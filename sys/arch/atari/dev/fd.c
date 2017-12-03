@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.76.18.1 2014/08/20 00:02:48 tls Exp $	*/
+/*	$NetBSD: fd.c,v 1.76.18.2 2017/12/03 11:35:57 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.76.18.1 2014/08/20 00:02:48 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.76.18.2 2017/12/03 11:35:57 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -252,7 +252,7 @@ uint8_t read_dmastat(void)
 /*
  * Config switch stuff. Used only for the floppy type for now. That's
  * why it's here...
- * XXX: If needed in more places, it should be moved to it's own include file.
+ * XXX: If needed in more places, it should be moved to its own include file.
  * Note: This location _must_ be read as an u_short. Failure to do so
  *       will return garbage!
  */
@@ -334,7 +334,7 @@ fdcattach(device_t parent, device_t self, void *aux)
 		fdsoftc.unit  = i;
 		fdsoftc.flags = 0;
 		st_dmagrab((dma_farg)fdcint, (dma_farg)fdtestdrv, &fdsoftc,
-		    &lock_stat, 0);
+		    &lock_stat, 0, NULL);
 		st_dmafree(&fdsoftc, &lock_stat);
 
 		if ((fdsoftc.flags & FLPF_NOTRESP) == 0) {
@@ -379,7 +379,9 @@ fdcprint(void *aux, const char *pnp)
 static int	fdmatch(device_t, cfdata_t, void *);
 static void	fdattach(device_t, device_t, void *);
 
-struct dkdriver fddkdriver = { fdstrategy };
+struct dkdriver fddkdriver = {
+	.d_strategy = fdstrategy
+};
 
 CFATTACH_DECL_NEW(fd, sizeof(struct fd_softc),
     fdmatch, fdattach, NULL, NULL);
@@ -426,23 +428,20 @@ int
 fdioctl(dev_t dev, u_long cmd, void * addr, int flag, struct lwp *l)
 {
 	struct fd_softc *sc;
+	int error;
 
 	sc = device_lookup_private(&fd_cd, DISKUNIT(dev));
 
 	if ((sc->flags & FLPF_HAVELAB) == 0)
 		return EBADF;
 
+	error = disk_ioctl(&sc->dkdev, RAW_PART, cmd, addr, flag, l);
+	if (error != EPASSTHROUGH)
+		return error;
+
 	switch (cmd) {
 	case DIOCSBAD:
 		return EINVAL;
-	case DIOCGDINFO:
-		*(struct disklabel *)addr = *(sc->dkdev.dk_label);
-		return 0;
-	case DIOCGPART:
-		((struct partinfo *)addr)->disklab = sc->dkdev.dk_label;
-		((struct partinfo *)addr)->part =
-		    &sc->dkdev.dk_label->d_partitions[RAW_PART];
-		return 0;
 #ifdef notyet /* XXX LWP */
 	case DIOCSRETRIES:
 	case DIOCSSTEP:
@@ -533,7 +532,7 @@ fdopen(dev_t dev, int flags, int devtype, struct lwp *l)
 		sc->flags |= FLPF_INOPEN|FLPF_GETSTAT;
 		s = splbio();
 		st_dmagrab((dma_farg)fdcint, (dma_farg)fdstatus, sc,
-		    &lock_stat, 0);
+		    &lock_stat, 0, NULL);
 		while ((sc->flags & FLPF_GETSTAT) != 0)
 			tsleep((void *)sc, PRIBIO, "fdopen", 0);
 		splx(s);
@@ -639,7 +638,7 @@ fdstrategy(struct buf *bp)
 			callout_stop(&sc->sc_motor_ch);
 		fd_state = FLP_IDLE;
 		st_dmagrab((dma_farg)fdcint, (dma_farg)fdstart, sc,
-		    &lock_stat, 0);
+		    &lock_stat, 0, NULL);
 	}
 	splx(s);
 
@@ -770,7 +769,8 @@ fddone(register struct fd_softc *sc)
 #ifdef FLP_DEBUG
 	printf("fddone: Staring job on unit %d\n", sc1->unit);
 #endif
-	st_dmagrab((dma_farg)fdcint, (dma_farg)fdstart, sc1, &lock_stat, 0);
+	st_dmagrab((dma_farg)fdcint, (dma_farg)fdstart, sc1, &lock_stat, 0,
+	    NULL);
 }
 
 static int
@@ -1188,7 +1188,7 @@ fdmotoroff(struct fd_softc *sc)
 			int tmp;
 
 			st_dmagrab((dma_farg)fdcint, (dma_farg)fdmoff, sc,
-			    &tmp, 0);
+			    &tmp, 0, NULL);
 		} else
 			fd_state = FLP_IDLE;
 		break;
@@ -1301,7 +1301,7 @@ fdgetdefaultlabel(struct fd_softc *sc, struct disklabel *lp, int part)
 	lp->d_ncylinders  = sc->nblocks / lp->d_secpercyl;
 	lp->d_secperunit  = sc->nblocks;
 
-	lp->d_type        = DTYPE_FLOPPY;
+	lp->d_type        = DKTYPE_FLOPPY;
 	lp->d_rpm         = 300; 	/* good guess I suppose.	*/
 	lp->d_interleave  = 1;		/* FIXME: is this OK?		*/
 	lp->d_bbsize      = 0;

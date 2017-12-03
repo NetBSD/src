@@ -1,4 +1,4 @@
-/*	$NetBSD: natm.c,v 1.24.14.1 2014/08/20 00:04:36 tls Exp $	*/
+/*	$NetBSD: natm.c,v 1.24.14.2 2017/12/03 11:39:05 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles D. Cranor and Washington University.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.24.14.1 2014/08/20 00:04:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.24.14.2 2017/12/03 11:39:05 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -98,7 +98,7 @@ natm_detach(struct socket *so)
 }
 
 static int
-natm_accept(struct socket *so, struct mbuf *nam)
+natm_accept(struct socket *so, struct sockaddr *nam)
 {
 	KASSERT(solocked(so));
 
@@ -106,7 +106,7 @@ natm_accept(struct socket *so, struct mbuf *nam)
 }
 
 static int
-natm_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
+natm_bind(struct socket *so, struct sockaddr *nam, struct lwp *l)
 {
 	KASSERT(solocked(so));
 
@@ -122,11 +122,11 @@ natm_listen(struct socket *so, struct lwp *l)
 }
 
 static int
-natm_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
+natm_connect(struct socket *so, struct sockaddr *nam, struct lwp *l)
 {
 	int error = 0, s2;
-	struct natmpcb *npcb;
-	struct sockaddr_natm *snatm;
+	struct natmpcb *npcb = (struct natmpcb *)so->so_pcb;
+	struct sockaddr_natm *snatm = (struct sockaddr_natm *)nam;
 	struct atm_pseudoioctl api;
 	struct atm_pseudohdr *aph;
 	struct ifnet *ifp;
@@ -135,12 +135,9 @@ natm_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 	KASSERT(solocked(so));
 
 	/*
-	 * validate nam and npcb
+	 * validate snatm and npcb
 	 */
 
-	if (nam->m_len != sizeof(*snatm))
-		return EINVAL;
-	snatm = mtod(nam, struct sockaddr_natm *);
 	if (snatm->snatm_len != sizeof(*snatm) ||
 	    (npcb->npcb_flags & NPCB_FREE) == 0)
 		return EINVAL;
@@ -299,18 +296,17 @@ natm_stat(struct socket *so, struct stat *ub)
 }
 
 static int
-natm_peeraddr(struct socket *so, struct mbuf *nam)
+natm_peeraddr(struct socket *so, struct sockaddr *nam)
 {
   struct natmpcb *npcb = (struct natmpcb *) so->so_pcb;
-  struct sockaddr_natm *snatm;
+  struct sockaddr_natm *snatm = (struct sockaddr_natm *)nam;
 
   KASSERT(solocked(so));
   KASSERT(pcb != NULL);
   KASSERT(nam != NULL);
 
-  snatm = mtod(nam, struct sockaddr_natm *);
   memset(snatm, 0, sizeof(*snatm));
-  nam->m_len = snatm->snatm_len = sizeof(*snatm);
+  snatm->snatm_len = sizeof(*snatm);
   snatm->snatm_family = AF_NATM;
   memcpy(snatm->snatm_if, npcb->npcb_ifp->if_xname, sizeof(snatm->snatm_if));
   snatm->snatm_vci = npcb->npcb_vci;
@@ -319,7 +315,7 @@ natm_peeraddr(struct socket *so, struct mbuf *nam)
 }
 
 static int
-natm_sockaddr(struct socket *so, struct mbuf *nam)
+natm_sockaddr(struct socket *so, struct sockaddr *nam)
 {
 	KASSERT(solocked(so));
 
@@ -343,7 +339,7 @@ natm_recvoob(struct socket *so, struct mbuf *m, int flags)
 }
 
 static int
-natm_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
+natm_send(struct socket *so, struct mbuf *m, struct sockaddr *nam,
     struct mbuf *control)
 {
 	struct natmpcb *npcb = (struct natmpcb *) so->so_pcb;
@@ -430,63 +426,6 @@ natm_purgeif(struct socket *so, struct ifnet *ifp)
 }
 
 /*
- * user requests
- */
-
-static int
-natm_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
-    struct mbuf *control, struct lwp *l)
-{
-  int error = 0, s, s2;
-  struct natmpcb *npcb;
-  struct sockaddr_natm *snatm;
-  struct atm_pseudoioctl api;
-  struct atm_pseudohdr *aph;
-  struct ifnet *ifp;
-  int proto = so->so_proto->pr_protocol;
-
-  KASSERT(req != PRU_ATTACH);
-  KASSERT(req != PRU_DETACH);
-  KASSERT(req != PRU_ACCEPT);
-  KASSERT(req != PRU_BIND);
-  KASSERT(req != PRU_LISTEN);
-  KASSERT(req != PRU_CONNECT);
-  KASSERT(req != PRU_CONNECT2);
-  KASSERT(req != PRU_DISCONNECT);
-  KASSERT(req != PRU_SHUTDOWN);
-  KASSERT(req != PRU_ABORT);
-  KASSERT(req != PRU_CONTROL);
-  KASSERT(req != PRU_SENSE);
-  KASSERT(req != PRU_PEERADDR);
-  KASSERT(req != PRU_SOCKADDR);
-  KASSERT(req != PRU_RCVD);
-  KASSERT(req != PRU_RCVOOB);
-  KASSERT(req != PRU_SEND);
-  KASSERT(req != PRU_SENDOOB);
-  KASSERT(req != PRU_PURGEIF);
-
-  if (so->so_pcb == NULL)
-	return EINVAL;
-
-  switch (req) {
-    case PRU_FASTTIMO:			/* 200ms timeout */
-    case PRU_SLOWTIMO:			/* 500ms timeout */
-    case PRU_PROTORCV:			/* receive from below */
-    case PRU_PROTOSEND:			/* send to below */
-#ifdef DIAGNOSTIC
-      printf("natm: PRU #%d unsupported\n", req);
-#endif
-      error = EOPNOTSUPP;
-      break;
-
-    default: panic("natm usrreq");
-  }
-
-done:
-  return error;
-}
-
-/*
  * natmintr: splsoftnet interrupt
  *
  * note: we expect a socket pointer in rcvif rather than an interface
@@ -505,9 +444,9 @@ natmintr(void)
 
   mutex_enter(softnet_lock);
 next:
-  s = splnet();
+  IFQ_LOCK(&natmintrq);
   IF_DEQUEUE(&natmintrq, m);
-  splx(s);
+  IFQ_UNLOCK(&natmintrq);
   if (m == NULL) {
     mutex_exit(softnet_lock);
     return;
@@ -518,7 +457,7 @@ next:
     panic("natmintr no HDR");
 #endif
 
-  npcb = (struct natmpcb *) m->m_pkthdr.rcvif; /* XXX: overloaded */
+  npcb = (struct natmpcb *) m_get_rcvif_NOMPSAFE(m); /* XXX: overloaded */
   so = npcb->npcb_socket;
 
   s = splnet();			/* could have atm devs @ different levels */
@@ -538,10 +477,10 @@ next:
   }
 
 #ifdef NEED_TO_RESTORE_IFP
-  m->m_pkthdr.rcvif = npcb->npcb_ifp;
+  m_set_rcvif(m, npcb->npcb_ifp);
 #else
 #ifdef DIAGNOSTIC
-m->m_pkthdr.rcvif = NULL;	/* null it out to be safe */
+  m_reset_rcvif(m);	/* null it out to be safe */
 #endif
 #endif
 
@@ -584,7 +523,6 @@ PR_WRAP_USRREQS(natm)
 #define	natm_send	natm_send_wrapper
 #define	natm_sendoob	natm_sendoob_wrapper
 #define	natm_purgeif	natm_purgeif_wrapper
-#define	natm_usrreq	natm_usrreq_wrapper
 
 const struct pr_usrreqs natm_usrreqs = {
 	.pr_attach	= natm_attach,
@@ -606,5 +544,4 @@ const struct pr_usrreqs natm_usrreqs = {
 	.pr_send	= natm_send,
 	.pr_sendoob	= natm_sendoob,
 	.pr_purgeif	= natm_purgeif,
-	.pr_generic	= natm_usrreq,
 };

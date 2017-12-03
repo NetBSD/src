@@ -1,4 +1,4 @@
-#	$NetBSD: COMPUTEX7750,v 1.30 2011/12/18 05:49:27 dholland Exp $
+#	$NetBSD: COMPUTEX7750,v 1.30.6.1 2017/12/03 11:36:12 jdolecek Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -50,8 +50,7 @@ options 	USERCONF	# userconf(4) support
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Compatibility options
-options 	COMPAT_43	# and 4.3BSD
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+include 	"conf/compat_netbsd15.config"
 
 # Executable format options
 options 	EXEC_COFF	# COFF executables

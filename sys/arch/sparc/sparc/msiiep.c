@@ -1,4 +1,4 @@
-/*	$NetBSD: msiiep.c,v 1.43.12.2 2014/08/20 00:03:24 tls Exp $ */
+/*	$NetBSD: msiiep.c,v 1.43.12.3 2017/12/03 11:36:43 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.43.12.2 2014/08/20 00:03:24 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.43.12.3 2017/12/03 11:36:43 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -507,7 +507,7 @@ mspcic_pci_map_find(struct mspcic_pci_map *m, int nmaps,
 
 	for (i = 0; i < nmaps; ++i, ++m) {
 		offset = pciaddr - m->pcibase;
-		if (offset >= 0 && offset + size <= m->size)
+		if (offset + size <= m->size)
 			return (m->sysbase + offset);
 	}
 	return (0);

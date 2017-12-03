@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_subdev_vm_base.c,v 1.1.1.1.6.2 2014/08/20 00:04:16 tls Exp $	*/
+/*	$NetBSD: nouveau_subdev_vm_base.c,v 1.1.1.1.6.3 2017/12/03 11:37:57 jdolecek Exp $	*/
 
 /*
  * Copyright 2010 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_subdev_vm_base.c,v 1.1.1.1.6.2 2014/08/20 00:04:16 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_subdev_vm_base.c,v 1.1.1.1.6.3 2017/12/03 11:37:57 jdolecek Exp $");
 
 #include <core/gpuobj.h>
 #include <core/mm.h>
@@ -76,6 +76,51 @@ nouveau_vm_map_at(struct nouveau_vma *vma, u64 delta, struct nouveau_mem *node)
 
 	vmm->flush(vm);
 }
+
+#ifdef __NetBSD__
+
+static void
+nouveau_vm_map_dma(struct nouveau_vma *vma, u64 delta, u64 length,
+    struct nouveau_mem *mem)
+{
+	struct nouveau_vm *vm = vma->vm;
+	struct nouveau_vmmgr *vmm = vm->vmm;
+	int big = vma->node->type != vmm->spg_shift;
+	u32 offset = vma->node->offset + (delta >> 12);
+	u32 bits = vma->node->type - 12;
+	u32 num  = length >> vma->node->type;
+	u32 pde  = (offset >> vmm->pgt_bits) - vm->fpde;
+	u32 pte  = (offset & ((1 << vmm->pgt_bits) - 1)) >> bits;
+	u32 max  = 1 << (vmm->pgt_bits - bits);
+	unsigned seg, pgoff;
+
+	for (seg = 0; seg < mem->pages->dm_nsegs; seg++) {
+		struct nouveau_gpuobj *pgt = vm->pgt[pde].obj[big];
+		dma_addr_t addr = mem->pages->dm_segs[seg].ds_addr;
+
+		KASSERT((mem->pages->dm_segs[seg].ds_len & NOUVEAU_GPU_PAGE_MASK) == 0);
+		for (pgoff = 0; pgoff < mem->pages->dm_segs[seg].ds_len;
+		     pgoff += NOUVEAU_GPU_PAGE_SIZE, addr += NOUVEAU_GPU_PAGE_SIZE) {
+			
+			vmm->map_sg(vma, pgt, mem, pte, 1, &addr);
+			num--;
+			pte++;
+
+			if (num == 0)
+				goto finish;
+
+			if (__predict_false(pte >= max)) {
+				pde++;
+				pte = 0;
+			}
+		}
+	}
+
+finish:
+	vmm->flush(vm);
+}
+
+#else
 
 static void
 nouveau_vm_map_sg_table(struct nouveau_vma *vma, u64 delta, u64 length,
@@ -173,9 +218,17 @@ nouveau_vm_map_sg(struct nouveau_vma *vma, u64 delta, u64 length,
 	vmm->flush(vm);
 }
 
+#endif
+
 void
 nouveau_vm_map(struct nouveau_vma *vma, struct nouveau_mem *node)
 {
+#ifdef __NetBSD__
+	if (node->pages)
+		nouveau_vm_map_dma(vma, 0, node->size << 12, node);
+	else
+		nouveau_vm_map_at(vma, 0, node);
+#else
 	if (node->sg)
 		nouveau_vm_map_sg_table(vma, 0, node->size << 12, node);
 	else
@@ -183,6 +236,7 @@ nouveau_vm_map(struct nouveau_vma *vma, struct nouveau_mem *node)
 		nouveau_vm_map_sg(vma, 0, node->size << 12, node);
 	else
 		nouveau_vm_map_at(vma, 0, node);
+#endif
 }
 
 void

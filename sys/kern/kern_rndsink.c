@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndsink.c,v 1.8.8.2 2014/08/20 00:04:29 tls Exp $	*/
+/*	$NetBSD: kern_rndsink.c,v 1.8.8.3 2017/12/03 11:38:44 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndsink.c,v 1.8.8.2 2014/08/20 00:04:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndsink.c,v 1.8.8.3 2017/12/03 11:38:44 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -38,29 +38,24 @@ __KERNEL_RCSID(0, "$NetBSD: kern_rndsink.c,v 1.8.8.2 2014/08/20 00:04:29 tls Exp
 #include <sys/kmem.h>
 #include <sys/mutex.h>
 #include <sys/queue.h>
-#include <sys/rnd.h>
 #include <sys/rndsink.h>
 
-#include <dev/rnd_private.h>	/* XXX provisional, for rnd_extract_data */
+#include <dev/rnd_private.h>
+
+enum rsink_state {
+	RNDSINK_IDLE,		/* no callback in progress */
+	RNDSINK_QUEUED,		/* queued for callback */
+	RNDSINK_IN_FLIGHT,	/* callback called */
+	RNDSINK_REQUEUED,	/* queued again before callback done */
+	RNDSINK_DEAD,		/* destroyed */
+};
 
 struct rndsink {
 	/* Callback state.  */
-	enum {
-		RNDSINK_IDLE,		/* no callback in progress */
-		RNDSINK_QUEUED,		/* queued for callback */
-		RNDSINK_IN_FLIGHT,	/* callback called */
-		RNDSINK_REQUEUED,	/* queued again before callback done */
-		RNDSINK_DEAD,		/* destroyed */
-	}			rsink_state;
+	enum rsink_state	rsink_state;
 
 	/* Entry on the queue of rndsinks, iff in the RNDSINK_QUEUED state.  */
 	TAILQ_ENTRY(rndsink)	rsink_entry;
-
-	/*
-	 * Notifies rndsink_destroy when rsink_state transitions to
-	 * RNDSINK_IDLE or RNDSINK_QUEUED.
-	 */
-	kcondvar_t		rsink_cv;
 
 	/* rndsink_create parameters.  */
 	unsigned int		rsink_bytes;
@@ -68,8 +63,11 @@ struct rndsink {
 	void			*rsink_arg;
 };
 
-static kmutex_t 		rndsinks_lock __cacheline_aligned;
-static TAILQ_HEAD(, rndsink)	rndsinks = TAILQ_HEAD_INITIALIZER(rndsinks);
+static struct {
+	kmutex_t		lock;
+	kcondvar_t		cv;
+	TAILQ_HEAD(, rndsink)	q;
+} rndsinks __cacheline_aligned;
 
 void
 rndsinks_init(void)
@@ -81,75 +79,9 @@ rndsinks_init(void)
 	 *
 	 * XXX Call this IPL_RND, perhaps.
 	 */
-	mutex_init(&rndsinks_lock, MUTEX_DEFAULT, IPL_VM);
-}
-
-/*
- * XXX Provisional -- rndpool_extract and rndpool_maybe_extract should
- * move into kern_rndpool.c.
- */
-extern rndpool_t rnd_pool;
-extern kmutex_t rndpool_mtx;
-
-/*
- * Fill the buffer with as much entropy as we can.  Return true if it
- * has full entropy and false if not.
- */
-static bool
-rndpool_extract(void *buffer, size_t bytes)
-{
-	const size_t extracted = rnd_extract_data(buffer, bytes,
-	    RND_EXTRACT_GOOD);
-
-	if (extracted < bytes) {
-		(void)rnd_extract_data((uint8_t *)buffer + extracted,
-		    bytes - extracted, RND_EXTRACT_ANY);
-		mutex_spin_enter(&rndpool_mtx);
-		rnd_getmore(bytes - extracted);
-		mutex_spin_exit(&rndpool_mtx);
-		return false;
-	}
-
-	return true;
-}
-
-/*
- * If we have as much entropy as is requested, fill the buffer with it
- * and return true.  Otherwise, leave the buffer alone and return
- * false.
- */
-
-CTASSERT(RND_ENTROPY_THRESHOLD <= 0xffffffffUL);
-CTASSERT(RNDSINK_MAX_BYTES <= (0xffffffffUL - RND_ENTROPY_THRESHOLD));
-CTASSERT((RNDSINK_MAX_BYTES + RND_ENTROPY_THRESHOLD) <=
-	    (0xffffffffUL / NBBY));
-
-static bool
-rndpool_maybe_extract(void *buffer, size_t bytes)
-{
-	bool ok;
-
-	KASSERT(bytes <= RNDSINK_MAX_BYTES);
-
-	const uint32_t bits_needed = ((bytes + RND_ENTROPY_THRESHOLD) * NBBY);
-
-	mutex_spin_enter(&rndpool_mtx);
-	if (bits_needed <= rndpool_get_entropy_count(&rnd_pool)) {
-		const uint32_t extracted __diagused =
-		    rndpool_extract_data(&rnd_pool, buffer, bytes,
-			RND_EXTRACT_GOOD);
-
-		KASSERT(extracted == bytes);
-
-		ok = true;
-	} else {
-		ok = false;
-		rnd_getmore(howmany(bits_needed -
-			rndpool_get_entropy_count(&rnd_pool), NBBY));
-	}
-	mutex_spin_exit(&rndpool_mtx);
-
-	return ok;
+	mutex_init(&rndsinks.lock, MUTEX_DEFAULT, IPL_VM);
+	cv_init(&rndsinks.cv, "rndsink");
+	TAILQ_INIT(&rndsinks.q);
 }
 
 void
@@ -160,12 +92,12 @@ rndsinks_distribute(void)
 
 	explicit_memset(buffer, 0, sizeof(buffer)); /* paranoia */
 
-	mutex_spin_enter(&rndsinks_lock);
-	while ((rndsink = TAILQ_FIRST(&rndsinks)) != NULL) {
+	mutex_spin_enter(&rndsinks.lock);
+	while ((rndsink = TAILQ_FIRST(&rndsinks.q)) != NULL) {
 		KASSERT(rndsink->rsink_state == RNDSINK_QUEUED);
 
 		/* Bail if we can't get some entropy for this rndsink.  */
-		if (!rndpool_maybe_extract(buffer, rndsink->rsink_bytes))
+		if (!rnd_tryextract(buffer, rndsink->rsink_bytes))
 			break;
 
 		/*
@@ -174,15 +106,15 @@ rndsinks_distribute(void)
 		 * dropped.  While running the callback, lock out
 		 * rndsink_destroy by marking the sink in flight.
 		 */
-		TAILQ_REMOVE(&rndsinks, rndsink, rsink_entry);
+		TAILQ_REMOVE(&rndsinks.q, rndsink, rsink_entry);
 		rndsink->rsink_state = RNDSINK_IN_FLIGHT;
-		mutex_spin_exit(&rndsinks_lock);
+		mutex_spin_exit(&rndsinks.lock);
 
 		(*rndsink->rsink_callback)(rndsink->rsink_arg, buffer,
 		    rndsink->rsink_bytes);
 		explicit_memset(buffer, 0, rndsink->rsink_bytes);
 
-		mutex_spin_enter(&rndsinks_lock);
+		mutex_spin_enter(&rndsinks.lock);
 
 		/*
 		 * If, while the callback was running, anyone requested
@@ -191,15 +123,15 @@ rndsinks_distribute(void)
 		 * pending rndsink_destroy, if there is one.
 		 */
 		if (rndsink->rsink_state == RNDSINK_REQUEUED) {
-			TAILQ_INSERT_TAIL(&rndsinks, rndsink, rsink_entry);
+			TAILQ_INSERT_TAIL(&rndsinks.q, rndsink, rsink_entry);
 			rndsink->rsink_state = RNDSINK_QUEUED;
 		} else {
 			KASSERT(rndsink->rsink_state == RNDSINK_IN_FLIGHT);
 			rndsink->rsink_state = RNDSINK_IDLE;
 		}
-		cv_broadcast(&rndsink->rsink_cv);
+		cv_broadcast(&rndsinks.cv);
 	}
-	mutex_spin_exit(&rndsinks_lock);
+	mutex_spin_exit(&rndsinks.lock);
 
 	explicit_memset(buffer, 0, sizeof(buffer));	/* paranoia */
 }
@@ -208,27 +140,16 @@ static void
 rndsinks_enqueue(struct rndsink *rndsink)
 {
 
-	KASSERT(mutex_owned(&rndsinks_lock));
+	KASSERT(mutex_owned(&rndsinks.lock));
 
-	/*
-	 * XXX This should request only rndsink->rs_bytes bytes of
-	 * entropy, but that might get buffered up indefinitely because
-	 * kern_rndq has no bound on the duration before it will
-	 * process queued entropy samples.  For now, request refilling
-	 * the pool altogether so that the buffer will fill up and get
-	 * processed.  Later, we ought to (a) bound the duration before
-	 * queued entropy samples get processed, and (b) add a target
-	 * or something -- as soon as we get that much from the entropy
-	 * sources, distribute it.
-	 */
-	mutex_spin_enter(&rndpool_mtx);
-	rnd_getmore(RND_POOLBITS / NBBY);
-	mutex_spin_exit(&rndpool_mtx);
+	/* Kick on-demand entropy sources.  */
+	rnd_getmore(rndsink->rsink_bytes);
 
+	/* Ensure this rndsink is on the queue.  */
 	switch (rndsink->rsink_state) {
 	case RNDSINK_IDLE:
 		/* Not on the queue and nobody is handling it.  */
-		TAILQ_INSERT_TAIL(&rndsinks, rndsink, rsink_entry);
+		TAILQ_INSERT_TAIL(&rndsinks.q, rndsink, rsink_entry);
 		rndsink->rsink_state = RNDSINK_QUEUED;
 		break;
 
@@ -262,7 +183,6 @@ rndsink_create(size_t bytes, rndsink_callback_t *callback, void *arg)
 	KASSERT(bytes <= RNDSINK_MAX_BYTES);
 
 	rndsink->rsink_state = RNDSINK_IDLE;
-	cv_init(&rndsink->rsink_cv, "rndsink");
 	rndsink->rsink_bytes = bytes;
 	rndsink->rsink_callback = callback;
 	rndsink->rsink_arg = arg;
@@ -278,17 +198,17 @@ rndsink_destroy(struct rndsink *rndsink)
 	 * Make sure the rndsink is off the queue, and if it's already
 	 * in flight, wait for the callback to complete.
 	 */
-	mutex_spin_enter(&rndsinks_lock);
+	mutex_spin_enter(&rndsinks.lock);
 	while (rndsink->rsink_state != RNDSINK_IDLE) {
 		switch (rndsink->rsink_state) {
 		case RNDSINK_QUEUED:
-			TAILQ_REMOVE(&rndsinks, rndsink, rsink_entry);
+			TAILQ_REMOVE(&rndsinks.q, rndsink, rsink_entry);
 			rndsink->rsink_state = RNDSINK_IDLE;
 			break;
 
 		case RNDSINK_IN_FLIGHT:
 		case RNDSINK_REQUEUED:
-			cv_wait(&rndsink->rsink_cv, &rndsinks_lock);
+			cv_wait(&rndsinks.cv, &rndsinks.lock);
 			break;
 
 		case RNDSINK_DEAD:
@@ -300,9 +220,7 @@ rndsink_destroy(struct rndsink *rndsink)
 		}
 	}
 	rndsink->rsink_state = RNDSINK_DEAD;
-	mutex_spin_exit(&rndsinks_lock);
-
-	cv_destroy(&rndsink->rsink_cv);
+	mutex_spin_exit(&rndsinks.lock);
 
 	kmem_free(rndsink, sizeof(*rndsink));
 }
@@ -314,9 +232,9 @@ rndsink_schedule(struct rndsink *rndsink)
 	/* Optimistically check without the lock whether we're queued.  */
 	if ((rndsink->rsink_state != RNDSINK_QUEUED) &&
 	    (rndsink->rsink_state != RNDSINK_REQUEUED)) {
-		mutex_spin_enter(&rndsinks_lock);
+		mutex_spin_enter(&rndsinks.lock);
 		rndsinks_enqueue(rndsink);
-		mutex_spin_exit(&rndsinks_lock);
+		mutex_spin_exit(&rndsinks.lock);
 	}
 }
 
@@ -326,11 +244,11 @@ rndsink_request(struct rndsink *rndsink, void *buffer, size_t bytes)
 
 	KASSERT(bytes == rndsink->rsink_bytes);
 
-	mutex_spin_enter(&rndsinks_lock);
-	const bool full_entropy = rndpool_extract(buffer, bytes);
+	mutex_spin_enter(&rndsinks.lock);
+	const bool full_entropy = rnd_extract(buffer, bytes);
 	if (!full_entropy)
 		rndsinks_enqueue(rndsink);
-	mutex_spin_exit(&rndsinks_lock);
+	mutex_spin_exit(&rndsinks.lock);
 
 	return full_entropy;
 }

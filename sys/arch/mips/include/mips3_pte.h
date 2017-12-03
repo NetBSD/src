@@ -1,4 +1,4 @@
-/*	$NetBSD: mips3_pte.h,v 1.28 2011/09/22 05:08:52 macallan Exp $	*/
+/*	$NetBSD: mips3_pte.h,v 1.28.12.1 2017/12/03 11:36:27 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -40,11 +40,13 @@
 
 #ifndef _MIPS_MIPS3_PTE_H_
 #define _MIPS_MIPS3_PTE_H_
+
 /*
  * R4000 hardware page table entry
  */
 
 #ifndef _LOCORE
+#if 0
 struct mips3_pte {
 #if BYTE_ORDER == BIG_ENDIAN
 unsigned int	pg_prot:2,		/* SW: access control */
@@ -63,20 +65,29 @@ unsigned int 	pg_g:1,			/* HW: ignore asid bit */
 		pg_prot:2;		/* SW: access control */
 #endif
 };
+#endif
 #endif /* _LOCORE */
 
 #define MIPS3_PG_WIRED	0x80000000	/* SW */
 #define MIPS3_PG_RO	0x40000000	/* SW */
 
-#ifdef ENABLE_MIPS_16KB_PAGE
-#define	MIPS3_PG_SVPN	0xffffc000	/* Software page no mask */
-#define	MIPS3_PG_HVPN	0xffff8000	/* Hardware page no mask */
-#define	MIPS3_PG_ODDPG	0x00004000	/* Odd even pte entry */
-#elif defined(ENABLE_MIPS_4KB_PAGE) || 1
-#define	MIPS3_PG_SVPN	0xfffff000	/* Software page no mask */
-#define	MIPS3_PG_HVPN	0xffffe000	/* Hardware page no mask */
-#define	MIPS3_PG_ODDPG	0x00001000	/* Odd even pte entry */
+#if PGSHIFT == 14
+#define	MIPS3_PG_SVPN	(~0UL << 14)	/* Software page no mask */
+#define	MIPS3_PG_HVPN	(~0UL << 15)	/* Hardware page no mask */
+#define MIPS3_PG_ODDPG	(MIPS3_PG_SVPN ^ MIPS3_PG_HVPN)
+#elif PGSHIFT == 13
+#ifdef MIPS3_4100
+#define 8KB page size is not supported on the MIPS3_4100
 #endif
+#define	MIPS3_PG_SVPN	(~0UL << 13)	/* Software page no mask */
+#define	MIPS3_PG_HVPN	(~0UL << 13)	/* Hardware page no mask */
+#define MIPS3_PG_NEXT	(1 << (12 - MIPS3_DEFAULT_PG_SHIFT))
+#elif PGSHIFT == 12
+#define	MIPS3_PG_SVPN	(~0UL << 12)	/* Software page no mask */
+#define	MIPS3_PG_HVPN	(~0UL << 13)	/* Hardware page no mask */
+#define MIPS3_PG_ODDPG	(MIPS3_PG_SVPN ^ MIPS3_PG_HVPN)
+#endif
+					/* Odd even pte entry */
 #define	MIPS3_PG_ASID	0x000000ff	/* Address space ID */
 #define	MIPS3_PG_G	0x00000001	/* Global; ignore ASID if in lo0 & lo1 */
 #define	MIPS3_PG_V	0x00000002	/* Valid */
@@ -167,7 +178,10 @@ unsigned int 	pg_g:1,			/* HW: ignore asid bit */
     ((((pg_mask) | 0x00001fff) + 1) / 2)
 
 #define	MIPS3_PG_SIZE_TO_MASK(pg_size)		\
-    ((((pg_size) * 2) - 1) & ~0x00001fff)
+    ((((pg_size) << (((pg_size) & 0x2aaaa) == 0)) - 1) & ~0x00001fff)
+
+CTASSERT(MIPS3_PG_SIZE_TO_MASK(4096) == MIPS3_PG_SIZE_4K);
+CTASSERT(MIPS3_PG_SIZE_TO_MASK(8192) == MIPS3_PG_SIZE_4K);
 
 /* NEC Vr41xx uses different pagemask values. */
 #define	MIPS4100_PG_SIZE_1K	0x00000000

@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.76.2.2 2014/08/20 00:02:42 tls Exp $
+#	$NetBSD: files.amd64,v 1.76.2.3 2017/12/03 11:35:47 jdolecek Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -24,28 +24,37 @@ defparam opt_physmem.h	PHYSMEM_MAX_ADDR PHYSMEM_MAX_SIZE
 # with the i386 (they include the opt_*.h for these)
 #
 
+defflag			PMC
 defflag			USER_LDT
+defflag			KASLR
 defflag eisa.h EISA
 
-file	arch/amd64/amd64/amd64func.S
-file	arch/amd64/amd64/autoconf.c
-file	arch/amd64/amd64/busfunc.S
+# Start code
+file	arch/amd64/amd64/locore.S		machdep
+file	arch/amd64/amd64/vector.S		machdep
+file	arch/amd64/amd64/copy.S			machdep
+file	arch/amd64/amd64/spl.S			machdep
+
+file	arch/amd64/amd64/amd64func.S		machdep
+file	arch/amd64/amd64/autoconf.c		machdep
+file	arch/amd64/amd64/busfunc.S		machdep
 file	arch/amd64/amd64/cpu_in_cksum.S		(inet | inet6) & cpu_in_cksum
-file	arch/amd64/amd64/cpufunc.S
+file	arch/amd64/amd64/cpufunc.S		machdep
 file	arch/amd64/amd64/db_disasm.c		ddb
 file	arch/amd64/amd64/db_interface.c		ddb
 file	arch/amd64/amd64/db_machdep.c		ddb
 file	arch/amd64/amd64/kobj_machdep.c		modular
-file	arch/amd64/amd64/kgdb_machdep.c		kgdb
 file	kern/subr_disk_mbr.c			disk
-file	arch/amd64/amd64/gdt.c
-file	arch/amd64/amd64/machdep.c
-file	arch/amd64/amd64/process_machdep.c
-file	arch/amd64/amd64/trap.c
-file	arch/x86/x86/fpu.c
-file	arch/x86/x86/convert_xmm_s87.c
-file	arch/amd64/amd64/lock_stubs.S
-file	dev/cons.c
+file	arch/amd64/amd64/gdt.c			machdep
+file	arch/amd64/amd64/machdep.c		machdep
+file	arch/amd64/amd64/prekern.c		machdep
+file	arch/amd64/amd64/process_machdep.c	machdep
+file	arch/amd64/amd64/trap.c			machdep
+file	arch/x86/x86/fpu.c			machdep
+file	arch/x86/x86/dbregs.c			machdep
+file	arch/x86/x86/convert_xmm_s87.c		machdep
+file	arch/amd64/amd64/lock_stubs.S		machdep
+file	dev/cons.c				machdep
 
 file	arch/amd64/amd64/mptramp.S        multiprocessor
 
@@ -75,10 +84,6 @@ file	dev/md_root.c			memory_disk_hooks
 #
 
 include	"dev/i2o/files.i2o"
-
-# BIOS32 routines
-define	bios32
-file	arch/amd64/amd64/bios32.c		bios32 needs-flag
 
 #
 # System bus types
@@ -130,6 +135,8 @@ attach	fd at fdc
 #
 # Compatibility modules
 #
+# Binary compatibility with previous NetBSD releases (COMPAT_XX)
+file	arch/amd64/amd64/compat_16_machdep.c	compat_16
 
 # NetBSD/i386 32-bit binary compatibility (COMPAT_NETBSD32)
 include "compat/netbsd32/files.netbsd32"
@@ -149,12 +156,6 @@ include "compat/linux32/files.linux32"
 include "compat/linux32/arch/amd64/files.linux32_amd64"
 file	arch/amd64/amd64/linux32_sigcode.S		compat_linux32
 file	arch/amd64/amd64/linux32_syscall.c		compat_linux32
-
-# SVR4 compatibility (COMPAT_SVR4)
-include "compat/svr4/files.svr4"
-
-# SVR4 compatibility (COMPAT_SVR4_32)
-include "compat/svr4_32/files.svr4_32"
 
 # OSS audio driver compatibility
 include	"compat/ossaudio/files.ossaudio"

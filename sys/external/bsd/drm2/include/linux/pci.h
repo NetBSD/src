@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.8.2.2 2014/08/20 00:04:21 tls Exp $	*/
+/*	$NetBSD: pci.h,v 1.8.2.3 2017/12/03 11:37:59 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,6 +32,14 @@
 #ifndef _LINUX_PCI_H_
 #define _LINUX_PCI_H_
 
+#ifdef _KERNEL_OPT
+#if defined(i386) || defined(amd64)
+#include "acpica.h"
+#else	/* !(i386 || amd64) */
+#define NACPICA	0
+#endif	/* i386 || amd64 */
+#endif
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -46,10 +54,20 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/agpvar.h>
 
+#if NACPICA > 0
+#include <dev/acpi/acpivar.h>
+#include <dev/acpi/acpi_pci.h>
+#else
+struct acpi_devnode;
+#endif
+
 #include <linux/dma-mapping.h>
 #include <linux/ioport.h>
+#include <linux/kernel.h>
 
-struct pci_bus;
+struct pci_bus {
+	u_int		number;
+};
 
 struct pci_device_id {
 	uint32_t	vendor;
@@ -65,6 +83,8 @@ struct pci_device_id {
 
 #define	PCI_BASE_CLASS_DISPLAY	PCI_CLASS_DISPLAY
 
+#define	PCI_CLASS_DISPLAY_VGA						\
+	((PCI_CLASS_DISPLAY << 8) | PCI_SUBCLASS_DISPLAY_VGA)
 #define	PCI_CLASS_BRIDGE_ISA						\
 	((PCI_CLASS_BRIDGE << 8) | PCI_SUBCLASS_BRIDGE_ISA)
 CTASSERT(PCI_CLASS_BRIDGE_ISA == 0x0601);
@@ -110,8 +130,11 @@ struct pci_dev {
 	bus_space_tag_t		pd_rom_bst;
 	bus_space_handle_t	pd_rom_bsh;
 	bus_size_t		pd_rom_size;
+	bus_space_handle_t	pd_rom_found_bsh;
+	bus_size_t		pd_rom_found_size;
 	void			*pd_rom_vaddr;
 	device_t		pd_dev;
+	struct drm_device	*pd_drm_dev; /* XXX Nouveau kludge!  */
 	struct {
 		pcireg_t		type;
 		bus_addr_t		addr;
@@ -122,7 +145,7 @@ struct pci_dev {
 		void __pci_iomem	*kva;
 	}			pd_resources[PCI_NUM_RESOURCES];
 	struct pci_conf_state	*pd_saved_state;
-	struct device		dev;		/* XXX Don't believe me!  */
+	struct acpi_devnode	*pd_ad;
 	struct pci_bus		*bus;
 	uint32_t		devfn;
 	uint16_t		vendor;
@@ -132,12 +155,20 @@ struct pci_dev {
 	uint8_t			revision;
 	uint32_t		class;
 	bool			msi_enabled;
+	pci_intr_handle_t	*intr_handles;
 };
 
 static inline device_t
 pci_dev_dev(struct pci_dev *pdev)
 {
 	return pdev->pd_dev;
+}
+
+/* XXX Nouveau kludge!  */
+static inline struct drm_device *
+pci_get_drvdata(struct pci_dev *pdev)
+{
+	return pdev->pd_drm_dev;
 }
 
 static inline void
@@ -152,7 +183,14 @@ linux_pci_dev_init(struct pci_dev *pdev, device_t dev,
 	pdev->pd_kludges = kludges;
 	pdev->pd_rom_vaddr = NULL;
 	pdev->pd_dev = dev;
-	pdev->bus = NULL;	/* XXX struct pci_dev::bus */
+#if (NACPICA > 0)
+	pdev->pd_ad = acpi_pcidev_find(0 /*XXX segment*/, pa->pa_bus,
+	    pa->pa_device, pa->pa_function);
+#else
+	pdev->pd_ad = NULL;
+#endif
+	pdev->bus = kmem_zalloc(sizeof(struct pci_bus), KM_NOSLEEP);
+	pdev->bus->number = pa->pa_bus;
 	pdev->devfn = PCI_DEVFN(pa->pa_device, pa->pa_function);
 	pdev->vendor = PCI_VENDOR(pa->pa_id);
 	pdev->device = PCI_PRODUCT(pa->pa_id);
@@ -200,7 +238,7 @@ pci_read_config_word(struct pci_dev *pdev, int reg, uint16_t *valuep)
 {
 	KASSERT(!ISSET(reg, 1));
 	*valuep = pci_conf_read(pdev->pd_pa.pa_pc, pdev->pd_pa.pa_tag,
-	    (reg &~ 3)) >> (8 * (reg & 3));
+	    (reg &~ 2)) >> (8 * (reg & 2));
 	return 0;
 }
 
@@ -208,7 +246,7 @@ static inline int
 pci_read_config_byte(struct pci_dev *pdev, int reg, uint8_t *valuep)
 {
 	*valuep = pci_conf_read(pdev->pd_pa.pa_pc, pdev->pd_pa.pa_tag,
-	    (reg &~ 1)) >> (8 * (reg & 1));
+	    (reg &~ 3)) >> (8 * (reg & 3));
 	return 0;
 }
 
@@ -252,19 +290,32 @@ pci_write_config_byte(struct pci_dev *pdev, int reg, uint8_t value)
 	return 0;
 }
 
-/*
- * XXX pci msi
- */
 static inline int
 pci_enable_msi(struct pci_dev *pdev)
 {
+#ifdef notyet
+	const struct pci_attach_args *const pa = &pdev->pd_pa;
+
+	if (pci_msi_alloc_exact(pa, &pdev->intr_handles, 1))
+		return -EINVAL;
+
+	pdev->msi_enabled = 1;
+	return 0;
+#else
 	return -ENOSYS;
+#endif
 }
 
 static inline void
 pci_disable_msi(struct pci_dev *pdev __unused)
 {
-	KASSERT(pdev->msi_enabled);
+	const struct pci_attach_args *const pa = &pdev->pd_pa;
+
+	if (pdev->intr_handles != NULL) {
+		pci_intr_release(pa->pa_pc, pdev->intr_handles, 1);
+		pdev->intr_handles = NULL;
+	}
+	pdev->msi_enabled = 0;
 }
 
 static inline void
@@ -291,7 +342,7 @@ pci_clear_master(struct pci_dev *pdev)
 	    PCI_COMMAND_STATUS_REG, csr);
 }
 
-#define	PCIBIOS_MIN_MEM	0	/* XXX bogus x86 kludge bollocks */
+#define	PCIBIOS_MIN_MEM	0x100000	/* XXX bogus x86 kludge bollocks */
 
 static inline bus_addr_t
 pcibios_align_resource(void *p, const struct resource *resource,
@@ -423,6 +474,7 @@ static inline void
 pci_unmap_rom(struct pci_dev *pdev, void __pci_rom_iomem *vaddr __unused)
 {
 
+	/* XXX Disable the ROM address decoder.  */
 	KASSERT(ISSET(pdev->pd_kludges, NBPCI_KLUDGE_MAP_ROM));
 	KASSERT(vaddr == pdev->pd_rom_vaddr);
 	bus_space_unmap(pdev->pd_rom_bst, pdev->pd_rom_bsh, pdev->pd_rom_size);
@@ -430,11 +482,40 @@ pci_unmap_rom(struct pci_dev *pdev, void __pci_rom_iomem *vaddr __unused)
 	pdev->pd_rom_vaddr = NULL;
 }
 
+/* XXX Whattakludge!  Should move this in sys/arch/.  */
+static int
+pci_map_rom_md(struct pci_dev *pdev)
+{
+#if defined(__i386__) || defined(__x86_64__) || defined(__ia64__)
+	const bus_addr_t rom_base = 0xc0000;
+	const bus_size_t rom_size = 0x20000;
+	bus_space_handle_t rom_bsh;
+	int error;
+
+	if (PCI_CLASS(pdev->pd_pa.pa_class) != PCI_CLASS_DISPLAY)
+		return ENXIO;
+	if (PCI_SUBCLASS(pdev->pd_pa.pa_class) != PCI_SUBCLASS_DISPLAY_VGA)
+		return ENXIO;
+	/* XXX Check whether this is the primary VGA card?  */
+	error = bus_space_map(pdev->pd_pa.pa_memt, rom_base, rom_size,
+	    (BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE), &rom_bsh);
+	if (error)
+		return ENXIO;
+
+	pdev->pd_rom_bst = pdev->pd_pa.pa_memt;
+	pdev->pd_rom_bsh = rom_bsh;
+	pdev->pd_rom_size = rom_size;
+	pdev->pd_kludges |= NBPCI_KLUDGE_MAP_ROM;
+
+	return 0;
+#else
+	return ENXIO;
+#endif
+}
+
 static inline void __pci_rom_iomem *
 pci_map_rom(struct pci_dev *pdev, size_t *sizep)
 {
-	bus_space_handle_t bsh;
-	bus_size_t size;
 
 	KASSERT(!ISSET(pdev->pd_kludges, NBPCI_KLUDGE_MAP_ROM));
 
@@ -442,20 +523,81 @@ pci_map_rom(struct pci_dev *pdev, size_t *sizep)
 		(BUS_SPACE_MAP_PREFETCHABLE | BUS_SPACE_MAP_LINEAR),
 		&pdev->pd_rom_bst, &pdev->pd_rom_bsh, NULL, &pdev->pd_rom_size)
 	    != 0)
-		return NULL;
+		goto fail_mi;
 	pdev->pd_kludges |= NBPCI_KLUDGE_MAP_ROM;
 
 	/* XXX This type is obviously wrong in general...  */
 	if (pci_find_rom(&pdev->pd_pa, pdev->pd_rom_bst, pdev->pd_rom_bsh,
-		PCI_ROM_CODE_TYPE_X86, &bsh, &size)) {
+		pdev->pd_rom_size, PCI_ROM_CODE_TYPE_X86,
+		&pdev->pd_rom_found_bsh, &pdev->pd_rom_found_size)) {
 		pci_unmap_rom(pdev, NULL);
-		return NULL;
+		goto fail_mi;
+	}
+	goto success;
+
+fail_mi:
+	if (pci_map_rom_md(pdev) != 0)
+		goto fail_md;
+
+	/* XXX This type is obviously wrong in general...  */
+	if (pci_find_rom(&pdev->pd_pa, pdev->pd_rom_bst, pdev->pd_rom_bsh,
+		pdev->pd_rom_size, PCI_ROM_CODE_TYPE_X86,
+		&pdev->pd_rom_found_bsh, &pdev->pd_rom_found_size)) {
+		pci_unmap_rom(pdev, NULL);
+		goto fail_md;
 	}
 
-	KASSERT(size <= SIZE_T_MAX);
-	*sizep = size;
-	pdev->pd_rom_vaddr = bus_space_vaddr(pdev->pd_rom_bst, bsh);
+success:
+	KASSERT(pdev->pd_rom_found_size <= SIZE_T_MAX);
+	*sizep = pdev->pd_rom_found_size;
+	pdev->pd_rom_vaddr = bus_space_vaddr(pdev->pd_rom_bst,
+	    pdev->pd_rom_found_bsh);
 	return pdev->pd_rom_vaddr;
+
+fail_md:
+	return NULL;
+}
+
+static inline void __pci_rom_iomem *
+pci_platform_rom(struct pci_dev *pdev __unused, size_t *sizep)
+{
+
+	*sizep = 0;
+	return NULL;
+}
+
+static inline int
+pci_enable_rom(struct pci_dev *pdev)
+{
+	const pci_chipset_tag_t pc = pdev->pd_pa.pa_pc;
+	const pcitag_t tag = pdev->pd_pa.pa_tag;
+	pcireg_t addr;
+	int s;
+
+	/* XXX Don't do anything if the ROM isn't there.  */
+
+	s = splhigh();
+	addr = pci_conf_read(pc, tag, PCI_MAPREG_ROM);
+	addr |= PCI_MAPREG_ROM_ENABLE;
+	pci_conf_write(pc, tag, PCI_MAPREG_ROM, addr);
+	splx(s);
+
+	return 0;
+}
+
+static inline void
+pci_disable_rom(struct pci_dev *pdev)
+{
+	const pci_chipset_tag_t pc = pdev->pd_pa.pa_pc;
+	const pcitag_t tag = pdev->pd_pa.pa_tag;
+	pcireg_t addr;
+	int s;
+
+	s = splhigh();
+	addr = pci_conf_read(pc, tag, PCI_MAPREG_ROM);
+	addr &= ~(pcireg_t)PCI_MAPREG_ROM_ENABLE;
+	pci_conf_write(pc, tag, PCI_MAPREG_ROM, addr);
+	splx(s);
 }
 
 static inline bus_addr_t

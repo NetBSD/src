@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_taskq.c,v 1.14 2008/09/05 22:06:52 gmcgarry Exp $	*/
+/*	$NetBSD: sysmon_taskq.c,v 1.14.38.1 2017/12/03 11:37:33 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_taskq.c,v 1.14 2008/09/05 22:06:52 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_taskq.c,v 1.14.38.1 2017/12/03 11:37:33 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -49,6 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: sysmon_taskq.c,v 1.14 2008/09/05 22:06:52 gmcgarry E
 #include <sys/proc.h>
 #include <sys/kthread.h>
 #include <sys/systm.h>
+#include <sys/module.h>
+#include <sys/once.h>
 
 #include <dev/sysmon/sysmon_taskq.h>
 
@@ -71,14 +73,40 @@ static int sysmon_task_queue_cleanup_sem;
 static struct lwp *sysmon_task_queue_lwp;
 static void sysmon_task_queue_thread(void *);
 
-void
-sysmon_task_queue_preinit(void)
+MODULE(MODULE_CLASS_MISC, sysmon_taskq, NULL);
+
+/*
+ * XXX	Normally, all initialization would be handled as part of
+ *	the module(9) framework.  However, there are a number of
+ *	users of the sysmon_taskq facility that are not modular,
+ *	and these can directly call sysmon_task_queue_init()
+ *	directly.  To accomodate these non-standard users, we
+ *	make sure that sysmon_task_queue_init() handles multiple
+ *	invocations.  And we also ensure that, if any non-module
+ *	user exists, we don't allow the module to be unloaded.
+ *	(We can't use module_hold() for this, since the module(9)
+ *	framework itself isn't necessarily initialized yet.)
+ */
+
+/*
+ * tq_preinit:
+ *
+ *	Early one-time initialization of task-queue
+ */
+
+ONCE_DECL(once_tq);
+
+static int
+tq_preinit(void)
 {
+
 	mutex_init(&sysmon_task_queue_mtx, MUTEX_DEFAULT, IPL_VM);
 	mutex_init(&sysmon_task_queue_init_mtx, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&sysmon_task_queue_cv, "smtaskq");
-}
+	sysmon_task_queue_initialized = 0;
 
+	return 0;
+}
 
 /*
  * sysmon_task_queue_init:
@@ -90,13 +118,14 @@ sysmon_task_queue_init(void)
 {
 	int error;
 
+	(void)RUN_ONCE(&once_tq, tq_preinit);
+
 	mutex_enter(&sysmon_task_queue_init_mtx);
-	if (sysmon_task_queue_initialized) {
+	if (sysmon_task_queue_initialized++) {
 		mutex_exit(&sysmon_task_queue_init_mtx);
 		return;
 	}
 
-	sysmon_task_queue_initialized = 1;
 	mutex_exit(&sysmon_task_queue_init_mtx);
 
 	error = kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL,
@@ -113,9 +142,12 @@ sysmon_task_queue_init(void)
  *
  *	Tear town the sysmon task queue.
  */
-void
+int
 sysmon_task_queue_fini(void)
 {
+
+	if (sysmon_task_queue_initialized > 1)
+		return EBUSY;
 
 	mutex_enter(&sysmon_task_queue_mtx);
 
@@ -127,6 +159,8 @@ sysmon_task_queue_fini(void)
 			&sysmon_task_queue_mtx);
 
 	mutex_exit(&sysmon_task_queue_mtx);
+
+	return 0;
 }
 
 /*
@@ -178,6 +212,8 @@ sysmon_task_queue_sched(u_int pri, void (*func)(void *), void *arg)
 {
 	struct sysmon_task *st, *lst;
 
+	(void)RUN_ONCE(&once_tq, tq_preinit);
+
 	if (sysmon_task_queue_lwp == NULL)
 		aprint_debug("WARNING: Callback scheduled before sysmon "
 		    "task queue thread present\n");
@@ -208,4 +244,28 @@ sysmon_task_queue_sched(u_int pri, void (*func)(void *), void *arg)
 	mutex_exit(&sysmon_task_queue_mtx);
 
 	return 0;
+}
+
+static
+int   
+sysmon_taskq_modcmd(modcmd_t cmd, void *arg)
+{
+	int ret;
+ 
+	switch (cmd) { 
+	case MODULE_CMD_INIT:
+		sysmon_task_queue_init();
+		ret = 0;
+		break;
+ 
+	case MODULE_CMD_FINI: 
+		ret = sysmon_task_queue_fini();
+		break;
+ 
+	case MODULE_CMD_STAT:
+	default: 
+		ret = ENOTTY;
+	}
+ 
+	return ret;
 }

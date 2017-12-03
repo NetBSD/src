@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_param.h,v 1.33.6.1 2013/06/23 06:20:08 tls Exp $	*/
+/*	$NetBSD: mips_param.h,v 1.33.6.2 2017/12/03 11:36:27 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -25,10 +25,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifdef _KERNEL
-#include <machine/cpu.h>
-#endif
-
 /*
  * No reason this can't be common
  */
@@ -76,16 +72,9 @@
 #define	SSIZE		1		/* initial stack size/NBPG */
 #define	SINCR		1		/* increment of stack/NBPG */
 
-#ifdef ENABLE_MIPS_16KB_PAGE
-#define	UPAGES		1		/* pages of u-area */
-#define	USPACE		(UPAGES*NBPG)	/* size of u-area in bytes */
-#elif defined(ENABLE_MIPS_4KB_PAGE) || 1
-#define	UPAGES		2		/* pages of u-area */
-#define	USPACE		(UPAGES*NBPG)	/* size of u-area in bytes */
-#else
-#error ENABLE_MIPS_xKB_PAGE not defined
+#if (ENABLE_MIPS_16KB_PAGE + ENABLE_MIPS_8KB_PAGE + ENABLE_MIPS_4KB_PAGE) > 1
+#error only one of ENABLE_MIPS_{4,8,16}KB_PAGE can be defined.
 #endif
-#define	USPACE_ALIGN	USPACE		/* make sure it starts on a even VA */
 
 #ifndef MSGBUFSIZE
 #define MSGBUFSIZE	NBPG		/* default message buffer size */
@@ -96,25 +85,42 @@
 #endif
 
 #ifdef ENABLE_MIPS_16KB_PAGE
-#define	NBPG		16384		/* bytes/page */
 #define	PGSHIFT		14		/* LOG2(NBPG) */
+#elif defined(ENABLE_MIPS_8KB_PAGE) \
+    || (!defined(ENABLE_MIPS_4KB_PAGE) && __mips >= 3)
+#define	PGSHIFT		13		/* LOG2(NBPG) */
 #else
-#define	NBPG		4096		/* bytes/page */
 #define	PGSHIFT		12		/* LOG2(NBPG) */
 #endif
+#define	NBPG		(1 << PGSHIFT)	/* bytes/page */
 #define	PGOFSET		(NBPG-1)	/* byte offset into page */
-#define	NPTEPG		(NBPG/4)
+#define	PTPSHIFT	2
+#define	PTPLENGTH	(PGSHIFT-PTPSHIFT)
+#define	NPTEPG		(1 << PTPLENGTH)
 
-#define NBSEG		(NBPG*NPTEPG)	/* bytes/segment */
+#define	SEGSHIFT	(PGSHIFT+PTPLENGTH)	/* LOG2(NBSEG) */
+#define NBSEG		(1 << SEGSHIFT)	/* bytes/segment */
 #define	SEGOFSET	(NBSEG-1)	/* byte offset into segment */
-#define	SEGSHIFT	(PGSHIFT+(PGSHIFT-2))	/* LOG2(NBSEG) */
 
 #ifdef _LP64
-#define	NSEGPG		(NBPG/8)
-#define NBXSEG		(NSEGPG*NBSEG)	/* bytes/xsegment */
-#define	XSEGOFSET	(NBSEG-1)	/* byte offset into segment */
-#define	XSEGSHIFT	(SEGSHIFT+(PGSHIFT-3))	/* LOG2(NBXSEG) */
+#define SEGLENGTH	(PGSHIFT-3)
+#define	XSEGSHIFT	(SEGSHIFT+SEGLENGTH)	/* LOG2(NBXSEG) */
+#define NBXSEG		(1UL << XSEGSHIFT)	/* bytes/xsegment */
+#define	XSEGOFSET	(NBXSEG-1)	/* byte offset into xsegment */
+#define XSEGLENGTH	(PGSHIFT-3)
+#define	NXSEGPG		(1 << XSEGLENGTH)
+#else
+#define	SEGLENGTH	(31-SEGSHIFT)
 #endif
+#define	NSEGPG		(1 << SEGLENGTH)
+
+#if PGSHIFT >= 13
+#define	UPAGES		1		/* pages of u-area */
+#else
+#define	UPAGES		2		/* pages of u-area */
+#endif
+#define	USPACE		(UPAGES*NBPG)	/* size of u-area in bytes */
+#define	USPACE_ALIGN	USPACE		/* make sure it starts on a even VA */
 
 /*
  * Minimum and maximum sizes of the kernel malloc arena in PAGE_SIZE-sized

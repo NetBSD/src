@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200.c,v 1.30.22.1 2012/11/20 03:01:23 tls Exp $	*/
+/*	$NetBSD: mq200.c,v 1.30.22.2 2017/12/03 11:36:15 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 TAKEMURA Shin
@@ -30,11 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mq200.c,v 1.30.22.1 2012/11/20 03:01:23 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mq200.c,v 1.30.22.2 2017/12/03 11:36:15 jdolecek Exp $");
 
 #include <sys/param.h>
-#include <sys/kernel.h>
+#include <sys/bus.h>
 #include <sys/device.h>
+#include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/reboot.h>
 
@@ -42,8 +43,9 @@ __KERNEL_RCSID(0, "$NetBSD: mq200.c,v 1.30.22.1 2012/11/20 03:01:23 tls Exp $");
 
 #include <dev/wscons/wsconsio.h>
 
+#include <mips/locore.h>
+
 #include <machine/bootinfo.h>
-#include <machine/bus.h>
 #include <machine/autoconf.h>
 #include <machine/config_hook.h>
 #include <machine/platid.h>

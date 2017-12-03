@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplayvar.h,v 1.19 2009/03/15 15:52:12 cegger Exp $ */
+/* $NetBSD: pcdisplayvar.h,v 1.19.22.1 2017/12/03 11:37:03 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -26,7 +26,9 @@
  *
  */
 
+#ifdef _KERNEL_OPT
 #include "opt_pcdisplay.h"
+#endif
 
 struct pcdisplayscreen {
 	struct pcdisplay_handle *hdl;

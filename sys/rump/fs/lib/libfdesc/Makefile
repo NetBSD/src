@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.1 2009/07/31 19:16:45 pooka Exp $
+#	$NetBSD: Makefile,v 1.1.24.1 2017/12/03 11:39:11 jdolecek Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../miscfs/fdesc
 
 LIB=	rumpfs_fdesc
+COMMENT=/dev/fd pseudo file system
 
 SRCS=	fdesc_vfsops.c fdesc_vnops.c
 

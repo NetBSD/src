@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zydreg.h,v 1.19 2006/11/30 19:28:07 damien Exp $	*/
-/*	$NetBSD: if_zydreg.h,v 1.7 2012/08/24 09:01:23 msaitoh Exp $	*/
+/*	$NetBSD: if_zydreg.h,v 1.7.2.1 2017/12/03 11:37:34 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -1084,14 +1084,14 @@ struct zyd_notif_retry {
 #define ZYD_TX_TIMEOUT		10000
 
 #define ZYD_MAX_TXBUFSZ	\
-	(sizeof (struct zyd_tx_desc) + MCLBYTES)
+	(sizeof(struct zyd_tx_desc) + MCLBYTES)
 
 #define ZYD_MIN_FRAGSZ							\
-	(sizeof (struct zyd_plcphdr) + IEEE80211_MIN_LEN + 		\
-	 sizeof (struct zyd_rx_stat))
+	(sizeof(struct zyd_plcphdr) + IEEE80211_MIN_LEN + 		\
+	 sizeof(struct zyd_rx_stat))
 #define ZYD_MIN_RXBUFSZ	ZYD_MIN_FRAGSZ
 #define ZYX_MAX_RXBUFSZ	\
-	(sizeof (struct zyd_plcphdr) + MCLBYTES + sizeof (struct zyd_rx_desc))
+	(sizeof(struct zyd_plcphdr) + MCLBYTES + sizeof(struct zyd_rx_desc))
 
 #define ZYD_CMD_FLAG_READ	(1 << 0)
 
@@ -1110,14 +1110,14 @@ struct zyd_mac_pair {
 
 struct zyd_tx_data {
 	struct zyd_softc	*sc;
-	usbd_xfer_handle	xfer;
+	struct usbd_xfer	*xfer;
 	uint8_t			*buf;
 	struct ieee80211_node	*ni;
 };
 
 struct zyd_rx_data {
 	struct zyd_softc	*sc;
-	usbd_xfer_handle	xfer;
+	struct usbd_xfer	*xfer;
 	const uint8_t		*buf;
 };
 
@@ -1183,8 +1183,8 @@ struct zyd_softc {
 	struct zyd_rf			sc_rf;
 
 	struct usb_task			sc_task;
-	usbd_device_handle		sc_udev;
-	usbd_interface_handle		sc_iface;
+	struct usbd_device *		sc_udev;
+	struct usbd_interface *		sc_iface;
 	int				sc_flags;
 #define ZD1211_FWLOADED (1 << 0)
 
@@ -1217,8 +1217,9 @@ struct zyd_softc {
 #define ZYD_ENDPT_IIN	2
 #define ZYD_ENDPT_IOUT	3
 #define ZYD_ENDPT_CNT	4
-	usbd_pipe_handle		zyd_ep[ZYD_ENDPT_CNT];
+	struct usbd_pipe *		zyd_ep[ZYD_ENDPT_CNT];
 	uint8_t 			*ibuf;
+	size_t				ibuf_size;
 
 	struct zyd_rx_data		rx_data[ZYD_RX_LIST_CNT];
 	struct zyd_tx_data		tx_data[ZYD_TX_LIST_CNT];

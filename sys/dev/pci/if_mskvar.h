@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_mskvar.h,v 1.3 2006/12/28 16:34:42 kettenis Exp $	*/
-/*	$NetBSD: if_mskvar.h,v 1.10.6.1 2012/11/20 03:02:17 tls Exp $	*/
+/*	$NetBSD: if_mskvar.h,v 1.10.6.2 2017/12/03 11:37:08 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
 #ifndef _DEV_PCI_IF_MSKVAR_H_
 #define _DEV_PCI_IF_MSKVAR_H_
 
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 struct sk_jpool_entry {
 	int                             slot;

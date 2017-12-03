@@ -1,4 +1,4 @@
-/* $NetBSD: lunaws.c,v 1.24.2.3 2014/08/20 00:03:10 tls Exp $ */
+/* $NetBSD: lunaws.c,v 1.24.2.4 2017/12/03 11:36:23 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.24.2.3 2014/08/20 00:03:10 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.24.2.4 2017/12/03 11:36:23 jdolecek Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "wsmouse.h"
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.24.2.3 2014/08/20 00:03:10 tls Exp $");
 #include <luna68k/dev/omkbdmap.h>
 #include <luna68k/dev/sioreg.h>
 #include <luna68k/dev/siovar.h>
+#include <luna68k/dev/syscn.h>
 
 #include "ioconf.h"
 
@@ -127,9 +128,6 @@ static void wsattach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(ws, sizeof(struct ws_softc),
     wsmatch, wsattach, NULL, NULL);
-
-extern int  syscngetc(dev_t);
-extern void syscnputc(dev_t, int);
 
 static int
 wsmatch(device_t parent, cfdata_t cf, void *aux)

@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_gem.c,v 1.2.6.2 2014/08/20 00:04:10 tls Exp $	*/
+/*	$NetBSD: nouveau_gem.c,v 1.2.6.3 2017/12/03 11:37:52 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 2008 Ben Skeggs.
@@ -27,9 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_gem.c,v 1.2.6.2 2014/08/20 00:04:10 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_gem.c,v 1.2.6.3 2017/12/03 11:37:52 jdolecek Exp $");
 
 #include <subdev/fb.h>
+
+#include <linux/err.h>		/* XXX */
 
 #include "nouveau_drm.h"
 #include "nouveau_dma.h"
@@ -45,8 +47,10 @@ nouveau_gem_object_del(struct drm_gem_object *gem)
 	struct nouveau_bo *nvbo = nouveau_gem_object(gem);
 	struct ttm_buffer_object *bo = &nvbo->bo;
 
+#ifndef __NetBSD__		/* XXX drm prime */
 	if (gem->import_attach)
 		drm_prime_gem_destroy(gem, nvbo->bo.sg);
+#endif
 
 	drm_gem_object_release(gem);
 
@@ -458,6 +462,10 @@ validate_sync(struct nouveau_channel *chan, struct nouveau_bo *nvbo)
 
 	return ret;
 }
+
+#ifdef __NetBSD__		/* XXX yargleblargh */
+#  define	__force
+#endif
 
 static int
 validate_list(struct nouveau_channel *chan, struct nouveau_cli *cli,
@@ -875,19 +883,6 @@ out_next:
 	}
 
 	return nouveau_abi16_put(abi16, ret);
-}
-
-static inline uint32_t
-domain_to_ttm(struct nouveau_bo *nvbo, uint32_t domain)
-{
-	uint32_t flags = 0;
-
-	if (domain & NOUVEAU_GEM_DOMAIN_VRAM)
-		flags |= TTM_PL_FLAG_VRAM;
-	if (domain & NOUVEAU_GEM_DOMAIN_GART)
-		flags |= TTM_PL_FLAG_TT;
-
-	return flags;
 }
 
 int

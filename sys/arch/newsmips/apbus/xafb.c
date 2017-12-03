@@ -1,4 +1,4 @@
-/*	$NetBSD: xafb.c,v 1.16.18.1 2014/08/20 00:03:16 tls Exp $	*/
+/*	$NetBSD: xafb.c,v 1.16.18.2 2017/12/03 11:36:32 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -29,7 +29,7 @@
 /* "xa" frame buffer driver.  Currently supports 1280x1024x8 only. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xafb.c,v 1.16.18.1 2014/08/20 00:03:16 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xafb.c,v 1.16.18.2 2017/12/03 11:36:32 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -40,10 +40,12 @@ __KERNEL_RCSID(0, "$NetBSD: xafb.c,v 1.16.18.1 2014/08/20 00:03:16 tls Exp $");
 
 #include <uvm/uvm_extern.h>
 
+#include <mips/locore.h>
+
 #include <machine/adrsmap.h>
 #include <machine/apcall.h>
-
 #include <machine/wsconsio.h>
+
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/rasops/rasops.h>
 

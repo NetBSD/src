@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_arbus.c,v 1.1 2011/07/07 05:06:44 matt Exp $	*/
+/*	$NetBSD: ohci_arbus.c,v 1.1.12.1 2017/12/03 11:36:26 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
@@ -32,21 +32,22 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_arbus.c,v 1.1 2011/07/07 05:06:44 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_arbus.c,v 1.1.12.1 2017/12/03 11:36:26 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-
 #include <sys/bus.h>
 
-#include <dev/usb/usb.h>   
+#include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdivar.h>
 #include <dev/usb/usb_mem.h>
 
 #include <dev/usb/ohcireg.h>
 #include <dev/usb/ohcivar.h>
+
+#include <mips/locore.h>
 
 #include <mips/atheros/include/arbusvar.h>
 
@@ -85,13 +86,12 @@ ohci_arbus_attach(device_t parent, device_t self, void *aux)
 	ohci_softc_t * const sc = device_private(self);
 	struct arbus_attach_args * const aa = aux;
 	void *ih = NULL;
-	usbd_status status;
 
 	sc->sc_dev = self;
 	sc->iot = aa->aa_bst;
 	sc->sc_size = aa->aa_size;
-	sc->sc_bus.dmatag = aa->aa_dmat;
-	sc->sc_bus.hci_private = sc;
+	sc->sc_bus.ub_dmatag = aa->aa_dmat;
+	sc->sc_bus.ub_hcpriv = sc;
 
 	if (bus_space_map(sc->iot, aa->aa_addr, sc->sc_size, 0, &sc->ioh)) {
 		aprint_error_dev(self, "unable to map registers\n");
@@ -110,9 +110,9 @@ ohci_arbus_attach(device_t parent, device_t self, void *aux)
 	/* we don't handle endianess in bus space */
 	sc->sc_endian = OHCI_LITTLE_ENDIAN;
 
-	status = ohci_init(sc);
-	if (status != USBD_NORMAL_COMPLETION) {
-		aprint_error_dev(self, "init failed, error=%d\n", status);
+	int err = ohci_init(sc);
+	if (err) {
+		aprint_error_dev(self, "init failed, error=%d\n", err);
 		if (ih != NULL)
 			arbus_intr_disestablish(ih);
 		return;

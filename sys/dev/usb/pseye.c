@@ -1,4 +1,4 @@
-/* $NetBSD: pseye.c,v 1.21 2011/05/24 16:42:31 joerg Exp $ */
+/* $NetBSD: pseye.c,v 1.21.16.1 2017/12/03 11:37:34 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,12 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.21 2011/05/24 16:42:31 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.21.16.1 2017/12/03 11:37:34 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/fcntl.h>
 #include <sys/conf.h>
 #include <sys/poll.h>
@@ -82,8 +81,8 @@ __KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.21 2011/05/24 16:42:31 joerg Exp $");
 struct pseye_softc {
 	device_t		sc_dev;
 
-	usbd_device_handle	sc_udev;
-	usbd_interface_handle	sc_iface;
+	struct usbd_device *	sc_udev;
+	struct usbd_interface *	sc_iface;
 
 	device_t		sc_videodev;
 	char			sc_running;
@@ -91,8 +90,8 @@ struct pseye_softc {
 	kcondvar_t		sc_cv;
 	kmutex_t		sc_mtx;
 
-	usbd_pipe_handle	sc_bulkin_pipe;
-	usbd_xfer_handle	sc_bulkin_xfer;
+	struct usbd_pipe *	sc_bulkin_pipe;
+	struct usbd_xfer *	sc_bulkin_xfer;
 	int			sc_bulkin;
 	uint8_t			*sc_bulkin_buffer;
 	int			sc_bulkin_bufferlen;
@@ -163,15 +162,15 @@ static const struct video_hw_if pseye_hw_if = {
 static int
 pseye_match(device_t parent, cfdata_t match, void *opaque)
 {
-	struct usbif_attach_arg *uaa = opaque;
+	struct usbif_attach_arg *uiaa = opaque;
 
-	if (uaa->class != UICLASS_VENDOR)
+	if (uiaa->uiaa_class != UICLASS_VENDOR)
 		return UMATCH_NONE;
 
-	if (uaa->vendor == USB_VENDOR_OMNIVISION2) {
-		switch (uaa->product) {
+	if (uiaa->uiaa_vendor == USB_VENDOR_OMNIVISION2) {
+		switch (uiaa->uiaa_product) {
 		case USB_PRODUCT_OMNIVISION2_PSEYE:
-			if (uaa->ifaceno != 0)
+			if (uiaa->uiaa_ifaceno != 0)
 				return UMATCH_NONE;
 			return UMATCH_VENDOR_PRODUCT;
 		}
@@ -184,8 +183,8 @@ static void
 pseye_attach(device_t parent, device_t self, void *opaque)
 {
 	struct pseye_softc *sc = device_private(self);
-	struct usbif_attach_arg *uaa = opaque;
-	usbd_device_handle dev = uaa->device;
+	struct usbif_attach_arg *uiaa = opaque;
+	struct usbd_device *dev = uiaa->uiaa_device;
 	usb_interface_descriptor_t *id = NULL;
 	usb_endpoint_descriptor_t *ed = NULL, *ed_bulkin = NULL;
 	char *devinfop;
@@ -200,9 +199,9 @@ pseye_attach(device_t parent, device_t self, void *opaque)
 
 	sc->sc_dev = self;
 	sc->sc_udev = dev;
-	sc->sc_iface = uaa->iface;
+	sc->sc_iface = uiaa->uiaa_iface;
 	snprintf(sc->sc_businfo, sizeof(sc->sc_businfo), "usb:%08x",
-	    sc->sc_udev->cookie.cookie);
+	    sc->sc_udev->ud_cookie.cookie);
 	sc->sc_bulkin_bufferlen = PSEYE_BULKIN_BUFLEN;
 
 	sc->sc_dying = sc->sc_running = 0;
@@ -239,19 +238,21 @@ pseye_attach(device_t parent, device_t self, void *opaque)
 
 	sc->sc_bulkin = ed_bulkin->bEndpointAddress;
 
-	sc->sc_bulkin_xfer = usbd_alloc_xfer(sc->sc_udev);
-	if (sc->sc_bulkin_xfer == NULL) {
-		sc->sc_dying = 1;
+	int error = pseye_init_pipes(sc);
+	if (error) {
+		aprint_error_dev(self, "couldn't open pipes\n");
 		return;
 	}
-	sc->sc_bulkin_buffer = usbd_alloc_buffer(sc->sc_bulkin_xfer,
-	    sc->sc_bulkin_bufferlen);
-	if (sc->sc_bulkin_buffer == NULL) {
-		usbd_free_xfer(sc->sc_bulkin_xfer);
-		sc->sc_bulkin_xfer = NULL;
-		sc->sc_dying = 1;
+
+	error = usbd_create_xfer(sc->sc_bulkin_pipe, sc->sc_bulkin_bufferlen,
+	    USBD_SHORT_XFER_OK, 0, &sc->sc_bulkin_xfer);
+	if (error) {
+		aprint_error_dev(self, "couldn't create transfer\n");
+		pseye_close_pipes(sc);
 		return;
 	}
+
+	sc->sc_bulkin_buffer = usbd_get_buffer(sc->sc_bulkin_xfer);
 
 	pseye_init(sc);
 
@@ -265,8 +266,7 @@ pseye_attach(device_t parent, device_t self, void *opaque)
 		return;
 	}
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-	    self);
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, self);
 
 }
 
@@ -284,13 +284,17 @@ pseye_detach(device_t self, int flags)
 		sc->sc_videodev = NULL;
 	}
 
+	if (sc->sc_bulkin_pipe != NULL) {
+		usbd_abort_pipe(sc->sc_bulkin_pipe);
+	}
+
 	if (sc->sc_bulkin_xfer != NULL) {
-		usbd_free_xfer(sc->sc_bulkin_xfer);
+		usbd_destroy_xfer(sc->sc_bulkin_xfer);
 		sc->sc_bulkin_xfer = NULL;
 	}
 
 	if (sc->sc_bulkin_pipe != NULL) {
-		usbd_abort_pipe(sc->sc_bulkin_pipe);
+		usbd_close_pipe(sc->sc_bulkin_pipe);
 		sc->sc_bulkin_pipe = NULL;
 	}
 
@@ -304,8 +308,7 @@ pseye_detach(device_t self, int flags)
 	cv_destroy(&sc->sc_cv);
 	mutex_destroy(&sc->sc_mtx);
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-	    sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
 
 	return 0;
 }
@@ -622,8 +625,7 @@ pseye_get_frame(struct pseye_softc *sc, uint32_t *plen)
 		return USBD_IOERROR;
 
 	return usbd_bulk_transfer(sc->sc_bulkin_xfer, sc->sc_bulkin_pipe,
-	    USBD_SHORT_XFER_OK|USBD_NO_COPY, 1000,
-	    sc->sc_bulkin_buffer, plen, "pseyerb");
+	    USBD_SHORT_XFER_OK, 1000, sc->sc_bulkin_buffer, plen);
 }
 
 static int
@@ -642,8 +644,6 @@ pseye_init_pipes(struct pseye_softc *sc)
 		return ENOMEM;
 	}
 
-	pseye_start(sc);
-
 	return 0;
 }
 
@@ -655,8 +655,6 @@ pseye_close_pipes(struct pseye_softc *sc)
 		usbd_close_pipe(sc->sc_bulkin_pipe);
 		sc->sc_bulkin_pipe = NULL;
 	}
-
-	pseye_stop(sc);
 
 	return 0;
 }
@@ -731,7 +729,9 @@ pseye_open(void *opaque, int flags)
 	if (sc->sc_dying)
 		return EIO;
 
-	return pseye_init_pipes(sc);
+	pseye_start(sc);
+
+	return 0;
 }
 
 static void
@@ -739,7 +739,7 @@ pseye_close(void *opaque)
 {
 	struct pseye_softc *sc = opaque;
 
-	pseye_close_pipes(sc);
+	pseye_stop(sc);
 }
 
 static const char *

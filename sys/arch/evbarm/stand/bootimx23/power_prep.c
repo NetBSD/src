@@ -1,4 +1,4 @@
-/* $Id: power_prep.c,v 1.3.6.3 2014/08/20 00:02:56 tls Exp $ */
+/* $Id: power_prep.c,v 1.3.6.4 2017/12/03 11:36:07 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -222,7 +222,7 @@ power_vddd_from_dcdc(int target, int brownout)
 {
 	uint32_t tmp_r;
 
-	/* BO_OFFSET must be withing 800mV - 1475mV */
+	/* BO_OFFSET must be within 800mV - 1475mV */
 	if (brownout > 1475)
 		brownout = 1475;
 	else if (brownout < 800)
@@ -274,7 +274,7 @@ power_vdda_from_dcdc(int target, int brownout)
 {
 	uint32_t tmp_r;
 
-	/* BO_OFFSET must be withing 1400mV - 2175mV */
+	/* BO_OFFSET must be within 1400mV - 2175mV */
 	if (brownout > 2275)
 		brownout = 2275;
 	else if (brownout < 1400)
@@ -326,7 +326,7 @@ power_vddio_from_dcdc(int target, int brownout)
 {
 	uint32_t tmp_r;
 
-	/* BO_OFFSET must be withing 2700mV - 3475mV */
+	/* BO_OFFSET must be within 2700mV - 3475mV */
 	if (brownout > 3475)
 		brownout = 3475;
 	else if (brownout < 2700)

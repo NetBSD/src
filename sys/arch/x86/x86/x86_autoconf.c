@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.65.2.3 2014/08/20 00:03:29 tls Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.65.2.4 2017/12/03 11:36:51 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.65.2.3 2014/08/20 00:03:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.65.2.4 2017/12/03 11:36:51 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,11 +71,12 @@ int x86_ndisks;
 #endif
 
 static void
-dmatch(const char *func, device_t dv)
+dmatch(const char *func, device_t dv, const char *method)
 {
 
-	printf("WARNING: %s: double match for boot device (%s, %s)\n",
-	    func, device_xname(booted_device), device_xname(dv));
+	printf("WARNING: %s: double match for boot device (%s:%s %s:%s)\n",
+	    func, booted_method, device_xname(booted_device),
+	    method, device_xname(dv));
 }
 
 static int
@@ -235,9 +236,11 @@ match_bootwedge(device_t dv, struct btinfo_bootwedge *biw)
 		    sizeof(bf), blk * DEV_BSIZE, UIO_SYSSPACE,
 		    0, NOCRED, NULL, NULL);
 		if (error) {
-			printf("%s: unable to read block %" PRId64 " "
-			    "of dev %s (%d)\n", __func__,
-			    blk, device_xname(dv), error);
+			if (error != EINVAL) {
+				aprint_error("%s: unable to read block %"
+				    PRId64 " " "of dev %s (%d)\n", __func__,
+				    blk, device_xname(dv), error);
+			}
 			goto closeout;
 		}
 		MD5Update(&ctx, bf, sizeof(bf));
@@ -324,6 +327,7 @@ findroot(void)
 	struct btinfo_biosgeom *big;
 	device_t dv;
 	deviter_t di;
+	static char bootspecbuf[sizeof(biv->devname)+1];
 
 	if (booted_device)
 		return;
@@ -355,6 +359,7 @@ findroot(void)
 			if (strncmp(cd->cf_name, biv->devname, len) == 0 &&
 			    biv->devname[len] - '0' == device_unit(dv)) {
 				booted_device = dv;
+				booted_method = "bootinfo/rootdevice";
 				booted_partition = biv->devname[len + 1] - 'a';
 				booted_nblks = 0;
 				break;
@@ -365,6 +370,12 @@ findroot(void)
 		deviter_release(&di);
 		if (dv != NULL)
 			return;
+
+		if (biv->devname[0] != '\0') {
+			strlcpy(bootspecbuf, biv->devname, sizeof(bootspecbuf));
+			bootspec = bootspecbuf;
+			return;
+		}
 	}
 
 	bid = lookup_bootinfo(BTINFO_BOOTDISK);
@@ -396,10 +407,11 @@ findroot(void)
 			continue;
  bootwedge_found:
 			if (booted_device) {
-				dmatch(__func__, dv);
+				dmatch(__func__, dv, "bootinfo/bootwedge");
 				continue;
 			}
 			booted_device = dv;
+			booted_method = "bootinfo/bootwedge";
 			booted_partition = bid != NULL ? bid->partition : 0;
 			booted_nblks = biw->nblks;
 			booted_startblk = biw->startblk;
@@ -423,7 +435,6 @@ findroot(void)
 		for (dv = deviter_first(&di, DEVITER_F_ROOT_FIRST);
 		     dv != NULL;
 		     dv = deviter_next(&di)) {
-				continue;
 
 			if (device_is_a(dv, "fd") &&
 			    device_class(dv) == DV_DISK) {
@@ -455,10 +466,11 @@ findroot(void)
 			continue;
  bootdisk_found:
 			if (booted_device) {
-				dmatch(__func__, dv);
+				dmatch(__func__, dv, "bootinfo/bootdisk");
 				continue;
 			}
 			booted_device = dv;
+			booted_method = "bootinfo/bootdisk";
 			booted_partition = bid->partition;
 			booted_nblks = 0;
 		}
@@ -499,6 +511,7 @@ findroot(void)
 				if (device_class(dv) == DV_DISK &&
 				    device_is_a(dv, "cd")) {
 					booted_device = dv;
+					booted_method = "bootinfo/biosgeom";
 					booted_partition = 0;
 					booted_nblks = 0;
 					break;
@@ -534,6 +547,8 @@ device_register(device_t dev, void *aux)
 {
 	device_t isaboot, pciboot;
 
+	device_acpi_register(dev, aux);
+
 	isaboot = device_isa_register(dev, aux);
 	pciboot = device_pci_register(dev, aux);
 
@@ -542,7 +557,9 @@ device_register(device_t dev, void *aux)
 
 	if (booted_device != NULL) {
 		/* XXX should be a panic() */
-		dmatch(__func__, dev);
-	} else
+		dmatch(__func__, dev, "device/register");
+	} else {
 		booted_device = (isaboot != NULL) ? isaboot : pciboot;
+		booted_method = "device/register";
+	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_ohci.c,v 1.4 2011/07/01 19:01:31 dyoung Exp $	*/
+/*	$NetBSD: rmixl_ohci.c,v 1.4.12.1 2017/12/03 11:36:28 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_ohci.c,v 1.4 2011/07/01 19:01:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_ohci.c,v 1.4.12.1 2017/12/03 11:36:28 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: rmixl_ohci.c,v 1.4 2011/07/01 19:01:31 dyoung Exp $"
 #include <mips/rmi/rmixl_intr.h>
 #include <mips/rmi/rmixl_usbivar.h>
 
-#include <dev/usb/usb.h>   
+#include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdivar.h>
 #include <dev/usb/usb_mem.h>
@@ -82,7 +82,6 @@ rmixl_ohci_attach(device_t parent, device_t self, void *aux)
 	struct rmixl_usbi_attach_args * const usbi = aux;
 	void *ih = NULL;
 	uint32_t r;
-	usbd_status status;
 
 	/* check state of IO_AD9 signal latched in GPIO Reset Config reg */
 	r = RMIXL_IOREG_READ(RMIXL_IO_DEV_GPIO + RMIXL_GPIO_RESET_CFG);
@@ -95,8 +94,8 @@ rmixl_ohci_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->iot = usbi->usbi_el_bst;
 	sc->sc_size = usbi->usbi_size;
-	sc->sc_bus.dmatag = usbi->usbi_dmat;
-	sc->sc_bus.hci_private = sc;
+	sc->sc_bus.ub_dmatag = usbi->usbi_dmat;
+	sc->sc_bus.ub_hcpriv = sc;
 
 	if (bus_space_map(sc->iot, usbi->usbi_addr, sc->sc_size, 0, &sc->ioh)) {
 		aprint_error_dev(self, "unable to map registers\n");
@@ -119,9 +118,9 @@ rmixl_ohci_attach(device_t parent, device_t self, void *aux)
 	/* we handle endianess in bus space */
 	sc->sc_endian = OHCI_HOST_ENDIAN;
 
-	status = ohci_init(sc);
-	if (status != USBD_NORMAL_COMPLETION) {
-		aprint_error_dev(self, "init failed, error=%d\n", status);
+	int err = ohci_init(sc);
+	if (err) {
+		aprint_error_dev(self, "init failed, error=%d\n", err);
 		if (ih != NULL)
 			rmixl_intr_disestablish(ih);
 		return;

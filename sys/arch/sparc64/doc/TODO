@@ -1,24 +1,35 @@
- /* $NetBSD: TODO,v 1.6.4.2 2014/08/20 00:03:25 tls Exp $ */
+ /* $NetBSD: TODO,v 1.6.4.3 2017/12/03 11:36:45 jdolecek Exp $ */
 
 Things to be done:
 
 common:
 - make %g6 point to curcpu
 - make %g7 point to curlwp
+- change run-time checks for cpu type to function pointers
 
 sun4u:
+- GENERIC.UP kernel hangs on v445 (missing interrupt?)
 
 sun4v:
+ - current status: The kernel boots and starts the init process (syscalls are done, but crashes...)
 - 64-bit kernel support
 - 32-bit kernel support
 - libkvm
 - ofwboot: tlb_init_sun4v() hardcodes number of slots to 64
-- locore.s: sun4v_datatrap missing implementation for trap levels 0 and 1
-- pmap.c: pmap_calculate_colors() should known about sun4v
-- cpu.c: cpu_attach() does not emit cache info on sun4v
+- locore.s: sun4v_datatrap missing implementation for trap level 1
 - check build without SUN4V defined
-- replace relevant references til %ver with GET_MAXCWP
+- replace relevant references to %ver with GET_MAXCWP
 - pmap_mp_init(): sun4v missing handling
-- cpu_pmap_prepare: sun4v multi???
 - replace constructs like "wrpr %g0, PSTATE_KERN, %pstate" with NORMAL_GLOBALS
 - replace constructs line "wrpr %g0, PSTATE_INTR, %pstate" with ALTERNATE_GOBALS
+- sun4v tsb no need to lock... per cpu... anyway...
+- ci_tsb_desc->td_ctxidx: -1 or 1?
+- MP support - currently bypassed in pmap_bootstrap() for sun4v
+- vpci.c/vpcivar.h: cleanup FIXMEs
+- interrups not handled properly (com at ebus only...)
+- mpt(4) complains: mpt0: Phy 0: Link Status Unknown
+- man pages for drivers imported from OpenBSD lke vpci, vbus, cbus, vdsk, ldc etc.
+- vdsk and ldc drivers: code maked with OPENBSD_BUSDMA - make the bus_dma stuff work properly
+- vbus.c: handle prom_getprop() memory leaks
+- locore.s: rft_user (sun4v specific manaul fill) - seems to work, but is it good enough (compared to openbsds rft_user
+

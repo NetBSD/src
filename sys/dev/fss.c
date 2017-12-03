@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.83.2.3 2014/08/20 00:03:35 tls Exp $	*/
+/*	$NetBSD: fss.c,v 1.83.2.4 2017/12/03 11:36:58 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.83.2.3 2014/08/20 00:03:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.83.2.4 2017/12/03 11:36:58 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.83.2.3 2014/08/20 00:03:35 tls Exp $");
 
 #include <uvm/uvm.h>
 
-void fssattach(int);
+#include "ioconf.h"
 
 dev_type_open(fss_open);
 dev_type_close(fss_close);
@@ -130,7 +130,6 @@ static int fss_detach(device_t, int);
 
 CFATTACH_DECL_NEW(fss, sizeof(struct fss_softc),
     fss_match, fss_attach, fss_detach, NULL);
-extern struct cfdriver fss_cd;
 
 static void
 fss_minphys(struct buf *bp)
@@ -143,7 +142,10 @@ fss_minphys(struct buf *bp)
 	    bp->b_bcount = xmax;
 }
 
-const struct dkdriver fss_dkdriver = { fss_strategy, fss_minphys };
+const struct dkdriver fss_dkdriver = {
+	.d_strategy = fss_strategy,
+	.d_minphys = fss_minphys,
+};
 
 void
 fssattach(int num)
@@ -458,17 +460,20 @@ fss_dump(dev_t dev, daddr_t blkno, void *va,
 
 /*
  * An error occurred reading or writing the snapshot or backing store.
- * If it is the first error log to console.
+ * If it is the first error log to console and disestablish cow handler.
  * The caller holds the mutex.
  */
 static inline void
 fss_error(struct fss_softc *sc, const char *msg)
 {
 
-	if ((sc->sc_flags & (FSS_ACTIVE|FSS_ERROR)) == FSS_ACTIVE)
-		aprint_error_dev(sc->sc_dev, "snapshot invalid: %s\n", msg);
-	if ((sc->sc_flags & FSS_ACTIVE) == FSS_ACTIVE)
-		sc->sc_flags |= FSS_ERROR;
+	if ((sc->sc_flags & (FSS_ACTIVE | FSS_ERROR)) != FSS_ACTIVE)
+		return;
+
+	aprint_error_dev(sc->sc_dev, "snapshot invalid: %s\n", msg);
+	if ((sc->sc_flags & FSS_PERSISTENT) == 0)
+		fscow_disestablish(sc->sc_mount, fss_copy_on_write, sc);
+	sc->sc_flags |= FSS_ERROR;
 }
 
 /*
@@ -486,31 +491,18 @@ fss_softc_alloc(struct fss_softc *sc)
 	if ((sc->sc_flags & FSS_PERSISTENT) == 0) {
 		sc->sc_copied =
 		    kmem_zalloc(howmany(sc->sc_clcount, NBBY), KM_SLEEP);
-		if (sc->sc_copied == NULL)
-			return(ENOMEM);
-
 		sc->sc_cache = kmem_alloc(sc->sc_cache_size *
 		    sizeof(struct fss_cache), KM_SLEEP);
-		if (sc->sc_cache == NULL)
-			return(ENOMEM);
-
 		for (i = 0; i < sc->sc_cache_size; i++) {
 			sc->sc_cache[i].fc_type = FSS_CACHE_FREE;
 			sc->sc_cache[i].fc_data =
 			    kmem_alloc(FSS_CLSIZE(sc), KM_SLEEP);
-			if (sc->sc_cache[i].fc_data == NULL)
-				return(ENOMEM);
 			cv_init(&sc->sc_cache[i].fc_state_cv, "cowwait1");
 		}
 
 		sc->sc_indir_valid =
 		    kmem_zalloc(howmany(sc->sc_indir_size, NBBY), KM_SLEEP);
-		if (sc->sc_indir_valid == NULL)
-			return(ENOMEM);
-
 		sc->sc_indir_data = kmem_zalloc(FSS_CLSIZE(sc), KM_SLEEP);
-		if (sc->sc_indir_data == NULL)
-			return(ENOMEM);
 	} else {
 		sc->sc_copied = NULL;
 		sc->sc_cache = NULL;
@@ -588,9 +580,8 @@ fss_unmount_hook(struct mount *mp)
 		if ((sc = device_lookup_private(&fss_cd, i)) == NULL)
 			continue;
 		mutex_enter(&sc->sc_slock);
-		if ((sc->sc_flags & FSS_ACTIVE) != 0 &&
-		    sc->sc_mount == mp)
-			fss_error(sc, "forced unmount");
+		if ((sc->sc_flags & FSS_ACTIVE) != 0 && sc->sc_mount == mp)
+			fss_error(sc, "forced by unmount");
 		mutex_exit(&sc->sc_slock);
 	}
 	mutex_exit(&fss_device_lock);
@@ -862,7 +853,10 @@ fss_create_snapshot(struct fss_softc *sc, struct fss_set *fss, struct lwp *l)
 
 	microtime(&sc->sc_time);
 
-	error = fscow_establish(sc->sc_mount, fss_copy_on_write, sc);
+	vrele_flush(sc->sc_mount);
+	error = VFS_SYNC(sc->sc_mount, MNT_WAIT, curlwp->l_cred);
+	if (error == 0)
+		error = fscow_establish(sc->sc_mount, fss_copy_on_write, sc);
 	if (error == 0)
 		sc->sc_flags |= FSS_ACTIVE;
 
@@ -899,7 +893,7 @@ static int
 fss_delete_snapshot(struct fss_softc *sc, struct lwp *l)
 {
 
-	if ((sc->sc_flags & FSS_PERSISTENT) == 0)
+	if ((sc->sc_flags & (FSS_PERSISTENT | FSS_ERROR)) == 0)
 		fscow_disestablish(sc->sc_mount, fss_copy_on_write, sc);
 
 	mutex_enter(&sc->sc_slock);
@@ -1303,10 +1297,12 @@ fss_bs_thread(void *arg)
 MODULE(MODULE_CLASS_DRIVER, fss, NULL);
 CFDRIVER_DECL(fss, DV_DISK, NULL);
 
+devmajor_t fss_bmajor = -1, fss_cmajor = -1;
+
 static int
 fss_modcmd(modcmd_t cmd, void *arg)
 {
-	int bmajor = -1, cmajor = -1,  error = 0;
+	int error = 0;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
@@ -1323,9 +1319,8 @@ fss_modcmd(modcmd_t cmd, void *arg)
 			break;
 		}
 		error = devsw_attach(fss_cd.cd_name,
-		    &fss_bdevsw, &bmajor, &fss_cdevsw, &cmajor);
-		if (error == EEXIST)
-			error = 0;
+		    &fss_bdevsw, &fss_bmajor, &fss_cdevsw, &fss_cmajor);
+
 		if (error) {
 			config_cfattach_detach(fss_cd.cd_name, &fss_ca);
 			config_cfdriver_detach(&fss_cd);
@@ -1335,11 +1330,14 @@ fss_modcmd(modcmd_t cmd, void *arg)
 		break;
 
 	case MODULE_CMD_FINI:
-		error = config_cfattach_detach(fss_cd.cd_name, &fss_ca);
-		if (error)
-			break;
-		config_cfdriver_detach(&fss_cd);
 		devsw_detach(&fss_bdevsw, &fss_cdevsw);
+		error = config_cfattach_detach(fss_cd.cd_name, &fss_ca);
+		if (error) {
+			devsw_attach(fss_cd.cd_name, &fss_bdevsw, &fss_bmajor,
+			    &fss_cdevsw, &fss_cmajor);
+			break;
+		}
+		config_cfdriver_detach(&fss_cd);
 		mutex_destroy(&fss_device_lock);
 		break;
 

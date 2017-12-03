@@ -1,4 +1,4 @@
-/* $NetBSD: ahcireg.h,v 1.1 2007/03/20 08:52:01 dyoung Exp $ */
+/* $NetBSD: ahcireg.h,v 1.1.88.1 2017/12/03 11:36:26 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -78,13 +78,13 @@
 #define ADMHCD_PRSC             0x00100000      /* reset status change */
 
 struct admhcd_ed {
-        /* Don't change first four, they used for DMA */
-        volatile u_int32_t                       control;
-        volatile struct admhcd_td               *tail;
-        volatile struct admhcd_td               *head;
-        volatile struct admhcd_ed               *next;
-        /* the rest is for the driver only: */
-        u_int32_t                       unused[4];
+	/* Don't change first four, they used for DMA */
+	volatile uint32_t                       control;
+	volatile struct admhcd_td               *tail;
+	volatile struct admhcd_td               *head;
+	volatile struct admhcd_ed               *next;
+	/* the rest is for the driver only: */
+	uint32_t				unused[4];
 } __attribute__ ((packed));
 
 #define ADMHCD_ED_EPSHIFT       7               /* Shift for endpoint number */
@@ -95,16 +95,16 @@ struct admhcd_ed {
 #define ADMHCD_ED_MAXSHIFT      16              /* Shift for max packet size */
 
 struct admhcd_td {
-        /* Don't change first four, they are used for DMA */
-        volatile u_int32_t               control;
-        volatile u_int32_t               buffer;
-        volatile u_int32_t               buflen;
-        volatile struct admhcd_td       *next;
-        /* the rest is for the driver only: */
-        /* struct urb           *urb;
-        struct admhcd_td        *real; */
-        u_int32_t                       len;
-        u_int32_t                       unused[3];
+	/* Don't change first four, they are used for DMA */
+	volatile uint32_t		control;
+	volatile uint32_t		buffer;
+	volatile uint32_t		buflen;
+	volatile struct admhcd_td	*next;
+	/* the rest is for the driver only: */
+	/* struct urb			*urb;
+	struct admhcd_td		*real; */
+	uint32_t			len;
+	uint32_t			unused[3];
 } __attribute__ ((packed));
 
 #define ADMHCD_TD_OWN           0x80000000

@@ -1,4 +1,4 @@
-#	$NetBSD: files.altq,v 1.7 2009/12/06 14:03:23 dsl Exp $
+#	$NetBSD: files.altq,v 1.7.22.1 2017/12/03 11:35:43 jdolecek Exp $
 
 defflag	opt_altq_enabled.h	ALTQ
 defflag opt_altq.h		ALTQ_AFMAP ALTQ_BLUE ALTQ_CBQ ALTQ_CDNR
@@ -13,6 +13,7 @@ defflag opt_altq.h		ALTQ_AFMAP ALTQ_BLUE ALTQ_CBQ ALTQ_CDNR
 # Always enabled if ALTQ_BLUE defined
 # defflag opt_altq.h		BLUE_STATS
 
+define	altq
 file	altq/altq_conf.c	altq
 file	altq/altq_afmap.c	altq
 file	altq/altq_blue.c	altq

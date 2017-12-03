@@ -1,4 +1,4 @@
-/*	$NetBSD: ath_netbsd.h,v 1.13.2.2 2013/02/25 00:29:14 tls Exp $ */
+/*	$NetBSD: ath_netbsd.h,v 1.13.2.3 2017/12/03 11:37:03 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2003, 2004 David Young
@@ -28,22 +28,25 @@
 #define _ATH_NETBSD_H
 
 #include <sys/sysctl.h>
+#include <sys/intr.h>
 
 typedef struct ath_task {
-	void	(*t_func)(void*, int);
-	void	*t_context;
+	void	*t_soft_ih;
 } ath_task_t;
 
 #define ATH_CALLOUT_INIT(__ch, __mpsafe) callout_init((__ch), 0)
 
 #define TASK_INIT(__task, __zero, __func, __context)	\
 	do {						\
-		(__task)->t_func = (__func);		\
-		(__task)->t_context = (__context);	\
+		(__task)->t_soft_ih = 			\
+		    softint_establish(SOFTINT_NET,	\
+		      __CONCAT(__func, _si),		\
+		      (__context));			\
+		KASSERT((__task)->t_soft_ih);		\
 	} while (0)
 
 #define TASK_RUN_OR_ENQUEUE(__task)	\
-	((*(__task)->t_func)((__task)->t_context, 1))
+	softint_schedule((__task)->t_soft_ih);
 
 typedef kmutex_t ath_txq_lock_t;
 #define	ATH_TXQ_LOCK_INIT(_sc, _tq)	mutex_init(&(_tq)->axq_lock, MUTEX_DEFAULT, IPL_NET)
@@ -59,8 +62,9 @@ typedef kmutex_t ath_txbuf_lock_t;
 #define	ATH_TXBUF_UNLOCK(_sc)		mutex_exit(&(_sc)->sc_txbuflock)
 #define	ATH_TXBUF_LOCK_ASSERT(_sc)	do { KASSERTMSG(mutex_owned(&(_sc)->sc_txbuflock), "txbuf lock unheld"); } while (/*CONSTCOND*/true)
 
-#define	NET_LOCK_GIANT()
-#define	NET_UNLOCK_GIANT()
+#define	NET_LOCK_GIANT_FUNC_INIT()	int s
+#define	NET_LOCK_GIANT()		s = splnet()
+#define	NET_UNLOCK_GIANT()		splx(s)
 
 #define	SYSCTL_INT_SUBR(__rw, __name, __descr)				     \
 	sysctl_createv(log, 0, &rnode, &cnode, CTLFLAG_PERMANENT|(__rw),     \

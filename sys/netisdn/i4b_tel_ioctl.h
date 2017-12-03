@@ -27,7 +27,7 @@
  *	i4b_tel_ioctl.h telephony interface ioctls
  *	------------------------------------------
  *
- *	$Id: i4b_tel_ioctl.h,v 1.4 2005/12/10 23:51:50 elad Exp $
+ *	$Id: i4b_tel_ioctl.h,v 1.4.120.1 2017/12/03 11:39:05 jdolecek Exp $
  *
  * $FreeBSD$
  *
@@ -37,6 +37,8 @@
 
 #ifndef _NETISDN_I4B_TEL_IOCTL_H_
 #define _NETISDN_I4B_TEL_IOCTL_H_
+
+#include <sys/ioccom.h>
 
 /*===========================================================================*
  *	/dev/i4btel<n> devices (audio data)

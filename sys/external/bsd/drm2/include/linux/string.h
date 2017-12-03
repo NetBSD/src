@@ -1,4 +1,4 @@
-/*	$NetBSD: string.h,v 1.3.4.2 2014/08/20 00:04:21 tls Exp $	*/
+/*	$NetBSD: string.h,v 1.3.4.3 2017/12/03 11:37:59 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -61,6 +61,26 @@ kmemdup(const void *src, size_t len, gfp_t gfp)
 		return NULL;
 
 	(void)memcpy(dst, src, len);
+	return dst;
+}
+
+static inline char *
+kstrndup(const char *src, size_t maxlen, gfp_t gfp)
+{
+	char *dst;
+	size_t len;
+
+	if (src == NULL)
+		return NULL;
+
+	len = strnlen(src, maxlen);
+	dst = kmalloc(len + 1, gfp);
+	if (dst == NULL)
+		return NULL;
+
+	(void)memcpy(dst, src, len);
+	dst[len] = '\0';
+
 	return dst;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.54.12.1 2012/11/20 03:01:30 tls Exp $	*/
+/*	$NetBSD: adb.c,v 1.54.12.2 2017/12/03 11:36:24 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.54.12.1 2012/11/20 03:01:30 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.54.12.2 2017/12/03 11:36:24 jdolecek Exp $");
 
 #include "opt_adb.h"
 
@@ -260,7 +260,7 @@ adbprint(void *args, const char *name)
  * returning.
  *
  * NOTE: The user specified compRout is ignored, since this routine specifies
- * it's own to adb_op, which is why you really called this in the first place
+ * its own to adb_op, which is why you really called this in the first place
  * anyway.
  */
 int

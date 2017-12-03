@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.15 2011/07/10 23:21:59 matt Exp $ */
+/*	$NetBSD: svr4_machdep.c,v 1.15.12.1 2017/12/03 11:36:28 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,13 +30,11 @@
  */
 
 /* 
- * This does not implement COMPAT_SVR4 for MIPS yet. For now we only
- * have enough definitions to get some svr4_* files needed by COMPAT_IRIX
- * to build.  
+ * This does not implement COMPAT_SVR4 for MIPS. XXX: should be removed.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.15 2011/07/10 23:21:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.15.12.1 2017/12/03 11:36:28 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>

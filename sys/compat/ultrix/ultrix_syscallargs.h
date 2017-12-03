@@ -1,4 +1,4 @@
-/* $NetBSD: ultrix_syscallargs.h,v 1.57.20.1 2014/08/20 00:03:34 tls Exp $ */
+/* $NetBSD: ultrix_syscallargs.h,v 1.57.20.2 2017/12/03 11:36:57 jdolecek Exp $ */
 
 /*
  * System call argument lists.
@@ -9,6 +9,9 @@
 
 #ifndef _ULTRIX_SYS_SYSCALLARGS_H_
 #define	_ULTRIX_SYS_SYSCALLARGS_H_
+
+/* Forward declaration */
+struct lwp;
 
 #define	ULTRIX_SYS_MAXSYSARGS	8
 

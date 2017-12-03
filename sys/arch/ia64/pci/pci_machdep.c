@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.2.18.1 2013/02/25 00:28:45 tls Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.2.18.2 2017/12/03 11:36:20 jdolecek Exp $	*/
 /*
  * Copyright (c) 2009, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.2.18.1 2013/02/25 00:28:45 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.2.18.2 2017/12/03 11:36:20 jdolecek Exp $");
 
 #include <machine/bus.h>
 #include <machine/sal.h>
@@ -78,6 +78,9 @@ pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 {
 	struct ia64_sal_result res;
 
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return -1;
+
 	res = ia64_sal_entry(SAL_PCI_CONFIG_READ,
 	    tag | reg, sizeof(pcireg_t), 0, 0, 0, 0, 0);
 	if (res.sal_status < 0)
@@ -91,8 +94,21 @@ pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t val)
 {
 	struct ia64_sal_result res;
 
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return;
+
 	res = ia64_sal_entry(SAL_PCI_CONFIG_WRITE,
 	    tag | reg, sizeof(pcireg_t), val, 0, 0, 0, 0);
 	if (res.sal_status < 0)
 		printf("pci configuration write failed\n");
+}
+
+int
+pci_enumerate_bus(struct pci_softc *sc, const int *locators,
+		  int (*match)(const struct pci_attach_args *), struct pci_attach_args *pap)
+{
+	/* XXX implement */
+	panic("ia64 pci_enumerate_bus not implemented");
+
+	return -1;
 }

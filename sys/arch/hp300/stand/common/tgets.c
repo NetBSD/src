@@ -1,4 +1,4 @@
-/*	$NetBSD: tgets.c,v 1.5 2005/12/11 12:17:19 christos Exp $	*/
+/*	$NetBSD: tgets.c,v 1.5.122.1 2017/12/03 11:36:13 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -38,13 +38,18 @@
 #include <hp300/stand/common/samachdep.h>
 
 int
-tgets(char *buf)
+tgets(char *buf, size_t size)
 {
 	int c;
 	int i;
 	char *lp = buf;
 
 	for (i = 240000; i > 0; i--) {
+                if (lp - buf == size) {
+                        lp--;
+                        *lp = '\0';
+                        return 0;
+                }
 		c = tgetchar() & 0177;
 		if (c) {
 			for (;;) {

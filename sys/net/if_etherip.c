@@ -1,4 +1,4 @@
-/*      $NetBSD: if_etherip.c,v 1.33.2.1 2014/08/20 00:04:34 tls Exp $        */
+/*      $NetBSD: if_etherip.c,v 1.33.2.2 2017/12/03 11:39:02 jdolecek Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -86,9 +86,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.33.2.1 2014/08/20 00:04:34 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.33.2.2 2017/12/03 11:39:02 jdolecek Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,13 +136,13 @@ __KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.33.2.1 2014/08/20 00:04:34 tls Exp 
 
 #include <compat/sys/sockio.h>
 
+#include "ioconf.h"
+
 struct etherip_softc_list etherip_softc_list;
 
 static int etherip_node;
 static int etherip_sysctl_handler(SYSCTLFN_PROTO);
 SYSCTL_SETUP_PROTO(sysctl_etherip_setup);
-
-void etheripattach(int);
 
 static int  etherip_match(device_t, cfdata_t, void *);
 static void etherip_attach(device_t, device_t, void *);
@@ -223,7 +225,7 @@ etherip_attach(device_t parent, device_t self, void *aux)
 	getmicrouptime(&tv);
 	ui = (tv.tv_sec ^ tv.tv_usec) & 0xffffff;
 	memcpy(enaddr+3, (uint8_t *)&ui, 3);
-	
+
 	aprint_verbose_dev(self, "Ethernet address %s\n",
 		       ether_snprintf(enaddrstr, sizeof(enaddrstr), enaddr));
 
@@ -243,7 +245,7 @@ etherip_attach(device_t parent, device_t self, void *aux)
 	ifmedia_add(&sc->sc_im, IFM_ETHER|IFM_10_T|IFM_FDX, 0, NULL);
 	ifmedia_add(&sc->sc_im, IFM_ETHER|IFM_AUTO, 0, NULL);
 	ifmedia_set(&sc->sc_im, IFM_ETHER|IFM_AUTO);
-	
+
 	/*
 	 * One should note that an interface must do multicast in order
 	 * to support IPv6.
@@ -257,14 +259,20 @@ etherip_attach(device_t parent, device_t self, void *aux)
 	ifp->if_stop  = etherip_stop;
 	ifp->if_init  = etherip_init;
 	IFQ_SET_READY(&ifp->if_snd);
-	
+
 	sc->sc_ec.ec_capabilities = ETHERCAP_VLAN_MTU | ETHERCAP_JUMBO_MTU;
-	
-	/* 
+
+	/*
 	 * Those steps are mandatory for an Ethernet driver, the first call
 	 * being common to all network interface drivers.
 	 */
-	if_attach(ifp);
+	error = if_attach(ifp);
+	if (error != 0) {
+		aprint_error_dev(self, "if_attach failed(%d)\n", error);
+		ifmedia_delete_instance(&sc->sc_im, IFM_INST_ANY);
+		pmf_device_deregister(self);
+		return;
+	}
 	ether_ifattach(ifp, enaddr);
 
 	/*
@@ -275,14 +283,14 @@ etherip_attach(device_t parent, device_t self, void *aux)
 	 * the fly in the helper function of the node.  See the comments for
 	 * etherip_sysctl_handler for details.
 	 */
-	error = sysctl_createv(NULL, 0, NULL, &node, CTLFLAG_READWRITE, 
+	error = sysctl_createv(NULL, 0, NULL, &node, CTLFLAG_READWRITE,
 			       CTLTYPE_STRING, device_xname(self), NULL,
-			       etherip_sysctl_handler, 0, (void *)sc, 18, CTL_NET,
-			       AF_LINK, etherip_node, device_unit(self),
-			       CTL_EOL);
+			       etherip_sysctl_handler, 0, (void *)sc, 18,
+			       CTL_NET, AF_LINK, etherip_node,
+			       device_unit(self), CTL_EOL);
 	if (error)
-		aprint_error_dev(self, "sysctl_createv returned %d, ignoring\n",
-			     error);
+		aprint_error_dev(self,
+		    "sysctl_createv returned %d, ignoring\n", error);
 
 	/* insert into etherip_softc_list */
 	LIST_INSERT_HEAD(&etherip_softc_list, sc, etherip_list);
@@ -312,8 +320,8 @@ etherip_detach(device_t self, int flags)
 	error = sysctl_destroyv(NULL, CTL_NET, AF_LINK, etherip_node,
 				device_unit(self), CTL_EOL);
 	if (error)
-		aprint_error_dev(self, "sysctl_destroyv returned %d, ignoring\n",
-			     error);
+		aprint_error_dev(self,
+		    "sysctl_destroyv returned %d, ignoring\n", error);
 
 	LIST_REMOVE(sc, etherip_list);
 	etherip_delete_tunnel(ifp);
@@ -373,9 +381,9 @@ etheripintr(void *arg)
 		splx(s);
 		if (m == NULL)
 			break;
-		
+
 		bpf_mtap(ifp, m);
-		
+
 		ifp->if_opackets++;
 		if (sc->sc_src && sc->sc_dst) {
 			ifp->if_flags |= IFF_OACTIVE;
@@ -438,7 +446,7 @@ etherip_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		default:
 			return EAFNOSUPPORT;
 		}
-		
+
 		error = etherip_set_tunnel(ifp, src, dst);
 		break;
 
@@ -488,13 +496,13 @@ etherip_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			error = 0;
 		break;
 	}
-	
+
 	return (error);
 }
 
 static int
-etherip_set_tunnel(struct ifnet *ifp, 
-		   struct sockaddr *src, 
+etherip_set_tunnel(struct ifnet *ifp,
+		   struct sockaddr *src,
 		   struct sockaddr *dst)
 {
 	struct etherip_softc *sc = ifp->if_softc;

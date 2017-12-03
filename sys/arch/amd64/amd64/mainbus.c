@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.33.14.1 2014/08/20 00:02:42 tls Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.33.14.2 2017/12/03 11:35:47 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.33.14.1 2014/08/20 00:02:42 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.33.14.2 2017/12/03 11:35:47 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.33.14.1 2014/08/20 00:02:42 tls Exp $"
 #include <arch/x86/pci/pci_addr_fixup.h>
 #endif
 #endif
+#include <arch/x86/pci/msipic.h>
 #endif
 
 /*
@@ -125,11 +126,18 @@ int mp_nintr;
 int mp_isa_bus = -1;
 int mp_eisa_bus = -1;
 
-#ifdef MPVERBOSE
+bool acpi_present;
+bool mpacpi_active;
+
+# ifdef MPVERBOSE
+#  if MPVERBOSE > 0
+int mp_verbose = MPVERBOSE;
+#  else
 int mp_verbose = 1;
-#else
+#  endif
+# else
 int mp_verbose = 0;
-#endif
+# endif
 #endif
 
 
@@ -155,13 +163,9 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 #if NPCI > 0
 	int mode;
 #endif
-#if NACPICA > 0
-	int acpi_present = 0;
-#endif
 #ifdef MPBIOS
 	int mpbios_present = 0;
 #endif
-	int mpacpi_active = 0;
 	int numcpus = 0;
 #if defined(PCI_BUS_FIXUP)
 	int pci_maxbus = 0;
@@ -175,6 +179,8 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 #endif
 
 #if NPCI > 0
+	msipic_init();
+
 	/*
 	 * ACPI needs to be able to access PCI configuration space.
 	 */
@@ -195,14 +201,14 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 
 #if NACPICA > 0
 	if ((boothowto & RB_MD2) == 0 && acpi_check(self, "acpibus"))
-		acpi_present = acpi_probe();
+		acpi_present = acpi_probe() != 0;
 	/*
 	 * First, see if the MADT contains CPUs, and possibly I/O APICs.
 	 * Building the interrupt routing structures can only
 	 * be done later (via a callback).
 	 */
 	if (acpi_present)
-		mpacpi_active = mpacpi_scan_apics(self, &numcpus);
+		mpacpi_active = mpacpi_scan_apics(self, &numcpus) != 0;
 #endif
 
 	if (!mpacpi_active) {
@@ -241,6 +247,8 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 		    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY |
 		    PCI_FLAGS_MWI_OKAY;
 		mba.mba_acpi.aa_ic = &x86_isa_chipset;
+		mba.mba_acpi.aa_dmat = &pci_bus_dma_tag;
+		mba.mba_acpi.aa_dmat64 = &pci_bus_dma64_tag;
 		config_found_ia(self, "acpibus", &mba.mba_acpi, 0);
 	}
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.c,v 1.2.6.3 2014/08/20 00:03:10 tls Exp $	*/
+/*	$NetBSD: scsi.c,v 1.2.6.4 2017/12/03 11:36:23 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -86,7 +86,7 @@ int scsi_device = 6;
 
 #define SENSBUFF 8					/* デバイスドライバでセンスデータ */
 							/* の長さを８バイト以内に固定して */
-u_char	sensbuff[SENSBUFF];				/* ８以上は無意味である。         */
+uint8_t	sensbuff[SENSBUFF];				/* ８以上は無意味である。         */
 
 static struct scsi_inquiry inquirybuf;
 static struct scsi_generic_cdb inquiry = {
@@ -118,7 +118,7 @@ scsi(int argc, char *argv[])
 			for (p = argv[2]; *p != '\0' ; p++) {
 				i = i * 10 + *p - '0';
 			}
-			if ( i < 8 && i >= 0) {
+			if (i < 8 && i >= 0) {
 				scsi_device = i;
 			}
 		}
@@ -131,7 +131,7 @@ scsi(int argc, char *argv[])
 		scsi_request_sense(   0, scsi_device,   0, sensbuff, SENSBUFF);
 	} else if (!strcmp(argv[1], "inquiry")) {
 		if (scsi_immed_command(   0, scsi_device,   0, &inquiry,
-		    (u_char *)&inquirybuf, sizeof(inquirybuf)) == 0) {
+		    (uint8_t *)&inquirybuf, sizeof(inquirybuf)) == 0) {
 			printf("Type:\t0x%x\n",		inquirybuf.type);
 			printf("Qualifier:\t0x%x\n",	inquirybuf.qual);
 			printf("Version:\t0x%x\n",	inquirybuf.version);
@@ -154,16 +154,16 @@ scsi(int argc, char *argv[])
 		}
 	} else if (!strcmp(argv[1], "read_capacity")) {
 		if (scsi_immed_command(   0, scsi_device,   0, &capacity,
-		    (u_char *)&capacitybuf, sizeof(capacitybuf)) == 0) {
+		    (uint8_t *)&capacitybuf, sizeof(capacitybuf)) == 0) {
 			printf("Logical Block Address:\t%ld (0x%lx)\n",
-			       capacitybuf[0], capacitybuf[0]);
+			    capacitybuf[0], capacitybuf[0]);
 			printf("Block Length:\t\t%ld (0x%lx)\n",
-			       capacitybuf[1], capacitybuf[1]);
+			    capacitybuf[1], capacitybuf[1]);
 		}
 	} else if (!strcmp(argv[1], "trace")) {
 		for (i = 0; i < 7; i++) {
 			printf("SCSI ID %d .... ", i);
-			status = scsi_test_unit_rdy( 0, i, 0);
+			status = scsi_test_unit_rdy(0, i, 0);
 			if (status >= 0)
 				printf("found.\n");
 			else
@@ -182,7 +182,7 @@ scsi(int argc, char *argv[])
 		}
 
 		if ((i == 'y') || (i == 'Y'))
-			status = scsi_format_unit( 0, scsi_device, 0);
+			status = scsi_format_unit(0, scsi_device, 0);
 	}
 
 	return ST_NORMAL;
@@ -194,7 +194,7 @@ static struct scsi_generic_cdb scsi_cdb = {
 };
 
 int
-scsi_read_raw(u_int target, u_int blk, u_int nblk, u_char *buff, u_int len)
+scsi_read_raw(u_int target, u_int blk, u_int nblk, uint8_t *buff, u_int len)
 {
 	struct scsi_generic_cdb *cdb = &scsi_cdb;
 
@@ -215,7 +215,7 @@ scsi_read_raw(u_int target, u_int blk, u_int nblk, u_char *buff, u_int len)
 }
 
 int
-scsi_read(u_int blk, u_char *buff, u_int len)
+scsi_read(u_int blk, uint8_t *buff, u_int len)
 {
 	u_int   nblk = len >> DEV_BSHIFT;
 
@@ -223,7 +223,7 @@ scsi_read(u_int blk, u_char *buff, u_int len)
 }
 
 int
-scsi_write(u_int blk, u_char *buff, u_int len)
+scsi_write(u_int blk, uint8_t *buff, u_int len)
 {
 	struct scsi_generic_cdb *cdb = &scsi_cdb;
 

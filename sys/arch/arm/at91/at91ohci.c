@@ -1,11 +1,11 @@
-/*	$Id: at91ohci.c,v 1.5 2011/11/04 17:13:15 aymeric Exp $	*/
-/*	$NetBSD: at91ohci.c,v 1.5 2011/11/04 17:13:15 aymeric Exp $	*/
+/*	$Id: at91ohci.c,v 1.5.10.1 2017/12/03 11:35:51 jdolecek Exp $	*/
+/*	$NetBSD: at91ohci.c,v 1.5.10.1 2017/12/03 11:35:51 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2007 Embedtronics Oy.
  * All rights reserved.
  *
- * Based on arch/arm/ep93xx/epohci.c, 
+ * Based on arch/arm/ep93xx/epohci.c,
  * Copyright (c) 2004 Jesse Off
  * All rights reserved.
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91ohci.c,v 1.5 2011/11/04 17:13:15 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91ohci.c,v 1.5.10.1 2017/12/03 11:35:51 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,7 +83,7 @@ at91ohci_match(device_t parent, cfdata_t match, void *aux)
 {
 	/* AT91X builtin OHCI module */
 	if (strcmp(match->cf_name, "ohci") == 0 && strcmp(match->cf_atname, "at91ohci") == 0)
-		return (2);
+		return 2;
 	return(0);
 }
 
@@ -94,13 +94,13 @@ at91ohci_attach(device_t parent, device_t self, void *aux)
 	struct at91bus_attach_args *sa = aux;
 
 	sc->sc.sc_dev = self;
-	sc->sc.sc_bus.hci_private = sc;
-	sc->sc.sc_bus.dmatag = sa->sa_dmat;
+	sc->sc.sc_bus.ub_hcpriv = sc;
+	sc->sc.sc_bus.ub_dmatag = sa->sa_dmat;
 	sc->sc.iot = sa->sa_iot;
 	sc->sc_pid = sa->sa_pid;
 
 	/* Map I/O space */
-	if (bus_space_map(sc->sc.iot, sa->sa_addr, sa->sa_size, 
+	if (bus_space_map(sc->sc.iot, sa->sa_addr, sa->sa_size,
 			  0, &sc->sc.ioh)) {
 		printf(": cannot map mem space\n");
 		return;
@@ -121,7 +121,6 @@ void
 at91ohci_callback(device_t self)
 {
 	struct at91ohci_softc *sc = device_private(self);
-	usbd_status r;
 
 	/* Disable interrupts, so we don't get any spurious ones. */
 	bus_space_write_4(sc->sc.iot, sc->sc.ioh, OHCI_INTERRUPT_DISABLE,
@@ -130,10 +129,10 @@ at91ohci_callback(device_t self)
 	strlcpy(sc->sc.sc_vendor, "Atmel", sizeof sc->sc.sc_vendor);
 
 	sc->sc_ih = at91_intr_establish(sc->sc_pid, IPL_USB, INTR_HIGH_LEVEL, ohci_intr, sc);
-	r = ohci_init(&sc->sc);
+	int err = ohci_init(&sc->sc);
 
-	if (r != USBD_NORMAL_COMPLETION) {
-		printf("%s: init failed, error=%d\n", device_xname(self), r);
+	if (err) {
+		printf("%s: init failed, error=%d\n", device_xname(self), err);
 
 		at91_intr_disestablish(sc->sc_ih);
 		return;

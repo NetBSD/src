@@ -1,4 +1,4 @@
-/*	$NetBSD: pyro.c,v 1.11.2.3 2014/08/20 00:03:25 tls Exp $	*/
+/*	$NetBSD: pyro.c,v 1.11.2.4 2017/12/03 11:36:44 jdolecek Exp $	*/
 /*	from: $OpenBSD: pyro.c,v 1.20 2010/12/05 15:15:14 kettenis Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pyro.c,v 1.11.2.3 2014/08/20 00:03:25 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pyro.c,v 1.11.2.4 2017/12/03 11:36:44 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -295,7 +295,7 @@ pyro_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 	int s;
 
 	DPRINTF(PDB_CONF, ("%s: tag %lx reg %x ", __func__, (long)tag, reg));
-	if (PCITAG_NODE(tag) != -1) {
+	if (PCITAG_NODE(tag) != -1 && (unsigned int)reg < PCI_CONF_SIZE) {
 		s = splhigh();
 		ci->ci_pci_probe = true;
 		membar_Sync();
@@ -324,6 +324,9 @@ pyro_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 		DPRINTF(PDB_CONF, (" .. bad addr\n"));
 		return;
 	}
+
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return;
 
         bus_space_write_4(pp->pp_cfgt, pp->pp_cfgh,
 	    (PCITAG_OFFSET(tag) << 4) + reg, data);
@@ -492,6 +495,12 @@ pyro_bus_map(bus_space_tag_t t, bus_addr_t offset,
 	    (unsigned long long)size,
 	    flags));
 
+	/*
+	 * BUS_SPACE_MAP_PREFETCHABLE causes hard hangs on schizo, so weed it
+	 * out for now until someone can verify wether it works on pyro
+	 */
+	flags &= ~BUS_SPACE_MAP_PREFETCHABLE;
+
 	ss = sparc_pci_childspace(t->type);
 	DPRINTF(PDB_BUSMAP, (" cspace %d", ss));
 
@@ -523,6 +532,12 @@ pyro_bus_mmap(bus_space_tag_t t, bus_addr_t paddr,
 	struct pyro_pbm *pbm = t->cookie;
 	struct pyro_softc *sc = pbm->pp_sc;
 	int i, ss;
+
+	/*
+	 * BUS_SPACE_MAP_PREFETCHABLE causes hard hangs on schizo, so weed it
+	 * out for now until someone can verify wether it works on pyro
+	 */
+	flags &= ~BUS_SPACE_MAP_PREFETCHABLE;
 
 	ss = sparc_pci_childspace(t->type);
 
@@ -577,9 +592,7 @@ pyro_intr_establish(bus_space_tag_t t, int ihandle, int level,
 
 	ino |= INTVEC(ihandle);
 
-	ih = malloc(sizeof *ih, M_DEVBUF, M_NOWAIT);
-	if (ih == NULL)
-		return (NULL);
+	ih = intrhand_alloc();
 
 	/* Register the map and clear intr registers */
 	ih->ih_map = intrmapptr;

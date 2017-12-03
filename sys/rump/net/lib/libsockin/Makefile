@@ -1,12 +1,11 @@
-#	$NetBSD: Makefile,v 1.5.22.2 2014/08/20 00:04:43 tls Exp $
+#	$NetBSD: Makefile,v 1.5.22.3 2017/12/03 11:39:19 jdolecek Exp $
 #
 
 LIB=	rumpnet_sockin
+COMMENT=PF_INET/PF_INET6 via hypercalls
 
 SRCS=	sockin.c
 SRCS+=	sockin_component.c
-
-CPPFLAGS+= -I${RUMPTOP}/librump/rumpkern
 
 RUMPCOMP_USER_SRCS=	sockin_user.c
 

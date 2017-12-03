@@ -1,4 +1,4 @@
-/*	$NetBSD: smg.c,v 1.55 2012/01/11 21:26:13 macallan Exp $ */
+/*	$NetBSD: smg.c,v 1.55.6.1 2017/12/03 11:36:48 jdolecek Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -11,12 +11,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed at Ludd, University of 
- *	Lule}, Sweden and its contributors.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -31,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smg.c,v 1.55 2012/01/11 21:26:13 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smg.c,v 1.55.6.1 2017/12/03 11:36:48 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: smg.c,v 1.55 2012/01/11 21:26:13 macallan Exp $");
 #define	WRITECUR(addr, val)	*(volatile uint16_t *)(curaddr + (addr)) = (val)
 static	char *curaddr;
 static	uint16_t curcmd, curx, cury, hotX, hotY;
-static	int bgmask, fgmask; 
+static	int bgmask, fgmask;
 
 static	int smg_match(device_t, cfdata_t, void *);
 static	void smg_attach(device_t, device_t, void *);

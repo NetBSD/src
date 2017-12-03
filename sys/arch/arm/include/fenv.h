@@ -1,4 +1,4 @@
-/*	$NetBSD: fenv.h,v 1.1.4.3 2014/08/20 00:02:46 tls Exp $	*/
+/*	$NetBSD: fenv.h,v 1.1.4.4 2017/12/03 11:35:53 jdolecek Exp $	*/
 
 /* 
  * Based on ieeefp.h written by J.T. Conklin, Apr 28, 1995
@@ -7,6 +7,8 @@
 
 #ifndef _ARM_FENV_H_
 #define _ARM_FENV_H_
+
+#include <sys/cdefs.h>
 
 #ifdef __ARM_PCS_AAPCS64
 /* AArch64 split FPSCR into two registers FPCR and FPSR */
@@ -31,6 +33,28 @@ typedef int fexcept_t;
 #define	FE_UPWARD	1	/* round toward positive infinity */
 #define	FE_DOWNWARD	2	/* round toward negative infinity */
 #define	FE_TOWARDZERO	3	/* round to zero (truncate) */
+
+#ifdef __SOFTFP__
+
+/*
+ * Provide a platform-specific softfloat ABI.
+ */
+
+#include <arm/vfpreg.h>
+
+#define __FENV_GET_FLAGS(__envp)	__SHIFTOUT(*(__envp), VFP_FPSCR_CSUM)
+#define __FENV_GET_MASK(__envp)		__SHIFTOUT(*(__envp), VFP_FPSCR_ESUM)
+#define __FENV_GET_ROUND(__envp)	__SHIFTOUT(*(__envp), VFP_FPSCR_RMODE)
+#define __FENV_SET_FLAGS(__envp, __val) \
+	*(__envp) = __SHIFTIN((__val), VFP_FPSCR_CSUM)
+#define __FENV_SET_MASK(__envp, __val) \
+	*(__envp) = __SHIFTIN((__val), VFP_FPSCR_ESUM)
+#define __FENV_SET_ROUND(__envp, __val) \
+	*(__envp) = __SHIFTIN((__val), VFP_FPSCR_RMODE)
+
+#define __HAVE_FENV_SOFTFLOAT_DEFS
+
+#endif /* __SOFTFP__ */
 
 __BEGIN_DECLS
 

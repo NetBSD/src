@@ -1,4 +1,4 @@
-/*	$NetBSD: glx.c,v 1.4 2012/03/11 00:02:04 mrg Exp $	*/
+/*	$NetBSD: glx.c,v 1.4.2.1 2017/12/03 11:36:09 jdolecek Exp $	*/
 /*	$OpenBSD: glx.c,v 1.6 2010/10/14 21:23:04 pirofti Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  * XXX too many hardcoded numbers... need to expand glxreg.h
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: glx.c,v 1.4 2012/03/11 00:02:04 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: glx.c,v 1.4.2.1 2017/12/03 11:36:09 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,6 +215,9 @@ glx_pci_read_hook(void *v, pcitag_t tag, int offset)
 	int bus, dev, fn;
 	pcireg_t data;
 
+	if ((unsigned int)offset >= PCI_CONF_SIZE)
+		return (pcireg_t) -1;
+
 	/*
 	 * Do not get in the way of MSR programming
 	 */
@@ -259,6 +262,9 @@ glx_pci_write_hook(void *v, pcitag_t tag,
     int offset, pcireg_t data)
 {
 	int bus, dev, fn;
+
+	if ((unsigned int)offset >= PCI_CONF_SIZE)
+		return;
 
 	/*
 	 * Do not get in the way of MSR programming

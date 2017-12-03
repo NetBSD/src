@@ -1,4 +1,4 @@
-/* $NetBSD: mavb.c,v 1.8.8.1 2012/11/20 03:01:41 tls Exp $ */
+/* $NetBSD: mavb.c,v 1.8.8.2 2017/12/03 11:36:41 jdolecek Exp $ */
 /* $OpenBSD: mavb.c,v 1.6 2005/04/15 13:05:14 mickey Exp $ */
 
 /*
@@ -723,16 +723,16 @@ mavb_query_devinfo(void *hdl, struct mixer_devinfo *di)
 
 	case AD1843_DAC1_GAIN:
 		di->type = AUDIO_MIXER_VALUE;
-		di->mixer_class = AD1843_INPUT_CLASS;
+		di->mixer_class = AD1843_OUTPUT_CLASS;
 		di->next = AD1843_DAC1_MUTE;
-		strlcpy(di->label.name, AudioNdac "1", sizeof di->label.name);
+		strlcpy(di->label.name, AudioNmaster, sizeof di->label.name);
 		di->un.v.num_channels = 2;
 		strlcpy(di->un.v.units.name, AudioNvolume,
 		    sizeof di->un.v.units.name);
 		break;
 	case AD1843_DAC1_MUTE:
 		di->type = AUDIO_MIXER_ENUM;
-		di->mixer_class = AD1843_INPUT_CLASS;
+		di->mixer_class = AD1843_OUTPUT_CLASS;
 		di->prev = AD1843_DAC1_GAIN;
 		strlcpy(di->label.name, AudioNmute, sizeof di->label.name);
 		di->un.e.num_mem = 2;

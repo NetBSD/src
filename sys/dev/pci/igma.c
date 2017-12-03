@@ -1,4 +1,4 @@
-/*	$NetBSD: igma.c,v 1.2.4.2 2014/08/20 00:03:43 tls Exp $	*/
+/*	$NetBSD: igma.c,v 1.2.4.3 2017/12/03 11:37:08 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2014 Michael van Elst
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igma.c,v 1.2.4.2 2014/08/20 00:03:43 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igma.c,v 1.2.4.3 2017/12/03 11:37:08 jdolecek Exp $");
 
 #include "vga.h"
 
@@ -470,6 +470,7 @@ igma_i2c_attach(struct igma_softc *sc)
 		ii->ii_i2c.ic_exec = NULL;
 
 #if 0
+		memset(&iba, 0, sizeof(iba));
 		iba.iba_type = I2C_TYPE_SMBUS;
 		iba.iba_tag = &ii->ii_i2c;
 		config_found_ia(sc->sc_dev, "i2cbus", &iba, iicbus_print);

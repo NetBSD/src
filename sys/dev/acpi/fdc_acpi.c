@@ -1,4 +1,4 @@
-/* $NetBSD: fdc_acpi.c,v 1.42 2012/02/02 19:43:02 tls Exp $ */
+/* $NetBSD: fdc_acpi.c,v 1.42.6.1 2017/12/03 11:36:58 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,14 +31,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.42 2012/02/02 19:43:02 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.42.6.1 2017/12/03 11:36:58 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/disk.h>
 #include <sys/systm.h>
-
-#include <sys/rnd.h>
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>

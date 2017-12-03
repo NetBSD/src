@@ -1,4 +1,4 @@
-/*	$NetBSD: ofnet.c,v 1.52.12.1 2012/11/20 03:02:13 tls Exp $	*/
+/*	$NetBSD: ofnet.c,v 1.52.12.2 2017/12/03 11:37:07 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.52.12.1 2012/11/20 03:02:13 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.52.12.2 2017/12/03 11:37:07 jdolecek Exp $");
 
 #include "ofnet.h"
 #include "opt_inet.h"
@@ -206,7 +206,7 @@ ofnet_read(struct ofnet_softc *of)
 			ifp->if_ierrors++;
 			continue;
 		}
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = len;
 
 		l = MHLEN;
@@ -261,9 +261,7 @@ ofnet_read(struct ofnet_softc *of)
 		if (head == 0)
 			continue;
 
-		bpf_mtap(ifp, m);
-		ifp->if_ipackets++;
-		(*ifp->if_input)(ifp, head);
+		if_percpuq_enqueue(ifp->if_percpuq, head);
 	}
 	splx(s);
 }
@@ -335,7 +333,7 @@ ofnet_start(struct ifnet *ifp)
 		for (bufp = buf; (m = m0) != NULL;) {
 			memcpy(bufp, mtod(m, char *), m->m_len);
 			bufp += m->m_len;
-			MFREE(m, m0);
+			m0 = m_free(m);
 		}
 
 		/*

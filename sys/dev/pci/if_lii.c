@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lii.c,v 1.11.2.2 2014/08/20 00:03:42 tls Exp $	*/
+/*	$NetBSD: if_lii.c,v 1.11.2.3 2017/12/03 11:37:08 jdolecek Exp $	*/
 
 /*
  *  Copyright (c) 2008 The NetBSD Foundation.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lii.c,v 1.11.2.2 2014/08/20 00:03:42 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lii.c,v 1.11.2.3 2017/12/03 11:37:08 jdolecek Exp $");
 
 
 #include <sys/param.h>
@@ -336,6 +336,7 @@ lii_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ec.ec_capabilities = ETHERCAP_VLAN_MTU;
 
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, eaddr);
 
 	if (pmf_device_register(self, NULL, NULL))
@@ -993,15 +994,12 @@ lii_rxintr(struct lii_softc *sc)
 			}
 		}
 
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		/* Copy the packet withhout the FCS */
 		m->m_pkthdr.len = m->m_len = size;
 		memcpy(mtod(m, void *), &rxp->rxp_data[0], size);
-		++ifp->if_ipackets;
 
-		bpf_mtap(ifp, m);
-
-		(*ifp->if_input)(ifp, m);
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 	}
 
 	AT_WRITE_4(sc, ATL2_MB_RXD_RD_IDX, sc->sc_rxcur);
@@ -1048,7 +1046,7 @@ lii_txintr(struct lii_softc *sc)
 	}
 
 	if (sc->sc_free_tx_slots)
-		lii_start(ifp);
+		if_schedule_deferred_start(ifp);
 }
 
 static int

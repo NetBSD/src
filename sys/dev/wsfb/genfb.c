@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.48.2.2 2014/08/20 00:03:52 tls Exp $ */
+/*	$NetBSD: genfb.c,v 1.48.2.3 2017/12/03 11:37:37 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.48.2.2 2014/08/20 00:03:52 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.48.2.3 2017/12/03 11:37:37 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,6 +130,15 @@ genfb_init(struct genfb_softc *sc)
 		sc->sc_fbaddr = (void *)(uintptr_t)fbaddr;
 	}
 
+	sc->sc_shadowfb = NULL;
+	if (!prop_dictionary_get_bool(dict, "enable_shadowfb",
+	    &sc->sc_enable_shadowfb))
+#ifdef GENFB_SHADOWFB
+		sc->sc_enable_shadowfb = true;
+#else
+		sc->sc_enable_shadowfb = false;
+#endif
+
 	if (!prop_dictionary_get_uint32(dict, "linebytes", &sc->sc_stride))
 		sc->sc_stride = (sc->sc_width * sc->sc_depth) >> 3;
 
@@ -226,7 +235,8 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 		0, 0,
 		NULL,
 		8, 16,
-		WSSCREEN_WSCOLORS | WSSCREEN_HILIT,
+		WSSCREEN_WSCOLORS | WSSCREEN_HILIT | WSSCREEN_UNDERLINE |
+		  WSSCREEN_RESIZE,
 		NULL
 	};
 	sc->sc_screens[0] = &sc->sc_defaultscreen_descr;
@@ -240,11 +250,11 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 	sc->sc_accessops.mmap = genfb_mmap;
 	sc->sc_accessops.pollc = genfb_pollc;
 
-#ifdef GENFB_SHADOWFB
-	sc->sc_shadowfb = kmem_alloc(sc->sc_fbsize, KM_SLEEP);
-	if (sc->sc_want_clear == false && sc->sc_shadowfb != NULL)
-		memcpy(sc->sc_shadowfb, sc->sc_fbaddr, sc->sc_fbsize);
-#endif
+	if (sc->sc_enable_shadowfb) {
+		sc->sc_shadowfb = kmem_alloc(sc->sc_fbsize, KM_SLEEP);
+		if (sc->sc_want_clear == false)
+			memcpy(sc->sc_shadowfb, sc->sc_fbaddr, sc->sc_fbsize);
+	}
 
 	vcons_init(&sc->vd, sc, &sc->sc_defaultscreen_descr,
 	    &sc->sc_accessops);
@@ -305,7 +315,7 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 	genfb_restore_palette(sc);
 
 	sc->sc_splash.si_depth = sc->sc_depth;
-	sc->sc_splash.si_bits = sc->sc_console_screen.scr_ri.ri_bits;
+	sc->sc_splash.si_bits = sc->sc_console_screen.scr_ri.ri_origbits;
 	sc->sc_splash.si_hwbits = sc->sc_fbaddr;
 	sc->sc_splash.si_width = sc->sc_width;
 	sc->sc_splash.si_height = sc->sc_height;
@@ -354,7 +364,7 @@ genfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	struct wsdisplay_fbinfo *wdf;
 	struct vcons_screen *ms = vd->active;
 	struct wsdisplay_param *param;
-	int new_mode, error, val;
+	int new_mode, error, val, ret;
 
 	switch (cmd) {
 		case WSDISPLAYIO_GINFO:
@@ -459,9 +469,22 @@ genfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 				return sc->sc_backlight->gpc_set_parameter(
 				    sc->sc_backlight->gpc_cookie, val);
 			}
-			return EPASSTHROUGH;
-		
+			return EPASSTHROUGH;		
+	}
+	ret = EPASSTHROUGH;
+	if (sc->sc_ops.genfb_ioctl)
+		ret = sc->sc_ops.genfb_ioctl(sc, vs, cmd, data, flag, l);
+	if (ret != EPASSTHROUGH)
+		return ret;
+	/*
+	 * XXX
+	 * handle these only if there either is no ioctl() handler or it didn't
+	 * know how to deal with them. This allows bus frontends to override
+	 * them but still provides fallback implementations
+	 */
+	switch (cmd) {
 		case WSDISPLAYIO_GET_EDID: {
+			
 			struct wsdisplayio_edid_info *d = data;
 			return wsdisplayio_get_edid(sc->sc_dev, d);
 		}
@@ -470,11 +493,6 @@ genfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 			struct wsdisplayio_fbinfo *fbi = data;
 			return wsdisplayio_get_fbinfo(&ms->scr_ri, fbi);
 		}
-		
-		default:
-			if (sc->sc_ops.genfb_ioctl)
-				return sc->sc_ops.genfb_ioctl(sc, vs, cmd,
-				    data, flag, l);
 	}
 	return EPASSTHROUGH;
 }
@@ -521,14 +539,12 @@ genfb_init_screen(void *cookie, struct vcons_screen *scr,
 	if (sc->sc_want_clear)
 		ri->ri_flg |= RI_FULLCLEAR;
 
-#ifdef GENFB_SHADOWFB
-	if (sc->sc_shadowfb != NULL) {
+	scr->scr_flags |= VCONS_LOADFONT;
 
+	if (sc->sc_shadowfb != NULL) {
 		ri->ri_hwbits = (char *)sc->sc_fbaddr;
 		ri->ri_bits = (char *)sc->sc_shadowfb;
-	} else
-#endif
-	{
+	} else {
 		ri->ri_bits = (char *)sc->sc_fbaddr;
 		scr->scr_flags |= VCONS_DONT_READ;
 	}
@@ -537,10 +553,12 @@ genfb_init_screen(void *cookie, struct vcons_screen *scr,
 		ri->ri_flg |= RI_CLEAR;
 	}
 
-	if (ri->ri_depth == 32) {
+	if (ri->ri_depth == 32 || ri->ri_depth == 24) {
 		bool is_bgr = false;
 
-		ri->ri_flg |= RI_ENABLE_ALPHA;
+		if (ri->ri_depth == 32) {
+			ri->ri_flg |= RI_ENABLE_ALPHA;
+		}
 		prop_dictionary_get_bool(device_properties(sc->sc_dev),
 		    "is_bgr", &is_bgr);
 		if (is_bgr) {
@@ -560,15 +578,15 @@ genfb_init_screen(void *cookie, struct vcons_screen *scr,
 			ri->ri_gpos = 8;
 			ri->ri_bpos = 0;
 		}
-	}	
+	}
 
 	if (ri->ri_depth == 8 && sc->sc_cmcb != NULL)
 		ri->ri_flg |= RI_ENABLE_ALPHA | RI_8BIT_IS_RGB;
 
 
 	rasops_init(ri, 0, 0);
-	ri->ri_caps = WSSCREEN_WSCOLORS;
-
+	ri->ri_caps = WSSCREEN_WSCOLORS | WSSCREEN_HILIT | WSSCREEN_UNDERLINE |
+		  WSSCREEN_RESIZE;
 	rasops_reconfig(ri, sc->sc_height / ri->ri_font->fontheight,
 		    sc->sc_width / ri->ri_font->fontwidth);
 

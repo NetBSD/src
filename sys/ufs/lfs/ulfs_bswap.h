@@ -1,5 +1,5 @@
-/*	$NetBSD: ulfs_bswap.h,v 1.3.2.3 2014/08/20 00:04:45 tls Exp $	*/
-/*  from NetBSD: ufs_bswap.h,v 1.19 2009/10/19 18:41:17 bouyer Exp  */
+/*	$NetBSD: ulfs_bswap.h,v 1.3.2.4 2017/12/03 11:39:22 jdolecek Exp $	*/
+/*  from NetBSD: ufs_bswap.h,v 1.21 2016/04/29 03:05:04 christos Exp  */
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -48,19 +48,19 @@
 
 #if !defined(_KERNEL) || defined(LFS_EI)
 /* inlines for access to swapped data */
-static inline u_int16_t
+static inline uint16_t
 ulfs_rw16(uint16_t a, int ns)
 {
 	return ((ns) ? bswap16(a) : (a));
 }
 
-static inline u_int32_t
+static inline uint32_t
 ulfs_rw32(uint32_t a, int ns)
 {
 	return ((ns) ? bswap32(a) : (a));
 }
 
-static inline u_int64_t
+static inline uint64_t
 ulfs_rw64(uint64_t a, int ns)
 {
 	return ((ns) ? bswap64(a) : (a));

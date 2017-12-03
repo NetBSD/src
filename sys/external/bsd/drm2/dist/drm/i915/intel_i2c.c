@@ -264,14 +264,10 @@ gmbus_wait_hw_status(struct drm_i915_private *dev_priv,
 		     u32 gmbus2_status,
 		     u32 gmbus4_irq_en)
 {
-#ifndef __NetBSD__
 	int i;
-#endif
 	int reg_offset = dev_priv->gpio_mmio_base;
 	u32 gmbus2 = 0;
-#ifdef __NetBSD__
-	int ret;
-#else
+#ifndef __NetBSD__
 	DEFINE_WAIT(wait);
 #endif
 
@@ -289,25 +285,32 @@ gmbus_wait_hw_status(struct drm_i915_private *dev_priv,
 	I915_WRITE(GMBUS4 + reg_offset, gmbus4_irq_en);
 
 #ifdef __NetBSD__
-	spin_lock(&dev_priv->gmbus_wait_lock);
 	if (cold) {
-		unsigned timo = 1000;
-		ret = 0;
-		while (gmbus2 = I915_READ_NOTRACE(GMBUS2 + reg_offset),
-		    !ISSET(gmbus2, (GMBUS_SATOER | gmbus2_status))) {
-			if (timo-- == 0) {
-				ret = -ETIMEDOUT;
+		i = 50;
+		do {
+			gmbus2 = I915_READ_NOTRACE(GMBUS2 + reg_offset);
+			if (ISSET(gmbus2, (GMBUS_SATOER | gmbus2_status)))
 				break;
-			}
-			DELAY(100);
-		}
+			DELAY(1000);
+		} while (i-- > 0);
 	} else {
-		DRM_SPIN_TIMED_WAIT_UNTIL(ret, &dev_priv->gmbus_wait_queue,
-		    &dev_priv->gmbus_wait_lock, 1,
-		    (gmbus2 = I915_READ_NOTRACE(GMBUS2 + reg_offset),
-			!ISSET(gmbus2, (GMBUS_SATOER | gmbus2_status))));
+		i = mstohz(50);
+		do {
+			int ret;
+
+			spin_lock(&dev_priv->gmbus_wait_lock);
+			DRM_SPIN_TIMED_WAIT_NOINTR_UNTIL(ret,
+			    &dev_priv->gmbus_wait_queue,
+			    &dev_priv->gmbus_wait_lock,
+			    1,
+			    (gmbus2 = I915_READ_NOTRACE(GMBUS2 + reg_offset),
+				ISSET(gmbus2,
+				    (GMBUS_SATOER | gmbus2_status))));
+			spin_unlock(&dev_priv->gmbus_wait_lock);
+			if (ret)
+				break;
+		} while (i-- > 0);
 	}
-	spin_unlock(&dev_priv->gmbus_wait_lock);
 #else
 	for (i = 0; i < msecs_to_jiffies_timeout(50); i++) {
 		prepare_to_wait(&dev_priv->gmbus_wait_queue, &wait,
@@ -352,7 +355,7 @@ gmbus_wait_idle(struct drm_i915_private *dev_priv)
 
 #ifdef __NetBSD__
 	spin_lock(&dev_priv->gmbus_wait_lock);
-	DRM_SPIN_TIMED_WAIT_UNTIL(ret, &dev_priv->gmbus_wait_queue,
+	DRM_SPIN_TIMED_WAIT_NOINTR_UNTIL(ret, &dev_priv->gmbus_wait_queue,
 	    &dev_priv->gmbus_wait_lock, msecs_to_jiffies_timeout(10),
 	    C);
 	spin_unlock(&dev_priv->gmbus_wait_lock);
@@ -653,7 +656,7 @@ int intel_setup_gmbus(struct drm_device *dev)
 			 "i915 gmbus %s",
 			 gmbus_ports[i].name);
 
-		bus->adapter.dev.parent = &dev->pdev->dev;
+		bus->adapter.dev.parent = dev->dev;
 		bus->dev_priv = dev_priv;
 
 		bus->adapter.algo = &gmbus_algorithm;

@@ -1,4 +1,4 @@
-#	$NetBSD: GUMSTIX,v 1.68.2.3 2014/08/20 00:02:53 tls Exp $
+#	$NetBSD: GUMSTIX,v 1.68.2.4 2017/12/03 11:36:03 jdolecek Exp $
 #
 #	GUMSTIX -- Gumstix. Inc. gumstix platforms kernel
 #
@@ -62,6 +62,7 @@ file-system 	TMPFS		# Efficient memory file-system
 # File system options
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
 #options 	FFS_EI		# FFS Endian Independent support
 options 	WAPBL		# File system journaling support
 # Note that UFS_DIRHASH is suspected of causing kernel memory corruption.
@@ -97,26 +98,11 @@ options 	NFS_BOOT_DHCP
 
 # Compatibility options
 
-options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
-#options 	COMPAT_09	# NetBSD 0.9 compatibility.
-#options 	COMPAT_10	# NetBSD 1.0 compatibility.
-#options 	COMPAT_11	# NetBSD 1.1 compatibility.
-#options 	COMPAT_12	# NetBSD 1.2 compatibility.
-#options 	COMPAT_13	# NetBSD 1.3 compatibility.
-#options 	COMPAT_14	# NetBSD 1.4 compatibility.
-#options 	COMPAT_15	# NetBSD 1.5 compatibility.
-options 	COMPAT_16	# NetBSD 1.6 compatibility.
-options 	COMPAT_20	# NetBSD 2.0 compatibility.
-options 	COMPAT_30	# NetBSD 3.0 compatibility.
-options 	COMPAT_40	# NetBSD 4.0 compatibility.
-options 	COMPAT_50	# NetBSD 5.0 compatibility.
-options 	COMPAT_60	# NetBSD 6.0 compatibility.
-#options 	COMPAT_43	# 4.3BSD compatibility.
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
+include 	"conf/compat_netbsd16.config"
+options 	COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 
 options 	COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
 options 	COMPAT_LINUX	# binary compatibility with Linux
-options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Shared memory options
 
@@ -135,7 +121,6 @@ options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 options 	KTRACE		# system call tracing, a la ktrace(1)
 options 	IRQSTATS	# manage IRQ statistics
-#options 	KMEMSTATS	# kernel memory statistics
 options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 #options 	USBVERBOSE	# verbose USB device autoconfig messages
 options 	MIIVERBOSE	# Verbose MII autoconfuration messages
@@ -158,7 +143,7 @@ options 	DDB		# in-kernel debugger
 #options 	DEBUG_KGDB
 makeoptions	DEBUG="-g"	# compile full symbol table
 #makeoptions	COPTS="-O2"
-options 	SYMTAB_SPACE=790000
+makeoptions	COPY_SYMTAB=1
 #options 	AUDIO_DEBUG=2
 
 config		netbsd		root on ? type ?
@@ -178,6 +163,7 @@ pxaintc0 at pxaip?				# interrupt controller
 options 	PXAGPIO_HAS_GPION_INTRS
 
 pxagpio0 at pxaip?				# GPIO
+gpio* at gpiobus?
 pxartc0	at pxaip? addr 0x40900000		# RTC
 
 # cotulla integrated 16550 UARTs
@@ -203,6 +189,8 @@ pxaacu0	at pxaip? addr 0x40500000 intr 14	# Audiostix, Audiostx2, GPSstix
 
 # Audio support
 audio*	at audiobus?
+
+spkr*	at audio?				# PC speaker (synthesized)
 
 # LCD
 lcd0	at pxaip? addr 0x44000000		# consoleLCD-vx,consoleLCD16-vx
@@ -418,6 +406,7 @@ pseudo-device	dmoverio		# /dev/dmover dmover(9) interface
 pseudo-device	drvctl
 
 #options 	FILEASSOC		# fileassoc(9) - required for Veriexec
+					# and PAX_SEGVGUARD
 
 # Veriexec
 #pseudo-device	veriexec
@@ -426,12 +415,9 @@ pseudo-device	drvctl
 # removing fingerprint methods will have almost no impact on the kernel
 # code size.
 #
-#options VERIFIED_EXEC_FP_RMD160
 #options VERIFIED_EXEC_FP_SHA256
 #options VERIFIED_EXEC_FP_SHA384
 #options VERIFIED_EXEC_FP_SHA512
-#options VERIFIED_EXEC_FP_SHA1
-#options VERIFIED_EXEC_FP_MD5
 
 #options 	PAX_MPROTECT=0		# PaX mprotect(2) restrictions
 #options 	PAX_ASLR=0		# PaX Address Space Layout Randomization

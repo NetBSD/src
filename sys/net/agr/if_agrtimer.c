@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agrtimer.c,v 1.6 2010/02/08 17:59:06 dyoung Exp $	*/
+/*	$NetBSD: if_agrtimer.c,v 1.6.20.1 2017/12/03 11:39:02 jdolecek Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agrtimer.c,v 1.6 2010/02/08 17:59:06 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agrtimer.c,v 1.6.20.1 2017/12/03 11:39:02 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -40,14 +40,22 @@ __KERNEL_RCSID(0, "$NetBSD: if_agrtimer.c,v 1.6 2010/02/08 17:59:06 dyoung Exp $
 #include <net/agr/if_agrsubr.h>
 
 static void agrtimer_tick(void *);
+static void agrtimer_work(struct work *, void *);
 static int agrtimer_port_tick(struct agr_port *, void *);
 
-void
+int
 agrtimer_init(struct agr_softc *sc)
 {
+	int error;
+
+	error = workqueue_create(&sc->sc_wq, "agrmon",
+	    agrtimer_work, sc, PRI_SOFTNET, IPL_SOFTNET, 0);
+	if (error)
+		return error;
 
 	callout_init(&sc->sc_callout, 0);
 	callout_setfunc(&sc->sc_callout, agrtimer_tick, sc);
+	return 0;
 }
 
 void
@@ -55,6 +63,7 @@ agrtimer_destroy(struct agr_softc *sc)
 {
 
 	callout_destroy(&sc->sc_callout);
+	workqueue_destroy(sc->sc_wq);
 }
 
 void
@@ -73,6 +82,14 @@ agrtimer_stop(struct agr_softc *sc)
 
 static void
 agrtimer_tick(void *arg)
+{
+	struct agr_softc *sc = arg;
+
+	workqueue_enqueue(sc->sc_wq, &sc->sc_wk, NULL);
+}
+
+static void
+agrtimer_work(struct work *wk, void *arg)
 {
 	struct agr_softc *sc = arg;
 	const struct agr_iftype_ops *iftop = sc->sc_iftop;

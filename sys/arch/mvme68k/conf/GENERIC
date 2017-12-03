@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.83.6.3 2014/08/20 00:03:14 tls Exp $
+# $NetBSD: GENERIC,v 1.83.6.4 2017/12/03 11:36:30 jdolecek Exp $
 #
 # GENERIC machine description file
 # 
@@ -18,11 +18,11 @@
 # of each device driver in this file see the section 4 man page for the
 # device.
 
-include		"arch/mvme68k/conf/std.mvme68k"
+include 	"arch/mvme68k/conf/std.mvme68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.83.6.3 $"
+#ident 		"GENERIC-$Revision: 1.83.6.4 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
@@ -47,7 +47,6 @@ options 	M060SP
 
 #options 	SYSVSHM
 options 	KTRACE
-options 	COMPAT_43
 
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
@@ -73,6 +72,7 @@ options 	NFSSERVER
 #options 	FFS_EI		# FFS Endian Independent support
 options 	WAPBL		# File system journaling support
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+#options 	UFS_EXTATTR	# Extended attribute support for UFS1
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 
 # Networking options
@@ -97,24 +97,10 @@ options 	INET6		# IPV6
 #options 	ALTQ_WFQ	# Weighted Fair Queueing
 
 options 	COMPAT_AOUT_M68K	# compatibility with NetBSD/m68k a.out
-options 	COMPAT_09
-options 	COMPAT_10
-options 	COMPAT_11
-options 	COMPAT_12
-options 	COMPAT_13
-options 	COMPAT_14
-options 	COMPAT_15
-options 	COMPAT_16
-options 	COMPAT_20
-options 	COMPAT_30	# NetBSD 3.0 compatibility.
-options 	COMPAT_40	# NetBSD 4.0 compatibility.
-options 	COMPAT_50	# NetBSD 5.0 compatibility.
-options 	COMPAT_60	# NetBSD 6.0 compatibility.
+include 	"conf/compat_netbsd09.config"
 #options 	COMPAT_SUNOS
 #options 	COMPAT_M68K4K	# compatibility with NetBSD/m68k4k binaries
 #options 	COMPAT_LINUX	# compatibility with Linux/m68k binaries
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 ## force NFS root and swap
 #config	netbsd		root on ? type nfs
@@ -166,12 +152,9 @@ pseudo-device	ksyms			# /dev/ksyms
 # removing fingerprint methods will have almost no impact on the kernel
 # code size.
 #
-#options VERIFIED_EXEC_FP_RMD160
 #options VERIFIED_EXEC_FP_SHA256
 #options VERIFIED_EXEC_FP_SHA384
 #options VERIFIED_EXEC_FP_SHA512
-#options VERIFIED_EXEC_FP_SHA1
-#options VERIFIED_EXEC_FP_MD5
 
 mainbus0	at root
 

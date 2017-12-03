@@ -1,4 +1,4 @@
-#	$NetBSD: majors.vax,v 1.24 2012/06/22 20:42:23 abs Exp $
+#	$NetBSD: majors.vax,v 1.24.2.1 2017/12/03 11:36:47 jdolecek Exp $
 #
 # Device majors for vax
 #
@@ -51,6 +51,7 @@ device-major	mt		char 38  block 15	mt
 device-major	qd		char 41			qd
 device-major	ipl		char 42			ipfilter
 device-major	ii		char 43			ingres
+device-major	qvaux		char 44			qvaux
 
 device-major	crx		char 51			vax8200 | vaxany
 
@@ -84,6 +85,7 @@ device-major	wsfont		char 80			wsfont
 device-major	ses		char 81			ses
 
 device-major	nsmb		char 98			nsmb
+device-major	audio		char 99			audio
 
 #
 # block-device-only devices
@@ -95,3 +97,5 @@ device-major	uu			 block 13	uu
 # Majors up to 143 are reserved for machine-dependent drivers.
 # New machine-independent driver majors are assigned in 
 # sys/conf/majors.
+
+include "conf/majors.usb"

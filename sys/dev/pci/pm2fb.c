@@ -1,7 +1,8 @@
-/*	$NetBSD: pm2fb.c,v 1.16.2.2 2014/08/20 00:03:48 tls Exp $	*/
+/*	$NetBSD: pm2fb.c,v 1.16.2.3 2017/12/03 11:37:28 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2009, 2012 Michael Lorenz
+ * 		 2014 Naruaki Etomi
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,11 +28,10 @@
 
 /*
  * A console driver for Permedia 2 graphics controllers
- * tested on sparc64 only so far
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.16.2.2 2014/08/20 00:03:48 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.16.2.3 2017/12/03 11:37:28 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,6 +71,18 @@ __KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.16.2.2 2014/08/20 00:03:48 tls Exp $");
 #define DPRINTF aprint_error
 #else
 #define DPRINTF while (0) printf
+#endif
+
+#if BYTE_ORDER == LITTLE_ENDIAN
+/*
+ * XXX
+ * A temporary workaround for unaligned blits on little endian hardware.
+ * This makes pm2fb_bitblt() work well on little endian hardware to get
+ * scrolling right, but not much more. Unaligned blits ( as in, where the lower
+ * 2 bits of the source and destination X coordinates don't match ) are still
+ * wrong so the glyph cache is also disabled.  
+ */
+#define BITBLT_LE_WORKAROUND
 #endif
 
 struct pm2fb_softc {
@@ -123,7 +135,7 @@ static void	pm2fb_init_screen(void *, struct vcons_screen *, int, long *);
 
 static int	pm2fb_putcmap(struct pm2fb_softc *, struct wsdisplay_cmap *);
 static int 	pm2fb_getcmap(struct pm2fb_softc *, struct wsdisplay_cmap *);
-static void	pm2fb_restore_palette(struct pm2fb_softc *);
+static void	pm2fb_init_palette(struct pm2fb_softc *);
 static int 	pm2fb_putpalreg(struct pm2fb_softc *, uint8_t, uint8_t,
 			    uint8_t, uint8_t);
 
@@ -184,9 +196,32 @@ static const struct i2c_bitbang_ops pm2fb_i2cbb_ops = {
 
 /* mode setting stuff */
 static int pm2fb_set_pll(struct pm2fb_softc *, int);
+static int pm2vfb_set_pll(struct pm2fb_softc *, int);
 static uint8_t pm2fb_read_dac(struct pm2fb_softc *, int);
 static void pm2fb_write_dac(struct pm2fb_softc *, int, uint8_t);
 static void pm2fb_set_mode(struct pm2fb_softc *, const struct videomode *);
+
+const struct {
+	int vendor;
+	int product;
+	int flags;
+} pm2fb_pci_devices[] = {
+	{
+		PCI_VENDOR_3DLABS,
+		PCI_PRODUCT_3DLABS_PERMEDIA2V,
+		0
+	},
+	{
+		PCI_VENDOR_TI,
+		PCI_PRODUCT_TI_TVP4020,
+		1 	
+	},
+	{
+		0,
+		0,
+		0
+	}
+};
 
 /* this table is from xf86-video-glint */
 #define PARTPROD(a,b,c) (((a)<<6) | ((b)<<3) | (c))
@@ -250,26 +285,24 @@ pm2fb_flush_engine(struct pm2fb_softc *sc)
 		while (bus_space_read_4(sc->sc_memt, sc->sc_regh, 
 			PM2_OUTPUT_FIFO_WORDS) == 0);
 	} while (bus_space_read_4(sc->sc_memt, sc->sc_regh, PM2_OUTPUT_FIFO) != 
-	    0x188);
+	    PM2_SYNC_TAG);
 }
 
 static int
 pm2fb_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
+	int i;
 
 	if (PCI_CLASS(pa->pa_class) != PCI_CLASS_DISPLAY)
 		return 0;
-	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_3DLABS)
-		return 0;
 
-	/*
-	 * only card tested on so far is a TechSource Raptor GFX 8P /
-	 * Sun PGX32, which happens to be a Permedia 2v
-	 */
-	if (/*(PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_3DLABS_PERMEDIA2) ||*/
-	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_3DLABS_PERMEDIA2V))
-		return 100;
+	for (i = 0; pm2fb_pci_devices[i].vendor; i++) {
+		if ((PCI_VENDOR(pa->pa_id) == pm2fb_pci_devices[i].vendor &&
+		     PCI_PRODUCT(pa->pa_id) == pm2fb_pci_devices[i].product)) 
+			return 100;
+	}
+
 	return (0);
 }
 
@@ -282,18 +315,23 @@ pm2fb_attach(device_t parent, device_t self, void *aux)
 	struct wsemuldisplaydev_attach_args aa;
 	prop_dictionary_t	dict;
 	unsigned long		defattr;
-	bool			is_console;
-	int 			i, j;
+	bool			is_console = FALSE;
 	uint32_t		flags;
-	uint8_t			cmap[768];
+	int			i;
 
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
 	sc->sc_memt = pa->pa_memt;
 	sc->sc_iot = pa->pa_iot;
 	sc->sc_dev = self;
-	sc->sc_is_pm2 = (PCI_PRODUCT(pa->pa_id) == 
-	    PCI_PRODUCT_3DLABS_PERMEDIA2);
+
+	for (i = 0; pm2fb_pci_devices[i].vendor; i++) {
+		if (PCI_PRODUCT(pa->pa_id) == pm2fb_pci_devices[i].product) {
+			sc->sc_is_pm2 = pm2fb_pci_devices[i].flags ;
+			break;
+		}
+	}
+
 	pci_aprint_devinfo(pa, NULL);
 
 	/*
@@ -359,7 +397,7 @@ pm2fb_attach(device_t parent, device_t self, void *aux)
 	vcons_init(&sc->vd, sc, &sc->sc_defaultscreen_descr,
 	    &pm2fb_accessops);
 	sc->vd.init_screen = pm2fb_init_screen;
-	
+
 	/* init engine here */
 	pm2fb_init(sc);
 
@@ -416,16 +454,8 @@ pm2fb_attach(device_t parent, device_t self, void *aux)
 			   defattr);
 	}
 
-	j = 0;
-	rasops_get_cmap(ri, cmap, sizeof(cmap));
-	for (i = 0; i < 256; i++) {
-		sc->sc_cmap_red[i] = cmap[j];
-		sc->sc_cmap_green[i] = cmap[j + 1];
-		sc->sc_cmap_blue[i] = cmap[j + 2];
-		pm2fb_putpalreg(sc, i, cmap[j], cmap[j + 1], cmap[j + 2]);
-		j += 3;
-	}
-
+	pm2fb_init_palette(sc);
+	
 	aa.console = is_console;
 	aa.scrdata = &sc->sc_screenlist;
 	aa.accessops = &pm2fb_accessops;
@@ -509,7 +539,7 @@ pm2fb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 				}
 				/* then initialize the drawing engine */
 				pm2fb_init(sc);
-				pm2fb_restore_palette(sc);
+				pm2fb_init_palette(sc);
 				/* clean out the glyph cache */
 				glyphcache_wipe(&sc->sc_gc);
 				/* and redraw everything */
@@ -573,6 +603,7 @@ pm2fb_mmap(void *v, void *vs, off_t offset, int prot)
 		    BUS_SPACE_MAP_LINEAR);
 		return pa;
 	}
+	/* XXX 2nd fb BAR? */
 
 #ifdef PCI_MAGIC_IO_RANGE
 	/* allow mapping of IO space */
@@ -685,13 +716,19 @@ pm2fb_getcmap(struct pm2fb_softc *sc, struct wsdisplay_cmap *cm)
 }
 
 static void
-pm2fb_restore_palette(struct pm2fb_softc *sc)
+pm2fb_init_palette(struct pm2fb_softc *sc)
 {
-	int i;
+	struct rasops_info *ri = &sc->sc_console_screen.scr_ri;
+	int i, j = 0;
+	uint8_t cmap[768];
 
-	for (i = 0; i < (1 << sc->sc_depth); i++) {
-		pm2fb_putpalreg(sc, i, sc->sc_cmap_red[i],
-		    sc->sc_cmap_green[i], sc->sc_cmap_blue[i]);
+	rasops_get_cmap(ri, cmap, sizeof(cmap));
+	for (i = 0; i < 256; i++) {
+		sc->sc_cmap_red[i] = cmap[j];
+		sc->sc_cmap_green[i] = cmap[j + 1];
+		sc->sc_cmap_blue[i] = cmap[j + 2];
+		pm2fb_putpalreg(sc, i, cmap[j], cmap[j + 1], cmap[j + 2]);
+		j += 3;
 	}
 }
 
@@ -729,11 +766,13 @@ pm2fb_write_dac(struct pm2fb_softc *sc, int reg, uint8_t data)
 {
 	pm2fb_wait(sc, 3);
 	if (sc->sc_is_pm2) {
+		pm2fb_wait(sc, 2);
 		bus_space_write_1(sc->sc_memt, sc->sc_regh,
 		    PM2_DAC_PAL_WRITE_IDX, reg);
 		bus_space_write_1(sc->sc_memt, sc->sc_regh,
 		    PM2_DAC_INDEX_DATA, data);
 	} else {
+		pm2fb_wait(sc, 3);
 		bus_space_write_1(sc->sc_memt, sc->sc_regh,
 		    PM2V_DAC_INDEX_LOW, reg & 0xff);
 		bus_space_write_1(sc->sc_memt, sc->sc_regh,
@@ -748,8 +787,15 @@ pm2fb_init(struct pm2fb_softc *sc)
 {
 	pm2fb_flush_engine(sc);
 
-	pm2fb_wait(sc, 8);
+	pm2fb_wait(sc, 9);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_SCREEN_BASE, 0);
+	/* set aperture endianness */
+#if BYTE_ORDER == BIG_ENDIAN
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_APERTURE1_CONTROL,
+		PM2_AP_BYTESWAP | PM2_AP_HALFWORDSWAP);	
+#else
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_APERTURE1_CONTROL, 0);
+#endif	
 #if 0
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_BYPASS_MASK, 
 		0xffffffff);
@@ -834,9 +880,11 @@ pm2fb_rectfill(struct pm2fb_softc *sc, int x, int y, int wi, int he,
      uint32_t colour)
 {
 
-	pm2fb_wait(sc, 7);
+	pm2fb_wait(sc, 9);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_DDA_MODE, 0);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_MODE, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_ALPHA_MODE, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_DITHER_MODE, 0);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_CONFIG,
 	    PM2RECFG_WRITE_EN);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_BLOCK_COLOUR,
@@ -872,9 +920,11 @@ pm2fb_bitblt(void *cookie, int xs, int ys, int xd, int yd,
 	if (xd <= xs) {
 		dir |= PM2RE_INC_X;
 	}
-	pm2fb_wait(sc, 8);
+	pm2fb_wait(sc, 10);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_DDA_MODE, 0);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_MODE, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_ALPHA_MODE, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_DITHER_MODE, 0);
 	if (sc->sc_depth == 8) {
 		int adjust;
 		/*
@@ -900,7 +950,12 @@ pm2fb_bitblt(void *cookie, int xs, int ys, int xd, int yd,
 		rwi = (wi + 7) >> 2;
 		rxdelta = (xs & 0xffc) - (xd & 0xffc);
 		/* adjust for non-aligned x */
+#ifdef BITBLT_LE_WORKAROUND
+		/* I have no idea why this seems to work */
+		adjust = 1;
+#else
 		adjust = ((xd & 3) - (xs & 3));
+#endif
 		bus_space_write_4(sc->sc_memt, sc->sc_regh,
 		    PM2_RE_PACKEDDATA_LIMIT,
 		    (xd << 16) | (xd + wi) | (adjust << 29));
@@ -998,6 +1053,16 @@ pm2fb_putchar(void *cookie, int row, int col, u_int c, long attr)
 			data = (uint8_t *)font->data + uc * ri->ri_fontscale;
 
 			mode = PM2RM_MASK_MIRROR;
+#if BYTE_ORDER == LITTLE_ENDIAN
+			switch (ri->ri_font->stride) {
+				case 1:
+					mode |= 4 << 7;
+					break;
+				case 2:
+					mode |= 3 << 7;
+					break;
+			}
+#else
 			switch (ri->ri_font->stride) {
 				case 1:
 					mode |= 3 << 7;
@@ -1006,7 +1071,7 @@ pm2fb_putchar(void *cookie, int row, int col, u_int c, long attr)
 					mode |= 2 << 7;
 					break;
 			}
-
+#endif
 			pm2fb_wait(sc, 8);
 
 			bus_space_write_4(sc->sc_memt, sc->sc_regh,
@@ -1070,9 +1135,9 @@ pm2fb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 	struct wsdisplay_font *font = PICK_FONT(ri, c);
 	struct vcons_screen *scr = ri->ri_hw;
 	struct pm2fb_softc *sc = scr->scr_cookie;
-	uint32_t bg, fg, /*latch = 0,*/ bg8, fg8, pixel;
-	int i, x, y, wi, he, r, g, b, aval;
-	int r1, g1, b1, r0, g0, b0, fgo, bgo;
+	uint32_t bg, fg, pixel, /*bg32,*/ fg32, aval;
+	int i, x, y, wi, he;
+	int r1, g1, b1, /*r0, g0, b0,*/ fgo/*, bgo*/;
 	uint8_t *data8;
 	int rv = GC_NOPE, cnt = 0;
 
@@ -1089,90 +1154,78 @@ pm2fb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 	fg = ri->ri_devcmap[(attr >> 24) & 0xf];
 	x = ri->ri_xorigin + col * wi;
 	y = ri->ri_yorigin + row * he;
+
+	/* always blit the cell with the background colour */
+	pm2fb_rectfill(sc, x, y, wi, he, bg);
+
+	/* if we draw a whitespace we're done here */
 	if (c == 0x20) {
-		pm2fb_rectfill(sc, x, y, wi, he, bg);
 		if (attr & 1)
 			pm2fb_rectfill(sc, x, y + he - 2, wi, 1, fg);
 		return;
 	}
 
+#ifdef BITBLT_LE_WORKAROUND
+	rv = GC_NOPE;
+#else
 	rv = glyphcache_try(&sc->sc_gc, c, x, y, attr);
 	if (rv == GC_OK)
 		return;
+#endif
 
 	data8 = WSFONT_GLYPH(c, font);
 
-	pm2fb_wait(sc, 5);
-#if 0
-	/*
-	 * TODO:
-	 * - use packed mode here as well, instead of writing each pixel separately
-	 * - see if we can trick the chip into doing the alpha blending for us
-	 */
-	x = x >> 2;
-	wi = (wi + 3) >> 2;
-#endif
+	pm2fb_wait(sc, 7);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_MODE, 0);
+	/*
+	 * XXX
+	 * we *chould* be able to get away without reading the framebuffer
+	 * since our background colour is always constant, but for some reason
+	 * that produces random, mostly black background
+	 */
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_CONFIG,
-			    PM2RECFG_WRITE_EN /*| PM2RECFG_PACKED*/);
-	bus_space_write_4(sc->sc_memt, sc->sc_regh, 
-			    PM2_RE_RECT_START, (y << 16) | x);
-	bus_space_write_4(sc->sc_memt, sc->sc_regh, 
-			    PM2_RE_RECT_SIZE, (he << 16) | wi);
-	bus_space_write_4(sc->sc_memt, sc->sc_regh, 
-			    PM2_RE_RENDER,
-			    PM2RE_RECTANGLE | PM2RE_SYNC_ON_HOST |
-			    PM2RE_INC_X | PM2RE_INC_Y);
+			    PM2RECFG_WRITE_EN | PM2RECFG_READ_DST);
+
+	/* enable alpha blending and R3G3B2 output */
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_ALPHA_MODE,
+			    PM2AL_ENABLE |
+			    PM2AL_OP_SRC_IS_SRC_ALPHA | 
+			    PM2AL_OP_DST_IS_ONE_MINUS_SRC_ALPHA |
+			    PM2AL_332F | PM2AL_RGB);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_DITHER_MODE,
+			    PM2DM_ENABLE |
+			    PM2DM_332F | PM2DM_RGB);
+
 	/*
 	 * we need the RGB colours here, so get offsets into rasops_cmap
 	 */
 	fgo = ((attr >> 24) & 0xf) * 3;
-	bgo = ((attr >> 16) & 0xf) * 3;
 
-	r0 = rasops_cmap[bgo];
 	r1 = rasops_cmap[fgo];
-	g0 = rasops_cmap[bgo + 1];
 	g1 = rasops_cmap[fgo + 1];
-	b0 = rasops_cmap[bgo + 2];
 	b1 = rasops_cmap[fgo + 2];
-#define R3G3B2(r, g, b) ((r & 0xe0) | ((g >> 3) & 0x1c) | (b >> 6))
-	bg8 = R3G3B2(r0, g0, b0);
-	fg8 = R3G3B2(r1, g1, b1);
 
-	pm2fb_wait(sc, 200);
+	fg32 = ( r1 << 16) | (g1 << 8) | b1;
 
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, 
+			    PM2_RE_RECT_START, (y << 16) | x);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, 
+			    PM2_RE_RECT_SIZE, (he << 16) | wi);
+
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, 
+			    PM2_RE_RENDER,
+			    PM2RE_RECTANGLE | PM2RE_SYNC_ON_HOST |
+			    PM2RE_INC_X | PM2RE_INC_Y);
+
+	pm2fb_wait(sc, min(200, ri->ri_fontscale));
+
+	/*
+	 * and now we just hammer the forground colour and alpha values into
+	 * the upload port
+	 */
 	for (i = 0; i < ri->ri_fontscale; i++) {
 		aval = *data8;
-		if (aval == 0) {
-			pixel = bg8;
-		} else if (aval == 255) {
-			pixel = fg8;
-		} else {
-			r = aval * r1 + (255 - aval) * r0;
-			g = aval * g1 + (255 - aval) * g0;
-			b = aval * b1 + (255 - aval) * b0;
-			pixel = ((r & 0xe000) >> 8) |
-				((g & 0xe000) >> 11) |
-				((b & 0xc000) >> 14);
-		}
-#if 0
-		latch = (latch << 8) | pixel;
-		/* write in 32bit chunks */
-		if ((i & 3) == 3) {
-			bus_space_write_stream_4(sc->sc_memt, sc->sc_regh,
-			    PM2_RE_DATA, latch);
-			/*
-			 * not strictly necessary, old data should be shifted 
-			 * out 
-			 */
-			latch = 0;
-			cnt++;
-			if (cnt > 190) {
-				pm2fb_wait(sc, 200);
-				cnt = 0;
-			}
-		}
-#else
+		pixel = fg32 | (aval << 24);
 		bus_space_write_4(sc->sc_memt, sc->sc_regh,
 			    PM2_RE_COLOUR, pixel);
 
@@ -1180,17 +1233,8 @@ pm2fb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 			pm2fb_wait(sc, 200);
 			cnt = 0;
 		}		
-#endif
 		data8++;
 	}
-#if 0
-	/* if we have pixels left in latch write them out */
-	if ((i & 3) != 0) {
-		latch = latch << ((4 - (i & 3)) << 3);	
-		bus_space_write_stream_4(sc->sc_memt, sc->sc_regh,
-				    PM2_RE_DATA, latch);
-	}
-#endif
 	/* 
 	 * XXX
 	 * occasionally characters end up in the cache only partially drawn
@@ -1449,21 +1493,17 @@ pm2fb_i2c_write_byte(void *cookie, uint8_t val, int flags)
 	return (i2c_bitbang_write_byte(cookie, val, flags, &pm2fb_i2cbb_ops));
 }
 
-#define RefClk 14318	/* all frequencies are in kHz */
 static int
-pm2fb_set_pll(struct pm2fb_softc *sc, int freq)
+pm2vfb_set_pll(struct pm2fb_softc *sc, int freq)
 {
 	int m, n, p, diff, out_freq, bm = 1, bn = 3, bp = 0,
 	    bdiff = 1000000 /* , bfreq */;
 	int fi;
 	uint8_t temp;
 
-	/*
-	 * this should work on PM2V, PM2 needs something slightly different
-	 */
 	for (m = 1; m < 128; m++) {
 		for (n = 2 * m + 1; n < 256; n++) {
-			fi = RefClk * n / m;
+			fi = PM2_EXT_CLOCK_FREQ * n / m;
 			for (p = 0; p < 2; p++) {
 				out_freq = fi >> (p + 1);
 				diff = abs(out_freq - freq);
@@ -1495,12 +1535,126 @@ pm2fb_set_pll(struct pm2fb_softc *sc, int freq)
 	return 0;
 }
 
+static int
+pm2fb_set_pll(struct pm2fb_softc *sc, int freq)
+{
+	uint8_t  reg, bm = 0, bn = 0, bp = 0;
+	unsigned int  m, n, p, fi, diff, out_freq, bdiff = 1000000;
+
+	for (n = 2; n < 15; n++) {
+		for (m = 2 ; m < 256; m++) {
+			fi = PM2_EXT_CLOCK_FREQ * m / n;
+			if (fi >= PM2_PLL_FREQ_MIN && fi <= PM2_PLL_FREQ_MAX) {
+				for (p = 0; p < 5; p++) {
+					out_freq = fi >> p;
+					diff = abs(out_freq - freq);
+					if (diff < bdiff) {
+						bm = m;
+						bn = n;
+						bp = p;
+						bdiff = diff;
+					}
+				}
+			}
+		}
+	}
+
+	pm2fb_write_dac(sc, PM2_DAC_PIXELCLKA_M, bm);
+	pm2fb_write_dac(sc, PM2_DAC_PIXELCLKA_N, bn);
+	pm2fb_write_dac(sc, PM2_DAC_PIXELCLKA_P, (bp | 0x08));
+
+	do {
+		reg = bus_space_read_1(sc->sc_memt, sc->sc_regh,
+			PM2_DAC_INDEX_DATA);
+	} while (reg == PCLK_LOCKED);
+
+	return 0;
+}
+
+/*
+ * most of the following was adapted from the xf86-video-glint driver's
+ * pm2_dac.c (8bpp only)
+ */
+static void 
+pm2fb_set_dac(struct pm2fb_softc *sc, const struct videomode *mode)
+{
+	int t1, t2, t3, t4, stride;
+	uint32_t vclk, tmp;
+	uint8_t sync = 0;
+	
+	t1 = mode->hsync_start - mode->hdisplay;
+	t2 = mode->vsync_start - mode->vdisplay;
+	t3 = mode->hsync_end - mode->hsync_start;
+	t4 = mode->vsync_end - mode->vsync_start;
+
+	/* first round up to the next multiple of 32 */
+	stride = (mode->hdisplay + 31) & ~31;
+	/* then find the next bigger one that we have partial products for */
+	while ((partprodPermedia[stride >> 5] == -1) && (stride < 2048)) {
+		stride += 32;
+	}
+
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_HTOTAL, 
+	    ((mode->htotal) >> 2) - 1);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_HSYNC_END,
+	    (t1 + t3) >> 2);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_HSYNC_START,
+	    (t1 >> 2));
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_HBLANK_END,
+	    (mode->htotal - mode->hdisplay) >> 2);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_HGATE_END,
+	    (mode->htotal - mode->hdisplay) >> 2);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_SCREEN_STRIDE,  
+	    stride >> 3);
+
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_VTOTAL, 
+	    mode->vtotal - 2);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_VSYNC_END,
+	    t2 + t4 - 1);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_VSYNC_START,
+	    t2 - 1);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_VBLANK_END,
+	    mode->vtotal - mode->vdisplay);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_VIDEO_CONTROL,
+	    PM2_VC_VIDEO_ENABLE | 
+	    PM2_VC_HSYNC_ACT_HIGH | PM2_VC_VSYNC_ACT_HIGH);
+
+	vclk = bus_space_read_4(sc->sc_memt, sc->sc_regh, PM2_VCLKCTL);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_VCLKCTL,
+	    vclk & 0xfffffffc);
+
+	tmp = bus_space_read_4(sc->sc_memt, sc->sc_regh, PM2_CHIP_CONFIG);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_CHIP_CONFIG,
+	    tmp & 0xffffffdd);
+
+	pm2fb_write_dac(sc, PM2_DAC_MODE_CONTROL, MOC_BUFFERFRONT);
+	pm2fb_set_pll(sc, mode->dot_clock);  	
+
+	sync = MC_PALETTE_8BIT;
+
+	if (!(mode->flags & VID_PHSYNC))
+	    sync |= MC_HSYNC_INV;
+	if (!(mode->flags & VID_PVSYNC))
+	    sync |= MC_VSYNC_INV;
+
+	pm2fb_write_dac(sc, PM2_DAC_MISC_CONTROL, sync);
+	pm2fb_write_dac(sc, PM2_DAC_COLOR_MODE,
+	    CM_PALETTE | CM_GUI_ENABLE | CM_RGB);
+
+	sc->sc_width = mode->hdisplay;
+	sc->sc_height = mode->vdisplay;
+	sc->sc_depth = 8;
+	sc->sc_stride = stride;
+	aprint_normal_dev(sc->sc_dev, "pm2 using %d x %d in 8 bit, stride %d\n",
+	    sc->sc_width, sc->sc_height, stride);
+}
+
 /*
  * most of the following was adapted from the xf86-video-glint driver's
  * pm2v_dac.c
  */				
 static void
-pm2fb_set_mode(struct pm2fb_softc *sc, const struct videomode *mode)
+pm2vfb_set_dac(struct pm2fb_softc *sc, const struct videomode *mode)
 {
 	int t1, t2, t3, t4, stride;
 	uint32_t vclk;
@@ -1548,7 +1702,7 @@ pm2fb_set_mode(struct pm2fb_softc *sc, const struct videomode *mode)
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_VCLKCTL,
 	    vclk & 0xfffffffc);
 
-	pm2fb_set_pll(sc, mode->dot_clock / 2);
+	pm2vfb_set_pll(sc, mode->dot_clock / 2);
 	pm2fb_write_dac(sc, PM2V_DAC_MISC_CONTROL, PM2V_DAC_8BIT);
 
 	if (mode->flags & VID_PHSYNC)
@@ -1563,6 +1717,16 @@ pm2fb_set_mode(struct pm2fb_softc *sc, const struct videomode *mode)
 	sc->sc_height = mode->vdisplay;
 	sc->sc_depth = 8;
 	sc->sc_stride = stride;
-	aprint_normal_dev(sc->sc_dev, "using %d x %d in 8 bit, stride %d\n",
+	aprint_normal_dev(sc->sc_dev, "pm2v using %d x %d in 8 bit, stride %d\n",
 	    sc->sc_width, sc->sc_height, stride);
+}
+
+static void
+pm2fb_set_mode(struct pm2fb_softc *sc, const struct videomode *mode)
+{
+	if (sc->sc_is_pm2) {
+		pm2fb_set_dac(sc, mode);
+	} else {
+		pm2vfb_set_dac(sc, mode);
+	}      
 }

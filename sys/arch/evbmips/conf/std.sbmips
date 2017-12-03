@@ -1,0 +1,17 @@
+# $NetBSD: std.sbmips,v 1.2.6.2 2017/12/03 11:36:09 jdolecek Exp $
+
+machine evbmips mips
+include		"conf/std"	# MI standard options
+
+options 	MIPS64
+options 	MIPS64_SB1	# we use an SB1 core
+
+options 	EXEC_ELF32	# exec ELF32 binaries
+options 	EXEC_SCRIPT	# exec #! scripts
+
+makeoptions	CFLAGS+="-mips64 -mtune=sb1"
+makeoptions	AFLAGS+="-mips64 -mtune=sb1"
+makeoptions	DEFTEXTADDR="0x80001000"
+
+include	"arch/evbmips/conf/files.sbmips"
+include	"arch/mips/conf/files.sibyte"

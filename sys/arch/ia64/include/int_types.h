@@ -1,4 +1,4 @@
-/*	$NetBSD: int_types.h,v 1.1 2006/04/07 14:21:18 cherry Exp $	*/
+/*	$NetBSD: int_types.h,v 1.1.122.1 2017/12/03 11:36:20 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -34,6 +34,9 @@
 #ifndef	_IA64_INT_TYPES_H_
 #define	_IA64_INT_TYPES_H_
 
+#ifdef __UINTPTR_TYPE__
+#include <sys/common_int_types.h>
+#else
 /*
  * 7.18.1 Integer types
  */
@@ -70,5 +73,7 @@ typedef unsigned long int     __uintptr_t;
 typedef	int		       __intptr_t;
 typedef	unsigned int	      __uintptr_t;
 #endif
+
+#endif /* !__UINTPTR_TYPE__ */
 
 #endif	/* !_IA64_INT_TYPES_H_ */

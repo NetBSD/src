@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r5900.h,v 1.8.4.2 2014/08/20 00:03:12 tls Exp $	*/
+/*	$NetBSD: cache_r5900.h,v 1.8.4.3 2017/12/03 11:36:27 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -127,14 +127,14 @@ do {									\
 } while (/*CONSTCOND*/0)
 
 void	r5900_icache_sync_all_64(void);
-void	r5900_icache_sync_range_64(vaddr_t, vsize_t);
+void	r5900_icache_sync_range_64(register_t, vsize_t);
 void	r5900_icache_sync_range_index_64(vaddr_t, vsize_t);
 
 void	r5900_pdcache_wbinv_all_64(void);
-void	r5900_pdcache_wbinv_range_64(vaddr_t, vsize_t);
+void	r5900_pdcache_wbinv_range_64(register_t, vsize_t);
 void	r5900_pdcache_wbinv_range_index_64(vaddr_t, vsize_t);
 
-void	r5900_pdcache_inv_range_64(vaddr_t, vsize_t);
-void	r5900_pdcache_wb_range_64(vaddr_t, vsize_t);
+void	r5900_pdcache_inv_range_64(register_t, vsize_t);
+void	r5900_pdcache_wb_range_64(register_t, vsize_t);
 
 #endif /* !_LOCORE */

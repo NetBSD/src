@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cpsw.c,v 1.2.6.4 2014/08/20 00:02:47 tls Exp $	*/
+/*	$NetBSD: if_cpsw.c,v 1.2.6.5 2017/12/03 11:35:55 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.2.6.4 2014/08/20 00:02:47 tls Exp $");
+__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.2.6.5 2017/12/03 11:35:55 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -115,6 +115,7 @@ struct cpsw_softc {
 	device_t sc_dev;
 	bus_space_tag_t sc_bst;
 	bus_space_handle_t sc_bsh;
+	bus_size_t sc_bss;
 	bus_dma_tag_t sc_bdt;
 	bus_space_handle_t sc_bsh_txdescs;
 	bus_space_handle_t sc_bsh_rxdescs;
@@ -123,6 +124,7 @@ struct cpsw_softc {
 	struct ethercom sc_ec;
 	struct mii_data sc_mii;
 	bool sc_phy_has_1000t;
+	bool sc_attached;
 	callout_t sc_tick_ch;
 	void *sc_ih;
 	struct cpsw_ring_data *sc_rdp;
@@ -145,6 +147,7 @@ struct cpsw_softc {
 
 static int cpsw_match(device_t, cfdata_t, void *);
 static void cpsw_attach(device_t, device_t, void *);
+static int cpsw_detach(device_t, int);
 
 static void cpsw_start(struct ifnet *);
 static int cpsw_ioctl(struct ifnet *, u_long, void *);
@@ -170,7 +173,7 @@ static int cpsw_miscintr(void *);
 static int cpsw_ale_update_addresses(struct cpsw_softc *, int purge);
 
 CFATTACH_DECL_NEW(cpsw, sizeof(struct cpsw_softc),
-    cpsw_match, cpsw_attach, NULL, NULL);
+    cpsw_match, cpsw_attach, cpsw_detach, NULL);
 
 #undef KERNHIST
 #include <sys/kernhist.h>
@@ -179,8 +182,8 @@ KERNHIST_DEFINE(cpswhist);
 #ifdef KERNHIST
 #define KERNHIST_CALLED_5(NAME, i, j, k, l) \
 do { \
-	_kernhist_call = atomic_inc_uint_nv(&_kernhist_cnt); \
-	KERNHIST_LOG(NAME, "called! %x %x %x %x", i, j, k, l); \
+	_kernhist_call = atomic_inc_32_nv(&_kernhist_cnt); \
+	KERNHIST_LOG(NAME, "called! %jx %jx %jx %jx", i, j, k, l); \
 } while (/*CONSTCOND*/ 0)
 #else
 #define KERNHIST_CALLED_5(NAME, i, j, k, l)
@@ -217,7 +220,7 @@ cpsw_set_txdesc_next(struct cpsw_softc * const sc, const u_int i, uint32_t n)
 	const bus_size_t o = sizeof(struct cpsw_cpdma_bd) * i + 0;
 
 	KERNHIST_FUNC(__func__);
-	KERNHIST_CALLED_5(cpswhist, sc, i, n, 0);
+	KERNHIST_CALLED_5(cpswhist, (uintptr_t)sc, i, n, 0);
 
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh_txdescs, o, n);
 }
@@ -228,7 +231,7 @@ cpsw_set_rxdesc_next(struct cpsw_softc * const sc, const u_int i, uint32_t n)
 	const bus_size_t o = sizeof(struct cpsw_cpdma_bd) * i + 0;
 
 	KERNHIST_FUNC(__func__);
-	KERNHIST_CALLED_5(cpswhist, sc, i, n, 0);
+	KERNHIST_CALLED_5(cpswhist, (uintptr_t)sc, i, n, 0);
 
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh_rxdescs, o, n);
 }
@@ -242,10 +245,10 @@ cpsw_get_txdesc(struct cpsw_softc * const sc, const u_int i,
 	const bus_size_t c = __arraycount(bdp->word);
 
 	KERNHIST_FUNC(__func__);
-	KERNHIST_CALLED_5(cpswhist, sc, i, bdp, 0);
+	KERNHIST_CALLED_5(cpswhist, (uintptr_t)sc, i, (uintptr_t)bdp, 0);
 
 	bus_space_read_region_4(sc->sc_bst, sc->sc_bsh_txdescs, o, dp, c);
-	KERNHIST_LOG(cpswhist, "%08x %08x %08x %08x\n",
+	KERNHIST_LOG(cpswhist, "%08jx %08jx %08jx %08jx\n",
 	    dp[0], dp[1], dp[2], dp[3]);
 }
 
@@ -258,8 +261,8 @@ cpsw_set_txdesc(struct cpsw_softc * const sc, const u_int i,
 	const bus_size_t c = __arraycount(bdp->word);
 
 	KERNHIST_FUNC(__func__);
-	KERNHIST_CALLED_5(cpswhist, sc, i, bdp, 0);
-	KERNHIST_LOG(cpswhist, "%08x %08x %08x %08x\n",
+	KERNHIST_CALLED_5(cpswhist, (uintptr_t)sc, i, (uintptr_t)bdp, 0);
+	KERNHIST_LOG(cpswhist, "%08jx %08jx %08jx %08jx\n",
 	    dp[0], dp[1], dp[2], dp[3]);
 
 	bus_space_write_region_4(sc->sc_bst, sc->sc_bsh_txdescs, o, dp, c);
@@ -274,11 +277,11 @@ cpsw_get_rxdesc(struct cpsw_softc * const sc, const u_int i,
 	const bus_size_t c = __arraycount(bdp->word);
 
 	KERNHIST_FUNC(__func__);
-	KERNHIST_CALLED_5(cpswhist, sc, i, bdp, 0);
+	KERNHIST_CALLED_5(cpswhist, (uintptr_t)sc, i, (uintptr_t)bdp, 0);
 
 	bus_space_read_region_4(sc->sc_bst, sc->sc_bsh_rxdescs, o, dp, c);
 
-	KERNHIST_LOG(cpswhist, "%08x %08x %08x %08x\n",
+	KERNHIST_LOG(cpswhist, "%08jx %08jx %08jx %08jx\n",
 	    dp[0], dp[1], dp[2], dp[3]);
 }
 
@@ -291,8 +294,8 @@ cpsw_set_rxdesc(struct cpsw_softc * const sc, const u_int i,
 	const bus_size_t c = __arraycount(bdp->word);
 
 	KERNHIST_FUNC(__func__);
-	KERNHIST_CALLED_5(cpswhist, sc, i, bdp, 0);
-	KERNHIST_LOG(cpswhist, "%08x %08x %08x %08x\n",
+	KERNHIST_CALLED_5(cpswhist, (uintptr_t)sc, i, (uintptr_t)bdp, 0);
+	KERNHIST_LOG(cpswhist, "%08jx %08jx %08jx %08jx\n",
 	    dp[0], dp[1], dp[2], dp[3]);
 
 	bus_space_write_region_4(sc->sc_bst, sc->sc_bsh_rxdescs, o, dp, c);
@@ -336,6 +339,55 @@ cpsw_phy_has_1000t(struct cpsw_softc * const sc)
 	return false;
 }
 
+static int
+cpsw_detach(device_t self, int flags)
+{
+	struct cpsw_softc * const sc = device_private(self);
+	struct ifnet *ifp = &sc->sc_ec.ec_if;
+	u_int i;
+
+	/* Succeed now if there's no work to do. */
+	if (!sc->sc_attached)
+		return 0;
+
+	sc->sc_attached = false;
+
+	/* Stop the interface. Callouts are stopped in it. */
+	cpsw_stop(ifp, 1);
+
+	/* Destroy our callout. */
+	callout_destroy(&sc->sc_tick_ch);
+
+	/* Let go of the interrupts */
+	intr_disestablish(sc->sc_rxthih);
+	intr_disestablish(sc->sc_rxih);
+	intr_disestablish(sc->sc_txih);
+	intr_disestablish(sc->sc_miscih);
+
+	/* Delete all media. */
+	ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
+
+	ether_ifdetach(ifp);
+	if_detach(ifp);
+
+	/* Free the packet padding buffer */
+	kmem_free(sc->sc_txpad, ETHER_MIN_LEN);
+	bus_dmamap_destroy(sc->sc_bdt, sc->sc_txpad_dm);
+
+	/* Destroy all the descriptors */
+	for (i = 0; i < CPSW_NTXDESCS; i++)
+		bus_dmamap_destroy(sc->sc_bdt, sc->sc_rdp->tx_dm[i]);
+	for (i = 0; i < CPSW_NRXDESCS; i++)
+		bus_dmamap_destroy(sc->sc_bdt, sc->sc_rdp->rx_dm[i]);
+	kmem_free(sc->sc_rdp, sizeof(*sc->sc_rdp));
+
+	/* Unmap */
+	bus_space_unmap(sc->sc_bst, sc->sc_bsh, sc->sc_bss);
+
+
+	return 0;
+}
+
 static void
 cpsw_attach(device_t parent, device_t self, void *aux)
 {
@@ -351,7 +403,7 @@ cpsw_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 
-	aprint_normal(": TI CPSW Ethernet\n");
+	aprint_normal(": TI Layer 2 3-Port Switch\n");
 	aprint_naive("\n");
 
 	callout_init(&sc->sc_tick_ch, 0);
@@ -398,6 +450,7 @@ cpsw_attach(device_t parent, device_t self, void *aux)
 	    IPL_VM, IST_LEVEL, cpsw_miscintr, sc);
 
 	sc->sc_bst = oa->obio_iot;
+	sc->sc_bss = oa->obio_size;
 	sc->sc_bdt = oa->obio_dmat;
 
 	error = bus_space_map(sc->sc_bst, oa->obio_addr, oa->obio_size, 0,
@@ -433,7 +486,6 @@ cpsw_attach(device_t parent, device_t self, void *aux)
 	    (void *)sc->sc_bsh_rxdescs);
 
 	sc->sc_rdp = kmem_alloc(sizeof(*sc->sc_rdp), KM_SLEEP);
-	KASSERT(sc->sc_rdp != NULL);
 
 	for (i = 0; i < CPSW_NTXDESCS; i++) {
 		if ((error = bus_dmamap_create(sc->sc_bdt, MCLBYTES,
@@ -455,7 +507,6 @@ cpsw_attach(device_t parent, device_t self, void *aux)
 	}
 
 	sc->sc_txpad = kmem_zalloc(ETHER_MIN_LEN, KM_SLEEP);
-	KASSERT(sc->sc_txpad != NULL);
 	bus_dmamap_create(sc->sc_bdt, ETHER_MIN_LEN, 1, ETHER_MIN_LEN, 0,
 	    BUS_DMA_WAITOK, &sc->sc_txpad_dm);
 	bus_dmamap_load(sc->sc_bdt, sc->sc_txpad_dm, sc->sc_txpad,
@@ -489,7 +540,8 @@ cpsw_attach(device_t parent, device_t self, void *aux)
 	    ether_mediastatus);
 
 	/* Initialize MDIO */
-	cpsw_write_4(sc, MDIOCONTROL, MDIOCTL_ENABLE | MDIOCTL_FAULTENB | MDIOCTL_CLKDIV(0xff));
+	cpsw_write_4(sc, MDIOCONTROL,
+	    MDIOCTL_ENABLE | MDIOCTL_FAULTENB | MDIOCTL_CLKDIV(0xff));
 	/* Clear ALE */
 	cpsw_write_4(sc, CPSW_ALE_CONTROL, ALECTL_CLEAR_TABLE);
 
@@ -503,17 +555,26 @@ cpsw_attach(device_t parent, device_t self, void *aux)
 	} else {
 		sc->sc_phy_has_1000t = cpsw_phy_has_1000t(sc);
 		if (sc->sc_phy_has_1000t) {
-			aprint_normal_dev(sc->sc_dev, "1000baseT PHY found. setting RGMII Mode\n");
-			/* Select the Interface RGMII Mode in the Control Module */
+			aprint_normal_dev(sc->sc_dev, "1000baseT PHY found. "
+			    "Setting RGMII Mode\n");
+			/*
+			 * Select the Interface RGMII Mode in the Control
+			 * Module
+			 */
 			sitara_cm_reg_write_4(CPSW_GMII_SEL,
-			    GMIISEL_GMII2_SEL(RGMII_MODE) | GMIISEL_GMII1_SEL(RGMII_MODE));
+			    GMIISEL_GMII2_SEL(RGMII_MODE) |
+			    GMIISEL_GMII1_SEL(RGMII_MODE));
 		}
 
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
 	}
 
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, sc->sc_enaddr);
+
+	/* The attach is successful. */
+	sc->sc_attached = true;
 
 	return;
 }
@@ -536,7 +597,7 @@ cpsw_start(struct ifnet *ifp)
 	u_int mlen;
 
 	KERNHIST_FUNC(__func__);
-	KERNHIST_CALLED_5(cpswhist, sc, 0, 0, 0);
+	KERNHIST_CALLED_5(cpswhist, (uintptr_t)sc, 0, 0, 0);
 
 	if (__predict_false((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) !=
 	    IFF_RUNNING)) {
@@ -548,7 +609,7 @@ cpsw_start(struct ifnet *ifp)
 	else
 		txfree = sc->sc_txhead - sc->sc_txnext - 1;
 
-	KERNHIST_LOG(cpswhist, "start txf %x txh %x txn %x txr %x\n",
+	KERNHIST_LOG(cpswhist, "start txf %jx txh %jx txn %jx txr %jx\n",
 	    txfree, sc->sc_txhead, sc->sc_txnext, sc->sc_txrun);
 
 	while (txfree > 0) {
@@ -600,7 +661,7 @@ cpsw_start(struct ifnet *ifp)
 				dw[3] |= CPDMA_BD_SOP | CPDMA_BD_OWNER |
 				    MAX(mlen, CPSW_PAD_LEN);
 
-			if (seg == dm->dm_nsegs - 1 && !pad)
+			if ((seg == dm->dm_nsegs - 1) && !pad)
 				dw[3] |= CPDMA_BD_EOP;
 
 			cpsw_set_txdesc(sc, sc->sc_txnext, &bd);
@@ -629,7 +690,7 @@ cpsw_start(struct ifnet *ifp)
 		/* terminate the new chain */
 		KASSERT(eopi == TXDESC_PREV(sc->sc_txnext));
 		cpsw_set_txdesc_next(sc, TXDESC_PREV(sc->sc_txnext), 0);
-		KERNHIST_LOG(cpswhist, "CP %x HDP %x s %x e %x\n",
+		KERNHIST_LOG(cpswhist, "CP %jx HDP %jx s %jx e %jx\n",
 		    cpsw_read_4(sc, CPSW_CPDMA_TX_CP(0)),
 		    cpsw_read_4(sc, CPSW_CPDMA_TX_HDP(0)), txstart, eopi);
 		/* link the new chain on */
@@ -642,7 +703,7 @@ cpsw_start(struct ifnet *ifp)
 			    cpsw_txdesc_paddr(sc, txstart));
 		}
 	}
-	KERNHIST_LOG(cpswhist, "end txf %x txh %x txn %x txr %x\n",
+	KERNHIST_LOG(cpswhist, "end txf %jx txh %jx txn %jx txr %jx\n",
 	    txfree, sc->sc_txhead, sc->sc_txnext, sc->sc_txrun);
 }
 
@@ -683,7 +744,7 @@ cpsw_mii_wait(struct cpsw_softc * const sc, int reg)
 {
 	u_int tries;
 
-	for(tries = 0; tries < 1000; tries++) {
+	for (tries = 0; tries < 1000; tries++) {
 		if ((cpsw_read_4(sc, reg) & __BIT(31)) == 0)
 			return 0;
 		delay(1);
@@ -819,11 +880,12 @@ cpsw_init(struct ifnet *ifp)
 	cpsw_write_4(sc, CPSW_SS_SOFT_RESET, 1);
 	while(cpsw_read_4(sc, CPSW_SS_SOFT_RESET) & 1);
 
-	/* Clear table (30) and enable ALE(31) and set passthrough (4) */
-	cpsw_write_4(sc, CPSW_ALE_CONTROL, (3 << 30) | 0x10);
+	/* Clear table and enable ALE */
+	cpsw_write_4(sc, CPSW_ALE_CONTROL,
+	    ALECTL_ENABLE_ALE | ALECTL_CLEAR_TABLE);
 
 	/* Reset and init Sliver port 1 and 2 */
-	for (i = 0; i < 2; i++) {
+	for (i = 0; i < CPSW_ETH_PORTS; i++) {
 		uint32_t macctl;
 
 		/* Reset */
@@ -891,6 +953,9 @@ cpsw_init(struct ifnet *ifp)
 	}
 	sc->sc_rxhead = 0;
 
+	/* turn off flow control */
+	cpsw_write_4(sc, CPSW_SS_FLOW_CONTROL, 0);
+
 	/* align layer 3 header to 32-bit */
 	cpsw_write_4(sc, CPSW_CPDMA_RX_BUFFER_OFFSET, ETHER_ALIGN);
 
@@ -920,9 +985,10 @@ cpsw_init(struct ifnet *ifp)
 	cpsw_write_4(sc, CPSW_CPDMA_CPDMA_EOI_VECTOR, CPSW_INTROFF_TX);
 	cpsw_write_4(sc, CPSW_CPDMA_CPDMA_EOI_VECTOR, CPSW_INTROFF_MISC);
 
-	/* Initialze MDIO - ENABLE, PREAMBLE=0, FAULTENB, CLKDIV=0xFF */
+	/* Initialize MDIO - ENABLE, PREAMBLE=0, FAULTENB, CLKDIV=0xFF */
 	/* TODO Calculate MDCLK=CLK/(CLKDIV+1) */
-	cpsw_write_4(sc, MDIOCONTROL, (1<<30) | (1<<18) | 0xFF);
+	cpsw_write_4(sc, MDIOCONTROL,
+	    MDIOCTL_ENABLE | MDIOCTL_FAULTENB | MDIOCTL_CLKDIV(0xff));
 
 	mii_mediachg(mii);
 
@@ -960,7 +1026,7 @@ cpsw_stop(struct ifnet *ifp, int disable)
 	cpsw_write_4(sc, CPSW_CPDMA_RX_INTMASK_CLEAR, 1);
 	cpsw_write_4(sc, CPSW_WR_C_TX_EN(0), 0x0);
 	cpsw_write_4(sc, CPSW_WR_C_RX_EN(0), 0x0);
-	cpsw_write_4(sc, CPSW_WR_C_MISC_EN(0), 0x1F);
+	cpsw_write_4(sc, CPSW_WR_C_MISC_EN(0), 0x0);
 
 	cpsw_write_4(sc, CPSW_CPDMA_TX_TEARDOWN, 0);
 	cpsw_write_4(sc, CPSW_CPDMA_RX_TEARDOWN, 0);
@@ -983,7 +1049,7 @@ cpsw_stop(struct ifnet *ifp, int disable)
 	cpsw_write_4(sc, CPSW_SS_SOFT_RESET, 1);
 	while(cpsw_read_4(sc, CPSW_SS_SOFT_RESET) & 1);
 
-	for (i = 0; i < 2; i++) {
+	for (i = 0; i < CPSW_ETH_PORTS; i++) {
 		cpsw_write_4(sc, CPSW_SL_SOFT_RESET(i), 1);
 		while(cpsw_read_4(sc, CPSW_SL_SOFT_RESET(i)) & 1);
 	}
@@ -1051,13 +1117,14 @@ cpsw_rxintr(void *arg)
 	u_int len, off;
 
 	KERNHIST_FUNC(__func__);
-	KERNHIST_CALLED_5(cpswhist, sc, 0, 0, 0);
+	KERNHIST_CALLED_5(cpswhist, (uintptr_t)sc, 0, 0, 0);
 
 	for (;;) {
 		KASSERT(sc->sc_rxhead < CPSW_NRXDESCS);
 
 		i = sc->sc_rxhead;
-		KERNHIST_LOG(cpswhist, "rxhead %x CP %x\n", i, cpsw_read_4(sc, CPSW_CPDMA_RX_CP(0)), 0, 0);
+		KERNHIST_LOG(cpswhist, "rxhead %jx CP %jx\n", i,
+		    cpsw_read_4(sc, CPSW_CPDMA_RX_CP(0)), 0, 0);
 		dm = rdp->rx_dm[i];
 		m = rdp->rx_mb[i];
 
@@ -1094,15 +1161,11 @@ cpsw_rxintr(void *arg)
 		if (ISSET(dw[3], CPDMA_BD_PASSCRC))
 			len -= ETHER_CRC_LEN;
 
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = len;
 		m->m_data += off;
 
-		ifp->if_ipackets++;
-
-		bpf_mtap(ifp, m);
-
-		(*ifp->if_input)(ifp, m);
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 
 next:
 		sc->sc_rxhead = RXDESC_NEXT(sc->sc_rxhead);
@@ -1139,30 +1202,30 @@ cpsw_txintr(void *arg)
 	u_int cpi;
 
 	KERNHIST_FUNC(__func__);
-	KERNHIST_CALLED_5(cpswhist, sc, 0, 0, 0);
+	KERNHIST_CALLED_5(cpswhist, (uintptr_t)sc, 0, 0, 0);
 
 	KASSERT(sc->sc_txrun);
 
-	KERNHIST_LOG(cpswhist, "before txnext %x txhead %x txrun %x\n",
+	KERNHIST_LOG(cpswhist, "before txnext %jx txhead %jx txrun %jx\n",
 	    sc->sc_txnext, sc->sc_txhead, sc->sc_txrun, 0);
 
 	tx0_cp = cpsw_read_4(sc, CPSW_CPDMA_TX_CP(0));
 
 	if (tx0_cp == 0xfffffffc) {
+		/* Teardown, ack it */
 		cpsw_write_4(sc, CPSW_CPDMA_TX_CP(0), 0xfffffffc);
 		cpsw_write_4(sc, CPSW_CPDMA_TX_HDP(0), 0);
 		sc->sc_txrun = false;
 		return 0;
 	}
 
-	cpi = (tx0_cp - sc->sc_txdescs_pa) / sizeof(struct cpsw_cpdma_bd);
-
 	for (;;) {
 		tx0_cp = cpsw_read_4(sc, CPSW_CPDMA_TX_CP(0));
 		cpi = (tx0_cp - sc->sc_txdescs_pa) / sizeof(struct cpsw_cpdma_bd);
 		KASSERT(sc->sc_txhead < CPSW_NTXDESCS);
 
-		KERNHIST_LOG(cpswhist, "txnext %x txhead %x txrun %x cpi %x\n",
+		KERNHIST_LOG(cpswhist, "txnext %jx txhead %jx txrun %jx "
+		    "cpi %jx\n",
 		    sc->sc_txnext, sc->sc_txhead, sc->sc_txrun, cpi);
 
 		cpsw_get_txdesc(sc, sc->sc_txhead, &bd);
@@ -1175,7 +1238,8 @@ cpsw_txintr(void *arg)
 			goto next;
 
 		if (ISSET(dw[3], CPDMA_BD_OWNER)) {
-			printf("pwned %x %x %x\n", cpi, sc->sc_txhead, sc->sc_txnext);
+			printf("pwned %x %x %x\n", cpi, sc->sc_txhead,
+			    sc->sc_txnext);
 			break;
 		}
 
@@ -1225,9 +1289,9 @@ next:
 		}
 	}
 
-	KERNHIST_LOG(cpswhist, "after txnext %x txhead %x txrun %x\n",
+	KERNHIST_LOG(cpswhist, "after txnext %jx txhead %jx txrun %jx\n",
 	    sc->sc_txnext, sc->sc_txhead, sc->sc_txrun, 0);
-	KERNHIST_LOG(cpswhist, "CP %x HDP %x\n",
+	KERNHIST_LOG(cpswhist, "CP %jx HDP %jx\n",
 	    cpsw_read_4(sc, CPSW_CPDMA_TX_CP(0)),
 	    cpsw_read_4(sc, CPSW_CPDMA_TX_HDP(0)), 0, 0);
 
@@ -1235,7 +1299,7 @@ next:
 		ifp->if_timer = 0;
 
 	if (handled)
-		cpsw_start(ifp);
+		if_schedule_deferred_start(ifp);
 
 	return handled;
 }
@@ -1311,7 +1375,7 @@ cpsw_ale_entry_set_bcast_mac(uint32_t *ale_entry)
 }
 
 static void
-cpsw_ale_entry_set(uint32_t *ale_entry, ale_entry_filed_t field, uint32_t val)
+cpsw_ale_entry_set(uint32_t *ale_entry, ale_entry_field_t field, uint32_t val)
 {
 	/* Entry type[61:60] is addr entry(1), Mcast fwd state[63:62] is fw(3)*/
 	switch (field) {
@@ -1368,7 +1432,8 @@ cpsw_ale_read_entry(struct cpsw_softc *sc, uint16_t idx, uint32_t *ale_entry)
 }
 
 static void
-cpsw_ale_write_entry(struct cpsw_softc *sc, uint16_t idx, uint32_t *ale_entry)
+cpsw_ale_write_entry(struct cpsw_softc *sc, uint16_t idx,
+    const uint32_t *ale_entry)
 {
 	cpsw_write_4(sc, CPSW_ALE_TBLW0, ale_entry[0]);
 	cpsw_write_4(sc, CPSW_ALE_TBLW1, ale_entry[1]);
@@ -1404,7 +1469,7 @@ cpsw_ale_mc_entry_set(struct cpsw_softc *sc, uint8_t portmask, uint8_t *mac)
 	for (i = 0; i < CPSW_MAX_ALE_ENTRIES; i++) {
 		cpsw_ale_read_entry(sc, i, ale_entry);
 
-		/* Entry Type[61:60] is 0 for free entry */ 
+		/* Entry Type[61:60] is 0 for free entry */
 		if (free_index < 0 && ((ale_entry[1] >> 28) & 3) == 0) {
 			free_index = i;
 		}
@@ -1451,7 +1516,7 @@ cpsw_ale_update_addresses(struct cpsw_softc *sc, int purge)
 	cpsw_ale_write_entry(sc, 0, ale_entry);
 
 	/* Set outgoing MAC Address for Ports 1 and 2. */
-	for (i = 1; i < 3; ++i)
+	for (i = CPSW_CPPI_PORTS; i < (CPSW_ETH_PORTS + CPSW_CPPI_PORTS); ++i)
 		cpsw_ale_set_outgoing_mac(sc, i, mac);
 
 	/* Keep the broadcast address at table entry 1. */

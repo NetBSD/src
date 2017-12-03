@@ -1,4 +1,4 @@
-/*	$NetBSD: sfsqrt.c,v 1.5 2012/02/04 17:03:10 skrll Exp $	*/
+/*	$NetBSD: sfsqrt.c,v 1.5.6.1 2017/12/03 11:36:16 jdolecek Exp $	*/
 
 /*	$OpenBSD: sfsqrt.c,v 1.5 2001/03/29 03:58:19 mickey Exp $	*/
 
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sfsqrt.c,v 1.5 2012/02/04 17:03:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfsqrt.c,v 1.5.6.1 2017/12/03 11:36:16 jdolecek Exp $");
 
 #include "../spmath/float.h"
 #include "../spmath/sgl_float.h"
@@ -150,7 +150,7 @@ sgl_fsqrt(sgl_floating_point *srcptr, sgl_floating_point *dstptr,
 
 	/* check for inexact */
 	if (Sgl_isnotzero(src)) {
-		if (!even_exponent & Sgl_islessthan(result,src))
+		if (!even_exponent && Sgl_islessthan(result,src))
 			Sgl_increment(result);
 		guardbit = Sgl_lowmantissa(result);
 		Sgl_rightshiftby1(result);

@@ -1,4 +1,4 @@
-/*	$NetBSD: nandemulator.c,v 1.5.16.1 2012/11/20 03:02:13 tls Exp $	*/
+/*	$NetBSD: nandemulator.c,v 1.5.16.2 2017/12/03 11:37:06 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nandemulator.c,v 1.5.16.1 2012/11/20 03:02:13 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nandemulator.c,v 1.5.16.2 2017/12/03 11:37:06 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -46,8 +46,9 @@ __KERNEL_RCSID(0, "$NetBSD: nandemulator.c,v 1.5.16.1 2012/11/20 03:02:13 tls Ex
 #include <dev/nand/onfi.h>
 #include <dev/nand/nand_crc.h>
 
+#include "ioconf.h"
+
 extern struct cfdriver nandemulator_cd;
-void nandemulatorattach(int n);
 
 static int nandemulator_match(device_t, cfdata_t, void *);
 static void nandemulator_attach(device_t, device_t, void *);

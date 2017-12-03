@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.74 2012/02/12 16:34:11 matt Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.74.6.1 2017/12/03 11:36:56 jdolecek Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.74 2012/02/12 16:34:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.74.6.1 2017/12/03 11:36:56 jdolecek Exp $");
 
 #define COMPAT_SUNOS 1
 
@@ -522,7 +522,7 @@ sunos32_sys_mount(struct lwp *l, const struct sunos32_sys_mount_args *uap, regis
 		na.retrans = sna.retrans;
 		na.hostname = (char *)(u_long)sna.hostname;
 
-		return do_sys_mount(l, vfs_getopsbyname("nfs"), NULL,
+		return do_sys_mount(l, "nfs", UIO_SYSSPACE,
 		    SCARG_P32(uap, path), nflags, &na, UIO_SYSSPACE, sizeof na,
 		    &dummy);
 	}
@@ -530,7 +530,7 @@ sunos32_sys_mount(struct lwp *l, const struct sunos32_sys_mount_args *uap, regis
 	if (strcmp(fsname, "4.2") == 0)
 		strcpy(fsname, "ffs");
 
-	return do_sys_mount(l, vfs_getopsbyname(fsname), NULL,
+	return do_sys_mount(l, fsname, UIO_SYSSPACE,
 	    SCARG_P32(uap, path), nflags, SCARG_P32(uap, data), UIO_USERSPACE,
 	    0, &dummy);
 }
@@ -622,7 +622,7 @@ sunos32_sys_getdents(struct lwp *l, const struct sunos32_sys_getdents_args *uap,
 		goto out1;
 	}
 
-	vp = fp->f_data;
+	vp = fp->f_vnode;
 	if (vp->v_type != VDIR) {
 		error = EINVAL;
 		goto out1;
@@ -659,8 +659,10 @@ again:
 	for (cookie = cookiebuf; len > 0; len -= reclen) {
 		bdp = (struct dirent *)inp;
 		reclen = bdp->d_reclen;
-		if (reclen & 3)
-			panic("sunos_getdents");
+		if (reclen & 3) {
+			error = EIO;
+			goto out;
+		}
 		if (cookie && (*cookie >> 32) != 0) {
 			compat_offseterr(vp, "sunos_getdents");
 			error = EINVAL;
@@ -758,7 +760,7 @@ sunos32_sys_mmap(struct lwp *l, const struct sunos32_sys_mmap_args *uap, registe
 
 	error = sys_mmap(l, &ua, retval);
 	if ((u_long)*retval > (u_long)UINT_MAX) {
-		printf("sunos32_mmap: retval out of range: 0x%lx",
+		printf("sunos32_mmap: retval out of range: 0x%lx\n",
 		       (u_long)*retval);
 		/* Should try to recover and return an error here. */
 	}
@@ -1116,7 +1118,7 @@ sunos32_sys_fstatfs(struct lwp *l, const struct sunos32_sys_fstatfs_args *uap, r
 	/* fd_getvnode() will use the descriptor for us */
 	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)
 		return (error);
-	mp = ((struct vnode *)fp->f_data)->v_mount;
+	mp = fp->f_vnode->v_mount;
 	sp = &mp->mnt_stat;
 	if ((error = VFS_STATVFS(mp, sp)) != 0)
 		goto out;

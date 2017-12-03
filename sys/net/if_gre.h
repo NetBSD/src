@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.h,v 1.42 2011/11/29 17:28:45 drochner Exp $ */
+/*	$NetBSD: if_gre.h,v 1.42.8.1 2017/12/03 11:39:02 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@
 #ifndef _NET_IF_GRE_H_
 #define _NET_IF_GRE_H_
 
+#include <sys/ioccom.h>
 #include <sys/evcnt.h>
 #include <sys/queue.h>
 #include <sys/mutex.h>

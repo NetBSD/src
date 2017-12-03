@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.42 2012/07/22 14:32:52 matt Exp $ */
+/* $NetBSD: sbmac.c,v 1.42.2.1 2017/12/03 11:36:28 jdolecek Exp $ */
 
 /*
  * Copyright 2000, 2001, 2004
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.42 2012/07/22 14:32:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.42.2.1 2017/12/03 11:36:28 jdolecek Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -75,6 +75,8 @@ __KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.42 2012/07/22 14:32:52 matt Exp $");
 #include <mips/sibyte/include/sb1250_dma.h>
 #include <mips/sibyte/include/sb1250_scd.h>
 
+#include <evbmips/sbmips/systemsw.h>
+
 /* Simple types */
 
 typedef u_long sbmac_port_t;
@@ -111,8 +113,8 @@ typedef enum { sbmac_state_uninit, sbmac_state_off, sbmac_state_on,
 #define	dprintf(x)
 #endif
 
-#define	SBMAC_READCSR(t) mips3_ld((volatile uint64_t *) (t))
-#define	SBMAC_WRITECSR(t, v) mips3_sd((volatile uint64_t *) (t), (v))
+#define	SBMAC_READCSR(t) mips3_ld((register_t)(t))
+#define	SBMAC_WRITECSR(t, v) mips3_sd((register_t)(t), (v))
 
 #define	PKSEG1(x) ((sbmac_port_t) MIPS_PHYS_TO_KSEG1(x))
 
@@ -640,7 +642,7 @@ sbdma_add_txbuffer(sbmacdma_t *d, struct mbuf *m)
 			 * Check to see if the mbuf spans a page boundary.  If
 			 * it does, and the physical pages behind the virtual
 			 * pages are not contiguous, split it so that each
-			 * virtual page uses it's own Tx descriptor.
+			 * virtual page uses its own Tx descriptor.
 			 */
 			if (trunc_page(addr) != trunc_page(addr + len - 1)) {
 				next_len = (addr + len) - trunc_page(addr + len);
@@ -917,8 +919,7 @@ sbdma_rx_process(struct sbmac_softc *sc, sbmacdma_t *d)
 			 */
 			m->m_pkthdr.len = m->m_len = len;
 
-			ifp->if_ipackets++;
-			m->m_pkthdr.rcvif = ifp;
+			m_set_rcvif(m, ifp);
 
 
 			/*
@@ -934,11 +935,10 @@ sbdma_rx_process(struct sbmac_softc *sc, sbmacdma_t *d)
 			 * interface is in promiscuous mode.
 			 */
 
-			bpf_mtap(ifp, m);
 			/*
 			 * Pass the buffer to the kernel
 			 */
-			(*ifp->if_input)(ifp, m);
+			if_percpuq_enqueue(ifp->if_percpuq, m);
 		} else {
 			/*
 			 * Packet was mangled somehow.  Just drop it and
@@ -1756,7 +1756,7 @@ sbmac_intr(void *xsc, uint32_t status, vaddr_t pc)
 	}
 
 	/* try to get more packets going */
-	sbmac_start(ifp);
+	if_schedule_deferred_start(ifp);
 }
 
 
@@ -2355,5 +2355,6 @@ sbmac_attach(device_t parent, device_t self, void *aux)
 	 * Call MI attach routines.
 	 */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, eaddr);
 }

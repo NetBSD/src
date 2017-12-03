@@ -1,4 +1,4 @@
-/*	$NetBSD: spinlock.h,v 1.3.4.2 2014/08/20 00:04:21 tls Exp $	*/
+/*	$NetBSD: spinlock.h,v 1.3.4.3 2017/12/03 11:37:59 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,6 +34,11 @@
 
 #include <sys/cdefs.h>
 #include <sys/mutex.h>
+
+#include <machine/limits.h>
+
+#define	__acquires(lock)	/* XXX lockdep stuff */
+#define	__releases(lock)	/* XXX lockdep stuff */
 
 typedef struct spinlock {
 	kmutex_t sl_lock;
@@ -105,18 +110,71 @@ spin_lock_destroy(spinlock_t *spinlock)
 	KASSERT(mutex_owned(&(spinlock)->sl_lock))
 
 /*
- * Linux rwlocks are reader/writer spin locks.  We implement them as
- * normal spin locks without reader/writer semantics for expedience.
- * If that turns out to not work, adapting to reader/writer semantics
- * shouldn't be too hard.
+ * Stupid reader/writer spin locks.  No attempt to avoid writer
+ * starvation.  Must allow recursive readers.  We use mutex and state
+ * instead of compare-and-swap for expedience and LOCKDEBUG support.
  */
 
-#define	rwlock_t		spinlock_t
-#define	rwlock_init		spin_lock_init
-#define	rwlock_destroy		spin_lock_destroy
-#define	write_lock_irq		spin_lock_irq
-#define	write_unlock_irq	spin_unlock_irq
-#define	read_lock		spin_lock
-#define	read_unlock		spin_unlock
+typedef struct linux_rwlock {
+	kmutex_t	rw_lock;
+	unsigned	rw_nreaders;
+} rwlock_t;
+
+static inline void
+rwlock_init(rwlock_t *rw)
+{
+
+	mutex_init(&rw->rw_lock, MUTEX_DEFAULT, IPL_VM);
+	rw->rw_nreaders = 0;
+}
+
+static inline void
+rwlock_destroy(rwlock_t *rw)
+{
+
+	KASSERTMSG(rw->rw_nreaders == 0,
+	    "rwlock still held by %u readers", rw->rw_nreaders);
+	mutex_destroy(&rw->rw_lock);
+}
+
+static inline void
+write_lock_irq(rwlock_t *rw)
+{
+
+	for (;;) {
+		mutex_spin_enter(&rw->rw_lock);
+		if (rw->rw_nreaders == 0)
+			break;
+		mutex_spin_exit(&rw->rw_lock);
+	}
+}
+
+static inline void
+write_unlock_irq(rwlock_t *rw)
+{
+
+	KASSERT(rw->rw_nreaders == 0);
+	mutex_spin_exit(&rw->rw_lock);
+}
+
+static inline void
+read_lock(rwlock_t *rw)
+{
+
+	mutex_spin_enter(&rw->rw_lock);
+	KASSERT(rw->rw_nreaders < UINT_MAX);
+	rw->rw_nreaders++;
+	mutex_spin_exit(&rw->rw_lock);
+}
+
+static inline void
+read_unlock(rwlock_t *rw)
+{
+
+	mutex_spin_enter(&rw->rw_lock);
+	KASSERT(0 < rw->rw_nreaders);
+	rw->rw_nreaders--;
+	mutex_spin_exit(&rw->rw_lock);
+}
 
 #endif  /* _LINUX_SPINLOCK_H_ */

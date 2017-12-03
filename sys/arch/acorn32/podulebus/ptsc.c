@@ -1,4 +1,4 @@
-/*	$NetBSD: ptsc.c,v 1.17.12.1 2012/11/20 03:00:54 tls Exp $	*/
+/*	$NetBSD: ptsc.c,v 1.17.12.2 2017/12/03 11:35:45 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptsc.c,v 1.17.12.1 2012/11/20 03:00:54 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptsc.c,v 1.17.12.2 2017/12/03 11:35:45 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -385,7 +385,7 @@ int
 ptsc_build_dma_chain(void *v1, void *v2, void *p, int l)
 {
 #if 0
-	vm_offset_t  pa, lastpa;
+	vaddr_t  pa, lastpa;
 	char	    *ptr;
 	int	     len, prelen, postlen, max_t, n;
 #endif
@@ -404,12 +404,12 @@ do { chain[n].ptr = (p); chain[n].len = (l); chain[n++].flg = (f); } while(0)
 	n = 0;
 
 	if (l < 512)
-		set_link(n, (vm_offset_t)p, l, SFAS_CHAIN_BUMP);
+		set_link(n, (vaddr_t)p, l, SFAS_CHAIN_BUMP);
 	else if (p >= (void *)0xFF000000) {
 		while(l != 0) {
 			len = ((l > sc->sc_bump_sz) ? sc->sc_bump_sz : l);
 	  
-			set_link(n, (vm_offset_t)p, len, SFAS_CHAIN_BUMP);
+			set_link(n, (vaddr_t)p, len, SFAS_CHAIN_BUMP);
 	  
 			p += len;
 			l -= len;
@@ -423,7 +423,7 @@ do { chain[n].ptr = (p); chain[n].len = (l); chain[n++].flg = (f); } while(0)
 
 		if (prelen) {
 			prelen = 4-prelen;
-			set_link(n, (vm_offset_t)ptr, prelen, SFAS_CHAIN_BUMP);
+			set_link(n, (vaddr_t)ptr, prelen, SFAS_CHAIN_BUMP);
 			ptr += prelen;
 			len -= prelen;
 		}
@@ -449,7 +449,7 @@ do { chain[n].ptr = (p); chain[n].len = (l); chain[n++].flg = (f); } while(0)
 		}
       
 		if (len)
-			set_link(n, (vm_offset_t)ptr, len, SFAS_CHAIN_BUMP);
+			set_link(n, (vaddr_t)ptr, len, SFAS_CHAIN_BUMP);
 	}
 
 	return(n);

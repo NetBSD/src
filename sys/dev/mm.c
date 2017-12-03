@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.c,v 1.16.2.2 2014/08/20 00:03:35 tls Exp $	*/
+/*	$NetBSD: mm.c,v 1.16.2.3 2017/12/03 11:36:58 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2008, 2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mm.c,v 1.16.2.2 2014/08/20 00:03:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mm.c,v 1.16.2.3 2017/12/03 11:36:58 jdolecek Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -128,11 +128,11 @@ mm_init(void)
  * constant, general mapping address otherwise.
  */
 static inline vaddr_t
-dev_mem_getva(paddr_t pa)
+dev_mem_getva(paddr_t pa, int color)
 {
 #ifdef __HAVE_MM_MD_CACHE_ALIASING
 	return uvm_km_alloc(kernel_map, PAGE_SIZE,
-	    atop(pa) & uvmexp.colormask,
+	    color & uvmexp.colormask,
 	    UVM_KMF_VAONLY | UVM_KMF_WAITVA | UVM_KMF_COLORMATCH);
 #else
 	return dev_mem_addr;
@@ -161,9 +161,10 @@ dev_mem_readwrite(struct uio *uio, struct iovec *iov)
 	size_t len, offset;
 	bool have_direct;
 	int error;
+	int color = 0;
 
 	/* Check for wrap around. */
-	if ((intptr_t)uio->uio_offset != uio->uio_offset) {
+	if ((uintptr_t)uio->uio_offset != uio->uio_offset) {
 		return EFAULT;
 	}
 	paddr = uio->uio_offset & ~PAGE_MASK;
@@ -175,16 +176,24 @@ dev_mem_readwrite(struct uio *uio, struct iovec *iov)
 	offset = uio->uio_offset & PAGE_MASK;
 	len = MIN(uio->uio_resid, PAGE_SIZE - offset);
 
+#ifdef __HAVE_MM_MD_CACHE_ALIASING
+	have_direct = mm_md_page_color(paddr, &color);
+#else
+	have_direct = true;
+	color = 0;
+#endif
+
 #ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
 	/* Is physical address directly mapped?  Return VA. */
-	have_direct = mm_md_direct_mapped_phys(paddr, &vaddr);
+	if (have_direct)
+		have_direct = mm_md_direct_mapped_phys(paddr, &vaddr);
 #else
 	vaddr = 0;
 	have_direct = false;
 #endif
 	if (!have_direct) {
 		/* Get a special virtual address. */
-		const vaddr_t va = dev_mem_getva(paddr);
+		const vaddr_t va = dev_mem_getva(paddr, color);
 
 		/* Map selected KVA to physical address. */
 		mutex_enter(&dev_mem_lock);
@@ -337,6 +346,11 @@ mm_readwrite(dev_t dev, struct uio *uio, int flags)
 			}
 			/* Break directly out of the loop. */
 			return 0;
+		case DEV_FULL:
+			if (uio->uio_rw == UIO_WRITE) {
+				return ENOSPC;
+			}
+			/*FALLTHROUGH*/
 #if defined(COMPAT_16) && defined(__arm)
 		case _DEV_ZERO_oARM:
 #endif

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC_USERMODE,v 1.1 2012/06/30 15:03:57 reinoud Exp $
+# $NetBSD: GENERIC_USERMODE,v 1.1.2.1 2017/12/03 11:35:47 jdolecek Exp $
 
 machine usermode
 include "arch/usermode/conf/GENERIC.common"
@@ -8,13 +8,13 @@ no options EXEC_ELF32
 
 options 	INSECURE		# required by sysinst
 
-options		TEXTADDR=0x40000000	# 1 Gb `phys ram' / total space
-options		KVMSIZE= 0x10000000	# KVM space reserved in VM map, 256 Mb
-options		NKMEMPAGES_MAX=32768	# 128 Mb max
+options 	TEXTADDR=0x40000000	# 1 Gb `phys ram' / total space
+options 	KVMSIZE= 0x10000000	# KVM space reserved in VM map, 256 Mb
+options 	NKMEMPAGES_MAX=32768	# 128 Mb max
 
 makeoptions	COPTS+="-m64"
 makeoptions	LD="ld -melf_amd64"
 
 #options 	INCLUDE_CONFIG_FILE
-#ident 		"GENERIC32-$Revision: 1.1 $"
+#ident 		"GENERIC32-$Revision: 1.1.2.1 $"
 

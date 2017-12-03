@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.33.2.2 2014/08/20 00:03:25 tls Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.33.2.3 2017/12/03 11:36:44 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -61,6 +61,9 @@
 extern char bootdev[];
 extern bool root_fs_quickseekable;
 
+struct btinfo_bootdev_unit bi_unit;
+bool bootinfo_pass_bootunit = false;
+
 /*
  * This is ugly.  A path on a sparc machine is something like this:
  *
@@ -94,7 +97,8 @@ filename(char *str, char *ppart)
 			 * if not, lp is the delimiter between device and
 			 * path.  if the last component was a block device.
 			 */
-			if (!strcmp(devtype, "block")) {
+			if (strcmp(devtype, "block") == 0
+			    || strcmp(devtype, "scsi") == 0) {
 				/* search for arguments */
 				DPRINTF(("filename: hunting for arguments "
 				       "in %s\n", lp));
@@ -357,6 +361,69 @@ search_label(struct of_dev *devp, u_long off, char *buf,
 	return ("no disk label");
 }
 
+static void
+device_target_unit(const char *dev, int ihandle)
+{
+	cell_t units[4], phandle, myself, depth = 0, odepth = 0, cnt;
+	char buf[256];
+
+	/* init the data passed to the kernel */
+	bootinfo_pass_bootunit = false;
+	memset(&bi_unit, 0, sizeof(bi_unit));
+
+	/* save old my-self value */
+	OF_interpret("my-self", 0, 1, &myself);
+	/* set our device as my-self */
+	OF_interpret("to my-self", 1, 0, HDL2CELL(ihandle));
+
+	/*
+	 * my-unit delivers a variable number of cells, we could
+	 * walk up the path and find a #address-cells value that
+	 * describes it, but it seems to just work this simple
+	 * way.
+	 */
+	OF_interpret("depth", 0, 1, &odepth);	
+	OF_interpret("my-unit depth", 0, 5, &depth,
+	    &units[0], &units[1], &units[2], &units[3]);
+	cnt = depth-odepth;
+
+	/*
+	 * Old versions of QEMU's OpenBIOS have a bug in the
+	 * CIF implementation for instance_to_package, test
+	 * for that explicitly here and work around it if needed.
+	 */
+	phandle = OF_instance_to_package(ihandle);	
+	OF_package_to_path(phandle, buf, sizeof(buf));
+	buf[sizeof(buf)-1] = 0;
+	if (strlen(buf) > 2 && strlen(dev) > 2 &&
+	    strncmp(buf, dev, strlen(buf)) != 0) {
+		DPRINTF(("OpenBIOS workaround: phandle %" PRIx32 "is %s, "
+		    "does not match %s\n", (uint32_t)phandle, buf, dev));
+		OF_interpret("my-self ihandle>non-interposed-phandle",
+		     0, 1, &phandle);
+		OF_package_to_path(phandle, buf, sizeof(buf));
+		DPRINTF(("new phandle %" PRIx32 " is %s\n",
+		    (uint32_t)phandle, buf));
+	}
+
+	bi_unit.phandle = phandle;
+	bi_unit.parent = OF_parent(phandle);
+	bi_unit.lun = units[cnt > 2 ? 3 : 1];
+	bi_unit.target = units[cnt > 2 ? 2 : 0];
+	if (cnt >= 4)
+		bi_unit.wwn = (uint64_t)units[0] << 32 | (uint32_t)units[1];
+	DPRINTF(("boot device package: %" PRIx32 ", parent: %" PRIx32 
+	    ", lun: %" PRIu32 ", target: %" PRIu32 ", wwn: %" PRIx64 "\n",
+	    bi_unit.phandle, bi_unit.parent, bi_unit.lun, bi_unit.target,
+	    bi_unit.wwn));
+
+	/* restore my-self */
+	OF_interpret("to my-self", 1, 0, myself);
+
+	/* now that we have gatherd all the details, pass them to the kernel */
+	bootinfo_pass_bootunit = true;
+}
+
 int
 devopen(struct open_file *of, const char *name, char **file)
 {
@@ -372,6 +439,7 @@ devopen(struct open_file *of, const char *name, char **file)
 	size_t readsize;
 	char *errmsg = NULL, *pp = NULL, savedpart = 0;
 	int error = 0;
+	bool get_target_unit = false;
 
 	if (ofdev.handle != -1)
 		panic("devopen: ofdev already in use");
@@ -410,7 +478,10 @@ devopen(struct open_file *of, const char *name, char **file)
 	if (_prom_getprop(handle, "device_type", b.buf, sizeof b.buf) < 0)
 		return ENXIO;
 	DPRINTF(("devopen: %s is a %s device\n", fname, b.buf));
-	if (!strcmp(b.buf, "block")) {
+	if (strcmp(b.buf, "block") == 0 || strcmp(b.buf, "scsi") == 0) {
+
+		get_target_unit = true;
+
 		pp = strrchr(fname, ':');
 		if (pp && pp[1] >= 'a' && pp[1] <= 'f' && pp[2] == 0) {
 			savedpart = pp[1];
@@ -457,9 +528,13 @@ open_again:
 		return ENXIO;
 	}
 	DPRINTF(("devopen: %s is now open\n", fname));
+
+	if (get_target_unit)
+		device_target_unit(fname, handle);
+
 	memset(&ofdev, 0, sizeof ofdev);
 	ofdev.handle = handle;
-	if (!strcmp(b.buf, "block")) {
+	if (strcmp(b.buf, "block") == 0 || strcmp(b.buf, "scsi") == 0) {
 		ofdev.type = OFDEV_DISK;
 		ofdev.bsize = DEV_BSIZE;
 		/* First try to find a disklabel without MBR partitions */

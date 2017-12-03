@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.139.2.3 2014/08/20 00:04:29 tls Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.139.2.4 2017/12/03 11:38:45 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.139.2.3 2014/08/20 00:04:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.139.2.4 2017/12/03 11:38:45 jdolecek Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_compat_netbsd.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,6 +123,10 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.139.2.3 2014/08/20 00:04:29 tls Ex
 #include <sys/uidinfo.h>
 #include <sys/kernel.h>
 #include <sys/kthread.h>
+
+#ifdef COMPAT_70
+#include <compat/sys/socket.h>
+#endif
 
 /*
  * Unix communications domain.
@@ -319,6 +327,10 @@ unp_output(struct mbuf *m, struct mbuf *control, struct unpcb *unp)
 		sun = &sun_noname;
 	if (unp->unp_conn->unp_flags & UNP_WANTCRED)
 		control = unp_addsockcred(curlwp, control);
+#ifdef COMPAT_SOCKCRED70
+	if (unp->unp_conn->unp_flags & UNP_OWANTCRED)
+		control = compat_70_unp_addsockcred(curlwp, control);
+#endif
 	if (sbappendaddr(&so2->so_rcv, (const struct sockaddr *)sun, m,
 	    control) == 0) {
 		so2->so_rcv.sb_overflowed++;
@@ -333,39 +345,25 @@ unp_output(struct mbuf *m, struct mbuf *control, struct unpcb *unp)
 }
 
 static void
-unp_setaddr(struct socket *so, struct mbuf *nam, bool peeraddr)
+unp_setaddr(struct socket *so, struct sockaddr *nam, bool peeraddr)
 {
-	const struct sockaddr_un *sun;
+	const struct sockaddr_un *sun = NULL;
 	struct unpcb *unp;
-	bool ext;
 
 	KASSERT(solocked(so));
 	unp = sotounpcb(so);
-	ext = false;
 
-	for (;;) {
-		sun = NULL;
-		if (peeraddr) {
-			if (unp->unp_conn && unp->unp_conn->unp_addr)
-				sun = unp->unp_conn->unp_addr;
-		} else {
-			if (unp->unp_addr)
-				sun = unp->unp_addr;
-		}
-		if (sun == NULL)
-			sun = &sun_noname;
-		nam->m_len = sun->sun_len;
-		if (nam->m_len > MLEN && !ext) {
-			sounlock(so);
-			MEXTMALLOC(nam, MAXPATHLEN * 2, M_WAITOK);
-			solock(so);
-			ext = true;
-		} else {
-			KASSERT(nam->m_len <= MAXPATHLEN * 2);
-			memcpy(mtod(nam, void *), sun, (size_t)nam->m_len);
-			break;
-		}
+	if (peeraddr) {
+		if (unp->unp_conn && unp->unp_conn->unp_addr)
+			sun = unp->unp_conn->unp_addr;
+	} else {
+		if (unp->unp_addr)
+			sun = unp->unp_addr;
 	}
+	if (sun == NULL)
+		sun = &sun_noname;
+
+	memcpy(nam, sun, sun->sun_len);
 }
 
 static int
@@ -423,7 +421,7 @@ unp_recvoob(struct socket *so, struct mbuf *m, int flags)
 }
 
 static int
-unp_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
+unp_send(struct socket *so, struct mbuf *m, struct sockaddr *nam,
     struct mbuf *control, struct lwp *l)
 {
 	struct unpcb *unp = sotounpcb(so);
@@ -505,6 +503,16 @@ unp_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
 			unp->unp_conn->unp_flags &= ~UNP_WANTCRED;
 			control = unp_addsockcred(l, control);
 		}
+#ifdef COMPAT_SOCKCRED70
+		if (unp->unp_conn->unp_flags & UNP_OWANTCRED) {
+			/*
+			 * Credentials are passed only once on
+			 * SOCK_STREAM and SOCK_SEQPACKET.
+			 */
+			unp->unp_conn->unp_flags &= ~UNP_OWANTCRED;
+			control = compat_70_unp_addsockcred(l, control);
+		}
+#endif
 		/*
 		 * Send to paired receive port, and then reduce
 		 * send buffer hiwater marks to maintain backpressure.
@@ -561,41 +569,6 @@ unp_sendoob(struct socket *so, struct mbuf *m, struct mbuf * control)
 	return EOPNOTSUPP;
 }
 
-static int
-unp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
-    struct mbuf *control, struct lwp *l)
-{
-
-	KASSERT(req != PRU_ATTACH);
-	KASSERT(req != PRU_DETACH);
-	KASSERT(req != PRU_ACCEPT);
-	KASSERT(req != PRU_BIND);
-	KASSERT(req != PRU_LISTEN);
-	KASSERT(req != PRU_CONNECT);
-	KASSERT(req != PRU_CONNECT2);
-	KASSERT(req != PRU_DISCONNECT);
-	KASSERT(req != PRU_SHUTDOWN);
-	KASSERT(req != PRU_ABORT);
-	KASSERT(req != PRU_CONTROL);
-	KASSERT(req != PRU_SENSE);
-	KASSERT(req != PRU_PEERADDR);
-	KASSERT(req != PRU_SOCKADDR);
-	KASSERT(req != PRU_RCVD);
-	KASSERT(req != PRU_RCVOOB);
-	KASSERT(req != PRU_SEND);
-	KASSERT(req != PRU_SENDOOB);
-	KASSERT(req != PRU_PURGEIF);
-
-	KASSERT(solocked(so));
-
-	if (sotounpcb(so) == NULL)
-		return EINVAL;
-
-	panic("piusrreq");
-
-	return 0;
-}
-
 /*
  * Unix domain socket option processing.
  */
@@ -615,6 +588,9 @@ uipc_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 		switch (sopt->sopt_name) {
 		case LOCAL_CREDS:
 		case LOCAL_CONNWAIT:
+#ifdef COMPAT_SOCKCRED70
+		case LOCAL_OCREDS:
+#endif
 			error = sockopt_getint(sopt, &optval);
 			if (error)
 				break;
@@ -631,6 +607,11 @@ uipc_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 			case LOCAL_CONNWAIT:
 				OPTSET(UNP_CONNWAIT);
 				break;
+#ifdef COMPAT_SOCKCRED70
+			case LOCAL_OCREDS:
+				OPTSET(UNP_OWANTCRED);
+				break;
+#endif
 			}
 			break;
 #undef OPTSET
@@ -658,6 +639,12 @@ uipc_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 			optval = OPTBIT(UNP_WANTCRED);
 			error = sockopt_setint(sopt, optval);
 			break;
+#ifdef COMPAT_SOCKCRED70
+		case LOCAL_OCREDS:
+			optval = OPTBIT(UNP_OWANTCRED);
+			error = sockopt_setint(sopt, optval);
+			break;
+#endif
 #undef OPTBIT
 
 		default:
@@ -785,7 +772,7 @@ unp_detach(struct socket *so)
 }
 
 static int
-unp_accept(struct socket *so, struct mbuf *nam)
+unp_accept(struct socket *so, struct sockaddr *nam)
 {
 	struct unpcb *unp = sotounpcb(so);
 	struct socket *so2;
@@ -888,7 +875,7 @@ unp_stat(struct socket *so, struct stat *ub)
 }
 
 static int
-unp_peeraddr(struct socket *so, struct mbuf *nam)
+unp_peeraddr(struct socket *so, struct sockaddr *nam)
 {
 	KASSERT(solocked(so));
 	KASSERT(sotounpcb(so) != NULL);
@@ -899,7 +886,7 @@ unp_peeraddr(struct socket *so, struct mbuf *nam)
 }
 
 static int
-unp_sockaddr(struct socket *so, struct mbuf *nam)
+unp_sockaddr(struct socket *so, struct sockaddr *nam)
 {
 	KASSERT(solocked(so));
 	KASSERT(sotounpcb(so) != NULL);
@@ -910,30 +897,23 @@ unp_sockaddr(struct socket *so, struct mbuf *nam)
 }
 
 /*
- * Allocate the new sockaddr.  We have to allocate one
- * extra byte so that we can ensure that the pathname
- * is nul-terminated. Note that unlike linux, we don't
- * include in the address length the NUL in the path
- * component, because doing so, would exceed sizeof(sockaddr_un)
- * for fully occupied pathnames. Linux is also inconsistent,
- * because it does not include the NUL in the length of
- * what it calls "abstract" unix sockets.
+ * we only need to perform this allocation until syscalls other than
+ * bind are adjusted to use sockaddr_big.
  */
 static struct sockaddr_un *
-makeun(struct mbuf *nam, size_t *addrlen) {
+makeun_sb(struct sockaddr *nam, size_t *addrlen)
+{
 	struct sockaddr_un *sun;
 
-	*addrlen = nam->m_len + 1;
+	*addrlen = nam->sa_len + 1;
 	sun = malloc(*addrlen, M_SONAME, M_WAITOK);
-	m_copydata(nam, 0, nam->m_len, (void *)sun);
-	*(((char *)sun) + nam->m_len) = '\0';
-	sun->sun_len = strlen(sun->sun_path) +
-	    offsetof(struct sockaddr_un, sun_path);
+	memcpy(sun, nam, nam->sa_len);
+	*(((char *)sun) + nam->sa_len) = '\0';
 	return sun;
 }
 
 static int
-unp_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
+unp_bind(struct socket *so, struct sockaddr *nam, struct lwp *l)
 {
 	struct sockaddr_un *sun;
 	struct unpcb *unp;
@@ -964,7 +944,7 @@ unp_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
 	sounlock(so);
 
 	p = l->l_proc;
-	sun = makeun(nam, &addrlen);
+	sun = makeun_sb(nam, &addrlen);
 
 	pb = pathbuf_create(sun->sun_path);
 	if (pb == NULL) {
@@ -1077,7 +1057,7 @@ unp_abort(struct socket *so)
 }
 
 static int
-unp_connect1(struct socket *so, struct socket *so2)
+unp_connect1(struct socket *so, struct socket *so2, struct lwp *l)
 {
 	struct unpcb *unp = sotounpcb(so);
 	struct unpcb *unp2;
@@ -1101,6 +1081,18 @@ unp_connect1(struct socket *so, struct socket *so2)
 
 	unp2 = sotounpcb(so2);
 	unp->unp_conn = unp2;
+
+	if ((so->so_proto->pr_flags & PR_CONNREQUIRED) != 0) {
+		unp2->unp_connid.unp_pid = l->l_proc->p_pid;
+		unp2->unp_connid.unp_euid = kauth_cred_geteuid(l->l_cred);
+		unp2->unp_connid.unp_egid = kauth_cred_getegid(l->l_cred);
+		unp2->unp_flags |= UNP_EIDSVALID;
+		if (unp2->unp_flags & UNP_EIDSBIND) {
+			unp->unp_connid = unp2->unp_connid;
+			unp->unp_flags |= UNP_EIDSVALID;
+		}
+	}
+
 	switch (so->so_type) {
 
 	case SOCK_DGRAM:
@@ -1127,7 +1119,7 @@ unp_connect1(struct socket *so, struct socket *so2)
 }
 
 int
-unp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
+unp_connect(struct socket *so, struct sockaddr *nam, struct lwp *l)
 {
 	struct sockaddr_un *sun;
 	vnode_t *vp;
@@ -1149,7 +1141,7 @@ unp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 	unp->unp_flags |= UNP_BUSY;
 	sounlock(so);
 
-	sun = makeun(nam, &addrlen);
+	sun = makeun_sb(nam, &addrlen);
 	pb = pathbuf_create(sun->sun_path);
 	if (pb == NULL) {
 		error = ENOMEM;
@@ -1163,11 +1155,11 @@ unp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 		goto bad2;
 	}
 	vp = nd.ni_vp;
+	pathbuf_destroy(pb);
 	if (vp->v_type != VSOCK) {
 		error = ENOTSOCK;
 		goto bad;
 	}
-	pathbuf_destroy(pb);
 	if ((error = VOP_ACCESS(vp, VWRITE, l->l_cred)) != 0)
 		goto bad;
 	/* Acquire v_interlock to protect against unp_detach(). */
@@ -1210,17 +1202,9 @@ unp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 			unp3->unp_addrlen = unp2->unp_addrlen;
 		}
 		unp3->unp_flags = unp2->unp_flags;
-		unp3->unp_connid.unp_pid = l->l_proc->p_pid;
-		unp3->unp_connid.unp_euid = kauth_cred_geteuid(l->l_cred);
-		unp3->unp_connid.unp_egid = kauth_cred_getegid(l->l_cred);
-		unp3->unp_flags |= UNP_EIDSVALID;
-		if (unp2->unp_flags & UNP_EIDSBIND) {
-			unp->unp_connid = unp2->unp_connid;
-			unp->unp_flags |= UNP_EIDSVALID;
-		}
 		so2 = so3;
 	}
-	error = unp_connect1(so, so2);
+	error = unp_connect1(so, so2, l);
 	if (error) {
 		sounlock(so);
 		goto bad;
@@ -1271,7 +1255,7 @@ unp_connect2(struct socket *so, struct socket *so2)
 
 	KASSERT(solocked2(so, so2));
 
-	error = unp_connect1(so, so2);
+	error = unp_connect1(so, so2, curlwp);
 	if (error)
 		return error;
 
@@ -1287,6 +1271,10 @@ unp_connect2(struct socket *so, struct socket *so2)
 	case SOCK_SEQPACKET: /* FALLTHROUGH */
 	case SOCK_STREAM:
 		unp2->unp_conn = unp;
+		if ((so->so_proto->pr_flags & PR_CONNREQUIRED) != 0) {
+			unp->unp_connid = unp2->unp_connid;
+			unp->unp_flags |= UNP_EIDSVALID;
+		}
 		soisconnected(so);
 		soisconnected(so2);
 		break;
@@ -1408,7 +1396,7 @@ unp_externalize(struct mbuf *rights, struct lwp *l, int flags)
 		 * to access.
 		 */
 		if (p->p_cwdi->cwdi_rdir != NULL && fp->f_type == DTYPE_VNODE) {
-			vnode_t *vp = (vnode_t *)fp->f_data;
+			vnode_t *vp = fp->f_vnode;
 			if ((vp->v_type == VDIR) &&
 			    !vn_isunder(vp, p->p_cwdi->cwdi_rdir, l)) {
 				error = EPERM;
@@ -1620,8 +1608,9 @@ unp_addsockcred(struct lwp *l, struct mbuf *control)
 		SCM_CREDS, SOL_SOCKET, M_WAITOK);
 	if (m == NULL)
 		return control;
-		
+
 	sc = p;
+	sc->sc_pid = l->l_proc->p_pid;
 	sc->sc_uid = kauth_cred_getuid(l->l_cred);
 	sc->sc_euid = kauth_cred_geteuid(l->l_cred);
 	sc->sc_gid = kauth_cred_getgid(l->l_cred);
@@ -1645,7 +1634,7 @@ unp_gc(file_t *dp)
 	extern	struct domain unixdomain;
 	file_t *fp, *np;
 	struct socket *so, *so1;
-	u_int i, old, new;
+	u_int i, oflags, rflags;
 	bool didwork;
 
 	KASSERT(curlwp == unp_thread_lwp);
@@ -1679,10 +1668,10 @@ unp_gc(file_t *dp)
 	 */
 	unp_defer = 0;
 	LIST_FOREACH(fp, &filehead, f_list) {
-		for (old = fp->f_flag;; old = new) {
-			new = atomic_cas_uint(&fp->f_flag, old,
-			    (old | FSCAN) & ~(FMARK|FDEFER));
-			if (__predict_true(old == new)) {
+		for (oflags = fp->f_flag;; oflags = rflags) {
+			rflags = atomic_cas_uint(&fp->f_flag, oflags,
+			    (oflags | FSCAN) & ~(FMARK|FDEFER));
+			if (__predict_true(oflags == rflags)) {
 				break;
 			}
 		}
@@ -1704,7 +1693,14 @@ unp_gc(file_t *dp)
 			if ((fp->f_flag & FDEFER) != 0) {
 				atomic_and_uint(&fp->f_flag, ~FDEFER);
 				unp_defer--;
-				KASSERT(fp->f_count != 0);
+				if (fp->f_count == 0) {
+					/*
+					 * XXX: closef() doesn't pay attention
+					 * to FDEFER
+					 */
+					mutex_exit(&fp->f_lock);
+					continue;
+				}
 			} else {
 				if (fp->f_count == 0 ||
 				    (fp->f_flag & FMARK) != 0 ||
@@ -1717,7 +1713,7 @@ unp_gc(file_t *dp)
 			atomic_or_uint(&fp->f_flag, FMARK);
 
 			if (fp->f_type != DTYPE_SOCKET ||
-			    (so = fp->f_data) == NULL ||
+			    (so = fp->f_socket) == NULL ||
 			    so->so_proto->pr_domain != &unixdomain ||
 			    (so->so_proto->pr_flags & PR_RIGHTS) == 0) {
 				mutex_exit(&fp->f_lock);
@@ -1798,7 +1794,7 @@ unp_gc(file_t *dp)
 		 * This will cause files referenced only by the
 		 * socket to be queued for close.
 		 */
-		so = fp->f_data;
+		so = fp->f_socket;
 		solock(so);
 		sorflush(so);
 		sounlock(so);
@@ -1981,5 +1977,4 @@ const struct pr_usrreqs unp_usrreqs = {
 	.pr_recvoob	= unp_recvoob,
 	.pr_send	= unp_send,
 	.pr_sendoob	= unp_sendoob,
-	.pr_generic	= unp_usrreq,
 };

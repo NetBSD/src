@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_subdev_bar_base.c,v 1.1.1.1.6.2 2014/08/20 00:04:14 tls Exp $	*/
+/*	$NetBSD: nouveau_subdev_bar_base.c,v 1.1.1.1.6.3 2017/12/03 11:37:55 jdolecek Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_subdev_bar_base.c,v 1.1.1.1.6.2 2014/08/20 00:04:14 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_subdev_bar_base.c,v 1.1.1.1.6.3 2017/12/03 11:37:55 jdolecek Exp $");
 
 #include <core/object.h>
 
@@ -37,7 +37,12 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_subdev_bar_base.c,v 1.1.1.1.6.2 2014/08/20 0
 struct nouveau_barobj {
 	struct nouveau_object base;
 	struct nouveau_vma vma;
+#ifdef __NetBSD__
+	bus_space_tag_t iomemt;
+	bus_space_handle_t iomemh;
+#else
 	void __iomem *iomem;
+#endif
 };
 
 static int
@@ -59,7 +64,25 @@ nouveau_barobj_ctor(struct nouveau_object *parent,
 	if (ret)
 		return ret;
 
+#ifdef __NetBSD__
+    {
+	/* Yes, truncation is really intended here.  */
+	uint32_t offset = barobj->vma.offset & 0xffffffffUL;
+
+	KASSERTMSG(offset < bar->iomemsz,
+	    "bar object vma exceeds range: %"PRIx32" > %"PRIxMAX,
+	    offset, (uintmax_t)bar->iomemsz);
+
+	barobj->iomemt = bar->iomemt;
+	/* XXX errno NetBSD->Linux */
+	ret = -bus_space_subregion(bar->iomemt, bar->iomemh, offset,
+	    bar->iomemsz - offset, &barobj->iomemh);
+	if (ret)
+		return ret;
+    }
+#else
 	barobj->iomem = bar->iomem + (u32)barobj->vma.offset;
+#endif
 	return 0;
 }
 
@@ -77,14 +100,22 @@ static u32
 nouveau_barobj_rd32(struct nouveau_object *object, u64 addr)
 {
 	struct nouveau_barobj *barobj = (void *)object;
+#ifdef __NetBSD__
+	return bus_space_read_4(barobj->iomemt, barobj->iomemh, addr);
+#else
 	return ioread32_native(barobj->iomem + addr);
+#endif
 }
 
 static void
 nouveau_barobj_wr32(struct nouveau_object *object, u64 addr, u32 data)
 {
 	struct nouveau_barobj *barobj = (void *)object;
+#ifdef __NetBSD__
+	bus_space_write_4(barobj->iomemt, barobj->iomemh, addr, data);
+#else
 	iowrite32_native(data, barobj->iomem + addr);
+#endif
 }
 
 static struct nouveau_oclass
@@ -123,16 +154,32 @@ nouveau_bar_create_(struct nouveau_object *parent,
 	if (ret)
 		return ret;
 
-	bar->iomem = ioremap(nv_device_resource_start(device, 3),
-			     nv_device_resource_len(device, 3));
+#ifdef __NetBSD__
+	if (nv_device_resource_len(device, 3) != 0) {
+		bar->iomemt = nv_device_resource_tag(device, 3);
+		bar->iomemsz = nv_device_resource_len(device, 3);
+		if (bus_space_map(bar->iomemt, nv_device_resource_start(device, 3),
+			bar->iomemsz, 0, &bar->iomemh))
+			bar->iomemsz = 0; /* XXX Fail?  */
+	}
+#else
+	if (nv_device_resource_len(device, 3) != 0)
+		bar->iomem = ioremap(nv_device_resource_start(device, 3),
+				     nv_device_resource_len(device, 3));
+#endif
 	return 0;
 }
 
 void
 nouveau_bar_destroy(struct nouveau_bar *bar)
 {
+#ifdef __NetBSD__
+	if (bar->iomemsz)
+		bus_space_unmap(bar->iomemt, bar->iomemh, bar->iomemsz);
+#else
 	if (bar->iomem)
 		iounmap(bar->iomem);
+#endif
 	nouveau_subdev_destroy(&bar->base);
 }
 

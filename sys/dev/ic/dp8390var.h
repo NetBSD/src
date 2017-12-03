@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390var.h,v 1.32 2012/02/02 19:43:03 tls Exp $	*/
+/*	$NetBSD: dp8390var.h,v 1.32.6.1 2017/12/03 11:37:03 jdolecek Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -13,7 +13,7 @@
  * the author assume any responsibility for damages incurred with its use.
  */
 
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 /*
  * We include MII glue here -- some DP8390 compatible chips have

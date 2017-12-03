@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,8 +40,6 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  */
-
-#define __UTEVAL_C__
 
 #include "acpi.h"
 #include "accommon.h"
@@ -233,7 +231,7 @@ AcpiUtEvaluateNumericObject (
 
 
     Status = AcpiUtEvaluateObject (DeviceNode, ObjectName,
-                ACPI_BTYPE_INTEGER, &ObjDesc);
+        ACPI_BTYPE_INTEGER, &ObjDesc);
     if (ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
@@ -280,7 +278,7 @@ AcpiUtExecute_STA (
 
 
     Status = AcpiUtEvaluateObject (DeviceNode, METHOD_NAME__STA,
-                ACPI_BTYPE_INTEGER, &ObjDesc);
+        ACPI_BTYPE_INTEGER, &ObjDesc);
     if (ACPI_FAILURE (Status))
     {
         if (AE_NOT_FOUND == Status)
@@ -353,8 +351,8 @@ AcpiUtExecutePowerMethods (
          * return type is an Integer.
          */
         Status = AcpiUtEvaluateObject (DeviceNode,
-                    ACPI_CAST_PTR (char, MethodNames[i]),
-                    ACPI_BTYPE_INTEGER, &ObjDesc);
+            ACPI_CAST_PTR (char, MethodNames[i]),
+            ACPI_BTYPE_INTEGER, &ObjDesc);
         if (ACPI_SUCCESS (Status))
         {
             OutValues[i] = (UINT8) ObjDesc->Integer.Value;

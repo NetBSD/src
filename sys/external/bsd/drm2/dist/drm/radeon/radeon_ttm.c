@@ -50,7 +50,11 @@
 #include <drm/bus_dma_hacks.h>
 #endif
 
+#ifdef _LP64
 #define DRM_FILE_PAGE_OFFSET (0x100000000ULL >> PAGE_SHIFT)
+#else
+#define DRM_FILE_PAGE_OFFSET (0xa0000000UL >> PAGE_SHIFT)
+#endif
 
 static int radeon_ttm_debugfs_init(struct radeon_device *rdev);
 static void radeon_ttm_debugfs_fini(struct radeon_device *rdev);
@@ -446,6 +450,10 @@ static int radeon_ttm_io_mem_reserve(struct ttm_bo_device *bdev, struct ttm_mem_
 			mem->bus.offset = mem->start << PAGE_SHIFT;
 			mem->bus.base = rdev->mc.agp_base;
 			mem->bus.is_iomem = !rdev->ddev->agp->cant_use_aperture;
+			KASSERTMSG((mem->bus.base & (PAGE_SIZE - 1)) == 0,
+			    "agp aperture is not page-aligned: %lx",
+			    mem->bus.base);
+			KASSERT((mem->bus.offset & (PAGE_SIZE - 1)) == 0);
 		}
 #endif
 		break;
@@ -479,6 +487,10 @@ static int radeon_ttm_io_mem_reserve(struct ttm_bo_device *bdev, struct ttm_mem_
 		mem->bus.base = (mem->bus.base & 0x0ffffffffUL) +
 			rdev->ddev->hose->dense_mem_base;
 #endif
+		KASSERTMSG((mem->bus.base & (PAGE_SIZE - 1)) == 0,
+		    "mc aperture is not page-aligned: %lx",
+		    mem->bus.base);
+		KASSERT((mem->bus.offset & (PAGE_SIZE - 1)) == 0);
 		break;
 	default:
 		return -EINVAL;
@@ -597,7 +609,6 @@ static struct ttm_tt *radeon_ttm_tt_create(struct ttm_bo_device *bdev,
 
 static int radeon_ttm_tt_populate(struct ttm_tt *ttm)
 {
-	struct radeon_device *rdev;
 	struct radeon_ttm_tt *gtt = (void *)ttm;
 #ifndef __NetBSD__
 	unsigned i;
@@ -619,8 +630,8 @@ static int radeon_ttm_tt_populate(struct ttm_tt *ttm)
 #endif
 	}
 
-	rdev = radeon_get_rdev(ttm->bdev);
 #if __OS_HAS_AGP
+	struct radeon_device *rdev = radeon_get_rdev(ttm->bdev);
 	if (rdev->flags & RADEON_IS_AGP) {
 		return ttm_agp_tt_populate(ttm);
 	}
@@ -632,6 +643,9 @@ static int radeon_ttm_tt_populate(struct ttm_tt *ttm)
 #else
 
 #ifdef CONFIG_SWIOTLB
+#if ! __OS_HAS_AGP
+	struct radeon_device *rdev = radeon_get_rdev(ttm->bdev);
+#endif
 	if (swiotlb_nr_tbl()) {
 		return ttm_dma_populate(&gtt->ttm, rdev->dev);
 	}
@@ -662,7 +676,6 @@ static int radeon_ttm_tt_populate(struct ttm_tt *ttm)
 
 static void radeon_ttm_tt_unpopulate(struct ttm_tt *ttm)
 {
-	struct radeon_device *rdev;
 	struct radeon_ttm_tt *gtt = (void *)ttm;
 #ifndef __NetBSD__
 	unsigned i;
@@ -672,8 +685,8 @@ static void radeon_ttm_tt_unpopulate(struct ttm_tt *ttm)
 	if (slave)
 		return;
 
-	rdev = radeon_get_rdev(ttm->bdev);
 #if __OS_HAS_AGP
+	struct radeon_device *rdev = radeon_get_rdev(ttm->bdev);
 	if (rdev->flags & RADEON_IS_AGP) {
 		ttm_agp_tt_unpopulate(ttm);
 		return;
@@ -686,6 +699,9 @@ static void radeon_ttm_tt_unpopulate(struct ttm_tt *ttm)
 #else
 
 #ifdef CONFIG_SWIOTLB
+#if ! __OS_HAS_AGP
+	struct radeon_device *rdev = radeon_get_rdev(ttm->bdev);
+#endif
 	if (swiotlb_nr_tbl()) {
 		ttm_dma_unpopulate(&gtt->ttm, rdev->dev);
 		return;
@@ -704,6 +720,15 @@ static void radeon_ttm_tt_unpopulate(struct ttm_tt *ttm)
 }
 
 #ifdef __NetBSD__
+static void radeon_ttm_tt_swapout(struct ttm_tt *ttm)
+{
+	struct radeon_ttm_tt *gtt = container_of(ttm, struct radeon_ttm_tt,
+	    ttm.ttm);
+	struct ttm_dma_tt *ttm_dma = &gtt->ttm;
+
+	ttm_bus_dma_swapout(ttm_dma);
+}
+
 static int	radeon_ttm_fault(struct uvm_faultinfo *, vaddr_t,
 		    struct vm_page **, int, int, vm_prot_t, int);
 
@@ -719,6 +744,7 @@ static struct ttm_bo_driver radeon_bo_driver = {
 	.ttm_tt_populate = &radeon_ttm_tt_populate,
 	.ttm_tt_unpopulate = &radeon_ttm_tt_unpopulate,
 #ifdef __NetBSD__
+	.ttm_tt_swapout = &radeon_ttm_tt_swapout,
 	.ttm_uvm_ops = &radeon_uvm_ops,
 #endif
 	.invalidate_caches = &radeon_invalidate_caches,

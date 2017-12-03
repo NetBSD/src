@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.10 2011/10/01 15:59:28 chs Exp $
+#	$NetBSD: genassym.cf,v 1.10.12.1 2017/12/03 11:36:20 jdolecek Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,7 +64,6 @@
 #
 
 if defined(_KERNEL_OPT)
-include "opt_compat_freebsd.h"
 include "opt_compat_linux.h"
 include "opt_multiprocessor.h"
 endif
@@ -87,6 +86,7 @@ include <uvm/uvm.h>
 
 include <machine/pmap.h>
 include <machine/vmparam.h>
+include <machine/pte.h>
 include <machine/intr.h>
 include <machine/frame.h>
 include <machine/types.h>
@@ -95,10 +95,6 @@ include <machine/pcb.h>
 ifdef COMPAT_LINUX
 include <compat/linux/common/linux_signal.h>
 include <compat/linux/common/linux_machdep.h>
-endif
-
-ifdef COMPAT_FREEBSD
-include <machine/freebsd_machdep.h>
 endif
 
 ifdef COMPAT_IA32
@@ -112,6 +108,21 @@ endif
 define	PAGE_SIZE		PAGE_SIZE
 define	PAGE_SHIFT		PAGE_SHIFT
 define	KSTACK_PAGES		KSTACK_PAGES
+
+define	IA64_VM_MINKERN_REGION	IA64_VM_MINKERN_REGION
+define	IA64_PBVM_RR		IA64_PBVM_RR
+define  IA64_PBVM_PAGE_SHIFT	IA64_PBVM_PAGE_SHIFT
+define	IA64_PSR_DFH		IA64_PSR_DFH
+define	IA64_PBVM_BASE		IA64_PBVM_BASE
+define	IA64_PBVM_PGTBL		IA64_PBVM_PGTBL
+
+define	PTE_PRESENT		PTE_PRESENT
+define	PTE_ACCESSED		PTE_ACCESSED
+define	PTE_DIRTY		PTE_DIRTY
+define	PTE_PL_KERN		PTE_PL_KERN
+define	PTE_AR_RWX		PTE_AR_RWX
+define	PTE_MA_WB		PTE_MA_WB
+define	PTE_MA_UC		PTE_MA_UC
 
 define	DT_NULL			DT_NULL
 define	DT_RELA			DT_RELA

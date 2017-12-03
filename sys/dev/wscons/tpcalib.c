@@ -1,4 +1,4 @@
-/*	$NetBSD: tpcalib.c,v 1.11 2007/03/04 06:02:51 christos Exp $	*/
+/*	$NetBSD: tpcalib.c,v 1.11.86.1 2017/12/03 11:37:37 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 TAKEMURA Shin All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tpcalib.c,v 1.11 2007/03/04 06:02:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tpcalib.c,v 1.11.86.1 2017/12/03 11:37:37 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_tpcalib.h"
@@ -101,7 +101,8 @@ tpcalib_ioctl(struct tpcalib_softc *sc, u_long cmd, void *data,
 		d = (const struct wsmouse_calibcoords *)data;
 		if (d->samplelen == WSMOUSE_CALIBCOORDS_RESET) {
 			tpcalib_reset(sc);
-		} else
+		} 
+		if (d->samplelen > 0) {
 			if (mra_Y_AX1_BX2_C(&d->samples[0].x, s,
 				    &d->samples[0].rawx, s,
 				    &d->samples[0].rawy, s,
@@ -116,20 +117,21 @@ tpcalib_ioctl(struct tpcalib_softc *sc, u_long cmd, void *data,
 				tpcalib_reset(sc);
 
 				return (EINVAL);
-			} else {
-				sc->sc_minx = d->minx;
-				sc->sc_maxx = d->maxx;
-				sc->sc_miny = d->miny;
-				sc->sc_maxy = d->maxy;
-				sc->sc_saved = *d;
-				DPRINTF(("tpcalib: x=%d~%d y=%d~%d\n",
-				    sc->sc_minx, sc->sc_maxx,
-				    sc->sc_miny, sc->sc_maxy));
-				DPRINTF(("tpcalib: Ax=%d Bx=%d Cx=%d\n",
-				    sc->sc_ax, sc->sc_bx, sc->sc_cx));
-				DPRINTF(("tpcalib: Ay=%d By=%d Cy=%d\n",
-				    sc->sc_ay, sc->sc_by, sc->sc_cy));
 			}
+		}
+		sc->sc_minx = d->minx;
+		sc->sc_maxx = d->maxx;
+		sc->sc_miny = d->miny;
+		sc->sc_maxy = d->maxy;
+		sc->sc_saved = *d;
+		DPRINTF(("tpcalib: x=%d~%d y=%d~%d\n",
+		    sc->sc_minx, sc->sc_maxx,
+		    sc->sc_miny, sc->sc_maxy));
+		DPRINTF(("tpcalib: Ax=%d Bx=%d Cx=%d\n",
+		    sc->sc_ax, sc->sc_bx, sc->sc_cx));
+		DPRINTF(("tpcalib: Ay=%d By=%d Cy=%d\n",
+		    sc->sc_ay, sc->sc_by, sc->sc_cy));
+		
 		break;
 
 	case WSMOUSEIO_GCALIBCOORDS:

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.63.2.2 2014/08/20 00:03:33 tls Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.63.2.3 2017/12/03 11:36:56 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.63.2.2 2014/08/20 00:03:33 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.63.2.3 2017/12/03 11:36:56 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.63.2.2 2014/08/20 00:03:33 tls Exp
 #include <sys/vfs_syscalls.h>
 
 #include <fs/cd9660/cd9660_mount.h>
+#include <fs/tmpfs/tmpfs_args.h>
 #include <fs/msdosfs/bpb.h>
 #include <fs/msdosfs/msdosfsmount.h>
 #include <ufs/ufs/ufsmount.h>
@@ -306,7 +307,7 @@ dofilewritev32(int fd, struct file *fp, struct netbsd32_iovec *iovp, int iovcnt,
 	}
 	cnt -= auio.uio_resid;
 	if (ktriov != NULL) {
-		ktrgenio(fd, UIO_WRITE, ktriov, cnt, error);
+		ktrgeniov(fd, UIO_WRITE, ktriov, cnt, error);
 		kmem_free(ktriov, iovlen);
 	}
 	*retval = cnt;
@@ -384,7 +385,7 @@ netbsd32___utimes50(struct lwp *l, const struct netbsd32___utimes50_args *uap, r
 }
 
 static int
-netbds32_copyout_statvfs(const void *kp, void *up, size_t len)
+netbsd32_copyout_statvfs(const void *kp, void *up, size_t len)
 {
 	struct netbsd32_statvfs *sbuf_32;
 	int error;
@@ -411,7 +412,7 @@ netbsd32_statvfs1(struct lwp *l, const struct netbsd32_statvfs1_args *uap, regis
 	sb = STATVFSBUF_GET();
 	error = do_sys_pstatvfs(l, SCARG_P32(uap, path), SCARG(uap, flags), sb);
 	if (error == 0)
-		error = netbds32_copyout_statvfs(sb, SCARG_P32(uap, buf), 0);
+		error = netbsd32_copyout_statvfs(sb, SCARG_P32(uap, buf), 0);
 	STATVFSBUF_PUT(sb);
 	return error;
 }
@@ -430,7 +431,7 @@ netbsd32_fstatvfs1(struct lwp *l, const struct netbsd32_fstatvfs1_args *uap, reg
 	sb = STATVFSBUF_GET();
 	error = do_sys_fstatvfs(l, SCARG(uap, fd), SCARG(uap, flags), sb);
 	if (error == 0)
-		error = netbds32_copyout_statvfs(sb, SCARG_P32(uap, buf), 0);
+		error = netbsd32_copyout_statvfs(sb, SCARG_P32(uap, buf), 0);
 	STATVFSBUF_PUT(sb);
 	return error;
 }
@@ -445,7 +446,7 @@ netbsd32_getvfsstat(struct lwp *l, const struct netbsd32_getvfsstat_args *uap, r
 	} */
 
 	return do_sys_getvfsstat(l, SCARG_P32(uap, buf), SCARG(uap, bufsize),
-	    SCARG(uap, flags), netbds32_copyout_statvfs,
+	    SCARG(uap, flags), netbsd32_copyout_statvfs,
 	    sizeof (struct netbsd32_statvfs), retval);
 }
 
@@ -466,7 +467,7 @@ netbsd32___fhstatvfs140(struct lwp *l, const struct netbsd32___fhstatvfs140_args
 	    SCARG(uap, flags));
 
 	if (error == 0)
-		error = netbds32_copyout_statvfs(sb, SCARG_P32(uap, buf), 0);
+		error = netbsd32_copyout_statvfs(sb, SCARG_P32(uap, buf), 0);
 	STATVFSBUF_PUT(sb);
 
 	return error;
@@ -491,7 +492,7 @@ netbsd32___futimes50(struct lwp *l, const struct netbsd32___futimes50_args *uap,
 	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)
 		return (error);
 
-	error = do_sys_utimes(l, fp->f_data, NULL, 0, tvp, UIO_SYSSPACE);
+	error = do_sys_utimes(l, fp->f_vnode, NULL, 0, tvp, UIO_SYSSPACE);
 
 	fd_putfile(SCARG(uap, fd));
 	return (error);
@@ -518,6 +519,7 @@ netbsd32___getdents30(struct lwp *l,
 	}
 	error = vn_readdir(fp, SCARG_P32(uap, buf),
 	    UIO_USERSPACE, SCARG(uap, count), &done, l, 0, 0);
+	ktrgenio(SCARG(uap, fd), UIO_READ, SCARG_P32(uap, buf), done, error);
 	*retval = done;
  out:
 	fd_putfile(SCARG(uap, fd));
@@ -649,7 +651,7 @@ netbsd32_preadv(struct lwp *l, const struct netbsd32_preadv_args *uap, register_
 		return (EBADF);
 	}
 
-	vp = fp->f_data;
+	vp = fp->f_vnode;
 	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO) {
 		error = ESPIPE;
 		goto out;
@@ -695,7 +697,7 @@ netbsd32_pwritev(struct lwp *l, const struct netbsd32_pwritev_args *uap, registe
 		return (EBADF);
 	}
 
-	vp = fp->f_data;
+	vp = fp->f_vnode;
 	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO) {
 		error = ESPIPE;
 		goto out;
@@ -750,9 +752,6 @@ netbsd32___getcwd(struct lwp *l, const struct netbsd32___getcwd_args *uap, regis
 		return ERANGE;
 
 	path = kmem_alloc(len, KM_SLEEP);
-	if (!path)
-		return ENOMEM;
-
 	bp = &path[len];
 	bend = bp;
 	*(--bp) = '\0';
@@ -799,6 +798,7 @@ netbsd32___mount50(struct lwp *l, const struct netbsd32___mount50_args *uap,
 		struct netbsd32_iso_args iso_args;
 		struct netbsd32_nfs_args nfs_args;
 		struct netbsd32_msdosfs_args msdosfs_args;
+		struct netbsd32_tmpfs_args tmpfs_args;
 	} fs_args32;
 	union {
 		struct ufs_args ufs_args;
@@ -806,6 +806,7 @@ netbsd32___mount50(struct lwp *l, const struct netbsd32___mount50_args *uap,
 		struct iso_args iso_args;
 		struct nfs_args nfs_args;
 		struct msdosfs_args msdosfs_args;
+		struct tmpfs_args tmpfs_args;
 	} fs_args;
 	const char *type = SCARG_P32(uap, type);
 	const char *path = SCARG_P32(uap, path);
@@ -819,7 +820,31 @@ netbsd32___mount50(struct lwp *l, const struct netbsd32___mount50_args *uap,
 	error = copyinstr(type, mtype, sizeof(mtype), &len);
 	if (error)
 		return error;
-	if (strcmp(mtype, MOUNT_MFS) == 0) {
+	if (strcmp(mtype, MOUNT_TMPFS) == 0) {
+		if (data_len != sizeof(fs_args32.tmpfs_args))
+			return EINVAL;
+		if ((flags & MNT_GETARGS) == 0) {
+			error = copyin(data, &fs_args32.tmpfs_args, 
+			    sizeof(fs_args32.tmpfs_args));
+			if (error)
+				return error;
+			fs_args.tmpfs_args.ta_version =
+			    fs_args32.tmpfs_args.ta_version;
+			fs_args.tmpfs_args.ta_nodes_max =
+			    fs_args32.tmpfs_args.ta_nodes_max;
+			fs_args.tmpfs_args.ta_size_max =
+			    fs_args32.tmpfs_args.ta_size_max;
+			fs_args.tmpfs_args.ta_root_uid =
+			    fs_args32.tmpfs_args.ta_root_uid;
+			fs_args.tmpfs_args.ta_root_gid =
+			    fs_args32.tmpfs_args.ta_root_gid;
+			fs_args.tmpfs_args.ta_root_mode =
+			    fs_args32.tmpfs_args.ta_root_mode;
+		}
+		data_seg = UIO_SYSSPACE;
+		data = &fs_args.tmpfs_args;
+		data_len = sizeof(fs_args.tmpfs_args);
+	} else if (strcmp(mtype, MOUNT_MFS) == 0) {
 		if (data_len != sizeof(fs_args32.mfs_args))
 			return EINVAL;
 		if ((flags & MNT_GETARGS) == 0) {
@@ -931,13 +956,30 @@ netbsd32___mount50(struct lwp *l, const struct netbsd32___mount50_args *uap,
 	} else {
 		data_seg = UIO_USERSPACE;
 	}
-	error = do_sys_mount(l, NULL, type, path, flags, data, data_seg,
+	error = do_sys_mount(l, mtype, UIO_SYSSPACE, path, flags, data, data_seg,
 	    data_len, retval);
 	if (error)
 		return error;
 	if (flags & MNT_GETARGS) {
 		data_len = *retval;
-		if (strcmp(mtype, MOUNT_MFS) == 0) {
+		if (strcmp(mtype, MOUNT_TMPFS) == 0) {
+			if (data_len != sizeof(fs_args.tmpfs_args))
+				return EINVAL;
+			fs_args32.tmpfs_args.ta_version =
+			    fs_args.tmpfs_args.ta_version;
+			fs_args32.tmpfs_args.ta_nodes_max =
+			    fs_args.tmpfs_args.ta_nodes_max;
+			fs_args32.tmpfs_args.ta_size_max =
+			    fs_args.tmpfs_args.ta_size_max;
+			fs_args32.tmpfs_args.ta_root_uid =
+			    fs_args.tmpfs_args.ta_root_uid;
+			fs_args32.tmpfs_args.ta_root_gid =
+			    fs_args.tmpfs_args.ta_root_gid;
+			fs_args32.tmpfs_args.ta_root_mode =
+			    fs_args.tmpfs_args.ta_root_mode;
+			error = copyout(&fs_args32.tmpfs_args, data,
+				    sizeof(fs_args32.tmpfs_args));
+		} else if (strcmp(mtype, MOUNT_MFS) == 0) {
 			if (data_len != sizeof(fs_args.mfs_args))
 				return EINVAL;
 			NETBSD32PTR32(fs_args32.mfs_args.fspec,
@@ -1192,7 +1234,7 @@ netbsd32_utimensat(struct lwp *l, const struct netbsd32_utimensat_args *uap,
 		syscallarg(netbsd32_timespecp_t) tptr;
 		syscallarg(int) flag;
 	} */
-	struct timespec ts[2], *tsp;
+	struct timespec ts[2], *tsp = NULL /* XXXgcc */;
 	int follow;
 	int error;
 
@@ -1290,7 +1332,7 @@ netbsd32_futimens(struct lwp *l, const struct netbsd32_futimens_args *uap,
 		syscallarg(int) fd;
 		syscallarg(netbsd32_timespecp_t) tptr;
 	} */
-	struct timespec ts[2], *tsp;
+	struct timespec ts[2], *tsp = NULL /* XXXgcc */;
 	file_t *fp;
 	int error;
 
@@ -1301,7 +1343,7 @@ netbsd32_futimens(struct lwp *l, const struct netbsd32_futimens_args *uap,
 	/* fd_getvnode() will use the descriptor for us */
 	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)
 		return (error);
-	error = do_sys_utimensat(l, AT_FDCWD, fp->f_data, NULL, 0,
+	error = do_sys_utimensat(l, AT_FDCWD, fp->f_vnode, NULL, 0,
 	    tsp, UIO_SYSSPACE);
 	fd_putfile(SCARG(uap, fd));
 	return (error);

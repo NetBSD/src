@@ -1,4 +1,4 @@
-/*	$NetBSD: amidisplaycc.c,v 1.25.6.2 2014/08/20 00:02:43 tls Exp $ */
+/*	$NetBSD: amidisplaycc.c,v 1.25.6.3 2017/12/03 11:35:48 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2000 Jukka Andberg.
@@ -28,15 +28,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.25.6.2 2014/08/20 00:02:43 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.25.6.3 2017/12/03 11:35:48 jdolecek Exp $");
 
 /*
  * wscons interface to amiga custom chips. Contains the necessary functions
  * to render text on bitmapped screens. Uses the functions defined in
  * grfabs_reg.h for display creation/destruction and low level setup.
  *
- * For each virtual terminal a new screen ('view') is allocated.
- * Also one more is allocated for the mapped screen on demand.
+ * For each virtual terminal a new screen (a grfabs view) is allocated.
+ * Also one more view is allocated for the mapped screen on demand.
  */
 
 #include "amidisplaycc.h"
@@ -60,13 +60,12 @@ __KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.25.6.2 2014/08/20 00:02:43 tls Ex
 #include <amiga/dev/viewioctl.h>
 #include <amiga/amiga/device.h>
 #include <dev/wscons/wsconsio.h>
-#include <dev/rcons/raster.h>
 #include <dev/wscons/wscons_raster.h>
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/cons.h>
 #include <dev/wsfont/wsfont.h>
 
-/* These can be lowered if you are sure you dont need that much colors. */
+/* These can be lowered if you are sure you don't need that much colors. */
 #define MAXDEPTH 8
 #define MAXROWS 128
 
@@ -176,15 +175,11 @@ const struct wsdisplay_emulops amidisplaycc_emulops = {
 	amidisplaycc_allocattr
 };
 
-/* add some of our own data to the wsscreen_descr */
+/* Add some of our own data to the wsscreen_descr */
 struct amidisplaycc_screen_descr {
 	struct wsscreen_descr  wsdescr;
 	int                    depth;
 };
-
-/*
- * List of supported screenmodes. Almost anything can be given here.
- */
 
 #define ADCC_SCREEN(name, width, height, depth, fontwidth, fontheight) \
     /* CONSTCOND */ \
@@ -198,10 +193,10 @@ struct amidisplaycc_screen_descr {
     depth }
 
 /*
- * Screen types.
+ * List of supported screen types.
  *
- * The first in list is used for the console screen.
- * A suitable screen mode is guessed for it by looking
+ * The first item in list is used for the console screen.
+ * A suitable screen size is guessed for it by looking
  * at the GRF_* options.
  */
 struct amidisplaycc_screen_descr amidisplaycc_screentab[] = {
@@ -253,7 +248,7 @@ const struct wsscreen_descr *amidisplaycc_screens[] = {
 #define NELEMS(arr) (sizeof(arr)/sizeof((arr)[0]))
 
 /*
- * This structure also is passed to wscons. It contains pointers
+ * This structure is passed to wscons. It contains pointers
  * to the available display modes.
  */
 
@@ -344,7 +339,7 @@ static int aga_enable = 0;
  * This gets called at console init to determine the priority of
  * this console device.
  *
- * Of course pointers to this and other functions must present
+ * Pointers to this and other functions must present
  * in constab[] in conf.c for this to work.
  */
 void
@@ -410,7 +405,7 @@ amidisplaycc_match(device_t parent, cfdata_t cf, void *aux)
 	if (matchname("amidisplaycc", name) == 0)
 		return (0);
 
-	/* Allow only one of us now. Not sure about that. */
+	/* Allow only one of us. */
 	if (amidisplaycc_attached)
 		return (0);
 
@@ -482,10 +477,9 @@ amidisplaycc_attach(device_t parent, device_t self, void *aux)
 	}
 }
 
-
 /*
- * Color, bgcolor and style are packed into one long attribute.
- * These macros are used to create/split the attribute
+ * Foreground color, background color, and style are packed into one
+ * long attribute. These macros are used to create/split the attribute.
  */
 
 #define MAKEATTR(fg, bg, mode) (((fg)<<16) | ((bg)<<8) | (mode))
@@ -542,9 +536,6 @@ amidisplaycc_cursor(void *screen, int on, int row, int col)
 }
 
 
-/*
- * This obviously does something important, don't ask me what.
- */
 int
 amidisplaycc_mapchar(void *screen, int ch, unsigned int *chp)
 {
@@ -779,8 +770,6 @@ amidisplaycc_erasecols(void *screen, int row, int startcol, int ncols,
 
 /*
  * Copy a number of rows to another location on the screen.
- * Combined with eraserows it can be used to perform operation
- * also known as 'scrolling'.
  */
 
 void
@@ -1168,9 +1157,8 @@ amidisplaycc_mmap(void *dp, void *vs, off_t off, int prot)
 	}
 
 	/*
-	 * As we all know by now, we are mapping our special
-	 * screen here so our pretty text consoles are left
-	 * untouched.
+	 * Screen reserved for graphics is used to avoid writing
+	 * over the text screens.
 	 */
 
 	bm = adp->gfxview->bitmap;
@@ -1184,12 +1172,13 @@ amidisplaycc_mmap(void *dp, void *vs, off_t off, int prot)
 	rv = (paddr_t)bm->hardware_address;
 	rv += off;
 
-	return (rv >> PGSHIFT);
+	return MD_BTOP(rv);
 }
 
 
 /*
  * Create a new screen.
+ *
  * NULL dp signifies console and then memory is allocated statically
  * and the screen is automatically displayed.
  *

@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_conndb.c,v 1.2.6.2 2014/08/20 00:04:35 tls Exp $	*/
+/*	$NetBSD: npf_conndb.c,v 1.2.6.3 2017/12/03 11:39:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2010-2014 The NetBSD Foundation, Inc.
@@ -33,8 +33,9 @@
  * NPF connection storage.
  */
 
+#ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_conndb.c,v 1.2.6.2 2014/08/20 00:04:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_conndb.c,v 1.2.6.3 2017/12/03 11:39:03 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -43,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: npf_conndb.c,v 1.2.6.2 2014/08/20 00:04:35 tls Exp $
 #include <sys/cprng.h>
 #include <sys/hash.h>
 #include <sys/kmem.h>
+#endif
 
 #define __NPF_CONN_PRIVATE
 #include "npf_conn.h"
@@ -62,6 +64,7 @@ struct npf_conndb {
 	npf_conn_t *		cd_list;
 	npf_conn_t *		cd_tail;
 	uint32_t		cd_seed;
+	void *			cd_tree;
 	npf_hashbucket_t	cd_hashtbl[];
 };
 
@@ -138,6 +141,10 @@ npf_conndb_destroy(npf_conndb_t *cd)
 		KASSERT(!rb_tree_iterate(&hb->hb_tree, NULL, RB_DIR_LEFT));
 		rw_destroy(&hb->hb_lock);
 	}
+#ifdef USE_JUDY
+	Word_t bytes;
+	JHSFA(bytes, cd->cd_tree);
+#endif
 	kmem_free(cd, len);
 }
 
@@ -179,6 +186,15 @@ npf_conndb_lookup(npf_conndb_t *cd, const npf_connkey_t *key, bool *forw)
 bool
 npf_conndb_insert(npf_conndb_t *cd, npf_connkey_t *key, npf_conn_t *con)
 {
+#ifdef USE_JUDY
+	PWord_t pval;
+
+	JHSI(pval, cd->cd_tree, key, NPF_CONN_KEYLEN(key));
+	if (pval == PJERR || *pval != 0)
+		return false;
+	*pval = (uintptr_t)key;
+	return true;
+#else
 	npf_hashbucket_t *hb = conndb_hash_bucket(cd, key);
 	bool ok;
 
@@ -187,6 +203,7 @@ npf_conndb_insert(npf_conndb_t *cd, npf_connkey_t *key, npf_conn_t *con)
 	hb->hb_count += (u_int)ok;
 	rw_exit(&hb->hb_lock);
 	return ok;
+#endif
 }
 
 /*
@@ -194,8 +211,14 @@ npf_conndb_insert(npf_conndb_t *cd, npf_connkey_t *key, npf_conn_t *con)
  * it represents.
  */
 npf_conn_t *
-npf_conndb_remove(npf_conndb_t *cd, const npf_connkey_t *key)
+npf_conndb_remove(npf_conndb_t *cd, npf_connkey_t *key)
 {
+#ifdef USE_JUDY
+	PWord_t rc;
+
+	JHSD(rc, cd->cd_tree, key, NPF_CONN_KEYLEN(key));
+	return rc ? key->ck_backptr : NULL;
+#else
 	npf_hashbucket_t *hb = conndb_hash_bucket(cd, key);
 	npf_connkey_t *foundkey;
 	npf_conn_t *con;
@@ -210,6 +233,7 @@ npf_conndb_remove(npf_conndb_t *cd, const npf_connkey_t *key)
 	}
 	rw_exit(&hb->hb_lock);
 	return con;
+#endif
 }
 
 /*

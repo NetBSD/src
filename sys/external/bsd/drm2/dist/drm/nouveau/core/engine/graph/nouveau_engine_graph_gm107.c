@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_engine_graph_gm107.c,v 1.1.1.1.6.2 2014/08/20 00:04:12 tls Exp $	*/
+/*	$NetBSD: nouveau_engine_graph_gm107.c,v 1.1.1.1.6.3 2017/12/03 11:37:54 jdolecek Exp $	*/
 
 /*
  * Copyright 2013 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_engine_graph_gm107.c,v 1.1.1.1.6.2 2014/08/20 00:04:12 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_engine_graph_gm107.c,v 1.1.1.1.6.3 2017/12/03 11:37:54 jdolecek Exp $");
 
 #include <subdev/bios.h>
 #include <subdev/bios/P0260.h>
@@ -323,7 +323,7 @@ gm107_graph_init_bios(struct nvc0_graph_priv *priv)
 	}
 }
 
-int
+static int
 gm107_graph_init(struct nouveau_object *object)
 {
 	struct nvc0_graph_oclass *oclass = (void *)object->oclass;

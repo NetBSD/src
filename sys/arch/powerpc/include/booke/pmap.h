@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.10.2.2 2014/08/20 00:03:19 tls Exp $	*/
+/*	$NetBSD: pmap.h,v 1.10.2.3 2017/12/03 11:36:37 jdolecek Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -51,6 +51,7 @@
 #include <sys/cpu.h>
 #include <sys/kcore.h>
 #include <uvm/uvm_page.h>
+#include <uvm/uvm_physseg.h>
 #ifdef __PMAP_PRIVATE
 #include <powerpc/booke/cpuvar.h>
 #endif
@@ -92,6 +93,12 @@ void	pmap_md_init(void);
 
 bool	pmap_md_tlb_check_entry(void *, vaddr_t, tlb_asid_t, pt_entry_t);
 
+#ifdef MULTIPROCESSOR
+#define	PMAP_MD_NEED_TLB_MISS_LOCK
+void	pmap_md_tlb_miss_lock_enter(void);
+void	pmap_md_tlb_miss_lock_exit(void);
+#endif	/* MULTIPROCESSOR */
+
 #ifdef PMAP_MINIMALTLB
 vaddr_t	pmap_kvptefill(vaddr_t, vaddr_t, pt_entry_t);
 #endif
@@ -125,7 +132,7 @@ pmap_md_vca_add(struct vm_page *pg, vaddr_t va, pt_entry_t *nptep)
 }
 
 static inline void
-pmap_md_vca_remove(struct vm_page *pg, vaddr_t va)
+pmap_md_vca_remove(struct vm_page *pg, vaddr_t va, bool dirty)
 {
 
 }
@@ -134,11 +141,20 @@ static inline void
 pmap_md_vca_clean(struct vm_page *pg, vaddr_t va, int op)
 {
 }
+#endif
 
+#ifdef __PMAP_PRIVATE
 static inline size_t
 pmap_md_tlb_asid_max(void)
 {
 	return PMAP_TLB_NUM_PIDS - 1;
+}
+
+struct vm_physseg;
+static inline bool
+pmap_md_ok_to_steal_p(const uvm_physseg_t bank, size_t npgs)
+{
+	return true;
 }
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: oiocsc.c,v 1.2 2011/07/01 18:53:47 dyoung Exp $	*/
+/*	$NetBSD: oiocsc.c,v 1.2.12.1 2017/12/03 11:36:41 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2009 Stephen M. Rumble
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oiocsc.c,v 1.2 2011/07/01 18:53:47 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oiocsc.c,v 1.2.12.1 2017/12/03 11:36:41 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,7 +124,7 @@ void
 oiocsc_attach(device_t parent, device_t self, void *aux)
 {
 	struct oiocsc_softc *osc = device_private(self);
-	struct wd33c93_softc *sc = &osc->sc_wd33c93; 
+	struct wd33c93_softc *sc = &osc->sc_wd33c93;
 	struct oioc_attach_args *oa = aux;
 	int err;
 

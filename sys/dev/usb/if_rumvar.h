@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rumvar.h,v 1.9 2011/02/21 23:50:42 jmcneill Exp $	*/
+/*	$NetBSD: if_rumvar.h,v 1.9.16.1 2017/12/03 11:37:34 jdolecek Exp $	*/
 /*	$OpenBSD: if_rumvar.h,v 1.7 2006/11/13 20:06:38 damien Exp $	*/
 
 /*-
@@ -57,7 +57,7 @@ struct rum_softc;
 
 struct rum_tx_data {
 	struct rum_softc	*sc;
-	usbd_xfer_handle	xfer;
+	struct usbd_xfer	*xfer;
 	uint8_t			*buf;
 	struct mbuf		*m;
 	struct ieee80211_node	*ni;
@@ -65,7 +65,7 @@ struct rum_tx_data {
 
 struct rum_rx_data {
 	struct rum_softc	*sc;
-	usbd_xfer_handle	xfer;
+	struct usbd_xfer	*xfer;
 	uint8_t			*buf;
 	struct mbuf		*m;
 };
@@ -78,8 +78,8 @@ struct rum_softc {
 	int				(*sc_newstate)(struct ieee80211com *,
 					    enum ieee80211_state, int);
 
-	usbd_device_handle		sc_udev;
-	usbd_interface_handle		sc_iface;
+	struct usbd_device *		sc_udev;
+	struct usbd_interface *		sc_iface;
 	int				sc_flags;
 #define	RT2573_FWLOADED	(1 << 0)
 
@@ -92,10 +92,10 @@ struct rum_softc {
 	uint8_t				rf_rev;
 	uint8_t				rffreq;
 
-	usbd_xfer_handle		amrr_xfer;
+	struct usbd_xfer *		amrr_xfer;
 
-	usbd_pipe_handle		sc_rx_pipeh;
-	usbd_pipe_handle		sc_tx_pipeh;
+	struct usbd_pipe *		sc_rx_pipeh;
+	struct usbd_pipe *		sc_tx_pipeh;
 
 	enum ieee80211_state		sc_state;
 	int				sc_arg;

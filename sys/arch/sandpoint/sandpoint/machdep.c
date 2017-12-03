@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.62.6.1 2013/06/23 06:20:11 tls Exp $	*/
+/*	$NetBSD: machdep.c,v 1.62.6.2 2017/12/03 11:36:40 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.62.6.1 2013/06/23 06:20:11 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.62.6.2 2017/12/03 11:36:40 jdolecek Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -198,8 +198,7 @@ initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 	/* Initialize the console */
 	consinit();
 
-	/* Set the page size */
-	uvm_setpagesize();
+	uvm_md_init();
 
 	/* Initialize pmap module */
 	pmap_bootstrap(startkernel, endkernel);
@@ -231,15 +230,25 @@ mem_regions(struct mem_region **mem, struct mem_region **avail)
 void
 cpu_startup(void)
 {
-	struct btinfo_prodfamily *bi_prod;
+	struct btinfo_prodfamily *bi_fam;
+	struct btinfo_model *bi_model;
+	char prod_name[32];
+	char *model;
 	void *baseaddr;
 	int msr;
 
 	/*
 	 * Do common startup.
 	 */
-	bi_prod = lookup_bootinfo(BTINFO_PRODFAMILY);
-	oea_startup(bi_prod != NULL ? bi_prod->name : NULL);
+	bi_fam = lookup_bootinfo(BTINFO_PRODFAMILY);
+	bi_model = lookup_bootinfo(BTINFO_MODEL);
+	if (bi_fam != NULL) {
+		snprintf(prod_name, sizeof(prod_name), "%s %s", bi_fam->name,
+		    bi_model != NULL ? bi_model->name : "");
+		model = prod_name;
+	} else
+		model = NULL;
+	oea_startup(model);
 
 	/*
 	 * Prepare EPIC and install external interrupt handler.
@@ -450,8 +459,8 @@ struct powerpc_bus_space sandpoint_eumb_space_tag = {
 	0xfc000000, 0x00000000, 0x00100000,
 };
 struct powerpc_bus_space sandpoint_flash_space_tag = {
-	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
-	0x00000000, 0xff000000, 0x00000000,
+	_BUS_SPACE_BIG_ENDIAN|_BUS_SPACE_MEM_TYPE,
+	0x00000000, 0xff000000, 0xffffffff,
 };
 struct powerpc_bus_space sandpoint_nhgpio_space_tag = {
 	_BUS_SPACE_BIG_ENDIAN|_BUS_SPACE_MEM_TYPE,

@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_gpio.c,v 1.15.12.1 2012/11/20 03:01:08 tls Exp $	*/
+/*	$NetBSD: pxa2x0_gpio.c,v 1.15.12.2 2017/12/03 11:35:57 jdolecek Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -36,8 +36,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_gpio.c,v 1.15.12.1 2012/11/20 03:01:08 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_gpio.c,v 1.15.12.2 2017/12/03 11:35:57 jdolecek Exp $");
 
+#include "gpio.h"
 #include "opt_pxa2x0_gpio.h"
 
 #include <sys/param.h>
@@ -54,6 +55,9 @@ __KERNEL_RCSID(0, "$NetBSD: pxa2x0_gpio.c,v 1.15.12.1 2012/11/20 03:01:08 tls Ex
 #include <arm/xscale/pxa2x0_gpio.h>
 
 #include "locators.h"
+
+#include <sys/gpio.h>
+#include <dev/gpio/gpiovar.h>
 
 struct gpio_irq_handler {
 	struct gpio_irq_handler *gh_next;
@@ -75,10 +79,18 @@ struct pxagpio_softc {
 #else
 	struct gpio_irq_handler *sc_handlers[2];
 #endif
+	struct gpio_chipset_tag sc_gpio_gc;
+	gpio_pin_t sc_gpio_pins[GPIO_NPINS];
 };
 
 static int	pxagpio_match(device_t, cfdata_t, void *);
 static void	pxagpio_attach(device_t, device_t, void *);
+
+#if NGPIO > 0
+static int	pxa2x0_gpio_pin_read(void *, int);
+static void	pxa2x0_gpio_pin_write(void *, int, int);
+static void	pxa2x0_gpio_pin_ctl(void *, int, int);
+#endif
 
 CFATTACH_DECL_NEW(pxagpio, sizeof(struct pxagpio_softc),
     pxagpio_match, pxagpio_attach, NULL, NULL);
@@ -137,6 +149,11 @@ pxagpio_attach(device_t parent, device_t self, void *aux)
 {
 	struct pxagpio_softc *sc = device_private(self);
 	struct pxaip_attach_args *pxa = aux;
+#if NGPIO > 0
+	struct gpiobus_attach_args gba;
+	int pin, maxpin;
+	u_int func;
+#endif
 
 	sc->sc_dev = self;
 	sc->sc_bust = pxa->pxa_iot;
@@ -185,6 +202,42 @@ pxagpio_attach(device_t parent, device_t self, void *aux)
 	sc->sc_irqcookie[0] = sc->sc_irqcookie[1] = NULL;
 
 	pxagpio_softc = sc;
+#if NGPIO > 0
+#if defined(CPU_XSCALE_PXA250) && defined(CPU_XSCALE_PXA270)
+	maxpin = CPU_IS_PXA270 ? PXA270_GPIO_NPINS : PXA250_GPIO_NPINS;
+#else
+	maxpin = GPIO_NPINS;
+#endif
+	for (pin = 0; pin < maxpin; ++pin) {
+
+		sc->sc_gpio_pins[pin].pin_num = pin;
+		func = pxa2x0_gpio_get_function(pin);
+
+		if (GPIO_IS_GPIO(func)) {
+			sc->sc_gpio_pins[pin].pin_caps = GPIO_PIN_INPUT |
+			    GPIO_PIN_OUTPUT;
+			sc->sc_gpio_pins[pin].pin_state =
+			pxa2x0_gpio_pin_read(sc, pin);
+		} else {
+			sc->sc_gpio_pins[pin].pin_caps = 0;
+			sc->sc_gpio_pins[pin].pin_state = 0;
+		}
+	}
+
+	/* create controller tag */
+	sc->sc_gpio_gc.gp_cookie = sc;
+	sc->sc_gpio_gc.gp_pin_read = pxa2x0_gpio_pin_read;
+	sc->sc_gpio_gc.gp_pin_write = pxa2x0_gpio_pin_write;
+	sc->sc_gpio_gc.gp_pin_ctl = pxa2x0_gpio_pin_ctl;
+
+	gba.gba_gc = &sc->sc_gpio_gc;
+	gba.gba_pins = sc->sc_gpio_pins;
+	gba.gba_npins = maxpin;
+
+	config_found_ia(self, "gpiobus", &gba, gpiobus_print);
+#else
+	aprint_normal_dev(sc->sc_dev, "no GPIO configured in kernel\n");
+#endif
 }
 
 void
@@ -668,6 +721,34 @@ pxa2x0_gpio_set_intr_level(u_int gpio, int level)
 	splx(s);
 }
 
+#if NGPIO > 0
+/* GPIO support functions */
+static int
+pxa2x0_gpio_pin_read(void *arg, int pin)
+{
+	return pxa2x0_gpio_get_bit(pin);
+}
+
+static void
+pxa2x0_gpio_pin_write(void *arg, int pin, int value)
+{
+	if (value == GPIO_PIN_HIGH) {
+		pxa2x0_gpio_set_bit(pin);
+	} else {
+		pxa2x0_gpio_clear_bit(pin);
+	}
+}
+
+static void
+pxa2x0_gpio_pin_ctl(void *arg, int pin, int flags)
+{
+	if (flags & GPIO_PIN_OUTPUT) {
+		pxa2x0_gpio_set_function(pin, GPIO_OUT);
+	} else if (flags & GPIO_PIN_INPUT) {
+		pxa2x0_gpio_set_function(pin, GPIO_IN);
+	}
+}
+#endif
 
 #if defined(CPU_XSCALE_PXA250)
 /*

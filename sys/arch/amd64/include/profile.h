@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.15.38.1 2014/08/20 00:02:42 tls Exp $	*/
+/*	$NetBSD: profile.h,v 1.15.38.2 2017/12/03 11:35:47 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -34,12 +34,7 @@
 #ifdef __x86_64__
 
 #ifdef _KERNEL_OPT
-#include "opt_multiprocessor.h"
 #include "opt_xen.h"
-#endif
-
-#ifdef _KERNEL
-#include <machine/lock.h>
 #endif
 
 #define	_MCOUNT_DECL void _mcount
@@ -84,33 +79,13 @@ __asm(" .globl __mcount		\n"			\
 
 
 #ifdef _KERNEL
-#ifdef MULTIPROCESSOR
-__cpu_simple_lock_t __mcount_lock;
-
-static inline void
-MCOUNT_ENTER_MP(void)
-{
-	__cpu_simple_lock(&__mcount_lock);
-	__insn_barrier();
-}
-
-static inline void
-MCOUNT_EXIT_MP(void)
-{
-	__insn_barrier();
-	__mcount_lock = __SIMPLELOCK_UNLOCKED;
-}
-#else
-#define MCOUNT_ENTER_MP()
-#define MCOUNT_EXIT_MP()
-#endif
-
 #ifdef XEN
 static inline void
 mcount_disable_intr(void)
 {
-	/* works because __cli is a macro */
-	__cli();
+	/* should be __cli() but this calls x86_lfence() which calls mcount */
+	curcpu()->ci_vcpu->evtchn_upcall_mask = 1;
+	__asm volatile("lfence" ::: "memory"); /* x86_lfence() */
 }
 
 static inline u_long
@@ -123,7 +98,8 @@ static inline void
 mcount_write_psl(u_long psl)
 {
 	curcpu()->ci_vcpu->evtchn_upcall_mask = psl;
-	x86_lfence();
+	/* can't call x86_lfence because it calls mcount() */
+	__asm volatile("lfence" ::: "memory"); /* x86_lfence() */
 	/* XXX can't call hypervisor_force_callback() because we're in mcount*/ 
 }
 
@@ -150,14 +126,10 @@ mcount_write_psl(u_long ef)
 }
 
 #endif /* XEN */
-#define	MCOUNT_ENTER							\
-	s = (int)mcount_read_psl();					\
-	mcount_disable_intr();						\
-	MCOUNT_ENTER_MP();
 
-#define	MCOUNT_EXIT							\
-	MCOUNT_EXIT_MP();						\
-	mcount_write_psl(s);
+#define MCOUNT_ENTER	\
+	do { s = (int)mcount_read_psl(); mcount_disable_intr(); } while (0)
+#define MCOUNT_EXIT	do { mcount_write_psl(s); } while (0)
 
 #endif /* _KERNEL */
 

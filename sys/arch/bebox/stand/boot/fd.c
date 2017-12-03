@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.10 2010/10/14 06:39:52 kiyohara Exp $	*/
+/*	$NetBSD: fd.c,v 1.10.18.1 2017/12/03 11:35:59 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1997-1998 Kazuki Sakamoto (sakamoto@NetBSD.org)
@@ -297,7 +297,7 @@ fdstrategy(void *devdata, int func, daddr_t blk, size_t size, void *buf,
 	int ctlr = un->ctlr;
 	int unit = un->unit;
 	int *stat = un->stat;
-	long nblock, blknum;
+	long blknum;
 	int fd_skip = 0;
 	u_char *cbuf = (u_char *)buf;
 
@@ -306,7 +306,6 @@ fdstrategy(void *devdata, int func, daddr_t blk, size_t size, void *buf,
 	}
 	fdDriveStatus(ctlr, unit, 0, stat);
 
-	nblock = un->un_type->maxseccount;
 	sectrac = un->un_type->seccount;	/* sector per track */
 	*rsize = 0;
 

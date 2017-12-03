@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.239.2.2 2014/08/20 00:02:42 tls Exp $	*/
+/*	$NetBSD: machdep.c,v 1.239.2.3 2017/12/03 11:35:48 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,7 +50,7 @@
 #include "empm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.239.2.2 2014/08/20 00:02:42 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.239.2.3 2017/12/03 11:35:48 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,7 +141,6 @@ paddr_t msgbufpa;
 
 int	machineid;
 int	maxmem;			/* max memory per process */
-extern int	physmem;	/* max supported memory, changes to actual */
 
 extern  int   freebufspace;
 extern	u_int lowram;
@@ -535,7 +534,7 @@ cpu_dumpconf(void)
 		else if (dumplo == 0)
 			dumplo = nblks - btodb(ctob(dumpsize));
 	}
-	--dumplo;	/* XXX assume header fits in one block */
+	dumplo -= ctod(btoc(MDHDRSIZE));
 	/*
 	 * Don't dump on the first PAGE_SIZE (why PAGE_SIZE?)
 	 * in case the dump device includes a disk label.
@@ -1182,17 +1181,14 @@ nmihand(struct frame frame)
 int
 cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 {
-	int error = ENOEXEC;
 #ifdef COMPAT_NOMID
 	struct exec *execp = epp->ep_hdr;
-#endif
 
-#ifdef COMPAT_NOMID
 	if (!((execp->a_midmag >> 16) & 0x0fff)
 	    && execp->a_midmag == ZMAGIC)
 		return(exec_aout_prep_zmagic(l, epp));
 #endif
-	return(error);
+	return ENOEXEC;
 }
 
 #ifdef MODULAR
@@ -1208,21 +1204,21 @@ int _spllkm6(void);
 int _spllkm7(void);
 
 #ifdef LEV6_DEFER
-int _spllkm6() {
+int _spllkm6(void) {
 	return spl4();
 };
 
-int _spllkm7() {
+int _spllkm7(void) {
 	return spl4();
 };
 
 #else
 
-int _spllkm6() {
+int _spllkm6(void) {
 	return spl6();
 };
 
-int _spllkm7() {
+int _spllkm7(void) {
 	return spl7();
 };
 

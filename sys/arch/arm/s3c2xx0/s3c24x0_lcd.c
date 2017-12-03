@@ -1,4 +1,4 @@
-/* $NetBSD: s3c24x0_lcd.c,v 1.9.6.2 2014/08/20 00:02:47 tls Exp $ */
+/* $NetBSD: s3c24x0_lcd.c,v 1.9.6.3 2017/12/03 11:35:55 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2004  Genetec Corporation.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c24x0_lcd.c,v 1.9.6.2 2014/08/20 00:02:47 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c24x0_lcd.c,v 1.9.6.3 2017/12/03 11:35:55 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -735,7 +735,6 @@ s3c24x0_lcd_mmap(void *v, void *vs, off_t offset, int prot)
 	    offset, prot, BUS_DMA_WAITOK|BUS_DMA_COHERENT);
 	/*	printf("s3c24x0_lcd_mmap: ret: %lx\n", ret);*/
 	return ret;
-	return -1;
 }
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.6 2011/06/30 00:52:59 matt Exp $	*/
+/*	$NetBSD: pte.h,v 1.6.12.1 2017/12/03 11:36:37 jdolecek Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,6 +41,7 @@
 #ifndef __BSD_PT_ENTRY_T
 #define __BSD_PT_ENTRY_T	__uint32_t
 typedef __BSD_PT_ENTRY_T	pt_entry_t;
+#define PRIxPTE			PRIx32
 #endif
 #endif
 
@@ -76,6 +77,12 @@ typedef __BSD_PT_ENTRY_T	pt_entry_t;
 #ifndef _LOCORE
 #ifdef _KERNEL
 
+static inline uint32_t
+pte_value(pt_entry_t pt_entry)
+{
+	return pt_entry;
+}
+
 static inline bool
 pte_cached_p(pt_entry_t pt_entry)
 {
@@ -95,9 +102,21 @@ pte_valid_p(pt_entry_t pt_entry)
 }
 
 static inline bool
+pte_zero_p(pt_entry_t pt_entry)
+{
+	return pt_entry == 0;
+}
+
+static inline bool
 pte_exec_p(pt_entry_t pt_entry)
 {
 	return (pt_entry & PTE_xX) != 0;
+}
+
+static inline bool
+pte_readonly_p(pt_entry_t pt_entry)
+{
+	return (pt_entry & PTE_xW) == 0;
 }
 
 static inline bool
@@ -251,6 +270,13 @@ pte_make_kenter_pa(paddr_t pa, struct vm_page_md *mdpg, vm_prot_t prot,
 
 	return pt_entry;
 }
+
+static inline void
+pte_set(pt_entry_t *ptep, pt_entry_t pte)
+{
+	*ptep = pte;
+}
+
 #endif /* _KERNEL */
 #endif /* !_LOCORE */
 

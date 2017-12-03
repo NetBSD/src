@@ -1,4 +1,4 @@
-/*	$NetBSD: event.c,v 1.13.48.1 2014/08/20 00:03:28 tls Exp $ */
+/*	$NetBSD: event.c,v 1.13.48.2 2017/12/03 11:36:48 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: event.c,v 1.13.48.1 2014/08/20 00:03:28 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: event.c,v 1.13.48.2 2017/12/03 11:36:48 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/fcntl.h>
@@ -216,8 +216,12 @@ filt_evread(struct knote *kn, long hint)
 	return rv;
 }
 
-static const struct filterops ev_filtops =
-	{ 1, NULL, filt_evrdetach, filt_evread };
+static const struct filterops ev_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_evrdetach,
+	.f_event = filt_evread,
+};
 
 int
 ev_kqfilter(struct evvar *ev, struct knote *kn)

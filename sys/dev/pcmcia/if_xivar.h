@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xivar.h,v 1.8 2012/02/02 19:43:06 tls Exp $	*/
+/*	$NetBSD: if_xivar.h,v 1.8.6.1 2017/12/03 11:37:31 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -18,7 +18,7 @@
  *    derived from this software without specific prior written permission.
  */
 
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 struct xi_softc {
 	device_t sc_dev;			/* Generic device info */

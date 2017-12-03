@@ -1,0 +1,8 @@
+#	$NetBSD: files.netcan,v 1.2.10.2 2017/12/03 11:39:03 jdolecek Exp $
+
+defflag opt_can.h		CAN 	# ISO-15765 CAN network stack
+
+file	netcan/can.c		can
+file	netcan/can_proto.c	can
+file	netcan/can_pcb.c	can
+file	netcan/if_canloop.c	canloop

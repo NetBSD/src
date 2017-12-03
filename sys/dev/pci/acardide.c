@@ -1,4 +1,4 @@
-/*	$NetBSD: acardide.c,v 1.30.2.2 2014/08/20 00:03:41 tls Exp $	*/
+/*	$NetBSD: acardide.c,v 1.30.2.3 2017/12/03 11:37:07 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acardide.c,v 1.30.2.2 2014/08/20 00:03:41 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acardide.c,v 1.30.2.3 2017/12/03 11:37:07 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -294,41 +294,3 @@ acard_setup_channel(struct ata_channel *chp)
 		pci_conf_write(sc->sc_pc, sc->sc_tag, ATP860_UDMA, udma_mode);
 	}
 }
-
-#if 0 /* XXX !! */
-static int
-acard_pci_intr(void *arg)
-{
-	struct pciide_softc *sc = arg;
-	struct pciide_channel *cp;
-	struct ata_channel *wdc_cp;
-	int rv = 0;
-	int dmastat, i, crv;
-
-	for (i = 0; i < sc->sc_wdcdev.sc_atac.atac_nchannels; i++) {
-		cp = &sc->pciide_channels[i];
-		dmastat = bus_space_read_1(sc->sc_dma_iot,
-		    cp->dma_iohs[IDEDMA_CTL], 0);
-		if ((dmastat & IDEDMA_CTL_INTR) == 0)
-			continue;
-		wdc_cp = &cp->ata_channel;
-		if ((wdc_cp->ch_flags & ATACH_IRQ_WAIT) == 0) {
-			(void)wdcintr(wdc_cp);
-			bus_space_write_1(sc->sc_dma_iot,
-			    cp->dma_iohs[IDEDMA_CTL], 0, dmastat);
-			continue;
-		}
-		crv = wdcintr(wdc_cp);
-		if (crv == 0) {
-			printf("%s:%d: bogus intr\n",
-			    device_xname(sc->sc_wdcdev.sc_atac.atac_dev), i);
-			bus_space_write_1(sc->sc_dma_iot,
-			    cp->dma_iohs[IDEDMA_CTL], 0, dmastat);
-		} else if (crv == 1)
-			rv = 1;
-		else if (rv == 0)
-			rv = crv;
-	}
-	return rv;
-}
-#endif

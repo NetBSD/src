@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dl.h,v 1.23 2008/02/20 17:18:11 matt Exp $	*/
+/*	$NetBSD: if_dl.h,v 1.23.54.1 2017/12/03 11:39:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -58,6 +58,22 @@
 typedef __sa_family_t	sa_family_t;
 #define sa_family_t	__sa_family_t
 #endif
+#ifndef socklen_t
+typedef __socklen_t   socklen_t;
+#define socklen_t     __socklen_t
+#endif
+
+struct dl_addr {
+	uint8_t	    dl_type;	/* interface type */
+	uint8_t	    dl_nlen;	/* interface name length, no trailing 0 reqd. */
+	uint8_t	    dl_alen;	/* link level address length */
+	uint8_t	    dl_slen;	/* link layer selector length */
+	/*
+	 * minimum work area, can be larger; contains both if name
+	 * and ll address
+	 */
+	char	    dl_data[12];
+};
 
 /*
  * Structure of a Link-Level sockaddr:
@@ -65,15 +81,13 @@ typedef __sa_family_t	sa_family_t;
 struct sockaddr_dl {
 	uint8_t	    sdl_len;	/* Total length of sockaddr */
 	sa_family_t sdl_family;	/* AF_LINK */
-	uint16_t   sdl_index;	/* if != 0, system given index for interface */
-	uint8_t	    sdl_type;	/* interface type */
-	uint8_t	    sdl_nlen;	/* interface name length, no trailing 0 reqd. */
-	uint8_t	    sdl_alen;	/* link level address length */
-	uint8_t	    sdl_slen;	/* link layer selector length */
-	/* minimum work area, can be larger; contains both if name
-	 * and ll address
-	 */
-	char	    sdl_data[12];
+	uint16_t    sdl_index;	/* if != 0, system given index for interface */
+	struct dl_addr sdl_addr;
+#define sdl_type	sdl_addr.dl_type
+#define sdl_nlen	sdl_addr.dl_nlen
+#define sdl_alen	sdl_addr.dl_alen
+#define sdl_slen	sdl_addr.dl_slen
+#define sdl_data	sdl_addr.dl_data
 };
 
 #define	satosdl(__sa)	((struct sockaddr_dl *)(__sa))
@@ -101,5 +115,14 @@ char	*link_ntoa(const struct sockaddr_dl *);
 __END_DECLS
 
 #endif /* !_KERNEL */
+
+#if defined(_KERNEL) || defined(_TEST)
+// 255 xx: + 255 'a' + / + # + 3 digits + NUL
+#define LINK_ADDRSTRLEN	((255 * 4) + 5)
+
+int	dl_print(char *, size_t, const struct dl_addr *);
+#define DL_PRINT(b, a) (dl_print((b), sizeof(b), (a)), (b))
+int	sdl_print(char *, size_t, const void *);
+#endif
 
 #endif /* !_NET_IF_DL_H_ */

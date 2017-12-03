@@ -1,4 +1,4 @@
-/*	$NetBSD: arcmsr.c,v 1.30.12.2 2014/08/20 00:03:41 tls Exp $ */
+/*	$NetBSD: arcmsr.c,v 1.30.12.3 2017/12/03 11:37:07 jdolecek Exp $ */
 /*	$OpenBSD: arc.c,v 1.68 2007/10/27 03:28:27 dlg Exp $ */
 
 /*
@@ -21,7 +21,7 @@
 #include "bio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.30.12.2 2014/08/20 00:03:41 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.30.12.3 2017/12/03 11:37:07 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -72,7 +72,9 @@ int arcdebug = 0;
 /* 
  * the fw header must always equal this.
  */
+#if NBIO > 0
 static struct arc_fw_hdr arc_fw_hdr = { 0x5e, 0x01, 0x61 };
+#endif
 
 /*
  * autoconf(9) glue.
@@ -108,6 +110,63 @@ static void 	arc_create_sensors(void *);
 static void 	arc_refresh_sensors(struct sysmon_envsys *, envsys_data_t *);
 static int	arc_fw_parse_status_code(struct arc_softc *, uint8_t *);
 #endif
+
+/* 
+ * interface for scsi midlayer to talk to.
+ */
+static void 	arc_scsi_cmd(struct scsipi_channel *, scsipi_adapter_req_t,
+    void *);
+
+/* 
+ * code to deal with getting bits in and out of the bus space.
+ */
+static uint32_t arc_read(struct arc_softc *, bus_size_t);
+static void 	arc_read_region(struct arc_softc *, bus_size_t, void *,
+    size_t);
+static void 	arc_write(struct arc_softc *, bus_size_t, uint32_t);
+#if NBIO > 0
+static void 	arc_write_region(struct arc_softc *, bus_size_t, void *,
+    size_t);
+#endif
+static int 	arc_wait_eq(struct arc_softc *, bus_size_t, uint32_t,
+    uint32_t);
+#ifdef unused
+static int 	arc_wait_ne(struct arc_softc *, bus_size_t, uint32_t,
+    uint32_t);
+#endif
+static int	arc_msg0(struct arc_softc *, uint32_t);
+static struct arc_dmamem 	*arc_dmamem_alloc(struct arc_softc *, size_t);
+static void	arc_dmamem_free(struct arc_softc *,
+    struct arc_dmamem *);
+
+static int 	arc_alloc_ccbs(device_t);
+static struct arc_ccb	*arc_get_ccb(struct arc_softc *);
+static void 	arc_put_ccb(struct arc_softc *, struct arc_ccb *);
+static int 	arc_load_xs(struct arc_ccb *);
+static int 	arc_complete(struct arc_softc *, struct arc_ccb *, int);
+static void 	arc_scsi_cmd_done(struct arc_softc *, struct arc_ccb *,
+    uint32_t);
+
+/* 
+ * real stuff for dealing with the hardware.
+ */
+static int 	arc_map_pci_resources(device_t, struct pci_attach_args *);
+static void 	arc_unmap_pci_resources(struct arc_softc *);
+static int 	arc_query_firmware(device_t);
+
+/* 
+ * stuff to do messaging via the doorbells.
+ */
+#if NBIO > 0
+static void 	arc_lock(struct arc_softc *);
+static void 	arc_unlock(struct arc_softc *);
+static void 	arc_wait(struct arc_softc *);
+static uint8_t 	arc_msg_cksum(void *, uint16_t);
+static int 	arc_msgbuf(struct arc_softc *, void *, size_t, void *, size_t);
+#endif
+
+#define arc_push(_s, _r)	arc_write((_s), ARC_REG_POST_QUEUE, (_r))
+#define arc_pop(_s)		arc_read((_s), ARC_REG_REPLY_QUEUE)
 
 static int
 arc_match(device_t parent, cfdata_t match, void *aux)
@@ -182,6 +241,7 @@ arc_attach(device_t parent, device_t self, void *aux)
 	adapt->adapt_max_periph = adapt->adapt_openings;
 	adapt->adapt_minphys = arc_minphys;		
 	adapt->adapt_request = arc_scsi_cmd;
+	adapt->adapt_flags = SCSIPI_ADAPT_MPSAFE;
 
 	memset(chan, 0, sizeof(*chan));
 	chan->chan_adapter = adapt;
@@ -566,6 +626,8 @@ arc_map_pci_resources(device_t self, struct pci_attach_args *pa)
 		goto unmap;
 	}
 
+	pci_intr_setattr(pa->pa_pc, &ih, PCI_INTR_MPSAFE, true);
+
 	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO,
 	    arc_intr, sc);
 	if (sc->sc_ih == NULL) {
@@ -635,15 +697,18 @@ arc_query_firmware(device_t self)
 	DNPRINTF(ARC_D_INIT, "%s: sata_ports: %d\n",
 	    device_xname(self), htole32(fwinfo.sata_ports));
 
-	scsipi_strvis(string, 81, fwinfo.vendor, sizeof(fwinfo.vendor));
+	strnvisx(string, sizeof(string), fwinfo.vendor, sizeof(fwinfo.vendor),
+	    VIS_TRIM|VIS_SAFE|VIS_OCTAL);
 	DNPRINTF(ARC_D_INIT, "%s: vendor: \"%s\"\n",
 	    device_xname(self), string);
 
-	scsipi_strvis(string, 17, fwinfo.model, sizeof(fwinfo.model));
+	strnvisx(string, sizeof(string), fwinfo.model, sizeof(fwinfo.model),
+	    VIS_TRIM|VIS_SAFE|VIS_OCTAL);
 	aprint_normal_dev(self, "Areca %s Host Adapter RAID controller\n",
 	    string);
 
-	scsipi_strvis(string, 33, fwinfo.fw_version, sizeof(fwinfo.fw_version));
+	strnvisx(string, sizeof(string), fwinfo.fw_version,
+	    sizeof(fwinfo.fw_version), VIS_TRIM|VIS_SAFE|VIS_OCTAL);
 	DNPRINTF(ARC_D_INIT, "%s: version: \"%s\"\n",
 	    device_xname(self), string);
 
@@ -1328,8 +1393,8 @@ arc_bio_vol(struct arc_softc *sc, struct bioc_vol *bv)
 	bv->bv_nodisk = volinfo->member_disks;
 	bv->bv_stripe_size = volinfo->stripe_size / 2;
 	snprintf(bv->bv_dev, sizeof(bv->bv_dev), "sd%d", bv->bv_volid);
-	scsipi_strvis(bv->bv_vendor, sizeof(bv->bv_vendor), volinfo->set_name,
-	    sizeof(volinfo->set_name));
+	strnvisx(bv->bv_vendor, sizeof(bv->bv_vendor), volinfo->set_name,
+	    sizeof(volinfo->set_name), VIS_TRIM|VIS_SAFE|VIS_OCTAL);
 
 out:
 	kmem_free(volinfo, sizeof(*volinfo));
@@ -1417,10 +1482,12 @@ arc_bio_disk_filldata(struct arc_softc *sc, struct bioc_disk *bd,
 	blocks += (uint64_t)htole32(diskinfo->capacity);
 	bd->bd_size = blocks * ARC_BLOCKSIZE; /* XXX */
 
-	scsipi_strvis(model, 81, diskinfo->model, sizeof(diskinfo->model));
-	scsipi_strvis(serial, 41, diskinfo->serial, sizeof(diskinfo->serial));
-	scsipi_strvis(rev, 17, diskinfo->firmware_rev,
-	    sizeof(diskinfo->firmware_rev));
+	strnvisx(model, sizeof(model), diskinfo->model,
+	    sizeof(diskinfo->model), VIS_TRIM|VIS_SAFE|VIS_OCTAL);
+	strnvisx(serial, sizeof(serial), diskinfo->serial,
+	    sizeof(diskinfo->serial), VIS_TRIM|VIS_SAFE|VIS_OCTAL);
+	strnvisx(rev, sizeof(rev), diskinfo->firmware_rev,
+	    sizeof(diskinfo->firmware_rev), VIS_TRIM|VIS_SAFE|VIS_OCTAL);
 
 	snprintf(bd->bd_vendor, sizeof(bd->bd_vendor), "%s %s", model, rev);
 	strlcpy(bd->bd_serial, serial, sizeof(bd->bd_serial));
@@ -1501,9 +1568,8 @@ out:
 	kmem_free(diskinfo, sizeof(*diskinfo));
 	return error;
 }
-#endif /* NBIO > 0 */
 
-uint8_t
+static uint8_t
 arc_msg_cksum(void *cmd, uint16_t len)
 {
 	uint8_t	*buf = cmd;
@@ -1518,7 +1584,7 @@ arc_msg_cksum(void *cmd, uint16_t len)
 }
 
 
-int
+static int
 arc_msgbuf(struct arc_softc *sc, void *wptr, size_t wbuflen, void *rptr,
 	   size_t rbuflen)
 {
@@ -1662,7 +1728,7 @@ out:
 	return error;
 }
 
-void
+static void
 arc_lock(struct arc_softc *sc)
 {
 	rw_enter(&sc->sc_rwlock, RW_WRITER);
@@ -1671,7 +1737,7 @@ arc_lock(struct arc_softc *sc)
 	sc->sc_talking = 1;
 }
 
-void
+static void
 arc_unlock(struct arc_softc *sc)
 {
 	KASSERT(mutex_owned(&sc->sc_mutex));
@@ -1683,7 +1749,7 @@ arc_unlock(struct arc_softc *sc)
 	rw_exit(&sc->sc_rwlock);
 }
 
-void
+static void
 arc_wait(struct arc_softc *sc)
 {
 	KASSERT(mutex_owned(&sc->sc_mutex));
@@ -1694,7 +1760,7 @@ arc_wait(struct arc_softc *sc)
 		arc_write(sc, ARC_REG_INTRMASK, ~ARC_REG_INTRMASK_POSTQUEUE);
 }
 
-#if NBIO > 0
+
 static void
 arc_create_sensors(void *arg)
 {
@@ -1841,83 +1907,28 @@ arc_refresh_sensors(struct sysmon_envsys *sme, envsys_data_t *edata)
 	bv.bv_volid = arcdata->arc_volid;
 
 	if (arc_bio_vol(sc, &bv)) {
-		edata->value_cur = ENVSYS_DRIVE_EMPTY;
-		edata->state = ENVSYS_SINVALID;
+		bv.bv_status = BIOC_SVINVALID;
+		bio_vol_to_envsys(edata, &bv);
 		return;
 	}
 
-	/* Current sensor is handling a disk volume member */
 	if (arcdata->arc_diskid) {
+		/* Current sensor is handling a disk volume member */
 		memset(&bd, 0, sizeof(bd));
 		bd.bd_volid = arcdata->arc_volid;
 		bd.bd_diskid = arcdata->arc_diskid - 10;
 
-		if (arc_bio_disk_volume(sc, &bd)) {
-			edata->value_cur = ENVSYS_DRIVE_OFFLINE;
-			edata->state = ENVSYS_SCRITICAL;
-			return;
-		}
-
-		switch (bd.bd_status) {
-		case BIOC_SDONLINE:
-			edata->value_cur = ENVSYS_DRIVE_ONLINE;
-			edata->state = ENVSYS_SVALID;
-			break;
-		case BIOC_SDOFFLINE:
-			edata->value_cur = ENVSYS_DRIVE_OFFLINE;
-			edata->state = ENVSYS_SCRITICAL;
-			break;
-		default:
-			edata->value_cur = ENVSYS_DRIVE_FAIL;
-			edata->state = ENVSYS_SCRITICAL;
-			break;
-		}
-
-		return;
-	}
-
-	/* Current sensor is handling a volume */
-	switch (bv.bv_status) {
-	case BIOC_SVOFFLINE:
-		edata->value_cur = ENVSYS_DRIVE_OFFLINE;
-		edata->state = ENVSYS_SCRITICAL;
-		break;
-	case BIOC_SVDEGRADED:
-		edata->value_cur = ENVSYS_DRIVE_PFAIL;
-		edata->state = ENVSYS_SCRITICAL;
-		break;
-	case BIOC_SVBUILDING:
-		edata->value_cur = ENVSYS_DRIVE_BUILD;
-		edata->state = ENVSYS_SVALID;
-		break;
-	case BIOC_SVMIGRATING:
-		edata->value_cur = ENVSYS_DRIVE_MIGRATING;
-		edata->state = ENVSYS_SVALID;
-		break;
-	case BIOC_SVCHECKING:
-		edata->value_cur = ENVSYS_DRIVE_CHECK;
-		edata->state = ENVSYS_SVALID;
-		break;
-	case BIOC_SVREBUILD:
-		edata->value_cur = ENVSYS_DRIVE_REBUILD;
-		edata->state = ENVSYS_SCRITICAL;
-		break;
-	case BIOC_SVSCRUB:
-	case BIOC_SVONLINE:
-		edata->value_cur = ENVSYS_DRIVE_ONLINE;
-		edata->state = ENVSYS_SVALID;
-		break;
-	case BIOC_SVINVALID:
-		/* FALLTHROUGH */
-	default:
-		edata->value_cur = ENVSYS_DRIVE_EMPTY; /* unknown state */
-		edata->state = ENVSYS_SINVALID;
-		break;
+		if (arc_bio_disk_volume(sc, &bd))
+			bd.bd_status = BIOC_SDOFFLINE;
+		bio_disk_to_envsys(edata, &bd);
+	} else {
+		/* Current sensor is handling a volume */
+		bio_vol_to_envsys(edata, &bv);
 	}
 }
 #endif /* NBIO > 0 */
 
-uint32_t
+static uint32_t
 arc_read(struct arc_softc *sc, bus_size_t r)
 {
 	uint32_t			v;
@@ -1932,7 +1943,7 @@ arc_read(struct arc_softc *sc, bus_size_t r)
 	return v;
 }
 
-void
+static void
 arc_read_region(struct arc_softc *sc, bus_size_t r, void *buf, size_t len)
 {
 	bus_space_barrier(sc->sc_iot, sc->sc_ioh, r, len,
@@ -1941,7 +1952,7 @@ arc_read_region(struct arc_softc *sc, bus_size_t r, void *buf, size_t len)
 	    (uint32_t *)buf, len >> 2);
 }
 
-void
+static void
 arc_write(struct arc_softc *sc, bus_size_t r, uint32_t v)
 {
 	DNPRINTF(ARC_D_RW, "%s: arc_write 0x%lx 0x%08x\n",
@@ -1952,7 +1963,8 @@ arc_write(struct arc_softc *sc, bus_size_t r, uint32_t v)
 	    BUS_SPACE_BARRIER_WRITE);
 }
 
-void
+#if NBIO > 0
+static void
 arc_write_region(struct arc_softc *sc, bus_size_t r, void *buf, size_t len)
 {
 	bus_space_write_region_4(sc->sc_iot, sc->sc_ioh, r,
@@ -1960,8 +1972,9 @@ arc_write_region(struct arc_softc *sc, bus_size_t r, void *buf, size_t len)
 	bus_space_barrier(sc->sc_iot, sc->sc_ioh, r, len,
 	    BUS_SPACE_BARRIER_WRITE);
 }
+#endif /* NBIO > 0 */
 
-int
+static int
 arc_wait_eq(struct arc_softc *sc, bus_size_t r, uint32_t mask,
 	    uint32_t target)
 {
@@ -1979,7 +1992,8 @@ arc_wait_eq(struct arc_softc *sc, bus_size_t r, uint32_t mask,
 	return 1;
 }
 
-int
+#if unused
+static int
 arc_wait_ne(struct arc_softc *sc, bus_size_t r, uint32_t mask,
 	    uint32_t target)
 {
@@ -1996,8 +2010,9 @@ arc_wait_ne(struct arc_softc *sc, bus_size_t r, uint32_t mask,
 
 	return 1;
 }
+#endif
 
-int
+static int
 arc_msg0(struct arc_softc *sc, uint32_t m)
 {
 	/* post message */
@@ -2013,7 +2028,7 @@ arc_msg0(struct arc_softc *sc, uint32_t m)
 	return 0;
 }
 
-struct arc_dmamem *
+static struct arc_dmamem *
 arc_dmamem_alloc(struct arc_softc *sc, size_t size)
 {
 	struct arc_dmamem		*adm;
@@ -2057,7 +2072,7 @@ admfree:
 	return NULL;
 }
 
-void
+static void
 arc_dmamem_free(struct arc_softc *sc, struct arc_dmamem *adm)
 {
 	bus_dmamap_unload(sc->sc_dmat, adm->adm_map);
@@ -2067,7 +2082,7 @@ arc_dmamem_free(struct arc_softc *sc, struct arc_dmamem *adm)
 	kmem_free(adm, sizeof(*adm));
 }
 
-int
+static int
 arc_alloc_ccbs(device_t self)
 {
 	struct arc_softc 	*sc = device_private(self);
@@ -2124,7 +2139,7 @@ free_ccbs:
 	return 1;
 }
 
-struct arc_ccb *
+static struct arc_ccb *
 arc_get_ccb(struct arc_softc *sc)
 {
 	struct arc_ccb			*ccb;
@@ -2136,7 +2151,7 @@ arc_get_ccb(struct arc_softc *sc)
 	return ccb;
 }
 
-void
+static void
 arc_put_ccb(struct arc_softc *sc, struct arc_ccb *ccb)
 {
 	ccb->ccb_xs = NULL;

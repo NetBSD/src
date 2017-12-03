@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -41,11 +41,10 @@
  * POSSIBILITY OF SUCH DAMAGES.
  */
 
-#define __UTDECODE_C__
-
 #include "acpi.h"
 #include "accommon.h"
 #include "acnamesp.h"
+#include "amlcode.h"
 
 #define _COMPONENT          ACPI_UTILITIES
         ACPI_MODULE_NAME    ("utdecode")
@@ -89,38 +88,6 @@ const UINT8                     AcpiGbl_NsProperties[ACPI_NUM_NS_TYPES] =
     ACPI_NS_NORMAL,                     /* 29 Data             */
     ACPI_NS_NORMAL                      /* 30 Invalid          */
 };
-
-
-/*******************************************************************************
- *
- * FUNCTION:    AcpiUtHexToAsciiChar
- *
- * PARAMETERS:  Integer             - Contains the hex digit
- *              Position            - bit position of the digit within the
- *                                    integer (multiple of 4)
- *
- * RETURN:      The converted Ascii character
- *
- * DESCRIPTION: Convert a hex digit to an Ascii character
- *
- ******************************************************************************/
-
-/* Hex to ASCII conversion table */
-
-static const char           AcpiGbl_HexToAscii[] =
-{
-    '0','1','2','3','4','5','6','7',
-    '8','9','A','B','C','D','E','F'
-};
-
-char
-AcpiUtHexToAsciiChar (
-    UINT64                  Integer,
-    UINT32                  Position)
-{
-
-    return (AcpiGbl_HexToAscii[(Integer >> Position) & 0xF]);
-}
 
 
 /*******************************************************************************
@@ -175,7 +142,7 @@ AcpiUtGetRegionName (
         return ("InvalidSpaceId");
     }
 
-    return (ACPI_CAST_PTR (char, AcpiGbl_RegionTypes[SpaceId]));
+    return (AcpiGbl_RegionTypes[SpaceId]);
 }
 
 
@@ -213,7 +180,7 @@ AcpiUtGetEventName (
         return ("InvalidEventID");
     }
 
-    return (ACPI_CAST_PTR (char, AcpiGbl_EventTypes[EventId]));
+    return (AcpiGbl_EventTypes[EventId]);
 }
 
 
@@ -235,7 +202,8 @@ AcpiUtGetEventName (
  *
  * The type ACPI_TYPE_ANY (Untyped) is used as a "don't care" when searching;
  * when stored in a table it really means that we have thus far seen no
- * evidence to indicate what type is actually going to be stored for this entry.
+ * evidence to indicate what type is actually going to be stored for this
+ & entry.
  */
 static const char           AcpiGbl_BadType[] = "UNDEFINED";
 
@@ -277,17 +245,17 @@ static const char           *AcpiGbl_NsTypeNames[] =
 };
 
 
-char *
+const char *
 AcpiUtGetTypeName (
     ACPI_OBJECT_TYPE        Type)
 {
 
     if (Type > ACPI_TYPE_INVALID)
     {
-        return (ACPI_CAST_PTR (char, AcpiGbl_BadType));
+        return (AcpiGbl_BadType);
     }
 
-    return (ACPI_CAST_PTR (char, AcpiGbl_NsTypeNames[Type]));
+    return (AcpiGbl_NsTypeNames[Type]);
 }
 
 
@@ -295,13 +263,29 @@ const char *
 AcpiUtGetObjectTypeName (
     ACPI_OPERAND_OBJECT     *ObjDesc)
 {
+    ACPI_FUNCTION_TRACE (UtGetObjectTypeName);
+
 
     if (!ObjDesc)
     {
-        return ("[NULL Object Descriptor]");
+        ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "Null Object Descriptor\n"));
+        return_STR ("[NULL Object Descriptor]");
     }
 
-    return (AcpiUtGetTypeName (ObjDesc->Common.Type));
+    /* These descriptor types share a common area */
+
+    if ((ACPI_GET_DESCRIPTOR_TYPE (ObjDesc) != ACPI_DESC_TYPE_OPERAND) &&
+        (ACPI_GET_DESCRIPTOR_TYPE (ObjDesc) != ACPI_DESC_TYPE_NAMED))
+    {
+        ACPI_DEBUG_PRINT ((ACPI_DB_EXEC,
+            "Invalid object descriptor type: 0x%2.2X [%s] (%p)\n",
+            ACPI_GET_DESCRIPTOR_TYPE (ObjDesc),
+            AcpiUtGetDescriptorName (ObjDesc), ObjDesc));
+
+        return_STR ("Invalid object");
+    }
+
+    return_STR (AcpiUtGetTypeName (ObjDesc->Common.Type));
 }
 
 
@@ -408,9 +392,7 @@ AcpiUtGetDescriptorName (
         return ("Not a Descriptor");
     }
 
-    return (ACPI_CAST_PTR (char,
-        AcpiGbl_DescTypeNames[ACPI_GET_DESCRIPTOR_TYPE (Object)]));
-
+    return (AcpiGbl_DescTypeNames[ACPI_GET_DESCRIPTOR_TYPE (Object)]);
 }
 
 
@@ -468,11 +450,6 @@ AcpiUtGetReferenceName (
 }
 
 
-#if defined(ACPI_DEBUG_OUTPUT) || defined(ACPI_DEBUGGER)
-/*
- * Strings and procedures used for debug only
- */
-
 /*******************************************************************************
  *
  * FUNCTION:    AcpiUtGetMutexName
@@ -487,7 +464,7 @@ AcpiUtGetReferenceName (
 
 /* Names for internal mutex objects, used for debug output */
 
-static const char              *AcpiGbl_MutexNames[ACPI_NUM_MUTEX] =
+static const char           *AcpiGbl_MutexNames[ACPI_NUM_MUTEX] =
 {
     "ACPI_MTX_Interpreter",
     "ACPI_MTX_Namespace",
@@ -495,8 +472,6 @@ static const char              *AcpiGbl_MutexNames[ACPI_NUM_MUTEX] =
     "ACPI_MTX_Events",
     "ACPI_MTX_Caches",
     "ACPI_MTX_Memory",
-    "ACPI_MTX_CommandComplete",
-    "ACPI_MTX_CommandReady"
 };
 
 const char *
@@ -513,6 +488,12 @@ AcpiUtGetMutexName (
 }
 
 
+#if defined(ACPI_DEBUG_OUTPUT) || defined(ACPI_DEBUGGER)
+
+/*
+ * Strings and procedures used for debug only
+ */
+
 /*******************************************************************************
  *
  * FUNCTION:    AcpiUtGetNotifyName
@@ -527,7 +508,7 @@ AcpiUtGetMutexName (
 
 /* Names for Notify() values, used for debug output */
 
-static const char           *AcpiGbl_NotifyValueNames[ACPI_NOTIFY_MAX + 1] =
+static const char           *AcpiGbl_GenericNotify[ACPI_GENERIC_NOTIFY_MAX + 1] =
 {
     /* 00 */ "Bus Check",
     /* 01 */ "Device Check",
@@ -539,33 +520,146 @@ static const char           *AcpiGbl_NotifyValueNames[ACPI_NOTIFY_MAX + 1] =
     /* 07 */ "Power Fault",
     /* 08 */ "Capabilities Check",
     /* 09 */ "Device PLD Check",
-    /* 10 */ "Reserved",
-    /* 11 */ "System Locality Update",
-    /* 12 */ "Shutdown Request"
+    /* 0A */ "Reserved",
+    /* 0B */ "System Locality Update",
+    /* 0C */ "Reserved (was previously Shutdown Request)",  /* Reserved in ACPI 6.0 */
+    /* 0D */ "System Resource Affinity Update",
+    /* 0E */ "Heterogeneous Memory Attributes Update"       /* ACPI 6.2 */
 };
+
+static const char           *AcpiGbl_DeviceNotify[5] =
+{
+    /* 80 */ "Status Change",
+    /* 81 */ "Information Change",
+    /* 82 */ "Device-Specific Change",
+    /* 83 */ "Device-Specific Change",
+    /* 84 */ "Reserved"
+};
+
+static const char           *AcpiGbl_ProcessorNotify[5] =
+{
+    /* 80 */ "Performance Capability Change",
+    /* 81 */ "C-State Change",
+    /* 82 */ "Throttling Capability Change",
+    /* 83 */ "Guaranteed Change",
+    /* 84 */ "Minimum Excursion"
+};
+
+static const char           *AcpiGbl_ThermalNotify[5] =
+{
+    /* 80 */ "Thermal Status Change",
+    /* 81 */ "Thermal Trip Point Change",
+    /* 82 */ "Thermal Device List Change",
+    /* 83 */ "Thermal Relationship Change",
+    /* 84 */ "Reserved"
+};
+
 
 const char *
 AcpiUtGetNotifyName (
-    UINT32                  NotifyValue)
+    UINT32                  NotifyValue,
+    ACPI_OBJECT_TYPE        Type)
 {
 
-    if (NotifyValue <= ACPI_NOTIFY_MAX)
+    /* 00 - 0D are "common to all object types" (from ACPI Spec) */
+
+    if (NotifyValue <= ACPI_GENERIC_NOTIFY_MAX)
     {
-        return (AcpiGbl_NotifyValueNames[NotifyValue]);
+        return (AcpiGbl_GenericNotify[NotifyValue]);
     }
-    else if (NotifyValue <= ACPI_MAX_SYS_NOTIFY)
+
+    /* 0E - 7F are reserved */
+
+    if (NotifyValue <= ACPI_MAX_SYS_NOTIFY)
     {
         return ("Reserved");
     }
-    else if (NotifyValue <= ACPI_MAX_DEVICE_SPECIFIC_NOTIFY)
+
+    /* 80 - 84 are per-object-type */
+
+    if (NotifyValue <= ACPI_SPECIFIC_NOTIFY_MAX)
     {
-        return ("Device Specific");
+        switch (Type)
+        {
+        case ACPI_TYPE_ANY:
+        case ACPI_TYPE_DEVICE:
+            return (AcpiGbl_DeviceNotify [NotifyValue - 0x80]);
+
+        case ACPI_TYPE_PROCESSOR:
+            return (AcpiGbl_ProcessorNotify [NotifyValue - 0x80]);
+
+        case ACPI_TYPE_THERMAL:
+            return (AcpiGbl_ThermalNotify [NotifyValue - 0x80]);
+
+        default:
+            return ("Target object type does not support notifies");
+        }
     }
-    else
+
+    /* 84 - BF are device-specific */
+
+    if (NotifyValue <= ACPI_MAX_DEVICE_SPECIFIC_NOTIFY)
     {
-        return ("Hardware Specific");
+        return ("Device-Specific");
     }
+
+    /* C0 and above are hardware-specific */
+
+    return ("Hardware-Specific");
 }
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiUtGetArgumentTypeName
+ *
+ * PARAMETERS:  ArgType             - an ARGP_* parser argument type
+ *
+ * RETURN:      Decoded ARGP_* type
+ *
+ * DESCRIPTION: Decode an ARGP_* parser type, as defined in the amlcode.h file,
+ *              and used in the acopcode.h file. For example, ARGP_TERMARG.
+ *              Used for debug only.
+ *
+ ******************************************************************************/
+
+static const char           *AcpiGbl_ArgumentType[20] =
+{
+    /* 00 */ "Unknown ARGP",
+    /* 01 */ "ByteData",
+    /* 02 */ "ByteList",
+    /* 03 */ "CharList",
+    /* 04 */ "DataObject",
+    /* 05 */ "DataObjectList",
+    /* 06 */ "DWordData",
+    /* 07 */ "FieldList",
+    /* 08 */ "Name",
+    /* 09 */ "NameString",
+    /* 0A */ "ObjectList",
+    /* 0B */ "PackageLength",
+    /* 0C */ "SuperName",
+    /* 0D */ "Target",
+    /* 0E */ "TermArg",
+    /* 0F */ "TermList",
+    /* 10 */ "WordData",
+    /* 11 */ "QWordData",
+    /* 12 */ "SimpleName",
+    /* 13 */ "NameOrRef"
+};
+
+const char *
+AcpiUtGetArgumentTypeName (
+    UINT32                  ArgType)
+{
+
+    if (ArgType > ARGP_MAX)
+    {
+        return ("Unknown ARGP");
+    }
+
+    return (AcpiGbl_ArgumentType[ArgType]);
+}
+
 #endif
 
 

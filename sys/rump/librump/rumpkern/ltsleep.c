@@ -1,4 +1,4 @@
-/*	$NetBSD: ltsleep.c,v 1.29.6.1 2013/06/23 06:20:28 tls Exp $	*/
+/*	$NetBSD: ltsleep.c,v 1.29.6.2 2017/12/03 11:39:16 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -34,16 +34,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ltsleep.c,v 1.29.6.1 2013/06/23 06:20:28 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ltsleep.c,v 1.29.6.2 2017/12/03 11:39:16 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/queue.h>
 
-#include <rump/rumpuser.h>
+#include <rump-sys/kern.h>
 
-#include "rump_private.h"
+#include <rump/rumpuser.h>
 
 struct ltsleeper {
 	wchan_t id;

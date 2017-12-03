@@ -1,4 +1,4 @@
-/* $NetBSD: siotty.c,v 1.33.8.3 2014/08/20 00:03:10 tls Exp $ */
+/* $NetBSD: siotty.c,v 1.33.8.4 2017/12/03 11:36:23 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.33.8.3 2014/08/20 00:03:10 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.33.8.4 2017/12/03 11:36:23 jdolecek Exp $");
 
 #include "opt_ddb.h"
 
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.33.8.3 2014/08/20 00:03:10 tls Exp $");
 
 #include <luna68k/dev/sioreg.h>
 #include <luna68k/dev/siovar.h>
+#include <luna68k/dev/syscn.h>
 
 #include "ioconf.h"
 
@@ -693,10 +694,6 @@ getsiocsr(struct sioreg *sio)
 
 /*---------------------  console interface ----------------------*/
 
-void syscnattach(int);
-int  syscngetc(dev_t);
-void syscnputc(dev_t, int);
-
 struct consdev syscons = {
 	NULL,
 	NULL,
@@ -711,7 +708,7 @@ struct consdev syscons = {
 };
 
 /* EXPORT */ void
-syscnattach(int channel)
+syscninit(int channel)
 {
 /*
  * Channel A is immediately initialized with 9600N1 right after cold

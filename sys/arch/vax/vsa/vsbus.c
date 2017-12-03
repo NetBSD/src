@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.c,v 1.60 2012/06/28 13:58:21 abs Exp $ */
+/*	$NetBSD: vsbus.c,v 1.60.2.1 2017/12/03 11:36:48 jdolecek Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -13,12 +13,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed at Ludd, University of 
- *	Lule}, Sweden and its contributors.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -33,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vsbus.c,v 1.60 2012/06/28 13:58:21 abs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vsbus.c,v 1.60.2.1 2017/12/03 11:36:48 jdolecek Exp $");
 
 #include "opt_cputype.h"
 
@@ -94,7 +88,7 @@ vsbus_print(void *aux, const char *name)
 
 	aprint_normal(" csr 0x%lx vec %o ipl %x maskbit %d", va->va_paddr,
 	    va->va_cvec & 511, va->va_br, va->va_maskno - 1);
-	return UNCONF; 
+	return UNCONF;
 }
 
 int
@@ -138,6 +132,7 @@ vsbus_attach(device_t parent, device_t self, void *aux)
 		sc->sc_intclr = (char *)sc->sc_vsregs + 15;
 		sc->sc_intmsk = (char *)sc->sc_vsregs + 12;
 		vsbus_dma_init(sc, 32768);
+		break;
 #endif
 
 	default:
@@ -373,7 +368,7 @@ vsbus_dma_intr(void)
 {	
 	struct vsbus_dma *vd;
 	
-	vd = SIMPLEQ_FIRST(&vsbus_dma); 
+	vd = SIMPLEQ_FIRST(&vsbus_dma);
 	if (vd == NULL) {
 		vsbus_active = 0;
 		return;

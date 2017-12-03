@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.98.2.2 2014/08/20 00:03:25 tls Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.98.2.3 2017/12/03 11:36:45 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.98.2.2 2014/08/20 00:03:25 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.98.2.3 2017/12/03 11:36:45 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -76,9 +76,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.98.2.2 2014/08/20 00:03:25 tl
 #include <compat/sys/siginfo.h>
 #include <compat/sys/ucontext.h>
 
-#ifndef SUN4U
-#define SUN4U	/* see .../sparc/include/frame.h for the reason */
-#endif
 #include <machine/frame.h>
 #include <machine/pcb.h>
 #include <machine/reg.h>
@@ -181,6 +178,7 @@ netbsd32_sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct trapframe64 *tf;
 	int addr, onstack, error;
 	struct rwindow32 *oldsp, *newsp;
+	register32_t sp;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 	struct sparc32_sigframe sf;
 	extern char netbsd32_sigcode[], netbsd32_esigcode[];
@@ -251,9 +249,11 @@ netbsd32_sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	    printf("sendsig: saving sf to %p, setting stack pointer %p to %p\n",
 		   fp, &(((struct rwindow32 *)newsp)->rw_in[6]), oldsp);
 #endif
+	sp = NETBSD32PTR32I(oldsp);
 	error = (rwindow_save(l) || 
-	    copyout((void *)&sf, (void *)fp, sizeof sf) || 
-	    suword(&(((struct rwindow32 *)newsp)->rw_in[6]), (u_long)oldsp));
+	    copyout(&sf, fp, sizeof sf) || 
+	    copyout(&sp, &(((struct rwindow32 *)newsp)->rw_in[6]),
+	        sizeof(sp)));
 	mutex_enter(p->p_lock);
 	if (error) {
 		/*
@@ -319,9 +319,11 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	int sig = ksi->ksi_signo;
 	ucontext32_t uc;
 	struct sparc32_sigframe_siginfo *fp;
+	siginfo32_t si32;	
 	netbsd32_intptr_t catcher;
 	struct trapframe64 *tf = l->l_md.md_tf;
 	struct rwindow32 *oldsp, *newsp;
+	register32_t sp;
 	int ucsz, error;
 
 	/* Need to attempt to zero extend this 32-bit pointer */
@@ -339,15 +341,16 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	else
 		fp = (struct sparc32_sigframe_siginfo *)oldsp;
 	fp = (struct sparc32_sigframe_siginfo*)((u_long)(fp - 1) & ~7);
+
 	/*
 	 * Build the signal context to be used by sigreturn.
 	 */
+	memset(&uc, 0, sizeof uc);
 	uc.uc_flags = _UC_SIGMASK |
 		((l->l_sigstk.ss_flags & SS_ONSTACK)
 			? _UC_SETSTACK : _UC_CLRSTACK);
 	uc.uc_sigmask = *mask;
 	uc.uc_link = (uint32_t)(uintptr_t)l->l_ctxlink;
-	memset(&uc.uc_stack, 0, sizeof(uc.uc_stack));
 
 	sendsig_reset(l, sig);
 
@@ -362,11 +365,13 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	 */
 	mutex_exit(p->p_lock);
 	cpu_getmcontext32(l, &uc.uc_mcontext, &uc.uc_flags);
+	netbsd32_si_to_si32(&si32, (const siginfo_t *)&ksi->ksi_info);
 	ucsz = (int)(intptr_t)&uc.__uc_pad - (int)(intptr_t)&uc;
 	newsp = (struct rwindow32*)((intptr_t)fp - sizeof(struct frame32));
-	error = (copyout(&ksi->ksi_info, &fp->sf_si, sizeof ksi->ksi_info) ||
+	sp = NETBSD32PTR32I(oldsp);
+	error = (copyout(&si32, &fp->sf_si, sizeof si32) ||
 	    copyout(&uc, &fp->sf_uc, ucsz) ||
-	    suword(&newsp->rw_in[6], (intptr_t)oldsp));
+	    copyout(&sp, &newsp->rw_in[6], sizeof(sp)));
 	mutex_enter(p->p_lock);
 
 	if (error) {
@@ -619,16 +624,15 @@ netbsd32_process_read_regs(struct lwp *l, struct reg32 *regs)
 	return (0);
 }
 
-#if 0
 int
 netbsd32_process_write_regs(struct lwp *l, const struct reg32 *regs)
 {
-	struct trapframe64* tf = p->p_md.md_tf;
+	struct trapframe64* tf = l->l_md.md_tf;
 	int i;
 
 	tf->tf_pc = regs->r_pc;
 	tf->tf_npc = regs->r_npc;
-	tf->tf_y = regs->r_pc;
+	tf->tf_y = regs->r_y;
 	for (i = 0; i < 8; i++) {
 		tf->tf_global[i] = regs->r_global[i];
 		tf->tf_out[i] = regs->r_out[i];
@@ -638,7 +642,6 @@ netbsd32_process_write_regs(struct lwp *l, const struct reg32 *regs)
 		PSRCC_TO_TSTATE(regs->r_psr);
 	return (0);
 }
-#endif
 
 int
 netbsd32_process_read_fpregs(struct lwp *l, struct fpreg32 *regs, size_t *sz)
@@ -656,9 +659,9 @@ netbsd32_process_read_fpregs(struct lwp *l, struct fpreg32 *regs, size_t *sz)
 	return 0;
 }
 
-#if 0
 int
-netbsd32_process_write_fpregs(struct lwp *l, const struct fpreg32 *regs)
+netbsd32_process_write_fpregs(struct lwp *l, const struct fpreg32 *regs,
+    size_t sz)
 {
 	struct fpstate64	*statep;
 	int i;
@@ -673,7 +676,6 @@ netbsd32_process_write_fpregs(struct lwp *l, const struct fpreg32 *regs)
 
 	return 0;
 }
-#endif
 
 /*
  * 32-bit version of cpu_coredump.
@@ -1327,12 +1329,14 @@ startlwp32(void *arg)
 	error = cpu_setmcontext32(l, &uc->uc_mcontext, uc->uc_flags);
 	KASSERT(error == 0);
 
-	kmem_free(uc, sizeof(ucontext32_t));
+	/* Note: we are freeing ucontext_t, not ucontext32_t. */
+	kmem_free(arg, sizeof(ucontext_t));
 	userret(l, 0, 0);
 }
 
 vaddr_t
-netbsd32_vm_default_addr(struct proc *p, vaddr_t base, vsize_t size)
+netbsd32_vm_default_addr(struct proc *p, vaddr_t base, vsize_t size,
+     int topdown)
 {
 	return round_page((vaddr_t)(base) + (vsize_t)MAXDSIZ32);
 }

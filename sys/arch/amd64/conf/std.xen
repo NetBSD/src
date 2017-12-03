@@ -1,18 +1,18 @@
-# $NetBSD: std.xen,v 1.6 2009/07/29 12:02:05 cegger Exp $
+# $NetBSD: std.xen,v 1.6.22.1 2017/12/03 11:35:47 jdolecek Exp $
 # NetBSD: std.i386,v 1.24 2003/02/26 21:33:36 fvdl Exp 
 #
 # standard, required NetBSD/i386 'options'
 
 machine xen amd64
-include		"conf/std"	# MI standard options
+include 	"conf/std"	# MI standard options
 
 options 	XEN	#Xen support
-#options		__XEN_INTERFACE_VERSION__=0x00030205 # Xen 3.1 interface
+#options 	__XEN_INTERFACE_VERSION__=0x00030205 # Xen 3.1 interface
 
 options 	CPU_IN_CKSUM
 options 	EXEC_ELF64	# exec ELF binaries
 options 	EXEC_SCRIPT	# exec #! scripts
 options 	MTRR
 
-# Atheros HAL options
-include "external/isc/atheros_hal/conf/std.ath_hal"
+options 	CHILD_MAX=1024	# 160 is too few
+options 	OPEN_MAX=1024	# 128 is too few

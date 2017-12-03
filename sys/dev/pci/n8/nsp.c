@@ -82,7 +82,6 @@
 
 #include <opencrypto/cryptodev.h>
 #include <opencrypto/xform.h>
-#include <sys/rnd.h>
 #include <sys/md5.h>
 #include <sys/sha1.h>
 
@@ -702,12 +701,6 @@ n8_session_free(struct nsp_softc *sc, nsp_session_t *session)
 	}
 
 	mutex_enter(&sc->sc_intrlock);
-    	if (session == NULL) {
-		DBG(("n8_session_free: attempt to free NULL\n"));
-		mutex_exit(&sc->sc_intrlock);
-		return;
-	}
-
 	session->next = sc->freesession;
 	sc->freesession = session;
 	session->magic = 0xFEED;

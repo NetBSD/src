@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.77 2010/11/12 07:59:27 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.77.18.1 2017/12/03 11:36:42 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.77 2010/11/12 07:59:27 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.77.18.1 2017/12/03 11:36:42 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.77 2010/11/12 07:59:27 uebayasi Exp $");
 #include <sys/socketvar.h>	/* XXX: for sock_loan_thresh */
 
 #include <uvm/uvm.h>
+#include <uvm/uvm_physseg.h>
 
 #include <sh3/mmu.h>
 #include <sh3/cache.h>
@@ -107,8 +108,8 @@ pmap_bootstrap(void)
 	/* Steal msgbuf area */
 	initmsgbuf((void *)uvm_pageboot_alloc(MSGBUFSIZE), MSGBUFSIZE);
 
-	avail_start = ptoa(VM_PHYSMEM_PTR(0)->start);
-	avail_end = ptoa(VM_PHYSMEM_PTR(vm_nphysseg - 1)->end);
+	avail_start = ptoa(uvm_physseg_get_start(uvm_physseg_get_first()));
+	avail_end = ptoa(uvm_physseg_get_end(uvm_physseg_get_last()));
 	__pmap_kve = VM_MIN_KERNEL_ADDRESS;
 
 	pmap_kernel()->pm_refcnt = 1;
@@ -126,39 +127,29 @@ pmap_bootstrap(void)
 vaddr_t
 pmap_steal_memory(vsize_t size, vaddr_t *vstart, vaddr_t *vend)
 {
-	struct vm_physseg *bank;
-	int i, j, npage;
+	int npage;
 	paddr_t pa;
 	vaddr_t va;
+	uvm_physseg_t bank;
 
 	KDASSERT(!uvm.page_init_done);
 
 	size = round_page(size);
 	npage = atop(size);
 
-	bank = NULL;
-	for (i = 0; i < vm_nphysseg; i++) {
-		bank = VM_PHYSMEM_PTR(i);
-		if (npage <= bank->avail_end - bank->avail_start)
+	for (bank = uvm_physseg_get_first();
+	     uvm_physseg_valid_p(bank);
+	     bank = uvm_physseg_get_next(bank)) {
+		if (npage <= uvm_physseg_get_avail_end(bank)
+				- uvm_physseg_get_avail_start(bank))
 			break;
 	}
-	KDASSERT(i != vm_nphysseg);
-	KDASSERT(bank != NULL);
+
+	KDASSERT(uvm_physseg_valid_p(bank));
 
 	/* Steal pages */
-	pa = ptoa(bank->avail_start);
-	bank->avail_start += npage;
-	bank->start += npage;
-
-	/* GC memory bank */
-	if (bank->avail_start == bank->end) {
-		/* Remove this segment from the list. */
-		vm_nphysseg--;
-		KDASSERT(vm_nphysseg > 0);
-		for (j = i; i < vm_nphysseg; j++)
-			VM_PHYSMEM_PTR_SWAP(j, j + 1);
-	}
-
+	pa = ptoa(uvm_physseg_get_avail_start(bank));
+	uvm_physseg_unplug(atop(pa), npage);
 	va = SH3_PHYS_TO_P1SEG(pa);
 	memset((void *)va, 0, size);
 
@@ -904,15 +895,21 @@ pmap_phys_address(paddr_t cookie)
  * a virtual cache alias against vaddr_t foff.
  */
 void
-pmap_prefer(vaddr_t foff, vaddr_t *vap)
+pmap_prefer(vaddr_t foff, vaddr_t *vap, int td)
 {
-	vaddr_t va;
+	if (!SH_HAS_VIRTUAL_ALIAS) 
+		return;
 
-	if (SH_HAS_VIRTUAL_ALIAS) {
-		va = *vap;
+	vaddr_t va = *vap;
+	vsize_t d = (foff - va) & sh_cache_prefer_mask;
 
-		*vap = va + ((foff - va) & sh_cache_prefer_mask);
-	}
+	if (d == 0)
+		return;
+
+	if (td)
+		*vap = va - ((-d) & sh_cache_prefer_mask);
+	else
+		*vap = va + d;
 }
 #endif /* SH4 */
 

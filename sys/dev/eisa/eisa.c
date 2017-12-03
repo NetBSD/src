@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa.c,v 1.45 2008/04/06 08:54:43 cegger Exp $	*/
+/*	$NetBSD: eisa.c,v 1.45.48.1 2017/12/03 11:37:01 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eisa.c,v 1.45 2008/04/06 08:54:43 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eisa.c,v 1.45.48.1 2017/12/03 11:37:01 jdolecek Exp $");
 
 #include "opt_eisaverbose.h"
 
@@ -131,8 +131,8 @@ eisaattach(device_t parent, device_t self, void *aux)
 		 * about it.
 		 */
 		if (bus_space_map(iot, slotaddr, EISA_SLOT_SIZE, 0, &slotioh)) {
-			aprint_error_dev(self, "can't map I/O space for slot %d\n",
-			    slot);
+			aprint_error_dev(self,
+			    "can't map I/O space for slot %d\n", slot);
 			continue;
 		}
 
@@ -146,8 +146,7 @@ eisaattach(device_t parent, device_t self, void *aux)
 #if 0
 			printf("no device at %s slot %d\n", device_xname(self),
 			    slot);
-			printf("\t(0x%x, 0x%x)\n", ea.ea_vid[0],
-			    ea.ea_vid[1]);
+			printf("\t(0x%x, 0x%x)\n", ea.ea_vid[0], ea.ea_vid[1]);
 #endif
 			bus_space_unmap(iot, slotioh, EISA_SLOT_SIZE);
 			continue;

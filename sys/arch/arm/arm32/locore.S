@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.28.2.4 2014/08/20 00:02:45 tls Exp $	*/
+/*	$NetBSD: locore.S,v 1.28.2.5 2017/12/03 11:35:51 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -40,7 +40,7 @@
 /* What size should this really be ? It is only used by init_arm() */
 #define INIT_ARM_STACK_SIZE	2048
 
-	RCSID("$NetBSD: locore.S,v 1.28.2.4 2014/08/20 00:02:45 tls Exp $")
+	RCSID("$NetBSD: locore.S,v 1.28.2.5 2017/12/03 11:35:51 jdolecek Exp $")
 
 /*
  * This is for kvm_mkdb, and should be the address of the beginning
@@ -56,8 +56,12 @@ ASENTRY_NP(start)
 	mrs	r1, cpsr		/* fetch CPSR value */
 	msr	spsr_sx, r1		/* set SPSR[23:8] to known value */
 
+	/*
+	 * Get bss bounds (r1, r2), curlwp or curcpu (r8), and set initial
+	 * stack.
+	 */
 	adr	r1, .Lstart
-	ldmia	r1, {r1, r2, r8, sp}	/* Set initial stack and */
+	ldmia	r1, {r1, r2, r8, sp}
 
 #if defined(TPIDRPRW_IS_CURCPU) || defined(TPIDRPRW_IS_CURLWP)
 	mcr	p15, 0, r8, c13, c0, 4
@@ -115,6 +119,9 @@ ASENTRY_NP(start)
 ASEND(start)
 
 	.bss
+#ifdef __ARM_EABI__
+	.align	3
+#endif
 svcstk:
 	.space	INIT_ARM_STACK_SIZE
 

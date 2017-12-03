@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isa.c,v 1.59 2012/07/31 15:50:35 bouyer Exp $ */
+/*	$NetBSD: wdc_isa.c,v 1.59.2.1 2017/12/03 11:37:05 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.59 2012/07/31 15:50:35 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.59.2.1 2017/12/03 11:37:05 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,6 @@ struct wdc_isa_softc {
 	struct	wdc_softc sc_wdcdev;
 	struct	ata_channel *wdc_chanlist[1];
 	struct	ata_channel ata_channel;
-	struct	ata_queue wdc_chqueue;
 	struct	wdc_regs wdc_regs;
 	isa_chipset_tag_t sc_ic;
 	void	*sc_ih;
@@ -85,9 +84,7 @@ static int	wdc_isa_dma_finish(void*, int, int, int);
 static int
 wdc_isa_probe(device_t parent, cfdata_t match, void *aux)
 {
-	struct ata_channel ch;
 	struct isa_attach_args *ia = aux;
-	struct wdc_softc wdc;
 	struct wdc_regs wdr;
 	int result = 0, i;
 
@@ -106,11 +103,6 @@ wdc_isa_probe(device_t parent, cfdata_t match, void *aux)
 	if (ia->ia_ndrq > 0 && ia->ia_drq[0].ir_drq == ISA_UNKNOWN_DRQ)
 		ia->ia_ndrq = 0;
 
-	memset(&wdc, 0, sizeof(wdc));
-	memset(&ch, 0, sizeof(ch));
-	ch.ch_atac = &wdc.sc_atac;
-	wdc.regs = &wdr;
-
 	wdr.cmd_iot = ia->ia_iot;
 
 	if (bus_space_map(wdr.cmd_iot, ia->ia_io[0].ir_addr,
@@ -122,14 +114,14 @@ wdc_isa_probe(device_t parent, cfdata_t match, void *aux)
 		    i == 0 ? 4 : 1, &wdr.cmd_iohs[i]) != 0)
 			goto outunmap;
 	}
-	wdc_init_shadow_regs(&ch);
+	wdc_init_shadow_regs(&wdr);
 
 	wdr.ctl_iot = ia->ia_iot;
 	if (bus_space_map(wdr.ctl_iot, ia->ia_io[0].ir_addr +
 	    WDC_ISA_AUXREG_OFFSET, WDC_ISA_AUXREG_NPORTS, 0, &wdr.ctl_ioh))
 		goto outunmap;
 
-	result = wdcprobe(&ch);
+	result = wdcprobe(&wdr);
 	if (result) {
 		ia->ia_nio = 1;
 		ia->ia_io[0].ir_size = WDC_ISA_REG_NPORTS;
@@ -227,8 +219,8 @@ wdc_isa_attach(device_t parent, device_t self, void *aux)
 	sc->sc_wdcdev.wdc_maxdrives = 2;
 	sc->ata_channel.ch_channel = 0;
 	sc->ata_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
-	sc->ata_channel.ch_queue = &sc->wdc_chqueue;
-	wdc_init_shadow_regs(&sc->ata_channel);
+
+	wdc_init_shadow_regs(wdr);
 
 	aprint_normal("\n");
 

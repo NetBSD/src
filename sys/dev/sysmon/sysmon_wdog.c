@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_wdog.c,v 1.25 2011/01/04 01:51:06 matt Exp $	*/
+/*	$NetBSD: sysmon_wdog.c,v 1.25.18.1 2017/12/03 11:37:33 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_wdog.c,v 1.25 2011/01/04 01:51:06 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_wdog.c,v 1.25.18.1 2017/12/03 11:37:33 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -53,6 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: sysmon_wdog.c,v 1.25 2011/01/04 01:51:06 matt Exp $"
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/module.h>
+#include <sys/once.h>
 
 #include <dev/sysmon/sysmonvar.h>
 
@@ -74,19 +76,66 @@ void	sysmon_wdog_critpoll(void *);
 void	sysmon_wdog_shutdown(void *);
 void	sysmon_wdog_ref(struct sysmon_wdog *);
 
-void
-sysmon_wdog_init(void)
+static struct sysmon_opvec sysmon_wdog_opvec = {    
+        sysmonopen_wdog, sysmonclose_wdog, sysmonioctl_wdog,
+        NULL, NULL, NULL
+};
+
+MODULE(MODULE_CLASS_DRIVER, sysmon_wdog, "sysmon");
+
+ONCE_DECL(once_wdog);
+
+static int
+wdog_preinit(void)
 {
+
 	mutex_init(&sysmon_wdog_list_mtx, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sysmon_wdog_mtx, MUTEX_DEFAULT, IPL_SOFTCLOCK);
 	cv_init(&sysmon_wdog_cv, "wdogref");
+	callout_init(&sysmon_wdog_callout, 0);
+
+	return 0;
+}
+
+int
+sysmon_wdog_init(void)
+{
+	int error;
+
+	(void)RUN_ONCE(&once_wdog, wdog_preinit);
+
 	sysmon_wdog_sdhook = shutdownhook_establish(sysmon_wdog_shutdown, NULL);
 	if (sysmon_wdog_sdhook == NULL)
 		printf("WARNING: unable to register watchdog shutdown hook\n");
 	sysmon_wdog_cphook = critpollhook_establish(sysmon_wdog_critpoll, NULL);
 	if (sysmon_wdog_cphook == NULL)
 		printf("WARNING: unable to register watchdog critpoll hook\n");
-	callout_init(&sysmon_wdog_callout, 0);
+
+	error = sysmon_attach_minor(SYSMON_MINOR_WDOG, &sysmon_wdog_opvec);
+
+	return error;
+}
+
+int
+sysmon_wdog_fini(void)
+{
+	int error;
+
+	if ( ! LIST_EMPTY(&sysmon_wdog_list))
+		return EBUSY;
+
+	error = sysmon_attach_minor(SYSMON_MINOR_WDOG, NULL);
+
+	if (error == 0) {
+		callout_destroy(&sysmon_wdog_callout);
+		critpollhook_disestablish(sysmon_wdog_cphook);
+		shutdownhook_disestablish(sysmon_wdog_sdhook);
+		cv_destroy(&sysmon_wdog_cv);
+		mutex_destroy(&sysmon_wdog_mtx);
+		mutex_destroy(&sysmon_wdog_list_mtx);
+	}
+
+	return error;
 }
 
 /*
@@ -275,6 +324,8 @@ sysmon_wdog_register(struct sysmon_wdog *smw)
 {
 	struct sysmon_wdog *lsmw;
 	int error = 0;
+
+	(void)RUN_ONCE(&once_wdog, wdog_preinit);
 
 	mutex_enter(&sysmon_wdog_list_mtx);
 
@@ -499,4 +550,26 @@ sysmon_wdog_shutdown(void *arg)
 			printf("WARNING: FAILED TO SHUTDOWN WATCHDOG %s!\n",
 			    smw->smw_name);
 	}
+}
+static
+int   
+sysmon_wdog_modcmd(modcmd_t cmd, void *arg)
+{
+        int ret;
+  
+        switch (cmd) {
+        case MODULE_CMD_INIT:
+                ret = sysmon_wdog_init();
+                break;
+ 
+        case MODULE_CMD_FINI:
+                ret = sysmon_wdog_fini();
+                break; 
+   
+        case MODULE_CMD_STAT:
+        default:
+                ret = ENOTTY;
+        }
+  
+        return ret; 
 }

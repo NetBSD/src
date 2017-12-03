@@ -1,15 +1,15 @@
-#	$NetBSD: Makefile,v 1.1.24.1 2014/08/20 00:04:37 tls Exp $
+#	$NetBSD: Makefile,v 1.1.24.2 2017/12/03 11:39:07 jdolecek Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../dev
 
 LIB=	rumpdev_fss
+COMMENT=File system snapshot device
 
+IOCONF=	FSS.ioconf
 SRCS=   fss.c
 
 SRCS+=	fss_component.c
-
-CPPFLAGS+=	-I${RUMPTOP}/librump/rumpvfs
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>

@@ -15,24 +15,14 @@ SECTIONS
     *(.strings)
      _etext = . ;
   }  > ram
-  .tors :
-  AT ( ROM + SIZEOF(.text))
-  {
-    ___ctors = . ;
-    *(.ctors)
-    ___ctors_end = . ;
-    ___dtors = . ;
-    *(.dtors)
-    ___dtors_end = . ;
-  } > ram
   .data :
-  AT ( ROM + SIZEOF(.text) + SIZEOF(.tors))
+  AT (ROM + SIZEOF(.text))
   {
     *(.data)
      _edata = . ;
   }  > ram
   .bss :
-  AT ( ROM + SIZEOF(.text) + SIZEOF(.tors) + SIZEOF(.data))
+  AT (ROM + SIZEOF(.text) + SIZEOF(.data))
   {
      _bss_start = . ;
     *(.bss)

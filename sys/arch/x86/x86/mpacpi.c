@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.94.2.2 2013/06/23 06:20:14 tls Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.94.2.3 2017/12/03 11:36:50 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,10 +36,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.94.2.2 2013/06/23 06:20:14 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.94.2.3 2017/12/03 11:36:50 jdolecek Exp $");
 
 #include "acpica.h"
 #include "opt_acpi.h"
+#include "opt_ddb.h"
 #include "opt_mpbios.h"
 #include "opt_multiprocessor.h"
 #include "pchb.h"
@@ -123,6 +124,10 @@ static void mpacpi_print_isa_intr(int);
 
 static void mpacpi_user_continue(const char *fmt, ...);
 
+#ifdef DDB
+void mpacpi_dump(void);
+#endif
+
 int mpacpi_nioapic;			/* number of ioapics */
 int mpacpi_ncpu;			/* number of cpus */
 int mpacpi_nintsrc;			/* number of non-device interrupts */
@@ -196,7 +201,7 @@ mpacpi_nonpci_intr(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 		pin = ioapic_nmi->GlobalIrq - pic->pic_vecbase;
 		mpi->ioapic_pin = pin;
 		mpi->bus_pin = -1;
-		mpi->redir = (IOAPIC_REDLO_DEL_NMI<<IOAPIC_REDLO_DEL_SHIFT);
+		mpi->redir = (IOAPIC_REDLO_DEL_NMI << IOAPIC_REDLO_DEL_SHIFT);
 #if NIOAPIC > 0
 		if (pic->pic_type == PIC_IOAPIC) {
 			pic->pic_ioapic->sc_pins[pin].ip_map = mpi;
@@ -219,7 +224,7 @@ mpacpi_nonpci_intr(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 		mpi->type = MPS_INTTYPE_NMI;
 		mpi->ioapic_pin = lapic_nmi->Lint;
 		mpi->cpu_id = lapic_nmi->ProcessorId;
-		mpi->redir = (IOAPIC_REDLO_DEL_NMI<<IOAPIC_REDLO_DEL_SHIFT);
+		mpi->redir = (IOAPIC_REDLO_DEL_NMI << IOAPIC_REDLO_DEL_SHIFT);
 		mpi->global_int = -1;
 		break;
 	case ACPI_MADT_TYPE_INTERRUPT_OVERRIDE:
@@ -228,7 +233,7 @@ mpacpi_nonpci_intr(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 			printf("mpacpi: ISA interrupt override %d -> %d (%d/%d)\n",
 			    isa_ovr->SourceIrq, isa_ovr->GlobalIrq,
 			    isa_ovr->IntiFlags & ACPI_MADT_POLARITY_MASK,
-			    (isa_ovr->IntiFlags & ACPI_MADT_TRIGGER_MASK) >> 2);
+			    (isa_ovr->IntiFlags & ACPI_MADT_TRIGGER_MASK) >>2);
 		}
 		if (isa_ovr->SourceIrq > 15 || isa_ovr->SourceIrq == 2 ||
 		    (isa_ovr->SourceIrq == 0 && isa_ovr->GlobalIrq == 2 &&
@@ -310,7 +315,7 @@ mpacpi_nonpci_intr(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 		mpi->type = MPS_INTTYPE_NMI;
 		mpi->ioapic_pin = x2apic_nmi->Lint;
 		mpi->cpu_id = x2apic_nmi->Uid;
-		mpi->redir = (IOAPIC_REDLO_DEL_NMI<<IOAPIC_REDLO_DEL_SHIFT);
+		mpi->redir = (IOAPIC_REDLO_DEL_NMI << IOAPIC_REDLO_DEL_SHIFT);
 		mpi->global_int = -1;
 		break;
 
@@ -447,6 +452,8 @@ mpacpi_scan_apics(device_t self, int *ncpup)
 	mpacpi_ncpu = mpacpi_nintsrc = mpacpi_nioapic = 0;
 	acpi_madt_walk(mpacpi_count, self);
 
+	acpi_madt_walk(mpacpi_config_ioapic, self);
+
 #if NLAPIC > 0
 	lapic_boot_init(mpacpi_lapic_base);
 #endif
@@ -455,8 +462,6 @@ mpacpi_scan_apics(device_t self, int *ncpup)
 
 	if (mpacpi_ncpu == 0)
 		goto done;
-
-	acpi_madt_walk(mpacpi_config_ioapic, self);
 
 #if NPCI > 0
 	/*
@@ -490,11 +495,17 @@ mpacpi_pci_foundbus(struct acpi_devnode *ad)
 
 	rv = acpi_get(ad->ad_handle, &buf, AcpiGetIrqRoutingTable);
 	if (ACPI_FAILURE(rv)) {
-		buf.Length = 0; 
-		buf.Pointer = NULL; 
+		buf.Length = 0;
+		buf.Pointer = NULL;
 	}
 
 	mpr = kmem_zalloc(sizeof(struct mpacpi_pcibus), KM_SLEEP);
+	mpr->mpr_handle = ad->ad_handle;
+	mpr->mpr_buf = buf;
+	mpr->mpr_seg = ad->ad_pciinfo->ap_segment;
+	mpr->mpr_bus = ad->ad_pciinfo->ap_downbus;
+	TAILQ_INSERT_TAIL(&mpacpi_pcibusses, mpr, mpr_list);
+
 	if ((ad->ad_devinfo->Flags & ACPI_PCI_ROOT_BRIDGE) != 0) {
 		if (mp_verbose)
 			printf("mpacpi: found root PCI bus %d\n",
@@ -505,12 +516,6 @@ mpacpi_pci_foundbus(struct acpi_devnode *ad)
 			printf("mpacpi: found subordinate bus %d\n",
 			    mpr->mpr_bus);
 	}
-
-	mpr->mpr_handle = ad->ad_handle;
-	mpr->mpr_buf = buf;
-	mpr->mpr_seg = ad->ad_pciinfo->ap_segment;
-	mpr->mpr_bus = ad->ad_pciinfo->ap_downbus;
-	TAILQ_INSERT_TAIL(&mpacpi_pcibusses, mpr, mpr_list);
 
 	/*
 	 * XXX this wrongly assumes that bus numbers are unique
@@ -646,7 +651,7 @@ mpacpi_pciroute(struct mpacpi_pcibus *mpr)
 				continue;
 			/* Defaults for PCI (active low, level triggered) */
 			mpi->redir =
-			    (IOAPIC_REDLO_DEL_FIXED<<IOAPIC_REDLO_DEL_SHIFT) |
+			    (IOAPIC_REDLO_DEL_FIXED <<IOAPIC_REDLO_DEL_SHIFT) |
 			    IOAPIC_REDLO_LEVEL | IOAPIC_REDLO_ACTLO;
 			mpi->ioapic = pic;
 			pin = ptrp->SourceIndex - pic->pic_vecbase;
@@ -738,13 +743,7 @@ mpacpi_config_irouting(struct acpi_softc *acpi)
 	mp_nintr = nintr;
 
 	mp_busses = kmem_zalloc(sizeof(struct mp_bus) * mp_nbus, KM_SLEEP);
-	if (mp_busses == NULL)
-		panic("can't allocate mp_busses");
-
 	mp_intrs = kmem_zalloc(sizeof(struct mp_intr_map) * mp_nintr, KM_SLEEP);
-	if (mp_intrs == NULL)
-		panic("can't allocate mp_intrs");
-
 	mbp = &mp_busses[mp_isa_bus];
 	mbp->mb_name = "isa";
 	mbp->mb_idx = 0;
@@ -785,7 +784,7 @@ mpacpi_config_irouting(struct acpi_softc *acpi)
 			    (pic->pic_apicid << APIC_INT_APIC_SHIFT) |
 			    (i << APIC_INT_PIN_SHIFT);
 			mpi->redir =
-			    (IOAPIC_REDLO_DEL_FIXED<<IOAPIC_REDLO_DEL_SHIFT);
+			    (IOAPIC_REDLO_DEL_FIXED << IOAPIC_REDLO_DEL_SHIFT);
 			pic->pic_ioapic->sc_pins[i].ip_map = mpi;
 		} else
 #endif
@@ -824,7 +823,7 @@ mpacpi_config_irouting(struct acpi_softc *acpi)
 static void
 mpacpi_print_pci_intr(int intr)
 {
-	printf(" device %d INT_%c", (intr>>2)&0x1f, 'A' + (intr & 0x3));
+	printf(" device %d INT_%c", (intr >> 2) & 0x1f, 'A' + (intr & 0x3));
 }
 #endif
 
@@ -1047,7 +1046,7 @@ mpacpi_findintr_linkdev(struct mp_intr_map *mip)
 
 	if (pic->pic_type == PIC_IOAPIC) {
 #if NIOAPIC > 0
-		mip->redir = (IOAPIC_REDLO_DEL_FIXED<<IOAPIC_REDLO_DEL_SHIFT);
+		mip->redir = (IOAPIC_REDLO_DEL_FIXED <<IOAPIC_REDLO_DEL_SHIFT);
 		if (pol ==  MPS_INTPO_ACTLO)
 			mip->redir |= IOAPIC_REDLO_ACTLO;
 		if (trig ==  MPS_INTTR_LEVEL)
@@ -1080,3 +1079,13 @@ mpacpi_user_continue(const char *fmt, ...)
 	printf("<press any key to continue>\n>");
 	cngetc();
 }
+
+#ifdef DDB
+void
+mpacpi_dump(void)
+{
+	int i;
+	for (i = 0; i < mp_nintr; i++)
+		mpacpi_print_intr(&mp_intrs[i]);
+}
+#endif

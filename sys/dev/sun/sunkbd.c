@@ -1,4 +1,4 @@
-/*	$NetBSD: sunkbd.c,v 1.28.18.1 2014/08/20 00:03:50 tls Exp $	*/
+/*	$NetBSD: sunkbd.c,v 1.28.18.2 2017/12/03 11:37:33 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunkbd.c,v 1.28.18.1 2014/08/20 00:03:50 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunkbd.c,v 1.28.18.2 2017/12/03 11:37:33 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,6 +145,7 @@ sunkbd_attach(device_t parent, device_t self, void *aux)
 	KASSERT(tp->t_linesw == &sunkbd_disc);
 	tp->t_oflag &= ~OPOST;
 	tp->t_dev = args->kmta_dev;
+	SET(tp->t_state, TS_KERN_ONLY);
 
 	/* link the structures together. */
 	k->k_priv = tp;
@@ -218,6 +219,7 @@ sunkbdiopen(device_t dev, int flags)
 	int error;
 
 	/* Open the lower device */
+	CLR(tp->t_state, TS_KERN_ONLY);
 	if ((error = cdev_open(tp->t_dev, O_NONBLOCK|flags,
 				     0/* ignored? */, l)) != 0)
 		return (error);
@@ -228,6 +230,7 @@ sunkbdiopen(device_t dev, int flags)
 	t.c_ospeed = sunkbd_bps;
 	t.c_cflag =  CLOCAL|CS8;
 	(*tp->t_param)(tp, &t);
+	SET(tp->t_state, TS_KERN_ONLY);
 
 	return (0);
 }

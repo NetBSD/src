@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_output.c,v 1.43.12.1 2013/02/25 00:30:06 tls Exp $	*/
+/*	$NetBSD: udp6_output.c,v 1.43.12.2 2017/12/03 11:39:05 jdolecek Exp $	*/
 /*	$KAME: udp6_output.c,v 1.43 2001/10/15 09:19:52 itojun Exp $	*/
 
 /*
@@ -62,12 +62,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.43.12.1 2013/02/25 00:30:06 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.43.12.2 2017/12/03 11:39:05 jdolecek Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
+#endif
 
 #include <sys/param.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
@@ -81,7 +82,6 @@ __KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.43.12.1 2013/02/25 00:30:06 tls Ex
 #include <sys/domain.h>
 
 #include <net/if.h>
-#include <net/route.h>
 #include <net/if_types.h>
 
 #include <netinet/in.h>
@@ -113,15 +113,14 @@ __KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.43.12.1 2013/02/25 00:30:06 tls Ex
 
 int
 udp6_output(struct in6pcb * const in6p, struct mbuf *m,
-    struct mbuf * const addr6, struct mbuf * const control,
+    struct sockaddr_in6 * const addr6, struct mbuf * const control,
     struct lwp * const l)
 {
-	struct rtentry *rt;
 	u_int32_t ulen = m->m_pkthdr.len;
 	u_int32_t plen = sizeof(struct udphdr) + ulen;
 	struct ip6_hdr *ip6;
 	struct udphdr *udp6;
-	struct in6_addr *laddr, *faddr;
+	struct in6_addr _laddr, *laddr, *faddr;
 	struct in6_addr laddr_mapped; /* XXX ugly */
 	struct sockaddr_in6 *sin6 = NULL;
 	struct ifnet *oifp = NULL;
@@ -139,11 +138,7 @@ udp6_output(struct in6pcb * const in6p, struct mbuf *m,
 	struct sockaddr_in6 tmp;
 
 	if (addr6) {
-		if (addr6->m_len != sizeof(*sin6)) {
-			error = EINVAL;
-			goto release;
-		}
-		sin6 = mtod(addr6, struct sockaddr_in6 *);
+		sin6 = addr6;
 		if (sin6->sin6_family != AF_INET6) {
 			error = EAFNOSUPPORT;
 			goto release;
@@ -178,11 +173,11 @@ udp6_output(struct in6pcb * const in6p, struct mbuf *m,
 
 	if (sin6) {
 		/*
-		 * IPv4 version of udp_output calls in_pcbconnect in this case,
-		 * which needs splnet and affects performance.
-		 * We have to do this as well, since in6_pcbsetport needs to
-		 * know the foreign address for some of the algorithms that
-		 * it employs.
+		 * Slightly different than v4 version in that we call
+		 * in6_selectsrc and in6_pcbsetport to fill in the local
+		 * address and port rather than in_pcbconnect. in_pcbconnect
+		 * sets in6p_faddr which causes EISCONN below to be hit on
+		 * subsequent sendto.
 		 */
 		if (sin6->sin6_port == 0) {
 			error = EADDRNOTAVAIL;
@@ -231,15 +226,24 @@ udp6_output(struct in6pcb * const in6p, struct mbuf *m,
 		}
 
 		if (!IN6_IS_ADDR_V4MAPPED(faddr)) {
-			laddr = in6_selectsrc(sin6, optp,
+			struct psref psref;
+			int bound = curlwp_bind();
+
+			error = in6_selectsrc(sin6, optp,
 			    in6p->in6p_moptions,
 			    &in6p->in6p_route,
-			    &in6p->in6p_laddr, &oifp, &error);
+			    &in6p->in6p_laddr, &oifp, &psref, &_laddr);
+			/* XXX need error check? */
 			if (oifp && scope_ambiguous &&
 			    (error = in6_setscope(&sin6->sin6_addr,
 			    oifp, NULL))) {
+				if_put(oifp, &psref);
+				curlwp_bindx(bound);
 				goto release;
 			}
+			if_put(oifp, &psref);
+			curlwp_bindx(bound);
+			laddr = &_laddr;
 		} else {
 			/*
 			 * XXX: freebsd[34] does not have in_selectsrc, but
@@ -248,15 +252,20 @@ udp6_output(struct in6pcb * const in6p, struct mbuf *m,
 			 * never see this path.
 			 */
 			if (IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_laddr)) {
-				struct sockaddr_in *sinp, sin_dst;
+				struct sockaddr_in sin_dst;
 				struct in_addr ina;
+				struct in_ifaddr *ia4;
+				struct psref _psref;
+				int bound;
 
 				memcpy(&ina, &faddr->s6_addr[12], sizeof(ina));
 				sockaddr_in_init(&sin_dst, &ina, 0);
-				sinp = in_selectsrc(&sin_dst, &in6p->in6p_route,
+				bound = curlwp_bind();
+				ia4 = in_selectsrc(&sin_dst, &in6p->in6p_route,
 				    in6p->in6p_socket->so_options, NULL,
-				    &error);
-				if (sinp == NULL) {
+				    &error, &_psref);
+				if (ia4 == NULL) {
+					curlwp_bindx(bound);
 					if (error == 0)
 						error = EADDRNOTAVAIL;
 					goto release;
@@ -264,8 +273,10 @@ udp6_output(struct in6pcb * const in6p, struct mbuf *m,
 				memset(&laddr_mapped, 0, sizeof(laddr_mapped));
 				laddr_mapped.s6_addr16[5] = 0xffff; /* ugly */
 				memcpy(&laddr_mapped.s6_addr[12],
-				      &sinp->sin_addr,
-				      sizeof(sinp->sin_addr));
+				      &IA_SIN(ia4)->sin_addr,
+				      sizeof(IA_SIN(ia4)->sin_addr));
+				ia4_release(ia4, &_psref);
+				curlwp_bindx(bound);
 				laddr = &laddr_mapped;
 			} else
 			{
@@ -359,9 +370,7 @@ udp6_output(struct in6pcb * const in6p, struct mbuf *m,
 		ip6->ip6_plen	= htons((u_int16_t)plen);
 #endif
 		ip6->ip6_nxt	= IPPROTO_UDP;
-		ip6->ip6_hlim	= in6_selecthlim(in6p,
-		    (rt = rtcache_validate(&in6p->in6p_route)) != NULL
-		        ? rt->rt_ifp : NULL);
+		ip6->ip6_hlim	= in6_selecthlim_rt(in6p);
 		ip6->ip6_src	= *laddr;
 		ip6->ip6_dst	= *faddr;
 
@@ -372,7 +381,7 @@ udp6_output(struct in6pcb * const in6p, struct mbuf *m,
 
 		UDP6_STATINC(UDP6_STAT_OPACKETS);
 		error = ip6_output(m, optp, &in6p->in6p_route, 0,
-		    in6p->in6p_moptions, in6p->in6p_socket, NULL);
+		    in6p->in6p_moptions, in6p, NULL);
 		break;
 	case AF_INET:
 #ifdef INET
@@ -404,7 +413,7 @@ udp6_output(struct in6pcb * const in6p, struct mbuf *m,
 
 		UDP_STATINC(UDP_STAT_OPACKETS);
 		error = ip_output(m, NULL, &in6p->in6p_route, flags /* XXX */,
-		    NULL, (struct socket *)in6p->in6p_socket);
+		    in6p->in6p_v4moptions, NULL);
 		break;
 #else
 		error = EAFNOSUPPORT;

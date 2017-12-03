@@ -1,4 +1,4 @@
-/*	$NetBSD: if_we_vme.c,v 1.3 2011/10/01 15:59:01 chs Exp $	*/
+/*	$NetBSD: if_we_vme.c,v 1.3.12.1 2017/12/03 11:35:58 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2010 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_we_vme.c,v 1.3 2011/10/01 15:59:01 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_we_vme.c,v 1.3.12.1 2017/12/03 11:35:58 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -216,7 +216,7 @@ we_vme_probe(device_t parent, cfdata_t cf, void *aux)
 	bus_space_write_1(asict, asich, WE_MSR,
 	    bus_space_read_1(asict, asich, WE_MSR) & ~WE_MSR_RST);
 
-	/* Wait in case the card is reading it's EEPROM. */
+	/* Wait in case the card is reading its EEPROM. */
 	delay(5000);
 
 	/*

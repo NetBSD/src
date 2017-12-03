@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.106.2.2 2014/08/20 00:04:27 tls Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.106.2.3 2017/12/03 11:38:43 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,12 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.106.2.2 2014/08/20 00:04:27 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.106.2.3 2017/12/03 11:38:43 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/mount.h>
-#include <sys/malloc.h>
 #include <sys/extattr.h>
 #include <sys/queue.h>
 #include <sys/vnode.h>
@@ -62,23 +61,21 @@ MODULE(MODULE_CLASS_VFS, puffs, "putter");
 
 VFS_PROTOS(puffs_vfsop);
 
-#ifndef PUFFS_PNODEBUCKETS
-#define PUFFS_PNODEBUCKETS 256
-#endif
-#ifndef PUFFS_MAXPNODEBUCKETS
-#define PUFFS_MAXPNODEBUCKETS 8192
-#endif
-int puffs_pnodebuckets_default = PUFFS_PNODEBUCKETS;
-int puffs_maxpnodebuckets = PUFFS_MAXPNODEBUCKETS;
-
-#define BUCKETALLOC(a) (sizeof(struct puffs_pnode_hashlist *) * (a))
-
 static struct putter_ops puffs_putter = {
 	.pop_getout	= puffs_msgif_getout,
 	.pop_releaseout	= puffs_msgif_releaseout,
 	.pop_waitcount	= puffs_msgif_waitcount,
 	.pop_dispatch	= puffs_msgif_dispatch,
 	.pop_close	= puffs_msgif_close,
+};
+
+static const struct genfs_ops puffs_genfsops = {
+        .gop_size = puffs_gop_size,
+	.gop_write = genfs_gop_write,
+	.gop_markupdate = puffs_gop_markupdate,
+#if 0
+	.gop_alloc, should ask userspace
+#endif
 };
 
 /*
@@ -206,17 +203,6 @@ puffs_vfsop_mount(struct mount *mp, const char *path, void *data,
 
 	(void)strlcpy(args->pa_typename, fstype, sizeof(args->pa_typename));
 
-	if (args->pa_nhashbuckets == 0)
-		args->pa_nhashbuckets = puffs_pnodebuckets_default;
-	if (args->pa_nhashbuckets < 1)
-		args->pa_nhashbuckets = 1;
-	if (args->pa_nhashbuckets > PUFFS_MAXPNODEBUCKETS) {
-		args->pa_nhashbuckets = puffs_maxpnodebuckets;
-		printf("puffs_mount: using %d hash buckets. "
-		    "adjust puffs_maxpnodebuckets for more\n",
-		    puffs_maxpnodebuckets);
-	}
-
 	error = set_statvfs_info(path, UIO_USERSPACE, args->pa_mntfromname,
 	    UIO_SYSSPACE, fstype, mp, curlwp);
 	if (error)
@@ -270,13 +256,6 @@ puffs_vfsop_mount(struct mount *mp, const char *path, void *data,
 	pmp->pmp_msg_maxsize = args->pa_maxmsglen;
 	pmp->pmp_args = *args;
 
-	pmp->pmp_npnodehash = args->pa_nhashbuckets;
-	pmp->pmp_pnodehash = kmem_alloc(BUCKETALLOC(pmp->pmp_npnodehash),
-	    KM_SLEEP);
-	for (i = 0; i < pmp->pmp_npnodehash; i++)
-		LIST_INIT(&pmp->pmp_pnodehash[i]);
-	LIST_INIT(&pmp->pmp_newcookie);
-
 	/*
 	 * Inform the fileops processing code that we have a mountpoint.
 	 * If it doesn't know about anyone with our pid/fd having the
@@ -290,8 +269,22 @@ puffs_vfsop_mount(struct mount *mp, const char *path, void *data,
 
 	/* XXX: check parameters */
 	pmp->pmp_root_cookie = args->pa_root_cookie;
+	switch (args->pa_root_vtype) {
+	case VNON: case VREG: case VDIR: case VBLK:
+	case VCHR: case VLNK: case VSOCK: case VFIFO:
+		break;
+	default:
+		error = EINVAL;
+		goto out;
+	}
 	pmp->pmp_root_vtype = args->pa_root_vtype;
+
+	if (args->pa_root_vsize < 0) {
+		error = EINVAL;
+		goto out;
+	}
 	pmp->pmp_root_vsize = args->pa_root_vsize;
+
 	pmp->pmp_root_rdev = args->pa_root_rdev;
 	pmp->pmp_docompat = args->pa_time32;
 
@@ -319,8 +312,6 @@ puffs_vfsop_mount(struct mount *mp, const char *path, void *data,
  out:
 	if (error && pmp && pmp->pmp_pi)
 		putter_detach(pmp->pmp_pi);
-	if (error && pmp && pmp->pmp_pnodehash)
-		kmem_free(pmp->pmp_pnodehash, BUCKETALLOC(pmp->pmp_npnodehash));
 	if (error && pmp)
 		kmem_free(pmp, sizeof(struct puffs_mount));
 	return error;
@@ -441,7 +432,6 @@ puffs_vfsop_unmount(struct mount *mp, int mntflags)
 		mutex_destroy(&pmp->pmp_lock);
 		mutex_destroy(&pmp->pmp_sopmtx);
 
-		kmem_free(pmp->pmp_pnodehash, BUCKETALLOC(pmp->pmp_npnodehash));
 		kmem_free(pmp, sizeof(struct puffs_mount));
 		error = 0;
 	} else {
@@ -462,9 +452,17 @@ puffs_vfsop_root(struct mount *mp, struct vnode **vpp)
 	struct puffs_mount *pmp = MPTOPUFFSMP(mp);
 	int rv;
 
-	rv = puffs_cookie2vnode(pmp, pmp->pmp_root_cookie, 1, 1, vpp);
+	rv = puffs_cookie2vnode(pmp, pmp->pmp_root_cookie, vpp);
 	KASSERT(rv != PUFFS_NOSUCHCOOKIE);
-	return rv;
+	if (rv != 0)
+		return rv;
+	rv = vn_lock(*vpp, LK_EXCLUSIVE);
+	if (rv != 0) {
+		vrele(*vpp);
+		*vpp = NULL;
+		return rv;
+	}
+	return 0;
 }
 
 int
@@ -513,6 +511,9 @@ puffs_vfsop_statvfs(struct mount *mp, struct statvfs *sbp)
 static bool
 pageflush_selector(void *cl, struct vnode *vp)
 {
+
+	KASSERT(mutex_owned(vp->v_interlock));
+
 	return vp->v_type == VREG &&
 	    !(LIST_EMPTY(&vp->v_dirtyblkhd) && UVM_OBJ_IS_CLEAN(&vp->v_uobj));
 }
@@ -644,19 +645,12 @@ puffs_vfsop_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 	if (error)
 		goto out;
 
-	error = puffs_cookie2vnode(pmp, fhtonode_msg->pvfsr_fhcookie, 1,1,&vp);
-	DPRINTF(("puffs_fhtovp: got cookie %p, existing vnode %p\n",
-	    fhtonode_msg->pvfsr_fhcookie, vp));
-	if (error == PUFFS_NOSUCHCOOKIE) {
-		error = puffs_getvnode(mp, fhtonode_msg->pvfsr_fhcookie,
-		    fhtonode_msg->pvfsr_vtype, fhtonode_msg->pvfsr_size,
-		    fhtonode_msg->pvfsr_rdev, &vp);
-		if (error)
-			goto out;
-		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	} else if (error) {
+	error = puffs_getvnode(mp, fhtonode_msg->pvfsr_fhcookie,
+	    fhtonode_msg->pvfsr_vtype, fhtonode_msg->pvfsr_size,
+	    fhtonode_msg->pvfsr_rdev, &vp);
+	if (error)
 		goto out;
-	}
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 
 	*vpp = vp;
  out:
@@ -737,6 +731,41 @@ puffs_vfsop_vptofh(struct vnode *vp, struct fid *fhp, size_t *fh_size)
  out:
 	puffs_msgmem_release(park_nodetofh);
 	return error;
+}
+
+int
+puffs_vfsop_loadvnode(struct mount *mp, struct vnode *vp,
+    const void *key, size_t key_len, const void **new_key)
+{
+	struct puffs_mount *pmp;
+	struct puffs_node *pnode;
+
+	KASSERT(key_len == sizeof(puffs_cookie_t));
+
+	pmp = MPTOPUFFSMP(mp);
+
+	/* Allocate and initialize the pnode. */
+	pnode = pool_get(&puffs_pnpool, PR_WAITOK);
+	memset(pnode, 0, sizeof(struct puffs_node));
+
+	pnode->pn_vp = vp;
+	memcpy(&pnode->pn_cookie, key, key_len);
+	pnode->pn_refcount = 1;
+	mutex_init(&pnode->pn_mtx, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&pnode->pn_sizemtx, MUTEX_DEFAULT, IPL_NONE);
+	selinit(&pnode->pn_sel);
+	vp->v_tag = VT_PUFFS;
+	vp->v_type = VNON;
+	vp->v_op = puffs_vnodeop_p;
+	if (pnode->pn_cookie == pmp->pmp_root_cookie)
+		vp->v_vflag |= VV_ROOT;
+	vp->v_data = pnode;
+
+	genfs_node_init(vp, &puffs_genfsops);
+	uvm_vnp_setsize(vp, 0);
+
+	*new_key = &pnode->pn_cookie;
+	return 0;
 }
 
 void
@@ -838,13 +867,14 @@ struct vfsops puffs_vfsops = {
 	.vfs_statvfs = puffs_vfsop_statvfs,
 	.vfs_sync = puffs_vfsop_sync,
 	.vfs_vget = (void *)eopnotsupp,
+	.vfs_loadvnode = puffs_vfsop_loadvnode,
 	.vfs_fhtovp = puffs_vfsop_fhtovp,
 	.vfs_vptofh = puffs_vfsop_vptofh,
 	.vfs_init = puffs_vfsop_init,
 	.vfs_done = puffs_vfsop_done,
 	.vfs_snapshot = puffs_vfsop_snapshot,
 	.vfs_extattrctl = puffs_vfsop_extattrctl,
-	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_suspendctl = genfs_suspendctl,
 	.vfs_renamelock_enter = genfs_renamelock_enter,
 	.vfs_renamelock_exit = genfs_renamelock_exit,
 	.vfs_fsync = (void *)eopnotsupp,

@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_mbuf.c,v 1.7.2.2 2014/08/20 00:04:35 tls Exp $	*/
+/*	$NetBSD: npf_mbuf.c,v 1.7.2.3 2017/12/03 11:39:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -36,28 +36,45 @@
  * abstracted within this source.
  */
 
+#ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_mbuf.c,v 1.7.2.2 2014/08/20 00:04:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_mbuf.c,v 1.7.2.3 2017/12/03 11:39:03 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
+#endif
 
 #include "npf_impl.h"
+
+#if defined(_NPF_STANDALONE)
+#define	m_length(m)		(nbuf)->nb_mops->getchainlen(m)
+#define	m_buflen(m)		(nbuf)->nb_mops->getlen(m)
+#define	m_next_ptr(m)		(nbuf)->nb_mops->getnext(m)
+#define	m_ensure_contig(m,t)	(nbuf)->nb_mops->ensure_contig((m), (t))
+#define	m_makewritable(m,o,l,f)	(nbuf)->nb_mops->ensure_writable((m), (o+l))
+#define	mtod(m,t)		((t)((nbuf)->nb_mops->getdata(m)))
+#define	m_flags_p(m,f)		true
+#else
+#define	m_next_ptr(m)		(m)->m_next
+#define	m_buflen(m)		(m)->m_len
+#define	m_flags_p(m,f)		(((m)->m_flags & (f)) != 0)
+#endif
 
 #define	NBUF_ENSURE_ALIGN	(MAX(COHERENCY_UNIT, 64))
 #define	NBUF_ENSURE_MASK	(NBUF_ENSURE_ALIGN - 1)
 #define	NBUF_ENSURE_ROUNDUP(x)	(((x) + NBUF_ENSURE_ALIGN) & ~NBUF_ENSURE_MASK)
 
 void
-nbuf_init(nbuf_t *nbuf, struct mbuf *m, const ifnet_t *ifp)
+nbuf_init(npf_t *npf, nbuf_t *nbuf, struct mbuf *m, const ifnet_t *ifp)
 {
-	u_int ifid = npf_ifmap_getid(ifp);
+	u_int ifid = npf_ifmap_getid(npf, ifp);
 
-	KASSERT((m->m_flags & M_PKTHDR) != 0);
+	KASSERT(m_flags_p(m, M_PKTHDR));
+	nbuf->nb_mops = npf->mbufops;
 
 	nbuf->nb_mbuf0 = m;
 	nbuf->nb_ifp = ifp;
-	nbuf->nb_ifid =  ifid;
+	nbuf->nb_ifid = ifid;
 	nbuf_reset(nbuf);
 }
 
@@ -121,11 +138,11 @@ nbuf_advance(nbuf_t *nbuf, size_t len, size_t ensure)
 
 	/* Offset with amount to advance. */
 	off = (uintptr_t)nbuf->nb_nptr - mtod(m, uintptr_t) + len;
-	wmark = m->m_len;
+	wmark = m_buflen(m);
 
 	/* Find the mbuf according to offset. */
 	while (__predict_false(wmark <= off)) {
-		m = m->m_next;
+		m = m_next_ptr(m);
 		if (__predict_false(m == NULL)) {
 			/*
 			 * If end of the chain, then the offset is
@@ -133,14 +150,14 @@ nbuf_advance(nbuf_t *nbuf, size_t len, size_t ensure)
 			 */
 			return NULL;
 		}
-		wmark += m->m_len;
+		wmark += m_buflen(m);
 	}
 	KASSERT(off < m_length(nbuf->nb_mbuf0));
 
 	/* Offset in mbuf data. */
 	d = mtod(m, uint8_t *);
-	KASSERT(off >= (wmark - m->m_len));
-	d += (off - (wmark - m->m_len));
+	KASSERT(off >= (wmark - m_buflen(m)));
+	d += (off - (wmark - m_buflen(m)));
 
 	nbuf->nb_mbuf = m;
 	nbuf->nb_nptr = d;
@@ -165,17 +182,17 @@ nbuf_ensure_contig(nbuf_t *nbuf, size_t len)
 	const struct mbuf * const n = nbuf->nb_mbuf;
 	const size_t off = (uintptr_t)nbuf->nb_nptr - mtod(n, uintptr_t);
 
-	KASSERT(off <= n->m_len);
+	KASSERT(off <= m_buflen(n));
 
-	if (__predict_false(n->m_len < (off + len))) {
+	if (__predict_false(m_buflen(n) < (off + len))) {
 		struct mbuf *m = nbuf->nb_mbuf0;
 		const size_t foff = nbuf_offset(nbuf);
 		const size_t plen = m_length(m);
-		const size_t mlen = m->m_len;
+		const size_t mlen = m_buflen(m);
 		size_t target;
 		bool success;
 
-		npf_stats_inc(NPF_STAT_NBUF_NONCONTIG);
+		//npf_stats_inc(npf, NPF_STAT_NBUF_NONCONTIG);
 
 		/* Attempt to round-up to NBUF_ENSURE_ALIGN bytes. */
 		if ((target = NBUF_ENSURE_ROUNDUP(foff + len)) > plen) {
@@ -183,12 +200,12 @@ nbuf_ensure_contig(nbuf_t *nbuf, size_t len)
 		}
 
 		/* Rearrange the chain to be contiguous. */
-		KASSERT((m->m_flags & M_PKTHDR) != 0);
+		KASSERT(m_flags_p(m, M_PKTHDR));
 		success = m_ensure_contig(&m, target);
 		KASSERT(m != NULL);
 
 		/* If no change in the chain: return what we have. */
-		if (m == nbuf->nb_mbuf0 && m->m_len == mlen) {
+		if (m == nbuf->nb_mbuf0 && m_buflen(m) == mlen) {
 			return success ? nbuf->nb_nptr : NULL;
 		}
 
@@ -197,16 +214,16 @@ nbuf_ensure_contig(nbuf_t *nbuf, size_t len)
 		 * accordingly and indicate that the references to the data
 		 * might need a reset.
 		 */
-		KASSERT((m->m_flags & M_PKTHDR) != 0);
+		KASSERT(m_flags_p(m, M_PKTHDR));
 		nbuf->nb_mbuf0 = m;
 		nbuf->nb_mbuf = m;
 
-		KASSERT(foff < m->m_len && foff < m_length(m));
+		KASSERT(foff < m_buflen(m) && foff < m_length(m));
 		nbuf->nb_nptr = mtod(m, uint8_t *) + foff;
 		nbuf->nb_flags |= NBUF_DATAREF_RESET;
 
 		if (!success) {
-			npf_stats_inc(NPF_STAT_NBUF_CONTIG_FAIL);
+			//npf_stats_inc(npf, NPF_STAT_NBUF_CONTIG_FAIL);
 			return NULL;
 		}
 	}
@@ -232,7 +249,7 @@ nbuf_ensure_writable(nbuf_t *nbuf, size_t len)
 		return NULL;
 	}
 	if (head_buf) {
-		KASSERT((m->m_flags & M_PKTHDR) != 0);
+		KASSERT(m_flags_p(m, M_PKTHDR));
 		KASSERT(off < m_length(m));
 		nbuf->nb_mbuf0 = m;
 	}
@@ -245,19 +262,30 @@ nbuf_ensure_writable(nbuf_t *nbuf, size_t len)
 bool
 nbuf_cksum_barrier(nbuf_t *nbuf, int di)
 {
+#ifdef _KERNEL
 	struct mbuf *m;
 
 	if (di != PFIL_OUT) {
 		return false;
 	}
 	m = nbuf->nb_mbuf0;
-	KASSERT((m->m_flags & M_PKTHDR) != 0);
+	KASSERT(m_flags_p(m, M_PKTHDR));
 
 	if (m->m_pkthdr.csum_flags & (M_CSUM_TCPv4 | M_CSUM_UDPv4)) {
 		in_delayed_cksum(m);
 		m->m_pkthdr.csum_flags &= ~(M_CSUM_TCPv4 | M_CSUM_UDPv4);
 		return true;
 	}
+#ifdef INET6
+	if (m->m_pkthdr.csum_flags & (M_CSUM_TCPv6 | M_CSUM_UDPv6)) {
+		in6_delayed_cksum(m);
+		m->m_pkthdr.csum_flags &= ~(M_CSUM_TCPv6 | M_CSUM_UDPv6);
+		return true;
+	}
+#endif
+#else
+	(void)nbuf; (void)di;
+#endif
 	return false;
 }
 
@@ -267,13 +295,14 @@ nbuf_cksum_barrier(nbuf_t *nbuf, int di)
  * => Returns 0 on success or errno on failure.
  */
 int
-nbuf_add_tag(nbuf_t *nbuf, uint32_t key, uint32_t val)
+nbuf_add_tag(nbuf_t *nbuf, uint32_t val)
 {
+#ifdef _KERNEL
 	struct mbuf *m = nbuf->nb_mbuf0;
 	struct m_tag *mt;
 	uint32_t *dat;
 
-	KASSERT((m->m_flags & M_PKTHDR) != 0);
+	KASSERT(m_flags_p(m, M_PKTHDR));
 
 	mt = m_tag_get(PACKET_TAG_NPF, sizeof(uint32_t), M_NOWAIT);
 	if (mt == NULL) {
@@ -283,6 +312,10 @@ nbuf_add_tag(nbuf_t *nbuf, uint32_t key, uint32_t val)
 	*dat = val;
 	m_tag_prepend(m, mt);
 	return 0;
+#else
+	(void)nbuf; (void)val;
+	return ENOTSUP;
+#endif
 }
 
 /*
@@ -291,17 +324,22 @@ nbuf_add_tag(nbuf_t *nbuf, uint32_t key, uint32_t val)
  * => Returns 0 on success or errno on failure.
  */
 int
-nbuf_find_tag(nbuf_t *nbuf, uint32_t key, void **data)
+nbuf_find_tag(nbuf_t *nbuf, uint32_t *val)
 {
+#ifdef _KERNEL
 	struct mbuf *m = nbuf->nb_mbuf0;
 	struct m_tag *mt;
 
-	KASSERT((m->m_flags & M_PKTHDR) != 0);
+	KASSERT(m_flags_p(m, M_PKTHDR));
 
 	mt = m_tag_find(m, PACKET_TAG_NPF, NULL);
 	if (mt == NULL) {
 		return EINVAL;
 	}
-	*data = (void *)(mt + 1);
+	*val = *(uint32_t *)(mt + 1);
 	return 0;
+#else
+	(void)nbuf; (void)val;
+	return ENOTSUP;
+#endif
 }

@@ -1,12 +1,15 @@
-#	$NetBSD: Makefile,v 1.3.4.2 2014/08/20 00:04:40 tls Exp $
+#	$NetBSD: Makefile,v 1.3.4.3 2017/12/03 11:39:14 jdolecek Exp $
 #
 # Public Domain.
 #
+
+.include <bsd.init.mk>
 
 .PATH:	${.CURDIR}/../../../../external/bsd/sljit/sljit \
 	${.CURDIR}/../../../../external/bsd/sljit/dist/sljit_src
 
 LIB=	rumpkern_sljit
+COMMENT=Stackless JIT compiler
 
 SRCS=	sljitLir.c sljit_mod.c
 
@@ -32,7 +35,7 @@ RUMPCOMP_INCS_DIR:=	${.PARSEDIR}
 RUMPCOMP_USER_CPPFLAGS=-I${RUMPCOMP_INCS_DIR}
 
 # Link to libarm to get arm_sync_icache(2)
-LDADD+=	-larm
+LIBDPLIBS+=	arm ${NETBSDSRCDIR}/lib/libarch
 .endif
 
 .include <bsd.lib.mk>

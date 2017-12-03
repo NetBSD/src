@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay.h,v 1.8 2008/06/28 01:34:06 rumble Exp $	*/
+/*	$NetBSD: overlay.h,v 1.8.40.1 2017/12/03 11:38:48 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -86,7 +86,6 @@ struct overlay_args {
 struct overlay_mount {
 	struct	layer_mount	lm;	/* generic layerfs mount stuff */
 };
-#define	ovm_vfs			lm.layerm_vfs
 #define	ovm_rootvp		lm.layerm_rootvp
 #define	ovm_export		lm.layerm_export
 #define	ovm_flags		lm.layerm_flags

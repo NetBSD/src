@@ -34,7 +34,7 @@
  *	the "cx" driver for Cronyx's HDLC-in-hardware device).  This driver
  *	is only the glue between sppp and i4b.
  *
- *	$Id: i4b_isppp.c,v 1.27 2010/04/05 07:22:50 joerg Exp $
+ *	$Id: i4b_isppp.c,v 1.27.18.1 2017/12/03 11:39:05 jdolecek Exp $
  *
  * $FreeBSD$
  *
@@ -43,7 +43,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_isppp.c,v 1.27 2010/04/05 07:22:50 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_isppp.c,v 1.27.18.1 2017/12/03 11:39:05 jdolecek Exp $");
 
 #ifndef __NetBSD__
 #define USE_ISPPP
@@ -335,6 +335,11 @@ ipppattach(void)
 		ether_ifattach(&sc->sc_sp.pp_if, 0);
 #else
 		if_attach(&sc->sc_sp.pp_if);
+#ifndef USE_ISPPP
+		sc->sc_sp.pp_if._if_input = sppp_input;
+#else
+		sc->sc_sp.pp_if._if_input = isppp_input;
+#endif
 #endif
 #ifndef USE_ISPPP
 		sppp_attach(&sc->sc_sp.pp_if);
@@ -419,12 +424,12 @@ i4bisppp_start(struct ifnet *ifp)
 		}
 		else
 		{
-			IF_ENQUEUE(sc->sc_ilt->tx_queue, m);
 #if 0
 			sc->sc_sp.pp_if.if_obytes += m->m_pkthdr.len;
 #endif
 			sc->sc_outb += m->m_pkthdr.len;
 			sc->sc_sp.pp_if.if_opackets++;
+			IF_ENQUEUE(sc->sc_ilt->tx_queue, m);
 		}
 	}
 	sc->sc_ilt->bchannel_driver->bch_tx_start(sc->sc_ilt->l1token,
@@ -666,15 +671,12 @@ i4bisppp_rx_data_rdy(void *softc)
 {
 	struct i4bisppp_softc *sc = softc;
 	struct mbuf *m;
-	int s;
 
 	if((m = *sc->sc_ilt->rx_mbuf) == NULL)
 		return;
 
-	m->m_pkthdr.rcvif = &sc->sc_sp.pp_if;
+	m_set_rcvif(m, &sc->sc_sp.pp_if);
 	m->m_pkthdr.len = m->m_len;
-
-	sc->sc_sp.pp_if.if_ipackets++;
 
 #if I4BISPPPACCT
 	sc->sc_inb += m->m_pkthdr.len;
@@ -684,28 +686,7 @@ i4bisppp_rx_data_rdy(void *softc)
 	printf("i4bisppp_rx_data_ready: received packet!\n");
 #endif
 
-#if NBPFILTER > 0 || NBPF > 0
-
-#ifdef __FreeBSD__
-	if(sc->sc_sp.pp_if.if_bpf)
-		bpf_mtap(&sc->sc_sp.pp_if, m);
-#endif /* __FreeBSD__ */
-
-#ifdef __NetBSD__
-	bpf_mtap(&sc->sc_sp.pp_if, m);
-#endif
-
-#endif /* NBPFILTER > 0  || NBPF > 0 */
-
-	s = splnet();
-
-#ifndef USE_ISPPP
-	sppp_input(&sc->sc_sp.pp_if, m);
-#else
-	isppp_input(&sc->sc_sp.pp_if, m);
-#endif
-
-	splx(s);
+	if_percpuq_enqueue(sc->sc_sp.pp_if.if_percpuq, m);
 }
 
 /*---------------------------------------------------------------------------*

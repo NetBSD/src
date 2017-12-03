@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsclstate.h,v 1.1.1.1.10.2 2014/08/20 00:04:27 tls Exp $	*/
+/*	$NetBSD: nfsclstate.h,v 1.1.1.1.10.3 2017/12/03 11:38:42 jdolecek Exp $	*/
 /*-
  * Copyright (c) 2009 Rick Macklem, University of Guelph
  * All rights reserved.
@@ -24,8 +24,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * FreeBSD: head/sys/fs/nfs/nfsclstate.h 244042 2012-12-08 22:52:39Z rmacklem 
- * $NetBSD: nfsclstate.h,v 1.1.1.1.10.2 2014/08/20 00:04:27 tls Exp $
+ * FreeBSD: head/sys/fs/nfs/nfsclstate.h 268115 2014-07-01 20:47:16Z rmacklem 
+ * $NetBSD: nfsclstate.h,v 1.1.1.1.10.3 2017/12/03 11:38:42 jdolecek Exp $
  */
 
 #ifndef _NFS_NFSCLSTATE_H_
@@ -56,9 +56,10 @@ LIST_HEAD(nfsclrecalllayouthead, nfsclrecalllayout);
 
 /* Structure for NFSv4.1 session stuff. */
 struct nfsclsession {
-	struct mtx	nfsess_mtx;
+	kmutex_t	nfsess_mtx;
 	struct nfsslot	nfsess_cbslots[NFSV4_CBSLOTS];
 	nfsquad_t	nfsess_clientid;
+	SVCXPRT		*nfsess_xprt;		/* For backchannel callback */
 	uint32_t	nfsess_slotseq[64];	/* Max for 64bit nm_slots */
 	uint64_t	nfsess_slots;
 	uint32_t	nfsess_sequenceid;
@@ -76,7 +77,7 @@ struct nfsclsession {
 struct nfsclds {
 	TAILQ_ENTRY(nfsclds)	nfsclds_list;
 	struct nfsclsession	nfsclds_sess;
-	struct mtx		nfsclds_mtx;
+	kmutex_t		nfsclds_mtx;
 	struct nfssockreq	*nfsclds_sockp;
 	time_t			nfsclds_expire;
 	uint16_t		nfsclds_flags;

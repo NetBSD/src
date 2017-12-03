@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.40.22.1 2012/11/20 03:02:31 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.40.22.2 2017/12/03 11:37:31 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -78,7 +78,8 @@ extern const struct isdn_layer1_isdnif_driver isic_std_driver;
 
 static int isic_pcmcia_match(device_t, cfdata_t, void *);
 static void isic_pcmcia_attach(device_t, device_t, void *);
-static const struct isic_pcmcia_card_entry * find_matching_card(struct pcmcia_attach_args *pa);
+static const struct isic_pcmcia_card_entry * find_matching_card(
+	struct pcmcia_attach_args *pa);
 static int isic_pcmcia_isdn_attach(struct isic_softc *sc, const char*);
 static int isic_pcmcia_detach(device_t self, int flags);
 static int isic_pcmcia_activate(device_t self, enum devact act);
@@ -144,10 +145,12 @@ find_matching_card(struct pcmcia_attach_args *pa)
 	int i, j;
 
 	for (i = 0; i < NUM_MATCH_ENTRIES; i++) {
-		if (card_list[i].vendor != PCMCIA_VENDOR_INVALID && pa->card->manufacturer != card_list[i].vendor)
+		if (card_list[i].vendor != PCMCIA_VENDOR_INVALID
+		    && pa->card->manufacturer != card_list[i].vendor)
 			continue;
-		if (card_list[i].product != PCMCIA_PRODUCT_INVALID && pa->card->product != card_list[i].product)
-				continue;
+		if (card_list[i].product != PCMCIA_PRODUCT_INVALID
+		    && pa->card->product != card_list[i].product)
+			continue;
 		if (pa->pf->function != card_list[i].function)
 			continue;
 		for (j = 0; j < 4; j++) {
@@ -155,7 +158,8 @@ find_matching_card(struct pcmcia_attach_args *pa)
 				continue;	/* wildcard */
 			if (pa->card->cis1_info[j] == NULL)
 				break;		/* not available */
-			if (strcmp(pa->card->cis1_info[j], card_list[i].cis1_info[j]) != 0)
+			if (strcmp(pa->card->cis1_info[j],
+			    card_list[i].cis1_info[j]) != 0)
 				break;		/* mismatch */
 		}
 		if (j >= 4)
@@ -198,13 +202,15 @@ isic_pcmcia_attach(device_t parent, device_t self, void *aux)
 	cfe = SIMPLEQ_FIRST(&pa->pf->cfe_head);
 	psc->sc_ih = NULL;
 
+	aprint_naive("\n");
 	/* Which card is it? */
 	cde = find_matching_card(pa);
 	if (cde == NULL) {
-		aprint_error_dev(self, "attach failed, couldn't find matching card\n");
+		aprint_error_dev(self,
+		    "attach failed, couldn't find matching card\n");
 		return;
 	}
-	printf("%s: %s\n", cde->name, device_xname(self));
+	aprint_normal_dev(self, "%s\n", cde->name);
 
 	/* Enable the card */
 	pcmcia_function_init(pa->pf, cfe);
@@ -212,14 +218,16 @@ isic_pcmcia_attach(device_t parent, device_t self, void *aux)
 	pcmcia_function_enable(pa->pf);
 
 	if (!cde->attach(psc, cfe, pa)) {
-		aprint_error_dev(self, "attach failed, card-specific attach unsuccesful\n");
+		aprint_error_dev(self,
+		    "attach failed, card-specific attach unsuccesful\n");
 		goto fail;
 	}
 
 	/* MI initilization */
 	sc->sc_cardtyp = cde->card_type;
 	if (isic_pcmcia_isdn_attach(sc, cde->name)) {
-		aprint_error_dev(self, "attach failed, generic attach unsuccesful\n");
+		aprint_error_dev(self,
+		    "attach failed, generic attach unsuccesful\n");
 		goto fail;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmu.c,v 1.21.12.1 2014/08/20 00:03:11 tls Exp $ */
+/*	$NetBSD: pmu.c,v 1.21.12.2 2017/12/03 11:36:25 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.21.12.1 2014/08/20 00:03:11 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.21.12.2 2017/12/03 11:36:25 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -35,6 +35,8 @@ __KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.21.12.1 2014/08/20 00:03:11 tls Exp $");
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/kthread.h>
+#include <sys/atomic.h>
+#include <sys/mutex.h>
 
 #include <sys/bus.h>
 #include <machine/pio.h>
@@ -70,28 +72,39 @@ static void pmu_autopoll(void *, int);
 
 static int pmu_intr(void *);
 
+
+/* bits for sc_pending, as signals to the event thread */
+#define PMU_EV_CARD0	1
+#define PMU_EV_CARD1	2
+#define PMU_EV_BUTTON	4
+#define PMU_EV_LID	8
+
 struct pmu_softc {
 	device_t sc_dev;
 	void *sc_ih;
 	struct todr_chip_handle sc_todr;
 	struct adb_bus_accessops sc_adbops;
 	struct i2c_controller sc_i2c;
+	kmutex_t sc_i2c_lock;
 	struct pmu_ops sc_pmu_ops;
 	struct sysmon_pswitch sc_lidswitch;
+	struct sysmon_pswitch sc_powerbutton;
 	bus_space_tag_t sc_memt;
 	bus_space_handle_t sc_memh;
 	uint32_t sc_flags;
 #define PMU_HAS_BACKLIGHT_CONTROL	1
 	int sc_node;
-	int sc_iic_done;
 	int sc_error;
 	int sc_autopoll;
-	int sc_pending_eject;
 	int sc_brightness, sc_brightness_wanted;
 	int sc_volume, sc_volume_wanted;
 	int sc_lid_closed;
+	int sc_button;
+	uint8_t sc_env_old;
+	uint8_t sc_env_mask;
 	/* deferred processing */
 	lwp_t *sc_thread;
+	int sc_pending;
 	/* signalling the event thread */
 	int sc_event;
 	/* ADB */
@@ -134,12 +147,10 @@ static 	int pmu_adb_send(void *, int, int, int, uint8_t *);
 static	int pmu_adb_set_handler(void *, void (*)(void *, int, uint8_t *), void *);
 
 /* i2c stuff */
-#if 0
 static int pmu_i2c_acquire_bus(void *, int);
 static void pmu_i2c_release_bus(void *, int);
 static int pmu_i2c_exec(void *, i2c_op_t, i2c_addr_t, const void *, size_t,
 		    void *, size_t, int);
-#endif
 
 static void pmu_attach_legacy_battery(struct pmu_softc *);
 static void pmu_attach_smart_battery(struct pmu_softc *, int);
@@ -250,9 +261,7 @@ pmu_attach(device_t parent, device_t self, void *aux)
 {
 	struct confargs *ca = aux;
 	struct pmu_softc *sc = device_private(self);
-#if notyet
 	struct i2cbus_attach_args iba;
-#endif
 	uint32_t regs[16];
 	int irq = ca->ca_intr[0];
 	int node, extint_node, root_node;
@@ -260,7 +269,8 @@ pmu_attach(device_t parent, device_t self, void *aux)
 	int type = IST_EDGE;
 	uint8_t cmd[2] = {2, 0};
 	uint8_t resp[16];
-	char name[256];
+	char name[256], model[32];
+	prop_dictionary_t dict = device_properties(self);
 
 	extint_node = of_getnode_byname(OF_parent(ca->ca_node), "extint-gpio1");
 	if (extint_node) {
@@ -279,12 +289,27 @@ pmu_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_error = 0;
 	sc->sc_autopoll = 0;
-	sc->sc_pending_eject = 0;
+	sc->sc_pending = 0;
+	sc->sc_env_old = 0;
 	sc->sc_brightness = sc->sc_brightness_wanted = 0x80;
 	sc->sc_volume = sc->sc_volume_wanted = 0x80;
 	sc->sc_flags = 0;
 	sc->sc_callback = NULL;
 	sc->sc_lid_closed = 0;
+	sc->sc_button = 0;
+	sc->sc_env_mask = 0xff;
+
+	/*
+	 * core99 PowerMacs like to send environment messages with the lid
+	 * switch bit set - since that doesn't make any sense here and it
+	 * probably means something else anyway we mask it out
+	 */
+
+	if (OF_getprop(root_node, "model", model, 32) != 0) {
+		if (strncmp(model, "PowerMac", 8) == 0) {
+			sc->sc_env_mask = PMU_ENV_POWER_BUTTON;
+		}
+	}
 
 	if (bus_space_map(sc->sc_memt, ca->ca_reg[0] + ca->ca_baseaddr,
 	    ca->ca_reg[1], 0, &sc->sc_memh) != 0) {
@@ -317,7 +342,57 @@ pmu_attach(device_t parent, device_t self, void *aux)
 			goto next;
 
 		if (strncmp(name, "pmu-i2c", 8) == 0) {
+			int devs;
+			uint32_t addr;
+			char compat[256];
+			prop_array_t cfg;
+			prop_dictionary_t dev;
+			prop_data_t data;
+
 			aprint_normal_dev(self, "initializing IIC bus\n");
+
+			cfg = prop_array_create();
+			prop_dictionary_set(dict, "i2c-child-devices", cfg);
+			prop_object_release(cfg);
+
+			/* look for i2c devices */
+			devs = OF_child(node);
+			while (devs != 0) {
+				if (OF_getprop(devs, "name", name, 256) == 0)
+					goto skip;
+				if (OF_getprop(devs, "compatible",
+				    compat, 256) == 0)
+					goto skip;
+				if (OF_getprop(devs, "reg", &addr, 4) == 0)
+					goto skip;
+				addr = (addr & 0xff) >> 1;
+				DPRINTF("-> %s@%x\n", name, addr);
+				dev = prop_dictionary_create();
+				prop_dictionary_set_cstring(dev, "name", name);
+				data = prop_data_create_data(compat, strlen(compat)+1);
+				prop_dictionary_set(dev, "compatible", data);
+				prop_object_release(data);
+				prop_dictionary_set_uint32(dev, "addr", addr);
+				prop_dictionary_set_uint64(dev, "cookie", devs);
+				prop_array_add(cfg, dev);
+				prop_object_release(dev);
+			skip:
+				devs = OF_peer(devs);
+			}
+			memset(&iba, 0, sizeof(iba));
+			iba.iba_tag = &sc->sc_i2c;
+			mutex_init(&sc->sc_i2c_lock, MUTEX_DEFAULT, IPL_NONE);
+			sc->sc_i2c.ic_cookie = sc;
+			sc->sc_i2c.ic_acquire_bus = pmu_i2c_acquire_bus;
+			sc->sc_i2c.ic_release_bus = pmu_i2c_release_bus;
+			sc->sc_i2c.ic_send_start = NULL;
+			sc->sc_i2c.ic_send_stop = NULL;
+			sc->sc_i2c.ic_initiate_xfer = NULL;
+			sc->sc_i2c.ic_read_byte = NULL;
+			sc->sc_i2c.ic_write_byte = NULL;
+			sc->sc_i2c.ic_exec = pmu_i2c_exec;
+			config_found_ia(sc->sc_dev, "i2cbus", &iba,
+			    iicbus_print);
 			goto next;
 		}
 		if (strncmp(name, "adb", 4) == 0) {
@@ -383,20 +458,6 @@ next:
 			pmu_attach_smart_battery(sc, i);
 	}
 bat_done:
-
-#if notyet
-	iba.iba_tag = &sc->sc_i2c;
-	sc->sc_i2c.ic_cookie = sc;
-	sc->sc_i2c.ic_acquire_bus = pmu_i2c_acquire_bus;
-	sc->sc_i2c.ic_release_bus = pmu_i2c_release_bus;
-	sc->sc_i2c.ic_send_start = NULL;
-	sc->sc_i2c.ic_send_stop = NULL;
-	sc->sc_i2c.ic_initiate_xfer = NULL;
-	sc->sc_i2c.ic_read_byte = NULL;
-	sc->sc_i2c.ic_write_byte = NULL;
-	sc->sc_i2c.ic_exec = pmu_i2c_exec;
-	config_found_ia(sc->sc_dev, "i2cbus", &iba, iicbus_print);
-#endif
 	
 	if (kthread_create(PRI_NONE, 0, NULL, pmu_thread, sc, &sc->sc_thread,
 	    "%s", "pmu") != 0) {
@@ -408,6 +469,12 @@ bat_done:
 	if (sysmon_pswitch_register(&sc->sc_lidswitch) != 0)
 		aprint_error_dev(self,
 		    "unable to register lid switch with sysmon\n");
+
+	sc->sc_powerbutton.smpsw_name = "Power button";
+	sc->sc_powerbutton.smpsw_type = PSWITCH_TYPE_POWER;
+	if (sysmon_pswitch_register(&sc->sc_powerbutton) != 0)
+		aprint_error_dev(self,
+		    "unable to register power button with sysmon\n");
 }
 
 static void
@@ -633,7 +700,7 @@ pmu_intr(void *arg)
 	if (resp[1] & PMU_INT_PCEJECT) {
 		/* deal with PCMCIA eject buttons */
 		DPRINTF("card eject %d\n", resp[3]);
-		sc->sc_pending_eject |= (resp[3] & 3);
+		atomic_or_32(&sc->sc_pending, (resp[3] & 3));
 		wakeup(&sc->sc_event);
 		goto done;
 	}
@@ -646,7 +713,7 @@ pmu_intr(void *arg)
 		goto done;
 	}
 	if (resp[1] & PMU_INT_ENVIRONMENT) {
-		int closed;
+		uint8_t diff;
 #ifdef PMU_VERBOSE
 		/* deal with environment messages */
 		printf("environment:");
@@ -654,12 +721,18 @@ pmu_intr(void *arg)
 			printf(" %02x", resp[i]);
 		printf("\n");
 #endif
-		closed = (resp[2] & PMU_ENV_LID_CLOSED) != 0;
-		if (closed != sc->sc_lid_closed) {
-			sc->sc_lid_closed = closed;
-			sysmon_pswitch_event(&sc->sc_lidswitch, 
-	    		    closed ? PSWITCH_EVENT_PRESSED : 
-			    PSWITCH_EVENT_RELEASED);
+		diff = (resp[2] ^ sc->sc_env_old ) & sc->sc_env_mask;
+		if (diff == 0) goto done;
+		sc->sc_env_old = resp[2];
+		if (diff & PMU_ENV_LID_CLOSED) {
+			sc->sc_lid_closed = (resp[2] & PMU_ENV_LID_CLOSED) != 0;
+			atomic_or_32(&sc->sc_pending, PMU_EV_LID);
+			wakeup(&sc->sc_event);
+		}
+		if (diff & PMU_ENV_POWER_BUTTON) {
+			sc->sc_button = (resp[2] & PMU_ENV_POWER_BUTTON) != 0;
+			atomic_or_32(&sc->sc_pending, PMU_EV_BUTTON);
+			wakeup(&sc->sc_event);
 		}
 		goto done;
 	}
@@ -851,96 +924,89 @@ pmu_adb_set_handler(void *cookie, void (*handler)(void *, int, uint8_t *),
 	sc->sc_adb_cookie = hcookie;
 	return 0;
 }
-#if 0
+
 static int
 pmu_i2c_acquire_bus(void *cookie, int flags)
 {
-	/* nothing yet */
+	struct pmu_softc *sc = cookie;
+
+	mutex_enter(&sc->sc_i2c_lock);
+
 	return 0;
 }
 
 static void
 pmu_i2c_release_bus(void *cookie, int flags)
 {
-	/* nothing here either */
+	struct pmu_softc *sc = cookie;
+
+	mutex_exit(&sc->sc_i2c_lock);
 }
 
 static int
 pmu_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *_send,
     size_t send_len, void *_recv, size_t recv_len, int flags)
 {
-#if 0
 	struct pmu_softc *sc = cookie;
 	const uint8_t *send = _send;
-	uint8_t *recv = _recv;
-	uint8_t command[16] = {PMU_POWERMGR, PMGR_IIC};
+	uint8_t command[32] = {1,	/* bus number */
+				PMU_I2C_MODE_SIMPLE,
+				0,	/* bus2 */
+				addr,
+				0,	/* sub address */
+				0,	/* comb address */
+				0,	/* count */
+				0	/* data */
+				};
+	uint8_t resp[16];
+	int len, rw;
 
-	DPRINTF("pmu_i2c_exec(%02x)\n", addr);
-	command[2] = addr;
+	rw = addr << 1;
+	command[3] = rw;
+	if (send_len > 0) {
+		command[6] = send_len;
+		memcpy(&command[7], send, send_len);
+		len = send_len + 7;
+		DPRINTF("pmu_i2c_exec(%02x, %d)\n", addr, send_len);
 
-	memcpy(&command[3], send, min((int)send_len, 12));
+		len = pmu_send(sc, PMU_I2C_CMD, len, command, 16, resp);
+		DPRINTF("resp(%d): %2x %2x\n", len, resp[0], resp[1]);
 
-	sc->sc_iic_done = 0;
-	pmu_send(sc, sc->sc_polling, send_len + 3, command);
-
-	while ((sc->sc_iic_done == 0) && (sc->sc_error == 0)) {
-		if (sc->sc_polling) {
-			pmu_poll(sc);
-		} else
-			tsleep(&sc->sc_todev, 0, "i2c", 1000);
-	}
-
-	if (sc->sc_error) {
-		sc->sc_error = 0;
-		return -1;
-	}
-
-	/* see if we're supposed to do a read */
-	if (recv_len > 0) {
-		sc->sc_iic_done = 0;
-		command[2] |= 1;
-		command[3] = 0;
-
-		/*
-		 * XXX we need to do something to limit the size of the answer
-		 * - apparently the chip keeps sending until we tell it to stop
-		 */
-		pmu_send(sc, sc->sc_polling, 3, command);
-		while ((sc->sc_iic_done == 0) && (sc->sc_error == 0)) {
-			if (sc->sc_polling) {
-				pmu_poll(sc);
-			} else
-				tsleep(&sc->sc_todev, 0, "i2c", 1000);
-		}
-
-		if (sc->sc_error) {
-			printf("error trying to read\n");
-			sc->sc_error = 0;
+		if (resp[1] != PMU_I2C_STATUS_OK) {
+			DPRINTF("%s: iic error %d\n", __func__, resp[1]);
 			return -1;
 		}
 	}
-
-	if ((sc->sc_iic_done > 3) && (recv_len > 0)) {
-		/* we got an answer */
-		recv[0] = sc->sc_iic_val;
-		printf("ret: %02x\n", sc->sc_iic_val);
-		return 1;
-	}
-#endif
+	/* see if we're supposed to read */
+	if (I2C_OP_READ_P(op)) {
+		rw |= 1;
+		command[3] = rw;
+		command[6] = recv_len;
+		len = pmu_send(sc, PMU_I2C_CMD, 7, command, 16, resp);
+		DPRINTF("resp2(%d): %2x %2x\n", len, resp[0], resp[1]);
+		
+		command[0] = 0;
+		len = pmu_send(sc, PMU_I2C_CMD, 1, command, 16, resp);
+		DPRINTF("resp3(%d): %2x %2x %2x\n", len, resp[0], resp[1],
+			resp[2]);
+		if ((len - 2) != recv_len) {
+			aprint_error_dev(sc->sc_dev, "%s(%d) - got %d\n",
+			    __func__, recv_len, len - 2);
+			return -1;
+		}
+		memcpy(_recv, &resp[2], len - 2);
+		return 0;
+	};
 	return 0;
 }
-#endif
 
 static void
 pmu_eject_card(struct pmu_softc *sc, int socket)
 {
-	int s;
 	uint8_t buf[] = {socket | 4};
 	uint8_t res[4];
 
-	s = splhigh();
-	sc->sc_pending_eject &= ~socket;
-	splx(s);
+	atomic_and_32(&sc->sc_pending, ~socket);
 	pmu_send(sc, PMU_EJECT_PCMCIA, 1, buf, 4, res);
 }
 
@@ -1001,10 +1067,10 @@ pmu_thread(void *cookie)
 	
 	while (1) {
 		tsleep(&sc->sc_event, PWAIT, "wait", ticks);
-		if (sc->sc_pending_eject != 0) {
-			DPRINTF("eject %d\n", sc->sc_pending_eject);
+		if ((sc->sc_pending & 3) != 0) {
+			DPRINTF("eject %d\n", sc->sc_pending & 3);
 			for (i = 1; i < 3; i++) {
-				if (i & sc->sc_pending_eject)
+				if (i & sc->sc_pending)
 					pmu_eject_card(sc, i);
 			}
 		}
@@ -1020,6 +1086,20 @@ pmu_thread(void *cookie)
 			set_volume(sc->sc_volume_wanted);
 #endif
 			sc->sc_volume = sc->sc_volume_wanted;
+		}
+
+		if (sc->sc_pending & PMU_EV_LID) {
+			atomic_and_32(&sc->sc_pending, ~PMU_EV_LID);
+			sysmon_pswitch_event(&sc->sc_lidswitch, 
+	    		    sc->sc_lid_closed ? PSWITCH_EVENT_PRESSED : 
+			    PSWITCH_EVENT_RELEASED);
+		}
+
+		if (sc->sc_pending & PMU_EV_BUTTON) {
+			atomic_and_32(&sc->sc_pending, ~PMU_EV_BUTTON);
+			sysmon_pswitch_event(&sc->sc_powerbutton, 
+	    		    sc->sc_button ? PSWITCH_EVENT_PRESSED : 
+			    PSWITCH_EVENT_RELEASED);
 		}
 
 		if (sc->sc_callback != NULL)

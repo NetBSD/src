@@ -1,4 +1,4 @@
-/*	$NetBSD: ipi.c,v 1.18.18.1 2014/08/20 00:03:29 tls Exp $	*/
+/*	$NetBSD: ipi.c,v 1.18.18.2 2017/12/03 11:36:50 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008, 2009 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.18.18.1 2014/08/20 00:03:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.18.18.2 2017/12/03 11:36:50 jdolecek Exp $");
 
 #include "opt_mtrr.h"
 
@@ -85,7 +85,7 @@ void (* const ipifunc[X86_NIPI])(struct cpu_info *) =
 	x86_ipi_generic,	/* X86_IPI_GENERIC */
 	x86_ipi_synch_fpu,	/* X86_IPI_SYNCH_FPU */
 	x86_ipi_reload_mtrr,	/* X86_IPI_MTRR */
-	gdt_reload_cpu,		/* X86_IPI_GDT */
+	NULL,			/* X86_IPI_GDT */
 	x86_ipi_xcall,		/* X86_IPI_XCALL */
 	acpi_cpu_sleep,		/* X86_IPI_ACPI_CPU_SLEEP */
 	x86_ipi_kpreempt	/* X86_IPI_KPREEMPT */

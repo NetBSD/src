@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpdev_bus_space.c,v 1.2.8.2 2014/08/20 00:04:38 tls Exp $	*/
+/*	$NetBSD: rumpdev_bus_space.c,v 1.2.8.3 2017/12/03 11:39:08 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2013 Antti Kantee.  All Rights Reserved.
@@ -34,6 +34,11 @@
 
 #include "pci_user.h"
 
+#if defined(RUMPCOMP_USERFEATURE_PCI_IOSPACE) \
+    && (defined(__i386__) || defined(__x86_64__))
+#define IOSPACE_SUPPORTED
+#endif
+
 int
 bus_space_map(bus_space_tag_t bst, bus_addr_t address, bus_size_t size,
 	int flags, bus_space_handle_t *handlep)
@@ -48,8 +53,12 @@ bus_space_map(bus_space_tag_t bst, bus_addr_t address, bus_size_t size,
 	 * make a hypercall to request it.
 	 */
 	if (bst == 0) {
+#ifdef IOSPACE_SUPPORTED
 		*handlep = address;
 		rv = 0;
+#else
+		rv = ENOTSUP;
+#endif
 	} else {
 		*handlep = (bus_space_handle_t)rumpcomp_pci_map(address, size);
 		rv = *handlep ? 0 : EINVAL;
@@ -65,7 +74,12 @@ bus_space_read_1(bus_space_tag_t bst, bus_space_handle_t bsh,
 	uint8_t rv;
 
 	if (bst == 0) {
-		panic("8bit IO space not supported");
+#ifdef IOSPACE_SUPPORTED
+		unsigned short addr = bsh + offset;
+		__asm__ __volatile__("inb %1, %0" : "=a"(rv) : "d"(addr));
+#else
+		panic("IO space not supported");
+#endif
 	} else {
 		rv = *(volatile uint8_t *)(bsh + offset);
 	}
@@ -80,7 +94,12 @@ bus_space_read_2(bus_space_tag_t bst, bus_space_handle_t bsh,
 	uint16_t rv;
 
 	if (bst == 0) {
-		panic("16bit IO space not supported");
+#ifdef IOSPACE_SUPPORTED
+		unsigned short addr = bsh + offset;
+		__asm__ __volatile__("in %1, %0" : "=a"(rv) : "d"(addr));
+#else
+		panic("IO space not supported");
+#endif
 	} else {
 		rv = *(volatile uint16_t *)(bsh + offset);
 	}
@@ -95,11 +114,11 @@ bus_space_read_4(bus_space_tag_t bst, bus_space_handle_t bsh,
 	uint32_t rv;
 
 	if (bst == 0) {
-#if 1
-		panic("IO space not supported in this build");
-#else
+#ifdef IOSPACE_SUPPORTED
 		unsigned short addr = bsh + offset;
-		__asm__ __volatile__("inl %1, %0" : "=a"(rv) : "d"(addr)); 
+		__asm__ __volatile__("inl %1, %0" : "=a"(rv) : "d"(addr));
+#else
+		panic("IO space not supported");
 #endif
 	} else {
 		rv = *(volatile uint32_t *)(bsh + offset);
@@ -109,13 +128,49 @@ bus_space_read_4(bus_space_tag_t bst, bus_space_handle_t bsh,
 }
 
 void
+bus_space_read_multi_1(bus_space_tag_t bst, bus_space_handle_t bsh,
+	bus_size_t offset, uint8_t *datap, bus_size_t count)
+{
+
+	while (count--) {
+		*datap++ = bus_space_read_1(bst, bsh, offset);
+		bus_space_barrier(bst, bsh, offset, 1, BUS_SPACE_BARRIER_READ);
+	}
+}
+
+void
+bus_space_read_multi_2(bus_space_tag_t bst, bus_space_handle_t bsh,
+	bus_size_t offset, uint16_t *datap, bus_size_t count)
+{
+
+	while (count--) {
+		*datap++ = bus_space_read_2(bst, bsh, offset);
+		bus_space_barrier(bst, bsh, offset, 2, BUS_SPACE_BARRIER_READ);
+	}
+}
+
+void
+bus_space_read_multi_4(bus_space_tag_t bst, bus_space_handle_t bsh,
+	bus_size_t offset, uint32_t *datap, bus_size_t count)
+{
+
+	while (count--) {
+		*datap++ = bus_space_read_4(bst, bsh, offset);
+		bus_space_barrier(bst, bsh, offset, 4, BUS_SPACE_BARRIER_READ);
+	}
+}
+
+void
 bus_space_write_1(bus_space_tag_t bst, bus_space_handle_t bsh,
 	bus_size_t offset, uint8_t v)
 {
 
 	if (bst == 0) {
-#if 1
-		panic("IO space not supported in this build");
+#ifdef IOSPACE_SUPPORTED
+		unsigned short addr = bsh + offset;
+		__asm__ __volatile__("outb %0, %1" :: "a"(v), "d"(addr));
+#else
+		panic("IO space not supported");
 #endif
 	} else {
 		*(volatile uint8_t *)(bsh + offset) = v;
@@ -128,8 +183,11 @@ bus_space_write_2(bus_space_tag_t bst, bus_space_handle_t bsh,
 {
 
 	if (bst == 0) {
-#if 1
-		panic("IO space not supported in this build");
+#ifdef IOSPACE_SUPPORTED
+		unsigned short addr = bsh + offset;
+		__asm__ __volatile__("out %0, %1" :: "a"(v), "d"(addr));
+#else
+		panic("IO space not supported");
 #endif
 	} else {
 		*(volatile uint16_t *)(bsh + offset) = v;
@@ -142,14 +200,53 @@ bus_space_write_4(bus_space_tag_t bst, bus_space_handle_t bsh,
 {
 
 	if (bst == 0) {
-#if 1
-		panic("IO space not supported in this build");
-#else
+#ifdef IOSPACE_SUPPORTED
 		unsigned short addr = bsh + offset;
 		__asm__ __volatile__("outl %0, %1" :: "a"(v), "d"(addr));
+#else
+		panic("IO space not supported");
 #endif
 	} else {
 		*(volatile uint32_t *)(bsh + offset) = v;
+	}
+}
+
+void
+bus_space_write_multi_1(bus_space_tag_t bst, bus_space_handle_t bsh,
+	bus_size_t offset, const uint8_t *datap, bus_size_t count)
+{
+
+	while (count--) {
+		const uint8_t value = *datap++;
+
+		bus_space_write_1(bst, bsh, offset, value);
+		bus_space_barrier(bst, bsh, offset, 1, BUS_SPACE_BARRIER_WRITE);
+	}
+}
+
+void
+bus_space_write_multi_2(bus_space_tag_t bst, bus_space_handle_t bsh,
+	bus_size_t offset, const uint16_t *datap, bus_size_t count)
+{
+
+	while (count--) {
+		const uint16_t value = *datap++;
+
+		bus_space_write_2(bst, bsh, offset, value);
+		bus_space_barrier(bst, bsh, offset, 2, BUS_SPACE_BARRIER_WRITE);
+	}
+}
+
+void
+bus_space_write_multi_4(bus_space_tag_t bst, bus_space_handle_t bsh,
+	bus_size_t offset, const uint32_t *datap, bus_size_t count)
+{
+
+	while (count--) {
+		const uint32_t value = *datap++;
+
+		bus_space_write_4(bst, bsh, offset, value);
+		bus_space_barrier(bst, bsh, offset, 4, BUS_SPACE_BARRIER_WRITE);
 	}
 }
 
@@ -166,13 +263,17 @@ bus_space_subregion(bus_space_tag_t bst, bus_space_handle_t bsh,
 	bus_size_t offset, bus_size_t size, bus_space_handle_t *nhandlep)
 {
 
-	panic("%s: unimplemented", __func__);
+	*nhandlep = bsh + offset;
+	return 0;
 }
 
 void
 bus_space_unmap(bus_space_tag_t bst, bus_space_handle_t bsh,
 	bus_size_t size)
 {
+
+	if (bst == 0)
+		return;
 
 	panic("%s: unimplemented", __func__);
 }

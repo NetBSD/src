@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcdintr.c,v 1.9.4.2 2014/08/20 00:04:22 tls Exp $	*/
+/*	$NetBSD: dwc2_hcdintr.c,v 1.9.4.3 2017/12/03 11:38:01 jdolecek Exp $	*/
 
 /*
  * hcd_intr.c - DesignWare HS OTG Controller host-mode interrupt handling
@@ -40,7 +40,7 @@
  * This file contains the interrupt handlers for Host mode
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_hcdintr.c,v 1.9.4.2 2014/08/20 00:04:22 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_hcdintr.c,v 1.9.4.3 2017/12/03 11:38:01 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/pool.h>
@@ -125,6 +125,9 @@ static void dwc2_sof_intr(struct dwc2_hsotg *hsotg)
 	struct dwc2_qh *qh;
 	enum dwc2_transaction_type tr_type;
 
+	/* Clear interrupt */
+	DWC2_WRITE_4(hsotg, GINTSTS, GINTSTS_SOF);
+
 #ifdef DEBUG_SOF
 	dev_vdbg(hsotg->dev, "--Start of Frame Interrupt--\n");
 #endif
@@ -149,9 +152,6 @@ static void dwc2_sof_intr(struct dwc2_hsotg *hsotg)
 	tr_type = dwc2_hcd_select_transactions(hsotg);
 	if (tr_type != DWC2_TRANSACTION_NONE)
 		dwc2_hcd_queue_transactions(hsotg, tr_type);
-
-	/* Clear interrupt */
-	DWC2_WRITE_4(hsotg, GINTSTS, GINTSTS_SOF);
 }
 
 /*
@@ -317,6 +317,7 @@ static void dwc2_hprt0_enable(struct dwc2_hsotg *hsotg, u32 hprt0,
 
 	if (do_reset) {
 		*hprt0_modify |= HPRT0_RST;
+		DWC2_WRITE_4(hsotg, HPRT0, *hprt0_modify);
 		queue_delayed_work(hsotg->wq_otg, &hsotg->reset_work,
 				   msecs_to_jiffies(60));
 	} else {
@@ -354,12 +355,12 @@ static void dwc2_port_intr(struct dwc2_hsotg *hsotg)
 	 * Set flag and clear if detected
 	 */
 	if (hprt0 & HPRT0_CONNDET) {
+		DWC2_WRITE_4(hsotg, HPRT0, hprt0_modify | HPRT0_CONNDET);
+
 		dev_vdbg(hsotg->dev,
 			 "--Port Interrupt HPRT0=0x%08x Port Connect Detected--\n",
 			 hprt0);
-		hsotg->flags.b.port_connect_status_change = 1;
-		hsotg->flags.b.port_connect_status = 1;
-		hprt0_modify |= HPRT0_CONNDET;
+		dwc2_hcd_connect(hsotg);
 
 		/*
 		 * The Hub driver asserts a reset when it sees port connect
@@ -372,27 +373,35 @@ static void dwc2_port_intr(struct dwc2_hsotg *hsotg)
 	 * Clear if detected - Set internal flag if disabled
 	 */
 	if (hprt0 & HPRT0_ENACHG) {
+		DWC2_WRITE_4(hsotg, HPRT0, hprt0_modify | HPRT0_ENACHG);
 		dev_vdbg(hsotg->dev,
 			 "  --Port Interrupt HPRT0=0x%08x Port Enable Changed (now %d)--\n",
 			 hprt0, !!(hprt0 & HPRT0_ENA));
-		hprt0_modify |= HPRT0_ENACHG;
-		if (hprt0 & HPRT0_ENA)
+		if (hprt0 & HPRT0_ENA) {
+			hsotg->new_connection = true;
 			dwc2_hprt0_enable(hsotg, hprt0, &hprt0_modify);
-		else
+		} else {
 			hsotg->flags.b.port_enable_change = 1;
+			if (hsotg->core_params->dma_desc_fs_enable) {
+				u32 hcfg;
+
+				hsotg->core_params->dma_desc_enable = 0;
+				hsotg->new_connection = false;
+				hcfg = DWC2_READ_4(hsotg, HCFG);
+				hcfg &= ~HCFG_DESCDMA;
+				DWC2_WRITE_4(hsotg, HCFG, hcfg);
+			}
+		}
 	}
 
 	/* Overcurrent Change Interrupt */
 	if (hprt0 & HPRT0_OVRCURRCHG) {
+		DWC2_WRITE_4(hsotg, HPRT0, hprt0_modify | HPRT0_OVRCURRCHG);
 		dev_vdbg(hsotg->dev,
 			 "  --Port Interrupt HPRT0=0x%08x Port Overcurrent Changed--\n",
 			 hprt0);
 		hsotg->flags.b.port_over_current_change = 1;
-		hprt0_modify |= HPRT0_OVRCURRCHG;
 	}
-
-	/* Clear Port Interrupts */
-	DWC2_WRITE_4(hsotg, HPRT0, hprt0_modify);
 
 	if (hsotg->flags.b.port_connect_status_change ||
 	    hsotg->flags.b.port_enable_change ||
@@ -474,12 +483,17 @@ static int dwc2_update_urb_state(struct dwc2_hsotg *hsotg,
 	}
 
 	/* Non DWORD-aligned buffer case handling */
-	if (chan->align_buf && xfer_length && chan->ep_is_in) {
+	if (chan->align_buf && xfer_length) {
 		dev_vdbg(hsotg->dev, "%s(): non-aligned buffer\n", __func__);
-		usb_syncmem(urb->usbdma, 0, urb->length, BUS_DMASYNC_POSTREAD);
-		memcpy(urb->buf + urb->actual_length, chan->qh->dw_align_buf,
-		       xfer_length);
-		usb_syncmem(urb->usbdma, 0, urb->length, BUS_DMASYNC_PREREAD);
+		usb_syncmem(urb->usbdma, 0, chan->qh->dw_align_buf_size,
+		    chan->ep_is_in ?
+		    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
+		if (chan->ep_is_in)
+			memcpy(urb->buf + urb->actual_length,
+					chan->qh->dw_align_buf, xfer_length);
+		usb_syncmem(urb->usbdma, 0, chan->qh->dw_align_buf_size,
+		    chan->ep_is_in ?
+		    BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 	}
 
 	dev_vdbg(hsotg->dev, "urb->actual_length=%d xfer_length=%d\n",
@@ -564,17 +578,22 @@ static enum dwc2_halt_status dwc2_update_isoc_urb_state(
 					chan, chnum, qtd, halt_status, NULL);
 
 		/* Non DWORD-aligned buffer case handling */
-		if (chan->align_buf && frame_desc->actual_length &&
-		    chan->ep_is_in) {
+		if (chan->align_buf && frame_desc->actual_length) {
 			dev_vdbg(hsotg->dev, "%s(): non-aligned buffer\n",
 				 __func__);
-			usb_syncmem(urb->usbdma, 0, urb->length,
-				    BUS_DMASYNC_POSTREAD);
-			memcpy(urb->buf + frame_desc->offset +
-			       qtd->isoc_split_offset, chan->qh->dw_align_buf,
-			       frame_desc->actual_length);
-			usb_syncmem(urb->usbdma, 0, urb->length,
-				    BUS_DMASYNC_PREREAD);
+			usb_dma_t *ud = &chan->qh->dw_align_buf_usbdma;
+
+			usb_syncmem(ud, 0, chan->qh->dw_align_buf_size,
+			    chan->ep_is_in ?
+			    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
+			if (chan->ep_is_in)
+				memcpy(urb->buf + frame_desc->offset +
+					qtd->isoc_split_offset,
+					chan->qh->dw_align_buf,
+					frame_desc->actual_length);
+			usb_syncmem(ud, 0, chan->qh->dw_align_buf_size,
+			    chan->ep_is_in ?
+			    BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 		}
 		break;
 	case DWC2_HC_XFER_FRAME_OVERRUN:
@@ -597,17 +616,22 @@ static enum dwc2_halt_status dwc2_update_isoc_urb_state(
 					chan, chnum, qtd, halt_status, NULL);
 
 		/* Non DWORD-aligned buffer case handling */
-		if (chan->align_buf && frame_desc->actual_length &&
-		    chan->ep_is_in) {
+		if (chan->align_buf && frame_desc->actual_length) {
 			dev_vdbg(hsotg->dev, "%s(): non-aligned buffer\n",
 				 __func__);
-			usb_syncmem(urb->usbdma, 0, urb->length,
-				    BUS_DMASYNC_POSTREAD);
-			memcpy(urb->buf + frame_desc->offset +
-			       qtd->isoc_split_offset, chan->qh->dw_align_buf,
-			       frame_desc->actual_length);
-			usb_syncmem(urb->usbdma, 0, urb->length,
-				    BUS_DMASYNC_PREREAD);
+			usb_dma_t *ud = &chan->qh->dw_align_buf_usbdma;
+
+			usb_syncmem(ud, 0, chan->qh->dw_align_buf_size,
+			    chan->ep_is_in ?
+			    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
+			if (chan->ep_is_in)
+				memcpy(urb->buf + frame_desc->offset +
+					qtd->isoc_split_offset,
+					chan->qh->dw_align_buf,
+					frame_desc->actual_length);
+			usb_syncmem(ud, 0, chan->qh->dw_align_buf_size,
+			    chan->ep_is_in ?
+			    BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 		}
 
 		/* Skip whole frame */
@@ -943,12 +967,12 @@ static int dwc2_xfercomp_isoc_split_in(struct dwc2_hsotg *hsotg,
 
 	if (chan->align_buf) {
 		dev_vdbg(hsotg->dev, "%s(): non-aligned buffer\n", __func__);
-		usb_syncmem(qtd->urb->usbdma, 0, qtd->urb->length,
-			    BUS_DMASYNC_POSTREAD);
+		usb_syncmem(qtd->urb->usbdma, chan->qh->dw_align_buf_dma,
+		    chan->qh->dw_align_buf_size, BUS_DMASYNC_POSTREAD);
 		memcpy(qtd->urb->buf + frame_desc->offset +
 		       qtd->isoc_split_offset, chan->qh->dw_align_buf, len);
-		usb_syncmem(qtd->urb->usbdma, 0, qtd->urb->length,
-			    BUS_DMASYNC_PREREAD);
+		usb_syncmem(qtd->urb->usbdma, chan->qh->dw_align_buf_dma,
+		    chan->qh->dw_align_buf_size, BUS_DMASYNC_PREREAD);
 	}
 
 	qtd->isoc_split_offset += len;
@@ -1175,10 +1199,19 @@ static void dwc2_update_urb_state_abn(struct dwc2_hsotg *hsotg,
 	/* Non DWORD-aligned buffer case handling */
 	if (chan->align_buf && xfer_length && chan->ep_is_in) {
 		dev_vdbg(hsotg->dev, "%s(): non-aligned buffer\n", __func__);
-		usb_syncmem(urb->usbdma, 0, urb->length, BUS_DMASYNC_POSTREAD);
-		memcpy(urb->buf + urb->actual_length, chan->qh->dw_align_buf,
-		       xfer_length);
-		usb_syncmem(urb->usbdma, 0, urb->length, BUS_DMASYNC_PREREAD);
+
+		usb_dma_t *ud = &chan->qh->dw_align_buf_usbdma;
+
+		usb_syncmem(ud, 0, chan->qh->dw_align_buf_size,
+		    chan->ep_is_in ?
+		    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
+		if (chan->ep_is_in)
+			memcpy(urb->buf + urb->actual_length,
+					chan->qh->dw_align_buf,
+					xfer_length);
+		usb_syncmem(ud, 0, chan->qh->dw_align_buf_size,
+		    chan->ep_is_in ?
+		    BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 	}
 
 	urb->actual_length += xfer_length;
@@ -1206,6 +1239,16 @@ static void dwc2_hc_nak_intr(struct dwc2_hsotg *hsotg,
 			     struct dwc2_host_chan *chan, int chnum,
 			     struct dwc2_qtd *qtd)
 {
+	if (!qtd) {
+		dev_dbg(hsotg->dev, "%s: qtd is NULL\n", __func__);
+		return;
+	}
+
+	if (!qtd->urb) {
+		dev_dbg(hsotg->dev, "%s: qtd->urb is NULL\n", __func__);
+		return;
+	}
+
 	if (dbg_hc(chan))
 		dev_vdbg(hsotg->dev, "--Host Channel %d Interrupt: NAK Received--\n",
 			 chnum);
@@ -1215,6 +1258,17 @@ static void dwc2_hc_nak_intr(struct dwc2_hsotg *hsotg,
 	 * interrupt. Re-start the SSPLIT transfer.
 	 */
 	if (chan->do_split) {
+		/*
+		 * When we get control/bulk NAKs then remember this so we holdoff on
+		 * this qh until the beginning of the next frame
+		 */
+		switch (dwc2_hcd_get_pipe_type(&qtd->urb->pipe_info)) {
+		case USB_ENDPOINT_XFER_CONTROL:
+		case USB_ENDPOINT_XFER_BULK:
+			chan->qh->nak_frame = dwc2_hcd_get_frame_number(hsotg);
+			break;
+		}
+
 		if (chan->complete_split)
 			qtd->error_count = 0;
 		qtd->complete_split = 0;
@@ -1899,10 +1953,10 @@ static void dwc2_hc_chhltd_intr_dma(struct dwc2_hsotg *hsotg,
 			 "NYET/NAK/ACK/other in non-error case, 0x%08x\n",
 			 chan->hcint);
 error:
-		/* use the 3-strikes rule */
+		/* Failthrough: use 3-strikes rule */
 		qtd->error_count++;
 		dwc2_update_urb_state_abn(hsotg, chan, chnum, qtd->urb,
-					    qtd, DWC2_HC_XFER_XACT_ERR);
+					  qtd, DWC2_HC_XFER_XACT_ERR);
 		dwc2_hcd_save_data_toggle(hsotg, chan, chnum, qtd);
 		dwc2_halt_channel(hsotg, chan, qtd, DWC2_HC_XFER_XACT_ERR);
 	}
@@ -1934,6 +1988,24 @@ static void dwc2_hc_chhltd_intr(struct dwc2_hsotg *hsotg,
 			return;
 		dwc2_release_channel(hsotg, chan, qtd, chan->halt_status);
 	}
+}
+
+/*
+ * Check if the given qtd is still the top of the list (and thus valid).
+ *
+ * If dwc2_hcd_qtd_unlink_and_free() has been called since we grabbed
+ * the qtd from the top of the list, this will return false (otherwise true).
+ */
+static bool dwc2_check_qtd_still_ok(struct dwc2_qtd *qtd, struct dwc2_qh *qh)
+{
+	struct dwc2_qtd *cur_head;
+
+	if (qh == NULL)
+		return false;
+
+	cur_head = list_first_entry(&qh->qtd_list, struct dwc2_qtd,
+				    qtd_list_entry);
+	return (cur_head == qtd);
 }
 
 /* Handles interrupt for a specific Host Channel */
@@ -2018,27 +2090,59 @@ static void dwc2_hc_n_intr(struct dwc2_hsotg *hsotg, int chnum)
 		 */
 		hcint &= ~HCINTMSK_NYET;
 	}
-	if (hcint & HCINTMSK_CHHLTD)
-		dwc2_hc_chhltd_intr(hsotg, chan, chnum, qtd);
-	if (hcint & HCINTMSK_AHBERR)
-		dwc2_hc_ahberr_intr(hsotg, chan, chnum, qtd);
-	if (hcint & HCINTMSK_STALL)
-		dwc2_hc_stall_intr(hsotg, chan, chnum, qtd);
-	if (hcint & HCINTMSK_NAK)
-		dwc2_hc_nak_intr(hsotg, chan, chnum, qtd);
-	if (hcint & HCINTMSK_ACK)
-		dwc2_hc_ack_intr(hsotg, chan, chnum, qtd);
-	if (hcint & HCINTMSK_NYET)
-		dwc2_hc_nyet_intr(hsotg, chan, chnum, qtd);
-	if (hcint & HCINTMSK_XACTERR)
-		dwc2_hc_xacterr_intr(hsotg, chan, chnum, qtd);
-	if (hcint & HCINTMSK_BBLERR)
-		dwc2_hc_babble_intr(hsotg, chan, chnum, qtd);
-	if (hcint & HCINTMSK_FRMOVRUN)
-		dwc2_hc_frmovrun_intr(hsotg, chan, chnum, qtd);
-	if (hcint & HCINTMSK_DATATGLERR)
-		dwc2_hc_datatglerr_intr(hsotg, chan, chnum, qtd);
 
+	if (hcint & HCINTMSK_CHHLTD) {
+		dwc2_hc_chhltd_intr(hsotg, chan, chnum, qtd);
+		if (!dwc2_check_qtd_still_ok(qtd, chan->qh))
+			goto exit;
+	}
+	if (hcint & HCINTMSK_AHBERR) {
+		dwc2_hc_ahberr_intr(hsotg, chan, chnum, qtd);
+		if (!dwc2_check_qtd_still_ok(qtd, chan->qh))
+			goto exit;
+	}
+	if (hcint & HCINTMSK_STALL) {
+		dwc2_hc_stall_intr(hsotg, chan, chnum, qtd);
+		if (!dwc2_check_qtd_still_ok(qtd, chan->qh))
+			goto exit;
+	}
+	if (hcint & HCINTMSK_NAK) {
+		dwc2_hc_nak_intr(hsotg, chan, chnum, qtd);
+		if (!dwc2_check_qtd_still_ok(qtd, chan->qh))
+			goto exit;
+	}
+	if (hcint & HCINTMSK_ACK) {
+		dwc2_hc_ack_intr(hsotg, chan, chnum, qtd);
+		if (!dwc2_check_qtd_still_ok(qtd, chan->qh))
+			goto exit;
+	}
+	if (hcint & HCINTMSK_NYET) {
+		dwc2_hc_nyet_intr(hsotg, chan, chnum, qtd);
+		if (!dwc2_check_qtd_still_ok(qtd, chan->qh))
+			goto exit;
+	}
+	if (hcint & HCINTMSK_XACTERR) {
+		dwc2_hc_xacterr_intr(hsotg, chan, chnum, qtd);
+		if (!dwc2_check_qtd_still_ok(qtd, chan->qh))
+			goto exit;
+	}
+	if (hcint & HCINTMSK_BBLERR) {
+		dwc2_hc_babble_intr(hsotg, chan, chnum, qtd);
+		if (!dwc2_check_qtd_still_ok(qtd, chan->qh))
+			goto exit;
+	}
+	if (hcint & HCINTMSK_FRMOVRUN) {
+		dwc2_hc_frmovrun_intr(hsotg, chan, chnum, qtd);
+		if (!dwc2_check_qtd_still_ok(qtd, chan->qh))
+			goto exit;
+	}
+	if (hcint & HCINTMSK_DATATGLERR) {
+		dwc2_hc_datatglerr_intr(hsotg, chan, chnum, qtd);
+		if (!dwc2_check_qtd_still_ok(qtd, chan->qh))
+			goto exit;
+	}
+
+exit:
 	chan->hcint = 0;
 }
 

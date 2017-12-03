@@ -1,4 +1,4 @@
-/* $NetBSD: emdtv_ir.c,v 1.1 2011/07/11 18:02:04 jmcneill Exp $ */
+/* $NetBSD: emdtv_ir.c,v 1.1.14.1 2017/12/03 11:37:33 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emdtv_ir.c,v 1.1 2011/07/11 18:02:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emdtv_ir.c,v 1.1.14.1 2017/12/03 11:37:33 jdolecek Exp $");
 
 #include <sys/select.h>
 #include <sys/param.h>
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: emdtv_ir.c,v 1.1 2011/07/11 18:02:04 jmcneill Exp $"
 #include <dev/ir/cirio.h>
 #include <dev/ir/cirvar.h>
 
-static void		emdtv_ir_intr(usbd_xfer_handle, usbd_private_handle,
+static void		emdtv_ir_intr(struct usbd_xfer *, void *,
 				      usbd_status);
 static void		emdtv_ir_worker(struct work *, void *);
 
@@ -125,7 +125,7 @@ emdtv_ir_detach(struct emdtv_softc *sc, int flags)
 }
 
 static void
-emdtv_ir_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
+emdtv_ir_intr(struct usbd_xfer *xfer, void * priv,
     usbd_status status)
 {
 	struct emdtv_softc *sc = priv;

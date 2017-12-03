@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.156.2.3 2014/08/20 00:04:29 tls Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.156.2.4 2017/12/03 11:38:45 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,9 +61,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.156.2.3 2014/08/20 00:04:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.156.2.4 2017/12/03 11:38:45 jdolecek Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_pipe.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,6 +92,8 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.156.2.3 2014/08/20 00:04:29 tls 
  * System call interface to the socket abstraction.
  */
 extern const struct fileops socketops;
+
+static int	sockargs_sb(struct sockaddr_big *, const void *, socklen_t);
 
 int
 sys___socket30(struct lwp *l, const struct sys___socket30_args *uap,
@@ -118,30 +122,25 @@ sys_bind(struct lwp *l, const struct sys_bind_args *uap, register_t *retval)
 		syscallarg(const struct sockaddr *)	name;
 		syscallarg(unsigned int)		namelen;
 	} */
-	struct mbuf	*nam;
 	int		error;
+	struct sockaddr_big sb;
 
-	error = sockargs(&nam, SCARG(uap, name), SCARG(uap, namelen),
-	    MT_SONAME);
+	error = sockargs_sb(&sb, SCARG(uap, name), SCARG(uap, namelen));
 	if (error)
 		return error;
 
-	return do_sys_bind(l, SCARG(uap, s), nam);
+	return do_sys_bind(l, SCARG(uap, s), (struct sockaddr *)&sb);
 }
 
 int
-do_sys_bind(struct lwp *l, int fd, struct mbuf *nam)
+do_sys_bind(struct lwp *l, int fd, struct sockaddr *nam)
 {
 	struct socket	*so;
 	int		error;
 
-	if ((error = fd_getsock(fd, &so)) != 0) {
-		m_freem(nam);
-		return (error);
-	}
-	MCLAIM(nam, so->so_mowner);
+	if ((error = fd_getsock(fd, &so)) != 0)
+		return error;
 	error = sobind(so, nam, l);
-	m_freem(nam);
 	fd_putfile(fd);
 	return error;
 }
@@ -164,11 +163,10 @@ sys_listen(struct lwp *l, const struct sys_listen_args *uap, register_t *retval)
 }
 
 int
-do_sys_accept(struct lwp *l, int sock, struct mbuf **name,
+do_sys_accept(struct lwp *l, int sock, struct sockaddr *name,
     register_t *new_sock, const sigset_t *mask, int flags, int clrflags)
 {
 	file_t		*fp, *fp2;
-	struct mbuf	*nam;
 	int		error, fd;
 	struct socket	*so, *so2;
 	short		wakeup_state = 0;
@@ -183,9 +181,8 @@ do_sys_accept(struct lwp *l, int sock, struct mbuf **name,
 		fd_putfile(sock);
 		return error;
 	}
-	nam = m_get(M_WAIT, MT_SONAME);
 	*new_sock = fd;
-	so = fp->f_data;
+	so = fp->f_socket;
 	solock(so);
 
 	if (__predict_false(mask))
@@ -233,17 +230,16 @@ do_sys_accept(struct lwp *l, int sock, struct mbuf **name,
 	    ((flags & SOCK_NONBLOCK) ? FNONBLOCK : 0)|
 	    ((flags & SOCK_NOSIGPIPE) ? FNOSIGPIPE : 0);
 	fp2->f_ops = &socketops;
-	fp2->f_data = so2;
+	fp2->f_socket = so2;
 	if (fp2->f_flag & FNONBLOCK)
 		so2->so_state |= SS_NBIO;
 	else
 		so2->so_state &= ~SS_NBIO;
-	error = soaccept(so2, nam);
+	error = soaccept(so2, name);
 	so2->so_cred = kauth_cred_dup(so->so_cred);
 	sounlock(so);
 	if (error) {
 		/* an error occurred, free the file descriptor and mbuf */
-		m_freem(nam);
 		mutex_enter(&fp2->f_lock);
 		fp2->f_count++;
 		mutex_exit(&fp2->f_lock);
@@ -252,7 +248,6 @@ do_sys_accept(struct lwp *l, int sock, struct mbuf **name,
 	} else {
 		fd_set_exclose(l, fd, (flags & SOCK_CLOEXEC) != 0);
 		fd_affix(curproc, fp2, fd);
-		*name = nam;
 	}
 	fd_putfile(sock);
 	if (__predict_false(mask))
@@ -260,7 +255,6 @@ do_sys_accept(struct lwp *l, int sock, struct mbuf **name,
 	return error;
  bad:
 	sounlock(so);
-	m_freem(nam);
 	fd_putfile(sock);
 	fd_abort(curproc, fp2, fd);
 	if (__predict_false(mask))
@@ -277,15 +271,15 @@ sys_accept(struct lwp *l, const struct sys_accept_args *uap, register_t *retval)
 		syscallarg(unsigned int *)	anamelen;
 	} */
 	int error, fd;
-	struct mbuf *name;
+	struct sockaddr_big name;
 
-	error = do_sys_accept(l, SCARG(uap, s), &name, retval, NULL, 0, 0);
+	name.sb_len = UCHAR_MAX;
+	error = do_sys_accept(l, SCARG(uap, s), (struct sockaddr *)&name,
+	    retval, NULL, 0, 0);
 	if (error != 0)
 		return error;
-	error = copyout_sockname(SCARG(uap, name), SCARG(uap, anamelen),
-	    MSG_LENUSRSPACE, name);
-	if (name != NULL)
-		m_free(name);
+	error = copyout_sockname_sb(SCARG(uap, name), SCARG(uap, anamelen),
+	    MSG_LENUSRSPACE, &name);
 	if (error != 0) {
 		fd = (int)*retval;
 		if (fd_getfile(fd) != NULL)
@@ -306,7 +300,7 @@ sys_paccept(struct lwp *l, const struct sys_paccept_args *uap,
 		syscallarg(int)			flags;
 	} */
 	int error, fd;
-	struct mbuf *name;
+	struct sockaddr_big name;
 	sigset_t *mask, amask;
 
 	if (SCARG(uap, mask) != NULL) {
@@ -317,14 +311,13 @@ sys_paccept(struct lwp *l, const struct sys_paccept_args *uap,
 	} else
 		mask = NULL;
 
-	error = do_sys_accept(l, SCARG(uap, s), &name, retval, mask,
-	    SCARG(uap, flags), FNONBLOCK);
+	name.sb_len = UCHAR_MAX;
+	error = do_sys_accept(l, SCARG(uap, s), (struct sockaddr *)&name,
+	    retval, mask, SCARG(uap, flags), FNONBLOCK);
 	if (error != 0)
 		return error;
-	error = copyout_sockname(SCARG(uap, name), SCARG(uap, anamelen),
-	    MSG_LENUSRSPACE, name);
-	if (name != NULL)
-		m_free(name);
+	error = copyout_sockname_sb(SCARG(uap, name), SCARG(uap, anamelen),
+	    MSG_LENUSRSPACE, &name);
 	if (error != 0) {
 		fd = (int)*retval;
 		if (fd_getfile(fd) != NULL)
@@ -343,28 +336,25 @@ sys_connect(struct lwp *l, const struct sys_connect_args *uap,
 		syscallarg(unsigned int)		namelen;
 	} */
 	int		error;
-	struct mbuf	*nam;
+	struct sockaddr_big sbig;
 
-	error = sockargs(&nam, SCARG(uap, name), SCARG(uap, namelen),
-	    MT_SONAME);
+	error = sockargs_sb(&sbig, SCARG(uap, name), SCARG(uap, namelen));
 	if (error)
 		return error;
-	return do_sys_connect(l,  SCARG(uap, s), nam);
+	return do_sys_connect(l, SCARG(uap, s), (struct sockaddr *)&sbig);
 }
 
 int
-do_sys_connect(struct lwp *l, int fd, struct mbuf *nam)
+do_sys_connect(struct lwp *l, int fd, struct sockaddr *nam)
 {
 	struct socket	*so;
 	int		error;
 	int		interrupted = 0;
 
 	if ((error = fd_getsock(fd, &so)) != 0) {
-		m_freem(nam);
 		return (error);
 	}
 	solock(so);
-	MCLAIM(nam, so->so_mowner);
 	if ((so->so_state & SS_ISCONNECTING) != 0) {
 		error = EALREADY;
 		goto out;
@@ -403,7 +393,6 @@ do_sys_connect(struct lwp *l, int fd, struct mbuf *nam)
  out:
 	sounlock(so);
 	fd_putfile(fd);
-	m_freem(nam);
 	return error;
 }
 
@@ -431,7 +420,7 @@ makesocket(struct lwp *l, file_t **fp, int *fd, int flags, int type,
 	    ((flags & SOCK_NOSIGPIPE) ? FNOSIGPIPE : 0);
 	(*fp)->f_type = DTYPE_SOCKET;
 	(*fp)->f_ops = &socketops;
-	(*fp)->f_data = so;
+	(*fp)->f_socket = so;
 	return 0;
 }
 
@@ -457,13 +446,13 @@ sys_socketpair(struct lwp *l, const struct sys_socketpair_args *uap,
 	error = makesocket(l, &fp1, &fd, flags, type, domain, proto, NULL);
 	if (error)
 		return error;
-	so1 = fp1->f_data;
+	so1 = fp1->f_socket;
 	sv[0] = fd;
 
 	error = makesocket(l, &fp2, &fd, flags, type, domain, proto, so1);
 	if (error)
 		goto out;
-	so2 = fp2->f_data;
+	so2 = fp2->f_socket;
 	sv[1] = fd;
 
 	solock(so1);
@@ -514,7 +503,8 @@ sys_sendto(struct lwp *l, const struct sys_sendto_args *uap,
 	msg.msg_flags = 0;
 	aiov.iov_base = __UNCONST(SCARG(uap, buf)); /* XXXUNCONST kills const */
 	aiov.iov_len = SCARG(uap, len);
-	return do_sys_sendmsg(l, SCARG(uap, s), &msg, SCARG(uap, flags), retval);
+	return do_sys_sendmsg(l, SCARG(uap, s), &msg, SCARG(uap, flags),
+	    NULL, 0, retval);
 }
 
 int
@@ -534,21 +524,29 @@ sys_sendmsg(struct lwp *l, const struct sys_sendmsg_args *uap,
 		return (error);
 
 	msg.msg_flags = MSG_IOVUSRSPACE;
-	return do_sys_sendmsg(l, SCARG(uap, s), &msg, SCARG(uap, flags), retval);
+	return do_sys_sendmsg(l, SCARG(uap, s), &msg, SCARG(uap, flags),
+	    NULL, 0, retval);
 }
 
-static int
+int
 do_sys_sendmsg_so(struct lwp *l, int s, struct socket *so, file_t *fp,
-    struct msghdr *mp, int flags, register_t *retsize)
+    struct msghdr *mp, int flags, const void *kthdr, size_t ktsize,
+    register_t *retsize)
 {
 
 	struct iovec	aiov[UIO_SMALLIOV], *iov = aiov, *tiov, *ktriov = NULL;
+	struct sockaddr *sa = NULL;
 	struct mbuf	*to, *control;
 	struct uio	auio;
 	size_t		len, iovsz;
 	int		i, error;
 
-	ktrkuser("msghdr", mp, sizeof *mp);
+	if (__predict_false(kthdr == NULL && ktsize == 0)) {
+		kthdr = mp;
+		ktsize = sizeof(*mp);
+	}
+	if (__predict_true(kthdr != NULL))
+		ktrkuser("msghdr", kthdr, ktsize);
 
 	/* If the caller passed us stuff in mbufs, we must free them. */
 	to = (mp->msg_flags & MSG_NAMEMBUF) ? mp->msg_name : NULL;
@@ -568,10 +566,10 @@ do_sys_sendmsg_so(struct lwp *l, int s, struct socket *so, file_t *fp,
 			if (error)
 				goto bad;
 		}
-		mp->msg_iov = iov;
-	}
+		auio.uio_iov = iov;
+	} else
+		auio.uio_iov = mp->msg_iov;
 
-	auio.uio_iov = mp->msg_iov;
 	auio.uio_iovcnt = mp->msg_iovlen;
 	auio.uio_rw = UIO_WRITE;
 	auio.uio_offset = 0;			/* XXX */
@@ -579,7 +577,8 @@ do_sys_sendmsg_so(struct lwp *l, int s, struct socket *so, file_t *fp,
 	KASSERT(l == curlwp);
 	auio.uio_vmspace = l->l_proc->p_vmspace;
 
-	for (i = 0, tiov = mp->msg_iov; i < mp->msg_iovlen; i++, tiov++) {
+	tiov = auio.uio_iov;
+	for (i = 0; i < auio.uio_iovcnt; i++, tiov++) {
 		/*
 		 * Writes return ssize_t because -1 is returned on error.
 		 * Therefore, we must restrict the length to SSIZE_MAX to
@@ -622,8 +621,12 @@ do_sys_sendmsg_so(struct lwp *l, int s, struct socket *so, file_t *fp,
 	if (mp->msg_control)
 		MCLAIM(control, so->so_mowner);
 
+	if (to) {
+		sa = mtod(to, struct sockaddr *);
+	}
+
 	len = auio.uio_resid;
-	error = (*so->so_send)(so, to, &auio, NULL, control, flags, l);
+	error = (*so->so_send)(so, sa, &auio, NULL, control, flags, l);
 	/* Protocol is responsible for freeing 'control' */
 	control = NULL;
 
@@ -659,15 +662,23 @@ bad:
 
 int
 do_sys_sendmsg(struct lwp *l, int s, struct msghdr *mp, int flags,
-    register_t *retsize)
+    const void *kthdr, size_t ktsize, register_t *retsize)
 {
 	int		error;
 	struct socket	*so;
 	file_t		*fp;
 
-	if ((error = fd_getsock1(s, &so, &fp)) != 0)
+	if ((error = fd_getsock1(s, &so, &fp)) != 0) {
+		/* We have to free msg_name and msg_control ourselves */
+		if (mp->msg_flags & MSG_NAMEMBUF)
+			m_freem(mp->msg_name);
+		if (mp->msg_flags & MSG_CONTROLMBUF)
+			m_freem(mp->msg_control);
 		return error;
-	error = do_sys_sendmsg_so(l, s, so, fp, mp, flags, retsize);
+	}
+	error = do_sys_sendmsg_so(l, s, so, fp, mp, flags, kthdr, ktsize,
+	    retsize);
+	/* msg_name and msg_control freed */
 	fd_putfile(s);
 	return error;
 }
@@ -697,7 +708,8 @@ sys_recvfrom(struct lwp *l, const struct sys_recvfrom_args *uap,
 	msg.msg_control = NULL;
 	msg.msg_flags = SCARG(uap, flags) & MSG_USERFLAGS;
 
-	error = do_sys_recvmsg(l, SCARG(uap, s), &msg, &from, NULL, retval);
+	error = do_sys_recvmsg(l, SCARG(uap, s), &msg, NULL, 0, &from,
+	    NULL, retval);
 	if (error != 0)
 		return error;
 
@@ -727,7 +739,7 @@ sys_recvmsg(struct lwp *l, const struct sys_recvmsg_args *uap,
 
 	msg.msg_flags = (SCARG(uap, flags) & MSG_USERFLAGS) | MSG_IOVUSRSPACE;
 
-	error = do_sys_recvmsg(l, SCARG(uap, s), &msg, &from,
+	error = do_sys_recvmsg(l, SCARG(uap, s), &msg, NULL, 0, &from,
 	    msg.msg_control != NULL ? &control : NULL, retval);
 	if (error != 0)
 		return error;
@@ -782,7 +794,8 @@ sys_sendmmsg(struct lwp *l, const struct sys_sendmmsg_args *uap,
 
 		msg->msg_flags = flags;
 
-		error = do_sys_sendmsg_so(l, s, so, fp, msg, flags, retval);
+		error = do_sys_sendmsg_so(l, s, so, fp, msg, flags,
+		    &msg, sizeof(msg), retval);
 		if (error)
 			break;
 
@@ -907,16 +920,22 @@ copyout_msg_control(struct lwp *l, struct msghdr *mp, struct mbuf *control)
 	return error;
 }
 
-static int
+int
 do_sys_recvmsg_so(struct lwp *l, int s, struct socket *so, struct msghdr *mp,
-    struct mbuf **from, struct mbuf **control, register_t *retsize)
+    const void *ktrhdr, size_t ktsize, struct mbuf **from,
+    struct mbuf **control, register_t *retsize)
 {
 	struct iovec	aiov[UIO_SMALLIOV], *iov = aiov, *tiov, *ktriov = NULL;
 	struct uio	auio;
 	size_t		len, iovsz;
 	int		i, error;
 
-	ktrkuser("msghdr", mp, sizeof *mp);
+	if (__predict_false(ktrhdr == NULL && ktsize == 0)) {
+		ktrhdr = mp;
+		ktsize = sizeof *mp;
+	}
+	if (__predict_true(ktrhdr != NULL))
+		ktrkuser("msghdr", ktrhdr, ktsize);
 
 	*from = NULL;
 	if (control != NULL)
@@ -948,7 +967,7 @@ do_sys_recvmsg_so(struct lwp *l, int s, struct socket *so, struct msghdr *mp,
 	auio.uio_vmspace = l->l_proc->p_vmspace;
 
 	tiov = auio.uio_iov;
-	for (i = 0; i < mp->msg_iovlen; i++, tiov++) {
+	for (i = 0; i < auio.uio_iovcnt; i++, tiov++) {
 		/*
 		 * Reads return ssize_t because -1 is returned on error.
 		 * Therefore we must restrict the length to SSIZE_MAX to
@@ -998,15 +1017,17 @@ do_sys_recvmsg_so(struct lwp *l, int s, struct socket *so, struct msghdr *mp,
 
 
 int
-do_sys_recvmsg(struct lwp *l, int s, struct msghdr *mp, struct mbuf **from,
-    struct mbuf **control, register_t *retsize)
+do_sys_recvmsg(struct lwp *l, int s, struct msghdr *mp,
+    const void *ktrhdr, size_t ktrsize,
+    struct mbuf **from, struct mbuf **control, register_t *retsize)
 {
 	int error;
 	struct socket *so;
 
 	if ((error = fd_getsock(s, &so)) != 0)
 		return error;
-	error = do_sys_recvmsg_so(l, s, so, mp, from, control, retsize);
+	error = do_sys_recvmsg_so(l, s, so, mp, ktrhdr, ktrsize, from,
+	    control, retsize);
 	fd_putfile(s);
 	return error;
 }
@@ -1060,7 +1081,7 @@ sys_recvmmsg(struct lwp *l, const struct sys_recvmmsg_args *uap,
 			from = NULL;
 		}
 
-		error = do_sys_recvmsg_so(l, s, so, msg, &from,
+		error = do_sys_recvmsg_so(l, s, so, msg, NULL, 0, &from,
 		    msg->msg_control != NULL ? &control : NULL, retval);
 		if (error) {
 			if (error == EAGAIN && dg > 0)
@@ -1267,13 +1288,13 @@ pipe1(struct lwp *l, register_t *retval, int flags)
 	rf->f_flag = FREAD | flags;
 	rf->f_type = DTYPE_SOCKET;
 	rf->f_ops = &socketops;
-	rf->f_data = rso;
+	rf->f_socket = rso;
 	if ((error = fd_allocfile(&wf, &fd)) != 0)
 		goto free3;
 	wf->f_flag = FWRITE | flags;
 	wf->f_type = DTYPE_SOCKET;
 	wf->f_ops = &socketops;
-	wf->f_data = wso;
+	wf->f_socket = wso;
 	retval[1] = fd;
 	solock(wso);
 	error = unp_connect2(wso, rso);
@@ -1299,28 +1320,21 @@ pipe1(struct lwp *l, register_t *retval, int flags)
  * Get peer socket name.
  */
 int
-do_sys_getpeername(int fd, struct mbuf **nam)
+do_sys_getpeername(int fd, struct sockaddr *nam)
 {
 	struct socket	*so;
-	struct mbuf	*m;
 	int		error;
 
 	if ((error = fd_getsock(fd, &so)) != 0)
 		return error;
 
-	m = m_getclr(M_WAIT, MT_SONAME);
-	MCLAIM(m, so->so_mowner);
-
 	solock(so);
 	if ((so->so_state & SS_ISCONNECTED) == 0)
 		error = ENOTCONN;
 	else {
-		*nam = m;
-		error = (*so->so_proto->pr_usrreqs->pr_peeraddr)(so, m);
+		error = (*so->so_proto->pr_usrreqs->pr_peeraddr)(so, nam);
 	}
 	sounlock(so);
-	if (error != 0)
-		m_free(m);
 	fd_putfile(fd);
 	return error;
 }
@@ -1329,25 +1343,57 @@ do_sys_getpeername(int fd, struct mbuf **nam)
  * Get local socket name.
  */
 int
-do_sys_getsockname(int fd, struct mbuf **nam)
+do_sys_getsockname(int fd, struct sockaddr *nam)
 {
 	struct socket	*so;
-	struct mbuf	*m;
 	int		error;
 
 	if ((error = fd_getsock(fd, &so)) != 0)
 		return error;
 
-	m = m_getclr(M_WAIT, MT_SONAME);
-	MCLAIM(m, so->so_mowner);
-
-	*nam = m;
 	solock(so);
-	error = (*so->so_proto->pr_usrreqs->pr_sockaddr)(so, m);
+	error = (*so->so_proto->pr_usrreqs->pr_sockaddr)(so, nam);
 	sounlock(so);
-	if (error != 0)
-		m_free(m);
 	fd_putfile(fd);
+	return error;
+}
+
+int
+copyout_sockname_sb(struct sockaddr *asa, unsigned int *alen, int flags,
+    struct sockaddr_big *addr)
+{
+	unsigned int len;
+	int error;
+
+	if (asa == NULL)
+		/* Assume application not interested */
+		return 0;
+
+	if (flags & MSG_LENUSRSPACE) {
+		error = copyin(alen, &len, sizeof(len));
+		if (error)
+			return error;
+	} else
+		len = *alen;
+
+	if (addr == NULL) {
+		len = 0;
+		error = 0;
+	} else {
+		if (len > addr->sb_len)
+			len = addr->sb_len;
+		/* XXX addr isn't an mbuf... */
+		ktrkuser(mbuftypes[MT_SONAME], addr, len);
+		error = copyout(addr, asa, len);
+	}
+
+	if (error == 0) {
+		if (flags & MSG_LENUSRSPACE)
+			error = copyout(&len, alen, sizeof(len));
+		else
+			*alen = len;
+	}
+
 	return error;
 }
 
@@ -1404,17 +1450,16 @@ sys_getsockname(struct lwp *l, const struct sys_getsockname_args *uap,
 		syscallarg(struct sockaddr *)	asa;
 		syscallarg(unsigned int *)	alen;
 	} */
-	struct mbuf	*m;
-	int		error;
+	struct sockaddr_big sbig;
+	int		    error;
 
-	error = do_sys_getsockname(SCARG(uap, fdes), &m);
+	sbig.sb_len = UCHAR_MAX;
+	error = do_sys_getsockname(SCARG(uap, fdes), (struct sockaddr *)&sbig);
 	if (error != 0)
 		return error;
 
-	error = copyout_sockname(SCARG(uap, asa), SCARG(uap, alen),
-	    MSG_LENUSRSPACE, m);
-	if (m != NULL)
-		m_free(m);
+	error = copyout_sockname_sb(SCARG(uap, asa), SCARG(uap, alen),
+	    MSG_LENUSRSPACE, &sbig);
 	return error;
 }
 
@@ -1430,18 +1475,49 @@ sys_getpeername(struct lwp *l, const struct sys_getpeername_args *uap,
 		syscallarg(struct sockaddr *)	asa;
 		syscallarg(unsigned int *)	alen;
 	} */
-	struct mbuf	*m;
-	int		error;
+	struct sockaddr_big sbig;
+	int		    error;
 
-	error = do_sys_getpeername(SCARG(uap, fdes), &m);
+	sbig.sb_len = UCHAR_MAX;
+	error = do_sys_getpeername(SCARG(uap, fdes), (struct sockaddr *)&sbig);
 	if (error != 0)
 		return error;
 
-	error = copyout_sockname(SCARG(uap, asa), SCARG(uap, alen),
-	    MSG_LENUSRSPACE, m);
-	if (m != NULL)
-		m_free(m);
+	error = copyout_sockname_sb(SCARG(uap, asa), SCARG(uap, alen),
+	    MSG_LENUSRSPACE, &sbig);
 	return error;
+}
+
+static int
+sockargs_sb(struct sockaddr_big *sb, const void *name, socklen_t buflen)
+{
+	int error;
+
+	/*
+	 * We can't allow socket names > UCHAR_MAX in length, since that
+	 * will overflow sb_len. Further no reasonable buflen is <=
+	 * offsetof(sockaddr_big, sb_data) since it shall be at least
+	 * the size of the preamble sb_len and sb_family members.
+	 */
+	if (buflen > UCHAR_MAX ||
+	    buflen <= offsetof(struct sockaddr_big, sb_data))
+		return EINVAL;
+
+	error = copyin(name, (void *)sb, buflen);
+	if (error)
+		return error;
+
+	ktrkuser(mbuftypes[MT_SONAME], sb, buflen);
+#if BYTE_ORDER != BIG_ENDIAN
+	/*
+	 * 4.3BSD compat thing - need to stay, since bind(2),
+	 * connect(2), sendto(2) were not versioned for COMPAT_43.
+	 */
+	if (sb->sb_family == 0 && sb->sb_len < AF_MAX)
+		sb->sb_family = sb->sb_len;
+#endif
+	sb->sb_len = buflen;
+	return 0;
 }
 
 /*
@@ -1461,6 +1537,12 @@ sockargs(struct mbuf **mp, const void *bf, size_t buflen, int type)
 	 * length is just too much.
 	 */
 	if (buflen > (type == MT_SONAME ? UCHAR_MAX : PAGE_SIZE))
+		return EINVAL;
+
+	/*
+	 * length must greater than sizeof(sa_family) + sizeof(sa_len)
+	 */
+	if (type == MT_SONAME && buflen <= 2)
 		return EINVAL;
 
 	/* Allocate an mbuf to hold the arguments. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ppi.c,v 1.19.22.2 2014/08/20 00:03:37 tls Exp $	*/
+/*	$NetBSD: ppi.c,v 1.19.22.3 2017/12/03 11:37:01 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.19.22.2 2014/08/20 00:03:37 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.19.22.3 2017/12/03 11:37:01 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,6 +79,8 @@ __KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.19.22.2 2014/08/20 00:03:37 tls Exp $");
 #include <dev/gpib/gpibvar.h>
 
 #include <dev/gpib/ppiio.h>
+
+#include "ioconf.h"
 
 struct	ppi_softc {
 	device_t sc_dev;
@@ -108,8 +110,6 @@ void	ppiattach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(ppi, sizeof(struct ppi_softc),
 	ppimatch, ppiattach, NULL, NULL);
-
-extern struct cfdriver ppi_cd;
 
 void	ppicallback(void *, int);
 void	ppistart(void *);

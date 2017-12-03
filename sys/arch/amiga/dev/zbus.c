@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.68.6.2 2013/02/25 00:28:22 tls Exp $ */
+/*	$NetBSD: zbus.c,v 1.68.6.3 2017/12/03 11:35:48 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zbus.c,v 1.68.6.2 2013/02/25 00:28:22 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zbus.c,v 1.68.6.3 2017/12/03 11:35:48 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -192,7 +192,9 @@ static const struct aconfdata aconftab[] = {
 	{ "hyper4+",	5001,	6},	/* Hypercom4+ */
 	{ "hyper3+",	5001,	7},	/* Hypercom3+ */
 	/* Matay Grzegorz Kraszewski */
-	{ "mppb",	44359,	1}	/* Prometheus PCI bridge */
+	{ "mppb",	44359,	1},	/* Prometheus PCI bridge */
+	/* MNT */
+	{ "mntva",	28014,	1}	/* MNT VA2000 */
 };
 static int naconfent = sizeof(aconftab) / sizeof(struct aconfdata);
 
@@ -226,6 +228,7 @@ static struct preconfdata preconftab[] = {
 	{2167,	3, 0},	/* Domino regs (proto 16M) */
 	{2181,	0, 0},	/* oMniBus mem or regs */
 	{8512,	67, 0}	/* Cybervison 64/3D */		/* grf7 */
+/*	{28014,	1, 0}	// MNTMN VA2000 */
 };
 static int npreconfent = sizeof(preconftab) / sizeof(struct preconfdata);
 

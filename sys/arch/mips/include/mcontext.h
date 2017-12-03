@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.19.12.1 2012/11/20 03:01:33 tls Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.19.12.2 2017/12/03 11:36:27 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -203,17 +203,25 @@ __lwp_gettcb_fast(void)
 	/*
 	 * Only emit a rdhwr $3, $29 so the kernel can quickly emulate it.
 	 */
-	__asm __volatile(".set push; .set mips32r2; "
-		"rdhwr $3,$29; .set pop;"
-#ifdef __mips_o32
-		"addiu %[__tcb],$3,%1"
+	__asm __volatile(
+#if 1
+		// For some reason the syscall is much faster than
+		// emulating rdhwr $3,$29 on a CN50xx
+		"addiu $2,$0,316; syscall; nop; move %[__tcb],$2"
 #else
-		"daddiu %[__tcb],$3,%1"
+		".set push"   
+		";.set mips32r2"
+		";.p2align 4"
+		";ssnop"
+		";rdhwr $3,$29"
+		";ssnop"
+		";move %0,$3"
+		";.set pop"     
 #endif
 	    : [__tcb]"=r"(__tcb)
-	    : [__offset]"n"(-(TLS_TP_OFFSET + sizeof(*__tcb)))
-	    : "v1");
-	return __tcb;
+	    :
+	    : "v0", "v1", "a3");
+	return __tcb - (TLS_TP_OFFSET / sizeof(*__tcb) + 1);
 }
 
 void _lwp_setprivate(void *);

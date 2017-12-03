@@ -1,4 +1,4 @@
-/*	$NetBSD: max6900.c,v 1.12.22.1 2014/08/20 00:03:37 tls Exp $	*/
+/*	$NetBSD: max6900.c,v 1.12.22.2 2017/12/03 11:37:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: max6900.c,v 1.12.22.1 2014/08/20 00:03:37 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: max6900.c,v 1.12.22.2 2017/12/03 11:37:02 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -338,24 +338,24 @@ maxrtc_clock_read(struct maxrtc_softc *sc, struct clock_ymdhms *dt)
 	/*
 	 * Convert the MAX6900's register values into something useable
 	 */
-	dt->dt_sec = FROMBCD(bcd[MAX6900_BURST_SECOND] & MAX6900_SECOND_MASK);
-	dt->dt_min = FROMBCD(bcd[MAX6900_BURST_MINUTE] & MAX6900_MINUTE_MASK);
+	dt->dt_sec = bcdtobin(bcd[MAX6900_BURST_SECOND] & MAX6900_SECOND_MASK);
+	dt->dt_min = bcdtobin(bcd[MAX6900_BURST_MINUTE] & MAX6900_MINUTE_MASK);
 
 	if (bcd[MAX6900_BURST_HOUR] & MAX6900_HOUR_12HRS) {
-		dt->dt_hour = FROMBCD(bcd[MAX6900_BURST_HOUR] &
+		dt->dt_hour = bcdtobin(bcd[MAX6900_BURST_HOUR] &
 		    MAX6900_HOUR_12MASK);
 		if (bcd[MAX6900_BURST_HOUR] & MAX6900_HOUR_12HRS_PM)
 			dt->dt_hour += 12;
 	} else {
-		dt->dt_hour = FROMBCD(bcd[MAX6900_BURST_HOUR] &
+		dt->dt_hour = bcdtobin(bcd[MAX6900_BURST_HOUR] &
 		    MAX6900_HOUR_24MASK);
 	}
 
-	dt->dt_day = FROMBCD(bcd[MAX6900_BURST_DATE] & MAX6900_DATE_MASK);
-	dt->dt_mon = FROMBCD(bcd[MAX6900_BURST_MONTH] & MAX6900_MONTH_MASK);
-	dt->dt_year = FROMBCD(bcd[MAX6900_BURST_YEAR]);
+	dt->dt_day = bcdtobin(bcd[MAX6900_BURST_DATE] & MAX6900_DATE_MASK);
+	dt->dt_mon = bcdtobin(bcd[MAX6900_BURST_MONTH] & MAX6900_MONTH_MASK);
+	dt->dt_year = bcdtobin(bcd[MAX6900_BURST_YEAR]);
 		/* century in the burst control slot */
-	dt->dt_year += (int)FROMBCD(bcd[MAX6900_BURST_CONTROL]) * 100;
+	dt->dt_year += (int)bcdtobin(bcd[MAX6900_BURST_CONTROL]) * 100;
 
 	return (1);
 }
@@ -371,15 +371,15 @@ maxrtc_clock_write(struct maxrtc_softc *sc, struct clock_ymdhms *dt)
 	 * Convert our time representation into something the MAX6900
 	 * can understand.
 	 */
-	bcd[MAX6900_BURST_SECOND] = TOBCD(dt->dt_sec);
-	bcd[MAX6900_BURST_MINUTE] = TOBCD(dt->dt_min);
-	bcd[MAX6900_BURST_HOUR] = TOBCD(dt->dt_hour) & MAX6900_HOUR_24MASK;
-	bcd[MAX6900_BURST_DATE] = TOBCD(dt->dt_day);
-	bcd[MAX6900_BURST_WDAY] = TOBCD(dt->dt_wday);
-	bcd[MAX6900_BURST_MONTH] = TOBCD(dt->dt_mon);
-	bcd[MAX6900_BURST_YEAR] = TOBCD(dt->dt_year % 100);
+	bcd[MAX6900_BURST_SECOND] = bintobcd(dt->dt_sec);
+	bcd[MAX6900_BURST_MINUTE] = bintobcd(dt->dt_min);
+	bcd[MAX6900_BURST_HOUR] = bintobcd(dt->dt_hour) & MAX6900_HOUR_24MASK;
+	bcd[MAX6900_BURST_DATE] = bintobcd(dt->dt_day);
+	bcd[MAX6900_BURST_WDAY] = bintobcd(dt->dt_wday);
+	bcd[MAX6900_BURST_MONTH] = bintobcd(dt->dt_mon);
+	bcd[MAX6900_BURST_YEAR] = bintobcd(dt->dt_year % 100);
 		/* century in control slot */
-	bcd[MAX6900_BURST_CONTROL] = TOBCD(dt->dt_year / 100);
+	bcd[MAX6900_BURST_CONTROL] = bintobcd(dt->dt_year / 100);
 
 	if (iic_acquire_bus(sc->sc_tag, I2C_F_POLL)) {
 		aprint_error_dev(sc->sc_dev,

@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.h,v 1.12 2008/05/29 14:25:01 tsutsui Exp $	*/
+/*	$NetBSD: boot.h,v 1.12.42.1 2017/12/03 11:36:00 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -25,6 +25,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <mips/cpuregs.h>
 
 #if defined(_DEBUG)
 #define DPRINTF(x)	printf x;

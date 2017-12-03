@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wpi.c,v 1.53.2.3 2014/08/20 00:03:43 tls Exp $	*/
+/*	$NetBSD: if_wpi.c,v 1.53.2.4 2017/12/03 11:37:08 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.53.2.3 2014/08/20 00:03:43 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.53.2.4 2017/12/03 11:37:08 jdolecek Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.53.2.3 2014/08/20 00:03:43 tls Exp $");
 #include <sys/kauth.h>
 #include <sys/callout.h>
 #include <sys/proc.h>
+#include <sys/kthread.h>
 
 #include <sys/bus.h>
 #include <machine/endian.h>
@@ -47,6 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.53.2.3 2014/08/20 00:03:43 tls Exp $");
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
+
+#include <dev/sysmon/sysmonvar.h>
 
 #include <net/bpf.h>
 #include <net/if.h>
@@ -122,6 +125,7 @@ static void	wpi_tx_intr(struct wpi_softc *, struct wpi_rx_desc *);
 static void	wpi_cmd_intr(struct wpi_softc *, struct wpi_rx_desc *);
 static void	wpi_notif_intr(struct wpi_softc *);
 static int	wpi_intr(void *);
+static void	wpi_softintr(void *);
 static void	wpi_read_eeprom(struct wpi_softc *);
 static void	wpi_read_eeprom_channels(struct wpi_softc *, int);
 static void	wpi_read_eeprom_group(struct wpi_softc *, int);
@@ -153,6 +157,7 @@ static void	wpi_stop(struct ifnet *, int);
 static bool	wpi_resume(device_t, const pmf_qual_t *);
 static int	wpi_getrfkill(struct wpi_softc *);
 static void	wpi_sysctlattach(struct wpi_softc *);
+static void	wpi_rsw_thread(void *);
 
 #ifdef WPI_DEBUG
 #define DPRINTF(x)	do { if (wpi_debug > 0) printf x; } while (0)
@@ -202,7 +207,6 @@ wpi_attach(device_t parent __unused, device_t self, void *aux)
 	const char *intrstr;
 	bus_space_tag_t memt;
 	bus_space_handle_t memh;
-	pci_intr_handle_t ih;
 	pcireg_t data;
 	int ac, error;
 	char intrbuf[PCI_INTRSTR_LEN];
@@ -213,6 +217,22 @@ wpi_attach(device_t parent __unused, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_pct = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
+
+	sc->sc_rsw_status = WPI_RSW_UNKNOWN;
+	sc->sc_rsw.smpsw_name = device_xname(self);
+	sc->sc_rsw.smpsw_type = PSWITCH_TYPE_RADIO;
+	error = sysmon_pswitch_register(&sc->sc_rsw);
+	if (error) {
+		aprint_error_dev(self,
+		    "unable to register radio switch with sysmon\n");
+		return;
+	}
+	mutex_init(&sc->sc_rsw_mtx, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&sc->sc_rsw_cv, "wpirsw");
+	if (kthread_create(PRI_NONE, 0, NULL,
+	    wpi_rsw_thread, sc, &sc->sc_rsw_lwp, "%s", device_xname(self))) {
+		aprint_error_dev(self, "couldn't create switch thread\n");
+	}
 
 	callout_init(&sc->calib_to, 0);
 	callout_setfunc(&sc->calib_to, wpi_calib_timeout, sc);
@@ -236,19 +256,27 @@ wpi_attach(device_t parent __unused, device_t self, void *aux)
 	sc->sc_sh = memh;
 	sc->sc_dmat = pa->pa_dmat;
 
-	if (pci_intr_map(pa, &ih) != 0) {
-		aprint_error_dev(self, "could not map interrupt\n");
-		return;
+	sc->sc_soft_ih = softint_establish(SOFTINT_NET, wpi_softintr, sc);
+	if (sc->sc_soft_ih == NULL) {
+		aprint_error_dev(self, "could not establish softint\n");
+		goto unmap;
 	}
 
-	intrstr = pci_intr_string(sc->sc_pct, ih, intrbuf, sizeof(intrbuf));
-	sc->sc_ih = pci_intr_establish(sc->sc_pct, ih, IPL_NET, wpi_intr, sc);
+	if (pci_intr_alloc(pa, &sc->sc_pihp, NULL, 0)) {
+		aprint_error_dev(self, "could not map interrupt\n");
+		goto failsi;
+	}
+
+	intrstr = pci_intr_string(sc->sc_pct, sc->sc_pihp[0], intrbuf,
+	    sizeof(intrbuf));
+	sc->sc_ih = pci_intr_establish(sc->sc_pct, sc->sc_pihp[0], IPL_NET,
+	    wpi_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "could not establish interrupt");
 		if (intrstr != NULL)
 			aprint_error(" at %s", intrstr);
 		aprint_error("\n");
-		return;
+		goto failia;
 	}
 	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 
@@ -257,7 +285,7 @@ wpi_attach(device_t parent __unused, device_t self, void *aux)
 	 */
 	if ((error = wpi_reset(sc)) != 0) {
 		aprint_error_dev(self, "could not reset adapter\n");
-		return;
+		goto failih;
 	}
 
 	/*
@@ -265,7 +293,7 @@ wpi_attach(device_t parent __unused, device_t self, void *aux)
 	 */
 	if ((error = wpi_alloc_fwmem(sc)) != 0) {
 		aprint_error_dev(self, "could not allocate firmware memory\n");
-		return;
+		goto failih;
 	}
 
 	/*
@@ -338,8 +366,17 @@ wpi_attach(device_t parent __unused, device_t self, void *aux)
 	IFQ_SET_READY(&ifp->if_snd);
 	memcpy(ifp->if_xname, device_xname(self), IFNAMSIZ);
 
-	if_attach(ifp);
+	error = if_initialize(ifp);
+	if (error != 0) {
+		aprint_error_dev(sc->sc_dev, "if_initialize failed(%d)\n",
+		    error);
+		goto fail5;
+	}
 	ieee80211_ifattach(ic);
+	/* Use common softint-based if_input */
+	ifp->if_percpuq = if_percpuq_create(ifp);
+	if_register(ifp);
+
 	/* override default methods */
 	ic->ic_node_alloc = wpi_node_alloc;
 	ic->ic_newassoc = wpi_newassoc;
@@ -377,12 +414,20 @@ wpi_attach(device_t parent __unused, device_t self, void *aux)
 	return;
 
 	/* free allocated memory if something failed during attachment */
+fail5:	wpi_free_rx_ring(sc, &sc->rxq);
 fail4:	wpi_free_tx_ring(sc, &sc->cmdq);
 fail3:	while (--ac >= 0)
 		wpi_free_tx_ring(sc, &sc->txq[ac]);
 	wpi_free_rpool(sc);
 fail2:	wpi_free_shared(sc);
 fail1:	wpi_free_fwmem(sc);
+failih:	pci_intr_disestablish(sc->sc_pct, sc->sc_ih);
+	sc->sc_ih = NULL;
+failia:	pci_intr_release(sc->sc_pct, sc->sc_pihp, 1);
+	sc->sc_pihp = NULL;
+failsi:	softint_disestablish(sc->sc_soft_ih);
+	sc->sc_soft_ih = NULL;
+unmap:	bus_space_unmap(sc->sc_st, sc->sc_sh, sc->sc_sz);
 }
 
 static int
@@ -411,6 +456,22 @@ wpi_detach(device_t self, int flags __unused)
 		pci_intr_disestablish(sc->sc_pct, sc->sc_ih);
 		sc->sc_ih = NULL;
 	}
+	if (sc->sc_pihp != NULL) {
+		pci_intr_release(sc->sc_pct, sc->sc_pihp, 1);
+		sc->sc_pihp = NULL;
+	}
+	if (sc->sc_soft_ih != NULL) {
+		softint_disestablish(sc->sc_soft_ih);
+		sc->sc_soft_ih = NULL;
+	}
+
+	mutex_enter(&sc->sc_rsw_mtx);
+	sc->sc_dying = 1;
+	cv_signal(&sc->sc_rsw_cv);
+	while (sc->sc_rsw_lwp != NULL)
+		cv_wait(&sc->sc_rsw_cv, &sc->sc_rsw_mtx);
+	mutex_exit(&sc->sc_rsw_mtx);
+	sysmon_pswitch_unregister(&sc->sc_rsw);
 
 	bus_space_unmap(sc->sc_st, sc->sc_sh, sc->sc_sz);
 
@@ -418,7 +479,8 @@ wpi_detach(device_t self, int flags __unused)
 		sc->fw_used = false;
 		wpi_release_firmware();
 	}
-
+	cv_destroy(&sc->sc_rsw_cv);
+	mutex_destroy(&sc->sc_rsw_mtx);
 	return 0;
 }
 
@@ -1427,7 +1489,7 @@ wpi_rx_intr(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 	struct ieee80211_frame *wh;
 	struct ieee80211_node *ni;
 	struct mbuf *m, *mnew;
-	int data_off, error;
+	int data_off, error, s;
 
 	bus_dmamap_sync(sc->sc_dmat, data->map, 0, data->map->dm_mapsize,
 	    BUS_DMASYNC_POSTREAD);
@@ -1513,7 +1575,9 @@ wpi_rx_intr(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 	m->m_pkthdr.len = m->m_len = le16toh(head->len);
 
 	/* finalize mbuf */
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
+
+	s = splnet();
 
 	if (sc->sc_drvbpf != NULL) {
 		struct wpi_rx_radiotap_header *tap = &sc->sc_rxtap;
@@ -1560,6 +1624,8 @@ wpi_rx_intr(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 
 	/* release node reference */
 	ieee80211_free_node(ni);
+
+	splx(s);
 }
 
 static void
@@ -1570,11 +1636,14 @@ wpi_tx_intr(struct wpi_softc *sc, struct wpi_rx_desc *desc)
 	struct wpi_tx_data *data = &ring->data[desc->idx];
 	struct wpi_tx_stat *stat = (struct wpi_tx_stat *)(desc + 1);
 	struct wpi_node *wn = (struct wpi_node *)data->ni;
+	int s;
 
 	DPRINTFN(4, ("tx done: qid=%d idx=%d retries=%d nkill=%d rate=%x "
 	    "duration=%d status=%x\n", desc->qid, desc->idx, stat->ntries,
 	    stat->nkill, stat->rate, le32toh(stat->duration),
 	    le32toh(stat->status)));
+
+	s = splnet();
 
 	/*
 	 * Update rate control statistics for the node.
@@ -1602,7 +1671,9 @@ wpi_tx_intr(struct wpi_softc *sc, struct wpi_rx_desc *desc)
 
 	sc->sc_tx_timer = 0;
 	ifp->if_flags &= ~IFF_OACTIVE;
-	wpi_start(ifp);
+	wpi_start(ifp); /* in softint */
+
+	splx(s);
 }
 
 static void
@@ -1632,6 +1703,7 @@ wpi_notif_intr(struct wpi_softc *sc)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp =  ic->ic_ifp;
 	uint32_t hw;
+	int s;
 
 	bus_dmamap_sync(sc->sc_dmat, sc->shared_dma.map, 0,
 	    sizeof(struct wpi_shared), BUS_DMASYNC_POSTREAD);
@@ -1687,12 +1759,16 @@ wpi_notif_intr(struct wpi_softc *sc)
 			DPRINTF(("state changed to %x\n", le32toh(*status)));
 
 			if (le32toh(*status) & 1) {
+				s = splnet();
 				/* the radio button has to be pushed */
+				/* wake up thread to signal powerd */
+				cv_signal(&sc->sc_rsw_cv);
 				aprint_error_dev(sc->sc_dev,
 				    "Radio transmitter is off\n");
 				/* turn the interface down */
 				ifp->if_flags &= ~IFF_UP;
 				wpi_stop(ifp, 1);
+				splx(s);
 				return;	/* no further processing */
 			}
 			break;
@@ -1721,10 +1797,11 @@ wpi_notif_intr(struct wpi_softc *sc)
 			DPRINTF(("scan finished nchan=%d status=%d chan=%d\n",
 			    scan->nchan, scan->status, scan->chan));
 
+			s = splnet();
 			sc->is_scanning = false;
 			if (ic->ic_state == IEEE80211_S_SCAN)
 				ieee80211_next_scan(ic);
-
+			splx(s);
 			break;
 		}
 		}
@@ -1741,7 +1818,6 @@ static int
 wpi_intr(void *arg)
 {
 	struct wpi_softc *sc = arg;
-	struct ifnet *ifp = sc->sc_ic.ic_ifp;
 	uint32_t r;
 
 	r = WPI_READ(sc, WPI_INTR);
@@ -1752,6 +1828,22 @@ wpi_intr(void *arg)
 
 	/* disable interrupts */
 	WPI_WRITE(sc, WPI_MASK, 0);
+
+	softint_schedule(sc->sc_soft_ih);
+	return 1;
+}
+
+static void
+wpi_softintr(void *arg)
+{
+	struct wpi_softc *sc = arg;
+	struct ifnet *ifp = sc->sc_ic.ic_ifp;
+	uint32_t r;
+
+	r = WPI_READ(sc, WPI_INTR);
+	if (r == 0 || r == 0xffffffff)
+		goto out;
+
 	/* ack interrupts */
 	WPI_WRITE(sc, WPI_INTR, r);
 
@@ -1760,7 +1852,7 @@ wpi_intr(void *arg)
 		aprint_error_dev(sc->sc_dev, "fatal firmware error\n");
 		ifp->if_flags &= ~IFF_UP;
 		wpi_stop(ifp, 1);
-		return 1;
+		return;
 	}
 
 	if (r & WPI_RX_INTR)
@@ -1769,11 +1861,10 @@ wpi_intr(void *arg)
 	if (r & WPI_ALIVE_INTR)	/* firmware initialized */
 		wakeup(sc);
 
+ out:
 	/* re-enable interrupts */
 	if (ifp->if_flags & IFF_UP)
 		WPI_WRITE(sc, WPI_MASK, WPI_INTR_MASK);
-
-	return 1;
 }
 
 static uint8_t
@@ -2028,8 +2119,8 @@ wpi_start(struct ifnet *ifp)
 		IF_DEQUEUE(&ic->ic_mgtq, m0);
 		if (m0 != NULL) {
 
-			ni = (struct ieee80211_node *)m0->m_pkthdr.rcvif;
-			m0->m_pkthdr.rcvif = NULL;
+			ni = M_GETCTX(m0, struct ieee80211_node *);
+			M_CLEARCTX(m0);
 
 			/* management frames go into ring 0 */
 			if (sc->txq[0].queued > sc->txq[0].count - 8) {
@@ -3167,12 +3258,16 @@ wpi_init(struct ifnet *ifp)
 		goto fail1;
 
 	/* Check the status of the radio switch */
+	mutex_enter(&sc->sc_rsw_mtx);
 	if (wpi_getrfkill(sc)) {
+		mutex_exit(&sc->sc_rsw_mtx);
 		aprint_error_dev(sc->sc_dev,
 		    "radio is disabled by hardware switch\n");
+		ifp->if_flags &= ~IFF_UP;
 		error = EBUSY;
 		goto fail1;
 	}
+	mutex_exit(&sc->sc_rsw_mtx);
 
 	/* wait for thermal sensors to calibrate */
 	for (ntries = 0; ntries < 1000; ntries++) {
@@ -3275,6 +3370,23 @@ wpi_getrfkill(struct wpi_softc *sc)
 	tmp = wpi_mem_read(sc, WPI_MEM_RFKILL);
 	wpi_mem_unlock(sc);
 
+	KASSERT(mutex_owned(&sc->sc_rsw_mtx));
+	if (tmp & 0x01) {
+		/* switch is on */
+		if (sc->sc_rsw_status != WPI_RSW_ON) {
+			sc->sc_rsw_status = WPI_RSW_ON;
+			sysmon_pswitch_event(&sc->sc_rsw,
+			    PSWITCH_EVENT_PRESSED);
+		}
+	} else {
+		/* switch is off */
+		if (sc->sc_rsw_status != WPI_RSW_OFF) {
+			sc->sc_rsw_status = WPI_RSW_OFF;
+			sysmon_pswitch_event(&sc->sc_rsw,
+			    PSWITCH_EVENT_RELEASED);
+		}
+	}
+
 	return !(tmp & 0x01);
 }
 
@@ -3288,7 +3400,9 @@ wpi_sysctl_radio(SYSCTLFN_ARGS)
 	node = *rnode;
 	sc = (struct wpi_softc *)node.sysctl_data;
 
+	mutex_enter(&sc->sc_rsw_mtx);
 	val = !wpi_getrfkill(sc);
+	mutex_exit(&sc->sc_rsw_mtx);
 
 	node.sysctl_data = &val;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
@@ -3333,3 +3447,22 @@ wpi_sysctlattach(struct wpi_softc *sc)
 err:
 	aprint_error("%s: sysctl_createv failed (rc = %d)\n", __func__, rc);
 }
+
+static void
+wpi_rsw_thread(void *arg)
+{
+	struct wpi_softc *sc = (struct wpi_softc *)arg;
+
+	mutex_enter(&sc->sc_rsw_mtx);
+	for (;;) {
+		cv_timedwait(&sc->sc_rsw_cv, &sc->sc_rsw_mtx, hz);
+		if (sc->sc_dying) {
+			sc->sc_rsw_lwp = NULL;
+			cv_broadcast(&sc->sc_rsw_cv);
+			mutex_exit(&sc->sc_rsw_mtx);
+			kthread_exit(0);
+		}
+		wpi_getrfkill(sc);
+	}
+}
+

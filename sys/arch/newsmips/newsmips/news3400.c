@@ -1,4 +1,4 @@
-/*	$NetBSD: news3400.c,v 1.22.14.1 2014/08/20 00:03:16 tls Exp $	*/
+/*	$NetBSD: news3400.c,v 1.22.14.2 2017/12/03 11:36:33 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: news3400.c,v 1.22.14.1 2014/08/20 00:03:16 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: news3400.c,v 1.22.14.2 2017/12/03 11:36:33 jdolecek Exp $");
 
 #define __INTR_PRIVATE
 #include <sys/param.h>
@@ -132,7 +132,7 @@ news3400_intr(int ppl, uint32_t pc, uint32_t status)
 			news3400_level0_intr();
 		}
 
-		/* FPU nofiticaition */
+		/* FPU notification */
 		if (ipending & INT_MASK_FPU) {
 			if (!USERMODE(status))
 				panic("kernel used FPU: PC %x, SR %x",

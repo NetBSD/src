@@ -44,6 +44,10 @@
 
 #ifdef _KERNEL
 
+#if !defined(_MODULE) && defined(_KERNEL_OPT)
+# include "opt_multiprocessor.h"
+#endif
+
 #include <sys/types.h>
 #include <arm/armreg.h>
 #include <arm/cpuconf.h>
@@ -309,13 +313,23 @@ void 	armv7_dcache_wbinv_all(void);
 void	armv7_idcache_wbinv_range(vaddr_t, vsize_t);
 void	armv7_idcache_wbinv_all(void);
 
-void	armv7_tlb_flushID(void);
-void	armv7_tlb_flushI(void);
-void	armv7_tlb_flushD(void);
+void	armv7up_tlb_flushID(void);
+void	armv7up_tlb_flushI(void);
+void	armv7up_tlb_flushD(void);
 
-void	armv7_tlb_flushID_SE(vaddr_t);
-void	armv7_tlb_flushI_SE(vaddr_t);
-void	armv7_tlb_flushD_SE(vaddr_t);
+void	armv7up_tlb_flushID_SE(vaddr_t);
+void	armv7up_tlb_flushI_SE(vaddr_t);
+void	armv7up_tlb_flushD_SE(vaddr_t);
+
+#ifdef MULTIPROCESSOR
+void	armv7mp_tlb_flushID(void);
+void	armv7mp_tlb_flushI(void);
+void	armv7mp_tlb_flushD(void);
+
+void	armv7mp_tlb_flushID_SE(vaddr_t);
+void	armv7mp_tlb_flushI_SE(vaddr_t);
+void	armv7mp_tlb_flushD_SE(vaddr_t);
+#endif
 
 void	armv7_cpu_sleep(int);
 void	armv7_drain_writebuf(void);
@@ -323,31 +337,13 @@ void	armv7_setup(char *string);
 #endif /* CPU_ARMV7 */
 
 #if defined(CPU_PJ4B)
-#if defined(ARM_MMU_EXTENDED)
-void	pj4b_setttb(u_int, tlb_asid_t);
-void	pj4b_context_switch(u_int, tlb_asid_t);
-#else
-void	pj4b_setttb(u_int, bool);
-void	pj4b_context_switch(u_int);
-#endif
-void	pj4b_tlb_flushID(void);
-void	pj4b_tlb_flushID_SE(vaddr_t);
-
-void	pj4b_icache_sync_range(vm_offset_t, vm_size_t);
-void	pj4b_idcache_wbinv_range(vm_offset_t, vm_size_t);
-void	pj4b_dcache_wbinv_range(vm_offset_t, vm_size_t);
-void	pj4b_dcache_inv_range(vm_offset_t, vm_size_t);
-void	pj4b_dcache_wb_range(vm_offset_t, vm_size_t);
-
-void	pj4b_drain_writebuf(void);
-void	pj4b_drain_readbuf(void);
-void	pj4b_flush_brnchtgt_all(void);
-void	pj4b_flush_brnchtgt_va(u_int);
-void	pj4b_sleep(int);
-
+void	pj4b_cpu_sleep(int);
 void	pj4bv7_setup(char *string);
 void	pj4b_config(void);
-
+void	pj4b_io_coherency_barrier(vaddr_t, paddr_t, vsize_t);
+void	pj4b_dcache_cfu_inv_range(vaddr_t, vsize_t);
+void	pj4b_dcache_cfu_wb_range(vaddr_t, vsize_t);
+void	pj4b_dcache_cfu_wbinv_range(vaddr_t, vsize_t);
 #endif /* CPU_PJ4B */
 
 #if defined(CPU_ARM1136) || defined(CPU_ARM1176)

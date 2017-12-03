@@ -29,11 +29,15 @@
 #ifndef	_IF_CPSWREG_H
 #define	_IF_CPSWREG_H
 
+#define CPSW_ETH_PORTS			2
+#define CPSW_CPPI_PORTS			1
+
 #define CPSW_SS_OFFSET			0x0000
 #define CPSW_SS_IDVER			(CPSW_SS_OFFSET + 0x00)
 #define CPSW_SS_SOFT_RESET		(CPSW_SS_OFFSET + 0x08)
 #define CPSW_SS_STAT_PORT_EN		(CPSW_SS_OFFSET + 0x0C)
 #define CPSW_SS_PTYPE			(CPSW_SS_OFFSET + 0x10)
+#define CPSW_SS_FLOW_CONTROL		(CPSW_SS_OFFSET + 0x24)
 #define CPSW_SS_RGMII_CTL		(CPSW_SS_OFFSET + 0x88)
 
 #define CPSW_PORT_OFFSET		0x0100
@@ -88,10 +92,17 @@
 #define CPSW_ALE_PORTCTL(p)		(CPSW_ALE_OFFSET + 0x40 + ((p) * 0x04))
 
 #define CPSW_SL_OFFSET			0x0D80
+#define CPSW_SL_IDVER(p)		(CPSW_SL_OFFSET + (0x40 * (p)) + 0x00)
 #define CPSW_SL_MACCONTROL(p)		(CPSW_SL_OFFSET + (0x40 * (p)) + 0x04)
+#define CPSW_SL_MACSTATUS(p)		(CPSW_SL_OFFSET + (0x40 * (p)) + 0x08)
 #define CPSW_SL_SOFT_RESET(p)		(CPSW_SL_OFFSET + (0x40 * (p)) + 0x0C)
 #define CPSW_SL_RX_MAXLEN(p)		(CPSW_SL_OFFSET + (0x40 * (p)) + 0x10)
+#define CPSW_SL_BOFFTEST(p)		(CPSW_SL_OFFSET + (0x40 * (p)) + 0x14)
+#define CPSW_SL_RX_PAUSE(p)		(CPSW_SL_OFFSET + (0x40 * (p)) + 0x18)
+#define CPSW_SL_TX_PAUSE(p)		(CPSW_SL_OFFSET + (0x40 * (p)) + 0x1C)
+#define CPSW_SL_EMCONTROL(p)		(CPSW_SL_OFFSET + (0x40 * (p)) + 0x20)
 #define CPSW_SL_RX_PRI_MAP(p)		(CPSW_SL_OFFSET + (0x40 * (p)) + 0x24)
+#define CPSW_SL_TX_GAP(p)		(CPSW_SL_OFFSET + (0x40 * (p)) + 0x28)
 
 #define MDIO_OFFSET			0x1000
 #define MDIOCONTROL			(MDIO_OFFSET + 0x04)
@@ -117,14 +128,24 @@
 #define __BIT32(x) ((uint32_t)__BIT(x))
 #define __BITS32(x, y) ((uint32_t)__BITS((x), (y)))
 
-/* flags for desciptor word 3 */
+/* flags for descriptor word 3 */
 #define CPDMA_BD_SOP		__BIT32(31)
 #define CPDMA_BD_EOP		__BIT32(30)
 #define CPDMA_BD_OWNER		__BIT32(29)
 #define CPDMA_BD_EOQ		__BIT32(28)
 #define CPDMA_BD_TDOWNCMPLT	__BIT32(27)
 #define CPDMA_BD_PASSCRC	__BIT32(26)
+
+#define CPDMA_BD_LONG		__BIT32(25) /* Rx descriptor only */
+#define CPDMA_BD_SHORT		__BIT32(24)
+#define CPDMA_BD_MAC_CTL	__BIT32(23)
+#define CPDMA_BD_OVERRUN	__BIT32(22)
 #define CPDMA_BD_PKT_ERR_MASK	__BITS32(21,20)
+#define CPDMA_BD_RX_VLAN_ENCAP	__BIT32(19)
+#define CPDMA_BD_FROM_PORT	__BITS32(18,16)
+
+#define CPDMA_BD_TO_PORT_EN	__BIT32(20) /* Tx descriptor only */
+#define CPDMA_BD_TO_PORT	__BITS32(17,16)
 
 struct cpsw_cpdma_bd {
 	uint32_t word[4];
@@ -132,7 +153,7 @@ struct cpsw_cpdma_bd {
 
 /* Interrupt offsets */
 #define CPSW_INTROFF_RXTH	0
-#define CPSW_INTROFF_RX		1 
+#define CPSW_INTROFF_RX		1
 #define CPSW_INTROFF_TX		2
 #define CPSW_INTROFF_MISC	3
 
@@ -166,7 +187,7 @@ struct cpsw_cpdma_bd {
 #define GMIISEL_RGMII2_IDMODE	__BIT32(5)
 #define GMIISEL_RGMII1_IDMODE	__BIT32(4)
 #define GMIISEL_GMII2_SEL(val)	((0x3 & (val)) << 2)
-#define GMIISEL_GMII1_SEL(val)	((0x3 & (val)) << 0)	
+#define GMIISEL_GMII1_SEL(val)	((0x3 & (val)) << 0)
 #define GMII_MODE	0
 #define RMII_MODE	1
 #define RGMII_MODE	2
@@ -197,7 +218,7 @@ typedef enum {
 	ALE_MCAST_FWD_STATE,
 	ALE_PORT_MASK,
 	ALE_PORT_NUMBER,
-} ale_entry_filed_t;
+} ale_entry_field_t;
 
 #define ALE_TYPE_FREE		0
 #define ALE_TYPE_ADDRESS	1

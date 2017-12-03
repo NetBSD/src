@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_time.c,v 1.41.18.1 2012/11/20 03:01:57 tls Exp $	*/
+/*	$NetBSD: netbsd32_time.c,v 1.41.18.2 2017/12/03 11:36:56 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.41.18.1 2012/11/20 03:01:57 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.41.18.2 2017/12/03 11:36:56 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.41.18.1 2012/11/20 03:01:57 tls 
 #ifdef NTP
 
 int
-netbsd32___ntp_gettime50(struct lwp *l, 
+netbsd32___ntp_gettime50(struct lwp *l,
     const struct netbsd32___ntp_gettime50_args *uap, register_t *retval)
 {
 	/* {
@@ -83,7 +83,7 @@ netbsd32___ntp_gettime50(struct lwp *l,
 
 #ifdef COMPAT_50
 int
-compat_50_netbsd32_ntp_gettime(struct lwp *l, 
+compat_50_netbsd32_ntp_gettime(struct lwp *l,
     const struct compat_50_netbsd32_ntp_gettime_args *uap, register_t *retval)
 {
 	/* {
@@ -323,16 +323,13 @@ netbsd32___adjtime50(struct lwp *l, const struct netbsd32___adjtime50_args *uap,
 			atv.tv_usec += 1000000;
 			atv.tv_sec--;
 		}
-		(void) copyout(&atv,
-			       SCARG_P32(uap, olddelta), 
-			       sizeof(atv));
+		error = copyout(&atv, SCARG_P32(uap, olddelta), sizeof(atv));
 		if (error)
 			return (error);
 	}
-	
+
 	if (SCARG_P32(uap, delta)) {
-		error = copyin(SCARG_P32(uap, delta), &atv,
-			       sizeof(struct timeval));
+		error = copyin(SCARG_P32(uap, delta), &atv, sizeof(atv));
 		if (error)
 			return (error);
 
@@ -436,8 +433,8 @@ int
 netbsd32_clock_nanosleep(struct lwp *l, const struct netbsd32_clock_nanosleep_args *uap, register_t *retval)
 {
 	/* {
-		clockid_t clock_id;
-		int flags;
+		syscallarg(clockid_t) clock_id;
+		syscallarg(int) flags;
 		syscallarg(const netbsd32_timespecp_t) rqtp;
 		syscallarg(netbsd32_timespecp_t) rmtp;
 	} */
@@ -447,17 +444,21 @@ netbsd32_clock_nanosleep(struct lwp *l, const struct netbsd32_clock_nanosleep_ar
 
 	error = copyin(SCARG_P32(uap, rqtp), &ts32, sizeof(ts32));
 	if (error)
-		return (error);
+		goto out;
 	netbsd32_to_timespec(&ts32, &rqt);
 
 	error = nanosleep1(l, SCARG(uap, clock_id), SCARG(uap, flags),
 	    &rqt, SCARG_P32(uap, rmtp) ? &rmt : NULL);
 	if (SCARG_P32(uap, rmtp) == NULL || (error != 0 && error != EINTR))
-		return error;
+		goto out;
 
 	netbsd32_from_timespec(&rmt, &ts32);
-	error1 = copyout(&ts32, SCARG_P32(uap, rmtp), sizeof(ts32));
-	return error1 ? error1 : error;
+	if ((SCARG(uap, flags) & TIMER_ABSTIME) == 0 &&
+	    (error1 = copyout(&ts32, SCARG_P32(uap, rmtp), sizeof(ts32))) != 0)
+		error = error1;
+out:
+	*retval = error;
+	return 0;
 }
 
 static int
@@ -566,3 +567,34 @@ netbsd32_timer_getoverrun(struct lwp *l, const struct netbsd32_timer_getoverrun_
 	NETBSD32TO64_UAP(timerid);
 	return sys_timer_getoverrun(l, (void *)&ua, retval);
 }
+
+int
+netbsd32_clock_getcpuclockid2(struct lwp *l,
+    const struct netbsd32_clock_getcpuclockid2_args *uap,
+    register_t *retval)
+{
+	/* {
+		syscallarg(idtype_t) idtype;
+		syscallarg(id_t) id;
+		syscallarg(netbsd32_clockidp_t) clock_id;
+	} */
+	pid_t pid;
+	lwpid_t lid;
+	clockid_t clock_id;
+	id_t id = SCARG(uap, id);
+
+	switch (SCARG(uap, idtype)) {
+	case P_PID:
+		pid = id == 0 ? l->l_proc->p_pid : id;
+		clock_id = CLOCK_PROCESS_CPUTIME_ID | pid;
+		break;
+	case P_LWPID:
+		lid = id == 0 ? l->l_lid : id;
+		clock_id = CLOCK_THREAD_CPUTIME_ID | lid;
+		break;
+	default:
+		return EINVAL;
+	}
+	return copyout(&clock_id, SCARG_P32(uap, clock_id), sizeof(clock_id));
+}
+

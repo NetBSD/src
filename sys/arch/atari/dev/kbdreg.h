@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdreg.h,v 1.5 2005/12/11 12:16:54 christos Exp $	*/
+/*	$NetBSD: kbdreg.h,v 1.5.122.1 2017/12/03 11:35:57 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,6 +44,8 @@
 
 #ifndef _MACHINE_KBDREG_H_
 #define _MACHINE_KBDREG_H_
+
+#include <sys/ioccom.h>
 
 struct kbdbell {
 	u_int volume;		/* volume of bell (0-64) */

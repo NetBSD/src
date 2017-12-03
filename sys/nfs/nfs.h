@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.72.20.2 2014/08/20 00:04:36 tls Exp $	*/
+/*	$NetBSD: nfs.h,v 1.72.20.3 2017/12/03 11:39:05 jdolecek Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -545,8 +545,8 @@ struct nfsrv_descript {
 };
 
 /* Bits for "nd_flag" */
-#define	ND_READ		LEASE_READ
-#define ND_WRITE	LEASE_WRITE
+#define ND_READ		0x01	/* Check lease for readers */
+#define ND_WRITE	0x02	/* Check lease for modifiers */
 #define ND_CHECK	0x04
 #define ND_LEASE	(ND_READ | ND_WRITE | ND_CHECK)
 #define ND_NFSV3	0x08

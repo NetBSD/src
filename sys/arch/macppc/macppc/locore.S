@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.70.12.1 2013/06/23 06:20:08 tls Exp $	*/
+/*	$NetBSD: locore.S,v 1.70.12.2 2017/12/03 11:36:25 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -82,8 +82,10 @@ _C_LABEL(kernel_text):
 	.text
 	.globl	__start
 __start:
-	bl	_C_LABEL(cpu_model_init)	/* init oeacpufeat */
 	bl	_C_LABEL(ofwinit)		/* init OF */
+	mr	13,6
+	mr	14,7
+	bl	_C_LABEL(cpu_model_init)	/* init oeacpufeat */
 
 	li	0,0
 	mtmsr	0			/* Disable FPU/MMU/exceptions */
@@ -99,6 +101,8 @@ __start:
 	addi	4,4,_C_LABEL(end)@l
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 	/* skip symbol table */
+	mr	6,13
+	mr	7,14
 	cmpwi	6,0
 	beq	1f
 	add	9,6,7			/* r9 = args + l */

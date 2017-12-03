@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.17.2.2 2014/08/20 00:02:46 tls Exp $	*/
+/*	$NetBSD: locore.h,v 1.17.2.3 2017/12/03 11:35:53 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -54,6 +54,8 @@
 #include "opt_arm_debug.h"
 #endif
 
+#include <sys/pcu.h>
+
 #include <arm/cpuconf.h>
 #include <arm/armreg.h>
 
@@ -77,7 +79,7 @@
 	mrs	r0, cpsr ; \
 	bic	r0, r0, #(I32_bit) ; \
 	msr	cpsr_c, r0 ; \
-	ldmfd	sp!, {r0}		
+	ldmfd	sp!, {r0}
 #else
 /* Not yet used in 26-bit code */
 #endif
@@ -87,7 +89,13 @@
 #define GET_CURLWP(rX)		GET_CURCPU(rX); ldr rX, [rX, #CI_CURLWP]
 #elif defined (TPIDRPRW_IS_CURLWP)
 #define GET_CURLWP(rX)		mrc	p15, 0, rX, c13, c0, 4
+#if defined (MULTIPROCESSOR)
 #define GET_CURCPU(rX)		GET_CURLWP(rX); ldr rX, [rX, #L_CPU]
+#elif defined(_ARM_ARCH_7)
+#define GET_CURCPU(rX)		movw rX, #:lower16:cpu_info_store; movt rX, #:upper16:cpu_info_store
+#else
+#define GET_CURCPU(rX)		ldr rX, =_C_LABEL(cpu_info_store)
+#endif
 #elif !defined(MULTIPROCESSOR)
 #define GET_CURCPU(rX)		ldr rX, =_C_LABEL(cpu_info_store)
 #define GET_CURLWP(rX)		GET_CURCPU(rX); ldr rX, [rX, #CI_CURLWP]
@@ -112,16 +120,24 @@
  */
 
 #ifdef __PROG32
+#ifdef __NO_FIQ
 #define VALID_R15_PSR(r15,psr)						\
-	(((psr) & PSR_MODE) == PSR_USR32_MODE &&			\
-		((psr) & (I32_bit | F32_bit)) == 0)
+	(((psr) & PSR_MODE) == PSR_USR32_MODE && ((psr) & I32_bit) == 0)
+#else
+#define VALID_R15_PSR(r15,psr)						\
+	(((psr) & PSR_MODE) == PSR_USR32_MODE && ((psr) & IF32_bits) == 0)
+#endif
 #else
 #define VALID_R15_PSR(r15,psr)						\
 	(((r15) & R15_MODE) == R15_MODE_USR &&				\
 		((r15) & (R15_IRQ_DISABLE | R15_FIQ_DISABLE)) == 0)
 #endif
 
-
+/*
+ * Translation Table Base Register Share/Cache settings
+ */
+#define	TTBR_UPATTR	(TTBR_S | TTBR_RGN_WBNWA | TTBR_C)
+#define	TTBR_MPATTR	(TTBR_S | TTBR_RGN_WBNWA /* | TTBR_NOS */ | TTBR_IRGN_WBNWA)
 
 /* The address of the vector page. */
 extern vaddr_t vector_page;
@@ -165,6 +181,7 @@ extern int cpu_processor_features[2];
 extern int cpu_media_and_vfp_features[2];
 
 extern bool arm_has_tlbiasid_p;
+extern bool arm_has_mpext_p;
 #ifdef MULTIPROCESSOR
 extern u_int arm_cpu_max;
 extern volatile u_int arm_cpu_hatched;
@@ -214,7 +231,9 @@ read_thumb_insn(vaddr_t va, bool user_p)
 	va &= ~1;
 	uint32_t insn;
 	if (user_p) {
-#ifdef _ARM_ARCH_T2
+#if defined(__thumb__) && defined(_ARM_ARCH_T2)
+		__asm __volatile("ldrht %0, [%1, #0]" : "=&r"(insn) : "r"(va));
+#elif defined(_ARM_ARCH_7)
 		__asm __volatile("ldrht %0, [%1], #0" : "=&r"(insn) : "r"(va));
 #else
 		__asm __volatile("ldrt %0, [%1]" : "=&r"(insn) : "r"(va & ~3));
@@ -233,13 +252,14 @@ read_thumb_insn(vaddr_t va, bool user_p)
 	return insn;
 }
 
+#ifndef _RUMPKERNEL
 static inline void
 arm_dmb(void)
 {
 	if (CPU_IS_ARMV6_P())
 		armreg_dmb_write(0);
 	else if (CPU_IS_ARMV7_P())
-		__asm __volatile("dmb");
+		__asm __volatile("dmb" ::: "memory");
 }
 
 static inline void
@@ -248,7 +268,7 @@ arm_dsb(void)
 	if (CPU_IS_ARMV6_P())
 		armreg_dsb_write(0);
 	else if (CPU_IS_ARMV7_P())
-		__asm __volatile("dsb");
+		__asm __volatile("dsb" ::: "memory");
 }
 
 static inline void
@@ -257,8 +277,9 @@ arm_isb(void)
 	if (CPU_IS_ARMV6_P())
 		armreg_isb_write(0);
 	else if (CPU_IS_ARMV7_P())
-		__asm __volatile("isb");
+		__asm __volatile("isb" ::: "memory");
 }
+#endif
 
 /*
  * Random cruft
@@ -290,11 +311,11 @@ void	ucas_ras_check(trapframe_t *);
 
 /* vfp_init.c */
 void	vfp_attach(struct cpu_info *);
-void	vfp_discardcontext(bool);
-void	vfp_savecontext(void);
+void	vfp_discardcontext(lwp_t *, bool);
+void	vfp_savecontext(lwp_t *);
 void	vfp_kernel_acquire(void);
 void	vfp_kernel_release(void);
-bool	vfp_used_p(void);
+bool	vfp_used_p(const lwp_t *);
 extern const pcu_ops_t arm_vfp_ops;
 
 #endif	/* !_LOCORE */

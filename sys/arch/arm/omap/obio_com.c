@@ -1,4 +1,4 @@
-/*	$NetBSD: obio_com.c,v 1.4.12.1 2014/08/20 00:02:47 tls Exp $	*/
+/*	$NetBSD: obio_com.c,v 1.4.12.2 2017/12/03 11:35:55 jdolecek Exp $	*/
 
 /*
  * Based on arch/arm/omap/omap_com.c
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_com.c,v 1.4.12.1 2014/08/20 00:02:47 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_com.c,v 1.4.12.2 2017/12/03 11:35:55 jdolecek Exp $");
 
 #include "opt_omap.h"
 #include "opt_com.h"
@@ -59,12 +59,37 @@ __KERNEL_RCSID(0, "$NetBSD: obio_com.c,v 1.4.12.1 2014/08/20 00:02:47 tls Exp $"
 #include <arm/omap/omap2_reg.h>
 #include <arm/omap/omap_com.h>
 
+#include <arm/omap/omap2_prcm.h>
+#include <arm/omap/am335x_prcm.h>
+
 #include "locators.h"
 
 static int	obiouart_match(device_t, cfdata_t, void *);
 static void	obiouart_attach(device_t, device_t, void *);
-static int	uart_enable(struct obio_attach_args *);
+#if defined(TI_AM335X)
+static int	uart_enable_am335x(struct obio_attach_args *);
+#else
+static int	uart_enable_omap(struct obio_attach_args *);
+#endif
+static int	uart_enable(struct obio_attach_args *, bus_space_handle_t);
 static void	obiouart_callout(void *);
+
+#if defined(TI_AM335X)
+struct am335x_com {
+	bus_addr_t as_base_addr;
+	int as_intr;
+	struct omap_module as_module;
+};
+
+static const struct am335x_com am335x_com[] = {
+	{ 0x44e09000, 72, { AM335X_PRCM_CM_WKUP, 0xb4 } },
+	{ 0x48022000, 73, { AM335X_PRCM_CM_PER, 0x6c } },
+	{ 0x48024000, 74, { AM335X_PRCM_CM_PER, 0x70 } },
+	{ 0x481a6000, 44, { AM335X_PRCM_CM_PER, 0x74 } },
+	{ 0x481a8000, 45, { AM335X_PRCM_CM_PER, 0x78 } },
+	{ 0x481aa000, 46, { AM335X_PRCM_CM_PER, 0x38 } },
+};
+#endif
 
 struct com_obio_softc {
 	struct com_softc sc_sc;
@@ -87,7 +112,7 @@ obiouart_match(device_t parent, cfdata_t cf, void *aux)
 #if 0
 	/*
 	 * XXX this should be ifdefed on a board-dependent switch
-	 * We don't know what is the irq for com0 on the sdp2430 
+	 * We don't know what is the irq for com0 on the sdp2430
 	 */
 	if (obio->obio_intr == OBIOCF_INTR_DEFAULT)
 		panic("obiouart must have intr specified in config.");
@@ -99,14 +124,12 @@ obiouart_match(device_t parent, cfdata_t cf, void *aux)
 	if (com_is_console(obio->obio_iot, obio->obio_addr, NULL))
 		return 1;
 
-	if (uart_enable(obio) != 0)
-		return 1;
-
 	if (bus_space_map(obio->obio_iot, obio->obio_addr, obio->obio_size,
-			  0, &bh))
-		return 1;
-
-	rv = comprobe1(obio->obio_iot, bh);
+			  0, &bh) != 0)
+		return 0;
+	rv = 0;
+	if (uart_enable(obio, bh) == 0)
+		rv = comprobe1(obio->obio_iot, bh);
 
 	bus_space_unmap(obio->obio_iot, bh, obio->obio_size);
 
@@ -128,7 +151,7 @@ obiouart_attach(device_t parent, device_t self, void *aux)
 	iot = obio->obio_iot;
 	iobase = obio->obio_addr;
 	sc->sc_frequency = OMAP_COM_FREQ;
-	sc->sc_type = COM_TYPE_NORMAL;
+	sc->sc_type = COM_TYPE_OMAP;
 
 	if (com_is_console(iot, iobase, &ioh) == 0 &&
 	    bus_space_map(iot, iobase, obio->obio_size, 0, &ioh)) {
@@ -161,8 +184,29 @@ obiouart_callout(void *arg)
 }
 
 
+#if defined(TI_AM335X)
+
 static int
-uart_enable(struct obio_attach_args *obio)
+uart_enable_am335x(struct obio_attach_args *obio)
+{
+	int i;
+
+	/* XXX Not really AM335X-specific.  */
+	for (i = 0; i < __arraycount(am335x_com); i++)
+		if ((obio->obio_addr == am335x_com[i].as_base_addr) &&
+		    (obio->obio_intr == am335x_com[i].as_intr)) {
+			prcm_module_enable(&am335x_com[i].as_module);
+			break;
+		}
+	KASSERT(i < __arraycount(am335x_com));
+
+	return 0;
+}
+
+#else
+
+static int
+uart_enable_omap(struct obio_attach_args *obio)
 {
 	bus_space_handle_t ioh;
 	uint32_t r;
@@ -219,6 +263,36 @@ printf("%s: UART#%d\n", __func__, n);
 
 err:
 //	bus_space_unmap(obio->obio_iot, ioh, OMAP2_CM_SIZE);
+
+	return 0;
+}
+
+#endif
+
+static int
+uart_enable(struct obio_attach_args *obio, bus_space_handle_t bh)
+{
+	uint32_t v;
+
+#if defined(TI_AM335X)
+	if (uart_enable_am335x(obio) != 0)
+		return -1;
+#else
+	if (uart_enable_omap(obio) != 0)
+		return -1;
+#endif
+
+	v = bus_space_read_4(obio->obio_iot, bh, OMAP_COM_SYSC);
+	v |= OMAP_COM_SYSC_SOFT_RESET;
+	bus_space_write_4(obio->obio_iot, bh, OMAP_COM_SYSC, v);
+	v = bus_space_read_4(obio->obio_iot, bh, OMAP_COM_SYSS);
+	while (!(v & OMAP_COM_SYSS_RESET_DONE))
+		v = bus_space_read_4(obio->obio_iot, bh, OMAP_COM_SYSS);
+
+	/* Disable smart idle */
+	v = bus_space_read_4(obio->obio_iot, bh, OMAP_COM_SYSC);
+	v |= OMAP_COM_SYSC_NO_IDLE;
+	bus_space_write_4(obio->obio_iot, bh, OMAP_COM_SYSC, v);
 
 	return 0;
 }

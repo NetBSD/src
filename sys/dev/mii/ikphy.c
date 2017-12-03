@@ -1,4 +1,4 @@
-/*	$NetBSD: ikphy.c,v 1.9.22.1 2014/08/20 00:03:41 tls Exp $	*/
+/*	$NetBSD: ikphy.c,v 1.9.22.2 2017/12/03 11:37:06 jdolecek Exp $	*/
 
 /*******************************************************************************
 Copyright (c) 2001-2005, Intel Corporation 
@@ -59,7 +59,7 @@ POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ikphy.c,v 1.9.22.1 2014/08/20 00:03:41 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ikphy.c,v 1.9.22.2 2017/12/03 11:37:06 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,6 +125,9 @@ ikphyattach(device_t parent, device_t self, void *aux)
 	sc->mii_dev = self;
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
+	sc->mii_mpd_oui = MII_OUI(ma->mii_id1, ma->mii_id2);
+	sc->mii_mpd_model = MII_MODEL(ma->mii_id2);
+	sc->mii_mpd_rev = MII_REV(ma->mii_id2);
 	sc->mii_funcs = &ikphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
@@ -132,8 +135,7 @@ ikphyattach(device_t parent, device_t self, void *aux)
 
 	PHY_RESET(sc);
 
-	sc->mii_capabilities =
-	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
+	sc->mii_capabilities = PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
 	if (sc->mii_capabilities & BMSR_EXTSTAT)
 	    sc->mii_extcapabilities = PHY_READ(sc, MII_EXTSR);
 	aprint_normal_dev(self, "");

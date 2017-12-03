@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcivar.h,v 1.51.2.1 2013/02/25 00:29:39 tls Exp $	*/
+/*	$NetBSD: uhcivar.h,v 1.51.2.2 2017/12/03 11:37:34 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -59,30 +59,43 @@ typedef union {
 	struct uhci_soft_td *std;
 } uhci_soft_td_qh_t;
 
-/*
- * An interrupt info struct contains the information needed to
- * execute a requested routine when the controller generates an
- * interrupt.  Since we cannot know which transfer generated
- * the interrupt all structs are linked together so they can be
- * searched at interrupt time.
- */
-typedef struct uhci_intr_info {
-	struct uhci_softc *sc;
-	usbd_xfer_handle xfer;
-	uhci_soft_td_t *stdstart;
-	uhci_soft_td_t *stdend;
-	LIST_ENTRY(uhci_intr_info) list;
-	int isdone;	/* used only when DIAGNOSTIC is defined */
-} uhci_intr_info_t;
-
 struct uhci_xfer {
-	struct usbd_xfer xfer;
-	uhci_intr_info_t iinfo;
-	struct usb_task	abort_task;
-	int curframe;
+	struct usbd_xfer ux_xfer;
+	struct usb_task ux_aborttask;
+	enum {
+		UX_NONE, UX_CTRL, UX_BULK, UX_INTR, UX_ISOC
+	} ux_type;
+	/* ctrl/bulk/intr */
+	struct {
+		uhci_soft_td_t **ux_stds;
+		size_t ux_nstd;
+	};
+	union {
+		/* ctrl */
+		struct {
+			uhci_soft_td_t *ux_setup;
+			uhci_soft_td_t *ux_data;
+			uhci_soft_td_t *ux_stat;
+		};
+		/* bulk/intr/isoc */
+		struct {
+			uhci_soft_td_t *ux_stdstart;
+			uhci_soft_td_t *ux_stdend;
+		};
+	};
+
+	TAILQ_ENTRY(uhci_xfer) ux_list;
+	int ux_curframe;
+	bool ux_isdone;	/* used only when DIAGNOSTIC is defined */
 };
 
-#define UXFER(xfer) ((struct uhci_xfer *)(xfer))
+#define UHCI_BUS2SC(bus)	((bus)->ub_hcpriv)
+#define UHCI_PIPE2SC(pipe)	UHCI_BUS2SC((pipe)->up_dev->ud_bus)
+#define UHCI_XFER2SC(xfer)	UHCI_BUS2SC((xfer)->ux_bus)
+#define UHCI_UPIPE2SC(d)	UHCI_BUS2SC((d)->pipe.up_dev->ud_bus)
+
+#define UHCI_XFER2UXFER(xfer)	((struct uhci_xfer *)(xfer))
+#define UHCI_PIPE2UPIPE(pipe)	((struct uhci_pipe *)(pipe))
 
 /*
  * Extra information that we need for a TD.
@@ -100,7 +113,7 @@ struct uhci_soft_td {
  * aligned.
  * NOTE: Minimum size is 32 bytes.
  */
-#define UHCI_STD_SIZE ((sizeof (struct uhci_soft_td) + UHCI_TD_ALIGN - 1) / UHCI_TD_ALIGN * UHCI_TD_ALIGN)
+#define UHCI_STD_SIZE ((sizeof(struct uhci_soft_td) + UHCI_TD_ALIGN - 1) / UHCI_TD_ALIGN * UHCI_TD_ALIGN)
 #define UHCI_STD_CHUNK 128 /*(PAGE_SIZE / UHCI_TD_SIZE)*/
 
 /*
@@ -116,7 +129,7 @@ struct uhci_soft_qh {
 	int offs;			/* QH's offset in usb_dma_t */
 };
 /* See comment about UHCI_STD_SIZE. */
-#define UHCI_SQH_SIZE ((sizeof (struct uhci_soft_qh) + UHCI_QH_ALIGN - 1) / UHCI_QH_ALIGN * UHCI_QH_ALIGN)
+#define UHCI_SQH_SIZE ((sizeof(struct uhci_soft_qh) + UHCI_QH_ALIGN - 1) / UHCI_QH_ALIGN * UHCI_QH_ALIGN)
 #define UHCI_SQH_CHUNK 128 /*(PAGE_SIZE / UHCI_QH_SIZE)*/
 
 /*
@@ -152,18 +165,15 @@ typedef struct uhci_softc {
 	uhci_soft_qh_t *sc_bulk_start;	/* dummy QH for bulk */
 	uhci_soft_qh_t *sc_bulk_end;	/* last bulk transfer */
 	uhci_soft_qh_t *sc_last_qh;	/* dummy QH at the end */
-	u_int32_t sc_loops;		/* number of QHs that wants looping */
+	uint32_t sc_loops;		/* number of QHs that wants looping */
 
 	uhci_soft_td_t *sc_freetds;	/* TD free list */
 	uhci_soft_qh_t *sc_freeqhs;	/* QH free list */
 
 	pool_cache_t sc_xferpool;	/* free xfer pool */
 
-	u_int8_t sc_addr;		/* device address */
-	u_int8_t sc_conf;		/* device configuration */
-
-	u_int8_t sc_saved_sof;
-	u_int16_t sc_saved_frnum;
+	uint8_t sc_saved_sof;
+	uint16_t sc_saved_frnum;
 
 	char sc_softwake;
 
@@ -171,21 +181,20 @@ typedef struct uhci_softc {
 	char sc_suspend;
 	char sc_dying;
 
-	LIST_HEAD(, uhci_intr_info) sc_intrhead;
+	TAILQ_HEAD(, uhci_xfer) sc_intrhead;
 
 	/* Info for the root hub interrupt "pipe". */
 	int sc_ival;			/* time between root hub intrs */
-	usbd_xfer_handle sc_intr_xfer;	/* root hub interrupt transfer */
+	struct usbd_xfer *sc_intr_xfer;	/* root hub interrupt transfer */
 	struct callout sc_poll_handle;
 
 	char sc_vendor[32];		/* vendor string for root hub */
 	int sc_id_vendor;		/* vendor ID for root hub */
 
 	device_t sc_child;		/* /dev/usb# device */
-	struct usb_dma_reserve sc_dma_reserve;
 } uhci_softc_t;
 
-usbd_status	uhci_init(uhci_softc_t *);
+int		uhci_init(uhci_softc_t *);
 int		uhci_intr(void *);
 int		uhci_detach(uhci_softc_t *, int);
 void		uhci_childdet(device_t, device_t);

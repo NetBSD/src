@@ -1,4 +1,4 @@
-/*	$NetBSD: tss.h,v 1.5 2008/10/26 00:08:15 mrg Exp $	*/
+/*	$NetBSD: tss.h,v 1.5.38.1 2017/12/03 11:35:47 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -50,7 +50,7 @@ struct x86_64_tss {
 	uint32_t	tss_reserved1;
 	uint64_t	tss_rsp0;
 	uint64_t	tss_rsp1;
-	uint64_t	tss_rsp3;
+	uint64_t	tss_rsp2;
 	uint32_t	tss_reserved2;
 	uint32_t	tss_reserved3;
 	uint64_t	tss_ist[7];

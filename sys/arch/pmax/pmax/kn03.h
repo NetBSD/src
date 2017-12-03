@@ -1,4 +1,4 @@
-/*	$NetBSD: kn03.h,v 1.12 2005/12/11 12:18:39 christos Exp $	*/
+/*	$NetBSD: kn03.h,v 1.12.122.1 2017/12/03 11:36:35 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -128,7 +128,7 @@
 #define KN03_INT_HALTB		IP_LEV6		/* Halt button */
 #define KN03_INT_MEM		IP_LEV5		/* Memory Errors */
 #define KN03_INT_RTC		IP_LEV3		/* RTC clock */
-#define KN03_INT_ASIC		IP_LEV2		/* All turbochannel */
+#define KN03_INT_ASIC		IP_LEV2		/* All TURBOchannel */
 
 #define	KN03_REG_SCSI_DMAPTR	( KN03_SYS_ASIC + IOASIC_SCSI_DMAPTR )
 #define	KN03_REG_SCSI_DMANPTR	( KN03_SYS_ASIC + IOASIC_SCSI_NEXTPTR )

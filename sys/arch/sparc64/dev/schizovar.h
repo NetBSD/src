@@ -1,4 +1,4 @@
-/*	$NetBSD: schizovar.h,v 1.6 2012/03/25 03:13:08 mrg Exp $	*/
+/*	$NetBSD: schizovar.h,v 1.6.2.1 2017/12/03 11:36:44 jdolecek Exp $	*/
 /*	$OpenBSD: schizovar.h,v 1.10 2007/01/14 16:19:49 kettenis Exp $	*/
 
 /*
@@ -50,6 +50,9 @@ struct schizo_pbm {
 	struct iommu_state	sp_is;
 	struct strbuf_ctl	sp_sb;
 	char			sp_flush[0x80];
+#ifdef DEBUG
+	bus_space_handle_t	sp_ichiph;
+#endif
 };
 
 struct schizo_softc {
@@ -64,6 +67,9 @@ struct schizo_softc {
 	int sc_busa;
 	int sc_tomatillo;
 	uint32_t sc_ver;
+#ifdef DEBUG
+	struct schizo_pbm* sc_pbm;
+#endif
 };
 
 #define	schizo_read(sc,r) \
@@ -82,3 +88,9 @@ struct schizo_softc {
     bus_space_read_4((pbm)->sp_cfgt, (pbm)->sp_cfgh, (r))
 #define	schizo_cfg_write(pbm,r,v) \
     bus_space_write_4((pbm)->sp_cfgt, (pbm)->sp_cfgh, (r), (v))
+#ifdef DEBUG
+#define	schizo_read_1(sc,r) \
+    bus_space_read_1((sc)->sc_bustag, (sc)->sc_ctrlh, (r))
+#define	tomatillo_pbm_readichip(pbm,r) \
+    bus_space_read_8((pbm)->sp_regt, (pbm)->sp_ichiph, (r))
+#endif

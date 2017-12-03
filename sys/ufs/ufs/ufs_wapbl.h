@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_wapbl.h,v 1.7.12.1 2014/08/20 00:04:45 tls Exp $	*/
+/*	$NetBSD: ufs_wapbl.h,v 1.7.12.2 2017/12/03 11:39:22 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -95,16 +95,10 @@ void	ufs_wapbl_verify_inodes(struct mount *, const char *);
 #endif
 
 static __inline int
-ufs_wapbl_begin2(struct mount *mp, struct vnode *vp1, struct vnode *vp2,
-		 const char *file, int line)
+ufs_wapbl_begin(struct mount *mp, const char *file, int line)
 {
 	if (mp->mnt_wapbl) {
 		int error;
-
-		if (vp1)
-			vref(vp1);
-		if (vp2)
-			vref(vp2);
 		error = wapbl_begin(mp->mnt_wapbl, file, line);
 		if (error)
 			return error;
@@ -117,7 +111,7 @@ ufs_wapbl_begin2(struct mount *mp, struct vnode *vp1, struct vnode *vp2,
 }
 
 static __inline void
-ufs_wapbl_end2(struct mount *mp, struct vnode *vp1, struct vnode *vp2)
+ufs_wapbl_end(struct mount *mp)
 {
 	if (mp->mnt_wapbl) {
 #ifdef WAPBL_DEBUG_INODES
@@ -125,19 +119,12 @@ ufs_wapbl_end2(struct mount *mp, struct vnode *vp1, struct vnode *vp2)
 			ufs_wapbl_verify_inodes(mp, "wapbl_end");
 #endif
 		wapbl_end(mp->mnt_wapbl);
-		if (vp2)
-			vrele(vp2);
-		if (vp1)
-			vrele(vp1);
 	}
 }
 
 #define	UFS_WAPBL_BEGIN(mp)						\
-	ufs_wapbl_begin2(mp, NULL, NULL, __FUNCTION__, __LINE__)
-#define	UFS_WAPBL_BEGIN1(mp, v1)					\
-	ufs_wapbl_begin2(mp, v1, NULL, __FUNCTION__, __LINE__)
-#define	UFS_WAPBL_END(mp)	ufs_wapbl_end2(mp, NULL, NULL)
-#define	UFS_WAPBL_END1(mp, v1)	ufs_wapbl_end2(mp, v1, NULL)
+	ufs_wapbl_begin(mp, __func__, __LINE__)
+#define	UFS_WAPBL_END(mp) ufs_wapbl_end(mp)
 
 #define	UFS_WAPBL_UPDATE(vp, access, modify, flags)			\
 	if ((vp)->v_mount->mnt_wapbl) {					\
@@ -159,20 +146,34 @@ ufs_wapbl_end2(struct mount *mp, struct vnode *vp1, struct vnode *vp2)
 #define	UFS_WAPBL_UNREGISTER_INODE(mp, ino, mode)			\
 	if (mp->mnt_wapbl) wapbl_unregister_inode(mp->mnt_wapbl, ino, mode)
 
-#define	UFS_WAPBL_REGISTER_DEALLOCATION(mp, blk, len)			\
-	if (mp->mnt_wapbl) wapbl_register_deallocation(mp->mnt_wapbl, blk, len)
+#define	UFS_WAPBL_REGISTER_DEALLOCATION(mp, blk, len, cookiep)		\
+	(mp->mnt_wapbl)							\
+	    ? wapbl_register_deallocation(mp->mnt_wapbl, blk, len,	\
+		false, cookiep)						\
+	    : 0
+
+#define	UFS_WAPBL_REGISTER_DEALLOCATION_FORCE(mp, blk, len)		\
+	(								\
+	  (mp->mnt_wapbl)						\
+	    ? wapbl_register_deallocation(mp->mnt_wapbl, blk, len,	\
+		true, NULL)						\
+	    : 0								\
+	)
+
+#define	UFS_WAPBL_UNREGISTER_DEALLOCATION(mp, cookie)			\
+	if (mp->mnt_wapbl) wapbl_unregister_deallocation(mp->mnt_wapbl, cookie)
 
 #else /* ! WAPBL */
 #define	UFS_WAPBL_BEGIN(mp) (__USE(mp), 0)
-#define	UFS_WAPBL_BEGIN1(mp, v1) 0
 #define	UFS_WAPBL_END(mp)	do { } while (0)
-#define	UFS_WAPBL_END1(mp, v1)
 #define	UFS_WAPBL_UPDATE(vp, access, modify, flags)	do { } while (0)
 #define	UFS_WAPBL_JLOCK_ASSERT(mp)
 #define	UFS_WAPBL_JUNLOCK_ASSERT(mp)
 #define	UFS_WAPBL_REGISTER_INODE(mp, ino, mode)		do { } while (0)
 #define	UFS_WAPBL_UNREGISTER_INODE(mp, ino, mode)	do { } while (0)
-#define	UFS_WAPBL_REGISTER_DEALLOCATION(mp, blk, len)
+#define	UFS_WAPBL_REGISTER_DEALLOCATION(mp, blk, len, cookiep)		0
+#define	UFS_WAPBL_REGISTER_DEALLOCATION_FORCE(mp, blk, len)		0
+#define	UFS_WAPBL_UNREGISTER_DEALLOCATION(mp, cookie)	do { } while (0)
 #endif
 
 #endif /* !_UFS_UFS_UFS_WAPBL_H_ */

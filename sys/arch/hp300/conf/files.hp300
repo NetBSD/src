@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.85.12.1 2014/08/20 00:03:00 tls Exp $
+#	$NetBSD: files.hp300,v 1.85.12.2 2017/12/03 11:36:13 jdolecek Exp $
 #
 # hp300-specific configuration info
 
@@ -146,6 +146,10 @@ file	arch/hp300/dev/dcm.c		dcm needs-flag
 # LANCE ethernet
 attach	le at dio: le24
 file	arch/hp300/dev/if_le.c		le
+
+# 425e digital audio
+attach	arcofi at dio with arcofi_dio
+file	arch/hp300/dev/arcofi_dio.c	arcofi_dio
 
 # HP-IB interfaces
 define	hpibdev { }

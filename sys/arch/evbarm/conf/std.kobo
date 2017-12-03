@@ -1,4 +1,4 @@
-#	$NetBSD: std.kobo,v 1.1.6.2 2014/08/20 00:02:53 tls Exp $
+#	$NetBSD: std.kobo,v 1.1.6.3 2017/12/03 11:36:03 jdolecek Exp $
 #
 # standard NetBSD/evbarm options for Kobo
 
@@ -9,6 +9,7 @@ include 	"arch/evbarm/conf/std.evbarm"
 include	  	"arch/evbarm/conf/files.kobo"
 
 options 	MODULAR
+options 	MODULAR_DEFAULT_AUTOLOAD
 options 	__HAVE_FAST_SOFTINTS		# should be in types.h
 options 	__HAVE_CPU_COUNTER
 options         __HAVE_MM_MD_DIRECT_MAPPED_PHYS

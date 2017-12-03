@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.16 2007/10/17 19:57:09 garbled Exp $	*/
+/*	$NetBSD: clock.c,v 1.16.64.1 2017/12/03 11:36:42 jdolecek Exp $	*/
 
 /*
  * Copyright 1997
@@ -154,7 +154,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.16 2007/10/17 19:57:09 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.16.64.1 2017/12/03 11:36:42 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -349,7 +349,7 @@ clockintr(void *arg)
 	/* check to see if the high-availability timer needs to be unwedged */
 	if (++hatUnwedgeCtr >= (hz / HAT_MIN_FREQ)) {
 		hatUnwedgeCtr = 0;
-		hatUnwedge(); 
+		hatUnwedge();
 	}
 
 #ifdef TESTHAT

@@ -1,4 +1,4 @@
-/*	$NetBSD: kirkwood.c,v 1.7.2.1 2014/08/20 00:02:47 tls Exp $	*/
+/*	$NetBSD: kirkwood.c,v 1.7.2.2 2017/12/03 11:35:54 jdolecek Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kirkwood.c,v 1.7.2.1 2014/08/20 00:02:47 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kirkwood.c,v 1.7.2.2 2017/12/03 11:35:54 jdolecek Exp $");
 
 #define _INTR_PRIVATE
 
@@ -55,6 +55,9 @@ static void kirkwood_pic_establish_irq(struct pic_softc *, struct intrsource *);
 static void kirkwood_pic_source_name(struct pic_softc *, int, char *, size_t);
 
 static int kirkwood_find_pending_irqs(void);
+
+static void kirkwood_getclks(vaddr_t);
+static int kirkwood_clkgating(struct marvell_attach_args *);
 
 static const char * const sources[64] = {
     "MainHighSum(0)",  "Bridge(1)",       "Host2CPU DB(2)",  "CPU2Host DB(3)",
@@ -111,15 +114,14 @@ static struct {
 
 
 /*
- * kirkwood_intr_bootstrap:
+ * kirkwood_bootstrap:
  *
- *	Initialize the rest of the interrupt subsystem, making it
+ *	Initialize the rest of the Kirkwood dependencies, making it
  *	ready to handle interrupts from devices.
  */
 void
-kirkwood_intr_bootstrap(void)
+kirkwood_bootstrap(vaddr_t iobase)
 {
-	extern void (*mvsoc_intr_init)(void);
 
 	/* disable all interrupts */
 	write_mlmbreg(KIRKWOOD_MLMB_MIRQIMLR, 0);
@@ -139,6 +141,9 @@ kirkwood_intr_bootstrap(void)
 	}
 	gpp_irqbase = 96;	/* Main Low(32) + High(32) + Bridge(32) */
 #endif
+
+	kirkwood_getclks(iobase);
+	mvsoc_clkgating = kirkwood_clkgating;
 }
 
 static void
@@ -224,8 +229,8 @@ kirkwood_find_pending_irqs(void)
  * Clock functions
  */
 
-void
-kirkwood_getclks(bus_addr_t iobase)
+static void
+kirkwood_getclks(vaddr_t iobase)
 {
 	uint32_t reg;
 	uint16_t model;
@@ -282,7 +287,7 @@ kirkwood_getclks(bus_addr_t iobase)
 
 }
 
-int
+static int
 kirkwood_clkgating(struct marvell_attach_args *mva)
 {
 	uint32_t val;

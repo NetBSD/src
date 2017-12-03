@@ -1,40 +1,47 @@
-/*	$NetBSD: iconv.c,v 1.12.98.1 2014/08/20 00:04:36 tls Exp $	*/
+/*	$NetBSD: iconv.c,v 1.12.98.2 2017/12/03 11:39:05 jdolecek Exp $	*/
 
 /* Public domain */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iconv.c,v 1.12.98.1 2014/08/20 00:04:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iconv.c,v 1.12.98.2 2017/12/03 11:39:05 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/errno.h>
-#include <sys/malloc.h>
 
 #include <netsmb/iconv.h>
 
+/* stubs for iconv functions */
+int iconv_open_stub(const char *, const char *, void **);
+int iconv_close_stub(void *);
+int iconv_conv_stub(void *, const char **, size_t *, char **, size_t *);
+__weak_alias(iconv_open, iconv_open_stub);
+__weak_alias(iconv_close, iconv_close_stub);
+__weak_alias(iconv_conv, iconv_conv_stub);
+
 int
-iconv_open(const char *to, const char *from,
+iconv_open_stub(const char *to, const char *from,
     void **handle)
 {
 	return 0;
 }
 
 int
-iconv_close(void *handle)
+iconv_close_stub(void *handle)
 {
 	return 0;
 }
 
 int
-iconv_conv(void *handle, const char **inbuf,
+iconv_conv_stub(void *handle, const char **inbuf,
     size_t *inbytesleft, char **outbuf, size_t *outbytesleft)
 {
-	if (*inbytesleft > *outbytesleft)
-		return(E2BIG);
-
 	if (inbuf == NULL)
 		return(0); /* initial shift state */
+
+	if (*inbytesleft > *outbytesleft)
+		return(E2BIG);
 
 	(void)memcpy(*outbuf, *inbuf, *inbytesleft);
 
@@ -59,7 +66,11 @@ iconv_convstr(void *handle, char *dst, const char *src, size_t l)
 		strlcpy(dst, src, l);
 		return dst;
 	}
-	inlen = outlen = strlen(src);
+	inlen = strlen(src);
+	outlen = l - 1;
+	error = iconv_conv(handle, NULL, NULL, &p, &outlen);
+	if (error)
+		return NULL;
 	error = iconv_conv(handle, &src, &inlen, &p, &outlen);
 	if (error)
 		return NULL;
@@ -82,6 +93,9 @@ iconv_convmem(void *handle, void *dst, const void *src, int size)
 		return dst;
 	}
 	inlen = outlen = size;
+	error = iconv_conv(handle, NULL, NULL, &d, &outlen);
+	if (error)
+		return NULL;
 	error = iconv_conv(handle, &s, &inlen, &d, &outlen);
 	if (error)
 		return NULL;

@@ -1,5 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.2 2001/05/12 22:35:29 chs Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.2.174.1 2017/12/03 11:36:33 jdolecek Exp $	*/
 
 #include <m68k/db_machdep.h>
 #define DB_ELF_SYMBOLS
-#define DB_ELFSIZE 32

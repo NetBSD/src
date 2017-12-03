@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.93 2012/01/30 04:25:15 mrg Exp $ */
+/*	$NetBSD: sbus.c,v 1.93.6.1 2017/12/03 11:36:44 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1999-2002 Eduardo Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.93 2012/01/30 04:25:15 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.93.6.1 2017/12/03 11:36:44 jdolecek Exp $");
 
 #include "opt_ddb.h"
 
@@ -178,7 +178,7 @@ sbus_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_bustag = ma->ma_bustag;
 	sc->sc_dmatag = ma->ma_dmatag;
-	sc->sc_ign = ma->ma_interrupts[0] & INTMAP_IGN;		
+	sc->sc_ign = ma->ma_interrupts[0] & INTMAP_IGN;
 
 	/* XXXX Use sysio PROM mappings for interrupt vector regs. */
 	sparc_promaddr_to_handle(sc->sc_bustag,	ma->ma_address[0], &sc->sc_bh);
@@ -254,8 +254,7 @@ sbus_attach(device_t parent, device_t self, void *aux)
 	iommu_init(name, &sc->sc_is, 0, -1);
 
 	/* Enable the over temp intr */
-	ih = (struct intrhand *)
-		malloc(sizeof(struct intrhand), M_DEVBUF, M_NOWAIT);
+	ih = intrhand_alloc();
 	ih->ih_map = &sc->sc_sysio->therm_int_map;
 	ih->ih_clr = NULL; /* &sc->sc_sysio->therm_clr_int; */
 	ih->ih_fun = sbus_overtemp;
@@ -384,6 +383,13 @@ _sbus_bus_map(bus_space_tag_t t, bus_addr_t addr, bus_size_t size, int flags,
 			return (error);
 	}
 
+	/*
+	 * BUS_SPACE_MAP_PREFETCHABLE doesn't work right through sbus, so weed
+	 * it out for now until we know better
+	 */
+
+	flags &= ~BUS_SPACE_MAP_PREFETCHABLE;
+
 	return (bus_space_map(t->parent, addr, size, flags, hp));
 }
 
@@ -506,12 +512,9 @@ sbus_intr_establish(bus_space_tag_t t, int pri, int level,
 	struct sbus_softc *sc = t->cookie;
 	struct intrhand *ih;
 	int ipl;
-	long vec = pri; 
+	long vec = pri;
 
-	ih = (struct intrhand *)
-		malloc(sizeof(struct intrhand), M_DEVBUF, M_NOWAIT);
-	if (ih == NULL)
-		return (NULL);
+	ih = intrhand_alloc();
 
 	if ((vec & SBUS_INTR_COMPAT) != 0)
 		ipl = vec & ~SBUS_INTR_COMPAT;

@@ -1,12 +1,8 @@
-/*      $NetBSD: usb_verbose.h,v 1.3 2010/08/07 21:09:48 christos Exp $ */
+/*      $NetBSD: usb_verbose.h,v 1.3.24.1 2017/12/03 11:37:34 jdolecek Exp $ */
 
 /*
- * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
+ * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (lennart@augustsson.net) at
- * Carlstedt Research & Technology.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,13 +29,8 @@
 #ifndef _DEV_USB_USBVERBOSE_H_
 #define _DEV_USB_USBVERBOSE_H_
 
-typedef u_int16_t usb_vendor_id_t;
-typedef u_int16_t usb_product_id_t;
+#include <dev/dev_verbose.h>
 
-extern void (*get_usb_vendor)(char *, size_t, usb_vendor_id_t);
-extern void (*get_usb_product)(char *, size_t, usb_vendor_id_t,
-    usb_product_id_t);
-
-extern int usb_verbose_loaded;
+DEV_VERBOSE_DECLARE(usb);
 
 #endif /* _DEV_USB_USBVERBOSE_H_ */

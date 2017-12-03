@@ -1,4 +1,4 @@
-/*	$NetBSD: raidframeio.h,v 1.6 2009/11/17 18:54:26 jld Exp $ */
+/*	$NetBSD: raidframeio.h,v 1.6.22.1 2017/12/03 11:37:31 jdolecek Exp $ */
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -131,5 +131,6 @@
 #define RAIDFRAME_PARITYMAP_GET_DISABLE _IOR('r', 38, int)
 #define RAIDFRAME_PARITYMAP_SET_DISABLE _IOW('r', 39, int)
 #define RAIDFRAME_PARITYMAP_SET_PARAMS _IOW('r', 40, struct rf_pmparams)
+#define RAIDFRAME_SET_LAST_UNIT _IOW('r', 41, int)
 
 #endif				/* !_RF_RAIDFRAMEIO_H_ */

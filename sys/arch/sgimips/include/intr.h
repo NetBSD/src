@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.27 2011/02/20 07:59:50 matt Exp $	*/
+/*	$NetBSD: intr.h,v 1.27.14.1 2017/12/03 11:36:41 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -43,8 +43,6 @@
 #include <sys/queue.h>
 #include <sys/types.h>
 #include <sys/evcnt.h>
-#include <mips/cpuregs.h>
-#include <mips/locore.h>
 
 #define NINTR	32
 

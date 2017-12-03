@@ -1,4 +1,4 @@
-/*	$NetBSD: bandit.c,v 1.30 2011/10/26 04:56:23 macallan Exp $	*/
+/*	$NetBSD: bandit.c,v 1.30.12.1 2017/12/03 11:36:25 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bandit.c,v 1.30 2011/10/26 04:56:23 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bandit.c,v 1.30.12.1 2017/12/03 11:36:25 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -46,6 +46,7 @@ struct bandit_softc {
 	struct genppc_pci_chipset sc_pc;
 	struct powerpc_bus_space sc_iot;
 	struct powerpc_bus_space sc_memt;
+	boolean_t sc_is_chaos;
 };
 
 static void bandit_attach(device_t, device_t, void *);
@@ -53,6 +54,7 @@ static int bandit_match(device_t, cfdata_t, void *);
 
 static pcireg_t bandit_conf_read(void *, pcitag_t, int);
 static void bandit_conf_write(void *, pcitag_t, int, pcireg_t);
+static void chaos_conf_write(void *, pcitag_t, int, pcireg_t);
 
 static void bandit_init(struct bandit_softc *);
 
@@ -88,6 +90,8 @@ bandit_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal("\n");
 	sc->sc_dev = self;
+
+	sc->sc_is_chaos = (strcmp(ca->ca_name, "chaos") == 0);
 
 	/* Bandit address */
 	if (OF_getprop(node, "reg", reg, sizeof(reg)) < 8)
@@ -131,7 +135,10 @@ bandit_attach(device_t parent, device_t self, void *aux)
 	pc->pc_data = mapiodev(reg[0] + 0xc00000, 8, false);
 	pc->pc_bus = busrange[0];
 	pc->pc_conf_read = bandit_conf_read;
-	pc->pc_conf_write = bandit_conf_write;
+	if (sc->sc_is_chaos) {
+		pc->pc_conf_write = chaos_conf_write;
+	} else
+		pc->pc_conf_write = bandit_conf_write;
 
 	bandit_init(sc);
 
@@ -155,6 +162,9 @@ bandit_conf_read(void *cookie, pcitag_t tag, int reg)
 	pcireg_t data;
 	int bus, dev, func, s;
 	uint32_t x;
+
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return (pcireg_t) -1;
 
 	pci_decompose_tag(pc, tag, &bus, &dev, &func);
 
@@ -195,6 +205,9 @@ bandit_conf_write(void *cookie, pcitag_t tag, int reg, pcireg_t data)
 	int bus, dev, func, s;
 	u_int32_t x;
 
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return;
+
 	pci_decompose_tag(pc, tag, &bus, &dev, &func);
 
 	if (func > 7)
@@ -217,6 +230,15 @@ bandit_conf_write(void *cookie, pcitag_t tag, int reg, pcireg_t data)
 	DELAY(10);
 
 	splx(s);
+}
+
+/*
+ * XXX
+ * /chaos really hates writes to config space, so we just don't do them
+ */
+static void
+chaos_conf_write(void *cookie, pcitag_t tag, int reg, pcireg_t data)
+{
 }
 
 #define	PCI_BANDIT		11

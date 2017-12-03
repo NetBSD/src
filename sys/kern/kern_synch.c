@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.305.2.1 2014/08/20 00:04:29 tls Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.305.2.2 2017/12/03 11:38:44 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.305.2.1 2014/08/20 00:04:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.305.2.2 2017/12/03 11:38:44 jdolecek Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -907,7 +907,7 @@ setrunnable(struct lwp *l)
 		 * If we're being traced (possibly because someone attached us
 		 * while we were stopped), check for a signal from the debugger.
 		 */
-		if ((p->p_slflag & PSL_TRACED) != 0 && p->p_xstat != 0)
+		if ((p->p_slflag & PSL_TRACED) != 0 && p->p_xsig != 0)
 			signotify(l);
 		p->p_nrlwps++;
 		break;
@@ -985,7 +985,13 @@ suspendsched(void)
 			continue;
 		}
 
-		p->p_stat = SSTOP;
+		if (p->p_stat != SSTOP) {
+			if (p->p_stat != SZOMB && p->p_stat != SDEAD) {
+				p->p_pptr->p_nstopchild++;
+				p->p_waited = 0;
+			}
+			p->p_stat = SSTOP;
+		}
 
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 			if (l == curlwp)
@@ -1079,9 +1085,11 @@ sched_lendpri(struct lwp *l, pri_t pri)
 		KASSERT(lwp_locked(l, l->l_cpu->ci_schedstate.spc_mutex));
 		sched_dequeue(l);
 		l->l_inheritedprio = pri;
+		l->l_auxprio = MAX(l->l_inheritedprio, l->l_protectprio);
 		sched_enqueue(l, false);
 	} else {
 		l->l_inheritedprio = pri;
+		l->l_auxprio = MAX(l->l_inheritedprio, l->l_protectprio);
 	}
 	resched_cpu(l);
 }
@@ -1200,11 +1208,11 @@ sched_pstats(void)
 		if (__predict_false(runtm >= rlim->rlim_cur)) {
 			if (runtm >= rlim->rlim_max) {
 				sig = SIGKILL;
-				log(LOG_NOTICE, "pid %d is killed: %s\n",
-					p->p_pid, "exceeded RLIMIT_CPU");
+				log(LOG_NOTICE,
+				    "pid %d, command %s, is killed: %s\n",
+				    p->p_pid, p->p_comm, "exceeded RLIMIT_CPU");
 				uprintf("pid %d, command %s, is killed: %s\n",
-					p->p_pid, p->p_comm,
-					"exceeded RLIMIT_CPU");
+				    p->p_pid, p->p_comm, "exceeded RLIMIT_CPU");
 			} else {
 				sig = SIGXCPU;
 				if (rlim->rlim_cur < rlim->rlim_max)

@@ -1,4 +1,4 @@
-/*	$NetBSD: cec.c,v 1.12.22.1 2012/11/20 03:02:09 tls Exp $	*/
+/*	$NetBSD: cec.c,v 1.12.22.2 2017/12/03 11:37:04 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cec.c,v 1.12.22.1 2012/11/20 03:02:09 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cec.c,v 1.12.22.2 2017/12/03 11:37:04 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -207,8 +207,8 @@ cecattach(device_t parent, device_t self, void *aux)
 		maxsize = isa_dmamaxsize(sc->sc_ic, sc->sc_drq);
 		if (isa_dmamap_create(sc->sc_ic, sc->sc_drq,
 		    maxsize, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW)) {
-			aprint_error_dev(sc->sc_dev, "unable to create map for drq %d\n",
-			    sc->sc_drq);
+			aprint_error_dev(sc->sc_dev,
+			    "unable to create map for drq %d\n", sc->sc_drq);
 			sc->sc_flags &= ~CECF_USEDMA;
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ixpide.c,v 1.24.2.1 2012/10/09 13:36:05 bouyer Exp $	*/
+/*	$NetBSD: ixpide.c,v 1.24.2.2 2017/12/03 11:37:08 jdolecek Exp $	*/
 
 /*
  *  Copyright (c) 2004 The NetBSD Foundation.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixpide.c,v 1.24.2.1 2012/10/09 13:36:05 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixpide.c,v 1.24.2.2 2017/12/03 11:37:08 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,7 +43,8 @@ static bool	ixpide_suspend(device_t, const pmf_qual_t *);
 static int	ixpide_match(device_t, cfdata_t, void *);
 static void	ixpide_attach(device_t, device_t, void *);
 
-static void	ixp_chip_map(struct pciide_softc *, const struct pci_attach_args *);
+static void	ixp_chip_map(struct pciide_softc *,
+    const struct pci_attach_args *);
 static void	ixp_setup_channel(struct ata_channel *);
 
 CFATTACH_DECL_NEW(ixpide, sizeof(struct pciide_softc),
@@ -220,6 +221,7 @@ ixp_setup_channel(struct ata_channel *chp)
 	pci_conf_write(sc->sc_pc, sc->sc_tag, IXP_MDMA_TIMING, mdma_timing);
 	pci_conf_write(sc->sc_pc, sc->sc_tag, IXP_PIO_CTL, pio);
 	pci_conf_write(sc->sc_pc, sc->sc_tag, IXP_PIO_TIMING, pio_timing);
-	ATADEBUG_PRINT(("ixp_setup_channel: udma = %08x, mdma_timing = %08x, pio_mode = %08x,"
-	    " pio_timing = %08x\n", udma, mdma_timing, pio, pio_timing), DEBUG_PROBE);
+	ATADEBUG_PRINT(("ixp_setup_channel: udma = %08x, mdma_timing = %08x, "
+	    "pio_mode = %08x, pio_timing = %08x\n", udma, mdma_timing, pio,
+	    pio_timing), DEBUG_PROBE);
 }

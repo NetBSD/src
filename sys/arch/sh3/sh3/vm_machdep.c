@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.75.2.1 2014/08/20 00:03:23 tls Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.75.2.2 2017/12/03 11:36:42 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.75.2.1 2014/08/20 00:03:23 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.75.2.2 2017/12/03 11:36:42 jdolecek Exp $");
 
 #include "opt_kstack_debug.h"
 
@@ -102,6 +102,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.75.2.1 2014/08/20 00:03:23 tls Exp 
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_page.h>
+#include <uvm/uvm_physseg.h>
 
 #include <sh3/locore.h>
 #include <sh3/cpu.h>
@@ -387,7 +388,7 @@ int
 mm_md_physacc(paddr_t pa, vm_prot_t prot)
 {
 
-	if (atop(pa) < vm_physmem[0].start || PHYS_TO_VM_PAGE(pa) != NULL) {
+	if (atop(pa) < uvm_physseg_get_start(uvm_physseg_get_first()) || PHYS_TO_VM_PAGE(pa) != NULL) {
 		return 0;
 	}
 	return EFAULT;

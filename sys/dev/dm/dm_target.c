@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target.c,v 1.18 2011/08/28 07:22:48 ahoka Exp $      */
+/*        $NetBSD: dm_target.c,v 1.18.12.1 2017/12/03 11:37:00 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -176,7 +176,7 @@ dm_target_insert(dm_target_t * dm_target)
 
 
 /*
- * Remove target from TAIL, target is selected with it's name.
+ * Remove target from TAIL, target is selected with its name.
  */
 int
 dm_target_rem(char *dm_target_name)

@@ -1,4 +1,4 @@
-/*      $NetBSD: if_qe.c,v 1.71.18.1 2014/08/20 00:03:49 tls Exp $ */
+/*      $NetBSD: if_qe.c,v 1.71.18.2 2017/12/03 11:37:31 jdolecek Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -10,12 +10,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed at Ludd, University of
- *      Lule}, Sweden and its contributors.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -38,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qe.c,v 1.71.18.1 2014/08/20 00:03:49 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qe.c,v 1.71.18.2 2017/12/03 11:37:31 jdolecek Exp $");
 
 #include "opt_inet.h"
 
@@ -142,7 +136,7 @@ qematch(device_t parent, cfdata_t cf, void *aux)
 #define	PROBESIZE	4096
 	struct qe_ring *ring;
 	struct	qe_ring *rp;
-	int error;
+	int error, match;
 
 	ring = malloc(PROBESIZE, M_TEMP, M_WAITOK|M_ZERO);
 	memset(sc, 0, sizeof(*sc));
@@ -161,8 +155,10 @@ qematch(device_t parent, cfdata_t cf, void *aux)
 	 */
 	ui.ui_size = PROBESIZE;
 	ui.ui_vaddr = (void *)&ring[0];
-	if ((error = uballoc(uh, &ui, UBA_CANTWAIT)))
-		return 0;
+	if ((error = uballoc(uh, &ui, UBA_CANTWAIT))) {
+		match = 0;
+		goto out0;
+	}
 
 	/*
 	 * Init a simple "fake" receive and transmit descriptor that
@@ -192,12 +188,14 @@ qematch(device_t parent, cfdata_t cf, void *aux)
 	QE_WCSR(QE_CSR_XMTH, HIWORD(rp));
 	DELAY(10000);
 
+	match = 1;
+
 	/*
 	 * All done with the bus resources.
 	 */
 	ubfree(uh, &ui);
-	free(ring, M_TEMP);
-	return 1;
+out0:	free(ring, M_TEMP);
+	return match;
 }
 
 /*
@@ -587,13 +585,12 @@ qeintr(void *arg)
 			len = ((status1 & QE_RBL_HI) |
 			    (status2 & QE_RBL_LO)) + 60;
 			qe_add_rxbuf(sc, sc->sc_nextrx);
-			m->m_pkthdr.rcvif = ifp;
+			m_set_rcvif(m, ifp);
 			m->m_pkthdr.len = m->m_len = len;
 			if (++sc->sc_nextrx == RXDESCS)
 				sc->sc_nextrx = 0;
-			bpf_mtap(ifp, m);
 			if ((status1 & QE_ESETUP) == 0)
-				(*ifp->if_input)(ifp, m);
+				if_percpuq_enqueue(ifp->if_percpuq, m);
 			else
 				m_freem(m);
 		}

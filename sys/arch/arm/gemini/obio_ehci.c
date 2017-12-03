@@ -1,4 +1,4 @@
-/*	$NetBSD: obio_ehci.c,v 1.3 2012/07/20 02:14:01 matt Exp $	*/
+/*	$NetBSD: obio_ehci.c,v 1.3.2.1 2017/12/03 11:35:53 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_ehci.c,v 1.3 2012/07/20 02:14:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_ehci.c,v 1.3.2.1 2017/12/03 11:35:53 jdolecek Exp $");
 
 #include "locators.h"
 
@@ -101,10 +101,9 @@ ehci_obio_attach(device_t parent, device_t self, void *aux)
 	struct ehci_softc * const sc = device_private(self);
 	struct obio_attach_args * const obio = aux;
 	const char * const devname = device_xname(self);
-	usbd_status r;
 
 	sc->sc_dev = self;
-	sc->sc_bus.hci_private = sc;
+	sc->sc_bus.ub_hcpriv = sc;
 	sc->iot = obio->obio_iot;
 
 	aprint_naive(": EHCI USB controller\n");
@@ -117,7 +116,7 @@ ehci_obio_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_bus.dmatag = obio->obio_dmat;
+	sc->sc_bus.ub_dmatag = obio->obio_dmat;
 
 	/* Disable interrupts, so we don't get any spurious ones. */
 	sc->sc_offs = EREAD1(sc, EHCI_CAPLENGTH);
@@ -131,15 +130,15 @@ ehci_obio_attach(device_t parent, device_t self, void *aux)
 		    ehci_obio_intr, sc);
 	}
 
-	sc->sc_bus.usbrev = USBREV_2_0;
+	sc->sc_bus.ub_revision = USBREV_2_0;
 
 	/* Figure out vendor for root hub descriptor. */
 	sc->sc_id_vendor = PCI_VENDOR_FARADAY;
 	strlcpy(sc->sc_vendor, "SL351x", sizeof(sc->sc_vendor));
 
-	r = ehci_init(sc);
-	if (r != USBD_NORMAL_COMPLETION) {
-		aprint_error("%s: init failed, error=%d\n", devname, r);
+	int err = ehci_init(sc);
+	if (err) {
+		aprint_error("%s: init failed, error=%d\n", devname, err);
 		return;
 	}
 

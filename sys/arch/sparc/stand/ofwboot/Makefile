@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.29.14.1 2014/08/20 00:03:25 tls Exp $
+#	$NetBSD: Makefile,v 1.29.14.2 2017/12/03 11:36:44 jdolecek Exp $
+
+.include <bsd.init.mk>
 
 CURDIR=	${.CURDIR}
 S=	${CURDIR}/../../../..
@@ -11,10 +13,11 @@ WARNS?=		2
 KLINK_MACHINE=	sparc64
 
 PROG?=		ofwboot
-SRCS=		srt0.s Locore.c boot.c ofdev.c alloc.c net.c netif_of.c vers.c
+SRCS=		srt0.s Locore.c boot.c ofdev.c alloc.c net.c netif_of.c
 SRCS+=		bootinfo.c loadfile_machdep.c promlib.c prf.c isfloppy.c
 .if ${MACHINE_ARCH} == "sparc64"
 SRCS+=		hvcall.S
+CPPFLAGS+=	-DSUN4V
 .endif
 .PATH:		${S}/arch/sparc64/sparc64 ${S}/arch/sparc/stand/common
 
@@ -25,13 +28,10 @@ LIBC=
 LIBCRTBEGIN=
 LIBCRTEND=
 
-COPTS+=		-ffreestanding
+COPTS+=		-ffreestanding -mcpu=v9
 CWARNFLAGS+=	-Wno-main
-CFLAGS+=	${COPTS} ${CEXTRAFLAGS}
-CPPFLAGS+=	-D_STANDALONE -DSUN4U
-.if ${MACHINE_ARCH} == "sparc64"
-CPPFLAGS+=	-DSUN4V
-.endif
+CFLAGS+=	${COPTS}
+CPPFLAGS+=	-D_STANDALONE
 CPPFLAGS+=	-DBOOT_ELF32 -DBOOT_ELF64 -DBOOT_AOUT
 CPPFLAGS+=	-DNETBOOT
 CPPFLAGS+=	-DSUPPORT_DHCP
@@ -86,14 +86,10 @@ SAMISCCPPFLAGS+= -DCOMPAT_SOLARIS_UFS
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
 
+.include "${S}/conf/newvers_stand.mk"
+
 .include <bsd.own.mk>
 .include <bsd.klinks.mk>
-
-vers.c: version
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
-	    ${CURDIR}/version "sparc64" ${NEWVERSWHAT}
-
-CLEANFILES+= vers.c
 
 .if CROSS
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
@@ -103,27 +99,17 @@ ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 .else
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	${_MKTARGET_LINK}
-	${LD} -X -N -Ttext ${RELOC} -e ${ENTRY} -o ${PROG} \
+	${LD} -X -N -S -Ttext ${RELOC} -e ${ENTRY} -o ${PROG} \
 	    ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}	# native linker
 .endif
 
 .include <bsd.prog.mk>
 
-.if ${MACHINE_ARCH} == "sparc64"
+CPUFLAGS+=		-mcpu=v9
 AFLAGS+=		-Wa,-Av9a
-CEXTRAFLAGS?=		-D_LP64
-.else
-AFLAGS+=		-Wa,-Av8plusa
-.endif
-
-.if CROSS
 AFLAGS+=		-x assembler-with-cpp -D_LOCORE -D__ELF__
-CEXTRAFLAGS?=		-D_LP64
-.else
-AFLAGS+=		-x assembler-with-cpp -D_LOCORE -D__ELF__ ${CEXTRAFLAGS}
-.endif
 
-NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
+NORMAL_S=	${CC} ${AFLAGS} ${AFLAGS.${<:T}}  ${CPPFLAGS} -c $<
 srt0.o: srt0.s
 	${NORMAL_S}
 

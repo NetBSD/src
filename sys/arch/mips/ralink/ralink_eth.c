@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_eth.c,v 1.6 2012/07/22 14:32:52 matt Exp $	*/
+/*	$NetBSD: ralink_eth.c,v 1.6.2.1 2017/12/03 11:36:28 jdolecek Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
 /* ralink_eth.c -- Ralink Ethernet Driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_eth.c,v 1.6 2012/07/22 14:32:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_eth.c,v 1.6.2.1 2017/12/03 11:36:28 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -63,12 +63,12 @@ __KERNEL_RCSID(0, "$NetBSD: ralink_eth.c,v 1.6 2012/07/22 14:32:52 matt Exp $");
 #include <mips/ralink/ralink_reg.h>
 #if 0
 #define CPDEBUG				/* XXX TMP DEBUG FIXME */
-#define RALINK_ETH_DEBUG			/* XXX TMP DEBUG FIXME */
+#define RALINK_ETH_DEBUG		/* XXX TMP DEBUG FIXME */
 #define ENABLE_RALINK_DEBUG_ERROR 1
 #define ENABLE_RALINK_DEBUG_MISC  1
 #define ENABLE_RALINK_DEBUG_INFO  1
 #define ENABLE_RALINK_DEBUG_FORCE 1
-#define ENABLE_RALINK_DEBUG_REG 1
+#define ENABLE_RALINK_DEBUG_REG   1
 #endif
 #include <mips/ralink/ralink_debug.h>
 
@@ -77,49 +77,49 @@ __KERNEL_RCSID(0, "$NetBSD: ralink_eth.c,v 1.6 2012/07/22 14:32:52 matt Exp $");
 struct ralink_rx_desc {
 	uint32_t data_ptr;
 	uint32_t rxd_info1;
-#define RXD_LEN1(x)  (((x) >> 0) & 0x3fff)
-#define RXD_LAST1    (1 << 14)
-#define RXD_LEN0(x)  (((x) >> 16) & 0x3fff)
-#define RXD_LAST0    (1 << 30)
-#define RXD_DDONE    (1 << 31)
+#define RXD_LEN1(x)	(((x) >> 0) & 0x3fff)
+#define RXD_LAST1	(1 << 14)
+#define RXD_LEN0(x)	(((x) >> 16) & 0x3fff)
+#define RXD_LAST0	(1 << 30)
+#define RXD_DDONE	(1 << 31)
 	uint32_t unused;
 	uint32_t rxd_info2;
-#define RXD_FOE(x)   (((x) >> 0) & 0x3fff)
-#define RXD_FVLD     (1 << 14)
-#define RXD_INFO(x)  (((x) >> 16) & 0xff)
-#define RXD_PORT(x)  (((x) >> 24) & 0x7)
-#define RXD_INFO_CPU (1 << 27)
-#define RXD_L4_FAIL  (1 << 28)
-#define RXD_IP_FAIL  (1 << 29)
-#define RXD_L4_VLD   (1 << 30)
-#define RXD_IP_VLD   (1 << 31)
+#define RXD_FOE(x)	(((x) >> 0) & 0x3fff)
+#define RXD_FVLD	(1 << 14)
+#define RXD_INFO(x)	(((x) >> 16) & 0xff)
+#define RXD_PORT(x)	(((x) >> 24) & 0x7)
+#define RXD_INFO_CPU	(1 << 27)
+#define RXD_L4_FAIL	(1 << 28)
+#define RXD_IP_FAIL	(1 << 29)
+#define RXD_L4_VLD	(1 << 30)
+#define RXD_IP_VLD	(1 << 31)
 };
 
-/* PDMA RX Descriptor Format */
+/* PDMA TX Descriptor Format */
 struct ralink_tx_desc {
 	uint32_t data_ptr0;
 	uint32_t txd_info1;
-#define TXD_LEN1(x)  (((x) & 0x3fff) << 0)
-#define TXD_LAST1    (1 << 14)
-#define TXD_BURST    (1 << 15)
-#define TXD_LEN0(x)  (((x) & 0x3fff) << 16)
-#define TXD_LAST0    (1 << 30)
-#define TXD_DDONE    (1 << 31)
+#define TXD_LEN1(x)	(((x) & 0x3fff) << 0)
+#define TXD_LAST1	(1 << 14)
+#define TXD_BURST	(1 << 15)
+#define TXD_LEN0(x)	(((x) & 0x3fff) << 16)
+#define TXD_LAST0	(1 << 30)
+#define TXD_DDONE	(1 << 31)
 	uint32_t data_ptr1;
 	uint32_t txd_info2;
-#define TXD_VIDX(x)  (((x) & 0xf) << 0)
-#define TXD_VPRI(x)  (((x) & 0x7) << 4)
-#define TXD_VEN      (1 << 7)
-#define TXD_SIDX(x)  (((x) & 0xf) << 8)
-#define TXD_SEN(x)   (1 << 13)
-#define TXD_QN(x)    (((x) & 0x7) << 16)
-#define TXD_PN(x)    (((x) & 0x7) << 24)
-#define  TXD_PN_CPU   0
-#define  TXD_PN_GDMA1 1
-#define  TXD_PN_GDMA2 2
-#define TXD_TCP_EN   (1 << 29)
-#define TXD_UDP_EN   (1 << 30)
-#define TXD_IP_EN    (1 << 31)
+#define TXD_VIDX(x)	(((x) & 0xf) << 0)
+#define TXD_VPRI(x)	(((x) & 0x7) << 4)
+#define TXD_VEN		(1 << 7)
+#define TXD_SIDX(x)	(((x) & 0xf) << 8)
+#define TXD_SEN(x)	(1 << 13)
+#define TXD_QN(x)	(((x) & 0x7) << 16)
+#define TXD_PN(x)	(((x) & 0x7) << 24)
+#define  TXD_PN_CPU	0
+#define  TXD_PN_GDMA1	1
+#define  TXD_PN_GDMA2	2
+#define TXD_TCP_EN	(1 << 29)
+#define TXD_UDP_EN	(1 << 30)
+#define TXD_IP_EN	(1 << 31)
 };
 
 /* TODO:
@@ -255,7 +255,8 @@ static int  ralink_eth_mii_read(device_t, int, int);
 static void ralink_eth_mii_write(device_t, int, int, int);
 
 CFATTACH_DECL_NEW(reth, sizeof(struct ralink_eth_softc),
-    ralink_eth_match, ralink_eth_attach, ralink_eth_detach, ralink_eth_activate);
+    ralink_eth_match, ralink_eth_attach, ralink_eth_detach,
+    ralink_eth_activate);
 
 static inline uint32_t
 sy_read(const ralink_eth_softc_t *sc, const bus_size_t off)
@@ -317,51 +318,56 @@ ralink_eth_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": Ralink Ethernet\n");
 
 	evcnt_attach_dynamic(&sc->sc_evcnt_spurious_intr, EVCNT_TYPE_INTR, NULL,
-		device_xname(self), "spurious intr");
+	    device_xname(self), "spurious intr");
 	evcnt_attach_dynamic(&sc->sc_evcnt_rxintr, EVCNT_TYPE_INTR, NULL,
-		device_xname(self), "rxintr");
+	    device_xname(self), "rxintr");
 	evcnt_attach_dynamic(&sc->sc_evcnt_rxintr_skip_len,
-		EVCNT_TYPE_INTR, &sc->sc_evcnt_rxintr,
-		device_xname(self), "rxintr skip: no room for VLAN header");
+	    EVCNT_TYPE_INTR, &sc->sc_evcnt_rxintr,
+	    device_xname(self), "rxintr skip: no room for VLAN header");
 	evcnt_attach_dynamic(&sc->sc_evcnt_rxintr_skip_tag_none,
-		EVCNT_TYPE_INTR, &sc->sc_evcnt_rxintr,
-		device_xname(self), "rxintr skip: no VLAN tag");
+	    EVCNT_TYPE_INTR, &sc->sc_evcnt_rxintr,
+	    device_xname(self), "rxintr skip: no VLAN tag");
 	evcnt_attach_dynamic(&sc->sc_evcnt_rxintr_skip_tag_inval,
-		EVCNT_TYPE_INTR, &sc->sc_evcnt_rxintr,
-		device_xname(self), "rxintr skip: invalid VLAN tag");
+	    EVCNT_TYPE_INTR, &sc->sc_evcnt_rxintr,
+	    device_xname(self), "rxintr skip: invalid VLAN tag");
 	evcnt_attach_dynamic(&sc->sc_evcnt_rxintr_skip_inact,
-		EVCNT_TYPE_INTR, &sc->sc_evcnt_rxintr,
-		device_xname(self), "rxintr skip: partition inactive");
+	    EVCNT_TYPE_INTR, &sc->sc_evcnt_rxintr,
+	    device_xname(self), "rxintr skip: partition inactive");
 	evcnt_attach_dynamic(&sc->sc_evcnt_txintr, EVCNT_TYPE_INTR, NULL,
-		device_xname(self), "txintr");
+	    device_xname(self), "txintr");
 	evcnt_attach_dynamic(&sc->sc_evcnt_input, EVCNT_TYPE_INTR, NULL,
-		device_xname(self), "input");
+	    device_xname(self), "input");
 	evcnt_attach_dynamic(&sc->sc_evcnt_output, EVCNT_TYPE_INTR, NULL,
-		device_xname(self), "output");
+	    device_xname(self), "output");
 	evcnt_attach_dynamic(&sc->sc_evcnt_watchdog, EVCNT_TYPE_INTR, NULL,
-		device_xname(self), "watchdog");
+	    device_xname(self), "watchdog");
 	evcnt_attach_dynamic(&sc->sc_evcnt_wd_tx,
-		EVCNT_TYPE_INTR, &sc->sc_evcnt_watchdog,
-		device_xname(self), "watchdog TX timeout");
+	    EVCNT_TYPE_INTR, &sc->sc_evcnt_watchdog,
+	    device_xname(self), "watchdog TX timeout");
 	evcnt_attach_dynamic(&sc->sc_evcnt_wd_spurious,
-		EVCNT_TYPE_INTR, &sc->sc_evcnt_watchdog,
-		device_xname(self), "watchdog spurious");
+	    EVCNT_TYPE_INTR, &sc->sc_evcnt_watchdog,
+	    device_xname(self), "watchdog spurious");
 	evcnt_attach_dynamic(&sc->sc_evcnt_wd_reactivate,
-		EVCNT_TYPE_INTR, &sc->sc_evcnt_watchdog,
-		device_xname(self), "watchdog reactivate");
+	    EVCNT_TYPE_INTR, &sc->sc_evcnt_watchdog,
+	    device_xname(self), "watchdog reactivate");
 	evcnt_attach_dynamic(&sc->sc_evcnt_add_rxbuf_hdr_fail,
-		EVCNT_TYPE_INTR, NULL,
-		device_xname(self), "add rxbuf hdr fail");
+	    EVCNT_TYPE_INTR, NULL,
+	    device_xname(self), "add rxbuf hdr fail");
 	evcnt_attach_dynamic(&sc->sc_evcnt_add_rxbuf_mcl_fail,
-		EVCNT_TYPE_INTR, NULL,
-		device_xname(self), "add rxbuf mcl fail");
+	    EVCNT_TYPE_INTR, NULL,
+	    device_xname(self), "add rxbuf mcl fail");
 
 	/*
 	 * In order to obtain unique initial Ethernet address on a host,
 	 * do some randomisation using the current uptime.  It's not meant
 	 * for anything but avoiding hard-coding an address.
 	 */
+#ifdef RALINK_ETH_MACADDR
+	uint8_t enaddr[ETHER_ADDR_LEN];
+	ether_aton_r(enaddr, sizeof(enaddr), ___STRING(RALINK_ETH_MACADDR));
+#else
 	uint8_t enaddr[ETHER_ADDR_LEN] = { 0x00, 0x30, 0x44, 0x00, 0x00, 0x00 };
+#endif
 
 	sc->sc_dev = self;
 	sc->sc_dmat = ma->ma_dmat;
@@ -379,19 +385,19 @@ ralink_eth_attach(device_t parent, device_t self, void *aux)
 	if ((error = bus_space_map(sc->sc_memt, RA_SYSCTL_BASE,
 	    sc->sc_sy_size, 0, &sc->sc_sy_memh)) != 0) {
 		aprint_error_dev(self, "unable to map Sysctl registers, "
-			"error=%d\n", error);
+		    "error=%d\n", error);
 		goto fail_0a;
 	}
 	if ((error = bus_space_map(sc->sc_memt, RA_FRAME_ENGINE_BASE,
 	    sc->sc_fe_size, 0, &sc->sc_fe_memh)) != 0) {
 		aprint_error_dev(self, "unable to map Frame Engine registers, "
-			"error=%d\n", error);
+		    "error=%d\n", error);
 		goto fail_0b;
 	}
 	if ((error = bus_space_map(sc->sc_memt, RA_ETH_SW_BASE,
 	    sc->sc_sw_size, 0, &sc->sc_sw_memh)) != 0) {
 		aprint_error_dev(self, "unable to map Ether Switch registers, "
-			"error=%d\n", error);
+		    "error=%d\n", error);
 		goto fail_0c;
 	}
 
@@ -399,29 +405,29 @@ ralink_eth_attach(device_t parent, device_t self, void *aux)
 	if ((error = bus_dmamem_alloc(sc->sc_dmat, sizeof(struct ralink_descs),
 	    PAGE_SIZE, 0, &sc->sc_dseg, 1, &sc->sc_ndseg, 0)) != 0) {
 		aprint_error_dev(self, "unable to allocate transmit descs, "
-			"error=%d\n", error);
+		    "error=%d\n", error);
 		goto fail_1;
 	}
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &sc->sc_dseg, sc->sc_ndseg,
-	    sizeof(struct ralink_descs), (void **)&sc->sc_descs, BUS_DMA_COHERENT))
-	    != 0) {
+	    sizeof(struct ralink_descs), (void **)&sc->sc_descs,
+	    BUS_DMA_COHERENT)) != 0) {
 		aprint_error_dev(self, "unable to map control data, "
-			"error=%d\n", error);
+		    "error=%d\n", error);
 		goto fail_2;
 	}
 
-	if ((error = bus_dmamap_create(sc->sc_dmat, sizeof(struct ralink_descs), 1,
-	    sizeof(struct ralink_descs), 0, 0, &sc->sc_pdmamap)) != 0) {
+	if ((error = bus_dmamap_create(sc->sc_dmat, sizeof(struct ralink_descs),
+	    1, sizeof(struct ralink_descs), 0, 0, &sc->sc_pdmamap)) != 0) {
 		aprint_error_dev(self, "unable to create control data DMA map, "
-			"error=%d\n", error);
+		    "error=%d\n", error);
 		goto fail_3;
 	}
 
 	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_pdmamap, sc->sc_descs,
 	    sizeof(struct ralink_descs), NULL, 0)) != 0) {
 		aprint_error_dev(self, "unable to load control data DMA map, "
-			"error=%d\n", error);
+		    "error=%d\n", error);
 		goto fail_4;
 	}
 
@@ -430,8 +436,9 @@ ralink_eth_attach(device_t parent, device_t self, void *aux)
 		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
 		    RALINK_ETH_MAX_TX_SEGS, MCLBYTES, 0, 0,
 		    &sc->sc_txstate[i].txs_dmamap)) != 0) {
-			aprint_error_dev(self, "unable to create tx DMA map %d, "
-				"error=%d\n", i, error);
+			aprint_error_dev(self,
+			    "unable to create tx DMA map %d, error=%d\n",
+			    i, error);
 			goto fail_5;
 		}
 	}
@@ -440,8 +447,9 @@ ralink_eth_attach(device_t parent, device_t self, void *aux)
 	for (i = 0; i < RALINK_ETH_NUM_RX_DESC; i++) {
 		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1,
 		    MCLBYTES, 0, 0, &sc->sc_rxstate[i].rxs_dmamap)) != 0) {
-			aprint_error_dev(self, "unable to create rx DMA map %d, "
-				"error=%d\n", i, error);
+			aprint_error_dev(self,
+			    "unable to create rx DMA map %d, error=%d\n",
+			    i, error);
 			goto fail_6;
 		}
 		sc->sc_rxstate[i].rxs_mbuf = NULL;
@@ -452,10 +460,10 @@ ralink_eth_attach(device_t parent, device_t self, void *aux)
 
 	/* setup some address in hardware */
 	fe_write(sc, RA_FE_GDMA1_MAC_LSB,
-		(enaddr[5] | (enaddr[4] << 8) |
-		(enaddr[3] << 16) | (enaddr[2] << 24)));
+	    (enaddr[5] | (enaddr[4] << 8) |
+	    (enaddr[3] << 16) | (enaddr[2] << 24)));
 	fe_write(sc, RA_FE_GDMA1_MAC_MSB,
-		(enaddr[1] | (enaddr[0] << 8)));
+	    (enaddr[1] | (enaddr[0] << 8)));
 
 	/*
 	 * iterate through ports
@@ -476,23 +484,23 @@ ralink_eth_attach(device_t parent, device_t self, void *aux)
 	sc->sc_mii.mii_statchg = ralink_eth_mii_statchg;
 	sc->sc_ethercom.ec_mii = &sc->sc_mii;
 	ifmedia_init(&sc->sc_mii.mii_media, 0, ether_mediachange,
-		ether_mediastatus);
-	mii_attach(sc->sc_dev, &sc->sc_mii, ~0, i, MII_OFFSET_ANY,
-		MIIF_FORCEANEG|MIIF_DOPAUSE|MIIF_NOISOLATE);
+	    ether_mediastatus);
+	mii_attach(sc->sc_dev, &sc->sc_mii, ~0, MII_PHY_ANY, MII_OFFSET_ANY,
+	    MIIF_FORCEANEG|MIIF_DOPAUSE|MIIF_NOISOLATE);
 
 	if (LIST_EMPTY(&sc->sc_mii.mii_phys)) {
 #if 1
 		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_1000_T|
-			IFM_FDX|IFM_ETH_RXPAUSE|IFM_ETH_TXPAUSE, 0, NULL);
+		    IFM_FDX|IFM_ETH_RXPAUSE|IFM_ETH_TXPAUSE, 0, NULL);
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_1000_T|
-			IFM_FDX|IFM_ETH_RXPAUSE|IFM_ETH_TXPAUSE);
+		    IFM_FDX|IFM_ETH_RXPAUSE|IFM_ETH_TXPAUSE);
 #else
 		ifmedia_add(&sc->sc_mii.mii_media,
-			IFM_ETHER|IFM_MANUAL, 0, NULL);
+		    IFM_ETHER|IFM_MANUAL, 0, NULL);
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_MANUAL);
 #endif
 	} else {
-			/* Ensure we mask ok for the switch multiple phy's */
+		/* Ensure we mask ok for the switch multiple phy's */
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
 	}
 
@@ -510,12 +518,13 @@ ralink_eth_attach(device_t parent, device_t self, void *aux)
 
 	/* We support IPV4 CRC Offload */
 	ifp->if_capabilities |=
-		(IFCAP_CSUM_IPv4_Tx | IFCAP_CSUM_IPv4_Rx |
-		 IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx |
-		 IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx);
+	    (IFCAP_CSUM_IPv4_Tx | IFCAP_CSUM_IPv4_Rx |
+	    IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx |
+	    IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx);
 
 	/* Attach the interface. */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, enaddr);
 
 	/* init our mii ticker */
@@ -532,20 +541,20 @@ ralink_eth_attach(device_t parent, device_t self, void *aux)
 	for (i = 0; i < RALINK_ETH_NUM_RX_DESC; i++) {
 		if (sc->sc_rxstate[i].rxs_dmamap != NULL)
 			bus_dmamap_destroy(sc->sc_dmat,
-				sc->sc_rxstate[i].rxs_dmamap);
+			    sc->sc_rxstate[i].rxs_dmamap);
 	}
  fail_5:
 	for (i = 0; i < RALINK_ETH_NUM_TX_DESC; i++) {
 		if (sc->sc_txstate[i].txs_dmamap != NULL)
 			bus_dmamap_destroy(sc->sc_dmat,
-				sc->sc_txstate[i].txs_dmamap);
+			    sc->sc_txstate[i].txs_dmamap);
 	}
 	bus_dmamap_unload(sc->sc_dmat, sc->sc_pdmamap);
  fail_4:
 	bus_dmamap_destroy(sc->sc_dmat, sc->sc_pdmamap);
  fail_3:
 	bus_dmamem_unmap(sc->sc_dmat, (void *)sc->sc_descs,
-		sizeof(struct ralink_descs));
+	    sizeof(struct ralink_descs));
  fail_2:
 	bus_dmamem_free(sc->sc_dmat, &sc->sc_dseg, sc->sc_ndseg);
  fail_1:
@@ -600,12 +609,12 @@ ralink_eth_enable(ralink_eth_softc_t *sc)
 	int s = splnet();
 	ralink_eth_hw_init(sc);
 	sc->sc_ih = ra_intr_establish(RA_IRQ_FENGINE,
-		ralink_eth_intr, sc, 1);
+	    ralink_eth_intr, sc, 1);
 	splx(s);
 	if (sc->sc_ih == NULL) {
 		RALINK_DEBUG(RALINK_DEBUG_ERROR,
-			"%s: unable to establish interrupt\n",
-			device_xname(sc->sc_dev));
+		    "%s: unable to establish interrupt\n",
+		    device_xname(sc->sc_dev));
 		return EIO;
 	}
 
@@ -675,7 +684,7 @@ ralink_eth_detach(device_t self, int flags)
 	bus_dmamap_unload(sc->sc_dmat, sc->sc_pdmamap);
 	bus_dmamap_destroy(sc->sc_dmat, sc->sc_pdmamap);
 	bus_dmamem_unmap(sc->sc_dmat, (void *)sc->sc_descs,
-		sizeof(struct ralink_descs));
+	    sizeof(struct ralink_descs));
 	bus_dmamem_free(sc->sc_dmat, &sc->sc_dseg, sc->sc_ndseg);
 
 	bus_space_unmap(sc->sc_memt, sc->sc_sw_memh, sc->sc_sw_size);
@@ -700,7 +709,7 @@ ralink_eth_reset(ralink_eth_softc_t *sc)
 	r ^= RST_FE;
 	sy_write(sc, RA_SYSCTL_RST, r);
 
-	/* Wait until the PDMA is quiscent */
+	/* Wait until the PDMA is quiescent */
 	for (;;) {
 		r = fe_read(sc, RA_FE_PDMA_GLOBAL_CFG);
 		if (r & FE_PDMA_GLOBAL_CFG_RX_DMA_BUSY) {
@@ -729,44 +738,55 @@ ralink_eth_hw_init(ralink_eth_softc_t *sc)
 	/* reset to a known good state */
 	ralink_eth_reset(sc);
 
-#if defined(RT3050) || defined(RT3052)
+#if defined(RT3050) || defined(RT3052) || defined(MT7628)
 	/* Bring the switch to a sane default state (from linux driver) */
 	bus_space_write_4(sc->sc_memt, sc->sc_sw_memh, RA_ETH_SW_SGC2,
-		0x00000000);
+	    0x00000000);
 	bus_space_write_4(sc->sc_memt, sc->sc_sw_memh, RA_ETH_SW_PFC1,
-		0x00405555);	/* check VLAN tag on port forward */
+	    0x00405555);	/* check VLAN tag on port forward */
 	bus_space_write_4(sc->sc_memt, sc->sc_sw_memh, RA_ETH_SW_VLANI0,
-		0x00002001);
+	    0x00002001);
 	bus_space_write_4(sc->sc_memt, sc->sc_sw_memh, RA_ETH_SW_PVIDC0,
-		0x00001002);
+	    0x00001002);
 	bus_space_write_4(sc->sc_memt, sc->sc_sw_memh, RA_ETH_SW_PVIDC1,
-		0x00001001);
+	    0x00001001);
 	bus_space_write_4(sc->sc_memt, sc->sc_sw_memh, RA_ETH_SW_PVIDC2,
-		0x00001001);
+	    0x00001001);
+#if defined(MT7628)
 	bus_space_write_4(sc->sc_memt, sc->sc_sw_memh, RA_ETH_SW_VMSC0,
-		0xffff417e);
+	    0xffffffff);
 	bus_space_write_4(sc->sc_memt, sc->sc_sw_memh, RA_ETH_SW_POC0,
-		0x00007f7f);
+	    0x10007f7f);
 	bus_space_write_4(sc->sc_memt, sc->sc_sw_memh, RA_ETH_SW_POC2,
-		0x00007f3f);
+	    0x00007f7f);
 	bus_space_write_4(sc->sc_memt, sc->sc_sw_memh, RA_ETH_SW_FTC2,
-		0x00d6500c);
+	    0x0002500c);
+#else
+	bus_space_write_4(sc->sc_memt, sc->sc_sw_memh, RA_ETH_SW_VMSC0,
+	    0xffff417e);
+	bus_space_write_4(sc->sc_memt, sc->sc_sw_memh, RA_ETH_SW_POC0,
+	    0x00007f7f);
+	bus_space_write_4(sc->sc_memt, sc->sc_sw_memh, RA_ETH_SW_POC2,
+	    0x00007f3f);
+	bus_space_write_4(sc->sc_memt, sc->sc_sw_memh, RA_ETH_SW_FTC2,
+	    0x00d6500c);
+#endif
 	bus_space_write_4(sc->sc_memt, sc->sc_sw_memh, RA_ETH_SW_SWGC,
-		0x0008a301);	/* hashing algorithm=XOR48 */
+	    0x0008a301);	/* hashing algorithm=XOR48 */
 				/*  aging interval=300sec  */
 	bus_space_write_4(sc->sc_memt, sc->sc_sw_memh, RA_ETH_SW_SOCPC,
-		0x02404040);
+	    0x02404040);
 	bus_space_write_4(sc->sc_memt, sc->sc_sw_memh, RA_ETH_SW_FPORT,
-		0x3f502b28);	/* Change polling Ext PHY Addr=0x0 */
+	    0x3f502b28);	/* Change polling Ext PHY Addr=0x0 */
 	bus_space_write_4(sc->sc_memt, sc->sc_sw_memh, RA_ETH_SW_FPA,
-		0x00000000);
+	    0x00000000);
 
 	/* do some mii magic  TODO: define these registers/bits */
 	/* lower down PHY 10Mbps mode power */
 	/* select local register */
 	ralink_eth_mii_write(sc->sc_dev, 0, 31, 0x8000);
 
-	for (i=0;i<5;i++){
+	for (i=0; i < 5; i++) {
 		/* set TX10 waveform coefficient */
 		ralink_eth_mii_write(sc->sc_dev, i, 26, 0x1601);
 
@@ -799,14 +819,14 @@ ralink_eth_hw_init(ralink_eth_softc_t *sc)
 #else
 	/* GE1 + GigSW */
 	fe_write(sc, RA_FE_MDIO_CFG1,
-		MDIO_CFG_PHY_ADDR(0x1f) |
-		MDIO_CFG_BP_EN |
-		MDIO_CFG_FORCE_CFG |
-		MDIO_CFG_SPEED(MDIO_CFG_SPEED_1000M) |
-		MDIO_CFG_FULL_DUPLEX |
-		MDIO_CFG_FC_TX |
-		MDIO_CFG_FC_RX |
-		MDIO_CFG_TX_CLK_MODE(MDIO_CFG_TX_CLK_MODE_3COM));
+	    MDIO_CFG_PHY_ADDR(0x1f) |
+	    MDIO_CFG_BP_EN |
+	    MDIO_CFG_FORCE_CFG |
+	    MDIO_CFG_SPEED(MDIO_CFG_SPEED_1000M) |
+	    MDIO_CFG_FULL_DUPLEX |
+	    MDIO_CFG_FC_TX |
+	    MDIO_CFG_FC_RX |
+	    MDIO_CFG_TX_CLK_MODE(MDIO_CFG_TX_CLK_MODE_3COM));
 #endif
 
 	/*
@@ -841,8 +861,8 @@ ralink_eth_hw_init(ralink_eth_softc_t *sc)
 	 *    to avoid the flush?
 	 */
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_pdmamap,
-		(int)&sc->sc_txdesc - (int)sc->sc_descs, sizeof(sc->sc_txdesc),
-		BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+	    (int)&sc->sc_txdesc - (int)sc->sc_descs, sizeof(sc->sc_txdesc),
+	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
 	/* Initialize the RX descriptor ring */
 	memset(sc->sc_rxdesc, 0, sizeof(sc->sc_rxdesc));
@@ -858,8 +878,8 @@ ralink_eth_hw_init(ralink_eth_softc_t *sc)
 	 *   to avoid the flush?
 	 */
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_pdmamap,
-		(int)&sc->sc_rxdesc - (int)sc->sc_descs, sizeof(sc->sc_rxdesc),
-		BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+	    (int)&sc->sc_rxdesc - (int)sc->sc_descs, sizeof(sc->sc_rxdesc),
+	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
 	/* Clear the PDMA state */
 	r = fe_read(sc, RA_FE_PDMA_GLOBAL_CFG);
@@ -867,6 +887,7 @@ ralink_eth_hw_init(ralink_eth_softc_t *sc)
 	fe_write(sc, RA_FE_PDMA_GLOBAL_CFG, r);
 	(void) fe_read(sc, RA_FE_PDMA_GLOBAL_CFG);
 
+#if !defined(MT7628)
 	/* Setup the PDMA VLAN ID's */
 	fe_write(sc, RA_FE_VLAN_ID_0001, 0x00010000);
 	fe_write(sc, RA_FE_VLAN_ID_0203, 0x00030002);
@@ -876,39 +897,58 @@ ralink_eth_hw_init(ralink_eth_softc_t *sc)
 	fe_write(sc, RA_FE_VLAN_ID_1011, 0x000b000a);
 	fe_write(sc, RA_FE_VLAN_ID_1213, 0x000d000c);
 	fe_write(sc, RA_FE_VLAN_ID_1415, 0x000f000e);
+#endif
 
 	/* Give the TX and TX rings to the chip. */
 	fe_write(sc, RA_FE_PDMA_TX0_PTR,
-		htole32(MIPS_KSEG0_TO_PHYS(&sc->sc_txdesc)));
+	    htole32(MIPS_KSEG0_TO_PHYS(&sc->sc_txdesc)));
 	fe_write(sc, RA_FE_PDMA_TX0_COUNT, htole32(RALINK_ETH_NUM_TX_DESC));
 	fe_write(sc, RA_FE_PDMA_TX0_CPU_IDX, 0);
+#if !defined(MT7628)
 	fe_write(sc, RA_FE_PDMA_RESET_IDX, PDMA_RST_TX0);
+#endif
 
 	fe_write(sc, RA_FE_PDMA_RX0_PTR,
-		htole32(MIPS_KSEG0_TO_PHYS(&sc->sc_rxdesc)));
+	    htole32(MIPS_KSEG0_TO_PHYS(&sc->sc_rxdesc)));
 	fe_write(sc, RA_FE_PDMA_RX0_COUNT, htole32(RALINK_ETH_NUM_RX_DESC));
 	fe_write(sc, RA_FE_PDMA_RX0_CPU_IDX,
-		htole32(RALINK_ETH_NUM_RX_DESC - 1));
+	    htole32(RALINK_ETH_NUM_RX_DESC - 1));
+#if !defined(MT7628)
 	fe_write(sc, RA_FE_PDMA_RESET_IDX, PDMA_RST_RX0);
+#endif
 	fe_write(sc, RA_FE_PDMA_RX0_CPU_IDX,
-		htole32(RALINK_ETH_NUM_RX_DESC - 1));
+	    htole32(RALINK_ETH_NUM_RX_DESC - 1));
 
 	/* Start PDMA */
 	fe_write(sc, RA_FE_PDMA_GLOBAL_CFG,
-		FE_PDMA_GLOBAL_CFG_TX_WB_DDONE |
-		FE_PDMA_GLOBAL_CFG_RX_DMA_EN |
-		FE_PDMA_GLOBAL_CFG_TX_DMA_EN |
-		FE_PDMA_GLOBAL_CFG_BURST_SZ_4);
+	    FE_PDMA_GLOBAL_CFG_TX_WB_DDONE |
+	    FE_PDMA_GLOBAL_CFG_RX_DMA_EN |
+	    FE_PDMA_GLOBAL_CFG_TX_DMA_EN |
+	    FE_PDMA_GLOBAL_CFG_BURST_SZ_4);
 
 	/* Setup the clock for the Frame Engine */
+#if defined(MT7628)
+	fe_write(sc, RA_FE_SDM_CON, 0x8100);
+#else
 	fe_write(sc, RA_FE_GLOBAL_CFG,
-		FE_GLOBAL_CFG_EXT_VLAN(0x8100) |
-		FE_GLOBAL_CFG_US_CLK(RA_BUS_FREQ / 1000000) |
-		FE_GLOBAL_CFG_L2_SPACE(0x8));
+	    FE_GLOBAL_CFG_EXT_VLAN(0x8100) |
+	    FE_GLOBAL_CFG_US_CLK(RA_BUS_FREQ / 1000000) |
+	    FE_GLOBAL_CFG_L2_SPACE(0x8));
+#endif
 
 	/* Turn on all interrupts */
+#if defined(MT7628)
+	fe_write(sc, RA_FE_INT_MASK,
+	    RA_FE_INT_RX_DONE_INT1 |
+	    RA_FE_INT_RX_DONE_INT0 |
+	    RA_FE_INT_TX_DONE_INT3 |
+	    RA_FE_INT_TX_DONE_INT2 |
+	    RA_FE_INT_TX_DONE_INT1 |
+	    RA_FE_INT_TX_DONE_INT0);
+#else
 	fe_write(sc, RA_FE_INT_ENABLE,
-		FE_INT_RX | FE_INT_TX3 | FE_INT_TX2 | FE_INT_TX1 | FE_INT_TX0);
+	    FE_INT_RX | FE_INT_TX3 | FE_INT_TX2 | FE_INT_TX1 | FE_INT_TX0);
+#endif
 
 	/*
 	 * Configure GDMA forwarding
@@ -917,63 +957,91 @@ ralink_eth_hw_init(ralink_eth_softc_t *sc)
 	 */
 #if 0
 	fe_write(sc, RA_FE_GDMA1_FWD_CFG,
-		(FE_GDMA_FWD_CFG_DIS_TX_CRC | FE_GDMA_FWD_CFG_DIS_TX_PAD));
+	    (FE_GDMA_FWD_CFG_DIS_TX_CRC | FE_GDMA_FWD_CFG_DIS_TX_PAD));
 #endif
+
+#if !defined(MT7628)
 	fe_write(sc, RA_FE_GDMA1_FWD_CFG,
-		FE_GDMA_FWD_CFG_JUMBO_LEN(MCLBYTES/1024) |
-		FE_GDMA_FWD_CFG_STRIP_RX_CRC |
-		FE_GDMA_FWD_CFG_IP4_CRC_EN |
-		FE_GDMA_FWD_CFG_TCP_CRC_EN |
-		FE_GDMA_FWD_CFG_UDP_CRC_EN);
+	    FE_GDMA_FWD_CFG_JUMBO_LEN(MCLBYTES/1024) |
+	    FE_GDMA_FWD_CFG_STRIP_RX_CRC |
+	    FE_GDMA_FWD_CFG_IP4_CRC_EN |
+	    FE_GDMA_FWD_CFG_TCP_CRC_EN |
+	    FE_GDMA_FWD_CFG_UDP_CRC_EN);
+#endif
 
 	/* CDMA also needs CRCs turned on */
+#if !defined(MT7628)
 	r = fe_read(sc, RA_FE_CDMA_CSG_CFG);
 	r |= (FE_CDMA_CSG_CFG_IP4_CRC_EN | FE_CDMA_CSG_CFG_UDP_CRC_EN |
-		FE_CDMA_CSG_CFG_TCP_CRC_EN);
+	    FE_CDMA_CSG_CFG_TCP_CRC_EN);
 	fe_write(sc, RA_FE_CDMA_CSG_CFG, r);
+#endif
 
 	/* Configure Flow Control Thresholds */
-#ifdef RT3883
+#if defined(MT7628)
+	sw_write(sc, RA_ETH_SW_FCT0,
+	    RA_ETH_SW_FCT0_FC_RLS_TH(0xc8) |
+	    RA_ETH_SW_FCT0_FC_SET_TH(0xa0) |
+	    RA_ETH_SW_FCT0_DROP_RLS_TH(0x78) |
+	    RA_ETH_SW_FCT0_DROP_SET_TH(0x50));
+	sw_write(sc, RA_ETH_SW_FCT1,
+	    RA_ETH_SW_FCT1_PORT_TH(0x14));
+#elif defined(RT3883)
 	fe_write(sc, RA_FE_PSE_FQ_CFG,
-		FE_PSE_FQ_MAX_COUNT(0xff) |
-		FE_PSE_FQ_FC_RELEASE(0x90) |
-		FE_PSE_FQ_FC_ASSERT(0x80));
+	    FE_PSE_FQ_MAX_COUNT(0xff) |
+	    FE_PSE_FQ_FC_RELEASE(0x90) |
+	    FE_PSE_FQ_FC_ASSERT(0x80));
 #else
 	fe_write(sc, RA_FE_PSE_FQ_CFG,
-		FE_PSE_FQ_MAX_COUNT(0x80) |
-		FE_PSE_FQ_FC_RELEASE(0x50) |
-		FE_PSE_FQ_FC_ASSERT(0x40));
+	    FE_PSE_FQ_MAX_COUNT(0x80) |
+	    FE_PSE_FQ_FC_RELEASE(0x50) |
+	    FE_PSE_FQ_FC_ASSERT(0x40));
 #endif
 
 #ifdef RALINK_ETH_DEBUG
+#ifdef RA_FE_MDIO_CFG1
 	printf("FE_MDIO_CFG1: 0x%08x\n", fe_read(sc, RA_FE_MDIO_CFG1));
+#endif
+#ifdef RA_FE_MDIO_CFG2
 	printf("FE_MDIO_CFG2: 0x%08x\n", fe_read(sc, RA_FE_MDIO_CFG2));
+#endif
 	printf("FE_PDMA_TX0_PTR: %08x\n", fe_read(sc, RA_FE_PDMA_TX0_PTR));
 	printf("FE_PDMA_TX0_COUNT: %08x\n",
-		fe_read(sc, RA_FE_PDMA_TX0_COUNT));
+	    fe_read(sc, RA_FE_PDMA_TX0_COUNT));
 	printf("FE_PDMA_TX0_CPU_IDX: %08x\n",
-		fe_read(sc, RA_FE_PDMA_TX0_CPU_IDX));
+	    fe_read(sc, RA_FE_PDMA_TX0_CPU_IDX));
 	printf("FE_PDMA_TX0_DMA_IDX: %08x\n",
-		fe_read(sc, RA_FE_PDMA_TX0_DMA_IDX));
+	    fe_read(sc, RA_FE_PDMA_TX0_DMA_IDX));
 	printf("FE_PDMA_RX0_PTR: %08x\n", fe_read(sc, RA_FE_PDMA_RX0_PTR));
 	printf("FE_PDMA_RX0_COUNT: %08x\n",
-		fe_read(sc, RA_FE_PDMA_RX0_COUNT));
+	    fe_read(sc, RA_FE_PDMA_RX0_COUNT));
 	printf("FE_PDMA_RX0_CPU_IDX: %08x\n",
-		fe_read(sc, RA_FE_PDMA_RX0_CPU_IDX));
+	    fe_read(sc, RA_FE_PDMA_RX0_CPU_IDX));
 	printf("FE_PDMA_RX0_DMA_IDX: %08x\n",
-		fe_read(sc, RA_FE_PDMA_RX0_DMA_IDX));
+	    fe_read(sc, RA_FE_PDMA_RX0_DMA_IDX));
 	printf("FE_PDMA_GLOBAL_CFG: %08x\n",
-		fe_read(sc, RA_FE_PDMA_GLOBAL_CFG));
+	    fe_read(sc, RA_FE_PDMA_GLOBAL_CFG));
+#ifdef RA_FE_GLOBAL_CFG
 	printf("FE_GLOBAL_CFG: %08x\n", fe_read(sc, RA_FE_GLOBAL_CFG));
+#endif
+#ifdef RA_FE_GDMA1_FWD_CFG
 	printf("FE_GDMA1_FWD_CFG: %08x\n",
-		fe_read(sc, RA_FE_GDMA1_FWD_CFG));
+	    fe_read(sc, RA_FE_GDMA1_FWD_CFG));
+#endif
+#ifdef RA_FE_CDMA_CSG_CFG
 	printf("FE_CDMA_CSG_CFG: %08x\n", fe_read(sc, RA_FE_CDMA_CSG_CFG));
+#endif
+#ifdef RA_FE_PSE_FQ_CFG
 	printf("FE_PSE_FQ_CFG: %08x\n", fe_read(sc, RA_FE_PSE_FQ_CFG));
+#endif
 #endif
 
 	/* Force PSE Reset to get everything finalized */
+#if defined(MT7628)
+#else
 	fe_write(sc, RA_FE_GLOBAL_RESET, FE_GLOBAL_RESET_PSE);
 	fe_write(sc, RA_FE_GLOBAL_RESET, 0);
+#endif
 }
 
 /*
@@ -1065,16 +1133,16 @@ ralink_eth_add_rxbuf(ralink_eth_softc_t *sc, int idx)
 	    m->m_ext.ext_size, NULL, BUS_DMA_READ|BUS_DMA_NOWAIT);
 	if (error) {
 		aprint_error_dev(sc->sc_dev, "can't load rx DMA map %d, "
-			"error=%d\n", idx, error);
+		    "error=%d\n", idx, error);
 		panic(__func__);  /* XXX */
 	}
 
 	sc->sc_rxdesc[idx].data_ptr = MIPS_KSEG0_TO_PHYS(
-		rxs->rxs_dmamap->dm_segs[0].ds_addr + RALINK_ETHER_ALIGN);
+	    rxs->rxs_dmamap->dm_segs[0].ds_addr + RALINK_ETHER_ALIGN);
 	sc->sc_rxdesc[idx].rxd_info1 = RXD_LAST0;
 
 	bus_dmamap_sync(sc->sc_dmat, rxs->rxs_dmamap, 0,
-		rxs->rxs_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
+	    rxs->rxs_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
 
 	return 0;
 }
@@ -1118,7 +1186,7 @@ ralink_eth_start(struct ifnet *ifp)
 		if (m0->m_pkthdr.len < RALINK_MIN_BUF) {
 			int padlen = 64 - m0->m_pkthdr.len;
 			m_copyback(m0, m0->m_pkthdr.len, padlen,
-				sc->ralink_zero_buf);
+			    sc->ralink_zero_buf);
 			/* TODO : need some checking here */
 		}
 
@@ -1133,7 +1201,7 @@ ralink_eth_start(struct ifnet *ifp)
 			MGETHDR(m, M_DONTWAIT, MT_DATA);
 			if (m == NULL) {
 				aprint_error_dev(sc->sc_dev,
-					"unable to allocate aligned Tx mbuf\n");
+				    "unable to allocate aligned Tx mbuf\n");
 				break;
 			}
 			MCLAIM(m, &sc->sc_ethercom.ec_tx_mowner);
@@ -1141,7 +1209,7 @@ ralink_eth_start(struct ifnet *ifp)
 				MCLGET(m, M_DONTWAIT);
 				if ((m->m_flags & M_EXT) == 0) {
 					aprint_error_dev(sc->sc_dev,
-				 	    "unable to allocate Tx cluster\n");
+					    "unable to allocate Tx cluster\n");
 					m_freem(m);
 					break;
 				}
@@ -1152,8 +1220,8 @@ ralink_eth_start(struct ifnet *ifp)
 			    BUS_DMA_WRITE|BUS_DMA_NOWAIT);
 			if (error) {
 				aprint_error_dev(sc->sc_dev,
-					"unable to load Tx buffer error=%d\n",
-					error);
+				    "unable to load Tx buffer error=%d\n",
+				    error);
 				m_freem(m);
 				break;
 			}
@@ -1168,38 +1236,38 @@ ralink_eth_start(struct ifnet *ifp)
 
 		/* Sync the DMA map. */
 		bus_dmamap_sync(sc->sc_dmat, dmamap, 0, dmamap->dm_mapsize,
-			BUS_DMASYNC_PREWRITE);
+		    BUS_DMASYNC_PREWRITE);
 
 		/* Initialize the transmit descriptor */
 		sc->sc_txdesc[tx_cpu_idx].data_ptr0 =
-			MIPS_KSEG0_TO_PHYS(dmamap->dm_segs[0].ds_addr);
+		    MIPS_KSEG0_TO_PHYS(dmamap->dm_segs[0].ds_addr);
 		sc->sc_txdesc[tx_cpu_idx].txd_info1 =
-			TXD_LEN0(dmamap->dm_segs[0].ds_len) | TXD_LAST0;
+		    TXD_LEN0(dmamap->dm_segs[0].ds_len) | TXD_LAST0;
 		sc->sc_txdesc[tx_cpu_idx].txd_info2 =
-			TXD_QN(3) | TXD_PN(TXD_PN_GDMA1);
+		    TXD_QN(3) | TXD_PN(TXD_PN_GDMA1);
 		sc->sc_txdesc[tx_cpu_idx].txd_info2 = TXD_QN(3) |
-			TXD_PN(TXD_PN_GDMA1) | TXD_VEN |
-			// TXD_VIDX(pt->vlan_id) |
-			TXD_TCP_EN | TXD_UDP_EN | TXD_IP_EN;
+		    TXD_PN(TXD_PN_GDMA1) | TXD_VEN |
+		    // TXD_VIDX(pt->vlan_id) |
+		    TXD_TCP_EN | TXD_UDP_EN | TXD_IP_EN;
 
 		RALINK_DEBUG(RALINK_DEBUG_REG,"+tx(%d) 0x%08x: 0x%08x\n",
-			tx_cpu_idx, (int)&sc->sc_txdesc[tx_cpu_idx].data_ptr0,
-			sc->sc_txdesc[tx_cpu_idx].data_ptr0);
+		    tx_cpu_idx, (int)&sc->sc_txdesc[tx_cpu_idx].data_ptr0,
+		    sc->sc_txdesc[tx_cpu_idx].data_ptr0);
 		RALINK_DEBUG(RALINK_DEBUG_REG,"+tx(%d) 0x%08x: 0x%08x\n",
-			tx_cpu_idx, (int)&sc->sc_txdesc[tx_cpu_idx].txd_info1,
-			sc->sc_txdesc[tx_cpu_idx].txd_info1);
+		    tx_cpu_idx, (int)&sc->sc_txdesc[tx_cpu_idx].txd_info1,
+		    sc->sc_txdesc[tx_cpu_idx].txd_info1);
 		RALINK_DEBUG(RALINK_DEBUG_REG,"+tx(%d) 0x%08x: 0x%08x\n",
-			tx_cpu_idx, (int)&sc->sc_txdesc[tx_cpu_idx].data_ptr1,
-			sc->sc_txdesc[tx_cpu_idx].data_ptr1);
-		RALINK_DEBUG(RALINK_DEBUG_REG,"+tx(%d) 0x%08x: 0x%08x\n", tx_cpu_idx,
-			(int)&sc->sc_txdesc[tx_cpu_idx].txd_info2,
-			sc->sc_txdesc[tx_cpu_idx].txd_info2);
+		    tx_cpu_idx, (int)&sc->sc_txdesc[tx_cpu_idx].data_ptr1,
+		    sc->sc_txdesc[tx_cpu_idx].data_ptr1);
+		RALINK_DEBUG(RALINK_DEBUG_REG,"+tx(%d) 0x%08x: 0x%08x\n",
+		    tx_cpu_idx, (int)&sc->sc_txdesc[tx_cpu_idx].txd_info2,
+		    sc->sc_txdesc[tx_cpu_idx].txd_info2);
 
 		/* sync the descriptor we're using. */
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_pdmamap,
-			(int)&sc->sc_txdesc[tx_cpu_idx] - (int)sc->sc_descs,
-			sizeof(struct ralink_tx_desc),
-			BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+		    (int)&sc->sc_txdesc[tx_cpu_idx] - (int)sc->sc_descs,
+		    sizeof(struct ralink_tx_desc),
+		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
 		/*
 		 * Store a pointer to the packet so we can free it later,
@@ -1210,7 +1278,7 @@ ralink_eth_start(struct ifnet *ifp)
 		sc->sc_pending_tx++;
 		if (txs->txs_idx != tx_cpu_idx) {
 			panic("txs_idx doesn't match %d != %d\n",
-				txs->txs_idx, tx_cpu_idx);
+			    txs->txs_idx, tx_cpu_idx);
 		}
 
 		SIMPLEQ_REMOVE_HEAD(&sc->sc_txfreeq, txs_q);
@@ -1253,12 +1321,12 @@ ralink_eth_watchdog(struct ifnet *ifp)
 
 	if (doing_transmit) {
 		RALINK_DEBUG(RALINK_DEBUG_ERROR, "%s: transmit timeout\n",
-			ifp->if_xname);
+		    ifp->if_xname);
 		ifp->if_oerrors++;
 		sc->sc_evcnt_wd_tx.ev_count++;
 	} else {
-		RALINK_DEBUG(RALINK_DEBUG_ERROR, "%s: spurious watchog timeout\n",
-			ifp->if_xname);
+		RALINK_DEBUG(RALINK_DEBUG_ERROR,
+		    "%s: spurious watchog timeout\n", ifp->if_xname);
 		sc->sc_evcnt_wd_spurious.ev_count++;
 		return;
 	}
@@ -1343,12 +1411,27 @@ ralink_eth_intr(void *arg)
 	RALINK_DEBUG_FUNC_ENTRY();
 	ralink_eth_softc_t * const sc = arg;
 
-	for (u_int n=0;; n = 1) {
+	for (u_int n = 0;; n = 1) {
 		u_int32_t status = fe_read(sc, RA_FE_INT_STATUS);
 		fe_write(sc, RA_FE_INT_STATUS, ~0);
 		RALINK_DEBUG(RALINK_DEBUG_REG,"%s() status: 0x%08x\n",
-			__func__, status);
+		    __func__, status);
+#if defined(MT7628)
+		if ((status & (RA_FE_INT_RX_DONE_INT1 | RA_FE_INT_RX_DONE_INT0 |
+		    RA_FE_INT_TX_DONE_INT3 | RA_FE_INT_TX_DONE_INT2 |
+		    RA_FE_INT_TX_DONE_INT1 | RA_FE_INT_TX_DONE_INT0)) == 0) {
+			if (n == 0)
+				sc->sc_evcnt_spurious_intr.ev_count++;
+			return (n != 0);
+		}
 
+		if (status & (RA_FE_INT_RX_DONE_INT1|RA_FE_INT_RX_DONE_INT0))
+			ralink_eth_rxintr(sc);
+
+		if (status & (RA_FE_INT_TX_DONE_INT3 | RA_FE_INT_TX_DONE_INT2 |
+		    RA_FE_INT_TX_DONE_INT1 | RA_FE_INT_TX_DONE_INT0))
+			ralink_eth_txintr(sc);
+#else
 		if ((status & (FE_INT_RX | FE_INT_TX0)) == 0) {
 			if (n == 0)
 				sc->sc_evcnt_spurious_intr.ev_count++;
@@ -1360,10 +1443,11 @@ ralink_eth_intr(void *arg)
 
 		if (status & FE_INT_TX0)
 			ralink_eth_txintr(sc);
+#endif
 	}
 
 	/* Try to get more packets going. */
-	ralink_eth_start(&sc->sc_ethercom.ec_if);
+	if_schedule_deferred_start(&sc->sc_ethercom.ec_if);
 
 	return 1;
 }
@@ -1391,22 +1475,22 @@ ralink_eth_rxintr(ralink_eth_softc_t *sc)
 		rxs = &sc->sc_rxstate[rx_cpu_idx];
 
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_pdmamap,
-			(int)&sc->sc_rxdesc[rx_cpu_idx] - (int)sc->sc_descs,
-			sizeof(struct ralink_rx_desc),
-			BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		    (int)&sc->sc_rxdesc[rx_cpu_idx] - (int)sc->sc_descs,
+		    sizeof(struct ralink_rx_desc),
+		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
 		RALINK_DEBUG(RALINK_DEBUG_REG,"rx(%d) 0x%08x: 0x%08x\n",
-			rx_cpu_idx, (int)&sc->sc_rxdesc[rx_cpu_idx].data_ptr,
-			sc->sc_rxdesc[rx_cpu_idx].data_ptr);
+		    rx_cpu_idx, (int)&sc->sc_rxdesc[rx_cpu_idx].data_ptr,
+		    sc->sc_rxdesc[rx_cpu_idx].data_ptr);
 		RALINK_DEBUG(RALINK_DEBUG_REG,"rx(%d) 0x%08x: 0x%08x\n",
-			rx_cpu_idx, (int)&sc->sc_rxdesc[rx_cpu_idx].rxd_info1,
-			sc->sc_rxdesc[rx_cpu_idx].rxd_info1);
-		RALINK_DEBUG(RALINK_DEBUG_REG,"rx(%d) 0x%08x: 0x%08x\n", rx_cpu_idx,
-			(int)&sc->sc_rxdesc[rx_cpu_idx].unused,
-			sc->sc_rxdesc[rx_cpu_idx].unused);
+		    rx_cpu_idx, (int)&sc->sc_rxdesc[rx_cpu_idx].rxd_info1,
+		    sc->sc_rxdesc[rx_cpu_idx].rxd_info1);
 		RALINK_DEBUG(RALINK_DEBUG_REG,"rx(%d) 0x%08x: 0x%08x\n",
-			rx_cpu_idx, (int)&sc->sc_rxdesc[rx_cpu_idx].rxd_info2,
-			sc->sc_rxdesc[rx_cpu_idx].rxd_info2);
+		    rx_cpu_idx, (int)&sc->sc_rxdesc[rx_cpu_idx].unused,
+		    sc->sc_rxdesc[rx_cpu_idx].unused);
+		RALINK_DEBUG(RALINK_DEBUG_REG,"rx(%d) 0x%08x: 0x%08x\n",
+		    rx_cpu_idx, (int)&sc->sc_rxdesc[rx_cpu_idx].rxd_info2,
+		    sc->sc_rxdesc[rx_cpu_idx].rxd_info2);
 
 		if (!(sc->sc_rxdesc[rx_cpu_idx].rxd_info1 & RXD_DDONE))
 			break;
@@ -1421,7 +1505,7 @@ ralink_eth_rxintr(ralink_eth_softc_t *sc)
 		len = RXD_LEN0(sc->sc_rxdesc[rx_cpu_idx].rxd_info1);
 
 		RALINK_DEBUG(RALINK_DEBUG_REG,"rx(%d) packet rx %d bytes\n",
-			rx_cpu_idx, len);
+		    rx_cpu_idx, len);
 
 		/*
 		 * Allocate a new mbuf cluster.  If that fails, we are
@@ -1439,7 +1523,7 @@ ralink_eth_rxintr(ralink_eth_softc_t *sc)
 		struct ether_header *eh = mtod(m, struct ether_header *);
 		printf("rx: eth_dst: %s ", ether_sprintf(eh->ether_dhost));
 		printf("rx: eth_src: %s type: 0x%04x \n",
-			ether_sprintf(eh->ether_shost), ntohs(eh->ether_type));
+		    ether_sprintf(eh->ether_shost), ntohs(eh->ether_type));
 		printf("0x14: %08x\n", *(volatile unsigned int *)(0xb0110014));
 		printf("0x98: %08x\n", *(volatile unsigned int *)(0xb0110098));
 
@@ -1457,22 +1541,21 @@ ralink_eth_rxintr(ralink_eth_softc_t *sc)
 		MCLAIM(m, &sc->sc_ethercom.ec_rx_mowner);
 
 		/* push it up the inteface */
-		ifp->if_ipackets++;
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 
 #ifdef RALINK_ETH_DEBUG
  {
 		struct ether_header *eh = mtod(m, struct ether_header *);
 		printf("rx: eth_dst: %s ", ether_sprintf(eh->ether_dhost));
 		printf("rx: eth_src: %s type: 0x%04x\n",
-			ether_sprintf(eh->ether_shost), ntohs(eh->ether_type));
+		    ether_sprintf(eh->ether_shost), ntohs(eh->ether_type));
 		printf("0x14: %08x\n", *(volatile unsigned int *)(0xb0110014));
 		printf("0x98: %08x\n", *(volatile unsigned int *)(0xb0110098));
 
 		unsigned char * s = mtod(m, unsigned char *);
 		for (int j = 0; j < 32; j++)
 			printf("%02x%c", *(s + j),
-				(j == 15 || j == 31) ? '\n' : ' ');
+			    (j == 15 || j == 31) ? '\n' : ' ');
  }
 #endif
 
@@ -1482,15 +1565,9 @@ ralink_eth_rxintr(ralink_eth_softc_t *sc)
 		 */
 		m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
 
-		/*
-		 * Pass this up to any BPF listeners, but only
-		 * pass it up the stack if its for us.
-		 */
-		bpf_mtap(ifp, m);
-
 		/* Pass it on. */
 		sc->sc_evcnt_input.ev_count++;
-		(*ifp->if_input)(ifp, m);
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 
 		fe_write(sc, RA_FE_PDMA_RX0_CPU_IDX, rx_cpu_idx);
 	}
@@ -1514,33 +1591,34 @@ ralink_eth_txintr(ralink_eth_softc_t *sc)
 	 */
 	while ((txs = SIMPLEQ_FIRST(&sc->sc_txdirtyq)) != NULL) {
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_pdmamap,
-			(int)&sc->sc_txdesc[txs->txs_idx] - (int)sc->sc_descs,
-			sizeof(struct ralink_tx_desc),
-			BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		    (int)&sc->sc_txdesc[txs->txs_idx] - (int)sc->sc_descs,
+		    sizeof(struct ralink_tx_desc),
+		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
-		RALINK_DEBUG(RALINK_DEBUG_REG,"-tx(%d) 0x%08x: 0x%08x\n", txs->txs_idx,
-			(int)&sc->sc_txdesc[txs->txs_idx].data_ptr0,
-			sc->sc_txdesc[txs->txs_idx].data_ptr0);
-		RALINK_DEBUG(RALINK_DEBUG_REG,"-tx(%d) 0x%08x: 0x%08x\n", txs->txs_idx,
-			(int)&sc->sc_txdesc[txs->txs_idx].txd_info1,
-			sc->sc_txdesc[txs->txs_idx].txd_info1);
-		RALINK_DEBUG(RALINK_DEBUG_REG,"-tx(%d) 0x%08x: 0x%08x\n", txs->txs_idx,
-			(int)&sc->sc_txdesc[txs->txs_idx].data_ptr1,
-			sc->sc_txdesc[txs->txs_idx].data_ptr1);
-		RALINK_DEBUG(RALINK_DEBUG_REG,"-tx(%d) 0x%08x: 0x%08x\n", txs->txs_idx,
-			(int)&sc->sc_txdesc[txs->txs_idx].txd_info2,
-			sc->sc_txdesc[txs->txs_idx].txd_info2);
+		RALINK_DEBUG(RALINK_DEBUG_REG,"-tx(%d) 0x%08x: 0x%08x\n",
+		    txs->txs_idx, (int)&sc->sc_txdesc[txs->txs_idx].data_ptr0,
+		    sc->sc_txdesc[txs->txs_idx].data_ptr0);
+		RALINK_DEBUG(RALINK_DEBUG_REG,"-tx(%d) 0x%08x: 0x%08x\n",
+		    txs->txs_idx, (int)&sc->sc_txdesc[txs->txs_idx].txd_info1,
+		    sc->sc_txdesc[txs->txs_idx].txd_info1);
+		RALINK_DEBUG(RALINK_DEBUG_REG,"-tx(%d) 0x%08x: 0x%08x\n",
+		    txs->txs_idx, (int)&sc->sc_txdesc[txs->txs_idx].data_ptr1,
+		    sc->sc_txdesc[txs->txs_idx].data_ptr1);
+		RALINK_DEBUG(RALINK_DEBUG_REG,"-tx(%d) 0x%08x: 0x%08x\n",
+		    txs->txs_idx, (int)&sc->sc_txdesc[txs->txs_idx].txd_info2,
+		    sc->sc_txdesc[txs->txs_idx].txd_info2);
 
 		/* we're finished if the current tx isn't done */
 		if (!(sc->sc_txdesc[txs->txs_idx].txd_info1 & TXD_DDONE))
 			break;
 
-		RALINK_DEBUG(RALINK_DEBUG_REG,"-tx(%d) transmitted\n", txs->txs_idx);
+		RALINK_DEBUG(RALINK_DEBUG_REG,"-tx(%d) transmitted\n",
+		   txs->txs_idx);
 
 		SIMPLEQ_REMOVE_HEAD(&sc->sc_txdirtyq, txs_q);
 
 		bus_dmamap_sync(sc->sc_dmat, txs->txs_dmamap, 0,
-			txs->txs_dmamap->dm_mapsize, BUS_DMASYNC_POSTWRITE);
+		    txs->txs_dmamap->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->sc_dmat, txs->txs_dmamap);
 		m_freem(txs->txs_mbuf);
 		txs->txs_mbuf = NULL;
@@ -1560,7 +1638,7 @@ ralink_eth_txintr(ralink_eth_softc_t *sc)
 /*
  * ralink_eth_mdio_enable
  */
-#if defined (RT3050) || defined(RT3052)
+#if defined(RT3050) || defined(RT3052)
 static void
 ralink_eth_mdio_enable(ralink_eth_softc_t *sc, bool enable)
 {
@@ -1617,7 +1695,7 @@ ralink_eth_mii_read(device_t self, int phy_addr, int phy_reg)
 #if 0
 	printf("%s() phy_addr: %d  phy_reg: %d\n", __func__, phy_addr, phy_reg);
 #endif
-#if defined(RT3050) || defined(RT3052)
+#if defined(RT3050) || defined(RT3052) || defined(MT7628)
 	if (phy_addr > 5)
 		return 0;
 #endif
@@ -1631,7 +1709,7 @@ ralink_eth_mii_read(device_t self, int phy_addr, int phy_reg)
 	 */
 	for (;;) {
 		/* rd_rdy: read operation is complete */
-#if defined(RT3050) || defined(RT3052)
+#if defined(RT3050) || defined(RT3052) || defined(MT7628)
 		if ((sw_read(sc, RA_ETH_SW_PCTL1) & PCTL1_RD_DONE) == 0)
 			break;
 #else
@@ -1640,15 +1718,15 @@ ralink_eth_mii_read(device_t self, int phy_addr, int phy_reg)
 #endif
 	}
 
-#if defined(RT3050) || defined(RT3052)
+#if defined(RT3050) || defined(RT3052) || defined(MT7628)
 	sw_write(sc, RA_ETH_SW_PCTL0,
-		PCTL0_RD_CMD | PCTL0_REG(phy_reg) | PCTL0_ADDR(phy_addr));
+	    PCTL0_RD_CMD | PCTL0_REG(phy_reg) | PCTL0_ADDR(phy_addr));
 #else
 	fe_write(sc, RA_FE_MDIO_ACCESS,
-		MDIO_ACCESS_PHY_ADDR(phy_addr) | MDIO_ACCESS_REG(phy_reg));
+	    MDIO_ACCESS_PHY_ADDR(phy_addr) | MDIO_ACCESS_REG(phy_reg));
 	fe_write(sc, RA_FE_MDIO_ACCESS,
-		MDIO_ACCESS_PHY_ADDR(phy_addr) | MDIO_ACCESS_REG(phy_reg) |
-		MDIO_ACCESS_TRG);
+	    MDIO_ACCESS_PHY_ADDR(phy_addr) | MDIO_ACCESS_REG(phy_reg) |
+	    MDIO_ACCESS_TRG);
 #endif
 
 	/*
@@ -1656,17 +1734,17 @@ ralink_eth_mii_read(device_t self, int phy_addr, int phy_reg)
 	 * TODO: timeout (linux uses jiffies to measure 5 seconds)
 	 */
 	for (;;) {
-#if defined(RT3050) || defined(RT3052)
+#if defined(RT3050) || defined(RT3052) || defined(MT7628)
 		if ((sw_read(sc, RA_ETH_SW_PCTL1) & PCTL1_RD_DONE) != 0) {
 			int data = PCTL1_RD_VAL(
-				sw_read(sc, RA_ETH_SW_PCTL1));
+			    sw_read(sc, RA_ETH_SW_PCTL1));
 			ralink_eth_mdio_enable(sc, false);
 			return data;
 		}
 #else
 		if ((fe_read(sc, RA_FE_MDIO_ACCESS) & MDIO_ACCESS_TRG) == 0) {
 			int data = MDIO_ACCESS_DATA(
-				fe_read(sc, RA_FE_MDIO_ACCESS));
+			    fe_read(sc, RA_FE_MDIO_ACCESS));
 			ralink_eth_mdio_enable(sc, false);
 			return data;
 		}
@@ -1684,7 +1762,7 @@ ralink_eth_mii_write(device_t self, int phy_addr, int phy_reg, int val)
 	KASSERT(sc != NULL);
 #if 0
 	printf("%s() phy_addr: %d  phy_reg: %d  val: 0x%04x\n",
-		__func__, phy_addr, phy_reg, val);
+	    __func__, phy_addr, phy_reg, val);
 #endif
 	ralink_eth_mdio_enable(sc, true);
 
@@ -1693,7 +1771,7 @@ ralink_eth_mii_write(device_t self, int phy_addr, int phy_reg, int val)
 	 * TODO: timeout (linux uses jiffies to measure 5 seconds)
 	 */
 	for (;;) {
-#if defined(RT3050) || defined(RT3052)
+#if defined(RT3050) || defined(RT3052) || defined(MT7628)
 		if ((sw_read(sc, RA_ETH_SW_PCTL1) & PCTL1_RD_DONE) == 0)
 			break;
 #else
@@ -1702,24 +1780,24 @@ ralink_eth_mii_write(device_t self, int phy_addr, int phy_reg, int val)
 #endif
 	}
 
-#if defined(RT3050) || defined(RT3052)
+#if defined(RT3050) || defined(RT3052) || defined(MT7628)
 	sw_write(sc, RA_ETH_SW_PCTL0,
-		PCTL0_WR_CMD | PCTL0_WR_VAL(val) | PCTL0_REG(phy_reg) |
-		PCTL0_ADDR(phy_addr));
+	    PCTL0_WR_CMD | PCTL0_WR_VAL(val) | PCTL0_REG(phy_reg) |
+	    PCTL0_ADDR(phy_addr));
 #else
 	fe_write(sc, RA_FE_MDIO_ACCESS,
-		MDIO_ACCESS_WR | MDIO_ACCESS_PHY_ADDR(phy_addr) |
-		MDIO_ACCESS_REG(phy_reg) | MDIO_ACCESS_DATA(val));
+	    MDIO_ACCESS_WR | MDIO_ACCESS_PHY_ADDR(phy_addr) |
+	    MDIO_ACCESS_REG(phy_reg) | MDIO_ACCESS_DATA(val));
 	fe_write(sc, RA_FE_MDIO_ACCESS,
-		MDIO_ACCESS_WR | MDIO_ACCESS_PHY_ADDR(phy_addr) |
-		MDIO_ACCESS_REG(phy_reg) | MDIO_ACCESS_DATA(val) |
-		MDIO_ACCESS_TRG);
+	    MDIO_ACCESS_WR | MDIO_ACCESS_PHY_ADDR(phy_addr) |
+	    MDIO_ACCESS_REG(phy_reg) | MDIO_ACCESS_DATA(val) |
+	    MDIO_ACCESS_TRG);
 #endif
 
 
 	/* make sure write operation is complete */
 	for (;;) {
-#if defined(RT3050) || defined(RT3052)
+#if defined(RT3050) || defined(RT3052) || defined(MT7628)
 		if ((sw_read(sc, RA_ETH_SW_PCTL1) & PCTL1_WR_DONE) != 0) {
 			ralink_eth_mdio_enable(sc, false);
 			return;

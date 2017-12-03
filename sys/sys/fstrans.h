@@ -1,4 +1,4 @@
-/*	$NetBSD: fstrans.h,v 1.10 2008/11/07 00:15:42 joerg Exp $	*/
+/*	$NetBSD: fstrans.h,v 1.10.26.1 2017/12/03 11:39:20 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,25 +41,14 @@
 #define SUSPEND_SUSPEND	0x0001		/* VFS_SUSPENDCTL: suspend */
 #define SUSPEND_RESUME	0x0002		/* VFS_SUSPENDCTL: resume */
 
-enum fstrans_lock_type {
-	FSTRANS_LAZY = 1,		/* Granted while not suspended */
-	FSTRANS_SHARED = 2		/* Granted while not suspending */
-#ifdef _FSTRANS_API_PRIVATE
-	,
-	FSTRANS_EXCL = 3		/* Internal: exclusive lock */
-#endif /* _FSTRANS_API_PRIVATE */
-};
-
 enum fstrans_state {
 	FSTRANS_NORMAL,
-	FSTRANS_SUSPENDING,
 	FSTRANS_SUSPENDED
 };
 
 void	fstrans_init(void);
-#define fstrans_start(mp, t)		_fstrans_start((mp), (t), 1)
-#define fstrans_start_nowait(mp, t)	_fstrans_start((mp), (t), 0)
-int	_fstrans_start(struct mount *, enum fstrans_lock_type, int);
+void	fstrans_start(struct mount *);
+int	fstrans_start_nowait(struct mount *);
 void	fstrans_done(struct mount *);
 int	fstrans_is_owner(struct mount *);
 int	fstrans_mount(struct mount *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: dead_vnops.c,v 1.51.12.1 2014/08/20 00:04:30 tls Exp $	*/
+/*	$NetBSD: dead_vnops.c,v 1.51.12.2 2017/12/03 11:38:47 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.51.12.1 2014/08/20 00:04:30 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.51.12.2 2017/12/03 11:38:47 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,17 +122,18 @@ dead_default_error(void *v)
 	return EBADF;
 }
 
-/* ARGSUSED */
 int
 dead_bmap(void *v)
 {
-	/* struct vop_bmap_args {
+	struct vop_bmap_args /* {
 		struct vnode *a_vp;
 		daddr_t  a_bn;
 		struct vnode **a_vpp;
 		daddr_t *a_bnp;
 		int *a_runp;
-	} *ap = v; */
+	} */ *ap = v;
+
+	(void)ap;
 
 	return (EIO);
 }
@@ -151,15 +152,16 @@ dead_lookup(void *v)
 	return ENOENT;
 }
 
-/* ARGSUSED */
 int
 dead_open(void *v)
 {
-	/* struct vop_open_args {
+	struct vop_open_args /* {
 		struct vnode *a_vp;
 		int a_mode;
 		kauth_cred_t a_cred;
-	} *ap = v; */
+	} */ *ap = v;
+
+	(void)ap;
 
 	return (ENXIO);
 }
@@ -182,32 +184,34 @@ dead_read(void *v)
 	return (0);
 }
 
-/* ARGSUSED */
 int
 dead_write(void *v)
 {
-	/* struct vop_write_args {
+	struct vop_write_args /* {
 		struct vnode *a_vp;
 		struct uio *a_uio;
 		int  a_ioflag;
 		kauth_cred_t a_cred;
-	} *ap = v; */
+	} */ *ap = v;
+
+	(void)ap;
 
 	return (EIO);
 }
 
-/* ARGSUSED */
 int
 dead_ioctl(void *v)
 {
-	/* struct vop_ioctl_args {
+	struct vop_ioctl_args /* {
 		struct vnode *a_vp;
 		u_long a_command;
 		void *a_data;
 		int  a_fflag;
 		kauth_cred_t a_cred;
 		struct lwp *a_l;
-	} *ap = v; */
+	} */ *ap = v;
+
+	(void)ap;
 
 	return (EBADF);
 }
@@ -230,13 +234,12 @@ dead_poll(void *v)
 int
 dead_remove(void *v)
 {
-	struct vop_remove_args /* {
+	struct vop_remove_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
 	} */ *ap = v;
 
-	vput(ap->a_dvp);
 	vput(ap->a_vp);
 
 	return EIO;
@@ -245,13 +248,13 @@ dead_remove(void *v)
 int
 dead_link(void *v)
 {
-	struct vop_link_args /* {
+	struct vop_link_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
 	} */ *ap = v;
 
-	vput(ap->a_dvp);
+	(void)ap;
 
 	return EIO;
 }
@@ -282,13 +285,12 @@ dead_rename(void *v)
 int
 dead_rmdir(void *v)
 {
-	struct vop_rmdir_args /* {
+	struct vop_rmdir_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
 	} */ *ap = v;
 
-	vput(ap->a_dvp);
 	vput(ap->a_vp);
 
 	return EIO;
@@ -297,13 +299,12 @@ dead_rmdir(void *v)
 int
 dead_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 		struct vnode *a_vp;
 		bool *a_recycle;
 	} */ *ap = v;
 
 	*ap->a_recycle = false;
-	VOP_UNLOCK(ap->a_vp);
 
 	return 0;
 }
@@ -356,7 +357,7 @@ int
 dead_putpages(void *v)
 {
         struct vop_putpages_args /* {
-	struct vnode *a_vp;
+		struct vnode *a_vp;
 		voff_t a_offlo;
 		voff_t a_offhi;
 		int a_flags;

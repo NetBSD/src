@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ipc.c,v 1.17 2009/12/12 10:30:09 njoly Exp $	*/
+/*	$NetBSD: netbsd32_ipc.c,v 1.17.22.1 2017/12/03 11:36:56 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ipc.c,v 1.17 2009/12/12 10:30:09 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ipc.c,v 1.17.22.1 2017/12/03 11:36:56 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -40,14 +40,100 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_ipc.c,v 1.17 2009/12/12 10:30:09 njoly Exp 
 #include <sys/sem.h>
 #include <sys/shm.h>
 #include <sys/mount.h>
+#include <sys/module.h>
 #include <sys/dirent.h>
+#include <sys/syscallvar.h>
 
 #include <sys/syscallargs.h>
 #include <sys/proc.h>
 
 #include <compat/netbsd32/netbsd32.h>
+#include <compat/netbsd32/netbsd32_syscall.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 #include <compat/netbsd32/netbsd32_conv.h>
+
+extern struct emul emul_netbsd32;
+
+#define _PKG_ENTRY(name)	\
+	{ NETBSD32_SYS_ ## name, 0, (sy_call_t *)name }
+
+#define _PKG_ENTRY2(code, name)	\
+	{ NETBSD32_SYS_ ## code, 0, (sy_call_t *)name }
+
+static const struct syscall_package compat_sysvipc_syscalls[] = {
+#if defined(SYSVSEM)
+	_PKG_ENTRY(netbsd32_____semctl50),
+	_PKG_ENTRY(netbsd32_semget),
+	_PKG_ENTRY(netbsd32_semop),
+	_PKG_ENTRY(netbsd32_semconfig),
+#if defined(COMPAT_10)
+	_PKG_ENTRY2(compat_10_osemsys, compat_10_netbsd32_semsys),
+#endif
+#if defined(COMPAT_14)
+	_PKG_ENTRY(compat_14_netbsd32___semctl),
+#endif
+#if defined(COMPAT_50)
+	_PKG_ENTRY(compat_50_netbsd32___semctl14),
+#endif
+#endif /* SYSVSEM */
+
+#if defined(SYSVSHM)
+	_PKG_ENTRY(netbsd32_shmat),
+	_PKG_ENTRY(netbsd32___shmctl50),
+	_PKG_ENTRY(netbsd32_shmdt),
+	_PKG_ENTRY(netbsd32_shmget),
+#if defined(COMPAT_10)
+	_PKG_ENTRY2(compat_10_oshmsys, compat_10_netbsd32_shmsys),
+#endif
+#if defined(COMPAT_14)
+	_PKG_ENTRY(compat_14_netbsd32_shmctl),
+#endif
+#if defined(COMPAT_50)
+	_PKG_ENTRY(compat_50_netbsd32___shmctl13),
+#endif
+#endif /* SYSVSHM */
+
+#if defined(SYSVMSG)
+	_PKG_ENTRY(netbsd32___msgctl50),
+	_PKG_ENTRY(netbsd32_msgget),
+	_PKG_ENTRY(netbsd32_msgsnd),
+	_PKG_ENTRY(netbsd32_msgrcv),
+#if defined(COMPAT_10)
+	_PKG_ENTRY2(compat_10_omsgsys, compat_10_netbsd32_msgsys),
+#endif
+#if defined(COMPAT_14)
+	_PKG_ENTRY(compat_14_netbsd32_msgctl),
+#endif
+#if defined(COMPAT_50)
+	_PKG_ENTRY(compat_50_netbsd32___msgctl13),
+#endif
+#endif /* SYSVMSG */
+	{ 0, 0, NULL }
+};
+
+MODULE(MODULE_CLASS_EXEC, compat_netbsd32_sysvipc, "sysv_ipc,compat_netbsd32");
+
+static int
+compat_netbsd32_sysvipc_modcmd(modcmd_t cmd, void *arg)
+{
+	int error;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		error = syscall_establish(&emul_netbsd32,
+		    compat_sysvipc_syscalls);
+		break;
+	case MODULE_CMD_FINI:
+		error = syscall_disestablish(&emul_netbsd32,
+		    compat_sysvipc_syscalls);
+		break;
+	default:
+		error = ENOTTY;
+		break;
+	}
+	return error;
+}
+
 
 #if defined(SYSVSEM)
 

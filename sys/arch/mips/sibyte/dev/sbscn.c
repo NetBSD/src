@@ -1,4 +1,4 @@
-/* $NetBSD: sbscn.c,v 1.37.6.1 2014/08/20 00:03:13 tls Exp $ */
+/* $NetBSD: sbscn.c,v 1.37.6.2 2017/12/03 11:36:29 jdolecek Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -109,16 +109,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbscn.c,v 1.37.6.1 2014/08/20 00:03:13 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbscn.c,v 1.37.6.2 2017/12/03 11:36:29 jdolecek Exp $");
 
 #define	SBSCN_DEBUG
 
 #include "opt_ddb.h"
 #include "ioconf.h"
 
-#include "rnd.h"
 #ifdef RND_SBSCN
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 #endif
 
 #include <sys/param.h>
@@ -146,6 +145,8 @@ __KERNEL_RCSID(0, "$NetBSD: sbscn.c,v 1.37.6.1 2014/08/20 00:03:13 tls Exp $");
 #include <mips/sibyte/dev/sbscnvar.h>
 #include <dev/cons.h>
 #include <mips/locore.h>
+
+#include <evbmips/sbmips/systemsw.h>
 
 void	sbscn_attach_channel(struct sbscn_softc *sc, int chan, int intr);
 #if defined(DDB) || defined(KGDB)
@@ -243,8 +244,8 @@ static void	sbscn_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(sbscn, sizeof(struct sbscn_softc),
     sbscn_match, sbscn_attach, NULL, NULL);
 
-#define	READ_REG(rp)		(mips3_ld((volatile uint64_t *)(rp)))
-#define	WRITE_REG(rp, val)	(mips3_sd((volatile uint64_t *)(rp), (val)))
+#define	READ_REG(rp)		(mips3_ld((register_t)(rp)))
+#define	WRITE_REG(rp, val)	(mips3_sd((register_t)(rp), (val)))
 
 /*
  * input and output signals are actually the _inverse_ of the bits in the

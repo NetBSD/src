@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.182 2012/02/02 18:59:44 para Exp $	   */
+/*	$NetBSD: pmap.c,v 1.182.6.1 2017/12/03 11:36:48 jdolecek Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -11,11 +11,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *     This product includes software developed at Ludd, University of Lule}.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -30,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.182 2012/02/02 18:59:44 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.182.6.1 2017/12/03 11:36:48 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -51,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.182 2012/02/02 18:59:44 para Exp $");
 #include <sys/mutex.h>
 
 #include <uvm/uvm.h>
+#include <uvm/uvm_physseg.h>
 
 #ifdef PMAPDEBUG
 #include <dev/cons.h>
@@ -302,7 +298,7 @@ pmap_bootstrap(void)
 
 	/* Set logical page size */
 	uvmexp.pagesize = NBPG;
-	uvm_setpagesize();
+	uvm_md_init();
 
 	physmem = btoc(avail_end);
 
@@ -475,6 +471,7 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 {
 	vaddr_t v;
 	int npgs;
+	uvm_physseg_t bank;
 
 	PMDEBUG(("pmap_steal_memory: size 0x%lx start %p end %p\n",
 		    size, vstartp, vendp));
@@ -490,10 +487,10 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 	/*
 	 * A vax only have one segment of memory.
 	 */
+	bank = uvm_physseg_get_first();
 
-	v = (VM_PHYSMEM_PTR(0)->avail_start << PGSHIFT) | KERNBASE;
-	VM_PHYSMEM_PTR(0)->avail_start += npgs;
-	VM_PHYSMEM_PTR(0)->start += npgs;
+	v = (uvm_physseg_get_start(bank) << PGSHIFT) | KERNBASE;
+	uvm_physseg_unplug(uvm_physseg_get_start(bank), npgs);
 	memset((void *)v, 0, size);
 	return v;
 }

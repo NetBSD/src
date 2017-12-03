@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_usb_map.c,v 1.1 2012/08/29 02:44:07 macallan Exp $ */
+/*	$NetBSD: adb_usb_map.c,v 1.1.2.1 2017/12/03 11:36:59 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_usb_map.c,v 1.1 2012/08/29 02:44:07 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_usb_map.c,v 1.1.2.1 2017/12/03 11:36:59 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -158,9 +158,9 @@ keysym_t adb_to_usb[] = {
 /* 120, KS_f2		*/		59,
 /* 121, KS_Next		*/		78,
 /* 122, KS_f1		*/		58,
-/* 123			*/		0,
-/* 124			*/		0,
-/* 125			*/		0,
+/* 123, KS_Shift_R	*/		229,
+/* 124, KS_Alt_R	*/		230,
+/* 125, KS_Control_R	*/		228,
 /* 126			*/		0,
 /* 127, KS_Cmd_Debugger	*/		102
 };

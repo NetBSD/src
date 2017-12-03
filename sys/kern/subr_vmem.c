@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.75.2.4 2014/08/20 00:04:29 tls Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.75.2.5 2017/12/03 11:38:45 jdolecek Exp $	*/
 
 /*-
  * Copyright (c)2006,2007,2008,2009 YAMAMOTO Takashi,
@@ -46,11 +46,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.75.2.4 2014/08/20 00:04:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.75.2.5 2017/12/03 11:38:45 jdolecek Exp $");
 
-#if defined(_KERNEL)
+#if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_ddb.h"
-#endif /* defined(_KERNEL) */
+#endif /* defined(_KERNEL) && defined(_KERNEL_OPT) */
 
 #include <sys/param.h>
 #include <sys/hash.h>
@@ -194,9 +194,19 @@ static LIST_HEAD(, vmem_btag) vmem_btag_freelist;
 static size_t vmem_btag_freelist_count = 0;
 static struct pool vmem_btag_pool;
 
+static void
+vmem_kick_pdaemon(void)
+{
+#if defined(_KERNEL)
+	mutex_spin_enter(&uvm_fpageqlock);
+	uvm_kick_pdaemon();
+	mutex_spin_exit(&uvm_fpageqlock);
+#endif
+}
+
 /* ---- boundary tag */
 
-static int bt_refill(vmem_t *vm, vm_flag_t flags);
+static int bt_refill(vmem_t *vm);
 
 static void *
 pool_page_alloc_vmem_meta(struct pool *pp, int flags)
@@ -226,11 +236,9 @@ struct pool_allocator pool_allocator_vmem_meta = {
 };
 
 static int
-bt_refill(vmem_t *vm, vm_flag_t flags)
+bt_refill(vmem_t *vm)
 {
 	bt_t *bt;
-
-	KASSERT(flags & VM_NOSLEEP);
 
 	VMEM_LOCK(vm);
 	if (vm->vm_nfreetags > BT_MINRESERVE) {
@@ -270,12 +278,9 @@ bt_refill(vmem_t *vm, vm_flag_t flags)
 	VMEM_UNLOCK(vm);
 
 	if (kmem_meta_arena != NULL) {
-		bt_refill(kmem_arena, (flags & ~VM_FITMASK)
-		    | VM_INSTANTFIT | VM_POPULATING);
-		bt_refill(kmem_va_meta_arena, (flags & ~VM_FITMASK)
-		    | VM_INSTANTFIT | VM_POPULATING);
-		bt_refill(kmem_meta_arena, (flags & ~VM_FITMASK)
-		    | VM_INSTANTFIT | VM_POPULATING);
+		(void)bt_refill(kmem_arena);
+		(void)bt_refill(kmem_va_meta_arena);
+		(void)bt_refill(kmem_meta_arena);
 	}
 
 	return 0;
@@ -288,8 +293,22 @@ bt_alloc(vmem_t *vm, vm_flag_t flags)
 	VMEM_LOCK(vm);
 	while (vm->vm_nfreetags <= BT_MINRESERVE && (flags & VM_POPULATING) == 0) {
 		VMEM_UNLOCK(vm);
-		if (bt_refill(vm, VM_NOSLEEP | VM_INSTANTFIT)) {
-			return NULL;
+		if (bt_refill(vm)) {
+			if ((flags & VM_NOSLEEP) != 0) {
+				return NULL;
+			}
+
+			/*
+			 * It would be nice to wait for something specific here
+			 * but there are multiple ways that a retry could
+			 * succeed and we can't wait for multiple things
+			 * simultaneously.  So we'll just sleep for an arbitrary
+			 * short period of time and retry regardless.
+			 * This should be a very rare case.
+			 */
+
+			vmem_kick_pdaemon();
+			kpause("btalloc", false, 1, NULL);
 		}
 		VMEM_LOCK(vm);
 	}
@@ -417,7 +436,7 @@ bt_lookupbusy(vmem_t *vm, vmem_addr_t addr)
 	struct vmem_hashlist *list;
 	bt_t *bt;
 
-	list = bt_hashhead(vm, addr); 
+	list = bt_hashhead(vm, addr);
 	LIST_FOREACH(bt, list, bt_hashlist) {
 		if (bt->bt_start == addr) {
 			break;
@@ -940,7 +959,7 @@ vmem_init(vmem_t *vm, const char *name,
 
 #if defined(_KERNEL)
 	if (flags & VM_BOOTSTRAP) {
-		bt_refill(vm, VM_NOSLEEP);
+		bt_refill(vm);
 	}
 
 	mutex_enter(&vmem_list_lock);
@@ -1018,6 +1037,7 @@ int
 vmem_alloc(vmem_t *vm, vmem_size_t size, vm_flag_t flags, vmem_addr_t *addrp)
 {
 	const vm_flag_t strat __diagused = flags & VM_FITMASK;
+	int error;
 
 	KASSERT((flags & (VM_SLEEP|VM_NOSLEEP)) != 0);
 	KASSERT((~flags & (VM_SLEEP|VM_NOSLEEP)) != 0);
@@ -1037,12 +1057,16 @@ vmem_alloc(vmem_t *vm, vmem_size_t size, vm_flag_t flags, vmem_addr_t *addrp)
 		p = pool_cache_get(qc->qc_cache, vmf_to_prf(flags));
 		if (addrp != NULL)
 			*addrp = (vmem_addr_t)p;
-		return (p == NULL) ? ENOMEM : 0;
+		error = (p == NULL) ? ENOMEM : 0;
+		goto out;
 	}
 #endif /* defined(QCACHE) */
 
-	return vmem_xalloc(vm, size, 0, 0, 0, VMEM_ADDR_MIN, VMEM_ADDR_MAX,
+	error = vmem_xalloc(vm, size, 0, 0, 0, VMEM_ADDR_MIN, VMEM_ADDR_MAX,
 	    flags, addrp);
+out:
+	KASSERT(error == 0 || (flags & VM_SLEEP) == 0);
+	return error;
 }
 
 int
@@ -1177,11 +1201,7 @@ retry:
 	/* XXX */
 
 	if ((flags & VM_SLEEP) != 0) {
-#if defined(_KERNEL)
-		mutex_spin_enter(&uvm_fpageqlock);
-		uvm_kick_pdaemon();
-		mutex_spin_exit(&uvm_fpageqlock);
-#endif
+		vmem_kick_pdaemon();
 		VMEM_LOCK(vm);
 		VMEM_CONDVAR_WAIT(vm);
 		VMEM_UNLOCK(vm);

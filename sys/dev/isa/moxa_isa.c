@@ -1,4 +1,4 @@
-/*	$NetBSD: moxa_isa.c,v 1.19.22.1 2012/11/20 03:02:10 tls Exp $	*/
+/*	$NetBSD: moxa_isa.c,v 1.19.22.2 2017/12/03 11:37:05 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: moxa_isa.c,v 1.19.22.1 2012/11/20 03:02:10 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: moxa_isa.c,v 1.19.22.2 2017/12/03 11:37:05 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,7 +158,8 @@ moxa_isaattach(device_t parent, device_t self, void *aux)
 		if (!com_is_console(iot, iobase, &sc->sc_slaveioh[i]) &&
 		    bus_space_map(iot, iobase, COM_NPORTS, 0,
 			&sc->sc_slaveioh[i])) {
-			aprint_error_dev(self, "can't map i/o space for slave %d\n", i);
+			aprint_error_dev(self,
+			    "can't map i/o space for slave %d\n", i);
 			return;
 		}
 	}

@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -41,10 +41,7 @@
  * POSSIBILITY OF SUCH DAMAGES.
  */
 
-#define __DTEXPRESS_C__
-
 #include "aslcompiler.h"
-#include "dtcompiler.h"
 #include "dtparser.y.h"
 
 #define _COMPONENT          DT_COMPILER
@@ -149,6 +146,7 @@ DtDoOperator (
                 Gbl_CurrentField, NULL);
             return (0);
         }
+
         Result = LeftValue / RightValue;
         break;
 
@@ -160,6 +158,7 @@ DtDoOperator (
                 Gbl_CurrentField, NULL);
             return (0);
         }
+
         Result = LeftValue % RightValue;
         break;
 
@@ -415,10 +414,11 @@ DtLookupLabel (
     LabelField = Gbl_LabelList;
     while (LabelField)
     {
-        if (!ACPI_STRCMP (Name, LabelField->Value))
+        if (!strcmp (Name, LabelField->Value))
         {
             return (LabelField);
         }
+
         LabelField = LabelField->NextLabel;
     }
 

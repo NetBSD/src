@@ -1,4 +1,4 @@
-/* $NetBSD: rtc.c,v 1.19 2011/07/09 16:59:40 matt Exp $ */
+/* $NetBSD: rtc.c,v 1.19.12.1 2017/12/03 11:36:40 jdolecek Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.19 2011/07/09 16:59:40 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.19.12.1 2017/12/03 11:36:40 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -160,18 +160,18 @@ xirtc_settime(todr_chip_handle_t handle, struct clock_ymdhms *ymdhms)
 	WRITERTC(sc, X1241REG_SR, X1241REG_SR_WEL | X1241REG_SR_RWEL);
 
 	/* set the time */
-	WRITERTC(sc, X1241REG_HR, TOBCD(ymdhms->dt_hour) | X1241REG_HR_MIL);
-	WRITERTC(sc, X1241REG_MN, TOBCD(ymdhms->dt_min));
-	WRITERTC(sc, X1241REG_SC, TOBCD(ymdhms->dt_sec));
+	WRITERTC(sc, X1241REG_HR, bintobcd(ymdhms->dt_hour) | X1241REG_HR_MIL);
+	WRITERTC(sc, X1241REG_MN, bintobcd(ymdhms->dt_min));
+	WRITERTC(sc, X1241REG_SC, bintobcd(ymdhms->dt_sec));
 
 	/* set the date */
 	y2k = (ymdhms->dt_year >= 2000) ? 0x20 : 0x19;
 	year = ymdhms->dt_year % 100;
 
-	WRITERTC(sc, X1241REG_MO, TOBCD(ymdhms->dt_mon));
-	WRITERTC(sc, X1241REG_DT, TOBCD(ymdhms->dt_day));
-	WRITERTC(sc, X1241REG_YR, TOBCD(year));
-	WRITERTC(sc, X1241REG_Y2K, TOBCD(y2k));
+	WRITERTC(sc, X1241REG_MO, bintobcd(ymdhms->dt_mon));
+	WRITERTC(sc, X1241REG_DT, bintobcd(ymdhms->dt_day));
+	WRITERTC(sc, X1241REG_YR, bintobcd(year));
+	WRITERTC(sc, X1241REG_Y2K, bintobcd(y2k));
 
 	/* lock writes again */
 	WRITERTC(sc, X1241REG_SR, 0);
@@ -187,17 +187,17 @@ xirtc_gettime(todr_chip_handle_t handle, struct clock_ymdhms *ymdhms)
 	uint8_t status;
 
 	time_smbus_init(sc->sc_smbus_chan);
-	ymdhms->dt_day = FROMBCD(READRTC(sc, X1241REG_DT));
-	ymdhms->dt_mon =  FROMBCD(READRTC(sc, X1241REG_MO));
+	ymdhms->dt_day = bcdtobin(READRTC(sc, X1241REG_DT));
+	ymdhms->dt_mon =  bcdtobin(READRTC(sc, X1241REG_MO));
 	year =  READRTC(sc, X1241REG_YR);
 	y2k = READRTC(sc, X1241REG_Y2K);
-	ymdhms->dt_year = FROMBCD(y2k) * 100 + FROMBCD(year);
+	ymdhms->dt_year = bcdtobin(y2k) * 100 + bcdtobin(year);
 
 
-	ymdhms->dt_sec = FROMBCD(READRTC(sc, X1241REG_SC));
-	ymdhms->dt_min = FROMBCD(READRTC(sc, X1241REG_MN));
+	ymdhms->dt_sec = bcdtobin(READRTC(sc, X1241REG_SC));
+	ymdhms->dt_min = bcdtobin(READRTC(sc, X1241REG_MN));
 	hour = READRTC(sc, X1241REG_HR);
-	ymdhms->dt_hour = FROMBCD(hour & ~X1241REG_HR_MIL);
+	ymdhms->dt_hour = bcdtobin(hour & ~X1241REG_HR_MIL);
 
 	status = READRTC(sc, X1241REG_SR);
 
@@ -265,19 +265,19 @@ strtc_settime(todr_chip_handle_t handle, struct clock_ymdhms *ymdhms)
 
 	time_smbus_init(sc->sc_smbus_chan);
 
-	hour = TOBCD(ymdhms->dt_hour);
+	hour = bintobcd(ymdhms->dt_hour);
 	if (ymdhms->dt_year >= 2000)	/* Should be always true! */
 		hour |= M41T81_HOUR_CB | M41T81_HOUR_CEB;
 
 	/* set the time */
-	WRITERTC(sc, M41T81_SEC, TOBCD(ymdhms->dt_sec));
-	WRITERTC(sc, M41T81_MIN, TOBCD(ymdhms->dt_min));
+	WRITERTC(sc, M41T81_SEC, bintobcd(ymdhms->dt_sec));
+	WRITERTC(sc, M41T81_MIN, bintobcd(ymdhms->dt_min));
 	WRITERTC(sc, M41T81_HOUR, hour);
 
 	/* set the date */
-	WRITERTC(sc, M41T81_DATE, TOBCD(ymdhms->dt_day));
-	WRITERTC(sc, M41T81_MON, TOBCD(ymdhms->dt_mon));
-	WRITERTC(sc, M41T81_YEAR, TOBCD(ymdhms->dt_year % 100));
+	WRITERTC(sc, M41T81_DATE, bintobcd(ymdhms->dt_day));
+	WRITERTC(sc, M41T81_MON, bintobcd(ymdhms->dt_mon));
+	WRITERTC(sc, M41T81_YEAR, bintobcd(ymdhms->dt_year % 100));
 
 	return (0);
 }
@@ -290,14 +290,14 @@ strtc_gettime(todr_chip_handle_t handle, struct clock_ymdhms *ymdhms)
 
 	time_smbus_init(sc->sc_smbus_chan);
 
-	ymdhms->dt_sec = FROMBCD(READRTC(sc, M41T81_SEC));
-	ymdhms->dt_min = FROMBCD(READRTC(sc, M41T81_MIN));
+	ymdhms->dt_sec = bcdtobin(READRTC(sc, M41T81_SEC));
+	ymdhms->dt_min = bcdtobin(READRTC(sc, M41T81_MIN));
 	hour = READRTC(sc, M41T81_HOUR & M41T81_HOUR_MASK);
-	ymdhms->dt_hour = FROMBCD(hour & M41T81_HOUR_MASK);
+	ymdhms->dt_hour = bcdtobin(hour & M41T81_HOUR_MASK);
 
-	ymdhms->dt_day = FROMBCD(READRTC(sc, M41T81_DATE));
-	ymdhms->dt_mon =  FROMBCD(READRTC(sc, M41T81_MON));
-	ymdhms->dt_year =  1900 + FROMBCD(READRTC(sc, M41T81_YEAR));
+	ymdhms->dt_day = bcdtobin(READRTC(sc, M41T81_DATE));
+	ymdhms->dt_mon =  bcdtobin(READRTC(sc, M41T81_MON));
+	ymdhms->dt_year =  1900 + bcdtobin(READRTC(sc, M41T81_YEAR));
 	if (hour & M41T81_HOUR_CB)
 		ymdhms->dt_year += 100;
 
@@ -305,7 +305,7 @@ strtc_gettime(todr_chip_handle_t handle, struct clock_ymdhms *ymdhms)
 }
 
 #define	NITERS			3
-#define	RTC_SECONDS(rtc)	FROMBCD(READRTC((rtc), X1241REG_SC))
+#define	RTC_SECONDS(rtc)	bcdtobin(READRTC((rtc), X1241REG_SC))
 
 /*
  * Since it takes so long to read the complete time/date values from
@@ -417,8 +417,8 @@ return;	/* XXX XXX */
 #include <mips/sibyte/include/sb1250_regs.h>
 #include <mips/sibyte/include/sb1250_smbus.h>
 
-#define	READ_REG(rp)		(mips3_ld((volatile uint64_t *)(MIPS_PHYS_TO_KSEG1(rp))))
-#define	WRITE_REG(rp, val)	(mips3_sd((volatile uint64_t *)(MIPS_PHYS_TO_KSEG1(rp)), (val)))
+#define	READ_REG(rp)		mips3_ld((register_t)(MIPS_PHYS_TO_KSEG1(rp)))
+#define	WRITE_REG(rp, val)	mips3_sd((register_t)(MIPS_PHYS_TO_KSEG1(rp)), (val))
 
 static void
 time_smbus_init(int chan)

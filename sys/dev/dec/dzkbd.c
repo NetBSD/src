@@ -1,4 +1,4 @@
-/*	$NetBSD: dzkbd.c,v 1.25.2.1 2012/11/20 03:01:59 tls Exp $	*/
+/*	$NetBSD: dzkbd.c,v 1.25.2.2 2017/12/03 11:37:00 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dzkbd.c,v 1.25.2.1 2012/11/20 03:01:59 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dzkbd.c,v 1.25.2.2 2017/12/03 11:37:00 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -237,7 +237,7 @@ dzkbd_cngetc(void *v, u_int *type, int *data)
 
 	do {
 		c = dzgetc(dzi->dzi_ls);
-	} while (!lk201_decode(&dzi->dzi_ks, c, type, data));
+	} while (!lk201_decode(&dzi->dzi_ks, 0, c, type, data) == LKD_NODATA);
 }
 
 static void
@@ -294,12 +294,15 @@ dzkbd_input(void *v, int data)
 	struct dzkbd_softc *sc = (struct dzkbd_softc *)v;
 	u_int type;
 	int val;
+	int decode;
 
-	if (sc->sc_enabled == 0)
-		return(0);
+	do {
+		decode = lk201_decode(&sc->sc_itl->dzi_ks, 1,
+		    data, &type, &val);
+		if (decode != LKD_NODATA)
+			wskbd_input(sc->sc_wskbddev, type, val);
+	} while (decode == LKD_MORE);
 
-	if (lk201_decode(&sc->sc_itl->dzi_ks, data, &type, &val))
-		wskbd_input(sc->sc_wskbddev, type, val);
 	return(1);
 }
 

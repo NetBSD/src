@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.50.8.3 2014/08/20 00:03:37 tls Exp $ */
+/* $NetBSD: gpio.c,v 1.50.8.4 2017/12/03 11:37:01 jdolecek Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.50.8.3 2014/08/20 00:03:37 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.50.8.4 2017/12/03 11:37:01 jdolecek Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.50.8.3 2014/08/20 00:03:37 tls Exp $");
 #include <sys/module.h>
 #include <dev/gpio/gpiovar.h>
 
+#include "ioconf.h"
 #include "locators.h"
 
 #ifdef GPIO_DEBUG
@@ -113,8 +114,6 @@ const struct cdevsw gpio_cdevsw = {
 	.d_discard = nodiscard,
 	.d_flag = D_OTHER | D_MPSAFE
 };
-
-extern struct cfdriver gpio_cd;
 
 static int
 gpio_match(device_t parent, cfdata_t cf, void *aux)
@@ -202,6 +201,8 @@ gpio_attach(device_t parent, device_t self, void *aux)
 {
 	struct gpio_softc *sc = device_private(self);
 	struct gpiobus_attach_args *gba = aux;
+	struct gpio_name *nm;
+	int pin;
 
 	sc->sc_dev = self;
 	sc->sc_gc = gba->gba_gc;
@@ -210,6 +211,17 @@ gpio_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal(": %d pins\n", sc->sc_npins);
 	aprint_naive("\n");
+
+	/* Configure default pin names */
+	for (pin = 0; pin < sc->sc_npins; pin++) {
+		if (sc->sc_pins[pin].pin_defname[0] == '\0')
+			continue;
+		nm = kmem_alloc(sizeof(*nm), KM_SLEEP);
+		strlcpy(nm->gp_name, sc->sc_pins[pin].pin_defname,
+		    sizeof(nm->gp_name));
+		nm->gp_pin = pin;
+		LIST_INSERT_HEAD(&sc->sc_names, nm, gp_next);
+	}
 
 	if (!pmf_device_register(self, NULL, gpio_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
@@ -298,6 +310,45 @@ gpiobus_print(void *aux, const char *pnp)
 	return UNCONF;
 }
 
+/* called from backends when a interrupt even occurs */
+void
+gpio_intr(device_t self, uint32_t evts)
+{
+	struct gpio_softc *sc = device_private(self);
+	void (*callback)(void *);
+	void *callback_arg;
+
+	for (int i = 0; i < sc->sc_npins; i++) {
+		if (evts & (1 << i)) {
+			mutex_enter(&sc->sc_mtx);
+			callback = sc->sc_pins[i].pin_callback;
+			callback_arg = sc->sc_pins[i].pin_callback_arg;
+			DPRINTFN(2, ("gpio pin %d event callback %p\n", i, callback));
+			if (callback != NULL) {
+				callback(callback_arg);
+			}
+			mutex_exit(&sc->sc_mtx);
+		}
+	}
+}
+
+void *
+gpio_find_device(const char *name)
+{
+	device_t gpio_dev;
+	gpio_dev = device_find_by_xname(name);
+	if (gpio_dev == NULL)
+		return NULL;
+	return device_private(gpio_dev);
+}
+
+const char *
+gpio_get_name(void *gpio)
+{
+	struct gpio_softc *sc = gpio;
+	return device_xname(sc->sc_dev);
+}
+
 /* return 1 if all pins can be mapped, 0 if not */
 int
 gpio_pin_can_map(void *gpio, int offset, uint32_t mask)
@@ -379,8 +430,42 @@ void
 gpio_pin_ctl(void *gpio, struct gpio_pinmap *map, int pin, int flags)
 {
 	struct gpio_softc *sc = gpio;
+	struct gpio_pin *pinp = &sc->sc_pins[map->pm_map[pin]];
 
-	return gpiobus_pin_ctl(sc->sc_gc, map->pm_map[pin], flags);
+	KASSERT((flags & GPIO_PIN_EVENTS) == 0);
+	mutex_enter(&sc->sc_mtx);
+	gpiobus_pin_ctl(sc->sc_gc, map->pm_map[pin], flags);
+	pinp->pin_callback = NULL;
+	pinp->pin_callback_arg = NULL;
+	mutex_exit(&sc->sc_mtx);
+}
+
+int
+gpio_pin_ctl_intr(void *gpio, struct gpio_pinmap *map, int pin, int flags,
+    int ipl, void (*callback)(void *), void *arg)
+{
+	struct gpio_softc *sc = gpio;
+	struct gpio_pin *pinp = &sc->sc_pins[map->pm_map[pin]];
+	KASSERT((flags & GPIO_PIN_EVENTS) != 0);
+	if (ipl != IPL_VM)
+		return EINVAL;
+	mutex_enter(&sc->sc_mtx);
+	if (pinp->pin_callback != NULL) {
+		mutex_exit(&sc->sc_mtx);
+		return EEXIST;
+	}
+	pinp->pin_callback = callback;
+	pinp->pin_callback_arg = arg;
+	gpiobus_pin_ctl(sc->sc_gc, map->pm_map[pin], flags);
+	mutex_exit(&sc->sc_mtx);
+	return 0;
+}
+
+void
+gpio_pin_irqen(void *gpio, struct gpio_pinmap *map, int pin, bool en)
+{
+	struct gpio_softc *sc = gpio;
+	gpiobus_pin_irqen(sc->sc_gc, map->pm_map[pin], en);
 }
 
 int

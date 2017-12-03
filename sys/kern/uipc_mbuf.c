@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.146.2.4 2014/08/20 00:04:29 tls Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.146.2.5 2017/12/03 11:38:45 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,11 +62,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.146.2.4 2014/08/20 00:04:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.146.2.5 2017/12/03 11:38:45 jdolecek Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
 #include "opt_nmbclusters.h"
 #include "opt_ddb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -554,9 +556,20 @@ m_reclaim(void *arg, int flags)
 			if (pr->pr_drain)
 				(*pr->pr_drain)();
 	}
-	IFNET_FOREACH(ifp) {
-		if (ifp->if_drain)
-			(*ifp->if_drain)(ifp);
+	/* XXX we cannot use psref in H/W interrupt */
+	if (!cpu_intr_p()) {
+		int bound = curlwp_bind();
+		IFNET_READER_FOREACH(ifp) {
+			struct psref psref;
+
+			if_acquire(ifp, &psref);
+
+			if (ifp->if_drain)
+				(*ifp->if_drain)(ifp);
+
+			if_release(ifp, &psref);
+		}
+		curlwp_bindx(bound);
 	}
 	splx(s);
 	mbstat.m_drain++;
@@ -576,19 +589,13 @@ m_get(int nowait, int type)
 	KASSERT(type != MT_FREE);
 
 	m = pool_cache_get(mb_cache,
-	    nowait == M_WAIT ? PR_WAITOK|PR_LIMITFAIL : 0);
+	    nowait == M_WAIT ? PR_WAITOK|PR_LIMITFAIL : PR_NOWAIT);
 	if (m == NULL)
 		return NULL;
 
 	mbstat_type_add(type, 1);
-	mowner_init(m, type);
-	m->m_ext_ref = m;
-	m->m_type = type;
-	m->m_len = 0;
-	m->m_next = NULL;
-	m->m_nextpkt = NULL;
-	m->m_data = m->m_dat;
-	m->m_flags = 0;
+
+	m_hdr_init(m, type, NULL, m->m_dat, 0);
 
 	return m;
 }
@@ -602,13 +609,7 @@ m_gethdr(int nowait, int type)
 	if (m == NULL)
 		return NULL;
 
-	m->m_data = m->m_pktdat;
-	m->m_flags = M_PKTHDR;
-	m->m_pkthdr.rcvif = NULL;
-	m->m_pkthdr.len = 0;
-	m->m_pkthdr.csum_flags = 0;
-	m->m_pkthdr.csum_data = 0;
-	SLIST_INIT(&m->m_pkthdr.tags);
+	m_pkthdr_init(m);
 
 	return m;
 }
@@ -630,28 +631,6 @@ m_clget(struct mbuf *m, int nowait)
 {
 
 	MCLGET(m, nowait);
-}
-
-struct mbuf *
-m_free(struct mbuf *m)
-{
-	struct mbuf *n;
-
-	MFREE(m, n);
-	return (n);
-}
-
-void
-m_freem(struct mbuf *m)
-{
-	struct mbuf *n;
-
-	if (m == NULL)
-		return;
-	do {
-		MFREE(m, n);
-		m = n;
-	} while (m);
 }
 
 #ifdef MBUFTRACE
@@ -777,8 +756,13 @@ m_copym0(struct mbuf *m, int off0, int len, int wait, int deep)
 				/*
 				 * we are unsure about the way m was allocated.
 				 * copy into multiple MCLBYTES cluster mbufs.
+				 *
+				 * recompute m_len, it is no longer valid if MCLGET()
+				 * fails to allocate a cluster. Then we try to split
+				 * the source into normal sized mbufs.
 				 */
 				MCLGET(n, wait);
+				n->m_len = 0;
 				n->m_len = M_TRAILINGSPACE(n);
 				n->m_len = m_copylen(len, n->m_len);
 				n->m_len = min(n->m_len, m->m_len - off);
@@ -1162,7 +1146,7 @@ m_split0(struct mbuf *m0, int len0, int wait, int copyhdr)
 		if (n == NULL)
 			return NULL;
 		MCLAIM(n, m0->m_owner);
-		n->m_pkthdr.rcvif = m0->m_pkthdr.rcvif;
+		m_copy_rcvif(n, m0);
 		n->m_pkthdr.len = m0->m_pkthdr.len - len0;
 		len_save = m0->m_pkthdr.len;
 		m0->m_pkthdr.len = len0;
@@ -1231,7 +1215,7 @@ m_devget(char *buf, int totlen, int off0, struct ifnet *ifp,
 	m = m_gethdr(M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return NULL;
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
 	m->m_pkthdr.len = totlen;
 	m->m_len = MHLEN;
 
@@ -1342,6 +1326,9 @@ m_makewritable(struct mbuf **mp, int off, int len, int how)
 	error = m_copyback0(mp, off, len, NULL,
 	    M_COPYBACK0_PRESERVE|M_COPYBACK0_COW, how);
 
+	if (error)
+		return error;
+
 #if defined(DEBUG)
 	int reslen = 0;
 	for (struct mbuf *n = *mp; n; n = n->m_next)
@@ -1352,7 +1339,7 @@ m_makewritable(struct mbuf **mp, int off, int len, int how)
 		panic("m_makewritable: inconsist");
 #endif /* defined(DEBUG) */
 
-	return error;
+	return 0;
 }
 
 /*
@@ -1684,7 +1671,7 @@ m_getptr(struct mbuf *m, int loc, int *off)
 /*
  * m_ext_free: release a reference to the mbuf external storage.
  *
- * => free the mbuf m itsself as well.
+ * => free the mbuf m itself as well.
  */
 
 void
@@ -1772,9 +1759,9 @@ nextchain:
 	    (int)M_READONLY(m));
 	if ((m->m_flags & M_PKTHDR) != 0) {
 		snprintb(buf, sizeof(buf), M_CSUM_BITS, m->m_pkthdr.csum_flags);
-		(*pr)("  pktlen=%d, rcvif=%p, csum_flags=0x%s, csum_data=0x%"
+		(*pr)("  pktlen=%d, rcvif=%p, csum_flags=%s, csum_data=0x%"
 		    PRIx32 ", segsz=%u\n",
-		    m->m_pkthdr.len, m->m_pkthdr.rcvif,
+		    m->m_pkthdr.len, m_get_rcvif_NOMPSAFE(m),
 		    buf, m->m_pkthdr.csum_data, m->m_pkthdr.segsz);
 	}
 	if ((m->m_flags & M_EXT)) {
@@ -1927,3 +1914,79 @@ m_claim(struct mbuf *m, struct mowner *mo)
 	mowner_claim(m, mo);
 }
 #endif /* defined(MBUFTRACE) */
+
+/*
+ * MFREE(struct mbuf *m, struct mbuf *n)
+ * Free a single mbuf and associated external storage.
+ * Place the successor, if any, in n.
+ */
+#define	MFREE(f, l, m, n)						\
+	mowner_revoke((m), 1, (m)->m_flags);				\
+	mbstat_type_add((m)->m_type, -1);				\
+	if ((m)->m_flags & M_PKTHDR)					\
+		m_tag_delete_chain((m), NULL);				\
+	(n) = (m)->m_next;						\
+	if ((m)->m_flags & M_EXT) {					\
+		m_ext_free((m));					\
+	} else {							\
+		MBUFFREE(f, l, m);					\
+	}								\
+
+#ifdef DEBUG
+#define MBUFFREE(f, l, m)						\
+	do {								\
+		if ((m)->m_type == MT_FREE)				\
+			panic("mbuf was already freed at %s,%d", 	\
+			    m->m_data, m->m_len);			\
+		(m)->m_type = MT_FREE;					\
+		(m)->m_data = __UNCONST(f);				\
+		(m)->m_len = l;						\
+		pool_cache_put(mb_cache, (m));				\
+	} while (/*CONSTCOND*/0)
+
+#else
+#define MBUFFREE(f, l, m)						\
+	do {								\
+		KASSERT((m)->m_type != MT_FREE);			\
+		(m)->m_type = MT_FREE;					\
+		pool_cache_put(mb_cache, (m));				\
+	} while (/*CONSTCOND*/0)
+#endif
+
+struct mbuf *
+m__free(const char *f, int l, struct mbuf *m)
+{
+	struct mbuf *n;
+
+	MFREE(f, l, m, n);
+	return (n);
+}
+
+void
+m__freem(const char *f, int l, struct mbuf *m)
+{
+	struct mbuf *n;
+
+	if (m == NULL)
+		return;
+	do {
+		MFREE(f, l, m, n);
+		m = n;
+	} while (m);
+}
+
+#undef m_free
+struct mbuf *m_free(struct mbuf *);
+struct mbuf *
+m_free(struct mbuf *m)
+{
+	return m__free(__func__, __LINE__, m);
+}
+
+#undef m_freem
+void m_freem(struct mbuf *);
+void
+m_freem(struct mbuf *m)
+{
+	m__freem(__func__, __LINE__, m);
+}

@@ -2169,7 +2169,7 @@ static void ilk_compute_wm_parameters(struct drm_crtc *crtc,
 {
 	struct drm_device *dev = crtc->dev;
 	struct intel_crtc *intel_crtc = to_intel_crtc(crtc);
-	enum pipe pipe = intel_crtc->pipe;
+	enum i915_pipe pipe = intel_crtc->pipe;
 	struct drm_plane *plane;
 
 	p->active = intel_crtc_active(crtc);
@@ -2373,7 +2373,7 @@ static void ilk_compute_wm_results(struct drm_device *dev,
 
 	/* LP0 register values */
 	list_for_each_entry(intel_crtc, &dev->mode_config.crtc_list, base.head) {
-		enum pipe pipe = intel_crtc->pipe;
+		enum i915_pipe pipe = intel_crtc->pipe;
 		const struct intel_wm_level *r =
 			&intel_crtc->wm.active.wm[0];
 
@@ -2430,7 +2430,7 @@ static unsigned int ilk_compute_wm_dirty(struct drm_device *dev,
 					 const struct ilk_wm_values *new)
 {
 	unsigned int dirty = 0;
-	enum pipe pipe;
+	enum i915_pipe pipe;
 	int wm_lp;
 
 	for_each_pipe(pipe) {
@@ -2676,7 +2676,7 @@ static void ilk_pipe_wm_get_hw_state(struct drm_crtc *crtc)
 	struct ilk_wm_values *hw = &dev_priv->wm.hw;
 	struct intel_crtc *intel_crtc = to_intel_crtc(crtc);
 	struct intel_pipe_wm *active = &intel_crtc->wm.active;
-	enum pipe pipe = intel_crtc->pipe;
+	enum i915_pipe pipe = intel_crtc->pipe;
 	static const unsigned int wm0_pipe_reg[] = {
 		[PIPE_A] = WM0_PIPEA_ILK,
 		[PIPE_B] = WM0_PIPEB_ILK,
@@ -3625,6 +3625,8 @@ static void valleyview_check_pctx(struct drm_i915_private *dev_priv)
 {
 	unsigned long pctx_addr = I915_READ(VLV_PCBR) & ~4095;
 
+	if (WARN_ON(!dev_priv->vlv_pctx))
+		return;
 	WARN_ON(pctx_addr != dev_priv->mm.stolen_base +
 			     dev_priv->vlv_pctx->stolen->start);
 }
@@ -4426,14 +4428,6 @@ ips_ping_for_i915_load(void)
 
 void intel_gpu_ips_init(struct drm_i915_private *dev_priv)
 {
-#ifdef __NetBSD__		/* XXX */
-	/*
-	 * This seems as good a place as any to initialize mchdev_lock.
-	 * Taking the lock in the rest of this routine is silly, but...
-	 */
-	spin_lock_init(&mchdev_lock);
-#endif
-
 	/* We only register the i915 ips part with intel-ips once everything is
 	 * set up, to avoid intel-ips sneaking in and reading bogus values. */
 	spin_lock_irq(&mchdev_lock);
@@ -4445,18 +4439,9 @@ void intel_gpu_ips_init(struct drm_i915_private *dev_priv)
 
 void intel_gpu_ips_teardown(void)
 {
-#ifdef __NetBSD__
-	if (i915_mch_dev == NULL)
-		return;
-#endif
-
 	spin_lock_irq(&mchdev_lock);
 	i915_mch_dev = NULL;
 	spin_unlock_irq(&mchdev_lock);
-
-#ifdef __NetBSD__
-	spin_lock_destroy(&mchdev_lock);
-#endif
 }
 
 static void intel_init_emon(struct drm_device *dev)
@@ -4502,8 +4487,8 @@ static void intel_init_emon(struct drm_device *dev)
 	pxw[15] = 0;
 
 	for (i = 0; i < 4; i++) {
-		u32 val = (pxw[i*4] << 24) | (pxw[(i*4)+1] << 16) |
-			(pxw[(i*4)+2] << 8) | (pxw[(i*4)+3]);
+		u32 val = ((u32)pxw[i*4] << 24) | ((u32)pxw[(i*4)+1] << 16) |
+			((u32)pxw[(i*4)+2] << 8) | ((u32)pxw[(i*4)+3]);
 		I915_WRITE(PXW + (i * 4), val);
 	}
 
@@ -4917,7 +4902,7 @@ static void lpt_suspend_hw(struct drm_device *dev)
 static void gen8_init_clock_gating(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
-	enum pipe pipe;
+	enum i915_pipe pipe;
 
 	I915_WRITE(WM3_LP_ILK, 0);
 	I915_WRITE(WM2_LP_ILK, 0);
@@ -5439,7 +5424,7 @@ static void hsw_power_well_post_enable(struct drm_i915_private *dev_priv)
 	}
 }
 
-static void reset_vblank_counter(struct drm_device *dev, enum pipe pipe)
+static void reset_vblank_counter(struct drm_device *dev, enum i915_pipe pipe)
 {
 	assert_spin_locked(&dev->vbl_lock);
 
@@ -5449,7 +5434,7 @@ static void reset_vblank_counter(struct drm_device *dev, enum pipe pipe)
 static void hsw_power_well_post_disable(struct drm_i915_private *dev_priv)
 {
 	struct drm_device *dev = dev_priv->dev;
-	enum pipe pipe;
+	enum i915_pipe pipe;
 	unsigned long irqflags;
 
 	/*
@@ -5651,7 +5636,7 @@ static void vlv_display_power_well_disable(struct drm_i915_private *dev_priv,
 					   struct i915_power_well *power_well)
 {
 	struct drm_device *dev = dev_priv->dev;
-	enum pipe pipe;
+	enum i915_pipe pipe;
 
 	WARN_ON_ONCE(power_well->data != PUNIT_POWER_WELL_DISP2D);
 
@@ -6035,7 +6020,7 @@ void intel_aux_display_runtime_put(struct drm_i915_private *dev_priv)
 void intel_runtime_pm_get(struct drm_i915_private *dev_priv)
 {
 	struct drm_device *dev = dev_priv->dev;
-	struct device *device = &dev->pdev->dev;
+	struct device *device = dev->dev;
 
 	if (!HAS_RUNTIME_PM(dev))
 		return;
@@ -6047,7 +6032,7 @@ void intel_runtime_pm_get(struct drm_i915_private *dev_priv)
 void intel_runtime_pm_put(struct drm_i915_private *dev_priv)
 {
 	struct drm_device *dev = dev_priv->dev;
-	struct device *device = &dev->pdev->dev;
+	struct device *device = dev->dev;
 
 	if (!HAS_RUNTIME_PM(dev))
 		return;
@@ -6059,7 +6044,7 @@ void intel_runtime_pm_put(struct drm_i915_private *dev_priv)
 void intel_init_runtime_pm(struct drm_i915_private *dev_priv)
 {
 	struct drm_device *dev = dev_priv->dev;
-	struct device *device = &dev->pdev->dev;
+	struct device *device = dev->dev;
 
 	if (!HAS_RUNTIME_PM(dev))
 		return;
@@ -6076,7 +6061,7 @@ void intel_init_runtime_pm(struct drm_i915_private *dev_priv)
 void intel_fini_runtime_pm(struct drm_i915_private *dev_priv)
 {
 	struct drm_device *dev = dev_priv->dev;
-	struct device *device = &dev->pdev->dev;
+	struct device *device = dev->dev;
 
 	if (!HAS_RUNTIME_PM(dev))
 		return;

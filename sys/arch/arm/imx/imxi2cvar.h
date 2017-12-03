@@ -1,7 +1,7 @@
-/*	$NetBSD: imxi2cvar.h,v 1.1.6.2 2014/08/20 00:02:46 tls Exp $	*/
+/*	$NetBSD: imxi2cvar.h,v 1.1.6.3 2017/12/03 11:35:53 jdolecek Exp $	*/
 
 /*
-* Copyright (c) 2012  Genetec Corporation.  All rights reserved.
+* Copyright (c) 2012, 2015 Genetec Corporation.  All rights reserved.
 * Written by Hashimoto Kenichi for Genetec Corporation.
 *
 * Redistribution and use in source and binary forms, with or without
@@ -30,13 +30,12 @@
 #define _IMXI2CVAR_H_
 
 #include <dev/i2c/i2cvar.h>
+#include <dev/i2c/motoi2cvar.h>
 
 struct imxi2c_softc {
 	device_t sc_dev;
-	bus_space_tag_t sc_iot;
-	bus_space_handle_t sc_ioh;
-	struct i2c_controller sc_i2c;
-	kmutex_t sc_buslock;
+	struct motoi2c_softc sc_motoi2c;
+	struct motoi2c_settings sc_motoi2c_settings;
 };
 
 int imxi2c_attach_common(device_t, device_t,

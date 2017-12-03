@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_vsbus.c,v 1.42.18.1 2012/11/20 03:01:48 tls Exp $	*/
+/*	$NetBSD: asc_vsbus.c,v 1.42.18.2 2017/12/03 11:36:48 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.42.18.1 2012/11/20 03:01:48 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.42.18.2 2017/12/03 11:36:48 jdolecek Exp $");
 
 #include "locators.h"
 #include "opt_cputype.h"
@@ -352,7 +352,7 @@ asc_vsbus_dma_intr(struct ncr53c9x_softc *sc)
 
 	if (asc->sc_dmasize == 0) {
 		/* A "Transfer Pad" operation completed */
-		tcl = NCR_READ_REG(sc, NCR_TCL); 
+		tcl = NCR_READ_REG(sc, NCR_TCL);
 		tcm = NCR_READ_REG(sc, NCR_TCM);
 		NCR_DMA(("asc_vsbus_intr: discarded %d bytes (tcl=%d, tcm=%d)\n",
 		    tcl | (tcm << 8), tcl, tcm));

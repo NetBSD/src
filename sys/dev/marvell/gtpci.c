@@ -1,4 +1,4 @@
-/*	$NetBSD: gtpci.c,v 1.30.2.1 2014/08/20 00:03:39 tls Exp $	*/
+/*	$NetBSD: gtpci.c,v 1.30.2.2 2017/12/03 11:37:05 jdolecek Exp $	*/
 /*
  * Copyright (c) 2008, 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtpci.c,v 1.30.2.1 2014/08/20 00:03:39 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtpci.c,v 1.30.2.2 2017/12/03 11:37:05 jdolecek Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -567,6 +567,9 @@ gtpci_conf_read(void *v, pcitag_t tag, int reg)
 	struct gtpci_softc *sc = v;
 	const pcireg_t addr = tag | reg;
 
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return -1;
+
 	GTPCI_WRITE(sc, GTPCI_CA, addr | GTPCI_CA_CONFIGEN);
 	if ((addr | GTPCI_CA_CONFIGEN) != GTPCI_READ(sc, GTPCI_CA))
 		return -1;
@@ -579,6 +582,9 @@ gtpci_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data)
 {
 	struct gtpci_softc *sc = v;
 	pcireg_t addr = tag | (reg & 0xfc);
+
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return;
 
 	GTPCI_WRITE(sc, GTPCI_CA, addr | GTPCI_CA_CONFIGEN);
 	if ((addr | GTPCI_CA_CONFIGEN) != GTPCI_READ(sc, GTPCI_CA))

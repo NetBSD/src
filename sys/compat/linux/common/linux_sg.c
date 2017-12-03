@@ -1,4 +1,4 @@
-/* $NetBSD: linux_sg.c,v 1.13 2008/03/21 21:54:58 ad Exp $ */
+/* $NetBSD: linux_sg.c,v 1.13.48.1 2017/12/03 11:36:55 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2004 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sg.c,v 1.13 2008/03/21 21:54:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sg.c,v 1.13.48.1 2017/12/03 11:36:55 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ linux_ioctl_sg(struct lwp *l, const struct linux_sys_ioctl_args *uap,
 	DPRINTF(("Command = %lx\n", com));
 	switch (com) {
 	case LINUX_SG_GET_VERSION_NUM: {
-		error = copyout(&version, SCARG(uap, data),
+		error = copyout(&linux_sg_version, SCARG(uap, data),
 		    sizeof(linux_sg_version));
 		break;
 	}

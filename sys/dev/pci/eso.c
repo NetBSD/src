@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.61.2.2 2014/08/20 00:03:42 tls Exp $	*/
+/*	$NetBSD: eso.c,v 1.61.2.3 2017/12/03 11:37:07 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.61.2.2 2014/08/20 00:03:42 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.61.2.3 2017/12/03 11:37:07 jdolecek Exp $");
 
 #include "mpu.h"
 
@@ -402,8 +402,7 @@ eso_attach(device_t parent, device_t self, void *aux)
 		mutex_destroy(&sc->sc_intr_lock);
 		return;
 	}
-	aprint_normal_dev(sc->sc_dev, "interrupting at %s\n",
-	    intrstring);
+	aprint_normal_dev(sc->sc_dev, "interrupting at %s\n", intrstring);
 
 	cv_init(&sc->sc_pcv, "esoho");
 	cv_init(&sc->sc_rcv, "esohi");
@@ -1640,8 +1639,7 @@ eso_allocm(void *hdl, int direction, size_t size)
 	int error;
 
 	sc = hdl;
-	if ((ed = kmem_alloc(sizeof (*ed), KM_SLEEP)) == NULL)
-		return NULL;
+	ed = kmem_alloc(sizeof (*ed), KM_SLEEP);
 
 	/*
 	 * Apparently the Audio 1 DMA controller's current address

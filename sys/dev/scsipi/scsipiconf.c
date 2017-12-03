@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.c,v 1.40 2010/08/21 13:18:36 pgoyette Exp $	*/
+/*	$NetBSD: scsipiconf.c,v 1.40.18.1 2017/12/03 11:37:32 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.40 2010/08/21 13:18:36 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.40.18.1 2017/12/03 11:37:32 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.40 2010/08/21 13:18:36 pgoyette Exp
 #include <dev/scsipi/scsipiconf.h>
 #include <dev/scsipi/scsipi_base.h>
 
-#define	STRVIS_ISWHITE(x) ((x) == ' ' || (x) == '\0' || (x) == (u_char)'\377')
 
 /* Function pointers and stub routines for scsiverbose module */
 int (*scsipi_print_sense)(struct scsipi_xfer *, int) = scsipi_print_sense_stub;
@@ -70,7 +69,8 @@ void (*scsipi_print_sense_data)(struct scsi_sense_data *, int) =
 
 int scsi_verbose_loaded = 0; 
 
-int scsipi_print_sense_stub(struct scsipi_xfer * xs, int verbosity)
+int
+scsipi_print_sense_stub(struct scsipi_xfer * xs, int verbosity)
 {
 	scsipi_load_verbose();
 	if (scsi_verbose_loaded)
@@ -79,7 +79,8 @@ int scsipi_print_sense_stub(struct scsipi_xfer * xs, int verbosity)
 		return 0;
 }
 
-void scsipi_print_sense_data_stub(struct scsi_sense_data *sense, int verbosity)
+void
+scsipi_print_sense_data_stub(struct scsi_sense_data *sense, int verbosity)
 {
 	scsipi_load_verbose();
 	if (scsi_verbose_loaded)
@@ -92,13 +93,21 @@ scsipi_command(struct scsipi_periph *periph, struct scsipi_generic *cmd,
     struct buf *bp, int flags)
 {
 	struct scsipi_xfer *xs;
+	int rc;
 
-	xs = scsipi_make_xs(periph, cmd, cmdlen, data_addr, datalen, retries,
+	/*
+	 * execute unlocked to allow waiting for memory
+	 */
+	xs = scsipi_make_xs_unlocked(periph, cmd, cmdlen, data_addr, datalen, retries,
 	    timeout, bp, flags);
 	if (!xs)
 		return (ENOMEM);
 
-	return (scsipi_execute_xs(xs));
+	mutex_enter(chan_mtx(periph->periph_channel));
+	rc = scsipi_execute_xs(xs);
+	mutex_exit(chan_mtx(periph->periph_channel));
+
+	return rc;
 }
 
 /* 
@@ -138,8 +147,19 @@ scsipi_alloc_periph(int malloc_flag)
 
 	TAILQ_INIT(&periph->periph_xferq);
 	callout_init(&periph->periph_callout, 0);
+	cv_init(&periph->periph_cv, "periph");
 
 	return periph;
+}
+
+/*
+ * cleanup and free scsipi_periph structure
+ */
+void
+scsipi_free_periph(struct scsipi_periph *periph)
+{
+	cv_destroy(&periph->periph_cv);
+	free(periph, M_DEVBUF);
 }
 
 /*
@@ -255,43 +275,4 @@ scsipi_dtype(int type)
 		break;
 	}
 	return (dtype);
-}
-
-void
-scsipi_strvis(u_char *dst, int dlen, const u_char *src, int slen)
-{
-
-	/* Trim leading and trailing blanks and NULs. */
-	while (slen > 0 && STRVIS_ISWHITE(src[0]))
-		++src, --slen;
-	while (slen > 0 && STRVIS_ISWHITE(src[slen - 1]))
-		--slen;
-
-	while (slen > 0) {
-		if (*src < 0x20 || *src >= 0x80) {
-			/* non-printable characters */
-			dlen -= 4;
-			if (dlen < 1)
-				break;
-			*dst++ = '\\';
-			*dst++ = ((*src & 0300) >> 6) + '0';
-			*dst++ = ((*src & 0070) >> 3) + '0';
-			*dst++ = ((*src & 0007) >> 0) + '0';
-		} else if (*src == '\\') {
-			/* quote characters */
-			dlen -= 2;
-			if (dlen < 1)
-				break;
-			*dst++ = '\\';
-			*dst++ = '\\';
-		} else {
-			/* normal characters */
-			if (--dlen < 1)
-				break;
-			*dst++ = *src;
-		}
-		++src, --slen;
-	}
-
-	*dst++ = 0;
 }

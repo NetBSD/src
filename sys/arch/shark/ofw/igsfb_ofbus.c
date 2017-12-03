@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb_ofbus.c,v 1.13.12.2 2014/08/20 00:03:23 tls Exp $ */
+/*	$NetBSD: igsfb_ofbus.c,v 1.13.12.3 2017/12/03 11:36:42 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2006 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb_ofbus.c,v 1.13.12.2 2014/08/20 00:03:23 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb_ofbus.c,v 1.13.12.3 2017/12/03 11:36:42 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,7 +112,7 @@ igsfb_ofbus_cnattach(bus_space_tag_t iot, bus_space_tag_t memt)
 
 	igsfb_mem_paddr = be32toh(regs[13]);
 	/* 4MB VRAM aperture, bufferable and cacheable */
-	igsfb_mem_vaddr = ofw_map(igsfb_mem_paddr, 0x00400000, L2_B | L2_C);
+	igsfb_mem_vaddr = ofw_map(igsfb_mem_paddr, 0x00400000, L2_B);
 	/* MMIO registers */
 	igsfb_mmio_vaddr = ofw_map(igsfb_mem_paddr + IGS_MEM_MMIO_SELECT,
 	    0x00100000, 0);
@@ -133,8 +133,17 @@ igsfb_ofbus_cnattach(bus_space_tag_t iot, bus_space_tag_t memt)
 	stdout_ihandle = of_decode_int((void *)&stdout_ihandle);
 	stdout_phandle = OF_instance_to_package(stdout_ihandle);
 
-	if (stdout_phandle != igs_node)
+	if (stdout_phandle != igs_node) {
+		/*
+		 * If we aren't the boot console, the CyberPro probably
+		 * hasn't been brought up yet.  Bring it up now, it's
+		 * still early enough to do so.
+		 */
+		const int handle = OF_open("/vlbus/display");
+		if (handle != -1)
+			OF_close(handle);
 		return ENXIO;
+	}
 
 	/* ok, now setup and attach the console */
 	dc = &igsfb_console_dc;

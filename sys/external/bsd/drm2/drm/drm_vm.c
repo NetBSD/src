@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_vm.c,v 1.5.4.2 2014/08/20 00:04:20 tls Exp $	*/
+/*	$NetBSD: drm_vm.c,v 1.5.4.3 2017/12/03 11:37:58 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_vm.c,v 1.5.4.2 2014/08/20 00:04:20 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_vm.c,v 1.5.4.3 2017/12/03 11:37:58 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/conf.h>
@@ -49,7 +49,8 @@ int
 drm_mmap_object(struct drm_device *dev, off_t offset, size_t size, int prot,
     struct uvm_object **uobjp, voff_t *uoffsetp, struct file *file __unused)
 {
-	dev_t devno = cdevsw_lookup_major(&drm_cdevsw);
+	devmajor_t maj = cdevsw_lookup_major(&drm_cdevsw);
+	dev_t devno = makedev(maj, dev->primary->index);
 	struct uvm_object *uobj;
 
 	KASSERT(offset == (offset & ~(PAGE_SIZE-1)));
@@ -59,7 +60,7 @@ drm_mmap_object(struct drm_device *dev, off_t offset, size_t size, int prot,
 	 * access checks; offset does not become a base address for the
 	 * subsequent uvm_map, hence we set *uoffsetp to offset, not 0.
 	 */
-	uobj = udv_attach(&devno, prot, offset, size);
+	uobj = udv_attach(devno, prot, offset, size);
 	if (uobj == NULL)
 		return -EINVAL;
 

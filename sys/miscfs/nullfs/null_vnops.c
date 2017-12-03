@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vnops.c,v 1.38.12.1 2014/08/20 00:04:31 tls Exp $	*/
+/*	$NetBSD: null_vnops.c,v 1.38.12.2 2017/12/03 11:38:48 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: null_vnops.c,v 1.38.12.1 2014/08/20 00:04:31 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: null_vnops.c,v 1.38.12.2 2017/12/03 11:38:48 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,6 @@ const struct vnodeopv_entry_desc null_vnodeop_entries[] = {
 	{ &vop_fsync_desc,	layer_fsync },
 	{ &vop_inactive_desc,	layer_inactive },
 	{ &vop_reclaim_desc,	layer_reclaim },
-	{ &vop_lock_desc,	layer_lock },
 	{ &vop_print_desc,	layer_print },
 	{ &vop_remove_desc,	layer_remove },
 	{ &vop_rename_desc,	layer_rename },
@@ -114,6 +113,7 @@ const struct vnodeopv_entry_desc null_vnodeop_entries[] = {
 	{ &vop_rmdir_desc,	layer_rmdir },
 
 	{ &vop_open_desc,	layer_open },	/* mount option handling */
+	{ &vop_close_desc,	layer_close },
 
 	{ &vop_bmap_desc,	layer_bmap },
 	{ &vop_getpages_desc,	layer_getpages },

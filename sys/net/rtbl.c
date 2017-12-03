@@ -1,4 +1,4 @@
-/*	$NetBSD: rtbl.c,v 1.1 2011/03/31 19:40:52 dyoung Exp $	*/
+/*	$NetBSD: rtbl.c,v 1.1.18.1 2017/12/03 11:39:02 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008, 2011 The NetBSD Foundation, Inc.
@@ -90,12 +90,12 @@
  *	@(#)route.c	8.3 (Berkeley) 1/9/95
  */
 
-#ifdef _KERNEL
+#if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_route.h"
-#endif /* _KERNEL */
+#endif /* _KERNEL && _KERNEL_OPT */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtbl.c,v 1.1 2011/03/31 19:40:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtbl.c,v 1.1.18.1 2017/12/03 11:39:02 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -107,7 +107,6 @@ __KERNEL_RCSID(0, "$NetBSD: rtbl.c,v 1.1 2011/03/31 19:40:52 dyoung Exp $");
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/domain.h>
-#include <sys/protosw.h>
 #include <sys/kernel.h>
 #include <sys/ioctl.h>
 #include <sys/pool.h>
@@ -126,8 +125,7 @@ rt_inithead(rtbl_t **tp, int off)
 	rtbl_t *t;
 	if (*tp != NULL)
 		return 1;
-	if ((t = kmem_alloc(sizeof(*t), KM_SLEEP)) == NULL)
-		return 0;
+	t = kmem_alloc(sizeof(*t), KM_SLEEP);
 	*tp = t;
 	return rn_inithead0(&t->t_rnh, off);
 }
@@ -190,7 +188,7 @@ rt_walktree_visitor(struct radix_node *rn, void *v)
 }
 
 int
-rt_walktree(sa_family_t family, int (*f)(struct rtentry *, void *), void *v)
+rtbl_walktree(sa_family_t family, int (*f)(struct rtentry *, void *), void *v)
 {
 	rtbl_t *t = rt_tables[family];
 	struct rtwalk rw;
@@ -202,6 +200,23 @@ rt_walktree(sa_family_t family, int (*f)(struct rtentry *, void *), void *v)
 	rw.rw_v = v;
 
 	return rn_walktree(&t->t_rnh, rt_walktree_visitor, &rw);
+}
+
+struct rtentry *
+rtbl_search_matched_entry(sa_family_t family,
+    int (*f)(struct rtentry *, void *), void *v)
+{
+	rtbl_t *t = rt_tables[family];
+	struct rtwalk rw;
+
+	if (t == NULL)
+		return 0;
+
+	rw.rw_f = f;
+	rw.rw_v = v;
+
+	return (struct rtentry *)
+	    rn_search_matched(&t->t_rnh, rt_walktree_visitor, &rw);
 }
 
 rtbl_t *
@@ -227,4 +242,11 @@ rt_assert_inactive(const struct rtentry *rt)
 {
 	if (rt->rt_nodes->rn_flags & (RNF_ACTIVE | RNF_ROOT))
 		panic ("rtfree 2");
+}
+
+int
+rt_refines(const struct sockaddr *m_sa, const struct sockaddr *n_sa)
+{
+
+	return rn_refines(m_sa, n_sa);
 }

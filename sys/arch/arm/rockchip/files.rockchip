@@ -1,0 +1,67 @@
+#	$NetBSD: files.rockchip,v 1.11.18.2 2017/12/03 11:35:55 jdolecek Exp $
+#
+# Configuration info for Rockchip ARM Peripherals
+#
+
+include "arch/arm/pic/files.pic"
+include "arch/arm/cortex/files.cortex"
+
+file	arch/arm/arm32/arm32_boot.c
+file	arch/arm/arm32/arm32_kvminit.c
+file	arch/arm/arm32/arm32_reboot.c
+file	arch/arm/arm32/irq_dispatch.S
+file	arch/arm/arm32/armv7_generic_space.c
+file	arch/arm/arm/bus_space_a4x.S
+
+file	arch/arm/rockchip/rockchip_board.c
+file	arch/arm/rockchip/rockchip_cpufreq.c
+file	arch/arm/rockchip/rockchip_dma.c
+
+# On-board I/O
+device obio {[addr = -1], [size = -1], [width = -1], [intr = -1], [mult = 1], [port = -1], [crit = 0]}: bus_space_generic
+attach obio at mainbus
+file arch/arm/rockchip/obio.c		obio
+
+# serial
+attach com at obio with obiouart
+file	arch/arm/rockchip/obio_com.c	obiouart
+
+# I2C controller
+device	rkiic: i2cbus, i2cexec
+attach	rkiic at obio
+file	arch/arm/rockchip/rockchip_i2c.c	rkiic
+
+# RK3066 Timer (Synopsys DesignWare)
+attach	dwctmr at obio with rkdwctmr
+file	arch/arm/rockchip/rockchip_dwctmr.c	rkdwctmr
+
+# RK3188 Timer
+device	rktimer
+attach	rktimer at obio
+file	arch/arm/rockchip/rockchip_timer.c	rktimer
+
+# SD/MMC (Synopsys DesignWare)
+attach	dwcmmc at obio with rkdwcmmc
+file	arch/arm/rockchip/rockchip_dwcmmc.c	rkdwcmmc
+
+# USB OTG (Synopsys DesignWare OTG)
+attach  dwctwo at obio with rkdwctwo
+file    arch/arm/rockchip/rockchip_dwctwo.c	rkdwctwo	needs-flag
+
+# VMAC Ethernet Controller
+device	rkemac: arp, ether, ifnet, mii
+attach	rkemac at obio
+file	arch/arm/rockchip/rockchip_emac.c	rkemac
+
+# Console parameters
+defparam opt_rockchip.h			CONADDR
+defparam opt_rockchip.h			CONSPEED
+defparam opt_rockchip.h			CONMODE
+
+# Memory parameters
+defparam opt_rockchip.h			MEMSIZE
+
+# Debugging parameters
+defflag opt_rockchip.h			ROCKCHIP_CLOCK_DEBUG
+defflag opt_rkiic.h			RKIIC_DEBUG
+defflag opt_rkemac.h			RKEMAC_DEBUG

@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.20 2012/07/08 20:14:12 dsl Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.20.2.1 2017/12/03 11:36:42 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.20 2012/07/08 20:14:12 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.20.2.1 2017/12/03 11:36:42 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,7 +101,7 @@ static int process_machdep_write_regs40(struct lwp *l, struct __reg40 *);
 #endif /* COMPAT_40 */
 
 
-#if defined(PTRACE) || defined(COREDUMP)
+#if defined(PTRACE_HOOKS) || defined(COREDUMP)
 
 static inline struct trapframe *
 process_frame(struct lwp *l)
@@ -141,10 +141,10 @@ process_read_regs(struct lwp *l, struct reg *regs)
 	return (0);
 }
 
-#endif /* PTRACE || COREDUMP */
+#endif /* PTRACE_HOOKS || COREDUMP */
 
 
-#ifdef PTRACE
+#ifdef PTRACE_HOOKS
 
 int
 process_write_regs(struct lwp *l, const struct reg *regs)
@@ -360,4 +360,4 @@ process_set_pc(struct lwp *l, void *addr)
 	return (0);
 }
 
-#endif /* PTRACE */
+#endif /* PTRACE_HOOKS */

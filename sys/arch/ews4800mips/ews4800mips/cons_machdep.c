@@ -1,4 +1,4 @@
-/*	$NetBSD: cons_machdep.c,v 1.7 2012/08/08 09:02:49 martin Exp $	*/
+/*	$NetBSD: cons_machdep.c,v 1.7.2.1 2017/12/03 11:36:12 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -30,11 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons_machdep.c,v 1.7 2012/08/08 09:02:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons_machdep.c,v 1.7.2.1 2017/12/03 11:36:12 jdolecek Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/conf.h>
+#include <sys/cpu.h>
+#include <sys/systm.h>
 
 #include <dev/cons.h>
 

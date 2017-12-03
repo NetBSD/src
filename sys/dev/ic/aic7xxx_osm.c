@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_osm.c,v 1.37 2010/02/24 22:37:57 dyoung Exp $	*/
+/*	$NetBSD: aic7xxx_osm.c,v 1.37.20.1 2017/12/03 11:37:03 jdolecek Exp $	*/
 
 /*
  * Bus independent FreeBSD shim for the aic7xxx based adaptec SCSI controllers
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx_osm.c,v 1.37 2010/02/24 22:37:57 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx_osm.c,v 1.37.20.1 2017/12/03 11:37:03 jdolecek Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -258,6 +258,10 @@ ahc_done(struct ahc_softc *ahc, struct scb *scb)
 		scsipi_printaddr(xs->xs_periph);
 		printf("%s: no longer in timeout, status = %x\n",
 		       ahc_name(ahc), xs->status);
+
+		scsipi_channel_thaw(&ahc->sc_channel, 1);
+		if (ahc->features & AHC_TWIN)
+			scsipi_channel_thaw(&ahc->sc_channel_b, 1);
 	}
 
 	/* Don't clobber any existing error state */

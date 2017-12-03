@@ -1,4 +1,4 @@
-/* $NetBSD: process_machdep.c,v 1.27.6.1 2014/08/20 00:02:41 tls Exp $ */
+/* $NetBSD: process_machdep.c,v 1.27.6.2 2017/12/03 11:35:46 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -54,7 +54,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.27.6.1 2014/08/20 00:02:41 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.27.6.2 2017/12/03 11:35:46 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,7 +116,7 @@ process_read_fpregs(struct lwp *l, struct fpreg *regs, size_t *sz)
 {
 	struct pcb *pcb = lwp_getpcb(l);
 
-	fpu_save();
+	fpu_save(l);
 
 	memcpy(regs, &pcb->pcb_fp, sizeof(struct fpreg));
 	return (0);
@@ -127,7 +127,7 @@ process_write_fpregs(struct lwp *l, const struct fpreg *regs, size_t sz)
 {
 	struct pcb *pcb = lwp_getpcb(l);
 
-	fpu_discard(true);
+	fpu_discard(l, true);
 
 	memcpy(&pcb->pcb_fp, regs, sizeof(struct fpreg));
 	return (0);

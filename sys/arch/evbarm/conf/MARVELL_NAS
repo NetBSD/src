@@ -1,4 +1,4 @@
-#	$NetBSD: MARVELL_NAS,v 1.9.2.2 2014/08/20 00:02:53 tls Exp $
+#	$NetBSD: MARVELL_NAS,v 1.9.2.3 2017/12/03 11:36:03 jdolecek Exp $
 #
 #  This configuration supports for generically Marvell NAS.
 
@@ -54,6 +54,7 @@ file-system 	HFS		# experimental - Apple HFS+ (read-only)
 # File system options
 options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
 #options 	FFS_EI		# FFS Endian Independent support
 options 	WAPBL		# File system journaling support
 # Note that UFS_DIRHASH is suspected of causing kernel memory corruption.
@@ -89,29 +90,16 @@ options 	NFS_BOOT_DHCP
 
 # Compatibility options
 
-options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
-#options 	COMPAT_09	# NetBSD 0.9 compatibility.
-#options 	COMPAT_10	# NetBSD 1.0 compatibility.
-#options 	COMPAT_11	# NetBSD 1.1 compatibility.
-#options 	COMPAT_12	# NetBSD 1.2 compatibility.
-#options 	COMPAT_13	# NetBSD 1.3 compatibility.
-#options 	COMPAT_14	# NetBSD 1.4 compatibility.
-#options 	COMPAT_15	# NetBSD 1.5 compatibility.
-options 	COMPAT_16	# NetBSD 1.6 compatibility.
-options 	COMPAT_20	# NetBSD 2.0 compatibility.
-options 	COMPAT_30	# NetBSD 3.0 compatibility.
-options 	COMPAT_40	# NetBSD 4.0 compatibility.
-#options 	COMPAT_43	# 4.3BSD compatibility.
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
+include 	"conf/compat_netbsd16.config"
+options 	COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 
 options 	COMPAT_LINUX	# binary compatibility with Linux
-options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Shared memory options
 
-#options 	SYSVMSG		# System V-like message queues
-#options 	SYSVSEM		# System V-like semaphores
-#options 	SYSVSHM		# System V-like memory sharing
+options 	SYSVMSG		# System V-like message queues
+options 	SYSVSEM		# System V-like semaphores
+options 	SYSVSHM		# System V-like memory sharing
 
 # Device options
 
@@ -125,7 +113,6 @@ options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 options 	KTRACE		# system call tracing, a la ktrace(1)
 options 	IRQSTATS	# manage IRQ statistics
-#options 	KMEMSTATS	# kernel memory statistics
 options 	MIIVERBOSE	# Verbose MII autoconfuration messages
 options 	PCIVERBOSE	# Verbose PCI descriptions
 options 	USBVERBOSE	# verbose USB device autoconfig messages
@@ -233,6 +220,31 @@ wd*	at umass?
 uplcom* at uhub? port ?			# I/O DATA USB-RSAQ2 serial adapter
 ucom*   at uplcom? portno ?
 
+# Wedge support   
+options 	DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances
+options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
+
+# Alternate buffer queue strategies for better responsiveness under high
+# disk I/O load.
+#options 	BUFQ_READPRIO
+options 	BUFQ_PRIOCSCAN
+
+# Development and Debugging options
+
+#options 	PERFCTRS	# performance counters
+#options 	DIAGNOSTIC	# internal consistency checks
+#options 	DEBUG
+#options 	LOCKDEBUG
+#options 	PMAP_DEBUG	# Enable pmap_debug_level code
+#options 	IPKDB		# remote kernel debugging
+#options 	VERBOSE_INIT_ARM # verbose bootstraping messages
+options 	DDB		# in-kernel debugger
+options 	DDB_ONPANIC=0
+options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
+options 	DDB_COMMANDONENTER="bt"
+#options 	KGDB
+#options		SYSCALL_DEBUG
+
 
 # Pseudo-Devices
 
@@ -271,7 +283,7 @@ pseudo-device	loop			# network loopback
 #pseudo-device	strip			# Starmode Radio IP (Metricom)
 #pseudo-device	irframetty		# IrDA frame line discipline
 #pseudo-device	tap			# virtual Ethernet
-#pseudo-device	tun			# network tunneling over tty
+pseudo-device	tun			# network tunneling over tty
 #pseudo-device	gre			# generic L3 over IP tunnel
 #pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC 1933)
 #pseudo-device	faith			# IPv[46] TCP relay translation i/f
@@ -280,7 +292,7 @@ pseudo-device	loop			# network loopback
 #pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 #pseudo-device	agr			# IEEE 802.3ad link aggregation
-#pseudo-device	pf			# PF packet filter
+pseudo-device	npf			# NPF packet filter
 #pseudo-device	pflog			# PF log if
 
 # miscellaneous pseudo-devices
@@ -307,6 +319,7 @@ pseudo-device	swdmover		# software dmover(9) back-end
 pseudo-device	dmoverio		# /dev/dmover dmover(9) interface
 
 options 	FILEASSOC		# fileassoc(9) - required for Veriexec
+					# and PAX_SEGVGUARD
 
 # Veriexec
 pseudo-device	veriexec
@@ -315,12 +328,9 @@ pseudo-device	veriexec
 # removing fingerprint methods will have almost no impact on the kernel
 # code size.
 #
-options 	VERIFIED_EXEC_FP_RMD160
 options 	VERIFIED_EXEC_FP_SHA256
 options 	VERIFIED_EXEC_FP_SHA384
 options 	VERIFIED_EXEC_FP_SHA512
-options 	VERIFIED_EXEC_FP_SHA1
-options 	VERIFIED_EXEC_FP_MD5
 
 options 	PAX_MPROTECT=0		# PaX mprotect(2) restrictions
 options 	PAX_ASLR=0		# PaX Address Space Layout Randomization

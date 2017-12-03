@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.2.10.2 2014/08/20 00:03:05 tls Exp $	*/
+/*	$NetBSD: cpu.h,v 1.2.10.3 2017/12/03 11:36:16 jdolecek Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.55 2008/07/23 17:39:35 kettenis Exp $	*/
 
@@ -86,6 +86,7 @@ enum hppa_cpu_type {
 	mako	/* PA8800 (mako)	PA 2.0 */
 };
 
+#ifdef _KERNEL
 /*
  * A CPU description.
  */
@@ -116,7 +117,6 @@ struct hppa_cpu_info {
 	int (*hptinit)(vaddr_t, vsize_t);
 };
 
-#ifdef _KERNEL
 extern const struct hppa_cpu_info *hppa_cpu_info;
 extern int cpu_modelno;
 extern int cpu_revision;

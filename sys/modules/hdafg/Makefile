@@ -1,11 +1,12 @@
-#	$NetBSD: Makefile,v 1.4 2011/08/28 15:48:19 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.4.12.1 2017/12/03 11:38:54 jdolecek Exp $
 
 .include "../Makefile.inc"
-
-.PATH:	${S}/dev/pci/hdaudio
+.include "${.CURDIR}/Makefile.inc"
 
 KMOD=	hdafg
-IOCONF=	hdafg.ioconf
-SRCS=	hdafg.c hdafg_dd.c
+
+# For non-rump modules, enable HDMI audio
+
+CPPFLAGS+=	-DHDAUDIO_ENABLE_HDMI
 
 .include <bsd.kmodule.mk>

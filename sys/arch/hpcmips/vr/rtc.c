@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.32 2011/03/18 15:31:38 tsutsui Exp $	*/
+/*	$NetBSD: rtc.c,v 1.32.14.1 2017/12/03 11:36:15 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura. All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.32 2011/03/18 15:31:38 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.32.14.1 2017/12/03 11:36:15 jdolecek Exp $");
 
 #include "opt_vr41xx.h"
 
@@ -162,7 +162,7 @@ vrrtc_attach(device_t parent, device_t self, void *aux)
 	/* RTC interrupt handler is directly dispatched from CPU intr */
 	vr_intr_establish(VR_INTR1, vrrtc_intr, sc);
 	/* But need to set level 1 interrupt mask register, 
-	 * so regsiter fake interrurpt handler
+	 * so register fake interrurpt handler
 	 */
 	if (!(sc->sc_ih = vrip_intr_establish(va->va_vc, va->va_unit, 0,
 	    IPL_CLOCK, 0, 0))) {
@@ -203,10 +203,10 @@ vrrtc_attach(device_t parent, device_t self, void *aux)
 	 * be on Jan 1.
 	 */
 	for (year = EPOCHYEAR; year < POSIX_BASE_YEAR; year++) {
-		sc->sc_epoch += LEAPYEAR4(year) ? SECYR + SECDAY : SECYR;
+		sc->sc_epoch += days_per_year(year) * SECS_PER_DAY;
 	}
 	for (year = POSIX_BASE_YEAR; year < EPOCHYEAR; year++) {
-		sc->sc_epoch -= LEAPYEAR4(year) ? SECYR + SECDAY : SECYR;
+		sc->sc_epoch -= days_per_year(year) * SECS_PER_DAY;
 	}
 
 	/*

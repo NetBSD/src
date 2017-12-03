@@ -1,4 +1,4 @@
-/*	$NetBSD: bufq_fcfs.c,v 1.10 2009/01/19 14:54:28 yamt Exp $	*/
+/*	$NetBSD: bufq_fcfs.c,v 1.10.24.1 2017/12/03 11:38:44 jdolecek Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.61 2004/09/25 03:30:44 thorpej Exp 	*/
 
 /*-
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bufq_fcfs.c,v 1.10 2009/01/19 14:54:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bufq_fcfs.c,v 1.10.24.1 2017/12/03 11:38:44 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,6 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: bufq_fcfs.c,v 1.10 2009/01/19 14:54:28 yamt Exp $");
 #include <sys/bufq.h>
 #include <sys/bufq_impl.h>
 #include <sys/kmem.h>
+#include <sys/module.h>
 
 /*
  * First-come first-served sort for disks.
@@ -96,7 +97,7 @@ BUFQ_DEFINE(fcfs, 10, bufq_fcfs_init);
 static void
 bufq_fcfs_put(struct bufq_state *bufq, struct buf *bp)
 {
-	struct bufq_fcfs *fcfs = bufq->bq_private;
+	struct bufq_fcfs *fcfs = bufq_private(bufq);
 
 	TAILQ_INSERT_TAIL(&fcfs->bq_head, bp, b_actq);
 }
@@ -104,7 +105,7 @@ bufq_fcfs_put(struct bufq_state *bufq, struct buf *bp)
 static struct buf *
 bufq_fcfs_get(struct bufq_state *bufq, int remove)
 {
-	struct bufq_fcfs *fcfs = bufq->bq_private;
+	struct bufq_fcfs *fcfs = bufq_private(bufq);
 	struct buf *bp;
 
 	bp = TAILQ_FIRST(&fcfs->bq_head);
@@ -118,7 +119,7 @@ bufq_fcfs_get(struct bufq_state *bufq, int remove)
 static struct buf *
 bufq_fcfs_cancel(struct bufq_state *bufq, struct buf *buf)
 {
-	struct bufq_fcfs *fcfs = bufq->bq_private;
+	struct bufq_fcfs *fcfs = bufq_private(bufq);
 	struct buf *bp;
 
 	TAILQ_FOREACH(bp, &fcfs->bq_head, b_actq) {
@@ -150,4 +151,20 @@ bufq_fcfs_init(struct bufq_state *bufq)
 	bufq->bq_private = kmem_zalloc(sizeof(struct bufq_fcfs), KM_SLEEP);
 	fcfs = (struct bufq_fcfs *)bufq->bq_private;
 	TAILQ_INIT(&fcfs->bq_head);
+}
+
+MODULE(MODULE_CLASS_BUFQ, bufq_fcfs, NULL);
+
+static int
+bufq_fcfs_modcmd(modcmd_t cmd, void *opaque)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return bufq_register(&bufq_strat_fcfs);
+	case MODULE_CMD_FINI:
+		return bufq_unregister(&bufq_strat_fcfs);
+	default:
+		return ENOTTY;
+	}
 }

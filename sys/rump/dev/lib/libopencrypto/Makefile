@@ -1,10 +1,12 @@
-#	$NetBSD: Makefile,v 1.7.10.2 2014/08/20 00:04:37 tls Exp $
+#	$NetBSD: Makefile,v 1.7.10.3 2017/12/03 11:39:07 jdolecek Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../opencrypto
 
 LIB=	rumpdev_opencrypto
+COMMENT=OpenCrypto, incl. /dev/crypto
 
+IOCONF=	OPENCRYPTO.ioconf
 SRCS=	opencrypto_component.c
 
 # Sources for crypto framework
@@ -25,8 +27,6 @@ SRCS+=	aesxcbcmac.c
 SRCS+=	cryptosoft.c
 SRCS+=	deflate.c
 SRCS+=	gmac.c
-
-CPPFLAGS+=	-I${RUMPTOP}/librump/rumpvfs
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>

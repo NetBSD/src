@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.98.2.3 2014/08/20 00:02:48 tls Exp $
+#	$NetBSD: GENERIC.in,v 1.98.2.4 2017/12/03 11:35:57 jdolecek Exp $
 #
 # Generic atari
 #
@@ -84,9 +84,9 @@ options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 
-options 	IPFILTER_LOG	# ipmon(8) log support
-options 	IPFILTER_LOOKUP	# ippool(8) support
-options 	IPFILTER_COMPAT # Compat for IP-Filter
+#options 	IPFILTER_LOG	# ipmon(8) log support
+#options 	IPFILTER_LOOKUP	# ippool(8) support
+#options 	IPFILTER_COMPAT # Compat for IP-Filter
 #options  	IPFILTER_DEFAULT_BLOCK	# block packages by default
 
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
@@ -116,13 +116,13 @@ file-system 	CD9660		# ISO 9660 filesystem with Rock Ridge
 file-system 	KERNFS		# Kernel parameter filesystem
 file-system 	NFS		# Network File System client side code
 file-system 	PROCFS		# Process filesystem
-file-system 	FDESC		# /dev/fd
+#file-system 	FDESC		# /dev/fd
 file-system 	NULLFS		# Loopback filesystem
-file-system 	OVERLAY		# overlay filesystem
-file-system 	UNION		# union file system
-file-system 	UMAPFS		# null file system (with uid & gid remapping)
-file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
-file-system 	EXT2FS		# second extended file system (linux)
+#file-system 	OVERLAY		# overlay filesystem
+#file-system 	UNION		# union file system
+#file-system 	UMAPFS		# null file system (with uid & gid remapping)
+#file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
+#file-system 	EXT2FS		# second extended file system (linux)
 #file-system 	LFS		# log-structured file system
 file-system	PTYFS		# /dev/pts/N support
 file-system	TMPFS		# Efficient memory file-system
@@ -130,6 +130,7 @@ file-system	TMPFS		# Efficient memory file-system
 
 # File system options
 options 	WAPBL		# File system journaling support
+options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #if !defined(SMALL030_KERNEL)
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
@@ -153,31 +154,23 @@ options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #
 # Compatibility options for various existing systems
 #
-#if !defined(SMALL030_KERNEL)
-options 	COMPAT_43	# 4.3 BSD compatible system calls
-options 	COMPAT_10	# Compatibility with NetBSD 1.0
-options 	COMPAT_11	# Compatibility with NetBSD 1.1
-options 	COMPAT_12	# Compatibility with NetBSD 1.2
-options 	COMPAT_13	# Compatibility with NetBSD 1.3
-options 	COMPAT_14	# Compatibility with NetBSD 1.4
-options 	COMPAT_15	# Compatibility with NetBSD 1.5
+include 	"conf/compat_netbsd10.config"
+#if defined(SMALL030_KERNEL)
+no options 	COMPAT_43	# 4.3 BSD compatible system calls
+no options 	COMPAT_10	# NetBSD 1.0,
+no options 	COMPAT_11	# NetBSD 1.1,
+no options 	COMPAT_12	# NetBSD 1.2,
+no options 	COMPAT_13	# NetBSD 1.3,
+no options 	COMPAT_14	# NetBSD 1.4,
+no options 	COMPAT_15	# NetBSD 1.5,
 #endif /* !SMALL030_KERNEL */
-options 	COMPAT_16	# Compatibility with NetBSD 1.6
-options 	COMPAT_20	# Compatibility with NetBSD 2.0
-options 	COMPAT_30	# NetBSD 3.0 compatibility.
-options 	COMPAT_40	# NetBSD 4.0 compatibility.
-options 	COMPAT_50	# NetBSD 5.0 compatibility.
-options 	COMPAT_60	# NetBSD 6.0 compatibility.
 #if !defined(SMALL030_KERNEL)
-#options 	COMPAT_09	# has no meaning on the atari
 #options 	COMPAT_SUNOS	# Support to run Sun-3 executables
 #options 	COMPAT_SVR4	# Support to run SVR4 executables
 #options 	COMPAT_LINUX	# Support to run Linux/m68k executables
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options 	COMPAT_AOUT_M68K # Compatibility to a.out executables
 options 	EXEC_AOUT	# a.out format executables
 #endif /* !SMALL030_KERNEL */
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 #if !defined(SMALL030_KERNEL)
 #
@@ -197,6 +190,7 @@ options 	KTRACE			# Add kernel tracing system call
 options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
+options 	MODULAR			# new style module(7) framework
 #else /* SMALL030_KERNEL */
 options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 #endif /* !SMALL030_KERNEL */
@@ -204,10 +198,10 @@ options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
 #if !defined(SMALL030_KERNEL)
-options 	SCSIVERBOSE		# human readable SCSI error messages
+#options 	SCSIVERBOSE		# human readable SCSI error messages
 #endif /* !SMALL030_KERNEL */
 #if defined(HADES_KERNEL) || defined(MILAN_KERNEL)
-options 	MIIVERBOSE		# verbose PHY autoconfig messages
+#options 	MIIVERBOSE		# verbose PHY autoconfig messages
 #options 	PCIVERBOSE		# verbose PCI device autoconfig messages
 #options 	PCI_CONFIG_DUMP		# verbosely dump PCI config space
 #endif
@@ -253,20 +247,20 @@ pseudo-device	sl			# Slip
 pseudo-device	ppp			# ppp
 #endif /* !SMALL030_KERNEL */
 #if !defined(NO_PHYS_NETWORK)
-pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
+#pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 #endif /* NO_PHYS_NETWORK */
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	loop			# Loopback network
 #options 	VND_COMPRESSION		# compressed vnd(4)
 pseudo-device	md			# Boot memory disk
-pseudo-device	putter			# for puffs and pud
+#pseudo-device	putter			# for puffs and pud
 
 #if !defined(SMALL030_KERNEL)
 pseudo-device	vnd			# 3 pseudo disks (see vnconfig)
 pseudo-device	bpfilter		# berkeley packet filters
 #pseudo-device	carp			# Common Address Redundancy Protocol
-pseudo-device	tun			# network tunnel
-pseudo-device	tap			# virtual Ethernet
+#pseudo-device	tun			# network tunnel
+#pseudo-device	tap			# virtual Ethernet
 #pseudo-device	gre			# generic L3 over IP tunnel
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
@@ -276,7 +270,7 @@ pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 #pseudo-device	bridge			# simple inter-network bridging
 #pseudo-device	agr			# IEEE 802.3ad link aggregation
 #endif /* NO_PHYS_NETWORK */
-pseudo-device	ccd			# concatenating disk driver
+#pseudo-device	ccd			# concatenating disk driver
 #pseudo-device	cgd			# cryptographic disk driver
 #pseudo-device	raid			# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
@@ -288,8 +282,8 @@ pseudo-device	ccd			# concatenating disk driver
 # options	RF_INCLUDE_INTERDECLUSTER=1
 # options 	RF_INCLUDE_PARITY_DECLUSTERING=1
 # options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
-pseudo-device	fss			# file system snapshot device
-pseudo-device	ipfilter		# IP filtering device
+#pseudo-device	fss			# file system snapshot device
+#pseudo-device	ipfilter		# IP filtering device
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pf			# PF packet filter
@@ -315,6 +309,8 @@ fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 #
 eso*	at pci? dev ? function ?	# ESS Solo-1 PCI AudioDrive
 audio*	at eso?
+
+spkr*	at audio?			# PC speaker (synthesized)
 
 #endif /* defined(HADES_KERNEL) || defined(MILAN_KERNEL) */
 
@@ -375,11 +371,11 @@ scsibus* at scsi?			# SCSI bus
 sd* 	at scsibus? target ? lun ?	# SCSI disk drives
 cd* 	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 #if !defined (SMALL030_KERNEL)
-st* 	at scsibus? target ? lun ?	# SCSI tape drives
-ch* 	at scsibus? target ? lun ?	# SCSI autochangers
-ss* 	at scsibus? target ? lun ?	# SCSI scanners
+#st* 	at scsibus? target ? lun ?	# SCSI tape drives
+#ch* 	at scsibus? target ? lun ?	# SCSI autochangers
+#ss* 	at scsibus? target ? lun ?	# SCSI scanners
 se* 	at scsibus? target ? lun ?	# SCSI ethernet
-uk* 	at scsibus? target ? lun ?	# SCSI unknown
+#uk* 	at scsibus? target ? lun ?	# SCSI unknown
 #endif /* ! SMALL030_KERNEL */
 
 #endif /* TT030_KERNEL || FALCON_KERNEL */

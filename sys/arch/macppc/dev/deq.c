@@ -1,4 +1,4 @@
-/*	$NetBSD: deq.c,v 1.8 2010/12/20 00:25:37 matt Exp $	*/
+/*	$NetBSD: deq.c,v 1.8.18.1 2017/12/03 11:36:25 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz
@@ -32,7 +32,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: deq.c,v 1.8 2010/12/20 00:25:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: deq.c,v 1.8.18.1 2017/12/03 11:36:25 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,7 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: deq.c,v 1.8 2010/12/20 00:25:37 matt Exp $");
 #include <dev/i2c/i2cvar.h>
 
 #include <machine/autoconf.h>
-#include <macppc/dev/ki2cvar.h>
 #include <macppc/dev/deqvar.h>
 
 static void deq_attach(device_t, device_t, void *);
@@ -53,19 +52,27 @@ static int deq_match(device_t, struct cfdata *, void *);
 CFATTACH_DECL_NEW(deq, sizeof(struct deq_softc),
     deq_match, deq_attach, NULL, NULL);
 
+static const char * deq_compats[] = {
+	"deq",
+	"tas3004",
+	"pcm3052",
+	"cs8416",
+	"codec",
+	NULL
+};
+
 int
 deq_match(device_t parent, struct cfdata *cf, void *aux)
 {
-	struct ki2c_confargs *ka = aux;
-	char buf[32];
+	struct i2c_attach_args *ia = aux;
 	
-	if (strcmp(ka->ka_name, "deq") == 0) {
-		if (OF_getprop(ka->ka_node, "i2c-address", buf, sizeof(buf)))
-			return 1;
-	} else if (strcmp(ka->ka_name, "codec") == 0) {
-		if (OF_getprop(ka->ka_node, "compatible", buf, sizeof(buf)))
-			if (strcmp(buf, "tas3004") == 0)
+	if (ia->ia_name) {
+		if (ia->ia_ncompat > 0) {
+			if (iic_compat_match(ia, deq_compats))
 				return 1;
+		}
+		if (strcmp(ia->ia_name, "deq") == 0)
+			return 1;
 	}
 	return 0;
 }
@@ -74,14 +81,23 @@ void
 deq_attach(device_t parent, device_t self, void *aux)
 {
 	struct deq_softc *sc = device_private(self);
-	struct ki2c_confargs *ka = aux;
-	int node;
+	struct i2c_attach_args *ia = aux;
+	char name[256];
 
 	sc->sc_dev = self;
-	node = ka->ka_node;
-	sc->sc_node = node;
+	sc->sc_node = ia->ia_cookie;
 	sc->sc_parent = parent;
-	sc->sc_address = ka->ka_addr & 0xfe;
-	sc->sc_i2c = ka->ka_tag;
-	aprint_normal(" Apple Digital Equalizer, addr 0x%x\n", sc->sc_address);
+	sc->sc_address = (ia->ia_addr & 0x7f);
+	sc->sc_i2c = ia->ia_tag;
+	if (OF_getprop(sc->sc_node, "compatible", name, 256) <= 0) {
+		/* deq has no 'compatible' on my iBook G4 */
+		switch (sc->sc_address) {
+			case 0x35:
+				strcpy(name, "tas3004");
+				break;
+			default:
+				strcpy(name, "unknown");
+		}
+	}
+	aprint_normal(" Audio Codec (%s)\n", name);
 }

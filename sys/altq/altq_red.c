@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_red.c,v 1.29 2011/11/19 22:51:18 tls Exp $	*/
+/*	$NetBSD: altq_red.c,v 1.29.8.1 2017/12/03 11:35:43 jdolecek Exp $	*/
 /*	$KAME: altq_red.c,v 1.20 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_red.c,v 1.29 2011/11/19 22:51:18 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_red.c,v 1.29.8.1 2017/12/03 11:35:43 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -203,7 +203,7 @@ static int default_inv_pmax = INV_P_MAX;
 
 #ifdef ALTQ3_COMPAT
 /* internal function prototypes */
-static int red_enqueue(struct ifaltq *, struct mbuf *, struct altq_pktattr *);
+static int red_enqueue(struct ifaltq *, struct mbuf *);
 static struct mbuf *red_dequeue(struct ifaltq *, int);
 static int red_request(struct ifaltq *, int, void *);
 static void red_purgeq(red_queue_t *);
@@ -1011,11 +1011,16 @@ red_detach(red_queue_t *rqp)
  *		 ENOBUFS when drop occurs.
  */
 static int
-red_enqueue(struct ifaltq *ifq, struct mbuf *m, struct altq_pktattr *pktattr)
+red_enqueue(struct ifaltq *ifq, struct mbuf *m)
 {
+	struct altq_pktattr pktattr;
 	red_queue_t *rqp = (red_queue_t *)ifq->altq_disc;
 
-	if (red_addq(rqp->rq_red, rqp->rq_q, m, pktattr) < 0)
+	pktattr.pattr_class = m->m_pkthdr.pattr_class;
+	pktattr.pattr_af = m->m_pkthdr.pattr_af;
+	pktattr.pattr_hdr = m->m_pkthdr.pattr_hdr;
+
+	if (red_addq(rqp->rq_red, rqp->rq_q, m, &pktattr) < 0)
 		return ENOBUFS;
 	ifq->ifq_len++;
 	return 0;

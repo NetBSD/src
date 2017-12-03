@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.22.18.1 2014/08/20 00:03:06 tls Exp $	*/
+/*	$NetBSD: copy.S,v 1.22.18.2 2017/12/03 11:36:17 jdolecek Exp $	*/
 /*	NetBSD: locore.S,v 1.34 2005/04/01 11:59:31 yamt Exp $	*/
 
 /*-
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: copy.S,v 1.22.18.1 2014/08/20 00:03:06 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: copy.S,v 1.22.18.2 2017/12/03 11:36:17 jdolecek Exp $");
 
 #include "assym.h"
 
@@ -86,10 +86,10 @@ __KERNEL_RCSID(0, "$NetBSD: copy.S,v 1.22.18.1 2014/08/20 00:03:06 tls Exp $");
 #define DEFERRED_SWITCH_CHECK \
 	CHECK_DEFERRED_SWITCH			; \
 	jnz	99f				; \
-    98:
+	98:
 
 #define DEFERRED_SWITCH_CALL \
-    99:						; \
+	99:						; \
 	call	_C_LABEL(do_pmap_load)		; \
 	jmp	98b
 
@@ -136,7 +136,7 @@ NENTRY(do_pmap_load)
  * `level' levels down the stack if level > 0.
  */
 ENTRY(return_address)
-	movl	%ebp,%eax	/* frame pointer -> %eax */ 
+	movl	%ebp,%eax	/* frame pointer -> %eax */
 	movl	4(%esp),%ecx	/* level -> %ecx */
 	movl	CPUVAR(CURLWP),%edx
 	movl	L_PCB(%edx),%edx
@@ -166,15 +166,15 @@ ENTRY(kcopy)
 .Lkcopy_start:
 	movl	%edi,%eax
 	subl	%esi,%eax
-	cmpl	%ecx,%eax		# overlapping?
+	cmpl	%ecx,%eax		/* overlapping? */
 	movl	%ecx,%edx
 	jb	1f
-	# nope, copy forward
-	shrl	$2,%ecx			# copy by 32-bit words
+	/* nope, copy forward */
+	shrl	$2,%ecx			/* copy by 32-bit words */
 	rep
 	movsl
 	movl	%edx,%ecx
-	andl	$3,%ecx			# any bytes left?
+	andl	$3,%ecx			/* any bytes left? */
 	jz	0f
 	rep
 	movsb
@@ -185,15 +185,15 @@ ENTRY(kcopy)
 	ret
 
 	ALIGN_TEXT
-1:	addl	%ecx,%edi		# copy backward
+1:	addl	%ecx,%edi		/* copy backward */
 	addl	%ecx,%esi
 	std
-	andl	$3,%ecx			# any fractional bytes?
+	andl	$3,%ecx			/* any fractional bytes? */
 	decl	%edi
 	decl	%esi
 	rep
 	movsb
-	movl	%edx,%ecx		# copy remainder by 32-bit words
+	movl	%edx,%ecx		/* copy remainder by 32-bit words */
 	shrl	$2,%ecx
 	subl	$3,%esi
 	subl	$3,%edi
@@ -337,11 +337,11 @@ ENTRY(copyoutstr)
 	DEFERRED_SWITCH_CHECK
 	pushl	%esi
 	pushl	%edi
-	movl	12(%esp),%esi		# esi = from
-	movl	16(%esp),%edi		# edi = to
-	movl	20(%esp),%edx		# edx = maxlen
+	movl	12(%esp),%esi		/* esi = from */
+	movl	16(%esp),%edi		/* edi = to */
+	movl	20(%esp),%edx		/* edx = maxlen */
 .Lcopyoutstr_start:
-5:	
+5:
 	/*
 	 * Get min(%edx, VM_MAXUSER_ADDRESS-%edi).
 	 */
@@ -388,9 +388,9 @@ ENTRY(copyinstr)
 	DEFERRED_SWITCH_CHECK
 	pushl	%esi
 	pushl	%edi
-	movl	12(%esp),%esi		# %esi = from
-	movl	16(%esp),%edi		# %edi = to
-	movl	20(%esp),%edx		# %edx = maxlen
+	movl	12(%esp),%esi		/* %esi = from */
+	movl	16(%esp),%edi		/* %edi = to */
+	movl	20(%esp),%edx		/* %edx = maxlen */
 
 	/*
 	 * Get min(%edx, VM_MAXUSER_ADDRESS-%esi).
@@ -457,9 +457,9 @@ ENTRY(copystr)
 	pushl	%esi
 	pushl	%edi
 
-	movl	12(%esp),%esi		# esi = from
-	movl	16(%esp),%edi		# edi = to
-	movl	20(%esp),%edx		# edx = maxlen
+	movl	12(%esp),%esi		/* esi = from */
+	movl	16(%esp),%edi		/* edi = to */
+	movl	20(%esp),%edx		/* edx = maxlen */
 	incl	%edx
 
 1:	decl	%edx
@@ -503,24 +503,6 @@ ENTRY(fuword)
 	GET_CURPCB(%ecx)
 	movl	$_C_LABEL(fusufault),PCB_ONFAULT(%ecx)
 	movl	(%edx),%eax
-	movl	$0,PCB_ONFAULT(%ecx)
-	ret
-	DEFERRED_SWITCH_CALL
-
-/*
- * int fusword(const void *uaddr);
- * Fetch a short from the user's address space.
- * see fusword(9)
- */
-/* LINTSTUB: Func: int fusword(const void *base) */
-ENTRY(fusword)
-	DEFERRED_SWITCH_CHECK
-	movl	4(%esp),%edx
-	cmpl	$VM_MAXUSER_ADDRESS-2,%edx
-	ja	_C_LABEL(fusuaddrfault)
-	GET_CURPCB(%ecx)
-	movl	$_C_LABEL(fusufault),PCB_ONFAULT(%ecx)
-	movzwl	(%edx),%eax
 	movl	$0,PCB_ONFAULT(%ecx)
 	ret
 	DEFERRED_SWITCH_CALL
@@ -606,26 +588,6 @@ ENTRY(suword)
 	movl	$_C_LABEL(fusufault),PCB_ONFAULT(%ecx)
 	movl	8(%esp),%eax
 	movl	%eax,(%edx)
-	xorl	%eax,%eax
-	movl	%eax,PCB_ONFAULT(%ecx)
-	ret
-	DEFERRED_SWITCH_CALL
-
-/*
- * int susword(void *uaddr, short x);
- * Store a short in the user's address space.
- * see susword(9)
- */
-/* LINTSTUB: Func: int susword(void *base, short c) */
-ENTRY(susword)
-	DEFERRED_SWITCH_CHECK
-	movl	4(%esp),%edx
-	cmpl	$VM_MAXUSER_ADDRESS-2,%edx
-	ja	_C_LABEL(fusuaddrfault)
-	GET_CURPCB(%ecx)
-	movl	$_C_LABEL(fusufault),PCB_ONFAULT(%ecx)
-	movl	8(%esp),%eax
-	movw	%ax,(%edx)
 	xorl	%eax,%eax
 	movl	%eax,PCB_ONFAULT(%ecx)
 	ret
@@ -725,18 +687,21 @@ ENTRY(x86_copyargs)
 	movl	16(%esp),%ecx
 
 	/*
-	 * We check that the end of the destination buffer is not past the end
-	 * of the user's address space.  If it's not, then we only need to
-	 * check that each page is readable, and the CPU will do that for us.
+	 * In this function, we may copy more than the size given in the third
+	 * argument. In order to make sure the real end of the destination
+	 * buffer is not past the end of the user's address space, we don't
+	 * check the third argument but rather the largest possible size, which
+	 * is:
+	 * 	(2 + SYS_MAXSYSARGS) * 4 = 10 * 4
 	 */
 .Lx86_copyargs_start:
 	movl	%esi,%eax
-	addl	%ecx,%eax
+	addl	$(10 * 4),%eax
 	jc	_C_LABEL(x86_copyargs_efault)
 	cmpl	$VM_MAXUSER_ADDRESS,%eax
 	ja	_C_LABEL(x86_copyargs_efault)
 	/* There are a maximum of 8 args + 2 for syscall indirect */
-	cmp     $16,%ecx
+	cmp	$16,%ecx
 	movl	(%esi),%eax
 	movl	4(%esi),%ecx
 	movl	%eax,(%edx)

@@ -1,4 +1,4 @@
-/*	$NetBSD: rwlock.h,v 1.5.44.1 2014/08/20 00:02:46 tls Exp $	*/
+/*	$NetBSD: rwlock.h,v 1.5.44.2 2017/12/03 11:35:53 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -42,8 +42,8 @@ struct krwlock {
 
 #ifdef MULTIPROCESSOR
 #ifdef _ARM_ARCH_7
-#define	RW_RECEIVE(rw)			__asm __volatile("dmb")
-#define	RW_GIVE(rw)			__asm __volatile("dsb")
+#define	RW_RECEIVE(rw)			__asm __volatile("dmb" ::: "memory")
+#define	RW_GIVE(rw)			__asm __volatile("dsb" ::: "memory")
 #else
 #define	RW_RECEIVE(rw)			membar_consumer()
 #define	RW_GIVE(rw)			membar_producer()

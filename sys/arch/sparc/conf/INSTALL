@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.83.2.3 2014/08/20 00:03:24 tls Exp $
+#	$NetBSD: INSTALL,v 1.83.2.4 2017/12/03 11:36:43 jdolecek Exp $
 #
 # from: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 #
@@ -19,7 +19,7 @@ options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 ## The miniroot size must be kept in sync manually with the size of
 ## the `ramdisk' image (which is built in distrib/sparc/ramdisk).
-options 	MEMORY_DISK_ROOT_SIZE=1800	# size of memory disk, in blocks
+options 	MEMORY_DISK_ROOT_SIZE=2000	# size of memory disk, in blocks
 options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 pseudo-device	md			# memory disk device (ramdisk)
@@ -40,14 +40,6 @@ options 	SUN4_MMU3L	# 3-level MMU on sun4/400
 # Blink the power LED on some machines to indicate the system load.
 #options 	BLINK
 
-## Use a faster console than the PROM's slow drawing routines.  Not needed
-## for headless (no framebuffer) machines.
-#options 	RASTERCONSOLE		# fast rasterop console
-options 	FONT_GALLANT12x22	# the console font
-options 	FONT_BOLD8x16		# a somewhat smaller font
-#options 	RASTERCONSOLE_FGCOL=WSCOL_BLACK
-#options 	RASTERCONSOLE_BGCOL=WSCOL_WHITE
-
 # wscons stuff
 #options 	WSEMUL_SUN
 options 	WSEMUL_VT100
@@ -59,6 +51,8 @@ options 	WS_DEFAULT_FG=WSCOL_BLACK
 options 	WS_DEFAULT_BG=WSCOL_LIGHT_WHITE
 options 	WS_KERNEL_FG=WSCOL_GREEN
 options 	WS_KERNEL_BG=WSCOL_LIGHT_WHITE
+options 	FONT_GALLANT12x22	# the console font
+options 	FONT_BOLD8x16		# a somewhat smaller font
 
 #### System options that are the same for all ports
 
@@ -71,11 +65,6 @@ config		netbsd	root on ? type ?
 
 ## System call tracing (see ktrace(1)).
 #options 	KTRACE
-
-## Collect statistics on kernel malloc's and free's.  This does have a
-## significant performance hit on slower machines, so it is intended for
-## diagnostic use only.
-#options 	KMEMSTATS
 
 ## System V compatible IPC subsystem.  (msgctl(2), semctl(2), and shmctl(2))
 #options 	SYSVMSG		# System V message queues
@@ -148,20 +137,9 @@ options 	INSECURE
 ## additional user-level utilities or system configuration files. See
 ## compat_sunos(8) and compat_svr4(8).
 
-#options 	COMPAT_43	# 4.3BSD system interfaces
-#options 	COMPAT_10	# NetBSD 1.0 binary compatibility
-#options 	COMPAT_11	# NetBSD 1.1 binary compatibility
-#options 	COMPAT_12	# NetBSD 1.2 binary compatibility
-#options 	COMPAT_13	# NetBSD 1.3 binary compatibility
-#options 	COMPAT_14	# NetBSD 1.4 binary compatibility
-#options 	COMPAT_15	# NetBSD 1.5 binary compatibility
-#options 	COMPAT_16	# NetBSD 1.6 binary compatibility
-#options 	COMPAT_20	# NetBSD 2.0 binary compatibility
-#options 	COMPAT_30	# NetBSD 3.0 binary compatibility
-#options 	COMPAT_40	# NetBSD 4.0 binary compatibility
+#include 	"conf/compat_netbsd10.config"
 #options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility
 #options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 ## File systems.  You probably need at least one of FFS or NFS.
@@ -519,6 +497,8 @@ pseudo-device	loop
 #audiocs0	at sbus0 slot ? offset ?		# SUNW,CS4231
 #audio*		at audiocs0
 
+#spkr*		at audio?		# PC speaker (synthesized)
+
 
 ## Sun "bwtwo" black and white framebuffer, found on sun4, sun4c, and sun4m
 ## systems.  If your sun4 system has a cgfour installed in the P4 slot,
@@ -577,6 +557,9 @@ zx*		at sbus? slot ? offset ?
 
 # Fujitsu AG-10e accelerated graphics 8/24-bit board
 agten*	at sbus? slot ? offset ?
+
+## Southland Media Systems (now Quantum 3D) MGX
+mgx* 		at sbus? slot ? offset ?
 
 # generic framebuffer console
 genfb*	at sbus? slot ? offset ?

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ntptime.c,v 1.54.18.1 2014/08/20 00:04:29 tls Exp $	*/
+/*	$NetBSD: kern_ntptime.c,v 1.54.18.2 2017/12/03 11:38:44 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_ntptime.c,v 1.59 2005/05/28 14:34:41 rwatson Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.54.18.1 2014/08/20 00:04:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.54.18.2 2017/12/03 11:38:44 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
@@ -99,7 +99,7 @@ typedef int64_t l_fp;
 #define L_MPY(v, a)	((v) *= (a))
 #define L_CLR(v)	((v) = 0)
 #define L_ISNEG(v)	((v) < 0)
-#define L_LINT(v, a)	((v) = (int64_t)(a) << 32)
+#define L_LINT(v, a)	((v) = (int64_t)((uint64_t)(a) << 32))
 #define L_GINT(v)	((v) < 0 ? -(-(v) >> 32) : (v) >> 32)
 
 #ifdef NTP
@@ -260,7 +260,7 @@ sys_ntp_adjtime(struct lwp *l, const struct sys_ntp_adjtime_args *uap, register_
 		syscallarg(struct timex *) tp;
 	} */
 	struct timex ntv;
-	int error = 0;
+	int error;
 
 	error = copyin((void *)SCARG(uap, tp), (void *)&ntv, sizeof(ntv));
 	if (error != 0)

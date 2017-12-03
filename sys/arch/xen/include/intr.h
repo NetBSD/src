@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.34.2.1 2013/02/25 00:29:06 tls Exp $	*/
+/*	$NetBSD: intr.h,v 1.34.2.2 2017/12/03 11:36:51 jdolecek Exp $	*/
 /*	NetBSD intr.h,v 1.15 2004/10/31 10:39:34 yamt Exp	*/
 
 /*-
@@ -36,6 +36,8 @@
 #include <machine/intrdefs.h>
 
 #ifndef _LOCORE
+#include <xen/xen-public/xen.h>
+#include <x86/intr.h>
 #include <xen/xen.h>
 #include <xen/hypervisor.h>
 #include <machine/pic.h>
@@ -58,120 +60,18 @@ struct evtsource {
 	char ev_evname[32];		/* event counter name */
 };
 
-/*
- * Structure describing an interrupt level. struct cpu_info has an array of
- * IPL_MAX of theses. The index in the array is equal to the stub number of
- * the stubcode as present in vector.s
- */
-
-struct intrstub {
-#if 0
-	void *ist_entry;
-#endif
-	void *ist_recurse; 
-	void *ist_resume;
-};
-
-/* for x86 compatibility */
-extern struct intrstub i8259_stubs[];
-extern struct intrstub ioapic_edge_stubs[];
-extern struct intrstub ioapic_level_stubs[];
-
-struct iplsource {
-	struct intrhand *ipl_handlers;   /* handler chain */
-	void *ipl_recurse;               /* entry for spllower */
-	void *ipl_resume;                /* entry for doreti */
-	struct lwp *ipl_lwp;
-	u_long ipl_evt_mask1;	/* pending events for this IPL */
-	u_long ipl_evt_mask2[NR_EVENT_CHANNELS];
-};
-
-
-
-/*
- * Interrupt handler chains. These are linked in both the evtsource and
- * the iplsource.
- * The handler is called with its (single) argument.
- */
-
-struct intrhand {
-	int	(*ih_fun)(void *);
-	void	*ih_arg;
-	int	ih_level;
-	int	(*ih_realfun)(void *);
-	void	*ih_realarg;
-	struct	intrhand *ih_ipl_next;
-	struct	intrhand *ih_evt_next;
-	struct cpu_info *ih_cpu;
-};
-
-struct xen_intr_handle {
-	int pirq; /* also contains the  APIC_INT_* flags if NIOAPIC > 0 */
-	int evtch;
-};
-
 extern struct intrstub xenev_stubs[];
-
-#define IUNMASK(ci,level) (ci)->ci_iunmask[(level)]
-
-extern void Xspllower(int);
-
-int splraise(int);
-void spllower(int);
-
-#define SPL_ASSERT_BELOW(x) KDASSERT(curcpu()->ci_ilevel < (x))
-
-/*
- * Miscellaneous
- */
-#define	spl0()		spllower(IPL_NONE)
-#define	splx(x)		spllower(x)
-
-typedef uint8_t ipl_t;
-typedef struct {
-	ipl_t _ipl;
-} ipl_cookie_t;
-
-static inline ipl_cookie_t
-makeiplcookie(ipl_t ipl)
-{
-
-	return (ipl_cookie_t){._ipl = ipl};
-}
-
-static inline int
-splraiseipl(ipl_cookie_t icookie)
-{
-
-	return splraise(icookie._ipl);
-}
-
-#include <sys/spl.h>
-
-/*
- * Stub declarations.
- */
-
-struct pcibus_attach_args;
+extern int irq2vect[256];
+extern int vect2irq[256];
+extern int irq2port[NR_EVENT_CHANNELS];
 
 #ifdef MULTIPROCESSOR
-int intr_biglock_wrapper(void *);
+int xen_intr_biglock_wrapper(void *);
 #endif
 
-void intr_default_setup(void);
-int x86_nmi(void);
-
-void *intr_establish(int, struct pic *, int, int, int, int (*)(void *), void *, bool);
-void intr_disestablish(struct intrhand *);
-const char *intr_string(int);
-void cpu_intr_init(struct cpu_info *);
-int xen_intr_map(int *, int);
-#ifdef INTRDEBUG
-void intr_printconfig(void);
-#endif
-int intr_find_mpmapping(int, int, struct xen_intr_handle *);
-struct pic *intr_findpic(int);
-void intr_add_pcibus(struct pcibus_attach_args *);
+#if defined(DOM0OPS) || NPCI > 0
+int xen_pirq_alloc(intr_handle_t *, int);
+#endif /* defined(DOM0OPS) || NPCI > 0 */
 
 #ifdef MULTIPROCESSOR
 void xen_ipi_init(void);
@@ -182,7 +82,6 @@ void xen_broadcast_ipi(uint32_t);
 #define xen_send_ipi(_i1, _i2) (0) /* nothing */
 #define xen_broadcast_ipi(_i1) ((void) 0) /* nothing */
 #endif /* MULTIPROCESSOR */
-
 #endif /* !_LOCORE */
 
 #endif /* _XEN_INTR_H_ */

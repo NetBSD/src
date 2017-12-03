@@ -1,4 +1,4 @@
-/*	$NetBSD: layer.h,v 1.14.18.1 2014/08/20 00:04:31 tls Exp $	*/
+/*	$NetBSD: layer.h,v 1.14.18.2 2017/12/03 11:38:47 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -79,7 +79,6 @@ struct layer_args {
 #ifdef _KERNEL
 
 struct layer_mount {
-	struct mount		*layerm_vfs;
 	struct vnode		*layerm_rootvp;	/* Ref to root layer_node */
 	u_int			layerm_flags;	/* mount point layer flags */
 	u_int			layerm_size;	/* size of fs's struct node */

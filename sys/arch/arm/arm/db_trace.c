@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.24.2.3 2014/08/20 00:02:44 tls Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.24.2.4 2017/12/03 11:35:51 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.24.2.3 2014/08/20 00:02:44 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.24.2.4 2017/12/03 11:35:51 jdolecek Exp $");
 
 #include <sys/proc.h>
 #include <arm/armreg.h>
@@ -86,6 +86,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr,
 		db_expr_t count, const char *modif,
 		void (*pr)(const char *, ...))
 {
+	struct trapframe *tf = NULL;
 	uint32_t	*frame, *lastframe;
 	const char	*cp = modif;
 	char c;
@@ -140,6 +141,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr,
 			}
 			(*pr)("lid %d ", l.l_lid);
 			pcb = lwp_getpcb(&l);
+			tf = lwp_trapframe(&l);
 #ifndef _KERNEL
 			struct pcb pcbb;
 			db_read_bytes((db_addr_t)pcb, sizeof(*pcb),
@@ -155,8 +157,18 @@ db_stack_trace_print(db_expr_t addr, bool have_addr,
 		} else
 			frame = (uint32_t *)(addr);
 	}
-	lastframe = NULL;
 	scp_offset = -(get_pc_str_offset() >> 2);
+
+	if (frame == NULL)
+		return;
+
+	lastframe = frame;
+#ifndef _KERNEL
+	uint32_t frameb[4];
+	db_read_bytes((db_addr_t)(frame - 3), sizeof(frameb),
+	    (char *)frameb);
+	frame = frameb + 3;
+#endif
 
 	/*
 	 * In theory, the SCP isn't guaranteed to be in the function
@@ -169,7 +181,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr,
 #endif
 	pc = scp;
 
-	while (count-- && frame != NULL) {
+	while (count--) {
 		uint32_t	savecode;
 		int		r;
 		uint32_t	*rp;
@@ -180,14 +192,8 @@ db_stack_trace_print(db_expr_t addr, bool have_addr,
 #else
 		scp = frame[FR_SCP];
 #endif
-		lastframe = frame;
-		(*pr)("%p: ", frame);
-#ifndef _KERNEL
-		uint32_t frameb[4];
-		db_read_bytes((db_addr_t)(frame - 3), sizeof(frameb),
-		    (char *)frameb);
-		frame = frameb + 3;
-#endif
+		(*pr)("%p: ", lastframe);
+
 		db_printsym(pc, DB_STGY_PROC, pr);
 		if (trace_full) {
 			(*pr)("\n\t");
@@ -244,6 +250,9 @@ db_stack_trace_print(db_expr_t addr, bool have_addr,
 
 		frame = (uint32_t *)(frame[FR_RFP]);
 
+		if (frame == NULL)
+			break;
+
 		if (INKERNEL((int)frame)) {
 			/* staying in kernel */
 			if (frame <= lastframe) {
@@ -251,6 +260,9 @@ db_stack_trace_print(db_expr_t addr, bool have_addr,
 				break;
 			}
 		} else if (INKERNEL((int)lastframe)) {
+			if (trace_thread) {
+				(*pr)("--- tf %p ---\n", tf);
+			}
 			/* switch from user to kernel */
 			if (kernel_only)
 				break;	/* kernel stack only */
@@ -262,5 +274,11 @@ db_stack_trace_print(db_expr_t addr, bool have_addr,
 				break;
 			}
 		}
+		lastframe = frame;
+#ifndef _KERNEL
+		db_read_bytes((db_addr_t)(frame - 3), sizeof(frameb),
+		    (char *)frameb);
+		frame = frameb + 3;
+#endif
 	}
 }

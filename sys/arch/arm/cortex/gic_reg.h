@@ -1,4 +1,4 @@
-/*	$NetBSD: gic_reg.h,v 1.1.2.1 2014/08/20 00:02:45 tls Exp $	*/
+/*	$NetBSD: gic_reg.h,v 1.1.2.2 2017/12/03 11:35:52 jdolecek Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -48,7 +48,7 @@
 
 #define	GICC_CTRL	0x0000	// CPU Interface Control Register
 #define	GICC_PMR	0x0004	// Interrupt Priority Mask Register
-#define	GICC_BPR	0x0008	// Aliased Binary Point Register
+#define	GICC_BPR	0x0008	// Binary Point Register
 #define	GICC_IAR	0x000C	// Interrupt Acknowledge Register
 #define	GICC_EOIR	0x0010	// End Of Interrupt Register (WO)
 #define	GICC_RPR	0x0014	// Running Priority Register
@@ -101,6 +101,7 @@
 #define	GICC_IAR_CPUID			__BITS(12,10)
 #define	GICC_IAR_IRQ			__BITS(9,0)
 #define	GICC_IAR_IRQ_SPURIOUS		1023
+#define	GICC_IAR_IRQ_SSPURIOUS		1022	// Secure
 
 #define	GICC_EOIR_CPUID			__BITS(12,10)
 #define	GICC_EOIR_InterruptID		__BITS(9,0)
@@ -145,7 +146,7 @@
 #define	GICD_TYPER_ITLinesNumber	__BITS(4,0)	// 32*(N+1)
 #define	GICD_TYPER_LINES(n)		MIN(32*(__SHIFTOUT((n), GICD_TYPER_ITLinesNumber) + 1), 1020)
 
-#define	GICD_IIDR_ProductId		__BITS(31,24)
+#define	GICD_IIDR_ProductID		__BITS(31,24)
 #define	GICD_IIDR_Variant		__BITS(19,16)
 #define	GICD_IIDR_Revision		__BITS(15,12)
 #define	GICD_IIDR_Implementer		__BITS(11,0)

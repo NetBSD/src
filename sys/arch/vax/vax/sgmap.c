@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap.c,v 1.17 2012/01/27 18:53:06 para Exp $ */
+/* $NetBSD: sgmap.c,v 1.17.6.1 2017/12/03 11:36:48 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sgmap.c,v 1.17 2012/01/27 18:53:06 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgmap.c,v 1.17.6.1 2017/12/03 11:36:48 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,16 +124,18 @@ vax_sgmap_alloc(bus_dmamap_t map, bus_size_t origlen, struct vax_sgmap *sgmap,
 	}
 
 	map->_dm_sgvalen = vax_round_page(len);
-#if 0
+#define DEBUG_SGMAP 0
+#if DEBUG_SGMAP
 	printf("len %x -> %x, _dm_sgvalen %x _dm_boundary %x boundary %x -> ",
-	    origlen, len, map->_dm_sgvalen, map->_dm_boundary, boundary);
+	    //origlen, len, map->_dm_sgvalen, map->_dm_boundary, boundary);
+	    (unsigned int)origlen, (unsigned int)len, (unsigned int)map->_dm_sgvalen, (unsigned int)map->_dm_boundary, 1);
 #endif
 
 	error = extent_alloc(sgmap->aps_ex, map->_dm_sgvalen, VAX_NBPG,
 	    0, (flags & BUS_DMA_NOWAIT) ? EX_NOWAIT : EX_WAITOK,
 	    &map->_dm_sgva);
-#if 0
-	printf("error %d _dm_sgva %x\n", error, map->_dm_sgva);
+#if DEBUG_SGMAP
+	printf("error %d _dm_sgva %lx\n", error, map->_dm_sgva);
 #endif
 
 	if (error == 0)
@@ -158,6 +160,12 @@ vax_sgmap_free(bus_dmamap_t map, struct vax_sgmap *sgmap)
 		panic("vax_sgmap_free");
 
 	map->_dm_flags &= ~DMAMAP_HAS_SGMAP;
+}
+
+int
+vax_sgmap_reserve(bus_addr_t ba, bus_size_t len, struct vax_sgmap *sgmap)
+{
+	return extent_alloc_region(sgmap->aps_ex, ba, len, EX_NOWAIT);
 }
 
 int

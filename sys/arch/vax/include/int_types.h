@@ -1,4 +1,4 @@
-/*	$NetBSD: int_types.h,v 1.11 2008/08/29 18:25:01 matt Exp $	*/
+/*	$NetBSD: int_types.h,v 1.11.38.1 2017/12/03 11:36:48 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -34,6 +34,9 @@
 #ifndef	_VAX_INT_TYPES_H_
 #define	_VAX_INT_TYPES_H_
 
+#ifdef __UINTPTR_TYPE__
+#include <sys/common_int_types.h>
+#else
 #include <sys/cdefs.h>
 
 /*
@@ -64,5 +67,7 @@ typedef	unsigned long long int __uint64_t;
 
 typedef	long int	       __intptr_t;
 typedef	unsigned long int      __uintptr_t;
+
+#endif /* !__UINTPTR_TYPE__ */
 
 #endif	/* !_VAX_INT_TYPES_H_ */

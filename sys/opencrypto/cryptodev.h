@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.h,v 1.25 2011/06/09 14:41:24 drochner Exp $ */
+/*	$NetBSD: cryptodev.h,v 1.25.12.1 2017/12/03 11:39:06 jdolecek Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.h,v 1.2.2.6 2003/07/02 17:04:50 sam Exp $	*/
 /*	$OpenBSD: cryptodev.h,v 1.33 2002/07/17 23:52:39 art Exp $	*/
 
@@ -87,6 +87,11 @@
 
 #include <sys/ioccom.h>
 #include <sys/condvar.h>
+#include <sys/time.h>
+
+#if defined(_KERNEL_OPT)
+#include "opt_ocf.h"
+#endif
 
 /* Some initial values */
 #define CRYPTO_DRIVERS_INITIAL	4
@@ -250,7 +255,7 @@ struct crypt_mop {
 struct crypt_sfop {
 	size_t		count;
 	u_int32_t	*sesid;
-}; 
+};
 
 struct crypt_sgop {
 	size_t		count;
@@ -316,7 +321,7 @@ struct crypt_result {
 struct cryptret {
 	size_t		count;		/* space for how many */
 	struct crypt_result *	results;	/* where to put them */
-}; 
+};
 
 
 /* Assymetric key operations */
@@ -456,8 +461,10 @@ struct cryptop {
 					 * should always check and use the new
 					 * value on future requests.
 					 */
-	int		crp_flags;	/* Note: must hold mutext to modify */
-
+	int		crp_flags;	/*
+					 * other than crypto.c must not write
+					 * after crypto_dispatch().
+					 */
 #define CRYPTO_F_IMBUF		0x0001	/* Input/output are mbuf chains */
 #define CRYPTO_F_IOV		0x0002	/* Input/output are uio */
 #define CRYPTO_F_REL		0x0004	/* Must return data in same place */
@@ -469,11 +476,18 @@ struct cryptop {
 #define	CRYPTO_F_USER		0x0100	/* Request is in user context */
 #define	CRYPTO_F_MORE		0x0200	/* more data to follow */
 
+	int		crp_devflags;	/* other than cryptodev.c must not use. */
+#define	CRYPTODEV_F_RET		0x0001	/* return from crypto.c to cryptodev.c */
+
 	void *		crp_buf;	/* Data to be processed */
 	void *		crp_opaque;	/* Opaque pointer, passed along */
 	struct cryptodesc *crp_desc;	/* Linked list of processing descriptors */
 
-	int (*crp_callback)(struct cryptop *); /* Callback function */
+	int (*crp_callback)(struct cryptop *); /*
+						* Callback function.
+						* That must not sleep as it is
+						* called in softint context.
+						*/
 
 	void *		crp_mac;
 
@@ -494,6 +508,10 @@ struct cryptop {
 	struct iovec	iovec[1];
 	struct uio	uio;
 	uint32_t	magic;
+	struct cpu_info	*reqcpu;	/*
+					 * save requested CPU to do cryptoret
+					 * softint in the same CPU.
+					 */
 };
 
 #define CRYPTO_BUF_CONTIG	0x0
@@ -520,11 +538,17 @@ struct cryptkop {
 	u_short		krp_oparams;	/* # of output parameters */
 	u_int32_t	krp_hid;
 	struct crparam	krp_param[CRK_MAXPARAM];	/* kvm */
-	int		(*krp_callback)(struct cryptkop *);
+	int		(*krp_callback)(struct cryptkop *);  /*
+							      * Callback function.
+							      * That must not sleep as it is
+							      * called in softint context.
+							      */
 	int		krp_flags;	/* same values as crp_flags */
+	int		krp_devflags;	/* same values as crp_devflags */
 	kcondvar_t	krp_cv;
 	struct fcrypt 	*fcrp;
 	struct crparam	crk_param[CRK_MAXPARAM];
+	struct cpu_info	*reqcpu;
 };
 
 /* Crypto capabilities structure */
@@ -554,6 +578,8 @@ struct cryptocap {
 	int		(*cc_freesession) (void*, u_int64_t);
 	void		*cc_karg;		/* callback argument */
 	int		(*cc_kprocess) (void*, struct cryptkop *, int);
+
+	kmutex_t	cc_lock;
 };
 
 /*
@@ -597,26 +623,15 @@ void	cuio_copyback(struct uio *, int, int, void *);
 int	cuio_apply(struct uio *, int, int,
 	    int (*f)(void *, void *, unsigned int), void *);
 
-extern	int crypto_ret_q_remove(struct cryptop *);
-extern	int crypto_ret_kq_remove(struct cryptkop *);
 extern	void crypto_freereq(struct cryptop *crp);
 extern	struct cryptop *crypto_getreq(int num);
+
+extern	void crypto_kfreereq(struct cryptkop *);
+extern	struct cryptkop *crypto_kgetreq(int, int);
 
 extern	int crypto_usercrypto;		/* userland may do crypto requests */
 extern	int crypto_userasymcrypto;	/* userland may do asym crypto reqs */
 extern	int crypto_devallowsoft;	/* only use hardware crypto */
-
-/*
- * Asymmetric operations are allocated in cryptodev.c but can be
- * freed in crypto.c.
- */
-extern struct pool	cryptkop_pool;
-
-/*
- * Mutual exclusion and its unwelcome friends.
- */
-
-extern	kmutex_t	crypto_mtx;
 
 /*
  * initialize the crypto framework subsystem (not the pseudo-device).
@@ -625,7 +640,7 @@ extern	kmutex_t	crypto_mtx;
  * (This declaration doesnt really belong here but there's no header
  * for the raw framework.)
  */
-void	crypto_init(void);
+int	crypto_init(void);
 
 /*
  * Crypto-related utility routines used mainly by drivers.
@@ -640,19 +655,32 @@ extern int	cuio_getptr(struct uio *, int loc, int *off);
 
 #ifdef CRYPTO_DEBUG	/* yuck, netipsec defines these differently */
 #ifndef DPRINTF
-#define DPRINTF(a) uprintf a
-#endif
-#ifndef DCPRINTF
-#define DCPRINTF(a) printf a
+#define DPRINTF(a, ...)	printf("%s: " a, __func__, ##__VA_ARGS__)
 #endif
 #else
 #ifndef DPRINTF
-#define DPRINTF(a)
-#endif
-#ifndef DCPRINTF
-#define DCPRINTF(a)
+#define DPRINTF(a, ...)
 #endif
 #endif
 
 #endif /* _KERNEL */
+/*
+ * Locking notes:
+ * + crypto_drivers itself is protected by crypto_drv_mtx (an adaptive lock)
+ * + crypto_drivers[i] and its all members are protected by
+ *   crypto_drivers[i].cc_lock (a spin lock)
+ *       spin lock as crypto_unblock() can be called in interrupt context
+ * + percpu'ed crp_q and crp_kq are procted by splsoftnet.
+ * + crp_ret_q, crp_ret_kq and crypto_exit_flag that are members of
+ *   struct crypto_crp_ret_qs are protected by crypto_crp_ret_qs.crp_ret_q_mtx
+ *   (a spin lock)
+ *       spin lock as crypto_done() can be called in interrupt context
+ *       NOTE:
+ *       It is not known whether crypto_done()(in interrupt context) is called
+ *       in the same CPU as crypto_dispatch() is called.
+ *       So, struct crypto_crp_ret_qs cannot be percpu(9).
+ *
+ * Locking order:
+ *     - crypto_drv_mtx => crypto_drivers[i].cc_lock
+ */
 #endif /* _CRYPTO_CRYPTO_H_ */

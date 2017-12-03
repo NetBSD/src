@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_50.c,v 1.20.10.3 2014/08/20 00:03:33 tls Exp $	*/
+/*	$NetBSD: netbsd32_compat_50.c,v 1.20.10.4 2017/12/03 11:36:55 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,10 +36,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.20.10.3 2014/08/20 00:03:33 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.20.10.4 2017/12/03 11:36:55 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
-#include "opt_sysv.h"
+#include "opt_compat_netbsd.h"
 #endif
 
 #include <sys/param.h>
@@ -63,10 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.20.10.3 2014/08/20 00:03:33
 #include <sys/dirent.h>
 #include <sys/kauth.h>
 #include <sys/vfs_syscalls.h>
-#include <sys/ipc.h>
-#include <sys/msg.h>
-#include <sys/sem.h>
-#include <sys/shm.h>
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
@@ -74,6 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.20.10.3 2014/08/20 00:03:33
 #include <compat/sys/mount.h>
 #include <compat/sys/time.h>
 
+#if defined(COMPAT_50)
 
 /*
  * Common routine to set access and modification times given a vnode.
@@ -139,7 +136,6 @@ compat_50_netbsd32_select(struct lwp *l,
 
 	return selcommon(retval, SCARG(uap, nd), SCARG_P32(uap, in),
 	    SCARG_P32(uap, ou), SCARG_P32(uap, ex), ts, NULL);
-	return 0;
 }
 
 int
@@ -248,30 +244,31 @@ compat_50_netbsd32_adjtime(struct lwp *l,
 		return (error);
 
 	if (SCARG_P32(uap, olddelta)) {
+		mutex_spin_enter(&timecounter_lock);
 		atv.tv_sec = time_adjtime / 1000000;
 		atv.tv_usec = time_adjtime % 1000000;
 		if (atv.tv_usec < 0) {
 			atv.tv_usec += 1000000;
 			atv.tv_sec--;
 		}
-		(void) copyout(&atv,
-			       SCARG_P32(uap, olddelta), 
-			       sizeof(atv));
+		mutex_spin_exit(&timecounter_lock);
+
+		error = copyout(&atv, SCARG_P32(uap, olddelta), sizeof(atv));
 		if (error)
 			return (error);
 	}
 	
 	if (SCARG_P32(uap, delta)) {
-		error = copyin(SCARG_P32(uap, delta), &atv,
-			       sizeof(struct timeval));
+		error = copyin(SCARG_P32(uap, delta), &atv, sizeof(atv));
 		if (error)
 			return (error);
 
+		mutex_spin_enter(&timecounter_lock);
 		time_adjtime = (int64_t)atv.tv_sec * 1000000 + atv.tv_usec;
-
 		if (time_adjtime)
 			/* We need to save the system time during shutdown */
 			time_adjusted |= 1;
+		mutex_spin_exit(&timecounter_lock);
 	}
 
 	return 0;
@@ -297,7 +294,7 @@ compat_50_netbsd32_futimes(struct lwp *l,
 	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)
 		return error;
 
-	error = do_sys_utimes(l, fp->f_data, NULL, 0, tvp, UIO_SYSSPACE);
+	error = do_sys_utimes(l, fp->f_vnode, NULL, 0, tvp, UIO_SYSSPACE);
 
 	fd_putfile(SCARG(uap, fd));
 	return error;
@@ -352,7 +349,7 @@ compat_50_netbsd32_clock_getres(struct lwp *l,
 	} */
 	struct netbsd32_timespec50 ts32;
 	struct timespec ts;
-	int error = 0;
+	int error;
 
 	error = clock_getres1(SCARG(uap, clock_id), &ts);
 	if (error != 0)
@@ -563,7 +560,6 @@ compat_50_netbsd32__lwp_park(struct lwp *l,
 
 	return lwp_park(CLOCK_REALTIME, TIMER_ABSTIME, tsp,
 	    SCARG_P32(uap, hint));
-	return 0;
 }
 
 static int
@@ -582,12 +578,12 @@ netbsd32_kevent_fetch_timeout(const void *src, void *dest, size_t length)
 }
 
 static int
-netbsd32_kevent_fetch_changes(void *private, const struct kevent *changelist,
+netbsd32_kevent_fetch_changes(void *ctx, const struct kevent *changelist,
     struct kevent *changes, size_t index, int n)
 {
 	const struct netbsd32_kevent *src =
 	    (const struct netbsd32_kevent *)changelist;
-	struct netbsd32_kevent *kev32, *changes32 = private;
+	struct netbsd32_kevent *kev32, *changes32 = ctx;
 	int error, i;
 
 	error = copyin(src + index, changes32, n * sizeof(*changes32));
@@ -599,10 +595,10 @@ netbsd32_kevent_fetch_changes(void *private, const struct kevent *changelist,
 }
 
 static int
-netbsd32_kevent_put_events(void *private, struct kevent *events,
+netbsd32_kevent_put_events(void *ctx, struct kevent *events,
     struct kevent *eventlist, size_t index, int n)
 {
-	struct netbsd32_kevent *kev32, *events32 = private;
+	struct netbsd32_kevent *kev32, *events32 = ctx;
 	int i;
 
 	for (i = 0, kev32 = events32; i < n; i++, kev32++, events++)
@@ -681,7 +677,6 @@ compat_50_netbsd32_pselect(struct lwp *l,
 
 	return selcommon(retval, SCARG(uap, nd), SCARG_P32(uap, in),
 	    SCARG_P32(uap, ou), SCARG_P32(uap, ex), ts, mask);
-	return 0;
 }
 
 int
@@ -911,158 +906,6 @@ compat_50_netbsd32_getitimer(struct lwp *l, const struct compat_50_netbsd32_geti
 	return copyout(&s32it, SCARG_P32(uap, itv), sizeof(s32it));
 }
 
-#if defined(SYSVSEM)
-
-int
-compat_50_netbsd32___semctl14(struct lwp *l, const struct compat_50_netbsd32___semctl14_args *uap, register_t *retval)
-{
-	return do_netbsd32___semctl14(l, uap, retval, NULL);
-}
-
-int
-do_netbsd32___semctl14(struct lwp *l, const struct compat_50_netbsd32___semctl14_args *uap, register_t *retval, void *vkarg)
-{
-	/* {
-		syscallarg(int) semid;
-		syscallarg(int) semnum;
-		syscallarg(int) cmd;
-		syscallarg(netbsd32_semun50p_t) arg;
-	} */
-	struct semid_ds sembuf;
-	struct netbsd32_semid_ds50 sembuf32;
-	int cmd, error;
-	void *pass_arg;
-	union __semun karg;
-	union netbsd32_semun50 karg32;
-
-	cmd = SCARG(uap, cmd);
-
-	switch (cmd) {
-	case IPC_SET:
-	case IPC_STAT:
-		pass_arg = &sembuf;
-		break;
-
-	case GETALL:
-	case SETVAL:
-	case SETALL:
-		pass_arg = &karg;
-		break;
-	default:
-		pass_arg = NULL;
-		break;
-	}
-
-	if (pass_arg) {
-		if (vkarg != NULL)
-			karg32 = *(union netbsd32_semun50 *)vkarg;
-		else {
-			error = copyin(SCARG_P32(uap, arg), &karg32,
-					sizeof(karg32));
-			if (error)
-				return error;
-		}
-		if (pass_arg == &karg) {
-			switch (cmd) {
-			case GETALL:
-			case SETALL:
-				karg.array = NETBSD32PTR64(karg32.array);
-				break;
-			case SETVAL:
-				karg.val = karg32.val;
-				break;
-			}
-		}
-		if (cmd == IPC_SET) {
-			error = copyin(NETBSD32PTR64(karg32.buf), &sembuf32,
-			    sizeof(sembuf32));
-			if (error)
-				return (error);
-			netbsd32_to_semid_ds50(&sembuf32, &sembuf);
-		}
-	}
-
-	error = semctl1(l, SCARG(uap, semid), SCARG(uap, semnum), cmd,
-	    pass_arg, retval);
-
-	if (error == 0 && cmd == IPC_STAT) {
-		netbsd32_from_semid_ds50(&sembuf, &sembuf32);
-		error = copyout(&sembuf32, NETBSD32PTR64(karg32.buf),
-		    sizeof(sembuf32));
-	}
-
-	return (error);
-}
-#endif
-
-#if defined(SYSVMSG)
-
-int
-compat_50_netbsd32___msgctl13(struct lwp *l, const struct compat_50_netbsd32___msgctl13_args *uap, register_t *retval)
-{
-	/* {
-		syscallarg(int) msqid;
-		syscallarg(int) cmd;
-		syscallarg(netbsd32_msqid_ds50p_t) buf;
-	} */
-	struct msqid_ds ds;
-	struct netbsd32_msqid_ds50 ds32;
-	int error, cmd;
-
-	cmd = SCARG(uap, cmd);
-	if (cmd == IPC_SET) {
-		error = copyin(SCARG_P32(uap, buf), &ds32, sizeof(ds32));
-		if (error)
-			return error;
-		netbsd32_to_msqid_ds50(&ds32, &ds);
-	}
-
-	error = msgctl1(l, SCARG(uap, msqid), cmd,
-	    (cmd == IPC_SET || cmd == IPC_STAT) ? &ds : NULL);
-
-	if (error == 0 && cmd == IPC_STAT) {
-		netbsd32_from_msqid_ds50(&ds, &ds32);
-		error = copyout(&ds32, SCARG_P32(uap, buf), sizeof(ds32));
-	}
-
-	return error;
-}
-#endif
-
-#if defined(SYSVSHM)
-
-int
-compat_50_netbsd32___shmctl13(struct lwp *l, const struct compat_50_netbsd32___shmctl13_args *uap, register_t *retval)
-{
-	/* {
-		syscallarg(int) shmid;
-		syscallarg(int) cmd;
-		syscallarg(netbsd32_shmid_ds50p_t) buf;
-	} */
-	struct shmid_ds ds;
-	struct netbsd32_shmid_ds50 ds32;
-	int error, cmd;
-
-	cmd = SCARG(uap, cmd);
-	if (cmd == IPC_SET) {
-		error = copyin(SCARG_P32(uap, buf), &ds32, sizeof(ds32));
-		if (error)
-			return error;
-		netbsd32_to_shmid_ds50(&ds32, &ds);
-	}
-
-	error = shmctl1(l, SCARG(uap, shmid), cmd,
-	    (cmd == IPC_SET || cmd == IPC_STAT) ? &ds : NULL);
-
-	if (error == 0 && cmd == IPC_STAT) {
-		netbsd32_from_shmid_ds50(&ds, &ds32);
-		error = copyout(&ds32, SCARG_P32(uap, buf), sizeof(ds32));
-	}
-
-	return error;
-}
-#endif
-
 int
 compat_50_netbsd32_quotactl(struct lwp *l, const struct compat_50_netbsd32_quotactl_args *uap, register_t *retval)
 {
@@ -1080,3 +923,5 @@ compat_50_netbsd32_quotactl(struct lwp *l, const struct compat_50_netbsd32_quota
 	NETBSD32TOP_UAP(arg, void *);
 	return (compat_50_sys_quotactl(l, &ua, retval));
 }
+
+#endif /* COMPAT_50 */

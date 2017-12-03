@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.142.12.3 2014/08/20 00:03:43 tls Exp $	*/
+/*	$NetBSD: pci.c,v 1.142.12.4 2017/12/03 11:37:08 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,9 +36,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.142.12.3 2014/08/20 00:03:43 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.142.12.4 2017/12/03 11:37:08 jdolecek Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_pci.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -49,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.142.12.3 2014/08/20 00:03:43 tls Exp $");
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
+#include <dev/pci/ppbvar.h>
 
 #include <net/if.h>
 
@@ -66,9 +69,6 @@ int	pciprint(void *, const char *);
 
 #ifdef PCI_MACHDEP_ENUMERATE_BUS
 #define pci_enumerate_bus PCI_MACHDEP_ENUMERATE_BUS
-#else
-int pci_enumerate_bus(struct pci_softc *, const int *,
-    int (*)(const struct pci_attach_args *), struct pci_attach_args *);
 #endif
 
 /*
@@ -277,7 +277,11 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 {
 	pci_chipset_tag_t pc = sc->sc_pc;
 	struct pci_attach_args pa;
-	pcireg_t id, /* csr, */ class, intr, bhlcr, bar, endbar;
+	pcireg_t id, /* csr, */ pciclass, intr, bhlcr, bar, endbar;
+#ifdef __HAVE_PCI_MSI_MSIX
+	pcireg_t cap;
+	int off;
+#endif
 	int ret, pin, bus, device, function, i, width;
 	int locs[PCICF_NLOCS];
 
@@ -293,7 +297,7 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 
 	id = pci_conf_read(pc, tag, PCI_ID_REG);
 	/* csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG); */
-	class = pci_conf_read(pc, tag, PCI_CLASS_REG);
+	pciclass = pci_conf_read(pc, tag, PCI_CLASS_REG);
 
 	/* Invalid vendor ID value? */
 	if (PCI_VENDOR(id) == PCI_VENDOR_INVALID)
@@ -352,8 +356,12 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 				nr->r_size = 0x7ff000;
 				nr->r_flags = BUS_SPACE_MAP_LINEAR |
 					      BUS_SPACE_MAP_PREFETCHABLE;
+			} else if ((PCI_VENDOR(id) == PCI_VENDOR_SILMOTION) &&
+			   (PCI_PRODUCT(id) == PCI_PRODUCT_SILMOTION_SM502) &&
+			   (bar == 0x10)) {
+			   	r->r_flags = BUS_SPACE_MAP_LINEAR |
+					     BUS_SPACE_MAP_PREFETCHABLE;
 			}
-			
 		}
 	}
 
@@ -367,7 +375,7 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 	pa.pa_function = function;
 	pa.pa_tag = tag;
 	pa.pa_id = id;
-	pa.pa_class = class;
+	pa.pa_class = pciclass;
 
 	/*
 	 * Set up memory, I/O enable, and PCI command flags
@@ -408,6 +416,36 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 		    ((pin + pa.pa_intrswiz - 1) % 4) + 1;
 	}
 	pa.pa_intrline = PCI_INTERRUPT_LINE(intr);
+
+#ifdef __HAVE_PCI_MSI_MSIX
+	if (pci_get_ht_capability(pc, tag, PCI_HT_CAP_MSIMAP, &off, &cap)) {
+		/*
+		 * XXX Should we enable MSI mapping ourselves on
+		 * systems that have it disabled?
+		 */
+		if (cap & PCI_HT_MSI_ENABLED) {
+			uint64_t addr;
+			if ((cap & PCI_HT_MSI_FIXED) == 0) {
+				addr = pci_conf_read(pc, tag,
+				    off + PCI_HT_MSI_ADDR_LO);
+				addr |= (uint64_t)pci_conf_read(pc, tag,
+				    off + PCI_HT_MSI_ADDR_HI) << 32;
+			} else
+				addr = PCI_HT_MSI_FIXED_ADDR;
+
+			/*
+			 * XXX This will fail to enable MSI on systems
+			 * that don't use the canonical address.
+			 */
+			if (addr == PCI_HT_MSI_FIXED_ADDR) {
+				pa.pa_flags |= PCI_FLAGS_MSI_OKAY;
+				pa.pa_flags |= PCI_FLAGS_MSIX_OKAY;
+			} else
+				aprint_verbose_dev(sc->sc_dev,
+				    "HyperTransport MSI mapping is not supported yet. Disable MSI/MSI-X.\n");
+		}
+	}
+#endif
 
 	if (match != NULL) {
 		ret = (*match)(&pa);
@@ -511,6 +549,115 @@ pci_get_capability(pci_chipset_tag_t pc, pcitag_t tag, int capid,
 }
 
 int
+pci_get_ht_capability(pci_chipset_tag_t pc, pcitag_t tag, int capid,
+    int *offset, pcireg_t *value)
+{
+	pcireg_t reg;
+	unsigned int ofs;
+
+	if (pci_get_capability(pc, tag, PCI_CAP_LDT, &ofs, NULL) == 0)
+		return 0;
+
+	while (ofs != 0) {
+#ifdef DIAGNOSTIC
+		if ((ofs & 3) || (ofs < 0x40))
+			panic("pci_get_ht_capability");
+#endif
+		reg = pci_conf_read(pc, tag, ofs);
+		if (PCI_HT_CAP(reg) == capid) {
+			if (offset)
+				*offset = ofs;
+			if (value)
+				*value = reg;
+			return 1;
+		}
+		ofs = PCI_CAPLIST_NEXT(reg);
+	}
+
+	return 0;
+}
+
+/*
+ * return number of the devices's MSI vectors
+ * return 0 if the device does not support MSI
+ */
+int
+pci_msi_count(pci_chipset_tag_t pc, pcitag_t tag)
+{
+	pcireg_t reg;
+	uint32_t mmc;
+	int count, offset;
+
+	if (pci_get_capability(pc, tag, PCI_CAP_MSI, &offset, NULL) == 0)
+		return 0;
+
+	reg = pci_conf_read(pc, tag, offset + PCI_MSI_CTL);
+	mmc = PCI_MSI_CTL_MMC(reg);
+	count = 1 << mmc;
+	if (count > PCI_MSI_MAX_VECTORS) {
+		aprint_error("detect an illegal device! The device use reserved MMC values.\n");
+		return 0;
+	}
+
+	return count;
+}
+
+/*
+ * return number of the devices's MSI-X vectors
+ * return 0 if the device does not support MSI-X
+ */
+int
+pci_msix_count(pci_chipset_tag_t pc, pcitag_t tag)
+{
+	pcireg_t reg;
+	int offset;
+
+	if (pci_get_capability(pc, tag, PCI_CAP_MSIX, &offset, NULL) == 0)
+		return 0;
+
+	reg = pci_conf_read(pc, tag, offset + PCI_MSIX_CTL);
+
+	return PCI_MSIX_CTL_TBLSIZE(reg);
+}
+
+int
+pci_get_ext_capability(pci_chipset_tag_t pc, pcitag_t tag, int capid,
+    int *offset, pcireg_t *value)
+{
+	pcireg_t reg;
+	unsigned int ofs;
+
+	/* Only supported for PCI-express devices */
+	if (!pci_get_capability(pc, tag, PCI_CAP_PCIEXPRESS, NULL, NULL))
+		return 0;
+
+	ofs = PCI_EXTCAPLIST_BASE;
+	reg = pci_conf_read(pc, tag, ofs);
+	if (reg == 0xffffffff || reg == 0)
+		return 0;
+
+	for (;;) {
+#ifdef DIAGNOSTIC
+		if ((ofs & 3) || ofs < PCI_EXTCAPLIST_BASE)
+			panic("%s: invalid offset %u", __func__, ofs);
+#endif
+		if (PCI_EXTCAPLIST_CAP(reg) == capid) {
+			if (offset != NULL)
+				*offset = ofs;
+			if (value != NULL)
+				*value = reg;
+			return 1;
+		}
+		ofs = PCI_EXTCAPLIST_NEXT(reg);
+		if (ofs == 0)
+			break;
+		reg = pci_conf_read(pc, tag, ofs);
+	}
+
+	return 0;
+}
+
+int
 pci_find_device(struct pci_attach_args *pa,
 		int (*match)(const struct pci_attach_args *))
 {
@@ -549,6 +696,26 @@ pci_enumerate_bus(struct pci_softc *sc, const int *locators,
 	uint8_t devs[32];
 	int i, n;
 
+	device_t bridgedev;
+	bool arien = false;
+
+	/* Check PCIe ARI */
+	bridgedev = device_parent(sc->sc_dev);
+	if (device_is_a(bridgedev, "ppb")) {
+		struct ppb_softc *ppbsc = device_private(bridgedev);
+		pci_chipset_tag_t ppbpc = ppbsc->sc_pc;
+		pcitag_t ppbtag = ppbsc->sc_tag;
+		pcireg_t pciecap, reg;
+
+		if (pci_get_capability(ppbpc, ppbtag, PCI_CAP_PCIEXPRESS,
+		    &pciecap, NULL) != 0) {
+			reg = pci_conf_read(ppbpc, ppbtag, pciecap
+			    + PCIE_DCSR2);
+			if ((reg & PCIE_DCSR2_ARI_FWD) != 0)
+				arien = true;
+		}
+	}
+
 	n = pci_bus_devorder(sc->sc_pc, sc->sc_bus, devs, __arraycount(devs));
 	for (i = 0; i < n; i++) {
 		device = devs[i];
@@ -580,6 +747,8 @@ pci_enumerate_bus(struct pci_softc *sc, const int *locators,
 		else if (qd != NULL &&
 		      (qd->quirks & PCI_QUIRK_MONOFUNCTION) != 0)
 			nfunctions = 1;
+		else if (arien)
+			nfunctions = 8; /* Scan all if ARI is enabled */
 		else
 			nfunctions = PCI_HDRTYPE_MULTIFN(bhlcr) ? 8 : 1;
 

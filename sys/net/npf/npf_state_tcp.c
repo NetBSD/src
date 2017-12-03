@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_state_tcp.c,v 1.10.2.3 2014/08/20 00:04:35 tls Exp $	*/
+/*	$NetBSD: npf_state_tcp.c,v 1.10.2.4 2017/12/03 11:39:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
@@ -33,15 +33,16 @@
  * NPF TCP state engine for connection tracking.
  */
 
+#ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_state_tcp.c,v 1.10.2.3 2014/08/20 00:04:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_state_tcp.c,v 1.10.2.4 2017/12/03 11:39:03 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
 
 #include <netinet/in.h>
 #include <netinet/tcp.h>
-#include <netinet/tcp_seq.h>
+#endif
 
 #include "npf_impl.h"
 
@@ -92,6 +93,11 @@ static u_int npf_tcp_timeouts[] __read_mostly = {
 static bool npf_strict_order_rst __read_mostly = true;
 
 #define	NPF_TCP_MAXACKWIN	66000
+
+#define	SEQ_LT(a,b)		((int)((a)-(b)) < 0)
+#define	SEQ_LEQ(a,b)		((int)((a)-(b)) <= 0)
+#define	SEQ_GT(a,b)		((int)((a)-(b)) > 0)
+#define	SEQ_GEQ(a,b)		((int)((a)-(b)) >= 0)
 
 /*
  * List of TCP flag cases and conversion of flags to a case (index).
@@ -186,6 +192,8 @@ static const uint8_t npf_tcp_fsm[NPF_TCP_NSTATES][2][TCPFC_COUNT] = {
 			[TCPFC_ACK]	= NPF_TCPS_ESTABLISHED,
 			/* FIN may be sent early. */
 			[TCPFC_FIN]	= NPF_TCPS_FIN_SENT,
+			/* Late SYN re-transmission. */
+			[TCPFC_SYN]	= NPF_TCPS_OK,
 		},
 		[NPF_FLOW_BACK] = {
 			/* SYN-ACK may be retransmitted. */
@@ -406,13 +414,13 @@ npf_tcp_inwindow(npf_cache_t *npc, npf_state_t *nst, const int di)
 	 * that is, upper boundary for valid data (I).
 	 */
 	if (!SEQ_LEQ(end, fstate->nst_maxend)) {
-		npf_stats_inc(NPF_STAT_INVALID_STATE_TCP1);
+		npf_stats_inc(npc->npc_ctx, NPF_STAT_INVALID_STATE_TCP1);
 		return false;
 	}
 
 	/* Lower boundary (II), which is no more than one window back. */
 	if (!SEQ_GEQ(seq, fstate->nst_end - tstate->nst_maxwin)) {
-		npf_stats_inc(NPF_STAT_INVALID_STATE_TCP2);
+		npf_stats_inc(npc->npc_ctx, NPF_STAT_INVALID_STATE_TCP2);
 		return false;
 	}
 
@@ -423,7 +431,7 @@ npf_tcp_inwindow(npf_cache_t *npc, npf_state_t *nst, const int di)
 	ackskew = tstate->nst_end - ack;
 	if (ackskew < -NPF_TCP_MAXACKWIN ||
 	    ackskew > (NPF_TCP_MAXACKWIN << fstate->nst_wscale)) {
-		npf_stats_inc(NPF_STAT_INVALID_STATE_TCP3);
+		npf_stats_inc(npc->npc_ctx, NPF_STAT_INVALID_STATE_TCP3);
 		return false;
 	}
 

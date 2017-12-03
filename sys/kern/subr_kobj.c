@@ -1,6 +1,6 @@
-/*	$NetBSD: subr_kobj.c,v 1.44.12.2 2014/08/20 00:04:29 tls Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.44.12.3 2017/12/03 11:38:45 jdolecek Exp $	*/
 
-/*-
+/*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*-
+/*
  * Copyright (c) 1998-2000 Doug Rabson
  * Copyright (c) 2004 Peter Wemm
  * All rights reserved.
@@ -63,9 +63,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.44.12.2 2014/08/20 00:04:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.44.12.3 2017/12/03 11:38:45 jdolecek Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_modular.h"
+#endif
 
 #include <sys/kobj_impl.h>
 
@@ -107,10 +109,6 @@ kobj_load_mem(kobj_t *kop, const char *name, void *base, ssize_t size)
 	kobj_t ko;
 
 	ko = kmem_zalloc(sizeof(*ko), KM_SLEEP);
-	if (ko == NULL) {
-		return ENOMEM;
-	}
-
 	ko->ko_type = KT_MEMORY;
 	kobj_setname(ko, name);
 	ko->ko_source = base;
@@ -158,8 +156,12 @@ kobj_load(kobj_t ko)
 	Elf_Ehdr *hdr;
 	Elf_Shdr *shdr;
 	Elf_Sym *es;
-	vaddr_t mapbase;
-	size_t mapsize;
+	vaddr_t map_text_base;
+	vaddr_t map_data_base;
+	vaddr_t map_rodata_base;
+	size_t map_text_size;
+	size_t map_data_size;
+	size_t map_rodata_size;
 	int error;
 	int symtabindex;
 	int symstrindex;
@@ -390,45 +392,76 @@ kobj_load(kobj_t ko)
 	 * Size up code/data(progbits) and bss(nobits).
 	 */
 	alignmask = 0;
-	mapbase = 0;
-	mapsize = 0;
+	map_text_size = 0;
+	map_data_size = 0;
+	map_rodata_size = 0;
 	for (i = 0; i < hdr->e_shnum; i++) {
-		switch (shdr[i].sh_type) {
-		case SHT_PROGBITS:
-		case SHT_NOBITS:
-			if (mapbase == 0)
-				mapbase = shdr[i].sh_offset;
-			alignmask = shdr[i].sh_addralign - 1;
-			mapsize += alignmask;
-			mapsize &= ~alignmask;
-			mapsize += shdr[i].sh_size;
-			break;
+		if (shdr[i].sh_type != SHT_PROGBITS &&
+		    shdr[i].sh_type != SHT_NOBITS)
+			continue;
+		alignmask = shdr[i].sh_addralign - 1;
+		if ((shdr[i].sh_flags & SHF_EXECINSTR)) {
+			map_text_size += alignmask;
+			map_text_size &= ~alignmask;
+			map_text_size += shdr[i].sh_size;
+		} else if (!(shdr[i].sh_flags & SHF_WRITE)) {
+			map_rodata_size += alignmask;
+			map_rodata_size &= ~alignmask;
+			map_rodata_size += shdr[i].sh_size;
+		} else {
+			map_data_size += alignmask;
+			map_data_size &= ~alignmask;
+			map_data_size += shdr[i].sh_size;
 		}
 	}
 
-	/*
-	 * We know how much space we need for the text/data/bss/etc.
-	 * This stuff needs to be in a single chunk so that profiling etc
-	 * can get the bounds and gdb can associate offsets with modules.
-	 */
-	if (mapsize == 0) {
-		kobj_error(ko, "no text/data/bss");
+	if (map_text_size == 0) {
+		kobj_error(ko, "no text");
 		error = ENOEXEC;
-		goto out;
-	}
-	if (ko->ko_type == KT_MEMORY) {
-		mapbase += (vaddr_t)ko->ko_source;
-	} else {
-		mapbase = uvm_km_alloc(module_map, round_page(mapsize),
-		    0, UVM_KMF_WIRED | UVM_KMF_EXEC);
-		if (mapbase == 0) {
+ 		goto out;
+ 	}
+
+	if (map_data_size != 0) {
+		map_data_base = uvm_km_alloc(module_map, round_page(map_data_size),
+			0, UVM_KMF_WIRED);
+		if (map_data_base == 0) {
 			kobj_error(ko, "out of memory");
 			error = ENOMEM;
 			goto out;
 		}
+		ko->ko_data_address = map_data_base;
+		ko->ko_data_size = map_data_size;
+ 	} else {
+		map_data_base = 0;
+		ko->ko_data_address = 0;
+		ko->ko_data_size = 0;
 	}
-	ko->ko_address = mapbase;
-	ko->ko_size = mapsize;
+
+	if (map_rodata_size != 0) {
+		map_rodata_base = uvm_km_alloc(module_map, round_page(map_rodata_size),
+			0, UVM_KMF_WIRED);
+		if (map_rodata_base == 0) {
+			kobj_error(ko, "out of memory");
+			error = ENOMEM;
+			goto out;
+		}
+		ko->ko_rodata_address = map_rodata_base;
+		ko->ko_rodata_size = map_rodata_size;
+ 	} else {
+		map_rodata_base = 0;
+		ko->ko_rodata_address = 0;
+		ko->ko_rodata_size = 0;
+	}
+
+	map_text_base = uvm_km_alloc(module_map, round_page(map_text_size),
+	    0, UVM_KMF_WIRED | UVM_KMF_EXEC);
+	if (map_text_base == 0) {
+		kobj_error(ko, "out of memory");
+		error = ENOMEM;
+		goto out;
+	}
+	ko->ko_text_address = map_text_base;
+	ko->ko_text_size = map_text_size;
 
 	/*
 	 * Now load code/data(progbits), zero bss(nobits), allocate space
@@ -443,21 +476,23 @@ kobj_load(kobj_t ko)
 		case SHT_PROGBITS:
 		case SHT_NOBITS:
 			alignmask = shdr[i].sh_addralign - 1;
-			if (ko->ko_type == KT_MEMORY) {
-				addr = (void *)(shdr[i].sh_offset +
-				    (vaddr_t)ko->ko_source);
-				if (((vaddr_t)addr & alignmask) != 0) {
-					kobj_error(ko,
-					    "section %d not aligned", i);
-					error = ENOEXEC;
-					goto out;
-				}
-			} else {
-				mapbase += alignmask;
-				mapbase &= ~alignmask;
-				addr = (void *)mapbase;
-				mapbase += shdr[i].sh_size;
-			}
+			if ((shdr[i].sh_flags & SHF_EXECINSTR)) {
+				map_text_base += alignmask;
+				map_text_base &= ~alignmask;
+				addr = (void *)map_text_base;
+				map_text_base += shdr[i].sh_size;
+			} else if (!(shdr[i].sh_flags & SHF_WRITE)) {
+				map_rodata_base += alignmask;
+				map_rodata_base &= ~alignmask;
+				addr = (void *)map_rodata_base;
+				map_rodata_base += shdr[i].sh_size;
+ 			} else {
+				map_data_base += alignmask;
+				map_data_base &= ~alignmask;
+				addr = (void *)map_data_base;
+				map_data_base += shdr[i].sh_size;
+ 			}
+
 			ko->ko_progtab[pb].addr = addr;
 			if (shdr[i].sh_type == SHT_PROGBITS) {
 				ko->ko_progtab[pb].name = "<<PROGBITS>>";
@@ -467,16 +502,11 @@ kobj_load(kobj_t ko)
 					kobj_error(ko, "read failed %d", error);
 					goto out;
 				}
-			} else if (ko->ko_type == KT_MEMORY &&
-			    shdr[i].sh_size != 0) {
-				kobj_error(ko, "non-loadable BSS "
-				    "section in pre-loaded module");
-				error = ENOEXEC;
-				goto out;
-			} else {
+			} else { /* SHT_NOBITS */
 				ko->ko_progtab[pb].name = "<<NOBITS>>";
 				memset(addr, 0, shdr[i].sh_size);
 			}
+
 			ko->ko_progtab[pb].size = shdr[i].sh_size;
 			ko->ko_progtab[pb].sec = i;
 			if (ko->ko_shstrtab != NULL && shdr[i].sh_name != 0) {
@@ -553,12 +583,26 @@ kobj_load(kobj_t ko)
 		panic("%s:%d: %s: lost rela", __func__, __LINE__,
 		   ko->ko_name);
 	}
-	if (ko->ko_type != KT_MEMORY && mapbase != ko->ko_address + mapsize) {
-		panic("%s:%d: %s: "
-		    "mapbase 0x%lx != address %lx + mapsize %ld (0x%lx)\n",
-		    __func__, __LINE__, ko->ko_name,
-		    (long)mapbase, (long)ko->ko_address, (long)mapsize,
-		    (long)ko->ko_address + mapsize);
+	if (map_text_base != ko->ko_text_address + map_text_size) {
+		panic("%s:%d: %s: map_text_base 0x%lx != address %lx "
+		    "+ map_text_size %ld (0x%lx)\n",
+		    __func__, __LINE__, ko->ko_name, (long)map_text_base,
+		    (long)ko->ko_text_address, (long)map_text_size,
+		    (long)ko->ko_text_address + map_text_size);
+	}
+	if (map_data_base != ko->ko_data_address + map_data_size) {
+		panic("%s:%d: %s: map_data_base 0x%lx != address %lx "
+		    "+ map_data_size %ld (0x%lx)\n",
+		    __func__, __LINE__, ko->ko_name, (long)map_data_base,
+		    (long)ko->ko_data_address, (long)map_data_size,
+		    (long)ko->ko_data_address + map_data_size);
+	}
+	if (map_rodata_base != ko->ko_rodata_address + map_rodata_size) {
+		panic("%s:%d: %s: map_rodata_base 0x%lx != address %lx "
+		    "+ map_rodata_size %ld (0x%lx)\n",
+		    __func__, __LINE__, ko->ko_name, (long)map_rodata_base,
+		    (long)ko->ko_rodata_address, (long)map_rodata_size,
+		    (long)ko->ko_rodata_address + map_rodata_size);
 	}
 
 	/*
@@ -581,6 +625,29 @@ kobj_load(kobj_t ko)
 	return error;
 }
 
+static void
+kobj_unload_notify(kobj_t ko, vaddr_t addr, size_t size, const char *note)
+{
+	if (addr == 0)
+		return;
+
+	int error = kobj_machdep(ko, (void *)addr, size, false);
+	if (error)
+		kobj_error(ko, "machine dependent deinit failed (%s) %d",
+		    note, error);
+}
+
+#define KOBJ_SEGMENT_NOTIFY(ko, what) \
+    kobj_unload_notify(ko, (ko)->ko_ ## what ## _address, \
+	(ko)->ko_ ## what ## _size, # what);
+
+#define KOBJ_SEGMENT_FREE(ko, what) \
+    do \
+	if ((ko)->ko_ ## what ## _address != 0) \
+		uvm_km_free(module_map, (ko)->ko_ ## what ## _address, \
+		    round_page((ko)->ko_ ## what ## _size), UVM_KMF_WIRED); \
+    while (/*CONSTCOND*/ 0)
+
 /*
  * kobj_unload:
  *
@@ -589,25 +656,23 @@ kobj_load(kobj_t ko)
 void
 kobj_unload(kobj_t ko)
 {
-	int error;
-
 	kobj_close(ko);
 	kobj_jettison(ko);
+
 
 	/*
 	 * Notify MD code that a module has been unloaded.
 	 */
 	if (ko->ko_loaded) {
-		error = kobj_machdep(ko, (void *)ko->ko_address, ko->ko_size,
-		    false);
-		if (error != 0)
-			kobj_error(ko, "machine dependent deinit failed %d",
-			    error);
+		KOBJ_SEGMENT_NOTIFY(ko, text);
+		KOBJ_SEGMENT_NOTIFY(ko, data);
+		KOBJ_SEGMENT_NOTIFY(ko, rodata);
 	}
-	if (ko->ko_address != 0 && ko->ko_type != KT_MEMORY) {
-		uvm_km_free(module_map, ko->ko_address, round_page(ko->ko_size),
-		    UVM_KMF_WIRED);
-	}
+
+	KOBJ_SEGMENT_FREE(ko, text);
+	KOBJ_SEGMENT_FREE(ko, data);
+	KOBJ_SEGMENT_FREE(ko, rodata);
+
 	if (ko->ko_ksyms == true) {
 		ksyms_modunload(ko->ko_name);
 	}
@@ -640,12 +705,12 @@ kobj_stat(kobj_t ko, vaddr_t *address, size_t *size)
 {
 
 	if (address != NULL) {
-		*address = ko->ko_address;
+		*address = ko->ko_text_address;
 	}
 	if (size != NULL) {
-		*size = ko->ko_size;
+		*size = ko->ko_text_size;
 	}
-	return 0; 
+	return 0;
 }
 
 /*
@@ -690,17 +755,44 @@ kobj_affix(kobj_t ko, const char *name)
 	 *
 	 * Most architectures use this opportunity to flush their caches.
 	 */
-	if (error == 0) {
-		error = kobj_machdep(ko, (void *)ko->ko_address, ko->ko_size,
-		    true);
+	if (error == 0 && ko->ko_text_address != 0) {
+		error = kobj_machdep(ko, (void *)ko->ko_text_address,
+		    ko->ko_text_size, true);
 		if (error != 0)
-			kobj_error(ko, "machine dependent init failed %d",
-			    error);
-		ko->ko_loaded = true;
+			kobj_error(ko, "machine dependent init failed (text)"
+			    " %d", error);
 	}
 
-	/* If there was an error, destroy the whole object. */
-	if (error != 0) {
+	if (error == 0 && ko->ko_data_address != 0) {
+		error = kobj_machdep(ko, (void *)ko->ko_data_address,
+		    ko->ko_data_size, true);
+		if (error != 0)
+			kobj_error(ko, "machine dependent init failed (data)"
+			    " %d", error);
+	}
+
+	if (error == 0 && ko->ko_rodata_address != 0) {
+		error = kobj_machdep(ko, (void *)ko->ko_rodata_address,
+		    ko->ko_rodata_size, true);
+		if (error != 0)
+			kobj_error(ko, "machine dependent init failed (rodata)"
+			    " %d", error);
+	}
+
+	if (error == 0) {
+		ko->ko_loaded = true;
+
+		/* Change the memory protections, when needed. */
+		if (ko->ko_text_address != 0) {
+			uvm_km_protect(module_map, ko->ko_text_address,
+			     ko->ko_text_size, VM_PROT_READ|VM_PROT_EXECUTE);
+		}
+		if (ko->ko_rodata_address != 0) {
+			uvm_km_protect(module_map, ko->ko_rodata_address,
+			    ko->ko_rodata_size, VM_PROT_READ);
+		}
+	} else {
+		/* If there was an error, destroy the whole object. */
 		kobj_unload(ko);
 	}
 
@@ -781,21 +873,29 @@ kobj_jettison(kobj_t ko)
  *	Symbol lookup function to be used when the symbol index
  *	is known (ie during relocation).
  */
-uintptr_t
-kobj_sym_lookup(kobj_t ko, uintptr_t symidx)
+int
+kobj_sym_lookup(kobj_t ko, uintptr_t symidx, Elf_Addr *val)
 {
 	const Elf_Sym *sym;
 	const char *symbol;
 
-	/* Don't even try to lookup the symbol if the index is bogus. */
-	if (symidx >= ko->ko_symcnt)
-		return 0;
-
 	sym = ko->ko_symtab + symidx;
+
+	if (symidx == SHN_ABS) {
+		*val = (uintptr_t)sym->st_value;
+		return 0;
+	} else if (symidx >= ko->ko_symcnt) {
+		/*
+		 * Don't even try to lookup the symbol if the index is
+		 * bogus.
+		 */
+		return EINVAL;
+	}
 
 	/* Quick answer if there is a definition included. */
 	if (sym->st_shndx != SHN_UNDEF) {
-		return (uintptr_t)sym->st_value;
+		*val = (uintptr_t)sym->st_value;
+		return 0;
 	}
 
 	/* If we get here, then it is undefined and needs a lookup. */
@@ -803,7 +903,7 @@ kobj_sym_lookup(kobj_t ko, uintptr_t symidx)
 	case STB_LOCAL:
 		/* Local, but undefined? huh? */
 		kobj_error(ko, "local symbol undefined");
-		return 0;
+		return EINVAL;
 
 	case STB_GLOBAL:
 		/* Relative to Data or Function name */
@@ -812,17 +912,22 @@ kobj_sym_lookup(kobj_t ko, uintptr_t symidx)
 		/* Force a lookup failure if the symbol name is bogus. */
 		if (*symbol == 0) {
 			kobj_error(ko, "bad symbol name");
-			return 0;
+			return EINVAL;
+		}
+		if (sym->st_value == 0) {
+			kobj_error(ko, "bad value");
+			return EINVAL;
 		}
 
-		return (uintptr_t)sym->st_value;
+		*val = (uintptr_t)sym->st_value;
+		return 0;
 
 	case STB_WEAK:
 		kobj_error(ko, "weak symbols not supported");
-		return 0;
+		return EINVAL;
 
 	default:
-		return 0;
+		return EINVAL;
 	}
 }
 
@@ -854,7 +959,7 @@ static int
 kobj_checksyms(kobj_t ko, bool undefined)
 {
 	unsigned long rval;
-	Elf_Sym *sym, *ms;
+	Elf_Sym *sym, *ksym, *ms;
 	const char *name;
 	int error;
 
@@ -875,7 +980,7 @@ kobj_checksyms(kobj_t ko, bool undefined)
 		 * module_lock).
 		 */
 		name = ko->ko_strtab + sym->st_name;
-		if (ksyms_getval_unlocked(NULL, name, &rval,
+		if (ksyms_getval_unlocked(NULL, name, &ksym, &rval,
 		    KSYMS_EXTERN) != 0) {
 			if (undefined) {
 				kobj_error(ko, "symbol `%s' not found",
@@ -887,6 +992,9 @@ kobj_checksyms(kobj_t ko, bool undefined)
 
 		/* Save values of undefined globals. */
 		if (undefined) {
+			if (ksym->st_shndx == SHN_ABS) {
+				sym->st_shndx = SHN_ABS;
+			}
 			sym->st_value = (Elf_Addr)rval;
 			continue;
 		}
@@ -904,7 +1012,7 @@ kobj_checksyms(kobj_t ko, bool undefined)
 		    strcmp(name, "__end") == 0 ||
 		    strcmp(name, "__end__") == 0 ||
 		    strncmp(name, "__start_link_set_", 17) == 0 ||
-		    strncmp(name, "__stop_link_set_", 16)) {
+		    strncmp(name, "__stop_link_set_", 16) == 0) {
 		    	continue;
 		}
 		kobj_error(ko, "global symbol `%s' redefined",
@@ -1021,21 +1129,27 @@ kobj_read_mem(kobj_t ko, void **basep, size_t size, off_t off,
 	void *base = *basep;
 	int error;
 
+	KASSERT(ko->ko_source != NULL);
+
 	if (ko->ko_memsize != -1 && off + size > ko->ko_memsize) {
 		kobj_error(ko, "preloaded object short");
 		error = EINVAL;
 		base = NULL;
 	} else if (allocate) {
-		base = (uint8_t *)ko->ko_source + off;
+		base = kmem_alloc(size, KM_SLEEP);
 		error = 0;
-	} else if ((uint8_t *)base != (uint8_t *)ko->ko_source + off) {
-		kobj_error(ko, "object not aligned");
-		kobj_error(ko, "source=%p base=%p off=%d "
-		    "size=%zu", ko->ko_source, base, (int)off, size);
-		error = EINVAL;
 	} else {
-		/* Nothing to do.  Loading in-situ. */
 		error = 0;
+	}
+
+	if (error == 0) {
+		/* Copy the section */
+		memcpy(base, (uint8_t *)ko->ko_source + off, size);
+	}
+
+	if (allocate && error != 0) {
+		kmem_free(base, size);
+		base = NULL;
 	}
 
 	if (allocate)
@@ -1053,8 +1167,7 @@ static void
 kobj_free(kobj_t ko, void *base, size_t size)
 {
 
-	if (ko->ko_type != KT_MEMORY)
-		kmem_free(base, size);
+	kmem_free(base, size);
 }
 
 extern char module_base[];

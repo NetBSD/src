@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.c,v 1.116 2012/02/19 21:06:37 rmind Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.116.2.1 2017/12/03 11:36:54 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998, 2000, 2007, 2008 The NetBSD Foundation, Inc.
@@ -31,13 +31,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.116 2012/02/19 21:06:37 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.116.2.1 2017/12/03 11:36:54 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
-#include <sys/malloc.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>

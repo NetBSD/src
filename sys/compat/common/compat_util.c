@@ -1,4 +1,4 @@
-/* 	$NetBSD: compat_util.c,v 1.44.18.1 2014/08/20 00:03:31 tls Exp $	*/
+/* 	$NetBSD: compat_util.c,v 1.44.18.2 2017/12/03 11:36:53 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_util.c,v 1.44.18.1 2014/08/20 00:03:31 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_util.c,v 1.44.18.2 2017/12/03 11:36:53 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,6 @@ __KERNEL_RCSID(0, "$NetBSD: compat_util.c,v 1.44.18.1 2014/08/20 00:03:31 tls Ex
 #include <sys/exec.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/syslog.h>
 #include <sys/mount.h>

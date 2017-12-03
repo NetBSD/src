@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -41,15 +41,6 @@
  * POSSIBILITY OF SUCH DAMAGES.
  */
 
-#include "acpi.h"
-#include "accommon.h"
-#include "actables.h"
-
-#include <stdio.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <sys/stat.h>
-
 /*
  * Global variables. Defined in main.c only, externed in all other files
  */
@@ -61,25 +52,21 @@
 #define INIT_GLOBAL(a,b)        a
 #endif
 
+#include "acpi.h"
+#include "accommon.h"
+#include "actables.h"
+#include "acapps.h"
 
 /* Globals */
 
 EXTERN BOOLEAN              INIT_GLOBAL (Gbl_SummaryMode, FALSE);
 EXTERN BOOLEAN              INIT_GLOBAL (Gbl_VerboseMode, FALSE);
 EXTERN BOOLEAN              INIT_GLOBAL (Gbl_BinaryMode, FALSE);
-EXTERN BOOLEAN              INIT_GLOBAL (Gbl_DumpCustomizedTables, FALSE);
-EXTERN FILE                 INIT_GLOBAL (*Gbl_OutputFile, NULL);
+EXTERN BOOLEAN              INIT_GLOBAL (Gbl_DumpCustomizedTables, TRUE);
+EXTERN BOOLEAN              INIT_GLOBAL (Gbl_DoNotDumpXsdt, FALSE);
+EXTERN ACPI_FILE            INIT_GLOBAL (Gbl_OutputFile, NULL);
 EXTERN char                 INIT_GLOBAL (*Gbl_OutputFilename, NULL);
 EXTERN UINT64               INIT_GLOBAL (Gbl_RsdpBase, 0);
-
-/* Globals required for use with ACPICA modules */
-
-#ifdef _DECLARE_GLOBALS
-UINT8                       AcpiGbl_EnableInterpreterSlack = FALSE;
-UINT8                       AcpiGbl_IntegerByteWidth = 8;
-UINT32                      AcpiDbgLevel = 0;
-UINT32                      AcpiDbgLayer = 0;
-#endif
 
 /* Action table used to defer requested options */
 
@@ -89,10 +76,6 @@ typedef struct ap_dump_action
     UINT32                  ToBeDone;
 
 } AP_DUMP_ACTION;
-
-/* Local RSDP signature (Not the same as the actual signature which is "RSD PTR ") */
-
-#define AP_DUMP_SIG_RSDP            "RSDP"
 
 #define AP_MAX_ACTIONS              32
 
@@ -146,10 +129,6 @@ ApGetTableLength (
 /*
  * apfiles - File I/O utilities
  */
-UINT32
-ApGetFileSize (
-    FILE                    *File);
-
 int
 ApOpenOutputFile (
     char                    *Pathname);

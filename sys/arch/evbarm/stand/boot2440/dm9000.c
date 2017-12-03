@@ -1,4 +1,4 @@
-/* $NetBSD: dm9000.c,v 1.2 2012/02/23 22:20:51 nisimura Exp $ */
+/* $NetBSD: dm9000.c,v 1.2.4.1 2017/12/03 11:36:07 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -193,7 +193,7 @@ dm9k_init(unsigned int tag, void *aux)
 	unsigned int val, fdx;
 
 	val = CSR_READ_1(l, CHIPR);
-	printf("DM9000 rev. 0x%d", val);
+	printf("DM9000 rev. %#x", val);
 	val = CSR_READ_1(l, ISR);
 	printf(", %d bit mode\n", (val & 1<<7) ? 8 : 16);
 

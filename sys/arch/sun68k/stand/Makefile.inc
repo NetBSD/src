@@ -1,5 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.18.14.1 2014/08/20 00:03:26 tls Exp $
+#	$NetBSD: Makefile.inc,v 1.18.14.2 2017/12/03 11:36:46 jdolecek Exp $
 
+NOSSP=	# defined
+NOPIE=	# defined
 # Must have S=/usr/src/sys (or equivalent)
 # But note: this is w.r.t. a subdirectory
 S=	${.CURDIR}/../../../..
@@ -22,7 +24,7 @@ RELOC?= 240000
 DEFS?= -Dsun3 -D_STANDALONE -D__daddr_t=int32_t
 INCL?= -I. -I${.CURDIR} -I${.CURDIR}/../libsa -I${S}/lib/libsa -I${S}
 
-.if defined(HAVE_GCC) && ${HAVE_GCC} >= 48
+.if defined(HAVE_GCC)
 # gcc 4.8 convers -mc68000 to -mcpu=68000 and that breaks gas
 # which works for -march=68010 but breaks for -mcpu=68010
 CPUFLAGS= -march=68010

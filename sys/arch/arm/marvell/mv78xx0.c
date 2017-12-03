@@ -1,4 +1,4 @@
-/*	$NetBSD: mv78xx0.c,v 1.1.10.2 2014/08/20 00:02:47 tls Exp $	*/
+/*	$NetBSD: mv78xx0.c,v 1.1.10.3 2017/12/03 11:35:54 jdolecek Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mv78xx0.c,v 1.1.10.2 2014/08/20 00:02:47 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mv78xx0.c,v 1.1.10.3 2017/12/03 11:35:54 jdolecek Exp $");
 
 #define _INTR_PRIVATE
 
@@ -58,6 +58,8 @@ static void mv78xx0_pic_establish_irq(struct pic_softc *, struct intrsource *);
 static void mv78xx0_pic_source_name(struct pic_softc *, int, char *, size_t);
 
 static int mv78xx0_find_pending_irqs(void);
+
+static void mv78xx0_getclks(vaddr_t);
 
 static const char * const sources[64] = {
     "ErrSum(0)",       "SPI(1)",          "TWSI0(2)",        "TWSI1(3)",
@@ -93,15 +95,14 @@ static struct pic_softc mv78xx0_pic = {
 
 
 /*
- * mv78xx0_intr_bootstrap:
+ * mv78xx0_bootstrap:
  *
- *	Initialize the rest of the interrupt subsystem, making it
+ *	Initialize the rest of the Discovery Innovation dependencies, making it
  *	ready to handle interrupts from devices.
  */
 void
-mv78xx0_intr_bootstrap(void)
+mv78xx0_bootstrap(vaddr_t iobase)
 {
-	extern void (*mvsoc_intr_init)(void);
 
 	/* disable all interrupts */
 	write_mlmbreg(MV78XX0_ICI_IRQIMER, 0);
@@ -113,8 +114,12 @@ mv78xx0_intr_bootstrap(void)
 
 	mvsoc_intr_init = mv78xx0_intr_init;
 
+#if NMVSOCGPP > 0
 	gpp_npins = 32;
 	gpp_irqbase = 64;	/* Main Low(32) + High(32) */
+#endif
+
+	mv78xx0_getclks(iobase);
 }
 
 static void
@@ -197,8 +202,8 @@ mv78xx0_find_pending_irqs(void)
  * Clock functions
  */
 
-void
-mv78xx0_getclks(bus_addr_t iobase)
+static void
+mv78xx0_getclks(vaddr_t iobase)
 {
 	const static int sys2cpu_clk_ratio_m[] =	/* Mul constant */
 	    { 1, 3, 2, 5, 3, 7, 4, 9, 5, 1, 6 };

@@ -1,4 +1,4 @@
-/*      $NetBSD: clpscom.c,v 1.1.4.3 2014/08/20 00:02:45 tls Exp $      */
+/*      $NetBSD: clpscom.c,v 1.1.4.4 2017/12/03 11:35:52 jdolecek Exp $      */
 /*
  * Copyright (c) 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clpscom.c,v 1.1.4.3 2014/08/20 00:02:45 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clpscom.c,v 1.1.4.4 2017/12/03 11:35:52 jdolecek Exp $");
 
 #include "rnd.h"
 
@@ -50,17 +50,14 @@ __KERNEL_RCSID(0, "$NetBSD: clpscom.c,v 1.1.4.3 2014/08/20 00:02:45 tls Exp $");
 #include <dev/cons.h>
 
 #ifdef RND_COM
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 #endif
 
 #include "ioconf.h"
 #include "locators.h"
 
-#define COMUNIT_MASK	0x7ffff
-#define COMDIALOUT_MASK	0x80000
-
-#define COMUNIT(x)	(minor(x) & COMUNIT_MASK)
-#define COMDIALOUT(x)	(minor(x) & COMDIALOUT_MASK)
+#define COMUNIT(x)	TTUNIT(x)
+#define COMDIALOUT(x)	TTDIALOUT(x)
 
 #define CLPSCOM_RING_SIZE	2048
 #define UART_FIFO_SIZE		16

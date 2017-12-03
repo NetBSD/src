@@ -1,0 +1,16 @@
+# $NetBSD: GENERIC_USB,v 1.1.18.2 2017/12/03 11:36:35 jdolecek Exp $
+#
+# GENERIC kernel with USB
+
+include	"arch/pmax/conf/GENERIC"
+
+# TC-USB
+tcu*	at tc? slot ? offset ?
+slhci*	at tcu?
+gpio*	at gpiobus?
+
+# USB bus support
+usb*	at slhci?
+
+include	"dev/usb/usbdevices.config"
+midi*	at midibus?

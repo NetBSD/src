@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86950var.h,v 1.7.6.1 2012/11/20 03:02:06 tls Exp $	*/
+/*	$NetBSD: mb86950var.h,v 1.7.6.2 2017/12/03 11:37:03 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Mika Kortelainen
@@ -29,6 +29,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/rndsource.h>
 
 /*
  * Adapted from if_qnreg.h for the amiga port of NetBSD by Dave J. Barnes, 2004.

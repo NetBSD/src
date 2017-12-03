@@ -1,4 +1,4 @@
-/*	$NetBSD: simide.c,v 1.29 2012/07/31 15:50:31 bouyer Exp $	*/
+/*	$NetBSD: simide.c,v 1.29.2.1 2017/12/03 11:35:45 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: simide.c,v 1.29 2012/07/31 15:50:31 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: simide.c,v 1.29.2.1 2017/12/03 11:35:45 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,6 @@ struct simide_softc {
 	struct bus_space 	sc_tag;			/* custom tag */
 	struct simide_channel {
 		struct ata_channel sc_channel;	/* generic part */
-		struct ata_queue sc_chqueue;		/* channel queue */
 		irqhandler_t	sc_ih;			/* interrupt handler */
 		int		sc_irqmask;	/* IRQ mask for this channel */
 	} simide_channels[2];
@@ -258,7 +257,6 @@ simide_attach(device_t parent, device_t self, void *aux)
 
 		cp->ch_channel = channel;
 		cp->ch_atac = &sc->sc_wdcdev.sc_atac;
-		cp->ch_queue = &scp->sc_chqueue;
 		wdr->cmd_iot = wdr->ctl_iot = &sc->sc_tag;
 		iobase = pa->pa_podule->mod_base;
 		if (bus_space_map(wdr->cmd_iot, iobase +
@@ -273,7 +271,7 @@ simide_attach(device_t parent, device_t self, void *aux)
 				continue;
 			}
 		}
-		wdc_init_shadow_regs(cp);
+		wdc_init_shadow_regs(wdr);
 		if (bus_space_map(wdr->ctl_iot, iobase +
 		    simide_info[channel].aux_register, 4, 0, &wdr->ctl_ioh)) {
 			bus_space_unmap(wdr->cmd_iot, wdr->cmd_baseioh,

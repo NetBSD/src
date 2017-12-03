@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: listsrcdirs,v 1.1.4.4 2014/08/20 00:04:37 tls Exp $
+#	$NetBSD: listsrcdirs,v 1.1.4.5 2017/12/03 11:39:06 jdolecek Exp $
 #
 
 #
@@ -10,9 +10,14 @@
 #
 # ./listsrcdirs | xargs cvs -d anoncvs@anoncvs.netbsd.org:/cvsroot -z3 co -P
 #
-# Note: after making changes, test that "sh listsrcdirs all | sort | uniq -d"
-# returns an empty set.
-#
+
+# Check that the intersection between all branches is the null set
+if [ "${LISTSRCDIRS_INSANITY}" != 'y' ]; then
+	if [ ! -z "$(LISTSRCDIRS_INSANITY=y sh $0 all | sort | uniq -d)" ]; then
+		echo $0: INTERNAL ERROR
+		exit 1
+	fi
+fi
 
 # default echomode (for compat)
 em='sys posix'
@@ -58,7 +63,7 @@ lsrc ()
 	iswanted ${what} && for arg in $* ; do echo src${pfx}${arg} ; done
 }
 
-ARCHS="amd64 i386 x86 arm evbarm sparc sparc64 powerpc evbppc mips evbmips"
+ARCHS="amd64 i386 x86 arm evbarm sparc sparc64 powerpc evbppc mips evbmips aarch64 evbarm64 riscv"
 ARCHS_EXTRA="arm/arm32 Makefile"
 
 # sources necessary for building rump kernel components.  This list
@@ -74,7 +79,7 @@ lsrc sys /bin/			cat
 lsrc sys /usr.bin/		make xinstall config mktemp sed tsort
 lsrc sys /usr.bin/		lorder join cksum m4 mkdep Makefile.inc
 lsrc sys /usr.bin/		rpcgen rump_wmd
-lsrc sys /usr.bin/		stat
+lsrc sys /usr.bin/		genassym stat uname
 lsrc sys /usr.sbin/		mtree
 
 # sources hosted in the NetBSD tree that are required/useful
@@ -84,13 +89,16 @@ lsrc posix /lib/lib		rumpuser rumpclient rumphijack
 lsrc posix /usr.bin/		rump_server rump_allserver shmif_dumpbus
 
 # assorted userspace sources, mostly for configuration & diagnostics
-lsrc usr /lib/lib		crypt ipsec m npf pci prop
+# NOTE! libc++ is handled below as a special case due to the NetBSD
+# dist directory consisting ~90% (50+MB) of tests unnecessary to us
+lsrc usr /lib/			i18n_module
+lsrc usr /lib/lib		crypt ipsec kvm m npf pci prop
 lsrc usr /lib/lib		pthread rmt y z
 lsrc usr /libexec/		ld.elf_so
 lsrc usr /bin/			chmod cp dd df ed ln ls mkdir mv pax
 lsrc usr /bin/			rm rmdir
-lsrc usr /sbin/			cgdconfig chown
-lsrc usr /sbin/			disklabel dump
+lsrc usr /sbin/			brconfig cgdconfig chown
+lsrc usr /sbin/			disklabel dump fdisk
 lsrc usr /sbin/			fsck fsck_ext2fs fsck_ffs fsck_msdos
 lsrc usr /sbin/			ifconfig mknod
 lsrc usr /sbin/			modstat mount
@@ -98,10 +106,10 @@ lsrc usr /sbin/			mount_ext2fs mount_ffs mount_msdos mount_tmpfs
 lsrc usr /sbin/			newfs newfs_ext2fs newfs_msdos
 lsrc usr /sbin/			ping ping6 raidctl reboot
 lsrc usr /sbin/			rndctl route setkey sysctl umount
-lsrc usr /usr.bin/		kdump ktrace
-lsrc usr /usr.sbin/		arp dumpfs ndp npf pcictl vnconfig
-lsrc usr /usr.sbin/		wlanctl
-lsrc usr /external/bsd/		libpcap tcpdump wpa
+lsrc usr /usr.bin/		kdump ktrace mixerctl sockstat
+lsrc usr /usr.sbin/		arp dumpfs mdconfig ndp npf pcictl
+lsrc usr /usr.sbin/		rtadvd vnconfig wlanctl
+lsrc usr /external/bsd/		libelf libpcap tcpdump wpa
 lsrc usr /crypto/		Makefile.openssl
 lsrc usr /crypto/dist/		ipsec-tools
 lsrc usr /crypto/external/bsd/	openssl
@@ -112,6 +120,10 @@ lsrc usr /crypto/external/bsd/	openssl
 if ${cvsmode}; then
 	iswanted sys && echo \!src/sys/arch src/sys
 
+	iswanted usr && \
+	    echo \!src/external/bsd/libc++/dist/libcxx/test \
+	           src/external/bsd/libc++
+
 	# pick a few useful archs, namely those mentioned in buildrump.sh
 	for arch in ${ARCHS}; do
 		lsrc sys /sys/arch/${arch}/ include ${arch} Makefile
@@ -121,4 +133,6 @@ if ${cvsmode}; then
 	done
 else
 	lsrc sys / sys
+
+	lsrc usr /external /bsd/libc++
 fi

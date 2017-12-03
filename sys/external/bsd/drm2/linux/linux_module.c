@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_module.c,v 1.4.4.2 2014/08/20 00:04:22 tls Exp $	*/
+/*	$NetBSD: linux_module.c,v 1.4.4.3 2017/12/03 11:38:00 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_module.c,v 1.4.4.2 2014/08/20 00:04:22 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_module.c,v 1.4.4.3 2017/12/03 11:38:00 jdolecek Exp $");
 
 #include <sys/module.h>
 #ifndef _MODULE
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_module.c,v 1.4.4.2 2014/08/20 00:04:22 tls Exp
 #include <linux/reservation.h>
 #include <linux/workqueue.h>
 
-MODULE(MODULE_CLASS_MISC, drmkms_linux, NULL);
+MODULE(MODULE_CLASS_MISC, drmkms_linux, "i2cexec");
 
 DEFINE_WW_CLASS(reservation_ww_class __cacheline_aligned);
 
@@ -108,6 +108,7 @@ linux_fini(void)
 	linux_writecomb_fini();
 	linux_workqueue_fini();
 	linux_kmap_fini();
+	linux_idr_module_fini();
 }
 
 static int

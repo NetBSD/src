@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_kmap.c,v 1.4.10.2 2014/08/20 00:04:22 tls Exp $	*/
+/*	$NetBSD: linux_kmap.c,v 1.4.10.3 2017/12/03 11:38:00 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,12 +30,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_kmap.c,v 1.4.10.2 2014/08/20 00:04:22 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_kmap.c,v 1.4.10.3 2017/12/03 11:38:00 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/kmem.h>
 #include <sys/mutex.h>
 #include <sys/rbtree.h>
+
+#ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
+#include <dev/mm.h>
+#endif
 
 #include <uvm/uvm_extern.h>
 
@@ -46,12 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_kmap.c,v 1.4.10.2 2014/08/20 00:04:22 tls Exp 
  * required not to fail.  To accomodate this, we reserve one page of
  * kva at boot (or load) and limit the system to at most kmap_atomic in
  * use at a time.
- */
-
-/*
- * XXX Use direct-mapped physical pages where available, e.g. amd64.
- *
- * XXX ...or add an abstraction to uvm for this.  (uvm_emap?)
  */
 
 static kmutex_t linux_kmap_atomic_lock;
@@ -106,7 +104,7 @@ int
 linux_kmap_init(void)
 {
 
-	/* IPL_VM is needed to block pmap_kenter_pa.  */
+	/* IPL_VM since interrupt handlers use kmap_atomic.  */
 	mutex_init(&linux_kmap_atomic_lock, MUTEX_DEFAULT, IPL_VM);
 
 	linux_kmap_atomic_vaddr = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
@@ -115,7 +113,7 @@ linux_kmap_init(void)
 	KASSERT(linux_kmap_atomic_vaddr != 0);
 	KASSERT(!pmap_extract(pmap_kernel(), linux_kmap_atomic_vaddr, NULL));
 
-	mutex_init(&linux_kmap_lock, MUTEX_DEFAULT, IPL_VM);
+	mutex_init(&linux_kmap_lock, MUTEX_DEFAULT, IPL_NONE);
 	rb_tree_init(&linux_kmap_entries, &linux_kmap_entry_ops);
 
 	return 0;
@@ -125,9 +123,8 @@ void
 linux_kmap_fini(void)
 {
 
-	KASSERT(rb_tree_iterate(&linux_kmap_entries, NULL, RB_DIR_RIGHT) ==
-	    NULL);
-#if 0				/* XXX no rb_tree_destroy*/
+	KASSERT(RB_TREE_MIN(&linux_kmap_entries) == NULL);
+#if 0				/* XXX no rb_tree_destroy */
 	rb_tree_destroy(&linux_kmap_entries);
 #endif
 	mutex_destroy(&linux_kmap_lock);
@@ -145,16 +142,18 @@ void *
 kmap_atomic(struct page *page)
 {
 	const paddr_t paddr = uvm_vm_page_to_phys(&page->p_vmp);
+	vaddr_t vaddr;
+
+#ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
+	if (mm_md_direct_mapped_phys(paddr, &vaddr))
+		return (void *)vaddr;
+#endif
 
 	mutex_spin_enter(&linux_kmap_atomic_lock);
-
 	KASSERT(linux_kmap_atomic_vaddr != 0);
 	KASSERT(!pmap_extract(pmap_kernel(), linux_kmap_atomic_vaddr, NULL));
-
-	const vaddr_t vaddr = linux_kmap_atomic_vaddr;
-	const int prot = (VM_PROT_READ | VM_PROT_WRITE);
-	const int flags = 0;
-	pmap_kenter_pa(vaddr, paddr, prot, flags);
+	vaddr = linux_kmap_atomic_vaddr;
+	pmap_kenter_pa(vaddr, paddr, (VM_PROT_READ | VM_PROT_WRITE), 0);
 	pmap_update(pmap_kernel());
 
 	return (void *)vaddr;
@@ -164,6 +163,19 @@ void
 kunmap_atomic(void *addr)
 {
 	const vaddr_t vaddr = (vaddr_t)addr;
+
+#ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
+    {
+	paddr_t paddr;
+	vaddr_t vaddr1;
+	bool ok __diagused;
+
+	ok = pmap_extract(pmap_kernel(), vaddr, &paddr);
+	KASSERT(ok);
+	if (mm_md_direct_mapped_phys(paddr, &vaddr1) && vaddr1 == vaddr)
+		return;
+    }
+#endif
 
 	KASSERT(mutex_owned(&linux_kmap_atomic_lock));
 	KASSERT(linux_kmap_atomic_vaddr == vaddr);
@@ -179,7 +191,16 @@ void *
 kmap(struct page *page)
 {
 	const paddr_t paddr = VM_PAGE_TO_PHYS(&page->p_vmp);
-	const vaddr_t vaddr = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
+	vaddr_t vaddr;
+
+	ASSERT_SLEEPABLE();
+
+#ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
+	if (mm_md_direct_mapped_phys(paddr, &vaddr))
+		return (void *)vaddr;
+#endif
+
+	vaddr = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
 	    (UVM_KMF_VAONLY | UVM_KMF_WAITVA));
 	KASSERT(vaddr != 0);
 
@@ -188,16 +209,14 @@ kmap(struct page *page)
 	lke->lke_paddr = paddr;
 	lke->lke_vaddr = vaddr;
 
-	mutex_spin_enter(&linux_kmap_lock);
-	struct linux_kmap_entry *const collision __unused =
+	mutex_enter(&linux_kmap_lock);
+	struct linux_kmap_entry *const collision __diagused =
 	    rb_tree_insert_node(&linux_kmap_entries, lke);
 	KASSERT(collision == lke);
-	mutex_spin_exit(&linux_kmap_lock);
+	mutex_exit(&linux_kmap_lock);
 
 	KASSERT(!pmap_extract(pmap_kernel(), vaddr, NULL));
-	const int prot = (VM_PROT_READ | VM_PROT_WRITE);
-	const int flags = 0;
-	pmap_kenter_pa(vaddr, paddr, prot, flags);
+	pmap_kenter_pa(vaddr, paddr, (VM_PROT_READ | VM_PROT_WRITE), 0);
 	pmap_update(pmap_kernel());
 
 	return (void *)vaddr;
@@ -208,12 +227,23 @@ kunmap(struct page *page)
 {
 	const paddr_t paddr = VM_PAGE_TO_PHYS(&page->p_vmp);
 
-	mutex_spin_enter(&linux_kmap_lock);
+	ASSERT_SLEEPABLE();
+
+#ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
+    {
+	vaddr_t vaddr1;
+
+	if (mm_md_direct_mapped_phys(paddr, &vaddr1))
+		return;
+    }
+#endif
+
+	mutex_enter(&linux_kmap_lock);
 	struct linux_kmap_entry *const lke =
 	    rb_tree_find_node(&linux_kmap_entries, &paddr);
 	KASSERT(lke != NULL);
 	rb_tree_remove_node(&linux_kmap_entries, lke);
-	mutex_spin_exit(&linux_kmap_lock);
+	mutex_exit(&linux_kmap_lock);
 
 	const vaddr_t vaddr = lke->lke_vaddr;
 	kmem_free(lke, sizeof(*lke));

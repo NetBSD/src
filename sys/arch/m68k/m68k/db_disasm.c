@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.39.6.1 2014/08/20 00:03:11 tls Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.39.6.2 2017/12/03 11:36:24 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.39.6.1 2014/08/20 00:03:11 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.39.6.2 2017/12/03 11:36:24 jdolecek Exp $");
 
 #include <sys/param.h>
 #ifdef _KERNEL
@@ -1189,7 +1189,7 @@ opcode_1000(dis_buffer_t *dbuf, u_short opc)
 		addstr(dbuf, "@-,");
 		PRINT_AREG(dbuf,BITFIELD(opc,11,9));
 		addstr(dbuf, "@-");
-	} else if (IS_INST(SBCDA,opc)) {
+	} else if (IS_INST(SBCDD,opc)) {
 		addstr(dbuf, "sbcd\t");
 		PRINT_DREG(dbuf,BITFIELD(opc,2,0));
 		addchar(',');
@@ -1247,7 +1247,7 @@ opcode_1100(dis_buffer_t *dbuf, u_short opc)
 		addstr(dbuf, "@-,");
 		PRINT_AREG(dbuf,BITFIELD(opc,11,9));
 		addstr(dbuf, "@-");
-	} else if (IS_INST(ABCDA,opc)) {
+	} else if (IS_INST(ABCDD,opc)) {
 		addstr(dbuf, "abcd\t");
 		PRINT_DREG(dbuf,BITFIELD(opc,2,0));
 		addchar(',');

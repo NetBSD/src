@@ -1,10 +1,10 @@
-/*	$NetBSD: tcdevs.h,v 1.23 2007/04/12 21:39:24 matt Exp $	*/
+/*	$NetBSD: tcdevs.h,v 1.23.78.1 2017/12/03 11:37:33 jdolecek Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: tcdevs,v 1.20 2005/12/11 12:24:00 christos Exp
+ *	NetBSD: tcdevs,v 1.23 2017/06/22 16:46:53 flxd Exp
  */
 
 /*
@@ -150,7 +150,7 @@
 #define	TC_DESCRIPTION_PMAP_AA	"Prestoserve"
 
 #define	TC_DEVICE_PMAT_AA	"tra"
-#define	TC_DESCRIPTION_PMAT_AA	"DEC TurboChannel Token Ring Controller"
+#define	TC_DESCRIPTION_PMAT_AA	"DEC TURBOchannel Token Ring Controller"
 
 #define	TC_DEVICE_PMAZ_AA	"asc"
 #define	TC_DESCRIPTION_PMAZ_AA	"53c94 SCSI"
@@ -177,7 +177,10 @@
 #define	TC_DESCRIPTION_PMTNV_AA	"Non-volatile RAM option card"
 
 #define	TC_DEVICE_T1D4PKT	"ds"
-#define	TC_DESCRIPTION_T1D4PKT	"DECWRL Turbochannel T1"
+#define	TC_DESCRIPTION_T1D4PKT	"DECWRL TURBOchannel T1"
 
 #define	TC_DEVICE_T3PKT	"tt"
-#define	TC_DESCRIPTION_T3PKT	"DECWRL Turbochannel T3"
+#define	TC_DESCRIPTION_T3PKT	"DECWRL TURBOchannel T3"
+
+#define	TC_DEVICE_TC_USB	"tcu"
+#define	TC_DESCRIPTION_TC_USB	"flxd TC-USB"

@@ -1,4 +1,4 @@
-/*	$NetBSD: shmif_component.c,v 1.1.10.2 2014/08/20 00:04:43 tls Exp $	*/
+/*	$NetBSD: shmif_component.c,v 1.1.10.3 2017/12/03 11:39:19 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,15 +26,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shmif_component.c,v 1.1.10.2 2014/08/20 00:04:43 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shmif_component.c,v 1.1.10.3 2017/12/03 11:39:19 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/vmem.h>
 
 #include <net/if.h>
 
-#include "rump_private.h"
-#include "rump_net_private.h"
+#include <rump-sys/kern.h>
 
 RUMP_COMPONENT(RUMP_COMPONENT_NET_IF)
 {

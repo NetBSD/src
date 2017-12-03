@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_vma_manager.c,v 1.1.6.2 2014/08/20 00:04:20 tls Exp $	*/
+/*	$NetBSD: drm_vma_manager.c,v 1.1.6.3 2017/12/03 11:37:58 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_vma_manager.c,v 1.1.6.2 2014/08/20 00:04:20 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_vma_manager.c,v 1.1.6.3 2017/12/03 11:37:58 jdolecek Exp $");
 
 #include <sys/kmem.h>
 #include <sys/rbtree.h>
@@ -120,6 +120,8 @@ drm_vma_offset_manager_destroy(struct drm_vma_offset_manager *mgr)
 {
 
 	vmem_destroy(mgr->vom_vmem);
+	KASSERTMSG((RB_TREE_MIN(&mgr->vom_nodes) == NULL),
+	    "drm vma offset manager %p not empty", mgr);
 #if 0
 	rb_tree_destroy(&mgr->vom_nodes);
 #endif
@@ -143,6 +145,8 @@ void
 drm_vma_node_destroy(struct drm_vma_offset_node *node)
 {
 
+	KASSERTMSG((RB_TREE_MIN(&node->von_files) == NULL),
+	    "drm vma node %p not empty", node);
 #if 0
 	rb_tree_destroy(&node->von_files);
 #endif
@@ -164,19 +168,22 @@ drm_vma_offset_add(struct drm_vma_offset_manager *mgr,
 	if (0 < node->von_npages)
 		return 0;
 
-	error = vmem_alloc(mgr->vom_vmem, npages, VM_SLEEP|VM_BESTFIT,
+	error = vmem_alloc(mgr->vom_vmem, npages, VM_NOSLEEP|VM_BESTFIT,
 	    &startpage);
-	if (error)
+	if (error) {
+		if (error == ENOMEM)
+			error = ENOSPC;
 		/* XXX errno NetBSD->Linux */
 		return -error;
+	}
 
 	node->von_startpage = startpage;
 	node->von_npages = npages;
 
-	rw_enter(&node->von_lock, RW_WRITER);
+	rw_enter(&mgr->vom_lock, RW_WRITER);
 	collision = rb_tree_insert_node(&mgr->vom_nodes, node);
 	KASSERT(collision == node);
-	rw_exit(&node->von_lock);
+	rw_exit(&mgr->vom_lock);
 
 	return 0;
 }
@@ -189,9 +196,9 @@ drm_vma_offset_remove(struct drm_vma_offset_manager *mgr,
 	if (node->von_npages == 0)
 		return;
 
-	rw_enter(&node->von_lock, RW_WRITER);
+	rw_enter(&mgr->vom_lock, RW_WRITER);
 	rb_tree_remove_node(&mgr->vom_nodes, node);
-	rw_exit(&node->von_lock);
+	rw_exit(&mgr->vom_lock);
 
 	vmem_free(mgr->vom_vmem, node->von_startpage, node->von_npages);
 
@@ -286,6 +293,8 @@ drm_vma_node_revoke(struct drm_vma_offset_node *node, struct file *file)
 	if (found != NULL)
 		rb_tree_remove_node(&node->von_files, found);
 	rw_exit(&node->von_lock);
+	if (found != NULL)
+		kmem_free(found, sizeof(*found));
 }
 
 bool

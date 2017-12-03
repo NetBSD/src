@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool.c,v 1.38.2.1 2014/08/20 00:03:37 tls Exp $ */
+/*	$NetBSD: dbcool.c,v 1.38.2.2 2017/12/03 11:37:02 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* 
+/*
  * a driver for the dbCool(tm) family of environmental controllers
  *
  * Data sheets for the various supported chips are available at
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.38.2.1 2014/08/20 00:03:37 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.38.2.2 2017/12/03 11:37:02 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,7 +131,7 @@ struct dbc_sysctl_info {
 
 static struct dbc_sysctl_info dbc_sysctl_table[] = {
 	/*
-	 * The first several entries must remain in the same order as the 
+	 * The first several entries must remain in the same order as the
 	 * corresponding entries in enum dbc_pwm_params
 	 */
 	{ "behavior",		"operating behavior and temp selector",
@@ -407,7 +407,7 @@ struct dbcool_power_control ADT7475_power_table[] = {
 	{ { DBCOOL_PWM2_CTL, DBCOOL_PWM2_MINDUTY,
 	    DBCOOL_PWM2_MAXDUTY, DBCOOL_PWM2_CURDUTY },
 		"fan_control_2" },
-	{ { DBCOOL_PWM3_CTL, DBCOOL_PWM3_MINDUTY, 
+	{ { DBCOOL_PWM3_CTL, DBCOOL_PWM3_MINDUTY,
 	    DBCOOL_PWM3_MAXDUTY, DBCOOL_PWM3_CURDUTY },
 		"fan_control_3" },
 	{ { 0, 0, 0, 0 }, NULL }
@@ -539,7 +539,7 @@ struct dbcool_sensor ADM1030_sensor_table[] = {
 	{ DBC_EOF,  {0, 0, 0 }, 0, 0, 0 }
 };
 
-struct dbcool_power_control ADM1030_power_table[] = {   
+struct dbcool_power_control ADM1030_power_table[] = {
 	{ { DBCOOL_ADM1030_CFG1,  DBCOOL_NO_REG, DBCOOL_NO_REG,
 	    DBCOOL_ADM1030_FAN_SPEED_CFG },
 	  "fan_control_1" },
@@ -592,7 +592,7 @@ struct dbcool_sensor ADM1031_sensor_table[] = {
 	{ DBC_EOF,  {0, 0, 0 }, 0, 0, 0 }
 };
 
-struct dbcool_power_control ADM1031_power_table[] = {   
+struct dbcool_power_control ADM1031_power_table[] = {
 	{ { DBCOOL_ADM1030_CFG1,  DBCOOL_NO_REG, DBCOOL_NO_REG,
 	    DBCOOL_ADM1030_FAN_SPEED_CFG },
 	  "fan_control_1" },
@@ -731,6 +731,13 @@ static char dbcool_cur_behav[16];
 CFATTACH_DECL_NEW(dbcool, sizeof(struct dbcool_softc),
     dbcool_match, dbcool_attach, dbcool_detach, NULL);
 
+static const char * dbcool_compats[] = {
+	"i2c-adm1031",
+	"adt7467",
+	"adt7460",
+	"adm1030",
+	NULL
+};
 int
 dbcool_match(device_t parent, cfdata_t cf, void *aux)
 {
@@ -742,12 +749,19 @@ dbcool_match(device_t parent, cfdata_t cf, void *aux)
 	dc.dc_readreg = dbcool_readreg;
 	dc.dc_writereg = dbcool_writereg;
 
-	/* no probing if we attach to iic, but verify chip id  and address */
-	if ((ia->ia_addr & DBCOOL_ADDRMASK) != DBCOOL_ADDR)
-		return 0;
-	if (dbcool_chip_ident(&dc) >= 0)
-		return 1;
-
+	/* Direct config - match compats */
+	if (ia->ia_name) {
+		if (ia->ia_ncompat > 0) {
+			if (iic_compat_match(ia, dbcool_compats))
+				return 1;
+		}
+	/* Indirect config - check address and chip ID */
+	} else {
+		if ((ia->ia_addr & DBCOOL_ADDRMASK) != DBCOOL_ADDR)
+			return 0;
+		if (dbcool_chip_ident(&dc) >= 0)
+			return 1;
+	}
 	return 0;
 }
 
@@ -774,12 +788,12 @@ dbcool_attach(device_t parent, device_t self, void *aux)
 	        if (sc->sc_dc.dc_chip->company == SMSC_COMPANYID)
 	        {
 		        aprint_normal_dev(self, "SMSC %s Controller "
-			        "(rev 0x%02x, stepping 0x%02x)\n", sc->sc_dc.dc_chip->name,
-        			ver >> 4, ver & 0x0f);
+			    "(rev 0x%02x, stepping 0x%02x)\n",
+			    sc->sc_dc.dc_chip->name, ver >> 4, ver & 0x0f);
 	        } else {
 		        aprint_normal_dev(self, "%s dBCool(tm) Controller "
-			        "(rev 0x%02x, stepping 0x%02x)\n", sc->sc_dc.dc_chip->name,
-        			ver >> 4, ver & 0x0f);
+			    "(rev 0x%02x, stepping 0x%02x)\n",
+			    sc->sc_dc.dc_chip->name, ver >> 4, ver & 0x0f);
                 }
 	else
 		aprint_normal_dev(self, "%s dBCool(tm) Controller "
@@ -820,7 +834,7 @@ bool dbcool_pmf_suspend(device_t dev, const pmf_qual_t *qual)
 
 	if ((sc->sc_dc.dc_chip->flags & DBCFLAG_HAS_SHDN) == 0)
 		return true;
- 
+
 	if (sc->sc_dc.dc_chip->flags & DBCFLAG_ADT7466) {
 		reg = DBCOOL_ADT7466_CONFIG2;
 		bit = DBCOOL_ADT7466_CFG2_SHDN;
@@ -845,7 +859,7 @@ bool dbcool_pmf_resume(device_t dev, const pmf_qual_t *qual)
 
 	if ((sc->sc_dc.dc_chip->flags & DBCFLAG_HAS_SHDN) == 0)
 		return true;
- 
+
 	if (sc->sc_dc.dc_chip->flags & DBCFLAG_ADT7466) {
 		reg = DBCOOL_ADT7466_CONFIG2;
 	} else {
@@ -881,12 +895,12 @@ bad:
 	return data;
 }
 
-void 
+void
 dbcool_writereg(struct dbcool_chipset *dc, uint8_t reg, uint8_t val)
 {
 	if (iic_acquire_bus(dc->dc_tag, 0) != 0)
 		return;
-        
+
 	(void)iic_smbus_write_byte(dc->dc_tag, dc->dc_addr, reg, val, 0);
 
 	iic_release_bus(dc->dc_tag, 0);
@@ -1098,7 +1112,7 @@ dbcool_read_volt(struct dbcool_softc *sc, uint8_t reg, int nom_idx, bool extres)
 		ext &= 0x03;
 	}
 
-	/* 
+	/*
 	 * Scale the nominal value by the 10-bit fraction
 	 *
 	 * Returned value is in microvolts.
@@ -1136,7 +1150,7 @@ sysctl_dbcool_temp(SYSCTLFN_ARGS)
 	if (error || newp == NULL)
 		return error;
 
-	/* We were asked to update the value - sanity check before writing */	
+	/* We were asked to update the value - sanity check before writing */
 	if (*(int *)node.sysctl_data < -64 ||
 	    *(int *)node.sysctl_data > 127 + sc->sc_temp_offset)
 		return EINVAL;
@@ -1168,7 +1182,7 @@ sysctl_adm1030_temp(SYSCTLFN_ARGS)
 	if (error || newp == NULL)
 		return error;
 
-	/* We were asked to update the value - sanity check before writing */	
+	/* We were asked to update the value - sanity check before writing */
 	if (*(int *)node.sysctl_data < 0 || *(int *)node.sysctl_data > 127)
 		return EINVAL;
 
@@ -1201,7 +1215,7 @@ sysctl_adm1030_trange(SYSCTLFN_ARGS)
 	if (error || newp == NULL)
 		return error;
 
-	/* We were asked to update the value - sanity check before writing */	
+	/* We were asked to update the value - sanity check before writing */
 	newval = *(int *)node.sysctl_data;
 
 	if (newval == 5)
@@ -1246,7 +1260,7 @@ sysctl_dbcool_duty(SYSCTLFN_ARGS)
 	if (error || newp == NULL)
 		return error;
 
-	/* We were asked to update the value - sanity check before writing */	
+	/* We were asked to update the value - sanity check before writing */
 	if (*(int *)node.sysctl_data < 0 || *(int *)node.sysctl_data > 100)
 		return EINVAL;
 
@@ -1270,7 +1284,7 @@ sysctl_dbcool_behavior(SYSCTLFN_ARGS)
 	node = *rnode;
 	sc = (struct dbcool_softc *)node.sysctl_data;
 	chipreg = node.sysctl_num & 0xff;
-	
+
 	oldreg = sc->sc_dc.dc_readreg(&sc->sc_dc, chipreg);
 
 	if (sc->sc_dc.dc_chip->flags & DBCFLAG_ADM1030) {
@@ -1344,7 +1358,7 @@ sysctl_dbcool_slope(SYSCTLFN_ARGS)
 	node = *rnode;
 	sc = (struct dbcool_softc *)node.sysctl_data;
 	chipreg = node.sysctl_num & 0xff;
-	
+
 	reg = (sc->sc_dc.dc_readreg(&sc->sc_dc, chipreg) >> 4) & 0x0f;
 	node.sysctl_data = &reg;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
@@ -1352,7 +1366,7 @@ sysctl_dbcool_slope(SYSCTLFN_ARGS)
 	if (error || newp == NULL)
 		return error;
 
-	/* We were asked to update the value - sanity check before writing */	
+	/* We were asked to update the value - sanity check before writing */
 	if (*(int *)node.sysctl_data < 0 || *(int *)node.sysctl_data > 0x0f)
 		return EINVAL;
 
@@ -1389,7 +1403,7 @@ sysctl_dbcool_thyst(SYSCTLFN_ARGS)
 	if (error || newp == NULL)
 		return error;
 
-	/* We were asked to update the value - sanity check before writing */	
+	/* We were asked to update the value - sanity check before writing */
 	newhyst = *(int *)node.sysctl_data;
 	if (newhyst > 0x0f)
 		return EINVAL;
@@ -1427,7 +1441,7 @@ sysctl_dbcool_reg_select(SYSCTLFN_ARGS)
 
 	node = *rnode;
 	sc = (struct dbcool_softc *)node.sysctl_data;
-	
+
 	reg = sc->sc_user_reg;
 	node.sysctl_data = &reg;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
@@ -1451,7 +1465,7 @@ sysctl_dbcool_reg_access(SYSCTLFN_ARGS)
 	node = *rnode;
 	sc = (struct dbcool_softc *)node.sysctl_data;
 	chipreg = sc->sc_user_reg;
-	
+
 	reg = sc->sc_dc.dc_readreg(&sc->sc_dc, chipreg);
 	node.sysctl_data = &reg;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
@@ -1579,7 +1593,7 @@ dbcool_setup(device_t self)
 		    "unable to register with sysmon (%d)\n", error);
 		goto out;
 	}
-	
+
 	return;
 
 out:
@@ -1775,7 +1789,7 @@ dbcool_setup_controllers(struct dbcool_softc *sc)
 				name,
 				SYSCTL_DESCR(dbc_sysctl_table[j].desc),
 				dbc_sysctl_table[j].helper,
-				0, sc, 
+				0, sc,
 				( j == DBC_PWM_BEHAVIOR)?
 					sizeof(dbcool_cur_behav): sizeof(int),
 				CTL_HW, sc->sc_root_sysctl_num, me2->sysctl_num,
@@ -1790,10 +1804,10 @@ dbcool_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	struct dbcool_softc *sc=sme->sme_cookie;
 	int i, nom_volt_idx, cur;
 	struct reg_list *reg;
-	
+
 	i = edata->sensor;
 	reg = sc->sc_regs[i];
-	
+
 	edata->state = ENVSYS_SVALID;
 	switch (edata->units)
 	{
@@ -1859,7 +1873,7 @@ dbcool_chip_ident(struct dbcool_chipset *dc)
  		d_id = dc->dc_readreg(dc, DBCOOL_DEVICEID_REG);
  		r_id = dc->dc_readreg(dc, DBCOOL_REVISION_REG);
 	}
- 
+
 	for (i = 0; chip_table[i].company != 0; i++)
 		if ((c_id == chip_table[i].company) &&
 		    (d_id == chip_table[i].device ||
@@ -1875,7 +1889,7 @@ dbcool_chip_ident(struct dbcool_chipset *dc)
 			r_id);
 
 	return -1;
-}  
+}
 
 /*
  * Retrieve sensor limits from the chip registers
@@ -1907,7 +1921,7 @@ dbcool_get_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
 	/* If both limits provided, make sure they're sane */
 	if ((*props & PROP_CRITMIN) &&
 	    (*props & PROP_CRITMAX) &&
-	    (limits->sel_critmin >= limits->sel_critmax)) 
+	    (limits->sel_critmin >= limits->sel_critmax))
 		*props &= ~(PROP_CRITMIN | PROP_CRITMAX);
 
 	/*
@@ -2161,7 +2175,7 @@ dbcool_set_fan_limits(struct dbcool_softc *sc, int idx,
 	}
 }
 
-MODULE(MODULE_CLASS_DRIVER, dbcool, "iic");
+MODULE(MODULE_CLASS_DRIVER, dbcool, "i2cexec,sysmon_envsys");
 
 #ifdef _MODULE
 #include "ioconf.c"

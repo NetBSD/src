@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.h,v 1.3 2012/02/19 21:06:16 rmind Exp $	*/
+/*	$NetBSD: netbsd32_machdep.h,v 1.3.2.1 2017/12/03 11:36:27 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -43,6 +43,11 @@ typedef struct { NETBSD32_POINTER_TYPE i32; }	netbsd32_pointer_t;
 #define NETBSD32_INT64_ALIGN
 
 typedef netbsd32_pointer_t			netbsd32_sigcontextp_t;
+
+/* Support varying ABI names for netbsd32 */
+extern const char machine_arch32[];
+#define	PROC_MACHINE_ARCH32(P)	((P)->p_md.md_abi == _MIPS_BSD_API_O32) ? \
+	__UNCONST(machine_arch32) : machine_arch
 
 /*
  * The sigcode is ABI neutral.

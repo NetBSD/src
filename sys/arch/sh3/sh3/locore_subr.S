@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.54 2011/02/01 01:54:14 uwe Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.54.14.1 2017/12/03 11:36:42 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.54 2011/02/01 01:54:14 uwe Exp $")
+__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.54.14.1 2017/12/03 11:36:42 jdolecek Exp $")
 
 
 /*
@@ -645,7 +645,7 @@ ENTRY(copyinstr)
 
 	mov.l	.L_copyinstr_VM_MAXUSER_ADDRESS, r3
 	cmp/hi	r3,	r4		/* bomb if usrc isn't in user space */
-	bt	4f
+	bt	5f
 	mov	r3,	r0
 	sub	r4,	r0
 	cmp/hi	r6,	r0		/* don't beyond user space */

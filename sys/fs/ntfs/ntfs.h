@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs.h,v 1.19 2008/05/05 17:11:16 ad Exp $	*/
+/*	$NetBSD: ntfs.h,v 1.19.44.1 2017/12/03 11:38:43 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -232,12 +232,12 @@ struct bootfile {
 	u_int8_t        reserved3[2];
 	u_int16_t       bf_spt;		/* sectors per track */
 	u_int16_t       bf_heads;	/* number of heads */
-	u_int8_t        reserver4[12];
+	u_int8_t        reserved4[12];
 	u_int64_t       bf_spv;		/* sectors per volume */
 	cn_t            bf_mftcn;	/* $MFT cluster number */
 	cn_t            bf_mftmirrcn;	/* $MFTMirr cn */
 	u_int8_t        bf_mftrecsz;	/* MFT record size (clust) */
-					/* 0xF6 inducates 1/4 */
+					/* 0xF6 indicates 1/4 */
 	u_int32_t       bf_ibsz;	/* index buffer size */
 	u_int32_t       bf_volsn;	/* volume ser. num. */
 };
@@ -294,7 +294,6 @@ struct ntfsmount {
 #ifdef _KERNEL
 MALLOC_DECLARE(M_NTFSMNT);
 MALLOC_DECLARE(M_NTFSNTNODE);
-MALLOC_DECLARE(M_NTFSFNODE);
 MALLOC_DECLARE(M_NTFSDIR);
 MALLOC_DECLARE(M_NTFSNTVATTR);
 MALLOC_DECLARE(M_NTFSRDATA);

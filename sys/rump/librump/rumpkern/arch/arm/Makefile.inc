@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.4.4.2 2014/08/20 00:04:41 tls Exp $
+# $NetBSD: Makefile.inc,v 1.4.4.3 2017/12/03 11:39:16 jdolecek Exp $
 
 CPPFLAGS+=	-DARCH_ELFSIZE=32
 
@@ -6,4 +6,4 @@ CPPFLAGS+=	-DARCH_ELFSIZE=32
 SRCS+=  	kobj_machdep.c
 
 .PATH:	${RUMPTOP}/librump/rumpkern/arch/generic
-SRCS+=  	rump_generic_cpu.c rump_generic_pmap.c
+SRCS+=  	rump_generic_abi.c rump_generic_cpu.c rump_generic_pmap.c

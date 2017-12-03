@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.41.12.1 2014/08/20 00:02:44 tls Exp $	*/
+/*	$NetBSD: fd.c,v 1.41.12.2 2017/12/03 11:35:50 jdolecek Exp $	*/
 /*	$OpenBSD: fd.c,v 1.6 1998/10/03 21:18:57 millert Exp $	*/
 /*	NetBSD: fd.c,v 1.78 1995/07/04 07:23:09 mycroft Exp 	*/
 
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.41.12.1 2014/08/20 00:02:44 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.41.12.2 2017/12/03 11:35:50 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -214,7 +214,9 @@ const struct cdevsw fd_cdevsw = {
 
 static void fdstart(struct fd_softc *);
 
-struct dkdriver fddkdriver = { fdstrategy };
+struct dkdriver fddkdriver = {
+	.d_strategy = fdstrategy
+};
 
 static bool fd_shutdown(device_t, int);
 #if 0
@@ -1085,7 +1087,7 @@ fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		memset(&buffer, 0, sizeof(buffer));
 
 		buffer.d_secpercyl = fd->sc_type->seccyl;
-		buffer.d_type = DTYPE_FLOPPY;
+		buffer.d_type = DKTYPE_FLOPPY;
 		buffer.d_secsize = FDC_BSIZE;
 
 		if (readdisklabel(dev, fdstrategy, &buffer, NULL) != NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_iostat.c,v 1.19.22.1 2014/08/20 00:04:29 tls Exp $	*/
+/*	$NetBSD: subr_iostat.c,v 1.19.22.2 2017/12/03 11:38:45 jdolecek Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.69 2005/05/29 22:24:15 christos Exp	*/
 
 /*-
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_iostat.c,v 1.19.22.1 2014/08/20 00:04:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_iostat.c,v 1.19.22.2 2017/12/03 11:38:45 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -140,9 +140,6 @@ iostat_alloc(int32_t type, void *parent, const char *name)
 	struct io_stats *stats;
 
 	stats = kmem_zalloc(sizeof(*stats), KM_SLEEP);
-	if (stats == NULL)
-		panic("iostat_alloc: cannot allocate memory for stats buffer");
-
 	stats->io_type = type;
 	stats->io_parent = parent;
 	(void)strlcpy(stats->io_name, name, sizeof(stats->io_name));
@@ -183,37 +180,106 @@ iostat_free(struct io_stats *stats)
 }
 
 /*
- * Increment a iostat busy counter.  If the counter is going from
- * 0 to 1, set the timestamp.
+ * multiply timeval by unsigned integer and add to result
+ */
+static void
+timermac(struct timeval *a, uint64_t count, struct timeval *res)
+{
+	struct timeval part = *a;
+
+	while (count) {
+		if (count & 1)
+			timeradd(res, &part, res);
+		timeradd(&part, &part, &part);
+		count >>= 1;
+	}
+}
+
+/*
+ * Increment the iostat wait counter.
+ * Accumulate wait time and timesum.
+ *
+ * Wait time is spent in the device bufq.
+ */
+void
+iostat_wait(struct io_stats *stats)
+{
+	struct timeval dv_time, diff_time;
+	int32_t count;
+
+	KASSERT(stats->io_wait >= 0);
+
+	getmicrouptime(&dv_time);
+
+	timersub(&dv_time, &stats->io_waitstamp, &diff_time);
+	count = stats->io_wait++;
+	if (count != 0) {
+		timermac(&diff_time, count, &stats->io_waitsum);
+		timeradd(&stats->io_waittime, &diff_time, &stats->io_waittime);
+	}
+	stats->io_waitstamp = dv_time;
+}
+
+/*
+ * Decrement the iostat wait counter.
+ * Increment the iostat busy counter.
+ * Accumulate wait and busy times and timesums.
+ *
+ * Busy time is spent being processed by the device.
+ *
+ * Old devices do not yet measure wait time, so skip
+ * processing it if the counter is still zero.
  */
 void
 iostat_busy(struct io_stats *stats)
 {
+	struct timeval dv_time, diff_time;
+	int32_t count;
 
-	if (stats->io_busy++ == 0)
-		getmicrouptime(&stats->io_timestamp);
+	KASSERT(stats->io_wait >= 0); /* > 0 when iostat_wait is used */
+	KASSERT(stats->io_busy >= 0);
+
+	getmicrouptime(&dv_time);
+
+	timersub(&dv_time, &stats->io_waitstamp, &diff_time);
+	if (stats->io_wait != 0) {
+		count = stats->io_wait--;
+		timermac(&diff_time, count, &stats->io_waitsum);
+		timeradd(&stats->io_waittime, &diff_time, &stats->io_waittime);
+	}
+	stats->io_waitstamp = dv_time;
+
+	timersub(&dv_time, &stats->io_busystamp, &diff_time);
+	count = stats->io_busy++;
+	if (count != 0) {
+		timermac(&diff_time, count, &stats->io_busysum);
+		timeradd(&stats->io_busytime, &diff_time, &stats->io_busytime);
+	}
+	stats->io_busystamp = dv_time;
 }
 
 /*
- * Decrement a iostat busy counter, increment the byte count, total busy
- * time, and reset the timestamp.
+ * Decrement the iostat busy counter, increment the byte count.
+ * Accumulate busy time and timesum.
  */
 void
 iostat_unbusy(struct io_stats *stats, long bcount, int read)
 {
 	struct timeval dv_time, diff_time;
+	int32_t count;
 
-	if (stats->io_busy-- == 0) {
-		printf("%s: busy < 0\n", stats->io_name);
-		panic("iostat_unbusy");
-	}
+	KASSERT(stats->io_busy > 0);
 
 	getmicrouptime(&dv_time);
-
-	timersub(&dv_time, &stats->io_timestamp, &diff_time);
-	timeradd(&stats->io_time, &diff_time, &stats->io_time);
-
 	stats->io_timestamp = dv_time;
+
+	/* any op */
+	timersub(&dv_time, &stats->io_busystamp, &diff_time);
+	count = stats->io_busy--;
+	timermac(&diff_time, count, &stats->io_busysum);
+	timeradd(&stats->io_busytime, &diff_time, &stats->io_busytime);
+	stats->io_busystamp = dv_time;
+
 	if (bcount > 0) {
 		if (read) {
 			stats->io_rbytes += bcount;
@@ -330,7 +396,7 @@ sysctl_hw_iostats(SYSCTLFN_ARGS)
 
 	/*
 	 * The original hw.diskstats call was broken and did not require
-	 * the userland to pass in it's size of struct disk_sysctl.  This
+	 * the userland to pass in its size of struct disk_sysctl.  This
 	 * was fixed after NetBSD 1.6 was released.
 	 */
 	if (namelen == 0)
@@ -352,20 +418,38 @@ sysctl_hw_iostats(SYSCTLFN_ARGS)
 	TAILQ_FOREACH(stats, &iostatlist, io_link) {
 		if (left < tocopy)
 			break;
+
 		strncpy(sdrive.name, stats->io_name, sizeof(sdrive.name));
-		sdrive.xfer = stats->io_rxfer + stats->io_wxfer;
-		sdrive.rxfer = stats->io_rxfer;
-		sdrive.wxfer = stats->io_wxfer;
-		sdrive.seek = stats->io_seek;
-		sdrive.bytes = stats->io_rbytes + stats->io_wbytes;
-		sdrive.rbytes = stats->io_rbytes;
-		sdrive.wbytes = stats->io_wbytes;
 		sdrive.attachtime_sec = stats->io_attachtime.tv_sec;
 		sdrive.attachtime_usec = stats->io_attachtime.tv_usec;
-		sdrive.timestamp_sec = stats->io_timestamp.tv_sec;
-		sdrive.timestamp_usec = stats->io_timestamp.tv_usec;
-		sdrive.time_sec = stats->io_time.tv_sec;
-		sdrive.time_usec = stats->io_time.tv_usec;
+		sdrive.timestamp_sec = stats->io_busystamp.tv_sec;
+		sdrive.timestamp_usec = stats->io_busystamp.tv_usec;
+
+		sdrive.time_sec = stats->io_busytime.tv_sec;
+		sdrive.time_usec = stats->io_busytime.tv_usec;
+
+		sdrive.seek = stats->io_seek;
+
+		sdrive.rxfer = stats->io_rxfer;
+		sdrive.wxfer = stats->io_wxfer;
+		sdrive.xfer = stats->io_rxfer + stats->io_wxfer;
+
+		sdrive.rbytes = stats->io_rbytes;
+		sdrive.wbytes = stats->io_wbytes;
+		sdrive.bytes = stats->io_rbytes + stats->io_wbytes;
+
+		sdrive.wait_sec = stats->io_waittime.tv_sec;
+		sdrive.wait_usec = stats->io_waittime.tv_usec;
+
+		sdrive.time_sec = stats->io_busytime.tv_sec;
+		sdrive.time_usec = stats->io_busytime.tv_usec;
+
+		sdrive.waitsum_sec = stats->io_waitsum.tv_sec;
+		sdrive.waitsum_usec = stats->io_waitsum.tv_usec;
+
+		sdrive.busysum_sec = stats->io_busysum.tv_sec;
+		sdrive.busysum_usec = stats->io_busysum.tv_usec;
+
 		sdrive.busy = stats->io_busy;
 
 		error = copyout(&sdrive, where, min(tocopy, sizeof(sdrive)));

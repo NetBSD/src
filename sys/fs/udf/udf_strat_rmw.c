@@ -1,4 +1,4 @@
-/* $NetBSD: udf_strat_rmw.c,v 1.22.22.1 2014/08/20 00:04:28 tls Exp $ */
+/* $NetBSD: udf_strat_rmw.c,v 1.22.22.2 2017/12/03 11:38:43 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_strat_rmw.c,v 1.22.22.1 2014/08/20 00:04:28 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_strat_rmw.c,v 1.22.22.2 2017/12/03 11:38:43 jdolecek Exp $");
 #endif /* not lint */
 
 
@@ -616,10 +616,9 @@ udf_read_nodedscr_rmw(struct udf_strat_args *args)
 	uint32_t sectornr, dummy;
 	uint8_t *pos;
 	int sector_size = ump->discinfo.sector_size;
-	int lb_size = udf_rw32(ump->logical_vol->lb_size);
+	int lb_size __diagused = udf_rw32(ump->logical_vol->lb_size);
 	int i, error, dscrlen, eccsect;
 
-	lb_size = lb_size;
 	KASSERT(sector_size == lb_size);
 	error = udf_translate_vtop(ump, icb, &sectornr, &dummy);
 	if (error)
@@ -711,18 +710,14 @@ udf_write_nodedscr_rmw(struct udf_strat_args *args)
 	uint32_t sectornr, logsectornr, dummy;
 	// int waitfor  = args->waitfor;
 	int sector_size = ump->discinfo.sector_size;
-	int lb_size = udf_rw32(ump->logical_vol->lb_size);
+	int lb_size __diagused = udf_rw32(ump->logical_vol->lb_size);
 	int error, eccsect;
 
-	lb_size = lb_size;
 	KASSERT(sector_size == lb_size);
 	sectornr    = 0;
 	error = udf_translate_vtop(ump, icb, &sectornr, &dummy);
 	if (error)
 		return error;
-
-	/* paranoia: add reference to the vnode to prevent recycling */
-	vhold(udf_node->vnode);
 
 	/* get our eccline */
 	eccline = udf_geteccline(ump, sectornr, 0);
@@ -763,7 +758,6 @@ udf_write_nodedscr_rmw(struct udf_strat_args *args)
 		UDF_UNLOCK_NODE(udf_node, 0);
 		wakeup(&udf_node->outstanding_nodedscr);
 	}
-	holdrele(udf_node->vnode);
 	udf_puteccline(eccline);
 
 	/* XXX waitfor not used */
@@ -1007,6 +1001,16 @@ udf_queuebuf_rmw(struct udf_strat_args *args)
 	eccline->flags |= ECC_SEQWRITING;
 	udf_puteccline(eccline);
 	mutex_exit(&priv->seqwrite_mutex);
+}
+
+/* --------------------------------------------------------------------- */
+
+static void
+udf_sync_caches_rmw(struct udf_strat_args *args)
+{
+	struct udf_mount *ump = args->ump;
+
+	udf_mmc_synchronise_caches(ump);
 }
 
 /* --------------------------------------------------------------------- */
@@ -1501,6 +1505,7 @@ struct udf_strategy udf_strat_rmw =
 	udf_read_nodedscr_rmw,
 	udf_write_nodedscr_rmw,
 	udf_queuebuf_rmw,
+	udf_sync_caches_rmw,
 	udf_discstrat_init_rmw,
 	udf_discstrat_finish_rmw
 };

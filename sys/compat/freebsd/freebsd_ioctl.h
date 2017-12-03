@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_ioctl.h,v 1.6 2007/05/29 21:32:27 christos Exp $	*/
+/*	$NetBSD: freebsd_ioctl.h,v 1.6.78.1 2017/12/03 11:36:53 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -33,6 +33,8 @@
 
 #ifndef _FREEBSD_IOCTL_H
 #define _FREEBSD_IOCTL_H
+
+#include <sys/ioccom.h>
 
 #define	FREEBSD_IOCGROUP(x)	(((x) >> 8) & 0xff)
 

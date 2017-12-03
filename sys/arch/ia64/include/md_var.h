@@ -1,4 +1,4 @@
-/*	$NetBSD: md_var.h,v 1.1 2006/04/07 14:21:18 cherry Exp $	*/
+/*	$NetBSD: md_var.h,v 1.1.122.1 2017/12/03 11:36:20 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -83,13 +83,14 @@ void	ia64_probe_sapics(void);
 int	interrupt(uint64_t, struct trapframe *);
 void	map_gateway_page(void);
 void	map_pal_code(void);
+void	map_vhpt(uintptr_t);
 void	os_boot_rendez(void);
 void	os_mca(void);
 int	syscall(struct trapframe *);
 void	trap(int, struct trapframe *);
 void	trap_panic(int, struct trapframe *);
 int	unaligned_fixup(struct trapframe *, struct thread *);
-
+void	ia64_sync_icache(vaddr_t, vaddr_t);
 #endif	/* _KERNEL */
 
 #endif /* !_IA64_MD_VAR_H_ */

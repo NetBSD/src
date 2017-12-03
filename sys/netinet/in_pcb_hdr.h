@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb_hdr.h,v 1.8.2.1 2014/08/20 00:04:35 tls Exp $	*/
+/*	$NetBSD: in_pcb_hdr.h,v 1.8.2.2 2017/12/03 11:39:04 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 2003 WIDE Project.
@@ -84,10 +84,12 @@ struct inpcb_hdr {
 };
 
 #define	sotoinpcb_hdr(so)	((struct inpcb_hdr *)(so)->so_pcb)
+#define	inph_locked(inph)	(solocked((inph)->inph_socket))
 
 LIST_HEAD(inpcbhead, inpcb_hdr);
 
 struct vestigial_inpcb;
+struct in6_addr;
 
 /* Hooks for vestigial pcb entries.
  * If vestigial entries exist for a table (TCP only)

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cas.c,v 1.18.2.2 2014/08/20 00:03:42 tls Exp $	*/
+/*	$NetBSD: if_cas.c,v 1.18.2.3 2017/12/03 11:37:07 jdolecek Exp $	*/
 /*	$OpenBSD: if_cas.c,v 1.29 2009/11/29 16:19:38 kettenis Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.18.2.2 2014/08/20 00:03:42 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.18.2.3 2017/12/03 11:37:07 jdolecek Exp $");
 
 #ifndef _MODULE
 #include "opt_inet.h"
@@ -83,7 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.18.2.2 2014/08/20 00:03:42 tls Exp $");
 
 #include <sys/bus.h>
 #include <sys/intr.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
@@ -609,6 +609,7 @@ cas_config(struct cas_softc *sc, const uint8_t *enaddr)
 
 	/* Attach the interface. */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, enaddr);
 
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
@@ -1299,11 +1300,8 @@ cas_rint(struct cas_softc *sc)
 				 * Pass this up to any BPF listeners, but only
 				 * pass it up the stack if its for us.
 				 */
-				bpf_mtap(ifp, m);
-
-				ifp->if_ipackets++;
 				m->m_pkthdr.csum_flags = 0;
-				(*ifp->if_input)(ifp, m);
+				if_percpuq_enqueue(ifp->if_percpuq, m);
 			} else
 				ifp->if_ierrors++;
 		}
@@ -1332,11 +1330,8 @@ cas_rint(struct cas_softc *sc)
 				 * Pass this up to any BPF listeners, but only
 				 * pass it up the stack if its for us.
 				 */
-				bpf_mtap(ifp, m);
-
-				ifp->if_ipackets++;
 				m->m_pkthdr.csum_flags = 0;
-				(*ifp->if_input)(ifp, m);
+				if_percpuq_enqueue(ifp->if_percpuq, m);
 			} else
 				ifp->if_ierrors++;
 		}
@@ -2016,7 +2011,7 @@ cas_tint(struct cas_softc *sc, u_int32_t status)
 	if (sc->sc_tx_cnt == 0)
 		ifp->if_timer = 0;
 
-	cas_start(ifp);
+	if_schedule_deferred_start(ifp);
 
 	return (1);
 }

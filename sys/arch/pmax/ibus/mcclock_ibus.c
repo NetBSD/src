@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_ibus.c,v 1.18 2011/06/04 01:43:56 tsutsui Exp $	*/
+/*	$NetBSD: mcclock_ibus.c,v 1.18.12.1 2017/12/03 11:36:35 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,12 +28,14 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mcclock_ibus.c,v 1.18 2011/06/04 01:43:56 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_ibus.c,v 1.18.12.1 2017/12/03 11:36:35 jdolecek Exp $");
 
 #include <sys/param.h>
-#include <sys/kernel.h>
+#include <sys/cpu.h>
 #include <sys/device.h>
+#include <sys/kernel.h>
 #include <sys/systm.h>
+
 #include <dev/clock_subr.h>
 
 #include <dev/dec/mcclockvar.h>

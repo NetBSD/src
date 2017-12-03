@@ -1,4 +1,4 @@
-/*	$NetBSD: gencons.c,v 1.52.14.1 2014/08/20 00:03:27 tls Exp $	*/
+/*	$NetBSD: gencons.c,v 1.52.14.2 2017/12/03 11:36:48 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -13,9 +13,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *     This product includes software developed at Ludd, University of Lule}.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
@@ -36,7 +33,7 @@
  /* All bugs are subject to removal without further notice */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gencons.c,v 1.52.14.1 2014/08/20 00:03:27 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gencons.c,v 1.52.14.2 2017/12/03 11:36:48 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -313,7 +310,7 @@ gencninit(struct consdev *cndev)
 	}
 #if 0
 	mtpr(0, PR_RXCS);
-	mtpr(0, PR_TXCS); 
+	mtpr(0, PR_TXCS);
 	mtpr(0, PR_TBIA); /* ??? */
 #endif
 }
@@ -371,7 +368,7 @@ gencnpollc(dev_t dev, int pollflag)
 {
 	if (pollflag)  {
 		mtpr(0, PR_RXCS);
-		mtpr(0, PR_TXCS); 
+		mtpr(0, PR_TXCS);
 	} else {
 		mtpr(GC_RIE, PR_RXCS);
 		mtpr(GC_TIE, PR_TXCS);

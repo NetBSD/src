@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_psdev.c,v 1.49.2.1 2014/08/20 00:03:31 tls Exp $	*/
+/*	$NetBSD: coda_psdev.c,v 1.49.2.2 2017/12/03 11:36:52 jdolecek Exp $	*/
 
 /*
  *
@@ -54,15 +54,9 @@
 /* These routines are the device entry points for Venus. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.49.2.1 2014/08/20 00:03:31 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.49.2.2 2017/12/03 11:36:52 jdolecek Exp $");
 
 extern int coda_nc_initialized;    /* Set if cache has been initialized */
-
-#ifndef _KERNEL_OPT
-#define	NVCODA 4
-#else
-#include <vcoda.h>
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,12 +72,12 @@ extern int coda_nc_initialized;    /* Set if cache has been initialized */
 #include <sys/atomic.h>
 #include <sys/module.h>
 
-#include <miscfs/syncfs/syncfs.h>
-
 #include <coda/coda.h>
 #include <coda/cnode.h>
 #include <coda/coda_namecache.h>
 #include <coda/coda_io.h>
+
+#include "ioconf.h"
 
 #define CTL_C
 
@@ -99,8 +93,6 @@ int coda_pcatch = PCATCH;
 int coda_kernel_version = CODA_KERNEL_VERSION;
 
 #define ENTRY if(coda_psdev_print_entry) myprintf(("Entered %s\n",__func__))
-
-void vcodaattach(int n);
 
 dev_type_open(vc_nb_open);
 dev_type_close(vc_nb_close);
@@ -403,7 +395,7 @@ vc_nb_ioctl(dev_t dev, u_long cmd, void *addr, int flag,
 {
     ENTRY;
 
-    switch(cmd) {
+    switch (cmd) {
     case CODARESIZE: {
 	struct coda_resize *data = (struct coda_resize *)addr;
 	return(coda_nc_resize(data->hashsize, data->heapsize, IS_DOWNCALL));
@@ -494,8 +486,12 @@ filt_vc_nb_read(struct knote *kn, long hint)
 	return (1);
 }
 
-static const struct filterops vc_nb_read_filtops =
-	{ 1, NULL, filt_vc_nb_detach, filt_vc_nb_read };
+static const struct filterops vc_nb_read_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_vc_nb_detach,
+	.f_event = filt_vc_nb_read,
+};
 
 int
 vc_nb_kqfilter(dev_t dev, struct knote *kn)

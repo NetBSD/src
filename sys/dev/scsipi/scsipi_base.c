@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.159.2.1 2014/08/20 00:03:50 tls Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.159.2.2 2017/12/03 11:37:32 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -31,9 +31,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.159.2.1 2014/08/20 00:03:50 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.159.2.2 2017/12/03 11:37:32 jdolecek Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_scsi.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.159.2.1 2014/08/20 00:03:50 tls Ex
 #include <sys/proc.h>
 #include <sys/kthread.h>
 #include <sys/hash.h>
+#include <sys/atomic.h>
 
 #include <dev/scsipi/scsi_spc.h>
 #include <dev/scsipi/scsipi_all.h>
@@ -76,7 +79,14 @@ static void	scsipi_async_event_max_openings(struct scsipi_channel *,
 		    struct scsipi_max_openings *);
 static void	scsipi_async_event_channel_reset(struct scsipi_channel *);
 
+static void	scsipi_channel_freeze_locked(struct scsipi_channel *, int);
+
+static void	scsipi_adapter_lock(struct scsipi_adapter *adapt);
+static void	scsipi_adapter_unlock(struct scsipi_adapter *adapt);
+
 static struct pool scsipi_xfer_pool;
+
+int scsipi_xs_count = 0;
 
 /*
  * scsipi_init:
@@ -100,6 +110,8 @@ scsipi_init(void)
 	    PAGE_SIZE / sizeof(struct scsipi_xfer)) == ENOMEM) {
 		printf("WARNING: not enough memory for scsipi_xfer_pool\n");
 	}
+
+	scsipi_ioctl_init();
 }
 
 /*
@@ -133,7 +145,7 @@ scsipi_channel_init(struct scsipi_channel *chan)
 		panic("scsipi_channel_init");
 	}
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -145,17 +157,19 @@ void
 scsipi_channel_shutdown(struct scsipi_channel *chan)
 {
 
+	mutex_enter(chan_mtx(chan));
 	/*
 	 * Shut down the completion thread.
 	 */
 	chan->chan_tflags |= SCSIPI_CHANT_SHUTDOWN;
-	wakeup(&chan->chan_complete);
+	cv_broadcast(chan_cv_complete(chan));
 
 	/*
 	 * Now wait for the thread to exit.
 	 */
 	while (chan->chan_thread != NULL)
-		(void) tsleep(&chan->chan_thread, PRIBIO, "scshut", 0);
+		cv_wait(chan_cv_thread(chan), chan_mtx(chan));
+	mutex_exit(chan_mtx(chan));
 }
 
 static uint32_t
@@ -166,7 +180,7 @@ scsipi_chan_periph_hash(uint64_t t, uint64_t l)
 	hash = hash32_buf(&t, sizeof(t), HASH32_BUF_INIT);
 	hash = hash32_buf(&l, sizeof(l), hash);
 
-	return (hash & SCSIPI_CHAN_PERIPH_HASHMASK);
+	return hash & SCSIPI_CHAN_PERIPH_HASHMASK;
 }
 
 /*
@@ -178,14 +192,13 @@ void
 scsipi_insert_periph(struct scsipi_channel *chan, struct scsipi_periph *periph)
 {
 	uint32_t hash;
-	int s;
 
 	hash = scsipi_chan_periph_hash(periph->periph_target,
 	    periph->periph_lun);
 
-	s = splbio();
+	mutex_enter(chan_mtx(chan));
 	LIST_INSERT_HEAD(&chan->chan_periphtab[hash], periph, periph_hash);
-	splx(s);
+	mutex_exit(chan_mtx(chan));
 }
 
 /*
@@ -197,11 +210,8 @@ void
 scsipi_remove_periph(struct scsipi_channel *chan,
     struct scsipi_periph *periph)
 {
-	int s;
 
-	s = splbio();
 	LIST_REMOVE(periph, periph_hash);
-	splx(s);
 }
 
 /*
@@ -209,30 +219,41 @@ scsipi_remove_periph(struct scsipi_channel *chan,
  *
  *	Lookup a periph on the specified channel.
  */
-struct scsipi_periph *
-scsipi_lookup_periph(struct scsipi_channel *chan, int target, int lun)
+static struct scsipi_periph *
+scsipi_lookup_periph_internal(struct scsipi_channel *chan, int target, int lun, bool lock)
 {
 	struct scsipi_periph *periph;
 	uint32_t hash;
-	int s;
-
-	KASSERT(cold || KERNEL_LOCKED_P());
 
 	if (target >= chan->chan_ntargets ||
 	    lun >= chan->chan_nluns)
-		return (NULL);
+		return NULL;
 
 	hash = scsipi_chan_periph_hash(target, lun);
 
-	s = splbio();
+	if (lock)
+		mutex_enter(chan_mtx(chan));
 	LIST_FOREACH(periph, &chan->chan_periphtab[hash], periph_hash) {
 		if (periph->periph_target == target &&
 		    periph->periph_lun == lun)
 			break;
 	}
-	splx(s);
+	if (lock)
+		mutex_exit(chan_mtx(chan));
 
-	return (periph);
+	return periph;
+}
+
+struct scsipi_periph *
+scsipi_lookup_periph_locked(struct scsipi_channel *chan, int target, int lun)
+{
+	return scsipi_lookup_periph_internal(chan, target, lun, false);
+}
+
+struct scsipi_periph *
+scsipi_lookup_periph(struct scsipi_channel *chan, int target, int lun)
+{
+	return scsipi_lookup_periph_internal(chan, target, lun, true);
 }
 
 /*
@@ -240,7 +261,7 @@ scsipi_lookup_periph(struct scsipi_channel *chan, int target, int lun)
  *
  *	Allocate a single xfer `resource' from the channel.
  *
- *	NOTE: Must be called at splbio().
+ *	NOTE: Must be called with channel lock held
  */
 static int
 scsipi_get_resource(struct scsipi_channel *chan)
@@ -250,16 +271,16 @@ scsipi_get_resource(struct scsipi_channel *chan)
 	if (chan->chan_flags & SCSIPI_CHAN_OPENINGS) {
 		if (chan->chan_openings > 0) {
 			chan->chan_openings--;
-			return (1);
+			return 1;
 		}
-		return (0);
+		return 0;
 	}
 
 	if (adapt->adapt_openings > 0) {
 		adapt->adapt_openings--;
-		return (1);
+		return 1;
 	}
-	return (0);
+	return 0;
 }
 
 /*
@@ -268,7 +289,7 @@ scsipi_get_resource(struct scsipi_channel *chan)
  *	Attempt to grow resources for a channel.  If this succeeds,
  *	we allocate one for our caller.
  *
- *	NOTE: Must be called at splbio().
+ *	NOTE: Must be called with channel lock held
  */
 static inline int
 scsipi_grow_resources(struct scsipi_channel *chan)
@@ -276,21 +297,23 @@ scsipi_grow_resources(struct scsipi_channel *chan)
 
 	if (chan->chan_flags & SCSIPI_CHAN_CANGROW) {
 		if ((chan->chan_flags & SCSIPI_CHAN_TACTIVE) == 0) {
+			mutex_exit(chan_mtx(chan));
 			scsipi_adapter_request(chan,
 			    ADAPTER_REQ_GROW_RESOURCES, NULL);
-			return (scsipi_get_resource(chan));
+			mutex_enter(chan_mtx(chan));
+			return scsipi_get_resource(chan);
 		}
 		/*
 		 * ask the channel thread to do it. It'll have to thaw the
 		 * queue
 		 */
-		scsipi_channel_freeze(chan, 1);
+		scsipi_channel_freeze_locked(chan, 1);
 		chan->chan_tflags |= SCSIPI_CHANT_GROWRES;
-		wakeup(&chan->chan_complete);
-		return (0);
+		cv_broadcast(chan_cv_complete(chan));
+		return 0;
 	}
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -298,7 +321,7 @@ scsipi_grow_resources(struct scsipi_channel *chan)
  *
  *	Free a single xfer `resource' to the channel.
  *
- *	NOTE: Must be called at splbio().
+ *	NOTE: Must be called with channel lock held
  */
 static void
 scsipi_put_resource(struct scsipi_channel *chan)
@@ -316,7 +339,7 @@ scsipi_put_resource(struct scsipi_channel *chan)
  *
  *	Get a tag ID for the specified xfer.
  *
- *	NOTE: Must be called at splbio().
+ *	NOTE: Must be called with channel lock held
  */
 static void
 scsipi_get_tag(struct scsipi_xfer *xs)
@@ -358,7 +381,7 @@ scsipi_get_tag(struct scsipi_xfer *xs)
  *
  *	Put the tag ID for the specified xfer back into the pool.
  *
- *	NOTE: Must be called at splbio().
+ *	NOTE: Must be called with channel lock held
  */
 static void
 scsipi_put_tag(struct scsipi_xfer *xs)
@@ -379,12 +402,15 @@ scsipi_put_tag(struct scsipi_xfer *xs)
  *	specified peripheral.  If the peripheral has no more
  *	available command openings, we either block waiting for
  *	one to become available, or fail.
+ *
+ *	When this routine is called with the channel lock held
+ *	the flags must include XS_CTL_NOSLEEP.
  */
 struct scsipi_xfer *
 scsipi_get_xs(struct scsipi_periph *periph, int flags)
 {
 	struct scsipi_xfer *xs;
-	int s;
+	bool lock = (flags & XS_CTL_NOSLEEP) == 0;
 
 	SC_DEBUG(periph, SCSIPI_DB3, ("scsipi_get_xs\n"));
 
@@ -402,7 +428,6 @@ scsipi_get_xs(struct scsipi_periph *periph, int flags)
 	}
 #endif
 
-	s = splbio();
 	/*
 	 * Wait for a command opening to become available.  Rules:
 	 *
@@ -420,6 +445,8 @@ scsipi_get_xs(struct scsipi_periph *periph, int flags)
 	 *	  command, URGENT commands must block, because only
 	 *	  one recovery command can execute at a time.
 	 */
+	if (lock)
+		mutex_enter(chan_mtx(periph->periph_channel));
 	for (;;) {
 		if (flags & XS_CTL_URGENT) {
 			if (periph->periph_active > periph->periph_openings)
@@ -443,27 +470,35 @@ scsipi_get_xs(struct scsipi_periph *periph, int flags)
 
  wait_for_opening:
 		if (flags & XS_CTL_NOSLEEP) {
-			splx(s);
-			return (NULL);
+			KASSERT(!lock);
+			return NULL;
 		}
+		KASSERT(lock);
 		SC_DEBUG(periph, SCSIPI_DB3, ("sleeping\n"));
 		periph->periph_flags |= PERIPH_WAITING;
-		(void) tsleep(periph, PRIBIO, "getxs", 0);
+		cv_wait(periph_cv_periph(periph),
+		    chan_mtx(periph->periph_channel));
 	}
+	if (lock)
+		mutex_exit(chan_mtx(periph->periph_channel));
+
 	SC_DEBUG(periph, SCSIPI_DB3, ("calling pool_get\n"));
 	xs = pool_get(&scsipi_xfer_pool,
 	    ((flags & XS_CTL_NOSLEEP) != 0 ? PR_NOWAIT : PR_WAITOK));
 	if (xs == NULL) {
+		if (lock)
+			mutex_enter(chan_mtx(periph->periph_channel));
 		if (flags & XS_CTL_URGENT) {
 			if ((flags & XS_CTL_REQSENSE) == 0)
 				periph->periph_flags &= ~PERIPH_RECOVERY_ACTIVE;
 		} else
 			periph->periph_active--;
+		if (lock)
+			mutex_exit(chan_mtx(periph->periph_channel));
 		scsipi_printaddr(periph);
 		printf("unable to allocate %sscsipi_xfer\n",
 		    (flags & XS_CTL_URGENT) ? "URGENT " : "");
 	}
-	splx(s);
 
 	SC_DEBUG(periph, SCSIPI_DB3, ("returning\n"));
 
@@ -473,11 +508,13 @@ scsipi_get_xs(struct scsipi_periph *periph, int flags)
 		xs->xs_periph = periph;
 		xs->xs_control = flags;
 		xs->xs_status = 0;
-		s = splbio();
+		if ((flags & XS_CTL_NOSLEEP) == 0)
+			mutex_enter(chan_mtx(periph->periph_channel));
 		TAILQ_INSERT_TAIL(&periph->periph_xferq, xs, device_q);
-		splx(s);
+		if ((flags & XS_CTL_NOSLEEP) == 0)
+			mutex_exit(chan_mtx(periph->periph_channel));
 	}
-	return (xs);
+	return xs;
 }
 
 /*
@@ -488,7 +525,7 @@ scsipi_get_xs(struct scsipi_periph *periph, int flags)
  *	an opening, wake it up.  If not, kick any queued I/O the
  *	peripheral may have.
  *
- *	NOTE: Must be called at splbio().
+ *	NOTE: Must be called with channel lock held
  */
 void
 scsipi_put_xs(struct scsipi_xfer *xs)
@@ -519,12 +556,12 @@ scsipi_put_xs(struct scsipi_xfer *xs)
 	if (periph->periph_active == 0 &&
 	    (periph->periph_flags & PERIPH_WAITDRAIN) != 0) {
 		periph->periph_flags &= ~PERIPH_WAITDRAIN;
-		wakeup(&periph->periph_active);
+		cv_broadcast(periph_cv_active(periph));
 	}
 
 	if (periph->periph_flags & PERIPH_WAITING) {
 		periph->periph_flags &= ~PERIPH_WAITING;
-		wakeup(periph);
+		cv_broadcast(periph_cv_periph(periph));
 	} else {
 		if (periph->periph_switch->psw_start != NULL &&
 		    device_is_active(periph->periph_dev)) {
@@ -543,11 +580,20 @@ scsipi_put_xs(struct scsipi_xfer *xs)
 void
 scsipi_channel_freeze(struct scsipi_channel *chan, int count)
 {
-	int s;
+	bool lock = chan_running(chan) > 0;
 
-	s = splbio();
+	if (lock)
+		mutex_enter(chan_mtx(chan));
 	chan->chan_qfreeze += count;
-	splx(s);
+	if (lock)
+		mutex_exit(chan_mtx(chan));
+}
+
+static void
+scsipi_channel_freeze_locked(struct scsipi_channel *chan, int count)
+{
+
+	chan->chan_qfreeze += count;
 }
 
 /*
@@ -558,9 +604,10 @@ scsipi_channel_freeze(struct scsipi_channel *chan, int count)
 void
 scsipi_channel_thaw(struct scsipi_channel *chan, int count)
 {
-	int s;
+	bool lock = chan_running(chan) > 0;
 
-	s = splbio();
+	if (lock)
+		mutex_enter(chan_mtx(chan));
 	chan->chan_qfreeze -= count;
 	/*
 	 * Don't let the freeze count go negative.
@@ -572,7 +619,15 @@ scsipi_channel_thaw(struct scsipi_channel *chan, int count)
 	if (chan->chan_qfreeze < 0) {
 		chan->chan_qfreeze = 0;
 	}
-	splx(s);
+	if (lock)
+		mutex_exit(chan_mtx(chan));
+
+	/*
+	 * until the channel is running
+	 */
+	if (!lock)
+		return;
+
 	/*
 	 * Kick the channel's queue here.  Note, we may be running in
 	 * interrupt context (softclock or HBA's interrupt), so the adapter
@@ -602,13 +657,10 @@ scsipi_channel_timed_thaw(void *arg)
  *	Freeze a device's xfer queue.
  */
 void
-scsipi_periph_freeze(struct scsipi_periph *periph, int count)
+scsipi_periph_freeze_locked(struct scsipi_periph *periph, int count)
 {
-	int s;
 
-	s = splbio();
 	periph->periph_qfreeze += count;
-	splx(s);
 }
 
 /*
@@ -617,11 +669,9 @@ scsipi_periph_freeze(struct scsipi_periph *periph, int count)
  *	Thaw a device's xfer queue.
  */
 void
-scsipi_periph_thaw(struct scsipi_periph *periph, int count)
+scsipi_periph_thaw_locked(struct scsipi_periph *periph, int count)
 {
-	int s;
 
-	s = splbio();
 	periph->periph_qfreeze -= count;
 #ifdef DIAGNOSTIC
 	if (periph->periph_qfreeze < 0) {
@@ -633,8 +683,25 @@ scsipi_periph_thaw(struct scsipi_periph *periph, int count)
 #endif
 	if (periph->periph_qfreeze == 0 &&
 	    (periph->periph_flags & PERIPH_WAITING) != 0)
-		wakeup(periph);
-	splx(s);
+		cv_broadcast(periph_cv_periph(periph));
+}
+
+void
+scsipi_periph_freeze(struct scsipi_periph *periph, int count)
+{
+
+	mutex_enter(chan_mtx(periph->periph_channel));
+	scsipi_periph_freeze_locked(periph, count);
+	mutex_exit(chan_mtx(periph->periph_channel));
+}
+
+void
+scsipi_periph_thaw(struct scsipi_periph *periph, int count)
+{
+
+	mutex_enter(chan_mtx(periph->periph_channel));
+	scsipi_periph_thaw_locked(periph, count);
+	mutex_exit(chan_mtx(periph->periph_channel));
 }
 
 /*
@@ -645,28 +712,29 @@ scsipi_periph_thaw(struct scsipi_periph *periph, int count)
 void
 scsipi_periph_timed_thaw(void *arg)
 {
-	int s;
 	struct scsipi_periph *periph = arg;
+	struct scsipi_channel *chan = periph->periph_channel;
 
 	callout_stop(&periph->periph_callout);
 
-	s = splbio();
-	scsipi_periph_thaw(periph, 1);
+	mutex_enter(chan_mtx(chan));
+	scsipi_periph_thaw_locked(periph, 1);
 	if ((periph->periph_channel->chan_flags & SCSIPI_CHAN_TACTIVE) == 0) {
 		/*
 		 * Kick the channel's queue here.  Note, we're running in
 		 * interrupt context (softclock), so the adapter driver
 		 * had better not sleep.
 		 */
+		mutex_exit(chan_mtx(chan));
 		scsipi_run_queue(periph->periph_channel);
 	} else {
 		/*
 		 * Tell the completion thread to kick the channel's queue here.
 		 */
 		periph->periph_channel->chan_tflags |= SCSIPI_CHANT_KICK;
-		wakeup(&periph->periph_channel->chan_complete);
+		cv_broadcast(chan_cv_complete(chan));
+		mutex_exit(chan_mtx(chan));
 	}
-	splx(s);
 }
 
 /*
@@ -677,14 +745,14 @@ scsipi_periph_timed_thaw(void *arg)
 void
 scsipi_wait_drain(struct scsipi_periph *periph)
 {
-	int s;
+	struct scsipi_channel *chan = periph->periph_channel;
 
-	s = splbio();
+	mutex_enter(chan_mtx(chan));
 	while (periph->periph_active != 0) {
 		periph->periph_flags |= PERIPH_WAITDRAIN;
-		(void) tsleep(&periph->periph_active, PRIBIO, "sxdrn", 0);
+		cv_wait(periph_cv_active(periph), chan_mtx(chan));
 	}
-	splx(s);
+	mutex_exit(chan_mtx(chan));
 }
 
 /*
@@ -692,14 +760,18 @@ scsipi_wait_drain(struct scsipi_periph *periph)
  *
  *	Kill off all pending xfers for a periph.
  *
- *	NOTE: Must be called at splbio().
+ *	NOTE: Must be called with channel lock held
  */
 void
 scsipi_kill_pending(struct scsipi_periph *periph)
 {
+	struct scsipi_channel *chan = periph->periph_channel;
 
-	(*periph->periph_channel->chan_bustype->bustype_kill_pending)(periph);
-	scsipi_wait_drain(periph);
+	(*chan->chan_bustype->bustype_kill_pending)(periph);
+	while (periph->periph_active != 0) {
+		periph->periph_flags |= PERIPH_WAITDRAIN;
+		cv_wait(periph_cv_active(periph), chan_mtx(chan));
+	}
 }
 
 /*
@@ -808,7 +880,7 @@ scsipi_interpret_sense(struct scsipi_xfer *xs)
 #endif
 
 	/*
-	 * If the periph has it's own error handler, call it first.
+	 * If the periph has its own error handler, call it first.
 	 * If it returns a legit error value, return that, otherwise
 	 * it wants us to continue with normal error processing.
 	 */
@@ -817,7 +889,7 @@ scsipi_interpret_sense(struct scsipi_xfer *xs)
 		    ("calling private err_handler()\n"));
 		error = (*periph->periph_switch->psw_error)(xs);
 		if (error != EJUSTRETURN)
-			return (error);
+			return error;
 	}
 	/* otherwise use the default */
 	switch (SSD_RCODE(sense->response_code)) {
@@ -827,21 +899,21 @@ scsipi_interpret_sense(struct scsipi_xfer *xs)
 		 * codes other than 70.
 		 */
 	case 0x00:		/* no error (command completed OK) */
-		return (0);
+		return 0;
 	case 0x04:		/* drive not ready after it was selected */
 		if ((periph->periph_flags & PERIPH_REMOVABLE) != 0)
 			periph->periph_flags &= ~PERIPH_MEDIA_LOADED;
 		if ((xs->xs_control & XS_CTL_IGNORE_NOT_READY) != 0)
-			return (0);
+			return 0;
 		/* XXX - display some sort of error here? */
-		return (EIO);
+		return EIO;
 	case 0x20:		/* invalid command */
 		if ((xs->xs_control &
 		     XS_CTL_IGNORE_ILLEGAL_REQUEST) != 0)
-			return (0);
-		return (EINVAL);
+			return 0;
+		return EINVAL;
 	case 0x25:		/* invalid LUN (Adaptec ACB-4000) */
-		return (EACCES);
+		return EACCES;
 
 		/*
 		 * If it's code 70, use the extended stuff and
@@ -875,20 +947,20 @@ scsipi_interpret_sense(struct scsipi_xfer *xs)
 			if ((periph->periph_flags & PERIPH_REMOVABLE) != 0)
 				periph->periph_flags &= ~PERIPH_MEDIA_LOADED;
 			if ((xs->xs_control & XS_CTL_IGNORE_NOT_READY) != 0)
-				return (0);
+				return 0;
 			if (sense->asc == 0x3A) {
 				error = ENODEV; /* Medium not present */
 				if (xs->xs_control & XS_CTL_SILENT_NODEV)
-					return (error);
+					return error;
 			} else
 				error = EIO;
 			if ((xs->xs_control & XS_CTL_SILENT) != 0)
-				return (error);
+				return error;
 			break;
 		case SKEY_ILLEGAL_REQUEST:
 			if ((xs->xs_control &
 			     XS_CTL_IGNORE_ILLEGAL_REQUEST) != 0)
-				return (0);
+				return 0;
 			/*
 			 * Handle the case where a device reports
 			 * Logical Unit Not Supported during discovery.
@@ -896,16 +968,16 @@ scsipi_interpret_sense(struct scsipi_xfer *xs)
 			if ((xs->xs_control & XS_CTL_DISCOVERY) != 0 &&
 			    sense->asc == 0x25 &&
 			    sense->ascq == 0x00)
-				return (EINVAL);
+				return EINVAL;
 			if ((xs->xs_control & XS_CTL_SILENT) != 0)
-				return (EIO);
+				return EIO;
 			error = EINVAL;
 			break;
 		case SKEY_UNIT_ATTENTION:
 			if (sense->asc == 0x29 &&
 			    sense->ascq == 0x00) {
 				/* device or bus reset */
-				return (ERESTART);
+				return ERESTART;
 			}
 			if ((periph->periph_flags & PERIPH_REMOVABLE) != 0)
 				periph->periph_flags &= ~PERIPH_MEDIA_LOADED;
@@ -914,10 +986,10 @@ scsipi_interpret_sense(struct scsipi_xfer *xs)
 				/* XXX Should reupload any transient state. */
 				(periph->periph_flags &
 				 PERIPH_REMOVABLE) == 0) {
-				return (ERESTART);
+				return ERESTART;
 			}
 			if ((xs->xs_control & XS_CTL_SILENT) != 0)
-				return (EIO);
+				return EIO;
 			error = EIO;
 			break;
 		case SKEY_DATA_PROTECT:
@@ -945,7 +1017,7 @@ scsipi_interpret_sense(struct scsipi_xfer *xs)
 		if ((key == 0) ||
 		    ((xs->xs_control & XS_CTL_SILENT) != 0) ||
 		    (scsipi_print_sense(xs, 0) != 0))
-			return (error);
+			return error;
 
 		/* Print brief(er) sense information */
 		scsipi_printaddr(periph);
@@ -979,7 +1051,7 @@ scsipi_interpret_sense(struct scsipi_xfer *xs)
 				    sense->csi[n]);
 		}
 		printf("\n");
-		return (error);
+		return error;
 
 	/*
 	 * Some other code, just report it
@@ -1013,7 +1085,7 @@ scsipi_interpret_sense(struct scsipi_xfer *xs)
 		}
 		printf("\n");
 #endif
-		return (EIO);
+		return EIO;
 	}
 }
 
@@ -1030,7 +1102,7 @@ scsipi_test_unit_ready(struct scsipi_periph *periph, int flags)
 
 	/* some ATAPI drives don't support TEST UNIT READY. Sigh */
 	if (periph->periph_quirks & PQUIRK_NOTUR)
-		return (0);
+		return 0;
 
 	if (flags & XS_CTL_DISCOVERY)
 		retries = 0;
@@ -1040,8 +1112,30 @@ scsipi_test_unit_ready(struct scsipi_periph *periph, int flags)
 	memset(&cmd, 0, sizeof(cmd));
 	cmd.opcode = SCSI_TEST_UNIT_READY;
 
-	return (scsipi_command(periph, (void *)&cmd, sizeof(cmd), 0, 0,
-	    retries, 10000, NULL, flags));
+	return scsipi_command(periph, (void *)&cmd, sizeof(cmd), 0, 0,
+	    retries, 10000, NULL, flags);
+}
+
+static const struct scsipi_inquiry3_pattern {
+	const char vendor[8];
+	const char product[16];
+	const char revision[4];
+} scsipi_inquiry3_quirk[] = {
+	{ "ES-6600 ", "", "" },
+};
+
+static int
+scsipi_inquiry3_ok(const struct scsipi_inquiry_data *ib)
+{
+	for (size_t i = 0; i < __arraycount(scsipi_inquiry3_quirk); i++) {
+		const struct scsipi_inquiry3_pattern *q =
+		    &scsipi_inquiry3_quirk[i];
+#define MATCH(field) \
+    (q->field[0] ? memcmp(ib->field, q->field, sizeof(ib->field)) == 0 : 1)
+		if (MATCH(vendor) && MATCH(product) && MATCH(revision))
+			return 0;
+	}
+	return 1;
 }
 
 /*
@@ -1064,7 +1158,7 @@ scsipi_inquire(struct scsipi_periph *periph, struct scsipi_inquiry_data *inqbuf,
 
 	/*
 	 * If we request more data than the device can provide, it SHOULD just
-	 * return a short reponse.  However, some devices error with an
+	 * return a short response.  However, some devices error with an
 	 * ILLEGAL REQUEST sense code, and yet others have even more special
 	 * failture modes (such as the GL641USB flash adapter, which goes loony
 	 * and sends corrupted CRCs).  To work around this, and to bring our
@@ -1081,6 +1175,7 @@ scsipi_inquire(struct scsipi_periph *periph, struct scsipi_inquiry_data *inqbuf,
 	    10000, NULL, flags | XS_CTL_DATA_IN);
 	if (!error &&
 	    inqbuf->additional_length > SCSIPI_INQUIRY_LENGTH_SCSI2 - 4) {
+	    if (scsipi_inquiry3_ok(inqbuf)) {
 #if 0
 printf("inquire: addlen=%d, retrying\n", inqbuf->additional_length);
 #endif
@@ -1091,6 +1186,7 @@ printf("inquire: addlen=%d, retrying\n", inqbuf->additional_length);
 #if 0
 printf("inquire: error=%d\n", error);
 #endif
+	    }
 	}
 
 #ifdef SCSI_OLD_NOINQUIRY
@@ -1173,8 +1269,8 @@ scsipi_start(struct scsipi_periph *periph, int type, int flags)
 	cmd.byte2 = 0x00;
 	cmd.how = type;
 
-	return (scsipi_command(periph, (void *)&cmd, sizeof(cmd), 0, 0,
-	    SCSIPIRETRIES, (type & SSS_START) ? 60000 : 10000, NULL, flags));
+	return scsipi_command(periph, (void *)&cmd, sizeof(cmd), 0, 0,
+	    SCSIPIRETRIES, (type & SSS_START) ? 60000 : 10000, NULL, flags);
 }
 
 /*
@@ -1195,8 +1291,8 @@ scsipi_mode_sense(struct scsipi_periph *periph, int byte2, int page,
 	cmd.page = page;
 	cmd.length = len & 0xff;
 
-	return (scsipi_command(periph, (void *)&cmd, sizeof(cmd),
-	    (void *)data, len, retries, timeout, NULL, flags | XS_CTL_DATA_IN));
+	return scsipi_command(periph, (void *)&cmd, sizeof(cmd),
+	    (void *)data, len, retries, timeout, NULL, flags | XS_CTL_DATA_IN);
 }
 
 int
@@ -1212,8 +1308,8 @@ scsipi_mode_sense_big(struct scsipi_periph *periph, int byte2, int page,
 	cmd.page = page;
 	_lto2b(len, cmd.length);
 
-	return (scsipi_command(periph, (void *)&cmd, sizeof(cmd),
-	    (void *)data, len, retries, timeout, NULL, flags | XS_CTL_DATA_IN));
+	return scsipi_command(periph, (void *)&cmd, sizeof(cmd),
+	    (void *)data, len, retries, timeout, NULL, flags | XS_CTL_DATA_IN);
 }
 
 int
@@ -1228,8 +1324,8 @@ scsipi_mode_select(struct scsipi_periph *periph, int byte2,
 	cmd.byte2 = byte2;
 	cmd.length = len & 0xff;
 
-	return (scsipi_command(periph, (void *)&cmd, sizeof(cmd),
-	    (void *)data, len, retries, timeout, NULL, flags | XS_CTL_DATA_OUT));
+	return scsipi_command(periph, (void *)&cmd, sizeof(cmd),
+	    (void *)data, len, retries, timeout, NULL, flags | XS_CTL_DATA_OUT);
 }
 
 int
@@ -1244,8 +1340,8 @@ scsipi_mode_select_big(struct scsipi_periph *periph, int byte2,
 	cmd.byte2 = byte2;
 	_lto2b(len, cmd.length);
 
-	return (scsipi_command(periph, (void *)&cmd, sizeof(cmd),
-	    (void *)data, len, retries, timeout, NULL, flags | XS_CTL_DATA_OUT));
+	return scsipi_command(periph, (void *)&cmd, sizeof(cmd),
+	    (void *)data, len, retries, timeout, NULL, flags | XS_CTL_DATA_OUT);
 }
 
 /*
@@ -1259,9 +1355,7 @@ scsipi_done(struct scsipi_xfer *xs)
 {
 	struct scsipi_periph *periph = xs->xs_periph;
 	struct scsipi_channel *chan = periph->periph_channel;
-	int s, freezecnt;
-
-	KASSERT(cold || KERNEL_LOCKED_P());
+	int freezecnt;
 
 	SC_DEBUG(periph, SCSIPI_DB2, ("scsipi_done\n"));
 #ifdef SCSIPI_DEBUG
@@ -1269,7 +1363,7 @@ scsipi_done(struct scsipi_xfer *xs)
 		show_scsipi_cmd(xs);
 #endif
 
-	s = splbio();
+	mutex_enter(chan_mtx(chan));
 	/*
 	 * The resource this command was using is now free.
 	 */
@@ -1284,7 +1378,7 @@ scsipi_done(struct scsipi_xfer *xs)
 		 * that this won't ever happen (and can be turned into
 		 * a KASSERT().
 		 */
-		splx(s);
+		mutex_exit(chan_mtx(chan));
 		goto out;
 	}
 	scsipi_put_resource(chan);
@@ -1318,7 +1412,7 @@ scsipi_done(struct scsipi_xfer *xs)
 	if (xs->xs_control & XS_CTL_FREEZE_PERIPH)
 		freezecnt++;
 	if (freezecnt != 0)
-		scsipi_periph_freeze(periph, freezecnt);
+		scsipi_periph_freeze_locked(periph, freezecnt);
 
 	/*
 	 * record the xfer with a pending sense, in case a SCSI reset is
@@ -1335,7 +1429,6 @@ scsipi_done(struct scsipi_xfer *xs)
 	 * in its context.
 	 */
 	if ((xs->xs_control & XS_CTL_ASYNC) == 0) {
-		splx(s);
 		/*
 		 * If it's a polling job, just return, to unwind the
 		 * call graph.  We don't need to restart the queue,
@@ -1344,9 +1437,12 @@ scsipi_done(struct scsipi_xfer *xs)
 		 * (XXX or during boot-time autconfiguration of
 		 * ATAPI devices).
 		 */
-		if (xs->xs_control & XS_CTL_POLL)
+		if (xs->xs_control & XS_CTL_POLL) {
+			mutex_exit(chan_mtx(chan));
 			return;
-		wakeup(xs);
+		}
+		cv_broadcast(xs_cv(xs));
+		mutex_exit(chan_mtx(chan));
 		goto out;
 	}
 
@@ -1356,7 +1452,7 @@ scsipi_done(struct scsipi_xfer *xs)
 	 * if we can handle it in interrupt context.
 	 */
 	if (xs->error == XS_NOERROR) {
-		splx(s);
+		mutex_exit(chan_mtx(chan));
 		(void) scsipi_complete(xs);
 		goto out;
 	}
@@ -1366,8 +1462,8 @@ scsipi_done(struct scsipi_xfer *xs)
 	 * completion queue, and wake up the completion thread.
 	 */
 	TAILQ_INSERT_TAIL(&chan->chan_complete, xs, channel_q);
-	splx(s);
-	wakeup(&chan->chan_complete);
+	cv_broadcast(chan_cv_complete(chan));
+	mutex_exit(chan_mtx(chan));
 
  out:
 	/*
@@ -1411,7 +1507,7 @@ scsipi_complete(struct scsipi_xfer *xs)
 {
 	struct scsipi_periph *periph = xs->xs_periph;
 	struct scsipi_channel *chan = periph->periph_channel;
-	int error, s;
+	int error;
 
 #ifdef DIAGNOSTIC
 	if ((xs->xs_control & XS_CTL_ASYNC) != 0 && xs->bp == NULL)
@@ -1421,10 +1517,10 @@ scsipi_complete(struct scsipi_xfer *xs)
 	 * If command terminated with a CHECK CONDITION, we need to issue a
 	 * REQUEST_SENSE command. Once the REQUEST_SENSE has been processed
 	 * we'll have the real status.
-	 * Must be processed at splbio() to avoid missing a SCSI bus reset
-	 * for this command.
+	 * Must be processed with channel lock held to avoid missing
+	 * a SCSI bus reset for this command.
 	 */
-	s = splbio();
+	mutex_enter(chan_mtx(chan));
 	if (xs->error == XS_BUSY && xs->status == SCSI_CHECK) {
 		/* request sense for a request sense ? */
 		if (xs->xs_control & XS_CTL_REQSENSE) {
@@ -1432,8 +1528,8 @@ scsipi_complete(struct scsipi_xfer *xs)
 			printf("request sense for a request sense ?\n");
 			/* XXX maybe we should reset the device ? */
 			/* we've been frozen because xs->error != XS_NOERROR */
-			scsipi_periph_thaw(periph, 1);
-			splx(s);
+			scsipi_periph_thaw_locked(periph, 1);
+			mutex_exit(chan_mtx(chan));
 			if (xs->resid < xs->datalen) {
 				printf("we read %d bytes of sense anyway:\n",
 				    xs->datalen - xs->resid);
@@ -1441,9 +1537,10 @@ scsipi_complete(struct scsipi_xfer *xs)
 			}
 			return EINVAL;
 		}
+		mutex_exit(chan_mtx(chan)); // XXX allows other commands to queue or run
 		scsipi_request_sense(xs);
-	}
-	splx(s);
+	} else
+		mutex_exit(chan_mtx(chan));
 
 	/*
 	 * If it's a user level request, bypass all usual completion
@@ -1451,8 +1548,10 @@ scsipi_complete(struct scsipi_xfer *xs)
 	 */
 	if ((xs->xs_control & XS_CTL_USERCMD) != 0) {
 		SC_DEBUG(periph, SCSIPI_DB3, ("calling user done()\n"));
+		mutex_enter(chan_mtx(chan));
 		if (xs->error != XS_NOERROR)
-			scsipi_periph_thaw(periph, 1);
+			scsipi_periph_thaw_locked(periph, 1);
+		mutex_exit(chan_mtx(chan));
 		scsipi_user_done(xs);
 		SC_DEBUG(periph, SCSIPI_DB3, ("returned from user done()\n "));
 		return 0;
@@ -1511,15 +1610,17 @@ scsipi_complete(struct scsipi_xfer *xs)
 			/*
 			 * Wait one second, and try again.
 			 */
+			mutex_enter(chan_mtx(chan));
 			if ((xs->xs_control & XS_CTL_POLL) ||
 			    (chan->chan_flags & SCSIPI_CHAN_TACTIVE) == 0) {
 				/* XXX: quite extreme */
-				kpause("xsbusy", false, hz, NULL);
+				kpause("xsbusy", false, hz, chan_mtx(chan));
 			} else if (!callout_pending(&periph->periph_callout)) {
-				scsipi_periph_freeze(periph, 1);
+				scsipi_periph_freeze_locked(periph, 1);
 				callout_reset(&periph->periph_callout,
 				    hz, scsipi_periph_timed_thaw, periph);
 			}
+			mutex_exit(chan_mtx(chan));
 			error = ERESTART;
 		} else
 			error = EBUSY;
@@ -1574,7 +1675,7 @@ scsipi_complete(struct scsipi_xfer *xs)
 		break;
 	}
 
-	s = splbio();
+	mutex_enter(chan_mtx(chan));
 	if (error == ERESTART) {
 		/*
 		 * If we get here, the periph has been thawed and frozen
@@ -1590,9 +1691,9 @@ scsipi_complete(struct scsipi_xfer *xs)
 		xs->xs_requeuecnt++;
 		error = scsipi_enqueue(xs);
 		if (error == 0) {
-			scsipi_periph_thaw(periph, 1);
-			splx(s);
-			return (ERESTART);
+			scsipi_periph_thaw_locked(periph, 1);
+			mutex_exit(chan_mtx(chan));
+			return ERESTART;
 		}
 	}
 
@@ -1601,22 +1702,24 @@ scsipi_complete(struct scsipi_xfer *xs)
 	 * Thaw it here.
 	 */
 	if (xs->error != XS_NOERROR)
-		scsipi_periph_thaw(periph, 1);
+		scsipi_periph_thaw_locked(periph, 1);
+	mutex_exit(chan_mtx(chan));
 
 	if (periph->periph_switch->psw_done)
 		periph->periph_switch->psw_done(xs, error);
 
+	mutex_enter(chan_mtx(chan));
 	if (xs->xs_control & XS_CTL_ASYNC)
 		scsipi_put_xs(xs);
-	splx(s);
+	mutex_exit(chan_mtx(chan));
 
-	return (error);
+	return error;
 }
 
 /*
  * Issue a request sense for the given scsipi_xfer. Called when the xfer
  * returns with a CHECK_CONDITION status. Must be called in valid thread
- * context and at splbio().
+ * context.
  */
 
 static void
@@ -1682,9 +1785,6 @@ scsipi_enqueue(struct scsipi_xfer *xs)
 {
 	struct scsipi_channel *chan = xs->xs_periph->periph_channel;
 	struct scsipi_xfer *qxs;
-	int s;
-
-	s = splbio();
 
 	/*
 	 * If the xfer is to be polled, and there are already jobs on
@@ -1692,9 +1792,8 @@ scsipi_enqueue(struct scsipi_xfer *xs)
 	 */
 	if ((xs->xs_control & XS_CTL_POLL) != 0 &&
 	    TAILQ_FIRST(&chan->chan_queue) != NULL) {
-		splx(s);
 		xs->error = XS_DRIVER_STUFFUP;
-		return (EAGAIN);
+		return EAGAIN;
 	}
 
 	/*
@@ -1732,9 +1831,8 @@ scsipi_enqueue(struct scsipi_xfer *xs)
 	TAILQ_INSERT_TAIL(&chan->chan_queue, xs, channel_q);
  out:
 	if (xs->xs_control & XS_CTL_THAW_PERIPH)
-		scsipi_periph_thaw(xs->xs_periph, 1);
-	splx(s);
-	return (0);
+		scsipi_periph_thaw_locked(xs->xs_periph, 1);
+	return 0;
 }
 
 /*
@@ -1747,17 +1845,16 @@ scsipi_run_queue(struct scsipi_channel *chan)
 {
 	struct scsipi_xfer *xs;
 	struct scsipi_periph *periph;
-	int s;
 
 	for (;;) {
-		s = splbio();
+		mutex_enter(chan_mtx(chan));
 
 		/*
 		 * If the channel is frozen, we can't do any work right
 		 * now.
 		 */
 		if (chan->chan_qfreeze != 0) {
-			splx(s);
+			mutex_exit(chan_mtx(chan));
 			return;
 		}
 
@@ -1787,7 +1884,7 @@ scsipi_run_queue(struct scsipi_channel *chan)
 		/*
 		 * Can't find any work to do right now.
 		 */
-		splx(s);
+		mutex_exit(chan_mtx(chan));
 		return;
 
  got_one:
@@ -1812,7 +1909,7 @@ scsipi_run_queue(struct scsipi_channel *chan)
 					    "adapter resources");
 					/* We'll panic shortly... */
 				}
-				splx(s);
+				mutex_exit(chan_mtx(chan));
 
 				/*
 				 * XXX: We should be able to note that
@@ -1840,7 +1937,7 @@ scsipi_run_queue(struct scsipi_channel *chan)
 		else
 			periph->periph_flags |= PERIPH_UNTAG;
 		periph->periph_sent++;
-		splx(s);
+		mutex_exit(chan_mtx(chan));
 
 		scsipi_adapter_request(chan, ADAPTER_REQ_RUN_XFER, xs);
 	}
@@ -1859,10 +1956,9 @@ scsipi_execute_xs(struct scsipi_xfer *xs)
 {
 	struct scsipi_periph *periph = xs->xs_periph;
 	struct scsipi_channel *chan = periph->periph_channel;
-	int oasync, async, poll, error, s;
+	int oasync, async, poll, error;
 
 	KASSERT(!cold);
-	KASSERT(KERNEL_LOCKED_P());
 
 	(chan->chan_bustype->bustype_cmd)(xs);
 
@@ -1897,14 +1993,14 @@ scsipi_execute_xs(struct scsipi_xfer *xs)
 	} else {
 		/*
 		 * If the request doesn't specify a tag, give Head
-		 * tags to URGENT operations and Ordered tags to
+		 * tags to URGENT operations and Simple tags to
 		 * everything else.
 		 */
 		if (XS_CTL_TAGTYPE(xs) == 0) {
 			if (xs->xs_control & XS_CTL_URGENT)
 				xs->xs_control |= XS_CTL_HEAD_TAG;
 			else
-				xs->xs_control |= XS_CTL_ORDERED_TAG;
+				xs->xs_control |= XS_CTL_SIMPLE_TAG;
 		}
 
 		switch (XS_CTL_TAGTYPE(xs)) {
@@ -1966,34 +2062,35 @@ scsipi_execute_xs(struct scsipi_xfer *xs)
 		goto free_xs;
 	}
 
+	mutex_exit(chan_mtx(chan));
  restarted:
 	scsipi_run_queue(chan);
+	mutex_enter(chan_mtx(chan));
 
 	/*
 	 * The xfer is enqueued, and possibly running.  If it's to be
 	 * completed asynchronously, just return now.
 	 */
 	if (async)
-		return (0);
+		return 0;
 
 	/*
 	 * Not an asynchronous command; wait for it to complete.
 	 */
-	s = splbio();
 	while ((xs->xs_status & XS_STS_DONE) == 0) {
 		if (poll) {
 			scsipi_printaddr(periph);
 			printf("polling command not done\n");
 			panic("scsipi_execute_xs");
 		}
-		(void) tsleep(xs, PRIBIO, "xscmd", 0);
+		cv_wait(xs_cv(xs), chan_mtx(chan));
 	}
-	splx(s);
 
 	/*
 	 * Command is complete.  scsipi_done() has awakened us to perform
 	 * the error handling.
 	 */
+	mutex_exit(chan_mtx(chan));
 	error = scsipi_complete(xs);
 	if (error == ERESTART)
 		goto restarted;
@@ -2008,10 +2105,10 @@ scsipi_execute_xs(struct scsipi_xfer *xs)
 	 * Command completed successfully or fatal error occurred.  Fall
 	 * into....
 	 */
+	mutex_enter(chan_mtx(chan));
  free_xs:
-	s = splbio();
 	scsipi_put_xs(xs);
-	splx(s);
+	mutex_exit(chan_mtx(chan));
 
 	/*
 	 * Kick the queue, keep it running in case it stopped for some
@@ -2019,7 +2116,8 @@ scsipi_execute_xs(struct scsipi_xfer *xs)
 	 */
 	scsipi_run_queue(chan);
 
-	return (error);
+	mutex_enter(chan_mtx(chan));
+	return error;
 }
 
 /*
@@ -2034,56 +2132,51 @@ scsipi_completion_thread(void *arg)
 {
 	struct scsipi_channel *chan = arg;
 	struct scsipi_xfer *xs;
-	int s;
 
 	if (chan->chan_init_cb)
 		(*chan->chan_init_cb)(chan, chan->chan_init_cb_arg);
 
-	s = splbio();
+	mutex_enter(chan_mtx(chan));
 	chan->chan_flags |= SCSIPI_CHAN_TACTIVE;
-	splx(s);
 	for (;;) {
-		s = splbio();
 		xs = TAILQ_FIRST(&chan->chan_complete);
-		if (xs == NULL && chan->chan_tflags  == 0) {
+		if (xs == NULL && chan->chan_tflags == 0) {
 			/* nothing to do; wait */
-			(void) tsleep(&chan->chan_complete, PRIBIO,
-			    "sccomp", 0);
-			splx(s);
+			cv_wait(chan_cv_complete(chan), chan_mtx(chan));
 			continue;
 		}
 		if (chan->chan_tflags & SCSIPI_CHANT_CALLBACK) {
 			/* call chan_callback from thread context */
 			chan->chan_tflags &= ~SCSIPI_CHANT_CALLBACK;
 			chan->chan_callback(chan, chan->chan_callback_arg);
-			splx(s);
 			continue;
 		}
 		if (chan->chan_tflags & SCSIPI_CHANT_GROWRES) {
 			/* attempt to get more openings for this channel */
 			chan->chan_tflags &= ~SCSIPI_CHANT_GROWRES;
+			mutex_exit(chan_mtx(chan));
 			scsipi_adapter_request(chan,
 			    ADAPTER_REQ_GROW_RESOURCES, NULL);
 			scsipi_channel_thaw(chan, 1);
-			splx(s);
 			if (chan->chan_tflags & SCSIPI_CHANT_GROWRES)
 				kpause("scsizzz", FALSE, hz/10, NULL);
+			mutex_enter(chan_mtx(chan));
 			continue;
 		}
 		if (chan->chan_tflags & SCSIPI_CHANT_KICK) {
 			/* explicitly run the queues for this channel */
 			chan->chan_tflags &= ~SCSIPI_CHANT_KICK;
+			mutex_exit(chan_mtx(chan));
 			scsipi_run_queue(chan);
-			splx(s);
+			mutex_enter(chan_mtx(chan));
 			continue;
 		}
 		if (chan->chan_tflags & SCSIPI_CHANT_SHUTDOWN) {
-			splx(s);
 			break;
 		}
 		if (xs) {
 			TAILQ_REMOVE(&chan->chan_complete, xs, channel_q);
-			splx(s);
+			mutex_exit(chan_mtx(chan));
 
 			/*
 			 * Have an xfer with an error; process it.
@@ -2095,15 +2188,15 @@ scsipi_completion_thread(void *arg)
 			 * for some reason.
 			 */
 			scsipi_run_queue(chan);
-		} else {
-			splx(s);
+			mutex_enter(chan_mtx(chan));
 		}
 	}
 
 	chan->chan_thread = NULL;
 
 	/* In case parent is waiting for us to exit. */
-	wakeup(&chan->chan_thread);
+	cv_broadcast(chan_cv_thread(chan));
+	mutex_exit(chan_mtx(chan));
 
 	kthread_exit(0);
 }
@@ -2116,25 +2209,24 @@ int
 scsipi_thread_call_callback(struct scsipi_channel *chan,
     void (*callback)(struct scsipi_channel *, void *), void *arg)
 {
-	int s;
 
-	s = splbio();
+	mutex_enter(chan_mtx(chan));
 	if ((chan->chan_flags & SCSIPI_CHAN_TACTIVE) == 0) {
 		/* kernel thread doesn't exist yet */
-		splx(s);
+		mutex_exit(chan_mtx(chan));
 		return ESRCH;
 	}
 	if (chan->chan_tflags & SCSIPI_CHANT_CALLBACK) {
-		splx(s);
+		mutex_exit(chan_mtx(chan));
 		return EBUSY;
 	}
 	scsipi_channel_freeze(chan, 1);
 	chan->chan_callback = callback;
 	chan->chan_callback_arg = arg;
 	chan->chan_tflags |= SCSIPI_CHANT_CALLBACK;
-	wakeup(&chan->chan_complete);
-	splx(s);
-	return(0);
+	cv_broadcast(chan_cv_complete(chan));
+	mutex_exit(chan_mtx(chan));
+	return 0;
 }
 
 /*
@@ -2146,9 +2238,10 @@ void
 scsipi_async_event(struct scsipi_channel *chan, scsipi_async_event_t event,
     void *arg)
 {
-	int s;
+	bool lock = chan_running(chan) > 0;
 
-	s = splbio();
+	if (lock)
+		mutex_enter(chan_mtx(chan));
 	switch (event) {
 	case ASYNC_EVENT_MAX_OPENINGS:
 		scsipi_async_event_max_openings(chan,
@@ -2165,7 +2258,8 @@ scsipi_async_event(struct scsipi_channel *chan, scsipi_async_event_t event,
 		scsipi_async_event_channel_reset(chan);
 		break;
 	}
-	splx(s);
+	if (lock)
+		mutex_exit(chan_mtx(chan));
 }
 
 /*
@@ -2192,7 +2286,7 @@ scsipi_async_event_max_openings(struct scsipi_channel *chan,
 
 	/* XXX This could really suck with a large LUN space. */
 	for (; minlun <= maxlun; minlun++) {
-		periph = scsipi_lookup_periph(chan, mo->mo_target, minlun);
+		periph = scsipi_lookup_periph_locked(chan, mo->mo_target, minlun);
 		if (periph == NULL)
 			continue;
 
@@ -2214,7 +2308,7 @@ scsipi_set_xfer_mode(struct scsipi_channel *chan, int target, int immed)
 {
 	struct scsipi_xfer_mode xm;
 	struct scsipi_periph *itperiph;
-	int lun, s;
+	int lun;
 
 	/*
 	 * Go to the minimal xfer mode.
@@ -2237,9 +2331,7 @@ scsipi_set_xfer_mode(struct scsipi_channel *chan, int target, int immed)
 		/*
 		 * Now issue the request to the adapter.
 		 */
-		s = splbio();
 		scsipi_adapter_request(chan, ADAPTER_REQ_SET_XFER_MODE, &xm);
-		splx(s);
 		/*
 		 * If we want this to happen immediately, issue a dummy
 		 * command, since most adapters can't really negotiate unless
@@ -2258,7 +2350,7 @@ scsipi_set_xfer_mode(struct scsipi_channel *chan, int target, int immed)
  * scsipi_channel_reset:
  *
  *	handle scsi bus reset
- * called at splbio
+ * called with channel lock held
  */
 static void
 scsipi_async_event_channel_reset(struct scsipi_channel *chan)
@@ -2284,13 +2376,13 @@ scsipi_async_event_channel_reset(struct scsipi_channel *chan)
 				    channel_q);
 		}
 	}
-	wakeup(&chan->chan_complete);
+	cv_broadcast(chan_cv_complete(chan));
 	/* Catch xs with pending sense which may not have a REQSENSE xs yet */
 	for (target = 0; target < chan->chan_ntargets; target++) {
 		if (target == chan->chan_id)
 			continue;
 		for (lun = 0; lun <  chan->chan_nluns; lun++) {
-			periph = scsipi_lookup_periph(chan, target, lun);
+			periph = scsipi_lookup_periph_locked(chan, target, lun);
 			if (periph) {
 				xs = periph->periph_xscheck;
 				if (xs)
@@ -2311,9 +2403,10 @@ scsipi_target_detach(struct scsipi_channel *chan, int target, int lun,
     int flags)
 {
 	struct scsipi_periph *periph;
+	device_t tdev;
 	int ctarget, mintarget, maxtarget;
 	int clun, minlun, maxlun;
-	int error;
+	int error = 0;
 
 	if (target == -1) {
 		mintarget = 0;
@@ -2337,20 +2430,33 @@ scsipi_target_detach(struct scsipi_channel *chan, int target, int lun,
 		maxlun = lun + 1;
 	}
 
+	/* for config_detach */
+	KERNEL_LOCK(1, curlwp);
+
+	mutex_enter(chan_mtx(chan));
 	for (ctarget = mintarget; ctarget < maxtarget; ctarget++) {
 		if (ctarget == chan->chan_id)
 			continue;
 
 		for (clun = minlun; clun < maxlun; clun++) {
-			periph = scsipi_lookup_periph(chan, ctarget, clun);
+			periph = scsipi_lookup_periph_locked(chan, ctarget, clun);
 			if (periph == NULL)
 				continue;
-			error = config_detach(periph->periph_dev, flags);
+			tdev = periph->periph_dev;
+			mutex_exit(chan_mtx(chan));
+			error = config_detach(tdev, flags);
 			if (error)
-				return (error);
+				goto out;
+			mutex_enter(chan_mtx(chan));
+			KASSERT(scsipi_lookup_periph_locked(chan, ctarget, clun) == NULL);
 		}
 	}
-	return(0);
+	mutex_exit(chan_mtx(chan));
+
+out:
+	KERNEL_UNLOCK_ONE(curlwp);
+
+	return error;
 }
 
 /*
@@ -2362,16 +2468,17 @@ scsipi_target_detach(struct scsipi_channel *chan, int target, int lun,
 int
 scsipi_adapter_addref(struct scsipi_adapter *adapt)
 {
-	int s, error = 0;
+	int error = 0;
 
-	s = splbio();
-	if (adapt->adapt_refcnt++ == 0 && adapt->adapt_enable != NULL) {
-		error = (*adapt->adapt_enable)(adapt->adapt_dev, 1);
+	if (atomic_inc_uint_nv(&adapt->adapt_refcnt) == 1
+	    && adapt->adapt_enable != NULL) {
+		scsipi_adapter_lock(adapt);
+		error = scsipi_adapter_enable(adapt, 1);
+		scsipi_adapter_unlock(adapt);
 		if (error)
-			adapt->adapt_refcnt--;
+			atomic_dec_uint(&adapt->adapt_refcnt);
 	}
-	splx(s);
-	return (error);
+	return error;
 }
 
 /*
@@ -2383,12 +2490,13 @@ scsipi_adapter_addref(struct scsipi_adapter *adapt)
 void
 scsipi_adapter_delref(struct scsipi_adapter *adapt)
 {
-	int s;
 
-	s = splbio();
-	if (adapt->adapt_refcnt-- == 1 && adapt->adapt_enable != NULL)
-		(void) (*adapt->adapt_enable)(adapt->adapt_dev, 0);
-	splx(s);
+	if (atomic_dec_uint_nv(&adapt->adapt_refcnt) == 0
+	    && adapt->adapt_enable != NULL) {
+		scsipi_adapter_lock(adapt);
+		(void) scsipi_adapter_enable(adapt, 0);
+		scsipi_adapter_unlock(adapt);
+	}
 }
 
 static struct scsipi_syncparam {
@@ -2411,10 +2519,10 @@ scsipi_sync_period_to_factor(int period /* ns * 100 */)
 
 	for (i = 0; i < scsipi_nsyncparams; i++) {
 		if (period <= scsipi_syncparams[i].ss_period)
-			return (scsipi_syncparams[i].ss_factor);
+			return scsipi_syncparams[i].ss_factor;
 	}
 
-	return ((period / 100) / 4);
+	return (period / 100) / 4;
 }
 
 int
@@ -2424,10 +2532,10 @@ scsipi_sync_factor_to_period(int factor)
 
 	for (i = 0; i < scsipi_nsyncparams; i++) {
 		if (factor == scsipi_syncparams[i].ss_factor)
-			return (scsipi_syncparams[i].ss_period);
+			return scsipi_syncparams[i].ss_period;
 	}
 
-	return ((factor * 4) * 100);
+	return (factor * 4) * 100;
 }
 
 int
@@ -2437,15 +2545,80 @@ scsipi_sync_factor_to_freq(int factor)
 
 	for (i = 0; i < scsipi_nsyncparams; i++) {
 		if (factor == scsipi_syncparams[i].ss_factor)
-			return (100000000 / scsipi_syncparams[i].ss_period);
+			return 100000000 / scsipi_syncparams[i].ss_period;
 	}
 
-	return (10000000 / ((factor * 4) * 10));
+	return 10000000 / ((factor * 4) * 10);
+}
+
+static inline void
+scsipi_adapter_lock(struct scsipi_adapter *adapt)
+{
+
+	if ((adapt->adapt_flags & SCSIPI_ADAPT_MPSAFE) == 0)
+		KERNEL_LOCK(1, NULL);
+}
+
+static inline void
+scsipi_adapter_unlock(struct scsipi_adapter *adapt)
+{
+
+	if ((adapt->adapt_flags & SCSIPI_ADAPT_MPSAFE) == 0)
+		KERNEL_UNLOCK_ONE(NULL);
+}
+
+void
+scsipi_adapter_minphys(struct scsipi_channel *chan, struct buf *bp)
+{
+	struct scsipi_adapter *adapt = chan->chan_adapter;
+
+	scsipi_adapter_lock(adapt);
+	(adapt->adapt_minphys)(bp);
+	scsipi_adapter_unlock(chan->chan_adapter);
+}
+
+void
+scsipi_adapter_request(struct scsipi_channel *chan, 
+	scsipi_adapter_req_t req, void *arg)
+
+{
+	struct scsipi_adapter *adapt = chan->chan_adapter;
+
+	scsipi_adapter_lock(adapt);
+	(adapt->adapt_request)(chan, req, arg);
+	scsipi_adapter_unlock(adapt);
+}
+
+int
+scsipi_adapter_ioctl(struct scsipi_channel *chan, u_long cmd,
+	void *data, int flag, struct proc *p)
+{
+	struct scsipi_adapter *adapt = chan->chan_adapter;
+	int error;
+
+	if (adapt->adapt_ioctl == NULL)
+		return ENOTTY;
+
+	scsipi_adapter_lock(adapt);
+	error = (adapt->adapt_ioctl)(chan, cmd, data, flag, p);
+	scsipi_adapter_unlock(adapt);
+	return error;
+}
+
+int
+scsipi_adapter_enable(struct scsipi_adapter *adapt, int enable)
+{
+	int error;
+
+	scsipi_adapter_lock(adapt);
+	error = (adapt->adapt_enable)(adapt->adapt_dev, enable);
+	scsipi_adapter_unlock(adapt);
+	return error;
 }
 
 #ifdef SCSIPI_DEBUG
 /*
- * Given a scsipi_xfer, dump the request, in all it's glory
+ * Given a scsipi_xfer, dump the request, in all its glory
  */
 void
 show_scsipi_xs(struct scsipi_xfer *xs)

@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.26.2.1 2014/08/20 00:03:25 tls Exp $	*/
+/*	$NetBSD: consinit.c,v 1.26.2.2 2017/12/03 11:36:44 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 Eduardo E. Horvath
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.26.2.1 2014/08/20 00:03:25 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.26.2.2 2017/12/03 11:36:44 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "pcons.h"
@@ -172,7 +172,7 @@ consinit(void)
 	char buffer[128];
 	const char *consname = "unknown";
 
-	DBPRINT(("consinit()\r\n"));
+	DBPRINT(("consinit()\n"));
 
 	if (cn_tab != &consdev_prom)
 		return;
@@ -180,13 +180,13 @@ consinit(void)
 	if ((prom_stdin_node = prom_instance_to_package(prom_stdin())) == 0) {
 		printf("WARNING: no PROM stdin\n");
 	}
-	DBPRINT(("stdin node = %x\r\n", prom_stdin_node));
+	DBPRINT(("stdin node = %x\n", prom_stdin_node));
 
 	if ((prom_stdout_node = prom_instance_to_package(prom_stdout())) == 0)
 		printf("WARNING: no PROM stdout\n");
-	DBPRINT(("stdout package = %x\r\n", prom_stdout_node));
+	DBPRINT(("stdout package = %x\n", prom_stdout_node));
 
-	DBPRINT(("buffer @ %p\r\n", buffer));
+	DBPRINT(("buffer @ %p\n", buffer));
 
 	if (prom_stdin_node != 0 &&
 	    (prom_getproplen(prom_stdin_node, "keyboard") >= 0)) {

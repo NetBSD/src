@@ -1,4 +1,4 @@
-/*	$NetBSD: ezload.c,v 1.13.2.1 2013/02/25 00:29:33 tls Exp $	*/
+/*	$NetBSD: ezload.c,v 1.13.2.2 2017/12/03 11:37:33 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ezload.c,v 1.13.2.1 2013/02/25 00:29:33 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ezload.c,v 1.13.2.2 2017/12/03 11:37:33 jdolecek Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_usb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,7 +89,7 @@ int ezloaddebug = 0;
 #endif
 
 usbd_status
-ezload_reset(usbd_device_handle dev, int reset)
+ezload_reset(struct usbd_device *dev, int reset)
 {
 	usb_device_request_t req;
 	uByte rst;
@@ -98,11 +102,11 @@ ezload_reset(usbd_device_handle dev, int reset)
 	USETW(req.wValue, ANCHOR_CPUCS_REG);
 	USETW(req.wIndex, 0);
 	USETW(req.wLength, 1);
-	return (usbd_do_request(dev, &req, &rst));
+	return usbd_do_request(dev, &req, &rst);
 }
 
 usbd_status
-ezload_download(usbd_device_handle dev, const struct ezdata *rec)
+ezload_download(struct usbd_device *dev, const struct ezdata *rec)
 {
 	usb_device_request_t req;
 	const struct ezdata *ptr;
@@ -115,7 +119,7 @@ ezload_download(usbd_device_handle dev, const struct ezdata *rec)
 
 #if 0
 		if (ptr->address + ptr->length > ANCHOR_MAX_INTERNAL_ADDRESS)
-			return (USBD_INVAL);
+			return USBD_INVAL;
 #endif
 
 		req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
@@ -133,30 +137,30 @@ ezload_download(usbd_device_handle dev, const struct ezdata *rec)
 			err = usbd_do_request(dev, &req,
 			    __UNCONST(ptr->data + offs));
 			if (err)
-				return (err);
+				return err;
 		}
 	}
 
-	return (0);
+	return 0;
 }
 
 usbd_status
-ezload_downloads_and_reset(usbd_device_handle dev, const struct ezdata **recs)
+ezload_downloads_and_reset(struct usbd_device *dev, const struct ezdata **recs)
 {
 	usbd_status err;
 
 	/*(void)ezload_reset(dev, 1);*/
 	err = ezload_reset(dev, 1);
 	if (err)
-		return (err);
+		return err;
 	usbd_delay_ms(dev, 250);
 	while (*recs != NULL) {
 		err = ezload_download(dev, *recs++);
 		if (err)
-			return (err);
+			return err;
 	}
 	usbd_delay_ms(dev, 250);
 	err = ezload_reset(dev, 0);
 	usbd_delay_ms(dev, 250);
-	return (err);
+	return err;
 }

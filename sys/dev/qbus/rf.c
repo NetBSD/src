@@ -1,4 +1,4 @@
-/*	$NetBSD: rf.c,v 1.24.24.2 2014/08/20 00:03:49 tls Exp $	*/
+/*	$NetBSD: rf.c,v 1.24.24.3 2017/12/03 11:37:31 jdolecek Exp $	*/
 /*
  * Copyright (c) 2002 Jochen Kunz.
  * All rights reserved.
@@ -36,7 +36,7 @@ TODO:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.24.24.2 2014/08/20 00:03:49 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.24.24.3 2017/12/03 11:37:31 jdolecek Exp $");
 
 /* autoconfig stuff */
 #include <sys/param.h>
@@ -202,7 +202,7 @@ struct rfc_attach_args {
 
 
 const struct dkdriver rfdkdriver = {
-	rfstrategy
+	.d_strategy = rfstrategy
 };
 
 
@@ -460,7 +460,7 @@ rf_attach(device_t parent, device_t self, void *aux)
 	disk_init(&rf_sc->sc_disk, device_xname(rf_sc->sc_dev), &rfdkdriver);
 	disk_attach(&rf_sc->sc_disk);
 	dl = rf_sc->sc_disk.dk_label;
-	dl->d_type = DTYPE_FLOPPY;		/* drive type */
+	dl->d_type = DKTYPE_FLOPPY;		/* drive type */
 	dl->d_magic = DISKMAGIC;		/* the magic number */
 	dl->d_magic2 = DISKMAGIC;
 	dl->d_typename[0] = 'R';
@@ -1090,27 +1090,22 @@ int
 rfioctl(dev_t dev, u_long cmd, void *data, int fflag, struct lwp *l)
 {
 	struct rf_softc *rf_sc = device_lookup_private(&rf_cd, DISKUNIT(dev));
+	int error;
 
 	/* We are going to operate on a non-open dev? PANIC! */
 	if ((rf_sc->sc_state & 1 << (DISKPART(dev) + RFS_OPEN_SHIFT)) == 0)
 		panic("rfioctl: can not operate on non-open drive %s "
 		    "partition %"PRIu32, device_xname(rf_sc->sc_dev), DISKPART(dev));
+	error = disk_ioctl(&rf_sc->sc_disk, dev, cmd, data, fflag, l);
+	if (error != EPASSTHROUGH)
+		return error;
+
 	switch (cmd) {
-	/* get and set disklabel; DIOCGPART used internally */
-	case DIOCGDINFO: /* get */
-		memcpy(data, rf_sc->sc_disk.dk_label,
-		    sizeof(struct disklabel));
-		return(0);
+	/* get and set disklabel; DIOCGPARTINFO used internally */
 	case DIOCSDINFO: /* set */
 		return(0);
 	case DIOCWDINFO: /* set, update disk */
 		return(0);
-	case DIOCGPART:  /* get partition */
-		((struct partinfo *)data)->disklab = rf_sc->sc_disk.dk_label;
-		((struct partinfo *)data)->part =
-		    &rf_sc->sc_disk.dk_label->d_partitions[DISKPART(dev)];
-		return(0);
-
 	/* do format operation, read or write */
 	case DIOCRFORMAT:
 	break;

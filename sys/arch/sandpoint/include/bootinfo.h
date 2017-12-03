@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.8 2011/01/11 06:57:35 nisimura Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.8.18.1 2017/12/03 11:36:40 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -45,6 +45,7 @@ struct btinfo_common {
 #define BTINFO_NET		7
 #define BTINFO_PRODFAMILY	8
 #define BTINFO_MODULELIST	9
+#define BTINFO_MODEL		10
 
 struct btinfo_magic {
 	struct btinfo_common common;
@@ -89,6 +90,20 @@ struct btinfo_net {
 struct btinfo_prodfamily {
 	struct btinfo_common common;
 	char name[24];
+};
+
+struct btinfo_model {
+	struct btinfo_common common;
+	char name[28];
+	unsigned flags;			/* model specific flags */
+/* Synology flags: */
+#define BI_MODEL_CPLDVER_MASK	0x07
+#define BI_MODEL_CPLD207	0x08
+#define BI_MODEL_CPLD209	0x10
+#define BI_MODEL_CPLD406	0x18
+#define BI_MODEL_CPLD407	0x20
+#define BI_MODEL_CPLD_MASK	0x38
+#define BI_MODEL_THERMAL	0x40
 };
 
 struct btinfo_modulelist {

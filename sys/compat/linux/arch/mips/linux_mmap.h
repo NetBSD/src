@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_mmap.h,v 1.8 2008/04/28 20:23:43 martin Exp $	*/
+/*	$NetBSD: linux_mmap.h,v 1.8.44.1 2017/12/03 11:36:54 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@
  */
 #define LINUX_MAP_FIXED		0x0010
 #define LINUX_MAP_ANON		0x0800	/* MAP_ANONYMOUS for Linux */
+#define LINUX_MAP_LOCKED	0x8000
 
 /* Ignored */
 #define LINUX_MAP_RENAME	0x0020
@@ -52,6 +53,5 @@
 #define LINUX_MAP_GROWSDOWN	0x1000
 #define LINUX_MAP_DENYWRITE	0x2000
 #define LINUX_MAP_EXECUTABLE	0x4000
-#define LINUX_MAP_LOCKED	0x8000
 
 #endif /* !_MIPS_LINUX_MMAP_H */

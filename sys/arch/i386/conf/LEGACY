@@ -1,0 +1,14 @@
+#	$NetBSD: LEGACY,v 1.1.20.2 2017/12/03 11:36:17 jdolecek Exp $
+
+# LEGACY kernel -- includes vga@isa and pcdisplay@isa for pre-PCI
+# systems, due to significant pain making them fail to attach when
+# drmkms has not already attached.  see PR#49290 for details.
+
+include "arch/i386/conf/GENERIC"
+
+vga0		at isa?
+pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
+wsdisplay*	at pcdisplay? console ?
+
+# XXX we could turn off all sorts of other modern features in this
+# configuration, but that is left for future work.

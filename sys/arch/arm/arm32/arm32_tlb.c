@@ -26,8 +26,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_multiprocessor.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: arm32_tlb.c,v 1.2.8.2 2014/08/20 00:02:45 tls Exp $");
+__KERNEL_RCSID(1, "$NetBSD: arm32_tlb.c,v 1.2.8.3 2017/12/03 11:35:51 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -37,6 +40,7 @@ __KERNEL_RCSID(1, "$NetBSD: arm32_tlb.c,v 1.2.8.2 2014/08/20 00:02:45 tls Exp $"
 #include <arm/locore.h>
 
 bool arm_has_tlbiasid_p;	// CPU supports TLBIASID system coprocessor op
+bool arm_has_mpext_p;		// CPU supports MP extensions
 
 tlb_asid_t
 tlb_get_asid(void)
@@ -48,8 +52,9 @@ void
 tlb_set_asid(tlb_asid_t asid)
 {
 	arm_dsb();
-	if (asid == 0) {
+	if (asid == KERNEL_PID) {
 		armreg_ttbcr_write(armreg_ttbcr_read() | TTBCR_S_PD0);
+		arm_isb();
 	}
 	armreg_contextidr_write(asid);
 	arm_isb();
@@ -60,7 +65,11 @@ tlb_invalidate_all(void)
 {
 	const bool vivt_icache_p = arm_pcache.icache_type == CACHE_TYPE_VIVT;
 	arm_dsb();
-	armreg_tlbiall_write(0);
+	if (arm_has_mpext_p) {
+		armreg_tlbiallis_write(0);
+	} else {
+		armreg_tlbiall_write(0);
+	}
 	arm_isb();
 	if (__predict_false(vivt_icache_p)) {
 		if (arm_has_tlbiasid_p) {
@@ -69,6 +78,7 @@ tlb_invalidate_all(void)
 			armreg_iciallu_write(0);
 		}
 	}
+	arm_dsb();
 	arm_isb();
 }
 
@@ -85,11 +95,20 @@ tlb_invalidate_asids(tlb_asid_t lo, tlb_asid_t hi)
 	arm_dsb();
 	if (arm_has_tlbiasid_p) {
 		for (; lo <= hi; lo++) {
-			armreg_tlbiasid_write(lo);
+			if (arm_has_mpext_p) {
+				armreg_tlbiasidis_write(lo);
+			} else {
+				armreg_tlbiasid_write(lo);
+			}
 		}
+		arm_dsb();
 		arm_isb();
 		if (__predict_false(vivt_icache_p)) {
-			armreg_icialluis_write(0);
+			if (arm_has_mpext_p) {
+				armreg_icialluis_write(0);
+			} else {
+				armreg_iciallu_write(0);
+			}
 		}
 	} else {
 		armreg_tlbiall_write(0);
@@ -107,8 +126,11 @@ tlb_invalidate_addr(vaddr_t va, tlb_asid_t asid)
 	arm_dsb();
 	va = trunc_page(va) | asid;
 	for (vaddr_t eva = va + PAGE_SIZE; va < eva; va += L2_S_SIZE) {
-		armreg_tlbimva_write(va);
-		//armreg_tlbiall_write(asid);
+		if (arm_has_mpext_p) {
+			armreg_tlbimvais_write(va);
+		} else {
+			armreg_tlbimva_write(va);
+		}
 	}
 	arm_isb();
 }
@@ -122,7 +144,7 @@ tlb_update_addr(vaddr_t va, tlb_asid_t asid, pt_entry_t pte, bool insert_p)
 
 #if !defined(MULTIPROCESSOR) && defined(CPU_CORTEXA5)
 static u_int
-tlb_cortex_a5_record_asids(u_long *mapp)
+tlb_cortex_a5_record_asids(u_long *mapp, tlb_asid_t asid_max)
 {
 	u_int nasids = 0;
 	for (size_t va_index = 0; va_index < 63; va_index++) {
@@ -134,11 +156,11 @@ tlb_cortex_a5_record_asids(u_long *mapp)
 			const uint64_t d = ((uint64_t) armreg_tlbdata1_read())
 			    | armreg_tlbdata0_read();
 			if (!(d & ARM_TLBDATA_VALID)
-			    || !(d & ARM_V5_TLBDATA_nG))
+			    || !(d & ARM_A5_TLBDATA_nG))
 				continue;
 
 			const tlb_asid_t asid = __SHIFTOUT(d,
-			    ARM_V5_TLBDATA_ASID);
+			    ARM_A5_TLBDATA_ASID);
 			const u_long mask = 1L << (asid & 31);
 			const size_t idx = asid >> 5;
 			if (mapp[idx] & mask)
@@ -154,7 +176,7 @@ tlb_cortex_a5_record_asids(u_long *mapp)
 
 #if !defined(MULTIPROCESSOR) && defined(CPU_CORTEXA7)
 static u_int
-tlb_cortex_a7_record_asids(u_long *mapp)
+tlb_cortex_a7_record_asids(u_long *mapp, tlb_asid_t asid_max)
 {
 	u_int nasids = 0;
 	for (size_t va_index = 0; va_index < 128; va_index++) {
@@ -186,16 +208,16 @@ tlb_cortex_a7_record_asids(u_long *mapp)
 #endif
 
 u_int
-tlb_record_asids(u_long *mapp)
+tlb_record_asids(u_long *mapp, tlb_asid_t asid_max)
 {
 #ifndef MULTIPROCESSOR
 #ifdef CPU_CORTEXA5
 	if (CPU_ID_CORTEX_A5_P(curcpu()->ci_arm_cpuid))
-		return tlb_cortex_a5_record_asids(mapp);
+		return tlb_cortex_a5_record_asids(mapp, asid_max);
 #endif
 #ifdef CPU_CORTEXA7
 	if (CPU_ID_CORTEX_A7_P(curcpu()->ci_arm_cpuid))
-		return tlb_cortex_a7_record_asids(mapp);
+		return tlb_cortex_a7_record_asids(mapp, asid_max);
 #endif
 #endif /* MULTIPROCESSOR */
 #ifdef DIAGNOSTIC

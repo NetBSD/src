@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emu.c,v 1.16 2012/07/23 04:13:06 matt Exp $ */
+/*	$NetBSD: fpu_emu.c,v 1.16.2.1 2017/12/03 11:36:36 jdolecek Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.16 2012/07/23 04:13:06 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.16.2.1 2017/12/03 11:36:36 jdolecek Exp $");
 
 #include "opt_ddb.h"
 
@@ -248,14 +248,14 @@ fpu_emulate(struct trapframe *tf, struct fpreg *fpf, ksiginfo_t *ksi)
 	case NOTFPU:
 	default:
 		DPRINTF(FPE_EX, ("fpu_emulate: SIGILL\n"));
-#ifdef DEBUG
+#if defined(DDB) && defined(DEBUG)
 		if (fpe_debug & FPE_EX) {
 			printf("fpu_emulate:  illegal insn %x at %p:",
 			insn.i_int, (void *) (tf->tf_srr0));
 			opc_disasm((vaddr_t)(tf->tf_srr0), insn.i_int);
 		}
 #endif
-#if defined(PPC_IBM4XX) && defined(DEBUG)
+#if defined(PPC_IBM4XX) && defined(DDB) && defined(DEBUG)
 		/*
 		* XXXX retry an illegal insn once due to cache issues.
 		*/
@@ -265,7 +265,7 @@ fpu_emulate(struct trapframe *tf, struct fpreg *fpf, ksiginfo_t *ksi)
 				Debugger();
 		}
 		lastill = tf->tf_srr0;
-#endif /* PPC_IBM4XX && DEBUG */
+#endif /* PPC_IBM4XX && DDB && DEBUG */
 		return false;
 	}
 }
@@ -324,7 +324,7 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 		 * Convert to/from single if needed, calculate addr,
 		 * and update index reg if needed.
 		 */
-		double buf;
+		uint64_t buf;
 		size_t size = sizeof(float);
 		int store, update;
 
@@ -626,9 +626,11 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 			rb = instr.i_a.i_frb;
 			rc = instr.i_a.i_frc;
 
-			type = FTYPE_SNG;
-			if (instr.i_any.i_opcd & 0x4)
-				type = FTYPE_DBL;
+			/*
+			 * All arithmetic operations work on registers, which
+			 * are stored as doubles.
+			 */
+			type = FTYPE_DBL;
 			switch ((unsigned int)instr.i_a.i_xo) {
 			case	OPC59_FDIVS:
 				FPU_EMU_EVCNT_INCR(fdiv);
@@ -744,6 +746,13 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 			default:
 				return (NOTFPU);
 				break;
+			}
+
+			/* If the instruction was single precision, round */
+			if (!(instr.i_any.i_opcd & 0x4)) {
+				fpu_implode(fe, fp, FTYPE_SNG, 
+					(u_int *)&fs->fpreg[rt]);
+				fpu_explode(fe, fp = &fe->fe_f1, FTYPE_SNG, rt);
 			}
 		}
 	} else {

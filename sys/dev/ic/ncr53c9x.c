@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.145 2012/06/18 21:23:56 martin Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.145.2.1 2017/12/03 11:37:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.145 2012/06/18 21:23:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.145.2.1 2017/12/03 11:37:03 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -286,7 +286,7 @@ ncr53c9x_attach(struct ncr53c9x_softc *sc)
 
 	/*
 	 * Add reference to adapter so that we drop the reference after
-	 * config_found() to make sure the adatper is disabled.
+	 * config_found() to make sure the adapter is disabled.
 	 */
 	if (scsipi_adapter_addref(adapt) != 0) {
 		aprint_error_dev(sc->sc_dev, "unable to enable controller\n");
@@ -296,7 +296,7 @@ ncr53c9x_attach(struct ncr53c9x_softc *sc)
 	/* Reset state & bus */
 	sc->sc_cfflags = device_cfdata(sc->sc_dev)->cf_flags;
 	sc->sc_state = 0;
-	ncr53c9x_init(sc, 1);
+	ncr53c9x_init(sc, 0);	/* no bus reset yet, leave that to scsibus* */
 
 	/*
 	 * Now try to attach all the sub-devices
@@ -555,13 +555,13 @@ ncr53c9x_init(struct ncr53c9x_softc *sc, int doreset)
 	if (doreset) {
 		sc->sc_state = NCR_SBR;
 		NCRCMD(sc, NCRCMD_RSTSCSI);
+
+		/* Notify upper layer */
+		scsipi_async_event(&sc->sc_channel, ASYNC_EVENT_RESET, NULL);
 	} else {
 		sc->sc_state = NCR_IDLE;
 		ncr53c9x_sched(sc);
 	}
-
-	/* Notify upper layer */
-	scsipi_async_event(&sc->sc_channel, ASYNC_EVENT_RESET, NULL);
 
 	/* XXXSMP scsipi */
 	KERNEL_UNLOCK_ONE(curlwp);
@@ -1837,12 +1837,15 @@ gotit:
 				goto reject;
 			}
 			break;
+		case MSG_IGN_WIDE_RESIDUE:
+			NCR_MSGS(("ignore wide residue "));
+			break;
 
 		default:
 			NCR_MSGS(("ident "));
 			scsipi_printaddr(ecb->xs->xs_periph);
-			printf("%s: unrecognized MESSAGE; sending REJECT\n",
-			    device_xname(sc->sc_dev));
+			printf("%s: unrecognized MESSAGE (%x); sending REJECT\n",
+			    device_xname(sc->sc_dev), sc->sc_imess[0]);
 		reject:
 			ncr53c9x_sched_msgout(SEND_REJECT);
 			break;

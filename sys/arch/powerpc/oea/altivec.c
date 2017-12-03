@@ -1,4 +1,4 @@
-/*	$NetBSD: altivec.c,v 1.25.12.2 2014/08/20 00:03:20 tls Exp $	*/
+/*	$NetBSD: altivec.c,v 1.25.12.3 2017/12/03 11:36:37 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altivec.c,v 1.25.12.2 2014/08/20 00:03:20 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altivec.c,v 1.25.12.3 2017/12/03 11:36:37 jdolecek Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -63,13 +63,13 @@ const pcu_ops_t vec_ops = {
 bool
 vec_used_p(lwp_t *l)
 {
-	return pcu_valid_p(&vec_ops);
+	return pcu_valid_p(&vec_ops, l);
 }
 
 void
 vec_mark_used(lwp_t *l)
 {
-	return pcu_discard(&vec_ops, true);
+	return pcu_discard(&vec_ops, l, true);
 }
 
 void
@@ -82,29 +82,31 @@ vec_state_load(lwp_t *l, u_int flags)
 		vec_mark_used(l);
 	}
 
-	/*
-	 * Enable AltiVec temporarily (and disable interrupts).
-	 */
-	const register_t msr = mfmsr();
-	mtmsr((msr & ~PSL_EE) | PSL_VEC);
-	__asm volatile ("isync");
+	if ((flags & PCU_REENABLE) == 0) {
+		/*
+		 * Enable AltiVec temporarily (and disable interrupts).
+		 */
+		const register_t msr = mfmsr();
+		mtmsr((msr & ~PSL_EE) | PSL_VEC);
+		__asm volatile ("isync");
 
-	/*
-	 * Load the vector unit from vreg which is best done in
-	 * assembly.
-	 */
-	vec_load_from_vreg(&pcb->pcb_vr);
+		/*
+		 * Load the vector unit from vreg which is best done in
+		 * assembly.
+		 */
+		vec_load_from_vreg(&pcb->pcb_vr);
+
+		/*
+		 * Restore MSR (turn off AltiVec)
+		 */
+		mtmsr(msr);
+		__asm volatile ("isync");
+	}
 
 	/*
 	 * VRSAVE will be restored when trap frame returns
 	 */
 	l->l_md.md_utf->tf_vrsave = pcb->pcb_vr.vrsave;
-
-	/*
-	 * Restore MSR (turn off AltiVec)
-	 */
-	mtmsr(msr);
-	__asm volatile ("isync");
 
 	/*
 	 * Mark vector registers as modified.
@@ -164,7 +166,8 @@ vec_restore_from_mcontext(struct lwp *l, const mcontext_t *mcp)
 	KASSERT(l == curlwp);
 
 	/* we don't need to save the state, just drop it */
-	pcu_discard(&vec_ops, true);
+	pcu_discard(&vec_ops, l, true);
+
 	memcpy(pcb->pcb_vr.vreg, &mcp->__vrf.__vrs, sizeof (pcb->pcb_vr.vreg));
 	pcb->pcb_vr.vscr = mcp->__vrf.__vscr;
 	pcb->pcb_vr.vrsave = mcp->__vrf.__vrsave;
@@ -185,7 +188,7 @@ vec_save_to_mcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flagp)
 	/*
 	 * If we're the AltiVec owner, dump its context to the PCB first.
 	 */
-	pcu_save(&vec_ops);
+	pcu_save(&vec_ops, l);
 
 	mcp->__gregs[_REG_MSR] |= PSL_VEC;
 	mcp->__vrf.__vscr = pcb->pcb_vr.vscr;

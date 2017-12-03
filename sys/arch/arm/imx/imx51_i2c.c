@@ -1,7 +1,7 @@
-/*	$NetBSD: imx51_i2c.c,v 1.1.6.2 2014/08/20 00:02:46 tls Exp $	*/
+/*	$NetBSD: imx51_i2c.c,v 1.1.6.3 2017/12/03 11:35:53 jdolecek Exp $	*/
 
 /*
- * Copyright (c) 2012 Genetec Corporation.  All rights reserved.
+ * Copyright (c) 2012, 2015 Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,24 +27,32 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx51_i2c.c,v 1.1.6.2 2014/08/20 00:02:46 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx51_i2c.c,v 1.1.6.3 2017/12/03 11:35:53 jdolecek Exp $");
+
+#include "opt_imx.h"
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/device.h>
 
-#include "opt_imx.h"
-
-#include <arm/imx/imxi2cvar.h>
 #include <arm/imx/imx51reg.h>
 #include <arm/imx/imx51var.h>
 #include <arm/imx/imx51_ccmvar.h>
+#include <arm/imx/imxi2cvar.h>
 
 int
 imxi2c_match(device_t parent, cfdata_t cf, void *aux)
 {
-	if (strcmp(cf->cf_name, "imxi2c") == 0)
+	struct axi_attach_args *aa = aux;
+
+	switch (aa->aa_addr) {
+	case I2C1_BASE:
+	case I2C2_BASE:
+#ifdef IMX50
+	case I2C3_BASE:
+#endif
 		return 1;
+	}
 
 	return 0;
 }
@@ -53,15 +61,11 @@ void
 imxi2c_attach(device_t parent, device_t self, void *aux)
 {
 	struct axi_attach_args * aa = aux;
-	struct imxi2c_softc *sc = device_private(self);
-	struct i2cbus_attach_args iba;
 
-	imxi2c_attach_common(parent, self,
-	    aa->aa_iot, aa->aa_addr, aa->aa_size, aa->aa_irq, 0);
+	if (aa->aa_size <= 0)
+		aa->aa_size = I2C_SIZE;
 
 	imxi2c_set_freq(self, imx51_get_clock(IMX51CLK_PERCLK_ROOT), 400000);
-
-	memset(&iba, 0, sizeof(iba));
-	iba.iba_tag = &sc->sc_i2c;
-	config_found_ia(sc->sc_dev, "i2cbus", &iba, iicbus_print);
+	imxi2c_attach_common(parent, self,
+	    aa->aa_iot, aa->aa_addr, aa->aa_size, aa->aa_irq, 0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: context.S,v 1.3.22.2 2013/06/23 06:20:07 tls Exp $	*/
+/*	$NetBSD: context.S,v 1.3.22.3 2017/12/03 11:36:20 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2003 Marcel Moolenaar
@@ -25,7 +25,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/ia64/ia64/context.S,v 1.3 2003/07/02 12:57:07 ru Exp $
+ * $FreeBSD: releng/10.1/sys/ia64/ia64/context.S 204184 2010-02-22 01:23:41Z marcel $
  */
 
 #include <machine/asm.h>
@@ -64,7 +64,7 @@ ENTRY(restorectx, 1)
 {	.mmi
 	loadrs
 	ld8		r21=[r30],16		// rnat
-	mov		pr=r18,0x1003e		// Preserved pr (p1-p5, p16-p63)
+	mov		pr=r18,0x1fffe
 	;;
 }
 {	.mmi
@@ -88,18 +88,18 @@ ENTRY(restorectx, 1)
 {	.mmi
 	ld8.fill	r6=[r14],16		// r6
 	ld8.fill	r7=[r15],16		// r7
-	nop		1
+	nop		0
 	;;
 }
 {	.mmi
 	mov		ar.unat=r16
 	mov		ar.rsc=3
-	nop		2
+	nop		0
 }
 {	.mmi
 	ld8		r17=[r14],16		// b1
 	ld8		r18=[r15],16		// b2
-	nop		3
+	nop		0
 	;;
 }
 {	.mmi
@@ -288,7 +288,7 @@ ENTRY(swapctx, 2)
 (p15)	br.ret.sptk	rp
 	;;
 }
-{	.mfb
+{	.mib
 	mov		r32=r33
 	nop		0
 	br.sptk		restorectx
@@ -340,10 +340,10 @@ ENTRY(save_callee_saved, 1)
 	mov		r17=b5
 	;;
 }
-{	.mfi
+{	.mii
 	st8		[r14]=r17,16		// b5
-	nop		0
 	mov		r16=ar.lc
+	nop		0
 	;;
 }
 {	.mmb
@@ -365,13 +365,13 @@ ENTRY(restore_callee_saved, 1)
 	add		r31=-8,r32
 	;;
 }
-{	.mmb
+{	.mmi
 	ld8.fill	r4=[r31],16		// r4
 	ld8.fill	r5=[r32],16		// r5
 	nop		0
 	;;
 }
-{	.mmb
+{	.mmi
 	ld8.fill	r6=[r31],16		// r6
 	ld8.fill	r7=[r32],16		// r7
 	nop		0
@@ -657,7 +657,7 @@ ENTRY(restore_high_fp, 1)
 	ldf.fill	f32=[r32],32
 	;;
 	ldf.fill	f33=[r31],32
-	ldf.fill	f34=[r32],32
+	ldf.fill	f34=[r32],32	
 	;;
 	ldf.fill	f35=[r31],32
 	ldf.fill	f36=[r32],32
@@ -806,75 +806,9 @@ ENTRY(restore_high_fp, 1)
 END(restore_high_fp)
 
 /*
- * lwp_t *
- * cpu_switchto(lwp_t *oldlwp, lwp_t *newlwp, bool returning)
- *
- * Switch to the specified next LWP
- *   in0 is oldlwp
- *   in1 is newlwp
- */
-ENTRY(cpu_switchto, 3)
-{	.mmi
-	alloc		loc0=ar.pfs,3,2,2,0
-
-	/*
-	 * Save old context, unless the LWP is exiting.
-	 */
-	cmp.eq		p6,p0=r0,in0		// p6 = (in0 == 0)
-	add		r14=PC_CURLWP,r13	// r2 = &ci->ci_curlwp
-	;;
-}
-{	.mii
-	add		r2=L_PCB,in0		// r2 = lwp_getpcb(&oldlwp)
-	add		r3=L_PCB,in1		// r3 = lwp_getpcb(&newlwp)
-	mov		loc1=rp			// save rp (loc1 = rp)
-	;;
-}
-{	.mmi
-	st8		[r14]=in1		// ci->ci_curlwp = newlwp
-	mov		r9=in0			// r9 = oldlwp
-	nop		0
-	;;
-}
-{	.mmb
-	nop		0
-	/*
-	 * Switch to new context, if p6 == true.
-	 * We assum to return to restorectx_return_here for swapped context.
-	 */
-(p6)	ld8		out0=[r3]		// out0 = pcb of &newlwp
-(p6)	br.call.sptk.many rp=restorectx		// if (p6) restorectx(out0)
-	;;
-}
-{	.mmb
-	/*
-	 * Swap to new context.
-	 */
-	ld8		out0=[r2]
-	ld8		out1=[r3]
-	br.call.sptk.many rp=swapctx
-	;;
-}
-
-restorectx_return_here:
-{	.mib
-	mov		r8=r9			// r8(ret0) = oldlwp
-	mov		rp=loc1
-	nop		0
-	;;
-}
-{	.mib
-	nop		0
-	mov		ar.pfs=loc0
-	br.ret.sptk.many rp
-	;;
-}
-END(cpu_switchto)
-
-/*
  * lwp_trampoline()
  *
- * Arrange for a function to be invoked neatly, after a cpu_switch().
+ * Arrange for a function to be invoked neatly, after a cpu_switchto().
  *
  * Invokes fork_exit() passing in three arguments: a callout function, an
  * argument to the callout, and a trapframe pointer.  For child processes

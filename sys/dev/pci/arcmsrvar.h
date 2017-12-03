@@ -1,4 +1,4 @@
-/*	$NetBSD: arcmsrvar.h,v 1.14.12.1 2012/12/02 05:46:03 tls Exp $ */
+/*	$NetBSD: arcmsrvar.h,v 1.14.12.2 2017/12/03 11:37:07 jdolecek Exp $ */
 /*	Derived from $OpenBSD: arc.c,v 1.68 2007/10/27 03:28:27 dlg Exp $ */
 
 /*
@@ -455,29 +455,6 @@ struct arc_softc {
 };
 
 /* 
- * interface for scsi midlayer to talk to.
- */
-void 	arc_scsi_cmd(struct scsipi_channel *, scsipi_adapter_req_t, void *);
-
-/* 
- * code to deal with getting bits in and out of the bus space.
- */
-uint32_t arc_read(struct arc_softc *, bus_size_t);
-void 	arc_read_region(struct arc_softc *, bus_size_t, void *,
-			size_t);
-void 	arc_write(struct arc_softc *, bus_size_t, uint32_t);
-void 	arc_write_region(struct arc_softc *, bus_size_t, void *,
-			 size_t);
-int 	arc_wait_eq(struct arc_softc *, bus_size_t, uint32_t,
-		    uint32_t);
-int 	arc_wait_ne(struct arc_softc *, bus_size_t, uint32_t,
-		    uint32_t);
-int	arc_msg0(struct arc_softc *, uint32_t);
-
-#define arc_push(_s, _r)	arc_write((_s), ARC_REG_POST_QUEUE, (_r))
-#define arc_pop(_s)		arc_read((_s), ARC_REG_REPLY_QUEUE)
-
-/* 
  * wrap up the bus_dma api.
  */
 struct arc_dmamem {
@@ -489,10 +466,6 @@ struct arc_dmamem {
 #define ARC_DMA_MAP(_adm)	((_adm)->adm_map)
 #define ARC_DMA_DVA(_adm)	((_adm)->adm_map->dm_segs[0].ds_addr)
 #define ARC_DMA_KVA(_adm)	((void *)(_adm)->adm_kva)
-
-struct arc_dmamem 	*arc_dmamem_alloc(struct arc_softc *, size_t);
-void 			arc_dmamem_free(struct arc_softc *,
-					struct arc_dmamem *);
 
 /* 
  * stuff to manage a scsi command.
@@ -510,29 +483,5 @@ struct arc_ccb {
 
 	TAILQ_ENTRY(arc_ccb)	ccb_link;
 };
-
-int 	arc_alloc_ccbs(device_t);
-struct arc_ccb	*arc_get_ccb(struct arc_softc *);
-void 	arc_put_ccb(struct arc_softc *, struct arc_ccb *);
-int 	arc_load_xs(struct arc_ccb *);
-int 	arc_complete(struct arc_softc *, struct arc_ccb *, int);
-void 	arc_scsi_cmd_done(struct arc_softc *, struct arc_ccb *,
-			  uint32_t);
-
-/* 
- * real stuff for dealing with the hardware.
- */
-int 	arc_map_pci_resources(device_t, struct pci_attach_args *);
-void 	arc_unmap_pci_resources(struct arc_softc *);
-int 	arc_query_firmware(device_t);
-
-/* 
- * stuff to do messaging via the doorbells.
- */
-void 	arc_lock(struct arc_softc *);
-void 	arc_unlock(struct arc_softc *);
-void 	arc_wait(struct arc_softc *);
-uint8_t 	arc_msg_cksum(void *, uint16_t);
-int 	arc_msgbuf(struct arc_softc *, void *, size_t, void *, size_t);
 
 #endif /* ! _PCI_ARCMSRVAR_H_ */

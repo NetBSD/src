@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.88.8.1 2013/06/23 06:19:59 tls Exp $
+# $NetBSD: INSTALL,v 1.88.8.2 2017/12/03 11:35:47 jdolecek Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -7,8 +7,8 @@
 
 include	"arch/amd64/conf/GENERIC"
 
-options		CONSDEVNAME="\"com\"",CONADDR=0x2f8,CONSPEED=115200
-#ident 		"INSTALL-$Revision: 1.88.8.1 $"
+options 	CONSDEVNAME="\"com\"",CONADDR=0x2f8,CONSPEED=115200
+#ident 		"INSTALL-$Revision: 1.88.8.2 $"
 
 no options	MEMORY_DISK_DYNAMIC
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
@@ -16,12 +16,7 @@ options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 options 	MEMORY_DISK_ROOT_SIZE=10000	# size of memory disk, in blocks
 options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
-# DRI driver
-no i915drm*	at drm?		# Intel i915, i945 DRM driver
-no mach64drm*	at drm?		# mach64 (3D Rage Pro, Rage) DRM driver
-no mgadrm*	at drm?		# Matrox G[24]00, G[45]50 DRM driver
-no r128drm*	at drm?		# ATI Rage 128 DRM driver
-no radeondrm*	at drm?		# ATI Radeon DRM driver
-no savagedrm*	at drm?		# S3 Savage DRM driver
-no sisdrm*	at drm?		# SiS DRM driver
-no tdfxdrm*	at drm?		# 3dfx (voodoo) DRM driver
+# DRMKMS driver
+no i915drmkms*     at pci?
+no radeon*         at pci?
+#no nouveau*	   at pci?

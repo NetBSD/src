@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_kthread.c,v 1.39 2012/09/01 00:26:37 matt Exp $	*/
+/*	$NetBSD: kern_kthread.c,v 1.39.2.1 2017/12/03 11:38:44 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.39 2012/09/01 00:26:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.39.2.1 2017/12/03 11:38:44 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,17 +82,13 @@ kthread_create(pri_t pri, int flag, struct cpu_info *ci,
 	}
 
 	error = lwp_create(&lwp0, &proc0, uaddr, LWP_DETACHED, NULL,
-	    0, func, arg, &l, lc);
+	    0, func, arg, &l, lc, &lwp0.l_sigmask, &lwp0.l_sigstk);
 	if (error) {
 		uvm_uarea_system_free(uaddr);
 		return error;
 	}
 	if (fmt != NULL) {
 		l->l_name = kmem_alloc(MAXCOMLEN, KM_SLEEP);
-		if (l->l_name == NULL) {
-			kthread_destroy(l);
-			return ENOMEM;
-		}
 		va_start(ap, fmt);
 		vsnprintf(l->l_name, MAXCOMLEN, fmt, ap);
 		va_end(ap);
@@ -188,19 +184,6 @@ kthread_exit(int ecode)
 	/* And exit.. */
 	lwp_exit(l);
 	panic("kthread_exit");
-}
-
-/*
- * Destroy an inactive kthread.  The kthread must be in the LSIDL state.
- */
-void
-kthread_destroy(lwp_t *l)
-{
-
-	KASSERT((l->l_flag & LW_SYSTEM) != 0);
-	KASSERT(l->l_stat == LSIDL);
-
-	lwp_exit(l);
 }
 
 /*

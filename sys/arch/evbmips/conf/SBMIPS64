@@ -1,0 +1,11 @@
+# $NetBSD: SBMIPS64,v 1.2.6.2 2017/12/03 11:36:09 jdolecek Exp $
+
+include "arch/evbmips/conf/SBMIPS"
+
+makeoptions	LP64="yes"
+options 	EXEC_ELF64
+options 	COMPAT_NETBSD32
+
+no makeoptions	COPY_SYMTAB
+makeoptions	COPY_SYMTAB=1
+

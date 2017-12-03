@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.91.2.2 2014/08/20 00:03:42 tls Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.91.2.3 2017/12/03 11:37:07 jdolecek Exp $  */
 /*	$OpenBSD: if_iwi.c,v 1.111 2010/11/15 19:11:57 damien Exp $	*/
 
 /*-
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.91.2.2 2014/08/20 00:03:42 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.91.2.3 2017/12/03 11:37:07 jdolecek Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -117,6 +117,7 @@ static void	iwi_cmd_intr(struct iwi_softc *);
 static void	iwi_rx_intr(struct iwi_softc *);
 static void	iwi_tx_intr(struct iwi_softc *, struct iwi_tx_ring *);
 static int	iwi_intr(void *);
+static void	iwi_softintr(void *);
 static int	iwi_cmd(struct iwi_softc *, uint8_t, void *, uint8_t, int);
 static void	iwi_write_ibssnode(struct iwi_softc *, const struct iwi_node *);
 static int	iwi_tx_start(struct ifnet *, struct mbuf *, struct ieee80211_node *,
@@ -253,7 +254,15 @@ iwi_attach(device_t parent, device_t self, void *aux)
 	/* disable interrupts */
 	CSR_WRITE_4(sc, IWI_CSR_INTR_MASK, 0);
 
+	sc->sc_soft_ih = softint_establish(SOFTINT_NET, iwi_softintr, sc);
+	if (sc->sc_soft_ih == NULL) {
+		aprint_error_dev(self, "could not establish softint\n");
+		return;
+	}
+
 	if (pci_intr_map(pa, &ih) != 0) {
+		softint_disestablish(sc->sc_soft_ih);
+		sc->sc_soft_ih = NULL;
 		aprint_error_dev(self, "could not map interrupt\n");
 		return;
 	}
@@ -261,6 +270,8 @@ iwi_attach(device_t parent, device_t self, void *aux)
 	intrstr = pci_intr_string(sc->sc_pct, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(sc->sc_pct, ih, IPL_NET, iwi_intr, sc);
 	if (sc->sc_ih == NULL) {
+		softint_disestablish(sc->sc_soft_ih);
+		sc->sc_soft_ih = NULL;
 		aprint_error_dev(self, "could not establish interrupt");
 		if (intrstr != NULL)
 			aprint_error(" at %s", intrstr);
@@ -271,6 +282,8 @@ iwi_attach(device_t parent, device_t self, void *aux)
 
 	if (iwi_reset(sc) != 0) {
 		pci_intr_disestablish(sc->sc_pct, sc->sc_ih);
+		softint_disestablish(sc->sc_soft_ih);
+		sc->sc_soft_ih = NULL;
 		aprint_error_dev(self, "could not reset adapter\n");
 		return;
 	}
@@ -354,8 +367,18 @@ iwi_attach(device_t parent, device_t self, void *aux)
 	IFQ_SET_READY(&ifp->if_snd);
 	memcpy(ifp->if_xname, device_xname(self), IFNAMSIZ);
 
-	if_attach(ifp);
+	error = if_initialize(ifp);
+	if (error != 0) {
+		ifp->if_softc = NULL; /* For iwi_detach() */
+		aprint_error_dev(sc->sc_dev, "if_initialize failed(%d)\n",
+		    error);
+		goto fail;
+	}
 	ieee80211_ifattach(ic);
+	/* Use common softint-based if_input */
+	ifp->if_percpuq = if_percpuq_create(ifp);
+	if_register(ifp);
+
 	/* override default methods */
 	ic->ic_node_alloc = iwi_node_alloc;
 	sc->sc_node_free = ic->ic_node_free;
@@ -437,16 +460,13 @@ iwi_detach(device_t self, int flags)
 	struct iwi_softc *sc = device_private(self);
 	struct ifnet *ifp = &sc->sc_if;
 
-	pmf_device_deregister(self);
-
-	if (ifp != NULL)
+	if (ifp->if_softc != NULL) {
+		pmf_device_deregister(self);
 		iwi_stop(ifp, 1);
-
-	iwi_free_firmware(sc);
-
-	ieee80211_ifdetach(&sc->sc_ic);
-	if (ifp != NULL)
+		iwi_free_firmware(sc);
+		ieee80211_ifdetach(&sc->sc_ic);
 		if_detach(ifp);
+	}
 
 	iwi_free_cmd_ring(sc, &sc->cmdq);
 	iwi_free_tx_ring(sc, &sc->txq[0]);
@@ -458,6 +478,11 @@ iwi_detach(device_t self, int flags)
 	if (sc->sc_ih != NULL) {
 		pci_intr_disestablish(sc->sc_pct, sc->sc_ih);
 		sc->sc_ih = NULL;
+	}
+
+	if (sc->sc_soft_ih != NULL) {
+		softint_disestablish(sc->sc_soft_ih);
+		sc->sc_soft_ih = NULL;
 	}
 
 	bus_space_unmap(sc->sc_st, sc->sc_sh, sc->sc_sz);
@@ -1144,7 +1169,7 @@ iwi_frame_intr(struct iwi_softc *sc, struct iwi_rx_data *data, int i,
 	struct mbuf *m, *m_new;
 	struct ieee80211_frame *wh;
 	struct ieee80211_node *ni;
-	int error;
+	int error, s;
 
 	DPRINTFN(5, ("received frame len=%u chan=%u rssi=%u\n",
 	    le16toh(frame->len), frame->chan, frame->rssi_dbm));
@@ -1197,11 +1222,13 @@ iwi_frame_intr(struct iwi_softc *sc, struct iwi_rx_data *data, int i,
 	CSR_WRITE_4(sc, IWI_CSR_RX_BASE + i * 4, data->map->dm_segs[0].ds_addr);
 
 	/* Finalize mbuf */
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
 	m->m_pkthdr.len = m->m_len = sizeof (struct iwi_hdr) +
 	    sizeof (struct iwi_frame) + le16toh(frame->len);
 
 	m_adj(m, sizeof (struct iwi_hdr) + sizeof (struct iwi_frame));
+
+	s = splnet();
 
 	if (ic->ic_state == IEEE80211_S_SCAN)
 		iwi_fix_channel(ic, m);
@@ -1228,6 +1255,8 @@ iwi_frame_intr(struct iwi_softc *sc, struct iwi_rx_data *data, int i,
 
 	/* node is no longer needed */
 	ieee80211_free_node(ni);
+
+	splx(s);
 }
 
 static void
@@ -1237,6 +1266,7 @@ iwi_notification_intr(struct iwi_softc *sc, struct iwi_notif *notif)
 	struct iwi_notif_authentication *auth;
 	struct iwi_notif_association *assoc;
 	struct iwi_notif_beacon_state *beacon;
+	int s;
 
 	switch (notif->type) {
 	case IWI_NOTIF_TYPE_SCAN_CHANNEL:
@@ -1263,11 +1293,13 @@ iwi_notification_intr(struct iwi_softc *sc, struct iwi_notif *notif)
 #endif
 
 		/* monitor mode uses scan to set the channel ... */
+		s = splnet();
 		if (ic->ic_opmode != IEEE80211_M_MONITOR) {
 			sc->flags &= ~IWI_FLAG_SCANNING;
 			ieee80211_end_scan(ic);
 		} else
 			iwi_set_chan(sc, ic->ic_ibss_chan);
+		splx(s);
 		break;
 
 	case IWI_NOTIF_TYPE_AUTHENTICATION:
@@ -1277,11 +1309,21 @@ iwi_notification_intr(struct iwi_softc *sc, struct iwi_notif *notif)
 
 		switch (auth->state) {
 		case IWI_AUTH_SUCCESS:
+			s = splnet();
 			ieee80211_node_authorize(ic->ic_bss);
 			ieee80211_new_state(ic, IEEE80211_S_ASSOC, -1);
+			splx(s);
 			break;
 
 		case IWI_AUTH_FAIL:
+			break;
+
+		case IWI_AUTH_SENT_1:
+		case IWI_AUTH_RECV_2:
+		case IWI_AUTH_SEQ1_PASS:
+			break;
+
+		case IWI_AUTH_SEQ1_FAIL:
 			break;
 
 		default:
@@ -1302,11 +1344,15 @@ iwi_notification_intr(struct iwi_softc *sc, struct iwi_notif *notif)
 			break;
 
 		case IWI_ASSOC_SUCCESS:
+			s = splnet();
 			ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
+			splx(s);
 			break;
 
 		case IWI_ASSOC_FAIL:
+			s = splnet();
 			ieee80211_begin_scan(ic, 1);
+			splx(s);
 			break;
 
 		default:
@@ -1354,7 +1400,8 @@ iwi_cmd_intr(struct iwi_softc *sc)
 	sc->cmdq.next = (sc->cmdq.next + 1) % sc->cmdq.count;
 
 	if (--sc->cmdq.queued > 0) {
-		CSR_WRITE_4(sc, IWI_CSR_CMD_WIDX, (sc->cmdq.next + 1) % sc->cmdq.count);
+		CSR_WRITE_4(sc, IWI_CSR_CMD_WIDX,
+		    (sc->cmdq.next + 1) % sc->cmdq.count);
 	}
 }
 
@@ -1410,6 +1457,9 @@ iwi_tx_intr(struct iwi_softc *sc, struct iwi_tx_ring *txq)
 	struct ifnet *ifp = &sc->sc_if;
 	struct iwi_tx_data *data;
 	uint32_t hw;
+	int s;
+
+	s = splnet();
 
 	hw = CSR_READ_4(sc, txq->csr_ridx);
 
@@ -1433,10 +1483,15 @@ iwi_tx_intr(struct iwi_softc *sc, struct iwi_tx_ring *txq)
 	}
 
 	sc->sc_tx_timer = 0;
-	ifp->if_flags &= ~IFF_OACTIVE;
 
-	/* Call start() since some buffer descriptors have been released */
-	(*ifp->if_start)(ifp);
+	if (txq->queued < txq->count - 8 - 8 && (ifp->if_flags & IFF_OACTIVE)) {
+		ifp->if_flags &= ~IFF_OACTIVE;
+
+		/* Call start() since some buffer descriptors have been released */
+		iwi_start(ifp); /* in softint */
+	}
+
+	splx(s);
 }
 
 static int
@@ -1448,14 +1503,33 @@ iwi_intr(void *arg)
 	if ((r = CSR_READ_4(sc, IWI_CSR_INTR)) == 0 || r == 0xffffffff)
 		return 0;
 
+	/* Disable interrupts */
+	CSR_WRITE_4(sc, IWI_CSR_INTR_MASK, 0);
+
+	softint_schedule(sc->sc_soft_ih);
+	return 1;
+}
+
+static void
+iwi_softintr(void *arg)
+{
+	struct iwi_softc *sc = arg;
+	uint32_t r;
+	int s;
+
+	if ((r = CSR_READ_4(sc, IWI_CSR_INTR)) == 0 || r == 0xffffffff)
+		goto out;
+
 	/* Acknowledge interrupts */
 	CSR_WRITE_4(sc, IWI_CSR_INTR, r);
 
 	if (r & IWI_INTR_FATAL_ERROR) {
 		aprint_error_dev(sc->sc_dev, "fatal error\n");
+		s = splnet();
 		sc->sc_ic.ic_ifp->if_flags &= ~IFF_UP;
 		iwi_stop(&sc->sc_if, 1);
-		return (1);
+		splx(s);
+		return;
 	}
 
 	if (r & IWI_INTR_FW_INITED) {
@@ -1465,9 +1539,11 @@ iwi_intr(void *arg)
 
 	if (r & IWI_INTR_RADIO_OFF) {
 		DPRINTF(("radio transmitter off\n"));
+		s = splnet();
 		sc->sc_ic.ic_ifp->if_flags &= ~IFF_UP;
 		iwi_stop(&sc->sc_if, 1);
-		return (1);
+		splx(s);
+		return;
 	}
 
 	if (r & IWI_INTR_CMD_DONE)
@@ -1491,7 +1567,9 @@ iwi_intr(void *arg)
 	if (r & IWI_INTR_PARITY_ERROR)
 		aprint_error_dev(sc->sc_dev, "parity error\n");
 
-	return 1;
+ out:
+	/* Re-enable interrupts */
+	CSR_WRITE_4(sc, IWI_CSR_INTR_MASK, IWI_INTR_MASK);
 }
 
 static int
@@ -1719,7 +1797,7 @@ iwi_start(struct ifnet *ifp)
 		return;
 
 	for (;;) {
-		IF_DEQUEUE(&ifp->if_snd, m0);
+		IFQ_DEQUEUE(&ifp->if_snd, m0);
 		if (m0 == NULL)
 			break;
 
@@ -1751,7 +1829,9 @@ iwi_start(struct ifnet *ifp)
 
 		if (sc->txq[ac].queued > sc->txq[ac].count - 8) {
 			/* there is no place left in this ring */
+			IFQ_LOCK(&ifp->if_snd);
 			IF_PREPEND(&ifp->if_snd, m0);
+			IFQ_UNLOCK(&ifp->if_snd);
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
@@ -2187,6 +2267,7 @@ iwi_cache_firmware(struct iwi_softc *sc)
 		error = EIO;
 		goto fail1;
 	}
+	sc->sc_blobsize = size;
 
 	sc->sc_blob = firmware_malloc(size);
 	if (sc->sc_blob == NULL) {
@@ -2246,7 +2327,7 @@ iwi_cache_firmware(struct iwi_softc *sc)
 	return 0;
 
 
-fail2:	firmware_free(sc->sc_blob, 0);
+fail2:	firmware_free(sc->sc_blob, sc->sc_blobsize);
 fail1:
 	return error;
 }
@@ -2258,7 +2339,7 @@ iwi_free_firmware(struct iwi_softc *sc)
 	if (!(sc->flags & IWI_FLAG_FW_CACHED))
 		return;
 
-	firmware_free(sc->sc_blob, 0);
+	firmware_free(sc->sc_blob, sc->sc_blobsize);
 
 	sc->flags &= ~IWI_FLAG_FW_CACHED;
 }

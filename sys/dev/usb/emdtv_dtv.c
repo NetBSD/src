@@ -1,4 +1,4 @@
-/* $NetBSD: emdtv_dtv.c,v 1.9.2.1 2013/02/25 00:29:33 tls Exp $ */
+/* $NetBSD: emdtv_dtv.c,v 1.9.2.2 2017/12/03 11:37:33 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2008, 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,11 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emdtv_dtv.c,v 1.9.2.1 2013/02/25 00:29:33 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emdtv_dtv.c,v 1.9.2.2 2017/12/03 11:37:33 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/lwp.h>
 #include <sys/conf.h>
 
 #include <dev/usb/usb.h>
@@ -64,7 +65,7 @@ static int		emdtv_dtv_tuner_reset(void *);
 static void		emdtv_dtv_isoc_startall(struct emdtv_softc *);
 static int		emdtv_dtv_isoc_start(struct emdtv_softc *,
 			    struct emdtv_isoc_xfer *);
-static void		emdtv_dtv_isoc(usbd_xfer_handle, usbd_private_handle,
+static void		emdtv_dtv_isoc(struct usbd_xfer *, void *,
 			    usbd_status);
 
 static const struct dtv_hw_if emdtv_dtv_if = {
@@ -102,7 +103,7 @@ emdtv_dtv_attach(struct emdtv_softc *sc)
 
 	aprint_debug_dev(sc->sc_dev, "calling usbd_open_pipe, ep 0x%02x\n",
 	    ed->bEndpointAddress);
-	status = usbd_open_pipe(sc->sc_iface, 
+	status = usbd_open_pipe(sc->sc_iface,
 	    ed->bEndpointAddress, USBD_EXCLUSIVE_USE|USBD_MPSAFE,
 	    &sc->sc_isoc_pipe);
 	if (status != USBD_NORMAL_COMPLETION) {
@@ -124,6 +125,20 @@ emdtv_dtv_attach(struct emdtv_softc *sc)
 	emdtv_dtv_rescan(sc, NULL, NULL);
 }
 
+static void
+emdtv_dtv_free_xfers(struct emdtv_softc *sc)
+{
+
+	for (size_t i = 0; i < EMDTV_NXFERS; i++)
+		if (sc->sc_ix[i].ix_xfer) {
+			usbd_destroy_xfer(sc->sc_ix[i].ix_xfer);
+			sc->sc_ix[i].ix_xfer = NULL;
+			sc->sc_ix[i].ix_buf = NULL;
+		}
+
+	return;
+}
+
 void
 emdtv_dtv_detach(struct emdtv_softc *sc, int flags)
 {
@@ -141,6 +156,7 @@ emdtv_dtv_detach(struct emdtv_softc *sc, int flags)
 
 	if (sc->sc_isoc_pipe) {
 		usbd_abort_pipe(sc->sc_isoc_pipe);
+		emdtv_dtv_free_xfers(sc);
 		usbd_close_pipe(sc->sc_isoc_pipe);
 		sc->sc_isoc_pipe = NULL;
 	}
@@ -180,6 +196,20 @@ emdtv_dtv_open(void *priv, int flags)
 
 	if (sc->sc_dying)
 		return ENXIO;
+
+	aprint_debug_dev(sc->sc_dev, "allocating isoc xfers (pktsz %d)\n",
+	    sc->sc_isoc_maxpacketsize);
+
+	for (size_t i = 0; i < EMDTV_NXFERS; i++) {
+		int error = usbd_create_xfer(sc->sc_isoc_pipe,
+		    sc->sc_isoc_buflen, USBD_SHORT_XFER_OK, EMDTV_NFRAMES,
+		    &sc->sc_ix[i].ix_xfer);
+		if (error)
+			return error;
+		sc->sc_ix[i].ix_buf = usbd_get_buffer(sc->sc_ix[i].ix_xfer);
+		aprint_debug_dev(sc->sc_dev, "  ix[%zu] xfer %p buf %p\n",
+		    i, sc->sc_ix[i].ix_xfer, sc->sc_ix[i].ix_buf);
+	}
 
 	switch (sc->sc_board->eb_tuner) {
 	case EMDTV_TUNER_XC3028:
@@ -233,7 +263,9 @@ emdtv_dtv_open(void *priv, int flags)
 static void
 emdtv_dtv_close(void *priv)
 {
-	return;
+	struct emdtv_softc *sc = priv;
+
+	emdtv_dtv_free_xfers(sc);
 }
 
 static int
@@ -296,26 +328,13 @@ emdtv_dtv_start_transfer(void *priv,
     void (*cb)(void *, const struct dtv_payload *), void *arg)
 {
 	struct emdtv_softc *sc = priv;
-	int i, s;
+	int s;
 
 	s = splusb();
 
 	sc->sc_streaming = true;
 	sc->sc_dtvsubmitcb = cb;
 	sc->sc_dtvsubmitarg = arg;
-
-	aprint_debug_dev(sc->sc_dev, "allocating isoc xfers (pktsz %d)\n",
-	    sc->sc_isoc_maxpacketsize);
-
-	KERNEL_LOCK(1, curlwp);
-	for (i = 0; i < EMDTV_NXFERS; i++) {
-		sc->sc_ix[i].ix_xfer = usbd_alloc_xfer(sc->sc_udev);
-		sc->sc_ix[i].ix_buf = usbd_alloc_buffer(sc->sc_ix[i].ix_xfer,
-		    sc->sc_isoc_buflen);
-		aprint_debug_dev(sc->sc_dev, "  ix[%d] xfer %p buf %p\n",
-		    i, sc->sc_ix[i].ix_xfer, sc->sc_ix[i].ix_buf);
-	}
-	KERNEL_UNLOCK_ONE(curlwp);
 
 	aprint_debug_dev(sc->sc_dev, "starting isoc transactions\n");
 
@@ -329,7 +348,6 @@ static int
 emdtv_dtv_stop_transfer(void *priv)
 {
 	struct emdtv_softc *sc = priv;
-	int i;
 
 	aprint_debug_dev(sc->sc_dev, "stopping stream\n");
 
@@ -338,13 +356,6 @@ emdtv_dtv_stop_transfer(void *priv)
 	KERNEL_LOCK(1, curlwp);
 	if (sc->sc_isoc_pipe != NULL)
 		usbd_abort_pipe(sc->sc_isoc_pipe);
-
-	for (i = 0; i < EMDTV_NXFERS; i++)
-		if (sc->sc_ix[i].ix_xfer) {
-			usbd_free_xfer(sc->sc_ix[i].ix_xfer);
-			sc->sc_ix[i].ix_xfer = NULL;
-			sc->sc_ix[i].ix_buf = NULL;
-		}
 	KERNEL_UNLOCK_ONE(curlwp);
 
 	sc->sc_dtvsubmitcb = NULL;
@@ -377,11 +388,10 @@ emdtv_dtv_isoc_start(struct emdtv_softc *sc, struct emdtv_isoc_xfer *ix)
 		ix->ix_frlengths[i] = sc->sc_isoc_maxpacketsize;
 
 	usbd_setup_isoc_xfer(ix->ix_xfer,
-			     sc->sc_isoc_pipe,
 			     ix,
 			     ix->ix_frlengths,
 			     EMDTV_NFRAMES,
-			     USBD_NO_COPY | USBD_SHORT_XFER_OK,
+			     USBD_SHORT_XFER_OK,
 			     emdtv_dtv_isoc);
 
 	KERNEL_LOCK(1, curlwp);
@@ -392,13 +402,13 @@ emdtv_dtv_isoc_start(struct emdtv_softc *sc, struct emdtv_isoc_xfer *ix)
 }
 
 static void
-emdtv_dtv_isoc(usbd_xfer_handle xfer, usbd_private_handle priv,
+emdtv_dtv_isoc(struct usbd_xfer *xfer, void * priv,
     usbd_status err)
 {
 	struct emdtv_isoc_xfer *ix = priv;
 	struct emdtv_softc *sc = ix->ix_sc;
 	struct dtv_payload payload;
-	usbd_pipe_handle isoc = sc->sc_isoc_pipe;
+	struct usbd_pipe *isoc = sc->sc_isoc_pipe;
 	uint32_t len;
 	uint8_t *buf;
 	int i;

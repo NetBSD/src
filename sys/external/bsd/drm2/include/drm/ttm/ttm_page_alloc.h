@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_page_alloc.h,v 1.1.6.2 2014/08/20 00:04:21 tls Exp $	*/
+/*	$NetBSD: ttm_page_alloc.h,v 1.1.6.3 2017/12/03 11:37:59 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -37,6 +37,7 @@ struct ttm_mem_global;
 
 int	ttm_bus_dma_populate(struct ttm_dma_tt *);
 void	ttm_bus_dma_unpopulate(struct ttm_dma_tt *);
+void	ttm_bus_dma_swapout(struct ttm_dma_tt *);
 
 static inline int
 ttm_page_alloc_init(struct ttm_mem_global *glob __unused,

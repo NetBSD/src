@@ -1,4 +1,4 @@
-/*	$NetBSD: imxusb.c,v 1.2.2.3 2014/08/20 00:02:46 tls Exp $	*/
+/*	$NetBSD: imxusb.c,v 1.2.2.4 2017/12/03 11:35:53 jdolecek Exp $	*/
 /*
  * Copyright (c) 2009, 2010  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi and Hiroyuki Bessho for Genetec Corporation.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxusb.c,v 1.2.2.3 2014/08/20 00:02:46 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxusb.c,v 1.2.2.4 2017/12/03 11:35:53 jdolecek Exp $");
 
 #include "opt_imx.h"
 
@@ -56,12 +56,13 @@ __KERNEL_RCSID(0, "$NetBSD: imxusb.c,v 1.2.2.3 2014/08/20 00:02:46 tls Exp $");
 
 static int	imxehci_match(device_t, cfdata_t, void *);
 static void	imxehci_attach(device_t, device_t, void *);
-						     
+
 uint8_t imxusb_ulpi_read(struct imxehci_softc *sc, int addr);
 void imxusb_ulpi_write(struct imxehci_softc *sc, int addr, uint8_t data);
 static void ulpi_reset(struct imxehci_softc *sc);
 
-
+static void imxehci_select_interface(struct imxehci_softc *, enum imx_usb_if);
+static void imxehci_init(struct ehci_softc *);
 
 /* attach structures */
 CFATTACH_DECL_NEW(imxehci, sizeof(struct imxehci_softc),
@@ -71,11 +72,11 @@ static int
 imxehci_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct imxusbc_attach_args *aa = aux;
-	
+
 	if (aa->aa_unit < 0 || 3 < aa->aa_unit) {
 		return 0;
 	}
-		
+
 	return 1;
 }
 
@@ -88,26 +89,30 @@ imxehci_attach(device_t parent, device_t self, void *aux)
 	ehci_softc_t *hsc = &sc->sc_hsc;
 	bus_space_tag_t iot;
 	uint16_t hcirev;
-	usbd_status r;
 	uint32_t id, hwhost, hwdevice;
 	const char *comma;
-	
+
 	sc->sc_hsc.sc_dev = self;
 	iot = sc->sc_iot = sc->sc_hsc.iot = aa->aa_iot;
 	sc->sc_unit = aa->aa_unit;
 	sc->sc_usbc = usbc;
-	hsc->sc_bus.hci_private = sc;
+	hsc->sc_bus.ub_hcpriv = sc;
 	hsc->sc_flags |= EHCIF_ETTF;
+	hsc->sc_vendor_init = imxehci_init;
 
-	aprint_normal("\n");
+	aprint_naive("\n");
+	aprint_normal(": i.MX USB Controller\n");
+
+	if (usbc->sc_ehci_size == 0)
+		usbc->sc_ehci_size = IMXUSB_EHCI_SIZE;	/* use default */
 
 	/* per unit registers */
-	if (bus_space_subregion(iot, aa->aa_ioh, 
-		aa->aa_unit * IMXUSB_EHCI_SIZE, IMXUSB_EHCI_SIZE,
+	if (bus_space_subregion(iot, aa->aa_ioh,
+		aa->aa_unit * usbc->sc_ehci_size, usbc->sc_ehci_size,
 		&sc->sc_ioh) ||
 	    bus_space_subregion(iot, aa->aa_ioh,
-		aa->aa_unit * IMXUSB_EHCI_SIZE + IMXUSB_EHCIREGS,
-		IMXUSB_EHCI_SIZE - IMXUSB_EHCIREGS,
+		aa->aa_unit * usbc->sc_ehci_size + IMXUSB_EHCIREGS,
+		usbc->sc_ehci_size - IMXUSB_EHCIREGS,
 		&sc->sc_hsc.ioh)) {
 
 		aprint_error_dev(self, "can't subregion\n");
@@ -118,11 +123,11 @@ imxehci_attach(device_t parent, device_t self, void *aux)
 	hcirev = bus_space_read_2(iot, sc->sc_hsc.ioh, EHCI_HCIVERSION);
 
 	aprint_normal_dev(self,
-	    "i.MX USB Controller id=%d revision=%d HCI revision=0x%x\n", 
+	    "id=%d revision=%d HCI revision=0x%x\n",
 	    (int)__SHIFTOUT(id, IMXUSB_ID_ID),
 	    (int)__SHIFTOUT(id, IMXUSB_ID_REVISION),
 	    hcirev);
-			  
+
 	hwhost = bus_space_read_4(iot, sc->sc_ioh, IMXUSB_HWHOST);
 	hwdevice = bus_space_read_4(iot, sc->sc_ioh, IMXUSB_HWDEVICE);
 
@@ -144,16 +149,15 @@ imxehci_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_normal("\n");
 
-	sc->sc_hsc.sc_bus.dmatag = aa->aa_dmat;
+	sc->sc_hsc.sc_bus.ub_dmatag = aa->aa_dmat;
 
-	sc->sc_hsc.sc_offs = bus_space_read_1(iot, sc->sc_hsc.ioh, 
+	sc->sc_hsc.sc_offs = bus_space_read_1(iot, sc->sc_hsc.ioh,
 	    EHCI_CAPLENGTH);
 
 	/* Platform dependent setup */
 	if (usbc->sc_init_md_hook)
 		usbc->sc_init_md_hook(sc);
 
-	
 	imxehci_reset(sc);
 	imxehci_select_interface(sc, sc->sc_iftype);
 
@@ -171,14 +175,12 @@ imxehci_attach(device_t parent, device_t self, void *aux)
 
 	}
 
-	imxehci_host_mode(sc);
-	
 	if (usbc->sc_setup_md_hook)
 		usbc->sc_setup_md_hook(sc, IMXUSB_HOST);
 
 	if (sc->sc_iftype == IMXUSBC_IF_ULPI) {
 #if 0
-		if(hsc->sc_bus.usbrev == USBREV_2_0)
+		if(hsc->sc_bus.ub_revision == USBREV_2_0)
 			ulpi_write(hsc, ULPI_FUNCTION_CONTROL + ULPI_REG_CLEAR, (1 << 0));
 		else
 			ulpi_write(hsc, ULPI_FUNCTION_CONTROL + ULPI_REG_SET, (1 << 2));
@@ -203,9 +205,9 @@ imxehci_attach(device_t parent, device_t self, void *aux)
 	/* Figure out vendor for root hub descriptor. */
 	strlcpy(hsc->sc_vendor, "i.MX", sizeof(hsc->sc_vendor));
 
-	r = ehci_init(hsc);
-	if (r != USBD_NORMAL_COMPLETION) {
-		aprint_error_dev(self, "init failed, error=%d\n", r);
+	int err = ehci_init(hsc);
+	if (err) {
+		aprint_error_dev(self, "init failed, error=%d\n", err);
 		return;
 	}
 
@@ -213,17 +215,14 @@ imxehci_attach(device_t parent, device_t self, void *aux)
 	hsc->sc_child = config_found(self, &hsc->sc_bus, usbctlprint);
 }
 
-
-
-
-void
+static void
 imxehci_select_interface(struct imxehci_softc *sc, enum imx_usb_if interface)
 {
 	uint32_t reg;
 	struct ehci_softc *hsc = &sc->sc_hsc;
 
 	reg = EOREAD4(hsc, EHCI_PORTSC(1));
-	reg &= ~(PORTSC_PTS | PORTSC_PTW);
+	reg &= ~(PORTSC_PTS | PORTSC_PTW | PORTSC_PTS2);
 	switch (interface) {
 	case IMXUSBC_IF_UTMI_WIDE:
 		reg |= PORTSC_PTW_16;
@@ -239,10 +238,12 @@ imxehci_select_interface(struct imxehci_softc *sc, enum imx_usb_if interface)
 	case IMXUSBC_IF_SERIAL:
 		reg |= PORTSC_PTS_SERIAL;
 		break;
+	case IMXUSBC_IF_HSIC:
+		reg |= PORTSC_PTS2;
+		break;
 	}
 	EOWRITE4(hsc, EHCI_PORTSC(1), reg);
 }
-
 
 static uint32_t
 ulpi_wakeup(struct imxehci_softc *sc, int tout)
@@ -293,7 +294,7 @@ ulpi_wait(struct imxehci_softc *sc, int tout)
 }
 
 #define	TIMEOUT	100000
-						     
+
 uint8_t
 imxusb_ulpi_read(struct imxehci_softc *sc, int addr)
 {
@@ -406,10 +407,10 @@ imxehci_reset(struct imxehci_softc *sc)
 	usb_delay_ms(&hsc->sc_bus, 100);
 }
 
-void
-imxehci_host_mode(struct imxehci_softc *sc)
+static void
+imxehci_init(struct ehci_softc *hsc)
 {
-	struct ehci_softc *hsc = &sc->sc_hsc;
+	struct imxehci_softc *sc = device_private(hsc->sc_dev);
 	uint32_t reg;
 
 	reg = EOREAD4(hsc, EHCI_PORTSC(1));
@@ -424,7 +425,8 @@ imxehci_host_mode(struct imxehci_softc *sc)
 	reg |= OTGSC_DPIE;
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, IMXUSB_OTGSC, reg);
 
-	reg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, IMXUSB_OTGMODE);
+	reg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, IMXUSB_USBMODE);
+	reg &= ~USBMODE_CM;
 	reg |= USBMODE_CM_HOST;
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, IMXUSB_OTGMODE, reg);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, IMXUSB_USBMODE, reg);
 }

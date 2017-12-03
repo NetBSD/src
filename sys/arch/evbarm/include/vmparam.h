@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.28 2012/02/18 16:29:37 christos Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.28.2.1 2017/12/03 11:36:05 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -51,11 +51,6 @@
 #endif
 
 /*
- * Override the default pager_map size, there's not enough KVA.
- */
-#define PAGER_MAP_DEFAULT_SIZE		(4 * 1024 * 1024)
-
-/*
  * Size of User Raw I/O map
  */
 
@@ -83,7 +78,7 @@
  * we support 2 free lists:
  *
  *	- DEFAULT for all systems
- *	- ISADMA for the ISA DMA range on Sharks only
+ *	- ISADMA for the ISA DMA range
  */
 
 #define	VM_NFREELIST		2

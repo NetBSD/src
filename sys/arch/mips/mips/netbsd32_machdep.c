@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.9.2.1 2014/08/20 00:03:12 tls Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.9.2.2 2017/12/03 11:36:28 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.9.2.1 2014/08/20 00:03:12 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.9.2.2 2017/12/03 11:36:28 jdolecek Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_coredump.h"
@@ -143,9 +143,10 @@ compat_16_netbsd32___sigreturn14(struct lwp *l,
 #endif
 
 vaddr_t
-netbsd32_vm_default_addr(struct proc *p, vaddr_t base, vsize_t size)
+netbsd32_vm_default_addr(struct proc *p, vaddr_t base, vsize_t size,
+    int topdown)
 {
-	if (p->p_vmspace->vm_map.flags & VM_MAP_TOPDOWN)
+	if (topdown)
 		return VM_DEFAULT_ADDRESS32_TOPDOWN(base, size);
 	else
 		return VM_DEFAULT_ADDRESS32_BOTTOMUP(base, size);
@@ -323,8 +324,7 @@ cpu_coredump32(struct lwp *l, struct coredump_iostate *iocookie,
 		return 0;
 	}
 
-	KASSERT(l == curlwp);
-	fpu_save();
+	fpu_save(l);
 
 	struct pcb * const pcb = lwp_getpcb(l);
 	cpustate.frame = *l->l_md.md_utf;

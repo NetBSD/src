@@ -1,4 +1,4 @@
-/*	$NetBSD: iop_pci.c,v 1.26.22.2 2014/08/20 00:03:43 tls Exp $	*/
+/*	$NetBSD: iop_pci.c,v 1.26.22.3 2017/12/03 11:37:08 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop_pci.c,v 1.26.22.2 2014/08/20 00:03:43 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop_pci.c,v 1.26.22.3 2017/12/03 11:37:08 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,7 +134,7 @@ iop_pci_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 	if (i == PCI_MAPREG_END) {
-		printf("can't find mapping\n");
+		aprint_error("can't find mapping\n");
 		return;
 	}
 
@@ -150,7 +150,7 @@ iop_pci_attach(device_t parent, device_t self, void *aux)
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_DPT_RAID_2005S) {
 		i += 4;	/* next BAR */
 		if (i == PCI_MAPREG_END) {
-			printf("can't find mapping\n");
+			aprint_error("can't find mapping\n");
 			return;
 		}
 
@@ -161,7 +161,8 @@ iop_pci_attach(device_t parent, device_t self, void *aux)
 #endif
 		if (pci_mapreg_map(pa, i, PCI_MAPREG_TYPE_MEM, 0,
 		    &sc->sc_msg_iot, &sc->sc_msg_ioh, NULL, NULL)) {
-			aprint_error_dev(self, "can't map 2nd register window\n");
+			aprint_error_dev(self,
+			    "can't map 2nd register window\n");
 			return;
 		}
 	} else {
@@ -183,16 +184,16 @@ iop_pci_attach(device_t parent, device_t self, void *aux)
 
 	/* Map and establish the interrupt.. */
 	if (pci_intr_map(pa, &ih)) {
-		printf("can't map interrupt\n");
+		aprint_error("can't map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_BIO, iop_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("can't establish interrupt");
+		aprint_error("can't establish interrupt");
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
 

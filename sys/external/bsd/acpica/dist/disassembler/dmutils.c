@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -41,17 +41,16 @@
  * POSSIBILITY OF SUCH DAMAGES.
  */
 
-
 #include "acpi.h"
 #include "accommon.h"
 #include "amlcode.h"
 #include "acdisasm.h"
+#include "acconvert.h"
 
 #ifdef ACPI_ASL_COMPILER
 #include <acnamesp.h>
 #endif
 
-#ifdef ACPI_DISASSEMBLER
 
 #define _COMPONENT          ACPI_CA_DEBUGGER
         ACPI_MODULE_NAME    ("dmutils")
@@ -229,7 +228,7 @@ AcpiDmIndent (
         return;
     }
 
-    AcpiOsPrintf ("%*.s", ACPI_MUL_4 (Level), " ");
+    AcpiOsPrintf ("%*.s", (Level * 4), " ");
 }
 
 
@@ -252,11 +251,20 @@ AcpiDmCommaIfListMember (
 
     if (!Op->Common.Next)
     {
+        ASL_CV_PRINT_ONE_COMMENT (Op, AMLCOMMENT_INLINE, NULL, 0);
         return (FALSE);
     }
 
     if (AcpiDmListType (Op->Common.Parent) & BLOCK_COMMA_LIST)
     {
+        /* Exit if Target has been marked IGNORE */
+
+        if (Op->Common.Next->Common.DisasmFlags & ACPI_PARSEOP_IGNORE)
+        {
+            ASL_CV_PRINT_ONE_COMMENT (Op, AMLCOMMENT_INLINE, NULL, 0);
+            return (FALSE);
+        }
+
         /* Check for a NULL target operand */
 
         if ((Op->Common.Next->Common.AmlOpcode == AML_INT_NAMEPATH_OP) &&
@@ -270,24 +278,35 @@ AcpiDmCommaIfListMember (
              */
             if (!Op->Common.Next->Common.Next)
             {
+                ASL_CV_PRINT_ONE_COMMENT (Op, AMLCOMMENT_INLINE, NULL, 0);
                 return (FALSE);
             }
         }
 
-        if ((Op->Common.DisasmFlags & ACPI_PARSEOP_PARAMLIST) &&
-            (!(Op->Common.Next->Common.DisasmFlags & ACPI_PARSEOP_PARAMLIST)))
+        if ((Op->Common.DisasmFlags & ACPI_PARSEOP_PARAMETER_LIST) &&
+            (!(Op->Common.Next->Common.DisasmFlags & ACPI_PARSEOP_PARAMETER_LIST)))
         {
+            ASL_CV_PRINT_ONE_COMMENT (Op, AMLCOMMENT_INLINE, NULL, 0);
             return (FALSE);
         }
 
-        AcpiOsPrintf (", ");
+        /* Emit comma only if this is not a C-style operator */
+
+        if (!Op->Common.OperatorSymbol)
+        {
+            AcpiOsPrintf (", ");
+            ASL_CV_PRINT_ONE_COMMENT (Op, AMLCOMMENT_INLINE, NULL, 0);
+        }
+
         return (TRUE);
     }
 
-    else if ((Op->Common.DisasmFlags & ACPI_PARSEOP_PARAMLIST) &&
-             (Op->Common.Next->Common.DisasmFlags & ACPI_PARSEOP_PARAMLIST))
+    else if ((Op->Common.DisasmFlags & ACPI_PARSEOP_PARAMETER_LIST) &&
+             (Op->Common.Next->Common.DisasmFlags & ACPI_PARSEOP_PARAMETER_LIST))
     {
         AcpiOsPrintf (", ");
+        ASL_CV_PRINT_ONE_COMMENT (Op, AMLCOMMENT_INLINE, NULL, 0);
+
         return (TRUE);
     }
 
@@ -317,5 +336,3 @@ AcpiDmCommaIfFieldMember (
         AcpiOsPrintf (", ");
     }
 }
-
-#endif

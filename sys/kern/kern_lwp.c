@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.172.2.4 2014/08/20 00:04:29 tls Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.172.2.5 2017/12/03 11:38:44 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.172.2.4 2014/08/20 00:04:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.172.2.5 2017/12/03 11:38:44 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -251,18 +251,11 @@ struct lwplist		alllwp		__cacheline_aligned;
 static void		lwp_dtor(void *, void *);
 
 /* DTrace proc provider probes */
-SDT_PROBE_DEFINE(proc,,,lwp_create,lwp-create,
-	"struct lwp *", NULL,
-	NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL);
-SDT_PROBE_DEFINE(proc,,,lwp_start,lwp-start,
-	"struct lwp *", NULL,
-	NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL);
-SDT_PROBE_DEFINE(proc,,,lwp_exit,lwp-exit,
-	"struct lwp *", NULL,
-	NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL);
+SDT_PROVIDER_DEFINE(proc);
+
+SDT_PROBE_DEFINE1(proc, kernel, , lwp__create, "struct lwp *");
+SDT_PROBE_DEFINE1(proc, kernel, , lwp__start, "struct lwp *");
+SDT_PROBE_DEFINE1(proc, kernel, , lwp__exit, "struct lwp *");
 
 struct turnstile turnstile0;
 struct lwp lwp0 __aligned(MIN_LWP_ALIGNMENT) = {
@@ -516,7 +509,7 @@ lwp_unstop(struct lwp *l)
 	if (l->l_wchan == NULL) {
 		/* setrunnable() will release the lock. */
 		setrunnable(l);
-	} else if (p->p_xstat && (l->l_flag & LW_SINTR) != 0) {
+	} else if (p->p_xsig && (l->l_flag & LW_SINTR) != 0) {
 		/* setrunnable() so we can receive the signal */
 		setrunnable(l);
 	} else {
@@ -767,8 +760,9 @@ lwp_find_free_lid(lwpid_t try_lid, lwp_t * new_lwp, proc_t *p)
  */
 int
 lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
-	   void *stack, size_t stacksize, void (*func)(void *), void *arg,
-	   lwp_t **rnewlwpp, int sclass)
+    void *stack, size_t stacksize, void (*func)(void *), void *arg,
+    lwp_t **rnewlwpp, int sclass, const sigset_t *sigmask,
+    const stack_t *sigstk)
 {
 	struct lwp *l2, *isfree;
 	turnstile_t *ts;
@@ -836,6 +830,8 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 	l2->l_kpribase = PRI_KERNEL;
 	l2->l_priority = l1->l_priority;
 	l2->l_inheritedprio = -1;
+	l2->l_protectprio = -1;
+	l2->l_auxprio = -1;
 	l2->l_flag = 0;
 	l2->l_pflag = LP_MPSAFE;
 	TAILQ_INIT(&l2->l_ld_locks);
@@ -891,8 +887,7 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 	pcu_save_all(l1);
 
 	uvm_lwp_setuarea(l2, uaddr);
-	uvm_lwp_fork(l1, l2, stack, stacksize, func,
-	    (arg != NULL) ? arg : l2);
+	uvm_lwp_fork(l1, l2, stack, stacksize, func, (arg != NULL) ? arg : l2);
 
 	if ((flags & LWP_PIDLID) != 0) {
 		lid = proc_alloc_pid(p2);
@@ -909,8 +904,8 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 	} else
 		l2->l_prflag = 0;
 
-	l2->l_sigstk = l1->l_sigstk;
-	l2->l_sigmask = l1->l_sigmask;
+	l2->l_sigstk = *sigstk;
+	l2->l_sigmask = *sigmask;
 	TAILQ_INIT(&l2->l_sigpend.sp_info);
 	sigemptyset(&l2->l_sigpend.sp_set);
 
@@ -961,7 +956,7 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 	}
 	mutex_exit(p2->p_lock);
 
-	SDT_PROBE(proc,,,lwp_create, l2, 0,0,0,0);
+	SDT_PROBE(proc, kernel, , lwp__create, l2, 0, 0, 0, 0);
 
 	mutex_enter(proc_lock);
 	LIST_INSERT_HEAD(&alllwp, l2, l_list);
@@ -972,6 +967,24 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 	if (p2->p_emul->e_lwp_fork)
 		(*p2->p_emul->e_lwp_fork)(l1, l2);
 
+	/* If the process is traced, report lwp creation to a debugger */
+	if ((p2->p_slflag & (PSL_TRACED|PSL_TRACELWP_CREATE|PSL_SYSCALL)) ==
+	    (PSL_TRACED|PSL_TRACELWP_CREATE)) {
+		ksiginfo_t ksi;
+
+		/* Tracing */
+		KASSERT((l2->l_flag & LW_SYSTEM) == 0);
+
+		p2->p_lwp_created = l2->l_lid;
+
+		KSI_INIT_EMPTY(&ksi);
+		ksi.ksi_signo = SIGTRAP;
+		ksi.ksi_code = TRAP_LWP;
+		mutex_enter(proc_lock);
+		kpsignal(p2, &ksi, NULL);
+		mutex_exit(proc_lock);
+	}
+
 	return (0);
 }
 
@@ -981,11 +994,11 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
  * previous LWP, at splsched.
  */
 void
-lwp_startup(struct lwp *prev, struct lwp *new)
+lwp_startup(struct lwp *prev, struct lwp *new_lwp)
 {
-	KASSERTMSG(new == curlwp, "l %p curlwp %p prevlwp %p", new, curlwp, prev);
+	KASSERTMSG(new_lwp == curlwp, "l %p curlwp %p prevlwp %p", new_lwp, curlwp, prev);
 
-	SDT_PROBE(proc,,,lwp_start, new, 0,0,0,0);
+	SDT_PROBE(proc, kernel, , lwp__start, new_lwp, 0, 0, 0, 0);
 
 	KASSERT(kpreempt_disabled());
 	if (prev != NULL) {
@@ -998,18 +1011,18 @@ lwp_startup(struct lwp *prev, struct lwp *new)
 		membar_exit();
 		prev->l_ctxswtch = 0;
 	}
-	KPREEMPT_DISABLE(new);
+	KPREEMPT_DISABLE(new_lwp);
+	if (__predict_true(new_lwp->l_proc->p_vmspace))
+		pmap_activate(new_lwp);
 	spl0();
-	if (__predict_true(new->l_proc->p_vmspace))
-		pmap_activate(new);
 
 	/* Note trip through cpu_switchto(). */
 	pserialize_switchpoint();
 
 	LOCKDEBUG_BARRIER(NULL, 0);
-	KPREEMPT_ENABLE(new);
-	if ((new->l_pflag & LP_MPSAFE) == 0) {
-		KERNEL_LOCK(1, new);
+	KPREEMPT_ENABLE(new_lwp);
+	if ((new_lwp->l_pflag & LP_MPSAFE) == 0) {
+		KERNEL_LOCK(1, new_lwp);
 	}
 }
 
@@ -1028,12 +1041,30 @@ lwp_exit(struct lwp *l)
 	KASSERT(current || (l->l_stat == LSIDL && l->l_target_cpu == NULL));
 	KASSERT(p == curproc);
 
-	SDT_PROBE(proc,,,lwp_exit, l, 0,0,0,0);
+	SDT_PROBE(proc, kernel, , lwp__exit, l, 0, 0, 0, 0);
 
 	/*
 	 * Verify that we hold no locks other than the kernel lock.
 	 */
 	LOCKDEBUG_BARRIER(&kernel_lock, 0);
+
+	/* If the process is traced, report lwp termination to a debugger */
+	if ((p->p_slflag & (PSL_TRACED|PSL_TRACELWP_EXIT|PSL_SYSCALL)) ==
+	    (PSL_TRACED|PSL_TRACELWP_EXIT)) {
+		ksiginfo_t ksi;
+
+		/* Tracing */
+		KASSERT((l->l_flag & LW_SYSTEM) == 0);
+
+		p->p_lwp_exited = l->l_lid;
+
+		KSI_INIT_EMPTY(&ksi);
+		ksi.ksi_signo = SIGTRAP;
+		ksi.ksi_code = TRAP_LWP;
+		mutex_enter(proc_lock);
+		kpsignal(p, &ksi, NULL);
+		mutex_exit(proc_lock);
+	}
 
 	/*
 	 * If we are the last live LWP in a process, we need to exit the
@@ -1050,7 +1081,7 @@ lwp_exit(struct lwp *l)
 		KASSERT(current == true);
 		KASSERT(p != &proc0);
 		/* XXXSMP kernel_lock not held */
-		exit1(l, 0);
+		exit1(l, 0, 0);
 		/* NOTREACHED */
 	}
 	p->p_nzlwps++;
@@ -1409,7 +1440,7 @@ lwp_find(struct proc *p, lwpid_t id)
  *
  * This happens early in the syscall path, on user trap, and on LWP
  * creation.  A long-running LWP can also voluntarily choose to update
- * it's credentials by calling this routine.  This may be called from
+ * its credentials by calling this routine.  This may be called from
  * LWP_CACHE_CREDS(), which checks l->l_cred != p->p_cred beforehand.
  */
 void
@@ -1446,13 +1477,13 @@ lwp_locked(struct lwp *l, kmutex_t *mtx)
  * Lend a new mutex to an LWP.  The old mutex must be held.
  */
 void
-lwp_setlock(struct lwp *l, kmutex_t *new)
+lwp_setlock(struct lwp *l, kmutex_t *mtx)
 {
 
 	KASSERT(mutex_owned(l->l_mutex));
 
 	membar_exit();
-	l->l_mutex = new;
+	l->l_mutex = mtx;
 }
 
 /*
@@ -1460,7 +1491,7 @@ lwp_setlock(struct lwp *l, kmutex_t *new)
  * must be held.
  */
 void
-lwp_unlock_to(struct lwp *l, kmutex_t *new)
+lwp_unlock_to(struct lwp *l, kmutex_t *mtx)
 {
 	kmutex_t *old;
 
@@ -1468,7 +1499,7 @@ lwp_unlock_to(struct lwp *l, kmutex_t *new)
 
 	old = l->l_mutex;
 	membar_exit();
-	l->l_mutex = new;
+	l->l_mutex = mtx;
 	mutex_spin_exit(old);
 }
 
@@ -1750,7 +1781,8 @@ lwp_ctl_alloc(vaddr_t *uaddr)
 		lp->lp_cur = 0;
 		lp->lp_max = LWPCTL_UAREA_SZ;
 		lp->lp_uva = p->p_emul->e_vm_default_addr(p,
-		     (vaddr_t)p->p_vmspace->vm_daddr, LWPCTL_UAREA_SZ);
+		     (vaddr_t)p->p_vmspace->vm_daddr, LWPCTL_UAREA_SZ,
+		     p->p_vmspace->vm_map.flags & VM_MAP_TOPDOWN);
 		error = uvm_map(&p->p_vmspace->vm_map, &lp->lp_uva,
 		    LWPCTL_UAREA_SZ, lp->lp_uao, 0, 0, UVM_MAPFLAG(UVM_PROT_RW,
 		    UVM_PROT_RW, UVM_INH_NONE, UVM_ADV_NORMAL, 0));
@@ -1774,10 +1806,7 @@ lwp_ctl_alloc(vaddr_t *uaddr)
 			return ENOMEM;
 		}
 		lcp = kmem_alloc(LWPCTL_LCPAGE_SZ, KM_SLEEP);
-		if (lcp == NULL) {
-			mutex_exit(&lp->lp_lock);
-			return ENOMEM;
-		}
+
 		/*
 		 * Wire the next page down in kernel space.  Since this
 		 * is a new mapping, we must add a reference.

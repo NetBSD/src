@@ -1,4 +1,4 @@
-#	$NetBSD: majors.evbmips,v 1.27.12.1 2013/06/23 06:20:04 tls Exp $
+#	$NetBSD: majors.evbmips,v 1.27.12.2 2017/12/03 11:36:09 jdolecek Exp $
 #
 # Device majors for evbmips
 #
@@ -39,7 +39,6 @@ device-major	se		char 37			se
 device-major	satlink		char 38			satlink
 device-major	rnd		char 39			rnd
 
-device-major	spkr		char 41			spkr
 device-major	scsibus		char 42			scsibus
 device-major	raid		char 43  block 16	raid
 device-major	esh		char 44			esh
@@ -73,7 +72,7 @@ device-major	wsfont		char 72			wsfont
 # obsolete, probably can be safely removed after 4.0 branch
 #device-major	aucom		char 73			aucom
 
-device-major	sysmon		char 74			sysmon_envsys | sysmon_wdog
+device-major	sysmon		char 74			sysmon
 device-major	cgd		char 75  block 18	cgd
 device-major	ksyms		char 76			ksyms
 device-major	uart		char 77			uart

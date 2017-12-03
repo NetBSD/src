@@ -1,4 +1,4 @@
-/*	$NetBSD: ibus_3max.c,v 1.15 2011/07/09 17:32:29 matt Exp $	*/
+/*	$NetBSD: ibus_3max.c,v 1.15.12.1 2017/12/03 11:36:35 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibus_3max.c,v 1.15 2011/07/09 17:32:29 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibus_3max.c,v 1.15.12.1 2017/12/03 11:36:35 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -68,6 +68,7 @@ kn02sys_attach(device_t parent, device_t self, void *aux)
 	ida.ida_busname = "ibus";
 	ida.ida_devs = kn02sys_devs;
 	ida.ida_ndevs = __arraycount(kn02sys_devs);
+	ida.ida_memt = normal_memt;
 
 	ibusattach(parent, self, &ida);
 }

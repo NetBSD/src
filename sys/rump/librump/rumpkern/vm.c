@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.130.2.4 2014/08/20 00:04:41 tls Exp $	*/
+/*	$NetBSD: vm.c,v 1.130.2.5 2017/12/03 11:39:16 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.130.2.4 2014/08/20 00:04:41 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.130.2.5 2017/12/03 11:39:16 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -55,16 +55,17 @@ __KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.130.2.4 2014/08/20 00:04:41 tls Exp $");
 
 #include <machine/pmap.h>
 
-#include <rump/rumpuser.h>
-
 #include <uvm/uvm.h>
 #include <uvm/uvm_ddb.h>
 #include <uvm/uvm_pdpolicy.h>
 #include <uvm/uvm_prot.h>
 #include <uvm/uvm_readahead.h>
+#include <uvm/uvm_device.h>
 
-#include "rump_private.h"
-#include "rump_vfs_private.h"
+#include <rump-sys/kern.h>
+#include <rump-sys/vfs.h>
+
+#include <rump/rumpuser.h>
 
 kmutex_t uvm_pageqlock; /* non-free page lock */
 kmutex_t uvm_fpageqlock; /* free page lock, non-gpl license */
@@ -79,13 +80,15 @@ const int * const uvmexp_pagemask = &uvmexp.pagemask;
 const int * const uvmexp_pageshift = &uvmexp.pageshift;
 #endif
 
-struct vm_map rump_vmmap;
-
 static struct vm_map kernel_map_store;
 struct vm_map *kernel_map = &kernel_map_store;
 
 static struct vm_map module_map_store;
 extern struct vm_map *module_map;
+
+static struct pmap pmap_kernel;
+struct pmap rump_pmap_local;
+struct pmap *const kernel_pmap_ptr = &pmap_kernel;
 
 vmem_t *kmem_arena;
 vmem_t *kmem_va_arena;
@@ -93,6 +96,9 @@ vmem_t *kmem_va_arena;
 static unsigned int pdaemon_waiters;
 static kmutex_t pdaemonmtx;
 static kcondvar_t pdaemoncv, oomwait;
+
+/* all local non-proc0 processes share this vmspace */
+struct vmspace *rump_vmspace_local;
 
 unsigned long rump_physmemlimit = RUMPMEM_UNLIMITED;
 static unsigned long pdlimit = RUMPMEM_UNLIMITED; /* page daemon memlimit */
@@ -388,6 +394,10 @@ uvm_init(void)
 
 	pool_cache_bootstrap(&pagecache, sizeof(struct vm_page), 0, 0, 0,
 	    "page$", NULL, IPL_NONE, pgctor, pgdtor, NULL);
+
+	/* create vmspace used by local clients */
+	rump_vmspace_local = kmem_zalloc(sizeof(*rump_vmspace_local), KM_SLEEP);
+	uvmspace_init(rump_vmspace_local, &rump_pmap_local, 0, 0, false);
 }
 
 void
@@ -395,8 +405,15 @@ uvmspace_init(struct vmspace *vm, struct pmap *pmap, vaddr_t vmin, vaddr_t vmax,
     bool topdown)
 {
 
-	vm->vm_map.pmap = pmap_kernel();
+	vm->vm_map.pmap = pmap;
 	vm->vm_refcnt = 1;
+}
+
+int
+uvm_map_pageable(struct vm_map *map, vaddr_t start, vaddr_t end,
+    bool new_pageable, int lockflags)
+{
+	return 0;
 }
 
 void
@@ -434,36 +451,34 @@ uvm_init_limits(struct proc *p)
 
 /*
  * This satisfies the "disgusting mmap hack" used by proplib.
- * We probably should grow some more assertables to make sure we're
- * not satisfying anything we shouldn't be satisfying.
  */
 int
-uvm_mmap(struct vm_map *map, vaddr_t *addr, vsize_t size, vm_prot_t prot,
-	vm_prot_t maxprot, int flags, void *handle, voff_t off, vsize_t locklim)
+uvm_mmap_anon(struct proc *p, void **addrp, size_t size)
 {
-	void *uaddr;
 	int error;
 
-	if (prot != (VM_PROT_READ | VM_PROT_WRITE))
-		panic("uvm_mmap() variant unsupported");
-	if (flags != (MAP_PRIVATE | MAP_ANON))
-		panic("uvm_mmap() variant unsupported");
-
 	/* no reason in particular, but cf. uvm_default_mapaddr() */
-	if (*addr != 0)
+	if (*addrp != NULL)
 		panic("uvm_mmap() variant unsupported");
 
 	if (RUMP_LOCALPROC_P(curproc)) {
-		error = rumpuser_anonmmap(NULL, size, 0, 0, &uaddr);
+		error = rumpuser_anonmmap(NULL, size, 0, 0, addrp);
 	} else {
-		error = rumpuser_sp_anonmmap(curproc->p_vmspace->vm_map.pmap,
-		    size, &uaddr);
+		error = rump_sysproxy_anonmmap(RUMP_SPVM2CTL(p->p_vmspace),
+		    size, addrp);
 	}
-	if (error)
-		return error;
+	return error;
+}
 
-	*addr = (vaddr_t)uaddr;
-	return 0;
+/*
+ * Stubs for things referenced from vfs_vnode.c but not used.
+ */
+const dev_t zerodev;
+
+struct uvm_object *
+udv_attach(dev_t device, vm_prot_t accessprot, voff_t off, vsize_t size)
+{
+	return NULL;
 }
 
 struct pagerinfo {
@@ -692,7 +707,7 @@ ubc_purge(struct uvm_object *uobj)
 }
 
 vaddr_t
-uvm_default_mapaddr(struct proc *p, vaddr_t base, vsize_t sz)
+uvm_default_mapaddr(struct proc *p, vaddr_t base, vsize_t sz, int topdown)
 {
 
 	return 0;
@@ -705,6 +720,24 @@ uvm_map_protect(struct vm_map *map, vaddr_t start, vaddr_t end,
 
 	return EOPNOTSUPP;
 }
+
+int
+uvm_map(struct vm_map *map, vaddr_t *startp, vsize_t size,
+    struct uvm_object *uobj, voff_t uoffset, vsize_t align,
+    uvm_flag_t flags)
+{
+
+	*startp = (vaddr_t)rump_hypermalloc(size, align, true, "uvm_map");
+	return *startp != 0 ? 0 : ENOMEM;
+}
+
+void
+uvm_unmap1(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
+{
+
+	rump_hyperfree((void*)start, end-start);
+}
+
 
 /*
  * UVM km
@@ -771,6 +804,12 @@ uvm_km_free(struct vm_map *map, vaddr_t vaddr, vsize_t size, uvm_flag_t flags)
 		rumpuser_unmap((void *)vaddr, size);
 	else
 		rumpuser_free((void *)vaddr, size);
+}
+
+int
+uvm_km_protect(struct vm_map *map, vaddr_t vaddr, vsize_t size, vm_prot_t prot)
+{
+	return 0;
 }
 
 struct vm_map *
@@ -1168,7 +1207,7 @@ uvm_pageout(void *arg)
 		    uvmexp.paging == 0) {
 			rumpuser_dprintf("pagedaemoness: failed to reclaim "
 			    "memory ... sleeping (deadlock?)\n");
-			cv_timedwait(&pdaemoncv, &pdaemonmtx, hz);
+			kpause("pddlk", false, hz, &pdaemonmtx);
 		}
 	}
 

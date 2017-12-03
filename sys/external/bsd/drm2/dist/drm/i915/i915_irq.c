@@ -207,7 +207,7 @@ static bool ivb_can_enable_err_int(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_crtc *crtc;
-	enum pipe pipe;
+	enum i915_pipe pipe;
 
 	assert_spin_locked(&dev_priv->irq_lock);
 
@@ -224,7 +224,7 @@ static bool ivb_can_enable_err_int(struct drm_device *dev)
 static bool cpt_can_enable_serr_int(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
-	enum pipe pipe;
+	enum i915_pipe pipe;
 	struct intel_crtc *crtc;
 
 	assert_spin_locked(&dev_priv->irq_lock);
@@ -239,7 +239,7 @@ static bool cpt_can_enable_serr_int(struct drm_device *dev)
 	return true;
 }
 
-static void i9xx_clear_fifo_underrun(struct drm_device *dev, enum pipe pipe)
+static void i9xx_clear_fifo_underrun(struct drm_device *dev, enum i915_pipe pipe)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	u32 reg = PIPESTAT(pipe);
@@ -252,7 +252,7 @@ static void i9xx_clear_fifo_underrun(struct drm_device *dev, enum pipe pipe)
 }
 
 static void ironlake_set_fifo_underrun_reporting(struct drm_device *dev,
-						 enum pipe pipe, bool enable)
+						 enum i915_pipe pipe, bool enable)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	uint32_t bit = (pipe == PIPE_A) ? DE_PIPEA_FIFO_UNDERRUN :
@@ -265,7 +265,7 @@ static void ironlake_set_fifo_underrun_reporting(struct drm_device *dev,
 }
 
 static void ivybridge_set_fifo_underrun_reporting(struct drm_device *dev,
-						  enum pipe pipe, bool enable)
+						  enum i915_pipe pipe, bool enable)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	if (enable) {
@@ -290,7 +290,7 @@ static void ivybridge_set_fifo_underrun_reporting(struct drm_device *dev,
 }
 
 static void broadwell_set_fifo_underrun_reporting(struct drm_device *dev,
-						  enum pipe pipe, bool enable)
+						  enum i915_pipe pipe, bool enable)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 
@@ -395,7 +395,7 @@ static void cpt_set_fifo_underrun_reporting(struct drm_device *dev,
  * Returns the previous state of underrun reporting.
  */
 bool __intel_set_cpu_fifo_underrun_reporting(struct drm_device *dev,
-					     enum pipe pipe, bool enable)
+					     enum i915_pipe pipe, bool enable)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct drm_crtc *crtc = dev_priv->pipe_to_crtc_mapping[pipe];
@@ -425,7 +425,7 @@ done:
 }
 
 bool intel_set_cpu_fifo_underrun_reporting(struct drm_device *dev,
-					   enum pipe pipe, bool enable)
+					   enum i915_pipe pipe, bool enable)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	unsigned long flags;
@@ -439,7 +439,7 @@ bool intel_set_cpu_fifo_underrun_reporting(struct drm_device *dev,
 }
 
 static bool __cpu_fifo_underrun_reporting_enabled(struct drm_device *dev,
-						  enum pipe pipe)
+						  enum i915_pipe pipe)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct drm_crtc *crtc = dev_priv->pipe_to_crtc_mapping[pipe];
@@ -502,7 +502,7 @@ done:
 
 
 static void
-__i915_enable_pipestat(struct drm_i915_private *dev_priv, enum pipe pipe,
+__i915_enable_pipestat(struct drm_i915_private *dev_priv, enum i915_pipe pipe,
 		       u32 enable_mask, u32 status_mask)
 {
 	u32 reg = PIPESTAT(pipe);
@@ -526,7 +526,7 @@ __i915_enable_pipestat(struct drm_i915_private *dev_priv, enum pipe pipe,
 }
 
 static void
-__i915_disable_pipestat(struct drm_i915_private *dev_priv, enum pipe pipe,
+__i915_disable_pipestat(struct drm_i915_private *dev_priv, enum i915_pipe pipe,
 		        u32 enable_mask, u32 status_mask)
 {
 	u32 reg = PIPESTAT(pipe);
@@ -571,7 +571,7 @@ static u32 vlv_get_pipestat_enable_mask(struct drm_device *dev, u32 status_mask)
 }
 
 void
-i915_enable_pipestat(struct drm_i915_private *dev_priv, enum pipe pipe,
+i915_enable_pipestat(struct drm_i915_private *dev_priv, enum i915_pipe pipe,
 		     u32 status_mask)
 {
 	u32 enable_mask;
@@ -585,7 +585,7 @@ i915_enable_pipestat(struct drm_i915_private *dev_priv, enum pipe pipe,
 }
 
 void
-i915_disable_pipestat(struct drm_i915_private *dev_priv, enum pipe pipe,
+i915_disable_pipestat(struct drm_i915_private *dev_priv, enum i915_pipe pipe,
 		      u32 status_mask)
 {
 	u32 enable_mask;
@@ -730,7 +730,7 @@ static u32 gm45_get_vblank_counter(struct drm_device *dev, int pipe)
 #define __raw_i915_read32(dev_priv__, reg__) readl((dev_priv__)->regs + (reg__))
 #endif
 
-static bool ilk_pipe_in_vblank_locked(struct drm_device *dev, enum pipe pipe)
+static bool ilk_pipe_in_vblank_locked(struct drm_device *dev, enum i915_pipe pipe)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	uint32_t status;
@@ -1099,7 +1099,9 @@ static void notify_ring(struct drm_device *dev,
     {
 	unsigned long flags;
 	spin_lock_irqsave(&dev_priv->irq_lock, flags);
-	/* XXX Set a flag under the lock...  */
+	/*
+	 * XXX Set a flag under the lock or push the lock out to callers.
+	 */
 	DRM_SPIN_WAKEUP_ALL(&ring->irq_queue, &dev_priv->irq_lock);
 	spin_unlock_irqrestore(&dev_priv->irq_lock, flags);
     }
@@ -1315,8 +1317,10 @@ static void snb_gt_irq_handler(struct drm_device *dev,
 	if (gt_iir & (GT_BLT_CS_ERROR_INTERRUPT |
 		      GT_BSD_CS_ERROR_INTERRUPT |
 		      GT_RENDER_CS_MASTER_ERROR_INTERRUPT)) {
+		spin_lock(&dev_priv->irq_lock);
 		i915_handle_error(dev, false, "GT error interrupt 0x%08x",
 				  gt_iir);
+		spin_unlock(&dev_priv->irq_lock);
 	}
 
 	if (gt_iir & GT_PARITY_ERROR(dev))
@@ -1475,7 +1479,7 @@ static void dp_aux_irq_handler(struct drm_device *dev)
 }
 
 #if defined(CONFIG_DEBUG_FS)
-static void display_pipe_crc_irq_handler(struct drm_device *dev, enum pipe pipe,
+static void display_pipe_crc_irq_handler(struct drm_device *dev, enum i915_pipe pipe,
 					 uint32_t crc0, uint32_t crc1,
 					 uint32_t crc2, uint32_t crc3,
 					 uint32_t crc4)
@@ -1520,14 +1524,14 @@ static void display_pipe_crc_irq_handler(struct drm_device *dev, enum pipe pipe,
 }
 #else
 static inline void
-display_pipe_crc_irq_handler(struct drm_device *dev, enum pipe pipe,
+display_pipe_crc_irq_handler(struct drm_device *dev, enum i915_pipe pipe,
 			     uint32_t crc0, uint32_t crc1,
 			     uint32_t crc2, uint32_t crc3,
 			     uint32_t crc4) {}
 #endif
 
 
-static void hsw_pipe_crc_irq_handler(struct drm_device *dev, enum pipe pipe)
+static void hsw_pipe_crc_irq_handler(struct drm_device *dev, enum i915_pipe pipe)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 
@@ -1536,7 +1540,7 @@ static void hsw_pipe_crc_irq_handler(struct drm_device *dev, enum pipe pipe)
 				     0, 0, 0, 0);
 }
 
-static void ivb_pipe_crc_irq_handler(struct drm_device *dev, enum pipe pipe)
+static void ivb_pipe_crc_irq_handler(struct drm_device *dev, enum i915_pipe pipe)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 
@@ -1548,7 +1552,7 @@ static void ivb_pipe_crc_irq_handler(struct drm_device *dev, enum pipe pipe)
 				     I915_READ(PIPE_CRC_RES_5_IVB(pipe)));
 }
 
-static void i9xx_pipe_crc_irq_handler(struct drm_device *dev, enum pipe pipe)
+static void i9xx_pipe_crc_irq_handler(struct drm_device *dev, enum i915_pipe pipe)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	uint32_t res1, res2;
@@ -1589,9 +1593,11 @@ static void gen6_rps_irq_handler(struct drm_i915_private *dev_priv, u32 pm_iir)
 			notify_ring(dev_priv->dev, &dev_priv->ring[VECS]);
 
 		if (pm_iir & PM_VEBOX_CS_ERROR_INTERRUPT) {
+			spin_lock(&dev_priv->irq_lock);
 			i915_handle_error(dev_priv->dev, false,
 					  "VEBOX CS error interrupt 0x%08x",
 					  pm_iir);
+			spin_unlock(&dev_priv->irq_lock);
 		}
 	}
 }
@@ -1771,7 +1777,7 @@ static void ivb_err_int_handler(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	u32 err_int = I915_READ(GEN7_ERR_INT);
-	enum pipe pipe;
+	enum i915_pipe pipe;
 
 	if (err_int & ERR_INT_POISON)
 		DRM_ERROR("Poison interrupt\n");
@@ -1861,7 +1867,7 @@ static void cpt_irq_handler(struct drm_device *dev, u32 pch_iir)
 static void ilk_display_irq_handler(struct drm_device *dev, u32 de_iir)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
-	enum pipe pipe;
+	enum i915_pipe pipe;
 
 	if (de_iir & DE_AUX_CHANNEL_A)
 		dp_aux_irq_handler(dev);
@@ -1911,7 +1917,7 @@ static void ilk_display_irq_handler(struct drm_device *dev, u32 de_iir)
 static void ivb_display_irq_handler(struct drm_device *dev, u32 de_iir)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
-	enum pipe pipe;
+	enum i915_pipe pipe;
 
 	if (de_iir & DE_ERR_INT_IVB)
 		ivb_err_int_handler(dev);
@@ -2017,7 +2023,7 @@ static irqreturn_t gen8_irq_handler(DRM_IRQ_ARGS)
 	u32 master_ctl;
 	irqreturn_t ret = IRQ_NONE;
 	uint32_t tmp = 0;
-	enum pipe pipe;
+	enum i915_pipe pipe;
 
 	master_ctl = I915_READ(GEN8_MASTER_IRQ);
 	master_ctl &= ~GEN8_MASTER_IRQ_CONTROL;
@@ -2132,11 +2138,10 @@ static void i915_error_wake_up(struct drm_i915_private *dev_priv,
 	 * a gpu reset pending so that i915_error_work_func can acquire them).
 	 */
 
+	assert_spin_locked(&dev_priv->irq_lock);
 #ifdef __NetBSD__
-	spin_lock(&dev_priv->irq_lock);
 	for_each_ring(ring, dev_priv, i)
 		DRM_SPIN_WAKEUP_ALL(&ring->irq_queue, &dev_priv->irq_lock);
-	spin_unlock(&dev_priv->irq_lock);
 
 	spin_lock(&dev_priv->pending_flip_lock);
 	DRM_SPIN_WAKEUP_ALL(&dev_priv->pending_flip_queue,
@@ -2244,7 +2249,9 @@ static void i915_error_work_func(struct work_struct *work)
 		 * Note: The wake_up also serves as a memory barrier so that
 		 * waiters see the update value of the reset counter atomic_t.
 		 */
+		spin_lock(&dev_priv->irq_lock);
 		i915_error_wake_up(dev_priv, true);
+		spin_unlock(&dev_priv->irq_lock);
 	}
 }
 
@@ -2356,6 +2363,8 @@ void i915_handle_error(struct drm_device *dev, bool wedged,
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	va_list args;
 	char error_msg[80];
+
+	assert_spin_locked(&dev_priv->irq_lock);
 
 	va_start(args, fmt);
 	vscnprintf(error_msg, sizeof(error_msg), fmt, args);
@@ -2734,6 +2743,8 @@ static void i915_hangcheck_elapsed(unsigned long data)
 	if (!i915.enable_hangcheck)
 		return;
 
+	spin_lock(&dev_priv->irq_lock);
+
 	for_each_ring(ring, dev_priv, i) {
 		u64 acthd;
 		u32 seqno;
@@ -2747,9 +2758,7 @@ static void i915_hangcheck_elapsed(unsigned long data)
 		if (ring->hangcheck.seqno == seqno) {
 			if (ring_idle(ring, seqno)) {
 				ring->hangcheck.action = HANGCHECK_IDLE;
-
 #ifdef __NetBSD__
-				spin_lock(&dev_priv->irq_lock);
 				if (DRM_SPIN_WAITERS_P(&ring->irq_queue,
 					&dev_priv->irq_lock)) {
 					if (!test_and_set_bit(ring->id, &dev_priv->gpu_error.missed_irq_rings)) {
@@ -2765,7 +2774,6 @@ static void i915_hangcheck_elapsed(unsigned long data)
 				} else {
 					busy = false;
 				}
-				spin_unlock(&dev_priv->irq_lock);
 #else
 				if (waitqueue_active(&ring->irq_queue)) {
 					/* Issue a wake-up to catch stuck h/w. */
@@ -2842,8 +2850,13 @@ static void i915_hangcheck_elapsed(unsigned long data)
 		}
 	}
 
-	if (rings_hung)
-		return i915_handle_error(dev, true, "Ring hung");
+	if (rings_hung) {
+		i915_handle_error(dev, true, "Ring hung");
+		spin_unlock(&dev_priv->irq_lock);
+		return;
+	}
+
+	spin_unlock(&dev_priv->irq_lock);
 
 	if (busy_count)
 		/* Reset timer case chip hangs without another request

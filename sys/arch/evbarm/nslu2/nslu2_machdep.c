@@ -1,4 +1,4 @@
-/*	$NetBSD: nslu2_machdep.c,v 1.21.2.2 2014/08/20 00:02:55 tls Exp $	*/
+/*	$NetBSD: nslu2_machdep.c,v 1.21.2.3 2017/12/03 11:36:06 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslu2_machdep.c,v 1.21.2.2 2014/08/20 00:02:55 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslu2_machdep.c,v 1.21.2.3 2017/12/03 11:36:06 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -155,16 +155,16 @@ BootConfig bootconfig;		/* Boot config storage */
 char *boot_args = NULL;
 char *boot_file = NULL;
 
-vm_offset_t physical_start;
-vm_offset_t physical_freestart;
-vm_offset_t physical_freeend;
-vm_offset_t physical_end;
+vaddr_t physical_start;
+vaddr_t physical_freestart;
+vaddr_t physical_freeend;
+vaddr_t physical_end;
 u_int free_pages;
 
 /* Physical and virtual addresses for some global pages */
 pv_addr_t minidataclean;
 
-vm_offset_t msgbufphys;
+paddr_t msgbufphys;
 
 extern int end;
 
@@ -777,7 +777,7 @@ initarm(void *arg)
 #ifdef VERBOSE_INIT_ARM
 	printf("page ");
 #endif
-	uvm_setpagesize();	/* initialize PAGE_SIZE-dependent variables */
+	uvm_md_init();
 	uvm_page_physload(atop(physical_freestart), atop(physical_freeend),
 	    atop(physical_freestart), atop(physical_freeend),
 	    VM_FREELIST_DEFAULT);
@@ -794,7 +794,7 @@ initarm(void *arg)
 #endif
 	ixp425_intr_init();
 #ifdef VERBOSE_INIT_ARM
-	printf("\nAll initialize done!\nNow Starting NetBSD, Hear we go!\n");
+	printf("\nAll initialization done!\nNow Starting NetBSD, Here we go!\n");
 #endif
 
 #ifdef BOOTHOWTO

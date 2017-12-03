@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.67.6.1 2014/08/20 00:03:00 tls Exp $	*/
+/*	$NetBSD: cpu.h,v 1.67.6.2 2017/12/03 11:36:13 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -63,7 +63,7 @@
 
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous
- * machine state in an opaque clockframe.  One the hp300, we use
+ * machine state in an opaque clockframe.  On the hp300, we use
  * what the hardware pushes on an interrupt (frame format 0).
  */
 struct clockframe {

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mbe_pcmcia.c,v 1.46 2009/05/12 14:42:18 cegger Exp $	*/
+/*	$NetBSD: if_mbe_pcmcia.c,v 1.46.22.1 2017/12/03 11:37:31 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mbe_pcmcia.c,v 1.46 2009/05/12 14:42:18 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mbe_pcmcia.c,v 1.46.22.1 2017/12/03 11:37:31 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,8 +141,8 @@ mbe_pcmcia_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
-	if (pcmcia_product_lookup(pa, mbe_pcmcia_products, mbe_pcmcia_nproducts,
-	    sizeof(mbe_pcmcia_products[0]), NULL))
+	if (pcmcia_product_lookup(pa, mbe_pcmcia_products,
+	    mbe_pcmcia_nproducts, sizeof(mbe_pcmcia_products[0]), NULL))
 		return 1;
 	return 0;
 }
@@ -151,8 +151,7 @@ int
 mbe_pcmcia_validate_config(struct pcmcia_config_entry *cfe)
 {
 
-	if (cfe->iftype != PCMCIA_IFTYPE_IO ||
-	    cfe->num_iospace < 1)
+	if (cfe->iftype != PCMCIA_IFTYPE_IO || cfe->num_iospace < 1)
 		return EINVAL;
 	return 0;
 }
@@ -173,8 +172,7 @@ mbe_pcmcia_attach(device_t parent, device_t self, void *aux)
 
 	error = pcmcia_function_configure(pa->pf, mbe_pcmcia_validate_config);
 	if (error) {
-		aprint_error_dev(self, "configure failed, error=%d\n",
-		    error);
+		aprint_error_dev(self, "configure failed, error=%d\n", error);
 		return;
 	}
 

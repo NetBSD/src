@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_ls2.c,v 1.4 2011/06/08 17:47:48 bouyer Exp $	*/
+/*	$NetBSD: cache_ls2.c,v 1.4.12.1 2017/12/03 11:36:28 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache_ls2.c,v 1.4 2011/06/08 17:47:48 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache_ls2.c,v 1.4.12.1 2017/12/03 11:36:28 jdolecek Exp $");
 
 #include <sys/param.h>
 
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: cache_ls2.c,v 1.4 2011/06/08 17:47:48 bouyer Exp $")
 __asm(".set mips3");
 
 void
-ls2_icache_sync_range(vaddr_t va, vsize_t size)
+ls2_icache_sync_range(register_t va, vsize_t size)
 {
 	struct mips_cache_info * const mci = &mips_cache_info;
 	const vaddr_t eva = round_line(va + size);
@@ -121,7 +121,7 @@ ls2_icache_sync_all(void)
 }
 
 void
-ls2_pdcache_inv_range(vaddr_t va, vsize_t size)
+ls2_pdcache_inv_range(register_t va, vsize_t size)
 {
 	const vaddr_t eva = round_line(va + size);
 
@@ -139,7 +139,7 @@ ls2_pdcache_inv_range(vaddr_t va, vsize_t size)
 }
 
 void
-ls2_pdcache_wbinv_range(vaddr_t va, vsize_t size)
+ls2_pdcache_wbinv_range(register_t va, vsize_t size)
 {
 	const vaddr_t eva = round_line(va + size);
 
@@ -157,7 +157,7 @@ ls2_pdcache_wbinv_range(vaddr_t va, vsize_t size)
 }
 
 void
-ls2_pdcache_wb_range(vaddr_t va, vsize_t size)
+ls2_pdcache_wb_range(register_t va, vsize_t size)
 {
 	/*
 	 * Alas, can't writeback without invalidating...
@@ -215,7 +215,7 @@ ls2_pdcache_wbinv_all(void)
  */
 
 void
-ls2_sdcache_inv_range(vaddr_t va, vsize_t size)
+ls2_sdcache_inv_range(register_t va, vsize_t size)
 {
 	const vaddr_t eva = round_line(va + size);
 
@@ -235,7 +235,7 @@ ls2_sdcache_inv_range(vaddr_t va, vsize_t size)
 }
 
 void
-ls2_sdcache_wbinv_range(vaddr_t va, vsize_t size)
+ls2_sdcache_wbinv_range(register_t va, vsize_t size)
 {
 	const vaddr_t eva = round_line(va + size);
 
@@ -255,7 +255,7 @@ ls2_sdcache_wbinv_range(vaddr_t va, vsize_t size)
 }
 
 void
-ls2_sdcache_wb_range(vaddr_t va, vsize_t size)
+ls2_sdcache_wb_range(register_t va, vsize_t size)
 {
 	/*
 	 * Alas, can't writeback without invalidating...

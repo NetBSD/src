@@ -1,4 +1,4 @@
-/*	$NetBSD: resourcevar.h,v 1.53.12.1 2012/11/20 03:02:51 tls Exp $	*/
+/*	$NetBSD: resourcevar.h,v 1.53.12.2 2017/12/03 11:39:21 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -39,10 +39,20 @@
 #endif
 
 #include <sys/mutex.h>
+#include <sys/resource.h>
 
 /*
  * Kernel per-process accounting / statistics
  */
+struct uprof {				/* profile arguments */
+	char *	pr_base;		/* buffer base */
+	size_t  pr_size;		/* buffer size */
+	u_long	pr_off;			/* pc offset */
+	u_int   pr_scale;		/* pc scaling */
+	u_long	pr_addr;		/* temp storage for addr until AST */
+	u_long	pr_ticks;		/* temp storage for ticks until AST */
+};
+
 struct pstats {
 #define	pstat_startzero	p_ru
 	struct	rusage p_ru;		/* stats for this proc */
@@ -51,15 +61,7 @@ struct pstats {
 
 #define	pstat_startcopy	p_timer
 	struct	itimerspec p_timer[3];	/* virtual-time timers */
-
-	struct uprof {			/* profile arguments */
-		char *	pr_base;	/* buffer base */
-		size_t  pr_size;	/* buffer size */
-		u_long	pr_off;		/* pc offset */
-		u_int   pr_scale;	/* pc scaling */
-		u_long	pr_addr;	/* temp storage for addr until AST */
-		u_long	pr_ticks;	/* temp storage for ticks until AST */
-	} p_prof;
+	struct	uprof p_prof;			/* profile arguments */
 #define	pstat_endcopy	p_start
 	struct	timeval p_start;	/* starting time */
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: btmagic.c,v 1.3.2.2 2014/08/20 00:03:36 tls Exp $	*/
+/*	$NetBSD: btmagic.c,v 1.3.2.3 2017/12/03 11:36:59 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btmagic.c,v 1.3.2.2 2014/08/20 00:03:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btmagic.c,v 1.3.2.3 2017/12/03 11:36:59 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -163,12 +163,19 @@ struct btmagic_softc {
 	int			sc_rw;
 
 	/* previous touches */
-	uint32_t		sc_smask;	/* scrolling */
-	int			sc_az[16];
-	int			sc_aw[16];
+	uint32_t		sc_smask;	/* active IDs */
+	int			sc_nfingers;	/* number of active IDs */
+	int			sc_ax[16];
+	int			sc_ay[16];
 
 	/* previous mouse buttons */
+	int			sc_mb_id; /* which ID selects the button */
 	uint32_t		sc_mb;
+	/* button emulation with tap */
+	int			sc_tapmb_id; /* which ID selects the button */
+	struct timeval		sc_taptime;
+	int			sc_taptimeout;
+	callout_t		sc_tapcallout;
 };
 
 /* sc_flags */
@@ -189,13 +196,15 @@ static int  btmagic_listen(struct btmagic_softc *);
 static int  btmagic_connect(struct btmagic_softc *);
 static int  btmagic_sysctl_resolution(SYSCTLFN_PROTO);
 static int  btmagic_sysctl_scale(SYSCTLFN_PROTO);
+static int  btmagic_tap(struct btmagic_softc *, int);
+static int  btmagic_sysctl_taptimeout(SYSCTLFN_PROTO);
 
 CFATTACH_DECL_NEW(btmagic, sizeof(struct btmagic_softc),
     btmagic_match, btmagic_attach, btmagic_detach, NULL);
 
 /* wsmouse(4) accessops */
-static int btmagic_wsmouse_enable(void *);
-static int btmagic_wsmouse_ioctl(void *, unsigned long, void *, int, struct lwp *);
+static int  btmagic_wsmouse_enable(void *);
+static int  btmagic_wsmouse_ioctl(void *, unsigned long, void *, int, struct lwp *);
 static void btmagic_wsmouse_disable(void *);
 
 static const struct wsmouse_accessops btmagic_wsmouse_accessops = {
@@ -216,7 +225,17 @@ static void  btmagic_complete(void *, int);
 static void  btmagic_linkmode(void *, int);
 static void  btmagic_input(void *, struct mbuf *);
 static void  btmagic_input_basic(struct btmagic_softc *, uint8_t *, size_t);
-static void  btmagic_input_magic(struct btmagic_softc *, uint8_t *, size_t);
+static void  btmagic_input_magicm(struct btmagic_softc *, uint8_t *, size_t);
+static void  btmagic_input_magict(struct btmagic_softc *, uint8_t *, size_t);
+static void  btmagic_tapcallout(void *);
+
+/* report types (data[1]) */
+#define BASIC_REPORT_ID		0x10
+#define TRACKPAD_REPORT_ID	0x28
+#define MOUSE_REPORT_ID		0x29
+#define BATT_STAT_REPORT_ID	0x30
+#define BATT_STRENGTH_REPORT_ID	0x47
+#define SURFACE_REPORT_ID	0x61
 
 static const struct btproto btmagic_ctl_proto = {
 	btmagic_connecting,
@@ -259,7 +278,8 @@ btmagic_match(device_t self, cfdata_t cfdata, void *aux)
 	if (prop_dictionary_get_uint16(aux, BTDEVvendor, &v)
 	    && prop_dictionary_get_uint16(aux, BTDEVproduct, &p)
 	    && v == USB_VENDOR_APPLE
-	    && p == USB_PRODUCT_APPLE_MAGICMOUSE)
+	    && (p == USB_PRODUCT_APPLE_MAGICMOUSE ||
+		p == USB_PRODUCT_APPLE_MAGICTRACKPAD))
 		return 2;	/* trump bthidev(4) */
 
 	return 0;
@@ -279,8 +299,12 @@ btmagic_attach(device_t parent, device_t self, void *aux)
 	 */
 	sc->sc_dev = self;
 	sc->sc_state = BTMAGIC_CLOSED;
+	sc->sc_mb_id = -1;
+	sc->sc_tapmb_id = -1;
 	callout_init(&sc->sc_timeout, 0);
 	callout_setfunc(&sc->sc_timeout, btmagic_timeout, sc);
+	callout_init(&sc->sc_tapcallout, 0);
+	callout_setfunc(&sc->sc_tapcallout, btmagic_tapcallout, sc);
 	sockopt_init(&sc->sc_mode, BTPROTO_L2CAP, SO_L2CAP_LM, 0);
 
 	/*
@@ -320,6 +344,7 @@ btmagic_attach(device_t parent, device_t self, void *aux)
 	sc->sc_firm = 6;
 	sc->sc_dist = 130;
 	sc->sc_scale = 20;
+	sc->sc_taptimeout = 100;
 
 	sysctl_createv(&sc->sc_log, 0, NULL, &node,
 		0,
@@ -363,6 +388,14 @@ btmagic_attach(device_t parent, device_t self, void *aux)
 			CTLTYPE_INT, "scroll_downscale_factor",
 			NULL,
 			btmagic_sysctl_scale, 0,
+			(void *)sc, 0,
+			CTL_HW, node->sysctl_num,
+			CTL_CREATE, CTL_EOL);
+		sysctl_createv(&sc->sc_log, 0, NULL, NULL,
+			CTLFLAG_READWRITE,
+			CTLTYPE_INT, "taptimeout",
+			"timeout for tap detection in milliseconds",
+			btmagic_sysctl_taptimeout, 0,
 			(void *)sc, 0,
 			CTL_HW, node->sysctl_num,
 			CTL_CREATE, CTL_EOL);
@@ -425,6 +458,8 @@ btmagic_detach(device_t self, int flags)
 		sc->sc_ctl = NULL;
 	}
 
+	callout_halt(&sc->sc_tapcallout, bt_lock);
+	callout_destroy(&sc->sc_tapcallout);
 	callout_halt(&sc->sc_timeout, bt_lock);
 	callout_destroy(&sc->sc_timeout);
 
@@ -602,6 +637,31 @@ btmagic_sysctl_scale(SYSCTLFN_ARGS)
 
 	sc->sc_scale = t;
 	DPRINTF(sc, "sc_scale = %u", t);
+	return 0;
+}
+
+/* validate tap timeout */
+static int
+btmagic_sysctl_taptimeout(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	struct btmagic_softc *sc;
+	int t, error;
+
+	node = *rnode;
+	sc = node.sysctl_data;
+
+	t = sc->sc_taptimeout;
+	node.sysctl_data = &t;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+
+	if (t < max(1000 / hz, 1) || t > 999)
+		return EINVAL;
+
+	sc->sc_taptimeout = t;
+	DPRINTF(sc, "taptimeout = %u", t);
 	return 0;
 }
 
@@ -1047,15 +1107,19 @@ btmagic_input(void *arg, struct mbuf *m)
 			break;
 
 		switch (data[1]) {
-		case 0x10: /* Basic mouse (input) */
+		case BASIC_REPORT_ID: /* Basic mouse (input) */
 			btmagic_input_basic(sc, data + 2, len - 2);
 			break;
 
-		case 0x29: /* Magic touch (input) */
-			btmagic_input_magic(sc, data + 2, len - 2);
+		case TRACKPAD_REPORT_ID: /* Magic trackpad (input) */
+			btmagic_input_magict(sc, data + 2, len - 2);
 			break;
 
-		case 0x30: /* Battery status (input) */
+		case MOUSE_REPORT_ID: /* Magic touch (input) */
+			btmagic_input_magicm(sc, data + 2, len - 2);
+			break;
+
+		case BATT_STAT_REPORT_ID: /* Battery status (input) */
 			if (len != 3)
 				break;
 
@@ -1068,7 +1132,7 @@ btmagic_input(void *arg, struct mbuf *m)
 			}
 			break;
 
-		case 0x47: /* Battery strength (feature) */
+		case BATT_STRENGTH_REPORT_ID: /* Battery strength (feature) */
 			if (len != 3)
 				break;
 
@@ -1076,7 +1140,7 @@ btmagic_input(void *arg, struct mbuf *m)
 			    data[2]);
 			break;
 
-		case 0x61: /* Surface detection (input) */
+		case SURFACE_REPORT_ID: /* Surface detection (input) */
 			if (len != 3)
 				break;
 
@@ -1246,7 +1310,7 @@ static const struct {
 #define BTMAGIC_PHASE_CANCEL	0x0
 
 static void
-btmagic_input_magic(struct btmagic_softc *sc, uint8_t *data, size_t len)
+btmagic_input_magicm(struct btmagic_softc *sc, uint8_t *data, size_t len)
 {
 	uint32_t mb;
 	int dx, dy, dz, dw;
@@ -1290,10 +1354,12 @@ btmagic_input_magic(struct btmagic_softc *sc, uint8_t *data, size_t len)
 
 		switch (hid_get_udata(data, &touch.phase)) {
 		case BTMAGIC_PHASE_CONT:
+#define sc_az sc_ay
+#define sc_aw sc_ax
 			tz = az - sc->sc_az[id];
 			tw = aw - sc->sc_aw[id];
 
-			if (ISSET(sc->sc_smask, id)) {
+			if (ISSET(sc->sc_smask, __BIT(id))) {
 				/* scrolling finger */
 				dz += btmagic_scale(tz, &sc->sc_rz,
 				    sc->sc_resolution / sc->sc_scale);
@@ -1307,7 +1373,7 @@ btmagic_input_magic(struct btmagic_softc *sc, uint8_t *data, size_t len)
 					sc->sc_rw = 0;
 				}
 
-				SET(sc->sc_smask, id);
+				SET(sc->sc_smask, __BIT(id));
 			} else {
 				/* not scrolling finger */
 				az = sc->sc_az[id];
@@ -1321,12 +1387,14 @@ btmagic_input_magic(struct btmagic_softc *sc, uint8_t *data, size_t len)
 			break;
 
 		default:
-			CLR(sc->sc_smask, id);
+			CLR(sc->sc_smask, __BIT(id));
 			break;
 		}
 
 		sc->sc_az[id] = az;
 		sc->sc_aw[id] = aw;
+#undef sc_az
+#undef sc_aw
 	}
 
 	/*
@@ -1354,4 +1422,268 @@ btmagic_input_magic(struct btmagic_softc *sc, uint8_t *data, size_t len)
 		    dx, -dy, -dz, dw, WSMOUSE_INPUT_DELTA);
 		splx(s);
 	}
+}
+
+/*
+ * the Magic touch trackpad report (0x28), according to the Linux driver
+ * written by Michael Poole and Chase Douglas, is variable length starting
+ * with the fixed 24-bit header
+ *
+ *	button 1	1-bit
+ *      unknown		5-bits
+ *	timestamp	18-bits
+ *
+ * followed by (up to 5?) touch reports of 72-bits each
+ *
+ *	abs X		13-bits (signed)
+ *	abs Y		13-bits (signed)
+ * 	unknown		6-bits
+ *	axis major	8-bits
+ *	axis minor	8-bits
+ *	pressure	6-bits
+ *	id		4-bits
+ *	angle		6-bits	(from E(0)->N(32)->W(64))
+ *	unknown		4-bits
+ *	phase		4-bits
+ */
+
+static const struct {
+	struct hid_location button;
+	struct hid_location timestamp;
+} magict = {
+	.button = { .pos =  0, .size = 1 },
+	.timestamp = { .pos = 6, .size = 18 },
+};
+
+static const struct {
+	struct hid_location aX;
+	struct hid_location aY;
+	struct hid_location major;
+	struct hid_location minor;
+	struct hid_location pressure;
+	struct hid_location id;
+	struct hid_location angle;
+	struct hid_location unknown;
+	struct hid_location phase;
+} toucht = {
+	.aX = { .pos = 0, .size = 13 },
+	.aY = { .pos = 13, .size = 13 },
+	.major = { .pos = 32, .size = 8 },
+	.minor = { .pos = 40, .size = 8 },
+	.pressure = { .pos = 48, .size = 6 },
+	.id = { .pos = 54, .size = 4 },
+	.angle = { .pos = 58, .size = 6 },
+	.unknown = { .pos = 64, .size = 4 },
+	.phase = { .pos = 68, .size = 4 },
+};
+
+/*
+ * as for btmagic_input_magicm, 
+ * the phase of the touch starts at 0x01 as the finger is first detected
+ * approaching the mouse, increasing to 0x04 while the finger is touching,
+ * then increases towards 0x07 as the finger is lifted, and we get 0x00
+ * when the touch is cancelled. The values below seem to be produced for
+ * every touch, the others less consistently depending on how fast the
+ * approach or departure is.
+ *
+ * In fact we ignore touches unless they are in the steady 0x04 phase.
+ */
+
+/* min and max values reported */
+#define MAGICT_X_MIN	(-2910)
+#define MAGICT_X_MAX	(3170)
+#define MAGICT_Y_MIN	(-2565)
+#define MAGICT_Y_MAX	(2455)
+
+/*
+ * area for detecting the buttons: divide in 3 areas on X, 
+ * below -1900 on y
+ */
+#define MAGICT_B_YMAX	(-1900)
+#define MAGICT_B_XSIZE	((MAGICT_X_MAX - MAGICT_X_MIN) / 3)
+#define MAGICT_B_X1MAX	(MAGICT_X_MIN + MAGICT_B_XSIZE)
+#define MAGICT_B_X2MAX	(MAGICT_X_MIN + MAGICT_B_XSIZE * 2)
+
+static void
+btmagic_input_magict(struct btmagic_softc *sc, uint8_t *data, size_t len)
+{
+	bool bpress;
+	uint32_t mb;
+	int id, ax, ay, tx, ty;
+	int dx, dy, dz, dw;
+	int s;
+
+	if (((len - 3) % 9) != 0)
+		return;
+
+	bpress = 0;
+	if (hid_get_udata(data, &magict.button))
+		bpress = 1;
+
+	dx = dy = dz = dw = 0;
+	mb = 0;
+
+	len = (len - 3) / 9;
+	for (data += 3; len-- > 0; data += 9) {
+		id = hid_get_udata(data, &toucht.id);
+		ax = hid_get_data(data, &toucht.aX);
+		ay = hid_get_data(data, &toucht.aY);
+
+		DPRINTF(sc,
+		    "btmagic_input_magict: id %d ax %d ay %d phase %ld %s\n",
+		    id, ax, ay, hid_get_udata(data, &toucht.phase),
+		    bpress ? "button pressed" : "");
+
+		/*
+		 * a single touch is interpreted as a mouse move.
+		 * If a button is pressed, the touch in the button area
+		 * defined above defines the button; a second touch is
+		 * interpreted as a mouse move.
+		 */
+
+		switch (hid_get_udata(data, &toucht.phase)) {
+		case BTMAGIC_PHASE_CONT:
+			if (bpress) {
+				if (sc->sc_mb == 0 && ay < MAGICT_B_YMAX) {
+					/*
+					 * we have a new button press,
+					 * and this id tells which one
+					 */
+					if (ax < MAGICT_B_X1MAX)
+						mb = __BIT(0);
+					else if (ax > MAGICT_B_X2MAX)
+						mb = __BIT(2);
+					else
+						mb = __BIT(1);
+					sc->sc_mb_id = id;
+				} else {
+					/* keep previous state */
+					mb = sc->sc_mb;
+				}
+			} else {
+				/* no button pressed */
+				mb = 0;
+				sc->sc_mb_id = -1;
+			}
+			if (id == sc->sc_mb_id) {
+				/*
+				 * this id selects the button
+				 * ignore for move/scroll
+				 */
+				 continue;
+			}
+			if (id >= __arraycount(sc->sc_ax))
+				continue;
+					
+			tx = ax - sc->sc_ax[id];
+			ty = ay - sc->sc_ay[id];
+
+			if (ISSET(sc->sc_smask, __BIT(id))) {
+				struct timeval now_tv;
+				getmicrotime(&now_tv);
+				if (sc->sc_nfingers == 1 && mb == 0 &&
+				    timercmp(&sc->sc_taptime, &now_tv, >)) {
+					/* still detecting a tap */
+					continue;
+				}
+
+				if (sc->sc_nfingers == 1 || mb != 0) {
+					/* single finger moving */
+					dx += btmagic_scale(tx, &sc->sc_rx,
+					    sc->sc_resolution);
+					dy += btmagic_scale(ty, &sc->sc_ry,
+					    sc->sc_resolution);
+				} else {
+					/* scrolling fingers */
+					dz += btmagic_scale(ty, &sc->sc_rz,
+					    sc->sc_resolution / sc->sc_scale);
+					dw += btmagic_scale(tx, &sc->sc_rw,
+					    sc->sc_resolution / sc->sc_scale);
+				}
+			} else if (ay > MAGICT_B_YMAX) { /* new finger */
+				sc->sc_rx = 0;
+				sc->sc_ry = 0;
+				sc->sc_rz = 0;
+				sc->sc_rw = 0;
+				KASSERT(!ISSET(sc->sc_smask, __BIT(id)));
+				SET(sc->sc_smask, __BIT(id));
+				sc->sc_nfingers++;
+				if (sc->sc_tapmb_id == -1 &&
+				    mb == 0 && sc->sc_mb == 0) {
+					sc->sc_tapmb_id = id;
+					getmicrotime(&sc->sc_taptime);
+					sc->sc_taptime.tv_usec +=
+					    sc->sc_taptimeout * 1000;
+					if (sc->sc_taptime.tv_usec > 1000000) {
+						sc->sc_taptime.tv_usec -=
+						    1000000;
+						sc->sc_taptime.tv_sec++;
+					}
+				}
+					
+			}
+
+			break;
+		default:
+			if (ISSET(sc->sc_smask, __BIT(id))) {
+				CLR(sc->sc_smask, __BIT(id));
+				sc->sc_nfingers--;
+				KASSERT(sc->sc_nfingers >= 0);
+				if (id == sc->sc_tapmb_id) {
+					mb = btmagic_tap(sc, id);
+				}
+			}
+			break;
+		}
+
+		if (id >= __arraycount(sc->sc_ax))
+			continue;
+
+		sc->sc_ax[id] = ax;
+		sc->sc_ay[id] = ay;
+	}
+
+	if (dx != 0 || dy != 0 || dz != 0 || dw != 0 || mb != sc->sc_mb) {
+		sc->sc_mb = mb;
+
+		s = spltty();
+		wsmouse_input(sc->sc_wsmouse, mb,
+		    dx, dy, -dz, dw, WSMOUSE_INPUT_DELTA);
+		splx(s);
+	}
+}
+
+static int
+btmagic_tap(struct btmagic_softc *sc, int id)
+{
+	struct timeval now_tv;
+
+	sc->sc_tapmb_id = -1;
+	getmicrotime(&now_tv);
+	if (timercmp(&sc->sc_taptime, &now_tv, >)) {
+		/* got a tap */
+		callout_schedule(
+		    &sc->sc_tapcallout,
+		    mstohz(sc->sc_taptimeout));
+		return __BIT(0);
+	}
+	return 0;
+}
+
+static void
+btmagic_tapcallout(void *arg)
+{
+	struct btmagic_softc *sc = arg;
+	int s;
+
+	mutex_enter(bt_lock);
+	callout_ack(&sc->sc_tapcallout);
+	if ((sc->sc_mb & __BIT(0)) != 0) {
+		sc->sc_mb &= ~__BIT(0);
+		s = spltty();
+		wsmouse_input(sc->sc_wsmouse, sc->sc_mb,
+		    0, 0, 0, 0, WSMOUSE_INPUT_DELTA);
+		splx(s);
+	}
+	mutex_exit(bt_lock);
 }

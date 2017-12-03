@@ -1,4 +1,4 @@
-#	$NetBSD: files.exynos,v 1.7.8.2 2014/08/20 00:02:47 tls Exp $
+#	$NetBSD: files.exynos,v 1.7.8.3 2017/12/03 11:35:56 jdolecek Exp $
 #
 # Configuration info for Samsung Exynos SoC ARM Peripherals
 #
@@ -12,13 +12,12 @@ file	arch/arm/arm32/arm32_boot.c
 file	arch/arm/arm32/arm32_kvminit.c
 file	arch/arm/arm32/arm32_reboot.c
 file	arch/arm/arm32/irq_dispatch.S
+file	arch/arm/arm32/armv7_generic_space.c
+file	arch/arm/arm32/armv7_generic_dma.c
+file	arch/arm/arm/bus_space_a4x.S
 
 file	arch/arm/samsung/exynos_soc.c
-file	arch/arm/samsung/exynos_space.c
-file	arch/arm/samsung/exynos_dma.c
 file	arch/arm/samsung/exynos_smc.S		arm_trustzone_firmware
-
-file	arch/arm/arm/bus_space_a4x.S		exyo
 
 # Console parameters
 defparam opt_exynos.h				CONADDR
@@ -31,58 +30,97 @@ defparam opt_exynos.h				EXYNOS_WDT_DEFAULT_PERIOD
 defflag opt_exynos.h				EXYNOS_CONSOLE_EARLY
 
 #
-defflag opt_exynos.h				EXYNOS4: CPU_CORTEXA9
-defflag opt_exynos.h				EXYNOS4120: EXYNOS4
-defflag opt_exynos.h				EXYNOS4212: EXYNOS4
-defflag opt_exynos.h				EXYNOS4412: EXYNOS4
-defflag opt_exynos.h				EXYNOS4412P: EXYNOS4
-defflag opt_exynos.h				EXYNOS5: CPU_CORTEXA15
-defflag opt_exynos.h				EXYNOS5250: EXYNOS5
-defflag opt_exynos.h				EXYNOS5260: EXYNOS5
-defflag opt_exynos.h				EXYNOS5410: EXYNOS5
-defflag opt_exynos.h				EXYNOS5420: EXYNOS5
-defflag opt_exynos.h				EXYNOS5440: EXYNOS5
-defflag opt_exynos.h				EXYNOS5422: EXYNOS5
+defflag opt_exynos.h				SOC_EXYNOS4: CPU_CORTEXA9
+defflag opt_exynos.h				SOC_EXYNOS4120: SOC_EXYNOS4
+defflag opt_exynos.h				SOC_EXYNOS4212: SOC_EXYNOS4
+defflag opt_exynos.h				SOC_EXYNOS4412: SOC_EXYNOS4
+defflag opt_exynos.h				SOC_EXYNOS4412P: SOC_EXYNOS4
+defflag opt_exynos.h				SOC_EXYNOS5: CPU_CORTEXA15
+defflag opt_exynos.h				SOC_EXYNOS5250: SOC_EXYNOS5
+defflag opt_exynos.h				SOC_EXYNOS5260: SOC_EXYNOS5
+defflag opt_exynos.h				SOC_EXYNOS5410: SOC_EXYNOS5
+defflag opt_exynos.h				SOC_EXYNOS5420: SOC_EXYNOS5
+defflag opt_exynos.h				SOC_EXYNOS5440: SOC_EXYNOS5
+defflag opt_exynos.h				SOC_EXYNOS5422: SOC_EXYNOS5
 
-# SoC I/O attach point
-device exyo { [port=-1], [intr=-1] } : bus_space_generic
-attach exyo at mainbus with exyo_io
-file	arch/arm/samsung/exynos_io.c	exyo_io
-file	arch/arm/samsung/exynos4_loc.c	exyo_io & exynos4
-file	arch/arm/samsung/exynos5_loc.c	exyo_io & exynos5
+file	arch/arm/samsung/exynos_platform.c	soc_exynos5
+
+# Interrupt combiner
+device  exyointr
+attach  exyointr at fdt with exynos_intr
+file	arch/arm/samsung/exynos_combiner.c	exynos_intr
+
+# CHIP ID register
+device	chipid : fdtbus
+attach	chipid at fdt with exynos_chipid
+file	arch/arm/samsung/exynos_chipid.c	exynos_chipid
+
+# SYSMMU
+device	sysmmu : fdtbus
+attach	sysmmu at fdt with exynos_sysmmu
+file	arch/arm/samsung/exynos_sysmmu.c	exynos_sysmmu
+
+# real time clock
+device  exyortc : fdtbus
+attach  exyortc at fdt with exynos_rtc
+file    arch/arm/samsung/exynos_rtc.c		exynos_rtc
 
 # Multi Core timer
-device	mct { } : bus_space_generic
-attach	mct at exyo with exyo_mct
+device	mct { } : fdtbus, mpcorebus
+attach	mct at fdt with exyo_mct
 file	arch/arm/samsung/mct.c		exyo_mct
 
 # Watchdog
 device	exyowdt : sysmon_wdog
-attach	exyowdt at exyo with exynos_wdt
-file	arch/arm/samsung/exynos_wdt.c	exynos_wdt | exyo_io needs-flag
+attach	exyowdt at fdt with exynos_wdt
+file	arch/arm/samsung/exynos_wdt.c	exynos_wdt needs-flag
 
 # UARTs
 device	sscom { } : bus_space_generic
-attach	sscom at exyo with exynos_sscom
+attach	sscom at fdt with exynos_sscom
 file	arch/arm/samsung/sscom.c	sscom needs-flag
 file	arch/arm/samsung/exynos_sscom.c	exynos_sscom 
 defflag opt_sscom.h     SSCOM0CONSOLE SSCOM1CONSOLE
 defparam opt_sscom.h    SSCOM_FREQ 
 
-# GPIO
-device	exyogpio : gpiobus
-attach	exyogpio at exyo with exynos_gpio
-file	arch/arm/samsung/exynos_gpio.c		exynos_gpio | exyo_io needs-flag
+# PINCTL
+device  exyopctl : gpiobus
+attach  exyopctl at fdt with exynos_pinctrl
+file	arch/arm/samsung/exynos_pinctrl.c	exynos_pinctrl needs-flag
+file	arch/arm/samsung/exynos_gpio.c		exynos_pinctrl needs-flag
 
-# USB2 Host Controller (EHCI/OHCI)
-device	exyousb { }
-attach	exyousb at exyo with exyo_usb
-attach	ohci at exyousb with ohci_exyousb
-attach	ehci at exyousb with ehci_exyousb
-file	arch/arm/samsung/exynos_usb.c		exyo_usb
+# USB2 phy
+device  exyousbphy
+attach  exyousbphy at fdt with exynos_usbphy
+file    arch/arm/samsung/exynos_usbphy.c	exynos_usbphy
 
-# I2C support, bitbanging trough GPIO
-device	exyoiic: i2cbus, i2c_bitbang
-attach	exyoiic at exyo with exynos_iic
-file	arch/arm/samsung/exynos_i2c.c		exynos_iic | exyo_io needs-flag
+# USB2 Host Controller (OHCI)
+attach	ohci at fdt with exynos_ohci
+file	arch/arm/samsung/exynos_ohci.c		exynos_ohci
 
+#USB 2 Host Controller (EHCI)
+attach	ehci at fdt with exynos_ehci
+file	arch/arm/samsung/exynos_ehci.c		exynos_ehci
+
+# USB3 Host Controller (xHCI)
+device	exyousb : fdtbus
+attach	exyousb at fdt with exynos_usb
+attach  xhci at fdt
+file	arch/arm/samsung/exynos_usb3.c		exynos_usb
+
+# SD/MMC Host Controller
+attach	dwcmmc at fdt with exynos_dwcmmc
+file	arch/arm/samsung/exynos_dwcmmc.c	exynos_dwcmmc
+
+# I2C support, bitbanging through GPIO
+device	exyoi2c: i2cbus, i2c_bitbang
+attach	exyoi2c at fdt with exynos_i2c
+file	arch/arm/samsung/exynos_i2c.c		exynos_i2c needs-flag
+
+device	exy5422clk: clk
+attach	exy5422clk at fdt with exynos5422_clock
+file	arch/arm/samsung/exynos5422_clock.c	exynos5422_clock
+
+device	exy5410clk: clk
+attach	exy5410clk at fdt with exynos5410_clock
+file	arch/arm/samsung/exynos5410_clock.c	exynos5410_clock

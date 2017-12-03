@@ -1,0 +1,16 @@
+# $NetBSD: INSTALL_ERLITE,v 1.2.18.2 2017/12/03 11:36:09 jdolecek Exp $
+
+include		"arch/evbmips/conf/ERLITE"
+
+#ident 		"INSTALL_ERLITE-$Revision: 1.2.18.2 $"
+
+# Enable the hooks used for initializing the root memory-disk.
+#     The ramdisk size must be kept in sync manually with the size of
+#     the `ramdisk' image (which is built in distrib/evbmips/ramdisk/ramdisk).
+pseudo-device	md				# memory disk device
+options 	MEMORY_DISK_HOOKS
+options 	MEMORY_DISK_IS_ROOT		# force root on memory disk
+options 	MEMORY_DISK_SERVER=0		# no userspace memory disk
+options 	MEMORY_DISK_ROOT_SIZE=12288	# size of memory disk, in blocks
+
+makeoptions	NEED_MDSETIMAGE="yes"

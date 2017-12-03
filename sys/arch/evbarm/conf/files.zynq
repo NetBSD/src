@@ -1,0 +1,12 @@
+#	$NetBSD: files.zynq,v 1.1.20.2 2017/12/03 11:36:03 jdolecek Exp $
+#
+# ZYNQ evaluation board configuration info
+#
+
+file	arch/evbarm/zynq/zynq_machdep.c
+
+# Kernel boot arguments
+defparam opt_machdep.h				BOOT_ARGS
+
+# CPU support and integrated peripherals
+include "arch/arm/zynq/files.zynq"

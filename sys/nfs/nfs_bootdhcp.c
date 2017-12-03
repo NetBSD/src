@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootdhcp.c,v 1.52 2010/10/04 23:48:22 cyber Exp $	*/
+/*	$NetBSD: nfs_bootdhcp.c,v 1.52.18.1 2017/12/03 11:39:05 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.52 2010/10/04 23:48:22 cyber Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.52.18.1 2017/12/03 11:39:05 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs_boot.h"
@@ -302,7 +302,7 @@ struct bootpcontext {
 };
 
 static int bootpset (struct mbuf*, void*, int);
-static int bootpcheck (struct mbuf*, void*);
+static int bootpcheck (struct mbuf**, void*);
 
 static int
 bootpset(struct mbuf *m, void *context, int waited)
@@ -318,10 +318,11 @@ bootpset(struct mbuf *m, void *context, int waited)
 }
 
 static int
-bootpcheck(struct mbuf *m, void *context)
+bootpcheck(struct mbuf **mp, void *context)
 {
 	struct bootp *bootp;
 	struct bootpcontext *bpc = context;
+	struct mbuf *m = *mp;
 	u_int tag, len;
 	u_char *p, *limit;
 
@@ -343,7 +344,7 @@ bootpcheck(struct mbuf *m, void *context)
 	 * don't make first checks more expensive than necessary
 	 */
 	if (m->m_len < offsetof(struct bootp, bp_sname)) {
-		m = m_pullup(m, offsetof(struct bootp, bp_sname));
+		m = *mp = m_pullup(m, offsetof(struct bootp, bp_sname));
 		if (m == NULL) {
 			DPRINTF(("bootpcheck: m_pullup failed\n"));
 			return (-1);
@@ -485,8 +486,8 @@ bootpc_call(struct nfs_diskless *nd, struct lwp *lwp, int *flags)
 	struct ifnet *ifp = nd->nd_ifp;
 	static u_int32_t xid = ~0xFF;
 	struct bootp *bootp;	/* request */
-	struct mbuf *m, *nam;
-	struct sockaddr_in *sin;
+	struct mbuf *m;
+	struct sockaddr_in sin;
 	int error;
 	const u_char *haddr;
 	u_char hafmt, halen;
@@ -504,7 +505,7 @@ bootpc_call(struct nfs_diskless *nd, struct lwp *lwp, int *flags)
 	 * and free each at the end if not null.
 	 */
 	bpc.replybuf = NULL;
-	m = nam = NULL;
+	m = NULL;
 
 	/* Record our H/W (Ethernet) address. */
 	{	const struct sockaddr_dl *sdl = ifp->if_sadl;
@@ -584,12 +585,10 @@ bootpc_call(struct nfs_diskless *nd, struct lwp *lwp, int *flags)
 	/*
 	 * Setup socket address for the server.
 	 */
-	nam = m_get(M_WAIT, MT_SONAME);
-	sin = mtod(nam, struct sockaddr_in *);
-	sin->sin_len = nam->m_len = sizeof(*sin);
-	sin->sin_family = AF_INET;
-	sin->sin_addr.s_addr = INADDR_BROADCAST;
-	sin->sin_port = htons(IPPORT_BOOTPS);
+	sin.sin_len = sizeof(sin);
+	sin.sin_family = AF_INET;
+	sin.sin_addr.s_addr = INADDR_BROADCAST;
+	sin.sin_port = htons(IPPORT_BOOTPS);
 
 	/*
 	 * Allocate buffer used for request
@@ -598,7 +597,7 @@ bootpc_call(struct nfs_diskless *nd, struct lwp *lwp, int *flags)
 	m_clget(m, M_WAIT);
 	bootp = mtod(m, struct bootp*);
 	m->m_pkthdr.len = m->m_len = BOOTP_SIZE_MAX;
-	m->m_pkthdr.rcvif = NULL;
+	m_reset_rcvif(m);
 
 	/*
 	 * Build the BOOTP reqest message.
@@ -634,8 +633,8 @@ bootpc_call(struct nfs_diskless *nd, struct lwp *lwp, int *flags)
 	bpc.dhcp_ok = 0;
 #endif
 
-	error = nfs_boot_sendrecv(so, nam, bootpset, m,
-				  bootpcheck, 0, 0, &bpc, lwp);
+	error = nfs_boot_sendrecv(so, &sin, bootpset, m,
+				  bootpcheck, NULL, NULL, &bpc, lwp);
 	if (error)
 		goto out;
 
@@ -661,8 +660,8 @@ bootpc_call(struct nfs_diskless *nd, struct lwp *lwp, int *flags)
 
 		bpc.expected_dhcpmsgtype = DHCPACK;
 
-		error = nfs_boot_sendrecv(so, nam, bootpset, m,
-					  bootpcheck, 0, 0, &bpc, lwp);
+		error = nfs_boot_sendrecv(so, &sin, bootpset, m,
+					  bootpcheck, NULL, NULL, &bpc, lwp);
 		if (error)
 			goto out;
 	}
@@ -687,8 +686,6 @@ out:
 		free(bpc.replybuf, M_DEVBUF);
 	if (m)
 		m_freem(m);
-	if (nam)
-		m_freem(nam);
 	soclose(so);
 	return (error);
 }

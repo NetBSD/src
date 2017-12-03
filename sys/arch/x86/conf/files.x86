@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.79.2.1 2014/08/20 00:03:29 tls Exp $
+#	$NetBSD: files.x86,v 1.79.2.2 2017/12/03 11:36:50 jdolecek Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI
@@ -21,20 +21,25 @@ define	cpufeaturebus {}
 define  ioapicbus { [apid = -1] }
 define  ipmibus {}
 
+# BIOS32 routines
+define	bios32
+file	arch/x86/x86/bios32.c		bios32 needs-flag
+
 #
 # CPU features
 #
 device	cpu: cpufeaturebus
 attach	cpu at cpubus
 file 	arch/x86/x86/cpu.c 		cpu
+file	arch/x86/x86/cpu_rng.c		cpu
 
-device	acpicpu
+device	acpicpu: acpi
 attach	acpicpu at cpufeaturebus
-file	dev/acpi/acpi_cpu.c		acpi & acpicpu
-file	dev/acpi/acpi_cpu_cstate.c	acpi & acpicpu
-file	dev/acpi/acpi_cpu_pstate.c	acpi & acpicpu
-file	dev/acpi/acpi_cpu_tstate.c	acpi & acpicpu
-file	arch/x86/acpi/acpi_cpu_md.c	acpi & acpicpu
+file	dev/acpi/acpi_cpu.c		acpicpu
+file	dev/acpi/acpi_cpu_cstate.c	acpicpu
+file	dev/acpi/acpi_cpu_pstate.c	acpicpu
+file	dev/acpi/acpi_cpu_tstate.c	acpicpu
+file	arch/x86/acpi/acpi_cpu_md.c	acpicpu
 
 device	coretemp: sysmon_envsys
 attach	coretemp at cpufeaturebus
@@ -66,34 +71,39 @@ attach	vmt at cpufeaturebus
 file	arch/x86/x86/vmt.c		vmt
 
 file	arch/x86/x86/apic.c		ioapic | lapic
-file	arch/x86/x86/bus_dma.c
-file	arch/x86/x86/bus_space.c
-file	arch/x86/x86/consinit.c
+file	arch/x86/x86/bus_dma.c		machdep
+file	arch/x86/x86/bus_space.c	machdep
+file	arch/x86/x86/consinit.c		machdep
 file	arch/x86/x86/core_machdep.c	coredump
-file	arch/x86/x86/cpu_topology.c
+file	arch/x86/x86/cpu_topology.c	machdep
 file	arch/x86/x86/db_memrw.c		ddb | kgdb
 file	arch/x86/x86/db_trace.c		ddb
-file	arch/x86/x86/errata.c
-file	arch/x86/x86/genfb_machdep.c
-file	arch/x86/x86/identcpu.c
-file	arch/x86/x86/i8259.c
-file	arch/x86/x86/intr.c
-file	arch/x86/x86/nmi.c
-file	arch/x86/x86/idt.c
-file	arch/x86/x86/ipi.c
+file	arch/x86/x86/efi.c		machdep
+file	arch/x86/x86/errata.c		machdep
+file	arch/x86/x86/genfb_machdep.c	machdep
+file	arch/x86/x86/identcpu.c		machdep
+file	arch/x86/x86/i8259.c		machdep
+file	arch/x86/x86/intr.c		machdep
+file	arch/x86/x86/kgdb_machdep.c	kgdb
+file	arch/x86/x86/nmi.c		machdep
+file	arch/x86/x86/idt.c		machdep
+file	arch/x86/x86/ipi.c		machdep
 file	arch/x86/x86/mtrr_i686.c	mtrr
-file 	arch/x86/x86/patch.c
-file	arch/x86/x86/platform.c
-file 	arch/x86/x86/pmap.c
-file 	arch/x86/x86/pmap_tlb.c
+file 	arch/x86/x86/patch.c		machdep
+file	arch/x86/x86/platform.c		machdep
+file 	arch/x86/x86/pmap.c		machdep
+file 	arch/x86/x86/pmap_tlb.c		machdep
+file 	arch/x86/x86/pmc.c		machdep
 file	arch/x86/x86/procfs_machdep.c	procfs
-file	arch/x86/x86/sys_machdep.c
-file	arch/x86/x86/syscall.c
-file	arch/x86/x86/tsc.c
-file	arch/x86/x86/vm_machdep.c
-file	arch/x86/x86/x86_autoconf.c
-file	arch/x86/x86/x86_userconf.c		userconf
-file	arch/x86/x86/x86_machdep.c
+file	arch/x86/x86/sys_machdep.c	machdep
+file	arch/x86/x86/syscall.c		machdep
+file	arch/x86/x86/tsc.c		machdep
+file	arch/x86/x86/vm_machdep.c	machdep
+file	arch/x86/x86/x86_autoconf.c	machdep
+file	arch/x86/x86/x86_userconf.c	userconf
+file	arch/x86/x86/x86_machdep.c	machdep
+
+file 	uvm/pmap/pmap_pvt.c		machdep
 
 file	arch/x86/x86/cpu_ucode.c	cpu_ucode needs-flag
 file	arch/x86/x86/cpu_ucode_amd.c	cpu_ucode needs-flag
@@ -141,6 +151,8 @@ file	arch/x86/x86/tprof_amdpmi.c	tprof_amdpmi
 file	arch/x86/pci/pci_machdep.c	pci
 #file	arch/x86/pci/pci_ranges.c	pci
 file	arch/x86/pci/pci_intr_machdep.c	pci
+file	arch/x86/pci/pci_msi_machdep.c	pci
+file	arch/x86/pci/msipic.c		pci
 
 file	arch/x86/pci/pciide_machdep.c	pciide_common
 

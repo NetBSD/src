@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_aubus.c,v 1.15 2011/07/01 18:39:29 dyoung Exp $	*/
+/*	$NetBSD: ohci_aubus.c,v 1.15.12.1 2017/12/03 11:36:26 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_aubus.c,v 1.15 2011/07/01 18:39:29 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_aubus.c,v 1.15.12.1 2017/12/03 11:36:26 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: ohci_aubus.c,v 1.15 2011/07/01 18:39:29 dyoung Exp $
 #include <mips/alchemy/include/aubusvar.h>
 #include <mips/alchemy/dev/ohcireg.h>
 
-#include <dev/usb/usb.h>   
+#include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdivar.h>
 #include <dev/usb/usb_mem.h>
@@ -64,9 +64,9 @@ ohci_aubus_match(device_t parent, cfdata_t match, void *aux)
 	struct aubus_attach_args *aa = aux;
 
 	if (strcmp(aa->aa_name, match->cf_name) == 0)
-		return (1);
+		return 1;
 
-	return (0);
+	return 0;
 }
 
 void
@@ -74,21 +74,18 @@ ohci_aubus_attach(device_t parent, device_t self, void *aux)
 {
 	ohci_softc_t *sc = device_private(self);
 	void *ih;
-	usbd_status r;
 	uint32_t x, tmp;
 	bus_addr_t usbh_base, usbh_enable;
 	struct aubus_attach_args *aa = aux;
-
-	r = 0;
 
 	usbh_base = aa->aa_addrs[0];
 	usbh_enable = aa->aa_addrs[1];
 	sc->sc_size = aa->aa_addrs[2];
 	sc->iot = aa->aa_st;
-	sc->sc_bus.dmatag = (bus_dma_tag_t)aa->aa_dt;
+	sc->sc_bus.ub_dmatag = (bus_dma_tag_t)aa->aa_dt;
 
 	sc->sc_dev = self;
-	sc->sc_bus.hci_private = sc;
+	sc->sc_bus.ub_hcpriv = sc;
 
 	if (bus_space_map(sc->iot, usbh_base, sc->sc_size, 0, &sc->ioh)) {
 		aprint_error_dev(self, "unable to map USBH registers\n");
@@ -127,6 +124,12 @@ ohci_aubus_attach(device_t parent, device_t self, void *aux)
 			break;
 		delay(1000);
 	}
+
+	if (x == 0) {
+		aprint_error_dev(self, "device not ready\n");
+		return;
+	}
+
 	printf(": Alchemy OHCI\n");
 
 	/* Disable OHCI interrupts */
@@ -141,10 +144,9 @@ ohci_aubus_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_endian = OHCI_HOST_ENDIAN;
 
-	if (x)
-		r = ohci_init(sc);
-	if (r != USBD_NORMAL_COMPLETION) {
-		aprint_error_dev(self, "init failed, error=%d\n", r);
+	int err = ohci_init(sc);
+	if (err != USBD_NORMAL_COMPLETION) {
+		aprint_error_dev(self, "init failed, error=%d\n", err);
 		au_intr_disestablish(ih);
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj_machdep.c,v 1.5 2008/12/08 08:41:36 njoly Exp $	*/
+/*	$NetBSD: kobj_machdep.c,v 1.5.24.1 2017/12/03 11:35:47 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.5 2008/12/08 08:41:36 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.5.24.1 2017/12/03 11:35:47 jdolecek Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -80,6 +80,7 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 	uintptr_t rtype, symidx;
 	const Elf_Rel *rel;
 	const Elf_Rela *rela;
+	int error;
 
 	if (isrela) {
 		rela = (const Elf_Rela *)data;
@@ -110,16 +111,16 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 		break;
 
 	case R_X86_64_64:		/* S + A */
-		addr = kobj_sym_lookup(ko, symidx);
-		if (addr == 0)
+		error = kobj_sym_lookup(ko, symidx, &addr);
+		if (error)
 			return -1;
 		val = addr + addend;
 		*where = val;
 		break;
 
 	case R_X86_64_PC32:	/* S + A - P */
-		addr = kobj_sym_lookup(ko, symidx);
-		if (addr == 0)
+		error = kobj_sym_lookup(ko, symidx, &addr);
+		if (error)
 			return -1;
 		where32 = (Elf32_Addr *)where;
 		val32 = (Elf32_Addr)(addr + addend - (Elf64_Addr)where);
@@ -128,8 +129,8 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 
 	case R_X86_64_32:	/* S + A */
 	case R_X86_64_32S:	/* S + A sign extend */
-		addr = kobj_sym_lookup(ko, symidx);
-		if (addr == 0)
+		error = kobj_sym_lookup(ko, symidx, &addr);
+		if (error)
 			return -1;
 		val32 = (Elf32_Addr)(addr + addend);
 		where32 = (Elf32_Addr *)where;
@@ -138,8 +139,8 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 
 	case R_X86_64_GLOB_DAT:	/* S */
 	case R_X86_64_JUMP_SLOT:/* XXX need addend + offset */
-		addr = kobj_sym_lookup(ko, symidx);
-		if (addr == 0)
+		error = kobj_sym_lookup(ko, symidx, &addr);
+		if (error)
 			return -1;
 		*where = addr;
 		break;

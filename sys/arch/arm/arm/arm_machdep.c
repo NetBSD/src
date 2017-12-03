@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.36.2.1 2014/08/20 00:02:44 tls Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.36.2.2 2017/12/03 11:35:51 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -75,10 +75,12 @@
 #include "opt_cpuoptions.h"
 #include "opt_cputypes.h"
 #include "opt_arm_debug.h"
+#include "opt_multiprocessor.h"
+#include "opt_modular.h"
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.36.2.1 2014/08/20 00:02:44 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.36.2.2 2017/12/03 11:35:51 jdolecek Exp $");
 
 #include <sys/exec.h>
 #include <sys/proc.h>
@@ -119,10 +121,14 @@ struct cpu_info cpu_info_store = {
 };
 
 #ifdef MULTIPROCESSOR
-struct cpu_info *cpu_info[MAXCPUS] = {
+#define	NCPUINFO	MAXCPUS
+#else
+#define	NCPUINFO	1
+#endif
+
+struct cpu_info *cpu_info[NCPUINFO] = {
 	[0] = &cpu_info_store
 };
-#endif
 
 const pcu_ops_t * const pcu_ops_md_defs[PCU_UNIT_COUNT] = {
 #if defined(FPU_VFP)
@@ -185,7 +191,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	tf->tf_spsr = PSR_USR32_MODE | (CPU_IS_ARMV7_P() ? PSR_E_BIT : 0);
 #else
 	tf->tf_spsr = PSR_USR32_MODE;
-#endif /* __ARMEB__ */ 
+#endif /* __ARMEB__ */
 
 #ifdef THUMB_CODE
 	if (pack->ep_entry & 1)
@@ -199,7 +205,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 		l->l_md.md_flags |= MDLWP_NOALIGNFLT;
 #endif
 #ifdef FPU_VFP
-	vfp_discardcontext(false);
+	vfp_discardcontext(l, false);
 #endif
 }
 
@@ -211,7 +217,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 void
 startlwp(void *arg)
 {
-	ucontext_t *uc = arg; 
+	ucontext_t *uc = (ucontext_t *)arg;
 	lwp_t *l = curlwp;
 	int error __diagused;
 
@@ -264,7 +270,7 @@ cpu_need_resched(struct cpu_info *ci, int flags)
 #ifdef __HAVE_PREEMPTION
 		atomic_or_uint(&l->l_dopreempt, DOPREEMPT_ACTIVE);
 		if (ci == cur_ci) {
-			softint_trigger(SOFTINT_KPREEMPT);
+			atomic_or_uint(&ci->ci_astpending, __BIT(1));
 		} else {
 			ipi = IPI_KPREEMPT;
 			goto send_ipi;
@@ -272,14 +278,17 @@ cpu_need_resched(struct cpu_info *ci, int flags)
 #endif /* __HAVE_PREEMPTION */
 		return;
 	}
-	ci->ci_astpending = 1;
 #ifdef MULTIPROCESSOR
-	if (ci == curcpu() || !immed)
+	if (ci == cur_ci || !immed) {
+		setsoftast(ci);
 		return;
+	}
 	ipi = IPI_AST;
 
    send_ipi:
 	intr_ipi_send(ci->ci_kcpuset, ipi);
+#else
+	setsoftast(ci);
 #endif /* MULTIPROCESSOR */
 }
 
@@ -305,3 +314,45 @@ ucas_ras_check(trapframe_t *tf)
 		tf->tf_pc = (vaddr_t)ucas_32_ras_start;
 	}
 }
+
+#ifdef MODULAR
+struct lwp *
+arm_curlwp(void)
+{
+	return curlwp;
+}
+
+struct cpu_info *
+arm_curcpu(void)
+{
+	return curcpu();
+}
+#endif
+
+#ifdef __HAVE_PREEMPTION
+void
+cpu_set_curpri(int pri)
+{
+	kpreempt_disable();
+	curcpu()->ci_schedstate.spc_curpriority = pri;
+	kpreempt_enable();
+}
+
+bool
+cpu_kpreempt_enter(uintptr_t where, int s)
+{
+	return s == IPL_NONE;
+}
+
+void
+cpu_kpreempt_exit(uintptr_t where)
+{
+	atomic_and_uint(&curcpu()->ci_astpending, (unsigned int)~__BIT(1));
+}
+
+bool
+cpu_kpreempt_disabled(void)
+{
+	return curcpu()->ci_cpl != IPL_NONE;
+}
+#endif /* __HAVE_PREEMPTION */

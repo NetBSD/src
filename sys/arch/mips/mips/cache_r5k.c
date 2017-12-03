@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r5k.c,v 1.15 2011/04/29 22:06:43 matt Exp $	*/
+/*	$NetBSD: cache_r5k.c,v 1.15.14.1 2017/12/03 11:36:28 jdolecek Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache_r5k.c,v 1.15 2011/04/29 22:06:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache_r5k.c,v 1.15.14.1 2017/12/03 11:36:28 jdolecek Exp $");
 
 #include <sys/param.h>
 
@@ -78,69 +78,47 @@ __KERNEL_RCSID(0, "$NetBSD: cache_r5k.c,v 1.15 2011/04/29 22:06:43 matt Exp $");
  * XXX Does not handle split secondary caches.
  */
 
-#define	round_line16(x)		(((x) + 15) & ~15)
-#define	trunc_line16(x)		((x) & ~15)
-#define	round_line(x)		(((x) + 31) & ~31)
-#define	trunc_line(x)		((x) & ~31)
+#define	round_line16(x)		round_line(x, 16)
+#define	trunc_line16(x)		trunc_line(x, 16)
+#define	round_line32(x)		round_line(x, 32)
+#define	trunc_line32(x)		trunc_line(x, 32)
+#define	round_line(x,n)		(((x) + (register_t)(n) - 1) & -(register_t)(n))
+#define	trunc_line(x,n)		((x) & -(register_t)(n))
 
 __asm(".set mips3");
 
 void
-r5k_icache_sync_all_32(void)
+r5k_picache_sync_all(void)
 {
-	vaddr_t va = MIPS_PHYS_TO_KSEG0(0);
-	vaddr_t eva = va + mips_cache_info.mci_picache_size;
+        struct mips_cache_info * const mci = &mips_cache_info;
 
-	/*
-	 * Since we're hitting the whole thing, we don't have to
-	 * worry about the 2 different "ways".
-	 */
-
-	mips_dcache_wbinv_all();
-
+        /*
+         * Since we're hitting the whole thing, we don't have to
+         * worry about the N different "ways".
+         */
+        mips_intern_dcache_sync_all();
 	__asm volatile("sync");
-
-	while (va < eva) {
-		cache_r4k_op_32lines_32(va, CACHE_R4K_I|CACHEOP_R4K_INDEX_INV);
-		va += (32 * 32);
-	}
+        mips_intern_icache_sync_range_index(MIPS_KSEG0_START,
+            mci->mci_picache_size);
 }
 
 void
-r5k_icache_sync_range_32(vaddr_t va, vsize_t size)
+r5k_picache_sync_range(register_t va, vsize_t size)
 {
-	vaddr_t eva = round_line(va + size);
 
-	va = trunc_line(va);
-
-	mips_dcache_wb_range(va, (eva - va));
-
-	__asm volatile("sync");
-
-	while ((eva - va) >= (32 * 32)) {
-		cache_r4k_op_32lines_32(va, CACHE_R4K_I|CACHEOP_R4K_HIT_INV);
-		va += (32 * 32);
-	}
-
-	while (va < eva) {
-		cache_op_r4k_line(va, CACHE_R4K_I|CACHEOP_R4K_HIT_INV);
-		va += 32;
-	}
+	mips_intern_dcache_sync_range(va, size);
+	mips_intern_icache_sync_range(va, size);
 }
 
 void
-r5k_icache_sync_range_index_32(vaddr_t va, vsize_t size)
+r5k_picache_sync_range_index(vaddr_t va, vsize_t size)
 {
-	vaddr_t w2va, eva, orig_va;
-
-	orig_va = va;
-
-	eva = round_line(va + size);
-	va = trunc_line(va);
-
-	mips_dcache_wbinv_range_index(va, (eva - va));
-
-	__asm volatile("sync");
+	struct mips_cache_info * const mci = &mips_cache_info;
+	const size_t ways = mci->mci_picache_ways;
+	const size_t line_size = mci->mci_picache_line_size;
+	const size_t way_size = mci->mci_picache_way_size;
+	const size_t way_mask = way_size - 1;
+	vaddr_t eva;
 
 	/*
 	 * Since we're doing Index ops, we expect to not be able
@@ -148,68 +126,89 @@ r5k_icache_sync_range_index_32(vaddr_t va, vsize_t size)
 	 * bits that determine the cache index, and make a KSEG0
 	 * address out of them.
 	 */
-	va = MIPS_PHYS_TO_KSEG0(orig_va & mips_cache_info.mci_picache_way_mask);
+	va = MIPS_PHYS_TO_KSEG0(va & way_mask);
 
-	eva = round_line(va + size);
-	va = trunc_line(va);
-	w2va = va + mips_cache_info.mci_picache_way_size;
+	eva = round_line(va + size, line_size);
+	va = trunc_line(va, line_size);
+	size = eva - va;
 
-	while ((eva - va) >= (16 * 32)) {
-		cache_r4k_op_16lines_32_2way(va, w2va,
-		    CACHE_R4K_I|CACHEOP_R4K_INDEX_INV);
-		va   += (16 * 32);
-		w2va += (16 * 32);
+	/*
+	 * If we are going to flush more than is in a way (or the stride
+	 * needed for that way), we are flushing everything.
+	 */
+	if (size >= way_size) {
+		r5k_picache_sync_all();
+		return;
 	}
 
-	while (va < eva) {
-		cache_op_r4k_line(  va, CACHE_R4K_I|CACHEOP_R4K_INDEX_INV);
-		cache_op_r4k_line(w2va, CACHE_R4K_I|CACHEOP_R4K_INDEX_INV);
-		va   += 32;
-		w2va += 32;
+	for (size_t way = 0; way < ways; way++) {
+		mips_intern_dcache_sync_range_index(va, size);
+		mips_intern_icache_sync_range_index(va, size);
+		va += way_size;
+		eva += way_size;
 	}
 }
 
 void
-r5k_pdcache_wbinv_all_16(void)
+r5k_pdcache_wbinv_all(void)
 {
-	vaddr_t va = MIPS_PHYS_TO_KSEG0(0);
-	vaddr_t eva = va + mips_cache_info.mci_pdcache_size;
+	struct mips_cache_info * const mci = &mips_cache_info;
 
 	/*
 	 * Since we're hitting the whole thing, we don't have to
-	 * worry about the 2 different "ways".
+	 * worry about the N different "ways".
 	 */
-
-	while (va < eva) {
-		cache_r4k_op_32lines_16(va,
-		    CACHE_R4K_D|CACHEOP_R4K_INDEX_WB_INV);
-		va += (32 * 16);
-	}
+	mips_intern_pdcache_wbinv_range_index(MIPS_KSEG0_START,
+	    mci->mci_pdcache_size);
 }
 
 void
-r5k_pdcache_wbinv_all_32(void)
+r5k_pdcache_wbinv_range_index(vaddr_t va, vsize_t size)
 {
-	vaddr_t va = MIPS_PHYS_TO_KSEG0(0);
-	vaddr_t eva = va + mips_cache_info.mci_pdcache_size;
+	struct mips_cache_info * const mci = &mips_cache_info;
+	const size_t ways = mci->mci_pdcache_ways;
+	const size_t line_size = mci->mci_pdcache_line_size;
+	const vaddr_t way_size = mci->mci_pdcache_way_size;
+	const vaddr_t way_mask = way_size - 1;
+	vaddr_t eva;
 
 	/*
-	 * Since we're hitting the whole thing, we don't have to
-	 * worry about the 2 different "ways".
+	 * Since we're doing Index ops, we expect to not be able
+	 * to access the address we've been given.  So, get the
+	 * bits that determine the cache index, and make a KSEG0
+	 * address out of them.
 	 */
+	va = MIPS_PHYS_TO_KSEG0(va & way_mask);
+	eva = round_line(va + size, line_size);
+	va = trunc_line(va, line_size);
+	size = eva - va;
 
-	while (va < eva) {
-		cache_r4k_op_32lines_32(va,
-		    CACHE_R4K_D|CACHEOP_R4K_INDEX_WB_INV);
-		va += (32 * 32);
+	/*
+	 * If we are going to flush more than is in a way, we are flushing
+	 * everything.
+	 */
+	if (size >= way_size) {
+		mips_intern_pdcache_wbinv_range_index(MIPS_KSEG0_START,
+		    mci->mci_pdcache_size);
+		return;
+	}
+
+	/*
+	 * Invalidate each way.  If the address range wraps past the end of
+	 * the way, we will be invalidating in two ways but eventually things
+	 * work out since the last way will wrap into the first way.
+	 */
+	for (size_t way = 0; way < ways; way++) {
+		mips_intern_pdcache_wbinv_range_index(va, size);
+		va += way_size;
+		eva += way_size;
 	}
 }
 
 void
-r4600v1_pdcache_wbinv_range_32(vaddr_t va, vsize_t size)
+r4600v1_pdcache_wbinv_range_32(register_t va, vsize_t size)
 {
-	vaddr_t eva = round_line(va + size);
-	uint32_t ostatus;
+	const register_t eva = round_line32(va + size);
 
 	/*
 	 * This is pathetically slow, but the chip bug is pretty
@@ -217,23 +216,23 @@ r4600v1_pdcache_wbinv_range_32(vaddr_t va, vsize_t size)
 	 * around.
 	 */
 
-	va = trunc_line(va);
+	va = trunc_line32(va);
 
 	/*
 	 * To make this a little less painful, just hit the entire
 	 * cache if we have a range >= the cache size.
 	 */
-	if ((eva - va) >= mips_cache_info.mci_pdcache_size) {
-		r5k_pdcache_wbinv_all_32();
+	if (eva - va >= mips_cache_info.mci_pdcache_size) {
+		r5k_pdcache_wbinv_all();
 		return;
 	}
 
-	ostatus = mips_cp0_status_read();
+	const uint32_t ostatus = mips_cp0_status_read();
 
 	mips_cp0_status_write(ostatus & ~MIPS_SR_INT_IE);
 
 	while (va < eva) {
-		__asm volatile("nop; nop; nop; nop;");
+		__asm volatile("nop; nop; nop; nop");
 		cache_op_r4k_line(va, CACHE_R4K_D|CACHEOP_R4K_HIT_WB_INV);
 		va += 32;
 	}
@@ -242,349 +241,159 @@ r4600v1_pdcache_wbinv_range_32(vaddr_t va, vsize_t size)
 }
 
 void
-r4600v2_pdcache_wbinv_range_32(vaddr_t va, vsize_t size)
+r4600v2_pdcache_wbinv_range_32(register_t va, vsize_t size)
 {
-	vaddr_t eva = round_line(va + size);
-	uint32_t ostatus;
+	const register_t eva = round_line32(va + size);
 
-	va = trunc_line(va);
+	va = trunc_line32(va);
 
-	ostatus = mips_cp0_status_read();
+	const uint32_t ostatus = mips_cp0_status_read();
 
 	mips_cp0_status_write(ostatus & ~MIPS_SR_INT_IE);
 
-	while ((eva - va) >= (32 * 32)) {
+	for (; (eva - va) >= (32 * 32); va += (32 * 32)) {
 		(void) *(volatile int *)MIPS_PHYS_TO_KSEG1(0);
-		cache_r4k_op_32lines_32(va,
-		    CACHE_R4K_D|CACHEOP_R4K_HIT_WB_INV);
-		va += (32 * 32);
+		cache_r4k_op_32lines_32(va, CACHE_R4K_D|CACHEOP_R4K_HIT_WB_INV);
 	}
 
 	(void) *(volatile int *)MIPS_PHYS_TO_KSEG1(0);
-	while (va < eva) {
+	for (; va < eva; va += 32) {
 		cache_op_r4k_line(va, CACHE_R4K_D|CACHEOP_R4K_HIT_WB_INV);
-		va += 32;
+
 	}
 
 	mips_cp0_status_write(ostatus);
 }
 
 void
-vr4131v1_pdcache_wbinv_range_16(vaddr_t va, vsize_t size)
+vr4131v1_pdcache_wbinv_range_16(register_t va, vsize_t size)
 {
-	vaddr_t eva = round_line16(va + size);
+	register_t eva = round_line16(va + size);
 
 	va = trunc_line16(va);
 
-	while ((eva - va) >= (32 * 16)) {
-		cache_r4k_op_32lines_16(va,
-		    CACHE_R4K_D|CACHEOP_R4K_HIT_WB);
-		cache_r4k_op_32lines_16(va,
-		    CACHE_R4K_D|CACHEOP_R4K_HIT_INV);
-		va += (32 * 16);
-	}
-
-	while (va < eva) {
-		cache_op_r4k_line(va, CACHE_R4K_D|CACHEOP_R4K_HIT_WB);
-		cache_op_r4k_line(va, CACHE_R4K_D|CACHEOP_R4K_HIT_INV);
-		va += 16;
-	}
-}
-
-void
-r5k_pdcache_wbinv_range_16(vaddr_t va, vsize_t size)
-{
-	vaddr_t eva = round_line16(va + size);
-
-	va = trunc_line16(va);
-
-	while ((eva - va) >= (32 * 16)) {
-		cache_r4k_op_32lines_16(va,
-		    CACHE_R4K_D|CACHEOP_R4K_HIT_WB_INV);
-		va += (32 * 16);
-	}
-
-	while (va < eva) {
-		cache_op_r4k_line(va, CACHE_R4K_D|CACHEOP_R4K_HIT_WB_INV);
-		va += 16;
-	}
-}
-
-void
-r5k_pdcache_wbinv_range_32(vaddr_t va, vsize_t size)
-{
-	vaddr_t eva = round_line(va + size);
-
-	va = trunc_line(va);
-
-	while ((eva - va) >= (32 * 32)) {
-		cache_r4k_op_32lines_32(va,
-		    CACHE_R4K_D|CACHEOP_R4K_HIT_WB_INV);
-		va += (32 * 32);
-	}
-
-	while (va < eva) {
-		cache_op_r4k_line(va, CACHE_R4K_D|CACHEOP_R4K_HIT_WB_INV);
-		va += 32;
-	}
-}
-
-void
-r5k_pdcache_wbinv_range_index_16(vaddr_t va, vsize_t size)
-{
-	vaddr_t w2va, eva;
-
-	/*
-	 * Since we're doing Index ops, we expect to not be able
-	 * to access the address we've been given.  So, get the
-	 * bits that determine the cache index, and make a KSEG0
-	 * address out of them.
-	 */
-	va = MIPS_PHYS_TO_KSEG0(va & mips_cache_info.mci_pdcache_way_mask);
-
-	eva = round_line16(va + size);
-	va = trunc_line16(va);
-	w2va = va + mips_cache_info.mci_pdcache_way_size;
-
-	while ((eva - va) >= (16 * 16)) {
-		cache_r4k_op_16lines_16_2way(va, w2va,
-		    CACHE_R4K_D|CACHEOP_R4K_INDEX_WB_INV);
-		va   += (16 * 16);
-		w2va += (16 * 16);
-	}
-
-	while (va < eva) {
-		cache_op_r4k_line(  va, CACHE_R4K_D|CACHEOP_R4K_INDEX_WB_INV);
-		cache_op_r4k_line(w2va, CACHE_R4K_D|CACHEOP_R4K_INDEX_WB_INV);
-		va   += 16;
-		w2va += 16;
-	}
-}
-
-void
-r5k_pdcache_wbinv_range_index_32(vaddr_t va, vsize_t size)
-{
-	vaddr_t w2va, eva;
-
-	/*
-	 * Since we're doing Index ops, we expect to not be able
-	 * to access the address we've been given.  So, get the
-	 * bits that determine the cache index, and make a KSEG0
-	 * address out of them.
-	 */
-	va = MIPS_PHYS_TO_KSEG0(va & mips_cache_info.mci_pdcache_way_mask);
-
-	eva = round_line(va + size);
-	va = trunc_line(va);
-	w2va = va + mips_cache_info.mci_pdcache_way_size;
-
-	while ((eva - va) >= (16 * 32)) {
-		cache_r4k_op_16lines_32_2way(va, w2va,
-		    CACHE_R4K_D|CACHEOP_R4K_INDEX_WB_INV);
-		va   += (16 * 32);
-		w2va += (16 * 32);
-	}
-
-	while (va < eva) {
-		cache_op_r4k_line(  va, CACHE_R4K_D|CACHEOP_R4K_INDEX_WB_INV);
-		cache_op_r4k_line(w2va, CACHE_R4K_D|CACHEOP_R4K_INDEX_WB_INV);
-		va   += 32;
-		w2va += 32;
-	}
-}
-
-void
-r4600v1_pdcache_inv_range_32(vaddr_t va, vsize_t size)
-{
-	vaddr_t eva = round_line(va + size);
-	uint32_t ostatus;
-
-	/*
-	 * This is pathetically slow, but the chip bug is pretty
-	 * nasty, and we hope that not too many v1.x R4600s are
-	 * around.
-	 */
-
-	va = trunc_line(va);
-
-	ostatus = mips_cp0_status_read();
-
-	mips_cp0_status_write(ostatus & ~MIPS_SR_INT_IE);
-
-	while (va < eva) {
-		__asm volatile("nop; nop; nop; nop;");
-		cache_op_r4k_line(va, CACHE_R4K_D|CACHEOP_R4K_HIT_INV);
-		va += 32;
-	}
-
-	mips_cp0_status_write(ostatus);
-}
-
-void
-r4600v2_pdcache_inv_range_32(vaddr_t va, vsize_t size)
-{
-	vaddr_t eva = round_line(va + size);
-	uint32_t ostatus;
-
-	va = trunc_line(va);
-
-	ostatus = mips_cp0_status_read();
-
-	mips_cp0_status_write(ostatus & ~MIPS_SR_INT_IE);
-
-	/*
-	 * Between blasts of big cache chunks, give interrupts
-	 * a chance to get though.
-	 */
-	while ((eva - va) >= (32 * 32)) {
-		(void) *(volatile int *)MIPS_PHYS_TO_KSEG1(0);
-		cache_r4k_op_32lines_32(va, CACHE_R4K_D|CACHEOP_R4K_HIT_INV);
-		va += (32 * 32);
-	}
-
-	(void) *(volatile int *)MIPS_PHYS_TO_KSEG1(0);
-	while (va < eva) {
-		cache_op_r4k_line(va, CACHE_R4K_D|CACHEOP_R4K_HIT_INV);
-		va += 32;
-	}
-
-	mips_cp0_status_write(ostatus);
-}
-
-void
-r5k_pdcache_inv_range_16(vaddr_t va, vsize_t size)
-{
-	vaddr_t eva = round_line16(va + size);
-
-	va = trunc_line16(va);
-
-	while ((eva - va) >= (32 * 16)) {
-		cache_r4k_op_32lines_16(va, CACHE_R4K_D|CACHEOP_R4K_HIT_INV);
-		va += (32 * 16);
-	}
-
-	while (va < eva) {
-		cache_op_r4k_line(va, CACHE_R4K_D|CACHEOP_R4K_HIT_INV);
-		va += 16;
-	}
-}
-
-void
-r5k_pdcache_inv_range_32(vaddr_t va, vsize_t size)
-{
-	vaddr_t eva = round_line(va + size);
-
-	va = trunc_line(va);
-
-	while ((eva - va) >= (32 * 32)) {
-		cache_r4k_op_32lines_32(va, CACHE_R4K_D|CACHEOP_R4K_HIT_INV);
-		va += (32 * 32);
-	}
-
-	while (va < eva) {
-		cache_op_r4k_line(va, CACHE_R4K_D|CACHEOP_R4K_HIT_INV);
-		va += 32;
-	}
-}
-
-void
-r4600v1_pdcache_wb_range_32(vaddr_t va, vsize_t size)
-{
-	vaddr_t eva = round_line(va + size);
-	uint32_t ostatus;
-
-	/*
-	 * This is pathetically slow, but the chip bug is pretty
-	 * nasty, and we hope that not too many v1.x R4600s are
-	 * around.
-	 */
-
-	va = trunc_line(va);
-
-	ostatus = mips_cp0_status_read();
-
-	mips_cp0_status_write(ostatus & ~MIPS_SR_INT_IE);
-
-	while (va < eva) {
-		__asm volatile("nop; nop; nop; nop;");
-		cache_op_r4k_line(va, CACHE_R4K_D|CACHEOP_R4K_HIT_WB);
-		va += 32;
-	}
-
-	mips_cp0_status_write(ostatus);
-}
-
-void
-r4600v2_pdcache_wb_range_32(vaddr_t va, vsize_t size)
-{
-	vaddr_t eva = round_line(va + size);
-	uint32_t ostatus;
-
-	va = trunc_line(va);
-
-	ostatus = mips_cp0_status_read();
-
-	mips_cp0_status_write(ostatus & ~MIPS_SR_INT_IE);
-
-	/*
-	 * Between blasts of big cache chunks, give interrupts
-	 * a chance to get though.
-	 */
-	while ((eva - va) >= (32 * 32)) {
-		(void) *(volatile int *)MIPS_PHYS_TO_KSEG1(0);
-		cache_r4k_op_32lines_32(va, CACHE_R4K_D|CACHEOP_R4K_HIT_WB);
-		va += (32 * 32);
-	}
-
-	(void) *(volatile int *)MIPS_PHYS_TO_KSEG1(0);
-	while (va < eva) {
-		cache_op_r4k_line(va, CACHE_R4K_D|CACHEOP_R4K_HIT_WB);
-		va += 32;
-	}
-
-	mips_cp0_status_write(ostatus);
-}
-
-void
-r5k_pdcache_wb_range_16(vaddr_t va, vsize_t size)
-{
-	vaddr_t eva = round_line16(va + size);
-
-	va = trunc_line16(va);
-
-	while ((eva - va) >= (32 * 16)) {
+	for (; (eva - va) >= (32 * 16); va += (32 * 16)) {
 		cache_r4k_op_32lines_16(va, CACHE_R4K_D|CACHEOP_R4K_HIT_WB);
-		va += (32 * 16);
+		cache_r4k_op_32lines_16(va, CACHE_R4K_D|CACHEOP_R4K_HIT_INV);
+
 	}
 
-	while (va < eva) {
+	for (; va < eva; va += 16) {
 		cache_op_r4k_line(va, CACHE_R4K_D|CACHEOP_R4K_HIT_WB);
-		va += 16;
+		cache_op_r4k_line(va, CACHE_R4K_D|CACHEOP_R4K_HIT_INV);
 	}
 }
 
 void
-r5k_pdcache_wb_range_32(vaddr_t va, vsize_t size)
+r4600v1_pdcache_inv_range_32(register_t va, vsize_t size)
 {
-	vaddr_t eva = round_line(va + size);
+	const register_t eva = round_line32(va + size);
 
-	va = trunc_line(va);
+	/*
+	 * This is pathetically slow, but the chip bug is pretty
+	 * nasty, and we hope that not too many v1.x R4600s are
+	 * around.
+	 */
 
-	while ((eva - va) >= (32 * 32)) {
-		cache_r4k_op_32lines_32(va, CACHE_R4K_D|CACHEOP_R4K_HIT_WB);
-		va += (32 * 32);
+	va = trunc_line32(va);
+
+	const uint32_t ostatus = mips_cp0_status_read();
+
+	mips_cp0_status_write(ostatus & ~MIPS_SR_INT_IE);
+
+	for (; va < eva; va += 32) {
+		__asm volatile("nop; nop; nop; nop;");
+		cache_op_r4k_line(va, CACHE_R4K_D|CACHEOP_R4K_HIT_INV);
+
 	}
 
-	while (va < eva) {
-		cache_op_r4k_line(va, CACHE_R4K_D|CACHEOP_R4K_HIT_WB);
-		va += 32;
-	}
+	mips_cp0_status_write(ostatus);
 }
 
-#undef round_line16
-#undef trunc_line16
-#undef round_line
-#undef trunc_line
+void
+r4600v2_pdcache_inv_range_32(register_t va, vsize_t size)
+{
+	const register_t eva = round_line32(va + size);
+
+	va = trunc_line32(va);
+
+	const uint32_t ostatus = mips_cp0_status_read();
+
+	mips_cp0_status_write(ostatus & ~MIPS_SR_INT_IE);
+
+	/*
+	 * Between blasts of big cache chunks, give interrupts
+	 * a chance to get though.
+	 */
+	for (; (eva - va) >= (32 * 32); va += (32 * 32)) {
+		(void) *(volatile int *)MIPS_PHYS_TO_KSEG1(0);
+		cache_r4k_op_32lines_32(va, CACHE_R4K_D|CACHEOP_R4K_HIT_INV);
+
+	}
+
+	(void) *(volatile int *)MIPS_PHYS_TO_KSEG1(0);
+	for (; va < eva; va += 32) {
+		cache_op_r4k_line(va, CACHE_R4K_D|CACHEOP_R4K_HIT_INV);
+
+	}
+
+	mips_cp0_status_write(ostatus);
+}
+
+void
+r4600v1_pdcache_wb_range_32(register_t va, vsize_t size)
+{
+	const register_t eva = round_line32(va + size);
+
+	/*
+	 * This is pathetically slow, but the chip bug is pretty
+	 * nasty, and we hope that not too many v1.x R4600s are
+	 * around.
+	 */
+
+	va = trunc_line32(va);
+
+	const uint32_t ostatus = mips_cp0_status_read();
+
+	mips_cp0_status_write(ostatus & ~MIPS_SR_INT_IE);
+
+	for (; va < eva; va += 32) {
+		__asm volatile("nop; nop; nop; nop;");
+		cache_op_r4k_line(va, CACHE_R4K_D|CACHEOP_R4K_HIT_WB);
+
+	}
+
+	mips_cp0_status_write(ostatus);
+}
+
+void
+r4600v2_pdcache_wb_range_32(register_t va, vsize_t size)
+{
+	const register_t eva = round_line32(va + size);
+
+	va = trunc_line32(va);
+
+	const uint32_t ostatus = mips_cp0_status_read();
+
+	mips_cp0_status_write(ostatus & ~MIPS_SR_INT_IE);
+
+	/*
+	 * Between blasts of big cache chunks, give interrupts
+	 * a chance to get though.
+	 */
+	for (; (eva - va) >= (32 * 32); va += (32 * 32)) {
+		(void) *(volatile int *)MIPS_PHYS_TO_KSEG1(0);
+		cache_r4k_op_32lines_32(va, CACHE_R4K_D|CACHEOP_R4K_HIT_WB);
+
+	}
+
+	(void) *(volatile int *)MIPS_PHYS_TO_KSEG1(0);
+	for (; va < eva; va += 32) {
+		cache_op_r4k_line(va, CACHE_R4K_D|CACHEOP_R4K_HIT_WB);
+	}
+
+	mips_cp0_status_write(ostatus);
+}
 
 /*
  * Cache operations for R5000-style secondary caches:
@@ -599,6 +408,7 @@ r5k_pdcache_wb_range_32(vaddr_t va, vsize_t size)
 __asm(".set mips3");
 
 #define R5K_Page_Invalidate_S   0x17
+CTASSERT(R5K_Page_Invalidate_S == (CACHEOP_R4K_HIT_WB_INV|CACHE_R4K_SD));
 
 void
 r5k_sdcache_wbinv_all(void)
@@ -618,43 +428,30 @@ r5k_sdcache_wbinv_range_index(vaddr_t va, vsize_t size)
 	 * address out of them.
 	 */
 	va = MIPS_PHYS_TO_KSEG0(va & (mips_cache_info.mci_sdcache_size - 1));
-	r5k_sdcache_wbinv_range(va, size);
+	r5k_sdcache_wbinv_range((intptr_t)va, size);
 }
 
-#define	mips_r5k_round_page(x)	(((x) + (128 * 32 - 1)) & ~(128 * 32 - 1))
-#define	mips_r5k_trunc_page(x)	((x) & ~(128 * 32 - 1))
+#define	mips_r5k_round_page(x)	round_line(x, PAGE_SIZE)
+#define	mips_r5k_trunc_page(x)	trunc_line(x, PAGE_SIZE)
 
 void
-r5k_sdcache_wbinv_range(vaddr_t va, vsize_t size)
+r5k_sdcache_wbinv_range(register_t va, vsize_t size)
 {
 	uint32_t ostatus, taglo;
-	vaddr_t eva = mips_r5k_round_page(va + size);
+	register_t eva = mips_r5k_round_page(va + size);
 
 	va = mips_r5k_trunc_page(va);
 
-	__asm volatile(
-		".set noreorder		\n\t"
-		".set noat		\n\t"
-		"mfc0 %0, $12		\n\t"
-		"mtc0 $0, $12		\n\t"
-		".set reorder		\n\t"
-		".set at"
-		: "=r"(ostatus));
+	ostatus = mips_cp0_status_read();
+	mips_cp0_status_write(ostatus & ~MIPS_SR_INT_IE);
 
 	__asm volatile("mfc0 %0, $28" : "=r"(taglo));
 	__asm volatile("mtc0 $0, $28");
 
-	while (va < eva) {
-		cache_op_r4k_line(va, R5K_Page_Invalidate_S);
-		va += (128 * 32);
+	for (; va < eva; va += (128 * 32)) {
+		cache_op_r4k_line(va, CACHEOP_R4K_HIT_WB_INV|CACHE_R4K_SD);
 	}
 
-	__asm volatile("mtc0 %0, $12; nop" :: "r"(ostatus));
+	mips_cp0_status_write(ostatus);
 	__asm volatile("mtc0 %0, $28; nop" :: "r"(taglo));
-}
-
-void
-r5k_sdcache_wb_range(vaddr_t va, vsize_t size)
-{
-	/* Write-through cache, no need to WB */
 }

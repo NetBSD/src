@@ -1,4 +1,4 @@
-/*	$NetBSD: imx51_ipuv3reg.h,v 1.1 2012/04/17 10:19:57 bsh Exp $	*/
+/*	$NetBSD: imx51_ipuv3reg.h,v 1.1.6.1 2017/12/03 11:35:53 jdolecek Exp $	*/
 /*
  * Copyright (c) 2011, 2012  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -95,11 +95,11 @@
 #define IPU_CM_SKIP			0x000000bc
 #define IPU_CM_DISP_ALT_CONF		0x000000c0
 #define IPU_CM_DISP_GEN			0x000000c4
+#define  CM_DISP_GEN_DI1_COUNTER_RELEASE	__BIT(25)
 #define  CM_DISP_GEN_DI0_COUNTER_RELEASE	__BIT(24)
-#define  CM_DISP_GEN_DI1_COUNTER_RELEASE	__BIT(23)
-#define  CM_DISP_GEN_MCU_MAX_BURST_STOP		__BIT(22)
-#define  CM_DISP_GEN_MCU_T_SHIFT		18
-#define  CM_DISP_GEN_MCU_T(n)		((n) << CM_DISP_GEN_MCU_T_SHIFT)
+#define  CM_DISP_GEN_MCU_CSI_VSYNC_DEST	__BIT(23)
+#define  CM_DISP_GEN_MCU_MAX_BURST_STOP	__BIT(22)
+#define  CM_DISP_GEN_MCU_T		__BITS(18, 21)
 #define IPU_CM_DISP_ALT1		0x000000c8
 #define IPU_CM_DISP_ALT2		0x000000cc
 #define IPU_CM_DISP_ALT3		0x000000d0
@@ -270,10 +270,11 @@
 #define  DI_GENERAL_POLARITY(n)		(1 << ((n) - 1))
 
 #define IPU_DI_BS_CLKGEN0		0x00000004
-#define  DI_BS_CLKGEN0_OFFSET_SHIFT	16
+#define  DI_BS_CLKGEN0_OFFSET		__BITS(24, 16)
+#define  DI_BS_CLKGEN0_PERIOD		__BITS(11, 0)
 #define IPU_DI_BS_CLKGEN1		0x00000008
-#define  DI_BS_CLKGEN1_DOWN_SHIFT	16
-#define  DI_BS_CLKGEN1_UP_SHIFT		0
+#define  DI_BS_CLKGEN1_DOWN		__BITS(24, 16)
+#define  DI_BS_CLKGEN1_UP		__BITS(8, 0)
 #define IPU_DI_SW_GEN0(n)		(0x0000000c + ((n) - 1) * 4)
 #define  DI_SW_GEN0_RUN_VAL		__BITS(30, 19)
 #define  DI_SW_GEN0_RUN_RESOL		__BITS(18, 16)
@@ -298,20 +299,17 @@
 #define IPU_DI_SYNC_AS_GEN		0x00000054
 #define  DI_SYNC_AS_GEN_SYNC_START_EN	__BIT(28)
 #define  DI_SYNC_AS_GEN_VSYNC_SEL	__BITS(15, 13)
-#define  DI_SYNC_AS_GEN_VSYNC_SEL_SHIFT	13
-#define  DI_SYNC_AS_GEN_SYNC_STAR	__BITS(11,  0)
+#define  DI_SYNC_AS_GEN_SYNC_START	__BITS(11,  0)
 #define IPU_DI_DW_GEN(n)		(0x00000058 + (n) * 4)
-#define  DI_DW_GEN_ACCESS_SIZE_SHIFT		24
-#define  DI_DW_GEN_COMPONNENT_SIZE_SHIFT	16
-#define  DI_DW_GEN_PIN_SHIFT(n)			(((n) - 11) * 2)
-#define  DI_DW_GEN_PIN(n)		__BITS(DI_DW_GEN_PIN_SHIFT(n) + 1, \
-					       DI_DW_GEN_PIN_SHIFT(n))
+#define  DI_DW_GEN_ACCESS_SIZE		__BITS(31, 24)
+#define  DI_DW_GEN_COMPONNENT_SIZE	__BITS(23, 16)
+#define  DI_DW_GEN_PIN(n)		__BITS((((n) - 11) * 2) + 1, \
+					       ((n) - 11) * 2)
 #define IPU_DI_DW_SET(n, m)	(0x00000088 + (n) * 4 + (m) * 0x30)
-#define  DI_DW_SET_DOWN_SHIFT	16
-#define  DI_DW_SET_UP_SHIFT	0
+#define  DI_DW_SET_DOWN		__BITS(24, 16)
+#define  DI_DW_SET_UP		__BITS(8, 0)
 #define IPU_DI_STP_REP(n)	(0x00000148 + ((n - 1) / 2) * 4)
-#define  DI_STP_REP_SHIFT(n)	(((n - 1) % 2) * 16)
-#define  DI_STP_REP_MASK(n)	(__BITS(11, 0) << DI_STP_REP_SHIFT((n)))
+#define  DI_STP_REP(n)		(__BITS(11, 0) << (((n - 1) % 2) * 16))
 #define IPU_DI_SER_CONF			0x0000015c
 #define IPU_DI_SSC			0x00000160
 #define IPU_DI_POL			0x00000164

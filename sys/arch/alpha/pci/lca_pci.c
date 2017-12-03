@@ -1,4 +1,4 @@
-/* $NetBSD: lca_pci.c,v 1.21 2012/02/06 02:14:14 matt Exp $ */
+/* $NetBSD: lca_pci.c,v 1.21.6.1 2017/12/03 11:35:46 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lca_pci.c,v 1.21 2012/02/06 02:14:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lca_pci.c,v 1.21.6.1 2017/12/03 11:35:46 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,6 +103,9 @@ lca_conf_read(void *cpv, pcitag_t tag, int offset)
 	pcireg_t *datap, data;
 	int s, secondary, device, ba;
 
+	if ((unsigned int)offset >= PCI_CONF_SIZE)
+		return (pcireg_t) -1;
+
 	s = 0;					/* XXX gcc -Wuninitialized */
 
 	/* secondary if bus # != 0 */
@@ -152,6 +155,9 @@ lca_conf_write(void *cpv, pcitag_t tag, int offset, pcireg_t data)
 	struct lca_config *lcp = cpv;
 	pcireg_t *datap;
 	int s, secondary, device;
+
+	if ((unsigned int)offset >= PCI_CONF_SIZE)
+		return;
 
 	s = 0;					/* XXX gcc -Wuninitialized */
 

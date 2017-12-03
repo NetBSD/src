@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.54.2.2 2013/06/23 06:18:58 tls Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.54.2.3 2017/12/03 11:38:45 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.54.2.2 2013/06/23 06:18:58 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.54.2.3 2017/12/03 11:38:45 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,8 @@ lwp_sys_init(void)
 }
 
 int
-do_lwp_create(lwp_t *l, void *arg, u_long flags, lwpid_t *new_lwp)
+do_lwp_create(lwp_t *l, void *arg, u_long flags, lwpid_t *new_lwp,
+    const sigset_t *sigmask, const stack_t *sigstk)
 {
 	struct proc *p = l->l_proc;
 	struct lwp *l2;
@@ -84,8 +85,8 @@ do_lwp_create(lwp_t *l, void *arg, u_long flags, lwpid_t *new_lwp)
 	if (__predict_false(uaddr == 0))
 		return ENOMEM;
 
-	error = lwp_create(l, p, uaddr, flags & LWP_DETACHED,
-	    NULL, 0, p->p_emul->e_startlwp, arg, &l2, l->l_class);
+	error = lwp_create(l, p, uaddr, flags & LWP_DETACHED, NULL, 0,
+	    p->p_emul->e_startlwp, arg, &l2, l->l_class, sigmask, &SS_INIT);
 	if (__predict_false(error)) {
 		uvm_uarea_free(uaddr);
 		return error;
@@ -134,7 +135,7 @@ sys__lwp_create(struct lwp *l, const struct sys__lwp_create_args *uap,
 		syscallarg(lwpid_t *) new_lwp;
 	} */
 	struct proc *p = l->l_proc;
-	ucontext_t *newuc = NULL;
+	ucontext_t *newuc;
 	lwpid_t lid;
 	int error;
 
@@ -152,7 +153,10 @@ sys__lwp_create(struct lwp *l, const struct sys__lwp_create_args *uap,
 	if (error)
 		goto fail;
 
-	error = do_lwp_create(l, newuc, SCARG(uap, flags), &lid);
+	const sigset_t *sigmask = newuc->uc_flags & _UC_SIGMASK ?
+	    &newuc->uc_sigmask : &l->l_sigmask;
+	error = do_lwp_create(l, newuc, SCARG(uap, flags), &lid, sigmask,
+	    &SS_INIT);
 	if (error)
 		goto fail;
 
@@ -673,11 +677,8 @@ sys__lwp_unpark_all(struct lwp *l, const struct sys__lwp_unpark_all_args *uap,
 	sz = sizeof(target) * ntargets;
 	if (sz <= sizeof(targets))
 		tp = targets;
-	else {
+	else
 		tp = kmem_alloc(sz, KM_SLEEP);
-		if (tp == NULL)
-			return ENOMEM;
-	}
 	error = copyin(SCARG(uap, targets), tp, sz);
 	if (error != 0) {
 		if (tp != targets) {
@@ -763,8 +764,6 @@ sys__lwp_setname(struct lwp *l, const struct sys__lwp_setname_args *uap,
 		target = l->l_lid;
 
 	name = kmem_alloc(MAXCOMLEN, KM_SLEEP);
-	if (name == NULL)
-		return ENOMEM;
 	error = copyinstr(SCARG(uap, name), name, MAXCOMLEN, NULL);
 	switch (error) {
 	case ENAMETOOLONG:
@@ -822,7 +821,7 @@ sys__lwp_getname(struct lwp *l, const struct sys__lwp_getname_args *uap,
 	if (t->l_name == NULL)
 		name[0] = '\0';
 	else
-		strcpy(name, t->l_name);
+		strlcpy(name, t->l_name, sizeof(name));
 	lwp_unlock(t);
 	mutex_exit(p->p_lock);
 

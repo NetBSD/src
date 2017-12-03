@@ -1,4 +1,4 @@
-/*	$NetBSD: panel.c,v 1.2 2011/02/16 23:44:19 jmcneill Exp $ */
+/*	$NetBSD: panel.c,v 1.2.14.1 2017/12/03 11:36:41 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2009 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: panel.c,v 1.2 2011/02/16 23:44:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: panel.c,v 1.2.14.1 2017/12/03 11:36:41 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,7 +96,7 @@ panel_attach(device_t parent, device_t self, void *aux)
 	
 	aprint_normal("\n");
 	if (bus_space_subregion(haa->ha_st, haa->ha_sh, haa->ha_devoff,
-			0x1, 		/* just a single register */
+			0x4, 		/* just a single register */
 			&sc->sc_hreg)) {
 		aprint_error(": unable to map panel register\n");
 		return;
@@ -126,8 +126,8 @@ panel_intr(void *cookie)
 	struct panel_softc *sc = cookie;
 	uint8_t reg;
 	
-	reg = bus_space_read_1(sc->sc_tag, sc->sc_hreg, 0);
-	bus_space_write_1(sc->sc_tag, sc->sc_hreg, 0,
+	reg = bus_space_read_4(sc->sc_tag, sc->sc_hreg, 0);
+	bus_space_write_4(sc->sc_tag, sc->sc_hreg, 0,
 	    IOC_PANEL_VDOWN_IRQ | IOC_PANEL_VUP_IRQ | IOC_PANEL_POWER_IRQ);
 	if ((reg & IOC_PANEL_POWER_IRQ) == 0) {
 		if (!sc->sc_fired)

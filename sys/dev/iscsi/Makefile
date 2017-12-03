@@ -2,6 +2,6 @@
 
 INCSDIR= /usr/include/dev/iscsi
 
-INCS= iscsi.h iscsi_ioctl.h iscsi_test.h iscsi_perf.h
+INCS= iscsi.h iscsi_ioctl.h
 
 .include <bsd.kinc.mk>

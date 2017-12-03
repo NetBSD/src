@@ -1,6 +1,6 @@
-#	$NetBSD: files.rasoc,v 1.2.12.1 2014/08/20 00:02:58 tls Exp $
+#	$NetBSD: files.rasoc,v 1.2.12.2 2017/12/03 11:36:09 jdolecek Exp $
 
-defflag opt_rasoc.h				RT3050 RT3052 RT3883 MT7620
+defflag opt_rasoc.h				RT3050 RT3052 RT3883 MT7620 MT7628
 
 file	arch/mips/mips/bus_dma.c
 file	arch/mips/mips/mips3_clock.c
@@ -15,7 +15,7 @@ file	arch/evbmips/rasoc/machdep.c
 file	arch/evbmips/rasoc/console.c
 
 # System bus
-device	mainbus { }
+device	mainbus { [addr = -1] }
 attach	mainbus at root
 file	arch/mips/ralink/ralink_mainbus.c	mainbus
 
@@ -40,6 +40,9 @@ include "dev/scsipi/files.scsipi"
 
 # Machine-independent USB device support
 include "dev/usb/files.usb"
+
+# Machine-independent Bluetooth device support
+include "dev/bluetooth/files.bluetooth"
 
 # Memory Disk
 file	dev/md_root.c				memory_disk_hooks

@@ -1,4 +1,4 @@
-/*	$NetBSD: ugraphire_rdesc.h,v 1.9 2011/12/23 00:51:46 jakllsch Exp $	*/
+/*	$NetBSD: ugraphire_rdesc.h,v 1.9.6.1 2017/12/03 11:37:34 jdolecek Exp $	*/
 /*
  * Copyright (c) 2000 Nick Hibma <n_hibma@freebsd.org>
  * All rights reserved.
@@ -26,8 +26,6 @@
  */
 
 /* Tested with 
- * - Graphire
- * - Graphire2
  * - Graphire3 4x5
  * - Graphire3 6x8
  * - Graphire4 4x5

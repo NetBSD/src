@@ -1,9 +1,9 @@
-#	$NetBSD: files.mpc85xx,v 1.9 2012/07/15 08:44:56 matt Exp $
+#	$NetBSD: files.mpc85xx,v 1.9.2.1 2017/12/03 11:36:11 jdolecek Exp $
 #
 # mpc85xx-specific configuration info
 
 defflag	opt_mpc85xx.h	MPC8536 MPC8544 MPC8548 MPC8555 MPC8568 MPC8572
-			P1025 P2020 CADMUS PIXIS E500_WDOG_STACK
+			P1023 P1025 P2020 CADMUS PIXIS E500_WDOG_STACK
 defparam opt_mpc85xx.h	SYS_CLK MEMSIZE
 
 file	arch/evbppc/mpc85xx/autoconf.c
@@ -12,9 +12,6 @@ file	arch/powerpc/booke/e500_autoconf.c
 file	arch/powerpc/booke/e500_intr.c
 file	arch/powerpc/booke/e500_timer.c
 file	arch/powerpc/booke/e500_tlb.c
-
-# we usr MBR
-file	kern/subr_disk_mbr.c			disk
 
 # Memory Disk for install kernel
 file	dev/md_root.c				memory_disk_hooks

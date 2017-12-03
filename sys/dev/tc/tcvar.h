@@ -1,4 +1,4 @@
-/* $NetBSD: tcvar.h,v 1.26 2011/06/04 01:57:34 tsutsui Exp $ */
+/* $NetBSD: tcvar.h,v 1.26.12.1 2017/12/03 11:37:33 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -139,7 +139,7 @@ struct tc_builtin {
 /*
  * Interrupt establishment functions.
  */
-int	tc_checkslot(tc_addr_t, char *);
+int	tc_checkslot(tc_addr_t, char *, struct tc_rommap **);
 void	tcattach(device_t, device_t, void *);
 const struct evcnt *tc_intr_evcnt(device_t, void *);
 void	tc_intr_establish(device_t, void *, int, int (*)(void *),

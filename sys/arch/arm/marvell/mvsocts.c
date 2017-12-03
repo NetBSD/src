@@ -1,6 +1,6 @@
-/*	$NetBSD: mvsocts.c,v 1.1 2012/08/01 10:34:42 kiyohara Exp $	*/
+/*	$NetBSD: mvsocts.c,v 1.1.2.1 2017/12/03 11:35:54 jdolecek Exp $	*/
 /*
- * Copyright (c) 2012 KIYOHARA Takashi
+ * Copyright (c) 2012, 2015 KIYOHARA Takashi
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsocts.c,v 1.1 2012/08/01 10:34:42 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsocts.c,v 1.1.2.1 2017/12/03 11:35:54 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -34,16 +34,17 @@ __KERNEL_RCSID(0, "$NetBSD: mvsocts.c,v 1.1 2012/08/01 10:34:42 kiyohara Exp $")
 
 #include <dev/sysmon/sysmonvar.h>
 
+#include <dev/marvell/marvellreg.h>
 #include <dev/marvell/marvellvar.h>
 
 #define TS_STATUS		0x0
-#define   STATUS_VALID			(1 << 9)
 #define   STATUS_VAL(v)			(((v) >> 10) & 0x1ff)
-
-#define VAL2MCELSIUS(v)		(((322 - (v)) * 10000) / 13625)
 
 struct mvsocts_softc {
 	device_t sc_dev;
+
+	bool (*sc_isvalid)(int);
+	int (*sc_val2uc)(int);
 
 	struct sysmon_envsys *sc_sme;
 	envsys_data_t sc_sensor;
@@ -57,6 +58,12 @@ static int mvsocts_match(device_t, struct cfdata *, void *);
 static void mvsocts_attach(device_t, device_t, void *);
 
 static void mvsocts_refresh(struct sysmon_envsys *, envsys_data_t *);
+
+static bool mvsocts_isvalid_88f6282(int);
+static int mvsocts_val2uc_88f6282(int);
+
+static bool mvsocts_isvalid_armada(int);
+static int mvsocts_val2uc_armada(int);
 
 CFATTACH_DECL_NEW(mvsocts, sizeof(struct mvsocts_softc),
     mvsocts_match, mvsocts_attach, NULL, NULL);
@@ -89,10 +96,34 @@ mvsocts_attach(device_t parent, device_t self, void *aux)
 	    mva->mva_offset, sizeof(uint32_t), &sc->sc_ioh))
 		panic("%s: Cannot map registers", device_xname(self));
 
+	switch (mva->mva_model) {
+	case MARVELL_KIRKWOOD_88F6282:
+		sc->sc_isvalid = mvsocts_isvalid_88f6282;
+		sc->sc_val2uc = mvsocts_val2uc_88f6282;
+		break;
+	case MARVELL_ARMADAXP_MV78130:
+	case MARVELL_ARMADAXP_MV78160:
+	case MARVELL_ARMADAXP_MV78230:
+	case MARVELL_ARMADAXP_MV78260:
+	case MARVELL_ARMADAXP_MV78460:
+/*
+	case MARVELL_ARMADA370_MV6707:
+	case MARVELL_ARMADA370_MV6710:
+	case MARVELL_ARMADA370_MV6W11:
+ */
+		sc->sc_isvalid = mvsocts_isvalid_armada;
+		sc->sc_val2uc = mvsocts_val2uc_armada;
+		break;
+
+	default:
+		aprint_error_dev(self, "unknwon model: 0x%x", mva->mva_model);
+		return;
+	}
+
 	sc->sc_sme = sysmon_envsys_create();
 	/* Initialize sensor data. */
-	sc->sc_sensor.units =  ENVSYS_STEMP;
-	sc->sc_sensor.state =  ENVSYS_SINVALID;
+	sc->sc_sensor.units = ENVSYS_STEMP;
+	sc->sc_sensor.state = ENVSYS_SINVALID;
 	strlcpy(sc->sc_sensor.desc, device_xname(self),
 	    sizeof(sc->sc_sensor.desc));
 	if (sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensor)) {
@@ -118,12 +149,40 @@ mvsocts_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	uint32_t val, uc, uk;
 
 	val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, TS_STATUS);
-	if (!(val & STATUS_VALID)) {
+	if (!sc->sc_isvalid(val)) {
 		aprint_error_dev(sc->sc_dev, "status value is invalid\n");
 		return;
 	}
-	uc = VAL2MCELSIUS(STATUS_VAL(val)) * 1000000;	/* uC */
+	uc = sc->sc_val2uc(STATUS_VAL(val));		/* uC */
 	uk = uc + 273150000;				/* convert to uKelvin */
 	sc->sc_sensor.value_cur = uk;
 	sc->sc_sensor.state = ENVSYS_SVALID;
+}
+
+static bool
+mvsocts_isvalid_88f6282(int v)
+{
+
+	return (v & (1 << 9)) != 0;
+}
+
+static int
+mvsocts_val2uc_88f6282(int v)
+{
+
+	return (322 - v) * 10 * 1000000 / 13625 * 1000;
+}
+
+static bool
+mvsocts_isvalid_armada(int v)
+{
+
+	return (v & (1 << 0)) != 0;
+}
+
+static int
+mvsocts_val2uc_armada(int v)
+{
+
+	return (3153 - v * 10) * 1000000 / 13825 * 1000;
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: gemini_gmac.c,v 1.7 2011/07/01 19:32:28 dyoung Exp $ */
+/* $NetBSD: gemini_gmac.c,v 1.7.12.1 2017/12/03 11:35:53 jdolecek Exp $ */
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -49,7 +49,7 @@
 
 #include <sys/gpio.h>
 
-__KERNEL_RCSID(0, "$NetBSD: gemini_gmac.c,v 1.7 2011/07/01 19:32:28 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_gmac.c,v 1.7.12.1 2017/12/03 11:35:53 jdolecek Exp $");
 
 #define	SWFREEQ_DESCS	256	/* one page worth */
 #define	HWFREEQ_DESCS	256	/* one page worth */
@@ -728,8 +728,8 @@ gmac_rxproduce(gmac_hwqueue_t *hwq, size_t free_min)
 		d->d_bufaddr = htole32(map->dm_segs->ds_addr);
 		for (m0 = hwq->hwq_ifq.ifq_head; m0 != NULL; m0 = m0->m_nextpkt)
 			KASSERT(m0 != m);
-		IF_ENQUEUE(&hwq->hwq_ifq, m);
 		m->m_len = d - hwq->hwq_base;
+		IF_ENQUEUE(&hwq->hwq_ifq, m);
 		aprint_debug(
 		    "gmac_rxproduce(%p): m=%p %zu@%p=%#x/%#x/%#x/%#x\n", hwq,
 		    m, d - hwq->hwq_base, d, d->d_desc0, d->d_desc1,
@@ -847,16 +847,14 @@ gmac_hwqueue_rxconsume(gmac_hwqueue_t *hwq, const gmac_desc_t *d)
 	 * Now get the whole chain.
 	 */
 	m = hwq->hwq_rxmbuf;
-	m->m_pkthdr.rcvif = ifp;	/* set receive interface */
-	ifp->if_ipackets++;
+	m_set_rcvif(m, ifp);	/* set receive interface */
 	ifp->if_ibytes += m->m_pkthdr.len;
 	switch (DESC0_RXSTS_GET(d->d_desc0)) {
 	case DESC0_RXSTS_GOOD:
 	case DESC0_RXSTS_LONG:
 		m->m_data += 2;
 		KASSERT(m_length(m) == m->m_pkthdr.len);
-		bpf_mtap(ifp, m);
-		(*ifp->if_input)(ifp, m);
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 		break;
 	default:
 		ifp->if_ierrors++;
@@ -963,9 +961,6 @@ gmac_hwqmem_create(gmac_mapcache_t *mc, size_t ndesc, size_t nqueue, int flags)
 	KASSERT((ndesc & (ndesc - 1)) == 0);
 
 	hqm = kmem_zalloc(sizeof(*hqm), KM_SLEEP);
-	if (hqm == NULL)
-		return NULL;
-
 	hqm->hqm_memsize = nqueue * sizeof(gmac_desc_t [ndesc]);
 	hqm->hqm_mc = mc;
 	hqm->hqm_dmat = mc->mc_dmat;
@@ -1050,11 +1045,7 @@ gmac_hwqueue_create(gmac_hwqmem_t *hqm,
 	KASSERT((hqm->hqm_refs & (1 << qno)) == 0);
 
 	hwq = kmem_zalloc(sizeof(*hwq), KM_SLEEP);
-	if (hwq == NULL)
-		return NULL;
-
 	hwq->hwq_size = hqm->hqm_ndesc;
-
 	hwq->hwq_iot = iot;
 	bus_space_subregion(iot, ioh, qrwptr, sizeof(uint32_t),
 	    &hwq->hwq_qrwptr_ioh);

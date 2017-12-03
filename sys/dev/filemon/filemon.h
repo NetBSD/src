@@ -1,4 +1,4 @@
-/* $NetBSD: filemon.h,v 1.3.12.2 2014/08/20 00:03:36 tls Exp $ */
+/* $NetBSD: filemon.h,v 1.3.12.3 2017/12/03 11:37:01 jdolecek Exp $ */
 /*
  * Copyright (c) 2010, Juniper Networks, Inc.
  *
@@ -25,13 +25,15 @@
  */
 #ifndef FILEMON_SET_FD
 
+#include <sys/ioccom.h>
+
 #ifndef _PATH_FILEMON
 #define _PATH_FILEMON "/dev/filemon"
 #endif
 #define FILEMON_SET_FD		_IOWR('S', 1, int)
 #define FILEMON_SET_PID		_IOWR('S', 2, pid_t)
 
-#define FILEMON_VERSION		4
+#define FILEMON_VERSION		5
 
 #ifdef _KERNEL
 struct filemon {
@@ -39,15 +41,20 @@ struct filemon {
 	char fm_fname1[MAXPATHLEN];/* Temporary filename buffer. */
 	char fm_fname2[MAXPATHLEN];/* Temporary filename buffer. */
 	char fm_msgbufr[32 + 2 * MAXPATHLEN];	/* Output message buffer. */
-	int fm_fd;			/* Output fd */
 	struct file *fm_fp;	/* Output file pointer. */
 	krwlock_t fm_mtx;		/* Lock mutex for this filemon. */
 	TAILQ_ENTRY(filemon) fm_link;	/* Link into the in-use list. */
 };
 
+struct hijack { 
+	int hj_index; 
+	sy_call_t *hj_funcs[2];	/* [0] = original, [1] = hijack */ 
+}; 
+
 struct filemon * filemon_lookup(struct proc *);
 void filemon_output(struct filemon *, char *, size_t);
-void filemon_wrapper_install(void);
+int syscall_hijack(struct sysent *, const struct hijack *, bool);
+int filemon_wrapper_install(void);
 int  filemon_wrapper_deinstall(void);
 void filemon_printf(struct filemon *, const char *, ...) __printflike(2, 3);
 #endif

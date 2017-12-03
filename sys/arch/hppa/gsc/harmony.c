@@ -1,4 +1,4 @@
-/*	$NetBSD: harmony.c,v 1.2.4.2 2014/08/20 00:03:04 tls Exp $	*/
+/*	$NetBSD: harmony.c,v 1.2.4.3 2017/12/03 11:36:16 jdolecek Exp $	*/
 
 /*	$OpenBSD: harmony.c,v 1.23 2004/02/13 21:28:19 mickey Exp $	*/
 
@@ -73,7 +73,7 @@
 #include <sys/kmem.h>
 #include <uvm/uvm_extern.h>
 
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
@@ -1052,8 +1052,6 @@ harmony_allocm(void *vsc, int dir, size_t size)
 
 	sc = vsc;
 	d = kmem_alloc(sizeof(*d), KM_SLEEP);
-	if (d == NULL)
-		goto fail;
 
 	if (bus_dmamap_create(sc->sc_dmat, size, 1, size, 0, BUS_DMA_WAITOK,
 	    &d->d_map) != 0)
@@ -1084,7 +1082,6 @@ fail2:
 	bus_dmamap_destroy(sc->sc_dmat, d->d_map);
 fail1:
 	kmem_free(d, sizeof(*d));
-fail:
 	return (NULL);
 }
 

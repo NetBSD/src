@@ -1,4 +1,4 @@
-/*	$NetBSD: atphy.c,v 1.12.2.2 2014/08/20 00:03:41 tls Exp $ */
+/*	$NetBSD: atphy.c,v 1.12.2.3 2017/12/03 11:37:06 jdolecek Exp $ */
 /*	$OpenBSD: atphy.c,v 1.1 2008/09/25 20:47:16 brad Exp $	*/
 
 /*-
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atphy.c,v 1.12.2.2 2014/08/20 00:03:41 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atphy.c,v 1.12.2.3 2017/12/03 11:37:06 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,6 +146,9 @@ atphy_attach(device_t parent, device_t self, void *aux)
 	sc->mii_dev = self;
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
+	sc->mii_mpd_oui = MII_OUI(ma->mii_id1, ma->mii_id2);
+	sc->mii_mpd_model = MII_MODEL(ma->mii_id2);
+	sc->mii_mpd_rev = MII_REV(ma->mii_id2);
 	sc->mii_funcs = &atphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
@@ -228,7 +231,7 @@ atphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			return EINVAL;
 		}
 
-		anar = mii_anar(ife->ifm_media);
+		anar = mii_anar(IFM_SUBTYPE(ife->ifm_media));
 		if (((ife->ifm_media & IFM_GMASK) & IFM_FDX) != 0) {
 			bmcr |= BMCR_FDX;
 			/* Enable pause. */

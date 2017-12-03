@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agr.c,v 1.30.12.1 2014/08/20 00:04:35 tls Exp $	*/
+/*	$NetBSD: if_agr.c,v 1.30.12.2 2017/12/03 11:39:02 jdolecek Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,9 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.30.12.1 2014/08/20 00:04:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.30.12.2 2017/12/03 11:39:02 jdolecek Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -42,6 +44,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.30.12.1 2014/08/20 00:04:35 tls Exp $")
 #include <sys/proc.h>	/* XXX for curproc */
 #include <sys/kauth.h>
 #include <sys/xcall.h>
+#include <sys/device.h>
+#include <sys/module.h>
+#include <sys/atomic.h>
 
 #include <net/bpf.h>
 #include <net/if.h>
@@ -60,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.30.12.1 2014/08/20 00:04:35 tls Exp $")
 #include <net/agr/if_agrsubr.h>
 #include <net/agr/if_agrethervar.h>
 
-void agrattach(int);
+#include "ioconf.h"
 
 static int agr_clone_create(struct if_clone *, int);
 static int agr_clone_destroy(struct ifnet *);
@@ -94,6 +99,8 @@ static void agr_ports_exit(struct agr_softc *);
 static struct if_clone agr_cloner =
     IF_CLONE_INITIALIZER("agr", agr_clone_create, agr_clone_destroy);
 
+static u_int agr_count;
+
 /*
  * EXPORTED FUNCTIONS
  */
@@ -106,7 +113,30 @@ void
 agrattach(int count)
 {
 
+	/*
+	 * Nothing to do here, initialization is handled by the
+	 * module initialization code in agrinit() below).
+	 */
+}
+
+static void
+agrinit(void)
+{
 	if_clone_attach(&agr_cloner);
+}
+
+static int
+agrdetach(void)
+{
+	int error = 0;
+
+	if (agr_count != 0)
+		error = EBUSY;
+
+	if (error == 0)
+		if_clone_detach(&agr_cloner);
+
+	return error;
 }
 
 /*
@@ -131,8 +161,7 @@ agr_input(struct ifnet *ifp_port, struct mbuf *m)
 		return;
 	}
 
-	ifp->if_ipackets++;
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
 
 #define DNH_DEBUG
 #if NVLAN > 0
@@ -155,8 +184,7 @@ agr_input(struct ifnet *ifp_port, struct mbuf *m)
 	}
 #endif
 
-	bpf_mtap(ifp, m);
-	(*ifp->if_input)(ifp, m);
+	if_percpuq_enqueue(ifp->if_percpuq, m);
 }
 
 /*
@@ -207,7 +235,7 @@ agr_xmit_frame(struct ifnet *ifp_port, struct mbuf *m)
 	m_copydata(m, 0, hdrlen, &dst->sa_data);
 	m_adj(m, hdrlen);
 
-	error = (*ifp_port->if_output)(ifp_port, m, dst, NULL);
+	error = if_output_lock(ifp_port, ifp_port, m, dst, NULL);
 
 	return error;
 }
@@ -315,14 +343,19 @@ agr_clone_create(struct if_clone *ifc, int unit)
 {
 	struct agr_softc *sc;
 	struct ifnet *ifp;
+	int error;
 
 	sc = agr_alloc_softc();
+	error = agrtimer_init(sc);
+	if (error) {
+		agr_free_softc(sc);
+		return error;
+	}
 	TAILQ_INIT(&sc->sc_ports);
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NET);
 	mutex_init(&sc->sc_entry_mtx, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&sc->sc_insc_cv, "agrsoftc");
 	cv_init(&sc->sc_ports_cv, "agrports");
-	agrtimer_init(sc);
 	ifp = &sc->sc_if;
 	snprintf(ifp->if_xname, sizeof(ifp->if_xname), "%s%d",
 	    ifc->ifc_name, unit);
@@ -336,7 +369,7 @@ agr_clone_create(struct if_clone *ifc, int unit)
 	if_attach(ifp);
 
 	agr_reset_iftype(ifp);
-
+	atomic_inc_uint(&agr_count);
 	return 0;
 }
 
@@ -373,6 +406,7 @@ agr_clone_destroy(struct ifnet *ifp)
 	cv_destroy(&sc->sc_ports_cv);
 	agr_free_softc(sc);
 
+	atomic_dec_uint(&agr_count);
 	return 0;
 }
 
@@ -565,6 +599,7 @@ agr_addport(struct ifnet *ifp, struct ifnet *ifp_port)
 	struct agr_softc *sc = ifp->if_softc;
 	struct agr_port *port = NULL;
 	int error = 0;
+	int s;
 
 	if (ifp_port->if_ioctl == NULL) {
 		error = EOPNOTSUPP;
@@ -589,12 +624,15 @@ agr_addport(struct ifnet *ifp, struct ifnet *ifp_port)
 	}
 	port->port_flags = AGRPORT_LARVAL;
 
-	IFADDR_FOREACH(ifa, ifp_port) {
+	s = pserialize_read_enter();
+	IFADDR_READER_FOREACH(ifa, ifp_port) {
 		if (ifa->ifa_addr->sa_family != AF_LINK) {
+			pserialize_read_exit(s);
 			error = EBUSY;
 			goto out;
 		}
 	}
+	pserialize_read_exit(s);
 
 	if (sc->sc_nports == 0) {
 		switch (ifp_port->if_type) {
@@ -1185,3 +1223,10 @@ agrport_config_promisc(struct agr_port *port, bool promisc)
 
 	return error;
 }
+
+/*
+ * Module infrastructure
+ */
+#include <net/if_module.h>
+
+IF_MODULE(MODULE_CLASS_DRIVER, agr, "")

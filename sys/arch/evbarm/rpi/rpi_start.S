@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_start.S,v 1.5.2.2 2014/08/20 00:02:56 tls Exp $	*/
+/*	$NetBSD: rpi_start.S,v 1.5.2.3 2017/12/03 11:36:06 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -81,6 +81,12 @@
  * SUCH DAMAGE.
  */
 
+#include "opt_bcm283x.h"
+
+#if defined(BCM2836)
+#include <evbarm/rpi/rpi2_start.S>
+#else
+
 #include "opt_cputypes.h"
 #include "opt_cpuoptions.h"
 
@@ -88,7 +94,7 @@
 #include <arm/armreg.h>
 #include "assym.h"
 
-RCSID("$NetBSD: rpi_start.S,v 1.5.2.2 2014/08/20 00:02:56 tls Exp $")
+RCSID("$NetBSD: rpi_start.S,v 1.5.2.3 2017/12/03 11:36:06 jdolecek Exp $")
 
 /*
  * Workaround Erratum 411920
@@ -217,15 +223,15 @@ _C_LABEL(rpi_start):
 	// When using split TTBRs, we need to set both since the physical
 	// addresses we were/are using might be in either.
 	mcr	p15, 0, r0, c2, c0, 1	/* TTBR1 write */
-#endif  
+#endif
 
 #if defined(ARM_MMU_EXTENDED)
 	mov	r1, #TTBCR_S_N_1        /* make sure TTBCR_S_N is 1 */
-#else   
+#else
 	mov	r1, #0			/* make sure TTBCR is 0 */
 #endif
 	mcr	p15, 0, r1, c2, c0, 2	/* TTBCR write */
-  
+
 	mov     r0, #0
 	mcr	p15, 0, r0, c8, c7, 0	/* Invalidate TLBs */
 
@@ -347,6 +353,8 @@ mmu_init_table:
 
 	/* end of table */
 	MMU_INIT(0, 0, 0, 0)
+#endif
+
 
 	.globl	_C_LABEL(rpi_boot_regs)
 rpi_boot_regs:

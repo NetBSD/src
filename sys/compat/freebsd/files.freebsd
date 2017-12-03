@@ -1,22 +1,23 @@
-#	$NetBSD: files.freebsd,v 1.12 2008/11/19 18:36:02 ad Exp $
+#	$NetBSD: files.freebsd,v 1.12.26.1 2017/12/03 11:36:53 jdolecek Exp $
 #
 # Config file description for machine-independent FreeBSD compat code.
-# Included by ports that need it.
+# Included by ports that need it. Only i386 is supported.
 
-# ports should define any machine-specific files they need in their
-# own file lists.
-
+define	compat_freebsd
 file	compat/freebsd/freebsd_exec.c		compat_freebsd
 file	compat/freebsd/freebsd_exec_elf32.c	compat_freebsd & exec_elf32
-file	compat/freebsd/freebsd_exec_aout.c	compat_freebsd & exec_aout
 file	compat/freebsd/freebsd_file.c		compat_freebsd
 file	compat/freebsd/freebsd_fork.c		compat_freebsd
 file	compat/freebsd/freebsd_ioctl.c		compat_freebsd
 file	compat/freebsd/freebsd_ipc.c		compat_freebsd
+file	compat/freebsd/freebsd_machdep.c	compat_freebsd
 file	compat/freebsd/freebsd_misc.c		compat_freebsd
 file	compat/freebsd/freebsd_mod.c		compat_freebsd
 file	compat/freebsd/freebsd_ptrace.c		compat_freebsd & ptrace
 file	compat/freebsd/freebsd_sched.c		compat_freebsd
+file	compat/freebsd/freebsd_sigcode.S	compat_freebsd
 file	compat/freebsd/freebsd_sysctl.c		compat_freebsd
 file	compat/freebsd/freebsd_sysent.c		compat_freebsd
 file	compat/freebsd/freebsd_syscalls.c	compat_freebsd
+file	compat/freebsd/freebsd_syscall.c	compat_freebsd
+

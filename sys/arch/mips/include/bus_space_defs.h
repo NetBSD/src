@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_defs.h,v 1.1 2011/07/01 17:28:55 dyoung Exp $	*/
+/*	$NetBSD: bus_space_defs.h,v 1.1.12.1 2017/12/03 11:36:27 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -107,17 +107,33 @@ struct mips_bus_space_translation;
 /*
  * Addresses (in bus space).
  */
+#ifdef __mips_n32
+typedef int64_t bus_addr_t;
+typedef uint64_t bus_size_t;
+#define	PRIxBUSADDR	PRIx64
+#define	PRIxBUSSIZE	PRIx64
+#else
 typedef paddr_t bus_addr_t;
 typedef psize_t bus_size_t;
 #define	PRIxBUSADDR	PRIxPADDR
 #define	PRIxBUSSIZE	PRIxPSIZE
+#endif
 
 /*
  * Access methods for bus space.
  */
 typedef struct mips_bus_space *bus_space_tag_t;
+/*
+ * If we are using the MIPS N32 ABI, allow bus_space_space_t to hold a
+ * 64-bit quantity which can hold an XKPHYS address.
+ */
+#if defined(__mips_n32) && defined(_MIPS_PADDR_T_64BIT)
+typedef int64_t bus_space_handle_t;
+#define	PRIxBSH		PRIx64
+#else
 typedef intptr_t bus_space_handle_t;
 #define	PRIxBSH		PRIxPTR
+#endif
 
 struct mips_bus_space {
 	/* cookie */
@@ -316,15 +332,6 @@ struct mips_bus_space_translation {
 
 #define	BUS_SPACE_BARRIER_READ	0x01
 #define	BUS_SPACE_BARRIER_WRITE	0x02
-
-/*
- * New style.
- */
-#define	BUS_SPACE_BARRIER_SYNC		0x03
-#define	BUS_SPACE_BARRIER_READ_BEFORE_READ	BUS_SPACE_BARRIER_READ
-#define	BUS_SPACE_BARRIER_READ_BEFORE_WRITE	BUS_SPACE_BARRIER_READ
-#define	BUS_SPACE_BARRIER_WRITE_BEFORE_READ	BUS_SPACE_BARRIER_WRITE
-#define	BUS_SPACE_BARRIER_WRITE_BEFORE_WRITE	BUS_SPACE_BARRIER_WRITE
 
 #endif /* _KERNEL */
 

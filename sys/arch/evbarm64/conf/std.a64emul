@@ -1,6 +1,6 @@
-# $NetBSD: std.a64emul,v 1.1.4.2 2014/08/20 00:02:57 tls Exp $
+# $NetBSD: std.a64emul,v 1.1.4.3 2017/12/03 11:36:08 jdolecek Exp $
 
-machine evbarm64 aarch64 arm
+machine evbarm64 aarch64
 maxpartitions	16
 
 include "arch/evbarm64/conf/std.evbarm64"

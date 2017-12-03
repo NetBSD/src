@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_open.c,v 1.10.2.1 2012/11/20 03:02:43 tls Exp $	*/
+/*	$NetBSD: subr_disk_open.c,v 1.10.2.2 2017/12/03 11:38:45 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_open.c,v 1.10.2.1 2012/11/20 03:02:43 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_open.c,v 1.10.2.2 2017/12/03 11:38:45 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -91,26 +91,32 @@ opendisk(device_t dv)
 int
 getdisksize(struct vnode *vp, uint64_t *numsecp, unsigned int *secsizep)
 {
-	struct partinfo dpart;
+	struct partinfo pi;
 	struct dkwedge_info dkw;
 	struct disk *pdk;
 	unsigned int secsize;
 	uint64_t numsec;
 	int error;
 
-	error = VOP_IOCTL(vp, DIOCGPART, &dpart, FREAD, NOCRED);
+	/*
+	 * We attempt to get the wedge information first if it exists,
+	 * because the label does not support larger size disks.
+	 */
+	error = VOP_IOCTL(vp, DIOCGWEDGEINFO, &dkw, FREAD, NOCRED);
 	if (error == 0) {
-		secsize = dpart.disklab->d_secsize;
-		numsec  = dpart.part->p_size;
-	} else {
-		error = VOP_IOCTL(vp, DIOCGWEDGEINFO, &dkw, FREAD, NOCRED);
+		pdk = disk_find(dkw.dkw_parent);
+		if (pdk != NULL) {
+			secsize = DEV_BSIZE << pdk->dk_blkshift;
+			numsec  = dkw.dkw_size;
+		} else
+			error = ENODEV;
+	}
+
+	if (error) {
+		error = VOP_IOCTL(vp, DIOCGPARTINFO, &pi, FREAD, NOCRED);
 		if (error == 0) {
-			pdk = disk_find(dkw.dkw_parent);
-			if (pdk != NULL) {
-				secsize = DEV_BSIZE << pdk->dk_blkshift;
-				numsec  = dkw.dkw_size;
-			} else
-				error = ENODEV;
+			secsize = pi.pi_secsize;
+			numsec  = pi.pi_size;
 		}
 	}
 
@@ -137,14 +143,14 @@ getdisksize(struct vnode *vp, uint64_t *numsecp, unsigned int *secsizep)
 int
 getdiskinfo(struct vnode *vp, struct dkwedge_info *dkw)
 {
-	struct partinfo dpart;
+	struct partinfo pi;
 	int error;
 	dev_t dev = vp->v_specnode->sn_rdev;
 
 	if (VOP_IOCTL(vp, DIOCGWEDGEINFO, dkw, FREAD, NOCRED) == 0)
 		return 0;
 	
-	if ((error = VOP_IOCTL(vp, DIOCGPART, &dpart, FREAD, NOCRED)) != 0)
+	if ((error = VOP_IOCTL(vp, DIOCGPARTINFO, &pi, FREAD, NOCRED)) != 0)
 		return error;
 
 	snprintf(dkw->dkw_devname, sizeof(dkw->dkw_devname), "%s%" PRId32 "%c",
@@ -155,10 +161,9 @@ getdiskinfo(struct vnode *vp, struct dkwedge_info *dkw)
 
 	strlcpy(dkw->dkw_parent, dkw->dkw_devname, sizeof(dkw->dkw_parent));
 
-	dkw->dkw_size = dpart.part->p_size;
-	dkw->dkw_offset = dpart.part->p_offset;
-
-	strlcpy(dkw->dkw_ptype, getfstypename(dpart.part->p_fstype),
+	dkw->dkw_size = pi.pi_size;
+	dkw->dkw_offset = pi.pi_offset;
+	strlcpy(dkw->dkw_ptype, getfstypename(pi.pi_fstype),
 	    sizeof(dkw->dkw_ptype));
 
 	return 0;

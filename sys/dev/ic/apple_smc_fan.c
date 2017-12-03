@@ -1,4 +1,4 @@
-/*	$NetBSD: apple_smc_fan.c,v 1.4.10.2 2014/08/20 00:03:37 tls Exp $	*/
+/*	$NetBSD: apple_smc_fan.c,v 1.4.10.3 2017/12/03 11:37:03 jdolecek Exp $	*/
 
 /*
  * Apple System Management Controller: Fans
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apple_smc_fan.c,v 1.4.10.2 2014/08/20 00:03:37 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apple_smc_fan.c,v 1.4.10.3 2017/12/03 11:37:03 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -448,7 +448,7 @@ apple_smc_fan_sysctl_setup_1(struct apple_smc_fan_softc *sc, uint8_t fan)
 }
 #endif
 
-MODULE(MODULE_CLASS_DRIVER, apple_smc_fan, "apple_smc");
+MODULE(MODULE_CLASS_DRIVER, apple_smc_fan, "apple_smc,sysmon_envsys");
 
 #ifdef _MODULE
 #include "ioconf.c"

@@ -1,11 +1,11 @@
-/*	$NetBSD: sys_sunos_component.c,v 1.1.10.2 2014/08/20 00:04:40 tls Exp $	*/
+/*	$NetBSD: sys_sunos_component.c,v 1.1.10.3 2017/12/03 11:39:15 jdolecek Exp $	*/
 
 #include <sys/param.h>
 #include <sys/proc.h>
 
 #include <uvm/uvm_extern.h>
 
-#include "rump_private.h"
+#include <rump-sys/kern.h>
 
 #include "rump_sunos_syscall.h"
 

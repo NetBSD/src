@@ -1,4 +1,4 @@
-/*	$NetBSD: orion.c,v 1.4.6.1 2014/08/20 00:02:47 tls Exp $	*/
+/*	$NetBSD: orion.c,v 1.4.6.2 2017/12/03 11:35:54 jdolecek Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: orion.c,v 1.4.6.1 2014/08/20 00:02:47 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: orion.c,v 1.4.6.2 2017/12/03 11:35:54 jdolecek Exp $");
 
 #define _INTR_PRIVATE
 
@@ -56,6 +56,8 @@ static void orion_pic_source_name(struct pic_softc *, int, char *, size_t);
 
 static int orion_find_pending_irqs(void);
 
+static void orion_getclks(vaddr_t);
+
 static const char * const sources[64] = {
     "Bridge(0)",       "Host2CPU DB(1)",  "CPU2Host DB(2)",  "UART0(3)",
     "UART1(4)",        "TWSI(5)",         "GPIO7_0(6)",      "GPIO15_8(7)",
@@ -81,15 +83,14 @@ static struct pic_softc orion_pic = {
 
 
 /*
- * orion_intr_bootstrap:
+ * orion_bootstrap:
  *
- *	Initialize the rest of the interrupt subsystem, making it
+ *	Initialize the rest of the Orion dependences, making it
  *	ready to handle interrupts from devices.
  */
 void
-orion_intr_bootstrap(void)
+orion_bootstrap(vaddr_t iobase)
 {
-	extern void (*mvsoc_intr_init)(void);
 
 	/* disable all interrupts */
 	write_mlmbreg(ORION_MLMB_MIRQIMR, 0);
@@ -103,6 +104,8 @@ orion_intr_bootstrap(void)
 	gpp_npins = 32;
 	gpp_irqbase = 64;	/* Main(32) + Bridge(32) */
 #endif
+
+	orion_getclks(iobase);
 }
 
 static void
@@ -173,8 +176,8 @@ orion_find_pending_irqs(void)
  * Clock functions
  */
 
-void
-orion_getclks(bus_addr_t iobase)
+static void
+orion_getclks(vaddr_t iobase)
 {
 	static const struct {
 		int armddrclkval;

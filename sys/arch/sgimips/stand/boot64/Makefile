@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11.14.1 2014/08/20 00:03:23 tls Exp $
+#	$NetBSD: Makefile,v 1.11.14.2 2017/12/03 11:36:42 jdolecek Exp $
 
 PROG=	ip30boot
 NOMAN=	# defined
@@ -9,7 +9,7 @@ SRCS=	start.S boot.c bootinfo.c conf.c devopen.c putchar.c getchar.c \
 
 CLEANFILES+=	boot.map
 
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 
 # $S must correspond to the top of the 'sys' tree
 S=	${.CURDIR}/../../../..
@@ -40,18 +40,6 @@ LINKFORMAT+=    -m elf64btsmip
 # the second page of RAM.
 
 LOAD_ADDRESS_IP30?=	0xa800000020080000
-
-# if there is a 'version' file, add rule for vers.c and add it to SRCS
-# and CLEANFILES
-.if exists(version)
-.PHONY: vers.c
-vers.c: ${.CURDIR}/version
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
-	    ${.CURDIR}/version "sgimips"
-
-SRCS+=	vers.c
-CLEANFILES+= vers.c
-.endif
 
 ### find out what to use for libkern
 KERN_AS=	library
@@ -84,6 +72,8 @@ ip30boot: ${OBJS} ${LIBS}
 cleandir distclean: .WAIT cleanlibdir
 cleanlibdir:
 	-rm -rf lib
+
+.include "${S}/conf/newvers_stand.mk"
 
 .include <bsd.klinks.mk>
 .include <bsd.prog.mk>

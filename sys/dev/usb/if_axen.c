@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.3.4.2 2014/08/20 00:03:51 tls Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.3.4.3 2017/12/03 11:37:33 jdolecek Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -19,14 +19,15 @@
 
 /*
  * ASIX Electronics AX88178a USB 2.0 ethernet and AX88179 USB 3.0 Ethernet
- * driver. 
+ * driver.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.3.4.2 2014/08/20 00:03:51 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.3.4.3 2017/12/03 11:37:33 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
+#include "opt_usb.h"
 #endif
 
 #include <sys/param.h>
@@ -40,7 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.3.4.2 2014/08/20 00:03:51 tls Exp $");
 #include <sys/sockio.h>
 #include <sys/systm.h>
 
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -95,8 +96,8 @@ static int	axen_tx_list_init(struct axen_softc *);
 static int	axen_rx_list_init(struct axen_softc *);
 static struct mbuf *axen_newbuf(void);
 static int	axen_encap(struct axen_softc *, struct mbuf *, int);
-static void	axen_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
-static void	axen_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
+static void	axen_rxeof(struct usbd_xfer *, void *, usbd_status);
+static void	axen_txeof(struct usbd_xfer *, void *, usbd_status);
 static void	axen_tick(void *);
 static void	axen_tick_task(void *);
 static void	axen_start(struct ifnet *);
@@ -110,14 +111,14 @@ static void	axen_miibus_statchg(struct ifnet *);
 static int	axen_cmd(struct axen_softc *, int, int, int, void *);
 static int	axen_ifmedia_upd(struct ifnet *);
 static void	axen_ifmedia_sts(struct ifnet *, struct ifmediareq *);
-static void	axen_reset(struct axen_softc *sc);
+static void	axen_reset(struct axen_softc *);
 #if 0
 static int	axen_ax88179_eeprom(struct axen_softc *, void *);
 #endif
 
 static void	axen_iff(struct axen_softc *);
-static void	axen_lock_mii(struct axen_softc *sc);
-static void	axen_unlock_mii(struct axen_softc *sc);
+static void	axen_lock_mii(struct axen_softc *);
+static void	axen_unlock_mii(struct axen_softc *);
 
 static void	axen_ax88179_init(struct axen_softc *);
 
@@ -433,7 +434,7 @@ axen_ax88179_eeprom(struct axen_softc *sc, void *addr)
 		} while ((le16toh(buf) & 0xff) & AXEN_EEPROM_BUSY);
 
 		/* read data */
-		axen_cmd(sc, AXEN_CMD_MAC_READ2, 2, AXEN_EEPROM_READ, 
+		axen_cmd(sc, AXEN_CMD_MAC_READ2, 2, AXEN_EEPROM_READ,
 		    &eeprom[i * 2]);
 
 		/* sanity check */
@@ -635,7 +636,7 @@ axen_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	return axen_lookup(uaa->vendor, uaa->product) != NULL ?
+	return axen_lookup(uaa->uaa_vendor, uaa->uaa_product) != NULL ?
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
@@ -644,7 +645,7 @@ axen_attach(device_t parent, device_t self, void *aux)
 {
 	struct axen_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
-	struct usbd_device *dev = uaa->device;
+	struct usbd_device *dev = uaa->uaa_device;
 	usbd_status err;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
@@ -672,7 +673,7 @@ axen_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->axen_flags = axen_lookup(uaa->vendor, uaa->product)->axen_flags;
+	sc->axen_flags = axen_lookup(uaa->uaa_vendor, uaa->uaa_product)->axen_flags;
 
 	rw_init(&sc->axen_mii_lock);
 	usb_init_task(&sc->axen_tick_task, axen_tick_task, sc, 0);
@@ -683,15 +684,23 @@ axen_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->axen_product = uaa->product;
-	sc->axen_vendor = uaa->vendor;
+	sc->axen_product = uaa->uaa_product;
+	sc->axen_vendor = uaa->uaa_vendor;
 
 	id = usbd_get_interface_descriptor(sc->axen_iface);
 
-	/* XXX fix when USB3.0 HC is supported */
 	/* decide on what our bufsize will be */
-	sc->axen_bufsz = (sc->axen_udev->speed == USB_SPEED_HIGH) ?
-	    AXEN_BUFSZ_HS * 1024 : AXEN_BUFSZ_LS * 1024;
+	switch (sc->axen_udev->ud_speed) {
+	case USB_SPEED_SUPER:
+		sc->axen_bufsz = AXEN_BUFSZ_SS * 1024;
+		break;
+	case USB_SPEED_HIGH:
+		sc->axen_bufsz = AXEN_BUFSZ_HS * 1024;
+		break;
+	default:
+		sc->axen_bufsz = AXEN_BUFSZ_LS * 1024;
+		break;
+	}
 
 	/* Find endpoints. */
 	for (i = 0; i < id->bNumEndpoints; i++) {
@@ -795,6 +804,9 @@ axen_attach(device_t parent, device_t self, void *aux)
 	splx(s);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->axen_udev,sc->axen_dev);
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 static int
@@ -809,6 +821,8 @@ axen_detach(device_t self, int flags)
 	/* Detached before attached finished, so just bail out. */
 	if (!sc->axen_attached)
 		return 0;
+
+	pmf_device_deregister(self);
 
 	sc->axen_dying = true;
 
@@ -906,15 +920,12 @@ axen_rx_list_init(struct axen_softc *sc)
 		c->axen_sc = sc;
 		c->axen_idx = i;
 		if (c->axen_xfer == NULL) {
-			c->axen_xfer = usbd_alloc_xfer(sc->axen_udev);
-			if (c->axen_xfer == NULL)
-				return ENOBUFS;
-			c->axen_buf = usbd_alloc_buffer(c->axen_xfer,
-			    sc->axen_bufsz);
-			if (c->axen_buf == NULL) {
-				usbd_free_xfer(c->axen_xfer);
-				return ENOBUFS;
-			}
+			int err = usbd_create_xfer(sc->axen_ep[AXEN_ENDPT_RX],
+			    sc->axen_bufsz, USBD_SHORT_XFER_OK, 0,
+			    &c->axen_xfer);
+			if (err)
+				return err;
+			c->axen_buf = usbd_get_buffer(c->axen_xfer);
 		}
 	}
 
@@ -936,15 +947,12 @@ axen_tx_list_init(struct axen_softc *sc)
 		c->axen_sc = sc;
 		c->axen_idx = i;
 		if (c->axen_xfer == NULL) {
-			c->axen_xfer = usbd_alloc_xfer(sc->axen_udev);
-			if (c->axen_xfer == NULL)
-				return ENOBUFS;
-			c->axen_buf = usbd_alloc_buffer(c->axen_xfer,
-			    sc->axen_bufsz);
-			if (c->axen_buf == NULL) {
-				usbd_free_xfer(c->axen_xfer);
-				return ENOBUFS;
-			}
+			int err = usbd_create_xfer(sc->axen_ep[AXEN_ENDPT_TX],
+			    sc->axen_bufsz, USBD_FORCE_SHORT_XFER, 0,
+			    &c->axen_xfer);
+			if (err)
+				return err;
+			c->axen_buf = usbd_get_buffer(c->axen_xfer);
 		}
 	}
 
@@ -956,7 +964,7 @@ axen_tx_list_init(struct axen_softc *sc)
  * the higher level protocols.
  */
 static void
-axen_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+axen_rxeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 {
 	struct axen_chain *c = (struct axen_chain *)priv;
 	struct axen_softc *sc = c->axen_sc;
@@ -998,7 +1006,7 @@ axen_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		goto done;
 	}
 
-	/* 
+	/*
 	 * buffer map
 	 * [packet #0]...[packet #n][pkt hdr#0]..[pkt hdr#n][recv_hdr]
 	 * each packet has 0xeeee as psuedo header..
@@ -1012,7 +1020,7 @@ axen_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		aprint_error_dev(sc->axen_dev, "rxeof: too large transfer\n");
 		goto done;
 	}
-		
+
 	/* sanity check */
 	if (hdr_offset > total_len) {
 		ifp->if_ierrors++;
@@ -1029,9 +1037,9 @@ axen_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	 */
 
 #if 1 /* XXX: paranoiac check. need to remove later */
-#define AXEN_MAX_PACKED_PACKET 200 
+#define AXEN_MAX_PACKED_PACKET 200
 	if (pkt_count > AXEN_MAX_PACKED_PACKET) {
-		DPRINTF(("%s: Too many packets (%d) in a transaction, discard.\n", 
+		DPRINTF(("%s: Too many packets (%d) in a transaction, discard.\n",
 		    device_xname(sc->axen_dev), pkt_count));
 		goto done;
 	}
@@ -1048,7 +1056,7 @@ axen_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		pkt_hdr = le32toh(*hdr_p);
 		pkt_len = (pkt_hdr >> 16) & 0x1fff;
 		DPRINTFN(10,
-		    ("%s: rxeof: packet#%d, pkt_hdr 0x%08x, pkt_len %zu\n", 
+		    ("%s: rxeof: packet#%d, pkt_hdr 0x%08x, pkt_len %zu\n",
 		   device_xname(sc->axen_dev), pkt_count, pkt_hdr, pkt_len));
 
 		if ((pkt_hdr & AXEN_RXHDR_CRC_ERR) ||
@@ -1069,13 +1077,12 @@ axen_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		}
 
 		/* skip pseudo header (2byte) */
-		ifp->if_ipackets++;
-		m->m_pkthdr.rcvif = ifp;
-		m->m_pkthdr.len = m->m_len = pkt_len - 2;
+		m_set_rcvif(m, ifp);
+		m->m_pkthdr.len = m->m_len = pkt_len - 6;
 
 #ifdef AXEN_TOE
 		/* cheksum err */
-		if ((pkt_hdr & AXEN_RXHDR_L3CSUM_ERR) || 
+		if ((pkt_hdr & AXEN_RXHDR_L3CSUM_ERR) ||
 		    (pkt_hdr & AXEN_RXHDR_L4CSUM_ERR)) {
 			aprint_error_dev(sc->axen_dev,
 			    "checksum err (pkt#%d)\n", pkt_count);
@@ -1084,7 +1091,7 @@ axen_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 			m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
 		}
 
-		int l4_type = (pkt_hdr & AXEN_RXHDR_L4_TYPE_MASK) >> 
+		int l4_type = (pkt_hdr & AXEN_RXHDR_L4_TYPE_MASK) >>
 		    AXEN_RXHDR_L4_TYPE_OFFSET;
 
 		if ((l4_type == AXEN_RXHDR_L4_TYPE_TCP) ||
@@ -1094,17 +1101,16 @@ axen_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		}
 #endif
 
-		memcpy(mtod(m, char *), buf + 2, pkt_len - 2);
+		memcpy(mtod(m, char *), buf + 2, pkt_len - 6);
 
 		/* push the packet up */
 		s = splnet();
-		bpf_mtap(ifp, m);
-		(*(ifp)->if_input)((ifp), (m));
+		if_percpuq_enqueue((ifp)->if_percpuq, (m));
 		splx(s);
 
 nextpkt:
 		/*
-		 * prepare next packet 
+		 * prepare next packet
 		 * as each packet will be aligned 8byte boundary,
 		 * need to fix up the start point of the buffer.
 		 */
@@ -1119,10 +1125,8 @@ done:
 	memset(c->axen_buf, 0, sc->axen_bufsz);
 
 	/* Setup new transfer. */
-	usbd_setup_xfer(xfer, sc->axen_ep[AXEN_ENDPT_RX],
-	    c, c->axen_buf, sc->axen_bufsz,
-	    USBD_SHORT_XFER_OK | USBD_NO_COPY,
-	    USBD_NO_TIMEOUT, axen_rxeof);
+	usbd_setup_xfer(xfer, c, c->axen_buf, sc->axen_bufsz,
+	    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, axen_rxeof);
 	usbd_transfer(xfer);
 
 	DPRINTFN(10,("%s: %s: start rx\n",device_xname(sc->axen_dev),__func__));
@@ -1133,7 +1137,7 @@ done:
  * the list buffers.
  */
 static void
-axen_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+axen_txeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 {
 	struct axen_chain *c = (struct axen_chain *)priv;
 	struct axen_softc *sc = c->axen_sc;
@@ -1236,7 +1240,7 @@ axen_encap(struct axen_softc *sc, struct mbuf *m, int idx)
 
 	c = &sc->axen_cdata.axen_tx_chain[idx];
 
-	boundary = (sc->axen_udev->speed == USB_SPEED_HIGH) ? 512 : 64;
+	boundary = (sc->axen_udev->ud_speed == USB_SPEED_HIGH) ? 512 : 64;
 
 	hdr.plen = htole32(m->m_pkthdr.len);
 	hdr.gso = 0; /* disable segmentation offloading */
@@ -1254,9 +1258,8 @@ axen_encap(struct axen_softc *sc, struct mbuf *m, int idx)
 		length += sizeof(hdr);
 	}
 
-	usbd_setup_xfer(c->axen_xfer, sc->axen_ep[AXEN_ENDPT_TX],
-	    c, c->axen_buf, length, USBD_FORCE_SHORT_XFER | USBD_NO_COPY,
-	    10000, axen_txeof);
+	usbd_setup_xfer(c->axen_xfer, c, c->axen_buf, length,
+	    USBD_FORCE_SHORT_XFER, 10000, axen_txeof);
 
 	/* Transmit */
 	err = usbd_transfer(c->axen_xfer);
@@ -1336,22 +1339,6 @@ axen_init(struct ifnet *ifp)
 	axen_cmd(sc, AXEN_CMD_MAC_WRITE, 1, AXEN_UNK_28, &bval);
 	axen_unlock_mii(sc);
 
-	/* Init RX ring. */
-	if (axen_rx_list_init(sc) == ENOBUFS) {
-		aprint_error_dev(sc->axen_dev, "rx list init failed\n");
-		axen_unlock_mii(sc);
-		splx(s);
-		return ENOBUFS;
-	}
-
-	/* Init TX ring. */
-	if (axen_tx_list_init(sc) == ENOBUFS) {
-		aprint_error_dev(sc->axen_dev, "tx list init failed\n");
-		axen_unlock_mii(sc);
-		splx(s);
-		return ENOBUFS;
-	}
-
 	/* Program promiscuous mode and multicast filters. */
 	axen_iff(sc);
 
@@ -1383,13 +1370,26 @@ axen_init(struct ifnet *ifp)
 		return EIO;
 	}
 
+	/* Init RX ring. */
+	if (axen_rx_list_init(sc)) {
+		aprint_error_dev(sc->axen_dev, "rx list init failed\n");
+		splx(s);
+		return ENOBUFS;
+	}
+
+	/* Init TX ring. */
+	if (axen_tx_list_init(sc)) {
+		aprint_error_dev(sc->axen_dev, "tx list init failed\n");
+		splx(s);
+		return ENOBUFS;
+	}
+
 	/* Start up the receive pipe. */
 	for (i = 0; i < AXEN_RX_LIST_CNT; i++) {
 		c = &sc->axen_cdata.axen_rx_chain[i];
-		usbd_setup_xfer(c->axen_xfer, sc->axen_ep[AXEN_ENDPT_RX],
-		    c, c->axen_buf, sc->axen_bufsz,
-		    USBD_SHORT_XFER_OK | USBD_NO_COPY,
-		    USBD_NO_TIMEOUT, axen_rxeof);
+
+		usbd_setup_xfer(c->axen_xfer, c, c->axen_buf, sc->axen_bufsz,
+		    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, axen_rxeof);
 		usbd_transfer(c->axen_xfer);
 	}
 
@@ -1497,6 +1497,42 @@ axen_stop(struct ifnet *ifp, int disable)
 			    "abort rx pipe failed: %s\n", usbd_errstr(err));
 
 		}
+	}
+
+	if (sc->axen_ep[AXEN_ENDPT_TX] != NULL) {
+		err = usbd_abort_pipe(sc->axen_ep[AXEN_ENDPT_TX]);
+		if (err) {
+			aprint_error_dev(sc->axen_dev,
+			    "abort tx pipe failed: %s\n", usbd_errstr(err));
+		}
+	}
+
+	if (sc->axen_ep[AXEN_ENDPT_INTR] != NULL) {
+		err = usbd_abort_pipe(sc->axen_ep[AXEN_ENDPT_INTR]);
+		if (err) {
+			aprint_error_dev(sc->axen_dev,
+			    "abort intr pipe failed: %s\n", usbd_errstr(err));
+		}
+	}
+
+	/* Free RX resources. */
+	for (i = 0; i < AXEN_RX_LIST_CNT; i++) {
+		if (sc->axen_cdata.axen_rx_chain[i].axen_xfer != NULL) {
+			usbd_destroy_xfer(sc->axen_cdata.axen_rx_chain[i].axen_xfer);
+			sc->axen_cdata.axen_rx_chain[i].axen_xfer = NULL;
+		}
+	}
+
+	/* Free TX resources. */
+	for (i = 0; i < AXEN_TX_LIST_CNT; i++) {
+		if (sc->axen_cdata.axen_tx_chain[i].axen_xfer != NULL) {
+			usbd_destroy_xfer(sc->axen_cdata.axen_tx_chain[i].axen_xfer);
+			sc->axen_cdata.axen_tx_chain[i].axen_xfer = NULL;
+		}
+	}
+
+	/* Close pipes. */
+	if (sc->axen_ep[AXEN_ENDPT_RX] != NULL) {
 		err = usbd_close_pipe(sc->axen_ep[AXEN_ENDPT_RX]);
 		if (err) {
 			aprint_error_dev(sc->axen_dev,
@@ -1506,11 +1542,6 @@ axen_stop(struct ifnet *ifp, int disable)
 	}
 
 	if (sc->axen_ep[AXEN_ENDPT_TX] != NULL) {
-		err = usbd_abort_pipe(sc->axen_ep[AXEN_ENDPT_TX]);
-		if (err) {
-			aprint_error_dev(sc->axen_dev,
-			    "abort tx pipe failed: %s\n", usbd_errstr(err));
-		}
 		err = usbd_close_pipe(sc->axen_ep[AXEN_ENDPT_TX]);
 		if (err) {
 			aprint_error_dev(sc->axen_dev,
@@ -1520,33 +1551,12 @@ axen_stop(struct ifnet *ifp, int disable)
 	}
 
 	if (sc->axen_ep[AXEN_ENDPT_INTR] != NULL) {
-		err = usbd_abort_pipe(sc->axen_ep[AXEN_ENDPT_INTR]);
-		if (err) {
-			aprint_error_dev(sc->axen_dev,
-			    "abort intr pipe failed: %s\n", usbd_errstr(err));
-		}
 		err = usbd_close_pipe(sc->axen_ep[AXEN_ENDPT_INTR]);
 		if (err) {
 			aprint_error_dev(sc->axen_dev,
 			    "close intr pipe failed: %s\n", usbd_errstr(err));
 		}
 		sc->axen_ep[AXEN_ENDPT_INTR] = NULL;
-	}
-
-	/* Free RX resources. */
-	for (i = 0; i < AXEN_RX_LIST_CNT; i++) {
-		if (sc->axen_cdata.axen_rx_chain[i].axen_xfer != NULL) {
-			usbd_free_xfer(sc->axen_cdata.axen_rx_chain[i].axen_xfer);
-			sc->axen_cdata.axen_rx_chain[i].axen_xfer = NULL;
-		}
-	}
-
-	/* Free TX resources. */
-	for (i = 0; i < AXEN_TX_LIST_CNT; i++) {
-		if (sc->axen_cdata.axen_tx_chain[i].axen_xfer != NULL) {
-			usbd_free_xfer(sc->axen_cdata.axen_tx_chain[i].axen_xfer);
-			sc->axen_cdata.axen_tx_chain[i].axen_xfer = NULL;
-		}
 	}
 
 	sc->axen_link = 0;

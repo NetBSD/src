@@ -1,4 +1,4 @@
-/*	$NetBSD: btuart.c,v 1.26.12.1 2014/08/20 00:03:36 tls Exp $	*/
+/*	$NetBSD: btuart.c,v 1.26.12.2 2017/12/03 11:36:59 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 KIYOHARA Takashi
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.26.12.1 2014/08/20 00:03:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.26.12.2 2017/12/03 11:36:59 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -81,7 +81,6 @@ struct btuart_softc {
 #define BTUART_RECV_SCO_DATA	5	/* sco packet data */
 #define BTUART_RECV_EVENT_DATA	6	/* event packet data */
 
-void btuartattach(int);
 static int btuart_match(device_t, cfdata_t, void *);
 static void btuart_attach(device_t, device_t, void *);
 static int btuart_detach(device_t, int);

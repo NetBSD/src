@@ -1,5 +1,5 @@
-/*	$NetBSD: ulfs_quota.h,v 1.4.2.3 2014/08/20 00:04:45 tls Exp $	*/
-/*  from NetBSD: ufs_quota.h,v 1.21 2012/02/18 06:13:23 matt Exp  */
+/*	$NetBSD: ulfs_quota.h,v 1.4.2.4 2017/12/03 11:39:22 jdolecek Exp $	*/
+/*  from NetBSD: ufs_quota.h,v 1.22 2014/06/28 22:27:51 dholland Exp  */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -60,10 +60,10 @@ struct dq2_desc {
  */
 struct dquot {
 	LIST_ENTRY(dquot) dq_hash;	/* h: hash list */
-	u_int16_t dq_flags;		/* d: flags, see below */
-	u_int16_t dq_type;		/* d: quota type of this dquot */
-	u_int32_t dq_cnt;		/* h: count of active references */
-	u_int32_t dq_id;		/* d: identifier this applies to */
+	uint16_t dq_flags;		/* d: flags, see below */
+	uint16_t dq_type;		/* d: quota type of this dquot */
+	uint32_t dq_cnt;		/* h: count of active references */
+	uint32_t dq_id;			/* d: identifier this applies to */
 	struct	ulfsmount *dq_ump;	/* d: filesystem this is taken from */
 	kmutex_t dq_interlock;		/* d: lock this dquot */
 	union {

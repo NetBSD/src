@@ -1,4 +1,4 @@
-/*	$NetBSD: ses.c,v 1.43.12.3 2014/08/20 00:03:50 tls Exp $ */
+/*	$NetBSD: ses.c,v 1.43.12.4 2017/12/03 11:37:32 jdolecek Exp $ */
 /*
  * Copyright (C) 2000 National Aeronautics & Space Administration
  * All rights reserved.
@@ -26,9 +26,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ses.c,v 1.43.12.3 2014/08/20 00:03:50 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ses.c,v 1.43.12.4 2017/12/03 11:37:32 jdolecek Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_scsi.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,7 +150,7 @@ const struct cdevsw ses_cdevsw = {
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
 	.d_discard = nodiscard,
-	.d_flag = D_OTHER
+	.d_flag = D_OTHER | D_MPSAFE
 };
 
 static int ses_runcmd(struct ses_softc *, char *, int, char *, int *);
@@ -284,7 +286,8 @@ ses_attach(device_t parent, device_t self, void *aux)
 		tname = "SAF-TE Compliant Device";
 		break;
 	}
-	printf("\n%s: %s\n", device_xname(softc->sc_dev), tname);
+	aprint_naive("\n");
+	aprint_normal("\n%s: %s\n", device_xname(softc->sc_dev), tname);
 }
 
 static enctyp

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.luna68k,v 1.23.10.1 2014/08/20 00:03:10 tls Exp $
+#	$NetBSD: files.luna68k,v 1.23.10.2 2017/12/03 11:36:23 jdolecek Exp $
 #
 maxpartitions 8
 maxusers 2 8 64
@@ -22,7 +22,6 @@ file arch/m68k/m68k/procfs_machdep.c	procfs
 file arch/m68k/m68k/sys_machdep.c
 file arch/m68k/m68k/vm_machdep.c
 file dev/cons.c
-file arch/luna68k/dev/lcd.c
 
 device mainbus {}
 attach mainbus at root
@@ -31,6 +30,10 @@ file arch/luna68k/luna68k/mainbus.c
 device clock
 attach clock at mainbus
 file arch/luna68k/dev/timekeeper.c	clock
+
+device lcd
+attach lcd at mainbus
+file	arch/luna68k/dev/lcd.c		lcd needs-flag
 
 attach le at mainbus: le24
 file arch/luna68k/dev/if_le.c		le
@@ -42,6 +45,11 @@ file arch/luna68k/dev/sio.c 		sio
 device siotty: tty
 attach siotty at sio
 file arch/luna68k/dev/siotty.c		siotty needs-flag
+
+# HD647180X I/O processor
+device xp
+attach xp at mainbus
+file arch/luna68k/dev/xp.c		xp
 
 device ws: wskbddev,wsmousedev
 attach ws at sio

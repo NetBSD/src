@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.25 2012/02/02 21:54:34 phx Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.25.6.1 2017/12/03 11:36:34 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2010 Frank Wille.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.25 2012/02/02 21:54:34 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.25.6.1 2017/12/03 11:36:34 jdolecek Exp $");
 
 #include "opt_disksubr.h"
 
@@ -337,12 +337,12 @@ read_rdb_label(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 		lp->d_secpercyl = lp->d_nsectors * lp->d_ntracks;
 #ifdef DIAGNOSTIC
 	if (lp->d_ncylinders != rbp->ncylinders)
-		printf("warning found rdb->ncylinders(%ld) != "
-		    "rdb->highcyl(%ld) + 1\n", rbp->ncylinders,
+		printf("warning found rdb->ncylinders(%u) != "
+		    "rdb->highcyl(%u) + 1\n", rbp->ncylinders,
 		    rbp->highcyl);
 	if (lp->d_nsectors * lp->d_ntracks != rbp->secpercyl)
-		printf("warning found rdb->secpercyl(%ld) != "
-		    "rdb->nsectors(%ld) * rdb->nheads(%ld)\n", rbp->secpercyl,
+		printf("warning found rdb->secpercyl(%u) != "
+		    "rdb->nsectors(%u) * rdb->nheads(%u)\n", rbp->secpercyl,
 		    rbp->nsectors, rbp->nheads);
 #endif
 	lp->d_sparespercyl =
@@ -354,8 +354,8 @@ read_rdb_label(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 		lp->d_sparespertrack = lp->d_sparespercyl / lp->d_ntracks;
 #ifdef DIAGNOSTIC
 		if (lp->d_sparespercyl % lp->d_ntracks)
-			printf("warning lp->d_sparespercyl(%d) not multiple "
-			    "of lp->d_ntracks(%d)\n", lp->d_sparespercyl,
+			printf("warning lp->d_sparespercyl(%u) not multiple "
+			    "of lp->d_ntracks(%u)\n", lp->d_sparespercyl,
 			    lp->d_ntracks);
 #endif
 	}
@@ -410,7 +410,6 @@ read_rdb_label(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 			 */
 			msg = "bad partition info (environ < 11)";
 			goto done;
-			continue;
 		}
 
 		/*
@@ -467,10 +466,10 @@ read_rdb_label(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 				pbp->partname[pbp->partname[0] + 1] = 0;
 			else
 				pbp->partname[sizeof(pbp->partname) - 1] = 0;
-			printf("Partition '%s' geometry %ld/%ld differs",
+			printf("Partition '%s' geometry %u/%u differs",
 			    pbp->partname + 1, pbp->e.numheads,
 			    pbp->e.secpertrk);
-			printf(" from RDB %d/%d=%d\n", lp->d_ntracks,
+			printf(" from RDB %u/%u=%u\n", lp->d_ntracks,
 			    lp->d_nsectors, lp->d_secpercyl);
 		}
 #endif

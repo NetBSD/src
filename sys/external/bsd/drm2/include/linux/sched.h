@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.3.4.2 2014/08/20 00:04:21 tls Exp $	*/
+/*	$NetBSD: sched.h,v 1.3.4.3 2017/12/03 11:37:59 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -49,14 +49,21 @@ task_pid_nr(struct proc *p)
 static inline long
 schedule_timeout_uninterruptible(long timeout)
 {
+	long remain;
 	int start, end;
+
+	if (cold) {
+		DELAY(timeout);
+		return 0;
+	}
 
 	start = hardclock_ticks;
 	/* XXX Integer truncation...not likely to matter here.  */
 	(void)kpause("loonix", false /*!intr*/, timeout, NULL);
 	end = hardclock_ticks;
 
-	return (end - start);
+	remain = timeout - (end - start);
+	return remain > 0 ? remain : 0;
 }
 
 #endif  /* _LINUX_SCHED_H_ */

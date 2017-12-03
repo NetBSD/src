@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sdt.c,v 1.1 2010/03/01 21:10:17 darran Exp $	*/
+/*	$NetBSD: kern_sdt.c,v 1.1.24.1 2017/12/03 11:38:44 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -62,14 +62,23 @@
  * not be present. A module may be built with SDT probes in it.
  *
  */
+#ifdef _KERNEL_OPT
+#include "opt_dtrace.h"
+#endif
 
 #include <sys/cdefs.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/sdt.h>
 
+SDT_PROVIDER_DEFINE(sdt);
+
 void sdt_probe_stub(u_int32_t, uintptr_t, uintptr_t,
 	uintptr_t, uintptr_t, uintptr_t);
+
+__link_set_decl(sdt_providers_set, struct sdt_provider);
+__link_set_decl(sdt_probes_set, struct sdt_probe);
+__link_set_decl(sdt_argtypes_set, struct sdt_argtype);
 
 /*
  * Hook for the DTrace probe function. The 'sdt' provider will set this
@@ -86,7 +95,20 @@ void
 sdt_probe_stub(u_int32_t id, uintptr_t arg0, uintptr_t arg1,
     uintptr_t arg2, uintptr_t arg3, uintptr_t arg4)
 {
+	struct sdt_provider * const * provider;
+	struct sdt_probe * const * probe;
+	struct sdt_argtype * const * argtype;
 	printf("%s: XXX should not be called\n", __func__);
+	printf("providers: ");
+	__link_set_foreach(provider, sdt_providers_set)
+		printf("%s ", (*provider)->name);
+	printf("\nprobes: ");
+	__link_set_foreach(probe, sdt_probes_set)
+		printf("%s ", (*probe)->name);
+	printf("\nargtypes: ");
+	__link_set_foreach(argtype, sdt_argtypes_set)
+		printf("%s ", (*argtype)->type);
+	printf("\n");
 }
 
 /*

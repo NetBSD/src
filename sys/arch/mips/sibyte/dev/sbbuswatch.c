@@ -1,4 +1,4 @@
-/*	$NetBSD: sbbuswatch.c,v 1.2 2011/02/20 07:47:39 matt Exp $	*/
+/*	$NetBSD: sbbuswatch.c,v 1.2.16.1 2017/12/03 11:36:28 jdolecek Exp $	*/
 /*
  * Copyright (c) 2010, The NetBSD Foundation, Inc.  All rights reserved.
  *
@@ -38,8 +38,10 @@
 #include <mips/sibyte/include/sb1250_regs.h>
 #include <mips/sibyte/dev/sbbuswatchvar.h>
 
-#define READ_REG(rp)            (mips3_ld((volatile uint64_t *)(rp)))
-#define WRITE_REG(rp, val)      (mips3_sd((volatile uint64_t *)(rp), (val)))
+#include <evbmips/sbmips/systemsw.h>
+
+#define READ_REG(rp)            mips3_ld((register_t)(rp))
+#define WRITE_REG(rp, val)      mips3_sd((register_t)(rp), (val))
 
 static void sibyte_bus_watch_intr(void *, uint32_t, vaddr_t);
 

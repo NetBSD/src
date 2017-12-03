@@ -1,11 +1,11 @@
-/*	$NetBSD: subr_kmem.c,v 1.46.2.2 2014/08/20 00:04:29 tls Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.46.2.3 2017/12/03 11:38:45 jdolecek Exp $	*/
 
 /*-
- * Copyright (c) 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009-2015 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Andrew Doran.
+ * by Andrew Doran and Maxime Villard.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -87,10 +87,10 @@
  *	Check the pattern on allocation.
  *
  * KMEM_GUARD
- *	A kernel with "option DEBUG" has "kmguard" debugging feature compiled
- *	in. See the comment in uvm/uvm_kmguard.c for what kind of bugs it tries
- *	to detect.  Even if compiled in, it's disabled by default because it's
- *	very expensive.  You can enable it on boot by:
+ *	A kernel with "option DEBUG" has "kmem_guard" debugging feature compiled
+ *	in. See the comment below for what kind of bugs it tries to detect. Even
+ *	if compiled in, it's disabled by default because it's very expensive.
+ *	You can enable it on boot by:
  *		boot -d
  *		db> w kmem_guard_depth 0t30000
  *		db> c
@@ -100,7 +100,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.46.2.2 2014/08/20 00:04:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.46.2.3 2017/12/03 11:38:45 jdolecek Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_kmem.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/callback.h>
@@ -112,7 +116,6 @@ __KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.46.2.2 2014/08/20 00:04:29 tls Exp $
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_map.h>
-#include <uvm/uvm_kmguard.h>
 
 #include <lib/libkern/libkern.h>
 
@@ -182,8 +185,10 @@ static size_t kmem_cache_big_maxidx __read_mostly;
 #endif /* defined(DIAGNOSTIC) */
 
 #if defined(DEBUG) && defined(_HARDKERNEL)
+#define	KMEM_SIZE
 #define	KMEM_POISON
 #define	KMEM_GUARD
+static void *kmem_freecheck;
 #endif /* defined(DEBUG) */
 
 #if defined(KMEM_POISON)
@@ -222,10 +227,20 @@ static void kmem_size_check(void *, size_t);
 #ifndef KMEM_GUARD_DEPTH
 #define KMEM_GUARD_DEPTH 0
 #endif
+struct kmem_guard {
+	u_int		kg_depth;
+	intptr_t *	kg_fifo;
+	u_int		kg_rotor;
+	vmem_t *	kg_vmem;
+};
+
+static bool	kmem_guard_init(struct kmem_guard *, u_int, vmem_t *);
+static void *kmem_guard_alloc(struct kmem_guard *, size_t, bool);
+static void kmem_guard_free(struct kmem_guard *, size_t, void *);
+
 int kmem_guard_depth = KMEM_GUARD_DEPTH;
-size_t kmem_guard_size;
-static struct uvm_kmguard kmem_guard;
-static void *kmem_freecheck;
+static bool kmem_guard_enabled;
+static struct kmem_guard kmem_guard;
 #endif /* defined(KMEM_GUARD) */
 
 CTASSERT(KM_SLEEP == PR_WAITOK);
@@ -245,9 +260,12 @@ kmem_intr_alloc(size_t requested_size, km_flag_t kmflags)
 
 	KASSERT(requested_size > 0);
 
+	KASSERT((kmflags & KM_SLEEP) || (kmflags & KM_NOSLEEP));
+	KASSERT(!(kmflags & KM_SLEEP) || !(kmflags & KM_NOSLEEP));
+
 #ifdef KMEM_GUARD
-	if (requested_size <= kmem_guard_size) {
-		return uvm_kmguard_alloc(&kmem_guard, requested_size,
+	if (kmem_guard_enabled) {
+		return kmem_guard_alloc(&kmem_guard, requested_size,
 		    (kmflags & KM_SLEEP) != 0);
 	}
 #endif
@@ -324,8 +342,8 @@ kmem_intr_free(void *p, size_t requested_size)
 	KASSERT(requested_size > 0);
 
 #ifdef KMEM_GUARD
-	if (requested_size <= kmem_guard_size) {
-		uvm_kmguard_free(&kmem_guard, requested_size, p);
+	if (kmem_guard_enabled) {
+		kmem_guard_free(&kmem_guard, requested_size, p);
 		return;
 	}
 #endif
@@ -372,10 +390,13 @@ kmem_intr_free(void *p, size_t requested_size)
 void *
 kmem_alloc(size_t size, km_flag_t kmflags)
 {
+	void *v;
 
 	KASSERTMSG((!cpu_intr_p() && !cpu_softintr_p()),
 	    "kmem(9) should not be used from the interrupt context");
-	return kmem_intr_alloc(size, kmflags);
+	v = kmem_intr_alloc(size, kmflags);
+	KASSERT(v || (kmflags & KM_NOSLEEP) != 0);
+	return v;
 }
 
 /*
@@ -386,10 +407,13 @@ kmem_alloc(size_t size, km_flag_t kmflags)
 void *
 kmem_zalloc(size_t size, km_flag_t kmflags)
 {
+	void *v;
 
 	KASSERTMSG((!cpu_intr_p() && !cpu_softintr_p()),
 	    "kmem(9) should not be used from the interrupt context");
-	return kmem_intr_zalloc(size, kmflags);
+	v = kmem_intr_zalloc(size, kmflags);
+	KASSERT(v || (kmflags & KM_NOSLEEP) != 0);
+	return v;
 }
 
 /*
@@ -400,7 +424,6 @@ kmem_zalloc(size_t size, km_flag_t kmflags)
 void
 kmem_free(void *p, size_t size)
 {
-
 	KASSERT(!cpu_intr_p());
 	KASSERT(!cpu_softintr_p());
 	kmem_intr_free(p, size);
@@ -466,9 +489,8 @@ kmem_create_caches(const struct kmem_cache_info *array,
 void
 kmem_init(void)
 {
-
 #ifdef KMEM_GUARD
-	uvm_kmguard_init(&kmem_guard, &kmem_guard_depth, &kmem_guard_size,
+	kmem_guard_enabled = kmem_guard_init(&kmem_guard, kmem_guard_depth,
 	    kmem_va_arena);
 #endif
 	kmem_cache_maxidx = kmem_create_caches(kmem_cache_sizes,
@@ -480,8 +502,55 @@ kmem_init(void)
 size_t
 kmem_roundup_size(size_t size)
 {
-
 	return (size + (KMEM_ALIGN - 1)) & ~(KMEM_ALIGN - 1);
+}
+
+/*
+ * Used to dynamically allocate string with kmem accordingly to format.
+ */
+char *
+kmem_asprintf(const char *fmt, ...)
+{
+	int size __diagused, len;
+	va_list va;
+	char *str;
+
+	va_start(va, fmt);
+	len = vsnprintf(NULL, 0, fmt, va);
+	va_end(va);
+
+	str = kmem_alloc(len + 1, KM_SLEEP);
+
+	va_start(va, fmt);
+	size = vsnprintf(str, len + 1, fmt, va);
+	va_end(va);
+
+	KASSERT(size == len);
+
+	return str;
+}
+
+char *
+kmem_strdupsize(const char *str, size_t *lenp, km_flag_t flags)
+{
+	size_t len = strlen(str) + 1;
+	char *ptr = kmem_alloc(len, flags);
+	if (ptr == NULL)
+		return NULL;
+
+	if (lenp)
+		*lenp = len;
+	memcpy(ptr, str, len);
+	return ptr;
+}
+
+void
+kmem_strfree(char *str)
+{
+	if (str == NULL)
+		return;
+
+	kmem_free(str, strlen(str) + 1);
 }
 
 /* ------------------ DEBUG / DIAGNOSTIC ------------------ */
@@ -626,27 +695,162 @@ kmem_redzone_check(void *p, size_t sz)
 #endif /* defined(KMEM_REDZONE) */
 
 
+#if defined(KMEM_GUARD)
 /*
- * Used to dynamically allocate string with kmem accordingly to format.
+ * The ultimate memory allocator for debugging, baby.  It tries to catch:
+ *
+ * 1. Overflow, in realtime. A guard page sits immediately after the
+ *    requested area; a read/write overflow therefore triggers a page
+ *    fault.
+ * 2. Invalid pointer/size passed, at free. A kmem_header structure sits
+ *    just before the requested area, and holds the allocated size. Any
+ *    difference with what is given at free triggers a panic.
+ * 3. Underflow, at free. If an underflow occurs, the kmem header will be
+ *    modified, and 2. will trigger a panic.
+ * 4. Use-after-free. When freeing, the memory is unmapped, and depending
+ *    on the value of kmem_guard_depth, the kernel will more or less delay
+ *    the recycling of that memory. Which means that any ulterior read/write
+ *    access to the memory will trigger a page fault, given it hasn't been
+ *    recycled yet.
  */
-char *
-kmem_asprintf(const char *fmt, ...)
+
+#include <sys/atomic.h>
+#include <uvm/uvm.h>
+
+static bool
+kmem_guard_init(struct kmem_guard *kg, u_int depth, vmem_t *vm)
 {
-	int size __diagused, len;
-	va_list va;
-	char *str;
+	vaddr_t va;
 
-	va_start(va, fmt);
-	len = vsnprintf(NULL, 0, fmt, va);
-	va_end(va);
+	/* If not enabled, we have nothing to do. */
+	if (depth == 0) {
+		return false;
+	}
+	depth = roundup(depth, PAGE_SIZE / sizeof(void *));
+	KASSERT(depth != 0);
 
-	str = kmem_alloc(len + 1, KM_SLEEP);
+	/*
+	 * Allocate fifo.
+	 */
+	va = uvm_km_alloc(kernel_map, depth * sizeof(void *), PAGE_SIZE,
+	    UVM_KMF_WIRED | UVM_KMF_ZERO);
+	if (va == 0) {
+		return false;
+	}
 
-	va_start(va, fmt);
-	size = vsnprintf(str, len + 1, fmt, va);
-	va_end(va);
+	/*
+	 * Init object.
+	 */
+	kg->kg_vmem = vm;
+	kg->kg_fifo = (void *)va;
+	kg->kg_depth = depth;
+	kg->kg_rotor = 0;
 
-	KASSERT(size == len);
-
-	return str;
+	printf("kmem_guard(%p): depth %d\n", kg, depth);
+	return true;
 }
+
+static void *
+kmem_guard_alloc(struct kmem_guard *kg, size_t requested_size, bool waitok)
+{
+	struct vm_page *pg;
+	vm_flag_t flags;
+	vmem_addr_t va;
+	vaddr_t loopva;
+	vsize_t loopsize;
+	size_t size;
+	void **p;
+
+	/*
+	 * Compute the size: take the kmem header into account, and add a guard
+	 * page at the end.
+	 */
+	size = round_page(requested_size + SIZE_SIZE) + PAGE_SIZE;
+
+	/* Allocate pages of kernel VA, but do not map anything in yet. */
+	flags = VM_BESTFIT | (waitok ? VM_SLEEP : VM_NOSLEEP);
+	if (vmem_alloc(kg->kg_vmem, size, flags, &va) != 0) {
+		return NULL;
+	}
+
+	loopva = va;
+	loopsize = size - PAGE_SIZE;
+
+	while (loopsize) {
+		pg = uvm_pagealloc(NULL, loopva, NULL, 0);
+		if (__predict_false(pg == NULL)) {
+			if (waitok) {
+				uvm_wait("kmem_guard");
+				continue;
+			} else {
+				uvm_km_pgremove_intrsafe(kernel_map, va,
+				    va + size);
+				vmem_free(kg->kg_vmem, va, size);
+				return NULL;
+			}
+		}
+
+		pg->flags &= ~PG_BUSY;	/* new page */
+		UVM_PAGE_OWN(pg, NULL);
+		pmap_kenter_pa(loopva, VM_PAGE_TO_PHYS(pg),
+		    VM_PROT_READ|VM_PROT_WRITE, PMAP_KMPAGE);
+
+		loopva += PAGE_SIZE;
+		loopsize -= PAGE_SIZE;
+	}
+
+	pmap_update(pmap_kernel());
+
+	/*
+	 * Offset the returned pointer so that the unmapped guard page sits
+	 * immediately after the returned object.
+	 */
+	p = (void **)((va + (size - PAGE_SIZE) - requested_size) & ~(uintptr_t)ALIGNBYTES);
+	kmem_size_set((uint8_t *)p - SIZE_SIZE, requested_size);
+	return (void *)p;
+}
+
+static void
+kmem_guard_free(struct kmem_guard *kg, size_t requested_size, void *p)
+{
+	vaddr_t va;
+	u_int rotor;
+	size_t size;
+	uint8_t *ptr;
+
+	ptr = (uint8_t *)p - SIZE_SIZE;
+	kmem_size_check(ptr, requested_size);
+	va = trunc_page((vaddr_t)ptr);
+	size = round_page(requested_size + SIZE_SIZE) + PAGE_SIZE;
+
+	KASSERT(pmap_extract(pmap_kernel(), va, NULL));
+	KASSERT(!pmap_extract(pmap_kernel(), va + (size - PAGE_SIZE), NULL));
+
+	/*
+	 * Unmap and free the pages. The last one is never allocated.
+	 */
+	uvm_km_pgremove_intrsafe(kernel_map, va, va + size);
+	pmap_update(pmap_kernel());
+
+#if 0
+	/*
+	 * XXX: Here, we need to atomically register the va and its size in the
+	 * fifo.
+	 */
+
+	/*
+	 * Put the VA allocation into the list and swap an old one out to free.
+	 * This behaves mostly like a fifo.
+	 */
+	rotor = atomic_inc_uint_nv(&kg->kg_rotor) % kg->kg_depth;
+	va = (vaddr_t)atomic_swap_ptr(&kg->kg_fifo[rotor], (void *)va);
+	if (va != 0) {
+		vmem_free(kg->kg_vmem, va, size);
+	}
+#else
+	(void)rotor;
+	vmem_free(kg->kg_vmem, va, size);
+#endif
+}
+
+#endif /* defined(KMEM_GUARD) */

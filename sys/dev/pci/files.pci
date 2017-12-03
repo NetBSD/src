@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.360.2.3 2014/08/20 00:03:42 tls Exp $
+#	$NetBSD: files.pci,v 1.360.2.4 2017/12/03 11:37:07 jdolecek Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -106,6 +106,11 @@ file	dev/pci/icp_pci.c		icp_pci
 # Adaptec FSA RAID controllers
 attach	aac at pci with aac_pci
 file	dev/pci/aac_pci.c		aac_pci
+
+# IBM ServeRAID RAID controllers
+device  ips: scsi
+attach  ips at pci
+file    dev/pci/ips.c                   ips
 
 # DPT EATA SCSI controllers
 attach	dpt at pci with dpt_pci
@@ -635,6 +640,7 @@ file	dev/pci/usb_pci.c		ehci_pci | ehci_cardbus
 # xHCI USB controller
 attach	xhci at pci with xhci_pci
 file	dev/pci/xhci_pci.c		xhci_pci
+defflag	opt_xhci_pci.h			XHCI_DISABLE_MSI
 
 # OHCI IEEE 1394 controller
 attach	fwohci at pci with fwohci_pci
@@ -667,22 +673,36 @@ file	dev/pci/if_stge.c		stge
 # Intel i82598 & i82599 10-Gigabit Ethernet
 device	ixg: ether, ifnet, arp
 attach	ixg at pci
-file	dev/pci/ixgbe/ixgbe.c		ixg
-file	dev/pci/ixgbe/ixgbe_netbsd.c	ixg
-file	dev/pci/ixgbe/ixgbe_82598.c	ixg
-file	dev/pci/ixgbe/ixgbe_82599.c	ixg
-file	dev/pci/ixgbe/ixgbe_api.c	ixg
-file	dev/pci/ixgbe/ixgbe_common.c	ixg
-file	dev/pci/ixgbe/ixgbe_mbx.c	ixg
-file	dev/pci/ixgbe/ixgbe_phy.c	ixg
-file	dev/pci/ixgbe/ixgbe_vf.c	ixg
+file	dev/pci/ixgbe/ixgbe.c		ixg | ixv
+file	dev/pci/ixgbe/ix_txrx.c		ixg | ixv
+file	dev/pci/ixgbe/ixgbe_netbsd.c	ixg | ixv
+file	dev/pci/ixgbe/ixgbe_82598.c	ixg | ixv
+file	dev/pci/ixgbe/ixgbe_82599.c	ixg | ixv
+file	dev/pci/ixgbe/ixgbe_x540.c	ixg | ixv
+file	dev/pci/ixgbe/ixgbe_x550.c	ixg | ixv
+file	dev/pci/ixgbe/ixgbe_api.c	ixg | ixv
+file	dev/pci/ixgbe/ixgbe_common.c	ixg | ixv
+file	dev/pci/ixgbe/ixgbe_mbx.c	ixg | ixv
+file	dev/pci/ixgbe/ixgbe_osdep.c	ixg | ixv
+file	dev/pci/ixgbe/ixgbe_phy.c	ixg | ixv
+file	dev/pci/ixgbe/ixgbe_vf.c	ixg | ixv
+file	dev/pci/ixgbe/if_bypass.c	ixg | ixv
+file	dev/pci/ixgbe/if_fdir.c		ixg | ixv
+
 # This appears to be the driver for virtual instances of i82599.
-#file	dev/pci/ixgbe/ixv.c		ixg
+device	ixv: ether, ifnet, arp
+attach	ixv at pci
+file	dev/pci/ixgbe/ixv.c		ixv
 
 # Intel i8254x Gigabit Ethernet
 device	wm: ether, ifnet, arp, mii, mii_bitbang
 attach	wm at pci
 file	dev/pci/if_wm.c			wm
+defflag	opt_if_wm.h	WM_EVENT_COUNTERS
+defparam opt_if_wm.h	WM_RX_PROCESS_LIMIT_DEFAULT
+			WM_RX_INTR_PROCESS_LIMIT_DEFAULT
+			WM_DISABLE_MSI
+			WM_DISABLE_MSIX
 
 # Broadcom 570x Gigabit Ethernet
 device	bge: ether, ifnet, arp, mii, mii_bitbang
@@ -776,6 +796,11 @@ file	dev/pci/if_atw_pci.c		atw_pci
 # Realtek RTL8180 PCI/Mini-PCI
 attach	rtw at pci with rtw_pci
 file	dev/pci/if_rtw_pci.c		rtw_pci
+
+# Realtek RTL8188CE Mini-PCIe
+device	rtwn: ifnet, arp, wlan, firmload
+attach	rtwn at pci
+file	dev/pci/if_rtwn.c		rtwn
 
 # Ralink RT2500/RT2600 PCI/Mini-PCI
 attach	ral at pci with ral_pci
@@ -936,6 +961,11 @@ device	iwn: ifnet, arp, wlan, firmload
 attach	iwn at pci
 file	dev/pci/if_iwn.c		iwn
 
+# Intel Centrino 7260
+device	iwm: ifnet, arp, wlan, firmload
+attach	iwm at pci
+file	dev/pci/if_iwm.c		iwm
+
 # Workbit NinjaSCSI-32 controllers
 # device declaration in sys/conf/files
 attach	njs at pci with njs_pci
@@ -1055,13 +1085,19 @@ file	dev/pci/voyager.c		voyager
 defflag	opt_voyager.h	VOYAGER_DEBUG
 
 # High Definition Audio
-include "dev/pci/hdaudio/files.hdaudio"
+attach	hdaudio at pci with hdaudio_pci
+file	dev/pci/hdaudio_pci.c		hdaudio_pci
 
 # Permedia 2 / Sun PGX32 / Raptor
 device	pm2fb: wsemuldisplaydev, rasops8, rasops32, vcons, videomode, i2cbus, i2c_bitbang, ddc_read_edid, edid, glyphcache
 attach	pm2fb at pci
 file	dev/pci/pm2fb.c		pm2fb
 defflag	opt_pm2fb.h	PM2FB_DEBUG
+
+# Permedia 3 / Oxygen VX1 / Proformance 3  
+device  pm3fb: wsemuldisplaydev, rasops8, vcons, videomode, i2cbus, i2c_bitbang, ddc_read_edid, edid
+attach  pm3fb at pci
+file	dev/pci/pm3fb.c		pm3fb
 
 # 3Dlabs Wildcat / Sun XVR-500, 1200, Expert3D etc.
 device		wcfb: wsemuldisplaydev, rasops8, vcons
@@ -1109,21 +1145,11 @@ device  sisfb: wsemuldisplaydev, rasops8, rasops15, rasops16, rasops32, vcons
 attach  sisfb at pci
 file    dev/pci/sisfb.c		sisfb	needs-flag
 
-# VirtIO
-device	virtio {}
-attach	virtio at pci
-file	dev/pci/virtio.c	virtio
+# VirtIO: XXX: move to dev/vmm/virtio
+include "dev/pci/files.virtio"
 
-attach	ld at virtio with ld_virtio
-file	dev/pci/ld_virtio.c	ld_virtio
-
-device	viomb
-attach	viomb at virtio
-file	dev/pci/viomb.c		viomb
-
-device	vioif
-attach	vioif at virtio
-file	dev/pci/if_vioif.c	vioif
+attach	virtio at pci with virtio_pci
+file	dev/pci/virtio_pci.c	virtio_pci
 
 # Silicon Motion SM712(LynxEM+) frame buffer
 device	lynxfb: wsemuldisplaydev, rasops16
@@ -1152,5 +1178,14 @@ defflag	opt_gffb.h	GFFB_DEBUG
 attach	rtsx at pci with rtsx_pci
 file	dev/pci/rtsx_pci.c	rtsx_pci
 
+# NVM Express Controller
+attach	nvme at pci with nvme_pci
+file	dev/pci/nvme_pci.c	nvme_pci
+
 # PCI graphics devices with DRM/KMS
 include "external/bsd/drm2/pci/files.drmkms_pci"
+
+# Intel S1200,C2000 (non-pch) SMBus controller
+device	ismt: i2cbus
+attach	ismt at pci
+file	dev/pci/ismt.c		ismt

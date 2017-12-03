@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -46,8 +46,6 @@
 #include "amlcode.h"
 #include "acparser.h"
 #include "acdebug.h"
-
-#include <stdio.h>
 
 /*
  * This is an os-independent implementation of line-editing services needed
@@ -262,6 +260,7 @@ AcpiOsGetLine (
 
             ACPI_BACKUP_CURSOR (i, EndOfLine - CursorPosition + 1);
             EndOfLine--;
+
             if (CursorPosition > 0)
             {
                 CursorPosition--;

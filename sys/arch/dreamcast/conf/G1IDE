@@ -1,0 +1,237 @@
+# $NetBSD: G1IDE,v 1.5.2.2 2017/12/03 11:36:00 jdolecek Exp $
+
+include 	"arch/dreamcast/conf/std.dreamcast"
+
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+maxusers	16		# estimated number of users
+
+# Standard system options
+#options 	INSECURE	# disable kernel security levels
+
+#options 	RTC_OFFSET=-540
+options 	HZ=100		# clock interrupt generates every 1/HZ sec
+options 	NTP		# NTP phase/frequency locked loop
+
+options 	KTRACE		# system call tracing via ktrace(1)
+
+options 	USERCONF	# userconf(4) support
+#options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
+
+options 	SYSVMSG		# System V-like message queues
+options 	SYSVSEM		# System V-like semaphores
+options 	SYSVSHM		# System V-like memory sharing
+
+#options 	MODULAR		# new style module(7) framework
+#options 	MODULAR_DEFAULT_AUTOLOAD
+
+# Alternate buffer queue strategies for better responsiveness under high
+# disk I/O load.
+#options 	BUFQ_READPRIO
+options 	BUFQ_PRIOCSCAN
+
+# Diagnostic/debugging support options
+options 	DIAGNOSTIC	# cheap kernel consistency checks
+#options 	DEBUG		# expensive debugging checks/support
+options 	DDB		# in-kernel debugger
+#options 	KGDB			# remote debugger
+#options 	"KGDB_DEVNAME=\"scif\"",KGDB_DEVRATE=57600
+#makeoptions	DEBUG="-g"	# compile full symbol table
+makeoptions	COPY_SYMTAB=1
+#options 	SYSCALL_DEBUG
+#options 	UVMHIST
+#options 	UVMHIST_PRINT
+
+# Compatibility options
+
+include 	"conf/compat_netbsd16.config"
+
+# Executable format options
+options 	EXEC_COFF	# COFF executables
+
+# File systems
+file-system 	FFS		# UFS
+#file-system	EXT2FS		# second extended file system (linux)
+#file-system	LFS		# log-structured file system
+file-system 	MFS		# memory file system
+file-system 	NFS		# Network File System client
+file-system	CD9660		# CD-ROM file system
+file-system	MSDOSFS		# MS-DOS file system
+file-system	FDESC		# /dev/fd
+file-system 	KERNFS		# /kern
+file-system 	PROCFS		# /proc
+file-system 	NULLFS		# loopback file system
+#file-system	OVERLAY		# overlay file system
+#file-system 	UMAPFS		# NULLFS + uid and gid remapping
+file-system	UNION		# union file system
+file-system	PTYFS		# /dev/pts/N support
+file-system	TMPFS		# Efficient memory file-system
+#file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
+
+# File system options
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	FFS_EI		# FFS Endian Independent supoprt
+options 	WAPBL		# File system journaling support
+#options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
+#options 	NFSSERVER	# Network File System server
+options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+#options 	UFS_EXTATTR	# Extended attribute support for UFS1
+#options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
+				# immutable) behave as system flags.
+
+# Networking options
+options 	INET		# IP + ICMP + TCP + UDP
+options 	INET6		# IPV6
+#options 	IPSEC		# IP security
+#options 	IPSEC_DEBUG	# debug for IP security
+#options 	MROUTING	# IP multicast routing
+#options 	PIM		# Protocol Independent Multicast
+#options 	NETATALK	# AppleTalk networking protocols
+#options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
+#options 	PPP_DEFLATE	# Deflrate compression support for PPP
+#options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
+#options 	IPFILTER_LOG	# ipmon(8) log support
+#options 	IPFILTER_LOOKUP	# ippool(8) support
+#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
+#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
+
+#options 	ALTQ		# Manipulate network interfaces' output queues
+#options 	ALTQ_BLUE	# Stochastic Fair Blue
+#options 	ALTQ_CBQ	# Class-Based Queueing
+#options 	ALTQ_CDNR	# Diffserv Traffic Conditioner
+#options 	ALTQ_FIFOQ	# First-In First-Out Queue
+#options 	ALTQ_FLOWVALVE	# RED/flow-valve (red-penalty-box)
+#options 	ALTQ_HFSC	# Hierarchical Fair Service Curve
+#options 	ALTQ_LOCALQ	# Local queueing discipline
+#options 	ALTQ_PRIQ	# Priority Queueing
+#options 	ALTQ_RED	# Random Early Detection
+#options 	ALTQ_RIO	# RED with IN/OUT
+#options 	ALTQ_WFQ	# Weighted Fair Queueing
+
+#options 	PCIVERBOSE	# verbose PCI device autoconfig messages
+#options 	MIIVERBOSE	# verbose PHY autoconfig messages
+#options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
+
+options 	NFS_BOOT_DHCP	# Support DHCP NFS root
+
+options 	KLOADER		# in-kernel bootloader
+#options 	KLOADER_DEBUG
+
+# wscons options
+options 	WSEMUL_VT100		# VT100 / VT220 emulation
+options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
+options 	FONT_BOLD8x16
+#options 	FONT_SONY8x16
+
+# Kernel root file system and dump configuration.
+#config		netbsd	root on ? type nfs
+#config		netbsd	root on wd0a type ffs
+config		netbsd	root on ? type ?
+
+#
+# Device configuration
+#
+
+mainbus0 at root
+
+cpu*		at mainbus?
+shb*		at mainbus?
+
+# Serial Devices
+#options 	SCIFCONSOLE
+options 	SCIFCN_SPEED=57600
+scif0		at shb?
+
+pvr0		at shb?
+wsdisplay*	at pvr? console ?
+
+maple0		at shb?
+
+mkbd*		at maple? port ? subunit ?
+wskbd*		at mkbd? mux 1 console ?
+
+mms*		at maple? port ? subunit ?
+wsmouse*	at mms? mux 0
+
+#mmem*		at maple? port ? subunit ?
+#mlcd*		at maple? port ? subunit ?
+
+#gdrom0		at shb?
+
+g1bus0		at shb?
+wdc0		at g1bus?
+atabus*	at wdc? channel ?
+wd*		at atabus? drive ? flags 0x0000
+#options 	ATADEBUG
+#options 	ATADEBUG_MASK=DEBUG_PROBE
+#options 	ATADEBUG_MASK="(DEBUG_PROBE|DEBUG_XFERS)"
+
+# To enable "gdrom0 at atapibus?" also edit gdrom lines in conf/files.dreamcast
+atapibus*	at atabus?
+gdrom0		at atapibus?
+
+g2bus0		at shb?
+g2rtc0		at g2bus?			# time-of-day clock
+gapspci*	at g2bus?			# GAPS PCI bridge
+pci*		at gapspci?
+rtk*		at pci? dev ? function ?	# SEGA Broadband Adapter
+rlphy*		at mii? phy ?
+
+mbe*		at g2bus?			# SEGA LAN Adapter
+
+#aica*		at g2bus?			# AICA Sound Processing Unit
+#audio*		at audiobus?
+
+#spkr*		at audio?		# PC speaker (synthesized)
+
+#pseudo-device	cgd			# cryptographic disk devices
+pseudo-device	md			# memory disk device (ramdisk)
+pseudo-device	vnd			# disk-like interface to files
+#options 	VND_COMPRESSION		# compressed vnd(4)
+
+# network pseudo-devices
+pseudo-device	bpfilter		# Berkeley packet filter
+#pseudo-device	carp			# Common Address Redundancy Protocol
+#pseudo-device	ipfilter		# IP filter (firewall) and NAT
+pseudo-device	loop			# network loopback
+#pseudo-device	ppp			# Point-to-Point Protocol
+#pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
+#pseudo-device	sl			# Serial Line IP
+#pseudo-device	tun			# network tunneling over tty
+#pseudo-device	tap			# virtual Ethernet
+#pseudo-device	gre			# generic L3 over IP tunnel
+#pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith			# IPv[46] tcp relay translation i/f
+#pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
+#pseudo-device	vlan			# IEEE 802.1q encapsulation
+#pseudo-device	bridge			# simple inter-network bridging
+#options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+#pseudo-device	agr			# IEEE 802.3ad link aggregation
+
+#
+# accept filters
+pseudo-device   accf_data		# "dataready" accept filter
+pseudo-device   accf_http		# "httpready" accept filter
+
+# miscellaneous pseudo-devices
+pseudo-device	pty			# pseudo-terminals
+pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	wsmux			# mouse & keyboard multiplexor
+pseudo-device	ksyms			# /dev/ksyms
+#pseudo-device	pf			# PF packet filter
+#pseudo-device	pflog			# PF log if
+
+# Veriexec
+#
+# a pseudo device needed for veriexec
+#pseudo-device	veriexec
+#
+# Uncomment the fingerprint methods below that are desired. Note that
+# removing fingerprint methods will have almost no impact on the kernel
+# code size.
+#
+#options VERIFIED_EXEC_FP_SHA256
+#options VERIFIED_EXEC_FP_SHA384
+#options VERIFIED_EXEC_FP_SHA512

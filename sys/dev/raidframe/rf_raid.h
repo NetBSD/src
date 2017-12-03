@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid.h,v 1.43.14.1 2013/06/23 06:20:21 tls Exp $	*/
+/*	$NetBSD: rf_raid.h,v 1.43.14.2 2017/12/03 11:37:31 jdolecek Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -66,7 +66,7 @@
 
 /*
  * Each row in the array is a distinct parity group, so
- * each has it's own status, which is one of the following.
+ * each has its own status, which is one of the following.
  */
 typedef enum RF_RowStatus_e {
 	rf_rs_optimal,

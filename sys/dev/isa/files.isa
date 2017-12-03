@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.162.6.1 2013/06/23 06:20:17 tls Exp $
+#	$NetBSD: files.isa,v 1.162.6.2 2017/12/03 11:37:04 jdolecek Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -13,6 +13,7 @@ device	isa {[port = -1], [size = 0],
 	     [irq = -1], [drq = -1], [drq2 = -1]}
 attach	isa at isabus
 file	dev/isa/isa.c			isa			needs-flag
+file	dev/isa/isa_stub.c		isa
 
 file	dev/isa/isabusprint.c		isabus
 
@@ -432,9 +433,10 @@ file	dev/isa/radiotrack2.c		rtii
 device	pcppi {}
 attach	pcppi at isa
 file	dev/isa/pcppi.c			pcppi			needs-flag
-device	spkr
-attach	spkr at pcppi
-file	dev/isa/spkr.c			spkr			needs-flag
+
+attach	spkr at pcppi with spkr_pcppi
+file	dev/isa/spkr_pcppi.c		spkr_pcppi
+
 attach	midi at pcppi with midi_pcppi: midisyn
 file	dev/isa/midi_pcppi.c		midi_pcppi
 

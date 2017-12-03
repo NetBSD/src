@@ -1,4 +1,4 @@
-/* $NetBSD: pte.h,v 1.1.4.2 2014/08/20 00:02:39 tls Exp $ */
+/* $NetBSD: pte.h,v 1.1.4.3 2017/12/03 11:35:44 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -107,8 +107,8 @@ typedef unsigned long long pt_entry_t;
 #define TCR_T1SZ		__BITS(21,16)	// Size offset for TTBR1_EL1
 #define TCR_TG0			__BITS(15,14)
 #define TCR_SH0			__BITS(13,12)
-#define TCR_ORGN1		__BITS(11,10)
-#define TCR_IRGN1		__BITS(9,8)
+#define TCR_ORGN0		__BITS(11,10)
+#define TCR_IRGN0		__BITS(9,8)
 #define TCR_EPD0		__BIT(7)	// Walk Disable for TTBR0
 #define TCR_T0SZ		__BITS(5,0)	// Size offset for TTBR0_EL1
 

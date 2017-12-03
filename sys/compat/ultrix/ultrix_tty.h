@@ -1,6 +1,8 @@
-/*	$NetBSD: ultrix_tty.h,v 1.3 2009/12/14 00:47:12 matt Exp $	*/
+/*	$NetBSD: ultrix_tty.h,v 1.3.22.1 2017/12/03 11:36:57 jdolecek Exp $	*/
 
 /* From:  NetBSD sunos.h,v 1.4 1995/03/04 09:50:00 pk Exp 	*/
+
+#include <sys/ioccom.h>
 
 
 struct ultrix_ttysize {

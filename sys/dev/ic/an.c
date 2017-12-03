@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.59.18.1 2014/08/20 00:03:37 tls Exp $	*/
+/*	$NetBSD: an.c,v 1.59.18.2 2017/12/03 11:37:03 jdolecek Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.59.18.1 2014/08/20 00:03:37 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.59.18.2 2017/12/03 11:37:03 jdolecek Exp $");
 
 
 #include <sys/param.h>
@@ -96,6 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: an.c,v 1.59.18.1 2014/08/20 00:03:37 tls Exp $");
 #include <sys/kauth.h>
 
 #include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -116,6 +117,7 @@ __KERNEL_RCSID(0, "$NetBSD: an.c,v 1.59.18.1 2014/08/20 00:03:37 tls Exp $");
 
 static int	an_reset(struct an_softc *);
 static void	an_wait(struct an_softc *);
+static void	an_softintr(void *);
 static int	an_init(struct ifnet *);
 static void	an_stop(struct ifnet *, int);
 static void	an_start(struct ifnet *);
@@ -164,7 +166,7 @@ an_attach(struct an_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &sc->sc_if;
-	int i, s;
+	int i, s, rv = 0;
 	struct an_rid_wepkey *akey;
 	int buflen, kid, rid;
 	int chan, chan_min, chan_max;
@@ -174,31 +176,38 @@ an_attach(struct an_softc *sc)
 	an_wait(sc);
 	if (an_reset(sc) != 0) {
 		config_deactivate(sc->sc_dev);
-		splx(s);
-		return 1;
+		rv = 1;
+		goto fail_1;
+	}
+
+	sc->sc_soft_ih = softint_establish(SOFTINT_NET, an_softintr, sc);
+	if (sc->sc_soft_ih == NULL) {
+		aprint_error_dev(sc->sc_dev, "failed to establish softint\n");
+		rv = 1;
+		goto fail_1;
 	}
 
 	/* Load factory config */
 	if (an_cmd(sc, AN_CMD_READCFG, 0) != 0) {
-		splx(s);
 		aprint_error_dev(sc->sc_dev, "failed to load config data\n");
-		return 1;
+		rv = 1;
+		goto fail_2;
 	}
 
 	/* Read the current configuration */
 	buflen = sizeof(sc->sc_config);
 	if (an_read_rid(sc, AN_RID_GENCONFIG, &sc->sc_config, &buflen) != 0) {
-		splx(s);
 		aprint_error_dev(sc->sc_dev, "read config failed\n");
-		return 1;
+		rv = 1;
+		goto fail_2;
 	}
 
 	/* Read the card capabilities */
 	buflen = sizeof(sc->sc_caps);
 	if (an_read_rid(sc, AN_RID_CAPABILITIES, &sc->sc_caps, &buflen) != 0) {
-		splx(s);
 		aprint_error_dev(sc->sc_dev, "read caps failed\n");
-		return 1;
+		rv = 1;
+		goto fail_2;
 	}
 
 #ifdef AN_DEBUG
@@ -308,8 +317,14 @@ an_attach(struct an_softc *sc)
 	/*
 	 * Call MI attach routine.
 	 */
-	if_attach(ifp);
+	rv = if_initialize(ifp);
+	if (rv != 0) {
+		aprint_error_dev(sc->sc_dev, "if_initialize failed(%d)\n", rv);
+		goto fail_2;
+	}
 	ieee80211_ifattach(ic);
+	ifp->if_percpuq = if_percpuq_create(ifp);
+	if_register(ifp);
 
 	sc->sc_newstate = ic->ic_newstate;
 	ic->ic_newstate = an_newstate;
@@ -335,6 +350,14 @@ an_attach(struct an_softc *sc)
 
 	ieee80211_announce(ic);
 	return 0;
+
+fail_2:
+	if (sc->sc_soft_ih != NULL)
+		softint_disestablish(sc->sc_soft_ih);
+fail_1:
+	splx(s);
+
+	return rv;
 }
 
 #ifdef AN_DEBUG
@@ -409,7 +432,10 @@ an_detach(struct an_softc *sc)
 	an_stop(ifp, 1);
 	ieee80211_ifdetach(ic);
 	if_detach(ifp);
+	if (sc->sc_soft_ih != NULL)
+		softint_disestablish(sc->sc_soft_ih);
 	splx(s);
+
 	return 0;
 }
 
@@ -432,8 +458,6 @@ an_intr(void *arg)
 {
 	struct an_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_if;
-	int i;
-	u_int16_t status;
 
 	if (!sc->sc_enabled || !device_is_active(sc->sc_dev) ||
 	    (ifp->if_flags & IFF_RUNNING) == 0)
@@ -445,15 +469,39 @@ an_intr(void *arg)
 		return 1;
 	}
 
+	/* Disable interrupts */
+	CSR_WRITE_2(sc, AN_INT_EN, 0);
+
+	softint_schedule(sc->sc_soft_ih);
+	return 1;
+}
+
+static void
+an_softintr(void *arg)
+{
+	struct an_softc *sc = arg;
+	struct ifnet *ifp = &sc->sc_if;
+	int i, s;
+	uint16_t status;
+
+	if (!sc->sc_enabled || !device_is_active(sc->sc_dev) ||
+	    (ifp->if_flags & IFF_RUNNING) == 0)
+		return;
+
+	if ((ifp->if_flags & IFF_UP) == 0) {
+		CSR_WRITE_2(sc, AN_EVENT_ACK, ~0);
+		return;
+	}
+
 	/* maximum 10 loops per interrupt */
 	for (i = 0; i < 10; i++) {
 		if (!sc->sc_enabled || !device_is_active(sc->sc_dev))
-			return 1;
+			return;
 		if (CSR_READ_2(sc, AN_SW0) != AN_MAGIC) {
 			DPRINTF(("an_intr: magic number changed: %x\n",
 			    CSR_READ_2(sc, AN_SW0)));
 			config_deactivate(sc->sc_dev);
-			return 1;
+			return;
 		}
 		status = CSR_READ_2(sc, AN_EVENT_STAT);
 		CSR_WRITE_2(sc, AN_EVENT_ACK, status & ~(AN_INTRS));
@@ -471,11 +519,17 @@ an_intr(void *arg)
 
 		if ((ifp->if_flags & IFF_OACTIVE) == 0 &&
 		    sc->sc_ic.ic_state == IEEE80211_S_RUN &&
-		    !IFQ_IS_EMPTY(&ifp->if_snd))
-			an_start(ifp);
+		    !IFQ_IS_EMPTY(&ifp->if_snd)) {
+			s = splnet();
+			an_start(ifp); /* in softint */
+			splx(s);
+		}
 	}
+	if (i == 10)
+		softint_schedule(sc->sc_soft_ih);
 
-	return 1;
+	/* Re-enable interrupts */
+	CSR_WRITE_2(sc, AN_INT_EN, AN_INTRS);
 }
 
 static int
@@ -569,8 +623,8 @@ an_init(struct ifnet *ifp)
 	if (ic->ic_des_esslen)
 		memcpy(sc->sc_buf.sc_ssidlist.an_entry[0].an_ssid,
 		    ic->ic_des_essid, ic->ic_des_esslen);
-	if (an_write_rid(sc, AN_RID_SSIDLIST, &sc->sc_buf,
-	    sizeof(sc->sc_buf.sc_ssidlist)) != 0) {
+	if ((error = an_write_rid(sc, AN_RID_SSIDLIST, &sc->sc_buf,
+	    sizeof(sc->sc_buf.sc_ssidlist))) != 0) {
 		printf("%s: failed to write ssid list\n", ifp->if_xname);
 		an_stop(ifp, 1);
 		return error;
@@ -604,8 +658,8 @@ an_init(struct ifnet *ifp)
 		printf("\n");
 	}
 #endif
-	if (an_write_rid(sc, AN_RID_GENCONFIG, &sc->sc_config,
-	    sizeof(sc->sc_config)) != 0) {
+	if ((error = an_write_rid(sc, AN_RID_GENCONFIG, &sc->sc_config,
+	    sizeof(sc->sc_config))) != 0) {
 		printf("%s: failed to write config\n", ifp->if_xname);
 		an_stop(ifp, 1);
 		return error;
@@ -1328,7 +1382,7 @@ an_rx_intr(struct an_softc *sc)
 	struct an_rxframe frmhdr;
 	struct mbuf *m;
 	u_int16_t status;
-	int fid, gaplen, len, off;
+	int fid, gaplen, len, off, s;
 	uint8_t *gap;
 
 	fid = CSR_READ_2(sc, AN_RX_FID);
@@ -1438,8 +1492,10 @@ an_rx_intr(struct an_softc *sc)
 	    len;
 
 	memcpy(m->m_data, &frmhdr.an_whdr, sizeof(struct ieee80211_frame));
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
 	CSR_WRITE_2(sc, AN_EVENT_ACK, AN_EV_RX);
+
+	s = splnet();
 
 	if (sc->sc_drvbpf) {
 		struct an_rx_radiotap_header *tap = &sc->sc_rxtap;
@@ -1473,13 +1529,17 @@ an_rx_intr(struct an_softc *sc)
 	ieee80211_input(ic, m, ni, frmhdr.an_rx_signal_strength,
 	    le32toh(frmhdr.an_rx_time));
 	ieee80211_free_node(ni);
+
+	splx(s);
 }
 
 static void
 an_tx_intr(struct an_softc *sc, int status)
 {
 	struct ifnet *ifp = &sc->sc_if;
-	int cur, fid;
+	int cur, fid, s;
+
+	s = splnet();
 
 	sc->sc_tx_timer = 0;
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -1513,7 +1573,7 @@ an_tx_intr(struct an_softc *sc, int status)
 			    fid, cur);
 	}
 
-	return;
+	splx(s);
 }
 
 static void
@@ -1521,11 +1581,13 @@ an_linkstat_intr(struct an_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	u_int16_t status;
+	int s;
 
 	status = CSR_READ_2(sc, AN_LINKSTAT);
 	CSR_WRITE_2(sc, AN_EVENT_ACK, AN_EV_LINKSTAT);
 	DPRINTF(("an_linkstat_intr: status 0x%x\n", status));
 
+	s = splnet();
 	if (status == AN_LINKSTAT_ASSOCIATED) {
 		if (ic->ic_state != IEEE80211_S_RUN ||
 		    ic->ic_opmode == IEEE80211_M_IBSS)
@@ -1534,6 +1596,7 @@ an_linkstat_intr(struct an_softc *sc)
 		if (ic->ic_opmode == IEEE80211_M_STA)
 			ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
 	}
+	splx(s);
 }
 
 /* Must be called at proper protection level! */

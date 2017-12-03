@@ -1,4 +1,4 @@
-/*	$NetBSD: wdvar.h,v 1.40 2012/02/02 19:43:02 tls Exp $	*/
+/*	$NetBSD: wdvar.h,v 1.40.6.1 2017/12/03 11:36:59 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -28,28 +28,23 @@
 #define	_DEV_ATA_WDVAR_H_
 
 #ifdef _KERNEL_OPT
-#include "opt_wd_softbadsect.h"
+#include "opt_wd.h"
 #endif
 
-#include <sys/rnd.h>
+#include <dev/dkvar.h>
+#include <sys/sysctl.h>
 
 struct wd_softc {
 	/* General disk infos */
-	device_t sc_dev;
-	struct disk sc_dk;
-	struct bufq_state *sc_q;
-	struct callout sc_restart_ch;
+	struct dk_softc sc_dksc;
+	kmutex_t sc_lock;
 	int sc_quirks;			/* any quirks drive might have */
+
 	/* IDE disk soft states */
-	struct ata_bio sc_wdc_bio; /* current transfer */
-	struct buf *sc_bp; /* buf being transfered */
 	struct ata_drive_datas *drvp; /* Our controller's infos */
 	const struct ata_bustype *atabus;
-	int openings;
 	struct ataparams sc_params;/* drive characteristics found */
 	int sc_flags;
-#define	WDF_WLABEL	0x004 /* label is writable */
-#define	WDF_LABELLING	0x008 /* writing label */
 /*
  * XXX Nothing resets this yet, but disk change sensing will when ATA-4 is
  * more fully implemented.
@@ -57,23 +52,34 @@ struct wd_softc {
 #define WDF_LOADED	0x010 /* parameters loaded */
 #define WDF_WAIT	0x020 /* waiting for resources */
 #define WDF_LBA		0x040 /* using LBA mode */
-#define WDF_KLABEL	0x080 /* retain label after 'full' close */
 #define WDF_LBA48	0x100 /* using 48-bit LBA mode */
-	u_int64_t sc_capacity; /* full capacity of the device */
-	u_int32_t sc_capacity28; /* capacity accessible with LBA28 commands */
-
-	int retries; /* number of xfer retry */
+#define WDF_FLUSH_PEND	0x200 /* cache flush waits for free xfer */
+#define WDF_OPEN	0x400 /* device is open */
+	uint64_t sc_capacity; /* full capacity of the device */
+	uint64_t sc_capacity512; /* ... in DEV_BSIZE blocks */
+	uint32_t sc_capacity28; /* capacity accessible with LBA28 commands */
+	uint32_t sc_blksize; /* logical block size, in bytes */
 
 #ifdef WD_SOFTBADSECT
 	SLIST_HEAD(, disk_badsectors)	sc_bslist;
 	u_int sc_bscount;
 #endif
-	krndsource_t	rnd_source;
-};
 
-#define sc_drive sc_wdc_bio.drive
-#define sc_mode sc_wdc_bio.mode
-#define sc_multi sc_wdc_bio.multi
-#define sc_badsect sc_wdc_bio.badsect
+	/* Sysctl nodes specific for the disk */
+	struct sysctllog *nodelog;
+	int drv_max_tags;
+#define WD_MAX_OPENINGS(wd)	\
+	(MAX(1, MIN((wd)->drvp->drv_openings, (wd)->drv_max_tags)))
+	bool drv_ncq;
+#define WD_USE_NCQ(wd)	\
+	((wd)->drv_ncq && ((wd)->drvp->drive_flags & ATA_DRIVE_NCQ))
+	bool drv_ncq_prio;
+#define WD_USE_NCQ_PRIO(wd) \
+	((wd)->drv_ncq_prio && ((wd)->drvp->drive_flags & ATA_DRIVE_NCQ_PRIO))
+#ifdef WD_CHAOS_MONKEY
+	int drv_chaos_freq;		/* frequency of simulated bio errors */
+	int drv_chaos_cnt;		/* count of processed bio read xfers */
+#endif
+};
 
 #endif /* _DEV_ATA_WDVAR_H_ */

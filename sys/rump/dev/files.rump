@@ -1,5 +1,7 @@
-#	$NetBSD: files.rump,v 1.3.18.1 2014/08/20 00:04:37 tls Exp $
+#	$NetBSD: files.rump,v 1.3.18.2 2017/12/03 11:39:06 jdolecek Exp $
 #
+
+version 20151112
 
 device mainbus { }: pcibus
 attach mainbus at root

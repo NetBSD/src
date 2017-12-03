@@ -1,4 +1,4 @@
-/*	$NetBSD: ikphyreg.h,v 1.2 2010/11/29 23:04:42 jym Exp $	*/
+/*	$NetBSD: ikphyreg.h,v 1.2.18.1 2017/12/03 11:37:06 jdolecek Exp $	*/
 /*******************************************************************************
 Copyright (c) 2001-2005, Intel Corporation 
 All rights reserved.
@@ -41,10 +41,9 @@ POSSIBILITY OF SUCH DAMAGE.
  */
 #define GG82563_PAGE_SHIFT        5
 #define GG82563_REG(page, reg)    \
-        (((page) << GG82563_PAGE_SHIFT) | ((reg) & GG82563_MAX_REG_ADDRESS))
+        (((page) << GG82563_PAGE_SHIFT) | ((reg) & MII_ADDRMASK))
 #define GG82563_MIN_ALT_REG       30
 
-#define GG82563_MAX_REG_ADDRESS        0x1F  /* 5 bit address bus (0-0x1F) */
 #define GG82563_MAX_MULTI_PAGE_REG     0xF   /* Registers equal on all pages */
 
 

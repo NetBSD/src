@@ -1,0 +1,55 @@
+/*	$NetBSD: prekern.ldscript,v 1.2.2.2 2017/12/03 11:35:48 jdolecek Exp $	*/
+
+__PAGE_SIZE = 0x1000 ;
+
+ENTRY(start)
+SECTIONS
+{
+	.text : AT (ADDR(.text) & 0x0fffffff)
+	{
+		*(.text)
+		*(.text.*)
+		*(.stub)
+		. = ALIGN(__PAGE_SIZE);
+	} =0xCC
+	_etext = . ;
+	PROVIDE (etext = .) ;
+
+	. = ALIGN(__PAGE_SIZE);
+
+	__rodata_start = . ;
+	.rodata :
+	{
+		*(.rodata)
+		*(.rodata.*)
+	}
+
+	. = ALIGN(__PAGE_SIZE);
+
+	__data_start = . ;
+	.data :
+	{
+		*(.data)
+	}
+
+	__bss_start = . ;
+	.bss :
+	{
+		*(.bss)
+		*(.bss.*)
+		*(COMMON)
+	}
+
+	. = ALIGN(__PAGE_SIZE);
+
+	/* End of the prekern image */
+	__prekern_end = . ;
+
+	_end = . ;
+	PROVIDE (end = .) ;
+	.note.netbsd.ident :
+	{
+		KEEP(*(.note.netbsd.ident));
+	}
+}
+

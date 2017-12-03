@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.68.2.1 2014/08/20 00:04:28 tls Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.68.2.2 2017/12/03 11:38:44 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.68.2.1 2014/08/20 00:04:28 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.68.2.2 2017/12/03 11:38:44 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,11 +94,10 @@ __KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.68.2.1 2014/08/20 00:04:28 tls Ex
 #include <sys/kauth.h>
 #include <sys/module.h>
 
+#include <miscfs/genfs/genfs.h>
 #include <fs/union/union.h>
 
 MODULE(MODULE_CLASS_VFS, union, NULL);
-
-VFS_PROTOS(union);
 
 static struct sysctllog *union_sysctl_log;
 
@@ -239,7 +238,7 @@ union_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	/*
 	 * Copy in the upper layer's RDONLY flag.  This is for the benefit
 	 * of lookup() which explicitly checks the flag, rather than asking
-	 * the filesystem for it's own opinion.  This means, that an update
+	 * the filesystem for its own opinion.  This means, that an update
 	 * mount of the underlying filesystem to go from rdonly to rdwr
 	 * will leave the unioned view as read-only.
 	 */
@@ -252,6 +251,8 @@ union_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	    mp->mnt_op->vfs_name, mp, l);
 	if (error)
 		goto bad;
+
+	mp->mnt_lower = um->um_uppervp->v_mount;
 
 	switch (um->um_op) {
 	case UNMNT_ABOVE:
@@ -316,6 +317,17 @@ union_start(struct mount *mp, int flags)
 /*
  * Free reference to union layer
  */
+static bool
+union_unmount_selector(void *cl, struct vnode *vp)
+{
+	int *count = cl;
+
+	KASSERT(mutex_owned(vp->v_interlock));
+
+	*count += 1;
+	return false;
+}
+
 int
 union_unmount(struct mount *mp, int mntflags)
 {
@@ -337,13 +349,14 @@ union_unmount(struct mount *mp, int mntflags)
 	 * in the filesystem.
 	 */
 	for (freeing = 0; (error = vflush(mp, NULL, 0)) != 0;) {
-		struct vnode *vp;
+		struct vnode_iterator *marker;
 		int n;
 
 		/* count #vnodes held on mount list */
 		n = 0;
-		TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes)
-			n++;
+		vfs_vnode_iterator_init(mp, &marker);
+		vfs_vnode_iterator_next(marker, union_unmount_selector, &n);
+		vfs_vnode_iterator_destroy(marker);
 
 		/* if this is unchanged then stop */
 		if (n == freeing)
@@ -518,6 +531,7 @@ struct vfsops union_vfsops = {
 	.vfs_statvfs = union_statvfs,
 	.vfs_sync = union_sync,
 	.vfs_vget = union_vget,
+	.vfs_loadvnode = union_loadvnode,
 	.vfs_fhtovp = (void *)eopnotsupp,
 	.vfs_vptofh = (void *)eopnotsupp,
 	.vfs_init = union_init,
@@ -525,7 +539,7 @@ struct vfsops union_vfsops = {
 	.vfs_done = union_done,
 	.vfs_snapshot = (void *)eopnotsupp,
 	.vfs_extattrctl = vfs_stdextattrctl,
-	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_suspendctl = genfs_suspendctl,
 	.vfs_renamelock_enter = union_renamelock_enter,
 	.vfs_renamelock_exit = union_renamelock_exit,
 	.vfs_fsync = (void *)eopnotsupp,

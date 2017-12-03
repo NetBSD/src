@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_compr.c,v 1.5 2009/03/18 16:00:21 cegger Exp $	*/
+/*	$NetBSD: ntfs_compr.c,v 1.5.22.1 2017/12/03 11:38:43 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,20 +29,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_compr.c,v 1.5 2009/03/18 16:00:21 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_compr.c,v 1.5.22.1 2017/12/03 11:38:43 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
-#include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
-#include <sys/buf.h>
-#include <sys/file.h>
 #include <sys/malloc.h>
-
-#include <miscfs/specfs/specdev.h>
 
 #include <fs/ntfs/ntfs.h>
 #include <fs/ntfs/ntfs_compr.h>
@@ -50,15 +45,13 @@ __KERNEL_RCSID(0, "$NetBSD: ntfs_compr.c,v 1.5 2009/03/18 16:00:21 cegger Exp $"
 #define GET_UINT16(addr)	(*((u_int16_t *)(addr)))
 
 int
-ntfs_uncompblock(
-	u_int8_t * dbuf,
-	u_int8_t * cbuf)
+ntfs_uncompblock(u_int8_t *dbuf, u_int8_t *cbuf)
 {
-	u_int32_t       ctag;
-	int             len, dshift, lmask;
-	int             blen, boff;
-	int             i, j;
-	int             pos, cpos;
+	u_int32_t ctag;
+	int len, dshift, lmask;
+	int blen, boff;
+	int i, j;
+	int pos, cpos;
 
 	len = GET_UINT16(cbuf) & 0xFFF;
 	dprintf(("ntfs_uncompblock: block length: %d + 3, 0x%x,0x%04x\n",
@@ -101,14 +94,11 @@ ntfs_uncompblock(
 }
 
 int
-ntfs_uncompunit(
-	struct ntfsmount * ntmp,
-	u_int8_t * uup,
-	u_int8_t * cup)
+ntfs_uncompunit(struct ntfsmount *ntmp, u_int8_t *uup, u_int8_t *cup)
 {
-	int             i;
-	int             off = 0;
-	int             new;
+	int i;
+	int off = 0;
+	int new;
 
 	for (i = 0; i * NTFS_COMPBLOCK_SIZE < ntfs_cntob(NTFS_COMPUNIT_CL); i++) {
 		new = ntfs_uncompblock(uup + i * NTFS_COMPBLOCK_SIZE, cup + off);

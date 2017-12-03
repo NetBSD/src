@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.47.2.1 2014/08/20 00:03:19 tls Exp $	*/
+/*	$NetBSD: types.h,v 1.47.2.2 2017/12/03 11:36:37 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -31,15 +31,18 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_MACHTYPES_H_
-#define	_MACHTYPES_H_
+#ifndef	_POWERPC_TYPES_H_
+#define	_POWERPC_TYPES_H_
 
 #include <sys/cdefs.h>
 #include <sys/featuretest.h>
 #include <powerpc/int_types.h>
 
-/* NB: This should probably be if defined(_KERNEL) */
-#if defined(_NETBSD_SOURCE)
+typedef int __cpu_simple_lock_nv_t;
+typedef unsigned long __register_t;	/* frame.h */
+typedef __uint32_t __register32_t;	/* frame.h */
+
+#if defined(_KERNEL) || defined(_KMEMUSER) || defined(_KERNTYPES) || defined(_STANDALONE)
 typedef	unsigned long	paddr_t, vaddr_t;
 typedef	unsigned long	psize_t, vsize_t;
 #define	PRIxPADDR	"lx"
@@ -48,17 +51,17 @@ typedef	unsigned long	psize_t, vsize_t;
 #define	PRIxVADDR	"lx"
 #define	PRIxVSIZE	"lx"
 #define	PRIuVSIZE	"lu"
-#endif
 
 /*
  * Because lwz etal don't sign extend, it's best to make registers unsigned.
  */
-typedef unsigned long register_t;
+typedef __register_t register_t;
+typedef __register32_t register32_t;
 typedef __uint64_t register64_t;
-typedef __uint32_t register32_t;
 #define	PRIxREGISTER	"lx"
 #define	PRIxREGISTER64	PRIx64
 #define	PRIxREGISTER32	PRIx32
+#endif
 
 #if defined(_KERNEL)
 typedef struct label_t {
@@ -67,8 +70,6 @@ typedef struct label_t {
 
 typedef __uint32_t tlb_asid_t;		/* for booke */
 #endif
-
-typedef volatile int __cpu_simple_lock_t;
 
 #define __SIMPLELOCK_LOCKED	1
 #define __SIMPLELOCK_UNLOCKED	0
@@ -81,6 +82,7 @@ typedef volatile int __cpu_simple_lock_t;
 #ifdef _LP64
 #define	__HAVE_ATOMIC64_OPS
 #endif
+#define	__HAVE_CPU_LWP_SETPRIVATE
 #define	__HAVE_COMMON___TLS_GET_ADDR
 #define	__HAVE___LWP_GETTCB_FAST
 #define	__HAVE___LWP_SETTCB
@@ -98,4 +100,4 @@ typedef volatile int __cpu_simple_lock_t;
 #define	__HAVE_RAS
 #endif
 
-#endif	/* _MACHTYPES_H_ */
+#endif	/* _POWERPC_TYPES_H_ */

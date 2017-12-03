@@ -1,35 +1,37 @@
-# $NetBSD: files.cortex,v 1.2.2.3 2014/08/20 00:02:45 tls Exp $
+# $NetBSD: files.cortex,v 1.2.2.4 2017/12/03 11:35:52 jdolecek Exp $
 
 defflag opt_cpu_in_cksum.h			NEON_IN_CKSUM
 
 file	arch/arm/cortex/cpu_in_cksum_neon.c	(inet | inet6) & neon_in_cksum
 file	arch/arm/cortex/cpu_in_cksum_asm_neon.S	(inet | inet6) & neon_in_cksum
 
-device	armperiph {}
+define	mpcorebus {}
+
+device	armperiph: mpcorebus
 attach	armperiph at mainbus
 file	arch/arm/cortex/armperiph.c		armperiph
 
 # ARM Generic Interrupt Controller (initially on Cortex-A9)
 device	armgic: pic, pic_splfuncs
-attach	armgic at armperiph
+attach	armgic at mpcorebus
 file	arch/arm/cortex/gic.c			armgic
 
 # ARM PL310 L2 Cache Controller(initially on Cortex-A9)
 device	arml2cc
-attach	arml2cc at armperiph
+attach	arml2cc at mpcorebus
 file	arch/arm/cortex/pl310.c			arml2cc	needs-flag
 
 # ARMv7 Generic Timer
 device	armgtmr
-attach	armgtmr at armperiph
+attach	armgtmr at mpcorebus
 file	arch/arm/cortex/gtmr.c			armgtmr
 
 # A9 MPCore Global Timer
 device	a9tmr
-attach	a9tmr at armperiph
+attach	a9tmr at mpcorebus
 file	arch/arm/cortex/a9tmr.c			a9tmr
 
 # A9 MPcore Watchdog Timer
 device	a9wdt: sysmon_wdog
-attach	a9wdt at armperiph
+attach	a9wdt at mpcorebus
 file	arch/arm/cortex/a9wdt.c			a9wdt

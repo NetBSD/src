@@ -1,4 +1,4 @@
-/*	$NetBSD: crl.c,v 1.30.12.1 2014/08/20 00:03:27 tls Exp $	*/
+/*	$NetBSD: crl.c,v 1.30.12.2 2017/12/03 11:36:48 jdolecek Exp $	*/
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crl.c,v 1.30.12.1 2014/08/20 00:03:27 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crl.c,v 1.30.12.2 2017/12/03 11:36:48 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,7 +161,7 @@ crlrw(dev_t dev, struct uio *uio, int flag)
 			bp->b_flags &= ~(B_WRITE);
 			bp->b_flags |= B_READ;
 		}
-		s = splconsmedia(); 
+		s = splconsmedia();
 		crlstart();
                 while ((bp->b_oflags & BO_DONE) == 0)
                   (void) tsleep(bp, PRIBIO, "crlxfer", 0);
@@ -229,7 +229,7 @@ crlintr(void *arg)
 				    crlstat.crl_cs);
 				snprintb(sbuf2, sizeof(sbuf2), CRLDS_BITS,
 				    crlstat.crl_ds);
-				printf("crlcs=0x%s, crlds=0x%s\n", sbuf, sbuf2);
+				printf("crlcs=%s, crlds=%s\n", sbuf, sbuf2);
 				break;
 			}
 

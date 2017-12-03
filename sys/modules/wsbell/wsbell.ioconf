@@ -1,0 +1,9 @@
+#	$NetBSD: wsbell.ioconf,v 1.1.6.2 2017/12/03 11:39:02 jdolecek Exp $
+
+ioconf		wsbell
+
+include		"conf/files"
+
+pseudo-root	spkr*
+
+wsbell*		at spkr? console ?

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_cardbus.c,v 1.47 2012/02/02 19:43:02 tls Exp $	*/
+/*	$NetBSD: if_rtk_cardbus.c,v 1.47.6.1 2017/12/03 11:37:00 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 Masanori Kanaoka
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.47 2012/02/02 19:43:02 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.47.6.1 2017/12/03 11:37:00 jdolecek Exp $");
 
 #include "opt_inet.h"
 
@@ -59,8 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.47 2012/02/02 19:43:02 tls Exp 
 #include <netinet/in.h>
 #include <netinet/if_inarp.h>
 #endif
-
-#include <sys/rnd.h>
 
 #include <sys/bus.h>
 

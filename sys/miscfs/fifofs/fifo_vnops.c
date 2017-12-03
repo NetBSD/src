@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.72.6.2 2014/08/20 00:04:30 tls Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.72.6.3 2017/12/03 11:38:47 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.72.6.2 2014/08/20 00:04:30 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.72.6.3 2017/12/03 11:38:47 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -360,12 +360,11 @@ fifo_poll(void *v)
 static int
 fifo_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 		struct vnode	*a_vp;
 		struct lwp	*a_l;
-	} */ *ap = v;
+	} */ *ap __unused = v;
 
-	VOP_UNLOCK(ap->a_vp);
 	return (0);
 }
 
@@ -580,10 +579,19 @@ filt_fifowrite(struct knote *kn, long hint)
 	return rv;
 }
 
-static const struct filterops fiforead_filtops =
-	{ 1, NULL, filt_fifordetach, filt_fiforead };
-static const struct filterops fifowrite_filtops =
-	{ 1, NULL, filt_fifowdetach, filt_fifowrite };
+static const struct filterops fiforead_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_fifordetach,
+	.f_event = filt_fiforead,
+};
+
+static const struct filterops fifowrite_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_fifowdetach,
+	.f_event = filt_fifowrite,
+};
 
 /* ARGSUSED */
 static int

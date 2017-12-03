@@ -1,4 +1,4 @@
-/*	$NetBSD: yeeloong_machdep.c,v 1.3.2.3 2014/08/20 00:02:58 tls Exp $	*/
+/*	$NetBSD: yeeloong_machdep.c,v 1.3.2.4 2017/12/03 11:36:09 jdolecek Exp $	*/
 /*	$OpenBSD: yeeloong_machdep.c,v 1.16 2011/04/15 20:40:06 deraadt Exp $	*/
 
 /*
@@ -23,13 +23,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yeeloong_machdep.c,v 1.3.2.3 2014/08/20 00:02:58 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yeeloong_machdep.c,v 1.3.2.4 2017/12/03 11:36:09 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/types.h>
 
+#include <mips/cpuregs.h>
 #include <evbmips/loongson/autoconf.h>
 #include <mips/pmon/pmon.h>
 #include <evbmips/loongson/loongson_intr.h>
@@ -557,6 +558,18 @@ lemote_device_register(device_t dev, void *aux)
 
 	if (device_class(dev) != bootdev_class)
 		return;
+
+	/* OHCI memory space access may not be enabled by the BIOS */
+	if (device_is_a(dev, "ohci")) {
+		struct pci_attach_args *pa = aux;
+		pcireg_t csr = pci_conf_read(pa->pa_pc, pa->pa_tag,
+		    PCI_COMMAND_STATUS_REG);
+		if ((csr & PCI_COMMAND_MEM_ENABLE) == 0) {
+			csr |= PCI_COMMAND_MEM_ENABLE;
+			pci_conf_write(pa->pa_pc, pa->pa_tag,
+			    PCI_COMMAND_STATUS_REG, csr);
+		}
+	}
 
 	/* 
 	 * The device numbering must match. There's no way

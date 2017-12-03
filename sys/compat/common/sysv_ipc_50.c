@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_ipc_50.c,v 1.2 2009/01/21 16:12:20 christos Exp $	*/
+/*	$NetBSD: sysv_ipc_50.c,v 1.2.28.1 2017/12/03 11:36:53 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_ipc_50.c,v 1.2 2009/01/21 16:12:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_ipc_50.c,v 1.2.28.1 2017/12/03 11:36:53 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
@@ -73,6 +73,8 @@ __KERNEL_RCSID(0, "$NetBSD: sysv_ipc_50.c,v 1.2 2009/01/21 16:12:20 christos Exp
 /*
  * Check for ipc permission
  */
+
+int sysctl_kern_sysvipc50(SYSCTLFN_PROTO);
 
 int
 sysctl_kern_sysvipc50(SYSCTLFN_ARGS)
@@ -213,4 +215,4 @@ sysctl_kern_sysvipc50(SYSCTLFN_ARGS)
 		free(bf, M_TEMP);
 	return error;
 }
-#endif
+#endif /* COMPAT_50 */

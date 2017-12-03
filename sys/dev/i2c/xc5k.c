@@ -1,4 +1,4 @@
-/* $NetBSD: xc5k.c,v 1.4 2011/10/02 19:03:56 jmcneill Exp $ */
+/* $NetBSD: xc5k.c,v 1.4.12.1 2017/12/03 11:37:02 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xc5k.c,v 1.4 2011/10/02 19:03:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xc5k.c,v 1.4.12.1 2017/12/03 11:37:02 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,7 +174,7 @@ xc5k_firmware_open(struct xc5k *xc)
 
 done:
 	if (fw)
-		firmware_free(fw, 0);
+		firmware_free(fw, fwlen);
 	mutex_exit(&xc5k_firmware_lock);
 
 	if (error)
@@ -250,8 +250,6 @@ xc5k_open(device_t parent, i2c_tag_t i2c, i2c_addr_t addr,
 	uint16_t product_id;
 
 	xc = kmem_alloc(sizeof(*xc), KM_SLEEP);
-	if (xc == NULL)
-		return NULL;
 	xc->parent = parent;
 	xc->i2c = i2c;
 	xc->i2c_addr = addr;
@@ -434,7 +432,7 @@ xc5k_get_status(struct xc5k *xc)
 	return festatus;
 }
 
-MODULE(MODULE_CLASS_DRIVER, xc5k, "iic");
+MODULE(MODULE_CLASS_DRIVER, xc5k, "i2cexec");
 
 static int
 xc5k_modcmd(modcmd_t cmd, void *opaque)

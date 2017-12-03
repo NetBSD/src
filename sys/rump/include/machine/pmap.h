@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.6 2010/06/17 08:19:32 pooka Exp $	*/
+/*	$NetBSD: pmap.h,v 1.6.18.1 2017/12/03 11:39:14 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -27,6 +27,10 @@
 
 #ifndef _SYS_RUMP_PMAP_H_
 #define _SYS_RUMP_PMAP_H_
+
+struct pmap {
+	int vac_me_not_at_all;
+};
 
 #define pmap_update(v)
 #define pmap_is_modified(a) (true)

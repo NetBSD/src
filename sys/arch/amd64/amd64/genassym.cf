@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.52.2.1 2014/08/20 00:02:42 tls Exp $
+#	$NetBSD: genassym.cf,v 1.52.2.2 2017/12/03 11:35:47 jdolecek Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -145,6 +145,8 @@ define	L1_SLOT_KERNBASE	pl1_pi(KERNBASE)
 
 define	PDIR_SLOT_PTE		PDIR_SLOT_PTE
 
+define	PDE_SIZE		sizeof(pd_entry_t)
+
 define	VM_MAXUSER_ADDRESS	(unsigned long long)VM_MAXUSER_ADDRESS
 
 define	L_PCB			offsetof(struct lwp, l_addr)
@@ -218,7 +220,7 @@ define	TF_SS			offsetof(struct trapframe, tf_ss)
 
 # Size of stack area needed for saving registers
 define	TF_REGSIZE		offsetof(struct trapframe, tf_trapno)
-# Total size includes regsisters pushed by hardware
+# Total size includes registers pushed by hardware
 define	FRAMESIZE		sizeof(struct trapframe)
 
 define	CPU_INFO_SCRATCH	offsetof(struct cpu_info, ci_scratch)
@@ -276,11 +278,7 @@ endif
 define	IH_FUN			offsetof(struct intrhand, ih_fun)
 define	IH_ARG			offsetof(struct intrhand, ih_arg)
 define  IH_LEVEL		offsetof(struct intrhand, ih_level)
-ifdef XEN
-define IH_IPL_NEXT		offsetof(struct intrhand, ih_ipl_next)
-else
 define	IH_NEXT			offsetof(struct intrhand, ih_next)
-endif
 
 ifdef COMPAT_NETBSD32
 define	SC_FS32			offsetof(struct netbsd32_sigcontext, sc_fs)
@@ -297,13 +295,6 @@ define  LINUX32_SYS_sigreturn		LINUX32_SYS_sigreturn
 define  LINUX32_SYS_exit		LINUX32_SYS_exit
 endif
 
-ifdef XEN
-define	SIZEOF_IPLSOURCE	sizeof(struct iplsource)
-define	IS_RECURSE      offsetof(struct iplsource, ipl_recurse)
-define	IS_RESUME       offsetof(struct iplsource, ipl_resume)
-define	IS_HANDLERS     offsetof(struct iplsource, ipl_handlers)
-define	EV_EVCNTL	offsetof(struct evcnt, ev_count)
-else
 define	IS_RECURSE	offsetof(struct intrsource, is_recurse)
 define	IS_RESUME	offsetof(struct intrsource, is_resume)
 define	IS_EVCNT	offsetof(struct intrsource, is_evcnt.ev_count)
@@ -314,7 +305,6 @@ define	IS_PIN		offsetof(struct intrsource, is_pin)
 define	IS_TYPE		offsetof(struct intrsource, is_type)
 define	IS_MAXLEVEL	offsetof(struct intrsource, is_maxlevel)
 define	IS_LWP			offsetof(struct intrsource, is_lwp)
-endif
 
 define	IPL_NONE		IPL_NONE
 define	IPL_PREEMPT		IPL_PREEMPT
@@ -359,6 +349,7 @@ define EVTCHN_UPCALL_MASK	offsetof(struct vcpu_info, evtchn_upcall_mask)
 define XEN_PT_BASE		offsetof(struct start_info, pt_base)    
 define XEN_NR_PT_FRAMES		offsetof(struct start_info, nr_pt_frames)
 define __HYPERVISOR_iret	__HYPERVISOR_iret
+define FLAT_RING3_CS64		FLAT_RING3_CS64
 endif
 
 define	NKL4_KIMG_ENTRIES	NKL4_KIMG_ENTRIES

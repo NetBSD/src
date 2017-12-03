@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_rng.c,v 1.3.6.4 2014/08/20 00:02:45 tls Exp $ */
+/*	$NetBSD: bcm2835_rng.c,v 1.3.6.5 2017/12/03 11:35:52 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,16 +30,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_rng.c,v 1.3.6.4 2014/08/20 00:02:45 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_rng.c,v 1.3.6.5 2017/12/03 11:35:52 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/bus.h>
-#include <sys/rnd.h>
-#include <sys/atomic.h>
-#include <sys/intr.h>
+#include <sys/rndpool.h>
+#include <sys/rndsource.h>
 
 #include <arm/broadcom/bcm_amba.h>
 #include <arm/broadcom/bcm2835reg.h>
@@ -59,19 +58,13 @@ struct bcm2835rng_softc {
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 
-	kmutex_t		sc_intr_lock;
-	unsigned int		sc_bytes_wanted;
-	void 			*sc_sih;
-
-	kmutex_t		sc_rnd_lock;
+	kmutex_t		sc_lock;
 	krndsource_t		sc_rndsource;
 };
 
 static int bcmrng_match(device_t, cfdata_t, void *);
 static void bcmrng_attach(device_t, device_t, void *);
-static void bcmrng_get(struct bcm2835rng_softc *);
-static void bcmrng_get_cb(size_t, void *);
-static void bcmrng_get_intr(void *);
+static void bcmrng_get(size_t, void *);
 
 CFATTACH_DECL_NEW(bcmrng_amba, sizeof(struct bcm2835rng_softc),
     bcmrng_match, bcmrng_attach, NULL, NULL);
@@ -104,7 +97,7 @@ bcmrng_attach(device_t parent, device_t self, void *aux)
 	if (bus_space_map(aaa->aaa_iot, aaa->aaa_addr, BCM2835_RNG_SIZE, 0,
 	    &sc->sc_ioh)) {
 		aprint_error_dev(sc->sc_dev, "unable to map device\n");
-		goto fail0;
+		return;
 	}
 
 	/* discard initial numbers, broadcom says they are "less random" */
@@ -115,41 +108,25 @@ bcmrng_attach(device_t parent, device_t self, void *aux)
 	ctrl |= RNG_CTRL_EN;
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, RNG_CTRL, ctrl);
 
-	/* set up a softint for adding data */
-	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SERIAL);
-	sc->sc_bytes_wanted = 0;
-	sc->sc_sih = softint_establish(SOFTINT_SERIAL|SOFTINT_MPSAFE,
-	    &bcmrng_get_intr, sc);
-	if (sc->sc_sih == NULL) {
-		aprint_error_dev(sc->sc_dev, "unable to establish softint");
-		goto fail1;
-	}
-
 	/* set up an rndsource */
-	mutex_init(&sc->sc_rnd_lock, MUTEX_DEFAULT, IPL_SERIAL);
-	rndsource_setcb(&sc->sc_rndsource, &bcmrng_get_cb, sc);
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_VM);
+	rndsource_setcb(&sc->sc_rndsource, &bcmrng_get, sc);
 	rnd_attach_source(&sc->sc_rndsource, device_xname(self), RND_TYPE_RNG,
 	    RND_FLAG_COLLECT_VALUE|RND_FLAG_HASCB);
 
 	/* get some initial entropy ASAP */
-	bcmrng_get_cb(RND_POOLBITS / NBBY, sc);
-
-	/* Success!  */
-	return;
-
-fail1:	mutex_destroy(&sc->sc_intr_lock);
-	bus_space_unmap(aaa->aaa_iot, sc->sc_ioh, BCM2835_RNG_SIZE);
-fail0:	return;
+	bcmrng_get(RND_POOLBITS / NBBY, sc);
 }
 
 static void
-bcmrng_get(struct bcm2835rng_softc *sc)
+bcmrng_get(size_t bytes_wanted, void *arg)
 {
+	struct bcm2835rng_softc *sc = arg;
 	uint32_t status, cnt;
 	uint32_t buf[RNG_DATA_MAX]; /* 1k on the stack */
 
-	mutex_spin_enter(&sc->sc_intr_lock);
-	while (sc->sc_bytes_wanted) {
+	mutex_spin_enter(&sc->sc_lock);
+	while (bytes_wanted) {
 		status = bus_space_read_4(sc->sc_iot, sc->sc_ioh, RNG_STATUS);
 		cnt = __SHIFTOUT(status, RNG_STATUS_CNT);
 		KASSERT(cnt < RNG_DATA_MAX);
@@ -157,46 +134,10 @@ bcmrng_get(struct bcm2835rng_softc *sc)
 			continue;	/* XXX Busy-waiting seems wrong...  */
 		bus_space_read_multi_4(sc->sc_iot, sc->sc_ioh, RNG_DATA, buf,
 		    cnt);
-
-		/*
-		 * This lock dance is necessary because rnd_add_data
-		 * may call bcmrng_get_cb which takes the intr lock.
-		 */
-		mutex_spin_exit(&sc->sc_intr_lock);
-		mutex_spin_enter(&sc->sc_rnd_lock);
-		rnd_add_data(&sc->sc_rndsource, buf, (cnt * 4),
+		rnd_add_data_sync(&sc->sc_rndsource, buf, (cnt * 4),
 		    (cnt * 4 * NBBY));
-		mutex_spin_exit(&sc->sc_rnd_lock);
-		mutex_spin_enter(&sc->sc_intr_lock);
-		sc->sc_bytes_wanted -= MIN(sc->sc_bytes_wanted, (cnt * 4));
+		bytes_wanted -= MIN(bytes_wanted, (cnt * 4));
 	}
 	explicit_memset(buf, 0, sizeof(buf));
-	mutex_spin_exit(&sc->sc_intr_lock);
-}
-
-static void
-bcmrng_get_cb(size_t bytes_wanted, void *arg)
-{
-	struct bcm2835rng_softc *sc = arg;
-
-	/*
-	 * Deferring to a softint is necessary until the rnd(9) locking
-	 * is fixed.
-	 */
-	mutex_spin_enter(&sc->sc_intr_lock);
-	if (sc->sc_bytes_wanted == 0)
-		softint_schedule(sc->sc_sih);
-	if (bytes_wanted > (UINT_MAX - sc->sc_bytes_wanted))
-		sc->sc_bytes_wanted = UINT_MAX;
-	else
-		sc->sc_bytes_wanted += bytes_wanted;
-	mutex_spin_exit(&sc->sc_intr_lock);
-}
-
-static void
-bcmrng_get_intr(void *arg)
-{
-	struct bcm2835rng_softc *const sc = arg;
-
-	bcmrng_get(sc);
+	mutex_spin_exit(&sc->sc_lock);
 }

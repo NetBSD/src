@@ -1,0 +1,42 @@
+#	$NetBSD: kernhist,v 1.2.18.2 2017/12/03 11:38:44 jdolecek Exp $
+
+# by mrg and skrll
+
+define kernhist
+	dont-repeat
+
+	set $hist = (struct kern_history *)&$arg0
+	set $histf = $hist->f
+	set $histn = $hist->n
+	set $lcv = $histf
+
+	printf "Kernel history %s has %d entries (next free %d)\n", $hist->name, $histn, $histf
+	while (1)
+		set $e = $hist->e[$lcv]
+		set $fmt = $e.fmt
+
+		if ($fmt)
+			printf "%06lx.%06d ", $e.tv.tv_sec, $e.tv.tv_usec
+			printf "%s#%ld@%d: ", $e.fn, $e.call, $e.cpunum
+			printf "%s: %lx %lx %lx %lx\n", $fmt, $e.v[0], $e.v[1], $e.v[2], $e.v[3]
+			set $lcv = ($lcv + 1) % $histn
+		else
+			if ($histf == 0)
+				printf "No entries\n"
+				loop_break
+			end
+			# if fmt is NULL and hist->f isn't zero, skip back to
+			# the start of the list since it hasn't looped yet.
+			set $lcv = 0
+		end
+
+		if ($lcv == $histf)
+			loop_break
+		end
+	end
+end
+document kernhist
+dump a kernel hist.  eg, "kernhist usbhist".  note that the format
+is not expanded due to there being now way to pass a variable format
+string to gdb's printf.
+end

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_machdep.c,v 1.38 2011/03/04 22:25:29 joerg Exp $	 */
+/*	$NetBSD: svr4_32_machdep.c,v 1.38.14.1 2017/12/03 11:36:45 jdolecek Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_machdep.c,v 1.38 2011/03/04 22:25:29 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_machdep.c,v 1.38.14.1 2017/12/03 11:36:45 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -226,7 +226,7 @@ svr4_32_setmcontext(struct lwp *l, struct svr4_32_mcontext *mc,
 #endif
 
 #ifdef DEBUG_SVR4
-	svr4_32_printmcontext("setmcontext", uc);
+	svr4_32_printmcontext("setmcontext", mc);
 #endif
 
 	write_user_windows();
@@ -504,8 +504,8 @@ svr4_32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	frame.sf_handler = catcher;
 
 	DPRINTF(("svr4_32_sendsig signum=%d si = %p uc = %p handler = %p\n",
-	         frame.sf_signum, frame.sf_sip,
-		 frame.sf_ucp, frame.sf_handler));
+	         frame.sf_signum, NETBSD32PTR64(frame.sf_sip),
+		 NETBSD32PTR64(frame.sf_ucp), frame.sf_handler));
 	/*
 	 * Modify the signal context to be used by sigreturn.
 	 */
@@ -673,7 +673,8 @@ svr4_32_sys_sysarch(struct lwp *l, const struct svr4_32_sys_sysarch_args *uap, r
 }
 
 vaddr_t
-svr4_32_vm_default_addr(struct proc *p, vaddr_t base, vsize_t size)
+svr4_32_vm_default_addr(struct proc *p, vaddr_t base, vsize_t size,
+    int topdown)
 {
 	return round_page((vaddr_t)(base) + (vsize_t)MAXDSIZ32);
 }

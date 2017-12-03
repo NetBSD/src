@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2800_pci.c,v 1.18.2.2 2014/08/20 00:02:47 tls Exp $	*/
+/*	$NetBSD: s3c2800_pci.c,v 1.18.2.3 2017/12/03 11:35:55 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2800_pci.c,v 1.18.2.2 2014/08/20 00:02:47 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2800_pci.c,v 1.18.2.3 2017/12/03 11:35:55 jdolecek Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -208,6 +208,7 @@ struct arm32_pci_chipset sspci_chipset = {
 	s3c2800_pci_intr_map,
 	s3c2800_pci_intr_string,
 	s3c2800_pci_intr_evcnt,
+	NULL,		/* intr_setattr */
 	s3c2800_pci_intr_establish,
 	s3c2800_pci_intr_disestablish,
 #ifdef __HAVE_PCI_CONF_HOOK
@@ -445,6 +446,10 @@ s3c2800_pci_decompose_tag(void *v, pcitag_t tag, int *bp, int *dp, int *fp)
 static vaddr_t
 make_pci_conf_va(struct sspci_softc * sc, pcitag_t tag, int offset)
 {
+
+	if ((unsigned int)offset >= PCI_CONF_SIZE)
+		return (vaddr_t) -1;
+
 	if ((tag & BUSNO_MASK) == 0) {
 		/* configuration type 0 */
 		int devno = tag_to_devno(tag);

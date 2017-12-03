@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_clstate.c,v 1.1.1.1.10.2 2014/08/20 00:04:26 tls Exp $	*/
+/*	$NetBSD: nfs_clstate.c,v 1.1.1.1.10.3 2017/12/03 11:38:42 jdolecek Exp $	*/
 /*-
  * Copyright (c) 2009 Rick Macklem, University of Guelph
  * All rights reserved.
@@ -27,8 +27,8 @@
  */
 
 #include <sys/cdefs.h>
-/* __FBSDID("FreeBSD: head/sys/fs/nfsclient/nfs_clstate.c 252100 2013-06-22 21:58:21Z rmacklem "); */
-__RCSID("$NetBSD: nfs_clstate.c,v 1.1.1.1.10.2 2014/08/20 00:04:26 tls Exp $");
+/* __FBSDID("FreeBSD: head/sys/fs/nfsclient/nfs_clstate.c 304026 2016-08-12 22:44:59Z rmacklem "); */
+__RCSID("$NetBSD: nfs_clstate.c,v 1.1.1.1.10.3 2017/12/03 11:38:42 jdolecek Exp $");
 
 /*
  * These functions implement the client side state handling for NFSv4.
@@ -81,12 +81,12 @@ __RCSID("$NetBSD: nfs_clstate.c,v 1.1.1.1.10.2 2014/08/20 00:04:26 tls Exp $");
  */
 
 #ifndef APPLEKEXT
-#include <fs/nfs/nfsport.h>
+#include <fs/nfs/common/nfsport.h>
 
 /*
  * Global variables
  */
-extern struct nfsstats newnfsstats;
+extern struct nfsstatsv1 nfsstatsv1;
 extern struct nfsreqhead nfsd_reqq;
 extern u_int32_t newnfs_false, newnfs_true;
 extern int nfscl_debuglevel;
@@ -148,7 +148,7 @@ static int nfscl_trylock(struct nfsmount *, vnode_t , u_int8_t *,
 static int nfsrpc_reopen(struct nfsmount *, u_int8_t *, int, u_int32_t,
     struct nfsclopen *, struct nfscldeleg **, struct ucred *, NFSPROC_T *);
 static void nfscl_freedeleg(struct nfscldeleghead *, struct nfscldeleg *);
-static int nfscl_errmap(struct nfsrv_descript *);
+static int nfscl_errmap(struct nfsrv_descript *, u_int32_t);
 static void nfscl_cleanup_common(struct nfsclclient *, u_int8_t *);
 static int nfscl_recalldeleg(struct nfsclclient *, struct nfsmount *,
     struct nfscldeleg *, vnode_t, struct ucred *, NFSPROC_T *, int);
@@ -283,6 +283,23 @@ nfscl_open(vnode_t vp, u_int8_t *nfhp, int fhlen, u_int32_t amode, int usedeleg,
 	    newonep);
 
 	/*
+	 * Now, check the mode on the open and return the appropriate
+	 * value.
+	 */
+	if (retp != NULL) {
+		if (nfhp != NULL && dp != NULL && nop == NULL)
+			/* new local open on delegation */
+			*retp = NFSCLOPEN_SETCRED;
+		else
+			*retp = NFSCLOPEN_OK;
+	}
+	if (op != NULL && (amode & ~(op->nfso_mode))) {
+		op->nfso_mode |= amode;
+		if (retp != NULL && dp == NULL)
+			*retp = NFSCLOPEN_DOOPEN;
+	}
+
+	/*
 	 * Serialize modifications to the open owner for multiple threads
 	 * within the same process using a read/write sleep lock.
 	 */
@@ -297,23 +314,6 @@ nfscl_open(vnode_t vp, u_int8_t *nfhp, int fhlen, u_int32_t amode, int usedeleg,
 		*owpp = owp;
 	if (opp != NULL)
 		*opp = op;
-	if (retp != NULL) {
-		if (nfhp != NULL && dp != NULL && nop == NULL)
-			/* new local open on delegation */
-			*retp = NFSCLOPEN_SETCRED;
-		else
-			*retp = NFSCLOPEN_OK;
-	}
-
-	/*
-	 * Now, check the mode on the open and return the appropriate
-	 * value.
-	 */
-	if (op != NULL && (amode & ~(op->nfso_mode))) {
-		op->nfso_mode |= amode;
-		if (retp != NULL && dp == NULL)
-			*retp = NFSCLOPEN_DOOPEN;
-	}
 	return (0);
 }
 
@@ -345,10 +345,10 @@ nfscl_newopen(struct nfsclclient *clp, struct nfscldeleg *dp,
 		nowp->nfsow_defunct = 0;
 		nfscl_lockinit(&nowp->nfsow_rwlock);
 		if (dp != NULL) {
-			newnfsstats.cllocalopenowners++;
+			nfsstatsv1.cllocalopenowners++;
 			LIST_INSERT_HEAD(&dp->nfsdl_owner, nowp, nfsow_list);
 		} else {
-			newnfsstats.clopenowners++;
+			nfsstatsv1.clopenowners++;
 			LIST_INSERT_HEAD(&clp->nfsc_owner, nowp, nfsow_list);
 		}
 		owp = *owpp = nowp;
@@ -382,9 +382,9 @@ nfscl_newopen(struct nfsclclient *clp, struct nfscldeleg *dp,
 				TAILQ_INSERT_HEAD(&clp->nfsc_deleg, dp,
 				    nfsdl_list);
 				dp->nfsdl_timestamp = NFSD_MONOSEC + 120;
-				newnfsstats.cllocalopens++;
+				nfsstatsv1.cllocalopens++;
 			} else {
-				newnfsstats.clopens++;
+				nfsstatsv1.clopens++;
 			}
 			LIST_INSERT_HEAD(&owp->nfsow_open, nop, nfso_list);
 			*opp = nop;
@@ -432,7 +432,7 @@ nfscl_deleg(mount_t mp, struct nfsclclient *clp, u_int8_t *nfhp,
 		LIST_INSERT_HEAD(NFSCLDELEGHASH(clp, nfhp, fhlen), dp,
 		    nfsdl_hash);
 		dp->nfsdl_timestamp = NFSD_MONOSEC + 120;
-		newnfsstats.cldelegates++;
+		nfsstatsv1.cldelegates++;
 		nfscl_delegcnt++;
 	} else {
 		/*
@@ -718,7 +718,7 @@ nfscl_openrelease(struct nfsclopen *op, int error, int candelete)
 /*
  * Called to get a clientid structure. It will optionally lock the
  * client data structures to do the SetClientId/SetClientId_confirm,
- * but will release that lock and return the clientid with a refernce
+ * but will release that lock and return the clientid with a reference
  * count on it.
  * If the "cred" argument is NULL, a new clientid should not be created.
  * If the "p" argument is NULL, a SetClientID/SetClientIDConfirm cannot
@@ -1073,10 +1073,10 @@ nfscl_getbytelock(vnode_t vp, u_int64_t off, u_int64_t len,
 		LIST_INIT(&nlp->nfsl_lock);
 		if (donelocally) {
 			nlp->nfsl_open = NULL;
-			newnfsstats.cllocallockowners++;
+			nfsstatsv1.cllocallockowners++;
 		} else {
 			nlp->nfsl_open = op;
-			newnfsstats.cllockowners++;
+			nfsstatsv1.cllockowners++;
 		}
 		LIST_INSERT_HEAD(lhp, nlp, nfsl_list);
 		lp = nlp;
@@ -1299,7 +1299,7 @@ nfscl_checkwritelocked(vnode_t vp, struct flock *fl,
 		break;
 	default:
 		return (1);
-	};
+	}
 	if (fl->l_len != 0) {
 		end = off + fl->l_len;
 		if (end < off)
@@ -1404,9 +1404,9 @@ nfscl_freeopen(struct nfsclopen *op, int local)
 	nfscl_freealllocks(&op->nfso_lock, local);
 	FREE((caddr_t)op, M_NFSCLOPEN);
 	if (local)
-		newnfsstats.cllocalopens--;
+		nfsstatsv1.cllocalopens--;
 	else
-		newnfsstats.clopens--;
+		nfsstatsv1.clopens--;
 }
 
 /*
@@ -1485,9 +1485,9 @@ nfscl_freeopenowner(struct nfsclowner *owp, int local)
 	LIST_REMOVE(owp, nfsow_list);
 	FREE((caddr_t)owp, M_NFSCLOWNER);
 	if (local)
-		newnfsstats.cllocalopenowners--;
+		nfsstatsv1.cllocalopenowners--;
 	else
-		newnfsstats.clopenowners--;
+		nfsstatsv1.clopenowners--;
 }
 
 /*
@@ -1504,9 +1504,9 @@ nfscl_freelockowner(struct nfscllockowner *lp, int local)
 	}
 	FREE((caddr_t)lp, M_NFSCLLOCKOWNER);
 	if (local)
-		newnfsstats.cllocallockowners--;
+		nfsstatsv1.cllocallockowners--;
 	else
-		newnfsstats.cllockowners--;
+		nfsstatsv1.cllockowners--;
 }
 
 /*
@@ -1519,9 +1519,9 @@ nfscl_freelock(struct nfscllock *lop, int local)
 	LIST_REMOVE(lop, nfslo_list);
 	FREE((caddr_t)lop, M_NFSCLLOCK);
 	if (local)
-		newnfsstats.cllocallocks--;
+		nfsstatsv1.cllocallocks--;
 	else
-		newnfsstats.cllocks--;
+		nfsstatsv1.cllocks--;
 }
 
 /*
@@ -1555,7 +1555,7 @@ nfscl_freedeleg(struct nfscldeleghead *hdp, struct nfscldeleg *dp)
 	TAILQ_REMOVE(hdp, dp, nfsdl_list);
 	LIST_REMOVE(dp, nfsdl_hash);
 	FREE((caddr_t)dp, M_NFSCLDELEG);
-	newnfsstats.cldelegates--;
+	nfsstatsv1.cldelegates--;
 	nfscl_delegcnt--;
 }
 
@@ -1623,18 +1623,18 @@ nfscl_expireclient(struct nfsclclient *clp, struct nfsmount *nmp,
 			    LIST_REMOVE(op, nfso_list);
 			    op->nfso_own = towp;
 			    LIST_INSERT_HEAD(&towp->nfsow_open, op, nfso_list);
-			    newnfsstats.cllocalopens--;
-			    newnfsstats.clopens++;
+			    nfsstatsv1.cllocalopens--;
+			    nfsstatsv1.clopens++;
 			}
 		    } else {
 			/* Just add the openowner to the client list */
 			LIST_REMOVE(owp, nfsow_list);
 			owp->nfsow_clp = clp;
 			LIST_INSERT_HEAD(&clp->nfsc_owner, owp, nfsow_list);
-			newnfsstats.cllocalopenowners--;
-			newnfsstats.clopenowners++;
-			newnfsstats.cllocalopens--;
-			newnfsstats.clopens++;
+			nfsstatsv1.cllocalopenowners--;
+			nfsstatsv1.clopenowners++;
+			nfsstatsv1.cllocalopens--;
+			nfsstatsv1.clopens++;
 		    }
 		}
 		owp = nowp;
@@ -2284,9 +2284,9 @@ nfscl_insertlock(struct nfscllockowner *lp, struct nfscllock *new_lop,
 	else
 		LIST_INSERT_AFTER(insert_lop, new_lop, nfslo_list);
 	if (local)
-		newnfsstats.cllocallocks++;
+		nfsstatsv1.cllocallocks++;
 	else
-		newnfsstats.cllocks++;
+		nfsstatsv1.cllocks++;
 }
 
 /*
@@ -2573,7 +2573,7 @@ tryagain:
 				    LIST_REMOVE(dp, nfsdl_hash);
 				    TAILQ_INSERT_HEAD(&dh, dp, nfsdl_list);
 				    nfscl_delegcnt--;
-				    newnfsstats.cldelegates--;
+				    nfsstatsv1.cldelegates--;
 				}
 				NFSLOCKCLSTATE();
 			}
@@ -2614,7 +2614,7 @@ tryagain:
 			    LIST_REMOVE(dp, nfsdl_hash);
 			    TAILQ_INSERT_HEAD(&dh, dp, nfsdl_list);
 			    nfscl_delegcnt--;
-			    newnfsstats.cldelegates--;
+			    nfsstatsv1.cldelegates--;
 			}
 		    }
 		    dp = ndp;
@@ -3148,7 +3148,7 @@ nfscl_docb(struct nfsrv_descript *nd, NFSPROC_T *p)
 	struct nfsclclient *clp;
 	struct nfscldeleg *dp = NULL;
 	int numops, taglen = -1, error = 0, trunc;
-	u_int32_t minorvers, retops = 0, *retopsp = NULL, *repp, cbident;
+	u_int32_t minorvers = 0, retops = 0, *retopsp = NULL, *repp, cbident;
 	u_char tag[NFSV4_SMALLSTR + 1], *tagstr;
 	vnode_t vp = NULL;
 	struct nfsnode *np;
@@ -3212,13 +3212,13 @@ nfscl_docb(struct nfsrv_descript *nd, NFSPROC_T *p)
 		   (op > NFSV4OP_CBNOTIFYDEVID &&
 		    minorvers == NFSV41_MINORVERSION)) {
 		    nd->nd_repstat = NFSERR_OPILLEGAL;
-		    *repp = nfscl_errmap(nd);
+		    *repp = nfscl_errmap(nd, minorvers);
 		    retops++;
 		    break;
 		}
 		nd->nd_procnum = op;
-		if (op < NFSV4OP_CBNOPS)
-			newnfsstats.cbrpccnt[nd->nd_procnum]++;
+		if (op < NFSV41_CBNOPS)
+			nfsstatsv1.cbrpccnt[nd->nd_procnum]++;
 		switch (op) {
 		case NFSV4OP_CBGETATTR:
 			NFSCL_DEBUG(4, "cbgetattr\n");
@@ -3281,7 +3281,7 @@ nfscl_docb(struct nfsrv_descript *nd, NFSPROC_T *p)
 				FREE((caddr_t)nfhp, M_NFSFH);
 			if (!error)
 				(void) nfsv4_fillattr(nd, NULL, NULL, NULL, &va,
-				    NULL, 0, &rattrbits, NULL, NULL, 0, 0, 0, 0,
+				    NULL, 0, &rattrbits, NULL, p, 0, 0, 0, 0,
 				    (uint64_t)0);
 			break;
 		case NFSV4OP_CBRECALL:
@@ -3509,7 +3509,7 @@ nfscl_docb(struct nfsrv_descript *nd, NFSPROC_T *p)
 				error = NFSERR_NOTSUPP;
 			}
 			break;
-		};
+		}
 		if (error) {
 			if (error == EBADRPC || error == NFSERR_BADXDR) {
 				nd->nd_repstat = NFSERR_BADXDR;
@@ -3520,7 +3520,7 @@ nfscl_docb(struct nfsrv_descript *nd, NFSPROC_T *p)
 		}
 		retops++;
 		if (nd->nd_repstat) {
-			*repp = nfscl_errmap(nd);
+			*repp = nfscl_errmap(nd, minorvers);
 			break;
 		} else
 			*repp = 0;	/* NFS4_OK */
@@ -3541,7 +3541,7 @@ nfsmout:
 	} else {
 		*retopsp = txdr_unsigned(retops);
 	}
-	*nd->nd_errp = nfscl_errmap(nd);
+	*nd->nd_errp = nfscl_errmap(nd, minorvers);
 out:
 	if (gotseq_ok != 0) {
 		rep = m_copym(nd->nd_mreq, 0, M_COPYALL, M_WAITOK);
@@ -3550,7 +3550,7 @@ out:
 		if (clp != NULL) {
 			nfsv4_seqsess_cacherep(slotid,
 			    NFSMNT_MDSSESSION(clp->nfsc_nmp)->nfsess_cbslots,
-			    rep);
+			    NFSERR_OK, &rep);
 			NFSUNLOCKCLSTATE();
 		} else {
 			NFSUNLOCKCLSTATE();
@@ -4647,7 +4647,7 @@ nfscl_deleggetmodtime(vnode_t vp, struct timespec *mtime)
 }
 
 static int
-nfscl_errmap(struct nfsrv_descript *nd)
+nfscl_errmap(struct nfsrv_descript *nd, u_int32_t minorvers)
 {
 	short *defaulterrp, *errp;
 
@@ -4660,6 +4660,11 @@ nfscl_errmap(struct nfsrv_descript *nd)
 	if (nd->nd_repstat == NFSERR_MINORVERMISMATCH ||
 	    nd->nd_repstat == NFSERR_OPILLEGAL)
 		return (txdr_unsigned(nd->nd_repstat));
+	if (nd->nd_repstat >= NFSERR_BADIOMODE && nd->nd_repstat < 20000 &&
+	    minorvers > NFSV4_MINORVERSION) {
+		/* NFSv4.n error. */
+		return (txdr_unsigned(nd->nd_repstat));
+	}
 	if (nd->nd_procnum < NFSV4OP_CBNOPS)
 		errp = defaulterrp = nfscl_cberrmap[nd->nd_procnum];
 	else
@@ -4713,7 +4718,7 @@ nfscl_layout(struct nfsmount *nmp, vnode_t vp, u_int8_t *fhp, int fhlen,
 	if (lyp == NULL) {
 		/*
 		 * Although no lyp was passed in, another thread might have
-		 * allocated one. If one is found, just increment it's ref
+		 * allocated one. If one is found, just increment its ref
 		 * count and return it.
 		 */
 		lyp = nfscl_findlayout(clp, fhp, fhlen);

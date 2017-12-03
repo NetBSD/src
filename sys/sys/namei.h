@@ -1,11 +1,11 @@
-/*	$NetBSD: namei.h,v 1.80.8.2 2014/08/20 00:04:44 tls Exp $	*/
+/*	$NetBSD: namei.h,v 1.80.8.3 2017/12/03 11:39:20 jdolecek Exp $	*/
 
 
 /*
  * WARNING: GENERATED FILE.  DO NOT EDIT
  * (edit namei.src and run make namei in src/sys/sys)
  *   by:   NetBSD: gennameih.awk,v 1.5 2009/12/23 14:17:19 pooka Exp 
- *   from: NetBSD: namei.src,v 1.33 2014/06/03 21:16:15 joerg Exp 
+ *   from: NetBSD: namei.src,v 1.41 2017/03/21 10:20:12 riastradh Exp 
  */
 
 /*
@@ -85,6 +85,26 @@ void pathbuf_stringcopy_put(struct pathbuf *, const char *);
 int pathbuf_maybe_copyin(const char *userpath, enum uio_seg seg, struct pathbuf **ret);
 
 /*
+ * Lookup parameters: this structure describes the subset of
+ * information from the nameidata structure that is passed
+ * through the VOP interface.
+ */
+struct componentname {
+	/*
+	 * Arguments to lookup.
+	 */
+	uint32_t	cn_nameiop;	/* namei operation */
+	uint32_t	cn_flags;	/* flags to namei */
+	kauth_cred_t 	cn_cred;	/* credentials */
+	/*
+	 * Shared between lookup and commit routines.
+	 */
+	const char 	*cn_nameptr;	/* pointer to looked up name */
+	size_t		cn_namelen;	/* length of looked up comp */
+	size_t		cn_consume;	/* chars to consume in lookup */
+};
+
+/*
  * Encapsulation of namei parameters.
  */
 struct nameidata {
@@ -115,20 +135,7 @@ struct nameidata {
 	 * information from the nameidata structure that is passed
 	 * through the VOP interface.
 	 */
-	struct componentname {
-		/*
-		 * Arguments to lookup.
-		 */
-		uint32_t	cn_nameiop;	/* namei operation */
-		uint32_t	cn_flags;	/* flags to namei */
-		kauth_cred_t 	cn_cred;	/* credentials */
-		/*
-		 * Shared between lookup and commit routines.
-		 */
-		const char 	*cn_nameptr;	/* pointer to looked up name */
-		size_t		cn_namelen;	/* length of looked up comp */
-		size_t		cn_consume;	/* chars to consume in lookup */
-	} ni_cnd;
+	struct componentname ni_cnd;
 };
 
 /*
@@ -166,9 +173,7 @@ struct nameidata {
 #define	DOWHITEOUT	0x0040000	/* do whiteouts */
 #define	REQUIREDIR	0x0080000	/* must be a directory */
 #define	CREATEDIR	0x0200000	/* trailing slashes are ok */
-#define	INRENAME	0x0400000	/* operation is a part of ``rename'' */
-#define	INRELOOKUP	0x0800000	/* set while inside relookup() */
-#define	PARAMASK	0x0eee300	/* mask of parameter descriptors */
+#define	PARAMASK	0x02ee300	/* mask of parameter descriptors */
 
 /*
  * Initialization of a nameidata structure.
@@ -204,21 +209,30 @@ struct nameidata {
  * accessed and mostly read-only data is toward the front, with
  * infrequently accessed data and the lock towards the rear.  The
  * lock is then more likely to be in a seperate cache line.
+ *
+ * Locking rules:
+ *
+ *      -       stable after initialization
+ *      L       namecache_lock
+ *      C       struct nchcpu::cpu_lock
+ *      L/C     insert needs L, read needs L or any C,
+ *              must hold L and all C after (or during) delete before free
+ *      N       struct namecache::nc_lock
  */
-struct	namecache {
-	LIST_ENTRY(namecache) nc_hash;	/* hash chain */
-	LIST_ENTRY(namecache) nc_vhash;	/* directory hash chain */
-	struct	vnode *nc_dvp;		/* vnode of parent of name */
-	struct	vnode *nc_vp;		/* vnode the name refers to */
-	int	nc_flags;		/* copy of componentname's ISWHITEOUT */
-	char	nc_nlen;		/* length of name */
-	char	nc_name[NCHNAMLEN];	/* segment name */
-	void	*nc_gcqueue;		/* queue for garbage collection */
-	TAILQ_ENTRY(namecache) nc_lru;	/* psuedo-lru chain */
-	LIST_ENTRY(namecache) nc_dvlist;
-	LIST_ENTRY(namecache) nc_vlist;
-	kmutex_t nc_lock;		/* lock on this entry */
-	int	nc_hittime;		/* last time scored a hit */
+struct namecache {
+	LIST_ENTRY(namecache) nc_hash;	/* L/C hash chain */
+	LIST_ENTRY(namecache) nc_vhash;	/* L directory hash chain */
+	struct	vnode *nc_dvp;		/* N vnode of parent of name */
+	struct	vnode *nc_vp;		/* N vnode the name refers to */
+	int	nc_flags;		/* - copy of componentname ISWHITEOUT */
+	char	nc_nlen;		/* - length of name */
+	char	nc_name[NCHNAMLEN];	/* - segment name */
+	void	*nc_gcqueue;		/* N queue for garbage collection */
+	TAILQ_ENTRY(namecache) nc_lru;	/* L psuedo-lru chain */
+	LIST_ENTRY(namecache) nc_dvlist;/* L dvp's list of cache entries */
+	LIST_ENTRY(namecache) nc_vlist; /* L vp's list of cache entries */
+	kmutex_t nc_lock;		/*   lock on this entry */
+	int	nc_hittime;		/* N last time scored a hit */
 };
 
 #ifdef _KERNEL
@@ -229,8 +243,8 @@ struct cpu_info;
 
 extern pool_cache_t pnbuf_cache;	/* pathname buffer cache */
 
-#define	PNBUF_GET()	pool_cache_get(pnbuf_cache, PR_WAITOK)
-#define	PNBUF_PUT(pnb)	pool_cache_put(pnbuf_cache, (pnb))
+#define	PNBUF_GET()	((char *)pool_cache_get(pnbuf_cache, PR_WAITOK))
+#define	PNBUF_PUT(pnb)	pool_cache_put(pnbuf_cache, (void *)(pnb))
 
 /*
  * Typesafe flags for namei_simple/nameiat_simple.
@@ -277,9 +291,9 @@ void	cache_purge1(struct vnode *, const char *, size_t, int);
 #define	PURGE_PARENTS	1
 #define	PURGE_CHILDREN	2
 #define	cache_purge(vp)	cache_purge1((vp),NULL,0,PURGE_PARENTS|PURGE_CHILDREN)
-int	cache_lookup(struct vnode *, const char *, size_t, uint32_t, uint32_t,
+bool	cache_lookup(struct vnode *, const char *, size_t, uint32_t, uint32_t,
 			int *, struct vnode **);
-int	cache_lookup_raw(struct vnode *, const char *, size_t, uint32_t,
+bool	cache_lookup_raw(struct vnode *, const char *, size_t, uint32_t,
 			int *, struct vnode **);
 int	cache_revlookup(struct vnode *, struct vnode **, char **, char *);
 void	cache_enter(struct vnode *, struct vnode *,
@@ -296,38 +310,31 @@ void	namecache_print(struct vnode *, void (*)(const char *, ...)
 #endif
 
 /*
- * Stats on usefulness of namei caches.
- * XXX: should be 64-bit counters.
+ * Stats on usefulness of namei caches.  A couple of structures are
+ * used for counting, with members having the same names but different
+ * types.  Containerize member names with the preprocessor to avoid
+ * cut-'n'-paste.  A (U) in the comment documents values that are
+ * incremented unlocked; we may treat these specially.
  */
-struct	nchstats {
-	long	ncs_goodhits;		/* hits that we can really use */
-	long	ncs_neghits;		/* negative hits that we can use */
-	long	ncs_badhits;		/* hits we must drop */
-	long	ncs_falsehits;		/* hits with id mismatch */
-	long	ncs_miss;		/* misses */
-	long	ncs_long;		/* long names that ignore cache */
-	long	ncs_pass2;		/* names found with passes == 2 */
-	long	ncs_2passes;		/* number of times we attempt it */
-	long	ncs_revhits;		/* reverse-cache hits */
-	long	ncs_revmiss;		/* reverse-cache misses */
-};
+#define	_NAMEI_CACHE_STATS(type) {					\
+	type	ncs_goodhits;	/* hits that we can really use (U) */	\
+	type	ncs_neghits;	/* negative hits that we can use */	\
+	type	ncs_badhits;	/* hits we must drop */			\
+	type	ncs_falsehits;	/* hits with id mismatch (U) */		\
+	type	ncs_miss;	/* misses */				\
+	type	ncs_long;	/* long names that ignore cache */	\
+	type	ncs_pass2;	/* names found with passes == 2 (U) */	\
+	type	ncs_2passes;	/* number of times we attempt it (U) */	\
+	type	ncs_revhits;	/* reverse-cache hits */		\
+	type	ncs_revmiss;	/* reverse-cache misses */		\
+}
 
-struct	nchstats_sysctl {
-	uint64_t ncs_goodhits;		/* hits that we can really use */
-	uint64_t ncs_neghits;		/* negative hits that we can use */
-	uint64_t ncs_badhits;		/* hits we must drop */
-	uint64_t ncs_falsehits;		/* hits with id mismatch */
-	uint64_t ncs_miss;		/* misses */
-	uint64_t ncs_long;		/* long names that ignore cache */
-	uint64_t ncs_pass2;		/* names found with passes == 2 */
-	uint64_t ncs_2passes;		/* number of times we attempt it */
-	uint64_t ncs_revhits;		/* reverse-cache hits */
-	uint64_t ncs_revmiss;		/* reverse-cache misses */
-};
+/*
+ * Sysctl deals with a uint64_t version of the stats and summary
+ * totals are kept that way.
+ */
+struct	nchstats _NAMEI_CACHE_STATS(uint64_t);
 
-#ifdef _KERNEL
-extern struct nchstats nchstats;
-#endif
 /* #endif !_SYS_NAMEI_H_ (generated by gennameih.awk) */
 
 /* Definitions match above, but with NAMEI_ prefix */
@@ -354,8 +361,6 @@ extern struct nchstats nchstats;
 #define NAMEI_DOWHITEOUT	0x0040000
 #define NAMEI_REQUIREDIR	0x0080000
 #define NAMEI_CREATEDIR	0x0200000
-#define NAMEI_INRENAME	0x0400000
-#define NAMEI_INRELOOKUP	0x0800000
-#define NAMEI_PARAMASK	0x0eee300
+#define NAMEI_PARAMASK	0x02ee300
 
 #endif /* !_SYS_NAMEI_H_ */

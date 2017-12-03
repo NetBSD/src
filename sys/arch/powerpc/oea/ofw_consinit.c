@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_consinit.c,v 1.13.12.2 2013/06/23 06:20:10 tls Exp $ */
+/* $NetBSD: ofw_consinit.c,v 1.13.12.3 2017/12/03 11:36:37 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.13.12.2 2013/06/23 06:20:10 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.13.12.3 2017/12/03 11:36:37 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -119,6 +119,7 @@ void ofprint(const char *blah, ...)
 
 	va_start(va, blah);
 	len = vsnprintf(buf, sizeof(buf), blah, va);
+	va_end(va);
 	OF_write(console_instance, buf, len);
 }
 

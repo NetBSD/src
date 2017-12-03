@@ -1,4 +1,4 @@
-/*	$NetBSD: cissreg.h,v 1.3.38.1 2014/08/20 00:03:37 tls Exp $	*/
+/*	$NetBSD: cissreg.h,v 1.3.38.2 2017/12/03 11:37:03 jdolecek Exp $	*/
 /*	$OpenBSD: cissreg.h,v 1.11 2010/06/03 01:02:13 dlg Exp $	*/
 
 /*
@@ -24,8 +24,10 @@
 #define	CISS_IDB_CFG	0x01
 #define	CISS_ISR	0x30
 #define	CISS_IMR	0x34
-#define	CISS_READYENAB	4
-#define	CISS_READYENA	8
+#define	CISS_INTR_OPQ_SA5	(1<<3)
+#define	CISS_INTR_OPQ_SA5B	(1<<2)
+#define	CISS_INTR_OPQ	(CISS_INTR_OPQ_SA5|CISS_INTR_OPQ_SA5B)
+#define	CISS_INTR_MSI		(1<<0)
 #define	CISS_INQ	0x40
 #define	CISS_OUTQ	0x44
 #define	CISS_CFG_BAR	0xb4

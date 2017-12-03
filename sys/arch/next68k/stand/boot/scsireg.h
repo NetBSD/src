@@ -1,4 +1,4 @@
-/*	$NetBSD: scsireg.h,v 1.4 2007/03/05 18:06:09 he Exp $	*/
+/*	$NetBSD: scsireg.h,v 1.4.88.1 2017/12/03 11:36:33 jdolecek Exp $	*/
 /*
  * Copyright (c) 1994, 1997 Rolf Grossmann
  * All rights reserved.
@@ -44,6 +44,6 @@
 
 #define	SCSI_INTR	(1<<12)	/* I_BIT(I_SCSI) */
 
-/* XXX floppy register (will get it's own header file some time) */
+/* XXX floppy register (will get its own header file some time) */
 #define	FLP_CTRL	8
 #define  FLC_82077_SEL		0x40	/* set = 82077, clear = 53C90A */

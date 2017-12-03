@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.46.10.1 2014/08/20 00:03:12 tls Exp $	*/
+/*	$NetBSD: asm.h,v 1.46.10.2 2017/12/03 11:36:27 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 	lw	t9,4(sp);					\
 	addiu	sp,sp,8;					\
 	addiu	t9,t9,40;					\
-	.set	pop;					
+	.set	pop;
 
 #ifdef GPROF
 #define	MCOUNT _KERN_MCOUNT
@@ -259,11 +259,11 @@ _C_LABEL(x):
 
 #define	MSG(msg)			\
 	.rdata;				\
-9:	.asciiz	msg;			\
+9:	.asciz	msg;			\
 	.text
 
 #define	ASMSTR(str)			\
-	.asciiz str;			\
+	.asciz str;			\
 	.align	3
 
 #define	RCSID(name)	.pushsection ".ident"; .asciz name; .popsection
@@ -327,7 +327,7 @@ _C_LABEL(x):
  * assembler to prevent the assembler from generating 64-bit style
  * ABI calls.
  */
-#if _MIPS_SZPTR == 32
+#ifdef __mips_o32
 #define	PTR_ADD		add
 #define	PTR_ADDI	addi
 #define	PTR_ADDU	addu
@@ -358,19 +358,28 @@ _C_LABEL(x):
 #define	PTR_SUBI	dsubi
 #define	PTR_SUBU	dsubu
 #define	PTR_SUBIU	dsubu
+#ifdef __mips_n32
+#define	PTR_L		lw
+#define	PTR_LL		ll
+#define	PTR_SC		sc
+#define	PTR_S		sw
+#define	PTR_SCALESHIFT	2
+#define	PTR_WORD	.word
+#else
 #define	PTR_L		ld
-#define	PTR_LA		dla
+#define	PTR_LL		lld
+#define	PTR_SC		scd
 #define	PTR_S		sd
+#define	PTR_SCALESHIFT	3
+#define	PTR_WORD	.dword
+#endif
+#define	PTR_LA		dla
 #define	PTR_SLL		dsll
 #define	PTR_SLLV	dsllv
 #define	PTR_SRL		dsrl
 #define	PTR_SRLV	dsrlv
 #define	PTR_SRA		dsra
 #define	PTR_SRAV	dsrav
-#define	PTR_LL		lld
-#define	PTR_SC		scd
-#define	PTR_WORD	.dword
-#define	PTR_SCALESHIFT	3
 #endif /* _MIPS_SZPTR == 64 */
 
 #if _MIPS_SZINT == 32
@@ -495,6 +504,19 @@ _C_LABEL(x):
 #define	REG_SCALESHIFT	3
 #endif
 
+#if (MIPS1 + MIPS2) > 0
+#define	NOP_L		nop
+#else
+#define	NOP_L		/* nothing */
+#endif
+
+/* CPU dependent hook for cp0 load delays */
+#if defined(MIPS1) || defined(MIPS2) || defined(MIPS3)
+#define MFC0_HAZARD	sll $0,$0,1	/* super scalar nop */
+#else
+#define MFC0_HAZARD	/* nothing */
+#endif
+
 #if _MIPS_ISA == _MIPS_ISA_MIPS1 || _MIPS_ISA == _MIPS_ISA_MIPS2 || \
     _MIPS_ISA == _MIPS_ISA_MIPS32
 #define	MFC0		mfc0
@@ -508,7 +530,7 @@ _C_LABEL(x):
 
 #if defined(__mips_o32) || defined(__mips_o64)
 
-#ifdef __ABICALLS__
+#ifdef __mips_abicalls
 #define	CPRESTORE(r)	.cprestore r
 #define	CPLOAD(r)	.cpload r
 #else

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.97.14.2 2014/08/20 00:03:06 tls Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.97.14.3 2017/12/03 11:36:17 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -46,9 +46,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.97.14.2 2014/08/20 00:03:06 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.97.14.3 2017/12/03 11:36:17 jdolecek Exp $");
 
-#include "opt_compat_oldboot.h"
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
 
@@ -74,6 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.97.14.2 2014/08/20 00:03:06 tls Exp $
 #endif
 
 #if NLAPIC > 0
+#include <machine/i82489reg.h>
 #include <machine/i82489var.h>
 #endif
 
@@ -90,6 +90,7 @@ extern void platform_init(void);
 #include <dev/pci/pcivar.h>
 #include <i386/pci/pcibios.h>
 #endif
+#include <x86/efi.h>
 
 /*
  * Determine i/o configuration for a machine.
@@ -102,8 +103,11 @@ cpu_configure(void)
 	startrtclock();
 
 #if NBIOS32 > 0
+	efi_init();
 	bios32_init();
 	platform_init();
+	/* identify hypervisor type from SMBIOS */
+	identify_hypervisor();
 #endif
 #ifdef PCIBIOS
 	pcibios_init();
@@ -130,6 +134,6 @@ cpu_configure(void)
 
 	spl0();
 #if NLAPIC > 0
-	lapic_tpr = 0;
+	lapic_write_tpri(0);
 #endif
 }

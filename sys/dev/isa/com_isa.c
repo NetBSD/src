@@ -1,4 +1,4 @@
-/*	$NetBSD: com_isa.c,v 1.39 2010/02/24 22:37:58 dyoung Exp $	*/
+/*	$NetBSD: com_isa.c,v 1.39.20.1 2017/12/03 11:37:04 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_isa.c,v 1.39 2010/02/24 22:37:58 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_isa.c,v 1.39.20.1 2017/12/03 11:37:04 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,8 +213,8 @@ com_isa_attach(device_t parent, device_t self, void *aux)
 
 	isc->sc_ic = ia->ia_ic;
 	isc->sc_irq = irq;
-	isc->sc_ih = isa_intr_establish(ia->ia_ic, irq, IST_EDGE, IPL_SERIAL,
-	    comintr, sc);
+	isc->sc_ih = isa_intr_establish_xname(ia->ia_ic, irq, IST_EDGE,
+	    IPL_SERIAL, comintr, sc, device_xname(sc->sc_dev));
 }
 
 static bool

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_devar.h,v 1.57.6.1 2012/11/20 03:02:16 tls Exp $	*/
+/*	$NetBSD: if_devar.h,v 1.57.6.2 2017/12/03 11:37:07 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -31,7 +31,7 @@
 
 #if defined(__NetBSD__)
 
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #if NetBSD >= 199803
 #define	TULIP_BUS_DMA		1
@@ -927,6 +927,7 @@ static void tulip_softintr(void);
 #endif
 
 #ifdef notyet
+#include <sys/ioccom.h>
 #define	SIOCGADDRROM		_IOW('i', 240, struct ifreq)	/* get 128 bytes of ROM */
 #define	SIOCGCHIPID		_IOWR('i', 241, struct ifreq)	/* get chipid */
 #endif

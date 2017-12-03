@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_intr.c,v 1.9 2010/12/20 00:25:31 matt Exp $	*/
+/*	$NetBSD: ifpga_intr.c,v 1.9.18.1 2017/12/03 11:36:04 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -96,8 +96,8 @@ const char * const ifpga_irqnames[] = {
 	"pci lb",	/* 20 */
 	"autoPC",	/* 21 */
 	"irq 22",	/* 22 */
-	"irq 23",	/* 23 */
-	"irq 24",	/* 24 */
+	"mmc 0",	/* 23 */
+	"mmc 1",	/* 24 */
 	"irq 25",	/* 25 */
 	"irq 26",	/* 26 */
 	"irq 27",	/* 27 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_ohare.c,v 1.11.2.1 2013/06/23 06:20:08 tls Exp $ */
+/*	$NetBSD: pic_ohare.c,v 1.11.2.2 2017/12/03 11:36:25 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_ohare.c,v 1.11.2.1 2013/06/23 06:20:08 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_ohare.c,v 1.11.2.2 2017/12/03 11:36:25 jdolecek Exp $");
 
 #include "opt_interrupt.h"
 
@@ -68,8 +68,6 @@ static inline void ohare_read_events(struct ohare_ops *);
 #define INT_ENABLE_REG	((uint32_t)pic->pic_cookie + 0x24)
 #define INT_CLEAR_REG	((uint32_t)pic->pic_cookie + 0x28)
 #define INT_LEVEL_REG	((uint32_t)pic->pic_cookie + 0x2c)
-#define INT_LEVEL_MASK_OHARE	0x1ff00000
-#define INT_LEVEL_MASK_GC	0x3ff00000
 
 int init_ohare(void)
 {
@@ -118,8 +116,7 @@ setup_ohare(uint32_t addr, int is_gc)
 	struct pic_ops *pic;
 	int i;
 
-	ohare = kmem_alloc(sizeof(struct ohare_ops), KM_SLEEP);
-	KASSERT(ohare != NULL);
+	ohare = kmem_zalloc(sizeof(struct ohare_ops), KM_SLEEP);
 	pic = &ohare->pic;
 
 	pic->pic_numintrs = OHARE_NIRQ;
@@ -135,12 +132,12 @@ setup_ohare(uint32_t addr, int is_gc)
 	if (is_gc) {
 	
 		strcpy(pic->pic_name, "gc");
-		ohare->level_mask = 0;
 	} else {
 
 		strcpy(pic->pic_name, "ohare");
-		ohare->level_mask = 0;
 	}
+	ohare->level_mask = 0;
+
 	for (i = 0; i < OHARE_NIRQ; i++)
 		ohare->priority_masks[i] = 0;
 	for (i = 0; i < NIPL; i++)
@@ -182,7 +179,7 @@ ohare_reenable_irq(struct pic_ops *pic, int irq, int type)
 
 	ohare->enable_mask |= mask;
 	out32rb(INT_ENABLE_REG, ohare->enable_mask);
-	levels = in32rb(INT_LEVEL_REG);
+	levels = in32rb(INT_STATE_REG);
 	if (levels & mask) {
 		pic_mark_pending(pic->pic_intrbase + irq);
 		out32rb(INT_CLEAR_REG, mask);

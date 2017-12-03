@@ -1,0 +1,22 @@
+#	$NetBSD: files.via,v 1.3.16.2 2017/12/03 11:38:01 jdolecek Exp $
+
+device	viadrmums: drmkms, drmkms_pci
+attach	viadrmums at drm
+
+makeoptions	viadrmums	CPPFLAGS+="-I$S/external/bsd/drm2/dist/drm/via"
+makeoptions	viadrmums	CPPFLAGS+="-I$S/external/bsd/drm2/via"
+
+makeoptions	viadrmums	"CWARNFLAGS.via_verifier.c"+="-Wno-shadow"
+makeoptions	viadrmums	"CWARNFLAGS.via_pci.c"+="-Wno-missing-field-initializers"
+
+file	external/bsd/drm2/dist/drm/via/via_dma.c		viadrmums
+file	external/bsd/drm2/dist/drm/via/via_dmablit.c		viadrmums
+file	external/bsd/drm2/dist/drm/via/via_drv.c		viadrmums
+file	external/bsd/drm2/dist/drm/via/via_irq.c		viadrmums
+file	external/bsd/drm2/dist/drm/via/via_map.c		viadrmums
+file	external/bsd/drm2/dist/drm/via/via_mm.c			viadrmums
+file	external/bsd/drm2/dist/drm/via/via_verifier.c		viadrmums
+file	external/bsd/drm2/dist/drm/via/via_video.c		viadrmums
+
+file	external/bsd/drm2/via/via_pci.c				viadrmums
+file	external/bsd/drm2/via/via_module.c			viadrmums

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.powerpc,v 1.8 2011/06/30 20:09:34 wiz Exp $
+#	$NetBSD: majors.powerpc,v 1.8.12.1 2017/12/03 11:36:36 jdolecek Exp $
 #
 # Device majors for shared PowerPC
 #
@@ -68,7 +68,7 @@ device-major	ld		char 59  block 13	ld
 
 device-major	pci		char 60			pci
 device-major	clockctl	char 61			clockctl
-device-major	sysmon		char 62			sysmon_envsys | sysmon_wdog | sysmon_power
+device-major	sysmon		char 62			sysmon
 device-major	apm		char 64			apm
 device-major	kttcp		char 65			kttcp
 device-major	cgd		char 66  block 14	cgd
@@ -83,7 +83,6 @@ device-major	dmoverio	char 75			dmoverio
 device-major	twe		char 76			twe
 device-major	altq		char 77			altq
 device-major	joy		char 78			joy
-device-major	spkr		char 79			spkr
 
 device-major	gtmpsc		char 80			gtmpsc
 device-major	satlink		char 81			satlink

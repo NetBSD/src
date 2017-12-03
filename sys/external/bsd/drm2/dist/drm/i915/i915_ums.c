@@ -31,7 +31,7 @@
 #include "intel_drv.h"
 #include "i915_reg.h"
 
-static bool i915_pipe_enabled(struct drm_device *dev, enum pipe pipe)
+static bool i915_pipe_enabled(struct drm_device *dev, enum i915_pipe pipe)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	u32	dpll_reg;
@@ -48,7 +48,7 @@ static bool i915_pipe_enabled(struct drm_device *dev, enum pipe pipe)
 	return (I915_READ(dpll_reg) & DPLL_VCO_ENABLE);
 }
 
-static void i915_save_palette(struct drm_device *dev, enum pipe pipe)
+static void i915_save_palette(struct drm_device *dev, enum i915_pipe pipe)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	unsigned long reg = (pipe == PIPE_A ? _PALETTE_A : _PALETTE_B);
@@ -70,7 +70,7 @@ static void i915_save_palette(struct drm_device *dev, enum pipe pipe)
 		array[i] = I915_READ(reg + (i << 2));
 }
 
-static void i915_restore_palette(struct drm_device *dev, enum pipe pipe)
+static void i915_restore_palette(struct drm_device *dev, enum i915_pipe pipe)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	unsigned long reg = (pipe == PIPE_A ? _PALETTE_A : _PALETTE_B);

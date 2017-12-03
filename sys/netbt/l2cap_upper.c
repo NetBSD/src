@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_upper.c,v 1.11.22.1 2014/08/20 00:04:35 tls Exp $	*/
+/*	$NetBSD: l2cap_upper.c,v 1.11.22.2 2017/12/03 11:39:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_upper.c,v 1.11.22.1 2014/08/20 00:04:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_upper.c,v 1.11.22.2 2017/12/03 11:39:03 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -386,7 +386,7 @@ l2cap_listen_pcb(struct l2cap_channel *chan)
  *	Note: I'm not sure how this will work out, but I think that
  *	if outgoing Retransmission Mode or Flow Control Mode is
  *	negotiated then this call will not be made until the SDU has
- *	been acknowleged by the peer L2CAP entity. For 'Best Effort'
+ *	been acknowledged by the peer L2CAP entity. For 'Best Effort'
  *	it will be made when the packet has cleared the controller
  *	buffers.
  *

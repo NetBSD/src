@@ -1,4 +1,4 @@
-/* $NetBSD: omap3_scm.c,v 1.1.6.3 2013/06/23 06:20:01 tls Exp $ */
+/* $NetBSD: omap3_scm.c,v 1.1.6.4 2017/12/03 11:35:55 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2013 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_scm.c,v 1.1.6.3 2013/06/23 06:20:01 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_scm.c,v 1.1.6.4 2017/12/03 11:35:55 jdolecek Exp $");
 
 #include "opt_omap.h"
 
@@ -47,12 +47,14 @@ __KERNEL_RCSID(0, "$NetBSD: omap3_scm.c,v 1.1.6.3 2013/06/23 06:20:01 tls Exp $"
 
 #define SCM_BASE_3530			0x48002000
 #define SCM_SIZE_3530			0x1000
+#define SCM_CONTROL_IDCODE_3530		0x308204
 #define SCM_OFFSET_INTERFACE_3530	0
 #define SCM_OFFSET_GENERAL_3530		0x270
 
-#if defined(OMAP_3430) || defined(OMAP_3530)
+#if defined(OMAP_3430) || defined(OMAP_3530) || defined(TI_DM37XX)
 #define SCM_BASE		SCM_BASE_3530
 #define SCM_SIZE		SCM_SIZE_3530
+#define SCM_CONTROL_IDCODE	SCM_CONTROL_IDCODE_3530
 #define SCM_OFFSET_INTERFACE	SCM_OFFSET_INTERFACE_3530
 #define SCM_OFFSET_GENERAL	SCM_OFFSET_GENERAL_3530
 #endif
@@ -66,6 +68,8 @@ __KERNEL_RCSID(0, "$NetBSD: omap3_scm.c,v 1.1.6.3 2013/06/23 06:20:01 tls Exp $"
 #define CONTROL_TEMP_SENSOR_SOC		__BIT(8)
 #define CONTROL_TEMP_SENSOR_EOCZ	__BIT(7)
 #define CONTROL_TEMP_SENSOR_TEMP_MASK	__BITS(6,0)
+
+#define CONTROL_OMAP_STATUS		0x44c
 
 /* CONTROL_TEMP_SENSOR TEMP bits to tenths of a degree */
 static const int omap3_scm_adc2temp[128] = {
@@ -103,6 +107,9 @@ struct omap3_scm_softc {
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 
+	uint32_t		sc_cid;	/* Chip Identification */
+	uint32_t		sc_did;	/* Device IDCODE */
+
 	/* GENERAL */
 	struct sysmon_envsys	*sc_sme;
 	envsys_data_t		sc_sensor;
@@ -139,7 +146,28 @@ omap3_scm_attach(device_t parent, device_t self, void *opaque)
 {
 	struct omap3_scm_softc *sc = device_private(self);
 	struct obio_attach_args *obio = opaque;
+	bus_space_handle_t ioh;
 	uint32_t rev;
+	char buf[256];
+	const char *cid, *did, *fmt;
+	const char *omap35x_fmt = "\177\020"
+	    "b\0TO_OUT\0"
+	    "b\1four_bit_mmc\0"
+	    "b\2CCP2_CSI1\0"
+	    "b\3CMADS_FL3G\0"
+	    "b\4NEON_VFPLite\0"
+	    "b\5ISP_disable\0"
+	    "f\6\2IVA2_MHz\0=\0 430\0=\2 266\0"
+	    "f\10\2ARM_MHz\0=\0 600\0=\1 400\0=\2 266\0"
+	    "f\12\2MPU_L2_cache_size\0=\0 0KB\0=\1 64KB\0=\2 128KB\0=\3 Full\0"
+	    "b\14IVA_disable_acc\0"
+	    "f\15\2SGX_scalable_control\0=\0Full\0=\1Half\0=\2not-present\0\0";
+	const char *amdm37x_fmt = "\177\020"
+	    "f\0\4Feature Tiering\0=\0All features aval\0=\1ISP not avail\0"
+	    "f\11\1MPU/IVA frequency\0=\0 800/600 MHz\0=\1 1000/800 MHz\0"
+	    "f\12\2MPU_L2_cache_size\0=\0 0KB\0=\2 128KB\0=\3 Full\0"
+	    "f\14\1IVA 2.2 subsystem\0=\0Full use\0=\1Not available\0"
+	    "f\15\2 2D/3D accelerator\0=\0Full use\0=\2HW not present\0";
 
 	aprint_naive("\n");
 
@@ -153,9 +181,83 @@ omap3_scm_attach(device_t parent, device_t self, void *opaque)
 		aprint_error(": couldn't map address space\n");
 		return;
 	}
+	if (bus_space_map(obio->obio_iot,
+	    obio->obio_addr + SCM_CONTROL_IDCODE, sizeof(uint32_t),
+	    0, &ioh) != 0) {
+		aprint_error(": couldn't map CONTROL_IDCODE space\n");
+		return;
+	}
+	sc->sc_did = bus_space_read_4(sc->sc_iot, ioh, 0);
+	bus_space_unmap(sc->sc_iot, ioh, sizeof(uint32_t));
 
 	rev = SCM_READ_REG(sc, CONTROL_REVISION);
 	aprint_normal(": rev. 0x%x\n", rev & 0xff);
+	sc->sc_cid = SCM_READ_REG(sc, CONTROL_OMAP_STATUS & 0xffff);
+	cid = did = fmt = NULL;
+	switch (sc->sc_did) {
+	case DEVID_OMAP35X_ES10:
+	case DEVID_OMAP35X_ES20:
+	case DEVID_OMAP35X_ES21:
+	case DEVID_OMAP35X_ES30:
+	case DEVID_OMAP35X_ES31:
+	case DEVID_OMAP35X_ES312:
+		switch (sc->sc_cid) {
+		case CHIPID_OMAP3503:	cid = "OMAP3503";	break;
+		case CHIPID_OMAP3515:	cid = "OMAP3515";	break;
+		case CHIPID_OMAP3525:	cid = "OMAP3525";	break;
+		case CHIPID_OMAP3530:	cid = "OMAP3530";	break;
+		}
+		switch (sc->sc_did) {
+		case DEVID_OMAP35X_ES10:	did = "ES1.0";	break;
+		case DEVID_OMAP35X_ES20:	did = "ES2.0";	break;
+		case DEVID_OMAP35X_ES21:	did = "ES2.1";	break;
+		case DEVID_OMAP35X_ES30:	did = "ES3.0";	break;
+		case DEVID_OMAP35X_ES31:	did = "ES3.1";	break;
+		case DEVID_OMAP35X_ES312:	did = "ES3.1.2";break;
+		}
+		fmt = omap35x_fmt;
+		break;
+
+	case DEVID_AMDM37X_ES10:
+	case DEVID_AMDM37X_ES11:
+	case DEVID_AMDM37X_ES12:
+		switch (sc->sc_cid) {
+		case CHIPID_OMAP3503:
+		case CHIPID_AM3703:
+			cid = "AM3703";
+			break;
+		case CHIPID_OMAP3515:
+		case CHIPID_AM3715:
+			cid = "AM3715";
+			break;
+		case CHIPID_OMAP3525:
+		case CHIPID_DM3725:
+			cid = "DM3525";
+			break;
+		case CHIPID_OMAP3530:
+		case CHIPID_DM3730:
+			cid = "DM3730";
+			break;
+		}
+		switch (sc->sc_did) {
+		case DEVID_AMDM37X_ES10:	did = "ES1.0";	break;
+		case DEVID_AMDM37X_ES11:	did = "ES1.1";	break;
+		case DEVID_AMDM37X_ES12:	did = "ES1.2";	break;
+		}
+		fmt = amdm37x_fmt;
+		break;
+	break;
+
+	default:
+		aprint_normal_dev(self,
+		    "unknwon ChipID/DeviceID found 0x%08x/0x%08x\n",
+		    sc->sc_cid, sc->sc_did);
+		break;
+	}
+	if (fmt != NULL)
+		snprintb(buf, sizeof(buf), fmt, sc->sc_cid);
+	if (did != NULL)
+		aprint_normal_dev(self, "%s %s: %s\n", cid, did, buf);
 
 	omap3_scm_sensor_attach(sc);
 }
@@ -224,4 +326,28 @@ omap3_scm_sensor_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 		edata->value_cur = val * (1000000/10) + 273150000;
 		edata->state = ENVSYS_SVALID;
 	}
+}
+
+uint32_t
+omap_chipid(void)
+{
+	struct omap3_scm_softc *sc;
+	device_t dev;
+
+	dev = device_find_by_xname("omapscm0");
+	KASSERT(dev != NULL);
+	sc = device_private(dev);
+	return sc->sc_cid;
+}
+
+uint32_t
+omap_devid(void)
+{
+	struct omap3_scm_softc *sc;
+	device_t dev;
+
+	dev = device_find_by_xname("omapscm0");
+	KASSERT(dev != NULL);
+	sc = device_private(dev);
+	return sc->sc_did;
 }

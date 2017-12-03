@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppvar.h,v 1.16 2009/10/05 21:27:36 dyoung Exp $	*/
+/*	$NetBSD: if_spppvar.h,v 1.16.22.1 2017/12/03 11:39:02 jdolecek Exp $	*/
 
 #ifndef _NET_IF_SPPPVAR_H_
 #define _NET_IF_SPPPVAR_H_
@@ -25,6 +25,11 @@
  *
  * From: Id: if_sppp.h,v 1.7 1998/12/01 20:20:19 hm Exp
  */
+
+#include <sys/workqueue.h>
+#include <sys/pcq.h>
+
+#include <net/if_media.h>
 
 #define IDX_LCP 0		/* idx into state table */
 
@@ -59,6 +64,11 @@ struct sipcp {
 	uint32_t saved_hisaddr;/* if hisaddr (IPv4) is dynamic, save original one here, in network byte order */
 	uint32_t req_hisaddr;	/* remote address requested */
 	uint32_t req_myaddr;	/* local address requested */
+
+	struct workqueue *update_addrs_wq;
+	struct work update_addrs_wk;
+	u_int update_addrs_enqueued;
+	pcq_t *update_addrs_q;
 };
 
 struct sauth {
@@ -79,6 +89,7 @@ struct sauth {
 struct sppp {
 	/* NB: pp_if _must_ be first */
 	struct  ifnet pp_if;    /* network interface data */
+	struct	ifmedia pp_im;	/* interface media, to report link status */
 	struct  ifqueue pp_fastq; /* fast output queue */
 	struct	ifqueue pp_cpq;	/* PPP control protocol queue */
 	struct  sppp *pp_next;  /* next interface in keepalive list */
@@ -100,6 +111,7 @@ struct sppp {
 	int	pp_auth_failures;	/* authorization failures */
 	int	pp_max_auth_fail;	/* max. allowed authorization failures */
 	int	pp_phase;	/* phase we're currently in */
+	krwlock_t	pp_lock;	/* lock for sppp structure */
 	int	query_dns;	/* 1 if we want to know the dns addresses */
 	uint32_t	dns_addrs[2];
 	int	state[IDX_COUNT];	/* state machine */
@@ -170,4 +182,25 @@ struct mbuf *sppp_dequeue (struct ifnet *);
 int sppp_isempty (struct ifnet *);
 void sppp_flush (struct ifnet *);
 #endif
+
+/*
+ * Locking notes:
+ * + spppq is protected by spppq_lock (an adaptive mutex)
+ *     spppq is a list of all struct sppps, and it is used for
+ *     sending keepalive packets.
+ * + struct sppp is protected by sppp->pp_lock (an rwlock)
+ *     sppp holds configuration parameters for line,
+ *     authentication and addresses. It also has pointers
+ *     of functions to notify events to lower layer.
+ *     When notify events, sppp->pp_lock must be released.
+ *     Because the event handler implemented in a lower
+ *     layer often call functions implemented in
+ *     if_spppsubr.c.
+ *
+ * Locking order:
+ *    - spppq_lock => struct sppp->pp_lock
+ *
+ * NOTICE
+ * - Lower layers must not acquire sppp->pp_lock
+ */
 #endif /* !_NET_IF_SPPPVAR_H_ */

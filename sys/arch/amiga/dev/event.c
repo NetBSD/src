@@ -1,4 +1,4 @@
-/*	$NetBSD: event.c,v 1.13 2008/03/01 14:16:49 rmind Exp $ */
+/*	$NetBSD: event.c,v 1.13.48.1 2017/12/03 11:35:48 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: event.c,v 1.13 2008/03/01 14:16:49 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: event.c,v 1.13.48.1 2017/12/03 11:35:48 jdolecek Exp $");
 
 /*
  * Internal `Firm_event' interface for the keyboard and mouse drivers.
@@ -190,8 +190,12 @@ filt_evread(struct knote *kn, long hint)
 	return (1);
 }
 
-static const struct filterops ev_filtops =
-	{ 1, NULL, filt_evrdetach, filt_evread };
+static const struct filterops ev_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_evrdetach,
+	.f_event = filt_evread,
+};
 
 int
 ev_kqfilter(struct evvar *ev, struct knote *kn)

@@ -1,9 +1,44 @@
-/*	$NetBSD: spr.h,v 1.45 2010/02/25 23:30:04 matt Exp $	*/
+/*	$NetBSD: spr.h,v 1.45.20.1 2017/12/03 11:36:37 jdolecek Exp $	*/
 
 #ifndef _POWERPC_SPR_H_
 #define	_POWERPC_SPR_H_
 
 #ifndef _LOCORE
+#ifdef PPC_OEA64_BRIDGE
+
+static inline uint64_t
+mfspr(int reg)
+{
+	uint64_t ret;
+	register_t h, l;
+	__asm volatile( "mfspr %0,%2;" \
+			"srdi %1,%0,32;" \
+			 : "=r"(l), "=r"(h) : "K"(reg));
+	ret = ((uint64_t)h << 32) | l;
+	return ret;
+}
+
+#define mtspr(reg, v) \
+( {						\
+	volatile register_t h, l;		\
+	uint64_t val = v;			\
+	h = (val >> 32);			\
+	l = val & 0xffffffff;			\
+	__asm volatile( \
+			"sldi %2,%2,32;" \
+			"or %2,%2,%1;" \
+			"sync;" \
+			"mtspr %0,%2;" \
+			"mfspr %1,%0;" \
+			"mfspr %1,%0;" \
+			"mfspr %1,%0;" \
+			"mfspr %1,%0;" \
+			"mfspr %1,%0;" \
+			"mfspr %1,%0;" \
+			 : : "K"(reg), "r"(l), "r"(h)); \
+} )
+
+#else
 #define	mtspr(reg, val)							\
 	__asm volatile("mtspr %0,%1" : : "K"(reg), "r"(val))
 #ifdef __GNUC__
@@ -12,6 +47,7 @@
 	  __asm volatile("mfspr %0,%1" : "=r"(val) : "K"(reg));	\
 	  val; } )
 #endif
+#endif /* PPC_OEA64_BRIDGE */
 #endif /* _LOCORE */
 
 /*

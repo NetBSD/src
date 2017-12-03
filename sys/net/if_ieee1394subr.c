@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394subr.c,v 1.45.18.1 2014/08/20 00:04:34 tls Exp $	*/
+/*	$NetBSD: if_ieee1394subr.c,v 1.45.18.2 2017/12/03 11:39:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,9 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.45.18.1 2014/08/20 00:04:34 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.45.18.2 2017/12/03 11:39:02 jdolecek Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,21 +79,19 @@ __KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.45.18.1 2014/08/20 00:04:34 tl
 #define	senderr(e)	do { error = (e); goto bad; } while(0/*CONSTCOND*/)
 
 static int  ieee1394_output(struct ifnet *, struct mbuf *,
-		const struct sockaddr *, struct rtentry *);
+		const struct sockaddr *, const struct rtentry *);
 static struct mbuf *ieee1394_reass(struct ifnet *, struct mbuf *, uint16_t);
 
 static int
 ieee1394_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
-    struct rtentry *rt0)
+    const struct rtentry *rt)
 {
 	uint16_t etype = 0;
 	struct mbuf *m;
-	int s, hdrlen, error = 0;
-	struct rtentry *rt;
+	int hdrlen, error = 0;
 	struct mbuf *mcopy = NULL;
 	struct ieee1394_hwaddr *hwdst, baddr;
 	const struct ieee1394_hwaddr *myaddr;
-	ALTQ_DECL(struct altq_pktattr pktattr;)
 #ifdef INET
 	struct arphdr *ah;
 #endif /* INET */
@@ -100,46 +100,12 @@ ieee1394_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
 		senderr(ENETDOWN);
-	if ((rt = rt0) != NULL) {
-		if ((rt->rt_flags & RTF_UP) == 0) {
-			if ((rt0 = rt = rtalloc1(dst, 1)) != NULL) {
-				rt->rt_refcnt--;
-				if (rt->rt_ifp != ifp)
-					return (*rt->rt_ifp->if_output)
-							(ifp, m0, dst, rt);
-			} else
-				senderr(EHOSTUNREACH);
-		}
-		if (rt->rt_flags & RTF_GATEWAY) {
-			if (rt->rt_gwroute == NULL)
-				goto lookup;
-			if (((rt = rt->rt_gwroute)->rt_flags & RTF_UP) == 0) {
-				rtfree(rt);
-				rt = rt0;
-  lookup:
-				rt->rt_gwroute = rtalloc1(rt->rt_gateway, 1);
-				if ((rt = rt->rt_gwroute) == NULL)
-					senderr(EHOSTUNREACH);
-				/* the "G" test below also prevents rt == rt0 */
-				if ((rt->rt_flags & RTF_GATEWAY) ||
-				    (rt->rt_ifp != ifp)) {
-					rt->rt_refcnt--;
-					rt0->rt_gwroute = NULL;
-					senderr(EHOSTUNREACH);
-				}
-			}
-		}
-		if (rt->rt_flags & RTF_REJECT)
-			if (rt->rt_rmx.rmx_expire == 0 ||
-			    time_second < rt->rt_rmx.rmx_expire)
-				senderr(rt == rt0 ? EHOSTDOWN : EHOSTUNREACH);
-	}
 
 	/*
 	 * If the queueing discipline needs packet classification,
 	 * do it before prepending link headers.
 	 */
-	IFQ_CLASSIFY(&ifp->if_snd, m0, dst->sa_family, &pktattr);
+	IFQ_CLASSIFY(&ifp->if_snd, m0, dst->sa_family);
 
 	/*
 	 * For unicast, we make a tag to store the lladdr of the
@@ -171,8 +137,10 @@ ieee1394_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 	switch (dst->sa_family) {
 #ifdef INET
 	case AF_INET:
-		if (unicast && (!arpresolve(ifp, rt, m0, dst, (u_char *)hwdst)))
-			return 0;	/* if not yet resolved */
+		if (unicast &&
+		    (error = arpresolve(ifp, rt, m0, dst, hwdst,
+			sizeof(*hwdst))) != 0)
+			return error == EWOULDBLOCK ? 0 : error;
 		/* if broadcasting on a simplex interface, loopback a copy */
 		if ((m0->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
 			mcopy = m_copy(m0, 0, M_COPYALL);
@@ -186,10 +154,21 @@ ieee1394_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 #endif /* INET */
 #ifdef INET6
 	case AF_INET6:
-		if (unicast && (!nd6_storelladdr(ifp, rt, m0, dst,
-		    hwdst->iha_uid, IEEE1394_ADDR_LEN))) {
-			/* something bad happened */
-			return 0;
+#if 0
+		/*
+		 * XXX This code was in nd6_storelladdr, which was replaced with
+		 * nd6_resolve, but it never be used because nd6_storelladdr was
+		 * called only if unicast. Should it be enabled?
+		 */
+		if (m0->m_flags & M_BCAST)
+			memcpy(hwdst->iha_uid, ifp->if_broadcastaddr,
+			    MIN(IEEE1394_ADDR_LEN, ifp->if_addrlen));
+#endif
+		if (unicast) {
+			error = nd6_resolve(ifp, rt, m0, dst, hwdst->iha_uid,
+			    IEEE1394_ADDR_LEN);
+			if (error != 0)
+				return error == EWOULDBLOCK ? 0 : error;
 		}
 		etype = htons(ETHERTYPE_IPV6);
 		break;
@@ -250,26 +229,15 @@ ieee1394_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 	if (m0 == NULL)
 		senderr(ENOBUFS);
 
-	s = splnet();
-	ifp->if_obytes += m0->m_pkthdr.len;
-	if (m0->m_flags & M_MCAST)
-		ifp->if_omcasts++;
 	while ((m = m0) != NULL) {
 		m0 = m->m_nextpkt;
-		if (m == NULL) {
-			splx(s);
-			senderr(ENOBUFS);
-		}
-		IFQ_ENQUEUE(&ifp->if_snd, m, &pktattr, error);
+
+		error = if_transmit_lock(ifp, m);
 		if (error) {
 			/* mbuf is already freed */
-			splx(s);
 			goto bad;
 		}
 	}
-	if ((ifp->if_flags & IFF_OACTIVE) == 0)
-		(*ifp->if_start)(ifp);
-	splx(s);
 	return 0;
 
   bad:
@@ -331,8 +299,10 @@ ieee1394_fragment(struct ifnet *ifp, struct mbuf *m0, int maxsize,
 		ifh->ifh_dgl = htons(ic->ic_dgl);
 		ifh->ifh_reserved = 0;
 		m->m_next = m_copy(m0, sizeof(*ifh) + off, fraglen);
-		if (m->m_next == NULL)
+		if (m->m_next == NULL) {
+			m_freem(m);
 			goto bad;
+		}
 		m->m_pkthdr.len = sizeof(*ifh) + fraglen;
 		off += fraglen;
 		*mp = m;
@@ -359,7 +329,6 @@ ieee1394_input(struct ifnet *ifp, struct mbuf *m, uint16_t src)
 	pktqueue_t *pktq = NULL;
 	struct ifqueue *inq;
 	uint16_t etype;
-	int s;
 	struct ieee1394_unfraghdr *iuh;
 	int isr = 0;
 
@@ -436,15 +405,16 @@ ieee1394_input(struct ifnet *ifp, struct mbuf *m, uint16_t src)
 		return;
 	}
 
-	s = splnet();
+	IFQ_LOCK(inq);
 	if (IF_QFULL(inq)) {
 		IF_DROP(inq);
+		IFQ_UNLOCK(inq);
 		m_freem(m);
 	} else {
 		IF_ENQUEUE(inq, m);
+		IFQ_UNLOCK(inq);
 		schednetisr(isr);
 	}
-	splx(s);
 }
 
 static struct mbuf *
@@ -707,9 +677,6 @@ ieee1394_ifdetach(struct ifnet *ifp)
 	bpf_detach(ifp);
 	free(__UNCONST(ifp->if_broadcastaddr), M_DEVBUF);
 	ifp->if_broadcastaddr = NULL;
-#if 0	/* done in if_detach() */
-	if_free_sadl(ifp);
-#endif
 }
 
 int

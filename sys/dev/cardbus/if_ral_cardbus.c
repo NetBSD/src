@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ral_cardbus.c,v 1.23 2012/02/18 13:38:35 drochner Exp $	*/
+/*	$NetBSD: if_ral_cardbus.c,v 1.23.2.1 2017/12/03 11:37:00 jdolecek Exp $	*/
 /*	$OpenBSD: if_ral_cardbus.c,v 1.6 2006/01/09 20:03:31 damien Exp $  */
 
 /*-
@@ -22,7 +22,7 @@
  * CardBus front-end for the Ralink RT2560/RT2561/RT2561S/RT2661 driver.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ral_cardbus.c,v 1.23 2012/02/18 13:38:35 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ral_cardbus.c,v 1.23.2.1 2017/12/03 11:37:00 jdolecek Exp $");
 
 
 #include <sys/param.h>
@@ -104,8 +104,7 @@ void	ral_cardbus_power(struct rt2560_softc *, int);
 void	ral_cardbus_setup(struct ral_cardbus_softc *);
 
 int
-ral_cardbus_match(device_t parent,
-    cfdata_t cfdata, void *aux)
+ral_cardbus_match(device_t parent, cfdata_t cfdata, void *aux)
 {
         struct cardbus_attach_args *ca = aux;
 
@@ -125,8 +124,7 @@ ral_cardbus_match(device_t parent,
 }
 
 void
-ral_cardbus_attach(device_t parent, device_t self,
-    void *aux)
+ral_cardbus_attach(device_t parent, device_t self, void *aux)
 {
 	struct ral_cardbus_softc *csc = device_private(self);
 	struct rt2560_softc *sc = &csc->sc_sc;
@@ -158,7 +156,7 @@ ral_cardbus_attach(device_t parent, device_t self,
 	    PCI_MAPREG_TYPE_MEM, 0, &sc->sc_st, &sc->sc_sh, &base,
 	    &csc->sc_mapsize);
 	if (error != 0) {
-		printf(": could not map memory space\n");
+		aprint_error(": could not map memory space\n");
 		return;
 	}
 

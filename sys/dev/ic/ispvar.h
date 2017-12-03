@@ -1,4 +1,4 @@
-/* $NetBSD: ispvar.h,v 1.72 2011/02/28 17:17:55 mjacob Exp $ */
+/* $NetBSD: ispvar.h,v 1.72.14.1 2017/12/03 11:37:03 jdolecek Exp $ */
 /*
  * Copyright (C) 1999 National Aeronautics & Space Administration
  * All rights reserved.
@@ -1009,7 +1009,7 @@ void isp_async(ispsoftc_t *, ispasync_t, ...);
 #define	ISP_LOGTDEBUG2	0x8000	/* log all debug messages (target) */
 
 /*
- * Each Platform provides it's own isposinfo substructure of the ispsoftc
+ * Each Platform provides its own isposinfo substructure of the ispsoftc
  * defined above.
  *
  * Each platform must also provide the following macros/defines:

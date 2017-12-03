@@ -1,4 +1,4 @@
-/* $NetBSD: skg.c,v 1.4 2011/10/30 21:08:33 phx Exp $ */
+/* $NetBSD: skg.c,v 1.4.12.1 2017/12/03 11:36:40 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2010 Frank Wille.
@@ -193,6 +193,7 @@ skg_match(unsigned tag, void *data)
 
 	v = pcicfgread(tag, PCI_ID_REG);
 	switch (v) {
+	case PCI_DEVICE(0x1148, 0x4320):
 	case PCI_DEVICE(0x11ab, 0x4320):
 		return 1;
 	}

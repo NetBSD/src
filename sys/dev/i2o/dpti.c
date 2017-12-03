@@ -1,4 +1,4 @@
-/*	$NetBSD: dpti.c,v 1.44.12.2 2014/08/20 00:03:37 tls Exp $	*/
+/*	$NetBSD: dpti.c,v 1.44.12.3 2017/12/03 11:37:02 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.44.12.2 2014/08/20 00:03:37 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.44.12.3 2017/12/03 11:37:02 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,6 +82,8 @@ __KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.44.12.2 2014/08/20 00:03:37 tls Exp $");
 #include <dev/i2o/iopio.h>
 #include <dev/i2o/iopvar.h>
 #include <dev/i2o/dptivar.h>
+
+#include "ioconf.h"
 
 #ifdef I2ODEBUG
 #define	DPRINTF(x)		printf x
@@ -150,8 +152,6 @@ const struct cdevsw dpti_cdevsw = {
 	.d_discard = nodiscard,
 	.d_flag = D_OTHER,
 };
-
-extern struct cfdriver dpti_cd;
 
 CFATTACH_DECL_NEW(dpti, sizeof(struct dpti_softc),
     dpti_match, dpti_attach, NULL, NULL);

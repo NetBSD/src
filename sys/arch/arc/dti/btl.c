@@ -1,4 +1,4 @@
-/*	$NetBSD: btl.c,v 1.24.22.1 2012/11/20 03:01:01 tls Exp $	*/
+/*	$NetBSD: btl.c,v 1.24.22.2 2017/12/03 11:35:50 jdolecek Exp $	*/
 /*	NetBSD: bt.c,v 1.10 1996/05/12 23:51:54 mycroft Exp 	*/
 
 #undef BTDIAG
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btl.c,v 1.24.22.1 2012/11/20 03:01:01 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btl.c,v 1.24.22.2 2017/12/03 11:35:50 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -515,7 +515,7 @@ btintr(void *arg)
 #endif /* BTDEBUG */
 
 	/*
-	 * First acknowlege the interrupt, Then if it's not telling about
+	 * First acknowledge the interrupt, Then if it's not telling about
 	 * a completed operation just return.
 	 */
 	sts = isa_inb(iobase + BT_INTR_PORT);
@@ -883,7 +883,7 @@ bt_done(struct bt_softc *sc, struct bt_ccb *ccb)
 }
 
 /*
- * Find the board and find it's irq/drq
+ * Find the board and find its irq/drq
  */
 int
 bt_find(struct isa_attach_args *ia, struct bt_softc *sc)

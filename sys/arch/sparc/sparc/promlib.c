@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.43.12.1 2014/08/20 00:03:24 tls Exp $ */
+/*	$NetBSD: promlib.c,v 1.43.12.2 2017/12/03 11:36:43 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.43.12.1 2014/08/20 00:03:24 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.43.12.2 2017/12/03 11:36:43 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sparc_arch.h"
@@ -262,6 +262,22 @@ prom_getpropint(int node, const char *name, int deflt)
 		return (deflt);
 
 	return (*ip);
+}
+
+/*
+ * Fetch an unsigned 64-bit integer (or pointer) property.
+ * The return value is the property, or the default if there was none.
+ */
+uint64_t
+prom_getpropuint64(int node, const char *name, uint64_t deflt)
+{
+	uint64_t uint64buf, *uint64p = &uint64buf;
+	int len = 2;
+
+	if (prom_getprop(node, name, sizeof(uint64_t), &len, &uint64p) != 0)
+		return deflt;
+
+	return uint64buf;
 }
 
 /*
@@ -1276,6 +1292,8 @@ prom_init_opf(void)
 	node = findchosen();
 	OF_getprop(node, "stdin", &promops.po_stdin, sizeof(int));
 	OF_getprop(node, "stdout", &promops.po_stdout, sizeof(int));
+
+	OF_init();
 }
 
 /*

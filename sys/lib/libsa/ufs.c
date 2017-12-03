@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.58.2.3 2014/08/20 00:04:30 tls Exp $	*/
+/*	$NetBSD: ufs.c,v 1.58.2.4 2017/12/03 11:38:46 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -101,19 +101,34 @@
 
 #ifdef LIBSA_LFS
 /*
- * In-core LFS superblock.  This exists only to placate the macros in lfs.h,
+ * In-core LFS superblock - just the on-disk one.
  */
-struct fs {
-	struct dlfs	lfs_dlfs;
+struct salfs {
+	union {
+		struct dlfs u_32;
+		struct dlfs64 u_64;
+	} lfs_dlfs_u;
+	unsigned lfs_is64 : 1,
+		lfs_dobyteswap : 1,
+		lfs_hasolddirfmt : 1;
 };
-#define fs_magic	lfs_magic
-#define fs_maxsymlinklen lfs_maxsymlinklen
+/* Get lfs accessors that use struct salfs. */
+#define STRUCT_LFS struct salfs
+#include <ufs/lfs/lfs_accessors.h>
+
+/* override this to avoid a mess with the dinode accessors */
+#define lfs_dino_getsize(fs, dp) ((dp)->di_size)
+
+typedef struct salfs FS;
+#define fs_magic	lfs_dlfs_u.u_32.dlfs_magic
+#define fs_maxsymlinklen lfs_dlfs_u.u_32.dlfs_maxsymlinklen
 
 #define FS_MAGIC	LFS_MAGIC
 #define SBLOCKSIZE	LFS_SBPAD
 #define SBLOCKOFFSET	LFS_LABELPAD
 #else
-/* NB ufs2 doesn't use the common suberblock code... */
+/* NB ufs2 doesn't use the common superblock code... */
+typedef struct fs FS;
 #define FS_MAGIC	FS_UFS1_MAGIC
 #define SBLOCKOFFSET	SBLOCK_UFS1
 #endif
@@ -167,7 +182,7 @@ typedef uint32_t	ino32_t;
  */
 struct file {
 	off_t		f_seekp;	/* seek pointer */
-	struct fs	*f_fs;		/* pointer to super-block */
+	FS		*f_fs;		/* pointer to super-block */
 	struct ufs_dinode	f_di;		/* copy of on-disk inode */
 	uint		f_nishift;	/* for blocks in indirect block */
 	indp_t		f_ind_cache_block;
@@ -183,10 +198,10 @@ static int block_map(struct open_file *, indp_t, indp_t *);
 static int buf_read_file(struct open_file *, char **, size_t *);
 static int search_directory(const char *, int, struct open_file *, ino32_t *);
 #ifdef LIBSA_FFSv1
-static void ffs_oldfscompat(struct fs *);
+static void ffs_oldfscompat(FS *);
 #endif
 #ifdef LIBSA_FFSv2
-static int ffs_find_superblock(struct open_file *, struct fs *);
+static int ffs_find_superblock(struct open_file *, FS *);
 #endif
 
 
@@ -198,28 +213,31 @@ static int
 find_inode_sector(ino32_t inumber, struct open_file *f, daddr_t *isp)
 {
 	struct file *fp = (struct file *)f->f_fsdata;
-	struct fs *fs = fp->f_fs;
+	FS *fs = fp->f_fs;
 	daddr_t ifileent_blkno;
 	char *ent_in_buf;
 	size_t buf_after_ent;
+	size_t entsize;
 	int rc;
 
-	rc = read_inode(fs->lfs_ifile, f);
+	rc = read_inode(LFS_IFILE_INUM, f);
 	if (rc)
 		return rc;
 
+	entsize = fs->lfs_is64 ? sizeof(IFILE64) :
+		(lfs_sb_getversion(fs) > 1 ? sizeof(IFILE32) : sizeof(IFILE_V1));
 	ifileent_blkno =
-	    (inumber / fs->lfs_ifpb) + fs->lfs_cleansz + fs->lfs_segtabsz;
-	fp->f_seekp = (off_t)ifileent_blkno * fs->fs_bsize +
-	    (inumber % fs->lfs_ifpb) * sizeof (IFILE_Vx);
+	    (inumber / lfs_sb_getifpb(fs)) + lfs_sb_getcleansz(fs) + lfs_sb_getsegtabsz(fs);
+	fp->f_seekp = (off_t)ifileent_blkno * lfs_sb_getbsize(fs) +
+	    (inumber % lfs_sb_getifpb(fs)) * entsize;
 	rc = buf_read_file(f, &ent_in_buf, &buf_after_ent);
 	if (rc)
 		return rc;
 	/* make sure something's not badly wrong, but don't panic. */
-	if (buf_after_ent < sizeof (IFILE_Vx))
+	if (buf_after_ent < entsize)
 		return EINVAL;
 
-	*isp = FSBTODB(fs, ((IFILE_Vx *)ent_in_buf)->if_daddr);
+	*isp = FSBTODB(fs, lfs_if_getdaddr(fs, (IFILE *)ent_in_buf));
 	if (*isp == LFS_UNUSED_DADDR)	/* again, something badly wrong */
 		return EINVAL;
 	return 0;
@@ -233,7 +251,7 @@ static int
 read_inode(ino32_t inumber, struct open_file *f)
 {
 	struct file *fp = (struct file *)f->f_fsdata;
-	struct fs *fs = fp->f_fs;
+	FS *fs = fp->f_fs;
 	char *buf;
 	size_t rsize;
 	int rc;
@@ -244,8 +262,8 @@ read_inode(ino32_t inumber, struct open_file *f)
 #endif
 
 #ifdef LIBSA_LFS
-	if (inumber == fs->lfs_ifile)
-		inode_sector = FSBTODB(fs, fs->lfs_idaddr);
+	if (inumber == LFS_IFILE_INUM)
+		inode_sector = FSBTODB(fs, lfs_sb_getidaddr(fs));
 	else if ((rc = find_inode_sector(inumber, f, &inode_sector)) != 0)
 		return rc;
 #else
@@ -293,7 +311,7 @@ static int
 block_map(struct open_file *f, indp_t file_block, indp_t *disk_block_p)
 {
 	struct file *fp = (struct file *)f->f_fsdata;
-	struct fs *fs = fp->f_fs;
+	FS *fs = fp->f_fs;
 	uint level;
 	indp_t ind_cache;
 	indp_t ind_block_num;
@@ -395,7 +413,7 @@ static int
 buf_read_file(struct open_file *f, char **buf_p, size_t *size_p)
 {
 	struct file *fp = (struct file *)f->f_fsdata;
-	struct fs *fs = fp->f_fs;
+	FS *fs = fp->f_fs;
 	long off;
 	indp_t file_block;
 	size_t block_size;
@@ -499,7 +517,7 @@ search_directory(const char *name, int length, struct open_file *f,
 daddr_t sblock_try[] = SBLOCKSEARCH;
 
 static int
-ffs_find_superblock(struct open_file *f, struct fs *fs)
+ffs_find_superblock(struct open_file *f, FS *fs)
 {
 	int i, rc;
 	size_t buf_size;
@@ -533,7 +551,7 @@ ufs_open(const char *path, struct open_file *f)
 #endif
 	ino32_t inumber;
 	struct file *fp;
-	struct fs *fs;
+	FS *fs;
 	int rc;
 #ifndef LIBSA_NO_FS_SYMLINK
 	ino32_t parent_inumber;
@@ -580,6 +598,11 @@ ufs_open(const char *path, struct open_file *f)
 	 *      This may need a LIBSA_LFS_SMALL check as well.
 	 */
 #endif
+#if defined(LIBSA_LFS)
+	fs->lfs_is64 = 0;
+	fs->lfs_dobyteswap = 0;
+	fs->lfs_hasolddirfmt = (fs->fs_maxsymlinklen <= 0);
+#endif
 #endif
 
 #ifdef LIBSA_FFSv1
@@ -587,7 +610,7 @@ ufs_open(const char *path, struct open_file *f)
 #endif
 
 	if (fs->fs_bsize > MAXBSIZE ||
-	    (size_t)fs->fs_bsize < sizeof(struct fs)) {
+	    (size_t)fs->fs_bsize < sizeof(FS)) {
 		rc = EINVAL;
 		goto out;
 	}
@@ -940,7 +963,7 @@ out:	lsfree(names);
  * Stripped of stuff libsa doesn't need.....
  */
 static void
-ffs_oldfscompat(struct fs *fs)
+ffs_oldfscompat(FS *fs)
 {
 
 #ifdef COMPAT_UFS

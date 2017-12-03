@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_isa.c,v 1.39 2011/07/01 18:11:24 dyoung Exp $	*/
+/*	$NetBSD: ahc_isa.c,v 1.39.12.1 2017/12/03 11:36:18 jdolecek Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_isa.c,v 1.39 2011/07/01 18:11:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_isa.c,v 1.39.12.1 2017/12/03 11:36:18 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -299,12 +299,12 @@ ahc_isa_match(struct isa_attach_args *ia, bus_addr_t iobase)
 
 /*
  * Check the slots looking for a board we recognise
- * If we find one, note it's address (slot) and call
+ * If we find one, note its address (slot) and call
  * the actual probe routine to check it out.
  */
 int
 ahc_isa_probe(device_t parent, cfdata_t match, void *aux)
-{       
+{
 	struct isa_attach_args *ia = aux;
 	struct ahc_isa_slot *as;
 
@@ -433,8 +433,8 @@ ahc_isa_attach(device_t parent, device_t self, void *aux)
 	ahc->ih = isa_intr_establish(ia->ia_ic, irq,
 	    intrtype, IPL_BIO, ahc_intr, ahc);
 	if (ahc->ih == NULL) {
-		aprint_error_dev(ahc->sc_dev, "couldn't establish %s interrupt\n",
-		       intrtypestr);
+		aprint_error_dev(ahc->sc_dev,
+		    "couldn't establish %s interrupt\n", intrtypestr);
 		goto free_io;
 	}
 
@@ -448,7 +448,7 @@ ahc_isa_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/*
-	 * Now that we know we own the resources we need, do the 
+	 * Now that we know we own the resources we need, do the
 	 * card initialization.
 	 */
 	aha2840_load_seeprom(ahc);
@@ -478,7 +478,7 @@ aha2840_load_seeprom(struct ahc_softc *ahc)
 	sd.sd_bsh = ahc->bsh;
 	sd.sd_control_offset = SEECTL_2840;
 	sd.sd_status_offset = STATUS_2840;
-	sd.sd_dataout_offset = STATUS_2840;		
+	sd.sd_dataout_offset = STATUS_2840;
 	sd.sd_chip = C46;
 	sd.sd_MS = 0;
 	sd.sd_RDY = EEPROM_TF;
@@ -539,7 +539,7 @@ aha2840_load_seeprom(struct ahc_softc *ahc)
 		if (sc.adapter_control & CFRESETB)
 			scsi_conf |= RESET_SCSI;
 
-		if (sc.bios_control & CF284XEXTEND)		
+		if (sc.bios_control & CF284XEXTEND)
 			ahc->flags |= AHC_EXTENDED_TRANS_A;
 		/* Set SCSICONF info */
 		ahc_outb(ahc, SCSICONF, scsi_conf);

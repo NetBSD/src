@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.140.2.1 2014/08/20 00:03:38 tls Exp $	*/
+/*	$NetBSD: i82557.c,v 1.140.2.2 2017/12/03 11:37:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.140.2.1 2014/08/20 00:03:38 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.140.2.2 2017/12/03 11:37:03 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,7 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.140.2.1 2014/08/20 00:03:38 tls Exp $")
 
 #include <machine/endian.h>
 
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -407,6 +407,7 @@ fxp_attach(struct fxp_softc *sc)
 	 * Attach the interface.
 	 */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, enaddr);
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
 	    RND_TYPE_NET, RND_FLAG_DEFAULT);
@@ -943,7 +944,6 @@ fxp_start(struct ifnet *ifp)
 
 		KASSERT((csum_flags & (M_CSUM_TCPv6 | M_CSUM_UDPv6)) == 0);
 		if (sc->sc_flags & FXPF_EXT_RFA) {
-			struct m_tag *vtag;
 			struct fxp_ipcb *ipcb;
 			/*
 			 * Deal with TCP/IP checksum offload. Note that
@@ -978,10 +978,8 @@ fxp_start(struct ifnet *ifp)
 			/*
 			 * request VLAN tag insertion if needed.
 			 */
-			vtag = VLAN_OUTPUT_TAG(&sc->sc_ethercom, m0);
-			if (vtag) {
-				ipcb->ipcb_vlan_id =
-				    htobe16(*(u_int *)(vtag + 1));
+			if (vlan_has_tag(m0)) {
+				ipcb->ipcb_vlan_id = htobe16(vlan_get_tag(m0));
 				ipcb->ipcb_ip_activation_high |=
 				    FXP_IPCB_INSERTVLAN_ENABLE;
 			}
@@ -1120,7 +1118,7 @@ fxp_intr(void *arg)
 			/*
 			 * Try to get more packets going.
 			 */
-			fxp_start(ifp);
+			if_schedule_deferred_start(ifp);
 
 			if (sc->sc_txpending == 0) {
 				/*
@@ -1402,16 +1400,8 @@ fxp_rxintr(struct fxp_softc *sc)
 		 * check VLAN tag stripping.
 		 */
 		if ((sc->sc_flags & FXPF_EXT_RFA) != 0 &&
-		    (rfa->rfa_status & htole16(FXP_RFA_STATUS_VLAN)) != 0) {
-			struct m_tag *vtag;
-
-			vtag = m_tag_get(PACKET_TAG_VLAN, sizeof(u_int),
-			    M_NOWAIT);
-			if (vtag == NULL)
-				goto dropit;
-			*(u_int *)(vtag + 1) = be16toh(rfa->vlan_id);
-			m_tag_prepend(m, vtag);
-		}
+		    (rfa->rfa_status & htole16(FXP_RFA_STATUS_VLAN)) != 0)
+			vlan_set_tag(m, be16toh(rfa->vlan_id));
 
 		/* Do checksum checking. */
 		if ((ifp->if_csum_flags_rx & (M_CSUM_TCPv4|M_CSUM_UDPv4)) != 0)
@@ -1448,17 +1438,11 @@ fxp_rxintr(struct fxp_softc *sc)
 			}
 		}
 
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = len;
 
-		/*
-		 * Pass this up to any BPF listeners, but only
-		 * pass it up the stack if it's for us.
-		 */
-		bpf_mtap(ifp, m);
-
 		/* Pass it on. */
-		(*ifp->if_input)(ifp, m);
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.19.2.3 2014/08/20 00:03:39 tls Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.19.2.4 2017/12/03 11:37:05 jdolecek Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -25,12 +25,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.19.2.3 2014/08/20 00:03:39 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.19.2.4 2017/12/03 11:37:05 jdolecek Exp $");
 
 #include "opt_multiprocessor.h"
 
 #if defined MULTIPROCESSOR
-#warning Queue Management Method 'Counters' not support yet 
+#warning Queue Management Method 'Counters' not support. Please use mvxpe instead of this.
 #endif
 
 #include <sys/param.h>
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.19.2.3 2014/08/20 00:03:39 tls Exp $"
 #include <netinet/ip.h>
 
 #include <net/bpf.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
@@ -366,6 +366,8 @@ struct mvgbe_port {
 	{ MARVELL_MV78XX0_MV78200,	1, 1, { 44 }, FLAGS_FIX_TQTB | FLAGS_IPG2 },
 	{ MARVELL_MV78XX0_MV78200,	2, 1, { 48 }, FLAGS_FIX_TQTB | FLAGS_IPG2 },
 	{ MARVELL_MV78XX0_MV78200,	3, 1, { 52 }, FLAGS_FIX_TQTB | FLAGS_IPG2 },
+
+	{ MARVELL_DOVE_88AP510,		0, 1, { 29 }, FLAGS_FIX_TQTB | FLAGS_IPG2 },
 
 	{ MARVELL_ARMADAXP_MV78130,	0, 1, { 66 }, FLAGS_HAS_PV },
 	{ MARVELL_ARMADAXP_MV78130,	1, 1, { 70 }, FLAGS_HAS_PV },
@@ -674,6 +676,13 @@ mvgbe_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct marvell_attach_args *mva = aux;
 	uint32_t pbase, maddrh, maddrl;
+	prop_dictionary_t dict;
+
+	dict = device_properties(parent);
+	if (dict) {
+		if (prop_dictionary_get(dict, "mac-address"))
+			return 1;
+	}
 
 	pbase = MVGBE_PORTR_BASE + mva->mva_unit * MVGBE_PORTR_SIZE;
 	maddrh =
@@ -694,15 +703,24 @@ mvgbe_attach(device_t parent, device_t self, void *aux)
 	struct mvgbe_softc *sc = device_private(self);
 	struct marvell_attach_args *mva = aux;
 	struct mvgbe_txmap_entry *entry;
+	prop_dictionary_t dict;
+	prop_data_t enaddrp;
 	struct ifnet *ifp;
 	bus_dma_segment_t seg;
 	bus_dmamap_t dmamap;
 	int rseg, i;
 	uint32_t maddrh, maddrl;
+	uint8_t enaddr[ETHER_ADDR_LEN];
 	void *kva;
 
 	aprint_naive("\n");
 	aprint_normal("\n");
+
+	dict = device_properties(parent);
+	if (dict)
+		enaddrp = prop_dictionary_get(dict, "mac-address");
+	else
+		enaddrp = NULL;
 
 	sc->sc_dev = self;
 	sc->sc_port = mva->mva_unit;
@@ -749,6 +767,18 @@ mvgbe_attach(device_t parent, device_t self, void *aux)
 			return;
 		}
 		sc->sc_linkup.bit = MVGBE_PS_LINKUP;
+	}
+
+	if (enaddrp) {
+		memcpy(enaddr, prop_data_data_nocopy(enaddrp), ETHER_ADDR_LEN);
+		maddrh  = enaddr[0] << 24;
+		maddrh |= enaddr[1] << 16;
+		maddrh |= enaddr[2] << 8;
+		maddrh |= enaddr[3];
+		maddrl  = enaddr[4] << 8;
+		maddrl |= enaddr[5];
+		MVGBE_WRITE(sc, MVGBE_MACAH, maddrh);
+		MVGBE_WRITE(sc, MVGBE_MACAL, maddrl);
 	}
 
 	maddrh = MVGBE_READ(sc, MVGBE_MACAH);
@@ -806,11 +836,6 @@ mvgbe_attach(device_t parent, device_t self, void *aux)
 		}
 
 		entry = kmem_alloc(sizeof(*entry), KM_SLEEP);
-		if (!entry) {
-			aprint_error_dev(self, "Can't alloc txmap entry\n");
-			bus_dmamap_destroy(sc->sc_dmat, dmamap);
-			goto fail4;
-		}
 		entry->dmamap = dmamap;
 		SIMPLEQ_INSERT_HEAD(&sc->sc_txmap_head, entry, link);
 	}
@@ -881,6 +906,7 @@ mvgbe_attach(device_t parent, device_t self, void *aux)
 	 * Call MI attach routines.
 	 */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 
 	ether_ifattach(ifp, sc->sc_enaddr);
 	ether_set_ifflags_cb(&sc->sc_ethercom, mvgbe_ifflags_cb);
@@ -1022,8 +1048,7 @@ mvgbe_intr(void *arg)
 			mvgbe_txeof(sc);
 	}
 
-	if (!IFQ_IS_EMPTY(&ifp->if_snd))
-		mvgbe_start(ifp);
+	if_schedule_deferred_start(ifp);
 
 	rnd_add_uint32(&sc->sc_rnd_source, datum);
 
@@ -1679,12 +1704,6 @@ mvgbe_alloc_jumbo_mem(struct mvgbe_softc *sc)
 		sc->sc_cdata.mvgbe_jslots[i] = ptr;
 		ptr += MVGBE_JLEN;
 		entry = kmem_alloc(sizeof(struct mvgbe_jpool_entry), KM_SLEEP);
-		if (entry == NULL) {
-			aprint_error_dev(sc->sc_dev,
-			    "no memory for jumbo buffer queue!\n");
-			error = ENOBUFS;
-			goto out;
-		}
 		entry->slot = i;
 		if (i)
 			LIST_INSERT_HEAD(&sc->sc_jfree_listhead, entry,
@@ -2045,19 +2064,15 @@ mvgbe_rxeof(struct mvgbe_softc *sc)
 			}
 			m = m0;
 		} else {
-			m->m_pkthdr.rcvif = ifp;
+			m_set_rcvif(m, ifp);
 			m->m_pkthdr.len = m->m_len = total_len;
 		}
 
 		/* Skip on first 2byte (HW header) */
 		m_adj(m,  MVGBE_HWHEADER_SIZE);
 
-		ifp->if_ipackets++;
-
-		bpf_mtap(ifp, m);
-
 		/* pass it on. */
-		(*ifp->if_input)(ifp, m);
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 	}
 }
 
@@ -2210,8 +2225,19 @@ set:
 	MVGBE_WRITE(sc, MVGBE_PXC, pxc);
 
 	/* Set Destination Address Filter Unicast Table */
-	i = sc->sc_enaddr[5] & 0xf;		/* last nibble */
-	dfut[i>>2] = MVGBE_DF(i&3, MVGBE_DF_QUEUE(0) | MVGBE_DF_PASS);
+	if (ifp->if_flags & IFF_PROMISC) {
+		/* pass all unicast addresses */
+		for (i = 0; i < MVGBE_NDFUT; i++) {
+			dfut[i] =
+			    MVGBE_DF(0, MVGBE_DF_QUEUE(0) | MVGBE_DF_PASS) |
+			    MVGBE_DF(1, MVGBE_DF_QUEUE(0) | MVGBE_DF_PASS) |
+			    MVGBE_DF(2, MVGBE_DF_QUEUE(0) | MVGBE_DF_PASS) |
+			    MVGBE_DF(3, MVGBE_DF_QUEUE(0) | MVGBE_DF_PASS);
+		}
+	} else {
+		i = sc->sc_enaddr[5] & 0xf;		/* last nibble */
+		dfut[i>>2] = MVGBE_DF(i&3, MVGBE_DF_QUEUE(0) | MVGBE_DF_PASS);
+	}
 	MVGBE_WRITE_FILTER(sc, MVGBE_DFUT, dfut, MVGBE_NDFUT);
 
 	/* Set Destination Address Filter Multicast Tables */

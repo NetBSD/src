@@ -1,4 +1,4 @@
-/*	$NetBSD: gcscide.c,v 1.14.2.1 2014/08/20 00:03:06 tls Exp $	*/
+/*	$NetBSD: gcscide.c,v 1.14.2.2 2017/12/03 11:36:18 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gcscide.c,v 1.14.2.1 2014/08/20 00:03:06 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gcscide.c,v 1.14.2.2 2017/12/03 11:36:18 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: gcscide.c,v 1.14.2.1 2014/08/20 00:03:06 tls Exp $")
 
 #include <machine/cpufunc.h>
 
-/* 
+/*
  * 6.4 - ATA-5 Controller Register Definitions.
  */
 #define GCSCIDE_MSR_ATAC_BASE 		0x51300000
@@ -85,7 +85,8 @@ __KERNEL_RCSID(0, "$NetBSD: gcscide.c,v 1.14.2.1 2014/08/20 00:03:06 tls Exp $")
 static int	gcscide_match(device_t, cfdata_t, void *);
 static void	gcscide_attach(device_t, device_t, void *);
 
-static void	gcscide_chip_map(struct pciide_softc *, const struct pci_attach_args *);
+static void	gcscide_chip_map(struct pciide_softc *,
+    const struct pci_attach_args *);
 static void	gcscide_setup_channel(struct ata_channel *);
 
 /* PIO Format 1 settings */

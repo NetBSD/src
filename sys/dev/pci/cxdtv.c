@@ -1,4 +1,4 @@
-/* $NetBSD: cxdtv.c,v 1.11.6.2 2014/08/20 00:03:42 tls Exp $ */
+/* $NetBSD: cxdtv.c,v 1.11.6.3 2017/12/03 11:37:07 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cxdtv.c,v 1.11.6.2 2014/08/20 00:03:42 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxdtv.c,v 1.11.6.3 2017/12/03 11:37:07 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -439,9 +439,6 @@ cxdtv_mpeg_attach(struct cxdtv_softc *sc)
 	
 	sc->sc_riscbufsz = ch->csc_riscsz;
 	sc->sc_riscbuf = kmem_alloc(ch->csc_riscsz, KM_SLEEP);
-
-	if ( sc->sc_riscbuf == NULL )
-		panic("riscbuf null");
 
 	aprint_debug_dev(sc->sc_dev, "attaching frontend...\n");
 
@@ -1061,10 +1058,6 @@ cxdtv_mpeg_malloc(struct cxdtv_softc *sc, size_t size)
 	int err;
 
 	p = kmem_alloc(sizeof(*p), KM_SLEEP);
-	if (p == NULL) {
-		return NULL;
-	}
-
 	err = cxdtv_allocmem(sc, size, 16, p);
 	if (err) {
 		kmem_free(p, sizeof(*p));

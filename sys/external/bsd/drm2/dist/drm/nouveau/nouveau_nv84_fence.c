@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nv84_fence.c,v 1.1.1.1.6.2 2014/08/20 00:04:11 tls Exp $	*/
+/*	$NetBSD: nouveau_nv84_fence.c,v 1.1.1.1.6.3 2017/12/03 11:37:52 jdolecek Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nv84_fence.c,v 1.1.1.1.6.2 2014/08/20 00:04:11 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nv84_fence.c,v 1.1.1.1.6.3 2017/12/03 11:37:52 jdolecek Exp $");
 
 #include <core/object.h>
 #include <core/client.h>
@@ -215,6 +215,12 @@ static void
 nv84_fence_destroy(struct nouveau_drm *drm)
 {
 	struct nv84_fence_priv *priv = drm->fence;
+
+#ifdef __NetBSD__
+	spin_lock_destroy(&priv->base.waitlock);
+	DRM_DESTROY_WAITQUEUE(&priv->base.waitqueue);
+#endif
+
 	nouveau_bo_unmap(priv->bo_gart);
 	if (priv->bo_gart)
 		nouveau_bo_unpin(priv->bo_gart);
@@ -244,7 +250,12 @@ nv84_fence_create(struct nouveau_drm *drm)
 	priv->base.context_new = nv84_fence_context_new;
 	priv->base.context_del = nv84_fence_context_del;
 
+#ifdef __NetBSD__
+	spin_lock_init(&priv->base.waitlock);
+	DRM_INIT_WAITQUEUE(&priv->base.waitqueue, "nvfenceq");
+#else
 	init_waitqueue_head(&priv->base.waiting);
+#endif
 	priv->base.uevent = true;
 
 	ret = nouveau_bo_new(drm->dev, 16 * (pfifo->max + 1), 0,

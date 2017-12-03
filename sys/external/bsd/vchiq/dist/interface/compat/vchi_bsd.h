@@ -45,52 +45,13 @@
 #include <sys/callout.h>
 
 #include <linux/completion.h>
+#include <asm/barrier.h>
 
 /*
  * Copy from/to user API
  */
 #define copy_from_user(to, from, n)	copyin((from), (to), (n))
 #define copy_to_user(to, from, n)	copyout((from), (to), (n))
-
-/*
- * Bit API
- */
-
-static __inline int
-test_and_set_bit(int nr, volatile void *addr)
-{
-	volatile uint32_t *val;
-	uint32_t mask, old;
-
-	val = (volatile uint32_t *)addr;
-	mask = 1 << nr;
-
-	do {
-		old = *val;
-		if ((old & mask) != 0)
-			break;
-	} while (atomic_cas_uint(val, old, old | mask) != old);
-
-	return old & mask;
-}
-
-static __inline__ int
-test_and_clear_bit(int nr, volatile void *addr)
-{
-	volatile uint32_t *val;
-	uint32_t mask, old;
-
-	val = (volatile uint32_t *)addr;
-	mask = 1 << nr;
-
-	do {
-		old = *val;
-		if ((old & mask) == 0)
-			break;
-	} while (atomic_cas_uint(val, old, old & ~mask) != old);
-
-	return old & mask;
-}
 
 /*
  * Atomic API
@@ -367,13 +328,7 @@ typedef	off_t	loff_t;
 #define BCM2835_MBOX_CHAN_VCHIQ	3
 #define bcm_mbox_write	bcmmbox_write
 
-#define rmb	membar_consumer
-#define wmb	membar_producer
 #define dsb	membar_producer
-
-#define smp_mb	membar_producer
-#define smp_rmb	membar_consumer
-#define smp_wmb	membar_producer
 
 #define device_print_prettyname(dev)	device_printf((dev), "")
 

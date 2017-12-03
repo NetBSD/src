@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,8 +40,6 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  */
-
-#define __HWVALID_C__
 
 #include "acpi.h"
 #include "accommon.h"
@@ -109,7 +107,7 @@ static const ACPI_PORT_INFO     AcpiProtectedPorts[] =
     {"PCI",     0x0CF8, 0x0CFF, ACPI_OSI_WIN_XP}
 };
 
-#define ACPI_PORT_INFO_ENTRIES  ACPI_ARRAY_LENGTH (AcpiProtectedPorts)
+#define ACPI_PORT_INFO_ENTRIES      ACPI_ARRAY_LENGTH (AcpiProtectedPorts)
 
 
 /******************************************************************************
@@ -139,7 +137,7 @@ AcpiHwValidateIoRequest (
     const ACPI_PORT_INFO    *PortInfo;
 
 
-    ACPI_FUNCTION_TRACE (HwValidateIoRequest);
+    ACPI_FUNCTION_NAME (HwValidateIoRequest);
 
 
     /* Supported widths are 8/16/32 */
@@ -157,8 +155,8 @@ AcpiHwValidateIoRequest (
     ByteWidth = ACPI_DIV_8 (BitWidth);
     LastAddress = Address + ByteWidth - 1;
 
-    ACPI_DEBUG_PRINT ((ACPI_DB_IO, "Address %p LastAddress %p Length %X",
-        ACPI_CAST_PTR (void, Address), ACPI_CAST_PTR (void, LastAddress),
+    ACPI_DEBUG_PRINT ((ACPI_DB_IO, "Address %8.8X%8.8X LastAddress %8.8X%8.8X Length %X",
+        ACPI_FORMAT_UINT64 (Address), ACPI_FORMAT_UINT64 (LastAddress),
         ByteWidth));
 
     /* Maximum 16-bit address in I/O space */
@@ -166,16 +164,16 @@ AcpiHwValidateIoRequest (
     if (LastAddress > ACPI_UINT16_MAX)
     {
         ACPI_ERROR ((AE_INFO,
-            "Illegal I/O port address/length above 64K: %p/0x%X",
-            ACPI_CAST_PTR (void, Address), ByteWidth));
-        return_ACPI_STATUS (AE_LIMIT);
+            "Illegal I/O port address/length above 64K: %8.8X%8.8X/0x%X",
+            ACPI_FORMAT_UINT64 (Address), ByteWidth));
+        return (AE_LIMIT);
     }
 
     /* Exit if requested address is not within the protected port table */
 
     if (Address > AcpiProtectedPorts[ACPI_PORT_INFO_ENTRIES - 1].End)
     {
-        return_ACPI_STATUS (AE_OK);
+        return (AE_OK);
     }
 
     /* Check request against the list of protected I/O ports */
@@ -184,7 +182,7 @@ AcpiHwValidateIoRequest (
     {
         /*
          * Check if the requested address range will write to a reserved
-         * port. Four cases to consider:
+         * port. There are four cases to consider:
          *
          * 1) Address range is contained completely in the port address range
          * 2) Address range overlaps port range at the port range start
@@ -198,8 +196,8 @@ AcpiHwValidateIoRequest (
             if (AcpiGbl_OsiData >= PortInfo->OsiDependency)
             {
                 ACPI_DEBUG_PRINT ((ACPI_DB_IO,
-                    "Denied AML access to port 0x%p/%X (%s 0x%.4X-0x%.4X)",
-                    ACPI_CAST_PTR (void, Address), ByteWidth, PortInfo->Name,
+                    "Denied AML access to port 0x%8.8X%8.8X/%X (%s 0x%.4X-0x%.4X)",
+                    ACPI_FORMAT_UINT64 (Address), ByteWidth, PortInfo->Name,
                     PortInfo->Start, PortInfo->End));
 
                 return_ACPI_STATUS (AE_AML_ILLEGAL_ADDRESS);
@@ -214,7 +212,7 @@ AcpiHwValidateIoRequest (
         }
     }
 
-    return_ACPI_STATUS (AE_OK);
+    return (AE_OK);
 }
 
 
@@ -223,7 +221,7 @@ AcpiHwValidateIoRequest (
  * FUNCTION:    AcpiHwReadPort
  *
  * PARAMETERS:  Address             Address of I/O port/register to read
- *              Value               Where value is placed
+ *              Value               Where value (data) is returned
  *              Width               Number of bits
  *
  * RETURN:      Status and value read from port
@@ -269,7 +267,7 @@ AcpiHwReadPort (
     /*
      * There has been a protection violation within the request. Fall
      * back to byte granularity port I/O and ignore the failing bytes.
-     * This provides Windows compatibility.
+     * This provides compatibility with other ACPI implementations.
      */
     for (i = 0, *Value = 0; i < Width; i += 8)
     {
@@ -343,7 +341,7 @@ AcpiHwWritePort (
     /*
      * There has been a protection violation within the request. Fall
      * back to byte granularity port I/O and ignore the failing bytes.
-     * This provides Windows compatibility.
+     * This provides compatibility with other ACPI implementations.
      */
     for (i = 0; i < Width; i += 8)
     {

@@ -1,4 +1,4 @@
-/*	$NetBSD: btsco.c,v 1.28.2.1 2014/08/20 00:03:36 tls Exp $	*/
+/*	$NetBSD: btsco.c,v 1.28.2.2 2017/12/03 11:36:59 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.28.2.1 2014/08/20 00:03:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.28.2.2 2017/12/03 11:36:59 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -97,7 +97,7 @@ struct btsco_softc {
 	device_t		 sc_audio;	/* MI audio device */
 	void			*sc_intr;	/* interrupt cookie */
 	kcondvar_t		 sc_connect;	/* connect wait */
-	kmutex_t		 sc_intr_lock;	/* for audio */
+	kmutex_t		 sc_lock;	/* for audio */
 
 	/* Bluetooth */
 	bdaddr_t		 sc_laddr;	/* local address */
@@ -295,7 +295,7 @@ btsco_attach(device_t parent, device_t self, void *aux)
 	sc->sc_state = BTSCO_CLOSED;
 	sc->sc_name = device_xname(self);
 	cv_init(&sc->sc_connect, "connect");
-	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	/*
 	 * copy in our configuration info
@@ -382,10 +382,12 @@ btsco_detach(device_t self, int flags)
 		sc->sc_intr = NULL;
 	}
 
+	mutex_enter(bt_lock);
 	if (sc->sc_rx_mbuf != NULL) {
 		m_freem(sc->sc_rx_mbuf);
 		sc->sc_rx_mbuf = NULL;
 	}
+	mutex_exit(bt_lock);
 
 	if (sc->sc_tx_refcnt > 0) {
 		aprint_error_dev(self, "tx_refcnt=%d!\n", sc->sc_tx_refcnt);
@@ -395,7 +397,7 @@ btsco_detach(device_t self, int flags)
 	}
 
 	cv_destroy(&sc->sc_connect);
-	mutex_destroy(&sc->sc_intr_lock);
+	mutex_destroy(&sc->sc_lock);
 
 	return 0;
 }
@@ -462,7 +464,7 @@ btsco_sco_disconnected(void *arg, int err)
 		 * has completed so that when it tries to send more, we
 		 * can indicate an error.
 		 */
-		mutex_enter(&sc->sc_intr_lock);
+		mutex_enter(bt_lock);
 		if (sc->sc_tx_pending > 0) {
 			sc->sc_tx_pending = 0;
 			(*sc->sc_tx_intr)(sc->sc_tx_intrarg);
@@ -471,7 +473,7 @@ btsco_sco_disconnected(void *arg, int err)
 			sc->sc_rx_want = 0;
 			(*sc->sc_rx_intr)(sc->sc_rx_intrarg);
 		}
-		mutex_exit(&sc->sc_intr_lock);
+		mutex_exit(bt_lock);
 		break;
 
 	default:
@@ -505,13 +507,11 @@ btsco_sco_complete(void *arg, int count)
 
 	DPRINTFN(10, "%s count %d\n", sc->sc_name, count);
 
-	mutex_enter(&sc->sc_intr_lock);
 	if (sc->sc_tx_pending > 0) {
 		sc->sc_tx_pending -= count;
 		if (sc->sc_tx_pending == 0)
 			(*sc->sc_tx_intr)(sc->sc_tx_intrarg);
 	}
-	mutex_exit(&sc->sc_intr_lock);
 }
 
 static void
@@ -530,7 +530,6 @@ btsco_sco_input(void *arg, struct mbuf *m)
 
 	DPRINTFN(10, "%s len=%d\n", sc->sc_name, m->m_pkthdr.len);
 
-	mutex_enter(&sc->sc_intr_lock);
 	if (sc->sc_rx_want == 0) {
 		m_freem(m);
 	} else {
@@ -556,7 +555,6 @@ btsco_sco_input(void *arg, struct mbuf *m)
 		if (sc->sc_rx_want == 0)
 			(*sc->sc_rx_intr)(sc->sc_rx_intrarg);
 	}
-	mutex_exit(&sc->sc_intr_lock);
 }
 
 
@@ -777,7 +775,7 @@ btsco_round_blocksize(void *hdl, int bs, int mode,
 /*
  * Start Output
  *
- * We dont want to be calling the network stack with sc_intr_lock held
+ * We dont want to be calling the network stack with bt_lock held
  * so make a note of what is to be sent, and schedule an interrupt to
  * bundle it up and queue it.
  */
@@ -798,7 +796,9 @@ btsco_start_output(void *hdl, void *block, int blksize,
 	sc->sc_tx_intr = intr;
 	sc->sc_tx_intrarg = intrarg;
 
+	kpreempt_disable();
 	softint_schedule(sc->sc_intr);
+	kpreempt_enable();
 	return 0;
 }
 
@@ -1025,7 +1025,7 @@ btsco_allocm(void *hdl, int direction, size_t size)
 
 	addr = kmem_alloc(size, KM_SLEEP);
 
-	if (addr != NULL && direction == AUMODE_PLAY) {
+	if (direction == AUMODE_PLAY) {
 		sc->sc_tx_buf = addr;
 		sc->sc_tx_refcnt = 0;
 	}
@@ -1077,8 +1077,8 @@ btsco_get_locks(void *hdl, kmutex_t **intr, kmutex_t **thread)
 {
 	struct btsco_softc *sc = hdl;
 
-	*intr = &sc->sc_intr_lock;
-	*thread = bt_lock;
+	*thread = &sc->sc_lock;
+	*intr = bt_lock;
 }
 
 /*
@@ -1139,12 +1139,12 @@ btsco_intr(void *arg)
 	if (sc->sc_sco == NULL)
 		return;		/* connection is lost */
 
+	mutex_enter(bt_lock);
 	block = sc->sc_tx_block;
 	size = sc->sc_tx_size;
 	sc->sc_tx_block = NULL;
 	sc->sc_tx_size = 0;
 
-	mutex_enter(bt_lock);
 	while (size > 0) {
 		MGETHDR(m, M_DONTWAIT, MT_DATA);
 		if (m == NULL)

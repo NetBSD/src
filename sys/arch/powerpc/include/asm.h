@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.39.12.2 2014/08/20 00:03:19 tls Exp $	*/
+/*	$NetBSD: asm.h,v 1.39.12.3 2017/12/03 11:36:37 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -104,7 +104,11 @@
 # define SF_SP		 0
 # define SF_CR		 8
 # define SF_LR		16
+# define SF_COMP	24
+# define SF_LD		32
+# define SF_TOC		40
 # define SF_PARAM	SF_HEADER_SZ
+# define SF_ALIGN(x)	(((x) + 0xf) & ~0xf)
 
 # define _XENTRY(y)			\
 	.globl	y;			\
@@ -356,12 +360,12 @@ y:	.quad	.##y,.TOC.@tocbase,0;	\
 # define cmpptri	cmpwi
 # define cmplongi	cmpwi
 # define cmpregi	cmpwi
-# define cmpptrl	cmpwl
-# define cmplongl	cmpwl
-# define cmpregl	cmpwl
-# define cmpptrli	cmpwli
-# define cmplongli	cmpwli
-# define cmpregli	cmpwli
+# define cmpptrl	cmplw
+# define cmplongl	cmplw
+# define cmpregl	cmplw
+# define cmpptrli	cmplwi
+# define cmplongli	cmplwi
+# define cmpregli	cmplwi
 
 #else /* __LP64__ */
 
@@ -401,12 +405,12 @@ y:	.quad	.##y,.TOC.@tocbase,0;	\
 # define cmpptri	cmpdi
 # define cmplongi	cmpdi
 # define cmpregi	cmpdi
-# define cmpptrl	cmpdl
-# define cmplongl	cmpdl
-# define cmpregl	cmpdl
-# define cmpptrli	cmpdli
-# define cmplongli	cmpdli
-# define cmpregli	cmpdli
+# define cmpptrl	cmpld
+# define cmplongl	cmpld
+# define cmpregl	cmpld
+# define cmpptrli	cmpldi
+# define cmplongli	cmpldi
+# define cmpregli	cmpldi
 
 #endif /* __LP64__ */
 

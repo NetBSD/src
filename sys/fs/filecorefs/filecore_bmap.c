@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_bmap.c,v 1.9.22.1 2013/02/25 00:29:47 tls Exp $	*/
+/*	$NetBSD: filecore_bmap.c,v 1.9.22.2 2017/12/03 11:38:41 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_bmap.c,v 1.9.22.1 2013/02/25 00:29:47 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_bmap.c,v 1.9.22.2 2017/12/03 11:38:41 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,7 +162,7 @@ filecore_map(struct filecore_mnt *fcmp, u_int32_t addr, daddr_t lbn, daddr_t *bn
 	sect <<= fcmp->drec.share_size;
 	do {
 		error=bread(fcmp->fc_devvp, fcmp->map + zone,
-			    1 << fcmp->drec.log2secsize, NOCRED, 0, &bp);
+			    1 << fcmp->drec.log2secsize, 0, &bp);
 #ifdef FILECORE_DEBUG_BR
 		printf("bread(%p, %lx, %d, CRED, %p)=%d\n", fcmp->fc_devvp,
 		       fcmp->map+zone, 1 << fcmp->drec.log2secsize, bp, error);
@@ -242,7 +242,7 @@ filecore_bread(struct filecore_mnt *fcmp, u_int32_t addr, int size, kauth_cred_t
 #endif
 		return error;
 	}
-	error = bread(fcmp->fc_devvp, bn, size, cred, 0, bp);
+	error = bread(fcmp->fc_devvp, bn, size, 0, bp);
 #ifdef FILECORE_DEBUG_BR
 	printf("bread(%p, %llx, %d, CRED, %p)=%d\n", fcmp->fc_devvp,
 	    (long long)bn, size, *bp, error);
@@ -261,7 +261,7 @@ filecore_dbread(struct filecore_node *ip, struct buf **bp)
 	if (error)
 		return error;
 	error = bread(ip->i_mnt->fc_devvp, ip->i_block, FILECORE_DIR_SIZE,
-		      NOCRED, 0, bp);
+		      0, bp);
 #ifdef FILECORE_DEBUG_BR
 	printf("bread(%p, %llx, %d, CRED, %p)=%d\n", ip->i_mnt->fc_devvp,
 	       (long long)ip->i_block, FILECORE_DIR_SIZE, *bp, error);

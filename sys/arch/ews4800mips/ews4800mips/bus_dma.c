@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.12.14.1 2012/11/20 03:01:20 tls Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.12.14.2 2017/12/03 11:36:12 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,18 +31,20 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.12.14.1 2012/11/20 03:01:20 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.12.14.2 2017/12/03 11:36:12 jdolecek Exp $");
 
+#define	_EWS4800MIPS_BUS_DMA_PRIVATE
 /* #define	BUS_DMA_DEBUG */
+
 #include <sys/param.h>
 #include <sys/malloc.h>
+#include <sys/bus.h>
 #include <sys/mbuf.h>
 #include <sys/proc.h>
 
+#include <mips/locore.h>
 #include <mips/cache.h>
 
-#define	_EWS4800MIPS_BUS_DMA_PRIVATE
-#include <machine/bus.h>
 #include <machine/sbdvar.h>
 
 #include <dev/bus_dma/bus_dmamem_common.h>
@@ -542,11 +544,11 @@ _bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
     bus_size_t boundary, bus_dma_segment_t *segs, int nsegs, int *rsegs,
     int flags)
 {
-	extern paddr_t mips_avail_start, mips_avail_end;
 
-	return (_bus_dmamem_alloc_range_common(t, size, alignment, boundary,
+	return _bus_dmamem_alloc_range_common(t, size, alignment, boundary,
 	    segs, nsegs, rsegs, flags,
-	    mips_avail_start /*low*/, mips_avail_end - PAGE_SIZE /*high*/));
+	    pmap_limits.avail_start /*low*/,
+	    pmap_limits.avail_end - PAGE_SIZE /*high*/);
 }
 
 /*

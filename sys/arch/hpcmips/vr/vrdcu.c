@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrdcu.c,v 1.6.14.1 2012/11/20 03:01:24 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrdcu.c,v 1.6.14.2 2017/12/03 11:36:15 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -222,12 +222,12 @@ _vrdcu_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 
 	DPRINTFN(1, ("_vrdcu_dmamem_alloc\n"));
 
-	high = (mips_avail_end < VRDMAAU_BOUNCE_THRESHOLD ?
-		mips_avail_end : VRDMAAU_BOUNCE_THRESHOLD) - PAGE_SIZE;
+	high = (pmap_limits.avail_end < VRDMAAU_BOUNCE_THRESHOLD ?
+		pmap_limits.avail_end : VRDMAAU_BOUNCE_THRESHOLD) - PAGE_SIZE;
 	alignment = alignment > VRDMAAU_ALIGNMENT ?
 		    alignment : VRDMAAU_ALIGNMENT;
 
 	return _hpcmips_bd_mem_alloc_range(t, size, alignment, boundary,
 					   segs, nsegs, rsegs, flags,
-					   mips_avail_start, high);
+					   pmap_limits.avail_start, high);
 }

@@ -1,10 +1,10 @@
-# 	$NetBSD: LIBERO,v 1.55.8.3 2014/08/20 00:03:15 tls Exp $
+# 	$NetBSD: LIBERO,v 1.55.8.4 2017/12/03 11:36:32 jdolecek Exp $
 
 #	NEWS1750 config file;
 #
 #	"The far way to the eventual news68k port"
 #
-include		"arch/news68k/conf/std.news68k"
+include 	"arch/news68k/conf/std.news68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -38,24 +38,12 @@ options 	SCSIVERBOSE		# Verbose SCSI errors
 #options 	SCSIDEBUG		#
 
 # Compatibility options
-options 	COMPAT_43		# compatibility with 4.3BSD binaries
-options 	COMPAT_13		# NetBSD 1.3 binary compatibility
-options 	COMPAT_14		# NetBSD 1.4 binary compatibility
-options 	COMPAT_15		# NetBSD 1.5 binary compatibility
-options 	COMPAT_16		# NetBSD 1.6 binary compatibility
-options 	COMPAT_20		# NetBSD 2.0 binary compatibility
-options 	COMPAT_30		# NetBSD 3.0 binary compatibility
-options 	COMPAT_40		# NetBSD 4.0 binary compatibility
-options 	COMPAT_50		# NetBSD 5.0 binary compatibility
-options 	COMPAT_60		# NetBSD 6.0 compatibility.
+include 	"conf/compat_netbsd13.config"
 options 	COMPAT_AOUT_M68K	# compatibility with NetBSD/m68k a.out
 
 #options 	COMPAT_SVR4		# binary compatibility with SVR4
 options 	COMPAT_SUNOS		# binary compatibility with SunOS
 #options 	COMPAT_LINUX		# binary compatibllity with Linux/m68k
-options 	COMPAT_BSDPTY		# /dev/[pt]ty?? ptys.
-
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 # Filesystem options
 file-system	FFS		# Berkeley Fast Filesystem

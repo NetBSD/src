@@ -1,4 +1,4 @@
-/* $NetBSD: gpioiic.c,v 1.5.12.1 2012/11/20 03:02:00 tls Exp $ */
+/* $NetBSD: gpioiic.c,v 1.5.12.2 2017/12/03 11:37:01 jdolecek Exp $ */
 /*	$OpenBSD: gpioiic.c,v 1.8 2008/11/24 12:12:12 mbalmer Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpioiic.c,v 1.5.12.1 2012/11/20 03:02:00 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpioiic.c,v 1.5.12.2 2017/12/03 11:37:01 jdolecek Exp $");
 
 /*
  * I2C bus bit-banging through GPIO pins.
@@ -35,6 +35,8 @@ __KERNEL_RCSID(0, "$NetBSD: gpioiic.c,v 1.5.12.1 2012/11/20 03:02:00 tls Exp $")
 
 #include <dev/i2c/i2cvar.h>
 #include <dev/i2c/i2c_bitbang.h>
+
+#include "ioconf.h"
 
 #define GPIOIIC_PIN_SDA		0
 #define GPIOIIC_PIN_SCL		1
@@ -79,8 +81,6 @@ uint32_t	gpioiic_bb_read_bits(void *);
 
 CFATTACH_DECL_NEW(gpioiic, sizeof(struct gpioiic_softc),
 	gpioiic_match, gpioiic_attach, gpioiic_detach, NULL);
-
-extern struct cfdriver gpioiic_cd;
 
 static const struct i2c_bitbang_ops gpioiic_bbops = {
 	gpioiic_bb_set_bits,
@@ -232,10 +232,10 @@ gpioiic_i2c_acquire_bus(void *cookie, int flags)
 	struct gpioiic_softc *sc = cookie;
 
 	if (flags & I2C_F_POLL)
-		return 0;
+		return 1;
 
 	rw_enter(&sc->sc_i2c_lock, RW_WRITER);
-	return 1;
+	return 0;
 }
 
 void
@@ -286,8 +286,8 @@ gpioiic_bb_set_bits(void *cookie, uint32_t bits)
 
 	gpio_pin_write(sc->sc_gpio, &sc->sc_map, sc->sc_pin_sda,
 	    bits & GPIOIIC_SDA ? GPIO_PIN_HIGH : GPIO_PIN_LOW);
-	gpio_pin_write(sc->sc_gpio, &sc->sc_map, GPIOIIC_PIN_SCL,
-	    bits & GPIOIIC_SCL ? GPIO_PIN_HIGH : sc->sc_pin_scl);
+	gpio_pin_write(sc->sc_gpio, &sc->sc_map, sc->sc_pin_scl,
+	    bits & GPIOIIC_SCL ? GPIO_PIN_HIGH : GPIO_PIN_LOW);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.34 2012/01/30 04:25:14 mrg Exp $ */
+/*	$NetBSD: ebus.c,v 1.34.6.1 2017/12/03 11:36:43 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.34 2012/01/30 04:25:14 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.34.6.1 2017/12/03 11:36:43 jdolecek Exp $");
 
 #if defined(DEBUG) && !defined(EBUS_DEBUG)
 #define EBUS_DEBUG
@@ -234,7 +234,7 @@ ebus_init_wiring_table(struct ebus_softc *sc)
 
 
 /*
- * attach an ebus and all it's children.  this code is modeled
+ * attach an ebus and all its children.  this code is modeled
  * after the sbus code which does similar things.
  */
 static void

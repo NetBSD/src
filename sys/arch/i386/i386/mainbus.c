@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.94.6.2 2014/08/20 00:03:06 tls Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.94.6.3 2017/12/03 11:36:17 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.94.6.2 2014/08/20 00:03:06 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.94.6.3 2017/12/03 11:36:17 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.94.6.2 2014/08/20 00:03:06 tls Exp $")
 #include <arch/x86/pci/pci_addr_fixup.h>
 #endif
 #endif
+#include <arch/x86/pci/msipic.h>
 #endif
 
 void	mainbus_childdetached(device_t, device_t);
@@ -101,8 +102,6 @@ struct mainbus_softc {
 	device_t	sc_pci;
 	device_t	sc_mca;
 	device_t	sc_pnpbios;
-	bool		sc_acpi_present;
-	bool		sc_mpacpi_active;
 };
 
 CFATTACH_DECL2_NEW(mainbus, sizeof(struct mainbus_softc),
@@ -160,11 +159,18 @@ int mp_nintr;
 int mp_isa_bus = -1;            /* XXX */
 int mp_eisa_bus = -1;           /* XXX */
 
-#ifdef MPVERBOSE
+bool acpi_present;
+bool mpacpi_active;
+
+# ifdef MPVERBOSE
+#  if MPVERBOSE > 0
+int mp_verbose = MPVERBOSE;
+#  else
 int mp_verbose = 1;
-#else
+#  endif
+# else
 int mp_verbose = 0;
-#endif
+# endif
 #endif
 
 void
@@ -227,6 +233,8 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 #endif
 
 #if NPCI > 0
+	msipic_init();
+
 	/*
 	 * ACPI needs to be able to access PCI configuration space.
 	 */
@@ -249,17 +257,17 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 
 #if NACPICA > 0
 	if ((boothowto & RB_MD2) == 0 && acpi_check(self, "acpibus"))
-		sc->sc_acpi_present = acpi_probe() != 0;
+		acpi_present = acpi_probe() != 0;
 	/*
 	 * First, see if the MADT contains CPUs, and possibly I/O APICs.
 	 * Building the interrupt routing structures can only
 	 * be done later (via a callback).
 	 */
-	if (sc->sc_acpi_present)
-		sc->sc_mpacpi_active = mpacpi_scan_apics(self, &numcpus) != 0;
+	if (acpi_present)
+		mpacpi_active = mpacpi_scan_apics(self, &numcpus) != 0;
 #endif
 
-	if (!sc->sc_mpacpi_active) {
+	if (!mpacpi_active) {
 #ifdef MPBIOS
 		if (mpbios_present)
 			mpbios_scan(self, &numcpus);
@@ -328,7 +336,7 @@ mainbus_rescan(device_t self, const char *ifattr, const int *locators)
 #endif
 
 	if (ifattr_match(ifattr, "acpibus") && sc->sc_acpi == NULL &&
-	    sc->sc_acpi_present) {
+	    acpi_present) {
 #if NACPICA > 0
 		mba.mba_acpi.aa_iot = x86_bus_space_io;
 		mba.mba_acpi.aa_memt = x86_bus_space_mem;
@@ -338,6 +346,8 @@ mainbus_rescan(device_t self, const char *ifattr, const int *locators)
 		    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY |
 		    PCI_FLAGS_MWI_OKAY;
 		mba.mba_acpi.aa_ic = &x86_isa_chipset;
+		mba.mba_acpi.aa_dmat = &pci_bus_dma_tag;
+		mba.mba_acpi.aa_dmat64 = NULL;
 		sc->sc_acpi =
 		    config_found_ia(self, "acpibus", &mba.mba_acpi, 0);
 #if 0 /* XXXJRT not yet */
@@ -406,7 +416,7 @@ mainbus_rescan(device_t self, const char *ifattr, const int *locators)
 		mba.mba_pba.pba_sub = 255;
 		mba.mba_pba.pba_bridgetag = NULL;
 #if NACPICA > 0 && defined(ACPI_SCANPCI)
-		if (npcibus == 0 && sc->sc_mpacpi_active)
+		if (npcibus == 0 && mpacpi_active)
 			npcibus = mp_pci_scan(self, &mba.mba_pba, pcibusprint);
 #endif
 #if defined(MPBIOS) && defined(MPBIOS_SCANPCI)

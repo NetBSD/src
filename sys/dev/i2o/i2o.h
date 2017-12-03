@@ -1,4 +1,4 @@
-/*	$NetBSD: i2o.h,v 1.15 2008/09/08 23:36:54 gmcgarry Exp $	*/
+/*	$NetBSD: i2o.h,v 1.15.38.1 2017/12/03 11:37:02 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,6 +37,9 @@
 
 #ifndef	_I2O_I2O_H_
 #define	_I2O_I2O_H_
+
+#include <sys/cdefs.h>
+#include <sys/types.h>
 
 /*
  * ================= Miscellaneous definitions =================

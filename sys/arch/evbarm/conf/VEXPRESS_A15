@@ -1,0 +1,102 @@
+#
+#	$NetBSD: VEXPRESS_A15,v 1.17.4.2 2017/12/03 11:36:03 jdolecek Exp $
+#
+#	ARM Versatile Express A15
+#
+
+include	"arch/evbarm/conf/std.vexpress"
+include	"arch/evbarm/conf/GENERIC.common"
+
+makeoptions 	DTS="vexpress-v2p-ca15-tc1.dts"
+
+options 	CPU_CORTEXA15
+options 	MULTIPROCESSOR
+
+pseudo-device 	openfirm	# /dev/openfirm
+
+#options 	DIAGNOSTIC	# internal consistency checks
+#options 	DEBUG
+#options 	LOCKDEBUG
+#options 	PMAP_DEBUG	# Enable pmap_debug_level code
+#options 	IPKDB		# remote kernel debugging
+#options 	VERBOSE_INIT_ARM # verbose bootstrapping messages
+
+makeoptions	DEBUG="-g"	# compile full symbol table
+makeoptions	COPY_SYMTAB=1
+
+config		netbsd		root on ? type ?
+
+# Device tree support
+armfdt0		at root
+fdt*		at fdtbus?
+
+# CPUs
+cpus*		at fdt? pass 0
+cpu*		at cpus?
+
+fclock*		at fdt? pass 4
+fregulator*	at fdt? pass 4
+gpiokeys*	at fdt?
+
+# Timer
+gtmr*		at fdt? pass 1		# ARM Generic Timer
+armgtmr0	at gtmr?
+
+# Interrupt controller
+gic*		at fdt? pass 1		# GIC
+armgic0		at gic?
+
+# ARM Motherboard Express uATX system registers
+vxsysreg*	at fdt?
+
+# Ethernet
+smsh*		at fdt?			# SMSC LAN9118
+ukphy*		at mii? phy ?
+
+# UART
+plcom*		at fdt?			# ARM PL011 UART
+
+# RTC
+plrtc*		at fdt?			# ARM PrimeCell RTC
+
+# SDMMC
+plmmc*		at fdt?			# ARM PrimeCell MCI
+sdmmc*		at sdmmcbus?
+ld0		at sdmmc0
+ld1		at sdmmc1
+ld2		at sdmmc2
+ld3		at sdmmc3
+ld*		at sdmmc?
+
+# Audio
+aaci*		at fdt?			# ARM PrimeCell AACI
+audio*		at audiobus?
+spkr*		at audio?		# PC speaker (synthesized)
+
+# Framebuffer
+genfb*		at fdt?
+wsdisplay*	at genfb?
+options 	VCONS_DRAW_INTR
+options 	WSEMUL_VT100
+options 	WS_DEFAULT_FG=WSCOL_WHITE
+options 	WS_DEFAULT_BG=WSCOL_BLACK
+options 	WS_KERNEL_FG=WSCOL_GREEN
+options 	WS_KERNEL_BG=WSCOL_BLACK
+options 	WSDISPLAY_COMPAT_PCVT
+options 	WSDISPLAY_COMPAT_SYSCONS
+options 	WSDISPLAY_COMPAT_USL
+options 	WSDISPLAY_COMPAT_RAWKBD
+options 	WSDISPLAY_DEFAULTSCREENS=4
+
+# PS/2 keyboard and mouse support
+plkmi*		at fdt?
+pckbd*		at pckbport?
+wskbd*		at pckbd? console ?
+pms*		at pckbport?
+wsmouse*	at pms? mux 0
+
+# wscons pseudo-devices
+pseudo-device	wsfont
+pseudo-device	wsmux
+
+cinclude "arch/evbarm/conf/VEXPRESS_A15.local"

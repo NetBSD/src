@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.83.2.1 2014/08/20 00:04:44 tls Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.83.2.2 2017/12/03 11:39:21 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,6 +37,7 @@
 #include <sys/siginfo.h>
 #include <sys/queue.h>
 #include <sys/mutex.h>
+#include <sys/stdbool.h>
 
 /*
  * Kernel signal definitions and data structures,
@@ -74,12 +75,12 @@ typedef struct sigpend {
  * Process signal state.
  */
 struct sigctx {
-	int		ps_signo;	/* for core dump/debugger XXX */
-	int		ps_code;	/* for core dump/debugger XXX */
-	int		ps_lwp;		/* for core dump/debugger XXX */
+	struct _ksiginfo ps_info;	/* for core dump/debugger XXX */
+	int		 ps_lwp;	/* for core dump/debugger XXX */
+	bool		 ps_faked;	/* for core dump/debugger XXX */
 	void		*ps_sigcode;	/* address of signal trampoline */
-	sigset_t	ps_sigignore;	/* Signals being ignored. */
-	sigset_t	ps_sigcatch;	/* Signals being caught by user. */
+	sigset_t	 ps_sigignore;	/* Signals being ignored. */
+	sigset_t	 ps_sigcatch;	/* Signals being caught by user. */
 };
 
 /* additional signal action values, used only temporarily/internally */
@@ -151,7 +152,7 @@ int	sigget(sigpend_t *, ksiginfo_t *, int, const sigset_t *);
 void	sigclear(sigpend_t *, const sigset_t *, ksiginfoq_t *);
 void	sigclearall(struct proc *, const sigset_t *, ksiginfoq_t *);
 
-void	kpsignal2(struct proc *, ksiginfo_t *);
+int	kpsignal2(struct proc *, ksiginfo_t *);
 
 void	signal_init(void);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.c,v 1.14.22.1 2014/08/20 00:03:24 tls Exp $	*/
+/*	$NetBSD: profile.c,v 1.14.22.2 2017/12/03 11:36:43 jdolecek Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: profile.c,v 1.14.22.1 2014/08/20 00:03:24 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: profile.c,v 1.14.22.2 2017/12/03 11:36:43 jdolecek Exp $");
 
 #include "profiler.h"
 
@@ -167,7 +167,7 @@ profopen(dev_t dev, int flag, int mode, struct proc *p)
 	return EROFS;
     }
     /* flag the device as open. */
-    prof_sc.state |= PROF_OPEN; 
+    prof_sc.state |= PROF_OPEN;
     nhashTables = 0;
     phashTables[0] = phashTables[1] = NULL;
     return 0;
@@ -385,7 +385,7 @@ profStart(struct profStartInfo *info)
 	     (int)&prof_sc,
 	     hatStack + HATSTACKSIZE - sizeof(unsigned),
 	     profHatWedge);
-    restore_interrupts(savedInts); 
+    restore_interrupts(savedInts);
 }
 
 void
@@ -396,7 +396,7 @@ profStop(void)
 
     savedInts = disable_interrupts(I32_bit | F32_bit);
     hatClkOff();
-    restore_interrupts(savedInts); 
+    restore_interrupts(savedInts);
 
     spl = splbio();
     /* only free the buffer's if we were profiling,

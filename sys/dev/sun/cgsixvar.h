@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsixvar.h,v 1.13 2012/07/12 01:20:22 macallan Exp $ */
+/*	$NetBSD: cgsixvar.h,v 1.13.2.1 2017/12/03 11:37:33 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,24 +73,16 @@ struct cgsix_softc {
 	uint32_t sc_mono_width;	/* how many monochrome pixels to write */
 	uint32_t sc_ramsize;		/* VRAM size in bytes */
 	int sc_fb_is_open;
-#if NWSDISPLAY > 0	
 	int sc_mode;
 	uint32_t sc_bg;
 	struct vcons_data vd;
 	uint8_t sc_default_cmap[768];
 	glyphcache sc_gc;	
-#endif
 	union	bt_cmap sc_cmap;	/* Brooktree color map */
 };
 
 #define IS_IN_EMUL_MODE(sc) \
 	((sc->sc_fb_is_open == 0) && \
 	 (sc->sc_mode == WSDISPLAYIO_MODE_EMUL))
-
-#ifdef RASTERCONSOLE
-extern int cgsix_use_rasterconsole;
-#else
-#define cgsix_use_rasterconsole 0
-#endif
 
 void	cg6attach(struct cgsix_softc *, const char *, int);

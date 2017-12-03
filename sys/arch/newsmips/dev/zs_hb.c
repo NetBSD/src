@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_hb.c,v 1.26 2010/06/26 03:44:49 tsutsui Exp $	*/
+/*	$NetBSD: zs_hb.c,v 1.26.18.1 2017/12/03 11:36:33 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_hb.c,v 1.26 2010/06/26 03:44:49 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_hb.c,v 1.26.18.1 2017/12/03 11:36:33 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,6 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: zs_hb.c,v 1.26 2010/06/26 03:44:49 tsutsui Exp $");
 #include <sys/conf.h>
 #include <sys/cpu.h>
 #include <sys/intr.h>
+
+#include <mips/locore.h>
 
 #include <machine/adrsmap.h>
 #include <machine/z8530var.h>

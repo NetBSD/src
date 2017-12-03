@@ -1,4 +1,4 @@
-/*      $NetBSD: lwproc.c,v 1.18.14.3 2014/08/20 00:04:40 tls Exp $	*/
+/*      $NetBSD: lwproc.c,v 1.18.14.4 2017/12/03 11:39:16 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #define RUMP__CURLWP_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.18.14.3 2014/08/20 00:04:40 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.18.14.4 2017/12/03 11:39:16 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -43,11 +43,77 @@ __KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.18.14.3 2014/08/20 00:04:40 tls Exp $")
 #include <sys/resourcevar.h>
 #include <sys/uidinfo.h>
 
+#include <rump-sys/kern.h>
+
 #include <rump/rumpuser.h>
-#include "rump_private.h"
+
 #include "rump_curlwp.h"
 
+struct lwp lwp0 = {
+	.l_lid = 1,
+	.l_proc = &proc0,
+	.l_fd = &filedesc0,
+};
+struct lwplist alllwp = LIST_HEAD_INITIALIZER(alllwp);
+
+u_int nprocs = 1;
+
 struct emul *emul_default = &emul_netbsd;
+
+void
+lwp_unsleep(lwp_t *l, bool cleanup)
+{
+
+	KASSERT(mutex_owned(l->l_mutex));
+
+	(*l->l_syncobj->sobj_unsleep)(l, cleanup);
+}
+
+/*
+ * Look up a live LWP within the specified process.
+ * 
+ * Must be called with p->p_lock held.
+ */
+struct lwp *
+lwp_find(struct proc *p, lwpid_t id)
+{
+	struct lwp *l;
+
+	KASSERT(mutex_owned(p->p_lock));
+
+	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
+		if (l->l_lid == id)
+			break;
+	}
+
+	/*
+	 * No need to lock - all of these conditions will
+	 * be visible with the process level mutex held.
+	 */
+	if (l != NULL && (l->l_stat == LSIDL || l->l_stat == LSZOMB))
+		l = NULL;
+
+	return l;
+}
+
+void
+lwp_update_creds(struct lwp *l)
+{
+	struct proc *p;
+	kauth_cred_t oldcred;
+
+	p = l->l_proc;
+	oldcred = l->l_cred;
+	l->l_prflag &= ~LPR_CRMOD;
+
+	mutex_enter(p->p_lock);
+	kauth_cred_hold(p->p_cred);
+	l->l_cred = p->p_cred;
+	mutex_exit(p->p_lock);
+
+	if (oldcred != NULL)
+		kauth_cred_free(oldcred);
+}
 
 void
 rump_lwproc_init(void)
@@ -130,10 +196,11 @@ lwproc_proc_free(struct proc *p)
 	cv_destroy(&p->p_waitcv);
 	cv_destroy(&p->p_lwpcv);
 
-	/* non-kernel vmspaces are not shared */
+	/* non-local vmspaces are not shared */
 	if (!RUMP_LOCALPROC_P(p)) {
+		struct rump_spctl *ctl = (struct rump_spctl *)p->p_vmspace;
 		KASSERT(p->p_vmspace->vm_refcnt == 1);
-		kmem_free(p->p_vmspace, sizeof(*p->p_vmspace));
+		kmem_free(ctl, sizeof(*ctl));
 	}
 
 	proc_free_mem(p);
@@ -147,7 +214,7 @@ lwproc_proc_free(struct proc *p)
  * Switch to the new lwp and return a pointer to it.
  */
 static struct proc *
-lwproc_newproc(struct proc *parent, int flags)
+lwproc_newproc(struct proc *parent, struct vmspace *vm, int flags)
 {
 	uid_t uid = kauth_cred_getuid(parent->p_cred);
 	struct proc *p;
@@ -171,12 +238,12 @@ lwproc_newproc(struct proc *parent, int flags)
 	p->p_mqueue_cnt = p->p_exitsig = 0;
 	p->p_flag = p->p_sflag = p->p_slflag = p->p_lflag = p->p_stflag = 0;
 	p->p_trace_enabled = 0;
-	p->p_xstat = p->p_acflag = 0;
+	p->p_xsig = p->p_xexit = p->p_acflag = 0;
 	p->p_stackbase = 0;
 
 	p->p_stats = pstatscopy(parent->p_stats);
 
-	p->p_vmspace = vmspace_kernel();
+	p->p_vmspace = vm;
 	p->p_emul = emul_default;
 #ifdef __HAVE_SYSCALL_INTERN
 	p->p_emul->e_syscall_intern(p);
@@ -246,6 +313,8 @@ lwproc_freelwp(struct lwp *l)
 	if (--p->p_nlwps == 0) {
 		KASSERT(p != &proc0);
 		p->p_stat = SDEAD;
+	} else {
+		chglwpcnt(kauth_cred_getuid(p->p_cred), -1);
 	}
 	cv_broadcast(&p->p_lwpcv); /* nobody sleeps on this in a rump kernel? */
 	kauth_cred_free(l->l_cred);
@@ -276,7 +345,15 @@ static void
 lwproc_makelwp(struct proc *p, struct lwp *l, bool doswitch, bool procmake)
 {
 
-	p->p_nlwps++;
+	/*
+	 * Account the new lwp to the owner of the process.
+	 * For some reason, NetBSD doesn't count the first lwp
+	 * in a process as a lwp, so skip that.
+	 */
+	if (p->p_nlwps++) {
+		chglwpcnt(kauth_cred_getuid(p->p_cred), 1);
+	}
+
 	l->l_refcnt = 1;
 	l->l_proc = p;
 
@@ -284,8 +361,8 @@ lwproc_makelwp(struct proc *p, struct lwp *l, bool doswitch, bool procmake)
 	LIST_INSERT_HEAD(&p->p_lwps, l, l_sibling);
 
 	l->l_fd = p->p_fd;
-	l->l_cpu = rump_cpu;
-	l->l_target_cpu = rump_cpu; /* Initial target CPU always the same */
+	l->l_cpu = &rump_bootcpu;
+	l->l_target_cpu = &rump_bootcpu; /* Initial target CPU always same */
 	l->l_stat = LSRUN;
 	l->l_mutex = &unruntime_lock;
 	TAILQ_INIT(&l->l_ld_locks);
@@ -317,7 +394,7 @@ rump__lwproc_alloclwp(struct proc *p)
 	bool newproc = false;
 
 	if (p == NULL) {
-		p = lwproc_newproc(&proc0, 0);
+		p = lwproc_newproc(&proc0, rump_vmspace_local, RUMP_RFCFDG);
 		newproc = true;
 	}
 
@@ -358,7 +435,7 @@ rump_lwproc_newlwp(pid_t pid)
 }
 
 int
-rump_lwproc_rfork(int flags)
+rump_lwproc_rfork_vmspace(struct vmspace *vm, int flags)
 {
 	struct proc *p;
 	struct lwp *l;
@@ -367,13 +444,20 @@ rump_lwproc_rfork(int flags)
 	    (~flags & (RUMP_RFFDG|RUMP_RFCFDG)) == 0)
 		return EINVAL;
 
-	p = lwproc_newproc(curproc, flags);
+	p = lwproc_newproc(curproc, vm, flags);
 	l = kmem_zalloc(sizeof(*l), KM_SLEEP);
 	mutex_enter(p->p_lock);
 	KASSERT((p->p_sflag & PS_RUMP_LWPEXIT) == 0);
 	lwproc_makelwp(p, l, true, true);
 
 	return 0;
+}
+
+int
+rump_lwproc_rfork(int flags)
+{
+
+	return rump_lwproc_rfork_vmspace(rump_vmspace_local, flags);
 }
 
 /*

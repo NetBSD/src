@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs.h,v 1.30.2.2 2014/08/20 00:04:30 tls Exp $	*/
+/*	$NetBSD: genfs.h,v 1.30.2.3 2017/12/03 11:38:47 jdolecek Exp $	*/
 
 #ifndef	_MISCFS_GENFS_GENFS_H_
 #define	_MISCFS_GENFS_GENFS_H_
@@ -45,6 +45,8 @@ int	genfs_statvfs(struct mount *, struct statvfs *);
 
 int	genfs_renamelock_enter(struct mount *);
 void	genfs_renamelock_exit(struct mount *);
+
+int	genfs_suspendctl(struct mount *, int);
 
 int	genfs_can_access(enum vtype, mode_t, uid_t, gid_t, mode_t,
 	    kauth_cred_t);

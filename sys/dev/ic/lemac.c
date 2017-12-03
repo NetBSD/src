@@ -1,4 +1,4 @@
-/* $NetBSD: lemac.c,v 1.40.6.2 2014/08/20 00:03:38 tls Exp $ */
+/* $NetBSD: lemac.c,v 1.40.6.3 2017/12/03 11:37:03 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.40.6.2 2014/08/20 00:03:38 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.40.6.3 2017/12/03 11:37:03 jdolecek Exp $");
 
 #include "opt_inet.h"
 
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.40.6.2 2014/08/20 00:03:38 tls Exp $");
 #include <sys/errno.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -171,7 +171,7 @@ lemac_tne_intr(
 	}
     }
     sc->sc_if.if_flags &= ~IFF_OACTIVE;
-    lemac_ifstart(&sc->sc_if);
+    if_schedule_deferred_start(&sc->sc_if);
 }
 
 static void
@@ -302,22 +302,11 @@ lemac_input(
 	if (length & 1)
 	    m->m_data[length - 1] = LEMAC_GET8(sc, offset + length - 1);
     }
-    if (sc->sc_if.if_bpf != NULL) {
-	m->m_pkthdr.len = m->m_len = length;
-	bpf_mtap(&sc->sc_if, m);
-    }
-    /*
-     * If this is single cast but not to us
-     * drop it!
-     */
-    if ((eh.ether_dhost[0] & 1) == 0
-	   && !LEMAC_ADDREQUAL(eh.ether_dhost, sc->sc_enaddr)) {
-	m_freem(m);
-	return;
-    }
+
     m->m_pkthdr.len = m->m_len = length;
-    m->m_pkthdr.rcvif = &sc->sc_if;
-    (*sc->sc_if.if_input)(&sc->sc_if, m);
+    m_set_rcvif(m, &sc->sc_if);
+
+    if_percpuq_enqueue((&sc->sc_if)->if_percpuq, m);
 }
 
 static void
@@ -332,7 +321,6 @@ lemac_rne_intr(
 	unsigned rxpg = LEMAC_INB(sc, LEMAC_REG_RQ);
 	u_int32_t rxlen;
 
-	sc->sc_if.if_ipackets++;
 	if (LEMAC_USE_PIO_MODE(sc)) {
 	    LEMAC_OUTB(sc, LEMAC_REG_IOP, rxpg);
 	    LEMAC_OUTB(sc, LEMAC_REG_PI1, 0);
@@ -1009,6 +997,7 @@ lemac_ifattach(
 	IFQ_SET_READY(&ifp->if_snd);
 
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, sc->sc_enaddr);
 
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),

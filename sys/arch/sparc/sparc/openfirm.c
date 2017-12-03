@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.18 2011/07/18 21:00:28 martin Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.18.12.1 2017/12/03 11:36:43 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,10 +32,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.18 2011/07/18 21:00:28 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.18.12.1 2017/12/03 11:36:43 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <machine/lock.h>
 #include <machine/psl.h>
 #include <machine/promlib.h>
 #include <lib/libkern/libkern.h>
@@ -43,6 +44,34 @@ __KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.18 2011/07/18 21:00:28 martin Exp $")
 #ifndef _KERNEL
 #include <sys/stdarg.h>
 #endif
+
+#ifdef SUN4V
+#ifdef __arch64__
+#define OFBOUNCE_MAXSIZE 1024
+/* 
+ * Sun4v OpenBoot is not always happy with 64-bit addresses - an example is the
+ * addr parameter in the OF_write() call which can be truncated to a 32-bit
+ * value.
+ * Avoid this behaviour by using a static buffer which is assumed to be mapped
+ * in on a 32-bit address.
+ * Use a mutex to protect access to the buffer from multiple threads.
+ * 
+ */
+static __cpu_simple_lock_t ofcall_lock;
+static char ofbounce[OFBOUNCE_MAXSIZE];
+#endif
+#endif
+
+void
+OF_init(void)
+{
+#ifdef SUN4V
+#ifdef __arch64__
+  KASSERT(((uint64_t)&ofbounce & 0xffffffffUL)==(uint64_t)&ofbounce);
+  __cpu_simple_lock_init(&ofcall_lock);
+#endif	
+#endif
+}
 
 int
 OF_peer(int phandle)
@@ -137,6 +166,7 @@ OF_getproplen(int handle, const char *prop)
 		cell_t size;
 	} args;
 
+	KASSERT(handle != 0);
 	args.name = ADR2CELL("getproplen");
 	args.nargs = 2;
 	args.nreturns = 1;
@@ -161,6 +191,7 @@ OF_getprop(int handle, const char *prop, void *buf, int buflen)
 		cell_t size;
 	} args;
 
+	KASSERT(handle != 0);
 	if (buflen > NBPG)
 		return -1;
 	args.name = ADR2CELL("getprop");
@@ -512,6 +543,15 @@ OF_write(int handle, const void *addr, int len)
 	if (len > 1024) {
 		panic("OF_write(len = %d)\n", len);
 	}
+#ifdef SUN4V
+#if __arch64__
+	__cpu_simple_lock(&ofcall_lock);
+	if (len > OFBOUNCE_MAXSIZE) 
+		panic("OF_write(len = %d) exceedes bounce buffer\n", len);
+	memcpy(ofbounce, addr, len);
+	addr = ofbounce;
+#endif	
+#endif
 	args.name = ADR2CELL("write");
 	args.nargs = 3;
 	args.nreturns = 1;
@@ -525,6 +565,11 @@ OF_write(int handle, const void *addr, int len)
 		l = args.actual;
 		act += l;
 	}
+#ifdef SUN4V
+#if __arch64__
+	__cpu_simple_unlock(&ofcall_lock);
+#endif
+#endif
 	return act;
 }
 
@@ -546,15 +591,15 @@ OF_seek(int handle, u_quad_t pos)
 	args.nargs = 3;
 	args.nreturns = 1;
 	args.handle = HDL2CELL(handle);
-	args.poshi = HDL2CELL(pos >> 32);
-	args.poslo = HDL2CELL(pos);
+	args.poshi = HDQ2CELL_HI(pos);
+	args.poslo = HDQ2CELL_LO(pos);
 	if (openfirmware(&args) == -1)
 		return -1;
 	return args.status;
 }
 
 void
-OF_boot(const char *bootspec)
+OF_boot(const char *bspec)
 {
 	struct {
 		cell_t name;
@@ -564,12 +609,12 @@ OF_boot(const char *bootspec)
 	} args;
 	int l;
 
-	if ((l = strlen(bootspec)) >= NBPG)
+	if ((l = strlen(bspec)) >= NBPG)
 		panic("OF_boot");
 	args.name = ADR2CELL("boot");
 	args.nargs = 1;
 	args.nreturns = 0;
-	args.bootspec = ADR2CELL(bootspec);
+	args.bootspec = ADR2CELL(bspec);
 	openfirmware(&args);
 	panic("OF_boot failed");
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdireg.h,v 1.7.2.1 2013/02/25 00:29:38 tls Exp $ */
+/*	$NetBSD: uftdireg.h,v 1.7.2.2 2017/12/03 11:37:34 jdolecek Exp $ */
 
 /*
  * Definitions for the FTDI USB Single Port Serial Converter -
@@ -7,7 +7,7 @@
  * The device is based on the FTDI FT8U100AX chip. It has a DB25 on one side,
  * USB on the other.
  *
- * Thanx to FTDI (http://www.ftdi.co.uk) for so kindly providing details
+ * Thanx to FTDI (http://www.ftdichip.com) for so kindly providing details
  * of the protocol required to talk to the device and ongoing assistence
  * during development.
  *

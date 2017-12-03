@@ -1,4 +1,4 @@
-/*	$NetBSD: oj6sh.c,v 1.1.10.2 2014/08/20 00:03:50 tls Exp $	*/
+/*	$NetBSD: oj6sh.c,v 1.1.10.3 2017/12/03 11:37:32 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2014  Genetec Corporation.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oj6sh.c,v 1.1.10.2 2014/08/20 00:03:50 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oj6sh.c,v 1.1.10.3 2017/12/03 11:37:32 jdolecek Exp $");
 
 #include "opt_oj6sh.h"
 
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: oj6sh.c,v 1.1.10.2 2014/08/20 00:03:50 tls Exp $");
 #include <sys/callout.h>
 #include <sys/bus.h>
 #include <sys/mutex.h>
+#include <sys/workqueue.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsmousevar.h>
@@ -83,6 +84,9 @@ struct oj6sh_softc {
 	struct callout sc_c;
 
 	kmutex_t sc_lock;
+	struct workqueue *sc_wq;
+	struct work sc_wk;
+
 	int sc_enabled;
 
 	device_t sc_wsmousedev;
@@ -108,8 +112,9 @@ static bool oj6sh_shuttrer(struct spi_handle *);
 static int oj6sh_readdelta(struct spi_handle *, struct oj6sh_delta *);
 
 static void oj6sh_poll(void *);
-static int oj6sh_enable(void *v);
-static void oj6sh_disable(void *v);
+static void oj6sh_cb(struct work *, void *);
+static int oj6sh_enable(void *);
+static void oj6sh_disable(void *);
 static int oj6sh_ioctl(void *, u_long, void *, int, struct lwp *);
 
 static bool oj6sh_resume(device_t, const pmf_qual_t *);
@@ -183,6 +188,8 @@ oj6sh_attach(device_t parent, device_t self, void *aux)
 	sc->sc_enabled = 0;
 
 	callout_init(&sc->sc_c, 0);
+	workqueue_create(&sc->sc_wq, "oj6sh",
+	    oj6sh_cb, sc, PRI_NONE, IPL_BIO, 0);
 
 	sc->sc_sh = sa->sa_handle;
 
@@ -196,6 +203,19 @@ oj6sh_attach(device_t parent, device_t self, void *aux)
 
 static void
 oj6sh_poll(void *arg)
+{
+	struct oj6sh_softc *sc = (struct oj6sh_softc *)arg;
+
+	workqueue_enqueue(sc->sc_wq, &sc->sc_wk, NULL);
+
+	if (sc->sc_enabled)
+		callout_reset(&sc->sc_c, POLLRATE, oj6sh_poll, sc);
+
+	return;
+}
+
+static void
+oj6sh_cb(struct work *wk, void *arg)
 {
 	struct oj6sh_softc *sc = (struct oj6sh_softc *)arg;
 	struct oj6sh_delta delta = {0, 0};
@@ -234,11 +254,6 @@ oj6sh_poll(void *arg)
 	splx(s);
 out:
 	mutex_exit(&sc->sc_lock);
-
-	if (sc->sc_enabled)
-		callout_reset(&sc->sc_c, POLLRATE, oj6sh_poll, sc);
-
-	return;
 }
 
 static uint8_t

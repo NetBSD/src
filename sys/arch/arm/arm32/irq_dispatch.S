@@ -1,4 +1,4 @@
-/*	$NetBSD: irq_dispatch.S,v 1.12.2.2 2014/08/20 00:02:45 tls Exp $	*/
+/*	$NetBSD: irq_dispatch.S,v 1.12.2.3 2017/12/03 11:35:51 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -97,6 +97,11 @@ ARM_ASENTRY_NP(irq_entry)
 	PUSHFRAMEINSVC			/* Push an interrupt frame */
 	ENABLE_ALIGNMENT_FAULTS		/* finishes with curcpu() in r4 */
 
+#ifdef _ARM_ARCH_7
+	clrex				/* force all strex to fail */
+	dmb				/* synchronize memory writes */
+#endif
+
 	/*
 	 * Increment the interrupt nesting depth and call the interrupt
 	 * dispatch routine.  We've pushed a frame, so we can safely use
@@ -152,6 +157,11 @@ ARM_ASENTRY_NP(irq_idle_entry)
 	ldr	r6, [r4, #CI_INTR_DEPTH]
 	add	r1, r6, #1
 	str	r1, [r4, #CI_INTR_DEPTH]
+
+#ifdef _ARM_ARCH_7
+	clrex				/* force all strex to fail */
+	dmb				/* synchronize memory writes */
+#endif
 
 	mov	r0, sp			/* arg for dispatcher */
 	bl	ARM_IRQ_HANDLER

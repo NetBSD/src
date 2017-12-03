@@ -1,4 +1,4 @@
-/*	$NetBSD: lancevar.h,v 1.15 2012/02/02 19:43:03 tls Exp $	*/
+/*	$NetBSD: lancevar.h,v 1.15.6.1 2017/12/03 11:37:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 struct lance_softc {
 	device_t sc_dev;		/* base device glue */

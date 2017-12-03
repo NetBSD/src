@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader_machdep.c,v 1.7 2009/03/18 10:22:29 cegger Exp $	*/
+/*	$NetBSD: kloader_machdep.c,v 1.7.22.1 2017/12/03 11:36:15 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -27,10 +27,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kloader_machdep.c,v 1.7 2009/03/18 10:22:29 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kloader_machdep.c,v 1.7.22.1 2017/12/03 11:36:15 jdolecek Exp $");
 
 #include <sys/param.h>
+#include <sys/cpu.h>
 #include <sys/systm.h>
+
+#include <mips/locore.h>
 #include <mips/cache.h>
 
 #include <machine/sysconf.h>

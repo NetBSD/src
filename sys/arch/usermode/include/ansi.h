@@ -1,4 +1,4 @@
-/* $NetBSD: ansi.h,v 1.3.12.1 2014/08/20 00:03:27 tls Exp $ */
+/* $NetBSD: ansi.h,v 1.3.12.2 2017/12/03 11:36:47 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -32,6 +32,7 @@
 #include <sys/cdefs.h>
 #include <machine/int_types.h>
 
+#define _BSD_CLOCK_T_		unsigned int
 #define _BSD_TIME_T_		__int64_t
 #define _BSD_CLOCKID_T_		int
 #define _BSD_TIMER_T_		int
@@ -41,17 +42,14 @@
 #define _BSD_WINT_T_		int
 
 #if defined(__i386__)
-#define _BSD_CLOCK_T_		unsigned long
 #define _BSD_PTRDIFF_T_		int
 #define _BSD_SIZE_T_		unsigned int
 #define _BSD_SSIZE_T_		int
 #elif defined(__x86_64__)
-#define _BSD_CLOCK_T_		unsigned int
 #define _BSD_PTRDIFF_T_		long
 #define _BSD_SIZE_T_		unsigned long
 #define _BSD_SSIZE_T_		long
 #elif defined(__arm__)
-#define _BSD_CLOCK_T_		unsigned int
 #define _BSD_PTRDIFF_T_		long int
 #define _BSD_SIZE_T_		unsigned long int
 #define _BSD_SSIZE_T_		long int

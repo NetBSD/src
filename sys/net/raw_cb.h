@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_cb.h,v 1.20.88.1 2014/08/20 00:04:34 tls Exp $	*/
+/*	$NetBSD: raw_cb.h,v 1.20.88.2 2017/12/03 11:39:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -46,6 +46,8 @@ struct rawcb {
 	struct	sockaddr *rcb_faddr;	/* destination address */
 	struct	sockaddr *rcb_laddr;	/* socket's address */
 	struct	sockproto rcb_proto;	/* protocol family, protocol */
+	int	(*rcb_filter)(struct mbuf *, struct sockproto *,
+		              struct rawcb *);
 	size_t	rcb_len;
 };
 
@@ -58,20 +60,19 @@ struct rawcb {
 #define	RAWRCVQ		8192
 
 LIST_HEAD(rawcbhead, rawcb);
-extern	struct	rawcbhead rawcb;		/* head of list */
 
-int	raw_attach(struct socket *, int);
+int	raw_attach(struct socket *, int, struct rawcbhead *);
 void	*raw_ctlinput(int, const struct sockaddr *, void *);
 void	raw_detach(struct socket *);
 void	raw_disconnect(struct rawcb *);
-void	raw_init(void);
 void	raw_input(struct mbuf *, ...);
 int	raw_usrreq(struct socket *,
 	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct lwp *);
-void	raw_setsockaddr(struct rawcb *, struct mbuf *);
-void	raw_setpeeraddr(struct rawcb *, struct mbuf *);
+void	raw_setsockaddr(struct rawcb *, struct sockaddr *);
+void	raw_setpeeraddr(struct rawcb *, struct sockaddr *);
 int	raw_send(struct socket *,
-	    struct mbuf *, struct mbuf *, struct mbuf *, struct lwp *);
+	    struct mbuf *, struct sockaddr *, struct mbuf *, struct lwp *,
+	    int (*)(struct mbuf *, struct socket *));
 
 #endif /* _KERNEL */
 

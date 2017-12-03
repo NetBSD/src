@@ -1,4 +1,4 @@
-/*      $NetBSD: esm.c,v 1.56.6.1 2014/08/20 00:03:42 tls Exp $      */
+/*      $NetBSD: esm.c,v 1.56.6.2 2017/12/03 11:37:07 jdolecek Exp $      */
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.56.6.1 2014/08/20 00:03:42 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.56.6.2 2017/12/03 11:37:07 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1639,8 +1639,7 @@ esm_attach(device_t parent, device_t self, void *aux)
 		mutex_destroy(&ess->sc_intr_lock);
 		return;
 	}
-	aprint_normal_dev(ess->sc_dev, "interrupting at %s\n",
-	    intrstr);
+	aprint_normal_dev(ess->sc_dev, "interrupting at %s\n", intrstr);
 
 	/*
 	 * Setup PCI config registers
@@ -1649,8 +1648,7 @@ esm_attach(device_t parent, device_t self, void *aux)
 	/* power up chip */
 	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, self,
 	    pci_activate_null)) && error != EOPNOTSUPP) {
-		aprint_error_dev(ess->sc_dev, "cannot activate %d\n",
-		    error);
+		aprint_error_dev(ess->sc_dev, "cannot activate %d\n", error);
 		mutex_destroy(&ess->sc_lock);
 		mutex_destroy(&ess->sc_intr_lock);
 		return;

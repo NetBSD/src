@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.86.12.1 2014/08/20 00:04:35 tls Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.86.12.2 2017/12/03 11:39:04 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,14 +93,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.86.12.1 2014/08/20 00:04:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.86.12.2 2017/12/03 11:39:04 jdolecek Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #include "opt_tcp_debug.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
@@ -109,7 +110,6 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.86.12.1 2014/08/20 00:04:35 tls Exp 
 #include <sys/kernel.h>
 
 #include <net/if.h>
-#include <net/route.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -564,19 +564,11 @@ tcp_timer_keep(void *arg)
 		 * correspondent TCP to respond.
 		 */
 		TCP_STATINC(TCP_STAT_KEEPPROBE);
-		if (tcp_compat_42) {
-			/*
-			 * The keepalive packet must have nonzero
-			 * length to get a 4.2 host to respond.
-			 */
-			(void)tcp_respond(tp, tp->t_template,
-			    NULL, NULL, tp->rcv_nxt - 1,
-			    tp->snd_una - 1, 0);
-		} else {
-			(void)tcp_respond(tp, tp->t_template,
-			    NULL, NULL, tp->rcv_nxt,
-			    tp->snd_una - 1, 0);
-		}
+
+		(void)tcp_respond(tp, tp->t_template,
+		    NULL, NULL, tp->rcv_nxt,
+		    tp->snd_una - 1, 0);
+
 		TCP_TIMER_ARM(tp, TCPT_KEEP, tp->t_keepintvl);
 	} else
 		TCP_TIMER_ARM(tp, TCPT_KEEP, tp->t_keepidle);
@@ -655,6 +647,6 @@ tcp_timer_2msl(void *arg)
 		tcp_trace(TA_USER, ostate, tp, NULL,
 		    PRU_SLOWTIMO | (TCPT_2MSL << 8));
 #endif
-	mutex_exit(softnet_lock);
 	KERNEL_UNLOCK_ONE(NULL);
+	mutex_exit(softnet_lock);
 }

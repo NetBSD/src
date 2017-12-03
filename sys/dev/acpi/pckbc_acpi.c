@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_acpi.c,v 1.33.20.1 2014/08/20 00:03:35 tls Exp $	*/
+/*	$NetBSD: pckbc_acpi.c,v 1.33.20.2 2017/12/03 11:36:58 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.33.20.1 2014/08/20 00:03:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.33.20.2 2017/12/03 11:36:58 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -56,6 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.33.20.1 2014/08/20 00:03:35 tls Exp
 
 #include <dev/ic/i8042reg.h>
 #include <dev/ic/pckbcvar.h>
+
+#include "ioconf.h"
 
 static int	pckbc_acpi_match(device_t, cfdata_t, void *);
 static void	pckbc_acpi_attach(device_t, device_t, void *);
@@ -71,8 +73,6 @@ struct pckbc_acpi_softc {
 
 /* Save first port: */
 static struct pckbc_acpi_softc *first;
-
-extern struct cfdriver pckbc_cd;
 
 CFATTACH_DECL_NEW(pckbc_acpi, sizeof(struct pckbc_acpi_softc),
     pckbc_acpi_match, pckbc_acpi_attach, NULL, NULL);
@@ -252,8 +252,14 @@ pckbc_acpi_intr_establish(struct pckbc_softc *sc, pckbc_slot_t slot)
 			break;
 		}
 	}
-	if (i < pckbc_cd.cd_ndevs)
-		rv = isa_intr_establish(ic, irq, ist, IPL_TTY, pckbcintr, sc);
+	if (i < pckbc_cd.cd_ndevs) {
+		char intr_xname[64];
+		snprintf(intr_xname, sizeof(intr_xname), "%s %s",
+		    device_xname(psc->sc_pckbc.sc_dv), pckbc_slot_names[slot]);
+
+		rv = isa_intr_establish_xname(ic, irq, ist, IPL_TTY, pckbcintr,
+		    sc, intr_xname);
+	}
 	if (rv == NULL) {
 		aprint_error_dev(sc->sc_dv,
 		    "unable to establish interrupt for %s slot\n",

@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.19.2.1 2014/08/20 00:02:46 tls Exp $	*/
+/*	$NetBSD: psl.h,v 1.19.2.2 2017/12/03 11:35:54 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -66,6 +66,8 @@
 
 #ifdef _KERNEL
 #ifndef _LOCORE
+#include <sys/types.h>
+
 int raisespl	(int);
 int lowerspl	(int);
 void splx	(int);

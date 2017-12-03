@@ -1,0 +1,319 @@
+#
+#	$NetBSD: DUOVERO,v 1.6.2.2 2017/12/03 11:36:03 jdolecek Exp $
+#
+#	DUOOVERO -- Gumstix. Inc. DuoVero COMS platforms kernel
+#
+
+include	"arch/evbarm/conf/std.overo"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+# estimated number of users
+
+maxusers	32
+
+# CPU options
+
+options 	CPU_CORTEXA9
+options 	OMAP_4430
+options 	MULTIPROCESSOR
+options 	FPU_VFP
+options 	PMAPCOUNTERS
+options 	ARM_HAS_VBAR
+options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
+makeoptions	CPUFLAGS="-mcpu=cortex-a9 -mfpu=neon"
+
+# Architecture options
+
+makeoptions	BOARDTYPE="duovero"
+options 	EVBARM_BOARDTYPE=duovero
+
+# Gumstix options
+options 	DUOVERO
+# Can specify 'expansion=' in args from u-boot.
+options 	GUMSTIX_NETBSD_ARGS_EXPANSION
+options 	GXIO_DEFAULT_EXPANSION="\"Parlor\""
+
+# Standard system options
+
+options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
+#options 	NTP		# NTP phase/frequency locked loop
+
+# File systems
+
+file-system	FFS		# UFS
+file-system 	EXT2FS		# second extended file system (linux)
+#file-system	LFS		# log-structured file system
+file-system	MFS		# memory file system
+file-system	NFS		# Network file system
+#file-system	NTFS		# Windows/NT file system (experimental)
+#file-system	CD9660		# ISO 9660 + Rock Ridge file system
+file-system	MSDOSFS		# MS-DOS file system
+file-system	FDESC		# /dev/fd
+file-system	KERNFS		# /kern
+#file-system	NULLFS		# loopback file system
+#file-system	OVERLAY		# overlay file system
+#file-system	PROCFS		# /proc
+#file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
+#file-system	UMAPFS		# NULLFS + uid and gid remapping
+file-system	UNION		# union file system
+#file-system	CODA		# Coda File System; also needs vcoda (below)
+#file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
+file-system	TMPFS		# memory file system
+file-system	PTYFS		# /dev/pts/N support
+#file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
+#file-system	HFS		# experimental - Apple HFS+ (read-only)
+
+# File system options
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
+#options 	FFS_EI		# FFS Endian Independent support
+options 	WAPBL		# File system journaling support
+#options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
+#options 	NFSSERVER
+#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+#options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
+				# immutable) behave as system flags.
+
+# Networking options
+
+#options 	GATEWAY		# packet forwarding
+options 	INET		# IP + ICMP + TCP + UDP
+options 	INET6		# IPV6
+#options 	IPSEC		# IP security
+#options 	IPSEC_DEBUG	# debug for IP security
+#options 	MROUTING	# IP multicast routing
+#options 	PIM		# Protocol Independent Multicast
+#options 	NETATALK	# AppleTalk networking
+#options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
+#options 	PPP_DEFLATE	# Deflate compression support for PPP
+#options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
+#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
+
+options 	NFS_BOOT_BOOTP
+options 	NFS_BOOT_DHCP
+#options 	NFS_BOOT_BOOTPARAM
+
+# Compatibility options
+
+include 	"conf/compat_netbsd30.config"
+options 	COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
+
+options 	COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
+options 	COMPAT_LINUX	# binary compatibility with Linux
+
+# Shared memory options
+
+#options 	SYSVMSG		# System V-like message queues
+#options 	SYSVSEM		# System V-like semaphores
+#options 	SYSVSHM		# System V-like memory sharing
+
+# Device options
+
+#options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
+#options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
+#options 	MEMORY_DISK_DYNAMIC
+#options 	MEMORY_DISK_ROOT_SIZE=8192	# Size in blocks
+
+# Miscellaneous kernel options
+options 	KTRACE		# system call tracing, a la ktrace(1)
+options 	IRQSTATS	# manage IRQ statistics
+#options 	MIIVERBOSE	# verbose PHY autoconfig messages
+#options 	USBVERBOSE	# verbose USB device autoconfig messages
+#options 	DDB_KEYCODE=0x40
+#options 	USERCONF	# userconf(4) support
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
+
+# Development and Debugging options
+
+#options 	PERFCTRS	# performance counters
+options 	DIAGNOSTIC	# internal consistency checks
+options 	DEBUG
+#options 	LOCKDEBUG
+#options 	PMAP_DEBUG	# Enable pmap_debug_level code
+#options 	IPKDB		# remote kernel debugging
+#options 	VERBOSE_INIT_ARM # verbose bootstraping messages
+options 	DDB		# in-kernel debugger
+options 	DDB_ONPANIC=1
+options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
+#options 	KGDB
+makeoptions	DEBUG="-g"	# compile full symbol table
+makeoptions	COPY_SYMTAB=1
+
+config		netbsd		root on ? type ?
+
+# The main bus device
+mainbus0	at root
+
+# The boot cpu
+cpu*		at mainbus?
+
+# A9 core devices
+armperiph0	at mainbus?
+arml2cc0	at armperiph?				# L2 Cache Controller
+armgic0		at armperiph?				# Interrupt Controller
+a9tmr0		at armperiph?				# Global Timer
+a9wdt0		at armperiph?				# Watchdog
+
+# L3 Interconnect
+L3i0		at mainbus?
+
+# OBIO
+obio0		at mainbus? base 0x4a000000 size 0x1000000	# L4 CORE (CFG)
+obio1		at mainbus? base 0x4a300000 size 0x0100000	# L4 WAKEUP
+obio2		at mainbus? base 0x48000000 size 0x1000000	# L4 PERIPHERAL
+obio3		at mainbus? base 0x49000000 size 0x1000000	# L4 ABE
+
+# General Purpose Memory Controller
+gpmc0		at mainbus? base 0x50000000
+
+omapgpio0	at obio1 addr 0x4a310000 size 0x0400 intrbase 160 intr 61
+omapgpio1	at obio2 addr 0x48055000 size 0x0400 intrbase 192 intr 62
+omapgpio2	at obio2 addr 0x48057000 size 0x0400 intrbase 224 intr 63
+omapgpio3	at obio2 addr 0x48059000 size 0x0400 intrbase 256 intr 64
+omapgpio4	at obio2 addr 0x4805b000 size 0x0400 intrbase 288 intr 65
+omapgpio5	at obio2 addr 0x4805d000 size 0x0400 intrbase 320 intr 66
+
+gpio*		at omapgpio?
+
+gpiobutton*	at gpio3 offset 0 mask 0x02000000 flag 0x01
+
+# I2C Controller
+tiiic0		at obio2 addr 0x48070000 size 0x100 intr 88	# I2C1
+tiiic1		at obio2 addr 0x48350000 size 0x100 intr 94	# I2C4
+#tiiic2		at obio2 addr 0x48072000 size 0x100 intr 89	# I2C2
+iic*		at tiiic?
+
+# Power Management and System Companion Device
+#twl6030pm0	at iic0 addr 0x48
+#twl6030pm1	at iic0 addr 0x49
+#twl6030pm2	at iic0 addr 0x4a
+#twl6040	at iic0 addr 0x4b
+
+# On-board 16550 UARTs
+com0		at obio2 addr 0x48020000 intr 106 mult 4 # UART3 (console)
+options 	CONSADDR=0x48020000, CONSPEED=115200
+#com1		at obio2 addr 0x4806c000 intr 105 mult 4 # UART2
+
+# Power, Reset and Clock Management
+prcm*		at obio1 addr 0x4a306000 size 0x2000	# PRM Module
+
+# MMC/SDIO
+sdhc0		at obio2 addr 0x4809c000 size 0x1000 intr 115	# MMCHS1
+#sdhc1		at obio2 addr 0x480d5000 size 0x1000 intr 91	# MMCHS5
+#sdhc2		at obio2 addr 0x480ad000 size 0x1000 intr 126	# MMCHS3
+sdmmc*		at sdhc?		# SD/MMC bus
+ld*		at sdmmc?
+#wi2wi		at sdmmc?		# W2CBW0015	(ZEPHER)
+#wl18xx		at sdmmc?		# TI WiLink8 	(ZEPHER-Y)
+
+# duovero expansion boards
+
+# SMSC LAN9221
+smsh0		at gpmc? cs 5 intr 204			# PARLOR
+ukphy*		at mii? phy ?				# smsh(4) internal PHY
+
+# On-board USB
+ohci*		at obio0 addr 0x4a064800 size 0x0400 intr 108
+ehci*		at obio0 addr 0x4a064c00 size 0x0400 intr 109
+usb*		at ohci?
+usb*		at ehci?
+
+# USB Hubs
+uhub*		at usb?
+uhub*		at uhub? port ?
+
+umass*		at uhub? port ?
+scsibus*	at scsi?
+sd*		at scsibus? target ? lun ?
+wd*		at umass?
+
+# Pseudo-Devices
+
+# disk/mass storage pseudo-devices
+#pseudo-device	bio			# RAID control device driver
+#pseudo-device	ccd			# concatenated/striped disk devices
+pseudo-device	cgd			# cryptographic disk devices
+#pseudo-device	raid			# RAIDframe disk driver
+#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+# Options to enable various other RAIDframe RAID types.
+#options 	RF_INCLUDE_EVENODD=1
+#options 	RF_INCLUDE_RAID5_RS=1
+#options 	RF_INCLUDE_PARITYLOGGING=1
+#options 	RF_INCLUDE_CHAINDECLUSTER=1
+#options 	RF_INCLUDE_INTERDECLUSTER=1
+#options 	RF_INCLUDE_PARITY_DECLUSTERING=1
+#options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
+#pseudo-device	fss			# file system snapshot device
+
+#pseudo-device	md			# memory disk device (ramdisk)
+pseudo-device	vnd			# disk-like interface to files
+options 	VND_COMPRESSION		# compressed vnd(4)
+#pseudo-device	putter			# for puffs and pud
+
+# network pseudo-devices
+pseudo-device	bpfilter		# Berkeley packet filter
+#pseudo-device	carp			# Common Address Redundancy Protocol
+pseudo-device	ipfilter		# IP filter (firewall) and NAT
+pseudo-device	loop			# network loopback
+#pseudo-device	ppp			# Point-to-Point Protocol
+#pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
+#pseudo-device	sl			# Serial Line IP
+#pseudo-device	strip			# Starmode Radio IP (Metricom)
+#pseudo-device	irframetty		# IrDA frame line discipline
+pseudo-device	tap			# virtual Ethernet
+#pseudo-device	tun			# network tunneling over tty
+#pseudo-device	gre			# generic L3 over IP tunnel
+#pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC 1933)
+#pseudo-device	faith			# IPv[46] TCP relay translation i/f
+#pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
+#pseudo-device	vlan			# IEEE 802.1q encapsulation
+pseudo-device	bridge			# simple inter-network bridging
+#options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+#pseudo-device	agr			# IEEE 802.3ad link aggregation
+#pseudo-device	pf			# PF packet filter
+#pseudo-device	pflog			# PF log if
+
+# miscellaneous pseudo-devices
+pseudo-device	pty			# pseudo-terminals
+#pseudo-device	sequencer		# MIDI sequencer
+options 	RND_COM
+pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	ksyms			# /dev/ksyms
+#pseudo-device	btuart			# Bluetooth HCI UART (H4)
+
+# a pseudo device needed for Coda	# also needs CODA (above)
+#pseudo-device	vcoda			# coda minicache <-> venus comm.
+
+# a pseudo device needed for SMBFS
+#pseudo-device	nsmb			# experimental - SMB requester
+
+# wscons pseudo-devices
+pseudo-device	wsmux			# mouse & keyboard multiplexor
+pseudo-device	wsfont
+
+# data mover pseudo-devices
+#pseudo-device	swdmover		# software dmover(9) back-end
+#pseudo-device	dmoverio		# /dev/dmover dmover(9) interface
+
+# userland interface to drivers, including autoconf and properties retrieval
+pseudo-device	drvctl
+
+#options 	FILEASSOC		# fileassoc(9) - required for Veriexec
+					# and PAX_SEGVGUARD
+
+# Veriexec
+#pseudo-device	veriexec
+#
+# Uncomment the fingerprint methods below that are desired. Note that
+# removing fingerprint methods will have almost no impact on the kernel
+# code size.
+#
+#options 	VERIFIED_EXEC_FP_SHA256
+#options 	VERIFIED_EXEC_FP_SHA384
+#options 	VERIFIED_EXEC_FP_SHA512
+
+#options 	PAX_MPROTECT=0		# PaX mprotect(2) restrictions
+#options 	PAX_ASLR=0		# PaX Address Space Layout Randomization

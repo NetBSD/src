@@ -1,4 +1,4 @@
-/* $NetBSD: coda.h,v 1.17 2010/08/07 20:39:33 christos Exp $ */
+/* $NetBSD: coda.h,v 1.17.18.1 2017/12/03 11:36:52 jdolecek Exp $ */
 
 /*
 
@@ -39,9 +39,15 @@ Mellon the rights to redistribute these changes without encumbrance.
 #ifndef _CODA_HEADER_
 #define _CODA_HEADER_
 
-#if defined(__NetBSD__) && defined(_KERNEL_OPT)
-/* pull in optional CODA_COMPAT_5 flag */
+#if defined(__NetBSD__)
+#include <sys/ioccom.h>
+#if defined(_KERNEL_OPT)
+/* pull in optional CODA_COMPAT_5 flag and NVCODA. */
 #include "opt_coda_compat.h"
+#include <vcoda.h>
+#else
+#define NVCODA 4
+#endif
 #endif
 
 /* Catch new _KERNEL defn for NetBSD and DJGPP/__CYGWIN32__ */

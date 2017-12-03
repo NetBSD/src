@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.56 2012/03/06 22:50:24 jklos Exp $	 */
+/*	$NetBSD: clock.c,v 1.56.2.1 2017/12/03 11:36:48 jdolecek Exp $	 */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -11,11 +11,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *     This product includes software developed at Ludd, University of Lule}.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -30,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.56 2012/03/06 22:50:24 jklos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.56.2.1 2017/12/03 11:36:48 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,7 +193,7 @@ yeartonum(int y)
 	int n;
 
 	for (n = 0, y -= 1; y > 1969; y--)
-		n += SECPERYEAR(y);
+ 		n += days_per_year(y) * SECS_PER_DAY;
 	return n;
 }
 
@@ -209,7 +204,7 @@ int
 numtoyear(int num)
 {
 	int y = 1970, j;
-	while(num >= (j = SECPERYEAR(y))) {
+	while(num >= (j = days_per_year(y) * SECS_PER_DAY)) {
 		y++;
 		num -= j;
 	}

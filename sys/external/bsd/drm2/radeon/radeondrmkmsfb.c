@@ -1,4 +1,4 @@
-/*	$NetBSD: radeondrmkmsfb.c,v 1.3.6.2 2014/08/20 00:04:22 tls Exp $	*/
+/*	$NetBSD: radeondrmkmsfb.c,v 1.3.6.3 2017/12/03 11:38:00 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeondrmkmsfb.c,v 1.3.6.2 2014/08/20 00:04:22 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeondrmkmsfb.c,v 1.3.6.3 2017/12/03 11:38:00 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "vga.h"
@@ -88,6 +88,12 @@ static int	radeonfb_genfb_ioctl(void *, void *, unsigned long, void *,
 static paddr_t	radeonfb_genfb_mmap(void *, void *, off_t, int);
 static int	radeonfb_genfb_enable_polling(void *);
 static int	radeonfb_genfb_disable_polling(void *);
+static bool	radeonfb_genfb_shutdown(device_t, int);
+static bool	radeonfb_genfb_setmode(struct genfb_softc *, int);
+
+static const struct genfb_mode_callback radeonfb_genfb_mode_callback = {
+	.gmc_setmode = radeonfb_genfb_setmode,
+};
 
 CFATTACH_DECL_NEW(radeondrmkmsfb, sizeof(struct radeonfb_softc),
     radeonfb_match, radeonfb_attach, radeonfb_detach, NULL);
@@ -162,15 +168,17 @@ radeonfb_setconfig_task(struct radeon_task *task)
 	KASSERT(sc->sc_scheduled);
 
 	/* XXX Ugh...  Pass these parameters some other way!  */
-	prop_dictionary_set_uint32(dict, "width", sizes->fb_width);
-	prop_dictionary_set_uint32(dict, "height", sizes->fb_height);
+	prop_dictionary_set_uint32(dict, "width", sizes->surface_width);
+	prop_dictionary_set_uint32(dict, "height", sizes->surface_height);
 	prop_dictionary_set_uint8(dict, "depth", sizes->surface_bpp);
-	prop_dictionary_set_uint16(dict, "linebytes",
-	    roundup2((sizes->fb_width * howmany(sizes->surface_bpp, 8)), 64));
+	prop_dictionary_set_uint16(dict, "linebytes", rfa->rfa_fb_linebytes);
 	prop_dictionary_set_uint32(dict, "address", 0); /* XXX >32-bit */
 	CTASSERT(sizeof(uintptr_t) <= sizeof(uint64_t));
 	prop_dictionary_set_uint64(dict, "virtual_address",
 	    (uint64_t)(uintptr_t)rfa->rfa_fb_ptr);
+
+	prop_dictionary_set_uint64(dict, "mode_callback",
+	    (uint64_t)(uintptr_t)&radeonfb_genfb_mode_callback);
 
 	/* XXX Whattakludge!  */
 #if NVGA > 0
@@ -203,7 +211,10 @@ radeonfb_setconfig_task(struct radeon_task *task)
 	}
 	sc->sc_attached = true;
 
-	drm_fb_helper_set_config(sc->sc_rfa.rfa_fb_helper);
+	if (!pmf_device_register1(sc->sc_dev, NULL, NULL,
+	    radeonfb_genfb_shutdown))
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't establish power handler\n");
 
 	/* Success!  */
 	sc->sc_scheduled = false;
@@ -343,4 +354,23 @@ radeonfb_genfb_disable_polling(void *cookie)
 	    struct radeonfb_softc, sc_genfb);
 
 	return drm_fb_helper_debug_leave_fb(sc->sc_rfa.rfa_fb_helper);
+}
+
+static bool
+radeonfb_genfb_shutdown(device_t self, int flags)
+{
+	genfb_enable_polling(self);
+	return true;
+}
+
+static bool
+radeonfb_genfb_setmode(struct genfb_softc *genfb, int mode)
+{
+	struct radeonfb_softc *sc = (struct radeonfb_softc *)genfb;
+
+	if (mode == WSDISPLAYIO_MODE_EMUL) {
+		drm_fb_helper_set_config(sc->sc_rfa.rfa_fb_helper);
+	}
+
+	return true;
 }

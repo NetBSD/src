@@ -1,4 +1,4 @@
-/*	$NetBSD: diskprobe.c,v 1.3 2012/01/18 23:12:21 nonaka Exp $	*/
+/*	$NetBSD: diskprobe.c,v 1.3.6.1 2017/12/03 11:36:52 jdolecek Exp $	*/
 /*	$OpenBSD: diskprobe.c,v 1.3 2006/10/13 00:00:55 krw Exp $	*/
 
 /*
@@ -112,9 +112,9 @@ hardprobe(char *buf, size_t bufsiz)
 		} else {
 			/* Best guess */
 			switch (dip->disklabel.d_type) {
-			case DTYPE_SCSI:
-			case DTYPE_ESDI:
-			case DTYPE_ST506:
+			case DKTYPE_SCSI:
+			case DKTYPE_ESDI:
+			case DKTYPE_ST506:
 				dip->bios_info.flags |= BDI_GOODLABEL;
 				break;
 

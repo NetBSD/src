@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_com.c,v 1.40.6.2 2014/08/20 00:02:46 tls Exp $ */
+/*	$NetBSD: ixp12x0_com.c,v 1.40.6.3 2017/12/03 11:35:54 jdolecek Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -66,14 +66,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_com.c,v 1.40.6.2 2014/08/20 00:02:46 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_com.c,v 1.40.6.3 2017/12/03 11:35:54 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 
-#include "rnd.h"
 #ifdef RND_COM
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 #endif
 
 #include <sys/param.h>
@@ -174,11 +173,8 @@ struct consdev ixpcomcons = {
 #define DEFAULT_COMSPEED 38400
 #endif
 
-#define COMUNIT_MASK    0x7ffff
-#define COMDIALOUT_MASK 0x80000
-
-#define COMUNIT(x)	(minor(x) & COMUNIT_MASK)
-#define COMDIALOUT(x)	(minor(x) & COMDIALOUT_MASK)
+#define COMUNIT(x)	TTUNIT(x)
+#define COMDIALOUT(x)	TTDIALOUT(x)
 
 #define COM_ISALIVE(sc)	((sc)->enabled != 0 && \
 			 device_is_active((sc)->sc_dev))

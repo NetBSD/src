@@ -1,4 +1,4 @@
-/*	$NetBSD: sljit_machdep.h,v 1.1.6.2 2014/08/20 00:02:42 tls Exp $	*/
+/*	$NetBSD: sljit_machdep.h,v 1.1.6.3 2017/12/03 11:35:47 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2012-2013 The NetBSD Foundation, Inc.
@@ -29,8 +29,16 @@
 #ifndef _AMD64_SLJITARCH_H
 #define _AMD64_SLJITARCH_H
 
+#if !defined __i386__
+
 #define SLJIT_CONFIG_X86_64 1
 
 #define SLJIT_CACHE_FLUSH(from, to)
+
+#else	/*	!__i386__	*/
+
+#include <i386/sljit_machdep.h>
+
+#endif
 
 #endif

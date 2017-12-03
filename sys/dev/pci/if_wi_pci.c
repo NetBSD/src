@@ -1,4 +1,4 @@
-/*      $NetBSD: if_wi_pci.c,v 1.54.6.1 2014/08/20 00:03:42 tls Exp $  */
+/*      $NetBSD: if_wi_pci.c,v 1.54.6.2 2017/12/03 11:37:08 jdolecek Exp $  */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.54.6.1 2014/08/20 00:03:42 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.54.6.2 2017/12/03 11:37:08 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -239,12 +239,12 @@ wi_pci_attach(device_t parent, device_t self, void *aux)
 		/* Map memory and I/O registers. */
 		if (pci_mapreg_map(pa, WI_PCI_LOMEM, PCI_MAPREG_TYPE_MEM, 0,
 		    &memt, &memh, NULL, NULL) != 0) {
-			printf(": can't map mem space\n");
+			aprint_error(": can't map mem space\n");
 			return;
 		}
 		if (pci_mapreg_map(pa, WI_PCI_LOIO, PCI_MAPREG_TYPE_IO, 0,
 		    &iot, &ioh, NULL, NULL) != 0) {
-			printf(": can't map I/O space\n");
+			aprint_error(": can't map I/O space\n");
 			return;
 		}
 
@@ -252,11 +252,11 @@ wi_pci_attach(device_t parent, device_t self, void *aux)
 			/* The PLX 9052 doesn't have IO at 0x14.  Perhaps
 			   other chips have, so we'll make this conditional. */
 			if (pci_mapreg_map(pa, WI_PCI_PLX_LOIO,
-				PCI_MAPREG_TYPE_IO, 0, &plxt,
-				&plxh, NULL, NULL) != 0) {
-					printf(": can't map PLX\n");
-					return;
-				}
+			    PCI_MAPREG_TYPE_IO, 0, &plxt, &plxh, NULL, NULL)
+			    != 0) {
+				aprint_error(": can't map PLX\n");
+				return;
+			}
 		}
 		break;
 	case CHIP_TMD_7160:
@@ -268,12 +268,12 @@ wi_pci_attach(device_t parent, device_t self, void *aux)
 		/* Map COR and I/O registers. */
 		if (pci_mapreg_map(pa, WI_TMD_COR, PCI_MAPREG_TYPE_IO, 0,
 		    &tmdt, &tmdh, NULL, NULL) != 0) {
-			printf(": can't map TMD\n");
+			aprint_error(": can't map TMD\n");
 			return;
 		}
 		if (pci_mapreg_map(pa, WI_TMD_IO, PCI_MAPREG_TYPE_IO, 0,
 		    &iot, &ioh, NULL, NULL) != 0) {
-			printf(": can't map I/O space\n");
+			aprint_error(": can't map I/O space\n");
 			return;
 		}
 		break;
@@ -281,7 +281,7 @@ wi_pci_attach(device_t parent, device_t self, void *aux)
 		if (pci_mapreg_map(pa, WI_PCI_CBMA,
 		    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT,
 		    0, &iot, &ioh, NULL, NULL) != 0) {
-			printf(": can't map mem space\n");
+			aprint_error(": can't map mem space\n");
 			return;
 		}
 

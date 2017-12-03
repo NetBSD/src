@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_rssadapt.c,v 1.17.22.1 2014/08/20 00:04:35 tls Exp $ */
+/* $NetBSD: ieee80211_rssadapt.c,v 1.17.22.2 2017/12/03 11:39:03 jdolecek Exp $ */
 /*-
  * Copyright (c) 2003, 2004 David Young.  All rights reserved.
  *
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_rssadapt.c,v 1.17.22.1 2014/08/20 00:04:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_rssadapt.c,v 1.17.22.2 2017/12/03 11:39:03 jdolecek Exp $");
 #endif
 
 #include <sys/param.h>
@@ -245,7 +245,7 @@ out:
 void
 ieee80211_rssadapt_updatestats(struct ieee80211_rssadapt *ra)
 {
-	long interval; 
+	long interval;
 
 	ra->ra_pktrate =
 	    (ra->ra_pktrate + 10 * (ra->ra_nfail + ra->ra_nok)) / 2;
@@ -350,6 +350,7 @@ ieee80211_rssadapt_raise_rate(struct ieee80211com *ic,
 	    (*thrs)[id->id_rateidx + 1] > (*thrs)[id->id_rateidx]) {
 		rate = (rs->rs_rates[id->id_rateidx + 1] & IEEE80211_RATE_VAL);
 
+		__USE(rate);
 		RSSADAPT_PRINTF(("%s: threshold[%d, %d.%d] decay %d ",
 		    ic->ic_ifp->if_xname,
 		    IEEE80211_RSSADAPT_BKT0 << (IEEE80211_RSSADAPT_BKTPOWER* i),

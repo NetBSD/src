@@ -1,4 +1,4 @@
-/*	$NetBSD: xenfunc.c,v 1.13 2011/11/06 11:40:47 cherry Exp $	*/
+/*	$NetBSD: xenfunc.c,v 1.13.10.1 2017/12/03 11:36:51 jdolecek Exp $	*/
 
 /*
  *
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenfunc.c,v 1.13 2011/11/06 11:40:47 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenfunc.c,v 1.13.10.1 2017/12/03 11:36:51 jdolecek Exp $");
 
 #include <sys/param.h>
 
@@ -70,7 +70,7 @@ lldt(u_short sel)
 		return;
 	/* __PRINTK(("ldt %x\n", IDXSELN(sel))); */
 	if (sel == GSEL(GLDT_SEL, SEL_KPL))
-		xen_set_ldt((vaddr_t)ldt, NLDT);
+		xen_set_ldt((vaddr_t)ldtstore, NLDT);
 	else
 		xen_set_ldt(ci->ci_gdt[IDXSELN(sel)].ld.ld_base,
 		    ci->ci_gdt[IDXSELN(sel)].ld.ld_entries);
@@ -121,20 +121,87 @@ tlbflushg(void)
 	tlbflush();
 }
 
-vaddr_t
-rdr6(void)
+register_t
+rdr0(void)
 {
-	u_int val;
 
-	val = HYPERVISOR_get_debugreg(6);
-	return val;
+	return HYPERVISOR_get_debugreg(0);
 }
 
 void
-ldr6(vaddr_t val)
+ldr0(register_t val)
+{
+
+	HYPERVISOR_set_debugreg(0, val);
+}
+
+register_t
+rdr1(void)
+{
+
+	return HYPERVISOR_get_debugreg(1);
+}
+
+void
+ldr1(register_t val)
+{
+
+	HYPERVISOR_set_debugreg(1, val);
+}
+
+register_t
+rdr2(void)
+{
+
+	return HYPERVISOR_get_debugreg(2);
+}
+
+void
+ldr2(register_t val)
+{
+
+	HYPERVISOR_set_debugreg(2, val);
+}
+
+register_t
+rdr3(void)
+{
+
+	return HYPERVISOR_get_debugreg(3);
+}
+
+void
+ldr3(register_t val)
+{
+
+	HYPERVISOR_set_debugreg(3, val);
+}
+register_t
+rdr6(void)
+{
+
+	return HYPERVISOR_get_debugreg(6);
+}
+
+void
+ldr6(register_t val)
 {
 
 	HYPERVISOR_set_debugreg(6, val);
+}
+
+register_t
+rdr7(void)
+{
+
+	return HYPERVISOR_get_debugreg(7);
+}
+
+void
+ldr7(register_t val)
+{
+
+	HYPERVISOR_set_debugreg(7, val);
 }
 
 void
@@ -149,3 +216,11 @@ rcr2(void)
 {
 	return curcpu()->ci_vcpu->arch.cr2;
 }
+
+#ifdef __x86_64__
+void
+setusergs(int gssel)
+{
+	HYPERVISOR_set_segment_base(SEGBASE_GS_USER_SEL, gssel);
+}
+#endif

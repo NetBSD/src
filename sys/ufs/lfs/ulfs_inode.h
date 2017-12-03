@@ -1,5 +1,5 @@
-/*	$NetBSD: ulfs_inode.h,v 1.9.2.3 2014/08/20 00:04:45 tls Exp $	*/
-/*  from NetBSD: inode.h,v 1.64 2012/11/19 00:36:21 jakllsch Exp  */
+/*	$NetBSD: ulfs_inode.h,v 1.9.2.4 2017/12/03 11:39:22 jdolecek Exp $	*/
+/*  from NetBSD: inode.h,v 1.72 2016/06/03 15:36:03 christos Exp  */
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -69,17 +69,17 @@ void lfs_unset_dirop(struct lfs *, struct vnode *, const char *);
 #define	LFS_MAX_RESOURCE(x, u)	(((x) >> 2) - 10 * (u))
 #define	LFS_WAIT_RESOURCE(x, u)	(((x) >> 1) - ((x) >> 3) - 10 * (u))
 #define	LFS_INVERSE_MAX_RESOURCE(x, u)	(((x) + 10 * (u)) << 2)
-#define LFS_MAX_BUFS	    LFS_MAX_RESOURCE(nbuf, 1)
-#define LFS_WAIT_BUFS	    LFS_WAIT_RESOURCE(nbuf, 1)
+#define LFS_MAX_BUFS	    lfs_max_bufs()
+#define LFS_WAIT_BUFS	    lfs_wait_bufs()
 #define LFS_INVERSE_MAX_BUFS(n)	LFS_INVERSE_MAX_RESOURCE(n, 1)
 #define LFS_MAX_BYTES	    LFS_MAX_RESOURCE(bufmem_lowater, PAGE_SIZE)
 #define LFS_INVERSE_MAX_BYTES(n) LFS_INVERSE_MAX_RESOURCE(n, PAGE_SIZE)
 #define LFS_WAIT_BYTES	    LFS_WAIT_RESOURCE(bufmem_lowater, PAGE_SIZE)
 #define LFS_MAX_DIROP	    ((desiredvnodes >> 2) + (desiredvnodes >> 3))
-#define SIZEOF_DIROP(fs)	(2 * ((fs)->lfs_bsize + LFS_DINODE1_SIZE))
+#define SIZEOF_DIROP(fs)	(2 * (lfs_sb_getbsize(fs) + DINOSIZE(fs)))
 #define LFS_MAX_FSDIROP(fs)						\
-	((fs)->lfs_nclean <= (fs)->lfs_resvseg ? 0 :			\
-	 (((fs)->lfs_nclean - (fs)->lfs_resvseg) * (fs)->lfs_ssize) /	\
+	(lfs_sb_getnclean(fs) <= lfs_sb_getresvseg(fs) ? 0 :		\
+	 ((lfs_sb_getnclean(fs) - lfs_sb_getresvseg(fs)) * lfs_sb_getssize(fs)) / \
           (2 * SIZEOF_DIROP(fs)))
 #define LFS_MAX_PAGES	lfs_max_pages()
 #define LFS_WAIT_PAGES	lfs_wait_pages()
@@ -93,7 +93,7 @@ int lfs_max_pages(void);
 #endif /* _KERNEL */
 
 /* How starved can we be before we start holding back page writes */
-#define LFS_STARVED_FOR_SEGS(fs) ((fs)->lfs_nclean < (fs)->lfs_resvseg)
+#define LFS_STARVED_FOR_SEGS(fs) (lfs_sb_getnclean(fs) < lfs_sb_getresvseg(fs))
 
 /*
  * Reserved blocks for lfs_malloc
@@ -144,9 +144,9 @@ typedef struct lfs_res_blk {
 #ifdef _KERNEL
 /* This overlays the fid structure (see fstypes.h). */
 struct ulfs_ufid {
-	u_int16_t ufid_len;	/* Length of structure. */
-	u_int16_t ufid_pad;	/* Force 32-bit alignment. */
-	u_int32_t ufid_ino;	/* File number (ino). */
+	uint16_t ufid_len;	/* Length of structure. */
+	uint16_t ufid_pad;	/* Force 32-bit alignment. */
+	uint32_t ufid_ino;	/* File number (ino). XXX should be 64 */
 	int32_t	  ufid_gen;	/* Generation number. */
 };
 /* Filehandle structure for exported LFSes */
@@ -175,7 +175,7 @@ struct lfid {
 
 #define WRITEINPROG(vp) ((vp)->v_numoutput > 0 ||			\
 	(!LIST_EMPTY(&(vp)->v_dirtyblkhd) &&				\
-	 !(VTOI(vp)->i_flag & (IN_MODIFIED | IN_ACCESSED | IN_CLEANING))))
+	 !(VTOI(vp)->i_state & (IN_MODIFIED | IN_ACCESSED | IN_CLEANING))))
 
 
 
@@ -189,27 +189,28 @@ struct lfid {
  */
 #define	DIP(ip, field) \
 	(((ip)->i_ump->um_fstype == ULFS1) ? \
-	(ip)->i_ffs1_##field : (ip)->i_ffs2_##field)
+	(ip)->i_din->u_32.di_##field : (ip)->i_din->u_64.di_##field)
 
 #define	DIP_ASSIGN(ip, field, value)					\
 	do {								\
 		if ((ip)->i_ump->um_fstype == ULFS1)			\
-			(ip)->i_ffs1_##field = (value);			\
+			(ip)->i_din->u_32.di_##field = (value);	\
 		else							\
-			(ip)->i_ffs2_##field = (value);			\
+			(ip)->i_din->u_64.di_##field = (value);	\
 	} while(0)
 
 #define	DIP_ADD(ip, field, value)					\
 	do {								\
 		if ((ip)->i_ump->um_fstype == ULFS1)			\
-			(ip)->i_ffs1_##field += (value);		\
+			(ip)->i_din->u_32.di_##field += (value);	\
 		else							\
-			(ip)->i_ffs2_##field += (value);		\
+			(ip)->i_din->u_64.di_##field += (value);	\
 	} while(0)
 
+/* XXX rework this better */
 #define	 SHORTLINK(ip) \
 	(((ip)->i_ump->um_fstype == ULFS1) ? \
-	(void *)(ip)->i_ffs1_db : (void *)(ip)->i_ffs2_db)
+	(void *)(ip)->i_din->u_32.di_db : (void *)(ip)->i_din->u_64.di_db)
 
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urlreg.h,v 1.9 2012/08/24 09:01:23 msaitoh Exp $	*/
+/*	$NetBSD: if_urlreg.h,v 1.9.2.1 2017/12/03 11:37:34 jdolecek Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -28,6 +28,8 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/rndsource.h>
 
 #define	URL_IFACE_INDEX		0
 #define	URL_CONFIG_NO		1
@@ -132,7 +134,7 @@ typedef	uWord url_rxhdr_t;	/* Recive Header */
 
 struct url_chain {
 	struct url_softc	*url_sc;
-	usbd_xfer_handle	url_xfer;
+	struct usbd_xfer	*url_xfer;
 	char			*url_buf;
 	struct mbuf		*url_mbuf;
 	int			url_idx;
@@ -153,17 +155,17 @@ struct url_cdata {
 
 struct url_softc {
 	device_t		sc_dev;	/* base device */
-	usbd_device_handle	sc_udev;
+	struct usbd_device *	sc_udev;
 
 	/* USB */
-	usbd_interface_handle	sc_ctl_iface;
+	struct usbd_interface *	sc_ctl_iface;
 	/* int			sc_ctl_iface_no; */
 	int			sc_bulkin_no; /* bulk in endpoint */
 	int			sc_bulkout_no; /* bulk out endpoint */
 	int			sc_intrin_no; /* intr in endpoint */
-	usbd_pipe_handle	sc_pipe_rx;
-	usbd_pipe_handle	sc_pipe_tx;
-	usbd_pipe_handle	sc_pipe_intr;
+	struct usbd_pipe *	sc_pipe_rx;
+	struct usbd_pipe *	sc_pipe_tx;
+	struct usbd_pipe *	sc_pipe_intr;
 	struct callout		sc_stat_ch;
 	u_int			sc_rx_errs;
 	/* u_int		sc_intr_errs; */
@@ -185,5 +187,5 @@ struct url_softc {
 	struct usb_task		sc_tick_task;
 	struct usb_task		sc_stop_task;
 
-	u_int16_t		sc_flags;
+	uint16_t		sc_flags;
 };

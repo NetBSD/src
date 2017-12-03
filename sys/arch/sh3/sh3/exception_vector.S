@@ -1,4 +1,4 @@
-/*	$NetBSD: exception_vector.S,v 1.49 2011/02/04 04:14:25 uwe Exp $	*/
+/*	$NetBSD: exception_vector.S,v 1.49.14.1 2017/12/03 11:36:42 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
 #define _ALIGN_TEXT	.align 5
 #include <sh3/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.49 2011/02/04 04:14:25 uwe Exp $")
+__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.49.14.1 2017/12/03 11:36:42 jdolecek Exp $")
 
 
 /*
@@ -98,7 +98,7 @@ NENTRY(sh_vector_generic)
 
 	/* general_exception(curlwp, tf, TEA); */
 1:	mov	r4, r8
-#if defined(PTRACE) || defined(DDB)
+#if defined(PTRACE_HOOKS) || defined(DDB)
 	mov	#0, r2
 	MOV	(BBRA, r1)
 	mov.l	r2, @(TF_UBC, r14)	/* clear tf->tf_ubc */
@@ -115,7 +115,7 @@ NENTRY(sh_vector_generic)
 	jsr	@r0
 	 mov	r14, r5
 
-#if defined(PTRACE) || defined(DDB)
+#if defined(PTRACE_HOOKS) || defined(DDB)
 	mov.l	@(TF_UBC, r14), r2
 	tst	r2, r2			! single-step == 0?
 	bt	.Lg_return_from_exception

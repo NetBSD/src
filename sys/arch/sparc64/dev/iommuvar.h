@@ -1,4 +1,4 @@
-/*	$NetBSD: iommuvar.h,v 1.21 2012/03/25 03:51:33 mrg Exp $	*/
+/*	$NetBSD: iommuvar.h,v 1.21.2.1 2017/12/03 11:36:44 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -65,6 +65,7 @@ struct iommu_state {
 	/* copies of our parents state, to allow us to be self contained */
 	bus_space_tag_t		is_bustag;	/* our bus tag */
 	bus_space_handle_t	is_iommu;	/* IOMMU registers */
+	uint64_t		is_devhandle;   /* for sun4v hypervisor calls */
 };
 
 /* interfaces for PCI/SBUS code */

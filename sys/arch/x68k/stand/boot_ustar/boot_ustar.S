@@ -3,7 +3,7 @@
 |         ITOH Yasufumi
 |	  minoura@NetBSD.org
 |
-| $NetBSD: boot_ustar.S,v 1.7 2011/02/21 02:31:58 itohy Exp $
+| $NetBSD: boot_ustar.S,v 1.7.14.1 2017/12/03 11:36:49 jdolecek Exp $
 
 | supports floppy only
 
@@ -60,7 +60,12 @@ ASENTRY_NOPROFILE(entry)
 		jne	boot_dev_unsupported	| boot from SASI?
 		|
 		| Floppy
-		|   read first 64KB (XXX: CONSTANT!!)
+		|   read /boot.
+		|
+		|   This boot_ustar has the 1KB size restriction and
+		|   it is impossible to detect /boot's actual size in this
+		|   restriction.  So define BOOT_MAXSIZE (in Makefile) as
+		|   the size enough to read /boot whole.
 		|
 		andib	#0x03,%d0	| drive # (head=0)
 		jbsr	check_fd_format
@@ -69,7 +74,7 @@ ASENTRY_NOPROFILE(entry)
 		moveq	#0x70,%d1
 		orw	%d2,%d1		| PDA*256 + MODE
 		movel	%d0,%d2		| read position (first sector)
-		movel	#65536,%d3	| read bytes
+		movel	#(BOOT_MAXSIZE+8192+0x200),%d3	| read bytes
 		moval	#(BOOT_TEXTADDR-8192-0x200-32),%a1
 		moval	%a1,%a4		| save buffer addr
 		IOCS(__B_READ)

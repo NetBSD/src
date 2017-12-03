@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.26.2.1 2014/08/20 00:03:11 tls Exp $ */
+/*	$NetBSD: wdc_obio.c,v 1.26.2.2 2017/12/03 11:36:24 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2002 Takeshi Shibagaki  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.26.2.1 2014/08/20 00:03:11 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.26.2.2 2017/12/03 11:36:24 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -68,7 +68,6 @@ struct wdc_obio_softc {
 	struct  wdc_softc sc_wdcdev;
 	struct  ata_channel *sc_chanlist[1];
 	struct  ata_channel sc_channel;
-	struct	ata_queue sc_chqueue;
 	struct	wdc_regs sc_wdc_regs;
 	void    *sc_ih;
 };
@@ -88,15 +87,8 @@ int
 wdc_obio_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct obio_attach_args *oa = (struct obio_attach_args *) aux;
-	struct ata_channel ch;
-	struct wdc_softc wdc;
 	struct wdc_regs wdr;
 	int i, result = 0;
-
-	memset(&wdc, 0, sizeof(wdc));
-	memset(&ch, 0, sizeof(ch));
-	ch.ch_atac = &wdc.sc_atac;
-	wdc.regs = &wdr;
 
 	switch (current_mac_model->machineid) {
 	case MACH_MACPB150:
@@ -118,7 +110,7 @@ wdc_obio_match(device_t parent, cfdata_t match, void *aux)
 				return 0;
 			}
 		}
-		wdc_init_shadow_regs(&ch);
+		wdc_init_shadow_regs(&wdr);
 
 
 		if (bus_space_subregion(wdr.cmd_iot, wdr.cmd_baseioh,
@@ -127,7 +119,7 @@ wdc_obio_match(device_t parent, cfdata_t match, void *aux)
 					&wdr.ctl_ioh))
 			return 0;
 
-		result = wdcprobe(&ch);
+		result = wdcprobe(&wdr);
 
 		bus_space_unmap(wdr.cmd_iot, wdr.cmd_baseioh, WDC_OBIO_REG_NPORTS);
 
@@ -223,8 +215,8 @@ wdc_obio_attach(device_t parent, device_t self, void *aux)
 	sc->sc_wdcdev.wdc_maxdrives = 2;
 	chp->ch_channel = 0;
 	chp->ch_atac = &sc->sc_wdcdev.sc_atac;
-	chp->ch_queue = &sc->sc_chqueue;
-	wdc_init_shadow_regs(chp);
+
+	wdc_init_shadow_regs(wdr);
 
 	aprint_normal("\n");
 

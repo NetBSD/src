@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.245.2.1 2014/08/20 00:03:18 tls Exp $	*/
+/*	$NetBSD: machdep.c,v 1.245.2.2 2017/12/03 11:36:35 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.245.2.1 2014/08/20 00:03:18 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.245.2.2 2017/12/03 11:36:35 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -220,10 +220,7 @@ mach_init(int argc, int32_t *argv32, int code, intptr_t cv, u_int bim, char *bip
 #else
 	__USE(bootinfo_msg);
 #endif
-	/*
-	 * Set the VM page size.
-	 */
-	uvm_setpagesize();
+	uvm_md_init();
 
 	/*
 	 * Copy exception-dispatch code down to exception vector.
@@ -374,42 +371,7 @@ consinit(void)
 void
 cpu_startup(void)
 {
-	vaddr_t minaddr, maxaddr;
-	char pbuf[9];
-#ifdef DEBUG
-	extern int pmapdebug;		/* XXX */
-	int opmapdebug = pmapdebug;
-
-	pmapdebug = 0;
-#endif
-
-	/*
-	 * Good {morning,afternoon,evening,night}.
-	 */
-	printf("%s%s", copyright, version);
-	printf("%s\n", cpu_getmodel());
-	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
-	printf("total memory = %s\n", pbuf);
-
-	minaddr = 0;
-
-	/*
-	 * Allocate a submap for physio
-	 */
-	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   VM_PHYS_SIZE, 0, false, NULL);
-
-	/*
-	 * No need to allocate an mbuf cluster submap.  Mbuf clusters
-	 * are allocated via the pool allocator, and we use KSEG to
-	 * map those pages.
-	 */
-
-#ifdef DEBUG
-	pmapdebug = opmapdebug;
-#endif
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
-	printf("avail memory = %s\n", pbuf);
+	cpu_startup_common();
 }
 
 /*
@@ -559,7 +521,7 @@ memsize_bitmap(void *first)
 	segstart = curaddr = i = segnum = 0;
 	xsize = prom_memmap->pagesize * 8;
 	while (i < mapbytes) {
-		while (prom_memmap->bitmap[i] == 0xff && i < mapbytes) {
+		while (i < mapbytes && prom_memmap->bitmap[i] == 0xff) {
 			++i;
 			curaddr += xsize;
 		}

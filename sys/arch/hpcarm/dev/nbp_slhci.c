@@ -1,4 +1,4 @@
-/*	$NetBSD: nbp_slhci.c,v 1.1 2011/08/06 03:53:40 kiyohara Exp $ */
+/*	$NetBSD: nbp_slhci.c,v 1.1.12.1 2017/12/03 11:36:14 jdolecek Exp $ */
 /*
  * Copyright (c) 2011 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nbp_slhci.c,v 1.1 2011/08/06 03:53:40 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nbp_slhci.c,v 1.1.12.1 2017/12/03 11:36:14 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -81,7 +81,7 @@ nbp_slhci_attach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 
 	sc->sc_dev = self;
-	sc->sc_bus.hci_private = sc;
+	sc->sc_bus.ub_hcpriv = sc;
 
 	if (bus_space_map(pxa->pxa_iot, pxa->pxa_addr,
 				NETBOOKPRO_SLHCI_REG_SIZE, 0, &ioh) != 0) {

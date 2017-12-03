@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.22 2008/11/19 18:36:00 ad Exp $ */
+/*	$NetBSD: signal.h,v 1.22.26.1 2017/12/03 11:36:43 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -51,7 +51,7 @@ typedef int sig_atomic_t;
 
 #if defined(_NETBSD_SOURCE)
 #ifndef _LOCORE
-
+#include <sys/sigtypes.h>
 /*
  * Information pushed on stack when a signal is delivered.
  * This is used by the kernel to restore state following

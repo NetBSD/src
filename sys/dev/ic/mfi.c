@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.46.2.2 2014/08/20 00:03:38 tls Exp $ */
+/* $NetBSD: mfi.c,v 1.46.2.3 2017/12/03 11:37:03 jdolecek Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 
 /*
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.46.2.2 2014/08/20 00:03:38 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.46.2.3 2017/12/03 11:37:03 jdolecek Exp $");
 
 #include "bio.h"
 
@@ -107,6 +107,8 @@ __KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.46.2.2 2014/08/20 00:03:38 tls Exp $");
 #if NBIO > 0
 #include <dev/biovar.h>
 #endif /* NBIO > 0 */
+
+#include "ioconf.h"
 
 #ifdef MFI_DEBUG
 uint32_t	mfi_debug = 0
@@ -197,8 +199,6 @@ const struct cdevsw mfi_cdevsw = {
 	.d_discard = nodiscard,
 	.d_flag = D_OTHER
 };
-
-extern struct cfdriver mfi_cd;
 
 static uint32_t 	mfi_xscale_fw_state(struct mfi_softc *sc);
 static void 		mfi_xscale_intr_ena(struct mfi_softc *sc);
@@ -380,15 +380,18 @@ mfi_init_ccb(struct mfi_softc *sc)
 
 	sc->sc_ccb = malloc(sizeof(struct mfi_ccb) * sc->sc_max_cmds,
 	    M_DEVBUF, M_WAITOK|M_ZERO);
-	io_req_base = (uint8_t *)MFIMEM_KVA(sc->sc_tbolt_reqmsgpool);
-	io_req_base_phys = MFIMEM_DVA(sc->sc_tbolt_reqmsgpool);
 	if (sc->sc_ioptype == MFI_IOP_TBOLT) {
 		/*
 		 * The first 256 bytes (SMID 0) is not used.
 		 * Don't add to the cmd list.
 		 */
-		io_req_base += MEGASAS_THUNDERBOLT_NEW_MSG_SIZE;
-		io_req_base_phys += MEGASAS_THUNDERBOLT_NEW_MSG_SIZE;
+		io_req_base = (uint8_t *)MFIMEM_KVA(sc->sc_tbolt_reqmsgpool) +
+		    MEGASAS_THUNDERBOLT_NEW_MSG_SIZE;
+		io_req_base_phys = MFIMEM_DVA(sc->sc_tbolt_reqmsgpool) +
+		    MEGASAS_THUNDERBOLT_NEW_MSG_SIZE;
+	} else {
+		io_req_base = NULL;	/* XXX: gcc */
+		io_req_base_phys = 0;	/* XXX: gcc */
 	}
 
 	for (i = 0; i < sc->sc_max_cmds; i++) {
@@ -2635,31 +2638,9 @@ mfi_sensor_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	splx(s);
 	KERNEL_UNLOCK_ONE(curlwp);
 	if (error)
-		return;
+		bv.bv_status = BIOC_SVINVALID;
 
-	switch(bv.bv_status) {
-	case BIOC_SVOFFLINE:
-		edata->value_cur = ENVSYS_DRIVE_FAIL;
-		edata->state = ENVSYS_SCRITICAL;
-		break;
-
-	case BIOC_SVDEGRADED:
-		edata->value_cur = ENVSYS_DRIVE_PFAIL;
-		edata->state = ENVSYS_SCRITICAL;
-		break;
-
-	case BIOC_SVSCRUB:
-	case BIOC_SVONLINE:
-		edata->value_cur = ENVSYS_DRIVE_ONLINE;
-		edata->state = ENVSYS_SVALID;
-		break;
-
-	case BIOC_SVINVALID:
-		/* FALLTRHOUGH */
-	default:
-		edata->value_cur = 0; /* unknown */
-		edata->state = ENVSYS_SINVALID;
-	}
+	bio_vol_to_envsys(edata, &bv);
 }
 
 #endif /* NBIO > 0 */
@@ -3423,8 +3404,7 @@ again:
 
 	ld_size = sizeof(*ld_sync) * sc->sc_ld_list.mll_no_ld;
 	
-	ld_sync = (struct mfi_ld *) malloc(ld_size, M_DEVBUF,
-	     M_WAITOK | M_ZERO);
+	ld_sync = malloc(ld_size, M_DEVBUF, M_WAITOK | M_ZERO);
 	if (ld_sync == NULL) {
 		aprint_error_dev(sc->sc_dev, "Failed to allocate sync\n");
 		goto err;
@@ -3435,7 +3415,6 @@ again:
 
 	if ((ccb = mfi_get_ccb(sc)) == NULL) {
 		aprint_error_dev(sc->sc_dev, "Failed to get sync command\n");
-		free(ld_sync, M_DEVBUF);
 		goto err;
 	}
 	sc->sc_ldsync_ccb = ccb;

@@ -9,8 +9,8 @@ int __llvm_profile_write_file(void);
 void __llvm_profile_set_filename(const char *);
 int foo(int);
 int main(int argc, const char *argv[]) {
-  // CHECK-LABEL: define i32 @main
-  // CHECK: br i1 %{{.*}}, label %{{.*}}, label %{{.*}}, !prof !1
+  // CHECK-LABEL: define {{.*}} @main(
+  // CHECK: br i1 %{{.*}}, label %{{.*}}, label %{{.*}}, !prof ![[PD1:[0-9]+]]
   if (argc > 1)
     return 1;
 
@@ -28,8 +28,8 @@ int foo(int X) {
   // There should be no profiling information for @foo, since it was called
   // after the profile was written (and the atexit was suppressed by defining
   // profile_runtime).
-  // CHECK-LABEL: define i32 @foo
+  // CHECK-LABEL: define {{.*}} @foo(
   // CHECK: br i1 %{{.*}}, label %{{.*}}, label %{{[^,]+$}}
   return X <= 0 ? -X : X;
 }
-// CHECK: !1 = metadata !{metadata !"branch_weights", i32 1, i32 2}
+// CHECK: ![[PD1]] = !{!"branch_weights", i32 1, i32 2}

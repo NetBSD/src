@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootxx,v 1.10 2012/07/20 15:23:02 matt Exp $
+# $NetBSD: Makefile.bootxx,v 1.10.2.1 2017/12/03 11:35:46 jdolecek Exp $
 
 SRCS = start.S bootxx.c booted_dev.c blkdev.c prom.c prom_disp.S \
        putstr.c panic_putstr.c
@@ -39,8 +39,10 @@ SAMISCMAKEFLAGS= SA_INCLUDE_NET=no SA_USE_CREAD=no
 ${PROG}.sym: ${OBJS} ${LIBSA} ${LIBKERN}
 	${_MKTARGET_LINK}
 	@${LD} -Ttext 0x20000000 -N --verbose 2>&1 \
-	    | ${TOOL_SED} -n '/^==========/,/^===========/{/^========/d; \
-	    s,^[[:blank:]]*\.eh_frame[[:blank:]]*:,  /DISCARD/ : ,;p;}' \
+	    | ${TOOL_SED} -n -e '/^==========/,/^===========/{' \
+	     -e '/^========/d' \
+	     -e 's,^[[:blank:]]*\.eh_frame[[:blank:]]*:,  /DISCARD/ : ,' \
+	     -e 'p' -e '}' \
 	    > ${PROG}.lds
 	${LD} -T ${PROG}.lds -Ttext ${BOOT_RELOC} -N -e start \
 	    -o ${PROG}.sym ${OBJS} ${LIBSA} ${LIBKERN} -Map ${PROG}.map

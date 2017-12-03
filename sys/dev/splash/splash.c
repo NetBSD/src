@@ -1,4 +1,4 @@
-/* $NetBSD: splash.c,v 1.12 2012/06/02 14:24:00 martin Exp $ */
+/* $NetBSD: splash.c,v 1.12.2.1 2017/12/03 11:37:32 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: splash.c,v 1.12 2012/06/02 14:24:00 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: splash.c,v 1.12.2.1 2017/12/03 11:37:32 jdolecek Exp $");
 
 #include "opt_splash.h"
 
@@ -194,6 +194,14 @@ splash_render(struct splash_info *si, int flg)
 	}
 	aprint_debug("%s: splash loaded, width %d height %d comp %d\n",
 	    __func__, width, height, comp);
+
+	if ((width > si->si_width) || (height > si->si_height)) {
+		aprint_error(
+			"WARNING: splash size (%dx%d) too big for framebuffer (%dx%d)\n",
+			width, height, si->si_width, si->si_height);
+		stbi_image_free(data);
+		return EINVAL;
+	}
 
 	/* XXX */
 	if (flg & SPLASH_F_CENTER) {

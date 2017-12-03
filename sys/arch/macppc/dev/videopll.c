@@ -1,4 +1,4 @@
-/*	$NetBSD: videopll.c,v 1.1 2012/01/24 04:33:11 macallan Exp $	*/
+/*	$NetBSD: videopll.c,v 1.1.10.1 2017/12/03 11:36:25 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2012 Michael Lorenz
@@ -27,13 +27,13 @@
 
 /*
  * A driver for the iic-controlled PLLs used in early Apple onboard video 
- * hardware. For now we support /valkyrie only but others use vary similar
+ * hardware. For now we support /valkyrie only but others use very similar
  * schemes to program their pixel clock so adding support for those should
  * be simple enough.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: videopll.c,v 1.1 2012/01/24 04:33:11 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: videopll.c,v 1.1.10.1 2017/12/03 11:36:25 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,17 +70,10 @@ static int
 videopll_match(device_t parent, cfdata_t cfdata, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
-	int node;
 
-	/* we support only /valkyrie so far */
-	node = OF_finddevice("/valkyrie");
-	if (node == -1)
-		return 0;
-	/* make sure we only attach to cuda's iic bus */
-	if (!device_is_a(device_parent(parent), "cuda"))
-		return 0;
-	if (ia->ia_addr == 0x50)
+	if (strcmp(ia->ia_name, "videopll") == 0)
 		return 100;
+
 	return 0;
 }
 

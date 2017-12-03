@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.19.18.1 2014/08/20 00:03:25 tls Exp $
+$NetBSD: version,v 1.19.18.2 2017/12/03 11:36:44 jdolecek Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -21,3 +21,6 @@ is taken as the current.
 1.15:	Properly close the firmware handle before starting the kernel
 1.16:	Add support to boot with root on cd9660
 1.17:	Add support for sun4v architecture
+1.18:	Fix loading of kernels with huge .bss
+1.19:	Support booting from virtio devices
+1.20:	Provide more boot device details

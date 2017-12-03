@@ -1,4 +1,4 @@
-/*	$NetBSD: uni-n.c,v 1.6 2011/10/26 13:54:18 macallan Exp $	*/
+/*	$NetBSD: uni-n.c,v 1.6.12.1 2017/12/03 11:36:25 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz.
@@ -31,7 +31,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uni-n.c,v 1.6 2011/10/26 13:54:18 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uni-n.c,v 1.6.12.1 2017/12/03 11:36:25 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: uni-n.c,v 1.6 2011/10/26 13:54:18 macallan Exp $");
 #include <sys/device.h>
 
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_pci.h>
 
 #include <machine/autoconf.h>
 
@@ -48,6 +49,7 @@ static int uni_n_print(void *, const char *);
 
 struct uni_n_softc {
 	device_t sc_dev;
+	struct powerpc_bus_space sc_memt;
 	int sc_node;
 };
 
@@ -59,14 +61,16 @@ uni_n_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct confargs *ca = aux;
 	char compat[32];
-	if (strcmp(ca->ca_name, "uni-n") != 0)
+	if ((strcmp(ca->ca_name, "uni-n") != 0) &&
+	    (strcmp(ca->ca_name, "u4") != 0))
 		return 0;
 
 	memset(compat, 0, sizeof(compat));
+#if 0
 	OF_getprop(ca->ca_node, "compatible", compat, sizeof(compat));
 	if (strcmp(compat, "uni-north") != 0)
 		return 0;
-
+#endif
 	return 1;
 }
 
@@ -85,10 +89,17 @@ uni_n_attach(device_t parent, device_t self, void *aux)
 	char name[32];
 
 	sc->sc_dev = self;
-	node = OF_finddevice("/uni-n");
+	node = our_ca->ca_node;
 	sc->sc_node = node;
 	printf(" address 0x%08x\n",our_ca->ca_reg[0]);
-	
+
+	memset(&sc->sc_memt, 0, sizeof(struct powerpc_bus_space));
+	sc->sc_memt.pbs_flags = _BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE;
+	if (ofwoea_map_space(RANGE_TYPE_MACIO, RANGE_MEM, node, &sc->sc_memt,
+	    "uni-n mem-space") != 0) {
+		panic("Can't init uni-n mem tag");
+	}
+
 	for (child = OF_child(node); child; child = OF_peer(child)) {
 		namelen = OF_getprop(child, "name", name, sizeof(name));
 		if (namelen < 0)
@@ -99,7 +110,7 @@ uni_n_attach(device_t parent, device_t self, void *aux)
 		name[namelen] = 0;
 		ca.ca_name = name;
 		ca.ca_node = child;
-
+		ca.ca_tag = &sc->sc_memt;
 		ca.ca_nreg  = OF_getprop(child, "reg", reg, sizeof(reg));
 		ca.ca_nintr = OF_getprop(child, "AAPL,interrupts", intr,
 				sizeof(intr));
@@ -109,7 +120,6 @@ uni_n_attach(device_t parent, device_t self, void *aux)
 
 		ca.ca_reg = reg;
 		ca.ca_intr = intr;
-
 		config_found(self, &ca, uni_n_print);
 	}
 }

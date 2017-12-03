@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_inet.c,v 1.16.2.4 2014/08/20 00:04:35 tls Exp $	*/
+/*	$NetBSD: npf_inet.c,v 1.16.2.5 2017/12/03 11:39:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -38,8 +38,9 @@
  * on rewrites (e.g. by translation routines).
  */
 
+#ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.16.2.4 2014/08/20 00:04:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.16.2.5 2017/12/03 11:39:03 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -51,11 +52,13 @@ __KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.16.2.4 2014/08/20 00:04:35 tls Exp $"
 
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
+#include <netinet6/in6_var.h>
 #include <netinet/ip.h>
 #include <netinet/ip6.h>
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
 #include <netinet/ip_icmp.h>
+#endif
 
 #include "npf_impl.h"
 
@@ -131,8 +134,8 @@ npf_addr_mix(const int sz, const npf_addr_t *a1, const npf_addr_t *a2)
 	KASSERT(sz > 0 && a1 != NULL && a2 != NULL);
 
 	for (int i = 0; i < (sz >> 2); i++) {
-		mix ^= a1->s6_addr32[i];
-		mix ^= a2->s6_addr32[i];
+		mix ^= a1->word32[i];
+		mix ^= a2->word32[i];
 	}
 	return mix;
 }
@@ -162,7 +165,7 @@ npf_addr_mask(const npf_addr_t *addr, const npf_netmask_t mask,
 		} else {
 			wordmask = 0;
 		}
-		out->s6_addr32[i] = addr->s6_addr32[i] & wordmask;
+		out->word32[i] = addr->word32[i] & wordmask;
 	}
 }
 
@@ -352,6 +355,7 @@ npf_cache_ip(npf_cache_t *npc, nbuf_t *nbuf)
 	case (IPV6_VERSION >> 4): {
 		struct ip6_hdr *ip6;
 		struct ip6_ext *ip6e;
+		struct ip6_frag *ip6f;
 		size_t off, hlen;
 
 		ip6 = nbuf_ensure_contig(nbuf, sizeof(struct ip6_hdr));
@@ -384,8 +388,21 @@ npf_cache_ip(npf_cache_t *npc, nbuf_t *nbuf)
 				hlen = (ip6e->ip6e_len + 1) << 3;
 				break;
 			case IPPROTO_FRAGMENT:
+				ip6f = nbuf_ensure_contig(nbuf, sizeof(*ip6f));
+				if (ip6f == NULL)
+					return 0;
+				/*
+				 * We treat the first fragment as a regular
+				 * packet and then we pass the rest of the
+				 * fragments unconditionally. This way if
+				 * the first packet passes the rest will
+				 * be able to reassembled, if not they will
+				 * be ignored. We can do better later.
+				 */
+				if (ntohs(ip6f->ip6f_offlg & IP6F_OFF_MASK) != 0)
+					flags |= NPC_IPFRAG;
+
 				hlen = sizeof(struct ip6_frag);
-				flags |= NPC_IPFRAG;
 				break;
 			case IPPROTO_AH:
 				hlen = (ip6e->ip6e_len + 2) << 2;
@@ -687,7 +704,7 @@ npf_npt66_rwr(const npf_cache_t *npc, u_int which, const npf_addr_t *pref,
 		 * subnet if /48 or shorter.
 		 */
 		word = 3;
-		if (addr->s6_addr16[word] == 0xffff) {
+		if (addr->word16[word] == 0xffff) {
 			return EINVAL;
 		}
 	} else {
@@ -695,19 +712,19 @@ npf_npt66_rwr(const npf_cache_t *npc, u_int which, const npf_addr_t *pref,
 		 * Also, all 0s or 1s in the host part are disallowed for
 		 * longer than /48 prefixes.
 		 */
-		if ((addr->s6_addr32[2] == 0 && addr->s6_addr32[3] == 0) ||
-		    (addr->s6_addr32[2] == ~0U && addr->s6_addr32[3] == ~0U))
+		if ((addr->word32[2] == 0 && addr->word32[3] == 0) ||
+		    (addr->word32[2] == ~0U && addr->word32[3] == ~0U))
 			return EINVAL;
 
 		/* Determine the 16-bit word to adjust. */
 		for (word = 4; word < 8; word++)
-			if (addr->s6_addr16[word] != 0xffff)
+			if (addr->word16[word] != 0xffff)
 				break;
 	}
 
 	/* Rewrite the prefix. */
 	for (unsigned i = 0; i < preflen; i++) {
-		addr->s6_addr16[i] = pref->s6_addr16[i];
+		addr->word16[i] = pref->word16[i];
 	}
 
 	/*
@@ -718,14 +735,14 @@ npf_npt66_rwr(const npf_cache_t *npc, u_int which, const npf_addr_t *pref,
 		const uint16_t wordmask = (1U << remnant) - 1;
 		const unsigned i = preflen;
 
-		addr->s6_addr16[i] = (pref->s6_addr16[i] & wordmask) |
-		    (addr->s6_addr16[i] & ~wordmask);
+		addr->word16[i] = (pref->word16[i] & wordmask) |
+		    (addr->word16[i] & ~wordmask);
 	}
 
 	/*
 	 * Performing 1's complement sum/difference.
 	 */
-	sum = addr->s6_addr16[word] + adj;
+	sum = addr->word16[word] + adj;
 	while (sum >> 16) {
 		sum = (sum >> 16) + (sum & 0xffff);
 	}
@@ -733,7 +750,7 @@ npf_npt66_rwr(const npf_cache_t *npc, u_int which, const npf_addr_t *pref,
 		/* RFC 1071. */
 		sum = 0x0000;
 	}
-	addr->s6_addr16[word] = sum;
+	addr->word16[word] = sum;
 	return 0;
 }
 
@@ -747,7 +764,7 @@ npf_addr_dump(const npf_addr_t *addr, int alen)
 		memcpy(&ip, addr, alen);
 		return inet_ntoa(ip);
 	}
-	return "[IPv6]"; // XXX
+	return "[IPv6]";
 }
 
 #endif

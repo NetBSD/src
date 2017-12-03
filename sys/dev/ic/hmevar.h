@@ -1,4 +1,4 @@
-/*	$NetBSD: hmevar.h,v 1.23 2012/02/02 19:43:03 tls Exp $	*/
+/*	$NetBSD: hmevar.h,v 1.23.6.1 2017/12/03 11:37:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -29,10 +29,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 #include <sys/callout.h>
-#include <sys/rnd.h>
-
+#include <sys/rndsource.h>
 
 struct hme_ring {
 	/* Ring Descriptors */

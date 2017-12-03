@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_dumb.c,v 1.15 2010/01/28 22:36:19 drochner Exp $ */
+/* $NetBSD: wsemul_dumb.c,v 1.15.22.1 2017/12/03 11:37:37 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_dumb.c,v 1.15 2010/01/28 22:36:19 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_dumb.c,v 1.15.22.1 2017/12/03 11:37:37 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,15 +55,16 @@ void	wsemul_dumb_detach(void *cookie, u_int *crowp, u_int *ccolp);
 void	wsemul_dumb_resetop(void *, enum wsemul_resetops);
 
 const struct wsemul_ops wsemul_dumb_ops = {
-	"dumb",
-	wsemul_dumb_cnattach,
-	wsemul_dumb_attach,
-	wsemul_dumb_output,
-	wsemul_dumb_translate,
-	wsemul_dumb_detach,
-	wsemul_dumb_resetop,
-	NULL,	/* getmsgattrs */
-	NULL,	/* setmsgattrs */
+	.name = "dumb",
+	.cnattach = wsemul_dumb_cnattach,
+	.attach = wsemul_dumb_attach,
+	.output = wsemul_dumb_output,
+	.translate = wsemul_dumb_translate,
+	.detach = wsemul_dumb_detach,
+	.reset = wsemul_dumb_resetop,
+	.getmsgattrs = NULL,
+	.setmsgattrs = NULL,
+	.resize = NULL,
 };
 
 struct wsemul_dumb_emuldata {

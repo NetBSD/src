@@ -1,4 +1,4 @@
-/* $NetBSD: wsevent.c,v 1.35 2012/05/24 18:16:31 abs Exp $ */
+/* $NetBSD: wsevent.c,v 1.35.2.1 2017/12/03 11:37:37 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2006, 2008 The NetBSD Foundation, Inc.
@@ -104,10 +104,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.35 2012/05/24 18:16:31 abs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.35.2.1 2017/12/03 11:37:37 jdolecek Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
 #include "opt_modular.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -338,8 +340,12 @@ filt_wseventread(struct knote *kn, long hint)
 	return (1);
 }
 
-static const struct filterops wsevent_filtops =
-	{ 1, NULL, filt_wseventrdetach, filt_wseventread };
+static const struct filterops wsevent_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_wseventrdetach,
+	.f_event = filt_wseventread,
+};
 
 int
 wsevent_kqfilter(struct wseventvar *ev, struct knote *kn)

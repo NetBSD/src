@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,8 +40,6 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  */
-
-#define __DSWLOAD_C__
 
 #include "acpi.h"
 #include "accommon.h"
@@ -80,7 +78,20 @@ AcpiDsInitCallbacks (
 
     switch (PassNumber)
     {
+    case 0:
+
+        /* Parse only - caller will setup callbacks */
+
+        WalkState->ParseFlags         = ACPI_PARSE_LOAD_PASS1 |
+                                        ACPI_PARSE_DELETE_TREE |
+                                        ACPI_PARSE_DISASSEMBLE;
+        WalkState->DescendingCallback = NULL;
+        WalkState->AscendingCallback  = NULL;
+        break;
+
     case 1:
+
+        /* Load pass 1 */
 
         WalkState->ParseFlags         = ACPI_PARSE_LOAD_PASS1 |
                                         ACPI_PARSE_DELETE_TREE;
@@ -90,6 +101,8 @@ AcpiDsInitCallbacks (
 
     case 2:
 
+        /* Load pass 2 */
+
         WalkState->ParseFlags         = ACPI_PARSE_LOAD_PASS1 |
                                         ACPI_PARSE_DELETE_TREE;
         WalkState->DescendingCallback = AcpiDsLoad2BeginOp;
@@ -97,6 +110,8 @@ AcpiDsInitCallbacks (
         break;
 
     case 3:
+
+        /* Execution pass */
 
 #ifndef ACPI_NO_METHOD_EXECUTION
         WalkState->ParseFlags        |= ACPI_PARSE_EXECUTE  |
@@ -173,7 +188,8 @@ AcpiDsLoad1BeginOp (
     ObjectType = WalkState->OpInfo->ObjectType;
 
     ACPI_DEBUG_PRINT ((ACPI_DB_DISPATCH,
-        "State=%p Op=%p [%s]\n", WalkState, Op, AcpiUtGetTypeName (ObjectType)));
+        "State=%p Op=%p [%s]\n", WalkState, Op,
+        AcpiUtGetTypeName (ObjectType)));
 
     switch (WalkState->Opcode)
     {
@@ -184,7 +200,7 @@ AcpiDsLoad1BeginOp (
          * Allow search-to-root for single namesegs.
          */
         Status = AcpiNsLookup (WalkState->ScopeInfo, Path, ObjectType,
-                        ACPI_IMODE_EXECUTE, ACPI_NS_SEARCH_PARENT, WalkState, &(Node));
+            ACPI_IMODE_EXECUTE, ACPI_NS_SEARCH_PARENT, WalkState, &(Node));
 #ifdef ACPI_ASL_COMPILER
         if (Status == AE_NOT_FOUND)
         {
@@ -195,13 +211,13 @@ AcpiDsLoad1BeginOp (
              */
             AcpiDmAddOpToExternalList (Op, Path, ACPI_TYPE_DEVICE, 0, 0);
             Status = AcpiNsLookup (WalkState->ScopeInfo, Path, ObjectType,
-                       ACPI_IMODE_LOAD_PASS1, ACPI_NS_SEARCH_PARENT,
-                       WalkState, &Node);
+               ACPI_IMODE_LOAD_PASS1, ACPI_NS_SEARCH_PARENT,
+               WalkState, &Node);
         }
 #endif
         if (ACPI_FAILURE (Status))
         {
-            ACPI_ERROR_NAMESPACE (Path, Status);
+            ACPI_ERROR_NAMESPACE (WalkState->ScopeInfo, Path, Status);
             return_ACPI_STATUS (Status);
         }
 
@@ -310,15 +326,24 @@ AcpiDsLoad1BeginOp (
         if ((WalkState->Opcode != AML_SCOPE_OP) &&
             (!(WalkState->ParseFlags & ACPI_PARSE_DEFERRED_OP)))
         {
-            Flags |= ACPI_NS_ERROR_IF_FOUND;
-            ACPI_DEBUG_PRINT ((ACPI_DB_DISPATCH, "[%s] Cannot already exist\n",
+            if (WalkState->NamespaceOverride)
+            {
+                Flags |= ACPI_NS_OVERRIDE_IF_FOUND;
+                ACPI_DEBUG_PRINT ((ACPI_DB_DISPATCH, "[%s] Override allowed\n",
                     AcpiUtGetTypeName (ObjectType)));
+            }
+            else
+            {
+                Flags |= ACPI_NS_ERROR_IF_FOUND;
+                ACPI_DEBUG_PRINT ((ACPI_DB_DISPATCH, "[%s] Cannot already exist\n",
+                    AcpiUtGetTypeName (ObjectType)));
+            }
         }
         else
         {
             ACPI_DEBUG_PRINT ((ACPI_DB_DISPATCH,
                 "[%s] Both Find or Create allowed\n",
-                    AcpiUtGetTypeName (ObjectType)));
+                AcpiUtGetTypeName (ObjectType)));
         }
 
         /*
@@ -328,7 +353,7 @@ AcpiDsLoad1BeginOp (
          * parse tree later.
          */
         Status = AcpiNsLookup (WalkState->ScopeInfo, Path, ObjectType,
-                        ACPI_IMODE_LOAD_PASS1, Flags, WalkState, &Node);
+            ACPI_IMODE_LOAD_PASS1, Flags, WalkState, &Node);
         if (ACPI_FAILURE (Status))
         {
             if (Status == AE_ALREADY_EXISTS)
@@ -348,7 +373,8 @@ AcpiDsLoad1BeginOp (
 
                     if (AcpiNsOpensScope (ObjectType))
                     {
-                        Status = AcpiDsScopeStackPush (Node, ObjectType, WalkState);
+                        Status = AcpiDsScopeStackPush (
+                            Node, ObjectType, WalkState);
                         if (ACPI_FAILURE (Status))
                         {
                             return_ACPI_STATUS (Status);
@@ -361,7 +387,7 @@ AcpiDsLoad1BeginOp (
 
             if (ACPI_FAILURE (Status))
             {
-                ACPI_ERROR_NAMESPACE (Path, Status);
+                ACPI_ERROR_NAMESPACE (WalkState->ScopeInfo, Path, Status);
                 return_ACPI_STATUS (Status);
             }
         }
@@ -374,7 +400,7 @@ AcpiDsLoad1BeginOp (
     {
         /* Create a new op */
 
-        Op = AcpiPsAllocOp (WalkState->Opcode);
+        Op = AcpiPsAllocOp (WalkState->Opcode, WalkState->Aml);
         if (!Op)
         {
             return_ACPI_STATUS (AE_NO_MEMORY);
@@ -384,7 +410,7 @@ AcpiDsLoad1BeginOp (
     /* Initialize the op */
 
 #if (defined (ACPI_NO_METHOD_EXECUTION) || defined (ACPI_CONSTANT_EVAL_ONLY))
-    Op->Named.Path = ACPI_CAST_PTR (UINT8, Path);
+    Op->Named.Path = Path;
 #endif
 
     if (Node)
@@ -423,6 +449,10 @@ AcpiDsLoad1EndOp (
     ACPI_PARSE_OBJECT       *Op;
     ACPI_OBJECT_TYPE        ObjectType;
     ACPI_STATUS             Status = AE_OK;
+
+#ifdef ACPI_ASL_COMPILER
+    UINT8                   ParamCount;
+#endif
 
 
     ACPI_FUNCTION_TRACE (DsLoad1EndOp);
@@ -470,8 +500,9 @@ AcpiDsLoad1EndOp (
         if (Op->Common.AmlOpcode == AML_REGION_OP)
         {
             Status = AcpiExCreateRegion (Op->Named.Data, Op->Named.Length,
-                        (ACPI_ADR_SPACE_TYPE) ((Op->Common.Value.Arg)->Common.Value.Integer),
-                        WalkState);
+                (ACPI_ADR_SPACE_TYPE)
+                    ((Op->Common.Value.Arg)->Common.Value.Integer),
+                WalkState);
             if (ACPI_FAILURE (Status))
             {
                 return_ACPI_STATUS (Status);
@@ -480,7 +511,7 @@ AcpiDsLoad1EndOp (
         else if (Op->Common.AmlOpcode == AML_DATA_REGION_OP)
         {
             Status = AcpiExCreateRegion (Op->Named.Data, Op->Named.Length,
-                        ACPI_ADR_SPACE_DATA_TABLE, WalkState);
+                ACPI_ADR_SPACE_DATA_TABLE, WalkState);
             if (ACPI_FAILURE (Status))
             {
                 return_ACPI_STATUS (Status);
@@ -507,6 +538,37 @@ AcpiDsLoad1EndOp (
         }
     }
 
+#ifdef ACPI_ASL_COMPILER
+    /*
+     * For external opcode, get the object type from the argument and
+     * get the parameter count from the argument's next.
+     */
+    if (AcpiGbl_DisasmFlag &&
+        Op->Common.Node &&
+        Op->Common.AmlOpcode == AML_EXTERNAL_OP)
+    {
+        /*
+         * Note, if this external is not a method
+         * Op->Common.Value.Arg->Common.Next->Common.Value.Integer == 0
+         * Therefore, ParamCount will be 0.
+         */
+        ParamCount = (UINT8) Op->Common.Value.Arg->Common.Next->Common.Value.Integer;
+        ObjectType = (UINT8) Op->Common.Value.Arg->Common.Value.Integer;
+        Op->Common.Node->Flags |= ANOBJ_IS_EXTERNAL;
+        Op->Common.Node->Type = (UINT8) ObjectType;
+
+        AcpiDmCreateSubobjectForExternal ((UINT8)ObjectType,
+            &Op->Common.Node, ParamCount);
+
+        /*
+         * Add the external to the external list because we may be
+         * emitting code based off of the items within the external list.
+         */
+        AcpiDmAddOpToExternalList (Op, Op->Named.Path, (UINT8)ObjectType, ParamCount,
+           ACPI_EXT_ORIGIN_FROM_OPCODE | ACPI_EXT_RESOLVED_REFERENCE);
+    }
+#endif
+
     /*
      * If we are executing a method, do not create any namespace objects
      * during the load phase, only during execution.
@@ -532,11 +594,12 @@ AcpiDsLoad1EndOp (
                 WalkState->Operands[0] = ACPI_CAST_PTR (void, Op->Named.Node);
                 WalkState->NumOperands = 1;
 
-                Status = AcpiDsCreateOperands (WalkState, Op->Common.Value.Arg);
+                Status = AcpiDsCreateOperands (
+                    WalkState, Op->Common.Value.Arg);
                 if (ACPI_SUCCESS (Status))
                 {
                     Status = AcpiExCreateMethod (Op->Named.Data,
-                                        Op->Named.Length, WalkState);
+                        Op->Named.Length, WalkState);
                 }
 
                 WalkState->Operands[0] = NULL;
@@ -553,6 +616,7 @@ AcpiDsLoad1EndOp (
     /* Pop the scope stack (only if loading a table) */
 
     if (!WalkState->MethodNode &&
+        Op->Common.AmlOpcode != AML_EXTERNAL_OP &&
         AcpiNsOpensScope (ObjectType))
     {
         ACPI_DEBUG_PRINT ((ACPI_DB_DISPATCH, "(%s): Popping scope for Op %p\n",

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.131.2.1 2014/08/20 00:03:27 tls Exp $     */
+/*	$NetBSD: trap.c,v 1.131.2.2 2017/12/03 11:36:48 jdolecek Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -12,11 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *     This product includes software developed at Ludd, University of Lule}.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -33,7 +28,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.131.2.1 2014/08/20 00:03:27 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.131.2.2 2017/12/03 11:36:48 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -111,7 +106,7 @@ trap(struct trapframe *tf)
 	if (usermode) {
 		type |= T_USER;
 		oticks = p->p_sticks;
-		l->l_md.md_utf = tf; 
+		l->l_md.md_utf = tf;
 		LWP_CACHE_CREDS(l, p);
 	}
 
@@ -244,18 +239,28 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 				panic("SEGV in kernel mode: pc %#lx addr %#lx",
 				    tf->tf_pc, tf->tf_code);
 			}
-			code = SEGV_ACCERR;
-			if (rv == ENOMEM) {
+			switch (rv) {
+			case ENOMEM:
 				printf("UVM: pid %d (%s), uid %d killed: "
 				       "out of swap\n",
 				       p->p_pid, p->p_comm,
 				       l->l_cred ?
 				       kauth_cred_geteuid(l->l_cred) : -1);
 				sig = SIGKILL;
-			} else {
+				code = SI_NOINFO;
+				break;
+			case EINVAL:
+				code = BUS_ADRERR;
+				sig = SIGBUS;
+				break;
+			case EACCES:
+				code = SEGV_ACCERR;
 				sig = SIGSEGV;
-				if (rv != EACCES)
-					code = SEGV_MAPERR;
+				break;
+			default:
+				code = SEGV_MAPERR;
+				sig = SIGSEGV;
+				break;
 			}
 		} else {
 			trapsig = false;

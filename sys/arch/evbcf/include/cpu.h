@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.2.8.2 2014/08/20 00:02:57 tls Exp $	*/
+/*	$NetBSD: cpu.h,v 1.2.8.3 2017/12/03 11:36:08 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -59,7 +59,7 @@
 
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous
- * machine state in an opaque clockframe.  One the mvme68k, we use
+ * machine state in an opaque clockframe.  On the evbcf, we use
  * what the hardware pushes on an interrupt (frame format 0).
  */
 struct clockframe {
@@ -91,7 +91,7 @@ extern volatile unsigned int interrupt_depth;
 
 /*
  * Give a profiling tick to the current process when the user profiling
- * buffer pages are invalid.  On the hp300, request an ast to send us
+ * buffer pages are invalid.  On the evbcf, request an ast to send us
  * through trap, marking the proc as needing a profiling tick.
  */
 #define	cpu_need_proftick(l)	\

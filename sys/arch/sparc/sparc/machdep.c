@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.323.2.2 2014/08/20 00:03:24 tls Exp $ */
+/*	$NetBSD: machdep.c,v 1.323.2.3 2017/12/03 11:36:43 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.323.2.2 2014/08/20 00:03:24 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.323.2.3 2017/12/03 11:36:43 jdolecek Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -943,6 +943,7 @@ cpu_dumpconf(void)
 
 #define	BYTES_PER_DUMP	(32 * 1024)	/* must be a multiple of pagesize */
 static vaddr_t dumpspace;
+struct pcb dumppcb;
 
 void *
 reserve_dumppages(void *p)
@@ -970,6 +971,7 @@ dumpsys(void)
 
 	/* copy registers to memory */
 	snapshot(cpuinfo.curpcb);
+	memcpy(&dumppcb, cpuinfo.curpcb, sizeof dumppcb);
 	stackdump();
 
 	if (dumpdev == NODEV)
@@ -1378,8 +1380,10 @@ _bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size,
 	 */
 	error = uvm_pglistalloc(size, low, high, 0, 0,
 				mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
-	if (error)
+	if (error) {
+		free(mlist, M_DEVBUF);
 		return (error);
+	}
 
 	/*
 	 * Simply keep a pointer around to the linked list, so

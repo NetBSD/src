@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.h,v 1.12.98.1 2013/02/25 00:29:49 tls Exp $	*/
+/*	$NetBSD: smbfs_node.h,v 1.12.98.2 2017/12/03 11:38:43 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -54,10 +54,19 @@
 
 struct smbfs_fctx;
 
+#define SMBFS_KEYSIZE(nmlen)	(sizeof(struct smbkey) + (nmlen))
+struct smbkey {
+	struct vnode *		k_parent;	/* Parent vnode. */
+	u_char			k_nmlen;	/* Name length. */
+	u_char			k_name[];	/* Name (variable length). */
+} __packed;
+
 struct smbnode {
 	struct genfs_node	n_gnode;
+	kmutex_t		n_lock;
+	struct smbkey *		n_key;
 	int			n_flag;
-	struct vnode *		n_parent;
+#define n_parent n_key->k_parent
 	struct vnode *		n_vnode;
 	struct smbmount *	n_mount;
 	time_t			n_attrage;	/* attributes cache time */
@@ -70,12 +79,11 @@ struct smbnode {
 	int			n_dosattr;
 	u_int16_t		n_fid;		/* file handle */
 	int			n_rwstate;	/* granted access mode */
-	u_char			n_nmlen;
-	u_char *		n_name;
+#define n_nmlen n_key->k_nmlen
+#define n_name n_key->k_name
 	struct smbfs_fctx *	n_dirseq;	/* ff context */
 	long			n_dirofs;	/* last ff offset */
 	struct lockf *		n_lockf;	/* Locking records of file */
-	LIST_ENTRY(smbnode)	n_hash;
 };
 
 #define VTOSMB(vp)	((struct smbnode *)(vp)->v_data)
@@ -85,9 +93,11 @@ struct smbfattr;
 
 int  smbfs_inactive(void *);
 int  smbfs_reclaim(void *);
+int smbfs_loadvnode(struct mount *, struct vnode *,
+    const void *, size_t, const void **);
 int smbfs_nget(struct mount *, struct vnode *, const char *, int,
     struct smbfattr *, struct vnode **);
-#define	smbfs_hash(x, y)	hash32_strn((x), (y), HASH32_STR_INIT)
+void smbfs_uncache(struct vnode *);
 
 int  smbfs_readvnode(struct vnode *, struct uio *, kauth_cred_t);
 int  smbfs_writevnode(struct vnode *, struct uio *, kauth_cred_t, int);

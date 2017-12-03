@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.18.18.1 2014/08/20 00:03:24 tls Exp $ */
+/*	$NetBSD: asm.h,v 1.18.18.2 2017/12/03 11:36:43 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1994 Allen Briggs
@@ -113,14 +113,14 @@
 #define OTYPE(x)		.type x,@object
 
 #define	_ENTRY(name) \
-	.align 4; .globl name; .proc 1; FTYPE(name); name:
+	.align 4; .globl name; FTYPE(name); name:
 
 #ifdef GPROF
 /* see _MCOUNT_ENTRY in profile.h */
 #ifdef __ELF__
 #ifdef __arch64__
 #define _PROF_PROLOGUE \
-	.data; .align 8; 1: .uaword 0; .uaword 0; \
+	.data; .align 8; 1: .word 0; .word 0; \
 	.text; save %sp,-CC64FSZ,%sp; sethi %hi(1b),%o0; call _mcount; \
 	or %o0,%lo(1b),%o0; restore
 #else
@@ -132,7 +132,7 @@
 #else
 #ifdef __arch64__
 #define _PROF_PROLOGUE \
-	.data; .align 8; 1: .uaword 0; .uaword 0; \
+	.data; .align 8; 1: .word 0; .word 0; \
 	.text; save %sp,-CC64FSZ,%sp; sethi %hi(1b),%o0; call mcount; \
 	or %o0,%lo(1b),%o0; restore
 #else

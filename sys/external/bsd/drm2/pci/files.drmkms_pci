@@ -1,5 +1,9 @@
-#	$NetBSD: files.drmkms_pci,v 1.4.4.2 2014/08/20 00:04:22 tls Exp $
+#	$NetBSD: files.drmkms_pci,v 1.4.4.3 2017/12/03 11:38:00 jdolecek Exp $
 
+# Attribute for kernel components supporting PCI-based real graphics
+# drivers, a.k.a. `KMS' (kernel mode-setting), as opposed to the legacy
+# `drm' interface attribute, which is where PCI-based fake graphics
+# drivers, a.k.a. `UMS' (user mode-setting), attach.
 define	drmkms_pci: drmkms
 
 # XXX Not quite right!  Should AGP stuff be kept separate?
@@ -10,7 +14,10 @@ file	external/bsd/drm2/dist/drm/drm_agpsupport.c	drmkms_pci
 file	external/bsd/drm2/pci/drm_pci.c			drmkms_pci
 file	external/bsd/drm2/pci/drm_pci_module.c		drmkms_pci
 
+define	drmfb_pci: drmfb, drmkms_pci
+file	external/bsd/drm2/pci/drmfb_pci.c		drmfb_pci
+
 include "external/bsd/drm2/i915drm/files.i915drmkms"
 include "external/bsd/drm2/radeon/files.radeon"
 include "external/bsd/drm2/nouveau/files.nouveau"
-#...
+include "external/bsd/drm2/via/files.via"

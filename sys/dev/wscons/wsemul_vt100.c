@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100.c,v 1.35.20.1 2014/08/20 00:03:52 tls Exp $ */
+/* $NetBSD: wsemul_vt100.c,v 1.35.20.2 2017/12/03 11:37:37 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,9 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100.c,v 1.35.20.1 2014/08/20 00:03:52 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100.c,v 1.35.20.2 2017/12/03 11:37:37 jdolecek Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_wsmsgattrs.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,22 +57,24 @@ static void wsemul_vt100_getmsgattrs(void *, struct wsdisplay_msgattrs *);
 static void wsemul_vt100_setmsgattrs(void *, const struct wsscreen_descr *,
                                      const struct wsdisplay_msgattrs *);
 #endif /* WSDISPLAY_CUSTOM_OUTPUT */
+static void wsemul_vt100_resize(void *, const struct wsscreen_descr *);
 
 const struct wsemul_ops wsemul_vt100_ops = {
-	"vt100",
-	wsemul_vt100_cnattach,
-	wsemul_vt100_attach,
-	wsemul_vt100_output,
-	wsemul_vt100_translate,
-	wsemul_vt100_detach,
-	wsemul_vt100_resetop,
+	.name = "vt100",
+	.cnattach = wsemul_vt100_cnattach,
+	.attach = wsemul_vt100_attach,
+	.output = wsemul_vt100_output,
+	.translate = wsemul_vt100_translate,
+	.detach = wsemul_vt100_detach,
+	.reset = wsemul_vt100_resetop,
 #ifdef WSDISPLAY_CUSTOM_OUTPUT
-	wsemul_vt100_getmsgattrs,
-	wsemul_vt100_setmsgattrs,
+	.getmsgattrs = wsemul_vt100_getmsgattrs,
+	.setmsgattrs = wsemul_vt100_setmsgattrs,
 #else
-	NULL,
-	NULL,
+	.getmsgattrs = NULL,
+	.setmsgattrs = NULL,
 #endif
+	.resize = wsemul_vt100_resize
 };
 
 struct wsemul_vt100_emuldata wsemul_vt100_console_emuldata;
@@ -238,9 +242,7 @@ wsemul_vt100_attach(int console, const struct wsscreen_descr *type,
 
 	if (console) {
 		edp = &wsemul_vt100_console_emuldata;
-#ifdef DIAGNOSTIC
 		KASSERT(edp->console == 1);
-#endif
 	} else {
 		edp = malloc(sizeof *edp, M_DEVBUF, M_WAITOK);
 		wsemul_vt100_init(edp, type, cookie, ccol, crow, defattr);
@@ -251,8 +253,8 @@ wsemul_vt100_attach(int console, const struct wsscreen_descr *type,
 	vd = &edp->bd;
 	vd->cbcookie = cbcookie;
 
-	vd->tabs = malloc(vd->ncols, M_DEVBUF, M_NOWAIT);
-	vd->dblwid = malloc(vd->nrows, M_DEVBUF, M_NOWAIT|M_ZERO);
+	vd->tabs = malloc(1024, M_DEVBUF, M_NOWAIT);
+	vd->dblwid = malloc(1024, M_DEVBUF, M_NOWAIT|M_ZERO);
 	vd->dw = 0;
 	vd->dcsarg = malloc(DCS_MAXLEN, M_DEVBUF, M_NOWAIT);
 	edp->isolatin1tab = malloc(128 * sizeof(int), M_DEVBUF, M_NOWAIT);
@@ -283,6 +285,17 @@ wsemul_vt100_detach(void *cookie, u_int *crowp, u_int *ccolp)
 #undef f
 	if (edp != &wsemul_vt100_console_emuldata)
 		free(edp, M_DEVBUF);
+}
+
+static void
+wsemul_vt100_resize(void * cookie, const struct wsscreen_descr *type)
+{
+	struct wsemul_vt100_emuldata *edp = cookie;
+
+	edp->bd.nrows = type->nrows;
+	edp->bd.ncols = type->ncols;
+	wsemul_vt100_reset(edp);
+	wsemul_vt100_resetop(cookie, WSEMUL_CLEARSCREEN);
 }
 
 void
@@ -993,10 +1006,7 @@ wsemul_vt100_output(void *cookie, const u_char *data, u_int count, int kernel)
 			wsemul_vt100_output_normal(edp, *data, kernel);
 			continue;
 		}
-#ifdef DIAGNOSTIC
-		if (edp->state > sizeof(vt100_output) / sizeof(vt100_output[0]))
-			panic("wsemul_vt100: invalid state %d", edp->state);
-#endif
+		KASSERT(edp->state < __arraycount(vt100_output) - 1);
 		edp->state = vt100_output[edp->state - 1](edp, *data);
 	}
 	if (vd->flags & VTFL_CURSORON)

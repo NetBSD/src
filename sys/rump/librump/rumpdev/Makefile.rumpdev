@@ -1,10 +1,12 @@
-#	$NetBSD: Makefile.rumpdev,v 1.5.20.2 2014/08/20 00:04:40 tls Exp $
+#	$NetBSD: Makefile.rumpdev,v 1.5.20.3 2017/12/03 11:39:15 jdolecek Exp $
 #
 
 LIB=	rumpdev
+COMMENT=Rump kernel device faction
 
 .PATH:	${RUMPTOP}/librump/rumpdev				\
-	${RUMPTOP}/../kern
+	${RUMPTOP}/../kern					\
+	${RUMPTOP}/../dev
 
 IOCONFDIR:=	${.PARSEDIR}
 IOCONF=		MAINBUS.ioconf
@@ -14,11 +16,10 @@ SRCS=	rump_dev.c autoconf.c
 # sys/kern
 SRCS+=	kern_pmf.c subr_autoconf.c
 
-# automatically in sync src/lib
-SHLIB_MAJOR=    0
-SHLIB_MINOR=    0
+# sys/dev
+SRCS+=	dev_verbose.c
 
-CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern -I${RUMPTOP}/librump/rumpdev/opt
+CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern
 
 .include "${RUMPTOP}/Makefile.rump"
 

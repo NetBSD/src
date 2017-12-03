@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: ahc_pci.c,v 1.68.22.1 2014/08/20 00:03:41 tls Exp $
+ * $Id: ahc_pci.c,v 1.68.22.2 2017/12/03 11:37:07 jdolecek Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx_pci.c#57 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.68.22.1 2014/08/20 00:03:41 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.68.22.2 2017/12/03 11:37:07 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -791,12 +791,13 @@ ahc_pci_attach(device_t parent, device_t self, void *aux)
 	entry = ahc_find_pci_device(pa->pa_id, subid, pa->pa_function);
 	if (entry == NULL)
 		return;
-	printf(": %s\n", entry->name);
+	aprint_naive("\n");
+	aprint_normal(": %s\n", entry->name);
 
 	/* Keep information about the PCI bus */
 	bd = malloc(sizeof (struct ahc_pci_busdata), M_DEVBUF, M_NOWAIT);
 	if (bd == NULL) {
-		printf("%s: unable to allocate bus-specific data\n",
+		aprint_error("%s: unable to allocate bus-specific data\n",
 		    ahc_name(ahc));
 		return;
 	}
@@ -825,7 +826,7 @@ ahc_pci_attach(device_t parent, device_t self, void *aux)
 	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
 	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
 		memh_valid = (pci_mapreg_map(pa, AHC_PCI_MEMADDR,
-					     memtype, 0, &memt, &memh, NULL, NULL) == 0);
+			memtype, 0, &memt, &memh, NULL, NULL) == 0);
 		break;
 	default:
 		memh_valid = 0;
@@ -851,7 +852,7 @@ ahc_pci_attach(device_t parent, device_t self, void *aux)
 		st = iot;
 		sh = ioh;
 	} else {
-		printf(": unable to map registers\n");
+		aprint_error(": unable to map registers\n");
 		return;
 	}
 	ahc->tag = st;
@@ -883,7 +884,7 @@ ahc_pci_attach(device_t parent, device_t self, void *aux)
 	if ((ahc->flags & AHC_39BIT_ADDRESSING) != 0) {
 
 		if (1/*bootverbose*/)
-			printf("%s: Enabling 39Bit Addressing\n",
+			aprint_normal("%s: Enabling 39Bit Addressing\n",
 			       ahc_name(ahc));
 		devconfig |= DACEN;
 	}
@@ -950,7 +951,7 @@ ahc_pci_attach(device_t parent, device_t self, void *aux)
 	}
 
 	if (pci_intr_map(pa, &ih)) {
-		printf("%s: couldn't map interrupt\n", ahc_name(ahc));
+		aprint_error("%s: couldn't map interrupt\n", ahc_name(ahc));
 		ahc_free(ahc);
 		return;
 	}
@@ -966,7 +967,8 @@ ahc_pci_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	if (intrstr != NULL)
-		printf("%s: interrupting at %s\n", ahc_name(ahc), intrstr);
+		aprint_normal("%s: interrupting at %s\n", ahc_name(ahc),
+		    intrstr);
 
 	dscommand0 = ahc_inb(ahc, DSCOMMAND0);
 	dscommand0 |= MPARCKEN|CACHETHEN;
@@ -1061,7 +1063,7 @@ ahc_pci_attach(device_t parent, device_t self, void *aux)
 			 * conservative settings (async, no tagged
 			 * queuing etc.) and machine dependent device
 			 * property is set.
-			 */ 
+			 */
 			usetd = prop_dictionary_get(
 					device_properties(ahc->sc_dev),
 					"aic7xxx-use-target-defaults");

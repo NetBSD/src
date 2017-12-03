@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.93.2.2 2014/08/20 00:03:10 tls Exp $ */
+/* $NetBSD: machdep.c,v 1.93.2.3 2017/12/03 11:36:23 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.93.2.2 2014/08/20 00:03:10 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.93.2.3 2017/12/03 11:36:23 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -68,7 +68,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.93.2.2 2014/08/20 00:03:10 tls Exp $")
 #include <sys/kgdb.h>
 #endif
 #include <sys/boot_flag.h>
-#define ELFSIZE 32
 #include <sys/exec_elf.h>
 #include <sys/cpu.h>
 
@@ -83,6 +82,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.93.2.2 2014/08/20 00:03:10 tls Exp $")
 #include <machine/psl.h>
 #include <machine/pte.h>
 #include <machine/kcore.h>	/* XXX should be pulled in by sys/kcore.h */
+
+#include <luna68k/dev/syscn.h>
 
 #include <dev/cons.h>
 #include <dev/mm.h>
@@ -137,7 +138,6 @@ int	sysconsole;	/* console: 0 for ttya, 1 for video */
 extern struct consdev syscons;
 extern void omfb_cnattach(void);
 extern void ws_cnattach(void);
-extern void syscnattach(int);
 
 /*
  * On the 68020/68030, the value of delay_divisor is roughly
@@ -248,7 +248,7 @@ consinit(void)
 {
 
 	if (sysconsole == 0)
-		syscnattach(0);
+		syscninit(0);
 	else {
 		omfb_cnattach();
 		ws_cnattach();
@@ -318,7 +318,6 @@ cpu_startup(void)
 {
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
-	extern void greeting(void);
 
 	if (fputype != FPU_NONE)
 		m68k_make_fpu_idle_frame();
@@ -347,11 +346,6 @@ cpu_startup(void)
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-
-	/*
-	 * Say "Hi" to the world
-	 */
-	greeting();
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_engine_graph_ctxnvd7.c,v 1.1.1.1.6.2 2014/08/20 00:04:12 tls Exp $	*/
+/*	$NetBSD: nouveau_engine_graph_ctxnvd7.c,v 1.1.1.1.6.3 2017/12/03 11:37:54 jdolecek Exp $	*/
 
 /*
  * Copyright 2013 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_engine_graph_ctxnvd7.c,v 1.1.1.1.6.2 2014/08/20 00:04:12 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_engine_graph_ctxnvd7.c,v 1.1.1.1.6.3 2017/12/03 11:37:54 jdolecek Exp $");
 
 #include "ctxnvc0.h"
 
@@ -222,7 +222,7 @@ nvd7_grctx_generate_mods(struct nvc0_graph_priv *priv, struct nvc0_grctx *info)
 	mmio_list(0x17e91c, 0x03060609, 0, 0); /* different from kepler */
 }
 
-void
+static void
 nvd7_grctx_generate_main(struct nvc0_graph_priv *priv, struct nvc0_grctx *info)
 {
 	struct nvc0_grctx_oclass *oclass = (void *)nv_engine(priv)->cclass;

@@ -1,4 +1,4 @@
-/* $NetBSD: gpiovar.h,v 1.15 2011/11/13 13:20:02 mbalmer Exp $ */
+/* $NetBSD: gpiovar.h,v 1.15.10.1 2017/12/03 11:37:01 jdolecek Exp $ */
 /*	$OpenBSD: gpiovar.h,v 1.3 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -31,6 +31,7 @@ typedef struct gpio_chipset_tag {
 	int	(*gp_pin_read)(void *, int);
 	void	(*gp_pin_write)(void *, int, int);
 	void	(*gp_pin_ctl)(void *, int, int);
+	void	(*gp_pin_irqen)(void *, int, bool);
 } *gpio_chipset_tag_t;
 
 /* GPIO pin description */
@@ -41,6 +42,9 @@ typedef struct gpio_pin {
 	int			pin_state;	/* current state */
 	int			pin_mapped;	/* is mapped */
 	gpio_chipset_tag_t	pin_gc;		/* reference the controller */
+	void			(*pin_callback)(void *); /* irq callback */
+	void *			pin_callback_arg; /* callback arg */
+	char			pin_defname[GPIOMAXNAME]; /* default name */
 } gpio_pin_t;
 
 /* Attach GPIO framework to the controller */
@@ -63,6 +67,8 @@ int gpiobus_print(void *, const char *);
     ((gc)->gp_pin_write((gc)->gp_cookie, (pin), (value)))
 #define gpiobus_pin_ctl(gc, pin, flags) \
     ((gc)->gp_pin_ctl((gc)->gp_cookie, (pin), (flags)))
+#define gpiobus_pin_irqen(gc, pin, en) \
+    ((gc)->gp_pin_irqen((gc)->gp_cookie, (pin), (en)))
 
 /* Attach devices connected to the GPIO pins */
 struct gpio_attach_args {
@@ -90,16 +96,24 @@ struct gpio_name {
 	LIST_ENTRY(gpio_name)	gp_next;
 };
 
+void *	gpio_find_device(const char *);
+const char * gpio_get_name(void *gpio);
 int	gpio_pin_can_map(void *, int, uint32_t);
 int	gpio_pin_map(void *, int, uint32_t, struct gpio_pinmap *);
 void	gpio_pin_unmap(void *, struct gpio_pinmap *);
 int	gpio_pin_read(void *, struct gpio_pinmap *, int);
 void	gpio_pin_write(void *, struct gpio_pinmap *, int, int);
 void	gpio_pin_ctl(void *, struct gpio_pinmap *, int, int);
+int	gpio_pin_ctl_intr(void *, struct gpio_pinmap *, int, int,
+			int, void (*)(void *), void *);
+void	gpio_pin_irqen(void *, struct gpio_pinmap *, int, bool);
 int	gpio_pin_caps(void *, struct gpio_pinmap *, int);
+int	gpio_pin_wait(void *, int);
 int	gpio_npins(uint32_t);
 
 int	gpio_lock(void *);
 void	gpio_unlock(void *);
+
+void	gpio_intr(device_t, u_int32_t);
 
 #endif	/* !_DEV_GPIO_GPIOVAR_H_ */

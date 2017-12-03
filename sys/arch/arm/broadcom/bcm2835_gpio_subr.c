@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_gpio_subr.c,v 1.2.8.3 2014/08/20 00:02:45 tls Exp $	*/
+/*	$NetBSD: bcm2835_gpio_subr.c,v 1.2.8.4 2017/12/03 11:35:52 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_gpio_subr.c,v 1.2.8.3 2014/08/20 00:02:45 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_gpio_subr.c,v 1.2.8.4 2017/12/03 11:35:52 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -43,8 +43,9 @@ __KERNEL_RCSID(0, "$NetBSD: bcm2835_gpio_subr.c,v 1.2.8.3 2014/08/20 00:02:45 tl
 void
 bcm2835gpio_function_select(u_int pin, u_int func)
 {
+    	const paddr_t iop = BCM2835_PERIPHERALS_BUS_TO_PHYS(BCM2835_GPIO_BASE);
 	const bus_space_tag_t iot = &bcm2835_bs_tag;
-	const bus_space_handle_t ioh = BCM2835_IOPHYSTOVIRT(BCM2835_GPIO_BASE);
+	const bus_space_handle_t ioh = BCM2835_IOPHYSTOVIRT(iop);
 	const u_int mask = (1 << BCM2835_GPIO_GPFSEL_BITS_PER_PIN) - 1;
 	const u_int regid = (pin / BCM2835_GPIO_GPFSEL_PINS_PER_REGISTER);
 	const u_int shift = (pin % BCM2835_GPIO_GPFSEL_PINS_PER_REGISTER) *
@@ -70,8 +71,9 @@ bcm2835gpio_function_select(u_int pin, u_int func)
 u_int
 bcm2835gpio_function_read(u_int pin)
 {
+	const paddr_t iop = BCM2835_PERIPHERALS_BUS_TO_PHYS(BCM2835_GPIO_BASE);
 	const bus_space_tag_t iot = &bcm2835_bs_tag;
-	const bus_space_handle_t ioh = BCM2835_IOPHYSTOVIRT(BCM2835_GPIO_BASE);
+	const bus_space_handle_t ioh = BCM2835_IOPHYSTOVIRT(iop);
 	const u_int mask = (1 << BCM2835_GPIO_GPFSEL_BITS_PER_PIN) - 1;
 	const u_int regid = (pin / BCM2835_GPIO_GPFSEL_PINS_PER_REGISTER);
 	const u_int shift = (pin % BCM2835_GPIO_GPFSEL_PINS_PER_REGISTER) *
@@ -81,4 +83,21 @@ bcm2835gpio_function_read(u_int pin)
 	v = bus_space_read_4(iot, ioh, BCM2835_GPIO_GPFSEL(regid));
 
 	return ((v >> shift) & mask);
+}
+
+void
+bcm2835gpio_function_setpull(u_int pin, u_int pud)
+{
+	const paddr_t iop = BCM2835_PERIPHERALS_BUS_TO_PHYS(BCM2835_GPIO_BASE);
+	const bus_space_tag_t iot = &bcm2835_bs_tag;
+	const bus_space_handle_t ioh = BCM2835_IOPHYSTOVIRT(iop);
+	const u_int mask = 1 << (pin % BCM2835_GPIO_GPPUD_PINS_PER_REGISTER);
+	const u_int regid = (pin / BCM2835_GPIO_GPPUD_PINS_PER_REGISTER);
+
+	bus_space_write_4(iot, ioh, BCM2835_GPIO_GPPUD, pud);
+	delay(1);
+	bus_space_write_4(iot, ioh, BCM2835_GPIO_GPPUDCLK(regid), mask);
+	delay(1);
+	bus_space_write_4(iot, ioh, BCM2835_GPIO_GPPUD, 0);
+	bus_space_write_4(iot, ioh, BCM2835_GPIO_GPPUDCLK(regid), 0);
 }

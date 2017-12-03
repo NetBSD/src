@@ -1,4 +1,4 @@
-/*	$NetBSD: acphy.c,v 1.23.26.1 2014/08/20 00:03:41 tls Exp $	*/
+/*	$NetBSD: acphy.c,v 1.23.26.2 2017/12/03 11:37:06 jdolecek Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acphy.c,v 1.23.26.1 2014/08/20 00:03:41 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acphy.c,v 1.23.26.2 2017/12/03 11:37:06 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,8 +126,7 @@ acphyattach(device_t parent, device_t self, void *aux)
 	 * XXX Check MCR_FX_SEL to set MIIF_HAVE_FIBER?
 	 */
 
-	sc->mii_capabilities =
-	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
+	sc->mii_capabilities = PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
 	aprint_normal_dev(sc->mii_dev, "");
 
 #define	ADD(m, c)	ifmedia_add(&mii->mii_media, (m), (c), NULL)

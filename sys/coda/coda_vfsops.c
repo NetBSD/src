@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.74.2.1 2014/08/20 00:03:31 tls Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.74.2.2 2017/12/03 11:36:52 jdolecek Exp $	*/
 
 /*
  *
@@ -45,13 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.74.2.1 2014/08/20 00:03:31 tls Exp $");
-
-#ifndef _KERNEL_OPT
-#define	NVCODA 4
-#else
-#include <vcoda.h>
-#endif
+__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.74.2.2 2017/12/03 11:36:52 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,6 +106,7 @@ struct vfsops coda_vfsops = {
 	.vfs_statvfs = coda_nb_statvfs,
 	.vfs_sync = coda_sync,
 	.vfs_vget = coda_vget,
+	.vfs_loadvnode = coda_loadvnode,
 	.vfs_fhtovp = (void *)eopnotsupp,
 	.vfs_vptofh = (void *)eopnotsupp,
 	.vfs_init = coda_init,
@@ -119,7 +114,7 @@ struct vfsops coda_vfsops = {
 	.vfs_mountroot = (void *)eopnotsupp,
 	.vfs_snapshot = (void *)eopnotsupp,
 	.vfs_extattrctl = vfs_stdextattrctl,
-	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_suspendctl = genfs_suspendctl,
 	.vfs_renamelock_enter = genfs_renamelock_enter,
 	.vfs_renamelock_exit = genfs_renamelock_exit,
 	.vfs_fsync = (void *)eopnotsupp,
@@ -264,12 +259,7 @@ coda_mount(struct mount *vfsp,	/* Allocated and initialized by mount(2) */
     rtvp = CTOV(cp);
     rtvp->v_vflag |= VV_ROOT;
 
-/*  cp = make_coda_node(&ctlfid, vfsp, VCHR);
-    The above code seems to cause a loop in the cnode links.
-    I don't totally understand when it happens, it is caught
-    when closing down the system.
- */
-    cp = make_coda_node(&ctlfid, 0, VCHR);
+    cp = make_coda_node(&ctlfid, vfsp, VCHR);
 
     coda_ctlvp = CTOV(cp);
 
@@ -325,6 +315,7 @@ coda_unmount(struct mount *vfsp, int mntflags)
 	mi->mi_started = 0;
 
 	vrele(mi->mi_rootvp);
+	vrele(coda_ctlvp);
 
 	active = coda_kill(vfsp, NOT_DOWNCALL);
 	mi->mi_rootvp->v_vflag &= ~VV_ROOT;
@@ -381,13 +372,19 @@ coda_root(struct mount *vfsp, struct vnode **vpp)
     error = venus_root(vftomi(vfsp), l->l_cred, l->l_proc, &VFid);
 
     if (!error) {
+	struct cnode *cp = VTOC(mi->mi_rootvp);
+
 	/*
-	 * Save the new rootfid in the cnode, and rehash the cnode into the
-	 * cnode hash with the new fid key.
+	 * Save the new rootfid in the cnode, and rekey the cnode
+	 * with the new fid key.
 	 */
-	coda_unsave(VTOC(mi->mi_rootvp));
-	VTOC(mi->mi_rootvp)->c_fid = VFid;
-	coda_save(VTOC(mi->mi_rootvp));
+	error = vcache_rekey_enter(vfsp, mi->mi_rootvp,
+	    &invalfid, sizeof(CodaFid), &VFid, sizeof(CodaFid));
+	if (error)
+	        goto exit;
+	cp->c_fid = VFid;
+	vcache_rekey_exit(vfsp, mi->mi_rootvp,
+	    &invalfid, sizeof(CodaFid), &cp->c_fid, sizeof(CodaFid));
 
 	*vpp = mi->mi_rootvp;
 	vref(*vpp);
@@ -483,6 +480,31 @@ coda_vget(struct mount *vfsp, ino_t ino,
 {
     ENTRY;
     return (EOPNOTSUPP);
+}
+
+int
+coda_loadvnode(struct mount *mp, struct vnode *vp,
+    const void *key, size_t key_len, const void **new_key)
+{
+	CodaFid fid;
+	struct cnode *cp;
+	extern int (**coda_vnodeop_p)(void *);
+
+	KASSERT(key_len == sizeof(CodaFid));
+	memcpy(&fid, key, key_len);
+
+	cp = kmem_zalloc(sizeof(*cp), KM_SLEEP);
+	mutex_init(&cp->c_lock, MUTEX_DEFAULT, IPL_NONE);
+	cp->c_fid = fid;
+	cp->c_vnode = vp;
+	vp->v_op = coda_vnodeop_p;
+	vp->v_tag = VT_CODA;
+	vp->v_type = VNON;
+	vp->v_data = cp;
+
+	*new_key = &cp->c_fid;
+
+	return 0;
 }
 
 /*
@@ -602,23 +624,20 @@ getNewVnode(struct vnode **vpp)
 		      NULL, NULL);
 }
 
-#include <ufs/ufs/quota.h>
-#include <ufs/ufs/ufsmount.h>
-/* get the mount structure corresponding to a given device.  Assume
- * device corresponds to a UFS. Return NULL if no device is found.
+/* Get the mount structure corresponding to a given device.
+ * Return NULL if no device is found or the device is not mounted.
  */
 struct mount *devtomp(dev_t dev)
 {
     struct mount *mp;
+    struct vnode *vp;
 
-    mutex_enter(&mountlist_lock);
-    TAILQ_FOREACH(mp, &mountlist, mnt_list) {
-	if ((!strcmp(mp->mnt_op->vfs_name, MOUNT_UFS)) &&
-	    ((VFSTOUFS(mp))->um_dev == (dev_t) dev)) {
-	    /* mount corresponds to UFS and the device matches one we want */
-	    break;
-	}
+    if (spec_node_lookup_by_dev(VBLK, dev, &vp) == 0) {
+	mp = spec_node_getmountedfs(vp);
+	vrele(vp);
+    } else {
+	mp = NULL;
     }
-    mutex_exit(&mountlist_lock);
+
     return mp;
 }

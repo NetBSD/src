@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.188.12.1 2014/08/20 00:04:36 tls Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.188.12.2 2017/12/03 11:39:05 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.188.12.1 2014/08/20 00:04:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.188.12.2 2017/12/03 11:39:05 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -615,16 +615,19 @@ nfs_vinvalbuf(struct vnode *vp, int flags, kauth_cred_t cred,
 	struct nfsnode *np = VTONFS(vp);
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
 	int error = 0, allerror = 0, slptimeo;
-	bool catch;
+	bool catch_p;
 
 	if ((nmp->nm_flag & NFSMNT_INT) == 0)
 		intrflg = 0;
 	if (intrflg) {
-		catch = true;
+		catch_p = true;
 		slptimeo = 2 * hz;
 	} else {
-		catch = false;
-		slptimeo = 0;
+		catch_p = false;
+		if (nmp->nm_flag & NFSMNT_SOFT)
+			slptimeo = nmp->nm_retry * nmp->nm_timeo;
+		else
+			slptimeo = 0;
 	}
 	/*
 	 * First wait for any other process doing a flush to complete.
@@ -645,7 +648,7 @@ nfs_vinvalbuf(struct vnode *vp, int flags, kauth_cred_t cred,
 	 */
 	np->n_flag |= NFLUSHINPROG;
 	mutex_exit(vp->v_interlock);
-	error = vinvalbuf(vp, flags, cred, l, catch, 0);
+	error = vinvalbuf(vp, flags, cred, l, catch_p, 0);
 	while (error) {
 		if (allerror == 0)
 			allerror = error;
@@ -737,15 +740,22 @@ nfs_asyncio(struct buf *bp)
 	struct nfs_iod *iod;
 	struct nfsmount *nmp;
 	int slptimeo = 0, error;
-	bool catch = false;
+	bool catch_p = false;
 
 	if (nfs_numasync == 0)
 		return (EIO);
 
 	nmp = VFSTONFS(bp->b_vp->v_mount);
+
+	if (nmp->nm_flag & NFSMNT_SOFT)
+		slptimeo = nmp->nm_retry * nmp->nm_timeo;
+
+	if (nmp->nm_iflag & NFSMNT_DISMNTFORCE)
+		slptimeo = hz;
+
 again:
 	if (nmp->nm_flag & NFSMNT_INT)
-		catch = true;
+		catch_p = true;
 
 	/*
 	 * Find a free iod to process this request.
@@ -796,7 +806,7 @@ again:
 		if (curlwp == uvm.pagedaemon_lwp) {
 	  		/* Enque for later, to avoid free-page deadlock */
 		} else while (nmp->nm_bufqlen >= 2 * nmp->nm_bufqiods) {
-			if (catch) {
+			if (catch_p) {
 				error = cv_timedwait_sig(&nmp->nm_aiocv,
 				    &nmp->nm_lock, slptimeo);
 			} else {
@@ -804,12 +814,19 @@ again:
 				    &nmp->nm_lock, slptimeo);
 			}
 			if (error) {
+				if (error == EWOULDBLOCK &&
+				    nmp->nm_flag & NFSMNT_SOFT) {
+					mutex_exit(&nmp->nm_lock);
+					bp->b_error = EIO;
+					return (EIO);
+				}
+
 				if (nfs_sigintr(nmp, NULL, curlwp)) {
 					mutex_exit(&nmp->nm_lock);
 					return (EINTR);
 				}
-				if (catch) {
-					catch = false;
+				if (catch_p) {
+					catch_p = false;
 					slptimeo = 2 * hz;
 				}
 			}

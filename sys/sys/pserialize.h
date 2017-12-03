@@ -1,4 +1,4 @@
-/*	$NetBSD: pserialize.h,v 1.1 2011/07/30 17:01:04 christos Exp $	*/
+/*	$NetBSD: pserialize.h,v 1.1.12.1 2017/12/03 11:39:20 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -44,6 +44,8 @@ void		pserialize_perform(pserialize_t);
 int		pserialize_read_enter(void);
 void		pserialize_read_exit(int);
 
+bool		pserialize_in_read_section(void);
+bool		pserialize_not_in_read_section(void);
 #endif	/* _KERNEL */
 
 #endif	/* _SYS_PSERIALIZE_H_ */

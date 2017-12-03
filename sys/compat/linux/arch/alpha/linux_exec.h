@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.11.44.1 2014/08/20 00:03:31 tls Exp $	*/
+/*	$NetBSD: linux_exec.h,v 1.11.44.2 2017/12/03 11:36:53 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  * Alpha specific ELF defines.
  */
 #define LINUX_ELF_AUX_ARGSIZ \
-	(howmany(sizeof(Aux64Info) * LINUX_ELF_AUX_ENTRIES, sizeof(char *)) + LINUX_RANDOM_BYTES)
+	(LINUX_ELF_AUX_ENTRIES * sizeof(Aux64Info) + LINUX_RANDOM_BYTES)
 
 #define linux_exec_setup_stack	exec_setup_stack
 

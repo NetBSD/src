@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.4.12.1 2012/11/20 03:01:12 tls Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.4.12.2 2017/12/03 11:36:01 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.4.12.1 2012/11/20 03:01:12 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.4.12.2 2017/12/03 11:36:01 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -84,11 +84,11 @@ intr_init(void)
 
 	tlb.tlb_hi = INTERRUPT_CONTROLLER_DEFAULT_ADDRESS;
 	tlb.tlb_lo0 = INTERRUPT_CONTROLLER_DEFAULT_ADDRESS | 0xf02;
-	tlb_write_indexed(4, &tlb);
+	tlb_write_entry(4, &tlb);
 
 	tlb.tlb_hi = TIMER_DEFAULT_ADDRESS;
 	tlb.tlb_lo0 = TIMER_DEFAULT_ADDRESS | 0xf02;
-	tlb_write_indexed(5, &tlb);
+	tlb_write_entry(5, &tlb);
 }
 
 /*

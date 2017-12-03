@@ -1,4 +1,4 @@
-#	$NetBSD: COMPUTEXEVB,v 1.32 2011/12/18 05:49:27 dholland Exp $
+#	$NetBSD: COMPUTEXEVB,v 1.32.6.1 2017/12/03 11:36:12 jdolecek Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -48,8 +48,7 @@ options 	HZ=50		# clock interrupt generates every 1/HZ sec
 options 	USERCONF	# userconf(4) support
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-options 	COMPAT_43	# and 4.3BSD
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+include 	"conf/compat_netbsd20.config"
 
 # Executable format options
 options 	EXEC_COFF	# 32-bit COFF executables (sh-compiler)

@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_dev.c,v 1.40.2.1 2014/08/20 00:04:36 tls Exp $	*/
+/*	$NetBSD: smb_dev.c,v 1.40.2.2 2017/12/03 11:39:05 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.40.2.1 2014/08/20 00:04:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.40.2.2 2017/12/03 11:39:05 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -67,6 +67,8 @@ __KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.40.2.1 2014/08/20 00:04:36 tls Exp $")
 #include <netsmb/smb_subr.h>
 #include <netsmb/smb_dev.h>
 #include <netsmb/smb_rq.h>
+
+#include "ioconf.h"
 
 static struct smb_dev **smb_devtbl; /* indexed by minor */
 #define SMB_GETDEV(dev) (smb_devtbl[minor(dev)])
@@ -100,7 +102,6 @@ const struct cdevsw nsmb_cdevsw = {
 };
 
 
-void nsmbattach(int);
 static bool nsmb_inited = false;
 
 void
@@ -344,6 +345,8 @@ nsmb_dev_ioctl(dev_t dev, u_long cmd, void *data, int flag,
 		struct uio auio;
 		struct iovec iov;
 
+		if (rwrq->ioc_cnt < 0 || rwrq->ioc_offset < 0)
+			return EINVAL;
 		if ((ssp = sdp->sd_share) == NULL)
 			return ENOTCONN;
 		iov.iov_base = rwrq->ioc_base;
@@ -371,25 +374,29 @@ MODULE(MODULE_CLASS_DRIVER, nsmb, NULL);
 static int
 nsmb_modcmd(modcmd_t cmd, void *arg)
 {
+#ifdef _MODULE
 	devmajor_t cmajor = NODEVMAJOR, bmajor = NODEVMAJOR;
+#endif
 	int error = 0;
 
 	switch (cmd) {
 	    case MODULE_CMD_INIT:
 		nsmbattach(1);
+#ifdef _MODULE
 		error =
 		    devsw_attach("nsmb", NULL, &bmajor, &nsmb_cdevsw, &cmajor);
-		if (error == EEXIST) /* builtin */
-			error = 0;
 		if (error) {
 			nsmbdetach();
 		}
+#endif
 
 		break;
 	    case MODULE_CMD_FINI:
+#ifdef _MODULE
 		error = devsw_detach(NULL, &nsmb_cdevsw);
 		if (error)
 			break;
+#endif
 		nsmbdetach();
 		break;
 	    default:
@@ -417,7 +424,7 @@ smb_dev2share(int fd, int mode, struct smb_cred *scred,
 	if ((fp = fd_getfile(fd)) == NULL)
 		return (EBADF);
 
-	vp = fp->f_data;
+	vp = fp->f_vnode;
 	if (fp->f_type != DTYPE_VNODE
 	    || (fp->f_flag & (FREAD|FWRITE)) == 0
 	    || vp->v_type != VCHR

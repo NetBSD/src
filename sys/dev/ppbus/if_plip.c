@@ -1,4 +1,4 @@
-/* $NetBSD: if_plip.c,v 1.24.18.1 2014/08/20 00:03:49 tls Exp $ */
+/* $NetBSD: if_plip.c,v 1.24.18.2 2017/12/03 11:37:31 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1997 Poul-Henning Kamp
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.24.18.1 2014/08/20 00:03:49 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.24.18.2 2017/12/03 11:37:31 jdolecek Exp $");
 
 /*
  * Parallel port TCP/IP interfaces added.  I looked at the driver from
@@ -194,7 +194,7 @@ static void lpinittables(void);
 static void lpfreetables(void);
 static int lpioctl(struct ifnet *, u_long, void *);
 static int lpoutput(struct ifnet *, struct mbuf *, const struct sockaddr *,
-	struct rtentry *);
+	const struct rtentry *);
 static void lpstart(struct ifnet *);
 static void lp_intr(void *);
 
@@ -445,6 +445,7 @@ lpioctl(struct ifnet *ifp, u_long cmd, void *data)
 		case AF_INET:
 			break;
 		default:
+			splx(s);
 			return EAFNOSUPPORT;
 		}
 		break;
@@ -699,12 +700,11 @@ lpoutbyte(u_char byte, int spin, device_t ppbus)
 /* Queue a packet for delivery */
 static int
 lpoutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
-	struct rtentry *rt)
+	const struct rtentry *rt)
 {
 	struct lp_softc * sc = ifp->if_softc;
 	device_t dev = sc->ppbus_dev.sc_dev;
 	device_t ppbus = device_parent(dev);
-	ALTQ_DECL(struct altq_pktattr pktattr;)
 	int err;
 	int s;
 
@@ -731,8 +731,8 @@ lpoutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 		goto endoutput;
 	}
 
-	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family, &pktattr);
-	IFQ_ENQUEUE(&ifp->if_snd, m, NULL, err);
+	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family);
+	IFQ_ENQUEUE(&ifp->if_snd, m, err);
 	if(err == 0) {
 		if((ifp->if_flags & IFF_OACTIVE) == 0)
 			lpstart(ifp);

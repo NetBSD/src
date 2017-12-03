@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.12.2.2 2014/08/20 00:02:46 tls Exp $	*/
+/*	$NetBSD: proc.h,v 1.12.2.3 2017/12/03 11:35:53 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -59,6 +59,7 @@ struct mdproc {
 	char	md_march[12];		/* machine arch of executable */
 };
 
-#define	PROC0_MD_INITIALIZERS .p_md = { .md_march = MACHINE_ARCH },
+#define	PROC_MACHINE_ARCH(P)	((P)->p_md.md_march)
+#define	PROC0_MD_INITIALIZERS	.p_md = { .md_march = MACHINE_ARCH },
 
 #endif /* _ARM_PROC_H_ */

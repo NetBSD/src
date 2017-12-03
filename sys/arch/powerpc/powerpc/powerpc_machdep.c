@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.64.2.1 2014/08/20 00:03:20 tls Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.64.2.2 2017/12/03 11:36:38 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,9 +32,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.64.2.1 2014/08/20 00:03:20 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.64.2.2 2017/12/03 11:36:38 jdolecek Exp $");
 
 #include "opt_altivec.h"
+#include "opt_ddb.h"
 #include "opt_modular.h"
 #include "opt_multiprocessor.h"
 #include "opt_ppcarch.h"
@@ -70,6 +71,12 @@ __KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.64.2.1 2014/08/20 00:03:20 tls
 
 #ifdef MULTIPROCESSOR
 #include <powerpc/pic/ipivar.h>
+#include <machine/cpu_counter.h>
+#endif
+
+#ifdef DDB
+#include <machine/db_machdep.h>
+#include <ddb/db_output.h>
 #endif
 
 int cpu_timebase;
@@ -503,6 +510,254 @@ cpu_ipi(struct cpu_info *ci)
 	cpu_send_ipi(target, IPI_GENERIC);
 }
 
+/* XXX kcpuset_create(9), kcpuset_clone(9) couldn't use interrupt context */
+typedef uint32_t __cpuset_t;
+CTASSERT(MAXCPUS <= 32);
+
+#define	CPUSET_SINGLE(cpu)		((__cpuset_t)1 << (cpu))
+
+#define	CPUSET_ADD(set, cpu)		atomic_or_32(&(set), CPUSET_SINGLE(cpu))
+#define	CPUSET_DEL(set, cpu)		atomic_and_32(&(set), ~CPUSET_SINGLE(cpu))
+#define	CPUSET_SUB(set1, set2)		atomic_and_32(&(set1), ~(set2))
+
+#define	CPUSET_EXCEPT(set, cpu)		((set) & ~CPUSET_SINGLE(cpu))
+
+#define	CPUSET_HAS_P(set, cpu)		((set) & CPUSET_SINGLE(cpu))
+#define	CPUSET_NEXT(set)		(ffs(set) - 1)
+
+#define	CPUSET_EMPTY_P(set)		((set) == (__cpuset_t)0)
+#define	CPUSET_EQUAL_P(set1, set2)	((set1) == (set2))
+#define	CPUSET_CLEAR(set)		((set) = (__cpuset_t)0)
+#define	CPUSET_ASSIGN(set1, set2)	((set1) = (set2))
+
+#define	CPUSET_EXPORT(kset, set)	kcpuset_export_u32((kset), &(set), sizeof(set))
+
+/*
+ * Send an inter-processor interupt to CPUs in cpuset (excludes curcpu())
+ */
+static void
+cpu_multicast_ipi(__cpuset_t cpuset, uint32_t msg)
+{
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+
+	CPUSET_DEL(cpuset, cpu_index(curcpu()));
+	if (CPUSET_EMPTY_P(cpuset))
+		return;
+
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		const int index = cpu_index(ci);
+		if (CPUSET_HAS_P(cpuset, index)) {
+			CPUSET_DEL(cpuset, index);
+			cpu_send_ipi(index, msg);
+		}
+	}
+}
+
+static void
+cpu_ipi_error(const char *s, kcpuset_t *succeeded, __cpuset_t expected)
+{
+	__cpuset_t cpuset;
+
+	CPUSET_EXPORT(succeeded, cpuset);
+	CPUSET_SUB(expected, cpuset);
+	if (!CPUSET_EMPTY_P(expected)) {
+		printf("Failed to %s:", s);
+		do {
+			const int index = CPUSET_NEXT(expected);
+			CPUSET_DEL(expected, index);
+			printf(" cpu%d", index);
+		} while (!CPUSET_EMPTY_P(expected));
+		printf("\n");
+	}
+}
+
+static int
+cpu_ipi_wait(kcpuset_t *watchset, __cpuset_t mask)
+{
+	uint64_t tmout = curcpu()->ci_data.cpu_cc_freq; /* some finite amount of time */
+	__cpuset_t cpuset;
+
+	while (tmout--) {
+		CPUSET_EXPORT(watchset, cpuset);
+		if (cpuset == mask)
+			return 0;		/* success */
+	}
+	return 1;				/* timed out */
+}
+
+/*
+ * Halt this cpu.
+ */
+void
+cpu_halt(void)
+{
+	struct cpuset_info * const csi = &cpuset_info;
+	const cpuid_t index = cpu_index(curcpu());
+
+	printf("cpu%ld: shutting down\n", index);
+	kcpuset_set(csi->cpus_halted, index);
+	spl0();			/* allow interrupts e.g. further ipi ? */
+
+	/* spin */
+	for (;;)
+		continue;
+	/*NOTREACHED*/
+}
+
+/*
+ * Halt all running cpus, excluding current cpu.
+ */
+void
+cpu_halt_others(void)
+{
+	struct cpuset_info * const csi = &cpuset_info;
+	const cpuid_t index = cpu_index(curcpu());
+	__cpuset_t cpumask, cpuset, halted;
+
+	KASSERT(kpreempt_disabled());
+
+	CPUSET_EXPORT(csi->cpus_running, cpuset);
+	CPUSET_DEL(cpuset, index);
+	CPUSET_ASSIGN(cpumask, cpuset);
+	CPUSET_EXPORT(csi->cpus_halted, halted);
+	CPUSET_SUB(cpuset, halted);
+
+	if (CPUSET_EMPTY_P(cpuset))
+		return;
+
+	cpu_multicast_ipi(cpuset, IPI_HALT);
+	if (cpu_ipi_wait(csi->cpus_halted, cpumask))
+		cpu_ipi_error("halt", csi->cpus_halted, cpumask);
+
+	/*
+	 * TBD
+	 * Depending on available firmware methods, other cpus will
+	 * either shut down themselfs, or spin and wait for us to
+	 * stop them.
+	 */
+}
+
+/*
+ * Pause this cpu.
+ */
+void
+cpu_pause(struct trapframe *tf)
+{
+	volatile struct cpuset_info * const csi = &cpuset_info;
+	int s = splhigh();
+	const cpuid_t index = cpu_index(curcpu());
+
+	for (;;) {
+		kcpuset_set(csi->cpus_paused, index);
+		while (kcpuset_isset(csi->cpus_paused, index))
+			docritpollhooks();
+		kcpuset_set(csi->cpus_resumed, index);
+#ifdef DDB
+		if (ddb_running_on_this_cpu_p())
+			cpu_Debugger();
+		if (ddb_running_on_any_cpu_p())
+			continue;
+#endif	/* DDB */
+		break;
+	}
+
+	splx(s);
+}
+
+/*
+ * Pause all running cpus, excluding current cpu.
+ */
+void
+cpu_pause_others(void)
+{
+	struct cpuset_info * const csi = &cpuset_info;
+	const cpuid_t index = cpu_index(curcpu());
+	__cpuset_t cpuset;
+
+	KASSERT(kpreempt_disabled());
+
+	CPUSET_EXPORT(csi->cpus_running, cpuset);
+	CPUSET_DEL(cpuset, index);
+
+	if (CPUSET_EMPTY_P(cpuset))
+		return;
+
+	cpu_multicast_ipi(cpuset, IPI_SUSPEND);
+	if (cpu_ipi_wait(csi->cpus_paused, cpuset))
+		cpu_ipi_error("pause", csi->cpus_paused, cpuset);
+}
+
+/*
+ * Resume a single cpu.
+ */
+void
+cpu_resume(cpuid_t index)
+{
+	struct cpuset_info * const csi = &cpuset_info;
+	__cpuset_t cpuset = CPUSET_SINGLE(index);
+
+	kcpuset_zero(csi->cpus_resumed);
+	kcpuset_clear(csi->cpus_paused, index);
+
+	if (cpu_ipi_wait(csi->cpus_paused, cpuset))
+		cpu_ipi_error("resume", csi->cpus_resumed, cpuset);
+}
+
+/*
+ * Resume all paused cpus.
+ */
+void
+cpu_resume_others(void)
+{
+	struct cpuset_info * const csi = &cpuset_info;
+	__cpuset_t cpuset;
+
+	kcpuset_zero(csi->cpus_resumed);
+	CPUSET_EXPORT(csi->cpus_paused, cpuset);
+	kcpuset_zero(csi->cpus_paused);
+
+	if (cpu_ipi_wait(csi->cpus_resumed, cpuset))
+		cpu_ipi_error("resume", csi->cpus_resumed, cpuset);
+}
+
+int
+cpu_is_paused(int index)
+{
+	struct cpuset_info * const csi = &cpuset_info;
+
+	return kcpuset_isset(csi->cpus_paused, index);
+}
+
+#ifdef DDB
+void
+cpu_debug_dump(void)
+{
+	struct cpuset_info * const csi = &cpuset_info;
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+	char running, hatched, paused, resumed, halted;
+
+#ifdef _LP64
+	db_printf("CPU CPUID STATE CPUINFO          CPL INT MTX IPIS\n");
+#else
+	db_printf("CPU CPUID STATE CPUINFO  CPL INT MTX IPIS\n");
+#endif
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		const cpuid_t index = cpu_index(ci);
+		hatched = (kcpuset_isset(csi->cpus_hatched, index) ? 'H' : '-');
+		running = (kcpuset_isset(csi->cpus_running, index) ? 'R' : '-');
+		paused  = (kcpuset_isset(csi->cpus_paused,  index) ? 'P' : '-');
+		resumed = (kcpuset_isset(csi->cpus_resumed, index) ? 'r' : '-');
+		halted  = (kcpuset_isset(csi->cpus_halted,  index) ? 'h' : '-');
+		db_printf("%3ld 0x%03x %c%c%c%c%c %p %3d %3d %3d 0x%08x\n",
+		    index, ci->ci_cpuid,
+		    running, hatched, paused, resumed, halted,
+		    ci, ci->ci_cpl, ci->ci_idepth, ci->ci_mtx_count,
+		    ci->ci_pending_ipis);
+	}
+}
+#endif	/* DDB */
 #endif /* MULTIPROCESSOR */
 
 #ifdef MODULAR
@@ -548,4 +803,3 @@ mm_md_kernacc(void *va, vm_prot_t prot, bool *handled)
 	*handled = false;
 	return 0;
 }
-

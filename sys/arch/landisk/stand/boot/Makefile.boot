@@ -1,18 +1,14 @@
-# $NetBSD: Makefile.boot,v 1.5.6.1 2014/08/20 00:03:09 tls Exp $
+# $NetBSD: Makefile.boot,v 1.5.6.2 2017/12/03 11:36:22 jdolecek Exp $
 
 PROG?=		boot
 
 NEWVERSWHAT?=	"Boot"
-VERSIONFILE?=	${.CURDIR}/../version
 
 SRCS=	boot.S boot2.c bootinfo.c conf.c devopen.c monitor.c
 SRCS+=	delay.c getsecs.c
 SRCS+=	bios.S
 SRCS+=	biosdisk.c biosdisk_ll.c
 SRCS+=	scifcons.c cons.c prf.c
-.if !make(depend)
-SRCS+=	vers.c
-.endif
 
 LDFLAGS+=	-e boot_start
 
@@ -33,16 +29,15 @@ SAMISCMAKEFLAGS+="SA_ENABLE_LS_OP=yes"
 
 LIBLIST=	${LIBSA} ${LIBZ} ${LIBKERN}
 
-CLEANFILES+=	${PROG}.sym ${PROG}.map vers.c
+CLEANFILES+=	${PROG}.sym ${PROG}.map
 
-vers.c: ${VERSIONFILE} ${SOURCES} ${.CURDIR}/../Makefile.boot
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
-	    ${VERSIONFILE} ${MACHINE} ${NEWVERSWHAT}
 
 ${PROG}: ${OBJS} ${LIBLIST}
 	${_MKTARGET_LINK}
 	${LD} -o ${PROG}.sym ${LDFLAGS} -Ttext ${SECONDARY_LOAD_ADDRESS} \
 		-Map ${PROG}.map -cref ${OBJS} ${LIBLIST}
 	${OBJCOPY} -O binary ${PROG}.sym ${PROG}
+
+.include "${S}/conf/newvers_stand.mk"
 
 .include <bsd.prog.mk>

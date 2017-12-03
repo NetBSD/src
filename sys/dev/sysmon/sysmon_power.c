@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.46.6.1 2014/08/20 00:03:50 tls Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.46.6.2 2017/12/03 11:37:33 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -69,9 +69,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.46.6.1 2014/08/20 00:03:50 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.46.6.2 2017/12/03 11:37:33 jdolecek Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
+#endif
+
 #include <sys/param.h>
 #include <sys/reboot.h>
 #include <sys/systm.h>
@@ -83,10 +86,14 @@ __KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.46.6.1 2014/08/20 00:03:50 tls Ex
 #include <sys/kmem.h>
 #include <sys/proc.h>
 #include <sys/device.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
+#include <sys/module.h>
+#include <sys/once.h>
 
 #include <dev/sysmon/sysmonvar.h>
 #include <prop/proplib.h>
+
+MODULE(MODULE_CLASS_DRIVER, sysmon_power, "sysmon");
 
 /*
  * Singly linked list for dictionaries to be stored/sent.
@@ -121,6 +128,7 @@ static const struct power_event_description pswitch_type_desc[] = {
 	{ PSWITCH_TYPE_RESET, 		"reset_button" },
 	{ PSWITCH_TYPE_ACADAPTER,	"acadapter" },
 	{ PSWITCH_TYPE_HOTKEY,		"hotkey_button" },
+	{ PSWITCH_TYPE_RADIO,		"radio_button" },
 	{ -1, NULL }
 };
 
@@ -185,24 +193,66 @@ static int sysmon_power_daemon_task(struct power_event_dictionary *,
 				    void *, int);
 static void sysmon_power_destroy_dictionary(struct power_event_dictionary *);
 
+static struct sysmon_opvec sysmon_power_opvec = {
+	sysmonopen_power, sysmonclose_power, sysmonioctl_power,
+	sysmonread_power, sysmonpoll_power, sysmonkqfilter_power
+};
+
 #define	SYSMON_NEXT_EVENT(x)		(((x) + 1) % SYSMON_MAX_POWER_EVENTS)
+
+ONCE_DECL(once_power);
+
+static int
+power_preinit(void)
+{
+
+	mutex_init(&sysmon_power_event_queue_mtx, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&sysmon_power_event_queue_cv, "smpower");
+
+	return 0;
+}
 
 /*
  * sysmon_power_init:
  *
  * 	Initializes the mutexes and condition variables in the
- * 	boot process via init_main.c.
+ * 	boot process via module initialization process.
  */
-void
+int
 sysmon_power_init(void)
 {
-	mutex_init(&sysmon_power_event_queue_mtx, MUTEX_DEFAULT, IPL_NONE);
-	cv_init(&sysmon_power_event_queue_cv, "smpower");
+	int error;
+
+	(void)RUN_ONCE(&once_power, power_preinit);
+
 	selinit(&sysmon_power_event_queue_selinfo);
 
 	rnd_attach_source(&sysmon_rndsource, "system-power",
 			  RND_TYPE_POWER, RND_FLAG_DEFAULT);
 
+	error = sysmon_attach_minor(SYSMON_MINOR_POWER, &sysmon_power_opvec);
+
+	return error;
+}
+
+int
+sysmon_power_fini(void)
+{
+	int error;
+
+	if (sysmon_power_daemon != NULL)
+		error = EBUSY;
+	else
+		error = sysmon_attach_minor(SYSMON_MINOR_POWER, NULL);
+
+	if (error == 0) {
+		rnd_detach_source(&sysmon_rndsource);
+		seldestroy(&sysmon_power_event_queue_selinfo);
+		cv_destroy(&sysmon_power_event_queue_cv);
+		mutex_destroy(&sysmon_power_event_queue_mtx);
+	}
+
+	return error;
 }
 
 /*
@@ -507,11 +557,19 @@ filt_sysmon_power_read(struct knote *kn, long hint)
 	return kn->kn_data > 0;
 }
 
-static const struct filterops sysmon_power_read_filtops =
-    { 1, NULL, filt_sysmon_power_rdetach, filt_sysmon_power_read };
+static const struct filterops sysmon_power_read_filtops = {
+    .f_isfd = 1,
+    .f_attach = NULL,
+    .f_detach = filt_sysmon_power_rdetach,
+    .f_event = filt_sysmon_power_read,
+};
 
-static const struct filterops sysmon_power_write_filtops =
-    { 1, NULL, filt_sysmon_power_rdetach, filt_seltrue };
+static const struct filterops sysmon_power_write_filtops = {
+    .f_isfd = 1,
+    .f_attach = NULL,
+    .f_detach = filt_sysmon_power_rdetach,
+    .f_event = filt_seltrue,
+};
 
 /*
  * sysmonkqfilter_power:
@@ -653,7 +711,7 @@ sysmon_power_make_dictionary(prop_dictionary_t dict, void *power_data,
 
 #define SETPROP(key, str)						\
 do {									\
-	if ((str) && !prop_dictionary_set_cstring(dict,			\
+	if ((str) != NULL && !prop_dictionary_set_cstring(dict,		\
 						  (key),		\
 						  (str))) {		\
 		printf("%s: failed to set %s\n", __func__, (str));	\
@@ -799,6 +857,9 @@ sysmon_penvsys_event(struct penvsys_state *pes, int event)
 
 		if (sysmon_power_daemon_task(ped, pes, event) == 0)
 			return;
+		/* We failed */
+		prop_object_release(ped->dict);
+		kmem_free(ped, sizeof(*ped));
 	}
 
 	switch (pes->pes_type) {
@@ -898,7 +959,8 @@ sysmon_penvsys_event(struct penvsys_state *pes, int event)
 int
 sysmon_pswitch_register(struct sysmon_pswitch *smpsw)
 {
-	/* nada */
+	(void)RUN_ONCE(&once_power, power_preinit);
+
 	return 0;
 }
 
@@ -953,6 +1015,9 @@ sysmon_pswitch_event(struct sysmon_pswitch *smpsw, int event)
 
 		if (sysmon_power_daemon_task(ped, smpsw, event) == 0)
 			return;
+		/* We failed */
+		prop_object_release(ped->dict);
+		kmem_free(ped, sizeof(*ped));
 	}
 	
 	switch (smpsw->smpsw_type) {
@@ -1052,3 +1117,27 @@ sysmon_pswitch_event(struct sysmon_pswitch *smpsw, int event)
 
 	}
 }
+
+static
+int   
+sysmon_power_modcmd(modcmd_t cmd, void *arg)
+{
+	int ret;
+ 
+	switch (cmd) { 
+	case MODULE_CMD_INIT:
+		ret = sysmon_power_init();
+		break;
+ 
+	case MODULE_CMD_FINI: 
+		ret = sysmon_power_fini();
+		break;
+ 
+	case MODULE_CMD_STAT:
+	default: 
+		ret = ENOTTY;
+	}
+
+	return ret;
+}
+

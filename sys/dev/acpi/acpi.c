@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.254.2.3 2014/08/20 00:03:35 tls Exp $	*/
+/*	$NetBSD: acpi.c,v 1.254.2.4 2017/12/03 11:36:58 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.254.2.3 2014/08/20 00:03:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.254.2.4 2017/12/03 11:36:58 jdolecek Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -118,6 +118,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.254.2.3 2014/08/20 00:03:35 tls Exp $");
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
+#include <dev/acpi/acpi_mcfg.h>
 #include <dev/acpi/acpi_osd.h>
 #include <dev/acpi/acpi_pci.h>
 #include <dev/acpi/acpi_power.h>
@@ -125,6 +126,8 @@ __KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.254.2.3 2014/08/20 00:03:35 tls Exp $");
 #include <dev/acpi/acpi_wakedev.h>
 
 #include <machine/acpi_machdep.h>
+
+#include "ioconf.h"
 
 #define _COMPONENT	ACPI_BUS_COMPONENT
 ACPI_MODULE_NAME	("acpi")
@@ -142,7 +145,6 @@ int		acpi_verbose_loaded = 0;
 struct acpi_softc	*acpi_softc = NULL;
 static uint64_t		 acpi_root_pointer;
 extern kmutex_t		 acpi_interrupt_list_mtx;
-extern struct		 cfdriver acpi_cd;
 static ACPI_HANDLE	 acpi_scopes[4];
 ACPI_TABLE_HEADER	*madt_header;
 
@@ -253,7 +255,6 @@ acpi_probe(void)
 	/*
 	 * Start up ACPICA.
 	 */
-	AcpiGbl_AllMethodsSerialized = false;
 	AcpiGbl_EnableInterpreterSlack = true;
 
 	rv = AcpiInitializeSubsystem();
@@ -455,6 +456,8 @@ acpi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_pc = aa->aa_pc;
 	sc->sc_pciflags = aa->aa_pciflags;
 	sc->sc_ic = aa->aa_ic;
+	sc->sc_dmat = aa->aa_dmat;
+	sc->sc_dmat64 = aa->aa_dmat64;
 
 	SIMPLEQ_INIT(&sc->ad_head);
 
@@ -486,6 +489,11 @@ acpi_attach(device_t parent, device_t self, void *aux)
 	 * Scan the namespace and build our device tree.
 	 */
 	acpi_build_tree(sc);
+
+	/*
+	 * Probe MCFG table
+	 */
+	acpimcfg_probe(sc);
 
 	acpi_md_callback(sc);
 
@@ -708,14 +716,13 @@ acpi_make_devnode(ACPI_HANDLE handle, uint32_t level,
 
 	case ACPI_TYPE_DEVICE:
 		acpi_activate_device(handle, &devinfo);
+		/* FALLTHROUGH */
+
 	case ACPI_TYPE_PROCESSOR:
 	case ACPI_TYPE_THERMAL:
 	case ACPI_TYPE_POWER:
 
 		ad = kmem_zalloc(sizeof(*ad), KM_SLEEP);
-
-		if (ad == NULL)
-			return AE_NO_MEMORY;
 
 		ad->ad_device = NULL;
 		ad->ad_notify = NULL;
@@ -861,6 +868,8 @@ acpi_rescan_early(struct acpi_softc *sc)
 		aa.aa_pc = sc->sc_pc;
 		aa.aa_pciflags = sc->sc_pciflags;
 		aa.aa_ic = sc->sc_ic;
+		aa.aa_dmat = sc->sc_dmat;
+		aa.aa_dmat64 = sc->sc_dmat64;
 
 		ad->ad_device = config_found_ia(sc->sc_dev,
 		    "acpinodebus", &aa, acpi_print);
@@ -925,6 +934,8 @@ acpi_rescan_nodes(struct acpi_softc *sc)
 		aa.aa_pc = sc->sc_pc;
 		aa.aa_pciflags = sc->sc_pciflags;
 		aa.aa_ic = sc->sc_ic;
+		aa.aa_dmat = sc->sc_dmat;
+		aa.aa_dmat64 = sc->sc_dmat64;
 
 		ad->ad_device = config_found_ia(sc->sc_dev,
 		    "acpinodebus", &aa, acpi_print);
@@ -1412,7 +1423,7 @@ acpi_enter_sleep_state(int state)
 
 			(void)pmf_system_bus_resume(PMF_Q_NONE);
 			(void)AcpiLeaveSleepState(state);
-			(void)AcpiSetFirmwareWakingVector(0);
+			(void)AcpiSetFirmwareWakingVector(0, 0);
 			(void)pmf_system_resume(PMF_Q_NONE);
 		}
 

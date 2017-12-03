@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pcu.c,v 1.12.2.2 2014/08/20 00:04:29 tls Exp $	*/
+/*	$NetBSD: subr_pcu.c,v 1.12.2.3 2017/12/03 11:38:45 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2011, 2014 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pcu.c,v 1.12.2.2 2014/08/20 00:04:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pcu.c,v 1.12.2.3 2017/12/03 11:38:45 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -110,7 +110,8 @@ pcu_switchpoint(lwp_t *l)
 			continue;
 		}
 		struct cpu_info * const pcu_ci = l->l_pcu_cpu[id];
-		if (pcu_ci == NULL || pcu_ci == l->l_cpu) {
+		if (pcu_ci == l->l_cpu) {
+			KASSERT(pcu_ci->ci_pcu_curlwp[id] == l);
 			continue;
 		}
 		const pcu_ops_t * const pcu = pcu_ops_md_defs[id];
@@ -313,7 +314,7 @@ pcu_load(const pcu_ops_t *pcu)
 		 * some architectures.
 		 */
 		KASSERT(curci->ci_pcu_curlwp[id] == l);
-		KASSERT(pcu_valid_p(pcu));
+		KASSERT(pcu_valid_p(pcu, l));
 		pcu->pcu_state_load(l, PCU_VALID | PCU_REENABLE);
 		splx(s);
 		return;
@@ -356,14 +357,13 @@ pcu_load(const pcu_ops_t *pcu)
 }
 
 /*
- * pcu_discard: discard the PCU state of current LWP.  If "valid"
+ * pcu_discard: discard the PCU state of the given LWP.  If "valid"
  * parameter is true, then keep considering the PCU state as valid.
  */
 void
-pcu_discard(const pcu_ops_t *pcu, bool valid)
+pcu_discard(const pcu_ops_t *pcu, lwp_t *l, bool valid)
 {
 	const u_int id = pcu->pcu_id;
-	lwp_t * const l = curlwp;
 
 	KASSERT(!cpu_intr_p() && !cpu_softintr_p());
 
@@ -382,10 +382,9 @@ pcu_discard(const pcu_ops_t *pcu, bool valid)
  * pcu_save_lwp: save PCU state to the given LWP.
  */
 void
-pcu_save(const pcu_ops_t *pcu)
+pcu_save(const pcu_ops_t *pcu, lwp_t *l)
 {
 	const u_int id = pcu->pcu_id;
-	lwp_t * const l = curlwp;
 
 	KASSERT(!cpu_intr_p() && !cpu_softintr_p());
 
@@ -420,10 +419,9 @@ pcu_save_all_on_cpu(void)
  * it always becomes "valid" when pcu_load() is called.
  */
 bool
-pcu_valid_p(const pcu_ops_t *pcu)
+pcu_valid_p(const pcu_ops_t *pcu, const lwp_t *l)
 {
 	const u_int id = pcu->pcu_id;
-	lwp_t * const l = curlwp;
 
 	return (l->l_pcu_valid & (1U << id)) != 0;
 }

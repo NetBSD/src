@@ -1,4 +1,4 @@
-/*	$NetBSD: tps65217pmic.c,v 1.5.2.3 2014/08/20 00:03:37 tls Exp $ */
+/*	$NetBSD: tps65217pmic.c,v 1.5.2.4 2017/12/03 11:37:02 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tps65217pmic.c,v 1.5.2.3 2014/08/20 00:03:37 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tps65217pmic.c,v 1.5.2.4 2017/12/03 11:37:02 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,6 +153,8 @@ static void tps65217pmic_envsys_refresh(struct sysmon_envsys *, envsys_data_t *)
 
 static void tps65217pmic_power_monitor_init(struct tps65217pmic_softc *);
 static void tps65217pmic_power_monitor(void *);
+
+static void tps65217pmic_wled_init(struct tps65217pmic_softc *, int, int, int);
 
 CFATTACH_DECL_NEW(tps65217pmic, sizeof (struct tps65217pmic_softc),
     tps65217pmic_match, tps65217pmic_attach, NULL, NULL);
@@ -291,10 +293,19 @@ tps65217pmic_attach(device_t parent, device_t self, void *aux)
 {
 	struct tps65217pmic_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = aux;
+	prop_dictionary_t dict;
+	int isel, fdim, brightness;
 
 	sc->sc_dev = self;
 	sc->sc_addr = ia->ia_addr;
 	sc->sc_tag = ia->ia_tag;
+
+	dict = device_properties(self);
+	if (prop_dictionary_get_int32(dict, "isel", &isel)) {
+		prop_dictionary_get_int32(dict, "fdim", &fdim);
+		prop_dictionary_get_int32(dict, "brightness", &brightness);
+	} else
+		isel = -1;
 
 	tps65217pmic_version(sc);
 
@@ -332,6 +343,9 @@ tps65217pmic_attach(device_t parent, device_t self, void *aux)
 	tps65217pmic_print_ldos(sc);
 
 	tps65217pmic_power_monitor_init(sc);
+
+	if (isel != -1)
+		tps65217pmic_wled_init(sc, isel, fdim, brightness);
 
 	tps65217pmic_envsys_register(sc);
 }
@@ -406,6 +420,55 @@ tps65217pmic_power_monitor(void *aux)
 	mutex_exit(&sc->sc_lock);
 
 	callout_schedule(&sc->sc_powerpollco, hz);
+}
+
+static void
+tps65217pmic_wled_init(struct tps65217pmic_softc *sc, int isel, int fdim,
+		       int brightness)
+{
+	uint8_t val = 0;
+
+	switch (isel) {
+	case 1:
+	case 2:
+		val |= ((isel - 1) << TPS65217PMIC_WLEDCTRL1_ISEL);
+		break;
+	default:
+		aprint_error_dev(sc->sc_dev,
+		    "WLED ISET selection is 1 or 2: isel %d\n", isel);
+		return;
+	}
+	switch (fdim) {
+	case 100:
+		val |= TPS65217PMIC_WLEDCTRL1_FDIM_100Hz;
+		break;
+	case 200:
+		val |= TPS65217PMIC_WLEDCTRL1_FDIM_200Hz;
+		break;
+	case 500:
+		val |= TPS65217PMIC_WLEDCTRL1_FDIM_500Hz;
+		break;
+	case 1000:
+		val |= TPS65217PMIC_WLEDCTRL1_FDIM_1000Hz;
+		break;
+	default:
+		aprint_error_dev(sc->sc_dev,
+		    "WLED PWM dimming frequency is 100, 200, 500 or 1000:"
+		    " fdim %d\n", fdim);
+		return;
+	}
+	if (brightness > 100 ||
+	    brightness < 0) {
+		aprint_error_dev(sc->sc_dev,
+		    "invalid brightness: between 0 and 100: %d\n", brightness);
+		return;
+	}
+
+	tps65217pmic_reg_write(sc, TPS65217PMIC_WLEDCTRL1, val);
+	tps65217pmic_reg_write(sc, TPS65217PMIC_WLEDCTRL2,
+	    (brightness - 1) & TPS65217PMIC_WLEDCTRL2_DUTY);
+	val |= TPS65217PMIC_WLEDCTRL1_ISINK_EN;
+	tps65217pmic_reg_write(sc, TPS65217PMIC_WLEDCTRL1, val);
 }
 
 static void

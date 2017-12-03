@@ -1,4 +1,4 @@
-/*	$NetBSD: mk48txx.c,v 1.26 2011/01/04 01:28:15 matt Exp $ */
+/*	$NetBSD: mk48txx.c,v 1.26.18.1 2017/12/03 11:37:03 jdolecek Exp $ */
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mk48txx.c,v 1.26 2011/01/04 01:28:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mk48txx.c,v 1.26.18.1 2017/12/03 11:37:03 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,16 +120,16 @@ mk48txx_gettime_ymdhms(todr_chip_handle_t handle, struct clock_ymdhms *dt)
 	csr |= MK48TXX_CSR_READ;
 	(*sc->sc_nvwr)(sc, clkoff + MK48TXX_ICSR, csr);
 
-	dt->dt_sec = FROMBCD((*sc->sc_nvrd)(sc, clkoff + MK48TXX_ISEC));
-	dt->dt_min = FROMBCD((*sc->sc_nvrd)(sc, clkoff + MK48TXX_IMIN));
-	dt->dt_hour = FROMBCD((*sc->sc_nvrd)(sc, clkoff + MK48TXX_IHOUR));
-	dt->dt_day = FROMBCD((*sc->sc_nvrd)(sc, clkoff + MK48TXX_IDAY));
-	dt->dt_wday = FROMBCD((*sc->sc_nvrd)(sc, clkoff + MK48TXX_IWDAY));
-	dt->dt_mon = FROMBCD((*sc->sc_nvrd)(sc, clkoff + MK48TXX_IMON));
-	year = FROMBCD((*sc->sc_nvrd)(sc, clkoff + MK48TXX_IYEAR));
+	dt->dt_sec = bcdtobin((*sc->sc_nvrd)(sc, clkoff + MK48TXX_ISEC));
+	dt->dt_min = bcdtobin((*sc->sc_nvrd)(sc, clkoff + MK48TXX_IMIN));
+	dt->dt_hour = bcdtobin((*sc->sc_nvrd)(sc, clkoff + MK48TXX_IHOUR));
+	dt->dt_day = bcdtobin((*sc->sc_nvrd)(sc, clkoff + MK48TXX_IDAY));
+	dt->dt_wday = bcdtobin((*sc->sc_nvrd)(sc, clkoff + MK48TXX_IWDAY));
+	dt->dt_mon = bcdtobin((*sc->sc_nvrd)(sc, clkoff + MK48TXX_IMON));
+	year = bcdtobin((*sc->sc_nvrd)(sc, clkoff + MK48TXX_IYEAR));
 
 	if (sc->sc_flag & MK48TXX_HAVE_CENT_REG) {
-		year += 100*FROMBCD(csr & MK48TXX_CSR_CENT_MASK);
+		year += 100*bcdtobin(csr & MK48TXX_CSR_CENT_MASK);
 	} else {
 		year += sc->sc_year0;
 		if (year < POSIX_BASE_YEAR &&
@@ -181,22 +181,22 @@ mk48txx_settime_ymdhms(todr_chip_handle_t handle, struct clock_ymdhms *dt)
 	csr |= MK48TXX_CSR_WRITE;
 	(*sc->sc_nvwr)(sc, clkoff + MK48TXX_ICSR, csr);
 
-	(*sc->sc_nvwr)(sc, clkoff + MK48TXX_ISEC, TOBCD(dt->dt_sec));
-	(*sc->sc_nvwr)(sc, clkoff + MK48TXX_IMIN, TOBCD(dt->dt_min));
-	(*sc->sc_nvwr)(sc, clkoff + MK48TXX_IHOUR, TOBCD(dt->dt_hour));
-	(*sc->sc_nvwr)(sc, clkoff + MK48TXX_IWDAY, TOBCD(dt->dt_wday));
-	(*sc->sc_nvwr)(sc, clkoff + MK48TXX_IDAY, TOBCD(dt->dt_day));
-	(*sc->sc_nvwr)(sc, clkoff + MK48TXX_IMON, TOBCD(dt->dt_mon));
-	(*sc->sc_nvwr)(sc, clkoff + MK48TXX_IYEAR, TOBCD(year));
+	(*sc->sc_nvwr)(sc, clkoff + MK48TXX_ISEC, bintobcd(dt->dt_sec));
+	(*sc->sc_nvwr)(sc, clkoff + MK48TXX_IMIN, bintobcd(dt->dt_min));
+	(*sc->sc_nvwr)(sc, clkoff + MK48TXX_IHOUR, bintobcd(dt->dt_hour));
+	(*sc->sc_nvwr)(sc, clkoff + MK48TXX_IWDAY, bintobcd(dt->dt_wday));
+	(*sc->sc_nvwr)(sc, clkoff + MK48TXX_IDAY, bintobcd(dt->dt_day));
+	(*sc->sc_nvwr)(sc, clkoff + MK48TXX_IMON, bintobcd(dt->dt_mon));
+	(*sc->sc_nvwr)(sc, clkoff + MK48TXX_IYEAR, bintobcd(year));
 
 	/*
 	 * If we have a century register and the century has changed
 	 * update it.
 	 */
 	if ((sc->sc_flag & MK48TXX_HAVE_CENT_REG)
-	    && (csr & MK48TXX_CSR_CENT_MASK) != TOBCD(cent)) {
+	    && (csr & MK48TXX_CSR_CENT_MASK) != bintobcd(cent)) {
 		csr &= ~MK48TXX_CSR_CENT_MASK;
-		csr |= MK48TXX_CSR_CENT_MASK & TOBCD(cent);
+		csr |= MK48TXX_CSR_CENT_MASK & bintobcd(cent);
 		(*sc->sc_nvwr)(sc, clkoff + MK48TXX_ICSR, csr);
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: stackframe.c,v 1.4.22.1 2014/08/20 00:03:08 tls Exp $	*/
+/*	$NetBSD: stackframe.c,v 1.4.22.2 2017/12/03 11:36:21 jdolecek Exp $	*/
 
 /* Contributed to the NetBSD foundation by Cherry G. Mathew <cherry@mahiti.org>
  * This file contains routines to use decoded unwind descriptor entries
@@ -19,21 +19,21 @@
 
 //#define UNWIND_DIAGNOSTIC
 
-/* Global variables:
-   array of struct recordchain
-   size of record chain array.
-*/
+/*
+ * Global variables:
+ * array of struct recordchain
+ * size of record chain array.
+ */
 struct recordchain strc[MAXSTATERECS];
 int rec_cnt = 0;
 
-/* Build a recordchain of a region, given the pointer to unwind table
+/*
+ * Build a recordchain of a region, given the pointer to unwind table
  * entry, and the number of entries to decode.
  */
-
-void buildrecordchain(uint64_t unwind_infop, struct recordchain *xxx)
+void
+buildrecordchain(uint64_t unwind_infop, struct recordchain *xxx)
 {
-
-
 	uint64_t unwindstart, unwindend;
 	uint64_t unwindlen;
 	uint64_t region_len = 0;
@@ -64,9 +64,11 @@ void buildrecordchain(uint64_t unwind_infop, struct recordchain *xxx)
 	/* XXX: Ignore zero length records. */
 
 
-	for(rec_cnt = 0; rec_cnt < MAXSTATERECS && (uint64_t)recptr < unwindend;
+	for (rec_cnt = 0;
+	    rec_cnt < MAXSTATERECS && (uint64_t)recptr < unwindend;
 	    rec_cnt++) {
-		if ((nextrecp = unwind_decode_R1(recptr, &strc[rec_cnt].udesc))){
+		nextrecp = unwind_decode_R1(recptr, &strc[rec_cnt].udesc);
+		if (nextrecp) {
 			region_len = strc[rec_cnt].udesc.R1.rlen;
 			region_type = strc[rec_cnt].udesc.R1.r;
 			strc[rec_cnt].type = R1;
@@ -74,15 +76,18 @@ void buildrecordchain(uint64_t unwind_infop, struct recordchain *xxx)
 			continue;
 		}
 
-		if ((nextrecp = unwind_decode_R2(recptr, &strc[rec_cnt].udesc))){
+		nextrecp = unwind_decode_R2(recptr, &strc[rec_cnt].udesc);
+		if (nextrecp) {
 			region_len = strc[rec_cnt].udesc.R2.rlen;
-			region_type = false; /* R2 regions are prologue regions */
+			/* R2 regions are prologue regions */
+			region_type = false;
 			strc[rec_cnt].type = R2;
 			recptr = nextrecp;
 			continue;
 		}
 
-		if ((nextrecp = unwind_decode_R3(recptr, &strc[rec_cnt].udesc))){
+		nextrecp = unwind_decode_R3(recptr, &strc[rec_cnt].udesc);
+		if (nextrecp) {
 			region_len = strc[rec_cnt].udesc.R3.rlen;
 			region_type = strc[rec_cnt].udesc.R3.r;
 			strc[rec_cnt].type = R3;
@@ -90,126 +95,158 @@ void buildrecordchain(uint64_t unwind_infop, struct recordchain *xxx)
 			continue;
 		}
 
-		if(region_type == false) { /* Prologue Region */
-			if ((nextrecp = unwind_decode_P1(recptr, &strc[rec_cnt].udesc))){
+		if (region_type == false) {
+			/* Prologue Region */
+			nextrecp = unwind_decode_P1(recptr,
+						    &strc[rec_cnt].udesc);
+			if (nextrecp) {
 				strc[rec_cnt].type = P1;
 				recptr = nextrecp;
 				continue;
 			}
 
-			if ((nextrecp = unwind_decode_P2(recptr, &strc[rec_cnt].udesc))){
+			nextrecp = unwind_decode_P2(recptr,
+						    &strc[rec_cnt].udesc);
+			if (nextrecp) {
 				strc[rec_cnt].type = P2;
 				recptr = nextrecp;
 				continue;
 			}
 
-			if ((nextrecp = unwind_decode_P3(recptr, &strc[rec_cnt].udesc))){
+			nextrecp = unwind_decode_P3(recptr,
+						    &strc[rec_cnt].udesc);
+			if (nextrecp) {
 				strc[rec_cnt].type = P3;
 				recptr = nextrecp;
 				continue;
 			}
 
-
-			if ((nextrecp = unwind_decode_P4(recptr, &strc[rec_cnt].udesc, region_len))){
+			nextrecp = unwind_decode_P4(recptr,
+						    &strc[rec_cnt].udesc,
+						    region_len);
+			if (nextrecp) {
 				strc[rec_cnt].type = P4;
 				recptr = nextrecp;
 				break;
 			}
 		
-
-			if ((nextrecp = unwind_decode_P5(recptr, &strc[rec_cnt].udesc))){
+			nextrecp = unwind_decode_P5(recptr,
+						    &strc[rec_cnt].udesc);
+			if (nextrecp) {
 				strc[rec_cnt].type = P5;
 				recptr = nextrecp;
 				continue;
 			}
 
-			if ((nextrecp = unwind_decode_P6(recptr, &strc[rec_cnt].udesc))){
+			nextrecp = unwind_decode_P6(recptr,
+						    &strc[rec_cnt].udesc);
+			if (nextrecp) {
 				strc[rec_cnt].type = P6;
 				recptr = nextrecp;
 				continue;
 			}
 
-			if ((nextrecp = unwind_decode_P7(recptr, &strc[rec_cnt].udesc))){
+			nextrecp = unwind_decode_P7(recptr,
+						    &strc[rec_cnt].udesc);
+			if (nextrecp) {
 				strc[rec_cnt].type = P7;
 				recptr = nextrecp;
 				continue;
 			}
 
-			if ((nextrecp = unwind_decode_P8(recptr, &strc[rec_cnt].udesc))){
+			nextrecp = unwind_decode_P8(recptr,
+						    &strc[rec_cnt].udesc);
+			if (nextrecp) {
 				strc[rec_cnt].type = P8;
 				recptr = nextrecp;
 				continue;
 			}
 
-			if ((nextrecp = unwind_decode_P9(recptr, &strc[rec_cnt].udesc))){
+			nextrecp = unwind_decode_P9(recptr,
+						    &strc[rec_cnt].udesc);
+			if (nextrecp) {
 				strc[rec_cnt].type = P9;
 				recptr = nextrecp;
 				continue;
 			}
 
-			if ((nextrecp = unwind_decode_P10(recptr, &strc[rec_cnt].udesc))){
+			nextrecp = unwind_decode_P10(recptr,
+						     &strc[rec_cnt].udesc);
+			if (nextrecp) {
 				strc[rec_cnt].type = P10;
 				recptr = nextrecp;
 				continue;
 			}
 
 			printf("Skipping prologue desc slot :: %d \n", rec_cnt);
-		}
+		} else {
 
-		else {
-			
-			if ((nextrecp = unwind_decode_B1(recptr, &strc[rec_cnt].udesc))){
+			nextrecp = unwind_decode_B1(recptr,
+						    &strc[rec_cnt].udesc);
+			if (nextrecp) {
 				strc[rec_cnt].type = B1;
 				recptr = nextrecp;
 				continue;
 			}
 
-			if ((nextrecp = unwind_decode_B2(recptr, &strc[rec_cnt].udesc))){
+			nextrecp = unwind_decode_B2(recptr,
+						    &strc[rec_cnt].udesc);
+			if (nextrecp) {
 				strc[rec_cnt].type = B2;
 				recptr = nextrecp;
 				continue;
 			}
 
-			if ((nextrecp = unwind_decode_B3(recptr, &strc[rec_cnt].udesc))){
+			nextrecp = unwind_decode_B3(recptr,
+						    &strc[rec_cnt].udesc);
+			if (nextrecp) {
 				strc[rec_cnt].type = B3;
 				recptr = nextrecp;
 				continue;
 			}
 
-			if ((nextrecp = unwind_decode_B4(recptr, &strc[rec_cnt].udesc))){
+			nextrecp = unwind_decode_B4(recptr,
+						    &strc[rec_cnt].udesc);
+			if (nextrecp) {
 				strc[rec_cnt].type = B4;
 				recptr = nextrecp;
 				continue;
 			}
 
-			if ((nextrecp = unwind_decode_X1(recptr, &strc[rec_cnt].udesc))){
+			nextrecp = unwind_decode_X1(recptr,
+						    &strc[rec_cnt].udesc);
+			if (nextrecp) {
 				strc[rec_cnt].type = X1;
 				recptr = nextrecp;
 				continue;
 			}
 
-			if ((nextrecp = unwind_decode_X2(recptr, &strc[rec_cnt].udesc))){
+			nextrecp = unwind_decode_X2(recptr,
+						    &strc[rec_cnt].udesc);
+			if (nextrecp) {
 				strc[rec_cnt].type = X2;
 				recptr = nextrecp;
 				continue;
 			}
 
 
-			if ((nextrecp = unwind_decode_X3(recptr, &strc[rec_cnt].udesc))){
+			nextrecp = unwind_decode_X3(recptr,
+						    &strc[rec_cnt].udesc);
+			if (nextrecp) {
 				strc[rec_cnt].type = X3;
 				recptr = nextrecp;
 				continue;
 			}
 
-			if ((nextrecp = unwind_decode_X4(recptr, &strc[rec_cnt].udesc))){
+			nextrecp = unwind_decode_X4(recptr,
+						    &strc[rec_cnt].udesc);
+			if (nextrecp) {
 				strc[rec_cnt].type = X4;
 				recptr = nextrecp;
 				continue;
 			}
 
 			printf("Skipping body desc slot :: %d \n", rec_cnt);
-
-			
 		}
 	}
 
@@ -220,20 +257,20 @@ void buildrecordchain(uint64_t unwind_infop, struct recordchain *xxx)
 	}
 
 #endif /* UNWIND_DIAGNOSTIC */
-
 }
 
 
 
 
-/* Debug support: dump a record chain entry */
-void dump_recordchain(struct recordchain *rchain)
+/*
+ * Debug support: dump a record chain entry
+ */
+void
+dump_recordchain(struct recordchain *rchain)
 {
 
 	switch(rchain->type) {
 	case R1:
-
-
 		printf("\t R1:");
 		if(rchain->udesc.R1.r)
 			printf("body (");
@@ -574,12 +611,14 @@ void dump_recordchain(struct recordchain *rchain)
 
 }
 
-/* State record stuff..... based on section 11. and Appendix A. of the 
- *"Itanium Software Conventions and Runtime Architecture Guide"
+/*
+ * State record stuff..... based on section 11. and Appendix A. of the 
+ * "Itanium Software Conventions and Runtime Architecture Guide"
  */
 
 
-/* Global variables:
+/*
+ * Global variables:
  * 1. Two arrays of staterecords: recordstack[], recordstackcopy[]
  *	XXX:	Since we don't use malloc, we have two arbitrary sized arrays
  *		providing guaranteed memory from the BSS. See the TODO file 
@@ -593,12 +632,13 @@ struct staterecord current_state;
 struct staterecord *unwind_rsp, *unwind_rscp;
 
 
-uint64_t spill_base = 0;	/* Base of spill area in memory stack frame as a psp relative offset */
+/* Base of spill area in memory stack frame as a psp relative offset */
+uint64_t spill_base = 0;
 
-/* Initialises a staterecord from a given template,
+/*
+ * Initialises a staterecord from a given template,
  * with default values as described by the Runtime Spec.
  */
-
 void
 initrecord(struct staterecord *target)
 {
@@ -617,27 +657,27 @@ initrecord(struct staterecord *target)
 }
 
 
-/* Modifies a staterecord structure by parsing 
+/*
+ * Modifies a staterecord structure by parsing 
  * a single record chain structure.
  * regionoffset is the offset within a (prologue) region 
  * where the stack unwinding began.
  */
-
-void modifyrecord(struct staterecord *srec, struct recordchain *rchain, 
-			 uint64_t regionoffset)
+void
+modifyrecord(struct staterecord *srec, struct recordchain *rchain, 
+	uint64_t regionoffset)
 {
-
-
-	uint64_t grno = 32; /* Default start save GR for prologue_save 
-			     * GRs.
-			     */
-
+	/*
+	 * Default start save GR for prologue_save GRs.
+	 */
+	uint64_t grno = 32;
 
 
 	switch (rchain->type) {
 	
 	case R2:
-		/* R2, prologue_gr is the only region encoding 
+		/*
+		 * R2, prologue_gr is the only region encoding
 		 * with register save info.
 		 */
 
@@ -689,7 +729,8 @@ void modifyrecord(struct staterecord *srec, struct recordchain *rchain,
 		break;
 
 
-	/* XXX: P4 spill_mask and P7: spill_base are for GRs, FRs, and BRs. 
+	/*
+	 * XXX: P4 spill_mask and P7: spill_base are for GRs, FRs, and BRs. 
 	 * We're not particularly worried about those right now.
 	 */
 
@@ -697,11 +738,14 @@ void modifyrecord(struct staterecord *srec, struct recordchain *rchain,
 		switch (rchain->udesc.P7.r) {
 
 		case 0: /* mem_stack_f */
-			if (srec->psp.offset != INVALID) printf("!!!saw mem_stack_f more than once. \n");
+			if (srec->psp.offset != INVALID) {
+				printf("!!!saw mem_stack_f more than once. \n");
+			}
 			srec->psp.when = rchain->udesc.P7.t;
 			if (srec->psp.when < regionoffset) {
 				srec->psp.where = IMMED;
-				srec->psp.offset = rchain->udesc.P7.size; /* spsz.offset is "overloaded" */
+				/* spsz.offset is "overloaded" */
+				srec->psp.offset = rchain->udesc.P7.size;
 			}
 			break;
 
@@ -722,9 +766,11 @@ void modifyrecord(struct staterecord *srec, struct recordchain *rchain,
 			
 		case 4: /* rp_when */
 			srec->rp.when = rchain->udesc.P7.t;
-			/* XXX: Need to set to prologue_gr(grno) for the orphan case 
-			 *	ie; _gr/_psprel/_sprel not set and therefore default
-			 *	to begin from the gr specified in prologue_gr.
+			/*
+			 * XXX: Need to set to prologue_gr(grno) for
+			 *	the orphan case ie; _gr/_psprel/_sprel
+			 *	not set and therefore default to begin
+			 *	from the gr specified in prologue_gr.
 			 */
 			break;
 
@@ -737,9 +783,11 @@ void modifyrecord(struct staterecord *srec, struct recordchain *rchain,
 
 		case 6: /* pfs_when */
 			srec->pfs.when = rchain->udesc.P7.t;
-			/* XXX: Need to set to prologue_gr(grno) for the orphan case 
-			 *	ie; _gr/_psprel/_sprel not set and therefore default
-			 *	to begin from the gr specified in prologue_gr.
+			/*
+			 * XXX: Need to set to prologue_gr(grno) for
+			 *	the orphan case ie; _gr/_psprel/_sprel
+			 *	not set and therefore default to begin
+			 *	from the gr specified in prologue_gr.
 			 */
 			break;
 
@@ -816,7 +864,8 @@ void modifyrecord(struct staterecord *srec, struct recordchain *rchain,
 
 }
 
-void dump_staterecord(struct staterecord *srec)
+void
+dump_staterecord(struct staterecord *srec)
 {
 	printf("rp.where: ");
 	switch(srec->rp.where) {
@@ -866,14 +915,14 @@ void dump_staterecord(struct staterecord *srec)
 
 	printf(", pfs.when = %lu, ", srec->pfs.when);
 	printf("pfs.offset = %lu \n", srec->pfs.offset);
-
-
 }
 
 
-/* Push a state record on the record stack. */
-
-void pushrecord(struct staterecord *srec)
+/*
+ * Push a state record on the record stack.
+ */
+void
+pushrecord(struct staterecord *srec)
 {
 	if(unwind_rsp >= recordstack + MAXSTATERECS) {
 		printf("Push exceeded array size!!! \n");
@@ -885,9 +934,11 @@ void pushrecord(struct staterecord *srec)
 
 }
 
-/* Pop n state records off the record stack. */
-
-void poprecord(struct staterecord *srec, int n)
+/*
+ * Pop n state records off the record stack.
+ */
+void
+poprecord(struct staterecord *srec, int n)
 {
 	if(unwind_rsp == recordstack) {
 		printf("Popped beyond end of Stack!!! \n");
@@ -901,16 +952,22 @@ void poprecord(struct staterecord *srec, int n)
 
 }
 
-/* Clone the whole record stack upto this one. */
-void clonerecordstack(u_int label)
+/*
+ * Clone the whole record stack upto this one.
+ */
+void
+clonerecordstack(u_int label)
 {
 	memcpy(recordstackcopy, recordstack, 
 	       (unwind_rsp - recordstack) * sizeof(struct staterecord));
 	unwind_rscp = unwind_rsp;
 }
 
-/* Discard the current stack, and adopt a clone. */
-void switchrecordstack(u_int label)
+/*
+ * Discard the current stack, and adopt a clone.
+ */
+void
+switchrecordstack(u_int label)
 {
 	memcpy((void *) recordstack, (void *) recordstackcopy, 
 	       (unwind_rscp - recordstackcopy) * sizeof(struct staterecord));
@@ -918,36 +975,47 @@ void switchrecordstack(u_int label)
 
 }
 
-/* In the context of a procedure:
+/*
+ * In the context of a procedure:
  * Parses through a record chain, building, pushing and/or popping staterecords,
  * or cloning/destroying stacks of staterecords as required.
  * Parameters are:
  *	rchain: pointer to recordchain array.
- *	procoffset: offset of point of interest, in slots, within procedure starting from slot 0
+ *	procoffset: offset of point of interest, in slots, within procedure
+ *                  starting from slot 0
  * This routine obeys [1]
  */
-struct staterecord *buildrecordstack(struct recordchain *rchain, uint64_t procoffset)
+struct staterecord *
+buildrecordstack(struct recordchain *rchain, uint64_t procoffset)
 {
+	/* Current region length, defaults to zero if not specified */
+	uint64_t rlen = 0;
+	/* Accumulated region length */
+	uint64_t roffset = 0;
+	/* Offset within current region */
+	uint64_t rdepth = 0;
 
-	uint64_t rlen = 0;		/* Current region length, defaults to zero, if not specified */
-	uint64_t roffset = 0;		/* Accumulated region length */
-	uint64_t rdepth = 0;		/* Offset within current region */
 	bool rtype;
-
-	unwind_rsp = recordstack; /* Start with bottom of staterecord stack. */
-
-	initrecord(&current_state);
-
 	int i;
 
+	/* Start with bottom of staterecord stack. */
+	unwind_rsp = recordstack;
+
+	initrecord(&current_state);
 
 	for (i = 0;i < rec_cnt;i++) {
 
 		switch (rchain[i].type) {
 		case R1:
 			rlen = rchain[i].udesc.R1.rlen;
+			if (procoffset < roffset) {
+				/*
+				 * Overshot Region containing
+				 * procoffset. Bail out.
+				 */
+				goto out;
+			}
 			rdepth = procoffset - roffset;
-			if (rdepth < 0) goto out; /* Overshot Region containing procoffset. Bailout. */ 
 			roffset += rlen;
 			rtype = rchain[i].udesc.R1.r;
 			if (!rtype) {
@@ -957,8 +1025,14 @@ struct staterecord *buildrecordstack(struct recordchain *rchain, uint64_t procof
 
 		case R3:
 			rlen = rchain[i].udesc.R3.rlen;
+			if (procoffset < roffset) {
+				/*
+				 * Overshot Region containing
+				 * procoffset. Bail out.
+				 */
+				goto out;
+			}
 			rdepth = procoffset - roffset;
-			if (rdepth < 0) goto out; /* Overshot Region containing procoffset. Bailout. */ 
 			roffset += rlen;
 			rtype = rchain[i].udesc.R3.r;
 			if (!rtype) {
@@ -968,14 +1042,20 @@ struct staterecord *buildrecordstack(struct recordchain *rchain, uint64_t procof
 
 		case R2:
 			rlen = rchain[i].udesc.R2.rlen;
+			if (procoffset < roffset) {
+				/*
+				 * Overshot Region containing
+				 * procoffset. Bail out.
+				 */
+				goto out;
+			}
 			rdepth = procoffset - roffset;
-			if (rdepth < 0) goto out; /* Overshot Region containing procoffset. Bailout. */ 
 			roffset += rlen;
 			rtype = false; /* prologue region */
 			pushrecord(&current_state);
 
 			/* R2 has save info. Continue down. */
-
+			/* FALLTHROUGH */
 		case P1:
 		case P2:
 		case P3:
@@ -993,7 +1073,8 @@ struct staterecord *buildrecordstack(struct recordchain *rchain, uint64_t procof
 		case B2:
 		case B3:
 		case B4:
-			modifyrecord(&current_state, &rchain[i], rlen - 1 - rdepth); 
+			modifyrecord(&current_state, &rchain[i],
+				     rlen - 1 - rdepth); 
 			break;
 
 		case X1:
@@ -1017,16 +1098,12 @@ out:
 	return &current_state;
 }
 
-void updateregs(struct unwind_frame *uwf, struct staterecord *srec, uint64_t procoffset) 
+void
+updateregs(struct unwind_frame *uwf, struct staterecord *srec,
+	uint64_t procoffset) 
 {
-
-#ifdef UNWIND_DIAGNOSTIC
-	printf("updateregs(): \n");
-	printf("procoffset (slots) = %lu \n", procoffset);
-#endif
 	/* XXX: Update uwf for regs other than rp and pfs*/
 	uint64_t roffset = 0;
-
 
 	/* Uses shadow arrays to update uwf from srec in a loop. */
 	/* Count of number of regstate elements in struct staterecord */
@@ -1036,8 +1113,12 @@ void updateregs(struct unwind_frame *uwf, struct staterecord *srec, uint64_t pro
 	/* Pointer to current unwind_frame element */
 	uint64_t *gr = (void *) uwf;
 
-
 	int i;
+
+#ifdef UNWIND_DIAGNOSTIC
+	printf("updateregs(): \n");
+	printf("procoffset (slots) = %lu \n", procoffset);
+#endif
 
 	for(i = 0; i < statecount; i++) {
 		switch (stptr[i].where) { 
@@ -1057,7 +1138,8 @@ void updateregs(struct unwind_frame *uwf, struct staterecord *srec, uint64_t pro
 
 
 			if (roffset < 32) {
-				printf("GR%ld: static register save ??? \n", roffset);
+				printf("GR%ld: static register save ??? \n",
+				       roffset);
 				break;
 			}
 
@@ -1071,14 +1153,16 @@ void updateregs(struct unwind_frame *uwf, struct staterecord *srec, uint64_t pro
 
 			/* Check if frame has been setup. */
 			if (srec->psp.offset == INVALID) {
-				printf("sprel used without setting up stackframe!!! \n");
+				printf("sprel used without setting up "
+				       "stackframe!!! \n");
 				break;
 			}
 
 			roffset = stptr[i].offset;
 
 			/* Fetch from sp + offset */
-			memcpy(&gr[i], (char *) uwf->sp + roffset * 4, sizeof(uint64_t));
+			memcpy(&gr[i], (char *) uwf->sp + roffset * 4,
+			       sizeof(uint64_t));
 			break;
 
 
@@ -1087,14 +1171,16 @@ void updateregs(struct unwind_frame *uwf, struct staterecord *srec, uint64_t pro
 
 			/* Check if frame has been setup. */
 			if (srec->psp.offset == INVALID) {
-				printf("psprel used without setting up stackframe!!! \n");
+				printf("psprel used without setting up "
+				       "stackframe!!! \n");
 				break;
 			}
 
 			roffset = stptr[i].offset;
 
 			/* Fetch from sp + offset */
-			memcpy(&gr[i], (char *) uwf->psp + 16 - (roffset * 4), sizeof(uint64_t));
+			memcpy(&gr[i], (char *) uwf->psp + 16 - (roffset * 4),
+			       sizeof(uint64_t));
 			break;
 
 		case UNSAVED:
@@ -1112,11 +1198,11 @@ void updateregs(struct unwind_frame *uwf, struct staterecord *srec, uint64_t pro
 }
 
 
-/* Locates unwind table entry, given unwind table entry info.
+/*
+ * Locates unwind table entry, given unwind table entry info.
  * Expects the variables ia64_unwindtab, and ia64_unwindtablen
  * to be set appropriately.
  */
-
 struct uwtable_ent *
 get_unwind_table_entry(uint64_t iprel)
 {
@@ -1124,9 +1210,8 @@ get_unwind_table_entry(uint64_t iprel)
 	extern uint64_t ia64_unwindtab, ia64_unwindtablen;
 
 	struct uwtable_ent *uwt;
-
-
 	int tabent;
+
 
 	for(uwt = (struct uwtable_ent *) ia64_unwindtab, tabent = 0; 
 	    /* The Runtime spec tells me the table entries are sorted. */
@@ -1159,9 +1244,8 @@ get_unwind_table_entry(uint64_t iprel)
 /* 
  * Reads unwind table info and updates register values.
  */
-
 void 
-patchunwindframe(struct unwind_frame *uwf, uint64_t iprel, uint64_t relocoffset) 
+patchunwindframe(struct unwind_frame *uwf, uint64_t iprel, uint64_t relocoffset)
 {
 
 	extern struct recordchain strc[];
@@ -1169,11 +1253,12 @@ patchunwindframe(struct unwind_frame *uwf, uint64_t iprel, uint64_t relocoffset)
 	struct uwtable_ent *uwt;
 	uint64_t infoptr, procoffset, slotoffset;
 
+#if 0 /* does not work - moved to assertion at the call site */
 	if (iprel < 0) {
 		panic("unwind ip out of range!!! \n");
 		return;
 	}
-
+#endif
 
 	uwt = get_unwind_table_entry(iprel);
 
@@ -1183,16 +1268,17 @@ patchunwindframe(struct unwind_frame *uwf, uint64_t iprel, uint64_t relocoffset)
 
 	if (infoptr > relocoffset) {
 		buildrecordchain(infoptr, NULL);
+	} else {
+		return;
 	}
-	else return;
 	
 	slotoffset = iprel & 3;
 
 	/* procoffset in Number of _slots_ , _not_ a byte offset. */
 
-	procoffset = (((iprel - slotoffset) - (uwt->start)) / 0x10 * 3) + slotoffset; 
+	procoffset = (((iprel - slotoffset) - (uwt->start)) / 0x10 * 3)
+		+ slotoffset; 
 	srec = buildrecordstack(strc, procoffset);
 
 	updateregs(uwf, srec, procoffset);
 }
-

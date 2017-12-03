@@ -1,4 +1,4 @@
-/*	$NetBSD: extent.h,v 1.19 2012/01/27 18:53:10 para Exp $	*/
+/*	$NetBSD: extent.h,v 1.19.6.1 2017/12/03 11:39:20 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -36,6 +36,10 @@
 #include <sys/mutex.h>
 #include <sys/condvar.h>
 
+#ifndef _KERNEL
+#include <stdbool.h>
+#endif
+
 struct extent_region {
 	LIST_ENTRY(extent_region) er_link;	/* link in region list */
 	u_long 	er_start;		/* start of region */
@@ -55,6 +59,7 @@ struct extent {
 	u_long	ex_start;		/* start of extent */
 	u_long	ex_end;			/* end of extent */
 	int	ex_flags;		/* misc. information */
+	bool	ex_flwanted;		/* someone asleep on freelist */
 };
 
 struct extent_fixed {
@@ -66,21 +71,22 @@ struct extent_fixed {
 };
 
 /* ex_flags; for internal use only */
-#define EXF_FIXED	0x01		/* extent uses fixed storage */
-#define EXF_NOCOALESCE	0x02		/* coalescing of regions not allowed */
-#define EXF_FLWANTED	0x08		/* someone asleep on freelist */
+#define EXF_FIXED	__BIT(0)	/* extent uses fixed storage */
+#define EXF_NOCOALESCE	__BIT(1)	/* coalescing of regions not allowed */
+#define EXF_EARLY	__BIT(2)	/* no need to lock */
 
-#define EXF_BITS	"\20\4FLWANTED\2NOCOALESCE\1FIXED"
+#define EXF_BITS	"\20\3EARLY\2NOCOALESCE\1FIXED"
 
 /* misc. flags passed to extent functions */
-#define EX_NOWAIT	0x00		/* not safe to sleep */
-#define EX_WAITOK	0x01		/* safe to sleep */
-#define EX_FAST		0x02		/* take first fit in extent_alloc() */
-#define EX_CATCH	0x04		/* catch signals while sleeping */
-#define EX_NOCOALESCE	0x08		/* create a non-coalescing extent */
-#define EX_MALLOCOK	0x10		/* safe to call kmem_alloc() */
-#define EX_WAITSPACE	0x20		/* wait for space to become free */
-#define EX_BOUNDZERO	0x40		/* boundary lines start at 0 */
+#define EX_NOWAIT	0		/* not safe to sleep */
+#define EX_WAITOK	__BIT(0)	/* safe to sleep */
+#define EX_FAST		__BIT(1)	/* take first fit in extent_alloc() */
+#define EX_CATCH	__BIT(2)	/* catch signals while sleeping */
+#define EX_NOCOALESCE	__BIT(3)	/* create a non-coalescing extent */
+#define EX_MALLOCOK	__BIT(4)	/* safe to call kmem_alloc() */
+#define EX_WAITSPACE	__BIT(5)	/* wait for space to become free */
+#define EX_BOUNDZERO	__BIT(6)	/* boundary lines start at 0 */
+#define EX_EARLY	__BIT(7)	/* safe for early kernel bootstrap */
 
 /*
  * Special place holders for "alignment" and "boundary" arguments,

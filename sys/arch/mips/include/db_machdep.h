@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.28 2011/07/09 16:58:05 matt Exp $ */
+/* $NetBSD: db_machdep.h,v 1.28.12.1 2017/12/03 11:36:27 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -41,13 +41,15 @@
 #include <mips/pcb.h>
 
 #define	DB_ELF_SYMBOLS
-#ifndef DB_ELFSIZE
-#define	DB_ELFSIZE	32
-#endif
 
 typedef	vaddr_t		db_addr_t;	/* address - unsigned */
+#ifdef __mips_n32
+#define	DDB_EXPR_FMT	"ll"		/* expression is long long */
+typedef	int64_t		db_expr_t;	/* expression - signed */
+#else
 #define	DDB_EXPR_FMT	"l"		/* expression is long */
 typedef	long		db_expr_t;	/* expression - signed */
+#endif
 
 typedef struct reg db_regs_t;
 

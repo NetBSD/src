@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_usb.c,v 1.1.2.3 2014/08/20 00:02:45 tls Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_usb.c,v 1.1.2.4 2017/12/03 11:35:52 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -113,8 +113,8 @@ ohci_bcmusb_attach(device_t parent, device_t self, void *aux)
 	sc->iot = usbaa->usbaa_bst;
 	sc->ioh = usbaa->usbaa_bsh;
 	sc->sc_size = usbaa->usbaa_size;
-	sc->sc_bus.dmatag = usbaa->usbaa_dmat;
-	sc->sc_bus.hci_private = sc;
+	sc->sc_bus.ub_dmatag = usbaa->usbaa_dmat;
+	sc->sc_bus.ub_hcpriv = sc;
 
 	sc->sc_id_vendor = PCI_VENDOR_BROADCOM;
 	strlcpy(sc->sc_vendor, "Broadcom", sizeof(sc->sc_vendor));
@@ -123,7 +123,7 @@ ohci_bcmusb_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": OHCI USB controller\n");
 
 	int error = ohci_init(sc);
-	if (error != USBD_NORMAL_COMPLETION) {
+	if (error) {
 		aprint_error_dev(self, "init failed, error=%d\n", error);
 		return;
 	}
@@ -168,9 +168,9 @@ ehci_bcmusb_attach(device_t parent, device_t self, void *aux)
 	sc->iot = usbaa->usbaa_bst;
 	sc->ioh = usbaa->usbaa_bsh;
 	sc->sc_size = usbaa->usbaa_size;
-	sc->sc_bus.dmatag = usbaa->usbaa_dmat;
-	sc->sc_bus.hci_private = sc;
-	sc->sc_bus.usbrev = USBREV_2_0;
+	sc->sc_bus.ub_dmatag = usbaa->usbaa_dmat;
+	sc->sc_bus.ub_hcpriv = sc;
+	sc->sc_bus.ub_revision = USBREV_2_0;
 	sc->sc_ncomp = 0;
 	if (usbsc->usbsc_ohci_dev != NULL) {
 		sc->sc_comps[sc->sc_ncomp++] = usbsc->usbsc_ohci_dev;
@@ -183,7 +183,7 @@ ehci_bcmusb_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": ECHI USB controller\n");
 
 	int error = ehci_init(sc);
-	if (error != USBD_NORMAL_COMPLETION) {
+	if (error) {
 		aprint_error_dev(self, "init failed, error=%d\n", error);
 		return;
 	}

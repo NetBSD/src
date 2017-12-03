@@ -1,3 +1,5 @@
+/*	$NetBSD: filemon_wrapper.c,v 1.3.12.3 2017/12/03 11:37:01 jdolecek Exp $	*/
+
 /*
  * Copyright (c) 2010, Juniper Networks, Inc.
  *
@@ -24,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filemon_wrapper.c,v 1.3.12.2 2014/08/20 00:03:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filemon_wrapper.c,v 1.3.12.3 2017/12/03 11:37:01 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -37,31 +39,108 @@ __KERNEL_RCSID(0, "$NetBSD: filemon_wrapper.c,v 1.3.12.2 2014/08/20 00:03:36 tls
 
 #include "filemon.h"
 
+static int filemon_wrapper_chdir(struct lwp *, const struct sys_chdir_args *,
+				register_t *);
+static int filemon_wrapper_execve(struct lwp *, struct sys_execve_args *,
+				register_t *);
+static void filemon_wrapper_sys_exit(struct lwp *, struct sys_exit_args *,
+				register_t *);
+static int filemon_wrapper_fork(struct lwp *, const void *, register_t *);
+static int filemon_wrapper_link(struct lwp *, struct sys_link_args *,
+				register_t *);
+static int filemon_wrapper_open(struct lwp *, struct sys_open_args *,
+				register_t *);
+static int filemon_wrapper_openat(struct lwp *, struct sys_openat_args *,
+				register_t *);
+static int filemon_wrapper_rename(struct lwp *, struct sys_rename_args *,
+				register_t *);
+static int filemon_wrapper_symlink(struct lwp *, struct sys_symlink_args *,
+				register_t *);
+static int filemon_wrapper_unlink(struct lwp *, struct sys_unlink_args *,
+				register_t *);
+static int filemon_wrapper_vfork(struct lwp *, const void *, register_t *);
+
+const struct hijack filemon_hijack[] = {
+	{ SYS_chdir,
+	   { (sy_call_t *)sys_chdir,   (sy_call_t *)filemon_wrapper_chdir   } },
+	{ SYS_execve,
+	   { (sy_call_t *)sys_execve,  (sy_call_t *)filemon_wrapper_execve  } },
+	{ SYS_exit,
+	   { (sy_call_t *)sys_exit,    (sy_call_t *)filemon_wrapper_sys_exit } },
+	{ SYS_fork,
+	   { (sy_call_t *)sys_fork,    (sy_call_t *)filemon_wrapper_fork    } },
+	{ SYS_link,
+	   { (sy_call_t *)sys_link,    (sy_call_t *)filemon_wrapper_link    } },
+	{ SYS_open,
+	   { (sy_call_t *)sys_open,    (sy_call_t *)filemon_wrapper_open    } },
+	{ SYS_openat,
+	   { (sy_call_t *)sys_openat,  (sy_call_t *)filemon_wrapper_openat  } },
+	{ SYS_rename,
+	   { (sy_call_t *)sys_rename,  (sy_call_t *)filemon_wrapper_rename  } },
+	{ SYS_symlink,
+	   { (sy_call_t *)sys_symlink, (sy_call_t *)filemon_wrapper_symlink } },
+	{ SYS_unlink,
+	   { (sy_call_t *)sys_unlink,  (sy_call_t *)filemon_wrapper_unlink  } },
+	{ SYS_vfork,
+	   { (sy_call_t *)sys_vfork,   (sy_call_t *)filemon_wrapper_vfork   } },
+	{ -1, {NULL, NULL } }
+};
+
+int
+syscall_hijack(struct sysent *sv_table, const struct hijack *hj_pkg,
+		bool restore)
+{
+	int from, to;
+	const struct hijack *entry;
+
+	if (restore)		/* Which entry should currently match? */
+		from = 1;
+	else
+		from = 0;
+	to = 1 - from;		/* Which entry will we replace with? */
+
+	KASSERT(kernconfig_is_held());
+
+	/* First, make sure that all of the old values match */
+	for (entry = hj_pkg; entry->hj_index >= 0; entry++)
+		if (sv_table[entry->hj_index].sy_call != entry->hj_funcs[from])
+			break;
+
+	if (entry->hj_index >= 0)
+		return EBUSY;
+
+	/* Now replace the old values with the new ones */
+	for (entry = hj_pkg; entry->hj_index >= 0; entry++)
+		sv_table[entry->hj_index].sy_call = entry->hj_funcs[to];
+
+	return 0;
+}
+
 static int
 filemon_wrapper_chdir(struct lwp * l, const struct sys_chdir_args * uap,
     register_t * retval)
 {
-	int ret;
 	int error;
 	size_t done;
 	struct filemon *filemon;
 	
-	if ((ret = sys_chdir(l, uap, retval)) == 0) {
-		filemon = filemon_lookup(curproc);
+	if ((error = sys_chdir(l, uap, retval)) != 0)
+		return error;
 
-		if (filemon) {
+	filemon = filemon_lookup(curproc);
+	if (filemon == NULL)
+		return 0;
 
-			error = copyinstr(SCARG(uap, path), filemon->fm_fname1,
-			    sizeof(filemon->fm_fname1), &done);
-			if (error == 0) {
-				filemon_printf(filemon,
-				    "C %d %s\n",
-				    curproc->p_pid, filemon->fm_fname1);
-			}
-			rw_exit(&filemon->fm_mtx);
-		}
-	}
-	return (ret);
+	error = copyinstr(SCARG(uap, path), filemon->fm_fname1,
+	    sizeof(filemon->fm_fname1), &done);
+	if (error)
+		goto out;
+
+	filemon_printf(filemon, "C %d %s\n",
+	    curproc->p_pid, filemon->fm_fname1);
+out:
+	rw_exit(&filemon->fm_mtx);
+	return 0;
 }
 
 static int
@@ -69,187 +148,235 @@ filemon_wrapper_execve(struct lwp * l, struct sys_execve_args * uap,
     register_t * retval)
 {
 	char fname[MAXPATHLEN];
-	int ret;
-	int error;
+	int error, cerror;
 	size_t done;
 	struct filemon *filemon;
-	
-	error = copyinstr(SCARG(uap, path), fname, sizeof(fname), &done);
 
-	if ((ret = sys_execve(l, uap, retval)) == EJUSTRETURN && error == 0) {
-		filemon = filemon_lookup(curproc);
+	cerror = copyinstr(SCARG(uap, path), fname, sizeof(fname), &done);
 
-		if (filemon) {
-			filemon_printf(filemon, "E %d %s\n",
-			    curproc->p_pid, fname);
-			rw_exit(&filemon->fm_mtx);
-		}
-	}
-	return (ret);
+	if ((error = sys_execve(l, uap, retval)) != EJUSTRETURN)
+		return error;
+
+	filemon = filemon_lookup(curproc);
+	if (filemon == NULL)
+		return EJUSTRETURN;
+
+	if (cerror)
+		goto out;
+
+	filemon_printf(filemon, "E %d %s\n", curproc->p_pid, fname);
+out:
+	rw_exit(&filemon->fm_mtx);
+	return EJUSTRETURN;
 }
 
 
 static int
 filemon_wrapper_fork(struct lwp * l, const void *v, register_t * retval)
 {
-	int ret;
+	int error;
 	struct filemon *filemon;
 
-	if ((ret = sys_fork(l, v, retval)) == 0) {
-		filemon = filemon_lookup(curproc);
+	if ((error = sys_fork(l, v, retval)) != 0)
+		return error;
 
-		if (filemon) {
-			filemon_printf(filemon, "F %d %ld\n",
-			    curproc->p_pid, (long) retval[0]);
-			rw_exit(&filemon->fm_mtx);
-		}
-	}
-	return (ret);
+	filemon = filemon_lookup(curproc);
+	if (filemon == NULL)
+		return 0;
+
+	filemon_printf(filemon, "F %d %ld\n", curproc->p_pid, (long) retval[0]);
+
+	rw_exit(&filemon->fm_mtx);
+	return 0;
 }
 
 static int
 filemon_wrapper_vfork(struct lwp * l, const void *v, register_t * retval)
 {
-	int ret;
+	int error;
 	struct filemon *filemon;
 
-	if ((ret = sys_vfork(l, v, retval)) == 0) {
-		filemon = filemon_lookup(curproc);
+	if ((error = sys_vfork(l, v, retval)) != 0)
+		return error;
 
-		if (filemon) {
-			filemon_printf(filemon, "F %d %ld\n",
-			    curproc->p_pid, (long) retval[0]);
-			rw_exit(&filemon->fm_mtx);
-		}
+	filemon = filemon_lookup(curproc);
+	if (filemon == NULL)
+		return 0;
+
+	filemon_printf(filemon, "F %d %ld\n", curproc->p_pid, (long) retval[0]);
+
+	rw_exit(&filemon->fm_mtx);
+	return 0;
+}
+
+static void
+filemon_flags(struct filemon * filemon, int f)
+{
+	if (f & O_RDWR) {
+		/* we want a separate R record */
+		filemon_printf(filemon, "R %d %s\n", curproc->p_pid,
+		    filemon->fm_fname1);
 	}
-	return (ret);
+
+	filemon_printf(filemon, "%c %d %s\n", (f & O_ACCMODE) ? 'W' : 'R',
+	    curproc->p_pid, filemon->fm_fname1);
 }
 
 static int
 filemon_wrapper_open(struct lwp * l, struct sys_open_args * uap,
     register_t * retval)
 {
-	int ret;
 	int error;
 	size_t done;
 	struct filemon *filemon;
 
-	if ((ret = sys_open(l, uap, retval)) == 0) {
-		filemon = filemon_lookup(curproc);
+	if ((error = sys_open(l, uap, retval)) != 0)
+		return error;
 
-		if (filemon) {
-			error = copyinstr(SCARG(uap, path), filemon->fm_fname1,
-			    sizeof(filemon->fm_fname1), &done);
-			if (error == 0) {
-				if (SCARG(uap, flags) & O_RDWR) {
-					/* we want a separate R record */
-					filemon_printf(filemon,
-						"R %d %s\n",
-						curproc->p_pid,
-						filemon->fm_fname1);
-				}			
-				filemon_printf(filemon,
-				    "%c %d %s\n",
-				    (SCARG(uap, flags) & O_ACCMODE) ? 'W' : 'R',
-				    curproc->p_pid, filemon->fm_fname1);
-			}
-			rw_exit(&filemon->fm_mtx);
-		}
+	filemon = filemon_lookup(curproc);
+	if (filemon == NULL)
+		return 0;
+
+	error = copyinstr(SCARG(uap, path), filemon->fm_fname1,
+	    sizeof(filemon->fm_fname1), &done);
+	if (error)
+		goto out;
+
+	filemon_flags(filemon, SCARG(uap, flags));
+out:
+	rw_exit(&filemon->fm_mtx);
+	return 0;
+}
+
+static int
+filemon_wrapper_openat(struct lwp * l, struct sys_openat_args * uap,
+    register_t * retval)
+{
+	int error;
+	size_t done;
+	struct filemon *filemon;
+
+	if ((error = sys_openat(l, uap, retval)) != 0)
+		return error;
+
+	filemon = filemon_lookup(curproc);
+	if (filemon == NULL)
+		return 0;
+
+	error = copyinstr(SCARG(uap, path), filemon->fm_fname1,
+	    sizeof(filemon->fm_fname1), &done);
+	if (error)
+		goto out;
+
+	if (filemon->fm_fname1[0] != '/' && SCARG(uap, fd) != AT_FDCWD) {
+		/*
+		 * Rats we cannot just treat like open.
+		 * Output an 'A' record as a clue.
+		 */
+		filemon_printf(filemon, "A %d %s\n", curproc->p_pid,
+		    filemon->fm_fname1);
 	}
-	return (ret);
+
+	filemon_flags(filemon, SCARG(uap, oflags));
+out:
+	rw_exit(&filemon->fm_mtx);
+	return 0;
 }
 
 static int
 filemon_wrapper_rename(struct lwp * l, struct sys_rename_args * uap,
     register_t * retval)
 {
-	int ret;
 	int error;
 	size_t done;
 	struct filemon *filemon;
 
-	if ((ret = sys_rename(l, uap, retval)) == 0) {
-		filemon = filemon_lookup(curproc);
+	if ((error = sys_rename(l, uap, retval)) != 0)
+		return error;
 
-		if (filemon) {
-			error = copyinstr(SCARG(uap, from), filemon->fm_fname1,
-			    sizeof(filemon->fm_fname1), &done);
-			if (error == 0) 
-				error = copyinstr(SCARG(uap, to),
-				    filemon->fm_fname2,
-				    sizeof(filemon->fm_fname2), &done);
-			if (error == 0) {
-				filemon_printf(filemon,
-				    "M %d '%s' '%s'\n",
-				    curproc->p_pid, filemon->fm_fname1,
-				    filemon->fm_fname2);
-			}
-			rw_exit(&filemon->fm_mtx);
-		}
-	}
-	return (ret);
+	filemon = filemon_lookup(curproc);
+	if (filemon == NULL)
+		return 0;
+
+	error = copyinstr(SCARG(uap, from), filemon->fm_fname1,
+	    sizeof(filemon->fm_fname1), &done);
+	if (error)
+		goto out;
+
+	error = copyinstr(SCARG(uap, to), filemon->fm_fname2,
+	    sizeof(filemon->fm_fname2), &done);
+	if (error)
+		goto out;
+
+	filemon_printf(filemon, "M %d '%s' '%s'\n", curproc->p_pid,
+	    filemon->fm_fname1, filemon->fm_fname2);
+out:
+	rw_exit(&filemon->fm_mtx);
+	return 0;
 }
 
 static int
 filemon_wrapper_link(struct lwp * l, struct sys_link_args * uap,
     register_t * retval)
 {
-	int ret;
 	int error;
 	size_t done;
 	struct filemon *filemon;
 
-	if ((ret = sys_link(l, uap, retval)) == 0) {
-		filemon = filemon_lookup(curproc);
+	if ((error = sys_link(l, uap, retval)) != 0)
+		return error;
 
-		if (filemon) {
-			error = copyinstr(SCARG(uap, path),
-			    filemon->fm_fname1, sizeof(filemon->fm_fname1),
-			    &done);
-			if (error == 0)
-				error = copyinstr(SCARG(uap, link),
-				    filemon->fm_fname2,
-				    sizeof(filemon->fm_fname2), &done);
-			if (error == 0) {
-				filemon_printf(filemon, "L %d '%s' '%s'\n",
-				    curproc->p_pid, filemon->fm_fname1,
-				    filemon->fm_fname2);
-			}
-			rw_exit(&filemon->fm_mtx);
-		}
-	}
-	return (ret);
+	filemon = filemon_lookup(curproc);
+	if (filemon == NULL)
+		return 0;
+
+	error = copyinstr(SCARG(uap, path), filemon->fm_fname1,
+	    sizeof(filemon->fm_fname1), &done);
+	if (error)
+		goto out;
+
+	error = copyinstr(SCARG(uap, link), filemon->fm_fname2,
+	    sizeof(filemon->fm_fname2), &done);
+	if (error)
+		goto out;
+
+	filemon_printf(filemon, "L %d '%s' '%s'\n", curproc->p_pid,
+	    filemon->fm_fname1, filemon->fm_fname2);
+out:
+	rw_exit(&filemon->fm_mtx);
+	return 0;
 }
 
 static int
 filemon_wrapper_symlink(struct lwp * l, struct sys_symlink_args * uap,
     register_t * retval)
 {
-	int ret;
 	int error;
 	size_t done;
 	struct filemon *filemon;
 
-	if ((ret = sys_symlink(l, uap, retval)) == 0) {
-		filemon = filemon_lookup(curproc);
+	if ((error = sys_symlink(l, uap, retval)) != 0)
+		return error;
 
-		if (filemon) {
-			error = copyinstr(SCARG(uap, path),
-			    filemon->fm_fname1,
-			    sizeof(filemon->fm_fname1), &done);
-			if (error == 0)
-				error = copyinstr(SCARG(uap, link),
-				    filemon->fm_fname2,
-				    sizeof(filemon->fm_fname2), &done);
-			if (error == 0) {
-				filemon_printf(filemon, "L %d '%s' '%s'\n",
-				    curproc->p_pid, filemon->fm_fname1,
-				    filemon->fm_fname2);
-			}
-			rw_exit(&filemon->fm_mtx);
-		}
-	}
-	return (ret);
+	filemon = filemon_lookup(curproc);
+	if (filemon == NULL)
+		return 0;
+
+	error = copyinstr(SCARG(uap, path), filemon->fm_fname1,
+	    sizeof(filemon->fm_fname1), &done);
+	if (error)
+		goto out;
+
+	error = copyinstr(SCARG(uap, link), filemon->fm_fname2,
+	    sizeof(filemon->fm_fname2), &done);
+	if (error)
+		goto out;
+
+	filemon_printf(filemon, "L %d '%s' '%s'\n", curproc->p_pid,
+	    filemon->fm_fname1, filemon->fm_fname2);
+out:
+	rw_exit(&filemon->fm_mtx);
+	return 0;
 }
 
 
@@ -264,75 +391,67 @@ filemon_wrapper_sys_exit(struct lwp * l, struct sys_exit_args * uap,
 	if (filemon) {
 		filemon_printf(filemon, "X %d %d\n",
 		    curproc->p_pid, SCARG(uap, rval));
+
 		/* Check if the monitored process is about to exit. */
-		if (filemon->fm_pid == curproc->p_pid) {
+		if (filemon->fm_pid == curproc->p_pid)
 			filemon_printf(filemon, "# Bye bye\n");
-		}
+
 		rw_exit(&filemon->fm_mtx);
 	}
 	sys_exit(l, uap, retval);
+	/* NOT REACHED */
 }
 
 static int
 filemon_wrapper_unlink(struct lwp * l, struct sys_unlink_args * uap,
     register_t * retval)
 {
-	int ret;
 	int error;
 	size_t done;
 	struct filemon *filemon;
 
-	if ((ret = sys_unlink(l, uap, retval)) == 0) {
-		filemon = filemon_lookup(curproc);
+	if ((error = sys_unlink(l, uap, retval)) != 0)
+		return error;
 
-		if (filemon) {
-			error = copyinstr(SCARG(uap, path),
-			    filemon->fm_fname1,
-			    sizeof(filemon->fm_fname1), &done);
-			if (error == 0) {
-				filemon_printf(filemon, "D %d %s\n",
-				    curproc->p_pid, filemon->fm_fname1);
-			}
-			rw_exit(&filemon->fm_mtx);
-		}
-	}
-	return (ret);
+	filemon = filemon_lookup(curproc);
+	if (filemon == NULL)
+		return 0;
+
+	error = copyinstr(SCARG(uap, path), filemon->fm_fname1,
+	    sizeof(filemon->fm_fname1), &done);
+	if (error)
+		goto out;
+
+	filemon_printf(filemon, "D %d %s\n",
+	    curproc->p_pid, filemon->fm_fname1);
+out:
+	rw_exit(&filemon->fm_mtx);
+	return 0;
 }
 
 
-void
+int
 filemon_wrapper_install(void)
 {
-	struct sysent *sv_table = curproc->p_emul->e_sysent;
+	int error;
+	struct sysent *sv_table = emul_netbsd.e_sysent;
 
-	sv_table[SYS_chdir].sy_call = (sy_call_t *) filemon_wrapper_chdir;
-	sv_table[SYS_execve].sy_call = (sy_call_t *) filemon_wrapper_execve;
-	sv_table[SYS_exit].sy_call = (sy_call_t *) filemon_wrapper_sys_exit;
-	sv_table[SYS_fork].sy_call = (sy_call_t *) filemon_wrapper_fork;
-	sv_table[SYS_link].sy_call = (sy_call_t *) filemon_wrapper_link;
-	sv_table[SYS_open].sy_call = (sy_call_t *) filemon_wrapper_open;
-	sv_table[SYS_rename].sy_call = (sy_call_t *) filemon_wrapper_rename;
-	sv_table[SYS_symlink].sy_call = (sy_call_t *) filemon_wrapper_symlink;
-	sv_table[SYS_unlink].sy_call = (sy_call_t *) filemon_wrapper_unlink;
-	sv_table[SYS_vfork].sy_call = (sy_call_t *) filemon_wrapper_vfork;
+	kernconfig_lock();
+	error = syscall_hijack(sv_table, filemon_hijack, false);
+	kernconfig_unlock();
+
+	return error;
 }
 
 int
 filemon_wrapper_deinstall(void)
 {
-	struct sysent *sv_table = curproc->p_emul->e_sysent;
+	int error;
+	struct sysent *sv_table = emul_netbsd.e_sysent;
 
-	if (sv_table[SYS_chdir].sy_call != (sy_call_t *) filemon_wrapper_chdir)
-	    return EBUSY;
-	sv_table[SYS_chdir].sy_call = (sy_call_t *) sys_chdir;
-	sv_table[SYS_execve].sy_call = (sy_call_t *) sys_execve;
-	sv_table[SYS_exit].sy_call = (sy_call_t *) sys_exit;
-	sv_table[SYS_fork].sy_call = (sy_call_t *) sys_fork;
-	sv_table[SYS_link].sy_call = (sy_call_t *) sys_link;
-	sv_table[SYS_open].sy_call = (sy_call_t *) sys_open;
-	sv_table[SYS_rename].sy_call = (sy_call_t *) sys_rename;
-	sv_table[SYS_symlink].sy_call = (sy_call_t *) sys_symlink;
-	sv_table[SYS_unlink].sy_call = (sy_call_t *) sys_unlink;
-	sv_table[SYS_vfork].sy_call = (sy_call_t *) sys_vfork;
-	return 0;
+	kernconfig_lock();
+	error = syscall_hijack(sv_table, filemon_hijack, true);
+	kernconfig_unlock();
+
+	return error;
 }

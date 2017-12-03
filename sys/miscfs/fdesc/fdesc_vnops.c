@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.114.12.1 2014/08/20 00:04:30 tls Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.114.12.2 2017/12/03 11:38:47 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.114.12.1 2014/08/20 00:04:30 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.114.12.2 2017/12/03 11:38:47 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -295,6 +295,8 @@ bad:
 good:
 	KASSERT(ix != -1);
 	error = vcache_get(dvp->v_mount, &ix, sizeof(ix), vpp);
+	if (error == 0 && ix == FD_CTTY)
+		(*vpp)->v_type = VCHR;
 	return error;
 }
 
@@ -344,9 +346,9 @@ fdesc_attr(int fd, struct vattr *vap, kauth_cred_t cred)
 
 	switch (fp->f_type) {
 	case DTYPE_VNODE:
-		vn_lock((struct vnode *) fp->f_data, LK_SHARED | LK_RETRY);
-		error = VOP_GETATTR((struct vnode *) fp->f_data, vap, cred);
-		VOP_UNLOCK((struct vnode *) fp->f_data);
+		vn_lock(fp->f_vnode, LK_SHARED | LK_RETRY);
+		error = VOP_GETATTR(fp->f_vnode, vap, cred);
+		VOP_UNLOCK(fp->f_vnode);
 		if (error == 0 && vap->va_type == VDIR) {
 			/*
 			 * directories can cause loops in the namespace,
@@ -834,7 +836,7 @@ fdesc_kqfilter(void *v)
 int
 fdesc_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -846,21 +848,22 @@ fdesc_inactive(void *v)
 	 */
 	if (fd->fd_type == Fctty || fd->fd_type == Fdesc)
 		vp->v_type = VNON;
-	VOP_UNLOCK(vp);
+
 	return (0);
 }
 
 int
 fdesc_reclaim(void *v)
 {
-	struct vop_reclaim_args /* {
+	struct vop_reclaim_v2_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct fdescnode *fd = VTOFDESC(vp);
 
+	VOP_UNLOCK(vp);
+
 	vp->v_data = NULL;
-	vcache_remove(vp->v_mount, &fd->fd_ix, sizeof(fd->fd_ix));
 	kmem_free(fd, sizeof(struct fdescnode));
 
 	return (0);
@@ -920,14 +923,13 @@ fdesc_print(void *v)
 int
 fdesc_link(void *v)
 {
-	struct vop_link_args /* {
+	struct vop_link_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
 	} */ *ap = v;
 
 	VOP_ABORTOP(ap->a_dvp, ap->a_cnp);
-	vput(ap->a_dvp);
 	return (EROFS);
 }
 

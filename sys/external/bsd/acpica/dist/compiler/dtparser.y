@@ -6,7 +6,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,10 +43,16 @@
  */
 
 #include "aslcompiler.h"
-#include "dtcompiler.h"
 
 #define _COMPONENT          DT_COMPILER
         ACPI_MODULE_NAME    ("dtparser")
+
+void *                      AslLocalAllocate (unsigned int Size);
+
+/* Bison/yacc configuration */
+
+#undef alloca
+#define alloca              AslLocalAllocate
 
 int                         DtParserlex (void);
 int                         DtParserparse (void);
@@ -162,17 +168,24 @@ Expression
 
     | EXPOP_LABEL                                   { $$ = DtResolveLabel (DtParsertext);}
 
-      /* Default base for a non-prefixed integer is 16 */
+      /*
+       * All constants for the data table compiler are in hex, whether a (optional) 0x
+       * prefix is present or not. For example, these two input strings are equivalent:
+       *    1234
+       *    0x1234
+       */
 
-    | EXPOP_NUMBER                                  { UtStrtoul64 (DtParsertext, 16, &$$);}
+      /* Non-prefixed hex number */
+
+    | EXPOP_NUMBER                                  { $$ = DtDoConstant (DtParsertext);}
 
       /* Standard hex number (0x1234) */
 
-    | EXPOP_HEX_NUMBER                              { UtStrtoul64 (DtParsertext, 16, &$$);}
+    | EXPOP_HEX_NUMBER                              { $$ = DtDoConstant (DtParsertext);}
 
-      /* TBD: Decimal number with prefix (0d1234) - Not supported by UtStrtoul64 at this time */
+      /* Possible TBD: Decimal number with prefix (0d1234) - Not supported this time */
 
-    | EXPOP_DECIMAL_NUMBER                          { UtStrtoul64 (DtParsertext, 10, &$$);}
+    | EXPOP_DECIMAL_NUMBER                          { $$ = DtDoConstant (DtParsertext);}
     ;
 %%
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_puc.c,v 1.14.48.1 2014/08/20 00:03:43 tls Exp $	*/
+/*	$NetBSD: lpt_puc.c,v 1.14.48.2 2017/12/03 11:37:08 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_puc.c,v 1.14.48.1 2014/08/20 00:03:43 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_puc.c,v 1.14.48.2 2017/12/03 11:37:08 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,9 +79,10 @@ lpt_puc_attach(device_t parent, device_t self, void *aux)
 	aprint_naive(": Parallel port");
 	aprint_normal(": ");
 
-	intrstr = pci_intr_string(aa->pc, aa->intrhandle, intrbuf, sizeof(intrbuf));
-	sc->sc_ih = pci_intr_establish(aa->pc, aa->intrhandle, IPL_TTY,
-	    lptintr, sc);
+	intrstr = pci_intr_string(aa->pc, aa->intrhandle, intrbuf,
+	    sizeof(intrbuf));
+	sc->sc_ih = pci_intr_establish_xname(aa->pc, aa->intrhandle, IPL_TTY,
+	    lptintr, sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error("couldn't establish interrupt");
 		if (intrstr != NULL)

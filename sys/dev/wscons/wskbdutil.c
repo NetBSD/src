@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdutil.c,v 1.18 2010/02/05 18:26:38 drochner Exp $	*/
+/*	$NetBSD: wskbdutil.c,v 1.18.22.1 2017/12/03 11:37:37 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbdutil.c,v 1.18 2010/02/05 18:26:38 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbdutil.c,v 1.18.22.1 2017/12/03 11:37:37 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -271,7 +271,7 @@ static struct compose_tab_s {
 	{ { KS_dead_slash,		KS_l },			KS_lstroke }
 };
 
-#define COMPOSE_SIZE	sizeof(compose_tab)/sizeof(compose_tab[0])
+#define COMPOSE_SIZE	__arraycount(compose_tab)
 
 static int compose_tab_inorder = 0;
 
@@ -504,7 +504,7 @@ wskbd_load_keymap(const struct wskbd_mapdata *mapdata,
 			mp++;
 		}
 
-		if (stack_ptr == sizeof(stack)/sizeof(stack[0]))
+		if (stack_ptr == __arraycount(stack))
 			panic("wskbd_load_keymap: %d: recursion too deep",
 			      mapdata->layout);
 		if (mp->map_size <= 0)

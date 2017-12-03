@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_stub.c,v 1.6 2012/01/30 23:31:27 matt Exp $	*/
+/*	$NetBSD: bpf_stub.c,v 1.6.6.1 2017/12/03 11:39:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf_stub.c,v 1.6 2012/01/30 23:31:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf_stub.c,v 1.6.6.1 2017/12/03 11:39:02 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -67,6 +67,9 @@ struct bpf_ops bpf_ops_stub = {
 	.bpf_mtap_af = 		(void *)bpf_stub_warn,
 	.bpf_mtap_sl_in = 	(void *)bpf_stub_warn,
 	.bpf_mtap_sl_out =	(void *)bpf_stub_warn,
+
+	.bpf_mtap_softint_init =	(void *)bpf_stub_null,
+	.bpf_mtap_softint =		(void *)bpf_stub_warn,
 };
 struct bpf_ops *bpf_ops;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.3 2008/04/28 20:23:16 martin Exp $	*/
+/*	$NetBSD: zs.c,v 1.3.44.1 2017/12/03 11:36:00 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,19 +37,22 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.3 2008/04/28 20:23:16 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.3.44.1 2017/12/03 11:36:00 jdolecek Exp $");
 
 #include "opt_ddb.h"
 
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/conf.h>
+#include <sys/cpu.h>
 #include <sys/device.h>
-#include <sys/tty.h>
 #include <sys/intr.h>
+#include <sys/tty.h>
+#include <sys/systm.h>
 
 #include <dev/cons.h>
 #include <dev/ic/z8530reg.h>
+
+#include <mips/cpuregs.h>
 
 #include <machine/autoconf.h>
 #include <machine/z8530var.h>

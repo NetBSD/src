@@ -1,4 +1,4 @@
-/*	$NetBSD: pca9564.c,v 1.1 2010/04/09 10:09:50 nonaka Exp $	*/
+/*	$NetBSD: pca9564.c,v 1.1.24.1 2017/12/03 11:37:03 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2010 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pca9564.c,v 1.1 2010/04/09 10:09:50 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pca9564.c,v 1.1.24.1 2017/12/03 11:37:03 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -113,6 +113,7 @@ pca9564_attach(struct pca9564_softc *sc)
 		break;
 	}
 
+	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_i2c;
 	(void) config_found_ia(sc->sc_dev, "i2cbus", &iba, iicbus_print);
 }

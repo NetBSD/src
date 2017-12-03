@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat6.c,v 1.3.2.2 2014/08/20 00:04:24 tls Exp $	*/
+/*	$NetBSD: ip_nat6.c,v 1.3.2.3 2017/12/03 11:38:02 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -2398,8 +2398,9 @@ find_out_wild_ports:
 /* Function:    ipf_nat6_lookupredir                                        */
 /* Returns:     nat6_t* - NULL == no match,                                 */
 /*                       else pointer to matching NAT entry                 */
-/* Parameters:  np(I) - pointer to description of packet to find NAT table  */
-/*                      entry for.                                          */
+/* Parameters:  softc(I) - pointer to soft context main structure           */
+/*              np(I)    - pointer to description of packet to find NAT     */
+/*                         table entry for.                                 */
 /*                                                                          */
 /* Lookup the NAT tables to search for a matching redirect                  */
 /* The contents of natlookup_t should imitate those found in a packet that  */
@@ -2414,12 +2415,13 @@ find_out_wild_ports:
 /*     nl_out* = destination information (translated)                       */
 /* ------------------------------------------------------------------------ */
 nat_t *
-ipf_nat6_lookupredir(natlookup_t *np)
+ipf_nat6_lookupredir(ipf_main_softc_t *softc, natlookup_t *np)
 {
 	fr_info_t fi;
 	nat_t *nat;
 
 	bzero((char *)&fi, sizeof(fi));
+	fi.fin_main_soft = softc;
 	if (np->nl_flags & IPN_IN) {
 		fi.fin_data[0] = ntohs(np->nl_realport);
 		fi.fin_data[1] = ntohs(np->nl_outport);
@@ -2469,8 +2471,8 @@ ipf_nat6_lookupredir(natlookup_t *np)
 				}
 			}
 
-			np->nl_realip6 = nat->nat_ndst6.in6;
-			np->nl_realport = nat->nat_ndport;
+			np->nl_realip6 = nat->nat_odst6.in6;
+			np->nl_realport = nat->nat_odport;
 		}
  	}
 

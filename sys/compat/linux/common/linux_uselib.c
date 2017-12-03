@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_uselib.c,v 1.30 2009/08/28 01:39:03 dholland Exp $	*/
+/*	$NetBSD: linux_uselib.c,v 1.30.22.1 2017/12/03 11:36:55 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -30,13 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_uselib.c,v 1.30 2009/08/28 01:39:03 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_uselib.c,v 1.30.22.1 2017/12/03 11:36:55 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
-#include <sys/malloc.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
@@ -100,20 +99,26 @@ linux_sys_uselib(struct lwp *l, const struct linux_sys_uselib_args *uap, registe
 	if (error != 0)
 		return error;
 
+	if (vp->v_type != VREG) {
+		error = EINVAL;
+		goto out;
+	}
+
 	if ((error = vn_rdwr(UIO_READ, vp, (void *) &hdr, LINUX_AOUT_HDR_SIZE,
 			     0, UIO_SYSSPACE, IO_NODELOCKED, l->l_cred,
 			     &rem, NULL))) {
-		vrele(vp);
-		return error;
+		goto out;
 	}
 
 	if (rem != 0) {
-		vrele(vp);
-		return ENOEXEC;
+		error = ENOEXEC;
+		goto out;
 	}
 
-	if (LINUX_N_MACHTYPE(&hdr) != LINUX_MID_MACHINE)
-		return ENOEXEC;
+	if (LINUX_N_MACHTYPE(&hdr) != LINUX_MID_MACHINE) {
+		error = ENOEXEC;
+		goto out;
+	}
 
 	magic = LINUX_N_MAGIC(&hdr);
 	taddr = hdr.a_entry & (~(PAGE_SIZE - 1));
@@ -123,7 +128,7 @@ linux_sys_uselib(struct lwp *l, const struct linux_sys_uselib_args *uap, registe
 
 	error = vn_marktext(vp);
 	if (error)
-		return (error);
+		goto out;
 
 	vcset.evs_cnt = 0;
 	vcset.evs_used = 0;
@@ -150,7 +155,7 @@ linux_sys_uselib(struct lwp *l, const struct linux_sys_uselib_args *uap, registe
 
 	kill_vmcmds(&vcset);
 
+out:
 	vrele(vp);
-
 	return error;
 }

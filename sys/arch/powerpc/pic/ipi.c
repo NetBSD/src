@@ -1,4 +1,4 @@
-/* $NetBSD: ipi.c,v 1.10.12.1 2014/08/20 00:03:20 tls Exp $ */
+/* $NetBSD: ipi.c,v 1.10.12.2 2017/12/03 11:36:37 jdolecek Exp $ */
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.10.12.1 2014/08/20 00:03:20 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.10.12.2 2017/12/03 11:36:37 jdolecek Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_pic.h"
@@ -75,8 +75,13 @@ ipi_intr(void *v)
 	if (ipi & IPI_GENERIC)
 		ipi_cpu_handler();
 
+	if (ipi & IPI_SUSPEND)
+		cpu_pause(NULL);
+
 	if (ipi & IPI_HALT) {
+		struct cpuset_info * const csi = &cpuset_info;
 		aprint_normal("halting CPU %d\n", cpu_id);
+		kcpuset_set(csi->cpus_halted, cpu_id);
 		msr = (mfmsr() & ~PSL_EE) | PSL_POW;
 		for (;;) {
 			__asm volatile ("sync; isync");

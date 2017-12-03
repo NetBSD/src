@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_isa.c,v 1.36 2008/04/28 20:23:52 martin Exp $	*/
+/*	$NetBSD: esp_isa.c,v 1.36.44.1 2017/12/03 11:37:04 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_isa.c,v 1.36 2008/04/28 20:23:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_isa.c,v 1.36.44.1 2017/12/03 11:37:04 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -302,7 +302,7 @@ esp_isa_init(struct esp_isa_softc *esc, struct esp_isa_probe_data *epd)
 
 /*
  * Check the slots looking for a board we recognise
- * If we find one, note it's address (slot) and call
+ * If we find one, note its address (slot) and call
  * the actual probe routine to check it out.
  */
 int

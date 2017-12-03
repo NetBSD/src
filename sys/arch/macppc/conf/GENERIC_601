@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC_601,v 1.3.2.2 2014/08/20 00:03:11 tls Exp $
+# $NetBSD: GENERIC_601,v 1.3.2.3 2017/12/03 11:36:24 jdolecek Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,11 +24,11 @@
 #
 # this config more or less matches a Power Macintosh 7200 with a USB card
 
-include		"arch/macppc/conf/std.macppc.601"
+include 	"arch/macppc/conf/std.macppc.601"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"GENERIC-$Revision: 1.3.2.2 $"
+ident 		"GENERIC-$Revision: 1.3.2.3 $"
 
 maxusers	32
 
@@ -44,6 +44,7 @@ options 	SYSVSEM		# System V semaphores
 options 	SYSVSHM		# System V shared memory
 
 options 	MODULAR		# new style module(7) framework
+options 	MODULAR_DEFAULT_AUTOLOAD
 
 #options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
@@ -67,19 +68,18 @@ options		DDB_COMMANDONENTER="bt"
 #makeoptions 	DEBUG="-g"	# compile full symbol table
 
 # Compatibility options
-options 	COMPAT_50	# NetBSD 5.0 compatibility.
-options 	COMPAT_60	# NetBSD 6.0 compatibility.
+include 	"conf/compat_netbsd50.config"
+
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	COMPAT_LINUX	# Linux binary compatibility
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
-options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Wedge support
 options         DKWEDGE_AUTODISCOVER    # Automatically add dk(4) instances
 options         DKWEDGE_METHOD_GPT      # Supports GPT partitions as wedges
-# The following two options can break /etc/fstab, so handle with care
-#options        DKWEDGE_METHOD_BSDLABEL # Support disklabel entries as wedges
-#options        DKWEDGE_METHOD_MBR      # Support MBR partitions as wedges
+#options	DKWEDGE_METHOD_BSDLABEL # Support disklabel entries as wedges
+#options	DKWEDGE_METHOD_MBR      # Support MBR partitions as wedges
+options		DKWEDGE_METHOD_APPLE    # Support Apple partitions as wedges
+#options	DKWEDGE_METHOD_RDB	# Support RDB partitions as wedges
 
 # File systems
 file-system 	FFS		# UFS
@@ -214,11 +214,15 @@ ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 
 # Display devices
 #
-# The 7200's onboard video is unsupported ( by OF no less ) so we need either a
+# The 7200's onboard video is unsupported by OF so we need either a
 # graphics card that works as OF console or a serial console.
 # The only cards known to work ( so far ) are PCI Voodoo3s flashed with the
 # official Macintosh firmware from 3Dfx. The others should work but are
 # untested with OF 1.0.5
+
+# this will take over the console if output-device is set to 'screen' or
+# 'platinum'. It will provide a NetBSD console, but still won't work with OF
+platinumfb0 	at mainbus?
 
 #gffb*		at pci?	function ?	# NVIDIA GeForce2 MX
 #machfb*		at pci? function ?	# ATI Mach 64, Rage, Rage Pro
@@ -227,7 +231,6 @@ voodoofb*	at pci? function ?	# 3Dfx Voodoo3
 
 # ATI Radeon. Still has problems on some hardware
 #radeonfb*	at pci? function ?
-#options 	RADEONFB_MMAP_BARS	# allow mmap()ing BARs - needed for X
 
 # generic PCI framebuffer, should work with everything supported by OF
 genfb*		at pci? function ?
@@ -307,6 +310,8 @@ ugen*	at uhub? port ? configuration ? interface ?	# USB Generic driver
 # Audio support
 audio*	at audiobus?
 
+spkr*	at audio?		# PC speaker (synthesized)
+
 #
 # accept filters
 #pseudo-device   accf_data		# "dataready" accept filter
@@ -370,11 +375,8 @@ pseudo-device   drvctl
 # removing fingerprint methods will have almost no impact on the kernel
 # code size.
 #
-#options VERIFIED_EXEC_FP_RMD160
 #options VERIFIED_EXEC_FP_SHA256
 #options VERIFIED_EXEC_FP_SHA384
 #options VERIFIED_EXEC_FP_SHA512
-#options VERIFIED_EXEC_FP_SHA1
-#options VERIFIED_EXEC_FP_MD5
 
 #options PAX_MPROTECT=0			# PaX mprotect(2) restrictions

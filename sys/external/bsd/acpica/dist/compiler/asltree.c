@@ -1,11 +1,11 @@
 /******************************************************************************
  *
- * Module Name: asltree - parse tree management
+ * Module Name: asltree - Parse tree management
  *
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -41,129 +41,30 @@
  * POSSIBILITY OF SUCH DAMAGES.
  */
 
-
 #include "aslcompiler.h"
 #include "aslcompiler.y.h"
 #include "acapps.h"
-#include <time.h>
 
 #define _COMPONENT          ACPI_COMPILER
         ACPI_MODULE_NAME    ("asltree")
 
-/* Local prototypes */
-
-static ACPI_PARSE_OBJECT *
-TrGetNextNode (
-    void);
-
-static char *
-TrGetNodeFlagName (
-    UINT32                  Flags);
-
 
 /*******************************************************************************
  *
- * FUNCTION:    TrGetNextNode
+ * FUNCTION:    TrSetOpIntegerValue
  *
- * PARAMETERS:  None
+ * PARAMETERS:  ParseOpcode         - New opcode to be assigned to the op
+ *              Op                  - An existing parse op
  *
- * RETURN:      New parse node. Aborts on allocation failure
+ * RETURN:      The updated op
  *
- * DESCRIPTION: Allocate a new parse node for the parse tree. Bypass the local
- *              dynamic memory manager for performance reasons (This has a
- *              major impact on the speed of the compiler.)
- *
- ******************************************************************************/
-
-static ACPI_PARSE_OBJECT *
-TrGetNextNode (
-    void)
-{
-
-    if (Gbl_NodeCacheNext >= Gbl_NodeCacheLast)
-    {
-        Gbl_NodeCacheNext = UtLocalCalloc (sizeof (ACPI_PARSE_OBJECT) *
-                                ASL_NODE_CACHE_SIZE);
-        Gbl_NodeCacheLast = Gbl_NodeCacheNext + ASL_NODE_CACHE_SIZE;
-    }
-
-    return (Gbl_NodeCacheNext++);
-}
-
-
-/*******************************************************************************
- *
- * FUNCTION:    TrAllocateNode
- *
- * PARAMETERS:  ParseOpcode         - Opcode to be assigned to the node
- *
- * RETURN:      New parse node. Aborts on allocation failure
- *
- * DESCRIPTION: Allocate and initialize a new parse node for the parse tree
+ * DESCRIPTION: Used to set the integer value of a op,
+ *              usually to a specific size (8, 16, 32, or 64 bits)
  *
  ******************************************************************************/
 
 ACPI_PARSE_OBJECT *
-TrAllocateNode (
-    UINT32                  ParseOpcode)
-{
-    ACPI_PARSE_OBJECT       *Op;
-
-
-    Op = TrGetNextNode ();
-
-    Op->Asl.ParseOpcode       = (UINT16) ParseOpcode;
-    Op->Asl.Filename          = Gbl_Files[ASL_FILE_INPUT].Filename;
-    Op->Asl.LineNumber        = Gbl_CurrentLineNumber;
-    Op->Asl.LogicalLineNumber = Gbl_LogicalLineNumber;
-    Op->Asl.LogicalByteOffset = Gbl_CurrentLineOffset;
-    Op->Asl.Column            = Gbl_CurrentColumn;
-
-    UtSetParseOpName (Op);
-    return (Op);
-}
-
-
-/*******************************************************************************
- *
- * FUNCTION:    TrReleaseNode
- *
- * PARAMETERS:  Op            - Op to be released
- *
- * RETURN:      None
- *
- * DESCRIPTION: "release" a node. In truth, nothing is done since the node
- *              is part of a larger buffer
- *
- ******************************************************************************/
-
-void
-TrReleaseNode (
-    ACPI_PARSE_OBJECT       *Op)
-{
-
-    return;
-}
-
-
-/*******************************************************************************
- *
- * FUNCTION:    TrUpdateNode
- *
- * PARAMETERS:  ParseOpcode         - New opcode to be assigned to the node
- *              Op                - An existing parse node
- *
- * RETURN:      The updated node
- *
- * DESCRIPTION: Change the parse opcode assigned to a node. Usually used to
- *              change an opcode to DEFAULT_ARG so that the node is ignored
- *              during the code generation. Also used to set generic integers
- *              to a specific size (8, 16, 32, or 64 bits)
- *
- ******************************************************************************/
-
-ACPI_PARSE_OBJECT *
-TrUpdateNode (
+TrSetOpIntegerValue (
     UINT32                  ParseOpcode,
     ACPI_PARSE_OBJECT       *Op)
 {
@@ -174,7 +75,7 @@ TrUpdateNode (
     }
 
     DbgPrint (ASL_PARSE_OUTPUT,
-        "\nUpdateNode: Old - %s, New - %s\n\n",
+        "\nUpdateOp: Old - %s, New - %s\n",
         UtGetOpName (Op->Asl.ParseOpcode),
         UtGetOpName (ParseOpcode));
 
@@ -242,127 +143,47 @@ TrUpdateNode (
         break;
     }
 
+    /* Converter: if this is a method invocation, turn off capture comments */
+
+    if (Gbl_CaptureComments &&
+        (ParseOpcode == PARSEOP_METHODCALL))
+    {
+        Gbl_CommentState.CaptureComments = FALSE;
+    }
+
     return (Op);
 }
 
 
 /*******************************************************************************
  *
- * FUNCTION:    TrGetNodeFlagName
+ * FUNCTION:    TrSetOpFlags
  *
- * PARAMETERS:  Flags               - Flags word to be decoded
- *
- * RETURN:      Name string. Always returns a valid string pointer.
- *
- * DESCRIPTION: Decode a flags word
- *
- ******************************************************************************/
-
-static char *
-TrGetNodeFlagName (
-    UINT32                  Flags)
-{
-
-    switch (Flags)
-    {
-    case NODE_VISITED:
-
-        return ("NODE_VISITED");
-
-    case NODE_AML_PACKAGE:
-
-        return ("NODE_AML_PACKAGE");
-
-    case NODE_IS_TARGET:
-
-        return ("NODE_IS_TARGET");
-
-    case NODE_IS_RESOURCE_DESC:
-
-        return ("NODE_IS_RESOURCE_DESC");
-
-    case NODE_IS_RESOURCE_FIELD:
-
-        return ("NODE_IS_RESOURCE_FIELD");
-
-    case NODE_HAS_NO_EXIT:
-
-        return ("NODE_HAS_NO_EXIT");
-
-    case NODE_IF_HAS_NO_EXIT:
-
-        return ("NODE_IF_HAS_NO_EXIT");
-
-    case NODE_NAME_INTERNALIZED:
-
-        return ("NODE_NAME_INTERNALIZED");
-
-    case NODE_METHOD_NO_RETVAL:
-
-        return ("NODE_METHOD_NO_RETVAL");
-
-    case NODE_METHOD_SOME_NO_RETVAL:
-
-        return ("NODE_METHOD_SOME_NO_RETVAL");
-
-    case NODE_RESULT_NOT_USED:
-
-        return ("NODE_RESULT_NOT_USED");
-
-    case NODE_METHOD_TYPED:
-
-        return ("NODE_METHOD_TYPED");
-
-    case NODE_COMPILE_TIME_CONST:
-
-        return ("NODE_COMPILE_TIME_CONST");
-
-    case NODE_IS_TERM_ARG:
-
-        return ("NODE_IS_TERM_ARG");
-
-    case NODE_WAS_ONES_OP:
-
-        return ("NODE_WAS_ONES_OP");
-
-    case NODE_IS_NAME_DECLARATION:
-
-        return ("NODE_IS_NAME_DECLARATION");
-
-    default:
-
-        return ("Multiple Flags (or unknown flag) set");
-    }
-}
-
-
-/*******************************************************************************
- *
- * FUNCTION:    TrSetNodeFlags
- *
- * PARAMETERS:  Op                  - An existing parse node
+ * PARAMETERS:  Op                  - An existing parse op
  *              Flags               - New flags word
  *
  * RETURN:      The updated parser op
  *
- * DESCRIPTION: Set bits in the node flags word. Will not clear bits, only set
+ * DESCRIPTION: Set bits in the op flags word. Will not clear bits, only set
  *
  ******************************************************************************/
 
 ACPI_PARSE_OBJECT *
-TrSetNodeFlags (
+TrSetOpFlags (
     ACPI_PARSE_OBJECT       *Op,
     UINT32                  Flags)
 {
-
-    DbgPrint (ASL_PARSE_OUTPUT,
-        "\nSetNodeFlags: Op %p, %8.8X %s\n\n", Op, Flags,
-        TrGetNodeFlagName (Flags));
 
     if (!Op)
     {
         return (NULL);
     }
+
+    DbgPrint (ASL_PARSE_OUTPUT,
+        "\nSetOpFlags: %s Op %p, %8.8X", Op->Asl.ParseOpName, Op, Flags);
+
+    TrPrintOpFlags (Flags, ASL_PARSE_OUTPUT);
+    DbgPrint (ASL_PARSE_OUTPUT, "\n\n");
 
     Op->Asl.CompileFlags |= Flags;
     return (Op);
@@ -371,27 +192,27 @@ TrSetNodeFlags (
 
 /*******************************************************************************
  *
- * FUNCTION:    TrSetNodeAmlLength
+ * FUNCTION:    TrSetOpAmlLength
  *
- * PARAMETERS:  Op                  - An existing parse node
+ * PARAMETERS:  Op                  - An existing parse op
  *              Length              - AML Length
  *
  * RETURN:      The updated parser op
  *
- * DESCRIPTION: Set the AML Length in a node. Used by the parser to indicate
- *              the presence of a node that must be reduced to a fixed length
+ * DESCRIPTION: Set the AML Length in a op. Used by the parser to indicate
+ *              the presence of a op that must be reduced to a fixed length
  *              constant.
  *
  ******************************************************************************/
 
 ACPI_PARSE_OBJECT *
-TrSetNodeAmlLength (
+TrSetOpAmlLength (
     ACPI_PARSE_OBJECT       *Op,
     UINT32                  Length)
 {
 
     DbgPrint (ASL_PARSE_OUTPUT,
-        "\nSetNodeAmlLength: Op %p, %8.8X\n", Op, Length);
+        "\nSetOpAmlLength: Op %p, %8.8X\n", Op, Length);
 
     if (!Op)
     {
@@ -405,19 +226,96 @@ TrSetNodeAmlLength (
 
 /*******************************************************************************
  *
- * FUNCTION:    TrSetEndLineNumber
+ * FUNCTION:    TrSetOpParent
  *
- * PARAMETERS:  Op                - An existing parse node
+ * PARAMETERS:  Op                  - To be set to new parent
+ *              ParentOp            - The parent
  *
- * RETURN:      None.
+ * RETURN:      None, sets Op parent directly
  *
- * DESCRIPTION: Set the ending line numbers (file line and logical line) of a
- *              parse node to the current line numbers.
+ * DESCRIPTION: Change the parent of a parse op.
  *
  ******************************************************************************/
 
 void
-TrSetEndLineNumber (
+TrSetOpParent (
+    ACPI_PARSE_OBJECT       *Op,
+    ACPI_PARSE_OBJECT       *ParentOp)
+{
+
+    Op->Asl.Parent = ParentOp;
+}
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    TrSetOpCurrentFilename
+ *
+ * PARAMETERS:  Op                  - An existing parse op
+ *
+ * RETURN:      None
+ *
+ * DESCRIPTION: Save the include file filename. Used for debug output only.
+ *
+ ******************************************************************************/
+
+void
+TrSetOpCurrentFilename (
+    ACPI_PARSE_OBJECT       *Op)
+{
+
+    Op->Asl.Filename = Gbl_PreviousIncludeFilename;
+}
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    TrSetOpIntegerWidth
+ *
+ * PARAMETERS:  Op                  - An existing parse op
+ *
+ * RETURN:      None
+ *
+ * DESCRIPTION:
+ *
+ ******************************************************************************/
+
+void
+TrSetOpIntegerWidth (
+    ACPI_PARSE_OBJECT       *TableSignatureOp,
+    ACPI_PARSE_OBJECT       *RevisionOp)
+{
+
+    /* TBD: Check table sig? (DSDT vs. SSDT) */
+
+    /* Handle command-line version override */
+
+    if (Gbl_RevisionOverride)
+    {
+        AcpiUtSetIntegerWidth (Gbl_RevisionOverride);
+    }
+    else
+    {
+        AcpiUtSetIntegerWidth ((UINT8) RevisionOp->Asl.Value.Integer);
+    }
+}
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    TrSetOpEndLineNumber
+ *
+ * PARAMETERS:  Op                - An existing parse op
+ *
+ * RETURN:      None.
+ *
+ * DESCRIPTION: Set the ending line numbers (file line and logical line) of a
+ *              parse op to the current line numbers.
+ *
+ ******************************************************************************/
+
+void
+TrSetOpEndLineNumber (
     ACPI_PARSE_OBJECT       *Op)
 {
 
@@ -428,343 +326,28 @@ TrSetEndLineNumber (
         return;
     }
 
-    Op->Asl.EndLine        = Gbl_CurrentLineNumber;
+    Op->Asl.EndLine = Gbl_CurrentLineNumber;
     Op->Asl.EndLogicalLine = Gbl_LogicalLineNumber;
 }
 
 
 /*******************************************************************************
  *
- * FUNCTION:    TrCreateLeafNode
+ * FUNCTION:    TrLinkOpChildren
  *
- * PARAMETERS:  ParseOpcode         - New opcode to be assigned to the node
+ * PARAMETERS:  Op                - An existing parse op
+ *              NumChildren        - Number of children to follow
+ *              ...                - A list of child ops to link to the new
+ *                                   op. NumChildren long.
  *
- * RETURN:      Pointer to the new node. Aborts on allocation failure
+ * RETURN:      The updated (linked) op
  *
- * DESCRIPTION: Create a simple leaf node (no children or peers, and no value
- *              assigned to the node)
- *
- ******************************************************************************/
-
-ACPI_PARSE_OBJECT *
-TrCreateLeafNode (
-    UINT32                  ParseOpcode)
-{
-    ACPI_PARSE_OBJECT       *Op;
-
-
-    Op = TrAllocateNode (ParseOpcode);
-
-    DbgPrint (ASL_PARSE_OUTPUT,
-        "\nCreateLeafNode  Ln/Col %u/%u NewNode %p  Op %s\n\n",
-        Op->Asl.LineNumber, Op->Asl.Column, Op, UtGetOpName(ParseOpcode));
-
-    return (Op);
-}
-
-
-/*******************************************************************************
- *
- * FUNCTION:    TrCreateConstantLeafNode
- *
- * PARAMETERS:  ParseOpcode         - The constant opcode
- *
- * RETURN:      Pointer to the new node. Aborts on allocation failure
- *
- * DESCRIPTION: Create a leaf node (no children or peers) for one of the
- *              special constants - __LINE__, __FILE__, and __DATE__.
- *
- * Note: An implemenation of __FUNC__ cannot happen here because we don't
- * have a full parse tree at this time and cannot find the parent control
- * method. If it is ever needed, __FUNC__ must be implemented later, after
- * the parse tree has been fully constructed.
+ * DESCRIPTION: Link a group of ops to an existing parse op
  *
  ******************************************************************************/
 
 ACPI_PARSE_OBJECT *
-TrCreateConstantLeafNode (
-    UINT32                  ParseOpcode)
-{
-    ACPI_PARSE_OBJECT       *Op = NULL;
-    time_t                  CurrentTime;
-    char                    *StaticTimeString;
-    char                    *TimeString;
-    char                    *Path;
-    char                    *Filename;
-
-
-    switch (ParseOpcode)
-    {
-    case PARSEOP___LINE__:
-
-        Op = TrAllocateNode (PARSEOP_INTEGER);
-        Op->Asl.Value.Integer = Op->Asl.LineNumber;
-        break;
-
-    case PARSEOP___PATH__:
-
-        Op = TrAllocateNode (PARSEOP_STRING_LITERAL);
-
-        /* Op.Asl.Filename contains the full pathname to the file */
-
-        Op->Asl.Value.String = Op->Asl.Filename;
-        break;
-
-    case PARSEOP___FILE__:
-
-        Op = TrAllocateNode (PARSEOP_STRING_LITERAL);
-
-        /* Get the simple filename from the full path */
-
-        FlSplitInputPathname (Op->Asl.Filename, &Path, &Filename);
-        ACPI_FREE (Path);
-        Op->Asl.Value.String = Filename;
-        break;
-
-    case PARSEOP___DATE__:
-
-        Op = TrAllocateNode (PARSEOP_STRING_LITERAL);
-
-        /* Get a copy of the current time */
-
-        CurrentTime = time (NULL);
-        StaticTimeString = ctime (&CurrentTime);
-        TimeString = UtLocalCalloc (strlen (StaticTimeString) + 1);
-        strcpy (TimeString, StaticTimeString);
-
-        TimeString[strlen(TimeString) -1] = 0;  /* Remove trailing newline */
-        Op->Asl.Value.String = TimeString;
-        break;
-
-    default: /* This would be an internal error */
-
-        return (NULL);
-    }
-
-    DbgPrint (ASL_PARSE_OUTPUT,
-        "\nCreateConstantLeafNode  Ln/Col %u/%u NewNode %p  Op %s  Value %8.8X%8.8X  ",
-        Op->Asl.LineNumber, Op->Asl.Column, Op, UtGetOpName (ParseOpcode),
-        ACPI_FORMAT_UINT64 (Op->Asl.Value.Integer));
-    return (Op);
-}
-
-
-/*******************************************************************************
- *
- * FUNCTION:    TrCreateValuedLeafNode
- *
- * PARAMETERS:  ParseOpcode         - New opcode to be assigned to the node
- *              Value               - Value to be assigned to the node
- *
- * RETURN:      Pointer to the new node. Aborts on allocation failure
- *
- * DESCRIPTION: Create a leaf node (no children or peers) with a value
- *              assigned to it
- *
- ******************************************************************************/
-
-ACPI_PARSE_OBJECT *
-TrCreateValuedLeafNode (
-    UINT32                  ParseOpcode,
-    UINT64                  Value)
-{
-    ACPI_PARSE_OBJECT       *Op;
-
-
-    Op = TrAllocateNode (ParseOpcode);
-
-    DbgPrint (ASL_PARSE_OUTPUT,
-        "\nCreateValuedLeafNode  Ln/Col %u/%u NewNode %p  Op %s  Value %8.8X%8.8X  ",
-        Op->Asl.LineNumber, Op->Asl.Column, Op, UtGetOpName(ParseOpcode),
-        ACPI_FORMAT_UINT64 (Value));
-    Op->Asl.Value.Integer = Value;
-
-    switch (ParseOpcode)
-    {
-    case PARSEOP_STRING_LITERAL:
-
-        DbgPrint (ASL_PARSE_OUTPUT, "STRING->%s", Value);
-        break;
-
-    case PARSEOP_NAMESEG:
-
-        DbgPrint (ASL_PARSE_OUTPUT, "NAMESEG->%s", Value);
-        break;
-
-    case PARSEOP_NAMESTRING:
-
-        DbgPrint (ASL_PARSE_OUTPUT, "NAMESTRING->%s", Value);
-        break;
-
-    case PARSEOP_EISAID:
-
-        DbgPrint (ASL_PARSE_OUTPUT, "EISAID->%s", Value);
-        break;
-
-    case PARSEOP_METHOD:
-
-        DbgPrint (ASL_PARSE_OUTPUT, "METHOD");
-        break;
-
-    case PARSEOP_INTEGER:
-
-        DbgPrint (ASL_PARSE_OUTPUT, "INTEGER");
-        break;
-
-    default:
-
-        break;
-    }
-
-    DbgPrint (ASL_PARSE_OUTPUT, "\n\n");
-    return (Op);
-}
-
-
-/*******************************************************************************
- *
- * FUNCTION:    TrCreateNode
- *
- * PARAMETERS:  ParseOpcode         - Opcode to be assigned to the node
- *              NumChildren         - Number of children to follow
- *              ...                 - A list of child nodes to link to the new
- *                                    node. NumChildren long.
- *
- * RETURN:      Pointer to the new node. Aborts on allocation failure
- *
- * DESCRIPTION: Create a new parse node and link together a list of child
- *              nodes underneath the new node.
- *
- ******************************************************************************/
-
-ACPI_PARSE_OBJECT *
-TrCreateNode (
-    UINT32                  ParseOpcode,
-    UINT32                  NumChildren,
-    ...)
-{
-    ACPI_PARSE_OBJECT       *Op;
-    ACPI_PARSE_OBJECT       *Child;
-    ACPI_PARSE_OBJECT       *PrevChild;
-    va_list                 ap;
-    UINT32                  i;
-    BOOLEAN                 FirstChild;
-
-
-    va_start (ap, NumChildren);
-
-    /* Allocate one new node */
-
-    Op = TrAllocateNode (ParseOpcode);
-
-    DbgPrint (ASL_PARSE_OUTPUT,
-        "\nCreateNode  Ln/Col %u/%u NewParent %p Child %u Op %s  ",
-        Op->Asl.LineNumber, Op->Asl.Column, Op, NumChildren, UtGetOpName(ParseOpcode));
-
-    /* Some extra debug output based on the parse opcode */
-
-    switch (ParseOpcode)
-    {
-    case PARSEOP_DEFINITIONBLOCK:
-
-        RootNode = Op;
-        DbgPrint (ASL_PARSE_OUTPUT, "DEFINITION_BLOCK (Tree Completed)->");
-        break;
-
-    case PARSEOP_OPERATIONREGION:
-
-        DbgPrint (ASL_PARSE_OUTPUT, "OPREGION->");
-        break;
-
-    case PARSEOP_OR:
-
-        DbgPrint (ASL_PARSE_OUTPUT, "OR->");
-        break;
-
-    default:
-
-        /* Nothing to do for other opcodes */
-
-        break;
-    }
-
-    /* Link the new node to its children */
-
-    PrevChild = NULL;
-    FirstChild = TRUE;
-    for (i = 0; i < NumChildren; i++)
-    {
-        /* Get the next child */
-
-        Child = va_arg (ap, ACPI_PARSE_OBJECT *);
-        DbgPrint (ASL_PARSE_OUTPUT, "%p, ", Child);
-
-        /*
-         * If child is NULL, this means that an optional argument
-         * was omitted. We must create a placeholder with a special
-         * opcode (DEFAULT_ARG) so that the code generator will know
-         * that it must emit the correct default for this argument
-         */
-        if (!Child)
-        {
-            Child = TrAllocateNode (PARSEOP_DEFAULT_ARG);
-        }
-
-        /* Link first child to parent */
-
-        if (FirstChild)
-        {
-            FirstChild = FALSE;
-            Op->Asl.Child = Child;
-        }
-
-        /* Point all children to parent */
-
-        Child->Asl.Parent = Op;
-
-        /* Link children in a peer list */
-
-        if (PrevChild)
-        {
-            PrevChild->Asl.Next = Child;
-        };
-
-        /*
-         * This child might be a list, point all nodes in the list
-         * to the same parent
-         */
-        while (Child->Asl.Next)
-        {
-            Child = Child->Asl.Next;
-            Child->Asl.Parent = Op;
-        }
-
-        PrevChild = Child;
-    }
-    va_end(ap);
-
-    DbgPrint (ASL_PARSE_OUTPUT, "\n\n");
-    return (Op);
-}
-
-
-/*******************************************************************************
- *
- * FUNCTION:    TrLinkChildren
- *
- * PARAMETERS:  Op                - An existing parse node
- *              NumChildren         - Number of children to follow
- *              ...                 - A list of child nodes to link to the new
- *                                    node. NumChildren long.
- *
- * RETURN:      The updated (linked) node
- *
- * DESCRIPTION: Link a group of nodes to an existing parse node
- *
- ******************************************************************************/
-
-ACPI_PARSE_OBJECT *
-TrLinkChildren (
+TrLinkOpChildren (
     ACPI_PARSE_OBJECT       *Op,
     UINT32                  NumChildren,
     ...)
@@ -778,8 +361,7 @@ TrLinkChildren (
 
     va_start (ap, NumChildren);
 
-
-    TrSetEndLineNumber (Op);
+    TrSetOpEndLineNumber (Op);
 
     DbgPrint (ASL_PARSE_OUTPUT,
         "\nLinkChildren  Line [%u to %u] NewParent %p Child %u Op %s  ",
@@ -788,9 +370,15 @@ TrLinkChildren (
 
     switch (Op->Asl.ParseOpcode)
     {
-    case PARSEOP_DEFINITIONBLOCK:
+    case PARSEOP_ASL_CODE:
 
-        RootNode = Op;
+        Gbl_ParseTreeRoot = Op;
+        Op->Asl.ParseOpcode = PARSEOP_DEFAULT_ARG;
+        DbgPrint (ASL_PARSE_OUTPUT, "ASLCODE (Tree Completed)->");
+        break;
+
+    case PARSEOP_DEFINITION_BLOCK:
+
         DbgPrint (ASL_PARSE_OUTPUT, "DEFINITION_BLOCK (Tree Completed)->");
         break;
 
@@ -811,7 +399,26 @@ TrLinkChildren (
         break;
     }
 
-    /* Link the new node to it's children */
+    /* The following is for capturing comments */
+
+    if(Gbl_CaptureComments)
+    {
+        /*
+         * If there are "regular comments" detected at this point,
+         * then is an endBlk comment. Categorize it as so and distribute
+         * all regular comments to this parse op.
+         */
+        if (Gbl_CommentListHead)
+        {
+            Op->Asl.EndBlkComment = Gbl_CommentListHead;
+            CvDbgPrint ("EndBlk Comment for %s: %s",
+                Op->Asl.ParseOpName, Gbl_CommentListHead->Comment);
+            Gbl_CommentListHead = NULL;
+            Gbl_CommentListTail = NULL;
+        }
+    }
+
+    /* Link the new op to it's children */
 
     PrevChild = NULL;
     FirstChild = TRUE;
@@ -822,7 +429,7 @@ TrLinkChildren (
         if ((Child == PrevChild) && (Child != NULL))
         {
             AslError (ASL_WARNING, ASL_MSG_COMPILER_INTERNAL, Child,
-                "Child node list invalid");
+                "Child op list invalid");
             va_end(ap);
             return (Op);
         }
@@ -837,7 +444,7 @@ TrLinkChildren (
          */
         if (!Child)
         {
-            Child = TrAllocateNode (PARSEOP_DEFAULT_ARG);
+            Child = TrAllocateOp (PARSEOP_DEFAULT_ARG);
         }
 
         /* Link first child to parent */
@@ -857,10 +464,10 @@ TrLinkChildren (
         if (PrevChild)
         {
             PrevChild->Asl.Next = Child;
-        };
+        }
 
         /*
-         * This child might be a list, point all nodes in the list
+         * This child might be a list, point all ops in the list
          * to the same parent
          */
         while (Child->Asl.Next)
@@ -868,30 +475,38 @@ TrLinkChildren (
             Child = Child->Asl.Next;
             Child->Asl.Parent = Op;
         }
+
         PrevChild = Child;
     }
 
     va_end(ap);
     DbgPrint (ASL_PARSE_OUTPUT, "\n\n");
+
+    if(Gbl_CaptureComments)
+    {
+        Gbl_CommentState.LatestParseOp = Op;
+        CvDbgPrint ("TrLinkOpChildren=====Set latest parse op to this op.\n");
+    }
+
     return (Op);
 }
 
 
 /*******************************************************************************
  *
- * FUNCTION:    TrLinkPeerNode
+ * FUNCTION:    TrLinkPeerOp
  *
  * PARAMETERS:  Op1           - First peer
  *              Op2           - Second peer
  *
- * RETURN:      Op1 or the non-null node.
+ * RETURN:      Op1 or the non-null op.
  *
- * DESCRIPTION: Link two nodes as peers. Handles cases where one peer is null.
+ * DESCRIPTION: Link two ops as peers. Handles cases where one peer is null.
  *
  ******************************************************************************/
 
 ACPI_PARSE_OBJECT *
-TrLinkPeerNode (
+TrLinkPeerOp (
     ACPI_PARSE_OBJECT       *Op1,
     ACPI_PARSE_OBJECT       *Op2)
 {
@@ -899,18 +514,18 @@ TrLinkPeerNode (
 
 
     DbgPrint (ASL_PARSE_OUTPUT,
-        "\nLinkPeerNode: 1=%p (%s), 2=%p (%s)\n\n",
+        "\nLinkPeerOp: 1=%p (%s), 2=%p (%s)\n",
         Op1, Op1 ? UtGetOpName(Op1->Asl.ParseOpcode) : NULL,
         Op2, Op2 ? UtGetOpName(Op2->Asl.ParseOpcode) : NULL);
 
 
     if ((!Op1) && (!Op2))
     {
-        DbgPrint (ASL_PARSE_OUTPUT, "\nTwo Null nodes!\n");
+        DbgPrint (ASL_PARSE_OUTPUT, "\nTwo Null ops!\n");
         return (Op1);
     }
 
-    /* If one of the nodes is null, just return the non-null node */
+    /* If one of the ops is null, just return the non-null op */
 
     if (!Op2)
     {
@@ -925,10 +540,10 @@ TrLinkPeerNode (
     if (Op1 == Op2)
     {
         DbgPrint (ASL_DEBUG_OUTPUT,
-            "\n\n************* Internal error, linking node to itself %p\n\n\n",
+            "\n************* Internal error, linking op to itself %p\n",
             Op1);
         AslError (ASL_WARNING, ASL_MSG_COMPILER_INTERNAL, Op1,
-            "Linking node to itself");
+            "Linking op to itself");
         return (Op1);
     }
 
@@ -952,19 +567,19 @@ TrLinkPeerNode (
 
 /*******************************************************************************
  *
- * FUNCTION:    TrLinkPeerNodes
+ * FUNCTION:    TrLinkPeerOps
  *
- * PARAMETERS:  NumPeers            - The number of nodes in the list to follow
- *              ...                 - A list of nodes to link together as peers
+ * PARAMETERS:  NumPeers            - The number of ops in the list to follow
+ *              ...                 - A list of ops to link together as peers
  *
- * RETURN:      The first node in the list (head of the peer list)
+ * RETURN:      The first op in the list (head of the peer list)
  *
- * DESCRIPTION: Link together an arbitrary number of peer nodes.
+ * DESCRIPTION: Link together an arbitrary number of peer ops.
  *
  ******************************************************************************/
 
 ACPI_PARSE_OBJECT *
-TrLinkPeerNodes (
+TrLinkPeerOps (
     UINT32                  NumPeers,
     ...)
 {
@@ -976,7 +591,7 @@ TrLinkPeerNodes (
 
 
     DbgPrint (ASL_PARSE_OUTPUT,
-        "\nLinkPeerNodes: (%u) ", NumPeers);
+        "\nLinkPeerOps: (%u) ", NumPeers);
 
     va_start (ap, NumPeers);
     This = va_arg (ap, ACPI_PARSE_OBJECT *);
@@ -994,41 +609,41 @@ TrLinkPeerNodes (
             This = This->Asl.Next;
         }
 
-        /* Get another peer node */
+        /* Get another peer op */
 
         Next = va_arg (ap, ACPI_PARSE_OBJECT *);
         if (!Next)
         {
-            Next = TrAllocateNode (PARSEOP_DEFAULT_ARG);
+            Next = TrAllocateOp (PARSEOP_DEFAULT_ARG);
         }
 
-        /* link new node to the current node */
+        /* link new op to the current op */
 
         This->Asl.Next = Next;
         This = Next;
     }
-    va_end (ap);
 
-    DbgPrint (ASL_PARSE_OUTPUT,"\n\n");
+    va_end (ap);
+    DbgPrint (ASL_PARSE_OUTPUT,"\n");
     return (Start);
 }
 
 
 /*******************************************************************************
  *
- * FUNCTION:    TrLinkChildNode
+ * FUNCTION:    TrLinkChildOp
  *
- * PARAMETERS:  Op1           - Parent node
+ * PARAMETERS:  Op1           - Parent op
  *              Op2           - Op to become a child
  *
- * RETURN:      The parent node
+ * RETURN:      The parent op
  *
- * DESCRIPTION: Link two nodes together as a parent and child
+ * DESCRIPTION: Link two ops together as a parent and child
  *
  ******************************************************************************/
 
 ACPI_PARSE_OBJECT *
-TrLinkChildNode (
+TrLinkChildOp (
     ACPI_PARSE_OBJECT       *Op1,
     ACPI_PARSE_OBJECT       *Op2)
 {
@@ -1036,9 +651,23 @@ TrLinkChildNode (
 
 
     DbgPrint (ASL_PARSE_OUTPUT,
-        "\nLinkChildNode: Parent=%p (%s), Child=%p (%s)\n\n",
+        "\nLinkChildOp: Parent=%p (%s), Child=%p (%s)\n",
         Op1, Op1 ? UtGetOpName(Op1->Asl.ParseOpcode): NULL,
         Op2, Op2 ? UtGetOpName(Op2->Asl.ParseOpcode): NULL);
+
+    /*
+     * Converter: if TrLinkChildOp is called to link a method call,
+     * turn on capture comments as it signifies that we are done parsing
+     * a method call.
+     */
+    if (Gbl_CaptureComments && Op1)
+    {
+        if (Op1->Asl.ParseOpcode == PARSEOP_METHODCALL)
+        {
+            Gbl_CommentState.CaptureComments = TRUE;
+        }
+        Gbl_CommentState.LatestParseOp = Op1;
+    }
 
     if (!Op1 || !Op2)
     {
@@ -1064,7 +693,8 @@ TrLinkChildNode (
  *
  * FUNCTION:    TrWalkParseTree
  *
- * PARAMETERS:  Visitation              - Type of walk
+ * PARAMETERS:  Op                      - Walk starting point
+ *              Visitation              - Type of walk
  *              DescendingCallback      - Called during tree descent
  *              AscendingCallback       - Called during tree ascent
  *              Context                 - To be passed to the callbacks
@@ -1084,18 +714,18 @@ TrWalkParseTree (
     void                    *Context)
 {
     UINT32                  Level;
-    BOOLEAN                 NodePreviouslyVisited;
+    BOOLEAN                 OpPreviouslyVisited;
     ACPI_PARSE_OBJECT       *StartOp = Op;
     ACPI_STATUS             Status;
 
 
-    if (!RootNode)
+    if (!Gbl_ParseTreeRoot)
     {
         return (AE_OK);
     }
 
     Level = 0;
-    NodePreviouslyVisited = FALSE;
+    OpPreviouslyVisited = FALSE;
 
     switch (Visitation)
     {
@@ -1103,9 +733,9 @@ TrWalkParseTree (
 
         while (Op)
         {
-            if (!NodePreviouslyVisited)
+            if (!OpPreviouslyVisited)
             {
-                /* Let the callback process the node. */
+                /* Let the callback process the op. */
 
                 Status = DescendingCallback (Op, Level, Context);
                 if (ACPI_SUCCESS (Status))
@@ -1139,7 +769,7 @@ TrWalkParseTree (
             if (Op->Asl.Next)
             {
                 Op = Op->Asl.Next;
-                NodePreviouslyVisited = FALSE;
+                OpPreviouslyVisited = FALSE;
             }
             else
             {
@@ -1150,7 +780,7 @@ TrWalkParseTree (
                     Level--;
                 }
                 Op = Op->Asl.Parent;
-                NodePreviouslyVisited = TRUE;
+                OpPreviouslyVisited = TRUE;
             }
         }
         break;
@@ -1159,12 +789,12 @@ TrWalkParseTree (
 
         while (Op)
         {
-            /* Visit leaf node (no children) or parent node on return trip */
+            /* Visit leaf op (no children) or parent op on return trip */
 
             if ((!Op->Asl.Child) ||
-                (NodePreviouslyVisited))
+                (OpPreviouslyVisited))
             {
-                /* Let the callback process the node. */
+                /* Let the callback process the op. */
 
                 Status = AscendingCallback (Op, Level, Context);
                 if (ACPI_FAILURE (Status))
@@ -1193,7 +823,7 @@ TrWalkParseTree (
             if (Op->Asl.Next)
             {
                 Op = Op->Asl.Next;
-                NodePreviouslyVisited = FALSE;
+                OpPreviouslyVisited = FALSE;
             }
             else
             {
@@ -1204,7 +834,7 @@ TrWalkParseTree (
                     Level--;
                 }
                 Op = Op->Asl.Parent;
-                NodePreviouslyVisited = TRUE;
+                OpPreviouslyVisited = TRUE;
             }
         }
         break;
@@ -1213,7 +843,7 @@ TrWalkParseTree (
 
         while (Op)
         {
-            if (NodePreviouslyVisited)
+            if (OpPreviouslyVisited)
             {
                 Status = AscendingCallback (Op, Level, Context);
                 if (ACPI_FAILURE (Status))
@@ -1223,7 +853,7 @@ TrWalkParseTree (
             }
             else
             {
-                /* Let the callback process the node. */
+                /* Let the callback process the op. */
 
                 Status = DescendingCallback (Op, Level, Context);
                 if (ACPI_SUCCESS (Status))
@@ -1257,7 +887,7 @@ TrWalkParseTree (
             if (Op->Asl.Next)
             {
                 Op = Op->Asl.Next;
-                NodePreviouslyVisited = FALSE;
+                OpPreviouslyVisited = FALSE;
             }
             else
             {
@@ -1268,7 +898,7 @@ TrWalkParseTree (
                     Level--;
                 }
                 Op = Op->Asl.Parent;
-                NodePreviouslyVisited = TRUE;
+                OpPreviouslyVisited = TRUE;
             }
         }
         break;

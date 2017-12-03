@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_dev.c,v 1.9 2011/09/22 23:02:35 jym Exp $ */
+/* $NetBSD: xenbus_dev.c,v 1.9.12.1 2017/12/03 11:36:52 jdolecek Exp $ */
 /*
  * xenbus_dev.c
  * 
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_dev.c,v 1.9 2011/09/22 23:02:35 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_dev.c,v 1.9.12.1 2017/12/03 11:36:52 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -61,11 +61,6 @@ static int xenbus_dev_open(void *);
 static int xenbus_dev_close(void *);
 static int xsd_port_read(void *);
 
-struct xenbus_dev_transaction {
-	SLIST_ENTRY(xenbus_dev_transaction) trans_next;
-	struct xenbus_transaction *handle;
-};
-
 #define DIR_MODE	 (S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH)
 #define PRIVCMD_MODE    (S_IRUSR | S_IWUSR)
 static const struct kernfs_fileop xenbus_fileops[] = {
@@ -79,6 +74,8 @@ static const struct kernfs_fileop xenbus_fileops[] = {
 static const struct kernfs_fileop xsd_port_fileops[] = {
     { .kf_fileop = KERNFS_FILEOP_READ, .kf_vop = xsd_port_read },
 };
+
+static kmutex_t xenbus_dev_open_mtx;
 
 void
 xenbus_kernfs_init(void)
@@ -99,25 +96,51 @@ xenbus_kernfs_init(void)
 		    kfst, VREG, XSD_MODE);
 		kernfs_addentry(kernxen_pkt, dkt);
 	}
+	mutex_init(&xenbus_dev_open_mtx, MUTEX_DEFAULT, IPL_NONE);
 }
 
-struct xenbus_dev_data {
+/*
+ * several process may open /kern/xen/xenbus in parallel.
+ * In a transaction one or more write is followed by one or more read.
+ * Unfortunably we don't get a file descriptor identifier down there,
+ * which we could use to link a read() to a transaction started in a write().
+ * To work around this we keep a list of lwp that opended the xenbus file.
+ * This assumes that a single lwp won't open /kern/xen/xenbus more
+ * than once, and that a transaction started by one lwp won't be ended
+ * by another.
+ * because of this, we also assume that we always got the data before
+ * the read() syscall.
+ */
+
+struct xenbus_dev_transaction {
+	SLIST_ENTRY(xenbus_dev_transaction) trans_next;
+	struct xenbus_transaction *handle;
+};
+
+struct xenbus_dev_lwp {
+	SLIST_ENTRY(xenbus_dev_lwp) lwp_next;
+	SLIST_HEAD(, xenbus_dev_transaction) transactions;
+	lwp_t *lwp;
+	/* Response queue. */
 #define BUFFER_SIZE (PAGE_SIZE)
 #define MASK_READ_IDX(idx) ((idx)&(BUFFER_SIZE-1))
-	/* In-progress transaction. */
-	SLIST_HEAD(, xenbus_dev_transaction) transactions;
-
+	char read_buffer[BUFFER_SIZE];
+	unsigned int read_cons, read_prod;
 	/* Partial request. */
 	unsigned int len;
 	union {
 		struct xsd_sockmsg msg;
 		char buffer[BUFFER_SIZE];
 	} u;
-
-	/* Response queue. */
-	char read_buffer[BUFFER_SIZE];
-	unsigned int read_cons, read_prod;
+	kmutex_t mtx;
 };
+
+struct xenbus_dev_data {
+	/* lwps which opended this device */
+	SLIST_HEAD(, xenbus_dev_lwp) lwps;
+	kmutex_t mtx;
+};
+
 
 static int
 xenbus_dev_read(void *v)
@@ -130,48 +153,66 @@ xenbus_dev_read(void *v)
 	} */ *ap = v;
 	struct kernfs_node *kfs = VTOKERN(ap->a_vp);
 	struct uio *uio = ap->a_uio;
-	struct xenbus_dev_data *u = kfs->kfs_v;
+	struct xenbus_dev_data *u;
+	struct xenbus_dev_lwp *xlwp;
 	int err;
 	off_t offset;
-	int s = spltty();
 
-	while (u->read_prod == u->read_cons) {
-		err = tsleep(u, PRIBIO | PCATCH, "xbrd", 0);
-		if (err)
-			goto end;
+	mutex_enter(&xenbus_dev_open_mtx);
+	u = kfs->kfs_v;
+	if (u == NULL) {
+		mutex_exit(&xenbus_dev_open_mtx);
+		return EBADF;
 	}
-	offset = uio->uio_offset;
+	mutex_enter(&u->mtx);
+	mutex_exit(&xenbus_dev_open_mtx);
+	SLIST_FOREACH(xlwp, &u->lwps, lwp_next) {
+		if (xlwp->lwp == curlwp) {
+			break;
+		}
+	}
+	if (xlwp == NULL) {
+		mutex_exit(&u->mtx);
+		return EBADF;
+	}
+	mutex_enter(&xlwp->mtx);
+	mutex_exit(&u->mtx);
 
-	if (u->read_cons > u->read_prod) {
-		err = uiomove(&u->read_buffer[MASK_READ_IDX(u->read_cons)],
-		    0U - u->read_cons, uio);
+	if (xlwp->read_prod == xlwp->read_cons) {
+		err = EWOULDBLOCK;
+		goto end;
+	}
+
+	offset = uio->uio_offset;
+	if (xlwp->read_cons > xlwp->read_prod) {
+		err = uiomove(
+		    &xlwp->read_buffer[MASK_READ_IDX(xlwp->read_cons)],
+		    0U - xlwp->read_cons, uio);
 		if (err)
 			goto end;
-		u->read_cons += (uio->uio_offset - offset);
+		xlwp->read_cons += (uio->uio_offset - offset);
 		offset = uio->uio_offset;
 	}
-	err = uiomove(&u->read_buffer[MASK_READ_IDX(u->read_cons)],
-	    u->read_prod - u->read_cons, uio);
+	err = uiomove(&xlwp->read_buffer[MASK_READ_IDX(xlwp->read_cons)],
+	    xlwp->read_prod - xlwp->read_cons, uio);
 	if (err == 0)
-		u->read_cons += (uio->uio_offset - offset);
+		xlwp->read_cons += (uio->uio_offset - offset);
 
 end:
-	splx(s);
+	mutex_exit(&xlwp->mtx);
 	return err;
 }
 
 static void
-queue_reply(struct xenbus_dev_data *u,
+queue_reply(struct xenbus_dev_lwp *xlwp,
 			char *data, unsigned int len)
 {
 	int i;
+	KASSERT(mutex_owned(&xlwp->mtx));
+	for (i = 0; i < len; i++, xlwp->read_prod++)
+		xlwp->read_buffer[MASK_READ_IDX(xlwp->read_prod)] = data[i];
 
-	for (i = 0; i < len; i++, u->read_prod++)
-		u->read_buffer[MASK_READ_IDX(u->read_prod)] = data[i];
-
-	KASSERT((u->read_prod - u->read_cons) <= sizeof(u->read_buffer));
-
-	wakeup(&u);
+	KASSERT((xlwp->read_prod - xlwp->read_cons) <= sizeof(xlwp->read_buffer));
 }
 
 static int
@@ -186,28 +227,54 @@ xenbus_dev_write(void *v)
 	struct kernfs_node *kfs = VTOKERN(ap->a_vp);
 	struct uio *uio = ap->a_uio;
 
-	struct xenbus_dev_data *u = kfs->kfs_v;
+	struct xenbus_dev_data *u;
+	struct xenbus_dev_lwp *xlwp;
 	struct xenbus_dev_transaction *trans;
 	void *reply;
 	int err;
 	size_t size;
 
-	if (uio->uio_offset < 0)
-		return EINVAL;
+	mutex_enter(&xenbus_dev_open_mtx);
+	u = kfs->kfs_v;
+	if (u == NULL) {
+		mutex_exit(&xenbus_dev_open_mtx);
+		return EBADF;
+	}
+	mutex_enter(&u->mtx);
+	mutex_exit(&xenbus_dev_open_mtx);
+	SLIST_FOREACH(xlwp, &u->lwps, lwp_next) {
+		if (xlwp->lwp == curlwp) {
+			break;
+		}
+	}
+	if (xlwp == NULL) {
+		mutex_exit(&u->mtx);
+		return EBADF;
+	}
+	mutex_enter(&xlwp->mtx);
+	mutex_exit(&u->mtx);
+
+	if (uio->uio_offset < 0) {
+		err = EINVAL;
+		goto end;
+	}
 	size = uio->uio_resid;
 
-	if ((size + u->len) > sizeof(u->u.buffer))
-		return EINVAL;
+	if ((size + xlwp->len) > sizeof(xlwp->u.buffer)) {
+		err = EINVAL;
+		goto end;
+	}
 
-	err = uiomove(u->u.buffer + u->len, sizeof(u->u.buffer) -  u->len, uio);
-	if (err)
-		return err;
+	err = uiomove(xlwp->u.buffer + xlwp->len,
+		      sizeof(xlwp->u.buffer) -  xlwp->len, uio);
+	if (err) 
+		goto end;
 
-	u->len += size;
-	if (u->len < (sizeof(u->u.msg) + u->u.msg.len))
-		return 0;
+	xlwp->len += size;
+	if (xlwp->len < (sizeof(xlwp->u.msg) + xlwp->u.msg.len))
+		goto end;
 
-	switch (u->u.msg.type) {
+	switch (xlwp->u.msg.type) {
 	case XS_TRANSACTION_START:
 	case XS_TRANSACTION_END:
 	case XS_DIRECTORY:
@@ -219,29 +286,33 @@ xenbus_dev_write(void *v)
 	case XS_MKDIR:
 	case XS_RM:
 	case XS_SET_PERMS:
-		err = xenbus_dev_request_and_reply(&u->u.msg, &reply);
+		err = xenbus_dev_request_and_reply(&xlwp->u.msg, &reply);
 		if (err == 0) {
-			if (u->u.msg.type == XS_TRANSACTION_START) {
+			if (xlwp->u.msg.type == XS_TRANSACTION_START) {
 				trans = malloc(sizeof(*trans), M_DEVBUF,
 				    M_WAITOK);
 				trans->handle = (struct xenbus_transaction *)
 					strtoul(reply, NULL, 0);
-				SLIST_INSERT_HEAD(&u->transactions,
+				SLIST_INSERT_HEAD(&xlwp->transactions,
 				    trans, trans_next);
-			} else if (u->u.msg.type == XS_TRANSACTION_END) {
-				SLIST_FOREACH(trans, &u->transactions,
+			} else if (xlwp->u.msg.type == XS_TRANSACTION_END) {
+				SLIST_FOREACH(trans, &xlwp->transactions,
 						    trans_next) {
 					if ((unsigned long)trans->handle ==
-					    (unsigned long)u->u.msg.tx_id)
+					    (unsigned long)xlwp->u.msg.tx_id)
 						break;
 				}
-				KASSERT(trans != NULL);
-				SLIST_REMOVE(&u->transactions, trans, 
+				if (trans == NULL) {
+					err = EINVAL;
+					goto end;
+				}
+				SLIST_REMOVE(&xlwp->transactions, trans, 
 				    xenbus_dev_transaction, trans_next);
 				free(trans, M_DEVBUF);
 			}
-			queue_reply(u, (char *)&u->u.msg, sizeof(u->u.msg));
-			queue_reply(u, (char *)reply, u->u.msg.len);
+			queue_reply(xlwp, (char *)&xlwp->u.msg,
+						sizeof(xlwp->u.msg));
+			queue_reply(xlwp, (char *)reply, xlwp->u.msg.len);
 			free(reply, M_DEVBUF);
 		}
 		break;
@@ -252,9 +323,10 @@ xenbus_dev_write(void *v)
 	}
 
 	if (err == 0) {
-		u->len = 0;
+		xlwp->len = 0;
 	}
-
+end:
+	mutex_exit(&xlwp->mtx);
 	return err;
 }
 
@@ -266,22 +338,47 @@ xenbus_dev_open(void *v)
 		int a_mode;
 		struct ucred *a_cred;
 	} */ *ap = v;
-	struct kernfs_node *kfs = VTOKERN(ap->a_vp);    
-
+	struct kernfs_node *kfs = VTOKERN(ap->a_vp);
 	struct xenbus_dev_data *u;
+	struct xenbus_dev_lwp *xlwp;
 
 	if (xen_start_info.store_evtchn == 0)
 		return ENOENT;
 
-	u = malloc(sizeof(*u), M_DEVBUF, M_WAITOK);
-	if (u == NULL)
-		return ENOMEM;
-
-	memset(u, 0, sizeof(*u));
-	SLIST_INIT(&u->transactions);
-
-	kfs->kfs_v = u;
-
+	mutex_enter(&xenbus_dev_open_mtx);
+	u = kfs->kfs_v;
+	if (u == NULL) {
+		u = malloc(sizeof(*u), M_DEVBUF, M_WAITOK);
+		if (u == NULL) {      
+			mutex_exit(&xenbus_dev_open_mtx);
+			return ENOMEM;
+		}
+		memset(u, 0, sizeof(*u));
+		SLIST_INIT(&u->lwps); 
+		mutex_init(&u->mtx, MUTEX_DEFAULT, IPL_NONE);
+		kfs->kfs_v = u;       
+	};
+	mutex_enter(&u->mtx);
+	mutex_exit(&xenbus_dev_open_mtx);
+	SLIST_FOREACH(xlwp, &u->lwps, lwp_next) {
+		if (xlwp->lwp == curlwp) {
+			break;
+		}
+	}
+	if (xlwp == NULL) {
+		xlwp = malloc(sizeof(*xlwp ), M_DEVBUF, M_WAITOK);      
+		if (xlwp  == NULL) {  
+			mutex_exit(&u->mtx);
+			return ENOMEM;
+		}
+		memset(xlwp, 0, sizeof(*xlwp));
+		xlwp->lwp = curlwp;   
+		SLIST_INIT(&xlwp->transactions);
+		mutex_init(&xlwp->mtx, MUTEX_DEFAULT, IPL_NONE);
+		SLIST_INSERT_HEAD(&u->lwps,
+		    xlwp, lwp_next);  
+	}
+	mutex_exit(&u->mtx);
 	return 0;
 }
 
@@ -293,21 +390,48 @@ xenbus_dev_close(void *v)
 		int a_fflag;
 		struct ucred *a_cred;
 	} */ *ap = v;
-	struct kernfs_node *kfs = VTOKERN(ap->a_vp);    
+	struct kernfs_node *kfs = VTOKERN(ap->a_vp);
 
-	struct xenbus_dev_data *u = kfs->kfs_v;
+	struct xenbus_dev_data *u;
+	struct xenbus_dev_lwp *xlwp;
 	struct xenbus_dev_transaction *trans;
 
-	while (!SLIST_EMPTY(&u->transactions)) {
-		trans = SLIST_FIRST(&u->transactions);
+	mutex_enter(&xenbus_dev_open_mtx);
+	u = kfs->kfs_v;
+	KASSERT(u != NULL);
+	mutex_enter(&u->mtx);
+	SLIST_FOREACH(xlwp, &u->lwps, lwp_next) {
+		if (xlwp->lwp == curlwp) {
+			break;
+		}
+	}
+	if (xlwp == NULL) {
+		mutex_exit(&u->mtx);
+		mutex_exit(&xenbus_dev_open_mtx);
+		return EBADF;
+	}
+	mutex_enter(&xlwp->mtx);
+	while (!SLIST_EMPTY(&xlwp->transactions)) {
+		trans = SLIST_FIRST(&xlwp->transactions);
 		xenbus_transaction_end(trans->handle, 1);
-		SLIST_REMOVE_HEAD(&u->transactions, trans_next);
+		SLIST_REMOVE_HEAD(&xlwp->transactions, trans_next);
 		free(trans, M_DEVBUF);
 	}
+	mutex_exit(&xlwp->mtx);
+	SLIST_REMOVE(&u->lwps, xlwp, xenbus_dev_lwp, lwp_next);
+	mutex_destroy(&xlwp->mtx);
 
-	free(u, M_DEVBUF);
+	if (!SLIST_EMPTY(&u->lwps)) {
+		mutex_exit(&u->mtx);
+		mutex_exit(&xenbus_dev_open_mtx);
+		return 0;
+	}
+	mutex_exit(&u->mtx);
+	mutex_destroy(&u->mtx);
 	kfs->kfs_v = NULL;
-
+	mutex_exit(&xenbus_dev_open_mtx);
+	free(xlwp, M_DEVBUF);
+	free(u, M_DEVBUF);
 	return 0;
 }
 
@@ -324,7 +448,7 @@ xsd_port_read(void *v)
 	} */ *ap = v;
 	struct uio *uio = ap->a_uio;
 	int off, error;
-	size_t len; 
+	size_t len;
 	char strbuf[LD_STRLEN], *bf;
 
 	off = (int)uio->uio_offset;

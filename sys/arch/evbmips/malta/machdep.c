@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.42.2.1 2014/08/20 00:02:58 tls Exp $	*/
+/*	$NetBSD: machdep.c,v 1.42.2.2 2017/12/03 11:36:10 jdolecek Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.42.2.1 2014/08/20 00:02:58 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.42.2.2 2017/12/03 11:36:10 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -181,8 +181,7 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	 */
 	mips_vector_init(NULL, false);
 
-	/* set the VM page size */
-	uvm_setpagesize();
+	uvm_md_init();
 
 	physmem = btoc(memsize);
 
@@ -278,11 +277,11 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 		Debugger();
 #endif
 
-#ifdef MULTIPROCESSOR
+#if defined(MULTIPROCESSOR) && 0
 	/*
 	 * We can never be running on more than one processor but we can dream.
 	 */
-	mips_fixup_exceptions(mips_fixup_zero_relative);
+	mips_fixup_exceptions(mips_fixup_zero_relative, NULL);
 #endif
 }
 

@@ -1,4 +1,4 @@
-#	$NetBSD: CUBIETRUCK,v 1.2.6.2 2014/08/20 00:02:53 tls Exp $
+#	$NetBSD: CUBIETRUCK,v 1.2.6.3 2017/12/03 11:36:03 jdolecek Exp $
 #
 #	CUBIETRUCK - Cubieboard3 (mostly cubieboard2 with 2GB)
 #
@@ -10,17 +10,30 @@ include "arch/evbarm/conf/CUBIEBOARD"
 #
 no makeoptions	KERNEL_BASE_PHYS
 no makeoptions	KERNEL_BASE_VIRT
+no makeoptions	BOARDTYPE
 makeoptions	KERNEL_BASE_PHYS="0x80000000"
 makeoptions	KERNEL_BASE_VIRT="0x80000000"
+makeoptions	BOARDTYPE="cubietruck"
+
+#
+# Cubietruck is an A20
+#
+no options 	ALLWINNER_A10
+no makeoptions	CPUFLAGS
+makeoptions	CPUFLAGS="-mcpu=cortex-a7 -mfpu=neon"
 
 #
 # We need this too.
 #
 options 	PMAP_NEED_ALLOC_POOLPAGE
 
-#
-# not fully working yet
-#
-# options	MULTIPROCESSOR
-# cpu* at mainbus?
-# options 	VERBOSE_INIT_ARM # verbose bootstraping messages
+# we need awinii2c to talk to VGA monitors
+awiniic*	at awinio? port ?
+
+# TV encoder / VGA output
+awintve0 	at awinio0
+
+
+cinclude	"arch/evbarm/conf/CUBIETRUCK.local"
+
+#options 	VERBOSE_INIT_ARM # verbose bootstraping messages

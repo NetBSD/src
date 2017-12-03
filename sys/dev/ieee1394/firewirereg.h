@@ -1,4 +1,4 @@
-/*	$NetBSD: firewirereg.h,v 1.18 2012/08/04 03:55:43 riastradh Exp $	*/
+/*	$NetBSD: firewirereg.h,v 1.18.2.1 2017/12/03 11:37:04 jdolecek Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -200,6 +200,7 @@ struct fw_xferq {
 	STAILQ_HEAD(, fw_bulkxfer) stfree;
 	STAILQ_HEAD(, fw_bulkxfer) stdma;
 	struct fw_bulkxfer *stproc;
+	kcondvar_t cv;
 	struct selinfo rsel;
 	void *sc;
 	void (*hand) (struct fw_xferq *);
@@ -283,6 +284,8 @@ int fw_xferwait(struct fw_xfer *);
 void fw_drain_txq(struct firewire_comm *);
 void fw_busreset(struct firewire_comm *, uint32_t);
 void fw_init(struct firewire_comm *);
+void fw_init_isodma(struct firewire_comm *);
+void fw_destroy_isodma(struct firewire_comm *);
 void fw_destroy(struct firewire_comm *);
 struct fw_bind *fw_bindlookup(struct firewire_comm *, uint16_t, uint32_t);
 int fw_bindadd(struct firewire_comm *, struct fw_bind *);

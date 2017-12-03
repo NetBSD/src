@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.62 2012/02/17 19:00:45 bouyer Exp $	*/
+/*	$NetBSD: clock.c,v 1.62.2.1 2017/12/03 11:36:51 jdolecek Exp $	*/
 
 /*
  *
@@ -29,7 +29,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.62 2012/02/17 19:00:45 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.62.2.1 2017/12/03 11:36:51 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.62 2012/02/17 19:00:45 bouyer Exp $");
 #include <dev/clock_subr.h>
 #include <x86/rtc.h>
 
-static int xen_timer_handler(void *, struct intrframe *);
+static int xen_timer_handler(void *);
+static struct intrhand *ih;
 
 /* A timecounter: Xen system_time extrapolated with a TSC. */
 u_int xen_get_timecount(struct timecounter*);
@@ -419,7 +420,7 @@ static struct evcnt hardclock_called[MAXCPUS];
 void
 xen_initclocks(void)
 {
-	int err;
+	int err __diagused;
 	static bool tcdone = false;
 
 	struct cpu_info *ci = curcpu();
@@ -471,15 +472,27 @@ xen_initclocks(void)
 	KASSERT(err == 0);
 
 #ifdef DOM0OPS
+	const struct sysctlnode *node = NULL;
+
 	if (!tcdone) { /* Do this only once */
 
 		xen_timepush_ticks = 53 * hz + 3; /* avoid exact # of min/sec */
 		if (xendomain_is_privileged()) {
-			sysctl_createv(NULL, 0, NULL, NULL, CTLFLAG_READWRITE,
-			    CTLTYPE_INT, "xen_timepush_ticks", SYSCTL_DESCR("How often"
-			     " to update the hypervisor's time-of-day; 0 to disable"),
-			     sysctl_xen_timepush, 0, &xen_timepush_ticks, 0, 
-			     CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+			sysctl_createv(NULL, 0, NULL, &node, 0,
+			    CTLTYPE_NODE, "xen",
+			    SYSCTL_DESCR("Xen top level node"),
+			    NULL, 0, NULL, 0,
+			    CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+			if (node != NULL) {
+				sysctl_createv(NULL, 0, &node, NULL,
+				    CTLFLAG_READWRITE, CTLTYPE_INT,
+				    "timepush_ticks",
+				    SYSCTL_DESCR("How often to update the "
+				    "hypervisor's time-of-day; 0 to disable"),
+				    sysctl_xen_timepush, 0,
+				    &xen_timepush_ticks, 0, 
+				    CTL_CREATE, CTL_EOL);
+			}
 			callout_reset(&xen_timepush_co, xen_timepush_ticks,
 			     &xen_timepush, &xen_timepush_co);
 		}
@@ -497,7 +510,7 @@ xen_suspendclocks(struct cpu_info *ci)
 	KASSERT(evtch != -1);
 
 	hypervisor_mask_event(evtch);
-	event_remove_handler(evtch, (int (*)(void *))xen_timer_handler, ci);
+	intr_disestablish(ih);
 
 	aprint_verbose("Xen clock: removed event channel %d\n", evtch);
 }
@@ -510,8 +523,11 @@ xen_resumeclocks(struct cpu_info *ci)
 	evtch = bind_virq_to_evtch(VIRQ_TIMER);
 	KASSERT(evtch != -1);
 
-	event_set_handler(evtch, (int (*)(void *))xen_timer_handler,
-	    ci, IPL_CLOCK, "clock");
+	ih = intr_establish_xname(0, &xen_pic, evtch, IST_LEVEL, IPL_CLOCK,
+	    xen_timer_handler, ci, true, "clock");
+
+	KASSERT(ih != NULL);
+
 	hypervisor_enable_event(evtch);
 
 	aprint_verbose("Xen clock: using event channel %d\n", evtch);
@@ -519,11 +535,12 @@ xen_resumeclocks(struct cpu_info *ci)
 
 /* ARGSUSED */
 static int
-xen_timer_handler(void *arg, struct intrframe *regs)
+xen_timer_handler(void *arg)
 {
 	int64_t delta;
 	struct cpu_info *ci = curcpu();
-	KASSERT(arg == ci);
+	struct intrframe *regs = arg;
+
 	int err;
 again:
 	mutex_enter(&tmutex);

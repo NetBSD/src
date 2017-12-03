@@ -49,7 +49,7 @@ test_and_set_bit(int b, volatile void *p)
 	unsigned int r = *(volatile int *)p & m;
 	*(volatile int *)p |= m;
 	splx(s);
-	return r;
+	return !!r;
 }
 
 static __inline void
@@ -115,7 +115,7 @@ test_and_set_bit(int b, volatile void *p)
 			break;
 	} while (atomic_cas_uint(val, old, old | mask) != old);
 
-	return old & mask;
+	return !!(old & mask);
 }
 
 #endif

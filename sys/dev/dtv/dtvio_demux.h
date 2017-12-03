@@ -1,4 +1,4 @@
-/* $NetBSD: dtvio_demux.h,v 1.2 2011/07/10 15:50:48 jmcneill Exp $ */
+/* $NetBSD: dtvio_demux.h,v 1.2.12.1 2017/12/03 11:37:00 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,6 +35,7 @@
 #ifndef _DEV_DTV_DTVIO_DEMUX_H
 #define _DEV_DTV_DTVIO_DEMUX_H
 
+#include <sys/types.h>
 #include <sys/ioccom.h>
 
 /*

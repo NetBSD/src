@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.235.2.1 2014/08/20 00:03:12 tls Exp $	*/
+/*	$NetBSD: trap.c,v 1.235.2.2 2017/12/03 11:36:28 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.235.2.1 2014/08/20 00:03:12 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.235.2.2 2017/12/03 11:36:28 jdolecek Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -99,16 +99,16 @@ const char * const trap_names[] = {
 	"r4k trap/r3k reserved 13",
 	"r4k virtual coherency instruction/r3k reserved 14",
 	"r4k floating point/ r3k reserved 15",
-	"reserved 16",
+	"mips NMI",
 	"reserved 17",
 	"mipsNN cp2 exception",
-	"reserved 19",
-	"reserved 20",
+	"mipsNN TLBRI",
+	"mipsNN TLBXI",
 	"reserved 21",
 	"mips64 MDMX",
 	"r4k watch",
 	"mipsNN machine check",
-	"reserved 25",
+	"mipsNN thread",
 	"DSP exception",
 	"reserved 27",
 	"reserved 28",
@@ -142,7 +142,7 @@ child_return(void *arg)
 #else
 #define TRAPTYPE(x) (((x) & MIPS1_CR_EXC_CODE) >> MIPS_CR_EXC_CODE_SHIFT)
 #endif
-#define KERNLAND(x) ((intptr_t)(x) < 0)
+#define KERNLAND_P(x) ((intptr_t)(x) < 0)
 
 /*
  * Trap is called from locore to handle most types of processor traps.
@@ -167,7 +167,11 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 	KSI_INIT_TRAP(&ksi);
 
 	curcpu()->ci_data.cpu_ntrap++;
-	type = TRAPTYPE(cause);
+	if (CPUISMIPS3 && (status & MIPS3_SR_NMI)) {
+		type = T_NMI;
+	} else {
+		type = TRAPTYPE(cause);
+	}
 	if (USERMODE(status)) {
 		tf = utf;
 		type |= T_USER;
@@ -186,36 +190,38 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 		int n, sz = sizeof(strbuf);
 
 		n = snprintf(str, sz, "pid %d(%s): ", p->p_pid, p->p_comm);
-		sz -= n; 
+		sz -= n;
 		str += n;
 		n = snprintf(str, sz, "trap: cpu%d, %s in %s mode\n",
 			cpu_number(), trap_names[TRAPTYPE(cause)],
 			USERMODE(status) ? "user" : "kernel");
-		sz -= n; 
+		sz -= n;
 		str += n;
-		n = snprintf(str, sz, "status=0x%x, cause=0x%x, epc=%#"
+		n = snprintf(str, sz, "status=%#x, cause=%#x, epc=%#"
 			PRIxVADDR ", vaddr=%#" PRIxVADDR "\n",
 			status, cause, pc, vaddr);
-		sz -= n; 
+		sz -= n;
 		str += n;
 		if (USERMODE(status)) {
 			KASSERT(tf == utf);
 			n = snprintf(str, sz, "frame=%p usp=%#" PRIxREGISTER
 			    " ra=%#" PRIxREGISTER "\n",
 			    tf, tf->tf_regs[_R_SP], tf->tf_regs[_R_RA]);
-			sz -= n; 
+			sz -= n;
 			str += n;
 		} else {
 			n = snprintf(str, sz, "tf=%p ksp=%p ra=%#"
-			    PRIxREGISTER " ppl=%#x\n",
-			    tf, tf+1, tf->tf_regs[_R_RA],
-			    tf->tf_ppl);
-			sz -= n; 
+			    PRIxREGISTER " ppl=%#x\n", tf,
+			    type == T_NMI
+				? (void*)(uintptr_t)tf->tf_regs[_R_SP]
+				: tf+1,
+			    tf->tf_regs[_R_RA], tf->tf_ppl);
+			sz -= n;
 			str += n;
 		}
 		printf("%s", strbuf);
 
-		if ((TRAPTYPE(cause) == 6) || (TRAPTYPE(cause) == 7))
+		if (type == T_BUS_ERR_IFETCH || type == T_BUS_ERR_LD_ST)
 			(void)(*mips_locoresw.lsw_bus_error)(cause);
 
 #if defined(DDB)
@@ -246,97 +252,69 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 #endif
 		/*NOTREACHED*/
 	case T_TLB_MOD:
-		if (KERNLAND(vaddr)) {
-			pt_entry_t *pte;
-			uint32_t pt_entry;
-			paddr_t pa;
-
-			kpreempt_disable();
-
-			pte = kvtopte(vaddr);
-			pt_entry = pte->pt_entry;
-			if (!mips_pg_v(pt_entry)) {
-				panic("ktlbmod: %#"PRIxVADDR": invalid pte",
-				    vaddr);
-			}
-			if (pt_entry & mips_pg_ro_bit()) {
-				/* write to read only page in the kernel */
-				ftype = VM_PROT_WRITE;
-				kpreempt_enable();
-				goto kernelfault;
-			}
-			if ((pt_entry & mips_pg_m_bit()) == 0) {
-				pt_entry |= mips_pg_m_bit();
-#ifdef MULTIPROCESSOR
-				atomic_or_32(&pte->pt_entry, mips_pg_m_bit());
-#else
-				pte->pt_entry = pt_entry;
-#endif
-			}
-			vaddr &= ~PGOFSET;
-			pmap_tlb_update_addr(pmap_kernel(), vaddr, pt_entry,
-			    false);
-			kpreempt_enable();
-			pa = mips_tlbpfn_to_paddr(pt_entry);
-#ifdef DIAGNOSTIC
-			if (!uvm_pageismanaged(pa)) {
-				panic("ktlbmod: unmanaged page:"
-				    " va %#" PRIxVADDR " pa %#"PRIxPADDR,
-				    vaddr, pa);
-			}
-#endif
-			pmap_set_modified(pa);
-			return; /* KERN */
-		}
-		/*FALLTHROUGH*/
 	case T_TLB_MOD+T_USER: {
-		pt_entry_t *pte;
-		uint32_t pt_entry;
-		paddr_t pa;
-		pmap_t pmap;
+		const bool user_p = (type & T_USER) || !KERNLAND_P(vaddr);
+		pmap_t pmap = user_p
+		    ? p->p_vmspace->vm_map.pmap
+		    : pmap_kernel();
 
 		kpreempt_disable();
-		pmap = p->p_vmspace->vm_map.pmap;
-		if (!(pte = pmap_pte_lookup(pmap, vaddr)))
-			panic("utlbmod: no pte");
-		pt_entry = pte->pt_entry;
-		if (!mips_pg_v(pt_entry))
-			panic("utlbmod: va %"PRIxVADDR" invalid pte %08x @ %p",
-			    vaddr, pt_entry, pte);
-		if (pt_entry & mips_pg_ro_bit()) {
+
+		pt_entry_t * const ptep = pmap_pte_lookup(pmap, vaddr);
+		if (!ptep)
+			panic("%ctlbmod: %#"PRIxVADDR": no pte",
+			    user_p ? 'u' : 'k', vaddr);
+		pt_entry_t pte = *ptep;
+		if (!pte_valid_p(pte)) {
+			panic("%ctlbmod: %#"PRIxVADDR": invalid pte %#"PRIx32
+			    " @ ptep %p", user_p ? 'u' : 'k', vaddr,
+			    pte_value(pte), ptep);
+		}
+		if (pte_readonly_p(pte)) {
 			/* write to read only page */
 			ftype = VM_PROT_WRITE;
 			kpreempt_enable();
-			goto pagefault;
+			if (user_p) {
+				goto pagefault;
+			} else {
+				goto kernelfault;
+			}
 		}
-		if ((pt_entry & mips_pg_m_bit()) == 0) {
-			pt_entry |= mips_pg_m_bit();
+		UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
+		UVMHIST_LOG(maphist, "%ctlbmod(va=%#lx, pc=%#lx, tf=%p)",
+		    user_p ? 'u' : 'k', vaddr, pc, tf);
+		if (!pte_modified_p(pte)) {
+			pte |= mips_pg_m_bit();
 #ifdef MULTIPROCESSOR
-			atomic_or_32(&pte->pt_entry, mips_pg_m_bit());
+			atomic_or_32(ptep, mips_pg_m_bit());
 #else
-			pte->pt_entry = pt_entry;
+			*ptep = pte;
 #endif
-			vaddr = trunc_page(vaddr);
 		}
-		pmap_tlb_update_addr(pmap, vaddr, pt_entry, false);
+		// We got a TLB MOD exception so we must have a valid ASID
+		// and there must be a matching entry in the TLB.  So when
+		// we try to update it, we better have done it.
+		KASSERTMSG(pte_valid_p(pte), "%#"PRIx32, pte_value(pte));
+		vaddr = trunc_page(vaddr);
+		int ok = pmap_tlb_update_addr(pmap, vaddr, pte, 0);
 		kpreempt_enable();
-		pa = mips_tlbpfn_to_paddr(pt_entry);
-#if defined(DIAGNOSTIC)
-		if (!uvm_pageismanaged(pa)) {
-			panic("utlbmod: unmanaged page:"
-			    " va %#"PRIxVADDR" pa %#"PRIxPADDR,
-			    vaddr, pa);
-		}
-#endif
+		if (ok != 1)
+			printf("pmap_tlb_update_addr(%p,%#"
+			    PRIxVADDR",%#"PRIxPTE", 0) returned %d",
+			    pmap, vaddr, pte_value(pte), ok);
+		paddr_t pa = pte_to_paddr(pte);
+		KASSERTMSG(uvm_pageismanaged(pa),
+		    "%#"PRIxVADDR" pa %#"PRIxPADDR, vaddr, pa);
 		pmap_set_modified(pa);
 		if (type & T_USER)
 			userret(l);
+		UVMHIST_LOG(maphist, " <-- done", 0, 0, 0, 0);
 		return; /* GEN */
 	}
 	case T_TLB_LD_MISS:
 	case T_TLB_ST_MISS:
 		ftype = (type == T_TLB_LD_MISS) ? VM_PROT_READ : VM_PROT_WRITE;
-		if (KERNLAND(vaddr))
+		if (KERNLAND_P(vaddr))
 			goto kernelfault;
 		/*
 		 * It is an error for the kernel to access user space except
@@ -375,9 +353,10 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 		 */
 		struct cpu_info * const ci = curcpu();
 		if ((va >> XSEGSHIFT) == 0 &&
-		    __predict_false(ci->ci_pmap_seg0tab == NULL
-				&& ci->ci_pmap_segtab->seg_seg[0] != NULL)) {
-			ci->ci_pmap_seg0tab = ci->ci_pmap_segtab->seg_seg[0];
+		    __predict_false(ci->ci_pmap_user_seg0tab == NULL
+				&& ci->ci_pmap_user_segtab->seg_seg[0] != NULL)) {
+			ci->ci_pmap_user_seg0tab =
+			    ci->ci_pmap_user_segtab->seg_seg[0];
 			kpreempt_enable();
 			if (type & T_USER) {
 				userret(l);
@@ -385,21 +364,20 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 			return; /* GEN */
 		}
 #endif
-		KASSERT(va < 0 || curcpu()->ci_pmap_asid_cur != 0);
+		KASSERT(KERNLAND_P(va) || curcpu()->ci_pmap_asid_cur != 0);
 		pmap_tlb_asid_check();
 		kpreempt_enable();
 
 #ifdef PMAP_FAULTINFO
 		if (p->p_pid == pfi->pfi_lastpid && va == pfi->pfi_faultaddr) {
-			if (++pfi->pfi_repeats > 1) {
-				register_t tlb_hi;
-				pt_entry_t *pte = pfi->pfi_faultpte;
-				__asm("dmfc0 %0,$%1" : "=r"(tlb_hi) : "n"(MIPS_COP_0_TLB_HI));
-				printf("trap: fault #%u (%s/%s) for %#"PRIxVADDR" (%#"PRIxVADDR") at pc %#"PRIxVADDR" curpid=%u/%u pte@%p=%#x)\n", pfi->pfi_repeats, trap_names[TRAPTYPE(cause)], trap_names[pfi->pfi_faulttype], va, vaddr, pc, map->pmap->pm_pai[0].pai_asid, (uint8_t)tlb_hi, pte, pte ? pte->pt_entry : 0);
+			if (++pfi->pfi_repeats > 4) {
+				tlb_asid_t asid = tlb_get_asid();
+				pt_entry_t *ptep = pfi->pfi_faultpte;
+				printf("trap: fault #%u (%s/%s) for %#"PRIxVADDR" (%#"PRIxVADDR") at pc %#"PRIxVADDR" curpid=%u/%u ptep@%p=%#"PRIxPTE")\n", pfi->pfi_repeats, trap_names[TRAPTYPE(cause)], trap_names[pfi->pfi_faulttype], va, vaddr, pc, map->pmap->pm_pai[0].pai_asid, asid, ptep, ptep ? pte_value(*ptep) : 0);
 				if (pfi->pfi_repeats >= 4) {
 					cpu_Debugger();
 				} else {
-					pfi->pfi_faulttype = TRAPTYPE(cause);       
+					pfi->pfi_faulttype = TRAPTYPE(cause);
 				}
 			}
 		} else {
@@ -413,17 +391,19 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 
 		onfault = pcb->pcb_onfault;
 		pcb->pcb_onfault = NULL;
-		if (p->p_emul->e_fault)
+		if (p->p_emul->e_fault) {
 			rv = (*p->p_emul->e_fault)(p, va, ftype);
-		else
+		} else {
 			rv = uvm_fault(map, va, ftype);
+		}
 		pcb->pcb_onfault = onfault;
 
-#ifdef VMFAULT_TRACE
-		printf(
-		    "uvm_fault(%p (pmap %p), %#"PRIxVADDR
-		    " (%"PRIxVADDR"), %d) -> %d at pc %#"PRIxVADDR"\n",
-		    map, vm->vm_map.pmap, va, vaddr, ftype, rv, pc);
+#if defined(VMFAULT_TRACE)
+		if (!KERNLAND_P(va))
+			printf(
+			    "uvm_fault(%p (pmap %p), %#"PRIxVADDR
+			    " (%"PRIxVADDR"), %d) -> %d at pc %#"PRIxVADDR"\n",
+			    map, vm->vm_map.pmap, va, vaddr, ftype, rv, pc);
 #endif
 		/*
 		 * If this was a stack access we keep track of the maximum
@@ -444,7 +424,7 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 				pfi->pfi_faultpte =
 				    pmap_pte_lookup(map->pmap, va);
 			}
-			KASSERT(((pt_entry_t *)(pfi->pfi_faultpte))->pt_entry);
+			KASSERT(*(pt_entry_t *)pfi->pfi_faultpte);
 #endif
 			if (type & T_USER) {
 				userret(l);
@@ -453,21 +433,27 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 		}
 		if ((type & T_USER) == 0)
 			goto copyfault;
-		if (rv == ENOMEM) {
-			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
-			       p->p_pid, p->p_comm,
-			       l->l_cred ?
-			       kauth_cred_geteuid(l->l_cred) : (uid_t) -1);
+
+		KSI_INIT_TRAP(&ksi);
+		switch (rv) {
+		case EINVAL:
+			ksi.ksi_signo = SIGBUS;
+			ksi.ksi_code = BUS_ADRERR;
+			break;
+		case EACCES:
+			ksi.ksi_signo = SIGSEGV;
+			ksi.ksi_code = SEGV_ACCERR;
+			break;
+		case ENOMEM:
 			ksi.ksi_signo = SIGKILL;
-			ksi.ksi_code = 0;
-		} else {
-			if (rv == EACCES) {
-				ksi.ksi_signo = SIGBUS;
-				ksi.ksi_code = BUS_OBJERR;
-			} else {
-				ksi.ksi_signo = SIGSEGV;
-				ksi.ksi_code = SEGV_MAPERR;
-			}
+			printf("UVM: pid %d.%d (%s), uid %d killed: "
+			    "out of swap\n", p->p_pid, l->l_lid, p->p_comm,
+			    l->l_cred ? kauth_cred_geteuid(l->l_cred) : -1);
+			break;
+		default:
+			ksi.ksi_signo = SIGSEGV;
+			ksi.ksi_code = SEGV_MAPERR;
+			break;
 		}
 		ksi.ksi_trap = type & ~T_USER;
 		ksi.ksi_addr = (void *)vaddr;
@@ -502,7 +488,7 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 	case T_BUS_ERR_LD_ST+T_USER:	/* BERR asserted to CPU */
 		ksi.ksi_trap = type & ~T_USER;
 		ksi.ksi_addr = (void *)vaddr;
-		if ((intptr_t)vaddr < 0) {
+		if (KERNLAND_P(vaddr)) {
 			ksi.ksi_signo = SIGSEGV;
 			ksi.ksi_code = SEGV_MAPERR;
 		} else {
@@ -560,6 +546,9 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 			ksi.ksi_signo = SIGTRAP;
 			ksi.ksi_addr = (void *)va;
 			ksi.ksi_code = TRAP_TRACE;
+			/* we broke, skip it to avoid infinite loop */
+			if (instr == MIPS_BREAK_INSTR)
+				tf->tf_regs[_R_PC] += 4;
 			break;
 		}
 		/*
@@ -942,7 +931,7 @@ loop:
 	/*
 	 * Find the beginning of the current subroutine by scanning backwards
 	 * from the current PC for the end of the previous subroutine.
-	 * 
+	 *
 	 * XXX This won't work well because nowadays gcc is so aggressive
 	 *     as to reorder instruction blocks for branch-predict.
 	 *     (i.e. 'jr ra' wouldn't indicate the end of subroutine)
@@ -1099,7 +1088,7 @@ done:
 		}
 	} else {
 finish:
-		(*printfn)("User-level: pid %d.%d\n", 
+		(*printfn)("User-level: pid %d.%d\n",
 		    curlwp->l_proc->p_pid, curlwp->l_lid);
 	}
 }

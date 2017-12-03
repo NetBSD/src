@@ -1,4 +1,4 @@
-/* $NetBSD: cx24227.c,v 1.6 2012/03/15 16:20:36 bouyer Exp $ */
+/* $NetBSD: cx24227.c,v 1.6.2.1 2017/12/03 11:37:02 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cx24227.c,v 1.6 2012/03/15 16:20:36 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cx24227.c,v 1.6.2.1 2017/12/03 11:37:02 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -234,9 +234,6 @@ cx24227_open(device_t parent, i2c_tag_t tag, i2c_addr_t addr)
 	uint16_t value;
 
 	sc = kmem_alloc(sizeof(*sc), KM_SLEEP);
-	if (sc == NULL)
-		return NULL;
-
 	sc->parent = parent;
 	sc->tag = tag;
 	sc->addr = addr;
@@ -328,7 +325,7 @@ cx24227_init(struct cx24227 *sc)
 	return 0;
 }
 
-MODULE(MODULE_CLASS_DRIVER, cx24227, "iic");
+MODULE(MODULE_CLASS_DRIVER, cx24227, "i2cexec");
 
 static int
 cx24227_modcmd(modcmd_t cmd, void *priv)

@@ -1,4 +1,4 @@
-/* $NetBSD: udf_strat_bootstrap.c,v 1.3 2008/12/16 16:18:25 pooka Exp $ */
+/* $NetBSD: udf_strat_bootstrap.c,v 1.3.24.1 2017/12/03 11:38:43 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_strat_bootstrap.c,v 1.3 2008/12/16 16:18:25 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_strat_bootstrap.c,v 1.3.24.1 2017/12/03 11:38:43 jdolecek Exp $");
 #endif /* not lint */
 
 
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: udf_strat_bootstrap.c,v 1.3 2008/12/16 16:18:25 pook
 #include <sys/device.h>
 #include <sys/disklabel.h>
 #include <sys/ioctl.h>
-#include <sys/malloc.h>
 #include <sys/dirent.h>
 #include <sys/stat.h>
 #include <sys/conf.h>
@@ -116,6 +115,14 @@ udf_queuebuf_bootstrap(struct udf_strat_args *args)
 	VOP_STRATEGY(ump->devvp, buf);
 }
 
+
+static void
+udf_sync_caches_bootstrap(struct udf_strat_args *args)
+{
+	/* empty */
+}
+
+
 static void
 udf_discstrat_init_bootstrap(struct udf_strat_args *args)
 {
@@ -138,6 +145,7 @@ struct udf_strategy udf_strat_bootstrap =
 	udf_read_logvol_dscr_bootstrap,
 	udf_write_logvol_dscr_bootstrap,
 	udf_queuebuf_bootstrap,
+	udf_sync_caches_bootstrap,
 	udf_discstrat_init_bootstrap,
 	udf_discstrat_finish_bootstrap
 };

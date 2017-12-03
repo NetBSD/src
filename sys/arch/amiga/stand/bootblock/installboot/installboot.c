@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.5 2010/07/06 06:09:57 mrg Exp $	*/
+/*	$NetBSD: installboot.c,v 1.5.18.1 2017/12/03 11:35:49 jdolecek Exp $	*/
 
 #include <err.h>
 #include <fcntl.h>
@@ -17,7 +17,7 @@ int main(int argc, char *argv[]);
 
 int main(int argc, char *argv[]){
 
-	char *line;
+	char *line = NULL;
 	char *progname;
 	char *bootnam, *devnam;
 	char *dline;

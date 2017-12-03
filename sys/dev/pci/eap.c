@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.94.8.1 2014/08/20 00:03:42 tls Exp $	*/
+/*	$NetBSD: eap.c,v 1.94.8.2 2017/12/03 11:37:07 jdolecek Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.94.8.1 2014/08/20 00:03:42 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.94.8.2 2017/12/03 11:37:07 jdolecek Exp $");
 
 #include "midi.h"
 #include "joy_eap.h"
@@ -635,8 +635,8 @@ eap_attach(device_t parent, device_t self, void *aux)
 		ctl.dev = EAP_INPUT_SOURCE;
 		ctl.type = AUDIO_MIXER_SET;
 		ctl.un.mask = 1 << EAP_VOICE_VOL | 1 << EAP_FM_VOL |
-			1 << EAP_CD_VOL | 1 << EAP_LINE_VOL | 1 << EAP_AUX_VOL |
-			1 << EAP_MIC_VOL;
+			1 << EAP_CD_VOL | 1 << EAP_LINE_VOL |
+			1 << EAP_AUX_VOL | 1 << EAP_MIC_VOL;
 		eap_hw_if->set_port(&sc->sc_ei[EAP_I1], &ctl);
 
 		ctl.type = AUDIO_MIXER_VALUE;
@@ -1729,8 +1729,6 @@ eap_malloc(void *addr, int direction, size_t size)
 	int error;
 
 	p = kmem_alloc(sizeof(*p), KM_SLEEP);
-	if (!p)
-		return NULL;
 	ei = addr;
 	sc = device_private(ei->parent);
 	error = eap_allocmem(sc, size, 16, p);

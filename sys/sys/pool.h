@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.75.2.1 2014/08/20 00:04:44 tls Exp $	*/
+/*	$NetBSD: pool.h,v 1.75.2.2 2017/12/03 11:39:20 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2007 The NetBSD Foundation, Inc.
@@ -32,6 +32,8 @@
 
 #ifndef _SYS_POOL_H_
 #define _SYS_POOL_H_
+
+#include <sys/stdbool.h>
 #include <sys/stdint.h>
 
 struct pool_sysctl {
@@ -97,6 +99,7 @@ struct pool_allocator {
 };
 
 LIST_HEAD(pool_pagelist,pool_item_header);
+SPLAY_HEAD(phtree, pool_item_header);
 
 struct pool {
 	TAILQ_ENTRY(pool)
@@ -144,6 +147,7 @@ struct pool {
 #define PR_NOTOUCH	0x400	/* don't use free items to keep internal state*/
 #define PR_NOALIGN	0x800	/* don't assume backend alignment */
 #define	PR_LARGECACHE	0x1000	/* use large cache groups */
+#define	PR_GROWING	0x2000	/* pool_grow in progress */
 
 	/*
 	 * `pr_lock' protects the pool's data structures when removing
@@ -158,7 +162,7 @@ struct pool {
 	kcondvar_t	pr_cv;
 	int		pr_ipl;
 
-	SPLAY_HEAD(phtree, pool_item_header) pr_phtree;
+	struct phtree	pr_phtree;
 
 	int		pr_maxcolor;	/* Cache colouring */
 	int		pr_curcolor;
@@ -188,6 +192,8 @@ struct pool {
 	 */
 	void		*pr_freecheck;
 	void		*pr_qcache;
+	bool		pr_redzone;
+	size_t		pr_reqsize;
 };
 
 /*
@@ -252,7 +258,11 @@ struct pool_cache {
 	unsigned int	pc_nfull;	/* full groups in cache */
 	unsigned int	pc_npart;	/* partial groups in cache */
 	unsigned int	pc_refcnt;	/* ref count for pagedaemon, etc */
+
+	/* Diagnostic aides. */
 	void		*pc_freecheck;
+	bool		pc_redzone;
+	size_t		pc_reqsize;
 
 	/* CPU layer. */
 	pool_cache_cpu_t pc_cpu0 __aligned(CACHE_LINE_SIZE);
@@ -297,6 +307,7 @@ void		pool_setlowat(struct pool *, int);
 void		pool_sethiwat(struct pool *, int);
 void		pool_sethardlimit(struct pool *, int, const char *, int);
 bool		pool_drain(struct pool **);
+int		pool_totalpages(void);
 
 /*
  * Debugging and diagnostic aides.

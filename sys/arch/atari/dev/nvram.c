@@ -1,4 +1,4 @@
-/*	$NetBSD: nvram.c,v 1.19 2011/06/05 06:33:43 tsutsui Exp $	*/
+/*	$NetBSD: nvram.c,v 1.19.12.1 2017/12/03 11:35:57 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvram.c,v 1.19 2011/06/05 06:33:43 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvram.c,v 1.19.12.1 2017/12/03 11:35:57 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -50,6 +50,12 @@ __KERNEL_RCSID(0, "$NetBSD: nvram.c,v 1.19 2011/06/05 06:33:43 tsutsui Exp $");
 #include "ioconf.h"
 
 #include "nvr.h"
+
+#ifdef NVRAM_DEBUG
+#define DPRINTF(a) printf a
+#else
+#define DPRINTF(a)
+#endif
 
 #define	MC_NVRAM_CSUM	(MC_NVRAM_START + MC_NVRAM_SIZE - 2)
 
@@ -136,11 +142,9 @@ nvram_uio(struct uio *uio)
 	if (!(sc->sc_flags & NVR_CONFIGURED))
 		return ENXIO;
 
-#ifdef NV_DEBUG
-	printf("Request to transfer %d bytes offset: %d, %s nvram\n",
+	DPRINTF(("Request to transfer %d bytes offset: %d, %s nvram\n",
 				(long)uio->uio_resid, (long)uio->uio_offset,
-				(uio->uio_rw == UIO_READ) ? "from" : "to");
-#endif /* NV_DEBUG */
+				(uio->uio_rw == UIO_READ) ? "from" : "to"));
 
 	offset = uio->uio_offset + MC_NVRAM_START;
 	nleft  = uio->uio_resid;
@@ -151,9 +155,7 @@ nvram_uio(struct uio *uio)
 		if (nleft <= 0)
 			return (EINVAL);
 	}
-#ifdef NV_DEBUG
-	printf("Translated: offset = %d, bytes: %d\n", (long)offset, nleft);
-#endif /* NV_DEBUG */
+	DPRINTF(("Translated: offset = %d, bytes: %d\n", (long)offset, nleft));
 
 	if (uio->uio_rw == UIO_READ) {
 		for (i = 0, p = buf; i < nleft; i++, p++)

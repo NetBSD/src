@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.52.2.1 2014/08/20 00:03:22 tls Exp $ */
+/* $NetBSD: machdep.c,v 1.52.2.2 2017/12/03 11:36:40 jdolecek Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.52.2.1 2014/08/20 00:03:22 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.52.2.2 2017/12/03 11:36:40 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -110,10 +110,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.52.2.1 2014/08/20 00:03:22 tls Exp $")
 #include <ddb/db_access.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
-#ifndef DB_ELFSIZE
-#error Must define DB_ELFSIZE!
-#endif
-#define	ELFSIZE		DB_ELFSIZE
 #include <sys/exec_elf.h>
 #endif
 
@@ -190,7 +186,7 @@ mach_init(long fwhandle, long magic, long bootdata, long reserved)
 
 	consinit();
 
-	uvm_setpagesize();
+	uvm_md_init();
 
 	/*
 	 * Copy exception-dispatch code down to exception vector.

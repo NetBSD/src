@@ -130,7 +130,7 @@ mvspi_attach(struct device *parent, struct device *self, void *aux)
 	ctl &= MVSPI_DIRHS_MASK;
 	ctl &= MVSPI_1BYTE_MASK;
 
-	PUTREG(sc, MVSPI_INTCONF_REG, ctl),
+	PUTREG(sc, MVSPI_INTCONF_REG, ctl);
 
 	/*
 	 * Initialize SPI controller.
@@ -265,7 +265,7 @@ mvspi_assert(struct mvspi_softc *sc)
 {
 	int ctl;
 	
-	if (sc->sc_transfer->st_slave < 0 && sc->sc_transfer->st_slave > 7) {
+	if (sc->sc_transfer->st_slave < 0 || sc->sc_transfer->st_slave > 7) {
 		printf("%s ERROR: Slave number %d not valid!\n",  __func__, sc->sc_transfer->st_slave);
 		return;
 	} else

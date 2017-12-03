@@ -1,4 +1,4 @@
-/*	$NetBSD: epe.c,v 1.27.2.2 2014/08/20 00:02:45 tls Exp $	*/
+/*	$NetBSD: epe.c,v 1.27.2.3 2017/12/03 11:35:52 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.27.2.2 2014/08/20 00:02:45 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.27.2.3 2017/12/03 11:35:52 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -63,11 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.27.2.2 2014/08/20 00:02:45 tls Exp $");
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_inarp.h>
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
 #endif
 
 #include <net/bpf.h>
@@ -232,11 +227,11 @@ begin:
 			if (m != NULL && (m->m_flags & M_EXT)) {
 				bus_dmamap_unload(sc->sc_dmat, 
 					sc->rxq[bi].m_dmamap);
-				sc->rxq[bi].m->m_pkthdr.rcvif = ifp;
+				m_set_rcvif(sc->rxq[bi].m, ifp);
 				sc->rxq[bi].m->m_pkthdr.len = 
 					sc->rxq[bi].m->m_len = fl;
-				bpf_mtap(ifp, sc->rxq[bi].m);
-                                (*ifp->if_input)(ifp, sc->rxq[bi].m);
+				if_percpuq_enqueue(ifp->if_percpuq,
+				    sc->rxq[bi].m);
 				sc->rxq[bi].m = m;
 				bus_dmamap_load(sc->sc_dmat, 
 					sc->rxq[bi].m_dmamap, 
@@ -276,7 +271,7 @@ begin:
 	}
 
 	if (epe_gctx(sc) > 0 && IFQ_IS_EMPTY(&ifp->if_snd) == 0) {
-		epe_ifstart(ifp);
+		if_schedule_deferred_start(ifp);
 	} 
 
 	irq = EPE_READ(IntStsC);
@@ -446,6 +441,7 @@ epe_init(struct epe_softc *sc)
 	ifp->if_softc = sc;
         IFQ_SET_READY(&ifp->if_snd);
         if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
         ether_ifattach(ifp, (sc)->sc_enaddr);
 }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.71.12.2 2014/08/20 00:03:06 tls Exp $ */
+/* $NetBSD: pnpbios.c,v 1.71.12.3 2017/12/03 11:36:18 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2000 Jason R. Thorpe.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.71.12.2 2014/08/20 00:03:06 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.71.12.3 2017/12/03 11:36:18 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -335,14 +335,14 @@ pnpbios_attach(device_t parent, device_t self, void *aux)
 	}
 	pnpbios_scratchbuf = malloc(PNPBIOS_BUFSIZE, M_DEVBUF, M_NOWAIT);
 
-	setsegment(&gdt[GPNPBIOSCODE_SEL].sd, codeva, 0xffff,
+	setsegment(&gdtstore[GPNPBIOSCODE_SEL].sd, codeva, 0xffff,
 		   SDT_MEMERA, SEL_KPL, 0, 0);
-	setsegment(&gdt[GPNPBIOSDATA_SEL].sd, datava, 0xffff,
+	setsegment(&gdtstore[GPNPBIOSDATA_SEL].sd, datava, 0xffff,
 		   SDT_MEMRWA, SEL_KPL, 0, 0);
-	setsegment(&gdt[GPNPBIOSSCRATCH_SEL].sd,
+	setsegment(&gdtstore[GPNPBIOSSCRATCH_SEL].sd,
 		   pnpbios_scratchbuf, PNPBIOS_BUFSIZE - 1,
 		   SDT_MEMRWA, SEL_KPL, 0, 0);
-	setsegment(&gdt[GPNPBIOSTRAMP_SEL].sd,
+	setsegment(&gdtstore[GPNPBIOSTRAMP_SEL].sd,
 		   pnpbiostramp, epnpbiostramp - pnpbiostramp - 1,
 		   SDT_MEMERA, SEL_KPL, 1, 0);
 

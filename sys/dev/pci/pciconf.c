@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.c,v 1.34.6.1 2012/11/20 03:02:20 tls Exp $	*/
+/*	$NetBSD: pciconf.c,v 1.34.6.2 2017/12/03 11:37:08 jdolecek Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.34.6.1 2012/11/20 03:02:20 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.34.6.2 2017/12/03 11:37:08 jdolecek Exp $");
 
 #include "opt_pci.h"
 
@@ -439,7 +439,7 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func, int mode
 {
 	pciconf_dev_t	*pd;
 	pciconf_win_t	*pi, *pm;
-	pcireg_t	class, cmd, icr, bhlc, bar, mask, bar64, mask64, busreg;
+	pcireg_t	classreg, cmd, icr, bhlc, bar, mask, bar64, mask64, busreg;
 	u_int64_t	size;
 	int		br, width, reg_start, reg_end;
 
@@ -449,12 +449,12 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func, int mode
 	pd->ppb = NULL;
 	pd->enable = mode;
 
-	class = pci_conf_read(pb->pc, tag, PCI_CLASS_REG);
+	classreg = pci_conf_read(pb->pc, tag, PCI_CLASS_REG);
 
 	cmd = pci_conf_read(pb->pc, tag, PCI_COMMAND_STATUS_REG);
 	bhlc = pci_conf_read(pb->pc, tag, PCI_BHLC_REG);
 
-	if (PCI_CLASS(class) != PCI_CLASS_BRIDGE
+	if (PCI_CLASS(classreg) != PCI_CLASS_BRIDGE
 	    && PCI_HDRTYPE_TYPE(bhlc) != PCI_HDRTYPE_PPB) {
 		cmd &= ~(PCI_COMMAND_MASTER_ENABLE |
 		    PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE);
@@ -525,8 +525,8 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func, int mode
 	for (br = reg_start; br < reg_end; br += width) {
 #if 0
 /* XXX Should only ignore if IDE not in legacy mode? */
-		if (PCI_CLASS(class) == PCI_CLASS_MASS_STORAGE &&
-		    PCI_SUBCLASS(class) == PCI_SUBCLASS_MASS_STORAGE_IDE) {
+		if (PCI_CLASS(classreg) == PCI_CLASS_MASS_STORAGE &&
+		    PCI_SUBCLASS(classreg) == PCI_SUBCLASS_MASS_STORAGE_IDE) {
 			break;
 		}
 #endif
@@ -1022,14 +1022,14 @@ configure_bus(pciconf_bus_t *pb)
 	 * Configure the latency for the devices, and enable them.
 	 */
 	for (pd=pb->device ; pd < &pb->device[pb->ndevs] ; pd++) {
-		pcireg_t cmd, class, misc;
+		pcireg_t cmd, classreg, misc;
 		int	ltim;
 
 		if (pci_conf_debug) {
 			print_tag(pd->pc, pd->tag);
 			printf("Configuring device.\n");
 		}
-		class = pci_conf_read(pd->pc, pd->tag, PCI_CLASS_REG);
+		classreg = pci_conf_read(pd->pc, pd->tag, PCI_CLASS_REG);
 		misc = pci_conf_read(pd->pc, pd->tag, PCI_BHLC_REG);
 		cmd = pci_conf_read(pd->pc, pd->tag, PCI_COMMAND_STATUS_REG);
 		if (pd->enable & PCI_CONF_ENABLE_PARITY)
@@ -1038,8 +1038,8 @@ configure_bus(pciconf_bus_t *pb)
 			cmd |= PCI_COMMAND_SERR_ENABLE;
 		if (pb->fast_b2b)
 			cmd |= PCI_COMMAND_BACKTOBACK_ENABLE;
-		if (PCI_CLASS(class) != PCI_CLASS_BRIDGE ||
-		    PCI_SUBCLASS(class) != PCI_SUBCLASS_BRIDGE_PCI) {
+		if (PCI_CLASS(classreg) != PCI_CLASS_BRIDGE ||
+		    PCI_SUBCLASS(classreg) != PCI_SUBCLASS_BRIDGE_PCI) {
 			if (pd->enable & PCI_CONF_ENABLE_IO)
 				cmd |= PCI_COMMAND_IO_ENABLE;
 			if (pd->enable & PCI_CONF_ENABLE_MEM)

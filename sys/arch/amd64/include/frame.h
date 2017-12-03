@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.15.38.1 2014/08/20 00:02:42 tls Exp $	*/
+/*	$NetBSD: frame.h,v 1.15.38.2 2017/12/03 11:35:47 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -121,6 +121,7 @@ struct sigframe_siginfo {
 #ifdef _KERNEL
 struct lwp;
 void buildcontext(struct lwp *, void *, void *);
+#define lwp_trapframe(l)	((l)->l_md.md_regs)
 #endif
 
 #else	/*	__x86_64__	*/

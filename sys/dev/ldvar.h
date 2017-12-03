@@ -1,4 +1,4 @@
-/*	$NetBSD: ldvar.h,v 1.21 2012/05/03 21:21:08 bsh Exp $	*/
+/*	$NetBSD: ldvar.h,v 1.21.2.1 2017/12/03 11:36:58 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -33,51 +33,48 @@
 #define	_DEV_LDVAR_H_
 
 #include <sys/mutex.h>
-#include <sys/device.h>	/* for device_t */
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
+
+#include <dev/dkvar.h> /* for dk_softc */
 
 struct ld_softc {
-	device_t sc_dv;
-	struct	disk sc_dk;
-	struct	bufq_state *sc_bufq;
-	kmutex_t sc_mutex;
-	krndsource_t	sc_rnd_source;
-	int	sc_queuecnt;		/* current h/w queue depth */
-	int	sc_ncylinders;		/* # cylinders */
-	int	sc_nheads;		/* # heads */
-	int	sc_nsectors;		/* # sectors per track */
+	struct dk_softc	sc_dksc;
+	kmutex_t	sc_mutex;
+	kcondvar_t	sc_drain;
+
+	int		sc_queuecnt;	/* current h/w queue depth */
+	int		sc_ncylinders;	/* # cylinders */
+	int		sc_nheads;	/* # heads */
+	int		sc_nsectors;	/* # sectors per track */
 	uint64_t	sc_disksize512;
 
 	/*
 	 * The following are filled by hardware specific attachment code.
 	 */
-	int	sc_flags;		/* control flags */
-	uint64_t	sc_secperunit;		/* # sectors in total */
-	int	sc_secsize;		/* sector size in bytes */
-	int	sc_maxxfer;		/* max xfer size in bytes */
-	int	sc_maxqueuecnt;		/* maximum h/w queue depth */
+	device_t	sc_dv;
+	int		sc_flags;	/* control flags */
+	uint64_t	sc_secperunit;	/* # sectors in total */
+	int		sc_secsize;	/* sector size in bytes */
+	int		sc_maxxfer;	/* max xfer size in bytes */
+	int		sc_maxqueuecnt;	/* maximum h/w queue depth */
 
-	int	(*sc_dump)(struct ld_softc *, void *, int, int);
-	int	(*sc_flush)(struct ld_softc *, int);
-	int	(*sc_start)(struct ld_softc *, struct buf *);
+	int		(*sc_dump)(struct ld_softc *, void *, int, int);
+	int		(*sc_ioctl)(struct ld_softc *, u_long, void *, int32_t, bool);
+	int		(*sc_start)(struct ld_softc *, struct buf *);
+	int		(*sc_discard)(struct ld_softc *, struct buf *);
 };
 
 /* sc_flags */
 #define	LDF_ENABLED	0x001		/* device enabled */
-#define	LDF_WLABEL	0x008		/* label is writable */
-#define	LDF_LABELLING	0x010		/* writing label */
 #define	LDF_DRAIN	0x020		/* maxqueuecnt has changed; drain */
-#define	LDF_DETACH	0x040		/* detach pending */
-#define	LDF_KLABEL	0x080		/* keep label on close */
-#define	LDF_VLABEL	0x100		/* label is valid */
-
-/* sc_flush() flags */
-#define	LDFL_POLL	0x001		/* poll for completion */
+#define	LDF_NO_RND	0x040		/* do not attach rnd source */
+#define	LDF_MPSAFE	0x080		/* backend is MPSAFE */
 
 int	ldadjqparam(struct ld_softc *, int);
-void	ldattach(struct ld_softc *);
+void	ldattach(struct ld_softc *, const char *);
 int	ldbegindetach(struct ld_softc *, int);
 void	ldenddetach(struct ld_softc *);
 void	lddone(struct ld_softc *, struct buf *);
+void	lddiscardend(struct ld_softc *, struct buf *);
 
 #endif	/* !_DEV_LDVAR_H_ */

@@ -30,6 +30,11 @@
 #include <core/device.h>
 #include <core/mm.h>
 
+#define NOUVEAU_GPU_PAGE_SIZE		4096
+#define NOUVEAU_GPU_PAGE_MASK		(NOUVEAU_GPU_PAGE_SIZE - 1)
+#define NOUVEAU_GPU_PAGE_SHIFT		12
+#define NOUVEAU_GPU_PAGE_ALIGN(a)	(((a) + NOUVEAU_GPU_PAGE_MASK) & ~NOUVEAU_GPU_PAGE_MASK)
+
 struct nouveau_vm_pgt {
 	struct nouveau_gpuobj *obj[2];
 	u32 refcount[2];

@@ -1,4 +1,4 @@
-/*	$NetBSD: mkclock_isa.c,v 1.14 2011/07/01 20:50:00 dyoung Exp $	*/
+/*	$NetBSD: mkclock_isa.c,v 1.14.12.1 2017/12/03 11:36:31 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mkclock_isa.c,v 1.14 2011/07/01 20:50:00 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mkclock_isa.c,v 1.14.12.1 2017/12/03 11:36:31 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -121,7 +121,7 @@ mkclock_isa_match(device_t parent, cfdata_t cf, void *aux)
 		goto restore;
 
 	/* Read from the seconds counter. */
-	t1 = FROMBCD(mkclock_isa_nvrd(sc, MK48T18_CLKOFF + MK48TXX_ISEC));
+	t1 = bcdtobin(mkclock_isa_nvrd(sc, MK48T18_CLKOFF + MK48TXX_ISEC));
 	if (t1 > 59)
 		goto restore;
 
@@ -129,7 +129,7 @@ mkclock_isa_match(device_t parent, cfdata_t cf, void *aux)
 	mkclock_isa_nvwr(sc, MK48T18_CLKOFF + MK48TXX_ICSR, ocsr);
 	DELAY(1100000);
 	mkclock_isa_nvwr(sc, MK48T18_CLKOFF + MK48TXX_ICSR, csr);
-	t2 = FROMBCD(mkclock_isa_nvrd(sc, MK48T18_CLKOFF + MK48TXX_ISEC));
+	t2 = bcdtobin(mkclock_isa_nvrd(sc, MK48T18_CLKOFF + MK48TXX_ISEC));
 	if (t2 > 59)
 		goto restore;
 

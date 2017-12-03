@@ -18,9 +18,10 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/cpu.h>
 #include <sys/proc.h>
 
-#include <machine/cpu.h>
+#include <mips/cpuregs.h>
 #include <mips/pmon/pmon.h>
 
 int	pmon_argc;

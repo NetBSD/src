@@ -1,4 +1,4 @@
-/*	$NetBSD: osk5912_machdep.c,v 1.13.2.2 2014/08/20 00:02:56 tls Exp $ */
+/*	$NetBSD: osk5912_machdep.c,v 1.13.2.3 2017/12/03 11:36:06 jdolecek Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osk5912_machdep.c,v 1.13.2.2 2014/08/20 00:02:56 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osk5912_machdep.c,v 1.13.2.3 2017/12/03 11:36:06 jdolecek Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -447,7 +447,7 @@ initarm(void *arg)
 #ifdef VERBOSE_INIT_ARM
 	printf("page ");
 #endif
-	uvm_setpagesize();        /* initialize PAGE_SIZE-dependent variables */
+	uvm_md_init();
 	uvm_page_physload(atop(physical_freestart), atop(physical_freeend),
 	    atop(physical_freestart), atop(physical_freeend),
 	    VM_FREELIST_DEFAULT);

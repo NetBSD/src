@@ -1,0 +1,10 @@
+#       $NetBSD: twe.ioconf,v 1.1.18.2 2017/12/03 11:39:01 jdolecek Exp $
+
+ioconf twe
+
+include "conf/files"
+include "dev/pci/files.pci"
+
+pseudo-root pci*
+
+twe* at pci? dev ? function ?

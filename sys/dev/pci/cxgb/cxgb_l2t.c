@@ -28,7 +28,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cxgb_l2t.c,v 1.1.24.2 2014/08/20 00:03:48 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxgb_l2t.c,v 1.1.24.3 2017/12/03 11:37:29 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,7 +127,7 @@ setup_l2e_send_pending(struct toedev *dev, struct mbuf *m,
     memcpy(req->dst_mac, e->dmac, sizeof(req->dst_mac));
     m_set_priority(m, CPL_PRIORITY_CONTROL);
     while (e->arpq_head) {
-        m = e->arpq_head;
+        m = e->arpq_head; /* XXX XXX XXX: Memory leak? */
         e->arpq_head = m->m_next;
         m->m_next = NULL;
     }
@@ -182,6 +182,7 @@ again:
         arpq_enqueue(e, m);
         mtx_unlock(&e->lock);
 
+		/* XXX XXX XXX: Memory leak? */
         if ((m0 = m_gethdr(M_NOWAIT, MT_DATA)) == NULL)
             return (ENOMEM);
         /*

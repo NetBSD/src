@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.56.12.2 2014/08/20 00:03:25 tls Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.56.12.3 2017/12/03 11:36:45 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -55,9 +55,10 @@
 #define	ASI_PHYS_CACHED_LITTLE		0x1c	/* [4u] MMU bypass to main memory, little endian */
 #define	ASI_PHYS_NON_CACHED_LITTLE	0x1d	/* [4u] MMU bypass to I/O location, little endian */
 
-#define ASI_MMU				0x21	/* [4v] MMU context control - both IMMU and DMMU */
+#define ASI_MMU_CONTEXTID		0x21	/* [4v] MMU context control - both IMMU and DMMU */
 
 #define	ASI_NUCLEUS_QUAD_LDD		0x24	/* [4u] use w/LDDA to load 128-bit item */
+#define	ASI_QUEUE			0x25	/* [4v] interrupt queue registers */
 #define	ASI_NUCLEUS_QUAD_LDD_LITTLE	0x2c	/* [4u] use w/LDDA to load 128-bit item, little endian */
 
 #define	ASI_FLUSH_D_PAGE_PRIMARY	0x38	/* [4u] flush D-cache page using primary context */
@@ -863,19 +864,10 @@ SPARC64_ST_DEF(sta, uint32_t)
 SPARC64_ST_DEF64(stxa, uint64_t)
 
 
-/* set dmmu secondary context */
-static __inline void
-dmmu_set_secondary_context(uint ctx)
-{
-	__asm volatile(
-		"stxa %0,[%1]%2;	"
-		"membar #Sync		"
-		: : "r" (ctx), "r" (CTX_SECONDARY), "n" (ASI_DMMU)
-		: "memory");
-}
 
-/* flush address from data cache */
-#define	flush(loc) __asm volatile("flush %0" : : "r" ((__uintptr_t)(loc)))
+/* flush address from cache */
+#define	sparc_flush_icache(loc) __asm \
+	volatile("flush %0" : : "r" ((__uintptr_t)(loc)))
 
 /*
  * SPARC V9 memory barrier instructions.

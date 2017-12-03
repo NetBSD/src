@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.24 2011/08/11 19:52:52 cherry Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.24.12.1 2017/12/03 11:35:47 jdolecek Exp $	*/
 
 /*
  * Mach Operating System
@@ -33,10 +33,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.24 2011/08/11 19:52:52 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.24.12.1 2017/12/03 11:35:47 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
+
+#include "lapic.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -64,9 +66,9 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.24 2011/08/11 19:52:52 cherry Exp
 extern const char *const trap_type[];
 extern int trap_types;
 
-int	db_active;
+int	db_active = 0;
 db_regs_t ddb_regs;	/* register state */
-db_regs_t *ddb_regp;
+db_regs_t *ddb_regp = NULL;
 
 void db_mach_cpu (db_expr_t, bool, db_expr_t, const char *);
 
@@ -75,7 +77,7 @@ const struct db_command db_machine_command_table[] = {
 	{ DDB_ADD_CMD("cpu",	db_mach_cpu,	0,
 	  "switch to another cpu", "cpu-no", NULL) },
 #endif
-	{ DDB_ADD_CMD(NULL,     NULL,          0,NULL,NULL,NULL) },
+	{ DDB_ADD_CMD(NULL, NULL, 0, NULL, NULL, NULL) },
 };
 
 void kdbprinttrap(int, int);
@@ -93,7 +95,7 @@ static bool ddb_mp_online;
 int ddb_cpu = NOCPU;
 
 typedef void (vector)(void);
-extern vector Xintrddb;
+extern vector Xintrddbipi, Xx2apic_intrddbipi;
 
 void
 db_machine_init(void)
@@ -101,9 +103,14 @@ db_machine_init(void)
 
 #ifdef MULTIPROCESSOR
 #ifndef XEN
+	vector *handler = &Xintrddbipi;
+#if NLAPIC > 0
+	if (lapic_is_x2apic())
+		handler = &Xx2apic_intrddbipi;
+#endif
 	ddb_vec = idt_vec_alloc(0xf0, 0xff);
-	setgate((struct gate_descriptor *)&idt[ddb_vec], &Xintrddb, 1,
-	    SDT_SYS386IGT, SEL_KPL, GSEL(GCODE_SEL, SEL_KPL));
+	setgate(&idt[ddb_vec], handler, 1, SDT_SYS386IGT, SEL_KPL,
+	    GSEL(GCODE_SEL, SEL_KPL));
 #else
 	/* Initialised as part of xen_ipi_init() */
 #endif /* XEN */
@@ -136,7 +143,6 @@ db_suspend_others(void)
 #else
 		x86_ipi(ddb_vec, LAPIC_DEST_ALLEXCL, LAPIC_DLMODE_FIXED);
 #endif /* XEN */
-
 	}
 	ddb_mp_online = x86_mp_online;
 	x86_mp_online = false;
@@ -194,7 +200,7 @@ kdb_trap(int type, int code, db_regs_t *regs)
 	case -1:	/* keyboard interrupt */
 		break;
 	default:
-		if (!db_onpanic && db_recover==0)
+		if (!db_onpanic && db_recover == 0)
 			return (0);
 
 		kdbprinttrap(type, code);
@@ -228,10 +234,10 @@ kdb_trap(int type, int code, db_regs_t *regs)
 	cnpollc(false);
 	db_active--;
 	splx(s);
-#ifdef MULTIPROCESSOR  
+#ifdef MULTIPROCESSOR
 	db_resume_others();
 	}
-#endif  
+#endif
 	ddb_regp = &dbreg;
 
 	*regs = ddb_regs;

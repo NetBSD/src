@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.15 2011/08/16 06:58:15 matt Exp $	*/
+/*	$NetBSD: reg.h,v 1.15.12.1 2017/12/03 11:36:27 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,15 +43,15 @@
 
 
 struct reg {
-	mips_reg_t	r_regs[38];
+	__register_t	r_regs[38];
 };
 
 struct fpreg {
-	mips_fpreg_t	r_regs[33];
+	__fpregister_t	r_regs[33];
 };
 
 struct dspreg {
-	mips_reg_t	r_regs[8];
+	__register_t	r_regs[8];
 };
 
 #if defined(__mips_n32) || defined(__mips_n64)

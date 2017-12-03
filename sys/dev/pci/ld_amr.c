@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_amr.c,v 1.21 2012/02/02 19:43:06 tls Exp $	*/
+/*	$NetBSD: ld_amr.c,v 1.21.6.1 2017/12/03 11:37:08 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_amr.c,v 1.21 2012/02/02 19:43:06 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_amr.c,v 1.21.6.1 2017/12/03 11:37:08 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: ld_amr.c,v 1.21 2012/02/02 19:43:06 tls Exp $");
 #include <sys/endian.h>
 #include <sys/dkio.h>
 #include <sys/disk.h>
-#include <sys/rnd.h>
+#include <sys/module.h>
 
 #include <sys/bus.h>
 
@@ -55,6 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: ld_amr.c,v 1.21 2012/02/02 19:43:06 tls Exp $");
 #include <dev/pci/pcivar.h>
 #include <dev/pci/amrreg.h>
 #include <dev/pci/amrvar.h>
+
+#include "ioconf.h"
 
 struct ld_amr_softc {
 	struct	ld_softc sc_ld;
@@ -70,7 +72,6 @@ static int	ld_amr_start(struct ld_softc *, struct buf *);
 static int
 ld_amr_match(device_t parent, cfdata_t match, void *aux)
 {
-
 	return (1);
 }
 
@@ -109,7 +110,7 @@ ld_amr_attach(device_t parent, device_t self, void *aux)
 	    amr->amr_drive[sc->sc_hwunit].al_properties & AMR_DRV_RAID_MASK,
 	    statestr);
 
-	ldattach(ld);
+	ldattach(ld, BUFQ_DISK_DEFAULT_STRAT);
 }
 
 CFATTACH_DECL_NEW(ld_amr, sizeof(struct ld_amr_softc),
@@ -122,7 +123,7 @@ ld_amr_dobio(struct ld_amr_softc *sc, void *data, int datasize,
 	struct amr_ccb *ac;
 	struct amr_softc *amr;
 	struct amr_mailbox_cmd *mb;
-	int s, rv;
+	int rv;
 
 	amr = device_private(device_parent(sc->sc_ld.sc_dv));
 
@@ -147,9 +148,7 @@ ld_amr_dobio(struct ld_amr_softc *sc, void *data, int datasize,
 		 * Polled commands must not sit on the software queue.  Wait
 		 * up to 30 seconds for the command to complete.
 		 */
-		s = splbio();
 		rv = amr_ccb_poll(amr, ac, 30000);
-		splx(s);
 		amr_ccb_unmap(amr, ac);
 		amr_ccb_free(amr, ac);
 	} else {
@@ -166,7 +165,6 @@ ld_amr_dobio(struct ld_amr_softc *sc, void *data, int datasize,
 static int
 ld_amr_start(struct ld_softc *ld, struct buf *bp)
 {
-
 	return (ld_amr_dobio((struct ld_amr_softc *)ld, bp->b_data,
 	    bp->b_bcount, bp->b_rawblkno, (bp->b_flags & B_READ) == 0, bp));
 }
@@ -205,4 +203,47 @@ ld_amr_dump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
 
 	return (ld_amr_dobio(sc, data, blkcnt * ld->sc_secsize, blkno, 1,
 	    NULL));
+}
+
+MODULE(MODULE_CLASS_DRIVER, ld_amr, "ld,amr");
+
+#ifdef _MODULE
+/*
+ * XXX Don't allow ioconf.c to redefine the "struct cfdriver ld_cd"
+ * XXX it will be defined in the common-code module
+ */
+#undef  CFDRIVER_DECL
+#define CFDRIVER_DECL(name, class, attr)
+#include "ioconf.c"
+#endif
+
+static int
+ld_amr_modcmd(modcmd_t cmd, void *opaque)
+{
+#ifdef _MODULE
+	/*
+	 * We ignore the cfdriver_vec[] that ioconf provides, since
+	 * the cfdrivers are attached already.
+	 */
+	static struct cfdriver * const no_cfdriver_vec[] = { NULL };
+#endif
+	int error = 0;
+
+#ifdef _MODULE
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		error = config_init_component(no_cfdriver_vec,
+		    cfattach_ioconf_ld_amr, cfdata_ioconf_ld_amr);
+		break;
+	case MODULE_CMD_FINI:
+		error = config_fini_component(no_cfdriver_vec,
+		    cfattach_ioconf_ld_amr, cfdata_ioconf_ld_amr);
+		break;
+	default:
+		error = ENOTTY;
+		break;
+	}
+#endif
+
+	return error;
 }

@@ -1,8 +1,9 @@
-#	$NetBSD: hdafg.ioconf,v 1.1 2011/01/07 15:32:11 jmcneill Exp $
+#	$NetBSD: hdafg.ioconf,v 1.1.20.1 2017/12/03 11:38:54 jdolecek Exp $
 
 ioconf hdafg
 
 include "conf/files"
+# XXX shouldn't be here, but nbconfig crashes without it
 include "dev/pci/files.pci"
 
 pseudo-root hdaudio*

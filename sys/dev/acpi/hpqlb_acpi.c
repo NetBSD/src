@@ -1,4 +1,4 @@
-/* $NetBSD: hpqlb_acpi.c,v 1.9 2011/02/16 09:05:12 jruoho Exp $ */
+/* $NetBSD: hpqlb_acpi.c,v 1.9.14.1 2017/12/03 11:36:58 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2008  Christoph Egger <cegger@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpqlb_acpi.c,v 1.9 2011/02/16 09:05:12 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpqlb_acpi.c,v 1.9.14.1 2017/12/03 11:36:58 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -303,7 +303,7 @@ hpqlb_resume(device_t self, const pmf_qual_t *qual)
 	return true;
 }
 
-MODULE(MODULE_CLASS_DRIVER, hpqlb, NULL);
+MODULE(MODULE_CLASS_DRIVER, hpqlb, "sysmon_power");
 
 #ifdef _MODULE
 #include "ioconf.c"

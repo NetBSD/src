@@ -1,4 +1,4 @@
-/*	$NetBSD: flash.h,v 1.7 2011/07/29 20:48:33 ahoka Exp $	*/
+/*	$NetBSD: flash.h,v 1.7.14.1 2017/12/03 11:37:01 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -53,6 +53,7 @@ struct flash_partition {
 	flash_off_t part_offset;
 	flash_size_t part_size;
 	int part_flags;
+	const char *part_name;
 };
 
 /**
@@ -120,6 +121,7 @@ struct flash_cache {
 };
 
 device_t flash_attach_mi(struct flash_interface *, device_t);
+void flash_attach_mtdparts(struct flash_interface *, device_t, flash_size_t, const char *, const char *);
 const struct flash_interface *flash_get_interface(dev_t);
 const struct flash_softc *flash_get_softc(dev_t);
 device_t flash_get_device(dev_t);

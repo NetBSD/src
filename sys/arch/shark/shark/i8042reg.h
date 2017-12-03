@@ -1,4 +1,4 @@
-/*      $NetBSD: i8042reg.h,v 1.5 2009/03/14 14:46:07 dsl Exp $     */
+/*      $NetBSD: i8042reg.h,v 1.5.22.1 2017/12/03 11:36:43 jdolecek Exp $     */
 
 /*
  * Copyright 1997
@@ -140,7 +140,7 @@
 ** Forward routine declarations
 */
 extern void i8042_flush(bus_space_tag_t,
-                                   bus_space_handle_t); 
+                                   bus_space_handle_t);
 extern int  i8042_cmd(bus_space_tag_t,
                                    bus_space_handle_t,
                                    u_char,

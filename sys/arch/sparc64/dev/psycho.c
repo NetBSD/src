@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.112.6.2 2014/08/20 00:03:25 tls Exp $	*/
+/*	$NetBSD: psycho.c,v 1.112.6.3 2017/12/03 11:36:44 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.112.6.2 2014/08/20 00:03:25 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.112.6.3 2017/12/03 11:36:44 jdolecek Exp $");
 
 #include "opt_ddb.h"
 
@@ -228,9 +228,13 @@ static	int
 psycho_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
-	char *model = prom_getpropstring(ma->ma_node, "model");
+	char *model;
 	int i;
 
+	if (ma->ma_node == 0)
+		return 0;	/* no OF node, can't be us */
+
+	model = prom_getpropstring(ma->ma_node, "model");
 	/* match on a name of "pci" and a sabre or a psycho */
 	if (strcmp(ma->ma_name, ROM_PCI_NAME) == 0) {
 		for (i=0; psycho_names[i].p_name; i++)
@@ -286,7 +290,7 @@ psycho_dump_intmap(struct psycho_softc *sc)
  *	- get interrupt-map and interrupt-map-mask
  *	- setup the chipsets.
  *	- if we're the first of the pair, initialise the IOMMU, otherwise
- *	  just copy it's tags and addresses.
+ *	  just copy its tags and addresses.
  */
 static	void
 psycho_attach(device_t parent, device_t self, void *aux)
@@ -707,8 +711,7 @@ psycho_set_intr(struct psycho_softc *sc, int ipl, void *handler,
 {
 	struct intrhand *ih;
 
-	ih = (struct intrhand *)malloc(sizeof(struct intrhand),
-		M_DEVBUF, M_NOWAIT);
+	ih = intrhand_alloc();
 	ih->ih_arg = sc;
 	ih->ih_map = mapper;
 	ih->ih_clr = clearer;
@@ -755,7 +758,7 @@ psycho_power_button_pressed(void *arg)
  */
 
 /*
- * allocate a PCI chipset tag and set it's cookie.
+ * allocate a PCI chipset tag and set its cookie.
  */
 static pci_chipset_tag_t
 psycho_alloc_chipset(struct psycho_pbm *pp, int node, pci_chipset_tag_t pc)
@@ -865,8 +868,8 @@ psycho_get_bus_range(int node, int *brp)
 		panic("could not get psycho bus-range, error %d", error);
 	if (n != 2)
 		panic("broken psycho bus-range");
-	DPRINTF(PDB_PROM, ("psycho debug: got `bus-range' for node %08x: %u - %u\n",
-			   node, brp[0], brp[1]));
+	DPRINTF(PDB_PROM, ("%s: got `bus-range' for node %08x: %u - %u\n",
+			   __func__, node, brp[0], brp[1]));
 }
 
 static void
@@ -876,8 +879,8 @@ psycho_fixup_bus_range(int node0, int *brp0)
 	int len, busrange[2], *brp;
 
 	DPRINTF(PDB_PROM,
-	    ("psycho debug: fixing up `bus-range' for node %08x: %u - %u\n",
-	    node0, brp0[0], brp0[1]));
+	    ("%s: fixing up `bus-range' for node %08x: %u - %u\n",
+	    __func__, node0, brp0[0], brp0[1]));
 
 	/*
 	 * Check all nodes under this one and increase the bus range to
@@ -903,8 +906,8 @@ psycho_fixup_bus_range(int node0, int *brp0)
 	}
 
 	DPRINTF(PDB_PROM,
-	    ("psycho debug: fixed up `bus-range' for node %08x: %u - %u\n",
-	    node0, brp[0], brp[1]));
+	    ("%s: fixed up `bus-range' for node %08x: %u - %u\n",
+	    __func__, node0, brp[0], brp[1]));
 }
 
 static void
@@ -913,7 +916,8 @@ psycho_get_ranges(int node, struct psycho_ranges **rp, int *np)
 
 	if (prom_getprop(node, "ranges", sizeof(**rp), np, rp))
 		panic("could not get psycho ranges");
-	DPRINTF(PDB_PROM, ("psycho debug: got `ranges' for node %08x: %d entries\n", node, *np));
+	DPRINTF(PDB_PROM, ("%s: got `ranges' for node %08x: %d entries\n",
+			  __func__, node, *np));
 }
 
 /*
@@ -1169,9 +1173,11 @@ _psycho_bus_map(bus_space_tag_t t, bus_addr_t offset, bus_size_t size,
 	int ss;
 
 	DPRINTF(PDB_BUSMAP,
-		("_psycho_bus_map: type %d off %qx sz %qx flags %d",
-			t->type, (unsigned long long)offset,
+		("%s: type %d off %qx sz %qx flags %d",
+			__func__, t->type, (unsigned long long)offset,
 			(unsigned long long)size, flags));
+
+	flags &= ~BUS_SPACE_MAP_PREFETCHABLE;
 
 	ss = sparc_pci_childspace(t->type);
 	DPRINTF(PDB_BUSMAP, (" cspace %d", ss));
@@ -1179,9 +1185,9 @@ _psycho_bus_map(bus_space_tag_t t, bus_addr_t offset, bus_size_t size,
 	pr = get_psychorange(pp, ss);
 	if (pr != NULL) {
 		paddr = BUS_ADDR(pr->phys_hi, pr->phys_lo + offset);
-		DPRINTF(PDB_BUSMAP, ("\n_psycho_bus_map: mapping paddr "
+		DPRINTF(PDB_BUSMAP, ("\n%s: mapping paddr "
 				     "space %lx offset %lx paddr %qx\n",
-			       (long)ss, (long)offset,
+			       __func__, (long)ss, (long)offset,
 			       (unsigned long long)paddr));
 		return ((*sc->sc_bustag->sparc_bus_map)(t, paddr, size,
 			flags, 0, hp));
@@ -1200,17 +1206,19 @@ psycho_bus_mmap(bus_space_tag_t t, bus_addr_t paddr, off_t off, int prot,
 	struct psycho_ranges *pr;
 	int ss;
 
+	flags &= ~BUS_SPACE_MAP_PREFETCHABLE;
+
 	ss = sparc_pci_childspace(t->type);
 
-	DPRINTF(PDB_BUSMAP, ("_psycho_bus_mmap: prot %x flags %d pa %qx\n",
-		prot, flags, (unsigned long long)paddr));
+	DPRINTF(PDB_BUSMAP, ("%s: prot %x flags %d busaddr %qx\n",
+		__func__, prot, flags, (unsigned long long)paddr));
 
 	pr = get_psychorange(pp, ss);
 	if (pr != NULL) {
 		paddr = BUS_ADDR(pr->phys_hi, pr->phys_lo + offset);
-		DPRINTF(PDB_BUSMAP, ("\n_psycho_bus_mmap: mapping paddr "
+		DPRINTF(PDB_BUSMAP, ("%s: mapping paddr "
 				     "space %lx offset %lx paddr %qx\n",
-			       (long)ss, (long)offset,
+			       __func__, (long)ss, (long)offset,
 			       (unsigned long long)paddr));
 		return (bus_space_mmap(sc->sc_bustag, paddr, off,
 				       prot, flags));
@@ -1233,8 +1241,8 @@ psycho_bus_offset(bus_space_tag_t t, bus_space_handle_t *hp)
 
 	addr = hp->_ptr;
 	ss = sparc_pci_childspace(t->type);
-	DPRINTF(PDB_BUSMAP, ("psycho_bus_offset: type %d addr %" PRIx64
-			     " cspace %d", t->type, addr, ss));
+	DPRINTF(PDB_BUSMAP, ("%s: type %d addr %" PRIx64" cspace %d",
+			     __func__, t->type, addr, ss));
 
 	pr = get_psychorange(pp, ss);
 	if (pr != NULL) {
@@ -1242,17 +1250,17 @@ psycho_bus_offset(bus_space_tag_t t, bus_space_handle_t *hp)
 			va = trunc_page((vaddr_t)addr);
 			if (pmap_extract(pmap_kernel(), va, &addr) == FALSE) {
 				DPRINTF(PDB_BUSMAP,
-					("\n pmap_extract FAILED\n"));
+					("- pmap_extract FAILED\n"));
 				return (-1);
 			}
 			addr += hp->_ptr & PGOFSET;
 		}
 		offset = BUS_ADDR_PADDR(addr) - pr->phys_lo;
-		DPRINTF(PDB_BUSMAP, ("\npsycho_bus_offset: paddr %" PRIx64
-				     " offset %" PRIx64 "\n", addr, offset));
+		DPRINTF(PDB_BUSMAP, ("- paddr %" PRIx64" offset %" PRIx64 "\n",
+				    addr, offset));
 		return (offset);
 	}
-	DPRINTF(PDB_BUSMAP, ("\n FAILED\n"));
+	DPRINTF(PDB_BUSMAP, ("- FAILED\n"));
 	return (-1);
 }
 
@@ -1272,10 +1280,7 @@ psycho_intr_establish(bus_space_tag_t t, int ihandle, int level,
 	int ino;
 	long vec = INTVEC(ihandle);
 
-	ih = (struct intrhand *)
-		malloc(sizeof(struct intrhand), M_DEVBUF, M_NOWAIT);
-	if (ih == NULL)
-		return (NULL);
+	ih = intrhand_alloc();
 
 	ih->ih_ivec = ihandle;
 
@@ -1289,9 +1294,9 @@ psycho_intr_establish(bus_space_tag_t t, int ihandle, int level,
 	 * interrupt which has a full vector that can be set arbitrarily.
 	 */
 
-	DPRINTF(PDB_INTR, ("\npsycho_intr_establish: ihandle %x vec %lx", ihandle, vec));
+	DPRINTF(PDB_INTR, ("%s: ihandle %x vec %lx", __func__, ihandle, vec));
 	ino = INTINO(vec);
-	DPRINTF(PDB_INTR, (" ino %x", ino));
+	DPRINTF(PDB_INTR, (" ino %x\n", ino));
 
 	/* If the device didn't ask for an IPL, use the one encoded. */
 	if (level == IPL_NONE) level = INTLEV(vec);
@@ -1301,8 +1306,8 @@ psycho_intr_establish(bus_space_tag_t t, int ihandle, int level,
 		level = 2;
 	}
 
-	DPRINTF(PDB_INTR, ("\npsycho: intr %lx: %p\nHunting for IRQ...\n",
-	    (long)ino, intrlev[ino]));
+	DPRINTF(PDB_INTR, ("%s: intr %lx: %p\nHunting for IRQ...\n",
+	    __func__, (long)ino, intrlev[ino]));
 
  	/*
  	 * First look for PCI interrupts, otherwise the PCI A slot 0
@@ -1342,6 +1347,7 @@ psycho_intr_establish(bus_space_tag_t t, int ihandle, int level,
 	}
 
 	printf("Cannot find interrupt vector %lx\n", vec);
+	free(ih, M_DEVBUF);
 	return (NULL);
 
 found:
@@ -1356,8 +1362,8 @@ found:
 	ih->ih_pending = 0;
 
 	DPRINTF(PDB_INTR, (
-	    "; installing handler %p arg %p with ino %u pil %u\n",
-	    handler, arg, (u_int)ino, (u_int)ih->ih_pil));
+	    "%s: installing handler %p arg %p with ino %u pil %u\n",
+	    __func__, handler, arg, (u_int)ino, (u_int)ih->ih_pil));
 
 	intr_establish(ih->ih_pil, level != IPL_VM, ih);
 
@@ -1370,8 +1376,8 @@ found:
 	 */
 	if (intrmapptr) {
 		imap = *intrmapptr;
-		DPRINTF(PDB_INTR, ("; read intrmap = %016qx",
-			(unsigned long long)imap));
+		DPRINTF(PDB_INTR, ("%s: read intrmap = %016qx",
+			__func__, (unsigned long long)imap));
 
 		/* Enable the interrupt */
 		imap |= INTMAP_V|(CPU_UPAID << INTMAP_TID_SHIFT);
@@ -1379,7 +1385,7 @@ found:
 		DPRINTF(PDB_INTR, ("; writing intrmap = %016qx\n",
 			(unsigned long long)imap));
 		*intrmapptr = imap;
-		DPRINTF(PDB_INTR, ("; reread intrmap = %016qx",
+		DPRINTF(PDB_INTR, ("; reread intrmap = %016qx\n",
 			(unsigned long long)(imap = *intrmapptr)));
 	}
  	if (intrclrptr) {
@@ -1405,7 +1411,7 @@ psycho_pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 
 	DPRINTF(PDB_CONF, ("%s: tag %lx reg %x ", __func__,
 		(long)tag, reg));
-	if (PCITAG_NODE(tag) != -1) {
+	if (PCITAG_NODE(tag) != -1 && (unsigned int)reg < PCI_CONF_SIZE) {
 
 		DPRINTF(PDB_CONF, ("asi=%x addr=%qx (offset=%x) ...",
 			sc->sc_configaddr._asi,
@@ -1425,7 +1431,7 @@ psycho_pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 		splx(s);
 	}
 #ifdef DEBUG
-	else DPRINTF(PDB_CONF, ("%s: bogus pcitag %x\n", __func__,
+	else DPRINTF(PDB_CONF, ("%s: bogus pcitag %x -", __func__,
 		(int)PCITAG_OFFSET(tag)));
 #endif
 	DPRINTF(PDB_CONF, (" returning %08x\n", (u_int)val));
@@ -1451,7 +1457,10 @@ psycho_pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data
 		DPRINTF(PDB_CONF, ("%s: bad addr", __func__));
 		return;
 	}
-		
+
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return;
+
 	bus_space_write_4(sc->sc_configtag, sc->sc_configaddr,
 		PCITAG_OFFSET(tag) + reg, data);
 }
@@ -1606,7 +1615,7 @@ psycho_setstick(long cnt)
 	}
 
 	psycho0->sc_last_stick = psycho_getstick();
-	DPRINTF(PDB_STICK, ("stick: %ld\n", psycho0->sc_last_stick));
+	DPRINTF(PDB_STICK, ("%s: %ld\n", __func__, psycho0->sc_last_stick));
 }
 
 void

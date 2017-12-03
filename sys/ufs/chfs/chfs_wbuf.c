@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_wbuf.c,v 1.4.8.2 2014/08/20 00:04:44 tls Exp $	*/
+/*	$NetBSD: chfs_wbuf.c,v 1.4.8.3 2017/12/03 11:39:21 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -209,7 +209,7 @@ chfs_write_wbuf(struct chfs_mount* chmp, const struct iovec *invecs, long count,
 		donelen += wbuf_retlen;
 
 		/* if there is more residual data than the length of the wbuf
-		 * write it out directly until it's fit in the wbuf */
+		 * write it out directly until it fits in the wbuf */
 		if (vlen >= chmp->chm_wbuf_pagesize) {
 			ret = chfs_write_leb(chmp, lnr, v, outvec_to, PAGE_DIV(vlen), &wbuf_retlen);
 			vlen -= wbuf_retlen;

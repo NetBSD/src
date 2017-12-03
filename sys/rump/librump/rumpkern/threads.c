@@ -1,4 +1,4 @@
-/*	$NetBSD: threads.c,v 1.15.12.3 2014/08/20 00:04:41 tls Exp $	*/
+/*	$NetBSD: threads.c,v 1.15.12.4 2017/12/03 11:39:16 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2007-2009 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: threads.c,v 1.15.12.3 2014/08/20 00:04:41 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: threads.c,v 1.15.12.4 2017/12/03 11:39:16 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -39,9 +39,9 @@ __KERNEL_RCSID(0, "$NetBSD: threads.c,v 1.15.12.3 2014/08/20 00:04:41 tls Exp $"
 #include <sys/systm.h>
 #include <sys/queue.h>
 
-#include <rump/rumpuser.h>
+#include <rump-sys/kern.h>
 
-#include "rump_private.h"
+#include <rump/rumpuser.h>
 
 struct thrdesc {
 	void (*f)(void *);
@@ -293,8 +293,9 @@ lwpbouncer(void *arg)
 
 int
 lwp_create(struct lwp *l1, struct proc *p2, vaddr_t uaddr, int flags,
-           void *stack, size_t stacksize, void (*func)(void *), void *arg,
-           struct lwp **newlwpp, int sclass)
+    void *stack, size_t stacksize, void (*func)(void *), void *arg,
+    struct lwp **newlwpp, int sclass, const sigset_t *sigmask,
+    const stack_t *sigstk)
 {
 	struct thrdesc *td;
 	struct lwp *l;

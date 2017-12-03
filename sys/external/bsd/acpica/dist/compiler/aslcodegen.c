@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -41,10 +41,10 @@
  * POSSIBILITY OF SUCH DAMAGES.
  */
 
-
 #include "aslcompiler.h"
 #include "aslcompiler.y.h"
 #include "amlcode.h"
+#include "acconvert.h"
 
 #define _COMPONENT          ACPI_COMPILER
         ACPI_MODULE_NAME    ("aslcodegen")
@@ -56,12 +56,6 @@ CgAmlWriteWalk (
     ACPI_PARSE_OBJECT       *Op,
     UINT32                  Level,
     void                    *Context);
-
-static void
-CgLocalWriteAmlData (
-    ACPI_PARSE_OBJECT       *Op,
-    void                    *Buffer,
-    UINT32                  Length);
 
 static void
 CgWriteAmlOpcode (
@@ -98,16 +92,16 @@ CgGenerateAmlOutput (
     void)
 {
 
-    DbgPrint (ASL_DEBUG_OUTPUT, "\nWriting AML\n\n");
-
     /* Generate the AML output file */
 
     FlSeekFile (ASL_FILE_SOURCE_OUTPUT, 0);
     Gbl_SourceLine = 0;
     Gbl_NextError = Gbl_ErrorLog;
 
-    TrWalkParseTree (RootNode, ASL_WALK_VISIT_DOWNWARD,
+    TrWalkParseTree (Gbl_ParseTreeRoot, ASL_WALK_VISIT_DOWNWARD,
         CgAmlWriteWalk, NULL, NULL);
+
+    DbgPrint (ASL_TREE_OUTPUT, ASL_PARSE_TREE_HEADER2);
     CgCloseTable ();
 }
 
@@ -131,58 +125,66 @@ CgAmlWriteWalk (
     void                    *Context)
 {
 
-    /*
-     * Print header at level 0. Alignment assumes 32-bit pointers
-     */
-    if (!Level)
-    {
-        DbgPrint (ASL_TREE_OUTPUT,
-            "Final parse tree used for AML output:\n");
-        DbgPrint (ASL_TREE_OUTPUT,
-            "%*s Value    P_Op A_Op OpLen PByts Len  SubLen PSubLen OpPtr    Child    Parent   Flags    AcTyp    Final Col L\n",
-            76, " ");
-    }
-
-    /* Debug output */
-
-    DbgPrint (ASL_TREE_OUTPUT,
-        "%5.5d [%2d]", Op->Asl.LogicalLineNumber, Level);
-    UtPrintFormattedName (Op->Asl.ParseOpcode, Level);
-
-    if (Op->Asl.ParseOpcode == PARSEOP_NAMESEG    ||
-        Op->Asl.ParseOpcode == PARSEOP_NAMESTRING ||
-        Op->Asl.ParseOpcode == PARSEOP_METHODCALL)
-    {
-        DbgPrint (ASL_TREE_OUTPUT,
-            "%10.32s      ", Op->Asl.ExternalName);
-    }
-    else
-    {
-        DbgPrint (ASL_TREE_OUTPUT, "                ");
-    }
-
-    DbgPrint (ASL_TREE_OUTPUT,
-    "%08X %04X %04X %01X     %04X  %04X %04X   %04X    %08X %08X %08X %08X %08X %04X  %02d  %02d\n",
-            /* 1  */ (UINT32) Op->Asl.Value.Integer,
-            /* 2  */ Op->Asl.ParseOpcode,
-            /* 3  */ Op->Asl.AmlOpcode,
-            /* 4  */ Op->Asl.AmlOpcodeLength,
-            /* 5  */ Op->Asl.AmlPkgLenBytes,
-            /* 6  */ Op->Asl.AmlLength,
-            /* 7  */ Op->Asl.AmlSubtreeLength,
-            /* 8  */ Op->Asl.Parent ? Op->Asl.Parent->Asl.AmlSubtreeLength : 0,
-            /* 9  */ Op,
-            /* 10 */ Op->Asl.Child,
-            /* 11 */ Op->Asl.Parent,
-            /* 12 */ Op->Asl.CompileFlags,
-            /* 13 */ Op->Asl.AcpiBtype,
-            /* 14 */ Op->Asl.FinalAmlLength,
-            /* 15 */ Op->Asl.Column,
-            /* 16 */ Op->Asl.LineNumber);
-
     /* Generate the AML for this node */
 
     CgWriteNode (Op);
+
+    if (!Gbl_DebugFlag)
+    {
+        return (AE_OK);
+    }
+
+    /* Print header at level 0. Alignment assumes 32-bit pointers */
+
+    if (!Level)
+    {
+        DbgPrint (ASL_TREE_OUTPUT,
+            "\nFinal parse tree used for AML output:\n");
+        DbgPrint (ASL_TREE_OUTPUT, ASL_PARSE_TREE_HEADER2);
+    }
+
+    /* Dump ParseOp name and possible value */
+
+    switch (Op->Asl.ParseOpcode)
+    {
+    case PARSEOP_NAMESEG:
+    case PARSEOP_NAMESTRING:
+    case PARSEOP_METHODCALL:
+    case PARSEOP_STRING_LITERAL:
+
+        UtDumpStringOp (Op, Level);
+        break;
+
+    default:
+
+        UtDumpBasicOp (Op, Level);
+        break;
+    }
+
+    DbgPrint (ASL_TREE_OUTPUT, ASL_PARSE_TREE_DEBUG2,
+        /* 1  */ (UINT32) Op->Asl.Value.Integer,
+        /* 2  */ Op->Asl.ParseOpcode,
+        /* 3  */ Op->Asl.AmlOpcode,
+        /* 4  */ Op->Asl.AmlOpcodeLength,
+        /* 5  */ Op->Asl.AmlPkgLenBytes,
+        /* 6  */ Op->Asl.AmlLength,
+        /* 7  */ Op->Asl.AmlSubtreeLength,
+        /* 8  */ Op->Asl.Parent ? Op->Asl.Parent->Asl.AmlSubtreeLength : 0,
+        /* 9  */ Op,
+        /* 10 */ Op->Asl.Parent,
+        /* 11 */ Op->Asl.Child,
+        /* 12 */ Op->Asl.Next,
+        /* 13 */ Op->Asl.CompileFlags,
+        /* 14 */ Op->Asl.AcpiBtype,
+        /* 15 */ Op->Asl.FinalAmlLength,
+        /* 16 */ Op->Asl.Column,
+        /* 17 */ Op->Asl.LineNumber,
+        /* 18 */ Op->Asl.EndLine,
+        /* 19 */ Op->Asl.LogicalLineNumber,
+        /* 20 */ Op->Asl.EndLogicalLine);
+
+    TrPrintOpFlags (Op->Asl.CompileFlags, ASL_TREE_OUTPUT);
+    DbgPrint (ASL_TREE_OUTPUT, "\n");
     return (AE_OK);
 }
 
@@ -201,7 +203,7 @@ CgAmlWriteWalk (
  *
  ******************************************************************************/
 
-static void
+void
 CgLocalWriteAmlData (
     ACPI_PARSE_OBJECT       *Op,
     void                    *Buffer,
@@ -256,6 +258,15 @@ CgWriteAmlOpcode (
         return;
     }
 
+    /*
+     * Before printing the bytecode, generate comment byte codes
+     * associated with this node.
+     */
+    if (Gbl_CaptureComments)
+    {
+        CgWriteAmlComment(Op);
+    }
+
     switch (Op->Asl.AmlOpcode)
     {
     case AML_UNASSIGNED_OPCODE:
@@ -263,7 +274,8 @@ CgWriteAmlOpcode (
         /* These opcodes should not get here */
 
         printf ("Found a node with an unassigned AML opcode\n");
-        FlPrintFile (ASL_FILE_STDERR, "Found a node with an unassigned AML opcode\n");
+        FlPrintFile (ASL_FILE_STDERR,
+            "Found a node with an unassigned AML opcode\n");
         return;
 
     case AML_INT_RESERVEDFIELD_OP:
@@ -320,7 +332,7 @@ CgWriteAmlOpcode (
 
     /* Does this opcode have an associated "PackageLength" field? */
 
-    if (Op->Asl.CompileFlags & NODE_AML_PACKAGE)
+    if (Op->Asl.CompileFlags & OP_AML_PACKAGE)
     {
         if (Op->Asl.AmlPkgLenBytes == 1)
         {
@@ -346,8 +358,10 @@ CgWriteAmlOpcode (
              */
             PkgLen.Len >>= 4;
 
-            /* Now we can write the remaining bytes - either 1, 2, or 3 bytes */
-
+            /*
+             * Now we can write the remaining bytes -
+             * either 1, 2, or 3 bytes
+             */
             for (i = 0; i < (UINT32) (Op->Asl.AmlPkgLenBytes - 1); i++)
             {
                 CgLocalWriteAmlData (Op, &PkgLen.LenBytes[i], 1);
@@ -408,6 +422,8 @@ CgWriteTableHeader (
     ACPI_PARSE_OBJECT       *Op)
 {
     ACPI_PARSE_OBJECT       *Child;
+    UINT32                  CommentLength;
+    ACPI_COMMENT_NODE       *Current;
 
 
     /* AML filename */
@@ -417,6 +433,21 @@ CgWriteTableHeader (
     /* Signature */
 
     Child = Child->Asl.Next;
+
+    /*
+     * For ASL-/ASL+ converter: replace the table signature with
+     * "XXXX" and save the original table signature. This results in an AML
+     * file with the signature "XXXX". The converter should remove this AML
+     * file. In the event where this AML file does not get deleted, the
+     * "XXXX" table signature prevents this AML file from running on the AML
+     * interpreter.
+     */
+    if (Gbl_CaptureComments)
+    {
+        strncpy(AcpiGbl_TableSig, Child->Asl.Value.String, 4);
+        Child->Asl.Value.String = ACPI_SIG_XXXX;
+    }
+
     strncpy (TableHeader.Signature, Child->Asl.Value.String, 4);
 
     /* Revision */
@@ -452,14 +483,116 @@ CgWriteTableHeader (
 
     /* Compiler version */
 
-    TableHeader.AslCompilerRevision = ASL_REVISION;
+    TableHeader.AslCompilerRevision = ACPI_CA_VERSION;
 
     /* Table length. Checksum zero for now, will rewrite later */
 
-    TableHeader.Length   = Gbl_TableLength;
+    TableHeader.Length = sizeof (ACPI_TABLE_HEADER) +
+        Op->Asl.AmlSubtreeLength;
+
+    /* Calculate the comment lengths for this definition block parseOp */
+
+    if (Gbl_CaptureComments)
+    {
+        CvDbgPrint ("Calculating comment lengths for %s in write header\n",
+            Op->Asl.ParseOpName);
+
+        /*
+         * Take the filename without extensions, add 3 for the new extension
+         * and another 3 for the a908 bytecode and null terminator.
+         */
+        TableHeader.Length += strrchr (Gbl_ParseTreeRoot->Asl.Filename, '.')
+            - Gbl_ParseTreeRoot->Asl.Filename + 1 + 3 + 3;
+        Op->Asl.AmlSubtreeLength +=
+            strlen (Gbl_ParseTreeRoot->Asl.Filename) + 3;
+    CvDbgPrint ("     Length: %lu\n",
+            strlen (Gbl_ParseTreeRoot->Asl.Filename) + 3);
+
+        if (Op->Asl.CommentList)
+        {
+            Current = Op->Asl.CommentList;
+            while (Current)
+            {
+                CommentLength = strlen (Current->Comment)+3;
+                CvDbgPrint ("Length of standard comment): %d\n", CommentLength);
+                CvDbgPrint ("    Comment string: %s\n\n", Current->Comment);
+                TableHeader.Length += CommentLength;
+                Op->Asl.AmlSubtreeLength += CommentLength;
+                Current = Current->Next;
+            CvDbgPrint ("    Length: %u\n", CommentLength);
+            }
+        }
+        if (Op->Asl.CloseBraceComment)
+        {
+            CommentLength = strlen (Op->Asl.CloseBraceComment)+3;
+            CvDbgPrint ("Length of inline comment +3: %d\n", CommentLength);
+            CvDbgPrint ("    Comment string: %s\n\n", Op->Asl.CloseBraceComment);
+            TableHeader.Length += CommentLength;
+            Op->Asl.AmlSubtreeLength += CommentLength;
+        CvDbgPrint ("    Length: %u\n", CommentLength);
+        }
+    }
+
     TableHeader.Checksum = 0;
 
+    Op->Asl.FinalAmlOffset = ftell (Gbl_Files[ASL_FILE_AML_OUTPUT].Handle);
+
+    /* Write entire header and clear the table header global */
+
     CgLocalWriteAmlData (Op, &TableHeader, sizeof (ACPI_TABLE_HEADER));
+    memset (&TableHeader, 0, sizeof (ACPI_TABLE_HEADER));
+}
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    CgUpdateHeader
+ *
+ * PARAMETERS:  Op                  - Op for the Definition Block
+ *
+ * RETURN:      None.
+ *
+ * DESCRIPTION: Complete the ACPI table by calculating the checksum and
+ *              re-writing the header for the input definition block
+ *
+ ******************************************************************************/
+
+static void
+CgUpdateHeader (
+    ACPI_PARSE_OBJECT       *Op)
+{
+    signed char             Sum;
+    UINT32                  i;
+    UINT32                  Length;
+    UINT8                   FileByte;
+    UINT8                   Checksum;
+
+
+    /* Calculate the checksum over the entire definition block */
+
+    Sum = 0;
+    Length = sizeof (ACPI_TABLE_HEADER) + Op->Asl.AmlSubtreeLength;
+    FlSeekFile (ASL_FILE_AML_OUTPUT, Op->Asl.FinalAmlOffset);
+
+    for (i = 0; i < Length; i++)
+    {
+        if (FlReadFile (ASL_FILE_AML_OUTPUT, &FileByte, 1) != AE_OK)
+        {
+            printf ("EOF while reading checksum bytes\n");
+            return;
+        }
+
+        Sum = (signed char) (Sum + FileByte);
+    }
+
+    Checksum = (UINT8) (0 - Sum);
+
+    /* Re-write the the checksum byte */
+
+    FlSeekFile (ASL_FILE_AML_OUTPUT, Op->Asl.FinalAmlOffset +
+        ACPI_OFFSET (ACPI_TABLE_HEADER, Checksum));
+
+    FlWriteFile (ASL_FILE_AML_OUTPUT, &Checksum, 1);
 }
 
 
@@ -472,7 +605,8 @@ CgWriteTableHeader (
  * RETURN:      None.
  *
  * DESCRIPTION: Complete the ACPI table by calculating the checksum and
- *              re-writing the header.
+ *              re-writing each table header. This allows support for
+ *              multiple definition blocks in a single source file.
  *
  ******************************************************************************/
 
@@ -480,26 +614,17 @@ static void
 CgCloseTable (
     void)
 {
-    signed char         Sum;
-    UINT8               FileByte;
+    ACPI_PARSE_OBJECT   *Op;
 
 
-    FlSeekFile (ASL_FILE_AML_OUTPUT, 0);
-    Sum = 0;
+    /* Process all definition blocks */
 
-    /* Calculate the checksum over the entire file */
-
-    while (FlReadFile (ASL_FILE_AML_OUTPUT, &FileByte, 1) == AE_OK)
+    Op = Gbl_ParseTreeRoot->Asl.Child;
+    while (Op)
     {
-        Sum = (signed char) (Sum + FileByte);
+        CgUpdateHeader (Op);
+        Op = Op->Asl.Next;
     }
-
-    /* Re-write the table header with the checksum */
-
-    TableHeader.Checksum = (UINT8) (0 - Sum);
-
-    FlSeekFile (ASL_FILE_AML_OUTPUT, 0);
-    CgLocalWriteAmlData (NULL, &TableHeader, sizeof (ACPI_TABLE_HEADER));
 }
 
 
@@ -522,13 +647,24 @@ CgWriteNode (
     ASL_RESOURCE_NODE       *Rnode;
 
 
+    /* Write all comments here. */
+    if (Gbl_CaptureComments)
+    {
+        CgWriteAmlComment(Op);
+    }
+
     /* Always check for DEFAULT_ARG and other "Noop" nodes */
     /* TBD: this may not be the best place for this check */
 
     if ((Op->Asl.ParseOpcode == PARSEOP_DEFAULT_ARG)  ||
-        (Op->Asl.ParseOpcode == PARSEOP_EXTERNAL)     ||
         (Op->Asl.ParseOpcode == PARSEOP_INCLUDE)      ||
         (Op->Asl.ParseOpcode == PARSEOP_INCLUDE_END))
+    {
+        return;
+    }
+
+    if ((Op->Asl.ParseOpcode == PARSEOP_EXTERNAL) &&
+        Gbl_DoExternals == FALSE)
     {
         return;
     }
@@ -575,9 +711,13 @@ CgWriteNode (
 
         break;
 
-    case PARSEOP_DEFINITIONBLOCK:
+    case PARSEOP_DEFINITION_BLOCK:
 
         CgWriteTableHeader (Op);
+        if (Gbl_CaptureComments)
+        {
+            CgWriteAmlDefBlockComment (Op);
+        }
         break;
 
     case PARSEOP_NAMESEG:

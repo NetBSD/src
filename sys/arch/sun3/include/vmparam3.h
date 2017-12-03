@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam3.h,v 1.37 2010/10/15 15:55:52 tsutsui Exp $	*/
+/*	$NetBSD: vmparam3.h,v 1.37.18.1 2017/12/03 11:36:46 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -97,7 +97,7 @@
  * so we need to be conservative with these limits.
  */
 #ifndef MAXTSIZ
-#define	MAXTSIZ		(8*1024*1024)		/* max text size */
+#define	MAXTSIZ		(32*1024*1024)		/* max text size */
 #endif
 #ifndef DFLDSIZ
 #define	DFLDSIZ		(16*1024*1024)		/* initial data size limit */

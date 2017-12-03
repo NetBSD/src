@@ -1,4 +1,4 @@
-/* $Id: arbusvar.h,v 1.4 2011/07/10 06:26:02 matt Exp $ */
+/* $Id: arbusvar.h,v 1.4.12.1 2017/12/03 11:36:26 jdolecek Exp $ */
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -44,6 +44,9 @@
 #define	_MIPS_ATHEROS_ARBUSVAR_H_
 
 #include <sys/bus.h>
+#include <sys/cpu.h>
+
+#include <mips/cpuregs.h>
 
 struct arbus_attach_args {
 	const char	*aa_name;

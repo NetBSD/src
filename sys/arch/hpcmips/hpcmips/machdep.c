@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.116.2.1 2014/08/20 00:03:03 tls Exp $	*/
+/*	$NetBSD: machdep.c,v 1.116.2.2 2017/12/03 11:36:15 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.116.2.1 2014/08/20 00:03:03 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.116.2.2 2017/12/03 11:36:15 jdolecek Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -122,14 +122,10 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.116.2.1 2014/08/20 00:03:03 tls Exp $"
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
-#ifndef DB_ELFSIZE
-#error Must define DB_ELFSIZE!
-#endif
-#define ELFSIZE         DB_ELFSIZE
 #include <sys/exec_elf.h>
 #endif
 
-#if NBICONSDEV > 0 
+#if NBICONSDEV > 0
 #include <sys/conf.h>
 #include <dev/hpc/biconsvar.h>
 #include <dev/hpc/bicons.h>
@@ -193,13 +189,13 @@ extern void stacktrace(void); /*XXX*/
 
 /*
  * Do all the stuff that locore normally does before calling main().
- * Process arguments passed to us by the boot loader. 
+ * Process arguments passed to us by the boot loader.
  * Return the first page address following the system.
  */
 void
 mach_init(int argc, char *argv[], struct bootinfo *bi)
 {
-	/* 
+	/*
 	 * this routines stack is never polluted since stack pointer
 	 * is lower than kernel text segment, and at exiting, stack pointer
 	 * is changed to proc0.
@@ -273,8 +269,8 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 	kloader_bootinfo_set(&kbi, argc, argv, bi, false);
 #endif
 
-	/* 
-	 * CPU core Specific Function Hooks 
+	/*
+	 * CPU core Specific Function Hooks
 	 */
 #if defined(VR41XX) && defined(TX39XX)
 	if (platid_match(&platid, &platid_mask_CPU_MIPS_VR_41XX))
@@ -291,8 +287,8 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 #endif
 
 #if NBICONSDEV > 0
-	/* 
-	 *  bicons don't need actual device initialize.  only bootinfo needed. 
+	/*
+	 *  bicons don't need actual device initialize.  only bootinfo needed.
 	 */
 	__bicons_enable = (bicons_init(&bicons) == 0);
 	if (__bicons_enable)
@@ -310,7 +306,7 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 	 * Set the VM page size.
 	 */
 	uvmexp.pagesize = NBPG; /* Notify the VM system of our page size. */
-	uvm_setpagesize();
+	uvm_md_init();
 
 	/*
 	 * Copy exception-dispatch code down to exception vector.
@@ -419,15 +415,15 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 #else
 	(*platform.mem_init)((paddr_t)kernend - MIPS_KSEG0_START);
 #endif
-	/* 
-	 *  Clear currently unused D-RAM area 
+	/*
+	 *  Clear currently unused D-RAM area
 	 *  (For reboot Windows CE clearly)
 	 */
 	{
 		u_int32_t sp;
 		__asm volatile("move %0, $29" : "=r"(sp));
 		KDASSERT(sp > KERNBASE + 0x400);
-		memset((void *)(KERNBASE + 0x400), 0, sp - (KERNBASE + 0x400));
+		memset((void *)(KERNBASE + 0x400), 0, sp - (KERNBASE + 0x400) - 64);
 	}
 
 	printf("mem_cluster_cnt = %d\n", mem_cluster_cnt);
@@ -478,55 +474,19 @@ cpuname_printf(const char *fmt, ...)
 void
 cpu_startup(void)
 {
-	vaddr_t minaddr, maxaddr;
-	char pbuf[9];
-	size_t i;
-#ifdef DEBUG
-	extern int pmapdebug;
-	int opmapdebug = pmapdebug;
-
-	pmapdebug = 0;
-#endif
-
-	/*
-	 * Good {morning,afternoon,evening,night}.
-	 */
-	printf("%s%s", copyright, version);
 	cpu_setmodel("%s (%s)", platid_name(&platid), hpcmips_cpuname);
-	printf("%s\n", cpu_getmodel());
-	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
-	printf("total memory = %s\n", pbuf);
-	if (bootverbose) {
-		/* show again when verbose mode */
-		printf("total memory banks = %d\n", mem_cluster_cnt);
-		for (i = 0; i < mem_cluster_cnt; i++) {
-			printf("memory bank %zu = "
-			    "0x%08"PRIxPADDR" %"PRIdPSIZE"KB(0x%08"PRIxPSIZE")\n", i,
-			    (paddr_t)mem_clusters[i].start,
-			    (psize_t)mem_clusters[i].size/1024,
-			    (psize_t)mem_clusters[i].size);
-		}
+
+	/* show again when verbose mode */
+	aprint_verbose("total memory banks = %d\n", mem_cluster_cnt);
+	for (size_t i = 0; i < mem_cluster_cnt; i++) {
+		aprint_verbose("memory bank %zu = "
+		    "%#08"PRIxPADDR" %"PRIdPSIZE"KB(%#"PRIxPSIZE")\n", i,
+		    (paddr_t)mem_clusters[i].start,
+		    (psize_t)mem_clusters[i].size/1024,
+		    (psize_t)mem_clusters[i].size);
 	}
 
-	minaddr = 0;
-
-	/*
-	 * Allocate a submap for physio
-	 */
-	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    VM_PHYS_SIZE, 0, false, NULL);
-
-	/*
-	 * No need to allocate an mbuf cluster submap.  Mbuf clusters
-	 * are allocated via the pool allocator, and we use KSEG to
-	 * map those pages.
-	 */
-
-#ifdef DEBUG
-	pmapdebug = opmapdebug;
-#endif
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
-	printf("avail memory = %s\n", pbuf);
+	cpu_startup_common();
 }
 
 void

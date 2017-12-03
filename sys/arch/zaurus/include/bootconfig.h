@@ -1,4 +1,4 @@
-/*	$NetBSD: bootconfig.h,v 1.1 2006/12/16 05:43:15 ober Exp $	*/
+/*	$NetBSD: bootconfig.h,v 1.1.98.1 2017/12/03 11:36:52 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -41,6 +41,10 @@
  *
  * Based on kate/boot/bootconfig.h
  */
+#ifndef _ZAURUS_BOOTCONFIG_H_
+#define _ZAURUS_BOOTCONFIG_H_
+
+#include <arm/bootconfig.h>
 
 typedef struct _PhysMem {
 	u_int address;
@@ -59,17 +63,8 @@ typedef struct _BootConfig {
 extern BootConfig bootconfig;
 #define	MAX_BOOT_STRING			255
 
-#define BOOTOPT_TYPE_BOOLEAN		0
-#define BOOTOPT_TYPE_STRING		1
-#define BOOTOPT_TYPE_INT		2
-#define BOOTOPT_TYPE_BININT		3
-#define BOOTOPT_TYPE_HEXINT		4
-#define BOOTOPT_TYPE_MASK		7
-
-int get_bootconf_option(char *, const char *, int, void *);
-
-extern char *boot_args;
 extern char *boot_file;
 #endif	/* _KERNEL */
 
-/* End of bootconfig.h */
+#endif /* _ZAURUS_BOOTCONFIG_H_ */
+

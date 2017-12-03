@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_timeout.c,v 1.45.18.1 2014/08/20 00:04:29 tls Exp $	*/
+/*	$NetBSD: kern_timeout.c,v 1.45.18.2 2017/12/03 11:38:45 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.45.18.1 2014/08/20 00:04:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.45.18.2 2017/12/03 11:38:45 jdolecek Exp $");
 
 /*
  * Timeouts are kept in a hierarchical timing wheel.  The c_time is the
@@ -101,6 +101,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.45.18.1 2014/08/20 00:04:29 tls E
 #include <machine/db_machdep.h>
 #include <ddb/db_interface.h>
 #include <ddb/db_access.h>
+#include <ddb/db_cpu.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_output.h>
 #endif
@@ -165,8 +166,6 @@ do {									\
 #define CIRCQ_LAST(elem,list)	((elem)->cq_next_l == (list))
 #define CIRCQ_EMPTY(list)	((list)->cq_next_l == (list))
 
-static void	callout_softclock(void *);
-
 struct callout_cpu {
 	kmutex_t	*cc_lock;
 	sleepq_t	cc_sleepq;
@@ -183,6 +182,9 @@ struct callout_cpu {
 	char		cc_name2[12];
 };
 
+#ifndef CRASH
+
+static void	callout_softclock(void *);
 static struct callout_cpu callout_cpu0;
 static void *callout_sih;
 
@@ -239,8 +241,6 @@ callout_init_cpu(struct cpu_info *ci)
 
 	if ((cc = ci->ci_data.cpu_callout) == NULL) {
 		cc = kmem_zalloc(sizeof(*cc), KM_SLEEP);
-		if (cc == NULL)
-			panic("callout_init_cpu (1)");
 		cc->cc_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_SCHED);
 		CIRCQ_INIT(&cc->cc_todo);
 		for (b = 0; b < BUCKETS; b++)
@@ -309,7 +309,9 @@ callout_destroy(callout_t *cs)
 	 * of c->c_flags.  If the callout could potentially have been
 	 * running, the current thread should have stopped it.
 	 */
-	KASSERT((c->c_flags & CALLOUT_PENDING) == 0);
+	KASSERTMSG((c->c_flags & CALLOUT_PENDING) == 0,
+	    "callout %p: c_func (%p) c_flags (%#x) destroyed from %p",
+	    c, c->c_func, c->c_flags, __builtin_return_address(0));
 	KASSERT(c->c_cpu->cc_lwp == curlwp || c->c_cpu->cc_active != c);
 	KASSERTMSG(c->c_magic == CALLOUT_MAGIC,
 	    "callout %p: c_magic (%#x) != CALLOUT_MAGIC (%#x)",
@@ -755,21 +757,25 @@ callout_softclock(void *v)
 	cc->cc_lwp = NULL;
 	mutex_spin_exit(cc->cc_lock);
 }
+#endif
 
 #ifdef DDB
 static void
-db_show_callout_bucket(struct callout_cpu *cc, struct callout_circq *bucket)
+db_show_callout_bucket(struct callout_cpu *cc, struct callout_circq *kbucket,
+    struct callout_circq *bucket)
 {
-	callout_impl_t *c;
+	callout_impl_t *c, ci;
 	db_expr_t offset;
 	const char *name;
 	static char question[] = "?";
 	int b;
 
-	if (CIRCQ_EMPTY(bucket))
+	if (CIRCQ_LAST(bucket, kbucket))
 		return;
 
 	for (c = CIRCQ_FIRST(bucket); /*nothing*/; c = CIRCQ_NEXT(&c->c_list)) {
+		db_read_bytes((db_addr_t)c, sizeof(ci), (char *)&ci);
+		c = &ci;
 		db_find_sym_and_offset((db_addr_t)(intptr_t)c->c_func, &name,
 		    &offset);
 		name = name ? name : question;
@@ -779,7 +785,7 @@ db_show_callout_bucket(struct callout_cpu *cc, struct callout_circq *bucket)
 		db_printf("%9d %2d/%-4d %16lx  %s\n",
 		    c->c_time - cc->cc_ticks, b / WHEELSIZE, b,
 		    (u_long)c->c_arg, name);
-		if (CIRCQ_LAST(&c->c_list, bucket))
+		if (CIRCQ_LAST(&c->c_list, kbucket))
 			break;
 	}
 }
@@ -787,12 +793,13 @@ db_show_callout_bucket(struct callout_cpu *cc, struct callout_circq *bucket)
 void
 db_show_callout(db_expr_t addr, bool haddr, db_expr_t count, const char *modif)
 {
-	CPU_INFO_ITERATOR cii;
-	struct callout_cpu *cc;
-	struct cpu_info *ci;
+	struct callout_cpu *cc, ccb;
+	struct cpu_info *ci, cib;
 	int b;
 
+#ifndef CRASH
 	db_printf("hardclock_ticks now: %d\n", hardclock_ticks);
+#endif
 	db_printf("    ticks  wheel               arg  func\n");
 
 	/*
@@ -800,14 +807,19 @@ db_show_callout(db_expr_t addr, bool haddr, db_expr_t count, const char *modif)
 	 * anyhow, and we might be called in a circumstance where
 	 * some other CPU was paused while holding the lock.
 	 */
-	for (CPU_INFO_FOREACH(cii, ci)) {
-		cc = ci->ci_data.cpu_callout;
-		db_show_callout_bucket(cc, &cc->cc_todo);
+	for (ci = db_cpu_first(); ci != NULL; ci = db_cpu_next(ci)) {
+		db_read_bytes((db_addr_t)ci, sizeof(cib), (char *)&cib);
+		cc = cib.ci_data.cpu_callout;
+		db_read_bytes((db_addr_t)cc, sizeof(ccb), (char *)&ccb);
+		db_show_callout_bucket(&ccb, &cc->cc_todo, &ccb.cc_todo);
 	}
 	for (b = 0; b < BUCKETS; b++) {
-		for (CPU_INFO_FOREACH(cii, ci)) {
-			cc = ci->ci_data.cpu_callout;
-			db_show_callout_bucket(cc, &cc->cc_wheel[b]);
+		for (ci = db_cpu_first(); ci != NULL; ci = db_cpu_next(ci)) {
+			db_read_bytes((db_addr_t)ci, sizeof(cib), (char *)&cib);
+			cc = cib.ci_data.cpu_callout;
+			db_read_bytes((db_addr_t)cc, sizeof(ccb), (char *)&ccb);
+			db_show_callout_bucket(&ccb, &cc->cc_wheel[b],
+			    &ccb.cc_wheel[b]);
 		}
 	}
 }

@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -48,7 +48,7 @@
  * Note: All tokens require a space separator.
  * Long lines are automatically split during output.
  */
-const AH_ASL_OPERATOR       AslOperatorInfo[] =
+const AH_ASL_OPERATOR       Gbl_AslOperatorInfo[] =
 {
     {"AccessAs",                "(AccessType, AccessAttribKeyword | "
                                 "ExtendedAttribKeyword (AccessLength))",
@@ -112,19 +112,19 @@ const AH_ASL_OPERATOR       AslOperatorInfo[] =
                                 "Declare a Definition Block"},
     {"DerefOf",                 "(Source) => Object",
                                 "Dereference an object reference"},
-    {"Device",                  "(DeviceName) {ObjectList}",
+    {"Device",                  "(DeviceName) {TermList}",
                                 "Declare a bus/device object"},
     {"Divide",                  "(Dividend, Divisor, Remainder, Result) => Integer",
                                 "Integer Divide"},
-    {"DMA",                     "(DmaTypeKeyword, BusMasterKeyword, XferTypeKeyword, "
+    {"Dma",                     "(DmaTypeKeyword, BusMasterKeyword, XferTypeKeyword, "
                                 "DescriptorName) {DmaChannelList} => Buffer",
                                 "DMA Resource Descriptor macro"},
-    {"DWordIO",                 "(ResourceTypeKeyword, MinKeyword, MaxKeyword, "
+    {"DWordIo",                 "(ResourceTypeKeyword, MinKeyword, MaxKeyword, "
                                 "DecodeKeyword, RangeTypeKeyword, AddressGranularity, "
                                 "AddressMinimum, AddressMaximum, AddressTranslation, "
                                 "RangeLength, ResourceSourceIndex, "
                                 "ResourceSource, DescriptorName, TypeKeyword, TranslationKeyword)",
-                                "DWord IO Resource Descriptor macro"},
+                                "DWord I/O Resource Descriptor macro"},
     {"DWordMemory",             "(ResourceTypeKeyword, DecodeKeyword, MinKeyword, "
                                 "MaxKeyword, MemTypeKeyword, ReadWriteKeyword, "
                                 "AddressGranularity, AddressMinimum, AddressMaximum, AddressTranslation, "
@@ -137,7 +137,7 @@ const AH_ASL_OPERATOR       AslOperatorInfo[] =
                                 "AddressTranslation, RangeLength, "
                                 "ResourceSourceIndex, ResourceSource, DescriptorName)",
                                 "DWord Space Resource Descriptor macro"},
-    {"EISAID",                  "(EisaIdString) => DWordConst",
+    {"EisaId",                  "(EisaIdString) => DWordConst",
                                 "EISA ID String to Integer conversion macro"},
     {"Else",                    "{TermList}",
                                 "Alternate conditional execution"},
@@ -147,11 +147,11 @@ const AH_ASL_OPERATOR       AslOperatorInfo[] =
                                 "End Dependent Function Resource Descriptor macro"},
     {"Event",                   "(EventName)",
                                 "Declare an event synchronization object"},
-    {"ExtendedIO",              "(ResourceTypeKeyword, MinKeyword, MaxKeyword, "
+    {"ExtendedIo",              "(ResourceTypeKeyword, MinKeyword, MaxKeyword, "
                                 "DecodeKeyword, RangeTypeKeyword, AddressGranularity, "
                                 "AddressMinimum, AddressMaximum, AddressTranslation, RangeLength, "
                                 "TypeSpecificAttributes, DescriptorName, TypeKeyword, TranslationKeyword)",
-                                "Extended IO Resource Descriptor macro"},
+                                "Extended I/O Resource Descriptor macro"},
     {"ExtendedMemory",          "(ResourceTypeKeyword, DecodeKeyword, MinKeyword, "
                                 "MaxKeyword, MemTypeKeyword, ReadWriteKeyword, "
                                 "AddressGranularity, AddressMinimum, AddressMaximum, AddressTranslation, "
@@ -174,11 +174,11 @@ const AH_ASL_OPERATOR       AslOperatorInfo[] =
                                 "Index of first least significant bit set"},
     {"FindSetRightBit",         "(Source, Result) => Integer",
                                 "Index of first most significant bit set"},
-    {"FixedDMA",                "(DmaRequestLine, Channel, TransferWidthKeyword, DescriptorName) => Buffer",
+    {"FixedDma",                "(DmaRequestLine, Channel, TransferWidthKeyword, DescriptorName) => Buffer",
                                 "Fixed DMA Resource Descriptor macro"},
-    {"FixedIO",                 "(AddressBase, RangeLength, DescriptorName) => Buffer",
+    {"FixedIo",                 "(AddressBase, RangeLength, DescriptorName) => Buffer",
                                 "Fixed I/O Resource Descriptor macro"},
-    {"FromBCD",                 "(BCDValue, Result) => Integer",
+    {"FromBcd",                 "(BcdValue, Result) => Integer",
                                 "Convert from BCD to numeric"},
     {"Function",                "(FunctionName, ReturnType, ParameterTypes) {TermList}",
                                 "Declare control method"},
@@ -193,9 +193,9 @@ const AH_ASL_OPERATOR       AslOperatorInfo[] =
                                 "ResourceSourceIndex, ResourceTypeKeyword, DescriptorName, "
                                 "RawDataBuffer() {VendorData}) {PinList}",
                                 "GPIO I/O Connection Resource Descriptor Macro"},
-    {"I2cSerialBus",            "(SlaveAddress, SlaveModeKeyword, ConnectionSpeed, "
+    {"I2cSerialBusV2",           "(SlaveAddress, SlaveModeKeyword, ConnectionSpeed, "
                                 "AddressingModeKeyword, ResourceSource, "
-                                "ResourceSourceIndex, ResourceTypeKeyword, DescriptorName, "
+                                "ResourceSourceIndex, ResourceTypeKeyword, DescriptorName, Shared, "
                                 "RawDataBuffer() {VendorData})",
                                 "I2C Serial Bus Connection Resource Descriptor Macro"},
     {"If",                      "(Predicate) {TermList}",
@@ -213,13 +213,13 @@ const AH_ASL_OPERATOR       AslOperatorInfo[] =
                                 "ShareTypeKeyword, ResourceSourceIndex, "
                                 "ResourceSource, DescriptorName) {InterruptList} => Buffer",
                                 "Interrupt Resource Descriptor macro"},
-    {"IO",                      "(IoDecodeKeyword, AddressMin, AddressMax, AddressAlignment, "
+    {"Io",                      "(IoDecodeKeyword, AddressMin, AddressMax, AddressAlignment, "
                                 "RangeLength, DescriptorName) => Buffer",
-                                "IO Resource Descriptor macro"},
-    {"IRQ",                     "(InterruptTypeKeyword, InterruptLevelKeyword, ShareTypeKeyword, "
+                                "I/O Resource Descriptor macro"},
+    {"Irq",                     "(InterruptTypeKeyword, InterruptLevelKeyword, ShareTypeKeyword, "
                                 "DescriptorName) {InterruptList} => Buffer",
                                 "Interrupt Resource Descriptor macro"},
-    {"IRQNoFlags",              "(DescriptorName) {InterruptList} => Buffer",
+    {"IrqNoFlags",              "(DescriptorName) {InterruptList} => Buffer",
                                 "Short Interrupt Resource Descriptor macro"},
     {"LAnd",                    "(Source1, Source2) => Boolean",
                                 "Logical And"},
@@ -295,16 +295,16 @@ const AH_ASL_OPERATOR       AslOperatorInfo[] =
                                 "Integer Bitwise Or"},
     {"Package",                 "(NumElements) {PackageList} => Package",
                                 "Declare a package object"},
-    {"PowerResource",           "(ResourceName, SystemLevel, ResourceOrder) {ObjectList}",
+    {"PowerResource",           "(ResourceName, SystemLevel, ResourceOrder) {TermList}",
                                 "Declare a power resource object"},
-    {"Processor",               "(ProcessorName, ProcessorID, PBlockAddress, PblockLength) {ObjectList}",
+    {"Processor",               "(ProcessorName, ProcessorID, PBlockAddress, PblockLength) {TermList}",
                                 "Declare a processor package"},
-    {"QWordIO",                 "(ResourceTypeKeyword, MinKeyword, MaxKeyword, DecodeKeyword, "
+    {"QWordIo",                 "(ResourceTypeKeyword, MinKeyword, MaxKeyword, DecodeKeyword, "
                                 "RangeTypeKeyword, AddressGranularity, "
                                 "AddressMinimum, AddressMaximum, AddressTranslation, RangeLength, "
                                 "ResourceSourceIndex, ResourceSource, DescriptorName, TypeKeyword, "
                                 "TranslationKeyword)",
-                                "QWord IO Resource Descriptor macro"},
+                                "QWord I/O Resource Descriptor macro"},
     {"QWordMemory",             "(ResourceTypeKeyword, DecodeKeyword, MinKeyword, MaxKeyword, "
                                 "MemTypeKeyword, ReadWriteKeyword, "
                                 "AddressGranularity, AddressMinimum, AddressMaximum, AddressTranslation, "
@@ -335,7 +335,7 @@ const AH_ASL_OPERATOR       AslOperatorInfo[] =
                                 "Return from method execution"},
     {"Revision",                "=> Integer",
                                 "Constant revision object"},
-    {"Scope",                   "(Location) {ObjectList}",
+    {"Scope",                   "(Location) {TermList}",
                                 "Open named scope "},
     {"ShiftLeft",               "(Source, ShiftCount, Result) => Integer",
                                 "Integer shift value left"},
@@ -347,11 +347,11 @@ const AH_ASL_OPERATOR       AslOperatorInfo[] =
                                 "Get the size of a buffer}, string}, or package"},
     {"Sleep",                   "(Milliseconds)",
                                 "Sleep n milliseconds (yields the processor)"},
-    {"SpiSerialBus",            "(DeviceSelection, PolarityKeyword, WireModeKeyword, "
+    {"SpiSerialBusV2",          "(DeviceSelection, PolarityKeyword, WireModeKeyword, "
                                 "DataBitLength, SlaveModeKeyword, "
                                 "ConnectionSpeed, ClockPolarityKeyword, ClockPhaseKeyword, "
                                 "ResourceSource, ResourceSourceIndex, "
-                                "ResourceTypeKeyword, DescriptorName, RawDataBuffer() {VendorData})",
+                                "ResourceTypeKeyword, DescriptorName, Shared, RawDataBuffer() {VendorData})",
                                 "SPI Serial Bus Connection Resource Descriptor Macro"},
     {"Stall",                   "(Microseconds)",
                                 "Delay n microseconds (does not yield the processor)"},
@@ -365,11 +365,11 @@ const AH_ASL_OPERATOR       AslOperatorInfo[] =
                                 "Integer Subtract"},
     {"Switch",                  "(Expression) {CaseTermList}",
                                 "Select code to execute based on expression value"},
-    {"ThermalZone",             "(ThermalZoneName) {ObjectList}",
+    {"ThermalZone",             "(ThermalZoneName) {TermList}",
                                 "Declare a thermal zone package"},
     {"Timer",                   "=> Integer",
                                 "Get 64-bit timer value"},
-    {"ToBCD",                   "(Value, Result) => Integer",
+    {"ToBcd",                   "(Value, Result) => Integer",
                                 "Convert Integer to BCD"},
     {"ToBuffer",                "(Data, Result) => Buffer",
                                 "Convert data type to buffer"},
@@ -381,12 +381,12 @@ const AH_ASL_OPERATOR       AslOperatorInfo[] =
                                 "Convert data type to integer"},
     {"ToString",                "(Source, Length, Result) => String",
                                 "Copy ASCII string from buffer"},
-    {"ToUUID",                  "(AsciiString) => Buffer",
+    {"ToUuid",                  "(AsciiString) => Buffer",
                                 "Convert Ascii string to UUID"},
-    {"UartSerialBus",           "(ConnectionSpeed, ByteLengthKeyword, StopBitsKeyword, "
+    {"UartSerialBusV2",         "(ConnectionSpeed, ByteLengthKeyword, StopBitsKeyword, "
                                 "LinesInUse, EndianKeyword, ParityKeyword, "
                                 "FlowControlKeyword, ReceiveBufferSize, TransmitBufferSize, ResourceSource, "
-                                "ResourceSourceIndex, ResourceTypeKeyword, DescriptorName, "
+                                "ResourceSourceIndex, ResourceTypeKeyword, DescriptorName, Shared, "
                                 "RawDataBuffer() {VendorData})",
                                 "UART Serial Bus Connection Resource Descriptor Macro"},
     {"Unicode",                 "(String) => Buffer",
@@ -406,18 +406,18 @@ const AH_ASL_OPERATOR       AslOperatorInfo[] =
                                 "AddressMaximum, AddressTranslation, RangeLength, ResourceSourceIndex, "
                                 "ResourceSource, DescriptorName)",
                                 "Word Bus number Resource Descriptor macro"},
-    {"WordIO",                  "(ResourceTypeKeyword, MinKeyword, MaxKeyword, DecodeKeyword, "
+    {"WordIo",                  "(ResourceTypeKeyword, MinKeyword, MaxKeyword, DecodeKeyword, "
                                 "RangeTypeKeyword, AddressGranularity, "
                                 "AddressMinimum, AddressMaximum, AddressTranslation, RangeLength, "
                                 "ResourceSourceIndex, ResourceSource, DescriptorName, TypeKeyword, "
                                 "TranslationKeyword)",
-                                "Word IO Resource Descriptor macro"},
+                                "Word I/O Resource Descriptor macro"},
     {"WordSpace",               "(ResourceType, ResourceTypeKeyword, DecodeKeyword, MinKeyword, "
                                 "MaxKeyword, TypeSpecificFlags, "
                                 "AddressGranularity, AddressMinimum, AddressMaximum, AddressTranslation, "
                                 "RangeLength, ResourceSourceIndex, ResourceSource, DescriptorName)",
                                 "Word Space Resource Descriptor macro"},
-    {"XOr",                     "(Source1, Source2, Result) => Integer",
+    {"Xor",                     "(Source1, Source2, Result) => Integer",
                                 "Integer Bitwise Xor"},
     {"Zero",                    "=> Integer",
                                 "Constant Zero object (0)"},

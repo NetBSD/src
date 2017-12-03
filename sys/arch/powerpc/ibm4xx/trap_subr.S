@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.22.6.1 2013/02/25 00:28:53 tls Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.22.6.2 2017/12/03 11:36:36 jdolecek Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -105,7 +105,7 @@
 	mfcr	%r29;			/* save CR */		\
 	mfdear	%r30;						\
 	mfesr	%r31;						\
-	stmw	%r30,(savearea+CPUSAVE_DEAR)(%r1);		\
+	stmw	%r30,(savearea+CPUSAVE_DEAR)(%r1); /* save esr/dear */ \
 	mfsrr0	%r30;						\
 	mfsrr1	%r31; /* Test whether we already had PR set */	\
 	stmw	%r30,(savearea+CPUSAVE_SRR0)(%r1); /* save srr0/srr1 */	\
@@ -172,18 +172,10 @@ _C_LABEL(name ## size) = .-_C_LABEL(name ## trap)
 	addi	%r1,%r1,USPACE-CALLFRAMELEN; /* stack is top of user struct */ \
 1:
 
-/*
- * This code gets copied to all the trap vectors
- * (except ISI/DSI, ALI, the interrupts, and possibly the debugging
- * traps when using IPKDB).
- */
 	.text
 	STANDARD_EXC_HANDLER(default)
-	ACCESS_EXC_HANDLER(ali)
-	ACCESS_EXC_HANDLER(dsi)
-	ACCESS_EXC_HANDLER(isi)
-	STANDARD_EXC_HANDLER(debug)
-	CRITICAL_EXC_HANDLER(mchk)
+	ACCESS_EXC_HANDLER(access)
+	CRITICAL_EXC_HANDLER(critical)
 
 /*
  * This one for the external interrupt handler.
@@ -199,20 +191,9 @@ _C_LABEL(extsize) = .-_C_LABEL(extint)
 /*
  * In case of DDB we want a separate trap catcher for it
  */
-	.lcomm	ddbstk,INTSTK,16	/* ddb stack */
-
 	.globl	_C_LABEL(ddblow),_C_LABEL(ddbsize)
 _C_LABEL(ddblow):
-	mtsprg1	%r1			/* save SP */
-	GET_CPUINFO(%r1)
-	stmw	%r28,CI_DDBSAVE(%r1)	/* free r28-r31 */
-	mflr	%r28			/* save LR */
-	mfcr	%r29			/* save CR */
-	mfsrr0	%r30
-	mfsrr1	%r31
-	stmw	%r30,(CI_DDBSAVE+CPUSAVE_SRR0)(%r1)	/* save srr0/srr1 */
-	lis	%r1,ddbstk+INTSTK-CALLFRAMELEN@ha	/* get new SP */
-	addi	%r1,%r1,ddbstk+INTSTK-CALLFRAMELEN@l
+	ACCESS_PROLOG(CI_DDBSAVE)
 	bla	ddbtrap
 _C_LABEL(ddbsize) = .-_C_LABEL(ddblow)
 #endif	/* DDB || KGDB */
@@ -221,21 +202,9 @@ _C_LABEL(ddbsize) = .-_C_LABEL(ddblow)
 /*
  * In case of IPKDB we want a separate trap catcher for it
  */
-
-	.lcomm	ipkdbstk,INTSTK,16	/* ipkdb stack */
-
 	.globl	_C_LABEL(ipkdblow),_C_LABEL(ipkdbsize)
 _C_LABEL(ipkdblow):
-	mtsprg1	%r1			/* save SP */
-	GET_CPUINFO(%r1)
-	stmw	%r28,CI_IPKDBSAVE(%r1)	/* free r28-r31 */
-	mflr	%r28			/* save LR */
-	mfcr	%r29			/* save CR */
-	mfsrr0	%r30
-	mfsrr1	%r31
-	stmw	%r30,(CI_IPKDBSAVE+CPUSAVE_SRR0)(%r1)	/* save srr0/srr1 */
-	lis	%r1,ipkdbstk+INTSTK-CALLFRAMELEN@ha	/* get new SP */
-	addi	%r1,%r1,ipkdbstk+INTSTK-CALLFRAMELEN@l
+	ACCESS_PROLOG(CI_IPKDBSAVE)
 	bla	ipkdbtrap
 _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 #endif	/* IPKDB */
@@ -258,7 +227,8 @@ _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 /*
  * FRAME_SETUP assumes:
  *	SPRG1		SP (r1)
- *	savearea	r28-r31,DEAR,ESR,SRR0,SRR1 (DEAR & ESR only for DSI traps)
+ *	savearea	r28-r31,DEAR,ESR,SRR0,SRR1
+ *			(DEAR & ESR only for access traps)
  *	%r28		LR
  *	%r29		CR
  *	%r1		kernel stack

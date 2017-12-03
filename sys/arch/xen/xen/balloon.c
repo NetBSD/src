@@ -1,4 +1,4 @@
-/* $NetBSD: balloon.c,v 1.16 2012/06/30 23:36:20 jym Exp $ */
+/* $NetBSD: balloon.c,v 1.16.2.1 2017/12/03 11:36:51 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -70,8 +70,12 @@
 
 #define BALLOONDEBUG 0
 
+#if defined(_KERNEL_OPT)
+#include "opt_uvm_hotplug.h"
+#endif
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: balloon.c,v 1.16 2012/06/30 23:36:20 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: balloon.c,v 1.16.2.1 2017/12/03 11:36:51 jdolecek Exp $");
 
 #include <sys/inttypes.h>
 #include <sys/device.h>
@@ -93,6 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: balloon.c,v 1.16 2012/06/30 23:36:20 jym Exp $");
 
 #include <uvm/uvm.h>
 #include <uvm/uvm.h>
+#include <uvm/uvm_physseg.h>
 #include <xen/xenpmap.h>
 
 #include "locators.h"
@@ -438,7 +443,7 @@ balloon_inflate(struct balloon_xenbus_softc *sc, size_t tpages)
 static size_t
 balloon_deflate(struct balloon_xenbus_softc *sc, size_t tpages)
 {
-	int rpages, s, ret; 
+	int rpages, s, ret;
 	paddr_t pa;
 	struct balloon_page_entry *bpg_entry;
 	xen_pfn_t *mfn_list = sc->sc_mfn_list;
@@ -454,6 +459,7 @@ balloon_deflate(struct balloon_xenbus_softc *sc, size_t tpages)
 	
 	memset(mfn_list, 0, BALLOON_DELTA * sizeof(*mfn_list));
 
+#ifndef UVM_HOTPLUG
 	/* 
 	 * If the list is empty, we are deflating balloon beyond empty. This
 	 * is currently unsupported as this would require to dynamically add
@@ -469,6 +475,7 @@ balloon_deflate(struct balloon_xenbus_softc *sc, size_t tpages)
 		    tpages, sc->balloon_num_page_entries);
 		tpages = sc->balloon_num_page_entries;
 	}
+#endif
 
 	/* reclaim pages from balloon */
 	set_xen_guest_handle(reservation.extent_start, mfn_list);
@@ -491,8 +498,31 @@ balloon_deflate(struct balloon_xenbus_softc *sc, size_t tpages)
 
 	/* plug pages back into memory through bpge entries */
 	for (rpages = 0; rpages < ret; rpages++) {
+#ifdef UVM_HOTPLUG
+		extern paddr_t pmap_pa_end;
+		if (sc->balloon_num_page_entries == 0) { /*XXX: consolidate */
+			/* "hot-plug": Stick it at the end of memory */
+			pa = pmap_pa_end;
 
-#ifdef noyet
+			/* P2M update */
+			s = splvm();
+			pmap_pa_end += PAGE_SIZE; /* XXX: TLB flush ?*/
+			xpmap_ptom_map(pa, ptoa(mfn_list[rpages]));
+			xpq_queue_machphys_update(ptoa(mfn_list[rpages]), pa);
+			splx(s);
+
+			if (uvm_physseg_plug(atop(pa), 1, NULL) == false) {
+				/* Undo P2M */
+				s = splvm();
+				xpmap_ptom_unmap(pa);
+				xpq_queue_machphys_update(ptoa(mfn_list[rpages]), 0);
+				pmap_pa_end -= PAGE_SIZE; /* XXX: TLB flush ?*/
+				splx(s);
+				break;
+			}
+			continue;
+		}
+#else
 		if (sc->balloon_num_page_entries == 0) {
 			/*
 			 * XXX This is the case where extra "hot-plug"
@@ -503,7 +533,6 @@ balloon_deflate(struct balloon_xenbus_softc *sc, size_t tpages)
 			break;
 		}
 #endif
-
 		bpg_entry = SLIST_FIRST(&balloon_sc->balloon_page_entries);
 		SLIST_REMOVE_HEAD(&balloon_sc->balloon_page_entries, entry);
 		balloon_sc->balloon_num_page_entries--;

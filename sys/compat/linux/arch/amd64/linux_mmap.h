@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_mmap.h,v 1.2 2005/12/11 12:20:14 christos Exp $ */
+/*	$NetBSD: linux_mmap.h,v 1.2.120.1 2017/12/03 11:36:53 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -34,12 +34,9 @@
 #ifndef _AMD64_LINUX_MMAP_H
 #define _AMD64_LINUX_MMAP_H
 
-#define LINUX_MAP_FIXED		0x10
-#define LINUX_MAP_ANON		0x20
+#define LINUX_MAP_FIXED		0x0010
+#define LINUX_MAP_ANON		0x0020
 #define LINUX_MAP_GROWSDOWN	0x0100
-
-
-
-
+#define LINUX_MAP_LOCKED	0x2000
 
 #endif /* !_AMD64_LINUX_MMAP_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_subr.c,v 1.36 2011/09/25 13:42:30 chs Exp $	*/
+/*	$NetBSD: smb_subr.c,v 1.36.12.1 2017/12/03 11:39:05 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_subr.c,v 1.36 2011/09/25 13:42:30 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_subr.c,v 1.36.12.1 2017/12/03 11:39:05 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,20 +114,15 @@ smb_strdup(const char *s)
 char *
 smb_strdupin(char *s, size_t maxlen)
 {
-	char *p, bt;
-	size_t len = 0;
+	char *p;
+	int error;
 
-	for (p = s; ;p++) {
-		if (copyin(p, &bt, 1))
-			return NULL;
-		len++;
-		if (maxlen && len > maxlen)
-			return NULL;
-		if (bt == 0)
-			break;
+	p = malloc(maxlen + 1, M_SMBSTR, M_WAITOK);
+	error = copyinstr(s, p, maxlen + 1, NULL);
+	if (error) {
+		free(p, M_SMBSTR);
+		return NULL;
 	}
-	p = malloc(len, M_SMBSTR, M_WAITOK);
-	copyin(s, p, len);
 	return p;
 }
 
@@ -307,11 +302,20 @@ smb_maperror(int eclass, int eno)
 }
 
 static int
-smb_copy_iconv(struct mbchain *mbp, const char *src, char *dst, size_t len)
+smb_copy_iconv(struct mbchain *mbp, const char *src, char *dst,
+    size_t *srclen, size_t *dstlen)
 {
-	size_t outlen = len;
+	int error;
+	size_t inlen = *srclen, outlen = *dstlen;
 
-	return iconv_conv((struct iconv_drv*)mbp->mb_udata, &src, &len, &dst, &outlen);
+	error = iconv_conv((struct iconv_drv*)mbp->mb_udata, &src, &inlen,
+	    &dst, &outlen);
+	if (inlen != *srclen || outlen != *dstlen) {
+		*srclen -= inlen;
+		*dstlen -= outlen;
+		return 0;
+	} else
+		return error;
 }
 
 int
@@ -370,4 +374,33 @@ dup_sockaddr(struct sockaddr *sa, int canwait)
 	if (sa2)
 		memcpy(sa2, sa, sa->sa_len);
 	return sa2;
+}
+
+int
+dup_sockaddr_copyin(struct sockaddr **ksap, struct sockaddr *usa,
+    size_t usalen)
+{
+	struct sockaddr *ksa;
+
+	/* Make sure user provided enough data for a generic sockaddr.  */
+	if (usalen < sizeof(*ksa))
+		return EINVAL;
+
+	/* Don't let the user overfeed us.  */
+	usalen = MIN(usalen, sizeof(struct sockaddr_storage));
+
+	/* Copy the buffer in from userland.  */
+	ksa = smb_memdupin(usa, usalen);
+	if (ksa == NULL)
+		return ENOMEM;
+
+	/* Make sure the user's idea of sa_len is reasonable.  */
+	if (ksa->sa_len > usalen) {
+		smb_memfree(ksa);
+		return EINVAL;
+	}
+
+	/* Success!  */
+	*ksap = ksa;
+	return 0;
 }

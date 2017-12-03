@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_clnode.c,v 1.1.1.1.10.2 2014/08/20 00:04:26 tls Exp $	*/
+/*	$NetBSD: nfs_clnode.c,v 1.1.1.1.10.3 2017/12/03 11:38:42 jdolecek Exp $	*/
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,10 +34,8 @@
  */
 
 #include <sys/cdefs.h>
-/* __FBSDID("FreeBSD: head/sys/fs/nfsclient/nfs_clnode.c 248084 2013-03-09 02:32:23Z attilio "); */
-__RCSID("$NetBSD: nfs_clnode.c,v 1.1.1.1.10.2 2014/08/20 00:04:26 tls Exp $");
-
-#include "opt_kdtrace.h"
+/* __FBSDID("FreeBSD: head/sys/fs/nfsclient/nfs_clnode.c 302210 2016-06-26 14:18:28Z kib "); */
+__RCSID("$NetBSD: nfs_clnode.c,v 1.1.1.1.10.3 2017/12/03 11:38:42 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,13 +52,13 @@ __RCSID("$NetBSD: nfs_clnode.c,v 1.1.1.1.10.2 2014/08/20 00:04:26 tls Exp $");
 
 #include <vm/uma.h>
 
-#include <fs/nfs/nfsport.h>
-#include <fs/nfsclient/nfsnode.h>
-#include <fs/nfsclient/nfsmount.h>
-#include <fs/nfsclient/nfs.h>
-#include <fs/nfsclient/nfs_kdtrace.h>
+#include <fs/nfs/common/nfsport.h>
+#include <fs/nfs/client/nfsnode.h>
+#include <fs/nfs/client/nfsmount.h>
+#include <fs/nfs/client/nfs.h>
+#include <fs/nfs/client/nfs_kdtrace.h>
 
-#include <nfs/nfs_lock.h>
+#include <fs/nfs/common/nfs_lock.h>
 
 extern struct vop_vector newnfs_vnodeops;
 extern struct buf_ops buf_ops_newnfs;
@@ -68,7 +66,9 @@ MALLOC_DECLARE(M_NEWNFSREQ);
 
 uma_zone_t newnfsnode_zone;
 
-static void	nfs_freesillyrename(void *arg, __unused int pending);
+const char nfs_vnode_tag[] = "nfs";
+
+static void	nfs_freesillyrename(void *arg);
 
 void
 ncl_nhinit(void)
@@ -126,7 +126,7 @@ ncl_nget(struct mount *mntp, u_int8_t *fhp, int fhsize, struct nfsnode **npp,
 	}
 	np = uma_zalloc(newnfsnode_zone, M_WAITOK | M_ZERO);
 
-	error = getnewvnode("newnfs", mntp, &newnfs_vnodeops, &nvp);
+	error = getnewvnode(nfs_vnode_tag, mntp, &newnfs_vnodeops, &nvp);
 	if (error) {
 		uma_zfree(newnfsnode_zone, np);
 		return (error);
@@ -191,7 +191,7 @@ ncl_nget(struct mount *mntp, u_int8_t *fhp, int fhsize, struct nfsnode **npp,
  * deadlock because of a LOR when vrele() locks the directory vnode.
  */
 static void
-nfs_freesillyrename(void *arg, __unused int pending)
+nfs_freesillyrename(void *arg)
 {
 	struct sillyrename *sp;
 
@@ -200,15 +200,39 @@ nfs_freesillyrename(void *arg, __unused int pending)
 	free(sp, M_NEWNFSREQ);
 }
 
-int
-ncl_inactive(struct vop_inactive_args *ap)
+static void
+ncl_releasesillyrename(struct vnode *vp, struct thread *td)
 {
 	struct nfsnode *np;
 	struct sillyrename *sp;
-	struct vnode *vp = ap->a_vp;
-	boolean_t retv;
 
+	ASSERT_VOP_ELOCKED(vp, "releasesillyrename");
 	np = VTONFS(vp);
+	mtx_assert(&np->n_mtx, MA_OWNED);
+	if (vp->v_type != VDIR) {
+		sp = np->n_sillyrename;
+		np->n_sillyrename = NULL;
+	} else
+		sp = NULL;
+	if (sp != NULL) {
+		mtx_unlock(&np->n_mtx);
+		(void) ncl_vinvalbuf(vp, 0, td, 1);
+		/*
+		 * Remove the silly file that was rename'd earlier
+		 */
+		ncl_removeit(sp, vp);
+		crfree(sp->s_cred);
+		sysmon_task_queue_sched(0, nfs_freesillyrename, sp);
+		mtx_lock(&np->n_mtx);
+	}
+}
+
+int
+ncl_inactive(struct vop_inactive_args *ap)
+{
+	struct vnode *vp = ap->a_vp;
+	struct nfsnode *np;
+	boolean_t retv;
 
 	if (NFS_ISV4(vp) && vp->v_type == VREG) {
 		/*
@@ -230,24 +254,15 @@ ncl_inactive(struct vop_inactive_args *ap)
 		}
 	}
 
+	np = VTONFS(vp);
 	mtx_lock(&np->n_mtx);
-	if (vp->v_type != VDIR) {
-		sp = np->n_sillyrename;
-		np->n_sillyrename = NULL;
-	} else
-		sp = NULL;
-	if (sp) {
-		mtx_unlock(&np->n_mtx);
-		(void) ncl_vinvalbuf(vp, 0, ap->a_td, 1);
-		/*
-		 * Remove the silly file that was rename'd earlier
-		 */
-		ncl_removeit(sp, vp);
-		crfree(sp->s_cred);
-		TASK_INIT(&sp->s_task, 0, nfs_freesillyrename, sp);
-		taskqueue_enqueue(taskqueue_thread, &sp->s_task);
-		mtx_lock(&np->n_mtx);
-	}
+	ncl_releasesillyrename(vp, ap->a_td);
+
+	/*
+	 * NMODIFIED means that there might be dirty/stale buffers
+	 * associated with the NFS vnode.  None of the other flags are
+	 * meaningful after the vnode is unused.
+	 */
 	np->n_flag &= NMODIFIED;
 	mtx_unlock(&np->n_mtx);
 	return (0);
@@ -269,6 +284,10 @@ ncl_reclaim(struct vop_reclaim_args *ap)
 	 */
 	if (nfs_reclaim_p != NULL)
 		nfs_reclaim_p(ap);
+
+	mtx_lock(&np->n_mtx);
+	ncl_releasesillyrename(vp, ap->a_td);
+	mtx_unlock(&np->n_mtx);
 
 	/*
 	 * Destroy the vm object and flush associated pages.
@@ -334,4 +353,3 @@ ncl_invalcaches(struct vnode *vp)
 	KDTRACE_NFS_ATTRCACHE_FLUSH_DONE(vp);
 	mtx_unlock(&np->n_mtx);
 }
-

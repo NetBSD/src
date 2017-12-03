@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.h,v 1.19 2011/04/30 01:44:36 mrg Exp $	*/
+/*	$NetBSD: rf_driver.h,v 1.19.14.1 2017/12/03 11:37:31 jdolecek Exp $	*/
 /*
  * rf_driver.h
  */
@@ -42,7 +42,7 @@
 #endif
 
 extern rf_declare_mutex2(rf_printf_mutex);
-int rf_BootRaidframe(void);
+int rf_BootRaidframe(bool);
 int rf_UnbootRaidframe(void);
 int rf_Shutdown(RF_Raid_t *);
 int rf_Configure(RF_Raid_t *, RF_Config_t *, RF_AutoConfig_t *);

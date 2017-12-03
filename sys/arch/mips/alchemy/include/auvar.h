@@ -1,4 +1,4 @@
-/* $NetBSD: auvar.h,v 1.11 2011/07/10 23:13:23 matt Exp $ */
+/* $NetBSD: auvar.h,v 1.11.12.1 2017/12/03 11:36:26 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -68,6 +68,8 @@
 
 #ifndef _MIPS_ALCHEMY_AUVAR_H_
 #define	_MIPS_ALCHEMY_AUVAR_H_
+
+#include <mips/cpuregs.h>
 
 #include "opt_alchemy.h"
 

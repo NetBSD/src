@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_io.c,v 1.7 2012/02/01 22:34:43 matt Exp $	*/
+/*	$NetBSD: sdmmc_io.c,v 1.7.6.1 2017/12/03 11:37:32 jdolecek Exp $	*/
 /*	$OpenBSD: sdmmc_io.c,v 1.10 2007/09/17 01:33:33 krw Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Routines for SD I/O cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_io.c,v 1.7 2012/02/01 22:34:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_io.c,v 1.7.6.1 2017/12/03 11:37:32 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -122,9 +122,6 @@ sdmmc_io_enable(struct sdmmc_softc *sc)
 		goto out;
 	}
 
-	/* Reset I/O functions (again). */
-	sdmmc_io_reset(sc);
-
 	/* Send the new OCR value until all cards are ready. */
 	error = sdmmc_io_send_op_cond(sc, host_ocr, NULL);
 	if (error) {
@@ -203,6 +200,11 @@ sdmmc_io_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 			sdmmc_io_write_1(sf, SD_IO_CCCR_BUS_WIDTH,
 			    CCCR_BUS_WIDTH_4);
 			sf->width = 4;
+			error = sdmmc_chip_bus_width(sc->sc_sct, sc->sc_sch,
+			    sf->width);
+			if (error)
+				aprint_error_dev(sc->sc_dev,
+				    "can't change bus width\n");
 		}
 
 		error = sdmmc_read_cis(sf, &sf->cis);
@@ -231,7 +233,8 @@ sdmmc_io_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 		if (sc->sc_busclk > sf->csd.tran_speed)
 			sc->sc_busclk = sf->csd.tran_speed;
 		error =
-		    sdmmc_chip_bus_clock(sc->sc_sct, sc->sc_sch, sc->sc_busclk);
+		    sdmmc_chip_bus_clock(sc->sc_sct, sc->sc_sch, sc->sc_busclk,
+			false);
 		if (error)
 			aprint_error_dev(sc->sc_dev,
 			    "can't change bus clock\n");
@@ -534,12 +537,10 @@ sdmmc_io_xchg(struct sdmmc_softc *sc, struct sdmmc_function *sf,
 static void
 sdmmc_io_reset(struct sdmmc_softc *sc)
 {
+	u_char data = CCCR_CTL_RES;
 
-	/* Don't lock */
-#if 0 /* XXX command fails */
-	(void)sdmmc_io_write(sc, NULL, SD_IO_REG_CCCR_CTL, CCCR_CTL_RES);
-	sdmmc_delay(100000);
-#endif
+	if (sdmmc_io_rw_direct(sc, NULL, SD_IO_CCCR_CTL, &data, SD_ARG_CMD52_WRITE) == 0)
+		sdmmc_delay(100000);
 }
 
 /*
@@ -565,7 +566,7 @@ sdmmc_io_send_op_cond(struct sdmmc_softc *sc, u_int32_t ocr, u_int32_t *ocrp)
 		memset(&cmd, 0, sizeof cmd);
 		cmd.c_opcode = SD_IO_SEND_OP_COND;
 		cmd.c_arg = ocr;
-		cmd.c_flags = SCF_CMD_BCR | SCF_RSP_R4;
+		cmd.c_flags = SCF_CMD_BCR | SCF_RSP_R4 | SCF_TOUT_OK;
 
 		error = sdmmc_mmc_command(sc, &cmd);
 		if (error)
@@ -596,9 +597,11 @@ sdmmc_intr_enable(struct sdmmc_function *sf)
 	uint8_t reg;
 
 	SDMMC_LOCK(sc);
+	mutex_enter(&sc->sc_intr_task_mtx);
 	reg = sdmmc_io_read_1(sf0, SD_IO_CCCR_FN_INTEN);
 	reg |= 1 << sf->number;
 	sdmmc_io_write_1(sf0, SD_IO_CCCR_FN_INTEN, reg);
+	mutex_exit(&sc->sc_intr_task_mtx);
 	SDMMC_UNLOCK(sc);
 }
 
@@ -610,9 +613,11 @@ sdmmc_intr_disable(struct sdmmc_function *sf)
 	uint8_t reg;
 
 	SDMMC_LOCK(sc);
+	mutex_enter(&sc->sc_intr_task_mtx);
 	reg = sdmmc_io_read_1(sf0, SD_IO_CCCR_FN_INTEN);
 	reg &= ~(1 << sf->number);
 	sdmmc_io_write_1(sf0, SD_IO_CCCR_FN_INTEN, reg);
+	mutex_exit(&sc->sc_intr_task_mtx);
 	SDMMC_UNLOCK(sc);
 }
 
@@ -627,7 +632,6 @@ sdmmc_intr_establish(device_t dev, int (*fun)(void *), void *arg,
 {
 	struct sdmmc_softc *sc = device_private(dev);
 	struct sdmmc_intr_handler *ih;
-	int s;
 
 	if (sc->sc_sct->card_enable_intr == NULL)
 		return NULL;
@@ -647,13 +651,13 @@ sdmmc_intr_establish(device_t dev, int (*fun)(void *), void *arg,
 	ih->ih_fun = fun;
 	ih->ih_arg = arg;
 
-	s = splhigh();
+	mutex_enter(&sc->sc_mtx);
 	if (TAILQ_EMPTY(&sc->sc_intrq)) {
 		sdmmc_intr_enable(sc->sc_fn0);
 		sdmmc_chip_card_enable_intr(sc->sc_sct, sc->sc_sch, 1);
 	}
 	TAILQ_INSERT_TAIL(&sc->sc_intrq, ih, entry);
-	splx(s);
+	mutex_exit(&sc->sc_mtx);
 
 	return ih;
 }
@@ -666,18 +670,17 @@ sdmmc_intr_disestablish(void *cookie)
 {
 	struct sdmmc_intr_handler *ih = cookie;
 	struct sdmmc_softc *sc = ih->ih_softc;
-	int s;
 
 	if (sc->sc_sct->card_enable_intr == NULL)
 		return;
 
-	s = splhigh();
+	mutex_enter(&sc->sc_mtx);
 	TAILQ_REMOVE(&sc->sc_intrq, ih, entry);
 	if (TAILQ_EMPTY(&sc->sc_intrq)) {
 		sdmmc_chip_card_enable_intr(sc->sc_sct, sc->sc_sch, 0);
 		sdmmc_intr_disable(sc->sc_fn0);
 	}
-	splx(s);
+	mutex_exit(&sc->sc_mtx);
 
 	free(ih->ih_name, M_DEVBUF);
 	free(ih, M_DEVBUF);
@@ -693,12 +696,13 @@ sdmmc_card_intr(device_t dev)
 {
 	struct sdmmc_softc *sc = device_private(dev);
 
-	if (sc->sc_sct->card_enable_intr) {
-		mutex_enter(&sc->sc_intr_task_mtx);
-		if (!sdmmc_task_pending(&sc->sc_intr_task))
-			sdmmc_add_task(sc, &sc->sc_intr_task);
-		mutex_exit(&sc->sc_intr_task_mtx);
-	}
+	if (sc->sc_sct->card_enable_intr == NULL)
+		return;
+
+	mutex_enter(&sc->sc_intr_task_mtx);
+	if (!sdmmc_task_pending(&sc->sc_intr_task))
+		sdmmc_add_task(sc, &sc->sc_intr_task);
+	mutex_exit(&sc->sc_intr_task_mtx);
 }
 
 void
@@ -706,15 +710,13 @@ sdmmc_intr_task(void *arg)
 {
 	struct sdmmc_softc *sc = (struct sdmmc_softc *)arg;
 	struct sdmmc_intr_handler *ih;
-	int s;
 
-	s = splsdmmc();
+	mutex_enter(&sc->sc_mtx);
 	TAILQ_FOREACH(ih, &sc->sc_intrq, entry) {
-		splx(s);
 		/* XXX examine return value and do evcount stuff*/
 		(void)(*ih->ih_fun)(ih->ih_arg);
-		s = splsdmmc();
 	}
+	mutex_exit(&sc->sc_mtx);
+
 	sdmmc_chip_card_intr_ack(sc->sc_sct, sc->sc_sch);
-	splx(s);
 }

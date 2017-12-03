@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile.cats.inc,v 1.25.12.1 2014/08/20 00:02:50 tls Exp $
+#	$NetBSD: Makefile.cats.inc,v 1.25.12.2 2017/12/03 11:35:59 jdolecek Exp $
 
 MACHINE_ARCH?=	arm
 CPPFLAGS+=	-D${MACHINE}
 
 .if defined(ABLEELF) && (${ABLEELF} == "1")
 # use a standard ELF format, adjusted to align areas
-LINKFLAGS=	-T ${THISARM}/conf/ldscript.elf
+KERNLDSCRIPT=	${THISARM}/conf/ldscript.elf
 
 .else
 # Need to convert the kernel from ELF to a.out so that the firmware
@@ -13,15 +13,23 @@ LINKFLAGS=	-T ${THISARM}/conf/ldscript.elf
 
 CFLAGS+=	-fno-unwind-tables
 
-LINKFLAGS=	-T ldscript
+LOADADDRESS=	0xF0000020
 
-SYSTEM_LD_HEAD_EXTRA+=; \
+KERNLDSCRIPT=	ldscript
+EXTRA_CLEAN+=	${KERNLDSCRIPT}
+
+${KERNLDSCRIPT}: \
+    ${ARM}/conf/kern.ldscript.head \
+    ${ARM}/conf/kern.ldscript.tail \
+    $S/conf/mkldscript.sh \
+    ${SYSTEM_OBJ}
 	( cat ${ARM}/conf/kern.ldscript.head ; \
 	  OBJDUMP=${OBJDUMP} ${HOST_SH} $S/conf/mkldscript.sh \
 		${SYSTEM_OBJ} ; \
-	  cat ${ARM}/conf/kern.ldscript.tail ) > ldscript
+	  cat ${ARM}/conf/kern.ldscript.tail ) > $@
 
 SYSTEM_LD_TAIL_EXTRA+=; \
 	echo "${OBJCOPY} ${OBJCOPY_ELF2AOUT_FLAGS} $@ $@.aout"; \
 	${OBJCOPY} ${OBJCOPY_ELF2AOUT_FLAGS} $@ $@.aout
 .endif
+

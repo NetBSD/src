@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.6 2011/01/02 18:07:02 skrll Exp $	*/
+/*	$NetBSD: signal.h,v 1.6.18.1 2017/12/03 11:36:16 jdolecek Exp $	*/
 
 /*	$OpenBSD: signal.h,v 1.1 1998/06/23 19:45:27 mickey Exp $	*/
 
@@ -33,6 +33,7 @@
  */
 
 #include <sys/featuretest.h>
+#include <sys/sigtypes.h>
 
 typedef int sig_atomic_t;
 

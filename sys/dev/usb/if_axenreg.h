@@ -1,10 +1,12 @@
-/*	$NetBSD: if_axenreg.h,v 1.1.10.2 2014/08/20 00:03:51 tls Exp $	*/
+/*	$NetBSD: if_axenreg.h,v 1.1.10.3 2017/12/03 11:37:33 jdolecek Exp $	*/
 /*	$OpenBSD: if_axenreg.h,v 1.1 2013/10/07 05:37:41 yuo Exp $	*/
 
 /*
  * Copyright (c) 2013 Yojiro UO <yuo@openbsd.org>. All right reserved.
  *
  */
+
+#include <sys/rndsource.h>
 
 /*
  * Definitions for the ASIX Electronics AX88179 to ethernet controller.
@@ -22,7 +24,7 @@
 
 
 /* recieve header */
-/* 
+/*
  *                     +-multicast/broadcast
  *                     |    +-rx_ok
  *                     |    |     ++-----L3_type (1:ipv4, 0/2:ipv6)
@@ -84,7 +86,7 @@
 #define AXEN_CMD_CMD(x)	 ((x) & 0x00FF)
 
 /* ---MAC--- */
-/*   1byte cmd   */ 
+/*   1byte cmd   */
 #define AXEN_CMD_MAC_READ			0x1001
 #define AXEN_CMD_MAC_WRITE			0x1101
 
@@ -141,7 +143,7 @@
 #define   AXEN_PAUSE_LOW_WATERMARK		0x55
 
 
-/*   2byte cmd   */ 
+/*   2byte cmd   */
 #define AXEN_CMD_MAC_READ2			0x2001
 #define AXEN_CMD_MAC_WRITE2			0x2101
 
@@ -149,7 +151,7 @@
 #define     AXEN_RXCTL_STOP			  0x0000
 #define     AXEN_RXCTL_PROMISC			  0x0001
 #define     AXEN_RXCTL_ACPT_ALL_MCAST		  0x0002
-#define     AXEN_RXCTL_HA8B			  0x0004		 
+#define     AXEN_RXCTL_HA8B			  0x0004
 #define     AXEN_RXCTL_AUTOB			  0x0008
 #define     AXEN_RXCTL_ACPT_BCAST		  0x0010
 #define     AXEN_RXCTL_ACPT_PHY_MCAST		  0x0020
@@ -176,21 +178,21 @@
 #define AXEN_CMD_EEPROM_READ			0x2004
 #define	    AXEN_EEPROM_STAT			  0x43
 
-/*   5byte cmd   */ 
+/*   5byte cmd   */
 #define AXEN_CMD_MAC_SET_RXSR			0x5101
 #define   AXEN_RX_BULKIN_QCTRL			  0x2e
 
-/*   6byte cmd   */ 
+/*   6byte cmd   */
 #define AXEN_CMD_MAC_READ_ETHER			0x6001
 #define   AXEN_CMD_MAC_NODE_ID			  0x10
 
-/*   8byte cmd   */ 
+/*   8byte cmd   */
 #define AXEN_CMD_MAC_READ_FILTER		0x8001
 #define AXEN_CMD_MAC_WRITE_FILTER		0x8101
 #define   AXEN_FILTER_MULTI		 	  0x16
 
 /* ---PHY--- */
-/*   2byte cmd   */ 
+/*   2byte cmd   */
 #define AXEN_CMD_MII_READ_REG			0x2002
 #define AXEN_CMD_MII_WRITE_REG			0x2102
 
@@ -268,8 +270,8 @@ struct axen_softc {
 	struct ethercom		axen_ec;
 	struct mii_data		axen_mii;
 	krndsource_t		rnd_source;
-	usbd_device_handle	axen_udev;
-	usbd_interface_handle	axen_iface;
+	struct usbd_device *	axen_udev;
+	struct usbd_interface *	axen_iface;
 
 	uint16_t		axen_vendor;
 	uint16_t		axen_product;

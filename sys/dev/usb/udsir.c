@@ -1,4 +1,4 @@
-/*	$NetBSD: udsir.c,v 1.1.2.2 2013/06/23 06:20:22 tls Exp $	*/
+/*	$NetBSD: udsir.c,v 1.1.2.3 2017/12/03 11:37:34 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,14 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udsir.c,v 1.1.2.2 2013/06/23 06:20:22 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udsir.c,v 1.1.2.3 2017/12/03 11:37:34 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/errno.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/poll.h>
@@ -67,8 +67,8 @@ int	udsirdebug = 0;
 
 struct udsir_softc {
 	device_t		sc_dev;
-	usbd_device_handle	sc_udev;
-	usbd_interface_handle	sc_iface;
+	struct usbd_device	*sc_udev;
+	struct usbd_interface	*sc_iface;
 
 	uint8_t			*sc_ur_buf; /* Unencapsulated frame */
 	u_int			sc_ur_framelen;
@@ -77,8 +77,8 @@ struct udsir_softc {
 	int			sc_rd_maxpsz;
 	size_t			sc_rd_index;
 	int			sc_rd_addr;
-	usbd_pipe_handle	sc_rd_pipe;
-	usbd_xfer_handle	sc_rd_xfer;
+	struct usbd_pipe	*sc_rd_pipe;
+	struct usbd_xfer	*sc_rd_xfer;
 	u_int			sc_rd_count;
 	int			sc_rd_readinprogress;
 	int			sc_rd_expectdataticks;
@@ -91,8 +91,8 @@ struct udsir_softc {
 	int			sc_wr_maxpsz;
 	int			sc_wr_addr;
 	int			sc_wr_stalewrite;
-	usbd_xfer_handle	sc_wr_xfer;
-	usbd_pipe_handle	sc_wr_pipe;
+	struct usbd_xfer	*sc_wr_xfer;
+	struct usbd_pipe	*sc_wr_pipe;
 	struct selinfo		sc_wr_sel;
 
 	enum {
@@ -143,7 +143,7 @@ static void udsir_dumpdata(uint8_t const *, size_t, char const *);
 #endif
 static int deframe_rd_ur(struct udsir_softc *);
 static void udsir_periodic(struct udsir_softc *);
-static void udsir_rd_cb(usbd_xfer_handle, usbd_private_handle, usbd_status);
+static void udsir_rd_cb(struct usbd_xfer *, void *, usbd_status);
 static usbd_status udsir_start_read(struct udsir_softc *);
 
 CFATTACH_DECL2_NEW(udsir, sizeof(struct udsir_softc),
@@ -158,12 +158,12 @@ static struct irframe_methods const udsir_methods = {
 static int
 udsir_match(device_t parent, cfdata_t match, void *aux)
 {
-	struct usbif_attach_arg *uaa = aux;
+	struct usbif_attach_arg *uiaa = aux;
 
 	DPRINTFN(50, ("udsir_match\n"));
 
-	if (uaa->vendor == USB_VENDOR_KINGSUN &&
-	    uaa->product == USB_PRODUCT_KINGSUN_IRDA)
+	if (uiaa->uiaa_vendor == USB_VENDOR_KINGSUN &&
+	    uiaa->uiaa_product == USB_PRODUCT_KINGSUN_IRDA)
 		return UMATCH_VENDOR_PRODUCT;
 
 	return UMATCH_NONE;
@@ -173,9 +173,9 @@ static void
 udsir_attach(device_t parent, device_t self, void *aux)
 {
 	struct udsir_softc *sc = device_private(self);
-	struct usbif_attach_arg *uaa = aux;
-	usbd_device_handle dev = uaa->device;
-	usbd_interface_handle iface = uaa->iface;
+	struct usbif_attach_arg *uiaa = aux;
+	struct usbd_device *dev = uiaa->uiaa_device;
+	struct usbd_interface *iface = uiaa->uiaa_iface;
 	char *devinfop;
 	usb_endpoint_descriptor_t *ed;
 	uint8_t epcount;
@@ -224,8 +224,7 @@ udsir_attach(device_t parent, device_t self, void *aux)
 
 	DPRINTFN(10, ("udsir_attach: %p\n", sc->sc_udev));
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-			   sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
 
 	ia.ia_type = IR_TYPE_IRFRAME;
 	ia.ia_methods = &udsir_methods;
@@ -257,11 +256,26 @@ udsir_detach(device_t self, int flags)
 	/* Abort all pipes.  Causes processes waiting for transfer to wake. */
 	if (sc->sc_rd_pipe != NULL) {
 		usbd_abort_pipe(sc->sc_rd_pipe);
+	}
+	if (sc->sc_wr_pipe != NULL) {
+		usbd_abort_pipe(sc->sc_wr_pipe);
+	}
+	if (sc->sc_rd_xfer != NULL) {
+		usbd_destroy_xfer(sc->sc_rd_xfer);
+		sc->sc_rd_xfer = NULL;
+		sc->sc_rd_buf = NULL;
+	}
+	if (sc->sc_wr_xfer != NULL) {
+		usbd_destroy_xfer(sc->sc_wr_xfer);
+		sc->sc_wr_xfer = NULL;
+		sc->sc_wr_buf = NULL;
+	}
+	/* Close pipes. */
+	if (sc->sc_rd_pipe != NULL) {
 		usbd_close_pipe(sc->sc_rd_pipe);
 		sc->sc_rd_pipe = NULL;
 	}
 	if (sc->sc_wr_pipe != NULL) {
-		usbd_abort_pipe(sc->sc_wr_pipe);
 		usbd_close_pipe(sc->sc_wr_pipe);
 		sc->sc_wr_pipe = NULL;
 	}
@@ -329,32 +343,20 @@ udsir_open(void *h, int flag, int mode, struct lwp *l)
 		error = EIO;
 		goto bad2;
 	}
-	sc->sc_rd_xfer = usbd_alloc_xfer(sc->sc_udev);
-	if (sc->sc_rd_xfer == NULL) {
-		error = ENOMEM;
-		goto bad3;
-	}
-	sc->sc_wr_xfer = usbd_alloc_xfer(sc->sc_udev);
-	if (sc->sc_wr_xfer == NULL) {
-		error = ENOMEM;
-		goto bad4;
-	}
-	sc->sc_rd_buf = usbd_alloc_buffer(sc->sc_rd_xfer, sc->sc_rd_maxpsz);
-	if (sc->sc_rd_buf == NULL) {
-		error = ENOMEM;
-		goto bad5;
-	}
-	sc->sc_wr_buf = usbd_alloc_buffer(sc->sc_wr_xfer, IRDA_MAX_FRAME_SIZE);
-	if (sc->sc_wr_buf == NULL) {
-		error = ENOMEM;
-		goto bad5;
-	}
-	sc->sc_ur_buf = malloc(IRDA_MAX_FRAME_SIZE, M_USBDEV, M_NOWAIT);
-	if (sc->sc_ur_buf == NULL) {
-		error = ENOMEM;
-		goto bad5;
-	}
+	error = usbd_create_xfer(sc->sc_rd_pipe, sc->sc_rd_maxpsz,
+	    USBD_SHORT_XFER_OK, 0, &sc->sc_rd_xfer);
+	if (error)
+		 goto bad3;
 
+	error = usbd_create_xfer(sc->sc_wr_pipe, IRDA_MAX_FRAME_SIZE,
+	    USBD_FORCE_SHORT_XFER, 0, &sc->sc_wr_xfer);
+	if (error)
+		goto bad4;
+
+	sc->sc_rd_buf = usbd_get_buffer(sc->sc_rd_xfer);
+	sc->sc_wr_buf = usbd_get_buffer(sc->sc_wr_xfer);
+
+	sc->sc_ur_buf = kmem_alloc(IRDA_MAX_FRAME_SIZE, KM_SLEEP);
 	sc->sc_rd_index = sc->sc_rd_count = 0;
 	sc->sc_closing = 0;
 	sc->sc_rd_readinprogress = 0;
@@ -382,10 +384,10 @@ udsir_open(void *h, int flag, int mode, struct lwp *l)
 	return 0;
 
  bad5:
-	usbd_free_xfer(sc->sc_wr_xfer);
+	usbd_destroy_xfer(sc->sc_wr_xfer);
 	sc->sc_wr_xfer = NULL;
  bad4:
-	usbd_free_xfer(sc->sc_rd_xfer);
+	usbd_destroy_xfer(sc->sc_rd_xfer);
 	sc->sc_rd_xfer = NULL;
  bad3:
 	usbd_close_pipe(sc->sc_wr_pipe);
@@ -417,26 +419,30 @@ udsir_close(void *h, int flag, int mode, struct lwp *l)
 
 	if (sc->sc_rd_pipe != NULL) {
 		usbd_abort_pipe(sc->sc_rd_pipe);
-		usbd_close_pipe(sc->sc_rd_pipe);
-		sc->sc_rd_pipe = NULL;
 	}
 	if (sc->sc_wr_pipe != NULL) {
 		usbd_abort_pipe(sc->sc_wr_pipe);
-		usbd_close_pipe(sc->sc_wr_pipe);
-		sc->sc_wr_pipe = NULL;
 	}
 	if (sc->sc_rd_xfer != NULL) {
-		usbd_free_xfer(sc->sc_rd_xfer);
+		usbd_destroy_xfer(sc->sc_rd_xfer);
 		sc->sc_rd_xfer = NULL;
 		sc->sc_rd_buf = NULL;
 	}
 	if (sc->sc_wr_xfer != NULL) {
-		usbd_free_xfer(sc->sc_wr_xfer);
+		usbd_destroy_xfer(sc->sc_wr_xfer);
 		sc->sc_wr_xfer = NULL;
 		sc->sc_wr_buf = NULL;
 	}
+	if (sc->sc_rd_pipe != NULL) {
+		usbd_close_pipe(sc->sc_rd_pipe);
+		sc->sc_rd_pipe = NULL;
+	}
+	if (sc->sc_wr_pipe != NULL) {
+		usbd_close_pipe(sc->sc_wr_pipe);
+		sc->sc_wr_pipe = NULL;
+	}
 	if (sc->sc_ur_buf != NULL) {
-		free(sc->sc_ur_buf, M_USBDEV);
+		kmem_free(sc->sc_ur_buf, IRDA_MAX_FRAME_SIZE);
 		sc->sc_ur_buf = NULL;
 	}
 
@@ -604,8 +610,8 @@ udsir_write(void *h, struct uio *uio, int flag)
 #endif
 
 		err = usbd_intr_transfer(sc->sc_wr_xfer, sc->sc_wr_pipe,
-				USBD_FORCE_SHORT_XFER | USBD_NO_COPY,
-				UDSIR_WR_TIMEOUT, wrbuf, &btlen, "udsiwr");
+		     USBD_FORCE_SHORT_XFER, UDSIR_WR_TIMEOUT,
+		     wrbuf, &btlen);
 		DPRINTFN(2, ("%s: err=%d\n", __func__, err));
 		if (err != USBD_NORMAL_COMPLETION) {
 			if (err == USBD_INTERRUPTED)
@@ -656,10 +662,19 @@ udsir_poll(void *h, int events, struct lwp *l)
 	return revents;
 }
 
-static const struct filterops udsirread_filtops =
-	{ 1, NULL, filt_udsirrdetach, filt_udsirread };
-static const struct filterops udsirwrite_filtops =
-	{ 1, NULL, filt_udsirwdetach, filt_udsirwrite };
+static const struct filterops udsirread_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_udsirrdetach,
+	.f_event = filt_udsirread,
+};
+
+static const struct filterops udsirwrite_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_udsirwdetach,
+	.f_event = filt_udsirwrite,
+};
 
 static int
 udsir_kqfilter(void *h, struct knote *kn)
@@ -936,7 +951,7 @@ udsir_periodic(struct udsir_softc *sc)
 }
 
 static void
-udsir_rd_cb(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+udsir_rd_cb(struct usbd_xfer *xfer, void * priv, usbd_status status)
 {
 	struct udsir_softc *sc = priv;
 	uint32_t size;
@@ -1044,9 +1059,8 @@ udsir_start_read(struct udsir_softc *sc)
 		usbd_clear_endpoint_stall(sc->sc_rd_pipe);
 	}
 
-	usbd_setup_xfer(sc->sc_rd_xfer, sc->sc_rd_pipe, sc, sc->sc_rd_buf,
-	    sc->sc_rd_maxpsz, USBD_SHORT_XFER_OK | USBD_NO_COPY,
-	    USBD_NO_TIMEOUT, udsir_rd_cb);
+	usbd_setup_xfer(sc->sc_rd_xfer, sc, sc->sc_rd_buf, sc->sc_rd_maxpsz,
+	    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, udsir_rd_cb);
 	err = usbd_transfer(sc->sc_rd_xfer);
 	if (err != USBD_IN_PROGRESS) {
 		DPRINTFN(0, ("%s: err=%d\n", __func__, (int)err));

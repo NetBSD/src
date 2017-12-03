@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_distopenpic.c,v 1.9 2012/02/01 09:54:03 matt Exp $ */
+/*	$NetBSD: pic_distopenpic.c,v 1.9.6.1 2017/12/03 11:36:37 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2008 Tim Rightnour
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_distopenpic.c,v 1.9 2012/02/01 09:54:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_distopenpic.c,v 1.9.6.1 2017/12/03 11:36:37 jdolecek Exp $");
 
 #include "opt_openpic.h"
 #include "opt_interrupt.h"
@@ -65,7 +65,6 @@ setup_distributed_openpic(void *addr, int nrofisus, void **isu, int *maps)
 
 	openpic_base = (void *)addr;
 	opicops = kmem_alloc(sizeof(*opicops), KM_SLEEP);
-	KASSERT(opicops != NULL);
 	pic = &opicops->pic;
 
 	x = openpic_read(OPENPIC_FEATURE);
@@ -75,10 +74,8 @@ setup_distributed_openpic(void *addr, int nrofisus, void **isu, int *maps)
 	opicops->nrofisus = nrofisus;
 	opicops->isu = kmem_alloc(sizeof(volatile u_char *) * nrofisus,
 	    KM_SLEEP);
-	KASSERT(opicops->isu != NULL);
 	opicops->irq_per = kmem_alloc(sizeof(uint8_t) * nrofisus, KM_SLEEP);
-	KASSERT(opicops->irq_per != NULL);
-	
+
 	for (irq=0, i=0; i < nrofisus ; i++) {
 		opicops->isu[i] = (void *)isu[i];
 		opicops->irq_per[i] = maps[i]/0x20;

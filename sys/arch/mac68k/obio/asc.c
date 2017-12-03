@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.53.40.2 2014/08/20 00:03:11 tls Exp $	*/
+/*	$NetBSD: asc.c,v 1.53.40.3 2017/12/03 11:36:24 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.53.40.2 2014/08/20 00:03:11 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.53.40.3 2017/12/03 11:36:24 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -135,6 +135,8 @@ const struct cdevsw asc_cdevsw = {
 	.d_flag = 0
 };
 
+static const uint8_t easc_version_tab[] = { 0xb0 };
+
 static int
 ascmatch(device_t parent, cfdata_t cf, void *aux)
 {
@@ -142,6 +144,7 @@ ascmatch(device_t parent, cfdata_t cf, void *aux)
 	bus_addr_t addr;
 	bus_space_handle_t bsh;
 	int rval = 0;
+	uint8_t ver;
 
 	if (oa->oa_addr != (-1))
 		addr = (bus_addr_t)oa->oa_addr;
@@ -155,9 +158,20 @@ ascmatch(device_t parent, cfdata_t cf, void *aux)
 	if (bus_space_map(oa->oa_tag, addr, MAC68K_ASC_LEN, 0, &bsh))
 		return (0);
 
-	if (mac68k_bus_space_probe(oa->oa_tag, bsh, 0, 1))
+	if (mac68k_bus_space_probe(oa->oa_tag, bsh, 0, 1)) {
 		rval = 1;
-	else
+
+		/*
+		 * Enhanced Apple Sound Chip (EASC) does not support wavetable
+		 * mode, exclude it for now.
+		 */
+		ver = bus_space_read_1(oa->oa_tag, bsh, 0x800);
+		for (size_t i = 0; i < __arraycount(easc_version_tab); i++)
+			if (ver == easc_version_tab[i]) {
+				rval = 0;
+				break;
+			}
+	} else
 		rval = 0;
 
 	bus_space_unmap(oa->oa_tag, bsh, MAC68K_ASC_LEN);

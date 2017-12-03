@@ -1229,16 +1229,16 @@ static int rv770_init_smc_table(struct radeon_device *rdev,
 static int rv770_construct_vddc_table(struct radeon_device *rdev)
 {
 	struct rv7xx_power_info *pi = rv770_get_pi(rdev);
-	u16 min, max, step;
+	u16 vmin, vmax, step;
 	u32 steps = 0;
 	u8 vddc_index = 0;
 	u32 i;
 
-	radeon_atom_get_min_voltage(rdev, SET_VOLTAGE_TYPE_ASIC_VDDC, &min);
-	radeon_atom_get_max_voltage(rdev, SET_VOLTAGE_TYPE_ASIC_VDDC, &max);
+	radeon_atom_get_min_voltage(rdev, SET_VOLTAGE_TYPE_ASIC_VDDC, &vmin);
+	radeon_atom_get_max_voltage(rdev, SET_VOLTAGE_TYPE_ASIC_VDDC, &vmax);
 	radeon_atom_get_voltage_step(rdev, SET_VOLTAGE_TYPE_ASIC_VDDC, &step);
 
-	steps = (max - min) / step + 1;
+	steps = (vmax - vmin) / step + 1;
 
 	if (steps > MAX_NO_VREG_STEPS)
 		return -EINVAL;
@@ -1246,7 +1246,7 @@ static int rv770_construct_vddc_table(struct radeon_device *rdev)
 	for (i = 0; i < steps; i++) {
 		u32 gpio_pins, gpio_mask;
 
-		pi->vddc_table[i].vddc = (u16)(min + i * step);
+		pi->vddc_table[i].vddc = (u16)(vmin + i * step);
 		radeon_atom_get_voltage_gpio_settings(rdev,
 						      pi->vddc_table[i].vddc,
 						      SET_VOLTAGE_TYPE_ASIC_VDDC,

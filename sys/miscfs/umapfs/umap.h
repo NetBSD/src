@@ -1,4 +1,4 @@
-/*	$NetBSD: umap.h,v 1.16 2008/06/28 01:34:06 rumble Exp $	*/
+/*	$NetBSD: umap.h,v 1.16.40.1 2017/12/03 11:38:48 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -64,7 +64,6 @@ struct umap_mount {
 	u_long		info_gmapdata[GMAPFILEENTRIES][2]; /*mapping data for
 	    group mapping in ficus */
 };
-#define	umapm_vfs		lm.layerm_vfs
 #define	umapm_rootvp		lm.layerm_rootvp
 #define	umapm_export		lm.layerm_export
 #define	umapm_flags		lm.layerm_flags

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_wait.c,v 1.11 2009/11/04 21:23:03 rmind Exp $ */
+/*	$NetBSD: linux32_wait.c,v 1.11.22.1 2017/12/03 11:36:55 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_wait.c,v 1.11 2009/11/04 21:23:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_wait.c,v 1.11.22.1 2017/12/03 11:36:55 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -105,10 +105,10 @@ linux32_sys_wait4(struct lwp *l, const struct linux32_sys_wait4_args *uap, regis
 	proc_t *p;
 
 	linux_options = SCARG(uap, options);
-	options = WOPTSCHECKED;
 	if (linux_options & ~(LINUX_WAIT4_KNOWNFLAGS))
 		return EINVAL;
 
+	options = 0;
 	if (linux_options & LINUX_WAIT4_WNOHANG)
 		options |= WNOHANG;
 	if (linux_options & LINUX_WAIT4_WUNTRACED)

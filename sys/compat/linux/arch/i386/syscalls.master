@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.107.10.3 2014/08/20 00:03:32 tls Exp $
+	$NetBSD: syscalls.master,v 1.107.10.4 2017/12/03 11:36:54 jdolecek Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -162,10 +162,10 @@
 81	STD		{ int|linux_sys||setgroups16(int gidsetsize, \
 			    linux_gid16_t *gidset); }
 82	STD		{ int|linux_sys||oldselect(struct linux_oldselect *lsp); }
-83	NOARGS		{ int|sys||symlink(const char *path, const char *to); }
+83	NOARGS		{ int|sys||symlink(const char *path, const char *link); }
 84	NOARGS		{ int|compat_43_sys||lstat(const char *path, \
-			    struct stat43 *up); } oolstat
-85	NOARGS		{ int|sys||readlink(const char *name, char *buf, \
+			    struct stat43 *ub); } oolstat
+85	NOARGS		{ ssize_t|sys||readlink(const char *path, char *buf, \
 			    int count); }
 #ifdef EXEC_AOUT
 86	STD		{ int|linux_sys||uselib(const char *path); }
@@ -497,14 +497,17 @@
 			    int fd2, const char *name2, int flags); }
 304	NOARGS		{ int|sys||symlinkat(const char *path1, int fd, \
 			    const char *path2); }
-305	NOARGS		{ int|sys||readlinkat(int fd, const char *path, \
+305	NOARGS		{ ssize_t|sys||readlinkat(int fd, const char *path, \
 			    char *buf, size_t bufsize); }
 306	STD		{ int|linux_sys||fchmodat(int fd, const char *path, \
 			    linux_umode_t mode); }
 307	STD		{ int|linux_sys||faccessat(int fd, const char *path, \
 			    int amode); }
-308	UNIMPL		pselect6
-309	STD		{ int|linux_sys||ppoll(struct pollfd *fds, int nfds, \
+308	STD		{ int|linux_sys||pselect6(int nfds, fd_set *readfds, \
+			   fd_set *writefds, fd_set *exceptfds, \
+			   struct linux_timespec *timeout, \
+			   linux_sized_sigset_t *ss); }
+309	STD		{ int|linux_sys||ppoll(struct pollfd *fds, u_int nfds, \
 			    struct linux_timespec *timeout, \
 			    linux_sigset_t *sigset); }
 310	UNIMPL		unshare

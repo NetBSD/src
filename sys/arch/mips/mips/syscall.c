@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.47.2.1 2014/08/20 00:03:12 tls Exp $	*/
+/*	$NetBSD: syscall.c,v 1.47.2.2 2017/12/03 11:36:28 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.47.2.1 2014/08/20 00:03:12 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.47.2.2 2017/12/03 11:36:28 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -188,7 +188,8 @@ EMULNAME(syscall)(struct lwp *l, u_int status, u_int cause, vaddr_t pc)
 			KASSERT(nargs <= __arraycount(copyargs));
 			args = copyargs;
 			/*
-			 * Copy the arguments passed via register from the				 * trapframe to our argument array
+			 * Copy the arguments passed via register from the
+			 * trapframe to our argument array
 			 */
 			memcpy(copyargs, fargs, nregs * sizeof(register_t));
 			/*
@@ -205,10 +206,10 @@ EMULNAME(syscall)(struct lwp *l, u_int status, u_int cause, vaddr_t pc)
 	} else do {
 		/*
 		 * The only difference between O32 and N32 is the calling
-		 * sequence.  If you make O32 
+		 * sequence.  If you make O32
 		 */
 		int32_t copy32args[SYS_MAXSYSARGS];
-		int32_t *cargs = copy32args; 
+		int32_t *cargs = copy32args;
 		unsigned int arg64mask = SYCALL_ARG_64_MASK(callp);
 		bool doing_arg64;
 		size_t narg64 = SYCALL_NARGS64(callp);
@@ -251,7 +252,7 @@ EMULNAME(syscall)(struct lwp *l, u_int status, u_int cause, vaddr_t pc)
 		for (i = 0, doing_arg64 = false; i < nargs + narg64;) {
 			register_t arg;
 			if (nregs > 0) {
-				arg = (int32_t) *fargs++; 
+				arg = (int32_t) *fargs++;
 				nregs--;
 			} else {
 				arg = *cargs++;
@@ -325,7 +326,7 @@ EMULNAME(syscall)(struct lwp *l, u_int status, u_int cause, vaddr_t pc)
 			 */
 			mips_reg_t tmp = reg->r_regs[_R_V0];
 			reg->r_regs[_R_V0 + _QUAD_LOWWORD] = (int32_t) tmp;
-			reg->r_regs[_R_V0 + _QUAD_HIGHWORD] = tmp >> 32; 
+			reg->r_regs[_R_V0 + _QUAD_HIGHWORD] = tmp >> 32;
 		}
 #endif
 #ifdef MIPS_SYSCALL_DEBUG

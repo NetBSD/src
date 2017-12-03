@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpdev_bus_dma.c,v 1.3.8.2 2014/08/20 00:04:38 tls Exp $	*/
+/*	$NetBSD: rumpdev_bus_dma.c,v 1.3.8.3 2017/12/03 11:39:08 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2013 Antti Kantee
@@ -446,8 +446,14 @@ bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map,
 void
 bus_dmamem_free(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs)
 {
+#ifdef RUMPCOMP_USERFEATURE_PCI_DMAFREE
+	vaddr_t vacookie = segs[0]._ds_vacookie;
+	bus_size_t sizecookie = segs[0]._ds_sizecookie;
 
+	rumpcomp_pci_dmafree(vacookie, sizecookie);
+#else
 	panic("bus_dmamem_free not implemented");
+#endif
 }
 
 /*
@@ -509,10 +515,13 @@ bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 {
 	paddr_t curaddr, lastaddr, pa;
 	vaddr_t vacookie;
+	size_t sizecookie;
 	int curseg, error;
 
 	/* Always round the size. */
 	size = round_page(size);
+
+	sizecookie = size;
 
 	/*
 	 * Allocate pages from the VM system.
@@ -536,6 +545,7 @@ bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 	lastaddr = segs[curseg].ds_addr = pa;
 	segs[curseg].ds_len = PAGE_SIZE;
 	segs[curseg]._ds_vacookie = vacookie;
+	segs[curseg]._ds_sizecookie = sizecookie;
 	size -= PAGE_SIZE;
 	pa += PAGE_SIZE;
 	vacookie += PAGE_SIZE;
@@ -553,6 +563,7 @@ bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 			segs[curseg].ds_addr = curaddr;
 			segs[curseg].ds_len = PAGE_SIZE;
 			segs[curseg]._ds_vacookie = vacookie;
+			segs[curseg]._ds_sizecookie = sizecookie;
 		}
 		lastaddr = curaddr;
 	}

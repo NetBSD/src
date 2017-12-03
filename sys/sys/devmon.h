@@ -1,4 +1,4 @@
-/* $NetBSD: devmon.h,v 1.1 2008/05/25 12:30:40 jmcneill Exp $ */
+/* $NetBSD: devmon.h,v 1.1.50.1 2017/12/03 11:39:20 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2007
@@ -31,6 +31,6 @@
 #ifndef _SYS_DEVMON_H_
 #define _SYS_DEVMON_H_
 
-void devmon_insert(const char *, prop_dictionary_t);
+int devmon_insert(const char *, prop_dictionary_t);
 
 #endif /*_SYS_DEVMON_H_*/

@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.15 2011/07/26 12:57:35 yamt Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.15.12.1 2017/12/03 11:36:18 jdolecek Exp $	*/
 
 #ifndef _I386_FRAMEASM_H_
 #define _I386_FRAMEASM_H_
@@ -9,58 +9,24 @@
 #endif
 
 #if !defined(XEN)
-#define CLI(reg)        cli
-#define STI(reg)        sti
+#define CLI(reg)	cli
+#define STI(reg)	sti
 #else
 /* XXX assym.h */
-#define TRAP_INSTR      int $0x82
-#define XEN_BLOCK_EVENTS(reg)   movb $1,EVTCHN_UPCALL_MASK(reg)
-#define XEN_UNBLOCK_EVENTS(reg) movb $0,EVTCHN_UPCALL_MASK(reg)
-#define XEN_TEST_PENDING(reg)   testb $0xFF,EVTCHN_UPCALL_PENDING(reg)
+#define TRAP_INSTR	int	$0x82
+#define XEN_BLOCK_EVENTS(reg)	movb	$1,EVTCHN_UPCALL_MASK(reg)
+#define XEN_UNBLOCK_EVENTS(reg)	movb	$0,EVTCHN_UPCALL_MASK(reg)
+#define XEN_TEST_PENDING(reg)	testb	$0xFF,EVTCHN_UPCALL_PENDING(reg)
 
-#define CLI(reg)        movl    CPUVAR(VCPU),reg ;  \
-                        XEN_BLOCK_EVENTS(reg)
-#define STI(reg)        movl    CPUVAR(VCPU),reg ;  \
+#define CLI(reg)	movl	CPUVAR(VCPU),reg ;  \
+			XEN_BLOCK_EVENTS(reg)
+#define STI(reg)	movl	CPUVAR(VCPU),reg ;  \
 			XEN_UNBLOCK_EVENTS(reg)
-#define STIC(reg)       movl    CPUVAR(VCPU),reg ;  \
+#define STIC(reg)	movl	CPUVAR(VCPU),reg ;  \
 			XEN_UNBLOCK_EVENTS(reg)  ; \
-			testb $0xff,EVTCHN_UPCALL_PENDING(reg)
+			testb	$0xff,EVTCHN_UPCALL_PENDING(reg)
 #endif
 
-#ifndef TRAPLOG
-#define TLOG		/**/
-#else
-/*
- * Fill in trap record
- */
-#define TLOG						\
-9:							\
-	movl	%fs:CPU_TLOG_OFFSET, %eax;		\
-	movl	%fs:CPU_TLOG_BASE, %ebx;		\
-	addl	$SIZEOF_TREC,%eax;			\
-	andl	$SIZEOF_TLOG-1,%eax;			\
-	addl	%eax,%ebx;				\
-	movl	%eax,%fs:CPU_TLOG_OFFSET;		\
-	movl	%esp,TREC_SP(%ebx);			\
-	movl	$9b,TREC_HPC(%ebx);			\
-	movl	TF_EIP(%esp),%eax;			\
-	movl	%eax,TREC_IPC(%ebx);			\
-	rdtsc			;			\
-	movl	%eax,TREC_TSC(%ebx);			\
-	movl	$MSR_LASTBRANCHFROMIP,%ecx;		\
-	rdmsr			;			\
-	movl	%eax,TREC_LBF(%ebx);			\
-	incl	%ecx		;			\
-	rdmsr			;			\
-	movl	%eax,TREC_LBT(%ebx);			\
-	incl	%ecx		;			\
-	rdmsr			;			\
-	movl	%eax,TREC_IBF(%ebx);			\
-	incl	%ecx		;			\
-	rdmsr			;			\
-	movl	%eax,TREC_IBT(%ebx)
-#endif
-		
 /*
  * These are used on interrupt or trap entry or exit.
  */
@@ -83,26 +49,10 @@
 	movl	$GSEL(GCPU_SEL, SEL_KPL),%eax	; \
 	movl	%ecx,TF_ECX(%esp)	; \
 	movl	%eax,%fs	; \
-	cld			; \
-	TLOG
+	cld
 
-/*
- * INTRFASTEXIT should be in sync with trap(), resume_iret and friends.
- */
 #define	INTRFASTEXIT \
-	movw	TF_GS(%esp),%gs	; \
-	movw	TF_FS(%esp),%fs	; \
-	movw	TF_ES(%esp),%es	; \
-	movw	TF_DS(%esp),%ds	; \
-	movl	TF_EDI(%esp),%edi	; \
-	movl	TF_ESI(%esp),%esi	; \
-	movl	TF_EBP(%esp),%ebp	; \
-	movl	TF_EBX(%esp),%ebx	; \
-	movl	TF_EDX(%esp),%edx	; \
-	movl	TF_ECX(%esp),%ecx	; \
-	movl	TF_EAX(%esp),%eax	; \
-	addl	$(TF_PUSHSIZE+8),%esp	; \
-	iret
+	jmp	intrfastexit
 
 #define	DO_DEFERRED_SWITCH \
 	cmpl	$0, CPUVAR(WANT_PMAPLOAD)		; \

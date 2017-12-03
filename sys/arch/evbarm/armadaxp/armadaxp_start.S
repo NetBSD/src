@@ -1,4 +1,4 @@
-/*	$NetBSD: armadaxp_start.S,v 1.2.2.3 2014/08/20 00:02:52 tls Exp $	*/
+/*	$NetBSD: armadaxp_start.S,v 1.2.2.4 2017/12/03 11:36:02 jdolecek Exp $	*/
 /*******************************************************************************
 Copyright (C) Marvell International Ltd. and its affiliates
 
@@ -44,7 +44,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <evbarm/marvell/marvellvar.h>
 #include "assym.h"
 
-RCSID("$NetBSD: armadaxp_start.S,v 1.2.2.3 2014/08/20 00:02:52 tls Exp $")
+RCSID("$NetBSD: armadaxp_start.S,v 1.2.2.4 2017/12/03 11:36:02 jdolecek Exp $")
 
 #ifdef KERNEL_BASES_EQUAL
 #error KERNEL_BASE_VIRT should not equal KERNEL_BASE_PHYS
@@ -77,6 +77,10 @@ _C_LABEL(armadaxp_start):
 	mcr	p15, 0, r2, c1, c0, 0
 	dsb
 	isb
+
+	/* Save U-Boot arguments */
+	adr	r4, uboot_regs_pa
+	stmia	r4!, {r0, r1, r2, r3}
 
 	/* build page table from scratch */
 	movw	r0, #:lower16:STARTUP_PAGETABLE_ADDR
@@ -132,6 +136,10 @@ _C_LABEL(armadaxp_start):
 	bx	ip
 
 	/* NOTREACHED */
+
+	.global _C_LABEL(uboot_regs_pa)
+uboot_regs_pa:
+	.space	16 /* r0, r1, r2, r3 */
 
 #define MMU_INIT(va,pa,n_sec,attr) \
 	.word	n_sec					; \

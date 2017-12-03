@@ -1,4 +1,4 @@
-/*	$NetBSD: bootp.c,v 1.38.14.1 2014/08/20 00:04:30 tls Exp $	*/
+/*	$NetBSD: bootp.c,v 1.38.14.2 2017/12/03 11:38:46 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -307,9 +307,9 @@ bootprecv(struct iodesc *d, void *pkt, size_t len, saseconds_t tleft)
 	ssize_t n;
 	struct bootp *bp;
 
-#ifdef BOOTP_DEBUGx
+#ifdef BOOTP_DEBUG
 	if (debug)
-		printf("bootp_recvoffer: called\n");
+		printf("bootprecv: called\n");
 #endif
 
 	n = readudp(d, pkt, len, tleft);
@@ -393,7 +393,7 @@ vend_rfc1048(u_char *cp, u_int len)
 			/* let it override bp_siaddr */
 			(void)memcpy(&rootip.s_addr, cp, sizeof(rootip.s_addr));
 		}
-	        if (tag == TAG_ROOTPATH && size < sizeof(rootpath)) {
+		if (tag == TAG_ROOTPATH && size < sizeof(rootpath)) {
 			strncpy(rootpath, (char *)cp, sizeof(rootpath));
 			rootpath[size] = '\0';
 		}

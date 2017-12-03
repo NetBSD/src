@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isa.c,v 1.35.22.2 2014/08/20 00:03:39 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isa.c,v 1.35.22.3 2017/12/03 11:37:05 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -917,7 +917,8 @@ isic_isa_attach(device_t parent, device_t self, void *aux)
 				setup_io_map(flags, ia->ia_iot, ia->ia_memt, iobase, maddr,
 					&(sc->sc_num_mappings), &(sc->sc_maps[0]), NULL, NULL);
 			} else {
-				printf(": could not determine card type - not configured!\n");
+				aprint_error(": could not determine card type "
+				    "- not configured!\n");
 				return;
 			}
 			break;

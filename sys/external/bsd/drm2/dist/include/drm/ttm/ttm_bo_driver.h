@@ -368,6 +368,15 @@ struct ttm_bo_driver {
 	void (*ttm_tt_unpopulate)(struct ttm_tt *ttm);
 
 	/**
+	 * ttm_tt_swapout
+	 *
+	 * @ttm: The struct ttm_tt to contain the backing pages.
+	 *
+	 * Deactivate all backing pages, but don't free them
+	 */
+	void (*ttm_tt_swapout)(struct ttm_tt *ttm);
+
+	/**
 	 * struct ttm_bo_driver member invalidate_caches
 	 *
 	 * @bdev: the buffer object device.
@@ -666,6 +675,25 @@ extern void ttm_tt_destroy(struct ttm_tt *ttm);
  */
 extern void ttm_tt_unbind(struct ttm_tt *ttm);
 
+#ifdef __NetBSD__
+/**
+ * ttm_tt_wire
+ *
+ * @ttm The struct ttm_tt.
+ *
+ * Wire the pages of a ttm_tt, allocating pages for it if necessary.
+ */
+extern int ttm_tt_wire(struct ttm_tt *ttm);
+
+/**
+ * ttm_tt_unwire
+ *
+ * @ttm The struct ttm_tt.
+ *
+ * Unwire the pages of a ttm_tt.
+ */
+extern void ttm_tt_unwire(struct ttm_tt *ttm);
+#else
 /**
  * ttm_tt_swapin:
  *
@@ -674,6 +702,7 @@ extern void ttm_tt_unbind(struct ttm_tt *ttm);
  * Swap in a previously swap out ttm_tt.
  */
 extern int ttm_tt_swapin(struct ttm_tt *ttm);
+#endif
 
 /**
  * ttm_tt_cache_flush:

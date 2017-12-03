@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_acafh.c,v 1.3.10.2 2014/08/20 00:02:43 tls Exp $ */
+/*	$NetBSD: wdc_acafh.c,v 1.3.10.3 2017/12/03 11:35:48 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2000, 2003, 2013 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_acafh.c,v 1.3.10.2 2014/08/20 00:02:43 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_acafh.c,v 1.3.10.3 2017/12/03 11:35:48 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -69,13 +69,10 @@ __KERNEL_RCSID(0, "$NetBSD: wdc_acafh.c,v 1.3.10.2 2014/08/20 00:02:43 tls Exp $
 
 struct wdc_acafh_slot {
 	struct ata_channel	channel;
-	struct ata_queue	chqueue;
 	struct wdc_regs		wdr;
 };
 
 struct wdc_acafh_softc {
-	device_t		sc_dev;
-
 	struct wdc_softc	sc_wdcdev;
 	struct ata_channel	*sc_chanlist[WDC_ACAFH_SLOTS];
 	struct wdc_acafh_slot	sc_slots[WDC_ACAFH_SLOTS];
@@ -113,8 +110,6 @@ wdc_acafh_attach(device_t parent, device_t self, void *aux)
 	int i;
 
 	aprint_normal(": ACA500 CompactFlash interface\n");
-
-	sc->sc_dev = device_private(self);
 	sc->aca_sc = device_private(parent);
 
 	gayle_init();
@@ -148,29 +143,36 @@ wdc_acafh_attach(device_t parent, device_t self, void *aux)
 void
 wdc_acafh_attach_channel(struct wdc_acafh_softc *sc, int chnum)
 {
+#ifdef WDC_ACAFH_DEBUG
+	device_t self;
+
+	self = sc->sc_wdcdev.sc_atac.atac_dev;
+#endif /* WDC_ACAFH_DEBUG */
+
 	sc->sc_chanlist[chnum] = &sc->sc_slots[chnum].channel;
 	memset(&sc->sc_slots[chnum],0,sizeof(struct wdc_acafh_slot));
 	sc->sc_slots[chnum].channel.ch_channel = chnum;
 	sc->sc_slots[chnum].channel.ch_atac = &sc->sc_wdcdev.sc_atac;
-	sc->sc_slots[chnum].channel.ch_queue = &sc->sc_slots[chnum].chqueue;
 
 	wdc_acafh_map_channel(sc, chnum);
 
-	wdc_init_shadow_regs(&sc->sc_slots[chnum].channel);
+	wdc_init_shadow_regs(CHAN_TO_WDC_REGS(&sc->sc_slots[chnum].channel));
 	wdcattach(&sc->sc_slots[chnum].channel);
 
 #ifdef WDC_ACAFH_DEBUG
-	aprint_normal_dev(sc->sc_dev, "done init for channel %d\n", chnum);
+	aprint_normal_dev(self, "done init for channel %d\n", chnum);
 #endif /* WDC_ACAFH_DEBUG */
-
 }
 
 void
 wdc_acafh_map_channel(struct wdc_acafh_softc *sc, int chnum)
 {
 	struct wdc_regs *wdr;
-	int i;
 	bus_addr_t off;
+	device_t self;
+	int i;
+
+	self = sc->sc_wdcdev.sc_atac.atac_dev;
 
 	wdr = CHAN_TO_WDC_REGS(&sc->sc_slots[chnum].channel);
 	wdr->cmd_iot = &sc->cmd_iot;
@@ -182,7 +184,7 @@ wdc_acafh_map_channel(struct wdc_acafh_softc *sc, int chnum)
 
 	if (bus_space_map(wdr->cmd_iot, off, 0x40, 0,
 			  &wdr->cmd_baseioh)) {
-		aprint_error_dev(sc->sc_dev, "couldn't map regs\n");
+		aprint_error_dev(self, "couldn't map regs\n");
 		return;
 	}
 
@@ -193,7 +195,7 @@ wdc_acafh_map_channel(struct wdc_acafh_softc *sc, int chnum)
 
 			bus_space_unmap(wdr->cmd_iot,
 			    wdr->cmd_baseioh, 0x40);
-			aprint_error_dev(sc->sc_dev, "couldn't map regs\n");
+			aprint_error_dev(self, "couldn't map regs\n");
 			return;
 		}
 	}

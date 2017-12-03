@@ -1,4 +1,4 @@
-/*	$NetBSD: sxreg.h,v 1.3.4.3 2013/06/23 06:20:12 tls Exp $	*/
+/*	$NetBSD: sxreg.h,v 1.3.4.4 2017/12/03 11:36:43 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
 /* write registers via pseudo instructions */
 #define SX_QUEUED_R0		0x00000300
 #define SX_QUEUED_R1		0x00000304	/* and so on until R127 */
-#define SX_QUEUED(r)		(0x300 + (r << 2))
+#define SX_QUEUED(r)		(0x300 + ((r) << 2))
 
 /* special purpose registers */
 #define R_ZERO	0
@@ -158,11 +158,21 @@
 				SX_UQUAD_16 | (dreg << 7) | (o))
 #define SX_LDUQ24(dreg, cnt, o) (0x80000000 | ((cnt) << 23) | SX_LOAD | \
 				SX_UQUAD_24 | (dreg << 7) | (o))
+#define SX_LDUC0(dreg, cnt, o) (0x80000000 | ((cnt) << 23) | SX_LOAD | \
+				SX_UCHAN_0 | (dreg << 7) | (o))
+#define SX_LDUC8(dreg, cnt, o) (0x80000000 | ((cnt) << 23) | SX_LOAD | \
+				SX_UCHAN_8 | (dreg << 7) | (o))
+#define SX_LDUC16(dreg, cnt, o) (0x80000000 | ((cnt) << 23) | SX_LOAD | \
+				SX_UCHAN_16 | (dreg << 7) | (o))
+#define SX_LDUC24(dreg, cnt, o) (0x80000000 | ((cnt) << 23) | SX_LOAD | \
+				SX_UCHAN_24 | (dreg << 7) | (o))
 #define SX_ST(sreg, cnt, o)  (0x80000000 | ((cnt) << 23) | SX_STORE | \
 				SX_LONG | (sreg << 7) | (o))
 #define SX_STM(sreg, cnt, o)  (0x80000000 | ((cnt) << 23) | SX_STORE_MASK | \
 				SX_LONG | (sreg << 7) | (o))
 #define SX_STB(sreg, cnt, o) (0x80000000 | ((cnt) << 23) | SX_STORE | \
+				SX_UBYTE_0 | (sreg << 7) | (o))
+#define SX_STBM(sreg, cnt, o) (0x80000000 | ((cnt) << 23) | SX_STORE_MASK | \
 				SX_UBYTE_0 | (sreg << 7) | (o))
 #define SX_STBC(sreg, cnt, o) (0x80000000 | ((cnt) << 23) | SX_STORE_CLAMP | \
 				SX_UBYTE_0 | (sreg << 7) | (o))
@@ -182,6 +192,16 @@
 				SX_UQUAD_16 | (sreg << 7) | (o))
 #define SX_STUQ24(sreg, cnt, o) (0x80000000 | ((cnt) << 23) | SX_STORE | \
 				SX_UQUAD_24 | (sreg << 7) | (o))
+#define SX_STUC0(sreg, cnt, o) (0x80000000 | ((cnt) << 23) | SX_STORE | \
+				SX_UCHAN_0 | (sreg << 7) | (o))
+#define SX_STUC0C(sreg, cnt, o) (0x80000000 | ((cnt) << 23) | SX_STORE_CLAMP | \
+				SX_UCHAN_0 | (sreg << 7) | (o))
+#define SX_STUC8(sreg, cnt, o) (0x80000000 | ((cnt) << 23) | SX_STORE | \
+				SX_UCHAN_8 | (sreg << 7) | (o))
+#define SX_STUC16(sreg, cnt, o) (0x80000000 | ((cnt) << 23) | SX_STORE | \
+				SX_UCHAN_16 | (sreg << 7) | (o))
+#define SX_STUC24(sreg, cnt, o) (0x80000000 | ((cnt) << 23) | SX_STORE | \
+				SX_UCHAN_24 | (sreg << 7) | (o))
 
 /* ROP and SELECT instructions */
 #define SX_ROPB	(0x0 << 21)	/* mask bits apply to bytes */

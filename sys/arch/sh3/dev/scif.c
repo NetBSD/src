@@ -1,4 +1,4 @@
-/*	$NetBSD: scif.c,v 1.61.6.1 2014/08/20 00:03:23 tls Exp $ */
+/*	$NetBSD: scif.c,v 1.61.6.2 2017/12/03 11:36:42 jdolecek Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.61.6.1 2014/08/20 00:03:23 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.61.6.2 2017/12/03 11:36:42 jdolecek Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_scif.h"
@@ -187,11 +187,8 @@ static int scif_attached = 0;	/* XXX: FIXME: don't limit to just one! */
 
 extern struct cfdriver scif_cd;
 
-#define	SCIFUNIT_MASK		0x7ffff
-#define	SCIFDIALOUT_MASK	0x80000
-
-#define	SCIFUNIT(x)	(minor(x) & SCIFUNIT_MASK)
-#define	SCIFDIALOUT(x)	(minor(x) & SCIFDIALOUT_MASK)
+#define	SCIFUNIT(x)	TTUNIT(x)
+#define	SCIFDIALOUT(x)	TTDIALOUT(x)
 
 
 /* console */
@@ -226,6 +223,10 @@ const struct cdevsw scif_cdevsw = {
 	.d_flag = D_TTY
 };
 
+#ifndef SCIFCONSOLE
+#define SCIFCONSOLE	0
+#endif
+int scifconsole = SCIFCONSOLE;	/* patchable */
 
 /* struct tty */
 static void scifstart(struct tty *);
@@ -1427,11 +1428,10 @@ scifcnprobe(struct consdev *cp)
 
 	/* Initialize required fields. */
 	cp->cn_dev = makedev(maj, 0);
-#ifdef SCIFCONSOLE
-	cp->cn_pri = CN_REMOTE;
-#else
-	cp->cn_pri = CN_NORMAL;
-#endif
+	if (scifconsole)
+		cp->cn_pri = CN_REMOTE;
+	else
+		cp->cn_pri = CN_NORMAL;
 }
 
 void

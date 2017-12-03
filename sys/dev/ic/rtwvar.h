@@ -1,4 +1,4 @@
-/* $NetBSD: rtwvar.h,v 1.43 2010/03/15 23:21:08 dyoung Exp $ */
+/* $NetBSD: rtwvar.h,v 1.43.18.1 2017/12/03 11:37:04 jdolecek Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -131,28 +131,27 @@ rtw_barrier(const struct rtw_regs *r, int reg0, int reg1, int flags)
  */
 /* sync */
 #define RTW_SYNC(regs, reg0, reg1)				\
-	rtw_barrier(regs, reg0, reg1, BUS_SPACE_BARRIER_SYNC)
+	rtw_barrier(regs, reg0, reg1, BUS_SPACE_BARRIER_READ|BUS_SPACE_BARRIER_WRITE)
 
 /* write-before-write */
 #define RTW_WBW(regs, reg0, reg1)				\
-	rtw_barrier(regs, reg0, reg1, BUS_SPACE_BARRIER_WRITE_BEFORE_WRITE)
+	rtw_barrier(regs, reg0, reg1, BUS_SPACE_BARRIER_WRITE)
 
 /* write-before-read */
 #define RTW_WBR(regs, reg0, reg1)				\
-	rtw_barrier(regs, reg0, reg1, BUS_SPACE_BARRIER_WRITE_BEFORE_READ)
+	rtw_barrier(regs, reg0, reg1, BUS_SPACE_BARRIER_WRITE)
 
 /* read-before-read */
 #define RTW_RBR(regs, reg0, reg1)				\
-	rtw_barrier(regs, reg0, reg1, BUS_SPACE_BARRIER_READ_BEFORE_READ)
+	rtw_barrier(regs, reg0, reg1, BUS_SPACE_BARRIER_READ)
 
 /* read-before-write */
 #define RTW_RBW(regs, reg0, reg1)				\
-	rtw_barrier(regs, reg0, reg1, BUS_SPACE_BARRIER_READ_BEFORE_WRITE)
+	rtw_barrier(regs, reg0, reg1, BUS_SPACE_BARRIER_READ)
 
 #define RTW_WBRW(regs, reg0, reg1)				\
 		rtw_barrier(regs, reg0, reg1,			\
-		    BUS_SPACE_BARRIER_WRITE_BEFORE_READ |	\
-		    BUS_SPACE_BARRIER_WRITE_BEFORE_WRITE)
+		    BUS_SPACE_BARRIER_WRITE)
 
 #define RTW_SR_GET(sr, ofs) \
     (((sr)->sr_content[(ofs)/2] >> (((ofs) % 2 == 0) ? 0 : 8)) & 0xff)
@@ -314,8 +313,8 @@ struct rtw_tx_radiotap_header {
 enum rtw_attach_state {FINISHED, FINISH_DESCMAP_LOAD, FINISH_DESCMAP_CREATE,
 	FINISH_DESC_MAP, FINISH_DESC_ALLOC, FINISH_RXMAPS_CREATE,
 	FINISH_TXMAPS_CREATE, FINISH_RESET, FINISH_READ_SROM, FINISH_PARSE_SROM,
-	FINISH_RF_ATTACH, FINISH_ID_STA, FINISH_TXDESCBLK_SETUP,
-	FINISH_TXCTLBLK_SETUP, DETACHED};
+	FINISH_RF_ATTACH, FINISH_ID_STA, FINISH_LED_ATTACH,
+	FINISH_TXDESCBLK_SETUP, FINISH_TXCTLBLK_SETUP, DETACHED};
 
 struct rtw_mtbl {
 	int			(*mt_newstate)(struct ieee80211com *,
@@ -465,6 +464,7 @@ struct rtw_softc {
 	struct rtw_regs		sc_regs;
 	bus_dma_tag_t		sc_dmat;
 	uint32_t		sc_flags;
+	void			*sc_soft_ih;
 
 	enum rtw_attach_state	sc_attach_state;
 	enum rtw_rfchipid	sc_rfchipid;

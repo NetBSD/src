@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_hfsc.c,v 1.24 2008/06/18 09:06:27 yamt Exp $	*/
+/*	$NetBSD: altq_hfsc.c,v 1.24.40.1 2017/12/03 11:35:43 jdolecek Exp $	*/
 /*	$KAME: altq_hfsc.c,v 1.26 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_hfsc.c,v 1.24 2008/06/18 09:06:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_hfsc.c,v 1.24.40.1 2017/12/03 11:35:43 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -90,8 +90,7 @@ static struct hfsc_class	*hfsc_class_create(struct hfsc_if *,
     struct hfsc_class *, int, int, int);
 static int			 hfsc_class_destroy(struct hfsc_class *);
 static struct hfsc_class	*hfsc_nextclass(struct hfsc_class *);
-static int			 hfsc_enqueue(struct ifaltq *, struct mbuf *,
-				    struct altq_pktattr *);
+static int			 hfsc_enqueue(struct ifaltq *, struct mbuf *);
 static struct mbuf		*hfsc_dequeue(struct ifaltq *, int);
 
 static int		 hfsc_addq(struct hfsc_class *, struct mbuf *);
@@ -146,7 +145,7 @@ static struct hfsc_class	*clh_to_clp(struct hfsc_if *, u_int32_t);
 
 #ifdef ALTQ3_COMPAT
 static struct hfsc_if *hfsc_attach(struct ifaltq *, u_int);
-static int hfsc_detach(struct hfsc_if *);
+static void hfsc_detach(struct hfsc_if *);
 static int hfsc_class_modify(struct hfsc_class *, struct service_curve *,
     struct service_curve *, struct service_curve *);
 
@@ -313,6 +312,7 @@ hfsc_getqstats(struct pf_altq *a, void *ubuf, int *nbytes)
 	if (*nbytes < sizeof(stats))
 		return (EINVAL);
 
+	memset(&stats, 0, sizeof(stats));
 	get_class_stats(&stats, cl);
 
 	if ((error = copyout((void *)&stats, ubuf, sizeof(stats))) != 0)
@@ -666,8 +666,9 @@ hfsc_nextclass(struct hfsc_class *cl)
  * (*altq_enqueue) in struct ifaltq.
  */
 static int
-hfsc_enqueue(struct ifaltq *ifq, struct mbuf *m, struct altq_pktattr *pktattr)
+hfsc_enqueue(struct ifaltq *ifq, struct mbuf *m)
 {
+	struct altq_pktattr pktattr;
 	struct hfsc_if	*hif = (struct hfsc_if *)ifq->altq_disc;
 	struct hfsc_class *cl;
 	struct m_tag *t;
@@ -685,8 +686,8 @@ hfsc_enqueue(struct ifaltq *ifq, struct mbuf *m, struct altq_pktattr *pktattr)
 	if ((t = m_tag_find(m, PACKET_TAG_ALTQ_QID, NULL)) != NULL)
 		cl = clh_to_clp(hif, ((struct altq_tag *)(t+1))->qid);
 #ifdef ALTQ3_COMPAT
-	else if ((ifq->altq_flags & ALTQF_CLASSIFY) && pktattr != NULL)
-		cl = pktattr->pattr_class;
+	else if ((ifq->altq_flags & ALTQF_CLASSIFY))
+		cl = m->m_pkthdr.pattr_class;
 #endif
 	if (cl == NULL || is_a_parent_class(cl)) {
 		cl = hif->hif_defaultclass;
@@ -696,9 +697,13 @@ hfsc_enqueue(struct ifaltq *ifq, struct mbuf *m, struct altq_pktattr *pktattr)
 		}
 	}
 #ifdef ALTQ3_COMPAT
-	if (pktattr != NULL)
-		cl->cl_pktattr = pktattr;  /* save proto hdr used by ECN */
-	else
+	if (m->m_pkthdr.pattr_af != AF_UNSPEC) {
+		pktattr.pattr_class = m->m_pkthdr.pattr_class;
+		pktattr.pattr_af = m->m_pkthdr.pattr_af;
+		pktattr.pattr_hdr = m->m_pkthdr.pattr_hdr;
+
+		cl->cl_pktattr = &pktattr;  /* save proto hdr used by ECN */
+	} else
 #endif
 		cl->cl_pktattr = NULL;
 	len = m_pktlen(m);
@@ -1727,7 +1732,7 @@ hfsc_attach(struct ifaltq *ifq, u_int bandwidth)
 	return (hif);
 }
 
-static int
+static void
 hfsc_detach(struct hfsc_if *hif)
 {
 	(void)hfsc_clear_interface(hif);
@@ -1750,8 +1755,6 @@ hfsc_detach(struct hfsc_if *hif)
 	ellist_destroy(hif->hif_eligible);
 
 	free(hif, M_DEVBUF);
-
-	return (0);
 }
 
 static int
@@ -1880,21 +1883,24 @@ hfscclose(dev_t dev, int flag, int fmt,
     struct lwp *l)
 {
 	struct hfsc_if *hif;
-	int err, error = 0;
 
 	while ((hif = hif_list) != NULL) {
 		/* destroy all */
 		if (ALTQ_IS_ENABLED(hif->hif_ifq))
 			altq_disable(hif->hif_ifq);
 
-		err = altq_detach(hif->hif_ifq);
-		if (err == 0)
-			err = hfsc_detach(hif);
-		if (err != 0 && error == 0)
-			error = err;
+		int error = altq_detach(hif->hif_ifq);
+		switch (error) {
+		case 0:
+		case ENXIO:	/* already disabled */
+			break;
+		default:
+			return error;
+		}
+		hfsc_detach(hif);
 	}
 
-	return error;
+	return 0;
 }
 
 int
@@ -2015,7 +2021,7 @@ hfsccmd_if_attach(struct hfsc_attach *ap)
 	if ((error = altq_attach(&ifp->if_snd, ALTQT_HFSC, hif,
 				 hfsc_enqueue, hfsc_dequeue, hfsc_request,
 				 &hif->hif_classifier, acc_classify)) != 0)
-		(void)hfsc_detach(hif);
+		hfsc_detach(hif);
 
 	return (error);
 }
@@ -2035,7 +2041,8 @@ hfsccmd_if_detach(struct hfsc_interface *ap)
 	if ((error = altq_detach(hif->hif_ifq)))
 		return (error);
 
-	return hfsc_detach(hif);
+	hfsc_detach(hif);
+	return 0;
 }
 
 static int

@@ -1,4 +1,4 @@
-/* $NetBSD: mpcore_var.h,v 1.1.2.1 2013/06/23 06:20:00 tls Exp $ */
+/* $NetBSD: mpcore_var.h,v 1.1.2.2 2017/12/03 11:35:52 jdolecek Exp $ */
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,6 +37,7 @@ struct mpcore_attach_args {
 	bus_space_handle_t mpcaa_memh;
 	bus_size_t mpcaa_off1;
 	bus_size_t mpcaa_off2;
+	int mpcaa_irq;
 };
 
 #endif /* _ARM_CORTEX_MPCORE_VAR_H_ */

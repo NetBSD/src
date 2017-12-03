@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteenvar.h,v 1.13.18.2 2013/06/23 06:20:12 tls Exp $ */
+/*	$NetBSD: cgfourteenvar.h,v 1.13.18.3 2017/12/03 11:36:43 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -32,6 +32,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/ioccom.h>
+
 struct sbus_reg {
 	uint32_t	sbr_slot;
 	uint32_t	sbr_offset;
@@ -95,6 +98,7 @@ struct cgfourteen_softc {
 #if NSX > 0
 	struct sx_softc *sc_sx;
 	uint32_t sc_fb_paddr;
+	glyphcache sc_gc;
 #endif /* NSX > 0 */
 #endif
 

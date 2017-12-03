@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.74.14.1 2013/02/25 00:30:11 tls Exp $	*/
+/*	$NetBSD: file.h,v 1.74.14.2 2017/12/03 11:39:20 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 #include <sys/fcntl.h>
 #include <sys/unistd.h>
 
-#ifdef _KERNEL
+#if defined(_KERNEL) || defined(_KMEMUSER)
 #include <sys/queue.h>
 #include <sys/mutex.h>
 #include <sys/condvar.h>
@@ -77,6 +77,42 @@ struct uio;
 struct iovec;
 struct stat;
 struct knote;
+struct uvm_object;
+
+struct fileops {
+	const char *fo_name;
+	int	(*fo_read)	(struct file *, off_t *, struct uio *,
+				    kauth_cred_t, int);
+	int	(*fo_write)	(struct file *, off_t *, struct uio *,
+				    kauth_cred_t, int);
+	int	(*fo_ioctl)	(struct file *, u_long, void *);
+	int	(*fo_fcntl)	(struct file *, u_int, void *);
+	int	(*fo_poll)	(struct file *, int);
+	int	(*fo_stat)	(struct file *, struct stat *);
+	int	(*fo_close)	(struct file *);
+	int	(*fo_kqfilter)	(struct file *, struct knote *);
+	void	(*fo_restart)	(struct file *);
+	int	(*fo_mmap)	(struct file *, off_t *, size_t, int, int *,
+				 int *, struct uvm_object **, int *);
+	void	(*fo_spare2)	(void);
+};
+
+union file_data {
+	struct vnode *fd_vp;		// DTYPE_VNODE
+	struct socket *fd_so;		// DTYPE_SOCKET
+	struct pipe *fd_pipe;		// DTYPE_PIPE
+	struct kqueue *fd_kq;		// DTYPE_KQUEUE
+	void *fd_data;			// DTYPE_MISC
+	struct rnd_ctx *fd_rndctx;	// DTYPE_MISC (rnd)
+	struct audio_chan *fd_audioctx;	// DTYPE_MISC (audio)
+	struct pad_softc *fd_pad;	// DTYPE_MISC (pad)
+	int fd_devunit;			// DTYPE_MISC (tap)
+	struct bpf_d *fd_bpf;		// DTYPE_MISC (bpf)
+	struct fcrypt *fd_fcrypt;	// DTYPE_CRYPTO is not used
+	struct mqueue *fd_mq;		// DTYPE_MQUEUE
+	struct ksem *fd_ks;		// DTYPE_SEM
+	struct iscsifd *fd_iscsi;	// DTYPE_MISC (iscsi)
+};
 
 /*
  * Kernel file descriptor.  One entry for each open kernel vnode and
@@ -88,22 +124,8 @@ struct knote;
 struct file {
 	off_t		f_offset;	/* first, is 64-bit */
 	kauth_cred_t 	f_cred;		/* creds associated with descriptor */
-	const struct fileops {
-		int	(*fo_read)	(struct file *, off_t *, struct uio *,
-					    kauth_cred_t, int);
-		int	(*fo_write)	(struct file *, off_t *, struct uio *,
-					    kauth_cred_t, int);
-		int	(*fo_ioctl)	(struct file *, u_long, void *);
-		int	(*fo_fcntl)	(struct file *, u_int, void *);
-		int	(*fo_poll)	(struct file *, int);
-		int	(*fo_stat)	(struct file *, struct stat *);
-		int	(*fo_close)	(struct file *);
-		int	(*fo_kqfilter)	(struct file *, struct knote *);
-		void	(*fo_restart)	(struct file *);
-		void	(*fo_spare1)	(void);
-		void	(*fo_spare2)	(void);
-	} *f_ops;
-	void		*f_data;	/* descriptor data, e.g. vnode/socket */
+	const struct fileops *f_ops;
+	union file_data	f_undata;	/* descriptor data, e.g. vnode/socket */
 	LIST_ENTRY(file) f_list;	/* list of active files */
 	kmutex_t	f_lock;		/* lock on structure */
 	int		f_flag;		/* see fcntl.h */
@@ -116,7 +138,22 @@ struct file {
 	SLIST_ENTRY(file) f_unplist;	/* deferred close: see uipc_usrreq.c */
 };
 
-#endif
+#define f_vnode		f_undata.fd_vp
+#define f_socket	f_undata.fd_so
+#define f_pipe		f_undata.fd_pipe
+#define f_kqueue	f_undata.fd_kq
+#define f_data		f_undata.fd_data
+#define f_mqueue	f_undata.fd_mq
+#define f_ksem		f_undata.fd_ks
+
+#define f_rndctx	f_undata.fd_rndctx
+#define f_audioctx	f_undata.fd_audioctx
+#define f_pad		f_undata.fd_pad
+#define f_devunit	f_undata.fd_devunit
+#define f_bpf		f_undata.fd_bpf
+#define f_fcrypt	f_undata.fd_fcrypt
+#define f_iscsi		f_undata.fd_iscsi
+#endif /* _KERNEL || _KMEMUSER */
 
 /*
  * Descriptor types.

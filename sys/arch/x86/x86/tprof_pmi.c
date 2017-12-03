@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_pmi.c,v 1.12.14.1 2014/08/20 00:03:29 tls Exp $	*/
+/*	$NetBSD: tprof_pmi.c,v 1.12.14.2 2017/12/03 11:36:51 jdolecek Exp $	*/
 
 /*-
  * Copyright (c)2008,2009 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof_pmi.c,v 1.12.14.1 2014/08/20 00:03:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof_pmi.c,v 1.12.14.2 2017/12/03 11:36:51 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,8 +138,8 @@ tprof_pmi_start_cpu(void *arg1, void *arg2)
 	wrmsr(msr->msr_counter, counter_reset_val);
 	wrmsr(msr->msr_escr, escr);
 	wrmsr(msr->msr_cccr, cccr);
-	tprof_pmi_lapic_saved[cpu_index(ci)] = i82489_readreg(LAPIC_PCINT);
-	i82489_writereg(LAPIC_PCINT, LAPIC_DLMODE_NMI);
+	tprof_pmi_lapic_saved[cpu_index(ci)] = lapic_readreg(LAPIC_PCINT);
+	lapic_writereg(LAPIC_PCINT, LAPIC_DLMODE_NMI);
 }
 
 static void
@@ -158,7 +158,7 @@ tprof_pmi_stop_cpu(void *arg1, void *arg2)
 
 	wrmsr(msr->msr_escr, 0);
 	wrmsr(msr->msr_cccr, 0);
-	i82489_writereg(LAPIC_PCINT, tprof_pmi_lapic_saved[cpu_index(ci)]);
+	lapic_writereg(LAPIC_PCINT, tprof_pmi_lapic_saved[cpu_index(ci)]);
 }
 
 static int
@@ -199,9 +199,9 @@ tprof_pmi_nmi(const struct trapframe *tf, void *dummy)
 	wrmsr(msr->msr_cccr, cccr & ~CCCR_OVF);
 
 	/* unmask PMI */
-	pcint = i82489_readreg(LAPIC_PCINT);
+	pcint = lapic_readreg(LAPIC_PCINT);
 	KASSERT((pcint & LAPIC_LVT_MASKED) != 0);
-	i82489_writereg(LAPIC_PCINT, pcint & ~LAPIC_LVT_MASKED);
+	lapic_writereg(LAPIC_PCINT, pcint & ~LAPIC_LVT_MASKED);
 
 	return 1;
 }

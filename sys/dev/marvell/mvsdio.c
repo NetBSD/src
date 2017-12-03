@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsdio.c,v 1.4.16.1 2014/08/20 00:03:39 tls Exp $	*/
+/*	$NetBSD: mvsdio.c,v 1.4.16.2 2017/12/03 11:37:05 jdolecek Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsdio.c,v 1.4.16.1 2014/08/20 00:03:39 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsdio.c,v 1.4.16.2 2017/12/03 11:37:05 jdolecek Exp $");
 
 #include "opt_mvsdio.h"
 
@@ -157,6 +157,7 @@ mvsdio_attach(device_t parent, device_t self, void *aux)
 	struct marvell_attach_args *mva = aux;
 	struct sdmmcbus_attach_args saa;
 	uint32_t nis, eis;
+	uint32_t hps;
 
 	aprint_naive("\n");
 	aprint_normal(": Marvell Secure Digital Input/Output Interface\n");
@@ -226,6 +227,13 @@ mvsdio_attach(device_t parent, device_t self, void *aux)
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, MVSDIO_EIS, eis);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, MVSDIO_EISE, eis);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, MVSDIO_EISIE, eis);
+
+	hps = bus_space_read_4(sc->sc_iot, sc->sc_ioh, MVSDIO_HPS16LSB);
+	if ((hps & HPS16LSB_CMDLEVEL) == 0) {
+		aprint_error_dev(sc->sc_dev,
+		    "CMD line not idle, HPS 0x%x (bad MPP config?)\n", hps);
+		return;
+	}
 
         /*
 	 * Attach the generic SD/MMC bus driver.  (The bus driver must

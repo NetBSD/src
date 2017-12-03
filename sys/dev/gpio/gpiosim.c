@@ -1,4 +1,4 @@
-/* $NetBSD: gpiosim.c,v 1.14.2.2 2014/08/20 00:03:37 tls Exp $ */
+/* $NetBSD: gpiosim.c,v 1.14.2.3 2017/12/03 11:37:01 jdolecek Exp $ */
 /*      $OpenBSD: gpiosim.c,v 1.1 2008/11/23 18:46:49 mbalmer Exp $	*/
 
 /*
@@ -30,6 +30,9 @@
 #include <sys/ioccom.h>
 #include <dev/gpio/gpiovar.h>
 
+#include "gpiosim.h"
+#include "ioconf.h"
+
 #define	GPIOSIM_NPINS	64
 
 struct gpiosim_softc {
@@ -43,7 +46,6 @@ struct gpiosim_softc {
 };
 
 static int	gpiosim_match(device_t, cfdata_t, void *);
-void		gpiosimattach(int);
 static void	gpiosim_attach(device_t, device_t, void *);
 static int	gpiosim_detach(device_t, int);
 static int	gpiosim_sysctl(SYSCTLFN_PROTO);
@@ -55,8 +57,6 @@ static void	gpiosim_pin_ctl(void *, int, int);
 CFATTACH_DECL_NEW(gpiosim, sizeof(struct gpiosim_softc), gpiosim_match,
     gpiosim_attach, gpiosim_detach, NULL);
 
-extern struct cfdriver gpiosim_cd;
-
 static int
 gpiosim_match(device_t parent, cfdata_t match, void *aux)
 {
@@ -64,7 +64,7 @@ gpiosim_match(device_t parent, cfdata_t match, void *aux)
 }
 
 void
-gpiosimattach(int num)
+gpiosimattach(int num __unused)
 {
 	cfdata_t cf;
 	int n, err;
@@ -73,7 +73,7 @@ gpiosimattach(int num)
 	if (err)
 		printf("%s: unable to register cfattach\n", gpiosim_cd.cd_name);
 
-	for (n = 0; n < num; n++) {
+	for (n = 0; n < NGPIOSIM; n++) {
 		cf = malloc(sizeof(*cf), M_DEVBUF, M_WAITOK);
 		cf->cf_name = "gpiosim";
 		cf->cf_atname = "gpiosim";
@@ -119,7 +119,8 @@ gpiosim_attach(device_t parent, device_t self, void *aux)
 	gba.gba_pins = sc->sc_gpio_pins;
 	gba.gba_npins = GPIOSIM_NPINS;
 
-	pmf_device_register(self, NULL, NULL);
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
         sysctl_createv(&sc->sc_log, 0, NULL, &node,
             0,
@@ -129,7 +130,7 @@ gpiosim_attach(device_t parent, device_t self, void *aux)
             CTL_HW, CTL_CREATE, CTL_EOL);
 
         if (node == NULL) {
-		printf(": can't create sysctl node\n");
+		aprint_error(": can't create sysctl node\n");
                 return;
 	}
 
@@ -140,7 +141,7 @@ gpiosim_attach(device_t parent, device_t self, void *aux)
             gpiosim_sysctl, 0, (void *)sc, 0,
 	    CTL_CREATE, CTL_EOL);
 
-	printf(": simulating %d pins\n", GPIOSIM_NPINS);
+	aprint_normal(": simulating %d pins\n", GPIOSIM_NPINS);
 	sc->sc_gdev = config_found_ia(self, "gpiobus", &gba, gpiobus_print);
 }
 

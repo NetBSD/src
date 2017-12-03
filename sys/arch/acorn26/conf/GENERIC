@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.68.2.2 2014/08/20 00:02:40 tls Exp $
+# $NetBSD: GENERIC,v 1.68.2.3 2017/12/03 11:35:44 jdolecek Exp $
 #
 # GENERIC machine description file
 # 
@@ -72,6 +72,7 @@ options 	FFS_EI		# FFS endianness-independence support
 options 	WAPBL		# File system journaling support
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+options 	UFS_EXTATTR	# Extended attribute support for UFS1
 
 # Executable format options
 options 	EXEC_ELF32
@@ -104,9 +105,8 @@ options 	INET6		# IPV6
 #options 	ALTQ_RIO	# RED with IN/OUT
 #options 	ALTQ_WFQ	# Weighted Fair Queueing
 
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 #options 	COMPAT_43	# 4.3BSD compatibility.
-options 	COMPAT_16	# NetBSD 1.6 compatibility.
+options 	COMPAT_16	# NetBSD 1.6 binary compatibility.
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Binary compatibility with previous versions of NetBSD.
@@ -120,7 +120,6 @@ options 	SYSVSHM		# System V-like shared memory
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
 #options 	IRQSTATS	# manage IRQ statistics
-#options 	KMEMSTATS	# kernel memory statistics
 #options 	SCSIVERBOSE	# Verbose SCSI errors
 options 	NTP		# Kernel PLL for ntpd(8).
 options 	USERCONF	# userconf(4) support
@@ -273,9 +272,6 @@ pseudo-device	putter		# for puffs and pud
 # removing fingerprint methods will have almost no impact on the kernel
 # code size.
 #
-#options VERIFIED_EXEC_FP_RMD160
 #options VERIFIED_EXEC_FP_SHA256
 #options VERIFIED_EXEC_FP_SHA384
 #options VERIFIED_EXEC_FP_SHA512
-#options VERIFIED_EXEC_FP_SHA1
-#options VERIFIED_EXEC_FP_MD5

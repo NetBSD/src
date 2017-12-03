@@ -1,4 +1,4 @@
-/*	$NetBSD: sony_acpi.c,v 1.21.2.1 2014/08/20 00:03:35 tls Exp $	*/
+/*	$NetBSD: sony_acpi.c,v 1.21.2.2 2017/12/03 11:36:58 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.21.2.1 2014/08/20 00:03:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.21.2.2 2017/12/03 11:36:58 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -122,7 +122,8 @@ sony_sysctl_helper(SYSCTLFN_ARGS)
 	rv = acpi_eval_integer(sc->sc_node->ad_handle, buf, &acpi_val);
 	if (ACPI_FAILURE(rv)) {
 #ifdef DIAGNOSTIC
-		printf("%s: couldn't get `%s'\n", device_xname(sc->sc_dev), buf);
+		printf("%s: couldn't get `%s'\n", device_xname(sc->sc_dev),
+		    buf);
 #endif
 		return EIO;
 	}
@@ -293,11 +294,13 @@ sony_acpi_attach(device_t parent, device_t self, void *aux)
 
 	if (!pmf_event_register(self, PMFE_DISPLAY_BRIGHTNESS_UP,
 				 sony_acpi_brightness_up, true))
-		aprint_error_dev(self, "couldn't register BRIGHTNESS UP handler\n");
+		aprint_error_dev(self,
+		    "couldn't register BRIGHTNESS UP handler\n");
 
 	if (!pmf_event_register(self, PMFE_DISPLAY_BRIGHTNESS_DOWN,
 				 sony_acpi_brightness_down, true))
-		aprint_error_dev(self, "couldn't register BRIGHTNESS DOWN handler\n");
+		aprint_error_dev(self,
+		    "couldn't register BRIGHTNESS DOWN handler\n");
 }
 
 static void

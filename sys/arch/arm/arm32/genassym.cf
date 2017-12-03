@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.54.2.4 2014/08/20 00:02:45 tls Exp $
+#	$NetBSD: genassym.cf,v 1.54.2.5 2017/12/03 11:35:51 jdolecek Exp $
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -66,6 +66,10 @@ ifdef __ARM_FIQ_INDIRECT
 define	__ARM_FIQ_INDIRECT	1
 endif
 
+ifdef __HAVE_PREEMPTION
+define	__HAVE_PREEMPTION	1
+endif
+
 ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
 define	__HAVE_MM_MD_DIRECT_MAPPED_PHYS	1
 endif
@@ -76,10 +80,6 @@ endif
 
 ifdef __HAVE_PIC_FAST_SOFTINTS
 define	__HAVE_PIC_FAST_SOFTINTS	1
-endif
-
-ifdef __HAVE_UNNESTED_INTRS
-define	__HAVE_UNNESTED_INTRS	1
 endif
 
 ifdef ARM_MMU_EXTENDED
@@ -101,7 +101,7 @@ define	PMAP_DOMAIN_KERNEL	PMAP_DOMAIN_KERNEL
 define	DOMAIN_CLIENT		DOMAIN_CLIENT
 ifdef ARM_MMU_EXTENDED
 define	DOMAIN_DEFAULT		((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | (DOMAIN_CLIENT << (PMAP_DOMAIN_USER*2)))
-else 
+else
 define	DOMAIN_DEFAULT		((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT)
 endif
 
@@ -138,6 +138,9 @@ define	L2_AP_KRW		L2_AP(AP_KRW)
 
 define	TTBCR_S_N_1		__SHIFTIN(1, TTBCR_S_N)
 
+define	TTBR_UPATTR		TTBR_UPATTR
+define	TTBR_MPATTR		TTBR_MPATTR
+
 ifdef PMAP_INCLUDE_PTE_SYNC
 define	PMAP_INCLUDE_PTE_SYNC	1
 endif
@@ -156,9 +159,12 @@ define	L_STAT			offsetof(struct lwp, l_stat)
 define	L_PROC			offsetof(struct lwp, l_proc)
 define	L_CTXSWTCH		offsetof(struct lwp, l_ctxswtch)
 define	L_PRIVATE		offsetof(struct lwp, l_private)
+define	L_FLAG			offsetof(struct lwp, l_flag)
 define	L_MD_FLAGS		offsetof(struct lwp, l_md.md_flags)
 define	L_MD_TF			offsetof(struct lwp, l_md.md_tf)
 define	MDLWP_NOALIGNFLT	MDLWP_NOALIGNFLT
+
+define	LW_SYSTEM		LW_SYSTEM
 
 define	P_RASLIST		offsetof(struct proc, p_raslist)
 
@@ -240,8 +246,11 @@ define	VFP_FPEXC_EN		VFP_FPEXC_EN
 define	NSACR_VFPCP		NSACR_CPn(VFP_COPROC)|NSACR_CPn(VFP_COPROC2)
 
 # Constants required for in_cksum() and friends.
-define	M_LEN				offsetof(struct mbuf, m_len)
-define	M_DATA				offsetof(struct mbuf, m_data)
-define	M_NEXT				offsetof(struct mbuf, m_next)
-define	IP_SRC				offsetof(struct ip, ip_src)
-define	IP_DST				offsetof(struct ip, ip_dst)
+define	M_LEN			offsetof(struct mbuf, m_len)
+define	M_DATA			offsetof(struct mbuf, m_data)
+define	M_NEXT			offsetof(struct mbuf, m_next)
+define	IP_SRC			offsetof(struct ip, ip_src)
+define	IP_DST			offsetof(struct ip, ip_dst)
+
+# Cache information
+define	DCACHE_SIZE		offsetof(struct arm_cache_info, dcache_size)

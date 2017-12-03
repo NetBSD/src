@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_priq.c,v 1.21 2009/03/14 15:35:58 dsl Exp $	*/
+/*	$NetBSD: altq_priq.c,v 1.21.22.1 2017/12/03 11:35:43 jdolecek Exp $	*/
 /*	$KAME: altq_priq.c,v 1.13 2005/04/13 03:44:25 suz Exp $	*/
 /*
  * Copyright (C) 2000-2003
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_priq.c,v 1.21 2009/03/14 15:35:58 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_priq.c,v 1.21.22.1 2017/12/03 11:35:43 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -68,7 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_priq.c,v 1.21 2009/03/14 15:35:58 dsl Exp $");
  */
 #ifdef ALTQ3_COMPAT
 static struct priq_if *priq_attach(struct ifaltq *, u_int);
-static int priq_detach(struct priq_if *);
+static void priq_detach(struct priq_if *);
 #endif
 static int priq_clear_interface(struct priq_if *);
 static int priq_request(struct ifaltq *, int, void *);
@@ -76,7 +76,7 @@ static void priq_purge(struct priq_if *);
 static struct priq_class *priq_class_create(struct priq_if *, int, int, int,
     int);
 static int priq_class_destroy(struct priq_class *);
-static int priq_enqueue(struct ifaltq *, struct mbuf *, struct altq_pktattr *);
+static int priq_enqueue(struct ifaltq *, struct mbuf *);
 static struct mbuf *priq_dequeue(struct ifaltq *, int);
 
 static int priq_addq(struct priq_class *, struct mbuf *);
@@ -219,6 +219,7 @@ priq_getqstats(struct pf_altq *a, void *ubuf, int *nbytes)
 	if (*nbytes < sizeof(stats))
 		return (EINVAL);
 
+	memset(&stats, 0, sizeof(stats));
 	get_class_stats(&stats, cl);
 
 	if ((error = copyout((void *)&stats, ubuf, sizeof(stats))) != 0)
@@ -438,8 +439,9 @@ priq_class_destroy(struct priq_class *cl)
  * (*altq_enqueue) in struct ifaltq.
  */
 static int
-priq_enqueue(struct ifaltq *ifq, struct mbuf *m, struct altq_pktattr *pktattr)
+priq_enqueue(struct ifaltq *ifq, struct mbuf *m)
 {
+	struct altq_pktattr pktattr;
 	struct priq_if	*pif = (struct priq_if *)ifq->altq_disc;
 	struct priq_class *cl;
 	struct m_tag *t;
@@ -457,8 +459,8 @@ priq_enqueue(struct ifaltq *ifq, struct mbuf *m, struct altq_pktattr *pktattr)
 	if ((t = m_tag_find(m, PACKET_TAG_ALTQ_QID, NULL)) != NULL)
 		cl = clh_to_clp(pif, ((struct altq_tag *)(t+1))->qid);
 #ifdef ALTQ3_COMPAT
-	else if ((ifq->altq_flags & ALTQF_CLASSIFY) && pktattr != NULL)
-		cl = pktattr->pattr_class;
+	else if (ifq->altq_flags & ALTQF_CLASSIFY)
+		cl = m->m_pkthdr.pattr_class;
 #endif
 	if (cl == NULL) {
 		cl = pif->pif_default;
@@ -468,9 +470,13 @@ priq_enqueue(struct ifaltq *ifq, struct mbuf *m, struct altq_pktattr *pktattr)
 		}
 	}
 #ifdef ALTQ3_COMPAT
-	if (pktattr != NULL)
-		cl->cl_pktattr = pktattr;  /* save proto hdr used by ECN */
-	else
+	if (m->m_pkthdr.pattr_af != AF_UNSPEC) {
+		pktattr.pattr_class = m->m_pkthdr.pattr_class;
+		pktattr.pattr_af = m->m_pkthdr.pattr_af;
+		pktattr.pattr_hdr = m->m_pkthdr.pattr_hdr;
+
+		cl->cl_pktattr = &pktattr;  /* save proto hdr used by ECN */
+	} else
 #endif
 		cl->cl_pktattr = NULL;
 	len = m_pktlen(m);
@@ -648,7 +654,7 @@ priq_attach(struct ifaltq *ifq, u_int bandwidth)
 	return (pif);
 }
 
-static int
+static void
 priq_detach(struct priq_if *pif)
 {
 	(void)priq_clear_interface(pif);
@@ -668,7 +674,6 @@ priq_detach(struct priq_if *pif)
 	}
 
 	free(pif, M_DEVBUF);
-	return (0);
 }
 
 /*
@@ -687,21 +692,24 @@ priqclose(dev_t dev, int flag, int fmt,
     struct lwp *l)
 {
 	struct priq_if *pif;
-	int err, error = 0;
 
 	while ((pif = pif_list) != NULL) {
 		/* destroy all */
 		if (ALTQ_IS_ENABLED(pif->pif_ifq))
 			altq_disable(pif->pif_ifq);
 
-		err = altq_detach(pif->pif_ifq);
-		if (err == 0)
-			err = priq_detach(pif);
-		if (err != 0 && error == 0)
-			error = err;
+		int error = altq_detach(pif->pif_ifq);
+		switch (error) {
+		case 0:
+		case ENXIO:	/* already disabled */
+			break;
+		default:
+			return error;
+		}
+		priq_detach(pif);
 	}
 
-	return error;
+	return 0;
 }
 
 int
@@ -821,7 +829,7 @@ priqcmd_if_attach(struct priq_interface *ap)
 	if ((error = altq_attach(&ifp->if_snd, ALTQT_PRIQ, pif,
 				 priq_enqueue, priq_dequeue, priq_request,
 				 &pif->pif_classifier, acc_classify)) != 0)
-		(void)priq_detach(pif);
+		priq_detach(pif);
 
 	return (error);
 }
@@ -841,7 +849,8 @@ priqcmd_if_detach(struct priq_interface *ap)
 	if ((error = altq_detach(pif->pif_ifq)))
 		return (error);
 
-	return priq_detach(pif);
+	priq_detach(pif);
+	return 0;
 }
 
 static int

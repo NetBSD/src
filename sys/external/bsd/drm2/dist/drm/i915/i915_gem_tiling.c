@@ -295,12 +295,14 @@ i915_gem_set_tiling(struct drm_device *dev, void *data,
 {
 	struct drm_i915_gem_set_tiling *args = data;
 	struct drm_i915_private *dev_priv = dev->dev_private;
+	struct drm_gem_object *gobj;
 	struct drm_i915_gem_object *obj;
 	int ret = 0;
 
-	obj = to_intel_bo(drm_gem_object_lookup(dev, file, args->handle));
-	if (&obj->base == NULL)
+	gobj = drm_gem_object_lookup(dev, file, args->handle);
+	if (gobj == NULL)
 		return -ENOENT;
+	obj = to_intel_bo(gobj);
 
 	if (!i915_tiling_ok(dev,
 			    args->stride, obj->base.size, args->tiling_mode)) {
@@ -416,11 +418,13 @@ i915_gem_get_tiling(struct drm_device *dev, void *data,
 {
 	struct drm_i915_gem_get_tiling *args = data;
 	struct drm_i915_private *dev_priv = dev->dev_private;
+	struct drm_gem_object *gobj;
 	struct drm_i915_gem_object *obj;
 
-	obj = to_intel_bo(drm_gem_object_lookup(dev, file, args->handle));
-	if (&obj->base == NULL)
+	gobj = drm_gem_object_lookup(dev, file, args->handle);
+	if (gobj == NULL)
 		return -ENOENT;
+	obj = to_intel_bo(gobj);
 
 	mutex_lock(&dev->struct_mutex);
 

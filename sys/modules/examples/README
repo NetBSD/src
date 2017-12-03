@@ -1,0 +1,60 @@
+	$NetBSD: README,v 1.4.10.2 2017/12/03 11:38:53 jdolecek Exp $
+
+                           Kernel Developer's Manual
+
+DESCRIPTION
+     The kernel example dynamic modules.
+
+     This directory contains the following example modules:
+     * hello           - the simplest `hello world' module
+     * properties      - handle incoming properties during the module load
+     * readhappy       - basic implementation of read(9) with happy numbers
+     * ping            - basic ioctl(9)
+     * luahello        - the simplest `hello world' Lua module
+     * luareadhappy    - demonstrates calling Lua code from C
+
+     To build the examples you need a local copy of NetBSD sources. You also
+     need the comp set with toolchain. To build the module just enter a
+     directory with example modules and use make(1):
+
+         # make
+
+     To load, unload, and stat the module use modload(8), modunload(8) and
+     modstat(8).
+
+     The S parameter in the Makefile files points to src/sys and it can be
+     overloaded in this way:
+
+         # make S=/data/netbsd/src/sys
+
+     The code of a module does not need to be in src/sys unless you use
+     the autoconf(9) framework.
+
+     A cross-built of a module for a target platform is possible with the
+     build.sh framework. You need to generate the toolchain and set
+     appropriately PATH to point bin/ in the TOOLDIR path. An example command
+     to cross-build a module with the amd64 toolchain is as follows:
+
+        # nbmake-amd64 S=/data/netbsd/src/sys
+
+
+     The example modules should not be used on a production machine.
+
+     All modules that create a cdevsw should be verified that the major number
+     should not conflict with a real device.
+
+SEE ALSO
+     modctl(2), module(7), modload(8), modstat(8), modunload(8), module(9),
+     intro(9lua)
+
+HISTORY
+     An example of handling incoming properties first appeared in NetBSD 5.0
+     and was written by Julio Merino with further modifications by Martin
+     Husemann, Adam Hamsik, John Nemeth and Mindaugas Rasiukevicius.
+
+     This document and additional modules (hello, readhappy, properties,
+     ping, luahello and luareadhappy) first appeared in NetBSD 8.0; they were
+     written by Kamil Rytarowski.
+
+AUTHORS
+     This document was written by Kamil Rytarowski.

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.35 2010/11/14 13:33:22 uebayasi Exp $	*/
+/*	$NetBSD: pmap.h,v 1.35.18.1 2017/12/03 11:36:42 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -72,8 +72,8 @@ pmap_remove_all(struct pmap *pmap)
  * which have the virtually-indexed cache.
  */
 #ifdef SH4
-#define PMAP_PREFER(pa, va, sz, td)     pmap_prefer((pa), (va))
-void pmap_prefer(vaddr_t, vaddr_t *);
+#define PMAP_PREFER(pa, va, sz, td)     pmap_prefer((pa), (va), (td))
+void pmap_prefer(vaddr_t, vaddr_t *, int);
 #endif /* SH4 */
 
 #define	PMAP_MAP_POOLPAGE(pa)		SH3_PHYS_TO_P1SEG((pa))

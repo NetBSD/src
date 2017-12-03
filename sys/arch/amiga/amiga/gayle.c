@@ -1,9 +1,9 @@
-/*	$NetBSD: gayle.c,v 1.6.122.1 2014/08/20 00:02:42 tls Exp $	*/
+/*	$NetBSD: gayle.c,v 1.6.122.2 2017/12/03 11:35:48 jdolecek Exp $	*/
 
 /* public domain */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gayle.c,v 1.6.122.1 2014/08/20 00:02:42 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gayle.c,v 1.6.122.2 2017/12/03 11:35:48 jdolecek Exp $");
 
 /*
  * Gayle management - provide functions for use in the drivers that utilise
@@ -75,9 +75,11 @@ gayle_init(void) {
 	if (is_a4000()) {
 		gayle_t->gayle_isr_bst.base = (bus_addr_t) __UNVOLATILE(ztwomap(
 		    GAYLE_IDE_BASE_A4000+GAYLE_IDE_INTREQ_A4000));
-
-		gayle_t->gayle_io_bst.absm = &amiga_bus_stride_1;
+		gayle_t->gayle_isr_bst.absm = &amiga_bus_stride_1;
 		gayle_t->gayle_isr_t = &(gayle_t->gayle_isr_bst);
+
+		bus_space_map(gayle_t->gayle_isr_t, 0, 0x1, 0,
+		    &(gayle_t->gayle_isr_h));
 	} else {
 		bus_space_subregion(gayle_t->gayle_io_t, gayle_t->gayle_io_h, 
 		    GAYLE_INTREQ, 0x1, &(gayle_t->gayle_isr_h));

@@ -1,4 +1,4 @@
-/*	$NetBSD: dsclock.c,v 1.5 2011/07/01 18:53:46 dyoung Exp $	*/
+/*	$NetBSD: dsclock.c,v 1.5.12.1 2017/12/03 11:36:41 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dsclock.c,v 1.5 2011/07/01 18:53:46 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dsclock.c,v 1.5.12.1 2017/12/03 11:36:41 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -72,9 +72,9 @@ CFATTACH_DECL_NEW(dsclock, sizeof(struct dsclock_softc),
     dsclock_match, dsclock_attach, NULL, NULL);
 
 #define	ds1286_write(sc, reg, datum)					\
-    bus_space_write_1((sc)->sc_rtct, (sc)->sc_rtch, (reg), (datum))
+    bus_space_write_1((sc)->sc_rtct, (sc)->sc_rtch, (reg << 2) + 3, (datum))
 #define	ds1286_read(sc, reg)						\
-    bus_space_read_1((sc)->sc_rtct, (sc)->sc_rtch, (reg))
+    bus_space_read_1((sc)->sc_rtct, (sc)->sc_rtch, (reg << 2) + 3)
 
 static int
 dsclock_match(device_t parent, cfdata_t cf, void *aux)
@@ -96,7 +96,7 @@ dsclock_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal("\n");
 
-	sc->sc_rtct = SGIMIPS_BUS_SPACE_HPC;
+	sc->sc_rtct = normal_memt;
 	if ((err = bus_space_map(sc->sc_rtct, ma->ma_addr, 0x1ffff,
 	    BUS_SPACE_MAP_LINEAR, &sc->sc_rtch)) != 0) {
 		aprint_error_dev(self,
@@ -126,12 +126,12 @@ dsclock_gettime_ymdhms(struct todr_chip_handle *todrch, struct clock_ymdhms *dt)
 	DS1286_GETTOD(sc, &regs)
 	splx(s);
 
-	dt->dt_sec = FROMBCD(regs[DS1286_SEC]);
-	dt->dt_min = FROMBCD(regs[DS1286_MIN]);
+	dt->dt_sec = bcdtobin(regs[DS1286_SEC]);
+	dt->dt_min = bcdtobin(regs[DS1286_MIN]);
 
 	if (regs[DS1286_HOUR] & DS1286_HOUR_12MODE) {
 		dt->dt_hour =
-		    FROMBCD(regs[DS1286_HOUR] & DS1286_HOUR_12HR_MASK) 
+		    bcdtobin(regs[DS1286_HOUR] & DS1286_HOUR_12HR_MASK) 
 		    + ((regs[DS1286_HOUR] & DS1286_HOUR_12HR_PM) ? 12 : 0);
 
 		/*
@@ -143,13 +143,13 @@ dsclock_gettime_ymdhms(struct todr_chip_handle *todrch, struct clock_ymdhms *dt)
 			dt->dt_hour = 0;
 	} else {
 		 dt->dt_hour =
-		    FROMBCD(regs[DS1286_HOUR] & DS1286_HOUR_24HR_MASK);
+		    bcdtobin(regs[DS1286_HOUR] & DS1286_HOUR_24HR_MASK);
 	}
 
-	dt->dt_wday = FROMBCD(regs[DS1286_DOW]);
-	dt->dt_day = FROMBCD(regs[DS1286_DOM]);
-	dt->dt_mon = FROMBCD(regs[DS1286_MONTH] & DS1286_MONTH_MASK);
-	dt->dt_year = FROM_IRIX_YEAR(FROMBCD(regs[DS1286_YEAR]));
+	dt->dt_wday = bcdtobin(regs[DS1286_DOW]);
+	dt->dt_day = bcdtobin(regs[DS1286_DOM]);
+	dt->dt_mon = bcdtobin(regs[DS1286_MONTH] & DS1286_MONTH_MASK);
+	dt->dt_year = FROM_IRIX_YEAR(bcdtobin(regs[DS1286_YEAR]));
 
 	return 0;
 }
@@ -169,17 +169,17 @@ dsclock_settime_ymdhms(struct todr_chip_handle *todrch, struct clock_ymdhms *dt)
 	splx(s);
 
 	regs[DS1286_SUBSEC] = 0;
-	regs[DS1286_SEC] = TOBCD(dt->dt_sec);
-	regs[DS1286_MIN] = TOBCD(dt->dt_min);
-	regs[DS1286_HOUR] = TOBCD(dt->dt_hour) & DS1286_HOUR_24HR_MASK;
-	regs[DS1286_DOW] = TOBCD(dt->dt_wday);
-	regs[DS1286_DOM] = TOBCD(dt->dt_day);
+	regs[DS1286_SEC] = bintobcd(dt->dt_sec);
+	regs[DS1286_MIN] = bintobcd(dt->dt_min);
+	regs[DS1286_HOUR] = bintobcd(dt->dt_hour) & DS1286_HOUR_24HR_MASK;
+	regs[DS1286_DOW] = bintobcd(dt->dt_wday);
+	regs[DS1286_DOM] = bintobcd(dt->dt_day);
 
 	/* Leave wave-generator bits as set originally */
 	regs[DS1286_MONTH] &=  ~DS1286_MONTH_MASK;
-	regs[DS1286_MONTH] |=  TOBCD(dt->dt_mon) & DS1286_MONTH_MASK;
+	regs[DS1286_MONTH] |=  bintobcd(dt->dt_mon) & DS1286_MONTH_MASK;
 
-	regs[DS1286_YEAR] = TOBCD(TO_IRIX_YEAR(dt->dt_year));
+	regs[DS1286_YEAR] = bintobcd(TO_IRIX_YEAR(dt->dt_year));
 
 	s = splhigh();
 	DS1286_PUTTOD(sc, &regs);

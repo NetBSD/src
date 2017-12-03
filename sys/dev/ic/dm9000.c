@@ -1,4 +1,4 @@
-/*	$NetBSD: dm9000.c,v 1.4 2012/01/28 08:29:55 nisimura Exp $	*/
+/*	$NetBSD: dm9000.c,v 1.4.6.1 2017/12/03 11:37:03 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2009 Paul Fleischer
@@ -161,46 +161,48 @@
 #endif
 
 /*** Internal PHY functions ***/
-uint16_t dme_phy_read(struct dme_softc *sc, int reg);
-void	dme_phy_write(struct dme_softc *sc, int reg, uint16_t value);
-void	dme_phy_init(struct dme_softc *sc);
-void	dme_phy_reset(struct dme_softc *sc);
-void	dme_phy_update_media(struct dme_softc *sc);
-void	dme_phy_check_link(void *arg);
+uint16_t dme_phy_read(struct dme_softc *, int );
+void	dme_phy_write(struct dme_softc *, int, uint16_t);
+void	dme_phy_init(struct dme_softc *);
+void	dme_phy_reset(struct dme_softc *);
+void	dme_phy_update_media(struct dme_softc *);
+void	dme_phy_check_link(void *);
 
 /*** Methods registered in struct ifnet ***/
-void	dme_start_output(struct ifnet *ifp);
-int	dme_init(struct ifnet *ifp);
-int	dme_ioctl(struct ifnet *ifp, u_long cmd, void *data);
-void	dme_stop(struct ifnet *ifp, int disable);
+void	dme_start_output(struct ifnet *);
+int	dme_init(struct ifnet *);
+int	dme_ioctl(struct ifnet *, u_long, void *);
+void	dme_stop(struct ifnet *, int);
 
-int	dme_mediachange(struct ifnet *ifp);
-void	dme_mediastatus(struct ifnet *ufp, struct ifmediareq *ifmr);
+int	dme_mediachange(struct ifnet *);
+void	dme_mediastatus(struct ifnet *, struct ifmediareq *);
 
 /*** Internal methods ***/
 
 /* Prepare data to be transmitted (i.e. dequeue and load it into the DM9000) */
-void    dme_prepare(struct dme_softc *sc, struct ifnet *ifp);
+void    dme_prepare(struct dme_softc *, struct ifnet *);
 
 /* Transmit prepared data */
-void    dme_transmit(struct dme_softc *sc);
+void    dme_transmit(struct dme_softc *);
 
 /* Receive data */
-void    dme_receive(struct dme_softc *sc, struct ifnet *ifp);
+void    dme_receive(struct dme_softc *, struct ifnet *);
 
 /* Software Initialize/Reset of the DM9000 */
-void    dme_reset(struct dme_softc *sc);
+void    dme_reset(struct dme_softc *);
 
 /* Configure multicast filter */
-void	dme_set_addr_filter(struct dme_softc *sc);
+void	dme_set_addr_filter(struct dme_softc *);
 
 /* Set media */
-int	dme_set_media(struct dme_softc *sc, int media);
+int	dme_set_media(struct dme_softc *, int );
 
 /* Read/write packet data from/to DM9000 IC in various transfer sizes */
-int	dme_pkt_read_2(struct dme_softc *sc, struct ifnet *ifp, struct mbuf **outBuf);
-int	dme_pkt_write_2(struct dme_softc *sc, struct mbuf *bufChain);
-/* TODO: Implement 8 and 32 bit read/write functions */
+int	dme_pkt_read_2(struct dme_softc *, struct ifnet *, struct mbuf **);
+int	dme_pkt_write_2(struct dme_softc *, struct mbuf *);
+int	dme_pkt_read_1(struct dme_softc *, struct ifnet *, struct mbuf **);
+int	dme_pkt_write_1(struct dme_softc *, struct mbuf *);
+/* TODO: Implement 32 bit read/write functions */
 
 uint16_t
 dme_phy_read(struct dme_softc *sc, int reg)
@@ -494,8 +496,6 @@ dme_attach(struct dme_softc *sc, const uint8_t *enaddr)
 
 	io_mode = (dme_read(sc, DM9000_ISR) &
 	    DM9000_IOMODE_MASK) >> DM9000_IOMODE_SHIFT;
-	if (io_mode != DM9000_MODE_16BIT )
-		panic("DM9000: Only 16-bit mode is supported!\n");
 
 	DPRINTF(("DM9000 Operation Mode: "));
 	switch( io_mode) {
@@ -508,10 +508,13 @@ dme_attach(struct dme_softc *sc, const uint8_t *enaddr)
 	case DM9000_MODE_32BIT:
 		DPRINTF(("32-bit mode"));
 		sc->sc_data_width = 4;
+		panic("32bit mode is unsupported\n");
 		break;
 	case DM9000_MODE_8BIT:
 		DPRINTF(("8-bit mode"));
 		sc->sc_data_width = 1;
+		sc->sc_pkt_write = dme_pkt_write_1;
+		sc->sc_pkt_read = dme_pkt_read_1;
 		break;
 	default:
 		DPRINTF(("Invalid mode"));
@@ -762,7 +765,6 @@ dme_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 void
 dme_transmit(struct dme_softc *sc)
 {
-	uint8_t status;
 
 	TX_DPRINTF(("dme_transmit: PRE: txready: %d, txbusy: %d\n",
 		sc->txready, sc->txbusy));
@@ -771,7 +773,7 @@ dme_transmit(struct dme_softc *sc)
 	dme_write(sc, DM9000_TXPLH, (sc->txready_length >> 8) & 0xff );
 
 	/* Request to send the packet */
-	status = dme_read(sc, DM9000_ISR);
+	dme_read(sc, DM9000_ISR);
 
 	dme_write(sc, DM9000_TCR, DM9000_TCR_TXREQ);
 
@@ -790,7 +792,8 @@ dme_receive(struct dme_softc *sc, struct ifnet *ifp)
 	while (ready == 0x01) {
 		/* Packet received, retrieve it */
 
-		/* Read without address increment to get the ready byte without moving past it. */
+		/* Read without address increment to get the ready byte without
+		   moving past it. */
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh,
 		    sc->dme_io, DM9000_MRCMDX);
 		/* Dummy ready */
@@ -806,8 +809,12 @@ dme_receive(struct dme_softc *sc, struct ifnet *ifp)
 					  sc->dme_io, DM9000_MRCMD);
 
 			rx_status = sc->sc_pkt_read(sc, ifp, &m);
-
-			if (rx_status & (DM9000_RSR_CE | DM9000_RSR_PLE)) {
+			if (m == NULL) {
+				/* failed to allocate a receive buffer */
+				ifp->if_ierrors++;
+				RX_DPRINTF(("dme_receive: "
+					"Error allocating buffer\n"));
+			} else if (rx_status & (DM9000_RSR_CE | DM9000_RSR_PLE)) {
 				/* Error while receiving the packet,
 				 * discard it and keep track of counters
 				 */
@@ -817,10 +824,7 @@ dme_receive(struct dme_softc *sc, struct ifnet *ifp)
 			} else if (rx_status & DM9000_RSR_LCS) {
 				ifp->if_collisions++;
 			} else {
-				if (ifp->if_bpf)
-					bpf_mtap(ifp, m);
-				ifp->if_ipackets++;
-				(*ifp->if_input)(ifp, m);
+				if_percpuq_enqueue(ifp->if_percpuq, m);
 			}
 
 		} else if (ready != 0x00) {
@@ -1012,21 +1016,21 @@ dme_pkt_write_2(struct dme_softc *sc, struct mbuf *bufChain)
 				to_write--;
 			} else {
 				int i;
-				uint16_t *dptr = (uint16_t*)write_ptr;
+				uint16_t *dptr = (uint16_t *)write_ptr;
 
 				/* A block of aligned data. */
-				for(i = 0; i < to_write/2; i++) {
+				for(i = 0; i < to_write / 2; i++) {
 					/* buf will be half-word aligned
 					 * all the time
 					 */
 					bus_space_write_2(sc->sc_iot,
-							  sc->sc_ioh, sc->dme_data, *dptr);
+					    sc->sc_ioh, sc->dme_data, *dptr);
 					TX_DATA_DPRINTF(("%02X %02X ",
-							 *dptr & 0xFF, (*dptr>>8) & 0xFF));
+					    *dptr & 0xFF, (*dptr >> 8) & 0xFF));
 					dptr++;
 				}
 
-				write_ptr += i*2;
+				write_ptr += i * 2;
 				if (to_write % 2 != 0) {
 					DPRINTF(("dme_pkt_write_16: "
 						 "to_write %% 2: %d\n",
@@ -1042,10 +1046,10 @@ dme_pkt_write_2(struct dme_softc *sc, struct mbuf *bufChain)
 					DPRINTF(("dme_pkt_write_16: "
 						 "to_write (after): %d\n",
 						 to_write));
-					DPRINTF(("dme_pkt_write_16: i*2: %d\n",
+					DPRINTF(("dme_pkt_write_16: i * 2: %d\n",
 						 i*2));
 				}
-				to_write -= i*2;
+				to_write -= i * 2;
 			}
 		} /* while(...) */
 	} /* for(...) */
@@ -1063,8 +1067,7 @@ dme_pkt_read_2(struct dme_softc *sc, struct ifnet *ifp, struct mbuf **outBuf)
 	uint16_t i;
 	uint16_t *buf;
 
-	data = bus_space_read_2(sc->sc_iot, sc->sc_ioh,
-				sc->dme_data);
+	data = bus_space_read_2(sc->sc_iot, sc->sc_ioh, sc->dme_data);
 
 	rx_status = data & 0xFF;
 	frame_length = bus_space_read_2(sc->sc_iot,
@@ -1080,23 +1083,121 @@ dme_pkt_read_2(struct dme_softc *sc, struct ifnet *ifp, struct mbuf **outBuf)
 
 
 	m = dme_alloc_receive_buffer(ifp, frame_length);
+	if (m == NULL) {
+		/*
+		 * didn't get a receive buffer, so we read the rest of the
+		 * packet, throw it away and return an error
+		 */
+		for (i = 0; i < frame_length; i += 2 ) {
+			data = bus_space_read_2(sc->sc_iot,
+					sc->sc_ioh, sc->dme_data);
+		}
+		*outBuf = NULL;
+		return 0;
+	}
 
 	buf = mtod(m, uint16_t*);
 
 	RX_DPRINTF(("dme_receive: "));
 
-	for(i=0; i< frame_length; i+=2 ) {
+	for (i = 0; i < frame_length; i += 2 ) {
 		data = bus_space_read_2(sc->sc_iot,
 					sc->sc_ioh, sc->dme_data);
 		if ( (frame_length % 2 != 0) &&
-		     (i == frame_length-1) ) {
+		     (i == frame_length - 1) ) {
 			data = data & 0xff;
 			RX_DPRINTF((" L "));
 		}
 		*buf = data;
 		buf++;
 		RX_DATA_DPRINTF(("%02X %02X ", data & 0xff,
-				 (data>>8) & 0xff));
+				 (data >> 8) & 0xff));
+	}
+
+	RX_DATA_DPRINTF(("\n"));
+	RX_DPRINTF(("Read %d bytes\n", i));
+
+	*outBuf = m;
+	return rx_status;
+}
+
+int
+dme_pkt_write_1(struct dme_softc *sc, struct mbuf *bufChain)
+{
+	int length = 0, i;
+	struct mbuf *buf;
+	uint8_t *write_ptr;
+
+	/* We expect that the DM9000 has been setup to accept writes before
+	   this function is called. */
+
+	for (buf = bufChain; buf != NULL; buf = buf->m_next) {
+		int to_write = buf->m_len;
+
+		length += to_write;
+
+		write_ptr = buf->m_data;
+		for (i = 0; i < to_write; i++) {
+			bus_space_write_1(sc->sc_iot, sc->sc_ioh,
+			    sc->dme_data, *write_ptr);
+			write_ptr++;
+		}
+	} /* for(...) */
+
+	return length;
+}
+
+int
+dme_pkt_read_1(struct dme_softc *sc, struct ifnet *ifp, struct mbuf **outBuf)
+{
+	uint8_t rx_status;
+	struct mbuf *m;
+	uint8_t *buf;
+	uint16_t frame_length;
+	uint16_t i, reg;
+	uint8_t data;
+
+	reg = bus_space_read_1(sc->sc_iot, sc->sc_ioh, sc->dme_data);
+	reg |= bus_space_read_1(sc->sc_iot, sc->sc_ioh, sc->dme_data) << 8;
+	rx_status = reg & 0xFF;
+
+	reg = bus_space_read_1(sc->sc_iot, sc->sc_ioh, sc->dme_data);
+	reg |= bus_space_read_1(sc->sc_iot, sc->sc_ioh, sc->dme_data) << 8;
+	frame_length = reg;
+
+	if (frame_length > ETHER_MAX_LEN) {
+		printf("Got frame of length: %d\n", frame_length);
+		printf("ETHER_MAX_LEN is: %d\n", ETHER_MAX_LEN);
+		panic("Something is rotten");
+	}
+	RX_DPRINTF(("dme_receive: "
+		    "rx_statux: 0x%x, frame_length: %d\n",
+		    rx_status, frame_length));
+
+
+	m = dme_alloc_receive_buffer(ifp, frame_length);
+	if (m == NULL) {
+		/*
+		 * didn't get a receive buffer, so we read the rest of the
+		 * packet, throw it away and return an error
+		 */
+		for (i = 0; i < frame_length; i++ ) {
+			data = bus_space_read_2(sc->sc_iot,
+					sc->sc_ioh, sc->dme_data);
+		}
+		*outBuf = NULL;
+		return 0;
+	}
+
+	buf = mtod(m, uint8_t *);
+
+	RX_DPRINTF(("dme_receive: "));
+
+	for (i = 0; i< frame_length; i += 1 ) {
+		data = bus_space_read_1(sc->sc_iot, sc->sc_ioh, sc->dme_data);
+		*buf = data;
+		buf++;
+		RX_DATA_DPRINTF(("%02X ", data));
 	}
 
 	RX_DATA_DPRINTF(("\n"));
@@ -1114,7 +1215,9 @@ dme_alloc_receive_buffer(struct ifnet *ifp, unsigned int frame_length)
 	int pad;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	m->m_pkthdr.rcvif = ifp;
+	if (m == NULL) return NULL;
+
+	m_set_rcvif(m, ifp);
 	/* Ensure that we always allocate an even number of
 	 * bytes in order to avoid writing beyond the buffer
 	 */
@@ -1123,8 +1226,13 @@ dme_alloc_receive_buffer(struct ifnet *ifp, unsigned int frame_length)
 		sizeof(struct ether_header);
 	/* All our frames have the CRC attached */
 	m->m_flags |= M_HASFCS;
-	if (m->m_pkthdr.len + pad > MHLEN )
+	if (m->m_pkthdr.len + pad > MHLEN) {
 		MCLGET(m, M_DONTWAIT);
+		if ((m->m_flags & M_EXT) == 0) {
+			m_freem(m);
+			return NULL;
+		}
+	}
 
 	m->m_data += pad;
 	m->m_len = frame_length + (frame_length % sc->sc_data_width);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.55.2.2 2014/08/20 00:03:42 tls Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.55.2.3 2017/12/03 11:37:08 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.55.2.2 2014/08/20 00:03:42 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.55.2.3 2017/12/03 11:37:08 jdolecek Exp $");
 
 
 #include <sys/param.h>
@@ -431,8 +431,7 @@ stge_attach(device_t parent, device_t self, void *aux)
 	/* power up chip */
 	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, self, NULL)) &&
 	    error != EOPNOTSUPP) {
-		aprint_error_dev(self, "cannot activate %d\n",
-		    error);
+		aprint_error_dev(self, "cannot activate %d\n", error);
 		return;
 	}
 	/*
@@ -461,8 +460,7 @@ stge_attach(device_t parent, device_t self, void *aux)
 	    sizeof(struct stge_control_data), PAGE_SIZE, 0, &seg, 1, &rseg,
 	    0)) != 0) {
 		aprint_error_dev(self,
-		    "unable to allocate control data, error = %d\n",
-		    error);
+		    "unable to allocate control data, error = %d\n", error);
 		goto fail_0;
 	}
 
@@ -470,8 +468,7 @@ stge_attach(device_t parent, device_t self, void *aux)
 	    sizeof(struct stge_control_data), (void **)&sc->sc_control_data,
 	    BUS_DMA_COHERENT)) != 0) {
 		aprint_error_dev(self,
-		    "unable to map control data, error = %d\n",
-		    error);
+		    "unable to map control data, error = %d\n", error);
 		goto fail_1;
 	}
 
@@ -661,6 +658,7 @@ stge_attach(device_t parent, device_t self, void *aux)
 	 * Attach the interface.
 	 */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, enaddr);
 
 #ifdef STGE_EVENT_COUNTERS
@@ -807,8 +805,9 @@ stge_start(struct ifnet *ifp)
 	 * descriptors.
 	 */
 	for (;;) {
-		struct m_tag *mtag;
 		uint64_t tfc;
+		bool have_vtag;
+		uint16_t vtag;
 
 		/*
 		 * Grab a packet off the queue.
@@ -829,7 +828,9 @@ stge_start(struct ifnet *ifp)
 		/*
 		 * See if we have any VLAN stuff.
 		 */
-		mtag = VLAN_OUTPUT_TAG(&sc->sc_ethercom, m0);
+		have_vtag = vlan_has_tag(m0);
+		if (have_vtag)
+			vtag = vlan_get_tag(m0);
 
 		/*
 		 * Get the last and next available transmit descriptor.
@@ -933,7 +934,7 @@ stge_start(struct ifnet *ifp)
 		    TFD_FragCount(seg) | csum_flags |
 		    (((nexttx & STGE_TXINTR_SPACING_MASK) == 0) ?
 			TFD_TxDMAIndicate : 0);
-		if (mtag) {
+		if (have_vtag) {
 #if	0
 			struct ether_header *eh =
 			    mtod(m0, struct ether_header *);
@@ -945,7 +946,7 @@ stge_start(struct ifnet *ifp)
 #ifdef	STGE_VLAN_CFI
 			    TFD_CFI |
 #endif
-			    TFD_VID(VLAN_TAG_VALUE(mtag));
+			    TFD_VID(vtag);
 		}
 		tfd->tfd_control = htole64(tfc);
 
@@ -1144,7 +1145,7 @@ stge_intr(void *arg)
 	    sc->sc_IntEnable);
 
 	/* Try to get more packets going. */
-	stge_start(ifp);
+	if_schedule_deferred_start(ifp);
 
 	return (1);
 }
@@ -1348,20 +1349,19 @@ stge_rxintr(struct stge_softc *sc)
 			}
 		}
 
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = len;
 
 		/*
 		 * Pass this up to any BPF listeners, but only
 		 * pass if up the stack if it's for us.
 		 */
-		bpf_mtap(ifp, m);
 #ifdef	STGE_VLAN_UNTAG
 		/*
 		 * Check for VLAN tagged packets
 		 */
 		if (status & RFD_VLANDetected)
-			VLAN_INPUT_TAG(ifp, m, RFD_TCI(status), continue);
+			vlan_set_tag(m, RFD_TCI(status));
 
 #endif
 #if	0
@@ -1377,7 +1377,7 @@ stge_rxintr(struct stge_softc *sc)
 		}
 #endif
 		/* Pass it on. */
-		(*ifp->if_input)(ifp, m);
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 	}
 
 	/* Update the receive pointer. */

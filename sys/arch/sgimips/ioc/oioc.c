@@ -1,4 +1,4 @@
-/*	$NetBSD: oioc.c,v 1.2.12.1 2012/11/20 03:01:41 tls Exp $	*/
+/*	$NetBSD: oioc.c,v 1.2.12.2 2017/12/03 11:36:41 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2009 Stephen M. Rumble
@@ -37,12 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oioc.c,v 1.2.12.1 2012/11/20 03:01:41 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oioc.c,v 1.2.12.2 2017/12/03 11:36:41 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 
-#define _SGIMIPS_BUS_DMA_PRIVATE
 #include <machine/cpu.h>
 #include <machine/locore.h>
 #include <machine/autoconf.h>
@@ -99,8 +98,8 @@ oioc_attach(device_t parent, device_t self, void *aux)
 	uint32_t reg1, reg2;
 	int oiocrev, i;
 
-	sc->sc_iot = SGIMIPS_BUS_SPACE_NORMAL;
-	if (bus_space_map(sc->sc_iot, ma->ma_addr, 0,
+	sc->sc_iot = normal_memt;
+	if (bus_space_map(sc->sc_iot, ma->ma_addr, OIOC_SCSI_REGS_SIZE,
 	    BUS_SPACE_MAP_LINEAR, &sc->sc_ioh))
 		panic("oioc_attach: could not allocate memory\n");
 
@@ -146,7 +145,7 @@ oioc_attach(device_t parent, device_t self, void *aux)
 		oa.oa_name      = oioc_devices[i].od_name;
 		oa.oa_irq       = oioc_devices[i].od_irq;
 		oa.oa_burst_dma = sc->sc_burst_dma;
-		oa.oa_st        = SGIMIPS_BUS_SPACE_NORMAL;
+		oa.oa_st        = normal_memt;
 		oa.oa_sh        = sc->sc_ioh;
 		oa.oa_dmat      = &sgimips_default_bus_dma_tag;
 		config_found_ia(self, "oioc", &oa, oioc_print);

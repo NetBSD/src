@@ -1,4 +1,4 @@
-/*	$NetBSD: grfioctl.h,v 1.20 2011/02/08 20:20:08 rmind Exp $	*/
+/*	$NetBSD: grfioctl.h,v 1.20.14.1 2017/12/03 11:35:48 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -37,6 +37,8 @@
  *
  *	@(#)grfioctl.h	7.2 (Berkeley) 11/4/90
  */
+
+#include <sys/ioccom.h>
 
 /* these are changeable values, encapsulated in their own structure, so
    no the whole thing has to be copied when setting parameters. */

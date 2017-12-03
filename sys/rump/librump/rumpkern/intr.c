@@ -1,7 +1,7 @@
-/*	$NetBSD: intr.c,v 1.36.14.2 2014/08/20 00:04:40 tls Exp $	*/
+/*	$NetBSD: intr.c,v 1.36.14.3 2017/12/03 11:39:16 jdolecek Exp $	*/
 
 /*
- * Copyright (c) 2008-2010 Antti Kantee.  All Rights Reserved.
+ * Copyright (c) 2008-2010, 2015 Antti Kantee.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.36.14.2 2014/08/20 00:04:40 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.36.14.3 2017/12/03 11:39:16 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -38,9 +38,9 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.36.14.2 2014/08/20 00:04:40 tls Exp $");
 #include <sys/intr.h>
 #include <sys/timetc.h>
 
-#include <rump/rumpuser.h>
+#include <rump-sys/kern.h>
 
-#include "rump_private.h"
+#include <rump/rumpuser.h>
 
 /*
  * Interrupt simulator.  It executes hardclock() and softintrs.
@@ -62,36 +62,32 @@ struct softint {
 struct softint_percpu {
 	struct softint *sip_parent;
 	bool sip_onlist;
+	bool sip_onlist_cpu;
 
-	LIST_ENTRY(softint_percpu) sip_entries;
+	TAILQ_ENTRY(softint_percpu) sip_entries;	/* scheduled */
+	TAILQ_ENTRY(softint_percpu) sip_entries_cpu;	/* to be scheduled */
 };
 
 struct softint_lev {
 	struct rumpuser_cv *si_cv;
-	LIST_HEAD(, softint_percpu) si_pending;
+	TAILQ_HEAD(, softint_percpu) si_pending;
 };
+
+static TAILQ_HEAD(, softint_percpu) sicpupending \
+    = TAILQ_HEAD_INITIALIZER(sicpupending);
+static struct rumpuser_mtx *sicpumtx;
+static struct rumpuser_cv *sicpucv;
 
 kcondvar_t lbolt; /* Oh Kath Ra */
 
-static u_int ticks;
 static int ncpu_final;
 
-static u_int
-rumptc_get(struct timecounter *tc)
-{
-
-	KASSERT(rump_threads);
-	return ticks;
-}
-
-static struct timecounter rumptc = {
-	.tc_get_timecount	= rumptc_get,
-	.tc_poll_pps 		= NULL,
-	.tc_counter_mask	= ~0,
-	.tc_frequency		= 0,
-	.tc_name		= "rumpclk",
-	.tc_quality		= 0,
-};
+void noclock(void); void noclock(void) {return;}
+__strong_alias(sched_schedclock,noclock);
+__strong_alias(cpu_initclocks,noclock);
+__strong_alias(addupc_intr,noclock);
+__strong_alias(sched_tick,noclock);
+__strong_alias(setstatclockrate,noclock);
 
 /*
  * clock "interrupt"
@@ -100,11 +96,11 @@ static void
 doclock(void *noarg)
 {
 	struct timespec thetick, curclock;
+	struct clockframe *clkframe;
 	int64_t sec;
 	long nsec;
 	int error;
-	int cpuindx = curcpu()->ci_index;
-	extern int hz;
+	struct cpu_info *ci = curcpu();
 
 	error = rumpuser_clock_gettime(RUMPUSER_CLOCK_ABSMONO, &sec, &nsec);
 	if (error)
@@ -115,21 +111,27 @@ doclock(void *noarg)
 	thetick.tv_sec = 0;
 	thetick.tv_nsec = 1000000000/hz;
 
+	/* generate dummy clockframe for hardclock to consume */
+	clkframe = rump_cpu_makeclockframe();
+
 	for (;;) {
-		callout_hardclock();
+		int lbolt_ticks = 0;
+
+		hardclock(clkframe);
+		if (CPU_IS_PRIMARY(ci)) {
+			if (++lbolt_ticks >= hz) {
+				lbolt_ticks = 0;
+				cv_broadcast(&lbolt);
+			}
+		}
 
 		error = rumpuser_clock_sleep(RUMPUSER_CLOCK_ABSMONO,
 		    curclock.tv_sec, curclock.tv_nsec);
-		KASSERT(!error);
-		timespecadd(&curclock, &thetick, &curclock);
-
-		if (cpuindx != 0)
-			continue;
-
-		if ((++ticks % hz) == 0) {
-			cv_broadcast(&lbolt);
+		if (error) {
+			panic("rumpuser_clock_sleep failed with error %d",
+			    error);
 		}
-		tc_ticktock();
+		timespecadd(&curclock, &thetick, &curclock);
 	}
 }
 
@@ -154,8 +156,8 @@ sithread(void *arg)
 	si_lvl = &si_lvlp[mylevel];
 
 	for (;;) {
-		if (!LIST_EMPTY(&si_lvl->si_pending)) {
-			sip = LIST_FIRST(&si_lvl->si_pending);
+		if (!TAILQ_EMPTY(&si_lvl->si_pending)) {
+			sip = TAILQ_FIRST(&si_lvl->si_pending);
 			si = sip->sip_parent;
 
 			func = si->si_func;
@@ -163,7 +165,7 @@ sithread(void *arg)
 			mpsafe = si->si_flags & SI_MPSAFE;
 
 			sip->sip_onlist = false;
-			LIST_REMOVE(sip, sip_entries);
+			TAILQ_REMOVE(&si_lvl->si_pending, sip, sip_entries);
 			if (si->si_flags & SI_KILLME) {
 				softint_disestablish(si);
 				continue;
@@ -181,6 +183,51 @@ sithread(void *arg)
 	}
 
 	panic("sithread unreachable");
+}
+
+/*
+ * Helper for softint_schedule_cpu()
+ */
+static void
+sithread_cpu_bouncer(void *arg)
+{
+	struct lwp *me;
+
+	me = curlwp;
+	me->l_pflag |= LP_BOUND;
+
+	rump_unschedule();
+	for (;;) {
+		struct softint_percpu *sip;
+		struct softint *si;
+		struct cpu_info *ci;
+		unsigned int cidx;
+
+		rumpuser_mutex_enter_nowrap(sicpumtx);
+		while (TAILQ_EMPTY(&sicpupending)) {
+			rumpuser_cv_wait_nowrap(sicpucv, sicpumtx);
+		}
+		sip = TAILQ_FIRST(&sicpupending);
+		TAILQ_REMOVE(&sicpupending, sip, sip_entries_cpu);
+		sip->sip_onlist_cpu = false;
+		rumpuser_mutex_exit(sicpumtx);
+
+		/*
+		 * ok, now figure out which cpu we need the softint to
+		 * be handled on
+		 */
+		si = sip->sip_parent;
+		cidx = sip - si->si_entry;
+		ci = cpu_lookup(cidx);
+		me->l_target_cpu = ci;
+
+		/* schedule ourselves there, and then schedule the softint */
+		rump_schedule();
+		KASSERT(curcpu() == ci);
+		softint_schedule(si);
+		rump_unschedule();
+	}
+	panic("sithread_cpu_bouncer unreasonable");
 }
 
 static kmutex_t sithr_emtx;
@@ -245,7 +292,7 @@ softint_init(struct cpu_info *ci)
 	slev = kmem_alloc(sizeof(struct softint_lev) * SOFTINT_COUNT, KM_SLEEP);
 	for (i = 0; i < SOFTINT_COUNT; i++) {
 		rumpuser_cv_init(&slev[i].si_cv);
-		LIST_INIT(&slev[i].si_pending);
+		TAILQ_INIT(&slev[i].si_pending);
 	}
 	cd->cpu_softcpu = slev;
 
@@ -254,8 +301,12 @@ softint_init(struct cpu_info *ci)
 	if (ci->ci_index == 0) {
 		int sithr_swap;
 
-		rumptc.tc_frequency = hz;
-		tc_init(&rumptc);
+		/* pretend that we have our own for these */
+		stathz = 1;
+		schedhz = 1;
+		profhz = 1;
+
+		initclocks();
 
 		/* create deferred softint threads */
 		mutex_enter(&sithr_emtx);
@@ -273,6 +324,13 @@ softint_init(struct cpu_info *ci)
 	if ((rv = kthread_create(PRI_NONE, KTHREAD_MPSAFE,
 	    ci, doclock, NULL, NULL, "rumpclk%d", ci->ci_index)) != 0)
 		panic("clock thread creation failed: %d", rv);
+
+	/* not one either, but at least a softint helper */
+	rumpuser_mutex_init(&sicpumtx, RUMPUSER_MTX_SPIN);
+	rumpuser_cv_init(&sicpucv);
+	if ((rv = kthread_create(PRI_NONE, KTHREAD_MPSAFE,
+	    NULL, sithread_cpu_bouncer, NULL, NULL, "sipbnc")) != 0)
+		panic("softint cpu bouncer creation failed: %d", rv);
 }
 
 void *
@@ -300,6 +358,13 @@ softint_establish(u_int flags, void (*func)(void *), void *arg)
 	return si;
 }
 
+static struct softint_percpu *
+sitosip(struct softint *si, struct cpu_info *ci)
+{
+
+	return &si->si_entry[ci->ci_index];
+}
+
 /*
  * Soft interrupts bring two choices.  If we are running with thread
  * support enabled, defer execution, otherwise execute in place.
@@ -310,7 +375,7 @@ softint_schedule(void *arg)
 {
 	struct softint *si = arg;
 	struct cpu_info *ci = curcpu();
-	struct softint_percpu *sip = &si->si_entry[ci->ci_index];
+	struct softint_percpu *sip = sitosip(si, ci);
 	struct cpu_data *cd = &ci->ci_data;
 	struct softint_lev *si_lvl = cd->cpu_softcpu;
 
@@ -318,21 +383,51 @@ softint_schedule(void *arg)
 		si->si_func(si->si_arg);
 	} else {
 		if (!sip->sip_onlist) {
-			LIST_INSERT_HEAD(&si_lvl[si->si_level].si_pending,
+			TAILQ_INSERT_TAIL(&si_lvl[si->si_level].si_pending,
 			    sip, sip_entries);
 			sip->sip_onlist = true;
 		}
 	}
 }
 
+/*
+ * Like softint_schedule(), except schedule softint to be handled on
+ * the core designated by ci_tgt instead of the core the call is made on.
+ *
+ * Unlike softint_schedule(), the performance is not important
+ * (unless ci_tgt == curcpu): high-performance rump kernel I/O stacks
+ * should arrange data to already be on the right core at the driver
+ * layer.
+ */
 void
-softint_schedule_cpu(void *arg, struct cpu_info *ci)
+softint_schedule_cpu(void *arg, struct cpu_info *ci_tgt)
 {
+	struct softint *si = arg;
+	struct cpu_info *ci_cur = curcpu();
+	struct softint_percpu *sip;
+
+	KASSERT(rump_threads);
+
+	/* preferred case (which can be optimized some day) */
+	if (ci_cur == ci_tgt) {
+		softint_schedule(si);
+		return;
+	}
+
 	/*
-	 * TODO: implement this properly
+	 * no?  then it's softint turtles all the way down
 	 */
-	KASSERT(curcpu() == ci);
-	softint_schedule(arg);
+
+	sip = sitosip(si, ci_tgt);
+	rumpuser_mutex_enter_nowrap(sicpumtx);
+	if (sip->sip_onlist_cpu) {
+		rumpuser_mutex_exit(sicpumtx);
+		return;
+	}
+	TAILQ_INSERT_TAIL(&sicpupending, sip, sip_entries_cpu);
+	sip->sip_onlist_cpu = true;
+	rumpuser_cv_signal(sicpucv);
+	rumpuser_mutex_exit(sicpumtx);
 }
 
 /*
@@ -368,7 +463,7 @@ rump_softint_run(struct cpu_info *ci)
 		return;
 
 	for (i = 0; i < SOFTINT_COUNT; i++) {
-		if (!LIST_EMPTY(&si_lvl[i].si_pending))
+		if (!TAILQ_EMPTY(&si_lvl[i].si_pending))
 			rumpuser_cv_signal(si_lvl[i].si_cv);
 	}
 }

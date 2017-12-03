@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.94.2.1 2014/08/20 00:03:38 tls Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.94.2.2 2017/12/03 11:37:04 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.94.2.1 2014/08/20 00:03:38 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.94.2.2 2017/12/03 11:37:04 jdolecek Exp $");
 
 
 #include <sys/param.h>
@@ -106,7 +106,7 @@ __KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.94.2.1 2014/08/20 00:03:38 tls Exp $")
 #include <net/if_media.h>
 
 #include <net/bpf.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <sys/bus.h>
 #include <machine/endian.h>
@@ -737,6 +737,7 @@ rtk_attach(struct rtk_softc *sc)
 	 * Call MI attach routines.
 	 */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, eaddr);
 
 	rnd_attach_source(&sc->rnd_source, device_xname(self),
@@ -1038,7 +1039,7 @@ rtk_rxeof(struct rtk_softc *sc)
 			}
 		}
 		m->m_data += RTK_ETHER_ALIGN;	/* for alignment */
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = total_len;
 		dst = mtod(m, void *);
 
@@ -1073,11 +1074,8 @@ rtk_rxeof(struct rtk_softc *sc)
 		if (m == NULL)
 			continue;
 
-		ifp->if_ipackets++;
-
-		bpf_mtap(ifp, m);
 		/* pass it on. */
-		(*ifp->if_input)(ifp, m);
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 	}
 }
 
@@ -1203,8 +1201,7 @@ rtk_intr(void *arg)
 	/* Re-enable interrupts. */
 	CSR_WRITE_2(sc, RTK_IMR, RTK_INTRS);
 
-	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
-		rtk_start(ifp);
+	if_schedule_deferred_start(ifp);
 
 	rnd_add_uint32(&sc->rnd_source, status);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.15 2012/01/27 18:52:59 para Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.15.6.1 2017/12/03 11:36:31 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.15 2012/01/27 18:52:59 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.15.6.1 2017/12/03 11:36:31 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/extent.h>
@@ -123,7 +123,7 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	memext = extent_create("pcimem", 0x00000000, 0x0fffffff,
 	    NULL, 0, EX_NOWAIT);
 
-	pci_configure_bus(0, ioext, memext, NULL, 0, 32);
+	pci_configure_bus(genppc_pct, ioext, memext, NULL, 0, CACHELINESIZE);
 
 	extent_destroy(ioext);
 	extent_destroy(memext);

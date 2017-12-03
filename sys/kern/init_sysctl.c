@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.190.2.4 2014/08/20 00:04:28 tls Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.190.2.5 2017/12/03 11:38:44 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.190.2.4 2014/08/20 00:04:28 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.190.2.5 2017/12/03 11:38:44 jdolecek Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd.h"
@@ -47,16 +47,16 @@ __KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.190.2.4 2014/08/20 00:04:28 tls Ex
 #include <sys/unistd.h>
 #include <sys/disklabel.h>
 #include <sys/cprng.h>
-#include <sys/vnode.h>
+#include <sys/vnode_impl.h>	/* For vfs_drainvnodes(). */
 #include <sys/mount.h>
 #include <sys/namei.h>
-#include <sys/msgbuf.h>
 #include <dev/cons.h>
 #include <sys/socketvar.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/tty.h>
 #include <sys/kmem.h>
+#include <sys/reboot.h>
 #include <sys/resource.h>
 #include <sys/resourcevar.h>
 #include <sys/exec.h>
@@ -65,7 +65,6 @@ __KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.190.2.4 2014/08/20 00:04:28 tls Ex
 #include <sys/stat.h>
 #include <sys/kauth.h>
 #include <sys/ktrace.h>
-#include <sys/ksem.h>
 
 #include <sys/cpu.h>
 
@@ -74,6 +73,16 @@ char security_setidcore_path[MAXPATHLEN] = "/var/crash/%n.core";
 uid_t security_setidcore_owner = 0;
 gid_t security_setidcore_group = 0;
 mode_t security_setidcore_mode = (S_IRUSR|S_IWUSR);
+
+/*
+ * Current status of SysV IPC capability.  Initially, these are
+ * 0 if the capability is not built-in to the kernel, but can
+ * be updated if the appropriate kernel module is (auto)loaded.
+ */
+
+int kern_has_sysvmsg = 0;
+int kern_has_sysvshm = 0;
+int kern_has_sysvsem = 0;
 
 static const u_int sysctl_lwpprflagmap[] = {
 	LPR_DETACHED, L_DETACHED,
@@ -102,11 +111,10 @@ dcopyout(struct lwp *l, const void *kaddr, void *uaddr, size_t len)
 static int sysctl_kern_trigger_panic(SYSCTLFN_PROTO);
 #endif
 static int sysctl_kern_maxvnodes(SYSCTLFN_PROTO);
+static int sysctl_kern_messages(SYSCTLFN_PROTO);
 static int sysctl_kern_rtc_offset(SYSCTLFN_PROTO);
 static int sysctl_kern_maxproc(SYSCTLFN_PROTO);
 static int sysctl_kern_hostid(SYSCTLFN_PROTO);
-static int sysctl_kern_clockrate(SYSCTLFN_PROTO);
-static int sysctl_msgbuf(SYSCTLFN_PROTO);
 static int sysctl_kern_defcorename(SYSCTLFN_PROTO);
 static int sysctl_kern_cptime(SYSCTLFN_PROTO);
 #if NPTY > 0
@@ -174,19 +182,6 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       SYSCTL_DESCR("System host ID number"),
 		       sysctl_kern_hostid, 0, NULL, 0,
 		       CTL_KERN, KERN_HOSTID, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_STRUCT, "clockrate",
-		       SYSCTL_DESCR("Kernel clock rates"),
-		       sysctl_kern_clockrate, 0, NULL,
-		       sizeof(struct clockinfo),
-		       CTL_KERN, KERN_CLOCKRATE, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_INT, "hardclock_ticks",
-		       SYSCTL_DESCR("Number of hardclock ticks"),
-		       NULL, 0, &hardclock_ticks, sizeof(hardclock_ticks),
-		       CTL_KERN, KERN_HARDCLOCK_TICKS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "vnode",
@@ -270,12 +265,6 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       sysctl_root_device, 0, NULL, 0,
 		       CTL_KERN, KERN_ROOT_DEVICE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_INT, "msgbufsize",
-		       SYSCTL_DESCR("Size of the kernel message buffer"),
-		       sysctl_msgbuf, 0, NULL, 0,
-		       CTL_KERN, KERN_MSGBUFSIZE, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "fsync",
 		       SYSCTL_DESCR("Whether the POSIX 1003.1b File "
@@ -290,38 +279,25 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       NULL, 0, NULL, 0,
 		       CTL_KERN, KERN_SYSVIPC, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
+		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
 		       CTLTYPE_INT, "sysvmsg",
 		       SYSCTL_DESCR("System V style message support available"),
-		       NULL,
-#ifdef SYSVMSG
-		       1,
-#else /* SYSVMSG */
-		       0,
-#endif /* SYSVMSG */
-		       NULL, 0, CTL_KERN, KERN_SYSVIPC, KERN_SYSVIPC_MSG, CTL_EOL);
+		       NULL, 0, &kern_has_sysvmsg, sizeof(int),
+		       CTL_KERN, KERN_SYSVIPC, KERN_SYSVIPC_MSG, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
+		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
 		       CTLTYPE_INT, "sysvsem",
 		       SYSCTL_DESCR("System V style semaphore support "
-				    "available"), NULL,
-#ifdef SYSVSEM
-		       1,
-#else /* SYSVSEM */
-		       0,
-#endif /* SYSVSEM */
-		       NULL, 0, CTL_KERN, KERN_SYSVIPC, KERN_SYSVIPC_SEM, CTL_EOL);
+				    "available"),
+		       NULL, 0, &kern_has_sysvsem, sizeof(int),
+		       CTL_KERN, KERN_SYSVIPC, KERN_SYSVIPC_SEM, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
+		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
 		       CTLTYPE_INT, "sysvshm",
 		       SYSCTL_DESCR("System V style shared memory support "
-				    "available"), NULL,
-#ifdef SYSVSHM
-		       1,
-#else /* SYSVSHM */
-		       0,
-#endif /* SYSVSHM */
-		       NULL, 0, CTL_KERN, KERN_SYSVIPC, KERN_SYSVIPC_SHM, CTL_EOL);
+				    "available"),
+		       NULL, 0, &kern_has_sysvshm, sizeof(int),
+		       CTL_KERN, KERN_SYSVIPC, KERN_SYSVIPC_SHM, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "synchronized_io",
@@ -403,12 +379,6 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       SYSCTL_DESCR("Clock ticks spent in different CPU states"),
 		       sysctl_kern_cptime, 0, NULL, 0,
 		       CTL_KERN, KERN_CP_TIME, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_INT, "msgbuf",
-		       SYSCTL_DESCR("Kernel message buffer"),
-		       sysctl_msgbuf, 0, NULL, 0,
-		       CTL_KERN, KERN_MSGBUF, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "consdev",
@@ -622,60 +592,17 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 			SYSCTL_DESCR("Information from build environment"),
 			NULL, 0, __UNCONST(buildinfo), 0,
 			CTL_KERN, CTL_CREATE, CTL_EOL);
-
-	/* kern.posix. */
-	sysctl_createv(clog, 0, NULL, &rnode,
-			CTLFLAG_PERMANENT,
-			CTLTYPE_NODE, "posix",
-			SYSCTL_DESCR("POSIX options"),
-			NULL, 0, NULL, 0,
+	sysctl_createv(clog, 0, NULL, NULL,
+			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+			CTLTYPE_INT, "messages",
+			SYSCTL_DESCR("Kernel message verbosity"),
+			sysctl_kern_messages, 0, NULL, 0,
 			CTL_KERN, CTL_CREATE, CTL_EOL);
-	sysctl_createv(clog, 0, &rnode, NULL,
-			CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
-			CTLTYPE_INT, "semmax",
-			SYSCTL_DESCR("Maximal number of semaphores"),
-			NULL, 0, &ksem_max, 0,
-			CTL_CREATE, CTL_EOL);
 }
 
-SYSCTL_SETUP(sysctl_hw_setup, "sysctl hw subtree setup")
+SYSCTL_SETUP(sysctl_hw_misc_setup, "sysctl hw subtree misc setup")
 {
-	u_int u;
-	u_quad_t q;
-	const char *model = cpu_getmodel();
 
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_STRING, "machine",
-		       SYSCTL_DESCR("Machine class"),
-		       NULL, 0, machine, 0,
-		       CTL_HW, HW_MACHINE, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_STRING, "model",
-		       SYSCTL_DESCR("Machine model"),
-		       NULL, 0, __UNCONST(model), 0,
-		       CTL_HW, HW_MODEL, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_INT, "ncpu",
-		       SYSCTL_DESCR("Number of CPUs configured"),
-		       NULL, 0, &ncpu, 0,
-		       CTL_HW, HW_NCPU, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
-		       CTLTYPE_INT, "byteorder",
-		       SYSCTL_DESCR("System byte order"),
-		       NULL, BYTE_ORDER, NULL, 0,
-		       CTL_HW, HW_BYTEORDER, CTL_EOL);
-	u = ((u_int)physmem > (UINT_MAX / PAGE_SIZE)) ?
-		UINT_MAX : physmem * PAGE_SIZE;
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
-		       CTLTYPE_INT, "physmem",
-		       SYSCTL_DESCR("Bytes of physical memory"),
-		       NULL, u, NULL, 0,
-		       CTL_HW, HW_PHYSMEM, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_INT, "usermem",
@@ -683,49 +610,17 @@ SYSCTL_SETUP(sysctl_hw_setup, "sysctl hw subtree setup")
 		       sysctl_hw_usermem, 0, NULL, 0,
 		       CTL_HW, HW_USERMEM, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
-		       CTLTYPE_INT, "pagesize",
-		       SYSCTL_DESCR("Software page size"),
-		       NULL, PAGE_SIZE, NULL, 0,
-		       CTL_HW, HW_PAGESIZE, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_STRING, "machine_arch",
-		       SYSCTL_DESCR("Machine CPU class"),
-		       NULL, 0, machine_arch, 0,
-		       CTL_HW, HW_MACHINE_ARCH, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
-		       CTLTYPE_INT, "alignbytes",
-		       SYSCTL_DESCR("Alignment constraint for all possible "
-				    "data types"),
-		       NULL, ALIGNBYTES, NULL, 0,
-		       CTL_HW, HW_ALIGNBYTES, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE|CTLFLAG_HEX,
 		       CTLTYPE_STRING, "cnmagic",
 		       SYSCTL_DESCR("Console magic key sequence"),
 		       sysctl_hw_cnmagic, 0, NULL, CNS_LEN,
 		       CTL_HW, HW_CNMAGIC, CTL_EOL);
-	q = (u_quad_t)physmem * PAGE_SIZE;
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
-		       CTLTYPE_QUAD, "physmem64",
-		       SYSCTL_DESCR("Bytes of physical memory"),
-		       NULL, q, NULL, 0,
-		       CTL_HW, HW_PHYSMEM64, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_QUAD, "usermem64",
 		       SYSCTL_DESCR("Bytes of non-kernel memory"),
 		       sysctl_hw_usermem, 0, NULL, 0,
 		       CTL_HW, HW_USERMEM64, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_INT, "ncpuonline",
-		       SYSCTL_DESCR("Number of CPUs online"),
-		       NULL, 0, &ncpuonline, 0,
-		       CTL_HW, HW_NCPUONLINE, CTL_EOL);
 }
 
 #ifdef DEBUG
@@ -861,13 +756,79 @@ sysctl_kern_maxvnodes(SYSCTLFN_ARGS)
 
 	old_vnodes = desiredvnodes;
 	desiredvnodes = new_vnodes;
-	error = vfs_drainvnodes(new_vnodes);
+	error = vfs_drainvnodes();
 	if (error) {
 		desiredvnodes = old_vnodes;
 		return (error);
 	}
 	vfs_reinit();
 	nchreinit();
+
+	return (0);
+}
+
+/*
+ * sysctl helper routine for kern.messages.
+ * Alters boothowto to display kernel messages in increasing verbosity
+ * from 0 to 4.
+ */
+
+#define MAXMESSAGES            4
+static int
+sysctl_kern_messages(SYSCTLFN_ARGS)
+{
+	int error, messageverbose, messagemask, newboothowto;
+	struct sysctlnode node;
+
+	messagemask = (AB_NORMAL|AB_QUIET|AB_SILENT|AB_VERBOSE|AB_DEBUG);
+	switch (boothowto & messagemask) {
+	case AB_SILENT:
+		messageverbose = 0;
+		break;
+	case AB_QUIET:
+		messageverbose = 1;
+		break;
+	case AB_VERBOSE:
+		messageverbose = 3;
+		break;
+	case AB_DEBUG:
+		messageverbose = 4;
+		break;
+	case AB_NORMAL:
+	default:
+		messageverbose = 2;
+}
+
+	node = *rnode;
+	node.sysctl_data = &messageverbose;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return (error);
+	if (messageverbose < 0 || messageverbose > MAXMESSAGES)
+		return EINVAL;
+
+	/* Set boothowto */
+	newboothowto = boothowto & ~messagemask;
+
+	switch (messageverbose) {
+	case 0:
+		newboothowto |= AB_SILENT;
+		break;
+	case 1:
+		newboothowto |= AB_QUIET;
+		break;
+	case 3:
+		newboothowto |= AB_VERBOSE;
+		break;
+	case 4:
+		newboothowto |= AB_DEBUG;
+		break;
+	case 2:
+	default:                /* Messages default to normal. */
+		break;
+	}
+
+	boothowto = newboothowto;
 
 	return (0);
 }
@@ -956,104 +917,6 @@ sysctl_kern_hostid(SYSCTLFN_ARGS)
 }
 
 /*
- * sysctl helper routine for kern.clockrate. Assembles a struct on
- * the fly to be returned to the caller.
- */
-static int
-sysctl_kern_clockrate(SYSCTLFN_ARGS)
-{
-	struct clockinfo clkinfo;
-	struct sysctlnode node;
-
-	clkinfo.tick = tick;
-	clkinfo.tickadj = tickadj;
-	clkinfo.hz = hz;
-	clkinfo.profhz = profhz;
-	clkinfo.stathz = stathz ? stathz : hz;
-
-	node = *rnode;
-	node.sysctl_data = &clkinfo;
-	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
-}
-
-/*
- * sysctl helper routine for kern.msgbufsize and kern.msgbuf. For the
- * former it merely checks the message buffer is set up. For the latter,
- * it also copies out the data if necessary.
- */
-static int
-sysctl_msgbuf(SYSCTLFN_ARGS)
-{
-	char *where = oldp;
-	size_t len, maxlen;
-	long beg, end;
-	extern kmutex_t log_lock;
-	int error;
-
-	if (!msgbufenabled || msgbufp->msg_magic != MSG_MAGIC) {
-		msgbufenabled = 0;
-		return (ENXIO);
-	}
-
-	switch (rnode->sysctl_num) {
-	case KERN_MSGBUFSIZE: {
-		struct sysctlnode node = *rnode;
-		int msg_bufs = (int)msgbufp->msg_bufs;
-		node.sysctl_data = &msg_bufs;
-		return (sysctl_lookup(SYSCTLFN_CALL(&node)));
-	}
-	case KERN_MSGBUF:
-		break;
-	default:
-		return (EOPNOTSUPP);
-	}
-
-	if (newp != NULL)
-		return (EPERM);
-
-	if (oldp == NULL) {
-		/* always return full buffer size */
-		*oldlenp = msgbufp->msg_bufs;
-		return (0);
-	}
-
-	sysctl_unlock();
-
-	/*
-	 * First, copy from the write pointer to the end of
-	 * message buffer.
-	 */
-	error = 0;
-	mutex_spin_enter(&log_lock);
-	maxlen = MIN(msgbufp->msg_bufs, *oldlenp);
-	beg = msgbufp->msg_bufx;
-	end = msgbufp->msg_bufs;
-	mutex_spin_exit(&log_lock);
-
-	while (maxlen > 0) {
-		len = MIN(end - beg, maxlen);
-		if (len == 0)
-			break;
-		/* XXX unlocked, but hardly matters. */
-		error = dcopyout(l, &msgbufp->msg_bufc[beg], where, len);
-		if (error)
-			break;
-		where += len;
-		maxlen -= len;
-
-		/*
-		 * ... then, copy from the beginning of message buffer to
-		 * the write pointer.
-		 */
-		beg = 0;
-		end = msgbufp->msg_bufx;
-	}
-
-	sysctl_relock();
-	return (error);
-}
-
-/*
  * sysctl helper routine for kern.defcorename. In the case of a new
  * string being assigned, check that it's not a zero-length string.
  * (XXX the check in -current doesn't work, but do we really care?)
@@ -1137,8 +1000,6 @@ sysctl_kern_cptime(SYSCTLFN_ARGS)
 	}
 
 	cp_time = kmem_alloc(node.sysctl_size, KM_SLEEP);
-	if (cp_time == NULL)
-		return (ENOMEM);
 	node.sysctl_data = cp_time;
 	memset(cp_time, 0, node.sysctl_size);
 
@@ -1546,8 +1407,6 @@ sysctl_kern_cpid(SYSCTLFN_ARGS)
 	}
 
 	cp_id = kmem_alloc(node.sysctl_size, KM_SLEEP);
-	if (cp_id == NULL)
-		return (ENOMEM);
 	node.sysctl_data = cp_id;
 	memset(cp_id, 0, node.sysctl_size);
 

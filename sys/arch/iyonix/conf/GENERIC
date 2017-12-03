@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.72.2.3 2014/08/20 00:03:09 tls Exp $
+#	$NetBSD: GENERIC,v 1.72.2.4 2017/12/03 11:36:22 jdolecek Exp $
 #
 # GENERIC machine description file
 #
@@ -22,11 +22,11 @@ include	"arch/iyonix/conf/std.iyonix"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.72.2.3 $"
+#ident 		"GENERIC-$Revision: 1.72.2.4 $"
 
 maxusers	32		# estimated number of users
 
-options		MSGBUFSIZE=65536
+options 	MSGBUFSIZE=65536
 
 # CPU options
 
@@ -58,7 +58,6 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
 options 	IRQSTATS	# manage IRQ statistics
-#options 	KMEMSTATS	# kernel memory statistics
 #options 	SCSIVERBOSE	# Verbose SCSI errors
 options 	PCIVERBOSE	# Verbose PCI descriptions
 options 	MIIVERBOSE	# Verbose MII autoconfuration messages
@@ -78,7 +77,6 @@ options 	USERCONF	# userconf(4) support
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# expensive kernel consistency checks
 #options 	DEBUG		# expensive debugging checks/support
-#options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# in-kernel debugger
 #options 	DDB_ONPANIC=1	# see also sysctl(7): `ddb.onpanic'
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
@@ -86,7 +84,7 @@ options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
 makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=630000
+makeoptions	COPY_SYMTAB=1
 options 	PERFCTRS	# performance counters
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages
@@ -96,23 +94,9 @@ options 	PERFCTRS	# performance counters
 
 
 # Compatibility options
-options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
-#options 	COMPAT_09	# NetBSD 0.9
-#options 	COMPAT_10	# NetBSD 1.0
-#options 	COMPAT_11	# NetBSD 1.1
-#options 	COMPAT_12	# NetBSD 1.2
-#options 	COMPAT_13	# NetBSD 1.3
-#options 	COMPAT_14	# NetBSD 1.4
-#options 	COMPAT_15	# NetBSD 1.5
-#options 	COMPAT_16	# NetBSD 1.6
-#options 	COMPAT_20	# NetBSD 2.0
-#options 	COMPAT_30	# NetBSD 3.0
-#options 	COMPAT_40	# NetBSD 4.0
-options 	COMPAT_50	# NetBSD 5.0 compatibility.
-options 	COMPAT_60	# NetBSD 6.0 compatibility.
-#options 	COMPAT_43	# 4.3BSD
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
-options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+
+include 	"conf/compat_netbsd50.config"
+options 	COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 
 # File systems
 file-system 	FFS		# UFS
@@ -148,6 +132,7 @@ options 	WAPBL		# File system journaling support
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 #options 	NFSSERVER	# Network File System server
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+#options 	UFS_EXTATTR	# Extended attribute support for UFS1
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
 
@@ -700,6 +685,8 @@ opl*	at yds?
 # Audio support
 audio*	at audiobus?
 
+spkr*	at audio?		# PC speaker (synthesized)
+
 # MPU 401 UARTs
 mpu*	at cmpci?
 mpu*	at eso?
@@ -848,6 +835,7 @@ pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
 
 #options 	FILEASSOC		# fileassoc(9) - required for Veriexec
+					# and PAX_SEGVGUARD
 
 # Veriexec
 #pseudo-device	veriexec
@@ -856,11 +844,8 @@ pseudo-device	wsfont
 # removing fingerprint methods will have almost no impact on the kernel
 # code size.
 #
-#options VERIFIED_EXEC_FP_RMD160
 #options VERIFIED_EXEC_FP_SHA256
 #options VERIFIED_EXEC_FP_SHA384
 #options VERIFIED_EXEC_FP_SHA512
-#options VERIFIED_EXEC_FP_SHA1
-#options VERIFIED_EXEC_FP_MD5
 
 #options PAX_MPROTECT=0			# PaX mprotect(2) restrictions

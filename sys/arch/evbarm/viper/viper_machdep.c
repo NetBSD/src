@@ -1,4 +1,4 @@
-/*	$NetBSD: viper_machdep.c,v 1.21.2.2 2014/08/20 00:02:56 tls Exp $ */
+/*	$NetBSD: viper_machdep.c,v 1.21.2.3 2017/12/03 11:36:08 jdolecek Exp $ */
 
 /*
  * Startup routines for the Arcom Viper.  Below you can trace the
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viper_machdep.c,v 1.21.2.2 2014/08/20 00:02:56 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viper_machdep.c,v 1.21.2.3 2017/12/03 11:36:08 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -174,10 +174,10 @@ BootConfig bootconfig;		/* Boot config storage */
 char *boot_args = NULL;
 char *boot_file = NULL;
 
-vm_offset_t physical_start;
-vm_offset_t physical_freestart;
-vm_offset_t physical_freeend;
-vm_offset_t physical_end;
+vaddr_t physical_start;
+vaddr_t physical_freestart;
+vaddr_t physical_freeend;
+vaddr_t physical_end;
 u_int free_pages;
 
 /*int debug_flags;*/
@@ -188,7 +188,7 @@ int max_processes = 64;			/* Default number */
 /* Physical and virtual addresses for some global pages */
 pv_addr_t minidataclean;
 
-vm_offset_t msgbufphys;
+paddr_t msgbufphys;
 
 #ifdef PMAP_DEBUG
 extern int pmap_debug_level;
@@ -746,7 +746,7 @@ initarm(void *arg)
 
 	/* Load memory into UVM. */
 	printf("page ");
-	uvm_setpagesize();        /* initialize PAGE_SIZE-dependent variables */
+	uvm_md_init();
 	uvm_page_physload(atop(physical_freestart), atop(physical_freeend),
 	    atop(physical_freestart), atop(physical_freeend),
 	    VM_FREELIST_DEFAULT);

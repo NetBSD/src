@@ -1,4 +1,4 @@
-/*	$NetBSD: marvellvar.h,v 1.1.24.1 2014/08/20 00:02:55 tls Exp $ */
+/*	$NetBSD: marvellvar.h,v 1.1.24.2 2017/12/03 11:36:06 jdolecek Exp $ */
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,6 +26,9 @@
  */
 #ifndef _EVBARM_MARVELLVAR_H_
 #define _EVBARM_MARVELLVAR_H_
+#ifndef _LOCORE
+#include <machine/bus_defs.h>
+#endif
 
 /*
  * Logical mapping for onboard/integrated peripherals

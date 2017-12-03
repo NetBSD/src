@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sysctl.c,v 1.40.18.1 2014/08/20 00:03:32 tls Exp $	*/
+/*	$NetBSD: linux_sysctl.c,v 1.40.18.2 2017/12/03 11:36:55 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.40.18.1 2014/08/20 00:03:32 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.40.18.2 2017/12/03 11:36:55 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,6 +70,7 @@ struct sysctlnode linux_sysctl_root = {
 
 static struct sysctllog *linux_clog1;
 static struct sysctllog *linux_clog2;
+extern int linux_enabled;
 
 void
 linux_sysctl_fini(void)
@@ -112,6 +113,7 @@ linux_sysctl_init(void)
 		       SYSCTL_DESCR("Linux emulation settings"),
 		       NULL, 0, NULL, 0,
 		       CTL_EMUL, EMUL_LINUX, CTL_EOL);
+
 	sysctl_createv(&linux_clog2, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "kern",
@@ -139,6 +141,13 @@ linux_sysctl_init(void)
 		       NULL, 0, linux_version, sizeof(linux_version),
 		       CTL_EMUL, EMUL_LINUX, EMUL_LINUX_KERN,
 		       EMUL_LINUX_KERN_VERSION, CTL_EOL);
+
+	sysctl_createv(&linux_clog2, 0, NULL, NULL,
+		       CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "enabled",
+		       SYSCTL_DESCR("Linux compat enabled."),
+		       linux_sysctl_enable, 0, &linux_enabled, 0,
+		       CTL_EMUL, EMUL_LINUX, CTL_CREATE, CTL_EOL);
 
 	linux_sysctl_root.sysctl_flags &= ~CTLFLAG_READWRITE;
 }

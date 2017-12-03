@@ -1,9 +1,9 @@
-/* $NetBSD: machdep.h,v 1.16.2.2 2014/08/20 00:02:46 tls Exp $ */
+/* $NetBSD: machdep.h,v 1.16.2.3 2017/12/03 11:35:54 jdolecek Exp $ */
 
 #ifndef _ARM32_BOOT_MACHDEP_H_
 #define _ARM32_BOOT_MACHDEP_H_
 
-/* Define various stack sizes in pages */ 
+/* Define various stack sizes in pages */
 #ifndef IRQ_STACK_SIZE
 #define IRQ_STACK_SIZE	1
 #endif
@@ -24,6 +24,8 @@
 
 extern void (*cpu_reset_address)(void);
 extern paddr_t cpu_reset_address_paddr;
+
+extern void (*cpu_powerdown_address)(void);
 
 extern u_int data_abort_handler_address;
 extern u_int prefetch_abort_handler_address;
@@ -66,8 +68,8 @@ void prefetch_abort_handler(trapframe_t *);
 void undefinedinstruction_bounce(trapframe_t *);
 void dumpsys(void);
 
-/* 
- * note that we use void *as all the platforms have different ideas on what
+/*
+ * note that we use void * as all the platforms have different ideas on what
  * the structure is
  */
 u_int initarm(void *);

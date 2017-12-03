@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_engine_disp_nv04.c,v 1.1.1.1.6.2 2014/08/20 00:04:12 tls Exp $	*/
+/*	$NetBSD: nouveau_engine_disp_nv04.c,v 1.1.1.1.6.3 2017/12/03 11:37:53 jdolecek Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,12 +25,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_engine_disp_nv04.c,v 1.1.1.1.6.2 2014/08/20 00:04:12 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_engine_disp_nv04.c,v 1.1.1.1.6.3 2017/12/03 11:37:53 jdolecek Exp $");
 
 #include "priv.h"
 
 #include <core/event.h>
 #include <core/class.h>
+
+#include <linux/ktime.h>	/* XXX */
 
 struct nv04_disp_priv {
 	struct nouveau_disp base;

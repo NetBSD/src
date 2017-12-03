@@ -371,7 +371,11 @@ static int ttm_copy_ttm_io_page(struct ttm_tt *ttm, void *dst,
 	kunmap_atomic(src);
 #else
 	if (pgprot_val(prot) != pgprot_val(PAGE_KERNEL))
+#ifdef __NetBSD__
+		vunmap(src, 1);
+#else
 		vunmap(src);
+#endif
 	else
 		kunmap(s);
 #endif
@@ -524,8 +528,13 @@ static int ttm_buffer_object_transfer(struct ttm_buffer_object *bo,
 	INIT_LIST_HEAD(&fbo->swap);
 	INIT_LIST_HEAD(&fbo->io_reserve_lru);
 #ifdef __NetBSD__
+	linux_mutex_init(&fbo->wu_mutex);
 	drm_vma_node_init(&fbo->vma_node);
+	uvm_obj_init(&fbo->uvmobj, bdev->driver->ttm_uvm_ops, true, 1);
+	mutex_obj_hold(bo->uvmobj.vmobjlock);
+	uvm_obj_setlock(&fbo->uvmobj, bo->uvmobj.vmobjlock);
 #else
+	mutex_init(&fbo->wu_mutex);
 	drm_vma_node_reset(&fbo->vma_node);
 #endif
 	atomic_set(&fbo->cpu_writers, 0);

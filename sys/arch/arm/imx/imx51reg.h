@@ -1,4 +1,4 @@
-/* $NetBSD: imx51reg.h,v 1.4.2.1 2014/08/20 00:02:46 tls Exp $ */
+/* $NetBSD: imx51reg.h,v 1.4.2.2 2017/12/03 11:35:53 jdolecek Exp $ */
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -126,7 +126,7 @@
 #define	ESDHC2_BASE	(AIPSTZ1_BASE + 0x00008000)
 #define	ESDHC3_BASE	(AIPSTZ1_BASE + 0x00020000)
 #define	ESDHC4_BASE	(AIPSTZ1_BASE + 0x00024000)
-#define	ESDHC_SIZE	0x100
+#define	ESDHC_SIZE	0x4000
 
 #define PWM1_BASE	(AIPSTZ1_BASE + 0x03fb4000)
 #define PWM2_BASE	(AIPSTZ1_BASE + 0x03fb8000)
@@ -239,7 +239,7 @@
 #define	 USB_CLKONOFF_CTRL_H1_AHBCLK_OFF	__BIT(18)
 #define	 USB_CLKONOFF_CTRL_OTG_AHBCLK_OFF	__BIT(17)
 
-#define	USBOH3_SIZE	0x828
+#define	USBOH3_SIZE	0x4000
 
 /* GPIO module */
 
@@ -266,7 +266,7 @@
 
 #define	WDOG1_BASE	(AIPSTZ1_BASE + 0x03f98000)
 #define	WDOG2_BASE	(AIPSTZ1_BASE + 0x03f9c000)
-#define	WDOG_SIZE	0x000a
+#define	WDOG_SIZE	0x4000
 
 #define	GPT_BASE	(AIPSTZ1_BASE + 0x03fa0000)
 #define	GPT_SIZE	0x4000
@@ -342,7 +342,7 @@
 #define	SRC_SIZE	0x4000
 
 #define	CCM_BASE	(AIPSTZ1_BASE + 0x03fd4000)
-#define	CCM_SIZE	0x0088
+#define	CCM_SIZE	0x4000
 
 #define	GPC_BASE	(AIPSTZ1_BASE + 0x03fd8000)
 #define	GPC_SIZE	0x4000
@@ -381,7 +381,7 @@
 
 #define	I2C1_BASE	(AIPSTZ2_BASE + 0x03fc8000)
 #define	I2C2_BASE	(AIPSTZ2_BASE + 0x03fc4000)
-/* register definitions in imxi2creg.h */
+#define	I2C_SIZE	0x4000
 
 #define	AUDMUX_BASE	(AIPSTZ2_BASE + 0x03fd0000)
 #define	AUDMUX_SIZE	0x4000
@@ -419,6 +419,6 @@
 #define	SAHARA_SIZE	0x4000
 
 #define	DPLL_BASE(n)	((AIPSTZ2_BASE + 0x03F80000 + (0x4000 * ((n)-1))))
-#define	DPLL_SIZE	0x100
+#define	DPLL_SIZE	0x4000
 
 #endif /* _ARM_IMX_IMX51REG_H_ */

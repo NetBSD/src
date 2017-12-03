@@ -1,4 +1,4 @@
-/* $NetBSD: ioc.c,v 1.9.12.1 2012/11/20 03:01:41 tls Exp $	 */
+/* $NetBSD: ioc.c,v 1.9.12.2 2017/12/03 11:36:41 jdolecek Exp $	 */
 
 /*
  * Copyright (c) 2003 Christopher Sekiya
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioc.c,v 1.9.12.1 2012/11/20 03:01:41 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioc.c,v 1.9.12.2 2017/12/03 11:36:41 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,9 +103,9 @@ ioc_attach(device_t parent, device_t self, void *aux)
 	callout_init(&ioc_blink_ch, 0);
 #endif
 
-	sc->sc_iot = SGIMIPS_BUS_SPACE_HPC;
+	sc->sc_iot = normal_memt;
 
-	if (bus_space_map(sc->sc_iot, maa->ma_addr, 0,
+	if (bus_space_map(sc->sc_iot, maa->ma_addr, 0x100,
 			  BUS_SPACE_MAP_LINEAR, &sc->sc_ioh))
 		panic("ioc_attach: could not allocate memory\n");
 
@@ -188,7 +188,7 @@ ioc_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	do {
 		iaa.iaa_offset = cf->cf_loc[IOCCF_OFFSET];
 		iaa.iaa_intr = cf->cf_loc[IOCCF_INTR];
-		iaa.iaa_st = SGIMIPS_BUS_SPACE_HPC;
+		iaa.iaa_st = normal_memt;
 		iaa.iaa_sh = sc->sc_ioh;	/* XXX */
 
 		tryagain = 0;

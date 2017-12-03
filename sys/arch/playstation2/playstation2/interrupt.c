@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.11.6.2 2014/08/20 00:03:18 tls Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.11.6.3 2017/12/03 11:36:35 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.11.6.2 2014/08/20 00:03:18 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.11.6.3 2017/12/03 11:36:35 jdolecek Exp $");
 
 #include "debug_playstation2.h"
 #if defined INTR_DEBUG && !defined GSFB_DEBUG_MONITOR
@@ -71,8 +71,6 @@ STATIC struct {
 } _sif_call_env;
 
 struct clockframe playstation2_clockframe;
-struct playstation2_soft_intr playstation2_soft_intrs[_IPL_NSOFT];
-struct playstation2_soft_intrhand *softnet_intrhand;
 
 u_int32_t __icu_mask[_IPL_N];	/* interrupt mask of DMAC/INTC */
 volatile u_int32_t md_imask;
@@ -102,9 +100,6 @@ interrupt_init_bootstrap(void)
 void
 interrupt_init(void)
 {
-	struct playstation2_soft_intr *asi;
-	int i;
-
 	evcnt_attach_static(&_playstation2_evcnt.clock);
 	evcnt_attach_static(&_playstation2_evcnt.sbus);
 	evcnt_attach_static(&_playstation2_evcnt.dmac);
@@ -125,31 +120,35 @@ interrupt_init(void)
  *  Hardware interrupt support
  */
 void
-cpu_intr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
+cpu_intr(int ppl, vaddr_t pc, uint32_t status)
 {
 	struct cpu_info *ci;
-
+	uint32_t ipending;
+	int ipl;
 #if 0
 	_debug_print_intr(__func__);
 #endif
 
 	ci = curcpu();
 	ci->ci_idepth++;
-	uvmexp.intrs++;
+	ci->ci_data.cpu_nintr++;
 
-	playstation2_clockframe.ppl = md_imask;
+	playstation2_clockframe.intr = (curcpu()->ci_idepth > 1);
 	playstation2_clockframe.sr = status;
 	playstation2_clockframe.pc = pc;
 
-	if (ipending & MIPS_INT_MASK_0) {
-		intc_intr(md_imask);
+	while (ppl < (ipl = splintr(&ipending))) {
+		splx(ipl);
+		if (ipending & MIPS_INT_MASK_0) {
+			intc_intr(md_imask);
+		}
+
+		if (ipending & MIPS_INT_MASK_1) {
+			_playstation2_evcnt.dmac.ev_count++;
+			dmac_intr(md_imask);
+		}
+		(void)splhigh();
 	}
-	
-	if (ipending & MIPS_INT_MASK_1) {
-		_playstation2_evcnt.dmac.ev_count++;
-		dmac_intr(md_imask);
-	}
-	ci->ci_idepth--;
 }
 void
 setsoft(int ipl)
@@ -212,7 +211,7 @@ splset(int npl)
 }
 
 void
-spl0()
+spl0(void)
 {
 
 	splset(0);

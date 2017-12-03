@@ -1,12 +1,12 @@
-# $NetBSD: GENERIC.UP,v 1.1 2010/03/13 08:36:06 mrg Exp $
+# $NetBSD: GENERIC.UP,v 1.1.24.1 2017/12/03 11:36:44 jdolecek Exp $
 #
 # GENERIC kernel configuration without multiprocessor support.
 #
 
 include 	"arch/sparc64/conf/GENERIC"
 
-#ident		"GENERIC-$Revision: 1.1 $"
+#ident		"GENERIC-$Revision: 1.1.24.1 $"
 
-no options 	MULTIPROCESSOR
+no options	MULTIPROCESSOR
 no cpu
 cpu0	at mainbus0

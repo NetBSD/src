@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.78.22.1 2014/08/20 00:03:38 tls Exp $	*/
+/*	$NetBSD: lpt.c,v 1.78.22.2 2017/12/03 11:37:03 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.78.22.1 2014/08/20 00:03:38 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.78.22.2 2017/12/03 11:37:03 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,6 +73,8 @@ __KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.78.22.1 2014/08/20 00:03:38 tls Exp $");
 #include <dev/ic/lptreg.h>
 #include <dev/ic/lptvar.h>
 
+#include "ioconf.h"
+
 #define	TIMEOUT		hz*16	/* wait up to 16 seconds for a ready */
 #define	STEP		hz/4
 
@@ -87,8 +89,6 @@ __KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.78.22.1 2014/08/20 00:03:38 tls Exp $");
 #define LPRINTF(a)	if (lptdebug) printf a
 int lptdebug = 0;
 #endif
-
-extern struct cfdriver lpt_cd;
 
 dev_type_open(lptopen);
 dev_type_close(lptclose);

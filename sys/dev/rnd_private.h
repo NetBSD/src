@@ -1,4 +1,4 @@
-/*      $NetBSD: rnd_private.h,v 1.1 2011/11/29 03:50:31 tls Exp $     */
+/*      $NetBSD: rnd_private.h,v 1.1.10.1 2017/12/03 11:36:58 jdolecek Exp $     */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -32,6 +32,14 @@
 
 #ifndef _DEV_RNDPRIVATE_H
 #define _DEV_RNDPRIVATE_H
+
+#include <sys/types.h>
+#include <sys/mutex.h>
+#include <sys/queue.h>
+#include <sys/rndio.h>
+#include <sys/rndpool.h>
+#include <sys/rndsource.h>
+
 /*
  * Number of bytes returned per hash.  This value is used in both
  * rnd.c and rndpool.c to decide when enough entropy exists to do a
@@ -39,20 +47,24 @@
  */
 #define RND_ENTROPY_THRESHOLD   10
 
-/*
- * Size of the event queue.  This _MUST_ be a power of 2.
- */
-#ifndef RND_EVENTQSIZE
-#define RND_EVENTQSIZE  128
-#endif
+bool	rnd_extract(void *, size_t);
+bool	rnd_tryextract(void *, size_t);
+void	rnd_getmore(size_t);
 
 /*
- * Used by rnd_extract_data() and rndpool_extract_data() to describe how
- * "good" the data has to be.
+ * Flag indicating rnd_init has run.
  */
-#define RND_EXTRACT_ANY		0  /* extract anything, even if no entropy */
-#define RND_EXTRACT_GOOD	1  /* return as many good bytes
-				      (short read ok) */
+extern int		rnd_ready;
 
-uint32_t        rnd_extract_data(void *, uint32_t, uint32_t);
+/*
+ * Debugging flags.
+ */
+#ifdef RND_DEBUG
+extern int rnd_debug;
+#define	RND_DEBUG_WRITE		0x0001
+#define	RND_DEBUG_READ		0x0002
+#define	RND_DEBUG_IOCTL		0x0004
+#define	RND_DEBUG_SNOOZE	0x0008
 #endif
+
+#endif	/* _DEV_RNDPRIVATE_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: tc5165buf.c,v 1.16.44.1 2012/11/20 03:01:23 tls Exp $ */
+/*	$NetBSD: tc5165buf.c,v 1.16.44.2 2017/12/03 11:36:15 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -35,19 +35,20 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tc5165buf.c,v 1.16.44.1 2012/11/20 03:01:23 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc5165buf.c,v 1.16.44.2 2017/12/03 11:36:15 jdolecek Exp $");
 
 #include "opt_use_poll.h"
 
 #include <sys/param.h>
-#include <sys/systm.h>
+#include <sys/bus.h>
 #include <sys/callout.h>
 #include <sys/device.h>
-
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <sys/intr.h>
+#include <sys/systm.h>
 
 #include <dev/hpc/hpckbdvar.h>
+
+#include <mips/cpuregs.h>
 
 #include <hpcmips/tx/tx39var.h>
 #include <hpcmips/tx/txcsbusvar.h>

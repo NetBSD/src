@@ -1,4 +1,4 @@
-/* $NetBSD: elf_machdep.h,v 1.1.4.2 2014/08/20 00:02:39 tls Exp $ */
+/* $NetBSD: elf_machdep.h,v 1.1.4.3 2017/12/03 11:35:44 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -74,6 +74,7 @@
 
 #define	ELF64_MACHDEP_ID	EM_AARCH64
 
+#define	KERN_ELFSIZE		64
 #define ARCH_ELFSIZE		64	/* MD native binary size */
 
 /* Processor specific relocation types */

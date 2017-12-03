@@ -1,4 +1,4 @@
-/*  $NetBSD: ufs_wapbl.c,v 1.23 2012/01/27 19:22:50 para Exp $ */
+/*  $NetBSD: ufs_wapbl.c,v 1.23.6.1 2017/12/03 11:39:22 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_wapbl.c,v 1.23 2012/01/27 19:22:50 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_wapbl.c,v 1.23.6.1 2017/12/03 11:39:22 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,7 +83,6 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_wapbl.c,v 1.23 2012/01/27 19:22:50 para Exp $");
 #include <sys/lockf.h>
 #include <sys/kauth.h>
 #include <sys/wapbl.h>
-#include <sys/fstrans.h>
 
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/fifofs/fifo.h>

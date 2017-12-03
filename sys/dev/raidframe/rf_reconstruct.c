@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.118.2.2 2014/08/20 00:03:49 tls Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.118.2.3 2017/12/03 11:37:31 jdolecek Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.118.2.2 2014/08/20 00:03:49 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.118.2.3 2017/12/03 11:37:31 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -263,7 +263,7 @@ rf_ReconstructFailedDiskBasic(RF_Raid_t *raidPtr, RF_RowCol_t col)
 		for (scol = raidPtr->numCol; scol < raidPtr->numCol + raidPtr->numSpare; scol++) {
 			if (raidPtr->Disks[scol].status == rf_ds_spare) {
 				spareDiskPtr = &raidPtr->Disks[scol];
-				spareDiskPtr->status = rf_ds_used_spare;
+				spareDiskPtr->status = rf_ds_rebuilding_spare;
 				break;
 			}
 		}
@@ -310,6 +310,13 @@ rf_ReconstructFailedDiskBasic(RF_Raid_t *raidPtr, RF_RowCol_t col)
 		/* XXX doesn't hold for RAID 6!!*/
 
 		rf_lock_mutex2(raidPtr->mutex);
+		/* The failed disk has already been marked as rf_ds_spared 
+		   (or rf_ds_dist_spared) in
+		   rf_ContinueReconstructFailedDisk() 
+		   so we just update the spare disk as being a used spare
+		*/
+
+		spareDiskPtr->status = rf_ds_used_spare;
 		raidPtr->parity_good = RF_RAID_CLEAN;
 		rf_unlock_mutex2(raidPtr->mutex);
 
@@ -483,7 +490,7 @@ rf_ReconstructInPlace(RF_Raid_t *raidPtr, RF_RowCol_t col)
 	rf_unlock_mutex2(raidPtr->mutex);
 
 	spareDiskPtr = &raidPtr->Disks[col];
-	spareDiskPtr->status = rf_ds_used_spare;
+	spareDiskPtr->status = rf_ds_rebuilding_spare;
 
 	printf("raid%d: initiating in-place reconstruction on column %d\n",
 	       raidPtr->raidid, col);

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.18.18.2 2014/08/20 00:02:40 tls Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.18.18.3 2017/12/03 11:35:44 jdolecek Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.18.18.2 2014/08/20 00:02:40 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.18.18.3 2017/12/03 11:35:44 jdolecek Exp $");
 
 #include "opt_ddb.h"
 
@@ -167,7 +167,7 @@ kdb_trap(int type, db_regs_t *regs)
 volatile bool db_validating, db_faulted;
 
 int
-db_validate_address(vm_offset_t addr)
+db_validate_address(vaddr_t addr)
 {
 
 	db_faulted = false;
@@ -181,7 +181,7 @@ db_validate_address(vm_offset_t addr)
  * Read bytes from kernel address space for debugger.
  */
 void
-db_read_bytes(vm_offset_t addr,	size_t size, char *data)
+db_read_bytes(vaddr_t addr,	size_t size, char *data)
 {
 	char	*src;
 
@@ -211,7 +211,7 @@ db_write_text(unsigned char *dst, int ch)
  * Write bytes to kernel address space for debugger.
  */
 void
-db_write_bytes(vm_offset_t addr, size_t size, const char *data)
+db_write_bytes(vaddr_t addr, size_t size, const char *data)
 {
 #if 0
 	extern char	_stext_[], _etext[];

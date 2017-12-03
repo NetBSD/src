@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.13.2.1 2014/08/20 00:02:46 tls Exp $	*/
+/*	$NetBSD: pte.h,v 1.13.2.2 2017/12/03 11:35:54 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -304,34 +304,32 @@ typedef uint32_t	pt_entry_t;	/* L2 table entry */
 /*
  * Type Extension bits for ARM V6 and V7 MMU
  *
- * TEX C B                                    Shared
- * 000 0 0  Strong order                      yes
- * 000 0 1  Shared device                     yes
- * 000 1 0  write through, no write alloc     S-bit
- * 000 1 1  write back, no write alloc        S-bit
- * 001 0 0  non-cacheable                     S-bit
+ * TEX C B                                                    Shared
+ * 000 0 0  Strong order                                      yes
+ * 000 0 1  Shared device                                     yes
+ * 000 1 0  Outer and Inner write through, no write alloc     S-bit
+ * 000 1 1  Outer and Inner write back, no write alloc        S-bit
+ * 001 0 0  Outer and Inner non-cacheable                     S-bit
  * 001 0 1  reserved
  * 001 1 0  reserved
- * 001 1 1  write back, write alloc           S-bit
- * 010 0 0  Non-shared device                 no
+ * 001 1 1  Outer and Inner write back, write alloc           S-bit
+ * 010 0 0  Non-shared device                                 no
  * 010 0 1  reserved
  * 010 1 X  reserved
  * 011 X X  reserved
- * 1BB A A  BB for internal, AA for external  S-bit
+ * 1BB A A  BB for inner, AA for outer                        S-bit
  *
- *    BB    internal cache
- *    0 0   Non-cacheable non-buffered
- *    0 1   Write back, write alloc, buffered
- *    1 0   Write through, no write alloc, buffered
- *          (non-cacheable for MPCore)
- *    1 1   Write back, no write alloc, buffered
- *          (write back, write alloc for MPCore)
+ *    BB    inner cache
+ *    0 0   Non-cacheable
+ *    0 1   Write back, write alloc
+ *    1 0   Write through, no write alloc
+ *    1 1   Write back, no write alloc
  *
- *    AA    external cache
- *    0 0   Non-cacheable non-buffered
- *    0 1   Write back, write alloc, buffered
- *    1 0   Write through, no write alloc, buffered
- *    1 1   Write back, no write alloc, buffered
+ *    AA    outer cache
+ *    0 0   Non-cacheable
+ *    0 1   Write back, write alloc
+ *    1 0   Write through, no write alloc
+ *    1 1   Write back, no write alloc
  */
 
 #define	TEX_ARMV6_TEX	0x07		/* 3 bits in TEX */

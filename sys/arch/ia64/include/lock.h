@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.4 2009/07/20 04:41:37 kiyohara Exp $	*/
+/*	$NetBSD: lock.h,v 1.4.22.1 2017/12/03 11:36:20 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,13 +37,13 @@
 #define	_IA64_LOCK_H_
 
 static __inline int
-__SIMPLELOCK_LOCKED_P(__cpu_simple_lock_t *__ptr)
+__SIMPLELOCK_LOCKED_P(const __cpu_simple_lock_t *__ptr)
 {
 	return *__ptr == __SIMPLELOCK_LOCKED;
 }
 
 static __inline int
-__SIMPLELOCK_UNLOCKED_P(__cpu_simple_lock_t *__ptr)
+__SIMPLELOCK_UNLOCKED_P(const __cpu_simple_lock_t *__ptr)
 {
 	return *__ptr == __SIMPLELOCK_UNLOCKED;
 }
@@ -114,6 +114,28 @@ __cpu_simple_unlock(__cpu_simple_lock_t *lockp)
 
 	__insn_barrier();
 	*lockp = __SIMPLELOCK_UNLOCKED;
+}
+
+/* XXX mf.a overkill for these? */
+static __inline void
+mb_read(void)
+{
+	__asm __volatile("mf.a	\n"
+			 "mf	\n" ::: "memory");
+}
+
+static __inline void
+mb_write(void)
+{
+	__asm __volatile("mf.a	\n"
+			 "mf	\n" ::: "memory");
+}
+
+static __inline void
+mb_memory(void)
+{
+	__asm __volatile("mf.a	\n"
+			 "mf	\n" ::: "memory");
 }
 
 #endif /* _IA64_LOCK_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.187.2.2 2014/08/20 00:04:35 tls Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.187.2.3 2017/12/03 11:39:04 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,14 +66,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.187.2.2 2014/08/20 00:04:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.187.2.3 2017/12/03 11:39:04 jdolecek Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
-#include "opt_compat_netbsd.h"
 #include "opt_ipsec.h"
 #include "opt_inet_csum.h"
 #include "opt_ipkdb.h"
 #include "opt_mbuftrace.h"
+#include "opt_net_mpsafe.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -87,7 +89,6 @@ __KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.187.2.2 2014/08/20 00:04:35 tls Exp
 #include <sys/sysctl.h>
 
 #include <net/if.h>
-#include <net/route.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -124,10 +125,6 @@ __KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.187.2.2 2014/08/20 00:04:35 tls Exp
 #include <netipsec/ipsec6.h>
 #endif
 #endif	/* IPSEC */
-
-#ifdef COMPAT_50
-#include <compat/sys/socket.h>
-#endif
 
 #ifdef IPKDB
 #include <ipkdb/ipkdb.h>
@@ -275,7 +272,7 @@ udp4_input_checksum(struct mbuf *m, const struct udphdr *uh,
 		return 0;
 
 	switch (m->m_pkthdr.csum_flags &
-	    ((m->m_pkthdr.rcvif->if_csum_flags_rx & M_CSUM_UDPv4) |
+	    ((m_get_rcvif_NOMPSAFE(m)->if_csum_flags_rx & M_CSUM_UDPv4) |
 	    M_CSUM_TCP_UDP_BAD | M_CSUM_DATA)) {
 	case M_CSUM_UDPv4|M_CSUM_TCP_UDP_BAD:
 		UDP_CSUM_COUNTER_INCR(&udp_hwcsum_bad);
@@ -308,7 +305,7 @@ udp4_input_checksum(struct mbuf *m, const struct udphdr *uh,
 		 * Need to compute it ourselves.  Maybe skip checksum
 		 * on loopback interfaces.
 		 */
-		if (__predict_true(!(m->m_pkthdr.rcvif->if_flags &
+		if (__predict_true(!(m_get_rcvif_NOMPSAFE(m)->if_flags &
 				     IFF_LOOPBACK) ||
 				   udp_do_loopback_cksum)) {
 			UDP_CSUM_COUNTER_INCR(&udp_swcsum);
@@ -353,6 +350,19 @@ udp_input(struct mbuf *m, ...)
 	if (uh == NULL) {
 		UDP_STATINC(UDP_STAT_HDROPS);
 		return;
+	}
+	/*
+	 * Enforce alignment requirements that are violated in
+	 * some cases, see kern/50766 for details.
+	 */
+	if (UDP_HDR_ALIGNED_P(uh) == 0) {
+		m = m_copyup(m, iphlen + sizeof(struct udphdr), 0);
+		if (m == NULL) {
+			UDP_STATINC(UDP_STAT_HDROPS);
+			return;
+		}
+		ip = mtod(m, struct ip *);
+		uh = (struct udphdr *)(mtod(m, char *) + iphlen);
 	}
 	KASSERT(UDP_HDR_ALIGNED_P(uh));
 
@@ -403,16 +413,12 @@ udp_input(struct mbuf *m, ...)
 		memset(&src6, 0, sizeof(src6));
 		src6.sin6_family = AF_INET6;
 		src6.sin6_len = sizeof(struct sockaddr_in6);
-		src6.sin6_addr.s6_addr[10] = src6.sin6_addr.s6_addr[11] = 0xff;
-		memcpy(&src6.sin6_addr.s6_addr[12], &ip->ip_src,
-			sizeof(ip->ip_src));
+		in6_in_2_v4mapin6(&ip->ip_src, &src6.sin6_addr);
 		src6.sin6_port = uh->uh_sport;
 		memset(&dst6, 0, sizeof(dst6));
 		dst6.sin6_family = AF_INET6;
 		dst6.sin6_len = sizeof(struct sockaddr_in6);
-		dst6.sin6_addr.s6_addr[10] = dst6.sin6_addr.s6_addr[11] = 0xff;
-		memcpy(&dst6.sin6_addr.s6_addr[12], &ip->ip_dst,
-			sizeof(ip->ip_dst));
+		in6_in_2_v4mapin6(&ip->ip_dst, &dst6.sin6_addr);
 		dst6.sin6_port = uh->uh_dport;
 
 		n += udp6_realinput(AF_INET, &src6, &dst6, m, iphlen);
@@ -457,25 +463,16 @@ udp4_sendup(struct mbuf *m, int off /* offset of data portion */,
 {
 	struct mbuf *opts = NULL;
 	struct mbuf *n;
-	struct inpcb *inp = NULL;
+	struct inpcb *inp;
 
-	if (!so)
-		return;
-	switch (so->so_proto->pr_domain->dom_family) {
-	case AF_INET:
-		inp = sotoinpcb(so);
-		break;
-#ifdef INET6
-	case AF_INET6:
-		break;
-#endif
-	default:
-		return;
-	}
+	KASSERT(so != NULL);
+	KASSERT(so->so_proto->pr_domain->dom_family == AF_INET);
+	inp = sotoinpcb(so);
+	KASSERT(inp != NULL);
 
 #if defined(IPSEC)
 	/* check AH/ESP integrity. */
-	if (ipsec_used && so != NULL && ipsec4_in_reject_so(m, so)) {
+	if (ipsec_used && ipsec4_in_reject(m, inp)) {
 		IPSEC_STATINC(IPSEC_STAT_IN_POLVIO);
 		if ((n = m_copypacket(m, M_DONTWAIT)) != NULL)
 			icmp_error(n, ICMP_UNREACH, ICMP_UNREACH_ADMIN_PROHIBIT,
@@ -485,11 +482,8 @@ udp4_sendup(struct mbuf *m, int off /* offset of data portion */,
 #endif /*IPSEC*/
 
 	if ((n = m_copypacket(m, M_DONTWAIT)) != NULL) {
-		if (inp && (inp->inp_flags & INP_CONTROLOPTS
-#ifdef SO_OTIMESTAMP
-			 || so->so_options & SO_OTIMESTAMP
-#endif
-			 || so->so_options & SO_TIMESTAMP)) {
+		if (inp->inp_flags & INP_CONTROLOPTS
+		    || SOOPT_TIMESTAMP(so->so_options)) {
 			struct ip *ip = mtod(n, struct ip *);
 			ip_savecontrol(inp, &opts, ip, n);
 		}
@@ -532,7 +526,7 @@ udp4_realinput(struct sockaddr_in *src, struct sockaddr_in *dst,
 	dport = &dst->sin_port;
 
 	if (IN_MULTICAST(dst4->s_addr) ||
-	    in_broadcast(*dst4, m->m_pkthdr.rcvif)) {
+	    in_broadcast(*dst4, m_get_rcvif_NOMPSAFE(m))) {
 		/*
 		 * Deliver a multicast or broadcast datagram to *all* sockets
 		 * for which the local and remote addresses and ports match
@@ -771,21 +765,18 @@ end:
 	return error;
 }
 
-
 int
-udp_output(struct mbuf *m, ...)
+udp_output(struct mbuf *m, struct inpcb *inp, struct mbuf *control,
+    struct lwp *l)
 {
-	struct inpcb *inp;
 	struct udpiphdr *ui;
 	struct route *ro;
+	struct ip_pktopts pktopts;
+	kauth_cred_t cred;
 	int len = m->m_pkthdr.len;
-	int error = 0;
-	va_list ap;
+	int error, flags = 0;
 
 	MCLAIM(m, &udp_tx_mowner);
-	va_start(ap, m);
-	inp = va_arg(ap, struct inpcb *);
-	va_end(ap);
 
 	/*
 	 * Calculate data length and get a mbuf
@@ -806,13 +797,30 @@ udp_output(struct mbuf *m, ...)
 		goto release;
 	}
 
+	if (l == NULL)
+		cred = NULL;
+	else
+		cred = l->l_cred;
+
+	/* Setup IP outgoing packet options */
+	memset(&pktopts, 0, sizeof(pktopts));
+	error = ip_setpktopts(control, &pktopts, &flags, inp, cred,
+	    IPPROTO_UDP);
+	if (error != 0)
+		goto release;
+
+	if (control != NULL) {
+		m_freem(control);
+		control = NULL;
+	}
+
 	/*
 	 * Fill in mbuf with extended UDP header
 	 * and addresses and length put into network format.
 	 */
 	ui = mtod(m, struct udpiphdr *);
 	ui->ui_pr = IPPROTO_UDP;
-	ui->ui_src = inp->inp_laddr;
+	ui->ui_src = pktopts.ippo_laddr.sin_addr;
 	ui->ui_dst = inp->inp_faddr;
 	ui->ui_sport = inp->inp_lport;
 	ui->ui_dport = inp->inp_fport;
@@ -840,13 +848,14 @@ udp_output(struct mbuf *m, ...)
 	((struct ip *)ui)->ip_tos = inp->inp_ip.ip_tos;	/* XXX */
 	UDP_STATINC(UDP_STAT_OPACKETS);
 
-	return (ip_output(m, inp->inp_options, ro,
-	    inp->inp_socket->so_options & (SO_DONTROUTE | SO_BROADCAST),
-	    inp->inp_moptions, inp->inp_socket));
+	flags |= inp->inp_socket->so_options & (SO_DONTROUTE|SO_BROADCAST);
+	return ip_output(m, inp->inp_options, ro, flags, pktopts.ippo_imo, inp);
 
-release:
+ release:
+	if (control != NULL)
+		m_freem(control);
 	m_freem(m);
-	return (error);
+	return error;
 }
 
 static int
@@ -895,7 +904,7 @@ udp_detach(struct socket *so)
 }
 
 static int
-udp_accept(struct socket *so, struct mbuf *nam)
+udp_accept(struct socket *so, struct sockaddr *nam)
 {
 	KASSERT(solocked(so));
 
@@ -905,9 +914,10 @@ udp_accept(struct socket *so, struct mbuf *nam)
 }
 
 static int
-udp_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
+udp_bind(struct socket *so, struct sockaddr *nam, struct lwp *l)
 {
 	struct inpcb *inp = sotoinpcb(so);
+	struct sockaddr_in *sin = (struct sockaddr_in *)nam;
 	int error = 0;
 	int s;
 
@@ -916,7 +926,7 @@ udp_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
 	KASSERT(nam != NULL);
 
 	s = splsoftnet();
-	error = in_pcbbind(inp, nam, l);
+	error = in_pcbbind(inp, sin, l);
 	splx(s);
 
 	return error;
@@ -931,7 +941,7 @@ udp_listen(struct socket *so, struct lwp *l)
 }
 
 static int
-udp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
+udp_connect(struct socket *so, struct sockaddr *nam, struct lwp *l)
 {
 	struct inpcb *inp = sotoinpcb(so);
 	int error = 0;
@@ -942,7 +952,7 @@ udp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 	KASSERT(nam != NULL);
 
 	s = splsoftnet();
-	error = in_pcbconnect(inp, nam, l);
+	error = in_pcbconnect(inp, (struct sockaddr_in *)nam, l);
 	if (! error)
 		soisconnected(so);
 	splx(s);
@@ -1017,7 +1027,7 @@ udp_stat(struct socket *so, struct stat *ub)
 }
 
 static int
-udp_peeraddr(struct socket *so, struct mbuf *nam)
+udp_peeraddr(struct socket *so, struct sockaddr *nam)
 {
 	int s;
 
@@ -1026,14 +1036,14 @@ udp_peeraddr(struct socket *so, struct mbuf *nam)
 	KASSERT(nam != NULL);
 
 	s = splsoftnet();
-	in_setpeeraddr(sotoinpcb(so), nam);
+	in_setpeeraddr(sotoinpcb(so), (struct sockaddr_in *)nam);
 	splx(s);
 
 	return 0;
 }
 
 static int
-udp_sockaddr(struct socket *so, struct mbuf *nam)
+udp_sockaddr(struct socket *so, struct sockaddr *nam)
 {
 	int s;
 
@@ -1042,7 +1052,7 @@ udp_sockaddr(struct socket *so, struct mbuf *nam)
 	KASSERT(nam != NULL);
 
 	s = splsoftnet();
-	in_setsockaddr(sotoinpcb(so), nam);
+	in_setsockaddr(sotoinpcb(so), (struct sockaddr_in *)nam);
 	splx(s);
 
 	return 0;
@@ -1065,7 +1075,7 @@ udp_recvoob(struct socket *so, struct mbuf *m, int flags)
 }
 
 static int
-udp_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
+udp_send(struct socket *so, struct mbuf *m, struct sockaddr *nam,
     struct mbuf *control, struct lwp *l)
 {
 	struct inpcb *inp = sotoinpcb(so);
@@ -1077,12 +1087,6 @@ udp_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
 	KASSERT(inp != NULL);
 	KASSERT(m != NULL);
 
-	if (control && control->m_len) {
-		m_freem(control);
-		m_freem(m);
-		return EINVAL;
-	}
-
 	memset(&laddr, 0, sizeof laddr);
 
 	s = splsoftnet();
@@ -1092,7 +1096,7 @@ udp_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
 			error = EISCONN;
 			goto die;
 		}
-		error = in_pcbconnect(inp, nam, l);
+		error = in_pcbconnect(inp, (struct sockaddr_in *)nam, l);
 		if (error)
 			goto die;
 	} else {
@@ -1101,16 +1105,19 @@ udp_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
 			goto die;
 		}
 	}
-	error = udp_output(m, inp);
+	error = udp_output(m, inp, control, l);
 	m = NULL;
+	control = NULL;
 	if (nam) {
 		in_pcbdisconnect(inp);
 		inp->inp_laddr = laddr;		/* XXX */
 		in_pcbstate(inp, INP_BOUND);	/* XXX */
 	}
   die:
-	if (m)
+	if (m != NULL)
 		m_freem(m);
+	if (control != NULL)
+		m_freem(control);
 
 	splx(s);
 	return error;
@@ -1135,44 +1142,16 @@ udp_purgeif(struct socket *so, struct ifnet *ifp)
 	s = splsoftnet();
 	mutex_enter(softnet_lock);
 	in_pcbpurgeif0(&udbtable, ifp);
+#ifdef NET_MPSAFE
+	mutex_exit(softnet_lock);
+#endif
 	in_purgeif(ifp);
+#ifdef NET_MPSAFE
+	mutex_enter(softnet_lock);
+#endif
 	in_pcbpurgeif(&udbtable, ifp);
 	mutex_exit(softnet_lock);
 	splx(s);
-
-	return 0;
-}
-
-static int
-udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
-    struct mbuf *control, struct lwp *l)
-{
-	KASSERT(req != PRU_ATTACH);
-	KASSERT(req != PRU_DETACH);
-	KASSERT(req != PRU_ACCEPT);
-	KASSERT(req != PRU_BIND);
-	KASSERT(req != PRU_LISTEN);
-	KASSERT(req != PRU_CONNECT);
-	KASSERT(req != PRU_CONNECT2);
-	KASSERT(req != PRU_DISCONNECT);
-	KASSERT(req != PRU_SHUTDOWN);
-	KASSERT(req != PRU_ABORT);
-	KASSERT(req != PRU_CONTROL);
-	KASSERT(req != PRU_SENSE);
-	KASSERT(req != PRU_PEERADDR);
-	KASSERT(req != PRU_SOCKADDR);
-	KASSERT(req != PRU_RCVD);
-	KASSERT(req != PRU_RCVOOB);
-	KASSERT(req != PRU_SEND);
-	KASSERT(req != PRU_SENDOOB);
-	KASSERT(req != PRU_PURGEIF);
-
-	KASSERT(solocked(so));
-
-	if (sotoinpcb(so) == NULL)
-		return EINVAL;
-
-	panic("udp_usrreq");
 
 	return 0;
 }
@@ -1380,13 +1359,9 @@ udp4_espinudp(struct mbuf **mp, int off, struct sockaddr *src,
 	((u_int16_t *)(tag + 1))[1] = dport;
 	m_tag_prepend(m, tag);
 
-#ifdef IPSEC
 	if (ipsec_used)
 		ipsec4_common_input(m, iphdrlen, IPPROTO_ESP);
 	/* XXX: else */
-#else
-	esp4_input(m, iphdrlen);
-#endif
 
 	/* We handled it, it shouldn't be handled by UDP */
 	*mp = NULL; /* avoid free by caller ... */
@@ -1414,7 +1389,6 @@ PR_WRAP_USRREQS(udp)
 #define	udp_send	udp_send_wrapper
 #define	udp_sendoob	udp_sendoob_wrapper
 #define	udp_purgeif	udp_purgeif_wrapper
-#define	udp_usrreq	udp_usrreq_wrapper
 
 const struct pr_usrreqs udp_usrreqs = {
 	.pr_attach	= udp_attach,
@@ -1436,5 +1410,4 @@ const struct pr_usrreqs udp_usrreqs = {
 	.pr_send	= udp_send,
 	.pr_sendoob	= udp_sendoob,
 	.pr_purgeif	= udp_purgeif,
-	.pr_generic	= udp_usrreq,
 };

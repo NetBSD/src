@@ -1,4 +1,4 @@
-/*	$NetBSD: cfi_0002.c,v 1.6.8.1 2014/08/20 00:03:41 tls Exp $	*/
+/*	$NetBSD: cfi_0002.c,v 1.6.8.2 2017/12/03 11:37:06 jdolecek Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -31,13 +31,14 @@
 #include "opt_flash.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cfi_0002.c,v 1.6.8.1 2014/08/20 00:03:41 tls Exp $"); 
+__KERNEL_RCSID(0, "$NetBSD: cfi_0002.c,v 1.6.8.2 2017/12/03 11:37:06 jdolecek Exp $"); 
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/cdefs.h>
 #include <sys/device.h>
 #include <sys/endian.h>
+#include <sys/sched.h>
 #include <sys/time.h>
 
 #include <sys/bus.h>

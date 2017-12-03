@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.25.10.1 2014/08/20 00:02:49 tls Exp $	*/
+/*	$NetBSD: installboot.c,v 1.25.10.2 2017/12/03 11:35:58 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens
@@ -30,8 +30,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/sysctl.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
@@ -54,7 +55,9 @@
 #include "installboot.h"
 
 static void	usage(void);
+#ifdef CHECK_OS_BOOTVERSION
 static void	oscheck(void);
+#endif
 static u_int	abcksum(void *);
 static void	setNVpref(void);
 static void	setIDEpar(u_int8_t *, size_t);
@@ -71,23 +74,26 @@ static struct ahdi_root ahdiboot;
 static const char	mdecpath[] = PATH_MDEC;
 static const char	stdpath[] = PATH_STD;
 static const char	milanpath[] = PATH_MILAN;
-static int		nowrite = 0;
-static int		verbose = 0;
-static int		trackpercyl = 0;
-static int		secpertrack = 0;
-static int		milan = 0;
+static bool		nowrite;
+static bool		verbose;
+static int		trackpercyl;
+static int		secpertrack;
+static bool		milan;
 
 static void
 usage(void)
 {
 	fprintf(stderr,
 		"usage: installboot [options] device\n"
+#ifndef NO_USAGE
 		"where options are:\n"
 		"\t-N  do not actually write anything on the disk\n"
 		"\t-m  use Milan boot blocks\n"
 		"\t-t  number of tracks per cylinder (IDE disk)\n"
 		"\t-u  number of sectors per track (IDE disk)\n"
-		"\t-v  verbose mode\n");
+		"\t-v  verbose mode\n"
+#endif
+		);
 	exit(EXIT_FAILURE);
 }
 
@@ -99,17 +105,19 @@ main(int argc, char *argv[])
 	char		 *devchr;
 	int		 fd, c;
 
+#ifdef CHECK_OS_BOOTVERSION
 	/* check OS bootversion */
 	oscheck();
+#endif
 
 	/* parse options */
 	while ((c = getopt(argc, argv, "Nmt:u:v")) != -1) {
 		switch (c) {
 		  case 'N':
-			nowrite = 1;
+			nowrite = true;
 			break;
 		  case 'm':
-			milan = 1;
+			milan = true;
 			break;
 		  case 't':
 			trackpercyl = atoi(optarg);
@@ -118,7 +126,7 @@ main(int argc, char *argv[])
 			secpertrack = atoi(optarg);
 			break;
 		  case 'v':
-			verbose = 1;
+			verbose = true;
 			break;
 		  default:
 			usage();
@@ -177,6 +185,7 @@ main(int argc, char *argv[])
 	return(EXIT_SUCCESS);
 }
 
+#ifdef CHECK_OS_BOOTVERSION
 static void
 oscheck(void)
 {
@@ -208,6 +217,7 @@ oscheck(void)
 		errx(EXIT_FAILURE, "Kern bootversion: %d, expected: %d",
 		    kvers, BOOTVERSION);
 }
+#endif
 
 static void
 install_fd(char *devnm, struct disklabel *label)

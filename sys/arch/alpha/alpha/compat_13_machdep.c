@@ -1,4 +1,4 @@
-/* $NetBSD: compat_13_machdep.c,v 1.20.6.1 2014/08/20 00:02:41 tls Exp $ */
+/* $NetBSD: compat_13_machdep.c,v 1.20.6.2 2017/12/03 11:35:46 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.20.6.1 2014/08/20 00:02:41 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.20.6.2 2017/12/03 11:35:46 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +94,7 @@ compat_13_sys_sigreturn(struct lwp *l, const struct compat_13_sys_sigreturn_args
 
 	/* XXX ksc.sc_ownedfp ? */
 	pcb = lwp_getpcb(l);
-	fpu_discard(true);
+	fpu_discard(l, true);
 	memcpy(&pcb->pcb_fp, (struct fpreg *)ksc.sc_fpregs,
 	    sizeof(struct fpreg));
 	/* XXX ksc.sc_fp_control ? */

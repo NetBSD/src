@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.78.2.2 2014/08/20 00:03:15 tls Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.78.2.3 2017/12/03 11:36:32 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.78.2.2 2014/08/20 00:03:15 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.78.2.3 2017/12/03 11:36:32 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -122,19 +122,19 @@ static char bootargs[MAX_BOOT_STRING + 1];
 char *boot_args = NULL;
 char *boot_file = NULL;
 
-vm_offset_t physical_start;
-vm_offset_t physical_freestart;
-vm_offset_t physical_freeend;
-vm_offset_t physical_end;
+vaddr_t physical_start;
+vaddr_t physical_freestart;
+vaddr_t physical_freeend;
+vaddr_t physical_end;
 u_int free_pages;
-vm_offset_t pagetables_start;
+vaddr_t pagetables_start;
 
 /*int debug_flags;*/
 #ifndef PMAP_STATIC_L1S
 int max_processes = 64;			/* Default number */
 #endif	/* !PMAP_STATIC_L1S */
 
-vm_offset_t msgbufphys;
+paddr_t msgbufphys;
 
 #ifdef PMAP_DEBUG
 extern int pmap_debug_level;
@@ -316,9 +316,9 @@ netwinder_reset(void)
  * time with section mappings.
  */
 struct l1_sec_map {
-	vm_offset_t	va;
-	vm_offset_t	pa;
-	vm_size_t	size;
+	vaddr_t		va;
+	vaddr_t		pa;
+	vsize_t		size;
 	vm_prot_t	prot;
 	int		cache;
 } l1_sec_table[] = {
@@ -477,7 +477,7 @@ initarm(void *arg)
 	physmem = (physical_end - physical_start) / PAGE_SIZE;
 
 	/* Tell the user about the memory */
-	printf("physmemory: %d pages at 0x%08lx -> 0x%08lx\n", physmem,
+	printf("physmemory: %"PRIxPSIZE" pages at 0x%08lx -> 0x%08lx\n", physmem,
 	    physical_start, physical_end - 1);
 
 	/*
@@ -646,7 +646,7 @@ initarm(void *arg)
 	 */
 	loop = 0;
 	while (l1_sec_table[loop].size) {
-		vm_size_t sz;
+		vsize_t sz;
 
 #ifdef VERBOSE_INIT_ARM
 		printf("%08lx -> %08lx @ %08lx\n", l1_sec_table[loop].pa,
@@ -738,7 +738,7 @@ initarm(void *arg)
 
 	/* Load memory into UVM. */
 	printf("page ");
-	uvm_setpagesize();	/* initialize PAGE_SIZE-dependent variables */
+	uvm_md_init();
 
 	/* XXX Always one RAM block -- nuke the loop. */
 	for (loop = 0; loop < bootconfig.dramblocks; loop++) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.14 2011/07/12 07:51:34 mrg Exp $ */
+/*	$NetBSD: reg.h,v 1.14.12.1 2017/12/03 11:36:45 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -178,24 +178,6 @@ struct fp_qentry {
 	int	fq_instr;		/* the instruction itself */
 };
 
-struct fpstate64 {
-	u_int	fs_regs[64];		/* our view is 64 32-bit registers */
-	int64_t	fs_fsr;			/* %fsr */
-	int	fs_gsr;			/* graphics state reg */
-	int	fs_qsize;		/* actual queue depth */
-	struct	fp_qentry fs_queue[FP_QSIZE];	/* queue contents */
-};
-
-/* 
- * For 32-bit emulations.
- */
-struct fpstate32 {
-	u_int	fs_regs[32];		/* our view is 32 32-bit registers */
-	int	fs_fsr;			/* %fsr */
-	int	fs_qsize;		/* actual queue depth */
-	struct	fp_qentry fs_queue[FP_QSIZE];	/* queue contents */
-};
-
 /*
  * The actual FP registers are made accessible (c.f. ptrace(2)) through
  * a `struct fpreg'; <arch/sparc64/sparc64/process_machdep.c> relies on the
@@ -207,12 +189,30 @@ struct fpreg64 {
 	int	fr_gsr;			/* graphics state reg */
 };
 
+struct fpstate64 {
+	struct fpreg64 fs_reg;
+#define fs_regs fs_reg.fr_regs
+#define fs_fsr fs_reg.fr_fsr
+#define fs_gsr fs_reg.fr_gsr
+	int	fs_qsize;		/* actual queue depth */
+	struct	fp_qentry fs_queue[FP_QSIZE];	/* queue contents */
+};
+
 /*
  * 32-bit fpreg used by 32-bit sparc CPUs
  */
 struct fpreg32 {
 	u_int	fr_regs[32];		/* our view is 32 32-bit registers */
 	int	fr_fsr;			/* %fsr */
+};
+
+/* 
+ * For 32-bit emulations.
+ */
+struct fpstate32 {
+	struct fpreg32 fs_reg;
+	int	fs_qsize;		/* actual queue depth */
+	struct	fp_qentry fs_queue[FP_QSIZE];	/* queue contents */
 };
 
 #if defined(__arch64__)

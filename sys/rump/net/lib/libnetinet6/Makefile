@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.2.8.2 2014/08/20 00:04:43 tls Exp $
+#	$NetBSD: Makefile,v 1.2.8.3 2017/12/03 11:39:18 jdolecek Exp $
 #
 
 LIB=	rumpnet_netinet6
+COMMENT=IPv6 incl. TCP and UDP (PF_INET6)
 
 SRCS=	netinet6_component.c
 

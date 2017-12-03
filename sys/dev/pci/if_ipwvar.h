@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipwvar.h,v 1.15.22.1 2012/11/20 03:02:16 tls Exp $	*/
+/*	$NetBSD: if_ipwvar.h,v 1.15.22.2 2017/12/03 11:37:07 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2004
@@ -26,6 +26,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/ioccom.h>
 
 struct ipw_firmware {
 	void	*main;
@@ -101,6 +103,7 @@ struct ipw_softc {
 	bus_space_tag_t			sc_st;
 	bus_space_handle_t		sc_sh;
 	void				*sc_ih;
+	void				*sc_soft_ih;
 	pci_chipset_tag_t		sc_pct;
 	pcitag_t			sc_pcitag;
 	bus_size_t			sc_sz;

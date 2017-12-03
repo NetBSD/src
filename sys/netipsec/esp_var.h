@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_var.h,v 1.4 2008/04/23 06:09:05 thorpej Exp $	*/
+/*	$NetBSD: esp_var.h,v 1.4.46.1 2017/12/03 11:39:05 jdolecek Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/esp_var.h,v 1.1.4.1 2003/01/24 05:11:35 sam Exp $	*/
 /*	$OpenBSD: ip_esp.h,v 1.37 2002/06/09 16:26:10 itojun Exp $	*/
 /*
@@ -40,14 +40,6 @@
 #ifndef _NETIPSEC_ESP_VAR_H_
 #define _NETIPSEC_ESP_VAR_H_
 
-/*
- * These define the algorithm indices into the histogram.  They're
- * presently based on the PF_KEY v2 protocol values which is bogus;
- * they should be decoupled from the protocol at which time we can
- * pack them and reduce the size of the array to a reasonable value.
- */
-#define	ESP_ALG_MAX	256		/* NB: could be < but skipjack is 249 */
-
 #define	ESP_STAT_HDROPS		0	/* packet shorter than header shows */
 #define	ESP_STAT_NOPF		1	/* protocol family not supported */
 #define	ESP_STAT_NOTDB		2
@@ -69,11 +61,14 @@
 #define	ESP_STAT_CRYPTO		18	/* crypto processing failure */
 #define	ESP_STAT_TUNNEL		19	/* tunnel sanity check failure */
 #define	ESP_STAT_HIST		20	/* per-algorithm op count */
-		/* space for ESP_ALG_MAX (256) counters */
 
-#define	ESP_NSTATS		276
+/* space for SADB_EALG_STATS_NUM counters */
+#define	ESP_ALG_MAX		SADB_EALG_STATS_NUM
+#define	ESP_ALG_STR		SADB_EALG_STATS_STR
+#define	ESP_NSTATS		(ESP_STAT_HIST + ESP_ALG_MAX)
 
 #ifdef _KERNEL
+extern  const uint8_t esp_stats[256];
 extern	int esp_enable;
 #endif /* _KERNEL */
 #endif /* !_NETIPSEC_ESP_VAR_H_ */

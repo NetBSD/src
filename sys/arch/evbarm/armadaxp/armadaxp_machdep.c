@@ -1,4 +1,4 @@
-/*	$NetBSD: armadaxp_machdep.c,v 1.2.2.3 2014/08/20 00:02:52 tls Exp $	*/
+/*	$NetBSD: armadaxp_machdep.c,v 1.2.2.4 2017/12/03 11:36:02 jdolecek Exp $	*/
 /*******************************************************************************
 Copyright (C) Marvell International Ltd. and its affiliates
 
@@ -37,7 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadaxp_machdep.c,v 1.2.2.3 2014/08/20 00:02:52 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadaxp_machdep.c,v 1.2.2.4 2017/12/03 11:36:02 jdolecek Exp $");
 
 #include "opt_machdep.h"
 #include "opt_mvsoc.h"
@@ -66,6 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: armadaxp_machdep.c,v 1.2.2.3 2014/08/20 00:02:52 tls
 #include <dev/cons.h>
 #include <dev/md.h>
 
+#include <dev/marvell/marvellreg.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <machine/pci_machdep.h>
@@ -92,6 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: armadaxp_machdep.c,v 1.2.2.3 2014/08/20 00:02:52 tls
 
 #include <evbarm/marvell/marvellreg.h>
 #include <evbarm/marvell/marvellvar.h>
+#include <dev/marvell/marvellreg.h>
 
 #include "mvpex.h"
 #include "com.h"
@@ -99,6 +101,8 @@ __KERNEL_RCSID(0, "$NetBSD: armadaxp_machdep.c,v 1.2.2.3 2014/08/20 00:02:52 tls
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
 #endif
+
+#include <net/if_ether.h>
 
 /*
  * Address to call from cpu_reset() to reset the machine.
@@ -109,6 +113,13 @@ __KERNEL_RCSID(0, "$NetBSD: armadaxp_machdep.c,v 1.2.2.3 2014/08/20 00:02:52 tls
 BootConfig bootconfig;		/* Boot config storage */
 char *boot_args = NULL;
 char *boot_file = NULL;
+
+/*
+ * U-Boot argument buffer
+ */
+extern unsigned int uboot_regs_pa[]; /* saved r0, r1, r2, r3 */
+unsigned int *uboot_regs_va;
+char boot_argbuf[MAX_BOOT_STRING];
 
 extern int KERNEL_BASE_phys[];
 
@@ -134,10 +145,6 @@ extern int KERNEL_BASE_phys[];
 
 #define	KERNEL_VM_BASE		(KERNEL_BASE + 0x40000000)
 #define KERNEL_VM_SIZE		0x14000000
-
-/* Prototypes */
-extern int armadaxp_l2_init(bus_addr_t);
-extern void armadaxp_io_coherency_init(void);
 
 void consinit(void);
 #ifdef KGDB
@@ -187,7 +194,7 @@ static const struct pmap_devmap devmap[] = {
 		/* Internal registers */
 		.pd_va = _A(MARVELL_INTERREGS_VBASE),
 		.pd_pa = _A(MARVELL_INTERREGS_PBASE),
-		.pd_size = _S(MARVELL_INTERREGS_SIZE),
+		.pd_size = _S(MVSOC_INTERREGS_SIZE),
 		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
 		.pd_cache = PTE_NOCACHE
 	},
@@ -228,8 +235,13 @@ reset_axp_pcie_win(void)
 			    ARMADAXP_TAG_PEX01_MEM, ARMADAXP_TAG_PEX01_IO,
 			    ARMADAXP_TAG_PEX02_MEM, ARMADAXP_TAG_PEX02_IO,
 			    ARMADAXP_TAG_PEX03_MEM, ARMADAXP_TAG_PEX03_IO,
+			    ARMADAXP_TAG_PEX10_MEM, ARMADAXP_TAG_PEX10_IO,
+			    ARMADAXP_TAG_PEX11_MEM, ARMADAXP_TAG_PEX11_IO,
+			    ARMADAXP_TAG_PEX12_MEM, ARMADAXP_TAG_PEX12_IO,
+			    ARMADAXP_TAG_PEX13_MEM, ARMADAXP_TAG_PEX13_IO,
 			    ARMADAXP_TAG_PEX2_MEM, ARMADAXP_TAG_PEX2_IO,
-			    ARMADAXP_TAG_PEX3_MEM, ARMADAXP_TAG_PEX3_IO};
+			    ARMADAXP_TAG_PEX3_MEM, ARMADAXP_TAG_PEX3_IO
+			};
 
 	nwindow = ARMADAXP_MLMB_NWINDOW;
 	nremap = ARMADAXP_MLMB_NREMAP;
@@ -333,23 +345,9 @@ initarm(void *arg)
 	reset_axp_pcie_win();
 
 	/* Get CPU, system and timebase frequencies */
-	extern vaddr_t misc_base;
-	misc_base = MARVELL_INTERREGS_VBASE + ARMADAXP_MISC_BASE;
-	armadaxp_getclks();
-	mvsoc_clkgating = armadaxp_clkgating;
-
-	/* Preconfigure interrupts */
-	armadaxp_intr_bootstrap(MARVELL_INTERREGS_PBASE);
-
-#ifdef L2CACHE_ENABLE
-	/* Initialize L2 Cache */
-	(void)armadaxp_l2_init(MARVELL_INTERREGS_PBASE);
-#endif
-
-#ifdef AURORA_IO_CACHE_COHERENCY
-	/* Initialize cache coherency */
-	armadaxp_io_coherency_init();
-#endif
+	armadaxp_bootstrap(
+	    MARVELL_INTERREGS_VBASE,
+	    MARVELL_INTERREGS_PBASE);
 
 #ifdef KGDB
 	kgdb_port_init();
@@ -392,6 +390,13 @@ initarm(void *arg)
 
 	/* we've a specific device_register routine */
 	evbarm_device_register = axp_device_register;
+
+	/* copy U-Boot args from U-Boot heap to kernel memory */
+	uboot_regs_va = (int *)((unsigned int)uboot_regs_pa + KERNEL_BASE);
+	boot_args = (char *)(uboot_regs_va[3] + KERNEL_BASE);
+	strlcpy(boot_argbuf, (char *)boot_args, sizeof(boot_argbuf));
+	boot_args = boot_argbuf;
+	parse_mi_bootargs(boot_args);
 
 	return initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, NULL, 0);
 }
@@ -501,12 +506,13 @@ axp_device_register(device_t dev, void *aux)
 	    armadaxp_pex01_io_bs_tag, armadaxp_pex01_mem_bs_tag,
 	    armadaxp_pex02_io_bs_tag, armadaxp_pex02_mem_bs_tag,
 	    armadaxp_pex03_io_bs_tag, armadaxp_pex03_mem_bs_tag,
+	    armadaxp_pex10_io_bs_tag, armadaxp_pex10_mem_bs_tag,
 	    armadaxp_pex2_io_bs_tag, armadaxp_pex2_mem_bs_tag,
 	    armadaxp_pex3_io_bs_tag, armadaxp_pex3_mem_bs_tag;
 	extern struct arm32_pci_chipset arm32_mvpex0_chipset,
 	    arm32_mvpex1_chipset, arm32_mvpex2_chipset,
 	    arm32_mvpex3_chipset, arm32_mvpex4_chipset,
-	    arm32_mvpex5_chipset;
+	    arm32_mvpex5_chipset, arm32_mvpex6_chipset;
 
 	struct marvell_attach_args *mva = aux;
 
@@ -523,34 +529,40 @@ axp_device_register(device_t dev, void *aux)
 			arm32_mvpex_chipset = &arm32_mvpex0_chipset;
 			iotag = ARMADAXP_TAG_PEX00_IO;
 			memtag = ARMADAXP_TAG_PEX00_MEM;
-		} else if (mva->mva_offset == MVSOC_PEX_BASE + 0x4000) {
+		} else if (mva->mva_offset == ARMADAXP_PEX01_BASE) {
 			mvpex_io_bs_tag = &armadaxp_pex01_io_bs_tag;
 			mvpex_mem_bs_tag = &armadaxp_pex01_mem_bs_tag;
 			arm32_mvpex_chipset = &arm32_mvpex1_chipset;
 			iotag = ARMADAXP_TAG_PEX01_IO;
 			memtag = ARMADAXP_TAG_PEX01_MEM;
-		} else if (mva->mva_offset == MVSOC_PEX_BASE + 0x8000) {
+		} else if (mva->mva_offset == ARMADAXP_PEX02_BASE) {
 			mvpex_io_bs_tag = &armadaxp_pex02_io_bs_tag;
 			mvpex_mem_bs_tag = &armadaxp_pex02_mem_bs_tag;
 			arm32_mvpex_chipset = &arm32_mvpex2_chipset;
 			iotag = ARMADAXP_TAG_PEX02_IO;
 			memtag = ARMADAXP_TAG_PEX02_MEM;
-		} else if (mva->mva_offset == MVSOC_PEX_BASE + 0xc000) {
+		} else if (mva->mva_offset == ARMADAXP_PEX03_BASE) {
 			mvpex_io_bs_tag = &armadaxp_pex03_io_bs_tag;
 			mvpex_mem_bs_tag = &armadaxp_pex03_mem_bs_tag;
 			arm32_mvpex_chipset = &arm32_mvpex3_chipset;
 			iotag = ARMADAXP_TAG_PEX03_IO;
 			memtag = ARMADAXP_TAG_PEX03_MEM;
-		} else if (mva->mva_offset == MVSOC_PEX_BASE + 0x2000) {
+		} else if (mva->mva_offset == ARMADAXP_PEX10_BASE) {
+			mvpex_io_bs_tag = &armadaxp_pex10_io_bs_tag;
+			mvpex_mem_bs_tag = &armadaxp_pex10_mem_bs_tag;
+			arm32_mvpex_chipset = &arm32_mvpex4_chipset;
+			iotag = ARMADAXP_TAG_PEX10_IO;
+			memtag = ARMADAXP_TAG_PEX10_MEM;
+		} else if (mva->mva_offset == ARMADAXP_PEX2_BASE) {
 			mvpex_io_bs_tag = &armadaxp_pex2_io_bs_tag;
 			mvpex_mem_bs_tag = &armadaxp_pex2_mem_bs_tag;
-			arm32_mvpex_chipset = &arm32_mvpex4_chipset;
+			arm32_mvpex_chipset = &arm32_mvpex5_chipset;
 			iotag = ARMADAXP_TAG_PEX2_IO;
 			memtag = ARMADAXP_TAG_PEX2_MEM;
 		} else {
 			mvpex_io_bs_tag = &armadaxp_pex3_io_bs_tag;
 			mvpex_mem_bs_tag = &armadaxp_pex3_mem_bs_tag;
-			arm32_mvpex_chipset = &arm32_mvpex5_chipset;
+			arm32_mvpex_chipset = &arm32_mvpex6_chipset;
 			iotag = ARMADAXP_TAG_PEX3_IO;
 			memtag = ARMADAXP_TAG_PEX3_MEM;
 		}
@@ -583,6 +595,56 @@ axp_device_register(device_t dev, void *aux)
 		prop_dictionary_set_uint64(dict, "memend", end);
 		prop_dictionary_set_uint32(dict,
 		    "cache-line-size", arm_dcache_align);
+	}
+	if (device_is_a(dev, "mvgbec")) {
+		uint8_t enaddr[ETHER_ADDR_LEN];
+		char optname[9];
+		int unit = device_unit(dev);
+
+		if (unit > 9)
+			return;
+		switch (unit) {
+		case 0:
+			strlcpy(optname, "ethaddr", sizeof(optname));
+			break;
+		default:
+			/* eth1addr ... eth9addr */
+			snprintf(optname, sizeof(optname),
+			    "eth%daddr", unit);
+			break;
+		}
+		if (get_bootconf_option(boot_args, optname,
+		    BOOTOPT_TYPE_MACADDR, enaddr)) {
+			prop_data_t pd =
+			    prop_data_create_data(enaddr, sizeof(enaddr));
+
+			prop_dictionary_set(dict, "mac-address", pd);
+		}
+	}
+	if (device_is_a(dev, "mvxpe")) {
+		uint8_t enaddr[ETHER_ADDR_LEN];
+		char optname[9];
+		int unit = device_unit(dev);
+
+		if (unit > 9)
+			return;
+		switch (unit) {
+		case 0:
+			strlcpy(optname, "ethaddr", sizeof(optname));
+			break;
+		default:
+			/* eth1addr ... eth9addr */
+			snprintf(optname, sizeof(optname),
+			    "eth%daddr", unit);
+			break;
+		}
+		if (get_bootconf_option(boot_args, optname,
+		    BOOTOPT_TYPE_MACADDR, enaddr)) {
+			prop_data_t pd =
+			    prop_data_create_data(enaddr, sizeof(enaddr));
+
+			prop_dictionary_set(dict, "mac-address", pd);
+		}
 	}
 #endif
 }

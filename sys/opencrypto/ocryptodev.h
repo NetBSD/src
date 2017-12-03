@@ -1,4 +1,4 @@
-/*	$NetBSD: ocryptodev.h,v 1.2 2011/02/19 16:26:34 drochner Exp $ */
+/*	$NetBSD: ocryptodev.h,v 1.2.16.1 2017/12/03 11:39:06 jdolecek Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.h,v 1.2.2.6 2003/07/02 17:04:50 sam Exp $	*/
 /*	$OpenBSD: cryptodev.h,v 1.33 2002/07/17 23:52:39 art Exp $	*/
 
@@ -84,6 +84,8 @@
 
 #ifndef _CRYPTO_OCRYPTODEV_H_
 #define _CRYPTO_OCRYPTODEV_H_
+
+#include <sys/ioccom.h>
 
 struct osession_op {	/* backwards compatible */
 	u_int32_t	cipher;		/* ie. CRYPTO_DES_CBC */

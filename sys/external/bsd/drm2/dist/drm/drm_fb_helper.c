@@ -117,7 +117,6 @@ fail:
 }
 EXPORT_SYMBOL(drm_fb_helper_single_add_all_connectors);
 
-#ifndef __NetBSD__		/* XXX fb command line */
 static int drm_fb_helper_parse_command_line(struct drm_fb_helper *fb_helper)
 {
 	struct drm_fb_helper_connector *fb_helper_conn;
@@ -133,8 +132,14 @@ static int drm_fb_helper_parse_command_line(struct drm_fb_helper *fb_helper)
 		mode = &fb_helper_conn->cmdline_mode;
 
 		/* do something on return - turn off connector maybe */
+#if defined(__NetBSD__)
+		prop_dictionary_t prop = device_properties(connector->dev->dev);
+		if (prop_dictionary_get_cstring(prop, drm_get_connector_name(connector), &option) == false)
+			continue;
+#else
 		if (fb_get_options(drm_get_connector_name(connector), &option))
 			continue;
+#endif
 
 		if (drm_mode_parse_command_line_for_connector(option,
 							      connector,
@@ -171,7 +176,6 @@ static int drm_fb_helper_parse_command_line(struct drm_fb_helper *fb_helper)
 	}
 	return 0;
 }
-#endif
 
 static void drm_fb_helper_save_lut_atomic(struct drm_crtc *crtc, struct drm_fb_helper *helper)
 {
@@ -1207,9 +1211,6 @@ static bool drm_has_cmdline_mode(struct drm_fb_helper_connector *fb_connector)
 struct drm_display_mode *drm_pick_cmdline_mode(struct drm_fb_helper_connector *fb_helper_conn,
 						      int width, int height)
 {
-#ifdef __NetBSD__		/* XXX fb command line */
-	return NULL;
-#else
 	struct drm_cmdline_mode *cmdline_mode;
 	struct drm_display_mode *mode = NULL;
 	bool prefer_non_interlace;
@@ -1257,7 +1258,6 @@ create_mode:
 						 cmdline_mode);
 	list_add(&mode->head, &fb_helper_conn->connector->modes);
 	return mode;
-#endif
 }
 EXPORT_SYMBOL(drm_pick_cmdline_mode);
 
@@ -1601,9 +1601,7 @@ bool drm_fb_helper_initial_config(struct drm_fb_helper *fb_helper, int bpp_sel)
 	struct drm_device *dev = fb_helper->dev;
 	int count = 0;
 
-#ifndef __NetBSD__		/* XXX fb command line */
 	drm_fb_helper_parse_command_line(fb_helper);
-#endif
 
 	mutex_lock(&dev->mode_config.mutex);
 	count = drm_fb_helper_probe_connector_modes(fb_helper,

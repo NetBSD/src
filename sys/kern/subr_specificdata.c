@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_specificdata.c,v 1.13 2008/04/28 20:24:04 martin Exp $	*/
+/*	$NetBSD: subr_specificdata.c,v 1.13.44.1 2017/12/03 11:38:45 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_specificdata.c,v 1.13 2008/04/28 20:24:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_specificdata.c,v 1.13.44.1 2017/12/03 11:38:45 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -153,7 +153,6 @@ specificdata_domain_create(void)
 	specificdata_domain_t sd;
 
 	sd = kmem_zalloc(sizeof(*sd), KM_SLEEP);
-	KASSERT(sd != NULL);
 	mutex_init(&sd->sd_lock, MUTEX_DEFAULT, IPL_NONE);
 	LIST_INIT(&sd->sd_list);
 
@@ -204,7 +203,6 @@ specificdata_key_create(specificdata_domain_t sd, specificdata_key_t *keyp,
 	nsz = (sd->sd_nkey + 1) * sizeof(*newkeys);
 	/* XXXSMP allocating memory while holding a lock. */
 	newkeys = kmem_zalloc(nsz, KM_SLEEP);
-	KASSERT(newkeys != NULL);
 	if (sd->sd_keys != NULL) {
 		size_t osz = sd->sd_nkey * sizeof(*newkeys);
 		memcpy(newkeys, sd->sd_keys, osz);
@@ -384,7 +382,6 @@ specificdata_setspecific(specificdata_domain_t sd,
 	}
 	sz = SPECIFICDATA_CONTAINER_BYTESIZE(newnkey);
 	newsc = kmem_zalloc(sz, KM_SLEEP);
-	KASSERT(newsc != NULL);
 	newsc->sc_nkey = newnkey;
 
 	mutex_enter(&ref->specdataref_lock);

@@ -1771,7 +1771,7 @@ int ci_mc_load_microcode(struct radeon_device *rdev)
 {
 	const __be32 *fw_data;
 	u32 running, blackout = 0;
-	u32 *io_mc_regs;
+	const u32 *io_mc_regs;
 	int i, regs_size, ucode_size;
 
 	if (!rdev->mc_fw)
@@ -1781,11 +1781,11 @@ int ci_mc_load_microcode(struct radeon_device *rdev)
 
 	switch (rdev->family) {
 	case CHIP_BONAIRE:
-		io_mc_regs = (u32 *)&bonaire_io_mc_regs;
+		io_mc_regs = &bonaire_io_mc_regs[0][0];
 		regs_size = BONAIRE_IO_MC_REGS_SIZE;
 		break;
 	case CHIP_HAWAII:
-		io_mc_regs = (u32 *)&hawaii_io_mc_regs;
+		io_mc_regs = &hawaii_io_mc_regs[0][0];
 		regs_size = HAWAII_IO_MC_REGS_SIZE;
 		break;
 	default:

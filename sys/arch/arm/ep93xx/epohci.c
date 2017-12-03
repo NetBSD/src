@@ -1,4 +1,4 @@
-/*	$NetBSD: epohci.c,v 1.5.12.1 2012/11/20 03:01:04 tls Exp $ */
+/*	$NetBSD: epohci.c,v 1.5.12.2 2017/12/03 11:35:52 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2004 Jesse Off
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epohci.c,v 1.5.12.1 2012/11/20 03:01:04 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epohci.c,v 1.5.12.2 2017/12/03 11:35:52 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,7 @@ epohci_match(device_t parent, cfdata_t match, void *aux)
 {
 	/* EP93xx builtin OHCI module */
 
-	return (1);
+	return 1;
 }
 
 void
@@ -91,14 +91,14 @@ epohci_attach(device_t parent, device_t self, void *aux)
 	bus_space_handle_t syscon_ioh;
 
 	sc->sc.sc_dev = self;
-	sc->sc.sc_bus.hci_private = sc;
+	sc->sc.sc_bus.ub_hcpriv = sc;
 
 	sc->sc.iot = sa->sa_iot;
-	sc->sc.sc_bus.dmatag = sa->sa_dmat;
+	sc->sc.sc_bus.ub_dmatag = sa->sa_dmat;
 	sc->sc_intr = sa->sa_intr;
 
 	/* Map I/O space */
-	if (bus_space_map(sc->sc.iot, sa->sa_addr, sa->sa_size, 
+	if (bus_space_map(sc->sc.iot, sa->sa_addr, sa->sa_size,
 	    0, &sc->sc.ioh)) {
 		printf(": cannot map mem space\n");
 		return;
@@ -120,7 +120,7 @@ epohci_attach(device_t parent, device_t self, void *aux)
 	 */
 
 	do {
-		i = bus_space_read_4(sc->sc.iot, syscon_ioh, 
+		i = bus_space_read_4(sc->sc.iot, syscon_ioh,
 			EP93XX_SYSCON_PwrSts);
 	} while ((i & 0x100) == 0);
 	bus_space_unmap(sc->sc.iot, syscon_ioh, EP93XX_APB_SYSCON_SIZE);
@@ -135,7 +135,6 @@ void
 epohci_callback(device_t self)
 {
 	struct epohci_softc *sc = device_private(self);
-	usbd_status r;
 
 	/* Disable interrupts, so we don't get any spurious ones. */
 	bus_space_write_4(sc->sc.iot, sc->sc.ioh, OHCI_INTERRUPT_DISABLE,
@@ -143,12 +142,12 @@ epohci_callback(device_t self)
 
 	strlcpy(sc->sc.sc_vendor, "Cirrus Logic", sizeof sc->sc.sc_vendor);
 
-	sc->sc_ih = ep93xx_intr_establish(sc->sc_intr, IPL_USB, 
+	sc->sc_ih = ep93xx_intr_establish(sc->sc_intr, IPL_USB,
 		ohci_intr, sc);
-	r = ohci_init(&sc->sc);
+	int err = ohci_init(&sc->sc);
 
-	if (r != USBD_NORMAL_COMPLETION) {
-		printf("%s: init failed, error=%d\n", device_xname(self), r);
+	if (err) {
+		printf("%s: init failed, error=%d\n", device_xname(self), err);
 
 		ep93xx_intr_disestablish(sc->sc_ih);
 		return;

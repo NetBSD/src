@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.49 2012/02/10 17:35:49 para Exp $	*/
+/*	$NetBSD: param.h,v 1.49.6.1 2017/12/03 11:35:48 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -55,6 +55,9 @@
 #include <m68k/param.h>
 
 #define	NPTEPG		(NBPG/(sizeof (pt_entry_t)))
+
+/* We need the same btop macro in device drivers for m68k and powerpc */
+#define MD_BTOP(pa)	m68k_btop(pa)
 
 /*
  * Minimum and maximum sizes of the kernel malloc arena in PAGE_SIZE-sized

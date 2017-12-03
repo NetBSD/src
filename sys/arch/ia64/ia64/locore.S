@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.4.12.2 2014/08/20 00:03:07 tls Exp $	*/
+/*	$NetBSD: locore.S,v 1.4.12.3 2017/12/03 11:36:20 jdolecek Exp $	*/
 	
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -31,18 +31,18 @@
 #include "opt_multiprocessor.h"
 
 #include <machine/asm.h>
-#include <machine/ia64_cpu.h>
-#include <machine/pte.h>
 #include <machine/elf_machdep.h>
 #include <sys/syscall.h>
 
 #include "assym.h"
 
 	.section .data.proc0,"aw"
-	.global	kstack
 	.align	PAGE_SIZE
+	.global	kstack
 kstack:	.space KSTACK_PAGES * PAGE_SIZE
-
+	.global kstack_top
+kstack_top:
+	
 	.text
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: zx.c,v 1.39 2012/01/11 16:08:57 macallan Exp $	*/
+/*	$NetBSD: zx.c,v 1.39.6.1 2017/12/03 11:37:32 jdolecek Exp $	*/
 
 /*
  *  Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,13 +39,10 @@
  *
  * o There is lots of unnecessary mucking about rasops in here, primarily
  *   to appease the sparc fb code.
- *
- * o RASTERCONSOLE is required.  X needs the board set up correctly, and
- *   that's difficult to reconcile with using the PROM for output.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.39 2012/01/11 16:08:57 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.39.6.1 2017/12/03 11:37:32 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,14 +67,12 @@ __KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.39 2012/01/11 16:08:57 macallan Exp $");
 #include <dev/sun/fbvar.h>
 
 #include "wsdisplay.h"
-#if NWSDISPLAY > 0
 #include <dev/wscons/wsconsio.h>
 #include <dev/wsfont/wsfont.h>
 #include <dev/rasops/rasops.h>
 #include <dev/wscons/wsdisplay_vconsvar.h>
 
 #include "opt_wsemul.h"
-#endif
 
 #include <dev/sbus/zxreg.h>
 #include <dev/sbus/zxvar.h>
@@ -86,14 +81,6 @@ __KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.39 2012/01/11 16:08:57 macallan Exp $");
 #include <dev/wscons/wsconsio.h>
 
 #include "ioconf.h"
-
-#if (NWSDISPLAY == 0) && !defined(RASTERCONSOLE)
-#error Sorry, this driver needs WSCONS or RASTERCONSOLE
-#endif
-
-#if (NWSDISPLAY > 0) && defined(RASTERCONSOLE)
-#error Sorry, RASTERCONSOLE and WSCONS are mutually exclusive
-#endif
 
 #define	ZX_STD_ROP	(ZX_ROP_NEW | ZX_ATTR_WE_ENABLE | \
     ZX_ATTR_OE_ENABLE | ZX_ATTR_FORCE_WID)
@@ -154,7 +141,6 @@ static struct fbdriver zx_fbdriver = {
 	zx_unblank, zxopen, zxclose, zxioctl, nopoll, zxmmap
 };
 
-#if NWSDISPLAY > 0
 struct wsscreen_descr zx_defaultscreen = {
 	"std",
 	0, 0,	/* will be filled in -- XXX shouldn't, it's global */
@@ -196,7 +182,6 @@ struct wsscreen_list zx_screenlist = {
 extern const u_char rasops_cmap[768];
 
 static struct vcons_screen zx_console_screen;
-#endif /* NWSDISPLAY > 0 */
 
 static int
 zx_match(device_t parent, cfdata_t cf, void *aux)
@@ -216,11 +201,9 @@ zx_attach(device_t parent, device_t self, void *args)
 	bus_space_handle_t bh;
 	bus_space_tag_t bt;
 	struct fbdevice *fb;
-#if NWSDISPLAY > 0
 	struct wsemuldisplaydev_attach_args aa;
 	struct rasops_info *ri = &zx_console_screen.scr_ri;
 	unsigned long defattr;
-#endif
 	int isconsole, width, height;
 
 	sc = device_private(self);
@@ -303,7 +286,6 @@ zx_attach(device_t parent, device_t self, void *args)
 	sc->sc_cmap = malloc(768, M_DEVBUF, M_NOWAIT);
 	zx_reset(sc);
 
-#if NWSDISPLAY > 0
 	sc->sc_width = fb->fb_type.fb_width;
 	sc->sc_stride = 8192; /* 32 bit */
 	sc->sc_height = fb->fb_type.fb_height;
@@ -343,7 +325,6 @@ zx_attach(device_t parent, device_t self, void *args)
 			 * definition. In this case we fill it from fb to
 			 * avoid problems in case no zx is the console
 			 */
-			ri = &sc->sc_fb.fb_rinfo;
 			zx_defaultscreen.textops = &ri->ri_ops;
 			zx_defaultscreen.capabilities = ri->ri_caps;
 			zx_defaultscreen.nrows = ri->ri_rows;
@@ -356,7 +337,6 @@ zx_attach(device_t parent, device_t self, void *args)
 	aa.accessops = &zx_accessops;
 	aa.accesscookie = &sc->vd;
 	config_found(sc->sc_dv, &aa, wsemuldisplaydevprint);
-#endif
 	fb_attach(&sc->sc_fb, isconsole);
 }
 
@@ -388,7 +368,7 @@ zxioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 	struct fbcmap *cm;
 	struct fbcursor *cu;
 	uint32_t curbits[2][32];
-	int rv, v, count, i;
+	int rv, v, count, i, error;
 
 	sc = device_lookup_private(&zx_cd, minor(dev));
 
@@ -537,20 +517,23 @@ zxioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 				return (rv);
 		}
 		if (cu->cmap.red != NULL) {
-			if (cu->cmap.index > 2 ||
-			    cu->cmap.count > 2 - cu->cmap.index)
-				return (EINVAL);
-			for (i = 0; i < cu->cmap.count; i++) {
-				v = sc->sc_curcmap[i + cu->cmap.index + 0];
-				if (subyte(&cu->cmap.red[i], v))
-					return (EFAULT);
-				v = sc->sc_curcmap[i + cu->cmap.index + 2];
-				if (subyte(&cu->cmap.green[i], v))
-					return (EFAULT);
-				v = sc->sc_curcmap[i + cu->cmap.index + 4];
-				if (subyte(&cu->cmap.blue[i], v))
-					return (EFAULT);
+			uint8_t red[2], green[2], blue[2];
+			const uint8_t *ccm = sc->sc_curcmap;
+			cm = &cu->cmap;
+
+			if (cm->index > 2 || cm->count > 2 - cm->index)
+				return EINVAL;
+
+			for (i = 0; i < cm->count; i++) {
+				red[i] = ccm[i + cm->index + 0];
+				green[i] = ccm[i + cm->index + 2];
+				blue[i] = ccm[i + cm->index + 4];
 			}
+
+			if ((error = copyout(red, cm->red, cm->count)) ||
+			    (error = copyout(green, cm->green, cm->count)) ||
+			    (error = copyout(blue, cm->blue, cm->count)))
+				return error;
 		} else {
 			cu->cmap.index = 0;
 			cu->cmap.count = 2;
@@ -1052,7 +1035,6 @@ zx_putchar(void *cookie, int row, int col, u_int uc, long attr)
 	}
 }
 
-#if NWSDISPLAY > 0
 static int
 zx_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	struct lwp *l)
@@ -1061,8 +1043,8 @@ zx_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	struct vcons_data *vd = v;
 	struct zx_softc *sc = vd->cookie;
 	struct wsdisplay_fbinfo *wdf;
-	struct rasops_info *ri = &sc->sc_fb.fb_rinfo;
 	struct vcons_screen *ms = sc->vd.active;
+	struct rasops_info *ri = &ms->scr_ri;
 	switch (cmd) {
 		case WSDISPLAYIO_GTYPE:
 			*(u_int *)data = WSDISPLAY_TYPE_SUNTCX;
@@ -1095,6 +1077,7 @@ zx_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 					}
 				}
 			}
+			return 0;
 	}
 	return EPASSTHROUGH;
 }
@@ -1193,5 +1176,3 @@ zx_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_ops.eraserows = zx_eraserows;
 	ri->ri_ops.putchar = zx_putchar;
 }
-
-#endif /* NWSDISPLAY > 0 */

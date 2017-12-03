@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ale.c,v 1.14.2.2 2014/08/20 00:03:42 tls Exp $	*/
+/*	$NetBSD: if_ale.c,v 1.14.2.3 2017/12/03 11:37:07 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -32,7 +32,7 @@
 /* Driver for Atheros AR8121/AR8113/AR8114 PCIe Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.14.2.2 2014/08/20 00:03:42 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.14.2.3 2017/12/03 11:37:07 jdolecek Exp $");
 
 #include "vlan.h"
 
@@ -68,8 +68,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.14.2.2 2014/08/20 00:03:42 tls Exp $");
 #include <net/if_vlanvar.h>
 
 #include <net/bpf.h>
-
-#include <sys/rnd.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
@@ -543,7 +541,7 @@ ale_attach(device_t parent, device_t self, void *aux)
 #ifdef ALE_CHECKSUM
 	ifp->if_capabilities |= IFCAP_CSUM_IPv4_Tx | IFCAP_CSUM_IPv4_Rx |
 				IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx |
-				IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_TCPv4_Rx;
+				IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx;
 #endif
 
 #if NVLAN > 0
@@ -574,6 +572,7 @@ ale_attach(device_t parent, device_t self, void *aux)
 		ifmedia_set(&sc->sc_miibus.mii_media, IFM_ETHER | IFM_AUTO);
 
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, sc->ale_eaddr);
 
 	if (pmf_device_register(self, NULL, NULL))
@@ -911,9 +910,6 @@ ale_encap(struct ale_softc *sc, struct mbuf **m_head)
 	bus_dmamap_t map;
 	uint32_t cflags, poff, vtag;
 	int error, i, nsegs, prod;
-#if NVLAN > 0
-	struct m_tag *mtag;
-#endif
 
 	m = *m_head;
 	cflags = vtag = 0;
@@ -998,8 +994,8 @@ ale_encap(struct ale_softc *sc, struct mbuf **m_head)
 
 #if NVLAN > 0
 	/* Configure VLAN hardware tag insertion. */
-	if ((mtag = VLAN_OUTPUT_TAG(&sc->sc_ec, m))) {
-		vtag = ALE_TX_VLAN_TAG(htons(VLAN_TAG_VALUE(mtag)));
+	if (vlan_has_tag(m)) {
+		vtag = ALE_TX_VLAN_TAG(htons(vlan_get_tag(m)));
 		vtag = ((vtag << ALE_TD_VLAN_SHIFT) & ALE_TD_VLAN_MASK);
 		cflags |= ALE_TD_INSERT_VLAN_TAG;
 	}
@@ -1315,8 +1311,7 @@ ale_intr(void *xsc)
 		}
 
 		ale_txeof(sc);
-		if (!IFQ_IS_EMPTY(&ifp->if_snd))
-			ale_start(ifp);
+		if_schedule_deferred_start(ifp);
 	}
 
 	/* Re-enable interrupts. */
@@ -1542,15 +1537,12 @@ ale_rxeof(struct ale_softc *sc)
 #if NVLAN > 0
 		if (status & ALE_RD_VLAN) {
 			uint32_t vtags = ALE_RX_VLAN(le32toh(rs->vtags));
-			VLAN_INPUT_TAG(ifp, m, ALE_RX_VLAN_TAG(vtags), );
+			vlan_set_tag(m, ALE_RX_VLAN_TAG(vtags));
 		}
 #endif
 
-
-		bpf_mtap(ifp, m);
-
 		/* Pass it to upper layer. */
-		(*ifp->if_input)(ifp, m);
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 
 		ale_rx_update_page(sc, &rx_page, length, &prod);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.1 2006/04/07 14:21:18 cherry Exp $	*/
+/*	$NetBSD: atomic.h,v 1.1.122.1 2017/12/03 11:36:20 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -25,11 +25,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/ia64/include/atomic.h,v 1.10 2005/09/27 17:39:10 jhb Exp $
+ * $FreeBSD: releng/10.1/sys/ia64/include/atomic.h 262004 2014-02-16 23:08:21Z marcel $
  */
 
-#ifndef _MACHINE_ATOMIC_H_
-#define	_MACHINE_ATOMIC_H_
+#ifndef _IA64_ATOMIC_H_
+#define	_IA64_ATOMIC_H_
 
 /*
  * Various simple arithmetic on memory which is atomic in the presence
@@ -44,7 +44,7 @@
 		"mov ar.ccv=%2;;\n\t"					\
 		"cmpxchg" #sz "." #sem " %0=%4,%3,ar.ccv\n\t"		\
 		: "=r" (ret), "=m" (*p)					\
-		: "r" (cmpval), "r" (newval), "m" (*p)			\
+		: "r" ((uint64_t)cmpval), "r" (newval), "m" (*p)	\
 		: "memory")
 
 /*
@@ -140,8 +140,11 @@ ATOMIC_STORE_LOAD(long,	 64, "8")
 
 #undef ATOMIC_STORE_LOAD
 
-#define	atomic_load_acq_ptr	atomic_load_acq_64
-#define	atomic_store_rel_ptr	atomic_store_rel_64
+#define	atomic_load_acq_ptr(p)		\
+    ((void *)atomic_load_acq_64((volatile uint64_t *)p))
+
+#define	atomic_store_rel_ptr(p, v)	\
+    atomic_store_rel_64((volatile uint64_t *)p, (uint64_t)v)
 
 #define	IA64_ATOMIC(sz, type, name, width, op)				\
 	static __inline type						\
@@ -260,6 +263,7 @@ IA64_ATOMIC(8, uint64_t, subtract, 64, -)
 #define	atomic_add_rel_long		atomic_add_rel_64
 #define	atomic_subtract_rel_long	atomic_subtract_rel_64
 
+/* XXX Needs casting. */
 #define	atomic_set_ptr			atomic_set_64
 #define	atomic_clear_ptr		atomic_clear_64
 #define	atomic_add_ptr			atomic_add_64
@@ -313,13 +317,18 @@ atomic_cmpset_rel_64(volatile uint64_t* p, uint64_t cmpval, uint64_t newval)
 #define	atomic_cmpset_64		atomic_cmpset_acq_64
 #define	atomic_cmpset_int		atomic_cmpset_32
 #define	atomic_cmpset_long		atomic_cmpset_64
-#define	atomic_cmpset_ptr		atomic_cmpset_64
 #define	atomic_cmpset_acq_int		atomic_cmpset_acq_32
 #define	atomic_cmpset_rel_int		atomic_cmpset_rel_32
 #define	atomic_cmpset_acq_long		atomic_cmpset_acq_64
 #define	atomic_cmpset_rel_long		atomic_cmpset_rel_64
-#define	atomic_cmpset_acq_ptr		atomic_cmpset_acq_64
-#define	atomic_cmpset_rel_ptr		atomic_cmpset_rel_64
+
+#define	atomic_cmpset_acq_ptr(p, o, n)	\
+    (atomic_cmpset_acq_64((volatile uint64_t *)p, (uint64_t)o, (uint64_t)n))
+
+#define	atomic_cmpset_ptr		atomic_cmpset_acq_ptr
+
+#define	atomic_cmpset_rel_ptr(p, o, n)	\
+    (atomic_cmpset_rel_64((volatile uint64_t *)p, (uint64_t)o, (uint64_t)n))
 
 static __inline uint32_t
 atomic_readandclear_32(volatile uint32_t* p)
@@ -343,6 +352,7 @@ atomic_readandclear_64(volatile uint64_t* p)
 
 #define	atomic_readandclear_int		atomic_readandclear_32
 #define	atomic_readandclear_long	atomic_readandclear_64
+#define	atomic_readandclear_ptr		atomic_readandclear_64
 
 /*
  * Atomically add the value of v to the integer pointed to by p and return
@@ -363,4 +373,43 @@ atomic_fetchadd_32(volatile uint32_t *p, uint32_t v)
 
 #define	atomic_fetchadd_int		atomic_fetchadd_32
 
-#endif /* ! _MACHINE_ATOMIC_H_ */
+static __inline u_long
+atomic_fetchadd_long(volatile u_long *p, u_long v)
+{
+	u_long value;
+
+	do {
+		value = *p;
+	} while (!atomic_cmpset_64(p, value, value + v));
+	return (value);
+}
+
+/*
+ * <type> atomic_swap_<type>(volatile <type> *p, <type> v);
+ */
+
+static __inline uint32_t
+ia64_atomic_swap_32(volatile uint32_t *p, uint32_t v)
+{
+	uint32_t r;
+
+	__asm __volatile ("xchg4 %0 = %3, %2;;" : "=r"(r), "=m"(*p) :
+	    "r"(v), "m"(*p) : "memory");
+	return (r);
+}
+
+static __inline uint64_t
+ia64_atomic_swap_64(volatile uint64_t *p, uint64_t v)
+{
+	uint64_t r;
+
+	__asm __volatile ("xchg8 %0 = %3, %2;;" : "=r"(r), "=m"(*p) :
+	    "r"(v), "m"(*p) : "memory");
+	return (r);
+}
+
+#define	ia64_atomic_swap_int	ia64_atomic_swap_32
+#define	ia64_atomic_swap_long	ia64_atomic_swap_64
+#define	ia64_atomic_swap_ptr	ia64_atomic_swap_64
+
+#endif /* ! _IA64_ATOMIC_H_ */

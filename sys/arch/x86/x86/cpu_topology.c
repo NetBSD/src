@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_topology.c,v 1.6.18.1 2014/08/20 00:03:29 tls Exp $	*/
+/*	$NetBSD: cpu_topology.c,v 1.6.18.2 2017/12/03 11:36:50 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2009 Mindaugas Rasiukevicius <rmind at NetBSD org>,
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_topology.c,v 1.6.18.1 2014/08/20 00:03:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_topology.c,v 1.6.18.2 2017/12/03 11:36:50 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -81,7 +81,7 @@ x86_cpu_topology(struct cpu_info *ci)
 	if ((ci->ci_feat_val[0] & CPUID_HTT) != 0) {
 		/* Maximum number of LPs sharing a cache (ebx[23:16]). */
 		x86_cpuid(1, descs);
-		lp_max = (descs[1] >> 16) & 0xff;
+		lp_max = __SHIFTOUT(descs[1], CPUID_HTT_CORES);
 	} else {
 		lp_max = 1;
 	}

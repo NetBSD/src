@@ -1,11 +1,11 @@
-/*	$NetBSD: amd64_trap.S,v 1.2.8.2 2014/08/20 00:02:42 tls Exp $	*/
+/*	$NetBSD: amd64_trap.S,v 1.2.8.3 2017/12/03 11:35:47 jdolecek Exp $	*/
 
-/*-
- * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
+/*
+ * Copyright (c) 1998, 2007, 2008, 2017 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Charles M. Hannum and by Andrew Doran.
+ * by Charles M. Hannum, by Andrew Doran and by Maxime Villard.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -66,7 +66,7 @@
 
 #if 0
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: amd64_trap.S,v 1.2.8.2 2014/08/20 00:02:42 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amd64_trap.S,v 1.2.8.3 2017/12/03 11:35:47 jdolecek Exp $");
 #endif
 
 /*
@@ -78,12 +78,12 @@ __KERNEL_RCSID(0, "$NetBSD: amd64_trap.S,v 1.2.8.2 2014/08/20 00:02:42 tls Exp $
  * (possibly the next clock tick).  Thus, we disable interrupt before checking,
  * and only enable them again on the final `iret' or before calling the AST
  * handler.
- */ 
+ */
 
 /*****************************************************************************/
 
 #ifdef	XEN
-#define	PRE_TRAP	movq (%rsp),%rcx ; movq 8(%rsp),%r11 ; addq $0x10,%rsp 
+#define	PRE_TRAP	movq (%rsp),%rcx ; movq 8(%rsp),%r11 ; addq $0x10,%rsp
 #else
 #define	PRE_TRAP
 #endif
@@ -103,39 +103,56 @@ IDTVEC(trap01)
 	ZTRAP(T_TRCTRAP)
 IDTVEC_END(trap01)
 
+/*
+ * Non Maskable Interrupts are a special case: they can be triggered even
+ * with interrupts disabled, and once triggered they block further NMIs
+ * until an 'iret' instruction is executed.
+ *
+ * Therefore we don't enable interrupts, because the CPU could switch to
+ * another LWP, call 'iret' and unintentionally leave the NMI mode.
+ *
+ * We need to be careful about %gs too, because it is possible that we were
+ * running in kernel mode with a userland %gs.
+ */
 IDTVEC(trap02)
 #if defined(XEN)
 	ZTRAP(T_NMI)
-#else /* defined(XEN) */
-	pushq $0
-	pushq $T_NMI
+#else
+	pushq	$0
+	pushq	$T_NMI
 	subq	$TF_REGSIZE,%rsp
 	INTR_SAVE_GPRS
-	movl	$MSR_GSBASE,%ecx
-	rdmsr
-	cmpl	$VM_MIN_KERNEL_ADDRESS_HIGH32,%edx
-	jae	1f
-	swapgs
+	cld
+	callq	smap_enable
 	movw	%gs,TF_GS(%rsp)
 	movw	%fs,TF_FS(%rsp)
 	movw	%es,TF_ES(%rsp)
 	movw	%ds,TF_DS(%rsp)
+
+	movl	$MSR_GSBASE,%ecx
+	rdmsr
+	cmpl	$VM_MIN_KERNEL_ADDRESS_HIGH32,%edx
+	jae	.Lnoswapgs
+
+	swapgs
+	movq	%rsp,%rdi
+	incq	CPUVAR(NTRAP)
+	call	_C_LABEL(nmitrap)
+	swapgs
+	jmp	.Lnmileave
+
+.Lnoswapgs:
 	movq	%rsp,%rdi
 	incq	CPUVAR(NTRAP)
 	call	_C_LABEL(trap)
+
+.Lnmileave:
 	movw	TF_ES(%rsp),%es
 	movw	TF_DS(%rsp),%ds
-	swapgs
-	jmp	2f
-1:
-	movq	%rsp,%rdi
-	incq	CPUVAR(NTRAP)
-	call	_C_LABEL(trap)
-2:
 	INTR_RESTORE_GPRS
 	addq	$TF_REGSIZE+16,%rsp
 	iretq
-#endif /* defined(XEN) */
+#endif
 IDTVEC_END(trap02)
 
 IDTVEC(trap03)
@@ -144,7 +161,7 @@ IDTVEC(trap03)
 #else
 	ZTRAP_NJ(T_BPTFLT)
 	INTRENTRY
-  	STI(si)
+	STI(si)
 	/*
 	 * DTrace Function Boundary Trace (fbt) probes are triggered
 	 * by int3 (0xcc).
@@ -199,7 +216,7 @@ IDTVEC(trap07)
 	INTRENTRY
 #ifdef DIAGNOSTIC
 	movl	CPUVAR(ILEVEL),%ebx
-#endif /* DIAGNOSTIC */
+#endif
 	movq	%rsp,%rdi
 	call	_C_LABEL(fpudna)
 	jmp	.Lalltraps_checkusr
@@ -229,43 +246,16 @@ IDTVEC_END(trap0a)
 IDTVEC(trap0b)		/* #NP() Segment not present */
 	TRAP_NJ(T_SEGNPFLT)
 	jmp	check_swapgs
-IDTVEC_END(trap0b)		/* #NP() Segment not present */
+IDTVEC_END(trap0b)
 
 IDTVEC(trap0c)		/* #SS() Stack exception */
 	TRAP_NJ(T_STKFLT)
 	jmp	check_swapgs
-IDTVEC_END(trap0c)		/* #SS() Stack exception */
+IDTVEC_END(trap0c)
 
 IDTVEC(trap0d)		/* #GP() General protection */
 	TRAP_NJ(T_PROTFLT)
-#ifdef check_swapgs
 	jmp	check_swapgs
-#else
-/* We need to worry about traps while the kernel %gs_base isn't loaded.
- * These are either loads to %gs (only 32bit) or faults on iret during
- * return to user. */
-check_swapgs:
-	INTRENTRY_L(3f,1:)
-2:	sti
-	jmp	calltrap
-3:
-	/* Trap in kernel mode. */
-	/* If faulting instruction is 'iret' we may need to do a 'swapgs'. */
-	movq	TF_RIP(%rsp),%rax
-	cmpw	$0xcf48,(%rax)		/* Faulting instruction is iretq ? */
-	jne	5f			/* Jump if not */
-	movq	TF_RSP(%rsp),%rax	/* Must read %rsp, may be a pad word */
-	testb	$SEL_UPL,8(%rax)	/* Check %cs of outer iret frame */
-	je	2b			/* jump if iret was to kernel  */
-	jmp	1b			/* to user - must restore %gs */
-5:
-	/* Not 'iret', all moves to %gs also need a swapgs */
-	movw	(%rax),%ax
-	andb	$070,%ah		/* mask mod/rm from mod/reg/rm */
-	cmpw	$0x8e+050*256,%ax	/* Any move to %gs (reg 5) */
-	jne	2b			/* No - normal kernel fault */
-	jmp	1b			/* Yes - restore %gs */
-#endif
 IDTVEC_END(trap0d)
 
 IDTVEC(trap0e)
@@ -278,7 +268,7 @@ IDTVEC(trap0f)
 	INTRENTRY
 #ifdef DIAGNOSTIC
 	movl	CPUVAR(ILEVEL),%ebx
-#endif /* DIAGNOSTIC */
+#endif
 	jmp	.Lalltraps_checkusr
 IDTVEC_END(trap0f)
 IDTVEC_END(intrspurious)
@@ -289,7 +279,7 @@ IDTVEC(trap10)
 	INTRENTRY
 #ifdef DIAGNOSTIC
 	movl	CPUVAR(ILEVEL),%ebx
-#endif /* DIAGNOSTIC */
+#endif
 	movq	%rsp,%rdi
 	call	_C_LABEL(fputrap)
 	jmp	.Lalltraps_checkusr
@@ -356,9 +346,9 @@ IDTVEC_END(exceptions)
 
 /*
  * trap() calls here when it detects a fault in INTRFASTEXIT (loading the
- * segment registers or during the iret itself).
- * The address of the (possibly reconstructed) user trap frame is
- * passed as an argument.
+ * segment registers or during the iret itself). The address of the (possibly
+ * reconstructed) user trap frame is passed as an argument.
+ *
  * Typically the code will have raised a SIGSEGV which will be actioned
  * by the code below.
  */
@@ -368,9 +358,53 @@ LABEL(trap_return_fault_return)
 #ifdef DIAGNOSTIC
 	/* We can't recover the saved %rbx, so suppress warning */
 	movl	CPUVAR(ILEVEL),%ebx
-#endif /* DIAGNOSTIC */
+#endif
 	jmp	.Lalltraps_checkusr
 END(trap_return_fault_return)
+
+#ifndef check_swapgs
+/*
+ * We need to worry about traps in kernel mode while the kernel %gs isn't
+ * loaded. These are either faults on iretq during return to user or loads to
+ * %gs.
+ *
+ * When such traps happen, we have CPL=0 and %gs=userland, and we must perform
+ * an additional swapgs to get %gs=kernel.
+ */
+NENTRY(check_swapgs)
+	INTRENTRY_L(3f,1:)
+2:
+	sti
+	jmp	calltrap
+3:
+	/*
+	 * Trap in kernel mode.
+	 */
+
+	/* Case 1: fault on sysretq? */
+	leaq	do_sysret(%rip),%rdi
+	cmpq	%rdi,TF_RIP(%rsp)
+	je	1b
+
+	/* Case 2: fault on iretq? */
+	leaq	do_iret(%rip),%rdi
+	cmpq	%rdi,TF_RIP(%rsp)
+	jne	5f
+	movq	TF_RSP(%rsp),%rax	/* Must read %rsp, may be a pad word */
+	testb	$SEL_UPL,8(%rax)	/* Check %cs of outer iret frame */
+	je	2b			/* jump if iret was to kernel  */
+	jmp	1b			/* to user - must restore %gs */
+5:
+
+	/* Case 3: move to %gs? */
+	movq	TF_RIP(%rsp),%rax
+	movw	(%rax),%ax
+	andb	$070,%ah		/* mask mod/rm from mod/reg/rm */
+	cmpw	$0x8e+050*256,%ax	/* Any move to %gs (reg 5) */
+	jne	2b			/* No - normal kernel fault */
+	jmp	1b			/* Yes - restore %gs */
+END(check_swapgs)
+#endif
 
 /*
  * All traps go through here. Call the generic trap handler, and
@@ -378,26 +412,28 @@ END(trap_return_fault_return)
  */
 NENTRY(alltraps)
 	INTRENTRY
-  	STI(si)
+	STI(si)
 
 calltrap:
 #ifdef DIAGNOSTIC
 	movl	CPUVAR(ILEVEL),%ebx
-#endif /* DIAGNOSTIC */
+#endif
 	movq	%rsp,%rdi
 	incq	CPUVAR(NTRAP)
 	call	_C_LABEL(trap)
+
 .Lalltraps_checkusr:
 	testb	$SEL_RPL,TF_CS(%rsp)
 	jz	6f
+
 .Lalltraps_checkast:
 	movq	CPUVAR(CURLWP),%r14
 	/* Check for ASTs on exit to user mode. */
-  	CLI(si)
+	CLI(si)
 	CHECK_ASTPENDING(%r14)
 	je	3f
 	CLEAR_ASTPENDING(%r14)
-  	STI(si)
+	STI(si)
 	movl	$T_ASTFLT,TF_TRAPNO(%rsp)
 	movq	%rsp,%rdi
 	incq	CPUVAR(NTRAP)
@@ -405,13 +441,21 @@ calltrap:
 	jmp	.Lalltraps_checkast	/* re-check ASTs */
 3:	CHECK_DEFERRED_SWITCH
 	jnz	9f
-#ifndef DIAGNOSTIC
-6:	INTRFASTEXIT
-#else /* DIAGNOSTIC */
-6:	cmpl	CPUVAR(ILEVEL),%ebx
-	jne	3f
+
+6:
+#ifdef DIAGNOSTIC
+	cmpl	CPUVAR(ILEVEL),%ebx
+	jne	.Lspl_error
+#endif
 	INTRFASTEXIT
-3:  	STI(si)
+
+9:	STI(si)
+	call	_C_LABEL(do_pmap_load)
+	jmp	.Lalltraps_checkast	/* re-check ASTs */
+
+#ifdef DIAGNOSTIC
+.Lspl_error:
+	STI(si)
 	movabsq	$4f,%rdi
 	movl	CPUVAR(ILEVEL),%esi
 	movl	%ebx,%edx
@@ -421,8 +465,6 @@ calltrap:
 	call	_C_LABEL(spllower)
 	jmp	.Lalltraps_checkast
 4:	.asciz	"WARNING: SPL NOT LOWERED ON TRAP EXIT %x %x\n"
-#endif /* DIAGNOSTIC */
-9:	STI(si)
-	call	_C_LABEL(do_pmap_load)
-	jmp	.Lalltraps_checkast	/* re-check ASTs */
+#endif
 END(alltraps)
+

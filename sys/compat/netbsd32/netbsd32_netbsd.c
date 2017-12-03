@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.180.2.1 2014/08/20 00:03:33 tls Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.180.2.2 2017/12/03 11:36:56 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -27,23 +27,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.180.2.1 2014/08/20 00:03:33 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.180.2.2 2017/12/03 11:36:56 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
 #include "opt_ntp.h"
+#include "opt_ktrace.h"
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
 #include "opt_sysv.h"
 #include "opt_syscall_debug.h"
 #endif
-
-/*
- * Though COMPAT_OLDSOCK is needed only for COMPAT_43, SunOS, Linux,
- * HP-UX, FreeBSD, Ultrix, OSF1, we define it unconditionally so that
- * this would be module-safe.
- */
-#define COMPAT_OLDSOCK /* used by <sys/socket.h> */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,6 +83,8 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.180.2.1 2014/08/20 00:03:33 tl
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 #include <compat/netbsd32/netbsd32_conv.h>
 
+#include <compat/sys/mman.h>
+
 #if defined(DDB)
 #include <ddb/ddbvar.h>
 #endif
@@ -112,6 +108,10 @@ struct uvm_object *emul_netbsd32_object;
 
 extern struct sysctlnode netbsd32_sysctl_root;
 
+#ifdef MODULAR
+#include <compat/netbsd32/netbsd32_syscalls_autoload.c>
+#endif
+
 struct emul emul_netbsd32 = {
 	.e_name =		"netbsd32",
 	.e_path =		"/emul/netbsd32",
@@ -126,6 +126,9 @@ struct emul emul_netbsd32 = {
 	.e_syscallnames =	netbsd32_syscallnames,
 #else
 	.e_syscallnames =	NULL,
+#endif
+#ifdef MODULAR
+	.e_sc_autoload =	netbsd32_syscalls_autoload,
 #endif
 	.e_sendsig =		netbsd32_sendsig,
 	.e_trapsignal =		trapsignal,
@@ -155,7 +158,8 @@ struct emul emul_netbsd32 = {
 	.e_vm_default_addr =	netbsd32_vm_default_addr,
 	.e_usertrap =		NULL,
 	.e_ucsize =		sizeof(ucontext32_t),
-	.e_startlwp =		startlwp32
+	.e_startlwp =		startlwp32,
+	.e_ktrpsig =		netbsd32_ktrpsig
 };
 
 /*
@@ -394,25 +398,6 @@ netbsd32_setuid(struct lwp *l, const struct netbsd32_setuid_args *uap, register_
 
 	NETBSD32TO64_UAP(uid);
 	return (sys_setuid(l, &ua, retval));
-}
-
-int
-netbsd32_ptrace(struct lwp *l, const struct netbsd32_ptrace_args *uap, register_t *retval)
-{
-	/* {
-		syscallarg(int) req;
-		syscallarg(pid_t) pid;
-		syscallarg(netbsd32_voidp) addr;
-		syscallarg(int) data;
-	} */
-	struct sys_ptrace_args ua;
-
-	NETBSD32TO64_UAP(req);
-	NETBSD32TO64_UAP(pid);
-	NETBSD32TOP_UAP(addr, void *);
-	NETBSD32TO64_UAP(data);
-
-	return (*sysent[SYS_ptrace].sy_call)(l, &ua, retval);
 }
 
 int
@@ -914,7 +899,7 @@ netbsd32___socket30(struct lwp *l, const struct netbsd32___socket30_args *uap, r
 	NETBSD32TO64_UAP(domain);
 	NETBSD32TO64_UAP(type);
 	NETBSD32TO64_UAP(protocol);
-	return (sys___socket30(l, &ua, retval));	
+	return (sys___socket30(l, &ua, retval));
 }
 
 int
@@ -1417,7 +1402,7 @@ int
 netbsd32_pathconf(struct lwp *l, const struct netbsd32_pathconf_args *uap, register_t *retval)
 {
 	/* {
-		syscallarg(int) fd;
+		syscallarg(netbsd32_charp) path;
 		syscallarg(int) name;
 	} */
 	struct sys_pathconf_args ua;
@@ -1441,23 +1426,51 @@ netbsd32_fpathconf(struct lwp *l, const struct netbsd32_fpathconf_args *uap, reg
 	return sys_fpathconf(l, &ua, retval);
 }
 
+static void
+fixlimit(int which, struct rlimit *alim)
+{
+	switch (which) {
+	case RLIMIT_DATA:
+		if (LIMITCHECK(alim->rlim_cur, MAXDSIZ32))
+			alim->rlim_cur = MAXDSIZ32;
+		if (LIMITCHECK(alim->rlim_max, MAXDSIZ32))
+			alim->rlim_max = MAXDSIZ32;
+		return;
+	case RLIMIT_STACK:
+		if (LIMITCHECK(alim->rlim_cur, MAXSSIZ32))
+			alim->rlim_cur = MAXSSIZ32;
+		if (LIMITCHECK(alim->rlim_max, MAXSSIZ32))
+			alim->rlim_max = MAXSSIZ32;
+		return;
+	default:
+		return;
+	}
+}
+
 int
-netbsd32_getrlimit(struct lwp *l, const struct netbsd32_getrlimit_args *uap, register_t *retval)
+netbsd32_getrlimit(struct lwp *l, const struct netbsd32_getrlimit_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) which;
 		syscallarg(netbsd32_rlimitp_t) rlp;
 	} */
 	int which = SCARG(uap, which);
+	struct rlimit alim;
 
 	if ((u_int)which >= RLIM_NLIMITS)
-		return (EINVAL);
-	return (copyout(&l->l_proc->p_rlimit[which],
-	    SCARG_P32(uap, rlp), sizeof(struct rlimit)));
+		return EINVAL;
+
+	alim = l->l_proc->p_rlimit[which];
+
+	fixlimit(which, &alim);
+
+	return copyout(&alim, SCARG_P32(uap, rlp), sizeof(alim));
 }
 
 int
-netbsd32_setrlimit(struct lwp *l, const struct netbsd32_setrlimit_args *uap, register_t *retval)
+netbsd32_setrlimit(struct lwp *l, const struct netbsd32_setrlimit_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) which;
@@ -1467,28 +1480,16 @@ netbsd32_setrlimit(struct lwp *l, const struct netbsd32_setrlimit_args *uap, reg
 	struct rlimit alim;
 	int error;
 
+	if ((u_int)which >= RLIM_NLIMITS)
+		return EINVAL;
+
 	error = copyin(SCARG_P32(uap, rlp), &alim, sizeof(struct rlimit));
 	if (error)
 		return (error);
 
-	switch (which) {
-	case RLIMIT_DATA:
-		if (LIMITCHECK(alim.rlim_cur, MAXDSIZ32))
-			alim.rlim_cur = MAXDSIZ32;
-		if (LIMITCHECK(alim.rlim_max, MAXDSIZ32))
-			alim.rlim_max = MAXDSIZ32;
-		break;
+	fixlimit(which, &alim);
 
-	case RLIMIT_STACK:
-		if (LIMITCHECK(alim.rlim_cur, MAXSSIZ32))
-			alim.rlim_cur = MAXSSIZ32;
-		if (LIMITCHECK(alim.rlim_max, MAXSSIZ32))
-			alim.rlim_max = MAXSSIZ32;
-	default:
-		break;
-	}
-
-	return (dosetrlimit(l, l->l_proc, which, &alim));
+	return dosetrlimit(l, l->l_proc, which, &alim);
 }
 
 int
@@ -1515,8 +1516,11 @@ netbsd32_mmap(struct lwp *l, const struct netbsd32_mmap_args *uap, register_t *r
 	 * Ancient kernel on x86 did not obey PROT_EXEC on i386 at least
 	 * and ld.so did not turn it on!
 	 */
-	if (SCARG(&ua, flags) & MAP_COPY)
+	if (SCARG(&ua, flags) & COMPAT_MAP_COPY) {
+		SCARG(&ua, flags) = MAP_PRIVATE
+		    | (SCARG(&ua, flags) & ~COMPAT_MAP_COPY);
 		SCARG(&ua, prot) |= PROT_EXEC;
+	}
 #endif
 	NETBSD32TO64_UAP(fd);
 	NETBSD32TOX_UAP(PAD, long);
@@ -1530,7 +1534,7 @@ netbsd32_mmap(struct lwp *l, const struct netbsd32_mmap_args *uap, register_t *r
 #endif
 	error = sys_mmap(l, &ua, retval);
 	if ((u_long)*retval > (u_long)UINT_MAX) {
-		printf("netbsd32_mmap: retval out of range: 0x%lx",
+		printf("netbsd32_mmap: retval out of range: 0x%lx\n",
 		    (u_long)*retval);
 		/* Should try to recover and return an error here. */
 	}
@@ -1747,11 +1751,16 @@ netbsd32_swapctl_stats(struct lwp *l, struct sys_swapctl_args *uap, register_t *
 
 	if (count < 0)
 		return EINVAL;
-	if (count == 0 || uvmexp.nswapdev == 0)
-		return 0;
-	/* Make sure userland cannot exhaust kernel memory */
+
+	swapsys_lock(RW_WRITER);
+
 	if ((size_t)count > (size_t)uvmexp.nswapdev)
 		count = uvmexp.nswapdev;
+	if (count == 0) {
+		/* No swap device */
+		swapsys_unlock();
+		return 0;
+	}
 
 	ksep_len = sizeof(*ksep) * count;
 	ksep = kmem_alloc(ksep_len, KM_SLEEP);
@@ -1759,6 +1768,8 @@ netbsd32_swapctl_stats(struct lwp *l, struct sys_swapctl_args *uap, register_t *
 
 	uvm_swap_stats(SWAP_STATS, ksep, count, retval);
 	count = *retval;
+
+	swapsys_unlock();
 
 	for (i = 0; i < count; i++) {
 		se32.se_dev = ksep[i].se_dev;
@@ -1796,7 +1807,7 @@ netbsd32_swapctl(struct lwp *l, const struct netbsd32_swapctl_args *uap, registe
 	/* SWAP_STATS50 and SWAP_STATS13 structures need no translation */
 	if (SCARG(&ua, cmd) == SWAP_STATS)
 		return netbsd32_swapctl_stats(l, &ua, retval);
-	
+
 	return (sys_swapctl(l, &ua, retval));
 }
 
@@ -2684,6 +2695,20 @@ netbsd32__sched_getaffinity(struct lwp *l,
 }
 
 int
+netbsd32__sched_protect(struct lwp *l,
+			const struct netbsd32__sched_protect_args *uap,
+			register_t *retval)
+{
+	/* {
+		syscallarg(int) priority;
+	} */
+	struct sys__sched_protect_args ua;
+
+	NETBSD32TO64_UAP(priority);
+	return sys__sched_protect(l, &ua, retval);
+}
+
+int
 netbsd32_pipe2(struct lwp *l, const struct netbsd32_pipe2_args *uap,
 	       register_t *retval)
 {
@@ -2761,6 +2786,105 @@ netbsd32_paccept(struct lwp *l, const struct netbsd32_paccept_args *uap,
 
 	return sys_paccept(l, &ua, retval);
 }
+
+int
+netbsd32_fdiscard(struct lwp *l, const struct netbsd32_fdiscard_args *uap,
+	register_t *retval)
+{
+	/* {
+		syscallarg(int) fd;
+		syscallarg(netbsd32_off_t) pos;
+		syscallarg(netbsd32_off_t) len;
+	} */
+	struct sys_fdiscard_args ua;
+
+	NETBSD32TO64_UAP(fd);
+	NETBSD32TO64_UAP(pos);
+	NETBSD32TO64_UAP(len);
+
+	return sys_fdiscard(l, &ua, retval);
+}
+
+int
+netbsd32_posix_fallocate(struct lwp *l, const struct netbsd32_posix_fallocate_args *uap,
+	register_t *retval)
+{
+	/* {
+		syscallarg(int) fd;
+		syscallarg(netbsd32_off_t) pos;
+		syscallarg(netbsd32_off_t) len;
+	} */
+	struct sys_posix_fallocate_args ua;
+
+	NETBSD32TO64_UAP(fd);
+	NETBSD32TO64_UAP(pos);
+	NETBSD32TO64_UAP(len);
+
+	return sys_posix_fallocate(l, &ua, retval);
+}
+
+int
+netbsd32_pset_create(struct lwp *l,
+    const struct netbsd32_pset_create_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(netbsd32_psetidp_t) psid;
+	}; */
+
+	return sys_pset_create(l, (const void *)uap, retval);
+}
+
+int
+netbsd32_pset_destroy(struct lwp *l,
+     const struct netbsd32_pset_destroy_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(psetid_t) psid;
+	}; */
+
+	return sys_pset_destroy(l, (const void *)uap, retval);
+}
+
+int
+netbsd32_pset_assign(struct lwp *l,
+     const struct netbsd32_pset_assign_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(psetid_t) psid;
+		syscallarg(cpuid_t) cpuid;
+		syscallarg(netbsd32_psetidp_t) opsid;
+	}; */
+	struct sys_pset_assign_args ua;
+
+	SCARG(&ua, psid) = SCARG(uap, psid);
+	NETBSD32TO64_UAP(cpuid);
+	NETBSD32TOP_UAP(opsid, psetid_t);
+
+	return sys_pset_assign(l, &ua, retval);
+}
+
+int
+netbsd32__pset_bind(struct lwp *l,
+     const struct netbsd32__pset_bind_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(idtype_t) idtype;
+		syscallarg(id_t) first_id;
+		syscallarg(id_t) second_id;
+		syscallarg(psetid_t) psid;
+		syscallarg(netbsd32_psetidp_t) opsid;
+	}; */
+	struct sys__pset_bind_args ua;
+
+	SCARG(&ua, idtype) = SCARG(uap, idtype);
+	SCARG(&ua, first_id) = SCARG(uap, first_id);
+	SCARG(&ua, second_id) = SCARG(uap, second_id);
+	SCARG(&ua, psid) = SCARG(uap, psid);
+	NETBSD32TOP_UAP(opsid, psetid_t);
+
+	return sys__pset_bind(l, &ua, retval);
+}
+
 
 /*
  * MI indirect system call support.

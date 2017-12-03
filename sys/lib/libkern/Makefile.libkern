@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.libkern,v 1.18.2.3 2014/08/20 00:04:29 tls Exp $
+#	$NetBSD: Makefile.libkern,v 1.18.2.4 2017/12/03 11:38:46 jdolecek Exp $
 
 # 
 # Variable definitions for libkern.  
@@ -53,8 +53,8 @@ SRCS+=	cpuset.c inet_addr.c intoa.c
 .if empty(SRCS:Mbyte_swap_8.*)
 SRCS+=	bswap64.c
 .endif
-SRCS+=	md4c.c md5c.c rmd160.c sha1.c sha2.c murmurhash.c
-SRCS+=	pmatch.c bcd.c mcount.c mertwist.c crc32.c
+SRCS+=	md4c.c md5c.c rmd160.c sha1.c sha2.c sha3.c keccak.c murmurhash.c
+SRCS+=	pmatch.c mcount.c mertwist.c crc32.c
 
 SRCS+=	ppath_kmem_alloc.c
 
@@ -73,6 +73,8 @@ SRCS+=	memset.c
 
 SRCS+=	popcount32.c popcount64.c
 SRCS+=	strtoul.c strtoll.c strtoull.c strtoimax.c strtoumax.c
+SRCS+=	strtoi.c strtou.c
+SRCS+=	strnvisx.c
 
 SRCS+=	scanc.c skpc.c
 SRCS+=	random.c
@@ -110,7 +112,3 @@ unwanted_file := ${SRCS:M${check_file:.S=.c}}
 SRCS := ${SRCS:N${unwanted_file}}
 .endif
 .endfor
-
-.if ${HAVE_GCC:U} == "45" && ${MACHINE_CPU} == "hppa"
-COPTS.md5c.c +=		${${ACTIVE_CC} == "gcc" :? -O0 :}
-.endif

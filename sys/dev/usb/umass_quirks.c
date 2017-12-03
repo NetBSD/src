@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_quirks.c,v 1.94.2.1 2013/06/23 06:20:22 tls Exp $	*/
+/*	$NetBSD: umass_quirks.c,v 1.94.2.2 2017/12/03 11:37:34 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -32,10 +32,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.94.2.1 2013/06/23 06:20:22 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.94.2.2 2017/12/03 11:37:34 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
-#include "opt_umass.h"
+#include "opt_usb.h"
 #endif
 
 #include <sys/param.h>
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.94.2.1 2013/06/23 06:20:22 tls Ex
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdevs.h>
+#include <dev/usb/usbhist.h>
 
 #include <dev/usb/umassvar.h>
 #include <dev/usb/umass_quirks.h>
@@ -213,13 +214,13 @@ Static const struct umass_quirk umass_quirks[] = {
 	},
 	{ { USB_VENDOR_SIGMATEL, USB_PRODUCT_SIGMATEL_I_BEAD100 },
 	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
-	  0, 
+	  0,
 	  PQUIRK_NODOORLOCK | PQUIRK_NOSYNCCACHE,
-	  UMATCH_VENDOR_PRODUCT,  
+	  UMATCH_VENDOR_PRODUCT,
 	  NULL, NULL
 	},
 	{ { USB_VENDOR_SIGMATEL, USB_PRODUCT_SIGMATEL_I_BEAD150 },
-	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC, 
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
 	  0,
 	  PQUIRK_NODOORLOCK | PQUIRK_NOSYNCCACHE,
 	  UMATCH_VENDOR_PRODUCT,
@@ -266,7 +267,18 @@ Static const struct umass_quirk umass_quirks[] = {
 
 	/* Meizu M6 doesn't like synchronize-cache, see PR 40442 */
 	{ { USB_VENDOR_MEIZU, USB_PRODUCT_MEIZU_M6_SL },
-	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC, 
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
+	  0,
+	  PQUIRK_NOSYNCCACHE,
+	  UMATCH_VENDOR_PRODUCT,
+	  NULL, NULL
+	},
+
+	/*
+	 * SanDisk Cruzer rejects cache sync.
+	 */
+	{ { USB_VENDOR_SANDISK, USB_PRODUCT_SANDISK_CRUZER },
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
 	  0,
 	  PQUIRK_NOSYNCCACHE,
 	  UMATCH_VENDOR_PRODUCT,
@@ -279,7 +291,7 @@ Static const struct umass_quirk umass_quirks[] = {
 	 * this is does not cause the device firmware to stop responding.
 	 */
 	{ { USB_VENDOR_SANDISK, USB_PRODUCT_SANDISK_SANSA_CLIP },
-	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC, 
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
 	  0,
 	  PQUIRK_NOSYNCCACHE,
 	  UMATCH_VENDOR_PRODUCT,
@@ -288,7 +300,7 @@ Static const struct umass_quirk umass_quirks[] = {
 
 	/* Kingston USB pendrives don't like being told to lock the door */
 	{ { USB_VENDOR_KINGSTON, USB_PRODUCT_KINGSTON_DT101_II },
-	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC, 
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
 	  0,
 	  PQUIRK_NODOORLOCK,
 	  UMATCH_VENDOR_PRODUCT,
@@ -296,7 +308,7 @@ Static const struct umass_quirk umass_quirks[] = {
 	},
 
 	{ { USB_VENDOR_KINGSTON, USB_PRODUCT_KINGSTON_DT101_G2 },
-	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC, 
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
 	  0,
 	  PQUIRK_NODOORLOCK,
 	  UMATCH_VENDOR_PRODUCT,
@@ -304,7 +316,7 @@ Static const struct umass_quirk umass_quirks[] = {
 	},
 
 	{ { USB_VENDOR_KINGSTON, USB_PRODUCT_KINGSTON_DT102_G2 },
-	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC, 
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
 	  0,
 	  PQUIRK_NODOORLOCK,
 	  UMATCH_VENDOR_PRODUCT,
@@ -312,7 +324,7 @@ Static const struct umass_quirk umass_quirks[] = {
 	},
 
 	{ { USB_VENDOR_KINGSTON, USB_PRODUCT_KINGSTON_DTMINI10 },
-	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC, 
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
 	  0,
 	  PQUIRK_NODOORLOCK,
 	  UMATCH_VENDOR_PRODUCT,
@@ -321,7 +333,7 @@ Static const struct umass_quirk umass_quirks[] = {
 
 	/* Also, some Kingston pendrives have Toshiba vendor ID */
 	{ { USB_VENDOR_TOSHIBA, USB_PRODUCT_KINGSTON_DT100_G2 },
-	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC, 
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
 	  0,
 	  PQUIRK_NODOORLOCK,
 	  UMATCH_VENDOR_PRODUCT,
@@ -347,33 +359,33 @@ Static const struct umass_quirk umass_quirks[] = {
 };
 
 const struct umass_quirk *
-umass_lookup(u_int16_t vendor, u_int16_t product)
+umass_lookup(uint16_t vendor, uint16_t product)
 {
-	return ((const struct umass_quirk *)
-		usb_lookup(umass_quirks, vendor, product));
+	return (const struct umass_quirk *)
+		usb_lookup(umass_quirks, vendor, product);
 }
 
 Static usbd_status
 umass_init_insystem(struct umass_softc *sc)
 {
+	UMASSHIST_FUNC(); UMASSHIST_CALLED();
 	usbd_status err;
 
 	err = usbd_set_interface(sc->sc_iface, 1);
 	if (err) {
-		DPRINTF(UDMASS_USB,
-			("%s: could not switch to Alt Interface 1\n",
-			device_xname(sc->sc_dev)));
-		return (err);
+		DPRINTFM(UDMASS_USB, "sc %#jx: could not switch to Alt "
+		    "Interface 1", (uintptr_t)sc, 0, 0, 0);
+		return err;
 	}
 
-	return (USBD_NORMAL_COMPLETION);
+	return USBD_NORMAL_COMPLETION;
 }
 
 Static usbd_status
 umass_init_shuttle(struct umass_softc *sc)
 {
 	usb_device_request_t req;
-	u_int8_t status[2];
+	uint8_t status[2];
 
 	/* The Linux driver does this */
 	req.bmRequestType = UT_READ_VENDOR_DEVICE;
@@ -382,7 +394,7 @@ umass_init_shuttle(struct umass_softc *sc)
 	USETW(req.wIndex, sc->sc_ifaceno);
 	USETW(req.wLength, sizeof(status));
 
-	return (usbd_do_request(sc->sc_udev, &req, &status));
+	return usbd_do_request(sc->sc_udev, &req, &status);
 }
 
 Static void

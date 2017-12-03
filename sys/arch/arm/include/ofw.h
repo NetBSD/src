@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.h,v 1.3.22.1 2014/08/20 00:02:46 tls Exp $	*/
+/*	$NetBSD: ofw.h,v 1.3.22.2 2017/12/03 11:35:53 jdolecek Exp $	*/
 
 /*
  * Copyright 1997
@@ -52,13 +52,12 @@ void ofw_init(ofw_handle_t);
 void ofw_boot(int, char *);
 void ofw_getbootinfo(char **, char **);
 void ofw_configmem(void);
-void ofw_configisa(vm_offset_t *, vm_offset_t *);
-void ofw_configisadma(vm_offset_t *);
-int  ofw_isadmarangeintersect(vm_offset_t, vm_offset_t,
-				   vm_offset_t *, vm_offset_t *);
-vm_offset_t ofw_gettranslation(vm_offset_t);
-vm_offset_t ofw_map(vm_offset_t, vm_size_t, int);
-vm_offset_t ofw_getcleaninfo(void);
+void ofw_configisa(vaddr_t *, vaddr_t *);
+void ofw_configisadma(vaddr_t *);
+int  ofw_isadmarangeintersect(vaddr_t, vaddr_t, vaddr_t *, vaddr_t *);
+vaddr_t ofw_gettranslation(vaddr_t);
+vaddr_t ofw_map(vaddr_t, vsize_t, int);
+vaddr_t ofw_getcleaninfo(void);
 
 #ifdef	OFWGENCFG
 /* Implemented in <ofw/ofwgencfg_machdep.c> */

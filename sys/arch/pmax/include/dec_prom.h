@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_prom.h,v 1.23 2011/02/20 07:50:25 matt Exp $	*/
+/*	$NetBSD: dec_prom.h,v 1.23.14.1 2017/12/03 11:36:35 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -103,7 +103,7 @@ struct callback {
 	char	*(*_strncpy)(char *, char *, int);		/* 1c */
 	int	(*_strncmp)(char *, char *, int);		/* 20 */
 	int	(*_getchar)(void);				/* 24 */
-	char	*(*_gets)(char *);				/* 28 */
+	char	*(*_unsafe_gets)(char *);			/* 28 */
 	int	(*_puts)(char *);				/* 2c */
 	int	(*_printf)(const char *, ...);			/* 30 */
 	int	(*_sprintf)(char *, char *, ...);		/* 34 */
@@ -162,7 +162,7 @@ intptr_t promcall(void *, ...);
 #define strncpy (*callv -> _strncpy)
 #define strncmp (*callv -> _strncmp)
 #define getchar (*callv -> _getchar)
-#define gets (*callv -> _gets)
+#define unsafe_gets (*callv -> _unsafe_gets)
 #define puts (*callv -> _puts)
 #define printf (*callv -> _printf)
 #define sprintf (*callv -> _sprintf)

@@ -1,14 +1,14 @@
-# $NetBSD: GENERIC.common,v 1.18.2.1 2012/11/20 03:01:48 tls Exp $
+# $NetBSD: GENERIC.common,v 1.18.2.2 2017/12/03 11:36:46 jdolecek Exp $
 
 include "arch/usermode/conf/std.usermode"
 
 options 	INCLUDE_CONFIG_FILE
-#ident 		"GENERIC-$Revision: 1.18.2.1 $"
+#ident 		"GENERIC-$Revision: 1.18.2.2 $"
 maxusers 	32
 
 makeoptions	DEBUG="-O1 -g3"
 
-options 	SYMTAB_SPACE=450000
+makeoptions	COPY_SYMTAB=1
 
 options 	RTC_OFFSET=0
 options 	NTP
@@ -28,9 +28,7 @@ options		CPU_DEBUG
 #options	UVMHIST
 #options	UVMHIST_PRINT
 
-options 	COMPAT_BSDPTY
-options 	COMPAT_50
-options 	COMPAT_60
+include 	"conf/compat_netbsd50.config"
 options 	COMPAT_OSSAUDIO
 
 file-system	FFS
@@ -46,6 +44,9 @@ file-system	NFS
 file-system	CD9660
 file-system	UDF
 file-system	NILFS
+
+#options 	DISKLABEL_EI
+#options 	FFS_EI
 options		WAPBL
 
 options 	INET
@@ -63,6 +64,8 @@ ld*		at mainbus?
 veth0		at mainbus?
 vaudio0		at mainbus?
 audio0		at vaudio0
+
+spkr*		at audio?		# PC speaker (synthesized)
 
 vncfb0		at mainbus?
 wsdisplay0	at vncfb?

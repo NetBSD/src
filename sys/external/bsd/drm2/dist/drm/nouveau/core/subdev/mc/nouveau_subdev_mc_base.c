@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_subdev_mc_base.c,v 1.1.1.1.6.2 2014/08/20 00:04:15 tls Exp $	*/
+/*	$NetBSD: nouveau_subdev_mc_base.c,v 1.1.1.1.6.3 2017/12/03 11:37:56 jdolecek Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,10 +25,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_subdev_mc_base.c,v 1.1.1.1.6.2 2014/08/20 00:04:15 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_subdev_mc_base.c,v 1.1.1.1.6.3 2017/12/03 11:37:56 jdolecek Exp $");
 
 #include <subdev/mc.h>
 #include <core/option.h>
+
+#if defined(__NetBSD__)
+#include <drm/drmP.h>
+#if defined(__arm__)
+/* XXX nouveau platform kludge */
+#include <arm/nvidia/tegra_intr.h>
+#endif
+#endif	/* __NetBSD__ */
 
 static inline u32
 nouveau_mc_intr_mask(struct nouveau_mc *pmc)
@@ -39,8 +47,13 @@ nouveau_mc_intr_mask(struct nouveau_mc *pmc)
 	return intr;
 }
 
+#ifdef __NetBSD__
+static int
+nouveau_mc_intr(void *arg)
+#else
 static irqreturn_t
 nouveau_mc_intr(int irq, void *arg)
+#endif
 {
 	struct nouveau_mc *pmc = arg;
 	const struct nouveau_mc_oclass *oclass = (void *)nv_object(pmc)->oclass;
@@ -71,7 +84,11 @@ nouveau_mc_intr(int irq, void *arg)
 	}
 
 	nv_wr32(pmc, 0x000140, 0x00000001);
+#ifdef __NetBSD__
+	return intr ? 1 : 0;
+#else
 	return intr ? IRQ_HANDLED : IRQ_NONE;
+#endif
 }
 
 int
@@ -98,7 +115,18 @@ _nouveau_mc_dtor(struct nouveau_object *object)
 {
 	struct nouveau_device *device = nv_device(object);
 	struct nouveau_mc *pmc = (void *)object;
+#if defined(__NetBSD__)
+	if (nv_device_is_pci(device)) {
+		struct drm_device *dev = pci_get_drvdata(device->pdev);
+		(*dev->driver->bus->irq_uninstall)(dev, pmc->irq_cookie);
+#if defined(__arm__)
+	} else {
+		intr_disestablish(pmc->irq_cookie);
+#endif
+	}
+#else
 	free_irq(pmc->irq, pmc);
+#endif
 	if (pmc->use_msi)
 		pci_disable_msi(device->pdev);
 	nouveau_subdev_destroy(&pmc->base);
@@ -149,6 +177,23 @@ nouveau_mc_create_(struct nouveau_object *parent, struct nouveau_object *engine,
 		}
 	}
 
+#if defined(__NetBSD__)
+	if (nv_device_is_pci(device)) {
+		struct drm_device *dev = pci_get_drvdata(device->pdev);
+		ret = (*dev->driver->bus->irq_install)(dev, nouveau_mc_intr,
+		    IRQF_SHARED, "nouveau", pmc,
+		    (struct drm_bus_irq_cookie **)&pmc->irq_cookie);
+		if (ret < 0)
+			return ret;
+#if defined (__arm__)
+	} else {
+		pmc->irq_cookie = intr_establish(TEGRA_INTR_GPU,
+		    IPL_VM, IST_LEVEL, nouveau_mc_intr, pmc);
+		if (pmc->irq_cookie == NULL)
+			return -EIO;
+#endif
+	}
+#else
 	ret = nv_device_get_irq(device, true);
 	if (ret < 0)
 		return ret;
@@ -159,6 +204,7 @@ nouveau_mc_create_(struct nouveau_object *parent, struct nouveau_object *engine,
 
 	if (ret < 0)
 		return ret;
+#endif
 
 	return 0;
 }

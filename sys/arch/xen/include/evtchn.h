@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.h,v 1.20 2011/09/20 00:12:23 jym Exp $	*/
+/*	$NetBSD: evtchn.h,v 1.20.12.1 2017/12/03 11:36:51 jdolecek Exp $	*/
 
 /*
  *
@@ -53,12 +53,15 @@ extern int xen_debug_handler(void *);
 
 int bind_virq_to_evtch(int);
 int bind_pirq_to_evtch(int);
+int get_pirq_to_evtch(int);
 int unbind_pirq_from_evtch(int);
 int unbind_virq_from_evtch(int);
 
 evtchn_port_t bind_vcpu_to_evtch(cpuid_t);
 
 struct pintrhand {
+	/* See comments in x86/include/intr.h:struct intrhand {} */
+	int pic_type;
 	int pirq;
 	int evtch;
 	int (*func)(void *);
@@ -67,5 +70,6 @@ struct pintrhand {
 
 struct pintrhand *pirq_establish(int, int, int (*)(void *), void *, int,
      const char *);
+void pirq_disestablish(struct pintrhand *);
 
 #endif /*  _XEN_EVENTS_H_ */

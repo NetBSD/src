@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2_gpio.c,v 1.11.2.3 2013/06/23 06:20:01 tls Exp $	*/
+/*	$NetBSD: omap2_gpio.c,v 1.11.2.4 2017/12/03 11:35:55 jdolecek Exp $	*/
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,31 +28,35 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_gpio.c,v 1.11.2.3 2013/06/23 06:20:01 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_gpio.c,v 1.11.2.4 2017/12/03 11:35:55 jdolecek Exp $");
 
 #define _INTR_PRIVATE
 
 #include "locators.h"
 #include "gpio.h"
 #include "opt_omap.h"
- 
+
 #include <sys/param.h>
 #include <sys/evcnt.h>
 #include <sys/atomic.h>
- 
+
 #include <uvm/uvm_extern.h>
-  
+
 #include <machine/intr.h>
- 
+
 #include <arm/cpu.h>
 #include <arm/armreg.h>
 #include <arm/cpufunc.h>
 
 #include <sys/bus.h>
 
+#include <arm/omap/am335x_prcm.h>
 #include <arm/omap/omap2_reg.h>
 #include <arm/omap/omap2_obiovar.h>
 #include <arm/omap/omap2_gpio.h>
+#include <arm/omap/omap2_prcm.h>
+#include <arm/omap/sitara_cm.h>
+#include <arm/omap/sitara_cmreg.h>
 #include <arm/pic/picvar.h>
 
 #if NGPIO > 0
@@ -60,15 +64,33 @@ __KERNEL_RCSID(0, "$NetBSD: omap2_gpio.c,v 1.11.2.3 2013/06/23 06:20:01 tls Exp 
 #include <dev/gpio/gpiovar.h>
 #endif
 
+#ifdef TI_AM335X
+static const struct omap_module gpio_module[] = {
+	{ 0, 0 },
+	{ AM335X_PRCM_CM_PER, CM_PER_GPIO1_CLKCTRL },
+	{ AM335X_PRCM_CM_PER, CM_PER_GPIO2_CLKCTRL },
+	{ AM335X_PRCM_CM_PER, CM_PER_GPIO3_CLKCTRL },
+};
+#endif
+
 static void gpio_pic_block_irqs(struct pic_softc *, size_t, uint32_t);
+static void gpio_pic_block_irqs2(struct pic_softc *, size_t, uint32_t);
 static void gpio_pic_unblock_irqs(struct pic_softc *, size_t, uint32_t);
+static void gpio_pic_unblock_irqs2(struct pic_softc *, size_t, uint32_t);
 static int gpio_pic_find_pending_irqs(struct pic_softc *);
+static int gpio_pic_find_pending_irqs2(struct pic_softc *);
 static void gpio_pic_establish_irq(struct pic_softc *, struct intrsource *);
 
 const struct pic_ops gpio_pic_ops = {
 	.pic_block_irqs = gpio_pic_block_irqs,
 	.pic_unblock_irqs = gpio_pic_unblock_irqs,
 	.pic_find_pending_irqs = gpio_pic_find_pending_irqs,
+	.pic_establish_irq = gpio_pic_establish_irq,
+};
+const struct pic_ops gpio_pic_ops2 = {
+	.pic_block_irqs = gpio_pic_block_irqs2,
+	.pic_unblock_irqs = gpio_pic_unblock_irqs2,
+	.pic_find_pending_irqs = gpio_pic_find_pending_irqs2,
 	.pic_establish_irq = gpio_pic_establish_irq,
 };
 
@@ -78,6 +100,7 @@ struct gpio_softc {
 	struct intrsource *gpio_is;
 	bus_space_tag_t gpio_memt;
 	bus_space_handle_t gpio_memh;
+	bus_space_handle_t gpio_memh2;
 	uint32_t gpio_enable_mask;
 	uint32_t gpio_edge_mask;
 	uint32_t gpio_edge_falling_mask;
@@ -100,6 +123,10 @@ struct gpio_softc {
 	bus_space_read_4((gpio)->gpio_memt, (gpio)->gpio_memh, (reg))
 #define	GPIO_WRITE(gpio, reg, val) \
 	bus_space_write_4((gpio)->gpio_memt, (gpio)->gpio_memh, (reg), (val))
+#define	GPIO_READ2(gpio, reg) \
+	bus_space_read_4((gpio)->gpio_memt, (gpio)->gpio_memh2, (reg))
+#define	GPIO_WRITE2(gpio, reg, val) \
+	bus_space_write_4((gpio)->gpio_memt, (gpio)->gpio_memh2, (reg), (val))
 
 void
 gpio_pic_unblock_irqs(struct pic_softc *pic, size_t irq_base, uint32_t irq_mask)
@@ -115,6 +142,22 @@ gpio_pic_unblock_irqs(struct pic_softc *pic, size_t irq_base, uint32_t irq_mask)
 	GPIO_WRITE(gpio, GPIO_SETIRQENABLE1, gpio->gpio_enable_mask);
 	if (irq_mask & gpio->gpio_level_mask)
 		GPIO_WRITE(gpio, GPIO_IRQSTATUS1,
+		    irq_mask & gpio->gpio_level_mask);
+}
+
+void
+gpio_pic_unblock_irqs2(struct pic_softc *pic, size_t irq_base, uint32_t irq_mask)
+{
+	struct gpio_softc * const gpio = PIC_TO_SOFTC(pic);
+	KASSERT(irq_base == 0);
+
+	/*
+	 * If this a level source, ack it now.  If it's still asserted
+	 * it'll come back.
+	 */
+	GPIO_WRITE2(gpio, GPIO_IRQSTATUS_SET_0, irq_mask);
+	if (irq_mask & gpio->gpio_level_mask)
+		GPIO_WRITE2(gpio, GPIO_IRQSTATUS_0,
 		    irq_mask & gpio->gpio_level_mask);
 }
 
@@ -135,6 +178,22 @@ gpio_pic_block_irqs(struct pic_softc *pic, size_t irq_base, uint32_t irq_mask)
 		    irq_mask & gpio->gpio_edge_mask);
 }
 
+void
+gpio_pic_block_irqs2(struct pic_softc *pic, size_t irq_base, uint32_t irq_mask)
+{
+	struct gpio_softc * const gpio = PIC_TO_SOFTC(pic);
+	KASSERT(irq_base == 0);
+
+	GPIO_WRITE2(gpio, GPIO_IRQSTATUS_CLR_0, irq_mask);
+	/*
+	 * If any of the sources are edge triggered, ack them now so
+	 * we won't lose them.
+	 */
+	if (irq_mask & gpio->gpio_edge_mask)
+		GPIO_WRITE2(gpio, GPIO_IRQSTATUS_0,
+		    irq_mask & gpio->gpio_edge_mask);
+}
+
 int
 gpio_pic_find_pending_irqs(struct pic_softc *pic)
 {
@@ -144,6 +203,24 @@ gpio_pic_find_pending_irqs(struct pic_softc *pic)
 
 	v = GPIO_READ(gpio, GPIO_IRQSTATUS1);
 	pending = (v & gpio->gpio_enable_mask);
+	if (pending == 0)
+		return 0;
+
+	/*
+	 * Now find all the pending bits and mark them as pending.
+	 */
+	(void) pic_mark_pending_sources(&gpio->gpio_pic, 0, pending);
+
+	return 1;
+}
+
+int
+gpio_pic_find_pending_irqs2(struct pic_softc *pic)
+{
+	struct gpio_softc * const gpio = PIC_TO_SOFTC(pic);
+	uint32_t pending;
+
+	pending = GPIO_READ2(gpio, GPIO_IRQSTATUS_0);
 	if (pending == 0)
 		return 0;
 
@@ -170,12 +247,17 @@ gpio_pic_establish_irq(struct pic_softc *pic, struct intrsource *is)
 	/*
 	 * Make sure the irq isn't enabled and not asserting.
 	 */
+#if defined(OMAP_4430) || defined(TI_AM335X)
+	GPIO_WRITE2(gpio, GPIO_IRQSTATUS_SET_0, irq_mask);
+	GPIO_WRITE2(gpio, GPIO_IRQSTATUS_0, irq_mask);
+#else
 	gpio->gpio_enable_mask &= ~irq_mask;
 	GPIO_WRITE(gpio, GPIO_IRQENABLE1, gpio->gpio_enable_mask);
 	GPIO_WRITE(gpio, GPIO_IRQSTATUS1, irq_mask);
+#endif
 
 	/*
-	 * Convert the type to a gpio type and figure out which bits in what 
+	 * Convert the type to a gpio type and figure out which bits in what
 	 * register we have to tweak.
 	 */
 	gpio->gpio_edge_rising_mask &= ~irq_mask;
@@ -209,7 +291,7 @@ gpio_pic_establish_irq(struct pic_softc *pic, struct intrsource *is)
 	 */
 	v = GPIO_READ(gpio, GPIO_OE);
 	v |= irq_mask;
-	GPIO_WRITE(gpio, GPIO_OE, v); 
+	GPIO_WRITE(gpio, GPIO_OE, v);
 #if 0
 	for (i = 0, maybe_is = NULL; i < 32; i++) {
 		if ((is = pic->pic_sources[i]) != NULL) {
@@ -222,7 +304,7 @@ gpio_pic_establish_irq(struct pic_softc *pic, struct intrsource *is)
 		KASSERT(is != NULL);
 		is->is_ipl = maybe_is->is_ipl;
 		(*is->is_pic->pic_ops->pic_establish_irq)(is->is_pic, is);
-	} 
+	}
 #endif
 }
 
@@ -249,16 +331,11 @@ omap2gpio_pin_write(void *arg, int pin, int value)
 {
 	struct gpio_softc * const gpio = arg;
 	uint32_t mask = 1 << pin;
-	uint32_t old, new;
 
-	old = GPIO_READ(gpio, GPIO_DATAOUT);
 	if (value)
-		new = old | mask; 
+		GPIO_WRITE(gpio, GPIO_SETDATAOUT, mask);
 	else
-		new = old & ~mask;
-
-	if (old != new)
-		GPIO_WRITE(gpio, GPIO_DATAOUT, new);
+		GPIO_WRITE(gpio, GPIO_CLEARDATAOUT, mask);
 }
 
 static void
@@ -414,16 +491,20 @@ gpio_attach(device_t parent, device_t self, void *aux)
 
 	gpio->gpio_dev = self;
 
-	if (oa->obio_intr == OBIOCF_INTR_DEFAULT)
-		panic("\n%s: no intr assigned", device_xname(self));
-
 	if (oa->obio_size == OBIOCF_SIZE_DEFAULT)
 		panic("\n%s: no size assigned", device_xname(self));
 
 	gpio->gpio_memt = oa->obio_iot;
+#if defined(OMAP_4430) || defined(TI_AM335X)
+	error = bus_space_map(oa->obio_iot, oa->obio_addr, oa->obio_size,
+	    0, &gpio->gpio_memh2);
+	if (error == 0)
+		error = bus_space_subregion(gpio->gpio_memt, gpio->gpio_memh2,
+		    GPIO_SIZE2, oa->obio_size - GPIO_SIZE2, &gpio->gpio_memh);
+#else
 	error = bus_space_map(oa->obio_iot, oa->obio_addr, oa->obio_size,
 	    0, &gpio->gpio_memh);
-
+#endif
 	if (error) {
 		aprint_error(": failed to map register %#lx@%#lx: %d\n",
 		    oa->obio_size, oa->obio_addr, error);
@@ -431,19 +512,40 @@ gpio_attach(device_t parent, device_t self, void *aux)
 	}
 
 	if (oa->obio_intrbase != OBIOCF_INTRBASE_DEFAULT) {
+#if defined(OMAP_4430) || defined(TI_AM335X)
+		gpio->gpio_pic.pic_ops = &gpio_pic_ops2;
+#else
 		gpio->gpio_pic.pic_ops = &gpio_pic_ops;
+#endif
 		strlcpy(gpio->gpio_pic.pic_name, device_xname(self),
 		    sizeof(gpio->gpio_pic.pic_name));
 		gpio->gpio_pic.pic_maxsources = 32;
 		pic_add(&gpio->gpio_pic, oa->obio_intrbase);
 		aprint_normal(": interrupts %d..%d",
 		    oa->obio_intrbase, oa->obio_intrbase + 31);
-		gpio->gpio_is = intr_establish(oa->obio_intr, 
+		gpio->gpio_is = intr_establish(oa->obio_intr,
 		    IPL_HIGH, IST_LEVEL, pic_handle_intr, &gpio->gpio_pic);
 		KASSERT(gpio->gpio_is != NULL);
 		aprint_normal(", intr %d", oa->obio_intr);
 	}
 	aprint_normal("\n");
+
+#ifdef TI_AM335X
+	switch (oa->obio_addr) {
+	case GPIO0_BASE_TI_AM335X:
+		break;
+	case GPIO1_BASE_TI_AM335X:
+		prcm_module_enable(&gpio_module[1]);
+		break;
+	case GPIO2_BASE_TI_AM335X:
+		prcm_module_enable(&gpio_module[2]);
+		break;
+	case GPIO3_BASE_TI_AM335X:
+		prcm_module_enable(&gpio_module[3]);
+		break;
+	}
+#endif
+
 #if NGPIO > 0
 #if 0
 	config_interrupts(self, gpio_attach1);

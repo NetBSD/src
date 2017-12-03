@@ -1,4 +1,7 @@
-#	$NetBSD: Makefile,v 1.7 2010/07/06 06:09:57 mrg Exp $
+#	$NetBSD: Makefile,v 1.7.18.1 2017/12/03 11:35:49 jdolecek Exp $
+
+.include <bsd.init.mk>
+
 PROG=installboot
 SRCS=installboot.c chksum.c
 BINDIR=/usr/mdec

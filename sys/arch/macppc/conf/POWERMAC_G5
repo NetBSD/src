@@ -1,7 +1,7 @@
 # Lean and mean config file for the POWERMAC G5
 # Author: Sanjay Lal <sanjayl@kymasys.com>
 
-include		"arch/macppc/conf/std.macppc.g5"
+include 	"arch/macppc/conf/std.macppc.g5"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 maxusers	32
@@ -44,12 +44,8 @@ options 	TRAP_PANICWAIT
 makeoptions 	DEBUG="-g"	# compile full symbol table
 
 # Compatibility options
-options 	COMPAT_30	# NetBSD 3.0 compatibility.
-options 	COMPAT_40	# NetBSD 4.0 compatibility.
-options 	COMPAT_43	# and 4.3BSD
+include 	"conf/compat_netbsd30.config"
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
-options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # File systems
 file-system 	FFS		# UFS
@@ -65,6 +61,7 @@ options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 #options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# ffs snapshots
+options 	UFS_EXTATTR	# Extended attribute support for UFS1
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
 #options 	APPLE_UFS	# Apple UFS support in FFS
@@ -142,6 +139,7 @@ uhub*	at usb?						# USB Hubs
 uhub*	at uhub? port ?
 uhidev*	at uhub? port ? configuration ? interface ?	# USB HID device
 uhid*	at uhidev? reportid ?				# USB Generic HID
+
 ukbd*	at uhidev? reportid ?				# USB Keyboards
 wskbd*	at ukbd? console ?
 ums*	at uhidev? reportid ?				# USB Mice

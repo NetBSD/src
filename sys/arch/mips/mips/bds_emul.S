@@ -1,4 +1,4 @@
-/*	$NetBSD: bds_emul.S,v 1.6 2011/12/25 11:51:15 kiyohara Exp $	*/
+/*	$NetBSD: bds_emul.S,v 1.6.6.1 2017/12/03 11:36:28 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -37,8 +37,8 @@
 #include <sys/cdefs.h>
 
 #include <mips/asm.h>
-#include <mips/cpu.h>			/* for MIPS_CURLWP */
 #include <mips/trap.h>			/* for T_RES_INST */
+#include <mips/cpuregs.h>
 
 #include "assym.h"
 
@@ -101,8 +101,8 @@ bcemul_optbl:
 	PTR_WORD bcemul_sigill			# 030 LDL (*)
 	PTR_WORD bcemul_sigill			# 031 LDR (*)
 #else
-	PTR_WORD _C_LABEL(mips_emul_daddi)	# 030 DADDI (*)
-	PTR_WORD _C_LABEL(mips_emul_daddiu)	# 031 DADDIU (*)
+	PTR_WORD bcemul_daddi			# 030 DADDI (*)
+	PTR_WORD bcemul_daddiu			# 031 DADDIU (*)
 	PTR_WORD _C_LABEL(mips_emul_ldl)	# 032 LDL (*)
 	PTR_WORD _C_LABEL(mips_emul_ldr)	# 033 LDR (*)
 #endif
@@ -191,7 +191,7 @@ bcemul_uimmed_prologue:
 #ifndef __mips_o32
 bcemul_daddi:
 	bal	bcemul_immed_prologue
-	daddiu	t0, v0, v1
+	dadd	t0, v0, v1
 	b	bcemul_check_add_overflow
 #endif
 

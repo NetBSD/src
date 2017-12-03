@@ -1,4 +1,4 @@
-/*	$NetBSD: armadillo9_iic.c,v 1.6.40.1 2012/11/20 03:01:12 tls Exp $	*/
+/*	$NetBSD: armadillo9_iic.c,v 1.6.40.2 2017/12/03 11:36:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2005 HAMAJIMA Katsuomi. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadillo9_iic.c,v 1.6.40.1 2012/11/20 03:01:12 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadillo9_iic.c,v 1.6.40.2 2017/12/03 11:36:02 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,6 +115,7 @@ armadillo9iic_attach(device_t parent, device_t self, void *aux)
 	sc->sc_i2c.ic_read_byte = armadillo9iic_read_byte;
 	sc->sc_i2c.ic_write_byte = armadillo9iic_write_byte;
 
+	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_i2c;
 
 	epgpio_in(sc->sc_gpio, sc->sc_port, sc->sc_sda);

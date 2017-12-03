@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_errno.h,v 1.13.44.1 2014/08/20 00:03:32 tls Exp $	*/
+/*	$NetBSD: linux_errno.h,v 1.13.44.2 2017/12/03 11:36:54 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,6 @@
 #define LINUX_EPIPE		32
 #define LINUX_EDOM		33
 #define LINUX_ERANGE		34
-#define LINUX_EDEADLK		35
 
 
 /* Error numbers after here vary wildly    */

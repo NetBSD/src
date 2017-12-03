@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.44.8.4 2014/08/20 00:04:43 tls Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.44.8.5 2017/12/03 11:39:19 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.44.8.4 2014/08/20 00:04:43 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.44.8.5 2017/12/03 11:39:19 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -47,11 +47,12 @@ __KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.44.8.4 2014/08/20 00:04:43 tls Exp $"
 #include <netinet/in.h>
 #include <netinet/in_var.h>
 
+#include <rump-sys/kern.h>
+#include <rump-sys/net.h>
+
 #include <rump/rump.h>
 #include <rump/rumpuser.h>
 
-#include "rump_private.h"
-#include "rump_net_private.h"
 #include "shmif_user.h"
 
 static int shmif_clone(struct if_clone *, int);
@@ -97,6 +98,8 @@ struct shmif_sc {
 
 	struct lwp *sc_rcvl;
 	bool sc_dying;
+
+	uint64_t sc_uuid;
 };
 
 static void shmif_rcv(void *);
@@ -167,12 +170,13 @@ allocif(int unit, struct shmif_sc **scp)
 	sc = kmem_zalloc(sizeof(*sc), KM_SLEEP);
 	sc->sc_memfd = -1;
 	sc->sc_unit = unit;
+	sc->sc_uuid = cprng_fast64();
 
 	ifp = &sc->sc_ec.ec_if;
 
 	snprintf(ifp->if_xname, sizeof(ifp->if_xname), "shmif%d", unit);
 	ifp->if_softc = sc;
-	ifp->if_flags = IFF_BROADCAST | IFF_MULTICAST;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_init = shmif_init;
 	ifp->if_ioctl = shmif_ioctl;
 	ifp->if_start = shmif_start;
@@ -183,8 +187,18 @@ allocif(int unit, struct shmif_sc **scp)
 	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&sc->sc_cv, "shmifcv");
 
-	if_attach(ifp);
+	error = if_initialize(ifp);
+	if (error != 0) {
+		aprint_error("shmif%d: if_initialize failed(%d)\n", unit,
+		    error);
+		cv_destroy(&sc->sc_cv);
+		mutex_destroy(&sc->sc_mtx);
+		kmem_free(sc, sizeof(*sc));
+
+		return error;
+	}
 	ether_ifattach(ifp, enaddr);
+	if_register(ifp);
 
 	aprint_verbose("shmif%d: Ethernet address %s\n",
 	    unit, ether_sprintf(enaddr));
@@ -225,7 +239,7 @@ initbackend(struct shmif_sc *sc, int memfd)
 	    && sc->sc_busmem->shm_magic != SHMIF_MAGIC) {
 		printf("bus is not magical");
 		rumpuser_unmap(sc->sc_busmem, BUSMEM_SIZE);
-		return ENOEXEC; 
+		return ENOEXEC;
 	}
 
 	/*
@@ -369,7 +383,6 @@ shmif_unclone(struct ifnet *ifp)
 
 	shmif_stop(ifp, 1);
 	if_down(ifp);
-	finibackend(sc);
 
 	mutex_enter(&sc->sc_mtx);
 	sc->sc_dying = true;
@@ -379,6 +392,13 @@ shmif_unclone(struct ifnet *ifp)
 	if (sc->sc_rcvl)
 		kthread_join(sc->sc_rcvl);
 	sc->sc_rcvl = NULL;
+
+	/*
+	 * Need to be called after the kthread left, otherwise closing kqueue
+	 * (sc_kq) hangs sometimes perhaps because of a race condition between
+	 * close and kevent in the kthread on the kqueue.
+	 */
+	finibackend(sc);
 
 	vmem_xfree(shmif_units, sc->sc_unit+1, 1);
 
@@ -540,6 +560,7 @@ shmif_start(struct ifnet *ifp)
 		sp.sp_len = pktsize;
 		sp.sp_sec = tv.tv_sec;
 		sp.sp_usec = tv.tv_usec;
+		sp.sp_sender = sc->sc_uuid;
 
 		bpf_mtap(ifp, m0);
 
@@ -679,8 +700,7 @@ shmif_rcv(void *arg)
 		    shmif_nextpktoff(busmem, busmem->shm_last)
 		     == sc->sc_nextpacket) {
 			shmif_unlockbus(busmem);
-			error = 0;
-			rumpcomp_shmif_watchwait(sc->sc_kq);
+			error = rumpcomp_shmif_watchwait(sc->sc_kq);
 			if (__predict_false(error))
 				printf("shmif_rcv: wait failed %d\n", error);
 			membar_consumer();
@@ -737,13 +757,15 @@ shmif_rcv(void *arg)
 		}
 
 		m->m_len = m->m_pkthdr.len = sp.sp_len;
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 
 		/*
 		 * Test if we want to pass the packet upwards
 		 */
 		eth = mtod(m, struct ether_header *);
-		if (memcmp(eth->ether_dhost, CLLADDR(ifp->if_sadl),
+		if (sp.sp_sender == sc->sc_uuid) {
+			passup = false;
+		} else if (memcmp(eth->ether_dhost, CLLADDR(ifp->if_sadl),
 		    ETHER_ADDR_LEN) == 0) {
 			passup = true;
 		} else if (ETHER_IS_MULTICAST(eth->ether_dhost)) {
@@ -756,10 +778,12 @@ shmif_rcv(void *arg)
 		}
 
 		if (passup) {
-			ifp->if_ipackets++;
+			int bound;
 			KERNEL_LOCK(1, NULL);
-			bpf_mtap(ifp, m);
-			ifp->if_input(ifp, m);
+			/* Prevent LWP migrations between CPUs for psref(9) */
+			bound = curlwp_bind();
+			if_input(ifp, m);
+			curlwp_bindx(bound);
 			KERNEL_UNLOCK_ONE(NULL);
 			m = NULL;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: imxusbreg.h,v 1.1.20.1 2014/08/20 00:02:46 tls Exp $	*/
+/*	$NetBSD: imxusbreg.h,v 1.1.20.2 2017/12/03 11:35:53 jdolecek Exp $	*/
 /*
  * Copyright (c) 2009, 2010  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -80,8 +80,12 @@
 #define	 OTGSC_OT	__BIT( 3)
 #define	 OTGSC_VC	__BIT( 1)
 #define	 OTGSC_VD	__BIT( 0)
-#define	IMXUSB_OTGMODE	0x01A8
-#define	 USBMODE_CM		__BITS(1,0)
+#define	IMXUSB_USBMODE	0x01A8
+#define	 USBMODE_VBPS	__BIT(5)	/* Vbus power selectt */
+#define	 USBMODE_SDIS	__BIT(4)	/* Stream disable mode 1=act */
+#define	 USBMODE_SLOM	__BIT(3)	/* setup lockouts on */
+#define	 USBMODE_ES	__BIT(2)	/* Endian Select ES=1 */
+#define	 USBMODE_CM	__BITS(1,0)	/* Controller mode */
 #define	 USBMODE_CM_IDLE	__SHIFTIN(0,USBMODE_CM)
 #define	 USBMODE_CM_DEVICE	__SHIFTIN(2,USBMODE_CM)
 #define	 USBMODE_CM_HOST	__SHIFTIN(3,USBMODE_CM)
@@ -90,11 +94,12 @@
 
 
 /* extension to PORTSCx register of EHCI. */
-#define	PORTSC_PTS 		__BITS(31,30)
+#define	PORTSC_PTS		__BITS(31,30)
 #define	PORTSC_PTS_UTMI		__SHIFTIN(0,PORTSC_PTS)
 #define	PORTSC_PTS_PHILIPS	__SHIFTIN(1,PORTSC_PTS) /* not in i.MX51*/
 #define	PORTSC_PTS_ULPI		__SHIFTIN(2,PORTSC_PTS)
 #define	PORTSC_PTS_SERIAL	__SHIFTIN(3,PORTSC_PTS)
+#define	PORTSC_PTS2		__BIT(25)	/* iMX6,7 */
 
 #define	PORTSC_STS	__BIT(29)	/* serial transeiver select */
 #define	PORTSC_PTW	__BIT(28)	/* parallel transceiver width */

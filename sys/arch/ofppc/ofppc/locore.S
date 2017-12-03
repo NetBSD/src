@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.48 2011/06/20 19:56:12 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.48.12.1 2017/12/03 11:36:34 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -80,6 +80,8 @@ _C_LABEL(kernel_text):
 	.text
 	.globl	__start
 __start:
+	mr	%r13,%r6
+	mr	%r14,%r7
 	bl	_C_LABEL(ofwinit)	/* init our OF hooks */
 
 	li	%r0,0
@@ -104,6 +106,8 @@ __start:
         addi	%r4,%r4,_C_LABEL(end)@l
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 	/* skip symbol table */
+	mr	%r6,%r13
+	mr	%r7,%r14
 	cmpwi	%r6,0
 	beq	1f
 	add	%r9,%r6,%r7			/* r9 = args + l */

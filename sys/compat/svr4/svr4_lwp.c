@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_lwp.c,v 1.19 2009/11/23 00:46:07 rmind Exp $	*/
+/*	$NetBSD: svr4_lwp.c,v 1.19.22.1 2017/12/03 11:36:56 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_lwp.c,v 1.19 2009/11/23 00:46:07 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_lwp.c,v 1.19.22.1 2017/12/03 11:36:56 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -107,6 +107,8 @@ svr4_sys__lwp_info(struct lwp *l, const struct svr4_sys__lwp_info_args *uap, reg
 {
 	struct svr4_lwpinfo lwpinfo;
 	int error;
+
+	memset(&lwpinfo, 0, sizeof(lwpinfo));
 
 	/* XXX NJWLWP */
 	TIMEVAL_TO_TIMESPEC(&l->l_proc->p_stats->p_ru.ru_stime, &lwpinfo.lwp_stime);

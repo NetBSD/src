@@ -1,4 +1,4 @@
-/* $NetBSD: dm_ioctl.c,v 1.26.12.1 2014/08/20 00:03:36 tls Exp $      */
+/* $NetBSD: dm_ioctl.c,v 1.26.12.2 2017/12/03 11:37:00 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -200,7 +200,8 @@ dm_dev_create_ioctl(prop_dictionary_t dm_dict)
 {
 	dm_dev_t *dmv;
 	const char *name, *uuid;
-	int r, flags;
+	int r;
+	uint32_t flags;
 	device_t devt;
 
 	r = 0;
@@ -747,13 +748,7 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 			prop_object_iterator_release(iter);
 			return ENOENT;
 		}
-		if ((table_en = kmem_alloc(sizeof(dm_table_entry_t),
-			    KM_SLEEP)) == NULL) {
-			dm_table_release(&dmv->table_head, DM_TABLE_INACTIVE);
-			dm_dev_unbusy(dmv);
-			prop_object_iterator_release(iter);
-			return ENOMEM;
-		}
+		table_en = kmem_alloc(sizeof(dm_table_entry_t), KM_SLEEP);
 		prop_dictionary_get_uint64(target_dict, DM_TABLE_START,
 		    &table_en->start);
 		prop_dictionary_get_uint64(target_dict, DM_TABLE_LENGTH,
@@ -773,7 +768,7 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 		prop_dictionary_get_cstring(target_dict,
 		    DM_TABLE_PARAMS, (char **) &str);
 
-		if (SLIST_EMPTY(tbl))
+		if (SLIST_EMPTY(tbl) || last_table == NULL)
 			/* insert this table to head */
 			SLIST_INSERT_HEAD(tbl, table_en, next);
 		else
@@ -843,11 +838,10 @@ dm_table_status_ioctl(prop_dictionary_t dm_dict)
 	prop_array_t cmd_array;
 	prop_dictionary_t target_dict;
 
-	uint32_t minor;
+	uint32_t minor, flags;
 
 	const char *name, *uuid;
 	char *params;
-	int flags;
 	int table_type;
 
 	dmv = NULL;
@@ -952,7 +946,7 @@ int
 dm_check_version(prop_dictionary_t dm_dict)
 {
 	size_t i;
-	int dm_version[3];
+	uint32_t dm_version[3];
 	prop_array_t ver;
 
 	ver = prop_dictionary_get(dm_dict, DM_IOCTL_VERSION);

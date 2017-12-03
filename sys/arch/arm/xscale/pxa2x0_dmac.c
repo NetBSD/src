@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_dmac.c,v 1.11.2.1 2012/11/20 03:01:08 tls Exp $	*/
+/*	$NetBSD: pxa2x0_dmac.c,v 1.11.2.2 2017/12/03 11:35:57 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2003, 2005 Wasabi Systems, Inc.
@@ -321,8 +321,9 @@ pxadmac_attach(device_t parent, device_t self, void *aux)
 		dmac_reg_write(sc, DMAC_DRCMR(i), 0);
 		sc->sc_active[i] = NULL;
 	}
-	dmac_reg_write(sc, DMAC_DINT,
-	    dmac_reg_read(sc, DMAC_DINT) & DMAC_DINT_MASK);
+	if (!CPU_IS_PXA270)
+		dmac_reg_write(sc, DMAC_DINT,
+		    dmac_reg_read(sc, DMAC_DINT) & DMAC_DINT_MASK);
 
 	/*
 	 * Initialise the request queues
@@ -1212,7 +1213,8 @@ dmac_channel_intr(struct pxadmac_softc *sc, u_int channel)
 	/*
 	 * Clear down the interrupt in the DMA Interrupt Register
 	 */
-	dmac_reg_write(sc, DMAC_DINT, (1u << channel));
+	if (!CPU_IS_PXA270)
+		dmac_reg_write(sc, DMAC_DINT, (1u << channel));
 
 	/*
 	 * If this is a looping request, invoke the 'done' callback and

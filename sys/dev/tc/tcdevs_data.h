@@ -1,10 +1,10 @@
-/*	$NetBSD: tcdevs_data.h,v 1.23 2007/04/12 21:39:24 matt Exp $	*/
+/*	$NetBSD: tcdevs_data.h,v 1.23.78.1 2017/12/03 11:37:33 jdolecek Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: tcdevs,v 1.20 2005/12/11 12:24:00 christos Exp
+ *	NetBSD: tcdevs,v 1.23 2017/06/22 16:46:53 flxd Exp
  */
 
 /*
@@ -278,6 +278,11 @@ const struct tc_knowndev tc_knowndevs[] = {
 	    "T3PKT   ",
 	    TC_DEVICE_T3PKT,
 	    TC_DESCRIPTION_T3PKT,
+	},
+	{
+	    "TC-USB  ",
+	    TC_DEVICE_TC_USB,
+	    TC_DESCRIPTION_TC_USB,
 	},
 	{ NULL, NULL, NULL, }
 };

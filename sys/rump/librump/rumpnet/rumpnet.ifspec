@@ -1,8 +1,8 @@
-;       $NetBSD: rumpnet.ifspec,v 1.2.24.1 2014/08/20 00:04:42 tls Exp $
+;       $NetBSD: rumpnet.ifspec,v 1.2.24.2 2017/12/03 11:39:17 jdolecek Exp $
 
 NAME|net
 PUBHDR|include/rump/rumpnet_if_pub.h
-PRIVHDR|librump/rumpnet/rumpnet_if_priv.h
+PRIVHDR|include/rump-sys/net_if.h
 WRAPPERS|librump/rumpnet/rumpnet_if_wrappers.c
 
 ; type          | name          | args			| attrs

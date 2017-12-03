@@ -1,4 +1,4 @@
-/*	$NetBSD: sifbios.h,v 1.5.6.2 2014/08/20 00:03:18 tls Exp $	*/
+/*	$NetBSD: sifbios.h,v 1.5.6.3 2017/12/03 11:36:35 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -32,6 +32,8 @@
 /*
  * PlayStation 2 SIF BIOS Version 2.0 define.
  */
+
+#include <mips/cpuregs.h>
 
 /* SIF BIOS uses SIFDMA_BASE as emulated IOP physical memory base */
 #define SIFDMA_BASE		MIPS_PHYS_TO_KSEG1(0x1c000000)

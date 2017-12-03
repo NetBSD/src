@@ -1,4 +1,4 @@
-/*	$NetBSD: vreset.c,v 1.13 2010/10/15 20:01:03 he Exp $	*/
+/*	$NetBSD: vreset.c,v 1.13.18.1 2017/12/03 11:35:59 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 Gary Thomas (gdt@linuxppc.org)
@@ -547,8 +547,8 @@ delayLoop(int k)
 static void
 writeAttr(u_char index, u_char data, u_char videoOn)
 {
-	u_char v;
-	v = inb(0x3da);   /* reset attr. address toggle */
+
+	(void)inb(0x3da);   /* reset attr. address toggle */
 	if (videoOn)
 		outb(0x3c0, (index & 0x1F) | 0x20);
 	else

@@ -1,105 +1,113 @@
-#	$NetBSD: files.imx6,v 1.1 2012/09/01 00:07:32 matt Exp $
+#	$NetBSD: files.imx6,v 1.1.2.1 2017/12/03 11:35:53 jdolecek Exp $
 #
 # Configuration info for the Freescale i.MX6
 #
 
+include "arch/arm/pic/files.pic"
+include "arch/arm/cortex/files.cortex"
+
 defparam opt_imx.h				MEMSIZE
 defflag opt_imx.h				IMX6
 
-define	bus_dma_generic
+file	arch/arm/arm32/arm32_boot.c
+file	arch/arm/arm32/arm32_kvminit.c
+file	arch/arm/arm32/arm32_reboot.c
+file	arch/arm/arm32/irq_dispatch.S
 
-file	arch/arm/imx/imx_space.c
-file	arch/arm/imx/imx_dma.c		bus_dma_generic needs-flag
+define	bus_dma_generic
+file	arch/arm/arm32/armv7_generic_space.c
+file	arch/arm/arm32/armv7_generic_dma.c	bus_dma_generic needs-flag
+file	arch/arm/arm/bus_space_a4x.S
+
+file	arch/arm/imx/imx6_board.c
 
 # iMX6 AXI/AHB bus interface and SoC domains
 device	axi { [addr=-1], [size=0], [irq=-1], [irqbase=-1]} : bus_space_generic
 attach	axi at mainbus
-file	arch/arm/imx/imx6_axi.c		axi
+file	arch/arm/imx/imx6_axi.c			axi
+
+# iMX6 PCIe
+device	imxpcie: pcibus
+attach	imxpcie at axi
+file	arch/arm/imx/imx6_pcie.c		imxpcie
+
+# iMX6 Clock Control Module
+device	imxccm
+attach	imxccm at axi
+file	arch/arm/imx/imx6_ccm.c			imxccm	needs-flag
+defflag opt_imx6clk.h				IMXCCMDEBUG
 
 # iMX6 Enhanced Periodic Interrupt Timer
 device	imxclock
 attach	imxclock at axi
-file	arch/arm/imx/imxclock.c
-file	arch/arm/imx/imx6_clock.c
+file	arch/arm/imx/imxclock.c			imxclock
+file	arch/arm/imx/imx6_clock.c		imxclock
 
-# Clock Control Module
-device	imxccm
-attach	imxccm	at axi
-file	arch/arm/imx/imx6_ccm.c	imxccm		needs-flag
+# iMX6 On-Chip OTP Controller
+device	imxocotp
+attach	imxocotp at axi
+file	arch/arm/imx/imx6_ocotp.c		imxocotp	needs-flag
 
-# frequency of external low frequency clock
-# typically 32000, 32768, or 38400.
-defparam opt_imx6clk.h	IMX6_CKIL_FREQ
-
-# frequency of on-chip oscillator. typically 24000000.
-defparam opt_imx6clk.h	IMX6_OSC_FREQ
-
-# following parameters are used when imxccm is not configured in the kernel.
-defparam opt_imx6clk.h IMX6_AHBCLK_FREQ
-defparam opt_imx6clk.h IMX6_IPGCLK_FREQ
+# Watchdog
+device imxwdog: sysmon_wdog
+attach imxwdog at axi
+file	arch/arm/imx/imx6_wdog.c		imxwdog
+file	arch/arm/imx/imxwdog.c			imxwdog
 
 # iMX GPIO
-#device	imxgpio: gpiobus
+device	imxgpio: gpiobus
 attach	imxgpio at axi
-#file	arch/arm/imx/imxgpio.c		imxgpio		needs-flag
-#file	arch/arm/imx/imx6_gpio.c	imxgpio
+file	arch/arm/imx/imxgpio.c			imxgpio	needs-flag
+file	arch/arm/imx/imx6_gpio.c		imxgpio
+defflag opt_imxgpio.h				IMX_GPIO_INTR_SPLIT
 
-# iMX IOMUX
-#device	imxiomux : bus_space_generic
-#attach	imxiomux at axi
-#file	arch/arm/imx/imx6_iomux.c		imxiomux
+# iMX6 IOMUX
+device	imxiomux
+attach	imxiomux at axi
+file	arch/arm/imx/imx6_iomux.c		imxiomux
 
-# IPU v3 controller
-#device	ipu : bus_dma_generic, wsemuldisplaydev, rasops16, rasops8, rasops4, rasops_rotation, vcons
-#file	arch/arm/imx/imx6_ipuv3.c	ipu	 needs-flag
-#defflag	opt_imx6_ipuv3.h		IMXIPUCONSOLE
-#defparam opt_imx6_ipuv3.h		IPUV3_DEBUG
-
-# iMX M3IF - Multi Master Memory Interface
-# iMX ESDCTL/MDDRC - Enhanced SDRAM/LPDDR memory controller
-# iMX PCMCIA - PCMCIA memory controller
-# iMX NANDFC - NAND Flash memory controller
-# iMX WEIM - Wireless External Interface Module
+# iMX iic Controler
+device	imxi2c: motoi2c, i2cbus, i2cexec
+attach	imxi2c at axi
+file	arch/arm/imx/imxi2c.c			imxi2c
+file	arch/arm/imx/imx6_i2c.c			imxi2c
 
 # iMX UART
 device	imxuart
-attach	imxuart at axi
+attach	imxuart at axi with imx6_uart
 file	arch/arm/imx/imxuart.c			imxuart	needs-flag
-file	arch/arm/imx/imx6_uart.c		imxuart
-defflag	opt_imxuart.h				IMXUARTCONSOLE
+file	arch/arm/imx/imx6_uart.c		imx6_uart
+defflag opt_imxuart.h				IMXUARTCONSOLE
 
-# USB controller
+# iMX6 10/100/1000-Mbps Ethernet MAC(ENET)
+device	enet: ether, ifnet, arp, mii, bus_dma_generic
+attach	enet at axi
+file	arch/arm/imx/if_enet.c			enet
+file	arch/arm/imx/if_enet_imx6.c		enet
+
+# USB Controller
 # attach of this driver need to be specified in paltform configuration
-device imxusbc { unit, irq } : bus_dma_generic
-file   arch/arm/imx/imx6_usb.c			imxusbc
+device	imxusbc { unit, irq } : bus_dma_generic
+file	arch/arm/imx/imx6_usb.c			imxusbc
 
-attach ehci at imxusbc with imxehci
-file   arch/arm/imx/imxusb.c			imxehci
+# USB Phy
+device	imxusbphy
+attach	imxusbphy at axi
+file	arch/arm/imx/imx6_usbphy.c		imxusbphy
 
-# attach	wdc at ahb with wdc_ahb : bus_dma_generic
-# file	arch/arm/imx/wdc_axi.c			wdc_axi
+attach	ehci at imxusbc with imxehci
+file	arch/arm/imx/imxusb.c			imxehci
 
-# SD host controller for SD/MMC
+# uSDHC
 attach	sdhc at axi with sdhc_axi
-file	arch/arm/imx/imx6_esdhc.c		sdhc_axi
+file	arch/arm/imx/imx6_usdhc.c		sdhc_axi
 
-# iic Controler
-# device	imxi2c: i2cbus
-# file	arch/arm/imx/imx6_i2c.c		imxi2c
+# iMX6 SATA Controllers (AHCI)
+attach	ahcisata at axi with imx6_ahcisata
+file	arch/arm/imx/imx6_ahcisata.c		imx6_ahcisata
 
-# attach	imxi2c at aips with imxi2c_aips
-# file	arch/arm/imx/imxi2c_aips.c		imxi2c_aips
-
-# spi bus controlloer
-# device	imxspi: spibus
-# file	arch/arm/imx/imx6_spi.c		imxspi
-
-# Smart Direct Memory Access Controller
-# device	imxsdma: dmover_service, bus_dma_generic
-# attach	imxsdma at ahb
-# file	arch/arm/imx/imxsdma.c		imxsdma
-# file	arch/arm/imx/imxsdmaprog.c		imxsdma
-
-# iis sound Controller (SSI module)
-# device	imxi2s {} : bus_dma_generic
-# file	arch/arm/imx/imx6_i2s.c		imxi2s needs-flag
+# iMX6 Secure Non-Volatile Storage (SNVS)
+device	imxsnvs
+attach	imxsnvs at axi
+file	arch/arm/imx/imxsnvs.c			imxsnvs
+file	arch/arm/imx/imx6_snvs.c		imxsnvs

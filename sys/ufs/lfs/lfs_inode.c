@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.126.8.3 2014/08/20 00:04:44 tls Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.126.8.4 2017/12/03 11:39:22 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.126.8.3 2014/08/20 00:04:44 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.126.8.4 2017/12/03 11:39:22 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -85,21 +85,23 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.126.8.3 2014/08/20 00:04:44 tls Exp 
 #include <ufs/lfs/ulfs_extern.h>
 
 #include <ufs/lfs/lfs.h>
+#include <ufs/lfs/lfs_accessors.h>
 #include <ufs/lfs/lfs_extern.h>
 #include <ufs/lfs/lfs_kernel.h>
 
 static int lfs_update_seguse(struct lfs *, struct inode *ip, long, size_t);
-static int lfs_indirtrunc (struct inode *, daddr_t, daddr_t,
-			   daddr_t, int, long *, long *, long *, size_t *);
+static int lfs_indirtrunc(struct inode *, daddr_t, daddr_t,
+			  daddr_t, int, daddr_t *, daddr_t *,
+			  long *, size_t *);
 static int lfs_blkfree (struct lfs *, struct inode *, daddr_t, size_t, long *, size_t *);
 static int lfs_vtruncbuf(struct vnode *, daddr_t, bool, int);
 
 /* Search a block for a specific dinode. */
-struct ulfs1_dinode *
+union lfs_dinode *
 lfs_ifind(struct lfs *fs, ino_t ino, struct buf *bp)
 {
-	struct ulfs1_dinode *dip = (struct ulfs1_dinode *)bp->b_data;
-	struct ulfs1_dinode *ldip, *fin;
+	union lfs_dinode *ldip;
+	unsigned num, i;
 
 	ASSERT_NO_SEGLOCK(fs);
 	/*
@@ -107,17 +109,19 @@ lfs_ifind(struct lfs *fs, ino_t ino, struct buf *bp)
 	 * inode will supercede earlier ones.  Though it is unlikely, it is
 	 * possible that the same inode will appear in the same inode block.
 	 */
-	fin = dip + LFS_INOPB(fs);
-	for (ldip = fin - 1; ldip >= dip; --ldip)
-		if (ldip->di_inumber == ino)
+	num = LFS_INOPB(fs);
+	for (i = num; i-- > 0; ) {
+		ldip = DINO_IN_BLOCK(fs, bp->b_data, i);
+		if (lfs_dino_getinumber(fs, ldip) == ino)
 			return (ldip);
+	}
 
-	printf("searched %d entries\n", (int)(fin - dip));
-	printf("offset is 0x%x (seg %d)\n", fs->lfs_offset,
-	       lfs_dtosn(fs, fs->lfs_offset));
-	printf("block is 0x%llx (seg %lld)\n",
-	       (unsigned long long)LFS_DBTOFSB(fs, bp->b_blkno),
-	       (long long)lfs_dtosn(fs, LFS_DBTOFSB(fs, bp->b_blkno)));
+	printf("searched %u entries for %ju\n", num, (uintmax_t)ino);
+	printf("offset is 0x%jx (seg %d)\n", (uintmax_t)lfs_sb_getoffset(fs),
+	       lfs_dtosn(fs, lfs_sb_getoffset(fs)));
+	printf("block is 0x%jx (seg %d)\n",
+	       (uintmax_t)LFS_DBTOFSB(fs, bp->b_blkno),
+	       lfs_dtosn(fs, LFS_DBTOFSB(fs, bp->b_blkno)));
 
 	return NULL;
 }
@@ -145,16 +149,16 @@ lfs_update(struct vnode *vp, const struct timespec *acc,
 	mutex_enter(vp->v_interlock);
 	while ((updflags & (UPDATE_WAIT|UPDATE_DIROP)) == UPDATE_WAIT &&
 	    WRITEINPROG(vp)) {
-		DLOG((DLOG_SEG, "lfs_update: sleeping on ino %d"
-		      " (in progress)\n", ip->i_number));
+		DLOG((DLOG_SEG, "lfs_update: sleeping on ino %llu"
+		      " (in progress)\n", (unsigned long long) ip->i_number));
 		cv_wait(&vp->v_cv, vp->v_interlock);
 	}
 	mutex_exit(vp->v_interlock);
 	LFS_ITIMES(ip, acc, mod, NULL);
 	if (updflags & UPDATE_CLOSE)
-		flags = ip->i_flag & (IN_MODIFIED | IN_ACCESSED | IN_CLEANING);
+		flags = ip->i_state & (IN_MODIFIED | IN_ACCESSED | IN_CLEANING);
 	else
-		flags = ip->i_flag & (IN_MODIFIED | IN_CLEANING);
+		flags = ip->i_state & (IN_MODIFIED | IN_CLEANING);
 	if (flags == 0)
 		return (0);
 
@@ -164,12 +168,12 @@ lfs_update(struct vnode *vp, const struct timespec *acc,
 		mutex_enter(&lfs_lock);
 		++fs->lfs_diropwait;
 		while (vp->v_uflag & VU_DIROP) {
-			DLOG((DLOG_DIROP, "lfs_update: sleeping on inode %d"
-			      " (dirops)\n", ip->i_number));
-			DLOG((DLOG_DIROP, "lfs_update: vflags 0x%x, iflags"
+			DLOG((DLOG_DIROP, "lfs_update: sleeping on inode %llu "
+			      "(dirops)\n", (unsigned long long) ip->i_number));
+			DLOG((DLOG_DIROP, "lfs_update: vflags 0x%x, i_state"
 			      " 0x%x\n",
 			      vp->v_iflag | vp->v_vflag | vp->v_uflag,
-			      ip->i_flag));
+			      ip->i_state));
 			if (fs->lfs_dirops == 0)
 				lfs_flush_fs(fs, SEGM_SYNC);
 			else
@@ -200,12 +204,13 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 	daddr_t lastblock;
 	struct inode *oip = VTOI(ovp);
 	daddr_t bn, lbn, lastiblock[ULFS_NIADDR], indir_lbn[ULFS_NIADDR];
-	/* XXX ondisk32 */
-	int32_t newblks[ULFS_NDADDR + ULFS_NIADDR];
+	/* note: newblks is set but only actually used if DIAGNOSTIC */
+	daddr_t newblks[ULFS_NDADDR + ULFS_NIADDR] __diagused;
 	struct lfs *fs;
 	struct buf *bp;
 	int offset, size, level;
-	long count, rcount, blocksreleased = 0, real_released = 0;
+	daddr_t count, rcount;
+	daddr_t blocksreleased = 0, real_released = 0;
 	int i, nblocks;
 	int aflags, error, allerror = 0;
 	off_t osize;
@@ -223,32 +228,24 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 	if (length < 0)
 		return (EINVAL);
 
-	/*
-	 * Just return and not update modification times.
-	 */
-	if (oip->i_size == length) {
-		/* still do a uvm_vnp_setsize() as writesize may be larger */
-		uvm_vnp_setsize(ovp, length);
-		return (0);
-	}
-
 	fs = oip->i_lfs;
 
 	if (ovp->v_type == VLNK &&
 	    (oip->i_size < fs->um_maxsymlinklen ||
 	     (fs->um_maxsymlinklen == 0 &&
-	      oip->i_ffs1_blocks == 0))) {
-#ifdef DIAGNOSTIC
-		if (length != 0)
-			panic("lfs_truncate: partial truncate of symlink");
-#endif
+	      lfs_dino_getblocks(fs, oip->i_din) == 0))) {
+		KASSERTMSG((length == 0),
+		    "partial truncate of symlink: %jd", (intmax_t)length);
 		memset((char *)SHORTLINK(oip), 0, (u_int)oip->i_size);
-		oip->i_size = oip->i_ffs1_size = 0;
-		oip->i_flag |= IN_CHANGE | IN_UPDATE;
+		oip->i_size = 0;
+		lfs_dino_setsize(fs, oip->i_din, 0);
+		oip->i_state |= IN_CHANGE | IN_UPDATE;
 		return (lfs_update(ovp, NULL, NULL, 0));
 	}
 	if (oip->i_size == length) {
-		oip->i_flag |= IN_CHANGE | IN_UPDATE;
+		/* still do a uvm_vnp_setsize() as writesize may be larger */
+		uvm_vnp_setsize(ovp, length);
+		oip->i_state |= IN_CHANGE | IN_UPDATE;
 		return (lfs_update(ovp, NULL, NULL, 0));
 	}
 	lfs_imtime(fs);
@@ -285,7 +282,7 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 				if (ioflag & IO_SYNC) {
 					mutex_enter(ovp->v_interlock);
 					VOP_PUTPAGES(ovp,
-					    trunc_page(osize & fs->lfs_bmask),
+					    trunc_page(osize & lfs_sb_getbmask(fs)),
 					    round_page(eob),
 					    PGO_CLEANIT | PGO_SYNCIO);
 				}
@@ -299,32 +296,33 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 				return error;
 			}
 			uvm_vnp_setsize(ovp, length);
-			oip->i_flag |= IN_CHANGE | IN_UPDATE;
+			oip->i_state |= IN_CHANGE | IN_UPDATE;
 			KASSERT(ovp->v_size == oip->i_size);
-			oip->i_lfs_hiblk = lfs_lblkno(fs, oip->i_size + fs->lfs_bsize - 1) - 1;
+			oip->i_lfs_hiblk = lfs_lblkno(fs, oip->i_size + lfs_sb_getbsize(fs) - 1) - 1;
 			return (lfs_update(ovp, NULL, NULL, 0));
 		} else {
 			error = lfs_reserve(fs, ovp, NULL,
-			    lfs_btofsb(fs, (ULFS_NIADDR + 2) << fs->lfs_bshift));
+			    lfs_btofsb(fs, (ULFS_NIADDR + 2) << lfs_sb_getbshift(fs)));
 			if (error)
 				return (error);
 			error = lfs_balloc(ovp, length - 1, 1, cred,
 					   aflags, &bp);
 			lfs_reserve(fs, ovp, NULL,
-			    -lfs_btofsb(fs, (ULFS_NIADDR + 2) << fs->lfs_bshift));
+			    -lfs_btofsb(fs, (ULFS_NIADDR + 2) << lfs_sb_getbshift(fs)));
 			if (error)
 				return (error);
-			oip->i_ffs1_size = oip->i_size = length;
+			oip->i_size = length;
+			lfs_dino_setsize(fs, oip->i_din, oip->i_size);
 			uvm_vnp_setsize(ovp, length);
 			(void) VOP_BWRITE(bp->b_vp, bp);
-			oip->i_flag |= IN_CHANGE | IN_UPDATE;
-			oip->i_lfs_hiblk = lfs_lblkno(fs, oip->i_size + fs->lfs_bsize - 1) - 1;
+			oip->i_state |= IN_CHANGE | IN_UPDATE;
+			oip->i_lfs_hiblk = lfs_lblkno(fs, oip->i_size + lfs_sb_getbsize(fs) - 1) - 1;
 			return (lfs_update(ovp, NULL, NULL, 0));
 		}
 	}
 
 	if ((error = lfs_reserve(fs, ovp, NULL,
-	    lfs_btofsb(fs, (2 * ULFS_NIADDR + 3) << fs->lfs_bshift))) != 0)
+	    lfs_btofsb(fs, (2 * ULFS_NIADDR + 3) << lfs_sb_getbshift(fs)))) != 0)
 		return (error);
 
 	/*
@@ -342,7 +340,8 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 	if (ovp != fs->lfs_ivnode)
 		lfs_seglock(fs, SEGM_PROT);
 	if (offset == 0) {
-		oip->i_size = oip->i_ffs1_size = length;
+		oip->i_size = length;
+		lfs_dino_setsize(fs, oip->i_din, oip->i_size);
 	} else if (!usepc) {
 		lbn = lfs_lblkno(fs, length);
 		aflags = B_CLRBUF;
@@ -351,12 +350,13 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 		error = lfs_balloc(ovp, length - 1, 1, cred, aflags, &bp);
 		if (error) {
 			lfs_reserve(fs, ovp, NULL,
-			    -lfs_btofsb(fs, (2 * ULFS_NIADDR + 3) << fs->lfs_bshift));
+			    -lfs_btofsb(fs, (2 * ULFS_NIADDR + 3) << lfs_sb_getbshift(fs)));
 			goto errout;
 		}
 		obufsize = bp->b_bufsize;
 		odb = lfs_btofsb(fs, bp->b_bcount);
-		oip->i_size = oip->i_ffs1_size = length;
+		oip->i_size = length;
+		lfs_dino_setsize(fs, oip->i_din, oip->i_size);
 		size = lfs_blksize(fs, oip, lbn);
 		if (ovp->v_type != VDIR)
 			memset((char *)bp->b_data + offset, 0,
@@ -367,8 +367,10 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 			locked_queue_bytes -= obufsize - bp->b_bufsize;
 			mutex_exit(&lfs_lock);
 		}
-		if (bp->b_oflags & BO_DELWRI)
-			fs->lfs_avail += odb - lfs_btofsb(fs, size);
+		if (bp->b_oflags & BO_DELWRI) {
+			lfs_sb_addavail(fs, odb - lfs_btofsb(fs, size));
+			/* XXX shouldn't this wake up on lfs_availsleep? */
+		}
 		(void) VOP_BWRITE(bp->b_vp, bp);
 	} else { /* vp->v_type == VREG && length < osize && offset != 0 */
 		/*
@@ -389,7 +391,7 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 		error = ulfs_balloc_range(ovp, length - 1, 1, cred, aflags);
 		if (error) {
 			lfs_reserve(fs, ovp, NULL,
-				    -lfs_btofsb(fs, (2 * ULFS_NIADDR + 3) << fs->lfs_bshift));
+				    -lfs_btofsb(fs, (2 * ULFS_NIADDR + 3) << lfs_sb_getbshift(fs)));
 			goto errout;
 		}
 		xlbn = lfs_lblkno(fs, length);
@@ -405,7 +407,7 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 			    ((ioflag & IO_SYNC) ? PGO_SYNCIO : 0));
 			if (error) {
 				lfs_reserve(fs, ovp, NULL,
-					    -lfs_btofsb(fs, (2 * ULFS_NIADDR + 3) << fs->lfs_bshift));
+					    -lfs_btofsb(fs, (2 * ULFS_NIADDR + 3) << lfs_sb_getbshift(fs)));
 				goto errout;
 			}
 		}
@@ -413,7 +415,8 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 
 	genfs_node_wrlock(ovp);
 
-	oip->i_size = oip->i_ffs1_size = length;
+	oip->i_size = length;
+	lfs_dino_setsize(fs, oip->i_din, oip->i_size);
 	uvm_vnp_setsize(ovp, length);
 
 	/*
@@ -423,20 +426,25 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 	 * the file is truncated to 0.
 	 */
 	/* Avoid sign overflow - XXX assumes that off_t is a quad_t. */
-	if (length > QUAD_MAX - fs->lfs_bsize)
-		lastblock = lfs_lblkno(fs, QUAD_MAX - fs->lfs_bsize);
+	if (length > QUAD_MAX - lfs_sb_getbsize(fs))
+		lastblock = lfs_lblkno(fs, QUAD_MAX - lfs_sb_getbsize(fs));
 	else
-		lastblock = lfs_lblkno(fs, length + fs->lfs_bsize - 1) - 1;
+		lastblock = lfs_lblkno(fs, length + lfs_sb_getbsize(fs) - 1) - 1;
 	lastiblock[SINGLE] = lastblock - ULFS_NDADDR;
 	lastiblock[DOUBLE] = lastiblock[SINGLE] - LFS_NINDIR(fs);
 	lastiblock[TRIPLE] = lastiblock[DOUBLE] - LFS_NINDIR(fs) * LFS_NINDIR(fs);
-	nblocks = lfs_btofsb(fs, fs->lfs_bsize);
+	nblocks = lfs_btofsb(fs, lfs_sb_getbsize(fs));
 	/*
 	 * Record changed file and block pointers before we start
 	 * freeing blocks.  lastiblock values are also normalized to -1
 	 * for calls to lfs_indirtrunc below.
 	 */
-	memcpy((void *)newblks, (void *)&oip->i_ffs1_db[0], sizeof newblks);
+	for (i=0; i<ULFS_NDADDR; i++) {
+		newblks[i] = lfs_dino_getdb(fs, oip->i_din, i);
+	}
+	for (i=0; i<ULFS_NIADDR; i++) {
+		newblks[ULFS_NDADDR + i] = lfs_dino_getib(fs, oip->i_din, i);
+	}
 	for (level = TRIPLE; level >= SINGLE; level--)
 		if (lastiblock[level] < 0) {
 			newblks[ULFS_NDADDR+level] = 0;
@@ -445,7 +453,8 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 	for (i = ULFS_NDADDR - 1; i > lastblock; i--)
 		newblks[i] = 0;
 
-	oip->i_size = oip->i_ffs1_size = osize;
+	oip->i_size = osize;
+	lfs_dino_setsize(fs, oip->i_din, oip->i_size);
 	error = lfs_vtruncbuf(ovp, lastblock + 1, false, 0);
 	if (error && !allerror)
 		allerror = error;
@@ -457,7 +466,7 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 	indir_lbn[DOUBLE] = indir_lbn[SINGLE] - LFS_NINDIR(fs) - 1;
 	indir_lbn[TRIPLE] = indir_lbn[DOUBLE] - LFS_NINDIR(fs) * LFS_NINDIR(fs) - 1;
 	for (level = TRIPLE; level >= SINGLE; level--) {
-		bn = oip->i_ffs1_ib[level];
+		bn = lfs_dino_getib(fs, oip->i_din, level);
 		if (bn != 0) {
 			error = lfs_indirtrunc(oip, indir_lbn[level],
 					       bn, lastiblock[level],
@@ -468,11 +477,11 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 			real_released += rcount;
 			blocksreleased += count;
 			if (lastiblock[level] < 0) {
-				if (oip->i_ffs1_ib[level] > 0)
+				if (lfs_dino_getib(fs, oip->i_din, level) > 0)
 					real_released += nblocks;
 				blocksreleased += nblocks;
-				oip->i_ffs1_ib[level] = 0;
-				lfs_blkfree(fs, oip, bn, fs->lfs_bsize,
+				lfs_dino_setib(fs, oip->i_din, level, 0);
+				lfs_blkfree(fs, oip, bn, lfs_sb_getbsize(fs),
 					    &lastseg, &bc);
         			lfs_deregister_block(ovp, bn);
 			}
@@ -487,11 +496,11 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 	for (i = ULFS_NDADDR - 1; i > lastblock; i--) {
 		long bsize, obsize;
 
-		bn = oip->i_ffs1_db[i];
+		bn = lfs_dino_getdb(fs, oip->i_din, i);
 		if (bn == 0)
 			continue;
 		bsize = lfs_blksize(fs, oip, i);
-		if (oip->i_ffs1_db[i] > 0) {
+		if (lfs_dino_getdb(fs, oip->i_din, i) > 0) {
 			/* Check for fragment size changes */
 			obsize = oip->i_lfs_fragsize[i];
 			real_released += lfs_btofsb(fs, obsize);
@@ -499,7 +508,7 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 		} else
 			obsize = 0;
 		blocksreleased += lfs_btofsb(fs, bsize);
-		oip->i_ffs1_db[i] = 0;
+		lfs_dino_setdb(fs, oip->i_din, i, 0);
 		lfs_blkfree(fs, oip, bn, obsize, &lastseg, &bc);
         	lfs_deregister_block(ovp, bn);
 	}
@@ -510,7 +519,7 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 	 * Finally, look for a change in size of the
 	 * last direct block; release any frags.
 	 */
-	bn = oip->i_ffs1_db[lastblock];
+	bn = lfs_dino_getdb(fs, oip->i_din, lastblock);
 	if (bn != 0) {
 		long oldspace, newspace;
 #if 0
@@ -526,7 +535,8 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 		olddspace = oip->i_lfs_fragsize[lastblock];
 #endif
 
-		oip->i_size = oip->i_ffs1_size = length;
+		oip->i_size = length;
+		lfs_dino_setsize(fs, oip->i_din, oip->i_size);
 		newspace = lfs_blksize(fs, oip, lastblock);
 		if (newspace == 0)
 			panic("itrunc: newspace");
@@ -544,57 +554,59 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 done:
 	/* Finish segment accounting corrections */
 	lfs_update_seguse(fs, oip, lastseg, bc);
-#ifdef DIAGNOSTIC
 	for (level = SINGLE; level <= TRIPLE; level++)
-		if ((newblks[ULFS_NDADDR + level] == 0) !=
-		    ((oip->i_ffs1_ib[level]) == 0)) {
-			panic("lfs itrunc1");
-		}
+		KASSERTMSG(((newblks[ULFS_NDADDR + level] == 0) ==
+			(lfs_dino_getib(fs, oip->i_din, level) == 0)),
+		    "lfs itrunc1");
 	for (i = 0; i < ULFS_NDADDR; i++)
-		if ((newblks[i] == 0) != (oip->i_ffs1_db[i] == 0)) {
-			panic("lfs itrunc2");
-		}
-	if (length == 0 &&
-	    (!LIST_EMPTY(&ovp->v_cleanblkhd) || !LIST_EMPTY(&ovp->v_dirtyblkhd)))
-		panic("lfs itrunc3");
-#endif /* DIAGNOSTIC */
+		KASSERTMSG(((newblks[i] == 0) ==
+			(lfs_dino_getdb(fs, oip->i_din, i) == 0)),
+		    "lfs itrunc2");
+	KASSERTMSG((length != 0 || LIST_EMPTY(&ovp->v_cleanblkhd)),
+	    "lfs itrunc3a");
+	KASSERTMSG((length != 0 || LIST_EMPTY(&ovp->v_dirtyblkhd)),
+	    "lfs itrunc3b");
+
 	/*
 	 * Put back the real size.
 	 */
-	oip->i_size = oip->i_ffs1_size = length;
+	oip->i_size = length;
+	lfs_dino_setsize(fs, oip->i_din, oip->i_size);
 	oip->i_lfs_effnblks -= blocksreleased;
-	oip->i_ffs1_blocks -= real_released;
+
 	mutex_enter(&lfs_lock);
-	fs->lfs_bfree += blocksreleased;
-	mutex_exit(&lfs_lock);
-#ifdef DIAGNOSTIC
-	if (oip->i_size == 0 &&
-	    (oip->i_ffs1_blocks != 0 || oip->i_lfs_effnblks != 0)) {
-		printf("lfs_truncate: truncate to 0 but %d blks/%d effblks\n",
-		       oip->i_ffs1_blocks, oip->i_lfs_effnblks);
-		panic("lfs_truncate: persistent blocks");
-	}
-#endif
+	lfs_dino_setblocks(fs, oip->i_din,
+	    lfs_dino_getblocks(fs, oip->i_din) - real_released);
+	lfs_sb_addbfree(fs, blocksreleased);
+
+	KASSERTMSG((oip->i_size != 0 ||
+		lfs_dino_getblocks(fs, oip->i_din) == 0),
+	    "ino %llu truncate to 0 but %jd blks/%jd effblks",
+	    (unsigned long long) oip->i_number,
+	    lfs_dino_getblocks(fs, oip->i_din), oip->i_lfs_effnblks);
+	KASSERTMSG((oip->i_size != 0 || oip->i_lfs_effnblks == 0),
+	    "ino %llu truncate to 0 but %jd blks/%jd effblks",
+	    (unsigned long long) oip->i_number,
+	    lfs_dino_getblocks(fs, oip->i_din), oip->i_lfs_effnblks);
 
 	/*
 	 * If we truncated to zero, take us off the paging queue.
 	 */
-	mutex_enter(&lfs_lock);
-	if (oip->i_size == 0 && oip->i_flags & IN_PAGING) {
-		oip->i_flags &= ~IN_PAGING;
+	if (oip->i_size == 0 && oip->i_state & IN_PAGING) {
+		oip->i_state &= ~IN_PAGING;
 		TAILQ_REMOVE(&fs->lfs_pchainhd, oip, i_lfs_pchain);
 	}
 	mutex_exit(&lfs_lock);
 
-	oip->i_flag |= IN_CHANGE;
+	oip->i_state |= IN_CHANGE;
 #if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
 	(void) lfs_chkdq(oip, -blocksreleased, NOCRED, 0);
 #endif
 	lfs_reserve(fs, ovp, NULL,
-	    -lfs_btofsb(fs, (2 * ULFS_NIADDR + 3) << fs->lfs_bshift));
+	    -lfs_btofsb(fs, (2 * ULFS_NIADDR + 3) << lfs_sb_getbshift(fs)));
 	genfs_node_unlock(ovp);
   errout:
-	oip->i_lfs_hiblk = lfs_lblkno(fs, oip->i_size + fs->lfs_bsize - 1) - 1;
+	oip->i_lfs_hiblk = lfs_lblkno(fs, oip->i_size + lfs_sb_getbsize(fs) - 1) - 1;
 	if (ovp != fs->lfs_ivnode)
 		lfs_segunlock(fs);
 	return (allerror ? allerror : error);
@@ -697,18 +709,19 @@ lfs_finalize_fs_seguse(struct lfs *fs)
  */
 static int
 lfs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn,
-	       daddr_t lastbn, int level, long *countp,
-	       long *rcountp, long *lastsegp, size_t *bcp)
+	       daddr_t lastbn, int level, daddr_t *countp,
+	       daddr_t *rcountp, long *lastsegp, size_t *bcp)
 {
 	int i;
 	struct buf *bp;
 	struct lfs *fs = ip->i_lfs;
-	int32_t *bap;	/* XXX ondisk32 */
+	void *bap;
+	bool bap_needs_free;
 	struct vnode *vp;
 	daddr_t nb, nlbn, last;
-	int32_t *copy = NULL;	/* XXX ondisk32 */
-	long blkcount, rblkcount, factor;
-	int nblocks, blocksreleased = 0, real_released = 0;
+	daddr_t blkcount, rblkcount, factor;
+	int nblocks;
+	daddr_t blocksreleased = 0, real_released = 0;
 	int error = 0, allerror = 0;
 
 	ASSERT_SEGLOCK(fs);
@@ -723,7 +736,7 @@ lfs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn,
 	last = lastbn;
 	if (lastbn > 0)
 		last /= factor;
-	nblocks = lfs_btofsb(fs, fs->lfs_bsize);
+	nblocks = lfs_btofsb(fs, lfs_sb_getbsize(fs));
 	/*
 	 * Get buffer of block pointers, zero those entries corresponding
 	 * to blocks to be free'd, and update on disk copy first.  Since
@@ -733,12 +746,12 @@ lfs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn,
 	 * explicitly instead of letting bread do everything for us.
 	 */
 	vp = ITOV(ip);
-	bp = getblk(vp, lbn, (int)fs->lfs_bsize, 0, 0);
+	bp = getblk(vp, lbn, lfs_sb_getbsize(fs), 0, 0);
 	if (bp->b_oflags & (BO_DONE | BO_DELWRI)) {
 		/* Braces must be here in case trace evaluates to nothing. */
-		trace(TR_BREADHIT, pack(vp, fs->lfs_bsize), lbn);
+		trace(TR_BREADHIT, pack(vp, lfs_sb_getbsize(fs)), lbn);
 	} else {
-		trace(TR_BREADMISS, pack(vp, fs->lfs_bsize), lbn);
+		trace(TR_BREADMISS, pack(vp, lfs_sb_getbsize(fs)), lbn);
 		curlwp->l_ru.ru_inblock++; /* pay for read */
 		bp->b_flags |= B_READ;
 		if (bp->b_bcount > bp->b_bufsize)
@@ -753,17 +766,25 @@ lfs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn,
 		return (error);
 	}
 
-	bap = (int32_t *)bp->b_data;	/* XXX ondisk32 */
 	if (lastbn >= 0) {
-		copy = (int32_t *)lfs_malloc(fs, fs->lfs_bsize, LFS_NB_IBLOCK);
-		memcpy((void *)copy, (void *)bap, (u_int)fs->lfs_bsize);
-		memset((void *)&bap[last + 1], 0,
-		/* XXX ondisk32 */
-		  (u_int)(LFS_NINDIR(fs) - (last + 1)) * sizeof (int32_t));
+		/*
+		 * We still need this block, so copy the data for
+		 * subsequent processing; then in the original block,
+		 * zero out the dying block pointers and send it off.
+		 */
+		bap = lfs_malloc(fs, lfs_sb_getbsize(fs), LFS_NB_IBLOCK);
+		memcpy(bap, bp->b_data, lfs_sb_getbsize(fs));
+		bap_needs_free = true;
+
+		for (i = last + 1; i < LFS_NINDIR(fs); i++) {
+			lfs_iblock_set(fs, bp->b_data, i, 0);
+		}
 		error = VOP_BWRITE(bp->b_vp, bp);
 		if (error)
 			allerror = error;
-		bap = copy;
+	} else {
+		bap = bp->b_data;
+		bap_needs_free = false;
 	}
 
 	/*
@@ -771,7 +792,7 @@ lfs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn,
 	 */
 	for (i = LFS_NINDIR(fs) - 1, nlbn = lbn + 1 - i * factor; i > last;
 	    i--, nlbn += factor) {
-		nb = bap[i];
+		nb = lfs_iblock_get(fs, bap, i);
 		if (nb == 0)
 			continue;
 		if (level > SINGLE) {
@@ -784,8 +805,8 @@ lfs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn,
 			blocksreleased += blkcount;
 			real_released += rblkcount;
 		}
-		lfs_blkfree(fs, ip, nb, fs->lfs_bsize, lastsegp, bcp);
-		if (bap[i] > 0)
+		lfs_blkfree(fs, ip, nb, lfs_sb_getbsize(fs), lastsegp, bcp);
+		if (lfs_iblock_get(fs, bap, i) > 0)
 			real_released += nblocks;
 		blocksreleased += nblocks;
 	}
@@ -795,7 +816,7 @@ lfs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn,
 	 */
 	if (level > SINGLE && lastbn >= 0) {
 		last = lastbn % factor;
-		nb = bap[i];
+		nb = lfs_iblock_get(fs, bap, i);
 		if (nb != 0) {
 			error = lfs_indirtrunc(ip, nlbn, nb,
 					       last, level - 1, &blkcount,
@@ -807,14 +828,14 @@ lfs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn,
 		}
 	}
 
-	if (copy != NULL) {
-		lfs_free(fs, copy, LFS_NB_IBLOCK);
+	if (bap_needs_free) {
+		lfs_free(fs, bap, LFS_NB_IBLOCK);
 	} else {
 		mutex_enter(&bufcache_lock);
 		if (bp->b_oflags & BO_DELWRI) {
 			LFS_UNLOCK_BUF(bp);
-			fs->lfs_avail += lfs_btofsb(fs, bp->b_bcount);
-			wakeup(&fs->lfs_avail);
+			lfs_sb_addavail(fs, lfs_btofsb(fs, bp->b_bcount));
+			wakeup(&fs->lfs_availsleep);
 		}
 		brelsel(bp, BC_INVAL);
 		mutex_exit(&bufcache_lock);
@@ -835,7 +856,7 @@ static int
 lfs_vtruncbuf(struct vnode *vp, daddr_t lbn, bool catch, int slptimeo)
 {
 	struct buf *bp, *nbp;
-	int error;
+	int error = 0;
 	struct lfs *fs;
 	voff_t off;
 
@@ -858,15 +879,14 @@ restart:
 		error = bbusy(bp, catch, slptimeo, NULL);
 		if (error == EPASSTHROUGH)
 			goto restart;
-		if (error != 0) {
-			mutex_exit(&bufcache_lock);
-			return (error);
-		}
+		if (error)
+			goto exit;
+
 		mutex_enter(bp->b_objlock);
 		if (bp->b_oflags & BO_DELWRI) {
 			bp->b_oflags &= ~BO_DELWRI;
-			fs->lfs_avail += lfs_btofsb(fs, bp->b_bcount);
-			wakeup(&fs->lfs_avail);
+			lfs_sb_addavail(fs, lfs_btofsb(fs, bp->b_bcount));
+			wakeup(&fs->lfs_availsleep);
 		}
 		mutex_exit(bp->b_objlock);
 		LFS_UNLOCK_BUF(bp);
@@ -880,22 +900,22 @@ restart:
 		error = bbusy(bp, catch, slptimeo, NULL);
 		if (error == EPASSTHROUGH)
 			goto restart;
-		if (error != 0) {
-			mutex_exit(&bufcache_lock);
-			return (error);
-		}
+		if (error)
+			goto exit;
+
 		mutex_enter(bp->b_objlock);
 		if (bp->b_oflags & BO_DELWRI) {
 			bp->b_oflags &= ~BO_DELWRI;
-			fs->lfs_avail += lfs_btofsb(fs, bp->b_bcount);
-			wakeup(&fs->lfs_avail);
+			lfs_sb_addavail(fs, lfs_btofsb(fs, bp->b_bcount));
+			wakeup(&fs->lfs_availsleep);
 		}
 		mutex_exit(bp->b_objlock);
 		LFS_UNLOCK_BUF(bp);
 		brelsel(bp, BC_INVAL | BC_VFLUSH);
 	}
+exit:
 	mutex_exit(&bufcache_lock);
 
-	return (0);
+	return error;
 }
 

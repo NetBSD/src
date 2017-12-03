@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.46 2012/07/22 14:32:51 matt Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.46.2.1 2017/12/03 11:36:25 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999, 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.46 2012/07/22 14:32:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.46.2.1 2017/12/03 11:36:25 jdolecek Exp $");
 
 #include "opt_inet.h"
 
@@ -214,8 +214,9 @@ bmac_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_txdma = mapiodev(ca->ca_reg[2], PAGE_SIZE, false);
 	sc->sc_rxdma = mapiodev(ca->ca_reg[4], PAGE_SIZE, false);
-	sc->sc_txcmd = dbdma_alloc(BMAC_TXBUFS * sizeof(dbdma_command_t));
-	sc->sc_rxcmd = dbdma_alloc((BMAC_RXBUFS + 1) * sizeof(dbdma_command_t));
+	sc->sc_txcmd = dbdma_alloc(BMAC_TXBUFS * sizeof(dbdma_command_t), NULL);
+	sc->sc_rxcmd = dbdma_alloc((BMAC_RXBUFS + 1) * sizeof(dbdma_command_t),
+	    NULL);
 	sc->sc_txbuf = malloc(BMAC_BUFLEN * BMAC_TXBUFS, M_DEVBUF, M_NOWAIT);
 	sc->sc_rxbuf = malloc(BMAC_BUFLEN * BMAC_RXBUFS, M_DEVBUF, M_NOWAIT);
 	if (sc->sc_txbuf == NULL || sc->sc_rxbuf == NULL ||
@@ -259,6 +260,7 @@ bmac_attach(device_t parent, device_t self, void *aux)
 	bmac_reset_chip(sc);
 
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, sc->sc_enaddr);
 }
 
@@ -440,7 +442,7 @@ bmac_intr(void *v)
 		sc->sc_if.if_flags &= ~IFF_OACTIVE;
 		sc->sc_if.if_timer = 0;
 		sc->sc_if.if_opackets++;
-		bmac_start(&sc->sc_if);
+		if_schedule_deferred_start(&sc->sc_if);
 	}
 
 	/* XXX should do more! */
@@ -497,13 +499,7 @@ bmac_rint(void *v)
 			goto next;
 		}
 
-		/*
-		 * Check if there's a BPF listener on this interface.
-		 * If so, hand off the raw packet to BPF.
-		 */
-		bpf_mtap(ifp, m);
-		(*ifp->if_input)(ifp, m);
-		ifp->if_ipackets++;
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 
 next:
 		DBDMA_BUILD_CMD(cmd, DBDMA_CMD_IN_LAST, 0, DBDMA_INT_ALWAYS,
@@ -620,13 +616,13 @@ bmac_put(struct bmac_softc *sc, void *buff, struct mbuf *m)
 	for (; m; m = n) {
 		len = m->m_len;
 		if (len == 0) {
-			MFREE(m, n);
+			n = m_free(m);
 			continue;
 		}
 		memcpy(buff, mtod(m, void *), len);
 		buff = (char *)buff + len;
 		tlen += len;
-		MFREE(m, n);
+		n = m_free(m);
 	}
 	if (tlen > PAGE_SIZE)
 		panic("%s: putpacket packet overflow",
@@ -645,7 +641,7 @@ bmac_get(struct bmac_softc *sc, void *pkt, int totlen)
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == 0)
 		return 0;
-	m->m_pkthdr.rcvif = &sc->sc_if;
+	m_set_rcvif(m, &sc->sc_if);
 	m->m_pkthdr.len = totlen;
 	len = MHLEN;
 	top = 0;

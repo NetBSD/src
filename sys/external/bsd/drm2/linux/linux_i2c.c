@@ -1,7 +1,7 @@
-/*	$NetBSD: linux_i2c.c,v 1.2.10.2 2014/08/20 00:04:22 tls Exp $	*/
+/*	$NetBSD: linux_i2c.c,v 1.2.10.3 2017/12/03 11:38:00 jdolecek Exp $	*/
 
 /*-
- * Copyright (c) 2013 The NetBSD Foundation, Inc.
+ * Copyright (c) 2015 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -30,10 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_i2c.c,v 1.2.10.2 2014/08/20 00:04:22 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_i2c.c,v 1.2.10.3 2017/12/03 11:38:00 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
+#include <sys/kmem.h>
 #include <sys/queue.h>		/* XXX include order botch: i2cvar.h needs */
 
 #include <dev/i2c/i2cvar.h>
@@ -56,6 +57,73 @@ static int	linux_i2cbb_initiate_xfer(void *, i2c_addr_t, int);
 static int	linux_i2cbb_read_byte(void *, uint8_t *, int);
 static int	linux_i2cbb_write_byte(void *, uint8_t, int);
 
+/*
+ * Client operations: operations with a particular i2c slave device.
+ */
+
+struct i2c_client *
+i2c_new_device(struct i2c_adapter *adapter, const struct i2c_board_info *info)
+{
+	struct i2c_client *client;
+
+	client = kmem_alloc(sizeof(*client), KM_SLEEP);
+	client->adapter = adapter;
+	client->addr = info->addr;
+	client->flags = info->flags;
+
+	return client;
+}
+
+void
+i2c_unregister_device(struct i2c_client *client)
+{
+
+	kmem_free(client, sizeof(*client));
+}
+
+int
+i2c_master_send(const struct i2c_client *client, const char *buf, int count)
+{
+	struct i2c_msg msg = {
+		.addr = client->addr,
+		.flags = client->flags & I2C_M_TEN,
+		.len = count,
+		.buf = __UNCONST(buf),
+	};
+	int ret;
+
+	KASSERT(0 <= count);
+
+	ret = i2c_transfer(client->adapter, &msg, 1);
+	if (ret <= 0)
+		return ret;
+
+	return count;
+}
+
+int
+i2c_master_recv(const struct i2c_client *client, char *buf, int count)
+{
+	struct i2c_msg msg = {
+		.addr = client->addr,
+		.flags = (client->flags & I2C_M_TEN) | I2C_M_RD,
+		.len = count,
+		.buf = buf,
+	};
+	int ret;
+
+	ret = i2c_transfer(client->adapter, &msg, 1);
+	if (ret <= 0)
+		return ret;
+
+	return count;
+}
+
+/*
+ * Adapter operations: operations over an i2c bus via a particular
+ * controller.
+ */
+
 int
 i2c_transfer(struct i2c_adapter *adapter, struct i2c_msg *msgs, int n)
 {
@@ -116,6 +184,8 @@ linux_i2c_flags_flags(uint16_t flags __unused)
 	return 0;
 }
 
+/* Bit-banging */
+
 const struct i2c_algorithm i2c_bit_algo = {
 	.master_xfer	= linux_i2cbb_xfer,
 	.functionality	= linux_i2cbb_functionality,

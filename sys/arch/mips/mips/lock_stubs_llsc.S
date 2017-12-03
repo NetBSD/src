@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs_llsc.S,v 1.2 2011/07/10 23:21:59 matt Exp $	*/
+/*	$NetBSD: lock_stubs_llsc.S,v 1.2.12.1 2017/12/03 11:36:28 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -15,7 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- *      
+ *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -36,7 +36,8 @@
 #include <sys/errno.h>
 
 #include <machine/asm.h>
-#include <machine/cpu.h>		/* MIPS_CURLWP */
+
+RCSID("$NetBSD: lock_stubs_llsc.S,v 1.2.12.1 2017/12/03 11:36:28 jdolecek Exp $")
 
 #include "assym.h"
 
@@ -45,8 +46,13 @@
 #endif
 
 #if defined(MULTIPROCESSOR)
+#if defined(__OCTEON__)
+#define	SYNC		sync 4
+#define	BDSYNC		sync 4
+#else
 #define	SYNC		sync
 #define	BDSYNC		sync
+#endif
 #else
 #define	SYNC		/* nothing */
 #define	BDSYNC		nop
@@ -128,7 +134,6 @@ STATIC_LEAF(llsc_ucas_uint)
 	move	v0, zero
 
 1:	INT_LL	t0, 0(a0)
-	 nop
 	bne	t0, a1, 2f
 	 move	t1, a2
 	INT_SC	t1, 0(a0)
@@ -156,7 +161,6 @@ STATIC_LEAF(llsc_ucas_ulong)
 	move	v0, zero
 
 1:	LONG_LL	t0, 0(a0)
-	 nop
 	bne	t0, a1, 2f
 	 move	t1, a2
 	LONG_SC	t1, 0(a0)
@@ -182,7 +186,6 @@ END(llsc_ucaserr)
  */
 STATIC_LEAF(llsc_mutex_enter)
 	PTR_LL	t0, MTX_OWNER(a0)
-	nop
 1:
 	bnez	t0, 2f
 	 move	t2, MIPS_CURLWP
@@ -246,7 +249,6 @@ STATIC_NESTED(llsc_mutex_spin_enter, CALLFRAME_SIZ, ra)
 	 */
 1:
 	INT_L	ta2, CPU_INFO_MTX_COUNT(t2)
-	nop
 	INT_ADDU ta3, ta2, -1
 	INT_S	ta3, CPU_INFO_MTX_COUNT(t2)
 	bltz	ta2, 2f
@@ -256,7 +258,6 @@ STATIC_NESTED(llsc_mutex_spin_enter, CALLFRAME_SIZ, ra)
 #ifdef PARANOIA
 	INT_L	ta1, CPU_INFO_MTX_OLDSPL(t2)
 	INT_L	ta2, CPU_INFO_CPL(t2)	# get updated CPL
-	nop
 	sltu	v0, ta2, ta0		# v0 = cpl < mtx_ipl
 	sltu	v1, ta2, ta1		# v1 = cpl < oldspl
 	sll	v0, 1
@@ -266,7 +267,6 @@ STATIC_NESTED(llsc_mutex_spin_enter, CALLFRAME_SIZ, ra)
 #endif /* PARANOIA */
 #if defined(FULL)
 	INT_LL	t3, MTX_LOCK(t0)
-	nop
 3:
 	bnez	t3, 4f
 	 li	t1, 1
@@ -291,7 +291,6 @@ LEAF(llsc_mutex_spin_exit)
 	PTR_L	t2, L_CPU(MIPS_CURLWP)
 #if defined(DIAGNOSTIC)
 	INT_L	t0, MTX_LOCK(a0)
-	nop
 	beqz	t0, 2f
 	 nop
 	INT_S	zero, MTX_LOCK(a0)
@@ -304,7 +303,6 @@ LEAF(llsc_mutex_spin_exit)
 	 */
 #ifdef PARANOIA
 	INT_L	a2, MTX_IPL(a0)
-	nop
 #endif
 	INT_L	a0, CPU_INFO_MTX_OLDSPL(t2)
 
@@ -312,7 +310,6 @@ LEAF(llsc_mutex_spin_exit)
 	 * Increment the mutex count
 	 */
 	INT_L	t0, CPU_INFO_MTX_COUNT(t2)
-	nop
 	INT_ADDU t0, t0, 1
 	INT_S	t0, CPU_INFO_MTX_COUNT(t2)
 

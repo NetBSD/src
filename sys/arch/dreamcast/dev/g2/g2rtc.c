@@ -1,4 +1,4 @@
-/* $NetBSD: g2rtc.c,v 1.6 2011/07/19 15:52:29 dyoung Exp $ */
+/* $NetBSD: g2rtc.c,v 1.6.12.1 2017/12/03 11:36:01 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: g2rtc.c,v 1.6 2011/07/19 15:52:29 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: g2rtc.c,v 1.6.12.1 2017/12/03 11:36:01 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: g2rtc.c,v 1.6 2011/07/19 15:52:29 dyoung Exp $");
 #define G2RTC_REG_SIZE	12
 
 /* Offset by 20 years, 5 of them are leap */
-#define G2RTC_OFFSET	(20 * SECYR + 5 * SECDAY)
+#define G2RTC_OFFSET	(20 * SECS_PER_COMMON_YEAR + 5 * SECS_PER_DAY)
 
 struct g2rtc_softc {
 	device_t sc_dev;
@@ -99,8 +99,8 @@ g2rtc_attach(device_t parent, device_t self, void *aux)
 
 	tch = &sc->sc_tch;
 	tch->cookie = sc;
-	tch->todr_gettime = g2rtc_todr_gettime,
-	tch->todr_settime = g2rtc_todr_settime,
+	tch->todr_gettime = g2rtc_todr_gettime;
+	tch->todr_settime = g2rtc_todr_settime;
 	todr_attach(tch);
 }
 

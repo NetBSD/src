@@ -1,10 +1,11 @@
-#	$NetBSD: files.aoutm68k,v 1.6 2008/11/19 18:36:02 ad Exp $
+#	$NetBSD: files.aoutm68k,v 1.6.26.1 2017/12/03 11:36:52 jdolecek Exp $
 #
 # Config file description for m68k a.out compat code.
 
 # ports should define any machine-specific files they need in their
 # own file lists.
 
+define	compat_aout_m68k
 file	compat/aoutm68k/aoutm68k_exec.c		compat_aout_m68k
 file	compat/aoutm68k/aoutm68k_stat.c		compat_aout_m68k
 file	compat/aoutm68k/aoutm68k_sysent.c	compat_aout_m68k

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.50.2.2 2014/08/20 00:03:25 tls Exp $ */
+/*	$NetBSD: param.h,v 1.50.2.3 2017/12/03 11:36:45 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -108,6 +108,11 @@ extern int nbpg, pgofset, pgshift;
 #define	MAXPHYS		(64 * 1024)
 
 #ifdef __arch64__
+
+#ifdef SUN4V
+#define	MAXCPUS		256
+#endif
+
 /* We get stack overflows w/8K stacks in 64-bit mode */
 #define	SSIZE		2		/* initial stack size in pages */
 #else
@@ -164,7 +169,6 @@ extern int nbpg, pgofset, pgshift;
  */
 #define	KERNBASE	0x001000000	/* start of kernel virtual space */
 #define	KERNEND		0x0e0000000	/* end of kernel virtual space */
-#define	VM_MAX_KERNEL_BUF	((KERNEND-KERNBASE)/4)
 
 #define	_MAXNBPG	8192	/* fixed VAs, independent of actual NBPG */
 
@@ -197,7 +201,7 @@ extern int nbpg, pgofset, pgshift;
 #define	MCLBYTES	(1 << MCLSHIFT)	/* size of a m_buf cluster */
 
 #if !defined (MSGBUFSIZE)		/* options MSGBUFSIZE=integer	*/
-#define MSGBUFSIZE	4 * NBPG
+#define MSGBUFSIZE	(4 * NBPG)
 #else
 #if INTSTACK - MSGBUF_VA - MSGBUFSIZE < 0
 #error MSGBUFSIZE is too large
@@ -281,3 +285,5 @@ extern const int cputyp;
 #define	PGSHIFT		13		/* log2(NBPG) */
 #define	NBPG		(1<<PGSHIFT)	/* bytes/page */
 #define	PGOFSET		(NBPG-1)	/* byte offset into page */
+
+#define PCI_MAGIC_IO_RANGE	0x100000000LL

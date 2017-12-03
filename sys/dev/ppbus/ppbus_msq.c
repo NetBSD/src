@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_msq.c,v 1.10 2011/07/17 20:54:51 joerg Exp $ */
+/* $NetBSD: ppbus_msq.c,v 1.10.12.1 2017/12/03 11:37:31 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 Nicolas Souchu
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppbus_msq.c,v 1.10 2011/07/17 20:54:51 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppbus_msq.c,v 1.10.12.1 2017/12/03 11:37:31 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -259,6 +259,7 @@ ppbus_MS_init_msq(struct ppbus_microseq * msq, int nbparam, ...)
 			panic("%s: unknown parameter (0x%x)!", __func__, param);
 		}
 	}
+	va_end(p_list);
 
 	return (0);
 }

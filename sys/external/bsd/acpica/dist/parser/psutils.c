@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -41,11 +41,11 @@
  * POSSIBILITY OF SUCH DAMAGES.
  */
 
-
 #include "acpi.h"
 #include "accommon.h"
 #include "acparser.h"
 #include "amlcode.h"
+#include "acconvert.h"
 
 #define _COMPONENT          ACPI_PARSER
         ACPI_MODULE_NAME    ("psutils")
@@ -65,12 +65,12 @@
 
 ACPI_PARSE_OBJECT *
 AcpiPsCreateScopeOp (
-    void)
+    UINT8                   *Aml)
 {
     ACPI_PARSE_OBJECT       *ScopeOp;
 
 
-    ScopeOp = AcpiPsAllocOp (AML_SCOPE_OP);
+    ScopeOp = AcpiPsAllocOp (AML_SCOPE_OP, Aml);
     if (!ScopeOp)
     {
         return (NULL);
@@ -105,9 +105,9 @@ AcpiPsInitOp (
     Op->Common.DescriptorType = ACPI_DESC_TYPE_PARSER;
     Op->Common.AmlOpcode = Opcode;
 
-    ACPI_DISASM_ONLY_MEMBERS (ACPI_STRNCPY (Op->Common.AmlOpName,
-            (AcpiPsGetOpcodeInfo (Opcode))->Name,
-                sizeof (Op->Common.AmlOpName)));
+    ACPI_DISASM_ONLY_MEMBERS (strncpy (Op->Common.AmlOpName,
+        (AcpiPsGetOpcodeInfo (Opcode))->Name,
+        sizeof (Op->Common.AmlOpName)));
 }
 
 
@@ -116,6 +116,7 @@ AcpiPsInitOp (
  * FUNCTION:    AcpiPsAllocOp
  *
  * PARAMETERS:  Opcode          - Opcode that will be stored in the new Op
+ *              Aml             - Address of the opcode
  *
  * RETURN:      Pointer to the new Op, null on failure
  *
@@ -127,7 +128,8 @@ AcpiPsInitOp (
 
 ACPI_PARSE_OBJECT*
 AcpiPsAllocOp (
-    UINT16                  Opcode)
+    UINT16                  Opcode,
+    UINT8                   *Aml)
 {
     ACPI_PARSE_OBJECT       *Op;
     const ACPI_OPCODE_INFO  *OpInfo;
@@ -147,7 +149,7 @@ AcpiPsAllocOp (
     }
     else if (OpInfo->Flags & AML_NAMED)
     {
-        Flags = ACPI_PARSEOP_NAMED;
+        Flags = ACPI_PARSEOP_NAMED_OBJECT;
     }
     else if (Opcode == AML_INT_BYTELIST_OP)
     {
@@ -174,7 +176,19 @@ AcpiPsAllocOp (
     if (Op)
     {
         AcpiPsInitOp (Op, Opcode);
+        Op->Common.Aml = Aml;
         Op->Common.Flags = Flags;
+        ASL_CV_CLEAR_OP_COMMENTS(Op);
+
+        if (Opcode == AML_SCOPE_OP)
+        {
+            AcpiGbl_CurrentScope = Op;
+        }
+
+        if (Gbl_CaptureComments)
+        {
+            ASL_CV_TRANSFER_COMMENTS (Op);
+        }
     }
 
     return (Op);
@@ -201,9 +215,11 @@ AcpiPsFreeOp (
     ACPI_FUNCTION_NAME (PsFreeOp);
 
 
+    ASL_CV_CLEAR_OP_COMMENTS(Op);
     if (Op->Common.AmlOpcode == AML_INT_RETURN_VALUE_OP)
     {
-        ACPI_DEBUG_PRINT ((ACPI_DB_ALLOCATIONS, "Free retval op: %p\n", Op));
+        ACPI_DEBUG_PRINT ((ACPI_DB_ALLOCATIONS,
+            "Free retval op: %p\n", Op));
     }
 
     if (Op->Common.Flags & ACPI_PARSEOP_GENERIC)

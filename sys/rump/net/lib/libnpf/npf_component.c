@@ -1,19 +1,19 @@
-/*	$NetBSD: npf_component.c,v 1.1.10.2 2014/08/20 00:04:43 tls Exp $	*/
+/*	$NetBSD: npf_component.c,v 1.1.10.3 2017/12/03 11:39:19 jdolecek Exp $	*/
 
 /*
  * Public Domain.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_component.c,v 1.1.10.2 2014/08/20 00:04:43 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_component.c,v 1.1.10.3 2017/12/03 11:39:19 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/stat.h>
 
-#include "rump_private.h"
-#include "rump_vfs_private.h"
+#include <rump-sys/kern.h>
+#include <rump-sys/vfs.h>
 
 extern const struct cdevsw npf_cdevsw;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk.c,v 1.42.2.1 2014/08/20 00:03:07 tls Exp $	*/
+/*	$NetBSD: biosdisk.c,v 1.42.2.2 2017/12/03 11:36:19 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998
@@ -102,6 +102,13 @@ struct biosdisk {
 		daddr_t offset;
 		daddr_t size;
 		int     fstype;
+#ifdef EFIBOOT
+		const struct gpt_part {
+			const struct uuid *guid;
+			const char *name;
+		} *guid;
+		uint64_t attr;
+#endif
 	} part[BIOSDISKNPART];
 #endif
 };
@@ -111,6 +118,55 @@ const struct uuid GET_nbsd_raid = GPT_ENT_TYPE_NETBSD_RAIDFRAME;
 const struct uuid GET_nbsd_ffs = GPT_ENT_TYPE_NETBSD_FFS;
 const struct uuid GET_nbsd_lfs = GPT_ENT_TYPE_NETBSD_LFS;
 const struct uuid GET_nbsd_swap = GPT_ENT_TYPE_NETBSD_SWAP;
+const struct uuid GET_nbsd_ccd = GPT_ENT_TYPE_NETBSD_CCD;
+const struct uuid GET_nbsd_cgd = GPT_ENT_TYPE_NETBSD_CGD;
+#ifdef EFIBOOT
+const struct uuid GET_efi = GPT_ENT_TYPE_EFI;
+const struct uuid GET_mbr = GPT_ENT_TYPE_MBR;
+const struct uuid GET_fbsd = GPT_ENT_TYPE_FREEBSD;
+const struct uuid GET_fbsd_swap = GPT_ENT_TYPE_FREEBSD_SWAP;
+const struct uuid GET_fbsd_ufs = GPT_ENT_TYPE_FREEBSD_UFS;
+const struct uuid GET_fbsd_vinum = GPT_ENT_TYPE_FREEBSD_VINUM;
+const struct uuid GET_fbsd_zfs = GPT_ENT_TYPE_FREEBSD_ZFS;
+const struct uuid GET_ms_rsvd = GPT_ENT_TYPE_MS_RESERVED;
+const struct uuid GET_ms_basic_data = GPT_ENT_TYPE_MS_BASIC_DATA;
+const struct uuid GET_ms_ldm_metadata = GPT_ENT_TYPE_MS_LDM_METADATA;
+const struct uuid GET_ms_ldm_data = GPT_ENT_TYPE_MS_LDM_DATA;
+const struct uuid GET_linux_data = GPT_ENT_TYPE_LINUX_DATA;
+const struct uuid GET_linux_raid = GPT_ENT_TYPE_LINUX_RAID;
+const struct uuid GET_linux_swap = GPT_ENT_TYPE_LINUX_SWAP;
+const struct uuid GET_linux_lvm = GPT_ENT_TYPE_LINUX_LVM;
+const struct uuid GET_apple_hfs = GPT_ENT_TYPE_APPLE_HFS;
+const struct uuid GET_apple_ufs = GPT_ENT_TYPE_APPLE_UFS;
+const struct uuid GET_bios = GPT_ENT_TYPE_BIOS;
+
+const struct gpt_part gpt_parts[] = {
+	{ &GET_nbsd_raid,	"NetBSD RAID" },
+	{ &GET_nbsd_ffs,	"NetBSD FFS" },
+	{ &GET_nbsd_lfs,	"NetBSD LFS" },
+	{ &GET_nbsd_swap,	"NetBSD Swap" },
+	{ &GET_nbsd_ccd,	"NetBSD ccd" },
+	{ &GET_nbsd_cgd,	"NetBSD cgd" },
+	{ &GET_efi,		"EFI System" },
+	{ &GET_mbr,		"MBR" },
+	{ &GET_fbsd,		"FreeBSD" },
+	{ &GET_fbsd_swap,	"FreeBSD Swap" },
+	{ &GET_fbsd_ufs,	"FreeBSD UFS" },
+	{ &GET_fbsd_vinum,	"FreeBSD Vinum" },
+	{ &GET_fbsd_zfs,	"FreeBSD ZFS" },
+	{ &GET_ms_rsvd,		"Microsoft Reserved" },
+	{ &GET_ms_basic_data,	"Microsoft Basic data" },
+	{ &GET_ms_ldm_metadata,	"Microsoft LDM metadata" },
+	{ &GET_ms_ldm_data,	"Microsoft LDM data" },
+	{ &GET_linux_data,	"Linux data" },
+	{ &GET_linux_raid,	"Linux RAID" },
+	{ &GET_linux_swap,	"Linux Swap" },
+	{ &GET_linux_lvm,	"Linux LVM" },
+	{ &GET_apple_hfs,	"Apple HFS" },
+	{ &GET_apple_ufs,	"Apple UFS" },
+	{ &GET_bios,		"BIOS Boot (GRUB)" },
+};
+#endif
 #endif /* NO_GPT */
 
 #ifdef _STANDALONE
@@ -273,7 +329,7 @@ check_gpt(struct biosdisk *d, daddr_t sector)
 		entblk += sectors;
 		crc = crc32(crc, (const void *)d->buf, size);
 
-		for (i = 0; j < BIOSDISKNPART && i < entries; i++, j++) {
+		for (i = 0; j < BIOSDISKNPART && i < entries; i++) {
 			u = (const struct uuid *)ep[i].ent_type;
 			if (!guid_is_nil(u)) {
 				d->part[j].offset = ep[i].ent_lba_start;
@@ -287,8 +343,22 @@ check_gpt(struct biosdisk *d, daddr_t sector)
 					d->part[j].fstype = FS_RAID;
 				else if (guid_is_equal(u, &GET_nbsd_swap))
 					d->part[j].fstype = FS_SWAP;
+				else if (guid_is_equal(u, &GET_nbsd_ccd))
+					d->part[j].fstype = FS_CCD;
+				else if (guid_is_equal(u, &GET_nbsd_cgd))
+					d->part[j].fstype = FS_CGD;
 				else
 					d->part[j].fstype = FS_OTHER;
+#ifdef EFIBOOT
+				for (int k = 0;
+				     k < __arraycount(gpt_parts);
+				     k++) {
+					if (guid_is_equal(u, gpt_parts[k].guid))
+						d->part[j].guid = &gpt_parts[k];
+				}
+				d->part[j].attr = ep[i].ent_attr;
+#endif
+				j++;
 			}
 		}
 
@@ -330,9 +400,6 @@ read_gpt(struct biosdisk *d)
 		gptsector[1] = d->ll.chs_sectors - 1;
 	}
 
-	/*
-	 * Use any valid GPT available, do not require both GPTs to be valid
-	 */
 	for (i = 0; i < __arraycount(gptsector); i++) {
 		error = check_gpt(d, gptsector[i]);
 		if (error == 0)
@@ -343,6 +410,15 @@ read_gpt(struct biosdisk *d)
 		memset(d->part, 0, sizeof(d->part));
 		return -1;
 	}
+
+#ifndef USE_SECONDARY_GPT
+	if (i > 0) {
+#ifdef DISK_DEBUG
+		printf("ignoring valid secondary GPT\n");
+#endif
+		return -1;
+	}
+#endif
 
 #ifdef DISK_DEBUG
 	printf("using %s GPT\n", (i == 0) ? "primary" : "secondary");
@@ -643,6 +719,11 @@ biosdisk_probe(void)
 				first = 0;
 			}
 			printf(" hd%d%c(", d.ll.dev & 0x7f, part + 'a');
+#ifdef EFIBOOT
+			if (d.part[part].guid != NULL)
+				printf("%s", d.part[part].guid->name);
+			else
+#endif
 			if (d.part[part].fstype < FSMAXTYPES)
 				printf("%s",
 				  fstypenames[d.part[part].fstype]);
@@ -668,6 +749,10 @@ biosdisk_findpartition(int biosdev, daddr_t sector)
 #else
 	struct biosdisk *d;
 	int partition = 0;
+#ifdef EFIBOOT
+	int candidate = 0;
+#endif
+
 #ifdef DISK_DEBUG
 	printf("looking for partition device %x, sector %"PRId64"\n", biosdev, sector);
 #endif
@@ -681,9 +766,31 @@ biosdisk_findpartition(int biosdev, daddr_t sector)
 		for (partition = (BIOSDISKNPART-1); --partition;) {
 			if (d->part[partition].fstype == FS_UNUSED)
 				continue;
+#ifdef EFIBOOT
+			if (d->part[partition].attr & GPT_ENT_ATTR_BOOTME) {
+				switch (d->part[partition].fstype) {
+				case FS_BSDFFS:
+				case FS_BSDLFS:
+				case FS_RAID:
+				case FS_CCD:
+				case FS_CGD:
+					break;
+
+				default:
+					candidate = partition;
+					continue;
+				}
+				break;
+			}
+#else
 			if (d->part[partition].offset == sector)
 				break;
+#endif
 		}
+#ifdef EFIBOOT
+		if (partition == 0 && candidate != 0)
+			partition = candidate;
+#endif
 	}
 
 	dealloc(d, sizeof(*d));
@@ -695,24 +802,13 @@ biosdisk_findpartition(int biosdev, daddr_t sector)
 static void
 add_biosdisk_bootinfo(void)
 {
-	static bool done;
-
 	if (bootinfo == NULL) {
-		done = false;
 		return;
 	}
-	
-	if (done)
-		return;
-
 	BI_ADD(&bi_disk, BTINFO_BOOTDISK, sizeof(bi_disk));
 	BI_ADD(&bi_wedge, BTINFO_BOOTWEDGE, sizeof(bi_wedge));
-
-	done = true;
-
 	return;
 }
-
 #endif
 
 int

@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: newvers.sh,v 1.57.22.1 2014/08/20 00:03:34 tls Exp $
+#	$NetBSD: newvers.sh,v 1.57.22.2 2017/12/03 11:36:57 jdolecek Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -41,12 +41,21 @@
 #
 # Command line options:
 #
-#     -r                Reproducible build: Do not embed directory
+#     -R                Reproducible build: Do not embed directory
 #                       names, user names, time stamps, or other dynamic
 #                       information into the output file.  This intended
 #                       to allow two builds done at different times and
 #                       even by different people on different hosts to
 #                       produce identical output.
+#
+#     -r <timestamp>    Reproducible build: Embed fixed information to
+#			the output file.
+#			This intended to allow two builds done at different
+#			times and even by different people on different
+#			hosts to produce identical output.
+#
+#     -m <machine>      Use the specified string as the value of the
+#                       machine variable
 #
 #     -i <id>           Use the specified string as the value of the
 #                       kernel_ident variable
@@ -144,40 +153,44 @@ if [ ! -e version ]; then
 	echo 0 > version
 fi
 
-v=$(cat version)
-t=$(LC_ALL=C date)
-u=${USER-root}
-h=$(hostname)
-d=$(pwd)
-cwd=$(dirname $0)
-copyright="$(cat "${cwd}/copyright")"
+Rflag=false
+nflag=false
+timestamp=
+pwd=$(pwd)
 
-while [ $# -gt 0 ]; do
-	case "$1" in
-	-r)
-		# -r: Reproducible build
-		rflag=true
+while getopts "Rr:m:i:n" OPT; do
+	case $OPT in
+	R)
+		# -R: Reproducible build
+		Rflag=true
 		;;
-	-i)
+	r)
+		# -r <timestamp>: timestamp
+		timestamp="$OPTARG"
+		;;
+	m)
+		# -m <machine>: machine
+		machine="$OPTARG"
+		;;
+	i)
 		# -i <id>: Use the secified string as the
 		# value of the kernel_ident variable
-		id="$2"
-		shift
+		id="$OPTARG"
 		;;
-	-n)
-		# -n: Do not include a ELF note section
-		# in the output file.
+	n)
+		# -n: Do not include a ELF note section in the output file.
 		nflag=true
 		;;
+	*)	echo "Usage: newvers.sh [-Rn] [-r <timestamp>] [-m <machine>] [-i <kernel>]" >&2
+		exit 1;;
 	esac
-	shift
 done
 
 if [ -z "${id}" ]; then
 	if [ -f ident ]; then
 		id="$(cat ident)"
 	else
-		id=$(basename ${d})
+		id=$(basename "${pwd}")
 	fi
 	# Append ".${BUILDID}" to the default value of <id>.
 	# If the "-i <id>" command line option was used then this
@@ -188,16 +201,35 @@ if [ -z "${id}" ]; then
 	fi
 fi
 
+if ${Rflag}; then
+	reproversion=
+else
+	if [ -z "${timestamp}" ]; then
+		v=$(cat version)
+		t=$(LC_ALL=C date)
+		u=${USER-root}
+		h=$(hostname)
+		d=$(pwd)
+		# Increment the serial number in the version file
+		echo $(expr ${v} + 1) > version
+	else
+		v=0
+		t=$(LC_ALL=C TZ=UTC date -r "${timestamp}")
+		u=mkrepro
+		h=mkrepro.NetBSD.org
+		d="/usr/src/sys/arch/${machine}/compile/${id}"
+	fi
+	reproversion=" #${v}: ${t}\n\t${u}@${h}:${d}"
+fi
+
+cwd=$(dirname "$0")
+copyright="$(cat "${cwd}/copyright")"
 osrelcmd=${cwd}/osrelease.sh
 
 ost="NetBSD"
 osr=$(sh $osrelcmd)
 
-if [ ! -z "${rflag}" ]; then
-	fullversion="${ost} ${osr} (${id})\n"
-else
-	fullversion="${ost} ${osr} (${id}) #${v}: ${t}\n\t${u}@${h}:${d}\n"
-fi
+fullversion="${ost} ${osr} (${id})${reproversion}\n"
 
 # Convert multi-line strings to C source code.
 # Also add an extra blank line to copyright.
@@ -205,9 +237,6 @@ fi
 copyright_source="$(printf "%s\n\n" "${copyright}" | source_lines)"
 fullversion_source="$(printf "%b" "${fullversion}" | source_lines)"
 buildinfo_source="$(printf "%b" "${BUILDINFO}" | source_lines)"
-
-# Increment the serial number in the version file
-echo $(expr ${v} + 1) > version
 
 # work around escaping issues with different shells
 emptyq='""'
@@ -232,7 +261,7 @@ const char kernel_ident[] = "${id}";
 const char copyright[] = ${copyright_source};
 _EOF
 
-[ ! -z "${nflag}" ] && exit 0
+${nflag} && exit 0
 
 cat << _EOF >> vers.c
 

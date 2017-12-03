@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.92.6.3 2014/08/20 00:03:00 tls Exp $	*/
+/*	$NetBSD: rd.c,v 1.92.6.4 2017/12/03 11:36:13 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.92.6.3 2014/08/20 00:03:00 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.92.6.4 2017/12/03 11:36:13 jdolecek Exp $");
 
 #include "opt_useleds.h"
 
@@ -89,7 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.92.6.3 2014/08/20 00:03:00 tls Exp $");
 #include <sys/proc.h>
 #include <sys/stat.h>
 
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <hp300/dev/hpibvar.h>
 
@@ -1129,17 +1129,11 @@ rdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	struct disklabel *lp = sc->sc_dkdev.dk_label;
 	int error, flags;
 
+	error = disk_ioctl(&sc->sc_dkdev, rdpart(dev), cmd, data, flag, l);
+	if (error != EPASSTHROUGH)
+		return error;
+
 	switch (cmd) {
-	case DIOCGDINFO:
-		*(struct disklabel *)data = *lp;
-		return 0;
-
-	case DIOCGPART:
-		((struct partinfo *)data)->disklab = lp;
-		((struct partinfo *)data)->part =
-		    &lp->d_partitions[rdpart(dev)];
-		return 0;
-
 	case DIOCWLABEL:
 		if ((flag & FWRITE) == 0)
 			return EBADF;
@@ -1184,7 +1178,7 @@ rdgetdefaultlabel(struct rd_softc *sc, struct disklabel *lp)
 
 	memset((void *)lp, 0, sizeof(struct disklabel));
 
-	lp->d_type = DTYPE_HPIB;
+	lp->d_type = DKTYPE_HPIB;
 	lp->d_secsize = DEV_BSIZE;
 	lp->d_nsectors = rdidentinfo[type].ri_nbpt;
 	lp->d_ntracks = rdidentinfo[type].ri_ntpc;

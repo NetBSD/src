@@ -58,6 +58,7 @@
 #include <linux/time.h>
 #include <linux/err.h>
 #include <linux/bitops.h>
+#include <linux/printk.h>
 #include <asm/param.h>
 #include <asm/page.h>
 
@@ -378,7 +379,11 @@ i915_gem_object_attach_phys(struct drm_i915_gem_object *obj,
 		memcpy(vaddr, src, PAGE_SIZE);
 		kunmap_atomic(src);
 
-#ifndef __NetBSD__
+#ifdef __NetBSD__
+		/* XXX mark page accessed */
+		uvm_obj_unwirepages(obj->base.gemo_shm_uao, i*PAGE_SIZE,
+		    (i + 1)*PAGE_SIZE);
+#else
 		mark_page_accessed(page);
 		page_cache_release(page);
 #endif
@@ -700,51 +705,21 @@ i915_gem_shmem_pread(struct drm_device *dev,
 	offset = args->offset;
 
 #ifdef __NetBSD__
-	/*
-	 * XXX This is a big #ifdef with a lot of duplicated code, but
-	 * factoring out the loop head -- which is all that
-	 * substantially differs -- is probably more trouble than it's
-	 * worth at the moment.
-	 */
-	while (0 < remain) {
-		/* Get the next page.  */
-		shmem_page_offset = offset_in_page(offset);
-		KASSERT(shmem_page_offset < PAGE_SIZE);
-		page_length = MIN(remain, (PAGE_SIZE - shmem_page_offset));
-		struct page *const page = i915_gem_object_get_page(obj,
-		    atop(offset));
-
-		/* Decide whether to swizzle bit 17.  */
-		page_do_bit17_swizzling = obj_do_bit17_swizzling &&
-		    (page_to_phys(page) & (1 << 17)) != 0;
-
-		/* Try the fast path.  */
-		ret = shmem_pread_fast(page, shmem_page_offset, page_length,
-		    user_data, page_do_bit17_swizzling, needs_clflush);
-		if (ret == 0)
-			goto next_page;
-
-		/* Fast path failed.  Try the slow path.  */
-		mutex_unlock(&dev->struct_mutex);
-		/* XXX prefault */
-		ret = shmem_pread_slow(page, shmem_page_offset, page_length,
-		    user_data, page_do_bit17_swizzling, needs_clflush);
-		mutex_lock(&dev->struct_mutex);
-		if (ret)
-			goto out;
-
-next_page:	KASSERT(page_length <= remain);
-		remain -= page_length;
-		user_data += page_length;
-		offset += page_length;
-	}
+	while (0 < remain)
 #else
 	for_each_sg_page(obj->pages->sgl, &sg_iter, obj->pages->nents,
-			 offset >> PAGE_SHIFT) {
+			 offset >> PAGE_SHIFT)
+#endif
+	{
+#ifdef __NetBSD__
+		struct page *const page = i915_gem_object_get_page(obj,
+		    atop(offset));
+#else
 		struct page *page = sg_page_iter_page(&sg_iter);
 
 		if (remain <= 0)
 			break;
+#endif
 
 		/* Operation in this page
 		 *
@@ -766,7 +741,7 @@ next_page:	KASSERT(page_length <= remain);
 			goto next_page;
 
 		mutex_unlock(&dev->struct_mutex);
-
+#ifndef __NetBSD__
 		if (likely(!i915.prefault_disable) && !prefaulted) {
 			ret = fault_in_multipages_writeable(user_data, remain);
 			/* Userspace is tricking us, but we've already clobbered
@@ -776,7 +751,7 @@ next_page:	KASSERT(page_length <= remain);
 			(void)ret;
 			prefaulted = 1;
 		}
-
+#endif
 		ret = shmem_pread_slow(page, shmem_page_offset, page_length,
 				       user_data, page_do_bit17_swizzling,
 				       needs_clflush);
@@ -791,7 +766,6 @@ next_page:
 		user_data += page_length;
 		offset += page_length;
 	}
-#endif
 
 out:
 	i915_gem_object_unpin_pages(obj);
@@ -809,6 +783,7 @@ i915_gem_pread_ioctl(struct drm_device *dev, void *data,
 		     struct drm_file *file)
 {
 	struct drm_i915_gem_pread *args = data;
+	struct drm_gem_object *gobj;
 	struct drm_i915_gem_object *obj;
 	int ret = 0;
 
@@ -824,11 +799,12 @@ i915_gem_pread_ioctl(struct drm_device *dev, void *data,
 	if (ret)
 		return ret;
 
-	obj = to_intel_bo(drm_gem_object_lookup(dev, file, args->handle));
-	if (&obj->base == NULL) {
+	gobj = drm_gem_object_lookup(dev, file, args->handle);
+	if (gobj == NULL) {
 		ret = -ENOENT;
 		goto unlock;
 	}
+	obj = to_intel_bo(gobj);
 
 	/* Bounds check source.  */
 	if (args->offset > obj->base.size ||
@@ -1043,6 +1019,9 @@ i915_gem_shmem_pwrite(struct drm_device *dev,
 	int needs_clflush_before = 0;
 #ifndef __NetBSD__
 	struct sg_page_iter sg_iter;
+	int flush_mask = boot_cpu_data.x86_clflush_size - 1;
+#else
+	int flush_mask = cpu_info_primary.ci_cflush_lsize - 1;
 #endif
 
 	user_data = to_user_ptr(args->data_ptr);
@@ -1076,48 +1055,18 @@ i915_gem_shmem_pwrite(struct drm_device *dev,
 	obj->dirty = 1;
 
 #ifdef __NetBSD__
-	while (0 < remain) {
-		/* Get the next page.  */
-		shmem_page_offset = offset_in_page(offset);
-		KASSERT(shmem_page_offset < PAGE_SIZE);
-		page_length = MIN(remain, (PAGE_SIZE - shmem_page_offset));
-		struct page *const page = i915_gem_object_get_page(obj,
-		    atop(offset));
-
-		/* Decide whether to flush the cache or swizzle bit 17.  */
-		const bool partial_cacheline_write = needs_clflush_before &&
-		    ((shmem_page_offset | page_length)
-			& (cpu_info_primary.ci_cflush_lsize - 1));
-		page_do_bit17_swizzling = obj_do_bit17_swizzling &&
-		    (page_to_phys(page) & (1 << 17)) != 0;
-
-		/* Try the fast path.  */
-		ret = shmem_pwrite_fast(page, shmem_page_offset, page_length,
-		    user_data, page_do_bit17_swizzling,
-		    partial_cacheline_write, needs_clflush_after);
-		if (ret == 0)
-			goto next_page;
-
-		/* Fast path failed.  Try the slow path.  */
-		hit_slowpath = 1;
-		mutex_unlock(&dev->struct_mutex);
-		ret = shmem_pwrite_slow(page, shmem_page_offset, page_length,
-		    user_data, page_do_bit17_swizzling,
-		    partial_cacheline_write, needs_clflush_after);
-		mutex_lock(&dev->struct_mutex);
-		if (ret)
-			goto out;
-
-next_page:	KASSERT(page_length <= remain);
-		remain -= page_length;
-		user_data += page_length;
-		offset += page_length;
-	}
+	while (0 < remain)
 #else
 	for_each_sg_page(obj->pages->sgl, &sg_iter, obj->pages->nents,
-			 offset >> PAGE_SHIFT) {
+			 offset >> PAGE_SHIFT)
+#endif
+	{
+#ifdef __NetBSD__
+		struct page *const page = i915_gem_object_get_page(obj,
+		    atop(offset));
+#else
 		struct page *page = sg_page_iter_page(&sg_iter);
-		int partial_cacheline_write;
+#endif
 
 		if (remain <= 0)
 			break;
@@ -1136,9 +1085,8 @@ next_page:	KASSERT(page_length <= remain);
 		/* If we don't overwrite a cacheline completely we need to be
 		 * careful to have up-to-date data by first clflushing. Don't
 		 * overcomplicate things and flush the entire patch. */
-		partial_cacheline_write = needs_clflush_before &&
-			((shmem_page_offset | page_length)
-				& (boot_cpu_data.x86_clflush_size - 1));
+		const int partial_cacheline_write = needs_clflush_before &&
+			((shmem_page_offset | page_length) & flush_mask);
 
 		page_do_bit17_swizzling = obj_do_bit17_swizzling &&
 			(page_to_phys(page) & (1 << 17)) != 0;
@@ -1167,7 +1115,6 @@ next_page:
 		user_data += page_length;
 		offset += page_length;
 	}
-#endif
 
 out:
 	i915_gem_object_unpin_pages(obj);
@@ -1201,6 +1148,7 @@ i915_gem_pwrite_ioctl(struct drm_device *dev, void *data,
 		      struct drm_file *file)
 {
 	struct drm_i915_gem_pwrite *args = data;
+	struct drm_gem_object *gobj;
 	struct drm_i915_gem_object *obj;
 	int ret;
 
@@ -1225,11 +1173,12 @@ i915_gem_pwrite_ioctl(struct drm_device *dev, void *data,
 	if (ret)
 		return ret;
 
-	obj = to_intel_bo(drm_gem_object_lookup(dev, file, args->handle));
-	if (&obj->base == NULL) {
+	gobj = drm_gem_object_lookup(dev, file, args->handle);
+	if (gobj == NULL) {
 		ret = -ENOENT;
 		goto unlock;
 	}
+	obj = to_intel_bo(gobj);
 
 	/* Bounds check destination. */
 	if (args->offset > obj->base.size ||
@@ -1387,6 +1336,8 @@ __wait_seqno(struct intel_ring_buffer *ring, u32 seqno, unsigned reset_counter,
 
 	if (timeout)
 		ticks = mstohz(timespec_to_ns(timeout) / 1000000);
+	else
+		ticks = 1;
 
 	if (INTEL_INFO(dev)->gen >= 6 && can_wait_boost(file_priv)) {
 		gen6_rps_boost(dev_priv);
@@ -1402,8 +1353,8 @@ __wait_seqno(struct intel_ring_buffer *ring, u32 seqno, unsigned reset_counter,
 	nanotime(&before);
 	spin_lock(&dev_priv->irq_lock);
 #define	EXIT_COND							      \
-	(((reset_counter != atomic_read(&dev_priv->gpu_error.reset_counter))  \
-	    ? wedged = true : false) ||					      \
+	((wedged = (reset_counter !=					      \
+		atomic_read(&dev_priv->gpu_error.reset_counter))) ||	      \
 	    i915_seqno_passed(ring->get_seqno(ring, false),		      \
 		seqno))
 
@@ -1420,6 +1371,12 @@ __wait_seqno(struct intel_ring_buffer *ring, u32 seqno, unsigned reset_counter,
 		else
 			DRM_SPIN_TIMED_WAIT_NOINTR_UNTIL(ret, &ring->irq_queue,
 			    &dev_priv->irq_lock, ticks, EXIT_COND);
+		if (ret < 0)	/* Failure: return negative error as is.  */
+			;
+		else if (ret == 0) /* Timed out: return -ETIME.  */
+			ret = -ETIME;
+		else		/* Succeeded (ret > 0): return 0.  */
+			ret = 0;
 	} else {
 		if (interruptible)
 			DRM_SPIN_WAIT_UNTIL(ret, &ring->irq_queue,
@@ -1427,6 +1384,7 @@ __wait_seqno(struct intel_ring_buffer *ring, u32 seqno, unsigned reset_counter,
 		else
 			DRM_SPIN_WAIT_NOINTR_UNTIL(ret, &ring->irq_queue,
 			    &dev_priv->irq_lock, EXIT_COND);
+		/* ret is negative on failure or zero on success.  */
 	}
 #undef	EXIT_COND
 	spin_unlock(&dev_priv->irq_lock);
@@ -1434,9 +1392,29 @@ __wait_seqno(struct intel_ring_buffer *ring, u32 seqno, unsigned reset_counter,
 
 	if (!irq_test_in_progress)
 		ring->irq_put(ring);
-	if (timeout)
-		timespecsub(&after, &before, timeout);
-	return MAX(ret, 0);	/* ignore remaining ticks */
+	if (timeout) {
+		struct timespec slept;
+
+		/* Compute slept = after - before.  */
+		timespecsub(&after, &before, &slept);
+
+		/*
+		 * Return the time remaining, timeout - slept, if we
+		 * slept for less time than the timeout; or zero if we
+		 * timed out.
+		 */
+		if (timespeccmp(&slept, timeout, <))
+			timespecsub(timeout, &slept, timeout);
+		else
+			timespecclear(timeout);
+	}
+	if (wedged) {		/* GPU reset while we were waiting.  */
+		ret = i915_gem_check_wedge(&dev_priv->gpu_error,
+		    interruptible);
+		if (ret == 0)
+			ret = -EAGAIN;
+	}
+	return ret;
 }
 #else
 static int __wait_seqno(struct intel_ring_buffer *ring, u32 seqno,
@@ -1661,6 +1639,7 @@ i915_gem_set_domain_ioctl(struct drm_device *dev, void *data,
 			  struct drm_file *file)
 {
 	struct drm_i915_gem_set_domain *args = data;
+	struct drm_gem_object *gobj;
 	struct drm_i915_gem_object *obj;
 	uint32_t read_domains = args->read_domains;
 	uint32_t write_domain = args->write_domain;
@@ -1683,11 +1662,12 @@ i915_gem_set_domain_ioctl(struct drm_device *dev, void *data,
 	if (ret)
 		return ret;
 
-	obj = to_intel_bo(drm_gem_object_lookup(dev, file, args->handle));
-	if (&obj->base == NULL) {
+	gobj = drm_gem_object_lookup(dev, file, args->handle);
+	if (gobj == NULL) {
 		ret = -ENOENT;
 		goto unlock;
 	}
+	obj = to_intel_bo(gobj);
 
 	/* Try to flush the object off the GPU without holding the lock.
 	 * We will repeat the flush holding the lock in the normal manner
@@ -1727,6 +1707,7 @@ i915_gem_sw_finish_ioctl(struct drm_device *dev, void *data,
 			 struct drm_file *file)
 {
 	struct drm_i915_gem_sw_finish *args = data;
+	struct drm_gem_object *gobj;
 	struct drm_i915_gem_object *obj;
 	int ret = 0;
 
@@ -1734,11 +1715,12 @@ i915_gem_sw_finish_ioctl(struct drm_device *dev, void *data,
 	if (ret)
 		return ret;
 
-	obj = to_intel_bo(drm_gem_object_lookup(dev, file, args->handle));
-	if (&obj->base == NULL) {
+	gobj = drm_gem_object_lookup(dev, file, args->handle);
+	if (gobj == NULL) {
 		ret = -ENOENT;
 		goto unlock;
 	}
+	obj = to_intel_bo(gobj);
 
 	/* Pinned buffers may be scanout, so flush the cache */
 	if (obj->pin_display)
@@ -1790,7 +1772,8 @@ i915_gem_mmap_ioctl(struct drm_device *dev, void *data,
 
 #ifdef __NetBSD__
 	addr = (*curproc->p_emul->e_vm_default_addr)(curproc,
-	    (vaddr_t)curproc->p_vmspace->vm_daddr, args->size);
+	    (vaddr_t)curproc->p_vmspace->vm_daddr, args->size,
+	    curproc->p_vmspace->vm_map.flags & VM_MAP_TOPDOWN);
 	/* XXX errno NetBSD->Linux */
 	ret = -uvm_map(&curproc->p_vmspace->vm_map, &addr, args->size,
 	    obj->gemo_shm_uao, args->offset, 0,
@@ -1842,6 +1825,9 @@ i915_gem_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 
 	intel_runtime_pm_get(dev_priv);
 
+	/* Thanks, uvm, but we don't need this lock.  */
+	mutex_exit(uobj->vmobjlock);
+
 	ret = i915_mutex_lock_interruptible(dev);
 	if (ret)
 		goto out;
@@ -1880,9 +1866,19 @@ unpin:
 unlock:
 	mutex_unlock(&dev->struct_mutex);
 out:
+	mutex_enter(uobj->vmobjlock);
 	uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj);
 	if (ret == -ERESTART)
 		uvm_wait("i915flt");
+
+	/*
+	 * Remap EINTR to success, so that we return to userland.
+	 * On the way out, we'll deliver the signal, and if the signal
+	 * is not fatal then the user code which faulted will most likely
+	 * fault again, and we'll come back here for another try.
+	 */
+	if (ret == -EINTR)
+		ret = 0;
 	/* XXX Deal with GPU hangs here...  */
 	intel_runtime_pm_put(dev_priv);
 	/* XXX errno Linux->NetBSD */
@@ -1910,7 +1906,7 @@ i915_udv_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 	int lcv, retval;
 	vm_prot_t mapprot;
 	UVMHIST_FUNC("i915_udv_fault"); UVMHIST_CALLED(maphist);
-	UVMHIST_LOG(maphist,"  flags=%d", flags,0,0,0);
+	UVMHIST_LOG(maphist,"  flags=%jd", flags,0,0,0);
 
 	/*
 	 * we do not allow device mappings to be mapped copy-on-write
@@ -1918,7 +1914,7 @@ i915_udv_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 	 */
 
 	if (UVM_ET_ISCOPYONWRITE(entry)) {
-		UVMHIST_LOG(maphist, "<- failed -- COW entry (etype=0x%x)",
+		UVMHIST_LOG(maphist, "<- failed -- COW entry (etype=0x%jx)",
 		entry->etype, 0,0,0);
 		return(EIO);
 	}
@@ -1952,8 +1948,8 @@ i915_udv_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 		mmapflags = 0;
 		mapprot = ufi->entry->protection;
 		UVMHIST_LOG(maphist,
-		    "  MAPPING: device: pm=0x%x, va=0x%x, pa=0x%lx, at=%d",
-		    ufi->orig_map->pmap, curr_va, paddr, mapprot);
+		    "  MAPPING: device: pm=0x%#jx, va=0x%jx, pa=0x%jx, at=%jd",
+		    (uintptr_t)ufi->orig_map->pmap, curr_va, paddr, mapprot);
 		if (pmap_enter_default(ufi->orig_map->pmap, curr_va, paddr, mapprot,
 		    PMAP_CANFAIL | mapprot | mmapflags) != 0) {
 			/*
@@ -2135,32 +2131,19 @@ i915_gem_release_mmap(struct drm_i915_gem_object *obj)
 
 #ifdef __NetBSD__		/* XXX gem gtt fault */
 	{
-		struct vm_page *page;
+		struct drm_device *const dev = obj->base.dev;
+		struct drm_i915_private *const dev_priv = dev->dev_private;
+		const paddr_t start = dev_priv->gtt.mappable_base +
+		    i915_gem_obj_ggtt_offset(obj);
+		const size_t size = obj->base.size;
+		const paddr_t end = start + size;
+		paddr_t pa;
 
-		mutex_enter(obj->base.gemo_shm_uao->vmobjlock);
-		KASSERT(obj->pages != NULL);
-		/* Force a fresh fault for each page.  */
-		/*
-		 * XXX OOPS!  This doesn't actually do what we want.
-		 * This causes a fresh fault for access to the backing
-		 * pages -- but nothing accesses the backing pages
-		 * directly!  What is actually entered into CPU page
-		 * table entries is aperture addresses which have been
-		 * programmed by the GTT to refer to those backing
-		 * pages.
-		 *
-		 * We need to clear those page table entries, but
-		 * there's no good way to do that at the moment: nobody
-		 * records for us a map from either uvm objects or
-		 * physical device addresses to a list of all virtual
-		 * pages where they have been mapped.  pmap(9) records
-		 * a map only from physical RAM addresses to virtual
-		 * pages; it does nothing for physical device
-		 * addresses.
-		 */
-		TAILQ_FOREACH(page, &obj->igo_pageq, pageq.queue)
-			pmap_page_protect(page, VM_PROT_NONE);
-		mutex_exit(obj->base.gemo_shm_uao->vmobjlock);
+		KASSERT((start & (PAGE_SIZE - 1)) == 0);
+		KASSERT((size & (PAGE_SIZE - 1)) == 0);
+
+		for (pa = start; pa < end; pa += PAGE_SIZE)
+			pmap_pv_protect(pa, VM_PROT_NONE);
 	}
 #else
 	drm_vma_node_unmap(&obj->base.vma_node,
@@ -2262,6 +2245,7 @@ i915_gem_mmap_gtt(struct drm_file *file,
 		  uint64_t *offset)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
+	struct drm_gem_object *gobj;
 	struct drm_i915_gem_object *obj;
 	int ret;
 
@@ -2269,11 +2253,12 @@ i915_gem_mmap_gtt(struct drm_file *file,
 	if (ret)
 		return ret;
 
-	obj = to_intel_bo(drm_gem_object_lookup(dev, file, handle));
-	if (&obj->base == NULL) {
+	gobj = drm_gem_object_lookup(dev, file, handle);
+	if (gobj == NULL) {
 		ret = -ENOENT;
 		goto unlock;
 	}
+	obj = to_intel_bo(gobj);
 
 	if (obj->base.size > dev_priv->gtt.mappable_end) {
 		ret = -E2BIG;
@@ -2374,6 +2359,7 @@ static void
 i915_gem_object_put_pages_gtt(struct drm_i915_gem_object *obj)
 {
 	struct drm_device *const dev = obj->base.dev;
+	struct vm_page *page;
 	int ret;
 
 	/* XXX Cargo-culted from the Linux code.  */
@@ -2390,7 +2376,15 @@ i915_gem_object_put_pages_gtt(struct drm_i915_gem_object *obj)
 	if (i915_gem_object_needs_bit17_swizzle(obj))
 		i915_gem_object_save_bit_17_swizzle(obj);
 
-	/* XXX Maintain dirty flag?  */
+	if (obj->madv == I915_MADV_DONTNEED)
+		obj->dirty = 0;
+
+	if (obj->dirty) {
+		TAILQ_FOREACH(page, &obj->igo_pageq, pageq.queue) {
+			page->flags &= ~PG_CLEAN;
+			/* XXX mark page accessed */
+		}
+	}
 
 	bus_dmamap_destroy(dev->dmat, obj->igo_dmamap);
 	bus_dmamem_unwire_uvm_object(dev->dmat, obj->base.gemo_shm_uao, 0,
@@ -3352,6 +3346,7 @@ i915_gem_wait_ioctl(struct drm_device *dev, void *data, struct drm_file *file)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct drm_i915_gem_wait *args = data;
+	struct drm_gem_object *gobj;
 	struct drm_i915_gem_object *obj;
 	struct intel_ring_buffer *ring = NULL;
 	struct timespec timeout_stack, *timeout = NULL;
@@ -3368,11 +3363,12 @@ i915_gem_wait_ioctl(struct drm_device *dev, void *data, struct drm_file *file)
 	if (ret)
 		return ret;
 
-	obj = to_intel_bo(drm_gem_object_lookup(dev, file, args->bo_handle));
-	if (&obj->base == NULL) {
+	gobj = drm_gem_object_lookup(dev, file, args->bo_handle);
+	if (gobj == NULL) {
 		mutex_unlock(&dev->struct_mutex);
 		return -ENOENT;
 	}
+	obj = to_intel_bo(gobj);
 
 	/* Need to make sure the object gets inactive eventually. */
 	ret = i915_gem_object_flush_active(obj);
@@ -3930,7 +3926,7 @@ static void i915_gem_verify_gtt(struct drm_device *dev)
 	struct drm_i915_gem_object *obj;
 	int err = 0;
 
-	list_for_each_entry(obj, &dev_priv->mm.gtt_list, global_list) {
+	list_for_each_entry(obj, &dev_priv->mm.bound_list, global_list) {
 		if (obj->gtt_space == NULL) {
 			printk(KERN_ERR "object found on GTT list with no space reserved\n");
 			err++;
@@ -4315,6 +4311,7 @@ int i915_gem_get_caching_ioctl(struct drm_device *dev, void *data,
 			       struct drm_file *file)
 {
 	struct drm_i915_gem_caching *args = data;
+	struct drm_gem_object *gobj;
 	struct drm_i915_gem_object *obj;
 	int ret;
 
@@ -4322,11 +4319,12 @@ int i915_gem_get_caching_ioctl(struct drm_device *dev, void *data,
 	if (ret)
 		return ret;
 
-	obj = to_intel_bo(drm_gem_object_lookup(dev, file, args->handle));
-	if (&obj->base == NULL) {
+	gobj = drm_gem_object_lookup(dev, file, args->handle);
+	if (gobj == NULL) {
 		ret = -ENOENT;
 		goto unlock;
 	}
+	obj = to_intel_bo(gobj);
 
 	switch (obj->cache_level) {
 	case I915_CACHE_LLC:
@@ -4353,6 +4351,7 @@ int i915_gem_set_caching_ioctl(struct drm_device *dev, void *data,
 			       struct drm_file *file)
 {
 	struct drm_i915_gem_caching *args = data;
+	struct drm_gem_object *gobj;
 	struct drm_i915_gem_object *obj;
 	enum i915_cache_level level;
 	int ret;
@@ -4375,11 +4374,12 @@ int i915_gem_set_caching_ioctl(struct drm_device *dev, void *data,
 	if (ret)
 		return ret;
 
-	obj = to_intel_bo(drm_gem_object_lookup(dev, file, args->handle));
-	if (&obj->base == NULL) {
+	gobj = drm_gem_object_lookup(dev, file, args->handle);
+	if (gobj == NULL) {
 		ret = -ENOENT;
 		goto unlock;
 	}
+	obj = to_intel_bo(gobj);
 
 	ret = i915_gem_object_set_cache_level(obj, level);
 
@@ -4391,6 +4391,15 @@ unlock:
 
 static bool is_pin_display(struct drm_i915_gem_object *obj)
 {
+	struct i915_vma *vma;
+
+	if (list_empty(&obj->vma_list))
+		return false;
+
+	vma = i915_gem_obj_to_ggtt(obj);
+	if (!vma)
+		return false;
+
 	/* There are 3 sources that pin objects:
 	 *   1. The display engine (scanouts, sprites, cursors);
 	 *   2. Reservations for execbuffer;
@@ -4402,7 +4411,7 @@ static bool is_pin_display(struct drm_i915_gem_object *obj)
 	 * subtracting the potential reference by the user, any pin_count
 	 * remains, it must be due to another use by the display engine.
 	 */
-	return i915_gem_obj_to_ggtt(obj)->pin_count - !!obj->user_pin_count;
+	return vma->pin_count - !!obj->user_pin_count;
 }
 
 /*
@@ -4416,6 +4425,7 @@ i915_gem_object_pin_to_display_plane(struct drm_i915_gem_object *obj,
 				     struct intel_ring_buffer *pipelined)
 {
 	u32 old_read_domains, old_write_domain;
+	bool was_pin_display;
 	int ret;
 
 	if (pipelined != obj->ring) {
@@ -4427,6 +4437,7 @@ i915_gem_object_pin_to_display_plane(struct drm_i915_gem_object *obj,
 	/* Mark the pin_display early so that we account for the
 	 * display coherency whilst setting up the cache domains.
 	 */
+	was_pin_display = obj->pin_display;
 	obj->pin_display = true;
 
 	/* The display engine is not coherent with the LLC cache on gen6.  As
@@ -4469,7 +4480,8 @@ i915_gem_object_pin_to_display_plane(struct drm_i915_gem_object *obj,
 	return 0;
 
 err_unpin_display:
-	obj->pin_display = is_pin_display(obj);
+	WARN_ON(was_pin_display != is_pin_display(obj));
+	obj->pin_display = was_pin_display;
 	return ret;
 }
 
@@ -4685,6 +4697,7 @@ i915_gem_pin_ioctl(struct drm_device *dev, void *data,
 		   struct drm_file *file)
 {
 	struct drm_i915_gem_pin *args = data;
+	struct drm_gem_object *gobj;
 	struct drm_i915_gem_object *obj;
 	int ret;
 
@@ -4695,11 +4708,12 @@ i915_gem_pin_ioctl(struct drm_device *dev, void *data,
 	if (ret)
 		return ret;
 
-	obj = to_intel_bo(drm_gem_object_lookup(dev, file, args->handle));
-	if (&obj->base == NULL) {
+	gobj = drm_gem_object_lookup(dev, file, args->handle);
+	if (gobj == NULL) {
 		ret = -ENOENT;
 		goto unlock;
 	}
+	obj = to_intel_bo(gobj);
 
 	if (obj->madv != I915_MADV_WILLNEED) {
 		DRM_DEBUG("Attempting to pin a purgeable buffer\n");
@@ -4741,6 +4755,7 @@ i915_gem_unpin_ioctl(struct drm_device *dev, void *data,
 		     struct drm_file *file)
 {
 	struct drm_i915_gem_pin *args = data;
+	struct drm_gem_object *gobj;
 	struct drm_i915_gem_object *obj;
 	int ret;
 
@@ -4748,11 +4763,12 @@ i915_gem_unpin_ioctl(struct drm_device *dev, void *data,
 	if (ret)
 		return ret;
 
-	obj = to_intel_bo(drm_gem_object_lookup(dev, file, args->handle));
-	if (&obj->base == NULL) {
+	gobj = drm_gem_object_lookup(dev, file, args->handle);
+	if (gobj == NULL) {
 		ret = -ENOENT;
 		goto unlock;
 	}
+	obj = to_intel_bo(gobj);
 
 	if (obj->pin_filp != file) {
 		DRM_DEBUG("Not pinned by caller in i915_gem_pin_ioctl(): %d\n",
@@ -4778,6 +4794,7 @@ i915_gem_busy_ioctl(struct drm_device *dev, void *data,
 		    struct drm_file *file)
 {
 	struct drm_i915_gem_busy *args = data;
+	struct drm_gem_object *gobj;
 	struct drm_i915_gem_object *obj;
 	int ret;
 
@@ -4785,11 +4802,12 @@ i915_gem_busy_ioctl(struct drm_device *dev, void *data,
 	if (ret)
 		return ret;
 
-	obj = to_intel_bo(drm_gem_object_lookup(dev, file, args->handle));
-	if (&obj->base == NULL) {
+	gobj = drm_gem_object_lookup(dev, file, args->handle);
+	if (gobj == NULL) {
 		ret = -ENOENT;
 		goto unlock;
 	}
+	obj = to_intel_bo(gobj);
 
 	/* Count all active objects as busy, even if they are currently not used
 	 * by the gpu. Users of this interface expect objects to eventually
@@ -4822,6 +4840,7 @@ i915_gem_madvise_ioctl(struct drm_device *dev, void *data,
 		       struct drm_file *file_priv)
 {
 	struct drm_i915_gem_madvise *args = data;
+	struct drm_gem_object *gobj;
 	struct drm_i915_gem_object *obj;
 	int ret;
 
@@ -4837,11 +4856,12 @@ i915_gem_madvise_ioctl(struct drm_device *dev, void *data,
 	if (ret)
 		return ret;
 
-	obj = to_intel_bo(drm_gem_object_lookup(dev, file_priv, args->handle));
-	if (&obj->base == NULL) {
+	gobj = drm_gem_object_lookup(dev, file_priv, args->handle);
+	if (gobj == NULL) {
 		ret = -ENOENT;
 		goto unlock;
 	}
+	obj = to_intel_bo(gobj);
 
 	if (i915_gem_obj_is_pinned(obj)) {
 		ret = -EINVAL;
@@ -5677,6 +5697,9 @@ struct i915_vma *i915_gem_obj_to_ggtt(struct drm_i915_gem_object *obj)
 {
 	struct i915_vma *vma;
 
+	/* This WARN has probably outlived its usefulness (callers already
+	 * WARN if they don't find the GGTT vma they expect). When removing,
+	 * remember to remove the pre-check in is_pin_display() as well */
 	if (WARN_ON(list_empty(&obj->vma_list)))
 		return NULL;
 

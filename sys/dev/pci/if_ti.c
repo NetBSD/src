@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.90.18.2 2014/08/20 00:03:42 tls Exp $ */
+/* $NetBSD: if_ti.c,v 1.90.18.3 2017/12/03 11:37:08 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.90.18.2 2014/08/20 00:03:42 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.90.18.3 2017/12/03 11:37:08 jdolecek Exp $");
 
 #include "opt_inet.h"
 
@@ -569,16 +569,16 @@ ti_alloc_jumbo_mem(struct ti_softc *sc)
 	if ((error = bus_dmamem_alloc(sc->sc_dmat,
 	    TI_JMEM, PAGE_SIZE, 0, &dmaseg, 1, &dmanseg,
 	    BUS_DMA_NOWAIT)) != 0) {
-		aprint_error_dev(sc->sc_dev, "can't allocate jumbo buffer, error = %d\n",
-		       error);
+		aprint_error_dev(sc->sc_dev,
+		    "can't allocate jumbo buffer, error = %d\n", error);
 		return (error);
 	}
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &dmaseg, dmanseg,
 	    TI_JMEM, (void **)&sc->ti_cdata.ti_jumbo_buf,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
-		aprint_error_dev(sc->sc_dev, "can't map jumbo buffer, error = %d\n",
-		       error);
+		aprint_error_dev(sc->sc_dev,
+		    "can't map jumbo buffer, error = %d\n", error);
 		return (error);
 	}
 
@@ -586,16 +586,16 @@ ti_alloc_jumbo_mem(struct ti_softc *sc)
 	    TI_JMEM, 1,
 	    TI_JMEM, 0, BUS_DMA_NOWAIT,
 	    &sc->jumbo_dmamap)) != 0) {
-		aprint_error_dev(sc->sc_dev, "can't create jumbo buffer DMA map, error = %d\n",
-		       error);
+		aprint_error_dev(sc->sc_dev,
+		    "can't create jumbo buffer DMA map, error = %d\n", error);
 		return (error);
 	}
 
 	if ((error = bus_dmamap_load(sc->sc_dmat, sc->jumbo_dmamap,
 	    sc->ti_cdata.ti_jumbo_buf, TI_JMEM, NULL,
 	    BUS_DMA_NOWAIT)) != 0) {
-		aprint_error_dev(sc->sc_dev, "can't load jumbo buffer DMA map, error = %d\n",
-		       error);
+		aprint_error_dev(sc->sc_dev,
+		    "can't load jumbo buffer DMA map, error = %d\n", error);
 		return (error);
 	}
 	sc->jumbo_dmaaddr = sc->jumbo_dmamap->dm_segs[0].ds_addr;
@@ -703,8 +703,8 @@ ti_newbuf_std(struct ti_softc *sc, int i, struct mbuf *m, bus_dmamap_t dmamap)
 		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1,
 					       MCLBYTES, 0, BUS_DMA_NOWAIT,
 					       &dmamap)) != 0) {
-			aprint_error_dev(sc->sc_dev, "can't create recv map, error = %d\n",
-			       error);
+			aprint_error_dev(sc->sc_dev,
+			    "can't create recv map, error = %d\n", error);
 			return (ENOMEM);
 		}
 	}
@@ -713,15 +713,15 @@ ti_newbuf_std(struct ti_softc *sc, int i, struct mbuf *m, bus_dmamap_t dmamap)
 	if (m == NULL) {
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
 		if (m_new == NULL) {
-			aprint_error_dev(sc->sc_dev, "mbuf allocation failed "
-			    "-- packet dropped!\n");
+			aprint_error_dev(sc->sc_dev,
+			    "mbuf allocation failed -- packet dropped!\n");
 			return (ENOBUFS);
 		}
 
 		MCLGET(m_new, M_DONTWAIT);
 		if (!(m_new->m_flags & M_EXT)) {
-			aprint_error_dev(sc->sc_dev, "cluster allocation failed "
-			    "-- packet dropped!\n");
+			aprint_error_dev(sc->sc_dev,
+			    "cluster allocation failed -- packet dropped!\n");
 			m_freem(m_new);
 			return (ENOBUFS);
 		}
@@ -731,8 +731,9 @@ ti_newbuf_std(struct ti_softc *sc, int i, struct mbuf *m, bus_dmamap_t dmamap)
 		if ((error = bus_dmamap_load(sc->sc_dmat, dmamap,
 				mtod(m_new, void *), m_new->m_len, NULL,
 				BUS_DMA_READ|BUS_DMA_NOWAIT)) != 0) {
-			aprint_error_dev(sc->sc_dev, "can't load recv map, error = %d\n",
-			       error);
+			aprint_error_dev(sc->sc_dev,
+			    "can't load recv map, error = %d\n", error);
+			m_freem(m_new);
 			return (ENOMEM);
 		}
 	} else {
@@ -777,8 +778,8 @@ ti_newbuf_mini(struct ti_softc *sc, int i, struct mbuf *m, bus_dmamap_t dmamap)
 		if ((error = bus_dmamap_create(sc->sc_dmat, MHLEN, 1,
 					       MHLEN, 0, BUS_DMA_NOWAIT,
 					       &dmamap)) != 0) {
-			aprint_error_dev(sc->sc_dev, "can't create recv map, error = %d\n",
-			       error);
+			aprint_error_dev(sc->sc_dev,
+			    "can't create recv map, error = %d\n", error);
 			return (ENOMEM);
 		}
 	}
@@ -787,8 +788,8 @@ ti_newbuf_mini(struct ti_softc *sc, int i, struct mbuf *m, bus_dmamap_t dmamap)
 	if (m == NULL) {
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
 		if (m_new == NULL) {
-			aprint_error_dev(sc->sc_dev, "mbuf allocation failed "
-			    "-- packet dropped!\n");
+			aprint_error_dev(sc->sc_dev,
+			    "mbuf allocation failed -- packet dropped!\n");
 			return (ENOBUFS);
 		}
 		m_new->m_len = m_new->m_pkthdr.len = MHLEN;
@@ -797,8 +798,9 @@ ti_newbuf_mini(struct ti_softc *sc, int i, struct mbuf *m, bus_dmamap_t dmamap)
 		if ((error = bus_dmamap_load(sc->sc_dmat, dmamap,
 				mtod(m_new, void *), m_new->m_len, NULL,
 				BUS_DMA_READ|BUS_DMA_NOWAIT)) != 0) {
-			aprint_error_dev(sc->sc_dev, "can't load recv map, error = %d\n",
-			       error);
+			aprint_error_dev(sc->sc_dev,
+			    "can't load recv map, error = %d\n", error);
+			m_freem(m_new);
 			return (ENOMEM);
 		}
 	} else {
@@ -842,8 +844,8 @@ ti_newbuf_jumbo(struct ti_softc *sc, int i, struct mbuf *m)
 		/* Allocate the mbuf. */
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
 		if (m_new == NULL) {
-			aprint_error_dev(sc->sc_dev, "mbuf allocation failed "
-			    "-- packet dropped!\n");
+			aprint_error_dev(sc->sc_dev,
+			    "mbuf allocation failed -- packet dropped!\n");
 			return (ENOBUFS);
 		}
 
@@ -851,8 +853,8 @@ ti_newbuf_jumbo(struct ti_softc *sc, int i, struct mbuf *m)
 		tbuf = ti_jalloc(sc);
 		if (tbuf == NULL) {
 			m_freem(m_new);
-			aprint_error_dev(sc->sc_dev, "jumbo allocation failed "
-			    "-- packet dropped!\n");
+			aprint_error_dev(sc->sc_dev,
+			    "jumbo allocation failed -- packet dropped!\n");
 			return (ENOBUFS);
 		}
 
@@ -1044,16 +1046,17 @@ ti_init_tx_ring(struct ti_softc *sc)
 	SIMPLEQ_INIT(&sc->txdma_list);
 	for (i = 0; i < TI_RSLOTS; i++) {
 		/* I've seen mbufs with 30 fragments. */
-		if ((error = bus_dmamap_create(sc->sc_dmat, ETHER_MAX_LEN_JUMBO,
-					       40, ETHER_MAX_LEN_JUMBO, 0,
-					       BUS_DMA_NOWAIT, &dmamap)) != 0) {
-			aprint_error_dev(sc->sc_dev, "can't create tx map, error = %d\n",
-			       error);
+		if ((error = bus_dmamap_create(sc->sc_dmat,
+			    ETHER_MAX_LEN_JUMBO, 40, ETHER_MAX_LEN_JUMBO, 0,
+			    BUS_DMA_NOWAIT, &dmamap)) != 0) {
+			aprint_error_dev(sc->sc_dev,
+			    "can't create tx map, error = %d\n", error);
 			return (ENOMEM);
 		}
 		dma = malloc(sizeof(*dma), M_DEVBUF, M_NOWAIT);
 		if (!dma) {
-			aprint_error_dev(sc->sc_dev, "can't alloc txdmamap_pool_entry\n");
+			aprint_error_dev(sc->sc_dev,
+			    "can't alloc txdmamap_pool_entry\n");
 			bus_dmamap_destroy(sc->sc_dmat, dmamap);
 			return (ENOMEM);
 		}
@@ -1620,11 +1623,12 @@ ti_attach(device_t parent, device_t self, void *aux)
 
 	t = ti_type_match(pa);
 	if (t == NULL) {
-		printf("ti_attach: were did the card go ?\n");
+		aprint_error("ti_attach: were did the card go ?\n");
 		return;
 	}
 
-	printf(": %s (rev. 0x%02x)\n", t->ti_name, PCI_REVISION(pa->pa_class));
+	aprint_normal(": %s (rev. 0x%02x)\n", t->ti_name,
+	    PCI_REVISION(pa->pa_class));
 
 	sc = device_private(self);
 	sc->sc_dev = self;
@@ -1641,7 +1645,7 @@ ti_attach(device_t parent, device_t self, void *aux)
 		if (pci_mapreg_map(pa, 0x10,
 		    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT,
 		    0 , &sc->ti_btag, &sc->ti_bhandle, NULL, NULL)) {
-			printf(": can't map memory space\n");
+			aprint_error_dev(self, "can't map memory space\n");
 			return;
 		}
 	}
@@ -1683,7 +1687,8 @@ ti_attach(device_t parent, device_t self, void *aux)
 		sc->sc_tx_encap = ti_encap_tigon1;
 		sc->sc_tx_eof = ti_txeof_tigon1;
 		if (nolinear == 1)
-			aprint_error_dev(self, "memory space not mapped linear\n");
+			aprint_error_dev(self,
+			    "memory space not mapped linear\n");
 		break;
 
 	case TI_HWREV_TIGON_II:
@@ -1692,7 +1697,7 @@ ti_attach(device_t parent, device_t self, void *aux)
 		break;
 
 	default:
-		printf("%s: Unknown chip version: %d\n", device_xname(self),
+		aprint_error_dev(self, "Unknown chip version: %d\n",
 		    sc->ti_hwrev);
 		goto fail2;
 	}
@@ -1722,8 +1727,7 @@ ti_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * A Tigon chip was detected. Inform the world.
 	 */
-	aprint_error_dev(self, "Ethernet address: %s\n",
-				ether_sprintf(eaddr));
+	aprint_normal_dev(self, "Ethernet address: %s\n",ether_sprintf(eaddr));
 
 	sc->sc_dmat = pa->pa_dmat;
 
@@ -1731,16 +1735,16 @@ ti_attach(device_t parent, device_t self, void *aux)
 	if ((error = bus_dmamem_alloc(sc->sc_dmat,
 	    sizeof(struct ti_ring_data), PAGE_SIZE, 0, &dmaseg, 1, &dmanseg,
 	    BUS_DMA_NOWAIT)) != 0) {
-		aprint_error_dev(sc->sc_dev, "can't allocate ring buffer, error = %d\n",
-		       error);
+		aprint_error_dev(self,
+		    "can't allocate ring buffer, error = %d\n", error);
 		goto fail2;
 	}
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &dmaseg, dmanseg,
 	    sizeof(struct ti_ring_data), (void **)&sc->ti_rdata,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
-		aprint_error_dev(sc->sc_dev, "can't map ring buffer, error = %d\n",
-		       error);
+		aprint_error_dev(self,
+		    "can't map ring buffer, error = %d\n", error);
 		goto fail2;
 	}
 
@@ -1748,16 +1752,16 @@ ti_attach(device_t parent, device_t self, void *aux)
 	    sizeof(struct ti_ring_data), 1,
 	    sizeof(struct ti_ring_data), 0, BUS_DMA_NOWAIT,
 	    &sc->info_dmamap)) != 0) {
-		aprint_error_dev(sc->sc_dev, "can't create ring buffer DMA map, error = %d\n",
-		       error);
+		aprint_error_dev(self,
+		    "can't create ring buffer DMA map, error = %d\n", error);
 		goto fail2;
 	}
 
 	if ((error = bus_dmamap_load(sc->sc_dmat, sc->info_dmamap,
 	    sc->ti_rdata, sizeof(struct ti_ring_data), NULL,
 	    BUS_DMA_NOWAIT)) != 0) {
-		aprint_error_dev(sc->sc_dev, "can't load ring buffer DMA map, error = %d\n",
-		       error);
+		aprint_error_dev(self,
+		    "can't load ring buffer DMA map, error = %d\n", error);
 		goto fail2;
 	}
 
@@ -1862,6 +1866,7 @@ ti_attach(device_t parent, device_t self, void *aux)
 	 * Call MI attach routines.
 	 */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, eaddr);
 
 	/*
@@ -1963,16 +1968,7 @@ ti_rxeof(struct ti_softc *sc)
 		}
 
 		m->m_pkthdr.len = m->m_len = cur_rx->ti_len;
-		ifp->if_ipackets++;
-		m->m_pkthdr.rcvif = ifp;
-
-		/*
-	 	 * Handle BPF listeners. Let the BPF user see the packet, but
-	 	 * don't pass it up to the ether_input() layer unless it's
-	 	 * a broadcast packet, multicast packet, matches our ethernet
-	 	 * address or the interface is in promiscuous mode.
-	 	 */
-		bpf_mtap(ifp, m);
+		m_set_rcvif(m, ifp);
 
 		eh = mtod(m, struct ether_header *);
 		switch (ntohs(eh->ether_type)) {
@@ -2022,13 +2018,11 @@ ti_rxeof(struct ti_softc *sc)
 		}
 
 		if (cur_rx->ti_flags & TI_BDFLAG_VLAN_TAG) {
-			VLAN_INPUT_TAG(ifp, m,
-			    /* ti_vlan_tag also has the priority, trim it */
-			    cur_rx->ti_vlan_tag & 4095,
-			    continue);
+			/* ti_vlan_tag also has the priority, trim it */
+			vlan_set_tag(m, cur_rx->ti_vlan_tag & 0x0fff);
 		}
 
-		(*ifp->if_input)(ifp, m);
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 	}
 
 	/* Only necessary on the Tigon 1. */
@@ -2176,9 +2170,8 @@ ti_intr(void *xsc)
 	/* Re-enable interrupts. */
 	CSR_WRITE_4(sc, TI_MB_HOSTINTR, 0);
 
-	if ((ifp->if_flags & IFF_RUNNING) != 0 &&
-	    IFQ_IS_EMPTY(&ifp->if_snd) == 0)
-		ti_start(ifp);
+	if ((ifp->if_flags & IFF_RUNNING) != 0)
+		if_schedule_deferred_start(ifp);
 
 	return (1);
 }
@@ -2214,7 +2207,6 @@ ti_encap_tigon1(struct ti_softc *sc, struct mbuf *m_head, u_int32_t *txidx)
 	struct txdmamap_pool_entry *dma;
 	bus_dmamap_t dmamap;
 	int error, i;
-	struct m_tag *mtag;
 	u_int16_t csum_flags = 0;
 
 	dma = SIMPLEQ_FIRST(&sc->txdma_list);
@@ -2270,9 +2262,9 @@ ti_encap_tigon1(struct ti_softc *sc, struct mbuf *m_head, u_int32_t *txidx)
 		TI_HOSTADDR(f->ti_addr) = dmamap->dm_segs[i].ds_addr;
 		f->ti_len = dmamap->dm_segs[i].ds_len;
 		f->ti_flags = csum_flags;
-		if ((mtag = VLAN_OUTPUT_TAG(&sc->ethercom, m_head))) {
+		if (vlan_has_tag(m_head)) {
 			f->ti_flags |= TI_BDFLAG_VLAN_TAG;
-			f->ti_vlan_tag = VLAN_TAG_VALUE(mtag);
+			f->ti_vlan_tag = vlan_get_tag(m_head);
 		} else {
 			f->ti_vlan_tag = 0;
 		}
@@ -2318,7 +2310,6 @@ ti_encap_tigon2(struct ti_softc *sc, struct mbuf *m_head, u_int32_t *txidx)
 	struct txdmamap_pool_entry *dma;
 	bus_dmamap_t dmamap;
 	int error, i;
-	struct m_tag *mtag;
 	u_int16_t csum_flags = 0;
 
 	dma = SIMPLEQ_FIRST(&sc->txdma_list);
@@ -2362,9 +2353,9 @@ ti_encap_tigon2(struct ti_softc *sc, struct mbuf *m_head, u_int32_t *txidx)
 		TI_HOSTADDR(f->ti_addr) = dmamap->dm_segs[i].ds_addr;
 		f->ti_len = dmamap->dm_segs[i].ds_len;
 		f->ti_flags = csum_flags;
-		if ((mtag = VLAN_OUTPUT_TAG(&sc->ethercom, m_head))) {
+		if (vlan_has_tag(m_head)) {
 			f->ti_flags |= TI_BDFLAG_VLAN_TAG;
-			f->ti_vlan_tag = VLAN_TAG_VALUE(mtag);
+			f->ti_vlan_tag = vlan_get_tag(m_head);
 		} else {
 			f->ti_vlan_tag = 0;
 		}

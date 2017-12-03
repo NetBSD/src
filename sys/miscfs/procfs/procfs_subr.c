@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.101.2.2 2014/08/20 00:04:31 tls Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.101.2.3 2017/12/03 11:38:48 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.101.2.2 2014/08/20 00:04:31 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.101.2.3 2017/12/03 11:38:48 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,6 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.101.2.2 2014/08/20 00:04:31 tls Ex
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
-#include <sys/malloc.h>
 #include <sys/stat.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
@@ -201,10 +200,6 @@ procfs_rw(void *v)
 		error = procfs_dofpregs(curl, l, pfs, uio);
 		break;
 
-	case PFSctl:
-		error = procfs_doctl(curl, l, pfs, uio);
-		break;
-
 	case PFSstatus:
 		error = procfs_dostatus(curl, l, pfs, uio);
 		break;
@@ -271,6 +266,10 @@ procfs_rw(void *v)
 
 	case PFSversion:
 		error = procfs_doversion(curl, p, pfs, uio);
+		break;
+
+	case PFSauxv:
+		error = procfs_doauxv(curl, p, pfs, uio);
 		break;
 
 #ifdef __HAVE_PROCFS_MACHDEP
@@ -352,7 +351,11 @@ static bool
 procfs_revoke_selector(void *arg, struct vnode *vp)
 {
 	struct proc *p = arg;
-	struct pfsnode *pfs = VTOPFS(vp);
+	struct pfsnode *pfs;
+
+	KASSERT(mutex_owned(vp->v_interlock));
+
+	pfs = VTOPFS(vp);
 
 	return (pfs != NULL && pfs->pfs_pid == p->p_pid);
 }

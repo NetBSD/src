@@ -1,4 +1,4 @@
-/* $NetBSD: radeonfbvar.h,v 1.16.2.3 2014/08/20 00:03:48 tls Exp $ */
+/* $NetBSD: radeonfbvar.h,v 1.16.2.4 2017/12/03 11:37:29 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -231,6 +231,7 @@ struct radeonfb_softc {
 	bus_size_t		sc_iosz;
 	bus_addr_t		sc_ioaddr;
 
+	int			sc_needs_unmap;
 	int			sc_mapped;
 
 	/* size of a single display */

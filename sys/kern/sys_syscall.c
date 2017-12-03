@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_syscall.c,v 1.10 2012/05/05 19:44:02 christos Exp $	*/
+/*	$NetBSD: sys_syscall.c,v 1.10.2.1 2017/12/03 11:38:45 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_syscall.c,v 1.10 2012/05/05 19:44:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_syscall.c,v 1.10.2.1 2017/12/03 11:38:45 jdolecek Exp $");
 
 #include <sys/syscall_stats.h>
 #include <sys/syscallvar.h>
@@ -56,10 +56,9 @@ SYS_SYSCALL(struct lwp *l, const struct CONCAT(SYS_SYSCALL, _args) *uap,
 	struct proc *p = l->l_proc;
 	int code;
 	int error;
-	int narg;
 #ifdef NETBSD32_SYSCALL
 	register_t args64[SYS_MAXSYSARGS];
-	int i;
+	int i, narg;
 	#define TRACE_ARGS args64
 #else
 	#define TRACE_ARGS &SCARG(uap, args[0])
@@ -77,17 +76,17 @@ SYS_SYSCALL(struct lwp *l, const struct CONCAT(SYS_SYSCALL, _args) *uap,
 	if (__predict_true(!p->p_trace_enabled))
 		return sy_call(callp, l, &uap->args, rval);
 
-	narg = callp->sy_narg;
 #ifdef NETBSD32_SYSCALL
+	narg = callp->sy_narg;
 	for (i = 0; i < narg; i++)
 		args64[i] = SCARG(uap, args[i]);
 #endif
 
-	error = trace_enter(code, TRACE_ARGS, narg);
+	error = trace_enter(code, callp, TRACE_ARGS);
 	if (__predict_false(error != 0))
 		return error;
 	error = sy_call(callp, l, &uap->args, rval);
-	trace_exit(code, rval, error);
+	trace_exit(code, callp, &uap->args, rval, error);
 	return error;
 
 	#undef TRACE_ARGS

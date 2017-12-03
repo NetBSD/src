@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_subdev_vm_nv44.c,v 1.1.1.1.6.2 2014/08/20 00:04:16 tls Exp $	*/
+/*	$NetBSD: nouveau_subdev_vm_nv44.c,v 1.1.1.1.6.3 2017/12/03 11:37:57 jdolecek Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_subdev_vm_nv44.c,v 1.1.1.1.6.2 2014/08/20 00:04:16 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_subdev_vm_nv44.c,v 1.1.1.1.6.3 2017/12/03 11:37:57 jdolecek Exp $");
 
 #include <core/gpuobj.h>
 #include <core/option.h>
@@ -190,11 +190,54 @@ nv44_vmmgr_ctor(struct nouveau_object *parent, struct nouveau_object *engine,
 	priv->base.unmap = nv44_vm_unmap;
 	priv->base.flush = nv44_vm_flush;
 
+#ifdef __NetBSD__
+    {
+	const bus_dma_tag_t dmat = pci_dma64_available(&device->pdev->pd_pa) ?
+	    device->pdev->pd_pa.pa_dmat64 : device->pdev->pd_pa.pa_dmat;
+	int nsegs;
+
+	/* XXX errno NetBSD->Linux */
+	ret = -bus_dmamem_alloc(dmat, PAGE_SIZE, PAGE_SIZE, 0,
+	    &priv->nullseg, 1, &nsegs, BUS_DMA_WAITOK);
+	if (ret) {
+		/* XXX Need to destroy stuff...  */
+fail0:		nv_error(priv, "unable to allocate dummy pages\n");
+		return ret;
+	}
+	KASSERT(nsegs == 1);
+
+	/* XXX errno NetBSD->Linux */
+	ret = -bus_dmamap_create(dmat, PAGE_SIZE, 1, PAGE_SIZE, 0,
+	    BUS_DMA_WAITOK, &priv->nullmap);
+	if (ret) {
+fail1:		bus_dmamem_free(dmat, &priv->nullseg, 1);
+		goto fail0;
+	}
+
+	/* XXX errno NetBSD->Linux */
+	ret = -bus_dmamem_map(dmat, &priv->nullseg, 1, PAGE_SIZE,
+	    &priv->nullp, BUS_DMA_WAITOK);
+	if (ret) {
+fail2:		bus_dmamap_destroy(dmat, priv->nullmap);
+		goto fail1;
+	}
+
+	/* XXX errno NetBSD->Linux */
+	ret = -bus_dmamap_load(dmat, priv->nullmap, priv->nullp, PAGE_SIZE,
+	    NULL, BUS_DMA_WAITOK);
+	if (ret) {
+fail3: __unused	bus_dmamem_unmap(dmat, priv->nullp, PAGE_SIZE);
+		goto fail2;
+	}
+	priv->null = priv->nullmap->dm_segs[0].ds_addr;
+    }
+#else
 	priv->nullp = pci_alloc_consistent(device->pdev, 16 * 1024, &priv->null);
 	if (!priv->nullp) {
 		nv_error(priv, "unable to allocate dummy pages\n");
 		return -ENOMEM;
 	}
+#endif
 
 	ret = nouveau_vm_create(&priv->base, 0, NV44_GART_SIZE, 0, 4096,
 				&priv->vm);

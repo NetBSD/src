@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_subr.c,v 1.32.12.1 2014/08/20 00:04:31 tls Exp $	*/
+/*	$NetBSD: layer_subr.c,v 1.32.12.2 2017/12/03 11:38:47 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_subr.c,v 1.32.12.1 2014/08/20 00:04:31 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_subr.c,v 1.32.12.2 2017/12/03 11:38:47 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,6 @@ __KERNEL_RCSID(0, "$NetBSD: layer_subr.c,v 1.32.12.1 2014/08/20 00:04:31 tls Exp
 #include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/kmem.h>
-#include <sys/malloc.h>
 
 #include <miscfs/genfs/layer.h>
 #include <miscfs/genfs/layer_extern.h>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.4.18.1 2014/08/20 00:03:08 tls Exp $
+#	$NetBSD: Makefile.booters,v 1.4.18.2 2017/12/03 11:36:21 jdolecek Exp $
 
 .include <bsd.own.mk>
 .include <bsd.klinks.mk>
@@ -15,10 +15,12 @@ LIBC=		# nothing
 COPTS=	-Os -ffreestanding
 
 IA64_STAND_DIR?= $S/arch/ia64/stand
+IA64_EFI_DIR=	 $S/external/bsd/gnu-efi/dist
 
 .PATH: ${IA64_STAND_DIR}/efi
 
-CPPFLAGS += -nostdlib -nostdinc -I${.OBJDIR} -I${IA64_STAND_DIR} -I${IA64_STAND_DIR}/efi/include
+CPPFLAGS += -nostdlib -nostdinc -I${.OBJDIR} -I${IA64_STAND_DIR}
+CPPFLAGS += -I${IA64_EFI_DIR}/inc -I${IA64_EFI_DIR}/inc/ia64
 
 # Options used when building standalone components
 CFLAGS+=	-ffreestanding -fshort-wchar -Wformat -D_STANDALONE
@@ -37,7 +39,7 @@ LIBZ=		${ZLIB}
 
 ### find out what to use for libsa
 SA_AS=		library
-SAMISCMAKEFLAGS+="SA_USE_LOADFILE=yes" "SA_INCLUDE_NET=no"
+SAMISCMAKEFLAGS+="SA_USE_LOADFILE=yes" "SA_INCLUDE_NET=yes"
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
 

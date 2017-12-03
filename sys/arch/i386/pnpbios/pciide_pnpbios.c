@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_pnpbios.c,v 1.30.2.2 2014/08/20 00:03:06 tls Exp $	*/
+/*	$NetBSD: pciide_pnpbios.c,v 1.30.2.3 2017/12/03 11:36:18 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999 Soren S. Jorvang.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_pnpbios.c,v 1.30.2.2 2014/08/20 00:03:06 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_pnpbios.c,v 1.30.2.3 2017/12/03 11:36:18 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,13 +121,6 @@ pciide_pnpbios_attach(device_t parent, device_t self, void *aux)
 	sc->wdc_chanarray[0] = &cp->ata_channel;
 	cp->ata_channel.ch_channel = 0;
 	cp->ata_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
-	cp->ata_channel.ch_queue = malloc(sizeof(struct ata_queue),
-					  M_DEVBUF, M_NOWAIT|M_ZERO);
-	if (cp->ata_channel.ch_queue == NULL) {
-		aprint_error_dev(self, "unable to allocate memory for command "
-		    "queue\n");
-		return;
-	}
 
 	sc->sc_dma_ok = 1;
 	for (i = 0; i < IDEDMA_NREGS; i++) {
@@ -172,7 +165,7 @@ pciide_pnpbios_attach(device_t parent, device_t self, void *aux)
 			    return;
 		}
 	}
-	wdc_init_shadow_regs(wdc_cp);
+	wdc_init_shadow_regs(wdr);
 
 	wdr->ctl_iot = wdr->data32iot = compat_iot;
 	wdr->ctl_ioh = wdr->data32ioh = ctl_ioh;

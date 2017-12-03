@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsa_common.c,v 1.8.2.1 2013/02/25 00:29:38 tls Exp $	*/
+/*	$NetBSD: ubsa_common.c,v 1.8.2.2 2017/12/03 11:37:34 jdolecek Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
  * All rights reserved.
@@ -54,12 +54,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsa_common.c,v 1.8.2.1 2013/02/25 00:29:38 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsa_common.c,v 1.8.2.2 2017/12/03 11:37:34 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/ioccom.h>
 #include <sys/fcntl.h>
 #include <sys/conf.h>
@@ -95,7 +95,7 @@ extern	int	ubsadebug;
 #define	DPRINTF(x) DPRINTFN(0, x)
 
 int
-ubsa_request(struct ubsa_softc *sc, int portno, u_int8_t request, u_int16_t value)
+ubsa_request(struct ubsa_softc *sc, int portno, uint8_t request, uint16_t value)
 {
 	usb_device_request_t req;
 	usbd_status err;
@@ -108,7 +108,7 @@ ubsa_request(struct ubsa_softc *sc, int portno, u_int8_t request, u_int16_t valu
 	if (portno >= UBSA_MAXCONN) {
 		printf("%s: ubsa_request: invalid port(%d)#\n",
 			device_xname(sc->sc_dev), portno);
-		return USBD_INVAL; 
+		return USBD_INVAL;
 	}
 
 	req.bRequest = request;
@@ -120,7 +120,7 @@ ubsa_request(struct ubsa_softc *sc, int portno, u_int8_t request, u_int16_t valu
 	if (err)
 		printf("%s: ubsa_request: %s\n",
 		    device_xname(sc->sc_dev), usbd_errstr(err));
-	return (err);
+	return err;
 }
 
 void
@@ -216,7 +216,7 @@ ubsa_set(void *addr, int portno, int reg, int onoff)
 void
 ubsa_baudrate(struct ubsa_softc *sc, int portno, speed_t speed)
 {
-	u_int16_t value = 0;
+	uint16_t value = 0;
 
 	DPRINTF(("ubsa_baudrate: speed = %d\n", speed));
 
@@ -332,7 +332,7 @@ ubsa_param(void *addr, int portno, struct termios *ti)
 		ubsa_flow(sc, portno, ti->c_cflag, ti->c_iflag);
 	}
 
-	return (0);
+	return 0;
 }
 
 int
@@ -342,10 +342,10 @@ ubsa_open(void *addr, int portno)
 	int err;
 
 	if (sc->sc_dying)
-		return (ENXIO);
+		return ENXIO;
 
 	if (sc->sc_intr_number != -1 && sc->sc_intr_pipe == NULL) {
-		sc->sc_intr_buf = malloc(sc->sc_isize, M_USBDEV, M_WAITOK);
+		sc->sc_intr_buf = kmem_alloc(sc->sc_isize, KM_SLEEP);
 		/* XXX only iface# = 0 has intr line */
 		/* XXX E220 specific? need to check */
 		err = usbd_open_pipe_intr(sc->sc_iface[0],
@@ -361,11 +361,11 @@ ubsa_open(void *addr, int portno)
 			printf("%s: cannot open interrupt pipe (addr %d)\n",
 			    device_xname(sc->sc_dev),
 			    sc->sc_intr_number);
-			return (EIO);
+			return EIO;
 		}
 	}
 
-	return (0);
+	return 0;
 }
 
 void
@@ -390,13 +390,13 @@ ubsa_close(void *addr, int portno)
 			printf("%s: close interrupt pipe failed: %s\n",
 			    device_xname(sc->sc_dev),
 			    usbd_errstr(err));
-		free(sc->sc_intr_buf, M_USBDEV);
+		kmem_free(sc->sc_intr_buf, sc->sc_isize);
 		sc->sc_intr_pipe = NULL;
 	}
 }
 
 void
-ubsa_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
+ubsa_intr(struct usbd_xfer *xfer, void *priv,
     usbd_status status)
 {
 	struct ubsa_softc *sc = priv;

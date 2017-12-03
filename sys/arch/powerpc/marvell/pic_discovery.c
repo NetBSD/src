@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_discovery.c,v 1.7 2012/02/01 09:54:03 matt Exp $	*/
+/*	$NetBSD: pic_discovery.c,v 1.7.6.1 2017/12/03 11:36:37 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_discovery.c,v 1.7 2012/02/01 09:54:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_discovery.c,v 1.7.6.1 2017/12/03 11:36:37 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -91,7 +91,6 @@ setup_discovery_pic(void)
 	struct pic_ops *pic;
 
 	discovery = kmem_alloc(sizeof(*discovery), KM_SLEEP);
-	KASSERT(discovery != NULL);
 
 	pic = &discovery->pic;
 	pic->pic_numintrs = 64;
@@ -166,7 +165,6 @@ setup_discovery_gpp_pic(void *discovery, int gpp_base)
 	struct pic_ops *pic;
 
 	discovery_gpp = kmem_alloc(sizeof(*discovery_gpp), KM_SLEEP);
-	KASSERT(discovery_gpp != NULL);
 
 	pic = &discovery_gpp->pic;
 	pic->pic_numintrs = 32;

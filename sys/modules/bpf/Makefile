@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3.2.1 2012/11/20 03:02:46 tls Exp $
+#	$NetBSD: Makefile,v 1.3.2.2 2017/12/03 11:38:49 jdolecek Exp $
 #
 
 .include "../Makefile.inc"
@@ -6,8 +6,6 @@
 .PATH:	${S}/net
 
 KMOD=	bpf
-# XXX: bpf_filter.c maybe needs to be its own module (or made
-# inseparable from bpfilter?)
-SRCS=	bpf.c bpf_filter.c
+SRCS=	bpf.c
 
 .include <bsd.kmodule.mk>

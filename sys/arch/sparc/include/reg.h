@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.8 2005/12/11 12:19:06 christos Exp $ */
+/*	$NetBSD: reg.h,v 1.8.122.1 2017/12/03 11:36:43 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -102,9 +102,15 @@ struct fp_qentry {
 	int	*fq_addr;		/* the instruction's address */
 	int	fq_instr;		/* the instruction itself */
 };
+
+struct fpreg {
+	u_int	fr_regs[32];		/* our view is 32 32-bit registers */
+	int	fr_fsr;			/* %fsr */
+};
 struct fpstate {
-	u_int	fs_regs[32];		/* our view is 32 32-bit registers */
-	int	fs_fsr;			/* %fsr */
+	struct fpreg fs_reg;
+#define fs_regs fs_reg.fr_regs
+#define fs_fsr	fs_reg.fr_fsr
 	int	fs_qsize;		/* actual queue depth */
 	struct	fp_qentry fs_queue[FP_QSIZE];	/* queue contents */
 };
@@ -114,9 +120,5 @@ struct fpstate {
  * a `struct fpreg'; <arch/sparc/sparc/process_machdep.c> relies on the
  * fact that `fpreg' is a prefix of `fpstate'.
  */
-struct fpreg {
-	u_int	fr_regs[32];		/* our view is 32 32-bit registers */
-	int	fr_fsr;			/* %fsr */
-};
 
 #endif /* _MACHINE_REG_H_ */

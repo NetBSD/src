@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_ac97.c,v 1.11.8.1 2012/11/20 03:01:08 tls Exp $	*/
+/*	$NetBSD: pxa2x0_ac97.c,v 1.11.8.2 2017/12/03 11:35:57 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2003, 2005 Wasabi Systems, Inc.
@@ -674,8 +674,7 @@ acu_malloc(void *arg, int direction, size_t size)
 	struct acu_dma *ad;
 	int error;
 
-	if ((ad = kmem_alloc(sizeof(*ad), KM_SLEEP)) == NULL)
-		return (NULL);
+	ad = kmem_alloc(sizeof(*ad), KM_SLEEP);
 
 	/* XXX */
 	if ((ad->ad_dx = pxa2x0_dmac_allocate_xfer()) == NULL)

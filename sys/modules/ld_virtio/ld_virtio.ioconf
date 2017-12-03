@@ -1,0 +1,10 @@
+#       $NetBSD: ld_virtio.ioconf,v 1.1.18.2 2017/12/03 11:38:57 jdolecek Exp $
+
+ioconf ld_virtio
+
+include "conf/files"
+include "dev/pci/files.pci"
+
+pseudo-root virtio*
+
+ld* at virtio?

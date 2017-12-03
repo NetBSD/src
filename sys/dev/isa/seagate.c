@@ -1,4 +1,4 @@
-/*	$NetBSD: seagate.c,v 1.70.22.2 2014/08/20 00:03:39 tls Exp $	*/
+/*	$NetBSD: seagate.c,v 1.70.22.3 2017/12/03 11:37:05 jdolecek Exp $	*/
 
 /*
  * ST01/02, Future Domain TMC-885, TMC-950 SCSI driver
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: seagate.c,v 1.70.22.2 2014/08/20 00:03:39 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: seagate.c,v 1.70.22.3 2017/12/03 11:37:05 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -391,6 +391,7 @@ seaattach(device_t parent, device_t self, void *aux)
 	struct scsipi_channel *chan = &sea->sc_channel;
 	int i;
 
+	aprint_naive("\n");
 	sea->sc_dev = self;
 
 	/* XXX XXX XXX */
@@ -462,7 +463,7 @@ seaattach(device_t parent, device_t self, void *aux)
 	chan->chan_id = sea->our_id;
 	chan->chan_flags = SCSIPI_CHAN_CANGROW;
 
-	printf("\n");
+	aprint_normal("\n");
 
 	sea->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
 	    IST_EDGE, IPL_BIO, seaintr, sea);
@@ -554,7 +555,8 @@ sea_init(struct sea_softc *sea)
  * the unit, target and lu.
  */
 void
-sea_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
+sea_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
+    void *arg)
 {
 	struct scsipi_xfer *xs;
 	struct scsipi_periph *periph __diagused;
@@ -721,51 +723,54 @@ loop:
 			 */
 			for (scb = sea->ready_list.tqh_first; scb;
 			    scb = scb->chain.tqe_next) {
-				if (!(sea->busy[scb->xs->xs_periph->periph_target] &
-				    (1 << scb->xs->xs_periph->periph_lun))) {
-					TAILQ_REMOVE(&sea->ready_list, scb,
-					    chain);
+				if ((sea->busy[scb->xs->xs_periph->periph_target] &
+				    (1 << scb->xs->xs_periph->periph_lun)))
+					continue;
 
-					/* Re-enable interrupts. */
-					splx(s);
+				/* target/lun is not busy */
+				TAILQ_REMOVE(&sea->ready_list, scb, chain);
 
-					/*
-					 * Attempt to establish an I_T_L nexus.
-					 * On success, sea->nexus is set.
-					 * On failure, we must add the command
-					 * back to the issue queue so we can
-					 * keep trying.
-					 */
+				/* Re-enable interrupts. */
+				splx(s);
 
-					/*
-					 * REQUEST_SENSE commands are issued
-					 * without tagged queueing, even on
-					 * SCSI-II devices because the
-					 * contingent alligence condition
-					 * exists for the entire unit.
-					 */
+				/*
+				 * Attempt to establish an I_T_L nexus.
+				 * On success, sea->nexus is set.
+				 * On failure, we must add the command
+				 * back to the issue queue so we can
+				 * keep trying.
+				 */
 
-					/*
-					 * First check that if any device has
-					 * tried a reconnect while we have done
-					 * other things with interrupts
-					 * disabled.
-					 */
+				/*
+				 * REQUEST_SENSE commands are issued
+				 * without tagged queueing, even on
+				 * SCSI-II devices because the
+				 * contingent alligence condition
+				 * exists for the entire unit.
+				 */
 
-					if ((STATUS & (STAT_SEL | STAT_IO)) ==
-					    (STAT_SEL | STAT_IO)) {
-						sea_reselect(sea);
-						break;
-					}
-					if (sea_select(sea, scb)) {
-						s = splbio();
-						TAILQ_INSERT_HEAD(&sea->ready_list,
-						    scb, chain);
-						splx(s);
-					} else
-						break;
-				} /* if target/lun is not busy */
-			} /* for scb */
+				/*
+				 * First check that if any device has
+				 * tried a reconnect while we have done
+				 * other things with interrupts
+				 * disabled.
+				 */
+
+				if ((STATUS & (STAT_SEL | STAT_IO)) ==
+				    (STAT_SEL | STAT_IO)) {
+					sea_reselect(sea);
+					s = splbio();
+					break;
+				}
+				if (sea_select(sea, scb)) {
+					s = splbio();
+					TAILQ_INSERT_HEAD(&sea->ready_list,
+					    scb, chain);
+				} else {
+					s = splbio();
+					break;
+				}
+			}
 			if (!sea->nexus) {
 				/* check for reselection phase */
 				if ((STATUS & (STAT_SEL | STAT_IO)) ==

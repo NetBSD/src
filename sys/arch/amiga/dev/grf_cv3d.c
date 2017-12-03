@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv3d.c,v 1.26.6.2 2014/08/20 00:02:43 tls Exp $ */
+/*	$NetBSD: grf_cv3d.c,v 1.26.6.3 2017/12/03 11:35:48 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -33,11 +33,11 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cv3d.c,v 1.26.6.2 2014/08/20 00:02:43 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cv3d.c,v 1.26.6.3 2017/12/03 11:35:48 jdolecek Exp $");
 
+#include "grfcv3d.h"
 #include "ite.h"
 #include "wsdisplay.h"
-#include "grfcv3d.h"
 #if NGRFCV3D > 0
 
 /*
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: grf_cv3d.c,v 1.26.6.2 2014/08/20 00:02:43 tls Exp $"
  * Modified for CV64/3D from Michael Teske's CV driver by Tobias Abt 10/97.
  * Bugfixes by Bernd Ernesti 10/97.
  * Many thanks to Richard Hartmann who gave us his board so we could make
- * driver.
+ * the driver.
  *
  * TODO:
  *	- ZorroII support
@@ -73,7 +73,7 @@ BOARDBASE
         +0xc0e0000      PCI Cfg Base start
         +0xc0e0fff      PCI Cfg Base end
 
-Note: IO Regbase is needed fo wakeup of the board otherwise use
+Note: IO Regbase is needed for wakeup of the board otherwise use
       MMIO Regbase
 */
 
@@ -99,7 +99,6 @@ Note: IO Regbase is needed fo wakeup of the board otherwise use
 #include <amiga/dev/itevar.h>
 #include <amiga/amiga/device.h>
 #include <amiga/dev/grfioctl.h>
-#include <amiga/dev/grfws.h>
 #include <amiga/dev/grfvar.h>
 #include <amiga/dev/grf_cv3dreg.h>
 #include <amiga/dev/zbusvar.h>
@@ -123,7 +122,8 @@ static unsigned short cv3d_compute_clock(unsigned long);
 void	cv3d_boardinit(struct grf_softc *);
 int	cv3d_getvmode(struct grf_softc *, struct grfvideo_mode *);
 int	cv3d_setvmode(struct grf_softc *, unsigned int);
-int	cv3d_blank(struct grf_softc *, int *);
+int	cv3d_blank(struct grf_softc *, int);
+int	cv3d_isblank(struct grf_softc *);
 int	cv3d_mode(register struct grf_softc *, u_long, void *, u_long, int);
 int	cv3d_ioctl(register struct grf_softc *gp, u_long cmd, void *data);
 int	cv3d_setmonitor(struct grf_softc *, struct grfvideo_mode *);
@@ -290,6 +290,9 @@ long cv3d_memclk = 55000000;
 
 #if NWSDISPLAY > 0 
 /* wsdisplay accessops, emulops */
+static int	cv3d_wsioctl(void *, void *, u_long, void *, int, struct lwp *);
+static int	cv3d_get_fbinfo(struct grf_softc *, struct wsdisplayio_fbinfo *);
+
 static void	cv3d_wscursor(void *, int, int, int);
 static void	cv3d_wsputchar(void *, int, int, u_int, long);
 static void	cv3d_wscopycols(void *, int, int, int, int);
@@ -300,7 +303,7 @@ static int	cv3d_wsallocattr(void *, int, int, int, long *);
 static int	cv3d_wsmapchar(void *, int, unsigned int *);
 
 struct wsdisplay_accessops cv3d_accessops = {
-	.ioctl		= grf_wsioctl,
+	.ioctl		= cv3d_wsioctl,
 	.mmap		= grf_wsmmap
 };
 
@@ -315,24 +318,21 @@ static struct wsdisplay_emulops cv3d_textops = {
 	.allocattr	= cv3d_wsallocattr
 };
 
-static struct ws_ao_ioctl cv3d_wsioctl = {
-	grf_wsaoginfo,
-	grf_wsaogetcmap,
-	grf_wsaoputcmap,
-	grf_wsaogvideo,
-	grf_wsaosvideo,
-	grf_wsaogmode,
-	grf_wsaosmode,
-	grf_wsaogtype
-};
-
-static struct wsscreen_descr cv3d_screen = {
+static struct wsscreen_descr cv3d_defaultscreen = {
 	.name		= "default",
 	.textops	= &cv3d_textops,
 	.fontwidth	= 8,
 	.fontheight	= S3FONTY,
-	.capabilities	= WSSCREEN_HILIT | WSSCREEN_REVERSE |
-			  WSSCREEN_BLINK | WSSCREEN_UNDERLINE
+	.capabilities	= WSSCREEN_HILIT | WSSCREEN_BLINK |
+			  WSSCREEN_REVERSE | WSSCREEN_UNDERLINE
+};
+
+static const struct wsscreen_descr *cv3d_screens[] = {
+	&cv3d_defaultscreen,
+};
+
+static struct wsscreen_list cv3d_screenlist = {
+	sizeof(cv3d_screens) / sizeof(struct wsscreen_descr *), cv3d_screens
 };
 #endif /* NWSDISPLAY > 0 */
 
@@ -487,14 +487,15 @@ grfcv3dattach(device_t parent, device_t self, void *aux)
 		cv3d_boardinit(gp);
 
 #ifdef CV3DCONSOLE
-#if NWSDISPLAY > 0 
+#if NWSDISPLAY > 0
 		gp->g_accessops = &cv3d_accessops;
 		gp->g_emulops = &cv3d_textops;
-		gp->g_defaultscreen = cv3d_screen;
-		gp->g_screens[0] = &gp->g_defaultscreen; 
-		gp->g_wsioctl = &cv3d_wsioctl;
+		gp->g_defaultscr = &cv3d_defaultscreen;
+		gp->g_scrlist = &cv3d_screenlist;
 #else
+#if NITE > 0
 		grfcv3d_iteinit(gp);
+#endif
 #endif /* NWSDISPLAY > 0 */
 		(void)cv3d_load_mon(gp, &cv3dconsole_mode);		
 #endif
@@ -867,13 +868,25 @@ cv3d_setvmode(struct grf_softc *gp, unsigned mode)
 
 
 int
-cv3d_blank(struct grf_softc *gp, int *on)
+cv3d_blank(struct grf_softc *gp, int on)
 {
 	volatile void *ba;
 
 	ba = gp->g_regkva;
-	cv3d_gfx_on_off(*on > 0 ? 0 : 1, ba);
+	cv3d_gfx_on_off(on > 0 ? 0 : 1, ba);
 	return (0);
+}
+
+
+int
+cv3d_isblank(struct grf_softc *gp)
+{
+	volatile void *ba;
+	int r;
+
+	ba = gp->g_regkva;
+	r = RSeq(ba, SEQ_ID_CLOCKING_MODE);
+	return (r & 0x20) != 0;
 }
 
 
@@ -976,7 +989,7 @@ cv3d_ioctl(register struct grf_softc *gp, u_long cmd, void *data)
 		return (cv3d_setmonitor (gp, (struct grfvideo_mode *)data));
 
 	    case GRFIOCBLANK:
-		return (cv3d_blank (gp, (int *)data));
+		return (cv3d_blank (gp, *(int *)data));
 	}
 	return (EPASSTHROUGH);
 }
@@ -1477,7 +1490,6 @@ cv3d_load_mon(struct grf_softc *gp, struct grfcv3dtext_mode *md)
 		gp->g_fbkva = (volatile char *)cv3d_boardaddr + 0x04000000 +
 				(0x00400000 * fb_flag);
 	} else {
-		/* XXX This is totaly untested */
 		Select_Zorro2_FrameBuffer(fb_flag);
 	}
 
@@ -2231,7 +2243,7 @@ cv3d_wscopyrows(void *c, int srcrow, int dstrow, int nrows)
 	gp = scr->scr_cookie;
 	src = dst = gp->g_fbkva;
 	n = ri->ri_cols * nrows;
-	if (src < dst) {
+	if (srcrow < dstrow) {
 		/* need to copy backwards */
 		src += gp->g_rowoffset[srcrow + nrows] << 1;
 		dst += gp->g_rowoffset[dstrow + nrows] << 1;
@@ -2299,6 +2311,125 @@ cv3d_wsallocattr(void *c, int fg, int bg, int flg, long *attr)
 	return 0;
 }
 
-#endif /* NWSDISPLAY > 0 */
+static int
+cv3d_wsioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
+{
+	struct vcons_data *vd;
+	struct grf_softc *gp;
 
-#endif  /* NGRFCV3D */
+	vd = v;
+	gp = vd->cookie;
+
+	switch (cmd) {
+	case WSDISPLAYIO_GETCMAP:
+		/* Note: wsdisplay_cmap and grf_colormap have same format */
+		if (gp->g_display.gd_planes == 8)
+			return cv3d_getcmap(gp, (struct grf_colormap *)data);
+		return EINVAL;
+
+	case WSDISPLAYIO_PUTCMAP:
+		/* Note: wsdisplay_cmap and grf_colormap have same format */
+		if (gp->g_display.gd_planes == 8)
+			return cv3d_putcmap(gp, (struct grf_colormap *)data);
+		return EINVAL;
+
+	case WSDISPLAYIO_GVIDEO:
+		if (cv3d_isblank(gp))
+			*(u_int *)data = WSDISPLAYIO_VIDEO_OFF;
+		else
+			*(u_int *)data = WSDISPLAYIO_VIDEO_ON;
+		return 0;
+
+	case WSDISPLAYIO_SVIDEO:
+		return cv3d_blank(gp, *(u_int *)data == WSDISPLAYIO_VIDEO_ON);
+
+	case WSDISPLAYIO_SMODE:
+		if ((*(int *)data) != gp->g_wsmode) {
+			if (*(int *)data == WSDISPLAYIO_MODE_EMUL) {
+				/* load console text mode, redraw screen */
+				(void)cv3d_load_mon(gp, &cv3dconsole_mode);
+				if (vd->active != NULL)
+					vcons_redraw_screen(vd->active);
+			} else {
+				/* switch to current graphics mode */
+				if (!cv3d_load_mon(gp,
+				    (struct grfcv3dtext_mode *)monitor_current))
+					return EINVAL;
+			}
+			gp->g_wsmode = *(int *)data;
+		} 
+		return 0;
+
+	case WSDISPLAYIO_GET_FBINFO:
+		return cv3d_get_fbinfo(gp, data);
+	}
+
+	/* handle this command hw-independant in grf(4) */
+	return grf_wsioctl(v, vs, cmd, data, flag, l);
+}
+
+/*
+ * Fill the wsdisplayio_fbinfo structure with information from the current
+ * graphics mode. Even when text mode is active.
+ */
+static int
+cv3d_get_fbinfo(struct grf_softc *gp, struct wsdisplayio_fbinfo *fbi)
+{
+	struct grfvideo_mode *md;
+	uint32_t rbits, gbits, bbits, abits;
+
+	md = monitor_current;
+	abits = 0;
+
+	switch (md->depth) {
+	case 8:
+		fbi->fbi_bitsperpixel = 8;
+		rbits = gbits = bbits = 6;  /* keep gcc happy */
+		break;
+	case 15:
+		fbi->fbi_bitsperpixel = 16;
+		rbits = gbits = bbits = 5;
+		break;
+	case 16:
+		fbi->fbi_bitsperpixel = 16;
+		rbits = bbits = 5;
+		gbits = 6;
+		break;
+	case 32:
+		abits = 8;
+	case 24:
+		fbi->fbi_bitsperpixel = 32;
+		rbits = gbits = bbits = 8;
+		break;
+	default:
+		return EINVAL;
+	}
+
+	fbi->fbi_stride = (fbi->fbi_bitsperpixel / 8) * md->disp_width;
+	fbi->fbi_width = md->disp_width;
+	fbi->fbi_height = md->disp_height;
+
+	if (md->depth > 8) {
+		fbi->fbi_pixeltype = WSFB_RGB;
+		fbi->fbi_subtype.fbi_rgbmasks.red_offset = bbits + gbits;
+		fbi->fbi_subtype.fbi_rgbmasks.red_size = rbits;
+		fbi->fbi_subtype.fbi_rgbmasks.green_offset = bbits;
+		fbi->fbi_subtype.fbi_rgbmasks.green_size = gbits;
+		fbi->fbi_subtype.fbi_rgbmasks.blue_offset = 0;
+		fbi->fbi_subtype.fbi_rgbmasks.blue_size = bbits;
+		fbi->fbi_subtype.fbi_rgbmasks.alpha_offset =
+		    bbits + gbits + rbits;
+		fbi->fbi_subtype.fbi_rgbmasks.alpha_size = abits;
+	} else {
+		fbi->fbi_pixeltype = WSFB_CI;
+		fbi->fbi_subtype.fbi_cmapinfo.cmap_entries = 1 << md->depth;
+	}
+
+	fbi->fbi_flags = 0;
+	fbi->fbi_fbsize = fbi->fbi_stride * fbi->fbi_height;
+	fbi->fbi_fboffset = 0;
+	return 0;
+}
+#endif	/* NWSDISPLAY > 0 */
+
+#endif	/* NGRFCV3D */

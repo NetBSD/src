@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.245.2.4 2014/08/20 00:03:24 tls Exp $ */
+/*	$NetBSD: autoconf.c,v 1.245.2.5 2017/12/03 11:36:43 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.245.2.4 2014/08/20 00:03:24 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.245.2.5 2017/12/03 11:36:43 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1296,7 +1296,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		if ((node = findnode(node0, sp)) == 0) {
 			if (ssp->flags & BS_OPTIONAL) continue;
 			printf("could not find %s in OPENPROM\n", sp);
-			panic(sp);
+			panic("%s", sp);
 		}
 
 		memset(&ma, 0, sizeof ma);
@@ -1318,7 +1318,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 
 		if (config_found(dev, (void *)&ma, mbprint) == NULL) {
 			if (ssp->flags & BS_OPTIONAL) continue;
-			panic(sp);
+			panic("%s", sp);
 		}
 	}
 
@@ -1563,6 +1563,7 @@ static struct {
 	{ "SUNW,fdtwo",	"fdc" },
 	{ "network",	"hme" }, /* Krups */
 	{ "SUNW,hme",   "hme" },
+	{ "SUNW,qfe",   "hme" },
 };
 
 static const char *

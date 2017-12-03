@@ -140,7 +140,7 @@ public:
     } while (byte >= 0x80);
     // sign extend negative numbers
     if ((byte & 0x40) != 0)
-      result |= (-1LL) << bit;
+      result |= (~0ULL) << bit;
     return result;
   }
 
@@ -263,21 +263,19 @@ public:
 
     pint_t base = n->hdr_base;
     pint_t first = n->hdr_start;
-    pint_t len = n->hdr_entries;
-    while (len) {
-      pint_t next = first + ((len + 1) / 2) * 8;
+    for (pint_t len = n->hdr_entries; len > 1; ) {
+      pint_t next = first + (len / 2) * 8;
       pint_t nextPC = base + (int32_t)get32(next);
       if (nextPC == pc) {
         first = next;
         break;
       }
       if (nextPC < pc) {
-        len -= (len + 1) / 2;
         first = next;
-      } else if (len == 1)
-        break;
-      else
-        len = (len + 1) / 2;
+        len -= (len / 2);
+      } else {
+        len /= 2;
+      }
     }
     fdeStart = base + (int32_t)get32(first + 4);
     data_base = n->data_base;

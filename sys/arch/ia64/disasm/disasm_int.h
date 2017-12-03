@@ -1,7 +1,7 @@
-/*	$NetBSD: disasm_int.h,v 1.1 2006/04/07 14:21:18 cherry Exp $	*/
+/*	$NetBSD: disasm_int.h,v 1.1.122.1 2017/12/03 11:36:20 jdolecek Exp $	*/
 
 /*-
- * Copyright (c) 2000-2003 Marcel Moolenaar
+ * Copyright (c) 2000-2006 Marcel Moolenaar
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/ia64/disasm/disasm_int.h,v 1.2 2005/01/06 22:18:22 imp Exp $
+ * $FreeBSD: releng/10.1/sys/ia64/disasm/disasm_int.h 159916 2006-06-24 19:21:11Z marcel $
  */
 
 #ifndef _DISASM_INT_H_
@@ -124,6 +124,8 @@
 	ASM_OP_FSWAP_, ASM_OP_FSWAP_NL, ASM_OP_FSWAP_NR,		\
 	ASM_OP_FSXT_L, ASM_OP_FSXT_R,					\
 	ASM_OP_GETF_D, ASM_OP_GETF_EXP, ASM_OP_GETF_S, ASM_OP_GETF_SIG,	\
+	ASM_OP_HINT_B, ASM_OP_HINT_F, ASM_OP_HINT_I, ASM_OP_HINT_M,	\
+	ASM_OP_HINT_X,							\
 	ASM_OP_INVALA_, ASM_OP_INVALA_E,				\
 	ASM_OP_ITC_D, ASM_OP_ITC_I,					\
 	ASM_OP_ITR_D, ASM_OP_ITR_I,					\
@@ -206,12 +208,16 @@
 	ASM_OP_TBIT_NZ_AND, ASM_OP_TBIT_NZ_OR, ASM_OP_TBIT_NZ_OR_ANDCM,	\
 	ASM_OP_TBIT_Z, ASM_OP_TBIT_Z_AND, ASM_OP_TBIT_Z_OR,		\
 	ASM_OP_TBIT_Z_OR_ANDCM, ASM_OP_TBIT_Z_UNC,			\
+	ASM_OP_TF_NZ_AND, ASM_OP_TF_NZ_OR, ASM_OP_TF_NZ_OR_ANDCM,	\
+	ASM_OP_TF_Z, ASM_OP_TF_Z_AND, ASM_OP_TF_Z_OR,			\
+	ASM_OP_TF_Z_OR_ANDCM, ASM_OP_TF_Z_UNC,				\
 	ASM_OP_TNAT_NZ_AND, ASM_OP_TNAT_NZ_OR, ASM_OP_TNAT_NZ_OR_ANDCM,	\
 	ASM_OP_TNAT_Z, ASM_OP_TNAT_Z_AND, ASM_OP_TNAT_Z_OR,		\
 	ASM_OP_TNAT_Z_OR_ANDCM, ASM_OP_TNAT_Z_UNC,			\
 	ASM_OP_UNPACK1_H, ASM_OP_UNPACK1_L,				\
 	ASM_OP_UNPACK2_H, ASM_OP_UNPACK2_L,				\
 	ASM_OP_UNPACK4_H, ASM_OP_UNPACK4_L,				\
+	ASM_OP_VMSW_0, ASM_OP_VMSW_1,					\
 	ASM_OP_XMA_H, ASM_OP_XMA_HU, ASM_OP_XMA_L,			\
 	ASM_OP_NUMBER_OF_OPCODES
 

@@ -1,4 +1,4 @@
-/* $NetBSD: sbscnvar.h,v 1.6 2012/02/02 19:43:00 tls Exp $ */
+/* $NetBSD: sbscnvar.h,v 1.6.6.1 2017/12/03 11:36:29 jdolecek Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -64,16 +64,15 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "rnd.h"
 #ifdef RND_SBSCN
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 #endif
 
 #include <sys/callout.h>
 
-#define	SBSCN_CHAN(x)		((minor(x) & 0x00001) >> 0)
-#define	SBSCN_UNIT(x)		((minor(x) & 0x7fffe) >> 1)
-#define	SBSCN_DIALOUT(x)	((minor(x) & 0x80000) != 0)
+#define	SBSCN_CHAN(x)		(TTUNIT(x) & 1)
+#define	SBSCN_UNIT(x)		(TTUNIT(x) >> 1)
+#define	SBSCN_DIALOUT(x)	TTDIALOUT(x)
 
 #define	SBSCN_TOLERANCE	30	/* baud rate tolerance, in 0.1% units */
 

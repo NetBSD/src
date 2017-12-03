@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.93.2.4 2014/08/20 00:03:19 tls Exp $	*/
+/*	$NetBSD: cpu.h,v 1.93.2.5 2017/12/03 11:36:37 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -51,7 +51,7 @@ struct cache_info {
 #endif
 
 #ifdef _KERNEL
-#include <machine/intr.h>
+#include <sys/intr.h>
 #include <sys/device_if.h>
 #include <sys/evcnt.h>
 #endif
@@ -393,6 +393,14 @@ register_t
 	cpu_hatch(void);
 void	cpu_spinup_trampoline(void);
 void	cpu_boot_secondary_processors(void);
+void	cpu_halt(void);
+void	cpu_halt_others(void);
+void	cpu_pause(struct trapframe *);
+void	cpu_pause_others(void);
+void	cpu_resume(cpuid_t);
+void	cpu_resume_others(void);
+int	cpu_is_paused(int);
+void	cpu_debug_dump(void);
 #endif /* MULTIPROCESSOR */
 #endif /* !_MODULE */
 

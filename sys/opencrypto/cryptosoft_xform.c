@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft_xform.c,v 1.25.8.1 2013/02/25 00:30:07 tls Exp $ */
+/*	$NetBSD: cryptosoft_xform.c,v 1.25.8.2 2017/12/03 11:39:06 jdolecek Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/xform.c,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: xform.c,v 1.19 2002/08/16 22:47:25 dhartmei Exp $	*/
 
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cryptosoft_xform.c,v 1.25.8.1 2013/02/25 00:30:07 tls Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cryptosoft_xform.c,v 1.25.8.2 2017/12/03 11:39:06 jdolecek Exp $");
 
 #include <crypto/blowfish/blowfish.h>
 #include <crypto/cast128/cast128.h>
@@ -427,17 +427,14 @@ static int
 des1_setkey(u_int8_t **sched, const u_int8_t *key, int len)
 {
 	des_key_schedule *p;
-	int err;
 
 	p = malloc(sizeof (des_key_schedule),
-		M_CRYPTO_DATA, M_NOWAIT|M_ZERO);
-	if (p != NULL) {
-		des_set_key((des_cblock *)__UNCONST(key), p[0]);
-		err = 0;
-	} else
-		err = ENOMEM;
+	    M_CRYPTO_DATA, M_NOWAIT|M_ZERO);
 	*sched = (u_int8_t *) p;
-	return err;
+	if (p == NULL)
+		return ENOMEM;
+	des_set_key((des_cblock *)__UNCONST(key), p[0]);
+	return 0;
 }
 
 static void
@@ -470,19 +467,16 @@ static int
 des3_setkey(u_int8_t **sched, const u_int8_t *key, int len)
 {
 	des_key_schedule *p;
-	int err;
 
 	p = malloc(3*sizeof (des_key_schedule),
 		M_CRYPTO_DATA, M_NOWAIT|M_ZERO);
-	if (p != NULL) {
-		des_set_key((des_cblock *)__UNCONST(key +  0), p[0]);
-		des_set_key((des_cblock *)__UNCONST(key +  8), p[1]);
-		des_set_key((des_cblock *)__UNCONST(key + 16), p[2]);
-		err = 0;
-	} else
-		err = ENOMEM;
 	*sched = (u_int8_t *) p;
-	return err;
+	if (p == NULL)
+		return ENOMEM;
+	des_set_key((des_cblock *)__UNCONST(key +  0), p[0]);
+	des_set_key((des_cblock *)__UNCONST(key +  8), p[1]);
+	des_set_key((des_cblock *)__UNCONST(key + 16), p[2]);
+	return 0;
 }
 
 static void
@@ -510,16 +504,13 @@ blf_decrypt(void *key, u_int8_t *blk)
 static int
 blf_setkey(u_int8_t **sched, const u_int8_t *key, int len)
 {
-	int err;
 
 	*sched = malloc(sizeof(BF_KEY),
 		M_CRYPTO_DATA, M_NOWAIT|M_ZERO);
-	if (*sched != NULL) {
-		BF_set_key((BF_KEY *) *sched, len, key);
-		err = 0;
-	} else
-		err = ENOMEM;
-	return err;
+	if (*sched == NULL)
+		return ENOMEM;
+	BF_set_key((BF_KEY *) *sched, len, key);
+	return 0;
 }
 
 static void
@@ -545,16 +536,13 @@ cast5_decrypt(void *key, u_int8_t *blk)
 static int
 cast5_setkey(u_int8_t **sched, const u_int8_t *key, int len)
 {
-	int err;
 
 	*sched = malloc(sizeof(cast128_key), M_CRYPTO_DATA,
 	       M_NOWAIT|M_ZERO);
-	if (*sched != NULL) {
-		cast128_setkey((cast128_key *)*sched, key, len);
-		err = 0;
-	} else
-		err = ENOMEM;
-	return err;
+	if (*sched == NULL)
+		return ENOMEM;
+	cast128_setkey((cast128_key *)*sched, key, len);
+	return 0;
 }
 
 static void
@@ -580,7 +568,6 @@ skipjack_decrypt(void *key, u_int8_t *blk)
 static int
 skipjack_setkey(u_int8_t **sched, const u_int8_t *key, int len)
 {
-	int err;
 
 	/* NB: allocate all the memory that's needed at once */
 	/* XXX assumes bytes are aligned on sizeof(u_char) == 1 boundaries.
@@ -589,21 +576,19 @@ skipjack_setkey(u_int8_t **sched, const u_int8_t *key, int len)
 	*sched = malloc(10 * (sizeof(u_int8_t *) + 0x100),
 		M_CRYPTO_DATA, M_NOWAIT|M_ZERO);
 
-	if (*sched != NULL) {
+	if (*sched == NULL)
+		return ENOMEM;
 
-		u_int8_t** key_tables = (u_int8_t**) *sched;
-		u_int8_t* table = (u_int8_t*) &key_tables[10];
-		int k;
+	u_int8_t** key_tables = (u_int8_t**) *sched;
+	u_int8_t* table = (u_int8_t*) &key_tables[10];
+	int k;
 
-		for (k = 0; k < 10; k++) {
-			key_tables[k] = table;
-			table += 0x100;
-		}
-		subkey_table_gen(key, (u_int8_t **) *sched);
-		err = 0;
-	} else
-		err = ENOMEM;
-	return err;
+	for (k = 0; k < 10; k++) {
+		key_tables[k] = table;
+		table += 0x100;
+	}
+	subkey_table_gen(key, (u_int8_t **) *sched);
+	return 0;
 }
 
 static void
@@ -630,18 +615,15 @@ rijndael128_decrypt(void *key, u_int8_t *blk)
 static int
 rijndael128_setkey(u_int8_t **sched, const u_int8_t *key, int len)
 {
-	int err;
 
 	if (len != 16 && len != 24 && len != 32)
 		return EINVAL;
 	*sched = malloc(sizeof(rijndael_ctx), M_CRYPTO_DATA,
 	    M_NOWAIT|M_ZERO);
-	if (*sched != NULL) {
-		rijndael_set_key((rijndael_ctx *) *sched, key, len * 8);
-		err = 0;
-	} else
-		err = ENOMEM;
-	return err;
+	if (*sched == NULL)
+		return ENOMEM;
+	rijndael_set_key((rijndael_ctx *) *sched, key, len * 8);
+	return 0;
 }
 
 static void
@@ -669,18 +651,16 @@ cml_decrypt(void *key, u_int8_t *blk)
 static int
 cml_setkey(u_int8_t **sched, const u_int8_t *key, int len)
 {
-	int err;
 
 	if (len != 16 && len != 24 && len != 32)
 		return (EINVAL);
 	*sched = malloc(sizeof(camellia_ctx), M_CRYPTO_DATA,
 			M_NOWAIT|M_ZERO);
-	if (*sched != NULL) {
-		camellia_set_key((camellia_ctx *) *sched, key, len * 8);
-		err = 0;
-	} else
-		err = ENOMEM;
-	return err;
+	if (*sched == NULL)
+		return ENOMEM;
+
+	camellia_set_key((camellia_ctx *) *sched, key, len * 8);
+	return 0;
 }
 
 static void

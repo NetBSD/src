@@ -1,4 +1,4 @@
-#	$NetBSD: files.ibcs2,v 1.9 2008/11/19 18:36:02 ad Exp $
+#	$NetBSD: files.ibcs2,v 1.9.26.1 2017/12/03 11:36:53 jdolecek Exp $
 #
 # Config file description for machine-independent IBCS-2 compat code.
 # Included by ports that need it.
@@ -6,6 +6,7 @@
 # ports should define any machine-specific files they need in their
 # own file lists.
 
+define	compat_ibcs2
 file	compat/ibcs2/ibcs2_errno.c	compat_ibcs2
 file	compat/ibcs2/ibcs2_exec.c	compat_ibcs2
 file	compat/ibcs2/ibcs2_exec_coff.c	compat_ibcs2

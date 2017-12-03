@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.38.18.2 2014/08/20 00:03:42 tls Exp $ */
+/* $NetBSD: if_txp.c,v 1.38.18.3 2017/12/03 11:37:08 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.38.18.2 2014/08/20 00:03:42 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.38.18.3 2017/12/03 11:37:08 jdolecek Exp $");
 
 #include "opt_inet.h"
 
@@ -216,25 +216,27 @@ txp_attach(device_t parent, device_t self, void *aux)
 	}
 	sc->sc_flags = flags;
 
+	aprint_naive("\n");
 	pci_devinfo(pa->pa_id, 0, 0, devinfo, sizeof(devinfo));
 #define TXP_EXTRAINFO ((flags & (TXP_USESUBSYSTEM|TXP_SERVERVERSION)) == \
   (TXP_USESUBSYSTEM|TXP_SERVERVERSION) ? " (SVR)" : "")
-	printf(": %s%s\n%s", devinfo, TXP_EXTRAINFO, device_xname(sc->sc_dev));
+	aprint_normal(": %s%s\n%s", devinfo, TXP_EXTRAINFO,
+	    device_xname(sc->sc_dev));
 
 	command = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 
 	if (!(command & PCI_COMMAND_MASTER_ENABLE)) {
-		printf(": failed to enable bus mastering\n");
+		aprint_error(": failed to enable bus mastering\n");
 		return;
 	}
 
 	if (!(command & PCI_COMMAND_MEM_ENABLE)) {
-		printf(": failed to enable memory mapping\n");
+		aprint_error(": failed to enable memory mapping\n");
 		return;
 	}
 	if (pci_mapreg_map(pa, TXP_PCI_LOMEM, PCI_MAPREG_TYPE_MEM, 0,
 	    &sc->sc_bt, &sc->sc_bh, NULL, NULL)) {
-		printf(": can't map mem space %d\n", 0);
+		aprint_error(": can't map mem space %d\n", 0);
 		return;
 	}
 
@@ -244,20 +246,20 @@ txp_attach(device_t parent, device_t self, void *aux)
 	 * Allocate our interrupt.
 	 */
 	if (pci_intr_map(pa, &ih)) {
-		printf(": couldn't map interrupt\n");
+		aprint_error(": couldn't map interrupt\n");
 		return;
 	}
 
 	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, txp_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf(": couldn't establish interrupt");
+		aprint_error(": couldn't establish interrupt");
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_normal(" at %s", intrstr);
+		aprint_normal("\n");
 		return;
 	}
-	printf(": interrupting at %s\n", intrstr);
+	aprint_error(": interrupting at %s\n", intrstr);
 
 	if (txp_chip_init(sc))
 		goto cleanupintr;
@@ -287,8 +289,8 @@ txp_attach(device_t parent, device_t self, void *aux)
 	enaddr[4] = ((u_int8_t *)&p2)[1];
 	enaddr[5] = ((u_int8_t *)&p2)[0];
 
-	printf("%s: Ethernet address %s\n", device_xname(sc->sc_dev),
-	       ether_sprintf(enaddr));
+	aprint_normal_dev(self, "Ethernet address %s\n",
+	    ether_sprintf(enaddr));
 	sc->sc_cold = 0;
 
 	ifmedia_init(&sc->sc_ifmedia, 0, txp_ifmedia_upd, txp_ifmedia_sts);
@@ -341,6 +343,7 @@ txp_attach(device_t parent, device_t self, void *aux)
 	 * Attach us everywhere
 	 */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, enaddr);
 
 	if (pmf_device_register1(self, NULL, NULL, txp_shutdown))
@@ -449,7 +452,8 @@ txp_download_fw(struct txp_softc *sc)
 	WRITE_REG(sc, TXP_ISR, TXP_INT_A2H_0);
 
 	fileheader = (const struct txp_fw_file_header *)tc990image;
-	if (memcmp("TYPHOON", fileheader->magicid, sizeof(fileheader->magicid))) {
+	if (memcmp("TYPHOON", fileheader->magicid,
+	    sizeof(fileheader->magicid))) {
 		printf(": fw invalid magic\n");
 		return (-1);
 	}
@@ -459,7 +463,8 @@ txp_download_fw(struct txp_softc *sc)
 	WRITE_REG(sc, TXP_H2A_0, TXP_BOOTCMD_RUNTIME_IMAGE);
 
 	if (txp_download_fw_wait(sc)) {
-		printf("%s: fw wait failed, initial\n", device_xname(sc->sc_dev));
+		printf("%s: fw wait failed, initial\n",
+		    device_xname(sc->sc_dev));
 		return (-1);
 	}
 
@@ -522,7 +527,8 @@ txp_download_fw_wait(struct txp_softc *sc)
 }
 
 int
-txp_download_fw_section(struct txp_softc *sc, const struct txp_fw_section_header *sect, int sectnum)
+txp_download_fw_section(struct txp_softc *sc,
+    const struct txp_fw_section_header *sect, int sectnum)
 {
 	struct txp_dma_alloc dma;
 	int rseg, err = 0;
@@ -647,13 +653,14 @@ txp_intr(void *vsc)
 	/* unmask all interrupts */
 	WRITE_REG(sc, TXP_IMR, TXP_INT_A2H_3);
 
-	txp_start(&sc->sc_arpcom.ec_if);
+	if_schedule_deferred_start(&sc->sc_arpcom.ec_if);
 
 	return (claimed);
 }
 
 void
-txp_rx_reclaim(struct txp_softc *sc, struct txp_rx_ring *r, struct txp_dma_alloc *dma)
+txp_rx_reclaim(struct txp_softc *sc, struct txp_rx_ring *r,
+    struct txp_dma_alloc *dma)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ec_if;
 	struct txp_rx_desc *rxd;
@@ -671,8 +678,8 @@ txp_rx_reclaim(struct txp_softc *sc, struct txp_rx_ring *r, struct txp_dma_alloc
 	while (roff != woff) {
 
 		bus_dmamap_sync(sc->sc_dmat, dma->dma_map,
-		    idx * sizeof(struct txp_rx_desc), sizeof(struct txp_rx_desc),
-		    BUS_DMASYNC_POSTREAD);
+		    idx * sizeof(struct txp_rx_desc),
+		    sizeof(struct txp_rx_desc), BUS_DMASYNC_POSTREAD);
 
 		if (rxd->rx_flags & RX_FLAGS_ERROR) {
 			printf("%s: error 0x%x\n", device_xname(sc->sc_dev),
@@ -715,7 +722,7 @@ txp_rx_reclaim(struct txp_softc *sc, struct txp_rx_ring *r, struct txp_dma_alloc
 					goto next;
 				}
 			}
-			mnew->m_pkthdr.rcvif = ifp;
+			m_set_rcvif(mnew, ifp);
 			mnew->m_pkthdr.len = mnew->m_len = m->m_len;
 			mnew->m_data += 2;
 			memcpy(mnew->m_data, m->m_data, m->m_len);
@@ -723,11 +730,6 @@ txp_rx_reclaim(struct txp_softc *sc, struct txp_rx_ring *r, struct txp_dma_alloc
 			m = mnew;
 		}
 #endif
-
-		/*
-		 * Handle BPF listeners. Let the BPF user see the packet.
-		 */
-		bpf_mtap(ifp, m);
 
 		if (rxd->rx_stat & htole32(RX_STAT_IPCKSUMBAD))
 			sumflags |= (M_CSUM_IPv4|M_CSUM_IPv4_BAD);
@@ -747,16 +749,15 @@ txp_rx_reclaim(struct txp_softc *sc, struct txp_rx_ring *r, struct txp_dma_alloc
 		m->m_pkthdr.csum_flags = sumflags;
 
 		if (rxd->rx_stat & htole32(RX_STAT_VLAN)) {
-			VLAN_INPUT_TAG(ifp, m, htons(rxd->rx_vlan >> 16),
-			    continue);
+			vlan_set_tag(m, htons(rxd->rx_vlan >> 16));
 		}
 
-		(*ifp->if_input)(ifp, m);
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 
 next:
 		bus_dmamap_sync(sc->sc_dmat, dma->dma_map,
-		    idx * sizeof(struct txp_rx_desc), sizeof(struct txp_rx_desc),
-		    BUS_DMASYNC_PREREAD);
+		    idx * sizeof(struct txp_rx_desc),
+		    sizeof(struct txp_rx_desc), BUS_DMASYNC_PREREAD);
 
 		roff += sizeof(struct txp_rx_desc);
 		if (roff == (RX_ENTRIES * sizeof(struct txp_rx_desc))) {
@@ -803,7 +804,7 @@ txp_rxbuf_reclaim(struct txp_softc *sc)
 		MCLGET(sd->sd_mbuf, M_DONTWAIT);
 		if ((sd->sd_mbuf->m_flags & M_EXT) == 0)
 			goto err_mbuf;
-		sd->sd_mbuf->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(sd->sd_mbuf, ifp);
 		sd->sd_mbuf->m_pkthdr.len = sd->sd_mbuf->m_len = MCLBYTES;
 		if (bus_dmamap_create(sc->sc_dmat, TXP_MAX_PKTLEN, 1,
 		    TXP_MAX_PKTLEN, 0, BUS_DMA_NOWAIT, &sd->sd_map))
@@ -853,7 +854,8 @@ err_sd:
  * Reclaim mbufs and entries from a transmit ring.
  */
 void
-txp_tx_reclaim(struct txp_softc *sc, struct txp_tx_ring *r, struct txp_dma_alloc *dma)
+txp_tx_reclaim(struct txp_softc *sc, struct txp_tx_ring *r,
+    struct txp_dma_alloc *dma)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ec_if;
 	u_int32_t idx = TXP_OFFSET2IDX(le32toh(*(r->r_off)));
@@ -934,8 +936,8 @@ txp_alloc_rings(struct txp_softc *sc)
 	int i, j, nb;
 
 	/* boot record */
-	if (txp_dma_malloc(sc, sizeof(struct txp_boot_record), &sc->sc_boot_dma,
-	    BUS_DMA_COHERENT)) {
+	if (txp_dma_malloc(sc, sizeof(struct txp_boot_record),
+	    &sc->sc_boot_dma, BUS_DMA_COHERENT)) {
 		printf(": can't allocate boot record\n");
 		return (-1);
 	}
@@ -960,7 +962,8 @@ txp_alloc_rings(struct txp_softc *sc)
 		printf(": can't allocate high tx ring\n");
 		goto bail_host;
 	}
-	memset(sc->sc_txhiring_dma.dma_vaddr, 0, sizeof(struct txp_tx_desc) * TX_ENTRIES);
+	memset(sc->sc_txhiring_dma.dma_vaddr, 0,
+	    sizeof(struct txp_tx_desc) * TX_ENTRIES);
 	boot->br_txhipri_lo = htole32(sc->sc_txhiring_dma.dma_paddr & 0xffffffff);
 	boot->br_txhipri_hi = htole32(sc->sc_txhiring_dma.dma_paddr >> 32);
 	boot->br_txhipri_siz = htole32(TX_ENTRIES * sizeof(struct txp_tx_desc));
@@ -987,7 +990,8 @@ txp_alloc_rings(struct txp_softc *sc)
 		printf(": can't allocate low tx ring\n");
 		goto bail_txhiring;
 	}
-	memset(sc->sc_txloring_dma.dma_vaddr, 0, sizeof(struct txp_tx_desc) * TX_ENTRIES);
+	memset(sc->sc_txloring_dma.dma_vaddr, 0,
+	    sizeof(struct txp_tx_desc) * TX_ENTRIES);
 	boot->br_txlopri_lo = htole32(sc->sc_txloring_dma.dma_paddr & 0xffffffff);
 	boot->br_txlopri_hi = htole32(sc->sc_txloring_dma.dma_paddr >> 32);
 	boot->br_txlopri_siz = htole32(TX_ENTRIES * sizeof(struct txp_tx_desc));
@@ -1002,7 +1006,8 @@ txp_alloc_rings(struct txp_softc *sc)
 		printf(": can't allocate high rx ring\n");
 		goto bail_txloring;
 	}
-	memset(sc->sc_rxhiring_dma.dma_vaddr, 0, sizeof(struct txp_rx_desc) * RX_ENTRIES);
+	memset(sc->sc_rxhiring_dma.dma_vaddr, 0,
+	    sizeof(struct txp_rx_desc) * RX_ENTRIES);
 	boot->br_rxhipri_lo = htole32(sc->sc_rxhiring_dma.dma_paddr & 0xffffffff);
 	boot->br_rxhipri_hi = htole32(sc->sc_rxhiring_dma.dma_paddr >> 32);
 	boot->br_rxhipri_siz = htole32(RX_ENTRIES * sizeof(struct txp_rx_desc));
@@ -1019,7 +1024,8 @@ txp_alloc_rings(struct txp_softc *sc)
 		printf(": can't allocate low rx ring\n");
 		goto bail_rxhiring;
 	}
-	memset(sc->sc_rxloring_dma.dma_vaddr, 0, sizeof(struct txp_rx_desc) * RX_ENTRIES);
+	memset(sc->sc_rxloring_dma.dma_vaddr, 0,
+	    sizeof(struct txp_rx_desc) * RX_ENTRIES);
 	boot->br_rxlopri_lo = htole32(sc->sc_rxloring_dma.dma_paddr & 0xffffffff);
 	boot->br_rxlopri_hi = htole32(sc->sc_rxloring_dma.dma_paddr >> 32);
 	boot->br_rxlopri_siz = htole32(RX_ENTRIES * sizeof(struct txp_rx_desc));
@@ -1036,7 +1042,8 @@ txp_alloc_rings(struct txp_softc *sc)
 		printf(": can't allocate command ring\n");
 		goto bail_rxloring;
 	}
-	memset(sc->sc_cmdring_dma.dma_vaddr, 0, sizeof(struct txp_cmd_desc) * CMD_ENTRIES);
+	memset(sc->sc_cmdring_dma.dma_vaddr, 0,
+	    sizeof(struct txp_cmd_desc) * CMD_ENTRIES);
 	boot->br_cmd_lo = htole32(sc->sc_cmdring_dma.dma_paddr & 0xffffffff);
 	boot->br_cmd_hi = htole32(sc->sc_cmdring_dma.dma_paddr >> 32);
 	boot->br_cmd_siz = htole32(CMD_ENTRIES * sizeof(struct txp_cmd_desc));
@@ -1050,7 +1057,8 @@ txp_alloc_rings(struct txp_softc *sc)
 		printf(": can't allocate response ring\n");
 		goto bail_cmdring;
 	}
-	memset(sc->sc_rspring_dma.dma_vaddr, 0, sizeof(struct txp_rsp_desc) * RSP_ENTRIES);
+	memset(sc->sc_rspring_dma.dma_vaddr, 0,
+	    sizeof(struct txp_rsp_desc) * RSP_ENTRIES);
 	boot->br_resp_lo = htole32(sc->sc_rspring_dma.dma_paddr & 0xffffffff);
 	boot->br_resp_hi = htole32(sc->sc_rspring_dma.dma_paddr >> 32);
 	boot->br_resp_siz = htole32(CMD_ENTRIES * sizeof(struct txp_rsp_desc));
@@ -1064,7 +1072,8 @@ txp_alloc_rings(struct txp_softc *sc)
 		printf(": can't allocate rx buffer ring\n");
 		goto bail_rspring;
 	}
-	memset(sc->sc_rxbufring_dma.dma_vaddr, 0, sizeof(struct txp_rxbuf_desc) * RXBUF_ENTRIES);
+	memset(sc->sc_rxbufring_dma.dma_vaddr, 0,
+	    sizeof(struct txp_rxbuf_desc) * RXBUF_ENTRIES);
 	boot->br_rxbuf_lo = htole32(sc->sc_rxbufring_dma.dma_paddr & 0xffffffff);
 	boot->br_rxbuf_hi = htole32(sc->sc_rxbufring_dma.dma_paddr >> 32);
 	boot->br_rxbuf_siz = htole32(RXBUF_ENTRIES * sizeof(struct txp_rxbuf_desc));
@@ -1073,7 +1082,8 @@ txp_alloc_rings(struct txp_softc *sc)
 		sd = (struct txp_swdesc *)malloc(sizeof(struct txp_swdesc),
 		    M_DEVBUF, M_NOWAIT);
 		/* stash away pointer */
-		memcpy(__UNVOLATILE(&sc->sc_rxbufs[nb].rb_vaddrlo), &sd, sizeof(sd));
+		memcpy(__UNVOLATILE(&sc->sc_rxbufs[nb].rb_vaddrlo), &sd,
+		    sizeof(sd));
 		if (sd == NULL)
 			break;
 
@@ -1087,7 +1097,7 @@ txp_alloc_rings(struct txp_softc *sc)
 			goto bail_rxbufring;
 		}
 		sd->sd_mbuf->m_pkthdr.len = sd->sd_mbuf->m_len = MCLBYTES;
-		sd->sd_mbuf->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(sd->sd_mbuf, ifp);
 		if (bus_dmamap_create(sc->sc_dmat, TXP_MAX_PKTLEN, 1,
 		    TXP_MAX_PKTLEN, 0, BUS_DMA_NOWAIT, &sd->sd_map)) {
 			goto bail_rxbufring;
@@ -1189,7 +1199,8 @@ bail_boot:
 }
 
 int
-txp_dma_malloc(struct txp_softc *sc, bus_size_t size, struct txp_dma_alloc *dma, int mapflags)
+txp_dma_malloc(struct txp_softc *sc, bus_size_t size,
+    struct txp_dma_alloc *dma, int mapflags)
 {
 	int r;
 
@@ -1385,7 +1396,6 @@ txp_start(struct ifnet *ifp)
 	struct mbuf *m, *mnew;
 	struct txp_swdesc *sd;
 	u_int32_t firstprod, firstcnt, prod, cnt, i;
-	struct m_tag *mtag;
 
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
@@ -1446,9 +1456,9 @@ txp_start(struct ifnet *ifp)
 		if (++cnt >= (TX_ENTRIES - 4))
 			goto oactive;
 
-		if ((mtag = VLAN_OUTPUT_TAG(&sc->sc_arpcom, m)))
+		if (vlan_has_tag(m))
 			txd->tx_pflags = TX_PFLAGS_VLAN |
-			  (htons(VLAN_TAG_VALUE(mtag)) << TX_PFLAGS_VLANTAG_S);
+			  (htons(vlan_get_tag(m)) << TX_PFLAGS_VLANTAG_S);
 
 		if (m->m_pkthdr.csum_flags & M_CSUM_IPv4)
 			txd->tx_pflags |= TX_PFLAGS_IPCKSUM;
@@ -1551,7 +1561,8 @@ oactive1:
  * Handle simple commands sent to the typhoon
  */
 int
-txp_command(struct txp_softc *sc, u_int16_t id, u_int16_t in1, u_int32_t in2, u_int32_t in3, u_int16_t *out1, u_int32_t *out2, u_int32_t *out3, int wait)
+txp_command(struct txp_softc *sc, u_int16_t id, u_int16_t in1, u_int32_t in2,
+    u_int32_t in3, u_int16_t *out1, u_int32_t *out2, u_int32_t *out3, int wait)
 {
 	struct txp_rsp_desc *rsp = NULL;
 
@@ -1572,7 +1583,9 @@ txp_command(struct txp_softc *sc, u_int16_t id, u_int16_t in1, u_int32_t in2, u_
 }
 
 int
-txp_command2(struct txp_softc *sc, u_int16_t id, u_int16_t in1, u_int32_t in2, u_int32_t in3, struct txp_ext_desc *in_extp, u_int8_t in_extn, struct txp_rsp_desc **rspp, int wait)
+txp_command2(struct txp_softc *sc, u_int16_t id, u_int16_t in1, u_int32_t in2,
+    u_int32_t in3, struct txp_ext_desc *in_extp, u_int8_t in_extn,
+    struct txp_rsp_desc **rspp, int wait)
 {
 	struct txp_hostvar *hv = sc->sc_hostvar;
 	struct txp_cmd_desc *cmd;
@@ -1645,7 +1658,8 @@ txp_command2(struct txp_softc *sc, u_int16_t id, u_int16_t in1, u_int32_t in2, u
 }
 
 int
-txp_response(struct txp_softc *sc, u_int32_t ridx, u_int16_t id, u_int16_t seq, struct txp_rsp_desc **rspp)
+txp_response(struct txp_softc *sc, u_int32_t ridx, u_int16_t id, u_int16_t seq,
+    struct txp_rsp_desc **rspp)
 {
 	struct txp_hostvar *hv = sc->sc_hostvar;
 	struct txp_rsp_desc *rsp;
@@ -1692,7 +1706,8 @@ txp_response(struct txp_softc *sc, u_int32_t ridx, u_int16_t id, u_int16_t seq, 
 }
 
 void
-txp_rsp_fixup(struct txp_softc *sc, struct txp_rsp_desc *rsp, struct txp_rsp_desc *dst)
+txp_rsp_fixup(struct txp_softc *sc, struct txp_rsp_desc *rsp,
+    struct txp_rsp_desc *dst)
 {
 	struct txp_rsp_desc *src = rsp;
 	struct txp_hostvar *hv = sc->sc_hostvar;
@@ -1931,7 +1946,8 @@ again:
 
 		ETHER_FIRST_MULTI(step, ac, enm);
 		while (enm != NULL) {
-			if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+			if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
+			    ETHER_ADDR_LEN)) {
 				/*
 				 * We must listen to a range of multicast
 				 * addresses.  For now, just accept all

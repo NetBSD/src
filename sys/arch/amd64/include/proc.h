@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.15.2.1 2014/08/20 00:02:42 tls Exp $	*/
+/*	$NetBSD: proc.h,v 1.15.2.2 2017/12/03 11:35:47 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -53,8 +53,8 @@ struct mdlwp {
 	volatile int md_astpending;
 };
 
-#define	MDL_COMPAT32	0x0008	/* i386, always return via iret */
-#define	MDL_IRET	0x0010	/* force return via iret, not sysret */
+#define	MDL_COMPAT32		0x0008	/* i386, always return via iret */
+#define	MDL_IRET		0x0010	/* force return via iret, not sysret */
 
 struct mdproc {
 	int	md_flags;

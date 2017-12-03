@@ -1,4 +1,4 @@
-/*	$NetBSD: hci.h,v 1.35.12.1 2014/08/20 00:04:35 tls Exp $	*/
+/*	$NetBSD: hci.h,v 1.35.12.2 2017/12/03 11:39:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -54,14 +54,15 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: hci.h,v 1.35.12.1 2014/08/20 00:04:35 tls Exp $
+ * $Id: hci.h,v 1.35.12.2 2017/12/03 11:39:03 jdolecek Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/ng_hci.h,v 1.6 2005/01/07 01:45:43 imp Exp $
  */
 
 /*
  * This file contains everything that applications need to know from
  * Host Controller Interface (HCI). Information taken from Bluetooth
- * Core Specifications (v1.1, v2.0 and v2.1)
+ * Core Specifications (v1.1, v2.0, v2.1 + EDR, v3.0 + HS,
+ * v4.0 and v4.2)
  *
  * This file can be included by both kernel and userland applications.
  *
@@ -75,6 +76,8 @@
 #define _NETBT_HCI_H_
 
 #include <netbt/bluetooth.h>
+
+#include <sys/ioccom.h>
 
 /**************************************************************************
  **************************************************************************
@@ -99,7 +102,10 @@
 #define HCI_SPEC_V20			0x03 /* v2.0 + EDR */
 #define HCI_SPEC_V21			0x04 /* v2.1 + EDR */
 #define HCI_SPEC_V30			0x05 /* v3.0 + HS */
-/* 0x06 - 0xFF - reserved for future use */
+#define HCI_SPEC_V40			0x06 /* v4.0 */
+#define HCI_SPEC_V41			0x07 /* v4.1 */
+#define HCI_SPEC_V42			0x08 /* v4.2 */
+/* 0x09 - 0xFF - reserved for future use */
 
 /* LMP features (and page 0 of extended features) */
 /* ------------------- byte 0 --------------------*/
@@ -144,8 +150,8 @@
 /* reserved				0x04 */
 #define HCI_LMP_AFH_CAPABLE_SLAVE	0x08
 #define HCI_LMP_AFH_CLASS_SLAVE		0x10
-/* reserved				0x20 */
-/* reserved				0x40 */
+#define HCI_LMP_BR_EDR_UNSUPPORTED	0x20
+#define HCI_LMP_LE_CONTROLLER		0x40
 #define HCI_LMP_3SLOT_EDR_ACL		0x80
 /* ------------------- byte 5 --------------------*/
 #define HCI_LMP_5SLOT_EDR_ACL		0x01
@@ -158,7 +164,7 @@
 #define HCI_LMP_3SLOT_EDR_eSCO		0x80
 /* ------------------- byte 6 --------------------*/
 #define HCI_LMP_EXTENDED_INQUIRY	0x01
-/* reserved				0x02 */
+#define HCI_LMP_LE_BR_EDR_CONTROLLER	0x02
 /* reserved				0x04 */
 #define HCI_LMP_SIMPLE_PAIRING		0x08
 #define HCI_LMP_ENCAPSULATED_PDU	0x10
@@ -174,6 +180,25 @@
 /* page 1 of extended features */
 /* ------------------- byte 0 --------------------*/
 #define HCI_LMP_SSP			0x01
+#define HCI_LMP_LE_HOST			0x02
+#define HCI_LMP_LE_BR_EDR_HOST		0x04
+#define HCI_LMP_SECURE_CONN_HOST	0x08
+
+/* page 2 of extended features */
+/* ------------------- byte 0 --------------------*/
+#define HCI_LMP_CONNLESS_MASTER		0x01
+#define HCI_LMP_CONNLESS_SLAVE		0x02
+#define HCI_LMP_SYNC_TRAIN		0x04
+#define HCI_LMP_SYNC_SCAN		0x08
+#define HCI_LMP_INQ_RSP_NOTIFY		0x10
+#define HCI_LMP_INTERLACE_SCAN		0x20
+#define HCI_LMP_COARSE_CLOCK		0x40
+/* reserved				0x80 */
+/* ------------------- byte 0 --------------------*/
+#define HCI_LMP_SECURE_CONN_CONTROLLER	0x01
+#define HCI_LMP_PING			0x02
+/* reserved				0x04 */
+#define HCI_LMP_TRAIN_NUDGING		0x08
 
 /* Link types */
 #define HCI_LINK_SCO			0x00 /* Voice */
@@ -2253,28 +2278,28 @@ struct hci_filter {
 static __inline void
 hci_filter_set(uint8_t bit, struct hci_filter *filter)
 {
-	uint8_t off = bit - 1;
+	uint8_t off = (uint8_t)((bit - 1) >> 5);
+	uint8_t sh = (uint8_t)((bit - 1) & 0x1f);
 
-	off >>= 5;
-	filter->mask[off] |= (1 << ((bit - 1) & 0x1f));
+	filter->mask[off] |= 1U << sh;
 }
 
 static __inline void
 hci_filter_clr(uint8_t bit, struct hci_filter *filter)
 {
-	uint8_t off = bit - 1;
+	uint8_t off = (uint8_t)((bit - 1) >> 5);
+	uint8_t sh = (uint8_t)((bit - 1) & 0x1f);
 
-	off >>= 5;
-	filter->mask[off] &= ~(1 << ((bit - 1) & 0x1f));
+	filter->mask[off] &= ~(1U << sh);
 }
 
 static __inline int
 hci_filter_test(uint8_t bit, const struct hci_filter *filter)
 {
-	uint8_t off = bit - 1;
+	uint8_t off = (uint8_t)((bit - 1) >> 5);
+	uint8_t sh = (uint8_t)((bit - 1) & 0x1f);
 
-	off >>= 5;
-	return (filter->mask[off] & (1 << ((bit - 1) & 0x1f)));
+	return (filter->mask[off] >> sh) & 1U;
 }
 
 /*
@@ -2332,6 +2357,7 @@ struct btreq {
 	    struct {
 		uint8_t btrf_page0[HCI_FEATURES_SIZE];	/* basic */
 		uint8_t btrf_page1[HCI_FEATURES_SIZE];	/* extended */
+		uint8_t btrf_page2[HCI_FEATURES_SIZE];	/* extended */
 	    } btrf;
 	    struct bt_stats btrs;   /* unit stats */
 	} btru;
@@ -2350,6 +2376,7 @@ struct btreq {
 #define btr_max_sco	btru.btri.btri_max_sco
 #define btr_features0	btru.btrf.btrf_page0
 #define btr_features1	btru.btrf.btrf_page1
+#define btr_features2	btru.btrf.btrf_page2
 #define btr_stats	btru.btrs
 
 /* hci_unit & btr_flags */
@@ -2494,7 +2521,8 @@ struct hci_unit {
 	uint16_t	 hci_lmp_mask;		/* link policy capabilities */
 
 	uint8_t		 hci_feat0[HCI_FEATURES_SIZE]; /* features mask */
-	uint8_t		 hci_feat1[HCI_FEATURES_SIZE]; /* extended */
+	uint8_t		 hci_feat1[HCI_FEATURES_SIZE]; /* extended page 1 */
+	uint8_t		 hci_feat2[HCI_FEATURES_SIZE]; /* extended page 2 */
 	uint8_t		 hci_cmds[HCI_COMMANDS_SIZE]; /* opcode bitmask */
 
 	/* flow control */

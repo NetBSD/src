@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_timer.c,v 1.4.12.1 2014/08/20 00:03:19 tls Exp $	*/
+/*	$NetBSD: e500_timer.c,v 1.4.12.2 2017/12/03 11:36:36 jdolecek Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: e500_timer.c,v 1.4.12.1 2014/08/20 00:03:19 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: e500_timer.c,v 1.4.12.2 2017/12/03 11:36:36 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: e500_timer.c,v 1.4.12.1 2014/08/20 00:03:19 tls Exp 
 #include <powerpc/booke/e500var.h>
 #include <powerpc/booke/openpicreg.h>
 
+uint32_t ticks_per_sec;
 static u_long ns_per_tick;
 
 static void init_ppcbooke_tc(void);
@@ -173,6 +174,7 @@ calc_delayconst(void)
 	struct cpu_info * const ci = curcpu();
 
 	ci->ci_data.cpu_cc_freq = board_info_get_number("timebase-frequency");
+	ticks_per_sec = (uint32_t)ci->ci_data.cpu_cc_freq;
 	ns_per_tick = 1000000000 / (u_int)ci->ci_data.cpu_cc_freq;
 }
 

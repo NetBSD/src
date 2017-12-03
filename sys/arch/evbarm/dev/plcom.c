@@ -1,4 +1,4 @@
-/*	$NetBSD: plcom.c,v 1.42.2.3 2014/08/20 00:02:54 tls Exp $	*/
+/*	$NetBSD: plcom.c,v 1.42.2.4 2017/12/03 11:36:04 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -94,15 +94,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.42.2.3 2014/08/20 00:02:54 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.42.2.4 2017/12/03 11:36:04 jdolecek Exp $");
 
 #include "opt_plcom.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
-
-#include "rnd.h"
 
 /*
  * Override cnmagic(9) macro before including <sys/systm.h>.
@@ -136,7 +134,7 @@ __KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.42.2.3 2014/08/20 00:02:54 tls Exp $");
 #include <sys/intr.h>
 #include <sys/bus.h>
 #ifdef RND_COM
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 #endif
 
 #include <evbarm/dev/plcomreg.h>
@@ -245,11 +243,10 @@ int	plcom_kgdb_getc (void *);
 void	plcom_kgdb_putc (void *, int);
 #endif /* KGDB */
 
-#define	PLCOMUNIT_MASK		0x7ffff
-#define	PLCOMDIALOUT_MASK	0x80000
+#define	PLCOMDIALOUT_MASK	TTDIALOUT_MASK
 
-#define	PLCOMUNIT(x)	(minor(x) & PLCOMUNIT_MASK)
-#define	PLCOMDIALOUT(x)	(minor(x) & PLCOMDIALOUT_MASK)
+#define	PLCOMUNIT(x)	TTUNIT(x)
+#define	PLCOMDIALOUT(x)	TTDIALOUT(x)
 
 #define	PLCOM_ISALIVE(sc)	((sc)->enabled != 0 && \
 				 device_is_active((sc)->sc_dev))
@@ -2326,7 +2323,7 @@ plcom_common_putc(dev_t dev, struct plcom_instance *pi, int c)
 
 	/* wait for any pending transmission to finish */
 	timo = 150000;
-	while (!ISSET(PREAD1(pi, PL01XCOM_FR), PL01X_FR_TXFE) && --timo)
+	while (ISSET(PREAD1(pi, PL01XCOM_FR), PL01X_FR_TXFF) && --timo)
 		continue;
 
 	PWRITE1(pi, PL01XCOM_DR, c);

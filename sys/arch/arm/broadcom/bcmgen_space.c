@@ -1,4 +1,4 @@
-/*	$NetBSD: bcmgen_space.c,v 1.1.2.2 2014/08/20 00:02:45 tls Exp $	*/
+/*	$NetBSD: bcmgen_space.c,v 1.1.2.3 2017/12/03 11:35:52 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcmgen_space.c,v 1.1.2.2 2014/08/20 00:02:45 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcmgen_space.c,v 1.1.2.3 2017/12/03 11:35:52 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -241,17 +241,8 @@ bcmgen_bs_barrier(void *t, bus_space_handle_t bsh, bus_size_t offset,
 {
 	flags &= BUS_SPACE_BARRIER_READ|BUS_SPACE_BARRIER_WRITE;
 	
-	if (flags) {
-		/* Issue an ARM11 Data Syncronisation Barrier (DSB) */
-#ifdef _ARM_ARCH_7
-		__asm __volatile("dsb");
-#else
-		__asm__ __volatile__ ("mcr p15, 0, %0, c7, c10, 4" : : "r" (0)
-		    : "memory");
-#endif
-		return;
-	}
-
+	if (flags)
+		arm_dsb();
 }
 
 void *

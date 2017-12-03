@@ -1,4 +1,4 @@
-/* $NetBSD: altmem.c,v 1.1.32.1 2014/08/20 00:03:35 tls Exp $ */
+/* $NetBSD: altmem.c,v 1.1.32.2 2017/12/03 11:36:59 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altmem.c,v 1.1.32.1 2014/08/20 00:03:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altmem.c,v 1.1.32.2 2017/12/03 11:36:59 jdolecek Exp $");
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/device.h>
@@ -36,6 +36,8 @@ __KERNEL_RCSID(0, "$NetBSD: altmem.c,v 1.1.32.1 2014/08/20 00:03:35 tls Exp $");
 #include <sys/disk.h>
 
 #include <dev/altmem/altmemvar.h>
+
+#include "ioconf.h"
 
 struct altmem_softc {
 	device_t	sc_dev;
@@ -83,8 +85,10 @@ const struct cdevsw altmem_cdevsw = {
 	.d_discard = nodiscard,
 	.d_flag = D_DISK
 };
-static struct dkdriver altmemdkdriver = { altmemstrategy, minphys };
-extern struct cfdriver altmem_cd;
+static struct dkdriver altmemdkdriver = {
+	.d_strategy = altmemstrategy,
+	.d_minphys = minphys
+};
 
 CFATTACH_DECL_NEW(altmem, sizeof(struct altmem_softc), altmem_match,
     altmem_attach, NULL, NULL);

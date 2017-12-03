@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.97.2.2 2014/08/20 00:04:36 tls Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.97.2.3 2017/12/03 11:39:04 jdolecek Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -62,11 +62,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.97.2.2 2014/08/20 00:04:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.97.2.3 2017/12/03 11:39:04 jdolecek Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_gateway.h"
 #include "opt_inet.h"
 #include "opt_ipsec.h"
+#include "opt_dccp.h"
+#include "opt_sctp.h"
+#include "opt_net_mpsafe.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -76,8 +81,6 @@ __KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.97.2.2 2014/08/20 00:04:36 tls Exp $
 #include <sys/mbuf.h>
 
 #include <net/if.h>
-#include <net/radix.h>
-#include <net/route.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -102,9 +105,20 @@ __KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.97.2.2 2014/08/20 00:04:36 tls Exp $
 #include <netinet6/udp6.h>
 #include <netinet6/udp6_var.h>
 
-#include <netinet6/pim6_var.h>
+#ifdef DCCP
+#include <netinet/dccp.h>
+#include <netinet/dccp_var.h>
+#include <netinet6/dccp6_var.h>
+#endif
 
-#include <netinet6/nd6.h>
+#ifdef SCTP
+#include <netinet/sctp_pcb.h>
+#include <netinet/sctp.h>
+#include <netinet/sctp_var.h>
+#include <netinet6/sctp6_var.h>
+#endif
+
+#include <netinet6/pim6_var.h>
 
 #ifdef IPSEC
 #include <netipsec/ipsec.h>
@@ -155,17 +169,103 @@ PR_WRAP_CTLOUTPUT(icmp6_ctloutput)
 #define	udp6_ctloutput	udp6_ctloutput_wrapper
 #define	icmp6_ctloutput	icmp6_ctloutput_wrapper
 
-#if defined(IPSEC)
-PR_WRAP_CTLINPUT(ah6_ctlinput)
+#if defined(DCCP)
+PR_WRAP_CTLINPUT(dccp6_ctlinput)
+PR_WRAP_CTLOUTPUT(dccp_ctloutput)
 
-#define	ah6_ctlinput	ah6_ctlinput_wrapper
+#define dccp6_ctlinput	dccp6_ctlinput_wrapper
+#define dccp_ctloutput	dccp_ctloutput_wrapper
+#endif
+
+#if defined(SCTP)
+PR_WRAP_CTLINPUT(sctp6_ctlinput)
+PR_WRAP_CTLOUTPUT(sctp_ctloutput)
+
+#define sctp6_ctlinput	sctp6_ctlinput_wrapper
+#define sctp_ctloutput	sctp_ctloutput_wrapper
+#endif
+
+#ifdef NET_MPSAFE
+PR_WRAP_INPUT6(udp6_input)
+PR_WRAP_INPUT6(tcp6_input)
+#ifdef DCCP
+PR_WRAP_INPUT6(dccp6_input)
+#endif
+#ifdef SCTP
+PR_WRAP_INPUT6(sctp6_input)
+#endif
+PR_WRAP_INPUT6(rip6_input)
+PR_WRAP_INPUT6(dest6_input)
+PR_WRAP_INPUT6(route6_input)
+PR_WRAP_INPUT6(frag6_input)
+#if NETHERIP > 0
+PR_WRAP_INPUT6(ip6_etherip_input)
+#endif
+#if NPFSYNC > 0
+PR_WRAP_INPUT6(pfsync_input)
+#endif
+PR_WRAP_INPUT6(pim6_input)
+
+#define	udp6_input		udp6_input_wrapper
+#define	tcp6_input		tcp6_input_wrapper
+#define	dccp6_input		dccp6_input_wrapper
+#define	sctp6_input		sctp6_input_wrapper
+#define	rip6_input		rip6_input_wrapper
+#define	dest6_input		dest6_input_wrapper
+#define	route6_input		route6_input_wrapper
+#define	frag6_input		frag6_input_wrapper
+#define	ip6_etherip_input	ip6_etherip_input_wrapper
+#define	pim6_input		pim6_input_wrapper
 #endif
 
 #if defined(IPSEC)
+
+#ifdef IPSEC_RUMPKERNEL
+/*
+ * .pr_input = ipsec6_common_input won't be resolved on loading
+ * the ipsec shared library. We need a wrapper anyway.
+ */
+static int
+ipsec6_common_input_wrapper(struct mbuf **mp, int *offp, int proto)
+{
+
+	if (ipsec_enabled) {
+		return ipsec6_common_input(mp, offp, proto);
+	} else {
+		m_freem(*mp);
+		return IPPROTO_DONE;
+	}
+}
+#define	ipsec6_common_input	ipsec6_common_input_wrapper
+
+/* The ctlinput functions may not be loaded */
+#define	IPSEC_WRAP_CTLINPUT(name)			\
+static void *						\
+name##_wrapper(int a, const struct sockaddr *b, void *c)\
+{							\
+	void *rv;					\
+	KERNEL_LOCK(1, NULL);				\
+	if (ipsec_enabled)				\
+		rv = name(a, b, c);			\
+	else						\
+		rv = NULL;				\
+	KERNEL_UNLOCK_ONE(NULL);			\
+	return rv;					\
+}
+IPSEC_WRAP_CTLINPUT(ah6_ctlinput)
+IPSEC_WRAP_CTLINPUT(esp6_ctlinput)
+
+#else /* !IPSEC_RUMPKERNEL */
+
+PR_WRAP_CTLINPUT(ah6_ctlinput)
 PR_WRAP_CTLINPUT(esp6_ctlinput)
 
+#endif /* !IPSEC_RUMPKERNEL */
+
+#define	ah6_ctlinput	ah6_ctlinput_wrapper
 #define	esp6_ctlinput	esp6_ctlinput_wrapper
-#endif
+
+#endif /* IPSEC */
 
 static void
 tcp6_init(void)
@@ -183,6 +283,16 @@ const struct ip6protosw inet6sw[] = {
 	.pr_fasttimo = frag6_fasttimo,
 	.pr_slowtimo = frag6_slowtimo,
 	.pr_drain = frag6_drainstub,
+},
+{	.pr_type = SOCK_RAW,
+	.pr_domain = &inet6domain,
+	.pr_protocol = IPPROTO_ICMPV6,
+	.pr_flags = PR_ATOMIC|PR_ADDR|PR_LASTHDR,
+	.pr_input = icmp6_input,
+	.pr_ctlinput = rip6_ctlinput,
+	.pr_ctloutput = icmp6_ctloutput,
+	.pr_usrreqs = &rip6_usrreqs,
+	.pr_init = icmp6_init,
 },
 {	.pr_type = SOCK_DGRAM,
 	.pr_domain = &inet6domain,
@@ -206,12 +316,55 @@ const struct ip6protosw inet6sw[] = {
 	.pr_fasttimo = tcp_fasttimo,
 	.pr_drain = tcp_drainstub,
 },
+#ifdef DCCP
+{	.pr_type = SOCK_CONN_DGRAM,
+	.pr_domain = &inet6domain,
+	.pr_protocol = IPPROTO_DCCP,
+	.pr_flags = PR_CONNREQUIRED|PR_ATOMIC|PR_LISTEN,
+	.pr_input = dccp6_input,
+	.pr_ctlinput = dccp6_ctlinput,
+	.pr_ctloutput = dccp_ctloutput,
+	.pr_usrreqs = &dccp6_usrreqs,
+#ifndef INET
+	.pr_init = dccp_init,
+#endif
+},
+#endif /* DCCP */
+#ifdef SCTP
+{	.pr_type = SOCK_DGRAM,
+	.pr_domain = &inet6domain,
+	.pr_protocol = IPPROTO_SCTP,
+	.pr_flags = PR_ADDR_OPT|PR_WANTRCVD,
+	.pr_input = sctp6_input,
+	.pr_ctlinput = sctp6_ctlinput,
+	.pr_ctloutput = sctp_ctloutput,
+	.pr_usrreqs = &sctp6_usrreqs,
+	.pr_drain = sctp_drain,
+},
+{	.pr_type = SOCK_SEQPACKET,
+	.pr_domain = &inet6domain,
+	.pr_protocol = IPPROTO_SCTP,
+	.pr_flags = PR_ADDR_OPT|PR_WANTRCVD,
+	.pr_input = sctp6_input,
+	.pr_ctlinput = sctp6_ctlinput,
+	.pr_ctloutput = sctp_ctloutput,
+	.pr_drain = sctp_drain,
+},
+{	.pr_type = SOCK_STREAM,
+	.pr_domain = &inet6domain,
+	.pr_protocol = IPPROTO_SCTP,
+	.pr_flags = PR_CONNREQUIRED|PR_ADDR_OPT|PR_WANTRCVD|PR_LISTEN,
+	.pr_input = sctp6_input,
+	.pr_ctlinput = sctp6_ctlinput,
+	.pr_ctloutput = sctp_ctloutput,
+	.pr_drain = sctp_drain,
+},
+#endif /* SCTP */
 {	.pr_type = SOCK_RAW,
 	.pr_domain = &inet6domain,
 	.pr_protocol = IPPROTO_RAW,
 	.pr_flags = PR_ATOMIC|PR_ADDR|PR_PURGEIF,
 	.pr_input = rip6_input,
-	.pr_output = rip6_output,
 	.pr_ctlinput = rip6_ctlinput,
 	.pr_ctloutput = rip6_ctloutput,
 	.pr_usrreqs = &rip6_usrreqs,
@@ -223,17 +376,6 @@ const struct ip6protosw inet6sw[] = {
 	.pr_init = ip6flow_poolinit,
 },
 #endif /* GATEWAY */
-{	.pr_type = SOCK_RAW,
-	.pr_domain = &inet6domain,
-	.pr_protocol = IPPROTO_ICMPV6,
-	.pr_flags = PR_ATOMIC|PR_ADDR|PR_LASTHDR,
-	.pr_input = icmp6_input,
-	.pr_output = rip6_output,
-	.pr_ctlinput = rip6_ctlinput,
-	.pr_ctloutput = icmp6_ctloutput,
-	.pr_usrreqs = &rip6_usrreqs,
-	.pr_init = icmp6_init,
-},
 {	.pr_type = SOCK_RAW,
 	.pr_domain = &inet6domain,
 	.pr_protocol = IPPROTO_DSTOPTS,
@@ -280,7 +422,6 @@ const struct ip6protosw inet6sw[] = {
 	.pr_protocol = IPPROTO_IPV4,
 	.pr_flags = PR_ATOMIC|PR_ADDR|PR_LASTHDR,
 	.pr_input = encap6_input,
-	.pr_output = rip6_output,
 	.pr_ctlinput = encap6_ctlinput,
 	.pr_ctloutput = rip6_ctloutput,
 	.pr_usrreqs = &rip6_usrreqs,
@@ -292,7 +433,6 @@ const struct ip6protosw inet6sw[] = {
 	.pr_protocol = IPPROTO_IPV6,
 	.pr_flags = PR_ATOMIC|PR_ADDR|PR_LASTHDR,
 	.pr_input = encap6_input,
-	.pr_output = rip6_output,
 	.pr_ctlinput = encap6_ctlinput,
 	.pr_ctloutput = rip6_ctloutput,
 	.pr_usrreqs = &rip6_usrreqs,
@@ -304,7 +444,6 @@ const struct ip6protosw inet6sw[] = {
 	.pr_protocol = IPPROTO_ETHERIP,
 	.pr_flags = PR_ATOMIC|PR_ADDR|PR_LASTHDR,
 	.pr_input = ip6_etherip_input,
-	.pr_output = rip6_output,
 	.pr_ctlinput = rip6_ctlinput,
 	.pr_ctloutput = rip6_ctloutput,
 	.pr_usrreqs = &rip6_usrreqs,
@@ -316,17 +455,25 @@ const struct ip6protosw inet6sw[] = {
 	.pr_protocol = IPPROTO_CARP,
 	.pr_flags = PR_ATOMIC|PR_ADDR,
 	.pr_input = carp6_proto_input,
-	.pr_output = rip6_output,
 	.pr_ctloutput = rip6_ctloutput,
 	.pr_usrreqs = &rip6_usrreqs,
 },
 #endif /* NCARP */
 {	.pr_type = SOCK_RAW,
 	.pr_domain = &inet6domain,
+	.pr_protocol = IPPROTO_L2TP,
+	.pr_flags = PR_ATOMIC|PR_ADDR|PR_LASTHDR,
+	.pr_input = encap6_input,
+	.pr_ctlinput = rip6_ctlinput,
+	.pr_ctloutput = rip6_ctloutput,
+	.pr_usrreqs = &rip6_usrreqs,
+	.pr_init = encap_init,
+},
+{	.pr_type = SOCK_RAW,
+	.pr_domain = &inet6domain,
 	.pr_protocol = IPPROTO_PIM,
 	.pr_flags = PR_ATOMIC|PR_ADDR|PR_LASTHDR,
 	.pr_input = pim6_input,
-	.pr_output = rip6_output,
 	.pr_ctloutput = rip6_ctloutput,
 	.pr_usrreqs = &rip6_usrreqs,
 	.pr_init = pim6_init,
@@ -336,7 +483,6 @@ const struct ip6protosw inet6sw[] = {
 	.pr_domain = &inet6domain,
 	.pr_flags = PR_ATOMIC|PR_ADDR|PR_LASTHDR,
 	.pr_input = rip6_input,
-	.pr_output = rip6_output,
 	.pr_ctloutput = rip6_ctloutput,
 	.pr_usrreqs = &rip6_usrreqs,
 	.pr_init = rip6_init,
@@ -354,7 +500,7 @@ static const struct sockaddr_in6 in6_any = {
 
 bool in6_present = false;
 static void
-in6_init(void)
+in6_dom_init(void)
 {
 
 	in6_present = true;
@@ -362,13 +508,15 @@ in6_init(void)
 
 struct domain inet6domain = {
 	.dom_family = AF_INET6, .dom_name = "internet6",
-	.dom_init = in6_init, .dom_externalize = NULL, .dom_dispose = NULL,
+	.dom_init = in6_dom_init, .dom_externalize = NULL, .dom_dispose = NULL,
 	.dom_protosw = (const struct protosw *)inet6sw,
 	.dom_protoswNPROTOSW = (const struct protosw *)&inet6sw[sizeof(inet6sw)/sizeof(inet6sw[0])],
 	.dom_rtattach = rt_inithead,
 	.dom_rtoffset = offsetof(struct sockaddr_in6, sin6_addr) << 3,
 	.dom_maxrtkey = sizeof(struct ip_pack6),
+	.dom_if_up = in6_if_up, .dom_if_down = in6_if_down,
 	.dom_ifattach = in6_domifattach, .dom_ifdetach = in6_domifdetach,
+	.dom_if_link_state_change = in6_if_link_state_change,
 	.dom_ifqueues = { NULL, NULL },
 	.dom_link = { NULL },
 	.dom_mowner = MOWNER_INIT("",""),
@@ -376,7 +524,6 @@ struct domain inet6domain = {
 	.dom_sa_cmplen = sizeof(struct in6_addr),
 	.dom_sa_any = (const struct sockaddr *)&in6_any,
 	.dom_sockaddr_externalize = sockaddr_in6_externalize,
-	.dom_rtcache = LIST_HEAD_INITIALIZER(inet6domain.dom_rtcache)
 };
 
 #if 0

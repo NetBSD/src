@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.52.2.2 2014/08/20 00:03:29 tls Exp $	*/
+/*	$NetBSD: pmap.h,v 1.52.2.3 2017/12/03 11:36:50 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -109,6 +109,49 @@
 
 #if defined(_KERNEL)
 #include <sys/kcpuset.h>
+#include <uvm/pmap/pmap_pvt.h>
+
+#define BTSEG_NONE	0
+#define BTSEG_TEXT	1
+#define BTSEG_RODATA	2
+#define BTSEG_DATA	3
+#define BTSPACE_NSEGS	64
+
+struct bootspace {
+	struct {
+		vaddr_t va;
+		paddr_t pa;
+		size_t sz;
+	} head;
+
+	/* Kernel segments. */
+	struct {
+		int type;
+		vaddr_t va;
+		paddr_t pa;
+		size_t sz;
+	} segs[BTSPACE_NSEGS];
+
+	/*
+	 * The area used by the early kernel bootstrap. It contains the kernel
+	 * symbols, the preloaded modules, the bootstrap tables, and the ISA I/O
+	 * mem.
+	 */
+	struct {
+		vaddr_t va;
+		paddr_t pa;
+		size_t sz;
+	} boot;
+
+	/* A magic VA usable by the bootstrap code. */
+	vaddr_t spareva;
+
+	/* Virtual address of the page directory. */
+	vaddr_t pdir;
+
+	/* End of the area dedicated to kernel modules (amd64 only). */
+	vaddr_t emodule;
+};
 
 /*
  * pmap data structures: see pmap.c for details of locking.
@@ -179,16 +222,6 @@ struct pmap {
 	((pmap)->pm_pdirpa[0] + (index) * sizeof(pd_entry_t))
 #endif
 
-/* 
- * flag to be used for kernel mappings: PG_u on Xen/amd64, 
- * 0 otherwise.
- */
-#if defined(XEN) && defined(__x86_64__)
-#define PG_k PG_u
-#else
-#define PG_k 0
-#endif
-
 /*
  * MD flags that we use for pmap_enter and pmap_kenter_pa:
  */
@@ -207,7 +240,9 @@ struct pmap {
  */
 extern u_long PDPpaddr;
 
-extern int pmap_pg_g;			/* do we support PG_G? */
+extern pd_entry_t pmap_pg_g;			/* do we support PG_G? */
+extern pd_entry_t pmap_pg_nx;			/* do we support PG_NX? */
+extern int pmap_largepages;
 extern long nkptp[PTP_LEVELS];
 
 /*
@@ -243,20 +278,28 @@ extern long nkptp[PTP_LEVELS];
 void		pmap_activate(struct lwp *);
 void		pmap_bootstrap(vaddr_t);
 bool		pmap_clear_attrs(struct vm_page *, unsigned);
+bool		pmap_pv_clear_attrs(paddr_t, unsigned);
 void		pmap_deactivate(struct lwp *);
-void		pmap_page_remove (struct vm_page *);
+void		pmap_page_remove(struct vm_page *);
+void		pmap_pv_remove(paddr_t);
 void		pmap_remove(struct pmap *, vaddr_t, vaddr_t);
 bool		pmap_test_attrs(struct vm_page *, unsigned);
 void		pmap_write_protect(struct pmap *, vaddr_t, vaddr_t, vm_prot_t);
 void		pmap_load(void);
 paddr_t		pmap_init_tmp_pgtbl(paddr_t);
 void		pmap_remove_all(struct pmap *);
+void		pmap_ldt_cleanup(struct lwp *);
 void		pmap_ldt_sync(struct pmap *);
 void		pmap_kremove_local(vaddr_t, vsize_t);
 
 void		pmap_emap_enter(vaddr_t, paddr_t, vm_prot_t);
 void		pmap_emap_remove(vaddr_t, vsize_t);
 void		pmap_emap_sync(bool);
+
+#define	__HAVE_PMAP_PV_TRACK	1
+void		pmap_pv_init(void);
+void		pmap_pv_track(paddr_t, psize_t);
+void		pmap_pv_untrack(paddr_t, psize_t);
 
 void		pmap_map_ptes(struct pmap *, struct pmap **, pd_entry_t **,
 		    pd_entry_t * const **);
@@ -267,6 +310,10 @@ int		pmap_pdes_invalid(vaddr_t, pd_entry_t * const *, pd_entry_t *);
 u_int		x86_mmap_flags(paddr_t);
 
 bool		pmap_is_curpmap(struct pmap *);
+
+#ifndef __HAVE_DIRECT_MAP
+void		pmap_vpage_cpu_init(struct cpu_info *);
+#endif
 
 vaddr_t reserve_dumppages(vaddr_t); /* XXX: not a pmap fn */
 
@@ -354,6 +401,23 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 			(void) pmap_clear_attrs(pg, PG_RW);
 		} else {
 			pmap_page_remove(pg);
+		}
+	}
+}
+
+/*
+ * pmap_pv_protect: change the protection of all recorded mappings
+ *	of an unmanaged page
+ */
+
+__inline static void __unused
+pmap_pv_protect(paddr_t pa, vm_prot_t prot)
+{
+	if ((prot & VM_PROT_WRITE) == 0) {
+		if (prot & (VM_PROT_READ|VM_PROT_EXECUTE)) {
+			(void) pmap_pv_clear_attrs(pa, PG_RW);
+		} else {
+			pmap_pv_remove(pa);
 		}
 	}
 }
@@ -455,6 +519,7 @@ void	pmap_kenter_ma(vaddr_t, paddr_t, vm_prot_t, u_int);
 int	pmap_enter_ma(struct pmap *, vaddr_t, paddr_t, paddr_t,
 	    vm_prot_t, u_int, int);
 bool	pmap_extract_ma(pmap_t, vaddr_t, paddr_t *);
+void	pmap_free_ptps(struct vm_page *);
 
 /*
  * Hooks for the pool allocator.
@@ -463,11 +528,13 @@ bool	pmap_extract_ma(pmap_t, vaddr_t, paddr_t *);
 
 #ifdef __HAVE_DIRECT_MAP
 
-#define L4_SLOT_DIRECT		509
+#define L4_SLOT_DIRECT		456
 #define PDIR_SLOT_DIRECT	L4_SLOT_DIRECT
 
+#define NL4_SLOT_DIRECT		32
+
 #define PMAP_DIRECT_BASE	(VA_SIGN_NEG((L4_SLOT_DIRECT * NBPD_L4)))
-#define PMAP_DIRECT_END		(VA_SIGN_NEG(((L4_SLOT_DIRECT + 1) * NBPD_L4)))
+#define PMAP_DIRECT_END		(PMAP_DIRECT_BASE + NL4_SLOT_DIRECT * NBPD_L4)
 
 #define PMAP_DIRECT_MAP(pa)	((vaddr_t)PMAP_DIRECT_BASE + (pa))
 #define PMAP_DIRECT_UNMAP(va)	((paddr_t)(va) - PMAP_DIRECT_BASE)

@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.258.6.1 2014/08/20 00:02:41 tls Exp $ */
+/* $NetBSD: pmap.c,v 1.258.6.2 2017/12/03 11:35:46 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.258.6.1 2014/08/20 00:02:41 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.258.6.2 2017/12/03 11:35:46 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,7 +149,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.258.6.1 2014/08/20 00:02:41 tls Exp $");
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/buf.h>
-#include <sys/shm.h>
 #include <sys/atomic.h>
 #include <sys/cpu.h>
 
@@ -778,9 +777,6 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 		 bufsz + 16 * NCARGS + pager_map_size) / PAGE_SIZE +
 		(maxproc * UPAGES) + nkmempages;
 
-#ifdef SYSVSHM
-	lev3mapsize += shminfo.shmall;
-#endif
 	lev3mapsize = roundup(lev3mapsize, NPTEPG);
 
 	/*
@@ -788,8 +784,8 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 	 * the fact that BSEARCH sorts the vm_physmem[] array
 	 * for us.
 	 */
-	avail_start = ptoa(VM_PHYSMEM_PTR(0)->start);
-	avail_end = ptoa(VM_PHYSMEM_PTR(vm_nphysseg - 1)->end);
+	avail_start = ptoa(uvm_physseg_get_avail_start(uvm_physseg_get_first()));
+	avail_end = ptoa(uvm_physseg_get_avail_end(uvm_physseg_get_last()));
 	virtual_end = VM_MIN_KERNEL_ADDRESS + lev3mapsize * PAGE_SIZE;
 
 #if 0
@@ -1011,9 +1007,11 @@ pmap_virtual_space(vaddr_t *vstartp, vaddr_t *vendp)
 vaddr_t
 pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 {
-	int bank, npgs, x;
+	int npgs;
 	vaddr_t va;
-	paddr_t pa;
+	paddr_t pa; 
+
+	uvm_physseg_t bank;
 
 	size = round_page(size);
 	npgs = atop(size);
@@ -1022,50 +1020,36 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 	printf("PSM: size 0x%lx (npgs 0x%x)\n", size, npgs);
 #endif
 
-	for (bank = 0; bank < vm_nphysseg; bank++) {
+	for (bank = uvm_physseg_get_first();
+	     uvm_physseg_valid_p(bank);
+	     bank = uvm_physseg_get_next(bank)) {
 		if (uvm.page_init_done == true)
 			panic("pmap_steal_memory: called _after_ bootstrap");
 
 #if 0
-		printf("     bank %d: avail_start 0x%lx, start 0x%lx, "
-		    "avail_end 0x%lx\n", bank, VM_PHYSMEM_PTR(bank)->avail_start,
+		printf("     bank %d: avail_start 0x%"PRIxPADDR", start 0x%"PRIxPADDR", "
+		    "avail_end 0x%"PRIxPADDR"\n", bank, VM_PHYSMEM_PTR(bank)->avail_start,
 		    VM_PHYSMEM_PTR(bank)->start, VM_PHYSMEM_PTR(bank)->avail_end);
 #endif
 
-		if (VM_PHYSMEM_PTR(bank)->avail_start != VM_PHYSMEM_PTR(bank)->start ||
-		    VM_PHYSMEM_PTR(bank)->avail_start >= VM_PHYSMEM_PTR(bank)->avail_end)
+		if (uvm_physseg_get_avail_start(bank) != uvm_physseg_get_start(bank) ||
+		    uvm_physseg_get_avail_start(bank) >= uvm_physseg_get_avail_end(bank))
 			continue;
 
 #if 0
-		printf("             avail_end - avail_start = 0x%lx\n",
+		printf("             avail_end - avail_start = 0x%"PRIxPADDR"\n",
 		    VM_PHYSMEM_PTR(bank)->avail_end - VM_PHYSMEM_PTR(bank)->avail_start);
 #endif
 
-		if ((VM_PHYSMEM_PTR(bank)->avail_end - VM_PHYSMEM_PTR(bank)->avail_start)
+		if (uvm_physseg_get_avail_end(bank) - uvm_physseg_get_avail_start(bank)
 		    < npgs)
 			continue;
 
 		/*
 		 * There are enough pages here; steal them!
 		 */
-		pa = ptoa(VM_PHYSMEM_PTR(bank)->avail_start);
-		VM_PHYSMEM_PTR(bank)->avail_start += npgs;
-		VM_PHYSMEM_PTR(bank)->start += npgs;
-
-		/*
-		 * Have we used up this segment?
-		 */
-		if (VM_PHYSMEM_PTR(bank)->avail_start == VM_PHYSMEM_PTR(bank)->end) {
-			if (vm_nphysseg == 1)
-				panic("pmap_steal_memory: out of memory!");
-
-			/* Remove this segment from the list. */
-			vm_nphysseg--;
-			for (x = bank; x < vm_nphysseg; x++) {
-				/* structure copy */
-				VM_PHYSMEM_PTR_SWAP(x, x + 1);
-			}
-		}
+		pa = ptoa(uvm_physseg_get_start(bank));
+		uvm_physseg_unplug(atop(pa), npgs);
 
 		va = ALPHA_PHYS_TO_K0SEG(pa);
 		memset((void *)va, 0, size);

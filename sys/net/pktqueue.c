@@ -1,4 +1,4 @@
-/*	$NetBSD: pktqueue.c,v 1.8.6.2 2014/08/20 00:04:34 tls Exp $	*/
+/*	$NetBSD: pktqueue.c,v 1.8.6.3 2017/12/03 11:39:02 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pktqueue.c,v 1.8.6.2 2014/08/20 00:04:34 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pktqueue.c,v 1.8.6.3 2017/12/03 11:39:02 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -104,9 +104,7 @@ pktq_create(size_t maxlen, void (*intrh)(void *), void *sc)
 	percpu_t *pc;
 	void *sih;
 
-	if ((pc = percpu_alloc(sizeof(pktq_counters_t))) == NULL) {
-		return NULL;
-	}
+	pc = percpu_alloc(sizeof(pktq_counters_t));
 	if ((sih = softint_establish(sflags, intrh, sc)) == NULL) {
 		percpu_free(pc, sizeof(pktq_counters_t));
 		return NULL;

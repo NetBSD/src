@@ -1,4 +1,4 @@
-/*	$NetBSD: motgvar.h,v 1.2.6.2 2014/08/20 00:03:51 tls Exp $	*/
+/*	$NetBSD: motgvar.h,v 1.2.6.3 2017/12/03 11:37:34 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@ struct motg_pipe {
 	struct usbd_pipe pipe;
 	int nexttoggle;
 	struct motg_hw_ep *hw_ep; /* pointer to the hardware EP used */
-	SIMPLEQ_ENTRY(motg_pipe) ep_pipe_list; 
+	SIMPLEQ_ENTRY(motg_pipe) ep_pipe_list;
 };
 
 /* description of a hardware endpoint */
@@ -54,7 +54,7 @@ SIMPLEQ_HEAD(ep_pipes_head, motg_pipe);
 struct motg_hw_ep {
 	int ep_number;
 	int ep_fifo_size;
-	usbd_xfer_handle xfer;	/* active xfer on this EP */
+	struct usbd_xfer *xfer;	/* active xfer on this EP */
 	char *data; /* pointer to data to be transmitted/received */
 	int datalen; /* data len to be transmitted */
 	usb_phase_t phase; /* current phase of the transfer, if any */
@@ -75,16 +75,15 @@ struct motg_softc {
 #define MOTG_MODE_DEVICE 1
 	void (*sc_intr_poll)(void *);
 	void *sc_intr_poll_arg;
+	int sc_ep_max;
+	u_int sc_ep_fifosize;
 
 	uint16_t sc_intr_tx_ep;
 	uint16_t sc_intr_rx_ep;
 	uint8_t  sc_intr_ctrl;
 
-	int sc_ep_max;
 	struct motg_hw_ep sc_in_ep[MOTG_MAX_HW_EP];
 	struct motg_hw_ep sc_out_ep[MOTG_MAX_HW_EP];
-
-	struct usb_dma_reserve sc_dma_reserve;
 
 	kmutex_t sc_lock;
 	kmutex_t sc_intr_lock;
@@ -93,9 +92,7 @@ struct motg_softc {
 	pool_cache_t sc_xferpool;
 
 	/* Info for the root hub interrupt "pipe". */
-	usbd_xfer_handle sc_intr_xfer;	/* root hub interrupt transfer */
-	uint8_t sc_root_addr;		/* address of the root hub */
-	uint8_t sc_root_conf;		/* configuration of the root hub */
+	struct usbd_xfer *sc_intr_xfer;	/* root hub interrupt transfer */
 
 	char sc_vendor[32];		/* vendor string for root hub */
 	int sc_id_vendor;		/* vendor ID for root hub */
@@ -114,13 +111,17 @@ struct motg_softc {
 
 struct motg_xfer {
 	struct usbd_xfer xfer;
-	struct motg_softc *sc;
 };
 
-#define UXFER(xfer) ((struct motg_xfer *)(xfer))
+#define MOTG_BUS2SC(bus)	((bus)->ub_hcpriv)
+#define MOTG_PIPE2SC(pipe)	MOTG_BUS2SC((pipe)->up_dev->ud_bus)
+#define MOTG_XFER2SC(xfer)	MOTG_BUS2SC((xfer)->ux_bus)
+#define MOTG_MPIPE2SC(mpipe)	MOTG_BUS2SC((mpipe)->pipe.up_dev->ud_bus)
 
+#define MOTG_XFER2MXFER(xfer)	((struct motg_xfer *)(xfer))
+#define MOTG_PIPE2MPIPE(pipe)	((struct motg_pipe *)(pipe))
 
-usbd_status	motg_init(struct motg_softc *);
+int		motg_init(struct motg_softc *);
 int		motg_intr(struct motg_softc *, uint16_t, uint16_t, uint8_t);
 int		motg_intr_vbus(struct motg_softc *, int);
 int		motg_detach(struct motg_softc *, int);

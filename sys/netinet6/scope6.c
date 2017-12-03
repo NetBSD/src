@@ -1,4 +1,4 @@
-/*	$NetBSD: scope6.c,v 1.8.22.1 2014/08/20 00:04:36 tls Exp $	*/
+/*	$NetBSD: scope6.c,v 1.8.22.2 2017/12/03 11:39:05 jdolecek Exp $	*/
 /*	$KAME$	*/
 
 /*-
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scope6.c,v 1.8.22.1 2014/08/20 00:04:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scope6.c,v 1.8.22.2 2017/12/03 11:39:05 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -41,8 +41,8 @@ __KERNEL_RCSID(0, "$NetBSD: scope6.c,v 1.8.22.1 2014/08/20 00:04:36 tls Exp $");
 #include <sys/queue.h>
 #include <sys/syslog.h>
 
-#include <net/route.h>
 #include <net/if.h>
+#include <net/net_osdep.h>
 
 #include <netinet/in.h>
 
@@ -57,7 +57,8 @@ int ip6_use_defzone = 0;
 
 static struct scope6_id sid_default;
 #define SID(ifp) \
-	(((struct in6_ifextra *)(ifp)->if_afdata[AF_INET6])->scope6_id)
+    ((ifp)->if_afdata[AF_INET6] == NULL ? NULL : \
+	((struct in6_ifextra *)(ifp)->if_afdata[AF_INET6])->scope6_id)
 
 void
 scope6_init(void)
@@ -101,9 +102,7 @@ scope6_set(struct ifnet *ifp, const struct scope6_id *idlist)
 {
 	int i;
 	int error = 0;
-	struct scope6_id *sid = NULL;
-
-	sid = SID(ifp);
+	struct scope6_id *sid = SID(ifp);
 
 	if (!sid)	/* paranoid? */
 		return (EINVAL);
@@ -121,6 +120,7 @@ scope6_set(struct ifnet *ifp, const struct scope6_id *idlist)
 	for (i = 0; i < 16; i++) {
 		if (idlist->s6id_list[i] &&
 		    idlist->s6id_list[i] != sid->s6id_list[i]) {
+			int s;
 			/*
 			 * An interface zone ID must be the corresponding
 			 * interface index by definition.
@@ -129,6 +129,7 @@ scope6_set(struct ifnet *ifp, const struct scope6_id *idlist)
 			    idlist->s6id_list[i] != ifp->if_index)
 				return (EINVAL);
 
+			s = pserialize_read_enter();
 			if (i == IPV6_ADDR_SCOPE_LINKLOCAL &&
 			    !if_byindex(idlist->s6id_list[i])) {
 				/*
@@ -137,8 +138,10 @@ scope6_set(struct ifnet *ifp, const struct scope6_id *idlist)
 				 * IDs, but we check the consistency for
 				 * safety in later use.
 				 */
+				pserialize_read_exit(s);
 				return (EINVAL);
 			}
+			pserialize_read_exit(s);
 
 			/*
 			 * XXX: we must need lots of work in this case,
@@ -181,13 +184,10 @@ in6_addrscope(const struct in6_addr *addr)
 		switch (scope) {
 		case 0x80:
 			return IPV6_ADDR_SCOPE_LINKLOCAL;
-			break;
 		case 0xc0:
 			return IPV6_ADDR_SCOPE_SITELOCAL;
-			break;
 		default:
 			return IPV6_ADDR_SCOPE_GLOBAL; /* just in case */
-			break;
 		}
 	}
 
@@ -202,16 +202,12 @@ in6_addrscope(const struct in6_addr *addr)
 		switch (scope) {
 		case IPV6_ADDR_SCOPE_INTFACELOCAL:
 			return IPV6_ADDR_SCOPE_INTFACELOCAL;
-			break;
 		case IPV6_ADDR_SCOPE_LINKLOCAL:
 			return IPV6_ADDR_SCOPE_LINKLOCAL;
-			break;
 		case IPV6_ADDR_SCOPE_SITELOCAL:
 			return IPV6_ADDR_SCOPE_SITELOCAL;
-			break;
 		default:
 			return IPV6_ADDR_SCOPE_GLOBAL;
-			break;
 		}
 	}
 
@@ -303,15 +299,20 @@ sa6_embedscope(struct sockaddr_in6 *sin6, int defaultok)
 	if (zoneid != 0 &&
 	    (IN6_IS_SCOPE_LINKLOCAL(&sin6->sin6_addr) ||
 	    IN6_IS_ADDR_MC_INTFACELOCAL(&sin6->sin6_addr))) {
+		int s;
 		/*
 		 * At this moment, we only check interface-local and
 		 * link-local scope IDs, and use interface indices as the
 		 * zone IDs assuming a one-to-one mapping between interfaces
 		 * and links.
 		 */
+		s = pserialize_read_enter();
 		ifp = if_byindex(zoneid);
-		if (ifp == NULL)
+		if (ifp == NULL) {
+			pserialize_read_exit(s);
 			return (ENXIO);
+		}
+		pserialize_read_exit(s);
 
 		/* XXX assignment to 16bit from 32bit variable */
 		sin6->sin6_addr.s6_addr16[1] = htons(zoneid & 0xffff);
@@ -343,11 +344,12 @@ int
 sa6_recoverscope(struct sockaddr_in6 *sin6)
 {
 	uint32_t zoneid;
+	char ip6buf[INET6_ADDRSTRLEN];
 
 	if (sin6->sin6_scope_id != 0) {
 		log(LOG_NOTICE,
-		    "sa6_recoverscope: assumption failure (non 0 ID): %s%%%d\n",
-		    ip6_sprintf(&sin6->sin6_addr), sin6->sin6_scope_id);
+		    "%s: assumption failure (non 0 ID): %s%%%d\n", __func__,
+		    IN6_PRINT(ip6buf, &sin6->sin6_addr), sin6->sin6_scope_id);
 		/* XXX: proceed anyway... */
 	}
 	if (IN6_IS_SCOPE_LINKLOCAL(&sin6->sin6_addr) ||
@@ -357,8 +359,12 @@ sa6_recoverscope(struct sockaddr_in6 *sin6)
 		 */
 		zoneid = ntohs(sin6->sin6_addr.s6_addr16[1]);
 		if (zoneid) {
-			if (!if_byindex(zoneid))
+			int s = pserialize_read_enter();
+			if (!if_byindex(zoneid)) {
+				pserialize_read_exit(s);
 				return (ENXIO);
+			}
+			pserialize_read_exit(s);
 			sin6->sin6_addr.s6_addr16[1] = 0;
 			sin6->sin6_scope_id = zoneid;
 		}
@@ -388,31 +394,31 @@ in6_setscope(struct in6_addr *in6, const struct ifnet *ifp, uint32_t *ret_id)
 	uint32_t zoneid = 0;
 	const struct scope6_id *sid = SID(ifp);
 
-#ifdef DIAGNOSTIC
-	if (sid == NULL) { /* should not happen */
-		panic("in6_setscope: scope array is NULL");
-		/* NOTREACHED */
+	if (sid == NULL) {
+		log(LOG_NOTICE, "%s: no scope id for %s\n", __func__,
+		    if_name(ifp));
+		return EINVAL;
 	}
-#endif
 
 	/*
 	 * special case: the loopback address can only belong to a loopback
 	 * interface.
 	 */
 	if (IN6_IS_ADDR_LOOPBACK(in6)) {
-		if (!(ifp->if_flags & IFF_LOOPBACK))
-			return (EINVAL);
-		else {
+		if (!(ifp->if_flags & IFF_LOOPBACK)) {
+			char ip6buf[INET6_ADDRSTRLEN];
+			log(LOG_NOTICE, "%s: can't set scope for not loopback "
+			    "interface %s and loopback address %s\n",
+			    __func__, if_name(ifp), IN6_PRINT(ip6buf, in6));
+			return EINVAL;
+		} else {
 			if (ret_id != NULL)
 				*ret_id = 0; /* there's no ambiguity */
-			return (0);
+			return 0;
 		}
 	}
 
 	scope = in6_addrscope(in6);
-
-	if (!sid->s6id_list)
-		return 0;
 
 	switch (scope) {
 	case IPV6_ADDR_SCOPE_INTFACELOCAL: /* should be interface index */
@@ -440,6 +446,22 @@ in6_setscope(struct in6_addr *in6, const struct ifnet *ifp, uint32_t *ret_id)
 		*ret_id = zoneid;
 
 	return in6_setzoneid(in6, zoneid);
+}
+
+const char *
+in6_getscopename(const struct in6_addr *addr)
+{
+	switch (in6_addrscope(addr)) {
+	case IPV6_ADDR_SCOPE_INTFACELOCAL:	return "interface";
+#if IPV6_ADDR_SCOPE_INTFACELOCAL != IPV6_ADDR_SCOPE_NODELOCAL
+	case IPV6_ADDR_SCOPE_NODELOCAL:		return "node";
+#endif
+	case IPV6_ADDR_SCOPE_LINKLOCAL:		return "link";
+	case IPV6_ADDR_SCOPE_SITELOCAL:		return "site";
+	case IPV6_ADDR_SCOPE_ORGLOCAL:		return "organization";
+	case IPV6_ADDR_SCOPE_GLOBAL:		return "global";
+	default:				return "unknown";
+	}
 }
 
 /*

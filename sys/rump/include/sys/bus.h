@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.1.12.1 2014/08/20 00:04:39 tls Exp $	*/
+/*	$NetBSD: bus.h,v 1.1.12.2 2017/12/03 11:39:14 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -48,6 +48,7 @@ typedef struct {
 	bus_addr_t	ds_addr;
 	bus_size_t	ds_len;
 	vaddr_t		_ds_vacookie;
+	bus_size_t	_ds_sizecookie;
 } bus_dma_segment_t;
 
 typedef struct {

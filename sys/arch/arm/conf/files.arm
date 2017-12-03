@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.110.2.4 2014/08/20 00:02:45 tls Exp $
+#	$NetBSD: files.arm,v 1.110.2.5 2017/12/03 11:35:52 jdolecek Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -49,6 +49,10 @@ defflag	opt_cputypes.h		CPU_CORTEXA7: CPU_CORTEX
 defflag	opt_cputypes.h		CPU_CORTEXA8: CPU_CORTEX
 defflag	opt_cputypes.h		CPU_CORTEXA9: CPU_CORTEX
 defflag	opt_cputypes.h		CPU_CORTEXA15: CPU_CORTEX
+defflag	opt_cputypes.h		CPU_CORTEXA17: CPU_CORTEX
+defflag	opt_cputypes.h		CPU_CORTEXA35: CPU_CORTEX
+defflag	opt_cputypes.h		CPU_CORTEXA53: CPU_CORTEX
+defflag	opt_cputypes.h		CPU_CORTEXA57: CPU_CORTEX
 defflag	opt_cputypes.h		FPU_VFP
 
 defparam opt_cpuoptions.h	XSCALE_CCLKCFG
@@ -63,9 +67,12 @@ defflag  opt_cpuoptions.h	ARM11_PMC CORTEX_PMC
 defflag  opt_cpuoptions.h	ARM11_CACHE_WRITE_THROUGH
 defflag	 opt_cpuoptions.h	ARM11_COMPAT_MMU
 defflag	 opt_cpuoptions.h	ARM_HAS_VBAR
+defflag	 opt_cpuoptions.h	ARM_HAS_LPAE
 # use extended small page in compatible MMU mode for ARMv6
 defflag  opt_cpuoptions.h	SHEEVA_L2_CACHE
 defflag  opt_cpuoptions.h	SHEEVA_L2_CACHE_WT: SHEEVA_L2_CACHE
+# override configuration base address register
+defparam opt_cpuoptions.h	ARM_CBAR
 
 # Interrupt implementation header definition.
 defparam opt_arm_intr_impl.h	ARM_INTR_IMPL
@@ -79,12 +86,20 @@ defflag  opt_arm_bus_space.h	__BUS_SPACE_HAS_STREAM_METHODS
 				_ARM32_NEED_BUS_DMA_BOUNCE
 				BUSDMA_COUNTERS
 
+# Timer options
+defflag opt_arm_timer.h		__HAVE_GENERIC_CPU_INITCLOCKS
+
 # Floating point emulator
 obsolete defflag				ARMFPE
 
 # VFP support
 file	arch/arm/vfp/vfp_init.c			arm32
 #file	arch/arm/vfp/pmap_vfp.S			arm32 & fpu_vfp
+
+# Power State Coordination Interface (PSCI)
+device	psci
+file	arch/arm/arm/psci.c			psci
+file	arch/arm/arm/psci_arm.S			psci
 
 # PMAP_DEBUG (heavily abused option)
 defflag				PMAP_DEBUG
@@ -208,6 +223,9 @@ file	arch/arm/arm32/arm11_pmc.c		arm11_pmc
 file	arch/arm/arm32/cortex_pmc.c		cortex_pmc
 file	arch/arm/arm32/arm32_tlb.c		(cpu_armv7 | cpu_arm11) & (!arm11_compat_mmu & !cpu_pre_armv6)
 file	uvm/pmap/pmap_tlb.c			(cpu_armv7 | cpu_arm11) & (!arm11_compat_mmu & !cpu_pre_armv6)
+
+# generic pmap files for arm32 implementations
+file	uvm/pmap/pmap_pvt.c			arm32
 
 # arm32 library functions
 file	arch/arm/arm32/bcopy_page.S		arm32

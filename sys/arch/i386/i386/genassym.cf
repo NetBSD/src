@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.92.2.2 2014/08/20 00:03:06 tls Exp $
+#	$NetBSD: genassym.cf,v 1.92.2.3 2017/12/03 11:36:17 jdolecek Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -64,7 +64,6 @@
 #
 
 if defined(_KERNEL_OPT)
-include "opt_compat_svr4.h"
 include "opt_compat_freebsd.h"
 include "opt_compat_linux.h"
 include "opt_compat_netbsd.h"
@@ -108,17 +107,13 @@ endif
 
 include <compat/sys/signal.h>
 
-ifdef COMPAT_SVR4
-include <compat/svr4/svr4_ucontext.h>
-endif
-
 ifdef COMPAT_LINUX
 include <compat/linux/common/linux_signal.h>
 include <compat/linux/common/linux_machdep.h>
 endif
 
 ifdef COMPAT_FREEBSD
-include <machine/freebsd_machdep.h>
+include <compat/freebsd/freebsd_machdep.h>
 endif
 
 if NIOAPIC > 0
@@ -132,9 +127,6 @@ endif
 if NISA > 0
 include <machine/isa_machdep.h>
 endif
-
-include <machine/tlog.h>
-
 
 include <sys/bus.h>
 
@@ -230,11 +222,6 @@ define	TF_PUSHSIZE		offsetof(struct trapframe, tf_trapno)
 
 define	FRAMESIZE		sizeof(struct trapframe)
 
-ifdef COMPAT_SVR4
-define	SVR4_SIGF_HANDLER	offsetof(struct svr4_sigframe, sf_handler)
-define	SVR4_SIGF_UC		offsetof(struct svr4_sigframe, sf_uc)
-endif
-
 ifdef COMPAT_LINUX
 define	LINUX_SIGF_HANDLER	offsetof(struct linux_sigframe, sf_handler)
 define	LINUX_SIGF_SC		offsetof(struct linux_sigframe, sf_sc)
@@ -250,11 +237,7 @@ endif
 define	IH_FUN			offsetof(struct intrhand, ih_fun)
 define	IH_ARG			offsetof(struct intrhand, ih_arg)
 define	IH_LEVEL		offsetof(struct intrhand, ih_level)
-ifdef XEN
-define	IH_IPL_NEXT		offsetof(struct intrhand, ih_ipl_next)
-else
 define	IH_NEXT			offsetof(struct intrhand, ih_next)
-endif
 
 define	CPU_INFO_SELF		offsetof(struct cpu_info, ci_self)
 define	CPU_INFO_RESCHED	offsetof(struct cpu_info, ci_want_resched)
@@ -281,9 +264,6 @@ define	CPU_INFO_CC_SKEW	offsetof(struct cpu_info, ci_data.cpu_cc_skew)
 
 define	CPU_INFO_VENDOR		offsetof(struct cpu_info, ci_vendor[0])
 define	CPU_INFO_SIGNATURE	offsetof(struct cpu_info, ci_signature)
-
-define	CPU_TLOG_OFFSET		offsetof(struct cpu_info, ci_tlog_offset)
-define	CPU_TLOG_BASE		offsetof(struct cpu_info, ci_tlog_base)
 
 define	CPU_INFO_GDT		offsetof(struct cpu_info, ci_gdt)
 define	CPU_INFO_IPENDING	offsetof(struct cpu_info, ci_ipending)
@@ -322,13 +302,6 @@ endif
 define	SIZEOF_CPU_INFO		sizeof(struct cpu_info)
 define	SIZEOF_ISTUB		sizeof(struct intrstub)
 
-ifdef XEN
-define	SIZEOF_IPLSOURCE	sizeof(struct iplsource)
-define	IS_RECURSE		offsetof(struct iplsource, ipl_recurse)
-define	IS_RESUME		offsetof(struct iplsource, ipl_resume)
-define	IS_HANDLERS		offsetof(struct iplsource, ipl_handlers)
-define	EV_EVCNTL		offsetof(struct evcnt, ev_count)
-else
 define	SIZEOF_ISOURCE		sizeof(struct intrsource)
 define	IS_RECURSE		offsetof(struct intrsource, is_recurse)
 define	IS_RESUME		offsetof(struct intrsource, is_resume)
@@ -341,19 +314,6 @@ define	IS_PIN			offsetof(struct intrsource, is_pin)
 define	IS_TYPE			offsetof(struct intrsource, is_type)
 define	IS_MAXLEVEL		offsetof(struct intrsource, is_maxlevel)
 define	IS_LWP			offsetof(struct intrsource, is_lwp)
-endif
-
-define	TREC_SP			offsetof(struct trec, tr_sp)
-define	TREC_HPC		offsetof(struct trec, tr_hpc)
-define	TREC_IPC		offsetof(struct trec, tr_ipc)
-define	TREC_TSC		offsetof(struct trec, tr_tsc)
-define	TREC_LBF		offsetof(struct trec, tr_lbf)
-define	TREC_LBT		offsetof(struct trec, tr_lbt)
-define	TREC_IBF		offsetof(struct trec, tr_ibf)
-define	TREC_IBT		offsetof(struct trec, tr_ibt)
-
-define	SIZEOF_TREC		sizeof(struct trec)
-define	SIZEOF_TLOG		sizeof(struct tlog)
 
 define	IPL_NONE		IPL_NONE
 define	IPL_PREEMPT		IPL_PREEMPT
@@ -377,7 +337,6 @@ define	IREENT_MAGIC		IREENT_MAGIC
 define	PSL_AC			PSL_AC
 define	PSL_MBO			PSL_MBO
 define	PSL_ID			PSL_ID
-define	PSL_VM			PSL_VM
 define	PSL_I			PSL_I
 
 define	MTX_IPL			offsetof(struct kmutex, u.s.mtxs_ipl)
@@ -422,4 +381,3 @@ define EVTCHN_UPCALL_MASK	offsetof(struct vcpu_info, evtchn_upcall_mask)
 define HYPERVISOR_sched_op	__HYPERVISOR_sched_op
 define SCHEDOP_yield		SCHEDOP_yield
 endif
-

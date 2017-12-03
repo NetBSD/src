@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.18.12.1 2013/06/23 06:20:04 tls Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.18.12.2 2017/12/03 11:36:09 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.18.12.1 2013/06/23 06:20:04 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.18.12.2 2017/12/03 11:36:09 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -39,8 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.18.12.1 2013/06/23 06:20:04 tls Exp 
 
 #include <mips/locore.h>
 #include <mips/mips3_clock.h>
-
-struct clockframe cf;
 
 void
 intr_init(void)
@@ -61,21 +59,28 @@ cpu_intr(int ppl, vaddr_t pc, uint32_t status)
 	const u_int blcnt = curlwp->l_blcnt;
 #endif
 	KASSERT(ci->ci_cpl == IPL_HIGH);
+	KDASSERT(mips_cp0_status_read() & MIPS_SR_INT_IE);
 
 	ci->ci_data.cpu_nintr++;
 
 	while (ppl < (ipl = splintr(&pending))) {
+		KDASSERT(mips_cp0_status_read() & MIPS_SR_INT_IE);
 		splx(ipl);	/* lower to interrupt level */
+		KDASSERT(mips_cp0_status_read() & MIPS_SR_INT_IE);
 
 		KASSERTMSG(ci->ci_cpl == ipl,
 		    "%s: cpl (%d) != ipl (%d)", __func__, ci->ci_cpl, ipl);
 		KASSERT(pending != 0);
 
-		cf.pc = pc;
-		cf.sr = status;
-		cf.intr = (ci->ci_idepth > 1);
+		struct clockframe cf = {
+			.pc = pc,
+			.sr = status,
+			.intr = (ci->ci_idepth > 1)
+		};
 
+#ifdef MIPS3_ENABLE_CLOCK_INTR
 		if (pending & MIPS_INT_MASK_5) {
+
 			KASSERTMSG(ipl == IPL_SCHED,
 			    "%s: ipl (%d) != IPL_SCHED (%d)",
 			     __func__, ipl, IPL_SCHED);
@@ -83,10 +88,11 @@ cpu_intr(int ppl, vaddr_t pc, uint32_t status)
 			mips3_clockintr(&cf);
 			pending ^= MIPS_INT_MASK_5;
 		}
+#endif
 
 		if (pending != 0) {
 			/* Process I/O and error interrupts. */
-			evbmips_iointr(ipl, pc, pending);
+			evbmips_iointr(ipl, pending, &cf);
 		}
 		KASSERT(biglock_count == ci->ci_biglock_count);
 		KASSERT(blcnt == curlwp->l_blcnt);
@@ -102,4 +108,5 @@ cpu_intr(int ppl, vaddr_t pc, uint32_t status)
 	}
 
 	KASSERT(ci->ci_cpl == IPL_HIGH);
+	KDASSERT(mips_cp0_status_read() & MIPS_SR_INT_IE);
 }

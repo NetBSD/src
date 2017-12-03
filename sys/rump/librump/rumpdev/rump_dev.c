@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_dev.c,v 1.19.14.3 2014/08/20 00:04:40 tls Exp $	*/
+/*	$NetBSD: rump_dev.c,v 1.19.14.4 2017/12/03 11:39:15 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,13 +26,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_dev.c,v 1.19.14.3 2014/08/20 00:04:40 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_dev.c,v 1.19.14.4 2017/12/03 11:39:15 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 
-#include "rump_private.h"
-#include "rump_dev_private.h"
+#include <rump-sys/kern.h>
+#include <rump-sys/dev.h>
 
 int nocomponent(void);
 int nocomponent() {return 0;}

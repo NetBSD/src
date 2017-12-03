@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352.c,v 1.53.8.1 2014/08/20 00:03:38 tls Exp $	*/
+/*	$NetBSD: mb89352.c,v 1.53.8.2 2017/12/03 11:37:03 jdolecek Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
 /*-
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.53.8.1 2014/08/20 00:03:38 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.53.8.2 2017/12/03 11:37:03 jdolecek Exp $");
 
 #ifdef DDB
 #define	integrate
@@ -164,6 +164,8 @@ __KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.53.8.1 2014/08/20 00:03:38 tls Exp $")
 #include <dev/ic/mb89352reg.h>
 #include <dev/ic/mb89352var.h>
 
+#include "ioconf.h"
+
 #ifndef DDB
 #define	Debugger() panic("should call debugger here (mb89352.c)")
 #endif /* ! DDB */
@@ -198,8 +200,6 @@ void	spc_dump89352(struct spc_softc *);
 void	spc_show_scsi_cmd(struct spc_acb *);
 void	spc_print_active_acb(void);
 #endif
-
-extern struct cfdriver spc_cd;
 
 /*
  * INITIALIZATION ROUTINES (probe, attach ++)
@@ -293,7 +293,7 @@ spc_attach(struct spc_softc *sc)
 
 	/*
 	 * Add reference to adapter so that we drop the reference after
-	 * config_found() to make sure the adatper is disabled.
+	 * config_found() to make sure the adapter is disabled.
 	 */
 	if (scsipi_adapter_addref(adapt) != 0) {
 		aprint_error_dev(sc->sc_dev, "unable to enable controller\n");

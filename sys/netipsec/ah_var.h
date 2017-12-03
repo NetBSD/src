@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_var.h,v 1.4 2008/04/23 06:09:05 thorpej Exp $	*/
+/*	$NetBSD: ah_var.h,v 1.4.46.1 2017/12/03 11:39:05 jdolecek Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/ah_var.h,v 1.1.4.1 2003/01/24 05:11:35 sam Exp $	*/
 /*	$OpenBSD: ip_ah.h,v 1.29 2002/06/09 16:26:10 itojun Exp $	*/
 /*
@@ -40,14 +40,6 @@
 #ifndef _NETIPSEC_AH_VAR_H_
 #define _NETIPSEC_AH_VAR_H_
 
-/*
- * These define the algorithm indices into the histogram.  They're
- * presently based on the PF_KEY v2 protocol values which is bogus;
- * they should be decoupled from the protocol at which time we can
- * pack them and reduce the size of the array to a minimum.
- */
-#define	AH_ALG_MAX	16
-
 #define	AH_STAT_HDROPS		0	/* packet shorter than header shows */
 #define	AH_STAT_NOPF		1	/* protocol family not supported */
 #define	AH_STAT_NOTDB		2
@@ -68,11 +60,14 @@
 #define	AH_STAT_CRYPTO		17	/* crypto processing failure */
 #define	AH_STAT_TUNNEL		18	/* tunnel sanity check failure */
 #define	AH_STAT_HIST		19	/* per-algorithm op count */
-		/* space for AH_ALG_MAX (16) counters */
 
-#define	AH_NSTATS		35
+/* space for SADB_AALG_STATS_NUM counters */
+#define	AH_ALG_MAX		SADB_AALG_STATS_NUM
+#define	AH_ALG_STR		SADB_AALG_STATS_STR
+#define	AH_NSTATS		(AH_STAT_HIST + AH_ALG_MAX)
 
 #ifdef _KERNEL
+extern const uint8_t ah_stats[256];
 extern	int ah_enable;
 extern	int ah_cleartos;
 #endif /* _KERNEL */

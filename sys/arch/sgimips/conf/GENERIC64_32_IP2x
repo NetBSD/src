@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC64_32_IP2x,v 1.1.6.2 2014/08/20 00:03:22 tls Exp $
+#	$NetBSD: GENERIC64_32_IP2x,v 1.1.6.3 2017/12/03 11:36:41 jdolecek Exp $
 #
 # GENERIC32_IP2x machine description file
 # 
@@ -29,7 +29,7 @@ include		"arch/sgimips/conf/std.sgimips64_32"
 no makeoptions	TEXTADDR			# entry point
 makeoptions	TEXTADDR=0xffffffff88069000	# entry point
 
-#ident		"GENERIC64-IP2x-$Revision: 1.1.6.2 $"
+#ident		"GENERIC64-IP2x-$Revision: 1.1.6.3 $"
 
 no makeoptions	WANT_ECOFF
 makeoptions	WANT_ECOFF="no"		# Create an ECOFF kernel in addition
@@ -37,14 +37,3 @@ makeoptions	WANT_ECOFF="no"		# Create an ECOFF kernel in addition
 					# netbooting Indigo (IP20) and some
 					# Indigo2 (IP22) machines
 
-# Compatibility options
-#options 	COMPAT_15	# NetBSD 1.5
-#options 	COMPAT_16	# NetBSD 1.6
-#options 	COMPAT_20	# NetBSD 2.0
-#options 	COMPAT_30	# NetBSD 3.0
-#options 	COMPAT_40	# NetBSD 4.0 compatibility.
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
-
-#options 	COMPAT_LINUX	# binary compatibility with Linux
-#options 	COMPAT_ULTRIX	# binary compatibility with Ultrix 
-#options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.

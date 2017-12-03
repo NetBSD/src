@@ -1,4 +1,4 @@
-/* $NetBSD: xilinx_ml40x.c,v 1.2.18.1 2014/08/20 00:02:51 tls Exp $ */
+/* $NetBSD: xilinx_ml40x.c,v 1.2.18.2 2017/12/03 11:36:01 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xilinx_ml40x.c,v 1.2.18.1 2014/08/20 00:02:51 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xilinx_ml40x.c,v 1.2.18.2 2017/12/03 11:36:01 jdolecek Exp $");
 
 #define __INTR_PRIVATE
 
@@ -122,7 +122,7 @@ xilinx_ml40x_cons_init(void)
 
 	tlb.tlb_hi = USART_DEFAULT_ADDRESS;
 	tlb.tlb_lo0 = USART_DEFAULT_ADDRESS | 0xf02;
-	tlb_write_indexed(3, &tlb);
+	tlb_write_entry(3, &tlb);
 #endif
 
 	dz_ebus_cnsetup(USART_DEFAULT_ADDRESS);

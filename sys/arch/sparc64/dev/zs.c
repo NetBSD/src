@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.73.12.1 2012/11/20 03:01:45 tls Exp $	*/
+/*	$NetBSD: zs.c,v 1.73.12.2 2017/12/03 11:36:44 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.73.12.1 2012/11/20 03:01:45 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.73.12.2 2017/12/03 11:36:44 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -259,6 +259,7 @@ zs_attach_sbus(device_t parent, device_t self, void *aux)
 	zsc->zsc_dmatag = sa->sa_dmatag;
 	zsc->zsc_promunit = prom_getpropint(sa->sa_node, "slave", -2);
 	zsc->zsc_node = sa->sa_node;
+	aprint_normal("\n");
 	zs_attach(zsc, zsaddr[zs_unit], sa->sa_pri);
 }
 

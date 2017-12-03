@@ -1,4 +1,4 @@
-/*	$NetBSD: fwhrng.c,v 1.5.6.1 2014/08/20 00:03:29 tls Exp $	*/
+/*	$NetBSD: fwhrng.c,v 1.5.6.2 2017/12/03 11:36:50 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -29,13 +29,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwhrng.c,v 1.5.6.1 2014/08/20 00:03:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwhrng.c,v 1.5.6.2 2017/12/03 11:36:50 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/time.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <sys/bus.h>
 
@@ -211,7 +211,7 @@ fwhrng_detach(device_t self, int flags)
 
 	rnd_detach_source(&sc->sc_rnd_source);
 
-	callout_stop(&sc->sc_rnd_ch);
+	callout_halt(&sc->sc_rnd_ch, NULL);
 	callout_destroy(&sc->sc_rnd_ch);
 
 	/* Disable the RNG. */

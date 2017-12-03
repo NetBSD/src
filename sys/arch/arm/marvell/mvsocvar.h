@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsocvar.h,v 1.3.2.2 2014/08/20 00:02:47 tls Exp $	*/
+/*	$NetBSD: mvsocvar.h,v 1.3.2.3 2017/12/03 11:35:54 jdolecek Exp $	*/
 /*
  * Copyright (c) 2007, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -107,6 +107,17 @@ enum mvsoc_tags {
 	MV78XX0_TAG_PEX13_IO,
 	MV78XX0_TAG_CRYPT,
 
+	DOVE_TAG_PEX0_MEM,
+	DOVE_TAG_PEX0_IO,
+	DOVE_TAG_PEX1_MEM,
+	DOVE_TAG_PEX1_IO,
+	DOVE_TAG_CRYPT,
+	DOVE_TAG_SPI0,
+	DOVE_TAG_SPI1,
+	DOVE_TAG_BOOTROM,
+	DOVE_TAG_NAND,
+	DOVE_TAG_PMU,
+
 	ARMADAXP_TAG_PEX00_MEM,
 	ARMADAXP_TAG_PEX00_IO,
 	ARMADAXP_TAG_PEX01_MEM,
@@ -115,28 +126,32 @@ enum mvsoc_tags {
 	ARMADAXP_TAG_PEX02_IO,
 	ARMADAXP_TAG_PEX03_MEM,
 	ARMADAXP_TAG_PEX03_IO,
+	ARMADAXP_TAG_PEX10_MEM,
+	ARMADAXP_TAG_PEX10_IO,
+	ARMADAXP_TAG_PEX11_MEM,
+	ARMADAXP_TAG_PEX11_IO,
+	ARMADAXP_TAG_PEX12_MEM,
+	ARMADAXP_TAG_PEX12_IO,
+	ARMADAXP_TAG_PEX13_MEM,
+	ARMADAXP_TAG_PEX13_IO,
 	ARMADAXP_TAG_PEX2_MEM,
 	ARMADAXP_TAG_PEX2_IO,
 	ARMADAXP_TAG_PEX3_MEM,
 	ARMADAXP_TAG_PEX3_IO,
+	ARMADAXP_TAG_CRYPT0,
+	ARMADAXP_TAG_CRYPT1,
 };
 int mvsoc_target(int, uint32_t *, uint32_t *, uint32_t *, uint32_t *);
+int mvsoc_target_dump(struct mvsoc_softc *);
+int mvsoc_attr_dump(struct mvsoc_softc *, uint32_t, uint32_t);
 
+extern void (*mvsoc_intr_init)(void);
 extern int (*mvsoc_clkgating)(struct marvell_attach_args *);
 
-void orion_intr_bootstrap(void);
-void orion_getclks(bus_addr_t);
-
-void kirkwood_intr_bootstrap(void);
-void kirkwood_getclks(bus_addr_t);
-int kirkwood_clkgating(struct marvell_attach_args *);
-
-void mv78xx0_intr_bootstrap(void);
-void mv78xx0_getclks(bus_addr_t);
-
-void armadaxp_intr_bootstrap(bus_addr_t);
-void armadaxp_getclks(void);
-void armada370_getclks(void);
-int armadaxp_clkgating(struct marvell_attach_args *);
+void orion_bootstrap(vaddr_t);
+void kirkwood_bootstrap(vaddr_t);
+void mv78xx0_bootstrap(vaddr_t);
+void dove_bootstrap(vaddr_t);
+void armadaxp_bootstrap(vaddr_t, bus_addr_t);
 
 #endif	/* _MVSOCVAR_H_ */

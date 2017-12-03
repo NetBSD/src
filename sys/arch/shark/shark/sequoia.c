@@ -1,4 +1,4 @@
-/*	$NetBSD: sequoia.c,v 1.12 2011/07/19 15:07:43 dyoung Exp $	*/
+/*	$NetBSD: sequoia.c,v 1.12.12.1 2017/12/03 11:36:43 jdolecek Exp $	*/
 
 /*
  * Copyright 1997
@@ -40,7 +40,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequoia.c,v 1.12 2011/07/19 15:07:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequoia.c,v 1.12.12.1 2017/12/03 11:36:43 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: sequoia.c,v 1.12 2011/07/19 15:07:43 dyoung Exp $");
 **
 */
 
-/* define regisers on sequoia used by pins  */
+/* define registers on sequoia used by pins  */
 #define SEQUOIA_1GPIO       PMC_GPCR_REG         /* reg 0x007 gpio 0-3 */      
 #define SEQUOIA_2GPIO       SEQ2_OGPIOCR_REG     /* reg 0x304 gpio 4.8 */
 
@@ -172,20 +172,20 @@ void sequoiaInit(void)
     /*
     ** setup the pins associated with the led
     */
-    sequoiaRead(SEQR_SEQPSR1_REG,&seqReg); 
+    sequoiaRead(SEQR_SEQPSR1_REG,&seqReg);
     SET(seqReg,SEQPSR1_M_TAGDEN);           /* enable pc[4:9] */
-    sequoiaWrite(SEQR_SEQPSR1_REG,seqReg); 
+    sequoiaWrite(SEQR_SEQPSR1_REG,seqReg);
 
     
-    sequoiaRead(SEQR_SEQPSR3_REG,&seqReg); 
+    sequoiaRead(SEQR_SEQPSR3_REG,&seqReg);
     CLR(seqReg,SEQPSR3_M_PC5PINEN);      /* enable pc5, biled */
     CLR(seqReg,SEQPSR3_M_PC6PINEN);      /* enable pc6, biled */
     CLR(seqReg,SEQPSR3_M_PC7PINEN);      /* enable pc7, debug led yellow */
     CLR(seqReg,SEQPSR3_M_PC8PINEN);      /* enable pc8, debug led green  */
-    sequoiaWrite(SEQR_SEQPSR3_REG,seqReg); 
+    sequoiaWrite(SEQR_SEQPSR3_REG,seqReg);
     
     sequoiaRead (PMC_FOMPCR_REG, &seqReg);
-    CLR(seqReg,LED_BILED_YELLOW_BIT); 
+    CLR(seqReg,LED_BILED_YELLOW_BIT);
     CLR(seqReg,LED_BILED_GREEN_BIT);
     SET(seqReg,LED_DEBUG_YELLOW_BIT);
     CLR(seqReg,LED_DEBUG_GREEN_BIT);
@@ -245,8 +245,8 @@ void sequoiaInit(void)
      /* setup the wak0 pin to be detect */
     sequoiaRead(SEQR_SEQPSR2_REG,&seqReg);
 
-    SET(seqReg,SEQPSR2_M_DIRTYPINEN); 
-    SET(seqReg,SEQPSR2_M_GPIOB0PINEN); 
+    SET(seqReg,SEQPSR2_M_DIRTYPINEN);
+    SET(seqReg,SEQPSR2_M_GPIOB0PINEN);
 
     sequoiaWrite(SEQR_SEQPSR2_REG,seqReg);
 
@@ -272,7 +272,7 @@ void sequoiaInit(void)
 void consXTvOn(void)
 {
     u_int16_t savedPSR3;
-    u_int16_t savedFMPCR;  
+    u_int16_t savedFMPCR;
     /* 
     ** Switch on TV output on the Sequoia, data indicates mode,
     ** but we are currently hardwired to NTSC, so ignore it.
@@ -289,7 +289,7 @@ void consXTvOn(void)
 void consXTvOff(void)
 {
     u_int16_t savedPSR3;
-    u_int16_t savedFMPCR;  
+    u_int16_t savedFMPCR;
     /* 
     ** Switch off TV output on the Seqoia 
     */
@@ -332,7 +332,7 @@ void scrSetPower (int value)
 #ifdef SHARK
     u_int savedints;
 
-    savedints = disable_interrupts(I32_bit | F32_bit);    
+    savedints = disable_interrupts(I32_bit | F32_bit);
 #endif
 
     sequoiaRead(SEQUOIA_1GPIO,&seqReg);
@@ -357,7 +357,7 @@ void scrSetClock (int value)
 #ifdef SHARK
     u_int savedints;
 
-    savedints = disable_interrupts(I32_bit | F32_bit);    
+    savedints = disable_interrupts(I32_bit | F32_bit);
 #endif
 
     sequoiaRead(SEQUOIA_2GPIO,&seqReg);
@@ -381,7 +381,7 @@ void scrSetReset (int value)
 #ifdef SHARK
     u_int savedints;
 
-    savedints = disable_interrupts(I32_bit | F32_bit);    
+    savedints = disable_interrupts(I32_bit | F32_bit);
 #endif
 
     sequoiaRead(SEQUOIA_1GPIO,&seqReg);
@@ -407,7 +407,7 @@ void scrSetDataHighZ (void)
 #ifdef SHARK
     u_int savedints;
 
-    savedints = disable_interrupts(I32_bit | F32_bit);    
+    savedints = disable_interrupts(I32_bit | F32_bit);
 #endif
 
     sequoiaRead(SEQUOIA_2GPIO,&seqReg);
@@ -427,7 +427,7 @@ void scrSetData (int value)
 #ifdef SHARK
     u_int savedints;
 
-    savedints = disable_interrupts(I32_bit | F32_bit);    
+    savedints = disable_interrupts(I32_bit | F32_bit);
 #endif
 
     sequoiaRead(SEQUOIA_2GPIO,&seqReg);
@@ -561,10 +561,10 @@ static void ledSetBiled(int color)
 #ifdef SHARK
     u_int savedints;
 
-    savedints = disable_interrupts(I32_bit | F32_bit);    
+    savedints = disable_interrupts(I32_bit | F32_bit);
 #endif
-    ledColor = color;    
-    
+    ledColor = color;
+
 
     sequoiaRead (PMC_FOMPCR_REG, &seqReg);
     switch(color)
@@ -622,7 +622,7 @@ void sequoiaWrite(int reg,u_int16_t  seqReg)
 #ifdef SHARK
     u_int savedints;
 
-    savedints = disable_interrupts(I32_bit | F32_bit);    
+    savedints = disable_interrupts(I32_bit | F32_bit);
 #endif
 
     /*
@@ -658,14 +658,14 @@ void sequoiaRead (int reg,u_int16_t * seqReg_ptr)
 #ifdef SHARK
     u_int savedints;
 
-    savedints = disable_interrupts(I32_bit | F32_bit);    
+    savedints = disable_interrupts(I32_bit | F32_bit);
 #endif
     if(sequoia_index_cache != reg)
     {
         sequoia_index_cache = reg;
-        bus_space_write_2(&isa_io_bs_tag,sequoia_ioh,SEQUOIA_INDEX_OFFSET,reg);    
+        bus_space_write_2(&isa_io_bs_tag,sequoia_ioh,SEQUOIA_INDEX_OFFSET,reg);
     }
-    *seqReg_ptr = bus_space_read_2(&isa_io_bs_tag,sequoia_ioh,SEQUOIA_DATA_OFFSET);  
+    *seqReg_ptr = bus_space_read_2(&isa_io_bs_tag,sequoia_ioh,SEQUOIA_DATA_OFFSET);
 #ifdef SHARK
     restore_interrupts(savedints);
 #endif
@@ -678,7 +678,7 @@ void ledSetDebug(int command)
 #ifdef SHARK
     u_int savedints;
 
-    savedints = disable_interrupts(I32_bit | F32_bit);    
+    savedints = disable_interrupts(I32_bit | F32_bit);
 #endif
     sequoiaRead (PMC_FOMPCR_REG, &seqReg);
 
@@ -739,9 +739,9 @@ u_int16_t reg;
 #ifdef SHARK
     u_int savedints;
 
-    savedints = disable_interrupts(I32_bit | F32_bit);    
+    savedints = disable_interrupts(I32_bit | F32_bit);
 #endif
-    reg = bus_space_read_2(&isa_io_bs_tag,sequoia_ioh,SEQUOIA_DATA_OFFSET);  
+    reg = bus_space_read_2(&isa_io_bs_tag,sequoia_ioh,SEQUOIA_DATA_OFFSET);
 #ifdef SHARK
     restore_interrupts(savedints);
 #endif
@@ -755,7 +755,7 @@ void scrToggleTestPin (void)
 #ifdef SHARK
     u_int savedints;
 
-    savedints = disable_interrupts(I32_bit | F32_bit);    
+    savedints = disable_interrupts(I32_bit | F32_bit);
 #endif
 
     sequoiaRead(SEQUOIA_2GPIO,&seqReg);

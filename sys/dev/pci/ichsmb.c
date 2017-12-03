@@ -1,4 +1,4 @@
-/*	$NetBSD: ichsmb.c,v 1.27.6.2 2014/08/20 00:03:42 tls Exp $	*/
+/*	$NetBSD: ichsmb.c,v 1.27.6.3 2017/12/03 11:37:07 jdolecek Exp $	*/
 /*	$OpenBSD: ichiic.c,v 1.18 2007/05/03 09:36:26 dlg Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.27.6.2 2014/08/20 00:03:42 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.27.6.3 2017/12/03 11:37:07 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -67,10 +67,13 @@ struct ichsmb_softc {
 		int          flags;
 		volatile int error;
 	}			sc_i2c_xfer;
+	device_t		sc_i2c_device;
 };
 
 static int	ichsmb_match(device_t, cfdata_t, void *);
 static void	ichsmb_attach(device_t, device_t, void *);
+static int	ichsmb_rescan(device_t, const char *, const int *);
+static void	ichsmb_chdet(device_t, device_t);
 
 static int	ichsmb_i2c_acquire_bus(void *, int);
 static void	ichsmb_i2c_release_bus(void *, int);
@@ -80,8 +83,8 @@ static int	ichsmb_i2c_exec(void *, i2c_op_t, i2c_addr_t, const void *,
 static int	ichsmb_intr(void *);
 
 
-CFATTACH_DECL_NEW(ichsmb, sizeof(struct ichsmb_softc),
-    ichsmb_match, ichsmb_attach, NULL, NULL);
+CFATTACH_DECL3_NEW(ichsmb, sizeof(struct ichsmb_softc),
+    ichsmb_match, ichsmb_attach, NULL, NULL, ichsmb_rescan, ichsmb_chdet, 0);
 
 
 static int
@@ -110,15 +113,24 @@ ichsmb_match(device_t parent, cfdata_t match, void *aux)
 		case PCI_PRODUCT_INTEL_6SERIES_SMB:
 		case PCI_PRODUCT_INTEL_7SERIES_SMB:
 		case PCI_PRODUCT_INTEL_8SERIES_SMB:
+		case PCI_PRODUCT_INTEL_9SERIES_SMB:
+		case PCI_PRODUCT_INTEL_100SERIES_SMB:
+		case PCI_PRODUCT_INTEL_100SERIES_LP_SMB:
+		case PCI_PRODUCT_INTEL_2HS_SMB:
 		case PCI_PRODUCT_INTEL_CORE4G_M_SMB:
+		case PCI_PRODUCT_INTEL_CORE5G_M_SMB:
 		case PCI_PRODUCT_INTEL_BAYTRAIL_PCU_SMB:
+		case PCI_PRODUCT_INTEL_BSW_PCU_SMB:
 		case PCI_PRODUCT_INTEL_C600_SMBUS:
 		case PCI_PRODUCT_INTEL_C600_SMB_0:
 		case PCI_PRODUCT_INTEL_C600_SMB_1:
 		case PCI_PRODUCT_INTEL_C600_SMB_2:
+		case PCI_PRODUCT_INTEL_C610_SMB:
 		case PCI_PRODUCT_INTEL_EP80579_SMB:
-		case PCI_PRODUCT_INTEL_DH89XX_SMB:
+		case PCI_PRODUCT_INTEL_DH89XXCC_SMB:
+		case PCI_PRODUCT_INTEL_DH89XXCL_SMB:
 		case PCI_PRODUCT_INTEL_C2000_PCU_SMBUS:
+		case PCI_PRODUCT_INTEL_C3K_SMBUS_LEGACY:
 			return 1;
 		}
 	}
@@ -130,12 +142,12 @@ ichsmb_attach(device_t parent, device_t self, void *aux)
 {
 	struct ichsmb_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
-	struct i2cbus_attach_args iba;
 	pcireg_t conf;
 	bus_size_t iosize;
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
 	char intrbuf[PCI_INTRSTR_LEN];
+	int flags;
 
 	sc->sc_dev = self;
 
@@ -164,9 +176,10 @@ ichsmb_attach(device_t parent, device_t self, void *aux)
 	} else {
 		/* Install interrupt handler */
 		if (pci_intr_map(pa, &ih) == 0) {
-			intrstr = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));
-			sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO,
-			    ichsmb_intr, sc);
+			intrstr = pci_intr_string(pa->pa_pc, ih, intrbuf,
+			    sizeof(intrbuf));
+			sc->sc_ih = pci_intr_establish_xname(pa->pa_pc, ih,
+			    IPL_BIO, ichsmb_intr, sc, device_xname(sc->sc_dev));
 			if (sc->sc_ih != NULL) {
 				aprint_normal_dev(self, "interrupting at %s\n",
 				    intrstr);
@@ -177,8 +190,28 @@ ichsmb_attach(device_t parent, device_t self, void *aux)
 			aprint_normal_dev(self, "polling\n");
 	}
 
-	/* Attach I2C bus */
+	sc->sc_i2c_device = NULL;
+	flags = 0;
 	mutex_init(&sc->sc_i2c_mutex, MUTEX_DEFAULT, IPL_NONE);
+	ichsmb_rescan(self, "i2cbus", &flags);
+
+out:	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+}
+
+static int
+ichsmb_rescan(device_t self, const char *ifattr, const int *flags)
+{
+	struct ichsmb_softc *sc = device_private(self);
+	struct i2cbus_attach_args iba;
+
+	if (!ifattr_match(ifattr, "i2cbus"))
+		return 0;
+
+	if (sc->sc_i2c_device)
+		return 0;
+
+	/* Attach I2C bus */
 	sc->sc_i2c_tag.ic_cookie = sc;
 	sc->sc_i2c_tag.ic_acquire_bus = ichsmb_i2c_acquire_bus;
 	sc->sc_i2c_tag.ic_release_bus = ichsmb_i2c_release_bus;
@@ -187,10 +220,19 @@ ichsmb_attach(device_t parent, device_t self, void *aux)
 	memset(&iba, 0, sizeof(iba));
 	iba.iba_type = I2C_TYPE_SMBUS;
 	iba.iba_tag = &sc->sc_i2c_tag;
-	config_found(self, &iba, iicbus_print);
+	sc->sc_i2c_device = config_found_ia(self, ifattr, &iba, iicbus_print);
 
-out:	if (!pmf_device_register(self, NULL, NULL))
-		aprint_error_dev(self, "couldn't establish power handler\n");
+	return 0;
+}
+
+static void
+ichsmb_chdet(device_t self, device_t child)
+{
+	struct ichsmb_softc *sc = device_private(self);
+
+	if (sc->sc_i2c_device == child)
+		sc->sc_i2c_device = NULL;
+
 }
 
 static int
@@ -246,7 +288,7 @@ ichsmb_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	}
 #ifdef ICHIIC_DEBUG
 	snprintb(fbuf, sizeof(fbuf), LPCIB_SMB_HS_BITS, st);
-	printf("%s: exec: st 0x%s\n", device_xname(sc->sc_dev), fbuf);
+	printf("%s: exec: st %s\n", device_xname(sc->sc_dev), fbuf);
 #endif
 	if (st & LPCIB_SMB_HS_BUSY)
 		return (1);
@@ -338,7 +380,7 @@ timeout:
 	snprintb(fbuf, sizeof(fbuf), LPCIB_SMB_HS_BITS, st);
 	aprint_error_dev(sc->sc_dev,
 	    "exec: op %d, addr 0x%02x, cmdlen %zd, len %zd, "
-	    "flags 0x%02x: timeout, status 0x%s\n",
+	    "flags 0x%02x: timeout, status %s\n",
 	    op, addr, cmdlen, len, flags, fbuf);
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, LPCIB_SMB_HC,
 	    LPCIB_SMB_HC_KILL);
@@ -346,7 +388,7 @@ timeout:
 	st = bus_space_read_1(sc->sc_iot, sc->sc_ioh, LPCIB_SMB_HS);
 	if ((st & LPCIB_SMB_HS_FAILED) == 0) {
 		snprintb(fbuf, sizeof(fbuf), LPCIB_SMB_HS_BITS, st);
-		aprint_error_dev(sc->sc_dev, "abort failed, status 0x%s\n",
+		aprint_error_dev(sc->sc_dev, "abort failed, status %s\n",
 		    fbuf);
 	}
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, LPCIB_SMB_HS, st);
@@ -374,7 +416,7 @@ ichsmb_intr(void *arg)
 
 #ifdef ICHIIC_DEBUG
 	snprintb(fbuf, sizeof(fbuf), LPCIB_SMB_HS_BITS, st);
-	printf("%s: intr st 0x%s\n", device_xname(sc->sc_dev), fbuf);
+	printf("%s: intr st %s\n", device_xname(sc->sc_dev), fbuf);
 #endif
 
 	/* Clear status bits */

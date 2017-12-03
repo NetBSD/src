@@ -1,4 +1,4 @@
-/*	$NetBSD: fat.h,v 1.4.120.2 2013/02/25 00:29:47 tls Exp $	*/
+/*	$NetBSD: fat.h,v 1.4.120.3 2017/12/03 11:38:41 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1997 Wolfgang Solfrank.
@@ -84,7 +84,7 @@
 #define	FAT32(pmp)	(pmp->pm_fatmask == FAT32_MASK)
 
 /*
- * M$ in it's unlimited wisdom desided that EOF mark is anything
+ * M$ in its unlimited wisdom decided that EOF mark is anything
  * between 0xfffffff8 and 0xffffffff (masked by appropriate fatmask,
  * of course).
  * Note that cn is supposed to be already adjusted accordingly to FAT type.

@@ -1,4 +1,4 @@
-/*	$NetBSD: uts.c,v 1.1.10.1 2013/02/25 00:29:43 tls Exp $	*/
+/*	$NetBSD: uts.c,v 1.1.10.2 2017/12/03 11:37:36 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,12 +34,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uts.c,v 1.1.10.1 2013/02/25 00:29:43 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uts.c,v 1.1.10.2 2017/12/03 11:37:36 jdolecek Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_usb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/vnode.h>
@@ -79,7 +82,7 @@ struct uts_softc {
 	int flags;		/* device configuration */
 #define UTS_ABS		0x1	/* absolute position */
 
-	u_int32_t		sc_buttons;	/* touchscreen button status */
+	uint32_t		sc_buttons;	/* touchscreen button status */
 	device_t		sc_wsmousedev;
 	struct tpcalib_softc	sc_tpcalib;	/* calibration */
 	struct wsmouse_calibcoords sc_calibcoords;
@@ -89,7 +92,7 @@ struct uts_softc {
 
 #define TSCREEN_FLAGS_MASK (HIO_CONST|HIO_RELATIVE)
 
-Static void	uts_intr(struct uhidev *addr, void *ibuf, u_int len);
+Static void	uts_intr(struct uhidev *, void *, u_int);
 
 Static int	uts_enable(void *);
 Static void	uts_disable(void *);
@@ -137,7 +140,7 @@ uts_attach(device_t parent, device_t self, void *aux)
 	struct wsmousedev_attach_args a;
 	int size;
 	void *desc;
-	u_int32_t flags;
+	uint32_t flags;
 	struct hid_data * d;
 	struct hid_item item;
 
@@ -202,9 +205,19 @@ uts_attach(device_t parent, device_t self, void *aux)
 	/* requires HID usage Digitizer:In_Range */
 	if (!hid_locate(desc, size, HID_USAGE2(HUP_DIGITIZERS, HUD_IN_RANGE),
 		uha->reportid, hid_input, &sc->sc_loc_z, &flags)) {
-		aprint_error_dev(sc->sc_hdev.sc_dev,
-		    "touchscreen has no range report\n");
-		return;
+		if (uha->uiaa->uiaa_vendor == USB_VENDOR_ELAN) {
+			/*
+			 * XXX
+			 * ELAN touchscreens error out here but still return
+			 * valid data
+			 */
+			aprint_debug_dev(sc->sc_hdev.sc_dev,
+			    "ELAN touchscreen found, working around bug.\n");
+		} else {
+			aprint_error_dev(sc->sc_hdev.sc_dev,
+			    "touchscreen has no range report\n");
+			return;
+		}
 	}
 
 	/* multi-touch support would need HUD_CONTACTID and HUD_CONTACTMAX */
@@ -230,22 +243,23 @@ uts_attach(device_t parent, device_t self, void *aux)
 	sc->sc_calibcoords.maxy = 4095;
 	sc->sc_calibcoords.samplelen = WSMOUSE_CALIBCOORDS_RESET;
 	d = hid_start_parse(desc, size, hid_input);
-	while (hid_get_item(d, &item)) {
-		if (item.kind != hid_input
-		    || HID_GET_USAGE_PAGE(item.usage) != HUP_GENERIC_DESKTOP
-		    || item.report_ID != sc->sc_hdev.sc_report_id)
-			continue;
-		if (HID_GET_USAGE(item.usage) == HUG_X) {
-			sc->sc_calibcoords.minx = item.logical_minimum;
-			sc->sc_calibcoords.maxx = item.logical_maximum;
+	if (d != NULL) {
+		while (hid_get_item(d, &item)) {
+			if (item.kind != hid_input
+			    || HID_GET_USAGE_PAGE(item.usage) != HUP_GENERIC_DESKTOP
+			    || item.report_ID != sc->sc_hdev.sc_report_id)
+				continue;
+			if (HID_GET_USAGE(item.usage) == HUG_X) {
+				sc->sc_calibcoords.minx = item.logical_minimum;
+				sc->sc_calibcoords.maxx = item.logical_maximum;
+			}
+			if (HID_GET_USAGE(item.usage) == HUG_Y) {
+				sc->sc_calibcoords.miny = item.logical_minimum;
+				sc->sc_calibcoords.maxy = item.logical_maximum;
+			}
 		}
-		if (HID_GET_USAGE(item.usage) == HUG_Y) {
-			sc->sc_calibcoords.miny = item.logical_minimum;
-			sc->sc_calibcoords.maxy = item.logical_maximum;
-		}
+		hid_end_parse(d);
 	}
-	hid_end_parse(d);
-
 	tpcalib_init(&sc->sc_tpcalib);
 	tpcalib_ioctl(&sc->sc_tpcalib, WSMOUSEIO_SCALIBCOORDS,
 	    (void *)&sc->sc_calibcoords, 0, 0);
@@ -353,7 +367,7 @@ uts_intr(struct uhidev *addr, void *ibuf, u_int len)
 {
 	struct uts_softc *sc = (struct uts_softc *)addr;
 	int dx, dy, dz;
-	u_int32_t buttons = 0;
+	uint32_t buttons = 0;
 	int flags, s;
 
 	DPRINTFN(5,("uts_intr: len=%d\n", len));

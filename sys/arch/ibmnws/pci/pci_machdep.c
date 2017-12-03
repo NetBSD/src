@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.9 2011/07/01 20:47:43 dyoung Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.9.12.1 2017/12/03 11:36:22 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -79,6 +79,16 @@ ibmnws_pci_get_chipset_tag_indirect(pci_chipset_tag_t pc)
 	pc->pc_intr_establish = genppc_pci_intr_establish;
 	pc->pc_intr_disestablish = genppc_pci_intr_disestablish;
 	pc->pc_intr_setattr = genppc_pci_intr_setattr;
+	pc->pc_intr_type = genppc_pci_intr_type;
+	pc->pc_intr_alloc = genppc_pci_intr_alloc;
+	pc->pc_intr_release = genppc_pci_intr_release;
+	pc->pc_intx_alloc = genppc_pci_intx_alloc;
+
+	pc->pc_msi_v = (void *)pc;
+	genppc_pci_chipset_msi_init(pc);
+
+	pc->pc_msix_v = (void *)pc;
+	genppc_pci_chipset_msix_init(pc);
 
 	pc->pc_conf_interrupt = genppc_pci_conf_interrupt;
 	pc->pc_decompose_tag = genppc_pci_indirect_decompose_tag;

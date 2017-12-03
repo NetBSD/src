@@ -1,4 +1,4 @@
-/*	$NetBSD: tcpcib.c,v 1.1.6.2 2013/02/25 00:29:05 tls Exp $	*/
+/*	$NetBSD: tcpcib.c,v 1.1.6.3 2017/12/03 11:36:50 jdolecek Exp $	*/
 /*	$OpenBSD: tcpcib.c,v 1.4 2012/10/17 22:32:01 deraadt Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcpcib.c,v 1.1.6.2 2013/02/25 00:29:05 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcpcib.c,v 1.1.6.3 2017/12/03 11:36:50 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -212,7 +212,8 @@ tcpcib_attach(device_t parent, device_t self, void *aux)
 		if (PCI_MAPREG_IO_ADDR(wdtbase) == 0 ||
 		    bus_space_map(sc->sc_wdt_iot, PCI_MAPREG_IO_ADDR(wdtbase),
 		    E600_WDT_SIZE, 0, &sc->sc_wdt_ioh)) {
-			aprint_error_dev(self, "can't map watchdog I/O space\n");
+			aprint_error_dev(self,
+			    "can't map watchdog I/O space\n");
 			return;
 		}
 		aprint_normal_dev(self, "watchdog");

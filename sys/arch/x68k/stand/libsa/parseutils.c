@@ -1,4 +1,4 @@
-/*	$NetBSD: parseutils.c,v 1.2 2007/11/11 05:20:27 isaki Exp $	*/
+/*	$NetBSD: parseutils.c,v 1.2.62.1 2017/12/03 11:36:49 jdolecek Exp $	*/
 
 /*
  *	from /sys/arch/i386/lib/parseutils.c
@@ -64,7 +64,7 @@ gettrailer(char *arg)
 		*options++ = '\0';
 
 	/* trim leading blanks */
-	while (*options && *options == ' ')
+	while (*options == ' ')
 		options++;
 
 	return options;

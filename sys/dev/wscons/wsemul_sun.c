@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_sun.c,v 1.28 2010/03/12 08:40:50 jdc Exp $ */
+/* $NetBSD: wsemul_sun.c,v 1.28.20.1 2017/12/03 11:37:37 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 /* XXX DESCRIPTION/SOURCE OF INFORMATION */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_sun.c,v 1.28 2010/03/12 08:40:50 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_sun.c,v 1.28.20.1 2017/12/03 11:37:37 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,15 +58,16 @@ void	wsemul_sun_detach(void *cookie, u_int *crowp, u_int *ccolp);
 void	wsemul_sun_resetop(void *, enum wsemul_resetops);
 
 const struct wsemul_ops wsemul_sun_ops = {
-	"sun",
-	wsemul_sun_cnattach,
-	wsemul_sun_attach,
-	wsemul_sun_output,
-	wsemul_sun_translate,
-	wsemul_sun_detach,
-	wsemul_sun_resetop,
-	NULL,	/* getmsgattrs */
-	NULL,	/* setmsgattrs */
+	.name = "sun",
+	.cnattach = wsemul_sun_cnattach,
+	.attach = wsemul_sun_attach,
+	.output = wsemul_sun_output,
+	.translate = wsemul_sun_translate,
+	.detach = wsemul_sun_detach,
+	.reset = wsemul_sun_resetop,
+	.getmsgattrs = NULL,
+	.setmsgattrs = NULL,
+	.resize = NULL,
 };
 
 #define	SUN_EMUL_STATE_NORMAL	0	/* normal processing */
@@ -151,11 +152,11 @@ wsemul_sun_cnattach(const struct wsscreen_descr *type, void *cookie,
 		res = (*edp->emulops->allocattr)(cookie, 0, 0,
 					    WS_KERNEL_MONOATTR,
 					    &edp->kernattr);
-	if (res)
 #else
-	res = 0; /* XXX gcc */
+	res = EINVAL;
 #endif
-	edp->kernattr = defattr;
+	if (res)
+		edp->kernattr = defattr;
 
 	edp->cbcookie = NULL;
 
@@ -175,9 +176,7 @@ wsemul_sun_attach(int console, const struct wsscreen_descr *type,
 
 	if (console) {
 		edp = &wsemul_sun_console_emuldata;
-#ifdef DIAGNOSTIC
 		KASSERT(edp->console == 1);
-#endif
 	} else {
 		edp = malloc(sizeof *edp, M_DEVBUF, M_WAITOK);
 

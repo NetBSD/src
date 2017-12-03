@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.128.2.2 2014/08/20 00:03:29 tls Exp $
+#	$NetBSD: files.xen,v 1.128.2.3 2017/12/03 11:36:51 jdolecek Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -14,6 +14,9 @@ defparam opt_kernbase.h	KERNBASE
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI
+
+# Interrupt debug
+defflag opt_intrdebug.h	INTRDEBUG
 
 # delay before cpu_reset() for reboot.
 defparam		CPURESET_DELAY
@@ -39,14 +42,12 @@ file	arch/i386/i386/aout_machdep.c	exec_aout
 file	arch/i386/i386/busfunc.S
 file	arch/i386/i386/cpufunc.S
 file	arch/i386/i386/cpu_in_cksum.S   (inet | inet6) & cpu_in_cksum
-file	arch/i386/i386/db_dbgreg.S	ddb | kstack_check_dr0
 file	arch/i386/i386/db_disasm.c	ddb
 file	arch/i386/i386/db_interface.c	ddb
 file	arch/i386/i386/db_machdep.c	ddb
 file	arch/i386/i386/dumpsys.c
 file	arch/i386/i386/gdt.c
 file	arch/i386/i386/ipkdb_glue.c	ipkdb
-file	arch/i386/i386/kgdb_machdep.c	kgdb
 file	arch/i386/i386/kobj_machdep.c	modular
 file	arch/i386/i386/machdep.c
 file	arch/i386/i386/longrun.c
@@ -54,8 +55,6 @@ file	arch/i386/i386/mtrr_k6.c	mtrr
 file	arch/i386/i386/process_machdep.c
 file	arch/i386/i386/trap.c
 file	arch/i386/i386/lock_stubs.S
-
-file	arch/i386/i386/pmc.c			perfctrs
 
 file	crypto/des/arch/i386/des_enc.S		des
 file	crypto/des/arch/i386/des_cbc.S		des
@@ -70,7 +69,6 @@ file	arch/amd64/amd64/cpu_in_cksum.S		(inet | inet6) & cpu_in_cksum
 file	arch/amd64/amd64/db_disasm.c		ddb
 file	arch/amd64/amd64/db_interface.c		ddb
 file	arch/amd64/amd64/db_machdep.c		ddb
-file	arch/amd64/amd64/kgdb_machdep.c	 kgdb
 file	arch/amd64/amd64/kobj_machdep.c	 	modular
 file	arch/amd64/amd64/gdt.c
 file	arch/amd64/amd64/machdep.c
@@ -80,11 +78,14 @@ file	arch/amd64/amd64/lock_stubs.S
 endif
 
 file	kern/subr_disk_mbr.c		disk
+file	uvm/pmap/pmap_pvt.c
 file	arch/x86/x86/convert_xmm_s87.c
 file	arch/x86/x86/db_memrw.c		ddb | kgdb
 file	arch/x86/x86/db_trace.c		ddb
 file	arch/x86/x86/fpu.c
+file	arch/x86/x86/dbregs.c
 file	arch/xen/x86/hypervisor_machdep.c
+file	arch/x86/x86/kgdb_machdep.c	kgdb
 # file 	arch/x86/x86/mtrr_i686.c	mtrr
 file	arch/x86/x86/syscall.c
 file	arch/xen/x86/x86_xpmap.c
@@ -92,9 +93,9 @@ file	arch/xen/x86/xen_pmap.c
 file	arch/xen/x86/xen_intr.c
 file	arch/xen/x86/xenfunc.c
 
-file	arch/xen/xen/xen_ucode.c	dom0ops | cpu_ucode needs-flag
-file	arch/x86/x86/cpu_ucode_amd.c	dom0ops | cpu_ucode needs-flag
-file	arch/x86/x86/cpu_ucode_intel.c	dom0ops | cpu_ucode needs-flag
+file	arch/xen/xen/xen_ucode.c	dom0ops & cpu_ucode needs-flag
+file	arch/x86/x86/cpu_ucode_amd.c	dom0ops & cpu_ucode needs-flag
+file	arch/x86/x86/cpu_ucode_intel.c	dom0ops & cpu_ucode needs-flag
 
 file	arch/xen/xen/xen_machdep.c
 file	arch/xen/xen/xen_debug.c
@@ -105,8 +106,16 @@ file	arch/xen/xen/evtchn.c
 
 file	arch/xen/xen/xengnt.c
 
+file	arch/x86/x86/cpu_rng.c
+
 file	dev/cons.c
 
+
+#
+# Stack-less Just-In-Time compiler
+#
+
+include	"external/bsd/sljit/conf/files.sljit"
 
 #
 # Machine-independent SCSI drivers
@@ -123,32 +132,31 @@ include	"dev/ata/files.ata"
 # Memory Disk for install floppy
 file	dev/md_root.c			memory_disk_hooks
 
-file	arch/x86/x86/bus_dma.c		pci
+file	arch/x86/x86/bus_dma.c		machdep
 file	arch/x86/x86/core_machdep.c	coredump
-file	arch/xen/x86/xen_bus_dma.c	pci
-file	arch/x86/x86/bus_space.c	pci
-file	arch/xen/x86/consinit.c
-file	arch/x86/x86/identcpu.c
-file	arch/xen/x86/intr.c
+file	arch/xen/x86/xen_bus_dma.c	machdep
+file	arch/x86/x86/bus_space.c	machdep
+file	arch/xen/x86/consinit.c		machdep
+file	arch/x86/x86/identcpu.c		machdep
+file	arch/xen/x86/pintr.c		machdep & dom0ops
 file	arch/xen/x86/xen_ipi.c		multiprocessor
-file	arch/x86/x86/pmap.c
-file	arch/x86/x86/pmap_tlb.c
+file	arch/x86/x86/intr.c		machdep
+file	arch/x86/x86/idt.c		machdep
+file	arch/x86/x86/pmap.c		machdep
+file	arch/x86/x86/pmap_tlb.c		machdep
 file	arch/x86/x86/procfs_machdep.c	procfs
-file	arch/x86/x86/sys_machdep.c
-file	arch/x86/x86/tsc.c
-file	arch/x86/x86/vm_machdep.c
-file	arch/x86/x86/x86_machdep.c
-file	arch/x86/x86/cpu_topology.c
+file	arch/x86/x86/sys_machdep.c	machdep
+file	arch/x86/x86/tsc.c		machdep
+file	arch/x86/x86/vm_machdep.c	machdep
+file	arch/x86/x86/x86_machdep.c	machdep
+file	arch/x86/x86/cpu_topology.c	machdep
+file	arch/x86/x86/platform.c		machdep
 
 include	"arch/xen/conf/files.compat"
 
 # BIOS32 routines
 define	bios32
-ifdef i386
-file	arch/i386/i386/bios32.c		bios32 needs-flag
-elifdef amd64
-file	arch/amd64/amd64/bios32.c	bios32 needs-flag
-endif
+file	arch/x86/x86/bios32.c		bios32 needs-flag
 
 # xen specific mainbus attributes
 define cpubus { [apid = -1] }
@@ -223,7 +231,7 @@ include	"dev/pckbport/files.pckbport"
 include "dev/i2o/files.i2o"
 include "dev/pci/files.pci"
 include "dev/pci/files.agp"
-file	arch/xen/xen/pciide_machdep.c	pciide_common
+file	arch/x86/pci/pciide_machdep.c	pciide_common
 
 device	pciback {unit = -1}
 attach	pciback at pci
@@ -249,7 +257,7 @@ include "dev/apm/files.apm"
 include "dev/acpi/files.acpi"
 file	arch/xen/xen/xen_acpi_machdep.c	acpi
 file	arch/x86/x86/mpacpi.c		acpi
-file	arch/x86/x86/i8259.c
+file	arch/x86/x86/i8259.c		dom0ops
 
 # Stubs for x86 routines not included in the system
 file	arch/x86/x86/x86_stub.c
@@ -304,24 +312,10 @@ file	arch/x86/x86/powernow.c		powernow
 #
 
 ifdef i386
-# VM86 mode
-file	arch/i386/i386/vm86.c			vm86
 
 # Binary compatibility with previous NetBSD releases (COMPAT_XX)
 file	arch/i386/i386/compat_13_machdep.c	compat_13
-file	arch/i386/i386/compat_16_machdep.c	compat_16 | compat_ibcs2
-
-# SVR4 binary compatibility (COMPAT_SVR4)
-include	"compat/svr4/files.svr4"
-file	arch/i386/i386/svr4_machdep.c		compat_svr4
-file	arch/i386/i386/svr4_sigcode.S		compat_svr4
-file	arch/i386/i386/svr4_syscall.c		compat_svr4
-
-# iBCS-2 binary compatibility (COMPAT_IBCS2)
-include	"compat/ibcs2/files.ibcs2"
-file	arch/i386/i386/ibcs2_machdep.c		compat_ibcs2
-file	arch/i386/i386/ibcs2_sigcode.S		compat_ibcs2
-file	arch/i386/i386/ibcs2_syscall.c		compat_ibcs2
+file	arch/i386/i386/compat_16_machdep.c	compat_16
 
 # Linux binary compatibility (COMPAT_LINUX)
 include	"compat/linux/files.linux"
@@ -332,11 +326,12 @@ file	arch/x86/x86/linux_trap.c		compat_linux
 
 # FreeBSD binary compatibility (COMPAT_FREEBSD)
 include	"compat/freebsd/files.freebsd"
-file	arch/i386/i386/freebsd_machdep.c	compat_freebsd
-file	arch/i386/i386/freebsd_sigcode.S	compat_freebsd
-file	arch/i386/i386/freebsd_syscall.c	compat_freebsd
 
 elifdef amd64
+
+# Binary compatibility with previous NetBSD releases (COMPAT_XX)
+file	arch/amd64/amd64/compat_16_machdep.c	compat_16
+
 # NetBSD/i386 32-bit binary compatibility (COMPAT_NETBSD32)
 include "compat/netbsd32/files.netbsd32"
 file	arch/amd64/amd64/netbsd32_machdep.c	compat_netbsd32
@@ -362,6 +357,8 @@ include	"compat/ossaudio/files.ossaudio"
 # Bluetooth
 include "dev/bluetooth/files.bluetooth"
 
+include "dev/sdmmc/files.sdmmc"
+
 #
 # CARDBUS
 #
@@ -383,8 +380,10 @@ defflag	opt_xen.h			DOM0OPS
 file	arch/xen/xen/privcmd.c		dom0ops
 file 	arch/xen/x86/xen_shm_machdep.c	dom0ops
 file	arch/x86/pci/pci_machdep.c	hypervisor & pci & dom0ops
-file	arch/xen/xen/pci_intr_machdep.c	hypervisor & pci
-file	arch/xen/xen/isa_machdep.c	hypervisor & dom0ops
+file	arch/x86/pci/pci_intr_machdep.c	hypervisor & pci
+file	arch/x86/pci/pci_msi_machdep.c	hypervisor & pci
+file	arch/x86/pci/msipic.c		hypervisor & pci
+file	arch/x86/isa/isa_machdep.c	hypervisor & dom0ops
 file	arch/xen/xen/xenevt.c		xenevt & dom0ops
 file	arch/xen/xen/xennetback_xenbus.c xvif
 file	arch/xen/xen/xennet_checksum.c	xvif | xennet

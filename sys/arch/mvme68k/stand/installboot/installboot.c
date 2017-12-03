@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.15.44.3 2014/08/20 00:03:14 tls Exp $ */
+/*	$NetBSD: installboot.c,v 1.15.44.4 2017/12/03 11:36:30 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -219,10 +219,6 @@ loadprotoblocks(char *fname, size_t *size)
 	}
 
 	return (char *)bp;
-
-	if (bp)
-		free((void *)bp);
-	return NULL;
 }
 
 static void

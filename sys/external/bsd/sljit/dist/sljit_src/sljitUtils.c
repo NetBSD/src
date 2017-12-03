@@ -1,4 +1,4 @@
-/*	$NetBSD: sljitUtils.c,v 1.2.4.3 2014/08/20 00:04:25 tls Exp $	*/
+/*	$NetBSD: sljitUtils.c,v 1.2.4.4 2017/12/03 11:38:04 jdolecek Exp $	*/
 
 /*
  *    Stack-less Just-In-Time compiler
@@ -206,11 +206,11 @@ SLJIT_API_FUNC_ATTRIBUTE void SLJIT_CALL sljit_release_lock(void)
 #include <fcntl.h>
 
 /* Some old systems does not have MAP_ANON. */
-static sljit_si dev_zero = -1;
+static sljit_s32 dev_zero = -1;
 
 #if (defined SLJIT_SINGLE_THREADED && SLJIT_SINGLE_THREADED)
 
-static SLJIT_INLINE sljit_si open_dev_zero(void)
+static SLJIT_INLINE sljit_s32 open_dev_zero(void)
 {
 	dev_zero = open("/dev/zero", O_RDWR);
 	return dev_zero < 0;
@@ -222,10 +222,13 @@ static SLJIT_INLINE sljit_si open_dev_zero(void)
 
 static pthread_mutex_t dev_zero_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-static SLJIT_INLINE sljit_si open_dev_zero(void)
+static SLJIT_INLINE sljit_s32 open_dev_zero(void)
 {
 	pthread_mutex_lock(&dev_zero_mutex);
-	dev_zero = open("/dev/zero", O_RDWR);
+	/* The dev_zero might be initialized by another thread during the waiting. */
+	if (dev_zero < 0) {
+		dev_zero = open("/dev/zero", O_RDWR);
+	}
 	pthread_mutex_unlock(&dev_zero_mutex);
 	return dev_zero < 0;
 }
@@ -243,7 +246,7 @@ static SLJIT_INLINE sljit_si open_dev_zero(void)
 /* Planning to make it even more clever in the future. */
 static sljit_sw sljit_page_align = 0;
 
-SLJIT_API_FUNC_ATTRIBUTE struct sljit_stack* SLJIT_CALL sljit_allocate_stack(sljit_uw limit, sljit_uw max_limit)
+SLJIT_API_FUNC_ATTRIBUTE struct sljit_stack* SLJIT_CALL sljit_allocate_stack(sljit_uw limit, sljit_uw max_limit, void *allocator_data)
 {
 	struct sljit_stack *stack;
 	union {
@@ -257,6 +260,7 @@ SLJIT_API_FUNC_ATTRIBUTE struct sljit_stack* SLJIT_CALL sljit_allocate_stack(slj
 	vaddr_t v;
 #endif
 
+	SLJIT_UNUSED_ARG(allocator_data);
 	if (limit > max_limit || limit < 1)
 		return NULL;
 
@@ -282,7 +286,7 @@ SLJIT_API_FUNC_ATTRIBUTE struct sljit_stack* SLJIT_CALL sljit_allocate_stack(slj
 	/* Align limit and max_limit. */
 	max_limit = (max_limit + sljit_page_align) & ~sljit_page_align;
 
-	stack = (struct sljit_stack*)SLJIT_MALLOC(sizeof(struct sljit_stack));
+	stack = (struct sljit_stack*)SLJIT_MALLOC(sizeof(struct sljit_stack), allocator_data);
 	if (!stack)
 		return NULL;
 
@@ -290,7 +294,7 @@ SLJIT_API_FUNC_ATTRIBUTE struct sljit_stack* SLJIT_CALL sljit_allocate_stack(slj
 	v = uvm_km_alloc(kernel_map, max_limit, PAGE_SIZE, UVM_KMF_WIRED|UVM_KMF_ZERO);
 	base.ptr = (void *)v;
 	if (base.ptr == NULL) {
-		SLJIT_FREE(stack);
+		SLJIT_FREE(stack, allocator_data);
 		return NULL;
 	}
 	stack->base = base.uw;
@@ -299,14 +303,14 @@ SLJIT_API_FUNC_ATTRIBUTE struct sljit_stack* SLJIT_CALL sljit_allocate_stack(slj
 #elif defined(_WIN32)
 	base.ptr = VirtualAlloc(NULL, max_limit, MEM_RESERVE, PAGE_READWRITE);
 	if (!base.ptr) {
-		SLJIT_FREE(stack);
+		SLJIT_FREE(stack, allocator_data);
 		return NULL;
 	}
 	stack->base = base.uw;
 	stack->limit = stack->base;
 	stack->max_limit = stack->base + max_limit;
 	if (sljit_stack_resize(stack, stack->base + limit)) {
-		sljit_free_stack(stack);
+		sljit_free_stack(stack, allocator_data);
 		return NULL;
 	}
 #else
@@ -315,14 +319,14 @@ SLJIT_API_FUNC_ATTRIBUTE struct sljit_stack* SLJIT_CALL sljit_allocate_stack(slj
 #else
 	if (dev_zero < 0) {
 		if (open_dev_zero()) {
-			SLJIT_FREE(stack);
+			SLJIT_FREE(stack, allocator_data);
 			return NULL;
 		}
 	}
 	base.ptr = mmap(NULL, max_limit, PROT_READ | PROT_WRITE, MAP_PRIVATE, dev_zero, 0);
 #endif
 	if (base.ptr == MAP_FAILED) {
-		SLJIT_FREE(stack);
+		SLJIT_FREE(stack, allocator_data);
 		return NULL;
 	}
 	stack->base = base.uw;
@@ -335,8 +339,9 @@ SLJIT_API_FUNC_ATTRIBUTE struct sljit_stack* SLJIT_CALL sljit_allocate_stack(slj
 
 #undef PAGE_ALIGN
 
-SLJIT_API_FUNC_ATTRIBUTE void SLJIT_CALL sljit_free_stack(struct sljit_stack* stack)
+SLJIT_API_FUNC_ATTRIBUTE void SLJIT_CALL sljit_free_stack(struct sljit_stack* stack, void *allocator_data)
 {
+	SLJIT_UNUSED_ARG(allocator_data);
 #ifdef _KERNEL
 	uvm_km_free(kernel_map, (vaddr_t)stack->base,
 	    stack->max_limit - stack->base, UVM_KMF_WIRED);
@@ -345,7 +350,7 @@ SLJIT_API_FUNC_ATTRIBUTE void SLJIT_CALL sljit_free_stack(struct sljit_stack* st
 #else
 	munmap((void*)stack->base, stack->max_limit - stack->base);
 #endif
-	SLJIT_FREE(stack);
+	SLJIT_FREE(stack, allocator_data);
 }
 
 SLJIT_API_FUNC_ATTRIBUTE sljit_sw SLJIT_CALL sljit_stack_resize(struct sljit_stack* stack, sljit_uw new_limit)

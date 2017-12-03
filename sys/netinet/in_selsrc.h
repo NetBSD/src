@@ -27,4 +27,7 @@ enum in_category {
 
 struct ifaddr *in_getifa(struct ifaddr *, const struct sockaddr *);
 
+void	*in_selsrc_domifattach(struct ifnet *ifp);
+void	in_selsrc_domifdetach(struct ifnet *ifp, void *aux);
+
 #endif /* _NETINET_IN_SELSRC_H */

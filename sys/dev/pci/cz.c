@@ -1,4 +1,4 @@
-/*	$NetBSD: cz.c,v 1.55.14.2 2014/08/20 00:03:42 tls Exp $	*/
+/*	$NetBSD: cz.c,v 1.55.14.3 2017/12/03 11:37:07 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.55.14.2 2014/08/20 00:03:42 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.55.14.3 2017/12/03 11:37:07 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -354,17 +354,16 @@ cz_attach(device_t parent, device_t self, void *aux)
 		aprint_error("\n");
 		/* We will fall-back on polling mode. */
 	} else
-		aprint_normal_dev(cz->cz_dev, "interrupting at %s\n",
-		    intrstr);
+		aprint_normal_dev(cz->cz_dev, "interrupting at %s\n", intrstr);
 
  polling_mode:
 	if (cz->cz_ih == NULL) {
 		callout_init(&cz->cz_callout, 0);
 		if (cz_timeout_ticks == 0)
 			cz_timeout_ticks = max(1, hz * CZ_POLL_MS / 1000);
-		aprint_normal_dev(cz->cz_dev, "polling mode, %d ms interval (%d tick%s)\n",
-		    CZ_POLL_MS, cz_timeout_ticks,
-		    cz_timeout_ticks == 1 ? "" : "s");
+		aprint_normal_dev(cz->cz_dev,
+		    "polling mode, %d ms interval (%d tick%s)\n", CZ_POLL_MS,
+		    cz_timeout_ticks, cz_timeout_ticks == 1 ? "" : "s");
 	}
 
 	/*
@@ -846,9 +845,8 @@ cz_wait_pci_doorbell(struct cz_softc *cz, const char *wstring)
  * Cyclades-Z TTY code starts here...
  *****************************************************************************/
 
-#define CZTTYDIALOUT_MASK	0x80000
-
-#define	CZTTY_DIALOUT(dev)	(minor((dev)) & CZTTYDIALOUT_MASK)
+#define	CZTTY_DIALOUT(dev)	TTDIALOUT(dev)
+#define	CZTTY_UNIT(dev)		TTUNIT(dev)
 #define	CZTTY_CZ(sc)		((sc)->sc_parent)
 
 #define	CZTTY_SOFTC(dev)	cztty_getttysoftc(dev)
@@ -856,7 +854,7 @@ cz_wait_pci_doorbell(struct cz_softc *cz, const char *wstring)
 static struct cztty_softc *
 cztty_getttysoftc(dev_t dev)
 {
-	int i, j, k = 0, u = minor(dev) & ~CZTTYDIALOUT_MASK;
+	int i, j, k = 0, u = CZTTY_UNIT(dev);
 	struct cz_softc *cz = NULL;
 
 	for (i = 0, j = 0; i < cz_cd.cd_ndevs; i++) {

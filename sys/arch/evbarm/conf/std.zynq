@@ -1,0 +1,35 @@
+#	$NetBSD: std.zynq,v 1.2.2.2 2017/12/03 11:36:04 jdolecek Exp $
+#
+# standard NetBSD/evbarm for ZYNQ options
+
+machine	evbarm arm
+include 	"arch/evbarm/conf/std.evbarm"
+
+# Pull in Zynq config definitions.
+include 	"arch/evbarm/conf/files.zynq"
+
+options 	MODULAR
+options 	MODULAR_DEFAULT_AUTOLOAD
+options 	ARM_HAS_VBAR
+options 	PMAP_NEED_ALLOC_POOLPAGE
+options 	__HAVE_CPU_COUNTER
+options 	__HAVE_CPU_UAREA_ALLOC_IDLELWP
+options 	__HAVE_FAST_SOFTINTS		# should be in types.h
+options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
+options 	TPIDRPRW_IS_CURCPU
+
+options 	COM_TOLERANCE=40
+options 	KERNEL_BASE_EXT=0x80000000
+
+options 	FPU_VFP
+options 	CORTEX_PMC
+options 	CORTEX_PMC_CCNT_HZ=666666666
+
+makeoptions	LOADADDRESS_VIRT="0x80100000"
+makeoptions	LOADADDRESS="0x00100000"
+
+makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.zynq"
+makeoptions	CPPFLAGS+="-I$S/../../../include"
+
+options 	ARM_INTR_IMPL="<arch/arm/zynq/zynq7000_intr.h>"
+options		ARM_GENERIC_TODR

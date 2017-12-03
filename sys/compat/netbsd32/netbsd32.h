@@ -1,7 +1,7 @@
-/*	$NetBSD: netbsd32.h,v 1.95.2.2 2014/08/20 00:03:33 tls Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.95.2.3 2017/12/03 11:36:55 jdolecek Exp $	*/
 
 /*
- * Copyright (c) 1998, 2001, 2008 Matthew R. Green
+ * Copyright (c) 1998, 2001, 2008, 2015 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -49,6 +49,8 @@
 #include <compat/sys/ucontext.h>
 #include <compat/sys/mount.h>
 #include <compat/sys/signal.h>
+
+#include <nfs/rpcv2.h>
 
 /*
  * first, define the basic types we need.
@@ -143,6 +145,7 @@ typedef netbsd32_pointer_t netbsd32_u_charp;
 typedef netbsd32_pointer_t netbsd32_charpp;
 typedef netbsd32_pointer_t netbsd32_size_tp;
 typedef netbsd32_pointer_t netbsd32_intp;
+typedef netbsd32_pointer_t netbsd32_uintp;
 typedef netbsd32_pointer_t netbsd32_longp;
 typedef netbsd32_pointer_t netbsd32_caddrp;
 typedef netbsd32_pointer_t netbsd32_caddr;
@@ -152,10 +155,8 @@ typedef netbsd32_pointer_t netbsd32_lwpidp;
 typedef netbsd32_pointer_t netbsd32_ucontextp;
 typedef netbsd32_pointer_t netbsd32_caddr_t;
 typedef netbsd32_pointer_t netbsd32_lwpctlp;
-typedef netbsd32_pointer_t netbsd32_posix_spawn_file_actionsp;
-typedef netbsd32_pointer_t netbsd32_posix_spawnattrp;
-typedef netbsd32_pointer_t netbsd32_posix_spawn_file_actions_entryp;
 typedef netbsd32_pointer_t netbsd32_pid_tp;
+typedef netbsd32_pointer_t netbsd32_psetidp_t;
 
 /*
  * now, the compatibility structures and their fake pointer types.
@@ -167,6 +168,12 @@ typedef netbsd32_intptr_t netbsd32_semid_t;
 typedef netbsd32_pointer_t netbsd32_semidp_t;
 typedef netbsd32_uint64 netbsd32_dev_t;
 typedef netbsd32_int64 netbsd32_off_t;
+typedef netbsd32_uint64 netbsd32_ino_t;
+
+/* from <sys/spawn.h> */
+typedef netbsd32_pointer_t netbsd32_posix_spawn_file_actionsp;
+typedef netbsd32_pointer_t netbsd32_posix_spawnattrp;
+typedef netbsd32_pointer_t netbsd32_posix_spawn_file_actions_entryp;
 
 /* from <sys/uio.h> */
 typedef netbsd32_pointer_t netbsd32_iovecp_t;
@@ -180,6 +187,7 @@ typedef int32_t netbsd32_timer_t;
 typedef	int32_t netbsd32_time50_t;
 typedef	netbsd32_int64 netbsd32_time_t;
 typedef netbsd32_pointer_t netbsd32_timerp_t;
+typedef netbsd32_pointer_t netbsd32_clockidp_t;
 
 typedef netbsd32_pointer_t netbsd32_timespec50p_t;
 struct netbsd32_timespec50 {
@@ -202,7 +210,7 @@ struct netbsd32_timeval50 {
 typedef netbsd32_pointer_t netbsd32_timevalp_t;
 struct netbsd32_timeval {
 	netbsd32_time_t	tv_sec;		/* seconds */
-	netbsd32_long	tv_usec;	/* and microseconds */
+	suseconds_t	tv_usec;	/* and microseconds */
 };
 
 typedef netbsd32_pointer_t netbsd32_timezonep_t;
@@ -268,11 +276,21 @@ struct netbsd32_export_args30 {
 	int	ex_addrlen;		/* and the net address length */
 	netbsd32_pointer_t ex_mask;	/* mask of valid bits in saddr */
 	int	ex_masklen;		/* and the smask length */
-	netbsd32_charp ex_indexfile;	/* index file for WebNFS URLs */ 
+	netbsd32_charp ex_indexfile;	/* index file for WebNFS URLs */
 };
 
 /* from <sys/poll.h> */
 typedef netbsd32_pointer_t netbsd32_pollfdp_t;
+
+/* from <sys/ptrace.h> */
+typedef netbsd32_pointer_t netbsd32_ptrace_io_descp_t;
+struct netbsd32_ptrace_io_desc {
+	int	piod_op;		/* I/O operation */
+	netbsd32_voidp piod_offs;	/* child offset */
+	netbsd32_voidp piod_addr;	/* parent offset */
+	netbsd32_size_t piod_len;	/* request length (in) /
+					   actual count (out) */
+};
 
 /* from <sys/quotactl.h> */
 typedef netbsd32_pointer_t netbsd32_quotactlargsp_t;
@@ -374,6 +392,12 @@ struct	netbsd32_rusage {
 	netbsd32_long	ru_nsignals;	/* signals received */
 	netbsd32_long	ru_nvcsw;	/* voluntary context switches */
 	netbsd32_long	ru_nivcsw;	/* involuntary " */
+};
+
+typedef netbsd32_pointer_t netbsd32_wrusagep_t;
+struct netbsd32_wrusage {
+	struct netbsd32_rusage	wru_self;
+	struct netbsd32_rusage	wru_children;
 };
 
 typedef netbsd32_pointer_t netbsd32_orlimitp_t;
@@ -909,6 +933,20 @@ struct netbsd32_kevent {
 typedef netbsd32_pointer_t netbsd32_sched_paramp_t;
 typedef netbsd32_pointer_t netbsd32_cpusetp_t;
 
+/* from <fs/tmpfs/tmpfs_args.h> */
+struct netbsd32_tmpfs_args {
+        int                     ta_version;
+
+        /* Size counters. */
+        netbsd32_ino_t          ta_nodes_max;
+        netbsd32_off_t          ta_size_max;
+
+        /* Root node attributes. */
+        uid_t                   ta_root_uid;
+        gid_t                   ta_root_gid;
+        mode_t                  ta_root_mode;
+};
+
 /* from <fs/cd9660/cd9660_mount.h> */
 struct netbsd32_iso_args {
 	netbsd32_charp fspec;
@@ -927,6 +965,48 @@ struct netbsd32_mfs_args {
 	netbsd32_voidp		base;
 	netbsd32_u_long		size;
 };
+
+/* from <nfs/nfs.h> */
+struct netbsd32_nfsd_args {
+	int		sock;
+	netbsd32_voidp	name;
+	int		namelen;
+};
+
+typedef netbsd32_pointer_t netbsd32_nfsdp;
+struct netbsd32_nfsd_srvargs {
+	netbsd32_nfsdp	nsd_nfsd;
+	uid_t		nsd_uid;
+	u_int32_t	nsd_haddr;
+	struct uucred	nsd_cr;
+	int		nsd_authlen;
+	netbsd32_u_charp nsd_authstr;
+	int		nsd_verflen;
+	netbsd32_u_charp nsd_verfstr;
+	struct netbsd32_timeval	nsd_timestamp;
+	u_int32_t	nsd_ttl;
+	NFSKERBKEY_T	nsd_key;
+};
+
+typedef netbsd32_pointer_t netbsd32_export_argsp;
+struct netbsd32_export_args {
+	int		ex_flags;
+	uid_t		ex_root;
+	struct uucred	ex_anon;
+	netbsd32_sockaddrp_t ex_addr;
+	int		ex_addrlen;
+	netbsd32_sockaddrp_t ex_mask;
+	int		ex_masklen;
+	netbsd32_charp	ex_indexfile;
+};
+
+struct netbsd32_mountd_exports_list {
+	const netbsd32_charp	mel_path;
+	netbsd32_size_t		mel_nexports;
+	netbsd32_export_argsp	mel_exports;
+};
+
+/* no struct export_args30 yet */
 
 /* from <nfs/nfsmount,h> */
 struct netbsd32_nfs_args {
@@ -949,6 +1029,8 @@ struct netbsd32_nfs_args {
 	int32_t		deadthresh;	/* Retrans threshold */
 	netbsd32_charp	hostname;	/* server's name */
 };
+
+/* from <msdosfs/msdosfsmount.h> */
 struct netbsd32_msdosfs_args {
 	netbsd32_charp	fspec;		/* blocks special holding the fs to mount */
 	struct	netbsd32_export_args30 _pad1; /* compat with old userland tools */
@@ -985,12 +1067,27 @@ struct netbsd32_posix_spawn_file_actions {
 	netbsd32_posix_spawn_file_actions_entryp fae;
 };
 
+struct netbsd32_modctl_load {
+	netbsd32_charp ml_filename;
+	int ml_flags;
+	netbsd32_charp ml_props;
+	netbsd32_size_t ml_propslen;
+};
+
+struct netbsd32_mq_attr {
+	netbsd32_long	mq_flags;
+	netbsd32_long	mq_maxmsg;
+	netbsd32_long	mq_msgsize;
+	netbsd32_long	mq_curmsgs;
+};
+typedef netbsd32_pointer_t netbsd32_mq_attrp_t;
+
 #if 0
 int	netbsd32_kevent(struct lwp *, void *, register_t *);
 #endif
 
 /*
- * here are some macros to convert between netbsd32 and sparc64 types.
+ * here are some macros to convert between netbsd32 and native 64 bit types.
  * note that they do *NOT* act like good macros and put ()'s around all
  * arguments cuz this _breaks_ SCARG().
  */
@@ -1020,11 +1117,18 @@ int	coredump_netbsd32(struct lwp *, struct coredump_iostate *);
 #include <compat/common/compat_util.h>
 #include <compat/sys/siginfo.h>
 
-vaddr_t netbsd32_vm_default_addr(struct proc *, vaddr_t, vsize_t);
+vaddr_t netbsd32_vm_default_addr(struct proc *, vaddr_t, vsize_t, int);
 void netbsd32_adjust_limits(struct proc *);
 
 void	netbsd32_si_to_si32(siginfo32_t *, const siginfo_t *);
-void	netbsd32_si32_to_si(siginfo_t *, const siginfo32_t *);
+void	netbsd32_ksi32_to_ksi(struct _ksiginfo *si, const struct __ksiginfo32 *si32);
+
+#ifdef KTRACE
+void netbsd32_ktrpsig(int, sig_t, const sigset_t *, const ksiginfo_t *);
+#else
+#define netbsd32_ktrpsig NULL
+#endif
+
 
 void	startlwp32(void *);
 struct compat_50_netbsd32___semctl14_args;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rayreg.h,v 1.10 2007/12/25 18:33:42 perry Exp $	*/
+/*	$NetBSD: if_rayreg.h,v 1.10.54.1 2017/12/03 11:37:31 jdolecek Exp $	*/
 /*
  * Copyright (c) 2000 Christian E. Hopps
  * All rights reserved.
@@ -27,6 +27,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/ioccom.h>
 
 #define	RAY_MAXSSIDLEN	32
 

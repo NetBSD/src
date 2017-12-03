@@ -1,29 +1,29 @@
-/*	$NetBSD: db_machdep.h,v 1.18.2.1 2014/08/20 00:02:46 tls Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.18.2.2 2017/12/03 11:35:53 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott K Stevens
- * 
+ *
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
+ *
  * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
- * 
+ *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
- * 
+ *
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  */
@@ -81,7 +81,7 @@ extern db_regs_t *ddb_regp;
 #define T_BREAKPOINT			(1)
 
 #define	IS_BREAKPOINT_TRAP(type, code)	((type) == T_BREAKPOINT)
-#define IS_WATCHPOINT_TRAP(type, code)	(0)
+#define	IS_WATCHPOINT_TRAP(type, code)	(0)
 
 #define	inst_trap_return(ins)	(0)
 /* ldmxx reg, {..., pc}
@@ -118,10 +118,9 @@ extern db_regs_t *ddb_regp;
 u_int branch_taken(u_int insn, u_int pc, db_regs_t *db_regs);
 int kdb_trap(int, db_regs_t *);
 void db_machine_init(void);
-int db_validate_address(vm_offset_t addr);
+int db_validate_address(vaddr_t addr);
 
 #define DB_ELF_SYMBOLS
-#define DB_ELFSIZE 32
 
 /*
  * kgdb

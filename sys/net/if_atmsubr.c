@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atmsubr.c,v 1.49.14.2 2014/08/20 00:04:34 tls Exp $       */
+/*      $NetBSD: if_atmsubr.c,v 1.49.14.3 2017/12/03 11:39:02 jdolecek Exp $       */
 
 /*
  * Copyright (c) 1996 Charles D. Cranor and Washington University.
@@ -30,20 +30,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atmsubr.c,v 1.49.14.2 2014/08/20 00:04:34 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atmsubr.c,v 1.49.14.3 2017/12/03 11:39:02 jdolecek Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #include "opt_gateway.h"
 #include "opt_natm.h"
-
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
-#include <sys/protosw.h>
-#include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/syslog.h>
@@ -89,16 +88,14 @@ __KERNEL_RCSID(0, "$NetBSD: if_atmsubr.c,v 1.49.14.2 2014/08/20 00:04:34 tls Exp
 
 int
 atm_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
-    struct rtentry *rt0)
+    const struct rtentry *rt)
 {
 	uint16_t etype = 0;			/* if using LLC/SNAP */
 	int error = 0, sz;
 	struct atm_pseudohdr atmdst, *ad;
 	struct mbuf *m = m0;
-	struct rtentry *rt;
 	struct atmllc *atmllc;
 	uint32_t atm_flags;
-	ALTQ_DECL(struct altq_pktattr pktattr;)
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
 		senderr(ENETDOWN);
@@ -108,34 +105,7 @@ atm_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 	 * do it before prepending link headers.
 	 */
 	IFQ_CLASSIFY(&ifp->if_snd, m,
-	     (dst != NULL ? dst->sa_family : AF_UNSPEC), &pktattr);
-
-	/*
-	 * check route
-	 */
-	if ((rt = rt0) != NULL) {
-
-		if ((rt->rt_flags & RTF_UP) == 0) { /* route went down! */
-			if ((rt0 = rt = RTALLOC1(dst, 0)) != NULL)
-				rt->rt_refcnt--;
-			else
-				senderr(EHOSTUNREACH);
-		}
-
-		if (rt->rt_flags & RTF_GATEWAY) {
-			if (rt->rt_gwroute == 0)
-				goto lookup;
-			if (((rt = rt->rt_gwroute)->rt_flags & RTF_UP) == 0) {
-				rtfree(rt); rt = rt0;
-			lookup: rt->rt_gwroute = RTALLOC1(rt->rt_gateway, 0);
-				if ((rt = rt->rt_gwroute) == 0)
-					senderr(EHOSTUNREACH);
-			}
-		}
-
-		/* XXX: put RTF_REJECT code here if doing ATMARP */
-
-	}
+	    (dst != NULL ? dst->sa_family : AF_UNSPEC));
 
 	/*
 	 * check for non-native ATM traffic   (dst != NULL)
@@ -181,13 +151,8 @@ atm_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 			break;
 
 		default:
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 			printf("%s: can't handle af%d\n", ifp->if_xname,
 			    dst->sa_family);
-#elif defined(__FreeBSD__) || defined(__bsdi__)
-			printf("%s%d: can't handle af%d\n", ifp->if_name,
-			    ifp->if_unit, dst->sa_family);
-#endif
 			senderr(EAFNOSUPPORT);
 		}
 
@@ -196,7 +161,8 @@ atm_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 		 */
 		sz = sizeof(atmdst);
 		atm_flags = ATM_PH_FLAGS(&atmdst);
-		if (atm_flags & ATM_PH_LLCSNAP) sz += 8; /* sizeof snap == 8 */
+		if (atm_flags & ATM_PH_LLCSNAP)
+			sz += 8; /* sizeof snap == 8 */
 		M_PREPEND(m, sz, M_DONTWAIT);
 		if (m == 0)
 			senderr(ENOBUFS);
@@ -205,12 +171,12 @@ atm_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 		if (atm_flags & ATM_PH_LLCSNAP) {
 			atmllc = (struct atmllc *)(ad + 1);
 			memcpy(atmllc->llchdr, ATMLLC_HDR,
-						sizeof(atmllc->llchdr));
+			    sizeof(atmllc->llchdr));
 			ATM_LLC_SETTYPE(atmllc, etype);
 		}
 	}
 
-	return ifq_enqueue(ifp, m ALTQ_COMMA ALTQ_DECL(&pktattr));
+	return ifq_enqueue(ifp, m);
 
 bad:
 	if (m)
@@ -237,60 +203,59 @@ atm_input(struct ifnet *ifp, struct atm_pseudohdr *ah, struct mbuf *m,
 
 	if (rxhand) {
 #ifdef NATM
-	  struct natmpcb *npcb = rxhand;
-	  struct ifqueue *inq;
-	  int s, isr = 0;
+		struct natmpcb *npcb = rxhand;
+		struct ifqueue *inq;
+		int s, isr = 0;
 
-	  s = splnet();			/* in case 2 atm cards @ diff lvls */
-	  npcb->npcb_inq++;			/* count # in queue */
-	  splx(s);
-	  isr = NETISR_NATM;
-	  inq = &natmintrq;
-	  m->m_pkthdr.rcvif = rxhand; /* XXX: overload */
+		s = splnet();		/* in case 2 atm cards @ diff lvls */
+		npcb->npcb_inq++;	/* count # in queue */
+		splx(s);
+		isr = NETISR_NATM;
+		inq = &natmintrq;
+		m_set_rcvif(m, rxhand); /* XXX: overload */
 
-	  s = splnet();
-	  if (IF_QFULL(inq)) {
-	  	IF_DROP(inq);
-	  	m_freem(m);
-	  } else {
-	  	IF_ENQUEUE(inq, m);
-	  	schednetisr(isr);
-	  }
-	  splx(s);
+		IFQ_LOCK(inq);
+		if (IF_QFULL(inq)) {
+			IF_DROP(inq);
+			IFQ_UNLOCK(inq);
+			m_freem(m);
+		} else {
+			IF_ENQUEUE(inq, m);
+			IFQ_UNLOCK(inq);
+			schednetisr(isr);
+		}
 #else
-	  printf("atm_input: NATM detected but not configured in kernel\n");
-	  m_freem(m);
+		printf("%s: NATM detected but not configured in kernel\n",
+		    __func__);
+		m_freem(m);
 #endif
-	  return;
+		return;
+	}
 
-	} else {
-	  /*
-	   * handle LLC/SNAP header, if present
-	   */
-	  if (ATM_PH_FLAGS(ah) & ATM_PH_LLCSNAP) {
-	    struct atmllc *alc;
-	    if (m->m_len < sizeof(*alc) && (m = m_pullup(m, sizeof(*alc))) == 0)
-		  return; /* failed */
-	    alc = mtod(m, struct atmllc *);
-	    if (memcmp(alc, ATMLLC_HDR, 6)) {
-#if defined(__NetBSD__) || defined(__OpenBSD__)
-	      printf("%s: recv'd invalid LLC/SNAP frame [vp=%d,vc=%d]\n",
-		  ifp->if_xname, ATM_PH_VPI(ah), ATM_PH_VCI(ah));
-#elif defined(__FreeBSD__) || defined(__bsdi__)
-	      printf("%s%d: recv'd invalid LLC/SNAP frame [vp=%d,vc=%d]\n",
-		  ifp->if_name, ifp->if_unit, ATM_PH_VPI(ah), ATM_PH_VCI(ah));
-#endif
-	      m_freem(m);
-              return;
-	    }
-	    etype = ATM_LLC_TYPE(alc);
-	    m_adj(m, sizeof(*alc));
-	  }
+	/*
+	 * handle LLC/SNAP header, if present
+	 */
+	if (ATM_PH_FLAGS(ah) & ATM_PH_LLCSNAP) {
+		struct atmllc *alc;
+		if (m->m_len < sizeof(*alc) &&
+		    (m = m_pullup(m, sizeof(*alc))) == NULL)
+			return; /* failed */
+		alc = mtod(m, struct atmllc *);
+		if (memcmp(alc, ATMLLC_HDR, 6)) {
+			printf(
+			    "%s: recv'd invalid LLC/SNAP frame [vp=%d,vc=%d]\n",
+			    ifp->if_xname, ATM_PH_VPI(ah), ATM_PH_VCI(ah));
+			m_freem(m);
+			return;
+		}
+		etype = ATM_LLC_TYPE(alc);
+		m_adj(m, sizeof(*alc));
+	}
 
-	  switch (etype) {
+	switch (etype) {
 #ifdef INET
-	  case ETHERTYPE_IP:
-#ifdef GATEWAY
+	case ETHERTYPE_IP:
+#if 0	/* XXX re-enable once atm_input runs in softint */
 		if (ipflow_fastforward(m))
 			return;
 #endif
@@ -298,18 +263,17 @@ atm_input(struct ifnet *ifp, struct atm_pseudohdr *ah, struct mbuf *m,
 		break;
 #endif /* INET */
 #ifdef INET6
-	  case ETHERTYPE_IPV6:
-#ifdef GATEWAY  
+	case ETHERTYPE_IPV6:
+#if 0	/* XXX re-enable once atm_input runs in softint */
 		if (ip6flow_fastforward(&m))
 			return;
 #endif
 		pktq = ip6_pktq;
 		break;
 #endif
-	  default:
-	      m_freem(m);
-	      return;
-	  }
+	default:
+		m_freem(m);
+		return;
 	}
 
 	if (__predict_false(!pktq_enqueue(pktq, m, 0))) {
@@ -351,19 +315,14 @@ pvcsif_alloc(void)
 	struct pvcsif *pvcsif;
 
 	if (pvc_number >= pvc_max_number)
-		return (NULL);
+		return NULL;
 	pvcsif = malloc(sizeof(struct pvcsif),
 	       M_DEVBUF, M_WAITOK|M_ZERO);
 	if (pvcsif == NULL)
-		return (NULL);
+		return NULL;
 
-#ifdef __NetBSD__
 	snprintf(pvcsif->sif_if.if_xname, sizeof(pvcsif->sif_if.if_xname),
 	    "pvc%d", pvc_number++);
-#else
-	pvcsif->sif_if.if_name = "pvc";
-	pvcsif->sif_if.if_unit = pvc_number++;
-#endif
 	return (&pvcsif->sif_if);
 }
 #endif /* ATM_PVCEXT */

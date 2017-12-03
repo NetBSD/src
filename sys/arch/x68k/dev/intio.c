@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.43 2012/01/27 18:53:06 para Exp $	*/
+/*	$NetBSD: intio.c,v 1.43.6.1 2017/12/03 11:36:48 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.43 2012/01/27 18:53:06 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.43.6.1 2017/12/03 11:36:48 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -236,7 +236,7 @@ intio_map_allocate_region(device_t parent, struct intio_attach_args *ia,
 #endif
 	if (r == 0) {
 		if (flag != INTIO_MAP_ALLOCATE)
-		extent_free(map, ia->ia_addr, ia->ia_size, 0);
+			extent_free(map, ia->ia_addr, ia->ia_size, 0);
 		return 0;
 	}
 
@@ -514,8 +514,7 @@ _intio_bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	 * and we can bounce, we will.
 	 */
 	error = x68k_bus_dmamap_load(t, map, buf, buflen, p, flags);
-	if (error == 0 ||
-	    (error != 0 && (cookie->id_flags & ID_MIGHT_NEED_BOUNCE) == 0))
+	if (error == 0 || (cookie->id_flags & ID_MIGHT_NEED_BOUNCE) == 0)
 		return (error);
 
 	/*
@@ -580,8 +579,7 @@ _intio_bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 	 * and we can bounce, we will.
 	 */
 	error = x68k_bus_dmamap_load_mbuf(t, map, m0, flags);
-	if (error == 0 ||
-	    (error != 0 && (cookie->id_flags & ID_MIGHT_NEED_BOUNCE) == 0))
+	if (error == 0 || (cookie->id_flags & ID_MIGHT_NEED_BOUNCE) == 0)
 		return (error);
 
 	/*

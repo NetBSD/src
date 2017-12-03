@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_subr.c,v 1.40 2011/09/24 00:05:38 christos Exp $	*/
+/*	$NetBSD: tty_subr.c,v 1.40.12.1 2017/12/03 11:38:45 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_subr.c,v 1.40 2011/09/24 00:05:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_subr.c,v 1.40.12.1 2017/12/03 11:38:45 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,16 +72,9 @@ clalloc(struct clist *clp, int size, int quot)
 {
 
 	clp->c_cs = kmem_zalloc(size, KM_SLEEP);
-	if (!clp->c_cs)
-		return (-1);
-
-	if (quot) {
+	if (quot)
 		clp->c_cq = kmem_zalloc(QMEM(size), KM_SLEEP);
-		if (!clp->c_cq) {
-			kmem_free(clp->c_cs, size);
-			return (-1);
-		}
-	} else
+	else
 		clp->c_cq = NULL;
 
 	clp->c_cf = clp->c_cl = NULL;

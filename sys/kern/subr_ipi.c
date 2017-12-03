@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_ipi.c,v 1.2.6.2 2014/08/20 00:04:29 tls Exp $	*/
+/*	$NetBSD: subr_ipi.c,v 1.2.6.3 2017/12/03 11:38:45 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_ipi.c,v 1.2.6.2 2014/08/20 00:04:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_ipi.c,v 1.2.6.3 2017/12/03 11:38:45 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_ipi.c,v 1.2.6.2 2014/08/20 00:04:29 tls Exp $")
 #include <sys/evcnt.h>
 #include <sys/cpu.h>
 #include <sys/ipi.h>
+#include <sys/intr.h>
 #include <sys/kcpuset.h>
 #include <sys/kmem.h>
 #include <sys/lock.h>
@@ -184,6 +185,35 @@ ipi_trigger(u_int ipi_id, struct cpu_info *ci)
 	if (membar_consumer(), (ci->ci_ipipend[i] & bitm) == 0) {
 		atomic_or_32(&ci->ci_ipipend[i], bitm);
 		cpu_ipi(ci);
+	}
+}
+
+/*
+ * ipi_trigger_multi: same as ipi_trigger() but sends to the multiple
+ * CPUs given the target CPU set.
+ */
+void
+ipi_trigger_multi(u_int ipi_id, const kcpuset_t *target)
+{
+	const cpuid_t selfid = cpu_index(curcpu());
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+
+	KASSERT(kpreempt_disabled());
+	KASSERT(target != NULL);
+
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		const cpuid_t cpuid = cpu_index(ci);
+
+		if (!kcpuset_isset(target, cpuid) || cpuid == selfid) {
+			continue;
+		}
+		ipi_trigger(ipi_id, ci);
+	}
+	if (kcpuset_isset(target, selfid)) {
+		int s = splhigh();
+		ipi_cpu_handler();
+		splx(s);
 	}
 }
 

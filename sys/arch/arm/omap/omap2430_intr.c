@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2430_intr.c,v 1.6 2011/07/01 20:30:21 dyoung Exp $	*/
+/*	$NetBSD: omap2430_intr.c,v 1.6.12.1 2017/12/03 11:35:55 jdolecek Exp $	*/
 /*
  * Define the SDP2430 specific information and then include the generic OMAP
  * interrupt header.
@@ -35,7 +35,7 @@
 #include "opt_omap.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2430_intr.c,v 1.6 2011/07/01 20:30:21 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2430_intr.c,v 1.6.12.1 2017/12/03 11:35:55 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -455,7 +455,9 @@ deliver_irqs(register_t psw, int ipl, void *frame)
 	KASSERT((intrgroups[4].ig_pending_irqs & intrgroups[4].ig_irqsbyipl[ipl]) == 0);
 	KASSERT((intrgroups[5].ig_pending_irqs & intrgroups[5].ig_irqsbyipl[ipl]) == 0);
 	KASSERT((intrgroups[6].ig_pending_irqs & intrgroups[6].ig_irqsbyipl[ipl]) == 0);
+#ifdef OMAP_2430
 	KASSERT((intrgroups[7].ig_pending_irqs & intrgroups[7].ig_irqsbyipl[ipl]) == 0);
+#endif
 	if (frame == NULL)
 		last_delivered_ipl = saved_ipl;
 }

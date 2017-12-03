@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpvfs,v 1.35.2.2 2014/08/20 00:04:42 tls Exp $
+#	$NetBSD: Makefile.rumpvfs,v 1.35.2.3 2017/12/03 11:39:17 jdolecek Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -6,10 +6,13 @@
 .include <bsd.own.mk>
 
 LIB=	rumpvfs
+COMMENT=Rump kernel file system faction
+
+MAN=	rump_etfs.3 rumpfs.4
 
 .PATH:	${RUMPTOP}/librump/rumpvfs ${RUMPTOP}/librump		\
 	${RUMPTOP}/../kern					\
-	${RUMPTOP}/../miscfs/genfs ${RUMPTOP}/../miscfs/syncfs	\
+	${RUMPTOP}/../miscfs/genfs				\
 	${RUMPTOP}/../miscfs/specfs ${RUMPTOP}/../miscfs/deadfs	\
 	${RUMPTOP}/../compat/common ${RUMPTOP}/../uvm		\
 	${RUMPTOP}/../dev ${RUMPTOP}/../ufs/mfs			\
@@ -39,9 +42,6 @@ SRCS+=	kern_module_vfs.c subr_kobj_vfs.c
 # sys/uvm
 SRCS+=	uvm_vnode.c
 
-# sys/miscfs/syncfs
-SRCS+=	sync_subr.c sync_vnops.c
-
 # sys/miscfs/deadfs
 SRCS+=	dead_vfsops.c dead_vnops.c
 
@@ -68,15 +68,12 @@ SRCS+= quota1_subr.c vfs_quotactl.c
 SRCS+=	firmload.c
 
 # compat syscalls
-SRCS+=	vfs_syscalls_50.c compat.c
+.if !empty(RUMP_NBCOMPAT:M50)
+SRCS+=	vfs_syscalls_50.c
+SRCS+=	rumpvfs_compat50.c
+.endif
 
 SRCS+=	rumpvnode_if.c
-
-# no shlib_version because this is automatically in sync with lib/librump
-SHLIB_MAJOR=    0
-SHLIB_MINOR=    0
-
-CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>

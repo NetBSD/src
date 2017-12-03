@@ -1,4 +1,4 @@
-/* $NetBSD: siisatareg.h,v 1.7 2011/11/02 16:03:01 jakllsch Exp $ */
+/* $NetBSD: siisatareg.h,v 1.7.12.1 2017/12/03 11:37:04 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011 Jonathan A. Kollasch.
@@ -141,7 +141,7 @@ struct siisata_prb {
 #define GR_GC_DEVSEL		__BIT(19)
 #define GR_GC_STOP		__BIT(18)
 #define GR_GC_TRDY		__BIT(17)
-#define GR_GC_M66EN		__BIT(16)	
+#define GR_GC_M66EN		__BIT(16)
 #define GR_GC_PXIE_MASK		__BITS(SIISATA_MAX_PORTS - 1, 0)
 #define GR_GC_PXIE(n)		__SHIFTIN(__BIT(n), GR_GC_PXIE_MASK)
 
@@ -164,6 +164,8 @@ struct siisata_prb {
 #define PRSO_RTC	0x04		/* recieved transfer count */
 #define PRSO_FIS	0x08		/* base of FIS */
 
+#define PRO_PMPSTS(i)	(0x0f80 + i * 8)
+#define PRO_PMPQACT(i)	(0x0f80 + i * 8 + 4)
 #define PRO_PCS		0x1000		/* (write) port control set */
 #define PRO_PS		PRO_PCS		/* (read) port status */
 #define PRO_PCC		0x1004		/* port control clear */
@@ -181,11 +183,13 @@ struct siisata_prb {
 #define PRO_PPHYC	0x1050		/* phy config */
 #define PRO_PSS		0x1800		/* port slot status */
 /* technically this is a shadow of the CAR */
-#define PRO_CAR		0x1c00
+#define PRO_CAR		0x1c00		/* command activation register */
 
-#define PRO_CARX(p,s)     (PRX(p, PRO_CAR) + s * sizeof(uint64_t))
+#define PRO_CARX(p,s)     (PRX(p, PRO_CAR) + (s) * sizeof(uint64_t))
 
 #define PRO_PCR		0x1e04		/* port context register */
+#define     PRO_PCR_SLOT(x)	(((x) & __BITS(4, 0)) >> 0) /* Slot */
+#define     PRO_PCR_PMP(x)	(((x) & __BITS(8, 5)) >> 5) /* PM Port */
 #define PRO_SCONTROL	0x1f00		/* SControl */
 #define PRO_SSTATUS	0x1f04		/* SStatus */
 #define PRO_SERROR	0x1f08		/* SError */
@@ -247,6 +251,8 @@ struct siisata_prb {
 #define PR_PC_PMP_ENABLE	__BIT(13)
 #define PR_PC_AIA		__BIT(14)
 #define PR_PC_LED_ON		__BIT(15)
+#define PR_PS_ACTIVE_SLOT_MASK	__BITS(20,16)
+#define PR_PS_ACTIVE_SLOT(x)	__SHIFTOUT((x), PR_PS_ACTIVE_SLOT_MASK)
 #define PR_PC_OOB_BYPASS	__BIT(25)
 #define PR_PS_PORT_READY	__BIT(31)
 

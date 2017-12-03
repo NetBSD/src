@@ -1,4 +1,4 @@
-/* $NetBSD: ibcs2_syscallargs.h,v 1.49.22.1 2014/08/20 00:03:31 tls Exp $ */
+/* $NetBSD: ibcs2_syscallargs.h,v 1.49.22.2 2017/12/03 11:36:53 jdolecek Exp $ */
 
 /*
  * System call argument lists.
@@ -9,6 +9,9 @@
 
 #ifndef _IBCS2_SYS_SYSCALLARGS_H_
 #define	_IBCS2_SYS_SYSCALLARGS_H_
+
+/* Forward declaration */
+struct lwp;
 
 #define	IBCS2_SYS_MAXSYSARGS	8
 

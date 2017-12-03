@@ -1,4 +1,4 @@
-/*	$NetBSD: nlm_prot_svc.c,v 1.1.1.1.10.2 2014/08/20 00:04:27 tls Exp $	*/
+/*	$NetBSD: nlm_prot_svc.c,v 1.1.1.1.10.3 2017/12/03 11:38:42 jdolecek Exp $	*/
 /*-
  * Copyright (c) 2008 Isilon Inc http://www.isilon.com/
  * Authors: Doug Rabson <dfr@rabson.org>
@@ -29,8 +29,8 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 
-#include <nlm/nlm_prot.h>
-#include <nlm/nlm.h>
+#include <fs/nfs/nlm/nlm_prot.h>
+#include <fs/nfs/nlm/nlm.h>
 
 #include <sys/cdefs.h>
 #ifndef lint
@@ -39,7 +39,7 @@
 /* __RCSID("NetBSD: nlm_prot.x,v 1.6 2000/06/07 14:30:15 bouyer Exp "); */
 #endif /* not lint */
 /* __FBSDID("FreeBSD: head/sys/nlm/nlm_prot_svc.c 184886 2008-11-12 15:30:30Z dfr "); */
-__RCSID("$NetBSD: nlm_prot_svc.c,v 1.1.1.1.10.2 2014/08/20 00:04:27 tls Exp $");
+__RCSID("$NetBSD: nlm_prot_svc.c,v 1.1.1.1.10.3 2017/12/03 11:38:42 jdolecek Exp $");
 
 void nlm_prog_0(struct svc_req *rqstp, SVCXPRT *transp);
 void nlm_prog_1(struct svc_req *rqstp, SVCXPRT *transp);

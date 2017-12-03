@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_machdep.c,v 1.26 2011/07/01 18:14:15 dyoung Exp $	*/
+/*	$NetBSD: rbus_machdep.c,v 1.26.12.1 2017/12/03 11:36:17 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.26 2011/07/01 18:14:15 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.26.12.1 2017/12/03 11:36:17 jdolecek Exp $");
 
 #include "opt_pcibios.h"
 #include "opt_pcifixup.h"
@@ -34,8 +34,6 @@ __KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.26 2011/07/01 18:14:15 dyoung Exp
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/extent.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <sys/sysctl.h>
 
@@ -88,7 +86,7 @@ rbus_min_start_hint(psize_t ram)
 	aprint_debug("rbus: rbus_min_start from config at %#0" PRIxPADDR "\n",
 	    rbus_min_start);
 #else
-        if (ram <= 192*1024*1024UL) {
+	if (ram <= 192*1024*1024UL) {
 		/*
 		 * <= 192 MB, so try 0.5 GB.  This will work on
 		 * Thinkpad 600E (2645-4AU), which fails at 1GB, and
@@ -114,7 +112,7 @@ rbus_min_start_hint(psize_t ram)
 	}
 
 	aprint_debug("rbus: rbus_min_start set to %#0" PRIxPADDR "\n",
-	   rbus_min_start);
+	    rbus_min_start);
 #endif
 }
 
@@ -151,11 +149,11 @@ rbus_pccbb_parent_mem(struct pci_attach_args *pa)
 	 * which is not recognised by the kernel as already reserved.
 	 */
 
-	if (start < rbus_min_start) 
+	if (start < rbus_min_start)
 		start = rbus_min_start;
 
 	size = ex->ex_end - start;
-  
+
 	return rbus_new_root_share(pa->pa_memt, ex, start, size, 0);
 }
 
@@ -182,7 +180,7 @@ rbus_pccbb_parent_io(struct pci_attach_args *pa)
 
 	ret = rbus_new_root_share(pa->pa_iot, ex, start, size, 0);
 	if (ret == NULL)
-	  panic("failed to alloc I/O space");
+		panic("failed to alloc I/O space");
 
 	return ret;
 }

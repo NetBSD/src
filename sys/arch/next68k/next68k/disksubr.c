@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.25.22.1 2014/08/20 00:03:17 tls Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.25.22.2 2017/12/03 11:36:33 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.25.22.1 2014/08/20 00:03:17 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.25.22.2 2017/12/03 11:36:33 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,7 @@ parse_nextstep_label(struct next68k_disklabel *ondisk, struct disklabel *lp, str
 	
 	osdep->od_version = ondisk->cd_version;
 	lp->d_magic = lp->d_magic2 = DISKMAGIC;
-	lp->d_type = DTYPE_SCSI;
+	lp->d_type = DKTYPE_SCSI;
 	lp->d_subtype = 0;
 	if (sizeof (lp->d_typename) > sizeof (ondisk->cd_name))
 		lp->d_typename[sizeof (ondisk->cd_name)] = '\0';

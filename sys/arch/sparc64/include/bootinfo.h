@@ -1,4 +1,4 @@
-/*       $NetBSD: bootinfo.h,v 1.7 2012/05/28 21:09:52 martin Exp $        */
+/*       $NetBSD: bootinfo.h,v 1.7.2.1 2017/12/03 11:36:45 jdolecek Exp $        */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -98,6 +98,7 @@
 #define BTINFO_ITLB			103
 #define BTINFO_KERNEND			104
 #define BTINFO_BOOTDEV			105
+#define BTINFO_BOOTDEV_UNIT		106
 
 #define LOOKUP_BOOTINFO(btp, info) \
 do { \
@@ -129,6 +130,15 @@ struct btinfo_kernend {
 struct btinfo_bootdev {
 	struct btinfo_common common;
 	char name[1];
+};
+
+struct btinfo_bootdev_unit {
+	struct btinfo_common common;
+	uint32_t phandle;	/* the boot path package handle */
+	uint32_t parent;	/* the controller handle */
+	uint32_t lun;		/* scsi address details */
+	uint32_t target;	/* or primary/secondary channel for IDE */
+	uint64_t wwn;		/* zero for non FC-AL drives */
 };
 
 #endif /* _BOOTINFO_H_ */

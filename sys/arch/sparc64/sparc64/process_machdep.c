@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.23.22.1 2014/08/20 00:03:25 tls Exp $ */
+/*	$NetBSD: process_machdep.c,v 1.23.22.2 2017/12/03 11:36:45 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.23.22.1 2014/08/20 00:03:25 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.23.22.2 2017/12/03 11:36:45 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,28 +198,29 @@ process_set_pc(struct lwp *l, void *addr)
 	return (0);
 }
 
+extern const struct fpstate64 initfpstate;
+
 int
 process_read_fpregs(struct lwp *l, struct fpreg *regs, size_t *sz)
 {
-	extern const struct fpstate64 initfpstate;
-	const struct fpstate64	*statep = &initfpstate;
-	struct fpreg32		*regp = (struct fpreg32 *)regs;
-	int i;
+	const struct fpstate64 *fs;
 
-	if (l->l_md.md_fpstate)
-		statep = l->l_md.md_fpstate;
+	if ((fs = l->l_md.md_fpstate) == NULL)
+		fs = &initfpstate;
 #ifdef __arch64__
 	if (!(curproc->p_flag & PK_32)) {
 		/* 64-bit mode -- copy out fregs */
-		/* NOTE: struct fpreg == struct fpstate */
-		memcpy(regs, statep, sizeof(struct fpreg64));
+		*regs = fs->fs_reg;
 		return 0;
 	}
 #endif
+
+	struct fpreg32 *regp = (struct fpreg32 *)regs;
+
 	/* 32-bit mode -- copy out & convert 32-bit fregs */
-	for (i = 0; i < 32; i++)
-		regp->fr_regs[i] = statep->fs_regs[i];
-	regp->fr_fsr = statep->fs_fsr;
+	for (size_t i = 0; i < __arraycount(regp->fr_regs); i++)
+		regp->fr_regs[i] = fs->fs_regs[i];
+	regp->fr_fsr = fs->fs_fsr;
 
 	return 0;
 }
@@ -227,28 +228,28 @@ process_read_fpregs(struct lwp *l, struct fpreg *regs, size_t *sz)
 int
 process_write_fpregs(struct lwp *l, const struct fpreg *regs, size_t sz)
 {
-	struct fpstate64	*statep;
-	const struct fpreg32	*regp = (const struct fpreg32 *)regs;
-	int i;
+	struct fpstate64	*fs;
 
-	statep = l->l_md.md_fpstate;
-	if (statep == NULL)
-		return EINVAL;
+	if ((fs = l->l_md.md_fpstate) == NULL) {
+		fs = pool_cache_get(fpstate_cache, PR_WAITOK);
+		memcpy(fs, &initfpstate, sizeof *fs);
+		l->l_md.md_fpstate = fs;
+	} else
+		fs->fs_qsize = 0;
 
 #ifdef __arch64__
 	if (!(curproc->p_flag & PK_32)) {
 		/* 64-bit mode -- copy in fregs */
-		/* NOTE: struct fpreg == struct fpstate */
-		memcpy(statep, regs, sizeof(struct fpreg64));
-		statep->fs_qsize = 0;
+		fs->fs_reg = *regs;
 		return 0;
 	}
 #endif
+	const struct fpreg32 *regp = (const struct fpreg32 *)regs;
+
 	/* 32-bit mode -- copy in & convert 32-bit fregs */
-	for (i = 0; i < 32; i++)
-		statep->fs_regs[i] = regp->fr_regs[i];
-	statep->fs_fsr = regp->fr_fsr;
-	statep->fs_qsize = 0;
+	for (size_t i = 0; i < __arraycount(regp->fr_regs); i++)
+		fs->fs_regs[i] = regp->fr_regs[i];
+	fs->fs_fsr = regp->fr_fsr;
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisatavar.h,v 1.13.2.2 2014/08/20 00:03:37 tls Exp $	*/
+/*	$NetBSD: ahcisatavar.h,v 1.13.2.3 2017/12/03 11:37:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -59,6 +59,7 @@ struct ahci_softc {
 #define AHCI_PCI_QUIRK_BAD64	__BIT(1)  /* broken 64-bit DMA */
 #define AHCI_QUIRK_BADPMP	__BIT(2)  /* broken PMP support, ignore */
 #define AHCI_QUIRK_BADPMPRESET	__BIT(3)  /* broken PMP support for reset */
+#define AHCI_QUIRK_SKIP_RESET	__BIT(4)  /* skip drive reset sequence */
 
 	uint32_t sc_ahci_cap;	/* copy of AHCI_CAP */
 	int sc_ncmds; /* number of command slots */
@@ -81,7 +82,9 @@ struct ahci_softc {
 		struct ahci_cmd_tbl *ahcic_cmd_tbl[AHCI_MAX_CMDS];
 		bus_addr_t ahcic_bus_cmd_tbl[AHCI_MAX_CMDS];
 		bus_dmamap_t ahcic_datad[AHCI_MAX_CMDS];
-		uint32_t  ahcic_cmds_active; /* active commands */
+		volatile uint32_t  ahcic_cmds_active;	/* active commands */
+		uint32_t  ahcic_cmds_hold; 	/* held commands */
+		bool ahcic_recovering;
 	} sc_channels[AHCI_MAX_PORTS];
 
 	void	(*sc_channel_start)(struct ahci_softc *, struct ata_channel *);
@@ -113,6 +116,7 @@ struct ahci_softc {
 #define AHCI_WRITE(sc, reg, val) bus_space_write_4((sc)->sc_ahcit, \
     (sc)->sc_ahcih, (reg), (val))
     
+#define AHCI_CH2SC(chp)		(struct ahci_softc *)((chp)->ch_atac)
 
 void ahci_attach(struct ahci_softc *);
 int  ahci_detach(struct ahci_softc *, int);

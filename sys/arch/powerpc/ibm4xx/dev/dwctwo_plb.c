@@ -1,4 +1,4 @@
-/* $NetBSD: dwctwo_plb.c,v 1.2.10.2 2014/08/20 00:03:19 tls Exp $ */
+/* $NetBSD: dwctwo_plb.c,v 1.2.10.3 2017/12/03 11:36:36 jdolecek Exp $ */
 /*
  * Copyright (c) 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwctwo_plb.c,v 1.2.10.2 2014/08/20 00:03:19 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwctwo_plb.c,v 1.2.10.3 2017/12/03 11:36:36 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -110,9 +110,9 @@ dwctwo_plb_attach(device_t parent, device_t self, void *aux)
 		panic("dwctwo_attach: Failed to initialise opb_tag");
 	sc->sc_iot = &dwctwo_tag;
 	bus_space_map(sc->sc_iot, paa->plb_addr, DWCTWO_SIZE, 0, &sc->sc_ioh);
-	sc->sc_bus.dmatag = paa->plb_dmat;
+	sc->sc_bus.ub_dmatag = paa->plb_dmat;
 
-	intr_establish(paa->plb_irq, IST_LEVEL, IPL_USB, dwc2_intr, sc);
+	intr_establish(paa->plb_irq, IST_LEVEL, IPL_VM, dwc2_intr, sc);
 
 	/* Enable the USB interface. */
 	mtsdr(DCR_SDR0_PFC1, mfsdr(DCR_SDR0_PFC1) | SDR0_PFC1_USBEN);

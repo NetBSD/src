@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.43.2.3 2014/08/20 00:04:29 tls Exp $ */
+/* $NetBSD: kern_tc.c,v 1.43.2.4 2017/12/03 11:38:45 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.43.2.3 2014/08/20 00:04:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.43.2.4 2017/12/03 11:38:45 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
@@ -84,7 +84,12 @@ dummy_get_timecount(struct timecounter *tc)
 }
 
 static struct timecounter dummy_timecounter = {
-	dummy_get_timecount, 0, ~0u, 1000000, "dummy", -1000000, NULL, NULL,
+	.tc_get_timecount	= dummy_get_timecount,
+	.tc_counter_mask	= ~0u,
+	.tc_frequency		= 1000000,
+	.tc_name		= "dummy",
+	.tc_quality		= -1000000,
+	.tc_priv		= NULL,
 };
 
 struct timehands {
@@ -470,8 +475,8 @@ getbintime(struct bintime *bt)
 	bintime_add(bt, &timebasebin);
 }
 
-void
-getnanotime(struct timespec *tsp)
+static inline void
+dogetnanotime(struct timespec *tsp)
 {
 	struct timehands *th;
 	u_int gen;
@@ -482,6 +487,22 @@ getnanotime(struct timespec *tsp)
 		gen = th->th_generation;
 		*tsp = th->th_nanotime;
 	} while (gen == 0 || gen != th->th_generation);
+}
+
+void
+getnanotime(struct timespec *tsp)
+{
+
+	dogetnanotime(tsp);
+}
+
+void dtrace_getnanotime(struct timespec *tsp);
+
+void
+dtrace_getnanotime(struct timespec *tsp)
+{
+
+	dogetnanotime(tsp);
 }
 
 void

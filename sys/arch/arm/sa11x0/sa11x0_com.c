@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_com.c,v 1.50.6.1 2014/08/20 00:02:47 tls Exp $        */
+/*      $NetBSD: sa11x0_com.c,v 1.50.6.2 2017/12/03 11:35:55 jdolecek Exp $        */
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.50.6.1 2014/08/20 00:02:47 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.50.6.2 2017/12/03 11:35:55 jdolecek Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -73,9 +73,8 @@ __KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.50.6.1 2014/08/20 00:02:47 tls Exp 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
 
-#include "rnd.h"
 #ifdef RND_COM
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 #endif
 
 #include <sys/param.h>
@@ -172,11 +171,10 @@ static inline void sacom_schedrx(struct sacom_softc *);
 static void	sacom_j720_init(device_t, device_t);
 #endif
 
-#define COMUNIT_MASK	0x7ffff
-#define COMDIALOUT_MASK	0x80000
+#define COMDIALOUT_MASK	TTDIALOUT_MASK
 
-#define COMUNIT(x)	(minor(x) & COMUNIT_MASK)
-#define COMDIALOUT(x)	(minor(x) & COMDIALOUT_MASK)
+#define COMUNIT(x)	TTUNIT(x)
+#define COMDIALOUT(x)	TTDIALOUT(x)
 
 #define COM_ISALIVE(sc)	((sc)->enabled != 0 && \
 			 device_is_active((sc)->sc_dev))

@@ -1,4 +1,4 @@
-/* $NetBSD: adw_pci.c,v 1.25.22.2 2014/08/20 00:03:41 tls Exp $	 */
+/* $NetBSD: adw_pci.c,v 1.25.22.3 2017/12/03 11:37:07 jdolecek Exp $	 */
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adw_pci.c,v 1.25.22.2 2014/08/20 00:03:41 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adw_pci.c,v 1.25.22.3 2017/12/03 11:37:07 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: adw_pci.c,v 1.25.22.2 2014/08/20 00:03:41 tls Exp $"
 /******************************************************************************/
 /*
  * Check the slots looking for a board we recognise
- * If we find one, note it's address (slot) and call
+ * If we find one, note its address (slot) and call
  * the actual probe routine to check it out.
  */
 static int

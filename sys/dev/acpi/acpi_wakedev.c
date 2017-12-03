@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_wakedev.c,v 1.25.2.1 2014/08/20 00:03:35 tls Exp $ */
+/* $NetBSD: acpi_wakedev.c,v 1.25.2.2 2017/12/03 11:36:58 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010, 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakedev.c,v 1.25.2.1 2014/08/20 00:03:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakedev.c,v 1.25.2.2 2017/12/03 11:36:58 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -128,10 +128,6 @@ acpi_wakedev_init(struct acpi_devnode *ad)
 	}
 
 	ad->ad_wakedev = kmem_zalloc(sizeof(*ad->ad_wakedev), KM_SLEEP);
-
-	if (ad->ad_wakedev == NULL)
-		return;
-
 	ad->ad_wakedev->aw_handle = hdl;
 	ad->ad_wakedev->aw_number = val;
 

@@ -32,7 +32,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-static char const n8_id[] = "$Id: config.c,v 1.3 2010/11/13 13:52:09 uebayasi Exp $";
+static char const n8_id[] = "$Id: config.c,v 1.3.18.1 2017/12/03 11:37:30 jdolecek Exp $";
 /*****************************************************************************/
 /** @file config.c
  *  @brief NSP2000 Device Driver Configuration Manager.
@@ -177,7 +177,6 @@ static char const n8_id[] = "$Id: config.c,v 1.3 2010/11/13 13:52:09 uebayasi Ex
 
 #include <opencrypto/cryptodev.h>
 #include <opencrypto/xform.h>
-#include <sys/rnd.h>
 #include <sys/md5.h>
 #include <sys/sha1.h>
 

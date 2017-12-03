@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -102,10 +102,12 @@ AcpiOsOpenDirectory (
 
     /* Allocate space for the full wildcard path */
 
-    FullWildcardSpec = calloc (strlen (DirPathname) + strlen (WildcardSpec) + 2, 1);
+    FullWildcardSpec = calloc (
+        strlen (DirPathname) + strlen (WildcardSpec) + 2, 1);
     if (!FullWildcardSpec)
     {
         printf ("Could not allocate buffer for wildcard pathname\n");
+        free (SearchInfo);
         return (NULL);
     }
 

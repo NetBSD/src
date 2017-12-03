@@ -1,4 +1,4 @@
-/*	$NetBSD: amdpm.c,v 1.35.6.3 2014/08/20 00:03:41 tls Exp $	*/
+/*	$NetBSD: amdpm.c,v 1.35.6.4 2017/12/03 11:37:07 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.35.6.3 2014/08/20 00:03:41 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.35.6.4 2017/12/03 11:37:07 jdolecek Exp $");
 
 #include "opt_amdpm.h"
 
@@ -39,7 +39,8 @@ __KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.35.6.3 2014/08/20 00:03:41 tls Exp $");
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/callout.h>
-#include <sys/rnd.h>
+#include <sys/rndpool.h>
+#include <sys/rndsource.h>
 #include <sys/mutex.h>
 
 #include <sys/bus.h>

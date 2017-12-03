@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.8 2012/02/08 17:55:21 reinoud Exp $ */
+/* $NetBSD: types.h,v 1.8.6.1 2017/12/03 11:36:47 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,8 +26,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _ARCH_USERMODE_INCLUDE_TYPES_H
-#define _ARCH_USERMODE_INCLUDE_TYPES_H
+#ifndef _USERMODE_TYPES_H_
+#define _USERMODE_TYPES_H_
 
 #include <sys/cdefs.h>
 #include <sys/featuretest.h>
@@ -39,6 +39,7 @@ typedef struct label_t {
 } label_t;
 #endif
 
+#if defined(_KERNEL) || defined(_KMEMUSER) || defined(_KERNTYPES) || defined(_STANDALONE)
 typedef unsigned long	paddr_t;
 typedef unsigned long	psize_t;
 typedef unsigned long	vaddr_t;
@@ -51,8 +52,11 @@ typedef long int	register_t;
 #define	PRIxVSIZE	"lx"
 #define	PRIuVSIZE	"lu"
 #define	PRIxREGISTER	"lx"
+#endif
 
-typedef volatile unsigned char	__cpu_simple_lock_t;
+typedef unsigned char	__cpu_simple_lock_nv_t;
+typedef long int	__register_t;
+
 #define __CPU_SIMPLE_LOCK_PAD
 
 #define __SIMPLELOCK_LOCKED	1
@@ -64,5 +68,6 @@ typedef volatile unsigned char	__cpu_simple_lock_t;
 
 #define __HAVE_CPU_DATA_FIRST
 #define __HAVE_MM_MD_KERNACC
+#define	__HAVE_COMPAT_NETBSD32
 
-#endif /* !_ARCH_USERMODE_INCLUDE_TYPES_H */
+#endif /* !_USERMODE_TYPES_H_ */

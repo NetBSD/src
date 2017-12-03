@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.79.8.1 2014/08/20 00:03:42 tls Exp $	*/
+/*	$NetBSD: azalia.c,v 1.79.8.2 2017/12/03 11:37:07 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2008 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.79.8.1 2014/08/20 00:03:42 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.79.8.2 2017/12/03 11:37:07 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -303,8 +303,8 @@ azalia_pci_attach(device_t parent, device_t self, void *aux)
 	pcireg_t v;
 	pci_intr_handle_t ih;
 	const char *intrrupt_str;
-	const char *name;
-	const char *vendor;
+	char vendor[PCI_VENDORSTR_LEN];
+	char product[PCI_PRODUCTSTR_LEN];
 	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->dev = self;
@@ -353,16 +353,11 @@ azalia_pci_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	sc->pciid = pa->pa_id;
-	vendor = pci_findvendor(pa->pa_id);
-	name = pci_findproduct(pa->pa_id);
-	if (vendor != NULL && name != NULL) {
-		aprint_normal_dev(self, "host: %s %s (rev. %d)",
-		    vendor, name, PCI_REVISION(pa->pa_class));
-	} else {
-		aprint_normal_dev(self, "host: 0x%4.4x/0x%4.4x (rev. %d)",
-		    PCI_VENDOR(pa->pa_id), PCI_PRODUCT(pa->pa_id),
-		    PCI_REVISION(pa->pa_class));
-	}
+	pci_findvendor(vendor, sizeof(vendor), PCI_VENDOR(pa->pa_id));
+	pci_findproduct(product, sizeof(product), PCI_VENDOR(pa->pa_id),
+	    PCI_PRODUCT(pa->pa_id));
+	aprint_normal_dev(self, "host: %s %s (rev. %d)",
+	    vendor, product, PCI_REVISION(pa->pa_class));
 
 	if (azalia_attach(sc)) {
 		aprint_error_dev(self, "initialization failure\n");
@@ -821,6 +816,17 @@ azalia_init_rirb(azalia_t *az, int reinit)
 	/* Run! */
 	rirbctl = AZ_READ_1(az, RIRBCTL);
 	AZ_WRITE_1(az, RIRBCTL, rirbctl | HDA_RIRBCTL_RIRBDMAEN | HDA_RIRBCTL_RINTCTL);
+	for (i = 5000; i >= 0; i--) {
+		DELAY(10);
+		rirbctl = AZ_READ_1(az, RIRBCTL);
+		if (rirbctl & HDA_RIRBCTL_RIRBDMAEN)
+			break;
+	}
+	if (i <= 0) {
+		aprint_error_dev(az->dev, "RIRB is not running\n");
+		return EBUSY;
+	}
+
 	return 0;
 }
 
@@ -1378,11 +1384,6 @@ azalia_codec_construct_format(codec_t *this, int newdac, int newadc)
 	this->nformats = 0;
 	this->szformats = sizeof(struct audio_format) * variation;
 	this->formats = kmem_zalloc(this->szformats, KM_SLEEP);
-	if (this->formats == NULL) {
-		aprint_error("%s: out of memory in %s\n",
-		    device_xname(this->dev), __func__);
-		return ENOMEM;
-	}
 
 	/* register formats for playback */
 	if (this->dacs.cur >= 0 && this->dacs.cur < this->dacs.ngroups) {
@@ -1894,10 +1895,6 @@ azalia_widget_init_connection(widget_t *this, const codec_t *codec,
 		return 0;
 	this->nconnections = length;
 	this->connections = kmem_alloc(sizeof(nid_t) * (length + 3), KM_SLEEP);
-	if (this->connections == NULL) {
-		aprint_error("%s: out of memory\n", device_xname(codec->dev));
-		return ENOMEM;
-	}
 	if (longform) {
 		for (i = 0; i < length;) {
 			err = codec->comresp(codec, this->nid,

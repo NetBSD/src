@@ -1,4 +1,4 @@
-/*	$NetBSD: dkwedge_gpt.c,v 1.12 2010/05/17 23:09:52 jakllsch Exp $	*/
+/*	$NetBSD: dkwedge_gpt.c,v 1.12.18.1 2017/12/03 11:37:00 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dkwedge_gpt.c,v 1.12 2010/05/17 23:09:52 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dkwedge_gpt.c,v 1.12.18.1 2017/12/03 11:37:00 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: dkwedge_gpt.c,v 1.12 2010/05/17 23:09:52 jakllsch Ex
  * GUID to dkw_ptype mapping information.
  *
  * GPT_ENT_TYPE_MS_BASIC_DATA is not suited to mapping.  Aside from being
- * used for multiple Microsoft file systems, Linux uses it for it's own
+ * used for multiple Microsoft file systems, Linux uses it for its own
  * set of native file systems.  Treating this GUID as unknown seems best.
  */
 
@@ -178,11 +178,11 @@ dkwedge_discover_gpt(struct disk *pdk, struct vnode *vp)
 	}
 	gpe_crc = le32toh(hdr->hdr_crc_table);
 
-	/* XXX Clamp entries at 128 for now. */
-	if (entries > 128) {
+	/* XXX Clamp entries at 512 for now. */
+	if (entries > 512) {
 		aprint_error("%s: WARNING: clamping number of GPT entries to "
-		    "128 (was %u)\n", pdk->dk_name, entries);
-		entries = 128;
+		    "512 (was %u)\n", pdk->dk_name, entries);
+		entries = 512;
 	}
 
 	lba_start = le64toh(hdr->hdr_lba_start);
@@ -239,20 +239,21 @@ dkwedge_discover_gpt(struct disk *pdk, struct vnode *vp)
 
 		/* figure out the type */
 		ptype = gpt_ptype_guid_to_str(&ptype_guid);
-		strcpy(dkw.dkw_ptype, ptype);
+		strlcpy(dkw.dkw_ptype, ptype, sizeof(dkw.dkw_ptype));
 
-		strcpy(dkw.dkw_parent, pdk->dk_name);
+		strlcpy(dkw.dkw_parent, pdk->dk_name, sizeof(dkw.dkw_parent));
 		dkw.dkw_offset = le64toh(ent->ent_lba_start);
 		dkw.dkw_size = le64toh(ent->ent_lba_end) - dkw.dkw_offset + 1;
 
 		/* XXX Make sure it falls within the disk's data area. */
 
 		if (ent->ent_name[0] == 0x0000)
-			strcpy(dkw.dkw_wname, ent_guid_str);
+			strlcpy(dkw.dkw_wname, ent_guid_str, sizeof(dkw.dkw_wname));
 		else {
 			c = dkw.dkw_wname;
 			r = sizeof(dkw.dkw_wname) - 1;
-			for (j = 0; ent->ent_name[j] != 0x0000; j++) {
+			for (j = 0; j < __arraycount(ent->ent_name)
+			    && ent->ent_name[j] != 0x0000; j++) {
 				n = wput_utf8(c, r, le16toh(ent->ent_name[j]));
 				if (n == 0)
 					break;
@@ -265,13 +266,16 @@ dkwedge_discover_gpt(struct disk *pdk, struct vnode *vp)
 		 * Try with the partition name first.  If that fails,
 		 * use the GUID string.  If that fails, punt.
 		 */
-		if ((error = dkwedge_add(&dkw)) == EEXIST) {
-			aprint_error("%s: wedge named '%s' already exists, "
-			    "trying '%s'\n", pdk->dk_name,
-			    dkw.dkw_wname, /* XXX Unicode */
-			    ent_guid_str);
-			strcpy(dkw.dkw_wname, ent_guid_str);
+		if ((error = dkwedge_add(&dkw)) == EEXIST &&
+		    strcmp(dkw.dkw_wname, ent_guid_str) != 0) {
+			char orig[sizeof(dkw.dkw_wname)];
+			strlcpy(orig, dkw.dkw_wname, sizeof(orig));
+			strlcpy(dkw.dkw_wname, ent_guid_str, sizeof(dkw.dkw_wname));
 			error = dkwedge_add(&dkw);
+			if (!error)
+				aprint_error("%s: wedge named '%s' already "
+				    "existed, using '%s'\n", pdk->dk_name,
+				    orig, ent_guid_str);
 		}
 		if (error == EEXIST)
 			aprint_error("%s: wedge named '%s' already exists, "

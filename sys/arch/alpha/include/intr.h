@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.70.6.1 2014/08/20 00:02:41 tls Exp $ */
+/* $NetBSD: intr.h,v 1.70.6.2 2017/12/03 11:35:46 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -147,7 +147,7 @@ static __inline int
 _splraise(int s)
 {
 	int cur = alpha_pal_rdps() & ALPHA_PSL_IPL_MASK;
-	return (s > cur ? alpha_pal_swpipl(s) : cur);
+	return (s > cur ? (int)alpha_pal_swpipl(s) : cur);
 }
 
 #define	splraiseipl(icookie)	_splraise((icookie)._psl)

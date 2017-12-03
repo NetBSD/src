@@ -1,0 +1,117 @@
+.\"     $NetBSD: rump_sp.7,v 1.2.4.2 2017/12/03 11:39:20 jdolecek Exp $
+.\"
+.\" Copyright (c) 2010 Antti Kantee.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd February 7, 2011
+.Dt RUMP_SP 7
+.Os
+.Sh NAME
+.Nm rump_sp
+.Nd rump remote system call support
+.Sh DESCRIPTION
+The
+.Nm
+facility allows clients to attach to a rump kernel server over a
+socket and perform system calls.
+While making a local rump system call is faster than calling the
+host kernel, a remote system call over a socket is slower.
+This facility is therefore meant mostly for operations which are
+not performance critical, such as configuration of a rump kernel
+server.
+.Ss Clients
+The
+.Nx
+base system comes with multiple preinstalled clients which can be
+used to configure a rump kernel and request diagnostic information.
+These clients run as hybrids partially in the host system and
+partially against the rump kernel.
+For example, network-related clients will typically avoid making
+any file system related system calls against the rump kernel, since
+it is not guaranteed that a rump network server has file system
+support.
+Another example is DNS: since a rump server very rarely has a DNS
+service configured, host networking is used to do DNS lookups.
+.Pp
+Some examples of clients include
+.Nm rump.ifconfig
+which configures interfaces,
+.Nm rump.sysctl
+which is used to access the
+.Xr sysctl 7
+namespace
+and
+.Nm rump.traceroute
+which is used to display a network trace starting from the rump kernel.
+.Pp
+Also, almost any unmodified dynamically linked application
+(for example
+.Xr telnet 1
+or
+.Xr ls 1 )
+can be used as a rump kernel client with the help of system call hijacking.
+See
+.Xr rumphijack 3
+for more information.
+.Ss Connecting to the server
+A remote rump server is specified using an URL.
+Currently two types of URLs are supported: TCP and local domain sockets.
+The TCP URL is of the format tcp://ip.address:port/ and the local
+domain URL is unix://path.
+The latter can accept relative or absolute paths.
+Note that absolute paths require three leading slashes.
+.Pp
+To preserve the standard usage of the rump clients' counterparts
+the environment variable
+.Ev RUMP_SERVER
+is used to specify the server URL.
+To keep track of which rump kernel the current shell is using,
+modifying the shell prompt is recommended -- this is analogous
+to the visual clue you have when you login from one machine to
+another.
+.Ss Client credentials and access control
+The current scheme gives all connecting clients root credentials.
+It is recommended to take precautions which prevent unauthorized
+access.
+For a unix domain socket it is enough to prevent access to the
+socket using file system permissions.
+For TCP/IP sockets the only available means is to prevent network
+access to the socket with the use of firewalls.
+More fine-grained access control based on cryptographic credentials
+may be implemented at a future date.
+.Sh EXAMPLES
+Get a list of file systems supported by a rump kernel server
+(in case that particular server does not support file systems,
+an error will be returned):
+.Bd -literal -offset indent
+$ env RUMP_SERVER=unix://sock rump.sysctl vfs.generic.fstypes
+.Ed
+.Sh SEE ALSO
+.Xr rump_server 1 ,
+.Xr rump 3 ,
+.Xr rumpclient 3 ,
+.Xr rumphijack 3
+.Sh HISTORY
+.Nm
+first appeared in
+.Nx 6.0 .

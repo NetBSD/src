@@ -1,4 +1,4 @@
-/*	$NetBSD: spawn.h,v 1.3.2.1 2013/06/23 06:20:29 tls Exp $	*/
+/*	$NetBSD: spawn.h,v 1.3.2.2 2017/12/03 11:39:21 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2008 Ed Schouten <ed@FreeBSD.org>
@@ -47,8 +47,9 @@ struct posix_spawnattr {
 	sigset_t		sa_sigmask;
 };
 
+enum fae_action { FAE_OPEN, FAE_DUP2, FAE_CLOSE };
 typedef struct posix_spawn_file_actions_entry {
-	enum { FAE_OPEN, FAE_DUP2, FAE_CLOSE } fae_action;
+	enum fae_action fae_action;
 
 	int fae_fildes;
 	union {
@@ -89,7 +90,7 @@ typedef struct posix_spawn_file_actions	posix_spawn_file_actions_t;
  * maximize parallelism, but instead the parent will wait for the child
  * process to complete all file/scheduler actions and report back errors
  * from that via the return value of the posix_spawn syscall. This is
- * usefull for testing, as it can verify the generated error codes and
+ * useful for testing, as it can verify the generated error codes and
  * match to the supposedly triggered failures.
  * In general, the kernel will return from the posix_spawn syscall as
  * early as possible, as soon as creating the new process is known to

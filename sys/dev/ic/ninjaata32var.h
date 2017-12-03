@@ -1,4 +1,4 @@
-/*	$NetBSD: ninjaata32var.h,v 1.5 2011/02/21 02:32:00 itohy Exp $	*/
+/*	$NetBSD: ninjaata32var.h,v 1.5.14.1 2017/12/03 11:37:03 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 ITOH Yasufumi.
@@ -69,7 +69,6 @@ struct njata32_softc {
 	} sc_ch[NJATA32_NCHAN];
 
 	struct ata_channel	*sc_wdc_chanarray[NJATA32_NCHAN];
-	struct ata_queue	sc_wdc_chqueue;
 	struct wdc_regs		sc_wdc_regs;
 #define NJATA32_REGT(sc)	(sc)->sc_wdc_regs.cmd_iot
 #define NJATA32_REGH(sc)	(sc)->sc_wdc_regs.cmd_baseioh

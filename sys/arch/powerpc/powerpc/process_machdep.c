@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.35.12.1 2014/08/20 00:03:20 tls Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.35.12.2 2017/12/03 11:36:38 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.35.12.1 2014/08/20 00:03:20 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.35.12.2 2017/12/03 11:36:38 jdolecek Exp $");
 
 #include "opt_altivec.h"
 
@@ -90,12 +90,8 @@ process_read_fpregs(struct lwp *l, struct fpreg *fpregs, size_t *sz)
 	if (!fpu_used_p(l)) {
 		memset(fpregs, 0, sizeof (*fpregs));
 #ifdef PPC_HAVE_FPU
-	} else if (l == curlwp) {
-		fpu_save();
 	} else {
-		KASSERTMSG(l->l_pcu_cpu[PCU_FPU] == NULL,
-		    "%s: FPU of l (%p) active on cpu%u",
-		     __func__, l, cpu_index(l->l_pcu_cpu[PCU_FPU]));
+		fpu_save(l);
 #endif
 	}
 	*fpregs = pcb->pcb_fpu;
@@ -110,8 +106,7 @@ process_write_fpregs(struct lwp *l, const struct fpreg *fpregs, size_t sz)
 	struct pcb * const pcb = lwp_getpcb(l);
 
 #ifdef PPC_HAVE_FPU
-	KASSERT(l == curlwp);
-	fpu_discard();
+	fpu_discard(l);
 #endif
 	pcb->pcb_fpu = *fpregs;
 	fpu_mark_used(l);		/* pcb_fpu is initialized now. */
@@ -154,7 +149,6 @@ process_machdep_read_vecregs(struct lwp *l, struct vreg *vregs)
 {
 	struct pcb * const pcb = lwp_getpcb(l);
 
-	KASSERT(l == curlwp);
 #ifdef ALTIVEC
 	if (cpu_altivec == 0)
 		return EINVAL;
@@ -163,13 +157,9 @@ process_machdep_read_vecregs(struct lwp *l, struct vreg *vregs)
 	/* Is the process using AltiVEC? */
 	if (!vec_used_p(l)) {
 		memset(vregs, 0, sizeof (*vregs));
-	} else if (l == curlwp) {
-		vec_save();
-		*vregs = pcb->pcb_vr;
 	} else {
-		KASSERTMSG(l->l_pcu_cpu[PCU_VEC] == NULL,
-		    "%s: VEC of l (%p) active on cpu%u",
-		     __func__, l, cpu_index(l->l_pcu_cpu[PCU_FPU]));
+		vec_save(l);
+		*vregs = pcb->pcb_vr;
 	}
 	vec_mark_used(l);
 
@@ -181,15 +171,13 @@ process_machdep_write_vecregs(struct lwp *l, struct vreg *vregs)
 {
 	struct pcb * const pcb = lwp_getpcb(l);
 
-	KASSERT(l == curlwp);
-
 #ifdef ALTIVEC
 	if (cpu_altivec == 0)
 		return (EINVAL);
 #endif
 
 #if defined(ALTIVEC) || defined(PPC_HAVE_SPE)
-	vec_discard();
+	vec_discard(l);
 #endif
 	pcb->pcb_vr = *vregs;		/* pcb_vr is initialized now. */
 	vec_mark_used(l);

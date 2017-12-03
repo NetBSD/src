@@ -1,4 +1,4 @@
-# $NetBSD: AMIGA,v 1.108 2007/10/17 19:53:13 garbled Exp $
+# $NetBSD: AMIGA,v 1.108.64.1 2017/12/03 11:35:48 jdolecek Exp $
 
 # GENERIC, without DraCo
 #
@@ -23,3 +23,5 @@ no scsibus*	at drsc0
 #
 melody* 	at zbus0		# Melody MPEG audio decoder
 audio*		at melody?
+
+spkr*		at audio?		# PC speaker (synthesized)

@@ -1,4 +1,4 @@
-#	$NetBSD: files.dreamcast,v 1.30 2008/02/20 21:43:33 drochner Exp $
+#	$NetBSD: files.dreamcast,v 1.30.54.1 2017/12/03 11:36:00 jdolecek Exp $
 
 # maxpartitions must be first item in files.${MACHINE}
 maxpartitions 16
@@ -77,9 +77,19 @@ device	pvr: wsemuldisplaydev, rasops16
 attach	pvr at shb
 file	arch/dreamcast/dev/pvr.c			pvr	needs-flag
 
+device	g1bus { }
+attach	g1bus at shb
+file	arch/dreamcast/dev/g1/g1bus.c			g1bus
+file	arch/dreamcast/dev/g1/g1bus_bus_mem.c		g1bus
+
+attach	wdc at g1bus with wdc_g1bus
+file	arch/dreamcast/dev/g1/wdc_g1.c			wdc_g1bus
+
 device	gdrom: disk
 attach	gdrom at shb
 file	arch/dreamcast/dev/gdrom.c			gdrom	needs-flag
+#attach	gdrom at atapibus
+#file	arch/dreamcast/dev/g1/gdrom.c			gdrom	needs-flag
 
 device	g2bus { }
 attach	g2bus at shb

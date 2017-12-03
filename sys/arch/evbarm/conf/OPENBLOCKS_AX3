@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS_AX3,v 1.11.2.2 2014/08/20 00:02:53 tls Exp $
+#	$NetBSD: OPENBLOCKS_AX3,v 1.11.2.3 2017/12/03 11:36:03 jdolecek Exp $
 #
 #	OPENBLOCKS_AX3 -- Plat'Home. OpenBlockS AX3 kernel
 #
@@ -21,14 +21,21 @@ options 	L2CACHE_ENABLE
 #options 	AURORA_IO_CACHE_COHERENCY
 options 	AURORA_L2_PT_WALK
 options 	ARM_HAS_VBAR
-#options 	FPU_VFP
-#makeoptions	CPUFLAGS="-march=armv7-a -mfpu=neon"
-makeoptions	CPUFLAGS="-march=armv7-a -msoft-float"
+options 	FPU_VFP
+makeoptions	CPUFLAGS="-march=armv7-a -mfpu=neon"
 
 # Architecture options
 options 	ARMADAXP
 
 options 	PIC_MAXSOURCES=128
+
+options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
+#options 	MULTIPROCESSOR
+options 	TPIDRPRW_IS_CURCPU
+
+no options 	KERNEL_BASE_EXT
+options 	KERNEL_BASE_EXT=0x80000000
+makeoptions 	KERNEL_BASE_VIRT="0x80008000"
 
 # Standard system options
 
@@ -57,6 +64,7 @@ file-system 	TMPFS		# Efficient memory file-system
 # File system options
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
 options 	FFS_EI		# FFS Endian Independent support
 options 	NFSSERVER	# Network File System server
 options 	WAPBL		# File system journaling support
@@ -89,26 +97,11 @@ options 	NFS_BOOT_DHCP
 
 # Compatibility options
 
-options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
-#options 	COMPAT_09	# NetBSD 0.9 compatibility.
-#options 	COMPAT_10	# NetBSD 1.0 compatibility.
-#options 	COMPAT_11	# NetBSD 1.1 compatibility.
-#options 	COMPAT_12	# NetBSD 1.2 compatibility.
-#options 	COMPAT_13	# NetBSD 1.3 compatibility.
-#options 	COMPAT_14	# NetBSD 1.4 compatibility.
-#options 	COMPAT_15	# NetBSD 1.5 compatibility.
-#options 	COMPAT_16	# NetBSD 1.6 compatibility.
-#options 	COMPAT_20	# NetBSD 2.0 compatibility.
-#options 	COMPAT_30	# NetBSD 3.0 compatibility.
-#options 	COMPAT_40	# NetBSD 4.0 compatibility.
-options 	COMPAT_50	# NetBSD 5.0 compatibility.
-options 	COMPAT_60	# NetBSD 6.0 compatibility.
-#options 	COMPAT_43	# 4.3BSD compatibility.
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
+include 	"conf/compat_netbsd50.config"
+options 	COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 
 options 	COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
 options 	COMPAT_LINUX	# binary compatibility with Linux
-options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Shared memory options
 
@@ -133,7 +126,6 @@ options 	SYSVSHM		# System V-like memory sharing
 
 #options 	KTRACE		# system call tracing, a la ktrace(1)
 options 	IRQSTATS	# manage IRQ statistics
-#options 	KMEMSTATS	# kernel memory statistics
 #options 	MIIVERBOSE	# Verbose MII auto configuration messages
 #options 	PCIVERBOSE	# Verbose PCI descriptions
 #options 	SCSIVERBOSE	# Verbose SCSI errors
@@ -156,7 +148,7 @@ options 	DDB_ONPANIC=1
 #options 	KGDB
 #options 	DEBUG_KGDB
 makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=800000
+makeoptions	COPY_SYMTAB=1
 
 config		netbsd		root on ? type ?
 
@@ -174,9 +166,16 @@ options 	MVSOC_FIXUP_DEVID=0x7826
 # On-chip Serial-ATA II Host Controller (SATAHC)
 mvsata* at mvsoc? offset ? irq ?
 
-# On-chip Gigabit Ethernet Controller Interface
+# On-chip Gigabit Ethernet Controller Interface (backward compatible mode)
 mvgbec* at mvsoc? offset ?
 mvgbe*	at mvgbec? port ? irq ?
+
+# On-chip Gigabit Ethernet Controller Interface (counter mode)
+#mvxpbm*	at mvsoc? offset ?
+#mvxpe*	at mvsoc? irq ?
+#options 	MVXPE_EVENT_COUNTERS
+#options 	MVXPE_DEBUG=0
+
 makphy* at mii? phy ?
 
 # On-chip USB 2.0 Interface
@@ -191,6 +190,10 @@ gttwsi* at mvsoc? offset ? irq ?
 iic*	at gttwsi?
 s390rtc* at iic1 addr 0x30
 
+# On-chip Cryptographic Engines and Security Accelerator (DMA)
+#mvxpsec* at mvsoc? offset ? irq ?
+#options 	MVXPSEC_DEBUG=MVXPSEC_DEBUG_ALL
+
 # On-chip UART Interface
 com*	at mvsoc? offset ? irq ?
 options 	COM_16750		# XXXX: required
@@ -202,9 +205,8 @@ mvpex*	at mvsoc? offset ? irq ?
 # On-chip IDMA Controller
 gtidmac* at mvsoc? offset ? irq ?
 
-# On-chip SD/MMC Interface
-mvsdio* at mvsoc? offset ? irq ?
-sdmmc*	at mvsdio?
+# On-chip Thermal Sensor
+mvsocts* at mvsoc? offset ? irq ?
 
 # On-chip Timers
 mvsoctmr* at mvsoc? offset ? irq ?
@@ -249,8 +251,6 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 
 # USB Generic driver
 ugen*	at uhub? port ?
-
-ld*	at sdmmc?
 
 
 # Pseudo-Devices
@@ -324,6 +324,7 @@ pseudo-device	swdmover		# software dmover(9) back-end
 pseudo-device	dmoverio		# /dev/dmover dmover(9) interface
 
 #options 	FILEASSOC		# fileassoc(9) - required for Veriexec
+					# and PAX_SEGVGUARD
 
 # Veriexec
 #pseudo-device	veriexec
@@ -332,12 +333,9 @@ pseudo-device	dmoverio		# /dev/dmover dmover(9) interface
 # removing fingerprint methods will have almost no impact on the kernel
 # code size.
 #
-#options 	VERIFIED_EXEC_FP_RMD160
 #options 	VERIFIED_EXEC_FP_SHA256
 #options 	VERIFIED_EXEC_FP_SHA384
 #options 	VERIFIED_EXEC_FP_SHA512
-#options 	VERIFIED_EXEC_FP_SHA1
-#options 	VERIFIED_EXEC_FP_MD5
 
 #options 	PAX_MPROTECT=0		# PaX mprotect(2) restrictions
 #options 	PAX_ASLR=0		# PaX Address Space Layout Randomization

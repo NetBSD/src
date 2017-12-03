@@ -1,4 +1,4 @@
-/*	$NetBSD: mly.c,v 1.44.18.2 2014/08/20 00:03:43 tls Exp $	*/
+/*	$NetBSD: mly.c,v 1.44.18.3 2017/12/03 11:37:08 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.44.18.2 2014/08/20 00:03:43 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.44.18.3 2017/12/03 11:37:08 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -367,8 +367,7 @@ mly_attach(device_t parent, device_t self, void *aux)
 	}
 
 	if (intrstr != NULL)
-		aprint_normal_dev(self, "interrupting at %s\n",
-		    intrstr);
+		aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 
 	/*
 	 * Take care of interface-specific tasks.
@@ -548,8 +547,7 @@ mly_attach(device_t parent, device_t self, void *aux)
 	rv = kthread_create(PRI_NONE, 0, NULL, mly_thread, mly,
 	    &mly->mly_thread, "%s", device_xname(self));
  	if (rv != 0)
-		aprint_error_dev(self, "unable to create thread (%d)\n",
-		    rv);
+		aprint_error_dev(self, "unable to create thread (%d)\n", rv);
 	return;
 
  bad:

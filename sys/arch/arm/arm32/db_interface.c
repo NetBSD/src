@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.49.2.1 2014/08/20 00:02:45 tls Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.49.2.2 2017/12/03 11:35:51 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott K. Stevens
@@ -35,10 +35,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.49.2.1 2014/08/20 00:02:45 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.49.2.2 2017/12/03 11:35:51 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
+#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -51,7 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.49.2.1 2014/08/20 00:02:45 tls Ex
 #include <uvm/uvm_extern.h>
 
 #include <arm/arm32/db_machdep.h>
-#include <arm/arm32/katelib.h>
 #include <arm/undefined.h>
 #include <ddb/db_access.h>
 #include <ddb/db_command.h>
@@ -133,7 +133,7 @@ kdb_trap(int type, db_regs_t *regs)
 			/*
 			 * While we aren't the master, wait until the master
 			 * gives control to us or exits.  If it exited, we
-			 * just exit to.  Otherwise this cpu will enter DDB.
+			 * just exit too.  Otherwise this cpu will enter DDB.
 			 */
 			membar_consumer();
 			while (db_onproc != ci) {
@@ -192,7 +192,7 @@ kdb_trap(int type, db_regs_t *regs)
 	}
 #endif
 
-	return (1);
+	return 1;
 }
 #endif
 
@@ -398,8 +398,8 @@ db_trapper(u_int addr, u_int inst, trapframe_t *frame, int fault_code)
 		else
 			kdb_trap(-1, frame);
 	} else
-		return (1);
-	return (0);
+		return 1;
+	return 0;
 }
 
 extern u_int esym;
@@ -426,37 +426,37 @@ db_fetch_reg(int reg, db_regs_t *regs)
 
 	switch (reg) {
 	case 0:
-		return (regs->tf_r0);
+		return regs->tf_r0;
 	case 1:
-		return (regs->tf_r1);
+		return regs->tf_r1;
 	case 2:
-		return (regs->tf_r2);
+		return regs->tf_r2;
 	case 3:
-		return (regs->tf_r3);
+		return regs->tf_r3;
 	case 4:
-		return (regs->tf_r4);
+		return regs->tf_r4;
 	case 5:
-		return (regs->tf_r5);
+		return regs->tf_r5;
 	case 6:
-		return (regs->tf_r6);
+		return regs->tf_r6;
 	case 7:
-		return (regs->tf_r7);
+		return regs->tf_r7;
 	case 8:
-		return (regs->tf_r8);
+		return regs->tf_r8;
 	case 9:
-		return (regs->tf_r9);
+		return regs->tf_r9;
 	case 10:
-		return (regs->tf_r10);
+		return regs->tf_r10;
 	case 11:
-		return (regs->tf_r11);
+		return regs->tf_r11;
 	case 12:
-		return (regs->tf_r12);
+		return regs->tf_r12;
 	case 13:
-		return (regs->tf_svc_sp);
+		return regs->tf_svc_sp;
 	case 14:
-		return (regs->tf_svc_lr);
+		return regs->tf_svc_lr;
 	case 15:
-		return (regs->tf_pc);
+		return regs->tf_pc;
 	default:
 		panic("db_fetch_reg: botch");
 	}
@@ -473,19 +473,19 @@ branch_taken(u_int insn, u_int pc, db_regs_t *regs)
 		addr = ((insn << 2) & 0x03ffffff);
 		if (addr & 0x02000000)
 			addr |= 0xfc000000;
-		return (pc + 8 + addr);
+		return pc + 8 + addr;
 	case 0x7:	/* ldr pc, [pc, reg, lsl #2] */
 		addr = db_fetch_reg(insn & 0xf, regs);
 		addr = pc + 8 + (addr << 2);
 		db_read_bytes(addr, 4, (char *)&addr);
-		return (addr);
+		return addr;
 	case 0x5:	/* ldr pc, [reg] */
 		addr = db_fetch_reg((insn >> 16) & 0xf, regs);
 		db_read_bytes(addr, 4, (char *)&addr);
-		return (addr);
+		return addr;
 	case 0x1:	/* mov pc, reg */
 		addr = db_fetch_reg(insn & 0xf, regs);
-		return (addr);
+		return addr;
 	case 0x8:	/* ldmxx reg, {..., pc} */
 	case 0x9:
 		addr = db_fetch_reg((insn >> 16) & 0xf, regs);
@@ -508,7 +508,7 @@ branch_taken(u_int insn, u_int pc, db_regs_t *regs)
 			break;
 		}
 		db_read_bytes(addr, 4, (char *)&addr);
-		return (addr);
+		return addr;
 	default:
 		panic("branch_taken: botch");
 	}

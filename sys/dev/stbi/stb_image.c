@@ -430,7 +430,7 @@ extern int      stbi_gif_info_from_file   (FILE *f,                  int *x, int
 #endif
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stb_image.c,v 1.4.2.2 2014/08/20 00:03:50 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stb_image.c,v 1.4.2.3 2017/12/03 11:37:32 jdolecek Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -985,7 +985,7 @@ static unsigned char *convert_format(unsigned char *data, int img_n, int req_com
    if (req_comp == img_n) return data;
    assert(req_comp >= 1 && req_comp <= 4);
 
-   good = (unsigned char *) MALLOC(req_comp * x * y);
+   good = MALLOC(req_comp * x * y);
    if (good == NULL) {
       FREE(data);
       return epuc("outofmem", "Out of memory");
@@ -1025,7 +1025,7 @@ static unsigned char *convert_format(unsigned char *data, int img_n, int req_com
 static float   *ldr_to_hdr(stbi_uc *data, int x, int y, int comp)
 {
    int i,k,n;
-   float *output = (float *) MALLOC(x * y * comp * sizeof(float));
+   float *output = MALLOC(x * y * comp * sizeof(float));
    if (output == NULL) { FREE(data); return epf("outofmem", "Out of memory"); }
    // compute number of non-alpha components
    if (comp & 1) n = comp; else n = comp-1;
@@ -1043,7 +1043,7 @@ static float   *ldr_to_hdr(stbi_uc *data, int x, int y, int comp)
 static stbi_uc *hdr_to_ldr(float   *data, int x, int y, int comp)
 {
    int i,k,n;
-   stbi_uc *output = (stbi_uc *) MALLOC(x * y * comp);
+   stbi_uc *output = MALLOC(x * y * comp);
    if (output == NULL) { FREE(data); return epuc("outofmem", "Out of memory"); }
    // compute number of non-alpha components
    if (comp & 1) n = comp; else n = comp-1;
@@ -1983,7 +1983,7 @@ static uint8 *load_jpeg_image(jpeg *z, int *out_x, int *out_y, int *comp, int re
 
          // allocate line buffer big enough for upsampling off the edges
          // with upsample factor of 4
-         z->img_comp[k].linebuf = (uint8 *) MALLOC(z->s.img_x + 3);
+         z->img_comp[k].linebuf = MALLOC(z->s.img_x + 3);
          if (!z->img_comp[k].linebuf) { cleanup_jpeg(z); return epuc("outofmem", "Out of memory"); }
 
          r->hs      = z->img_h_max / z->img_comp[k].h;
@@ -2001,7 +2001,7 @@ static uint8 *load_jpeg_image(jpeg *z, int *out_x, int *out_y, int *comp, int re
       }
 
       // can't error after this so, this is safe
-      output = (uint8 *) MALLOC(n * z->s.img_x * z->s.img_y + 1);
+      output = MALLOC(n * z->s.img_x * z->s.img_y + 1);
       if (!output) { cleanup_jpeg(z); return epuc("outofmem", "Out of memory"); }
 
       // now go ahead and resample
@@ -2074,7 +2074,7 @@ unsigned char *stbi_jpeg_load_from_memory(stbi_uc const *buffer, int len, int *x
 {
    #ifdef STBI_SMALL_STACK
    unsigned char *result;
-   jpeg *j = (jpeg *) MALLOC(sizeof(*j));
+   jpeg *j = MALLOC(sizeof(*j));
    start_mem(&j->s, buffer, len);
    result = load_jpeg_image(j,x,y,comp,req_comp);
    FREE(j);
@@ -2512,7 +2512,7 @@ static int do_zlib(zbuf *a, char *obuf, int olen, int exp, int parse_header)
 char *stbi_zlib_decode_malloc_guesssize(const char * buffer, int len, int initial_size, int *outlen)
 {
    zbuf a;
-   char *p = (char *) MALLOC(initial_size);
+   char *p = MALLOC(initial_size);
    if (p == NULL) return NULL;
    a.zbuffer = (uint8 const *) buffer;
    a.zbuffer_end = (uint8 const *) buffer + len;
@@ -2533,7 +2533,7 @@ char *stbi_zlib_decode_malloc(char const *buffer, int len, int *outlen)
 char *stbi_zlib_decode_malloc_guesssize_headerflag(const char *buffer, int len, int initial_size, int *outlen, int parse_header)
 {
    zbuf a;
-   char *p = (char *) MALLOC(initial_size);
+   char *p = MALLOC(initial_size);
    if (p == NULL) return NULL;
    a.zbuffer = (uint8 const *) buffer;
    a.zbuffer_end = (uint8 const *) buffer + len;
@@ -2560,7 +2560,7 @@ int stbi_zlib_decode_buffer(char *obuffer, int olen, char const *ibuffer, int il
 char *stbi_zlib_decode_noheader_malloc(char const *buffer, int len, int *outlen)
 {
    zbuf a;
-   char *p = (char *) MALLOC(16384);
+   char *p = MALLOC(16384);
    if (p == NULL) return NULL;
    a.zbuffer = (uint8 const *) buffer;
    a.zbuffer_end = (uint8 const *) buffer+len;
@@ -2657,7 +2657,7 @@ static int create_png_image_raw(png *a, uint8 *raw, uint32 raw_len, int out_n, u
    int img_n = s->img_n; // copy it into a local for later
    assert(out_n == s->img_n || out_n == s->img_n+1);
    if (stbi_png_partial) y = 1;
-   a->out = (uint8 *) MALLOC(x * y * out_n);
+   a->out = MALLOC(x * y * out_n);
    if (!a->out) return e("outofmem", "Out of memory");
    if (!stbi_png_partial) {
       if (s->img_x == x && s->img_y == y) {
@@ -2737,7 +2737,7 @@ static int create_png_image(png *a, uint8 *raw, uint32 raw_len, int out_n, int i
    stbi_png_partial = 0;
 
    // de-interlacing
-   final = (uint8 *) MALLOC(a->s.img_x * a->s.img_y * out_n);
+   final = MALLOC(a->s.img_x * a->s.img_y * out_n);
    for (p=0; p < 7; ++p) {
       int xorig[] = { 0,4,0,2,0,1,0 };
       int yorig[] = { 0,0,4,0,2,0,1 };
@@ -2797,7 +2797,7 @@ static int expand_palette(png *a, uint8 *palette, int len, int pal_img_n)
    uint32 i, pixel_count = a->s.img_x * a->s.img_y;
    uint8 *p, *temp_out, *orig = a->out;
 
-   p = (uint8 *) MALLOC(pixel_count * pal_img_n);
+   p = MALLOC(pixel_count * pal_img_n);
    if (p == NULL) return e("outofmem", "Out of memory");
 
    // between here and FREE(out) below, exiting would leak
@@ -3305,7 +3305,7 @@ static stbi_uc *bmp_load(stbi *s, int *x, int *y, int *comp, int req_comp)
       target = req_comp;
    else
       target = s->img_n; // if they want monochrome, we'll post-convert
-   out = (stbi_uc *) MALLOC(target * s->img_x * s->img_y);
+   out = MALLOC(target * s->img_x * s->img_y);
    if (!out) return epuc("outofmem", "Out of memory");
    if (bpp < 16) {
       int z=0;
@@ -3358,7 +3358,10 @@ static stbi_uc *bmp_load(stbi *s, int *x, int *y, int *comp, int req_comp)
             easy = 2;
       }
       if (!easy) {
-         if (!mr || !mg || !mb) return epuc("bad masks", "Corrupt BMP");
+         if (!mr || !mg || !mb) {
+	    FREE(out);
+	    return epuc("bad masks", "Corrupt BMP");
+	 }
          // right shift amt to put high bit in position #7
          rshift = high_bit(mr)-7; rcount = bitcount(mr);
          gshift = high_bit(mg)-7; gcount = bitcount(mr);
@@ -3594,7 +3597,7 @@ static stbi_uc *tga_load(stbi *s, int *x, int *y, int *comp, int req_comp)
       //   force a new number of components
       *comp = tga_bits_per_pixel/8;
    }
-   tga_data = (unsigned char*)MALLOC( tga_width * tga_height * req_comp );
+   tga_data = MALLOC( tga_width * tga_height * req_comp );
 
    //   skip to the data's starting position (offset usually = 0)
    skip(s, tga_offset );
@@ -3604,7 +3607,7 @@ static stbi_uc *tga_load(stbi *s, int *x, int *y, int *comp, int req_comp)
       //   any data to skip? (offset usually = 0)
       skip(s, tga_palette_start );
       //   load the palette
-      tga_palette = (unsigned char*)MALLOC( tga_palette_len * tga_palette_bits / 8 );
+      tga_palette = MALLOC( tga_palette_len * tga_palette_bits / 8 );
       if (!getn(s, tga_palette, tga_palette_len * tga_palette_bits / 8 ))
          return NULL;
    }
@@ -3868,7 +3871,7 @@ static stbi_uc *psd_load(stbi *s, int *x, int *y, int *comp, int req_comp)
       return epuc("bad compression", "PSD has an unknown compression format");
 
    // Create the destination image.
-   out = (stbi_uc *) MALLOC(4 * w*h);
+   out = MALLOC(4 * w*h);
    if (!out) return epuc("outofmem", "Out of memory");
    pixelCount = w*h;
 
@@ -4178,7 +4181,7 @@ static stbi_uc *pic_load(stbi *s,int *px,int *py,int *comp,int req_comp)
    get16(s); //skip `pad'
 
    // intermediate buffer is RGBA
-   result = (stbi_uc *) MALLOC(x*y*4);
+   result = MALLOC(x*y*4);
    memset(result, 0xff, x*y*4);
 
    if (!pic_load2(s,x,y,comp, result)) {
@@ -4474,14 +4477,14 @@ static uint8 *stbi_gif_load_next(stbi *s, stbi_gif *g, int *comp, int req_comp)
 
    if (g->out == 0) {
       if (!stbi_gif_header(s, g, comp,0))     return 0; // failure_reason set by stbi_gif_header
-      g->out = (uint8 *) MALLOC(4 * g->w * g->h);
+      g->out = MALLOC(4 * g->w * g->h);
       if (g->out == 0)                      return epuc("outofmem", "Out of memory");
       stbi_fill_gif_background(g);
    } else {
       // animated-gif-only path
       if (((g->eflags & 0x1C) >> 2) == 3) {
          old_out = g->out;
-         g->out = (uint8 *) MALLOC(4 * g->w * g->h);
+         g->out = MALLOC(4 * g->w * g->h);
          if (g->out == 0)                   return epuc("outofmem", "Out of memory");
          memcpy(g->out, old_out, g->w*g->h*4);
       }
@@ -4603,7 +4606,7 @@ stbi_uc *stbi_gif_load_from_memory (stbi_uc const *buffer, int len, int *x, int 
    stbi_gif *pg;
 
    #ifdef STBI_SMALL_STACK
-   pg = (stbi_gif *) MALLOC(sizeof(*pg));
+   pg = MALLOC(sizeof(*pg));
    if (pg == NULL)
       return NULL;
    #else
@@ -4788,7 +4791,7 @@ static float *hdr_load(stbi *s, int *x, int *y, int *comp, int req_comp)
    if (req_comp == 0) req_comp = 3;
 
    // Read data
-   hdr_data = (float *) MALLOC(height * width * req_comp * sizeof(float));
+   hdr_data = MALLOC(height * width * req_comp * sizeof(float));
 
    // Load image data
    // image data is stored as some number of sca
@@ -4827,7 +4830,7 @@ static float *hdr_load(stbi *s, int *x, int *y, int *comp, int req_comp)
          len <<= 8;
          len |= get8(s);
          if (len != width) { FREE(hdr_data); FREE(scanline); return epf("invalid decoded scanline length", "corrupt HDR"); }
-         if (scanline == NULL) scanline = (stbi_uc *) MALLOC(width * 4);
+         if (scanline == NULL) scanline = MALLOC(width * 4);
             
          for (k = 0; k < 4; ++k) {
             i = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: build.c,v 1.1 2006/06/04 20:30:17 rpaulo Exp $	*/
+/*	$NetBSD: build.c,v 1.1.114.1 2017/12/03 11:37:06 jdolecek Exp $	*/
 /*	$OpenBSD: build.c,v 1.1 2006/01/09 20:03:40 damien Exp $	*/
 
 /*-
@@ -54,6 +54,7 @@ main(void)
 	output("ral-rt2561",  rt2561,  sizeof rt2561);
 	output("ral-rt2561s", rt2561s, sizeof rt2561s);
 	output("ral-rt2661",  rt2661,  sizeof rt2661);
+	output("ral-rt2860",  rt2860,  sizeof rt2860);
 
 	return 0;
 }

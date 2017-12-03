@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.119.2.4 2014/08/20 00:04:40 tls Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.119.2.5 2017/12/03 11:39:16 jdolecek Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -6,6 +6,9 @@
 .include <bsd.own.mk>
 
 LIB=		rump
+COMMENT=	Rump kernel base
+
+MAN=		rump.3 rump_lwproc.3
 
 .PATH:	${RUMPTOP}/librump/rumpkern				\
 	${RUMPTOP}/librump/rumpkern/arch/generic		\
@@ -37,9 +40,6 @@ RUMPOBJ_NORENAME= rump_syscalls.o rump_syscalls.pico rump_syscalls.po
 CPPFLAGS+= -DRUMP_KERNEL_IS_LIBC
 .endif
 
-# optional hypervisor interfaces
-#SRCS+=	hyperstubs.c
-
 # Multiprocessor or uniprocessor locking.  TODO: select right
 # locking at runtime.
 .if ${RUMP_LOCKS_UP:Uno} == "yes"
@@ -48,18 +48,10 @@ SRCS+=	locks_up.c
 SRCS+=	locks.c
 .endif
 
-MKREPRO?=no
-
-.if ${MKREPRO} == "yes"
-_NVFLAGS=-r
-.else
-_NVFLAGS=
-.endif
-
 vers.c: ${RUMPTOP}/../conf/newvers.sh ${RUMPTOP}/../conf/osrelease.sh \
 		${RUMPTOP}/../sys/param.h ${_NETBSD_VERSION_DEPENDS}
 	${_MKMSG_CREATE} vers.c
-	${HOST_SH} ${RUMPTOP}/../conf/newvers.sh -i RUMP-ROAST -n ${_NVFLAGS}
+	${HOST_SH} ${RUMPTOP}/../conf/newvers.sh -i RUMP-ROAST -n -R
 SRCS+=		vers.c
 CLEANFILES+=	vers.c version
 
@@ -77,6 +69,7 @@ SRCS+=	devsw.c
 SRCS+=	init_sysctl_base.c	\
 	kern_auth.c		\
 	kern_cfglock.c		\
+	kern_clock.c		\
 	kern_descrip.c		\
 	kern_event.c		\
 	kern_hook.c		\
@@ -92,7 +85,9 @@ SRCS+=	init_sysctl_base.c	\
 	kern_rndpool.c		\
 	kern_rndq.c		\
 	kern_rndsink.c		\
+	kern_rwlock_obj.c	\
 	kern_stub.c		\
+	kern_ssp.c		\
 	kern_syscall.c		\
 	kern_sysctl.c		\
 	kern_tc.c		\
@@ -101,25 +96,29 @@ SRCS+=	init_sysctl_base.c	\
 	kern_uidinfo.c		\
 	kern_xxx.c		\
 	param.c			\
-	subr_devsw.c		\
 	subr_callback.c		\
 	subr_copy.c		\
 	subr_cprng.c		\
 	subr_device.c		\
+	subr_devsw.c		\
 	subr_evcnt.c		\
 	subr_extent.c		\
 	subr_hash.c		\
 	subr_humanize.c		\
 	subr_iostat.c		\
 	subr_kcpuset.c		\
+	subr_kmem.c		\
 	subr_kobj.c		\
+	subr_localcount.c	\
 	subr_log.c		\
 	subr_lwp_specificdata.c	\
 	subr_once.c		\
 	subr_pcq.c		\
 	subr_percpu.c		\
+	subr_pool.c		\
 	subr_prf.c		\
 	subr_pserialize.c	\
+	subr_psref.c		\
 	subr_specificdata.c	\
 	subr_time.c		\
 	subr_vmem.c		\
@@ -158,19 +157,12 @@ SRCS+=	rijndael.c
 SRCS+=	cprng_fast.c
 
 # compat
+.if !empty(RUMP_NBCOMPAT:M50)
 SRCS+=	kern_select_50.c
 SRCS+=	kern_time_50.c
-
-# Set RUMP_UNREAL_ALLOCATORS to "yes" to use memory allocation hypercalls
-# directly instead of the kmem/pool allocators backed by hypercalls.
-# Direct hypercalls may be a few percent faster, but don't emulate
-# all kernel corner cases as well (not to mention if you want to debug the
-# allocators themselves).
-.if defined(RUMP_UNREAL_ALLOCATORS) && ${RUMP_UNREAL_ALLOCATORS} == "yes"
-SRCS+=		memalloc.c
-.else
-SRCS+=		subr_kmem.c subr_pool.c
+SRCS+=	rndpseudo_50.c
 .endif
+
 
 .ifdef RUMP_LOCKDEBUG
 SRCS+=		subr_lockdebug.c
@@ -180,12 +172,7 @@ SRCS+=		subr_lockdebug.c
 SRCS+=		kern_ktrace.c
 .endif
 
-# no shlib_version because this is automatically in sync with lib/librump
-SHLIB_MAJOR=    0
-SHLIB_MINOR=    0
-
-CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern -I${RUMPTOP}/librump/rumpvfs
-CPPFLAGS+=	-I${RUMPTOP}/librump/rumpnet -I${RUMPTOP}/librump/rumpdev
+CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern
 AFLAGS+=	-D_LOCORE -Wa,--fatal-warnings
 
 #
@@ -201,7 +188,11 @@ AFLAGS+=	-D_LOCORE -Wa,--fatal-warnings
 # the kernel of our compat target (amd64->i386 & sparc64->sparc), so
 # take MD stuff from the right arch.
 #
-.ifdef MLIBDIR
+.if defined(COMPAT_MACHINE_CPU) \
+    && exists(${RUMPTOP}/librump/rumpkern/arch/${COMPAT_MACHINE_CPU})
+ARCHDIR=	${RUMPTOP}/librump/rumpkern/arch/${COMPAT_MACHINE_CPU}
+LIBKERN_ARCH=	${COMPAT_MACHINE_CPU}
+.elif defined(MLIBDIR)
 ARCHDIR=	${RUMPTOP}/librump/rumpkern/arch/${MLIBDIR}
 LIBKERN_ARCH=	${MLIBDIR}
 .elif exists(${RUMPTOP}/librump/rumpkern/arch/${MACHINE_CPU})

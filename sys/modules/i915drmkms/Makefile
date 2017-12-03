@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4.4.2 2014/08/20 00:04:33 tls Exp $
+# $NetBSD: Makefile,v 1.4.4.3 2017/12/03 11:38:54 jdolecek Exp $
 
 .include "../Makefile.inc"
 .include "../drmkms/Makefile.inc"
@@ -11,6 +11,7 @@ CPPFLAGS+=	-I${S}/external/bsd/drm2/i915drm
 
 KMOD=	i915drmkms
 IOCONF=	i915drmkms.ioconf
+MKLDSCRIPT=yes
 
 SRCS+=	dvo_ch7017.c
 SRCS+=	dvo_ch7xxx.c
@@ -38,7 +39,7 @@ SRCS+=	i915_params.c
 SRCS+=	i915_suspend.c
 SRCS+=	i915_sysfs.c		# XXX No sysfs in NetBSD.
 SRCS+=	i915_ums.c
-#SRCS+=	intel_acpi.c		# XXX ACPI
+SRCS+=	intel_acpi.c
 SRCS+=	intel_bios.c
 SRCS+=	intel_crt.c
 SRCS+=	intel_ddi.c
@@ -53,7 +54,7 @@ SRCS+=	intel_hdmi.c
 SRCS+=	intel_i2c.c
 SRCS+=	intel_lvds.c
 SRCS+=	intel_modes.c
-#SRCS+=	intel_opregion.c	# XXX ACPI
+SRCS+=	intel_opregion.c
 SRCS+=	intel_overlay.c
 SRCS+=	intel_panel.c
 SRCS+=	intel_pm.c
@@ -69,11 +70,17 @@ SRCS+=	i915_pci.c
 SRCS+=	intel_gtt.c
 SRCS+=	intelfb.c
 
-COPTS.i915_drv.c+=	-Wno-override-init
-COPTS.intel_display.c+=	-Wno-shadow
+COPTS.i915_drv.c+=	${${ACTIVE_CC} == "gcc":? -Wno-override-init :}
+COPTS.i915_drv.c+=	${${ACTIVE_CC} == "clang":? -Wno-initializer-overrides :}
+
+COPTS.intel_display.c+=	-Wno-shadow -Wno-conversion
 COPTS.intel_panel.c+=	-Wno-shadow
 COPTS.intel_pm.c+=	-Wno-shadow
 
-CPPFLAGS+=		-DCONFIG_DRM_I915_FBDEV
+CPPFLAGS+=		-DCONFIG_DRM_I915_FBDEV=1
+CPPFLAGS+=		-DCONFIG_DRM_I915_PRELIMINARY_HW_SUPPORT=0
+
+CPPFLAGS+=		-DNACPICA=1
+CPPFLAGS+=		-DNVGA=1
 
 .include <bsd.kmodule.mk>

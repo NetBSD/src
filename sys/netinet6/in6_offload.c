@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_offload.c,v 1.6 2011/04/25 22:07:57 yamt Exp $	*/
+/*	$NetBSD: in6_offload.c,v 1.6.14.1 2017/12/03 11:39:04 jdolecek Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_offload.c,v 1.6 2011/04/25 22:07:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_offload.c,v 1.6.14.1 2017/12/03 11:39:04 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: in6_offload.c,v 1.6 2011/04/25 22:07:57 yamt Exp $")
 #include <netinet/ip6.h>
 #include <netinet/tcp.h>
 #include <netinet6/in6_var.h>
+#include <netinet6/ip6_var.h>
 #include <netinet6/nd6.h>
 #include <netinet6/in6_offload.h>
 
@@ -56,7 +57,7 @@ ip6_tso_output_callback(void *vp, struct mbuf *m)
 {
 	struct ip6_tso_output_args *args = vp;
 
-	return nd6_output(args->ifp, args->origifp, m, args->dst, args->rt);
+	return ip6_if_output(args->ifp, args->origifp, m, args->dst, args->rt);
 }
 
 int

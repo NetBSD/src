@@ -1,4 +1,4 @@
-# $NetBSD: VAX780,v 1.10.2.2 2014/08/20 00:03:27 tls Exp $
+# $NetBSD: VAX780,v 1.10.2.3 2017/12/03 11:36:47 jdolecek Exp $
 #
 # 11/780,750,730 machine description file
 # 
@@ -17,7 +17,7 @@
 # of each device driver in this file see the section 4 man page for the
 # device.
 
-include		"arch/vax/conf/std.vax"
+include 	"arch/vax/conf/std.vax"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -38,7 +38,6 @@ options 	DDB
 options 	KTRACE
 #options 	DIAGNOSTIC
 #options 	DEBUG
-#options 	KMEMSTATS
 #options 	PMAPDEBUG
 #options 	TRAPDEBUG
 #options 	LOCKDEBUG
@@ -101,6 +100,7 @@ options 	QUOTA2		# new, in-filesystem UFS quotas
 options 	NFS_BOOT_BOOTP,NFS_BOOT_DHCP	# Use bootp <> dhcp
 options 	NFS_BOOT_BOOTPARAM	# Use the Sun way for netbooting.
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+options 	UFS_EXTATTR	# Extended attribute support for UFS1
 
 # WS console uses VT100 terminal emulation
 #options 	WSEMUL_VT100
@@ -117,23 +117,11 @@ options 	SYSVSHM
 # Note that if COMPAT_ULTRIX is set, you lose compatibility with
 # 4.3BSD Reno programs and get Ultrix compatibility instead.
 # (They cannot coexist).
+include 	"conf/compat_netbsd09.config"
 options 	COMPAT_VAX1K	# Must be present to run pre-1.4 binaries.
-options 	COMPAT_43
-options 	COMPAT_09
-options 	COMPAT_10
-options 	COMPAT_11
-options 	COMPAT_12
-options 	COMPAT_13
-options 	COMPAT_14
-options 	COMPAT_15
-options 	COMPAT_16
-options 	COMPAT_20
-options 	COMPAT_30	# NetBSD 3.0 compatibility.
-options 	COMPAT_40	# NetBSD 4.0 compatibility.
-options 	COMPAT_ULTRIX
-#options 	COMPAT_IBCS2	# DEC SVR.3 compatilibity
+options 	COMPAT_ULTRIX	# DEC Ultrix binary compatibility.
+#options 	COMPAT_IBCS2	# DEC SVR.3 compatibility
 #options 	NO_INSN_EMULATE	# CPU does not lack some hardware instructions.
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 options 	LKM
 
@@ -188,11 +176,12 @@ ubi0		at mainbus0		# 11/730 direct unibus
 #clr0		at vsbus0 csr 0x30000000 # 4- or 8-bitplans color graphics
 #spx0		at vsbus0 csr 0x38000000 # Low Cost SPX on VS4000/90.
 #lcg0		at vsbus0 csr 0x21801000 # VS4000/60 (or VLC) graphics
-#tc0		at vsbus0 csr 0x36000000 # VS4000/60 or 90 TC adapter
+#tc0		at vsbus0 csr 0x36800000 # VS4000/60 or 90 TC adapter
 #tcds*		at tc0 slot ? offset ?	 # TC dual SCSI controller
 #asc*		at tcds? chip ?		 # PMAZB/C
 #asc*		at tc? slot ? offset ?	 # PMAZ 
 #fta*		at tc? slot ? offset ?	 # TC FDDI controller
+#le*		at tc? slot ? offset ?	 # PMAD
 
 #hdc0		at vsbus0 csr 0x200c0000 # HDC9224 MFM/floppy ctlr
 #rd*		at hdc0 drive?		# RD5x disks
@@ -329,9 +318,6 @@ pseudo-device	ksyms			# /dev/ksyms
 # removing fingerprint methods will have almost no impact on the kernel
 # code size.
 #
-#options VERIFIED_EXEC_FP_RMD160
 #options VERIFIED_EXEC_FP_SHA256
 #options VERIFIED_EXEC_FP_SHA384
 #options VERIFIED_EXEC_FP_SHA512
-#options VERIFIED_EXEC_FP_SHA1
-#options VERIFIED_EXEC_FP_MD5

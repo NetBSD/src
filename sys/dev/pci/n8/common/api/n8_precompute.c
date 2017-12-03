@@ -32,7 +32,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-static char const n8_id[] = "$Id: n8_precompute.c,v 1.1 2008/10/30 12:02:15 darran Exp $";
+static char const n8_id[] = "$Id: n8_precompute.c,v 1.1.42.1 2017/12/03 11:37:30 jdolecek Exp $";
 /*****************************************************************************/
 /** @file n8_precompute.c
  *  @brief Precomputes IPAD and OPAD values for SSL and TLS MACs.
@@ -52,7 +52,7 @@ static char const n8_id[] = "$Id: n8_precompute.c,v 1.1 2008/10/30 12:02:15 darr
  * 02/15/02 brr   Modified include files to build in kernel context.
  * 01/25/02 bac   Corrected signatures to placate the compiler on all
  *                platforms. 
- * 01/23/02 dws   Changed TLS functions to return the hashed key and it's
+ * 01/23/02 dws   Changed TLS functions to return the hashed key and its
  *                length.  The length of the hashed key is the hash function's
  *                digest size.
  * 01/23/02 bac   Removed debug printfs.

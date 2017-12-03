@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc_pci.c,v 1.9.2.2 2014/08/20 00:03:48 tls Exp $	*/
+/*	$NetBSD: sdhc_pci.c,v 1.9.2.3 2017/12/03 11:37:29 jdolecek Exp $	*/
 /*	$OpenBSD: sdhc_pci.c,v 1.7 2007/10/30 18:13:45 chl Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc_pci.c,v 1.9.2.2 2014/08/20 00:03:48 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc_pci.c,v 1.9.2.3 2017/12/03 11:37:29 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -81,10 +81,12 @@ static const struct sdhc_pci_quirk {
 	u_int			function;
 
 	uint32_t		flags;
-#define	SDHC_PCI_QUIRK_FORCE_DMA		(1U << 0)
-#define	SDHC_PCI_QUIRK_TI_HACK			(1U << 1)
-#define	SDHC_PCI_QUIRK_NO_PWR0			(1U << 2)
-#define	SDHC_PCI_QUIRK_RICOH_LOWER_FREQ_HACK	(1U << 3)
+#define	SDHC_PCI_QUIRK_FORCE_DMA		__BIT(0)
+#define	SDHC_PCI_QUIRK_TI_HACK			__BIT(1)
+#define	SDHC_PCI_QUIRK_NO_PWR0			__BIT(2)
+#define	SDHC_PCI_QUIRK_RICOH_LOWER_FREQ_HACK	__BIT(3)
+#define	SDHC_PCI_QUIRK_RICOH_SLOW_SDR50_HACK	__BIT(4)
+#define	SDHC_PCI_QUIRK_INTEL_EMMC_HW_RESET	__BIT(5)
 } sdhc_pci_quirk_table[] = {
 	{
 		PCI_VENDOR_TI,
@@ -112,16 +114,14 @@ static const struct sdhc_pci_quirk {
 		0,
 		SDHC_PCI_QUIRK_NO_PWR0
 	},
-
 	{
 		PCI_VENDOR_RICOH,
 		PCI_PRODUCT_RICOH_Rx5U823,
 		0xffff,
 		0xffff,
 		0,
-		SDHC_PCI_QUIRK_RICOH_LOWER_FREQ_HACK
+		SDHC_PCI_QUIRK_RICOH_SLOW_SDR50_HACK
 	},
-
 	{
 		PCI_VENDOR_RICOH,
 		PCI_PRODUCT_RICOH_Rx5C822,
@@ -139,10 +139,39 @@ static const struct sdhc_pci_quirk {
 		~0,
 		SDHC_PCI_QUIRK_FORCE_DMA
 	},
+
+	{
+		PCI_VENDOR_INTEL,
+		PCI_PRODUCT_INTEL_BAYTRAIL_SCC_MMC,
+		0xffff,
+		0xffff,
+		~0,
+		SDHC_PCI_QUIRK_INTEL_EMMC_HW_RESET
+	},
+
+	{
+		PCI_VENDOR_INTEL,
+		PCI_PRODUCT_INTEL_BSW_SSC_MMC,
+		0xffff,
+		0xffff,
+		~0,
+		SDHC_PCI_QUIRK_INTEL_EMMC_HW_RESET
+	},
+
+	{
+		PCI_VENDOR_INTEL,
+		PCI_PRODUCT_INTEL_100SERIES_LP_EMMC,
+		0xffff,
+		0xffff,
+		~0,
+		SDHC_PCI_QUIRK_INTEL_EMMC_HW_RESET
+	},
 };
 
 static void sdhc_pci_quirk_ti_hack(struct pci_attach_args *);
 static void sdhc_pci_quirk_ricoh_lower_freq_hack(struct pci_attach_args *);
+static void sdhc_pci_intel_emmc_hw_reset(struct sdhc_softc *,
+    struct sdhc_host *);
 
 static uint32_t
 sdhc_pci_lookup_quirk_flags(struct pci_attach_args *pa)
@@ -241,6 +270,10 @@ sdhc_pci_attach(device_t parent, device_t self, void *aux)
 		SET(sc->sc.sc_flags, SDHC_FLAG_NO_PWR0);
 	if (ISSET(flags, SDHC_PCI_QUIRK_RICOH_LOWER_FREQ_HACK))
 		sdhc_pci_quirk_ricoh_lower_freq_hack(pa);
+	if (ISSET(flags, SDHC_PCI_QUIRK_RICOH_SLOW_SDR50_HACK))
+		SET(sc->sc.sc_flags, SDHC_FLAG_SLOW_SDR50);
+	if (ISSET(flags, SDHC_PCI_QUIRK_INTEL_EMMC_HW_RESET))
+		sc->sc.sc_vendor_hw_reset = sdhc_pci_intel_emmc_hw_reset;
 
 	/*
 	 * Map and attach all hosts supported by the host controller.
@@ -268,7 +301,8 @@ sdhc_pci_attach(device_t parent, device_t self, void *aux)
 	}
 
 	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_SDMMC, sdhc_intr, &sc->sc);
+	sc->sc_ih = pci_intr_establish_xname(pc, ih, IPL_SDMMC, sdhc_intr,
+	    &sc->sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt\n");
 		goto err;
@@ -395,7 +429,6 @@ sdhc_pci_quirk_ti_hack(struct pci_attach_args *pa)
 static void
 sdhc_pci_quirk_ricoh_lower_freq_hack(struct pci_attach_args *pa)
 {
-
 	/* Enable SD2.0 mode. */
 	sdhc_pci_conf_write(pa, SDHC_PCI_MODE_KEY, 0xfc);
 	sdhc_pci_conf_write(pa, SDHC_PCI_MODE, SDHC_PCI_MODE_SD20);
@@ -408,4 +441,27 @@ sdhc_pci_quirk_ricoh_lower_freq_hack(struct pci_attach_args *pa)
 	sdhc_pci_conf_write(pa, SDHC_PCI_BASE_FREQ_KEY, 0x01);
 	sdhc_pci_conf_write(pa, SDHC_PCI_BASE_FREQ, 50);
 	sdhc_pci_conf_write(pa, SDHC_PCI_BASE_FREQ_KEY, 0x00);
+printf("quirked\n");
+}
+
+static void
+sdhc_pci_intel_emmc_hw_reset(struct sdhc_softc *sc, struct sdhc_host *hp)
+{
+	kmutex_t *plock = sdhc_host_lock(hp);
+	uint8_t reg;
+
+	mutex_enter(plock);
+
+	reg = sdhc_host_read_1(hp, SDHC_POWER_CTL);
+	reg |= 0x10;
+	sdhc_host_write_1(hp, SDHC_POWER_CTL, reg);
+
+	sdmmc_delay(10);
+
+	reg &= ~0x10;
+	sdhc_host_write_1(hp, SDHC_POWER_CTL, reg);
+
+	sdmmc_delay(1000);
+
+	mutex_exit(plock);
 }

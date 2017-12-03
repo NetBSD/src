@@ -1,0 +1,18 @@
+#	$NetBSD: OLIMEXLIME2,v 1.2.8.2 2017/12/03 11:36:03 jdolecek Exp $
+#
+#	OLIMEXLIME2 - Olimex A20-OLinuXino-LIME2
+#
+
+include "arch/evbarm/conf/CUBIEBOARD"
+
+no makeoptions	BOARDTYPE
+makeoptions	BOARDTYPE="olimexlime2"
+
+no options 	ALLWINNER_A10
+no makeoptions	CPUFLAGS
+makeoptions	CPUFLAGS="-mcpu=cortex-a7 -mfpu=neon"
+
+# CAN bus support
+#options 	CAN		# Controller Area Network protocol
+#pseudo-device	canloop		# CAN loopback interface
+#awincan0	at awinio0 port ? flags 1

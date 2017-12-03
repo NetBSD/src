@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.83 2012/07/30 23:56:48 matt Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.83.2.1 2017/12/03 11:39:22 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.83 2012/07/30 23:56:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.83.2.1 2017/12/03 11:39:22 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,13 +186,13 @@ uvm_loanentry(struct uvm_faultinfo *ufi, void ***output, int flags)
 
 		/* total failure */
 		if (rv < 0) {
-			UVMHIST_LOG(loanhist, "failure %d", rv, 0,0,0);
+			UVMHIST_LOG(loanhist, "failure %jd", rv, 0,0,0);
 			return (-1);
 		}
 
 		/* relock failed, need to do another lookup */
 		if (rv == 0) {
-			UVMHIST_LOG(loanhist, "relock failure %d", result
+			UVMHIST_LOG(loanhist, "relock failure %jd", result
 			    ,0,0,0);
 			return (result);
 		}
@@ -214,7 +214,7 @@ uvm_loanentry(struct uvm_faultinfo *ufi, void ***output, int flags)
 		amap_unlock(aref->ar_amap);
 	}
 	uvmfault_unlockmaps(ufi, false);
-	UVMHIST_LOG(loanhist, "done %d", result, 0,0,0);
+	UVMHIST_LOG(loanhist, "done %jd", result, 0,0,0);
 	return (result);
 }
 
@@ -324,7 +324,7 @@ fail:
 			    output - result);
 		}
 	}
-	UVMHIST_LOG(loanhist, "error %d", error,0,0,0);
+	UVMHIST_LOG(loanhist, "error %jd", error,0,0,0);
 	return (error);
 }
 
@@ -359,7 +359,8 @@ uvm_loananon(struct uvm_faultinfo *ufi, void ***output, int flags,
 		pg = anon->an_page;
 		if (pg && (pg->pqflags & PQ_ANON) != 0 && anon->an_ref == 1) {
 			if (pg->wire_count > 0) {
-				UVMHIST_LOG(loanhist, "->A wired %p", pg,0,0,0);
+				UVMHIST_LOG(loanhist, "->A wired %#jx",
+				    (uintptr_t)pg, 0, 0, 0);
 				uvmfault_unlockall(ufi,
 				    ufi->entry->aref.ar_amap,
 				    ufi->entry->object.uvm_obj);
@@ -389,7 +390,7 @@ uvm_loananon(struct uvm_faultinfo *ufi, void ***output, int flags,
 	 */
 
 	if (error) {
-		UVMHIST_LOG(loanhist, "error %d", error,0,0,0);
+		UVMHIST_LOG(loanhist, "error %jd", error,0,0,0);
 
 		/* need to refault (i.e. refresh our lookup) ? */
 		if (error == ERESTART) {
@@ -414,7 +415,7 @@ uvm_loananon(struct uvm_faultinfo *ufi, void ***output, int flags,
 	mutex_enter(&uvm_pageqlock);
 	if (pg->wire_count > 0) {
 		mutex_exit(&uvm_pageqlock);
-		UVMHIST_LOG(loanhist, "->K wired %p", pg,0,0,0);
+		UVMHIST_LOG(loanhist, "->K wired %#jx", (uintptr_t)pg, 0, 0, 0);
 		KASSERT(pg->uobject == NULL);
 		uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, NULL);
 		return (-1);
@@ -464,7 +465,8 @@ uvm_loanpage(struct vm_page **pgpp, int npages)
 		mutex_enter(&uvm_pageqlock);
 		if (pg->wire_count > 0) {
 			mutex_exit(&uvm_pageqlock);
-			UVMHIST_LOG(loanhist, "wired %p", pg,0,0,0);
+			UVMHIST_LOG(loanhist, "wired %#jx", (uintptr_t)pg,
+			    0, 0, 0);
 			error = EBUSY;
 			break;
 		}
@@ -489,7 +491,7 @@ uvm_loanpage(struct vm_page **pgpp, int npages)
 		mutex_enter(slock);
 	}
 
-	UVMHIST_LOG(loanhist, "done %d", error,0,0,0);
+	UVMHIST_LOG(loanhist, "done %jd", error, 0, 0, 0);
 	return error;
 }
 
@@ -778,7 +780,7 @@ uvm_loanuobj(struct uvm_faultinfo *ufi, void ***output, int flags, vaddr_t va)
 	mutex_enter(&uvm_pageqlock);
 	if (pg->wire_count > 0) {
 		mutex_exit(&uvm_pageqlock);
-		UVMHIST_LOG(loanhist, "wired %p", pg,0,0,0);
+		UVMHIST_LOG(loanhist, "wired %#jx", (uintptr_t)pg, 0, 0, 0);
 		goto fail;
 	}
 	if (pg->loan_count == 0) {
@@ -1110,9 +1112,7 @@ struct vm_page *
 uvm_loanbreak(struct vm_page *uobjpage)
 {
 	struct vm_page *pg;
-#ifdef DIAGNOSTIC
-	struct uvm_object *uobj = uobjpage->uobject;
-#endif
+	struct uvm_object *uobj __diagused = uobjpage->uobject;
 
 	KASSERT(uobj != NULL);
 	KASSERT(mutex_owned(uobj->vmobjlock));

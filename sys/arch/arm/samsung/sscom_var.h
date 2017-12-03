@@ -1,4 +1,4 @@
-/* $NetBSD: sscom_var.h,v 1.3.10.2 2014/08/20 00:02:48 tls Exp $ */
+/* $NetBSD: sscom_var.h,v 1.3.10.3 2017/12/03 11:35:56 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -76,6 +76,9 @@
 #include <sys/termios.h>
 #include <sys/callout.h>
 #include <sys/bus.h>
+#ifdef RND_COM
+#include <sys/rndsource.h>
+#endif
 
 #include <arm/samsung/sscom_reg.h>
 

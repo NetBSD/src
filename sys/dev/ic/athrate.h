@@ -1,4 +1,4 @@
-/*	$NetBSD: athrate.h,v 1.2 2006/02/05 06:03:26 xtraeme Exp $ */
+/*	$NetBSD: athrate.h,v 1.2.114.1 2017/12/03 11:37:03 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2004-2005 Sam Leffler, Errno Consulting
@@ -65,7 +65,7 @@
  * rate for each outgoing frame and provided status from each transmitted
  * frame.  Any ancillary processing is the responsibility of the module
  * (e.g. if periodic processing is required then the module should setup
- * it's own timer).
+ * its own timer).
  *
  * In addition to the transmit rate for each frame the module must also
  * indicate the number of attempts to make at the specified rate.  If this

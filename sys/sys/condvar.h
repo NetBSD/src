@@ -1,4 +1,4 @@
-/*	$NetBSD: condvar.h,v 1.12 2009/12/05 22:38:19 pooka Exp $	*/
+/*	$NetBSD: condvar.h,v 1.12.22.1 2017/12/03 11:39:20 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -32,21 +32,26 @@
 #ifndef _SYS_CONDVAR_H_
 #define	_SYS_CONDVAR_H_
 
-#include <sys/mutex.h>
-
 typedef struct kcondvar {
 	void		*cv_opaque[3];
 } kcondvar_t;
 
 #ifdef _KERNEL
 
+struct bintime;
+struct kmutex;
+
 void	cv_init(kcondvar_t *, const char *);
 void	cv_destroy(kcondvar_t *);
 
-void	cv_wait(kcondvar_t *, kmutex_t *);
-int	cv_wait_sig(kcondvar_t *, kmutex_t *);
-int	cv_timedwait(kcondvar_t *, kmutex_t *, int);
-int	cv_timedwait_sig(kcondvar_t *, kmutex_t *, int);
+void	cv_wait(kcondvar_t *, struct kmutex *);
+int	cv_wait_sig(kcondvar_t *, struct kmutex *);
+int	cv_timedwait(kcondvar_t *, struct kmutex *, int);
+int	cv_timedwait_sig(kcondvar_t *, struct kmutex *, int);
+int	cv_timedwaitbt(kcondvar_t *, struct kmutex *, struct bintime *,
+	    const struct bintime *);
+int	cv_timedwaitbt_sig(kcondvar_t *, struct kmutex *, struct bintime *,
+	    const struct bintime *);
 
 void	cv_signal(kcondvar_t *);
 void	cv_broadcast(kcondvar_t *);

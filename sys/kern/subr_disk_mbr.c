@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_mbr.c,v 1.44.2.2 2014/08/20 00:04:29 tls Exp $	*/
+/*	$NetBSD: subr_disk_mbr.c,v 1.44.2.3 2017/12/03 11:38:45 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.44.2.2 2014/08/20 00:04:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.44.2.3 2017/12/03 11:38:45 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,6 +116,10 @@ typedef struct mbr_args {
 static int validate_label(mbr_args_t *, uint);
 static int look_netbsd_part(mbr_args_t *, mbr_partition_t *, int, uint);
 static int write_netbsd_label(mbr_args_t *, mbr_partition_t *, int, uint);
+
+#ifdef DISKLABEL_EI
+static void swap_disklabel(struct disklabel *, struct disklabel *);
+#endif
 
 static int
 read_sector(mbr_args_t *a, uint sector, int count)
@@ -565,12 +569,23 @@ look_netbsd_part(mbr_args_t *a, mbr_partition_t *dp, int slot, uint ext_base)
 }
 
 
+#ifdef DISKLABEL_EI
+/*
+ * - For read, convert a label to the native byte order.
+ * - For update or write, if a label already exists, keep its byte order.
+ *   Otherwise, write a new label in the native byte order.
+ */
+#endif
 static int
 validate_label(mbr_args_t *a, uint label_sector)
 {
 	struct disklabel *dlp;
 	char *dlp_lim, *dlp_byte;
 	int error;
+#ifdef DISKLABEL_EI
+	int swapped = 0;
+	uint16_t npartitions;
+#endif
 
 	/* Next, dig out disk label */
 	if (read_sector(a, label_sector, SCANBLOCKS)) {
@@ -603,8 +618,31 @@ validate_label(mbr_args_t *a, uint label_sector)
 			break;
 		}
 		if (dlp->d_magic != DISKMAGIC || dlp->d_magic2 != DISKMAGIC)
+#ifdef DISKLABEL_EI
+		{
+			if (bswap32(dlp->d_magic)  != DISKMAGIC ||
+			    bswap32(dlp->d_magic2) != DISKMAGIC)
+				continue;
+
+			/*
+			 * The label is in the other byte order. We need to
+			 * checksum before swapping the byte order.
+			 */
+			npartitions = bswap16(dlp->d_npartitions);
+			if (npartitions > MAXPARTITIONS ||
+			    dkcksum_sized(dlp, npartitions) != 0)
+				goto corrupted;
+
+			swapped = 1;
+		}
+#else
 			continue;
-		if (dlp->d_npartitions > MAXPARTITIONS || dkcksum(dlp) != 0) {
+#endif
+		else if (dlp->d_npartitions > MAXPARTITIONS ||
+			 dkcksum(dlp) != 0) {
+#ifdef DISKLABEL_EI
+corrupted:
+#endif
 			a->msg = "disk label corrupted";
 			continue;
 		}
@@ -613,7 +651,14 @@ validate_label(mbr_args_t *a, uint label_sector)
 
 	switch (a->action) {
 	case READ_LABEL:
+#ifdef DISKLABEL_EI
+		if (swapped)
+			swap_disklabel(a->lp, dlp);
+		else
+			*a->lp = *dlp;
+#else
 		*a->lp = *dlp;
+#endif
 		if ((a->msg = convertdisklabel(a->lp, a->strat, a->bp,
 		                              a->secperunit)) != NULL)
 			return SCAN_ERROR;
@@ -621,7 +666,15 @@ validate_label(mbr_args_t *a, uint label_sector)
 		return SCAN_FOUND;
 	case UPDATE_LABEL:
 	case WRITE_LABEL:
+#ifdef DISKLABEL_EI
+		/* DO NOT swap a->lp itself for later references. */
+		if (swapped)
+			swap_disklabel(dlp, a->lp);
+		else
+			*dlp = *a->lp;
+#else
 		*dlp = *a->lp;
+#endif
 		a->bp->b_oflags &= ~BO_DONE;
 		a->bp->b_flags &= ~B_READ;
 		a->bp->b_flags |= B_WRITE;
@@ -663,7 +716,7 @@ setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_long openmask,
 	}
 
 	if (nlp->d_magic != DISKMAGIC || nlp->d_magic2 != DISKMAGIC ||
-	    dkcksum(nlp) != 0)
+	    nlp->d_npartitions > MAXPARTITIONS || dkcksum(nlp) != 0)
 		return (EINVAL);
 
 	/* XXX missing check if other dos partitions will be overwritten */
@@ -738,3 +791,83 @@ write_netbsd_label(mbr_args_t *a, mbr_partition_t *dp, int slot, uint ext_base)
 
 	return validate_label(a, ptn_base);
 }
+
+#ifdef DISKLABEL_EI
+/*
+ * from sh3/disksubr.c with modifications:
+ *	- update d_checksum properly
+ *	- replace memcpy(9) by memmove(9) as a precaution
+ */
+static void
+swap_disklabel(struct disklabel *nlp, struct disklabel *olp)
+{
+	int i;
+	uint16_t npartitions;
+
+#define	SWAP16(x)	nlp->x = bswap16(olp->x)
+#define	SWAP32(x)	nlp->x = bswap32(olp->x)
+
+	SWAP32(d_magic);
+	SWAP16(d_type);
+	SWAP16(d_subtype);
+	/* Do not need to swap char strings. */
+	memmove(nlp->d_typename, olp->d_typename, sizeof(nlp->d_typename));
+
+	/* XXX What should we do for d_un (an union of char and pointers) ? */
+	memmove(nlp->d_packname, olp->d_packname, sizeof(nlp->d_packname));
+
+	SWAP32(d_secsize);
+	SWAP32(d_nsectors);
+	SWAP32(d_ntracks);
+	SWAP32(d_ncylinders);
+	SWAP32(d_secpercyl);
+	SWAP32(d_secperunit);
+
+	SWAP16(d_sparespertrack);
+	SWAP16(d_sparespercyl);
+
+	SWAP32(d_acylinders);
+
+	SWAP16(d_rpm);
+	SWAP16(d_interleave);
+	SWAP16(d_trackskew);
+	SWAP16(d_cylskew);
+	SWAP32(d_headswitch);
+	SWAP32(d_trkseek);
+	SWAP32(d_flags);
+	for (i = 0; i < NDDATA; i++)
+		SWAP32(d_drivedata[i]);
+	for (i = 0; i < NSPARE; i++)
+		SWAP32(d_spare[i]);
+	SWAP32(d_magic2);
+	/* d_checksum is updated later. */
+
+	SWAP16(d_npartitions);
+	SWAP32(d_bbsize);
+	SWAP32(d_sbsize);
+	for (i = 0; i < MAXPARTITIONS; i++) {
+		SWAP32(d_partitions[i].p_size);
+		SWAP32(d_partitions[i].p_offset);
+		SWAP32(d_partitions[i].p_fsize);
+		/* p_fstype and p_frag is uint8_t, so no need to swap. */
+		nlp->d_partitions[i].p_fstype = olp->d_partitions[i].p_fstype;
+		nlp->d_partitions[i].p_frag = olp->d_partitions[i].p_frag;
+		SWAP16(d_partitions[i].p_cpg);
+	}
+
+#undef SWAP16
+#undef SWAP32
+
+	/* Update checksum in the target endian. */
+	nlp->d_checksum = 0;
+	npartitions = nlp->d_magic == DISKMAGIC ?
+	    nlp->d_npartitions : olp->d_npartitions;
+	/*
+	 * npartitions can be larger than MAXPARTITIONS when the label was not
+	 * validated by setdisklabel. If so, the label is intentionally(?)
+	 * corrupted and checksum should be meaningless.
+	 */
+	if (npartitions <= MAXPARTITIONS)
+		nlp->d_checksum = dkcksum_sized(nlp, npartitions);
+}
+#endif /* DISKLABEL_EI */

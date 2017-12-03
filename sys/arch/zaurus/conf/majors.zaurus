@@ -1,4 +1,4 @@
-#	$NetBSD: majors.zaurus,v 1.6 2011/06/30 20:09:38 wiz Exp $
+#	$NetBSD: majors.zaurus,v 1.6.12.1 2017/12/03 11:36:52 jdolecek Exp $
 #
 # Device majors for zaurus
 #
@@ -93,7 +93,7 @@ device-major	cir		char 96			cir
 device-major	radio		char 97			radio
 device-major	kttcp		char 99			kttcp
 device-major	ixpcom		char 100		ixpcom
-device-major	sysmon		char 101		sysmon_envsys | sysmon_wdog | sysmon_power
+device-major	sysmon		char 101		sysmon
 device-major	dmoverio	char 102		dmoverio
 device-major	apmdev		char 103		apmdev
 device-major	sscom		char 104		sscom

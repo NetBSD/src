@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile.gzboot,v 1.20.2.2 2014/08/20 00:02:56 tls Exp $
+#	$NetBSD: Makefile.gzboot,v 1.20.2.3 2017/12/03 11:36:07 jdolecek Exp $
 
 NOMAN=  # defined
 
-.include <bsd.obj.mk>		# Pull in OBJDIR name rules.
+.include <bsd.init.mk>		# Pull in OBJDIR name rules.
 .include <bsd.own.mk>
 .include <bsd.klinks.mk>
 
@@ -14,8 +14,6 @@ PROG=	${BASE}.bin
 WARNS=	1
 
 NEWVERSWHAT=	"Gzip Boot"
-VERSIONFILE=	${EVBARM_STAND}/gzboot/version
-
 BINMODE=644
 
 DBG=	-Os
@@ -26,6 +24,7 @@ LIBCRTI=
 LIBC=
 LIBCRTBEGIN= 
 LIBCRTEND=      
+STRIPFLAG=
 
 .PATH: ${EVBARM_STAND}/gzboot
 .PATH: ${EVBARM_STAND}/board
@@ -38,11 +37,7 @@ CPPFLAGS+= -nostdinc -I. -I${EVBARM_STAND}/gzboot -I${EVBARM_STAND}/board
 CPPFLAGS+= -I${S} -I${S}/arch -I${S}/lib/libsa
 CPPFLAGS+= -I${S}/../common/dist/zlib
 CPPFLAGS+= ${ARM_APCS_FLAGS}
-.if ${HAVE_LLVM:Uno} != "no" || ${HAVE_GCC:U0} >= 48
 CPPFLAGS+=	-marm
-.else
-CPPFLAGS+=	-mno-thumb -mno-thumb-interwork
-.endif
 
 CPPFLAGS+= -D_STANDALONE
 
@@ -62,9 +57,8 @@ COPTS+=	-fno-unwind-tables
 CWARNFLAGS+= -Werror
 CWARNFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
 
-CLEANFILES+= ${STARTFILE} vers.c ${BASE}.list
+CLEANFILES+= ${STARTFILE} ${BASE}.list
 CLEANFILES+= ${PROGSYM}
-SRCS+= vers.c
 
 ### find out what to use for libkern
 KERN_AS=	library
@@ -86,14 +80,11 @@ cleandir distclean: .WAIT cleanlibdir
 cleanlibdir:
 	-rm -rf lib
 
-LDFLAGS= -M -T ${LDSCRIPT} --fix-v4bx
+DIRECT_LDFLAGS= -M -T ${LDSCRIPT} --fix-v4bx
 
 LIBLIST=${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN} ${LIBSA}
 
-.PHONY: vers.c
-vers.c: ${VERSIONFILE}
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
-	    ${.ALLSRC} '${PLATFORM}' ${NEWVERSWHAT}
+.include "${S}/conf/newvers_stand.mk"
 
 ${PROG}: ${PROGSYM}
 	${OBJCOPY} -O binary ${PROGSYM} ${.TARGET}
@@ -113,5 +104,5 @@ FILES=	${PROGSYM}
 
 ${PROGSYM}: ${STARTFILE} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	${_MKTARGET_LINK}
-	${LD} -o ${.TARGET} ${LDFLAGS} ${STARTFILE} \
+	${LD} -o ${.TARGET} ${DIRECT_LDFLAGS} ${STARTFILE} \
 	    ${OBJS} ${LIBLIST} > ${BASE}.list

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sparc64,v 1.32 2011/06/30 20:09:36 wiz Exp $
+#	$NetBSD: majors.sparc64,v 1.32.12.1 2017/12/03 11:36:44 jdolecek Exp $
 #
 # Device majors for sparc64
 #
@@ -109,7 +109,7 @@ device-major	dmoverio	char 129		dmoverio
 device-major	dpt		char 132		dpt
 device-major	twe		char 133		twe
 device-major	nsmb		char 134		nsmb		
-device-major	sysmon		char 135		sysmon_envsys | sysmon_wdog | sysmon_power
+device-major	sysmon		char 135		sysmon
 
 device-major	ksyms		char 136		ksyms
 
@@ -118,3 +118,7 @@ device-major	joy		char 137		joy
 # Majors up to 143 are reserved for machine-dependent drivers.
 # New machine-independent driver majors are assigned in 
 # sys/conf/majors.
+
+# ld has (eroneously) been assigned a MD major on some ports, this one
+# is from the (mostly unused) sys/conf/majors.storage
+device-major	ld		char 303 block	303	ld

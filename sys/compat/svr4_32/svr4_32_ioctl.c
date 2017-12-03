@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_ioctl.c,v 1.22 2009/03/14 21:04:19 dsl Exp $	 */
+/*	$NetBSD: svr4_32_ioctl.c,v 1.22.22.1 2017/12/03 11:36:57 jdolecek Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_ioctl.c,v 1.22 2009/03/14 21:04:19 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_ioctl.c,v 1.22.22.1 2017/12/03 11:36:57 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -103,8 +103,8 @@ svr4_32_sys_ioctl(struct lwp *l, const struct svr4_32_sys_ioctl_args *uap, regis
 
 	svr4_32_decode_cmd(SCARG(uap, com), dir, &c, &num, &argsiz);
 
-	uprintf("svr4_32_ioctl(%d, _IO%s(%c, %d, %d), %#x);\n", SCARG(uap, fd),
-	    dir, c, num, argsiz, SCARG(uap, data));
+	uprintf("svr4_32_ioctl(%d, _IO%s(%c, %d, %d), %p);\n", SCARG(uap, fd),
+	    dir, c, num, argsiz, NETBSD32PTR64(SCARG(uap, data)));
 #endif
 	cmd = SCARG(uap, com);
 

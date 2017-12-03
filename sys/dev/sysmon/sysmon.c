@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon.c,v 1.17.48.1 2014/08/20 00:03:50 tls Exp $	*/
+/*	$NetBSD: sysmon.c,v 1.17.48.2 2017/12/03 11:37:33 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon.c,v 1.17.48.1 2014/08/20 00:03:50 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon.c,v 1.17.48.2 2017/12/03 11:37:33 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -49,9 +49,12 @@ __KERNEL_RCSID(0, "$NetBSD: sysmon.c,v 1.17.48.1 2014/08/20 00:03:50 tls Exp $")
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/module.h>
+#include <sys/mutex.h>
+#include <sys/device.h>
+#include <sys/once.h>
 
 #include <dev/sysmon/sysmonvar.h>
-#include <dev/sysmon/sysmonconf.h>
 
 dev_type_open(sysmonopen);
 dev_type_close(sysmonclose);
@@ -75,6 +78,60 @@ const struct cdevsw sysmon_cdevsw = {
 	.d_flag = D_OTHER | D_MPSAFE
 };
 
+static int	sysmon_modcmd(modcmd_t, void *); 
+static int	sm_init_once(void);
+
+/*
+ * Info about our minor "devices"
+ */
+static struct sysmon_opvec	*sysmon_opvec_table[] = { NULL, NULL, NULL };
+static int			sysmon_refcnt[] = { 0, 0, 0 };
+static const char		*sysmon_mod[] = { "sysmon_envsys",
+						  "sysmon_wdog",
+						  "sysmon_power" };
+static kmutex_t sysmon_minor_mtx;
+
+#ifdef _MODULE
+static bool	sm_is_attached;
+#endif
+
+ONCE_DECL(once_sm);
+
+/*
+ * sysmon_attach_minor
+ *
+ *	Attach a minor device for wdog, power, or envsys.  Manage a
+ *	reference count so we can prevent the device from being
+ *	detached if there are still users with the minor device opened.
+ *
+ *	If the opvec argument is NULL, this is a request to detach the
+ *	minor device - make sure the refcnt is zero!
+ */
+int
+sysmon_attach_minor(int minor, struct sysmon_opvec *opvec)
+{
+	int ret;
+
+	mutex_enter(&sysmon_minor_mtx);
+	if (opvec) {
+		if (sysmon_opvec_table[minor] == NULL) {
+			sysmon_refcnt[minor] = 0;
+			sysmon_opvec_table[minor] = opvec;
+			ret = 0;
+		} else
+			ret = EEXIST;
+	} else {
+		if (sysmon_refcnt[minor] == 0) {
+			sysmon_opvec_table[minor] = NULL;
+			ret = 0;
+		} else
+			ret = EBUSY;
+	}
+
+	mutex_exit(&sysmon_minor_mtx);
+	return ret;
+}
+
 /*
  * sysmonopen:
  *
@@ -85,27 +142,35 @@ sysmonopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int error;
 
+	mutex_enter(&sysmon_minor_mtx);
+
 	switch (minor(dev)) {
-#if NSYSMON_ENVSYS > 0
 	case SYSMON_MINOR_ENVSYS:
-		error = sysmonopen_envsys(dev, flag, mode, l);
-		break;
-#endif
-#if NSYSMON_WDOG > 0
 	case SYSMON_MINOR_WDOG:
-		error = sysmonopen_wdog(dev, flag, mode, l);
-		break;
-#endif
-#if NSYSMON_POWER > 0
 	case SYSMON_MINOR_POWER:
-		error = sysmonopen_power(dev, flag, mode, l);
+		if (sysmon_opvec_table[minor(dev)] == NULL) {
+			mutex_exit(&sysmon_minor_mtx);
+			error = module_autoload(sysmon_mod[minor(dev)],
+						MODULE_CLASS_MISC);
+			if (error)
+				return error;
+			mutex_enter(&sysmon_minor_mtx);
+			if (sysmon_opvec_table[minor(dev)] == NULL) {
+				error = ENODEV;
+				break;
+			}
+		}
+		error = (sysmon_opvec_table[minor(dev)]->so_open)(dev, flag,
+		    mode, l);
+		if (error == 0)
+			sysmon_refcnt[minor(dev)]++;
 		break;
-#endif
 	default:
 		error = ENODEV;
 	}
 
-	return (error);
+	mutex_exit(&sysmon_minor_mtx);
+	return error;
 }
 
 /*
@@ -119,21 +184,20 @@ sysmonclose(dev_t dev, int flag, int mode, struct lwp *l)
 	int error;
 
 	switch (minor(dev)) {
-#if NSYSMON_ENVSYS > 0
 	case SYSMON_MINOR_ENVSYS:
-		error = sysmonclose_envsys(dev, flag, mode, l);
-		break;
-#endif
-#if NSYSMON_WDOG > 0
 	case SYSMON_MINOR_WDOG:
-		error = sysmonclose_wdog(dev, flag, mode, l);
-		break;
-#endif
-#if NSYSMON_POWER > 0
 	case SYSMON_MINOR_POWER:
-		error = sysmonclose_power(dev, flag, mode, l);
+		if (sysmon_opvec_table[minor(dev)] == NULL)
+			error = ENODEV;
+		else {
+			error = (sysmon_opvec_table[minor(dev)]->so_close)(dev,
+			    flag, mode, l);
+			if (error == 0) {
+				sysmon_refcnt[minor(dev)]--;
+				KASSERT(sysmon_refcnt[minor(dev)] >= 0);
+			}
+		}
 		break;
-#endif
 	default:
 		error = ENODEV;
 	}
@@ -152,21 +216,15 @@ sysmonioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	int error;
 
 	switch (minor(dev)) {
-#if NSYSMON_ENVSYS > 0
 	case SYSMON_MINOR_ENVSYS:
-		error = sysmonioctl_envsys(dev, cmd, data, flag, l);
-		break;
-#endif
-#if NSYSMON_WDOG > 0
 	case SYSMON_MINOR_WDOG:
-		error = sysmonioctl_wdog(dev, cmd, data, flag, l);
-		break;
-#endif
-#if NSYSMON_POWER > 0
 	case SYSMON_MINOR_POWER:
-		error = sysmonioctl_power(dev, cmd, data, flag, l);
+		if (sysmon_opvec_table[minor(dev)] == NULL)
+			error = ENODEV;
+		else
+			error = (sysmon_opvec_table[minor(dev)]->so_ioctl)(dev,
+			    cmd, data, flag, l);
 		break;
-#endif
 	default:
 		error = ENODEV;
 	}
@@ -185,11 +243,13 @@ sysmonread(dev_t dev, struct uio *uio, int flags)
 	int error;
 
 	switch (minor(dev)) {
-#if NSYSMON_POWER > 0
 	case SYSMON_MINOR_POWER:
-		error = sysmonread_power(dev, uio, flags);
+		if (sysmon_opvec_table[minor(dev)] == NULL)
+			error = ENODEV;
+		else
+			error = (sysmon_opvec_table[minor(dev)]->so_read)(dev,
+			    uio, flags);
 		break;
-#endif
 	default:
 		error = ENODEV;
 	}
@@ -208,11 +268,13 @@ sysmonpoll(dev_t dev, int events, struct lwp *l)
 	int rv;
 
 	switch (minor(dev)) {
-#if NSYSMON_POWER > 0
 	case SYSMON_MINOR_POWER:
-		rv = sysmonpoll_power(dev, events, l);
+		if (sysmon_opvec_table[minor(dev)] == NULL)
+			rv = events;
+		else
+			rv = (sysmon_opvec_table[minor(dev)]->so_poll)(dev,
+			    events, l);
 		break;
-#endif
 	default:
 		rv = events;
 	}
@@ -231,14 +293,96 @@ sysmonkqfilter(dev_t dev, struct knote *kn)
 	int error;
 
 	switch (minor(dev)) {
-#if NSYSMON_POWER > 0
 	case SYSMON_MINOR_POWER:
-		error = sysmonkqfilter_power(dev, kn);
+		if (sysmon_opvec_table[minor(dev)] == NULL)
+			error = ENODEV;
+		else
+			error = (sysmon_opvec_table[minor(dev)]->so_filter)(dev,
+			    kn);
 		break;
-#endif
 	default:
 		error = 1;
 	}
 
 	return (error);
+}
+
+MODULE(MODULE_CLASS_DRIVER, sysmon, "");
+
+static int
+sm_init_once(void)
+{
+
+	mutex_init(&sysmon_minor_mtx, MUTEX_DEFAULT, IPL_NONE);
+
+	return 0;
+}
+
+int
+sysmon_init(void)
+{
+	int error;
+#ifdef _MODULE
+	devmajor_t bmajor, cmajor;
+#endif
+
+	error = RUN_ONCE(&once_sm, sm_init_once);
+
+#ifdef _MODULE
+	mutex_enter(&sysmon_minor_mtx);
+	if (!sm_is_attached) {
+		bmajor = cmajor = -1;
+		error = devsw_attach("sysmon", NULL, &bmajor,
+				&sysmon_cdevsw, &cmajor);
+		sm_is_attached = (error != 0);
+	}
+	mutex_exit(&sysmon_minor_mtx);
+#endif
+
+	return error;
+}
+
+int
+sysmon_fini(void)
+{
+	int error = 0;
+
+	if ((sysmon_opvec_table[SYSMON_MINOR_ENVSYS] != NULL) ||
+	    (sysmon_opvec_table[SYSMON_MINOR_WDOG] != NULL) ||
+	    (sysmon_opvec_table[SYSMON_MINOR_POWER] != NULL))
+		error = EBUSY;
+
+#ifdef _MODULE
+	if (error == 0) {
+		mutex_enter(&sysmon_minor_mtx);
+		sm_is_attached = false;
+		error = devsw_detach(NULL, &sysmon_cdevsw);
+		mutex_exit(&sysmon_minor_mtx);
+	}
+#endif
+
+	return error;
+}
+
+static
+int   
+sysmon_modcmd(modcmd_t cmd, void *arg)
+{
+	int ret;
+ 
+	switch (cmd) { 
+	case MODULE_CMD_INIT:
+		ret = sysmon_init();
+		break;
+ 
+	case MODULE_CMD_FINI: 
+		ret = sysmon_fini(); 
+		break;
+ 
+	case MODULE_CMD_STAT:
+	default: 
+		ret = ENOTTY;
+	}
+ 
+	return ret;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_obio.c,v 1.5.2.3 2014/08/20 00:02:45 tls Exp $	*/
+/*	$NetBSD: bcm2835_obio.c,v 1.5.2.4 2017/12/03 11:35:52 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2014 The NetBSD Foundation, Inc.
@@ -30,19 +30,25 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_obio.c,v 1.5.2.3 2014/08/20 00:02:45 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_obio.c,v 1.5.2.4 2017/12/03 11:35:52 jdolecek Exp $");
 
 #include "locators.h"
 #include "obio.h"
 
-#include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/device.h>
+#include "opt_bcm283x.h"
 
+#include <sys/param.h>
 #include <sys/bus.h>
+#include <sys/cpu.h>
+#include <sys/device.h>
+#include <sys/systm.h>
 
 #include <arm/broadcom/bcm2835reg.h>
+#include <arm/broadcom/bcm2835var.h>
 #include <arm/broadcom/bcm_amba.h>
+
+#include <arm/cortex/mpcore_var.h>
+#include <arm/cortex/gtmr_var.h>
 
 struct obio_softc {
 	device_t		sc_dev;
@@ -76,13 +82,21 @@ static const struct ambadev_locators bcm2835_ambadev_locs[] = {
 		.ad_size = BCM2835_ARMICU_SIZE,
 		.ad_intr = -1,
 	},
+#if defined(BCM2836)
+	{
+		/* GTMR */
+		.ad_name = "armgtmr",
+		.ad_intr = BCM2836_INT_CNTVIRQ_CPUN(0),
+	},
+#endif
 	{
 		/* Mailbox */
 		.ad_name = "bcmmbox",
 		.ad_addr = BCM2835_ARMMBOX_BASE,
 		.ad_size = BCM2835_ARMMBOX_SIZE,
-		.ad_intr = -1, /* BCM2835_INT_ARMMAILBOX */
+		.ad_intr = BCM2835_INT_ARMMAILBOX
 	},
+#if !defined(BCM2836)
 	{
 		/* System Timer */
 		.ad_name = "bcmtmr",
@@ -90,6 +104,7 @@ static const struct ambadev_locators bcm2835_ambadev_locs[] = {
 		.ad_size = BCM2835_STIMER_SIZE,
 		.ad_intr = BCM2835_INT_TIMER3,
 	},
+#endif
 	{
 		/* VCHIQ */
 		.ad_name = "bcmvchiq",
@@ -102,6 +117,13 @@ static const struct ambadev_locators bcm2835_ambadev_locs[] = {
 		.ad_name = "bcmpm",
 		.ad_addr = BCM2835_PM_BASE,
 		.ad_size = BCM2835_PM_SIZE,
+		.ad_intr = -1,
+	},
+	{
+		/* DMA Controller */
+		.ad_name = "bcmdmac",
+		.ad_addr = BCM2835_DMA0_BASE,
+		.ad_size = BCM2835_DMA0_SIZE,
 		.ad_intr = -1,
 	},
 	{
@@ -119,11 +141,25 @@ static const struct ambadev_locators bcm2835_ambadev_locs[] = {
 		.ad_intr = BCM2835_INT_UART0,
 	},
 	{
+		/* AUX UART */
+		.ad_name = "com",
+		.ad_addr = BCM2835_AUX_UART_BASE,
+		.ad_size = BCM2835_AUX_UART_SIZE,
+		.ad_intr = BCM2835_INT_AUX,
+	},
+	{
 		/* Framebuffer */
 		.ad_name = "fb",
 		.ad_addr = 0,
 		.ad_size = 0,
 		.ad_intr = -1,
+	},
+	{
+		/* SD host interface */
+		.ad_name = "sdhost",
+		.ad_addr = BCM2835_SDHOST_BASE,
+		.ad_size = BCM2835_SDHOST_SIZE,
+		.ad_intr = BCM2835_INT_SDHOST,
 	},
 	{
 		/* eMMC interface */
@@ -172,6 +208,20 @@ static const struct ambadev_locators bcm2835_ambadev_locs[] = {
 		.ad_intr = -1,
 	},
 	{
+		/* Clock Manager */
+		.ad_name = "bcmcm",
+		.ad_addr = BCM2835_CM_BASE,
+		.ad_size = BCM2835_CM_SIZE,
+		.ad_intr = -1,
+	},
+	{
+		/* PWM Controller */
+		.ad_name = "bcmpwm",
+		.ad_addr = BCM2835_PWM_BASE,
+		.ad_size = BCM2835_PWM_SIZE,
+		.ad_intr = -1,
+	},
+	{
 		/* Terminator */
 		.ad_name = NULL,
 	}
@@ -184,6 +234,9 @@ obio_match(device_t parent, cfdata_t match, void *aux)
 
 	return 1;
 }
+
+bus_space_tag_t al_iot = &bcm2835_bs_tag;
+bus_space_handle_t al_ioh;
 
 static void
 obio_attach(device_t parent, device_t self, void *aux)
@@ -202,7 +255,11 @@ obio_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dmat = &bcm2835_bus_dma_tag;
 
 	sc->sc_dmarange[0].dr_sysbase = 0;
+#if defined(BCM2836)
+	sc->sc_dmarange[0].dr_busbase = BCM2835_BUSADDR_CACHE_DIRECT;
+#else
 	sc->sc_dmarange[0].dr_busbase = BCM2835_BUSADDR_CACHE_COHERENT;
+#endif
 	sc->sc_dmarange[0].dr_len = physmem * PAGE_SIZE;
 	bcm2835_bus_dma_tag._ranges = sc->sc_dmarange;
 	bcm2835_bus_dma_tag._nranges = __arraycount(sc->sc_dmarange);
@@ -213,9 +270,30 @@ obio_attach(device_t parent, device_t self, void *aux)
 	aaa.aaa_iot = &bcm2835_bs_tag;
 	aaa.aaa_dmat = sc->sc_dmat;
 
+#if defined(BCM2836)
+	if (bus_space_map(al_iot, BCM2836_ARM_LOCAL_BASE, BCM2836_ARM_LOCAL_SIZE,
+	    0, &al_ioh)) {
+		aprint_error(": unable to map local space\n");
+		return;
+	}
+
+	bus_space_write_4(al_iot, al_ioh, BCM2836_LOCAL_CONTROL, 0);
+	bus_space_write_4(al_iot, al_ioh, BCM2836_LOCAL_PRESCALER, 0x80000000);
+#endif
+
 	for (; ad->ad_name != NULL; ad++) {
 		aprint_debug("dev=%s[%u], addr=%lx:+%lx\n",
 		    ad->ad_name, ad->ad_instance, ad->ad_addr, ad->ad_size);
+		if (strcmp(ad->ad_name, "armgtmr") == 0) {
+			struct mpcore_attach_args mpcaa = {
+				.mpcaa_name = "armgtmr",
+				.mpcaa_irq = ad->ad_intr,
+			};
+
+			config_found(self, &mpcaa, NULL);
+			continue;
+		}
+
 		aaa.aaa_name = ad->ad_name;
 		aaa.aaa_addr = ad->ad_addr;
 		aaa.aaa_size = ad->ad_size;
@@ -258,3 +336,14 @@ obio_print(void *aux, const char *name)
 
 	return UNCONF;
 }
+
+#ifdef MULTIPROCESSOR
+void
+bcm2836_cpu_hatch(struct cpu_info *ci)
+{
+
+	bcm2836mp_intr_init(ci);
+
+	gtmr_init_cpu_clock(ci);
+}
+#endif

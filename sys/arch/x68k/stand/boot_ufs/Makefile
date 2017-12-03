@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26.12.1 2014/08/20 00:03:28 tls Exp $
+#	$NetBSD: Makefile,v 1.26.12.2 2017/12/03 11:36:49 jdolecek Exp $
 
 NOMAN=		# defined
 
@@ -30,12 +30,7 @@ LIBIOCS=	$M/stand/libiocs
 SRCS=	boot.S bootmain.c readufs.c readufs_ffs.c readufs_lfs.c
 SRCS+=	exec_image.S memset.S strcmp.S
 
-SRCS+=		vers.c
-CLEANFILES+=	vers.c
-vers.c:	${VERSIONFILE}
-	${_MKTARGET_CREATE}
-	${HOST_SH} ${S}/conf/newvers_stand.sh \
-	    ${.ALLSRC} ${MACHINE} ${NEWVERSWHAT}
+.include "${S}/conf/newvers_stand.mk"
 
 CFLAGS=	-Os -fomit-frame-pointer -fno-unwind-tables
 CFLAGS+= -m68020-60

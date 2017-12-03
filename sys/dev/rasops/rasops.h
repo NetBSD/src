@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops.h,v 1.31 2012/04/19 06:57:39 macallan Exp $ */
+/* 	$NetBSD: rasops.h,v 1.31.2.1 2017/12/03 11:37:31 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -63,6 +63,11 @@
 #define RI_ENABLE_ALPHA	0x1000
 /* set this in order to use r3g3b2 'true' colour in 8 bit */ 
 #define RI_8BIT_IS_RGB	0x2000
+/*
+ * drivers can set this to tell the font selection code that they'd rather
+ * use alpha fonts
+ */ 
+#define RI_PREFER_ALPHA	0x4000
 
 struct rasops_info {
 	/* These must be filled in by the caller */

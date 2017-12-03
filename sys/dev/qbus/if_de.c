@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.29 2010/04/05 07:21:47 joerg Exp $	*/
+/*	$NetBSD: if_de.c,v 1.29.18.1 2017/12/03 11:37:31 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -45,13 +45,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -64,8 +57,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	@(#)if_de.c	7.12 (Berkeley) 12/16/90
  */
 
 /*
@@ -81,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.29 2010/04/05 07:21:47 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.29.18.1 2017/12/03 11:37:31 jdolecek Exp $");
 
 #include "opt_inet.h"
 
@@ -541,7 +532,6 @@ derecv(struct de_softc *sc)
 	dc = sc->sc_dedata;
 	rp = &dc->dc_rrent[sc->sc_rindex];
 	while ((rp->r_flags & RFLG_OWN) == 0) {
-		sc->sc_if.if_ipackets++;
 		len = (rp->r_lenerr&RERR_MLEN) - ETHER_CRC_LEN;
 		/* check for errors */
 		if ((rp->r_flags & (RFLG_ERRS|RFLG_FRAM|RFLG_OFLO|RFLG_CRC)) ||
@@ -555,9 +545,8 @@ derecv(struct de_softc *sc)
 			sc->sc_if.if_ierrors++;
 			goto next;
 		}
-		bpf_mtap(ifp, m);
 
-		(*ifp->if_input)(ifp, m);
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 
 		/* hang the receive buffer again */
 next:		rp->r_lenerr = 0;

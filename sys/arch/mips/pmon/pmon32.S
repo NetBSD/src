@@ -1,4 +1,4 @@
-/*	$NetBSD: pmon32.S,v 1.1 2011/08/27 13:34:29 bouyer Exp $ */
+/*	$NetBSD: pmon32.S,v 1.1.12.1 2017/12/03 11:36:28 jdolecek Exp $ */
 /*	OpenBSD: pmon32.S,v 1.4 2010/02/18 18:53:33 miod Exp 	*/
 
 /*
@@ -28,10 +28,11 @@
  * than four arguments; other functions are not affected.
  */
 
-#include <machine/param.h>
 #include <machine/asm.h>
 
-#ifndef _STANDALONE
+#ifdef _STANDALONE
+#include <machine/param.h>
+#else
 #include "assym.h"
 #endif
 

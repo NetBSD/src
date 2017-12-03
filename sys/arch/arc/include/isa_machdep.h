@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.15.14.1 2012/11/20 03:01:01 tls Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.15.14.2 2017/12/03 11:35:50 jdolecek Exp $	*/
 /*      $OpenBSD: isa_machdep.h,v 1.5 1997/04/19 17:20:00 pefo Exp $  */
 
 /*
@@ -71,6 +71,8 @@ struct arc_isa_bus {
 #define	isa_intr_evcnt(c, i)					\
     (*(c)->ic_intr_evcnt)((c)->ic_data, (i))
 #define isa_intr_establish(c, i, t, l, f, a)                         \
+    (*(c)->ic_intr_establish)((c)->ic_data, (i), (t), (l), (f), (a))
+#define isa_intr_establish_xname(c, i, t, l, f, a, x)			\
     (*(c)->ic_intr_establish)((c)->ic_data, (i), (t), (l), (f), (a))
 #define isa_intr_disestablish(c, h)                                     \
     (*(c)->ic_intr_disestablish)((c)->ic_data, (h))

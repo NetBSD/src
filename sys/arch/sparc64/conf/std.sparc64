@@ -1,4 +1,4 @@
-#	$NetBSD: std.sparc64,v 1.18 2008/12/11 05:42:18 alc Exp $
+#	$NetBSD: std.sparc64,v 1.18.24.1 2017/12/03 11:36:44 jdolecek Exp $
 
 #
 # Mandatory NetBSD/sparc64 kernel options when building either 32-bit or
@@ -15,6 +15,9 @@ options 	EXEC_SCRIPT	# execve(2) support for scripts
 options 	EXEC_ELF64	# 64-bit NetBSD and SunOS 5 bins
 
 options		CPU_IN_CKSUM	# use optimized checksum method
+
+options 	CHILD_MAX=1024	# 160 is too few
+options 	OPEN_MAX=1024	# 128 is too few
 
 # Atheros HAL options
 include "external/isc/atheros_hal/conf/std.ath_hal"

@@ -1,4 +1,4 @@
-#	$NetBSD: files.aarch64,v 1.1.4.2 2014/08/20 00:02:39 tls Exp $
+#	$NetBSD: files.aarch64,v 1.1.4.3 2017/12/03 11:35:43 jdolecek Exp $
 
 # CPU types.
 defflag	opt_cputypes.h		CPU_CORTEXA53
@@ -71,10 +71,10 @@ file	arch/aarch64/dev/a64gtmr.c			a64gtmr
 #file	arch/aarch64/aarch64/bus_space_asm_generic.S	bus_space_generic
 #file	arch/aarch64/aarch64/bus_space_notimpl.S
 
-file	arch/aarch64/aarch64/copyinout.S
+#file	arch/aarch64/aarch64/copyinout.S
 file	arch/aarch64/aarch64/cpu_in_cksum.S		inet | inet6
 file	arch/aarch64/aarch64/exception.S
-file	arch/aarch64/aarch64/fusu.S
+#file	arch/aarch64/aarch64/fusu.S
 file	arch/aarch64/aarch64/idle_machdep.S
 file	arch/aarch64/aarch64/pmap_page.S
 file	arch/aarch64/aarch64/vectors.S

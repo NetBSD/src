@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.34 2012/06/30 22:50:36 jym Exp $	*/
+/*	$NetBSD: pmap.h,v 1.34.2.1 2017/12/03 11:35:47 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -128,17 +128,6 @@
  */
 
 /*
- * The first generation of Hammer processors can use 48 bits of
- * virtual memory, and 40 bits of physical memory. This will be
- * more for later generations. These defines can be changed to
- * variable names containing the # of bits, extracted from an
- * extended cpuid instruction (variables are harder to use during
- * bootstrap, though)
- */
-#define VIRT_BITS	48
-#define PHYS_BITS	40
-
-/*
  * Mask to get rid of the sign-extended part of addresses.
  */
 #define VA_SIGN_MASK		0xffff000000000000
@@ -150,45 +139,44 @@
 
 #define L4_SLOT_PTE		255
 #ifndef XEN
-#define L4_SLOT_KERN		256
+#define L4_SLOT_KERN		256 /* pl4_i(VM_MIN_KERNEL_ADDRESS) */
 #else
 /* Xen use slots 256-272, let's move farther */
-#define L4_SLOT_KERN		320
+#define L4_SLOT_KERN		320 /* pl4_i(VM_MIN_KERNEL_ADDRESS) */
 #endif
-#define L4_SLOT_KERNBASE	511
+#define L4_SLOT_KERNBASE	511 /* pl4_i(KERNBASE) */
 
 #define PDIR_SLOT_KERN	L4_SLOT_KERN
 #define PDIR_SLOT_PTE	L4_SLOT_PTE
 
 /*
- * the following defines give the virtual addresses of various MMU
+ * The following defines give the virtual addresses of various MMU
  * data structures:
  * PTE_BASE: the base VA of the linear PTE mappings
- * PTD_BASE: the base VA of the recursive mapping of the PTD
+ * PDP_BASE: the base VA of the recursive mapping of the PTD
  * PDP_PDE: the VA of the PDE that points back to the PDP
- *
  */
 
-#define PTE_BASE  ((pt_entry_t *) (L4_SLOT_PTE * NBPD_L4))
-#define KERN_BASE  ((pt_entry_t *) (L4_SLOT_KERN * NBPD_L4))
+#define PTE_BASE	((pt_entry_t *)(L4_SLOT_PTE * NBPD_L4))
+#define KERN_BASE	((pt_entry_t *)(L4_SLOT_KERN * NBPD_L4))
 
-#define L1_BASE		PTE_BASE
-#define L2_BASE ((pd_entry_t *)((char *)L1_BASE + L4_SLOT_PTE * NBPD_L3))
-#define L3_BASE ((pd_entry_t *)((char *)L2_BASE + L4_SLOT_PTE * NBPD_L2))
-#define L4_BASE ((pd_entry_t *)((char *)L3_BASE + L4_SLOT_PTE * NBPD_L1))
+#define L1_BASE	PTE_BASE
+#define L2_BASE	((pd_entry_t *)((char *)L1_BASE + L4_SLOT_PTE * NBPD_L3))
+#define L3_BASE	((pd_entry_t *)((char *)L2_BASE + L4_SLOT_PTE * NBPD_L2))
+#define L4_BASE	((pd_entry_t *)((char *)L3_BASE + L4_SLOT_PTE * NBPD_L1))
 
 #define PDP_PDE		(L4_BASE + PDIR_SLOT_PTE)
 
 #define PDP_BASE	L4_BASE
 
-#define NKL4_MAX_ENTRIES	(unsigned long)1
+#define NKL4_MAX_ENTRIES	(unsigned long)64
 #define NKL3_MAX_ENTRIES	(unsigned long)(NKL4_MAX_ENTRIES * 512)
 #define NKL2_MAX_ENTRIES	(unsigned long)(NKL3_MAX_ENTRIES * 512)
 #define NKL1_MAX_ENTRIES	(unsigned long)(NKL2_MAX_ENTRIES * 512)
 
 #define NKL4_KIMG_ENTRIES	1
 #define NKL3_KIMG_ENTRIES	1
-#define NKL2_KIMG_ENTRIES	16
+#define NKL2_KIMG_ENTRIES	32
 
 /*
  * Since kva space is below the kernel in its entirety, we start off
@@ -307,7 +295,7 @@ pmap_pte_setbits(volatile pt_entry_t *pte, pt_entry_t bits)
 
 static __inline void
 pmap_pte_clearbits(volatile pt_entry_t *pte, pt_entry_t bits)
-{	
+{
 	mutex_enter(&pte_lock);
 	xpq_queue_pte_update(xpmap_ptetomach(__UNVOLATILE(pte)),
 	    (*pte) & ~bits);
@@ -324,7 +312,6 @@ pmap_pte_flush(void)
 }
 #endif
 
-void pmap_prealloc_lowmem_ptps(void);
 void pmap_changeprot_local(vaddr_t, vm_prot_t);
 
 #include <x86/pmap_pv.h>

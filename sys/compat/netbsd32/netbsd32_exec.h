@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec.h,v 1.31 2009/12/10 14:13:53 matt Exp $	*/
+/*	$NetBSD: netbsd32_exec.h,v 1.31.22.1 2017/12/03 11:36:56 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -94,20 +94,27 @@ netbsd32_copyargs(struct lwp *l, struct exec_package *pack,
 	int envc = arginfo->ps_nenvstr;
 	int error;
 
+	NETBSD32PTR32(dp, (char *)(cpp +
+	    1 +				/* int argc */
+	    argc +			/* char *argv[] */
+	    1 +				/* \0 */
+	    envc +			/* char *env[] */
+	    1) +			/* \0 */
+	    pack->ep_esch->es_arglen);	/* auxinfo */
+	sp = argp;
+
 	if ((error = copyout(&argc, cpp++, sizeof(argc))) != 0)
 		return error;
-
-	NETBSD32PTR32(dp, cpp + argc + envc + 2 + pack->ep_esch->es_arglen);
-	sp = argp;
 
 	/* XXX don't copy them out, remap them! */
 	/* remember location of argv for later */
 	arginfo->ps_argvstr = (char **)(u_long)cpp;
 
 	for (; --argc >= 0; sp += len, NETBSD32PTR32PLUS(dp, len)) {
-		if ((error = copyout(&dp, cpp++, sizeof(dp))) != 0 ||
-		    (error = copyoutstr(sp, NETBSD32PTR64(dp),
-					ARG_MAX, &len)) != 0)
+		if ((error = copyout(&dp, cpp++, sizeof(dp))) != 0)
+			return error;
+		if ((error = copyoutstr(sp, NETBSD32PTR64(dp),
+		    ARG_MAX, &len)) != 0)
 			return error;
 	}
 	if ((error = copyout(&nullp, cpp++, sizeof(nullp))) != 0)
@@ -117,9 +124,10 @@ netbsd32_copyargs(struct lwp *l, struct exec_package *pack,
 	arginfo->ps_envstr = (char **)(u_long)cpp;
 
 	for (; --envc >= 0; sp += len, NETBSD32PTR32PLUS(dp, len)) {
-		if ((error = copyout(&dp, cpp++, sizeof(dp))) != 0 ||
-		    (error = copyoutstr(sp, NETBSD32PTR64(dp),
-					ARG_MAX, &len)) != 0)
+		if ((error = copyout(&dp, cpp++, sizeof(dp))) != 0)
+			return error;
+		if ((error = copyoutstr(sp, NETBSD32PTR64(dp),
+		    ARG_MAX, &len)) != 0)
 			return error;
 	}
 	if ((error = copyout(&nullp, cpp++, sizeof(nullp))) != 0)

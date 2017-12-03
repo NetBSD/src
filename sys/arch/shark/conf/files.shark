@@ -1,4 +1,4 @@
-#	$NetBSD: files.shark,v 1.18 2011/03/23 04:06:03 macallan Exp $
+#	$NetBSD: files.shark,v 1.18.14.1 2017/12/03 11:36:42 jdolecek Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -16,6 +16,13 @@ defflag	IRQSTATS
 defflag	COMPAT_OLD_BOOTLOADER
 
 define todservice {}
+
+#
+# PCI drivers
+#
+include "dev/i2o/files.i2o"
+include "dev/pci/files.pci"
+include "dev/usb/files.usb"
 
 #
 # ISA and mixed ISA+EISA or ISA+PCI drivers
@@ -129,6 +136,11 @@ file	arch/shark/ofw/igsfb_ofbus.c		igsfb_ofbus needs-flag
 # ofbus C&T 65550
 attach	chipsfb at ofbus with chipsfb_ofbus
 file	arch/shark/ofw/chipsfb_ofbus.c		chipsfb_ofbus needs-flag
+
+# ofbus VLB Host to PCI Bridge (VIA VT82C505)
+device	vlpci: pcibus
+file	arch/shark/ofw/vlpci.c			vlpci needs-flag
+attach	vlpci at ofbus
 
 # Smart Card Reader
 device	scr: tty

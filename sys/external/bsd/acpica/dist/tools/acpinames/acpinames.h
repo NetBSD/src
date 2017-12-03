@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -47,10 +47,20 @@
 #include "acpi.h"
 #include "accommon.h"
 #include "acapps.h"
-#include "../acpiexec/aecommon.h"
+#include "acutils.h"
+#include "acnamesp.h"
+#include "actables.h"
+#include "acinterp.h"
 
 #include <stdio.h>
 
 #define ACPI_MAX_INIT_TABLES    (32)
+
+extern BOOLEAN          AcpiGbl_NsLoadOnly;
+
+
+ACPI_STATUS
+AnBuildLocalTables (
+    ACPI_NEW_TABLE_DESC     *TableList);
 
 #endif

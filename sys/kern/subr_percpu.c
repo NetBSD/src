@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_percpu.c,v 1.16 2012/01/27 19:48:40 para Exp $	*/
+/*	$NetBSD: subr_percpu.c,v 1.16.6.1 2017/12/03 11:38:45 jdolecek Exp $	*/
 
 /*-
  * Copyright (c)2007,2008 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_percpu.c,v 1.16 2012/01/27 19:48:40 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_percpu.c,v 1.16.6.1 2017/12/03 11:38:45 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -257,9 +257,8 @@ percpu_alloc(size_t size)
 	percpu_t *pc;
 
 	ASSERT_SLEEPABLE();
-	if (vmem_alloc(percpu_offset_arena, size, VM_SLEEP | VM_BESTFIT,
-	    &offset) != 0)
-		return NULL;
+	(void)vmem_alloc(percpu_offset_arena, size, VM_SLEEP | VM_BESTFIT,
+	    &offset);
 	pc = (percpu_t *)percpu_encrypt((uintptr_t)offset);
 	percpu_zero(pc, size);
 	return pc;
@@ -291,7 +290,7 @@ void *
 percpu_getref(percpu_t *pc)
 {
 
-	KPREEMPT_DISABLE(curlwp);
+	kpreempt_disable();
 	return percpu_getptr_remote(pc, curcpu());
 }
 
@@ -306,7 +305,7 @@ void
 percpu_putref(percpu_t *pc)
 {
 
-	KPREEMPT_ENABLE(curlwp);
+	kpreempt_enable();
 }
 
 /*

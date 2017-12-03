@@ -1,4 +1,4 @@
-/*	$NetBSD: pdqvar.h,v 1.46.18.1 2012/11/20 03:02:07 tls Exp $	*/
+/*	$NetBSD: pdqvar.h,v 1.46.18.2 2017/12/03 11:37:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -47,7 +47,7 @@ enum _pdq_boolean_t {
 enum _pdq_type_t {
     PDQ_DEFPA,		/* PCI-bus */
     PDQ_DEFEA,		/* EISA-bus */
-    PDQ_DEFTA,		/* TurboChannel */
+    PDQ_DEFTA,		/* TURBOchannel */
     PDQ_DEFAA,		/* FutureBus+ */
     PDQ_DEFQA		/* Q-bus */
 };

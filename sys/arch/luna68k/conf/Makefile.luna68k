@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.luna68k,v 1.23.10.1 2013/06/23 06:20:07 tls Exp $
+#	$NetBSD: Makefile.luna68k,v 1.23.10.2 2017/12/03 11:36:23 jdolecek Exp $
 
 # Makefile for NetBSD
 #
@@ -50,7 +50,8 @@ KERN_AS=	library
 # for the Motorola 68040 Floating Point Software Product
 .include "$S/arch/m68k/fpsp/Makefile.inc"
 
-MD_OBJS=	locore.o ${FPSP}
+MD_OBJS=	locore.o
+MD_LIBS=	${FPSP}
 MD_CFILES=
 MD_SFILES=	
 
@@ -60,20 +61,8 @@ locore.o: ${LUNA68K}/luna68k/locore.s assym.h
 ##
 ## (5) link settings
 ##
-LINKFORMAT=	-N -T ldscript
-.if (${OBJECT_FMT} == "ELF")
-# Need to convert the kernel from ELF to a.out so that PROM can load it.
-
-SYSTEM_LD_HEAD_EXTRA+=; \
-	( cat ${LUNA68K}/conf/kern.ldscript.head ; \
-	  OBJDUMP=${OBJDUMP} ${HOST_SH} $S/conf/mkldscript.sh \
-	        ${SYSTEM_OBJ} ; \
-	  cat ${LUNA68K}/conf/kern.ldscript.tail ) > ldscript
-
-SYSTEM_LD_TAIL_EXTRA+=; \
-	echo "${ELF2AOUT} $@ $@.aout" ; \
-	    ${ELF2AOUT} $@ $@.aout
-.endif
+LINKFORMAT=	-N
+TEXTADDR?=	0xc000
 
 ##
 ## (6) port specific target dependencies

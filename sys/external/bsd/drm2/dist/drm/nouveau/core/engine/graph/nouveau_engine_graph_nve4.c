@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_engine_graph_nve4.c,v 1.1.1.1.6.2 2014/08/20 00:04:12 tls Exp $	*/
+/*	$NetBSD: nouveau_engine_graph_nve4.c,v 1.1.1.1.6.3 2017/12/03 11:37:54 jdolecek Exp $	*/
 
 /*
  * Copyright 2013 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_engine_graph_nve4.c,v 1.1.1.1.6.2 2014/08/20 00:04:12 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_engine_graph_nve4.c,v 1.1.1.1.6.3 2017/12/03 11:37:54 jdolecek Exp $");
 
 #include "nvc0.h"
 #include "ctxnvc0.h"
@@ -156,7 +156,7 @@ nve4_graph_init_be_0[] = {
 	{}
 };
 
-static const struct nvc0_graph_pack
+const struct nvc0_graph_pack
 nve4_graph_pack_mmio[] = {
 	{ nve4_graph_init_main_0 },
 	{ nvc0_graph_init_fe_0 },
@@ -194,7 +194,7 @@ nve4_graph_pack_mmio[] = {
  * PGRAPH engine/subdev functions
  ******************************************************************************/
 
-static int
+int
 nve4_graph_fini(struct nouveau_object *object, bool suspend)
 {
 	struct nvc0_graph_priv *priv = (void *)object;

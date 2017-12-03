@@ -1,4 +1,4 @@
-/*	$NetBSD: shpcic.c,v 1.17 2012/01/27 18:53:01 para Exp $	*/
+/*	$NetBSD: shpcic.c,v 1.17.6.1 2017/12/03 11:36:42 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 2005 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shpcic.c,v 1.17 2012/01/27 18:53:01 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shpcic.c,v 1.17.6.1 2017/12/03 11:36:42 jdolecek Exp $");
 
 #include "opt_pci.h"
 
@@ -295,6 +295,9 @@ shpcic_conf_read(void *v, pcitag_t tag, int reg)
 	pcireg_t data;
 	int s;
 
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return (pcireg_t) -1;
+
 	s = splhigh();
 	_reg_write_4(SH4_PCIPAR, tag | reg);
 	data = _reg_read_4(SH4_PCIPDR);
@@ -308,6 +311,9 @@ void
 shpcic_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data)
 {
 	int s;
+
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return;
 
 	s = splhigh();
 	_reg_write_4(SH4_PCIPAR, tag | reg);

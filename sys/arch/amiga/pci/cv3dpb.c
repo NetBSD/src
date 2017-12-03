@@ -1,4 +1,4 @@
-/*	$NetBSD: cv3dpb.c,v 1.1.10.1 2012/11/20 03:01:00 tls Exp $ */
+/*	$NetBSD: cv3dpb.c,v 1.1.10.2 2017/12/03 11:35:48 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2011, 2012 The NetBSD Foundation, Inc.
@@ -150,6 +150,9 @@ cv3dpb_pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 {
 	uint32_t data;
 	uint32_t bus, dev, func;
+
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return (pcireg_t) -1;
 	
 	pci_decompose_tag(pc, tag, &bus, &dev, &func);
 
@@ -167,6 +170,9 @@ void
 cv3dpb_pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t val)
 {
 	uint32_t bus, dev, func;
+
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return;
 	
 	pci_decompose_tag(pc, tag, &bus, &dev, &func);
 	

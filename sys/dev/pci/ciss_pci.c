@@ -1,4 +1,4 @@
-/*	$NetBSD: ciss_pci.c,v 1.9.22.2 2014/08/20 00:03:42 tls Exp $	*/
+/*	$NetBSD: ciss_pci.c,v 1.9.22.3 2017/12/03 11:37:07 jdolecek Exp $	*/
 /*	$OpenBSD: ciss_pci.c,v 1.9 2005/12/13 15:56:01 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss_pci.c,v 1.9.22.2 2014/08/20 00:03:42 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss_pci.c,v 1.9.22.3 2017/12/03 11:37:07 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,7 @@ const struct {
 		"Compaq Smart Array 5300 V1"
 	},
 	{
-		PCI_VENDOR_COMPAQ,	
+		PCI_VENDOR_COMPAQ,
 		PCI_PRODUCT_COMPAQ_CSA5300_2,
 		"Compaq Smart Array 5300 V2"
 	},
@@ -258,6 +258,7 @@ ciss_pci_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 
+	aprint_naive("\n");
 	for (i = 0; ciss_pci_devices[i].vendor; i++)
 	{
 		if ((PCI_VENDOR(pa->pa_id) == ciss_pci_devices[i].vendor &&
@@ -265,7 +266,7 @@ ciss_pci_attach(device_t parent, device_t self, void *aux)
 		    (PCI_VENDOR(reg) == ciss_pci_devices[i].vendor &&
 		     PCI_PRODUCT(reg) == ciss_pci_devices[i].product))
 		{
-			printf(": %s\n", ciss_pci_devices[i].name);
+			aprint_normal(": %s\n", ciss_pci_devices[i].name);
 			break;
 		}
 	}
@@ -273,30 +274,31 @@ ciss_pci_attach(device_t parent, device_t self, void *aux)
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, CISS_BAR);
 	if (memtype != (PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT) &&
 	    memtype != (PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT)) {
-		printf(": wrong BAR type\n");
+		aprint_error_dev(self, "wrong BAR type\n");
 		return;
 	}
 	if (pci_mapreg_map(pa, CISS_BAR, memtype, 0,
 	    &sc->sc_iot, &sc->sc_ioh, NULL, &size)) {
-		printf(": can't map controller i/o space\n");
+		aprint_error_dev(self, "can't map controller i/o space\n");
 		return;
 	}
 	sc->sc_dmat = pa->pa_dmat;
 
-	sc->iem = CISS_READYENA;
+	sc->iem = CISS_INTR_OPQ_SA5;
 	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
 	if (PCI_VENDOR(reg) == PCI_VENDOR_COMPAQ &&
 	    (PCI_PRODUCT(reg) == PCI_PRODUCT_COMPAQ_CSA5i ||
 	     PCI_PRODUCT(reg) == PCI_PRODUCT_COMPAQ_CSA532 ||
 	     PCI_PRODUCT(reg) == PCI_PRODUCT_COMPAQ_CSA5312))
-		sc->iem = CISS_READYENAB;
+		sc->iem = CISS_INTR_OPQ_SA5B;
 
 	cfg_bar = bus_space_read_2(sc->sc_iot, sc->sc_ioh, CISS_CFG_BAR);
 	sc->cfgoff = bus_space_read_4(sc->sc_iot, sc->sc_ioh, CISS_CFG_OFF);
 	if (cfg_bar != CISS_BAR) {
 		if (pci_mapreg_map(pa, cfg_bar, PCI_MAPREG_TYPE_MEM, 0,
 		    NULL, &sc->cfg_ioh, NULL, &cfgsz)) {
-			printf(": can't map controller config space\n");  
+			aprint_error_dev(self,
+			    "can't map controller config space\n");
 			bus_space_unmap(sc->sc_iot, sc->sc_ioh, size);
 			return;
 		}
@@ -306,7 +308,7 @@ ciss_pci_attach(device_t parent, device_t self, void *aux)
 	}
 
 	if (sc->cfgoff + sizeof(struct ciss_config) > cfgsz) {
-		printf(": unfit config space\n");
+		aprint_error_dev(self, "unfit config space\n");
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, size);
 		if (cfg_bar != CISS_BAR)
 			bus_space_unmap(sc->sc_iot, sc->cfg_ioh, cfgsz);
@@ -318,7 +320,7 @@ ciss_pci_attach(device_t parent, device_t self, void *aux)
 	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, CISS_IMR) | sc->iem);
 
 	if (pci_intr_map(pa, &ih)) {
-		printf(": can't map interrupt\n");
+		aprint_error_dev(self, "can't map interrupt\n");
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, size);
 		if (cfg_bar != CISS_BAR)
 			bus_space_unmap(sc->sc_iot, sc->cfg_ioh, cfgsz);
@@ -336,7 +338,7 @@ ciss_pci_attach(device_t parent, device_t self, void *aux)
 			bus_space_unmap(sc->sc_iot, sc->cfg_ioh, cfgsz);
 	}
 
-	printf("%s: interrupting at %s\n%s", device_xname(sc->sc_dev), intrstr,
+	aprint_normal_dev(self, "interrupting at %s\n%s", intrstr,
 	       device_xname(sc->sc_dev));
 
 	if (ciss_attach(sc)) {

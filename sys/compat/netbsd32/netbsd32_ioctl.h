@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.43.2.1 2014/08/20 00:03:33 tls Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.43.2.2 2017/12/03 11:36:56 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -71,13 +71,6 @@
 /* from <sys/dkio.h> */
 typedef netbsd32_pointer_t netbsd32_disklabel_tp_t;
 typedef netbsd32_pointer_t netbsd32_partition_tp_t;
-struct netbsd32_partinfo {
-	netbsd32_disklabel_tp_t disklab;
-	netbsd32_partition_tp_t part;
-};
-#if 1
-#define DIOCGPART32	_IOW('d', 104, struct netbsd32_partinfo)	/* get partition */
-#endif
 
 #if 0	/* not implemented by anything */
 struct netbsd32_format_op {
@@ -314,6 +307,12 @@ struct netbsd32_if_addrprefreq {
 	} ifap_addr;
 };
 
+struct netbsd32_if_clonereq {
+	int	ifcr_total;
+	int	ifcr_count;
+	netbsd32_charp ifcr_buffer;
+};
+
 /* from <dev/pci/if_devar.h> */
 #define	SIOCGADDRROM32		_IOW('i', 240, struct netbsd32_ifreq)	/* get 128 bytes of ROM */
 #define	SIOCGCHIPID32		_IOWR('i', 241, struct netbsd32_ifreq)	/* get chipid */
@@ -375,6 +374,11 @@ struct netbsd32_if_addrprefreq {
 #define	SIOCSIFMEDIA32	_IOWR('i', 53, struct netbsd32_ifreq)	/* set net media */
 #define	OSIOCSIFMEDIA32	_IOWR('i', 53, struct netbsd32_oifreq)	/* set net media */
 
+#define	SIOCSIFGENERIC32 _IOW('i', 57, struct netbsd32_ifreq)	/* generic IF set op */
+#define	SIOCGIFGENERIC32 _IOWR('i', 58, struct netbsd32_ifreq)	/* generic IF get op */
+
+#define	SIOCIFGCLONERS32 _IOWR('i', 120, struct netbsd32_if_clonereq) /* get cloners */
+
 #define	SIOCSIFMTU32	 _IOW('i', 127, struct netbsd32_ifreq)	/* set ifnet mtu */
 #define	OSIOCSIFMTU32	 _IOW('i', 127, struct netbsd32_oifreq)	/* set ifnet mtu */
 
@@ -418,6 +422,37 @@ struct netbsd32_ifmediareq {
 /* from <sys/sockio.h> */
 #define	SIOCGIFMEDIA32	_IOWR('i', 54, struct netbsd32_ifmediareq) /* get net media */
 
+/* from net/if_pppoe.h */
+struct netbsd32_pppoediscparms {
+	char	ifname[IFNAMSIZ];	/* pppoe interface name */
+	char	eth_ifname[IFNAMSIZ];	/* external ethernet interface name */
+	netbsd32_charp ac_name;		/* access concentrator name (or NULL) */
+	netbsd32_size_t	ac_name_len;		/* on write: length of buffer for ac_name */
+	netbsd32_charp service_name;	/* service name (or NULL) */
+	netbsd32_size_t	service_name_len;	/* on write: length of buffer for service name */
+};
+#define	PPPOESETPARMS32	_IOW('i', 110, struct netbsd32_pppoediscparms)
+#define	PPPOEGETPARMS32	_IOWR('i', 111, struct netbsd32_pppoediscparms)
+
+/* from net/if_sppp.h */
+struct netbsd32_spppauthcfg {
+	char	ifname[IFNAMSIZ];	/* pppoe interface name */
+	u_int	hisauth;		/* one of SPPP_AUTHPROTO_* above */
+	u_int	myauth;			/* one of SPPP_AUTHPROTO_* above */
+	u_int	myname_length;		/* includes terminating 0 */
+	u_int	mysecret_length;	/* includes terminating 0 */
+	u_int	hisname_length;		/* includes terminating 0 */
+	u_int	hissecret_length;	/* includes terminating 0 */
+	u_int	myauthflags;
+	u_int	hisauthflags;
+	netbsd32_charp	myname;
+	netbsd32_charp	mysecret;
+	netbsd32_charp	hisname;
+	netbsd32_charp	hissecret;
+};
+#define SPPPGETAUTHCFG32 _IOWR('i', 120, struct netbsd32_spppauthcfg)
+#define SPPPSETAUTHCFG32 _IOW('i', 121, struct netbsd32_spppauthcfg)
+
 /* from <net/if.h> */
 struct  netbsd32_ifdrv {
 	char		ifd_name[IFNAMSIZ];	/* if name, e.g. "en0" */
@@ -426,7 +461,8 @@ struct  netbsd32_ifdrv {
 	netbsd32_voidp	ifd_data;
 };
 /* from <sys/sockio.h> */
-#define SIOCSDRVSPEC32	_IOW('i', 123, struct netbsd32_ifdrv)   /* set driver-specific */
+#define SIOCSDRVSPEC32	_IOW('i', 123, struct netbsd32_ifdrv)	/* set driver-specific */
+#define SIOCGDRVSPEC32	_IOWR('i', 123, struct netbsd32_ifdrv)	/* get driver-specific */
 
 /* from <netinet/ip_mroute.h> */
 struct netbsd32_sioc_vif_req {
@@ -442,9 +478,9 @@ struct netbsd32_sioc_vif_req {
 struct netbsd32_sioc_sg_req {
 	struct	in_addr src;
 	struct	in_addr grp;
-	u_long	pktcnt;
-	u_long	bytecnt;
-	u_long	wrong_if;
+	netbsd32_u_long	pktcnt;
+	netbsd32_u_long	bytecnt;
+	netbsd32_u_long	wrong_if;
 };
 /* from <sys/sockio.h> */
 #define	SIOCGETSGCNT32	_IOWR('u', 52, struct netbsd32_sioc_sg_req) /* sg pkt cnt */
@@ -519,9 +555,66 @@ struct netbsd32_clockctl_clock_settime {
 
 struct netbsd32_clockctl_ntp_adjtime {
 	netbsd32_timexp_t tp;
-	/* register_t */ int32_t retval;
+	register32_t retval;
 };
 
 #define CLOCKCTL_NTP_ADJTIME32 _IOWR('C', 0x8, \
     struct netbsd32_clockctl_ntp_adjtime)
 
+#ifdef KIOCGSYMBOL
+struct netbsd32_ksyms_gsymbol {
+	netbsd32_charp kg_name;
+	union {
+		Elf_Sym ku_sym;
+	} _un;
+};
+
+struct netbsd32_ksyms_gvalue {
+	netbsd32_charp kv_name;
+	uint64_t kv_value;
+};
+
+#define	KIOCGVALUE32	_IOWR('l', 4, struct netbsd32_ksyms_gvalue)
+#define	KIOCGSYMBOL32	_IOWR('l', 5, struct netbsd32_ksyms_gsymbol)
+#endif /* KIOCGSYMBOL */
+
+#include <net/npf/npf.h>
+
+typedef struct netbsd32_npf_ioctl_buf {
+	netbsd32_voidp		buf;
+	netbsd32_size_t		len;
+} netbsd32_npf_ioctl_buf_t;
+
+typedef struct netbsd32_npf_ioctl_table {
+	int			nct_cmd;
+	netbsd32_charp		nct_name;
+	union {
+		npf_ioctl_ent_t ent;
+		netbsd32_npf_ioctl_buf_t buf;
+	} nct_data;
+} netbsd32_npf_ioctl_table_t;
+
+#define IOC_NPF_LOAD32          _IOWR('N', 102, struct netbsd32_plistref)
+#define IOC_NPF_TABLE32         _IOW('N', 103, struct netbsd32_npf_ioctl_table)
+#define IOC_NPF_STATS32         _IOW('N', 104, netbsd32_voidp)
+#define IOC_NPF_SAVE32          _IOR('N', 105, struct netbsd32_plistref)
+#define IOC_NPF_RULE32          _IOWR('N', 107, struct netbsd32_plistref)
+
+/* From sys/drvctlio.h */
+struct netbsd32_devlistargs {
+	char			l_devname[16];
+	netbsd32_charpp		l_childname;
+	netbsd32_size_t		l_children;
+};
+
+struct netbsd32_devrescanargs {
+	char			busname[16];
+	char			ifattr[16];
+	unsigned int		numlocators;
+	netbsd32_intp		locators;
+};
+
+#define	DRVRESCANBUS32		_IOW('D', 124, struct netbsd32_devrescanargs)
+#define DRVCTLCOMMAND32		_IOWR('D', 125, struct netbsd32_plistref)
+#define	DRVLISTDEV32		_IOWR('D', 127, struct netbsd32_devlistargs)
+#define DRVGETEVENT32		_IOR('D', 128, struct netbsd32_plistref)

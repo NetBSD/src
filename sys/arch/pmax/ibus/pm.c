@@ -1,4 +1,4 @@
-/*	$NetBSD: pm.c,v 1.11.6.1 2014/08/20 00:03:18 tls Exp $	*/
+/*	$NetBSD: pm.c,v 1.11.6.2 2017/12/03 11:36:35 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.11.6.1 2014/08/20 00:03:18 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.11.6.2 2017/12/03 11:36:35 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -666,7 +666,7 @@ pm_get_cmap(struct pm_softc *sc, struct wsdisplay_cmap *p)
 	index = p->index;
 	count = p->count;
 
-	if (index >= sc->sc_cmap_size || (index + count) > sc->sc_cmap_size)
+	if (index >= sc->sc_cmap_size || count > sc->sc_cmap_size - index)
 		return (EINVAL);
 
 	if ((rv = copyout(&sc->sc_cmap.r[index], p->red, count)) != 0)
@@ -685,7 +685,7 @@ pm_set_cmap(struct pm_softc *sc, struct wsdisplay_cmap *p)
 	index = p->index;
 	count = p->count;
 
-	if (index >= sc->sc_cmap_size || (index + count) > sc->sc_cmap_size)
+	if (index >= sc->sc_cmap_size || count > sc->sc_cmap_size - index)
 		return (EINVAL);
 
 	if ((rv = copyin(p->red, &sc->sc_cmap.r[index], count)) != 0)

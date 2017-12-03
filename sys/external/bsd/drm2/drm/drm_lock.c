@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_lock.c,v 1.3.4.2 2014/08/20 00:04:20 tls Exp $	*/
+/*	$NetBSD: drm_lock.c,v 1.3.4.3 2017/12/03 11:37:58 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_lock.c,v 1.3.4.2 2014/08/20 00:04:20 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_lock.c,v 1.3.4.3 2017/12/03 11:37:58 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -232,28 +232,47 @@ drm_lock_free(struct drm_lock_data *lock_data, unsigned int context)
 }
 
 /*
- * Take the lock for the kernel's use.
- *
- * XXX This is unimplemented because it's not clear that the Linux code
- * makes sense at all.  Linux's drm_idlelock_take never blocks, but it
- * doesn't guarantee that the kernel holds the lock on return!  For
- * now, I'll hope that the code paths relying on this don't matter yet.
+ * Try to acquire the lock.  Whether or not we acquire it, guarantee
+ * that whoever next releases it relinquishes it to the kernel, not to
+ * anyone else.
  */
 void
-drm_idlelock_take(struct drm_lock_data *lock_data __unused)
+drm_idlelock_take(struct drm_lock_data *lock_data)
 {
-	KASSERT(mutex_is_locked(&drm_global_mutex));
-	panic("drm_idlelock_take is not yet implemented"); /* XXX */
+
+	spin_lock(&lock_data->spinlock);
+	KASSERT(!lock_data->idle_has_lock);
+	KASSERT(lock_data->kernel_waiters < UINT32_MAX);
+	lock_data->kernel_waiters++;
+	/* Try to acquire the lock.  */
+	if (drm_lock_acquire(lock_data, DRM_KERNEL_CONTEXT)) {
+		lock_data->idle_has_lock = 1;
+	} else {
+		/*
+		 * Recording that there are kernel waiters will prevent
+		 * userland from acquiring the lock again when it is
+		 * next released.
+		 */
+	}
+	spin_unlock(&lock_data->spinlock);
 }
 
 /*
- * Release the lock from the kernel.
+ * Release whatever drm_idlelock_take managed to acquire.
  */
 void
-drm_idlelock_release(struct drm_lock_data *lock_data __unused)
+drm_idlelock_release(struct drm_lock_data *lock_data)
 {
-	KASSERT(mutex_is_locked(&drm_global_mutex));
-	panic("drm_idlelock_release is not yet implemented"); /* XXX */
+
+	spin_lock(&lock_data->spinlock);
+	KASSERT(0 < lock_data->kernel_waiters);
+	if (--lock_data->kernel_waiters == 0) {
+		if (lock_data->idle_has_lock) {
+			/* We did acquire it.  Release it.  */
+			drm_lock_release(lock_data, DRM_KERNEL_CONTEXT);
+		}
+	}
+	spin_unlock(&lock_data->spinlock);
 }
 
 /*

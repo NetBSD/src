@@ -1,4 +1,4 @@
-# $Id: IMX23_OLINUXINO,v 1.2.6.4 2014/08/20 00:02:53 tls Exp $
+# $Id: IMX23_OLINUXINO,v 1.2.6.5 2017/12/03 11:36:03 jdolecek Exp $
 #
 # IMX23_OLINUXINO -- Olimex i.MX23 OLinuXino kernel configuration file.
 #
@@ -66,6 +66,15 @@ usbphy0		at apbx? addr 0x8007C000 size 0x2000 irq -1
 # Clock control
 clkctrl0	at apbx? addr 0x80040000 size 0x2000 irq -1
 
+# RTC
+rtc0		at apbx? addr 0x8005C000 size 0x2000 irq -1
+
+# Digital filter: Audio I/O
+digfilt0	at apbx? addr 0x80048000 size 0x8000 irq -1
+audio0		at digfilt0
+
+spkr*		at audio?		# PC speaker (synthesized)
+
 # USB host
 ehci0		at imxusbc0 unit 0 irq 11
 # USB OTG
@@ -78,25 +87,30 @@ ugen*		at uhub? port ?
 
 include "dev/usb/usbdevices.config"
 
+midi*		at midibus?
+
 ukphy*		at mii? phy ?
 
-options		MEMSIZE=64
-options		DDB
-options		HZ=100
-options		INET		# IP + ICMP + TCP + UDP
-options		INET6		# IPv6
-options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
-options		COMPAT_60	# NetBSD 6.0 compatibility
+options 	MEMSIZE=64
+options 	DDB
+options 	HZ=100
+pseudo-device	ksyms
+options 	INET		# IP + ICMP + TCP + UDP
+options 	INET6		# IPv6
+
+include 	"conf/compat_netbsd60.config"
+options 	COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 
 makeoptions     DEBUG="-g"      # compile full symbol table
-options         SYMTAB_SPACE=800000
+makeoptions	COPY_SYMTAB=1
 
-options		SYSVMSG		# System V-like message queues
-options		SYSVSEM		# System V-like semaphores
-options		SYSVSHM		# System V-like memory sharing
+options 	SYSVMSG		# System V-like message queues
+options 	SYSVSEM		# System V-like semaphores
+options 	SYSVSHM		# System V-like memory sharing
 
 #options		MODULAR
-options		KTRACE
+#options		MODULAR_DEFAULT_AUTOLOAD
+options 	KTRACE
 #options		DEBUG
 #options		DIAGNOSTIC
 
@@ -109,7 +123,9 @@ file-system	PROCFS
 file-system	PTYFS
 file-system	NFS
 
-options		WAPBL
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
+#options 	FFS_EI		# FFS Endian Independent support
+options 	WAPBL
 
 pseudo-device	pty		# pseudo-terminals
 pseudo-device	loop		# network loopback

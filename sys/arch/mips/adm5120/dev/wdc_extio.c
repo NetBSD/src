@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_extio.c,v 1.8 2012/07/31 15:50:33 bouyer Exp $ */
+/*	$NetBSD: wdc_extio.c,v 1.8.2.1 2017/12/03 11:36:26 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2007 David Young.  All rights reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_extio.c,v 1.8 2012/07/31 15:50:33 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_extio.c,v 1.8.2.1 2017/12/03 11:36:26 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -99,7 +99,6 @@ struct wdc_extio_softc {
 	struct wdc_softc	sc_wdcdev;
 	struct ata_channel	*sc_chanlist[1];
 	struct ata_channel	sc_channel;
-	struct ata_queue	sc_chqueue;
 	struct wdc_regs		sc_wdc_regs;
 	void			*sc_gpio;
 	int			sc_map;
@@ -308,9 +307,9 @@ wdc_extio_attach(device_t parent, device_t self, void *aux)
 	sc->sc_wdcdev.sc_atac.atac_channels = sc->sc_chanlist;
 	sc->sc_wdcdev.sc_atac.atac_nchannels = 1;
 	sc->sc_wdcdev.wdc_maxdrives = 2;
+
 	chp->ch_channel = 0;
 	chp->ch_atac = &sc->sc_wdcdev.sc_atac;
-	chp->ch_queue = &sc->sc_chqueue;
 
 	aprint_normal("\n");
 

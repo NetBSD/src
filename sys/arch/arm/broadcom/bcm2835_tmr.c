@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_tmr.c,v 1.1.4.1 2013/02/25 00:28:25 tls Exp $	*/
+/*	$NetBSD: bcm2835_tmr.c,v 1.1.4.2 2017/12/03 11:35:52 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_tmr.c,v 1.1.4.1 2013/02/25 00:28:25 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_tmr.c,v 1.1.4.2 2017/12/03 11:35:52 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,7 +105,7 @@ bcmtmr_match(device_t parent, cfdata_t match, void *aux)
 static void
 bcmtmr_attach(device_t parent, device_t self, void *aux)
 {
-        struct bcm2835tmr_softc *sc = device_private(self);
+	struct bcm2835tmr_softc *sc = device_private(self);
  	struct amba_attach_args *aaa = aux;
 
 	aprint_naive("\n");
@@ -143,7 +143,7 @@ cpu_initclocks(void)
 	stcl += counts_per_hz;
 
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCM2835_STIMER_C3, stcl);
-	clock_ih = bcm2835_intr_establish(BCM2835_INT_TIMER3, IPL_CLOCK,
+	clock_ih = intr_establish(BCM2835_INT_TIMER3, IPL_CLOCK, IST_LEVEL,
 	    clockhandler, NULL);
 	if (clock_ih == NULL)
 		panic("%s: unable to register timer interrupt", __func__);
@@ -201,7 +201,8 @@ clockhandler(void *arg)
 	if (!(status & BCM2835_STIMER_M3))
 		return 0;
 
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCM2835_STIMER_CS, status);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCM2835_STIMER_CS,
+	    BCM2835_STIMER_M3);
 
 	hardclock(frame);
 

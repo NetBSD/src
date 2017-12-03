@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.15.6.1 2014/08/20 00:03:00 tls Exp $
+#	$NetBSD: Makefile,v 1.15.6.2 2017/12/03 11:36:13 jdolecek Exp $
 
 WARNS		?= 1
 NOMAN		=
+NOPIE		=
 
 BINMODE		= 444
 
@@ -37,7 +38,7 @@ SRCS		+= boot_device.c floppy_2d.c floppy_2hd_ibmpc.c
 #SRCS		+= floppy_2hc.c
 SRCS		+= console.c cons_rom.c cons_fb.c cons_zskbd.c cons_zs.c
 BINKERNEL_C	= ${COMMON}/binkernel.c
-BINKERNEL_SIZE	= '2 * 1024 * 1024'
+BINKERNEL_SIZE	= '2 * 1024 * 1024 + 32 * 1024'
 BINKERNEL_O	= binkernel.o
 BINKERNEL_DUMMY_O= binkernel_dummy.o
 
@@ -50,13 +51,7 @@ SRCS		+= ga.c
 # ../../ews4800mips
 SRCS		+= pdinfo.c vtoc.c
 
-.PHONY: vers.c
-vers.c: version
-	${_MKTARGET_CREATE}
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${.CURDIR}/version ${MACHINE}
-
-SRCS+=	vers.c
-CLEANFILES+= vers.c
+.include "${S}/conf/newvers_stand.mk"
 
 TEXTADDR	= 0xa0a00000
 LINKFLAGS	= -T ${S}/arch/mips/conf/stand.ldscript -Ttext ${TEXTADDR} \

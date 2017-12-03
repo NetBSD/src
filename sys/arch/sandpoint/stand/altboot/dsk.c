@@ -1,4 +1,4 @@
-/* $NetBSD: dsk.c,v 1.16.2.1 2014/08/20 00:03:22 tls Exp $ */
+/* $NetBSD: dsk.c,v 1.16.2.2 2017/12/03 11:36:40 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -125,6 +125,7 @@ disk_scan(void *drv)
 		}
 		d = &ldisk[ndrive];
 		d->dvops = l;
+		d->unitchan = n;
 		d->unittag = ndrive;
 		snprintf(d->xname, sizeof(d->xname), "wd%d", d->unittag);
 		set_xfermode(l, n);
@@ -404,7 +405,7 @@ lba_read(struct disk *d, int64_t bno, int bcnt, void *buf)
 	int error;
 
 	l = d->dvops;
-	n = d->unittag;
+	n = d->unitchan;
 	p = (uint16_t *)buf;
 	chan = &l->chan[n];
 	error = 0;
@@ -414,7 +415,8 @@ lba_read(struct disk *d, int64_t bno, int bcnt, void *buf)
 		(*issue)(chan, bno, rdcnt);
 		for (k = 0; k < rdcnt; k++) {
 			if (spinwait_unbusy(l, n, 1000, &err) == 0) {
-				printf("%s blk %lld %s\n", d->xname, bno, err);
+				printf("%s blk %u %s\n",
+				   d->xname, (unsigned)bno, err);
 				error = EIO;
 				break;
 			}

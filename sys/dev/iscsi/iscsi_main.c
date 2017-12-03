@@ -32,9 +32,13 @@
 
 #include <sys/systm.h>
 #include <sys/buf.h>
+#include <sys/file.h>
+#include <sys/filedesc.h>
 #include <sys/kmem.h>
 #include <sys/socketvar.h>
+#include <sys/sysctl.h>
 
+#include "ioconf.h"
 
 /*------------------------- Global Variables ------------------------*/
 
@@ -44,22 +48,10 @@ extern struct cfdriver iscsi_cd;
 int iscsi_debug_level = ISCSI_DEBUG;
 #endif
 
-#if defined(ISCSI_PERFTEST)
-int iscsi_perf_level = 0;
-#endif
-
-/* Device Structure */
-iscsi_softc_t *sc = NULL;
+bool iscsi_detaching;
 
 /* the list of sessions */
 session_list_t iscsi_sessions = TAILQ_HEAD_INITIALIZER(iscsi_sessions);
-
-/* connections to clean up */
-connection_list_t iscsi_cleanupc_list = TAILQ_HEAD_INITIALIZER(iscsi_cleanupc_list);
-session_list_t iscsi_cleanups_list = TAILQ_HEAD_INITIALIZER(iscsi_cleanups_list);
-
-bool iscsi_detaching = FALSE;
-struct lwp *iscsi_cleanproc = NULL;
 
 /* the number of active send threads (for cleanup thread) */
 uint32_t iscsi_num_send_threads = 0;
@@ -75,26 +67,35 @@ login_isid_t iscsi_InitiatorISID;
    System interface: autoconf and device structures
 */
 
-void iscsiattach(int);
-
 static void iscsi_attach(device_t parent, device_t self, void *aux);
 static int iscsi_match(device_t, cfdata_t, void *);
 static int iscsi_detach(device_t, int);
 
+struct iscsi_softc {
+	device_t		dev;
+	kmutex_t		lock;
+	TAILQ_HEAD(, iscsifd)	fds;
+};
 
 CFATTACH_DECL_NEW(iscsi, sizeof(struct iscsi_softc), iscsi_match, iscsi_attach,
 			  iscsi_detach, NULL);
 
 
 static dev_type_open(iscsiopen);
-static dev_type_close(iscsiclose);
+static int iscsiclose(struct file *);
+
+static const struct fileops iscsi_fileops = {
+	.fo_name = "iscsi",
+	.fo_ioctl = iscsiioctl,
+	.fo_close = iscsiclose,
+};
 
 struct cdevsw iscsi_cdevsw = {
 	.d_open = iscsiopen,
-	.d_close = iscsiclose,
+	.d_close = noclose,
 	.d_read = noread,
 	.d_write = nowrite,
-	.d_ioctl = iscsiioctl,
+	.d_ioctl = noioctl,
 	.d_stop = nostop,
 	.d_tty = notty,
 	.d_poll = nopoll,
@@ -107,7 +108,7 @@ struct cdevsw iscsi_cdevsw = {
 /******************************************************************************/
 
 STATIC void iscsi_scsipi_request(struct scsipi_channel *,
-								 scsipi_adapter_req_t, void *);
+                                 scsipi_adapter_req_t, void *);
 STATIC void iscsi_minphys(struct buf *);
 
 /******************************************************************************/
@@ -121,16 +122,60 @@ STATIC void iscsi_minphys(struct buf *);
 *******************************************************************************/
 
 int
-iscsiopen(dev_t dev, int flag, int mode, PTHREADOBJ p)
+iscsiopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
+	struct iscsifd *d;
+	struct iscsi_softc *sc;
+	struct file *fp;
+	int error, fd, unit;
 
-	DEB(99, ("ISCSI Open\n"));
-	return 0;
+	unit = minor(dev);
+
+	DEB(99, ("ISCSI Open unit=%d\n",unit));
+
+	sc = device_lookup_private(&iscsi_cd, unit);
+	if (sc == NULL)
+		return ENXIO;
+
+	if ((error = fd_allocfile(&fp, &fd)) != 0)
+		return error;
+
+	d = kmem_alloc(sizeof(*d), KM_SLEEP);
+	d->dev = sc->dev;
+	d->unit = unit;
+
+	mutex_enter(&sc->lock);
+	if (iscsi_detaching) {
+		mutex_exit(&sc->lock);
+		kmem_free(d, sizeof(*d));
+		DEB(99, ("ISCSI Open aborting\n"));
+		fd_abort(curproc, fp, fd);
+		return ENXIO;
+	}
+	TAILQ_INSERT_TAIL(&sc->fds, d, link);
+	mutex_exit(&sc->lock);
+
+	return fd_clone(fp, fd, flag, &iscsi_fileops, d);
 }
 
-int
-iscsiclose(dev_t dev, int flag, int mode, PTHREADOBJ p)
+static int
+iscsiclose(struct file *fp)
 {
+	struct iscsifd *d = fp->f_iscsi;
+	struct iscsi_softc *sc;
+
+	sc = device_lookup_private(&iscsi_cd, d->unit);
+	if (sc == NULL) {
+		DEBOUT(("%s: Cannot find private data\n",__func__));
+		return ENXIO;
+	}
+
+	mutex_enter(&sc->lock);
+	TAILQ_REMOVE(&sc->fds, d, link);
+	mutex_exit(&sc->lock);
+
+	kmem_free(d, sizeof(*d));
+	fp->f_iscsi = NULL;
 
 	DEB(99, ("ISCSI Close\n"));
 	return 0;
@@ -193,15 +238,19 @@ iscsiattach(int n)
 static void
 iscsi_attach(device_t parent, device_t self, void *aux)
 {
+	struct iscsi_softc *sc;
 
-	DEBOUT(("ISCSI: iscsi_attach, parent=%p, self=%p, aux=%p\n", parent,
+	DEB(1, ("ISCSI: iscsi_attach, parent=%p, self=%p, aux=%p\n", parent,
 			self, aux));
-	sc = (iscsi_softc_t *) device_private(self);
-	sc->sc_dev = self;
-	if (kthread_create(PRI_NONE, 0, NULL, iscsi_cleanup_thread,
-	    NULL, &iscsi_cleanproc, "Cleanup") != 0) {
-		panic("Can't create cleanup thread!");
-	}
+	sc = (struct iscsi_softc *) device_private(self);
+	sc->dev = self;
+
+	TAILQ_INIT(&sc->fds);
+	mutex_init(&sc->lock, MUTEX_DEFAULT, IPL_NONE);
+
+	iscsi_detaching = false;
+	iscsi_init_cleanup();
+
 	aprint_normal("%s: attached.  major = %d\n", iscsi_cd.cd_name,
 	    cdevsw_lookup_major(&iscsi_cdevsw));
 }
@@ -213,14 +262,30 @@ iscsi_attach(device_t parent, device_t self, void *aux)
 static int
 iscsi_detach(device_t self, int flags)
 {
+	struct iscsi_softc *sc;
+	int error;
 
-	DEBOUT(("ISCSI: detach\n"));
-	kill_all_sessions();
-	iscsi_detaching = TRUE;
-	while (iscsi_cleanproc != NULL) {
-		wakeup(&iscsi_cleanupc_list);
-		tsleep(&iscsi_cleanupc_list, PWAIT, "detach_wait", 20 * hz);
+	DEB(1, ("ISCSI: detach\n"));
+	sc = (struct iscsi_softc *) device_private(self);
+
+	mutex_enter(&sc->lock);
+	if (!TAILQ_EMPTY(&sc->fds)) {
+		mutex_exit(&sc->lock);
+		return EBUSY;
 	}
+	iscsi_detaching = true;
+	mutex_exit(&sc->lock);
+
+	error = kill_all_sessions();
+	if (error)
+		return error;
+
+	error = iscsi_destroy_cleanup();
+	if (error)
+		return error;
+
+	mutex_destroy(&sc->lock);
+
 	return 0;
 }
 
@@ -228,28 +293,19 @@ iscsi_detach(device_t self, int flags)
 
 typedef struct quirktab_t {
 	const char	*tgt;
-	size_t		 tgtlen;
 	const char	*iqn;
-	size_t		 iqnlen;
 	uint32_t	 quirks;
 } quirktab_t;
 
 static const quirktab_t	quirktab[] = {
-	{ "StarWind",	8,
-		"iqn.2008-08.com.starwindsoftware",	32,
-		PQUIRK_ONLYBIG	},
-	{ "UNH",	3,
-		"iqn.2002-10.edu.unh.",	20,
-		PQUIRK_NOBIGMODESENSE |
-		PQUIRK_NOMODESENSE |
-		PQUIRK_NOSYNCCACHE },
-	{ "NetBSD",	6,
-		"iqn.1994-04.org.netbsd.",	23,
-		0	},
-	{ "Unknown",	7,
-		"unknown",	7,
-		0	},
-	{ NULL,		0,	NULL,	0,	0	}
+	{ "StarWind", "iqn.2008-08.com.starwindsoftware", PQUIRK_ONLYBIG },
+	{ "UNH", "iqn.2002-10.edu.unh.",
+	    PQUIRK_NOBIGMODESENSE |
+	    PQUIRK_NOMODESENSE |
+	    PQUIRK_NOSYNCCACHE },
+	{ "NetBSD", "iqn.1994-04.org.netbsd.", 0 },
+	{ "Unknown", "unknown", 0 },
+	{ NULL, NULL, 0 }
 };
 
 /* loop through the quirktab looking for a match on target name */
@@ -257,14 +313,17 @@ static const quirktab_t *
 getquirks(const char *iqn)
 {
 	const quirktab_t	*qp;
+	size_t iqnlen, quirklen;
 
-	if (iqn == NULL) {
+	if (iqn == NULL)
 		iqn = "unknown";
-	}
+	iqnlen = strlen(iqn);
 	for (qp = quirktab ; qp->iqn ; qp++) {
-		if (strncmp(qp->iqn, iqn, qp->iqnlen) == 0) {
+		quirklen = strlen(qp->iqn);
+		if (quirklen > iqnlen)
+			continue;
+		if (memcmp(qp->iqn, iqn, quirklen) == 0)
 			break;
-		}
 	}
 	return qp;
 }
@@ -290,27 +349,26 @@ getquirks(const char *iqn)
  */
 
 int
-map_session(session_t *session)
+map_session(session_t *session, device_t dev)
 {
 	struct scsipi_adapter *adapt = &session->sc_adapter;
 	struct scsipi_channel *chan = &session->sc_channel;
 	const quirktab_t	*tgt;
 
-	if (sc == NULL) { 
-		/* we haven't gone through the config process */
-		/* (shouldn't happen) */
-		DEBOUT(("Map: No device pointer!\n"));
-		return 0;
-	}
+	mutex_enter(&session->lock);
+	session->send_window = max(2, window_size(session, CCBS_FOR_SCSIPI));
+	mutex_exit(&session->lock);
+
 	/*
 	 * Fill in the scsipi_adapter.
 	 */
-	adapt->adapt_dev = sc->sc_dev;
+	adapt->adapt_dev = dev;
 	adapt->adapt_nchannels = 1;
 	adapt->adapt_request = iscsi_scsipi_request;
 	adapt->adapt_minphys = iscsi_minphys;
-	adapt->adapt_openings = CCBS_PER_SESSION;
-	adapt->adapt_max_periph = CCBS_PER_SESSION;
+	adapt->adapt_openings = session->send_window;
+	adapt->adapt_max_periph = CCBS_FOR_SCSIPI;
+	adapt->adapt_flags = SCSIPI_ADAPT_MPSAFE;
 
 	/*
 	 * Fill in the scsipi_channel.
@@ -323,12 +381,12 @@ map_session(session_t *session)
 	chan->chan_adapter = adapt;
 	chan->chan_bustype = &scsi_bustype;
 	chan->chan_channel = 0;
-	chan->chan_flags = SCSIPI_CHAN_NOSETTLE;
+	chan->chan_flags = SCSIPI_CHAN_NOSETTLE | SCSIPI_CHAN_CANGROW;
 	chan->chan_ntargets = 1;
 	chan->chan_nluns = 16;		/* ToDo: ??? */
 	chan->chan_id = session->id;
 
-	session->child_dev = config_found(sc->sc_dev, chan, scsiprint);
+	session->child_dev = config_found(dev, chan, scsiprint);
 
 	return session->child_dev != NULL;
 }
@@ -359,6 +417,29 @@ unmap_session(session_t *session)
 	return rv;
 }
 
+/*
+ * grow_resources
+ *    Try to grow openings up to current window size
+ */
+static void
+grow_resources(session_t *session)
+{
+	struct scsipi_adapter *adapt = &session->sc_adapter;
+	int win;
+
+	mutex_enter(&session->lock);
+	if (session->refcount < CCBS_FOR_SCSIPI &&
+	    session->send_window < CCBS_FOR_SCSIPI) {
+		win = window_size(session, CCBS_FOR_SCSIPI - session->refcount);
+		if (win > session->send_window) {
+			session->send_window++;
+			adapt->adapt_openings++;
+			DEB(5, ("Grow send window to %d\n", session->send_window));
+		}
+	}
+	mutex_exit(&session->lock);
+}
+
 /******************************************************************************/
 
 /*****************************************************************************
@@ -379,8 +460,11 @@ iscsi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 	session_t *session;
 	int flags;
 	struct scsipi_xfer_mode *xm;
+	int error;
 
 	session = (session_t *) adapt;	/* adapter is first field in session */
+
+	error = ref_session(session);
 
 	switch (req) {
 	case ADAPTER_REQ_RUN_XFER:
@@ -388,45 +472,58 @@ iscsi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		xs = arg;
 		flags = xs->xs_control;
 
+		if (error) {
+			DEB(9, ("ISCSI: refcount too high: %d, winsize %d\n",
+				session->refcount, session->send_window));
+			xs->error = XS_BUSY;
+			xs->status = XS_BUSY;
+			scsipi_done(xs);
+			return;
+		}
+
 		if ((flags & XS_CTL_POLL) != 0) {
 			xs->error = XS_DRIVER_STUFFUP;
 			DEBOUT(("Run Xfer request with polling\n"));
 			scsipi_done(xs);
-			return;
+			break;
 		}
 		/*
 		 * NOTE: It appears that XS_CTL_DATA_UIO is not actually used anywhere.
-         *       Since it really would complicate matters to handle offsets
-         *       into scatter-gather lists, and a number of other drivers don't
-         *       handle uio-based data as well, XS_CTL_DATA_UIO isn't
-         *       implemented in this driver (at least for now).
+		 * Since it really would complicate matters to handle offsets
+		 * into scatter-gather lists, and a number of other drivers don't
+		 * handle uio-based data as well, XS_CTL_DATA_UIO isn't
+		 * implemented in this driver (at least for now).
 		 */
 		if (flags & XS_CTL_DATA_UIO) {
 			xs->error = XS_DRIVER_STUFFUP;
 			DEBOUT(("Run Xfer with data in UIO\n"));
 			scsipi_done(xs);
-			return;
+			break;
 		}
 
 		send_run_xfer(session, xs);
-		DEB(9, ("scsipi_req returns\n"));
+		DEB(15, ("scsipi_req returns, refcount = %d\n", session->refcount));
 		return;
 
 	case ADAPTER_REQ_GROW_RESOURCES:
-		DEBOUT(("ISCSI: scsipi_request GROW_RESOURCES\n"));
-		return;
+		DEB(5, ("ISCSI: scsipi_request GROW_RESOURCES\n"));
+		grow_resources(session);
+		break;
 
 	case ADAPTER_REQ_SET_XFER_MODE:
 		DEB(5, ("ISCSI: scsipi_request SET_XFER_MODE\n"));
 		xm = (struct scsipi_xfer_mode *)arg;
 		xm->xm_mode = PERIPH_CAP_TQING;
 		scsipi_async_event(chan, ASYNC_EVENT_XFER_MODE, xm);
-		return;
+		break;
 
 	default:
+		DEBOUT(("ISCSI: scsipi_request with invalid REQ code %d\n", req));
 		break;
 	}
-	DEBOUT(("ISCSI: scsipi_request with invalid REQ code %d\n", req));
+
+	if (!error)
+		unref_session(session);
 }
 
 /* cap the transfer at 64K */
@@ -459,35 +556,39 @@ void
 iscsi_done(ccb_t *ccb)
 {
 	struct scsipi_xfer *xs = ccb->xs;
-	/*DEBOUT (("iscsi_done\n")); */
+	DEB(9, ("iscsi_done\n"));
 
 	if (xs != NULL) {
 		xs->resid = ccb->residual;
 
 		switch (ccb->status) {
 		case ISCSI_STATUS_SUCCESS:
-			xs->error = 0;
+			xs->error = XS_NOERROR;
+			xs->status = SCSI_OK;
 			break;
 
 		case ISCSI_STATUS_CHECK_CONDITION:
 			xs->error = XS_SENSE;
-#ifdef ISCSI_DEBUG
-			{
-				uint8_t *s = (uint8_t *) (&xs->sense);
-				DEB(5, ("Scsipi_done, error=XS_SENSE, sense data=%02x "
-						"%02x %02x %02x...\n",
-						s[0], s[1], s[2], s[3]));
-			}
-#endif
+			xs->status = SCSI_CHECK;
 			break;
 
 		case ISCSI_STATUS_TARGET_BUSY:
+		case ISCSI_STATUS_NO_RESOURCES:
+			DEBC(ccb->connection, 5, ("target busy, ccb %p\n", ccb));
 			xs->error = XS_BUSY;
+			xs->status = SCSI_BUSY;
 			break;
 
 		case ISCSI_STATUS_SOCKET_ERROR:
 		case ISCSI_STATUS_TIMEOUT:
 			xs->error = XS_SELTIMEOUT;
+			xs->status = SCSI_BUSY;
+			break;
+
+		case ISCSI_STATUS_QUEUE_FULL:
+			DEBC(ccb->connection, 5, ("queue full, ccb %p\n", ccb));
+			xs->error = XS_BUSY;
+			xs->status = SCSI_QUEUE_FULL;
 			break;
 
 		default:
@@ -498,20 +599,48 @@ iscsi_done(ccb_t *ccb)
 		DEB(99, ("Calling scsipi_done (%p), err = %d\n", xs, xs->error));
 		scsipi_done(xs);
 		DEB(99, ("scsipi_done returned\n"));
+	} else {
+		DEBOUT(("ISCSI: iscsi_done CCB %p without XS\n", ccb));
 	}
+
+	unref_session(ccb->session);
 }
+
+SYSCTL_SETUP(sysctl_iscsi_setup, "ISCSI subtree setup")
+{
+	const struct sysctlnode *node = NULL;
+
+	sysctl_createv(clog, 0, NULL, &node,
+		CTLFLAG_PERMANENT,
+		CTLTYPE_NODE, "iscsi",
+		SYSCTL_DESCR("iscsi controls"),
+		NULL, 0, NULL, 0,
+		CTL_HW, CTL_CREATE, CTL_EOL);
+
+#ifdef ISCSI_DEBUG
+	sysctl_createv(clog, 0, &node, NULL,
+		CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		CTLTYPE_INT, "debug",
+		SYSCTL_DESCR("debug level"),
+		NULL, 0,  &iscsi_debug_level, sizeof(iscsi_debug_level),
+		CTL_CREATE, CTL_EOL);
+#endif
+}
+
 
 /* Kernel Module support */
 
 #include <sys/module.h>
 
-MODULE(MODULE_CLASS_DRIVER, iscsi, NULL);
+MODULE(MODULE_CLASS_DRIVER, iscsi, NULL); /* Possibly a builtin module */
+
+#ifdef _MODULE
 static const struct cfiattrdata ibescsi_info = { "scsi", 1,
 	{{"channel", "-1", -1},}
 };
+
 static const struct cfiattrdata *const iscsi_attrs[] = { &ibescsi_info, NULL };
 
-#ifdef _MODULE
 CFDRIVER_DECL(iscsi, DV_DULL, iscsi_attrs);
 
 static struct cfdata iscsi_cfdata[] = {
@@ -534,6 +663,7 @@ iscsi_modcmd(modcmd_t cmd, void *arg)
 #ifdef _MODULE
 	devmajor_t cmajor = NODEVMAJOR, bmajor = NODEVMAJOR;
 	int error;
+	static struct sysctllog *clog;
 #endif
 
 	switch (cmd) {
@@ -579,6 +709,8 @@ iscsi_modcmd(modcmd_t cmd, void *arg)
 			config_cfdriver_detach(&iscsi_cd);
 			return ENXIO;
 		}
+
+		sysctl_iscsi_setup(&clog);
 #endif
 		return 0;
 		break;
@@ -588,6 +720,8 @@ iscsi_modcmd(modcmd_t cmd, void *arg)
 		error = config_cfdata_detach(iscsi_cfdata);
 		if (error)
 			return error;
+
+		sysctl_teardown(&clog);
 
 		config_cfattach_detach(iscsi_cd.cd_name, &iscsi_ca);
 		config_cfdriver_detach(&iscsi_cd);

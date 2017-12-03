@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_subdev_fb_nv50.c,v 1.1.1.1.6.2 2014/08/20 00:04:15 tls Exp $	*/
+/*	$NetBSD: nouveau_subdev_fb_nv50.c,v 1.1.1.1.6.3 2017/12/03 11:37:55 jdolecek Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_subdev_fb_nv50.c,v 1.1.1.1.6.2 2014/08/20 00:04:15 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_subdev_fb_nv50.c,v 1.1.1.1.6.3 2017/12/03 11:37:55 jdolecek Exp $");
 
 #include <core/client.h>
 #include <core/enum.h>
@@ -253,6 +253,52 @@ nv50_fb_ctor(struct nouveau_object *parent, struct nouveau_object *engine,
 	if (ret)
 		return ret;
 
+#ifdef __NetBSD__
+    {
+	const bus_dma_tag_t dmat = pci_dma64_available(&device->pdev->pd_pa) ?
+	    device->pdev->pd_pa.pa_dmat64 : device->pdev->pd_pa.pa_dmat;
+	int nsegs;
+
+	priv->r100c08_map = NULL; /* paranoia */
+	priv->r100c08_kva = NULL;
+
+	/* XXX errno NetBSD->Linux */
+	ret = -bus_dmamem_alloc(dmat, PAGE_SIZE, PAGE_SIZE, 0,
+	    &priv->r100c08_seg, 1, &nsegs, BUS_DMA_WAITOK);
+	if (ret) {
+fail0:		nouveau_fb_destroy(&priv->base);
+		return ret;
+	}
+	KASSERT(nsegs == 1);
+
+	/* XXX errno NetBSD->Linux */
+	ret = -bus_dmamap_create(dmat, PAGE_SIZE, 1, PAGE_SIZE, 0,
+	    BUS_DMA_WAITOK, &priv->r100c08_map);
+	if (ret) {
+fail1:		bus_dmamem_free(dmat, &priv->r100c08_seg, 1);
+		goto fail0;
+	}
+
+	/* XXX errno NetBSD->Linux */
+	ret = -bus_dmamem_map(dmat, &priv->r100c08_seg, 1, PAGE_SIZE,
+	    &priv->r100c08_kva, BUS_DMA_WAITOK);
+	if (ret) {
+fail2:		bus_dmamap_destroy(dmat, priv->r100c08_map);
+		goto fail1;
+	}
+	(void)memset(priv->r100c08_kva, 0, PAGE_SIZE);
+
+	/* XXX errno NetBSD->Linux */
+	ret = -bus_dmamap_load(dmat, priv->r100c08_map, priv->r100c08_kva,
+	    PAGE_SIZE, NULL, BUS_DMA_WAITOK);
+	if (ret) {
+fail3: __unused	bus_dmamem_unmap(dmat, priv->r100c08_kva, PAGE_SIZE);
+		goto fail2;
+	}
+
+	priv->r100c08 = priv->r100c08_map->dm_segs[0].ds_addr;
+    }
+#else
 	priv->r100c08_page = alloc_page(GFP_KERNEL | __GFP_ZERO);
 	if (priv->r100c08_page) {
 		priv->r100c08 = nv_device_map_page(device, priv->r100c08_page);
@@ -261,6 +307,7 @@ nv50_fb_ctor(struct nouveau_object *parent, struct nouveau_object *engine,
 	} else {
 		nv_warn(priv, "failed 0x100c08 page alloc\n");
 	}
+#endif
 
 	nv_subdev(priv)->intr = nv50_fb_intr;
 	return 0;
@@ -272,10 +319,22 @@ nv50_fb_dtor(struct nouveau_object *object)
 	struct nouveau_device *device = nv_device(object);
 	struct nv50_fb_priv *priv = (void *)object;
 
+#ifdef __NetBSD__
+	if (priv->r100c08_map) {
+		const bus_dma_tag_t dmat = pci_dma64_available(&device->pdev->pd_pa) ?
+		    device->pdev->pd_pa.pa_dmat64 : device->pdev->pd_pa.pa_dmat;
+
+		bus_dmamap_unload(dmat, priv->r100c08_map);
+		bus_dmamem_unmap(dmat, priv->r100c08_kva, PAGE_SIZE);
+		bus_dmamap_destroy(dmat, priv->r100c08_map);
+		bus_dmamem_free(dmat, &priv->r100c08_seg, 1);
+	}
+#else
 	if (priv->r100c08_page) {
 		nv_device_unmap_page(device, priv->r100c08);
 		__free_page(priv->r100c08_page);
 	}
+#endif
 
 	nouveau_fb_destroy(&priv->base);
 }

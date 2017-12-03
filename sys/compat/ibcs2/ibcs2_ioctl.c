@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_ioctl.c,v 1.45 2008/06/24 10:03:17 gmcgarry Exp $	*/
+/*	$NetBSD: ibcs2_ioctl.c,v 1.45.40.1 2017/12/03 11:36:53 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_ioctl.c,v 1.45 2008/06/24 10:03:17 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_ioctl.c,v 1.45.40.1 2017/12/03 11:36:53 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -402,8 +402,10 @@ ibcs2_sys_ioctl(struct lwp *l, const struct ibcs2_sys_ioctl_args *uap, register_
 		if ((error = (*ctl)(fp, TIOCGETA, &bts)) != 0)
 			goto out;
 
+		memset(&sts, 0, sizeof(sts));
 		btios2stios(&bts, &sts);
 		if (SCARG(uap, cmd) == IBCS2_TCGETA) {
+			memset(&st, 0, sizeof(st));
 			stios2stio(&sts, &st);
 			error = copyout(&st, SCARG(uap, data), sizeof(st));
 			if (error)
@@ -559,6 +561,7 @@ ibcs2_sys_gtty(struct lwp *l, const struct ibcs2_sys_gtty_args *uap, register_t 
 
 	fd_putfile(SCARG(uap, fd));
 
+	memset(&itb, 0, sizeof(itb));
 	itb.sg_ispeed = tb.sg_ispeed;
 	itb.sg_ospeed = tb.sg_ospeed;
 	itb.sg_erase = tb.sg_erase;

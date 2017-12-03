@@ -1,10 +1,11 @@
-# $NetBSD: Makefile,v 1.5 2009/12/07 07:43:05 uebayasi Exp $
+# $NetBSD: Makefile,v 1.5.22.1 2017/12/03 11:38:51 jdolecek Exp $
 
 .include "../Makefile.inc"
 
 .PATH:	${S}/dev/dm
 
 KMOD=	dm
+IOCONF=	dm.ioconf
 SRCS=	device-mapper.c dm_dev.c dm_ioctl.c dm_pdev.c dm_table.c dm_target.c \
         dm_target_linear.c dm_target_stripe.c
 

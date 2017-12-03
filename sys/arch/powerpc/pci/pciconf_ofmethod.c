@@ -1,4 +1,4 @@
-/* $NetBSD: pciconf_ofmethod.c,v 1.4 2011/06/18 06:41:43 matt Exp $ */
+/* $NetBSD: pciconf_ofmethod.c,v 1.4.12.1 2017/12/03 11:36:37 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciconf_ofmethod.c,v 1.4 2011/06/18 06:41:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciconf_ofmethod.c,v 1.4.12.1 2017/12/03 11:36:37 jdolecek Exp $");
 
 #define _POWERPC_BUS_DMA_PRIVATE
 
@@ -103,6 +103,9 @@ genppc_pci_ofmethod_conf_read(void *v, pcitag_t tag, int reg)
 	pci_chipset_tag_t pc = (pci_chipset_tag_t)v;
 	pcireg_t data;
 
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return (pcireg_t) -1;
+
 	tag &= OFW_PCI_PHYS_HI_BUSMASK | OFW_PCI_PHYS_HI_DEVICEMASK |
 	    OFW_PCI_PHYS_HI_FUNCTIONMASK;
 	tag |= reg & OFW_PCI_PHYS_HI_REGISTERMASK;
@@ -116,6 +119,9 @@ void
 genppc_pci_ofmethod_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data)
 {
 	pci_chipset_tag_t pc = (pci_chipset_tag_t)v;
+
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return;
 
 	tag &= OFW_PCI_PHYS_HI_BUSMASK | OFW_PCI_PHYS_HI_DEVICEMASK |
 	    OFW_PCI_PHYS_HI_FUNCTIONMASK;

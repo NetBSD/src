@@ -1,4 +1,4 @@
-/* $NetBSD: linux_signal.h,v 1.13 2008/04/28 20:23:43 martin Exp $ */
+/* $NetBSD: linux_signal.h,v 1.13.44.1 2017/12/03 11:36:54 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1995, 1998, 2001 The NetBSD Foundation, Inc.
@@ -104,15 +104,14 @@ struct linux_pt_regs {
 #define LINUX_SA_NOCLDSTOP	0x00000001
 #define LINUX_SA_SIGINFO	0x00000008
 #define LINUX_SA_NOCLDWAIT	0x00010000
-#define LINUX_SA_RESTORER	0x04000000
 #define LINUX_SA_ONSTACK	0x08000000
 #define LINUX_SA_RESTART	0x10000000
-#define LINUX_SA_INTERRUPT	0x20000000
 #define LINUX_SA_NODEFER	0x40000000
 #define LINUX_SA_RESETHAND	0x80000000
 #define LINUX_SA_NOMASK		LINUX_SA_NODEFER
 #define LINUX_SA_ONESHOT	LINUX_SA_RESETHAND
-#define LINUX_SA_ALLBITS	0xfc010009 /* XXX from i386, not in mips. */
+#define LINUX_SA_ALLBITS	0xd8010009
+/* XXX LINUX_SA_RESTORER has been deprecated; not used any version of glibc */
 
 #define	LINUX_MINSIGSTKSZ	2048
 

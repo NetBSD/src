@@ -1,4 +1,4 @@
-/*	$NetBSD: booke_machdep.c,v 1.16.2.2 2014/08/20 00:03:19 tls Exp $	*/
+/*	$NetBSD: booke_machdep.c,v 1.16.2.3 2017/12/03 11:36:36 jdolecek Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
 #define	_POWERPC_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: booke_machdep.c,v 1.16.2.2 2014/08/20 00:03:19 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_machdep.c,v 1.16.2.3 2017/12/03 11:36:36 jdolecek Exp $");
 
 #include "opt_modular.h"
 
@@ -54,6 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: booke_machdep.c,v 1.16.2.2 2014/08/20 00:03:19 tls E
 #include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
+
+#include <dev/cons.h>
 
 #include <powerpc/pcb.h>
 #include <powerpc/spr.h>
@@ -130,6 +132,7 @@ struct cpu_info cpu_info[] = {
 		.ci_softc = &cpu_softc[0],
 		.ci_cpl = IPL_HIGH,
 		.ci_idepth = -1,
+		.ci_pmap_kern_segtab = &pmap_kern_segtab,
 	},
 #ifdef MULTIPROCESSOR
 	[CPU_MAXNUM-1] = {
@@ -138,6 +141,7 @@ struct cpu_info cpu_info[] = {
 		.ci_softc = &cpu_softc[CPU_MAXNUM-1],
 		.ci_cpl = IPL_HIGH,
 		.ci_idepth = -1,
+		.ci_pmap_kern_segtab = &pmap_kern_segtab,
 	},
 #endif
 };
@@ -207,6 +211,9 @@ booke_cpu_startup(const char *model)
 	fake_mapiodev = 0;
 
 #ifdef MULTIPROCESSOR
+	pmap_kernel()->pm_active = kcpuset_running;
+	pmap_kernel()->pm_onproc = kcpuset_running;
+
 	for (size_t i = 1; i < __arraycount(cpu_info); i++) {
 		struct cpu_info * const ci = &cpu_info[i];
 		struct cpu_softc * const cpu = &cpu_softc[i];
@@ -227,6 +234,8 @@ booke_cpu_startup(const char *model)
 	kcpuset_create(&cpuset_info.cpus_paused, true);
 	kcpuset_create(&cpuset_info.cpus_resumed, true);
 	kcpuset_create(&cpuset_info.cpus_halted, true);
+
+	kcpuset_set(cpuset_info.cpus_running, cpu_number());
 #endif /* MULTIPROCESSOR */
 }
 
@@ -268,8 +277,13 @@ cpu_reboot(int howto, char *what)
 	}
 
 	if (howto & RB_HALT) {
-		printf("halted\n\n");
+		printf("The operating system has halted.\n"
+		    "Press any key to reboot.\n\n");
+		cnpollc(1);	/* For proper keyboard command handling */
+		cngetc();
+		cnpollc(0);
 
+		printf("rebooting...\n\n");
 		goto reboot;	/* XXX for now... */
 
 #ifdef DDB
@@ -566,10 +580,10 @@ booke_sstep(struct trapframe *tf)
 			const int16_t off = insn & ~3;
 			iac2 = ((insn & 2) ? 0 : tf->tf_srr0) + off;
 			dbcr0 |= DBCR0_IAC2;
-		} else if ((insn & 0xfc00ffde) == 0x4c000420) {
+		} else if ((insn & 0xfc00fffe) == 0x4c000420) {
 			iac2 = tf->tf_ctr;
 			dbcr0 |= DBCR0_IAC2;
-		} else if ((insn & 0xfc00ffde) == 0x4c000020) {
+		} else if ((insn & 0xfc00fffe) == 0x4c000020) {
 			iac2 = tf->tf_lr;
 			dbcr0 |= DBCR0_IAC2;
 		}

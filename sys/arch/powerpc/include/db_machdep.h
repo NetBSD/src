@@ -1,5 +1,5 @@
 /*	$OpenBSD: db_machdep.h,v 1.2 1997/03/21 00:48:48 niklas Exp $	*/
-/*	$NetBSD: db_machdep.h,v 1.24 2011/06/14 03:28:32 matt Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.24.12.1 2017/12/03 11:36:37 jdolecek Exp $	*/
 
 /* 
  * Mach Operating System
@@ -42,7 +42,6 @@
 #endif
 
 #define	DB_ELF_SYMBOLS
-#define	DB_ELFSIZE	32
 
 typedef	vaddr_t		db_addr_t;	/* address - unsigned */
 #define	DDB_EXPR_FMT	"l"		/* expression is long */
@@ -162,6 +161,10 @@ typedef long	kgdb_reg_t;
 
 void	kdb_kintr(void *);
 int	kdb_trap(int, void *);
+
+bool	ddb_running_on_this_cpu_p(void);
+bool	ddb_running_on_any_cpu_p(void);
+void	db_resume_others(void);
 
 /*
  * We have machine-dependent commands.

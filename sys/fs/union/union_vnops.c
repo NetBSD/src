@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.49.8.1 2014/08/20 00:04:28 tls Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.49.8.2 2017/12/03 11:38:44 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.49.8.1 2014/08/20 00:04:28 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.49.8.2 2017/12/03 11:38:44 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -250,11 +250,11 @@ union_lookup1(struct vnode *udvp, struct vnode **dvpp, struct vnode **vpp,
 	 */
 	while (dvp != udvp && (dvp->v_type == VDIR) &&
 	       (mp = dvp->v_mountedhere)) {
-		if (vfs_busy(mp, NULL))
+		if (vfs_busy(mp))
 			continue;
 		vput(dvp);
 		error = VFS_ROOT(mp, &tdvp);
-		vfs_unbusy(mp, false, NULL);
+		vfs_unbusy(mp);
 		if (error) {
 			return (error);
 		}
@@ -616,6 +616,11 @@ union_open(void *v)
 			error = union_copyup(un, (mode&O_TRUNC) == 0, cred, l);
 			if (error == 0)
 				error = VOP_OPEN(un->un_uppervp, mode, cred);
+			if (error == 0) {
+				mutex_enter(un->un_uppervp->v_interlock);
+				un->un_uppervp->v_writecount++;
+				mutex_exit(un->un_uppervp->v_interlock);
+			}
 			return (error);
 		}
 
@@ -640,6 +645,11 @@ union_open(void *v)
 		return ENXIO;
 
 	error = VOP_OPEN(tvp, mode, cred);
+	if (error == 0 && (ap->a_mode & FWRITE)) {
+		mutex_enter(tvp->v_interlock);
+		tvp->v_writecount++;
+		mutex_exit(tvp->v_interlock);
+	}
 
 	return (error);
 }
@@ -669,6 +679,12 @@ union_close(void *v)
 
 	KASSERT(vp != NULLVP);
 	ap->a_vp = vp;
+	if ((ap->a_fflag & FWRITE)) {
+		KASSERT(vp == un->un_uppervp);
+		mutex_enter(vp->v_interlock);
+		vp->v_writecount--;
+		mutex_exit(vp->v_interlock);
+	}
 	if (do_lock)
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VCALL(vp, VOFFSET(vop_close), ap);
@@ -1132,7 +1148,7 @@ union_seek(void *v)
 int
 union_remove(void *v)
 {
-	struct vop_remove_args /* {
+	struct vop_remove_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
@@ -1149,24 +1165,18 @@ union_remove(void *v)
 		struct vnode *dvp = dun->un_uppervp;
 		struct vnode *vp = un->un_uppervp;
 
-		/*
-		 * Account for VOP_REMOVE to vrele dvp and vp.
-		 * Note: VOP_REMOVE will unlock dvp and vp.
-		 */
-		vref(dvp);
+		/* Account for VOP_REMOVE to vrele vp.  */
 		vref(vp);
 		if (union_dowhiteout(un, cnp->cn_cred))
 			cnp->cn_flags |= DOWHITEOUT;
 		error = VOP_REMOVE(dvp, vp, cnp);
 		if (!error)
 			union_removed_upper(un);
-		vrele(ap->a_dvp);
 		vrele(ap->a_vp);
 	} else {
 		error = union_mkwhiteout(
 			MOUNTTOUNIONMOUNT(UNIONTOV(dun)->v_mount),
 			dun->un_uppervp, ap->a_cnp, un);
-		vput(ap->a_dvp);
 		vput(ap->a_vp);
 	}
 
@@ -1176,7 +1186,7 @@ union_remove(void *v)
 int
 union_link(void *v)
 {
-	struct vop_link_args /* {
+	struct vop_link_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
@@ -1233,7 +1243,6 @@ union_link(void *v)
 					 */
 					error = EEXIST;
 					VOP_UNLOCK(ap->a_vp);
-					vput(ap->a_dvp);
 					vput(vp);
 					return (error);
 				}
@@ -1247,20 +1256,10 @@ union_link(void *v)
 	if (dvp == NULLVP)
 		error = EROFS;
 
-	if (error) {
-		vput(ap->a_dvp);
+	if (error)
 		return (error);
-	}
 
-	/*
-	 * Account for VOP_LINK to vrele dvp.
-	 * Note: VOP_LINK will unlock dvp.
-	 */
-	vref(dvp);
-	error = VOP_LINK(dvp, vp, cnp);
-	vrele(ap->a_dvp);
-
-	return error;
+	return VOP_LINK(dvp, vp, cnp);
 }
 
 int
@@ -1407,7 +1406,7 @@ union_mkdir(void *v)
 int
 union_rmdir(void *v)
 {
-	struct vop_rmdir_args /* {
+	struct vop_rmdir_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
@@ -1422,7 +1421,6 @@ union_rmdir(void *v)
 
 	error = union_check_rmdir(un, cnp->cn_cred);
 	if (error) {
-		vput(ap->a_dvp);
 		vput(ap->a_vp);
 		return error;
 	}
@@ -1431,24 +1429,18 @@ union_rmdir(void *v)
 		struct vnode *dvp = dun->un_uppervp;
 		struct vnode *vp = un->un_uppervp;
 
-		/*
-		 * Account for VOP_RMDIR to vrele dvp and vp.
-		 * Note: VOP_RMDIR will unlock dvp and vp.
-		 */
-		vref(dvp);
+		/* Account for VOP_RMDIR to vrele vp.  */
 		vref(vp);
 		if (union_dowhiteout(un, cnp->cn_cred))
 			cnp->cn_flags |= DOWHITEOUT;
 		error = VOP_RMDIR(dvp, vp, ap->a_cnp);
 		if (!error)
 			union_removed_upper(un);
-		vrele(ap->a_dvp);
 		vrele(ap->a_vp);
 	} else {
 		error = union_mkwhiteout(
 			MOUNTTOUNIONMOUNT(UNIONTOV(dun)->v_mount),
 			dun->un_uppervp, ap->a_cnp, un);
-		vput(ap->a_dvp);
 		vput(ap->a_vp);
 	}
 
@@ -1548,7 +1540,7 @@ union_abortop(void *v)
 int
 union_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 		const struct vnodeop_desc *a_desc;
 		struct vnode *a_vp;
 		bool *a_recycle;
@@ -1578,7 +1570,6 @@ union_inactive(void *v)
 	}
 
 	*ap->a_recycle = ((un->un_cflags & UN_CACHED) == 0);
-	VOP_UNLOCK(vp);
 
 	return (0);
 }
@@ -1586,11 +1577,22 @@ union_inactive(void *v)
 int
 union_reclaim(void *v)
 {
-	struct vop_reclaim_args /* {
+	struct vop_reclaim_v2_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	struct vnode *uvp = UPPERVP(vp);
 
-	union_freevp(ap->a_vp);
+	VOP_UNLOCK(vp);
+
+	if (uvp != NULL) {
+		mutex_enter(uvp->v_interlock);
+		KASSERT(vp->v_interlock == uvp->v_interlock);
+		uvp->v_writecount -= vp->v_writecount;
+		mutex_exit(uvp->v_interlock);
+	}
+
+	union_freevp(vp);
 
 	return (0);
 }
@@ -1600,12 +1602,14 @@ union_lock1(struct vnode *vp, struct vnode *lockvp, int flags)
 {
 	struct vop_lock_args ap;
 
-	if (lockvp == vp) {
-		ap.a_vp = vp;
-		ap.a_flags = flags;
+	ap.a_desc = VDESC(vop_lock);
+	ap.a_vp = lockvp;
+	ap.a_flags = flags;
+
+	if (lockvp == vp)
 		return genfs_lock(&ap);
-	} else
-		return VOP_LOCK(lockvp, flags);
+	else
+		return VCALL(ap.a_vp, VOFFSET(vop_lock), &ap);
 }
 
 static int
@@ -1613,11 +1617,13 @@ union_unlock1(struct vnode *vp, struct vnode *lockvp)
 {
 	struct vop_unlock_args ap;
 
-	if (lockvp == vp) {
-		ap.a_vp = vp;
+	ap.a_desc = VDESC(vop_unlock);
+	ap.a_vp = lockvp;
+
+	if (lockvp == vp)
 		return genfs_unlock(&ap);
-	} else
-		return VOP_UNLOCK(lockvp);
+	else
+		return VCALL(ap.a_vp, VOFFSET(vop_unlock), &ap);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_pci.c,v 1.13.2.2 2014/08/20 00:02:48 tls Exp $	*/
+/*	$NetBSD: i80321_pci.c,v 1.13.2.3 2017/12/03 11:35:57 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_pci.c,v 1.13.2.2 2014/08/20 00:02:48 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_pci.c,v 1.13.2.3 2017/12/03 11:35:57 jdolecek Exp $");
 
 #include "opt_pci.h"
 #include "opt_i80321.h"
@@ -184,6 +184,9 @@ i80321_pci_conf_setup(struct i80321_softc *sc, pcitag_t tag, int offset,
     struct pciconf_state *ps)
 {
 	uint32_t busno;
+
+	if ((unsigned int)offset >= PCI_CONF_SIZE)
+		return (1);
 
 	i80321_pci_decompose_tag(sc, tag, &ps->ps_b, &ps->ps_d, &ps->ps_f);
 

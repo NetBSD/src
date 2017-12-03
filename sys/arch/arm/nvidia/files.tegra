@@ -1,0 +1,175 @@
+#	$NetBSD: files.tegra,v 1.45.2.2 2017/12/03 11:35:54 jdolecek Exp $
+#
+# Configuration info for NVIDIA Tegra ARM Peripherals
+#
+
+include "arch/arm/pic/files.pic"
+include "arch/arm/cortex/files.cortex"
+
+file	arch/arm/arm32/arm32_boot.c
+file	arch/arm/arm32/arm32_kvminit.c
+file	arch/arm/arm32/arm32_reboot.c
+file	arch/arm/arm32/irq_dispatch.S
+file	arch/arm/arm32/armv7_generic_space.c
+file	arch/arm/arm32/armv7_generic_dma.c
+file	arch/arm/arm/bus_space_a4x.S
+
+file	arch/arm/nvidia/tegra_platform.c
+file	arch/arm/nvidia/tegra_soc.c
+file	arch/arm/nvidia/tegra_cpufreq.c
+
+# Tegra T124 (32-bit K1) support
+file	arch/arm/nvidia/soc_tegra124.c		soc_tegra124
+device	tegra124cpu
+attach	tegra124cpu at cpu with tegra124_cpu
+file	arch/arm/nvidia/tegra124_cpu.c		tegra124_cpu
+
+# Tegra T210 (X1) support
+file	arch/arm/nvidia/soc_tegra210.c		soc_tegra210
+
+# Interrupt controller
+device	tegralic
+attach	tegralic at fdt with tegra_lic
+file	arch/arm/nvidia/tegra_lic.c		tegra_lic
+
+# Memory controller
+device	tegramc
+attach	tegramc at fdt with tegra_mc
+file	arch/arm/nvidia/tegra_mc.c		tegra_mc
+
+# Power management controller
+device	tegrapmc
+attach	tegrapmc at fdt with tegra_pmc
+file	arch/arm/nvidia/tegra_pmc.c		tegra_pmc
+
+# eFUSE
+device	tegrafuse
+attach	tegrafuse at fdt with tegra_fuse
+file	arch/arm/nvidia/tegra_fuse.c		tegra_fuse
+
+# Clock and Reset controller (T124)
+device	tegra124car: clk
+attach	tegra124car at fdt with tegra124_car
+file	arch/arm/nvidia/tegra124_car.c		tegra124_car
+
+# Clock and Reset controller (T210)
+device	tegra210car: clk
+attach	tegra210car at fdt with tegra210_car
+file	arch/arm/nvidia/tegra210_car.c		tegra210_car
+
+# GPIO controller
+device	tegragpio: gpiobus
+attach	tegragpio at fdt with tegra_gpio
+file	arch/arm/nvidia/tegra_gpio.c		tegra_gpio
+
+# Timers
+device	tegratimer: sysmon_wdog
+attach	tegratimer at fdt with tegra_timer
+file	arch/arm/nvidia/tegra_timer.c		tegra_timer
+
+# MPIO / Pinmux
+device	tegrapinmux
+attach	tegrapinmux at fdt with tegra_pinmux
+file	arch/arm/nvidia/tegra_pinmux.c		tegra_pinmux
+file	arch/arm/nvidia/tegra210_pinmux.c	tegra_pinmux & soc_tegra210
+
+# APB DMA
+device	tegraapbdma
+attach	tegraapbdma at fdt with tegra_apbdma
+file	arch/arm/nvidia/tegra_apbdma.c		tegra_apbdma
+
+# XUSB PADCTL (common)
+file	arch/arm/nvidia/tegra_xusbpad.c		tegra_xusbpad
+defflag	opt_tegra.h				TEGRA_XUSBPAD_DEBUG
+
+# XUSB PADCTL (Tegra124)
+device	tegra124xpad: tegra_xusbpad
+attach	tegra124xpad at fdt with tegra124_xusbpad
+file	arch/arm/nvidia/tegra124_xusbpad.c	tegra124_xusbpad
+
+# XUSB PADCTL (Tegra210)
+device	tegra210xpad { }: tegra_xusbpad
+device	tegra210xphy: tegra210xpad
+attach	tegra210xpad at fdt with tegra210_xusbpad
+attach	tegra210xphy at tegra210xpad
+file	arch/arm/nvidia/tegra210_xusbpad.c	tegra210_xusbpad
+
+
+# UART
+attach	com at fdt with tegra_com
+file	arch/arm/nvidia/tegra_com.c		tegra_com needs-flag
+
+# I2C
+device	tegrai2c: i2cbus, i2cexec
+attach	tegrai2c at fdt with tegra_i2c
+file	arch/arm/nvidia/tegra_i2c.c		tegra_i2c
+
+# RTC
+device	tegrartc
+attach	tegrartc at fdt with tegra_rtc
+file	arch/arm/nvidia/tegra_rtc.c		tegra_rtc
+
+# USB PHY
+device	tegrausbphy
+attach	tegrausbphy at fdt with tegra_usbphy
+file	arch/arm/nvidia/tegra_usbphy.c		tegra_usbphy
+
+# USB 2.0
+attach	ehci at fdt with tegra_ehci
+file	arch/arm/nvidia/tegra_ehci.c		tegra_ehci
+
+# XUSB (USB 3.0)
+attach	xhci at fdt with tegra_xusb
+file	arch/arm/nvidia/tegra_xusb.c		tegra_xusb
+defflag	opt_tegra.h				TEGRA_XUSB_DEBUG
+
+# SDMMC
+attach	sdhc at fdt with tegra_sdhc
+file	arch/arm/nvidia/tegra_sdhc.c		tegra_sdhc
+
+# Thermal throttling controller
+device	tegrasoctherm: sysmon_envsys
+attach	tegrasoctherm at fdt with tegra_soctherm
+file	arch/arm/nvidia/tegra_soctherm.c	tegra_soctherm
+
+# PCIE
+device	tegrapcie: pcibus
+attach	tegrapcie at fdt with tegra_pcie
+file	arch/arm/nvidia/tegra_pcie.c		tegra_pcie
+
+# SATA
+attach	ahcisata at fdt with tegra_ahcisata
+file	arch/arm/nvidia/tegra_ahcisata.c	tegra_ahcisata
+
+# HDA
+attach	hdaudio at fdt with tegra_hdaudio
+file	arch/arm/nvidia/tegra_hdaudio.c		tegra_hdaudio
+
+# HDMI CEC
+device	tegracec: hdmicecbus
+attach	tegracec at fdt with tegra_cec
+file	arch/arm/nvidia/tegra_cec.c		tegra_cec
+
+# Display
+define	tegrafbbus { }
+device	tegradrm: drmkms, ddc_read_edid, tegrafbbus
+attach	tegradrm at fdt with tegra_drm
+file	arch/arm/nvidia/tegra_drm.c		tegra_drm
+file	arch/arm/nvidia/tegra_drm_mode.c	tegra_drm
+file	arch/arm/nvidia/tegra_drm_fb.c		tegra_drm
+file	arch/arm/nvidia/tegra_drm_gem.c		tegra_drm
+
+# Framebuffer console
+device	tegrafb: tegrafbbus, drmfb, wsemuldisplaydev
+attach	tegrafb at tegrafbbus with tegra_fb
+file	arch/arm/nvidia/tegra_fb.c		tegra_fb
+
+# GPU
+attach	nouveau at fdt with tegra_nouveau
+file	arch/arm/nvidia/tegra_nouveau.c		tegra_nouveau
+
+# SOC parameters
+defflag	opt_tegra.h			SOC_TEGRAK1
+defflag	opt_tegra.h			SOC_TEGRAX1
+defflag	opt_tegra.h			SOC_TEGRA124: SOC_TEGRAK1
+defflag	opt_tegra.h			SOC_TEGRA210: SOC_TEGRAX1

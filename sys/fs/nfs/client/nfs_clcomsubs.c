@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_clcomsubs.c,v 1.1.1.1.10.2 2014/08/20 00:04:26 tls Exp $	*/
+/*	$NetBSD: nfs_clcomsubs.c,v 1.1.1.1.10.3 2017/12/03 11:38:42 jdolecek Exp $	*/
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,8 +33,8 @@
  */
 
 #include <sys/cdefs.h>
-/* __FBSDID("FreeBSD: head/sys/fs/nfsclient/nfs_clcomsubs.c 244042 2012-12-08 22:52:39Z rmacklem "); */
-__RCSID("$NetBSD: nfs_clcomsubs.c,v 1.1.1.1.10.2 2014/08/20 00:04:26 tls Exp $");
+/* __FBSDID("FreeBSD: head/sys/fs/nfsclient/nfs_clcomsubs.c 304026 2016-08-12 22:44:59Z rmacklem "); */
+__RCSID("$NetBSD: nfs_clcomsubs.c,v 1.1.1.1.10.3 2017/12/03 11:38:42 jdolecek Exp $");
 
 /*
  * These functions support the macros and help fiddle mbuf chains for
@@ -42,9 +42,9 @@ __RCSID("$NetBSD: nfs_clcomsubs.c,v 1.1.1.1.10.2 2014/08/20 00:04:26 tls Exp $")
  * copy data between mbuf chains and uio lists.
  */
 #ifndef APPLEKEXT
-#include <fs/nfs/nfsport.h>
+#include <fs/nfs/common/nfsport.h>
 
-extern struct nfsstats newnfsstats;
+extern struct nfsstatsv1 nfsstatsv1;
 extern struct nfsv4_opflag nfsv4_opflag[NFSV41_NOPS];
 extern int ncl_mbuf_mlen;
 extern enum vtype newnv2tov_type[8];
@@ -68,8 +68,8 @@ static struct {
 	{ NFSV4OP_READLINK, 2, "Readlink", 8, },
 	{ NFSV4OP_READ, 1, "Read", 4, },
 	{ NFSV4OP_WRITE, 2, "Write", 5, },
-	{ NFSV4OP_OPEN, 3, "Open", 4, },
-	{ NFSV4OP_CREATE, 3, "Create", 6, },
+	{ NFSV4OP_OPEN, 5, "Open", 4, },
+	{ NFSV4OP_CREATE, 5, "Create", 6, },
 	{ NFSV4OP_CREATE, 1, "Create", 6, },
 	{ NFSV4OP_CREATE, 3, "Create", 6, },
 	{ NFSV4OP_REMOVE, 1, "Remove", 6, },
@@ -205,10 +205,11 @@ nfscl_reqstart(struct nfsrv_descript *nd, int procnum, struct nfsmount *nmp,
 			NFSM_BUILD(tl, u_int32_t *, NFSX_UNSIGNED);
 			*tl = txdr_unsigned(NFSV4OP_SEQUENCE);
 			if (sep == NULL)
-				nfsv4_setsequence(nd, NFSMNT_MDSSESSION(nmp),
+				nfsv4_setsequence(nmp, nd,
+				    NFSMNT_MDSSESSION(nmp),
 				    nfs_bigreply[procnum]);
 			else
-				nfsv4_setsequence(nd, sep,
+				nfsv4_setsequence(nmp, nd, sep,
 				    nfs_bigreply[procnum]);
 		}
 		if (nfsv4_opflag[nfsv4_opmap[procnum].op].needscfh > 0) {
@@ -220,9 +221,18 @@ nfscl_reqstart(struct nfsrv_descript *nd, int procnum, struct nfsmount *nmp,
 			    procnum != NFSPROC_COMMITDS) {
 				NFSM_BUILD(tl, u_int32_t *, NFSX_UNSIGNED);
 				*tl = txdr_unsigned(NFSV4OP_GETATTR);
-				NFSWCCATTR_ATTRBIT(&attrbits);
+				/*
+				 * For Lookup Ops, we want all the directory
+				 * attributes, so we can load the name cache.
+				 */
+				if (procnum == NFSPROC_LOOKUP ||
+				    procnum == NFSPROC_LOOKUPP)
+					NFSGETATTR_ATTRBIT(&attrbits);
+				else {
+					NFSWCCATTR_ATTRBIT(&attrbits);
+					nd->nd_flag |= ND_V4WCCATTR;
+				}
 				(void) nfsrv_putattrbit(nd, &attrbits);
-				nd->nd_flag |= ND_V4WCCATTR;
 			}
 		}
 		if (procnum != NFSPROC_RENEW ||
@@ -233,8 +243,8 @@ nfscl_reqstart(struct nfsrv_descript *nd, int procnum, struct nfsmount *nmp,
 	} else {
 		(void) nfsm_fhtom(nd, nfhp, fhlen, 0);
 	}
-	if (procnum < NFSV4_NPROCS)
-		NFSINCRGLOBAL(newnfsstats.rpccnt[procnum]);
+	if (procnum < NFSV41_NPROCS)
+		NFSINCRGLOBAL(nfsstatsv1.rpccnt[procnum]);
 }
 
 #ifndef APPLE

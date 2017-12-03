@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.138.2.2 2014/08/20 00:03:35 tls Exp $	*/
+/*	$NetBSD: db_command.c,v 1.138.2.3 2017/12/03 11:36:58 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2009 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.138.2.2 2014/08/20 00:03:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.138.2.3 2017/12/03 11:36:58 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -71,7 +71,6 @@ __KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.138.2.2 2014/08/20 00:03:35 tls Exp
 #include "opt_kernhist.h"
 #include "opt_ddbparam.h"
 #include "opt_multiprocessor.h"
-#include "arp.h"
 #endif
 
 #include <sys/param.h>
@@ -98,6 +97,8 @@ __KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.138.2.2 2014/08/20 00:03:35 tls Exp
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_ddb.h>
+
+#include <net/route.h>
 
 /*
  * Results of command search.
@@ -208,14 +209,14 @@ static void	db_uvmexp_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_kernhist_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 #endif
 static void	db_vnode_print_cmd(db_expr_t, bool, db_expr_t, const char *);
+static void	db_vnode_lock_print_cmd(db_expr_t, bool, db_expr_t,
+		    const char *);
 static void	db_vmem_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 
 static const struct db_command db_show_cmds[] = {
 	/*added from all sub cmds*/
-#ifdef _KERNEL	/* XXX CRASH(8) */
 	{ DDB_ADD_CMD("callout",  db_show_callout,
 	    0 ,"List all used callout functions.",NULL,NULL) },
-#endif
 	{ DDB_ADD_CMD("pages",	db_show_all_pages,
 	    0 ,"List all used memory pages.",NULL,NULL) },
 	{ DDB_ADD_CMD("proc",	db_show_proc,
@@ -231,8 +232,8 @@ static const struct db_command db_show_cmds[] = {
 #endif
 	{ DDB_ADD_CMD("all",	NULL,
 	    CS_COMPAT, NULL,NULL,NULL) },
-#if defined(INET) && (NARP > 0)
-	{ DDB_ADD_CMD("arptab",	db_show_arptab,		0,NULL,NULL,NULL) },
+#if defined(INET)
+	{ DDB_ADD_CMD("routes",	db_show_routes,		0,NULL,NULL,NULL) },
 #endif
 #ifdef _KERNEL
 	{ DDB_ADD_CMD("breaks",	db_listbreak_cmd, 	0,
@@ -283,6 +284,9 @@ static const struct db_command db_show_cmds[] = {
 #endif
 	{ DDB_ADD_CMD("vnode",	db_vnode_print_cmd,	0,
 	    "Print the vnode at address.", "[/f] address",NULL) },
+	{ DDB_ADD_CMD("vnode_lock",	db_vnode_lock_print_cmd,	0,
+	    "Print the vnode having that address as v_lock.",
+	    "[/f] address",NULL) },
 	{ DDB_ADD_CMD("vmem", db_vmem_print_cmd,	0,
 	    "Print the vmem usage.", "[/a] address", NULL) },
 	{ DDB_ADD_CMD("vmems", db_show_all_vmems,	0,
@@ -305,10 +309,8 @@ static const struct db_command db_command_table[] = {
 	    "Continue execution.", "[/c]",NULL) },
 	{ DDB_ADD_CMD("call",	db_fncall,		CS_OWN,
 	    "Call the function", "address[(expression[,...])]",NULL) },
-#ifdef _KERNEL	/* XXX CRASH(8) */
 	{ DDB_ADD_CMD("callout",	db_show_callout,	0, NULL,
 	    NULL,NULL ) },
-#endif
 	{ DDB_ADD_CMD("continue",	db_continue_cmd,	0,
 	    "Continue execution.", "[/c]",NULL) },
 	{ DDB_ADD_CMD("d",		db_delete_cmd,		0,
@@ -553,8 +555,13 @@ db_command_loop(void)
 	db_recover = &db_jmpbuf;
 	(void) setjmp(&db_jmpbuf);
 
-	/* Execute default ddb start commands */
-	db_execute_commandlist(db_cmd_on_enter);
+	/*
+	 * Execute default ddb start commands only if this is the
+	 * first entry into DDB, in case the start commands fault
+	 * and we recurse into here.
+	 */
+	if (!savejmp)
+		db_execute_commandlist(db_cmd_on_enter);
 
 	(void) setjmp(&db_jmpbuf);
 	while (!db_cmd_loop_done) {
@@ -1114,6 +1121,21 @@ db_vnode_print_cmd(db_expr_t addr, bool have_addr,
 
 /*ARGSUSED*/
 static void
+db_vnode_lock_print_cmd(db_expr_t addr, bool have_addr,
+    db_expr_t count, const char *modif)
+{
+#ifdef _KERNEL /* XXX CRASH(8) */
+	bool full = false;
+
+	if (modif[0] == 'f')
+		full = true;
+
+	vfs_vnode_lock_print((struct vnode *)(uintptr_t) addr, full, db_printf);
+#endif
+}
+
+/*ARGSUSED*/
+static void
 db_vmem_print_cmd(db_expr_t addr, bool have_addr,
     db_expr_t count, const char *modif)
 {
@@ -1188,7 +1210,7 @@ db_kernhist_print_cmd(db_expr_t addr, bool have_addr,
     db_expr_t count, const char *modif)
 {
 
-	kernhist_print(db_printf);
+	kernhist_print((void *)(uintptr_t)addr, db_printf);
 }
 #endif
 

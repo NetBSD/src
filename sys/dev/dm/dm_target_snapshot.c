@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_snapshot.c,v 1.15.12.1 2014/08/20 00:03:36 tls Exp $      */
+/*        $NetBSD: dm_target_snapshot.c,v 1.15.12.2 2017/12/03 11:37:00 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -221,8 +221,7 @@ dm_target_snapshot_init(dm_dev_t * dmv, void **target_config, char *params)
 	if ((dmp_snap = dm_pdev_insert(argv[0])) == NULL)
 		return ENOENT;
 
-	if ((tsc = kmem_alloc(sizeof(dm_target_snapshot_config_t), KM_NOSLEEP))
-	    == NULL)
+	if ((tsc = kmem_alloc(sizeof(*tsc), KM_NOSLEEP)) == NULL)
 		return 1;
 
 	tsc->tsc_persistent_dev = 0;
@@ -232,8 +231,10 @@ dm_target_snapshot_init(dm_dev_t * dmv, void **target_config, char *params)
 		tsc->tsc_persistent_dev = 1;
 
 		/* Insert cow device to global pdev list */
-		if ((dmp_cow = dm_pdev_insert(argv[1])) == NULL)
+		if ((dmp_cow = dm_pdev_insert(argv[1])) == NULL) {
+			kmem_free(tsc, sizeof(*tsc));
 			return ENOENT;
+		}
 	}
 	tsc->tsc_chunk_size = atoi(argv[3]);
 
@@ -342,7 +343,7 @@ dm_target_snapshot_destroy(dm_table_entry_t * table_en)
 
 	return 0;
 }
-/* Add this target dependiences to prop_array_t */
+/* Add this target dependencies to prop_array_t */
 int
 dm_target_snapshot_deps(dm_table_entry_t * table_en,
     prop_array_t prop_array)

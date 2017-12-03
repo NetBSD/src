@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.73.6.2 2014/08/20 00:03:38 tls Exp $	*/
+/*	$NetBSD: comvar.h,v 1.73.6.3 2017/12/03 11:37:03 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -30,14 +30,13 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "rnd.h"
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
 #include "opt_com.h"
 #include "opt_kgdb.h"
 
 #ifdef RND_COM
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 #endif
 
 #include <sys/callout.h>
@@ -92,27 +91,20 @@ int com_is_console(bus_space_tag_t, bus_addr_t, bus_space_handle_t *);
 #define	COM_REG_MCR		9
 #define	COM_REG_LSR		10
 #define	COM_REG_MSR		11
-#ifdef	COM_16750
-#define	COM_REG_USR		31
-#endif
+#define	COM_REG_USR		31	/* 16750/SUNXI */
+#define	COM_REG_TFL		32	/* SUNXI */
+#define	COM_REG_RFL		33	/* SUNXI */
+#define	COM_REG_HALT		41	/* SUNXI */
 
 struct com_regs {
 	bus_space_tag_t		cr_iot;
 	bus_space_handle_t	cr_ioh;
 	bus_addr_t		cr_iobase;
 	bus_size_t		cr_nports;
-#ifdef COM_16750
 	bus_size_t		cr_map[32];
-#else
-	bus_size_t		cr_map[16];
-#endif
 };
 
-#ifdef COM_16750
 extern const bus_size_t com_std_map[32];
-#else
-extern const bus_size_t com_std_map[16];
-#endif
 
 #define	COM_INIT_REGS(regs, tag, hdl, addr)				\
 	do {								\
@@ -139,9 +131,10 @@ extern const bus_size_t com_std_map[16];
 #define	COM_REG_TCR		com_msr
 #define	COM_REG_TLR		com_scratch
 #define	COM_REG_MDR1		8
-#ifdef	COM_16750
-#define COM_REG_USR		com_usr
-#endif
+#define COM_REG_USR		com_usr		/* 16750/SUNXI */
+#define	COM_REG_TFL		com_tfl		/* SUNXI */
+#define	COM_REG_RFL		com_rfl		/* SUNXI */
+#define	COM_REG_HALT		com_halt	/* SUNXI */
 
 struct com_regs {
 	bus_space_tag_t		cr_iot;
@@ -218,9 +211,7 @@ struct com_softc {
 	    sc_mcr_active, sc_lcr, sc_ier, sc_fifo, sc_dlbl, sc_dlbh, sc_efr;
 	u_char sc_mcr_dtr, sc_mcr_rts, sc_msr_cts, sc_msr_dcd;
 
-#ifdef COM_HAYESP
-	u_char sc_prescaler;
-#endif
+	u_char sc_prescaler;		/* for COM_TYPE_HAYESP */
 
 	/*
 	 * There are a great many almost-ns16550-compatible UARTs out
@@ -234,6 +225,12 @@ struct com_softc {
 #define	COM_TYPE_AU1x00		3	/* AMD/Alchemy Au1x000 proc. built-in */
 #define	COM_TYPE_OMAP		4	/* TI OMAP processor built-in */
 #define	COM_TYPE_16550_NOERS	5	/* like a 16550, no ERS */
+#define	COM_TYPE_INGENIC	6	/* JZ4780 built-in */
+#define	COM_TYPE_TEGRA		7	/* NVIDIA Tegra built-in */
+#define	COM_TYPE_BCMAUXUART	8	/* BCM2835 AUX UART */
+#define	COM_TYPE_16650		9
+#define	COM_TYPE_16750		10
+#define	COM_TYPE_SUNXI		11	/* Allwinner built-in */
 
 	/* power management hooks */
 	int (*enable)(struct com_softc *);

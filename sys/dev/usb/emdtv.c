@@ -1,4 +1,4 @@
-/* $NetBSD: emdtv.c,v 1.8.2.1 2013/02/25 00:29:33 tls Exp $ */
+/* $NetBSD: emdtv.c,v 1.8.2.2 2017/12/03 11:37:33 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2008, 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,11 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emdtv.c,v 1.8.2.1 2013/02/25 00:29:33 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emdtv.c,v 1.8.2.2 2017/12/03 11:37:33 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/lwp.h>
 #include <sys/module.h>
 #include <sys/conf.h>
 
@@ -72,7 +73,7 @@ emdtv_match(device_t parent, cfdata_t match, void *opaque)
 {
 	struct usb_attach_arg *uaa = opaque;
 
-	return usb_lookup(emdtv_devices, uaa->vendor, uaa->product) != NULL ?
+	return usb_lookup(emdtv_devices, uaa->uaa_vendor, uaa->uaa_product) != NULL ?
 	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
@@ -81,7 +82,7 @@ emdtv_attach(device_t parent, device_t self, void *opaque)
 {
 	struct emdtv_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = opaque;
-	usbd_device_handle dev = uaa->device;
+	struct usbd_device *dev = uaa->uaa_device;
 	usbd_status status;
 	char *devinfo;
 
@@ -93,8 +94,8 @@ emdtv_attach(device_t parent, device_t self, void *opaque)
 	sc->sc_dev = self;
 	sc->sc_udev = dev;
 
-	sc->sc_vendor = uaa->vendor;
-	sc->sc_product = uaa->product;
+	sc->sc_vendor = uaa->uaa_vendor;
+	sc->sc_product = uaa->uaa_product;
 
 	emdtv_i2c_attach(sc);
 
@@ -161,7 +162,7 @@ emdtv_detach(device_t self, int flags)
 	emdtv_dtv_detach(sc, flags);
 
 	if (sc->sc_iface != NULL) {
-        	status = usbd_set_interface(sc->sc_iface, 0);
+		status = usbd_set_interface(sc->sc_iface, 0);
 		if (status != USBD_NORMAL_COMPLETION)
 			aprint_error_dev(sc->sc_dev,
 			    "couldn't stop stream: %s\n", usbd_errstr(status));
@@ -382,7 +383,7 @@ emdtv_gpio_ctl(struct emdtv_softc *sc, emdtv_gpio_reg_t gpioreg, bool onoff)
 
 	if (sc->sc_board->eb_manual_gpio == false) {
 		val = eeprom_offset + gpioreg;
-		emdtv_write_1(sc, 0x03, 0xa0, val); 
+		emdtv_write_1(sc, 0x03, 0xa0, val);
 		gpio_value = emdtv_read_1(sc, 0x02, 0xa0);
 	} else {
 		const struct emdtv_gpio_regs *r = &eb->eb_gpio_regs;

@@ -10,32 +10,23 @@ SECTIONS
   {
     *(.text)
     *(.strings)
-     _etext = . ;
+    _etext = . ;
   }  > ram
-  .tors :
-  {
-    ___ctors = . ;
-    *(.ctors)
-    ___ctors_end = . ;
-    ___dtors = . ;
-    *(.dtors)
-    ___dtors_end = . ;
-  } > ram
   .data :
   {
     *(.data)
-     _edata = . ;
+    _edata = . ;
   }  > ram
   .bss :
   {
-     _bss_start = . ;
+    _bss_start = . ;
     *(.bss)
     *(COMMON)
-     _end = . ;
+    _end = . ;
   }  > ram
   .stack   :
   {
-     _stack = . ;
+    _stack = . ;
     *(.stack)
   }  > ram
   .stab 0 (NOLOAD) :

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.SKI,v 1.8.2.3 2014/08/20 00:03:07 tls Exp $
+# $NetBSD: GENERIC.SKI,v 1.8.2.4 2017/12/03 11:36:20 jdolecek Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/ia64/conf/std.ia64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.8.2.3 $"
+#ident 		"GENERIC-$Revision: 1.8.2.4 $"
 
 maxusers	32		# estimated number of users
 
@@ -32,28 +32,59 @@ maxusers	32		# estimated number of users
 # CPU-related options.
 
 # Standard system options
+options 	INSECURE	# disable kernel security levels - X needs this
+options 	NTP		# NTP phase/frequency locked loop
+
+options 	KTRACE		# system call tracing via ktrace(1)
+
+# Note: SysV IPC parameters can be changed dynamically; see sysctl(8).
+options 	SYSVMSG		# System V-like message queues
+options 	SYSVSEM		# System V-like semaphores
+options 	SYSVSHM		# System V-like memory sharing
+
+#options 	MODULAR		# new style module(7) framework
+#options 	MODULAR_DEFAULT_AUTOLOAD
 
 options 	USERCONF	# userconf(4) support
 
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC	# expensive kernel consistency checks
 options 	DEBUG		# expensive debugging checks/support
-#options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
+#options 	LOCKDEBUG	# expensive locking checks/support
 options 	DDB		# in-kernel debugger
-#options 	DDB_ONPANIC=1	# see also sysctl(7): `ddb.onpanic'
+options 	DDB_ONPANIC=1	# see also sysctl(7): `ddb.onpanic'
 #options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
 makeoptions	DEBUG="-g"	# compile full symbol table
 
+#options UVMHIST
+#options UVMHIST_PRINT
+
 # File systems
 file-system	FFS		# UFS
-#file-system 	MFS		# memory file system
+file-system	NFS		# Network File System client
+file-system 	MFS		# memory file system
+file-system	LFS		# log-structured file system
+#file-system	NTFS		# Windows/NT file system (experimental)
+file-system	CD9660		# ISO 9660 + Rock Ridge file system
+#file-system	MSDOSFS		# MS-DOS file system
+#file-system	FDESC		# /dev/fd
+file-system	KERNFS		# /kern
+file-system	NULLFS		# loopback file system
+#file-system	OVERLAY		# overlay file system
+#file-system	PROCFS		# /proc
 
+#options 	GATEWAY		# packet forwarding
+options 	INET		# IP + ICMP + TCP + UDP
+#options 	INET6		# IPv6
+#options 	IPSEC		# IP security
+
+#options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 
 # Kernel root file system and dump configuration.
-#config		netbsd	root on ? type ?
-config		netbsd	root on md0a type ffs
+config		netbsd	root on ? type ?
+#config		netbsd	root on md0a type ffs
 #config		netbsd	root on sd0a type ffs
 #config		netbsd	root on ? type nfs
 
@@ -64,6 +95,9 @@ config		netbsd	root on md0a type ffs
 mainbus0 at root
 
 cpu* at mainbus?
+
+#options 	ACPI_SCANPCI	# find PCI roots using ACPI
+
 acpi0 at mainbus?
 
 
@@ -75,20 +109,54 @@ cinclude "arch/ia64/conf/GENERIC.local"
 #wsdisplay*	at ssccons0 console ?
 #wskbd*		at ssccons0 console ?
 
-# Enable the hooks used for initializing the root memory-disk.
-options     MEMORY_DISK_HOOKS
-options     MEMORY_DISK_IS_ROOT         # force root on memory disk
-options     MEMORY_DISK_SERVER=1        # make the ramdisk writeable
-#options    MEMORY_DISK_ROOT_SIZE=2880  # 1.44M, same as a floppy
-options     MEMORY_DISK_ROOT_SIZE=8192  # 4Meg
-
 # Pseudo-Devices
 
+# Enable the hooks used for initializing the root memory-disk.
+pseudo-device	md			# memory disk device (ramdisk)
+#options 	MEMORY_DISK_DYNAMIC	# loaded via kernel module(7)
+##options 	MEMORY_DISK_HOOKS	# enable root ramdisk
+##options		MEMORY_DISK_IS_ROOT	# force md RAM disk to be the root device
+#options    MEMORY_DISK_ROOT_SIZE=2880  # 1.44M, same as a floppy
+##options     MEMORY_DISK_ROOT_SIZE=8192  # 4Meg
+##options     MEMORY_DISK_SERVER=1        # make the ramdisk writeable
 
-# wscons pseudo-devices
+#pseudo-device	vnd			# disk-like interface to files
+#options 	VND_COMPRESSION		# compressed vnd(4)
+
 pseudo-device	ssccons			# Ski emulator console
 #pseudo-device	wsmux			# mouse & keyboard multiplexor
 #pseudo-device	wsfont
 pseudo-device	ksyms			# /dev/ksyms
-pseudo-device	md
 
+# network pseudo-devices
+#pseudo-device	bpfilter		# Berkeley packet filter
+#pseudo-device	carp			# Common Address Redundancy Protocol
+#pseudo-device	ipfilter		# IP filter (firewall) and NAT
+pseudo-device	loop			# network loopback
+#pseudo-device	ifmpls			# MPLS pseudo-interface
+#pseudo-device	ppp			# Point-to-Point Protocol
+#pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
+#options 	PPPOE_SERVER		# Enable PPPoE server via link0
+#pseudo-device	sl			# Serial Line IP
+#pseudo-device	strip			# Starmode Radio IP (Metricom)
+#pseudo-device	irframetty		# IrDA frame line discipline
+#pseudo-device	tap			# virtual Ethernet
+#pseudo-device	tun			# network tunneling over tty
+#pseudo-device	gre			# generic L3 over IP tunnel
+#pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC 1933)
+#pseudo-device	faith			# IPv[46] TCP relay translation i/f
+#pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
+#pseudo-device	vlan			# IEEE 802.1q encapsulation
+#pseudo-device	bridge			# simple inter-network bridging
+#options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+#pseudo-device	agr			# IEEE 802.3ad link aggregation
+#pseudo-device	pf			# PF packet filter
+#pseudo-device	pflog			# PF log if
+#pseudo-device	pfsync			# PF sync if
+#pseudo-device	npf			# NPF packet filter
+#pseudo-device 	etherip 		# Tunnel Ethernet over IP
+# srt is EXPERIMENTAL
+#pseudo-device	srt			# source-address-based routing
+
+# miscellaneous pseudo-devices
+pseudo-device	pty			# pseudo-terminals

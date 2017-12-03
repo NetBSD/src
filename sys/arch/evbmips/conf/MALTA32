@@ -1,11 +1,10 @@
-# $NetBSD: MALTA32,v 1.3 2012/02/09 18:58:44 matt Exp $
+# $NetBSD: MALTA32,v 1.3.6.1 2017/12/03 11:36:09 jdolecek Exp $
 #
 include "arch/evbmips/conf/MALTA"
 
 makeoptions	LP64="no"
 
 no options	MIPS32
-options 	NOFPU		# No FPU
 #options 	EXEC_ELF64
 
 no ath*

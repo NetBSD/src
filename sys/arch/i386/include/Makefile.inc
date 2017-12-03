@@ -1,4 +1,7 @@
-# $NetBSD: Makefile.inc,v 1.1.26.1 2014/08/20 00:03:06 tls Exp $
+# $NetBSD: Makefile.inc,v 1.1.26.2 2017/12/03 11:36:17 jdolecek Exp $
+
+CFLAGS+=	-msoft-float
+CFLAGS+=	-mno-mmx -mno-sse -mno-avx
 
 # this should really be !(RUMPKERNEL && PIC)
 .if !defined(RUMPKERNEL)

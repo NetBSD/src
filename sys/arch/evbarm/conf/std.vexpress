@@ -1,0 +1,36 @@
+#       $NetBSD: std.vexpress,v 1.7.4.2 2017/12/03 11:36:04 jdolecek Exp $
+#
+# standard NetBSD/evbarm for VEXPRESS options
+
+machine evbarm arm
+include 	"arch/evbarm/conf/std.evbarm"
+
+# Pull in VEXPRESS config definitions
+include 	"arch/evbarm/conf/files.vexpress"
+
+options 	FDT				# Flattened Device Tree support
+options 	DRAM_BLOCKS=256
+options 	MODULAR
+options 	MODULAR_DEFAULT_AUTOLOAD
+options 	ARM_HAS_VBAR
+options 	__HAVE_CPU_COUNTER
+options 	__HAVE_CPU_UAREA_ALLOC_IDLELWP
+options 	__HAVE_FAST_SOFTINTS            # should be in types.h
+#options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
+options 	TPIDRPRW_IS_CURCPU
+options 	KERNEL_BASE_EXT=0x80000000
+options 	FPU_VFP
+
+makeoptions     KERNEL_BASE_PHYS="0x81000000"
+makeoptions     KERNEL_BASE_VIRT="0x81000000"
+makeoptions     BOARDTYPE="vexpress"
+makeoptions     BOARDMKFRAG="${THISARM}/conf/mk.vexpress"
+makeoptions     CPUFLAGS="-mcpu=cortex-a15 -mfpu=neon"
+
+options         ARM_INTR_IMPL="<arch/arm/fdt/fdt_intr.h>"
+options         ARM_GENERIC_TODR
+
+# initrd support
+options         MEMORY_DISK_HOOKS
+options         MEMORY_DISK_DYNAMIC
+pseudo-device   md

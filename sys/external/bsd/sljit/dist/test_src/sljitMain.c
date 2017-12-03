@@ -1,4 +1,4 @@
-/*	$NetBSD: sljitMain.c,v 1.2.2.3 2014/08/20 00:04:25 tls Exp $	*/
+/*	$NetBSD: sljitMain.c,v 1.2.2.4 2017/12/03 11:38:04 jdolecek Exp $	*/
 
 /*
  *    Stack-less Just-In-Time compiler
@@ -34,7 +34,7 @@
 void sljit_test(int argc, char* argv[]);
 
 #if 0
-void error(SLJIT_CONST char* str)
+void error(const char* str)
 {
 	printf("An error occured: %s\n", str);
 	exit(-1);
@@ -50,7 +50,7 @@ void devel(void)
 {
 	executable_code code;
 
-	struct sljit_compiler *compiler = sljit_create_compiler();
+	struct sljit_compiler *compiler = sljit_create_compiler(NULL);
 	sljit_sw buf[4];
 
 	if (!compiler)
@@ -63,7 +63,7 @@ void devel(void)
 #if (defined SLJIT_VERBOSE && SLJIT_VERBOSE)
 	sljit_compiler_verbose(compiler, stdout);
 #endif
-	sljit_emit_enter(compiler, 1, 4, 5, 2 * sizeof(sljit_sw));
+	sljit_emit_enter(compiler, 0, 1, 4, 5, 4, 0, 2 * sizeof(sljit_sw));
 
 	sljit_emit_return(compiler, SLJIT_MOV, SLJIT_RETURN_REG, 0);
 

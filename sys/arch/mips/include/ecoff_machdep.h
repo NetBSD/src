@@ -1,4 +1,4 @@
-/*	$NetBSD: ecoff_machdep.h,v 1.21 2012/03/20 11:28:04 nonaka Exp $	*/
+/*	$NetBSD: ecoff_machdep.h,v 1.21.2.1 2017/12/03 11:36:27 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone
@@ -37,13 +37,19 @@
 #define ECOFF_LDPGSZ 4096
 
 #define ECOFF_PAD
+#define ECOFF32_PAD
+
+#define ECOFF32_MACHDEP \
+        ecoff32_ulong gprmask; \
+        ecoff32_ulong cprmask[4]; \
+        ecoff32_ulong gp_value
 
 #define ECOFF_MACHDEP \
         u_long gprmask; \
         u_long cprmask[4]; \
         u_long gp_value
 #ifdef _KERNEL
-#include <mips/cpu.h>		/* mips CPU architecture levels */
+#include <mips/locore.h>		/* mips CPU architecture levels */
 #define _MIPS3_OK() CPUISMIPS3
 #else
 #define _MIPS3_OK() /*CONSTCOND*/1
@@ -67,6 +73,7 @@
 
 
 #define ECOFF_SEGMENT_ALIGNMENT(ep) ((ep)->a.vstamp < 23 ? 8 : 16)
+#define ECOFF32_SEGMENT_ALIGNMENT(ep) ((ep)->a.vstamp < 23 ? 8 : 16)
 
 #ifdef _KERNEL
 struct proc;
@@ -74,6 +81,34 @@ struct exec_package;
 void	cpu_exec_ecoff_setregs(struct lwp *, struct exec_package *, vaddr_t);
 #endif	/* _KERNEL */
 
+
+struct ecoff32_symhdr {
+	int16_t		magic;
+	int16_t		vstamp;
+	int32_t		ilineMax;
+	int32_t		cbLine;
+	int32_t		cbLineOffset;
+	int32_t		idnMax;
+	int32_t		cbDnOffset;
+	int32_t		ipdMax;
+	int32_t		cbPdOffset;
+	int32_t		isymMax;
+	int32_t		cbSymOffset;
+	int32_t		ioptMax;
+	int32_t		cbOptOffset;
+	int32_t		iauxMax;
+	int32_t		cbAuxOffset;
+	int32_t		issMax;
+	int32_t		cbSsOffset;
+	int32_t		issExtMax;
+	int32_t		cbSsExtOffset;
+	int32_t		ifdMax;
+	int32_t		cbFdOffset;
+	int32_t		crfd;
+	int32_t		cbRfdOffset;
+	int32_t		iextMax;
+	int32_t		cbExtOffset;
+};
 
 /*
  * ECOFF symbol definitions for 32-bit mips.
@@ -114,6 +149,17 @@ struct ecoff_symhdr {
 struct ecoff_extsym {
 	u_int16_t	es_flags;
 	u_int16_t	es_ifd;
+	int32_t		es_strindex;
+	int32_t		es_value;
+	unsigned	es_type:6;
+	unsigned	es_class:5;
+	unsigned	:1;
+	unsigned	es_symauxindex:20;
+};
+
+struct ecoff32_extsym {
+	uint16_t	es_flags;
+	uint16_t	es_ifd;
 	int32_t		es_strindex;
 	int32_t		es_value;
 	unsigned	es_type:6;

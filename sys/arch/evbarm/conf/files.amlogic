@@ -1,0 +1,10 @@
+#	$NetBSD: files.amlogic,v 1.1.20.2 2017/12/03 11:36:03 jdolecek Exp $
+#
+# Amlogic configuration info
+#
+
+file	arch/evbarm/amlogic/amlogic_machdep.c
+
+defparam opt_machdep.h				BOOT_ARGS
+
+include "arch/arm/amlogic/files.amlogic"

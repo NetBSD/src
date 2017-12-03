@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.48.2.2 2014/08/20 00:03:51 tls Exp $	*/
+/*	$NetBSD: ubt.c,v 1.48.2.3 2017/12/03 11:37:34 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -67,13 +67,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.48.2.2 2014/08/20 00:03:51 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.48.2.3 2017/12/03 11:37:34 jdolecek Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_usb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/mbuf.h>
 #include <sys/proc.h>
 #include <sys/sysctl.h>
@@ -160,7 +164,7 @@ SYSCTL_SETUP(sysctl_hw_ubt_debug_setup, "sysctl hw.ubt_debug setup")
 
 struct ubt_isoc_xfer {
 	struct ubt_softc	*softc;
-	usbd_xfer_handle	 xfer;
+	struct usbd_xfer	*xfer;
 	uint8_t			*buf;
 	uint16_t		 size[UBT_NFRAMES];
 	int			 busy;
@@ -168,56 +172,56 @@ struct ubt_isoc_xfer {
 
 struct ubt_softc {
 	device_t		 sc_dev;
-	usbd_device_handle	 sc_udev;
+	struct usbd_device	*sc_udev;
 	int			 sc_refcnt;
 	int			 sc_dying;
 	int			 sc_enabled;
 
 	/* Control Interface */
-	usbd_interface_handle	 sc_iface0;
+	struct usbd_interface *	 sc_iface0;
 
 	/* Commands (control) */
-	usbd_xfer_handle	 sc_cmd_xfer;
+	struct usbd_xfer	*sc_cmd_xfer;
 	uint8_t			*sc_cmd_buf;
 	int			 sc_cmd_busy;	/* write active */
 	MBUFQ_HEAD()		 sc_cmd_queue;	/* output queue */
 
 	/* Events (interrupt) */
 	int			 sc_evt_addr;	/* endpoint address */
-	usbd_pipe_handle	 sc_evt_pipe;
+	struct usbd_pipe	*sc_evt_pipe;
 	uint8_t			*sc_evt_buf;
 
 	/* ACL data (in) */
 	int			 sc_aclrd_addr;	/* endpoint address */
-	usbd_pipe_handle	 sc_aclrd_pipe;	/* read pipe */
-	usbd_xfer_handle	 sc_aclrd_xfer;	/* read xfer */
+	struct usbd_pipe	*sc_aclrd_pipe;	/* read pipe */
+	struct usbd_xfer	*sc_aclrd_xfer;	/* read xfer */
 	uint8_t			*sc_aclrd_buf;	/* read buffer */
 	int			 sc_aclrd_busy;	/* reading */
 
 	/* ACL data (out) */
 	int			 sc_aclwr_addr;	/* endpoint address */
-	usbd_pipe_handle	 sc_aclwr_pipe;	/* write pipe */
-	usbd_xfer_handle	 sc_aclwr_xfer;	/* write xfer */
+	struct usbd_pipe	*sc_aclwr_pipe;	/* write pipe */
+	struct usbd_xfer	*sc_aclwr_xfer;	/* write xfer */
 	uint8_t			*sc_aclwr_buf;	/* write buffer */
 	int			 sc_aclwr_busy;	/* write active */
 	MBUFQ_HEAD()		 sc_aclwr_queue;/* output queue */
 
 	/* ISOC interface */
-	usbd_interface_handle	 sc_iface1;	/* ISOC interface */
+	struct usbd_interface	*sc_iface1;	/* ISOC interface */
 	struct sysctllog	*sc_log;	/* sysctl log */
 	int			 sc_config;	/* current config no */
 	int			 sc_alt_config;	/* no of alternates */
 
 	/* SCO data (in) */
 	int			 sc_scord_addr;	/* endpoint address */
-	usbd_pipe_handle	 sc_scord_pipe;	/* read pipe */
+	struct usbd_pipe	*sc_scord_pipe;	/* read pipe */
 	int			 sc_scord_size;	/* frame length */
 	struct ubt_isoc_xfer	 sc_scord[UBT_NXFERS];
 	struct mbuf		*sc_scord_mbuf;	/* current packet */
 
 	/* SCO data (out) */
 	int			 sc_scowr_addr;	/* endpoint address */
-	usbd_pipe_handle	 sc_scowr_pipe;	/* write pipe */
+	struct usbd_pipe	*sc_scowr_pipe;	/* write pipe */
 	int			 sc_scowr_size;	/* frame length */
 	struct ubt_isoc_xfer	 sc_scowr[UBT_NXFERS];
 	struct mbuf		*sc_scowr_mbuf;	/* current packet */
@@ -242,30 +246,30 @@ static void ubt_disable(device_t);
 
 static void ubt_xmit_cmd(device_t, struct mbuf *);
 static void ubt_xmit_cmd_start(struct ubt_softc *);
-static void ubt_xmit_cmd_complete(usbd_xfer_handle,
-				usbd_private_handle, usbd_status);
+static void ubt_xmit_cmd_complete(struct usbd_xfer *,
+				void *, usbd_status);
 
 static void ubt_xmit_acl(device_t, struct mbuf *);
 static void ubt_xmit_acl_start(struct ubt_softc *);
-static void ubt_xmit_acl_complete(usbd_xfer_handle,
-				usbd_private_handle, usbd_status);
+static void ubt_xmit_acl_complete(struct usbd_xfer *,
+				void *, usbd_status);
 
 static void ubt_xmit_sco(device_t, struct mbuf *);
 static void ubt_xmit_sco_start(struct ubt_softc *);
 static void ubt_xmit_sco_start1(struct ubt_softc *, struct ubt_isoc_xfer *);
-static void ubt_xmit_sco_complete(usbd_xfer_handle,
-				usbd_private_handle, usbd_status);
+static void ubt_xmit_sco_complete(struct usbd_xfer *,
+				void *, usbd_status);
 
-static void ubt_recv_event(usbd_xfer_handle,
-				usbd_private_handle, usbd_status);
+static void ubt_recv_event(struct usbd_xfer *,
+				void *, usbd_status);
 
 static void ubt_recv_acl_start(struct ubt_softc *);
-static void ubt_recv_acl_complete(usbd_xfer_handle,
-				usbd_private_handle, usbd_status);
+static void ubt_recv_acl_complete(struct usbd_xfer *,
+				void *, usbd_status);
 
 static void ubt_recv_sco_start1(struct ubt_softc *, struct ubt_isoc_xfer *);
-static void ubt_recv_sco_complete(usbd_xfer_handle,
-				usbd_private_handle, usbd_status);
+static void ubt_recv_sco_complete(struct usbd_xfer *,
+				void *, usbd_status);
 
 static void ubt_stats(device_t, struct bt_stats *, int);
 
@@ -276,7 +280,7 @@ static const struct hci_if ubt_hci = {
 	.output_acl = ubt_xmit_acl,
 	.output_sco = ubt_xmit_sco,
 	.get_stats = ubt_stats,
-	.ipl = IPL_USB,		/* IPL_SOFTUSB ??? */
+	.ipl = IPL_SOFTUSB,
 };
 
 /*******************************************************************************
@@ -285,56 +289,193 @@ static const struct hci_if ubt_hci = {
  *
  */
 
-int             ubt_match(device_t, cfdata_t, void *);
-void            ubt_attach(device_t, device_t, void *);
-int             ubt_detach(device_t, int);
-int             ubt_activate(device_t, enum devact);
+int	ubt_match(device_t, cfdata_t, void *);
+void	ubt_attach(device_t, device_t, void *);
+int	ubt_detach(device_t, int);
+int	ubt_activate(device_t, enum devact);
 extern struct cfdriver ubt_cd;
-CFATTACH_DECL_NEW(ubt, sizeof(struct ubt_softc), ubt_match, ubt_attach, ubt_detach, ubt_activate);
+CFATTACH_DECL_NEW(ubt, sizeof(struct ubt_softc), ubt_match, ubt_attach,
+    ubt_detach, ubt_activate);
 
 static int ubt_set_isoc_config(struct ubt_softc *);
 static int ubt_sysctl_config(SYSCTLFN_PROTO);
 static void ubt_abortdealloc(struct ubt_softc *);
 
 /*
- * To match or ignore forcibly, add
- *
- *	{ { VendorID, ProductID } , UMATCH_VENDOR_PRODUCT|UMATCH_NONE }
- *
- * to the ubt_dev list.
+ * To match or ignore, add details to the ubt_dev list.
+ * Use value of -1 to indicate a wildcard
+ * To override another entry, add details earlier
  */
 const struct ubt_devno {
-	struct usb_devno	devno;
+	int			vendor;
+	int			product;
+	int			class;
+	int			subclass;
+	int			proto;
 	int			match;
 } ubt_dev[] = {
-	{ { USB_VENDOR_BROADCOM, USB_PRODUCT_BROADCOM_BCM2033NF },
-	  UMATCH_NONE },
-	{ { USB_VENDOR_APPLE, USB_PRODUCT_APPLE_BLUETOOTH_HOST_C },
-	  UMATCH_VENDOR_PRODUCT },
+	{   /* ignore Broadcom 2033 without firmware */
+	    USB_VENDOR_BROADCOM,
+	    USB_PRODUCT_BROADCOM_BCM2033NF,
+	    -1,
+	    -1,
+	    -1,
+	    UMATCH_NONE
+	},
+	{   /* Apple Bluetooth Host Controller MacbookPro 7,1 */
+	    USB_VENDOR_APPLE,
+	    USB_PRODUCT_APPLE_BLUETOOTH_HOST_1,
+	    -1,
+	    -1,
+	    -1,
+	    UMATCH_VENDOR_PRODUCT
+	},
+	{   /* Apple Bluetooth Host Controller iMac 11,1 */
+	    USB_VENDOR_APPLE,
+	    USB_PRODUCT_APPLE_BLUETOOTH_HOST_2,
+	    -1,
+	    -1,
+	    -1,
+	    UMATCH_VENDOR_PRODUCT
+	},
+	{   /* Apple Bluetooth Host Controller MacBookPro 8,2 */
+	    USB_VENDOR_APPLE,
+	    USB_PRODUCT_APPLE_BLUETOOTH_HOST_3,
+	    -1,
+	    -1,
+	    -1,
+	    UMATCH_VENDOR_PRODUCT
+	},
+	{   /* Apple Bluetooth Host Controller MacBookAir 3,1 3,2*/
+	    USB_VENDOR_APPLE,
+	    USB_PRODUCT_APPLE_BLUETOOTH_HOST_4,
+	    -1,
+	    -1,
+	    -1,
+	    UMATCH_VENDOR_PRODUCT
+	},
+	{   /* Apple Bluetooth Host Controller MacBookAir 4,1 */
+	    USB_VENDOR_APPLE,
+	    USB_PRODUCT_APPLE_BLUETOOTH_HOST_5,
+	    -1,
+	    -1,
+	    -1,
+	    UMATCH_VENDOR_PRODUCT
+	},
+	{   /* Apple Bluetooth Host Controller MacMini 5,1 */
+	    USB_VENDOR_APPLE,
+	    USB_PRODUCT_APPLE_BLUETOOTH_HOST_6,
+	    -1,
+	    -1,
+	    -1,
+	    UMATCH_VENDOR_PRODUCT
+	},
+	{   /* Apple Bluetooth Host Controller MacBookAir 6,1 */
+	    USB_VENDOR_APPLE,
+	    USB_PRODUCT_APPLE_BLUETOOTH_HOST_7,
+	    -1,
+	    -1,
+	    -1,
+	    UMATCH_VENDOR_PRODUCT
+	},
+	{   /* Apple Bluetooth Host Controller MacBookPro 9,2 */
+	    USB_VENDOR_APPLE,
+	    USB_PRODUCT_APPLE_BLUETOOTH_HOST_8,
+	    -1,
+	    -1,
+	    -1,
+	    UMATCH_VENDOR_PRODUCT
+	},
+	{   /* Broadcom chips with PatchRAM support */
+	    USB_VENDOR_BROADCOM,
+	    -1,
+	    UDCLASS_VENDOR,
+	    UDSUBCLASS_RF,
+	    UDPROTO_BLUETOOTH,
+	    UMATCH_VENDOR_DEVCLASS_DEVPROTO
+	},
+	{   /* Broadcom based device with PatchRAM support */
+	    USB_VENDOR_FOXCONN,
+	    -1,
+	    UDCLASS_VENDOR,
+	    UDSUBCLASS_RF,
+	    UDPROTO_BLUETOOTH,
+	    UMATCH_VENDOR_DEVCLASS_DEVPROTO
+	},
+	{   /* Broadcom based device with PatchRAM support */
+	    USB_VENDOR_LITEON,
+	    -1,
+	    UDCLASS_VENDOR,
+	    UDSUBCLASS_RF,
+	    UDPROTO_BLUETOOTH,
+	    UMATCH_VENDOR_DEVCLASS_DEVPROTO
+	},
+	{   /* Broadcom based device with PatchRAM support */
+	    USB_VENDOR_BELKIN,
+	    -1,
+	    UDCLASS_VENDOR,
+	    UDSUBCLASS_RF,
+	    UDPROTO_BLUETOOTH,
+	    UMATCH_VENDOR_DEVCLASS_DEVPROTO
+	},
+	{   /* Broadcom based device with PatchRAM support */
+	    USB_VENDOR_TOSHIBA,
+	    -1,
+	    UDCLASS_VENDOR,
+	    UDSUBCLASS_RF,
+	    UDPROTO_BLUETOOTH,
+	    UMATCH_VENDOR_DEVCLASS_DEVPROTO
+	},
+	{   /* Broadcom based device with PatchRAM support */
+	    USB_VENDOR_ASUSTEK,
+	    -1,
+	    UDCLASS_VENDOR,
+	    UDSUBCLASS_RF,
+	    UDPROTO_BLUETOOTH,
+	    UMATCH_VENDOR_DEVCLASS_DEVPROTO
+	},
+	{   /* Generic Bluetooth SIG compliant devices */
+	    -1,
+	    -1,
+	    UDCLASS_WIRELESS,
+	    UDSUBCLASS_RF,
+	    UDPROTO_BLUETOOTH,
+	    UMATCH_DEVCLASS_DEVSUBCLASS_DEVPROTO
+	},
 };
-#define ubt_lookup(vendor, product) \
-	((const struct ubt_devno *)usb_lookup(ubt_dev, vendor, product))
 
-int 
+int
 ubt_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
-	const struct ubt_devno *dev;
+	size_t i;
 
 	DPRINTFN(50, "ubt_match\n");
 
-	if ((dev = ubt_lookup(uaa->vendor, uaa->product)) != NULL)
-		return dev->match;
+	for (i = 0; i < __arraycount(ubt_dev); i++) {
+		if (ubt_dev[i].vendor != -1
+		    && ubt_dev[i].vendor != (int)uaa->uaa_vendor)
+			continue;
+		if (ubt_dev[i].product != -1
+		    && ubt_dev[i].product != (int)uaa->uaa_product)
+			continue;
+		if (ubt_dev[i].class != -1
+		    && ubt_dev[i].class != uaa->uaa_class)
+			continue;
+		if (ubt_dev[i].subclass != -1
+		    && ubt_dev[i].subclass != uaa->uaa_subclass)
+			continue;
+		if (ubt_dev[i].proto != -1
+		    && ubt_dev[i].proto != uaa->uaa_proto)
+			continue;
 
-	if (uaa->class == UDCLASS_WIRELESS
-	    && uaa->subclass == UDSUBCLASS_RF
-	    && uaa->proto == UDPROTO_BLUETOOTH)
-		return UMATCH_DEVCLASS_DEVSUBCLASS_DEVPROTO;
+		return ubt_dev[i].match;
+	}
 
 	return UMATCH_NONE;
 }
 
-void 
+void
 ubt_attach(device_t parent, device_t self, void *aux)
 {
 	struct ubt_softc *sc = device_private(self);
@@ -349,7 +490,7 @@ ubt_attach(device_t parent, device_t self, void *aux)
 	DPRINTFN(50, "ubt_attach: sc=%p\n", sc);
 
 	sc->sc_dev = self;
-	sc->sc_udev = uaa->device;
+	sc->sc_udev = uaa->uaa_device;
 
 	MBUFQ_INIT(&sc->sc_cmd_queue);
 	MBUFQ_INIT(&sc->sc_aclwr_queue);
@@ -367,7 +508,8 @@ ubt_attach(device_t parent, device_t self, void *aux)
 	 */
 	err = usbd_set_config_index(sc->sc_udev, 0, 1);
 	if (err) {
-		aprint_error_dev(self, "failed to set configuration idx 0: %s\n",
+		aprint_error_dev(self,
+		    "failed to set configuration idx 0: %s\n",
 		    usbd_errstr(err));
 
 		return;
@@ -381,8 +523,9 @@ ubt_attach(device_t parent, device_t self, void *aux)
 	 */
 	err = usbd_device2interface_handle(sc->sc_udev, 0, &sc->sc_iface0);
 	if (err) {
-		aprint_error_dev(self, "Could not get interface 0 handle %s (%d)\n",
-				usbd_errstr(err), err);
+		aprint_error_dev(self,
+		    "Could not get interface 0 handle %s (%d)\n",
+		    usbd_errstr(err), err);
 
 		return;
 	}
@@ -473,8 +616,7 @@ ubt_attach(device_t parent, device_t self, void *aux)
 	/* Attach HCI */
 	sc->sc_unit = hci_attach_pcb(&ubt_hci, sc->sc_dev, 0);
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-			   sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
 
 	/* sysctl set-up for alternate configs */
 	sysctl_createv(&sc->sc_log, 0, NULL, &node,
@@ -532,7 +674,7 @@ ubt_attach(device_t parent, device_t self, void *aux)
 	return;
 }
 
-int 
+int
 ubt_detach(device_t self, int flags)
 {
 	struct ubt_softc *sc = device_private(self);
@@ -572,8 +714,7 @@ ubt_detach(device_t self, int flags)
 
 	splx(s);
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			   sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
 
 	DPRINTFN(1, "driver detached\n");
 
@@ -607,7 +748,7 @@ ubt_set_isoc_config(struct ubt_softc *sc)
 
 	err = usbd_set_interface(sc->sc_iface1, sc->sc_config);
 	if (err != USBD_NORMAL_COMPLETION) {
-		aprint_error_dev(sc->sc_dev, 
+		aprint_error_dev(sc->sc_dev,
 		    "Could not set config %d on ISOC interface. %s (%d)\n",
 		    sc->sc_config, usbd_errstr(err), err);
 
@@ -739,71 +880,86 @@ ubt_abortdealloc(struct ubt_softc *sc)
 
 	if (sc->sc_evt_pipe != NULL) {
 		usbd_abort_pipe(sc->sc_evt_pipe);
-		usbd_close_pipe(sc->sc_evt_pipe);
-		sc->sc_evt_pipe = NULL;
 	}
 
 	if (sc->sc_aclrd_pipe != NULL) {
 		usbd_abort_pipe(sc->sc_aclrd_pipe);
-		usbd_close_pipe(sc->sc_aclrd_pipe);
-		sc->sc_aclrd_pipe = NULL;
 	}
 
 	if (sc->sc_aclwr_pipe != NULL) {
 		usbd_abort_pipe(sc->sc_aclwr_pipe);
-		usbd_close_pipe(sc->sc_aclwr_pipe);
-		sc->sc_aclwr_pipe = NULL;
 	}
 
 	if (sc->sc_scord_pipe != NULL) {
 		usbd_abort_pipe(sc->sc_scord_pipe);
-		usbd_close_pipe(sc->sc_scord_pipe);
-		sc->sc_scord_pipe = NULL;
 	}
 
 	if (sc->sc_scowr_pipe != NULL) {
 		usbd_abort_pipe(sc->sc_scowr_pipe);
-		usbd_close_pipe(sc->sc_scowr_pipe);
-		sc->sc_scowr_pipe = NULL;
 	}
 
 	/* Free event buffer */
 	if (sc->sc_evt_buf != NULL) {
-		free(sc->sc_evt_buf, M_USBDEV);
+		kmem_free(sc->sc_evt_buf, UBT_BUFSIZ_EVENT);
 		sc->sc_evt_buf = NULL;
 	}
 
 	/* Free all xfers and xfer buffers (implicit) */
 	if (sc->sc_cmd_xfer != NULL) {
-		usbd_free_xfer(sc->sc_cmd_xfer);
+		usbd_destroy_xfer(sc->sc_cmd_xfer);
 		sc->sc_cmd_xfer = NULL;
 		sc->sc_cmd_buf = NULL;
 	}
 
 	if (sc->sc_aclrd_xfer != NULL) {
-		usbd_free_xfer(sc->sc_aclrd_xfer);
+		usbd_destroy_xfer(sc->sc_aclrd_xfer);
 		sc->sc_aclrd_xfer = NULL;
 		sc->sc_aclrd_buf = NULL;
 	}
 
 	if (sc->sc_aclwr_xfer != NULL) {
-		usbd_free_xfer(sc->sc_aclwr_xfer);
+		usbd_destroy_xfer(sc->sc_aclwr_xfer);
 		sc->sc_aclwr_xfer = NULL;
 		sc->sc_aclwr_buf = NULL;
 	}
 
 	for (i = 0 ; i < UBT_NXFERS ; i++) {
 		if (sc->sc_scord[i].xfer != NULL) {
-			usbd_free_xfer(sc->sc_scord[i].xfer);
+			usbd_destroy_xfer(sc->sc_scord[i].xfer);
 			sc->sc_scord[i].xfer = NULL;
 			sc->sc_scord[i].buf = NULL;
 		}
 
 		if (sc->sc_scowr[i].xfer != NULL) {
-			usbd_free_xfer(sc->sc_scowr[i].xfer);
+			usbd_destroy_xfer(sc->sc_scowr[i].xfer);
 			sc->sc_scowr[i].xfer = NULL;
 			sc->sc_scowr[i].buf = NULL;
 		}
+	}
+
+	if (sc->sc_evt_pipe != NULL) {
+		usbd_close_pipe(sc->sc_evt_pipe);
+		sc->sc_evt_pipe = NULL;
+	}
+
+	if (sc->sc_aclrd_pipe != NULL) {
+		usbd_close_pipe(sc->sc_aclrd_pipe);
+		sc->sc_aclrd_pipe = NULL;
+	}
+
+	if (sc->sc_aclwr_pipe != NULL) {
+		usbd_close_pipe(sc->sc_aclwr_pipe);
+		sc->sc_aclwr_pipe = NULL;
+	}
+
+	if (sc->sc_scord_pipe != NULL) {
+		usbd_close_pipe(sc->sc_scord_pipe);
+		sc->sc_scord_pipe = NULL;
+	}
+
+	if (sc->sc_scowr_pipe != NULL) {
+		usbd_close_pipe(sc->sc_scowr_pipe);
+		sc->sc_scowr_pipe = NULL;
 	}
 
 	/* Free partial SCO packets */
@@ -843,11 +999,7 @@ ubt_enable(device_t self)
 	s = splusb();
 
 	/* Events */
-	sc->sc_evt_buf = malloc(UBT_BUFSIZ_EVENT, M_USBDEV, M_NOWAIT);
-	if (sc->sc_evt_buf == NULL) {
-		error = ENOMEM;
-		goto bad;
-	}
+	sc->sc_evt_buf = kmem_alloc(UBT_BUFSIZ_EVENT, KM_SLEEP);
 	err = usbd_open_pipe_intr(sc->sc_iface0,
 				  sc->sc_evt_addr,
 				  USBD_SHORT_XFER_OK,
@@ -863,16 +1015,12 @@ ubt_enable(device_t self)
 	}
 
 	/* Commands */
-	sc->sc_cmd_xfer = usbd_alloc_xfer(sc->sc_udev);
-	if (sc->sc_cmd_xfer == NULL) {
-		error = ENOMEM;
+	struct usbd_pipe *pipe0 = usbd_get_pipe0(sc->sc_udev);
+	error = usbd_create_xfer(pipe0, UBT_BUFSIZ_CMD, 0, 0,
+	    &sc->sc_cmd_xfer);
+	if (error)
 		goto bad;
-	}
-	sc->sc_cmd_buf = usbd_alloc_buffer(sc->sc_cmd_xfer, UBT_BUFSIZ_CMD);
-	if (sc->sc_cmd_buf == NULL) {
-		error = ENOMEM;
-		goto bad;
-	}
+	sc->sc_cmd_buf = usbd_get_buffer(sc->sc_cmd_xfer);
 	sc->sc_cmd_busy = 0;
 
 	/* ACL read */
@@ -882,16 +1030,11 @@ ubt_enable(device_t self)
 		error = EIO;
 		goto bad;
 	}
-	sc->sc_aclrd_xfer = usbd_alloc_xfer(sc->sc_udev);
-	if (sc->sc_aclrd_xfer == NULL) {
-		error = ENOMEM;
+	error = usbd_create_xfer(sc->sc_aclrd_pipe, UBT_BUFSIZ_ACL,
+	    USBD_SHORT_XFER_OK, 0, &sc->sc_aclrd_xfer);
+	if (error)
 		goto bad;
-	}
-	sc->sc_aclrd_buf = usbd_alloc_buffer(sc->sc_aclrd_xfer, UBT_BUFSIZ_ACL);
-	if (sc->sc_aclrd_buf == NULL) {
-		error = ENOMEM;
-		goto bad;
-	}
+	sc->sc_aclrd_buf = usbd_get_buffer(sc->sc_aclrd_xfer);
 	sc->sc_aclrd_busy = 0;
 	ubt_recv_acl_start(sc);
 
@@ -902,16 +1045,11 @@ ubt_enable(device_t self)
 		error = EIO;
 		goto bad;
 	}
-	sc->sc_aclwr_xfer = usbd_alloc_xfer(sc->sc_udev);
-	if (sc->sc_aclwr_xfer == NULL) {
-		error = ENOMEM;
+	error = usbd_create_xfer(sc->sc_aclwr_pipe, UBT_BUFSIZ_ACL,
+	    USBD_FORCE_SHORT_XFER, 0, &sc->sc_aclwr_xfer);
+	if (error)
 		goto bad;
-	}
-	sc->sc_aclwr_buf = usbd_alloc_buffer(sc->sc_aclwr_xfer, UBT_BUFSIZ_ACL);
-	if (sc->sc_aclwr_buf == NULL) {
-		error = ENOMEM;
-		goto bad;
-	}
+	sc->sc_aclwr_buf = usbd_get_buffer(sc->sc_aclwr_xfer);
 	sc->sc_aclwr_busy = 0;
 
 	/* SCO read */
@@ -924,17 +1062,15 @@ ubt_enable(device_t self)
 		}
 
 		for (i = 0 ; i < UBT_NXFERS ; i++) {
-			sc->sc_scord[i].xfer = usbd_alloc_xfer(sc->sc_udev);
-			if (sc->sc_scord[i].xfer == NULL) {
-				error = ENOMEM;
+		        error = usbd_create_xfer(sc->sc_scord_pipe,
+			    sc->sc_scord_size * UBT_NFRAMES,
+			    USBD_SHORT_XFER_OK, UBT_NFRAMES,
+			    &sc->sc_scord[i].xfer);
+			if (error)
 				goto bad;
-			}
-			sc->sc_scord[i].buf = usbd_alloc_buffer(sc->sc_scord[i].xfer,
-						sc->sc_scord_size * UBT_NFRAMES);
-			if (sc->sc_scord[i].buf == NULL) {
-				error = ENOMEM;
-				goto bad;
-			}
+
+			sc->sc_scord[i].buf =
+			    usbd_get_buffer(sc->sc_scord[i].xfer);
 			sc->sc_scord[i].softc = sc;
 			sc->sc_scord[i].busy = 0;
 			ubt_recv_sco_start1(sc, &sc->sc_scord[i]);
@@ -951,17 +1087,14 @@ ubt_enable(device_t self)
 		}
 
 		for (i = 0 ; i < UBT_NXFERS ; i++) {
-			sc->sc_scowr[i].xfer = usbd_alloc_xfer(sc->sc_udev);
-			if (sc->sc_scowr[i].xfer == NULL) {
-				error = ENOMEM;
+			error = usbd_create_xfer(sc->sc_scowr_pipe,
+			    sc->sc_scowr_size * UBT_NFRAMES,
+			    USBD_FORCE_SHORT_XFER, UBT_NFRAMES,
+			    &sc->sc_scowr[i].xfer);
+			if (error)
 				goto bad;
-			}
-			sc->sc_scowr[i].buf = usbd_alloc_buffer(sc->sc_scowr[i].xfer,
-						sc->sc_scowr_size * UBT_NFRAMES);
-			if (sc->sc_scowr[i].buf == NULL) {
-				error = ENOMEM;
-				goto bad;
-			}
+			sc->sc_scowr[i].buf =
+			    usbd_get_buffer(sc->sc_scowr[i].xfer);
 			sc->sc_scowr[i].softc = sc;
 			sc->sc_scowr[i].busy = 0;
 		}
@@ -1052,7 +1185,7 @@ ubt_xmit_cmd_start(struct ubt_softc *sc)
 				&req,
 				sc->sc_cmd_buf,
 				len,
-				USBD_NO_COPY | USBD_FORCE_SHORT_XFER,
+				USBD_FORCE_SHORT_XFER,
 				ubt_xmit_cmd_complete);
 
 	status = usbd_transfer(sc->sc_cmd_xfer);
@@ -1069,8 +1202,8 @@ ubt_xmit_cmd_start(struct ubt_softc *sc)
 }
 
 static void
-ubt_xmit_cmd_complete(usbd_xfer_handle xfer,
-			usbd_private_handle h, usbd_status status)
+ubt_xmit_cmd_complete(struct usbd_xfer *xfer,
+			void * h, usbd_status status)
 {
 	struct ubt_softc *sc = h;
 	uint32_t count;
@@ -1160,11 +1293,10 @@ ubt_xmit_acl_start(struct ubt_softc *sc)
 	sc->sc_stats.byte_tx += len;
 
 	usbd_setup_xfer(sc->sc_aclwr_xfer,
-			sc->sc_aclwr_pipe,
 			sc,
 			sc->sc_aclwr_buf,
 			len,
-			USBD_NO_COPY | USBD_FORCE_SHORT_XFER,
+			USBD_FORCE_SHORT_XFER,
 			UBT_ACL_TIMEOUT,
 			ubt_xmit_acl_complete);
 
@@ -1182,8 +1314,8 @@ ubt_xmit_acl_start(struct ubt_softc *sc)
 }
 
 static void
-ubt_xmit_acl_complete(usbd_xfer_handle xfer,
-		usbd_private_handle h, usbd_status status)
+ubt_xmit_acl_complete(struct usbd_xfer *xfer,
+		void * h, usbd_status status)
 {
 	struct ubt_softc *sc = h;
 
@@ -1321,19 +1453,18 @@ ubt_xmit_sco_start1(struct ubt_softc *sc, struct ubt_isoc_xfer *isoc)
 	}
 
 	usbd_setup_isoc_xfer(isoc->xfer,
-			     sc->sc_scowr_pipe,
 			     isoc,
 			     isoc->size,
 			     num,
-			     USBD_NO_COPY | USBD_FORCE_SHORT_XFER,
+			     USBD_FORCE_SHORT_XFER,
 			     ubt_xmit_sco_complete);
 
 	usbd_transfer(isoc->xfer);
 }
 
 static void
-ubt_xmit_sco_complete(usbd_xfer_handle xfer,
-		usbd_private_handle h, usbd_status status)
+ubt_xmit_sco_complete(struct usbd_xfer *xfer,
+		void * h, usbd_status status)
 {
 	struct ubt_isoc_xfer *isoc = h;
 	struct ubt_softc *sc;
@@ -1408,7 +1539,7 @@ ubt_mbufload(uint8_t *buf, int count, uint8_t type)
 }
 
 static void
-ubt_recv_event(usbd_xfer_handle xfer, usbd_private_handle h, usbd_status status)
+ubt_recv_event(struct usbd_xfer *xfer, void * h, usbd_status status)
 {
 	struct ubt_softc *sc = h;
 	struct mbuf *m;
@@ -1456,11 +1587,10 @@ ubt_recv_acl_start(struct ubt_softc *sc)
 	sc->sc_aclrd_busy = 1;
 
 	usbd_setup_xfer(sc->sc_aclrd_xfer,
-			sc->sc_aclrd_pipe,
 			sc,
 			sc->sc_aclrd_buf,
 			UBT_BUFSIZ_ACL,
-			USBD_NO_COPY | USBD_SHORT_XFER_OK,
+			USBD_SHORT_XFER_OK,
 			USBD_NO_TIMEOUT,
 			ubt_recv_acl_complete);
 
@@ -1478,8 +1608,8 @@ ubt_recv_acl_start(struct ubt_softc *sc)
 }
 
 static void
-ubt_recv_acl_complete(usbd_xfer_handle xfer,
-		usbd_private_handle h, usbd_status status)
+ubt_recv_acl_complete(struct usbd_xfer *xfer,
+		void * h, usbd_status status)
 {
 	struct ubt_softc *sc = h;
 	struct mbuf *m;
@@ -1555,19 +1685,18 @@ ubt_recv_sco_start1(struct ubt_softc *sc, struct ubt_isoc_xfer *isoc)
 		isoc->size[i] = sc->sc_scord_size;
 
 	usbd_setup_isoc_xfer(isoc->xfer,
-			     sc->sc_scord_pipe,
 			     isoc,
 			     isoc->size,
 			     UBT_NFRAMES,
-			     USBD_NO_COPY | USBD_SHORT_XFER_OK,
+			     USBD_SHORT_XFER_OK,
 			     ubt_recv_sco_complete);
 
 	usbd_transfer(isoc->xfer);
 }
 
 static void
-ubt_recv_sco_complete(usbd_xfer_handle xfer,
-		usbd_private_handle h, usbd_status status)
+ubt_recv_sco_complete(struct usbd_xfer *xfer,
+		void * h, usbd_status status)
 {
 	struct ubt_isoc_xfer *isoc = h;
 	struct ubt_softc *sc;
@@ -1694,7 +1823,7 @@ ubt_recv_sco_complete(usbd_xfer_handle xfer,
 					sc->sc_stats.sco_rx++;
 					if (!hci_input_sco(sc->sc_unit, m))
 						sc->sc_stats.err_rx++;
-						
+
 					m = NULL;
 				}
 			}

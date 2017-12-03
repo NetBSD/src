@@ -1,4 +1,4 @@
-/*	$NetBSD: rside.c,v 1.14 2012/07/31 15:50:31 bouyer Exp $	*/
+/*	$NetBSD: rside.c,v 1.14.2.1 2017/12/03 11:35:45 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher Gilbert
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rside.c,v 1.14 2012/07/31 15:50:31 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rside.c,v 1.14.2.1 2017/12/03 11:35:45 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,7 +115,6 @@ struct rside_softc {
 	struct bus_space        sc_tag;			/* custom tag */
 	struct rside_channel {
 		struct ata_channel rc_channel;		/* generic part */
-		struct ata_queue rc_chqueue;		/* channel queue */
 		irqhandler_t *rc_ih;			/* irq handler */
 	} rside_channels[2];
 	struct wdc_regs sc_wdc_regs[2];
@@ -199,7 +198,6 @@ rside_attach(device_t parent, device_t self, void *aux)
 
 		cp->ch_channel = channel;
 		cp->ch_atac = &sc->sc_wdcdev.sc_atac;
-		cp->ch_queue = &scp->rc_chqueue;
 		wdr->cmd_iot = wdr->ctl_iot = &sc->sc_tag;
 		if (bus_space_map(wdr->cmd_iot,
 		    rside_info[channel].drive_registers,
@@ -218,7 +216,7 @@ rside_attach(device_t parent, device_t self, void *aux)
 				continue;
 			}
 		}
-		wdc_init_shadow_regs(cp);
+		wdc_init_shadow_regs(wdr);
 
 		if (bus_space_map(wdr->ctl_iot,
 		    rside_info[channel].aux_register, 0x4, 0, &wdr->ctl_ioh))

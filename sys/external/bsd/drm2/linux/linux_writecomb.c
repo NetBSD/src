@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_writecomb.c,v 1.1.6.2 2014/08/20 00:04:22 tls Exp $	*/
+/*	$NetBSD: linux_writecomb.c,v 1.1.6.3 2017/12/03 11:38:00 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,16 +30,22 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_writecomb.c,v 1.1.6.2 2014/08/20 00:04:22 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_writecomb.c,v 1.1.6.3 2017/12/03 11:38:00 jdolecek Exp $");
 
-#ifdef _KERNEL_OPT
+#if defined(__i386__) || defined(__x86_64__)
+#define HAS_MTRR 1
+#endif
+
+#if defined(_KERNEL_OPT) && defined(HAS_MTRR)
 #include "opt_mtrr.h"
 #endif
 
 #include <sys/kmem.h>
 #include <sys/mutex.h>
 
+#if defined(MTRR)
 #include <machine/mtrr.h>
+#endif
 
 #include <linux/idr.h>
 #include <linux/io.h>
@@ -71,6 +77,7 @@ linux_writecomb_fini(void)
 int
 arch_phys_wc_add(unsigned long base, unsigned long size)
 {
+#if defined(MTRR)
 	struct mtrr *mtrr;
 	int n = 1;
 	int id;
@@ -111,11 +118,15 @@ fail1:	KASSERT(id < 0);
 fail0:	KASSERT(ret < 0);
 	kmem_free(mtrr, sizeof(*mtrr));
 	return ret;
+#else
+	return -1;
+#endif
 }
 
 void
 arch_phys_wc_del(int id)
 {
+#if defined(MTRR)
 	struct mtrr *mtrr;
 	int n;
 	int ret __diagused;
@@ -136,6 +147,7 @@ arch_phys_wc_del(int id)
 		KASSERT(n == 1);
 		kmem_free(mtrr, sizeof(*mtrr));
 	}
+#endif
 }
 
 int

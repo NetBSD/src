@@ -1,4 +1,4 @@
-/* $NetBSD: dtv_demux.c,v 1.4.12.1 2014/08/20 00:03:36 tls Exp $ */
+/* $NetBSD: dtv_demux.c,v 1.4.12.2 2017/12/03 11:37:00 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -52,7 +52,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtv_demux.c,v 1.4.12.1 2014/08/20 00:03:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtv_demux.c,v 1.4.12.2 2017/12/03 11:37:00 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -75,6 +75,7 @@ static int	dtv_demux_poll(struct file *, int);
 static int	dtv_demux_close(struct file *);
 
 static const struct fileops dtv_demux_fileops = {
+	.fo_name = "dtv_demux",
 	.fo_read = dtv_demux_read,
 	.fo_write = fbadop_write,
 	.fo_ioctl = dtv_demux_ioctl,
@@ -299,8 +300,6 @@ dtv_demux_open(struct dtv_softc *sc, int flags, int mode, lwp_t *l)
 
 	/* Allocate private storage */
 	demux = kmem_zalloc(sizeof(*demux), KM_SLEEP);
-	if (demux == NULL)
-		return ENOMEM;
 	demux->dd_sc = sc;
 	/* Default operation mode is unconfigured */
 	demux->dd_mode = DTV_DEMUX_MODE_NONE;

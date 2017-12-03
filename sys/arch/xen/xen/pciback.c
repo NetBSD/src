@@ -1,4 +1,4 @@
-/*      $NetBSD: pciback.c,v 1.7.6.1 2014/08/20 00:03:30 tls Exp $      */
+/*      $NetBSD: pciback.c,v 1.7.6.2 2017/12/03 11:36:51 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2009 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciback.c,v 1.7.6.1 2014/08/20 00:03:30 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciback.c,v 1.7.6.2 2017/12/03 11:36:51 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -188,6 +188,7 @@ struct pb_xenbus_instance {
 	/* communication with the domU */
         unsigned int pbx_evtchn; /* our even channel */
         struct xen_pci_sharedinfo *pbx_sh_info;
+        struct xen_pci_op op;
         grant_handle_t pbx_shinfo_handle; /* to unmap shared page */
 };
 
@@ -268,8 +269,8 @@ pciback_pci_attach(device_t parent, device_t self, void *aux)
 		    buf, sizeof(buf));
 		aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 	}
-	unbind_pirq_from_evtch(APIC_IRQ_LEGACY_IRQ(sc->sc_intrhandle.pirq));
-	sc->sc_irq = APIC_IRQ_LEGACY_IRQ(sc->sc_intrhandle.pirq);
+	unbind_pirq_from_evtch(APIC_IRQ_LEGACY_IRQ(sc->sc_intrhandle));
+	sc->sc_irq = APIC_IRQ_LEGACY_IRQ(sc->sc_intrhandle);
 	/* XXX should be done elsewhere ? */
 	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_INTERRUPT_REG);
 	reg &= ~ (PCI_INTERRUPT_LINE_MASK << PCI_INTERRUPT_LINE_SHIFT);
@@ -518,7 +519,7 @@ static int
 pciback_xenbus_destroy(void *arg)
 {
 	struct pb_xenbus_instance *pbxi = arg;
-	struct pciback_pci_dev *pbd; 
+	struct pciback_pci_dev *pbd;
 	struct gnttab_unmap_grant_ref op;
 	int err;
 
@@ -721,13 +722,16 @@ pciback_xenbus_evthandler(void * arg)
 {
 	struct pb_xenbus_instance *pbxi = arg;
 	struct pciback_pci_dev *pbd;
-	struct xen_pci_op *op = &pbxi->pbx_sh_info->op;
+	struct xen_pci_op *op = &pbxi->op;
 	u_int bus, dev, func;
 
 	hypervisor_clear_event(pbxi->pbx_evtchn);
 	if (xen_atomic_test_bit(&pbxi->pbx_sh_info->flags,
 	    _XEN_PCIF_active) == 0)
 		return 0;
+
+	memcpy(op, &pbxi->pbx_sh_info->op, sizeof (struct xen_pci_op));
+	__insn_barrier();
 	if (op->domain != 0) {
 		aprint_error("pciback: domain %d != 0", op->domain);
 		op->err = XEN_PCI_ERR_dev_not_found;
@@ -794,6 +798,8 @@ pciback_xenbus_evthandler(void * arg)
 		aprint_error("pciback: unknown cmd %d\n", op->cmd);
 		op->err = XEN_PCI_ERR_not_implemented;
 	}
+	pbxi->pbx_sh_info->op.value = op->value;
+	pbxi->pbx_sh_info->op.err = op->err;
 end:
 	xen_atomic_clear_bit(&pbxi->pbx_sh_info->flags, _XEN_PCIF_active);
 	hypervisor_notify_via_evtchn(pbxi->pbx_evtchn);

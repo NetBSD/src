@@ -1,4 +1,4 @@
-/*	$NetBSD: tsrtc.c,v 1.7 2011/07/01 19:11:34 dyoung Exp $	*/
+/*	$NetBSD: tsrtc.c,v 1.7.12.1 2017/12/03 11:36:07 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsrtc.c,v 1.7 2011/07/01 19:11:34 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsrtc.c,v 1.7.12.1 2017/12/03 11:36:07 jdolecek Exp $");
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
@@ -86,13 +86,13 @@ tsrtc_match(device_t parent, cfdata_t cf, void *aux)
 		return (0);
 
 	/* Read from the seconds counter. */
-	t1 = FROMBCD(tsrtc_read(sc, MC_SEC));
+	t1 = bcdtobin(tsrtc_read(sc, MC_SEC));
 	if (t1 > 59)
 		goto unmap;
 
 	/* Wait, then look again. */
 	DELAY(1100000);
-	t2 = FROMBCD(tsrtc_read(sc, MC_SEC));
+	t2 = bcdtobin(tsrtc_read(sc, MC_SEC));
 	if (t2 > 59)
 		goto unmap;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_in_cksum.S,v 1.2.22.1 2013/02/25 00:28:59 tls Exp $ */
+/*	$NetBSD: cpu_in_cksum.S,v 1.2.22.2 2017/12/03 11:36:45 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2001 Eduardo Horvath
@@ -26,12 +26,6 @@
 
 #include "assym.h"
 #include <machine/asm.h>
-
-#ifdef __arch64__
-#define	LDPTR	ldx
-#else
-#define	LDPTR	lduw
-#endif
 
 /*
  * int cpu_in_cksum(struct mbuf *m, int len, int off, uint32_t initial_sum);

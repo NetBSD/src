@@ -1,4 +1,4 @@
-/*	$NetBSD: rs5c372.c,v 1.12.6.1 2014/08/20 00:03:37 tls Exp $	*/
+/*	$NetBSD: rs5c372.c,v 1.12.6.2 2017/12/03 11:37:02 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 2005 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rs5c372.c,v 1.12.6.1 2014/08/20 00:03:37 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rs5c372.c,v 1.12.6.2 2017/12/03 11:37:02 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,12 +175,12 @@ rs5c372rtc_clock_read(struct rs5c372rtc_softc *sc, struct clock_ymdhms *dt)
 	/*
 	 * Convert the RS5C372's register values into something useable
 	 */
-	dt->dt_sec = FROMBCD(bcd[RS5C372_SECONDS] & RS5C372_SECONDS_MASK);
-	dt->dt_min = FROMBCD(bcd[RS5C372_MINUTES] & RS5C372_MINUTES_MASK);
-	dt->dt_hour = FROMBCD(bcd[RS5C372_HOURS] & RS5C372_HOURS_24MASK);
-	dt->dt_day = FROMBCD(bcd[RS5C372_DATE] & RS5C372_DATE_MASK);
-	dt->dt_mon = FROMBCD(bcd[RS5C372_MONTH] & RS5C372_MONTH_MASK);
-	dt->dt_year = FROMBCD(bcd[RS5C372_YEAR]) + 2000;
+	dt->dt_sec = bcdtobin(bcd[RS5C372_SECONDS] & RS5C372_SECONDS_MASK);
+	dt->dt_min = bcdtobin(bcd[RS5C372_MINUTES] & RS5C372_MINUTES_MASK);
+	dt->dt_hour = bcdtobin(bcd[RS5C372_HOURS] & RS5C372_HOURS_24MASK);
+	dt->dt_day = bcdtobin(bcd[RS5C372_DATE] & RS5C372_DATE_MASK);
+	dt->dt_mon = bcdtobin(bcd[RS5C372_MONTH] & RS5C372_MONTH_MASK);
+	dt->dt_year = bcdtobin(bcd[RS5C372_YEAR]) + 2000;
 
 	return (1);
 }
@@ -195,13 +195,13 @@ rs5c372rtc_clock_write(struct rs5c372rtc_softc *sc, struct clock_ymdhms *dt)
 	 * Convert our time representation into something the RS5C372
 	 * can understand.
 	 */
-	bcd[RS5C372_SECONDS] = TOBCD(dt->dt_sec);
-	bcd[RS5C372_MINUTES] = TOBCD(dt->dt_min);
-	bcd[RS5C372_HOURS] = TOBCD(dt->dt_hour);
-	bcd[RS5C372_DATE] = TOBCD(dt->dt_day);
-	bcd[RS5C372_DAY] = TOBCD(dt->dt_wday);
-	bcd[RS5C372_MONTH] = TOBCD(dt->dt_mon);
-	bcd[RS5C372_YEAR] = TOBCD(dt->dt_year % 100);
+	bcd[RS5C372_SECONDS] = bintobcd(dt->dt_sec);
+	bcd[RS5C372_MINUTES] = bintobcd(dt->dt_min);
+	bcd[RS5C372_HOURS] = bintobcd(dt->dt_hour);
+	bcd[RS5C372_DATE] = bintobcd(dt->dt_day);
+	bcd[RS5C372_DAY] = bintobcd(dt->dt_wday);
+	bcd[RS5C372_MONTH] = bintobcd(dt->dt_mon);
+	bcd[RS5C372_YEAR] = bintobcd(dt->dt_year % 100);
 
 	if (iic_acquire_bus(sc->sc_tag, I2C_F_POLL)) {
 		aprint_error_dev(sc->sc_dev, "rs5c372rtc_clock_write: failed to "

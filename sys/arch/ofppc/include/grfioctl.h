@@ -1,4 +1,4 @@
-/*	$NetBSD: grfioctl.h,v 1.3 2011/02/08 20:20:22 rmind Exp $	*/
+/*	$NetBSD: grfioctl.h,v 1.3.14.1 2017/12/03 11:36:34 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -40,6 +40,8 @@
 
 #ifndef _MACPPC_GRFIOCTL_H_
 #define _MACPPC_GRFIOCTL_H_
+
+#include <sys/ioccom.h>
 
 struct	grfinfo {
 	void *	gd_regaddr;		/* control registers physaddr */

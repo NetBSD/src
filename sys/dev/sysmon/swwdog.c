@@ -1,4 +1,4 @@
-/*	$NetBSD: swwdog.c,v 1.12.18.1 2014/08/20 00:03:50 tls Exp $	*/
+/*	$NetBSD: swwdog.c,v 1.12.18.2 2017/12/03 11:37:33 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Steven M. Bellovin
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: swwdog.c,v 1.12.18.1 2014/08/20 00:03:50 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: swwdog.c,v 1.12.18.2 2017/12/03 11:37:33 jdolecek Exp $");
 
 /*
  *
@@ -41,8 +41,8 @@ __KERNEL_RCSID(0, "$NetBSD: swwdog.c,v 1.12.18.1 2014/08/20 00:03:50 tls Exp $")
  *
  */
 #include <sys/param.h>
-#include <sys/callout.h>
 #include <sys/device.h>
+#include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/kmem.h>
 #include <sys/reboot.h>
@@ -50,41 +50,58 @@ __KERNEL_RCSID(0, "$NetBSD: swwdog.c,v 1.12.18.1 2014/08/20 00:03:50 tls Exp $")
 #include <sys/sysctl.h>
 #include <sys/wdog.h>
 #include <sys/workqueue.h>
+#include <sys/module.h>
 #include <dev/sysmon/sysmonvar.h>
 
-#include "ioconf.h"
+#ifndef _MODULE
+#include "opt_modular.h"
+#endif
 
 struct swwdog_softc {
-	device_t sc_dev;
-	struct sysmon_wdog sc_smw;
-	struct callout sc_c;
-	int sc_wdog_armed;
+	device_t		sc_dev;
+	struct sysmon_wdog	sc_smw;
+	struct callout		sc_c;
+	int			sc_armed;
 };
 
-void		swwdogattach(int);
+bool	swwdog_reboot = false;	/* false --> panic , true  --> reboot */
+
+static struct workqueue *wq;
+static device_t		swwdog_dev;
+
+MODULE(MODULE_CLASS_DRIVER, swwdog, "sysmon_wdog");
+
+#ifdef _MODULE
+CFDRIVER_DECL(swwdog, DV_DULL, NULL);
+#endif
+
+int swwdogattach(int);
+
+static int	swwdog_setmode(struct sysmon_wdog *);
+static int	swwdog_tickle(struct sysmon_wdog *);
+static bool	swwdog_suspend(device_t, const pmf_qual_t *);
+static int	swwdog_arm(struct swwdog_softc *);
+static int	swwdog_disarm(struct swwdog_softc *);
+
+static void	swwdog_panic(void *);
+
+static void	swwdog_sysctl_setup(void);
+static struct sysctllog *swwdog_sysctllog = NULL;
 
 static int	swwdog_match(device_t, cfdata_t, void *);
 static void	swwdog_attach(device_t, device_t, void *);
 static int	swwdog_detach(device_t, int);
 static bool	swwdog_suspend(device_t, const pmf_qual_t *);
 
-static int swwdog_setmode(struct sysmon_wdog *);
-static int swwdog_tickle(struct sysmon_wdog *);
-
-static int swwdog_arm(struct swwdog_softc *);
-static int swwdog_disarm(struct swwdog_softc *);
-
-static void swwdog_panic(void *);
-
-bool swwdog_reboot = false;		/* set for panic instead of reboot */
-
-#define	SWDOG_DEFAULT	60		/* 60-second default period */
+static int	swwdog_init(void *);
+static int	swwdog_fini(void *);
+static int	swwdog_modcmd(modcmd_t, void *);
 
 CFATTACH_DECL_NEW(swwdog, sizeof(struct swwdog_softc),
 	swwdog_match, swwdog_attach, swwdog_detach, NULL);
+extern struct cfdriver swwdog_cd;
 
-static void swwdog_sysctl_setup(void);
-static struct sysctllog *swwdog_sysctllog;
+#define	SWDOG_DEFAULT	60		/* 60-second default period */
 
 static void
 doreboot(struct work *wrkwrkwrk, void *p)
@@ -93,41 +110,48 @@ doreboot(struct work *wrkwrkwrk, void *p)
 	cpu_reboot(0, NULL);
 }
 
-static struct workqueue *wq;
-
-void
+int
 swwdogattach(int n __unused)
 {
-	int err;
+	int error;
 	static struct cfdata cf;
 
 	if (workqueue_create(&wq, "swwreboot", doreboot, NULL,
 	    PRI_NONE, IPL_NONE, 0) != 0) {
 		aprint_error("failed to create swwdog reboot wq");
+		return 1;
 	}
 
-	err = config_cfattach_attach(swwdog_cd.cd_name, &swwdog_ca);
-	if (err) {
-		aprint_error("%s: couldn't register cfattach: %d\n",
-		    swwdog_cd.cd_name, err);
-		config_cfdriver_detach(&swwdog_cd);
+	error = config_cfattach_attach(swwdog_cd.cd_name, &swwdog_ca);
+	if (error) {
+		aprint_error("%s: unable to attach cfattach\n",
+		    swwdog_cd.cd_name);
 		workqueue_destroy(wq);
-		return;
+		return error;
 	}
 
 	cf.cf_name = swwdog_cd.cd_name;
 	cf.cf_atname = swwdog_cd.cd_name;
 	cf.cf_unit = 0;
 	cf.cf_fstate = FSTATE_STAR;
+	cf.cf_pspec = NULL;
+	cf.cf_loc = NULL;
+	cf.cf_flags = 0;
 
-	(void)config_attach_pseudo(&cf);
+	swwdog_dev = config_attach_pseudo(&cf);
 
-	return;
+	if (swwdog_dev == NULL) {
+		config_cfattach_detach(swwdog_cd.cd_name, &swwdog_ca);
+		workqueue_destroy(wq);
+		return 1;
+	}
+	return 0;
 }
 
 static int
 swwdog_match(device_t parent, cfdata_t data, void *aux)
 {
+
 	return 1;
 }
 
@@ -136,20 +160,30 @@ swwdog_attach(device_t parent, device_t self, void *aux)
 {
 	struct swwdog_softc *sc = device_private(self);
 
+	if (workqueue_create(&wq, "swwreboot", doreboot, NULL,
+	    PRI_NONE, IPL_NONE, 0) != 0) {
+		aprint_error_dev(self, "failed to create reboot workqueue");
+	}
+
 	sc->sc_dev = self;
 	sc->sc_smw.smw_name = device_xname(self);
 	sc->sc_smw.smw_cookie = sc;
 	sc->sc_smw.smw_setmode = swwdog_setmode;
 	sc->sc_smw.smw_tickle = swwdog_tickle;
 	sc->sc_smw.smw_period = SWDOG_DEFAULT;
+
 	callout_init(&sc->sc_c, 0);
 	callout_setfunc(&sc->sc_c, swwdog_panic, sc);
 
 	if (sysmon_wdog_register(&sc->sc_smw) == 0)
 		aprint_normal_dev(self, "software watchdog initialized\n");
-	else
+	else {
 		aprint_error_dev(self, "unable to register software "
 		    "watchdog with sysmon\n");
+		callout_destroy(&sc->sc_c);
+		workqueue_destroy(wq);
+		return;
+	}
 
 	if (!pmf_device_register(self, swwdog_suspend, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
@@ -164,11 +198,12 @@ swwdog_detach(device_t self, int flags)
 
 	pmf_device_deregister(self);
 	swwdog_disarm(sc);
-	callout_destroy(&sc->sc_c);
 	sysctl_teardown(&swwdog_sysctllog);
+	sysmon_wdog_unregister(&sc->sc_smw);
+	callout_destroy(&sc->sc_c);
 	workqueue_destroy(wq);
 
-	return 1;
+	return 0;
 }
 
 static bool
@@ -236,7 +271,7 @@ swwdog_panic(void *vsc)
 	swwdog_reboot = false;
 	callout_schedule(&sc->sc_c, 60 * hz);	/* deliberate double-panic */
 
-	printf("%s: %d second timer expired\n", device_xname(sc->sc_dev),
+	printf("%s: %d second timer expired\n", "swwdog",
 	    sc->sc_smw.smw_period);
 
 	if (do_panic)
@@ -261,3 +296,82 @@ swwdog_sysctl_setup(void)
 	    NULL, 0, &swwdog_reboot, sizeof(bool),
 	    CTL_HW, me->sysctl_num, CTL_CREATE, CTL_EOL);
 }
+
+/*
+ * Module management
+ */
+
+static
+int
+swwdog_init(void *arg)
+{
+	/*
+	 * Merge the driver info into the kernel tables and attach the
+	 * pseudo-device
+	 */
+	int error = 0;
+
+
+#ifdef _MODULE
+	error = config_cfdriver_attach(&swwdog_cd);
+	if (error) {
+		aprint_error("%s: unable to attach cfdriver\n",
+		    swwdog_cd.cd_name);
+		return error;
+	}
+	error = swwdogattach(1);
+	if (error) {
+		aprint_error("%s: device attach failed\n", swwdog_cd.cd_name);
+		config_cfdriver_detach(&swwdog_cd);
+	}
+#endif
+
+	return error;
+}
+
+static
+int
+swwdog_fini(void *arg)
+{
+	int error;
+
+	error = config_detach(swwdog_dev, 0);
+
+#ifdef _MODULE
+	error = config_cfattach_detach(swwdog_cd.cd_name, &swwdog_ca);
+	if (error)
+		aprint_error("%s: error detaching cfattach: %d\n",
+		    swwdog_cd.cd_name, error);
+
+	error = config_cfdriver_detach(&swwdog_cd);
+	if (error)
+		aprint_error("%s: error detaching cfdriver: %d\n",
+		    swwdog_cd.cd_name, error);
+#endif
+
+        return error;
+}
+
+static
+int
+swwdog_modcmd(modcmd_t cmd, void *arg)
+{
+	int ret;
+ 
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		ret = swwdog_init(arg);
+		break;
+ 
+	case MODULE_CMD_FINI:
+		ret = swwdog_fini(arg);
+		break;
+ 
+	case MODULE_CMD_STAT:
+	default:
+		ret = ENOTTY;
+	}
+ 
+	return ret;
+}
+

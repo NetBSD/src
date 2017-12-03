@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -41,13 +41,11 @@
  * POSSIBILITY OF SUCH DAMAGES.
  */
 
-
-#define __PSTREE_C__
-
 #include "acpi.h"
 #include "accommon.h"
 #include "acparser.h"
 #include "amlcode.h"
+#include "acconvert.h"
 
 #define _COMPONENT          ACPI_PARSER
         ACPI_MODULE_NAME    ("pstree")
@@ -145,12 +143,12 @@ AcpiPsAppendArg (
     const ACPI_OPCODE_INFO  *OpInfo;
 
 
-    ACPI_FUNCTION_ENTRY ();
+    ACPI_FUNCTION_TRACE (PsAppendArg);
 
 
     if (!Op)
     {
-        return;
+        return_VOID;
     }
 
     /* Get the info structure for this opcode */
@@ -162,7 +160,7 @@ AcpiPsAppendArg (
 
         ACPI_ERROR ((AE_INFO, "Invalid AML Opcode: 0x%2.2X",
             Op->Common.AmlOpcode));
-        return;
+        return_VOID;
     }
 
     /* Check if this opcode requires argument sub-objects */
@@ -171,7 +169,7 @@ AcpiPsAppendArg (
     {
         /* Has no linked argument objects */
 
-        return;
+        return_VOID;
     }
 
     /* Append the argument to the linked argument list */
@@ -203,6 +201,8 @@ AcpiPsAppendArg (
 
         Op->Common.ArgListLength++;
     }
+
+    return_VOID;
 }
 
 
@@ -243,6 +243,7 @@ AcpiPsGetDepthNext (
     Next = AcpiPsGetArg (Op, 0);
     if (Next)
     {
+        ASL_CV_LABEL_FILENODE (Next);
         return (Next);
     }
 
@@ -251,6 +252,7 @@ AcpiPsGetDepthNext (
     Next = Op->Common.Next;
     if (Next)
     {
+        ASL_CV_LABEL_FILENODE (Next);
         return (Next);
     }
 
@@ -263,6 +265,8 @@ AcpiPsGetDepthNext (
         Arg = AcpiPsGetArg (Parent, 0);
         while (Arg && (Arg != Origin) && (Arg != Op))
         {
+
+            ASL_CV_LABEL_FILENODE (Arg);
             Arg = Arg->Common.Next;
         }
 
@@ -277,6 +281,7 @@ AcpiPsGetDepthNext (
         {
             /* Found sibling of parent */
 
+            ASL_CV_LABEL_FILENODE (Parent->Common.Next);
             return (Parent->Common.Next);
         }
 
@@ -284,6 +289,7 @@ AcpiPsGetDepthNext (
         Parent = Parent->Common.Parent;
     }
 
+    ASL_CV_LABEL_FILENODE (Next);
     return (Next);
 }
 
@@ -332,7 +338,7 @@ AcpiPsGetChild (
         Child = AcpiPsGetArg (Op, 1);
         break;
 
-    case AML_POWER_RES_OP:
+    case AML_POWER_RESOURCE_OP:
     case AML_INDEX_FIELD_OP:
 
         Child = AcpiPsGetArg (Op, 2);

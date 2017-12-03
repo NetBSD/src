@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe_tty.c,v 1.58.22.1 2014/08/20 00:03:38 tls Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.58.22.2 2017/12/03 11:37:04 jdolecek Exp $	*/
 
 /*
  * TODO
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.58.22.1 2014/08/20 00:03:38 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.58.22.2 2017/12/03 11:37:04 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -62,6 +62,8 @@ __KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.58.22.1 2014/08/20 00:03:38 tls Ex
 #include <dev/ir/sir.h>
 #include <dev/ir/irdaio.h>
 #include <dev/ir/irframevar.h>
+
+#include "ioconf.h"
 
 #ifdef IRFRAMET_DEBUG
 #define DPRINTF(x)	if (irframetdebug) printf x
@@ -124,8 +126,6 @@ int	irframetioctl(struct tty *, u_long, void *, int, struct lwp *);
 int	irframetinput(int, struct tty *);
 int	irframetstart(struct tty *);
 
-/* pseudo device init */
-void	irframettyattach(int);
 
 /* irframe methods */
 static int	irframet_open(void *, int, int, struct lwp *);
@@ -245,7 +245,7 @@ irframet_detach(device_t dev, int flags)
 	struct irframet_softc *sc = device_private(dev);
 	int rc;
 
-	callout_stop(&sc->sc_timeout);
+	callout_halt(&sc->sc_timeout, NULL);
 
 	rc = irframe_detach(dev, flags);
 
@@ -823,10 +823,19 @@ filt_irframetwrite(struct knote *kn, long hint)
 	return (0);
 }
 
-static const struct filterops irframetread_filtops =
-	{ 1, NULL, filt_irframetrdetach, filt_irframetread };
-static const struct filterops irframetwrite_filtops =
-	{ 1, NULL, filt_irframetwdetach, filt_irframetwrite };
+static const struct filterops irframetread_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_irframetrdetach,
+	.f_event = filt_irframetread,
+};
+
+static const struct filterops irframetwrite_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_irframetwdetach,
+	.f_event = filt_irframetwrite,
+};
 
 int
 irframet_kqfilter(void *h, struct knote *kn)

@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.12.12.1 2014/08/20 00:02:46 tls Exp $	*/
+/*	$NetBSD: signal.h,v 1.12.12.2 2017/12/03 11:35:53 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -47,6 +47,7 @@
 #define _ARM_SIGNAL_H_
 
 #include <sys/featuretest.h>
+#include <sys/sigtypes.h>
 
 #ifndef _LOCORE
 typedef int sig_atomic_t;

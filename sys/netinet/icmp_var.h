@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp_var.h,v 1.29 2011/12/24 19:54:41 christos Exp $	*/
+/*	$NetBSD: icmp_var.h,v 1.29.6.1 2017/12/03 11:39:03 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -56,8 +56,8 @@
 #define	ICMP_STAT_BMCASTTSTAMP	10	/* b/mcast tstamp requests dropped */
 #define	ICMP_STAT_LAST		16	/* Allow for 5 spare ones */
 #define	ICMP_STAT_OUTHIST	ICMP_STAT_LAST
-#define	ICMP_STAT_INHIST	(ICMP_STAT_LAST + ICMP_MAXTYPE)
-#define	ICMP_NSTATS		(ICMP_STAT_LAST + 2 * ICMP_MAXTYPE)
+#define	ICMP_STAT_INHIST	(ICMP_STAT_LAST + ICMP_NTYPES)
+#define	ICMP_NSTATS		(ICMP_STAT_LAST + 2 * ICMP_NTYPES)
 
 /*
  * Names for ICMP sysctl objects

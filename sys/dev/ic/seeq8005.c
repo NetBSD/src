@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005.c,v 1.48.2.2 2014/08/20 00:03:38 tls Exp $ */
+/* $NetBSD: seeq8005.c,v 1.48.2.3 2017/12/03 11:37:04 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Ben Harris
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.48.2.2 2014/08/20 00:03:38 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.48.2.3 2017/12/03 11:37:04 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.48.2.2 2014/08/20 00:03:38 tls Exp $"
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
 
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <sys/bus.h>
 #include <sys/intr.h>
@@ -875,8 +875,10 @@ ea_start(struct ifnet *ifp)
 	 * us (actually ea_txpacket()) back when the card's ready for more
 	 * frames.
 	 */
-	if (ifp->if_flags & IFF_OACTIVE)
+	if (ifp->if_flags & IFF_OACTIVE) {
+		splx(s);
 		return;
+	}
 
 	/* Mark interface as output active */
 
@@ -1205,7 +1207,6 @@ ea_rxint(struct seeq8005_softc *sc)
 			return;
 		}
 
-		ifp->if_ipackets++;
 		/* Pass data up to upper levels. */
 		ea_read(sc, addr + 4, len);
 
@@ -1244,13 +1245,7 @@ ea_read(struct seeq8005_softc *sc, int addr, int len)
 	if (m == NULL)
 		return;
 
-	/*
-	 * Check if there's a BPF listener on this interface.
-	 * If so, hand off the raw packet to bpf.
-	 */
-	bpf_mtap(ifp, m);
-
-	(*ifp->if_input)(ifp, m);
+	if_percpuq_enqueue(ifp->if_percpuq, m);
 }
 
 /*
@@ -1272,7 +1267,7 @@ ea_get(struct seeq8005_softc *sc, int addr, int totlen, struct ifnet *ifp)
         MGETHDR(m, M_DONTWAIT, MT_DATA);
         if (m == NULL)
                 return NULL;
-        m->m_pkthdr.rcvif = ifp;
+        m_set_rcvif(m, ifp);
         m->m_pkthdr.len = totlen;
         m->m_len = MHLEN;
         top = NULL;

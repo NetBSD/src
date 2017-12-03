@@ -1,4 +1,4 @@
-/* $NetBSD: if_gpn.c,v 1.4 2011/07/01 19:32:28 dyoung Exp $ */
+/* $NetBSD: if_gpn.c,v 1.4.12.1 2017/12/03 11:35:53 jdolecek Exp $ */
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include "opt_gemini.h"
 
-__KERNEL_RCSID(0, "$NetBSD: if_gpn.c,v 1.4 2011/07/01 19:32:28 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gpn.c,v 1.4.12.1 2017/12/03 11:35:53 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -298,16 +298,14 @@ gpn_process_data(struct gpn_softc *sc, const ipm_gpn_desc_t *gd)
 		struct mbuf *m;
 		m = sc->sc_rxmbuf;
 		sc->sc_rxmbuf = NULL;
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		KASSERT(((m->m_pkthdr.len + 63) >> 6) == gd->gd_pktlen64);
-		ifp->if_ipackets++;
 		ifp->if_ibytes += m->m_pkthdr.len;
-		bpf_mtap(ifp, m);
 #ifdef GPNDEBUG
 		printf("%s: rx len=%d crc=%#x\n", ifp->if_xname,
 		    m->m_pkthdr.len, m_crc32_le(m));
 #endif
-		(*ifp->if_input)(ifp, m);
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 	}
 
 out:
@@ -473,7 +471,12 @@ gpn_ifstart(struct ifnet *ifp)
 			ifp->if_obytes += m->m_len;
 		}
 		ifp->if_opackets++;
+
+		/*
+		 * XXX XXX 'last_gd' could be NULL
+		 */
 		last_gd->gd_subtype |= GPN_EOF;
+
 		sc->sc_txactive++;
 		sc->sc_free--;
 		gemini_ipm_produce(last_gd, 1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.42 2011/02/20 08:14:10 matt Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.42.14.1 2017/12/03 11:36:54 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.42 2011/02/20 08:14:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.42.14.1 2017/12/03 11:36:54 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,7 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.42 2011/02/20 08:14:10 matt Exp 
 #include <sys/exec.h>
 #include <sys/file.h>
 #include <sys/callout.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/msgbuf.h>
 #include <sys/mount.h>

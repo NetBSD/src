@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_cardbus.c,v 1.39 2011/08/01 11:20:28 drochner Exp $	*/
+/*	$NetBSD: ohci_cardbus.c,v 1.39.12.1 2017/12/03 11:37:00 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_cardbus.c,v 1.39 2011/08/01 11:20:28 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_cardbus.c,v 1.39.12.1 2017/12/03 11:37:00 jdolecek Exp $");
 
 #include "ehci_cardbus.h"
 
@@ -83,7 +83,8 @@ struct ohci_cardbus_softc {
 };
 
 CFATTACH_DECL_NEW(ohci_cardbus, sizeof(struct ohci_cardbus_softc),
-    ohci_cardbus_match, ohci_cardbus_attach, ohci_cardbus_detach, ohci_activate);
+    ohci_cardbus_match, ohci_cardbus_attach, ohci_cardbus_detach,
+    ohci_activate);
 
 int
 ohci_cardbus_match(device_t parent, cfdata_t match, void *aux)
@@ -93,9 +94,9 @@ ohci_cardbus_match(device_t parent, cfdata_t match, void *aux)
 	if (PCI_CLASS(ca->ca_class) == PCI_CLASS_SERIALBUS &&
 	    PCI_SUBCLASS(ca->ca_class) == PCI_SUBCLASS_SERIALBUS_USB &&
 	    PCI_INTERFACE(ca->ca_class) == PCI_INTERFACE_OHCI)
-		return (1);
+		return 1;
 
-	return (0);
+	return 0;
 }
 
 void
@@ -108,12 +109,10 @@ ohci_cardbus_attach(device_t parent, device_t self, void *aux)
 	cardbus_function_tag_t cf = ct->ct_cf;
 	pcireg_t csr;
 	char devinfo[256];
-	usbd_status r;
-	const char *vendor;
 	const char *devname = device_xname(self);
 
 	sc->sc.sc_dev = self;
-	sc->sc.sc_bus.hci_private = sc;
+	sc->sc.sc_bus.ub_hcpriv = sc;
 
 	pci_devinfo(ca->ca_id, ca->ca_class, 0, devinfo, sizeof(devinfo));
 	printf(": %s (rev. 0x%02x)\n", devinfo,
@@ -122,18 +121,17 @@ ohci_cardbus_attach(device_t parent, device_t self, void *aux)
 	/* Map I/O registers */
 	if (Cardbus_mapreg_map(ct, PCI_CBMEM, PCI_MAPREG_TYPE_MEM, 0,
 			   &sc->sc.iot, &sc->sc.ioh, NULL, &sc->sc.sc_size)) {
-		printf("%s: can't map mem space\n", devname);
+		aprint_error("%s: can't map mem space\n", devname);
 		return;
 	}
 
 	sc->sc_cc = cc;
 	sc->sc_cf = cf;
 	sc->sc_ct = ct;
-	sc->sc.sc_bus.dmatag = ca->ca_dmat;
+	sc->sc.sc_bus.ub_dmatag = ca->ca_dmat;
 
 	/* Enable the device. */
-	csr = Cardbus_conf_read(ct, ca->ca_tag,
-				PCI_COMMAND_STATUS_REG);
+	csr = Cardbus_conf_read(ct, ca->ca_tag, PCI_COMMAND_STATUS_REG);
 	Cardbus_conf_write(ct, ca->ca_tag, PCI_COMMAND_STATUS_REG,
 		       csr | PCI_COMMAND_MASTER_ENABLE
 			   | PCI_COMMAND_MEM_ENABLE);
@@ -144,22 +142,18 @@ ohci_cardbus_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_ih = Cardbus_intr_establish(ct, IPL_USB, ohci_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt\n", devname);
+		aprint_error("%s: couldn't establish interrupt\n", devname);
 		return;
 	}
 
 	/* Figure out vendor for root hub descriptor. */
-	vendor = pci_findvendor(ca->ca_id);
 	sc->sc.sc_id_vendor = PCI_VENDOR(ca->ca_id);
-	if (vendor)
-		strlcpy(sc->sc.sc_vendor, vendor, sizeof(sc->sc.sc_vendor));
-	else
-		snprintf(sc->sc.sc_vendor, sizeof(sc->sc.sc_vendor),
-		    "vendor 0x%04x", PCI_VENDOR(ca->ca_id));
+	pci_findvendor(sc->sc.sc_vendor, sizeof(sc->sc.sc_vendor),
+	    sc->sc.sc_id_vendor);
 
-	r = ohci_init(&sc->sc);
-	if (r != USBD_NORMAL_COMPLETION) {
-		printf("%s: init failed, error=%d\n", devname, r);
+	int err = ohci_init(&sc->sc);
+	if (err) {
+		aprint_error("%s: init failed, error=%d\n", devname, err);
 
 		/* Avoid spurious interrupts. */
 		Cardbus_intr_disestablish(ct, sc->sc_ih);
@@ -189,7 +183,7 @@ ohci_cardbus_detach(device_t self, int flags)
 
 	rv = ohci_detach(&sc->sc, flags);
 	if (rv)
-		return (rv);
+		return rv;
 	if (sc->sc_ih != NULL) {
 		Cardbus_intr_disestablish(ct, sc->sc_ih);
 		sc->sc_ih = NULL;
@@ -202,5 +196,5 @@ ohci_cardbus_detach(device_t self, int flags)
 #if NEHCI_CARDBUS > 0
 	usb_cardbus_rem(&sc->sc_cardbus);
 #endif
-	return (0);
+	return 0;
 }

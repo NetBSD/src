@@ -272,7 +272,7 @@ static inline int use_cpu_reloc(struct drm_i915_gem_object *obj)
 #  define	__iomem	__gtt_iomem
 
 static inline void
-iowrite32(uint32_t value, uint32_t __acpi_iomem *ptr)
+iowrite32(uint32_t value, uint32_t __gtt_iomem *ptr)
 {
 
 	__insn_barrier();

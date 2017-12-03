@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.57.2.1 2014/08/20 00:03:30 tls Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.57.2.2 2017/12/03 11:36:51 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.57.2.1 2014/08/20 00:03:30 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.57.2.2 2017/12/03 11:36:51 jdolecek Exp $");
 
 #include <sys/atomic.h>
 #include <sys/buf.h>
@@ -170,6 +170,7 @@ struct xbdback_instance {
 	bool xbdi_ro; /* is device read-only ? */
 	/* parameters for the communication */
 	unsigned int xbdi_evtchn;
+	struct intrhand *xbdi_ih;
 	/* private parameters for communication */
 	blkif_back_ring_proto_t xbdi_ring;
 	enum xbdi_proto xbdi_proto;
@@ -636,8 +637,10 @@ xbdback_connect(struct xbdback_instance *xbdi)
 	XENPRINTF(("xbdback %s: connect evchannel %d\n", xbusd->xbusd_path, xbdi->xbdi_evtchn));
 	xbdi->xbdi_evtchn = evop.u.bind_interdomain.local_port;
 
-	event_set_handler(xbdi->xbdi_evtchn, xbdback_evthandler,
-	    xbdi, IPL_BIO, xbdi->xbdi_name);
+	xbdi->xbdi_ih = intr_establish_xname(0, &xen_pic, xbdi->xbdi_evtchn,
+	    IST_LEVEL, IPL_BIO, xbdback_evthandler, xbdi, false,
+	    xbdi->xbdi_name);
+	KASSERT(xbdi->xbdi_ih != NULL);
 	aprint_verbose("xbd backend domain %d handle %#x (%d) "
 	    "using event channel %d, protocol %s\n", xbdi->xbdi_domid,
 	    xbdi->xbdi_handle, xbdi->xbdi_handle, xbdi->xbdi_evtchn, proto);
@@ -647,7 +650,7 @@ xbdback_connect(struct xbdback_instance *xbdi)
 	hypervisor_enable_event(xbdi->xbdi_evtchn);
 	hypervisor_notify_via_evtchn(xbdi->xbdi_evtchn);
 
-	if (kthread_create(IPL_NONE, KTHREAD_MPSAFE, NULL,
+	if (kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL,
 	    xbdback_thread, xbdi, NULL, "%s", xbdi->xbdi_name) == 0)
 		return 0;
 
@@ -681,8 +684,7 @@ xbdback_disconnect(struct xbdback_instance *xbdi)
 		return;
 	}
 	hypervisor_mask_event(xbdi->xbdi_evtchn);
-	event_remove_handler(xbdi->xbdi_evtchn, xbdback_evthandler,
-	    xbdi);
+	intr_disestablish(xbdi->xbdi_ih);
 
 	/* signal thread that we want to disconnect, then wait for it */
 	xbdi->xbdi_status = DISCONNECTING;
@@ -1022,6 +1024,7 @@ xbdback_co_main_loop(struct xbdback_instance *xbdi, void *obj)
 			req->sector_number = req64->sector_number;
 			break;
 		}
+		__insn_barrier();
 		XENPRINTF(("xbdback op %d req_cons 0x%x req_prod 0x%x "
 		    "resp_prod 0x%x id %" PRIu64 "\n", req->operation,
 			xbdi->xbdi_ring.ring_n.req_cons,
@@ -1623,7 +1626,7 @@ xbdback_iodone(struct buf *bp)
 	while(!SLIST_EMPTY(&xbd_io->xio_rq)) {
 		struct xbdback_fragment *xbd_fr;
 		struct xbdback_request *xbd_req;
-		struct xbdback_instance *rxbdi;
+		struct xbdback_instance *rxbdi __diagused;
 		int error;
 		
 		xbd_fr = SLIST_FIRST(&xbd_io->xio_rq);
@@ -1671,9 +1674,8 @@ xbdback_wakeup_thread(struct xbdback_instance *xbdi)
 	/* only set RUN state when we are WAITING for work */
 	if (xbdi->xbdi_status == WAITING)
 	       xbdi->xbdi_status = RUN;
-	mutex_exit(&xbdi->xbdi_lock);
-
 	cv_broadcast(&xbdi->xbdi_cv);
+	mutex_exit(&xbdi->xbdi_lock);
 }
 
 /*

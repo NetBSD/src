@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_hyperb.c,v 1.6.12.2 2014/08/20 00:03:10 tls Exp $	*/
+/*	$NetBSD: fpu_hyperb.c,v 1.6.12.3 2017/12/03 11:36:23 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -57,14 +57,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_hyperb.c,v 1.6.12.2 2014/08/20 00:03:10 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_hyperb.c,v 1.6.12.3 2017/12/03 11:36:23 jdolecek Exp $");
 
 #include <machine/ieee.h>
 
 #include "fpu_emulate.h"
-
-/* The number of items to terminate the Taylor expansion */
-#define MAX_ITEMS	(2000)
 
 /*
  * fpu_hyperb.c: defines the following functions
@@ -137,71 +134,14 @@ fpu_atanh(struct fpemu *fe)
 }
 
 /*
- * taylor expansion used by sinh(), cosh().
+ *            exp(x) + exp(-x)
+ * cosh(x) = ------------------
+ *                   2
  */
-static struct fpn *
-__fpu_sinhcosh_taylor(struct fpemu *fe, struct fpn *s0, uint32_t f)
-{
-	struct fpn res;
-	struct fpn x2;
-	struct fpn *s1;
-	struct fpn *r;
-	int sign;
-	uint32_t k;
-
-	/* x2 := x * x */
-	CPYFPN(&fe->fe_f1, &fe->fe_f2);
-	r = fpu_mul(fe);
-	CPYFPN(&x2, r);
-
-	/* res := s0 */
-	CPYFPN(&res, s0);
-
-	sign = 1;	/* sign := (-1)^n */
-
-	for (; f < (2 * MAX_ITEMS); ) {
-		/* (f1 :=) s0 * x^2 */
-		CPYFPN(&fe->fe_f1, s0);
-		CPYFPN(&fe->fe_f2, &x2);
-		r = fpu_mul(fe);
-		CPYFPN(&fe->fe_f1, r);
-
-		/*
-		 * for sinh(),  s1 := s0 * x^2 / (2n+1)2n
-		 * for cosh(),  s1 := s0 * x^2 / 2n(2n-1)
-		 */
-		k = f * (f + 1);
-		fpu_explode(fe, &fe->fe_f2, FTYPE_LNG, &k);
-		s1 = fpu_div(fe);
-
-		/* break if s1 is enough small */
-		if (ISZERO(s1))
-			break;
-		if (res.fp_exp - s1->fp_exp >= EXT_FRACBITS)
-			break;
-
-		/* s0 := s1 for next loop */
-		CPYFPN(s0, s1);
-
-		/* res += s1 */
-		CPYFPN(&fe->fe_f2, s1);
-		CPYFPN(&fe->fe_f1, &res);
-		r = fpu_add(fe);
-		CPYFPN(&res, r);
-
-		f += 2;
-		sign ^= 1;
-	}
-
-	CPYFPN(&fe->fe_f2, &res);
-	return &fe->fe_f2;
-}
-
 struct fpn *
 fpu_cosh(struct fpemu *fe)
 {
-	struct fpn s0;
-	struct fpn *r;
+	struct fpn x, *fp;
 
 	if (ISNAN(&fe->fe_f2))
 		return &fe->fe_f2;
@@ -211,17 +151,37 @@ fpu_cosh(struct fpemu *fe)
 		return &fe->fe_f2;
 	}
 
-	fpu_const(&s0, FPU_CONST_1);
-	r = __fpu_sinhcosh_taylor(fe, &s0, 1);
+	/* if x is +0/-0, return 1 */ /* XXX is this necessary? */
+	if (ISZERO(&fe->fe_f2)) {
+		fpu_const(&fe->fe_f2, FPU_CONST_1);
+		return &fe->fe_f2;
+	}
 
-	return r;
+	fp = fpu_etox(fe);
+	CPYFPN(&x, fp);
+
+	fpu_const(&fe->fe_f1, FPU_CONST_1);
+	CPYFPN(&fe->fe_f2, fp);
+	fp = fpu_div(fe);
+
+	CPYFPN(&fe->fe_f1, fp);
+	CPYFPN(&fe->fe_f2, &x);
+	fp = fpu_add(fe);
+
+	fp->fp_exp--;
+
+	return fp;
 }
 
+/*
+ *            exp(x) - exp(-x)
+ * sinh(x) = ------------------
+ *                   2
+ */
 struct fpn *
 fpu_sinh(struct fpemu *fe)
 {
-	struct fpn s0;
-	struct fpn *r;
+	struct fpn x, *fp;
 
 	if (ISNAN(&fe->fe_f2))
 		return &fe->fe_f2;
@@ -232,12 +192,28 @@ fpu_sinh(struct fpemu *fe)
 	if (ISZERO(&fe->fe_f2))
 		return &fe->fe_f2;
 
-	CPYFPN(&s0, &fe->fe_f2);
-	r = __fpu_sinhcosh_taylor(fe, &s0, 2);
+	fp = fpu_etox(fe);
+	CPYFPN(&x, fp);
 
-	return r;
+	fpu_const(&fe->fe_f1, FPU_CONST_1);
+	CPYFPN(&fe->fe_f2, fp);
+	fp = fpu_div(fe);
+
+	fp->fp_sign = 1;
+	CPYFPN(&fe->fe_f1, fp);
+	CPYFPN(&fe->fe_f2, &x);
+	fp = fpu_add(fe);
+
+	fp->fp_exp--;
+
+	return fp;
 }
 
+/*
+ *            sinh(x)
+ * tanh(x) = ---------
+ *            cosh(x)
+ */
 struct fpn *
 fpu_tanh(struct fpemu *fe)
 {

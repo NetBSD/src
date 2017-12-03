@@ -1,4 +1,4 @@
-/*	$NetBSD: ns16550reg.h,v 1.7.120.1 2013/06/23 06:20:17 tls Exp $	*/
+/*	$NetBSD: ns16550reg.h,v 1.7.120.2 2017/12/03 11:37:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -51,7 +51,11 @@
 /*
  * Additional register present in NS16750 
  */
-#ifdef COM_16750
-#define com_usr		31	/* status register (R) */
-#endif
+#define com_usr		31	/* status register (R) (16750/SUNXI) */
 
+/*
+ * Additional registers present on Allwinner hardware
+ */
+#define	com_tfl		32	/* transmit fifo level (R) (SUNXI) */
+#define	com_rfl		33	/* receive fifo level (R) (SUNXI) */
+#define	com_halt	41	/* halt tx (R/W) (SUNXI) */

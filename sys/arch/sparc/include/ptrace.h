@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.7 2008/01/25 12:03:37 skrll Exp $ */
+/*	$NetBSD: ptrace.h,v 1.7.54.1 2017/12/03 11:36:43 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,3 +53,16 @@
 	"PT_SETREGS", \
 	"PT_GETFPREGS", \
 	"PT_SETFPREGS",
+
+#include <machine/reg.h>
+#define PTRACE_REG_PC(r)	((register_t)(r)->r_pc)
+#define PTRACE_REG_SET_PC(r, v)	do {	\
+	(r)->r_pc = (v);		\
+	(r)->r_npc = (v) + 4;		\
+    } while (/*CONSTCOND*/0)
+#define PTRACE_REG_SP(r)	((register_t)(r)->r_out[6])
+#define PTRACE_REG_INTRV(r)	((register_t)(r)->r_out[0])
+
+#define PTRACE_BREAKPOINT	((const uint8_t[]) { 0x91, 0xd0, 0x20, 0x01 })
+#define PTRACE_BREAKPOINT_ASM	__asm __volatile("ta 1")
+#define PTRACE_BREAKPOINT_SIZE	4

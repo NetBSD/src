@@ -1,4 +1,4 @@
-/* $NetBSD: tiotg.c,v 1.2.6.2 2014/08/20 00:02:47 tls Exp $ */
+/* $NetBSD: tiotg.c,v 1.2.6.3 2017/12/03 11:35:55 jdolecek Exp $ */
 /*
  * Copyright (c) 2013 Manuel Bouyer.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tiotg.c,v 1.2.6.2 2014/08/20 00:02:47 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tiotg.c,v 1.2.6.3 2017/12/03 11:35:55 jdolecek Exp $");
 
 #include "opt_omap.h"
 #include "locators.h"
@@ -38,7 +38,8 @@ __KERNEL_RCSID(0, "$NetBSD: tiotg.c,v 1.2.6.2 2014/08/20 00:02:47 tls Exp $");
 #include <sys/kernel.h>
 #include <sys/mutex.h>
 #include <sys/condvar.h>
-#include <arm/omap/omap2_obiovar.h>
+#include <arm/mainbus/mainbus.h>
+#include <arm/omap/omap_var.h>
 
 #include <arm/omap/omap2_reg.h>
 #include <arm/omap/tiotgreg.h>
@@ -56,14 +57,19 @@ __KERNEL_RCSID(0, "$NetBSD: tiotg.c,v 1.2.6.2 2014/08/20 00:02:47 tls Exp $");
 #include <dev/usb/usb_mem.h>
 #include <dev/usb/motgreg.h>
 #include <dev/usb/motgvar.h>
+#include <dev/usb/usbhist.h>
 
-#define MOTG_DEBUG
-#ifdef MOTG_DEBUG
-extern int motgdebug;
-#define DPRINTF(x) if (motgdebug) printf x
+#ifdef USB_DEBUG
+#ifndef MOTG_DEBUG
+#define motgdebug 0
 #else
-#define DPRINTF(x)
-#endif
+extern int motgdebug;
+#endif /* MOTG_DEBUG */
+#endif /* USB_DEBUG */
+
+#define	DPRINTF(FMT,A,B,C,D)	USBHIST_LOGN(motgdebug,1,FMT,A,B,C,D)
+#define	MOTGHIST_FUNC()		USBHIST_FUNC()
+#define	MOTGHIST_CALLED(name)	USBHIST_CALLED(motgdebug)
 
 struct tiotg_softc {
 	device_t		sc_dev;
@@ -122,35 +128,36 @@ CFATTACH_DECL2_NEW(motg, sizeof(struct ti_motg_softc),
 static int
 tiotg_match(device_t parent, cfdata_t match, void *aux)
 {
-        struct obio_attach_args *obio = aux;
+	struct mainbus_attach_args *mb = aux;
 
-        if ((obio->obio_addr == -1) || (obio->obio_size == 0) ||
-	    (obio->obio_intrbase == -1))
-                return 0;
-        return 1;
+	if (mb->mb_iobase == MAINBUSCF_BASE_DEFAULT ||
+	    mb->mb_iosize == MAINBUSCF_SIZE_DEFAULT ||
+	    mb->mb_intrbase == MAINBUSCF_INTRBASE_DEFAULT)
+		return 0;
+	return 1;
 }
 
 static void
 tiotg_attach(device_t parent, device_t self, void *aux)
 {
-	struct tiotg_softc       *sc = device_private(self);
-	struct obio_attach_args *obio = aux;
+	struct tiotg_softc *sc = device_private(self);
+	struct mainbus_attach_args *mb = aux;
 	uint32_t val;
 
-	sc->sc_iot = obio->obio_iot;
-	sc->sc_dmat = obio->obio_dmat;
+	sc->sc_iot = &omap_bs_tag;
+	sc->sc_dmat = &omap_bus_dma_tag;
 	sc->sc_dev = self;
 
-	if (bus_space_map(obio->obio_iot, obio->obio_addr, obio->obio_size, 0,
+	if (bus_space_map(sc->sc_iot, mb->mb_iobase, mb->mb_iosize, 0,
 	    &sc->sc_ioh)) {
 		aprint_error(": couldn't map register space\n");
 		return;
 	}
 
-	sc->sc_intrbase = obio->obio_intrbase;
-	sc->sc_ih = intr_establish(obio->obio_intrbase, IPL_USB, IST_LEVEL,
+	sc->sc_intrbase = mb->mb_intrbase;
+	sc->sc_ih = intr_establish(mb->mb_intrbase, IPL_USB, IST_LEVEL,
 	    tiotg_intr, sc);
-        KASSERT(sc->sc_ih != NULL);
+	KASSERT(sc->sc_ih != NULL);
 	aprint_normal(": TI dual-port USB controller");
 	/* XXX this looks wrong */
 	prcm_write_4(AM335X_PRCM_CM_WKUP, CM_WKUP_CM_CLKDCOLDO_DPLL_PER,
@@ -212,7 +219,7 @@ tiotg_childdet(device_t self, device_t child)
 {
 	struct tiotg_softc *sc = device_private(self);
 	int i;
-	
+
 	for (i = 0; TI_OTG_NPORTS; i++) {
 		if (child == sc->sc_motgdev[i]) {
 			sc->sc_motgdev[i] = NULL;
@@ -222,7 +229,7 @@ tiotg_childdet(device_t self, device_t child)
 }
 
 static int
-tiotg_intr(void * v)
+tiotg_intr(void *v)
 {
 	panic("tiotg_intr");
 }
@@ -283,6 +290,7 @@ ti_motg_attach(device_t parent, device_t self, void *aux)
 	const char *mode;
 	u_int state;
 #endif
+	MOTGHIST_FUNC(); MOTGHIST_CALLED();
 
 	sc->sc_motg.sc_dev = self;
 	sc->sc_ctrliot = aa->aa_iot;
@@ -290,10 +298,10 @@ ti_motg_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ctrlih = intr_establish(aa->aa_intr, IPL_USB, IST_LEVEL,
 	    ti_motg_intr, sc);
 	sc->sc_ctrlport = aa->aa_port;
-	sc->sc_motg.sc_bus.dmatag = aa->aa_dmat;
+	sc->sc_motg.sc_bus.ub_dmatag = aa->aa_dmat;
 
 	val = TIOTG_USBC_READ4(sc, USBCTRL_REV);
-	aprint_normal(": 0x%x version v%d.%d.%d", val, 
+	aprint_normal(": 0x%x version v%d.%d.%d", val,
 	    (val >> 8) & 7, (val >> 6) & 3, val & 63);
 
 #ifdef TI_AM335X
@@ -317,20 +325,28 @@ ti_motg_attach(device_t parent, device_t self, void *aux)
 	}
 	/* turn clock on */
 	sitara_cm_reg_read_4(tiotg_port_control[sc->sc_ctrlport].scm_reg, &val);
-	DPRINTF((" power val 0x%x", val));
+	DPRINTF("power val 0x%jx", val, 0, 0, 0);
 	/* Enable power */
 	val &= ~(OMAP2SCM_USB_CTLx_OTGPHY_PWD | OMAP2SCM_USB_CTLx_CMPHY_PWD);
 	/* enable vbus detect and session end */
 	val |= (OMAP2SCM_USB_CTLx_VBUSDET | OMAP2SCM_USB_CTLx_SESSIONEND);
 	sitara_cm_reg_write_4(tiotg_port_control[sc->sc_ctrlport].scm_reg, val);
 	sitara_cm_reg_read_4(tiotg_port_control[sc->sc_ctrlport].scm_reg, &val);
-	DPRINTF(("now val 0x%x ", val));
+	DPRINTF("now val 0x%jx", val, 0, 0, 0);
 #endif
 	/* XXX configure mode */
+#if 0
 	if (sc->sc_ctrlport == 0)
 		sc->sc_motg.sc_mode = MOTG_MODE_DEVICE;
 	else
 		sc->sc_motg.sc_mode = MOTG_MODE_HOST;
+#else
+	/* XXXXX
+	 * Both ports always the host mode only.
+	 * And motg(4) doesn't supports device and OTG modes.
+	 */
+	sc->sc_motg.sc_mode = MOTG_MODE_HOST;
+#endif
 	if (sc->sc_motg.sc_mode == MOTG_MODE_HOST) {
 		val = TIOTG_USBC_READ4(sc, USBCTRL_MODE);
 		val |= USBCTRL_MODE_IDDIGMUX;
@@ -343,7 +359,7 @@ ti_motg_attach(device_t parent, device_t self, void *aux)
 		val |= USBCTRL_MODE_IDDIG;
 		TIOTG_USBC_WRITE4(sc, USBCTRL_MODE, val);
 	}
-	
+
 	aprint_normal("\n");
 	if (bus_space_subregion(sc->sc_ctrliot, sc->sc_ctrlioh,
 	    USB_CORE_OFFSET, USB_CORE_SIZE, &sc->sc_motg.sc_ioh) < 0) {
@@ -380,12 +396,14 @@ ti_motg_intr(void *v)
 	int rv = 0;
 	int i;
 
+	MOTGHIST_FUNC(); MOTGHIST_CALLED();
+
 	mutex_spin_enter(&sc->sc_motg.sc_intr_lock);
 	stat = TIOTG_USBC_READ4(sc, USBCTRL_STAT);
 	stat0 = TIOTG_USBC_READ4(sc, USBCTRL_IRQ_STAT0);
 	stat1 = TIOTG_USBC_READ4(sc, USBCTRL_IRQ_STAT1);
-	DPRINTF(("USB %d 0x%x 0x%x stat %d\n",
-	    sc->sc_ctrlport, stat0, stat1, stat));
+	DPRINTF("USB %jd 0x%jx 0x%jx stat %jd",
+	    sc->sc_ctrlport, stat0, stat1, stat);
 	/* try to deal with vbus errors */
 	if (stat1 & MUSB2_MASK_IVBUSERR ) {
 		stat1 &= ~MUSB2_MASK_IVBUSERR;

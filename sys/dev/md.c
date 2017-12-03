@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.67.2.1 2014/08/20 00:03:35 tls Exp $	*/
+/*	$NetBSD: md.c,v 1.67.2.2 2017/12/03 11:36:58 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.67.2.1 2014/08/20 00:03:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.67.2.2 2017/12/03 11:36:58 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_md.h"
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: md.c,v 1.67.2.1 2014/08/20 00:03:35 tls Exp $");
 
 #include <dev/md.h>
 
+#include "ioconf.h"
 /*
  * The user-space functionality is included by default.
  * Use  `options MEMORY_DISK_SERVER=0' to turn it off.
@@ -92,8 +93,6 @@ struct md_softc {
 #define sc_addr sc_md.md_addr
 #define sc_size sc_md.md_size
 #define sc_type sc_md.md_type
-
-void	mdattach(int);
 
 static void	md_attach(device_t, device_t, void *);
 static int	md_detach(device_t, int);
@@ -132,9 +131,10 @@ const struct cdevsw md_cdevsw = {
 	.d_flag = D_DISK
 };
 
-static struct dkdriver mddkdriver = { mdstrategy, NULL };
+static struct dkdriver mddkdriver = {
+	.d_strategy = mdstrategy
+};
 
-extern struct cfdriver md_cd;
 CFATTACH_DECL3_NEW(md, sizeof(struct md_softc),
 	0, md_attach, md_detach, NULL, NULL, NULL, DVF_DETACH_SHUTDOWN);
 
@@ -413,12 +413,12 @@ mdstrategy(struct buf *bp)
 
 	sc = device_lookup_private(&md_cd, MD_UNIT(bp->b_dev));
 
-	mutex_enter(&sc->sc_lock);
-
 	if (sc == NULL || sc->sc_type == MD_UNCONFIGURED) {
 		bp->b_error = ENXIO;
 		goto done;
 	}
+
+	mutex_enter(&sc->sc_lock);
 
 	switch (sc->sc_type) {
 #if MEMORY_DISK_SERVER
@@ -462,9 +462,9 @@ mdstrategy(struct buf *bp)
 		bp->b_error = EIO;
 		break;
 	}
+	mutex_exit(&sc->sc_lock);
 
  done:
-	mutex_exit(&sc->sc_lock);
 
 	biodone(bp);
 }
@@ -474,8 +474,6 @@ mdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct md_softc *sc;
 	struct md_conf *umd;
-	struct disklabel *lp;
-	struct partinfo *pp;
 	int error;
 
 	if ((sc = device_lookup_private(&md_cd, MD_UNIT(dev))) == NULL)
@@ -483,18 +481,8 @@ mdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 	mutex_enter(&sc->sc_lock);
 	if (sc->sc_type != MD_UNCONFIGURED) {
-		switch (cmd) {
-		case DIOCGDINFO:
-			lp = (struct disklabel *)data;
-			*lp = *sc->sc_dkdev.dk_label;
-			mutex_exit(&sc->sc_lock);
-			return 0;
-
-		case DIOCGPART:
-			pp = (struct partinfo *)data;
-			pp->disklab = sc->sc_dkdev.dk_label;
-			pp->part =
-			    &sc->sc_dkdev.dk_label->d_partitions[DISKPART(dev)];
+		error = disk_ioctl(&sc->sc_dkdev, dev, cmd, data, flag, l); 
+		if (error != EPASSTHROUGH) {
 			mutex_exit(&sc->sc_lock);
 			return 0;
 		}
@@ -539,6 +527,7 @@ mdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 static void
 md_set_disklabel(struct md_softc *sc)
 {
+	struct disk_geom *dg = &sc->sc_dkdev.dk_geom;
 	struct disklabel *lp = sc->sc_dkdev.dk_label;
 	struct partition *pp;
 
@@ -558,7 +547,7 @@ md_set_disklabel(struct md_softc *sc)
 	lp->d_secpercyl = lp->d_ntracks*lp->d_nsectors;
 
 	strncpy(lp->d_typename, md_cd.cd_name, sizeof(lp->d_typename));
-	lp->d_type = DTYPE_UNKNOWN;
+	lp->d_type = DKTYPE_MD;
 	strncpy(lp->d_packname, "fictitious", sizeof(lp->d_packname));
 	lp->d_rpm = 3600;
 	lp->d_interleave = 1;
@@ -578,6 +567,16 @@ md_set_disklabel(struct md_softc *sc)
 	lp->d_magic = DISKMAGIC;
 	lp->d_magic2 = DISKMAGIC;
 	lp->d_checksum = dkcksum(lp);
+
+	memset(dg, 0, sizeof(*dg));
+
+	dg->dg_secsize = lp->d_secsize;
+	dg->dg_secperunit = lp->d_secperunit;
+	dg->dg_nsectors = lp->d_nsectors;
+	dg->dg_ntracks = lp->d_ntracks = 64;;
+	dg->dg_ncylinders = lp->d_ncylinders;
+
+	disk_set_info(sc->sc_dev, &sc->sc_dkdev, NULL);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.59.2.2 2014/08/20 00:03:23 tls Exp $	*/
+/*	$NetBSD: ofw.c,v 1.59.2.3 2017/12/03 11:36:42 jdolecek Exp $	*/
 
 /*
  * Copyright 1997
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.59.2.2 2014/08/20 00:03:23 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.59.2.3 2017/12/03 11:36:42 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,7 +138,7 @@ u_int free_pages;
 paddr_t msgbufphys;
 
 /* for storage allocation, used to be local to ofw_construct_proc0_addrspace */
-static vaddr_t  virt_freeptr;	    
+static vaddr_t  virt_freeptr;
 
 int ofw_callbacks = 0;		/* debugging counter */
 
@@ -705,7 +705,7 @@ ofw_configisadma(paddr_t *pdma)
 	shark_isa_dma_nranges = nOFdmaranges;
 #endif
 
-	for (rangeidx = 0, dr = OFdmaranges; rangeidx < nOFdmaranges; 
+	for (rangeidx = 0, dr = OFdmaranges; rangeidx < nOFdmaranges;
 	    ++rangeidx, ++dr) {
 		dr->start = of_decode_int((unsigned char *)&dr->start);
 		dr->size = of_decode_int((unsigned char *)&dr->size);
@@ -795,7 +795,7 @@ ofw_configmem(void)
 
 		/* physmem, physical_start, physical_end */
 		physmem = 0;
-		for (totalcnt = 0, mp = OFphysmem; totalcnt < nOFphysmem; 
+		for (totalcnt = 0, mp = OFphysmem; totalcnt < nOFphysmem;
 		    totalcnt++, mp++) {
 #ifdef	OLDPRINTFS
 			printf("physmem: %x, %x\n", mp->start, mp->size);
@@ -871,8 +871,7 @@ ofw_configmem(void)
 		bootconfig.dramblocks = availcnt;
 	}
 
-	/* Load memory into UVM. */
-	uvm_setpagesize();	/* initialize PAGE_SIZE-dependent variables */
+	uvm_md_init();
 
 	/* XXX Please kill this code dead. */
 	for (i = 0; i < bootconfig.dramblocks; i++) {
@@ -1062,7 +1061,7 @@ ofw_callbackhandler(void *v)
 		}
 
 		/* Clean out tlb. */
-		tlb_flush();
+		cpu_tlb_flushID();
 
 		args_n_results[nargs + 1] = 0;
 		args->nreturns = 2;
@@ -1106,7 +1105,7 @@ ofw_callbackhandler(void *v)
 		}
 
 		/* Clean out tlb. */
-		tlb_flush();
+		cpu_tlb_flushID();
 
 		args->nreturns = 1;
 	} else if (strcmp(name, "translate") == 0) {
@@ -1756,8 +1755,12 @@ ofw_gettranslation(vaddr_t va)
 #endif
 	exists = 0;	    /* gets set to true if translation exists */
 	if (OF_call_method("translate", mmu_ihandle, 1, 3, va, &pa, &mode,
-	    &exists) != 0)
+	    &exists) != 0) {
+#ifdef OFW_DEBUG
+		printf("(failed)\n");
+#endif
 		return(-1);
+	}
 
 #ifdef OFW_DEBUG
 	printf("%d %x\n", exists, (uint32_t)pa);
@@ -1772,7 +1775,7 @@ ofw_settranslation(vaddr_t va, paddr_t pa, vsize_t size, int mode)
 	int mmu_ihandle = ofw_mmu_ihandle();
 
 #ifdef OFW_DEBUG
-	printf("ofw_settranslation (%x, %x, %x, %x) --> void", (uint32_t)va,
+	printf("ofw_settranslation (%x, %x, %x, %x) --> void\n", (uint32_t)va,
 	    (uint32_t)pa, (uint32_t)size, (uint32_t)mode);
 #endif
 	if (OF_call_method("map", mmu_ihandle, 4, 0, pa, va, size, mode) != 0)
@@ -1828,7 +1831,7 @@ ofw_malloc(vsize_t size)
 			newSize = (*ppLeftover)->size - size; /* reduce size */
 			/* move pointer */
 			*ppLeftover = (PLEFTOVER)(((vaddr_t)*ppLeftover)
-			    + size); 
+			    + size);
 			(*ppLeftover)->pNext = pLeft;
 			(*ppLeftover)->size  = newSize;
 		}

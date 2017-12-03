@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vfsops.c,v 1.5.2.3 2014/08/20 00:04:44 tls Exp $	*/
+/*	$NetBSD: chfs_vfsops.c,v 1.5.2.4 2017/12/03 11:39:21 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -43,7 +43,6 @@
 #include <sys/proc.h>
 #include <sys/module.h>
 #include <sys/namei.h>
-#include <sys/malloc.h>
 #include <sys/fcntl.h>
 #include <sys/conf.h>
 #include <sys/buf.h>
@@ -71,6 +70,8 @@ MODULE(MODULE_CLASS_VFS, chfs, "flash");
 static int chfs_mount(struct mount *, const char *, void *, size_t *);
 static int chfs_unmount(struct mount *, int);
 static int chfs_root(struct mount *, struct vnode **);
+static int chfs_loadvnode(struct mount *, struct vnode *,
+    const void *, size_t, const void **);
 static int chfs_vget(struct mount *, ino_t, struct vnode **);
 static int chfs_fhtovp(struct mount *, struct fid *, struct vnode **);
 static int chfs_vptofh(struct vnode *, struct fid *, size_t *);
@@ -152,8 +153,10 @@ chfs_mount(struct mount *mp,
 		}
 		/* Look up the name and verify that it's sane. */
 		NDINIT(&nd, LOOKUP, FOLLOW, pb);
-		if ((err = namei(&nd)) != 0 )
-			return (err);
+		err = namei(&nd);
+		pathbuf_destroy(pb);
+		if (err)
+			return err;
 		devvp = nd.ni_vp;
 
 		/* Be sure this is a valid block device */
@@ -224,7 +227,7 @@ chfs_mountfs(struct vnode *devvp, struct mount *mp)
 	err = vinvalbuf(devvp, V_SAVE, cred, l, 0, 0);
 	VOP_UNLOCK(devvp);
 	if (err)
-		return (err);
+		goto fail0;
 
 	/* Setup device. */
 	flash_major = cdevsw_lookup_major(&flash_cdevsw);
@@ -238,10 +241,8 @@ chfs_mountfs(struct vnode *devvp, struct mount *mp)
 		    major(dev), flash_major);
 		err = ENODEV;
 	}
-	if (err) {
-		vrele(devvp);
-		return (err);
-	}
+	if (err)
+		goto fail0;
 
 	/* Connect CHFS to UFS. */
 	ump = kmem_zalloc(sizeof(struct ufsmount), KM_SLEEP);
@@ -259,7 +260,7 @@ chfs_mountfs(struct vnode *devvp, struct mount *mp)
 	err = ebh_open(chmp->chm_ebh, devvp->v_rdev);
 	if (err) {
 		dbg("error while opening flash\n");
-		goto fail;
+		goto fail1;
 	}
 
 	//TODO check flash sizes
@@ -317,10 +318,8 @@ chfs_mountfs(struct vnode *devvp, struct mount *mp)
 
 	if (err) {
 		/* Armageddon and return. */
-		chfs_vnocache_hash_destroy(chmp->chm_vnocache_hash);
-		ebh_close(chmp->chm_ebh);
 		err = EIO;
-		goto fail;
+		goto fail2;
 	}
 
 	/* Initialize UFS. */
@@ -356,10 +355,31 @@ chfs_mountfs(struct vnode *devvp, struct mount *mp)
 	spec_node_setmountedfs(devvp, mp);
 	return 0;
 
-fail:
+fail2:
+	KASSERT(TAILQ_EMPTY(&chmp->chm_erase_pending_queue));
+	KASSERT(TAILQ_EMPTY(&chmp->chm_erasable_pending_wbuf_queue));
+	KASSERT(TAILQ_EMPTY(&chmp->chm_very_dirty_queue));
+	KASSERT(TAILQ_EMPTY(&chmp->chm_dirty_queue));
+	KASSERT(TAILQ_EMPTY(&chmp->chm_clean_queue));
+	KASSERT(TAILQ_EMPTY(&chmp->chm_free_queue));
+	rw_destroy(&chmp->chm_lock_wbuf);
+	kmem_free(chmp->chm_wbuf, chmp->chm_wbuf_pagesize);
+	mutex_destroy(&chmp->chm_lock_vnocache);
+	mutex_destroy(&chmp->chm_lock_sizes);
+	mutex_destroy(&chmp->chm_lock_mountfields);
+	kmem_free(chmp->chm_blocks, chmp->chm_ebh->peb_nr *
+	    sizeof(struct chfs_eraseblock));
+	chfs_vnocache_hash_destroy(chmp->chm_vnocache_hash);
+	ebh_close(chmp->chm_ebh);
+
+fail1:
 	kmem_free(chmp->chm_ebh, sizeof(struct chfs_ebh));
+	mutex_destroy(&ump->um_lock);
 	kmem_free(chmp, sizeof(struct chfs_mount));
 	kmem_free(ump, sizeof(struct ufsmount));
+
+fail0:
+	KASSERT(err);
 	return err;
 }
 
@@ -446,71 +466,49 @@ chfs_root(struct mount *mp, struct vnode **vpp)
 extern rb_tree_ops_t frag_rbtree_ops;
 
 static int
-chfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
+chfs_loadvnode(struct mount *mp, struct vnode *vp,
+    const void *key, size_t key_len, const void **new_key)
 {
 	struct chfs_mount *chmp;
 	struct chfs_inode *ip;
 	struct ufsmount *ump;
-	struct vnode *vp;
 	dev_t dev;
 	int error;
 	struct chfs_vnode_cache* chvc = NULL;
 	struct chfs_node_ref* nref = NULL;
 	struct buf *bp;
+	ino_t ino;
+
+	KASSERT(key_len == sizeof(ino));
+	memcpy(&ino, key, key_len);
 
 	dbg("vget() | ino: %llu\n", (unsigned long long)ino);
 
 	ump = VFSTOUFS(mp);
 	dev = ump->um_dev;
-retry:
-	if (!vpp) {
-		vpp = kmem_alloc(sizeof(struct vnode*), KM_SLEEP);
-	}
 
-	/* Get node from inode hash. */
-	if ((*vpp = chfs_ihashget(dev, ino, LK_EXCLUSIVE)) != NULL) {
-		return 0;
-	}
-
-	/* Allocate a new vnode/inode. */
-	if ((error = getnewvnode(VT_CHFS,
-		    mp, chfs_vnodeop_p, NULL, &vp)) != 0) {
-		*vpp = NULL;
-		return (error);
-	}
 	ip = pool_get(&chfs_inode_pool, PR_WAITOK);
-
-	mutex_enter(&chfs_hashlock);
-	if ((*vpp = chfs_ihashget(dev, ino, LK_EXCLUSIVE)) != NULL) {
-		mutex_exit(&chfs_hashlock);
-		ungetnewvnode(vp);
-		pool_put(&chfs_inode_pool, ip);
-		goto retry;
-	}
-
-	vp->v_vflag |= VV_LOCKSWORK;
 
 	/* Initialize vnode/inode. */
 	memset(ip, 0, sizeof(*ip));
-	vp->v_data = ip;
 	ip->vp = vp;
-	ip->ch_type = VTTOCHT(vp->v_type);
 	ip->ump = ump;
 	ip->chmp = chmp = ump->um_chfs;
 	ip->dev = dev;
 	ip->ino = ino;
-	vp->v_mount = mp;
-	genfs_node_init(vp, &chfs_genfsops);
 
 	rb_tree_init(&ip->fragtree, &frag_rbtree_ops);
 
-	chfs_ihashins(ip);
-	mutex_exit(&chfs_hashlock);
+	vp->v_tag = VT_CHFS;
+	vp->v_op = chfs_vnodeop_p;
+	vp->v_vflag |= VV_LOCKSWORK;
+	if (ino == CHFS_ROOTINO)
+		vp->v_vflag |= VV_ROOT;
+	vp->v_data = ip;
 
 	/* Set root inode. */
 	if (ino == CHFS_ROOTINO) {
 		dbg("SETROOT\n");
-		vp->v_vflag |= VV_ROOT;
 		vp->v_type = VDIR;
 		ip->ch_type = CHT_DIR;
 		ip->mode = IFMT | IEXEC | IWRITE | IREAD;
@@ -552,6 +550,7 @@ retry:
 
 		mutex_enter(&chmp->chm_lock_mountfields);
 		/* Initialize type specific things. */
+		error = 0;
 		switch (ip->ch_type) {
 		case CHT_DIR:
 			/* Read every dirent. */
@@ -570,24 +569,14 @@ retry:
 			dbg("read_inode_internal | ino: %llu\n",
 				(unsigned long long)ip->ino);
 			error = chfs_read_inode(chmp, ip);
-			if (error) {
-				vput(vp);
-				*vpp = NULL;
-				mutex_exit(&chmp->chm_lock_mountfields);
-				return (error);
-			}
 			break;
 		case CHT_LNK:
 			/* Collect data. */
 			dbg("read_inode_internal | ino: %llu\n",
 				(unsigned long long)ip->ino);
 			error = chfs_read_inode_internal(chmp, ip);
-			if (error) {
-				vput(vp);
-				*vpp = NULL;
-				mutex_exit(&chmp->chm_lock_mountfields);
-				return (error);
-			}
+			if (error)
+				break;
 
 			/* Set link. */
 			dbg("size: %llu\n", (unsigned long long)ip->size);
@@ -614,12 +603,8 @@ retry:
 			dbg("read_inode_internal | ino: %llu\n",
 				(unsigned long long)ip->ino);
 			error = chfs_read_inode_internal(chmp, ip);
-			if (error) {
-				vput(vp);
-				*vpp = NULL;
-				mutex_exit(&chmp->chm_lock_mountfields);
-				return (error);
-			}
+			if (error)
+				break;
 
 			/* Set device. */
 			bp = getiobuf(vp, true);
@@ -647,20 +632,51 @@ retry:
 			break;
 		}
 		mutex_exit(&chmp->chm_lock_mountfields);
+		if (error) {
+			vp->v_data = NULL;
+			KASSERT(TAILQ_FIRST(&ip->dents) == NULL);
+			pool_put(&chfs_inode_pool, ip);
+			return error;
+		}
 
 	}
 
 	/* Finish inode initalization. */
+	ip->ch_type = VTTOCHT(vp->v_type);
 	ip->devvp = ump->um_devvp;
 	vref(ip->devvp);
 
+	genfs_node_init(vp, &chfs_genfsops);
 	uvm_vnp_setsize(vp, ip->size);
-	*vpp = vp;
+	
+	*new_key = &ip->ino;
 
 	return 0;
 }
 
 /* --------------------------------------------------------------------- */
+
+static int
+chfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
+{
+	int error;
+
+	error = vcache_get(mp, &ino, sizeof(ino), vpp);
+	if (error)
+		return error;
+
+	error = vn_lock(*vpp, LK_EXCLUSIVE);
+	if (error) {
+		vrele(*vpp);
+		*vpp = NULL;
+		return error;
+	}
+
+	return 0;
+}
+
+/* --------------------------------------------------------------------- */
+
 
 static int
 chfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
@@ -734,7 +750,6 @@ chfs_init(void)
 {
 	/* Initialize pools and inode hash. */
 	chfs_alloc_pool_caches();
-	chfs_ihashinit();
 	pool_init(&chfs_inode_pool, sizeof(struct chfs_inode), 0, 0, 0,
 	    "chfsinopl", &pool_allocator_nointr, IPL_NONE);
 	ufs_init();
@@ -745,7 +760,6 @@ chfs_init(void)
 static void
 chfs_reinit(void)
 {
-	chfs_ihashreinit();
 	ufs_reinit();
 }
 
@@ -755,7 +769,6 @@ static void
 chfs_done(void)
 {
 	ufs_done();
-	chfs_ihashdone();
 	pool_destroy(&chfs_inode_pool);
 	chfs_destroy_pool_caches();
 }
@@ -797,6 +810,7 @@ struct vfsops chfs_vfsops = {
 	.vfs_statvfs = chfs_statvfs,
 	.vfs_sync = chfs_sync,
 	.vfs_vget = chfs_vget,
+	.vfs_loadvnode = chfs_loadvnode,
 	.vfs_fhtovp = chfs_fhtovp,
 	.vfs_vptofh = chfs_vptofh,
 	.vfs_init = chfs_init,
@@ -804,7 +818,7 @@ struct vfsops chfs_vfsops = {
 	.vfs_done = chfs_done,
 	.vfs_snapshot = chfs_snapshot,
 	.vfs_extattrctl = vfs_stdextattrctl,
-	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_suspendctl = genfs_suspendctl,
 	.vfs_renamelock_enter = genfs_renamelock_enter,
 	.vfs_renamelock_exit = genfs_renamelock_exit,
 	.vfs_fsync = (void *)eopnotsupp,

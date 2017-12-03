@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.131.12.2 2014/08/20 00:04:29 tls Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.131.12.3 2017/12/03 11:38:45 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.131.12.2 2014/08/20 00:04:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.131.12.3 2017/12/03 11:38:45 jdolecek Exp $");
 
 #include "opt_ptm.h"
 
@@ -61,6 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.131.12.2 2014/08/20 00:04:29 tls Exp $
 #include <sys/poll.h>
 #include <sys/pty.h>
 #include <sys/kauth.h>
+
+#include "ioconf.h"
 
 #define	DEFAULT_NPTYS		16	/* default number of initial ptys */
 #define DEFAULT_MAXPTYS		992	/* default maximum number of ptys */
@@ -86,7 +88,6 @@ int npty = 0;			/* for pstat -t */
 #define	PF_NOSTOP	0x40
 #define PF_UCNTL	0x80		/* user control mode */
 
-void	ptyattach(int);
 void	ptcwakeup(struct tty *, int);
 void	ptsstart(struct tty *);
 int	pty_maxptys(int, int);
@@ -243,7 +244,7 @@ pty_check(int ptn)
 
 		/*
 		 * Now grab the pty array mutex - we need to ensure
-		 * that the pty array is consistent while copying it's
+		 * that the pty array is consistent while copying its
 		 * content to newly allocated, larger space; we also
 		 * need to be safe against pty_maxptys().
 		 */
@@ -996,10 +997,19 @@ filt_ptcwrite(struct knote *kn, long hint)
 	return canwrite;
 }
 
-static const struct filterops ptcread_filtops =
-	{ 1, NULL, filt_ptcrdetach, filt_ptcread };
-static const struct filterops ptcwrite_filtops =
-	{ 1, NULL, filt_ptcwdetach, filt_ptcwrite };
+static const struct filterops ptcread_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_ptcrdetach,
+	.f_event = filt_ptcread,
+};
+
+static const struct filterops ptcwrite_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_ptcwdetach,
+	.f_event = filt_ptcwrite,
+};
 
 int
 ptckqfilter(dev_t dev, struct knote *kn)

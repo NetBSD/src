@@ -1,4 +1,4 @@
-/*	$NetBSD: lm75reg.h,v 1.3.108.1 2014/08/20 00:03:37 tls Exp $	*/
+/*	$NetBSD: lm75reg.h,v 1.3.108.2 2017/12/03 11:37:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -66,6 +66,7 @@
 #define	LM75_REG_CONFIG			0x01
 #define	LM75_REG_THYST_SET_POINT	0x02
 #define	LM75_REG_TOS_SET_POINT		0x03
+#define	LM75_REG_ID			0x07	/* LM75A only */
 
 #define	LM77_REG_TCRIT_SET_POINT	0x03
 #define	LM77_REG_TLOW_SET_POINT		0x04

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridgevar.h,v 1.15.2.1 2014/08/20 00:04:34 tls Exp $	*/
+/*	$NetBSD: if_bridgevar.h,v 1.15.2.2 2017/12/03 11:39:02 jdolecek Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -90,8 +90,8 @@
 #define	BRDGSIFFLGS		3	/* set member if flags (ifbreq) */
 #define	BRDGSCACHE		4	/* set cache size (ifbrparam) */
 #define	BRDGGCACHE		5	/* get cache size (ifbrparam) */
-#define	BRDGGIFS		6	/* get member list (ifbifconf) */
-#define	BRDGRTS			7	/* get address list (ifbaconf) */
+#define	OBRDGGIFS		6	/* get member list (ifbifconf) */
+#define	OBRDGRTS		7	/* get address list (ifbaconf) */
 #define	BRDGSADDR		8	/* set static address (ifbareq) */
 #define	BRDGSTO			9	/* set cache timeout (ifbrparam) */
 #define	BRDGGTO			10	/* get cache timeout (ifbrparam) */
@@ -110,6 +110,9 @@
 #define BRDGSIFCOST		22	/* set if path cost (ifbreq) */
 #define BRDGGFILT	        23	/* get filter flags (ifbrparam) */
 #define BRDGSFILT	        24	/* set filter flags (ifbrparam) */
+
+#define	BRDGGIFS		25	/* get member list */
+#define	BRDGRTS			26	/* get address list */
 
 /*
  * Generic bridge control request.
@@ -163,8 +166,7 @@ struct ifbifconf {
  */
 struct ifbareq {
 	char		ifba_ifsname[IFNAMSIZ];	/* member if name */
-	/*XXX: time_t */
-	long		ifba_expire;		/* address expire time */
+	time_t		ifba_expire;		/* address expire time */
 	uint8_t		ifba_flags;		/* address flags */
 	uint8_t		ifba_dst[ETHER_ADDR_LEN];/* destination address */
 };
@@ -207,6 +209,15 @@ struct ifbrparam {
 #define	ifbrp_filter	ifbrp_ifbrpu.ifbrpu_int32	/* filtering flags */
 
 #ifdef _KERNEL
+#ifdef _KERNEL_OPT
+#include "opt_net_mpsafe.h"
+#endif /* _KERNEL_OPT */
+
+#include <sys/pserialize.h>
+#include <sys/pslist.h>
+#include <sys/psref.h>
+#include <sys/workqueue.h>
+
 #include <net/pktqueue.h>
 
 /*
@@ -239,7 +250,7 @@ struct bstp_tcn_unit {
  * Bridge interface list entry.
  */
 struct bridge_iflist {
-	LIST_ENTRY(bridge_iflist) bif_next;
+	struct pslist_entry	bif_next;
 	uint64_t		bif_designated_root;
 	uint64_t		bif_designated_bridge;
 	uint32_t		bif_path_cost;
@@ -257,8 +268,7 @@ struct bridge_iflist {
 	uint8_t			bif_priority;
 	struct ifnet		*bif_ifp;	/* member if */
 	uint32_t		bif_flags;	/* member if flags */
-	uint32_t		bif_refs;	/* reference count */
-	bool			bif_waiting;	/* waiting for released  */
+	struct psref_target	bif_psref;
 };
 
 /*
@@ -271,6 +281,12 @@ struct bridge_rtnode {
 	time_t			brt_expire;	/* expiration time */
 	uint8_t			brt_flags;	/* address flags */
 	uint8_t			brt_addr[ETHER_ADDR_LEN];
+};
+
+struct bridge_iflist_psref {
+	struct pslist_head	bip_iflist;	/* member interface list */
+	kmutex_t		bip_lock;
+	pserialize_t		bip_psz;
 };
 
 /*
@@ -302,15 +318,15 @@ struct bridge_softc {
 	uint32_t		sc_brttimeout;	/* rt timeout in seconds */
 	callout_t		sc_brcallout;	/* bridge callout */
 	callout_t		sc_bstpcallout;	/* STP callout */
-	LIST_HEAD(, bridge_iflist) sc_iflist;	/* member interface list */
-	kmutex_t		*sc_iflist_lock;
-	kcondvar_t		sc_iflist_cv;
+	struct bridge_iflist_psref	sc_iflist_psref;
 	LIST_HEAD(, bridge_rtnode) *sc_rthash;	/* our forwarding table */
 	LIST_HEAD(, bridge_rtnode) sc_rtlist;	/* list version of above */
 	kmutex_t		*sc_rtlist_lock;
+	pserialize_t		sc_rtlist_psz;
+	struct workqueue	*sc_rtage_wq;
+	struct work		sc_rtage_wk;
 	uint32_t		sc_rthash_key;	/* key for hash */
 	uint32_t		sc_filter_flags; /* ipf and flags */
-	pktqueue_t *		sc_fwd_pktq;
 };
 
 extern const uint8_t bstp_etheraddr[];
@@ -318,7 +334,7 @@ extern const uint8_t bstp_etheraddr[];
 void	bridge_ifdetach(struct ifnet *);
 
 int	bridge_output(struct ifnet *, struct mbuf *, const struct sockaddr *,
-	    struct rtentry *);
+	    const struct rtentry *);
 
 void	bstp_initialization(struct bridge_softc *);
 void	bstp_stop(struct bridge_softc *);
@@ -327,16 +343,34 @@ void	bstp_input(struct bridge_softc *, struct bridge_iflist *, struct mbuf *);
 void	bridge_enqueue(struct bridge_softc *, struct ifnet *, struct mbuf *,
 	    int);
 
-#ifdef NET_MPSAFE
-#define BRIDGE_MPSAFE	1
-#endif
+#define BRIDGE_LOCK(_sc)	mutex_enter(&(_sc)->sc_iflist_psref.bip_lock)
+#define BRIDGE_UNLOCK(_sc)	mutex_exit(&(_sc)->sc_iflist_psref.bip_lock)
+#define BRIDGE_LOCKED(_sc)	mutex_owned(&(_sc)->sc_iflist_psref.bip_lock)
 
-#define BRIDGE_LOCK(_sc)	if ((_sc)->sc_iflist_lock) \
-					mutex_enter((_sc)->sc_iflist_lock)
-#define BRIDGE_UNLOCK(_sc)	if ((_sc)->sc_iflist_lock) \
-					mutex_exit((_sc)->sc_iflist_lock)
-#define BRIDGE_LOCKED(_sc)	(!(_sc)->sc_iflist_lock || \
-				 mutex_owned((_sc)->sc_iflist_lock))
+#define BRIDGE_PSZ_RENTER(__s)	do { __s = pserialize_read_enter(); } while (0)
+#define BRIDGE_PSZ_REXIT(__s)	do { pserialize_read_exit(__s); } while (0)
+#define BRIDGE_PSZ_PERFORM(_sc)	pserialize_perform((_sc)->sc_iflist_psref.bip_psz)
 
+#define BRIDGE_IFLIST_READER_FOREACH(_bif, _sc) \
+	PSLIST_READER_FOREACH((_bif), &((_sc)->sc_iflist_psref.bip_iflist), \
+	    struct bridge_iflist, bif_next)
+#define BRIDGE_IFLIST_WRITER_FOREACH(_bif, _sc) \
+	PSLIST_WRITER_FOREACH((_bif), &((_sc)->sc_iflist_psref.bip_iflist), \
+	    struct bridge_iflist, bif_next)
+
+/*
+ * Locking notes:
+ * - Updates of sc_iflist are serialized by sc_iflist_lock (an adaptive mutex)
+ *   - The mutex is also used for STP
+ * - Items of sc_iflist (bridge_iflist) is protected by both pserialize
+ *   (sc_iflist_psz) and reference counting (bridge_iflist#bif_refs)
+ * - Before destroying an item of sc_iflist, we have to do pserialize_perform
+ *   and synchronize with the reference counting via a conditional variable
+ *   (sc_iflist_cz)
+ * - Updates of sc_rtlist are serialized by sc_rtlist_lock (an adaptive mutex)
+ *   - The mutex is also used for pserialize
+ * - A workqueue is used to run bridge_rtage in LWP context via bridge_timer callout
+ *   - bridge_rtage uses pserialize that requires non-interrupt context
+ */
 #endif /* _KERNEL */
 #endif /* !_NET_IF_BRIDGEVAR_H_ */

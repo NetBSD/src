@@ -1,4 +1,4 @@
-/*	$NetBSD: anvar.h,v 1.20 2010/01/17 19:45:06 pooka Exp $	*/
+/*	$NetBSD: anvar.h,v 1.20.22.1 2017/12/03 11:37:03 jdolecek Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -108,6 +108,7 @@ struct an_softc	{
 	struct ieee80211com	sc_ic;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
+	void			*sc_soft_ih;
 	int			(*sc_enable)(struct an_softc *);
 	void			(*sc_disable)(struct an_softc *);
 	int			(*sc_newstate)(struct ieee80211com *,

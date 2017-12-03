@@ -1,12 +1,13 @@
-#	$NetBSD: Makefile,v 1.24.2.1 2012/11/20 03:02:48 tls Exp $
+#	$NetBSD: Makefile,v 1.24.2.2 2017/12/03 11:39:03 jdolecek Exp $
 
 INCSDIR= /usr/include/netinet
 
-INCS=	icmp6.h icmp_var.h if_atm.h if_ether.h if_inarp.h igmp.h \
-	igmp_var.h in.h in_gif.h in_pcb.h in_pcb_hdr.h \
+INCS=	dccp.h icmp6.h icmp_var.h if_atm.h if_ether.h if_inarp.h igmp.h \
+	igmp_var.h in.h in_gif.h in_l2tp.h in_pcb.h in_pcb_hdr.h \
 	in_selsrc.h in_systm.h \
 	in_var.h ip.h ip_carp.h ip6.h ip_ecn.h ip_encap.h \
 	ip_icmp.h ip_mroute.h ip_var.h pim.h pim_var.h portalgo.h \
+	sctp.h sctp_uio.h \
 	tcp.h tcp_debug.h tcp_fsm.h tcp_seq.h tcp_timer.h tcp_var.h \
 	tcpip.h udp.h udp_var.h \
 	tcp_vtw.h

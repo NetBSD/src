@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.150.12.2 2014/08/20 00:03:24 tls Exp $	*/
+/*	$NetBSD: fd.c,v 1.150.12.3 2017/12/03 11:36:43 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.150.12.2 2014/08/20 00:03:24 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.150.12.3 2017/12/03 11:36:43 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -337,7 +337,9 @@ int fd_get_parms(struct fd_softc *);
 void fdstart(struct fd_softc *);
 int fdprint(void *, const char *);
 
-struct dkdriver fddkdriver = { fdstrategy };
+struct dkdriver fddkdriver = {
+	.d_strategy = fdstrategy
+};
 
 struct	fd_type *fd_nvtotype(char *, int, int);
 void	fd_set_motor(struct fdc_softc *);
@@ -2244,9 +2246,9 @@ fdgetdisklabel(dev_t dev)
 	struct cpu_disklabel *clp = fd->sc_dk.dk_cpulabel;
 
 	memset(lp, 0, sizeof(struct disklabel));
-	memset(lp, 0, sizeof(struct cpu_disklabel));
+	memset(clp, 0, sizeof(struct cpu_disklabel));
 
-	lp->d_type = DTYPE_FLOPPY;
+	lp->d_type = DKTYPE_FLOPPY;
 	lp->d_secsize = FD_BSIZE(fd);
 	lp->d_secpercyl = fd->sc_type->seccyl;
 	lp->d_nsectors = fd->sc_type->sectrac;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_virt.c,v 1.26.8.3 2014/08/20 00:04:43 tls Exp $	*/
+/*	$NetBSD: if_virt.c,v 1.26.8.4 2017/12/03 11:39:19 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2008, 2013 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.26.8.3 2014/08/20 00:04:43 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.26.8.4 2017/12/03 11:39:19 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -121,7 +121,14 @@ virtif_clone(struct if_clone *ifc, int num)
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_dlt = DLT_EN10MB;
 
-	if_attach(ifp);
+	error = if_initialize(ifp);
+	if (error != 0) {
+		aprint_error("%s: if_initialize failed(%d)\n", ifp->if_xname,
+		    error);
+		goto fail_1;
+	}
+
+	if_register(ifp);
 
 #ifndef RUMP_VIF_LINKSTR
 	/*
@@ -131,11 +138,19 @@ virtif_clone(struct if_clone *ifc, int num)
 	 */
 #define LINKSTRNUMLEN 16
 	sc->sc_linkstr = kmem_alloc(LINKSTRNUMLEN, KM_SLEEP);
+	if (sc->sc_linkstr == NULL) {
+		error = ENOMEM;
+		goto fail_2;
+	}
 	snprintf(sc->sc_linkstr, LINKSTRNUMLEN, "%d", sc->sc_num);
-#undef LINKSTRNUMLEN
 	error = virtif_create(ifp);
 	if (error) {
+fail_2:
 		if_detach(ifp);
+		if (sc->sc_linkstr != NULL)
+			kmem_free(sc->sc_linkstr, LINKSTRNUMLEN);
+#undef LINKSTRNUMLEN
+fail_1:
 		kmem_free(sc, sizeof(*sc));
 		ifp->if_softc = NULL;
 	}
@@ -373,11 +388,13 @@ VIF_DELIVERPKT(struct virtif_sc *sc, struct iovec *iov, size_t iovlen)
 	}
 
 	if (passup) {
-		ifp->if_ipackets++;
-		m->m_pkthdr.rcvif = ifp;
+		int bound;
+		m_set_rcvif(m, ifp);
 		KERNEL_LOCK(1, NULL);
-		bpf_mtap(ifp, m);
-		ifp->if_input(ifp, m);
+		/* Prevent LWP migrations between CPUs for psref(9) */
+		bound = curlwp_bind();
+		if_input(ifp, m);
+		curlwp_bindx(bound);
 		KERNEL_UNLOCK_LAST(NULL);
 	} else {
 		m_freem(m);
@@ -385,10 +402,16 @@ VIF_DELIVERPKT(struct virtif_sc *sc, struct iovec *iov, size_t iovlen)
 	m = NULL;
 }
 
-MODULE(MODULE_CLASS_DRIVER, if_virt, NULL);
-
+/*
+ * The following ensures that no two modules using if_virt end up with
+ * the same module name.  MODULE() and modcmd wrapped in ... bad mojo.
+ */
+#define VIF_MOJO(x) MODULE(MODULE_CLASS_DRIVER,x,NULL);
+#define VIF_MODULE() VIF_MOJO(VIF_BASENAME(if_virt_,VIRTIF_BASE))
+#define VIF_MODCMD VIF_BASENAME3(if_virt_,VIRTIF_BASE,_modcmd)
+VIF_MODULE();
 static int
-if_virt_modcmd(modcmd_t cmd, void *opaque)
+VIF_MODCMD(modcmd_t cmd, void *opaque)
 {
 	int error = 0;
 

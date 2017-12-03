@@ -1,4 +1,4 @@
-/* $Id: if_ae.c,v 1.23.2.2 2014/08/20 00:03:12 tls Exp $ */
+/* $Id: if_ae.c,v 1.23.2.3 2017/12/03 11:36:26 jdolecek Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.23.2.2 2014/08/20 00:03:12 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.23.2.3 2017/12/03 11:36:26 jdolecek Exp $");
 
 
 #include <sys/param.h>
@@ -383,6 +383,7 @@ ae_attach(device_t parent, device_t self, void *aux)
 	 * Attach the interface.
 	 */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, enaddr);
 	ether_set_ifflags_cb(&sc->sc_ethercom, ae_ifflags_cb);
 
@@ -547,7 +548,7 @@ ae_start(struct ifnet *ifp)
 {
 	struct ae_softc *sc = ifp->if_softc;
 	struct mbuf *m0, *m;
-	struct ae_txsoft *txs, *last_txs = NULL;
+	struct ae_txsoft *txs;
 	bus_dmamap_t dmamap;
 	int error, firsttx, nexttx, lasttx = 1, ofree, seg;
 
@@ -727,8 +728,6 @@ ae_start(struct ifnet *ifp)
 
 		SIMPLEQ_REMOVE_HEAD(&sc->sc_txfreeq, txs_q);
 		SIMPLEQ_INSERT_TAIL(&sc->sc_txdirtyq, txs, txs_q);
-
-		last_txs = txs;
 
 		/*
 		 * Pass the packet to any BPF listeners.
@@ -995,7 +994,7 @@ ae_intr(void *arg)
 	}
 
 	/* Try to get more packets going. */
-	ae_start(ifp);
+	if_schedule_deferred_start(ifp);
 
 	if (handled)
 		rnd_add_uint32(&sc->sc_rnd_source, status);
@@ -1011,7 +1010,6 @@ static void
 ae_rxintr(struct ae_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	struct ether_header *eh;
 	struct ae_rxsoft *rxs;
 	struct mbuf *m;
 	u_int32_t rxstat;
@@ -1131,19 +1129,11 @@ ae_rxintr(struct ae_softc *sc)
 		    rxs->rxs_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
 #endif /* __NO_STRICT_ALIGNMENT */
 
-		ifp->if_ipackets++;
-		eh = mtod(m, struct ether_header *);
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = len;
 
-		/*
-		 * Pass this up to any BPF listeners, but only
-		 * pass it up the stack if its for us.
-		 */
-		bpf_mtap(ifp, m);
-
 		/* Pass it on. */
-		(*ifp->if_input)(ifp, m);
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 	}
 
 	/* Update the receive pointer. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: hid.h,v 1.9.42.1 2014/08/20 00:03:20 tls Exp $	*/
+/*	$NetBSD: hid.h,v 1.9.42.2 2017/12/03 11:36:37 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -31,6 +31,28 @@
 
 /* Hardware Implementation Dependent registers for the PowerPC */
 
+#if defined(_ARCH_PPC64) || defined (PPC_OEA64_BRIDGE)
+/* this way we can use the same bit numbers as IBM's PowerPC manuals */
+#define HIDBIT(x) (0x8000000000000000LL >> x)
+#define HID0_64_ONE_PPC	HIDBIT(0)   /* one instruction per dispatch group */
+#define HID0_64_DO_SNGL	HIDBIT(1)   /* single group completion mode */
+#define HID0_64_ISYNCSC	HIDBIT(2)   /* Disable isync scoreboard optimization */
+#define HID0_64_SER_GP	HIDBIT(3)   /* Serialize group dispatch */
+#define HID0_64_DEEPNAP	HIDBIT(7)   /* Enable deep nap mode (970) */
+#define HID0_64_DOZE	HIDBIT(8)   /* Enable doze mode */
+#define HID0_64_NAP	HIDBIT(9)   /* Enable nap mode */
+#define HID0_64_DPM	HIDBIT(11)  /* Enable Dynamic power management */
+#define HID0_64_TG	HIDBIT(13)  /* Perfmon threshold granularity control */
+#define HID0_64_HNG_DIS	HIDBIT(14)  /* Disable processor hang-detection */
+#define HID0_64_NHR	HIDBIT(15)  /* No Hard Reset */
+#define HID0_64_INORDER	HIDBIT(16)  /* Serialized group issue mode */
+#define HID0_64_TB_CTRL	HIDBIT(18)  /* TB keeps running if CPU stopped */
+#define HID0_64_EX_TBEN	HIDBIT(19)  /* timebase runs at external clock */
+#define HID0_64_CIABREN	HIDBIT(22)  /* enable CIABR register */
+#define HID0_64_HDICEEN	HIDBIT(23)  /* hypervisor decrementer enable */
+#define HID0_64_EN_ATTN	HIDBIT(31)  /* support processor attention inst. */
+#define HID0_64_EN_MCHK	HIDBIT(32)  /* ext. mchk interrupts */
+#endif
 #define HID0_EMCP	0x80000000  /* Enable MCP */
 #define HID0_DBP	0x40000000  /* Disable 60x bus parity generation */
 #define HID0_EBA	0x20000000  /* Enable 60x bus address parity checking */
@@ -82,6 +104,14 @@
     "\020ICE\017DCE\016ILOCK\015DLOCK\014ICFI\013DCFI\012SPD\011XBSEN" \
     "\010SGE\007b25\006BTIC\005LRSTK\004FOLD\003BHT\002NOPDST\001NOPTI"
 
+#define HID0_970_BITMASK "\020" \
+    "\040EMCP"
+
+#define HID0_970_BITMASK_U "\020" \
+    "\040ONEPPC\036DOSNGL\036ISYNCSC\035SERGP\034res\033res\032res\031DEEPNAP" \
+    "\030DOZE\027NAP\026res\025DPM\024res\023TG\022HNGDIS\021NHR" \
+    "\020INORDER\017res\016TBCTRL\015EXTBEN\014res\013res\012CIABREN\011HDICEEN" \
+    "\001ENATTN"
 /*
  *  HID0 bit definitions per CPU model
  *

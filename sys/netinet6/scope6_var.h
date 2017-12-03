@@ -34,6 +34,65 @@
 #define _NETINET6_SCOPE6_VAR_H_
 
 #ifdef _KERNEL
+
+/*
+ * IPv6 Core Protocols Implementation
+ * By Qing Li, Tatuya Jinmei, Keiichi Shima
+ *
+ * Some information from Chapter 2.9 (Handling Scope Zones) Figure 2.12, p.56
+ *
+ * User Space
+ *
+ *             Normal App         Statistics/Mgmt App        Routing App
+ *          /---------------\    /-------------------\   /------------------\
+ *          | sin6_scope_id |    |   embedded form   |   |  embedded form   |
+ *          |      only     |    | (+ sin6_scope_id) |   | or sin6_scope_id |
+ *          \---------------/    \-------------------/   \------------------/
+ *                  ^                      ^                ^          |
+ *                  |                      |                |          |
+ *            no conversion              parse            parse      embed
+ *                  |                   embedded        embbeded      ID
+ *                  |                      ID              ID    (if necessary)
+ *                  |                      |                |          |
+ *                  v                      |                |          v
+ *          /---------------\    /-------------------\   /------------------\
+ * ------   |    AF_INET6   |    |        kvm        |   |     Routing      |
+ * Kernel   |     socket    |    |     interface     |   |     socket       |
+ *          \---------------/    \-------------------/   \------------------/
+ *             ^       |                  ^                        ^
+ *             |       |                  |                        |
+ *           clear   embed           no conversion                 |
+ *          embedded  ID                  |                   no conversion
+ *            ID       |  ----------------------------------       |
+ *             |       V  |                                |       v
+ *          /---------------\                            /--------------------\
+ *          |               |---- clear sin_scope_id --->| embedded form only |
+ *          |               |<---  set sin_scope_id  ----|                    |
+ *          |               |                            \--------------------/
+ *          | embedded form |                                      ^
+ *          |       +       |                                      |
+ *          | sin_scope_id  |                                no conversion
+ *          |               |                                      |
+ *          |               |                                      V
+ *          |               |                            /--------------------\
+ *          |               |---- clear sin_scope_id --->| embedded form only |
+ *          |               |<---  set sin_scope_id  ----|                    |
+ *          \---------------/                            \--------------------/
+ * --------   ^           |
+ * Physical   |         clear 
+ * Network  embed ID,  embedded
+ *           set         ID
+ *        sin_scope_id    |
+ *            |           v
+ *          /---------------\
+ *          | 128-bit IPv6  |
+ *          | address       |
+ *          | (ID not       |
+ *          |  included)    |
+ *          \---------------/
+ */
+
+
 struct scope6_id {
 	/*
 	 * 16 is correspondent to 4bit multicast scope field.
@@ -57,6 +116,7 @@ int	sa6_recoverscope(struct sockaddr_in6 *);
 int	in6_setzoneid(struct in6_addr *, uint32_t);
 int	in6_setscope(struct in6_addr *, const struct ifnet *, u_int32_t *);
 int	in6_clearscope(struct in6_addr *);
+const char *in6_getscopename(const struct in6_addr *);
 #endif /* _KERNEL */
 
 #endif /* _NETINET6_SCOPE6_VAR_H_ */

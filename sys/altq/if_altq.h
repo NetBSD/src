@@ -1,4 +1,4 @@
-/*	$NetBSD: if_altq.h,v 1.13.22.1 2014/08/20 00:02:39 tls Exp $	*/
+/*	$NetBSD: if_altq.h,v 1.13.22.2 2017/12/03 11:35:43 jdolecek Exp $	*/
 /*	$KAME: if_altq.h,v 1.12 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -53,8 +53,7 @@ struct	ifaltq {
 	void	*altq_disc;		/* for discipline-specific use */
 	struct	ifnet *altq_ifp;	/* back pointer to interface */
 
-	int	(*altq_enqueue)(struct ifaltq *, struct mbuf *,
-				struct altq_pktattr *);
+	int	(*altq_enqueue)(struct ifaltq *, struct mbuf *);
 	struct	mbuf *(*altq_dequeue)(struct ifaltq *, int);
 	int	(*altq_request)(struct ifaltq *, int, void *);
 
@@ -146,8 +145,8 @@ struct tb_regulator {
 #define	ALTQ_CLEAR_CNDTNING(ifq)	((ifq)->altq_flags &= ~ALTQF_CNDTNING)
 #define	ALTQ_IS_ATTACHED(ifq)		((ifq)->altq_disc != NULL)
 
-#define	ALTQ_ENQUEUE(ifq, m, pa, err)					\
-	(err) = (*(ifq)->altq_enqueue)((ifq),(m),(pa))
+#define	ALTQ_ENQUEUE(ifq, m, err)					\
+	(err) = (*(ifq)->altq_enqueue)((ifq),(m))
 #define	ALTQ_DEQUEUE(ifq, m)						\
 	(m) = (*(ifq)->altq_dequeue)((ifq), ALTDQ_REMOVE)
 #define	ALTQ_POLL(ifq, m)						\
@@ -158,8 +157,7 @@ struct tb_regulator {
 #define	TBR_IS_ENABLED(ifq)		((ifq)->altq_tbr != NULL)
 
 extern int altq_attach(struct ifaltq *, int, void *,
-		       int (*)(struct ifaltq *, struct mbuf *,
-			       struct altq_pktattr *),
+		       int (*)(struct ifaltq *, struct mbuf *),
 		       struct mbuf *(*)(struct ifaltq *, int),
 		       int (*)(struct ifaltq *, int, void *),
 		       void *,
@@ -170,7 +168,7 @@ extern int altq_disable(struct ifaltq *);
 extern struct mbuf *tbr_dequeue(struct ifaltq *, int);
 extern int (*altq_input)(struct mbuf *, int);
 #if 1 /* ALTQ3_CLFIER_COMPAT */
-void altq_etherclassify(struct ifaltq *, struct mbuf *, struct altq_pktattr *);
+void altq_etherclassify(struct ifaltq *, struct mbuf *);
 #endif
 #endif /* _KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_start.S,v 1.3.2.3 2014/08/20 00:02:52 tls Exp $	*/
+/*	$NetBSD: bcm53xx_start.S,v 1.3.2.4 2017/12/03 11:36:03 jdolecek Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -45,10 +45,7 @@
 #define	CONADDR		0x18000300
 #endif
 
-RCSID("$NetBSD: bcm53xx_start.S,v 1.3.2.3 2014/08/20 00:02:52 tls Exp $")
-
-#undef VERBOSE_INIT_ARM
-#define VERBOSE_INIT_ARM
+RCSID("$NetBSD: bcm53xx_start.S,v 1.3.2.4 2017/12/03 11:36:03 jdolecek Exp $")
 
 #if defined(VERBOSE_INIT_ARM)
 #define	XPUTC(n)	mov r0, n; bl xputc

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.97.14.1 2014/08/20 00:04:35 tls Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.97.14.2 2017/12/03 11:39:04 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -52,8 +52,9 @@ struct ipovly {
  * IP Flow structure
  */
 struct ipflow {
-	LIST_ENTRY(ipflow) ipf_list;	/* next in active list */
-	LIST_ENTRY(ipflow) ipf_hash;	/* next ipflow in bucket */
+	TAILQ_ENTRY(ipflow) ipf_list;	/* next in active list */
+	TAILQ_ENTRY(ipflow) ipf_hash;	/* next ipflow in bucket */
+	size_t ipf_hashidx;		/* own hash index of ipflowtable[] */
 	struct in_addr ipf_dst;		/* destination address */
 	struct in_addr ipf_src;		/* source address */
 	uint8_t ipf_tos;		/* type-of-service */
@@ -114,12 +115,18 @@ struct ipoption {
  * passed to ip_output when IP multicast options are in use.
  */
 struct ip_moptions {
-	struct	  ifnet *imo_multicast_ifp; /* ifp for outgoing multicasts */
+	if_index_t imo_multicast_if_index; /* I/F for outgoing multicasts */
 	struct in_addr imo_multicast_addr; /* ifindex/addr on MULTICAST_IF */
 	u_int8_t  imo_multicast_ttl;	/* TTL for outgoing multicasts */
 	u_int8_t  imo_multicast_loop;	/* 1 => hear sends if a member */
 	u_int16_t imo_num_memberships;	/* no. memberships this socket */
 	struct	  in_multi *imo_membership[IP_MAX_MEMBERSHIPS];
+};
+
+struct ip_pktopts {
+	struct sockaddr_in ippo_laddr;	/* source address */
+	struct ip_moptions *ippo_imo;	/* inp->inp_moptions or &ippo_imobuf */
+	struct ip_moptions ippo_imobuf;	/* use when IP_PKTINFO */
 };
 
 /*
@@ -156,8 +163,9 @@ struct ip_moptions {
 #define	IP_STAT_TOOLONG		27	/* ip length > max ip packet size */
 #define	IP_STAT_NOGIF		28	/* no match gif found */
 #define	IP_STAT_BADADDR		29	/* invalid address on header */
+#define	IP_STAT_NOL2TP		30	/* no match l2tp found */
 
-#define	IP_NSTATS		30
+#define	IP_NSTATS		31
 
 #ifdef _KERNEL
 
@@ -180,6 +188,7 @@ __CTASSERT(SO_BROADCAST ==	0x0020);
 
 #define	IP_IGMP_MCAST		0x0040		/* IGMP for mcast join/leave */
 #define	IP_MTUDISC		0x0400		/* Path MTU Discovery; set DF */
+#define	IP_ROUTETOIFINDEX	0x0800	/* force route imo_multicast_if_index */
 
 extern struct domain inetdomain;
 extern const struct pr_usrreqs rip_usrreqs;
@@ -205,12 +214,15 @@ void	ip_init(void);
 void	in_init(void);
 
 int	 ip_ctloutput(int, struct socket *, struct sockopt *);
+int	 ip_setpktopts(struct mbuf *, struct ip_pktopts *, int *,
+	    struct inpcb *, kauth_cred_t, int);
 void	 ip_drain(void);
 void	 ip_drainstub(void);
 void	 ip_freemoptions(struct ip_moptions *);
 int	 ip_optcopy(struct ip *, struct ip *);
 u_int	 ip_optlen(struct inpcb *);
-int	 ip_output(struct mbuf *, ...);
+int	 ip_output(struct mbuf *, struct mbuf *, struct route *, int,
+	    struct ip_moptions *, struct inpcb *);
 int	 ip_fragment(struct mbuf *, struct ifnet *, u_long);
 
 void	 ip_reass_init(void);
@@ -223,22 +235,27 @@ void	 ip_savecontrol(struct inpcb *, struct mbuf **, struct ip *,
 void	 ip_slowtimo(void);
 void	 ip_fasttimo(void);
 struct mbuf *
-	 ip_srcroute(void);
+	 ip_srcroute(struct mbuf *);
 int	 ip_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 void	 ip_statinc(u_int);
 void *	 rip_ctlinput(int, const struct sockaddr *, void *);
 int	 rip_ctloutput(int, struct socket *, struct sockopt *);
 void	 rip_init(void);
 void	 rip_input(struct mbuf *, ...);
-int	 rip_output(struct mbuf *, ...);
+int	 rip_output(struct mbuf *, struct inpcb *, struct mbuf *, struct lwp *);
 int	 rip_usrreq(struct socket *,
 	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct lwp *);
+
+int	ip_setmoptions(struct ip_moptions **, const struct sockopt *sopt);
+int	ip_getmoptions(struct ip_moptions *, struct sockopt *sopt);
+
+int	ip_if_output(struct ifnet * const, struct mbuf * const,
+	    const struct sockaddr * const, const struct rtentry *);
 
 /* IP Flow interface. */
 void	ipflow_init(void);
 void	ipflow_poolinit(void);
-struct ipflow *ipflow_reap(bool);
-void	ipflow_create(const struct route *, struct mbuf *);
+void	ipflow_create(struct route *, struct mbuf *);
 void	ipflow_slowtimo(void);
 int	ipflow_invalidate_all(int);
 

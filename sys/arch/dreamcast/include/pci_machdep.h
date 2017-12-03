@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.6.18.2 2014/08/20 00:02:51 tls Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.6.18.3 2017/12/03 11:36:01 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -65,7 +65,7 @@ struct dreamcast_pci_chipset {
 
 	void		*pc_intr_v;
 
-  	int		(*pc_intr_map)(struct pci_attach_args *,
+  	int		(*pc_intr_map)(const struct pci_attach_args *,
 			    pci_intr_handle_t *);
 	const char	*(*pc_intr_string)(void *, pci_intr_handle_t,
 			    char *, size_t);

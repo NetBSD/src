@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsnode.h,v 1.1.1.1.10.2 2014/08/20 00:04:27 tls Exp $	*/
+/*	$NetBSD: nfsnode.h,v 1.1.1.1.10.3 2017/12/03 11:38:42 jdolecek Exp $	*/
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,21 +30,18 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * FreeBSD: head/sys/fs/nfsclient/nfsnode.h 244042 2012-12-08 22:52:39Z rmacklem 
- * $NetBSD: nfsnode.h,v 1.1.1.1.10.2 2014/08/20 00:04:27 tls Exp $
+ * FreeBSD: head/sys/fs/nfsclient/nfsnode.h 303715 2016-08-03 15:58:20Z kib 
+ * $NetBSD: nfsnode.h,v 1.1.1.1.10.3 2017/12/03 11:38:42 jdolecek Exp $
  */
 
 #ifndef _NFSCLIENT_NFSNODE_H_
 #define	_NFSCLIENT_NFSNODE_H_
-
-#include <sys/_task.h>
 
 /*
  * Silly rename structure that hangs off the nfsnode until the name
  * can be removed by nfs_inactive()
  */
 struct sillyrename {
-	struct	task s_task;
 	struct	ucred *s_cred;
 	struct	vnode *s_dvp;
 	long	s_namlen;
@@ -93,7 +90,7 @@ struct nfs_accesscache {
  *     be well aligned and, therefore, tightly packed.
  */
 struct nfsnode {
-	struct mtx 		n_mtx;		/* Protects all of these members */
+	kmutex_t 		n_mtx;		/* Protects all of these members */
 	u_quad_t		n_size;		/* Current size of file */
 	u_quad_t		n_brev;		/* Modify rev when cached */
 	u_quad_t		n_lrev;		/* Modify rev for lease */
@@ -159,6 +156,7 @@ struct nfsnode {
 #define	NLOCKWANT	0x00010000  /* Want the sleep lock */
 #define	NNOLAYOUT	0x00020000  /* Can't get a layout for this file */
 #define	NWRITEOPENED	0x00040000  /* Has been opened for writing */
+#define	NHASBEENLOCKED	0x00080000  /* Has been file locked. */
 
 /*
  * Convert between nfsnode pointers and vnode pointers
@@ -186,7 +184,6 @@ nfsuint64 *ncl_getcookie(struct nfsnode *, off_t, int);
 void	ncl_invaldir(struct vnode *);
 int	ncl_upgrade_vnlock(struct vnode *);
 void	ncl_downgrade_vnlock(struct vnode *, int);
-void	ncl_printf(const char *, ...);
 void	ncl_dircookie_lock(struct nfsnode *);
 void	ncl_dircookie_unlock(struct nfsnode *);
 

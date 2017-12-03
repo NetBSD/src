@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdi.c,v 1.53.2.4 2014/08/20 00:03:51 tls Exp $	*/
+/*	$NetBSD: uftdi.c,v 1.53.2.5 2017/12/03 11:37:34 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.53.2.4 2014/08/20 00:03:51 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.53.2.5 2017/12/03 11:37:34 jdolecek Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_usb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,8 +82,8 @@ int uftdidebug = 0;
 
 struct uftdi_softc {
 	device_t		sc_dev;		/* base device */
-	usbd_device_handle	sc_udev;	/* device */
-	usbd_interface_handle	sc_iface[UFTDI_MAX_PORTS];	/* interface */
+	struct usbd_device *	sc_udev;	/* device */
+	struct usbd_interface *	sc_iface[UFTDI_MAX_PORTS];	/* interface */
 
 	enum uftdi_type		sc_type;
 	u_int			sc_hdrlen;
@@ -97,27 +101,27 @@ struct uftdi_softc {
 
 };
 
-Static void	uftdi_get_status(void *, int portno, u_char *lsr, u_char *msr);
+Static void	uftdi_get_status(void *, int, u_char *, u_char *);
 Static void	uftdi_set(void *, int, int, int);
 Static int	uftdi_param(void *, int, struct termios *);
-Static int	uftdi_open(void *sc, int portno);
-Static void	uftdi_read(void *sc, int portno, u_char **ptr,u_int32_t *count);
-Static void	uftdi_write(void *sc, int portno, u_char *to, u_char *from,
-			    u_int32_t *count);
-Static void	uftdi_break(void *sc, int portno, int onoff);
+Static int	uftdi_open(void *, int);
+Static void	uftdi_read(void *, int, u_char **, uint32_t *);
+Static void	uftdi_write(void *, int, u_char *, u_char *,
+			    uint32_t *);
+Static void	uftdi_break(void *, int, int);
 
 struct ucom_methods uftdi_methods = {
-	uftdi_get_status,
-	uftdi_set,
-	uftdi_param,
-	NULL,
-	uftdi_open,
-	NULL,
-	uftdi_read,
-	uftdi_write,
+	.ucom_get_status = uftdi_get_status,
+	.ucom_set = uftdi_set,
+	.ucom_param = uftdi_param,
+	.ucom_ioctl = NULL,
+	.ucom_open = uftdi_open,
+	.ucom_close = NULL,
+	.ucom_read = uftdi_read,
+	.ucom_write = uftdi_write,
 };
 
-/* 
+/*
  * The devices default to UFTDI_TYPE_8U232AM.
  * Remember to update uftdi_attach() if it should be UFTDI_TYPE_SIO instead
  */
@@ -159,7 +163,9 @@ static const struct usb_devno uftdi_devs[] = {
 	{ USB_VENDOR_xxFTDI, USB_PRODUCT_xxFTDI_SHEEVAPLUG_JTAG },
 	{ USB_VENDOR_INTREPIDCS, USB_PRODUCT_INTREPIDCS_VALUECAN },
 	{ USB_VENDOR_INTREPIDCS, USB_PRODUCT_INTREPIDCS_NEOVI },
+	{ USB_VENDOR_MELCO, USB_PRODUCT_MELCO_PCOPRS1 },
 	{ USB_VENDOR_RATOC, USB_PRODUCT_RATOC_REXUSB60F },
+	{ USB_VENDOR_RTSYS, USB_PRODUCT_RTSYS_CT57A },
 	{ USB_VENDOR_SEALEVEL, USB_PRODUCT_SEALEVEL_USBSERIAL },
 	{ USB_VENDOR_SEALEVEL, USB_PRODUCT_SEALEVEL_SEAPORT4P1 },
 	{ USB_VENDOR_SEALEVEL, USB_PRODUCT_SEALEVEL_SEAPORT4P2 },
@@ -180,25 +186,25 @@ extern struct cfdriver uftdi_cd;
 CFATTACH_DECL2_NEW(uftdi, sizeof(struct uftdi_softc), uftdi_match,
     uftdi_attach, uftdi_detach, uftdi_activate, NULL, uftdi_childdet);
 
-int 
+int
 uftdi_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
 	DPRINTFN(20,("uftdi: vendor=0x%x, product=0x%x\n",
-		     uaa->vendor, uaa->product));
+		     uaa->uaa_vendor, uaa->uaa_product));
 
-        return (uftdi_lookup(uaa->vendor, uaa->product) != NULL ?
-                UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
+	return uftdi_lookup(uaa->uaa_vendor, uaa->uaa_product) != NULL ?
+		UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
-void 
+void
 uftdi_attach(device_t parent, device_t self, void *aux)
 {
 	struct uftdi_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
-	usbd_device_handle dev = uaa->device;
-	usbd_interface_handle iface;
+	struct usbd_device *dev = uaa->uaa_device;
+	struct usbd_interface *iface;
 	usb_device_descriptor_t *ddesc;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
@@ -206,7 +212,7 @@ uftdi_attach(device_t parent, device_t self, void *aux)
 	const char *devname = device_xname(self);
 	int i,idx;
 	usbd_status err;
-	struct ucom_attach_args uca;
+	struct ucom_attach_args ucaa;
 
 	DPRINTFN(10,("\nuftdi_attach: sc=%p\n", sc));
 
@@ -230,8 +236,8 @@ uftdi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_numports = 1;
 	sc->sc_type = UFTDI_TYPE_8U232AM; /* most devices are post-8U232AM */
 	sc->sc_hdrlen = 0;
-	if (uaa->vendor == USB_VENDOR_FTDI
-	    && uaa->product == USB_PRODUCT_FTDI_SERIAL_8U100AX) {
+	if (uaa->uaa_vendor == USB_VENDOR_FTDI
+	    && uaa->uaa_product == USB_PRODUCT_FTDI_SERIAL_8U100AX) {
 		sc->sc_type = UFTDI_TYPE_SIO;
 		sc->sc_hdrlen = 1;
 	}
@@ -266,8 +272,8 @@ uftdi_attach(device_t parent, device_t self, void *aux)
 
 		sc->sc_iface[idx] = iface;
 
-		uca.bulkin = uca.bulkout = -1;
-		uca.ibufsize = uca.obufsize = 0;
+		ucaa.ucaa_bulkin = ucaa.ucaa_bulkout = -1;
+		ucaa.ucaa_ibufsize = ucaa.ucaa_obufsize = 0;
 		for (i = 0; i < id->bNumEndpoints; i++) {
 			int addr, dir, attr;
 			ed = usbd_interface2endpoint_descriptor(iface, i);
@@ -282,60 +288,62 @@ uftdi_attach(device_t parent, device_t self, void *aux)
 			dir = UE_GET_DIR(ed->bEndpointAddress);
 			attr = ed->bmAttributes & UE_XFERTYPE;
 			if (dir == UE_DIR_IN && attr == UE_BULK) {
-				uca.bulkin = addr;
-				uca.ibufsize = UGETW(ed->wMaxPacketSize);
-				if (uca.ibufsize >= UFTDI_MAX_IBUFSIZE)
-					uca.ibufsize = UFTDI_MAX_IBUFSIZE;
+				ucaa.ucaa_bulkin = addr;
+				ucaa.ucaa_ibufsize = UGETW(ed->wMaxPacketSize);
+				if (ucaa.ucaa_ibufsize >= UFTDI_MAX_IBUFSIZE)
+					ucaa.ucaa_ibufsize = UFTDI_MAX_IBUFSIZE;
 			} else if (dir == UE_DIR_OUT && attr == UE_BULK) {
-				uca.bulkout = addr;
-				uca.obufsize = UGETW(ed->wMaxPacketSize)
+				ucaa.ucaa_bulkout = addr;
+				ucaa.ucaa_obufsize = UGETW(ed->wMaxPacketSize)
 				    - sc->sc_hdrlen;
-				if (uca.obufsize >= UFTDI_MAX_OBUFSIZE)
-					uca.obufsize = UFTDI_MAX_OBUFSIZE;
+				if (ucaa.ucaa_obufsize >= UFTDI_MAX_OBUFSIZE)
+					ucaa.ucaa_obufsize = UFTDI_MAX_OBUFSIZE;
 				/* Limit length if we have a 6-bit header.  */
 				if ((sc->sc_hdrlen > 0) &&
-				    (uca.obufsize > UFTDIOBUFSIZE))
-					uca.obufsize = UFTDIOBUFSIZE;
+				    (ucaa.ucaa_obufsize > UFTDIOBUFSIZE))
+					ucaa.ucaa_obufsize = UFTDIOBUFSIZE;
 			} else {
 				aprint_error_dev(self,
 				    "unexpected endpoint\n");
 				goto bad;
 			}
 		}
-		if (uca.bulkin == -1) {
+		if (ucaa.ucaa_bulkin == -1) {
 			aprint_error_dev(self,
 			    "Could not find data bulk in\n");
 			goto bad;
 		}
-		if (uca.bulkout == -1) {
+		if (ucaa.ucaa_bulkout == -1) {
 			aprint_error_dev(self,
 			    "Could not find data bulk out\n");
 			goto bad;
 		}
 
-		uca.portno = FTDI_PIT_SIOA + idx;
-		/* bulkin, bulkout set above */
-		if (uca.ibufsize == 0)
-			uca.ibufsize = UFTDIIBUFSIZE;
-		uca.ibufsizepad = uca.ibufsize;
-		if (uca.obufsize == 0)
-			uca.obufsize = UFTDIOBUFSIZE - sc->sc_hdrlen;
-		uca.opkthdrlen = sc->sc_hdrlen;
-		uca.device = dev;
-		uca.iface = iface;
-		uca.methods = &uftdi_methods;
-		uca.arg = sc;
-		uca.info = NULL;
+		ucaa.ucaa_portno = FTDI_PIT_SIOA + idx;
+		/* ucaa_bulkin, ucaa_bulkout set above */
+		if (ucaa.ucaa_ibufsize == 0)
+			ucaa.ucaa_ibufsize = UFTDIIBUFSIZE;
+		ucaa.ucaa_ibufsizepad = ucaa.ucaa_ibufsize;
+		if (ucaa.ucaa_obufsize == 0)
+			ucaa.ucaa_obufsize = UFTDIOBUFSIZE - sc->sc_hdrlen;
+		ucaa.ucaa_opkthdrlen = sc->sc_hdrlen;
+		ucaa.ucaa_device = dev;
+		ucaa.ucaa_iface = iface;
+		ucaa.ucaa_methods = &uftdi_methods;
+		ucaa.ucaa_arg = sc;
+		ucaa.ucaa_info = NULL;
 
 		DPRINTF(("uftdi: in=0x%x out=0x%x isize=0x%x osize=0x%x\n",
-			uca.bulkin, uca.bulkout,
-			uca.ibufsize, uca.obufsize));
+			ucaa.ucaa_bulkin, ucaa.ucaa_bulkout,
+			ucaa.ucaa_ibufsize, ucaa.ucaa_obufsize));
 		sc->sc_subdev[idx] = config_found_sm_loc(self, "ucombus", NULL,
-		    &uca, ucomprint, ucomsubmatch);
+		    &ucaa, ucomprint, ucomsubmatch);
 	}
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-			   sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	return;
 
@@ -386,10 +394,9 @@ uftdi_detach(device_t self, int flags)
 			config_detach(sc->sc_subdev[i], flags);
 	}
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			   sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
 
-	return (0);
+	return 0;
 }
 
 Static int
@@ -403,7 +410,7 @@ uftdi_open(void *vsc, int portno)
 	DPRINTF(("uftdi_open: sc=%p\n", sc));
 
 	if (sc->sc_dying)
-		return (EIO);
+		return EIO;
 
 	/* Perform a full reset on the device */
 	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
@@ -413,7 +420,7 @@ uftdi_open(void *vsc, int portno)
 	USETW(req.wLength, 0);
 	err = usbd_do_request(sc->sc_udev, &req, NULL);
 	if (err)
-		return (EIO);
+		return EIO;
 
 	/* Set 9600 baud, 2 stop bits, no parity, 8 bits */
 	t.c_ospeed = 9600;
@@ -428,13 +435,13 @@ uftdi_open(void *vsc, int portno)
 	USETW(req.wLength, 0);
 	err = usbd_do_request(sc->sc_udev, &req, NULL);
 	if (err)
-		return (EIO);
+		return EIO;
 
-	return (0);
+	return 0;
 }
 
 Static void
-uftdi_read(void *vsc, int portno, u_char **ptr, u_int32_t *count)
+uftdi_read(void *vsc, int portno, u_char **ptr, uint32_t *count)
 {
 	struct uftdi_softc *sc = vsc;
 	u_char msr, lsr;
@@ -466,7 +473,7 @@ uftdi_read(void *vsc, int portno, u_char **ptr, u_int32_t *count)
 }
 
 Static void
-uftdi_write(void *vsc, int portno, u_char *to, u_char *from, u_int32_t *count)
+uftdi_write(void *vsc, int portno, u_char *to, u_char *from, uint32_t *count)
 {
 	struct uftdi_softc *sc = vsc;
 
@@ -526,7 +533,7 @@ uftdi_param(void *vsc, int portno, struct termios *t)
 	DPRINTF(("uftdi_param: sc=%p\n", sc));
 
 	if (sc->sc_dying)
-		return (EIO);
+		return EIO;
 
 	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
 	req.bRequest = FTDI_SIO_SET_BITMODE;
@@ -535,7 +542,7 @@ uftdi_param(void *vsc, int portno, struct termios *t)
 	USETW(req.wLength, 0);
 	err = usbd_do_request(sc->sc_udev, &req, NULL);
 	if (err)
-		return (EIO);
+		return EIO;
 
 	switch (sc->sc_type) {
 	case UFTDI_TYPE_SIO:
@@ -551,7 +558,7 @@ uftdi_param(void *vsc, int portno, struct termios *t)
 		case 57600: rate = ftdi_sio_b57600; break;
 		case 115200: rate = ftdi_sio_b115200; break;
 		default:
-			return (EINVAL);
+			return EINVAL;
 		}
 		break;
 
@@ -571,12 +578,12 @@ uftdi_param(void *vsc, int portno, struct termios *t)
 		case 460800: rate = ftdi_8u232am_b460800; break;
 		case 921600: rate = ftdi_8u232am_b921600; break;
 		default:
-			return (EINVAL);
+			return EINVAL;
 		}
 		break;
 
 	default:
-		return (EINVAL);
+		return EINVAL;
 	}
 	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
 	req.bRequest = FTDI_SIO_SET_BAUD_RATE;
@@ -588,7 +595,7 @@ uftdi_param(void *vsc, int portno, struct termios *t)
 		    UGETW(req.wValue), UGETW(req.wIndex), UGETW(req.wLength)));
 	err = usbd_do_request(sc->sc_udev, &req, NULL);
 	if (err)
-		return (EIO);
+		return EIO;
 
 	if (ISSET(t->c_cflag, CSTOPB))
 		data = FTDI_SIO_SET_DATA_STOP_BITS_2;
@@ -627,7 +634,7 @@ uftdi_param(void *vsc, int portno, struct termios *t)
 		    UGETW(req.wValue), UGETW(req.wIndex), UGETW(req.wLength)));
 	err = usbd_do_request(sc->sc_udev, &req, NULL);
 	if (err)
-		return (EIO);
+		return EIO;
 
 	if (ISSET(t->c_cflag, CRTSCTS)) {
 		flow = FTDI_SIO_RTS_CTS_HS;
@@ -645,9 +652,9 @@ uftdi_param(void *vsc, int portno, struct termios *t)
 	USETW(req.wLength, 0);
 	err = usbd_do_request(sc->sc_udev, &req, NULL);
 	if (err)
-		return (EIO);
+		return EIO;
 
-	return (0);
+	return 0;
 }
 
 void

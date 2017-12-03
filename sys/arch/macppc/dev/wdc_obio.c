@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.58 2012/07/31 15:50:33 bouyer Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.58.2.1 2017/12/03 11:36:25 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -30,12 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.58 2012/07/31 15:50:33 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.58.2.1 2017/12/03 11:36:25 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -66,13 +66,12 @@ struct wdc_obio_softc {
 	struct wdc_softc sc_wdcdev;
 	struct ata_channel *sc_chanptr;
 	struct ata_channel sc_channel;
-	struct ata_queue sc_chqueue;
 	struct wdc_regs sc_wdc_regs;
 	bus_space_handle_t sc_dmaregh;
 	dbdma_regmap_t *sc_dmareg;
 	dbdma_command_t	*sc_dmacmd;
 	u_int sc_dmaconf[2];	/* per target value of CONFIG_REG */
-	void *sc_ih;
+	void *sc_ih, *sc_dma;
 };
 
 static int wdc_obio_match(device_t, cfdata_t, void *);
@@ -182,7 +181,8 @@ wdc_obio_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ih = intr_establish(intr, type, IPL_BIO, wdcintr, chp);
 
 	if (use_dma) {
-		sc->sc_dmacmd = dbdma_alloc(sizeof(dbdma_command_t) * 20);
+		sc->sc_dmacmd = dbdma_alloc(sizeof(dbdma_command_t) * 20,
+		    &sc->sc_dma);
 		/*
 		 * XXX
 		 * we don't use ca->ca_reg[3] for size here because at least
@@ -223,10 +223,11 @@ wdc_obio_attach(device_t parent, device_t self, void *aux)
 	} else {
 		/* all non-DMA controllers can use adjust_timing */
 		sc->sc_wdcdev.sc_atac.atac_set_modes = adjust_timing;
+		sc->sc_dmacmd = NULL;
 	}
 
 	sc->sc_wdcdev.sc_atac.atac_pio_cap = 4;
-	sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DATA16;
+	sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DATA16 /*| ATAC_CAP_DATA32*/;
 	sc->sc_chanptr = chp;
 	sc->sc_wdcdev.sc_atac.atac_channels = &sc->sc_chanptr;
 	sc->sc_wdcdev.sc_atac.atac_nchannels = 1;
@@ -235,11 +236,11 @@ wdc_obio_attach(device_t parent, device_t self, void *aux)
 	sc->sc_wdcdev.dma_init = wdc_obio_dma_init;
 	sc->sc_wdcdev.dma_start = wdc_obio_dma_start;
 	sc->sc_wdcdev.dma_finish = wdc_obio_dma_finish;
+
 	chp->ch_channel = 0;
 	chp->ch_atac = &sc->sc_wdcdev.sc_atac;
-	chp->ch_queue = &sc->sc_chqueue;
 
-	wdc_init_shadow_regs(chp);
+	wdc_init_shadow_regs(wdr);
 
 #define OHARE_FEATURE_REG	0xf3000038
 
@@ -453,9 +454,12 @@ wdc_obio_detach(device_t self, int flags)
 			sc->sc_wdcdev.regs->cmd_baseioh, WDC_REG_NPORTS << 4);
 
 	/* Unmap DMA registers. */
-	bus_space_unmap(sc->sc_wdcdev.regs->cmd_iot, sc->sc_dmaregh, 0x100);
-	free(sc->sc_dmacmd, M_DEVBUF);
+	if (sc->sc_dmacmd != NULL) {
 
+		bus_space_unmap(sc->sc_wdcdev.regs->cmd_iot,
+		    sc->sc_dmaregh, 0x100);
+		dbdma_free(sc->sc_dma, sizeof(dbdma_command_t) * 20);
+	}
 	return 0;
 }
 

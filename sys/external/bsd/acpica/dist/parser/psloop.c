@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -41,7 +41,6 @@
  * POSSIBILITY OF SUCH DAMAGES.
  */
 
-
 /*
  * Parse the AML and build an operation tree as most interpreters, (such as
  * Perl) do. Parsing is done by hand rather than with a YACC generated parser
@@ -52,9 +51,11 @@
 
 #include "acpi.h"
 #include "accommon.h"
+#include "acinterp.h"
 #include "acparser.h"
 #include "acdispat.h"
 #include "amlcode.h"
+#include "acconvert.h"
 
 #define _COMPONENT          ACPI_PARSER
         ACPI_MODULE_NAME    ("psloop")
@@ -104,6 +105,9 @@ AcpiPsGetArguments (
     ACPI_FUNCTION_TRACE_PTR (PsGetArguments, WalkState);
 
 
+    ACPI_DEBUG_PRINT ((ACPI_DB_PARSE,
+        "Get arguments for opcode [%s]\n", Op->Common.AmlOpName));
+
     switch (Op->Common.AmlOpcode)
     {
     case AML_BYTE_OP:       /* AML_BYTEDATA_ARG */
@@ -120,7 +124,8 @@ AcpiPsGetArguments (
 
     case AML_INT_NAMEPATH_OP:   /* AML_NAMESTRING_ARG */
 
-        Status = AcpiPsGetNextNamepath (WalkState, &(WalkState->ParserState), Op, 1);
+        Status = AcpiPsGetNextNamepath (WalkState,
+            &(WalkState->ParserState), Op, ACPI_POSSIBLE_METHOD_CALL);
         if (ACPI_FAILURE (Status))
         {
             return_ACPI_STATUS (Status);
@@ -133,13 +138,29 @@ AcpiPsGetArguments (
         /*
          * Op is not a constant or string, append each argument to the Op
          */
-        while (GET_CURRENT_ARG_TYPE (WalkState->ArgTypes) && !WalkState->ArgCount)
+        while (GET_CURRENT_ARG_TYPE (WalkState->ArgTypes) &&
+            !WalkState->ArgCount)
         {
-            WalkState->AmlOffset = (UINT32) ACPI_PTR_DIFF (WalkState->ParserState.Aml,
-                WalkState->ParserState.AmlStart);
+            WalkState->Aml = WalkState->ParserState.Aml;
+
+            switch (Op->Common.AmlOpcode)
+            {
+            case AML_METHOD_OP:
+            case AML_BUFFER_OP:
+            case AML_PACKAGE_OP:
+            case AML_VARIABLE_PACKAGE_OP:
+            case AML_WHILE_OP:
+
+                break;
+
+            default:
+
+                ASL_CV_CAPTURE_COMMENTS (WalkState);
+                break;
+            }
 
             Status = AcpiPsGetNextArg (WalkState, &(WalkState->ParserState),
-                        GET_CURRENT_ARG_TYPE (WalkState->ArgTypes), &Arg);
+                GET_CURRENT_ARG_TYPE (WalkState->ArgTypes), &Arg);
             if (ACPI_FAILURE (Status))
             {
                 return_ACPI_STATUS (Status);
@@ -147,13 +168,15 @@ AcpiPsGetArguments (
 
             if (Arg)
             {
-                Arg->Common.AmlOffset = WalkState->AmlOffset;
                 AcpiPsAppendArg (Op, Arg);
             }
 
             INCREMENT_ARG_LIST (WalkState->ArgTypes);
         }
 
+        ACPI_DEBUG_PRINT ((ACPI_DB_PARSE,
+            "Final argument count: %u pass %u\n",
+            WalkState->ArgCount, WalkState->PassNumber));
 
         /*
          * Handle executable code at "module-level". This refers to
@@ -246,12 +269,16 @@ AcpiPsGetArguments (
 
         case AML_BUFFER_OP:
         case AML_PACKAGE_OP:
-        case AML_VAR_PACKAGE_OP:
+        case AML_VARIABLE_PACKAGE_OP:
 
             if ((Op->Common.Parent) &&
                 (Op->Common.Parent->Common.AmlOpcode == AML_NAME_OP) &&
                 (WalkState->PassNumber <= ACPI_IMODE_LOAD_PASS2))
             {
+                ACPI_DEBUG_PRINT ((ACPI_DB_PARSE,
+                    "Setup Package/Buffer: Pass %u, AML Ptr: %p\n",
+                    WalkState->PassNumber, AmlOpStart));
+
                 /*
                  * Skip parsing of Buffers and Packages because we don't have
                  * enough info in the first pass to parse them correctly.
@@ -320,6 +347,9 @@ AcpiPsLinkModuleCode (
     ACPI_NAMESPACE_NODE     *ParentNode;
 
 
+    ACPI_FUNCTION_TRACE (PsLinkModuleCode);
+
+
     /* Get the tail of the list */
 
     Prev = Next = AcpiGbl_ModuleCodeList;
@@ -341,8 +371,11 @@ AcpiPsLinkModuleCode (
         MethodObj = AcpiUtCreateInternalObject (ACPI_TYPE_METHOD);
         if (!MethodObj)
         {
-            return;
+            return_VOID;
         }
+
+        ACPI_DEBUG_PRINT ((ACPI_DB_PARSE,
+            "Create/Link new code block: %p\n", MethodObj));
 
         if (ParentOp->Common.Node)
         {
@@ -376,8 +409,13 @@ AcpiPsLinkModuleCode (
     }
     else
     {
+        ACPI_DEBUG_PRINT ((ACPI_DB_PARSE,
+            "Appending to existing code block: %p\n", Prev));
+
         Prev->Method.AmlLength += AmlLength;
     }
+
+    return_VOID;
 }
 
 /*******************************************************************************
@@ -473,6 +511,8 @@ AcpiPsParseLoop (
 
     while ((ParserState->Aml < ParserState->AmlEnd) || (Op))
     {
+        ASL_CV_CAPTURE_COMMENTS (WalkState);
+
         AmlOpStart = ParserState->Aml;
         if (!Op)
         {
@@ -489,6 +529,11 @@ AcpiPsParseLoop (
                     Status = AE_OK;
                 }
 
+                if (Status == AE_CTRL_TERMINATE)
+                {
+                    return_ACPI_STATUS (Status);
+                }
+
                 Status = AcpiPsCompleteOp (WalkState, &Op, Status);
                 if (ACPI_FAILURE (Status))
                 {
@@ -498,23 +543,29 @@ AcpiPsParseLoop (
                 continue;
             }
 
-            Op->Common.AmlOffset = WalkState->AmlOffset;
-
-            if (WalkState->OpInfo)
-            {
-                ACPI_DEBUG_PRINT ((ACPI_DB_PARSE,
-                    "Opcode %4.4X [%s] Op %p Aml %p AmlOffset %5.5X\n",
-                     (UINT32) Op->Common.AmlOpcode, WalkState->OpInfo->Name,
-                     Op, ParserState->Aml, Op->Common.AmlOffset));
-            }
+            AcpiExStartTraceOpcode (Op, WalkState);
         }
-
 
         /*
          * Start ArgCount at zero because we don't know if there are
          * any args yet
          */
-        WalkState->ArgCount  = 0;
+        WalkState->ArgCount = 0;
+
+        switch (Op->Common.AmlOpcode)
+        {
+        case AML_BYTE_OP:
+        case AML_WORD_OP:
+        case AML_DWORD_OP:
+        case AML_QWORD_OP:
+
+            break;
+
+        default:
+
+            ASL_CV_CAPTURE_COMMENTS (WalkState);
+            break;
+        }
 
         /* Are there any arguments that must be processed? */
 
@@ -537,6 +588,9 @@ AcpiPsParseLoop (
 
         /* Check for arguments that need to be processed */
 
+        ACPI_DEBUG_PRINT ((ACPI_DB_PARSE,
+            "Parseloop: argument count: %u\n", WalkState->ArgCount));
+
         if (WalkState->ArgCount)
         {
             /*
@@ -544,7 +598,7 @@ AcpiPsParseLoop (
              * prepare for argument
              */
             Status = AcpiPsPushScope (ParserState, Op,
-                        WalkState->ArgTypes, WalkState->ArgCount);
+                WalkState->ArgTypes, WalkState->ArgCount);
             if (ACPI_FAILURE (Status))
             {
                 Status = AcpiPsCompleteOp (WalkState, &Op, Status);

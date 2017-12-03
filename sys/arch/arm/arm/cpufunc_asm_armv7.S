@@ -34,6 +34,7 @@
 	.arch	armv7a
 
 ENTRY(armv7_cpu_sleep)
+	dsb
 	wfi				@ wait for an interrupt
 	b	irq_idle_entry		@ assume we got an interrupt
 END(armv7_cpu_sleep)
@@ -48,8 +49,8 @@ ENTRY(armv7_context_switch)
 	dsb				@ data synchronization barrier
 	mrc	p15, 0, ip, c0, c0, 5	@ get MPIDR
 	cmp	ip, #0
-	orrlt	r0, r0, #0x5b		@ MP, cachable (Normal WB)
-	orrge	r0, r0, #0x1b		@ Non-MP, cacheable, normal WB
+	orrlt	r0, r0, #TTBR_MPATTR	@ MP, cachable (Normal WB)
+	orrge	r0, r0, #TTBR_UPATTR	@ Non-MP, cacheable, normal WB
 	mcr	p15, 0, r0, c2, c0, 0 	@ set the new TTBR 0
 #ifdef ARM_MMU_EXTENDED
 	cmp	r1, #0
@@ -63,66 +64,93 @@ ENTRY(armv7_context_switch)
 END(armv7_context_switch)
 
 #ifdef ARM_MMU_EXTENDED_XXX
-ENTRY(armv7_tlb_flushID_ASID)
-#ifdef MULTIPROCESSOR
-	mcr	p15, 0, r0, c8, c3, 2	@ flush I+D tlb all ASID
-#else
+ENTRY(armv7up_tlb_flushID_ASID)
 	mcr	p15, 0, r0, c8, c7, 2	@ flush I+D tlb all ASID
-#endif
 	dsb				@ data synchronization barrier
 	isb
 	bx	lr
-END(armv7_tlb_flushID_ASID)
-#endif
+END(armv7up_tlb_flushID_ASID)
 
-STRONG_ALIAS(armv7_tlb_flushD_SE, armv7_tlb_flushID_SE)
-STRONG_ALIAS(armv7_tlb_flushI_SE, armv7_tlb_flushID_SE)
-ENTRY(armv7_tlb_flushID_SE)
-	bfc	r0, #0, #12		@ clear ASID
-#ifdef ARM_MMU_EXTENDED
-	bfi	r0, r1, #0, #8		@ insert ASID into MVA
-#endif
 #ifdef MULTIPROCESSOR
-	mcr	p15, 0, r0, c8, c3, 1	@ flush I+D tlb single entry
-#if PAGE_SIZE == 2*L2_S_SIZE
-	add	r0, r0, #L2_S_SIZE
-	mcr	p15, 0, r0, c8, c3, 1	@ flush I+D tlb single entry
-#endif
-#else /* !MULTIPROCESSOR */
-	mcr	p15, 0, r0, c8, c7, 1	@ flush I+D tlb single entry
-#if PAGE_SIZE == 2*L2_S_SIZE
-	add	r0, r0, #L2_S_SIZE
-	mcr	p15, 0, r0, c8, c7, 1	@ flush I+D tlb single entry
-#endif
-#endif /* !MULTIPROCESSOR */
+ENTRY(armv7mp_tlb_flushID_ASID)
+	mcr	p15, 0, r0, c8, c3, 2	@ flush I+D tlb all ASID
 	dsb				@ data synchronization barrier
 	isb
 	bx	lr
-END(armv7_tlb_flushID_SE)
+END(armv7mp_tlb_flushID_ASID)
+#endif
+#endif
 
-ENTRY(armv7_tlb_flushD)
+STRONG_ALIAS(armv7up_tlb_flushD_SE, armv7up_tlb_flushID_SE)
+STRONG_ALIAS(armv7up_tlb_flushI_SE, armv7up_tlb_flushID_SE)
+ENTRY(armv7up_tlb_flushID_SE)
+	bfc	r0, #0, #12		@ Always KERNEL_PID, i.e. 0
+	mcr	p15, 0, r0, c8, c7, 1	@ flush I+D tlb single entry
+#if PAGE_SIZE == 2*L2_S_SIZE
+	add	r0, r0, #L2_S_SIZE
+	mcr	p15, 0, r0, c8, c7, 1	@ flush I+D tlb single entry
+#endif
+	dsb				@ data synchronization barrier
+	isb
+	bx	lr
+END(armv7up_tlb_flushID_SE)
+
+#ifdef MULTIPROCESSOR
+STRONG_ALIAS(armv7mp_tlb_flushD_SE, armv7mp_tlb_flushID_SE)
+STRONG_ALIAS(armv7mp_tlb_flushI_SE, armv7mp_tlb_flushID_SE)
+ENTRY(armv7mp_tlb_flushID_SE)
+	bfc	r0, #0, #12		@ Always KERNEL_PID, i.e. 0
+	mcr	p15, 0, r0, c8, c3, 1	@ flush I+D tlb single entry
+#if PAGE_SIZE == 2*L2_S_SIZE
+	add	r0, r0, #L2_S_SIZE
+	mcr	p15, 0, r0, c8, c3, 1	@ flush I+D tlb single entry
+#endif
+	dsb				@ data synchronization barrier
+	isb
+	bx	lr
+END(armv7mp_tlb_flushID_SE)
+#endif
+
+#ifdef MULTIPROCESSOR
+STRONG_ALIAS(armv7mp_tlb_flushD, armv7up_tlb_flushD)
+#endif
+ENTRY(armv7up_tlb_flushD)
 	mov	r0, #0
 	mcr	p15, 0, r0, c8, c6, 0	@ flush entire D tlb
 	dsb				@ data synchronization barrier
 	isb
 	bx      lr
-END(armv7_tlb_flushD)
+END(armv7up_tlb_flushD)
 
-STRONG_ALIAS(armv7_tlb_flushI, armv7_tlb_flushID)
-ENTRY(armv7_tlb_flushID)
+STRONG_ALIAS(armv7up_tlb_flushI, armv7up_tlb_flushID)
+ENTRY(armv7up_tlb_flushID)
+	dsb
 	mov	r0, #0
 	mcr	p15, 0, r0, c8, c7, 0	@ flush entire I+D tlb
+	mcr	p15, 0, r0, c7, c5, 6	@ branch predictor invalidate
 	dsb				@ data synchronization barrier
 	isb
 	bx      lr
-END(armv7_tlb_flushID)
+END(armv7up_tlb_flushID)
 
+#ifdef MULTIPROCESSOR
+STRONG_ALIAS(armv7mp_tlb_flushI, armv7mp_tlb_flushID)
+ENTRY(armv7mp_tlb_flushID)
+	dsb
+	mov	r0, #0
+	mcr	p15, 0, r0, c8, c3, 0	@ flush entire I+D tlb, IS
+	mcr	p15, 0, r0, c7, c1, 6	@ branch predictor invalidate, IS
+	dsb				@ data synchronization barrier
+	isb
+	bx      lr
+END(armv7mp_tlb_flushID)
+#endif
 
 ENTRY_NP(armv7_setttb)
 	mrc	p15, 0, ip, c0, c0, 5	@ get MPIDR
 	cmp	ip, #0
-	orrlt	r0, r0, #0x5b		@ MP, cachable (Normal WB)
-	orrge	r0, r0, #0x1b		@ Non-MP, cacheable, normal WB
+	orrlt	r0, r0, #TTBR_MPATTR	@ MP, cachable (Normal WB)
+	orrge	r0, r0, #TTBR_UPATTR	@ Non-MP, cacheable, normal WB
 	mcr	p15, 0, r0, c2, c0, 0   @ load new TTBR 0
 #ifdef ARM_MMU_EXTENDED
 	cmp	r1, #0
@@ -334,6 +362,53 @@ ENTRY_NP(armv7_icache_inv_all)
 	bx	lr			@ return
 END(armv7_icache_inv_all)
 
+/* * LINTSTUB: void armv7_dcache_l1inv_all(void); */
+ENTRY_NP(armv7_dcache_l1inv_all)
+	mrc	p15, 1, r0, c0, c0, 1	@ read CLIDR
+	and	r0, r0, #0x7		@ check L1
+	bxeq	lr			@ return if no L1 cache
+	mov	r3, #0			@ start with L1
+	mcr	p15, 2, r3, c0, c0, 0	@ select cache level
+	isb
+	mrc	p15, 1, r0, c0, c0, 0	@ read CCSIDR
+
+	ubfx	ip, r0, #0, #3		@ get linesize from CCSIDR
+	add	ip, ip, #4		@ apply bias
+	ubfx	r2, r0, #13, #15	@ get numsets - 1 from CCSIDR
+	lsl	r2, r2, ip		@ shift to set position
+	orr	r3, r3, r2		@ merge set into way/set/level
+	mov	r1, #1
+	lsl	r1, r1, ip		@ r1 = set decr
+
+	ubfx	ip, r0, #3, #10		@ get numways - 1 from [to be discarded] CCSIDR
+	clz	r2, ip			@ number of bits to MSB of way
+	lsl	ip, ip, r2		@ shift by that into way position
+	mov	r0, #1			@
+	lsl	r2, r0, r2		@ r2 now contains the way decr
+	mov	r0, r3 			@ get sets/level (no way yet)
+	orr	r3, r3, ip		@ merge way into way/set/level
+	bfc	r0, #0, #4		@ clear low 4 bits (level) to get numset - 1
+	sub	r2, r2, r0		@ subtract from way decr
+
+	/* r3 = ways/sets/level, r2 = way decr, r1 = set decr, r0 and ip are free */
+1:	mcr	p15, 0, r3, c7, c6, 2	@ invalidate line
+	cmp	r3, #15			@ are we done with this level (way/set == 0)
+	bls	.Ldone_l1inv		@ yes, we've finished
+	ubfx	r0, r3, #4, #18		@ extract set bits
+	cmp	r0, #0			@ compare
+	subne	r3, r3, r1		@ non-zero?, decrement set #
+	subeq	r3, r3, r2		@ zero?, decrement way # and restore set count
+	b	1b
+
+.Ldone_l1inv:
+	dsb
+	mov	r0, #0			@ default back to cache level 0
+	mcr	p15, 2, r0, c0, c0, 0	@ select cache level
+	dsb
+	isb
+	bx	lr
+END(armv7_dcache_l1inv_all)
+
 /* * LINTSTUB: void armv7_dcache_inv_all(void); */
 ENTRY_NP(armv7_dcache_inv_all)
 	mrc	p15, 1, r0, c0, c0, 1	@ read CLIDR
@@ -380,6 +455,7 @@ ENTRY_NP(armv7_dcache_inv_all)
 	b	1b
 
 .Lnext_level_inv:
+	dsb
 	mrc	p15, 1, r0, c0, c0, 1	@ read CLIDR
 	ubfx	ip, r0, #24, #3		@ narrow to LoC
 	add	r3, r3, #2		@ go to next level
@@ -440,6 +516,7 @@ ENTRY_NP(armv7_dcache_wbinv_all)
 	b	1b
 
 .Lnext_level_wbinv:
+	dsb
 	mrc	p15, 1, r0, c0, c0, 1	@ read CLIDR
 	ubfx	ip, r0, #24, #3		@ narrow to LoC
 	add	r3, r3, #2		@ go to next level

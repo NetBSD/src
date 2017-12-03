@@ -1,4 +1,4 @@
-/* $NetBSD: motoi2creg.h,v 1.2 2011/01/04 02:50:08 nisimura Exp $ */
+/* $NetBSD: motoi2creg.h,v 1.2.22.1 2017/12/03 11:37:02 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2007, 2010 The NetBSD Foundation, Inc.
@@ -79,10 +79,10 @@
 #define FDR_B(n)		(((n) & 0x1c) >> 2)
 
 #define	MOTOI2C_GROUP_A_VALUES	0x8765fca9U
-#define	MOTOI2C_A(a)		((MOTOI2C_GROUP_A_VALUE >> (4*(fdr_a))) & 0xf)
-#define	MOTOI2C_B(b)		(1 + (fdr_b))
+#define	MOTOI2C_A(a)		((MOTOI2C_GROUP_A_VALUE >> (4*(a))) & 0xf)
+#define	MOTOI2C_B(b)		(1 + (b))
 #define	MOTOI2C_DIV(name, fdr)	\
-	((name##_A(FDR_A(hdr)) + named##_C(FDR_B(fdr))) << name##_B(FDR_B(hdr)))
+	((name##_A(FDR_A(fdr)) + named##_C(FDR_B(fdr))) << name##_B(FDR_B(fdr)))
 
 #define	IMX31_A(fdr_a)		MOTOI2C_A(fdr_a)
 #define	IMX31_B(fdr_b)		MOTOI2C_B(fdr_b)

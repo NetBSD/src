@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma_defs.h,v 1.1 2011/07/01 17:28:55 dyoung Exp $ */
+/* $NetBSD: bus_dma_defs.h,v 1.1.12.1 2017/12/03 11:36:27 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@ typedef struct mips_bus_dmamap	*bus_dmamap_t;
 struct mips_bus_dma_segment {
 	bus_addr_t	ds_addr;	/* DMA address */
 	bus_size_t	ds_len;		/* length of transfer */
-	bus_addr_t	_ds_vaddr;	/* virtual address, 0 if invalid */
+	register_t	_ds_vaddr;	/* virtual address, 0 if invalid */
 };
 typedef struct mips_bus_dma_segment	bus_dma_segment_t;
 
@@ -213,7 +213,7 @@ struct mips_bus_dmamap {
 };
 
 #ifdef _MIPS_BUS_DMA_PRIVATE
-#define	_BUS_AVAIL_END	mips_avail_end
+#define	_BUS_AVAIL_END	pmap_limits.avail_end
 /*
  * Cookie used for bounce buffers. A pointer to one of these it stashed in
  * the DMA map.

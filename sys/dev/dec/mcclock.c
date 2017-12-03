@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock.c,v 1.27 2011/06/04 01:43:56 tsutsui Exp $ */
+/* $NetBSD: mcclock.c,v 1.27.12.1 2017/12/03 11:37:00 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.27 2011/06/04 01:43:56 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.27.12.1 2017/12/03 11:37:00 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -168,13 +168,13 @@ mcclock_get(todr_chip_handle_t tch, struct timeval *tvp)
 	dt.dt_mon = regs[MC_MONTH];
 	dt.dt_year = 1972;
 
-	yearsecs = clock_ymdhms_to_secs(&dt) - (72 - 70) * SECYR;
+	yearsecs = clock_ymdhms_to_secs(&dt) - (72 - 70) * SECS_PER_COMMON_YEAR;
 
 	/*
 	 * Take the actual year from the filesystem if possible;
 	 * allow for 2 days of clock loss and 363 days of clock gain.
 	 */
-	dt.dt_year = 1972; /* or MINYEAR or base/SECYR+1970 ... */
+	dt.dt_year = 1972; /* or MINYEAR or base/SECS_PER_COMMON_YEAR+1970... */
 	dt.dt_mon = 1;
 	dt.dt_day = 1;
 	dt.dt_hour = 0;
@@ -182,7 +182,7 @@ mcclock_get(todr_chip_handle_t tch, struct timeval *tvp)
 	dt.dt_sec = 0;
 	for(;;) {
 		tvp->tv_sec = yearsecs + clock_ymdhms_to_secs(&dt);
-		if (tvp->tv_sec > tch->base_time - 2 * SECDAY)
+		if (tvp->tv_sec > tch->base_time - 2 * SECS_PER_DAY)
 			break;
 		dt.dt_year++;
 	}
@@ -214,7 +214,7 @@ mcclock_set(todr_chip_handle_t tch, struct timeval *tvp)
 	dt.dt_sec = 0;
 	yearsecs = tvp->tv_sec - clock_ymdhms_to_secs(&dt);
 
-#define first72 ((72 - 70) * SECYR)
+#define first72 ((72 - 70) * SECS_PER_COMMON_YEAR)
 	clock_secs_to_ymdhms(first72 + yearsecs, &dt);
 
 #ifdef DEBUG

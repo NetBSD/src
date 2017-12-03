@@ -1,4 +1,4 @@
-/*	$NetBSD: raidframevar.h,v 1.15.14.1 2014/08/20 00:03:49 tls Exp $ */
+/*	$NetBSD: raidframevar.h,v 1.15.14.2 2017/12/03 11:37:31 jdolecek Exp $ */
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -383,17 +383,17 @@ struct RF_SparetWait_s {
  * IF YOU ADD A STATE, CHECK TO SEE IF YOU NEED TO MODIFY RF_DEAD_DISK().
  */
 enum RF_DiskStatus_e {
-        rf_ds_optimal,          /* no problems */
-        rf_ds_failed,           /* reconstruction ongoing */
-        rf_ds_reconstructing,   /* reconstruction complete to spare, dead disk
-                                 * not yet replaced */
-        rf_ds_dist_spared,      /* reconstruction complete to distributed
+	rf_ds_optimal,          /* no problems */
+	rf_ds_failed,           /* disk has failed */
+	rf_ds_reconstructing,   /* reconstruction ongoing */
+	rf_ds_dist_spared,      /* reconstruction complete to distributed
                                  * spare space, dead disk not yet replaced */
-        rf_ds_spared,           /* reconstruction complete to distributed
-                                 * spare space, dead disk not yet replaced */
-        rf_ds_spare,            /* an available spare disk */
-        rf_ds_used_spare        /* a spare which has been used, and hence is
+	rf_ds_spared,           /* reconstruction complete, dead disk not 
+				   yet replaced */
+	rf_ds_spare,            /* an available spare disk */
+	rf_ds_used_spare,       /* a spare which has been used, and hence is
                                  * not available */
+	rf_ds_rebuilding_spare	/* a spare which is being rebuilt to */
 };
 typedef enum RF_DiskStatus_e RF_DiskStatus_t;
 

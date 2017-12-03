@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.99 2012/07/30 23:56:48 matt Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.99.2.1 2017/12/03 11:39:22 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -45,9 +45,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.99 2012/07/30 23:56:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.99.2.1 2017/12/03 11:39:22 jdolecek Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_uvmhist.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,7 +174,8 @@ uvn_get(struct uvm_object *uobj, voff_t offset,
 
 	UVMHIST_FUNC("uvn_get"); UVMHIST_CALLED(ubchist);
 
-	UVMHIST_LOG(ubchist, "vp %p off 0x%x", vp, (int)offset, 0,0);
+	UVMHIST_LOG(ubchist, "vp %#jx off 0x%jx", (uintptr_t)vp, (int)offset,
+	    0, 0);
 
 	if (vp->v_type == VREG && (access_type & VM_PROT_WRITE) == 0
 	    && (flags & PGO_LOCKED) == 0) {
@@ -237,7 +240,8 @@ uvn_findpage(struct uvm_object *uobj, voff_t offset, struct vm_page **pgp,
 	struct vm_page *pg;
 	bool dirty;
 	UVMHIST_FUNC("uvn_findpage"); UVMHIST_CALLED(ubchist);
-	UVMHIST_LOG(ubchist, "vp %p off 0x%lx", uobj, offset,0,0);
+	UVMHIST_LOG(ubchist, "vp %#jx off 0x%jx", (uintptr_t)uobj, offset,
+	    0, 0);
 
 	KASSERT(mutex_owned(uobj->vmobjlock));
 
@@ -267,8 +271,8 @@ uvn_findpage(struct uvm_object *uobj, voff_t offset, struct vm_page **pgp,
 				mutex_enter(uobj->vmobjlock);
 				continue;
 			}
-			UVMHIST_LOG(ubchist, "alloced %p (color %u)", pg,
-			    VM_PGCOLOR_BUCKET(pg), 0,0);
+			UVMHIST_LOG(ubchist, "alloced %#jx (color %ju)",
+			    (uintptr_t)pg, VM_PGCOLOR_BUCKET(pg), 0, 0);
 			break;
 		} else if (flags & UFP_NOCACHE) {
 			UVMHIST_LOG(ubchist, "nocache",0,0,0,0);
@@ -282,8 +286,8 @@ uvn_findpage(struct uvm_object *uobj, voff_t offset, struct vm_page **pgp,
 				return 0;
 			}
 			pg->flags |= PG_WANTED;
-			UVMHIST_LOG(ubchist, "wait %p (color %u)", pg,
-			    VM_PGCOLOR_BUCKET(pg), 0,0);
+			UVMHIST_LOG(ubchist, "wait %#jx (color %ju)",
+			    (uintptr_t)pg, VM_PGCOLOR_BUCKET(pg), 0, 0);
 			UVM_UNLOCK_AND_WAIT(pg, uobj->vmobjlock, 0,
 					    "uvn_fp2", 0);
 			mutex_enter(uobj->vmobjlock);
@@ -310,8 +314,8 @@ uvn_findpage(struct uvm_object *uobj, voff_t offset, struct vm_page **pgp,
 		/* mark the page BUSY and we're done. */
 		pg->flags |= PG_BUSY;
 		UVM_PAGE_OWN(pg, "uvn_findpage");
-		UVMHIST_LOG(ubchist, "found %p (color %u)",
-		    pg, VM_PGCOLOR_BUCKET(pg), 0,0);
+		UVMHIST_LOG(ubchist, "found %#jx (color %ju)",
+		    (uintptr_t)pg, VM_PGCOLOR_BUCKET(pg), 0, 0);
 		break;
 	}
 	*pgp = pg;
@@ -338,23 +342,27 @@ uvm_vnp_setsize(struct vnode *vp, voff_t newsize)
 	UVMHIST_FUNC("uvm_vnp_setsize"); UVMHIST_CALLED(ubchist);
 
 	mutex_enter(uobj->vmobjlock);
-	UVMHIST_LOG(ubchist, "vp %p old 0x%x new 0x%x",
-	    vp, vp->v_size, newsize, 0);
+	UVMHIST_LOG(ubchist, "vp %#jx old 0x%jx new 0x%jx",
+	    (uintptr_t)vp, vp->v_size, newsize, 0);
 
 	/*
 	 * now check if the size has changed: if we shrink we had better
 	 * toss some pages...
 	 */
 
-	KASSERT(newsize != VSIZENOTSET);
+	KASSERT(newsize != VSIZENOTSET && newsize >= 0);
 	KASSERT(vp->v_size <= vp->v_writesize);
 	KASSERT(vp->v_size == vp->v_writesize ||
 	    newsize == vp->v_writesize || newsize <= vp->v_size);
 
 	oldsize = vp->v_writesize;
-	KASSERT(oldsize != VSIZENOTSET || pgend > oldsize);
 
-	if (oldsize > pgend) {
+	/*
+	 * check whether size shrinks
+	 * if old size hasn't been set, there are no pages to drop
+	 * if there was an integer overflow in pgend, then this is no shrink
+	 */
+	if (oldsize > pgend && oldsize != VSIZENOTSET && pgend >= 0) {
 		(void) uvn_put(uobj, pgend, 0, PGO_FREE | PGO_SYNCIO);
 		mutex_enter(uobj->vmobjlock);
 	}
@@ -367,7 +375,7 @@ uvm_vnp_setwritesize(struct vnode *vp, voff_t newsize)
 {
 
 	mutex_enter(vp->v_interlock);
-	KASSERT(newsize != VSIZENOTSET);
+	KASSERT(newsize != VSIZENOTSET && newsize >= 0);
 	KASSERT(vp->v_size != VSIZENOTSET);
 	KASSERT(vp->v_writesize != VSIZENOTSET);
 	KASSERT(vp->v_size <= vp->v_writesize);

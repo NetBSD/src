@@ -1,4 +1,4 @@
-/*	$NetBSD: moscom.c,v 1.7.6.1 2012/11/20 03:02:34 tls Exp $	*/
+/*	$NetBSD: moscom.c,v 1.7.6.2 2017/12/03 11:37:34 jdolecek Exp $	*/
 /*	$OpenBSD: moscom.c,v 1.11 2007/10/11 18:33:14 deraadt Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: moscom.c,v 1.7.6.1 2012/11/20 03:02:34 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: moscom.c,v 1.7.6.2 2017/12/03 11:37:34 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,11 +67,11 @@ __KERNEL_RCSID(0, "$NetBSD: moscom.c,v 1.7.6.1 2012/11/20 03:02:34 tls Exp $");
 
 #define MOSCOM_INT_RXEN		0x01
 #define MOSCOM_INT_TXEN		0x02
-#define MOSCOM_INT_RSEN		0x04	
+#define MOSCOM_INT_RSEN		0x04
 #define MOSCOM_INT_MDMEM	0x08
 #define MOSCOM_INT_SLEEP	0x10
 #define MOSCOM_INT_XOFF		0x20
-#define MOSCOM_INT_RTS		0x40	
+#define MOSCOM_INT_RTS		0x40
 
 #define MOSCOM_FIFO_EN		0x01
 #define MOSCOM_FIFO_RXCLR	0x02
@@ -138,8 +138,8 @@ __KERNEL_RCSID(0, "$NetBSD: moscom.c,v 1.7.6.1 2012/11/20 03:02:34 tls Exp $");
 
 struct moscom_softc {
 	device_t		 sc_dev;
-	usbd_device_handle	 sc_udev;
-	usbd_interface_handle	 sc_iface;
+	struct usbd_device *	 sc_udev;
+	struct usbd_interface *	 sc_iface;
 	device_t		 sc_subdev;
 
 	u_char			 sc_msr;
@@ -153,51 +153,52 @@ void	moscom_get_status(void *, int, u_char *, u_char *);
 void	moscom_set(void *, int, int, int);
 int	moscom_param(void *, int, struct termios *);
 int	moscom_open(void *, int);
-int	moscom_cmd(struct moscom_softc *, int, int);	
+int	moscom_cmd(struct moscom_softc *, int, int);
 
 struct ucom_methods moscom_methods = {
-	NULL,
-	moscom_set,
-	moscom_param,
-	NULL,
-	moscom_open,
-	NULL,
-	NULL,
-	NULL,
+	.ucom_get_status = NULL,
+	.ucom_set = moscom_set,
+	.ucom_param = moscom_param,
+	.ucom_ioctl = NULL,
+	.ucom_open = moscom_open,
+	.ucom_close = NULL,
+	.ucom_read = NULL,
+	.ucom_write = NULL,
 };
 
 static const struct usb_devno moscom_devs[] = {
 	{ USB_VENDOR_MOSCHIP,		USB_PRODUCT_MOSCHIP_MCS7703 },
+	{ USB_VENDOR_MOSCHIP,		USB_PRODUCT_MOSCHIP_MCS7720 },
 	{ USB_VENDOR_MOSCHIP,		USB_PRODUCT_MOSCHIP_MCS7840 },
 	{ USB_VENDOR_ATEN,		USB_PRODUCT_ATEN_UC2324 }
 };
 #define moscom_lookup(v, p) usb_lookup(moscom_devs, v, p)
 
-int moscom_match(device_t, cfdata_t, void *); 
-void moscom_attach(device_t, device_t, void *); 
+int moscom_match(device_t, cfdata_t, void *);
+void moscom_attach(device_t, device_t, void *);
 void moscom_childdet(device_t, device_t);
-int moscom_detach(device_t, int); 
-int moscom_activate(device_t, enum devact); 
+int moscom_detach(device_t, int);
+int moscom_activate(device_t, enum devact);
 
 CFATTACH_DECL2_NEW(moscom, sizeof(struct moscom_softc), moscom_match,
     moscom_attach, moscom_detach, moscom_activate, NULL, moscom_childdet);
 
-int 
+int
 moscom_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	return (moscom_lookup(uaa->vendor, uaa->product) != NULL ?
+	return (moscom_lookup(uaa->uaa_vendor, uaa->uaa_product) != NULL ?
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
-void 
+void
 moscom_attach(device_t parent, device_t self, void *aux)
 {
 	struct moscom_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
-	usbd_device_handle dev = uaa->device;
-	struct ucom_attach_args uca;
+	struct usbd_device *dev = uaa->uaa_device;
+	struct ucom_attach_args ucaa;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	char *devinfop;
@@ -213,8 +214,8 @@ moscom_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 
-	bzero(&uca, sizeof(uca));
-	sc->sc_udev = uaa->device;
+	memset(&ucaa, 0, sizeof(ucaa));
+	sc->sc_udev = uaa->uaa_device;
 
 	if (usbd_set_config_index(sc->sc_udev, MOSCOM_CONFIG_NO, 1) != 0) {
 		aprint_error_dev(self, "could not set configuration no\n");
@@ -233,7 +234,7 @@ moscom_attach(device_t parent, device_t self, void *aux)
 
 	id = usbd_get_interface_descriptor(sc->sc_iface);
 
-	uca.bulkin = uca.bulkout = -1;
+	ucaa.ucaa_bulkin = ucaa.ucaa_bulkout = -1;
 	for (i = 0; i < id->bNumEndpoints; i++) {
 		ed = usbd_interface2endpoint_descriptor(sc->sc_iface, i);
 		if (ed == NULL) {
@@ -245,32 +246,31 @@ moscom_attach(device_t parent, device_t self, void *aux)
 
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
 		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK)
-			uca.bulkin = ed->bEndpointAddress;
+			ucaa.ucaa_bulkin = ed->bEndpointAddress;
 		else if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_OUT &&
 		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK)
-			uca.bulkout = ed->bEndpointAddress;
+			ucaa.ucaa_bulkout = ed->bEndpointAddress;
 	}
 
-	if (uca.bulkin == -1 || uca.bulkout == -1) {
+	if (ucaa.ucaa_bulkin == -1 || ucaa.ucaa_bulkout == -1) {
 		aprint_error_dev(self, "missing endpoint\n");
 		sc->sc_dying = 1;
 		return;
 	}
 
-	uca.ibufsize = MOSCOMBUFSZ;
-	uca.obufsize = MOSCOMBUFSZ;
-	uca.ibufsizepad = MOSCOMBUFSZ;
-	uca.opkthdrlen = 0;
-	uca.device = sc->sc_udev;
-	uca.iface = sc->sc_iface;
-	uca.methods = &moscom_methods;
-	uca.arg = sc;
-	uca.info = NULL;
+	ucaa.ucaa_ibufsize = MOSCOMBUFSZ;
+	ucaa.ucaa_obufsize = MOSCOMBUFSZ;
+	ucaa.ucaa_ibufsizepad = MOSCOMBUFSZ;
+	ucaa.ucaa_opkthdrlen = 0;
+	ucaa.ucaa_device = sc->sc_udev;
+	ucaa.ucaa_iface = sc->sc_iface;
+	ucaa.ucaa_methods = &moscom_methods;
+	ucaa.ucaa_arg = sc;
+	ucaa.ucaa_info = NULL;
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-	    sc->sc_dev);
-	
-	sc->sc_subdev = config_found_sm_loc(self, "ucombus", NULL, &uca,
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
+
+	sc->sc_subdev = config_found_sm_loc(self, "ucombus", NULL, &ucaa,
 					    ucomprint, ucomsubmatch);
 
 	return;
@@ -285,7 +285,7 @@ moscom_childdet(device_t self, device_t child)
 	sc->sc_subdev = NULL;
 }
 
-int 
+int
 moscom_detach(device_t self, int flags)
 {
 	struct moscom_softc *sc = device_private(self);
@@ -295,10 +295,9 @@ moscom_detach(device_t self, int flags)
 	if (sc->sc_subdev != NULL)
 		rv = config_detach(sc->sc_subdev, flags);
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			   sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
 
-	return (rv);
+	return rv;
 }
 
 int
@@ -322,16 +321,16 @@ moscom_open(void *vsc, int portno)
 	usb_device_request_t req;
 
 	if (sc->sc_dying)
-		return (EIO);
+		return EIO;
 
 	/* Purge FIFOs or odd things happen */
 	if (moscom_cmd(sc, MOSCOM_FIFO, 0x00) != 0)
-		return (EIO);
-	
+		return EIO;
+
 	if (moscom_cmd(sc, MOSCOM_FIFO, MOSCOM_FIFO_EN |
 	    MOSCOM_FIFO_RXCLR | MOSCOM_FIFO_TXCLR |
-	    MOSCOM_FIFO_DMA_BLK | MOSCOM_FIFO_RXLVL_MASK) != 0) 
-		return (EIO);
+	    MOSCOM_FIFO_DMA_BLK | MOSCOM_FIFO_RXLVL_MASK) != 0)
+		return EIO;
 
 	/* Magic tell device we're ready for data command */
 	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
@@ -340,9 +339,9 @@ moscom_open(void *vsc, int portno)
 	USETW(req.wIndex, MOSCOM_INT);
 	USETW(req.wLength, 0);
 	if (usbd_do_request(sc->sc_udev, &req, NULL) != 0)
-		return (EIO);
+		return EIO;
 
-	return (0);
+	return 0;
 }
 
 void
@@ -378,12 +377,12 @@ moscom_param(void *vsc, int portno, struct termios *t)
 	int data;
 
 	if (t->c_ospeed <= 0 || t->c_ospeed > 115200)
-		return (EINVAL);
+		return EINVAL;
 
 	data = MOSCOM_BAUD_REF / t->c_ospeed;
 
 	if (data == 0 || data > 0xffff)
-		return (EINVAL);
+		return EINVAL;
 
 	moscom_cmd(sc, MOSCOM_LCR, MOSCOM_LCR_DIVLATCH_EN);
 	moscom_cmd(sc, MOSCOM_BAUDLO, data & 0xFF);
@@ -429,14 +428,14 @@ moscom_param(void *vsc, int portno, struct termios *t)
 	}
 #endif
 
-	return (0);
+	return 0;
 }
 
 void
 moscom_get_status(void *vsc, int portno, u_char *lsr, u_char *msr)
 {
 	struct moscom_softc *sc = vsc;
-	
+
 	if (msr != NULL)
 		*msr = sc->sc_msr;
 	if (lsr != NULL)
@@ -448,7 +447,7 @@ moscom_cmd(struct moscom_softc *sc, int reg, int val)
 {
 	usb_device_request_t req;
 	usbd_status err;
-	
+
 	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
 	req.bRequest = MOSCOM_WRITE;
 	USETW(req.wValue, val + MOSCOM_UART_REG);
@@ -456,7 +455,7 @@ moscom_cmd(struct moscom_softc *sc, int reg, int val)
 	USETW(req.wLength, 0);
 	err = usbd_do_request(sc->sc_udev, &req, NULL);
 	if (err)
-		return (EIO);
+		return EIO;
 	else
-		return (0);
+		return 0;
 }

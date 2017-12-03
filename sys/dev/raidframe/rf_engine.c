@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_engine.c,v 1.47.12.2 2014/08/20 00:03:49 tls Exp $	*/
+/*	$NetBSD: rf_engine.c,v 1.47.12.3 2017/12/03 11:37:31 jdolecek Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -55,7 +55,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.47.12.2 2014/08/20 00:03:49 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.47.12.3 2017/12/03 11:37:31 jdolecek Exp $");
 
 #include <sys/errno.h>
 
@@ -187,7 +187,7 @@ BranchDone(RF_DagNode_t *node)
 {
 	int     i;
 
-	/* return true if forward execution is completed for a node and it's
+	/* return true if forward execution is completed for a node and its
 	 * succedents */
 	switch (node->status) {
 	case rf_wait:
@@ -229,14 +229,14 @@ NodeReady(RF_DagNode_t *node)
 {
 	int     ready;
 
+	ready = RF_FALSE;
+
 	switch (node->dagHdr->status) {
 	case rf_enable:
 	case rf_rollForward:
 		if ((node->status == rf_wait) &&
 		    (node->numAntecedents == node->numAntDone))
 			ready = RF_TRUE;
-		else
-			ready = RF_FALSE;
 		break;
 	case rf_rollBackward:
 		RF_ASSERT(node->numSuccDone <= node->numSuccedents);
@@ -245,8 +245,6 @@ NodeReady(RF_DagNode_t *node)
 		if ((node->status == rf_good) &&
 		    (node->numSuccDone == node->numSuccedents))
 			ready = RF_TRUE;
-		else
-			ready = RF_FALSE;
 		break;
 	default:
 		printf("Execution engine found illegal DAG status in NodeReady\n");
@@ -843,7 +841,7 @@ DAGExecutionThread(RF_ThreadArg_t arg)
 
 /*
  * rf_RaidIOThread() -- When I/O to a component begins, raidstrategy()
- * puts the I/O on a buf_queue, and then signals raidPtr->iodone.  If
+ * puts the I/O on a buffer queue, and then signals raidPtr->iodone.  If
  * necessary, this function calls raidstart() to initiate the I/O.
  * When I/O to a component completes, KernelWakeupFunc() puts the
  * completed request onto raidPtr->iodone TAILQ.  This function looks

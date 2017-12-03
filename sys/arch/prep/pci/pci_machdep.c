@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.38.12.1 2014/08/20 00:03:20 tls Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.38.12.2 2017/12/03 11:36:38 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.38.12.1 2014/08/20 00:03:20 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.38.12.2 2017/12/03 11:36:38 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -91,9 +91,16 @@ prep_pci_get_chipset_tag_indirect(pci_chipset_tag_t pc)
 	pc->pc_intr_establish = genppc_pci_intr_establish;
 	pc->pc_intr_disestablish = genppc_pci_intr_disestablish;
 	pc->pc_intr_setattr = genppc_pci_intr_setattr;
+	pc->pc_intr_type = genppc_pci_intr_type;
+	pc->pc_intr_alloc = genppc_pci_intr_alloc;
+	pc->pc_intr_release = genppc_pci_intr_release;
+	pc->pc_intx_alloc = genppc_pci_intx_alloc;
 
 	pc->pc_msi_v = (void *)pc;
 	genppc_pci_chipset_msi_init(pc);
+
+	pc->pc_msix_v = (void *)pc;
+	genppc_pci_chipset_msix_init(pc);
 
 	pc->pc_conf_interrupt = genppc_pci_conf_interrupt;
 	pc->pc_decompose_tag = genppc_pci_indirect_decompose_tag;
@@ -183,7 +190,7 @@ prep_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 		    "prep-pcibus-rawdevnum");
 		dev = prop_number_integer_value(pbus);
 
-		/* now that we know the parent bus, we need to find it's pbi */
+		/* now that we know the parent bus, we need to find its pbi */
 		pbi = SIMPLEQ_FIRST(&genppc_pct->pc_pbi);
 		while (busno--)
 			pbi = SIMPLEQ_NEXT(pbi, next);

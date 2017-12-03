@@ -1,4 +1,4 @@
-/*	$NetBSD: ctu.c,v 1.31.18.1 2014/08/20 00:03:27 tls Exp $ */
+/*	$NetBSD: ctu.c,v 1.31.18.2 2017/12/03 11:36:48 jdolecek Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -11,12 +11,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed at Ludd, University of 
- *      Lule}, Sweden and its contributors.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -40,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ctu.c,v 1.31.18.1 2014/08/20 00:03:27 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ctu.c,v 1.31.18.2 2017/12/03 11:36:48 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -382,7 +376,7 @@ cturintr(void *arg)
 #ifdef TUDEBUG
 		printf("Writing byte %d\n", tu_sc.sc_xbytes);
 #endif
-		WAIT; mtpr(RSP_TYP_DATA, PR_CSTD); 
+		WAIT; mtpr(RSP_TYP_DATA, PR_CSTD);
 		WAIT; mtpr(128, PR_CSTD);
 		for (i = 0; i < 128; i++) {
 			WAIT;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pfil.h,v 1.29.42.2 2014/08/20 00:04:34 tls Exp $	*/
+/*	$NetBSD: pfil.h,v 1.29.42.3 2017/12/03 11:39:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthew R. Green
@@ -33,12 +33,14 @@
 
 struct mbuf;
 struct ifnet;
+struct ifaddr;
 
 /*
  * The packet filter hooks are designed for anything to call them to
  * possibly intercept the packet.
  */
 typedef int (*pfil_func_t)(void *, struct mbuf **, struct ifnet *, int);
+typedef void (*pfil_ifunc_t)(void *, unsigned long, void *);
 
 #define PFIL_IN		0x00000001
 #define PFIL_OUT	0x00000002
@@ -51,15 +53,22 @@ typedef int (*pfil_func_t)(void *, struct mbuf **, struct ifnet *, int);
 #define	PFIL_IFNET_DETACH	1
 
 #define	PFIL_TYPE_AF		1	/* key is AF_* type */
-#define	PFIL_TYPE_IFNET		2	/* key is ifnet pointer */
+#define	PFIL_TYPE_IFNET		2	/* key is ifnet or ifaddr pointer */
 
 typedef struct pfil_head	pfil_head_t;
 
 #ifdef _KERNEL
 
+void	pfil_init(void);
 int	pfil_run_hooks(pfil_head_t *, struct mbuf **, struct ifnet *, int);
+void	pfil_run_addrhooks(pfil_head_t *, unsigned long, struct ifaddr *);
+void	pfil_run_ifhooks(pfil_head_t *, unsigned long, struct ifnet *);
+
 int	pfil_add_hook(pfil_func_t, void *, int, pfil_head_t *);
 int	pfil_remove_hook(pfil_func_t, void *, int, pfil_head_t *);
+
+int	pfil_add_ihook(pfil_ifunc_t, void *, int, pfil_head_t *);
+int	pfil_remove_ihook(pfil_ifunc_t, void *, int, pfil_head_t *);
 
 pfil_head_t *	pfil_head_create(int, void *);
 void		pfil_head_destroy(pfil_head_t *);

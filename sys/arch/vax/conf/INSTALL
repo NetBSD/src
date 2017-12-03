@@ -1,9 +1,9 @@
-#	$NetBSD: INSTALL,v 1.63.2.3 2014/08/20 00:03:27 tls Exp $
+#	$NetBSD: INSTALL,v 1.63.2.4 2017/12/03 11:36:47 jdolecek Exp $
 #
 # INSTALL kernel; all supported devices but nothing fancy.
 #
 
-include		"arch/vax/conf/std.vax"
+include 	"arch/vax/conf/std.vax"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -40,7 +40,7 @@ options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 #options 	DDB
 #options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KTRACE
-#options 	DIAGNOSTIC,DEBUG,KMEMSTATS,PMAPDEBUG,TRAPDEBUG
+#options 	DIAGNOSTIC,DEBUG,PMAPDEBUG,TRAPDEBUG
 
 #options 	SCSIVERBOSE		# Verbose SCSI errors
 
@@ -91,24 +91,9 @@ options 	WSDISPLAY_DEFAULTSCREENS=1
 # Note that if COMPAT_ULTRIX is set, you lose compatibility with
 # 4.3BSD Reno programs and get Ultrix compatibility instead.
 # (They cannot coexist).
+include 	"conf/compat_netbsd14.config"
 #options 	COMPAT_VAX1K	# Must be present to run pre-1.4 binaries.
-#options 	COMPAT_43
-#options 	COMPAT_09
-#options 	COMPAT_10
-#options 	COMPAT_11
-#options 	COMPAT_12
-#options 	COMPAT_13
-options 	COMPAT_14
-options 	COMPAT_15
-options 	COMPAT_16
-options 	COMPAT_20
-options 	COMPAT_30	# NetBSD 3.0 compatibility.
-options 	COMPAT_40	# NetBSD 4.0 compatibility.
-options 	COMPAT_50	# NetBSD 5.0 compatibility.
-options 	COMPAT_60	# NetBSD 6.0 compatibility.
 #options 	COMPAT_ULTRIX
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
-
 
 options 	USERCONF	# userconf(4) support
 options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
@@ -156,11 +141,12 @@ smg0		at vsbus0 csr 0x200f0000 # Small monochrome display ctlr.
 #clr0		at vsbus0 csr 0x30000000 # 4- or 8-bitplans color graphics
 spx0		at vsbus0 csr 0x38000000 # Low Cost SPX on VS4000/90.
 #lcg0		at vsbus0 csr 0x21801000 # VS4000/60 (or VLC) graphics
-tc0		at vsbus0 csr 0x36000000 # VS4000/60 or 90 TC adapter
+tc0		at vsbus0 csr 0x36800000 # VS4000/60 or 90 TC adapter
 tcds*		at tc0 slot ? offset ?	 # TC dual SCSI controller
 asc*		at tcds? chip ?		 # PMAZB/C
 asc*		at tc? slot ? offset ?	 # PMAZ 
 fta*		at tc? slot ? offset ?	 # TC FDDI controller
+le*		at tc? slot ? offset ?	 # PMAD
 
 hdc0		at vsbus0 csr 0x200c0000 # HDC9224 MFM/floppy ctlr
 rd*		at hdc0 drive?		# RD5x disks

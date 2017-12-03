@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.52.12.1 2014/08/20 00:04:28 tls Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.52.12.2 2017/12/03 11:38:43 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,15 +42,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.52.12.1 2014/08/20 00:04:28 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.52.12.2 2017/12/03 11:38:43 jdolecek Exp $");
 
 #include <sys/param.h>
+#include <sys/atomic.h>
 #include <sys/types.h>
 #include <sys/kmem.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
 #include <sys/systm.h>
 #include <sys/vnode.h>
+#include <sys/kauth.h>
 #include <sys/module.h>
 
 #include <miscfs/genfs/genfs.h>
@@ -62,20 +64,7 @@ MODULE(MODULE_CLASS_VFS, tmpfs, NULL);
 struct pool	tmpfs_dirent_pool;
 struct pool	tmpfs_node_pool;
 
-static int	tmpfs_mount(struct mount *, const char *, void *, size_t *);
-static int	tmpfs_start(struct mount *, int);
-static int	tmpfs_unmount(struct mount *, int);
-static int	tmpfs_root(struct mount *, vnode_t **);
-static int	tmpfs_vget(struct mount *, ino_t, vnode_t **);
-static int	tmpfs_fhtovp(struct mount *, struct fid *, vnode_t **);
-static int	tmpfs_vptofh(struct vnode *, struct fid *, size_t *);
-static int	tmpfs_statvfs(struct mount *, struct statvfs *);
-static int	tmpfs_sync(struct mount *, int, kauth_cred_t);
-static void	tmpfs_init(void);
-static void	tmpfs_done(void);
-static int	tmpfs_snapshot(struct mount *, vnode_t *, struct timespec *);
-
-static void
+void
 tmpfs_init(void)
 {
 
@@ -85,7 +74,7 @@ tmpfs_init(void)
 	    "tmpfs_node", &pool_allocator_nointr, IPL_NONE);
 }
 
-static void
+void
 tmpfs_done(void)
 {
 
@@ -93,15 +82,19 @@ tmpfs_done(void)
 	pool_destroy(&tmpfs_node_pool);
 }
 
-static int
+int
 tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 {
 	struct tmpfs_args *args = data;
 	tmpfs_mount_t *tmp;
 	tmpfs_node_t *root;
+	struct vattr va;
+	struct vnode *vp;
 	uint64_t memlimit;
 	ino_t nodes;
-	int error;
+	int error, flags;
+	bool set_memlimit;
+	bool set_nodes;
 
 	if (args == NULL)
 		return EINVAL;
@@ -146,26 +139,42 @@ tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	/* Get the memory usage limit for this file-system. */
 	if (args->ta_size_max < PAGE_SIZE) {
 		memlimit = UINT64_MAX;
+		set_memlimit = false;
 	} else {
 		memlimit = args->ta_size_max;
+		set_memlimit = true;
 	}
 	KASSERT(memlimit > 0);
 
 	if (args->ta_nodes_max <= 3) {
 		nodes = 3 + (memlimit / 1024);
+		set_nodes = false;
 	} else {
 		nodes = args->ta_nodes_max;
+		set_nodes = true;
 	}
 	nodes = MIN(nodes, INT_MAX);
 	KASSERT(nodes >= 3);
 
 	if (mp->mnt_flag & MNT_UPDATE) {
 		tmp = VFS_TO_TMPFS(mp);
-		if (nodes < tmp->tm_nodes_cnt)
+		if (set_nodes && nodes < tmp->tm_nodes_cnt)
 			return EBUSY;
-		if ((error = tmpfs_mntmem_set(tmp, memlimit)) != 0)
-			return error;
-		tmp->tm_nodes_max = nodes;
+		if ((mp->mnt_iflag & IMNT_WANTRDONLY)) {
+			/* Changing from read/write to read-only. */
+			flags = WRITECLOSE;
+			if ((mp->mnt_flag & MNT_FORCE))
+				flags |= FORCECLOSE;
+			error = vflush(mp, NULL, flags);
+			if (error)
+				return error;
+		}
+		if (set_memlimit) {
+			if ((error = tmpfs_mntmem_set(tmp, memlimit)) != 0)
+				return error;
+		}
+		if (set_nodes)
+			tmp->tm_nodes_max = nodes;
 		root = tmp->tm_root;
 		root->tn_uid = args->ta_root_uid;
 		root->tn_gid = args->ta_root_gid;
@@ -175,21 +184,31 @@ tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 
 	/* Allocate the tmpfs mount structure and fill it. */
 	tmp = kmem_zalloc(sizeof(tmpfs_mount_t), KM_SLEEP);
-	if (tmp == NULL)
-		return ENOMEM;
-
 	tmp->tm_nodes_max = nodes;
 	tmp->tm_nodes_cnt = 0;
 	LIST_INIT(&tmp->tm_nodes);
 
 	mutex_init(&tmp->tm_lock, MUTEX_DEFAULT, IPL_NONE);
 	tmpfs_mntmem_init(tmp, memlimit);
+	mp->mnt_data = tmp;
 
 	/* Allocate the root node. */
-	error = tmpfs_alloc_node(tmp, VDIR, args->ta_root_uid,
-	    args->ta_root_gid, args->ta_root_mode & ALLPERMS, NULL,
-	    VNOVAL, &root);
-	KASSERT(error == 0 && root != NULL);
+	vattr_null(&va);
+	va.va_type = VDIR;
+	va.va_mode = args->ta_root_mode & ALLPERMS;
+	va.va_uid = args->ta_root_uid;
+	va.va_gid = args->ta_root_gid;
+	error = vcache_new(mp, NULL, &va, NOCRED, &vp);
+	if (error) {
+		mp->mnt_data = NULL;
+		tmpfs_mntmem_destroy(tmp);
+		mutex_destroy(&tmp->tm_lock);
+		kmem_free(tmp, sizeof(*tmp));
+		return error;
+	}
+	KASSERT(vp != NULL);
+	root = VP_TO_TMPFS_NODE(vp);
+	KASSERT(root != NULL);
 
 	/*
 	 * Parent of the root inode is itself.  Also, root inode has no
@@ -199,13 +218,13 @@ tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	root->tn_links++;
 	root->tn_spec.tn_dir.tn_parent = root;
 	tmp->tm_root = root;
+	vrele(vp);
 
-	mp->mnt_data = tmp;
 	mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_stat.f_namemax = TMPFS_MAXNAMLEN;
 	mp->mnt_fs_bshift = PAGE_SHIFT;
 	mp->mnt_dev_bshift = DEV_BSHIFT;
-	mp->mnt_iflag |= IMNT_MPSAFE;
+	mp->mnt_iflag |= IMNT_MPSAFE | IMNT_CAN_RWTORO;
 	vfs_getnewfsid(mp);
 
 	error = set_statvfs_info(path, UIO_USERSPACE, "tmpfs", UIO_SYSSPACE,
@@ -216,14 +235,14 @@ tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	return error;
 }
 
-static int
+int
 tmpfs_start(struct mount *mp, int flags)
 {
 
 	return 0;
 }
 
-static int
+int
 tmpfs_unmount(struct mount *mp, int mntflags)
 {
 	tmpfs_mount_t *tmp = VFS_TO_TMPFS(mp);
@@ -280,23 +299,33 @@ tmpfs_unmount(struct mount *mp, int mntflags)
 	return 0;
 }
 
-static int
+int
 tmpfs_root(struct mount *mp, vnode_t **vpp)
 {
 	tmpfs_node_t *node = VFS_TO_TMPFS(mp)->tm_root;
+	int error;
 
-	mutex_enter(&node->tn_vlock);
-	return tmpfs_vnode_get(mp, node, vpp);
+	error = vcache_get(mp, &node, sizeof(node), vpp);
+	if (error)
+		return error;
+	error = vn_lock(*vpp, LK_EXCLUSIVE);
+	if (error) {
+		vrele(*vpp);
+		*vpp = NULL;
+		return error;
+	}
+
+	return 0;
 }
 
-static int
+int
 tmpfs_vget(struct mount *mp, ino_t ino, vnode_t **vpp)
 {
 
 	return EOPNOTSUPP;
 }
 
-static int
+int
 tmpfs_fhtovp(struct mount *mp, struct fid *fhp, vnode_t **vpp)
 {
 	tmpfs_mount_t *tmp = VFS_TO_TMPFS(mp);
@@ -312,17 +341,29 @@ tmpfs_fhtovp(struct mount *mp, struct fid *fhp, vnode_t **vpp)
 	mutex_enter(&tmp->tm_lock);
 	LIST_FOREACH(node, &tmp->tm_nodes, tn_entries) {
 		if (node->tn_id == tfh.tf_id) {
-			mutex_enter(&node->tn_vlock);
+			/* Prevent this node from disappearing. */
+			atomic_inc_32(&node->tn_holdcount);
 			break;
 		}
 	}
 	mutex_exit(&tmp->tm_lock);
-
 	if (node == NULL)
 		return ESTALE;
-	/* Will release the tn_vlock. */
-	if ((error = tmpfs_vnode_get(mp, node, vpp)) != 0)
+
+	error = vcache_get(mp, &node, sizeof(node), vpp);
+	/* If this node has been reclaimed free it now. */
+	if (atomic_dec_32_nv(&node->tn_holdcount) == TMPFS_NODE_RECLAIMED) {
+		KASSERT(error != 0);
+		tmpfs_free_node(tmp, node);
+	}
+	if (error)
+		return (error == ENOENT ? ESTALE : error);
+	error = vn_lock(*vpp, LK_EXCLUSIVE);
+	if (error) {
+		vrele(*vpp);
+		*vpp = NULL;
 		return error;
+	}
 	if (TMPFS_NODE_GEN(node) != tfh.tf_gen) {
 		vput(*vpp);
 		*vpp = NULL;
@@ -332,7 +373,7 @@ tmpfs_fhtovp(struct mount *mp, struct fid *fhp, vnode_t **vpp)
 	return 0;
 }
 
-static int
+int
 tmpfs_vptofh(vnode_t *vp, struct fid *fhp, size_t *fh_size)
 {
 	tmpfs_fid_t tfh;
@@ -354,7 +395,7 @@ tmpfs_vptofh(vnode_t *vp, struct fid *fhp, size_t *fh_size)
 	return 0;
 }
 
-static int
+int
 tmpfs_statvfs(struct mount *mp, struct statvfs *sbp)
 {
 	tmpfs_mount_t *tmp;
@@ -384,14 +425,14 @@ tmpfs_statvfs(struct mount *mp, struct statvfs *sbp)
 	return 0;
 }
 
-static int
+int
 tmpfs_sync(struct mount *mp, int waitfor, kauth_cred_t uc)
 {
 
 	return 0;
 }
 
-static int
+int
 tmpfs_snapshot(struct mount *mp, vnode_t *vp, struct timespec *ctime)
 {
 
@@ -424,13 +465,15 @@ struct vfsops tmpfs_vfsops = {
 	.vfs_statvfs = tmpfs_statvfs,
 	.vfs_sync = tmpfs_sync,
 	.vfs_vget = tmpfs_vget,
+	.vfs_loadvnode = tmpfs_loadvnode,
+	.vfs_newvnode = tmpfs_newvnode,
 	.vfs_fhtovp = tmpfs_fhtovp,
 	.vfs_vptofh = tmpfs_vptofh,
 	.vfs_init = tmpfs_init,
 	.vfs_done = tmpfs_done,
 	.vfs_snapshot = tmpfs_snapshot,
 	.vfs_extattrctl = vfs_stdextattrctl,
-	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_suspendctl = genfs_suspendctl,
 	.vfs_renamelock_enter = genfs_renamelock_enter,
 	.vfs_renamelock_exit = genfs_renamelock_exit,
 	.vfs_fsync = (void *)eopnotsupp,

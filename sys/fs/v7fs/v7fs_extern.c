@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_extern.c,v 1.1.12.1 2014/08/20 00:04:28 tls Exp $	*/
+/*	$NetBSD: v7fs_extern.c,v 1.1.12.2 2017/12/03 11:38:44 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_extern.c,v 1.1.12.1 2014/08/20 00:04:28 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_extern.c,v 1.1.12.2 2017/12/03 11:38:44 jdolecek Exp $");
 
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
@@ -235,6 +235,7 @@ struct vfsops v7fs_vfsops = {
 	.vfs_statvfs = v7fs_statvfs,
 	.vfs_sync = v7fs_sync,
 	.vfs_vget = v7fs_vget,
+	.vfs_loadvnode = v7fs_loadvnode,
 	.vfs_fhtovp = v7fs_fhtovp,
 	.vfs_vptofh = v7fs_vptofh,
 	.vfs_init = v7fs_init,
@@ -243,7 +244,7 @@ struct vfsops v7fs_vfsops = {
 	.vfs_mountroot = v7fs_mountroot,
 	.vfs_snapshot = (void *)eopnotsupp,
 	.vfs_extattrctl = vfs_stdextattrctl,
-	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_suspendctl = genfs_suspendctl,
 	.vfs_renamelock_enter = genfs_renamelock_enter,
 	.vfs_renamelock_exit = genfs_renamelock_exit,
 	.vfs_fsync = (void *)eopnotsupp,

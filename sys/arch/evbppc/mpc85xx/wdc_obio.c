@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.4 2012/07/31 15:50:32 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.4.2.1 2017/12/03 11:36:11 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -53,7 +53,6 @@ struct wdc_obio_softc {
 	struct	wdc_softc sc_wdcdev;
 	struct	ata_channel *wdc_chanlist[1];
 	struct	ata_channel ata_channel;
-	struct	ata_queue wdc_chqueue;
 	struct	wdc_regs wdc_regs;
 	void	*sc_ih;
 };
@@ -162,10 +161,8 @@ wdc_obio_attach(device_t parent, device_t self, void *aux)
 	sc->sc_wdcdev.wdc_maxdrives = 2;
 	sc->ata_channel.ch_channel = 0;
 	sc->ata_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
-	sc->ata_channel.ch_queue = &sc->wdc_chqueue;
 
-	wdc_init_shadow_regs(&sc->ata_channel);
-
+	wdc_init_shadow_regs(wdr);
 
 	/* 
 	 * The interrupt line is controlled by a jumper.  We can't detect 

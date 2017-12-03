@@ -1,4 +1,4 @@
-/*	$NetBSD: btnmgr.c,v 1.25.22.2 2014/08/20 00:03:37 tls Exp $	*/
+/*	$NetBSD: btnmgr.c,v 1.25.22.3 2017/12/03 11:37:02 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btnmgr.c,v 1.25.22.2 2014/08/20 00:03:37 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btnmgr.c,v 1.25.22.3 2017/12/03 11:37:02 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_btnmgr.h"
@@ -205,7 +205,7 @@ btnmgrattach(device_t parent,
 	/*
 	 * install button event listener
 	 */
-	for (id = 0; id <= n_button_config; id++)
+	for (id = 0; id < n_button_config; id++)
 		if (button_config[id].name != NULL)
 			sc->sc_hook_tag = config_hook(CONFIG_HOOK_BUTTONEVENT,
 			    id, CONFIG_HOOK_SHARE,

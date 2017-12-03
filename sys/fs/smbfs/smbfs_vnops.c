@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.80.2.4 2014/08/20 00:04:28 tls Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.80.2.5 2017/12/03 11:38:43 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.80.2.4 2014/08/20 00:04:28 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.80.2.5 2017/12/03 11:38:43 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -606,7 +606,6 @@ smbfs_create(void *v)
 	error = smbfs_nget(VTOVFS(dvp), dvp, name, nmlen, &fattr, ap->a_vpp);
 	if (error)
 		goto out;
-	VOP_UNLOCK(*ap->a_vpp);
 
 	cache_enter(dvp, *ap->a_vpp, cnp->cn_nameptr, cnp->cn_namelen,
 		    cnp->cn_flags);
@@ -619,7 +618,7 @@ smbfs_create(void *v)
 int
 smbfs_remove(void *v)
 {
-	struct vop_remove_args /* {
+	struct vop_remove_v2_args /* {
 		struct vnodeop_desc *a_desc;
 		struct vnode * a_dvp;
 		struct vnode * a_vp;
@@ -649,7 +648,6 @@ smbfs_remove(void *v)
 		vrele(vp);
 	else
 		vput(vp);
-	vput(dvp);
 	return (error);
 }
 
@@ -809,7 +807,6 @@ smbfs_mkdir(void *v)
 	error = smbfs_nget(VTOVFS(dvp), dvp, name, len, &fattr, &vp);
 	if (error)
 		goto out;
-	VOP_UNLOCK(vp);
 	*ap->a_vpp = vp;
 
  out:
@@ -824,7 +821,7 @@ smbfs_mkdir(void *v)
 int
 smbfs_rmdir(void *v)
 {
-	struct vop_rmdir_args /* {
+	struct vop_rmdir_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
@@ -839,8 +836,7 @@ smbfs_rmdir(void *v)
 	int error;
 
 	if (dvp == vp) {
-		vrele(dvp);
-		vput(dvp);
+		vrele(vp);
 		return (EINVAL);
 	}
 
@@ -855,7 +851,6 @@ smbfs_rmdir(void *v)
 	cache_purge(dvp);
 	cache_purge(vp);
 	vput(vp);
-	vput(dvp);
 
 	return (error);
 }
@@ -1249,8 +1244,6 @@ smbfs_lookup(void *v)
 		if (newvp != dvp)
 			vn_lock(newvp, LK_SHARED | LK_RETRY);
 		error = VOP_GETATTR(newvp, &vattr, cnp->cn_cred);
-		if (newvp != dvp)
-			VOP_UNLOCK(newvp);
 		/*
 		 * If the file type on the server is inconsistent
 		 * with what it was when we created the vnode,
@@ -1267,6 +1260,8 @@ smbfs_lookup(void *v)
 		else if (error == 0
 			&& vattr.va_ctime.tv_sec == VTOSMB(newvp)->n_ctime)
 		{
+			if (newvp != dvp)
+				VOP_UNLOCK(newvp);
 			/* nfsstats.lookupcache_hits++; */
 			return (0);
 		}
@@ -1274,8 +1269,7 @@ smbfs_lookup(void *v)
 		cache_purge(newvp);
 		if (newvp != dvp) {
 			if (killit) {
-				VOP_UNLOCK(newvp);
-				vgone(newvp);
+				smbfs_uncache(newvp);
 			} else
 				vput(newvp);
 		} else
@@ -1347,46 +1341,23 @@ smbfs_lookup(void *v)
 
 		if (isdot)
 			return (EISDIR);
-		if (flags & ISDOTDOT)
-			VOP_UNLOCK(dvp);
 		error = smbfs_nget(mp, dvp, name, nmlen, &fattr, vpp);
-		if (flags & ISDOTDOT)
-			vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 		if (error)
 			return (error);
-		if (*vpp != dvp)
-			VOP_UNLOCK(*vpp);
 		return (0);
 	}
 
 	if (isdot) {
-
-		/*
-		 * "." lookup
-		 */
 		vref(dvp);
 		*vpp = dvp;
-	} else if (flags & ISDOTDOT) {
-
-		/*
-		 * ".." lookup
-		 */
-		VOP_UNLOCK(dvp);
-		error = smbfs_nget(mp, dvp, name, nmlen, NULL, vpp);
-		vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
-		if (error) {
-			return error;
-		}
+		error = 0;
 	} else {
-		/*
-		 * Other lookups.
-		 */
-		error = smbfs_nget(mp, dvp, name, nmlen, &fattr, vpp);
-		if (error)
-			return error;
+		error = smbfs_nget(mp, dvp, name, nmlen,
+		    ((flags & ISDOTDOT) ? NULL : &fattr), vpp);
 	}
+	if (error)
+		return error;
 
-	KASSERT(error == 0);
 	if (cnp->cn_nameiop != DELETE || !islastcn) {
 		VTOSMB(*vpp)->n_ctime = VTOSMB(*vpp)->n_mtime.tv_sec;
 		cache_enter(dvp, *vpp, cnp->cn_nameptr, cnp->cn_namelen,
@@ -1399,7 +1370,5 @@ smbfs_lookup(void *v)
 #endif
 	}
 
-	if (*vpp != dvp)
-		VOP_UNLOCK(*vpp);
 	return (0);
 }

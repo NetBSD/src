@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdSchedule.c,v 1.16.14.1 2014/08/20 00:03:35 tls Exp $	*/
+/*	$NetBSD: OsdSchedule.c,v 1.16.14.2 2017/12/03 11:36:59 jdolecek Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdSchedule.c,v 1.16.14.1 2014/08/20 00:03:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdSchedule.c,v 1.16.14.2 2017/12/03 11:36:59 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -113,9 +113,6 @@ AcpiOsExecute(ACPI_EXECUTE_TYPE Type, ACPI_OSD_EXEC_CALLBACK Function,
 	case OSL_NOTIFY_HANDLER:
 		pri = 3;
 		break;
-	case OSL_DEBUGGER_THREAD:
-		pri = 0;
-		break;
 	default:
 		return AE_BAD_PARAMETER;
 	}
@@ -171,12 +168,14 @@ AcpiOsStall(UINT32 Microseconds)
 UINT64
 AcpiOsGetTimer(void)
 {
+	static UINT64 xt;
 	struct timeval tv;
 	UINT64 t;
 
 	/* XXX During early boot there is no (decent) timer available yet. */
-	if (cold)
-		panic("acpi: timer op not yet supported during boot");
+	if (cold) {
+		return xt += 100;
+	}
 
 	microtime(&tv);
 	t = (UINT64)10 * tv.tv_usec;

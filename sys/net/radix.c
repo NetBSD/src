@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.c,v 1.44 2011/07/17 20:54:52 joerg Exp $	*/
+/*	$NetBSD: radix.c,v 1.44.12.1 2017/12/03 11:39:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993
@@ -36,14 +36,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radix.c,v 1.44 2011/07/17 20:54:52 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radix.c,v 1.44.12.1 2017/12/03 11:39:02 jdolecek Exp $");
 
 #ifndef _NET_RADIX_H_
 #include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/kmem.h>
 #ifdef	_KERNEL
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
+#endif
 
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -1003,6 +1005,37 @@ rn_walktree(
 	/* NOTREACHED */
 }
 
+struct radix_node *
+rn_search_matched(struct radix_node_head *h,
+    int (*matcher)(struct radix_node *, void *), void *w)
+{
+	bool matched;
+	struct radix_node *base, *next, *rn;
+	/*
+	 * This gets complicated because we may delete the node
+	 * while applying the function f to it, so we need to calculate
+	 * the successor node in advance.
+	 */
+	rn = rn_walkfirst(h->rnh_treetop, NULL, NULL);
+	for (;;) {
+		base = rn;
+		next = rn_walknext(rn, NULL, NULL);
+		/* Process leaves */
+		while ((rn = base) != NULL) {
+			base = rn->rn_dupedkey;
+			if (!(rn->rn_flags & RNF_ROOT)) {
+				matched = (*matcher)(rn, w);
+				if (matched)
+					return rn;
+			}
+		}
+		rn = next;
+		if (rn->rn_flags & RNF_ROOT)
+			return NULL;
+	}
+	/* NOTREACHED */
+}
+
 struct delayinit {
 	void **head;
 	int off;
@@ -1020,7 +1053,8 @@ rn_delayedinit(void **head, int off)
 {
 	struct delayinit *di;
 
-	KASSERT(radix_initialized == 0);
+	if (radix_initialized)
+		return;
 
 	di = kmem_alloc(sizeof(*di), KM_SLEEP);
 	di->head = head;

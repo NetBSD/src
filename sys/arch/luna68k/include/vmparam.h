@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.18.14.1 2014/08/20 00:03:10 tls Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.18.14.2 2017/12/03 11:36:23 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -58,7 +58,7 @@
  * Virtual memory related constants, all in bytes
  */
 #ifndef MAXTSIZ
-#define MAXTSIZ		(8*1024*1024)		/* max text size */
+#define MAXTSIZ		(32*1024*1024)		/* max text size */
 #endif
 #ifndef DFLDSIZ
 #define DFLDSIZ		(16*1024*1024)		/* initial data size limit */
@@ -72,13 +72,6 @@
 #ifndef	MAXSSIZ
 #define MAXSSIZ		MAXDSIZ			/* max stack size */
 #endif
-
-/*
- * Sizes of the system and user portions of the system page table.
- */
-/* SYSPTSIZE IS SILLY; IT SHOULD BE COMPUTED AT BOOT TIME */
-#define SYSPTSIZE	(2 * NPTEPG)	/* 8mb */
-#define USRPTSIZE 	(1 * NPTEPG)	/* 4mb */
 
 /*
  * PTEs for mapping user space into the kernel for phyio operations.
@@ -103,7 +96,7 @@
 #define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
 
 /* # of kernel PT pages (initial only, can grow dynamically) */
-#define VM_KERNEL_PT_PAGES	((vsize_t)2)		/* XXX: SYSPTSIZE */
+#define VM_KERNEL_PT_PAGES	((vsize_t)2)
 
 /*
  * Constants which control the way the VM system deals with memory segments.

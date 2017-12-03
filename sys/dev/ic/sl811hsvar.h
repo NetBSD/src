@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hsvar.h,v 1.8.12.2 2014/08/20 00:03:38 tls Exp $	*/
+/*	$NetBSD: sl811hsvar.h,v 1.8.12.3 2017/12/03 11:37:04 jdolecek Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -36,8 +36,6 @@ struct slhci_transfers {
 	int16_t len[2];		     	/* length of transfer or -1 if none */
 	uint8_t current_tregs[2][4]; 	/* ab, ADR, LEN, PID, DEV */
 	uint8_t copyin[2]; 		/* copyin ADR, LEN */
-	uint8_t rootaddr;		/* device address of root hub */
-	uint8_t rootconf;		/* root configuration */
 	uint8_t max_current;		/* max current / 2 */
 	uint8_t sltype;			/* revision */
 };

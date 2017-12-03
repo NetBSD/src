@@ -1,4 +1,4 @@
-/*	$NetBSD: opms.c,v 1.19.12.1 2014/08/20 00:02:44 tls Exp $	*/
+/*	$NetBSD: opms.c,v 1.19.12.2 2017/12/03 11:35:50 jdolecek Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pms.c,v 1.21 1995/04/18 02:25:18 mycroft Exp	*/
 
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.19.12.1 2014/08/20 00:02:44 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.19.12.2 2017/12/03 11:35:50 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -472,8 +472,12 @@ filt_opmsread(struct knote *kn, long hint)
 	return kn->kn_data > 0;
 }
 
-static const struct filterops opmsread_filtops =
-	{ 1, NULL, filt_opmsrdetach, filt_opmsread };
+static const struct filterops opmsread_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_opmsrdetach,
+	.f_event = filt_opmsread,
+};
 
 int
 opmskqfilter(dev_t dev, struct knote *kn)

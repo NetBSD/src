@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_connector.c,v 1.2.6.2 2014/08/20 00:04:10 tls Exp $	*/
+/*	$NetBSD: nouveau_connector.c,v 1.2.6.3 2017/12/03 11:37:52 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 2008 Maarten Maathuis.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_connector.c,v 1.2.6.2 2014/08/20 00:04:10 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_connector.c,v 1.2.6.3 2017/12/03 11:37:52 jdolecek Exp $");
 
 #include <acpi/button.h>
 
@@ -308,6 +308,7 @@ nouveau_connector_detect(struct drm_connector *connector, bool force)
 				type = DCB_OUTPUT_ANALOG;
 
 			nv_encoder = find_encoder(connector, type);
+			BUG_ON(nv_encoder == NULL);
 		}
 
 		nouveau_connector_set_encoder(connector, nv_encoder);

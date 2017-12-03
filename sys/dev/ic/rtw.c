@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.119.12.1 2014/08/20 00:03:38 tls Exp $ */
+/* $NetBSD: rtw.c,v 1.119.12.2 2017/12/03 11:37:04 jdolecek Exp $ */
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 David Young.  All rights
  * reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.119.12.1 2014/08/20 00:03:38 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.119.12.2 2017/12/03 11:37:04 jdolecek Exp $");
 
 
 #include <sys/param.h>
@@ -89,6 +89,7 @@ static void rtw_disable_interrupts(struct rtw_regs *);
 static void rtw_enable_interrupts(struct rtw_softc *);
 
 static int rtw_init(struct ifnet *);
+static void rtw_softintr(void *);
 
 static void rtw_start(struct ifnet *);
 static void rtw_reset_oactive(struct rtw_softc *);
@@ -683,7 +684,7 @@ out:
 	    RTW_DK0, rk->rk_words, __arraycount(rk->rk_words));
 
 	bus_space_barrier(regs->r_bt, regs->r_bh, RTW_DK0, sizeof(rk->rk_words),
-	    BUS_SPACE_BARRIER_SYNC);
+	    BUS_SPACE_BARRIER_READ|BUS_SPACE_BARRIER_WRITE);
 
 	RTW_DPRINTF(RTW_DEBUG_KEY,
 	    ("%s.%d: scr %02" PRIx8 ", keylen %d\n", __func__, __LINE__, scr,
@@ -1456,7 +1457,7 @@ rtw_intr_rx(struct rtw_softc *sc, uint16_t isr)
 							 * hardware -> net80211
 							 */
 	u_int next, nproc = 0;
-	int hwrate, len, rate, rssi, sq;
+	int hwrate, len, rate, rssi, sq, s;
 	uint32_t hrssi, hstat, htsfth, htsftl;
 	struct rtw_rxdesc *rd;
 	struct rtw_rxsoft *rs;
@@ -1606,10 +1607,12 @@ rtw_intr_rx(struct rtw_softc *sc, uint16_t isr)
 		/* Note well: now we cannot recycle the rs_mbuf unless
 		 * we restore its original length.
 		 */
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = len;
 
 		wh = mtod(m, struct ieee80211_frame_min *);
+
+		s = splnet();
 
 		if (!IS_BEACON(wh->i_fc[0]))
 			sc->sc_led_state.ls_event |= RTW_LED_S_RX;
@@ -1653,6 +1656,7 @@ rtw_intr_rx(struct rtw_softc *sc, uint16_t isr)
 
 		if ((hstat & RTW_RXSTAT_RES) != 0) {
 			m_freem(m);
+			splx(s);
 			goto next;
 		}
 
@@ -1663,6 +1667,7 @@ rtw_intr_rx(struct rtw_softc *sc, uint16_t isr)
 		ni = ieee80211_find_rxnode(&sc->sc_ic, wh);
 		ieee80211_input(&sc->sc_ic, m, ni, rssi, htsftl);
 		ieee80211_free_node(ni);
+		splx(s);
 next:
 		rtw_rxdesc_init(rdb, rs, next, 0);
 	}
@@ -1839,10 +1844,12 @@ rtw_collect_txring(struct rtw_softc *sc, struct rtw_txsoft_blk *tsb,
 static void
 rtw_intr_tx(struct rtw_softc *sc, uint16_t isr)
 {
-	int pri;
+	int pri, s;
 	struct rtw_txsoft_blk	*tsb;
 	struct rtw_txdesc_blk	*tdb;
 	struct ifnet *ifp = &sc->sc_if;
+
+	s = splnet();
 
 	for (pri = 0; pri < RTW_NTXPRI; pri++) {
 		tsb = &sc->sc_txsoft_blk[pri];
@@ -1851,9 +1858,9 @@ rtw_intr_tx(struct rtw_softc *sc, uint16_t isr)
 	}
 
 	if ((isr & RTW_INTR_TX) != 0)
-		rtw_start(ifp);
+		rtw_start(ifp); /* in softint */
 
-	return;
+	splx(s);
 }
 
 static void
@@ -1865,6 +1872,9 @@ rtw_intr_beacon(struct rtw_softc *sc, uint16_t isr)
 	struct rtw_txdesc_blk *tdb = &sc->sc_txdesc_blk[RTW_TXPRIBCN];
 	struct rtw_txsoft_blk *tsb = &sc->sc_txsoft_blk[RTW_TXPRIBCN];
 	struct mbuf *m;
+	int s;
+
+	s = splnet();
 
 	tsfth = RTW_READ(&sc->sc_regs, RTW_TSFTRH);
 	tsftl = RTW_READ(&sc->sc_regs, RTW_TSFTRL);
@@ -1900,12 +1910,15 @@ rtw_intr_beacon(struct rtw_softc *sc, uint16_t isr)
 		if (m == NULL) {
 			aprint_error_dev(sc->sc_dev,
 			    "could not allocate beacon\n");
+			splx(s);
 			return;
 		}
-		m->m_pkthdr.rcvif = (void *)ieee80211_ref_node(ic->ic_bss);
+		M_SETCTX(m, ieee80211_ref_node(ic->ic_bss));
 		IF_ENQUEUE(&sc->sc_beaconq, m);
-		rtw_start(&sc->sc_if);
+		rtw_start(&sc->sc_if); /* in softint */
 	}
+
+	splx(s);
 }
 
 static void
@@ -2077,10 +2090,14 @@ rtw_txdescs_reset(struct rtw_softc *sc)
 static void
 rtw_intr_ioerror(struct rtw_softc *sc, uint16_t isr)
 {
+	int s;
+
 	aprint_error_dev(sc->sc_dev, "tx fifo underflow\n");
 
 	RTW_DPRINTF(RTW_DEBUG_BUGS, ("%s: cleaning up xmit, isr %" PRIx16
 	    "\n", device_xname(sc->sc_dev), isr));
+
+	s = splnet();
 
 #ifdef RTW_DEBUG
 	rtw_dump_rings(sc);
@@ -2094,6 +2111,8 @@ rtw_intr_ioerror(struct rtw_softc *sc, uint16_t isr)
 #ifdef RTW_DEBUG
 	rtw_dump_rings(sc);
 #endif /* RTW_DEBUG */
+
+	splx(s);
 }
 
 static inline void
@@ -2129,16 +2148,18 @@ rtw_resume_ticks(struct rtw_softc *sc)
 static void
 rtw_intr_timeout(struct rtw_softc *sc)
 {
+	int s;
+
+	s = splnet();
 	RTW_DPRINTF(RTW_DEBUG_TIMEOUT, ("%s: timeout\n", device_xname(sc->sc_dev)));
 	if (sc->sc_do_tick)
 		rtw_resume_ticks(sc);
-	return;
+	splx(s);
 }
 
 int
 rtw_intr(void *arg)
 {
-	int i;
 	struct rtw_softc *sc = arg;
 	struct rtw_regs *regs = &sc->sc_regs;
 	uint16_t isr;
@@ -2153,6 +2174,34 @@ rtw_intr(void *arg)
 		RTW_DPRINTF(RTW_DEBUG_INTR, ("%s: stray interrupt\n",
 		    device_xname(sc->sc_dev)));
 		return (0);
+	}
+
+	isr = RTW_READ16(regs, RTW_ISR);
+	if (isr == 0)
+		return (0);
+
+	/* Disable interrupts. */
+	RTW_WRITE16(regs, RTW_IMR, 0);
+	RTW_WBW(regs, RTW_IMR, RTW_IMR);
+
+	softint_schedule(sc->sc_soft_ih);
+	return (1);
+}
+
+static void
+rtw_softintr(void *arg)
+{
+	int i;
+	struct rtw_softc *sc = arg;
+	struct rtw_regs *regs = &sc->sc_regs;
+	uint16_t isr;
+	struct ifnet *ifp = &sc->sc_if;
+
+	if ((ifp->if_flags & IFF_RUNNING) == 0 ||
+	    !device_activation(sc->sc_dev, DEVACT_LEVEL_DRIVER)) {
+		RTW_DPRINTF(RTW_DEBUG_INTR, ("%s: stray interrupt\n",
+		    device_xname(sc->sc_dev)));
+		return;
 	}
 
 	for (i = 0; i < 10; i++) {
@@ -2216,8 +2265,12 @@ rtw_intr(void *arg)
 		if ((isr & RTW_INTR_TIMEOUT) != 0)
 			rtw_intr_timeout(sc);
 	}
+	if (i == 10)
+		softint_schedule(sc->sc_soft_ih);
 
-	return 1;
+	/* Re-enable interrupts */
+	RTW_WRITE16(regs, RTW_IMR, sc->sc_inten);
+	RTW_WBW(regs, RTW_IMR, RTW_IMR);
 }
 
 /* Must be called at splnet. */
@@ -3062,8 +3115,8 @@ rtw_80211_dequeue(struct rtw_softc *sc, struct ifqueue *ifq, int pri,
 		return NULL;
 	}
 	IF_DEQUEUE(ifq, m);
-	*nip = (struct ieee80211_node *)m->m_pkthdr.rcvif;
-	m->m_pkthdr.rcvif = NULL;
+	*nip = M_GETCTX(m, struct ieee80211_node *);
+	M_SETCTX(m, NULL);
 	KASSERT(*nip != NULL);
 	return m;
 }
@@ -4001,6 +4054,12 @@ rtw_attach(struct rtw_softc *sc)
 
 	NEXT_ATTACH_STATE(sc, DETACHED);
 
+	sc->sc_soft_ih = softint_establish(SOFTINT_NET, rtw_softintr, sc);
+	if (sc->sc_soft_ih == NULL) {
+		aprint_error_dev(sc->sc_dev, "could not establish softint\n");
+		goto err;
+	}
+
 	switch (RTW_READ(&sc->sc_regs, RTW_TCR) & RTW_TCR_HWVERID_MASK) {
 	case RTW_TCR_HWVERID_F:
 		sc->sc_hwverid = 'F';
@@ -4166,12 +4225,20 @@ rtw_attach(struct rtw_softc *sc)
 	rtw_set80211props(&sc->sc_ic);
 
 	rtw_led_attach(&sc->sc_led_state, (void *)sc);
+	NEXT_ATTACH_STATE(sc, FINISH_LED_ATTACH);
 
 	/*
 	 * Call MI attach routines.
 	 */
-	if_attach(ifp);
-	ieee80211_ifattach(&sc->sc_ic);
+	rc = if_initialize(ifp);
+	if (rc != 0) {
+		aprint_error_dev(sc->sc_dev, "if_initialize failed(%d)\n", rc);
+		goto err;
+	}
+	ieee80211_ifattach(ic);
+	/* Use common softint-based if_input */
+	ifp->if_percpuq = if_percpuq_create(ifp);
+	if_register(ifp);
 
 	rtw_set80211methods(&sc->sc_mtbl, &sc->sc_ic);
 
@@ -4214,6 +4281,7 @@ rtw_detach(struct rtw_softc *sc)
 		callout_stop(&sc->sc_scan_ch);
 		ieee80211_ifdetach(&sc->sc_ic);
 		if_detach(ifp);
+	case FINISH_LED_ATTACH:
 		rtw_led_detach(&sc->sc_led_state);
 		/*FALLTHROUGH*/
 	case FINISH_ID_STA:
@@ -4256,6 +4324,10 @@ rtw_detach(struct rtw_softc *sc)
 		    sc->sc_desc_nsegs);
 		/*FALLTHROUGH*/
 	case DETACHED:
+		if (sc->sc_soft_ih != NULL) {
+			softint_disestablish(sc->sc_soft_ih);
+			sc->sc_soft_ih = NULL;
+		}
 		NEXT_ATTACH_STATE(sc, DETACHED);
 		break;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.24.12.1 2014/08/20 00:03:12 tls Exp $	*/
+/*	$NetBSD: Locore.c,v 1.24.12.2 2017/12/03 11:36:25 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -70,11 +70,12 @@ __asm(
 "	isync			\n"
 "				\n"
 "				\n" /* test for 601 */
-"       mfspr   %r0,287      	\n" /* mfpvbr %r0 PVR = 287 */
-"       srwi    %r0,%r0,0x10   	\n"
-"       cmpi    0,1,%r0,0x02  	\n" /* 601 CPU = 0x0001 */
-"       blt     1f		\n" /* skip over non-601 BAT setup */
-	/*non PPC 601 BATs*/
+"	mfspr	%r0,287		\n" /* mfpvbr %r0 PVR = 287 */
+"	srwi	%r0,%r0,0x10	\n"
+"	cmpi	0,1,%r0,0x02	\n" /* 601 CPU = 0x0001 */
+"	blt	1f		\n" /* skip over non-601 BAT setup */
+	/* non PPC 601 BATs */
+"	li	%r0,0		\n"
 "	mtibatu	0,%r0		\n"
 "	mtibatu	1,%r0		\n"
 "	mtibatu	2,%r0		\n"
@@ -84,45 +85,46 @@ __asm(
 "	mtdbatu	2,%r0		\n"
 "	mtdbatu	3,%r0		\n"
 "				\n"
-"	li	%r9,0x12	\n" 	/* BATL(0, BAT_M, BAT_PP_RW) */
+"	li	%r9,0x12	\n"	/* BATL(0, BAT_M, BAT_PP_RW) */
 "	mtibatl	0,%r9		\n"
 "	mtdbatl	0,%r9		\n"
 "	li	%r9,0x1ffe	\n"	/* BATU(0, BAT_BL_256M, BAT_Vs) */
 "	mtibatu	0,%r9		\n"
 "	mtdbatu	0,%r9		\n"
-"	b 2f			\n"
+"	b	2f		\n"
 
-	/* PPC 601 BATs*/
-"1:	mtibatu	0,%r0		\n"
-"      	mtibatu 1,%r0           \n"
-"      	mtibatu 2,%r0           \n"
-"      	mtibatu 3,%r0           \n"
-"                              	\n"
-"      	li      %r9,0x7f        \n"
-"      	mtibatl 0,%r9           \n"
-"      	li      %r9,0x1a        \n"
-"      	mtibatu 0,%r9           \n"
+	/* PPC 601 BATs */
+"1:	li	%r0,0		\n"
+"	mtibatu	0,%r0		\n"
+"	mtibatu	1,%r0		\n"
+"	mtibatu	2,%r0		\n"
+"	mtibatu	3,%r0		\n"
 "				\n"
-"      	lis %r9,0x80    	\n"
-"      	addi %r9,%r9,0x7f       \n"
-"      	mtibatl 1,%r9           \n"
-"      	lis %r9,0x80    	\n"
-"      	addi %r9,%r9,0x1a       \n"
-"      	mtibatu 1,%r9           \n"
+"	li	%r9,0x7f	\n"
+"	mtibatl	0,%r9		\n"
+"	li	%r9,0x1a	\n"
+"	mtibatu	0,%r9		\n"
 "				\n"
-"      	lis %r9,0x100   	\n"
-"      	addi %r9,%r9,0x7f      	\n"
-"      	mtibatl 2,%r9          	\n"
-"      	lis %r9,0x100   	\n"
-"      	addi %r9,%r9,0x1a      	\n"
-"      	mtibatu 2,%r9          	\n"
+"	lis	%r9,0x80	\n"
+"	addi	%r9,%r9,0x7f	\n"
+"	mtibatl	1,%r9		\n"
+"	lis	%r9,0x80	\n"
+"	addi	%r9,%r9,0x1a	\n"
+"	mtibatu	1,%r9		\n"
 "				\n"
-"      	lis %r9,0x180   	\n"
-"      	addi %r9,%r9,0x7f       \n"
-"      	mtibatl 3,%r9           \n"
-"     	lis %r9,0x180   	\n"
-"      	addi %r9,%r9,0x1a       \n"
-"      	mtibatu 3,%r9           \n"
+"	lis	%r9,0x100	\n"
+"	addi	%r9,%r9,0x7f	\n"
+"	mtibatl	2,%r9		\n"
+"	lis	%r9,0x100	\n"
+"	addi	%r9,%r9,0x1a	\n"
+"	mtibatu	2,%r9		\n"
+"				\n"
+"	lis	%r9,0x180	\n"
+"	addi	%r9,%r9,0x7f	\n"
+"	mtibatl	3,%r9		\n"
+"	lis	%r9,0x180	\n"
+"	addi	%r9,%r9,0x1a	\n"
+"	mtibatu	3,%r9		\n"
 "				\n"
 "2:	isync			\n"
 "				\n"

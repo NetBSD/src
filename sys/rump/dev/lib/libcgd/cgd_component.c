@@ -1,4 +1,4 @@
-/*	$NetBSD: cgd_component.c,v 1.1.10.2 2014/08/20 00:04:37 tls Exp $	*/
+/*	$NetBSD: cgd_component.c,v 1.1.10.3 2017/12/03 11:39:06 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,34 +26,35 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd_component.c,v 1.1.10.2 2014/08/20 00:04:37 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd_component.c,v 1.1.10.3 2017/12/03 11:39:06 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/stat.h>
 
-#include "rump_private.h"
-#include "rump_vfs_private.h"
+#include <rump-sys/kern.h>
+#include <rump-sys/vfs.h>
 
 RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 {
 	extern const struct bdevsw cgd_bdevsw;
 	extern const struct cdevsw cgd_cdevsw;
-	devmajor_t bmaj, cmaj;
+	extern devmajor_t cgd_bmajor, cgd_cmajor;
 	int error;
 
 	/* go, mydevfs */
-	bmaj = cmaj = -1;
 
-	if ((error = devsw_attach("/dev/cgd0", &cgd_bdevsw, &bmaj,
-	    &cgd_cdevsw, &cmaj)) != 0)
+	if ((error = devsw_attach("cgd", &cgd_bdevsw, &cgd_bmajor,
+	    &cgd_cdevsw, &cgd_cmajor)) != 0)
 		panic("cannot attach cgd: %d", error);
 
 	if ((error = rump_vfs_makedevnodes(S_IFBLK, "/dev/cgd0", 'a',
-	    bmaj, 0, 7)) != 0)
+	    cgd_bmajor, 0, 7)) != 0)
 		panic("cannot create cooked cgd dev nodes: %d", error);
 	if ((error = rump_vfs_makedevnodes(S_IFCHR, "/dev/rcgd0", 'a',
-	    cmaj, 0, 7)) != 0)
+	    cgd_cmajor, 0, 7)) != 0)
 		panic("cannot create raw cgd dev nodes: %d", error);
+
+	devsw_detach(&cgd_bdevsw, &cgd_cdevsw);
 }

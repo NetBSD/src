@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cbq.c,v 1.26.22.1 2014/08/20 00:02:39 tls Exp $	*/
+/*	$NetBSD: altq_cbq.c,v 1.26.22.2 2017/12/03 11:35:43 jdolecek Exp $	*/
 /*	$KAME: altq_cbq.c,v 1.21 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.26.22.1 2014/08/20 00:02:39 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.26.22.2 2017/12/03 11:35:43 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -82,8 +82,7 @@ static int		 cbq_class_destroy(cbq_state_t *, struct rm_class *);
 static struct rm_class  *clh_to_clp(cbq_state_t *, u_int32_t);
 static int		 cbq_clear_interface(cbq_state_t *);
 static int		 cbq_request(struct ifaltq *, int, void *);
-static int		 cbq_enqueue(struct ifaltq *, struct mbuf *,
-			     struct altq_pktattr *);
+static int		 cbq_enqueue(struct ifaltq *, struct mbuf *);
 static struct mbuf	*cbq_dequeue(struct ifaltq *, int);
 static void		 cbqrestart(struct ifaltq *);
 static void		 get_class_stats(class_stats_t *, struct rm_class *);
@@ -348,7 +347,7 @@ cbq_add_queue(struct pf_altq *a)
 		borrow = NULL;
 
 	/*
-	 * A class must borrow from it's parent or it can not
+	 * A class must borrow from its parent or it can not
 	 * borrow at all.  Hence, borrow can be null.
 	 */
 	if (parent == NULL && (opts->flags & CBQCLF_ROOTCLASS) == 0) {
@@ -472,6 +471,7 @@ cbq_getqstats(struct pf_altq *a, void *ubuf, int *nbytes)
 	if (*nbytes < sizeof(stats))
 		return (EINVAL);
 
+	memset(&stats, 0, sizeof(stats));
 	get_class_stats(&stats, cl);
 
 	if ((error = copyout((void *)&stats, ubuf, sizeof(stats))) != 0)
@@ -483,7 +483,7 @@ cbq_getqstats(struct pf_altq *a, void *ubuf, int *nbytes)
 
 /*
  * int
- * cbq_enqueue(struct ifaltq *ifq, struct mbuf *m, struct altq_pktattr *pattr)
+ * cbq_enqueue(struct ifaltq *ifq, struct mbuf *m)
  *		- Queue data packets.
  *
  *	cbq_enqueue is set to ifp->if_altqenqueue and called by an upper
@@ -497,8 +497,9 @@ cbq_getqstats(struct pf_altq *a, void *ubuf, int *nbytes)
  */
 
 static int
-cbq_enqueue(struct ifaltq *ifq, struct mbuf *m, struct altq_pktattr *pktattr)
+cbq_enqueue(struct ifaltq *ifq, struct mbuf *m)
 {
+	struct altq_pktattr pktattr;
 	cbq_state_t	*cbqp = (cbq_state_t *)ifq->altq_disc;
 	struct rm_class	*cl;
 	struct m_tag	*t;
@@ -516,8 +517,8 @@ cbq_enqueue(struct ifaltq *ifq, struct mbuf *m, struct altq_pktattr *pktattr)
 	if ((t = m_tag_find(m, PACKET_TAG_ALTQ_QID, NULL)) != NULL)
 		cl = clh_to_clp(cbqp, ((struct altq_tag *)(t+1))->qid);
 #ifdef ALTQ3_COMPAT
-	else if ((ifq->altq_flags & ALTQF_CLASSIFY) && pktattr != NULL)
-		cl = pktattr->pattr_class;
+	else if (ifq->altq_flags & ALTQF_CLASSIFY)
+		cl = m->m_pkthdr.pattr_class;
 #endif
 	if (cl == NULL) {
 		cl = cbqp->ifnp.default_;
@@ -527,9 +528,13 @@ cbq_enqueue(struct ifaltq *ifq, struct mbuf *m, struct altq_pktattr *pktattr)
 		}
 	}
 #ifdef ALTQ3_COMPAT
-	if (pktattr != NULL)
-		cl->pktattr_ = pktattr;  /* save proto hdr used by ECN */
-	else
+	if (m->m_pkthdr.pattr_af != AF_UNSPEC) {
+		pktattr.pattr_class = m->m_pkthdr.pattr_class;
+		pktattr.pattr_af = m->m_pkthdr.pattr_af;
+		pktattr.pattr_hdr = m->m_pkthdr.pattr_hdr;
+
+		cl->pktattr_ = &pktattr;  /* save proto hdr used by ECN */
+	} else
 #endif
 		cl->pktattr_ = NULL;
 	len = m_pktlen(m);
@@ -588,7 +593,7 @@ cbqrestart(struct ifaltq *ifq)
 	ifp = ifq->altq_ifp;
 	if (ifp->if_start &&
 	    cbqp->cbq_qlen > 0 && (ifp->if_flags & IFF_OACTIVE) == 0)
-		(*ifp->if_start)(ifp);
+		if_start_lock(ifp);
 }
 
 static void
@@ -626,7 +631,7 @@ cbq_add_class(struct cbq_add_class *acp)
 	borrow = clh_to_clp(cbqp, acp->cbq_class.borrow_class_handle);
 
 	/*
-	 * A class must borrow from it's parent or it can not
+	 * A class must borrow from its parent or it can not
 	 * borrow at all.  Hence, borrow can be null.
 	 */
 	if (parent == NULL && (acp->cbq_class.flags & CBQCLF_ROOTCLASS) == 0) {
@@ -876,6 +881,7 @@ cbq_getstats(struct cbq_getstats *gsp)
 			if (++i >= CBQ_MAX_CLASSES)
 				goto out;
 
+		memset(&stats, 0, sizeof(stats));
 		get_class_stats(&stats, cl);
 		stats.handle = cl->stats_.handle;
 

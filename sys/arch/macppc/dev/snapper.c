@@ -1,4 +1,4 @@
-/*	$NetBSD: snapper.c,v 1.38.8.1 2014/08/20 00:03:11 tls Exp $	*/
+/*	$NetBSD: snapper.c,v 1.38.8.2 2017/12/03 11:36:25 jdolecek Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 /*	Id: i2s.c,v 1.12 2005/01/15 14:32:35 tsubai Exp		*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.38.8.1 2014/08/20 00:03:11 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.38.8.2 2017/12/03 11:36:25 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -756,9 +756,9 @@ snapper_attach(device_t parent, device_t self, void *aux)
 	}
 
 	sc->sc_odmacmd = dbdma_alloc((SNAPPER_MAXPAGES + 4) * 
-				     sizeof(struct dbdma_command));
+				     sizeof(struct dbdma_command), NULL);
 	sc->sc_idmacmd = dbdma_alloc((SNAPPER_MAXPAGES + 4) * 
-				     sizeof(struct dbdma_command));
+				     sizeof(struct dbdma_command), NULL);
 
 	sc->sc_baseaddr = ca->ca_baseaddr;
 	OF_getprop(soundbus, "reg", reg, sizeof reg);
@@ -2051,7 +2051,7 @@ snapper_init(struct snapper_softc *sc, int node)
 	char fcr[32];
 
 	snprintb(fcr, sizeof(fcr),  FCR3C_BITMASK, obio_read_4(KEYLARGO_FCR1));
-	printf("FCR(0x3c) 0x%s\n", fcr);
+	printf("FCR(0x3c) %s\n", fcr);
 #endif
 	headphone_detect_intr = -1;
 

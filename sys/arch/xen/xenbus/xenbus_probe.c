@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_probe.c,v 1.37.2.1 2014/08/20 00:03:30 tls Exp $ */
+/* $NetBSD: xenbus_probe.c,v 1.37.2.2 2017/12/03 11:36:52 jdolecek Exp $ */
 /******************************************************************************
  * Talks to Xen Store to figure out what devices we have.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.37.2.1 2014/08/20 00:03:30 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.37.2.2 2017/12/03 11:36:52 jdolecek Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -606,7 +606,7 @@ static struct xenbus_watch fe_watch;
 static struct xenbus_watch be_watch;
 
 /* A flag to determine if xenstored is 'ready' (i.e. has started) */
-int xenstored_ready = 0; 
+int xenstored_ready = 0;
 
 void
 xenbus_probe(void *unused)
@@ -616,7 +616,7 @@ xenbus_probe(void *unused)
 		.xa_type = "balloon"
 	};
 
-	KASSERT((xenstored_ready > 0)); 
+	KASSERT((xenstored_ready > 0));
 
 	/* Enumerate devices in xenstore. */
 	xenbus_probe_frontends();
@@ -674,7 +674,7 @@ xenbus_probe_init(void *unused)
 		/* Next allocate a local port which xenstored can bind to */
 		op.cmd = EVTCHNOP_alloc_unbound;
 		op.u.alloc_unbound.dom        = DOMID_SELF;
-		op.u.alloc_unbound.remote_dom = 0; 
+		op.u.alloc_unbound.remote_dom = 0;
 
 		err = HYPERVISOR_event_channel_op(&op);
 		if (err) {
@@ -698,10 +698,10 @@ xenbus_probe_init(void *unused)
 	xb_init_comms(xenbus_dev);
 
 	/* Initialize the interface to xenstore. */
-	err = xs_init(xenbus_dev); 
+	err = xs_init(xenbus_dev);
 	if (err) {
 		aprint_error_dev(xenbus_dev,
-				"Error initializing xenstore comms: %i\n", err);
+		    "Error initializing xenstore comms: %i\n", err);
 		goto err0;
 	}
 

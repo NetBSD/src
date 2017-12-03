@@ -1,0 +1,37 @@
+#	$NetBSD: std.tegra,v 1.16.4.2 2017/12/03 11:36:03 jdolecek Exp $
+#
+
+machine	evbarm arm
+include 	"arch/evbarm/conf/std.evbarm"
+
+include		"arch/evbarm/conf/files.tegra"
+
+options 	FDT				# Flattened Device Tree support
+options 	DRAM_BLOCKS=256
+options 	MODULAR
+options 	MODULAR_DEFAULT_AUTOLOAD
+options 	__HAVE_CPU_COUNTER
+options 	__HAVE_FAST_SOFTINTS		# should be in types.h
+options 	ARM_HAS_VBAR
+options 	__HAVE_CPU_UAREA_ALLOC_IDLELWP
+#options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
+#options 	PMAP_NEED_ALLOC_POOLPAGE
+options 	TPIDRPRW_IS_CURCPU
+options 	KERNEL_BASE_EXT=0x80000000
+options 	FPU_VFP
+options 	PCI_NETBSD_CONFIGURE
+options 	__HAVE_PCI_CONF_HOOK
+options 	__BUS_SPACE_HAS_STREAM_METHODS
+
+makeoptions	KERNEL_BASE_PHYS="0x81000000"
+makeoptions	KERNEL_BASE_VIRT="0x81000000"
+makeoptions	BOARDTYPE="tegra"
+makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.tegra"
+
+options 	ARM_INTR_IMPL="<arch/arm/fdt/fdt_intr.h>"
+options		ARM_GENERIC_TODR
+
+# initrd support
+options 	MEMORY_DISK_HOOKS
+options 	MEMORY_DISK_DYNAMIC
+pseudo-device	md

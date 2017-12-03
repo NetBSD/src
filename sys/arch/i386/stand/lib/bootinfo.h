@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.9.120.1 2014/08/20 00:03:07 tls Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.9.120.2 2017/12/03 11:36:19 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -34,6 +34,8 @@ struct bootinfo {
 };
 
 extern struct bootinfo *bootinfo;
+
+#define BTINFO_MAX	32
 
 #define BI_ALLOC(max) (bootinfo = alloc(sizeof(struct bootinfo) \
                                         + ((max) - 1) * sizeof(uint32_t))) \

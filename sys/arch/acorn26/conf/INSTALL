@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.35.2.2 2014/08/20 00:02:40 tls Exp $
+# $NetBSD: INSTALL,v 1.35.2.3 2017/12/03 11:35:44 jdolecek Exp $
 
 # INSTALL configuration, used to generate installation media
 
@@ -72,7 +72,6 @@ options 	INET6		# IPV6
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 #options 	COMPAT_43	# 4.3BSD compatibility.
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
@@ -87,7 +86,6 @@ options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 # Miscellaneous kernel options
 #options 	KTRACE		# system call tracing, a la ktrace(1)
 #options 	IRQSTATS	# manage IRQ statistics
-#options 	KMEMSTATS	# kernel memory statistics
 #options 	SCSIVERBOSE	# Verbose SCSI errors
 options 	BUFPAGES=2
 options 	USERCONF	# userconf(4) support

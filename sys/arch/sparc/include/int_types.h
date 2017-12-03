@@ -1,4 +1,4 @@
-/*	$NetBSD: int_types.h,v 1.10 2005/12/24 20:07:32 perry Exp $	*/
+/*	$NetBSD: int_types.h,v 1.10.122.1 2017/12/03 11:36:43 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,6 +43,9 @@
 #ifndef	_SPARC_INT_TYPES_H_
 #define	_SPARC_INT_TYPES_H_
 
+#ifdef __UINTPTR_TYPE__
+#include <sys/common_int_types.h>
+#else
 #include <sys/cdefs.h>
 
 /*
@@ -81,5 +84,7 @@ typedef	unsigned long long int __uint64_t;
 
 typedef	long int	       __intptr_t;
 typedef	unsigned long int     __uintptr_t;
+
+#endif /* !__UINTPTR_TYPE__ */
 
 #endif	/* !_SPARC_INT_TYPES_H_ */

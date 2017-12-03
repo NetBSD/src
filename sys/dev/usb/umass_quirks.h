@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_quirks.h,v 1.4 2008/04/28 20:24:00 martin Exp $	*/
+/*	$NetBSD: umass_quirks.h,v 1.4.46.1 2017/12/03 11:37:34 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,16 +39,16 @@ typedef void (*umass_fixup_quirk)(struct umass_softc *);
 struct umass_quirk {
 	struct usb_devno	uq_dev;
 
-	u_int8_t		uq_wire;
-	u_int8_t		uq_cmd;
-	u_int32_t		uq_flags;
-	u_int32_t		uq_busquirks;
+	uint8_t			uq_wire;
+	uint8_t			uq_cmd;
+	uint32_t		uq_flags;
+	uint32_t		uq_busquirks;
 	int			uq_match;
 
 	umass_init_quirk	uq_init;
 	umass_fixup_quirk	uq_fixup;
 };
 
-const struct umass_quirk *umass_lookup(u_int16_t, u_int16_t);
+const struct umass_quirk *umass_lookup(uint16_t, uint16_t);
 
 #endif /* _DEV_USB_UMASS_QUIRKS_H_ */

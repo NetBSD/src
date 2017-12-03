@@ -1,4 +1,4 @@
-/*	$NetBSD: c_nec_eisa.c,v 1.16 2011/02/20 07:52:42 matt Exp $	*/
+/*	$NetBSD: c_nec_eisa.c,v 1.16.14.1 2017/12/03 11:35:49 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003 Izumi Tsutsui.  All rights reserved.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: c_nec_eisa.c,v 1.16 2011/02/20 07:52:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: c_nec_eisa.c,v 1.16.14.1 2017/12/03 11:35:49 jdolecek Exp $");
 
 #define __INTR_PRIVATE
 #include <sys/param.h>
@@ -65,6 +65,8 @@ __KERNEL_RCSID(0, "$NetBSD: c_nec_eisa.c,v 1.16 2011/02/20 07:52:42 matt Exp $")
 #include <sys/intr.h>
 
 #include <uvm/uvm_extern.h>
+
+#include <mips/locore.h>
 
 #include <machine/autoconf.h>
 #include <machine/pio.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_mul.c,v 1.6.22.1 2013/06/23 06:20:08 tls Exp $ */
+/*	$NetBSD: fpu_mul.c,v 1.6.22.2 2017/12/03 11:36:23 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_mul.c,v 1.6.22.1 2013/06/23 06:20:08 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_mul.c,v 1.6.22.2 2017/12/03 11:36:23 jdolecek Exp $");
 
 #include <sys/types.h>
 
@@ -122,7 +122,6 @@ fpu_mul(struct fpemu *fe)
 	 */
 	ORDER(x, y);
 	if (ISNAN(y)) {
-		y->fp_sign ^= x->fp_sign;
 		return (y);
 	}
 	if (ISINF(y)) {

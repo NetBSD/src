@@ -1,4 +1,4 @@
-/* $NetBSD: aupci.c,v 1.13.6.1 2014/08/20 00:03:12 tls Exp $ */
+/* $NetBSD: aupci.c,v 1.13.6.2 2017/12/03 11:36:26 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -35,7 +35,7 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aupci.c,v 1.13.6.1 2014/08/20 00:03:12 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aupci.c,v 1.13.6.2 2017/12/03 11:36:26 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -45,12 +45,12 @@ __KERNEL_RCSID(0, "$NetBSD: aupci.c,v 1.13.6.1 2014/08/20 00:03:12 tls Exp $");
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/extent.h>
+#include <sys/bus.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <sys/bus.h>
-#include <machine/cpu.h>
-#include <machine/pte.h>
+#include <mips/locore.h>
+#include <mips/pte.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
@@ -333,6 +333,9 @@ aupci_conf_access(void *v, int dir, pcitag_t tag, int reg, pcireg_t *datap)
 	bus_addr_t		addr;
 	int			b, d, f;
 	bus_space_handle_t	h;
+
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return false;
 
 	aupci_decompose_tag(v, tag, &b, &d, &f);
 	if (b) {

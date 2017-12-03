@@ -1,4 +1,4 @@
-/* $NetBSD: udf_strat_direct.c,v 1.10.22.1 2014/08/20 00:04:28 tls Exp $ */
+/* $NetBSD: udf_strat_direct.c,v 1.10.22.2 2017/12/03 11:38:43 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_strat_direct.c,v 1.10.22.1 2014/08/20 00:04:28 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_strat_direct.c,v 1.10.22.2 2017/12/03 11:38:43 jdolecek Exp $");
 #endif /* not lint */
 
 
@@ -118,8 +118,6 @@ udf_wr_nodedscr_callback(struct buf *buf)
 		UDF_UNLOCK_NODE(udf_node, 0);
 		wakeup(&udf_node->outstanding_nodedscr);
 	}
-	/* unreference the vnode so it can be recycled */
-	holdrele(udf_node->vnode);
 
 	putiobuf(buf);
 }
@@ -208,9 +206,6 @@ udf_write_nodedscr_direct(struct udf_strat_args *args)
 	if (error)
 		goto out;
 
-	/* add reference to the vnode to prevent recycling */
-	vhold(udf_node->vnode);
-
 	if (waitfor) {
 		DPRINTF(WRITE, ("udf_write_nodedscr: sync write\n"));
 
@@ -224,8 +219,6 @@ udf_write_nodedscr_direct(struct udf_strat_args *args)
 		/* will be UNLOCKED in call back */
 		return error;
 	}
-
-	holdrele(udf_node->vnode);
 out:
 	udf_node->outstanding_nodedscr--;
 	if (udf_node->outstanding_nodedscr == 0) {
@@ -400,6 +393,15 @@ udf_queue_buf_direct(struct udf_strat_args *args)
 
 
 static void
+udf_sync_caches_direct(struct udf_strat_args *args)
+{
+	struct udf_mount *ump = args->ump;
+
+	udf_mmc_synchronise_caches(ump);
+}
+
+
+static void
 udf_discstrat_init_direct(struct udf_strat_args *args)
 {
 	struct udf_mount  *ump = args->ump;
@@ -448,6 +450,7 @@ struct udf_strategy udf_strat_direct =
 	udf_read_nodedscr_direct,
 	udf_write_nodedscr_direct,
 	udf_queue_buf_direct,
+	udf_sync_caches_direct,
 	udf_discstrat_init_direct,
 	udf_discstrat_finish_direct
 };

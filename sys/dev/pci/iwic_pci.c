@@ -1,4 +1,4 @@
-/*	$NetBSD: iwic_pci.c,v 1.17.14.2 2014/08/20 00:03:43 tls Exp $	*/
+/*	$NetBSD: iwic_pci.c,v 1.17.14.3 2017/12/03 11:37:08 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Dave Boyce. All rights reserved.
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwic_pci.c,v 1.17.14.2 2014/08/20 00:03:43 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwic_pci.c,v 1.17.14.3 2017/12/03 11:37:08 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -236,13 +236,14 @@ iwic_pci_attach(device_t  parent, device_t  dev, void *aux)
 	pci_chipset_tag_t pc = pa->pa_pc;
 	char intrbuf[PCI_INTRSTR_LEN];
 
+	aprint_naive("\n");
 	sc->sc_dev = dev;
 	sc->sc_cardname = iwic_find_card(pa);
 
 	if (!sc->sc_cardname)
 		return;		/* Huh? */
 
-	printf(": %s\n", sc->sc_cardname);
+	aprint_normal(": %s\n", sc->sc_cardname);
 
 	if (pci_mapreg_map(pa, IWIC_PCI_IOBA, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_io_bt, &sc->sc_io_bh, &sc->sc_iobase, &sc->sc_iosize)) {
@@ -338,7 +339,8 @@ struct isdn_layer1_isdnif_driver iwic_bri_driver = {
 	iwic_mph_command_req
 };
 
-void iwic_set_link(void *, int channel, const struct isdn_l4_driver_functions * l4_driver, void *l4_driver_softc);
+void iwic_set_link(void *, int channel,
+    const struct isdn_l4_driver_functions * l4_driver, void *l4_driver_softc);
 isdn_link_t *iwic_ret_linktab(void *, int channel);
 
 /* XXX Should be prototyped in some header, not here XXX */
@@ -438,7 +440,8 @@ iwic_ret_linktab(void *t, int channel)
 }
 
 void
-iwic_set_link(void *t, int channel, const struct isdn_l4_driver_functions * l4_driver, void *l4_driver_softc)
+iwic_set_link(void *t, int channel,
+    const struct isdn_l4_driver_functions * l4_driver, void *l4_driver_softc)
 {
 	struct l2_softc *l2sc = t;
 	struct iwic_softc *sc = l2sc->l1_token;

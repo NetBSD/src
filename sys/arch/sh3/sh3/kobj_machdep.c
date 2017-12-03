@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj_machdep.c,v 1.4 2008/11/21 23:18:11 uwe Exp $	*/
+/*	$NetBSD: kobj_machdep.c,v 1.4.26.1 2017/12/03 11:36:42 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.4 2008/11/21 23:18:11 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.4.26.1 2017/12/03 11:36:42 jdolecek Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -47,6 +47,7 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 	Elf_Addr *where;
 	uintptr_t addr, tmp;
 	int symidx, rtype;
+	int error;
 
 	if (!isrela) {
 		printf("kobj_reloc: support only RELA relocations\n");
@@ -63,8 +64,8 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 		break;
 
 	case R_TYPE(DIR32):
-		addr = kobj_sym_lookup(ko, symidx);
-		if (addr == 0)
+		error = kobj_sym_lookup(ko, symidx, &addr);
+		if (error)
 			return -1;
 
 		tmp = (Elf_Addr)(addr + *where + rela->r_addend);

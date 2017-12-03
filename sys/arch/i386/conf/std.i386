@@ -1,4 +1,4 @@
-# $NetBSD: std.i386,v 1.32.2.1 2012/11/20 03:01:26 tls Exp $
+# $NetBSD: std.i386,v 1.32.2.2 2017/12/03 11:36:17 jdolecek Exp $
 #
 # standard, required NetBSD/i386 'options'
 
@@ -13,8 +13,11 @@ options 	EXEC_SCRIPT	# exec #! scripts
 #options 	CRYPTO_MD_DES_CBC	# machine-dependent DES CBC code
 #options 	CRYPTO_MD_BF_ENC	# machine-dependent code for BF_encrypt
 #options 	CRYPTO_MD_BF_CBC	# careful: uses bswapl, requires 486
-options		MULTIPROCESSOR		# multiprocessor support
+options 	MULTIPROCESSOR		# multiprocessor support
 options 	MPBIOS			# configure CPUs and APICs using MPBIOS
+
+options 	CHILD_MAX=1024	# 160 is too few
+options 	OPEN_MAX=1024	# 128 is too few
 
 mainbus0 at root
 cpu* at mainbus?

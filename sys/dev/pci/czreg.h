@@ -1,4 +1,4 @@
-/*	$NetBSD: czreg.h,v 1.2 2007/12/25 18:33:40 perry Exp $	*/
+/*	$NetBSD: czreg.h,v 1.2.54.1 2017/12/03 11:37:07 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -74,7 +74,7 @@
  */
 
 /*
- * PLX Local Address Base values for the board RAM and FPGA regsiters.
+ * PLX Local Address Base values for the board RAM and FPGA registers.
  *
  * These values are specific to the Cyclades-Z.
  */

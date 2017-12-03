@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.90.2.1 2014/08/20 00:03:31 tls Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.90.2.2 2017/12/03 11:36:52 jdolecek Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.90.2.1 2014/08/20 00:03:31 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.90.2.2 2017/12/03 11:36:52 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.90.2.1 2014/08/20 00:03:31 tls Exp 
 #include <sys/kauth.h>
 
 #include <miscfs/genfs/genfs.h>
+#include <miscfs/specfs/specdev.h>
 
 #include <coda/coda.h>
 #include <coda/cnode.h>
@@ -784,7 +785,7 @@ coda_fsync(void *v)
     MARK_ENTRY(CODA_FSYNC_STATS);
 
     /* Check for fsync on an unmounting object */
-    /* The NetBSD kernel, in it's infinite wisdom, can try to fsync
+    /* The NetBSD kernel, in its infinite wisdom, can try to fsync
      * after an unmount has been initiated.  This is a Bad Thing,
      * which we have to avoid.  Not a legitimate failure for stats.
      */
@@ -792,8 +793,8 @@ coda_fsync(void *v)
 	return(ENODEV);
     }
 
-    /* Check for fsync of control object. */
-    if (IS_CTL_VP(vp)) {
+    /* Check for fsync of control object or unitialized cnode. */
+    if (IS_CTL_VP(vp) || vp->v_type == VNON) {
 	MARK_INT_SAT(CODA_FSYNC_STATS);
 	return(0);
     }
@@ -826,7 +827,7 @@ int
 coda_inactive(void *v)
 {
 /* true args */
-    struct vop_inactive_args *ap = v;
+    struct vop_inactive_v2_args *ap = v;
     vnode_t *vp = ap->a_vp;
     struct cnode *cp = VTOC(vp);
     kauth_cred_t cred __unused = NULL;
@@ -842,18 +843,6 @@ coda_inactive(void *v)
     CODADEBUG(CODA_INACTIVE, myprintf(("in inactive, %s, vfsp %p\n",
 				  coda_f2s(&cp->c_fid), vp->v_mount));)
 
-    /* If an array has been allocated to hold the symlink, deallocate it */
-    if ((coda_symlink_cache) && (VALID_SYMLINK(cp))) {
-	if (cp->c_symlink == NULL)
-	    panic("%s: null symlink pointer in cnode", __func__);
-
-	CODA_FREE(cp->c_symlink, cp->c_symlen);
-	cp->c_flags &= ~C_SYMLINK;
-	cp->c_symlen = 0;
-    }
-
-    /* Remove it from the table so it can't be found. */
-    coda_unsave(cp);
     if (vp->v_mount->mnt_data == NULL) {
 	myprintf(("Help! vfsp->vfs_data was NULL, but vnode %p wasn't dying\n", vp));
 	panic("badness in coda_inactive");
@@ -867,7 +856,6 @@ coda_inactive(void *v)
 	printf("%s: %p ovp != NULL\n", __func__, vp);
 #endif
     /* XXX Do we need to VOP_CLOSE container vnodes? */
-    VOP_UNLOCK(vp);
     if (!IS_UNMOUNTING(cp))
 	*ap->a_recycle = true;
 
@@ -1083,7 +1071,7 @@ int
 coda_remove(void *v)
 {
 /* true args */
-    struct vop_remove_args *ap = v;
+    struct vop_remove_v2_args *ap = v;
     vnode_t *dvp = ap->a_dvp;
     struct cnode *cp = VTOC(dvp);
     vnode_t *vp = ap->a_vp;
@@ -1136,14 +1124,13 @@ coda_remove(void *v)
     CODADEBUG(CODA_REMOVE, myprintf(("in remove result %d\n",error)); )
 
     /*
-     * Unlock parent and child (avoiding double if ".").
+     * Unlock and release child (avoiding double if ".").
      */
     if (dvp == vp) {
 	vrele(vp);
     } else {
 	vput(vp);
     }
-    vput(dvp);
 
     return(error);
 }
@@ -1157,7 +1144,7 @@ int
 coda_link(void *v)
 {
 /* true args */
-    struct vop_link_args *ap = v;
+    struct vop_link_v2_args *ap = v;
     vnode_t *vp = ap->a_vp;
     struct cnode *cp = VTOC(vp);
     vnode_t *dvp = ap->a_dvp;
@@ -1218,7 +1205,6 @@ coda_link(void *v)
     CODADEBUG(CODA_LINK,	myprintf(("in link result %d\n",error)); )
 
 exit:
-    vput(dvp);
     return(error);
 }
 
@@ -1390,7 +1376,7 @@ int
 coda_rmdir(void *v)
 {
 /* true args */
-    struct vop_rmdir_args *ap = v;
+    struct vop_rmdir_v2_args *ap = v;
     vnode_t *dvp = ap->a_dvp;
     struct cnode *dcp = VTOC(dvp);
     vnode_t *vp = ap->a_vp;
@@ -1442,8 +1428,7 @@ coda_rmdir(void *v)
     CODADEBUG(CODA_RMDIR, myprintf(("in rmdir result %d\n", error)); )
 
 exit:
-    /* vput both vnodes */
-    vput(dvp);
+    /* unlock and release child */
     if (dvp == vp) {
 	vrele(vp);
     } else {
@@ -1647,11 +1632,13 @@ int
 coda_reclaim(void *v)
 {
 /* true args */
-    struct vop_reclaim_args *ap = v;
+    struct vop_reclaim_v2_args *ap = v;
     vnode_t *vp = ap->a_vp;
     struct cnode *cp = VTOC(vp);
 /* upcall decl */
 /* locals */
+
+    VOP_UNLOCK(vp);
 
 /*
  * Forced unmount/flush will let vnodes with non zero use be destroyed!
@@ -1674,8 +1661,24 @@ coda_reclaim(void *v)
 	}
 #endif
     }
-    coda_free(VTOC(vp));
+    /* If an array has been allocated to hold the symlink, deallocate it */
+    if ((coda_symlink_cache) && (VALID_SYMLINK(cp))) {
+	if (cp->c_symlink == NULL)
+	    panic("%s: null symlink pointer in cnode", __func__);
+
+	CODA_FREE(cp->c_symlink, cp->c_symlen);
+	cp->c_flags &= ~C_SYMLINK;
+	cp->c_symlen = 0;
+    }
+
+    mutex_enter(vp->v_interlock);
+    mutex_enter(&cp->c_lock);
     SET_VTOC(vp) = NULL;
+    mutex_exit(&cp->c_lock);
+    mutex_exit(vp->v_interlock);
+    mutex_destroy(&cp->c_lock);
+    kmem_free(cp, sizeof(*cp));
+
     return (0);
 }
 
@@ -1828,30 +1831,30 @@ coda_print_vattr(struct vattr *attr)
 struct cnode *
 make_coda_node(CodaFid *fid, struct mount *fvsp, short type)
 {
-    struct cnode *cp;
-    int          error;
+	int error __diagused;
+	struct vnode *vp;
+	struct cnode *cp;
 
-    if ((cp = coda_find(fid)) == NULL) {
-	vnode_t *vp;
+	error = vcache_get(fvsp, fid, sizeof(CodaFid), &vp);
+	KASSERT(error == 0);
 
-	cp = coda_alloc();
-	cp->c_fid = *fid;
+	mutex_enter(vp->v_interlock);
+	cp = VTOC(vp);
+	KASSERT(cp != NULL);
+	mutex_enter(&cp->c_lock);
+	mutex_exit(vp->v_interlock);
 
-	error = getnewvnode(VT_CODA, fvsp, coda_vnodeop_p, NULL, &vp);
-	if (error) {
-	    panic("%s: getnewvnode returned error %d", __func__, error);
+	if (vp->v_type != type) {
+		if (vp->v_type == VCHR || vp->v_type == VBLK)
+			spec_node_destroy(vp);
+		vp->v_type = type;
+		if (type == VCHR || type == VBLK)
+			spec_node_init(vp, NODEV);
+		uvm_vnp_setsize(vp, 0);
 	}
-	vp->v_data = cp;
-	vp->v_type = type;
-	cp->c_vnode = vp;
-	uvm_vnp_setsize(vp, 0);
-	coda_save(cp);
+	mutex_exit(&cp->c_lock);
 
-    } else {
-	vref(CTOV(cp));
-    }
-
-    return cp;
+	return cp;
 }
 
 /*
@@ -2014,7 +2017,7 @@ coda_putpages(void *v)
 #ifdef CODA_VERBOSE
 		printf("%s: control object %p\n", __func__, vp);
 #endif
-		return(EINVAL);
+		return 0;
 	}
 
 	/*

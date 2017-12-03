@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.h,v 1.18.20.1 2014/08/20 00:04:28 tls Exp $ */
+/* $NetBSD: udf_subr.h,v 1.18.20.2 2017/12/03 11:38:43 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -40,7 +40,8 @@ int udf_search_tracks(struct udf_mount *ump, struct udf_args *args,
 		  int *first_tracknr, int *last_tracknr);
 int udf_search_writing_tracks(struct udf_mount *ump);
 int udf_setup_writeparams(struct udf_mount *ump);
-int udf_synchronise_caches(struct udf_mount *ump);
+void udf_mmc_synchronise_caches(struct udf_mount *ump);
+void udf_synchronise_caches(struct udf_mount *ump);
 
 /* tags operations */
 int udf_fidsize(struct fileid_desc *fid);

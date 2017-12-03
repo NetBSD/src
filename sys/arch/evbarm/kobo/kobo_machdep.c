@@ -1,4 +1,4 @@
-/*	$NetBSD: kobo_machdep.c,v 1.2.6.2 2014/08/20 00:02:55 tls Exp $	*/
+/*	$NetBSD: kobo_machdep.c,v 1.2.6.3 2017/12/03 11:36:05 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005, 2010  Genetec Corporation.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kobo_machdep.c,v 1.2.6.2 2014/08/20 00:02:55 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobo_machdep.c,v 1.2.6.3 2017/12/03 11:36:05 jdolecek Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_arm_debug.h"
@@ -525,7 +525,7 @@ consinit(void)
 #else
 		consaddr = IMX51_UART2_BASE;
 #endif
-		imxuart_cons_attach(&imx_bs_tag, consaddr, consrate, consmode);
+		imxuart_cnattach(&armv7_generic_bs_tag, consaddr, consrate, consmode);
 		return;
 	}
 #endif
@@ -561,7 +561,7 @@ kgdb_port_init(void)
 {
 #if (NIMXUART > 0)
 	if (strcmp(kgdb_devname, "imxuart") == 0) {
-		imxuart_kgdb_attach(&imx_bs_tag, kgdb_addr,
+		imxuart_kgdb_attach(&armv7_generic_bs_tag, kgdb_addr,
 		kgdb_rate, kgdb_mode);
 	    return;
 	}

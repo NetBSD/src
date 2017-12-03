@@ -1,4 +1,4 @@
-#	$NetBSD: files.amigappc,v 1.25.6.3 2014/08/20 00:02:43 tls Exp $
+#	$NetBSD: files.amigappc,v 1.25.6.4 2017/12/03 11:35:49 jdolecek Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -19,6 +19,8 @@ defflag	opt_amigacons.h		RETINACONSOLE ULOWELLCONSOLE CL5426CONSOLE
 defflag	opt_amigacons.h		CV64CONSOLE CV3DCONSOLE TSENGCONSOLE
 defflag	opt_amigacons.h		CV3DONZORRO2
 defflag	opt_amigacons.h		SERCONSOLE
+
+defflag	opt_mntva.h		MNTVA_CONSOLE
 
 defflag	opt_kfont.h		KFONT_CONS_ISO8859_1
 defflag	opt_kfont.h		KFONT_CONS_ISO8859_2
@@ -204,6 +206,11 @@ device	grfcv: grfbus
 attach	grfcv at zbus
 file	arch/amiga/dev/grf_cv.c		grfcv needs-flag
 file	arch/amiga/dev/ite_cv.c		grfcv & ite
+
+# MNT VA2000
+device	mntva: wsemuldisplaydev, rasops16, rasops32, vcons, videomode
+attach	mntva at zbus
+file	arch/amiga/dev/mntva.c		mntva needs-flag
 
 # Tseng grf (ite6 grf6)
 device	grfet: grfbus

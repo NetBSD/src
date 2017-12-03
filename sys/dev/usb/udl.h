@@ -1,4 +1,4 @@
-/*	$NetBSD: udl.h,v 1.1 2009/11/30 16:18:34 tsutsui Exp $	*/
+/*	$NetBSD: udl.h,v 1.1.26.1 2017/12/03 11:37:34 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2009 FUKAUMI Naoki.
@@ -68,7 +68,7 @@
 struct udl_cmdq {
 	TAILQ_ENTRY(udl_cmdq)	 cq_chain;
 	struct udl_softc	*cq_sc;
-	usbd_xfer_handle	 cq_xfer;
+	struct usbd_xfer	*cq_xfer;
 	uint8_t			*cq_buf;
 };
 
@@ -77,9 +77,9 @@ struct udl_cmdq {
  */
 struct udl_softc {
 	device_t		 sc_dev;
-	usbd_device_handle	 sc_udev;
-	usbd_interface_handle	 sc_iface;
-	usbd_pipe_handle	 sc_tx_pipeh;
+	struct usbd_device *	 sc_udev;
+	struct usbd_interface *	 sc_iface;
+	struct usbd_pipe *	 sc_tx_pipeh;
 
 	struct udl_cmdq		 sc_cmdq[UDL_NCMDQ];
 	TAILQ_HEAD(udl_cmdq_head, udl_cmdq)	sc_freecmd,
@@ -108,12 +108,19 @@ struct udl_softc {
 	uint8_t			 sc_nscreens;
 
 	uint8_t			*sc_fbmem;	/* framebuffer for X11 */
+	uint8_t			*sc_fbmem_prev;	/* prev. framebuffer */
 #define UDL_FBMEM_SIZE(sc) \
     ((sc)->sc_width * (sc)->sc_height * ((sc)->sc_depth / 8))
 
 	uint8_t			*sc_huffman;
 	uint8_t			*sc_huffman_base;
 	size_t			 sc_huffman_size;
+
+	kcondvar_t		 sc_thread_cv;
+	kmutex_t		 sc_thread_mtx;
+	bool			 sc_dying;
+	bool			 sc_thread_stop;
+	lwp_t			*sc_thread;
 
 	kcondvar_t		 sc_cv;
 	kmutex_t		 sc_mtx;

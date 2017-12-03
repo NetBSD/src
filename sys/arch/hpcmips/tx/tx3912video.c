@@ -1,4 +1,4 @@
-/*	$NetBSD: tx3912video.c,v 1.41.6.2 2014/08/20 00:03:03 tls Exp $ */
+/*	$NetBSD: tx3912video.c,v 1.41.6.3 2017/12/03 11:36:15 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx3912video.c,v 1.41.6.2 2014/08/20 00:03:03 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx3912video.c,v 1.41.6.3 2017/12/03 11:36:15 jdolecek Exp $");
 
 #define TX3912VIDEO_DEBUG
 
@@ -39,11 +39,10 @@ __KERNEL_RCSID(0, "$NetBSD: tx3912video.c,v 1.41.6.2 2014/08/20 00:03:03 tls Exp
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/buf.h>
 #include <sys/device.h>
 #include <sys/extent.h>
-
 #include <sys/ioctl.h>
-#include <sys/buf.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -52,6 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: tx3912video.c,v 1.41.6.2 2014/08/20 00:03:03 tls Exp
 #include <machine/bus.h>
 #include <machine/bootinfo.h>
 #include <machine/config_hook.h>
+
+#include <mips/locore.h>
 
 #include <hpcmips/tx/tx39var.h>
 #include <hpcmips/tx/tx3912videovar.h>

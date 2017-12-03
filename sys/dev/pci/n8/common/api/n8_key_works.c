@@ -32,7 +32,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-static char const n8_id[] = "$Id: n8_key_works.c,v 1.1 2008/10/30 12:02:14 darran Exp $";
+static char const n8_id[] = "$Id: n8_key_works.c,v 1.1.42.1 2017/12/03 11:37:30 jdolecek Exp $";
 /*****************************************************************************/
 /** @file n8_key_works.c
  *  @brief Contains key operations
@@ -139,7 +139,7 @@ N8_Boolean_t checkKeyForWeakness (key_cblock_t *key_p)
 
    for (i=0; i < NUM_WEAK_KEY; i++)
    {
-      if (memcmp(weak_keys[i], key_p, sizeof(key_p)) == 0)
+      if (memcmp(weak_keys[i], key_p, sizeof(*key_p)) == 0)
       {
          ret = N8_TRUE;
          break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.169.2.3 2014/08/20 00:04:29 tls Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.169.2.4 2017/12/03 11:38:44 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.169.2.3 2014/08/20 00:04:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.169.2.4 2017/12/03 11:38:44 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -385,7 +385,7 @@ dosetrlimit(struct lwp *l, struct proc *p, int which, struct rlimit *limp)
 		/*
 		 * Return EINVAL if the new stack size limit is lower than
 		 * current usage. Otherwise, the process would get SIGSEGV the
-		 * moment it would try to access anything on it's current stack.
+		 * moment it would try to access anything on its current stack.
 		 * This conforms to SUSv2.
 		 */
 		if (limp->rlim_cur < p->p_vmspace->vm_ssize * PAGE_SIZE ||
@@ -404,6 +404,7 @@ dosetrlimit(struct lwp *l, struct proc *p, int which, struct rlimit *limp)
 		 * overlap).  If stack limit is going up make more
 		 * accessible, if going down make inaccessible.
 		 */
+		limp->rlim_max = round_page(limp->rlim_max);
 		limp->rlim_cur = round_page(limp->rlim_cur);
 		if (limp->rlim_cur != alimp->rlim_cur) {
 			vaddr_t addr;
@@ -812,6 +813,49 @@ sysctl_proc_findproc(lwp_t *l, pid_t pid, proc_t **p2)
 }
 
 /*
+ * sysctl_proc_paxflags: helper routine to get process's paxctl flags
+ */
+static int
+sysctl_proc_paxflags(SYSCTLFN_ARGS)
+{
+	struct proc *p;
+	struct sysctlnode node;
+	int paxflags;
+	int error;
+
+	/* First, validate the request. */
+	if (namelen != 0 || name[-1] != PROC_PID_PAXFLAGS)
+		return EINVAL;
+
+	/* Find the process.  Hold a reference (p_reflock), if found. */
+	error = sysctl_proc_findproc(l, (pid_t)name[-2], &p);
+	if (error)
+		return error;
+
+	/* XXX-elad */
+	error = kauth_authorize_process(l->l_cred, KAUTH_PROCESS_CANSEE, p,
+	    KAUTH_ARG(KAUTH_REQ_PROCESS_CANSEE_ENTRY), NULL, NULL);
+	if (error) {
+		rw_exit(&p->p_reflock);
+		return error;
+	}
+
+	/* Retrieve the limits. */
+	node = *rnode;
+	paxflags = p->p_pax;
+	node.sysctl_data = &paxflags;
+
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+
+	/* If attempting to write new value, it's an error */
+	if (error == 0 && newp != NULL)
+		error = EACCES;
+
+	rw_exit(&p->p_reflock);
+	return error;
+}
+
+/*
  * sysctl_proc_corename: helper routine to get or set the core file name
  * for a process specified by PID.
  */
@@ -1045,6 +1089,13 @@ sysctl_proc_setup(void)
 		       SYSCTL_DESCR("Per-process settings"),
 		       NULL, 0, NULL, 0,
 		       CTL_PROC, PROC_CURPROC, CTL_EOL);
+
+	sysctl_createv(&proc_sysctllog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
+		       CTLTYPE_INT, "paxflags",
+		       SYSCTL_DESCR("Process PAX control flags"),
+		       sysctl_proc_paxflags, 0, NULL, 0,
+		       CTL_PROC, PROC_CURPROC, PROC_PID_PAXFLAGS, CTL_EOL);
 
 	sysctl_createv(&proc_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE|CTLFLAG_ANYWRITE,

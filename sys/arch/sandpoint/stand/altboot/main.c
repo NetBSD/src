@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.21.2.2 2014/08/20 00:03:22 tls Exp $ */
+/* $NetBSD: main.c,v 1.21.2.3 2017/12/03 11:36:40 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -72,6 +72,7 @@ struct btinfo_memory bi_mem;
 struct btinfo_console bi_cons;
 struct btinfo_clock bi_clk;
 struct btinfo_prodfamily bi_fam;
+struct btinfo_model bi_model;
 struct btinfo_bootpath bi_path;
 struct btinfo_rootdevice bi_rdev;
 struct btinfo_net bi_net;
@@ -362,6 +363,7 @@ main(int argc, char *argv[], char *bootargs_start, char *bootargs_end)
 			/* need to pass this MAC address to kernel */
 			bi_add(&bi_net, BTINFO_NET, sizeof(bi_net));
 		}
+		bi_add(&bi_model, BTINFO_MODEL, sizeof(bi_model));
 
 		if (modules_enabled) {
 			if (fsmod != NULL)
@@ -641,7 +643,7 @@ static int input_cmdline(char **argv, int maxargc)
 
 	printf("\nbootargs> ");
 	cmdline = alloc(256);
-	gets(cmdline);
+	kgets(cmdline, 256);
 
 	return parse_cmdline(argv, maxargc, cmdline,
 	    cmdline + strlen(cmdline));
@@ -684,7 +686,7 @@ findflash(void)
 
 	for (;;) {
 		printf("\nfind> ");
-		gets(buf);
+		kgets(buf, sizeof(buf));
 		if (tolower((unsigned)buf[0]) == 'x')
 			break;
 		for (i = 0, n = 0, c = 0; buf[i]; i++) {
@@ -742,7 +744,7 @@ sat_test(void)
 		}
 
 		printf("controller> ");
-		gets(buf);
+		kgets(buf, sizeof(buf));
 		if (buf[0] == '*' && buf[1] == 'X')
 			break;
 

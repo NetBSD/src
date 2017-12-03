@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuframe.h,v 1.5 2011/02/08 20:20:16 rmind Exp $	*/
+/*	$NetBSD: cpuframe.h,v 1.5.14.1 2017/12/03 11:36:23 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -128,7 +128,6 @@ struct frame {
 };
 
 #define	f_regs		F_t.tf_regs
-#define	f_pad		F_t.tf_pad
 #define	f_stackadj	F_t.tf_stackadj
 #define	f_sr		F_t.tf_sr
 #define	f_pc		F_t.tf_pc

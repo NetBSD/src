@@ -1,8 +1,8 @@
-# $NetBSD: INSTALL,v 1.103.2.2 2014/08/20 00:02:41 tls Exp $
+# $NetBSD: INSTALL,v 1.103.2.3 2017/12/03 11:35:46 jdolecek Exp $
 #
 # Alpha INSTALL kernel.
 
-include		"arch/alpha/conf/std.alpha"
+include 	"arch/alpha/conf/std.alpha"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -39,6 +39,7 @@ options 	API_UP1000	# EV6:		Alpha Processor, Inc. UP1000
 
 # Diagnostic/debugging support options
 options 	DDB			# kernel debugger
+pseudo-device	ksyms
 #makeoptions	DEBUG="-g"
 
 # File systems
@@ -55,22 +56,8 @@ options 	WAPBL		# File system journaling support
 # Networking options
 options 	INET		# IP + ICMP + TCP + UDP
 
-# 4.3BSD compatibility.  Should be optional, but necessary for now.
-options 	COMPAT_43
-
 # Binary compatibility with previous versions of NetBSD.
-#options 	COMPAT_09
-options 	COMPAT_10
-options 	COMPAT_11
-options 	COMPAT_12
-options 	COMPAT_13
-options 	COMPAT_14
-options 	COMPAT_15
-options 	COMPAT_16
-options 	COMPAT_20
-options 	COMPAT_30	# NetBSD 3.0 compatibility.
-options 	COMPAT_40	# NetBSD 4.0 compatibility.
-options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+include 	"conf/compat_netbsd10.config"
 
 # Misc. options
 #options 	EISAVERBOSE		# recognize "unknown" EISA devices
@@ -184,6 +171,9 @@ pci*	at	dwlpx?
 pci*	at	mcpcia?
 pci*	at	tsp?
 pci*	at	ttwopci?
+
+# AGP support
+agp*	at	irongate?
 
 # PCI devices
 adv*	at	pci? dev ? function ?		# AdvanSys SCSI

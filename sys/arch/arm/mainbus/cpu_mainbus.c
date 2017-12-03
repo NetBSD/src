@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_mainbus.c,v 1.13.2.1 2014/08/20 00:02:47 tls Exp $	*/
+/*	$NetBSD: cpu_mainbus.c,v 1.13.2.2 2017/12/03 11:35:54 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -42,9 +42,10 @@
  */
 
 #include "locators.h"
+#include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_mainbus.c,v 1.13.2.1 2014/08/20 00:02:47 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_mainbus.c,v 1.13.2.2 2017/12/03 11:35:54 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

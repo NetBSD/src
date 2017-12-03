@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_fs.c,v 1.51.22.1 2014/08/20 00:03:34 tls Exp $	*/
+/*	$NetBSD: ultrix_fs.c,v 1.51.22.2 2017/12/03 11:36:57 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.51.22.1 2014/08/20 00:03:34 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.51.22.2 2017/12/03 11:36:57 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -206,17 +206,17 @@ make_ultrix_mntent(struct statvfs *sp, struct ultrix_fs_data *tem)
 int
 ultrix_sys_getmnt(struct lwp *l, const struct ultrix_sys_getmnt_args *uap, register_t *retval)
 {
-	struct mount *mp, *nmp;
+	struct mount *mp;
 	struct statvfs *sp;
 	struct ultrix_fs_data *sfsp;
+	mount_iterator_t *iter;
 	char *path;
 	int mntflags;
 	int skip;
 	int start;
 	long count, maxcount;
-	int error = 0;
+	int error;
 
-	nmp = NULL;	/* XXX keep gcc quiet */
 	path = NULL;
 	error = 0;
 	maxcount = SCARG(uap, bufsize) / sizeof(struct ultrix_fs_data);
@@ -237,6 +237,7 @@ ultrix_sys_getmnt(struct lwp *l, const struct ultrix_sys_getmnt_args *uap, regis
 		if ((error = copyinstr(SCARG(uap, path), path,
 				       MAXPATHLEN, NULL)) != 0)
 			goto bad;
+		skip = 0;
 		maxcount = 1;
 	} else {
 		/*
@@ -247,20 +248,14 @@ ultrix_sys_getmnt(struct lwp *l, const struct ultrix_sys_getmnt_args *uap, regis
 		if ((error = copyin((void *)SCARG(uap, start), &start,
 				    sizeof(*SCARG(uap, start))))  != 0)
 			goto bad;
-		mutex_enter(&mountlist_lock);
-		for (skip = start, mp = TAILQ_FIRST(&mountlist);
-		    mp != NULL && skip-- > 0;
-		    mp = TAILQ_NEXT(mp, mnt_list))
-			continue;
-		mutex_exit(&mountlist_lock);
+		skip = start;
 	}
 
-	mutex_enter(&mountlist_lock);
-	for (count = 0, mp = TAILQ_FIRST(&mountlist);
-	    mp != NULL && count < maxcount; mp = nmp) {
-		if (vfs_busy(mp, &nmp)) {
+	count = 0;
+	mountlist_iterator_init(&iter);
+	while (count < maxcount && (mp = mountlist_iterator_next(iter))) {
+		if (skip-- > 0)
 			continue;
-		}
 		if (sfsp != NULL) {
 			struct ultrix_fs_data tem;
 			sp = &mp->mnt_stat;
@@ -281,16 +276,13 @@ ultrix_sys_getmnt(struct lwp *l, const struct ultrix_sys_getmnt_args *uap, regis
 				make_ultrix_mntent(sp, &tem);
 				if ((error = copyout((void *)&tem, sfsp,
 				    sizeof(tem))) != 0) {
-					vfs_unbusy(mp, false, NULL);
 					goto bad;
 				}
 				sfsp++;
 				count++;
 			}
 		}
-		vfs_unbusy(mp, false, &nmp);
 	}
-	mutex_exit(&mountlist_lock);
 
 	if (sfsp != NULL && count > maxcount)
 		*retval = maxcount;
@@ -298,6 +290,7 @@ ultrix_sys_getmnt(struct lwp *l, const struct ultrix_sys_getmnt_args *uap, regis
 		*retval = count;
 
 bad:
+	mountlist_iterator_destroy(iter);
 	if (path)
 		free(path, M_TEMP);
 	return error;
@@ -401,7 +394,7 @@ ultrix_sys_mount(struct lwp *l, const struct ultrix_sys_mount_args *uap, registe
 		na.timeo = una.timeo;
 		na.retrans = una.retrans;
 		na.hostname = una.hostname;
-		return do_sys_mount(l, vfs_getopsbyname("nfs"), NULL,
+		return do_sys_mount(l, "nfs", UIO_SYSSPACE,
 		    SCARG(uap, special), nflags, &na, UIO_SYSSPACE,
 		    sizeof na, &dummy);
 	}
@@ -431,7 +424,7 @@ ultrix_sys_mount(struct lwp *l, const struct ultrix_sys_mount_args *uap, registe
 			printf("COMPAT_ULTRIX: mount with MNT_UPDATE on %s\n",
 			    fsname);
 		}
-		return do_sys_mount(l, vfs_getopsbyname("ffs"), NULL,
+		return do_sys_mount(l, "ffs", UIO_SYSSPACE,
 		    SCARG(uap, dir), nflags, &ua, UIO_SYSSPACE, sizeof ua,
 		    &dummy);
 	}

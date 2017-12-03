@@ -1,4 +1,4 @@
-/*	$NetBSD: dmacvar.h,v 1.10 2008/06/25 13:30:24 isaki Exp $	*/
+/*	$NetBSD: dmacvar.h,v 1.10.40.1 2017/12/03 11:36:48 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -55,8 +55,6 @@ struct dmac_dma_xfer {
 	struct dmac_sg_array *dx_array;	/* DMAC array chain */
 	int		dx_done;
 #endif
-	int		dx_nextoff;	/* for continued operation */
-	int		dx_nextsize;
 };
 
 /*
@@ -99,9 +97,14 @@ struct dmac_softc {
 #define DMAC_MAXSEGSZ	0xff00
 #define DMAC_BOUNDARY	0
 
-struct dmac_channel_stat *dmac_alloc_channel(device_t, int, const char *,
-	int, dmac_intr_handler_t, void *, int, dmac_intr_handler_t, void *);
-		/* ch, name, normalv, normal, errorv, error */
+struct dmac_channel_stat *dmac_alloc_channel(device_t,
+	int,		/* ch */
+	const char *,	/* name */
+	int, dmac_intr_handler_t, void *,	/* normal handler */
+	int, dmac_intr_handler_t, void *,	/* error handler */
+	uint8_t,	/* dcr */
+	uint8_t		/* ocr */
+);
 int dmac_free_channel(device_t, int, void *);
 		/* ch, channel */
 struct dmac_dma_xfer *dmac_alloc_xfer(struct dmac_channel_stat *,

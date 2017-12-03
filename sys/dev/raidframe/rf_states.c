@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_states.c,v 1.49 2011/05/11 18:13:12 mrg Exp $	*/
+/*	$NetBSD: rf_states.c,v 1.49.14.1 2017/12/03 11:37:31 jdolecek Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.49 2011/05/11 18:13:12 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.49.14.1 2017/12/03 11:37:31 jdolecek Exp $");
 
 #include <sys/errno.h>
 
@@ -222,24 +222,6 @@ rf_State_LastState(RF_RaidAccessDesc_t *desc)
 	KASSERT(desc->async_flag);
 
 	/*
-	 * That's all the IO for this one... unbusy the 'disk'.
-	 */
-
-	rf_disk_unbusy(desc);
-
-	/*
-	 * Wakeup any requests waiting to go.
-	 */
-
-	rf_lock_mutex2(desc->raidPtr->mutex);
-	desc->raidPtr->openings++;
-	rf_unlock_mutex2(desc->raidPtr->mutex);
-
-	rf_lock_mutex2(desc->raidPtr->iodone_lock);
-	rf_signal_cond2(desc->raidPtr->iodone_cv);
-	rf_unlock_mutex2(desc->raidPtr->iodone_lock);
-
-	/*
 	 * The parity_map hook has to go here, because the iodone
 	 * callback goes straight into the kintf layer.
 	 */
@@ -248,8 +230,8 @@ rf_State_LastState(RF_RaidAccessDesc_t *desc)
 		rf_paritymap_end(desc->raidPtr->parity_map, 
 		    desc->raidAddress, desc->numBlocks);
 
-	/* printf("Calling biodone on 0x%x\n",desc->bp); */
-	biodone(desc->bp);	/* access came through ioctl */
+	/* printf("Calling raiddone on 0x%x\n",desc->bp); */
+	raiddone(desc->raidPtr, desc->bp); /* access came through ioctl */
 
 	if (callbackFunc)
 		callbackFunc(callbackArg);

@@ -1,4 +1,4 @@
-/*	$NetBSD: btms.c,v 1.10.2.1 2012/11/20 03:01:59 tls Exp $	*/
+/*	$NetBSD: btms.c,v 1.10.2.2 2017/12/03 11:36:59 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btms.c,v 1.10.2.1 2012/11/20 03:01:59 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btms.c,v 1.10.2.2 2017/12/03 11:36:59 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -85,6 +85,15 @@ __KERNEL_RCSID(0, "$NetBSD: btms.c,v 1.10.2.1 2012/11/20 03:01:59 tls Exp $");
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsmousevar.h>
+
+#ifdef BTMS_DEBUG
+int btms_debug = 0;
+#define	BTMSDBG(s)	if (btms_debug) printf s
+#define	BTMSDBGN(n,s)	if (btms_debug > (n)) printf s
+#else
+#define	BTMSDBG(s)
+#define	BTMSDBGN(n,s)
+#endif
 
 #define MAX_BUTTONS	31
 #define BUTTON(n)	(1 << (((n) == 1 || (n) == 2) ? 3 - (n) : (n)))
@@ -135,6 +144,40 @@ static const struct wsmouse_accessops btms_wsmouse_accessops = {
 /* bthid methods */
 static void btms_input(struct bthidev *, uint8_t *, int);
 
+#ifdef BTMS_DEBUG
+static void	btms_print_device(struct btms_softc *);
+#endif
+
+/*
+ * quirks
+ */
+static const struct btms_quirk {
+	int		vendor;
+	int		product;
+
+	uint32_t	flags;
+#define	BTMS_QUIRK_ELECOM	__BIT(0)
+} btms_quirk_table[] = {
+	/* ELECOM M-XG2BB */
+	{ 0x056e, 0x00d2, BTMS_QUIRK_ELECOM },
+};
+
+static uint32_t
+btms_lookup_quirk_flags(int vendor, int product)
+{
+	const struct btms_quirk *q;
+	int i;
+
+	for (i = 0; i < __arraycount(btms_quirk_table); ++i) {
+		q = &btms_quirk_table[i];
+		if (vendor == q->vendor && product == q->product)
+			return q->flags;
+	}
+	return 0;
+}
+
+static void btms_fixup_elecom(struct bthidev_attach_args *,struct btms_softc *);
+
 /*****************************************************************************
  *
  *	btms autoconf(9) routines
@@ -159,10 +202,12 @@ btms_attach(device_t parent, device_t self, void *aux)
 	struct bthidev_attach_args *ba = aux;
 	struct wsmousedev_attach_args wsma;
 	struct hid_location *zloc;
-	uint32_t flags;
+	uint32_t flags, quirks;
 	int i, hl;
 
 	ba->ba_input = btms_input;
+
+	quirks = btms_lookup_quirk_flags(ba->ba_vendor, ba->ba_product);
 
 	/* control the horizontal */
 	hl = hid_locate(ba->ba_desc,
@@ -265,12 +310,19 @@ btms_attach(device_t parent, device_t self, void *aux)
 	}
 	sc->sc_num_buttons = i - 1;
 
+	if (ISSET(quirks, BTMS_QUIRK_ELECOM))
+		btms_fixup_elecom(ba, sc);
+
 	aprint_normal(": %d button%s%s%s%s.\n",
 			sc->sc_num_buttons,
 			sc->sc_num_buttons == 1 ? "" : "s",
 			sc->sc_flags & BTMS_HASW ? ", W" : "",
 			sc->sc_flags & BTMS_HASZ ? " and Z dir" : "",
 			sc->sc_flags & BTMS_HASW ? "s" : "");
+#ifdef BTMS_DEBUG
+	if (btms_debug)
+		btms_print_device(sc);
+#endif
 
 	wsma.accessops = &btms_wsmouse_accessops;
 	wsma.accesscookie = sc;
@@ -354,6 +406,16 @@ btms_input(struct bthidev *hidev, uint8_t *data, int len)
 	if (sc->sc_wsmouse == NULL || sc->sc_enabled == 0)
 		return;
 
+#ifdef BTMS_DEBUG
+	if (btms_debug > 9) {
+		printf("%s: data: ", __func__);
+		for (i = 0; i < len; ++i) {
+			printf("%02x", data[i]);
+		}
+		printf("\n");
+	}
+#endif
+
 	dx =  hid_get_data(data, &sc->sc_loc_x);
 	dy = -hid_get_data(data, &sc->sc_loc_y);
 	dz =  hid_get_data(data, &sc->sc_loc_z);
@@ -367,6 +429,8 @@ btms_input(struct bthidev *hidev, uint8_t *data, int len)
 		if (hid_get_data(data, &sc->sc_loc_button[i]))
 			buttons |= BUTTON(i);
 
+	BTMSDBGN(9,("%s: dx=%d, dy=%d, dz=%d, dw=%d, buttons=0x%08x\n",
+	    __func__, dx, dy, dz, dw, buttons));
 	if (dx != 0 || dy != 0 || dz != 0 || dw != 0 || buttons != sc->sc_buttons) {
 		sc->sc_buttons = buttons;
 
@@ -376,5 +440,53 @@ btms_input(struct bthidev *hidev, uint8_t *data, int len)
 				dx, dy, dz, dw,
 				WSMOUSE_INPUT_DELTA);
 		splx(s);
+	}
+}
+
+#ifdef BTMS_DEBUG
+static void
+btms_print_device(struct btms_softc *sc)
+{
+	int i;
+
+	printf("btms: X: pos=%d, size=%d\n",
+	    sc->sc_loc_x.pos, sc->sc_loc_x.size);
+	printf("btms: Y: pos=%d, size=%d\n",
+	    sc->sc_loc_y.pos, sc->sc_loc_y.size);
+	if (sc->sc_flags & BTMS_HASZ) {
+		printf("btms: Z: pos=%d, size=%d%s\n",
+		    sc->sc_loc_z.pos, sc->sc_loc_z.size,
+		    ((sc->sc_flags & BTMS_REVZ) ? ", REVZ" : ""));
+	}
+	if (sc->sc_flags & BTMS_HASW) {
+		printf("btms: W: pos=%d, size=%d\n",
+		    sc->sc_loc_w.pos, sc->sc_loc_w.size);
+	}
+
+	for (i = 0; i < sc->sc_num_buttons; ++i) {
+		printf("btms: button%d: pos=%d, size=%d\n", i,
+		    sc->sc_loc_button[i].pos, sc->sc_loc_button[i].size);
+	}
+}
+#endif
+
+/*****************************************************************************
+ *
+ * fixup routines
+ */
+static void
+btms_fixup_elecom(struct bthidev_attach_args *ba, struct btms_softc *sc)
+{
+
+	switch (ba->ba_product) {
+	case 0x00d2:	/* M-XG2BB */
+		/* invalid Wheel and AC_Pan */
+		BTMSDBG(("%s: fixup ELECOM M-XG2BB\n", __func__));
+		sc->sc_loc_z.pos = 40;
+		sc->sc_loc_z.size = 8;
+		sc->sc_loc_w.pos = 0;
+		sc->sc_loc_w.size = 0;
+		sc->sc_flags = BTMS_HASZ | BTMS_REVZ;
+		break;
 	}
 }

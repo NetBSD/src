@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.9 2011/05/17 17:34:50 dyoung Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.9.14.1 2017/12/03 11:36:20 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.9 2011/05/17 17:34:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.9.14.1 2017/12/03 11:36:20 jdolecek Exp $");
 
 #include "acpica.h"
 
@@ -124,6 +124,8 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY |
 	    PCI_FLAGS_MWI_OKAY;
 	aaa.aa_ic = 0;
+	aaa.aa_dmat = NULL;	/* XXX */
+	aaa.aa_dmat64 = NULL;	/* XXX */
 	config_found_ia(self, "acpibus", &aaa, 0);
 #endif
 

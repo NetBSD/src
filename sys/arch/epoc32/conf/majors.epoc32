@@ -1,4 +1,4 @@
-#	$NetBSD: majors.epoc32,v 1.1.4.2 2013/06/23 06:20:02 tls Exp $
+#	$NetBSD: majors.epoc32,v 1.1.4.3 2017/12/03 11:36:01 jdolecek Exp $
 #
 # Device majors for epoc32
 #
@@ -93,7 +93,7 @@ device-major	cir		char 96			cir
 device-major	radio		char 97			radio
 device-major	kttcp		char 99			kttcp
 device-major	ixpcom		char 100		ixpcom
-device-major	sysmon		char 101		sysmon_envsys | sysmon_wdog | sysmon_power
+device-major	sysmon		char 101		sysmon
 device-major	dmoverio	char 102		dmoverio
 device-major	apmdev		char 103		apmdev
 device-major	sscom		char 104		sscom

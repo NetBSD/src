@@ -1,4 +1,4 @@
-# $NetBSD: majors.aarch64,v 1.1.4.2 2014/08/20 00:02:39 tls Exp $
+# $NetBSD: majors.aarch64,v 1.1.4.3 2017/12/03 11:35:43 jdolecek Exp $
 #
 # Device majors for arm32
 #
@@ -93,7 +93,7 @@ device-major	cir		char 96			cir
 device-major	radio		char 97			radio
 device-major	kttcp		char 99			kttcp
 device-major	ixpcom		char 100		ixpcom
-device-major	sysmon		char 101		sysmon_envsys | sysmon_wdog | sysmon_power
+device-major	sysmon		char 101		sysmon
 device-major	dmoverio	char 102		dmoverio
 device-major	apm		char 103		apm
 device-major	sscom		char 104		sscom

@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsavar.h,v 1.9 2011/12/23 00:51:45 jakllsch Exp $	*/
+/*	$NetBSD: ubsavar.h,v 1.9.6.1 2017/12/03 11:37:34 jdolecek Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
  * All rights reserved.
@@ -113,14 +113,14 @@
 
 struct	ubsa_softc {
 	device_t		sc_dev;		/* base device */
-	usbd_device_handle	sc_udev;	/* USB device */
-	usbd_interface_handle	sc_iface[UBSA_MAXCONN]; /* interface */
+	struct usbd_device *	sc_udev;	/* USB device */
+	struct usbd_interface *	sc_iface[UBSA_MAXCONN]; /* interface */
 
 	int			sc_iface_number[UBSA_MAXCONN];	/* interface number */
 	int			sc_config_index;	/* USB CONFIG_INDEX */
 
 	int			sc_intr_number;	/* interrupt number */
-	usbd_pipe_handle	sc_intr_pipe;	/* interrupt pipe */
+	struct usbd_pipe *	sc_intr_pipe;	/* interrupt pipe */
 	u_char			*sc_intr_buf;	/* interrupt buffer */
 	int			sc_isize;
 
@@ -135,11 +135,11 @@ struct	ubsa_softc {
 
 	u_char			sc_dying;	/* disconnecting */
 	u_char			sc_quadumts;
-	u_int16_t		sc_devflags;		
+	uint16_t		sc_devflags;
 };
 
 
-void ubsa_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
+void ubsa_intr(struct usbd_xfer *, void *, usbd_status);
 
 void ubsa_get_status(void *, int, u_char *, u_char *);
 void ubsa_set(void *, int, int, int);
@@ -147,8 +147,8 @@ int  ubsa_param(void *, int, struct termios *);
 int  ubsa_open(void *, int);
 void ubsa_close(void *, int);
 
-void ubsa_break(struct ubsa_softc *sc, int, int onoff);
-int  ubsa_request(struct ubsa_softc *, int, u_int8_t, u_int16_t);
+void ubsa_break(struct ubsa_softc *, int, int);
+int  ubsa_request(struct ubsa_softc *, int, uint8_t, uint16_t);
 void ubsa_dtr(struct ubsa_softc *, int, int);
 void ubsa_quadumts_dtr(struct ubsa_softc *, int, int);
 void ubsa_rts(struct ubsa_softc *, int, int);

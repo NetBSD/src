@@ -1,4 +1,4 @@
-/*	$NetBSD: ansi.h,v 1.13 2011/07/17 20:54:41 joerg Exp $	*/
+/*	$NetBSD: ansi.h,v 1.13.12.1 2017/12/03 11:36:16 jdolecek Exp $	*/
 
 /*	$OpenBSD: ansi.h,v 1.4 2000/02/22 17:29:12 millert Exp $	*/
 
@@ -48,7 +48,7 @@
  *	#undef	_BSD_SIZE_T_
  *	#endif
  */
-#define	_BSD_CLOCK_T_	unsigned long int	/* clock() */
+#define	_BSD_CLOCK_T_	unsigned int		/* clock() */
 #define	_BSD_PTRDIFF_T_	long int		/* ptr1 - ptr2 */
 #define	_BSD_SIZE_T_	unsigned long int	/* sizeof() */
 #define	_BSD_SSIZE_T_	long int		/* byte count or error */

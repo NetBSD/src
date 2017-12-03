@@ -31,15 +31,17 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: armperiph.c,v 1.2.2.1 2013/06/23 06:20:00 tls Exp $");
+__KERNEL_RCSID(1, "$NetBSD: armperiph.c,v 1.2.2.2 2017/12/03 11:35:52 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/lwp.h>
 
 #include "ioconf.h"
 
 #include <arm/mainbus/mainbus.h>
 #include <arm/cortex/mpcore_var.h>
+#include <arm/cortex/gtmr_intr.h>
 
 static int armperiph_match(device_t, cfdata_t, void *);
 static void armperiph_attach(device_t, device_t, void *);
@@ -63,6 +65,8 @@ static const struct armperiph_info a5_devices[] = {
 	{ "armscu", 0x0000, 0 },
 	{ "armgic", 0x1000, 0x0100 },
 	{ "a9tmr",  0x0200, 0 },
+	{ "a9wdt",   0x0600, 0 },
+	{ "arml2cc", 0, 0 },	/* external; needs "offset" property */
 	{ "", 0, 0 },
 };
 #endif
@@ -94,6 +98,22 @@ static const struct armperiph_info a15_devices[] = {
 };
 #endif
 
+#ifdef CPU_CORTEXA17
+static const struct armperiph_info a17_devices[] = {
+	{ "armgic",  0x1000, 0x2000 },
+	{ "armgtmr", 0, 0 },
+	{ "", 0, 0 },
+};
+#endif
+
+#ifdef CPU_CORTEXA57
+static const struct armperiph_info a57_devices[] = {
+	{ "armgic",  0x1000, 0x2000 },
+	{ "armgtmr", 0, 0 },
+	{ "", 0, 0 },
+};
+#endif
+
 
 static const struct mpcore_config {
 	const struct armperiph_info *cfg_devices;
@@ -111,6 +131,12 @@ static const struct mpcore_config {
 #endif
 #ifdef CPU_CORTEXA15
 	{ a15_devices, 0x410fc0f0, 8*4096 },
+#endif
+#ifdef CPU_CORTEXA17
+	{ a17_devices, 0x410fc0e0, 8*4096 },
+#endif
+#ifdef CPU_CORTEXA57
+	{ a57_devices, 0x410fd070, 8*4096 },
 #endif
 };
 
@@ -170,6 +196,11 @@ armperiph_attach(device_t parent, device_t self, void *aux)
 	struct mainbus_attach_args * const mb = aux;
 	bus_addr_t cbar = armreg_cbar_read();
 	const struct mpcore_config * const cfg = armperiph_find_config();
+	prop_dictionary_t prop = device_properties(self);
+	uint32_t cbar_override;
+
+	if (prop_dictionary_get_uint32(prop, "cbar", &cbar_override))
+		cbar = (bus_addr_t)cbar_override;
 
 	/*
 	 * The normal mainbus bus space will not work for us so the port's
@@ -198,6 +229,11 @@ armperiph_attach(device_t parent, device_t self, void *aux)
 			.mpcaa_off1 = cfg->cfg_devices[i].pi_off1,
 			.mpcaa_off2 = cfg->cfg_devices[i].pi_off2,
 		};
+#if defined(CPU_CORTEXA7) || defined(CPU_CORTEXA15) || defined(CPU_CORTEXA57)
+		if (strcmp(mpcaa.mpcaa_name, "armgtmr") == 0) {
+			mpcaa.mpcaa_irq = IRQ_GTMR_PPI_VTIMER;
+		}
+#endif
 
 		config_found(self, &mpcaa, NULL);
 	}

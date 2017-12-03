@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.74.2.2 2014/08/20 00:02:50 tls Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.74.2.3 2017/12/03 11:35:59 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.74.2.2 2014/08/20 00:02:50 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.74.2.3 2017/12/03 11:35:59 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -53,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.74.2.2 2014/08/20 00:02:50 tls Ex
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/exec.h>
-#include <sys/exec_aout.h>
 #include <sys/proc.h>
 #include <sys/msgbuf.h>
 #include <sys/reboot.h>
@@ -266,7 +265,7 @@ initarm(void *arm_bootargs)
 	pmap_devmap_bootstrap((vaddr_t)ebsabootinfo.bt_l1, cats_devmap);
 
 #ifdef FCOM_INIT_ARM
-	fcomcnattach(DC21285_ARMCSR_BASE, comcnspeed, comcnmode);
+	fcomcnattach(DC21285_ARMCSR_VBASE, comcnspeed, comcnmode);
 #endif
 
 	/* Talk to the user */
@@ -301,12 +300,41 @@ initarm(void *arm_bootargs)
 	 */
 	process_kernel_args(ebsabootinfo.bt_args);
 
-	arm32_bootmem_init(ebsabootinfo.bt_memstart,
-	    ebsabootinfo.bt_memend - ebsabootinfo.bt_memstart,
+	psize_t ram_size = ebsabootinfo.bt_memend - ebsabootinfo.bt_memstart;
+	/*
+	 * If MEMSIZE specified less than what we really have, limit ourselves
+	 * to that.
+	*/
+#ifdef MEMSIZE
+	if (ram_size == 0 || ram_size > (unsigned)MEMSIZE * 1024 * 1024)
+		ram_size = (unsigned)MEMSIZE * 1024 * 1024;
+	DPRINTF("ram_size = 0x%x\n", (int)ram_size);
+#else
+	KASSERTMSG(ram_size > 0, "RAM size unknown and MEMSIZE undefined");
+#endif
+
+#ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
+	const bool mapallmem_p = true;
+
+#ifndef PMAP_NEED_ALLOC_POOLPAGE
+	if (ram_size > KERNEL_VM_BASE - KERNEL_BASE) {
+		printf("%s: dropping RAM size from %luMB to %uMB\n",
+		    __func__, (unsigned long) (ram_size >> 20),
+		    (KERNEL_VM_BASE - KERNEL_BASE) >> 20);
+		ram_size = KERNEL_VM_BASE - KERNEL_BASE;
+        }
+#endif
+#else
+        const bool mapallmem_p = false;
+#endif
+
+	printf("ram_size = 0x%08lx\n", ram_size);
+
+	arm32_bootmem_init(ebsabootinfo.bt_memstart, ram_size,
 	    ebsabootinfo.bt_memstart);
 
 	arm32_kernel_vm_init(KERNEL_VM_BASE, ARM_VECTORS_LOW, 0, cats_devmap,
-	    false);
+	    mapallmem_p);
 
 	printf("init subsystems: patch ");
 
@@ -436,18 +464,6 @@ initarm(void *arm_bootargs)
 
 #ifdef FCOM_INIT_ARM
 	fcomcndetach();
-#endif
-
-
-#if NKSYMS || defined(DDB) || defined(MODULAR)
-#ifndef __ELF__		/* XXX */
-	{
-		extern int end;
-		extern int *esym;
-
-		ksyms_addsyms_elf(*(int *)&end, ((int *)&end) + 1, esym);
-	}
-#endif /* __ELF__ */
 #endif
 
 #ifdef DDB

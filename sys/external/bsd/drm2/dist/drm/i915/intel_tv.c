@@ -326,11 +326,13 @@ static const struct color_conversion sdtv_csc_yprpb = {
 	.rv = 0x0100, .gv = 0x03ad, .bv = 0x074d, .av = 0x0200,
 };
 
+#ifndef __NetBSD__		/* XXX unused?  */
 static const struct color_conversion sdtv_csc_rgb = {
 	.ry = 0x0000, .gy = 0x0f00, .by = 0x0000, .ay = 0x0166,
 	.ru = 0x0000, .gu = 0x0000, .bu = 0x0f00, .au = 0x0166,
 	.rv = 0x0f00, .gv = 0x0000, .bv = 0x0000, .av = 0x0166,
 };
+#endif
 
 static const struct color_conversion hdtv_csc_yprpb = {
 	.ry = 0x05b3, .gy = 0x016e, .by = 0x0728, .ay = 0x0145,
@@ -338,11 +340,13 @@ static const struct color_conversion hdtv_csc_yprpb = {
 	.rv = 0x0100, .gv = 0x03d1, .bv = 0x06bc, .av = 0x0200,
 };
 
+#ifndef __NetBSD__		/* XXX unused?  */
 static const struct color_conversion hdtv_csc_rgb = {
 	.ry = 0x0000, .gy = 0x0f00, .by = 0x0000, .ay = 0x0166,
 	.ru = 0x0000, .gu = 0x0000, .bu = 0x0f00, .au = 0x0166,
 	.rv = 0x0f00, .gv = 0x0000, .bv = 0x0000, .av = 0x0166,
 };
+#endif
 
 static const struct video_levels component_levels = {
 	.blank = 279, .black = 279, .burst = 0,
@@ -835,7 +839,7 @@ static struct intel_tv *intel_attached_tv(struct drm_connector *connector)
 }
 
 static bool
-intel_tv_get_hw_state(struct intel_encoder *encoder, enum pipe *pipe)
+intel_tv_get_hw_state(struct intel_encoder *encoder, enum i915_pipe *pipe)
 {
 	struct drm_device *dev = encoder->base.dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;

@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.163.2.4 2014/08/20 00:04:44 tls Exp $	*/
+/*	$NetBSD: lwp.h,v 1.163.2.5 2017/12/03 11:39:20 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010
@@ -49,6 +49,9 @@
 #include <sys/resource.h>
 
 #if defined(_KERNEL)
+struct lwp;
+/* forward declare this for <machine/cpu.h> so it can get l_cpu. */
+static inline struct cpu_info *lwp_getcpu(struct lwp *);
 #include <machine/cpu.h>		/* curcpu() and cpu_info */
 #endif
 
@@ -102,6 +105,9 @@ struct lwp {
 	pri_t		l_kpribase;	/* !: kernel priority base level */
 	pri_t		l_priority;	/* l: scheduler priority */
 	pri_t		l_inheritedprio;/* l: inherited priority */
+	pri_t		l_protectprio;	/* l: for PTHREAD_PRIO_PROTECT */
+	pri_t		l_auxprio;	/* l: max(inherit,protect) priority */
+	int		l_protectdepth;	/* l: for PTHREAD_PRIO_PROTECT */
 	SLIST_HEAD(, turnstile) l_pi_lenders; /* l: ts lending us priority */
 	uint64_t	l_ncsw;		/* l: total context switches */
 	uint64_t	l_nivcsw;	/* l: involuntary context switches */
@@ -225,6 +231,7 @@ extern int		maxlwp __read_mostly;	/* max number of lwps */
 /* These flags are kept in l_flag. */
 #define	LW_IDLE		0x00000001 /* Idle lwp. */
 #define	LW_LWPCTL	0x00000002 /* Adjust lwpctl in userret */
+#define	LW_CVLOCKDEBUG	0x00000004 /* Waker does lockdebug */
 #define	LW_SINTR	0x00000080 /* Sleep is interruptible. */
 #define	LW_SYSTEM	0x00000200 /* Kernel thread */
 #define	LW_WSUSPEND	0x00020000 /* Suspend before return to user */
@@ -249,6 +256,7 @@ extern int		maxlwp __read_mostly;	/* max number of lwps */
 #define	LP_SYSCTLWRITE	0x00000080 /* sysctl write lock held */
 #define	LP_MUSTJOIN	0x00000100 /* Must join kthread on exit */
 #define	LP_VFORKWAIT	0x00000200 /* Waiting at vfork() for a child */
+#define	LP_SINGLESTEP	0x00000400 /* Single step thread in ptrace(2) */
 #define	LP_TIMEINTR	0x00010000 /* Time this soft interrupt */
 #define	LP_RUNNING	0x20000000 /* Active on a CPU */
 #define	LP_BOUND	0x80000000 /* Bound to a CPU */
@@ -334,7 +342,8 @@ void	lwp_need_userret(lwp_t *);
 void	lwp_free(lwp_t *, bool, bool);
 uint64_t lwp_pctr(void);
 int	lwp_setprivate(lwp_t *, void *);
-int	do_lwp_create(lwp_t *, void *, u_long, lwpid_t *);
+int	do_lwp_create(lwp_t *, void *, u_long, lwpid_t *, const sigset_t *,
+    const stack_t *);
 
 void	lwpinit_specificdata(void);
 int	lwp_specific_key_create(specificdata_key_t *, specificdata_dtor_t);
@@ -400,9 +409,6 @@ lwp_lendpri(lwp_t *l, pri_t pri)
 {
 	KASSERT(mutex_owned(l->l_mutex));
 
-	if (l->l_inheritedprio == pri)
-		return;
-
 	(*l->l_syncobj->sobj_lendpri)(l, pri);
 	KASSERT(l->l_inheritedprio == pri);
 }
@@ -415,11 +421,11 @@ lwp_eprio(lwp_t *l)
 	pri = l->l_priority;
 	if ((l->l_flag & LW_SYSTEM) == 0 && l->l_kpriority && pri < PRI_KERNEL)
 		pri = (pri >> 1) + l->l_kpribase;
-	return MAX(l->l_inheritedprio, pri);
+	return MAX(l->l_auxprio, pri);
 }
 
-int lwp_create(lwp_t *, struct proc *, vaddr_t, int,
-    void *, size_t, void (*)(void *), void *, lwp_t **, int);
+int lwp_create(lwp_t *, struct proc *, vaddr_t, int, void *, size_t,
+    void (*)(void *), void *, lwp_t **, int, const sigset_t *, const stack_t *);
 
 /*
  * XXX _MODULE
@@ -467,6 +473,16 @@ extern struct lwp	*curlwp;		/* Current running LWP */
 #endif /* ! curlwp */
 #define	curproc		(curlwp->l_proc)
 
+/*
+ * This provide a way for <machine/cpu.h> to get l_cpu for curlwp before
+ * struct lwp is defined.
+ */
+static inline struct cpu_info *
+lwp_getcpu(struct lwp *l)
+{
+	return l->l_cpu;
+}
+
 static inline bool
 CURCPU_IDLE_P(void)
 {
@@ -507,6 +523,28 @@ KPREEMPT_ENABLE(lwp_t *l)
 /* For lwp::l_dopreempt */
 #define	DOPREEMPT_ACTIVE	0x01
 #define	DOPREEMPT_COUNTED	0x02
+
+/*
+ * Prevent curlwp from migrating between CPUs beteen curlwp_bind and
+ * curlwp_bindx. One use case is psref(9) that has a contract that
+ * forbids migrations.
+ */
+static inline int
+curlwp_bind(void)
+{
+	int bound;
+
+	bound = curlwp->l_pflag & LP_BOUND;
+	curlwp->l_pflag |= LP_BOUND;
+
+	return bound;
+}
+
+static inline void
+curlwp_bindx(int bound)
+{
+	curlwp->l_pflag ^= bound ^ LP_BOUND;
+}
 
 #endif /* _KERNEL */
 

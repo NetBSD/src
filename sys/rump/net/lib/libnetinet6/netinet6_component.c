@@ -1,4 +1,4 @@
-/*	$NetBSD: netinet6_component.c,v 1.2.4.2 2014/08/20 00:04:43 tls Exp $	*/
+/*	$NetBSD: netinet6_component.c,v 1.2.4.3 2017/12/03 11:39:18 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2013 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netinet6_component.c,v 1.2.4.2 2014/08/20 00:04:43 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netinet6_component.c,v 1.2.4.3 2017/12/03 11:39:18 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -41,18 +41,19 @@ __KERNEL_RCSID(0, "$NetBSD: netinet6_component.c,v 1.2.4.2 2014/08/20 00:04:43 t
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 
-#include "rump_private.h"
-#include "rump_net_private.h"
+#include <rump-sys/kern.h>
 
 RUMP_COMPONENT(RUMP_COMPONENT_NET)
 {
 	extern struct domain inet6domain;
 
-	DOMAINADD(inet6domain);
+	domain_attach(&inet6domain);
 }
 
 RUMP_COMPONENT(RUMP_COMPONENT_NET_IFCFG)
 {
+	if (lo0ifp == NULL)
+		panic("lo0 config: rumpnet_net has not been initialized");
 
 	if_up(lo0ifp);
 }

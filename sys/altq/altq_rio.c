@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_rio.c,v 1.21 2009/04/18 14:58:02 tsutsui Exp $	*/
+/*	$NetBSD: altq_rio.c,v 1.21.22.1 2017/12/03 11:35:43 jdolecek Exp $	*/
 /*	$KAME: altq_rio.c,v 1.19 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_rio.c,v 1.21 2009/04/18 14:58:02 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_rio.c,v 1.21.22.1 2017/12/03 11:35:43 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -190,7 +190,7 @@ static struct redparams default_rio_params[RIO_NDROPPREC] = {
 /* internal function prototypes */
 static int dscp2index(u_int8_t);
 #ifdef ALTQ3_COMPAT
-static int rio_enqueue(struct ifaltq *, struct mbuf *, struct altq_pktattr *);
+static int rio_enqueue(struct ifaltq *, struct mbuf *);
 static struct mbuf *rio_dequeue(struct ifaltq *, int);
 static int rio_request(struct ifaltq *, int, void *);
 static int rio_detach(rio_queue_t *);
@@ -326,19 +326,6 @@ dscp2index(u_int8_t dscp)
 }
 #endif
 
-#if 1
-/*
- * kludge: when a packet is dequeued, we need to know its drop precedence
- * in order to keep the queue length of each drop precedence.
- * use m_pkthdr.rcvif to pass this info.
- */
-#define	RIOM_SET_PRECINDEX(m, idx)	\
-	do { (m)->m_pkthdr.rcvif = (struct ifnet *)((long)(idx)); } while (0)
-#define	RIOM_GET_PRECINDEX(m)	\
-	({ long idx; idx = (long)((m)->m_pkthdr.rcvif); \
-	(m)->m_pkthdr.rcvif = NULL; idx; })
-#endif
-
 int
 rio_addq(rio_t *rp, class_queue_t *q, struct mbuf *m,
     struct altq_pktattr *pktattr)
@@ -436,7 +423,7 @@ rio_addq(rio_t *rp, class_queue_t *q, struct mbuf *m,
 		rp->rio_precstate[i].qlen++;
 
 	/* save drop precedence index in mbuf hdr */
-	RIOM_SET_PRECINDEX(m, dpindex);
+	M_SETCTX(m, (intptr_t)dpindex);
 
 	if (rp->rio_flags & RIOF_CLEARDSCP)
 		dsfield &= ~DSCP_MASK;
@@ -461,7 +448,7 @@ rio_getq(rio_t *rp, class_queue_t *q)
 	if ((m = _getq(q)) == NULL)
 		return NULL;
 
-	dpindex = RIOM_GET_PRECINDEX(m);
+	dpindex = M_GETCTX(m, intptr_t);
 	for (i = dpindex; i < RIO_NDROPPREC; i++) {
 		if (--rp->rio_precstate[i].qlen == 0) {
 			if (rp->rio_precstate[i].idle == 0) {
@@ -763,12 +750,17 @@ rio_request(struct ifaltq *ifq, int req, void *arg)
  *		 ENOBUFS when drop occurs.
  */
 static int
-rio_enqueue(struct ifaltq *ifq, struct mbuf *m, struct altq_pktattr *pktattr)
+rio_enqueue(struct ifaltq *ifq, struct mbuf *m)
 {
+	struct altq_pktattr pktattr;
 	rio_queue_t *rqp = (rio_queue_t *)ifq->altq_disc;
 	int error = 0;
 
-	if (rio_addq(rqp->rq_rio, rqp->rq_q, m, pktattr) == 0)
+	pktattr.pattr_class = m->m_pkthdr.pattr_class;
+	pktattr.pattr_af = m->m_pkthdr.pattr_af;
+	pktattr.pattr_hdr = m->m_pkthdr.pattr_hdr;
+
+	if (rio_addq(rqp->rq_rio, rqp->rq_q, m, &pktattr) == 0)
 		ifq->ifq_len++;
 	else
 		error = ENOBUFS;

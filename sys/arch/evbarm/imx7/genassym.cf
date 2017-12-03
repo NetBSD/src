@@ -1,0 +1,59 @@
+#	$NetBSD: genassym.cf,v 1.1.18.2 2017/12/03 11:36:05 jdolecek Exp $
+
+#-
+# Copyright (c) 2012 The NetBSD Foundation, Inc.
+# All rights reserved.
+#
+# This code is derived from software contributed to The NetBSD Foundation
+# by Nick Hudson
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+# ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+# TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+# PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+
+include <evbarm/imx7/platform.h>
+
+include <arm/imx/imx7reg.h>
+include <arm/imx/imx7_srcreg.h>
+include <arm/imx/imxuartreg.h>
+
+define	IMX7_IOREG_PBASE	IMX7_IOREG_PBASE
+define	IMX7_IOREG_SIZE		IMX7_IOREG_SIZE
+
+define	IMX7_ARMCORE_PBASE	IMX7_ARMCORE_BASE
+define	IMX7_ARMCORE_SIZE	IMX7_ARMCORE_SIZE
+
+define	KERNEL_IO_IOREG_VBASE	KERNEL_IO_IOREG_VBASE
+define	KERNEL_IO_ARMCORE_VBASE	KERNEL_IO_ARMCORE_VBASE
+
+define	LSR_TXRDY		IMX_USR2_TXDC
+define	LSR_TSRE		IMX_USR2_TXDC
+define	COM_DATA		IMX_UTXD
+define	COM_LSR			(IMX_USR2/4)
+
+define	IMX7_AIPS_BASE		IMX7_AIPS_BASE
+define	AIPS1_SRC_BASE		AIPS1_SRC_BASE
+define	SRC_SCR			SRC_SCR
+define	SRC_A7RCR0		SRC_A7RCR0
+define	SRC_A7RCR0_A7_CORE_RESET1	SRC_A7RCR0_A7_CORE_RESET1
+define	SRC_A7RCR1		SRC_A7RCR1
+define	SRC_A7RCR1_A7_CORE1_ENABLE	SRC_A7RCR1_A7_CORE1_ENABLE
+define	SRC_GPR3		SRC_GPR3

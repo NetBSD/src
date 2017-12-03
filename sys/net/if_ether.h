@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.58.18.2 2014/08/20 00:04:34 tls Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.58.18.3 2017/12/03 11:39:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -59,8 +59,11 @@
 /*
  * Some Ethernet extensions.
  */
-#define	ETHER_VLAN_ENCAP_LEN 4	/* length of 802.1Q VLAN encapsulation */
-#define	ETHER_PPPOE_ENCAP_LEN 8	/* length of PPPoE encapsulation */
+#define	ETHER_VLAN_ENCAP_LEN	4      /* length of 802.1Q VLAN encapsulation */
+#define	EVL_VLANOFTAG(tag)	((tag) & 4095)		/* VLAN ID */
+#define	EVL_PRIOFTAG(tag)	(((tag) >> 13) & 7)	/* Priority */
+#define	EVL_CFIOFTAG(tag)	(((tag) >> 12) & 1)	/* CFI */
+#define	ETHER_PPPOE_ENCAP_LEN	8	/* length of PPPoE encapsulation */
 
 /*
  * Ethernet address - 6 octets
@@ -177,6 +180,7 @@ struct ethercom {
 	 * ec_if.if_init, 0 on success, not 0 on failure.
 	 */
 	ether_cb_t				ec_ifflags_cb;
+	kmutex_t				*ec_lock;
 #ifdef MBUFTRACE
 	struct	mowner ec_rx_mowner;		/* mbufs received */
 	struct	mowner ec_tx_mowner;		/* mbufs transmitted */
@@ -286,40 +290,38 @@ struct ether_multistep {
 
 #ifdef _KERNEL
 
+#define ETHER_LOCK(ec)		mutex_enter((ec)->ec_lock)
+#define ETHER_UNLOCK(ec)	mutex_exit((ec)->ec_lock)
+
 /*
  * Ethernet 802.1Q VLAN structures.
  */
 
 /* add VLAN tag to input/received packet */
-static inline int vlan_input_tag(struct ifnet *, struct mbuf *, u_int);
-static inline int
-vlan_input_tag(struct ifnet *ifp, struct mbuf *m, u_int vlanid)
+static inline void
+vlan_set_tag(struct mbuf *m, uint16_t vlantag)
 {
-	struct m_tag *mtag;
-	mtag = m_tag_get(PACKET_TAG_VLAN, sizeof(u_int), M_NOWAIT);
-	if (mtag == NULL) {
-		ifp->if_ierrors++;
-		printf("%s: unable to allocate VLAN tag\n", ifp->if_xname);
-		m_freem(m);
-		return 1;
-	}
-	*(u_int *)(mtag + 1) = vlanid;
-	m_tag_prepend(m, mtag);
-	return 0;
+
+	/* VLAN tag contains priority, CFI and VLAN ID */
+
+	m->m_pkthdr.ether_vtag = vlantag;
+	m->m_flags |= M_VLANTAG;
+	return;
 }
 
-#define VLAN_INPUT_TAG(ifp, m, vlanid, _errcase)		\
-    if (vlan_input_tag(ifp, m, vlanid) != 0) {	 		\
-	_errcase;						\
-    }
-
-/* extract VLAN tag from output/trasmit packet */
-#define VLAN_OUTPUT_TAG(ec, m0)			\
-	(VLAN_ATTACHED(ec) ? m_tag_find((m0), PACKET_TAG_VLAN, NULL) : NULL)
+static inline bool
+vlan_has_tag(struct mbuf *m)
+{
+	return (m->m_flags & M_VLANTAG) != 0;
+}
 
 /* extract VLAN ID value from a VLAN tag */
-#define VLAN_TAG_VALUE(mtag)	\
-	((*(u_int *)(mtag + 1)) & 4095)
+static inline uint16_t
+vlan_get_tag(struct mbuf *m)
+{
+	KASSERT(m->m_flags & M_VLANTAG);
+	return m->m_pkthdr.ether_vtag;
+}
 
 /* test if any VLAN is configured for this interface */
 #define VLAN_ATTACHED(ec)	((ec)->ec_nvlans > 0)
@@ -337,6 +339,8 @@ uint32_t ether_crc32_le(const uint8_t *, size_t);
 uint32_t ether_crc32_be(const uint8_t *, size_t);
 
 int	ether_aton_r(u_char *, size_t, const char *);
+int	ether_enable_vlan_mtu(struct ifnet *);
+int	ether_disable_vlan_mtu(struct ifnet *);
 #else
 /*
  * Prototype ethers(3) functions.

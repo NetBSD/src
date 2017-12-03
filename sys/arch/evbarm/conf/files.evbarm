@@ -1,4 +1,4 @@
-#	$NetBSD: files.evbarm,v 1.22.18.1 2014/08/20 00:02:53 tls Exp $
+#	$NetBSD: files.evbarm,v 1.22.18.2 2017/12/03 11:36:03 jdolecek Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -15,9 +15,7 @@ file	dev/md_root.c				md & memory_disk_hooks
 # Generic MD files
 file	arch/evbarm/evbarm/autoconf.c
 
-file	arch/arm/arm/disksubr.c
-file	arch/arm/arm/disksubr_acorn.c
-file	arch/arm/arm/disksubr_mbr.c
+file	kern/subr_disk_mbr.c			disk
 
 # ARM FPE
 file	arch/arm32/fpe-arm/armfpe_glue.S	armfpe
@@ -49,5 +47,16 @@ defparam	opt_evbarm_boardtype.h EVBARM_BOARDTYPE
 defflag	opt_plcom.h	PLCOM_DEBUG
 device	plcom { }: tty
 file	arch/evbarm/dev/plcom.c			plcom needs-flag
+
+#
+# Maximum number of memory ranges
+#
+defparam	opt_machdep.h			DRAM_BLOCKS
+
+#
+# Flattened Device Tree (FDT) support
+#
+include "dev/ofw/files.ofw"
+include "dev/fdt/files.fdt"
 
 include "arch/arm/conf/majors.arm32"

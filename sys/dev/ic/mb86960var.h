@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960var.h,v 1.39 2012/02/02 19:43:03 tls Exp $	*/
+/*	$NetBSD: mb86960var.h,v 1.39.6.1 2017/12/03 11:37:03 jdolecek Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -44,7 +44,7 @@
  * they are useful.
  */
 
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 /*
  * Default settings for fe driver specific options.

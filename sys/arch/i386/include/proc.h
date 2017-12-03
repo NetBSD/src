@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.38.18.1 2014/08/20 00:03:06 tls Exp $	*/
+/*	$NetBSD: proc.h,v 1.38.18.2 2017/12/03 11:36:18 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -52,7 +52,7 @@ struct mdlwp {
 };
 
 /* md_flags */
-#define	MDL_IOPL	0x0002	/* XEN: i/o privilege */
+#define	MDL_IOPL		0x0002	/* XEN: i/o privilege */
 
 struct mdproc {
 	int	md_flags;

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file64.c,v 1.53.12.1 2014/08/20 00:03:32 tls Exp $	*/
+/*	$NetBSD: linux_file64.c,v 1.53.12.2 2017/12/03 11:36:54 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.53.12.1 2014/08/20 00:03:32 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.53.12.2 2017/12/03 11:36:54 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -325,8 +325,10 @@ again:
 	for (cookie = cookiebuf; len > 0; len -= reclen) {
 		bdp = (struct dirent *)inp;
 		reclen = bdp->d_reclen;
-		if (reclen & 3)
-			panic("linux_readdir");
+		if (reclen & 3) {
+			error = EIO;
+			goto out;
+		}
 		if (bdp->d_fileno == 0) {
 			inp += reclen;	/* it is a hole; squish it out */
 			if (cookie)
@@ -354,7 +356,8 @@ again:
 		idb.d_type = bdp->d_type;
 		idb.d_off = off;
 		idb.d_reclen = (u_short)linux_reclen;
-		strcpy(idb.d_name, bdp->d_name);
+		memcpy(idb.d_name, bdp->d_name, MIN(sizeof(idb.d_name),
+		   bdp->d_namlen + 1));
 		if ((error = copyout((void *)&idb, outp, linux_reclen)))
 			goto out;
 		/* advance past this real entry */

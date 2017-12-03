@@ -1,4 +1,4 @@
-/*	$NetBSD: dkwedge_apple.c,v 1.1 2012/04/07 05:36:10 christos Exp $	*/
+/*	$NetBSD: dkwedge_apple.c,v 1.1.6.1 2017/12/03 11:37:00 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dkwedge_apple.c,v 1.1 2012/04/07 05:36:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dkwedge_apple.c,v 1.1.6.1 2017/12/03 11:37:00 jdolecek Exp $");
 
 #include <sys/param.h>
 #ifdef _KERNEL
@@ -106,6 +106,18 @@ swap_apple_part_map_entry(struct apple_part_map_entry *ap)
 	SWAP32(pmBootCksum);
 }
 
+static void
+swap_apple_blockzeroblock(struct apple_blockzeroblock *ap)
+{
+        SWAP32(bzbMagic);
+        SWAP16(bzbBadBlockInode);
+        SWAP16(bzbFlags);
+        SWAP16(bzbReserved);
+        SWAP32(bzbCreationTime);
+        SWAP32(bzbMountTime);
+        SWAP32(bzbUMountTime);
+}
+
 #undef SWAP16
 #undef SWAP32
 
@@ -137,6 +149,8 @@ dkwedge_discover_apple(struct disk *pdk, struct vnode *vp)
 	uint32_t blocksize, offset, rsize;
 	struct apple_drvr_map *am;
 	struct apple_part_map_entry *ae;
+	struct apple_blockzeroblock ab;
+	const char *ptype;
 
 	buf = DKW_MALLOC(ASIZE);
 	if ((error = dkwedge_read(pdk, vp, 0, buf, ASIZE)) != 0) {
@@ -193,10 +207,18 @@ dkwedge_discover_apple(struct disk *pdk, struct vnode *vp)
 		if (i == __arraycount(map))
 			continue;
 
+		ptype = map[i].type;
+		memcpy(&ab, ae->pmBootArgs, sizeof(ab));
+		swap_apple_blockzeroblock(&ab);
+		if (ab.bzbMagic == APPLE_BZB_MAGIC) {
+			if (ab.bzbType == APPLE_BZB_TYPESWAP)
+				ptype = DKW_PTYPE_SWAP;
+		}
+
 		struct dkwedge_info dkw;
 
-		strcpy(dkw.dkw_ptype, map[i].type);
-		strcpy(dkw.dkw_parent, pdk->dk_name);
+		strlcpy(dkw.dkw_ptype, ptype, sizeof(dkw.dkw_ptype));
+		strlcpy(dkw.dkw_parent, pdk->dk_name, sizeof(dkw.dkw_parent));
 		dkw.dkw_offset = ae->pmPyPartStart;
 		dkw.dkw_size = ae->pmPartBlkCnt;
 		strlcpy(dkw.dkw_wname, ae->pmPartName, sizeof(dkw.dkw_wname));

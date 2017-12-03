@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile.mbr,v 1.2.22.1 2014/08/20 00:03:09 tls Exp $
+#	$NetBSD: Makefile.mbr,v 1.2.22.2 2017/12/03 11:36:22 jdolecek Exp $
 
 S=	${.CURDIR}/../../../../..
 
+NOPIE=		# defined
 NOMAN=		# defined
 
 LIBCRT0=	# nothing
@@ -10,7 +11,7 @@ LIBCRTBEGIN=	# nothing
 LIBCRTEND=	# nothing
 LIBC=		# nothing
 
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 
 STRIPFLAG=	# override
 

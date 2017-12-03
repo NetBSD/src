@@ -1,4 +1,4 @@
-/*        $NetBSD: dm.h,v 1.24.2.1 2014/08/20 00:03:36 tls Exp $      */
+/*        $NetBSD: dm.h,v 1.24.2.2 2017/12/03 11:37:00 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -250,7 +250,7 @@ typedef struct dm_target {
 	int (*secsize)(dm_table_entry_t *, unsigned *);
 
 	uint32_t version[3];
-	int ref_cnt;
+	uint32_t ref_cnt;
 
 	TAILQ_ENTRY(dm_target) dm_target_next;
 } dm_target_t;

@@ -1,4 +1,4 @@
-#	$NetBSD: files.nfs,v 1.13 2010/03/02 23:49:11 pooka Exp $
+#	$NetBSD: files.nfs,v 1.13.20.1 2017/12/03 11:39:05 jdolecek Exp $
 
 deffs				NFS
 
@@ -16,6 +16,7 @@ defflag opt_nfs.h		NFS_V2_ONLY
 
 defflag				NFSSERVER
 
+define	nfs: vfs, net
 file	nfs/krpc_subr.c		nfs
 file	nfs/nfs_bio.c		nfs
 file	nfs/nfs_boot.c		nfs

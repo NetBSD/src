@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,7 +40,6 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  */
-
 
 #include "aslcompiler.h"
 #include "aslcompiler.y.h"
@@ -112,7 +111,7 @@ TrAmlGetNextTempName (
     char                    *TempName;
 
 
-    if (*TempCount >= (10+26))  /* 0-35 valid: 0-9 and A-Z for TempName[3] */
+    if (*TempCount >= (10 + 26))  /* 0-35 valid: 0-9 and A-Z for TempName[3] */
     {
         /* Too many temps */
 
@@ -130,6 +129,7 @@ TrAmlGetNextTempName (
     {
         TempName[3] = (char) (*TempCount + ('A' - 10));
     }
+
     (*TempCount)++;
 
     /* First three characters are always "_T_" */
@@ -218,7 +218,7 @@ TrAmlSetSubtreeParent (
     while (Next)
     {
         Next->Asl.Parent = Parent;
-        Next             = Next->Asl.Next;
+        Next = Next->Asl.Next;
     }
 }
 
@@ -243,13 +243,13 @@ TrAmlInsertPeer (
 {
 
     NewPeer->Asl.Next = Op->Asl.Next;
-    Op->Asl.Next      = NewPeer;
+    Op->Asl.Next = NewPeer;
 }
 
 
 /*******************************************************************************
  *
- * FUNCTION:    TrAmlTransformWalk
+ * FUNCTION:    TrAmlTransformWalkBegin
  *
  * PARAMETERS:  ASL_WALK_CALLBACK
  *
@@ -261,13 +261,45 @@ TrAmlInsertPeer (
  ******************************************************************************/
 
 ACPI_STATUS
-TrAmlTransformWalk (
+TrAmlTransformWalkBegin (
     ACPI_PARSE_OBJECT       *Op,
     UINT32                  Level,
     void                    *Context)
 {
 
     TrTransformSubtree (Op);
+    return (AE_OK);
+}
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    TrAmlTransformWalkEnd
+ *
+ * PARAMETERS:  ASL_WALK_CALLBACK
+ *
+ * RETURN:      None
+ *
+ * DESCRIPTION: Parse tree walk to generate both the AML opcodes and the AML
+ *              operands.
+ *
+ ******************************************************************************/
+
+ACPI_STATUS
+TrAmlTransformWalkEnd (
+    ACPI_PARSE_OBJECT       *Op,
+    UINT32                  Level,
+    void                    *Context)
+{
+
+    /* Save possible Externals list in the DefintionBlock Op */
+
+    if (Op->Asl.ParseOpcode == PARSEOP_DEFINITION_BLOCK)
+    {
+        Op->Asl.Value.Arg = Gbl_ExternalsListHead;
+        Gbl_ExternalsListHead = NULL;
+    }
+
     return (AE_OK);
 }
 
@@ -290,6 +322,8 @@ static void
 TrTransformSubtree (
     ACPI_PARSE_OBJECT           *Op)
 {
+    ACPI_PARSE_OBJECT           *MethodOp;
+
 
     if (Op->Asl.AmlOpcode == AML_RAW_DATA_BYTE)
     {
@@ -298,7 +332,7 @@ TrTransformSubtree (
 
     switch (Op->Asl.ParseOpcode)
     {
-    case PARSEOP_DEFINITIONBLOCK:
+    case PARSEOP_DEFINITION_BLOCK:
 
         TrDoDefinitionBlock (Op);
         break;
@@ -314,6 +348,44 @@ TrTransformSubtree (
          * however
          */
         Gbl_TempCount = 0;
+        break;
+
+    case PARSEOP_EXTERNAL:
+
+        if (Gbl_DoExternals == TRUE)
+        {
+            ExDoExternal (Op);
+        }
+
+        break;
+
+    case PARSEOP___METHOD__:
+
+        /* Transform to a string op containing the parent method name */
+
+        Op->Asl.ParseOpcode = PARSEOP_STRING_LITERAL;
+        UtSetParseOpName (Op);
+
+        /* Find the parent control method op */
+
+        MethodOp = Op;
+        while (MethodOp)
+        {
+            if (MethodOp->Asl.ParseOpcode == PARSEOP_METHOD)
+            {
+                /* First child contains the method name */
+
+                MethodOp = MethodOp->Asl.Child;
+                Op->Asl.Value.String = MethodOp->Asl.Value.String;
+                return;
+            }
+
+            MethodOp = MethodOp->Asl.Parent;
+        }
+
+        /* At the root, invocation not within a control method */
+
+        Op->Asl.Value.String = "\\";
         break;
 
     default:
@@ -347,6 +419,10 @@ TrDoDefinitionBlock (
     UINT32                  i;
 
 
+    /* Reset external list when starting a definition block */
+
+    Gbl_ExternalsListHead = NULL;
+
     Next = Op->Asl.Child;
     for (i = 0; i < 5; i++)
     {
@@ -376,7 +452,6 @@ TrDoDefinitionBlock (
  * PARAMETERS:  StartNode        - Parse node for SWITCH
  *
  * RETURN:      None
- *
  *
  * DESCRIPTION: Translate ASL SWITCH statement to if/else pairs. There is
  *              no actual AML opcode for SWITCH -- it must be simulated.
@@ -450,11 +525,7 @@ TrDoSwitch (
             {
                 /* Add an ELSE to complete the previous CASE */
 
-                if (!Conditional)
-                {
-                    return;
-                }
-                NewOp             = TrCreateLeafNode (PARSEOP_ELSE);
+                NewOp = TrCreateLeafOp (PARSEOP_ELSE);
                 NewOp->Asl.Parent = Conditional->Asl.Parent;
                 TrAmlInitLineNumbers (NewOp, NewOp->Asl.Parent);
 
@@ -464,9 +535,9 @@ TrDoSwitch (
                 CurrentParentNode = NewOp;
             }
 
-            CaseOp      = Next;
+            CaseOp = Next;
             Conditional = CaseOp;
-            CaseBlock   = CaseOp->Asl.Child->Asl.Next;
+            CaseBlock = CaseOp->Asl.Child->Asl.Next;
             Conditional->Asl.Child->Asl.Next = NULL;
             Predicate = CaseOp->Asl.Child;
 
@@ -479,49 +550,49 @@ TrDoSwitch (
                  * If (LNotEqual (Match (Package(<size>){<data>},
                  *                       MEQ, _T_x, MTR, Zero, Zero), Ones))
                  */
-                NewOp2              = TrCreateLeafNode (PARSEOP_MATCHTYPE_MEQ);
+                NewOp2              = TrCreateLeafOp (PARSEOP_MATCHTYPE_MEQ);
                 Predicate->Asl.Next = NewOp2;
                 TrAmlInitLineNumbers (NewOp2, Conditional);
 
                 NewOp               = NewOp2;
-                NewOp2              = TrCreateValuedLeafNode (PARSEOP_NAMESTRING,
+                NewOp2              = TrCreateValuedLeafOp (PARSEOP_NAMESTRING,
                                         (UINT64) ACPI_TO_INTEGER (PredicateValueName));
                 NewOp->Asl.Next     = NewOp2;
                 TrAmlInitLineNumbers (NewOp2, Predicate);
 
                 NewOp               = NewOp2;
-                NewOp2              = TrCreateLeafNode (PARSEOP_MATCHTYPE_MTR);
+                NewOp2              = TrCreateLeafOp (PARSEOP_MATCHTYPE_MTR);
                 NewOp->Asl.Next     = NewOp2;
                 TrAmlInitLineNumbers (NewOp2, Predicate);
 
                 NewOp               = NewOp2;
-                NewOp2              = TrCreateLeafNode (PARSEOP_ZERO);
+                NewOp2              = TrCreateLeafOp (PARSEOP_ZERO);
                 NewOp->Asl.Next     = NewOp2;
                 TrAmlInitLineNumbers (NewOp2, Predicate);
 
                 NewOp               = NewOp2;
-                NewOp2              = TrCreateLeafNode (PARSEOP_ZERO);
+                NewOp2              = TrCreateLeafOp (PARSEOP_ZERO);
                 NewOp->Asl.Next     = NewOp2;
                 TrAmlInitLineNumbers (NewOp2, Predicate);
 
-                NewOp2              = TrCreateLeafNode (PARSEOP_MATCH);
+                NewOp2              = TrCreateLeafOp (PARSEOP_MATCH);
                 NewOp2->Asl.Child   = Predicate;  /* PARSEOP_PACKAGE */
                 TrAmlInitLineNumbers (NewOp2, Conditional);
                 TrAmlSetSubtreeParent (Predicate, NewOp2);
 
                 NewOp               = NewOp2;
-                NewOp2              = TrCreateLeafNode (PARSEOP_ONES);
+                NewOp2              = TrCreateLeafOp (PARSEOP_ONES);
                 NewOp->Asl.Next     = NewOp2;
                 TrAmlInitLineNumbers (NewOp2, Conditional);
 
-                NewOp2              = TrCreateLeafNode (PARSEOP_LEQUAL);
+                NewOp2              = TrCreateLeafOp (PARSEOP_LEQUAL);
                 NewOp2->Asl.Child   = NewOp;
                 NewOp->Asl.Parent   = NewOp2;
                 TrAmlInitLineNumbers (NewOp2, Conditional);
                 TrAmlSetSubtreeParent (NewOp, NewOp2);
 
                 NewOp               = NewOp2;
-                NewOp2              = TrCreateLeafNode (PARSEOP_LNOT);
+                NewOp2              = TrCreateLeafOp (PARSEOP_LNOT);
                 NewOp2->Asl.Child   = NewOp;
                 NewOp2->Asl.Parent  = Conditional;
                 NewOp->Asl.Parent   = NewOp2;
@@ -542,12 +613,12 @@ TrDoSwitch (
                  * CaseOp->Child is the case value
                  * CaseOp->Child->Peer is the beginning of the case block
                  */
-                NewOp = TrCreateValuedLeafNode (PARSEOP_NAMESTRING,
-                            (UINT64) ACPI_TO_INTEGER (PredicateValueName));
+                NewOp = TrCreateValuedLeafOp (PARSEOP_NAMESTRING,
+                    (UINT64) ACPI_TO_INTEGER (PredicateValueName));
                 NewOp->Asl.Next = Predicate;
                 TrAmlInitLineNumbers (NewOp, Predicate);
 
-                NewOp2              = TrCreateLeafNode (PARSEOP_LEQUAL);
+                NewOp2              = TrCreateLeafOp (PARSEOP_LEQUAL);
                 NewOp2->Asl.Parent  = Conditional;
                 NewOp2->Asl.Child   = NewOp;
                 TrAmlInitLineNumbers (NewOp2, Conditional);
@@ -606,7 +677,7 @@ TrDoSwitch (
             /* Unknown peer opcode */
 
             AcpiOsPrintf ("Unknown parse opcode for switch statement: %s (%u)\n",
-                        Next->Asl.ParseOpName, Next->Asl.ParseOpcode);
+                Next->Asl.ParseOpName, Next->Asl.ParseOpcode);
         }
     }
 
@@ -619,11 +690,6 @@ TrDoSwitch (
         if (CaseOp)
         {
             /* Convert the DEFAULT node to an ELSE */
-
-            if (!Conditional)
-            {
-                return;
-            }
 
             TrAmlInitNode (DefaultOp, PARSEOP_ELSE);
             DefaultOp->Asl.Parent = Conditional->Asl.Parent;
@@ -649,20 +715,20 @@ TrDoSwitch (
     /* Create the Name node */
 
     Predicate = StartNode->Asl.Child;
-    NewOp = TrCreateLeafNode (PARSEOP_NAME);
+    NewOp = TrCreateLeafOp (PARSEOP_NAME);
     TrAmlInitLineNumbers (NewOp, StartNode);
 
     /* Find the parent method */
 
     Next = StartNode;
     while ((Next->Asl.ParseOpcode != PARSEOP_METHOD) &&
-           (Next->Asl.ParseOpcode != PARSEOP_DEFINITIONBLOCK))
+           (Next->Asl.ParseOpcode != PARSEOP_DEFINITION_BLOCK))
     {
         Next = Next->Asl.Parent;
     }
     MethodOp = Next;
 
-    NewOp->Asl.CompileFlags |= NODE_COMPILER_EMITTED;
+    NewOp->Asl.CompileFlags |= OP_COMPILER_EMITTED;
     NewOp->Asl.Parent = Next;
 
     /* Insert name after the method name and arguments */
@@ -679,7 +745,8 @@ TrDoSwitch (
      */
     if (Next->Asl.ParseOpcode != PARSEOP_SERIALIZERULE_SERIAL)
     {
-        AslError (ASL_REMARK, ASL_MSG_SERIALIZED, MethodOp, "Due to use of Switch operator");
+        AslError (ASL_REMARK, ASL_MSG_SERIALIZED, MethodOp,
+            "Due to use of Switch operator");
         Next->Asl.ParseOpcode = PARSEOP_SERIALIZERULE_SERIAL;
     }
 
@@ -692,10 +759,10 @@ TrDoSwitch (
 
     /* Create the NameSeg child for the Name node */
 
-    NewOp2 = TrCreateValuedLeafNode (PARSEOP_NAMESEG,
-                (UINT64) ACPI_TO_INTEGER (PredicateValueName));
+    NewOp2 = TrCreateValuedLeafOp (PARSEOP_NAMESEG,
+        (UINT64) ACPI_TO_INTEGER (PredicateValueName));
     TrAmlInitLineNumbers (NewOp2, NewOp);
-    NewOp2->Asl.CompileFlags |= NODE_IS_NAME_DECLARATION;
+    NewOp2->Asl.CompileFlags |= OP_IS_NAME_DECLARATION;
     NewOp->Asl.Child  = NewOp2;
 
     /* Create the initial value for the Name. Btype was already validated above */
@@ -704,31 +771,32 @@ TrDoSwitch (
     {
     case ACPI_BTYPE_INTEGER:
 
-        NewOp2->Asl.Next = TrCreateValuedLeafNode (PARSEOP_ZERO,
-                                (UINT64) 0);
+        NewOp2->Asl.Next = TrCreateValuedLeafOp (PARSEOP_ZERO,
+            (UINT64) 0);
         TrAmlInitLineNumbers (NewOp2->Asl.Next, NewOp);
         break;
 
     case ACPI_BTYPE_STRING:
 
-        NewOp2->Asl.Next = TrCreateValuedLeafNode (PARSEOP_STRING_LITERAL,
-                                (UINT64) ACPI_TO_INTEGER (""));
+        NewOp2->Asl.Next = TrCreateValuedLeafOp (PARSEOP_STRING_LITERAL,
+            (UINT64) ACPI_TO_INTEGER (""));
         TrAmlInitLineNumbers (NewOp2->Asl.Next, NewOp);
         break;
 
     case ACPI_BTYPE_BUFFER:
 
-        (void) TrLinkPeerNode (NewOp2, TrCreateValuedLeafNode (PARSEOP_BUFFER,
-                                    (UINT64) 0));
+        (void) TrLinkPeerOp (NewOp2, TrCreateValuedLeafOp (PARSEOP_BUFFER,
+            (UINT64) 0));
         Next = NewOp2->Asl.Next;
         TrAmlInitLineNumbers (Next, NewOp2);
-        (void) TrLinkChildren (Next, 1, TrCreateValuedLeafNode (PARSEOP_ZERO,
-                                    (UINT64) 1));
+
+        (void) TrLinkOpChildren (Next, 1, TrCreateValuedLeafOp (PARSEOP_ZERO,
+            (UINT64) 1));
         TrAmlInitLineNumbers (Next->Asl.Child, Next);
 
-        BufferOp = TrCreateValuedLeafNode (PARSEOP_DEFAULT_ARG, (UINT64) 0);
+        BufferOp = TrCreateValuedLeafOp (PARSEOP_DEFAULT_ARG, (UINT64) 0);
         TrAmlInitLineNumbers (BufferOp, Next->Asl.Child);
-        (void) TrLinkPeerNode (Next->Asl.Child, BufferOp);
+        (void) TrLinkPeerOp (Next->Asl.Child, BufferOp);
 
         TrAmlSetSubtreeParent (Next->Asl.Child, Next);
         break;
@@ -747,7 +815,7 @@ TrDoSwitch (
      * where _T_x is the temp variable.
      */
     TrAmlInitNode (StartNode, PARSEOP_WHILE);
-    NewOp = TrCreateLeafNode (PARSEOP_ONE);
+    NewOp = TrCreateLeafOp (PARSEOP_ONE);
     TrAmlInitLineNumbers (NewOp, StartNode);
     NewOp->Asl.Next = Predicate->Asl.Next;
     NewOp->Asl.Parent = StartNode;
@@ -755,7 +823,7 @@ TrDoSwitch (
 
     /* Create a Store() node */
 
-    StoreOp = TrCreateLeafNode (PARSEOP_STORE);
+    StoreOp = TrCreateLeafOp (PARSEOP_STORE);
     TrAmlInitLineNumbers (StoreOp, NewOp);
     StoreOp->Asl.Parent = StartNode;
     TrAmlInsertPeer (NewOp, StoreOp);
@@ -765,8 +833,8 @@ TrDoSwitch (
     StoreOp->Asl.Child = Predicate;
     Predicate->Asl.Parent = StoreOp;
 
-    NewOp = TrCreateValuedLeafNode (PARSEOP_NAMESEG,
-                (UINT64) ACPI_TO_INTEGER (PredicateValueName));
+    NewOp = TrCreateValuedLeafOp (PARSEOP_NAMESEG,
+        (UINT64) ACPI_TO_INTEGER (PredicateValueName));
     TrAmlInitLineNumbers (NewOp, StoreOp);
     NewOp->Asl.Parent    = StoreOp;
     Predicate->Asl.Next  = NewOp;
@@ -779,7 +847,7 @@ TrDoSwitch (
         Conditional = Conditional->Asl.Next;
     }
 
-    BreakOp = TrCreateLeafNode (PARSEOP_BREAK);
+    BreakOp = TrCreateLeafOp (PARSEOP_BREAK);
     TrAmlInitLineNumbers (BreakOp, NewOp);
     BreakOp->Asl.Parent = StartNode;
     TrAmlInsertPeer (Conditional, BreakOp);

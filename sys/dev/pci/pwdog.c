@@ -1,4 +1,4 @@
-/*	$$NetBSD: pwdog.c,v 1.7 2011/08/30 07:22:12 mbalmer Exp $ */
+/*	$$NetBSD: pwdog.c,v 1.7.12.1 2017/12/03 11:37:29 jdolecek Exp $ */
 /*	$OpenBSD: pwdog.c,v 1.7 2010/04/08 00:23:53 tedu Exp $ */
 
 /*
@@ -83,6 +83,7 @@ pwdog_attach(device_t parent, device_t self, void *aux)
 	struct pci_attach_args *const pa = (struct pci_attach_args *)aux;
 	pcireg_t memtype;
 
+	aprint_naive("\n");
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, PCI_MAPREG_START);
 	if (pci_mapreg_map(pa, PCI_MAPREG_START, memtype, 0, &sc->sc_iot,
 	    &sc->sc_ioh, NULL, &sc->sc_iosize)) {
@@ -91,11 +92,12 @@ pwdog_attach(device_t parent, device_t self, void *aux)
 		    memtype == PCI_MAPREG_TYPE_IO ? "I/O" : "memory");
 		return;
 	}
-	printf("\n");
+	aprint_normal("\n");
 
 	sc->sc_dev = self;
 
-	pmf_device_register(self, pwdog_suspend, pwdog_resume);
+	if (!pmf_device_register(self, pwdog_suspend, pwdog_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, PWDOG_DISABLE, 0);
 
 	sc->sc_smw.smw_name = device_xname(self);
@@ -191,7 +193,7 @@ pwdog_tickle(struct sysmon_wdog *smw)
 	return 0;
 }
 
-MODULE(MODULE_CLASS_DRIVER, pwdog, "pci");
+MODULE(MODULE_CLASS_DRIVER, pwdog, "pci,sysmon_wdog");
 
 #ifdef _MODULE
 #include "ioconf.c"

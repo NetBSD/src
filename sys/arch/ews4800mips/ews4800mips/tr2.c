@@ -1,4 +1,4 @@
-/*	$NetBSD: tr2.c,v 1.5 2011/02/20 07:55:20 matt Exp $	*/
+/*	$NetBSD: tr2.c,v 1.5.14.1 2017/12/03 11:36:12 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tr2.c,v 1.5 2011/02/20 07:55:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tr2.c,v 1.5.14.1 2017/12/03 11:36:12 jdolecek Exp $");
 
 #define __INTR_PRIVATE
 #include "fb_sbdio.h"
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: tr2.c,v 1.5 2011/02/20 07:55:20 matt Exp $");
 
 #include <uvm/uvm_extern.h>
 
+#include <mips/locore.h>	/* Set L2-cache size */
 #include <mips/cache.h>		/* Set L2-cache size */
 
 #include <machine/autoconf.h>
@@ -110,6 +111,8 @@ tr2_init(void)
 
 	/* Register system-board specific ops. */
 	_SBD_OPS_REGISTER_ALL(tr2);
+
+	mips_locore_jumpvec.ljv_wbflush = platform.wbflush;
 }
 
 int

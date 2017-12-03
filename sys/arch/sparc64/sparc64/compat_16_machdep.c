@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.15 2009/11/21 04:16:52 rmind Exp $ */
+/*	$NetBSD: compat_16_machdep.c,v 1.15.22.1 2017/12/03 11:36:45 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.15 2009/11/21 04:16:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.15.22.1 2017/12/03 11:36:45 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -87,7 +87,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	struct sigacts *ps = p->p_sigacts;
-	const void *addr; 
+	const void *addr;
 	struct rwindow *newsp;
 #ifdef NOT_DEBUG
 	struct rwindow tmpwin;
@@ -288,7 +288,8 @@ compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigretur
 	}
 #endif
 	scp = SCARG(uap, sigcntxp);
- 	if ((vaddr_t)scp & 3 || (error = copyin((void *)scp, &sc, sizeof sc) != 0))
+ 	if (((vaddr_t)scp & 3) != 0 ||
+	    (error = copyin((void *)scp, &sc, sizeof sc)) != 0)
 #ifdef DEBUG
 	{
 		printf("sigreturn14: copyin failed: scp=%p\n", scp);

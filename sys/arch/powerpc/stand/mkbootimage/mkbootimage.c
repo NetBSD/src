@@ -1,4 +1,4 @@
-/*	$NetBSD: mkbootimage.c,v 1.15.2.2 2014/08/20 00:03:20 tls Exp $	*/
+/*	$NetBSD: mkbootimage.c,v 1.15.2.3 2017/12/03 11:36:38 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -336,7 +336,7 @@ prep_build_image(char *kernel, char *boot, char *rawdev, char *outname)
 	lseek(prep_fd, 0x400, SEEK_SET);
 
 	/* Copy boot image */
-	elf_img = (unsigned char *)malloc(elf_img_len);
+	elf_img = malloc(elf_img_len);
 	if (!elf_img)
 		errx(3, "Can't malloc: %s", strerror(errno));
 	if (read(elf_fd, elf_img, elf_img_len) != elf_img_len)
@@ -347,7 +347,7 @@ prep_build_image(char *kernel, char *boot, char *rawdev, char *outname)
 
 	if (inkernflag) {
 		/* Copy kernel */
-		kern_img = (unsigned char *)malloc(kern_stat.st_size);
+		kern_img = malloc(kern_stat.st_size);
 
 		if (kern_img == NULL)
 			errx(3, "Can't malloc: %s", strerror(errno));
@@ -502,7 +502,7 @@ rs6000_build_image(char *kernel, char *boot, char *rawdev, char *outname)
 	lseek(rs6000_fd, 0x400, SEEK_SET);
 
 	/* Copy boot image */
-	elf_img = (unsigned char *)malloc(elf_img_len);
+	elf_img = malloc(elf_img_len);
 	if (!elf_img)
 		errx(3, "Can't malloc: %s", strerror(errno));
 	if (read(elf_fd, elf_img, elf_img_len) != elf_img_len)
@@ -516,7 +516,7 @@ rs6000_build_image(char *kernel, char *boot, char *rawdev, char *outname)
 	lseek(rs6000_fd, elf_pad, SEEK_CUR);
 
 	/* Copy kernel */
-	kern_img = (unsigned char *)malloc(kern_stat.st_size);
+	kern_img = malloc(kern_stat.st_size);
 
 	if (kern_img == NULL)
 		errx(3, "Can't malloc: %s", strerror(errno));
@@ -735,7 +735,7 @@ bebox_build_image(char *kernel, char *boot, char *rawdev, char *outname)
 		bebox_write_header(bebox_fd, elf_img_len, kern_stat.st_size);
 
 		/* Copy kernel */
-		kern_img = (unsigned char *)malloc(kern_stat.st_size);
+		kern_img = malloc(kern_stat.st_size);
 
 		if (kern_img == NULL)
 			errx(3, "Can't malloc: %s", strerror(errno));
@@ -786,7 +786,7 @@ bebox_build_image(char *kernel, char *boot, char *rawdev, char *outname)
 	toff = bebox_write_header(bebox_fd, elf_img_len, tmp);
 
 	/* Copy boot image */
-	elf_img = (unsigned char *)malloc(elf_img_len);
+	elf_img = malloc(elf_img_len);
 	if (!elf_img)
 		errx(3, "Can't malloc: %s", strerror(errno));
 	if (read(elf_fd, elf_img, elf_img_len) != elf_img_len)
@@ -802,7 +802,7 @@ bebox_build_image(char *kernel, char *boot, char *rawdev, char *outname)
 	/* Now go back and write in the block header */
 	endoff = lseek(bebox_fd, 0, SEEK_END);
 	lseek(bebox_fd, 0, SEEK_SET);
-	header_img = (unsigned char *)malloc(BEBOX_HEADER_SIZE);
+	header_img = malloc(BEBOX_HEADER_SIZE);
 	if (!header_img)
 		errx(3, "Can't malloc: %s", strerror(errno));
 	memset(header_img, 0, BEBOX_HEADER_SIZE);
@@ -837,6 +837,7 @@ bebox_build_image(char *kernel, char *boot, char *rawdev, char *outname)
 	write(bebox_fd, header_img, flength - endoff);
 
 	close(bebox_fd);
+	free(header_img);
 
 	return 0;
 }

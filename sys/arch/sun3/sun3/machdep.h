@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.37.14.1 2014/08/20 00:03:26 tls Exp $	*/
+/*	$NetBSD: machdep.h,v 1.37.14.2 2017/12/03 11:36:46 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -106,7 +106,6 @@ extern vaddr_t vmmap;	/* XXX - See mem.c */
 void	clock_init (void);
 void	cninit(void);
 
-void	dumpconf(void);
 void	dumpsys(void);
 
 void	enable_fpu(int);

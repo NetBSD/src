@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_extern.h,v 1.34.6.1 2014/08/20 00:04:31 tls Exp $	*/
+/*	$NetBSD: layer_extern.h,v 1.34.6.2 2017/12/03 11:38:47 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -90,6 +90,7 @@ int	layerfs_vget(struct mount *, ino_t, struct vnode **);
 int	layerfs_fhtovp(struct mount *, struct fid *, struct vnode **);
 int	layerfs_vptofh(struct vnode *, struct fid *, size_t *);
 int	layerfs_snapshot(struct mount *, struct vnode *, struct timespec *);
+int	layerfs_suspendctl(struct mount *, int);
 int	layerfs_renamelock_enter(struct mount *);
 void	layerfs_renamelock_exit(struct mount *);
 
@@ -98,7 +99,6 @@ int	layer_bypass(void *);
 int	layer_getattr(void *);
 int	layer_inactive(void *);
 int	layer_reclaim(void *);
-int	layer_lock(void *);
 int	layer_print(void *);
 int	layer_bmap(void *);
 int	layer_fsync(void *);
@@ -106,6 +106,7 @@ int	layer_lookup(void *);
 int	layer_setattr(void *);
 int	layer_access(void *);
 int	layer_open(void *);
+int	layer_close(void *);
 int	layer_remove(void *);
 int	layer_rename(void *);
 int	layer_revoke(void *);

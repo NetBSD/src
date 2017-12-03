@@ -1,4 +1,4 @@
-/* $NetBSD: sec.c,v 1.15.22.1 2014/08/20 00:03:49 tls Exp $ */
+/* $NetBSD: sec.c,v 1.15.22.2 2017/12/03 11:37:31 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001, 2006 Ben Harris
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sec.c,v 1.15.22.1 2014/08/20 00:03:49 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sec.c,v 1.15.22.2 2017/12/03 11:37:31 jdolecek Exp $");
 
 #include <sys/param.h>
 
@@ -214,7 +214,9 @@ sec_attach(device_t parent, device_t self, void *aux)
 	sec_cli(sc);
 	sc->sc_mpr |= SEC_MPR_IE;
 	bus_space_write_1(sc->sc_pod_t, sc->sc_pod_h, SEC_MPR, sc->sc_mpr);
-	pmf_device_register1(sc->sc_sbic.sc_dev, NULL, NULL, sec_shutdown);
+	if (!pmf_device_register1(sc->sc_sbic.sc_dev, NULL, NULL, sec_shutdown))
+		aprint_error_dev(sc->sc_sbic.sc_dev,
+		    "couldn't establish power handler\n");
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_misc.c,v 1.22.10.1 2014/08/20 00:03:33 tls Exp $	*/
+/*	$NetBSD: linux32_misc.c,v 1.22.10.2 2017/12/03 11:36:55 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -32,17 +32,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_misc.c,v 1.22.10.1 2014/08/20 00:03:33 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_misc.c,v 1.22.10.2 2017/12/03 11:36:55 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/time.h>
 #include <sys/types.h>
-#include <sys/malloc.h>
 #include <sys/fstypes.h>
 #include <sys/vfs_syscalls.h>
 #include <sys/ptrace.h>
 #include <sys/syscall.h>
+#include <sys/poll.h>
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
@@ -262,7 +262,7 @@ linux32_sys_futex(struct lwp *l,
 		}
 		linux32_to_native_timespec(&ts, &lts);
 	}
-	return linux_do_futex(l, &ua, retval, &ts);
+	return linux_do_futex(l, &ua, &ts, retval);
 }
 
 int
@@ -347,4 +347,40 @@ linux32_sys_setdomainname(struct lwp *l, const struct linux32_sys_setdomainname_
 	NETBSD32TOP_UAP(domainname, char);
 	NETBSD32TO64_UAP(len);
 	return linux_sys_setdomainname(l, &ua, retval);
+}
+
+int
+linux32_sys_ppoll(struct lwp *l, const struct linux32_sys_ppoll_args *uap,
+    register_t *retval)
+{
+	/* {
+		syscallarg(netbsd32_pollfdp_t) fds;
+		syscallarg(u_int) nfds;
+		syscallarg(linux32_timespecp_t) timeout;
+		syscallarg(linux32_sigsetp_t) sigset;
+	} */
+	struct linux32_timespec lts0, *lts;
+	struct timespec ts0, *ts = NULL;
+	linux32_sigset_t lsigmask0, *lsigmask;
+	sigset_t sigmask0, *sigmask = NULL;
+	int error;
+
+	lts = SCARG_P32(uap, timeout);
+	if (lts) {
+		if ((error = copyin(lts, &lts0, sizeof(lts0))) != 0)
+			return error;
+		linux32_to_native_timespec(&ts0, &lts0);
+		ts = &ts0;
+	}
+
+	lsigmask = SCARG_P32(uap, sigset);
+	if (lsigmask) {
+		if ((error = copyin(lsigmask, &lsigmask0, sizeof(lsigmask0))))
+			return error;
+		linux32_to_native_sigset(&sigmask0, &lsigmask0);
+		sigmask = &sigmask0;
+	}
+
+	return pollcommon(retval, SCARG_P32(uap, fds), SCARG(uap, nfds),
+	    ts, sigmask);
 }

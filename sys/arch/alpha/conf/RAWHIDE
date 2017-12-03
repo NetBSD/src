@@ -1,4 +1,4 @@
-# $NetBSD: RAWHIDE,v 1.35.18.2 2014/08/20 00:02:41 tls Exp $
+# $NetBSD: RAWHIDE,v 1.35.18.3 2017/12/03 11:35:46 jdolecek Exp $
 #
 # Alpha 4100 stripped for action server kernel.
 #
@@ -8,11 +8,11 @@ maxusers	64
 options 	DEC_KN300	# KN300:	AlphaServer 4100 and 1200
 options 	KTRACE		# System call tracing support
 options 	DEBUG		# Expensive debugging checks/support
-options 	KMEMSTATS	# Collect kmem usage statistics
 options 	USERCONF	# userconf(4) support
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 options 	DIAGNOSTIC	# Cheap kernel consistency checks
 options 	DDB		# Kernel Dynamic Debugger
+pseudo-device	ksyms
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -38,16 +38,8 @@ options 	IPFILTER_LOG	# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support
 options 	IPFILTER_COMPAT # Compat for IP-Filter
 #options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
-options 	COMPAT_43
-options 	COMPAT_12
-options 	COMPAT_13
-options 	COMPAT_14
-options 	COMPAT_15
-options 	COMPAT_16
-options 	COMPAT_20
-options 	COMPAT_30	# NetBSD 3.0 compatibility.
-options 	COMPAT_40	# NetBSD 4.0 compatibility.
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+
+include 	"conf/compat_netbsd12.config"
 
 options 	SYSVMSG
 options 	SYSVSEM

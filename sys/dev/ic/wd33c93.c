@@ -1,4 +1,4 @@
-/*	$NetBSD: wd33c93.c,v 1.24.18.1 2014/08/20 00:03:38 tls Exp $	*/
+/*	$NetBSD: wd33c93.c,v 1.24.18.2 2017/12/03 11:37:04 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.24.18.1 2014/08/20 00:03:38 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.24.18.2 2017/12/03 11:37:04 jdolecek Exp $");
 
 #include "opt_ddb.h"
 
@@ -207,7 +207,7 @@ wd33c93_attach(struct wd33c93_softc *sc)
 
 	/*
 	 * Add reference to adapter so that we drop the reference after
-	 * config_found() to make sure the adatper is disabled.
+	 * config_found() to make sure the adapter is disabled.
 	 */
 	if (scsipi_adapter_addref(&sc->sc_adapter) != 0) {
 		aprint_error_dev(sc->sc_dev, "unable to enable controller\n");

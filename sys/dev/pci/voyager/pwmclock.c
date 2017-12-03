@@ -1,4 +1,4 @@
-/*	$NetBSD: pwmclock.c,v 1.6.2.1 2013/06/23 06:20:21 tls Exp $	*/
+/*	$NetBSD: pwmclock.c,v 1.6.2.2 2017/12/03 11:37:30 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2011 Michael Lorenz
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pwmclock.c,v 1.6.2.1 2013/06/23 06:20:21 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pwmclock.c,v 1.6.2.2 2017/12/03 11:37:30 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,6 @@ static u_int get_pwmclock_timecount(struct timecounter *);
 
 struct pwmclock_softc *pwmclock;
 extern void (*initclocks_ptr)(void);
-extern struct clockframe cf;
 
 /* 0, 1/4, 3/8, 1/2, 5/8, 3/4, 7/8, 1 */
 static int scale_m[] = {1, 1, 3, 1, 5, 3, 7, 1};
@@ -137,7 +136,8 @@ pwmclock_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal("\n");
 
-	voyager_establish_intr(parent, 22, pwmclock_intr, sc);
+	/* NULL here gets us the clockframe */
+	voyager_establish_intr(parent, 22, pwmclock_intr, NULL);
 	reg = voyager_set_pwm(100, 100); /* 100Hz, 10% duty cycle */
 	reg |= SM502_PWM_ENABLE | SM502_PWM_ENABLE_INTR |
 	       SM502_PWM_INTR_PENDING;
@@ -273,7 +273,8 @@ pwmclock_set_speed(struct pwmclock_softc *sc, int speed)
 int
 pwmclock_intr(void *cookie)
 {
-	struct pwmclock_softc *sc = cookie;
+	struct clockframe *cf = cookie;
+	struct pwmclock_softc *sc = pwmclock;
 	uint32_t reg, now, diff;
 
 	/* is it us? */
@@ -307,7 +308,7 @@ pwmclock_intr(void *cookie)
 		sc->sc_step = sc->sc_step_wanted;
 	}
 		 
-	hardclock(&cf);
+	hardclock(cf);
 
 	return 1;
 }

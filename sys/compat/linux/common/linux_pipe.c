@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_pipe.c,v 1.65.14.1 2014/08/20 00:03:32 tls Exp $	*/
+/*	$NetBSD: linux_pipe.c,v 1.65.14.2 2017/12/03 11:36:55 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -30,12 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_pipe.c,v 1.65.14.1 2014/08/20 00:03:32 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_pipe.c,v 1.65.14.2 2017/12/03 11:36:55 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/mman.h>
 #include <sys/mount.h>

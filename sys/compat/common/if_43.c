@@ -1,4 +1,4 @@
-/*	$NetBSD: if_43.c,v 1.4.16.1 2014/08/20 00:03:31 tls Exp $	*/
+/*	$NetBSD: if_43.c,v 1.4.16.2 2017/12/03 11:36:53 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.4.16.1 2014/08/20 00:03:31 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.4.16.2 2017/12/03 11:36:53 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -49,7 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.4.16.1 2014/08/20 00:03:31 tls Exp $");
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/fcntl.h>
-#include <sys/malloc.h>
 #include <sys/syslog.h>
 #include <sys/unistd.h>
 #include <sys/resourcevar.h>
@@ -74,7 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.4.16.1 2014/08/20 00:03:31 tls Exp $");
 #include <compat/sys/sockio.h>
 
 #include <compat/common/compat_util.h>
-
+#include <compat/common/if_43.h>
 #include <uvm/uvm_extern.h>
 
 u_long 
@@ -216,12 +215,33 @@ compat_ifioctl(struct socket *so, u_long ocmd, u_long cmd, void *data,
     struct lwp *l)
 {
 	int error;
-	struct ifreq *ifr = data;
-	struct ifnet *ifp = ifunit(ifr->ifr_name);
+	struct ifreq *ifr = (struct ifreq *)data;
+	struct ifreq ifrb;
+	struct oifreq *oifr = NULL;
+	struct ifnet *ifp;
 	struct sockaddr *sa;
+	struct psref psref;
+	int bound = curlwp_bind();
 
-	if (ifp == NULL)
+	ifp = if_get(ifr->ifr_name, &psref);
+	if (ifp == NULL) {
+		curlwp_bindx(bound);
 		return ENXIO;
+	}
+
+	/*
+	 * If we have not been converted, make sure that we are.
+	 * (because the upper layer handles old socket calls, but
+	 * not oifreq calls.
+	 */
+	if (cmd == ocmd) {
+		cmd = compat_cvtcmd(ocmd);
+	}
+	if (cmd != ocmd) {
+		oifr = data;
+		data = ifr = &ifrb;
+		ifreqo2n(oifr, ifr);
+	}
 
 	switch (ocmd) {
 	case OSIOCSIFADDR:
@@ -239,24 +259,11 @@ compat_ifioctl(struct socket *so, u_long ocmd, u_long cmd, void *data,
 			sa->sa_len = 16;
 #endif
 		break;
-
-	case OOSIOCGIFADDR:
-		cmd = SIOCGIFADDR;
-		break;
-
-	case OOSIOCGIFDSTADDR:
-		cmd = SIOCGIFDSTADDR;
-		break;
-
-	case OOSIOCGIFBRDADDR:
-		cmd = SIOCGIFBRDADDR;
-		break;
-
-	case OOSIOCGIFNETMASK:
-		cmd = SIOCGIFNETMASK;
 	}
 
 	error = (*so->so_proto->pr_usrreqs->pr_ioctl)(so, cmd, ifr, ifp);
+	if_put(ifp, &psref);
+	curlwp_bindx(bound);
 
 	switch (ocmd) {
 	case OOSIOCGIFADDR:
@@ -265,6 +272,36 @@ compat_ifioctl(struct socket *so, u_long ocmd, u_long cmd, void *data,
 	case OOSIOCGIFNETMASK:
 		*(u_int16_t *)&ifr->ifr_addr = 
 		    ((struct sockaddr *)&ifr->ifr_addr)->sa_family;
+		break;
 	}
+
+	if (cmd != ocmd)
+		ifreqn2o(oifr, ifr);
+
 	return error;
 }
+
+#if defined(COMPAT_43)
+static u_long (*orig_compat_cvtcmd)(u_long);
+static int (*orig_compat_ifioctl)(struct socket *, u_long, u_long,
+    void *, struct lwp *);
+
+void
+if_43_init(void)
+{
+
+	orig_compat_cvtcmd = vec_compat_cvtcmd;
+	vec_compat_cvtcmd = compat_cvtcmd;
+
+	orig_compat_ifioctl = vec_compat_ifioctl;
+	vec_compat_ifioctl =  compat_ifioctl;
+}
+
+void
+if_43_fini(void)
+{
+
+	vec_compat_cvtcmd = orig_compat_cvtcmd;
+	vec_compat_ifioctl = orig_compat_ifioctl;
+}
+#endif /* defined(COMPAT_43) */

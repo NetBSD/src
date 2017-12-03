@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.8 2012/02/10 17:35:49 para Exp $	*/
+/*	$NetBSD: param.h,v 1.8.6.1 2017/12/03 11:36:20 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -80,6 +80,9 @@
 #define ALIGNBYTES32		(sizeof(int) - 1)
 #define ALIGN32(p)		(((u_long)(p) + ALIGNBYTES32) &~ALIGNBYTES32)
 
+#ifndef LOG2_PAGE_SIZE
+#define LOG2_PAGE_SIZE          14              /* 16K pages by default. */
+#endif
 #define	PGSHIFT		14		/* LOG2(NBPG) */
 #define	NBPG		(1 << PGSHIFT)	/* bytes/page */
 #define	PGOFSET		(NBPG-1)	/* byte offset into page */
@@ -107,6 +110,11 @@
  */
 #define	NKMEMPAGES_MIN_DEFAULT	((32 * 1024 * 1024) >> PAGE_SHIFT)
 #define	NKMEMPAGES_MAX_UNLIMITED 1
+
+/* The default size of identity mappings in region 6 & 7. */
+#ifndef LOG2_ID_PAGE_SIZE
+#define LOG2_ID_PAGE_SIZE       16
+#endif
 
 /*
  * Mach derived conversion macros

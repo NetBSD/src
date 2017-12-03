@@ -1,4 +1,4 @@
-/* $NetBSD: ofwpci.c,v 1.11.6.1 2014/08/20 00:03:17 tls Exp $ */
+/* $NetBSD: ofwpci.c,v 1.11.6.2 2017/12/03 11:36:34 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwpci.c,v 1.11.6.1 2014/08/20 00:03:17 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwpci.c,v 1.11.6.2 2017/12/03 11:36:34 jdolecek Exp $");
 
 #include "opt_pci.h"
 
@@ -83,6 +83,17 @@ ofwpci_get_chipset_tag(pci_chipset_tag_t pc)
 	pc->pc_intr_evcnt = genppc_pci_intr_evcnt;
 	pc->pc_intr_establish = genppc_pci_intr_establish;
 	pc->pc_intr_disestablish = genppc_pci_intr_disestablish;
+	pc->pc_intr_setattr = genppc_pci_intr_setattr;
+	pc->pc_intr_type = genppc_pci_intr_type;
+	pc->pc_intr_alloc = genppc_pci_intr_alloc;
+	pc->pc_intr_release = genppc_pci_intr_release;
+	pc->pc_intx_alloc = genppc_pci_intx_alloc;
+
+	pc->pc_msi_v = (void *)pc;
+	genppc_pci_chipset_msi_init(pc);
+
+	pc->pc_msix_v = (void *)pc;
+	genppc_pci_chipset_msix_init(pc);
 
 	pc->pc_conf_interrupt = genppc_pci_conf_interrupt;
 	pc->pc_decompose_tag = genppc_pci_ofmethod_decompose_tag;
@@ -123,7 +134,7 @@ ofwpci_attach(device_t parent, device_t self, void *aux)
 	struct pcibus_attach_args pba;
 	struct genppc_pci_chipset_businfo *pbi;
 	int node = ca->ca_node;
-	int i, isprim = 0;
+	int i;
 	uint32_t busrange[2];
 	char buf[64];
 #ifdef PCI_NETBSD_CONFIGURE
@@ -162,7 +173,6 @@ ofwpci_attach(device_t parent, device_t self, void *aux)
 	if (of_find_firstchild_byname(OF_finddevice("/"), "pci") == node) {
 		int isa_node;
 
-		isprim++;
 		/* yes we are, now do we have an ISA child? */
 		isa_node = of_find_firstchild_byname(node, "isa");
 		if (isa_node != -1) {

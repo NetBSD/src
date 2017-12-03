@@ -1,4 +1,4 @@
-/*	$NetBSD: omap5430_intr.h,v 1.1.2.3 2014/08/20 00:02:47 tls Exp $	*/
+/*	$NetBSD: omap5430_intr.h,v 1.1.2.4 2017/12/03 11:35:55 jdolecek Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -40,8 +40,9 @@
 #define PIC_MAXMAXSOURCES	(PIC_MAXSOURCES+8*32)
 
 /*
- * The BCM53xx uses a generic interrupt controller so pull that stuff.
+ * The OMAP5 uses a generic interrupt controller so pull in that stuff.
  */
+#define __HAVE_PIC_PENDING_INTRS
 #include <arm/cortex/gic_intr.h>
 #include <arm/cortex/gtmr_intr.h>      /* Generic Timer PPIs */
 

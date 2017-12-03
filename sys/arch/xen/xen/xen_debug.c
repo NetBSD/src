@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_debug.c,v 1.8 2011/07/17 20:54:49 joerg Exp $	*/
+/*	$NetBSD: xen_debug.c,v 1.8.12.1 2017/12/03 11:36:51 jdolecek Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_debug.c,v 1.8 2011/07/17 20:54:49 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_debug.c,v 1.8.12.1 2017/12/03 11:36:51 jdolecek Exp $");
 
 #define XENDEBUG
 
@@ -123,9 +123,9 @@ xen_dbglow_init(void)
 	printk("  nr_pages:   %lu",   si->nr_pages);
 	printk("  shared_inf: %p (was %p)\n",  HYPERVISOR_shared_info,
 	    si->shared_info);
-	printk("  pt_base:    %p",    (void *)si->pt_base); 
+	printk("  pt_base:    %p",    (void *)si->pt_base);
 	printk("  mod_start:  0x%lx\n", si->mod_start);
-	printk("  mod_len:    %lu\n", si->mod_len); 
+	printk("  mod_len:    %lu\n", si->mod_len);
 #if 0
 	printk("  net_rings: ");
 	for (i = 0; i < MAX_DOMAIN_VIFS; i++) {
@@ -433,6 +433,6 @@ void
 trap_init(void)
 {
 
-	HYPERVISOR_set_trap_table(trap_table);    
+	HYPERVISOR_set_trap_table(trap_table);
 }
 #endif

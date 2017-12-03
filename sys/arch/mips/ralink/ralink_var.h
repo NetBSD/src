@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_var.h,v 1.5.6.1 2014/08/20 00:03:13 tls Exp $	*/
+/*	$NetBSD: ralink_var.h,v 1.5.6.2 2017/12/03 11:36:28 jdolecek Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -49,6 +49,7 @@ struct mainbus_attach_args {
 	const char     *ma_name;
 	bus_space_tag_t ma_memt;
 	bus_dma_tag_t   ma_dmat;
+	bus_addr_t      ma_addr;
 };
 
 #define SERIAL_CONSOLE 1

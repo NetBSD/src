@@ -1,4 +1,4 @@
-/*	$NetBSD: intio_dmac.c,v 1.33.18.2 2014/08/20 00:03:28 tls Exp $	*/
+/*	$NetBSD: intio_dmac.c,v 1.33.18.3 2017/12/03 11:36:48 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio_dmac.c,v 1.33.18.2 2014/08/20 00:03:28 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intio_dmac.c,v 1.33.18.3 2017/12/03 11:36:48 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,9 +159,10 @@ dmac_init_channels(struct dmac_softc *sc)
  * Channel initialization/deinitialization per user device.
  */
 struct dmac_channel_stat *
-dmac_alloc_channel(device_t self, int ch, const char *name, int normalv,
-    dmac_intr_handler_t normal, void *normalarg, int errorv,
-    dmac_intr_handler_t error, void *errorarg)
+dmac_alloc_channel(device_t self, int ch, const char *name,
+    int normalv, dmac_intr_handler_t normal, void *normalarg,
+    int errorv,  dmac_intr_handler_t error,  void *errorarg,
+    uint8_t dcr, uint8_t ocr)
 {
 	struct intio_softc *intio = device_private(self);
 	struct dmac_softc *dmac = device_private(intio->sc_dmac);
@@ -201,9 +202,8 @@ dmac_alloc_channel(device_t self, int ch, const char *name, int normalv,
 
 	/* fill the channel status structure by the default values. */
 	strcpy(chan->ch_name, name);
-	chan->ch_dcr = (DMAC_DCR_XRM_CSWH | DMAC_DCR_OTYP_EASYNC |
-			DMAC_DCR_OPS_8BIT);
-	chan->ch_ocr = (DMAC_OCR_SIZE_BYTE | DMAC_OCR_REQG_EXTERNAL);
+	chan->ch_dcr = dcr;
+	chan->ch_ocr = ocr;
 	chan->ch_normalv = normalv;
 	chan->ch_errorv = errorv;
 	chan->ch_normal = normal;
@@ -217,6 +217,7 @@ dmac_alloc_channel(device_t self, int ch, const char *name, int normalv,
 	bus_space_write_1(dmac->sc_bst, chan->ch_bht,
 			   DMAC_REG_DCR, chan->ch_dcr);
 	bus_space_write_1(dmac->sc_bst, chan->ch_bht, DMAC_REG_CPR, 0);
+	/* OCR will be written at dmac_load_xfer() */
 
 	/*
 	 * X68k physical user space is a subset of the kernel space;
@@ -283,7 +284,6 @@ dmac_alloc_xfer(struct dmac_channel_stat *chan, bus_dma_tag_t dmat,
 	xf->dx_array = chan->ch_map;
 	xf->dx_done = 0;
 #endif
-	xf->dx_nextoff = xf->dx_nextsize = -1;
 	return xf;
 }
 
@@ -299,8 +299,6 @@ dmac_load_xfer(struct dmac_softc *dmac, struct dmac_dma_xfer *xf)
 		xf->dx_ocr |= DMAC_OCR_CHAIN_DISABLED;
 	else {
 		xf->dx_ocr |= DMAC_OCR_CHAIN_ARRAY;
-		xf->dx_nextoff = ~0;
-		xf->dx_nextsize = ~0;
 	}
 
 	bus_space_write_1(dmac->sc_bst, chan->ch_bht, DMAC_REG_CSR, 0xff);
@@ -351,6 +349,8 @@ dmac_start_xfer_offset(struct dmac_softc *dmac, struct dmac_dma_xfer *xf,
 	struct dmac_channel_stat *chan = xf->dx_channel;
 	struct x68k_bus_dmamap *dmamap = xf->dx_dmamap;
 	int go = DMAC_CCR_STR|DMAC_CCR_INT;
+	bus_addr_t paddr;
+	uint8_t csr;
 #ifdef DMAC_ARRAYCHAIN
 	int c;
 #endif
@@ -390,20 +390,21 @@ dmac_start_xfer_offset(struct dmac_softc *dmac, struct dmac_dma_xfer *xf,
 		if (dmamap->dm_mapsize != dmamap->dm_segs[0].ds_len)
 			panic("dmac_start_xfer_offset: dmamap curruption");
 #endif
-		if (offset == xf->dx_nextoff &&
-		    size == xf->dx_nextsize) {
-			/* Use continued operation */
+		paddr = dmamap->dm_segs[0].ds_addr + offset;
+		csr = bus_space_read_1(dmac->sc_bst, chan->ch_bht, DMAC_REG_CSR);
+		if ((csr & DMAC_CSR_ACT) != 0) {
+			/* Use 'Continue Mode' */
+			bus_space_write_4(dmac->sc_bst, chan->ch_bht,
+			    DMAC_REG_BAR, paddr);
+			bus_space_write_2(dmac->sc_bst, chan->ch_bht,
+			    DMAC_REG_BTCR, (int) size);
 			go |=  DMAC_CCR_CNT;
-			xf->dx_nextoff += size;
+			go &= ~DMAC_CCR_STR;
 		} else {
 			bus_space_write_4(dmac->sc_bst, chan->ch_bht,
-					  DMAC_REG_MAR,
-					  (int) dmamap->dm_segs[0].ds_addr
-					  + offset);
+					  DMAC_REG_MAR, paddr);
 			bus_space_write_2(dmac->sc_bst, chan->ch_bht,
 					  DMAC_REG_MTCR, (int) size);
-			xf->dx_nextoff = offset;
-			xf->dx_nextsize = size;
 		}
 #ifdef DMAC_ARRAYCHAIN
 		xf->dx_done = 1;
@@ -434,13 +435,6 @@ dmac_start_xfer_offset(struct dmac_softc *dmac, struct dmac_dma_xfer *xf,
 #endif
 #endif
 	bus_space_write_1(dmac->sc_bst, chan->ch_bht, DMAC_REG_CCR, go);
-
-	if (xf->dx_nextoff != ~0) {
-		bus_space_write_4(dmac->sc_bst, chan->ch_bht,
-				  DMAC_REG_BAR, xf->dx_nextoff);
-		bus_space_write_2(dmac->sc_bst, chan->ch_bht,
-				  DMAC_REG_BTCR, xf->dx_nextsize);
-	}
 
 	return 0;
 }
@@ -562,7 +556,6 @@ dmac_abort_xfer(struct dmac_softc *dmac, struct dmac_dma_xfer *xf)
 	bus_space_write_1(dmac->sc_bst, chan->ch_bht, DMAC_REG_CCR,
 			  DMAC_CCR_INT | DMAC_CCR_SAB);
 	bus_space_write_1(dmac->sc_bst, chan->ch_bht, DMAC_REG_CSR, 0xff);
-	xf->dx_nextoff = xf->dx_nextsize = -1;
 
 	return 0;
 }

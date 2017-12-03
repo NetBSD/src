@@ -1,4 +1,4 @@
-/*	$NetBSD: atwvar.h,v 1.37 2010/03/14 21:25:59 dyoung Exp $	*/
+/*	$NetBSD: atwvar.h,v 1.37.20.1 2017/12/03 11:37:03 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.  All rights reserved.
@@ -180,6 +180,8 @@ struct atw_softc {
 				    int, int, u_int32_t);
 	struct ieee80211_node	*(*sc_node_alloc)(struct ieee80211_node_table*);
 	void			(*sc_node_free)(struct ieee80211_node *);
+
+	void			*sc_soft_ih;
 
 	int			sc_tx_timer;
 	int			sc_rescan_timer;

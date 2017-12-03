@@ -1,4 +1,4 @@
-/* $NetBSD: lpt_pnpbios.c,v 1.12.12.1 2012/09/12 06:15:32 tls Exp $ */
+/* $NetBSD: lpt_pnpbios.c,v 1.12.12.2 2017/12/03 11:36:18 jdolecek Exp $ */
 /*
  * Copyright (c) 1999
  * 	Matthias Drochner.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_pnpbios.c,v 1.12.12.1 2012/09/12 06:15:32 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_pnpbios.c,v 1.12.12.2 2017/12/03 11:36:18 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,12 +81,13 @@ lpt_pnpbios_attach(device_t parent, device_t self, void *aux)
 	  this is really ISA DMA under the covers: clamp max transfer size */
         self->dv_maxphys = MIN(parent->dv_maxphys, 64 * 1024);
 
-	if (pnpbios_io_map(aa->pbt, aa->resc, 0, &sc->sc_iot, &sc->sc_ioh)) { 	
-		printf(": can't map i/o space\n");
+	aprint_naive("\n");
+	if (pnpbios_io_map(aa->pbt, aa->resc, 0, &sc->sc_iot, &sc->sc_ioh)) {
+		aprint_error(": can't map i/o space\n");
 		return;
 	}
 
-	printf("\n");
+	aprint_normal("\n");
 	pnpbios_print_devres(self, aa);
 
 	lpt_attach_subr(sc);

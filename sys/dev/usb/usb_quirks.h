@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_quirks.h,v 1.26 2010/11/30 11:35:30 phx Exp $	*/
+/*	$NetBSD: usb_quirks.h,v 1.26.20.1 2017/12/03 11:37:34 jdolecek Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.h,v 1.9 1999/11/12 23:31:03 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 struct usbd_quirks {
-	u_int32_t uq_flags;	/* Device problems: */
+	uint32_t uq_flags;	/* Device problems: */
 #define UQ_NO_SET_PROTO	0x0001	/* cannot handle SET PROTOCOL. */
 #define UQ_SWAP_UNICODE	0x0002	/* has some Unicode strings swapped. */
 #define UQ_MS_REVZ	0x0004	/* mouse has Z-axis reversed */

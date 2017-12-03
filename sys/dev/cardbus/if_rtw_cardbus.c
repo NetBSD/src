@@ -1,4 +1,4 @@
-/* $NetBSD: if_rtw_cardbus.c,v 1.42.12.1 2014/08/20 00:03:36 tls Exp $ */
+/* $NetBSD: if_rtw_cardbus.c,v 1.42.12.2 2017/12/03 11:37:00 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.42.12.1 2014/08/20 00:03:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.42.12.2 2017/12/03 11:37:00 jdolecek Exp $");
 
 #include "opt_inet.h"
 
@@ -128,8 +128,8 @@ void	rtw_cardbus_attach(device_t, device_t, void *);
 int	rtw_cardbus_detach(device_t, int);
 
 CFATTACH_DECL3_NEW(rtw_cardbus, sizeof(struct rtw_cardbus_softc),
-    rtw_cardbus_match, rtw_cardbus_attach, rtw_cardbus_detach, NULL, NULL, NULL,
-    DVF_DETACH_SHUTDOWN);
+    rtw_cardbus_match, rtw_cardbus_attach, rtw_cardbus_detach, NULL, NULL,
+    NULL, DVF_DETACH_SHUTDOWN);
 
 void	rtw_cardbus_setup(struct rtw_cardbus_softc *);
 

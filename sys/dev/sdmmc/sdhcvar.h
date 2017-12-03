@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhcvar.h,v 1.8.2.2 2013/02/25 00:29:31 tls Exp $	*/
+/*	$NetBSD: sdhcvar.h,v 1.8.2.3 2017/12/03 11:37:32 jdolecek Exp $	*/
 /*	$OpenBSD: sdhcvar.h,v 1.3 2007/09/06 08:01:01 jsg Exp $	*/
 
 /*
@@ -25,6 +25,7 @@
 #include <sys/pmf.h>
 
 struct sdhc_host;
+struct sdmmc_command;
 
 struct sdhc_softc {
 	device_t		sc_dev;
@@ -35,29 +36,45 @@ struct sdhc_softc {
 	bus_dma_tag_t		sc_dmat;
 
 	uint32_t		sc_flags;
-#define	SDHC_FLAG_USE_DMA	0x0001
-#define	SDHC_FLAG_FORCE_DMA	0x0002
-#define	SDHC_FLAG_NO_PWR0	0x0004	/* Freescale ESDHC */
-#define	SDHC_FLAG_HAVE_DVS	0x0008	/* Freescale ESDHC */
-#define	SDHC_FLAG_32BIT_ACCESS	0x0010	/* Freescale ESDHC */
-#define	SDHC_FLAG_ENHANCED	0x0020	/* Freescale ESDHC */
-#define	SDHC_FLAG_8BIT_MODE	0x0040	/* MMC 8bit mode is supported */
-#define	SDHC_FLAG_HAVE_CGM	0x0080	/* Netlogic XLP */
-#define	SDHC_FLAG_NO_LED_ON	0x0100	/* LED_ON unsupported in HOST_CTL */
-#define	SDHC_FLAG_HOSTCAPS	0x0200	/* No device provided capabilities */
-#define	SDHC_FLAG_RSP136_CRC	0x0400	/* Resp 136 with CRC and end-bit */
-#define	SDHC_FLAG_SINGLE_ONLY	0x0800	/* Single transfer only */
-#define	SDHC_FLAG_WAIT_RESET	0x1000	/* Wait for soft resets to start */
-#define	SDHC_FLAG_NO_HS_BIT	0x2000	/* Don't set SDHC_HIGH_SPEED bit */
+#define	SDHC_FLAG_USE_DMA	0x00000001
+#define	SDHC_FLAG_FORCE_DMA	0x00000002
+#define	SDHC_FLAG_NO_PWR0	0x00000004 /* Freescale ESDHC */
+#define	SDHC_FLAG_HAVE_DVS	0x00000008 /* Freescale ESDHC */
+#define	SDHC_FLAG_32BIT_ACCESS	0x00000010 /* Freescale ESDHC */
+#define	SDHC_FLAG_ENHANCED	0x00000020 /* Freescale ESDHC */
+#define	SDHC_FLAG_8BIT_MODE	0x00000040 /* MMC 8bit mode is supported */
+#define	SDHC_FLAG_HAVE_CGM	0x00000080 /* Netlogic XLP */
+#define	SDHC_FLAG_NO_LED_ON	0x00000100 /* LED_ON unsupported in HOST_CTL */
+#define	SDHC_FLAG_HOSTCAPS	0x00000200 /* No device provided capabilities */
+#define	SDHC_FLAG_RSP136_CRC	0x00000400 /* Resp 136 with CRC and end-bit */
+#define	SDHC_FLAG_SINGLE_ONLY	0x00000800 /* Single transfer only */
+#define	SDHC_FLAG_WAIT_RESET	0x00001000 /* Wait for soft resets to start */
+#define	SDHC_FLAG_NO_HS_BIT	0x00002000 /* Don't set SDHC_HIGH_SPEED bit */
+#define	SDHC_FLAG_EXTERNAL_DMA	0x00004000
+#define	SDHC_FLAG_EXTDMA_DMAEN	0x00008000 /* ext. dma need SDHC_DMA_ENABLE */
+#define	SDHC_FLAG_NO_CLKBASE	0x00020000 /* ignore clkbase register */
+#define	SDHC_FLAG_SINGLE_POWER_WRITE 0x00040000
+#define	SDHC_FLAG_NO_TIMEOUT	0x00080000 /* ignore timeout interrupts */
+#define	SDHC_FLAG_USE_ADMA2	0x00100000
+#define	SDHC_FLAG_POLL_CARD_DET	0x00200000 /* polling card detect */
+#define	SDHC_FLAG_SLOW_SDR50  	0x00400000 /* reduce SDR50 speed */
+#define	SDHC_FLAG_USDHC		0x00800000 /* Freescale uSDHC */
+#define	SDHC_FLAG_NO_AUTO_STOP	0x01000000 /* No auto CMD12 */
+#define	SDHC_FLAG_NO_BUSY_INTR	0x02000000 /* No intr when RESP_BUSY */
 
 	uint32_t		sc_clkbase;
 	int			sc_clkmsk;	/* Mask for SDCLK */
 	uint32_t		sc_caps;/* attachment provided capabilities */
+	uint32_t		sc_caps2;
 
 	int (*sc_vendor_rod)(struct sdhc_softc *, int);
 	int (*sc_vendor_write_protect)(struct sdhc_softc *);
 	int (*sc_vendor_card_detect)(struct sdhc_softc *);
+	int (*sc_vendor_bus_width)(struct sdhc_softc *, int);
 	int (*sc_vendor_bus_clock)(struct sdhc_softc *, int);
+	int (*sc_vendor_transfer_data_dma)(struct sdhc_softc *, struct sdmmc_command *);
+	void (*sc_vendor_hw_reset)(struct sdhc_softc *, struct sdhc_host *);
+	int (*sc_vendor_signal_voltage)(struct sdhc_softc *, int);
 };
 
 /* Host controller functions called by the attachment driver. */
@@ -68,5 +85,12 @@ int	sdhc_detach(struct sdhc_softc *, int);
 bool	sdhc_suspend(device_t, const pmf_qual_t *);
 bool	sdhc_resume(device_t, const pmf_qual_t *);
 bool	sdhc_shutdown(device_t, int);
+kmutex_t *sdhc_host_lock(struct sdhc_host *);
+uint8_t	sdhc_host_read_1(struct sdhc_host *, int);
+uint16_t sdhc_host_read_2(struct sdhc_host *, int);
+uint32_t sdhc_host_read_4(struct sdhc_host *, int);
+void	sdhc_host_write_1(struct sdhc_host *, int, uint8_t);
+void	sdhc_host_write_2(struct sdhc_host *, int, uint16_t);
+void	sdhc_host_write_4(struct sdhc_host *, int, uint32_t);
 
 #endif	/* _SDHCVAR_H_ */

@@ -1,4 +1,4 @@
-/* $NetBSD: thinkpad_acpi.c,v 1.41.2.2 2013/06/23 06:20:16 tls Exp $ */
+/* $NetBSD: thinkpad_acpi.c,v 1.41.2.3 2017/12/03 11:36:58 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.41.2.2 2013/06/23 06:20:16 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.41.2.3 2017/12/03 11:36:58 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -119,6 +119,21 @@ typedef struct thinkpad_softc {
 #define	THINKPAD_DISPLAY_ALL \
 	(THINKPAD_DISPLAY_LCD | THINKPAD_DISPLAY_CRT | THINKPAD_DISPLAY_DVI)
 
+#define THINKPAD_BLUETOOTH_HWPRESENT	0x01
+#define THINKPAD_BLUETOOTH_RADIOSSW	0x02
+#define THINKPAD_BLUETOOTH_RESUMECTRL	0x04
+
+#define THINKPAD_WWAN_HWPRESENT		0x01
+#define THINKPAD_WWAN_RADIOSSW		0x02
+#define THINKPAD_WWAN_RESUMECTRL	0x04
+
+#define THINKPAD_UWB_HWPRESENT	0x01
+#define THINKPAD_UWB_RADIOSSW	0x02
+
+#define THINKPAD_RFK_BLUETOOTH		0
+#define THINKPAD_RFK_WWAN		1
+#define THINKPAD_RFK_UWB		2
+
 static int	thinkpad_match(device_t, cfdata_t, void *);
 static void	thinkpad_attach(device_t, device_t, void *);
 static int	thinkpad_detach(device_t, int);
@@ -132,8 +147,9 @@ static void	thinkpad_sensors_refresh(struct sysmon_envsys *, envsys_data_t *);
 static void	thinkpad_temp_refresh(struct sysmon_envsys *, envsys_data_t *);
 static void	thinkpad_fan_refresh(struct sysmon_envsys *, envsys_data_t *);
 
-static void	thinkpad_wireless_toggle(thinkpad_softc_t *);
+static void	thinkpad_uwb_toggle(thinkpad_softc_t *);
 static void	thinkpad_wwan_toggle(thinkpad_softc_t *);
+static void	thinkpad_bluetooth_toggle(thinkpad_softc_t *);
 
 static bool	thinkpad_resume(device_t, const pmf_qual_t *);
 static void	thinkpad_brightness_up(device_t);
@@ -141,8 +157,9 @@ static void	thinkpad_brightness_down(device_t);
 static uint8_t	thinkpad_brightness_read(thinkpad_softc_t *sc);
 static void	thinkpad_cmos(thinkpad_softc_t *, uint8_t);
 
-CFATTACH_DECL_NEW(thinkpad, sizeof(thinkpad_softc_t),
-    thinkpad_match, thinkpad_attach, thinkpad_detach, NULL);
+CFATTACH_DECL3_NEW(thinkpad, sizeof(thinkpad_softc_t),
+    thinkpad_match, thinkpad_attach, thinkpad_detach, NULL, NULL, NULL,
+    DVF_DETACH_SHUTDOWN);
 
 static const char * const thinkpad_ids[] = {
 	"IBM0068",
@@ -387,7 +404,9 @@ thinkpad_get_hotkeys(void *opaque)
 #endif
 			break;
 		case THINKPAD_NOTIFY_WirelessSwitch:
-			thinkpad_wireless_toggle(sc);
+			thinkpad_uwb_toggle(sc);
+			thinkpad_wwan_toggle(sc);
+			thinkpad_bluetooth_toggle(sc);
 #ifndef THINKPAD_NORMAL_HOTKEYS
 			if (sc->sc_smpsw_valid == false)
 				break;
@@ -694,18 +713,89 @@ thinkpad_fan_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 }
 
 static void
-thinkpad_wireless_toggle(thinkpad_softc_t *sc)
+thinkpad_bluetooth_toggle(thinkpad_softc_t *sc)
 {
+	ACPI_BUFFER buf;
+	ACPI_OBJECT retobj;
+	ACPI_OBJECT param[1];
+	ACPI_OBJECT_LIST params;
+	ACPI_STATUS rv;
+
 	/* Ignore return value, as the hardware may not support bluetooth */
-	(void)AcpiEvaluateObject(sc->sc_node->ad_handle, "BTGL", NULL, NULL);
-	(void)AcpiEvaluateObject(sc->sc_node->ad_handle, "GWAN", NULL, NULL);
+	rv = AcpiEvaluateObject(sc->sc_node->ad_handle, "BTGL", NULL, NULL);
+	if (!ACPI_FAILURE(rv))
+		return;
+
+	buf.Pointer = &retobj;
+	buf.Length = sizeof(retobj);
+
+	rv = AcpiEvaluateObject(sc->sc_node->ad_handle, "GBDC", NULL, &buf);
+	if (ACPI_FAILURE(rv))
+		return;
+
+	params.Count = 1;
+	params.Pointer = param;
+	param[0].Type = ACPI_TYPE_INTEGER;
+	param[0].Integer.Value =
+		(retobj.Integer.Value & THINKPAD_BLUETOOTH_RADIOSSW) == 0
+		? THINKPAD_BLUETOOTH_RADIOSSW | THINKPAD_BLUETOOTH_RESUMECTRL
+		: 0;
+
+	(void)AcpiEvaluateObject(sc->sc_node->ad_handle, "SBDC", &params, NULL);
 }
 
 static void
 thinkpad_wwan_toggle(thinkpad_softc_t *sc)
 {
-	/* Ignore return value, as the hardware may not support wireless WAN */
-	(void)AcpiEvaluateObject(sc->sc_node->ad_handle, "WTGL", NULL, NULL);
+	ACPI_BUFFER buf;
+	ACPI_OBJECT retobj;
+	ACPI_OBJECT param[1];
+	ACPI_OBJECT_LIST params;
+	ACPI_STATUS rv;
+
+	buf.Pointer = &retobj;
+	buf.Length = sizeof(retobj);
+
+	rv = AcpiEvaluateObject(sc->sc_node->ad_handle, "GWAN", NULL, &buf);
+	if (ACPI_FAILURE(rv))
+		return;
+
+	params.Count = 1;
+	params.Pointer = param;
+	param[0].Type = ACPI_TYPE_INTEGER;
+	param[0].Integer.Value =
+		(retobj.Integer.Value & THINKPAD_WWAN_RADIOSSW) == 0
+		? THINKPAD_WWAN_RADIOSSW | THINKPAD_WWAN_RESUMECTRL
+		: 0;
+
+	(void)AcpiEvaluateObject(sc->sc_node->ad_handle, "SWAN", &params, NULL);
+}
+
+static void
+thinkpad_uwb_toggle(thinkpad_softc_t *sc)
+{
+	ACPI_BUFFER buf;
+	ACPI_OBJECT retobj;
+	ACPI_OBJECT param[1];
+	ACPI_OBJECT_LIST params;
+	ACPI_STATUS rv;
+
+	buf.Pointer = &retobj;
+	buf.Length = sizeof(retobj);
+
+	rv = AcpiEvaluateObject(sc->sc_node->ad_handle, "GUWB", NULL, &buf);
+	if (ACPI_FAILURE(rv))
+		return;
+
+	params.Count = 1;
+	params.Pointer = param;
+	param[0].Type = ACPI_TYPE_INTEGER;
+	param[0].Integer.Value =
+		(retobj.Integer.Value & THINKPAD_UWB_RADIOSSW) == 0
+		? THINKPAD_UWB_RADIOSSW
+		: 0;
+
+	(void)AcpiEvaluateObject(sc->sc_node->ad_handle, "SUWB", &params, NULL);
 }
 
 static uint8_t
@@ -769,7 +859,7 @@ thinkpad_resume(device_t dv, const pmf_qual_t *qual)
 	return true;
 }
 
-MODULE(MODULE_CLASS_DRIVER, thinkpad, NULL);
+MODULE(MODULE_CLASS_DRIVER, thinkpad, "sysmon_envsys,sysmon_power");
 
 #ifdef _MODULE
 #include "ioconf.c"

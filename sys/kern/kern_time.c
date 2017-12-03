@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.174.2.2 2013/06/23 06:18:58 tls Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.174.2.3 2017/12/03 11:38:45 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.174.2.2 2013/06/23 06:18:58 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.174.2.3 2017/12/03 11:38:45 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -96,6 +96,8 @@ CTASSERT(ITIMER_REAL == CLOCK_REALTIME);
 CTASSERT(ITIMER_VIRTUAL == CLOCK_VIRTUAL);
 CTASSERT(ITIMER_PROF == CLOCK_PROF);
 CTASSERT(ITIMER_MONOTONIC == CLOCK_MONOTONIC);
+
+#define	DELAYTIMER_MAX	32
 
 /*
  * Initialize timekeeping.
@@ -238,7 +240,7 @@ sys___clock_getres50(struct lwp *l, const struct sys___clock_getres50_args *uap,
 		syscallarg(struct timespec *) tp;
 	} */
 	struct timespec ts;
-	int error = 0;
+	int error;
 
 	if ((error = clock_getres1(SCARG(uap, clock_id), &ts)) != 0)
 		return error;
@@ -310,15 +312,19 @@ sys_clock_nanosleep(struct lwp *l, const struct sys_clock_nanosleep_args *uap,
 
 	error = copyin(SCARG(uap, rqtp), &rqt, sizeof(struct timespec));
 	if (error)
-		return (error);
+		goto out;
 
 	error = nanosleep1(l, SCARG(uap, clock_id), SCARG(uap, flags), &rqt,
 	    SCARG(uap, rmtp) ? &rmt : NULL);
 	if (SCARG(uap, rmtp) == NULL || (error != 0 && error != EINTR))
-		return error;
+		goto out;
 
-	error1 = copyout(&rmt, SCARG(uap, rmtp), sizeof(rmt));
-	return error1 ? error1 : error;
+	if ((SCARG(uap, flags) & TIMER_ABSTIME) == 0 &&
+	    (error1 = copyout(&rmt, SCARG(uap, rmtp), sizeof(rmt))) != 0)
+		error = error1;
+out:
+	*retval = error;
+	return 0;
 }
 
 int
@@ -328,8 +334,14 @@ nanosleep1(struct lwp *l, clockid_t clock_id, int flags, struct timespec *rqt,
 	struct timespec rmtstart;
 	int error, timo;
 
-	if ((error = ts2timo(clock_id, flags, rqt, &timo, &rmtstart)) != 0)
-		return error == ETIMEDOUT ? 0 : error;
+	if ((error = ts2timo(clock_id, flags, rqt, &timo, &rmtstart)) != 0) {
+		if (error == ETIMEDOUT) {
+			error = 0;
+			if (rmt != NULL)
+				rmt->tv_sec = rmt->tv_nsec = 0;
+		}
+		return error;
+	}
 
 	/*
 	 * Avoid inadvertently sleeping forever
@@ -366,6 +378,36 @@ again:
 		error = 0;
 
 	return error;
+}
+
+int
+sys_clock_getcpuclockid2(struct lwp *l,
+    const struct sys_clock_getcpuclockid2_args *uap,
+    register_t *retval)
+{
+	/* {
+		syscallarg(idtype_t idtype;
+		syscallarg(id_t id);
+		syscallarg(clockid_t *)clock_id;
+	} */
+	pid_t pid;
+	lwpid_t lid;
+	clockid_t clock_id;
+	id_t id = SCARG(uap, id);
+
+	switch (SCARG(uap, idtype)) {
+	case P_PID:
+		pid = id == 0 ? l->l_proc->p_pid : id;
+		clock_id = CLOCK_PROCESS_CPUTIME_ID | pid;
+		break;
+	case P_LWPID:
+		lid = id == 0 ? l->l_lid : id;
+		clock_id = CLOCK_THREAD_CPUTIME_ID | lid;
+		break;
+	default:
+		return EINVAL;
+	}
+	return copyout(&clock_id, SCARG(uap, clock_id), sizeof(clock_id));
 }
 
 /* ARGSUSED */
@@ -454,7 +496,7 @@ sys___adjtime50(struct lwp *l, const struct sys___adjtime50_args *uap,
 		syscallarg(const struct timeval *) delta;
 		syscallarg(struct timeval *) olddelta;
 	} */
-	int error = 0;
+	int error;
 	struct timeval atv, oldatv;
 
 	if ((error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_TIME,
@@ -509,7 +551,7 @@ adjtime1(const struct timeval *delta, struct timeval *olddelta, struct proc *p)
  *
  * All timers are kept in an array pointed to by p_timers, which is
  * allocated on demand - many processes don't use timers at all. The
- * first three elements in this array are reserved for the BSD timers:
+ * first four elements in this array are reserved for the BSD timers:
  * element 0 is ITIMER_REAL, element 1 is ITIMER_VIRTUAL, element
  * 2 is ITIMER_PROF, and element 3 is ITIMER_MONOTONIC. The rest may be
  * allocated by the timer_create() syscall.
@@ -575,7 +617,7 @@ timer_create1(timer_t *tid, clockid_t id, struct sigevent *evp,
 
 	/* Find a free timer slot, skipping those reserved for setitimer(). */
 	mutex_spin_enter(&timer_lock);
-	for (timerid = 3; timerid < TIMER_MAX; timerid++)
+	for (timerid = TIMER_MIN; timerid < TIMER_MAX; timerid++)
 		if (pts->pts_timers[timerid] == NULL)
 			break;
 	if (timerid == TIMER_MAX) {
@@ -940,6 +982,8 @@ sys_timer_getoverrun(struct lwp *l, const struct sys_timer_getoverrun_args *uap,
 		return (EINVAL);
 	}
 	*retval = pt->pt_poverruns;
+	if (*retval >= DELAYTIMER_MAX)
+		*retval = DELAYTIMER_MAX;
 	mutex_spin_exit(&timer_lock);
 
 	return (0);
@@ -1049,7 +1093,7 @@ dogetitimer(struct proc *p, int which, struct itimerval *itvp)
 		TIMESPEC_TO_TIMEVAL(&itvp->it_value, &its.it_value);
 		TIMESPEC_TO_TIMEVAL(&itvp->it_interval, &its.it_interval);
 	}
-	mutex_spin_exit(&timer_lock);	
+	mutex_spin_exit(&timer_lock);
 
 	return 0;
 }
@@ -1191,7 +1235,6 @@ timers_alloc(struct proc *p)
 	LIST_INIT(&pts->pts_prof);
 	for (i = 0; i < TIMER_MAX; i++)
 		pts->pts_timers[i] = NULL;
-	pts->pts_fired = 0;
 	mutex_spin_enter(&timer_lock);
 	if (p->p_timers == NULL) {
 		p->p_timers = pts;
@@ -1255,7 +1298,7 @@ timers_free(struct proc *p, int which)
 			    &ptn->pt_time.it_value);
 			LIST_INSERT_HEAD(&pts->pts_prof, ptn, pt_list);
 		}
-		i = 3;
+		i = TIMER_MIN;
 	}
 	for ( ; i < TIMER_MAX; i++) {
 		if (pts->pts_timers[i] != NULL) {
@@ -1264,7 +1307,7 @@ timers_free(struct proc *p, int which)
 		}
 	}
 	if (pts->pts_timers[0] == NULL && pts->pts_timers[1] == NULL &&
-	    pts->pts_timers[2] == NULL) {
+	    pts->pts_timers[2] == NULL && pts->pts_timers[3] == NULL) {
 		p->p_timers = NULL;
 		mutex_spin_exit(&timer_lock);
 		pool_put(&ptimers_pool, pts);

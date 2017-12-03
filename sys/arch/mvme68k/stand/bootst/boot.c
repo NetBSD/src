@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.8 2008/01/12 09:54:30 tsutsui Exp $ */
+/*	$NetBSD: boot.c,v 1.8.54.1 2017/12/03 11:36:30 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -62,7 +62,7 @@ main(void)
 
 	if (flag & RB_ASKNAME) {
 		printf("tapeboot: segment? [%s] ", defname);
-		gets(line);
+		kgets(line, sizeof(line));
 		if (line[0])
 			file = line;
 	}

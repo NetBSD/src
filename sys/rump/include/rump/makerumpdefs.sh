@@ -8,7 +8,7 @@ echo Generating rumpdefs.h
 rm -f rumpdefs.h
 exec 3>&1 > rumpdefs.h
 
-printf '/*	$NetBSD: makerumpdefs.sh,v 1.7.2.4 2014/08/20 00:04:39 tls Exp $	*/\n\n'
+printf '/*	$NetBSD: makerumpdefs.sh,v 1.7.2.5 2017/12/03 11:39:14 jdolecek Exp $	*/\n\n'
 printf '/*\n *\tAUTOMATICALLY GENERATED.  DO NOT EDIT.\n */\n\n'
 printf '#ifndef _RUMP_RUMPDEFS_H_\n'
 printf '#define _RUMP_RUMPDEFS_H_\n\n'
@@ -53,6 +53,11 @@ enum rump_'"$2"' {
 fromvers ../../../sys/fcntl.h
 sed -n '/#define	O_[A-Z]*	*0x/s/O_/RUMP_O_/gp' \
     < ../../../sys/fcntl.h
+sed -n '/#define	F_[A-Z_]*	*0x/s/F_/RUMP_F_/gp' \
+    < ../../../sys/fcntl.h
+sed -n '/#define	F_[A-Z_]*	*(/s/F_/RUMP_F_/gp' \
+    < ../../../sys/fcntl.h
+sed -n '/#define[ 	]*_FCN/{:t;N;/\\$/bt;s/_FCN/RUMP__FCN/g;s/F_[A-Z]/RUMP_&/gp}' <../../../sys/fcntl.h | sed 's,/\*.*$,,'
 
 fromvers ../../../sys/vnode.h
 sed -n '/enum vtype.*{/{s/vtype/rump_&/;s/ V/ RUMP_V/gp;}' <../../../sys/vnode.h
@@ -60,7 +65,8 @@ sed -n '/#define.*LK_[A-Z]/s/LK_/RUMP_LK_/gp' <../../../sys/vnode.h	\
     | sed 's,/\*.*$,,'
 
 fromvers ../../../sys/errno.h
-sed -n '/#define[ 	]*E/s/E[A-Z]*/RUMP_&/p' < ../../../sys/errno.h
+sed -n '/#define[ 	]*E/s/\([ 	]\)\(E[A-Z2][A-Z]*\)/\1RUMP_\2/gp' \
+    < ../../../sys/errno.h
 
 fromvers ../../../sys/reboot.h
 sed -n '/#define.*RB_[A-Z]/s/RB_/RUMP_RB_/gp' <../../../sys/reboot.h	\
@@ -97,7 +103,7 @@ fromvers ../../../sys/fstypes.h
 sed -n '/#define[ 	]*MNT_[A-Z].*[^\]$/s/MNT_/RUMP_MNT_/gp' <../../../sys/fstypes.h | sed 's,/\*.*$,,'
 
 fromvers ../../../sys/ioccom.h
-sed -n '/#define[ 	]*IOC[A-Z_]/s/IOC/RUMP_&/gp' <../../../sys/ioccom.h | sed 's,/\*.*$,,'
+sed -n '/#define[ 	]*IOC[A-Z_].*[^\\]$/s/IOC/RUMP_&/gp' <../../../sys/ioccom.h | sed 's,/\*.*$,,'
 sed -n '/#define[ 	]*_IO.*\\$/{:t;N;/\\$/bt;s/_IOC/_RUMP_IOC/g;s/IOC[A-Z]/RUMP_&/gp}' <../../../sys/ioccom.h \
     | sed 's,/\*.*$,,'
 sed -n '/#define[ 	]*_IO.*[^\]$/{s/_IO/_RUMP_IO/g;s/IOC_/RUMP_IOC_/gp}' <../../../sys/ioccom.h \
@@ -125,11 +131,11 @@ getstruct ../../../sys/dirent.h dirent
 printf '\n#endif /* _RUMP_RUMPDEFS_H_ */\n'
 
 exec 1>&3
+
 echo Generating rumperr.h
 rm -f rumperr.h
 exec > rumperr.h
-
-printf '/*	$NetBSD: makerumpdefs.sh,v 1.7.2.4 2014/08/20 00:04:39 tls Exp $	*/\n\n'
+printf '/*	$NetBSD: makerumpdefs.sh,v 1.7.2.5 2017/12/03 11:39:14 jdolecek Exp $	*/\n\n'
 printf '/*\n *\tAUTOMATICALLY GENERATED.  DO NOT EDIT.\n */\n'
 
 fromvers ../../../sys/errno.h
@@ -164,6 +170,46 @@ END {
 if [ $? -ne 0 ]; then
 	echo 'Parsing errno.h failed!' 1>&3
 	rm -f rumpdefs.h rumperr.h
+	exit 1
+fi
+
+echo Generating rumperrno2host.h 1>&3
+rm -f rumperrno2host.h
+exec > rumperrno2host.h
+printf '/*	$NetBSD: makerumpdefs.sh,v 1.7.2.5 2017/12/03 11:39:14 jdolecek Exp $	*/\n\n'
+printf '/*\n *\tAUTOMATICALLY GENERATED.  DO NOT EDIT.\n */\n'
+
+fromvers ../../../sys/errno.h
+
+printf "\n#ifndef ERANGE\n#error include ISO C style errno.h first\n#endif\n"
+printf "\nstatic inline int \nrump_errno2host(int rumperrno)\n{\n\n"
+printf "\tswitch (rumperrno) {\n\tcase 0:\n"
+printf "\t\t return 0;\n"
+awk '/^#define[ 	]*E.*[0-9]/{
+	ename = $2
+	evalue = $3
+	error = 1
+	if (ename == "ELAST") {
+		printf "\tdefault:\n"
+		printf "#ifdef EINVAL\n\t\treturn EINVAL;\n"
+		printf "#else\n\t\treturn ERANGE;\n#endif\n"
+		printf "\t}\n}\n"
+		error = 0
+		exit 0
+	}
+	if (preverror + 1 != evalue)
+		exit 1
+	preverror = evalue
+	printf "#ifdef %s\n", ename
+	printf "\tcase %d:\n\t\treturn %s;\n", evalue, ename
+	printf "#endif\n"
+}
+END {
+	exit error
+}' < ../../../sys/errno.h
+if [ $? -ne 0 ]; then
+	echo 'Parsing errno.h failed!' 1>&3
+	rm -f rumpdefs.h rumperr.h rumperrno2host.h
 	exit 1
 fi
 

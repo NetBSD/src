@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sched.c,v 1.42.2.1 2014/08/20 00:04:29 tls Exp $	*/
+/*	$NetBSD: sys_sched.c,v 1.42.2.2 2017/12/03 11:38:45 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2008, 2011 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.42.2.1 2014/08/20 00:04:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.42.2.2 2017/12/03 11:38:45 jdolecek Exp $");
 
 #include <sys/param.h>
 
@@ -394,7 +394,7 @@ sys__sched_setaffinity(struct lwp *l,
 		}
 		/* Empty set */
 		kcpuset_unuse(kcset, &kcpulst);
-		kcset = NULL; 
+		kcset = NULL;
 	}
 
 	if (SCARG(uap, pid) != 0) {
@@ -528,6 +528,68 @@ sys__sched_getaffinity(struct lwp *l,
 	error = kcpuset_copyout(kcset, SCARG(uap, cpuset), SCARG(uap, size));
 out:
 	kcpuset_unuse(kcset, NULL);
+	return error;
+}
+
+/*
+ * Priority protection for PTHREAD_PRIO_PROTECT. This is a weak
+ * analogue of priority inheritance: temp raise the priority
+ * of the caller when accessing a protected resource.
+ */
+int 
+sys__sched_protect(struct lwp *l, 
+    const struct sys__sched_protect_args *uap, register_t *retval)
+{
+        /* {
+                syscallarg(int) priority;
+		syscallarg(int *) opriority;
+        } */
+	int error;
+	pri_t pri;
+
+	KASSERT(l->l_inheritedprio == -1);
+	KASSERT(l->l_auxprio == -1 || l->l_auxprio == l->l_protectprio);
+	
+	pri = SCARG(uap, priority);
+	error = 0;
+	lwp_lock(l);
+	if (pri == -1) {
+		/* back out priority changes */
+		switch(l->l_protectdepth) {
+		case 0:
+			error = EINVAL;
+			break;
+		case 1:
+			l->l_protectdepth = 0;
+			l->l_protectprio = -1;
+			l->l_auxprio = -1;
+			break;
+		default:
+			l->l_protectdepth--;
+			break;
+		}
+	} else if (pri < 0) {
+		/* Just retrieve the current value, for debugging */
+		if (l->l_protectprio == -1)
+			error = ENOENT;
+		else
+			*retval = l->l_protectprio - PRI_USER_RT;
+	} else if (__predict_false(pri < SCHED_PRI_MIN ||
+	    pri > SCHED_PRI_MAX || l->l_priority > pri + PRI_USER_RT)) {
+		/* must fail if existing priority is higher */
+		error = EPERM;
+	} else {
+		/* play along but make no changes if not a realtime LWP. */
+		l->l_protectdepth++;
+		pri += PRI_USER_RT;
+		if (__predict_true(l->l_class != SCHED_OTHER && 
+		    pri > l->l_protectprio)) {
+			l->l_protectprio = pri;
+			l->l_auxprio = pri;
+		}
+	}
+	lwp_unlock(l);
+
 	return error;
 }
 

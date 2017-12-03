@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.31.2.1 2012/11/20 03:00:54 tls Exp $ */
+/* $NetBSD: if_ie.c,v 1.31.2.2 2017/12/03 11:35:45 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -45,7 +45,7 @@
  */
 
 /*
- *	This driver is at it's last beta release.  It should not cause
+ *	This driver is at its last beta release.  It should not cause
  *	any problems (Touch wood)
  *
  * 	If it passes field tests again.  This will constitute the realse
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.31.2.1 2012/11/20 03:00:54 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.31.2.2 2017/12/03 11:35:45 jdolecek Exp $");
 
 #define IGNORE_ETHER1_IDROM_CHECKSUM
 
@@ -71,7 +71,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.31.2.1 2012/11/20 03:00:54 tls Exp $");
 #include <sys/device.h>
 #include <machine/io.h>
 #include <machine/intr.h>
-#include <arm/arm32/katelib.h>
 #include <acorn32/podulebus/podulebus.h>
 #include <dev/podulebus/podules.h>
 
@@ -93,11 +92,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.31.2.1 2012/11/20 03:00:54 tls Exp $");
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_inarp.h>
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
 #endif
 
 /* Import our data structres */
@@ -458,6 +452,7 @@ ieattach(device_t parent, device_t self, void *aux)
 	
 	/* Signed, dated then sent */
         if_attach (ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, hwaddr);
 
 	/* "Hmm," said nuts, "what if the attach fails" */
@@ -621,7 +616,7 @@ ieioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 
 	case SIOCSIFFLAGS:
 	    if ((error = ifioctl_common(ifp, cmd, data)) != 0)
-		return error;
+		break;
 	    sc->promisc = ifp->if_flags & ( IFF_PROMISC | IFF_ALLMULTI );
 
 	    if ( IZCLR(ifp,IFF_UP) && IZSET(ifp,IFF_RUNNING) )
@@ -965,7 +960,7 @@ iestop(struct ie_softc *sc)
 }
 
 /*
- * Send a command to the card and awaits it's completion.
+ * Send a command to the card and await its completion.
  * Timeout if it's taking too long
  */
 
@@ -1108,7 +1103,7 @@ ieget(struct ie_softc *sc, int *to_bpf )
     if ( m==0 )
 	return 0;
 
-    m->m_pkthdr.rcvif = &sc->sc_ethercom.ec_if;
+    m_set_rcvif(m, &sc->sc_ethercom.ec_if);
     m->m_pkthdr.len = totlen;
     len = MHLEN;
     top = 0;
@@ -1284,11 +1279,7 @@ ie_read_frame(struct ie_softc *sc, int num)
 	return;
     }
 
-    ifp->if_ipackets++;
-
-    bpf_mtap(ifp, m);
-
-    (*ifp->if_input)(ifp, m);
+    if_percpuq_enqueue(ifp->if_percpuq, m);
 }
 
 void
@@ -1565,7 +1556,7 @@ ietint(struct ie_softc *sc)
     if ( sc->xmit_free<NTXBUF )
 	iexmit(sc);
 
-    iestart(ifp);
+    if_schedule_deferred_start(ifp);
 }
 
 /* End of if_ie.c */

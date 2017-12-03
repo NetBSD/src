@@ -1,4 +1,4 @@
-# 	$NetBSD: RAMDISK,v 1.12 2010/11/23 11:14:04 hannken Exp $
+# 	$NetBSD: RAMDISK,v 1.12.18.1 2017/12/03 11:36:35 jdolecek Exp $
 #
 # Install kernel with ramdisk added.
 # The ramdisk is be too big to netboot directly via ECOFF on some machines,
@@ -13,7 +13,7 @@ include	"arch/pmax/conf/INSTALL"
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MEMORY_DISK_ROOT_SIZE=6800	# size of memory disk, in blocks (3400kB)
+options 	MEMORY_DISK_ROOT_SIZE=7000	# size of memory disk, in blocks (3500kB)
 #options 	MEMORY_DISK_ROOT_SIZE=2880	# 1.44M, same as a floppy
 options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_heathrow.c,v 1.9 2012/05/02 00:55:26 macallan Exp $ */
+/*	$NetBSD: pic_heathrow.c,v 1.9.2.1 2017/12/03 11:36:25 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_heathrow.c,v 1.9 2012/05/02 00:55:26 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_heathrow.c,v 1.9.2.1 2017/12/03 11:36:25 jdolecek Exp $");
 
 #include "opt_interrupt.h"
 
@@ -107,8 +107,7 @@ setup_heathrow(uint32_t addr)
 	struct heathrow_ops *heathrow;
 	struct pic_ops *pic;
 
-	heathrow = kmem_alloc(sizeof(struct heathrow_ops), KM_SLEEP);
-	KASSERT(heathrow != NULL);
+	heathrow = kmem_zalloc(sizeof(struct heathrow_ops), KM_SLEEP);
 	pic = &heathrow->pic;
 
 	pic->pic_numintrs = 64;
@@ -161,7 +160,7 @@ heathrow_reenable_irq(struct pic_ops *pic, int irq, int type)
 	if (irq & 0x20) {
 		heathrow->enable_mask_h |= mask;
 		out32rb(INT_ENABLE_REG_H, heathrow->enable_mask_h);
-		levels = in32rb(INT_LEVEL_REG_H);
+		levels = in32rb(INT_STATE_REG_H);
 		if (levels & mask) {
 			pic_mark_pending(pic->pic_intrbase + irq);
 			out32rb(INT_CLEAR_REG_H, mask);
@@ -169,7 +168,7 @@ heathrow_reenable_irq(struct pic_ops *pic, int irq, int type)
 	} else {
 		heathrow->enable_mask_l |= mask;
 		out32rb(INT_ENABLE_REG_L, heathrow->enable_mask_l);
-		levels = in32rb(INT_LEVEL_REG_L);
+		levels = in32rb(INT_STATE_REG_L);
 		if (levels & mask) {
 			pic_mark_pending(pic->pic_intrbase + irq);
 			out32rb(INT_CLEAR_REG_L, mask);

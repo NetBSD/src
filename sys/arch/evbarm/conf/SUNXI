@@ -1,0 +1,304 @@
+#
+#	$NetBSD: SUNXI,v 1.54.2.2 2017/12/03 11:36:03 jdolecek Exp $
+#
+#	Allwinner sunxi family
+#
+
+include	"arch/evbarm/conf/std.sunxi"
+include	"arch/evbarm/conf/GENERIC.common"
+
+makeoptions	DTSGNUARCH="arm arm64"
+makeoptions	DTSSUBDIR="allwinner"
+makeoptions	DTS="
+	sun4i-a10-a1000.dts
+	sun4i-a10-ba10-tvbox.dts
+	sun4i-a10-chuwi-v7-cw0825.dts
+	sun4i-a10-cubieboard.dts
+	sun4i-a10-dserve-dsrv9703c.dts
+	sun4i-a10-gemei-g9.dts
+	sun4i-a10-hackberry.dts
+	sun4i-a10-hyundai-a7hd.dts
+	sun4i-a10-inet1.dts
+	sun4i-a10-inet97fv2.dts
+	sun4i-a10-inet9f-rev03.dts
+	sun4i-a10-itead-iteaduino-plus.dts
+	sun4i-a10-jesurun-q5.dts
+	sun4i-a10-marsboard.dts
+	sun4i-a10-mini-xplus.dts
+	sun4i-a10-mk802.dts
+	sun4i-a10-mk802ii.dts
+	sun4i-a10-olinuxino-lime.dts
+	sun4i-a10-pcduino.dts
+	sun4i-a10-pcduino2.dts
+	sun4i-a10-pov-protab2-ips9.dts
+
+	sun5i-a13-difrnce-dit4350.dts
+	sun5i-a13-empire-electronix-d709.dts
+	sun5i-a13-empire-electronix-m712.dts
+	sun5i-a13-hsg-h702.dts
+	sun5i-a13-inet-98v-rev2.dts
+	sun5i-a13-licheepi-one.dts
+	sun5i-a13-olinuxino-micro.dts
+	sun5i-a13-olinuxino.dts
+	sun5i-a13-q8-tablet.dts
+	sun5i-a13-utoo-p66.dts
+
+	sun5i-gr8-evb.dts
+	sun5i-gr8-chip-pro.dts
+
+	sun5i-r8-chip.dts
+	sun5i-r8-pocketchip.dts
+
+	sun6i-a31-app4-evb1.dts
+	sun6i-a31-colombus.dts
+	sun6i-a31-hummingbird.dts
+	sun6i-a31-i7.dts
+	sun6i-a31-m9.dts
+	sun6i-a31-mele-a1000g-quad.dts
+
+	sun7i-a20-bananapi-m1-plus.dts
+	sun7i-a20-bananapi.dts
+	sun7i-a20-bananapro.dts
+	sun7i-a20-cubieboard2.dts
+	sun7i-a20-cubietruck.dts
+	sun7i-a20-hummingbird.dts
+	sun7i-a20-i12-tvbox.dts
+	sun7i-a20-icnova-swac.dts
+	sun7i-a20-itead-ibox.dts
+	sun7i-a20-lamobo-r1.dts
+	sun7i-a20-m3.dts
+	sun7i-a20-mk808c.dts
+	sun7i-a20-olimex-som-evb.dts
+	sun7i-a20-olinuxino-lime.dts
+	sun7i-a20-olinuxino-lime2-emmc.dts
+	sun7i-a20-olinuxino-lime2.dts
+	sun7i-a20-olinuxino-micro-emmc.dts
+	sun7i-a20-olinuxino-micro.dts
+	sun7i-a20-orangepi-mini.dts
+	sun7i-a20-orangepi.dts
+	sun7i-a20-pcduino3-nano.dts
+	sun7i-a20-pcduino3.dts
+	sun7i-a20-wexler-tab7200.dts
+	sun7i-a20-wits-pro-a20-dkt.dts
+
+	sun8i-a83t-allwinner-h8homlet-v2.dts
+	sun8i-a83t-bananapi-m3.dts
+	sun8i-a83t-cubietruck-plus.dts
+	sun8i-a83t-tbs-a711.dts
+
+	sun8i-h2-plus-orangepi-zero.dts
+
+	sun8i-h3-bananapi-m2-plus.dts
+	sun8i-h3-beelink-x2.dts
+	sun8i-h3-nanopi-m1.dts
+	sun8i-h3-nanopi-m1-plus.dts
+	sun8i-h3-nanopi-neo.dts
+	sun8i-h3-nanopi-neo-air.dts
+	sun8i-h3-orangepi-2.dts
+	sun8i-h3-orangepi-lite.dts
+	sun8i-h3-orangepi-one.dts
+	sun8i-h3-orangepi-pc-plus.dts
+	sun8i-h3-orangepi-pc.dts
+	sun8i-h3-orangepi-plus.dts
+	sun8i-h3-orangepi-plus2e.dts
+
+	sun9i-a80-cubieboard4.dts
+	sun9i-a80-optimus.dts
+
+	sun50i-a64-bananapi-m64.dts
+	sun50i-a64-nanopi-a64.dts
+	sun50i-a64-olinuxino.dts
+	sun50i-a64-orangepi-win.dts
+	sun50i-a64-pine64-plus.dts
+	sun50i-a64-pine64.dts
+	sun50i-a64-pinebook.dts
+	sun50i-a64-sopine-baseboard.dts
+"
+
+options 	MULTIPROCESSOR
+
+options 	CPU_CORTEXA7
+options 	CPU_CORTEXA8
+options 	CPU_CORTEXA53
+
+options 	SOC_SUN4I_A10
+options 	SOC_SUN5I_A13
+options 	SOC_SUN6I_A31
+options 	SOC_SUN7I_A20
+options 	SOC_SUN8I_A83T
+options 	SOC_SUN8I_H3
+options 	SOC_SUN9I_A80
+options 	SOC_SUN50I_A64
+options 	SOC_SUN50I_H5
+
+pseudo-device 	openfirm	# /dev/openfirm
+
+#options 	DIAGNOSTIC	# internal consistency checks
+#options 	DEBUG
+#options 	LOCKDEBUG
+#options 	PMAP_DEBUG	# Enable pmap_debug_level code
+#options 	IPKDB		# remote kernel debugging
+#options 	VERBOSE_INIT_ARM # verbose bootstrapping messages
+# CONSADDR is required for early init messages from VERBOSE_INIT_ARM.
+#options 	CONSADDR=0x01c28000
+
+makeoptions	DEBUG="-g"	# compile full symbol table
+makeoptions	COPY_SYMTAB=1
+
+config		netbsd		root on ? type ?
+
+# Device tree support
+armfdt0		at root
+fdt*		at fdtbus?
+
+# CPUs
+cpus*		at fdt? pass 0
+cpu*		at cpus?
+cpufreqdt*	at cpu?
+
+# Power state coordination interface
+psci*		at fdt?
+
+# Clock and reset controllers
+sun4ia10ccu*	at fdt? pass 2		# A10/A20 CCU
+sun5ia13ccu*	at fdt? pass 2		# A13 CCU
+sun6ia31ccu*	at fdt? pass 2		# A31 CCU
+sun8ia83tccu*	at fdt? pass 2		# A83T CCU
+sun8ih3ccu*	at fdt? pass 2		# H3 CCU
+sun8ih3rccu*	at fdt? pass 2		# H3 CCU (PRCM)
+sun9ia80ccu*	at fdt? pass 2		# A80 CCU
+sun50ia64ccu*	at fdt? pass 2		# A64 CCU
+sunxiresets*	at fdt? pass 1		# Misc. clock resets
+sunxigates*	at fdt? pass 1		# Misc. clock gates
+sunxigmacclk*	at fdt? pass 2		# GMAC MII/RGMII clock mux
+sun9immcclk*	at fdt? pass 2		# A80 SD/MMC-COMM
+
+fclock*		at fdt? pass 1
+ffclock*	at fdt? pass 1
+fregulator*	at fdt? pass 4
+gregulator*	at fdt? pass 4
+gpiokeys*	at fdt?
+wskbd*		at gpiokeys? console ? mux 1
+gpioleds*	at fdt?
+
+# SRAM controller
+sunxisramc*	at fdt? pass 4		# SRAM controller
+
+# Timer
+gtmr*		at fdt? pass 1		# ARM Generic Timer
+armgtmr0	at gtmr?
+sunxitimer*	at fdt? 		# Allwinner async timer
+
+# Watchdog
+sunxiwdt*	at fdt?			# Allwinner watchdog
+
+# Interrupt controller
+gic*		at fdt? pass 1		# GIC
+armgic0		at gic?
+sunxiintc*	at fdt? pass 1		# Allwinner INTC
+
+# Memory controller
+
+# DMA controller
+sun4idma*	at fdt?			# DMA controller (sun4i)
+sun6idma*	at fdt?			# DMA controller (sun6i)
+
+# GPIO controller
+sunxigpio*	at fdt? pass 3		# GPIO
+gpio*		at gpiobus?
+
+# Ethernet
+sun4iemac*	at fdt?			# Allwinner Fast Ethernet (EMAC)
+sunxiemac*	at fdt?			# Allwinner Gigabit Ethernet (EMAC)
+awge*		at fdt?			# Allwinner Gigabit Ethernet (GMAC)
+rgephy*		at mii? phy ?
+rlphy*		at mii? phy ?
+ukphy*		at mii? phy ?
+
+# UART
+com*		at fdt?			# UART
+
+# I2C
+sunxitwi*	at fdt?			# TWI
+sunxirsb*	at fdt?			# P2WI/RSB
+iic*		at i2cbus?
+tcakp*		at iic?			# TI TCA8418 Keypad Scan IC
+wskbd*		at tcakp? console ?
+axp20x*		at iic?			# AXP209 Power Management IC
+axp20xreg*	at axp20x?
+axp22x*		at iic?			# AXP221 Power Management IC
+sy8106a*	at iic?			# Silergy SY81061 regulator
+pcf8563rtc*	at iic?			# PCF8563 RTC
+#seeprom*	at iic?			# AT24Cxx Serial EEPROM
+
+# RTC
+sunxirtc*	at fdt?			# RTC
+
+# Security ID EFUSE
+sunxisid*	at fdt?	pass 4		# SID
+
+# Thermal sensor
+sunxithermal*	at fdt?			# Thermal sensor controller
+
+# Audio
+sunxicodec*	at fdt?			# Audio codec
+h3codec*	at fdt?			# H3 audio codec (analog part)
+audio*		at audiobus?
+spkr*		at audio?
+
+# SDMMC
+mmcpwrseq*	at fdt?			# Simple MMC power sequence provider
+sunximmc*	at fdt?			# SDMMC
+sdmmc*		at sunximmc?
+ld0		at sdmmc0
+ld1		at sdmmc1
+ld2		at sdmmc2
+ld3		at sdmmc3
+ld*		at sdmmc?
+
+# NAND Flash
+sunxinand*	at fdt?			# NAND flash controller
+nand*		at nandbus?
+flash*		at nand? dynamic 1
+
+# SATA
+ahcisata*	at fdt?			# SATA
+atabus*		at ata?
+wd*		at atabus? drive ?
+
+# Display
+genfb*		at fdt?
+wsdisplay*	at genfb?
+options 	VCONS_DRAW_INTR
+options 	WSEMUL_VT100
+options 	WS_DEFAULT_FG=WSCOL_WHITE
+options 	WS_DEFAULT_BG=WSCOL_BLACK
+options 	WS_KERNEL_FG=WSCOL_GREEN
+options 	WS_KERNEL_BG=WSCOL_BLACK
+options 	WSDISPLAY_COMPAT_PCVT
+options 	WSDISPLAY_COMPAT_SYSCONS
+options 	WSDISPLAY_COMPAT_USL
+options 	WSDISPLAY_COMPAT_RAWKBD
+options 	WSDISPLAY_DEFAULTSCREENS=4
+
+# Touch Screen controller
+sunxits*	at fdt?			# Touch Screen controller
+wsmouse*	at sunxits? mux 0
+
+# wscons pseudo-devices
+pseudo-device	wsfont
+pseudo-device	wsmux
+
+# USB 2.0
+sunxiusbphy*	at fdt?	pass 9		# USB PHY
+ehci*		at fdt?			# EHCI
+ohci*		at fdt?			# OHCI
+motg*		at fdt?			# USB OTG
+usb*		at ehci?
+usb*		at ohci?
+usb*		at motg?
+
+include "dev/usb/usbdevices.config"
+midi*		at midibus?
+
+cinclude "arch/evbarm/conf/SUNXI.local"

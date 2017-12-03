@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.59.2.2 2014/08/20 00:03:50 tls Exp $ */
+/*	$NetBSD: cgsix.c,v 1.59.2.3 2017/12/03 11:37:33 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.59.2.2 2014/08/20 00:03:50 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.59.2.3 2017/12/03 11:37:33 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,11 +151,6 @@ static void cg6_loadomap (struct cgsix_softc *);
 static void cg6_setcursor (struct cgsix_softc *);/* set position */
 static void cg6_loadcursor (struct cgsix_softc *);/* set shape */
 
-#if NWSDISPLAY > 0
-#ifdef RASTERCONSOLE
-#error RASTERCONSOLE and wsdisplay are mutually exclusive
-#endif
-
 static void cg6_setup_palette(struct cgsix_softc *);
 
 struct wsscreen_descr cgsix_defaultscreen = {
@@ -208,18 +203,9 @@ struct wsscreen_list cgsix_screenlist = {
 
 extern const u_char rasops_cmap[768];
 
-#endif /* NWSDISPLAY > 0 */
-
-#if (NWSDISPLAY > 0) || defined(RASTERCONSOLE)
 void	cg6_invert(struct cgsix_softc *, int, int, int, int);
 
-/* need this for both cases because ri_hw points to it */
 static struct vcons_screen cg6_console_screen;
-#endif
-
-#ifdef RASTERCONSOLE
-int cgsix_use_rasterconsole = 1;
-#endif
 
 /*
  * cg6 accelerated console routines.
@@ -326,15 +312,11 @@ int cgsix_use_rasterconsole = 1;
 		/*EMPTY*/;						\
 } while (0)
 
-#if (NWSDISPLAY > 0) || defined(RASTERCONSOLE)
 static void cg6_ras_init(struct cgsix_softc *);
 static void cg6_ras_copyrows(void *, int, int, int);
 static void cg6_ras_copycols(void *, int, int, int, int);
 static void cg6_ras_erasecols(void *, int, int, int, long int);
 static void cg6_ras_eraserows(void *, int, int, long int);
-#if defined(RASTERCONSOLE) && defined(CG6_BLIT_CURSOR)
-static void cg6_ras_do_cursor(struct rasops_info *);
-#endif
 
 static void
 cg6_ras_init(struct cgsix_softc *sc)
@@ -522,38 +504,13 @@ cg6_ras_eraserows(void *cookie, int row, int n, long int attr)
 	CG6_DRAW(fbc);
 }
 
-#if defined(RASTERCONSOLE) && defined(CG6_BLIT_CURSOR)
-/*
- * Really want something more like fg^bg here, but that would be more
- * or less impossible to migrate to colors.  So we hope there's
- * something not too inappropriate in the colormap...besides, it's what
- * the non-accelerated code did. :-)
- */
-static void
-cg6_ras_do_cursor(struct rasops_info *ri)
-{
-	struct vcons_screen *scr = ri->ri_hw;
-	struct cgsix_softc *sc = scr->cookie;
-	int row, col;
-	
-	row = ri->ri_crow * ri->ri_font->fontheight;
-	col = ri->ri_ccol * ri->ri_font->fontwidth;
-	cg6_invert(sc, ri->ri_xorigin + col,ri->ri_yorigin + 
-	    row, ri->ri_font->fontwidth, ri->ri_font->fontheight);
-}
-#endif	/* RASTERCONSOLE */
-
-#endif	/* (NWSDISPLAY > 0) || defined(RASTERCONSOLE) */
-
 void
 cg6attach(struct cgsix_softc *sc, const char *name, int isconsole)
 {
 	struct fbdevice *fb = &sc->sc_fb;
-#if NWSDISPLAY > 0
 	struct wsemuldisplaydev_attach_args aa;
 	struct rasops_info *ri = &cg6_console_screen.scr_ri;
 	unsigned long defattr;
-#endif
 	
 	fb->fb_driver = &cg6_fbdriver;
 
@@ -580,27 +537,6 @@ cg6attach(struct cgsix_softc *sc, const char *name, int isconsole)
 
 	if (isconsole) {
 		printf(" (console)");
-
-/* this is the old console attachment stuff - sparc still needs it */
-#ifdef RASTERCONSOLE
-		if (cgsix_use_rasterconsole) {
-			fbrcons_init(&sc->sc_fb);
-			/* 
-			 * we don't use the screen struct but keep it here to 
-			 * avoid ugliness in the cg6_ras_* functions
-			 */
-			cg6_console_screen.scr_cookie = sc;
-			sc->sc_fb.fb_rinfo.ri_hw = &cg6_console_screen;
-			sc->sc_fb.fb_rinfo.ri_ops.copyrows = cg6_ras_copyrows;
-			sc->sc_fb.fb_rinfo.ri_ops.copycols = cg6_ras_copycols;
-			sc->sc_fb.fb_rinfo.ri_ops.erasecols = cg6_ras_erasecols;
-			sc->sc_fb.fb_rinfo.ri_ops.eraserows = cg6_ras_eraserows;
-#ifdef CG6_BLIT_CURSOR
-			sc->sc_fb.fb_rinfo.ri_do_cursor = cg6_ras_do_cursor;
-#endif
-			cg6_ras_init(sc);
-		}
-#endif
 	}
 	printf("\n");
 
@@ -612,7 +548,6 @@ cg6attach(struct cgsix_softc *sc, const char *name, int isconsole)
 	printf("%s: framebuffer size: %d MB\n", device_xname(sc->sc_dev), 
 	    sc->sc_ramsize >> 20);
 
-#if NWSDISPLAY
 	/* setup rasops and so on for wsdisplay */
 	memcpy(sc->sc_default_cmap, rasops_cmap, 768);
 	wsfont_init();
@@ -693,11 +628,6 @@ cg6attach(struct cgsix_softc *sc, const char *name, int isconsole)
 	aa.accessops = &cgsix_accessops;
 	aa.accesscookie = &sc->vd;
 	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint);
-#else
-	bt_initcmap(&sc->sc_cmap, 256);	
-	cg6_loadcmap(sc, 0, 256);
-	
-#endif
 }
 
 
@@ -723,7 +653,6 @@ cgsixclose(dev_t dev, int flags, int mode, struct lwp *l)
 	cg6_reset(sc);
 	sc->sc_fb_is_open = FALSE;
 
-#if NWSDISPLAY > 0
 	if (IS_IN_EMUL_MODE(sc)) {
 		struct vcons_screen *ms = sc->vd.active;
 
@@ -735,12 +664,6 @@ cgsixclose(dev_t dev, int flags, int mode, struct lwp *l)
 		if (ms != NULL)
 			vcons_redraw_screen(ms);
 	}
-#else
-	/* (re-)initialize the default color map */
-	bt_initcmap(&sc->sc_cmap, 256);
-	
-	cg6_loadcmap(sc, 0, 256);
-#endif
 	return 0;
 }
 
@@ -1149,8 +1072,6 @@ cgsixmmap(dev_t dev, off_t off, int prot)
 	return -1;	/* not a user-map offset */
 }
 
-#if NWSDISPLAY > 0
-
 static void
 cg6_setup_palette(struct cgsix_softc *sc)
 {
@@ -1178,7 +1099,6 @@ cgsix_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	struct vcons_data *vd = v;
 	struct cgsix_softc *sc = vd->cookie;
 	struct wsdisplay_fbinfo *wdf;
-	struct rasops_info *ri = &sc->sc_fb.fb_rinfo;
 	struct vcons_screen *ms = sc->vd.active;
 
 #ifdef CGSIX_DEBUG
@@ -1190,9 +1110,9 @@ cgsix_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 			return 0;
 		case WSDISPLAYIO_GINFO:
 			wdf = (void *)data;
-			wdf->height = ri->ri_height;
-			wdf->width = ri->ri_width;
-			wdf->depth = ri->ri_depth;
+			wdf->height = sc->sc_height;
+			wdf->width = sc->sc_width;
+			wdf->depth = 8;
 			wdf->cmsize = 256;
 			return 0;
 
@@ -1221,6 +1141,13 @@ cgsix_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 						vcons_redraw_screen(ms);
 					}
 				}
+			}
+			return 0;
+		case WSDISPLAYIO_GET_FBINFO:
+			{
+				struct wsdisplayio_fbinfo *fbi = data;
+
+				return wsdisplayio_get_fbinfo(&ms->scr_ri, fbi);
 			}
 	}
 	return EPASSTHROUGH;
@@ -1639,9 +1566,6 @@ cgsix_clearscreen(struct cgsix_softc *sc)
 	}
 }
 
-#endif /* NWSDISPLAY > 0 */
-
-#if (NWSDISPLAY > 0) || defined(RASTERCONSOLE)
 void
 cg6_invert(struct cgsix_softc *sc, int x, int y, int wi, int he)
 {
@@ -1657,6 +1581,4 @@ cg6_invert(struct cgsix_softc *sc, int x, int y, int wi, int he)
 	fbc->fbc_arectx = x + wi - 1;
 	CG6_DRAW(fbc);
 }
-
-#endif
 

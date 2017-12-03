@@ -1,4 +1,4 @@
-/*	$NetBSD: etfs_wrap.c,v 1.1.10.2 2014/08/20 00:04:40 tls Exp $	*/
+/*	$NetBSD: etfs_wrap.c,v 1.1.10.3 2017/12/03 11:39:16 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2014 Antti Kantee.  All Rights Reserved.
@@ -26,11 +26,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: etfs_wrap.c,v 1.1.10.2 2014/08/20 00:04:40 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: etfs_wrap.c,v 1.1.10.3 2017/12/03 11:39:16 jdolecek Exp $");
 
 #include <sys/param.h>
 
-#include "rump_private.h"
+#include <rump-sys/kern.h>
 
 rump_etfs_register_withsize_fn rump__etfs_register	= (void *)enosys;
 rump_etfs_remove_fn rump__etfs_remove			= (void *)enosys;

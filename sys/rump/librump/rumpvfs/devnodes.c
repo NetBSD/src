@@ -1,4 +1,4 @@
-/*	$NetBSD: devnodes.c,v 1.6.14.3 2014/08/20 00:04:42 tls Exp $	*/
+/*	$NetBSD: devnodes.c,v 1.6.14.4 2017/12/03 11:39:17 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: devnodes.c,v 1.6.14.3 2014/08/20 00:04:42 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: devnodes.c,v 1.6.14.4 2017/12/03 11:39:17 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -37,7 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: devnodes.c,v 1.6.14.3 2014/08/20 00:04:42 tls Exp $"
 #include <sys/stat.h>
 #include <sys/vfs_syscalls.h>
 
-#include "rump_vfs_private.h"
+#include <rump-sys/vfs.h>
 
 /* realqvik(tm) "devfs" */
 static int
@@ -85,6 +85,13 @@ makedevnodes(dev_t devtype, const char *basename, char minchar,
  out:
 	kmem_free(devname, devlen);
 	return error;
+}
+
+static int
+makesymlink(const char *dst, const char *src)
+{
+
+	return do_sys_symlink(dst, src, UIO_SYSSPACE);
 }
 
 enum { NOTEXIST, SAME, DIFFERENT };
@@ -177,6 +184,7 @@ rump_vfs_builddevs(struct devsw_conv *dcvec, size_t dcvecsize)
 
 	rump_vfs_makeonedevnode = makeonedevnode;
 	rump_vfs_makedevnodes = makedevnodes;
+	rump_vfs_makesymlink = makesymlink;
 
 	for (i = 0; i < dcvecsize; i++) {
 		dc = &dcvec[i];

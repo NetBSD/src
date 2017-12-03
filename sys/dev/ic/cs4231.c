@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231.c,v 1.28 2011/11/28 11:46:54 jmcneill Exp $	*/
+/*	$NetBSD: cs4231.c,v 1.28.8.1 2017/12/03 11:37:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231.c,v 1.28 2011/11/28 11:46:54 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231.c,v 1.28.8.1 2017/12/03 11:37:03 jdolecek Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -185,8 +185,6 @@ cs4231_malloc(void *addr, int direction, size_t size)
 	sc = addr;
 	dmatag = sc->sc_dmatag;
 	p = kmem_alloc(sizeof(*p), KM_SLEEP);
-	if (p == NULL)
-		return NULL;
 
 	/* Allocate a DMA map */
 	if (bus_dmamap_create(dmatag, size, 1, size, 0,

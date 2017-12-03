@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap.h,v 1.12.2.1 2013/02/25 00:28:29 tls Exp $	*/
+/*	$NetBSD: byte_swap.h,v 1.12.2.2 2017/12/03 11:35:53 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2002 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ __byte_swap_u32_variable(uint32_t v)
 	v = (v >> 8) | (v << 24);
 	v ^= (t1 >> 8);
 
-	return (v);
+	return v;
 }
 
 #define	__BYTE_SWAP_U16_VARIABLE __byte_swap_u16_variable
@@ -93,7 +93,7 @@ __byte_swap_u16_variable(uint16_t v)
 	if (!__builtin_constant_p(v)) {
 		uint32_t v32 = v;
 		__asm("rev16\t%0, %1" : "=r" (v32) : "0" (v32));
-		return v32;
+		return (uint16_t)v32;
 	}
 #elif !defined(__thumb__) && 0	/* gcc produces decent code for this */
 	if (!__builtin_constant_p(v)) {
@@ -104,13 +104,13 @@ __byte_swap_u16_variable(uint16_t v)
 			"bic	%0, %0, %0, lsl #16"
 		: "=&r" (v0)
 		: "0" (v0));
-		return v0;
+		return (uint16_t)v0;
 	}
 #endif
 	v &= 0xffff;
-	v = (v >> 8) | (v << 8);
+	v = (uint16_t)((v >> 8) | (v << 8));
 
-	return (v);
+	return v;
 }
 
 __END_DECLS

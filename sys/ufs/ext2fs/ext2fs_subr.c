@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_subr.c,v 1.27.22.3 2014/08/20 00:04:44 tls Exp $	*/
+/*	$NetBSD: ext2fs_subr.c,v 1.27.22.4 2017/12/03 11:39:21 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_subr.c,v 1.27.22.3 2014/08/20 00:04:44 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_subr.c,v 1.27.22.4 2017/12/03 11:39:21 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,13 +92,13 @@ ext2fs_blkatoff(struct vnode *vp, off_t offset, char **res, struct buf **bpp)
 	lbn = ext2_lblkno(fs, offset);
 
 	*bpp = NULL;
-	if ((error = bread(vp, lbn, fs->e2fs_bsize, NOCRED, 0, &bp)) != 0) {
-		return (error);
+	if ((error = bread(vp, lbn, fs->e2fs_bsize, 0, &bp)) != 0) {
+		return error;
 	}
 	if (res)
 		*res = (char *)bp->b_data + ext2_blkoff(fs, offset);
 	*bpp = bp;
-	return (0);
+	return 0;
 }
 
 void
@@ -115,18 +115,18 @@ ext2fs_itimes(struct inode *ip, const struct timespec *acc,
 	if (ip->i_flag & IN_ACCESS) {
 		if (acc == NULL)
 			acc = &now;
-		ip->i_e2fs_atime = acc->tv_sec;
+		EXT2_DINODE_TIME_SET(acc, ip->i_din.e2fs_din, e2di_atime, EXT2_DINODE_SIZE(ip->i_e2fs));
 	}
 	if (ip->i_flag & (IN_UPDATE | IN_MODIFY)) {
 		if (mod == NULL)
 			mod = &now;
-		ip->i_e2fs_mtime = mod->tv_sec;
+		EXT2_DINODE_TIME_SET(mod, ip->i_din.e2fs_din, e2di_mtime, EXT2_DINODE_SIZE(ip->i_e2fs));
 		ip->i_modrev++;
 	}
 	if (ip->i_flag & (IN_CHANGE | IN_MODIFY)) {
 		if (cre == NULL)
 			cre = &now;
-		ip->i_e2fs_ctime = cre->tv_sec;
+		EXT2_DINODE_TIME_SET(cre, ip->i_din.e2fs_din, e2di_ctime, EXT2_DINODE_SIZE(ip->i_e2fs));
 	}
 	if (ip->i_flag & (IN_ACCESS | IN_MODIFY))
 		ip->i_flag |= IN_ACCESSED;

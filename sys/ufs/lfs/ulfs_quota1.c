@@ -1,5 +1,5 @@
-/*	$NetBSD: ulfs_quota1.c,v 1.5.2.3 2014/08/20 00:04:45 tls Exp $	*/
-/*  from NetBSD: ufs_quota1.c,v 1.18 2012/02/02 03:00:48 matt Exp  */
+/*	$NetBSD: ulfs_quota1.c,v 1.5.2.4 2017/12/03 11:39:22 jdolecek Exp $	*/
+/*  from NetBSD: ufs_quota1.c,v 1.22 2016/06/20 00:52:04 dholland Exp  */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_quota1.c,v 1.5.2.3 2014/08/20 00:04:45 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_quota1.c,v 1.5.2.4 2017/12/03 11:39:22 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -780,7 +780,6 @@ lfs_q1sync(struct mount *mp)
 			mutex_exit(&dq->dq_interlock);
 		}
 		vput(vp);
-		mutex_enter(&mntvnode_lock);
 	}
 	vfs_vnode_iterator_destroy(marker);
 	return (0);
@@ -805,7 +804,7 @@ lfs_dq1get(struct vnode *dqvp, u_long id, struct ulfsmount *ump, int type,
 	aiov.iov_base = (void *)&dq->dq_un.dq1_dqb;
 	aiov.iov_len = sizeof (struct dqblk);
 	auio.uio_resid = sizeof (struct dqblk);
-	auio.uio_offset = (off_t)(id * sizeof (struct dqblk));
+	auio.uio_offset = (off_t)id * sizeof (struct dqblk);
 	auio.uio_rw = UIO_READ;
 	UIO_SETUP_SYSSPACE(&auio);
 	error = VOP_READ(dqvp, &auio, 0, ump->um_cred[type]);
@@ -859,7 +858,7 @@ lfs_dq1sync(struct vnode *vp, struct dquot *dq)
 	aiov.iov_base = (void *)&dq->dq_un.dq1_dqb;
 	aiov.iov_len = sizeof (struct dqblk);
 	auio.uio_resid = sizeof (struct dqblk);
-	auio.uio_offset = (off_t)(dq->dq_id * sizeof (struct dqblk));
+	auio.uio_offset = (off_t)dq->dq_id * sizeof (struct dqblk);
 	auio.uio_rw = UIO_WRITE;
 	UIO_SETUP_SYSSPACE(&auio);
 	error = VOP_WRITE(dqvp, &auio, 0, dq->dq_ump->um_cred[dq->dq_type]);

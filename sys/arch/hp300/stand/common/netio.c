@@ -1,4 +1,4 @@
-/*	$NetBSD: netio.c,v 1.14 2011/07/17 20:54:40 joerg Exp $	*/
+/*	$NetBSD: netio.c,v 1.14.12.1 2017/12/03 11:36:13 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -169,7 +169,7 @@ netmountroot(struct open_file *f, char *devname)
  get_my_ip:
 		printf("My IP address? ");
 		memset(input_line, 0, sizeof(input_line));
-		gets(input_line);
+		kgets(input_line, sizeof(input_line));
 		if ((myip.s_addr = inet_addr(input_line)) ==
 		    htonl(INADDR_NONE)) {
 			printf("invalid IP address: %s\n", input_line);
@@ -179,7 +179,7 @@ netmountroot(struct open_file *f, char *devname)
  get_my_netmask:
 		printf("My netmask? ");
 		memset(input_line, 0, sizeof(input_line)); 
-		gets(input_line);
+		kgets(input_line, sizeof(input_line));
 		if ((netmask = inet_addr(input_line)) ==
 		    htonl(INADDR_NONE)) {
 			printf("invalid netmask: %s\n", input_line);
@@ -189,7 +189,7 @@ netmountroot(struct open_file *f, char *devname)
  get_my_gateway:
 		printf("My gateway? ");
 		memset(input_line, 0, sizeof(input_line)); 
-		gets(input_line);
+		kgets(input_line, sizeof(input_line));
 		if ((gateip.s_addr = inet_addr(input_line)) ==
 		    htonl(INADDR_NONE)) {
 			printf("invalid IP address: %s\n", input_line);
@@ -199,7 +199,7 @@ netmountroot(struct open_file *f, char *devname)
  get_server_ip:
 		printf("Server IP address? ");
 		memset(input_line, 0, sizeof(input_line)); 
-		gets(input_line);
+		kgets(input_line, sizeof(input_line));
 		if ((rootip.s_addr = inet_addr(input_line)) ==
 		    htonl(INADDR_NONE)) {
 			printf("invalid IP address: %s\n", input_line);
@@ -209,7 +209,7 @@ netmountroot(struct open_file *f, char *devname)
  get_server_path:
 		printf("Server path? ");
 		memset(rootpath, 0, sizeof(rootpath)); 
-		gets(rootpath);
+		kgets(rootpath, sizeof(rootpath));
 		if (rootpath[0] == '\0' || rootpath[0] == '\n')
 			goto get_server_path;
 

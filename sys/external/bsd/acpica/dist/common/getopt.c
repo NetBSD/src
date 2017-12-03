@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -47,12 +47,11 @@
  * Option strings:
  *    "f"       - Option has no arguments
  *    "f:"      - Option requires an argument
+ *    "f+"      - Option has an optional argument
  *    "f^"      - Option has optional single-char sub-options
  *    "f|"      - Option has required single-char sub-options
  */
 
-#include <stdio.h>
-#include <string.h>
 #include "acpi.h"
 #include "accommon.h"
 #include "acapps.h"
@@ -92,6 +91,7 @@ AcpiGetoptArgument (
     int                     argc,
     char                    **argv)
 {
+
     AcpiGbl_Optind--;
     CurrentCharPtr++;
 
@@ -101,7 +101,7 @@ AcpiGetoptArgument (
     }
     else if (++AcpiGbl_Optind >= argc)
     {
-        ACPI_OPTION_ERROR ("Option requires an argument: -", 'v');
+        ACPI_OPTION_ERROR ("\nOption requires an argument", 0);
 
         CurrentCharPtr = 1;
         return (-1);
@@ -123,7 +123,7 @@ AcpiGetoptArgument (
  * PARAMETERS:  argc, argv          - from main
  *              opts                - options info list
  *
- * RETURN:      Option character or EOF
+ * RETURN:      Option character or ACPI_OPT_END
  *
  * DESCRIPTION: Get the next option
  *
@@ -145,12 +145,12 @@ AcpiGetopt(
             argv[AcpiGbl_Optind][0] != '-' ||
             argv[AcpiGbl_Optind][1] == '\0')
         {
-            return (EOF);
+            return (ACPI_OPT_END);
         }
         else if (strcmp (argv[AcpiGbl_Optind], "--") == 0)
         {
             AcpiGbl_Optind++;
-            return (EOF);
+            return (ACPI_OPT_END);
         }
     }
 
@@ -184,7 +184,8 @@ AcpiGetopt(
         }
         else if (++AcpiGbl_Optind >= argc)
         {
-            ACPI_OPTION_ERROR ("Option requires an argument: -", CurrentChar);
+            ACPI_OPTION_ERROR (
+                "Option requires an argument: -", CurrentChar);
 
             CurrentCharPtr = 1;
             return ('?');
@@ -245,7 +246,9 @@ AcpiGetopt(
         }
         else
         {
-            ACPI_OPTION_ERROR ("Option requires a single-character suboption: -", CurrentChar);
+            ACPI_OPTION_ERROR (
+                "Option requires a single-character suboption: -",
+                CurrentChar);
 
             CurrentCharPtr = 1;
             return ('?');

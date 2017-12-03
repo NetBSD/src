@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_irqhandler.c,v 1.18.18.2 2014/08/20 00:02:47 tls Exp $	*/
+/*	$NetBSD: ofw_irqhandler.c,v 1.18.18.3 2017/12/03 11:35:55 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_irqhandler.c,v 1.18.18.2 2014/08/20 00:02:47 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_irqhandler.c,v 1.18.18.3 2017/12/03 11:35:55 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -301,8 +301,10 @@ intr_claim(int irq, int level, int (*ih_func)(void *), void *ih_arg, const char 
 	ih->ih_arg = ih_arg;
 	ih->ih_flags = 0;
 
-	if (irq_claim(irq, ih, group, name) != 0)
+	if (irq_claim(irq, ih, group, name) != 0) {
+		free(ih, M_DEVBUF);
 		return(NULL);
+	}
 	return(ih);
 }
 

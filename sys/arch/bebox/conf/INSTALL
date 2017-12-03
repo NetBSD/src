@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.54.2.1 2013/06/23 06:20:01 tls Exp $
+#	$NetBSD: INSTALL,v 1.54.2.2 2017/12/03 11:35:59 jdolecek Exp $
 #
 # First try for BeBox config file
 #
@@ -35,20 +35,8 @@ options 	USERCONF		# userconf(4) support
 options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
-#options 	COMPAT_43
-#options 	COMPAT_09
-#options 	COMPAT_10
-#options 	COMPAT_12
-#options 	COMPAT_13
-#options 	COMPAT_14
-#options 	COMPAT_15
-#options 	COMPAT_16
-#options 	COMPAT_20
-#options 	COMPAT_30	# NetBSD 3.0 compatibility.
-#options 	COMPAT_40	# NetBSD 4.0 compatibility.
+#include 	"conf/compat_netbsd09.config"
 #options 	COMPAT_386BSD_MBRPART	# recognize old partition ID
-#options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # File systems
 file-system 	FFS
@@ -67,6 +55,8 @@ file-system	PTYFS		# /dev/pts/N support
 #file-system	TMPFS
 
 # Filesystem options
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
+#options 	FFS_EI		# FFS Endian Independent support
 options 	NFS_V2_ONLY	# Exclude NFS3 code to save space
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	WAPBL		# File system journaling support
@@ -179,7 +169,7 @@ tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
 ukphy*  at mii? phy ?                   # generic unknown PHYs
 
 #wss0	at isa? port 0x530 irq 10 drq 0	# Windows Sound System
-#spkr0	at pcppi?
+#spkr*	at pcppi?
 
 # Joystick driver. Probe is a little strange; add only if you have one.
 #joy0	at isa? port 0x201

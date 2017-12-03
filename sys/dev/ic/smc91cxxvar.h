@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxxvar.h,v 1.18.6.1 2012/11/20 03:02:08 tls Exp $	*/
+/*	$NetBSD: smc91cxxvar.h,v 1.18.6.2 2017/12/03 11:37:04 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 struct smc91cxx_softc {
 	device_t sc_dev;		/* generic device glue */

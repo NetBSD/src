@@ -1,4 +1,4 @@
-/*      $NetBSD: xpci_xenbus.c,v 1.11.2.2 2014/08/20 00:03:30 tls Exp $      */
+/*      $NetBSD: xpci_xenbus.c,v 1.11.2.3 2017/12/03 11:36:51 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2009 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xpci_xenbus.c,v 1.11.2.2 2014/08/20 00:03:30 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xpci_xenbus.c,v 1.11.2.3 2017/12/03 11:36:51 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -188,7 +188,7 @@ xpci_xenbus_resume(void *p)
 	error = xenbus_grant_ring(sc->sc_xbusd, ma, &sc->sc_shared_gntref);
 	if (error)
 		 return error;
-	DPRINTF(("shared %p ma 0x%jx ref 0x%u\n", shared, (uintmax_t)ma,
+	DPRINTF(("shared %p ma 0x%jx ref %#x\n", shared, (uintmax_t)ma,
 	    sc->sc_shared_gntref));
 	error = xenbus_alloc_evtchn(sc->sc_xbusd, &sc->sc_evtchn);
 	if (error)

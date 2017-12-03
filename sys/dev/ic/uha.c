@@ -1,4 +1,4 @@
-/*	$NetBSD: uha.c,v 1.45.18.1 2012/11/20 03:02:08 tls Exp $	*/
+/*	$NetBSD: uha.c,v 1.45.18.2 2017/12/03 11:37:04 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uha.c,v 1.45.18.1 2012/11/20 03:02:08 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uha.c,v 1.45.18.2 2017/12/03 11:37:04 jdolecek Exp $");
 
 #undef UHADEBUG
 #ifdef DDB
@@ -142,15 +142,15 @@ uha_attach(struct uha_softc *sc, struct uha_probe_data *upd)
 	 */
 	if ((error = bus_dmamem_alloc(sc->sc_dmat, MSCPSIZE,
 	    PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
-		aprint_error_dev(sc->sc_dev, "unable to allocate mscps, error = %d\n",
-		    error);
+		aprint_error_dev(sc->sc_dev,
+		    "unable to allocate mscps, error = %d\n", error);
 		return;
 	}
 	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
 	    MSCPSIZE, (void **)&sc->sc_mscps,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
-		aprint_error_dev(sc->sc_dev, "unable to map mscps, error = %d\n",
-		    error);
+		aprint_error_dev(sc->sc_dev,
+		    "unable to map mscps, error = %d\n", error);
 		return;
 	}
 
@@ -160,14 +160,14 @@ uha_attach(struct uha_softc *sc, struct uha_probe_data *upd)
 	if ((error = bus_dmamap_create(sc->sc_dmat, MSCPSIZE,
 	    1, MSCPSIZE, 0, BUS_DMA_NOWAIT | sc->sc_dmaflags,
 	    &sc->sc_dmamap_mscp)) != 0) {
-		aprint_error_dev(sc->sc_dev, "unable to create mscp DMA map, error = %d\n",
-		    error);
+		aprint_error_dev(sc->sc_dev,
+		    "unable to create mscp DMA map, error = %d\n", error);
 		return;
 	}
 	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_dmamap_mscp,
 	    sc->sc_mscps, MSCPSIZE, NULL, BUS_DMA_NOWAIT)) != 0) {
-		aprint_error_dev(sc->sc_dev, "unable to load mscp DMA map, error = %d\n",
-		    error);
+		aprint_error_dev(sc->sc_dev,
+		    "unable to load mscp DMA map, error = %d\n", error);
 		return;
 	}
 
@@ -181,8 +181,8 @@ uha_attach(struct uha_softc *sc, struct uha_probe_data *upd)
 		aprint_error_dev(sc->sc_dev, "unable to create mscps\n");
 		return;
 	} else if (i != UHA_MSCP_MAX) {
-		aprint_error_dev(sc->sc_dev, "WARNING: only %d of %d mscps created\n",
-		    i, UHA_MSCP_MAX);
+		aprint_error_dev(sc->sc_dev,
+		    "WARNING: only %d of %d mscps created\n", i, UHA_MSCP_MAX);
 	}
 
 	adapt->adapt_openings = i;
@@ -228,8 +228,8 @@ uha_init_mscp(struct uha_softc *sc, struct uha_mscp *mscp)
 	    0, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW | sc->sc_dmaflags,
 	    &mscp->dmamap_xfer);
 	if (error) {
-		aprint_error_dev(sc->sc_dev, "can't create mscp DMA map, error = %d\n",
-		    error);
+		aprint_error_dev(sc->sc_dev,
+		    "can't create mscp DMA map, error = %d\n", error);
 		return (error);
 	}
 
@@ -259,8 +259,8 @@ uha_create_mscps(struct uha_softc *sc, struct uha_mscp *mscpstore, int count)
 	for (i = 0; i < count; i++) {
 		mscp = &mscpstore[i];
 		if ((error = uha_init_mscp(sc, mscp)) != 0) {
-			aprint_error_dev(sc->sc_dev, "unable to initialize mscp, error = %d\n",
-			    error);
+			aprint_error_dev(sc->sc_dev,
+			    "unable to initialize mscp, error = %d\n", error);
 			goto out;
 		}
 		TAILQ_INSERT_TAIL(&sc->sc_free_mscp, mscp, chain);
@@ -369,8 +369,8 @@ uha_done(struct uha_softc *sc, struct uha_mscp *mscp)
 				xs->error = XS_BUSY;
 				break;
 			default:
-				aprint_error_dev(sc->sc_dev, "target_stat %x\n",
-				    mscp->target_stat);
+				aprint_error_dev(sc->sc_dev,
+				    "target_stat %x\n", mscp->target_stat);
 				xs->error = XS_DRIVER_STUFFUP;
 			}
 		} else
@@ -395,7 +395,8 @@ uhaminphys(struct buf *bp)
  */
 
 void
-uha_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
+uha_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
+    void *arg)
 {
 	struct scsipi_xfer *xs;
 	struct scsipi_periph *periph;
@@ -438,7 +439,8 @@ uha_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *
 			mscp->ca = 0x01;
 		} else {
 			if (xs->cmdlen > sizeof(mscp->scsi_cmd)) {
-				aprint_error_dev(sc->sc_dev, "cmdlen %d too large for MSCP\n",
+				aprint_error_dev(sc->sc_dev,
+				    "cmdlen %d too large for MSCP\n",
 				    xs->cmdlen);
 				xs->error = XS_DRIVER_STUFFUP;
 				goto out_bad;
@@ -493,8 +495,8 @@ uha_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *
 
 			default:
 				xs->error = XS_DRIVER_STUFFUP;
-				aprint_error_dev(sc->sc_dev, "error %d loading DMA map\n",
-				    error);
+				aprint_error_dev(sc->sc_dev,
+				    "error %d loading DMA map\n", error);
  out_bad:
 				uha_free_mscp(sc, mscp);
 				scsipi_done(xs);

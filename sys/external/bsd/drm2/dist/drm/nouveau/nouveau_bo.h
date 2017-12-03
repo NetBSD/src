@@ -1,8 +1,12 @@
 #ifndef __NOUVEAU_BO_H__
 #define __NOUVEAU_BO_H__
 
+#include <ttm/ttm_bo_api.h>
+
 struct nouveau_channel;
+struct nouveau_drm;
 struct nouveau_fence;
+struct nouveau_vm;
 struct nouveau_vma;
 
 struct nouveau_bo {

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xe.c,v 1.21.18.2 2014/08/20 00:03:16 tls Exp $	*/
+/*	$NetBSD: if_xe.c,v 1.21.18.3 2017/12/03 11:36:33 jdolecek Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xe.c,v 1.21.18.2 2014/08/20 00:03:16 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xe.c,v 1.21.18.3 2017/12/03 11:36:33 jdolecek Exp $");
 
 #include "opt_inet.h"
 
@@ -676,7 +676,7 @@ xe_dma_rxmap_load(struct mb8795_softc *sc, bus_dmamap_t map)
 		m->m_len = buflen;
 	}
 
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
 	m->m_pkthdr.len = m->m_len;
 
 	error = bus_dmamap_load_mbuf(xsc->sc_rxdma->sc_dmat,

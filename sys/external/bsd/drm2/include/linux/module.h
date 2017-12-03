@@ -1,4 +1,4 @@
-/*	$NetBSD: module.h,v 1.4.4.2 2014/08/20 00:04:21 tls Exp $	*/
+/*	$NetBSD: module.h,v 1.4.4.3 2017/12/03 11:37:59 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -43,7 +43,17 @@
 #define	MODULE_DEVICE_TABLE(DESCRIPTION, IDLIST)
 #define	MODULE_FIRMWARE(FIRMWARE)
 #define	MODULE_LICENSE(LICENSE)
-#define	MODULE_PARM_DESC(PARAMETER, DESCRIPTION)
+struct linux_module_param_desc {
+	const char *name;
+	const char *description;
+};
+#define	MODULE_PARM_DESC(PARAMETER, DESCRIPTION) \
+static __attribute__((__used__)) \
+const struct linux_module_param_desc PARAMETER ## _desc = { \
+    .name = # PARAMETER, \
+    .description = DESCRIPTION, \
+}; \
+__link_set_add_rodata(linux_module_param_desc, PARAMETER ## _desc)
 
 #define	THIS_MODULE	0
 

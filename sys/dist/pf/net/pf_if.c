@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_if.c,v 1.21.18.1 2014/08/20 00:03:52 tls Exp $	*/
+/*	$NetBSD: pf_if.c,v 1.21.18.2 2017/12/03 11:37:37 jdolecek Exp $	*/
 /*	$OpenBSD: pf_if.c,v 1.47 2007/07/13 09:17:48 markus Exp $ */
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf_if.c,v 1.21.18.1 2014/08/20 00:03:52 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf_if.c,v 1.21.18.2 2017/12/03 11:37:37 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -87,8 +87,8 @@ int		 pfi_unmask(void *);
 void		 pfi_init_groups(struct ifnet *);
 void		 pfi_destroy_groups(struct ifnet *);
 
-int		 pfil_ifnet_wrapper(void *, struct mbuf **, struct ifnet *, int);
-int		 pfil_ifaddr_wrapper(void *, struct mbuf **, struct ifnet *, int);
+void		 pfil_ifnet_wrapper(void *, u_long, void *);
+void		 pfil_ifaddr_wrapper(void *, u_long, void *);
 #endif
 
 RB_PROTOTYPE(pfi_ifhead, pfi_kif, pfik_tree, pfi_if_compare);
@@ -100,6 +100,9 @@ RB_GENERATE(pfi_ifhead, pfi_kif, pfik_tree, pfi_if_compare);
 void
 pfi_initialize(void)
 {
+	int s;
+	int bound;
+
 	if (pfi_all != NULL)	/* already initialized */
 		return;
 
@@ -119,13 +122,24 @@ pfi_initialize(void)
 
 #ifdef __NetBSD__
 	ifnet_t *ifp;
-	IFNET_FOREACH(ifp) {
+	bound = curlwp_bind();
+	s = pserialize_read_enter();
+	IFNET_READER_FOREACH(ifp) {
+		struct psref psref;
+		if_acquire(ifp, &psref);
+		pserialize_read_exit(s);
+
 		pfi_init_groups(ifp);
 		pfi_attach_ifnet(ifp);
-	}
 
-	pfil_add_hook(pfil_ifnet_wrapper, NULL, PFIL_IFNET, if_pfil);
-	pfil_add_hook(pfil_ifaddr_wrapper, NULL, PFIL_IFADDR, if_pfil);
+		s = pserialize_read_enter();
+		if_release(ifp, &psref);
+	}
+	pserialize_read_exit(s);
+	curlwp_bindx(bound);
+
+	pfil_add_ihook(pfil_ifnet_wrapper, NULL, PFIL_IFNET, if_pfil);
+	pfil_add_ihook(pfil_ifaddr_wrapper, NULL, PFIL_IFADDR, if_pfil);
 #endif /* __NetBSD__ */
 }
 
@@ -135,14 +149,27 @@ pfi_destroy(void)
 {
 	struct pfi_kif *p;
 	ifnet_t *ifp;
+	int s;
+	int bound;
 
-	pfil_remove_hook(pfil_ifaddr_wrapper, NULL, PFIL_IFADDR, if_pfil);
-	pfil_remove_hook(pfil_ifnet_wrapper, NULL, PFIL_IFNET, if_pfil);
+	pfil_remove_ihook(pfil_ifaddr_wrapper, NULL, PFIL_IFADDR, if_pfil);
+	pfil_remove_ihook(pfil_ifnet_wrapper, NULL, PFIL_IFNET, if_pfil);
 
-	IFNET_FOREACH(ifp) {
+	bound = curlwp_bind();
+	s = pserialize_read_enter();
+	IFNET_READER_FOREACH(ifp) {
+		struct psref psref;
+		if_acquire(ifp, &psref);
+		pserialize_read_exit(s);
+
 		pfi_detach_ifnet(ifp);
 		pfi_destroy_groups(ifp);
+
+		s = pserialize_read_enter();
+		if_release(ifp, &psref);
 	}
+	pserialize_read_exit(s);
+	curlwp_bindx(bound);
 
 	while ((p = RB_MIN(pfi_ifhead, &pfi_ifs))) {
 		RB_REMOVE(pfi_ifhead, &pfi_ifs, p);
@@ -529,12 +556,14 @@ pfi_instance_add(struct ifnet *ifp, int net, int flags)
 	struct ifaddr	*ia;
 	int		 got4 = 0, got6 = 0;
 	int		 net2, af;
+	int		 s;
 
 	if (ifp == NULL)
 		return;
-	IFADDR_FOREACH(ia, ifp) {
-		if (ia->ifa_addr == NULL)
-			continue;
+
+	/* Depends on pfi_address_add doesn't sleep */
+	s = pserialize_read_enter();
+	IFADDR_READER_FOREACH(ia, ifp) {
 		af = ia->ifa_addr->sa_family;
 		if (af != AF_INET && af != AF_INET6)
 			continue;
@@ -578,6 +607,7 @@ pfi_instance_add(struct ifnet *ifp, int net, int flags)
 		else
 			pfi_address_add(ia->ifa_addr, af, net2);
 	}
+	pserialize_read_exit(s);
 }
 
 void
@@ -855,10 +885,10 @@ pfi_destroy_groups(struct ifnet *ifp)
 	if_destroy_groups(ifp);
 }
 
-int
-pfil_ifnet_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
+void
+pfil_ifnet_wrapper(void *arg, u_long cmd, void *arg2)
 {
-	u_long cmd = (u_long)mp;
+	ifnet_t *ifp = arg2;
 
 	switch (cmd) {
 	case PFIL_IFNET_ATTACH:
@@ -874,14 +904,12 @@ pfil_ifnet_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 	default:
 		panic("pfil_ifnet_wrapper: unexpected cmd %lu", cmd);
 	}
-
-	return (0);
 }
 
-int
-pfil_ifaddr_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
+void
+pfil_ifaddr_wrapper(void *arg, u_long cmd, void *arg2)
 {
-	u_long cmd = (u_long)mp;
+	struct ifaddr *ifa = arg2;
 
 	switch (cmd) {
 	case SIOCSIFADDR:
@@ -891,12 +919,10 @@ pfil_ifaddr_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 	case SIOCAIFADDR_IN6:
 	case SIOCDIFADDR_IN6:
 #endif /* INET6 */
-		pfi_kifaddr_update(ifp->if_pf_kif);
+		pfi_kifaddr_update(ifa->ifa_ifp->if_pf_kif);
 		break;
 	default:
 		panic("pfil_ifaddr_wrapper: unexpected ioctl %lu", cmd);
 	}
-
-	return (0);
 }
 #endif /* __NetBSD__ */

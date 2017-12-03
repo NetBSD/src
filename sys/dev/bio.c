@@ -1,4 +1,4 @@
-/*	$NetBSD: bio.c,v 1.9.22.1 2014/08/20 00:03:35 tls Exp $ */
+/*	$NetBSD: bio.c,v 1.9.22.2 2017/12/03 11:36:58 jdolecek Exp $ */
 /*	$OpenBSD: bio.c,v 1.9 2007/03/20 02:35:55 marco Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
 /* A device controller ioctl tunnelling device.  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bio.c,v 1.9.22.1 2014/08/20 00:03:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bio.c,v 1.9.22.2 2017/12/03 11:36:58 jdolecek Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -45,6 +45,9 @@ __KERNEL_RCSID(0, "$NetBSD: bio.c,v 1.9.22.1 2014/08/20 00:03:35 tls Exp $");
 #include <sys/kauth.h>
 
 #include <dev/biovar.h>
+#include <dev/sysmon/sysmonvar.h>
+
+#include "ioconf.h"
 
 struct bio_mapping {
 	LIST_ENTRY(bio_mapping) bm_link;
@@ -64,8 +67,6 @@ static int	bioopen(dev_t, int, int, struct lwp *);
 static int	bio_delegate_ioctl(void *, u_long, void *);
 static struct	bio_mapping *bio_lookup(char *);
 static int	bio_validate(void *);
-
-void	bioattach(int);
 
 const struct cdevsw bio_cdevsw = {
         .d_open = bioopen,
@@ -301,4 +302,65 @@ bio_delegate_ioctl(void *cookie, u_long cmd, void *addr)
 	struct bio_mapping *bm = cookie;
 	
 	return bm->bm_ioctl(bm->bm_dev, cmd, addr);
+}
+
+void
+bio_disk_to_envsys(envsys_data_t *edata, const struct bioc_disk *bd)
+{
+	switch (bd->bd_status) {
+	case BIOC_SDONLINE:
+		edata->value_cur = ENVSYS_DRIVE_ONLINE;
+		edata->state = ENVSYS_SVALID;
+		break;
+	case BIOC_SDOFFLINE:
+		edata->value_cur = ENVSYS_DRIVE_OFFLINE;
+		edata->state = ENVSYS_SCRITICAL;
+		break;
+	default:
+		edata->value_cur = ENVSYS_DRIVE_FAIL;
+		edata->state = ENVSYS_SCRITICAL;
+		break;
+	}
+}
+
+void
+bio_vol_to_envsys(envsys_data_t *edata, const struct bioc_vol *bv)
+{
+	switch (bv->bv_status) {
+	case BIOC_SVOFFLINE:
+		edata->value_cur = ENVSYS_DRIVE_OFFLINE;
+		edata->state = ENVSYS_SCRITICAL;
+		break;
+	case BIOC_SVDEGRADED:
+		edata->value_cur = ENVSYS_DRIVE_PFAIL;
+		edata->state = ENVSYS_SCRITICAL;
+		break;
+	case BIOC_SVBUILDING:
+		edata->value_cur = ENVSYS_DRIVE_BUILD;
+		edata->state = ENVSYS_SVALID;
+		break;
+	case BIOC_SVMIGRATING:
+		edata->value_cur = ENVSYS_DRIVE_MIGRATING;
+		edata->state = ENVSYS_SVALID;
+		break;
+	case BIOC_SVCHECKING:
+		edata->value_cur = ENVSYS_DRIVE_CHECK;
+		edata->state = ENVSYS_SVALID;
+		break;
+	case BIOC_SVREBUILD:
+		edata->value_cur = ENVSYS_DRIVE_REBUILD;
+		edata->state = ENVSYS_SCRITICAL;
+		break;
+	case BIOC_SVSCRUB:
+	case BIOC_SVONLINE:
+		edata->value_cur = ENVSYS_DRIVE_ONLINE;
+		edata->state = ENVSYS_SVALID;
+		break;
+	case BIOC_SVINVALID:
+		/* FALLTHROUGH */
+	default:
+		edata->value_cur = ENVSYS_DRIVE_EMPTY; /* unknown state */
+		edata->state = ENVSYS_SINVALID;
+		break;
+	}
 }

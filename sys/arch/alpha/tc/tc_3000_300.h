@@ -1,4 +1,4 @@
-/* $NetBSD: tc_3000_300.h,v 1.6 2012/02/06 02:14:16 matt Exp $ */
+/* $NetBSD: tc_3000_300.h,v 1.6.6.1 2017/12/03 11:35:47 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 /*
- * TurboChannel-specific functions and structures for 3000_500.
+ * TURBOchannel-specific functions and structures for 3000_500.
  */
 
 /*

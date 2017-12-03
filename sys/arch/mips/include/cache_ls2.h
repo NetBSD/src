@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_ls2.h,v 1.2 2009/08/11 00:34:29 matt Exp $	*/
+/*	$NetBSD: cache_ls2.h,v 1.2.24.1 2017/12/03 11:36:27 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -104,22 +104,22 @@
             : "memory");
 
 void	ls2_icache_sync_all(void);
-void	ls2_icache_sync_range(vaddr_t, vsize_t);
+void	ls2_icache_sync_range(register_t, vsize_t);
 void	ls2_icache_sync_range_index(vaddr_t, vsize_t);
 
 void	ls2_pdcache_wbinv_all(void);
-void	ls2_pdcache_wbinv_range(vaddr_t, vsize_t);
+void	ls2_pdcache_wbinv_range(register_t, vsize_t);
 void	ls2_pdcache_wbinv_range_index(vaddr_t, vsize_t);
 
-void	ls2_pdcache_inv_range(vaddr_t, vsize_t);
-void	ls2_pdcache_wb_range(vaddr_t, vsize_t);
+void	ls2_pdcache_inv_range(register_t, vsize_t);
+void	ls2_pdcache_wb_range(register_t, vsize_t);
 
 void	ls2_sdcache_wbinv_all(void);
-void	ls2_sdcache_wbinv_range(vaddr_t, vsize_t);
+void	ls2_sdcache_wbinv_range(register_t, vsize_t);
 void	ls2_sdcache_wbinv_range_index(vaddr_t, vsize_t);
 
-void	ls2_sdcache_inv_range(vaddr_t, vsize_t);
-void	ls2_sdcache_wb_range(vaddr_t, vsize_t);
+void	ls2_sdcache_inv_range(register_t, vsize_t);
+void	ls2_sdcache_wb_range(register_t, vsize_t);
 
 #endif /* !_LOCORE */
 #endif /* !_MIPS_CACHE_LS2_H_ */

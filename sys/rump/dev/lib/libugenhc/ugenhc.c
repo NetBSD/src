@@ -1,4 +1,4 @@
-/*	$NetBSD: ugenhc.c,v 1.10.2.3 2014/08/20 00:04:38 tls Exp $	*/
+/*	$NetBSD: ugenhc.c,v 1.10.2.4 2017/12/03 11:39:09 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.10.2.3 2014/08/20 00:04:38 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.10.2.4 2017/12/03 11:39:09 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -78,14 +78,14 @@ __KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.10.2.3 2014/08/20 00:04:38 tls Exp $");
 #include <dev/usb/usbhid.h>
 #include <dev/usb/usbdivar.h>
 #include <dev/usb/usb_mem.h>
-#include <dev/usb/usbroothub_subr.h>
+#include <dev/usb/usbroothub.h>
 
 #include <rump/rumpuser.h>
 
-#include "ugenhc_user.h"
+#include <rump-sys/kern.h>
+#include <rump-sys/dev.h>
 
-#include "rump_private.h"
-#include "rump_dev_private.h"
+#include "ugenhc_user.h"
 
 #define UGEN_NEPTS 16
 #define UGEN_EPT_CTRL 0 /* ugenx.00 is the control endpoint */
@@ -99,11 +99,9 @@ struct ugenhc_softc {
 
 	int sc_port_status;
 	int sc_port_change;
-	int sc_addr;
-	int sc_conf;
 
 	struct lwp *sc_rhintr;
-	usbd_xfer_handle sc_intrxfer;
+	struct usbd_xfer *sc_intrxfer;
 
 	kmutex_t sc_lock;
 };
@@ -120,6 +118,10 @@ struct rusb_xfer {
 };
 #define RUSB(x) ((struct rusb_xfer *)x)
 
+#define UGENHC_BUS2SC(bus)	((bus)->ub_hcpriv)
+#define UGENHC_PIPE2SC(pipe)	UGENHC_BUS2SC((pipe)->up_dev->ud_bus)
+#define UGENHC_XFER2SC(pipe)	UGENHC_BUS2SC((xfer)->ux_bus)
+
 #define UGENDEV_BASESTR "/dev/ugen"
 #define UGENDEV_BUFSIZE 32
 static void
@@ -130,143 +132,45 @@ makeugendevstr(int devnum, int endpoint, char *buf, size_t len)
 	snprintf(buf, len, "%s%d.%02d", UGENDEV_BASESTR, devnum, endpoint);
 }
 
-/*
- * Our fictional hubbie.
- */
-
-static const usb_device_descriptor_t rumphub_udd = {
-	.bLength		= USB_DEVICE_DESCRIPTOR_SIZE,
-	.bDescriptorType	= UDESC_DEVICE,
-	.bDeviceClass		= UDCLASS_HUB,
-	.bDeviceSubClass	= UDSUBCLASS_HUB,
-	.bDeviceProtocol	= UDPROTO_FSHUB,
-	.bMaxPacketSize		= 64,
-	.idVendor		= { 0x75, 0x72 },
-	.idProduct		= { 0x70, 0x6d },
-	.bNumConfigurations	= 1,
-};
-
-static const usb_config_descriptor_t rumphub_ucd = {
-	.bLength		= USB_CONFIG_DESCRIPTOR_SIZE,
-	.bDescriptorType	= UDESC_CONFIG,
-	.wTotalLength		= { USB_CONFIG_DESCRIPTOR_SIZE
-				  + USB_INTERFACE_DESCRIPTOR_SIZE
-				  + USB_ENDPOINT_DESCRIPTOR_SIZE },
-	.bNumInterface		= 1,
-	.bmAttributes		= UC_SELF_POWERED | UC_ATTR_MBO,
-};
-
-static const usb_interface_descriptor_t rumphub_uid = {
-	.bLength		= USB_INTERFACE_DESCRIPTOR_SIZE,
-	.bDescriptorType	= UDESC_INTERFACE,
-	.bInterfaceNumber	= 0,
-	.bNumEndpoints		= 1,
-	.bInterfaceClass	= UICLASS_HUB,
-	.bInterfaceSubClass	= UISUBCLASS_HUB,
-	.bInterfaceProtocol	= UIPROTO_FSHUB,
-};
-
-static const usb_endpoint_descriptor_t rumphub_epd = {
-	.bLength		= USB_ENDPOINT_DESCRIPTOR_SIZE,
-	.bDescriptorType	= UDESC_ENDPOINT,
-	.bmAttributes		= UE_INTERRUPT,
-	.wMaxPacketSize		= {64, 0},
-};
-
-static const usb_hub_descriptor_t rumphub_hdd = {
-	.bDescLength		= USB_HUB_DESCRIPTOR_SIZE,
-	.bDescriptorType	= UDESC_HUB,
-	.bNbrPorts		= 1,
-};
-
-static usbd_status
-rumpusb_root_ctrl_start(usbd_xfer_handle xfer)
+static int
+ugenhc_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
+    void *buf, int buflen)
 {
-	usb_device_request_t *req = &xfer->request;
-	struct ugenhc_softc *sc = xfer->pipe->device->bus->hci_private;
-	int len, totlen, value, curlen, err;
-	uint8_t *buf = NULL;
+	struct ugenhc_softc *sc = UGENHC_BUS2SC(bus);
+	int totlen = 0;
+	uint16_t len, value;
 
-	len = totlen = UGETW(req->wLength);
-	if (len)
-		buf = KERNADDR(&xfer->dmabuf, 0);
+	len = UGETW(req->wLength);
 	value = UGETW(req->wValue);
 
 #define C(x,y) ((x) | ((y) << 8))
-	switch(C(req->bRequest, req->bmRequestType)) {
-
-	case C(UR_GET_CONFIG, UT_READ_DEVICE):
-		if (len > 0) {
-			*buf = sc->sc_conf;
-			totlen = 1;
-		}
-		break;
-
+	switch (C(req->bRequest, req->bmRequestType)) {
 	case C(UR_GET_DESCRIPTOR, UT_READ_DEVICE):
-		switch (value >> 8) {
-		case UDESC_DEVICE:
-			totlen = min(len, USB_DEVICE_DESCRIPTOR_SIZE);
-			memcpy(buf, &rumphub_udd, totlen);
+		switch (value) {
+		case C(0, UDESC_DEVICE): {
+			usb_device_descriptor_t devd;
+
+			totlen = min(buflen, sizeof(devd));
+			memcpy(&devd, buf, totlen);
+			USETW(devd.idVendor, 0x7275);
+			USETW(devd.idProduct, 0x6d72);
+			memcpy(buf, &devd, totlen);
 			break;
-
-		case UDESC_CONFIG:
-			totlen = 0;
-			curlen = min(len, USB_CONFIG_DESCRIPTOR_SIZE);
-			memcpy(buf, &rumphub_ucd, curlen);
-			len -= curlen;
-			buf += curlen;
-			totlen += curlen;
-
-			curlen = min(len, USB_INTERFACE_DESCRIPTOR_SIZE);
-			memcpy(buf, &rumphub_uid, curlen);
-			len -= curlen;
-			buf += curlen;
-			totlen += curlen;
-
-			curlen = min(len, USB_ENDPOINT_DESCRIPTOR_SIZE);
-			memcpy(buf, &rumphub_epd, curlen);
-			len -= curlen;
-			buf += curlen;
-			totlen += curlen;
-			break;
-
-		case UDESC_STRING:
+		}
 #define sd ((usb_string_descriptor_t *)buf)
-			switch (value & 0xff) {
-			case 0: /* Language table */
-				totlen = usb_makelangtbl(sd, len);
-				break;
-			case 1: /* Vendor */
-				totlen = usb_makestrdesc(sd, len, "rod nevada");
-				break;
-			case 2: /* Product */
-				totlen = usb_makestrdesc(sd, len,
-				    "RUMPUSBHC root hub");
-				break;
-			}
+		case C(1, UDESC_STRING):
+			/* Vendor */
+			totlen = usb_makestrdesc(sd, len, "rod nevada");
+			break;
+		case C(2, UDESC_STRING):
+			/* Product */
+			totlen = usb_makestrdesc(sd, len, "RUMPUSBHC root hub");
+			break;
 #undef sd
-			break;
-
 		default:
-			panic("unhandled read device request");
-			break;
+			/* default from usbroothub */
+			return buflen;
 		}
-		break;
-
-	case C(UR_SET_ADDRESS, UT_WRITE_DEVICE):
-		if (value >= USB_MAX_DEVICES) {
-			err = USBD_IOERROR;
-			goto ret;
-		}
-		sc->sc_addr = value;
-		break;
-
-	case C(UR_SET_CONFIG, UT_WRITE_DEVICE):
-		if (value != 0 && value != 1) {
-			err = USBD_IOERROR;
-			goto ret;
-		}
-		sc->sc_conf = value;
 		break;
 
 	case C(UR_SET_FEATURE, UT_WRITE_CLASS_OTHER):
@@ -277,7 +181,7 @@ rumpusb_root_ctrl_start(usbd_xfer_handle xfer)
 		case UHF_PORT_POWER:
 			break;
 		default:
-			panic("unhandled");
+			return -1;
 		}
 		break;
 
@@ -286,8 +190,7 @@ rumpusb_root_ctrl_start(usbd_xfer_handle xfer)
 		break;
 
 	case C(UR_GET_DESCRIPTOR, UT_READ_CLASS_DEVICE):
-		totlen = min(len, USB_HUB_DESCRIPTOR_SIZE);
-		memcpy(buf, &rumphub_hdd, totlen);
+		totlen = buflen;
 		break;
 
 	case C(UR_GET_STATUS, UT_READ_CLASS_DEVICE):
@@ -296,8 +199,7 @@ rumpusb_root_ctrl_start(usbd_xfer_handle xfer)
 		totlen = len;
 		break;
 
-	case C(UR_GET_STATUS, UT_READ_CLASS_OTHER):
-		{
+	case C(UR_GET_STATUS, UT_READ_CLASS_OTHER): {
 		usb_port_status_t ps;
 
 		USETW(ps.wPortStatus, sc->sc_port_status);
@@ -305,77 +207,20 @@ rumpusb_root_ctrl_start(usbd_xfer_handle xfer)
 		totlen = min(len, sizeof(ps));
 		memcpy(buf, &ps, totlen);
 		break;
-		}
-
-	default:
-		panic("unhandled request");
-		break;
 	}
-	err = USBD_NORMAL_COMPLETION;
-	xfer->actlen = totlen;
+	default:
+		/* default from usbroothub */
+		return buflen;
+	}
 
-ret:
-	xfer->status = err;
-	mutex_enter(&sc->sc_lock);
-	usb_transfer_complete(xfer);
-	mutex_exit(&sc->sc_lock);
-
-	return (USBD_IN_PROGRESS);
+	return totlen;
 }
 
 static usbd_status
-rumpusb_root_ctrl_transfer(usbd_xfer_handle xfer)
+rumpusb_device_ctrl_start(struct usbd_xfer *xfer)
 {
-	struct ugenhc_softc *sc = xfer->pipe->device->bus->hci_private;
-	usbd_status err;
-
-	mutex_enter(&sc->sc_lock);
-	err = usb_insert_transfer(xfer);
-	mutex_exit(&sc->sc_lock);
-	if (err)
-		return (err);
-
-	return (rumpusb_root_ctrl_start(SIMPLEQ_FIRST(&xfer->pipe->queue)));
-}
-
-static void
-rumpusb_root_ctrl_abort(usbd_xfer_handle xfer)
-{
-
-}
-
-static void
-rumpusb_root_ctrl_close(usbd_pipe_handle pipe)
-{
-
-}
-
-static void
-rumpusb_root_ctrl_cleartoggle(usbd_pipe_handle pipe)
-{
-
-}
-
-static void
-rumpusb_root_ctrl_done(usbd_xfer_handle xfer)
-{
-
-}
-
-static const struct usbd_pipe_methods rumpusb_root_ctrl_methods = {
-	.transfer =	rumpusb_root_ctrl_transfer,
-	.start =	rumpusb_root_ctrl_start,
-	.abort =	rumpusb_root_ctrl_abort,
-	.close =	rumpusb_root_ctrl_close,
-	.cleartoggle =	rumpusb_root_ctrl_cleartoggle,
-	.done =		rumpusb_root_ctrl_done,
-};
-
-static usbd_status
-rumpusb_device_ctrl_start(usbd_xfer_handle xfer)
-{
-	usb_device_request_t *req = &xfer->request;
-	struct ugenhc_softc *sc = xfer->pipe->device->bus->hci_private;
+	usb_device_request_t *req = &xfer->ux_request;
+	struct ugenhc_softc *sc = UGENHC_XFER2SC(xfer);
 	uint8_t *buf = NULL;
 	int len, totlen;
 	int value;
@@ -384,7 +229,7 @@ rumpusb_device_ctrl_start(usbd_xfer_handle xfer)
 
 	len = totlen = UGETW(req->wLength);
 	if (len)
-		buf = KERNADDR(&xfer->dmabuf, 0);
+		buf = xfer->ux_buf;
 	value = UGETW(req->wValue);
 
 #define C(x,y) ((x) | ((y) << 8))
@@ -541,64 +386,64 @@ rumpusb_device_ctrl_start(usbd_xfer_handle xfer)
 		panic("unhandled request");
 		break;
 	}
-	xfer->actlen = totlen;
+	xfer->ux_actlen = totlen;
 	err = USBD_NORMAL_COMPLETION;
 
  ret:
-	xfer->status = err;
+	xfer->ux_status = err;
 	mutex_enter(&sc->sc_lock);
 	usb_transfer_complete(xfer);
 	mutex_exit(&sc->sc_lock);
 
-	return (USBD_IN_PROGRESS);
+	return USBD_IN_PROGRESS;
 }
 
 static usbd_status
-rumpusb_device_ctrl_transfer(usbd_xfer_handle xfer)
+rumpusb_device_ctrl_transfer(struct usbd_xfer *xfer)
 {
-	struct ugenhc_softc *sc = xfer->pipe->device->bus->hci_private;
+	struct ugenhc_softc *sc = UGENHC_XFER2SC(xfer);
 	usbd_status err;
 
 	mutex_enter(&sc->sc_lock);
 	err = usb_insert_transfer(xfer);
 	mutex_exit(&sc->sc_lock);
 	if (err)
-		return (err);
+		return err;
 
-	return (rumpusb_device_ctrl_start(SIMPLEQ_FIRST(&xfer->pipe->queue)));
+	return rumpusb_device_ctrl_start(SIMPLEQ_FIRST(&xfer->ux_pipe->up_queue));
 }
 
 static void
-rumpusb_device_ctrl_abort(usbd_xfer_handle xfer)
+rumpusb_device_ctrl_abort(struct usbd_xfer *xfer)
 {
 
 }
 
 static void
-rumpusb_device_ctrl_close(usbd_pipe_handle pipe)
+rumpusb_device_ctrl_close(struct usbd_pipe *pipe)
 {
 
 }
 
 static void
-rumpusb_device_ctrl_cleartoggle(usbd_pipe_handle pipe)
+rumpusb_device_ctrl_cleartoggle(struct usbd_pipe *pipe)
 {
 
 }
 
 static void
-rumpusb_device_ctrl_done(usbd_xfer_handle xfer)
+rumpusb_device_ctrl_done(struct usbd_xfer *xfer)
 {
 
 }
 
 static const struct usbd_pipe_methods rumpusb_device_ctrl_methods = {
-	.transfer =	rumpusb_device_ctrl_transfer,
-	.start =	rumpusb_device_ctrl_start,
-	.abort =	rumpusb_device_ctrl_abort,
-	.close =	rumpusb_device_ctrl_close,
-	.cleartoggle =	rumpusb_device_ctrl_cleartoggle,
-	.done =		rumpusb_device_ctrl_done,
+	.upm_transfer =	rumpusb_device_ctrl_transfer,
+	.upm_start =	rumpusb_device_ctrl_start,
+	.upm_abort =	rumpusb_device_ctrl_abort,
+	.upm_close =	rumpusb_device_ctrl_close,
+	.upm_cleartoggle =	rumpusb_device_ctrl_cleartoggle,
+	.upm_done =	rumpusb_device_ctrl_done,
 };
 
 static void
@@ -606,7 +451,7 @@ rhscintr(void *arg)
 {
 	char buf[UGENDEV_BUFSIZE];
 	struct ugenhc_softc *sc = arg;
-	usbd_xfer_handle xfer;
+	struct usbd_xfer *xfer;
 	int fd, error;
 
 	makeugendevstr(sc->sc_devnum, 0, buf, sizeof(buf));
@@ -629,9 +474,9 @@ rhscintr(void *arg)
 		sc->sc_port_change = UPS_C_CONNECT_STATUS | UPS_C_PORT_RESET;
 
 		xfer = sc->sc_intrxfer;
-		memset(xfer->buffer, 0xff, xfer->length);
-		xfer->actlen = xfer->length;
-		xfer->status = USBD_NORMAL_COMPLETION;
+		memset(xfer->ux_buffer, 0xff, xfer->ux_length);
+		xfer->ux_actlen = xfer->ux_length;
+		xfer->ux_status = USBD_NORMAL_COMPLETION;
 
 		mutex_enter(&sc->sc_lock);
 		usb_transfer_complete(xfer);
@@ -644,7 +489,7 @@ rhscintr(void *arg)
 		 */
 
 		for (;;) {
-			fd = rumpuser_open(buf, RUMPUSER_OPEN_RDWR, &error);
+			error = rumpuser_open(buf, RUMPUSER_OPEN_RDWR, &fd);
 			if (fd == -1)
 				break;
 
@@ -660,9 +505,9 @@ rhscintr(void *arg)
 		sc->sc_ugenfd[UGEN_EPT_CTRL] = -1;
 
 		xfer = sc->sc_intrxfer;
-		memset(xfer->buffer, 0xff, xfer->length);
-		xfer->actlen = xfer->length;
-		xfer->status = USBD_NORMAL_COMPLETION;
+		memset(xfer->ux_buffer, 0xff, xfer->ux_length);
+		xfer->ux_actlen = xfer->ux_length;
+		xfer->ux_status = USBD_NORMAL_COMPLETION;
 		mutex_enter(&sc->sc_lock);
 		usb_transfer_complete(xfer);
 		mutex_exit(&sc->sc_lock);
@@ -674,9 +519,9 @@ rhscintr(void *arg)
 }
 
 static usbd_status
-rumpusb_root_intr_start(usbd_xfer_handle xfer)
+rumpusb_root_intr_start(struct usbd_xfer *xfer)
 {
-	struct ugenhc_softc *sc = xfer->pipe->device->bus->hci_private;
+	struct ugenhc_softc *sc = UGENHC_XFER2SC(xfer);
 	int error;
 
 	mutex_enter(&sc->sc_lock);
@@ -685,66 +530,66 @@ rumpusb_root_intr_start(usbd_xfer_handle xfer)
 		error = kthread_create(PRI_NONE, 0, NULL,
 		    rhscintr, sc, &sc->sc_rhintr, "ugenrhi");
 		if (error)
-			xfer->status = USBD_IOERROR;
+			xfer->ux_status = USBD_IOERROR;
 	}
 	mutex_exit(&sc->sc_lock);
 
-	return (USBD_IN_PROGRESS);
+	return USBD_IN_PROGRESS;
 }
 
 static usbd_status
-rumpusb_root_intr_transfer(usbd_xfer_handle xfer)
+rumpusb_root_intr_transfer(struct usbd_xfer *xfer)
 {
-	struct ugenhc_softc *sc = xfer->pipe->device->bus->hci_private;
+	struct ugenhc_softc *sc = UGENHC_XFER2SC(xfer);
 	usbd_status err;
 
 	mutex_enter(&sc->sc_lock);
 	err = usb_insert_transfer(xfer);
 	mutex_exit(&sc->sc_lock);
 	if (err)
-		return (err);
+		return err;
 
-	return (rumpusb_root_intr_start(SIMPLEQ_FIRST(&xfer->pipe->queue)));
+	return rumpusb_root_intr_start(SIMPLEQ_FIRST(&xfer->ux_pipe->up_queue));
 }
 
 static void
-rumpusb_root_intr_abort(usbd_xfer_handle xfer)
+rumpusb_root_intr_abort(struct usbd_xfer *xfer)
 {
 
 }
 
 static void
-rumpusb_root_intr_close(usbd_pipe_handle pipe)
+rumpusb_root_intr_close(struct usbd_pipe *pipe)
 {
 
 }
 
 static void
-rumpusb_root_intr_cleartoggle(usbd_pipe_handle pipe)
+rumpusb_root_intr_cleartoggle(struct usbd_pipe *pipe)
 {
 
 }
 
 static void
-rumpusb_root_intr_done(usbd_xfer_handle xfer)
+rumpusb_root_intr_done(struct usbd_xfer *xfer)
 {
 
 }
 
 static const struct usbd_pipe_methods rumpusb_root_intr_methods = {
-	.transfer =	rumpusb_root_intr_transfer,
-	.start =	rumpusb_root_intr_start,
-	.abort =	rumpusb_root_intr_abort,
-	.close =	rumpusb_root_intr_close,
-	.cleartoggle =	rumpusb_root_intr_cleartoggle,
-	.done =		rumpusb_root_intr_done,
+	.upm_transfer =	rumpusb_root_intr_transfer,
+	.upm_start =	rumpusb_root_intr_start,
+	.upm_abort =	rumpusb_root_intr_abort,
+	.upm_close =	rumpusb_root_intr_close,
+	.upm_cleartoggle =	rumpusb_root_intr_cleartoggle,
+	.upm_done =	rumpusb_root_intr_done,
 };
 
 static usbd_status
-rumpusb_device_bulk_start(usbd_xfer_handle xfer)
+rumpusb_device_bulk_start(struct usbd_xfer *xfer)
 {
-	struct ugenhc_softc *sc = xfer->pipe->device->bus->hci_private;
-	usb_endpoint_descriptor_t *ed = xfer->pipe->endpoint->edesc;
+	struct ugenhc_softc *sc = UGENHC_XFER2SC(xfer);
+	usb_endpoint_descriptor_t *ed = xfer->ux_pipe->up_endpoint->ue_edesc;
 	size_t n, done;
 	bool isread;
 	int len, error, endpt;
@@ -752,22 +597,22 @@ rumpusb_device_bulk_start(usbd_xfer_handle xfer)
 	int xfererr = USBD_NORMAL_COMPLETION;
 	int shortval, i;
 
-	ed = xfer->pipe->endpoint->edesc;
+	ed = xfer->ux_pipe->up_endpoint->ue_edesc;
 	endpt = ed->bEndpointAddress;
 	isread = UE_GET_DIR(endpt) == UE_DIR_IN;
 	endpt = UE_GET_ADDR(endpt);
 	KASSERT(endpt < UGEN_NEPTS);
 
-	buf = KERNADDR(&xfer->dmabuf, 0);
+	buf = xfer->ux_buf;
 	done = 0;
 	if ((ed->bmAttributes & UE_XFERTYPE) == UE_ISOCHRONOUS) {
-		for (i = 0, len = 0; i < xfer->nframes; i++)
-			len += xfer->frlengths[i];
+		for (i = 0, len = 0; i < xfer->ux_nframes; i++)
+			len += xfer->ux_frlengths[i];
 	} else {
-		KASSERT(xfer->length);
-		len = xfer->length;
+		KASSERT(xfer->ux_length);
+		len = xfer->ux_length;
 	}
-	shortval = (xfer->flags & USBD_SHORT_XFER_OK) != 0;
+	shortval = (xfer->ux_flags & USBD_SHORT_XFER_OK) != 0;
 
 	while (RUSB(xfer)->rusb_status == 0) {
 		if (isread) {
@@ -828,7 +673,7 @@ rumpusb_device_bulk_start(usbd_xfer_handle xfer)
 	}
 
 	if (RUSB(xfer)->rusb_status == 0) {
-		xfer->actlen = done;
+		xfer->ux_actlen = done;
 	} else {
 		xfererr = USBD_CANCELLED;
 		RUSB(xfer)->rusb_status = 2;
@@ -837,39 +682,39 @@ rumpusb_device_bulk_start(usbd_xfer_handle xfer)
 	if ((ed->bmAttributes & UE_XFERTYPE) == UE_ISOCHRONOUS)
 		if (done != len)
 			panic("lazy bum");
-	xfer->status = xfererr;
+	xfer->ux_status = xfererr;
 	mutex_enter(&sc->sc_lock);
 	usb_transfer_complete(xfer);
 	mutex_exit(&sc->sc_lock);
-	return (USBD_IN_PROGRESS);
+	return USBD_IN_PROGRESS;
 }
 
 static void
 doxfer_kth(void *arg)
 {
-	usbd_pipe_handle pipe = arg;
-	struct ugenhc_softc *sc = pipe->device->bus->hci_private;
+	struct usbd_pipe *pipe = arg;
+	struct ugenhc_softc *sc = UGENHC_PIPE2SC(pipe);
 
 	mutex_enter(&sc->sc_lock);
 	do {
-		usbd_xfer_handle xfer = SIMPLEQ_FIRST(&pipe->queue);
+		struct usbd_xfer *xfer = SIMPLEQ_FIRST(&pipe->up_queue);
 		mutex_exit(&sc->sc_lock);
 		rumpusb_device_bulk_start(xfer);
 		mutex_enter(&sc->sc_lock);
-	} while (!SIMPLEQ_EMPTY(&pipe->queue));
+	} while (!SIMPLEQ_EMPTY(&pipe->up_queue));
 	mutex_exit(&sc->sc_lock);
 	kthread_exit(0);
 }
 
 static usbd_status
-rumpusb_device_bulk_transfer(usbd_xfer_handle xfer)
+rumpusb_device_bulk_transfer(struct usbd_xfer *xfer)
 {
-	struct ugenhc_softc *sc = xfer->pipe->device->bus->hci_private;
+	struct ugenhc_softc *sc = UGENHC_XFER2SC(xfer);
 	usbd_status err;
 
 	if (!rump_threads) {
 		/* XXX: lie about supporting async transfers */
-		if ((xfer->flags & USBD_SYNCHRONOUS) == 0) {
+		if ((xfer->ux_flags & USBD_SYNCHRONOUS) == 0) {
 			printf("non-threaded rump does not support "
 			    "async transfers.\n");
 			return USBD_IN_PROGRESS;
@@ -882,14 +727,14 @@ rumpusb_device_bulk_transfer(usbd_xfer_handle xfer)
 			return err;
 
 		return rumpusb_device_bulk_start(
-		    SIMPLEQ_FIRST(&xfer->pipe->queue));
+		    SIMPLEQ_FIRST(&xfer->ux_pipe->up_queue));
 	} else {
 		mutex_enter(&sc->sc_lock);
 		err = usb_insert_transfer(xfer);
 		mutex_exit(&sc->sc_lock);
 		if (err)
 			return err;
-		kthread_create(PRI_NONE, 0, NULL, doxfer_kth, xfer->pipe, NULL,
+		kthread_create(PRI_NONE, 0, NULL, doxfer_kth, xfer->ux_pipe, NULL,
 		    "rusbhcxf");
 
 		return USBD_IN_PROGRESS;
@@ -898,7 +743,7 @@ rumpusb_device_bulk_transfer(usbd_xfer_handle xfer)
 
 /* wait for transfer to abort.  yea, this is cheesy (from a spray can) */
 static void
-rumpusb_device_bulk_abort(usbd_xfer_handle xfer)
+rumpusb_device_bulk_abort(struct usbd_xfer *xfer)
 {
 	struct rusb_xfer *rx = RUSB(xfer);
 
@@ -909,17 +754,17 @@ rumpusb_device_bulk_abort(usbd_xfer_handle xfer)
 }
 
 static void
-rumpusb_device_bulk_close(usbd_pipe_handle pipe)
+rumpusb_device_bulk_close(struct usbd_pipe *pipe)
 {
-	struct ugenhc_softc *sc = pipe->device->bus->hci_private;
-	int endpt = pipe->endpoint->edesc->bEndpointAddress;
-	usbd_xfer_handle xfer;
+	struct ugenhc_softc *sc = UGENHC_PIPE2SC(pipe);
+	int endpt = pipe->up_endpoint->ue_edesc->bEndpointAddress;
+	struct usbd_xfer *xfer;
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 
 	endpt = UE_GET_ADDR(endpt);
 
-	while ((xfer = SIMPLEQ_FIRST(&pipe->queue)) != NULL)
+	while ((xfer = SIMPLEQ_FIRST(&pipe->up_queue)) != NULL)
 		rumpusb_device_bulk_abort(xfer);
 
 	rumpuser_close(sc->sc_ugenfd[endpt]);
@@ -928,45 +773,46 @@ rumpusb_device_bulk_close(usbd_pipe_handle pipe)
 }
 
 static void
-rumpusb_device_bulk_cleartoggle(usbd_pipe_handle pipe)
+rumpusb_device_bulk_cleartoggle(struct usbd_pipe *pipe)
 {
 
 }
 
 static void
-rumpusb_device_bulk_done(usbd_xfer_handle xfer)
+rumpusb_device_bulk_done(struct usbd_xfer *xfer)
 {
 
 }
 
 static const struct usbd_pipe_methods rumpusb_device_bulk_methods = {
-	.transfer =	rumpusb_device_bulk_transfer,
-	.start =	rumpusb_device_bulk_start,
-	.abort =	rumpusb_device_bulk_abort,
-	.close =	rumpusb_device_bulk_close,
-	.cleartoggle =	rumpusb_device_bulk_cleartoggle,
-	.done =		rumpusb_device_bulk_done,
+	.upm_transfer =	rumpusb_device_bulk_transfer,
+	.upm_start =	rumpusb_device_bulk_start,
+	.upm_abort =	rumpusb_device_bulk_abort,
+	.upm_close =	rumpusb_device_bulk_close,
+	.upm_cleartoggle =	rumpusb_device_bulk_cleartoggle,
+	.upm_done =	rumpusb_device_bulk_done,
 };
 
 static usbd_status
 ugenhc_open(struct usbd_pipe *pipe)
 {
-	usbd_device_handle dev = pipe->device;
-	struct ugenhc_softc *sc = dev->bus->hci_private;
-	usb_endpoint_descriptor_t *ed = pipe->endpoint->edesc;
-	u_int8_t addr = dev->address;
-	u_int8_t xfertype = ed->bmAttributes & UE_XFERTYPE;
+	struct usbd_device *dev = pipe->up_dev;
+	struct ugenhc_softc *sc = UGENHC_PIPE2SC(pipe);
+	usb_endpoint_descriptor_t *ed = pipe->up_endpoint->ue_edesc;
+	uint8_t rhaddr = dev->ud_bus->ub_rhaddr;
+	uint8_t addr = dev->ud_addr;
+	uint8_t xfertype = ed->bmAttributes & UE_XFERTYPE;
 	char buf[UGENDEV_BUFSIZE];
 	int endpt, oflags, error;
 	int fd, val;
 
-	if (addr == sc->sc_addr) {
+	if (addr == rhaddr) {
 		switch (xfertype) {
 		case UE_CONTROL:
-			pipe->methods = &rumpusb_root_ctrl_methods;
+			pipe->up_methods = &roothub_ctrl_methods;
 			break;
 		case UE_INTERRUPT:
-			pipe->methods = &rumpusb_root_intr_methods;
+			pipe->up_methods = &rumpusb_root_intr_methods;
 			break;
 		default:
 			panic("%d not supported", xfertype);
@@ -975,13 +821,13 @@ ugenhc_open(struct usbd_pipe *pipe)
 	} else {
 		switch (xfertype) {
 		case UE_CONTROL:
-			pipe->methods = &rumpusb_device_ctrl_methods;
+			pipe->up_methods = &rumpusb_device_ctrl_methods;
 			break;
 		case UE_INTERRUPT:
 		case UE_BULK:
 		case UE_ISOCHRONOUS:
-			pipe->methods = &rumpusb_device_bulk_methods;
-			endpt = pipe->endpoint->edesc->bEndpointAddress;
+			pipe->up_methods = &rumpusb_device_bulk_methods;
+			endpt = pipe->up_endpoint->ue_edesc->bEndpointAddress;
 			if (UE_GET_DIR(endpt) == UE_DIR_IN) {
 				oflags = O_RDONLY;
 			} else {
@@ -1039,29 +885,13 @@ ugenhc_poll(struct usbd_bus *ubus)
 
 }
 
-static usbd_status
-ugenhc_allocm(struct usbd_bus *bus, usb_dma_t *dma, uint32_t size)
-{
-	struct ugenhc_softc *sc = bus->hci_private;
-
-	return usb_allocmem(&sc->sc_bus, size, 0, dma);
-}
-
-static void
-ugenhc_freem(struct usbd_bus *bus, usb_dma_t *dma)
-{
-	struct ugenhc_softc *sc = bus->hci_private;
-
-	usb_freemem(&sc->sc_bus, dma);
-}
-
 static struct usbd_xfer *
-ugenhc_allocx(struct usbd_bus *bus)
+ugenhc_allocx(struct usbd_bus *bus, unsigned int nframes)
 {
-	usbd_xfer_handle xfer;
+	struct usbd_xfer *xfer;
 
 	xfer = kmem_zalloc(sizeof(struct usbd_xfer), KM_SLEEP);
-	xfer->busy_free = XFER_BUSY;
+	xfer->ux_state = XFER_BUSY;
 
 	return xfer;
 }
@@ -1077,7 +907,7 @@ ugenhc_freex(struct usbd_bus *bus, struct usbd_xfer *xfer)
 static void
 ugenhc_getlock(struct usbd_bus *bus, kmutex_t **lock)
 {
-	struct ugenhc_softc *sc = bus->hci_private;
+	struct ugenhc_softc *sc = UGENHC_BUS2SC(bus);
 
 	*lock = &sc->sc_lock;
 }
@@ -1087,14 +917,13 @@ struct ugenhc_pipe {
 };
 
 static const struct usbd_bus_methods ugenhc_bus_methods = {
-	.open_pipe =	ugenhc_open,
-	.soft_intr =	ugenhc_softint,
-	.do_poll =	ugenhc_poll,
-	.allocm = 	ugenhc_allocm,
-	.freem = 	ugenhc_freem,
-	.allocx = 	ugenhc_allocx,
-	.freex =	ugenhc_freex,
-	.get_lock =	ugenhc_getlock
+	.ubm_open =	ugenhc_open,
+	.ubm_softint =	ugenhc_softint,
+	.ubm_dopoll =	ugenhc_poll,
+	.ubm_allocx = 	ugenhc_allocx,
+	.ubm_freex =	ugenhc_freex,
+	.ubm_getlock =	ugenhc_getlock,
+	.ubm_rhctrl =	ugenhc_roothub_ctrl,
 };
 
 static int
@@ -1121,10 +950,11 @@ ugenhc_attach(device_t parent, device_t self, void *aux)
 	memset(&sc->sc_ugenfd, -1, sizeof(sc->sc_ugenfd));
 	memset(&sc->sc_fdmodes, -1, sizeof(sc->sc_fdmodes));
 
-	sc->sc_bus.usbrev = USBREV_2_0;
-	sc->sc_bus.methods = &ugenhc_bus_methods;
-	sc->sc_bus.hci_private = sc;
-	sc->sc_bus.pipe_size = sizeof(struct ugenhc_pipe);
+	sc->sc_bus.ub_revision = USBREV_2_0;
+	sc->sc_bus.ub_methods = &ugenhc_bus_methods;
+	sc->sc_bus.ub_hcpriv = sc;
+	sc->sc_bus.ub_pipesize = sizeof(struct ugenhc_pipe);
+	sc->sc_bus.ub_usedma = false;
 	sc->sc_devnum = maa->maa_unit;
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);

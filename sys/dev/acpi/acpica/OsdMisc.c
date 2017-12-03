@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdMisc.c,v 1.12.12.1 2014/08/20 00:03:35 tls Exp $	*/
+/*	$NetBSD: OsdMisc.c,v 1.12.12.2 2017/12/03 11:36:58 jdolecek Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,13 +36,50 @@
  */
 
 /*
+ * Copyright (C) 2000 - 2017, Intel Corp.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions, and the following disclaimer,
+ *    without modification.
+ * 2. Redistributions in binary form must reproduce at minimum a disclaimer
+ *    substantially similar to the "NO WARRANTY" disclaimer below
+ *    ("Disclaimer") and any redistribution must be conditioned upon
+ *    including a substantially similar Disclaimer requirement for further
+ *    binary redistribution.
+ * 3. Neither the names of the above-listed copyright holders nor the names
+ *    of any contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * Alternatively, this software may be distributed under the terms of the
+ * GNU General Public License ("GPL") version 2 as published by the Free
+ * Software Foundation.
+ *
+ * NO WARRANTY
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * HOLDERS OR CONTRIBUTORS BE LIABLE FOR SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGES.
+ */
+
+/*
  * OS Services Layer
  *
  * 6.10: Miscellaneous
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdMisc.c,v 1.12.12.1 2014/08/20 00:03:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdMisc.c,v 1.12.12.2 2017/12/03 11:36:58 jdolecek Exp $");
 
 #include "opt_acpi.h"
 #include "opt_ddb.h"
@@ -59,6 +96,8 @@ __KERNEL_RCSID(0, "$NetBSD: OsdMisc.c,v 1.12.12.1 2014/08/20 00:03:35 tls Exp $"
 #include <dev/acpi/acpi_osd.h>
 
 #ifdef ACPI_DEBUG
+#include <external/bsd/acpica/dist/include/acpi.h>
+#include <external/bsd/acpica/dist/include/accommon.h>
 #include <external/bsd/acpica/dist/include/acdebug.h>
 #endif
 
@@ -189,6 +228,33 @@ AcpiOsPhysicalTableOverride (
 	return AE_SUPPORT;
 }
 
+/******************************************************************************
+ *
+ * FUNCTION:    AcpiOsEnterSleep
+ * 
+ * PARAMETERS:  SleepState          - Which sleep state to enter
+ *              RegaValue           - Register A value
+ *              RegbValue           - Register B value
+ *
+ * RETURN:      Status
+ *
+ * DESCRIPTION: A hook before writing sleep registers to enter the sleep
+ *              state. Return AE_CTRL_TERMINATE to skip further sleep register
+ *              writes.
+ *
+ *****************************************************************************/
+ 
+ACPI_STATUS
+AcpiOsEnterSleep (
+    UINT8                   SleepState,
+    UINT32                  RegaValue,
+    UINT32                  RegbValue)  
+{
+
+    return AE_OK;  
+}   
+
+
 /*
  * acpi_osd_debugger:
  *
@@ -198,16 +264,8 @@ void
 acpi_osd_debugger(void)
 {
 #ifdef ACPI_DEBUG
-	static int beenhere;
-	ACPI_PARSE_OBJECT obj;
 	label_t	acpi_jmpbuf;
 	label_t	*savejmp;
-
-	if (beenhere == 0) {
-		printf("Initializing ACPICA debugger...\n");
-		AcpiDbInitialize();
-		beenhere = 1;
-	}
 
 	printf("Entering ACPICA debugger...\n");
 	savejmp = db_recover;
@@ -215,7 +273,7 @@ acpi_osd_debugger(void)
 	db_recover = &acpi_jmpbuf;
 
 	acpi_indebugger = 1;
-	AcpiDbUserCommands('A', &obj);
+	AcpiDbUserCommands();
 	acpi_indebugger = 0;
 
 	db_recover = savejmp;
@@ -223,3 +281,140 @@ acpi_osd_debugger(void)
 	printf("ACPI: WARNING: ACPICA debugger not present.\n");
 #endif
 }
+
+#ifdef ACPI_DEBUG
+
+#define _COMPONENT          ACPI_CA_DEBUGGER
+        ACPI_MODULE_NAME    ("osnetbsdbg")
+
+
+/******************************************************************************
+ *
+ * FUNCTION:    AcpiOsWaitCommandReady
+ *
+ * PARAMETERS:  None
+ *
+ * RETURN:      Status
+ *
+ * DESCRIPTION: Negotiate with the debugger foreground thread (the user
+ *              thread) to wait the readiness of a command.
+ *
+ *****************************************************************************/
+
+ACPI_STATUS
+AcpiOsWaitCommandReady (
+    void)
+{
+    ACPI_STATUS             Status;
+    /* Force output to console until a command is entered */
+
+    AcpiDbSetOutputDestination (ACPI_DB_CONSOLE_OUTPUT);
+
+    /* Different prompt if method is executing */
+
+    if (!AcpiGbl_MethodExecuting)
+    {
+	AcpiOsPrintf ("%1c ", ACPI_DEBUGGER_COMMAND_PROMPT);
+    }
+    else
+    {
+	AcpiOsPrintf ("%1c ", ACPI_DEBUGGER_EXECUTE_PROMPT);
+    }
+
+    /* Get the user input line */
+
+    Status = AcpiOsGetLine (AcpiGbl_DbLineBuf,
+	ACPI_DB_LINE_BUFFER_SIZE, NULL);
+
+    if (ACPI_FAILURE (Status) && Status != AE_CTRL_TERMINATE)
+    {
+        ACPI_EXCEPTION ((AE_INFO, Status,
+            "While parsing/handling command line"));
+    }
+    return (Status);
+}
+
+
+/******************************************************************************
+ *
+ * FUNCTION:    AcpiOsNotifyCommandComplete
+ *
+ * PARAMETERS:  void
+ *
+ * RETURN:      Status
+ *
+ * DESCRIPTION: Negotiate with the debugger foreground thread (the user
+ *              thread) to notify the completion of a command.
+ *
+ *****************************************************************************/
+
+ACPI_STATUS
+AcpiOsNotifyCommandComplete (
+    void)
+{
+
+    return AE_OK;
+}
+
+
+/******************************************************************************
+ *
+ * FUNCTION:    AcpiOsInitializeDebugger
+ *
+ * PARAMETERS:  None
+ *
+ * RETURN:      Status
+ *
+ * DESCRIPTION: Initialize OSPM specific part of the debugger
+ *
+ *****************************************************************************/
+
+ACPI_STATUS
+AcpiOsInitializeDebugger (
+    void)
+{
+    return AE_OK;
+}
+
+
+/******************************************************************************
+ *
+ * FUNCTION:    AcpiOsTerminateDebugger
+ *
+ * PARAMETERS:  None
+ *
+ * RETURN:      None
+ *
+ * DESCRIPTION: Terminate signals used by the multi-threading debugger
+ *
+ *****************************************************************************/
+
+void
+AcpiOsTerminateDebugger (
+    void)
+{
+}
+
+
+/******************************************************************************
+ *
+ * FUNCTION:    AcpiRunDebugger
+ *
+ * PARAMETERS:  BatchBuffer         - Buffer containing commands running in
+ *                                    the batch mode
+ *
+ * RETURN:      None
+ *
+ * DESCRIPTION: Run a local/remote debugger
+ *
+ *****************************************************************************/
+
+void
+AcpiRunDebugger (
+    char                    *BatchBuffer)
+{
+        AcpiDbUserCommands ();
+}
+
+ACPI_EXPORT_SYMBOL (AcpiRunDebugger)
+#endif

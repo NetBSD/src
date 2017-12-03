@@ -1,4 +1,4 @@
-#	$NetBSD: files.zaurus,v 1.11 2012/01/29 10:12:41 tsutsui Exp $
+#	$NetBSD: files.zaurus,v 1.11.6.1 2017/12/03 11:36:52 jdolecek Exp $
 #
 # Sharp Zaurus specific configuration info
 #
@@ -38,11 +38,6 @@ defflag debug_kloader.h				KLOADER_DEBUG
 file	dev/kloader.c				kloader
 file	arch/zaurus/zaurus/kloader_machdep.c	kloader
 file	arch/zaurus/zaurus/kloader_zaurus.S	kloader
-
-# ARM FPE
-file	arch/arm32/fpe-arm/armfpe_glue.S	armfpe
-file	arch/arm32/fpe-arm/armfpe_init.c	armfpe
-file	arch/arm32/fpe-arm/armfpe.s		armfpe
 
 # Include Intel XScale PXA2x0 config definitions.
 include "arch/arm/xscale/files.pxa2x0"
@@ -100,6 +95,8 @@ file arch/zaurus/dev/ztp.c		ztp
 device zaudio: audiobus, auconv, mulaw, aurateconv, pxaiis
 attach zaudio at iic
 file arch/zaurus/dev/zaudio.c		zaudio
+file arch/zaurus/dev/wm8731_zaudio.c	zaudio & cpu_xscale_pxa250
+file arch/zaurus/dev/wm8750_zaudio.c	zaudio & cpu_xscale_pxa270
 defparam opt_zaudio.h			ZAUDIO_VOLUME_STRIDE
 
 # Zaurus remote control

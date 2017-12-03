@@ -1,8 +1,8 @@
-# $NetBSD: INSTALL_XLSATX32,v 1.2 2011/02/20 07:48:33 matt Exp $
+# $NetBSD: INSTALL_XLSATX32,v 1.2.14.1 2017/12/03 11:36:09 jdolecek Exp $
 
 include		"arch/evbmips/conf/XLSATX32"
 
-#ident		"INSTALL_XLSATX32-$Revision: 1.2 $"           
+#ident		"INSTALL_XLSATX32-$Revision: 1.2.14.1 $"           
 
 # Enable the hooks used for initializing the root memory-disk.
 #     The ramdisk size must be kept in sync manually with the size of
@@ -12,3 +12,7 @@ options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT		# force root on memory disk
 options 	MEMORY_DISK_SERVER=0		# no userspace memory disk
 options 	MEMORY_DISK_ROOT_SIZE=12288	# size of memory disk, in blocks
+
+no config netbsd-wm0
+no config netbsd-msk0
+no config netbsd-sd0a

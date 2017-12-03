@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.64.20.2 2014/08/20 00:03:11 tls Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.64.20.3 2017/12/03 11:36:24 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr5380.c,v 1.64.20.2 2014/08/20 00:03:11 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr5380.c,v 1.64.20.3 2017/12/03 11:36:24 jdolecek Exp $");
 
 /*
  * Bit mask of targets you want debugging to be shown
@@ -957,7 +957,7 @@ information_transfer(struct ncr_softc *sc)
 	 * loosing it means we lost the target...
 	 * Also REQ needs to be asserted here to indicate that the bus-phase
 	 * is valid. When the target does not supply REQ within a 'reasonable'
-	 * amount of time, it's probably lost in it's own maze of twisting
+	 * amount of time, it's probably lost in its own maze of twisting
 	 * passages, we have to reset the bus to free it.
 	 */
 	if (GET_5380_REG(NCR5380_IDSTAT) & SC_S_BSY)

@@ -1,4 +1,4 @@
-/*	$NetBSD: gets.c,v 1.10 2007/11/24 13:20:55 isaki Exp $	*/
+/*	$NetBSD: gets.c,v 1.10.62.1 2017/12/03 11:38:46 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -33,13 +33,26 @@
 
 #include "stand.h"
 
+#if 0 /* harmful */
 void
 gets(char *buf)
+{
+	kgets(buf, (size_t)-1);
+}
+#endif
+
+void
+kgets(char *buf, size_t size)
 {
 	int c;
 	char *lp;
 
 	for (lp = buf;;) {
+		if (lp - buf == size) {
+			lp--;
+			*lp = '\0';
+			return;
+		}
 		switch (c = getchar() & 0177) {
 		case '\n':
 		case '\r':

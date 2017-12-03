@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.152.2.4 2014/08/20 00:03:25 tls Exp $
+# $NetBSD: GENERIC,v 1.152.2.5 2017/12/03 11:36:44 jdolecek Exp $
 #
 # GENERIC machine description file
 #
@@ -18,11 +18,11 @@
 # of each device driver in this file see the section 4 man page for the
 # device.
 
-include	"arch/sparc64/conf/std.sparc64"
+include 	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.152.2.4 $"
+#ident		"GENERIC-$Revision: 1.152.2.5 $"
 
 maxusers	64
 
@@ -51,23 +51,19 @@ config		netbsd	root on ? type ?
 ## System call tracing (see ktrace(1)).
 options 	KTRACE
 
-## Collect statistics on kernel malloc's and free's.  This does have a
-## significant performance hit on slower machines, so it is intended for
-## diagnostic use only.
-#options 	KMEMSTATS
-
 ## System V compatible IPC subsystem.  (msgctl(2), semctl(2), and shmctl(2))
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
 options 	SYSVSHM		# System V shared memory
 
-options		MODULAR		# new style module(7) framework
+options 	MODULAR		# new style module(7) framework
+options 	MODULAR_DEFAULT_AUTOLOAD
 
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-# Enable experimental buffer queue strategy for better responsiveness under 
+# Enable experimental buffer queue strategy for better responsiveness under
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
 #options 	BUFQ_READPRIO
 #options 	BUFQ_PRIOCSCAN
@@ -137,36 +133,20 @@ options 	MIIVERBOSE	# verbose PHY autoconfig messages
 ## additional user-level utilities or system configuration files. See
 ## compat_sunos(8) and compat_svr4(8).
 
-options 	COMPAT_43	# 4.3BSD system interfaces
-options 	COMPAT_09	# NetBSD 0.9 binary compatibility
-options 	COMPAT_10	# NetBSD 1.0 binary compatibility
-options 	COMPAT_11	# NetBSD 1.1 binary compatibility
-options 	COMPAT_12	# NetBSD 1.2 binary compatibility
-options 	COMPAT_13	# NetBSD 1.3 binary compatibility
-options 	COMPAT_14	# NetBSD 1.4 binary compatibility
-options 	COMPAT_15	# NetBSD 1.5 binary compatibility
-options 	COMPAT_16	# NetBSD 1.6 binary compatibility
-options 	COMPAT_20	# NetBSD 2.0 binary compatibility
-options 	COMPAT_30	# NetBSD 3.0 binary compatibility
-options 	COMPAT_40	# NetBSD 4.0 binary compatibility
-options 	COMPAT_50	# NetBSD 5.0 compatibility.
-options 	COMPAT_60	# NetBSD 6.0 compatibility.
+include 	"conf/compat_netbsd09.config"
 options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility
-options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
-options 	COMPAT_SVR4_32	# SunOS 5.x 32-bit binary compatibility -- 64-bit only
+#options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
+#options 	COMPAT_SVR4_32	# SunOS 5.x 32-bit binary compatibility -- 64-bit only
 options 	COMPAT_NETBSD32	# NetBSD/sparc binary compatibility -- 64-bit only
 options 	EXEC_AOUT	# execve(2) support for a.out binaries
 options 	EXEC_ELF32	# Exec module for SunOS 5.x binaries.
-
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 ## File systems.  You probably need at least one of FFS or NFS.
 file-system	FFS		# Berkeley Fast Filesystem
 file-system	NFS		# Sun NFS-compatible filesystem client
 file-system	KERNFS		# kernel data-structure filesystem
 file-system	NULLFS		# NULL layered filesystem
-file-system 	OVERLAY		# overlay file system
+file-system	OVERLAY		# overlay file system
 file-system	MFS		# memory-based filesystem
 file-system	FDESC		# user file descriptor filesystem
 file-system	UMAPFS		# uid/gid remapping filesystem
@@ -188,6 +168,7 @@ options 	QUOTA2		# new, in-filesystem UFS quotas
 options 	FFS_EI		# FFS Endian Independent support
 options 	WAPBL		# File system journaling support
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+options 	UFS_EXTATTR	# Extended attribute support for UFS1
 
 ## Network protocol support.  In most environments, INET is required.
 options 	INET		# IP (Internet Protocol) v4
@@ -203,7 +184,7 @@ options 	NTP		# Network Time Protocol in-kernel support
 #options 	PPS_SYNC	# Add serial line synchronization for NTP
 options 	IPFILTER_LOG	# Add ipmon(8) logging for ipfilter device
 options 	IPFILTER_LOOKUP	# ippool(8) support
-options 	IPFILTER_COMPAT # Compat for IP-Filter
+options 	IPFILTER_COMPAT	# Compat for IP-Filter
 #options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 options 	PPP_BSDCOMP	# Add BSD compression to ppp device
 options 	PPP_DEFLATE	# Add deflate (libz) compression to ppp device
@@ -227,19 +208,21 @@ options 	PPP_FILTER	# Add active filters for ppp (via bpf)
 #### Main bus and CPUs .. all systems.
 mainbus0 at root
 options 	MULTIPROCESSOR		# include multiprocessor support
-cpu* 		at mainbus0		# declare additional CPUs
+cpu*		at mainbus0		# declare additional CPUs
 
 #### Bus types found on SPARC systems.
 
 sbus*	at mainbus0				# SBus-based systems
-psycho*	at mainbus0				# PCI-based systems
-schizo*	at mainbus?
+psycho* at mainbus0				# PCI-based systems
+schizo* at mainbus?
 pyro*	at mainbus?
+vpci*	at mainbus0
 central* at mainbus?
 fhc*	at mainbus?
 pci*	at psycho?
 pci*	at schizo?
 pci*	at pyro?
+pci*	at vpci?
 pci*	at ppb?
 ppb*	at pci?
 fhc*	at central?
@@ -247,6 +230,8 @@ ebus*	at mainbus0				# ebus devices
 ebus*	at pci?					# ebus devices
 # XXX 'puc's aren't really bridges, but there's no better place for them here
 puc*	at pci? dev ? function ?		# PCI "universal" comm. cards
+vbus0	at mainbus0
+cbus*	at vbus?
 
 #### Standard system devices -- all required for a given architecture
 
@@ -273,6 +258,10 @@ rtc*	at ebus?
 ## Timer chip found on 4/300, sun4c, sun4m and (some) sun4u systems.
 timer*	at mainbus0				# sun4c
 
+# Virtual devices for sun4v systems.
+vrtc0	at vbus?
+vdsk*	at cbus?
+
 #### Serial port configuration
 
 ## Zilog 8530 serial chips.  Each has two-channels.
@@ -289,7 +278,7 @@ ms0	at zstty?
 
 ## The SAB82532 controller has two serial ports
 sab*	at ebus?				# ttya/ttyb
-sabtty*	at sab? channel ?
+sabtty* at sab? channel ?
 
 ## Part of a PC87332VLJ
 com*	at ebus?				# `com' driver for `su'
@@ -297,12 +286,12 @@ kbd0	at com?					# keyboard
 ms0	at com?					# mouse
 
 ## Tadpole SPARCle PS/2 keyboard and mouse
-pckbc* 		at ebus?                # PC keyboard controller
-pckbd* 		at pckbc?               # PC keyboard
-pms* 		at pckbc?               # PS/2 mouse for wsmouse
+pckbc*		at ebus?		# PC keyboard controller
+pckbd*		at pckbc?		# PC keyboard
+pms*		at pckbc?		# PS/2 mouse for wsmouse
 options 	PMS_SYNAPTICS_TOUCHPAD	# Enable support for Synaptics Touchpads
-wskbd* 		at pckbd? console ?
-wsmouse* 	at pms? mux 0
+wskbd*		at pckbd? console ?
+wsmouse*	at pms? mux 0
 
 ## Magma Serial/Parallel driver (not tested)
 #magma*	at sbus? slot ? offset ?
@@ -310,9 +299,9 @@ wsmouse* 	at pms? mux 0
 #mbpp*	at magma?
 
 ## SUNW,spif Serial/Parallel driver
-spif*  at sbus? slot ? offset ?
-stty*  at spif?
-sbpp*  at spif?
+spif*	at sbus? slot ? offset ?
+stty*	at spif?
+sbpp*	at spif?
 
 ## PCI serial interfaces
 com*	at puc? port ?			# 16x50s on "universal" comm boards
@@ -340,11 +329,11 @@ esp*	at dma?					# SBus
 esp*	at sbus? slot ? offset ?
 isp*	at sbus? slot ? offset ?
 isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
-siop*	at pci? 			# 53C8xx ("glm" compatible)
-esiop*	at pci? 			# 53C875 and newer ("glm" compatible)
+siop*	at pci?				# 53C8xx ("glm" compatible)
+esiop*	at pci?				# 53C875 and newer ("glm" compatible)
 
 # PCI SCSI controllers
-# 	UT marks untested.
+#	UT marks untested.
 adv*	at pci? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI UT
 adw*	at pci? dev ? function ?	# AdvanSys 9x0UW[D], 3940U[2,3]W SCSI UT
 ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
@@ -385,7 +374,7 @@ pdcide* at pci? dev ? function ?	# Promise IDE controllers
 pdcsata* at pci? dev ? function ?	# Promise SATA150 controllers
 satalink* at pci? dev ? function ?	# SiI SATALink controllers
 siside* at pci? dev ? function ?	# SiS IDE controllers
-slide*  at pci? dev ? function ?	# Symphony Labs IDE controllers
+slide*	at pci? dev ? function ?	# Symphony Labs IDE controllers
 viaide* at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
 
 # ATA (IDE) bus support
@@ -418,19 +407,28 @@ ld*	at cac? unit ?			# logical disk devices
 ld*	at twe? unit ?
 ld*	at mlx? unit ?
 
+# Virtio devices
+virtio* at pci? dev ? function ?	# Virtio PCI device
+# the baloon driver can not work on machines with non-4k pages
+#viomb*	at virtio?			# Virtio memory balloon device
+ld*	at virtio?			# Virtio disk device
+vioif*	at virtio?			# Virtio network device
+viornd* at virtio?			# Virtio entropy device
+vioscsi* at virtio?			# Virtio SCSI device
+
 ## Floppy controller and drive found on SPARCstations.
 
 # need share with the sparc, and everyone else.  needs to use auxio.
-# actually, the ebus version has (will have) direct access to it's AUXIO
+# actually, the ebus version has (will have) direct access to its AUXIO
 # register space (it is mapped in to fdthree not auxio).
 fdc0	at sbus? slot ? offset ?		# SUNW,fdtwo
 #fdc0	at ebus?				# fdthree, EXPERIMENTAL
-fd*	at fdc0 	 			# the drive itself
+fd*	at fdc0					# the drive itself
 
 #
 # accept filters
-pseudo-device   accf_data		# "dataready" accept filter
-pseudo-device   accf_http		# "httpready" accept filter
+pseudo-device	accf_data		# "dataready" accept filter
+pseudo-device	accf_http		# "httpready" accept filter
 
 ## A disk-like interface to files.  Can be used to create floppy, CD,
 ## miniroot images, etc.
@@ -486,7 +484,7 @@ le*		at lebuffer?			# SBus
 
 ## Happy Meal Ethernet
 hme*		at sbus? slot ? offset ?
-hme*		at pci?	dev ? function ?	# network "hme" compatible
+hme*		at pci? dev ? function ?	# network "hme" compatible
 
 ## qec/be, qec/hme
 qec*		at sbus? slot ? offset ?
@@ -494,7 +492,7 @@ be*		at qec?
 qe*		at qec?
 
 # PCI network interfaces
-# 	UT marks untested.
+#	UT marks untested.
 an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11) UT
 ath*	at pci? dev ? function ?	# Atheros 5210/5211/5212 802.11 UT
 bge*	at pci? dev ? function ?	# Broadcom 570x gigabit Ethernet
@@ -503,14 +501,15 @@ cas*	at pci? dev ? function ?	# Sun Cassini/Cassini+ Ethernet
 en*	at pci? dev ? function ?	# ENI/Adaptec ATM UT
 # XXX causes ICE
 #ep*	at pci? dev ? function ?	# 3Com 3c59x
-ex*	at pci? dev ? function ?	# 3Com 90x[B]
 epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
 esh*	at pci? dev ? function ?	# Essential HIPPI card UT
+ex*	at pci? dev ? function ?	# 3Com 90x[B]
 fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI UT
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 gem*	at pci? dev ? function ?	# Apple GMAC and Sun ERI gigabit enet
 gem*	at sbus? slot ? offset ?
 gsip*	at pci? dev ? function ?	# National Semiconductor DP83820 GigE
+ixg*	at pci? dev ? function ?	# Intel 8259x 10 gigabit
 # XXX lacks bus_dmamap_sync()
 #le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 # XXX uses vtophys()
@@ -524,9 +523,9 @@ ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial UT
 ral*	at pci? dev ? function ?	# ralink wifi UT
 re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
 rtk*	at pci? dev ? function ?	# Realtek 8129/8139
+sip*	at pci? dev ? function ?	# SiS 900 Ethernet
 skc*	at pci? dev ? function ?	# SysKonnect SK9821 Gigabit Ethernet
 sk*	at skc?				# SysKonnect SK9821 Gigabit Ethernet
-sip*	at pci? dev ? function ?	# SiS 900 Ethernet
 ti*	at pci? dev ? function ?	# Alteon ACEnic gigabit Ethernet UT
 tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
 tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
@@ -544,15 +543,15 @@ dmphy*	at mii? phy ?			# Davicom DM9101 PHYs
 exphy*	at mii? phy ?			# 3Com internal PHYs
 gentbi* at mii? phy ?			# Generic Ten-Bit 1000BASE-[CLS]X PHYs
 gphyter* at mii? phy ?			# NS83861 Gig-E PHY
-icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
+icsphy* at mii? phy ?			# Integrated Circuit Systems ICS189x
+igphy*	at mii? phy ?			# Intel IGP01E1000
 ikphy*	at mii? phy ?			# Intel 82563 PHYs
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 iophy*	at mii? phy ?			# Intel 82553 PHYs
-igphy*	at mii? phy ?			# Intel IGP01E1000
-lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
+lxtphy* at mii? phy ?			# Level One LXT-970 PHYs
 makphy* at mii? phy ?			# Marvell Semiconductor 88E1000 PHYs
 nsphy*	at mii? phy ?			# NS83840 PHYs
-nsphyter* at mii? phy ?			# NS83843 PHYs
+nsphyter* at mii? phy ? 		# NS83843 PHYs
 qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
 rgephy* at mii? phy ?			# Realtek 8169S/8110S internal PHYs
 rlphy*	at mii? phy ?			# Realtek 8139/8201L PHYs
@@ -564,7 +563,7 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 # PCI USB controllers
 ehci*	at pci? dev ? function ?	# Enhanced Host Controller
 ohci*	at pci? dev ? function ?	# Open Host Controller
-uhci*	at pci?	dev ? function ?	# Universal Host Controller (Intel)
+uhci*	at pci? dev ? function ?	# Universal Host Controller (Intel)
 
 # USB bus support
 usb*	at ehci?
@@ -577,7 +576,7 @@ uhub*	at usb?
 uhub*	at uhub? port ?
 
 # USB HID device
-uhidev*	at uhub? port ? configuration ? interface ?
+uhidev* at uhub? port ? configuration ? interface ?
 
 # USB Mice
 ums*	at uhidev? reportid ?
@@ -595,7 +594,7 @@ wskbd*	at ukbd? console ? mux 1
 uthum*	at uhidev? reportid ?
 
 # USB serial adapter
-ucycom*	at uhidev? reportid ?
+ucycom* at uhidev? reportid ?
 
 # USB Generic HID devices
 uhid*	at uhidev? reportid ?
@@ -604,7 +603,7 @@ uhid*	at uhidev? reportid ?
 ulpt*	at uhub? port ? configuration ? interface ?
 
 # USB Modem
-umodem*	at uhub? port ? configuration ?
+umodem* at uhub? port ? configuration ?
 ucom*	at umodem?
 
 # Option N.V. Wireless WAN modems
@@ -615,7 +614,7 @@ umass*	at uhub? port ? configuration ? interface ?
 wd*	at umass?
 
 # USB audio
-uaudio*	at uhub? port ? configuration ?
+uaudio* at uhub? port ? configuration ?
 
 # USB MIDI
 umidi* at uhub? port ? configuration ?
@@ -666,7 +665,7 @@ ucom*	at uvscom? portno ?
 urio*	at uhub? port ?
 
 # USB Handspring Visor
-uvisor*	at uhub? port ?
+uvisor* at uhub? port ?
 ucom*	at uvisor?
 
 # Kyocera AIR-EDGE PHONE
@@ -674,7 +673,7 @@ ukyopon* at uhub? port ?
 ucom*	at ukyopon? portno ?
 
 # USB scanners
-uscanner* at uhub? port ?
+#uscanner* at uhub? port ?
 
 # USB scanners that use SCSI emulation, e.g., HP5300
 usscanner* at uhub? port ?
@@ -690,7 +689,7 @@ radio*	at udsbr?
 ugen*	at uhub? port ?
 
 # Firewire support
-fwohci*	at pci? dev ? function ?	# IEEE1394 Open Host Controller
+fwohci* at pci? dev ? function ?	# IEEE1394 Open Host Controller
 ieee1394if* at fwohci?
 fwip*	at ieee1394if?			# IP over IEEE1394
 sbp*	at ieee1394if? euihi ? euilo ?
@@ -755,7 +754,7 @@ pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 
 ## SBus to PCMCIA bridge
 #nell*	at sbus? slot ? offset ?		# PCMCIA bridge
-#pcmcia*	at nell?
+#pcmcia* at nell?
 
 ## CardBus cards; UT marks untested.
 
@@ -772,7 +771,9 @@ pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 
 # CardBus network interfaces
 #ath*	at cardbus? function ?	# Atheros 5210/5211/5212 802.11
+#athn*	at cardbus? function ?	# Atheros AR9k (802.11a/g/n) UT
 #atw*	at cardbus? function ?	# ADMtek ADM8211 (802.11) UT
+#bwi*	at cardbus? function ?	# Broadcom BCM43xx wireless
 #ex*	at cardbus? function ?	# 3Com 3C575TX
 #fxp*	at cardbus? function ?	# Intel i8255x UT
 #ral*	at cardbus? function ?	# Ralink Technology RT25x0 802.11a/b/g UT
@@ -785,6 +786,9 @@ pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 #ehci*	at cardbus? function ?	# Enhanced Host Controller
 #ohci*	at cardbus? function ?	# Open Host Controller
 #uhci*	at cardbus? function ?	# Universal Host Controller (Intel) UT
+
+# CardBus IEEE1394 controllers
+#fwohci* at cardbus? function ?	# IEEE1394 Open Host Controller UT
 
 ## PCMCIA cards; UT marks untested.
 
@@ -867,9 +871,11 @@ btsco* at bthub?
 audiocs*	at sbus? slot ? offset ?	# SUNW,CS4231
 audiocs*	at ebus?			# SUNW,CS4231 in U5/U10
 autri*		at pci? dev ? function ?	# Blade 100 'sound'
-auacer*		at pci? dev ? function ?	# Ultra45
+auacer* 	at pci? dev ? function ?	# Ultra45
 
 audio*		at audiobus?
+
+spkr*		at audio?			# PC speaker (synthesized)
 
 midi*		at midibus?
 
@@ -885,6 +891,9 @@ cgthree*	at sbus? slot ? offset ?
 ## Sun "cgsix" accelerated color framebuffer.
 cgsix*		at sbus? slot ? offset ?
 
+## Southland Media Systems (now Quantum 3D) MGX
+mgx*		at sbus? slot ? offset ?
+
 ## Sun FFB
 ffb*		at mainbus0
 upa*		at mainbus?
@@ -894,7 +903,7 @@ ffb*		at upa?
 gfb*		at mainbus0
 
 # On board vga on U5/U10 etc.
-machfb*		at pci?
+machfb* 	at pci?
 
 # Sun XVR-100
 radeonfb*	at pci?
@@ -907,20 +916,21 @@ wcfb*		at pci?
 
 # generic PCI framebuffers
 genfb*		at pci?
+genfb*		at sbus? slot ? offset ?
 
 # make sure the console display is always wsdisplay0
 wsdisplay0	at wsemuldisplaydev? console 1
 wsdisplay*	at wsemuldisplaydev?
 
 # wsmouse for sun ms
-wsmouse*        at ms0
+wsmouse*	at ms0
 
 # wskbd for sun kbd
-wskbd0 at kbd0
+wskbd0		at kbd0
 
 # various options for wscons - we try to look as much like a standard
 # sun console as possible
-#options	WSEMUL_SUN              # sun terminal emulation
+#options 	WSEMUL_SUN		# sun terminal emulation
 options 	WSEMUL_VT100		# allow us to be wsvt25
 options 	WS_DEFAULT_FG=WSCOL_BLACK
 options 	WS_DEFAULT_BG=WSCOL_LIGHT_WHITE
@@ -935,7 +945,7 @@ options 	FONT_DROID_SANS_MONO12x22	# antialiased font
 #### Other device configuration
 
 psm*		at ebus?		# Ultrabook IIi microcontroller
-pcfiic*		at ebus?		# various environmental monitoring
+pcfiic* 	at ebus?		# various environmental monitoring
 iic*		at pcfiic?
 lom*		at ebus?		# LOMlite lights out management
 
@@ -943,17 +953,18 @@ lom*		at ebus?		# LOMlite lights out management
 alipm*		at pci?
 iic*		at alipm?
 
-spdmem*		at iic? addr?
+spdmem* 	at iic? addr?
 admtemp*	at iic? addr?
+adm1026hm*	at iic? addr?
 ecadc*		at iic? addr?	# envctrl/envctrltwo on E250/E450
-lmtemp*		at iic? addr?
+lmtemp* 	at iic? addr?
 tda*		at iic? addr?	# fan control on SB1000/2000
-dbcool*		at iic? addr?	# SB25000
+dbcool* 	at iic? addr?	# SB25000
 seeprom*	at iic? addr?	# i2c-at24c64 fru's
 
 ### Other pseudo-devices
 
-pseudo-device 	crypto			# /dev/crypto device
+pseudo-device	crypto			# /dev/crypto device
 pseudo-device	swcrypto		# software crypto implementation
 
 ## Pseudo ttys, required for network logins and programs like screen.
@@ -976,7 +987,8 @@ pseudo-device	fss			# file system snapshot device
 pseudo-device	lockstat		# lock profiling
 pseudo-device	putter			# for puffs and pud
 
-options		FILEASSOC		# fileassoc(9) - required for Veriexec 
+options 	FILEASSOC		# fileassoc(9) - required for Veriexec
+					# and PAX_SEGVGUARD
 
 # Veriexec
 #
@@ -987,18 +999,20 @@ pseudo-device	veriexec
 # removing fingerprint methods will have almost no impact on the kernel
 # code size.
 #
-options VERIFIED_EXEC_FP_RMD160
-options VERIFIED_EXEC_FP_SHA256
-options VERIFIED_EXEC_FP_SHA384
-options VERIFIED_EXEC_FP_SHA512
-options VERIFIED_EXEC_FP_SHA1
-options VERIFIED_EXEC_FP_MD5
+options 	VERIFIED_EXEC_FP_SHA256
+options 	VERIFIED_EXEC_FP_SHA384
+options 	VERIFIED_EXEC_FP_SHA512
 
 # a pseudo device needed for SMBFS
-pseudo-device   nsmb		# experimental - SMB requester
+pseudo-device	nsmb		# experimental - SMB requester
 
 # drvctl - needed to show device dictionary via drvctl(8)
 pseudo-device	drvctl
 
-#options PAX_MPROTECT=0			# PaX mprotect(2) restrictions
-					# (for static binaries only for now)
+options 	PAX_ASLR_DEBUG=1	# PaX ASLR debug
+options 	PAX_SEGVGUARD=0		# PaX Segmentation fault guard
+# XXX: there is no PLT format for sparc64 that cooperates with
+# MPROTECT, so disable it for now
+# options 	PAX_MPROTECT=0		# PaX mprotect(2) restrictions
+# options 	PAX_MPROTECT_DEBUG=1	# PaX mprotect debug
+options 	PAX_ASLR=1		# PaX Address Space Layout Randomization

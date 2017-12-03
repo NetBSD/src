@@ -1,4 +1,4 @@
-/*	$NetBSD: locks_up.c,v 1.6.2.1 2013/06/23 06:20:28 tls Exp $	*/
+/*	$NetBSD: locks_up.c,v 1.6.2.2 2017/12/03 11:39:16 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks_up.c,v 1.6.2.1 2013/06/23 06:20:28 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks_up.c,v 1.6.2.2 2017/12/03 11:39:16 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -43,9 +43,9 @@ __KERNEL_RCSID(0, "$NetBSD: locks_up.c,v 1.6.2.1 2013/06/23 06:20:28 tls Exp $")
 #include <sys/mutex.h>
 #include <sys/rwlock.h>
 
-#include <rump/rumpuser.h>
+#include <rump-sys/kern.h>
 
-#include "rump_private.h"
+#include <rump/rumpuser.h>
 
 struct upmtx {
 	struct lwp *upm_owner;

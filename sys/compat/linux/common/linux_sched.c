@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.65.12.1 2014/08/20 00:03:32 tls Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.65.12.2 2017/12/03 11:36:55 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,14 +35,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.65.12.1 2014/08/20 00:03:32 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.65.12.2 2017/12/03 11:36:55 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/sysctl.h>
-#include <sys/malloc.h>
 #include <sys/syscallargs.h>
 #include <sys/wait.h>
 #include <sys/kauth.h>
@@ -65,6 +64,9 @@ __KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.65.12.1 2014/08/20 00:03:32 tls Ex
 
 static int linux_clone_nptl(struct lwp *, const struct linux_sys_clone_args *,
     register_t *);
+
+/* Unlike Linux, dynamically calculate CPU mask size */
+#define	LINUX_CPU_MASK_SIZE (sizeof(long) * ((ncpu + LONG_BIT - 1) / LONG_BIT))
 
 #if DEBUG_LINUX
 #define DPRINTF(x) uprintf x
@@ -205,7 +207,8 @@ linux_clone_nptl(struct lwp *l, const struct linux_sys_clone_args *uap, register
 	}
 
 	error = lwp_create(l, p, uaddr, LWP_DETACHED | LWP_PIDLID,
-	    SCARG(uap, stack), 0, child_return, NULL, &l2, l->l_class);
+	    SCARG(uap, stack), 0, child_return, NULL, &l2, l->l_class,
+	    &l->l_sigmask, &l->l_sigstk);
 	if (__predict_false(error)) {
 		DPRINTF(("%s: lwp_create error=%d\n", __func__, error));
 		atomic_dec_uint(&nprocs);
@@ -628,6 +631,10 @@ linux_sys_gettid(struct lwp *l, const void *v, register_t *retval)
 	return 0;
 }
 
+/*
+ * The affinity syscalls assume that the layout of our cpu kcpuset is
+ * the same as linux's: a linear bitmask.
+ */
 int
 linux_sys_sched_getaffinity(struct lwp *l, const struct linux_sys_sched_getaffinity_args *uap, register_t *retval)
 {
@@ -636,39 +643,45 @@ linux_sys_sched_getaffinity(struct lwp *l, const struct linux_sys_sched_getaffin
 		syscallarg(unsigned int) len;
 		syscallarg(unsigned long *) mask;
 	} */
-	proc_t *p;
-	unsigned long *lp, *data;
-	int error, size, nb = ncpu;
+	struct lwp *t;
+	kcpuset_t *kcset;
+	size_t size;
+	cpuid_t i;
+	int error;
 
-	/* Unlike Linux, dynamically calculate cpu mask size */
-	size = sizeof(long) * ((ncpu + LONG_BIT - 1) / LONG_BIT);
+	size = LINUX_CPU_MASK_SIZE;
 	if (SCARG(uap, len) < size)
 		return EINVAL;
 
-	/* XXX: Pointless check.  TODO: Actually implement this. */
-	mutex_enter(proc_lock);
-	p = proc_find(SCARG(uap, pid));
-	mutex_exit(proc_lock);
-	if (p == NULL) {
+	/* Lock the LWP */
+	t = lwp_find2(SCARG(uap, pid), l->l_lid);
+	if (t == NULL)
 		return ESRCH;
+
+	/* Check the permission */
+	if (kauth_authorize_process(l->l_cred,
+	    KAUTH_PROCESS_SCHEDULER_GETAFFINITY, t->l_proc, NULL, NULL, NULL)) {
+		mutex_exit(t->l_proc->p_lock);
+		return EPERM;
 	}
 
-	/* 
-	 * return the actual number of CPU, tag all of them as available 
-	 * The result is a mask, the first CPU being in the least significant
-	 * bit.
-	 */
-	data = kmem_zalloc(size, KM_SLEEP);
-	lp = data;
-	while (nb > LONG_BIT) {
-		*lp++ = ~0UL;
-		nb -= LONG_BIT;
+	kcpuset_create(&kcset, true);
+	lwp_lock(t);
+	if (t->l_affinity != NULL)
+		kcpuset_copy(kcset, t->l_affinity);
+	else {
+		/*
+		 * All available CPUs should be masked when affinity has not
+		 * been set.
+		 */
+		kcpuset_zero(kcset);
+		for (i = 0; i < ncpu; i++)
+			kcpuset_set(kcset, i);
 	}
-	if (nb)
-		*lp = (1 << ncpu) - 1;
-
-	error = copyout(data, SCARG(uap, mask), size);
-	kmem_free(data, size);
+	lwp_unlock(t);
+	mutex_exit(t->l_proc->p_lock);
+	error = kcpuset_copyout(kcset, (cpuset_t *)SCARG(uap, mask), size);
+	kcpuset_unuse(kcset, NULL);
 	*retval = size;
 	return error;
 }
@@ -681,17 +694,17 @@ linux_sys_sched_setaffinity(struct lwp *l, const struct linux_sys_sched_setaffin
 		syscallarg(unsigned int) len;
 		syscallarg(unsigned long *) mask;
 	} */
-	proc_t *p;
+	struct sys__sched_setaffinity_args ssa;
+	size_t size;
 
-	/* XXX: Pointless check.  TODO: Actually implement this. */
-	mutex_enter(proc_lock);
-	p = proc_find(SCARG(uap, pid));
-	mutex_exit(proc_lock);
-	if (p == NULL) {
-		return ESRCH;
-	}
+	size = LINUX_CPU_MASK_SIZE;
+	if (SCARG(uap, len) < size)
+		return EINVAL;
 
-	/* Let's ignore it */
-	DPRINTF(("%s\n", __func__));
-	return 0;
+	SCARG(&ssa, pid) = SCARG(uap, pid);
+	SCARG(&ssa, lid) = l->l_lid;
+	SCARG(&ssa, size) = size;
+	SCARG(&ssa, cpuset) = (cpuset_t *)SCARG(uap, mask);
+
+	return sys__sched_setaffinity(l, &ssa, retval);
 }

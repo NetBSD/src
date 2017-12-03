@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.6.12.1 2014/08/20 00:03:19 tls Exp $	*/
+/*	$NetBSD: intr.h,v 1.6.12.2 2017/12/03 11:36:37 jdolecek Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -74,6 +74,7 @@
 #define	IPI_KPREEMPT	0x0004
 #define IPI_TLB1SYNC	0x0008
 #define IPI_GENERIC	0x0010
+#define IPI_SUSPEND	0x0020
 
 #define	__HAVE_FAST_SOFTINTS	1
 #define	SOFTINT_KPREEMPT	SOFTINT_COUNT
@@ -83,6 +84,8 @@
 struct cpu_info;
 
 void 	*intr_establish(int, int, int, int (*)(void *), void *);
+void 	*intr_establish_xname(int, int, int, int (*)(void *), void *,
+	    const char *);
 void 	intr_disestablish(void *);
 void	intr_cpu_attach(struct cpu_info *);
 void	intr_cpu_hatch(struct cpu_info *);
@@ -117,7 +120,8 @@ typedef struct {
 struct trapframe;
 
 struct intrsw {
-	void *(*intrsw_establish)(int, int, int, int (*)(void *), void *);
+	void *(*intrsw_establish)(int, int, int, int (*)(void *), void *,
+	    const char *);
 	void (*intrsw_disestablish)(void *);
 	void (*intrsw_cpu_attach)(struct cpu_info *);
 	void (*intrsw_cpu_hatch)(struct cpu_info *);

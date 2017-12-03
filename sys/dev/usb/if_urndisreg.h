@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urndisreg.h,v 1.1 2011/07/20 19:59:49 jakllsch Exp $ */
+/*	$NetBSD: if_urndisreg.h,v 1.1.14.1 2017/12/03 11:37:34 jdolecek Exp $ */
 /*	$OpenBSD: if_urndisreg.h,v 1.14 2010/07/08 18:22:01 ckuethe Exp $ */
 
 /*
@@ -26,7 +26,7 @@
 
 struct urndis_chain {
 	struct urndis_softc	*sc_softc;
-	usbd_xfer_handle	 sc_xfer;
+	struct usbd_xfer	*sc_xfer;
 	char			*sc_buf;
 	struct mbuf		*sc_mbuf;
 	int			 sc_idx;
@@ -51,16 +51,16 @@ struct urndis_softc {
 	uint32_t			sc_filter;
 
 	/* USB goo */
-	usbd_device_handle		sc_udev;
+	struct usbd_device *		sc_udev;
 	int				sc_ifaceno_ctl;
-	usbd_interface_handle		sc_iface_ctl;
-	usbd_interface_handle		sc_iface_data;
+	struct usbd_interface *		sc_iface_ctl;
+	struct usbd_interface *		sc_iface_data;
 
 	struct timeval			sc_rx_notice;
 	int				sc_bulkin_no;
-	usbd_pipe_handle		sc_bulkin_pipe;
+	struct usbd_pipe *		sc_bulkin_pipe;
 	int				sc_bulkout_no;
-	usbd_pipe_handle		sc_bulkout_pipe;
+	struct usbd_pipe *		sc_bulkout_pipe;
 
 	struct urndis_cdata		sc_data;
 };
@@ -303,5 +303,5 @@ struct urndis_keepalive_comp {
 /* Rndis offsets */
 #define RNDIS_HEADER_OFFSET	(sizeof(uint32_t) * 2)
 #define RNDIS_DATA_OFFSET	(sizeof(struct urndis_packet_msg) - \
-    				 offsetof(struct urndis_packet_msg, \
-    				 rm_dataoffset))
+				 offsetof(struct urndis_packet_msg, \
+				 rm_dataoffset))

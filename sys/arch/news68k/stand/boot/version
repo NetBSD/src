@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.4 2008/07/16 13:19:20 tsutsui Exp $
+$NetBSD: version,v 1.4.38.1 2017/12/03 11:36:32 jdolecek Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -11,3 +11,4 @@ is taken as the current.
 1.5:	loadfile() update:  ELF symbols no longer need backward seeks.
 1.6:	loadfile() update to avoid backwards seeks for ELF Program Headers.
 1.7:	Change boot messages to replace build date and maker with kernrev.
+1.8:	Disable slow gunzip CRC32 calculation.

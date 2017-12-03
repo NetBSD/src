@@ -1,0 +1,271 @@
+#	$NetBSD: LINKITSMART7688,v 1.6.2.2 2017/12/03 11:36:09 jdolecek Exp $
+#
+# MediaTek MT7688
+#
+
+include 	"arch/evbmips/conf/std.rasoc"
+
+makeoptions	COPY_SYMTAB=1		# size for embedded symbol table
+
+options 	RALINK_CONSOLE_EARLY
+options 	RALINK_CONADDR=RA_UART2_BASE
+
+options 	MT7628
+options 	CONSPEED=57600
+
+maxusers	8
+
+# Size reduction options
+#options 	VNODE_OP_NOINLINE
+#options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	SOSEND_NO_LOAN
+
+# Standard system options
+
+options 	INSECURE	# disable kernel security levels - X needs this
+
+options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
+options 	NTP		# NTP phase/frequency locked loop
+
+options 	KTRACE		# system call tracing via ktrace(1)
+
+#options 	SYSVMSG		# System V-like message queues
+#options 	SYSVSEM		# System V-like semaphores
+#options 	SYSVSHM		# System V-like memory sharing
+#options 	SHMMAXPGS=2048	# 2048 pages is the default
+
+#options 	NMBCLUSTERS=1024
+#options 	MCLSHIFT=12 # 4k mbuf clusters (increases pool max's to 4k as well)
+
+#options 	USERCONF	# userconf(4) support
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
+
+# Diagnostic/debugging support options
+options 	DIAGNOSTIC	# expensive kernel consistency checks
+#options 	LOCKDEBUG
+#options 	KSTACK_CHECK_MAGIC
+#options 	DEBUG		# expensive debugging checks/support
+options 	DDB			# in-kernel debugger
+options 	DDB_ONPANIC=1		# see also sysctl(7): `ddb.onpanic'
+#options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
+#options 	DDB_COMMANDONENTER="w/b 0x90000128 0 ; bt"	# disable watchdog & drop history on enter
+#options 	KGDB		# remote debugger
+#options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x2f8,KGDB_DEVRATE=9600
+#makeoptions 	DEBUG="-g2"	# compile full symbol table
+#makeoptions 	COPTS="-Os"	# Optimise for space.
+
+#makeoptions PROF="-p"		# build profiling in 
+#options 	GPROF
+
+# Compatibility options
+
+include         "conf/compat_netbsd50.config"
+#options 	COMPAT_386BSD_MBRPART # recognize old partition ID
+
+#options 	EXEC_ECOFF	# exec ECOFF binaries
+#options 	COMPAT_ULTRIX	# binary compatibility with Ultrix
+#options 	COMPAT_SVR4	# binary compatibility with SVR4
+#options 	COMPAT_LINUX	# binary compatibility with Linux
+
+# File systems
+file-system	FFS		# UFS
+file-system	EXT2FS		# second extended file system (linux)
+#file-system	LFS		# log-structured file system
+file-system	MFS		# memory file system
+file-system	NFS		# Network File System client
+#file-system	CD9660		# ISO 9660 + Rock Ridge file system
+file-system	MSDOSFS		# MS-DOS file system
+#file-system	FDESC		# /dev/fd
+file-system	KERNFS		# /kern
+#file-system	NULLFS		# loopback file system
+#file-system	PORTAL		# portal filesystem (still experimental)
+file-system	PROCFS		# /proc
+#file-system	UMAPFS		# NULLFS + uid and gid remapping
+#file-system	UNION		# union file system
+#file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
+file-system	PTYFS		# /dev/pts/N support
+file-system	TMPFS		# Efficient memory file-system
+
+# File system options
+#options 	QUOTA		# UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
+#options 	FFS_EI		# FFS Endian Independant support
+#options 	NFSSERVER	# Network File System server
+options 	FFS_NO_SNAPSHOT	# No FF snapshot support
+#options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and immutable) behave as system flags.
+
+# Networking options
+#options 	GATEWAY		# packet forwarding
+options 	INET		# IP + ICMP + TCP + UDP
+options 	MROUTING	# IP multicast routing
+options 	INET6		# IPV6
+#options 	IPSEC		# IP security
+#options 	IPSEC_DEBUG	# debug for IP security
+#options 	PIM		# Protocol Independent Multicast
+#options 	NETATALK	# AppleTalk networking protocols
+#options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
+#options 	PPP_DEFLATE	# Deflate compression support for PPP
+#options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
+#options 	IPFILTER_LOG	# ipmon(8) log support
+#options 	IPFILTER_LOOKUP	# ippool(8) support
+#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
+#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
+
+#options 	ALTQ		# Manipulate network interfaces' output queues
+#options 	ALTQ_BLUE	# Stochastic Fair Blue
+#options 	ALTQ_CBQ	# Class-Based Queueing
+#options 	ALTQ_CDNR	# Diffserv Traffic Conditioner
+#options 	ALTQ_FIFOQ	# First-In First-Out Queue
+#options 	ALTQ_FLOWVALVE	# RED/flow-valve (red-penalty-box)
+#options 	ALTQ_HFSC	# Hierarchical Fair Service Curve
+#options 	ALTQ_LOCALQ	# Local queueing discipline
+#options 	ALTQ_PRIQ	# Priority Queueing
+#options 	ALTQ_RED	# Random Early Detection
+#options 	ALTQ_RIO	# RED with IN/OUT
+#options 	ALTQ_WFQ	# Weighted Fair Queueing
+
+# JIT compiler for bpfilter
+#options	SLJIT
+#options	BPFJIT
+
+# These options enable verbose messages for several subsystems.
+# Warning, these may compile large string tables into the kernel!
+#options 	EISAVERBOSE	# verbose EISA device autoconfig messages
+#options 	PCIVERBOSE	# verbose PCI device autoconfig messages
+#options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
+#options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
+#options 	SCSIVERBOSE	# human readable SCSI error messages
+options 	USBVERBOSE	# verbose USB device autoconfig messages
+
+# Options for necessary to use MD
+#options 	MEMORY_DISK_HOOKS
+#options 	MEMORY_DISK_IS_ROOT		# force root on memory disk
+#options 	MEMORY_DISK_SERVER=0		# no userspace memory disk support
+#options 	MEMORY_DISK_ROOT_SIZE=8192	# embed the FS into the system for now
+#options 	MEMORY_RBFLAGS=0		# keep the kernel from forcing single user mode
+
+# Options for NFS root boot
+#options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM,NFS_BOOT_BOOTSTATIC
+options 	NFS_BOOT_BOOTSTATIC
+options 	NFS_BOOTSTATIC_MYIP="\"192.168.0.1\""
+options 	NFS_BOOTSTATIC_GWIP="\"192.168.0.1\""
+options 	NFS_BOOTSTATIC_MASK="\"255.255.255.0\""
+options 	NFS_BOOTSTATIC_SERVADDR="\"192.168.0.5\""
+options 	NFS_BOOTSTATIC_SERVER="\"192.168.0.5:server:/path/to/root\""
+
+# Need more mbufs for IPsec VPN
+#options 	NMBCLUSTERS=4096
+
+# LinkItSmart7688 dev board root on embedded NFS mount disk
+#config		netbsd root on ? type ?
+#config		netbsd root on sd0a type ffs dumps none
+config		netbsd root on reth0 type nfs dumps none
+
+mainbus0	at root
+cpu0		at mainbus?
+
+# UARTs
+com0		at mainbus? addr 0x10000c00
+com1		at mainbus? addr 0x10000d00
+com2		at mainbus? addr 0x10000e00
+
+# Watchdog
+rwdog0 		at mainbus?
+options 	RA_WDOG_DEFAULT_PERIOD=10
+#options 	RA_WDOG_DEFAULT_MODE=WDOG_MODE_DISARMED
+options 	RA_WDOG_DEFAULT_MODE=WDOG_MODE_KTICKLE
+
+# Ethernet MACs
+reth*		at mainbus?
+options 	RALINK_ETH_MACADDR="00:00:aa:bb:cc:dd"	# according to u-boot env
+
+# MII/PHY support
+ukphy*	at mii? phy ?			# generic unknown PHYs
+
+# PCI/PCIe support
+rpci0		at mainbus?
+pci*		at rpci?
+
+# GPIO support
+rgpio0		at mainbus?
+gpio*		at rgpio?
+
+# I2C support
+ri2c0		at mainbus?
+iic*		at ri2c?
+
+# NOR Flash
+#options 	NOR_VERBOSE
+#cfi0 		at mainbus0
+#nor0		at cfi0
+#flash0		at nor0 offset 0x00000000 size 0x00030000	# u-boot
+#flash1		at nor0 offset 0x00030000 size 0x00010000	# u-boot env
+#flash2		at nor0 offset 0x00040000 size 0x00010000	# factory
+#flash3		at nor0 offset 0x00050000 size 0x007b0000	# firmware
+
+# USB support on rusb0
+ehci*		at mainbus?
+usb*		at ehci?
+
+# USB support on rusb0
+ohci*		at mainbus?
+usb*		at ohci?
+
+# USB device drivers
+include "dev/usb/usbdevices.config"
+
+midi*		at midibus?
+
+
+# Pseudo-Devices
+
+pseudo-device	crypto			# /dev/crypto device
+pseudo-device	swcrypto		# software crypto implementation
+
+# disk/mass storage pseudo-devices
+#pseudo-device	md			# memory disk device (ramdisk)
+#options 	MEMORY_DISK_HOOKS	# enable root ramdisk
+#options 	MEMORY_DISK_DYNAMIC	# loaded via kernel module(7)
+
+#pseudo-device	vnd			# disk-like interface to files
+#options 	VND_COMPRESSION		# compressed vnd(4)
+
+# network pseudo-devices
+pseudo-device	bpfilter		# Berkeley packet filter
+#pseudo-device	carp			# Common Address Redundancy Protocol
+pseudo-device	ipfilter		# IP filter (firewall) and NAT
+pseudo-device	loop			# network loopback
+#pseudo-device	mpls			# MPLS pseudo-interface
+pseudo-device	ppp			# Point-to-Point Protocol
+pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
+#options	PPPOE_SERVER		# Enable PPPoE server via link0
+pseudo-device	sl			# Serial Line IP
+pseudo-device	strip			# Starmode Radio IP (Metricom)
+pseudo-device	irframetty		# IrDA frame line discipline
+pseudo-device	tap			# virtual Ethernet
+pseudo-device	tun			# network tunneling over tty
+pseudo-device	gre			# generic L3 over IP tunnel
+pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC 1933)
+#pseudo-device	faith			# IPv[46] TCP relay translation i/f
+pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	vlan			# IEEE 802.1q encapsulation
+pseudo-device	bridge			# simple inter-network bridging
+#options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+pseudo-device	agr			# IEEE 802.3ad link aggregation
+#pseudo-device	pf			# PF packet filter
+#pseudo-device	pflog			# PF log if
+#pseudo-device	pfsync			# PF sync if
+#pseudo-device	npf			# NPF packet filter
+#pseudo-device	etherip			# Tunnel Ethernet over IP
+# srt is EXPERIMENTAL
+#pseudo-device	srt			# source-address-based routing
+
+# miscellaneous pseudo-devices
+pseudo-device	pty			# pseudo-terminals
+pseudo-device	sequencer		# MIDI sequencer
+pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	ksyms			# /dev/ksyms
+pseudo-device	lockstat		# lock profiling
+pseudo-device	bcsp			# BlueCore Serial Protocol
+pseudo-device	btuart			# Bluetooth HCI UART (H4)
+#pseudo-device	gpiosim		1	# GPIO simulator

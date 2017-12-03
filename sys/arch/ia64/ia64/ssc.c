@@ -1,4 +1,4 @@
-/*	$NetBSD: ssc.c,v 1.3.22.1 2012/11/20 03:01:28 tls Exp $	*/
+/*	$NetBSD: ssc.c,v 1.3.22.2 2017/12/03 11:36:20 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -46,6 +46,7 @@ int ssccngetc(dev_t);
 void ssccnpollc(dev_t, int);
 
 
+__attribute__((__noinline__))
 uint64_t
 ssc(uint64_t in0, uint64_t in1, uint64_t in2, uint64_t in3, int which)
 {

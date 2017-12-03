@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm.s,v 1.6 2010/11/30 16:05:55 hauke Exp $	*/
+/*	$NetBSD: iwm.s,v 1.6.18.1 2017/12/03 11:36:24 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996-99 Hauke Fath.  All rights reserved.
@@ -1130,7 +1130,7 @@ wsRDY01:
 	moveb	%a4@(0,%d3),%a0@	| Translate nibble and write
 	subqw	#3,%d4			| Update counter
 	moveb	%d7,%d3
-	addb	%d7,%d3			| Set X flag (??)
+	addb	%d7,%d3			| Set X flag (Why?)
 	rolb	#1,%d7
 	andib	#0x3F,%d0
 wsRDY02:

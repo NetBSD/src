@@ -183,8 +183,8 @@ struct t3_mbuf_hdr {
 } while (0)
 
 
-#define m_get_priority(m) ((uintptr_t)(m)->m_pkthdr.rcvif)
-#define m_set_priority(m, pri) ((m)->m_pkthdr.rcvif = (struct ifnet *)((uintptr_t)pri))
+#define m_get_priority(m)	M_GETCTX((m), uintptr_t)
+#define m_set_priority(m, pri)	M_SETCTX((m), (uintptr_t)(pri))
 
 #define if_name(ifp) (ifp)->if_xname
 #define M_SANITY(m, n)

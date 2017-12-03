@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qn.c,v 1.38.18.1 2012/11/20 03:00:58 tls Exp $ */
+/*	$NetBSD: if_qn.c,v 1.38.18.2 2017/12/03 11:35:48 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1995 Mika Kortelainen
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.38.18.1 2012/11/20 03:00:58 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.38.18.2 2017/12/03 11:35:48 jdolecek Exp $");
 
 #include "qn.h"
 #if NQN > 0
@@ -105,11 +105,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.38.18.1 2012/11/20 03:00:58 tls Exp $");
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_inarp.h>
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
 #endif
 
 #include <machine/cpu.h>
@@ -242,6 +237,7 @@ qnattach(device_t parent, device_t self, void *aux)
 
 	/* Attach the interface. */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, myaddr);
 
 #ifdef QN_DEBUG
@@ -297,7 +293,7 @@ qninit(struct qn_softc *sc)
 	*sc->nic_reset = ENABLE_DLC;
 
 	/* Attempt to start output, if any. */
-	qnstart(ifp);
+	if_schedule_deferred_start(ifp);
 }
 
 /*
@@ -545,7 +541,7 @@ qn_get_packet(struct qn_softc *sc, u_short len)
 	if (len & 1)
 		len++;
 
-	m->m_pkthdr.rcvif = &sc->sc_ethercom.ec_if;
+	m_set_rcvif(m, &sc->sc_ethercom.ec_if);
 	m->m_pkthdr.len = len;
 	m->m_len = 0;
 	head = m;
@@ -587,10 +583,7 @@ qn_get_packet(struct qn_softc *sc, u_short len)
 		len -= len1;
 	}
 
-	/* Tap off BPF listeners */
-	bpf_mtap(ifp, head);
-
-	(*ifp->if_input)(ifp, head);
+	if_percpuq_enqueue(ifp->if_percpuq, head);
 	return;
 
 bad:
@@ -698,8 +691,6 @@ qn_rint(struct qn_softc *sc, u_short rstat)
 
 		/* Read the packet. */
 		qn_get_packet(sc, len);
-
-		++sc->sc_ethercom.ec_if.if_ipackets;
 	}
 
 #ifdef QN_DEBUG
@@ -789,7 +780,7 @@ qnintr(void *arg)
 		qn_rint(sc, rint);
 
 	if ((sc->sc_ethercom.ec_if.if_flags & IFF_OACTIVE) == 0)
-		qnstart(&sc->sc_ethercom.ec_if);
+		if_schedule_deferred_start(&sc->sc_ethercom.ec_if);
 	else if (return_tintmask == 1)
 		*sc->nic_t_mask = tintmask;
 
@@ -827,22 +818,6 @@ qnioctl(register struct ifnet *ifp, u_long cmd, void *data)
 			qninit(sc);
 			arp_ifinit(ifp, ifa);
 			break;
-#endif
-#ifdef NS
-		case AF_NS:
-		    {
-			register struct ns_addr *ina = &(IA_SNS(ifa)->sns_addr);
-
-			if (ns_nullhost(*ina))
-				ina->x_host =
-				    *(union ns_host *)LLADDR(ifp->if_sadl);
-			else
-				bcopy(ina->x_host.c_host,
-				    LLADDR(ifp->if_sadl), ETHER_ADDR_LEN);
-			qnstop(sc);
-			qninit(sc);
-			break;
-		    }
 #endif
 		default:
 			log(LOG_INFO, "qn:sa_family:default (not tested)\n");

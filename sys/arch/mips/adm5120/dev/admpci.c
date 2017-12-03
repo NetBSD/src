@@ -1,4 +1,4 @@
-/* $NetBSD: admpci.c,v 1.9.6.1 2014/08/20 00:03:12 tls Exp $ */
+/* $NetBSD: admpci.c,v 1.9.6.2 2017/12/03 11:36:26 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2007 David Young.  All rights reserved.
@@ -61,13 +61,12 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: admpci.c,v 1.9.6.1 2014/08/20 00:03:12 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: admpci.c,v 1.9.6.2 2017/12/03 11:36:26 jdolecek Exp $");
 
+#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/bus.h>
 #include <sys/cpu.h>
-
-#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/systm.h>
 #include <sys/errno.h>
@@ -84,8 +83,6 @@ __KERNEL_RCSID(0, "$NetBSD: admpci.c,v 1.9.6.1 2014/08/20 00:03:12 tls Exp $");
 #ifdef	PCI_NETBSD_CONFIGURE
 #include <mips/cache.h>
 #endif
-
-#include <mips/pte.h>
 
 #include <mips/adm5120/include/adm5120_mainbusvar.h>
 #include <mips/adm5120/include/adm5120reg.h>
@@ -327,6 +324,10 @@ admpci_tag_to_addr(void *v, pcitag_t tag, int reg, bus_addr_t *addrp)
 	int bus, device, function;
 
 	KASSERT(addrp != NULL);
+
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return -1;
+
 	/* panics if tag is not well-formed */
 	admpci_decompose_tag(v, tag, &bus, &device, &function);
 	if (reg > __SHIFTOUT_MASK(ADMPCI_TAG_REGISTER_MASK))

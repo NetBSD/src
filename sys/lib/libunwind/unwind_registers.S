@@ -341,7 +341,7 @@ END(_ZNK7_Unwind17Registers_aarch646jumptoEv)
 #if defined(__arm__)
 	.fpu vfpv3
 	.hidden _ZN7_Unwind15Registers_arm32C1Ev
-ENTRY(_ZN7_Unwind15Registers_arm32C1Ev)
+ARM_ENTRY(_ZN7_Unwind15Registers_arm32C1Ev)
 	stmia	r0, {r0-r14}
 	str	lr, [r0, #60]	/* PC */
 	mrs	r1, cpsr
@@ -352,21 +352,21 @@ ENTRY(_ZN7_Unwind15Registers_arm32C1Ev)
 END(_ZN7_Unwind15Registers_arm32C1Ev)
 
 	.hidden _ZN7_Unwind15Registers_arm328lazyVFP1Ev
-ENTRY(_ZN7_Unwind15Registers_arm328lazyVFP1Ev)
+ARM_ENTRY(_ZN7_Unwind15Registers_arm328lazyVFP1Ev)
 	add	r0, #72
 	vstmia	r0, {d0-d15}
 	RET
 END(_ZN7_Unwind15Registers_arm328lazyVFP1Ev)
 
 	.hidden _ZN7_Unwind15Registers_arm328lazyVFP3Ev
-ENTRY(_ZN7_Unwind15Registers_arm328lazyVFP3Ev)
+ARM_ENTRY(_ZN7_Unwind15Registers_arm328lazyVFP3Ev)
 	add	r0, #200
 	vstmia	r0, {d16-d31}
 	RET
 END(_ZN7_Unwind15Registers_arm328lazyVFP3Ev)
 
 	.hidden _ZNK7_Unwind15Registers_arm326jumptoEv
-ENTRY(_ZNK7_Unwind15Registers_arm326jumptoEv)
+ARM_ENTRY(_ZNK7_Unwind15Registers_arm326jumptoEv)
 	ldrb	r1, [r0, #68]
 	tst	r1, #1
 	beq	.Lnovfp1
@@ -1252,4 +1252,85 @@ LEAF_ENTRY_NOPROFILE(_ZNK7_Unwind14Registers_HPPA6jumptoEv)
 	ldw 104(%r26), %r26
 	bv,n %r0(%r2)
 EXIT(_ZNK7_Unwind14Registers_HPPA6jumptoEv)
+#endif
+
+#ifdef __or1k__
+ENTRY_NP(_ZN7_Unwind14Registers_or1kC1Ev)
+	l.sw	(0*3)(r3), r0
+	l.sw	(1*3)(r3), r1
+	l.sw	(2*3)(r3), r2
+	l.sw	(3*3)(r3), r3
+	l.sw	(4*3)(r3), r4
+	l.sw	(5*3)(r3), r5
+	l.sw	(6*3)(r3), r6
+	l.sw	(7*3)(r3), r7
+	l.sw	(8*3)(r3), r8
+	l.sw	(9*3)(r3), r9
+	l.sw	(10*3)(r3), r10
+	l.sw	(11*3)(r3), r11
+	l.sw	(12*3)(r3), r12
+	l.sw	(13*3)(r3), r13
+	l.sw	(14*3)(r3), r14
+	l.sw	(15*3)(r3), r15
+	l.sw	(16*3)(r3), r16
+	l.sw	(17*3)(r3), r17
+	l.sw	(18*3)(r3), r18
+	l.sw	(19*3)(r3), r19
+	l.sw	(20*3)(r3), r20
+	l.sw	(21*3)(r3), r21
+	l.sw	(22*3)(r3), r22
+	l.sw	(23*3)(r3), r23
+	l.sw	(24*3)(r3), r24
+	l.sw	(25*3)(r3), r25
+	l.sw	(26*3)(r3), r26
+	l.sw	(27*3)(r3), r27
+	l.sw	(28*3)(r3), r28
+	l.sw	(29*3)(r3), r29
+	l.sw	(30*3)(r3), r30
+	l.sw	(31*3)(r3), r31
+	l.mfspr	r4, r0, 20
+	l.sw	(32*4)(r3), r4
+	l.jr	lr
+	l.nop
+END(_ZN7_Unwind14Registers_or1kC1Ev)
+
+ENTRY_NP(_ZNK7_Unwind14Registers_or1k6jumptoEv)
+	l.lwz	r6, (32*4)(r3)
+	l.mtspr	r0, r6, 20
+	l.lwz	r0, (0*4)(r3)
+	l.lwz	r1, (1*4)(r3)
+	l.lwz	r2, (2*4)(r3)
+	l.lwz	r4, (4*4)(r3)
+	l.lwz	r5, (5*4)(r3)
+	l.lwz	r6, (6*4)(r3)
+	l.lwz	r7, (7*4)(r3)
+	l.lwz	r8, (8*4)(r3)
+	l.lwz	r9, (9*4)(r3)
+	l.lwz	r10, (10*4)(r3)
+	l.lwz	r11, (11*4)(r3)
+	l.lwz	r12, (12*4)(r3)
+	l.lwz	r13, (13*4)(r3)
+	l.lwz	r14, (14*4)(r3)
+	l.lwz	r15, (15*4)(r3)
+	l.lwz	r16, (16*4)(r3)
+	l.lwz	r17, (17*4)(r3)
+	l.lwz	r18, (18*4)(r3)
+	l.lwz	r19, (19*4)(r3)
+	l.lwz	r20, (20*4)(r3)
+	l.lwz	r21, (21*4)(r3)
+	l.lwz	r22, (22*4)(r3)
+	l.lwz	r23, (23*4)(r3)
+	l.lwz	r24, (24*4)(r3)
+	l.lwz	r25, (25*4)(r3)
+	l.lwz	r26, (26*4)(r3)
+	l.lwz	r27, (27*4)(r3)
+	l.lwz	r28, (28*4)(r3)
+	l.lwz	r29, (29*4)(r3)
+	l.lwz	r30, (30*4)(r3)
+	l.lwz	r31, (31*4)(r3)
+
+	l.lwz	r3, (3*4)(r3)		/* return r3 */
+	l.jr	lr
+END(_ZNK7_Unwind14Registers_or1k6jumptoEv)
+
 #endif

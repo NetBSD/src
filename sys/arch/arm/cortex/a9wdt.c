@@ -1,4 +1,4 @@
-/*	$NetBSD: a9wdt.c,v 1.1.2.1 2014/08/20 00:02:45 tls Exp $	*/
+/*	$NetBSD: a9wdt.c,v 1.1.2.2 2017/12/03 11:35:52 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a9wdt.c,v 1.1.2.1 2014/08/20 00:02:45 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a9wdt.c,v 1.1.2.2 2017/12/03 11:35:52 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -94,7 +94,8 @@ a9wdt_match(device_t parent, cfdata_t cf, void *aux)
 	if (attached)
 		return 0;
 
-	if (!CPU_ID_CORTEX_A9_P(curcpu()->ci_arm_cpuid))
+	if (!CPU_ID_CORTEX_A9_P(curcpu()->ci_arm_cpuid) &&
+	    !CPU_ID_CORTEX_A5_P(curcpu()->ci_arm_cpuid))
 		return 0;
 
 	if (strcmp(mpcaa->mpcaa_name, cf->cf_name) != 0)
@@ -185,6 +186,7 @@ a9wdt_attach(device_t parent, device_t self, void *aux)
         struct a9wdt_softc * const sc = device_private(self);
 	struct mpcore_attach_args * const mpcaa = aux;
 	prop_dictionary_t dict = device_properties(self);
+	const char *cpu_type;
 
 	sc->sc_dev = self;
 	sc->sc_memt = mpcaa->mpcaa_memt;
@@ -229,8 +231,13 @@ a9wdt_attach(device_t parent, device_t self, void *aux)
 		sc->sc_wdog_armed = true;
 
 	aprint_naive("\n");
-	aprint_normal(": A9 Watchdog Timer, default period is %u seconds%s\n",
-	    sc->sc_wdog_period,
+	if (CPU_ID_CORTEX_A5_P(curcpu()->ci_arm_cpuid)) {
+		cpu_type = "A5";
+	} else {
+		cpu_type = "A9";
+	}
+	aprint_normal(": %s Watchdog Timer, default period is %u seconds%s\n",
+	    cpu_type, sc->sc_wdog_period,
 	    sc->sc_wdog_armed ? " (armed)" : "");
 
 	sc->sc_smw.smw_name = device_xname(self);
@@ -246,4 +253,8 @@ a9wdt_attach(device_t parent, device_t self, void *aux)
 			aprint_error_dev(self,
 			    "failed to start kernel tickler: %d\n", error);
  	}
+
+	if (sysmon_wdog_register(&sc->sc_smw) != 0)
+		aprint_error("%s: unable to register with sysmon\n",
+		    device_xname(sc->sc_dev));
 }

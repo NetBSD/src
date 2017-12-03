@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.3.2.2 2014/08/20 00:02:58 tls Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.3.2.3 2017/12/03 11:36:10 jdolecek Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.3.2.2 2014/08/20 00:02:58 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.3.2.3 2017/12/03 11:36:10 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -69,6 +69,15 @@ static const struct cfg_info {
 	uint32_t map_rst;
 	uint32_t map_clkcfg1;
 } map_info[] = {
+#if defined(MT7628)
+	{ "rpci", RST_PCIE0_7620, SYSCTL_CLKCFG1_PCIE_CLK_EN_7620 },
+	{ "ohci", RST_UHST0_7620|RST_UHST,
+	    SYSCTL_CLKCFG1_UPHY0_CLK_EN_7620|SYSCTL_CLKCFG1_UPHY0_CLK_EN_7628 },
+	{ "ehci", RST_UHST0_7620|RST_UHST,
+	    SYSCTL_CLKCFG1_UPHY0_CLK_EN_7620|SYSCTL_CLKCFG1_UPHY0_CLK_EN_7628 },
+	{ "sdhc", RST_SDHC_7620, SYSCTL_CLKCFG1_SDHC_CLK_EN },
+	{ "rsw", RST_ESW_7620, SYSCTL_CLKCFG1_ESW_CLK_EN },
+#endif
 #if defined(MT7620)
 	{ "rpci", RST_PCIE0_7620, SYSCTL_CLKCFG1_PCIE_CLK_EN_7620 },
 	{ "ohci", RST_UHST0_7620|RST_UHST, SYSCTL_CLKCFG1_UPHY0_CLK_EN_7620 },

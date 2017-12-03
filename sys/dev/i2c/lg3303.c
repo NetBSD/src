@@ -1,4 +1,4 @@
-/* $NetBSD: lg3303.c,v 1.8 2011/10/02 19:03:56 jmcneill Exp $ */
+/* $NetBSD: lg3303.c,v 1.8.12.1 2017/12/03 11:37:02 jdolecek Exp $ */
 
 /*-
  * Copyright 2007 Jason Harmening
@@ -28,7 +28,7 @@
  */
 
 #include <sys/param.h>
-__KERNEL_RCSID(0, "$NetBSD: lg3303.c,v 1.8 2011/10/02 19:03:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lg3303.c,v 1.8.12.1 2017/12/03 11:37:02 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/kmem.h>
@@ -87,8 +87,6 @@ lg3303_open(device_t parent, i2c_tag_t i2c, i2c_addr_t addr, int flags)
 	struct lg3303 *lg;
 
 	lg = kmem_alloc(sizeof(*lg), KM_SLEEP);
-	if (lg == NULL)
-		return NULL;
 	lg->parent = parent;
 	lg->i2c = i2c;
 	lg->i2c_addr = addr;
@@ -351,7 +349,7 @@ lg3303_get_ucblocks(struct lg3303 *lg)
 	return (buffer[0] << 8) | buffer[1];
 }
 
-MODULE(MODULE_CLASS_DRIVER, lg3303, "iic,dtv_math");
+MODULE(MODULE_CLASS_DRIVER, lg3303, "i2cexec,dtv_math");
 
 static int
 lg3303_modcmd(modcmd_t cmd, void *opaque)

@@ -64,8 +64,14 @@
 static inline struct io_mapping *
 fbmem_init(struct nouveau_device *dev)
 {
+#ifdef __NetBSD__
+	return bus_space_io_mapping_create_wc(nv_device_resource_tag(dev, 1),
+	    nv_device_resource_start(dev, 1),
+	    nv_device_resource_len(dev, 1));
+#else
 	return io_mapping_create_wc(nv_device_resource_start(dev, 1),
 				    nv_device_resource_len(dev, 1));
+#endif
 }
 
 static inline void
@@ -74,12 +80,45 @@ fbmem_fini(struct io_mapping *fb)
 	io_mapping_free(fb);
 }
 
+#ifdef __NetBSD__
+/*
+ * XXX Consider using bus_space_reserve/map instead.  Don't want to use
+ * bus_space_map because presumably that will eat too much KVA.
+ */
+
+#  define	__iomem		volatile
+#  define	ioread32	fake_ioread32
+#  define	iowrite32	fake_iowrite32
+
+static inline uint32_t
+fake_ioread32(const void __iomem *p)
+{
+	const uint32_t v = *(const uint32_t __iomem *)p;
+
+	membar_consumer();
+
+	return v;
+}
+
+static inline void
+fake_iowrite32(uint32_t v, void __iomem *p)
+{
+
+	membar_producer();
+	*(uint32_t __iomem *)p = v;
+}
+#endif
+
 static inline u32
 fbmem_peek(struct io_mapping *fb, u32 off)
 {
 	u8 __iomem *p = io_mapping_map_atomic_wc(fb, off & PAGE_MASK);
 	u32 val = ioread32(p + (off & ~PAGE_MASK));
+#ifdef __NetBSD__
+	io_mapping_unmap_atomic(fb, __UNVOLATILE(p));
+#else
 	io_mapping_unmap_atomic(p);
+#endif
 	return val;
 }
 
@@ -88,8 +127,13 @@ fbmem_poke(struct io_mapping *fb, u32 off, u32 val)
 {
 	u8 __iomem *p = io_mapping_map_atomic_wc(fb, off & PAGE_MASK);
 	iowrite32(val, p + (off & ~PAGE_MASK));
+#ifdef __NetBSD__
+	membar_producer();
+	io_mapping_unmap_atomic(fb, __UNVOLATILE(p));
+#else
 	wmb();
 	io_mapping_unmap_atomic(p);
+#endif
 }
 
 static inline bool
@@ -98,3 +142,9 @@ fbmem_readback(struct io_mapping *fb, u32 off, u32 val)
 	fbmem_poke(fb, off, val);
 	return val == fbmem_peek(fb, off);
 }
+
+#ifdef __NetBSD__
+#  undef	__iomem
+#  undef	ioread32
+#  undef	iowrite32
+#endif

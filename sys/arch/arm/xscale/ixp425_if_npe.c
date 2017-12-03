@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_if_npe.c,v 1.23.2.1 2014/08/20 00:02:48 tls Exp $ */
+/*	$NetBSD: ixp425_if_npe.c,v 1.23.2.2 2017/12/03 11:35:57 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2006 Sam Leffler.  All rights reserved.
@@ -28,7 +28,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/arm/xscale/ixp425/if_npe.c,v 1.1 2006/11/19 23:55:23 sam Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.23.2.1 2014/08/20 00:02:48 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.23.2.2 2017/12/03 11:35:57 jdolecek Exp $");
 
 /*
  * Intel XScale NPE Ethernet driver.
@@ -68,7 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.23.2.1 2014/08/20 00:02:48 tls E
 
 #include <net/bpf.h>
 
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <arm/xscale/ixp425reg.h>
 #include <arm/xscale/ixp425var.h>
@@ -332,6 +332,7 @@ npe_attach(device_t parent, device_t self, void *arg)
 	sc->sc_ethercom.ec_capabilities |= ETHERCAP_VLAN_MTU;
 
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, sc->sc_enaddr);
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
 	    RND_TYPE_NET, RND_FLAG_DEFAULT);
@@ -602,8 +603,9 @@ npe_activate(struct npe_softc *sc)
 		return error;
 	}
 
-	if (bus_dmamap_load(sc->sc_dt, sc->sc_stats_map, sc->sc_stats,
-	    sizeof(struct npestats), NULL, BUS_DMA_NOWAIT) != 0) {
+	error = bus_dmamap_load(sc->sc_dt, sc->sc_stats_map, sc->sc_stats,
+	    sizeof(struct npestats), NULL, BUS_DMA_NOWAIT);
+	if (error) {
 		aprint_error_dev(sc->sc_dev,
 		    "unable to %s for %s, error %u\n",
 		    "load map", "stats block", error);
@@ -810,7 +812,7 @@ npe_txdone_finish(struct npe_softc *sc, const struct txdone *td)
 	ifp->if_opackets += td->count;
 	ifp->if_flags &= ~IFF_OACTIVE;
 	ifp->if_timer = 0;
-	npestart(ifp);
+	if_schedule_deferred_start(ifp);
 }
 
 /*
@@ -952,7 +954,7 @@ npe_rxdone(int qid, void *arg)
 			/* set m_len etc. per rx frame size */
 			mrx->m_len = be32toh(hw->ix_ne[0].len) & 0xffff;
 			mrx->m_pkthdr.len = mrx->m_len;
-			mrx->m_pkthdr.rcvif = ifp;
+			m_set_rcvif(mrx, ifp);
 			/* Don't add M_HASFCS. See below */
 
 #if 1
@@ -1049,12 +1051,11 @@ npe_rxdone(int qid, void *arg)
 			 */
 			m_adj(mrx, -ETHER_CRC_LEN);
 
-			ifp->if_ipackets++;
 			/*
 			 * Tap off here if there is a bpf listener.
 			 */
-			bpf_mtap(ifp, mrx);
-			ifp->if_input(ifp, mrx);
+
+			if_percpuq_enqueue(ifp->if_percpuq, mrx);
 		} else {
 fail:
 			/* discard frame and re-use mbuf */
@@ -1219,7 +1220,7 @@ npeinit(struct ifnet *ifp)
 /*
  * Defragment an mbuf chain, returning at most maxfrags separate
  * mbufs+clusters.  If this is not possible NULL is returned and
- * the original mbuf chain is left in it's present (potentially
+ * the original mbuf chain is left in its present (potentially
  * modified) state.  We use two techniques: collapsing consecutive
  * mbufs and replacing consecutive mbufs by a cluster.
  */

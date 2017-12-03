@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmvar.h,v 1.13.2.3 2014/08/20 00:03:43 tls Exp $	*/
+/*	$NetBSD: if_wmvar.h,v 1.13.2.4 2017/12/03 11:37:08 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -74,10 +74,7 @@
 /* sc_flags */
 #define	WM_F_HAS_MII		0x00000001 /* has MII */
 #define	WM_F_LOCK_EECD		0x00000002 /* Lock using with EECD register */
-#define	WM_F_LOCK_SWSM		0x00000004 /* Lock using with SWSM register */
-#define WM_F_LOCK_SWFW		0x00000008 /* Lock using with SWFW register */
-#define WM_F_LOCK_EXTCNF	0x00000010 /* Lock using with EXTCNF reg. */
-#define	WM_F_EEPROM_EERDEEWR	0x00000020 /* EEPROM access via EERD/EEWR */
+#define	WM_F_EEPROM_INVM	0x00000020 /* NVM is iNVM */
 #define	WM_F_EEPROM_SPI		0x00000040 /* EEPROM is SPI */
 #define	WM_F_EEPROM_FLASH	0x00000080 /* EEPROM is FLASH */
 #define	WM_F_EEPROM_FLASH_HW	0x00000100 /* EEPROM is FLASH */
@@ -95,6 +92,35 @@
 #define WM_F_HAS_MANAGE		0x00100000
 #define WM_F_WOL		0x00200000
 #define WM_F_EEE		0x00400000 /* Energy Efficiency Ethernet */
+#define WM_F_ATTACHED		0x00800000 /* attach() finished successfully */
+#define WM_F_80003_MDIC_WA	0x01000000 /* 80003 MDIC workaround */
+#define	WM_F_PCS_DIS_AUTONEGO	0x02000000 /* PCS Disable Autonego */
+#define	WM_F_PLL_WA_I210	0x04000000 /* I21[01] PLL workaround */
+#define	WM_F_WA_I210_CLSEM	0x08000000 /* I21[01] Semaphore workaround */
+
+#define WM_FLAGS "\20" \
+	"\1" "HAS_MII"	"\2" "LOCK_EECD" "\3" "_B02"	"\4" "_B03"	\
+	"\5" "_B04"	"\6" "INVM"	"\7" "SPI"	"\10" "FLASH"	\
+	"\11" "FLASH_HW" "\12" "INVALID" "\13" "IOH_VALID" "\14" "BUS64" \
+	"\15" "PCIX"	"\16" "CSA"	"\17" "PCIE"	"\20" "SGMII"	\
+	"\21" "NEWQUEUE" "\22" "ASF_FIRM" "\23" "ARC_SUBSYS" "\24" "AMT" \
+	"\25" "MANAGE"	"\26" "WOL"	"\27" "EEE"	"\30" "ATTACHED" \
+	"\31" "_B24"	"\32" "PCS_DIS_AUTONEGO" "\33" "PLLWA"
+
+/*
+ * Variations of Intel gigabit Ethernet controller:
+ *
+ *  +-- 82542
+ *  |  +-- 82543 - 82544
+ *  |  |  +-- 82540 - 82545 - 82546
+ *  |  |  |  +-- 82541 - 82547
+ *  |  |  |  |  +---------- 82571 - 82572 - 82573 - 82574 - 82583
+ *  |  |  |  |  |  +--------- 82575 - 82576 - 82580 - I350 - I354 - I210 - I211
+ *  |  |  |  |  |  |  +-- 80003
+ *  |  |  |  |  |  |  |  +-- ICH8 - ICH9 - ICH10 - PCH - PCH2 - PCH_LPT
+ *  |  |  |  |  |  |  |  |
+ * -+--+--+--+--+--+--+--+----------------------------------------------->
+ */
 
 typedef enum {
 	WM_T_unknown		= 0,
@@ -119,18 +145,18 @@ typedef enum {
 	WM_T_82575,			/* i82575 */
 	WM_T_82576,			/* i82576 */
 	WM_T_82580,			/* i82580 */
-	WM_T_82580ER,			/* i82580ER */
 	WM_T_I350,			/* I350 */
 	WM_T_I354,			/* I354 */
 	WM_T_I210,			/* I210 */
 	WM_T_I211,			/* I211 */
 	WM_T_80003,			/* i80003 */
-	WM_T_ICH8,			/* ICH8 LAN */
+	WM_T_ICH8,			/* ICH8 (I/O Controller Hub) LAN */
 	WM_T_ICH9,			/* ICH9 LAN */
 	WM_T_ICH10,			/* ICH10 LAN */
-	WM_T_PCH,			/* PCH LAN */
+	WM_T_PCH,			/* PCH (Platform Controller Hub) LAN */
 	WM_T_PCH2,			/* PCH2 LAN */
-	WM_T_PCH_LPT,			/* PCH LPT LAN (I21[78]) */
+	WM_T_PCH_LPT,			/* PCH "Lynx Point" LAN (I217, I218) */
+	WM_T_PCH_SPT,			/* PCH "Sunrise Point" LAN (I219) */
 } wm_chip_type;
 
 typedef enum {
@@ -146,7 +172,10 @@ typedef enum {
 	WMPHY_82577,
 	WMPHY_82578,
 	WMPHY_82579,
-	WMPHY_82580
+	WMPHY_I217,
+	WMPHY_82580,
+	WMPHY_VF,
+	WMPHY_I210
 } wm_phy_type;
 
 
@@ -154,5 +183,6 @@ typedef enum {
 #define WM_PHY_CFG_TIMEOUT	100
 #define	WM_ICH8_LAN_INIT_TIMEOUT 1500
 #define	WM_MDIO_OWNERSHIP_TIMEOUT 10
+#define	WM_MAX_PLL_TRIES	5
 
 #endif /* _DEV_PCI_IF_WMVAR_H_ */

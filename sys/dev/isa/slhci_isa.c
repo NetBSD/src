@@ -1,4 +1,4 @@
-/*	$NetBSD: slhci_isa.c,v 1.12 2011/03/08 04:58:21 kiyohara Exp $	*/
+/*	$NetBSD: slhci_isa.c,v 1.12.14.1 2017/12/03 11:37:05 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 Kiyoshi Ikehara. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: slhci_isa.c,v 1.12 2011/03/08 04:58:21 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: slhci_isa.c,v 1.12.14.1 2017/12/03 11:37:05 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,6 +74,22 @@ slhci_isa_match(device_t parent, cfdata_t cf, void *aux)
 	int result = 0;
 	uint8_t sltype;
 
+	if (ia->ia_nio < 1)
+		goto out;
+	if (ia->ia_nirq < 1)
+		goto out;
+
+	if (ISA_DIRECT_CONFIG(ia))
+		goto out;
+
+	/* Disallow wildcarded i/o address. */
+	if (ia->ia_io[0].ir_addr == ISA_UNKNOWN_PORT)
+		goto out;
+
+	/* Don't allow wildcarded IRQ. */
+	if (ia->ia_irq[0].ir_irq == ISA_UNKNOWN_IRQ)
+		goto out;
+
 	if (bus_space_map(iot, ia->ia_io[0].ir_addr, SL11_PORTSIZE, 0, &ioh))
 		goto out;
 
@@ -85,6 +101,15 @@ slhci_isa_match(device_t parent, cfdata_t cf, void *aux)
 	bus_space_unmap(iot, ioh, SL11_PORTSIZE);
 
  out:
+	if (result) {
+		ia->ia_nio = 1;
+		ia->ia_io[0].ir_size = SL11_PORTSIZE;
+
+		ia->ia_nirq = 1;
+
+		ia->ia_niomem = 0;
+		ia->ia_ndrq = 0;
+	}
 	return (result);
 }
 
@@ -98,28 +123,28 @@ slhci_isa_attach(device_t parent, device_t self, void *aux)
 	bus_space_handle_t ioh;
 
 	sc->sc_dev = self;
-	sc->sc_bus.hci_private = sc;
+	sc->sc_bus.ub_hcpriv = sc;
 
 	printf("\n"); /* XXX still needed? */
 
 	/* Map I/O space */
 	if (bus_space_map(iot, ia->ia_io[0].ir_addr, SL11_PORTSIZE, 0, &ioh)) {
-		printf("%s: can't map I/O space\n", SC_NAME(sc));
+		aprint_error("%s: can't map I/O space\n", SC_NAME(sc));
 		return;
 	}
 
 	/* Initialize sc XXX power value unconfirmed */
-	slhci_preinit(sc, NULL, iot, ioh, 30, SL11_IDX_DATA);
+	slhci_preinit(sc, NULL, iot, ioh, 500, SL11_IDX_DATA);
 
 	/* Establish the interrupt handler */
 	isc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
-					IST_EDGE, IPL_USB, slhci_intr, sc);
+	    IST_EDGE, IPL_USB, slhci_intr, sc);
 	if (isc->sc_ih == NULL) {
-		printf("%s: can't establish interrupt\n", SC_NAME(sc));
+		aprint_error("%s: can't establish interrupt\n", SC_NAME(sc));
 		return;
 	}
 
 	/* Attach SL811HS/T */
 	if (slhci_attach(sc))
-		printf("%s: slhci_attach failed\n", SC_NAME(sc));
+		aprint_error("%s: slhci_attach failed\n", SC_NAME(sc));
 }

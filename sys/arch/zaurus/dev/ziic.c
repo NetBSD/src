@@ -1,4 +1,4 @@
-/*	$NetBSD: ziic.c,v 1.2 2011/06/23 10:56:03 nonaka Exp $	*/
+/*	$NetBSD: ziic.c,v 1.2.14.1 2017/12/03 11:36:52 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ziic.c,v 1.2 2011/06/23 10:56:03 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ziic.c,v 1.2.14.1 2017/12/03 11:36:52 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,6 +128,7 @@ pxaiic_attach(device_t parent, device_t self, void *aux)
 	sc->sc_i2c.ic_write_byte = pxaiic_write_byte;
 	sc->sc_i2c.ic_exec = NULL;
 
+	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_i2c;
 	(void)config_found_ia(psc->sc_dev, "i2cbus", &iba, iicbus_print);
 }

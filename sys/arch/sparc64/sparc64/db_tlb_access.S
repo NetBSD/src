@@ -1,4 +1,4 @@
-/*	$NetBSD: db_tlb_access.S,v 1.2 2010/02/23 05:32:08 mrg Exp $	*/
+/*	$NetBSD: db_tlb_access.S,v 1.2.24.1 2017/12/03 11:36:45 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -105,7 +105,7 @@ ENTRY_NOPROFILE(print_itlb)
 2:
 	.asciz	"%2d:%016lx %016lx "
 3:
-	.asciz	"%2d:%016lx %016lx\r\n"
+	.asciz	"%2d:%016lx %016lx\n"
 	.text
 #else
 ENTRY_NOPROFILE(print_dtlb)
@@ -196,6 +196,6 @@ ENTRY_NOPROFILE(print_itlb)
 2:
 	.asciz	"%2d:%08x:%08x %08x:%08x "
 3:
-	.asciz	"%2d:%08x:%08x %08x:%08x\r\n"
+	.asciz	"%2d:%08x:%08x %08x:%08x\n"
 	.text
 #endif

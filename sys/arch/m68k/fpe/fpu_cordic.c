@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_cordic.c,v 1.2.4.2 2013/06/23 06:20:08 tls Exp $	*/
+/*	$NetBSD: fpu_cordic.c,v 1.2.4.3 2017/12/03 11:36:23 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2013 Tetsuya Isaki. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_cordic.c,v 1.2.4.2 2013/06/23 06:20:08 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_cordic.c,v 1.2.4.3 2017/12/03 11:36:23 jdolecek Exp $");
 
 #include <machine/ieee.h>
 
@@ -46,7 +46,7 @@ struct sfpn {
 #if defined(CORDIC_BOOTSTRAP)
 /*
  * This is a bootstrap code to generate a pre-calculated tables such as
- * atan_table[] and atanh_table[].  However, it's just for reference.
+ * atan_table[].  However, it's just for reference.
  * If you want to run the bootstrap, you will define CORDIC_BOOTSTRAP
  * and modify these files as a userland application.
  */
@@ -58,16 +58,13 @@ struct sfpn {
 
 static void prepare_cordic_const(struct fpemu *);
 static struct fpn *fpu_gain1_cordic(struct fpemu *);
-static struct fpn *fpu_gain2_cordic(struct fpemu *);
 static struct fpn *fpu_atan_taylor(struct fpemu *);
 static void printf_fpn(const struct fpn *);
 static void printf_sfpn(const struct sfpn *);
 static void fpn_to_sfpn(struct sfpn *, const struct fpn *);
 
 static struct sfpn atan_table[EXT_FRACBITS];
-static struct sfpn atanh_table[EXT_FRACBITS];
 static struct fpn inv_gain1;
-static struct fpn inv_gain2;
 
 int
 main(int argc, char *argv[])
@@ -88,20 +85,8 @@ main(int argc, char *argv[])
 	}
 	printf("};\n\n");
 
-	printf("static const struct sfpn atanh_table[] = {\n");
-	for (i = 0; i < EXT_FRACBITS; i++) {
-		printf("\t");
-		printf_sfpn(&atanh_table[i]);
-		printf(",\n");
-	}
-	printf("};\n\n");
-
 	printf("const struct fpn fpu_cordic_inv_gain1 =\n\t");
 	printf_fpn(&inv_gain1);
-	printf(";\n\n");
-
-	printf("const struct fpn fpu_cordic_inv_gain2 =\n\t");
-	printf_fpn(&inv_gain2);
 	printf(";\n\n");
 }
 
@@ -117,7 +102,7 @@ prepare_cordic_const(struct fpemu *fe)
 	struct fpn *r;
 	int i;
 
-	/* atan_table and atanh_table */
+	/* atan_table */
 	fpu_const(&t, FPU_CONST_1);
 	for (i = 0; i < EXT_FRACBITS; i++) {
 		/* atan(t) */
@@ -127,32 +112,6 @@ prepare_cordic_const(struct fpemu *fe)
 
 		/* t /= 2 */
 		t.fp_exp--;
-
-		/* (1-t) */
-		fpu_const(&fe->fe_f1, FPU_CONST_1);
-		CPYFPN(&fe->fe_f2, &t);
-		fe->fe_f2.fp_sign = 1;
-		r = fpu_add(fe);
-		CPYFPN(&x, r);
-
-		/* (1+t) */
-		fpu_const(&fe->fe_f1, FPU_CONST_1);
-		CPYFPN(&fe->fe_f2, &t);
-		r = fpu_add(fe);
-
-		/* r = (1+t)/(1-t) */
-		CPYFPN(&fe->fe_f1, r);
-		CPYFPN(&fe->fe_f2, &x);
-		r = fpu_div(fe);
-
-		/* r = log(r) */
-		CPYFPN(&fe->fe_f2, r);
-		r = fpu_logn(fe);
-
-		/* r /= 2 */
-		r->fp_exp--;
-
-		fpn_to_sfpn(&atanh_table[i], r);
 	}
 
 	/* inv_gain1 = 1 / gain1cordic() */
@@ -161,13 +120,6 @@ prepare_cordic_const(struct fpemu *fe)
 	fpu_const(&fe->fe_f1, FPU_CONST_1);
 	r = fpu_div(fe);
 	CPYFPN(&inv_gain1, r);
-
-	/* inv_gain2 = 1 / gain2cordic() */
-	r = fpu_gain2_cordic(fe);
-	CPYFPN(&fe->fe_f2, r);
-	fpu_const(&fe->fe_f1, FPU_CONST_1);
-	r = fpu_div(fe);
-	CPYFPN(&inv_gain2, r);
 }
 
 static struct fpn *
@@ -185,25 +137,6 @@ fpu_gain1_cordic(struct fpemu *fe)
 	v.fp_sign = !v.fp_sign;
 
 	fpu_cordit1(fe, &x, &y, &z, &v);
-	CPYFPN(&fe->fe_f2, &x);
-	return &fe->fe_f2;
-}
-
-static struct fpn *
-fpu_gain2_cordic(struct fpemu *fe)
-{
-	struct fpn x;
-	struct fpn y;
-	struct fpn z;
-	struct fpn v;
-
-	fpu_const(&x, FPU_CONST_1);
-	fpu_const(&y, FPU_CONST_0);
-	fpu_const(&z, FPU_CONST_0);
-	CPYFPN(&v, &x);
-	v.fp_sign = !v.fp_sign;
-
-	fpu_cordit2(fe, &x, &y, &z, &v);
 	CPYFPN(&fe->fe_f2, &x);
 	return &fe->fe_f2;
 }
@@ -370,78 +303,8 @@ static const struct sfpn atan_table[] = {
 	{ 0xc1040000, 0x00000000, 0x00000000, },
 };
 
-static const struct sfpn atanh_table[] = {
-	{ 0xff0464fa, 0x9eab40c2, 0xa5dc43f6, },
-	{ 0xfe04162b, 0xbea04514, 0x69ca8e4a, },
-	{ 0xfd040562, 0x4727abbd, 0xda654b67, },
-	{ 0xfc040156, 0x22b4dd6b, 0x372a679c, },
-	{ 0xfb040055, 0x62246bb8, 0x92d60b35, },
-	{ 0xfa040015, 0x56222b47, 0x2637d656, },
-	{ 0xf9040005, 0x55622246, 0xb4dcf86e, },
-	{ 0xf8040001, 0x55562222, 0xb46bb307, },
-	{ 0xf7040000, 0x55556222, 0x246b45cd, },
-	{ 0xf6040000, 0x15555622, 0x222b465b, },
-	{ 0xf5040000, 0x05555562, 0x2222467f, },
-	{ 0xf4040000, 0x01555556, 0x22221eaf, },
-	{ 0xf3040000, 0x00555555, 0x62222213, },
-	{ 0xf2040000, 0x00155555, 0x56221221, },
-	{ 0xf1040000, 0x00055555, 0x556221a2, },
-	{ 0xf0040000, 0x00015555, 0x5556221e, },
-	{ 0xef040000, 0x00005555, 0x55552222, },
-	{ 0xee040000, 0x00001555, 0x55555222, },
-	{ 0xed040000, 0x00000555, 0x55555522, },
-	{ 0xec040000, 0x00000155, 0x55555552, },
-	{ 0xeb040000, 0x00000055, 0x554d5555, },
-	{ 0xea040000, 0x00000015, 0x55545555, },
-	{ 0xe9040000, 0x00000005, 0x55553555, },
-	{ 0xe8040000, 0x00000001, 0x55555155, },
-	{ 0xe7040000, 0x00000000, 0x555554d5, },
-	{ 0xe6040000, 0x00000000, 0x15555545, },
-	{ 0xe5040000, 0x00000000, 0x05555553, },
-	{ 0xe307ffff, 0xffffffff, 0xfaaaaaaa, },
-	{ 0xe207ffff, 0xffffffff, 0xfeaaaaaa, },
-	{ 0xe107ffff, 0xffffffff, 0xffaaaaaa, },
-	{ 0xe007ffff, 0xffffffff, 0xffeaaaaa, },
-	{ 0xdf07ffff, 0xffffffff, 0xfffaaaaa, },
-	{ 0xde07ffff, 0xffffffff, 0xfffeaaaa, },
-	{ 0xdd07ffff, 0xffffffff, 0xffffaaaa, },
-	{ 0xdc07ffff, 0xffffffff, 0xffffeaaa, },
-	{ 0xdb07ffff, 0xffffffff, 0xfffffaaa, },
-	{ 0xda07ffff, 0xffffffff, 0xfffffeaa, },
-	{ 0xd907ffff, 0xffffffff, 0xffffffaa, },
-	{ 0xd807ffff, 0xffffffff, 0xffffffea, },
-	{ 0xd707ffff, 0xffffffff, 0xfffffffa, },
-	{ 0xd607ffff, 0xffffffff, 0xfffffffe, },
-	{ 0xd507ffff, 0xfffffe00, 0x00000000, },
-	{ 0xd407ffff, 0xffffff00, 0x00000000, },
-	{ 0xd307ffff, 0xffffff80, 0x00000000, },
-	{ 0xd207ffff, 0xffffffc0, 0x00000000, },
-	{ 0xd107ffff, 0xffffffe0, 0x00000000, },
-	{ 0xd007ffff, 0xfffffff0, 0x00000000, },
-	{ 0xcf07ffff, 0xfffffff8, 0x00000000, },
-	{ 0xce07ffff, 0xfffffffc, 0x00000000, },
-	{ 0xcd07ffff, 0xfffffffe, 0x00000000, },
-	{ 0xcc07ffff, 0xffffffff, 0x00000000, },
-	{ 0xcb07ffff, 0xffffffff, 0x80000000, },
-	{ 0xca07ffff, 0xffffffff, 0xc0000000, },
-	{ 0xc907ffff, 0xffffffff, 0xe0000000, },
-	{ 0xc807ffff, 0xffffffff, 0xf0000000, },
-	{ 0xc707ffff, 0xffffffff, 0xf8000000, },
-	{ 0xc607ffff, 0xffffffff, 0xfc000000, },
-	{ 0xc507ffff, 0xffffffff, 0xfe000000, },
-	{ 0xc407ffff, 0xffffffff, 0xff000000, },
-	{ 0xc307ffff, 0xffffffff, 0xff800000, },
-	{ 0xc207ffff, 0xffffffff, 0xffc00000, },
-	{ 0xc107ffff, 0xffffffff, 0xffe00000, },
-	{ 0xc007ffff, 0xffffffff, 0xfff00000, },
-	{ 0xbf07ffff, 0xffffffff, 0xfff80000, },
-};
-
 const struct fpn fpu_cordic_inv_gain1 =
 	{ 1, 0,  -1, 1, { 0x0004dba7, 0x6d421af2, 0xd33fafd1, }, };
-
-const struct fpn fpu_cordic_inv_gain2 =
-	{ 1, 0,   0, 1, { 0x0004d483, 0xec3803fc, 0xc5ff12f8, }, };
 
 #endif /* CORDIC_BOOTSTRAP */
 
@@ -538,103 +401,6 @@ fpu_cordit1(struct fpemu *fe, struct fpn *x0, struct fpn *y0, struct fpn *z0,
 
 		/* x = x1 */
 		CPYFPN(&x, &x1);
-
-		/* t /= 2 */
-		t.fp_exp--;
-	}
-
-	CPYFPN(x0, &x);
-	CPYFPN(y0, &y);
-	CPYFPN(z0, &z);
-}
-
-void
-fpu_cordit2(struct fpemu *fe, struct fpn *x0, struct fpn *y0, struct fpn *z0,
-	const struct fpn *vecmode)
-{
-	struct fpn t;
-	struct fpn x;
-	struct fpn y;
-	struct fpn z;
-	struct fpn *r;
-	int i;
-	int k;
-	int sign;
-
-	/* t = 0.5 */
-	fpu_const(&t, FPU_CONST_1);
-	t.fp_exp--;
-
-	CPYFPN(&x, x0);
-	CPYFPN(&y, y0);
-	CPYFPN(&z, z0);
-
-	k = 3;
-	for (i = 0; i < EXT_FRACBITS; i++) {
-		struct fpn x1;
-		int j;
-
-		for (j = 0; j < 2; j++) {
-			if ((vecmode->fp_sign == 0 && y.fp_sign) ||
-			    (vecmode->fp_sign && z.fp_sign == 0)) {
-				sign = 0;
-			} else {
-				sign = 1;
-			}
-
-			/* y * t */
-			CPYFPN(&fe->fe_f1, &y);
-			CPYFPN(&fe->fe_f2, &t);
-			r = fpu_mul(fe);
-
-			/*
-			 * x1 = x + y*t
-			 * x1 = x - y*t (if sign)
-			 */
-			CPYFPN(&fe->fe_f2, r);
-			if (sign)
-				fe->fe_f2.fp_sign = !fe->fe_f2.fp_sign;
-			CPYFPN(&fe->fe_f1, &x);
-			r = fpu_add(fe);
-			CPYFPN(&x1, r);
-
-			/* x * t */
-			CPYFPN(&fe->fe_f1, &x);
-			CPYFPN(&fe->fe_f2, &t);
-			r = fpu_mul(fe);
-
-			/*
-			 * y = y + x*t
-			 * y = y - x*t (if sign)
-			 */
-			CPYFPN(&fe->fe_f2, r);
-			if (sign)
-				fe->fe_f2.fp_sign = !fe->fe_f2.fp_sign;
-			CPYFPN(&fe->fe_f1, &y);
-			r = fpu_add(fe);
-			CPYFPN(&y, r);
-
-			/*
-			 * z = z + atanh_table[i] (if sign)
-			 * z = z - atanh_table[i]
-			 */
-			CPYFPN(&fe->fe_f1, &z);
-			sfpn_to_fpn(&fe->fe_f2, &atanh_table[i]);
-			if (!sign)
-				fe->fe_f2.fp_sign = !fe->fe_f2.fp_sign;
-			r = fpu_add(fe);
-			CPYFPN(&z, r);
-
-			/* x = x1 */
-			CPYFPN(&x, &x1);
-
-			if (k > 0) {
-				k--;
-				break;
-			} else {
-				k = 3;
-			}
-		}
 
 		/* t /= 2 */
 		t.fp_exp--;

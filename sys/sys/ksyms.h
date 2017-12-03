@@ -1,4 +1,4 @@
-/*	$NetBSD: ksyms.h,v 1.27.20.1 2012/11/20 03:02:51 tls Exp $	*/
+/*	$NetBSD: ksyms.h,v 1.27.20.2 2017/12/03 11:39:20 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Anders Magnusson (ragge@ludd.luth.se).
@@ -30,10 +30,13 @@
 #ifndef _SYS_KSYMS_H_
 #define _SYS_KSYMS_H_
 
-#ifdef _KSYMS_PRIVATE
-
-#define	ELFSIZE	ARCH_ELFSIZE
+#if !defined(ELFSIZE) && !defined(_RUMPKERNEL)
+#define ELFSIZE KERN_ELFSIZE
+#endif
 #include <sys/exec_elf.h>
+
+#ifdef _KSYMS_PRIVATE
+#include <sys/ioccom.h>
 #include <sys/queue.h>
 
 struct ksyms_symtab {
@@ -58,28 +61,31 @@ struct ksyms_symtab {
  * Static allocated ELF header.
  * Basic info is filled in at attach, sizes at open.
  */
-#define	SYMTAB		1
-#define	STRTAB		2
-#define	SHSTRTAB	3
-#define	SHBSS		4
-#define	SHCTF		5
-#define NSECHDR		6
+#define	SHNOTE		1
+#define	SYMTAB		2
+#define	STRTAB		3
+#define	SHSTRTAB	4
+#define	SHBSS		5
+#define	SHCTF		6
+#define	NSECHDR		7
 
 #define	NPRGHDR		1
-#define	SHSTRSIZ	42
+#define	SHSTRSIZ	64
 
 struct ksyms_hdr {
 	Elf_Ehdr	kh_ehdr;
 	Elf_Phdr	kh_phdr[NPRGHDR];
 	Elf_Shdr	kh_shdr[NSECHDR];
 	char 		kh_strtab[SHSTRSIZ];
+	/* 0=NameSize, 1=DescSize, 2=Tag, 3="NetB", 4="SD\0\0", 5=Version */
+	int32_t		kh_note[6];
 };
 #endif	/* _KSYMS_PRIVATE */
 
 /*
  * Do a lookup of a symbol using the in-kernel lookup algorithm.
  */
-struct ksyms_gsymbol {
+struct ksyms_ogsymbol {
 	const char *kg_name;
 	union {
 		void *ku_sym;		 /* Normally Elf_Sym */
@@ -89,9 +95,25 @@ struct ksyms_gsymbol {
 #define	kg_value _un.ku_value
 };
 
-#define	KIOCGSYMBOL	_IOW('l', 1, struct ksyms_gsymbol)
-#define	KIOCGVALUE	_IOW('l', 2, struct ksyms_gsymbol)
+#ifdef ELFSIZE
+struct ksyms_gsymbol {
+	const char *kg_name;
+	union {
+		Elf_Sym ku_sym;
+	} _un;
+};
+#endif
+
+struct ksyms_gvalue {
+	const char *kv_name;
+	uint64_t kv_value;
+};
+
+#define	OKIOCGSYMBOL	_IOW('l', 1, struct ksyms_ogsymbol)
+#define	OKIOCGVALUE	_IOW('l', 2, struct ksyms_ogsymbol)
 #define	KIOCGSIZE	_IOR('l', 3, int)
+#define	KIOCGVALUE	_IOWR('l', 4, struct ksyms_gvalue)
+#define	KIOCGSYMBOL	_IOWR('l', 5, struct ksyms_gsymbol)
 
 
 #if defined(_KERNEL) || defined(_KMEMUSER)
@@ -113,7 +135,8 @@ typedef int (*ksyms_callback_t)(const char *, int, void *,
 
 int ksyms_getname(const char **, const char **, vaddr_t, int);
 int ksyms_getval(const char *, const char *, unsigned long *, int);
-int ksyms_getval_unlocked(const char *, const char *, unsigned long *, int);
+int ksyms_getval_unlocked(const char *, const char *, Elf_Sym **,
+    unsigned long *, int);
 struct ksyms_symtab *ksyms_get_mod(const char *);
 int ksyms_mod_foreach(const char *mod, ksyms_callback_t, void *);
 int ksyms_addsymtab(const char *, void *, vsize_t, char *, vsize_t);

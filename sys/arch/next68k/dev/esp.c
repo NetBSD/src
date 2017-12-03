@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.59.22.2 2014/08/20 00:03:16 tls Exp $	*/
+/*	$NetBSD: esp.c,v 1.59.22.3 2017/12/03 11:36:33 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.59.22.2 2014/08/20 00:03:16 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.59.22.3 2017/12/03 11:36:33 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -505,7 +505,7 @@ esp_dma_intr(struct ncr53c9x_softc *sc)
 				snprintb(sbuf, sizeof(sbuf), NEXT_INTR_BITS, 
 				    (*(volatile u_long *)IIOV(NEXT_P_INTRSTAT)));
 				
-				printf("esp_dma_isintr = 0x%s\n", sbuf);
+				printf("esp_dma_isintr = %s\n", sbuf);
 			}
 #endif
 
@@ -744,11 +744,11 @@ esp_dma_reset(struct ncr53c9x_softc *sc)
 
 		snprintb(sbuf, sizeof(sbuf), NEXT_INTR_BITS, 
 		    (*(volatile u_long *)IIOV(NEXT_P_INTRSTAT)));
-		printf("  *intrstat = 0x%s\n", sbuf);
+		printf("  *intrstat = %s\n", sbuf);
 
 		snprintb(sbuf, sizeof(sbuf), NEXT_INTR_BITS, 
 		    (*(volatile u_long *)IIOV(NEXT_P_INTRMASK)));
-		printf("  *intrmask = 0x%s\n", sbuf);
+		printf("  *intrmask = %s\n", sbuf);
 	}
 #endif
 
@@ -1932,11 +1932,11 @@ esp_dmacb_shutdown(void *arg)
 
 		snprintb(sbuf, sizeof(sbuf), NEXT_INTR_BITS, 
 		    (*(volatile u_long *)IIOV(NEXT_P_INTRSTAT)));
-		printf("  *intrstat = 0x%s\n", sbuf);
+		printf("  *intrstat = %s\n", sbuf);
 
 		snprintb(sbuf, sizeof(sbuf), NEXT_INTR_BITS, 
 		    (*(volatile u_long *)IIOV(NEXT_P_INTRMASK)));
-		printf("  *intrmask = 0x%s\n", sbuf);
+		printf("  *intrmask = %s\n", sbuf);
 	}
 #endif
 }

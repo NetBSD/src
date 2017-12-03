@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj_machdep.c,v 1.3.22.1 2014/08/20 00:02:45 tls Exp $	*/
+/*	$NetBSD: kobj_machdep.c,v 1.3.22.2 2017/12/03 11:35:51 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.3.22.1 2014/08/20 00:02:45 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.3.22.2 2017/12/03 11:35:51 jdolecek Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -61,8 +61,12 @@ __KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.3.22.1 2014/08/20 00:02:45 tls Ex
 #include <sys/kobj.h>
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
+#include <sys/kmem.h>
+#include <sys/ksyms.h>
+#include <sys/kobj_impl.h>
 
 #include <arm/cpufunc.h>
+#include <arm/locore.h>
 
 int
 kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
@@ -74,6 +78,7 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 	Elf_Word rtype, symidx;
 	const Elf_Rel *rel;
 	const Elf_Rela *rela;
+	int error;
 
 	if (isrela) {
 		rela = (const Elf_Rela *)data;
@@ -95,8 +100,8 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 		return 0;
 
 	case R_ARM_ABS32:
-		addr = kobj_sym_lookup(ko, symidx);
-		if (addr == 0)
+		error = kobj_sym_lookup(ko, symidx, &addr);
+		if (error)
 			break;
 		*where = addr + addend;
 		return 0;
@@ -106,8 +111,8 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 		break;
 
 	case R_ARM_JUMP_SLOT:
-		addr = kobj_sym_lookup(ko, symidx);
-		if (addr == 0)
+		error = kobj_sym_lookup(ko, symidx, &addr);
+		if (error)
 			break;
 		*where = addr;
 		return 0;
@@ -122,8 +127,8 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 	case R_ARM_MOVT_ABS:
 		if ((*where & 0x0fb00000) != 0x03000000)
 			break;
-		addr = kobj_sym_lookup(ko, symidx);
-		if (addr == 0)
+		error = kobj_sym_lookup(ko, symidx, &addr);
+		if (error)
 			break;
 		if (rtype == R_ARM_MOVT_ABS)
 			addr >>= 16;
@@ -146,8 +151,8 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 
 		addend <<= 2;
 
-		addr = kobj_sym_lookup(ko, symidx);
-		if (addr == 0)
+		error = kobj_sym_lookup(ko, symidx, &addr);
+		if (error)
 			break;
 
 		addend += (uintptr_t)addr - (uintptr_t)where;
@@ -167,8 +172,8 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 
 	case R_ARM_REL32:	/* ((S + A) | T) -  P */
 		/* T = 0 for now */
-		addr = kobj_sym_lookup(ko, symidx);
-		if (addr == 0)
+		error = kobj_sym_lookup(ko, symidx, &addr);
+		if (error)
 			break;
 
 		addend += (uintptr_t)addr - (uintptr_t)where;
@@ -180,8 +185,8 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 		if (addend & 0x40000000)
 			addend |= 0xc0000000;
 		/* T = 0 for now */
-		addr = kobj_sym_lookup(ko, symidx);
-		if (addr == 0)
+		error = kobj_sym_lookup(ko, symidx, &addr);
+		if (error)
 			break;
 
 		addend += (uintptr_t)addr - (uintptr_t)where;
@@ -203,11 +208,201 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 	return -1;
 }
 
+#if __ARMEB__
+
+enum be8_magic_sym_type {
+	Other, ArmStart, ThumbStart, DataStart
+};
+
+struct be8_marker {
+	enum be8_magic_sym_type type;
+	void *addr;
+};
+
+struct be8_marker_list {
+	size_t cnt;
+	struct be8_marker *markers;
+};
+
+/*
+ * See ELF for the ARM Architecture, Section 4.5.5: Mapping Symbols
+ * ARM reserves $a/$d/$t (and variants like $a.2) to mark start of
+ * arm/thumb code sections to allow conversion from ARM32-EB to -BE8
+ * format.
+ */
+static enum be8_magic_sym_type
+be8_sym_type(const char *name, int info)
+{
+	if (ELF_ST_BIND(info) != STB_LOCAL)
+		return Other;
+	if (ELF_ST_TYPE(info) != STT_NOTYPE)
+		return Other;
+	if (name[0] != '$' || name[1] == '\0' ||
+	    (name[2] != '\0' && name[2] != '.'))
+		return Other;
+
+	switch (name[1]) {
+	case 'a':
+		return ArmStart;
+	case 'd':
+		return DataStart;
+	case 't':
+		return ThumbStart;
+	default:
+		return Other;
+	}
+}
+
+static int
+be8_ksym_count(const char *name, int symindex, void *value, uint32_t size,
+	int info, void *cookie)
+{
+	size_t *res = cookie;
+	enum be8_magic_sym_type t = be8_sym_type(name, info);
+
+	if (t != Other)
+		(*res)++;
+	return 0;
+}
+
+static int
+be8_ksym_add(const char *name, int symindex, void *value, uint32_t size,
+	int info, void *cookie)
+{
+	size_t ndx;
+	struct be8_marker_list *list = cookie;
+	enum be8_magic_sym_type t = be8_sym_type(name, info);
+
+	if (t == Other)
+		return 0;
+
+	ndx = list->cnt++;
+	list->markers[ndx].type = t;
+	list->markers[ndx].addr = value;
+
+	return 0;
+}
+
+static int
+be8_ksym_comp(const void *a, const void *b)
+{
+	const struct be8_marker *ma = a, *mb = b;
+	uintptr_t va = (uintptr_t)ma->addr, vb = (uintptr_t)mb->addr;
+
+	if (va == vb)
+		return 0;
+	if (va < vb)
+		return -1;
+	return 1;
+}
+
+static void
+be8_ksym_swap(void *start, size_t size, const struct be8_marker_list *list)
+{
+	uintptr_t va_end = (uintptr_t)start + size;
+	size_t i;
+	uint32_t *p32, *p32_end, v32;
+	uint16_t *p16, *p16_end, v16;
+
+	/* find first relevant list entry */
+	for (i = 0; i < list->cnt; i++)
+		if (start <= list->markers[i].addr)
+			break;
+
+	/* swap all arm and thumb code parts of this section */
+	for ( ; i < list->cnt; i++) {
+		switch (list->markers[i].type) {
+		case ArmStart:
+			p32 = (uint32_t*)list->markers[i].addr;
+			p32_end = (uint32_t*)va_end;
+			if (i+1 < list->cnt) {
+				if ((uintptr_t)list->markers[i+1].addr
+				    < va_end)
+					p32_end = (uint32_t*)
+						list->markers[i+1].addr;
+			}
+			while (p32 < p32_end) {
+				v32 = bswap32(*p32);
+				*p32++ = v32;
+			}
+			break;
+		case ThumbStart:
+			p16 = (uint16_t*)list->markers[i].addr;
+			p16_end = (uint16_t*)va_end;
+			if (i+1 < list->cnt) {
+				if ((uintptr_t)list->markers[i+1].addr
+				    < va_end)
+					p16_end = (uint16_t*)
+						list->markers[i+1].addr;
+			}
+			while (p16 < p16_end) {
+				v16 = bswap16(*p16);
+				*p16++ = v16;
+			}
+			break;
+		default:
+			break;
+		}
+	}
+}
+ 
+static void
+kobj_be8_fixup(kobj_t ko)
+{
+	size_t relsym_cnt = 0, i, msize;
+	struct be8_marker_list list;
+	struct be8_marker tmp;
+
+	/*
+	 * Count all special relocations symbols
+	 */
+	ksyms_mod_foreach(ko->ko_name, be8_ksym_count, &relsym_cnt);
+
+	/*
+	 * Provide storage for the address list and add the symbols
+	 */
+	list.cnt = 0;
+	msize = relsym_cnt*sizeof(*list.markers);
+	list.markers = kmem_alloc(msize, KM_SLEEP);
+	ksyms_mod_foreach(ko->ko_name, be8_ksym_add, &list);
+	KASSERT(list.cnt == relsym_cnt);
+
+	/*
+	 * Sort symbols by ascending address
+	 */
+	if (kheapsort(list.markers, relsym_cnt, sizeof(*list.markers),
+	    be8_ksym_comp, &tmp) != 0)
+		panic("could not sort be8 marker symbols");
+
+	/*
+	 * Apply swaps to the .text section (XXX we do not have the
+	 * section header available any more, it has been jetisoned
+	 * already, so we can not check for all PROGBIT sections).
+	 */
+	for (i = 0; i < ko->ko_nprogtab; i++) {
+		if (strcmp(ko->ko_progtab[i].name, ".text") != 0)
+			continue;
+		be8_ksym_swap(ko->ko_progtab[i].addr,
+		    (size_t)ko->ko_progtab[i].size,
+		    &list);
+	}
+
+	/*
+	 * Done, free list
+	 */
+	kmem_free(list.markers, msize);
+}
+#endif
+
 int
 kobj_machdep(kobj_t ko, void *base, size_t size, bool load)
 {
 
 	if (load) {
+#if __ARMEB__
+		if (CPU_IS_ARMV7_P() && base == (void*)ko->ko_text_address)
+			kobj_be8_fixup(ko);
+#endif
 #ifndef _RUMPKERNEL
 		cpu_idcache_wbinv_range((vaddr_t)base, size);
 		cpu_tlb_flushID();

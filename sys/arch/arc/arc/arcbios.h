@@ -1,4 +1,4 @@
-/*	$NetBSD: arcbios.h,v 1.10 2007/03/04 05:59:32 christos Exp $	*/
+/*	$NetBSD: arcbios.h,v 1.10.88.1 2017/12/03 11:35:49 jdolecek Exp $	*/
 /*	$OpenBSD: arcbios.h,v 1.1 1998/01/29 15:06:22 pefo Exp $	*/
 
 /*-
@@ -62,7 +62,7 @@ typedef enum arc_config_type
 	arc_SecondaryCache,
 
 	arc_EisaAdapter,		/* Eisa adapter         */
-	arc_TcAdapter,			/* Turbochannel adapter */
+	arc_TcAdapter,			/* TURBOchannel adapter */
 	arc_ScsiAdapter,		/* SCSI adapter         */
 	arc_DtiAdapter,			/* AccessBus adapter    */
 	arc_MultiFunctionAdapter,

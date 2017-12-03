@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_mod.c,v 1.2.22.1 2014/08/20 00:03:31 tls Exp $	*/
+/*	$NetBSD: freebsd_mod.c,v 1.2.22.2 2017/12/03 11:36:53 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_mod.c,v 1.2.22.1 2014/08/20 00:03:31 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_mod.c,v 1.2.22.2 2017/12/03 11:36:53 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
@@ -40,7 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_mod.c,v 1.2.22.1 2014/08/20 00:03:31 tls Exp
 #include <sys/module.h>
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
-#include <sys/exec_aout.h>
 #include <sys/signalvar.h>
 
 #include <compat/freebsd/freebsd_exec.h>
@@ -51,16 +50,11 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_mod.c,v 1.2.22.1 2014/08/20 00:03:31 tls Exp
 #else
 # define	MD1	""
 #endif
-#if defined(EXEC_AOUT)
-#  define	MD2	",exec_aout"
-#else
-# define	MD2	""
-#endif
 
 #define ELF32_AUXSIZE (howmany(ELF_AUX_ENTRIES * sizeof(Aux32Info), \
     sizeof(Elf32_Addr)) + MAXPATHLEN + ALIGN(1))
 
-MODULE(MODULE_CLASS_EXEC, compat_freebsd, "compat,compat_ossaudio" MD1 MD2);
+MODULE(MODULE_CLASS_EXEC, compat_freebsd, "compat,compat_ossaudio" MD1);
 
 static struct execsw freebsd_execsw[] = {
 #ifdef EXEC_ELF32
@@ -77,23 +71,6 @@ static struct execsw freebsd_execsw[] = {
 		.es_copyargs = elf32_copyargs,
 		.es_setregs = NULL,
 		.es_coredump = coredump_elf32,
-		.es_setup_stack = exec_setup_stack,
-	},
-#endif
-#ifdef EXEC_AOUT
-	/* FreeBSD a.out (native word size) */
-	{
-		.es_hdrsz = FREEBSD_AOUT_HDR_SIZE,
-		.es_makecmds = exec_freebsd_aout_makecmds,
-		.u = {
-			.elf_probe_func = NULL,
-		},
-		.es_emul = &emul_freebsd,
-		.es_prio = EXECSW_PRIO_ANY,
-		.es_arglen = 0,
-		.es_copyargs = copyargs,
-		.es_setregs = NULL,
-		.es_coredump = coredump_netbsd,
 		.es_setup_stack = exec_setup_stack,
 	},
 #endif

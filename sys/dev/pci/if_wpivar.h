@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpivar.h,v 1.15.22.1 2014/08/20 00:03:43 tls Exp $    */
+/*  $NetBSD: if_wpivar.h,v 1.15.22.2 2017/12/03 11:37:08 jdolecek Exp $    */
 
 /*-
  * Copyright (c) 2006
@@ -150,6 +150,8 @@ struct wpi_softc {
 	bus_space_tag_t		sc_st;
 	bus_space_handle_t	sc_sh;
 	void 			*sc_ih;
+	void			*sc_soft_ih;
+	pci_intr_handle_t	*sc_pihp;
 	pci_chipset_tag_t	sc_pct;
 	pcitag_t		sc_pcitag;
 	bus_size_t		sc_sz;
@@ -187,4 +189,13 @@ struct wpi_softc {
 	bool		is_scanning;
 
 	struct sysctllog	*sc_sysctllog;
+	struct sysmon_pswitch 	sc_rsw;		/* for radio switch events */
+	int			sc_rsw_status;
+#define WPI_RSW_UNKNOWN		0
+#define WPI_RSW_OFF		1
+#define WPI_RSW_ON		2
+	struct lwp		*sc_rsw_lwp;
+	struct kmutex 		sc_rsw_mtx;
+	struct kcondvar 	sc_rsw_cv;
+	int 			sc_dying;
 };

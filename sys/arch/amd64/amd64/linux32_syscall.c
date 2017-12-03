@@ -1,7 +1,7 @@
-/*	$NetBSD: linux32_syscall.c,v 1.30 2010/12/20 00:25:24 matt Exp $ */
+/*	$NetBSD: linux32_syscall.c,v 1.30.18.1 2017/12/03 11:35:47 jdolecek Exp $ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_syscall.c,v 1.30 2010/12/20 00:25:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_syscall.c,v 1.30.18.1 2017/12/03 11:35:47 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,14 +63,14 @@ linux32_syscall(struct trapframe *frame)
 	args[4] = frame->tf_rdi & 0xffffffff;
 	args[5] = frame->tf_rbp & 0xffffffff;
 
-	if (__predict_false(p->p_trace_enabled)) {
+	if (__predict_false(p->p_trace_enabled || KDTRACE_ENTRY(callp->sy_return))) {
 		narg = callp->sy_narg;
 		if (__predict_false(narg > __arraycount(args)))
-			panic("impossible syscall narg, code %d, narg %zd",
+			panic("impossible syscall narg, code %d, narg %zu",
 			    code, narg);
 		for (i = 0; i < narg; i++)
 			args64[i] = args[i] & 0xffffffff;
-		if ((error = trace_enter(code, args64, narg)) != 0)
+		if ((error = trace_enter(code, callp, args64)) != 0)
 			goto out;
 	}
 
@@ -102,7 +102,11 @@ out:
 		break;
 	}
 
-	if (__predict_false(p->p_trace_enabled))
-		trace_exit(code, rval, error);
+	if (__predict_false(p->p_trace_enabled || KDTRACE_ENTRY(callp->sy_return))) {
+		narg = callp->sy_narg;
+		for (i = 0; i < narg; i++)
+			args64[i] = args[i] & 0xffffffff;
+		trace_exit(code, callp, args64, rval, error);
+	}
 	userret(l);
 }

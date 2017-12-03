@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.104.2.2 2013/06/23 06:20:22 tls Exp $ */
+/* $NetBSD: wsconsio.h,v 1.104.2.3 2017/12/03 11:37:37 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -46,6 +46,7 @@
 
 #include <sys/types.h>
 #include <sys/ioccom.h>
+#include <sys/time.h>
 #include <dev/wscons/wsksymvar.h>
 
 
@@ -317,23 +318,29 @@ struct wsmouse_repeat {
 #define	WSDISPLAY_TYPE_STI	40	/* HP STI framebuffers */
 #define	WSDISPLAY_TYPE_HDLCD	41	/* Hitachi HD44780 based LCDs */
 #define	WSDISPLAY_TYPE_VESA	42	/* VESA BIOS framebuffer */
-#define	WSDISPLAY_TYPE_XILFB 	43 	/* Xilinx TFT cores */
-#define WSDISPLAY_TYPE_LIGHT	44	/* SGI Light (a.k.a. Entry/Starter) */
-#define WSDISPLAY_TYPE_GENFB	45	/* generic nondescript framebuffer */
-#define WSDISPLAY_TYPE_CRIME	46	/* SGI O2 */
-#define WSDISPLAY_TYPE_PXALCD	47	/* PXA2x0 LCD controller */
-#define WSDISPLAY_TYPE_AG10	48	/* Fujitsu AG-10e */
-#define WSDISPLAY_TYPE_DL	49	/* DisplayLink DL-1x0/DL-1x5 */
-#define WSDISPLAY_TYPE_XVR1000	50	/* Sun XVR-1000 */
-#define WSDISPLAY_TYPE_LUNA	51	/* OMRON SX-9100 LUNA */
-#define WSDISPLAY_TYPE_GRF	52	/* wsdisplay on top of grf(4) */
-#define WSDISPLAY_TYPE_VNC	53	/* Usermode vnc framebuffer */
-#define WSDISPLAY_TYPE_VALKYRIE	54	/* Apple onboard video 'valkyrie' */
-#define WSDISPLAY_TYPE_IMXIPU	55	/* i.MX ipu */
-#define WSDISPLAY_TYPE_VC4	56	/* Broadcom VideoCore 4 */
-#define WSDISPLAY_TYPE_OMAP3	57	/* OMAP 3530 */
-#define WSDISPLAY_TYPE_WINDERMERE 58	/* SoC for EPOC32 Series 5mx */
-#define WSDISPLAY_TYPE_CLPS711X	59	/* CL PS-711x  */
+#define	WSDISPLAY_TYPE_XILFB	43 	/* Xilinx TFT cores */
+#define	WSDISPLAY_TYPE_LIGHT	44	/* SGI Light (a.k.a. Entry/Starter) */
+#define	WSDISPLAY_TYPE_GENFB	45	/* generic nondescript framebuffer */
+#define	WSDISPLAY_TYPE_CRIME	46	/* SGI O2 */
+#define	WSDISPLAY_TYPE_PXALCD	47	/* PXA2x0 LCD controller */
+#define	WSDISPLAY_TYPE_AG10	48	/* Fujitsu AG-10e */
+#define	WSDISPLAY_TYPE_DL	49	/* DisplayLink DL-1x0/DL-1x5 */
+#define	WSDISPLAY_TYPE_XVR1000	50	/* Sun XVR-1000 */
+#define	WSDISPLAY_TYPE_LUNA	51	/* OMRON SX-9100 LUNA */
+#define	WSDISPLAY_TYPE_GRF	52	/* wsdisplay on top of grf(4) */
+#define	WSDISPLAY_TYPE_VNC	53	/* Usermode vnc framebuffer */
+#define	WSDISPLAY_TYPE_VALKYRIE	54	/* Apple onboard video 'valkyrie' */
+#define	WSDISPLAY_TYPE_IMXIPU	55	/* i.MX ipu */
+#define	WSDISPLAY_TYPE_VC4	56	/* Broadcom VideoCore 4 */
+#define	WSDISPLAY_TYPE_OMAP3	57	/* OMAP 3530 */
+#define	WSDISPLAY_TYPE_WINDERMERE 58	/* SoC for EPOC32 Series 5mx */
+#define	WSDISPLAY_TYPE_CLPS711X	59	/* CL PS-711x  */
+#define	WSDISPLAY_TYPE_ALLWINNER 60	/* Allwinner ARM SoC */
+#define	WSDISPLAY_TYPE_MGX	61	/* SSB 4096V-MGX */
+#define	WSDISPLAY_TYPE_MESON	62	/* Amlogic Meson ARM SoC */
+#define	WSDISPLAY_TYPE_TEGRA	63	/* NVIDIA Tegra ARM SoC */
+#define	WSDISPLAY_TYPE_PLATINUM	64	/* onboard fb in PowerMac 7200 */
+#define	WSDISPLAY_TYPE_PLFB	65	/* ARM PrimeCell PL11x */
 
 /* Basic display information.  Not applicable to all display types. */
 struct wsdisplay_fbinfo {
@@ -537,6 +544,7 @@ struct wsmux_device {
 #define	WSMUX_MOUSE	1
 #define	WSMUX_KBD	2
 #define	WSMUX_MUX	3
+#define	WSMUX_BELL	4
 	int idx;
 };
 #define	WSMUXIO_ADD_DEVICE	_IOW('W', 97, struct wsmux_device)
@@ -649,8 +657,29 @@ struct wsdisplayio_fbinfo {
 };
 
 /* fbi_flags */
-#define WSFB_VRAM_IS_RAM	1	/* hint for wsfb - don't shadow */
+#define WSFB_VRAM_IS_RAM	0x0001	/* hint for wsfb - don't shadow */
+#define WSFB_VRAM_IS_SPLIT	0x0002	/* workaround for wildcat... */
 
 #define WSDISPLAYIO_GET_FBINFO	_IOWR('W', 104, struct wsdisplayio_fbinfo)
+
+struct wsdisplayio_blit {
+	uint32_t serial;
+	uint32_t op;
+	uint32_t srcx;
+	uint32_t srcy;
+	uint32_t dstx;
+	uint32_t dsty;
+	uint32_t width;
+	uint32_t height;
+	uint32_t pen;
+};
+
+/* blit ops */
+#define WSFB_BLIT_FILL		1	/* fill rectangle */
+#define WSFB_BLIT_COPY		2	/* copy rectangle */
+#define WSFB_BLIT_TRANS		3	/* copy rectangle with color key */
+
+#define WSDISPLAYIO_DOBLIT   	_IOWR('W', 105, struct wsdisplayio_blit)
+#define WSDISPLAYIO_WAITBLIT 	_IOWR('W', 106, struct wsdisplayio_blit)
 
 #endif /* _DEV_WSCONS_WSCONSIO_H_ */

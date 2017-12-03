@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.27.14.1 2014/08/20 00:03:17 tls Exp $
+#	$NetBSD: Makefile,v 1.27.14.2 2017/12/03 11:36:34 jdolecek Exp $
 
 S!=	cd ${.CURDIR}/../../../.. ; pwd
 
 PROG=		ofwboot
 NOMAN=		# defined
 SRCS=		ofwstart.S Locore.c boot.c ofdev.c net.c netif_of.c
-SRCS+=		mbr.c rdb.c vers.c
+SRCS+=		mbr.c rdb.c
 CFLAGS+=	${${ACTIVE_CC} == "gcc":? -msoft-float :}
 CFLAGS+=	-Wno-main -ffreestanding
 CFLAGS+=	-Wall -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
@@ -42,8 +42,6 @@ RELOC=		20000
 
 ENTRY=		_start
 
-CLEANFILES+=	vers.c
-
 CPPFLAGS+=	-I. -I${S} -I${S}/../common/include
 CPPFLAGS+=	-DRELOC=0x${RELOC}
 CPPFLAGS+=	-DFIRMWORKSBUGS
@@ -65,15 +63,12 @@ SAMISCMAKEFLAGS= SA_USE_CREAD=yes SA_USE_LOADFILE=yes
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
 
-.PHONY: vers.c
-vers.c: version
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
-	    ${.CURDIR}/version "ofppc" ${NEWVERSWHAT}
-
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	${_MKTARGET_LINK}
 	${LD} -s -N -T ${.CURDIR}/ldscript -Ttext ${RELOC} -Bstatic \
 	    -e ${ENTRY} -o ${PROG}.X ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	mv -f ${PROG}.X ${PROG}
+
+.include "${S}/conf/newvers_stand.mk"
 
 .include <bsd.prog.mk>

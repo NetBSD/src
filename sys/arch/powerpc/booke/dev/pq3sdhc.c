@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3sdhc.c,v 1.5 2012/07/26 18:38:10 matt Exp $	*/
+/*	$NetBSD: pq3sdhc.c,v 1.5.2.1 2017/12/03 11:36:36 jdolecek Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -31,7 +31,7 @@
 #define	ESDHC_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pq3sdhc.c,v 1.5 2012/07/26 18:38:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3sdhc.c,v 1.5.2.1 2017/12/03 11:36:36 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,7 @@ pq3sdhc_attach(device_t parent, device_t self, void *aux)
 	psc->sc_children |= cna->cna_childmask;
 	sc->sc.sc_dmat = cna->cna_dmat;
 	sc->sc.sc_dev = self;
-	//sc->sc.sc_flags |= SDHC_FLAG_USE_DMA;
+	sc->sc.sc_flags |= SDHC_FLAG_USE_DMA;
 	sc->sc.sc_flags |=
 	    SDHC_FLAG_HAVE_DVS | SDHC_FLAG_32BIT_ACCESS | SDHC_FLAG_ENHANCED;
 	sc->sc.sc_host = sc->sc_hosts;

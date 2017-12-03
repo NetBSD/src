@@ -1,7 +1,8 @@
-#	$NetBSD: files.nilfs,v 1.2 2010/03/02 16:43:48 pooka Exp $
+#	$NetBSD: files.nilfs,v 1.2.20.1 2017/12/03 11:38:42 jdolecek Exp $
 
 deffs	NILFS
 
+define	nilfs: vfs
 file	fs/nilfs/nilfs_vfsops.c		nilfs
 file	fs/nilfs/nilfs_vnops.c		nilfs
 file	fs/nilfs/nilfs_subr.c		nilfs

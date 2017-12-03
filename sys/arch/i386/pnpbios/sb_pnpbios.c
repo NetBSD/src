@@ -1,4 +1,4 @@
-/* $NetBSD: sb_pnpbios.c,v 1.16 2011/07/01 18:14:15 dyoung Exp $ */
+/* $NetBSD: sb_pnpbios.c,v 1.16.12.1 2017/12/03 11:36:18 jdolecek Exp $ */
 /*
  * Copyright (c) 1999
  * 	Matthias Drochner.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb_pnpbios.c,v 1.16 2011/07/01 18:14:15 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb_pnpbios.c,v 1.16.12.1 2017/12/03 11:36:18 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,8 +88,7 @@ sb_pnpbios_attach(device_t parent, device_t self, void *aux)
 	/* XXX These are only for setting chip configuration registers. */
 	pnpbios_getiobase(aa->pbt, aa->resc, 0, 0, &sc->sc_iobase);
 
-	if (pnpbios_getirqnum(aa->pbt, aa->resc, 0, &sc->sc_irq,
-	    NULL)) {
+	if (pnpbios_getirqnum(aa->pbt, aa->resc, 0, &sc->sc_irq, NULL)) {
 		aprint_error(": can't get IRQ\n");
 		return;
 	}

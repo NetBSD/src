@@ -1,6 +1,6 @@
-/*	$NetBSD: netbsd32_sigcode.S,v 1.7 2008/04/28 20:23:12 martin Exp $	*/
+/*	$NetBSD: netbsd32_sigcode.S,v 1.7.44.1 2017/12/03 11:35:47 jdolecek Exp $	*/
 
-/*-
+/*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -36,23 +36,22 @@
 /*
  * Signal trampoline for 1.6 compatibility; copied to top of user stack.
  */
-
-NENTRY(netbsd32_sigcode)
-
 	.code32
+NENTRY(netbsd32_sigcode)
 	/*
 	 * Handler has returned here as if we called it.  The sigcontext
 	 * is on the stack after the 3 args "we" pushed.
 	 */
-	leal	12(%esp),%eax		# get pointer to sigcontext
-	movl	%eax,4(%esp)		# put it in the argument slot
-					# fake return address already there
+	leal	12(%esp),%eax		/* get pointer to sigcontext */
+	movl	%eax,4(%esp)		/* put it in the argument slot */
+					/* fake return address already there */
 	movl	$SYS_compat_16___sigreturn14,%eax
-	int	$0x80	 		# enter kernel with args on stack
+	int	$0x80			/* enter kernel with args on stack */
 	movl	$SYS_exit,%eax
-	int	$0x80			# exit if sigreturn fails
+	int	$0x80			/* exit if sigreturn fails */
 	.globl	_C_LABEL(netbsd32_esigcode)
 _C_LABEL(netbsd32_esigcode):
+END(netbsd32_sigcode)
 
 /*
  * There is no NetBSD-1.6 compatibility for native code.

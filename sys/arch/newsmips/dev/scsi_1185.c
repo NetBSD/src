@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_1185.c,v 1.20.14.1 2014/08/20 00:03:16 tls Exp $	*/
+/*	$NetBSD: scsi_1185.c,v 1.20.14.2 2017/12/03 11:36:33 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsi_1185.c,v 1.20.14.1 2014/08/20 00:03:16 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsi_1185.c,v 1.20.14.2 2017/12/03 11:36:33 jdolecek Exp $");
 
 #define	__INTR_PRIVATE
 #include <sys/param.h>
@@ -67,11 +67,13 @@ __KERNEL_RCSID(0, "$NetBSD: scsi_1185.c,v 1.20.14.1 2014/08/20 00:03:16 tls Exp 
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 
+#include <mips/locore.h>
+#include <mips/cache.h>
+
 #include <machine/cpu.h>
 #include <machine/intr.h>
 #include <machine/machConst.h>
 
-#include <mips/cache.h>
 
 #include <newsmips/dev/screg_1185.h>
 #include <newsmips/dev/scsireg.h>
@@ -1720,12 +1722,11 @@ void
 adjust_transfer(struct sc_softc *sc, struct sc_chan_stat *cs)
 {
 	struct sc_scb *scb = cs->scb;
-	u_int remain_cnt;
+	u_int remain_cnt = 0;
 	u_int offset, sent_byte;
 
 	if (sc->pad_start) {
 		sc->pad_start = 0;
-		remain_cnt = 0;
 	} else {
 # if defined(__mips__) && defined(CPU_SINGLE)
 		remain_cnt = GET_CNT();

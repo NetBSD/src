@@ -1,4 +1,4 @@
-/*      $NetBSD: amdtemp.c,v 1.16.2.1 2014/08/20 00:03:29 tls Exp $ */
+/*      $NetBSD: amdtemp.c,v 1.16.2.2 2017/12/03 11:36:50 jdolecek Exp $ */
 /*      $OpenBSD: kate.c,v 1.2 2008/03/27 04:52:03 cnst Exp $   */
 
 /*
@@ -48,7 +48,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdtemp.c,v 1.16.2.1 2014/08/20 00:03:29 tls Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: amdtemp.c,v 1.16.2.2 2017/12/03 11:36:50 jdolecek Exp $ ");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -274,9 +274,6 @@ amdtemp_attach(device_t parent, device_t self, void *aux)
 	sc->sc_sme = sysmon_envsys_create();
 	sc->sc_sensor_len = sizeof(envsys_data_t) * sc->sc_numsensors;
 	sc->sc_sensor = kmem_zalloc(sc->sc_sensor_len, KM_SLEEP);
-
-	if (sc->sc_sensor == NULL)
-		goto bad;
 
 	switch (sc->sc_family) {
 	case 0xf:
@@ -519,7 +516,7 @@ amdtemp_family10_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	edata->value_cur = (value * 125000) + 273150000; /* From C to uK. */
 }
 
-MODULE(MODULE_CLASS_DRIVER, amdtemp, NULL);
+MODULE(MODULE_CLASS_DRIVER, amdtemp, "sysmon_envsys");
 
 #ifdef _MODULE
 #include "ioconf.c"

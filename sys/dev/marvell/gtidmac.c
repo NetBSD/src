@@ -1,6 +1,6 @@
-/*	$NetBSD: gtidmac.c,v 1.9.2.1 2014/08/20 00:03:39 tls Exp $	*/
+/*	$NetBSD: gtidmac.c,v 1.9.2.2 2017/12/03 11:37:05 jdolecek Exp $	*/
 /*
- * Copyright (c) 2008, 2012 KIYOHARA Takashi
+ * Copyright (c) 2008, 2012, 2016 KIYOHARA Takashi
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtidmac.c,v 1.9.2.1 2014/08/20 00:03:39 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtidmac.c,v 1.9.2.2 2017/12/03 11:37:05 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -276,24 +276,30 @@ static const struct dmover_algdesc mvxore_algdescs[] = {
 	},
 };
 
+static int orion_88f5182_xore_irqs[] = { 30, 31 };
+static int kirkwood_xore_irqs[] = { 5, 6, 7, 8 };
+static int dove_xore_irqs[] = { 39, 40, 42, 43 };
+static int armadaxp_xore_irqs0[] = { 51, 52 };
+static int armadaxp_xore_irqs1[] = { 94, 95 };
+
 static struct {
 	int model;
 	int idmac_nchan;
 	int idmac_irq;
 	int xore_nchan;
-	int xore_irq;
+	int *xore_irqs;
 } channels[] = {
 	/*
 	 * Marvell System Controllers:
 	 * need irqs in attach_args.
 	 */
-	{ MARVELL_DISCOVERY,		8, -1, 0, -1 },
-	{ MARVELL_DISCOVERY_II,		8, -1, 0, -1 },
-	{ MARVELL_DISCOVERY_III,	8, -1, 0, -1 },
+	{ MARVELL_DISCOVERY,		8, -1, 0, NULL },
+	{ MARVELL_DISCOVERY_II,		8, -1, 0, NULL },
+	{ MARVELL_DISCOVERY_III,	8, -1, 0, NULL },
 #if 0
-	{ MARVELL_DISCOVERY_LT,		4, -1, 2, -1 },
-	{ MARVELL_DISCOVERY_V,		4, -1, 2, -1 },
-	{ MARVELL_DISCOVERY_VI,		4, -1, 2, -1 },		????
+	{ MARVELL_DISCOVERY_LT,		4, -1, 2, NULL },
+	{ MARVELL_DISCOVERY_V,		4, -1, 2, NULL },
+	{ MARVELL_DISCOVERY_VI,		4, -1, 2, NULL },		????
 #endif
 
 	/*
@@ -301,28 +307,29 @@ static struct {
 	 * No need irqs in attach_args.  We always connecting to interrupt-pin
 	 * statically.
 	 */
-	{ MARVELL_ORION_1_88F1181,	4, 24, 0, -1 },
-	{ MARVELL_ORION_2_88F1281,	4, 24, 0, -1 },
-	{ MARVELL_ORION_1_88F5082,	4, 24, 0, -1 },
-	{ MARVELL_ORION_1_88F5180N,	4, 24, 0, -1 },
-	{ MARVELL_ORION_1_88F5181,	4, 24, 0, -1 },
-	{ MARVELL_ORION_1_88F5182,	4, 24, 2, 30 },
-	{ MARVELL_ORION_2_88F5281,	4, 24, 0, -1 },
-	{ MARVELL_ORION_1_88W8660,	4, 24, 0, -1 },
-	{ MARVELL_KIRKWOOD_88F6180,	0, -1, 4, 5 },
-	{ MARVELL_KIRKWOOD_88F6192,	0, -1, 4, 5 },
-	{ MARVELL_KIRKWOOD_88F6281,	0, -1, 4, 5 },
-	{ MARVELL_KIRKWOOD_88F6282,	0, -1, 4, 5 },
-	{ MARVELL_ARMADAXP_MV78130,	4, 33, 2, 51 },
-	{ MARVELL_ARMADAXP_MV78130,	0, -1, 2, 94 },
-	{ MARVELL_ARMADAXP_MV78160,	4, 33, 2, 51 },
-	{ MARVELL_ARMADAXP_MV78160,	0, -1, 2, 94 },
-	{ MARVELL_ARMADAXP_MV78230,	4, 33, 2, 51 },
-	{ MARVELL_ARMADAXP_MV78230,	0, -1, 2, 94 },
-	{ MARVELL_ARMADAXP_MV78260,	4, 33, 2, 51 },
-	{ MARVELL_ARMADAXP_MV78260,	0, -1, 2, 94 },
-	{ MARVELL_ARMADAXP_MV78460,	4, 33, 2, 51 },
-	{ MARVELL_ARMADAXP_MV78460,	0, -1, 2, 94 },
+	{ MARVELL_ORION_1_88F1181,	4, 24, 0, NULL },
+	{ MARVELL_ORION_2_88F1281,	4, 24, 0, NULL },
+	{ MARVELL_ORION_1_88F5082,	4, 24, 0, NULL },
+	{ MARVELL_ORION_1_88F5180N,	4, 24, 0, NULL },
+	{ MARVELL_ORION_1_88F5181,	4, 24, 0, NULL },
+	{ MARVELL_ORION_1_88F5182,	4, 24, 2, orion_88f5182_xore_irqs },
+	{ MARVELL_ORION_2_88F5281,	4, 24, 0, NULL },
+	{ MARVELL_ORION_1_88W8660,	4, 24, 0, NULL },
+	{ MARVELL_KIRKWOOD_88F6180,	0, -1, 4, kirkwood_xore_irqs },
+	{ MARVELL_KIRKWOOD_88F6192,	0, -1, 4, kirkwood_xore_irqs },
+	{ MARVELL_KIRKWOOD_88F6281,	0, -1, 4, kirkwood_xore_irqs },
+	{ MARVELL_KIRKWOOD_88F6282,	0, -1, 4, kirkwood_xore_irqs },
+	{ MARVELL_DOVE_88AP510,		0, -1, 4, dove_xore_irqs },
+	{ MARVELL_ARMADAXP_MV78130,	4, 33, 2, armadaxp_xore_irqs0 },
+	{ MARVELL_ARMADAXP_MV78130,	0, -1, 2, armadaxp_xore_irqs1 },
+	{ MARVELL_ARMADAXP_MV78160,	4, 33, 2, armadaxp_xore_irqs0 },
+	{ MARVELL_ARMADAXP_MV78160,	0, -1, 2, armadaxp_xore_irqs1 },
+	{ MARVELL_ARMADAXP_MV78230,	4, 33, 2, armadaxp_xore_irqs0 },
+	{ MARVELL_ARMADAXP_MV78230,	0, -1, 2, armadaxp_xore_irqs1 },
+	{ MARVELL_ARMADAXP_MV78260,	4, 33, 2, armadaxp_xore_irqs0 },
+	{ MARVELL_ARMADAXP_MV78260,	0, -1, 2, armadaxp_xore_irqs1 },
+	{ MARVELL_ARMADAXP_MV78460,	4, 33, 2, armadaxp_xore_irqs0 },
+	{ MARVELL_ARMADAXP_MV78460,	0, -1, 2, armadaxp_xore_irqs1 },
 };
 
 struct gtidmac_winacctbl *gtidmac_winacctbl;
@@ -364,7 +371,7 @@ gtidmac_attach(device_t parent, device_t self, void *aux)
 	struct gtidmac_softc *sc = device_private(self);
 	struct marvell_attach_args *mva = aux;
 	prop_dictionary_t dict = device_properties(self);
-	uint32_t idmac_irq, xore_irq, dmb_speed;
+	uint32_t idmac_irq, xore_irq, *xore_irqs, dmb_speed;
 	int unit, idmac_nchan, xore_nchan, nsegs, i, j, n;
 
 	unit = 0;
@@ -388,11 +395,12 @@ gtidmac_attach(device_t parent, device_t self, void *aux)
 			}
 	}
 	xore_nchan = channels[i].xore_nchan;
-	xore_irq = channels[i].xore_irq;
+	xore_irqs = channels[i].xore_irqs;
+	xore_irq = MVA_IRQ_DEFAULT;
 	if (xore_nchan != 0) {
-		if (xore_irq == -1)
+		if (xore_irqs == NULL)
 			xore_irq = mva->mva_irq;
-		if (xore_irq == -1)
+		if (xore_irqs == NULL && xore_irq == MVA_IRQ_DEFAULT)
 			/* Discovery LT/V/VI */
 			if (!prop_dictionary_get_uint32(dict,
 			    "xore-irq", &xore_irq)) {
@@ -408,10 +416,18 @@ gtidmac_attach(device_t parent, device_t self, void *aux)
 		aprint_normal_dev(self,
 		    "IDMA Controller %d channels, intr %d...%d\n",
 		    idmac_nchan, idmac_irq, idmac_irq + GTIDMAC_NINTRRUPT - 1);
-	if (xore_nchan > 0)
-		aprint_normal_dev(self,
-		    "XOR Engine %d channels, intr %d...%d\n",
-		    xore_nchan, xore_irq, xore_irq + xore_nchan - 1);
+	if (xore_nchan > 0) {
+		aprint_normal_dev(self, "XOR Engine %d channels", xore_nchan);
+		if (xore_irqs == NULL)
+			aprint_normal(", intr %d...%d\n",
+			    xore_irq, xore_irq + xore_nchan - 1);
+		else {
+			aprint_normal(", intr %d", xore_irqs[0]);
+			for (i = 1; i < xore_nchan; i++)
+				aprint_normal(", %d", xore_irqs[i]);
+			aprint_normal("\n");
+		}
+	}
 
 	sc->sc_dev = self;
 	sc->sc_iot = mva->mva_iot;
@@ -430,10 +446,7 @@ gtidmac_attach(device_t parent, device_t self, void *aux)
 	n = idmac_nchan * GTIDMAC_NDESC + xore_nchan * MVXORE_NDESC;
 	sc->sc_dd_buffer =
 	    kmem_alloc(sizeof(struct gtidmac_dma_desc) * n, KM_SLEEP);
-	if (sc->sc_dd_buffer == NULL) {
-		aprint_error_dev(self, "can't allocate memory\n");
-		goto fail1;
-	}
+
 	/* pattern buffer */
 	if (bus_dmamem_alloc(sc->sc_dmat, PAGE_SIZE, PAGE_SIZE, 0,
 	    &sc->sc_pattern_segment, 1, &nsegs, BUS_DMA_NOWAIT)) {
@@ -496,7 +509,9 @@ gtidmac_attach(device_t parent, device_t self, void *aux)
 
 		/* Setup interrupt */
 		for (i = 0; i < sc->sc_mvxore_nchan; i++)
-			marvell_intr_establish(xore_irq + i, IPL_BIO,
+			marvell_intr_establish(
+			    xore_irqs != NULL ? xore_irqs[i] : xore_irq + i,
+			    IPL_BIO,
 			    (i & 0x2) ? mvxore_port1_intr : mvxore_port0_intr,
 			    sc);
 
@@ -507,8 +522,7 @@ gtidmac_attach(device_t parent, device_t self, void *aux)
 		sc->sc_dmb_xore.dmb_speed = dmb_speed;
 		sc->sc_dmb_xore.dmb_cookie = sc;
 		sc->sc_dmb_xore.dmb_algdescs = mvxore_algdescs;
-		sc->sc_dmb_xore.dmb_nalgdescs =
-		    __arraycount(mvxore_algdescs);
+		sc->sc_dmb_xore.dmb_nalgdescs = __arraycount(mvxore_algdescs);
 		sc->sc_dmb_xore.dmb_process = gtidmac_process;
 		dmover_backend_register(&sc->sc_dmb_xore);
 	}
@@ -534,7 +548,6 @@ fail3:
 	bus_dmamem_free(sc->sc_dmat, &sc->sc_pattern_segment, 1);
 fail2:
 	kmem_free(sc->sc_dd_buffer, sizeof(struct gtidmac_dma_desc) * n);
-fail1:
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, mva->mva_size);
 	return;
 }
@@ -635,7 +648,6 @@ mvxore_intr(struct gtidmac_softc *sc, int port)
 	cause =
 	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, MVXORE_XEICR(sc, port));
 	DPRINTF(("XORE port %d intr: cause=0x%x\n", port, cause));
-printf("XORE port %d intr: cause=0x%x\n", port, cause);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh,
 	    MVXORE_XEICR(sc, port), ~cause);
 
@@ -703,7 +715,6 @@ printf("XORE port %d intr: cause=0x%x\n", port, cause);
 
 		cause >>= MVXORE_I_BITS;
 	}
-printf("XORE port %d intr: %shandled\n", port, handled ? "" : "not ");
 	DPRINTF(("XORE port %d intr: %shandled\n",
 	    port, handled ? "" : "not "));
 
@@ -770,7 +781,8 @@ gtidmac_dmover_run(struct dmover_backend *dmb)
 			    BUS_DMA_NOWAIT | BUS_DMA_STREAMING | BUS_DMA_WRITE);
 			if (error == 0) {
 				bus_dmamap_sync(sc->sc_dmat, *dmamap_in, 0,
-				    sizeof(uint32_t), BUS_DMASYNC_PREWRITE);
+				    sizeof(sc->sc_pbuf[pno]),
+				    BUS_DMASYNC_PREWRITE);
 
 				/*
 				 * We will call gtidmac_dmmap_unload() when
@@ -925,13 +937,6 @@ gtidmac_dmmap_unload(struct gtidmac_softc *sc, bus_dmamap_t dmamap, int read)
 	bus_dmamap_unload(sc->sc_dmat, dmamap);
 }
 
-
-void *
-gtidmac_tag_get(void)
-{
-
-	return gtidmac_softc;
-}
 
 /*
  * IDMAC functions
@@ -1251,10 +1256,9 @@ mvxore_setup(void *tag, int chan, int ninputs, bus_dmamap_t *dmamap_in,
 	int iidx[MVXORE_NSRC] = { 0, 0, 0, 0, 0, 0, 0, 0 }, oidx = 0;
 
 #ifdef DIAGNOSTIC
-	uint32_t xexact;
-
-	xexact =
+	uint32_t xexact =
 	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, MVXORE_XEXACTR(sc, chan));
+
 	if ((xexact & MVXORE_XEXACTR_XESTATUS_MASK) ==
 	    MVXORE_XEXACTR_XESTATUS_ACT)
 		panic("mvxore_setup: chan%d already active."
@@ -1970,7 +1974,7 @@ gtidmac_dump_xorereg(struct gtidmac_softc *sc, int chan)
 	    "\177\020"
 	    "b\017RegAccProtect\0b\016DesSwp\0b\015DwrReqSwp\0b\014DrdResSwp\0",
 	    val);
-	printf(" Configuration    : 0x%s\n", buf);
+	printf(" Configuration    : %s\n", buf);
 	opmode = val & MVXORE_XEXCR_OM_MASK;
 	printf("    OperationMode : %s operation\n",
 	  opmode == MVXORE_XEXCR_OM_XOR ? "XOR calculate" :
@@ -2068,7 +2072,7 @@ gtidmac_dump_xoredesc(struct gtidmac_softc *sc, struct gtidmac_dma_desc *dd,
 
 		snprintb(buf, sizeof(buf), "\177\020b\037Own\0b\036Success\0",
 		    desc->stat);
-		printf("  Status                  : 0x%s\n", buf);
+		printf("  Status                  : %s\n", buf);
 		if (desc->cmd & MVXORE_DESC_CMD_CRCLAST && post)
 			printf("  CRC-32 Result           : 0x%08x\n",
 			    desc->result);
@@ -2077,7 +2081,7 @@ gtidmac_dump_xoredesc(struct gtidmac_softc *sc, struct gtidmac_dma_desc *dd,
 		    "b\007Src7Cmd\0b\006Src6Cmd\0b\005Src5Cmd\0b\004Src4Cmd\0"
 		    "b\003Src3Cmd\0b\002Src2Cmd\0b\001Src1Cmd\0b\000Src0Cmd\0",
 		    desc->cmd);
-		printf("  Command                 : 0x%s\n", buf);
+		printf("  Command                 : %s\n", buf);
 		printf("  Next Descriptor Address : 0x%08x\n", desc->nextda);
 		printf("  Byte Count              :   0x%06x\n", desc->bcnt);
 		printf("  Destination Address     : 0x%08x\n", desc->dstaddr);

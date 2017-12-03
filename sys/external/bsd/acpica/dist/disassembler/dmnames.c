@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -41,15 +41,12 @@
  * POSSIBILITY OF SUCH DAMAGES.
  */
 
-
 #include "acpi.h"
 #include "accommon.h"
 #include "amlcode.h"
 #include "acnamesp.h"
 #include "acdisasm.h"
 
-
-#ifdef ACPI_DISASSEMBLER
 
 #define _COMPONENT          ACPI_CA_DEBUGGER
         ACPI_MODULE_NAME    ("dmnames")
@@ -158,15 +155,15 @@ AcpiPsDisplayObjectPathname (
         /* Node not defined in this scope, look it up */
 
         Status = AcpiNsLookup (WalkState->ScopeInfo, Op->Common.Value.String,
-                    ACPI_TYPE_ANY, ACPI_IMODE_EXECUTE, ACPI_NS_SEARCH_PARENT,
-                    WalkState, &(Node));
+            ACPI_TYPE_ANY, ACPI_IMODE_EXECUTE, ACPI_NS_SEARCH_PARENT,
+            WalkState, &(Node));
 
         if (ACPI_FAILURE (Status))
         {
             /*
-             * We can't get the pathname since the object
-             * is not in the namespace. This can happen during single
-             * stepping where a dynamic named object is *about* to be created.
+             * We can't get the pathname since the object is not in the
+             * namespace. This can happen during single stepping
+             * where a dynamic named object is *about* to be created.
              */
             AcpiOsPrintf ("  [Path not found]");
             goto Exit;
@@ -180,7 +177,7 @@ AcpiPsDisplayObjectPathname (
     /* Convert NamedDesc/handle to a full pathname */
 
     Buffer.Length = ACPI_ALLOCATE_LOCAL_BUFFER;
-    Status = AcpiNsHandleToPathname (Node, &Buffer);
+    Status = AcpiNsHandleToPathname (Node, &Buffer, FALSE);
     if (ACPI_FAILURE (Status))
     {
         AcpiOsPrintf ("****Could not get pathname****)");
@@ -247,7 +244,7 @@ AcpiDmNamestring (
         Name++;
         break;
 
-    case AML_MULTI_NAME_PREFIX_OP:
+    case AML_MULTI_NAME_PREFIX:
 
         SegCount = (UINT32) ACPI_GET8 (Name + 1);
         Name += 2;
@@ -272,6 +269,7 @@ AcpiDmNamestring (
 
             AcpiOsPrintf (".");
         }
+
         Name += ACPI_NAME_SIZE;
     }
 }
@@ -335,7 +333,6 @@ AcpiDmDisplayPath (
     }
 
     Prev = NULL;            /* Start with Root Node */
-
     while (Prev != Op)
     {
         /* Search upwards in the tree to find scope with "prev" as its parent */
@@ -393,6 +390,7 @@ AcpiDmDisplayPath (
                 DoDot = TRUE;
             }
         }
+
         Prev = Search;
     }
 }
@@ -415,6 +413,8 @@ AcpiDmValidateName (
     char                    *Name,
     ACPI_PARSE_OBJECT       *Op)
 {
+    ACPI_PARSE_OBJECT       *TargetOp;
+
 
     if ((!Name) ||
         (!Op->Common.Parent))
@@ -427,9 +427,6 @@ AcpiDmValidateName (
         AcpiOsPrintf (
             " /**** Name not found or not accessible from this scope ****/ ");
     }
-
-    ACPI_PARSE_OBJECT       *TargetOp;
-
 
     if ((!Name) ||
         (!Op->Common.Parent))
@@ -450,6 +447,4 @@ AcpiDmValidateName (
             " /**** Name not found or not accessible from this scope ****/ ");
     }
 }
-#endif
-
 #endif

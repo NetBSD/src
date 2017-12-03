@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,8 +40,6 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  */
-
-#define __EXUTILS_C__
 
 /*
  * DEFINE_AML_GLOBALS is tested in amlcode.h
@@ -105,41 +103,10 @@ AcpiExEnterInterpreter (
     {
         ACPI_ERROR ((AE_INFO, "Could not acquire AML Interpreter mutex"));
     }
-
-    return_VOID;
-}
-
-
-/*******************************************************************************
- *
- * FUNCTION:    AcpiExReacquireInterpreter
- *
- * PARAMETERS:  None
- *
- * RETURN:      None
- *
- * DESCRIPTION: Reacquire the interpreter execution region from within the
- *              interpreter code. Failure to enter the interpreter region is a
- *              fatal system error. Used in conjunction with
- *              RelinquishInterpreter
- *
- ******************************************************************************/
-
-void
-AcpiExReacquireInterpreter (
-    void)
-{
-    ACPI_FUNCTION_TRACE (ExReacquireInterpreter);
-
-
-    /*
-     * If the global serialized flag is set, do not release the interpreter,
-     * since it was not actually released by AcpiExRelinquishInterpreter.
-     * This forces the interpreter to be single threaded.
-     */
-    if (!AcpiGbl_AllMethodsSerialized)
+    Status = AcpiUtAcquireMutex (ACPI_MTX_NAMESPACE);
+    if (ACPI_FAILURE (Status))
     {
-        AcpiExEnterInterpreter ();
+        ACPI_ERROR ((AE_INFO, "Could not acquire AML Namespace mutex"));
     }
 
     return_VOID;
@@ -156,7 +123,16 @@ AcpiExReacquireInterpreter (
  *
  * DESCRIPTION: Exit the interpreter execution region. This is the top level
  *              routine used to exit the interpreter when all processing has
- *              been completed.
+ *              been completed, or when the method blocks.
+ *
+ * Cases where the interpreter is unlocked internally:
+ *      1) Method will be blocked on a Sleep() AML opcode
+ *      2) Method will be blocked on an Acquire() AML opcode
+ *      3) Method will be blocked on a Wait() AML opcode
+ *      4) Method will be blocked to acquire the global lock
+ *      5) Method will be blocked waiting to execute a serialized control
+ *          method that is currently executing
+ *      6) About to invoke a user-installed opregion handler
  *
  ******************************************************************************/
 
@@ -170,53 +146,15 @@ AcpiExExitInterpreter (
     ACPI_FUNCTION_TRACE (ExExitInterpreter);
 
 
+    Status = AcpiUtReleaseMutex (ACPI_MTX_NAMESPACE);
+    if (ACPI_FAILURE (Status))
+    {
+        ACPI_ERROR ((AE_INFO, "Could not release AML Namespace mutex"));
+    }
     Status = AcpiUtReleaseMutex (ACPI_MTX_INTERPRETER);
     if (ACPI_FAILURE (Status))
     {
         ACPI_ERROR ((AE_INFO, "Could not release AML Interpreter mutex"));
-    }
-
-    return_VOID;
-}
-
-
-/*******************************************************************************
- *
- * FUNCTION:    AcpiExRelinquishInterpreter
- *
- * PARAMETERS:  None
- *
- * RETURN:      None
- *
- * DESCRIPTION: Exit the interpreter execution region, from within the
- *              interpreter - before attempting an operation that will possibly
- *              block the running thread.
- *
- * Cases where the interpreter is unlocked internally
- *      1) Method to be blocked on a Sleep() AML opcode
- *      2) Method to be blocked on an Acquire() AML opcode
- *      3) Method to be blocked on a Wait() AML opcode
- *      4) Method to be blocked to acquire the global lock
- *      5) Method to be blocked waiting to execute a serialized control method
- *          that is currently executing
- *      6) About to invoke a user-installed opregion handler
- *
- ******************************************************************************/
-
-void
-AcpiExRelinquishInterpreter (
-    void)
-{
-    ACPI_FUNCTION_TRACE (ExRelinquishInterpreter);
-
-
-    /*
-     * If the global serialized flag is set, do not release the interpreter.
-     * This forces the interpreter to be single threaded.
-     */
-    if (!AcpiGbl_AllMethodsSerialized)
-    {
-        AcpiExExitInterpreter ();
     }
 
     return_VOID;
@@ -259,8 +197,8 @@ AcpiExTruncateFor32bitTable (
         (ObjDesc->Integer.Value > (UINT64) ACPI_UINT32_MAX))
     {
         /*
-         * We are executing in a 32-bit ACPI table.
-         * Truncate the value to 32 bits by zeroing out the upper 32-bit field
+         * We are executing in a 32-bit ACPI table. Truncate
+         * the value to 32 bits by zeroing out the upper 32-bit field
          */
         ObjDesc->Integer.Value &= (UINT64) ACPI_UINT32_MAX;
         return (TRUE);
@@ -304,7 +242,7 @@ AcpiExAcquireGlobalLock (
     /* Attempt to get the global lock, wait forever */
 
     Status = AcpiExAcquireMutexObject (ACPI_WAIT_FOREVER,
-                AcpiGbl_GlobalLockMutex, AcpiOsGetThreadId ());
+        AcpiGbl_GlobalLockMutex, AcpiOsGetThreadId ());
 
     if (ACPI_FAILURE (Status))
     {
@@ -413,8 +351,8 @@ AcpiExDigitsNeeded (
  *
  * FUNCTION:    AcpiExEisaIdToString
  *
- * PARAMETERS:  CompressedId    - EISAID to be converted
- *              OutString       - Where to put the converted string (8 bytes)
+ * PARAMETERS:  OutString       - Where to put the converted string (8 bytes)
+ *              CompressedId    - EISAID to be converted
  *
  * RETURN:      None
  *
@@ -441,7 +379,8 @@ AcpiExEisaIdToString (
     if (CompressedId > ACPI_UINT32_MAX)
     {
         ACPI_WARNING ((AE_INFO,
-            "Expected EISAID is larger than 32 bits: 0x%8.8X%8.8X, truncating",
+            "Expected EISAID is larger than 32 bits: "
+            "0x%8.8X%8.8X, truncating",
             ACPI_FORMAT_UINT64 (CompressedId)));
     }
 
@@ -471,7 +410,7 @@ AcpiExEisaIdToString (
  *                                possible 64-bit integer.
  *              Value           - Value to be converted
  *
- * RETURN:      None, string
+ * RETURN:      Converted string in OutString
  *
  * DESCRIPTION: Convert a 64-bit integer to decimal string representation.
  *              Assumes string buffer is large enough to hold the string. The
@@ -505,11 +444,48 @@ AcpiExIntegerToString (
 
 /*******************************************************************************
  *
+ * FUNCTION:    AcpiExPciClsToString
+ *
+ * PARAMETERS:  OutString       - Where to put the converted string (7 bytes)
+ *              ClassCode       - PCI class code to be converted (3 bytes)
+ *
+ * RETURN:      Converted string in OutString
+ *
+ * DESCRIPTION: Convert 3-bytes PCI class code to string representation.
+ *              Return buffer must be large enough to hold the string. The
+ *              string returned is always exactly of length
+ *              ACPI_PCICLS_STRING_SIZE (includes null terminator).
+ *
+ ******************************************************************************/
+
+void
+AcpiExPciClsToString (
+    char                    *OutString,
+    UINT8                   ClassCode[3])
+{
+
+    ACPI_FUNCTION_ENTRY ();
+
+
+    /* All 3 bytes are hexadecimal */
+
+    OutString[0] = AcpiUtHexToAsciiChar ((UINT64) ClassCode[0], 4);
+    OutString[1] = AcpiUtHexToAsciiChar ((UINT64) ClassCode[0], 0);
+    OutString[2] = AcpiUtHexToAsciiChar ((UINT64) ClassCode[1], 4);
+    OutString[3] = AcpiUtHexToAsciiChar ((UINT64) ClassCode[1], 0);
+    OutString[4] = AcpiUtHexToAsciiChar ((UINT64) ClassCode[2], 4);
+    OutString[5] = AcpiUtHexToAsciiChar ((UINT64) ClassCode[2], 0);
+    OutString[6] = 0;
+}
+
+
+/*******************************************************************************
+ *
  * FUNCTION:    AcpiIsValidSpaceId
  *
  * PARAMETERS:  SpaceId             - ID to be validated
  *
- * RETURN:      TRUE if valid/supported ID.
+ * RETURN:      TRUE if SpaceId is a valid/supported ID.
  *
  * DESCRIPTION: Validate an operation region SpaceID.
  *
@@ -530,6 +506,5 @@ AcpiIsValidSpaceId (
 
     return (TRUE);
 }
-
 
 #endif

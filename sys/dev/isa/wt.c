@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.82.22.2 2014/08/20 00:03:39 tls Exp $	*/
+/*	$NetBSD: wt.c,v 1.82.22.3 2017/12/03 11:37:05 jdolecek Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.82.22.2 2014/08/20 00:03:39 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.82.22.3 2017/12/03 11:37:05 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -286,7 +286,7 @@ wtattach(device_t parent, device_t self, void *aux)
 
 	/* Map i/o space */
 	if (bus_space_map(iot, ia->ia_io[0].ir_addr, AV_NPORT, 0, &ioh)) {
-		printf(": can't map i/o space\n");
+		aprint_error(": can't map i/o space\n");
 		return;
 	}
 
@@ -300,7 +300,7 @@ wtattach(device_t parent, device_t self, void *aux)
 	if (wtreset(iot, ioh, &wtregs)) {
 		sc->type = WANGTEK;
 		memcpy(&sc->regs, &wtregs, sizeof(sc->regs));
-		printf(": type <Wangtek>\n");
+		aprint_normal(": type <Wangtek>\n");
 		goto ok;
 	}
 
@@ -308,7 +308,7 @@ wtattach(device_t parent, device_t self, void *aux)
 	if (wtreset(iot, ioh, &avregs)) {
 		sc->type = ARCHIVE;
 		memcpy(&sc->regs, &avregs, sizeof(sc->regs));
-		printf(": type <Archive>\n");
+		aprint_normal(": type <Archive>\n");
 		/* Reset DMA. */
 		bus_space_write_1(iot, ioh, sc->regs.RDMAPORT, 0);
 		goto ok;
@@ -325,7 +325,8 @@ ok:
 	sc->chan = ia->ia_drq[0].ir_drq;
 
 	if ((maxsize = isa_dmamaxsize(sc->sc_ic, sc->chan)) < MAXPHYS) {
-		aprint_error_dev(sc->sc_dev, "max DMA size %lu is less than required %d\n",
+		aprint_error_dev(sc->sc_dev,
+		    "max DMA size %lu is less than required %d\n",
 		    (u_long)maxsize, MAXPHYS);
 		return;
 	}
@@ -347,8 +348,7 @@ ok:
 }
 
 static int
-wtdump(dev_t dev, daddr_t blkno, void *va,
-    size_t size)
+wtdump(dev_t dev, daddr_t blkno, void *va, size_t size)
 {
 
 	/* Not implemented. */
@@ -426,7 +426,8 @@ wtopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 				/* Check the status of the controller. */
 				if (sc->error & TP_ILL) {
-					aprint_error_dev(sc->sc_dev, "invalid tape density\n");
+					aprint_error_dev(sc->sc_dev,
+					    "invalid tape density\n");
 					return ENODEV;
 				}
 			}
@@ -451,8 +452,7 @@ wtopen(dev_t dev, int flag, int mode, struct lwp *l)
  * Close routine, called on last device close.
  */
 static int
-wtclose(dev_t dev, int flags, int mode,
-    struct lwp *l)
+wtclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct wt_softc *sc;
 
@@ -503,8 +503,7 @@ done:
  * ioctl(int fd, WTQICMD, int qicop)		-- do QIC op
  */
 static int
-wtioctl(dev_t dev, unsigned long cmd, void *addr, int flag,
-    struct lwp *l)
+wtioctl(dev_t dev, unsigned long cmd, void *addr, int flag, struct lwp *l)
 {
 	struct wt_softc *sc;
 	int error, count, op;

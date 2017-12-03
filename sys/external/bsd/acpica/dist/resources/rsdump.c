@@ -1,11 +1,11 @@
 /*******************************************************************************
  *
- * Module Name: rsdump - Functions to display the resource structures.
+ * Module Name: rsdump - AML debugger support for resource structures.
  *
  ******************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -41,9 +41,6 @@
  * POSSIBILITY OF SUCH DAMAGES.
  */
 
-
-#define __RSDUMP_C__
-
 #include "acpi.h"
 #include "accommon.h"
 #include "acresrc.h"
@@ -51,8 +48,9 @@
 #define _COMPONENT          ACPI_RESOURCES
         ACPI_MODULE_NAME    ("rsdump")
 
-
-#if defined(ACPI_DEBUG_OUTPUT) || defined(ACPI_DEBUGGER)
+/*
+ * All functions in this module are used by the AML Debugger only
+ */
 
 /* Local prototypes */
 
@@ -92,8 +90,8 @@ AcpiRsDumpByteList (
 
 static void
 AcpiRsDumpWordList (
-    UINT16                   Length,
-    UINT16                   *Data);
+    UINT16                  Length,
+    UINT16                  *Data);
 
 static void
 AcpiRsDumpDwordList (
@@ -102,12 +100,17 @@ AcpiRsDumpDwordList (
 
 static void
 AcpiRsDumpShortByteList (
-    UINT8                  Length,
-    UINT8                  *Data);
+    UINT8                   Length,
+    UINT8                   *Data);
 
 static void
 AcpiRsDumpResourceSource (
     ACPI_RESOURCE_SOURCE    *ResourceSource);
+
+static void
+AcpiRsDumpResourceLabel (
+    const char             *Title,
+    ACPI_RESOURCE_LABEL    *ResourceLabel);
 
 static void
 AcpiRsDumpAddressCommon (
@@ -116,7 +119,133 @@ AcpiRsDumpAddressCommon (
 static void
 AcpiRsDumpDescriptor (
     void                    *Resource,
-    ACPI_RSDUMP_INFO *Table);
+    ACPI_RSDUMP_INFO        *Table);
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiRsDumpResourceList
+ *
+ * PARAMETERS:  ResourceList        - Pointer to a resource descriptor list
+ *
+ * RETURN:      None
+ *
+ * DESCRIPTION: Dispatches the structure to the correct dump routine.
+ *
+ ******************************************************************************/
+
+void
+AcpiRsDumpResourceList (
+    ACPI_RESOURCE           *ResourceList)
+{
+    UINT32                  Count = 0;
+    UINT32                  Type;
+
+
+    ACPI_FUNCTION_ENTRY ();
+
+
+    /* Check if debug output enabled */
+
+    if (!ACPI_IS_DEBUG_ENABLED (ACPI_LV_RESOURCES, _COMPONENT))
+    {
+        return;
+    }
+
+    /* Walk list and dump all resource descriptors (END_TAG terminates) */
+
+    do
+    {
+        AcpiOsPrintf ("\n[%02X] ", Count);
+        Count++;
+
+        /* Validate Type before dispatch */
+
+        Type = ResourceList->Type;
+        if (Type > ACPI_RESOURCE_TYPE_MAX)
+        {
+            AcpiOsPrintf (
+                "Invalid descriptor type (%X) in resource list\n",
+                ResourceList->Type);
+            return;
+        }
+
+        /* Sanity check the length. It must not be zero, or we loop forever */
+
+        if (!ResourceList->Length)
+        {
+            AcpiOsPrintf (
+                "Invalid zero length descriptor in resource list\n");
+            return;
+        }
+
+        /* Dump the resource descriptor */
+
+        if (Type == ACPI_RESOURCE_TYPE_SERIAL_BUS)
+        {
+            AcpiRsDumpDescriptor (&ResourceList->Data,
+                AcpiGbl_DumpSerialBusDispatch[
+                    ResourceList->Data.CommonSerialBus.Type]);
+        }
+        else
+        {
+            AcpiRsDumpDescriptor (&ResourceList->Data,
+                AcpiGbl_DumpResourceDispatch[Type]);
+        }
+
+        /* Point to the next resource structure */
+
+        ResourceList = ACPI_NEXT_RESOURCE (ResourceList);
+
+        /* Exit when END_TAG descriptor is reached */
+
+    } while (Type != ACPI_RESOURCE_TYPE_END_TAG);
+}
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiRsDumpIrqList
+ *
+ * PARAMETERS:  RouteTable      - Pointer to the routing table to dump.
+ *
+ * RETURN:      None
+ *
+ * DESCRIPTION: Print IRQ routing table
+ *
+ ******************************************************************************/
+
+void
+AcpiRsDumpIrqList (
+    UINT8                   *RouteTable)
+{
+    ACPI_PCI_ROUTING_TABLE  *PrtElement;
+    UINT8                   Count;
+
+
+    ACPI_FUNCTION_ENTRY ();
+
+
+    /* Check if debug output enabled */
+
+    if (!ACPI_IS_DEBUG_ENABLED (ACPI_LV_RESOURCES, _COMPONENT))
+    {
+        return;
+    }
+
+    PrtElement = ACPI_CAST_PTR (ACPI_PCI_ROUTING_TABLE, RouteTable);
+
+    /* Dump all table elements, Exit on zero length element */
+
+    for (Count = 0; PrtElement->Length; Count++)
+    {
+        AcpiOsPrintf ("\n[%02X] PCI IRQ Routing Table Package\n", Count);
+        AcpiRsDumpDescriptor (PrtElement, AcpiRsDumpPrt);
+
+        PrtElement = ACPI_ADD_PTR (ACPI_PCI_ROUTING_TABLE,
+            PrtElement, PrtElement->Length);
+    }
+}
 
 
 /*******************************************************************************
@@ -140,7 +269,7 @@ AcpiRsDumpDescriptor (
     UINT8                   *Target = NULL;
     UINT8                   *PreviousTarget;
     const char              *Name;
-    UINT8                    Count;
+    UINT8                   Count;
 
 
     /* First table entry must contain the table length (# of table entries) */
@@ -183,8 +312,7 @@ AcpiRsDumpDescriptor (
 
             if (Table->Pointer)
             {
-                AcpiRsOutString (Name, ACPI_CAST_PTR (char,
-                    Table->Pointer [*Target]));
+                AcpiRsOutString (Name, Table->Pointer [*Target]);
             }
             else
             {
@@ -211,20 +339,17 @@ AcpiRsDumpDescriptor (
 
         case ACPI_RSD_1BITFLAG:
 
-            AcpiRsOutString (Name, ACPI_CAST_PTR (char,
-                Table->Pointer [*Target & 0x01]));
+            AcpiRsOutString (Name, Table->Pointer [*Target & 0x01]);
             break;
 
         case ACPI_RSD_2BITFLAG:
 
-            AcpiRsOutString (Name, ACPI_CAST_PTR (char,
-                Table->Pointer [*Target & 0x03]));
+            AcpiRsOutString (Name, Table->Pointer [*Target & 0x03]);
             break;
 
         case ACPI_RSD_3BITFLAG:
 
-            AcpiRsOutString (Name, ACPI_CAST_PTR (char,
-                Table->Pointer [*Target & 0x07]));
+            AcpiRsOutString (Name, Table->Pointer [*Target & 0x07]);
             break;
 
         case ACPI_RSD_SHORTLIST:
@@ -291,14 +416,32 @@ AcpiRsDumpDescriptor (
             /*
              * Common flags for all Address resources
              */
-            AcpiRsDumpAddressCommon (ACPI_CAST_PTR (ACPI_RESOURCE_DATA, Target));
+            AcpiRsDumpAddressCommon (ACPI_CAST_PTR (
+                ACPI_RESOURCE_DATA, Target));
             break;
 
         case ACPI_RSD_SOURCE:
             /*
              * Optional ResourceSource for Address resources
              */
-            AcpiRsDumpResourceSource (ACPI_CAST_PTR (ACPI_RESOURCE_SOURCE, Target));
+            AcpiRsDumpResourceSource (ACPI_CAST_PTR (
+                ACPI_RESOURCE_SOURCE, Target));
+            break;
+
+        case ACPI_RSD_LABEL:
+            /*
+             * ResourceLabel
+             */
+            AcpiRsDumpResourceLabel ("Resource Label", ACPI_CAST_PTR (
+                ACPI_RESOURCE_LABEL, Target));
+            break;
+
+        case ACPI_RSD_SOURCE_LABEL:
+            /*
+             * ResourceSourceLabel
+             */
+            AcpiRsDumpResourceLabel ("Resource Source Label", ACPI_CAST_PTR (
+                ACPI_RESOURCE_LABEL, Target));
             break;
 
         default:
@@ -345,6 +488,32 @@ AcpiRsDumpResourceSource (
     AcpiRsOutString ("Resource Source",
         ResourceSource->StringPtr ?
             ResourceSource->StringPtr : "[Not Specified]");
+}
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiRsDumpResourceLabel
+ *
+ * PARAMETERS:  Title              - Title of the dumped resource field
+ *              ResourceLabel      - Pointer to a Resource Label struct
+ *
+ * RETURN:      None
+ *
+ * DESCRIPTION: Common routine for dumping the ResourceLabel
+ *
+ ******************************************************************************/
+
+static void
+AcpiRsDumpResourceLabel (
+    const char             *Title,
+    ACPI_RESOURCE_LABEL    *ResourceLabel)
+{
+    ACPI_FUNCTION_ENTRY ();
+
+    AcpiRsOutString (Title,
+        ResourceLabel->StringPtr ?
+            ResourceLabel->StringPtr : "[Not Specified]");
 }
 
 
@@ -402,131 +571,6 @@ AcpiRsDumpAddressCommon (
 
 /*******************************************************************************
  *
- * FUNCTION:    AcpiRsDumpResourceList
- *
- * PARAMETERS:  ResourceList        - Pointer to a resource descriptor list
- *
- * RETURN:      None
- *
- * DESCRIPTION: Dispatches the structure to the correct dump routine.
- *
- ******************************************************************************/
-
-void
-AcpiRsDumpResourceList (
-    ACPI_RESOURCE           *ResourceList)
-{
-    UINT32                  Count = 0;
-    UINT32                  Type;
-
-
-    ACPI_FUNCTION_ENTRY ();
-
-
-    /* Check if debug output enabled */
-
-    if (!ACPI_IS_DEBUG_ENABLED (ACPI_LV_RESOURCES, _COMPONENT))
-    {
-        return;
-    }
-
-    /* Walk list and dump all resource descriptors (END_TAG terminates) */
-
-    do
-    {
-        AcpiOsPrintf ("\n[%02X] ", Count);
-        Count++;
-
-        /* Validate Type before dispatch */
-
-        Type = ResourceList->Type;
-        if (Type > ACPI_RESOURCE_TYPE_MAX)
-        {
-            AcpiOsPrintf (
-                "Invalid descriptor type (%X) in resource list\n",
-                ResourceList->Type);
-            return;
-        }
-
-        /* Sanity check the length. It must not be zero, or we loop forever */
-
-        if (!ResourceList->Length)
-        {
-            AcpiOsPrintf (
-                "Invalid zero length descriptor in resource list\n");
-            return;
-        }
-
-        /* Dump the resource descriptor */
-
-        if (Type == ACPI_RESOURCE_TYPE_SERIAL_BUS)
-        {
-            AcpiRsDumpDescriptor (&ResourceList->Data,
-                AcpiGbl_DumpSerialBusDispatch[ResourceList->Data.CommonSerialBus.Type]);
-        }
-        else
-        {
-            AcpiRsDumpDescriptor (&ResourceList->Data,
-                AcpiGbl_DumpResourceDispatch[Type]);
-        }
-
-        /* Point to the next resource structure */
-
-        ResourceList = ACPI_NEXT_RESOURCE (ResourceList);
-
-        /* Exit when END_TAG descriptor is reached */
-
-    } while (Type != ACPI_RESOURCE_TYPE_END_TAG);
-}
-
-
-/*******************************************************************************
- *
- * FUNCTION:    AcpiRsDumpIrqList
- *
- * PARAMETERS:  RouteTable      - Pointer to the routing table to dump.
- *
- * RETURN:      None
- *
- * DESCRIPTION: Print IRQ routing table
- *
- ******************************************************************************/
-
-void
-AcpiRsDumpIrqList (
-    UINT8                   *RouteTable)
-{
-    ACPI_PCI_ROUTING_TABLE  *PrtElement;
-    UINT8                   Count;
-
-
-    ACPI_FUNCTION_ENTRY ();
-
-
-    /* Check if debug output enabled */
-
-    if (!ACPI_IS_DEBUG_ENABLED (ACPI_LV_RESOURCES, _COMPONENT))
-    {
-        return;
-    }
-
-    PrtElement = ACPI_CAST_PTR (ACPI_PCI_ROUTING_TABLE, RouteTable);
-
-    /* Dump all table elements, Exit on zero length element */
-
-    for (Count = 0; PrtElement->Length; Count++)
-    {
-        AcpiOsPrintf ("\n[%02X] PCI IRQ Routing Table Package\n", Count);
-        AcpiRsDumpDescriptor (PrtElement, AcpiRsDumpPrt);
-
-        PrtElement = ACPI_ADD_PTR (ACPI_PCI_ROUTING_TABLE,
-                        PrtElement, PrtElement->Length);
-    }
-}
-
-
-/*******************************************************************************
- *
  * FUNCTION:    AcpiRsOut*
  *
  * PARAMETERS:  Title       - Name of the resource field
@@ -544,6 +588,7 @@ AcpiRsOutString (
     const char              *Title,
     const char              *Value)
 {
+
     AcpiOsPrintf ("%27s : %s", Title, Value);
     if (!*Value)
     {
@@ -565,6 +610,7 @@ AcpiRsOutInteger16 (
     const char              *Title,
     UINT16                  Value)
 {
+
     AcpiOsPrintf ("%27s : %4.4X\n", Title, Value);
 }
 
@@ -573,6 +619,7 @@ AcpiRsOutInteger32 (
     const char              *Title,
     UINT32                  Value)
 {
+
     AcpiOsPrintf ("%27s : %8.8X\n", Title, Value);
 }
 
@@ -581,6 +628,7 @@ AcpiRsOutInteger64 (
     const char              *Title,
     UINT64                  Value)
 {
+
     AcpiOsPrintf ("%27s : %8.8X%8.8X\n", Title,
         ACPI_FORMAT_UINT64 (Value));
 }
@@ -589,6 +637,7 @@ static void
 AcpiRsOutTitle (
     const char              *Title)
 {
+
     AcpiOsPrintf ("%27s : ", Title);
 }
 
@@ -616,15 +665,14 @@ AcpiRsDumpByteList (
 
     for (i = 0; i < Length; i++)
     {
-        AcpiOsPrintf ("%25s%2.2X : %2.2X\n",
-            "Byte", i, Data[i]);
+        AcpiOsPrintf ("%25s%2.2X : %2.2X\n", "Byte", i, Data[i]);
     }
 }
 
 static void
 AcpiRsDumpShortByteList (
-    UINT8                  Length,
-    UINT8                  *Data)
+    UINT8                   Length,
+    UINT8                   *Data)
 {
     UINT8                   i;
 
@@ -633,6 +681,7 @@ AcpiRsDumpShortByteList (
     {
         AcpiOsPrintf ("%X ", Data[i]);
     }
+
     AcpiOsPrintf ("\n");
 }
 
@@ -646,8 +695,7 @@ AcpiRsDumpDwordList (
 
     for (i = 0; i < Length; i++)
     {
-        AcpiOsPrintf ("%25s%2.2X : %8.8X\n",
-            "Dword", i, Data[i]);
+        AcpiOsPrintf ("%25s%2.2X : %8.8X\n", "Dword", i, Data[i]);
     }
 }
 
@@ -661,9 +709,6 @@ AcpiRsDumpWordList (
 
     for (i = 0; i < Length; i++)
     {
-        AcpiOsPrintf ("%25s%2.2X : %4.4X\n",
-            "Word", i, Data[i]);
+        AcpiOsPrintf ("%25s%2.2X : %4.4X\n", "Word", i, Data[i]);
     }
 }
-
-#endif

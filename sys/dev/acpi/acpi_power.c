@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_power.c,v 1.33.2.1 2014/08/20 00:03:35 tls Exp $ */
+/* $NetBSD: acpi_power.c,v 1.33.2.2 2017/12/03 11:36:58 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010, 2011 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.33.2.1 2014/08/20 00:03:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.33.2.2 2017/12/03 11:36:58 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -131,12 +131,6 @@ acpi_power_res_init(ACPI_HANDLE hdl)
 	}
 
 	res = kmem_zalloc(sizeof(*res), KM_SLEEP);
-
-	if (res == NULL) {
-		rv = AE_NO_MEMORY;
-		goto out;
-	}
-
 	res->res_handle = hdl;
 	res->res_level = obj->PowerResource.SystemLevel;
 	res->res_order = obj->PowerResource.ResourceOrder;

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.62 2007/12/14 21:15:52 pavel Exp $	*/
+/*	$NetBSD: main.c,v 1.62.54.1 2017/12/03 11:36:15 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 Shin Takemura.
@@ -1114,13 +1114,11 @@ BOOL BootKernel(int directboot)
 			szAppName, MB_OK);
 		return FALSE;
 	}				
-	GetDlgItemText(hDlgMain, IDC_OPTIONS,
-		woptions, sizeof(woptions));
-	if (wcstombs(options, woptions, sizeof(options)) < 0 ||
-		wcstombs(kernel_name, wkernel_name,
-			     sizeof(kernel_name)) < 0) {
-		MessageBox (NULL, TEXT("invalid character"),
-			szAppName, MB_OK);
+	GetDlgItemText(hDlgMain, IDC_OPTIONS, woptions, sizeof(woptions));
+	if (wcstombs(options, woptions, sizeof(options)) == (size_t)-1 ||
+	    wcstombs(kernel_name, wkernel_name, sizeof(kernel_name))
+	    == (size_t)-1) {
+		MessageBox(NULL, TEXT("invalid character"), szAppName, MB_OK);
 		return FALSE;
 	}
 	
@@ -1209,8 +1207,8 @@ BOOL BootKernel(int directboot)
 		platid.dw.dw0 = bi.platid_cpu;
 		platid.dw.dw1 = bi.platid_machine;
 		if (set_system_info(&platid)) {
-		/*
-		*  boot !
+			/*
+			*  boot !
 			*/
 			pbsdboot(wkernel_name, argc, argv, &bi);
 		}

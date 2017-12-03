@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_verbose.c,v 1.16.18.1 2014/08/20 00:03:35 tls Exp $ */
+/*	$NetBSD: acpi_verbose.c,v 1.16.18.2 2017/12/03 11:36:58 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2010 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_verbose.c,v 1.16.18.1 2014/08/20 00:03:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_verbose.c,v 1.16.18.2 2017/12/03 11:36:58 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -333,6 +333,12 @@ acpi_print_fadt(struct acpi_softc *sc)
 		uint64_t	 fadt_value;
 	};
 
+	struct acpi_fadt_genaddr {
+		uint32_t		 fadt_offset;
+		const char		*fadt_name;
+		ACPI_GENERIC_ADDRESS	 fadt_value;
+	};
+
 	const struct acpi_fadt acpi_fadt_table[] = {
 
 		{ 36,	"FACS",		 AcpiGbl_FADT.Facs		},
@@ -372,6 +378,24 @@ acpi_print_fadt(struct acpi_softc *sc)
 		{ 108,	"CENTURY",	 AcpiGbl_FADT.Century		},
 		{ 109,	"IAPC_BOOT_ARCH",AcpiGbl_FADT.BootFlags		},
 		{ 128,	"RESET_VALUE",	 AcpiGbl_FADT.ResetValue	},
+		{ 129,	"ARM_BOOT_ARCH", AcpiGbl_FADT.ArmBootFlags	},
+		{ 132,	"X_FACS",	 AcpiGbl_FADT.XFacs  		},
+		{ 140,	"X_DSDT",	 AcpiGbl_FADT.XDsdt  		},
+	};
+
+	const struct acpi_fadt_genaddr acpi_fadt_genaddr_table[] = {
+
+		{ 116,	"RESET_REG",	 AcpiGbl_FADT.ResetRegister  	},
+		{ 148,	"X_PM1a_EVT_BLK",AcpiGbl_FADT.XPm1aEventBlock	},
+		{ 160,	"X_PM1b_EVT_BLK",AcpiGbl_FADT.XPm1bEventBlock	},
+		{ 172,	"X_PM1a_CNT_BLK",AcpiGbl_FADT.XPm1aControlBlock	},
+		{ 184,	"X_PM1b_CNT_BLK",AcpiGbl_FADT.XPm1bControlBlock	},
+		{ 196,	"X_PM2_CNT_BLK", AcpiGbl_FADT.XPm2ControlBlock	},
+		{ 208,	"X_PM_TMR_BLK",	 AcpiGbl_FADT.XPmTimerBlock	},
+		{ 220,	"X_GPE0_BLK",	 AcpiGbl_FADT.XGpe0Block	},
+		{ 232,	"X_GPE1_BLK",	 AcpiGbl_FADT.XGpe1Block	},
+		{ 244,	"SLEEP_CTRL_REG",AcpiGbl_FADT.SleepControl	},
+		{ 256,	"SLEEP_STAT_REG",AcpiGbl_FADT.SleepStatus	},
 	};
 
 	const struct acpi_fadt acpi_fadt_flags[] = {
@@ -396,6 +420,8 @@ acpi_print_fadt(struct acpi_softc *sc)
 		{ 17,	"REMOTE_POWER", ACPI_FADT_REMOTE_POWER_ON	},
 		{ 18,	"APIC_CLUSTER",	ACPI_FADT_APIC_CLUSTER		},
 		{ 19,	"APIC_PHYSICAL",ACPI_FADT_APIC_PHYSICAL		},
+		{ 20,	"HW_REDUCED",	ACPI_FADT_HW_REDUCED		},
+		{ 21,	"LOW_POWER_S0",	ACPI_FADT_LOW_POWER_S0		},
 	};
 
 	for (i = 0; i < __arraycount(acpi_fadt_table); i++) {
@@ -404,6 +430,20 @@ acpi_print_fadt(struct acpi_softc *sc)
 		    "[FADT] %-15s: 0x%016" PRIX64"\n",
 		    acpi_fadt_table[i].fadt_name,
 		    acpi_fadt_table[i].fadt_value);
+	}
+
+	for (i = 0; i < __arraycount(acpi_fadt_genaddr_table); i++) {
+
+		aprint_normal_dev(sc->sc_dev,
+		    "[FADT] %-15s: 0x%016" PRIX64", "
+		    "SPACE ID %u, BIT WIDTH %u, BIT OFFSET %u, "
+		    "ACCESS WIDTH %u\n",
+		    acpi_fadt_genaddr_table[i].fadt_name,
+		    acpi_fadt_genaddr_table[i].fadt_value.Address,
+		    acpi_fadt_genaddr_table[i].fadt_value.SpaceId,
+		    acpi_fadt_genaddr_table[i].fadt_value.BitWidth,
+		    acpi_fadt_genaddr_table[i].fadt_value.BitOffset,
+		    acpi_fadt_genaddr_table[i].fadt_value.AccessWidth);
 	}
 
 	for (i = 0; i < __arraycount(acpi_fadt_flags); i++) {

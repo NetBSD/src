@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel.c,v 1.1 2011/12/04 19:24:59 jym Exp $ */
+/* $NetBSD: secmodel.c,v 1.1.10.1 2017/12/03 11:39:20 jdolecek Exp $ */
 /*-
  * Copyright (c) 2011 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -171,10 +171,8 @@ secmodel_plug(secmodel_t sm)
 	secmodel_t tsm;
 	int error = 0;
 
-	if (sm == NULL) {
-		error = EFAULT;
-		goto out;
-	}
+	if (sm == NULL)
+		return EFAULT;
 
 	/* Check if the secmodel is already present. */
 	rw_enter(&secmodels_lock, RW_WRITER);
@@ -203,10 +201,8 @@ secmodel_unplug(secmodel_t sm)
 	secmodel_t tsm;
 	int error = 0;
 
-	if (sm == NULL) {
-		error = EFAULT;
-		goto out;
-	}
+	if (sm == NULL)
+		return EFAULT;
 
 	/* Make sure the secmodel is present. */
 	rw_enter(&secmodels_lock, RW_WRITER);

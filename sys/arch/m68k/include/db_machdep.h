@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.31 2012/01/31 21:17:57 mlelstv Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.31.6.1 2017/12/03 11:36:23 jdolecek Exp $	*/
 
 /* 
  * Mach Operating System
@@ -40,11 +40,7 @@
 
 #include <sys/types.h>
 
-/*
- * XXX - Would rather not pull in vm headers, but need boolean_t,
- * at least until boolean_t moves to <sys/types.h> or someplace.
- */
-#include <uvm/uvm_param.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/frame.h>
 #include <machine/pcb.h>
@@ -114,6 +110,5 @@ int 	kdb_trap(int, db_regs_t *);
  * We use Elf32 symbols in DDB.
  */
 #define	DB_ELF_SYMBOLS
-#define	DB_ELFSIZE	32
 
 #endif	/* _M68K_DB_MACHDEP_H_ */

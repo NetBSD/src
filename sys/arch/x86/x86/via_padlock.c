@@ -1,5 +1,5 @@
 /*	$OpenBSD: via.c,v 1.8 2006/11/17 07:47:56 tom Exp $	*/
-/*	$NetBSD: via_padlock.c,v 1.21.6.1 2014/08/20 00:03:29 tls Exp $ */
+/*	$NetBSD: via_padlock.c,v 1.21.6.2 2017/12/03 11:36:51 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2003 Jason Wright
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.21.6.1 2014/08/20 00:03:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.21.6.2 2017/12/03 11:36:51 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -28,12 +28,9 @@ __KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.21.6.1 2014/08/20 00:03:29 tls Exp
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/module.h>
-#include <sys/rnd.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/cpu.h>
-#include <sys/rnd.h>
-#include <sys/cprng.h>
 
 #include <x86/specialreg.h>
 
@@ -72,64 +69,6 @@ int	via_padlock_crypto_encdec(struct cryptop *, struct cryptodesc *,
 int	via_padlock_crypto_freesession(void *, uint64_t);
 static	__inline void via_padlock_cbc(void *, void *, void *, void *, int,
 	    void *);
-
-static void
-via_c3_rnd(void *arg)
-{
-	struct via_padlock_softc *sc = arg;
-
-	uint32_t creg0, len = VIAC3_RNG_BUFSIZ;
-	uint32_t buffer[VIAC3_RNG_BUFSIZ/4 + 1]; /* CPU goes 3 bytes beyond */
-	uint32_t eax, ecx, edi; /* XXX write-only, but necessary it seems */
-
-	/*
-	 * Sadly, we have to monkey with the coprocessor enable and fault
-	 * registers, which are really for the FPU, in order to read
-	 * from the RNG.
-	 *
-	 * Don't remove CR0_TS from the call below -- comments in the Linux
-	 * driver indicate that the xstorerng instruction can generate
-	 * spurious DNA faults though no FPU or SIMD state is changed
-	 * even if such a fault is generated.
-	 *
-	 */
-	kpreempt_disable();
-	x86_disable_intr();
-	creg0 = rcr0();
-	lcr0(creg0 & ~(CR0_EM|CR0_TS));	/* Permit access to SIMD/FPU path */
-	/*
-	 * Collect the random data from the C3 RNG into our buffer.
-	 * We turn on maximum whitening (is this actually desirable
-	 * if we will feed the data to SHA1?) (%edx[0,1] = "11").
-	 */
-	__asm __volatile("rep xstorerng"
-			 : "=a" (eax), "=c" (ecx), "=D" (edi)
-			 : "d" (3), "D" (buffer), "c" (len)
-			 : "memory", "cc");
-	/* Put CR0 back how it was */
-	lcr0(creg0);
-	x86_enable_intr();
-	kpreempt_enable();
-	rnd_add_data(&sc->sc_rnd_source, buffer, len, len * NBBY);
-	callout_reset(&sc->sc_rnd_co, sc->sc_rnd_hz, via_c3_rnd, sc);
-}
-
-static void
-via_c3_rnd_init(struct via_padlock_softc *sc)
-{
-	sc->sc_rnd_attached = true;
-
-	if (hz >= 100) {
-	    sc->sc_rnd_hz = 10 * hz / 100;
-	} else {
-	    sc->sc_rnd_hz = 10;
-	}
-	rnd_attach_source(&sc->sc_rnd_source, device_xname(sc->sc_dev),
-			  RND_TYPE_RNG, RND_FLAG_COLLECT_VALUE);
-	callout_init(&sc->sc_rnd_co, 0);
-	/* Call once to prime the pool early and set callout. */
-	via_c3_rnd(sc);
-}
 
 static void
 via_c3_ace_init(struct via_padlock_softc *sc)
@@ -610,7 +549,6 @@ via_padlock_attach_intr(device_t self)
 
 	aprint_normal("%s:", device_xname(self));
 	if (cpu_feature[4] & CPUID_VIA_HAS_RNG) {
-		via_c3_rnd_init(sc);
 		aprint_normal(" RNG");
 	}
 	if (cpu_feature[4] & CPUID_VIA_HAS_ACE) {
@@ -625,12 +563,6 @@ via_padlock_detach(device_t self, int flags)
 {
 	struct via_padlock_softc *sc = device_private(self);
 
-	if (sc->sc_rnd_attached) {
-		callout_stop(&sc->sc_rnd_co);
-		callout_destroy(&sc->sc_rnd_co);
-		rnd_detach_source(&sc->sc_rnd_source);
-		sc->sc_rnd_attached = false;
-	}
 	if (sc->sc_cid_attached) {
 		crypto_unregister(sc->sc_cid, CRYPTO_AES_CBC);
 		crypto_unregister(sc->sc_cid, CRYPTO_MD5_HMAC_96);

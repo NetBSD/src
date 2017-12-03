@@ -1,4 +1,4 @@
-/*	$NetBSD: fss_component.c,v 1.1.10.2 2014/08/20 00:04:37 tls Exp $	*/
+/*	$NetBSD: fss_component.c,v 1.1.10.3 2017/12/03 11:39:07 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,34 +26,36 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss_component.c,v 1.1.10.2 2014/08/20 00:04:37 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss_component.c,v 1.1.10.3 2017/12/03 11:39:07 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/stat.h>
 
-#include "rump_private.h"
-#include "rump_vfs_private.h"
+#include <rump-sys/kern.h>
+#include <rump-sys/vfs.h>
 
 RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 {
 	extern const struct bdevsw fss_bdevsw;
 	extern const struct cdevsw fss_cdevsw;
-	devmajor_t bmaj, cmaj;
+	extern devmajor_t fss_bmajor, fss_cmajor;
 	int error;
 
-	bmaj = bdevsw_lookup_major(&fss_bdevsw);
-	cmaj = cdevsw_lookup_major(&fss_cdevsw);
+	fss_bmajor = bdevsw_lookup_major(&fss_bdevsw);
+	fss_cmajor = cdevsw_lookup_major(&fss_cdevsw);
 
-	if ((error = devsw_attach("fss", &fss_bdevsw, &bmaj,
-	    &fss_cdevsw, &cmaj)) != 0)
+	if ((error = devsw_attach("fss", &fss_bdevsw, &fss_bmajor,
+	    &fss_cdevsw, &fss_cmajor)) != 0)
 		panic("cannot attach fss: %d", error);
 
 	if ((error = rump_vfs_makedevnodes(S_IFBLK, "/dev/fss", '0',
-	    bmaj, 0, 4)) != 0)
+	    fss_bmajor, 0, 4)) != 0)
 		panic("cannot create cooked fss dev nodes: %d", error);
 	if ((error = rump_vfs_makedevnodes(S_IFCHR, "/dev/rfss", '0',
-	    cmaj, 0, 4)) != 0)
+	    fss_cmajor, 0, 4)) != 0)
 		panic("cannot create raw fss dev nodes: %d", error);
+
+	devsw_detach(&fss_bdevsw, &fss_cdevsw);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: genericbd.c,v 1.4.12.1 2014/08/20 00:02:58 tls Exp $ */
+/* $NetBSD: genericbd.c,v 1.4.12.2 2017/12/03 11:36:08 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,10 +32,11 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genericbd.c,v 1.4.12.1 2014/08/20 00:02:58 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genericbd.c,v 1.4.12.2 2017/12/03 11:36:08 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
+#include <sys/cpu.h>
 
 #include <mips/locore.h>
 

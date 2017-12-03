@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.73.6.2 2014/08/20 00:03:20 tls Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.73.6.3 2017/12/03 11:36:37 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.73.6.2 2014/08/20 00:03:20 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.73.6.3 2017/12/03 11:36:37 jdolecek Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_ppccache.h"
@@ -328,6 +328,9 @@ cpu_idlespin(void)
 		return;
 
 	__asm volatile(
+#if defined(_ARCH_PPC64) || defined (PPC_OEA64_BRIDGE)
+		"dssall;"
+#endif
 		"sync;"
 		"mfmsr	%0;"
 		"oris	%0,%0,%1@h;"	/* enter power saving mode */
@@ -487,11 +490,20 @@ cpu_attach_common(device_t self, int id)
 void
 cpu_setup(device_t self, struct cpu_info *ci)
 {
-	u_int hid0, hid0_save, pvr, vers;
+	u_int pvr, vers;
 	const char * const xname = device_xname(self);
 	const char *bitmask;
 	char hidbuf[128];
 	char model[80];
+#if defined(PPC_OEA64_BRIDGE) || defined(_ARCH_PPC64)
+	char hidbuf_u[128];
+	const char *bitmasku = NULL;
+#endif
+#if defined(PPC_OEA64_BRIDGE)
+	volatile uint64_t hid0;
+#else
+	register_t hid0;
+#endif
 
 	pvr = mfpvr();
 	vers = (pvr >> 16) & 0xffff;
@@ -503,7 +515,11 @@ cpu_setup(device_t self, struct cpu_info *ci)
 
 	/* set the cpu number */
 	ci->ci_cpuid = cpu_number();
-	hid0_save = hid0 = mfspr(SPR_HID0);
+#if defined(_ARCH_PPC64)
+	__asm volatile("mfspr %0,%1" : "=r"(hid0) : "K"(SPR_HID0));
+#else
+	hid0 = mfspr(SPR_HID0);
+#endif
 
 	cpu_probe_cache();
 
@@ -564,6 +580,13 @@ cpu_setup(device_t self, struct cpu_info *ci)
 	case IBM970:
 	case IBM970FX:
 	case IBM970MP:
+#if defined(_ARCH_PPC64) || defined (PPC_OEA64_BRIDGE)
+		hid0 &= ~(HID0_64_DOZE | HID0_64_NAP | HID0_64_DEEPNAP);
+		hid0 |= HID0_64_DOZE | HID0_64_DPM | HID0_64_EX_TBEN |
+			HID0_64_TB_CTRL | HID0_64_EN_MCHK;
+		powersave = 1;
+		break;
+#endif
 	case IBMPOWER3II:
 	default:
 		/* No power-saving mode is available. */ ;
@@ -598,23 +621,39 @@ cpu_setup(device_t self, struct cpu_info *ci)
 		break;
 	}
 
-#ifdef MULTIPROCESSOR
+	/*
+	 * according to the 603e manual this is necessary for an external L2
+	 * cache to work properly
+	 */
 	switch (vers) {
 	case MPC603e:
 		hid0 |= HID0_ABE;
 	}
-#endif
 
-	if (hid0 != hid0_save) {
-		mtspr(SPR_HID0, hid0);
-		__asm volatile("sync;isync");
-	}
+#if defined(_ARCH_PPC64)
+	/* ppc970 needs extre goop around writes to HID0 */
+	__asm volatile( "sync;" \
+			"mtspr %0,%1;" \
+			"mfspr %1,%0;" \
+			"mfspr %1,%0;" \
+			"mfspr %1,%0;" \
+			"mfspr %1,%0;" \
+			"mfspr %1,%0;" \
+			"mfspr %1,%0;" \
+			 : : "K"(SPR_HID0), "r"(hid0));
+#else
+	mtspr(SPR_HID0, hid0);
+#endif
+	__asm volatile("sync;isync");
+	
 
 
 	switch (vers) {
 	case MPC601:
 		bitmask = HID0_601_BITMASK;
 		break;
+	case MPC7447A:
+	case MPC7448:
 	case MPC7450:
 	case MPC7455:
 	case MPC7457:
@@ -623,14 +662,29 @@ cpu_setup(device_t self, struct cpu_info *ci)
 	case IBM970:
 	case IBM970FX:
 	case IBM970MP:
-		bitmask = 0;
+		bitmask = HID0_970_BITMASK;
+#if defined(PPC_OEA64_BRIDGE) || defined(_ARCH_PPC64)
+		bitmasku = HID0_970_BITMASK_U;
+#endif
 		break;
 	default:
 		bitmask = HID0_BITMASK;
 		break;
 	}
-	snprintb(hidbuf, sizeof hidbuf, bitmask, hid0);
-	aprint_normal_dev(self, "HID0 %s, powersave: %d\n", hidbuf, powersave);
+	
+#if defined(PPC_OEA64_BRIDGE) || defined(_ARCH_PPC64)
+	if (bitmasku != NULL) {
+		snprintb(hidbuf, sizeof hidbuf, bitmask, hid0 & 0xffffffff);
+		snprintb(hidbuf_u, sizeof hidbuf_u, bitmasku, hid0 >> 32);
+		aprint_normal_dev(self, "HID0 %s %s, powersave: %d\n",
+		    hidbuf_u, hidbuf, powersave);
+	} else
+#endif
+	{
+		snprintb(hidbuf, sizeof hidbuf, bitmask, hid0);
+		aprint_normal_dev(self, "HID0 %s, powersave: %d\n",
+		    hidbuf, powersave);
+	}
 
 	ci->ci_khz = 0;
 
@@ -1165,7 +1219,6 @@ cpu_tau_setup(struct cpu_info *ci)
 		sysmon_envsys_destroy(sme);
 	}
 }
-
 
 /* Find the temperature of the CPU. */
 void

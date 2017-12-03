@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2var.h,v 1.3.10.2 2014/08/20 00:04:22 tls Exp $	*/
+/*	$NetBSD: dwc2var.h,v 1.3.10.3 2017/12/03 11:38:01 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,16 +34,14 @@
 
 #include <sys/pool.h>
 
-#define DWC2_MAXISOCPACKETS	16
 struct dwc2_hsotg;
 struct dwc2_qtd;
 
 struct dwc2_xfer {
 	struct usbd_xfer xfer;			/* Needs to be first */
-	struct usb_task	abort_task;
+	struct usb_task abort_task;
 
 	struct dwc2_hcd_urb *urb;
-	int packet_count;
 
 	TAILQ_ENTRY(dwc2_xfer) xnext;		/* list of complete xfers */
 };
@@ -59,14 +57,14 @@ struct dwc2_pipe {
 };
 
 
-#define	DWC2_BUS2SC(bus)	((bus)->hci_private)
-#define	DWC2_PIPE2SC(pipe)	DWC2_BUS2SC((pipe)->device->bus)
-#define	DWC2_XFER2SC(xfer)	DWC2_PIPE2SC((xfer)->pipe)
-#define	DWC2_DPIPE2SC(d)	DWC2_BUS2SC((d)->pipe.device->bus)
+#define	DWC2_BUS2SC(bus)	((bus)->ub_hcpriv)
+#define	DWC2_PIPE2SC(pipe)	DWC2_BUS2SC((pipe)->up_dev->ud_bus)
+#define	DWC2_XFER2SC(xfer)	DWC2_BUS2SC((xfer)->ux_bus)
+#define	DWC2_DPIPE2SC(d)	DWC2_BUS2SC((d)->pipe.up_dev->ud_bus)
 
 #define	DWC2_XFER2DXFER(x)	(struct dwc2_xfer *)(x)
 
-#define	DWC2_XFER2DPIPE(x)	(struct dwc2_pipe *)(x)->pipe;
+#define	DWC2_XFER2DPIPE(x)	(struct dwc2_pipe *)(x)->ux_pipe;
 #define	DWC2_PIPE2DPIPE(p)	(struct dwc2_pipe *)(p)
 
 
@@ -77,6 +75,7 @@ typedef struct dwc2_softc {
  	bus_space_handle_t	sc_ioh;
  	bus_dma_tag_t		sc_dmat;
 	struct dwc2_core_params *sc_params;
+	int			(*sc_set_dma_addr)(device_t, bus_addr_t, int);
 
 	/*
 	 * Private
@@ -90,19 +89,12 @@ typedef struct dwc2_softc {
 	bool sc_hcdenabled;
 	void *sc_rhc_si;
 
-	usbd_xfer_handle sc_intrxfer;
+	struct usbd_xfer *sc_intrxfer;
 
 	device_t sc_child;		/* /dev/usb# device */
 	char sc_dying;
-	struct usb_dma_reserve sc_dma_reserve;
-
-	char sc_vendor[32];		/* vendor string for root hub */
-	int sc_id_vendor;		/* vendor ID for root hub */
 
 	TAILQ_HEAD(, dwc2_xfer) sc_complete;	/* complete transfers */
-
-	uint8_t sc_addr;		/* device address */
-	uint8_t sc_conf;		/* device configuration */
 
 	pool_cache_t sc_xferpool;
 	pool_cache_t sc_qhpool;

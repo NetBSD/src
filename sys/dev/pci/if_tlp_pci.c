@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.121.10.2 2014/08/20 00:03:42 tls Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.121.10.3 2017/12/03 11:37:08 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.121.10.2 2014/08/20 00:03:42 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.121.10.3 2017/12/03 11:37:08 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -522,8 +522,7 @@ tlp_pci_attach(device_t parent, device_t self, void *aux)
 	/* power up chip */
 	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, self,
 	    NULL)) && error != EOPNOTSUPP) {
-		aprint_error_dev(self, "cannot activate %d\n",
-		    error);
+		aprint_error_dev(self, "cannot activate %d\n", error);
 		return;
 	}
 

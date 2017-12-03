@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.67.12.4 2014/08/20 00:04:42 tls Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.67.12.5 2017/12/03 11:39:17 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.67.12.4 2014/08/20 00:04:42 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.67.12.5 2017/12/03 11:39:17 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -47,15 +47,15 @@ __KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.67.12.4 2014/08/20 00:04:42 tls Exp $
 #include <sys/vfs_syscalls.h>
 #include <sys/vnode.h>
 #include <sys/wapbl.h>
+#include <sys/bufq.h>
 
 #include <miscfs/specfs/specdev.h>
-#include <miscfs/syncfs/syncfs.h>
+
+#include <rump-sys/kern.h>
+#include <rump-sys/vfs.h>
 
 #include <rump/rump.h>
 #include <rump/rumpuser.h>
-
-#include "rump_private.h"
-#include "rump_vfs_private.h"
 
 extern struct cwdinfo cwdi0;
 const char *rootfstype = ROOT_FSTYPE_ANY;
@@ -79,6 +79,7 @@ fini(void)
 {
 
 	vfs_shutdown();
+	rumpblk_fini();
 }
 
 static void
@@ -120,6 +121,7 @@ RUMP_COMPONENT(RUMP__FACTION_VFS)
 		bufpages = rump_physmemlimit / (20 * PAGE_SIZE);
 	}
 
+	bufq_init();
 	vfsinit();
 	bufinit();
 	cwd_sys_init();
@@ -169,6 +171,7 @@ RUMP_COMPONENT(RUMP__FACTION_VFS)
 		}
 	}
 
+	module_init_class(MODULE_CLASS_BUFQ);
 	module_init_class(MODULE_CLASS_VFS);
 
 	/*
@@ -468,12 +471,23 @@ rump_vfs_syncwait(struct mount *mp)
 /*
  * Dump info about mount point.  No locking.
  */
+static bool
+rump_print_selector(void *cl, struct vnode *vp)
+{
+	int *full = cl;
+
+	KASSERT(mutex_owned(vp->v_interlock));
+
+	vfs_vnode_print(vp, *full, (void *)rumpuser_dprintf);
+	return false;
+}
+
 void
 rump_vfs_mount_print(const char *path, int full)
 {
 #ifdef DEBUGPRINT
 	struct vnode *mvp;
-	struct vnode *vp;
+	struct vnode_iterator *marker;
 	int error;
 
 	rumpuser_dprintf("\n==== dumping mountpoint at ``%s'' ====\n\n", path);
@@ -484,9 +498,9 @@ rump_vfs_mount_print(const char *path, int full)
 	vfs_mount_print(mvp->v_mount, full, (void *)rumpuser_dprintf);
 	if (full) {
 		rumpuser_dprintf("\n== dumping vnodes ==\n\n");
-		TAILQ_FOREACH(vp, &mvp->v_mount->mnt_vnodelist, v_mntvnodes) {
-			vfs_vnode_print(vp, full, (void *)rumpuser_dprintf);
-		}
+		vfs_vnode_iterator_init(mvp->v_mount, &marker);
+		vfs_vnode_iterator_next(marker, rump_print_selector, &full);
+		vfs_vnode_iterator_destroy(marker);
 	}
 	vrele(mvp);
 	rumpuser_dprintf("\n==== done ====\n\n");

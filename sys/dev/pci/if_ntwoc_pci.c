@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ntwoc_pci.c,v 1.27.12.2 2014/08/20 00:03:42 tls Exp $	*/
+/*	$NetBSD: if_ntwoc_pci.c,v 1.27.12.3 2017/12/03 11:37:08 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 Vixie Enterprises
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_pci.c,v 1.27.12.2 2014/08/20 00:03:42 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_pci.c,v 1.27.12.3 2017/12/03 11:37:08 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -202,7 +202,8 @@ ntwoc_pci_attach(device_t parent, device_t self, void *aux)
 	u_int numports;
 	char intrbuf[PCI_INTRSTR_LEN];
 
-	printf(": N2 Serial Interface\n");
+	aprint_naive("\n");
+	aprint_normal(": N2 Serial Interface\n");
 	flags = device_cfdata(self)->cf_flags;
 
 	/*
@@ -300,7 +301,7 @@ ntwoc_pci_attach(device_t parent, device_t self, void *aux)
 	 * Port 1 HAS to be present.  If it isn't, don't attach anything.
 	 */
 	if (db0 == NTWOC_FE_ID_NONE) {
-		printf("%s: no ports available\n", device_xname(self));
+		aprint_error_dev(self, "no ports available\n");
 		return;
 	}
 
@@ -312,12 +313,12 @@ ntwoc_pci_attach(device_t parent, device_t self, void *aux)
 	if (db1 != NTWOC_FE_ID_NONE)
 		numports++;
 
-	printf("%s: %d port%s\n", device_xname(self), numports,
+	aprint_normal_dev(self, "%d port%s\n", numports,
 	       (numports > 1 ? "s" : ""));
-	printf("%s: port 0 interface card: %s\n", device_xname(self),
+	aprint_normal_dev(self, "port 0 interface card: %s\n",
 	       ntwoc_pci_db_names[db0]);
 	if (numports > 1)
-		printf("%s: port 1 interface card: %s\n", device_xname(self),
+		aprint_normal_dev(self, "port 1 interface card: %s\n",
 		       ntwoc_pci_db_names[db1]);
 
 	/*

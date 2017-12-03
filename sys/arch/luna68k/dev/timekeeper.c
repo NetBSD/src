@@ -1,4 +1,4 @@
-/* $NetBSD: timekeeper.c,v 1.10.12.2 2014/08/20 00:03:10 tls Exp $ */
+/* $NetBSD: timekeeper.c,v 1.10.12.3 2017/12/03 11:36:23 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: timekeeper.c,v 1.10.12.2 2014/08/20 00:03:10 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timekeeper.c,v 1.10.12.3 2017/12/03 11:36:23 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,13 +124,13 @@ mkclock_get(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 
 	s = splclock();
 	chiptime[MK_CSR] |= MK_CSR_READ;	/* enable read (stop time) */
-	dt->dt_sec = FROMBCD(chiptime[MK_SEC]);
-	dt->dt_min = FROMBCD(chiptime[MK_MIN]);
-	dt->dt_hour = FROMBCD(chiptime[MK_HOUR]);
-	dt->dt_wday = FROMBCD(chiptime[MK_DOW]);
-	dt->dt_day = FROMBCD(chiptime[MK_DOM]);
-	dt->dt_mon = FROMBCD(chiptime[MK_MONTH]);
-	dt->dt_year = FROMBCD(chiptime[MK_YEAR]) + YEAR0;
+	dt->dt_sec = bcdtobin(chiptime[MK_SEC]);
+	dt->dt_min = bcdtobin(chiptime[MK_MIN]);
+	dt->dt_hour = bcdtobin(chiptime[MK_HOUR]);
+	dt->dt_wday = bcdtobin(chiptime[MK_DOW]);
+	dt->dt_day = bcdtobin(chiptime[MK_DOM]);
+	dt->dt_mon = bcdtobin(chiptime[MK_MONTH]);
+	dt->dt_year = bcdtobin(chiptime[MK_YEAR]) + YEAR0;
 	chiptime[MK_CSR] &= ~MK_CSR_READ;	/* time wears on */
 	splx(s);
 	return 0;
@@ -149,13 +149,13 @@ mkclock_set(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 
 	s = splclock();
 	chiptime[MK_CSR] |= MK_CSR_WRITE;	/* enable write */
-	chiptime[MK_SEC] = TOBCD(dt->dt_sec);
-	chiptime[MK_MIN] = TOBCD(dt->dt_min);
-	chiptime[MK_HOUR] = TOBCD(dt->dt_hour);
-	chiptime[MK_DOW] = TOBCD(dt->dt_wday);
-	chiptime[MK_DOM] = TOBCD(dt->dt_day);
-	chiptime[MK_MONTH] = TOBCD(dt->dt_mon);
-	chiptime[MK_YEAR] = TOBCD(dt->dt_year - YEAR0);
+	chiptime[MK_SEC] = bintobcd(dt->dt_sec);
+	chiptime[MK_MIN] = bintobcd(dt->dt_min);
+	chiptime[MK_HOUR] = bintobcd(dt->dt_hour);
+	chiptime[MK_DOW] = bintobcd(dt->dt_wday);
+	chiptime[MK_DOM] = bintobcd(dt->dt_day);
+	chiptime[MK_MONTH] = bintobcd(dt->dt_mon);
+	chiptime[MK_YEAR] = bintobcd(dt->dt_year - YEAR0);
 	chiptime[MK_CSR] &= ~MK_CSR_WRITE;	/* load them up */
 	splx(s);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.55.2.2 2014/08/20 00:03:35 tls Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.55.2.3 2017/12/03 11:36:58 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -55,9 +55,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.55.2.2 2014/08/20 00:03:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.55.2.3 2017/12/03 11:36:58 jdolecek Exp $");
 
+#ifdef _KERNEL_OPT
 #include "sequencer.h"
+#include "midi.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -80,10 +83,31 @@ __KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.55.2.2 2014/08/20 00:03:35 tls Exp $
 #include <sys/pcq.h>
 #include <sys/vnode.h>
 #include <sys/kauth.h>
+#include <sys/module.h>
 
 #include <dev/midi_if.h>
 #include <dev/midivar.h>
 #include <dev/sequencervar.h>
+
+#include "ioconf.h"
+
+/*
+ * XXX Kludge.  This module uses midi_cd, and depends on the `midi'
+ * module, but there's no obvious way to get midi_cd declared in
+ * ioconf.h without actually pulling MIDI into the module in
+ * sys/modules/sequencer/sequencer.ioconf.  Please fix me!
+ *
+ * XXX XXX XXX Apparently sequencer.ioconf doesn't actually make the
+ * sequencer cdev!  Did this ever work?
+ *
+ * XXX XXX XXX Apparently there are even some kernels that include a
+ * sequencer pseudo-device but exclude any midi device.  How do they
+ * even link??
+ */
+extern struct cfdriver midi_cd;
+#ifdef _MODULE
+extern struct cfdriver sequencer_cd;
+#endif
 
 #define ADDTIMEVAL(a, b) ( \
 	(a)->tv_sec += (b)->tv_sec, \
@@ -117,7 +141,6 @@ typedef union sequencer_pcqitem {
 	char	qi_msg[4];
 } sequencer_pcqitem_t;
 
-void sequencerattach(int);
 static void seq_reset(struct sequencer_softc *);
 static int seq_do_command(struct sequencer_softc *, seq_event_t *);
 static int seq_do_chnvoice(struct sequencer_softc *, seq_event_t *);
@@ -174,7 +197,9 @@ static LIST_HEAD(, sequencer_softc) sequencers = LIST_HEAD_INITIALIZER(sequencer
 static kmutex_t sequencer_lock;
 
 static void
-sequencerdestroy(struct sequencer_softc *sc) {
+sequencerdestroy(struct sequencer_softc *sc)
+{
+	callout_halt(&sc->sc_callout, &sc->lock);
 	callout_destroy(&sc->sc_callout);
 	softint_disestablish(sc->sih);
 	cv_destroy(&sc->rchan);
@@ -186,14 +211,9 @@ sequencerdestroy(struct sequencer_softc *sc) {
 }
 
 static struct sequencer_softc *
-sequencercreate(int unit) {
+sequencercreate(int unit)
+{
 	struct sequencer_softc *sc = kmem_zalloc(sizeof(*sc), KM_SLEEP);
-	if (sc == NULL) {
-#ifdef DIAGNOSTIC
-		printf("%s: out of memory\n", __func__);
-#endif
-		return NULL;
-	}
 	sc->sc_unit = unit;
 	callout_init(&sc->sc_callout, CALLOUT_MPSAFE);
 	sc->sih = softint_establish(SOFTINT_NET | SOFTINT_MPSAFE,
@@ -212,7 +232,8 @@ sequencercreate(int unit) {
 
 
 static struct sequencer_softc *
-sequencerget(int unit) {
+sequencerget(int unit)
+{
 	struct sequencer_softc *sc;
 	if (unit < 0) {
 #ifdef DIAGNOSTIC
@@ -238,7 +259,8 @@ sequencerget(int unit) {
 
 #ifdef notyet
 static void 
-sequencerput(struct sequencer_softc *sc) {
+sequencerput(struct sequencer_softc *sc)
+{
 	mutex_enter(&sequencer_lock);
 	LIST_REMOVE(sc, sc_link);
 	mutex_exit(&sequencer_lock);
@@ -294,7 +316,7 @@ sequenceropen(dev_t dev, int flags, int ifmt, struct lwp *l)
 	struct sequencer_softc *sc;
 	struct midi_dev *md;
 	struct midi_softc *msc;
-	int error, unit;
+	int error, unit, mdno;
 
 	DPRINTF(("sequenceropen\n"));
 
@@ -337,6 +359,11 @@ sequenceropen(dev_t dev, int flags, int ifmt, struct lwp *l)
 				sc->devs[sc->nmidi++] = md;
 				md->seq = sc;
 				md->doingsysex = 0;
+				DPRINTF(("%s: midi unit %d opened as seq %p\n",
+				    __func__, unit, md));
+			} else {
+				DPRINTF(("%s: midi unit %d not opened as seq\n",
+				    __func__, unit));
 			}
 		}
 		mutex_enter(&sc->lock);
@@ -345,11 +372,13 @@ sequenceropen(dev_t dev, int flags, int ifmt, struct lwp *l)
 	}
 
 	/* Only now redirect input from MIDI devices. */
-	for (unit = 0; unit < sc->nmidi; unit++) {
-		msc = sc->devs[unit]->msc;
-		mutex_enter(msc->lock);
-		msc->seqopen = 1;
-		mutex_exit(msc->lock);
+	for (mdno = 0; mdno < sc->nmidi; mdno++) {
+		msc = device_lookup_private(&midi_cd, sc->devs[mdno]->unit);
+		if (msc) {
+			mutex_enter(msc->lock);
+			msc->seqopen = 1;
+			mutex_exit(msc->lock);
+		}
 	}
 
 	seq_reset(sc);
@@ -429,7 +458,7 @@ sequencerclose(dev_t dev, int flags, int ifmt, struct lwp *l)
 	struct midi_softc *msc;
 	int unit, error;
 
-	DPRINTF(("sequencerclose: %"PRIx64"\n", dev));
+	DPRINTF(("%s: %"PRIx64"\n", __func__, dev));
 
 	if ((error = sequencer_enter(dev, &sc)) != 0)
 		return error;
@@ -440,10 +469,12 @@ sequencerclose(dev_t dev, int flags, int ifmt, struct lwp *l)
 	}
 	/* Bin input from MIDI devices. */
 	for (unit = 0; unit < sc->nmidi; unit++) {
-		msc = sc->devs[unit]->msc;
-		mutex_enter(msc->lock);
-		msc->seqopen = 0;
-		mutex_exit(msc->lock);
+		msc = device_lookup_private(&midi_cd, unit);
+		if (msc) {
+			mutex_enter(msc->lock);
+			msc->seqopen = 0;
+			mutex_exit(msc->lock);
+		}
 	}
 	mutex_exit(&sc->lock);
 
@@ -460,7 +491,7 @@ sequencerclose(dev_t dev, int flags, int ifmt, struct lwp *l)
 	sc->isopen = 0;
 	sequencer_exit(sc);
 
-	DPRINTF(("sequencerclose: %"PRIx64" done\n", dev));
+	DPRINTF(("%s: %"PRIx64" done\n", __func__, dev));
 
 	return (0);
 }
@@ -560,7 +591,7 @@ seq_softintr(void *addr)
 	t += sc->timer.divs_lastchange;
 	if (t != sc->input_stamp) {
 		seq_input_event(sc, &SEQ_MK_TIMING(WAIT_ABS, .divisions=t));
-		sc->input_stamp = t; /* XXX wha hoppen if timer is reset? */
+		sc->input_stamp = t; /* XXX what happens if timer is reset? */
 	}
 	seq_input_event(sc, &ev);
 	mutex_exit(&sc->lock);
@@ -574,7 +605,7 @@ sequencerread(dev_t dev, struct uio *uio, int ioflag)
 	seq_event_t ev;
 	int error;
 
-	DPRINTFN(20, ("sequencerread: %"PRIx64", count=%d, ioflag=%x\n",
+	DPRINTFN(2, ("sequencerread: %"PRIx64", count=%d, ioflag=%x\n",
 	   dev, (int)uio->uio_resid, ioflag));
 
 	if ((error = sequencer_enter(dev, &sc)) != 0)
@@ -701,7 +732,7 @@ sequencerioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 			if (sc->async != 0)
 				return EBUSY;
 			sc->async = curproc->p_pid;
-			DPRINTF(("sequencer_ioctl: FIOASYNC %d\n",
+			DPRINTF(("%s: FIOASYNC %d\n", __func__,
 			    sc->async));
 		} else {
 			sc->async = 0;
@@ -787,6 +818,7 @@ sequencerioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	case SEQUENCER_TMR_TEMPO:
 		error = seq_do_timing(sc,
 		    &SEQ_MK_TIMING(TEMPO, .bpm=*(int *)addr));
+		RECALC_USPERDIV(&sc->timer);
 		if (error == 0)
 			*(int *)addr = sc->timer.tempo_beatpermin;
 		break;
@@ -840,7 +872,7 @@ sequencerpoll(dev_t dev, int events, struct lwp *l)
 	if ((sc = sequencerget(SEQUENCERUNIT(dev))) == NULL)
 		return ENXIO;
 
-	DPRINTF(("sequencerpoll: %p events=0x%x\n", sc, events));
+	DPRINTF(("%s: %p events=0x%x\n", __func__, sc, events));
 
 	mutex_enter(&sc->lock);
 	if (events & (POLLIN | POLLRDNORM))
@@ -894,8 +926,12 @@ filt_sequencerread(struct knote *kn, long hint)
 	return rv;
 }
 
-static const struct filterops sequencerread_filtops =
-	{ 1, NULL, filt_sequencerrdetach, filt_sequencerread };
+static const struct filterops sequencerread_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_sequencerrdetach,
+	.f_event = filt_sequencerread,
+};
 
 static void
 filt_sequencerwdetach(struct knote *kn)
@@ -928,8 +964,12 @@ filt_sequencerwrite(struct knote *kn, long hint)
 	return rv;
 }
 
-static const struct filterops sequencerwrite_filtops =
-	{ 1, NULL, filt_sequencerwdetach, filt_sequencerwrite };
+static const struct filterops sequencerwrite_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_sequencerwdetach,
+	.f_event = filt_sequencerwrite,
+};
 
 static int
 sequencerkqfilter(dev_t dev, struct knote *kn)
@@ -971,7 +1011,7 @@ seq_reset(struct sequencer_softc *sc)
 
 	KASSERT(mutex_owned(&sc->lock));
 
-	if ( !(sc->flags & FWRITE) )
+	if (!(sc->flags & FWRITE))
 	        return;
 	for (i = 0; i < sc->nmidi; i++) {
 		md = sc->devs[i];
@@ -1114,7 +1154,7 @@ seq_do_sysex(struct sequencer_softc *sc, seq_event_t *b)
 	dev = b->sysex.device;
 	if (dev < 0 || dev >= sc->nmidi)
 		return (ENXIO);
-	DPRINTF(("seq_do_sysex: dev=%d\n", dev));
+	DPRINTF(("%s: dev=%d\n", __func__, dev));
 	md = sc->devs[dev];
 
 	if (!md->doingsysex) {
@@ -1166,7 +1206,7 @@ seq_timer_waitabs(struct sequencer_softc *sc, uint32_t divs)
 	}
 #ifdef SEQUENCER_DEBUG
 	else if (tick < 0)
-		DPRINTF(("seq_timer_waitabs: ticks = %d\n", ticks));
+		DPRINTF(("%s: ticks = %d\n", __func__, ticks));
 #endif
 }
 
@@ -1227,11 +1267,11 @@ seq_do_timing(struct sequencer_softc *sc, seq_event_t *b)
 		break;
 	case TMR_SPP:
 	case TMR_TIMESIG:
-		DPRINTF(("seq_do_timing: unimplemented %02x\n", b->timing.op));
+		DPRINTF(("%s: unimplemented %02x\n", __func__, b->timing.op));
 		error = EINVAL; /* not quite accurate... */
 		break;
 	default:
-		DPRINTF(("seq_timer: unknown %02x\n", b->timing.op));
+		DPRINTF(("%s: unknown %02x\n", __func__, b->timing.op));
 		error = EINVAL;
 		break;
 	}
@@ -1345,7 +1385,7 @@ seq_to_new(seq_event_t *ev, struct uio *uio)
 	case SEQOLD_PRIVATE:
 	case SEQOLD_EXTENDED:
 	default:
-		DPRINTF(("seq_to_new: not impl 0x%02x\n", cmd));
+		DPRINTF(("%s: not impl 0x%02x\n", __func__, cmd));
 		return EINVAL;
 	/* In case new-style events show up */
 	case SEQ_TIMING:
@@ -1381,7 +1421,6 @@ midiseq_in(struct midi_dev *md, u_char *msg, int len)
 static struct midi_dev *
 midiseq_open(int unit, int flags)
 {
-	extern struct cfdriver midi_cd;
 	int error;
 	struct midi_dev *md;
 	struct midi_softc *sc;
@@ -1420,7 +1459,6 @@ midiseq_open(int unit, int flags)
 
 	sc = device_lookup_private(&midi_cd, unit);
 	md = kmem_zalloc(sizeof(*md), KM_SLEEP);
-	md->msc = sc;
 	md->unit = unit;
 	md->name = mi.name;
 	md->subtype = 0;
@@ -1451,8 +1489,8 @@ midiseq_reset(struct midi_dev *md)
 static int
 midiseq_out(struct midi_dev *md, u_char *bf, u_int cc, int chk)
 {
-	DPRINTFN(5, ("midiseq_out: m=%p, unit=%d, bf[0]=0x%02x, cc=%d\n",
-		     md->msc, md->unit, bf[0], cc));
+	DPRINTFN(5, ("midiseq_out: md=%p, unit=%d, bf[0]=0x%02x, cc=%d\n",
+		     md, md->unit, bf[0], cc));
 
 	/* midi(4) does running status compression where appropriate. */
 	return midi_writebytes(md->unit, bf, cc);
@@ -1590,7 +1628,6 @@ midiseq_loadpatch(struct midi_dev *md,
 	return error;
 }
 
-#include "midi.h"
 #if NMIDI == 0
 static dev_type_open(midiopen);
 static dev_type_close(midiclose);
@@ -1648,3 +1685,49 @@ midi_writebytes(int unit, u_char *bf, int cc)
 	return (ENXIO);
 }
 #endif /* NMIDI == 0 */
+
+#ifdef _MODULE
+#include "ioconf.c"
+
+devmajor_t sequencer_bmajor = -1, sequencer_cmajor = -1;
+#endif
+
+MODULE(MODULE_CLASS_DRIVER, sequencer, "midi");
+
+static int
+sequencer_modcmd(modcmd_t cmd, void *arg)
+{
+	int error = 0;
+
+#ifdef _MODULE
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		error = devsw_attach(sequencer_cd.cd_name,
+		    NULL, &sequencer_bmajor,
+		    &sequencer_cdevsw, &sequencer_cmajor);
+		if (error)
+			break;
+
+		error = config_init_component(cfdriver_ioconf_sequencer,
+		    cfattach_ioconf_sequencer, cfdata_ioconf_sequencer);
+		if (error) {
+			devsw_detach(NULL, &sequencer_cdevsw);
+		}
+		break;
+	case MODULE_CMD_FINI:
+		devsw_detach(NULL, &sequencer_cdevsw);
+		error = config_fini_component(cfdriver_ioconf_sequencer,
+		   cfattach_ioconf_sequencer, cfdata_ioconf_sequencer);
+		if (error)
+			devsw_attach(sequencer_cd.cd_name,
+			    NULL, &sequencer_bmajor,
+			    &sequencer_cdevsw, &sequencer_cmajor);
+		break;
+	default:
+		error = ENOTTY;
+		break;
+	}
+#endif
+
+	return error;
+}

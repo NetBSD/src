@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_ipm.h,v 1.1 2008/12/06 05:22:39 cliff Exp $	*/
+/*	$NetBSD: gemini_ipm.h,v 1.1.32.1 2017/12/03 11:35:53 jdolecek Exp $	*/
 
 #ifndef _GEMINI_IPM_H_
 #define _GEMINI_IPM_H_
@@ -56,7 +56,7 @@ void gemini_ipm_deregister(void *);
  * - service produces (sends) 'ndesc' messages described by the array of
  *   descriptors 'desc'.
  * - if not all messages can be sent due to lack of descriptor queue resources,
- *   then the calling service has exceeded it's quota and the system will panic.
+ *   then the calling service has exceeded its quota and the system will panic.
  * - after return the descriptors at 'desc' revert to the caller
  *   caller can recycle or free as he likes.
  */

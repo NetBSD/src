@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_cardbus.c,v 1.55 2011/08/01 11:20:27 drochner Exp $	*/
+/*	$NetBSD: if_ex_cardbus.c,v 1.55.12.1 2017/12/03 11:37:00 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 and 1999
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.55 2011/08/01 11:20:27 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.55.12.1 2017/12/03 11:37:00 jdolecek Exp $");
 
 /* #define EX_DEBUG 4 */	/* define to report information for debugging */
 
@@ -255,16 +255,15 @@ ex_cardbus_attach(device_t parent, device_t self, void *aux)
 					adr1 | PCI_MAPREG_TYPE_MEM;
 
 			} else {
-				aprint_error_dev(self, "unable to map function "
-					"status window\n");
+				aprint_error_dev(self,
+				    "unable to map function status window\n");
 				return;
 			}
 
 			/* Setup interrupt acknowledge hook */
 			sc->intr_ack = ex_cardbus_intr_ack;
 		}
-	}
-	else {
+	} else {
 		aprint_naive(": can't map i/o space\n");
 		return;
 	}

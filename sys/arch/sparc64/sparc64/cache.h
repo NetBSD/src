@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.22.12.1 2014/08/20 00:03:25 tls Exp $ */
+/*	$NetBSD: cache.h,v 1.22.12.2 2017/12/03 11:36:45 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2011 Matthew R. Green
@@ -82,9 +82,7 @@
  */
 
 #include <machine/psl.h>
-#ifdef SUN4V
 #include <machine/hypervisor.h>
-#endif
 
 /* Various cache size/line sizes */
 extern	int	ecache_min_line_size;
@@ -103,15 +101,7 @@ void 	blast_icache_usiii(void);	/* Clear entire I$ */
 /* The following flush a range from the D$ and I$ but not E$. */
 void	cache_flush_phys_us(paddr_t, psize_t, int);
 void	cache_flush_phys_usiii(paddr_t, psize_t, int);
-
-static __inline__ void
-cache_flush_phys(paddr_t pa, psize_t size, int ecache)
-{
-	if (CPU_IS_USIII_UP() || CPU_IS_SPARC64_V_UP())
-		cache_flush_phys_usiii(pa, size, ecache);
-	else
-		cache_flush_phys_us(pa, size, ecache);
-}
+extern void (*cache_flush_phys)(paddr_t, psize_t, int);
 
 /* SPARC64 specific */
 /* Assembly routines to flush TLB mappings */
@@ -120,45 +110,13 @@ void sp_tlb_flush_pte_usiii(vaddr_t, int);
 void sp_tlb_flush_all_us(void);
 void sp_tlb_flush_all_usiii(void);
 
-#ifdef SUN4V
-static __inline__ void
-sp_tlb_flush_pte_sun4v(vaddr_t va, int ctx)
-{
-	int64_t hv_rc;
-	hv_rc = hv_mmu_demap_page(va, ctx, MAP_DTLB|MAP_ITLB);
-	if ( hv_rc != H_EOK )
-		panic("hv_mmu_demap_page(%p,%d) failed - rc = %" PRIx64 "\n", (void*)va, ctx, hv_rc);
-}
-#endif
-
-static __inline__ void
-sp_tlb_flush_pte(vaddr_t va, int ctx)
-{
-	if (CPU_ISSUN4U || CPU_ISSUN4US) {
-		if (CPU_IS_USIII_UP() || CPU_IS_SPARC64_V_UP())
-			sp_tlb_flush_pte_usiii(va, ctx);
-		else
-			sp_tlb_flush_pte_us(va, ctx);
-	}
-#ifdef SUN4V	
-	else
-		sp_tlb_flush_pte_sun4v(va, ctx);
-#endif
-}
-
-static __inline__ void
-sp_tlb_flush_all(void)
-{
-	if (CPU_IS_USIII_UP() || CPU_IS_SPARC64_V_UP())
-		sp_tlb_flush_all_usiii();
-	else
-		sp_tlb_flush_all_us();
-}
 
 extern	void	(*dcache_flush_page)(paddr_t);
 extern	void	(*dcache_flush_page_cpuset)(paddr_t, sparc64_cpuset_t);
 extern	void	(*blast_dcache)(void);
 extern	void	(*blast_icache)(void);
+extern	void	(*sp_tlb_flush_pte)(vaddr_t, int);
+extern	void	(*sp_tlb_flush_all)(void);
 
 void cache_setup_funcs(void);
 

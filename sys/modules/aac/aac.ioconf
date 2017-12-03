@@ -1,0 +1,10 @@
+#       $NetBSD: aac.ioconf,v 1.1.18.2 2017/12/03 11:38:48 jdolecek Exp $
+
+ioconf aac
+
+include "conf/files"
+include "dev/pci/files.pci"
+
+pseudo-root pci*
+
+aac* at pci ? dev ? function ?

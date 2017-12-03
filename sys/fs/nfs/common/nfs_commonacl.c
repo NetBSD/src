@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_commonacl.c,v 1.1.1.1.10.2 2014/08/20 00:04:27 tls Exp $	*/
+/*	$NetBSD: nfs_commonacl.c,v 1.1.1.1.10.3 2017/12/03 11:38:42 jdolecek Exp $	*/
 /*-
  * Copyright (c) 2009 Rick Macklem, University of Guelph
  * All rights reserved.
@@ -27,11 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-/* __FBSDID("FreeBSD: head/sys/fs/nfs/nfs_commonacl.c 240720 2012-09-20 02:49:25Z rmacklem "); */
-__RCSID("$NetBSD: nfs_commonacl.c,v 1.1.1.1.10.2 2014/08/20 00:04:27 tls Exp $");
+/* __FBSDID("FreeBSD: head/sys/fs/nfs/nfs_commonacl.c 297793 2016-04-10 23:07:00Z pfg "); */
+__RCSID("$NetBSD: nfs_commonacl.c,v 1.1.1.1.10.3 2017/12/03 11:38:42 jdolecek Exp $");
 
 #ifndef APPLEKEXT
-#include <fs/nfs/nfsport.h>
+#include <fs/nfs/common/nfsport.h>
 
 extern int nfsrv_useacl;
 #endif
@@ -349,6 +349,8 @@ nfsrv_buildace(struct nfsrv_descript *nd, u_char *name, int namelen,
 			acemask |= NFSV4ACE_WRITEACL;
 		if (ace->ae_perm & ACL_WRITE_OWNER)
 			acemask |= NFSV4ACE_WRITEOWNER;
+		if (ace->ae_perm & ACL_SYNCHRONIZE)
+			acemask |= NFSV4ACE_SYNCHRONIZE;
 	} else {
 		if (ace->ae_perm & ACL_READ_DATA)
 			acemask |= NFSV4ACE_READDATA;
@@ -436,7 +438,7 @@ nfsrv_buildacl(struct nfsrv_descript *nd, NFSACL_T *aclp, enum vtype type,
 			break;
 		default:
 			continue;
-		};
+		}
 		retlen += nfsrv_buildace(nd, name, namelen, type, isgroup,
 		    isowner, &aclp->acl_entry[i]);
 		entrycnt++;
@@ -505,7 +507,7 @@ nfsrv_compareacl(NFSACL_T *aclp1, NFSACL_T *aclp2)
 		case ACL_OTHER:
 			if (acep1->ae_perm != acep2->ae_perm)
 				return (1);
-		};
+		}
 		acep1++;
 		acep2++;
 	}

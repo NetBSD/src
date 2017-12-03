@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfe.c,v 1.56.2.3 2014/08/20 00:03:42 tls Exp $	*/
+/*	$NetBSD: if_nfe.c,v 1.56.2.4 2017/12/03 11:37:08 jdolecek Exp $	*/
 /*	$OpenBSD: if_nfe.c,v 1.77 2008/02/05 16:52:50 brad Exp $	*/
 
 /*-
@@ -21,7 +21,7 @@
 /* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.56.2.3 2014/08/20 00:03:42 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.56.2.4 2017/12/03 11:37:08 jdolecek Exp $");
 
 #include "opt_inet.h"
 #include "vlan.h"
@@ -409,6 +409,7 @@ nfe_attach(device_t parent, device_t self, void *aux)
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER | IFM_AUTO);
 
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, sc->sc_enaddr);
 	ether_set_ifflags_cb(&sc->sc_ethercom, nfe_ifflags_cb);
 
@@ -631,8 +632,8 @@ nfe_intr(void *arg)
 		}
 	}
 
-	if (handled && !IF_IS_EMPTY(&ifp->if_snd))
-		nfe_start(ifp);
+	if (handled)
+		if_schedule_deferred_start(ifp);
 
 	return handled;
 }
@@ -917,7 +918,7 @@ nfe_rxeof(struct nfe_softc *sc)
 mbufcopied:
 		/* finalize mbuf */
 		m->m_pkthdr.len = m->m_len = len;
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 
 		if ((sc->sc_flags & NFE_HW_CSUM) != 0) {
 			/*
@@ -944,9 +945,7 @@ mbufcopied:
 				    device_xname(sc->sc_dev)));
 			}
 		}
-		bpf_mtap(ifp, m);
-		ifp->if_ipackets++;
-		(*ifp->if_input)(ifp, m);
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 
 skip1:
 		/* update mapping address in h/w descriptor */
@@ -1073,7 +1072,6 @@ nfe_encap(struct nfe_softc *sc, struct mbuf *m0)
 	bus_dmamap_t map;
 	uint16_t flags, csumflags;
 #if NVLAN > 0
-	struct m_tag *mtag;
 	uint32_t vtag = 0;
 #endif
 	int error, i, first;
@@ -1102,8 +1100,8 @@ nfe_encap(struct nfe_softc *sc, struct mbuf *m0)
 
 #if NVLAN > 0
 	/* setup h/w VLAN tagging */
-	if ((mtag = VLAN_OUTPUT_TAG(&sc->sc_ethercom, m0)) != NULL)
-		vtag = NFE_TX_VTAG | VLAN_TAG_VALUE(mtag);
+	if (vlan_has_tag(m0))
+		vtag = NFE_TX_VTAG | vlan_get_tag(m0);
 #endif
 	if ((sc->sc_flags & NFE_HW_CSUM) != 0) {
 		if (m0->m_pkthdr.csum_flags & M_CSUM_IPv4)

@@ -1,0 +1,76 @@
+#	$NetBSD: majors.or1k,v 1.2.16.2 2017/12/03 11:36:34 jdolecek Exp $
+#
+# Device majors for OpenRISC 1000
+#
+
+device-major	mem		char 0
+device-major	swap		char 1   block 1	vmswap
+device-major	cons		char 2
+device-major	ctty		char 3
+device-major	physcon		char 4			vt
+device-major	log		char 5
+device-major	ptc		char 6			pty
+device-major	pts		char 7			pty
+device-major	clockctl	char 8			clockctl
+device-major	rnd		char 9			rnd
+device-major	ksyms		char 10			ksyms
+device-major	sysmon		char 11			sysmon
+device-major	kttcp		char 12			kttcp
+device-major	bpf		char 13			bpfilter
+device-major	tun		char 14			tun
+device-major	filedesc	char 15
+device-major	ipl		char 16			ipfilter
+device-major	vcoda		char 17			vcoda
+device-major	altq		char 18			altq
+device-major	prof		char 19			profiler
+device-major	nsmb		char 20			nsmb
+
+device-major	wd		char 30  block 30	wd
+device-major	fd		char 31  block 31	fdc
+device-major	md		char 32  block 32	md
+device-major	vnd		char 33  block 33	vnd
+device-major	ld		char 34  block 34	ld
+device-major	raid		char 35  block 35	raid
+device-major	ccd		char 36  block 36	ccd
+device-major	cgd		char 37  block 37	cgd
+device-major	scsibus		char 39			scsibus
+device-major	sd		char 40  block 40	sd
+device-major	st		char 41  block 41	st
+device-major	cd		char 42  block 42	cd
+device-major	ch		char 43			ch
+device-major	uk		char 44			uk
+device-major	ss		char 45			ss
+device-major	ses		char 46			ses
+
+device-major	audio		char 50			audio
+device-major	radio		char 51			radio
+device-major	joy		char 52			joy
+device-major	midi		char 53			midi
+device-major	sequencer	char 54			sequencer
+
+device-major	com		char 60			com
+
+device-major	wsdisplay	char 70			wsdisplay
+device-major	wskbd		char 71			wskbd
+device-major	wsmouse		char 72			wsmouse
+device-major	wsfont		char 73			wsfont
+device-major	wsmux		char 74			wsmux
+
+device-major	usb		char 80			usb
+device-major	uhid		char 81			uhid
+device-major	ugen		char 82			ugen
+device-major	ulpt		char 83			ulpt
+device-major	ucom		char 84			ucom
+device-major	urio		char 85			urio
+device-major	uscanner	char 86			uscanner
+
+device-major	agp		char 90			agp
+device-major	pci		char 91			pci
+device-major	iop		char 92			iop
+device-major	mly		char 93			mly
+device-major	mlx		char 94			mlx
+device-major	twe		char 95  		twe
+
+# Majors up to 143 are reserved for machine-dependent drivers.
+# New machine-independent driver majors are assigned in 
+# sys/conf/majors.

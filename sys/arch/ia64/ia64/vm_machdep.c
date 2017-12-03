@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.11 2011/02/10 14:46:46 pooka Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.11.14.1 2017/12/03 11:36:20 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -36,6 +36,7 @@
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
+#include <sys/cpu.h>
 
 #include <machine/frame.h>
 #include <machine/md_var.h>
@@ -62,11 +63,44 @@ cpu_lwp_free2(struct lwp *l)
 }
 
 /*
+ * The cpu_switchto() function saves the context of the LWP which is
+ * currently running on the processor, and restores the context of the LWP
+ * specified by newlwp.  man cpu_switchto(9)
+ */
+lwp_t *
+cpu_switchto(lwp_t *oldlwp, lwp_t *newlwp, bool returning)
+{
+	const struct lwp *l = curlwp;
+	struct pcb *oldpcb = oldlwp ? lwp_getpcb(oldlwp) : NULL;
+	struct pcb *newpcb = lwp_getpcb(newlwp);
+	struct cpu_info *ci = curcpu();
+	register uint64_t reg9 __asm("r9");
+
+	KASSERT(newlwp != NULL);
+	
+	ci->ci_curlwp = newlwp;
+	
+	/* required for lwp_startup, copy oldlwp into r9, "mov r9=in0" */
+	__asm __volatile("mov %0=%1" : "=r"(reg9) : "r"(oldlwp));
+	
+	/* XXX handle RAS eventually */
+	
+	if (oldlwp == NULL) {
+		restorectx(newpcb);
+	} else {
+		KASSERT(oldlwp == l);
+		swapctx(oldpcb, newpcb);
+	}
+	
+	return (oldlwp);
+}
+
+/*
  * Finish a fork operation, with process p2 nearly set up.
  * Copy and update the pcb and trap frame, making the child ready to run.
  * 
  * Rig the child's kernel stack so that it will start out in
- * proc_trampoline() and call child_return() with p2 as an
+ * lwp_trampoline() and call child_return() with p2 as an
  * argument. This causes the newly-created child process to go
  * directly to user level with an apparent return value of 0 from
  * fork(), while the parent process returns normally.
@@ -85,17 +119,16 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 {
 	struct pcb *pcb1, *pcb2;
 	struct trapframe *tf;
-
+	
 	pcb1 = lwp_getpcb(l1);
 	pcb2 = lwp_getpcb(l2);
 
 	/* Copy pcb from lwp l1 to l2. */
 	if (l1 == curlwp) {
 		/* Sync the PCB before we copy it. */
-		savectx(pcb1);
-#if 0
-		/* ia64_highfp_save(???); */
-#endif
+		if (savectx(pcb1) != 0)
+			panic("unexpected return from savectx");
+		/* ia64_highfp_save(td1); XXX */
 	} else {
 		KASSERT(l1 == &lwp0);
 	}

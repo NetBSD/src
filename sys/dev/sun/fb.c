@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.33.20.1 2014/08/20 00:03:50 tls Exp $ */
+/*	$NetBSD: fb.c,v 1.33.20.2 2017/12/03 11:37:33 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.33.20.1 2014/08/20 00:03:50 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.33.20.2 2017/12/03 11:37:33 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -382,146 +382,3 @@ fb_setsize_eeprom(struct fbdevice *fb, int depth, int def_width, int def_height)
 #endif /* !SUN4U */
 }
 
-
-
-#ifdef RASTERCONSOLE
-static void fb_bell(int);
-
-static void
-fb_bell(int on)
-{
-#if NKBD > 0
-	kbd_bell(on);
-#endif
-}
-
-void
-fbrcons_init(struct fbdevice *fb)
-{
-	struct rconsole	*rc = &fb->fb_rcons;
-	struct rasops_info *ri = &fb->fb_rinfo;
-	int maxrow, maxcol;
-#if !defined(RASTERCONS_FULLSCREEN)
-	int *row, *col;
-#endif
-
-	/* Set up what rasops needs to know about */
-	memset(ri, 0, sizeof *ri);
-	ri->ri_stride = fb->fb_linebytes;
-	ri->ri_bits = (void *)fb->fb_pixels;
-	ri->ri_depth = fb->fb_type.fb_depth;
-	ri->ri_width = fb->fb_type.fb_width;
-	ri->ri_height = fb->fb_type.fb_height;
-	maxrow = 5000;
-	maxcol = 5000;
-
-#if !defined(RASTERCONS_FULLSCREEN)
-#if !defined(SUN4U)
-	if (CPU_ISSUN4) {
-		struct eeprom *eep = (struct eeprom *)eeprom_va;
-
-		if (eep == NULL) {
-			maxcol = 80;
-			maxrow = 34;
-		} else {
-			maxcol = eep->eeTtyCols;
-			maxrow = eep->eeTtyRows;
-		}
-	}
-#endif /* !SUN4U */
-	if (!CPU_ISSUN4) {
-		char buf[6+1];	/* Enough for six digits */
-		maxcol = (prom_getoption("screen-#columns", buf, sizeof buf) == 0)
-			? strtoul(buf, NULL, 10)
-			: 80;
-
-		maxrow = (prom_getoption("screen-#rows", buf, sizeof buf) != 0)
-			? strtoul(buf, NULL, 10)
-			: 34;
-
-	}
-#endif /* !RASTERCONS_FULLSCREEN */
-	/*
-	 * - force monochrome output
-	 * - eraserows() hack to clear the *entire* display
-	 * - cursor is currently enabled
-	 * - center output
-	 */
-	ri->ri_flg = RI_FULLCLEAR | RI_CURSOR | RI_CENTER;
-
-	/* Get operations set and connect to rcons */
-	if (rasops_init(ri, maxrow, maxcol))
-		panic("fbrcons_init: rasops_init failed!");
-
-	if (ri->ri_depth == 8) {
-		int i;
-		for (i = 0; i < 16; i++) {
-
-			/*
-			 * Cmap entries are repeated four times in the
-			 * 32 bit wide `devcmap' entries for optimization
-			 * purposes; see rasops(9)
-			 */
-#define I_TO_DEVCMAP(i)	((i) | ((i)<<8) | ((i)<<16) | ((i)<<24))
-
-			/*
-			 * Use existing colormap entries for black and white
-			 */
-			if ((i & 7) == WSCOL_BLACK) {
-				ri->ri_devcmap[i] = I_TO_DEVCMAP(255);
-				continue;
-			}
-
-			if ((i & 7) == WSCOL_WHITE) {
-				ri->ri_devcmap[i] = I_TO_DEVCMAP(0);
-				continue;
-			}
-			/*
-			 * Other entries refer to ANSI map, which for now
-			 * is setup in bt_subr.c
-			 */
-			ri->ri_devcmap[i] = I_TO_DEVCMAP(i + 1);
-#undef I_TO_DEVCMAP
-		}
-	}
-
-	rc->rc_row = rc->rc_col = 0;
-#if !defined(RASTERCONS_FULLSCREEN)
-	/* Determine addresses of prom emulator row and column */
-	if (!CPU_ISSUN4 && !romgetcursoraddr(&row, &col)) {
-		rc->rc_row = *row;
-		rc->rc_col = *col;
-	}
-#endif
-	ri->ri_crow = rc->rc_row;
-	ri->ri_ccol = rc->rc_col;
-
-	rc->rc_ops = &ri->ri_ops;
-	rc->rc_cookie = ri;
-	rc->rc_bell = fb_bell;
-	rc->rc_maxcol = ri->ri_cols;
-	rc->rc_maxrow = ri->ri_rows;
-	rc->rc_width = ri->ri_emuwidth;
-	rc->rc_height = ri->ri_emuheight;
-	rc->rc_deffgcolor = WSCOL_BLACK;
-	rc->rc_defbgcolor = WSCOL_WHITE;
-	rcons_init(rc, 0);
-
-	/* Hook up virtual console */
-	v_putc = rcons_cnputc;
-}
-
-int
-fbrcons_rows(void)
-{
-	return ((fblist.fb_dev != NULL) ?
-	    fblist.fb_dev->fb_rcons.rc_maxrow : 0);
-}
-
-int
-fbrcons_cols(void)
-{
-	return ((fblist.fb_dev != NULL) ?
-	    fblist.fb_dev->fb_rcons.rc_maxcol : 0);
-}
-#endif /* RASTERCONSOLE */

@@ -1,8 +1,5 @@
-/*	$NetBSD: kern.ldscript,v 1.1.162.1 2014/08/20 00:03:23 tls Exp $	*/
+/*	$NetBSD: kern.ldscript,v 1.1.162.2 2017/12/03 11:36:42 jdolecek Exp $	*/
 
-OUTPUT_FORMAT("elf32-littlearm", "elf32-bigarm",
-	      "elf32-littlearm")
-OUTPUT_ARCH(arm)
 SECTIONS
 {
   . = 0xf0000020;	/* 0x20 == sizeof(a.out header) */
@@ -16,10 +13,6 @@ SECTIONS
     *(.glue_7t) *(.glue_7)
     *(.rodata) *(.rodata.*)
   } =0
-  .ARM.extab   : { *(.ARM.extab* .gnu.linkonce.armextab.*) }
-  PROVIDE (__exidx_start = .);
-  .ARM.exidx   : { *(.ARM.exidx* .gnu.linkonce.armexidx.*) }
-  PROVIDE (__exidx_end = .);
   PROVIDE (__etext = .);
   PROVIDE (_etext = .);
   PROVIDE (etext = .);
@@ -38,14 +31,14 @@ SECTIONS
   __bss_start__ = .;
   .bss       :
   {
-   *(.dynbss)
-   *(.bss)
-   *(.bss.*)
-   *(COMMON)
-   /* Align here to ensure that the .bss section occupies space up to
-      _end.  Align after .bss to ensure correct alignment even if the
-      .bss section disappears because there are no input sections.  */
-   . = ALIGN(32 / 8);
+    *(.dynbss)
+    *(.bss)
+    *(.bss.*)
+    *(COMMON)
+    /* Align here to ensure that the .bss section occupies space up to
+       _end.  Align after .bss to ensure correct alignment even if the
+       .bss section disappears because there are no input sections.  */
+    . = ALIGN(32 / 8);
   }
   . = ALIGN(32 / 8);
   _end = .;

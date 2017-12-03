@@ -1,4 +1,4 @@
-/*	$NetBSD: unpcb.h,v 1.17 2008/04/24 11:38:39 ad Exp $	*/
+/*	$NetBSD: unpcb.h,v 1.17.46.1 2017/12/03 11:39:21 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -97,11 +97,12 @@ struct	unpcb {
  * in with data for the listening process.  This is set up in unp_bind() when
  * it fills in unp_connid for later consumption by unp_connect().
  */
-#define	UNP_WANTCRED	0x0001		/* credentials wanted */
+#define	UNP_OWANTCRED	0x0001		/* credentials wanted */
 #define	UNP_CONNWAIT	0x0002		/* connect blocks until accepted */
 #define	UNP_EIDSVALID	0x0004		/* unp_connid contains valid data */
 #define	UNP_EIDSBIND	0x0008		/* unp_connid was set by bind() */
 #define	UNP_BUSY	0x0010		/* busy connecting or binding */
+#define	UNP_WANTCRED	0x0020		/* credentials wanted */
 
 #define	sotounpcb(so)	((struct unpcb *)((so)->so_pcb))
 

@@ -260,12 +260,12 @@ static void intel_dsi_post_disable(struct intel_encoder *encoder)
 }
 
 static bool intel_dsi_get_hw_state(struct intel_encoder *encoder,
-				   enum pipe *pipe)
+				   enum i915_pipe *pipe)
 {
 	struct drm_i915_private *dev_priv = encoder->base.dev->dev_private;
 	enum intel_display_power_domain power_domain;
 	u32 port, func;
-	enum pipe p;
+	enum i915_pipe p;
 
 	DRM_DEBUG_KMS("\n");
 

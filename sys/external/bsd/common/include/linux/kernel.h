@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.4.4.2 2014/08/20 00:03:56 tls Exp $	*/
+/*	$NetBSD: kernel.h,v 1.4.4.3 2017/12/03 11:37:45 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -37,9 +37,11 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 
+#include <lib/libkern/libkern.h>
+
 #define	oops_in_progress	(panicstr != NULL)
 
-#define	IS_ENABLED(option)	0 /* XXX Hmm...  */
+#define	IS_ENABLED(option)	(option)
 
 #define	__printf	__printflike
 #define	__user
@@ -61,6 +63,7 @@
 #define	min_t(T, X, Y)	MIN(X, Y)
 
 #define	clamp_t(T, X, MIN, MAX)	min_t(T, max_t(T, X, MIN), MAX)
+#define	clamp(X, MN, MX)	MIN(MAX(X, MN), MX)
 
 /*
  * Rounding to nearest.
@@ -92,16 +95,6 @@
  */
 #define	upper_32_bits(X)	((uint32_t) (((X) >> 16) >> 16))
 #define	lower_32_bits(X)	((uint32_t) ((X) & 0xffffffffUL))
-
-/*
- * Given x = &c->f, container_of(x, T, f) gives us back c, where T is
- * the type of c.
- */
-#define	container_of(PTR, TYPE, FIELD)					\
-	((TYPE *)(((char *)(PTR)) - offsetof(TYPE, FIELD) +		\
-	    0*sizeof((PTR) -						\
-		&((TYPE *)(((char *)(PTR)) -				\
-			offsetof(TYPE, FIELD)))->FIELD)))
 
 #define	ARRAY_SIZE(ARRAY)	__arraycount(ARRAY)
 
@@ -162,6 +155,18 @@ scnprintf(char *buf, size_t size, const char *fmt, ...)
 	va_end(va);
 
 	return ret;
+}
+
+static inline int
+kstrtol(const char *s, unsigned base, long *vp)
+{
+	long long v;
+
+	v = strtoll(s, NULL, base);
+	if (v < LONG_MIN || LONG_MAX < v)
+		return -ERANGE;
+	*vp = v;
+	return 0;
 }
 
 #endif  /* _LINUX_KERNEL_H_ */

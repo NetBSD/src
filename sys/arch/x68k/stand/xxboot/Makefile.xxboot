@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xxboot,v 1.1.4.1 2014/08/20 00:03:29 tls Exp $
+#	$NetBSD: Makefile.xxboot,v 1.1.4.2 2017/12/03 11:36:49 jdolecek Exp $
 
 NOMAN=		# defined
 
@@ -26,11 +26,7 @@ M=		$S/arch/x68k
 .PATH:		${.CURDIR}/..
 SRCS=	boot.S bootmain.c conf.c consio1.c $(DEVDRV).c
 
-SRCS+=		vers.c
-CLEANFILES+=	vers.c
-vers.c:	${VERSIONFILE}
-	${_MKTARGET_CREATE}
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${.ALLSRC} ${MACHINE} ${NEWVERSWHAT}
+.include "${S}/conf/newvers_stand.mk"
 
 CFLAGS=	-Os -fomit-frame-pointer -fno-unwind-tables
 #CFLAGS+= -Wall

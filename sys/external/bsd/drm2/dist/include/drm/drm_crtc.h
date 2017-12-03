@@ -31,6 +31,9 @@
 #include <linux/idr.h>
 #include <linux/fb.h>
 #include <linux/hdmi.h>
+#include <linux/kref.h>
+#include <linux/mutex.h>
+#include <linux/workqueue.h>
 #include <drm/drm_mode.h>
 #include <drm/drm_fourcc.h>
 
@@ -461,6 +464,7 @@ struct drm_encoder {
  * @force: a %DRM_FORCE_<foo> state for forced mode sets
  * @encoder_ids: valid encoders for this connector
  * @encoder: encoder driving this connector, if any
+ * @physical_address: HDMI physical address
  * @eld: EDID-like data, if present
  * @dvi_dual: dual link DVI, if found
  * @max_tmds_clock: max clock rate, if found
@@ -513,6 +517,7 @@ struct drm_connector {
 	struct drm_encoder *encoder; /* currently active encoder */
 
 	/* EDID bits */
+	uint16_t physical_address;
 	uint8_t eld[MAX_ELD_BYTES];
 	bool dvi_dual;
 	int max_tmds_clock;	/* in MHz */

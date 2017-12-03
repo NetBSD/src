@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp.c,v 1.31.22.1 2012/11/20 03:02:11 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp.c,v 1.31.22.2 2017/12/03 11:37:05 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -79,20 +79,24 @@ static void isic_isapnp_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(isic_isapnp, sizeof(struct isic_softc),
     isic_isapnp_probe, isic_isapnp_attach, NULL, NULL);
 
-typedef void (*allocmaps_func)(struct isapnp_attach_args *ipa, struct isic_softc *sc);
+typedef void (*allocmaps_func)(struct isapnp_attach_args *ipa,
+    struct isic_softc *sc);
 typedef void (*attach_func)(struct isic_softc *sc);
 
 /* map allocators */
 #if defined(ISICPNP_ELSA_QS1ISA) || defined(ISICPNP_SEDLBAUER) \
 	|| defined(ISICPNP_DYNALINK) || defined(ISICPNP_SIEMENS_ISURF2)	\
 	|| defined(ISICPNP_ITKIX)
-static void generic_pnp_mapalloc(struct isapnp_attach_args *ipa, struct isic_softc *sc);
+static void generic_pnp_mapalloc(struct isapnp_attach_args *ipa,
+    struct isic_softc *sc);
 #endif
 #ifdef ISICPNP_DRN_NGO
-static void ngo_pnp_mapalloc(struct isapnp_attach_args *ipa, struct isic_softc *sc);
+static void ngo_pnp_mapalloc(struct isapnp_attach_args *ipa,
+    struct isic_softc *sc);
 #endif
 #if defined(ISICPNP_CRTX_S0_P) || defined(ISICPNP_TEL_S0_16_3_P)
-static void tls_pnp_mapalloc(struct isapnp_attach_args *ipa, struct isic_softc *sc);
+static void tls_pnp_mapalloc(struct isapnp_attach_args *ipa,
+    struct isic_softc *sc);
 #endif
 
 /* card attach functions */
@@ -154,8 +158,7 @@ isic_isapnp_descriptions[] =
  * Probe card
  */
 static int
-isic_isapnp_probe(device_t parent,
-	cfdata_t cf, void *aux)
+isic_isapnp_probe(device_t parent, cfdata_t cf, void *aux)
 {
 	struct isapnp_attach_args *ipa = aux;
 	const struct isic_isapnp_card_desc *desc = isic_isapnp_descriptions;
@@ -231,9 +234,10 @@ isic_isapnp_attach(device_t parent, device_t self, void *aux)
 	printf(": %s\n", desc->name);
 
 	/* establish interrupt handler */
-	if (isa_intr_establish(ipa->ipa_ic, ipa->ipa_irq[0].num, ipa->ipa_irq[0].type,
-		IPL_NET, isicintr, sc) == NULL)
-		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt handler\n");
+	if (isa_intr_establish(ipa->ipa_ic, ipa->ipa_irq[0].num,
+	    ipa->ipa_irq[0].type, IPL_NET, isicintr, sc) == NULL)
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't establish interrupt handler\n");
 
 	/* init card */
 	desc->attach(sc);
@@ -242,8 +246,7 @@ isic_isapnp_attach(device_t parent, device_t self, void *aux)
 	sc->sc_isac_version = 0;
 	sc->sc_isac_version = ((ISAC_READ(I_RBCH)) >> 5) & 0x03;
 
-	switch(sc->sc_isac_version)
-	{
+	switch (sc->sc_isac_version) {
 		case ISAC_VA:
 		case ISAC_VB1:
                 case ISAC_VB2:
@@ -251,16 +254,16 @@ isic_isapnp_attach(device_t parent, device_t self, void *aux)
 			break;
 
 		default:
-			printf(ISIC_FMT "Error, ISAC version %d unknown!\n",
-				ISIC_PARM, sc->sc_isac_version);
+			aprint_error(ISIC_FMT
+			    "Error, ISAC version %d unknown!\n",
+			    ISIC_PARM, sc->sc_isac_version);
 			return;
 			break;
 	}
 
 	sc->sc_hscx_version = HSCX_READ(0, H_VSTR) & 0xf;
 
-	switch(sc->sc_hscx_version)
-	{
+	switch (sc->sc_hscx_version) {
 		case HSCX_VA1:
 		case HSCX_VA2:
 		case HSCX_VA3:
@@ -268,8 +271,9 @@ isic_isapnp_attach(device_t parent, device_t self, void *aux)
 			break;
 
 		default:
-			printf(ISIC_FMT "Error, HSCX version %d unknown!\n",
-				ISIC_PARM, sc->sc_hscx_version);
+			aprint_error(ISIC_FMT
+			    "Error, HSCX version %d unknown!\n",
+			    ISIC_PARM, sc->sc_hscx_version);
 			return;
 			break;
 	};
@@ -311,33 +315,24 @@ isic_isapnp_attach(device_t parent, device_t self, void *aux)
 
 	/* announce chip versions */
 
-	if(sc->sc_isac_version >= ISAC_UNKN)
-	{
-		printf(ISIC_FMT "ISAC Version UNKNOWN (VN=0x%x)" TERMFMT,
-				ISIC_PARM,
-				sc->sc_isac_version);
+	if (sc->sc_isac_version >= ISAC_UNKN) {
+		aprint_error(ISIC_FMT
+		    "ISAC Version UNKNOWN (VN=0x%x)" TERMFMT, ISIC_PARM,
+		    sc->sc_isac_version);
 		sc->sc_isac_version = ISAC_UNKN;
-	}
-	else
-	{
-		printf(ISIC_FMT "ISAC %s (IOM-%c)" TERMFMT,
-				ISIC_PARM,
-				ISACversion[sc->sc_isac_version],
-				sc->sc_bustyp == BUS_TYPE_IOM1 ? '1' : '2');
+	} else {
+		aprint_error(ISIC_FMT "ISAC %s (IOM-%c)" TERMFMT, ISIC_PARM,
+		    ISACversion[sc->sc_isac_version],
+		    sc->sc_bustyp == BUS_TYPE_IOM1 ? '1' : '2');
 	}
 
-	if(sc->sc_hscx_version >= HSCX_UNKN)
-	{
-		printf(ISIC_FMT "HSCX Version UNKNOWN (VN=0x%x)" TERMFMT,
-				ISIC_PARM,
-				sc->sc_hscx_version);
+	if (sc->sc_hscx_version >= HSCX_UNKN) {
+		aprint_error(ISIC_FMT "HSCX Version UNKNOWN (VN=0x%x)" TERMFMT,
+		    ISIC_PARM, sc->sc_hscx_version);
 		sc->sc_hscx_version = HSCX_UNKN;
-	}
-	else
-	{
-		printf(ISIC_FMT "HSCX %s" TERMFMT,
-				ISIC_PARM,
-				HSCXversion[sc->sc_hscx_version]);
+	} else {
+		aprint_error(ISIC_FMT "HSCX %s" TERMFMT, ISIC_PARM,
+		    HSCXversion[sc->sc_hscx_version]);
 	}
 
 	/* init higher protocol layers and save l2 handle */

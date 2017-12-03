@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.348.6.3 2014/08/20 00:03:24 tls Exp $ */
+/*	$NetBSD: pmap.c,v 1.348.6.4 2017/12/03 11:36:43 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.348.6.3 2014/08/20 00:03:24 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.348.6.4 2017/12/03 11:36:43 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -3035,7 +3035,7 @@ pmap_bootstrap(int nctx, int nregion, int nsegment)
 	extern char *kernel_top;
 
 	uvmexp.pagesize = NBPG;
-	uvm_setpagesize();
+	uvm_md_init();
 
 #if defined(SUN4) && (defined(SUN4C) || defined(SUN4M) || defined(SUN4D))
 	/* In this case NPTESG is a variable */
@@ -3214,7 +3214,7 @@ pmap_bootstrap4_4c(void *top, int nctx, int nregion, int nsegment)
 	 * above NUREG, we save storage space and can index kernel and
 	 * user regions in the same way.
 	 */
-	kernel_pmap_store.pm_regmap = &kernel_regmap_store[-NUREG];
+	kernel_pmap_store.pm_regmap = kernel_regmap_store - NUREG;
 	for (i = NKREG; --i >= 0;) {
 #if defined(SUN4_MMU3L)
 		kernel_regmap_store[i].rg_smeg = reginval;
@@ -3592,7 +3592,7 @@ pmap_bootstrap4m(void *top)
 	 * above NUREG, we save storage space and can index kernel and
 	 * user regions in the same way.
 	 */
-	kernel_pmap_store.pm_regmap = &kernel_regmap_store[-NUREG];
+	kernel_pmap_store.pm_regmap = kernel_regmap_store - NUREG;
 	memset(kernel_regmap_store, 0, NKREG * sizeof(struct regmap));
 	memset(kernel_segmap_store, 0, NKREG * NSEGRG * sizeof(struct segmap));
 	for (i = NKREG; --i >= 0;) {
@@ -4265,7 +4265,7 @@ pmap_quiet_check(struct pmap *pm)
 			continue;
 		if (CPU_HAS_SUNMMU) {
 			int ctx;
-			if (mmu_has_hole && (vr >= 32 || vr < (256 - 32)))
+			if (mmu_has_hole && (vr >= 32 && vr < (256 - 32)))
 				continue;
 			ctx = getcontext4();
 			setcontext4(pm->pm_ctxnum);

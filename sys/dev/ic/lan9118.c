@@ -1,4 +1,4 @@
-/*	$NetBSD: lan9118.c,v 1.16.2.1 2014/08/20 00:03:38 tls Exp $	*/
+/*	$NetBSD: lan9118.c,v 1.16.2.2 2017/12/03 11:37:03 jdolecek Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.16.2.1 2014/08/20 00:03:38 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.16.2.2 2017/12/03 11:37:03 jdolecek Exp $");
 
 /*
  * The LAN9118 Family
@@ -65,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.16.2.1 2014/08/20 00:03:38 tls Exp $")
 #include <dev/mii/miivar.h>
 
 #include <net/bpf.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <dev/ic/lan9118reg.h>
 #include <dev/ic/lan9118var.h>
@@ -156,7 +156,7 @@ int
 lan9118_attach(struct lan9118_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
-	uint32_t val;
+	uint32_t val, irq_cfg;
 	int timo, i;
 
 	if (sc->sc_flags & LAN9118_FLAGS_SWAP)
@@ -205,6 +205,14 @@ lan9118_attach(struct lan9118_softc *sc)
 	}
 	aprint_normal_dev(sc->sc_dev, "MAC address %s\n",
 	    ether_sprintf(sc->sc_enaddr));
+
+	/* Set IRQ config */
+	irq_cfg = 0;
+	if (sc->sc_flags & LAN9118_FLAGS_IRQ_ACTHI)
+		irq_cfg |= LAN9118_IRQ_CFG_IRQ_POL;
+	if (sc->sc_flags & LAN9118_FLAGS_IRQ_PP)
+		irq_cfg |= LAN9118_IRQ_CFG_IRQ_TYPE;
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, LAN9118_IRQ_CFG, irq_cfg);
 
 	KASSERT(LAN9118_TX_FIF_SZ >= 2 && LAN9118_TX_FIF_SZ < 15);
 	sc->sc_afc_cfg = afc_cfg[LAN9118_TX_FIF_SZ];
@@ -274,6 +282,7 @@ lan9118_attach(struct lan9118_softc *sc)
 
 	/* Attach the interface. */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, sc->sc_enaddr);
 
 	callout_init(&sc->sc_tick, 0);
@@ -297,7 +306,8 @@ lan9118_intr(void *arg)
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh, LAN9118_INT_STS,
 		    int_sts);
 		int_en =
-		    bus_space_read_4(sc->sc_iot, sc->sc_ioh, LAN9118_INT_EN);
+		    bus_space_read_4(sc->sc_iot, sc->sc_ioh, LAN9118_INT_EN) |
+		    LAN9118_INT_SW_INT;
 
 		DPRINTFN(3, ("%s: int_sts=0x%x, int_en=0x%x\n",
 		    __func__, int_sts, int_en));
@@ -305,6 +315,7 @@ lan9118_intr(void *arg)
 		if (!(int_sts & int_en))
 			break;
 		datum = int_sts;
+		handled = 1;
 
 #if 0	/* not yet... */
 		if (int_sts & LAN9118_INT_PHY_INT) { /* PHY */
@@ -318,7 +329,7 @@ lan9118_intr(void *arg)
 			ifp->if_ierrors++;
 			aprint_error_ifnet(ifp, "Receive Error\n");
 		}
-		if (int_sts & LAN9118_INT_TSFL) /* TX Status FIFO Level */
+		if (int_sts & (LAN9118_INT_TSFL|LAN9118_INT_SW_INT)) /* TX Status FIFO Level */
 			lan9118_txintr(sc);
 		if (int_sts & LAN9118_INT_RXDF_INT) {
 			ifp->if_ierrors++;
@@ -329,11 +340,11 @@ lan9118_intr(void *arg)
 			aprint_error_ifnet(ifp, "RX Status FIFO Full\n");
 		}
 		if (int_sts & LAN9118_INT_RSFL) /* RX Status FIFO Level */
-			 lan9118_rxintr(sc);
+			lan9118_rxintr(sc);
 	}
-
-	if (!IFQ_IS_EMPTY(&ifp->if_snd))
-		lan9118_start(ifp);
+ 
+	if (handled)
+		if_schedule_deferred_start(ifp);
 
 	rnd_add_uint32(&sc->rnd_source, datum);
 
@@ -347,7 +358,7 @@ lan9118_start(struct ifnet *ifp)
 	struct lan9118_softc *sc = ifp->if_softc;
 	struct mbuf *m0, *m;
 	unsigned tdfree, totlen, dso;
-	uint32_t txa, txb;
+	uint32_t txa, txb, int_en;
 	uint8_t *p;
 	int n;
 
@@ -449,8 +460,18 @@ discard:
 
 		m_freem(m0);
 	}
-	if (totlen > 0)
+
+	if (totlen > 0) {
 		ifp->if_timer = 5;
+
+		/*
+		 * Trigger a software interrupt to catch any missed completion
+		 * interrupts.
+		 */
+		int_en = bus_space_read_4(sc->sc_iot, sc->sc_ioh, LAN9118_INT_EN);
+		int_en |= LAN9118_INT_SW_INT;
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, LAN9118_INT_EN, int_en);
+	}
 }
 
 static int
@@ -514,7 +535,7 @@ lan9118_init(struct ifnet *ifp)
 {
 	struct lan9118_softc *sc = ifp->if_softc;
 	struct ifmedia *ifm = &sc->sc_mii.mii_media;
-	uint32_t reg, hw_cfg, mac_cr;
+	uint32_t reg, hw_cfg, mac_cr, irq_cfg;
 	int timo, s;
 
 	DPRINTFN(2, ("%s\n", __func__));
@@ -588,8 +609,10 @@ lan9118_init(struct ifnet *ifp)
 	    LAN9118_GPIO_CFG_GPIOBUFN(1) |
 	    LAN9118_GPIO_CFG_GPIOBUFN(0));
 
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, LAN9118_IRQ_CFG,
-	    LAN9118_IRQ_CFG_IRQ_EN);
+	irq_cfg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, LAN9118_IRQ_CFG);
+	irq_cfg |= LAN9118_IRQ_CFG_IRQ_EN;
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, LAN9118_IRQ_CFG, irq_cfg);
+
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, LAN9118_INT_STS,
 	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, LAN9118_INT_STS));
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, LAN9118_FIFO_INT,
@@ -991,18 +1014,11 @@ dropit:
 		    roundup(pad + pktlen, sizeof(uint32_t)) >> 2);
 		m->m_data += pad;
 
-		ifp->if_ipackets++;
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = (pktlen - ETHER_CRC_LEN);
 
-		/*
-		 * Pass this up to any BPF listeners, but only
-		 * pass if up the stack if it's for us.
-		 */
-		bpf_mtap(ifp, m);
-
 		/* Pass it on. */
-		(*ifp->if_input)(ifp, m);
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_cb.c,v 1.20.38.1 2014/08/20 00:04:34 tls Exp $	*/
+/*	$NetBSD: raw_cb.c,v 1.20.38.2 2017/12/03 11:39:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_cb.c,v 1.20.38.1 2014/08/20 00:04:34 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_cb.c,v 1.20.38.2 2017/12/03 11:39:02 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,8 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: raw_cb.c,v 1.20.38.1 2014/08/20 00:04:34 tls Exp $")
  *	redo address binding to allow wildcards
  */
 
-struct rawcbhead	rawcb = LIST_HEAD_INITIALIZER(rawcb);
-
 static u_long		raw_sendspace = RAWSNDQ;
 static u_long		raw_recvspace = RAWRCVQ;
 
@@ -66,7 +64,7 @@ static u_long		raw_recvspace = RAWRCVQ;
  * Allocate a nominal amount of buffer space for the socket.
  */
 int
-raw_attach(struct socket *so, int proto)
+raw_attach(struct socket *so, int proto, struct rawcbhead *rawcbhead)
 {
 	struct rawcb *rp;
 	int error;
@@ -87,7 +85,7 @@ raw_attach(struct socket *so, int proto)
 	rp->rcb_socket = so;
 	rp->rcb_proto.sp_family = so->so_proto->pr_domain->dom_family;
 	rp->rcb_proto.sp_protocol = proto;
-	LIST_INSERT_HEAD(&rawcb, rp, rcb_list);
+	LIST_INSERT_HEAD(rawcbhead, rp, rcb_list);
 	KASSERT(solocked(so));
 
 	return 0;
@@ -104,7 +102,6 @@ raw_detach(struct socket *so)
 
 	KASSERT(rp != NULL);
 	KASSERT(solocked(so));
-	KASSERT(so->so_lock == softnet_lock);	/* XXX */
 
 	/* Remove the last reference. */
 	LIST_REMOVE(rp, rcb_list);
@@ -113,6 +110,10 @@ raw_detach(struct socket *so)
 	/* Note: sofree() drops the socket's lock. */
 	sofree(so);
 	kmem_free(rp, rcb_len);
+	if (so->so_lock != softnet_lock) {
+		so->so_lock = softnet_lock;
+		mutex_obj_hold(softnet_lock);
+	}
 	mutex_enter(softnet_lock);
 }
 

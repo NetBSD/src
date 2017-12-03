@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.53.12.1 2014/08/20 00:03:12 tls Exp $	*/
+/*	$NetBSD: types.h,v 1.53.12.2 2017/12/03 11:36:27 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -34,12 +34,24 @@
  *	@(#)types.h	8.3 (Berkeley) 1/5/94
  */
 
-#ifndef	_MACHTYPES_H_
-#define	_MACHTYPES_H_
+#ifndef	_MIPS_TYPES_H_
+#define	_MIPS_TYPES_H_
 
 #include <sys/cdefs.h>
 #include <sys/featuretest.h>
 #include <mips/int_types.h>
+
+typedef	unsigned int	__cpu_simple_lock_nv_t;
+#if defined(__mips_o32)
+typedef __int32_t	__register_t;
+#else
+typedef __int64_t	__register_t;
+#endif
+#if defined(__mips_o64) || defined(__mips_o32)
+typedef	__uint32_t	__fpregister_t;
+#else
+typedef	__uint64_t	__fpregister_t;
+#endif
 
 /*
  * Note that mips_reg_t is distinct from the register_t defined
@@ -48,8 +60,7 @@
  */
 
 
-/* NB: This should probably be if defined(_KERNEL) */
-#if defined(_NETBSD_SOURCE)
+#if defined(_KERNEL) || defined(_KMEMUSER) || defined(_KERNTYPES) || defined(_STANDALONE)
 #if defined(_MIPS_PADDR_T_64BIT) || defined(_LP64)
 typedef __uint64_t	paddr_t;
 typedef __uint64_t	psize_t;
@@ -76,28 +87,22 @@ typedef __uint32_t	vsize_t;
 #define	PRIxVSIZE	PRIx32
 #define	PRIdVSIZE	PRId32
 #endif
-#endif
+
 
 typedef int		mips_prid_t;
 /* Make sure this is signed; we need pointers to be sign-extended. */
-#if defined(__mips_o64) || defined(__mips_o32)
-typedef	__uint32_t	fpregister_t;
-typedef	__uint32_t	mips_fpreg_t;		/* do not use */
-#else
-typedef	__uint64_t	fpregister_t;
-typedef	__uint64_t	mips_fpreg_t;		/* do not use */
-#endif
+typedef	__fpregister_t	fpregister_t;
+typedef	__fpregister_t	mips_fpreg_t;		/* do not use */
+typedef __register_t	register_t;
+typedef __register_t	mips_reg_t;
+
 #if defined(__mips_o32)
-typedef __int32_t	register_t;
 typedef __uint32_t	uregister_t;
-typedef __int32_t	mips_reg_t;		/* do not use */
 typedef __uint32_t	mips_ureg_t;		/* do not use */
 #define	PRIxREGISTER	PRIx32
 #define	PRIxUREGISTER	PRIx32
 #else
-typedef __int64_t	register_t;
 typedef __uint64_t	uregister_t;
-typedef __int64_t	mips_reg_t;		/* do not use */
 typedef __uint64_t	mips_ureg_t;		/* do not use */
 typedef __int64_t	register32_t;
 typedef __uint64_t	uregister32_t;
@@ -105,7 +110,6 @@ typedef __uint64_t	uregister32_t;
 #define	PRIxUREGISTER	PRIx64
 #endif /* __mips_o32 */
 
-#if defined(_KERNEL) || defined(_NETBSD_SOURCE)
 typedef struct label_t {
 	register_t val[14];
 } label_t;
@@ -123,7 +127,9 @@ typedef struct label_t {
 #define	_L_S8		11
 #define	_L_RA		12
 #define	_L_SR		13
-#endif
+
+typedef __uint32_t tlb_asid_t;
+#endif /* _KERNEL */
 
 #if defined(_KERNEL) || defined(_KMEMUSER)
 #define	PCU_FPU		0
@@ -131,10 +137,6 @@ typedef struct label_t {
 #define	PCU_UNIT_COUNT	2
 #endif
 
-typedef __uint64_t		__cpuset_t;
-#define	__CPUSET_MAXNUMCPU	64
-
-typedef	volatile unsigned int	__cpu_simple_lock_t;
 
 #define	__SIMPLELOCK_LOCKED	1
 #define	__SIMPLELOCK_UNLOCKED	0
@@ -145,9 +147,7 @@ typedef	volatile unsigned int	__cpu_simple_lock_t;
 #define	__HAVE_CPU_LWP_SETPRIVATE
 #define	__HAVE_CPU_DATA_FIRST
 #define	__HAVE_MD_CPU_OFFLINE
-#ifdef MIPS3_PLUS	/* XXX bogus! */
 #define	__HAVE_CPU_COUNTER
-#endif
 #define	__HAVE_CPU_UAREA_ROUTINES
 #define	__HAVE_COMMON___TLS_GET_ADDR
 #define	__HAVE___LWP_GETTCB_FAST
@@ -169,4 +169,4 @@ typedef	volatile unsigned int	__cpu_simple_lock_t;
 #define	__HAVE_MM_MD_KERNACC
 #define	__HAVE_MM_MD_CACHE_ALIASING
 
-#endif	/* _MACHTYPES_H_ */
+#endif	/* _MIPS_TYPES_H_ */

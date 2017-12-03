@@ -1,4 +1,4 @@
-/* $NetBSD: atppc.c,v 1.30.14.1 2014/08/20 00:03:37 tls Exp $ */
+/* $NetBSD: atppc.c,v 1.30.14.2 2017/12/03 11:37:03 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc.c,v 1.30.14.1 2014/08/20 00:03:37 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc.c,v 1.30.14.2 2017/12/03 11:37:03 jdolecek Exp $");
 
 #include "opt_atppc.h"
 
@@ -1544,27 +1544,22 @@ atppc_add_handler(device_t dev, void (*handler)(void *), void *arg)
 {
 	struct atppc_softc *atppc = device_private(dev);
 	struct atppc_handler_node *callback;
-	int rval = 0;
 
 	if (handler == NULL) {
 		ATPPC_DPRINTF(("%s(%s): attempt to register NULL handler.\n",
 			__func__, device_xname(dev)));
-		rval = EINVAL;
-	} else {
-		callback = kmem_alloc(sizeof(*callback), KM_SLEEP);
-		if (callback) {
-			callback->func = handler;
-			callback->arg = arg;
-			mutex_enter(&atppc->sc_lock);
-			SLIST_INSERT_HEAD(&(atppc->sc_handler_listhead),
-				callback, entries);
-			mutex_exit(&atppc->sc_lock);
-		} else {
-			rval = ENOMEM;
-		}
+		return EINVAL;
 	}
 
-	return rval;
+	callback = kmem_alloc(sizeof(*callback), KM_SLEEP);
+	callback->func = handler;
+	callback->arg = arg;
+	mutex_enter(&atppc->sc_lock);
+	SLIST_INSERT_HEAD(&(atppc->sc_handler_listhead),
+		callback, entries);
+	mutex_exit(&atppc->sc_lock);
+
+	return 0;
 }
 
 /* Remove a handler added by atppc_add_handler() */

@@ -1,4 +1,4 @@
-/*	$NetBSD: adv.c,v 1.45.18.1 2012/11/20 03:02:02 tls Exp $	*/
+/*	$NetBSD: adv.c,v 1.45.18.2 2017/12/03 11:37:02 jdolecek Exp $	*/
 
 /*
  * Generic driver for the Advanced Systems Inc. Narrow SCSI controllers
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adv.c,v 1.45.18.1 2012/11/20 03:02:02 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adv.c,v 1.45.18.2 2017/12/03 11:37:02 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,16 +113,16 @@ adv_alloc_control_data(ASC_SOFTC *sc)
 	if ((error = bus_dmamem_alloc(sc->sc_dmat, sizeof(struct adv_control),
 			   PAGE_SIZE, 0, &sc->sc_control_seg, 1,
 			   &sc->sc_control_nsegs, BUS_DMA_NOWAIT)) != 0) {
-		aprint_error_dev(sc->sc_dev, "unable to allocate control structures,"
-		       " error = %d\n", error);
+		aprint_error_dev(sc->sc_dev, "unable to allocate control "
+		    "structures, error = %d\n", error);
 		return (error);
 	}
 	if ((error = bus_dmamem_map(sc->sc_dmat, &sc->sc_control_seg,
 			   sc->sc_control_nsegs, sizeof(struct adv_control),
 			   (void **) & sc->sc_control,
 			   BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
-		aprint_error_dev(sc->sc_dev, "unable to map control structures, error = %d\n",
-		       error);
+		aprint_error_dev(sc->sc_dev,
+		    "unable to map control structures, error = %d\n", error);
 		return (error);
 	}
 	/*
@@ -131,15 +131,15 @@ adv_alloc_control_data(ASC_SOFTC *sc)
 	if ((error = bus_dmamap_create(sc->sc_dmat, sizeof(struct adv_control),
 			   1, sizeof(struct adv_control), 0, BUS_DMA_NOWAIT,
 				       &sc->sc_dmamap_control)) != 0) {
-		aprint_error_dev(sc->sc_dev, "unable to create control DMA map, error = %d\n",
-		       error);
+		aprint_error_dev(sc->sc_dev,
+		    "unable to create control DMA map, error = %d\n", error);
 		return (error);
 	}
 	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_dmamap_control,
 			   sc->sc_control, sizeof(struct adv_control), NULL,
 				     BUS_DMA_NOWAIT)) != 0) {
-		aprint_error_dev(sc->sc_dev, "unable to load control DMA map, error = %d\n",
-		       error);
+		aprint_error_dev(sc->sc_dev,
+		    "unable to load control DMA map, error = %d\n", error);
 		return (error);
 	}
 
@@ -180,8 +180,8 @@ adv_create_ccbs(ASC_SOFTC *sc, ADV_CCB *ccbstore, int count)
 	for (i = 0; i < count; i++) {
 		ccb = &ccbstore[i];
 		if ((error = adv_init_ccb(sc, ccb)) != 0) {
-			aprint_error_dev(sc->sc_dev, "unable to initialize ccb, error = %d\n",
-			       error);
+			aprint_error_dev(sc->sc_dev,
+			    "unable to initialize ccb, error = %d\n", error);
 			return (i);
 		}
 		TAILQ_INSERT_TAIL(&sc->sc_free_ccb, ccb, chain);
@@ -229,8 +229,8 @@ adv_init_ccb(ASC_SOFTC *sc, ADV_CCB *ccb)
 			 ASC_MAX_SG_LIST, (ASC_MAX_SG_LIST - 1) * PAGE_SIZE,
 		   0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &ccb->dmamap_xfer);
 	if (error) {
-		aprint_error_dev(sc->sc_dev, "unable to create DMA map, error = %d\n",
-		       error);
+		aprint_error_dev(sc->sc_dev,
+		    "unable to create DMA map, error = %d\n", error);
 		return (error);
 	}
 
@@ -482,10 +482,11 @@ adv_attach(ASC_SOFTC *sc)
 	 */
 	i = adv_create_ccbs(sc, sc->sc_control->ccbs, ADV_MAX_CCB);
 	if (i == 0) {
-		aprint_error_dev(sc->sc_dev, "unable to create control blocks\n");
+		aprint_error_dev(sc->sc_dev,
+		    "unable to create control blocks\n");
 		return; /* (ENOMEM) */ ;
 	} else if (i != ADV_MAX_CCB) {
-		aprint_error_dev(sc->sc_dev, 
+		aprint_error_dev(sc->sc_dev,
 		    "WARNING: only %d of %d control blocks created\n",
 		    i, ADV_MAX_CCB);
 	}
@@ -525,7 +526,8 @@ advminphys(struct buf *bp)
  */
 
 static void
-adv_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
+adv_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
+    void *arg)
 {
  	struct scsipi_xfer *xs;
  	struct scsipi_periph *periph;
@@ -634,13 +636,14 @@ adv_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *
  			default:
  				xs->error = XS_DRIVER_STUFFUP;
 				if (error == EFBIG) {
-					aprint_error_dev(sc->sc_dev, "adv_scsi_cmd, more than %d"
+					aprint_error_dev(sc->sc_dev,
+					    "adv_scsi_cmd, more than %d"
 					    " DMA segments\n",
 					    ASC_MAX_SG_LIST);
 				} else {
-					aprint_error_dev(sc->sc_dev, "adv_scsi_cmd, error %d"
-					    " loading DMA map\n",
-					    error);
+					aprint_error_dev(sc->sc_dev,
+					    "adv_scsi_cmd, error %d"
+					    " loading DMA map\n", error);
 				}
 
 out_bad:
@@ -745,8 +748,7 @@ adv_intr(void *arg)
 #ifdef ASC_DEBUG
 	int int_pend = FALSE;
 
-	if(ASC_IS_INT_PENDING(sc->sc_iot, sc->sc_ioh))
-	{
+	if (ASC_IS_INT_PENDING(sc->sc_iot, sc->sc_ioh)) {
 		int_pend = TRUE;
 		printf("ISR - ");
 	}
@@ -948,7 +950,6 @@ adv_narrow_isr_callback(ASC_SOFTC *sc, ASC_QDONE_INFO *qdonep)
 		xs->error = XS_DRIVER_STUFFUP;
 		break;
 	}
-
 
 	adv_free_ccb(sc, ccb);
 	scsipi_done(xs);

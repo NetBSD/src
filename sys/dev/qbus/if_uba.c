@@ -1,4 +1,4 @@
-/*	$NetBSD: if_uba.c,v 1.31 2010/11/13 13:52:10 uebayasi Exp $	*/
+/*	$NetBSD: if_uba.c,v 1.31.18.1 2017/12/03 11:37:31 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_uba.c,v 1.31 2010/11/13 13:52:10 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_uba.c,v 1.31.18.1 2017/12/03 11:37:31 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -202,7 +202,7 @@ if_ubaget(struct ifubinfo *ifu, struct ifrw *ifr, struct ifnet *ifp, int len)
 	if ((bus_dmamap_load(uh->uh_dmat, ifr->ifrw_map,
 	    mn->m_ext.ext_buf, mn->m_ext.ext_size, NULL, BUS_DMA_NOWAIT)))
 		panic("if_ubaget"); /* Cannot happen */
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
 	m->m_len = m->m_pkthdr.len = len;
 	return m;
 }

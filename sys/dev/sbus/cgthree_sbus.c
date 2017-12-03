@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree_sbus.c,v 1.30 2010/09/14 18:28:18 macallan Exp $ */
+/*	$NetBSD: cgthree_sbus.c,v 1.30.18.1 2017/12/03 11:37:32 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgthree_sbus.c,v 1.30 2010/09/14 18:28:18 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgthree_sbus.c,v 1.30.18.1 2017/12/03 11:37:32 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,6 +172,7 @@ cgthreeattach_sbus(device_t parent, device_t self, void *args)
 	if (name == NULL)
 		name = "cgthree";
 
+	fb->fb_pixels = NULL;
 	if (sa->sa_npromvaddrs != 0)
 		fb->fb_pixels = (void *)(u_long)sa->sa_promvaddrs[0];
 	if (fb->fb_pixels == NULL) {

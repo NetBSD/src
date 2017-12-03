@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_12.c,v 1.29.16.1 2014/08/20 00:03:31 tls Exp $	*/
+/*	$NetBSD: vfs_syscalls_12.c,v 1.29.16.2 2017/12/03 11:36:53 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_12.c,v 1.29.16.1 2014/08/20 00:03:31 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_12.c,v 1.29.16.2 2017/12/03 11:36:53 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,7 +123,7 @@ compat_12_sys_getdirentries(struct lwp *l, const struct compat_12_sys_getdirentr
 		goto out1;
 	}
 
-	vp = (struct vnode *)fp->f_data;
+	vp = (struct vnode *)fp->f_vnode;
 	if (vp->v_type != VDIR) {
 		error = ENOTDIR;
 		goto out1;
@@ -171,8 +171,10 @@ again:
 	for (cookie = cookiebuf; len > 0; len -= reclen) {
 		bdp = (struct dirent *)inp;
 		reclen = bdp->d_reclen;
-		if (reclen & 3)
-			panic(__func__);
+		if (reclen & 3) {
+			error = EIO;
+			goto out;
+		}
 		if (bdp->d_fileno == 0) {
 			inp += reclen;	/* it is a hole; squish it out */
 			if (cookie)
@@ -196,7 +198,8 @@ again:
 		idb.d_reclen = (uint16_t)old_reclen;
 		idb.d_type = (uint8_t)bdp->d_type;
 		idb.d_namlen = (uint8_t)bdp->d_namlen;
-		strcpy(idb.d_name, bdp->d_name);
+		memcpy(idb.d_name, bdp->d_name, MIN(sizeof(idb.d_name),
+		    bdp->d_namlen));
 		if ((error = copyout(&idb, outp, old_reclen)))
 			goto out;
 		/* advance past this real entry */

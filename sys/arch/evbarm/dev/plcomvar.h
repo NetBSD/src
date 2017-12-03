@@ -1,4 +1,4 @@
-/*	$NetBSD: plcomvar.h,v 1.13.2.2 2014/08/20 00:02:54 tls Exp $	*/
+/*	$NetBSD: plcomvar.h,v 1.13.2.3 2017/12/03 11:36:04 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -30,14 +30,13 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "rnd.h"
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
 #include "opt_plcom.h"
 #include "opt_kgdb.h"
 
 #ifdef RND_COM
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 #endif
 
 #include <sys/callout.h>
@@ -85,14 +84,6 @@ struct plcom_instance {
 	struct plcom_registers	*pi_regs;
 };
 
-struct plcomcons_info {
-	int	rate;
-	int	frequency;
-	int	type;
-
-	tcflag_t	cflag;
-};
-    
 struct plcom_softc {
 	device_t sc_dev;
 

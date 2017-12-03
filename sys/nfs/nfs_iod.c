@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_iod.c,v 1.4.22.1 2014/08/20 00:04:36 tls Exp $	*/
+/*	$NetBSD: nfs_iod.c,v 1.4.22.2 2017/12/03 11:39:05 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_iod.c,v 1.4.22.1 2014/08/20 00:04:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_iod.c,v 1.4.22.2 2017/12/03 11:39:05 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -199,6 +199,22 @@ nfs_iodfini(void)
 	error = nfs_set_niothreads(0);
 	KASSERT(error == 0);
 	mutex_destroy(&nfs_iodlist_lock);
+}
+
+int
+nfs_iodbusy(struct nfsmount *nmp)
+{
+	struct nfs_iod *iod;
+	int ret = 0;
+
+	mutex_enter(&nfs_iodlist_lock);
+	LIST_FOREACH(iod, &nfs_iodlist_all, nid_all) {
+		if (iod->nid_mount == nmp)
+			ret++;
+	}
+	mutex_exit(&nfs_iodlist_lock);
+
+	return ret;
 }
 
 int

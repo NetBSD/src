@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rumreg.h,v 1.4 2011/02/21 23:50:42 jmcneill Exp $	 */
+/*	$NetBSD: if_rumreg.h,v 1.4.16.1 2017/12/03 11:37:34 jdolecek Exp $	 */
 /*	$OpenBSD: if_rumreg.h,v 1.14 2009/08/10 18:04:56 damien Exp $	*/
 
 /*-
@@ -18,8 +18,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#define RT2573_TX_DESC_SIZE	(sizeof (struct rum_tx_desc))
-#define RT2573_RX_DESC_SIZE	(sizeof (struct rum_rx_desc))
+#define RT2573_TX_DESC_SIZE	(sizeof(struct rum_tx_desc))
+#define RT2573_RX_DESC_SIZE	(sizeof(struct rum_rx_desc))
 
 #define RT2573_CONFIG_NO	1
 #define RT2573_IFACE_INDEX	0

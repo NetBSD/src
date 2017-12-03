@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.67.6.4 2014/08/20 00:03:24 tls Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.67.6.5 2017/12/03 11:36:43 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -96,6 +96,7 @@
 #include <dev/rasops/rasops.h>
 
 #include <dev/wscons/wsdisplay_vconsvar.h>
+#include <dev/wscons/wsdisplay_glyphcachevar.h>
 
 #include <sparc/sparc/asm.h>
 #include <sparc/dev/cgfourteenreg.h>
@@ -164,10 +165,9 @@ static void cg14_rectfill(struct cgfourteen_softc *, int, int, int, int,
     uint32_t);
 static void cg14_invert(struct cgfourteen_softc *, int, int, int, int);
 static void cg14_bitblt(void *, int, int, int, int, int, int, int);
+static void cg14_bitblt_gc(void *, int, int, int, int, int, int, int);
 
-#if 0
 static void cg14_putchar_aa(void *, int, int, u_int, long);
-#endif
 static void cg14_cursor(void *, int, int, int);
 static void cg14_putchar(void *, int, int, u_int, long);
 static void cg14_copycols(void *, int, int, int, int);
@@ -418,9 +418,13 @@ cgfourteenclose(dev_t dev, int flags, int mode, struct lwp *l)
 	/*
 	 * Restore video state to make the PROM happy, on last close.
 	 */
-	if (opens == 0)
+	if (opens == 0) {
 		cg14_reset(sc);
-
+#if NSX > 0
+		if (sc->sc_sx)
+			glyphcache_wipe(&sc->sc_gc);
+#endif
+	}
 	return (0);
 }
 
@@ -595,74 +599,14 @@ cgfourteenpoll(dev_t dev, int events, struct lwp *l)
 static void
 cg14_init(struct cgfourteen_softc *sc)
 {
-#if 0
-	volatile uint32_t *clut;
-	volatile uint8_t  *xlut;
-	int i;
-
-	/*
-	 * We stash away the following to restore on close:
-	 *
-	 * 	color look-up table 1 	(sc->sc_saveclut)
-	 *	x look-up table		(sc->sc_savexlut)
-	 *	control register	(sc->sc_savectl)
-	 *	cursor control register (sc->sc_savehwc)
-	 */
-	sc->sc_savectl = sc->sc_ctl->ctl_mctl;
-	sc->sc_savehwc = sc->sc_hwc->curs_ctl;
-
-	clut = (volatile uint32_t *) sc->sc_clut1->clut_lut;
-	xlut = (volatile uint8_t *) sc->sc_xlut->xlut_lut;
-	for (i = 0; i < CG14_CLUT_SIZE; i++) {
-		sc->sc_saveclut.cm_chip[i] = clut[i];
-		sc->sc_savexlut[i] = xlut[i];
-	}
-
-	/*
-	 * Enable the video and put it in 8 bit mode
-	 */
-	sc->sc_ctl->ctl_mctl = CG14_MCTL_ENABLEVID | CG14_MCTL_PIXMODE_8 |
-		CG14_MCTL_POWERCTL;
-#else
 	cg14_set_depth(sc, 32);
-#endif
 }
 
 static void
 /* Restore the state saved on cg14_init */
 cg14_reset(struct cgfourteen_softc *sc)
 {
-#if 0
-	volatile uint32_t *clut;
-	volatile uint8_t  *xlut;
-	int i;
-
-	/*
-	 * We restore the following, saved in cg14_init:
-	 *
-	 * 	color look-up table 1 	(sc->sc_saveclut)
-	 *	x look-up table		(sc->sc_savexlut)
-	 *	control register	(sc->sc_savectl)
-	 *	cursor control register (sc->sc_savehwc)
-	 *
-	 * Note that we don't touch the video enable bits in the
-	 * control register; otherwise, screenblank wouldn't work.
-	 */
-	sc->sc_ctl->ctl_mctl = (sc->sc_ctl->ctl_mctl & (CG14_MCTL_ENABLEVID |
-							CG14_MCTL_POWERCTL)) |
-				(sc->sc_savectl & ~(CG14_MCTL_ENABLEVID |
-						    CG14_MCTL_POWERCTL));
-	sc->sc_hwc->curs_ctl = sc->sc_savehwc;
-
-	clut = sc->sc_clut1->clut_lut;
-	xlut = sc->sc_xlut->xlut_lut;
-	for (i = 0; i < CG14_CLUT_SIZE; i++) {
-		clut[i] = sc->sc_saveclut.cm_chip[i];
-		xlut[i] = sc->sc_savexlut[i];
-	}
-#else
 	cg14_set_depth(sc, 8);
-#endif
 }
 
 /* Enable/disable video display; power down monitor if DPMS-capable */
@@ -767,7 +711,6 @@ cg14_load_hwcmap(struct cgfourteen_softc *sc, int start, int ncolors)
 		*lutp++ = *colp++;
 }
 
-#if NWSDISPLAY > 0
 static void
 cg14_setup_wsdisplay(struct cgfourteen_softc *sc, int is_cons)
 {
@@ -793,20 +736,35 @@ cg14_setup_wsdisplay(struct cgfourteen_softc *sc, int is_cons)
 
 	ri = &sc->sc_console_screen.scr_ri;
 
+	sc->sc_gc.gc_bitblt = cg14_bitblt_gc;
+	sc->sc_gc.gc_blitcookie = sc;
+	sc->sc_gc.gc_rop = 0xc;
 	if (is_cons) {
 		vcons_init_screen(&sc->sc_vd, &sc->sc_console_screen, 1,
 		    &defattr);
 
 		/* clear the screen with the default background colour */
-		memset(sc->sc_fb.fb_pixels,
-		       (defattr >> 16) & 0xff,
-		       ri->ri_stride * ri->ri_height);
+		if (sc->sc_sx != NULL) {
+			cg14_rectfill(sc, 0, 0, ri->ri_width, ri->ri_height,
+				ri->ri_devcmap[(defattr >> 16) & 0xf]);
+		} else {
+			memset(sc->sc_fb.fb_pixels,
+			       ri->ri_devcmap[(defattr >> 16) & 0xf],
+			       ri->ri_stride * ri->ri_height);
+		}
 		sc->sc_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
 
 		sc->sc_defaultscreen_descr.textops = &ri->ri_ops;
 		sc->sc_defaultscreen_descr.capabilities = ri->ri_caps;
 		sc->sc_defaultscreen_descr.nrows = ri->ri_rows;
 		sc->sc_defaultscreen_descr.ncols = ri->ri_cols;
+		glyphcache_init(&sc->sc_gc, sc->sc_fb.fb_type.fb_height + 5,
+			(sc->sc_vramsize / sc->sc_fb.fb_type.fb_width) - 
+			 sc->sc_fb.fb_type.fb_height - 5,
+			sc->sc_fb.fb_type.fb_width,
+			ri->ri_font->fontwidth,
+			ri->ri_font->fontheight,
+			defattr);
 		wsdisplay_cnattach(&sc->sc_defaultscreen_descr, ri, 0, 0,
 		    defattr);
 		vcons_replay_msgbuf(&sc->sc_console_screen);
@@ -815,6 +773,13 @@ cg14_setup_wsdisplay(struct cgfourteen_softc *sc, int is_cons)
 		 * since we're not the console we can postpone the rest
 		 * until someone actually allocates a screen for us
 		 */
+		glyphcache_init(&sc->sc_gc, sc->sc_fb.fb_type.fb_height + 5,
+			(sc->sc_vramsize / sc->sc_fb.fb_type.fb_width) -
+			 sc->sc_fb.fb_type.fb_height - 5,
+			sc->sc_fb.fb_type.fb_width,
+			ri->ri_font->fontwidth,
+			ri->ri_font->fontheight,
+			DEFATTR);
 	}
 
 	cg14_init_cmap(sc);
@@ -830,13 +795,17 @@ cg14_setup_wsdisplay(struct cgfourteen_softc *sc, int is_cons)
 static void
 cg14_init_cmap(struct cgfourteen_softc *sc)
 {
+	struct rasops_info *ri = &sc->sc_console_screen.scr_ri;
 	int i, j = 0;
+	uint8_t cmap[768];
+
+	rasops_get_cmap(ri, cmap, sizeof(cmap));
 
 	for (i = 0; i < 256; i++) {
 
-		sc->sc_cmap.cm_map[i][3] = rasops_cmap[j];
-		sc->sc_cmap.cm_map[i][2] = rasops_cmap[j + 1];
-		sc->sc_cmap.cm_map[i][1] = rasops_cmap[j + 2];
+		sc->sc_cmap.cm_map[i][3] = cmap[j];
+		sc->sc_cmap.cm_map[i][2] = cmap[j + 1];
+		sc->sc_cmap.cm_map[i][1] = cmap[j + 2];
 		j += 3;
 	}
 	cg14_load_hwcmap(sc, 0, 256);
@@ -953,6 +922,10 @@ cg14_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 
 						cg14_set_depth(sc, 8);
 						cg14_init_cmap(sc);
+#if NSX > 0
+						if (sc->sc_sx)
+							glyphcache_wipe(&sc->sc_gc);
+#endif
 						vcons_redraw_screen(ms);
 					} else {
 
@@ -1035,6 +1008,8 @@ cg14_init_screen(void *cookie, struct vcons_screen *scr,
 
 	ri->ri_bits = (char *)sc->sc_fb.fb_pixels;
 #if NSX > 0
+	ri->ri_flg |= RI_8BIT_IS_RGB | RI_ENABLE_ALPHA;
+
 	/*
 	 * unaligned copies with horizontal overlap are slow, so don't bother
 	 * handling them in cg14_bitblt() and use putchar() instead
@@ -1064,11 +1039,9 @@ cg14_init_screen(void *cookie, struct vcons_screen *scr,
 		ri->ri_ops.eraserows = cg14_eraserows;
 		ri->ri_ops.erasecols = cg14_erasecols;
 		ri->ri_ops.cursor = cg14_cursor;
-#if 0
 		if (FONT_IS_ALPHA(ri->ri_font)) {
 			ri->ri_ops.putchar = cg14_putchar_aa;
 		} else
-#endif
 			ri->ri_ops.putchar = cg14_putchar;
 	}
 #endif /* NSX > 0 */
@@ -1403,6 +1376,64 @@ cg14_bitblt(void *cookie, int xs, int ys, int xd, int yd,
 	}
 }
 
+/*
+ * for copying glyphs around
+ * - uses all quads for reads
+ * - uses quads for writes as far as possible
+ * - limited by number of registers - won't do more than 120 wide
+ * - doesn't handle overlaps
+ */
+static void
+cg14_bitblt_gc(void *cookie, int xs, int ys, int xd, int yd,
+    int wi, int he, int rop)
+{
+	struct cgfourteen_softc *sc = cookie;
+	uint32_t saddr, daddr;
+	int line, cnt = wi, stride = sc->sc_fb.fb_type.fb_width;
+	int dreg = 8, swi = wi, dd;
+	int in = 0, q = 0, out = 0, r;
+
+	saddr = sc->sc_fb_paddr + xs + stride * ys;
+	daddr = sc->sc_fb_paddr + xd + stride * yd;
+
+	if (saddr & 3) {
+		swi += saddr & 3;
+		dreg += saddr & 3;
+		saddr &= ~3;
+	}
+	swi = (swi + 3) >> 2;	/* round up, number of quads to read */
+	
+	if (daddr & 3) {
+		in = 4 - (daddr & 3); /* pixels to write in byte mode */
+		cnt -= in;
+	}
+
+	q = cnt >> 2;
+	out = cnt & 3;
+	
+	for (line = 0; line < he; line++) {
+		/* read source line, in all quads */
+		sta(saddr & ~7, ASI_SX, SX_LDUQ0(8, swi - 1, saddr & 7));
+		/* now write it out */
+		dd = daddr;
+		r = dreg;
+		if (in > 0) {
+			sta(dd & ~7, ASI_SX, SX_STB(r, in - 1, dd & 7));
+			dd += in;
+			r += in;
+		}
+		if (q > 0) {
+			sta(dd & ~7, ASI_SX, SX_STUQ0(r, q - 1, dd & 7));
+			r += q << 2;
+			dd += q << 2;
+		}
+		if (out > 0) {
+			sta(dd & ~7, ASI_SX, SX_STB(r, out - 1, dd & 7));
+		}
+		saddr += stride;
+		daddr += stride;
+	}
+}
 
 static void
 cg14_putchar(void *cookie, int row, int col, u_int c, long attr)
@@ -1506,19 +1537,18 @@ cg14_cursor(void *cookie, int on, int row, int col)
 
 }
 
-#if 0
 static void
-r128fb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
+cg14_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 {
 	struct rasops_info *ri = cookie;
 	struct wsdisplay_font *font = PICK_FONT(ri, c);
 	struct vcons_screen *scr = ri->ri_hw;
-	struct r128fb_softc *sc = scr->scr_cookie;
-	uint32_t bg, latch = 0, bg8, fg8, pixel;
-	int i, x, y, wi, he, r, g, b, aval;
-	int r1, g1, b1, r0, g0, b0, fgo, bgo;
+	struct cgfourteen_softc *sc = scr->scr_cookie;
+	int stride = sc->sc_fb.fb_type.fb_width;
+	uint32_t bg, addr, bg8, fg8, pixel, in, q, next;
+	int i, j, x, y, wi, he, r, g, b, aval, cnt, reg;
+	int r1, g1, b1, r0, g0, b0, fgo, bgo, rv;
 	uint8_t *data8;
-	int rv, cnt = 0;
 
 	if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL) 
 		return;
@@ -1533,7 +1563,7 @@ r128fb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 	x = ri->ri_xorigin + col * wi;
 	y = ri->ri_yorigin + row * he;
 	if (c == 0x20) {
-		r128fb_rectfill(sc, x, y, wi, he, bg);
+		cg14_rectfill(sc, x, y, wi, he, bg);
 		return;
 	}
 
@@ -1541,28 +1571,8 @@ r128fb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 	if (rv == GC_OK)
 		return;
 
+	addr = sc->sc_fb_paddr + x + stride * y;
 	data8 = WSFONT_GLYPH(c, font);
-
-	r128fb_wait(sc, 5);
-	bus_space_write_4(sc->sc_memt, sc->sc_regh, 
-	    R128_DP_GUI_MASTER_CNTL,
-	    R128_GMC_BRUSH_SOLID_COLOR |
-	    R128_GMC_SRC_DATATYPE_COLOR |
-	    R128_ROP3_S |
-	    R128_DP_SRC_SOURCE_HOST_DATA |
-	    sc->sc_master_cntl);
-
-	bus_space_write_4(sc->sc_memt, sc->sc_regh, 
-	    R128_DP_CNTL, 
-	    R128_DST_Y_TOP_TO_BOTTOM | 
-	    R128_DST_X_LEFT_TO_RIGHT);
-
-	/* needed? */
-	bus_space_write_4(sc->sc_memt, sc->sc_regh, R128_SRC_X_Y, 0);
-	bus_space_write_4(sc->sc_memt, sc->sc_regh, R128_DST_X_Y,
-	    (x << 16) | y);
-	bus_space_write_4(sc->sc_memt, sc->sc_regh, R128_DST_WIDTH_HEIGHT,
-	    (wi << 16) | he);
 
 	/*
 	 * we need the RGB colours here, so get offsets into rasops_cmap
@@ -1580,51 +1590,59 @@ r128fb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 	bg8 = R3G3B2(r0, g0, b0);
 	fg8 = R3G3B2(r1, g1, b1);
 
-	r128fb_wait(sc, 16);
-
-	for (i = 0; i < ri->ri_fontscale; i++) {
-		aval = *data8;
-		if (aval == 0) {
-			pixel = bg8;
-		} else if (aval == 255) {
-			pixel = fg8;
-		} else {
-			r = aval * r1 + (255 - aval) * r0;
-			g = aval * g1 + (255 - aval) * g0;
-			b = aval * b1 + (255 - aval) * b0;
-			pixel = ((r & 0xe000) >> 8) |
-				((g & 0xe000) >> 11) |
-				((b & 0xc000) >> 14);
-		}
-		latch = (latch << 8) | pixel;
-		/* write in 32bit chunks */
-		if ((i & 3) == 3) {
-			bus_space_write_stream_4(sc->sc_memt, sc->sc_regh,
-			    R128_HOST_DATA0, latch);
-			/*
-			 * not strictly necessary, old data should be shifted 
-			 * out 
-			 */
-			latch = 0;
-			cnt++;
-			if (cnt > 15) {
-				r128fb_wait(sc, 16);
-				cnt = 0;
+	for (i = 0; i < he; i++) {
+		/* calculate one line of pixels */
+		for (j = 0; j < wi; j++) {
+			aval = *data8;
+			if (aval == 0) {
+				pixel = bg8;
+			} else if (aval == 255) {
+				pixel = fg8;
+			} else {
+				r = aval * r1 + (255 - aval) * r0;
+				g = aval * g1 + (255 - aval) * g0;
+				b = aval * b1 + (255 - aval) * b0;
+				pixel = ((r & 0xe000) >> 8) |
+					((g & 0xe000) >> 11) |
+					((b & 0xc000) >> 14);
 			}
+			/*
+			 * stick them into SX registers and hope we never have
+			 * to deal with fonts more than 120 pixels wide
+			 */
+			sx_write(sc->sc_sx, SX_QUEUED(j + 8), pixel);
+			data8++;
 		}
-		data8++;
+		/* now write them into video memory */
+		in = (addr & 3);
+		next = addr;
+		reg = 8;
+		cnt = wi;
+		if (in != 0) {
+			in = 4 - in;	/* pixels to write until aligned */
+			sta(next & ~7, ASI_SX, SX_STB(8, in - 1, next & 7));
+			next += in;
+			reg = 8 + in;
+			cnt -= in;
+		}
+		q = cnt >> 2;	/* number of writes we can do in quads */
+		if (q > 0) {
+			sta(next & ~7, ASI_SX, SX_STUQ0(reg, q - 1, next & 7));
+			next += (q << 2);
+			cnt -= (q << 2);
+			reg += (q << 2);
+		}
+		if (cnt > 0) {
+			sta(next & ~7, ASI_SX, SX_STB(reg, cnt - 1, next & 7));
+		}
+			
+		addr += stride;
 	}
-	/* if we have pixels left in latch write them out */
-	if ((i & 3) != 0) {
-		latch = latch << ((4 - (i & 3)) << 3);	
-		bus_space_write_stream_4(sc->sc_memt, sc->sc_regh,
-				    R128_HOST_DATA0, latch);
-	}
+
 	if (rv == GC_ADD) {
 		glyphcache_add(&sc->sc_gc, c, x, y);
 	}
 }
-#endif
 
 static void
 cg14_copycols(void *cookie, int row, int srccol, int dstcol, int ncols)
@@ -1702,4 +1720,3 @@ cg14_eraserows(void *cookie, int row, int nrows, long fillattr)
 
 #endif /* NSX > 0 */
 
-#endif

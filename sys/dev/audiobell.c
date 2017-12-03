@@ -1,4 +1,5 @@
-/*	$NetBSD: audiobell.c,v 1.8 2009/05/12 10:22:31 cegger Exp $	*/
+/*	$NetBSD: audiobell.c,v 1.8.22.1 2017/12/03 11:36:58 jdolecek Exp $	*/
+
 
 /*
  * Copyright (c) 1999 Richard Earnshaw
@@ -31,80 +32,41 @@
  */
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: audiobell.c,v 1.8 2009/05/12 10:22:31 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audiobell.c,v 1.8.22.1 2017/12/03 11:36:58 jdolecek Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/fcntl.h>
+#include <sys/file.h>
+#include <sys/filedesc.h>
+#include <sys/ioctl.h>
 #include <sys/malloc.h>
 #include <sys/null.h>
 #include <sys/systm.h>
 #include <sys/uio.h>
+#include <sys/unistd.h>
 
 #include <dev/audio_if.h>
+#include <dev/audiovar.h>
 #include <dev/audiobellvar.h>
+#include <dev/audiobelldata.h>
 
-extern dev_type_open(audioopen);
-extern dev_type_write(audiowrite);
-extern dev_type_close(audioclose);
-
-/* Convert a %age volume to an amount to add to u-law values */
-/* XXX Probably highly inaccurate -- should be regenerated */
-static const uint8_t volmap[] = {
-	0x7f, 0x67, 0x5b, 0x53, 0x49, 0x45, 0x41, 0x3e, 0x3a, 0x38,
-	0x36, 0x32, 0x30, 0x2f, 0x2e, 0x2c, 0x2b, 0x2a, 0x28, 0x27,
-	0x26, 0x25, 0x23, 0x22, 0x21, 0x1f, 0x1f, 0x1e, 0x1e, 0x1d,
-	0x1c, 0x1c, 0x1b, 0x1a, 0x1a, 0x19, 0x18, 0x18, 0x17, 0x17,
-	0x16, 0x15, 0x15, 0x14, 0x13, 0x13, 0x12, 0x11, 0x11, 0x10,
-	0x0f, 0x0f, 0x0f, 0x0f, 0x0e, 0x0e, 0x0e, 0x0d, 0x0d, 0x0d,
-	0x0c, 0x0c, 0x0c, 0x0b, 0x0b, 0x0b, 0x0a, 0x0a, 0x0a, 0x09,
-	0x09, 0x09, 0x08, 0x08, 0x08, 0x07, 0x07, 0x07, 0x07, 0x06,
-	0x06, 0x06, 0x05, 0x05, 0x05, 0x04, 0x04, 0x04,	0x03, 0x03,
-	0x03, 0x02, 0x02, 0x02, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00,
-	0x00
-};
-
-/* 1/4 cycle sine wave in u-law */
-/* XXX Probably highly inaccurate -- should be regenerated */
-static const uint8_t sinewave[] = {
-	0xff, 0xd3, 0xc5, 0xbc, 0xb6, 0xb0, 0xad, 0xaa,
-	0xa7, 0xa3, 0xa0, 0x9e, 0x9d, 0x9b, 0x9a, 0x98,
-	0x97, 0x96, 0x94, 0x93, 0x91, 0x90, 0x8f, 0x8e,
-	0x8e, 0x8d, 0x8c, 0x8c, 0x8b, 0x8b, 0x8a, 0x89,
-	0x89, 0x88, 0x88, 0x87, 0x87, 0x86, 0x86, 0x85,
-	0x85, 0x84, 0x84, 0x84, 0x83, 0x83, 0x83, 0x82,
-	0x82, 0x82, 0x81, 0x81, 0x81, 0x81, 0x80, 0x80,
-	0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
-	0x80,
-};
-
-static inline uint8_t
-audiobell_ulawscale(uint8_t val, uint8_t vol)
-{
-	uint8_t result;
-
-	result = val + vol;
-	/* Spot underflow and just return silence */
-	if ((result ^ val) & 0x80)
-		return 0x7f;
-	return result;
-}
+/* 44.1 kHz should reduce hum at higher pitches. */
+#define BELL_SAMPLE_RATE	44100
+#define BELL_SHIFT		3
 
 static inline void
-audiobell_expandwave(uint8_t *buf, int volume)
+audiobell_expandwave(int16_t *buf)
 {
 	u_int i;
-	int uvol;
 
-	KASSERT(volume >= 0 && volume <= 100);
-	uvol = volmap[volume];
-	for (i = 0; i < 65; i++)
-		buf[i] = audiobell_ulawscale(sinewave[i], uvol);
-	for (i = 65; i < 128; i++)
-		 buf[i] = buf[128 - i];
-	for (i = 128; i < 256; i++)
-		buf[i] = buf[i - 128] ^ 0x80;
+	for (i = 0; i < __arraycount(sinewave); i++)
+		buf[i] = sinewave[i];
+	for (i = __arraycount(sinewave); i < __arraycount(sinewave) * 2; i++)
+		 buf[i] = buf[__arraycount(sinewave) * 2 - i - 1];
+	for (i = __arraycount(sinewave) * 2; i < __arraycount(sinewave) * 4; i++)
+		buf[i] = -buf[__arraycount(sinewave) * 4 - i - 1];
 }
 
 /*
@@ -112,21 +74,22 @@ audiobell_expandwave(uint8_t *buf, int volume)
  * Reference Manual (pp1624--1628).
  */
 static inline int
-audiobell_synthesize(uint8_t *buf, u_int pitch, u_int period, u_int volume)
+audiobell_synthesize(int16_t *buf, u_int pitch, u_int period, u_int volume,
+    uint16_t *phase)
 {
-	uint8_t *wave;
-	uint16_t phase;
+	int16_t *wave;
 
-	wave = malloc(256, M_TEMP, M_WAITOK);
-	if (wave == NULL) return -1;
-	audiobell_expandwave(wave, volume);
-	pitch = pitch * 65536 / 8000;
-	period = period * 8; /* 8000 / 1000 */
-	phase = 0;
+	wave = malloc(sizeof(sinewave) * 4, M_TEMP, M_WAITOK);
+	if (wave == NULL)
+		return -1;
+	audiobell_expandwave(wave);
+	pitch = pitch * ((sizeof(sinewave) * 4) << BELL_SHIFT) /
+	    BELL_SAMPLE_RATE / 2;
+	period = period * BELL_SAMPLE_RATE / 1000 / 2;
 
 	for (; period != 0; period--) {
-		*buf++ = wave[phase >> 8];
-		phase += pitch;
+		*buf++ = wave[*phase >> BELL_SHIFT];
+		*phase += pitch;
 	}
 
 	free(wave, M_TEMP);
@@ -134,36 +97,89 @@ audiobell_synthesize(uint8_t *buf, u_int pitch, u_int period, u_int volume)
 }
 
 void
-audiobell(void *arg, u_int pitch, u_int period, u_int volume, int poll)
+audiobell(void *v, u_int pitch, u_int period, u_int volume, int poll)
 {
-	device_t audio = arg;
-	uint8_t *buf;
+	dev_t audio;
+	int16_t *buf;
+	uint16_t phase;
+	struct audio_info ai;
 	struct uio auio;
 	struct iovec aiov;
+	struct file *fp;
+	int size, len, fd;
+
+	KASSERT(volume <= 100);
+
+	fd = -1;
+	fp = NULL;
+	buf = NULL;
+	audio = AUDIO_DEVICE | device_unit((device_t)v);
 
 	/* The audio system isn't built for polling. */
-	if (poll) return;
-
-	/* If not configured, we can't beep. */
-	if (audioopen(AUDIO_DEVICE | device_unit(audio), FWRITE, 0, NULL) != 0)
+	if (poll)
 		return;
 
-	buf = malloc(period * 8, M_TEMP, M_WAITOK);
-	if (buf == NULL) goto out;
-	if (audiobell_synthesize(buf, pitch, period, volume) != 0) goto out;
+	/* If not configured, we can't beep. */
+	if (audiobellopen(audio, FWRITE, 0, NULL, &fp) != EMOVEFD || fp == NULL)
+		return;
+	fd = curlwp->l_dupfd;	/* save the fd for closing when done */
 
-	aiov.iov_base = (void *)buf;
-	aiov.iov_len = period * 8;
-	auio.uio_iov = &aiov;
-	auio.uio_iovcnt = 1;
-	auio.uio_offset = 0;
-	auio.uio_resid = period * 8;
-	auio.uio_rw = UIO_WRITE;
-	UIO_SETUP_SYSSPACE(&auio);
+	if (audiobellioctl(fp, AUDIO_GETINFO, &ai) != 0)
+		goto out;
 
-	audiowrite(AUDIO_DEVICE | device_unit(audio), &auio, 0);
+	AUDIO_INITINFO(&ai);
+	ai.mode = AUMODE_PLAY;
+	ai.play.sample_rate = BELL_SAMPLE_RATE;
+	ai.play.precision = 16;
+	ai.play.channels = 1;
+	ai.play.gain = 255 * volume / 100;
 
+#if BYTE_ORDER == LITTLE_ENDIAN
+	ai.play.encoding = AUDIO_ENCODING_SLINEAR_LE;
+#else
+	ai.play.encoding = AUDIO_ENCODING_SLINEAR_BE;
+#endif
+
+	if (audiobellioctl(fp, AUDIO_SETINFO, &ai) != 0)
+		goto out;
+
+	if (ai.blocksize < BELL_SAMPLE_RATE)
+		ai.blocksize = BELL_SAMPLE_RATE;
+
+	len = period * BELL_SAMPLE_RATE / 1000 * 2;
+	size = min(len, ai.blocksize);
+	if (size == 0)
+		goto out;
+
+	buf = malloc(size, M_TEMP, M_WAITOK);
+	if (buf == NULL)
+		goto out;
+ 
+	phase = 0;
+	while (len > 0) {
+		size = min(len, ai.blocksize);
+		if (audiobell_synthesize(buf, pitch, size *
+				1000 / BELL_SAMPLE_RATE, volume, &phase) != 0)
+			goto out;
+		aiov.iov_base = (void *)buf;
+		aiov.iov_len = size;
+		auio.uio_iov = &aiov;
+		auio.uio_iovcnt = 1;
+		auio.uio_offset = 0;
+		auio.uio_resid = size;
+		auio.uio_rw = UIO_WRITE;
+		UIO_SETUP_SYSSPACE(&auio);
+
+		if (audiobellwrite(fp, NULL, &auio, NULL, 0) != 0)
+			break;
+		len -= size;
+	}
 out:
-	if (buf != NULL) free(buf, M_TEMP);
-	audioclose(AUDIO_DEVICE | device_unit(audio), FWRITE, 0, NULL);
+	if (buf != NULL)
+		free(buf, M_TEMP);
+	if (fd >= 0) {
+		fd_getfile(fd);
+		fd_close(fd);
+	}
+	audiobellclose(fp);
 }

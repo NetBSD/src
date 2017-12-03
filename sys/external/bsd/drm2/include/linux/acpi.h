@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.h,v 1.2.10.2 2014/08/20 00:04:21 tls Exp $	*/
+/*	$NetBSD: acpi.h,v 1.2.10.3 2017/12/03 11:37:59 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,5 +31,17 @@
 
 #ifndef _LINUX_ACPI_H_
 #define _LINUX_ACPI_H_
+
+#ifdef _KERNEL_OPT
+#if defined(__i386__) || defined(__x86_64__)
+#include "acpica.h"
+#else
+#define NACPICA 0
+#endif
+#endif
+
+#if NACPICA > 0
+#include <dev/acpi/acpivar.h>
+#endif
 
 #endif  /* _LINUX_ACPI_H_ */

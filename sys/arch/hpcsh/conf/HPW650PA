@@ -1,4 +1,4 @@
-#	$NetBSD: HPW650PA,v 1.31 2012/08/17 20:11:39 abs Exp $
+#	$NetBSD: HPW650PA,v 1.31.2.1 2017/12/03 11:36:15 jdolecek Exp $
 #
 #	HITACHI PERSONA HPW650PA
 #
@@ -23,6 +23,7 @@ options 	HPC_DEBUG_INTERRUPT_MONITOR
 options 	HPC_DEBUG_LCD
 
 options 	DDB			# in-kernel debugger
+pseudo-device	ksyms
 #options 	KGDB			# in-kernel debugger
 #options 	"KGDB_DEVNAME=\"hd64465uart\"",KGDB_DEVRATE=19200
 #makeoptions	DEBUG="-g"	# compile full symbol table

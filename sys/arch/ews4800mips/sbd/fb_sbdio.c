@@ -1,4 +1,4 @@
-/*	$NetBSD: fb_sbdio.c,v 1.12.6.1 2014/08/20 00:03:00 tls Exp $	*/
+/*	$NetBSD: fb_sbdio.c,v 1.12.6.2 2017/12/03 11:36:12 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #define WIRED_FB_TLB
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb_sbdio.c,v 1.12.6.1 2014/08/20 00:03:00 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb_sbdio.c,v 1.12.6.2 2017/12/03 11:36:12 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,9 +46,9 @@ __KERNEL_RCSID(0, "$NetBSD: fb_sbdio.c,v 1.12.6.1 2014/08/20 00:03:00 tls Exp $"
 #include <dev/wsfont/wsfont.h>
 #include <dev/rasops/rasops.h>
 
+#include <mips/locore.h>
 #include <mips/pte.h>
 
-#include <machine/locore.h>
 #include <machine/sbdiovar.h>
 
 #include <machine/gareg.h>
@@ -154,6 +154,7 @@ fb_sbdio_attach(device_t parent, device_t self, void *aux)
 		ga = malloc(sizeof(struct ga), M_DEVBUF, M_NOWAIT | M_ZERO);
 		if (ga == NULL) {
 			printf(":can't allocate ga memory\n");
+			free(ri, M_DEVBUF);
 			return;
 		}
 		ga->reg_paddr = sa->sa_addr2;
@@ -302,6 +303,8 @@ _fb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 		if (ri->ri_flg == RI_FORCEMONO)
 			break;
 		ga_clut_get(ga);
+		if (cmap->index >= 256 || cmap->count > 256 - cmap->index)
+			return (EINVAL);
 		for (i = 0; i < cmap->count; i++) {
 			cmap->red[i] = ga->clut[cmap->index + i][0];
 			cmap->green[i] = ga->clut[cmap->index + i][1];
@@ -312,6 +315,8 @@ _fb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 	case WSDISPLAYIO_PUTCMAP:
 		if (ri->ri_flg == RI_FORCEMONO)
 			break;
+		if (cmap->index >= 256 || cmap->count > 256 - cmap->index)
+			return (EINVAL);
 		for (i = 0; i < cmap->count; i++) {
 			ga->clut[cmap->index + i][0] = cmap->red[i];
 			ga->clut[cmap->index + i][1] = cmap->green[i];

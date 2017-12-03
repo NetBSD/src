@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.50.10.3 2014/08/20 00:03:32 tls Exp $  
+	$NetBSD: syscalls.master,v 1.50.10.4 2017/12/03 11:36:54 jdolecek Exp $  
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -100,8 +100,8 @@
 14	STD		{ int|linux_sys||mknod(const char *path, linux_umode_t mode, \
 			    unsigned dev); }
 15	NOARGS		{ int|sys||chmod(const char *path, int mode); }
-16	NOARGS		{ int|sys||__posix_lchown(const char *path, int uid, \
-			    int gid); }
+16	NOARGS		{ int|sys||__posix_lchown(const char *path, uid_t uid, \
+			    gid_t gid); }
 17	OBSOL		break
 18	OBSOL		ostat
 19	NOARGS		{ long|compat_43_sys||lseek(int fd, long offset, \
@@ -189,7 +189,7 @@
 83	NOARGS		{ int|sys||symlink(const char *path, const char *to); }
 84	NOARGS		{ int|compat_43_sys||lstat(const char *path, \
 			    struct stat43 *up); } oolstat
-85	NOARGS		{ int|sys||readlink(const char *name, char *buf, \
+85	NOARGS		{ ssize_t|sys||readlink(const char *path, char *buf, \
 			    int count); }
 #ifdef EXEC_AOUT
 86	STD		{ int|linux_sys||uselib(const char *path); }
@@ -208,7 +208,8 @@
 			    long length); }
 93	NOARGS		{ int|compat_43_sys||ftruncate(int fd, long length); }
 94	NOARGS		{ int|sys||fchmod(int fd, linux_umode_t mode); }
-95	NOARGS		{ int|sys||__posix_fchown(int fd, int uid, int gid); }
+95	NOARGS		{ int|sys||__posix_fchown(int fd, uid_t uid, \
+			    gid_t gid); }
 96	STD		{ int|linux_sys||getpriority(int which, int who); }
 97	NOARGS		{ int|sys||setpriority(int which, int who, int prio); }
 98	NOARGS		{ int|sys||profil(void *samples, u_int size, \
@@ -342,8 +343,8 @@
 			    size_t nbyte, off_t offset); }
 180	STD		{ int|linux_sys||pwrite(int fd, char *buf, \
 			    size_t nbyte, off_t offset); }
-181	NOARGS		{ int|sys||__posix_chown(const char *path, \
-			    int uid, int gid); }
+181	NOARGS		{ int|sys||__posix_chown(const char *path, uid_t uid, \
+			    gid_t gid); }
 182	NOARGS		{ int|sys||__getcwd(char *bufp, size_t length); }
 183	UNIMPL		capget
 184	UNIMPL		capset
@@ -477,8 +478,11 @@
 277	UNIMPL		inotify_rm_watch
 278	UNIMPL		spu_run
 279	UNIMPL		spu_create
-280	UNIMPL		pselect6
-281	STD		{ int|linux_sys||ppoll(struct pollfd *fds, int nfds, \
+280	STD		{ int|linux_sys||pselect6(int nfds, fd_set *readfds, \
+			   fd_set *writefds, fd_set *exceptfds, \
+			   struct linux_timespec *timeout, \
+			   linux_sized_sigset_t *ss); }
+281	STD		{ int|linux_sys||ppoll(struct pollfd *fds, u_int nfds, \
 			    struct linux_timespec *timeout, \
 			    linux_sigset_t *sigset); }
 282	UNIMPL		unshare
@@ -504,7 +508,7 @@
 			    int fd2, const char *name2, int flags); }
 295	NOARGS		{ int|sys||symlinkat(const char *path1, int fd, \
 			    const char *path2); }
-296	NOARGS		{ int|sys||readlinkat(int fd, const char *path, \
+296	NOARGS		{ ssize_t|sys||readlinkat(int fd, const char *path, \
 			    char *buf, size_t bufsize); }
 297	STD		{ int|linux_sys||fchmodat(int fd, const char *path, \
 			    linux_umode_t mode); }
@@ -538,3 +542,69 @@
 320	UNIMPL		preadv
 321	UNIMPL		pwritev
 322	UNIMPL		rt_tgsigqueueinfo
+323	UNIMPL		fanotify_init
+324	UNIMPL		fanotify_mark
+325	UNIMPL		prlimit64
+326	UNIMPL		socket
+327	UNIMPL		bind
+328	UNIMPL		connect
+329	UNIMPL		listen
+330	UNIMPL		accept
+331	UNIMPL		getsockname
+332	UNIMPL		getpeername
+333	UNIMPL		socketpair
+334	UNIMPL		send
+335	UNIMPL		sendto
+336	UNIMPL		recv
+337	UNIMPL		recvfrom
+338	UNIMPL		shutdown
+339	UNIMPL		setsockopt
+340	UNIMPL		getsockopt
+341	UNIMPL		sendmsg
+342	UNIMPL		recvmsg
+343	STD		{ int|linux_sys||recvmmsg(int s, \
+			    struct linux_mmsghdr *msgvec, unsigned int vlen, \
+			    unsigned int flags, struct timespec *timeout); }
+344	STD		{ int|linux_sys||accept4(int s, \
+			    struct osockaddr *name, \
+			    int *anamelen, int flags); }
+345	UNIMPL		name_to_handle_at
+346	UNIMPL		open_by_handle_at
+347	UNIMPL		clock_adjtime
+348	UNIMPL		syncfs
+349	STD		{ int|linux_sys||sendmmsg(int s, \
+			    struct linux_mmsghdr *msgvec, unsigned int vlen, \
+			    unsigned int flags); }
+350	UNIMPL		setns
+351	UNIMPL		process_vm_readv
+352	UNIMPL		process_vm_writev
+353	UNIMPL		finit_module
+354	UNIMPL		kcmp
+355	UNIMPL		sched_setattr
+356	UNIMPL		sched_getattr
+357	UNIMPL		renameat2
+358	UNIMPL		seccomp
+359	UNIMPL		getrandom
+360	UNIMPL		memfd_create
+361	UNIMPL		bpf
+362	UNIMPL		execveat
+363	UNIMPL		switch_endian
+364	UNIMPL		userfaultfd
+365	UNIMPL		membarrier
+366	UNIMPL
+367	UNIMPL
+368	UNIMPL
+369	UNIMPL
+370	UNIMPL
+371	UNIMPL
+372	UNIMPL
+373	UNIMPL
+374	UNIMPL
+375	UNIMPL
+376	UNIMPL
+377	UNIMPL
+378	UNIMPL		mlock2
+379	UNIMPL		copy_file_range
+380	UNIMPL		preadv2
+381	UNIMPL		pwritev2
+382	UNIMPL		kexec_file_load

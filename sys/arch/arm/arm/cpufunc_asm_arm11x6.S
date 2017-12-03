@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_arm11x6.S,v 1.1.4.2 2014/08/20 00:02:44 tls Exp $	*/
+/*	$NetBSD: cpufunc_asm_arm11x6.S,v 1.1.4.3 2017/12/03 11:35:51 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2007 Microsoft
@@ -63,7 +63,7 @@
 #include <machine/asm.h>
 #include <arm/locore.h>
 
-RCSID("$NetBSD: cpufunc_asm_arm11x6.S,v 1.1.4.2 2014/08/20 00:02:44 tls Exp $")
+RCSID("$NetBSD: cpufunc_asm_arm11x6.S,v 1.1.4.3 2017/12/03 11:35:51 jdolecek Exp $")
 
 #if 0
 #define Invalidate_I_cache(Rtmp1, Rtmp2) \
@@ -73,7 +73,7 @@ RCSID("$NetBSD: cpufunc_asm_arm11x6.S,v 1.1.4.2 2014/08/20 00:02:44 tls Exp $")
  * Workaround for
  *
  *    Erratum 411920 in ARM1136 (fixed in r1p4)
- *    Erratum 415045 in ARM1176 (fixed in r0p5?)
+ *    Erratum 415045 in ARM1176 (fixed in r0p5)
  *
  *	- value of arg 'reg' Should Be Zero
  */
@@ -164,6 +164,11 @@ ENTRY_NP(arm11x6_icache_sync_range)
 END(arm11x6_icache_sync_range)
 
 ENTRY_NP(arm11x6_idcache_wbinv_range)
+	ldr	r2, .Larm_pcache
+	ldr	r2, [r2, #DCACHE_SIZE]
+	cmp	r1, r2
+	bge	arm11x6_idcache_wbinv_all
+
 	add	r1, r1, r0
 	sub	r1, r1, #1
 	/* Erratum ARM1136 371025, workaround #2 */
@@ -212,3 +217,6 @@ ENTRY_NP(arm11x6_sleep)
 	bne	1b
 	RET
 END(arm11x6_sleep)
+
+.Larm_pcache:
+	.word arm_pcache

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.8.12.1 2014/08/20 00:03:21 tls Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.8.12.2 2017/12/03 11:36:40 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -35,6 +35,7 @@
  */
 
 #define	__HAVE_PCIIDE_MACHDEP_COMPAT_INTR_ESTABLISH
+#define	__HAVE_PCI_MSI_MSIX
 
 /*
  * be-specific PCI structure and type definitions.
@@ -56,6 +57,13 @@ typedef int pcitag_t;
 typedef int pci_intr_handle_t;
 extern struct powerpc_bus_dma_tag pci_bus_dma_tag;
 
+typedef enum {
+	PCI_INTR_TYPE_INTX = 0,
+	PCI_INTR_TYPE_MSI,
+	PCI_INTR_TYPE_MSIX,
+	PCI_INTR_TYPE_SIZE,
+} pci_intr_type_t;
+
 /*
  * Functions provided to machine-independent PCI code.
  */
@@ -75,4 +83,31 @@ const char	*pci_intr_string(pci_chipset_tag_t, pci_intr_handle_t,
 const struct evcnt *pci_intr_evcnt(pci_chipset_tag_t, pci_intr_handle_t);
 void		*pci_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
 		    int, int (*)(void *), void *);
+void		*pci_intr_establish_xname(pci_chipset_tag_t, pci_intr_handle_t,
+		    int, int (*)(void *), void *, const char *);
 void		pci_intr_disestablish(pci_chipset_tag_t, void *);
+
+pci_intr_type_t	pci_intr_type(pci_chipset_tag_t, pci_intr_handle_t);
+int		pci_intr_alloc(const struct pci_attach_args *,
+		    pci_intr_handle_t **, int *, pci_intr_type_t);
+void		pci_intr_release(pci_chipset_tag_t, pci_intr_handle_t *, int);
+int		pci_intx_alloc(const struct pci_attach_args *,
+		    pci_intr_handle_t **);
+
+/* experimental MSI support */
+int		pci_msi_alloc(const struct pci_attach_args *,
+		    pci_intr_handle_t **, int *);
+int		pci_msi_alloc_exact(const struct pci_attach_args *,
+		    pci_intr_handle_t **, int);
+
+/* experimental MSI-X support */
+int		pci_msix_alloc(const struct pci_attach_args *,
+		    pci_intr_handle_t **, int *);
+int		pci_msix_alloc_exact(const struct pci_attach_args *,
+		    pci_intr_handle_t **, int);
+int		pci_msix_alloc_map(const struct pci_attach_args *,
+		    pci_intr_handle_t **, u_int *, int);
+
+void		pci_conf_interrupt(pci_chipset_tag_t, int, int, int,
+		    int, int *);
+int		pci_conf_hook(pci_chipset_tag_t, int, int, int, pcireg_t);

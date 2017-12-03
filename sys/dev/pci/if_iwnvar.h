@@ -1,5 +1,5 @@
-/*	$NetBSD: if_iwnvar.h,v 1.13.14.2 2014/08/20 00:03:42 tls Exp $	*/
-/*	$OpenBSD: if_iwnvar.h,v 1.24 2012/11/17 14:02:51 kettenis Exp $	*/
+/*	$NetBSD: if_iwnvar.h,v 1.13.14.3 2017/12/03 11:37:08 jdolecek Exp $	*/
+/*	$OpenBSD: if_iwnvar.h,v 1.28 2014/09/09 18:55:08 sthen Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -221,8 +221,11 @@ struct iwn_softc {
 #define IWN_FLAG_HAS_11N	(1 << 6)
 #define IWN_FLAG_ENH_SENS	(1 << 7)
 /* Added for NetBSD */
-#define IWN_FLAG_SCANNING	(1 << 8)
-#define IWN_FLAG_HW_INITED	(1 << 9)
+#define IWN_FLAG_HW_INITED	(1 << 8)
+#define IWN_FLAG_SCANNING_2GHZ	(1 << 9)
+#define IWN_FLAG_SCANNING_5GHZ	(1 << 10)
+#define IWN_FLAG_SCANNING	(IWN_FLAG_SCANNING_2GHZ|IWN_FLAG_SCANNING_5GHZ)
+#define IWN_FLAG_ATTACHED	(1 << 11)
 
 	uint8_t 		hw_type;
 
@@ -262,7 +265,9 @@ struct iwn_softc {
 
 	bus_space_tag_t		sc_st;
 	bus_space_handle_t	sc_sh;
+	pci_intr_handle_t	*sc_pihp;
 	void 			*sc_ih;
+	void			*sc_soft_ih;
 	pci_chipset_tag_t	sc_pct;
 	pcitag_t		sc_pcitag;
 	bus_size_t		sc_sz;
@@ -295,10 +300,16 @@ struct iwn_softc {
 	uint32_t		eeprom_crystal;
 	int16_t			eeprom_temp;
 	int16_t			eeprom_voltage;
+	int16_t			eeprom_rawtemp;
 	int8_t			maxpwr2GHz;
 	int8_t			maxpwr5GHz;
 	int8_t			maxpwr[IEEE80211_CHAN_MAX];
 	int8_t			enh_maxpwr[35];
+
+	uint8_t			reset_noise_gain;
+	uint8_t			noise_gain;
+
+	uint32_t		tlv_feature_flags;
 
 	int32_t			temp_off;
 	uint32_t		int_mask;
@@ -327,7 +338,11 @@ struct iwn_softc {
 #define sc_txtap	sc_txtapu.th
 	int			sc_txtap_len;
 
+#define IWN_UCODE_API(ver)	(((ver) & 0x0000ff00) >> 8)
+	uint32_t		ucode_rev;
+
 	kmutex_t		sc_mtx;         /* mutex for init/stop */
 
+	int			sc_beacon_wait;	/* defer/skip sending */
 };
 

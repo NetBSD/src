@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vfsops.c,v 1.42.22.2 2014/08/20 00:04:27 tls Exp $	*/
+/*	$NetBSD: ptyfs_vfsops.c,v 1.42.22.3 2017/12/03 11:38:43 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.42.22.2 2014/08/20 00:04:27 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.42.22.3 2017/12/03 11:38:43 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,6 +155,7 @@ ptyfs__makename(struct mount *mp, struct lwp *l, char *tbuf, size_t bufsiz,
 {
 	size_t len;
 	const char *np;
+	int pty = minor(dev);
 
 	switch (ms) {
 	case 'p':
@@ -170,7 +171,7 @@ ptyfs__makename(struct mount *mp, struct lwp *l, char *tbuf, size_t bufsiz,
 		 */
 		if (l->l_proc->p_cwdi->cwdi_rdir == NULL
 		    && ptyfs_save_ptm != NULL 
-		    && ptyfs_used_get(PTYFSptc, minor(dev), mp, 0) == NULL)
+		    && ptyfs_next_active(mp, pty) != pty)
 			return (*ptyfs_save_ptm->makename)(mp, l,
 			    tbuf, bufsiz, dev, ms);
 
@@ -193,6 +194,7 @@ static int
 ptyfs__allocvp(struct mount *mp, struct lwp *l, struct vnode **vpp,
     dev_t dev, char ms)
 {
+	int error;
 	ptyfstype type;
 
 	switch (ms) {
@@ -206,7 +208,18 @@ ptyfs__allocvp(struct mount *mp, struct lwp *l, struct vnode **vpp,
 		return EINVAL;
 	}
 
-	return ptyfs_allocvp(mp, vpp, type, minor(dev), l);
+	error = ptyfs_allocvp(mp, vpp, type, minor(dev));
+	if (error)
+		return error;
+	error = vn_lock(*vpp, LK_EXCLUSIVE);
+	if (error) {
+		vrele(*vpp);
+		*vpp = NULL;
+		return error;
+	}
+	if (type == PTYFSptc)
+		ptyfs_set_active(mp, minor(dev));
+	return 0;
 }
 
 
@@ -235,7 +248,7 @@ ptyfs_init(void)
 void
 ptyfs_reinit(void)
 {
-	ptyfs_hashreinit();
+
 }
 
 void
@@ -261,8 +274,10 @@ ptyfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 
 	if (args == NULL)
 		return EINVAL;
-	if (*data_len != sizeof *args && *data_len != OSIZE)
-		return EINVAL;
+	if (*data_len != sizeof *args) {
+		if (*data_len != OSIZE || args->version >= PTYFS_ARGSVERSION)
+			return EINVAL;
+	}
 
 	if (UIO_MX & (UIO_MX - 1)) {
 		log(LOG_ERR, "ptyfs: invalid directory entry size");
@@ -299,12 +314,15 @@ ptyfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	pmnt = malloc(sizeof(struct ptyfsmount), M_PTYFSMNT, M_WAITOK);
 
 	mp->mnt_data = pmnt;
+	mutex_init(&pmnt->pmnt_lock, MUTEX_DEFAULT, IPL_NONE);
 	pmnt->pmnt_gid = args->gid;
 	pmnt->pmnt_mode = args->mode;
 	if (args->version >= PTYFS_ARGSVERSION)
 		pmnt->pmnt_flags = args->flags;
 	else
 		pmnt->pmnt_flags = 0;
+	pmnt->pmnt_bitmap_size = 0;
+	pmnt->pmnt_bitmap = NULL;
 	mp->mnt_flag |= MNT_LOCAL;
 	vfs_getnewfsid(mp);
 
@@ -360,6 +378,9 @@ ptyfs_unmount(struct mount *mp, int mntflags)
 	/*
 	 * Finally, throw away the ptyfsmount structure
 	 */
+	if (pmnt->pmnt_bitmap_size > 0)
+		kmem_free(pmnt->pmnt_bitmap, pmnt->pmnt_bitmap_size);
+	mutex_destroy(&pmnt->pmnt_lock);
 	free(mp->mnt_data, M_PTYFSMNT);
 	mp->mnt_data = NULL;
 
@@ -369,8 +390,19 @@ ptyfs_unmount(struct mount *mp, int mntflags)
 int
 ptyfs_root(struct mount *mp, struct vnode **vpp)
 {
+	int error;
+
 	/* setup "." */
-	return ptyfs_allocvp(mp, vpp, PTYFSroot, 0, NULL);
+	error = ptyfs_allocvp(mp, vpp, PTYFSroot, 0);
+	if (error)
+		return error;
+	error = vn_lock(*vpp, LK_EXCLUSIVE);
+	if (error) {
+		vrele(*vpp);
+		*vpp = NULL;
+		return error;
+	}
+	return 0;
 }
 
 /*ARGSUSED*/
@@ -378,6 +410,47 @@ int
 ptyfs_sync(struct mount *mp, int waitfor,
     kauth_cred_t uc)
 {
+	return 0;
+}
+
+/*
+ * Initialize this vnode / ptynode pair.
+ * Only for the slave side of a pty, caller assures
+ * no other thread will try to load this node.
+ */
+int
+ptyfs_loadvnode(struct mount *mp, struct vnode *vp,
+    const void *key, size_t key_len, const void **new_key)
+{
+	struct ptyfskey pkey;
+	struct ptyfsnode *ptyfs;
+
+	KASSERT(key_len == sizeof(pkey));
+	memcpy(&pkey, key, key_len);
+
+	ptyfs = ptyfs_get_node(pkey.ptk_type, pkey.ptk_pty);
+	KASSERT(memcmp(&ptyfs->ptyfs_key, &pkey, sizeof(pkey)) == 0);
+
+	switch (pkey.ptk_type) {
+	case PTYFSroot:	/* /pts = dr-xr-xr-x */
+		vp->v_type = VDIR;
+		vp->v_vflag = VV_ROOT;
+		break;
+
+	case PTYFSpts:	/* /pts/N = cxxxxxxxxx */
+	case PTYFSptc:	/* controlling side = cxxxxxxxxx */
+		vp->v_type = VCHR;
+		spec_node_init(vp, PTYFS_MAKEDEV(ptyfs));
+		break;
+	default:
+		panic("ptyfs_loadvnode");
+	}
+
+	vp->v_tag = VT_PTYFS;
+	vp->v_op = ptyfs_vnodeop_p;
+	vp->v_data = ptyfs;
+	uvm_vnp_setsize(vp, 0);
+	*new_key = &ptyfs->ptyfs_key;
 	return 0;
 }
 
@@ -411,6 +484,7 @@ struct vfsops ptyfs_vfsops = {
 	.vfs_statvfs = genfs_statvfs,
 	.vfs_sync = ptyfs_sync,
 	.vfs_vget = ptyfs_vget,
+	.vfs_loadvnode = ptyfs_loadvnode,
 	.vfs_fhtovp = (void *)eopnotsupp,
 	.vfs_vptofh = (void *)eopnotsupp,
 	.vfs_init = ptyfs_init,
@@ -418,7 +492,7 @@ struct vfsops ptyfs_vfsops = {
 	.vfs_done = ptyfs_done,
 	.vfs_snapshot = (void *)eopnotsupp,
 	.vfs_extattrctl = (void *)eopnotsupp,
-	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_suspendctl = genfs_suspendctl,
 	.vfs_renamelock_enter = genfs_renamelock_enter,
 	.vfs_renamelock_exit = genfs_renamelock_exit,
 	.vfs_fsync = (void *)eopnotsupp,

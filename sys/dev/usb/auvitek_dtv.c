@@ -1,4 +1,4 @@
-/* $NetBSD: auvitek_dtv.c,v 1.5.6.1 2013/02/25 00:29:33 tls Exp $ */
+/* $NetBSD: auvitek_dtv.c,v 1.5.6.2 2017/12/03 11:37:33 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvitek_dtv.c,v 1.5.6.1 2013/02/25 00:29:33 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvitek_dtv.c,v 1.5.6.2 2017/12/03 11:37:33 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,13 +66,13 @@ static int		auvitek_dtv_start_transfer(void *,
 static int		auvitek_dtv_stop_transfer(void *);
 
 static int		auvitek_dtv_init_pipes(struct auvitek_softc *);
+static int		auvitek_dtv_abort_pipes(struct auvitek_softc *);
 static int		auvitek_dtv_close_pipes(struct auvitek_softc *);
 
 static int		auvitek_dtv_bulk_start(struct auvitek_softc *);
 static int		auvitek_dtv_bulk_start1(struct auvitek_bulk_xfer *);
-static void		auvitek_dtv_bulk_cb(usbd_xfer_handle,
-					    usbd_private_handle,
-					    usbd_status);
+static void		auvitek_dtv_bulk_cb(struct usbd_xfer *, void *,
+			    usbd_status);
 
 static const struct dtv_hw_if auvitek_dtv_if = {
 	.get_devinfo = auvitek_dtv_get_devinfo,
@@ -92,7 +92,7 @@ auvitek_dtv_attach(struct auvitek_softc *sc)
 
 	auvitek_dtv_rescan(sc, NULL, NULL);
 
-	return (sc->sc_dtvdev != NULL);
+	return sc->sc_dtvdev != NULL;
 }
 
 int
@@ -153,7 +153,26 @@ auvitek_dtv_open(void *priv, int flags)
 	if (sc->sc_xc5k == NULL)
 		return ENXIO;
 
-	return auvitek_dtv_init_pipes(sc);
+	int err = auvitek_dtv_init_pipes(sc);
+	if (err)
+		return err;
+
+	for (size_t i = 0; i < AUVITEK_NBULK_XFERS; i++) {
+		sc->sc_ab.ab_bx[i].bx_sc = sc;
+		err = usbd_create_xfer(sc->sc_ab.ab_pipe,
+		    AUVITEK_BULK_BUFLEN, 0, 0, &sc->sc_ab.ab_bx[i].bx_xfer);
+		if (err) {
+			aprint_error_dev(sc->sc_dev,
+			    "couldn't allocate xfer\n");
+			sc->sc_dying = 1;
+			return err;
+		}
+		sc->sc_ab.ab_bx[i].bx_buffer = usbd_get_buffer(
+		    sc->sc_ab.ab_bx[i].bx_xfer);
+	}
+
+
+	return 0;
 }
 
 static void
@@ -162,6 +181,13 @@ auvitek_dtv_close(void *priv)
 	struct auvitek_softc *sc = priv;
 
 	auvitek_dtv_stop_transfer(sc);
+	auvitek_dtv_abort_pipes(sc);
+
+	for (size_t i = 0; i < AUVITEK_NBULK_XFERS; i++) {
+		if (sc->sc_ab.ab_bx[i].bx_xfer)
+			usbd_destroy_xfer(sc->sc_ab.ab_bx[i].bx_xfer);
+	}
+
 	auvitek_dtv_close_pipes(sc);
 
 	sc->sc_dtvsubmitcb = NULL;
@@ -272,11 +298,22 @@ auvitek_dtv_init_pipes(struct auvitek_softc *sc)
 }
 
 static int
-auvitek_dtv_close_pipes(struct auvitek_softc *sc)
+auvitek_dtv_abort_pipes(struct auvitek_softc *sc)
 {
 	if (sc->sc_ab.ab_pipe != NULL) {
 		KERNEL_LOCK(1, curlwp);
 		usbd_abort_pipe(sc->sc_ab.ab_pipe);
+		KERNEL_UNLOCK_ONE(curlwp);
+	}
+
+	return 0;
+}
+
+static int
+auvitek_dtv_close_pipes(struct auvitek_softc *sc)
+{
+	if (sc->sc_ab.ab_pipe != NULL) {
+		KERNEL_LOCK(1, curlwp);
 		usbd_close_pipe(sc->sc_ab.ab_pipe);
 		KERNEL_UNLOCK_ONE(curlwp);
 		sc->sc_ab.ab_pipe = NULL;
@@ -286,7 +323,7 @@ auvitek_dtv_close_pipes(struct auvitek_softc *sc)
 }
 
 static void
-auvitek_dtv_bulk_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
+auvitek_dtv_bulk_cb(struct usbd_xfer *xfer, void *priv,
     usbd_status status)
 {
 	struct auvitek_bulk_xfer *bx = priv;
@@ -345,13 +382,10 @@ static int
 auvitek_dtv_bulk_start1(struct auvitek_bulk_xfer *bx)
 {
 	struct auvitek_softc *sc = bx->bx_sc;
-	struct auvitek_bulk *ab = &sc->sc_ab;
-	int err;
+	usbd_status err;
 
-	usbd_setup_xfer(bx->bx_xfer, ab->ab_pipe, bx,
-	    bx->bx_buffer, AUVITEK_BULK_BUFLEN,
-	    //USBD_SHORT_XFER_OK|USBD_NO_COPY, USBD_NO_TIMEOUT,
-	    USBD_NO_COPY, 100,
+	usbd_setup_xfer(bx->bx_xfer, bx, bx->bx_buffer, AUVITEK_BULK_BUFLEN,
+	    0 /* USBD_SHORT_XFER_OK */, 100 /* USBD_NO_TIMEOUT */,
 	    auvitek_dtv_bulk_cb);
 
 	KERNEL_LOCK(1, curlwp);

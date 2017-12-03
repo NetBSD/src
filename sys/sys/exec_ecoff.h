@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_ecoff.h,v 1.20 2009/12/10 14:13:54 matt Exp $	*/
+/*	$NetBSD: exec_ecoff.h,v 1.20.22.1 2017/12/03 11:39:20 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -34,6 +34,76 @@
 #define	_SYS_EXEC_ECOFF_H_
 
 #include <machine/ecoff_machdep.h>
+
+#ifdef ECOFF32_PAD
+
+typedef uint32_t ecoff32_addr;
+typedef uint32_t ecoff32_off;
+typedef uint32_t ecoff32_ulong;
+typedef int32_t ecoff32_long;
+typedef uint32_t ecoff32_uint;
+typedef int32_t ecoff32_int;
+typedef uint16_t ecoff32_ushort;
+typedef int16_t ecoff32_short;
+typedef uint8_t ecoff32_ubyte;
+typedef int8_t ecoff32_byte;
+
+struct ecoff32_filehdr {
+	ecoff32_ushort  f_magic;	/* magic number */
+	ecoff32_ushort  f_nscns;	/* # of sections */
+	ecoff32_uint	f_timdat;	/* time and date stamp */
+	ecoff32_ulong	f_symptr;	/* file offset of symbol table */
+	ecoff32_uint	f_nsyms;	/* # of symbol table entries */
+	ecoff32_ushort	f_opthdr;	/* sizeof the optional header */
+	ecoff32_ushort	f_flags;	/* flags??? */
+};
+
+struct ecoff32_aouthdr {
+	ecoff32_ushort	magic;
+	ecoff32_ushort	vstamp;
+	ECOFF32_PAD
+	ecoff32_ulong	tsize;
+	ecoff32_ulong	dsize;
+	ecoff32_ulong	bsize;
+	ecoff32_ulong	entry;
+	ecoff32_ulong	text_start;
+	ecoff32_ulong	data_start;
+	ecoff32_ulong	bss_start;
+	ECOFF32_MACHDEP;
+};
+
+struct ecoff32_scnhdr {			/* needed for size info */
+	char		s_name[8];	/* name */
+	ecoff32_ulong	s_paddr;	/* physical addr? for ROMing?*/
+	ecoff32_ulong	s_vaddr;	/* virtual addr? */
+	ecoff32_ulong	s_size;		/* size */
+	ecoff32_ulong	s_scnptr;	/* file offset of raw data */
+	ecoff32_ulong	s_relptr;	/* file offset of reloc data */
+	ecoff32_ulong	s_lnnoptr;	/* file offset of line data */
+	ecoff32_ushort	s_nreloc;	/* # of relocation entries */
+	ecoff32_ushort	s_nlnno;	/* # of line entries */
+	ecoff32_uint	s_flags;	/* flags */
+};
+
+struct ecoff32_exechdr {
+	struct ecoff32_filehdr f;
+	struct ecoff32_aouthdr a;
+};
+
+#define ECOFF32_HDR_SIZE (sizeof(struct ecoff32_exechdr))
+
+#define ECOFF32_TXTOFF(ep) \
+        ((ep)->a.magic == ECOFF_ZMAGIC ? 0 : \
+	 ECOFF_ROUND(ECOFF32_HDR_SIZE + (ep)->f.f_nscns * \
+		     sizeof(struct ecoff32_scnhdr), ECOFF32_SEGMENT_ALIGNMENT(ep)))
+
+#define ECOFF32_DATOFF(ep) \
+        (ECOFF_BLOCK_ALIGN((ep), ECOFF32_TXTOFF(ep) + (ep)->a.tsize))
+
+#define ECOFF32_SEGMENT_ALIGN(ep, value) \
+        (ECOFF_ROUND((value), ((ep)->a.magic == ECOFF_ZMAGIC ? ECOFF_LDPGSZ : \
+         ECOFF32_SEGMENT_ALIGNMENT(ep))))
+#endif
 
 struct ecoff_filehdr {
 	u_short f_magic;	/* magic number */

@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.151.12.3 2013/06/23 06:20:12 tls Exp $
+#	$NetBSD: files.sparc,v 1.151.12.4 2017/12/03 11:36:43 jdolecek Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -256,7 +256,7 @@ device cgeight: bt_dac, fb, rasops24, pfour
 attach cgeight at obio
 file	arch/sparc/dev/cgeight.c	cgeight needs-flag
 
-device cgfourteen: fb, rasops8, wsemuldisplaydev
+device cgfourteen: fb, rasops8, wsemuldisplaydev, vcons, glyphcache
 attach cgfourteen at obio
 file	arch/sparc/dev/cgfourteen.c	cgfourteen needs-flag
 
@@ -317,6 +317,7 @@ file	arch/sparc/sparc/trap.c
 file	arch/sparc/sparc/vm_machdep.c
 
 file	arch/sparc/sparc/db_interface.c	ddb | kgdb
+file	arch/sparc/sparc/db_machdep.c	ddb
 file	arch/sparc/sparc/db_trace.c	ddb
 file	arch/sparc/sparc/db_disasm.c	ddb
 

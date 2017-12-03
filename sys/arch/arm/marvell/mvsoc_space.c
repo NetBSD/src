@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsoc_space.c,v 1.5.2.2 2014/08/20 00:02:47 tls Exp $	*/
+/*	$NetBSD: mvsoc_space.c,v 1.5.2.3 2017/12/03 11:35:54 jdolecek Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsoc_space.c,v 1.5.2.2 2014/08/20 00:02:47 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsoc_space.c,v 1.5.2.3 2017/12/03 11:35:54 jdolecek Exp $");
 
 #include "opt_mvsoc.h"
 #include "mvpex.h"
@@ -215,6 +215,45 @@ struct bus_space kirkwood_pex1_io_bs_tag = {
 };
 #endif
 
+#if defined(DOVE)
+struct bus_space dove_pex0_mem_bs_tag = {
+	/* cookie */
+	(void *)DOVE_TAG_PEX0_MEM,
+
+	MVSOC_BUS_SPACE_DEFAULT_FUNCS,
+#ifdef __BUS_SPACE_HAS_STREAM_METHODS
+	MVSOC_BUS_SPACE_NORMAL_FUNCS,
+#endif
+};
+struct bus_space dove_pex0_io_bs_tag = {
+	/* cookie */
+	(void *)DOVE_TAG_PEX0_IO,
+
+	MVSOC_BUS_SPACE_DEFAULT_FUNCS,
+#ifdef __BUS_SPACE_HAS_STREAM_METHODS
+	MVSOC_BUS_SPACE_NORMAL_FUNCS,
+#endif
+};
+struct bus_space dove_pex1_mem_bs_tag = {
+	/* cookie */
+	(void *)DOVE_TAG_PEX1_MEM,
+
+	MVSOC_BUS_SPACE_DEFAULT_FUNCS,
+#ifdef __BUS_SPACE_HAS_STREAM_METHODS
+	MVSOC_BUS_SPACE_NORMAL_FUNCS,
+#endif
+};
+struct bus_space dove_pex1_io_bs_tag = {
+	/* cookie */
+	(void *)DOVE_TAG_PEX1_IO,
+
+	MVSOC_BUS_SPACE_DEFAULT_FUNCS,
+#ifdef __BUS_SPACE_HAS_STREAM_METHODS
+	MVSOC_BUS_SPACE_NORMAL_FUNCS,
+#endif
+};
+#endif
+
 #if defined(ARMADAXP)
 struct bus_space armadaxp_pex00_mem_bs_tag = {
 	/* cookie */
@@ -261,6 +300,18 @@ struct bus_space armadaxp_pex03_mem_bs_tag = {
 struct bus_space armadaxp_pex03_io_bs_tag = {
 	/* cookie */
 	(void *)ARMADAXP_TAG_PEX03_IO,
+
+	MVSOC_BUS_SPACE_DEFAULT_FUNCS
+};
+struct bus_space armadaxp_pex10_mem_bs_tag = {
+	/* cookie */
+	(void *)ARMADAXP_TAG_PEX10_MEM,
+
+	MVSOC_BUS_SPACE_DEFAULT_FUNCS
+};
+struct bus_space armadaxp_pex10_io_bs_tag = {
+	/* cookie */
+	(void *)ARMADAXP_TAG_PEX10_IO,
 
 	MVSOC_BUS_SPACE_DEFAULT_FUNCS
 };

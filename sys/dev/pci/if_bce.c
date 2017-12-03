@@ -1,4 +1,4 @@
-/* $NetBSD: if_bce.c,v 1.37.2.1 2014/08/20 00:03:42 tls Exp $	 */
+/* $NetBSD: if_bce.c,v 1.37.2.2 2017/12/03 11:37:07 jdolecek Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.37.2.1 2014/08/20 00:03:42 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.37.2.2 2017/12/03 11:37:07 jdolecek Exp $");
 
 #include "vlan.h"
 
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.37.2.1 2014/08/20 00:03:42 tls Exp $");
 #include <net/if_ether.h>
 
 #include <net/bpf.h>
-#include <sys/rnd.h>
+#include <sys/rndsource.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -198,6 +198,11 @@ static const struct bce_product {
 		"Broadcom BCM4401-B0 10/100 Ethernet"
 	},
 	{
+		PCI_VENDOR_BROADCOM,
+		PCI_PRODUCT_BROADCOM_BCM4401_B1,
+		"Broadcom BCM4401-B1 10/100 Ethernet"
+	},
+	{
 
 		0,
 		0,
@@ -298,8 +303,9 @@ bce_attach(device_t parent, device_t self, void *aux)
 
 	/* Get it out of power save mode if needed. */
 	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT, &pmreg, NULL)) {
-		pmode = pci_conf_read(pc, pa->pa_tag, pmreg + 4) & 0x3;
-		if (pmode == 3) {
+		pmode = pci_conf_read(pc, pa->pa_tag, pmreg + PCI_PMCSR)
+		    & PCI_PMCSR_STATE_MASK;
+		if (pmode == PCI_PMCSR_STATE_D3) {
 			/*
 			 * The card has lost all configuration data in
 			 * this state, so punt.
@@ -308,10 +314,10 @@ bce_attach(device_t parent, device_t self, void *aux)
 			    "unable to wake up from power state D3\n");
 			return;
 		}
-		if (pmode != 0) {
+		if (pmode != PCI_PMCSR_STATE_D0) {
 			aprint_normal_dev(self,
 			    "waking up from power state D%d\n", pmode);
-			pci_conf_write(pc, pa->pa_tag, pmreg + 4, 0);
+			pci_conf_write(pc, pa->pa_tag, pmreg + PCI_PMCSR, 0);
 		}
 	}
 	if (pci_intr_map(pa, &ih)) {
@@ -445,6 +451,7 @@ bce_attach(device_t parent, device_t self, void *aux)
 
 	/* Attach the interface */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	sc->enaddr[0] = bus_space_read_1(sc->bce_btag, sc->bce_bhandle,
 	    BCE_MAGIC_ENET0);
 	sc->enaddr[1] = bus_space_read_1(sc->bce_btag, sc->bce_bhandle,
@@ -713,7 +720,7 @@ bce_intr(void *xsc)
 			bce_init(ifp);
 		rnd_add_uint32(&sc->rnd_source, intstatus);
 		/* Try to get more packets going. */
-		bce_start(ifp);
+		if_schedule_deferred_start(ifp);
 	}
 	return (handled);
 }
@@ -804,18 +811,11 @@ bce_rxintr(struct bce_softc *sc)
 			}
 		}
 
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = len;
-		ifp->if_ipackets++;
-
-		/*
-		 * Pass this up to any BPF listeners, but only
-		 * pass it up the stack if it's for us.
-		 */
-		bpf_mtap(ifp, m);
 
 		/* Pass it on. */
-		(*ifp->if_input) (ifp, m);
+		if_percpuq_enqueue(ifp->if_percpuq, m);
 
 		/* re-check current in case it changed */
 		curr = (bus_space_read_4(sc->bce_btag, sc->bce_bhandle,

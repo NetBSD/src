@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.84 2012/02/19 21:06:17 rmind Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.84.2.1 2017/12/03 11:36:28 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,7 +56,8 @@
 
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
-#include <machine/param.h>
+
+RCSID("$NetBSD: locore_mips1.S,v 1.84.2.1 2017/12/03 11:36:28 jdolecek Exp $")
 
 #include "assym.h"
 
@@ -93,15 +94,15 @@ VECTOR(MIPSX(utlb_miss), unknown)
 	_MFC0	k0, MIPS_COP_0_BAD_VADDR	#00: k0=bad address
 	lui	k1, %hi(CPUVAR(PMAP_SEG0TAB))	#01: k1=hi of seg0tab
 	bltz	k0, 1f				# R3000 chip bug
-	 PTR_SRL k0, 1*(PGSHIFT-PTR_SCALESHIFT)+(PGSHIFT-2)#03: k0=seg offset (almost)
+	 PTR_SRL k0, SEGSHIFT-PTR_SCALESHIFT	#03: k0=seg offset (almost)
 	PTR_L	k1, %lo(CPUVAR(PMAP_SEG0TAB))(k1) #04: k1=seg0tab
-	andi	k0, (NBPG-(1<<PTR_SCALESHIFT))	#07: k0=seg offset (mask 0x3)
+	andi	k0, (NSEGPG-1)<<PTR_SCALESHIFT	#07: k0=seg offset (mask 0x3)
 	PTR_ADDU k1, k0				#08: k1=seg entry address
 	PTR_L	k1, 0(k1)			#09: k1=seg entry
 	_MFC0	k0, MIPS_COP_0_BAD_VADDR	#0a: k0=bad address (again)
 	beqz	k1, MIPSX(nopagetable)		#0b: ==0 -- no page table
-	 PTR_SRL k0, (PGSHIFT-2)		#0c: k0=VPN (aka va>>10)
-	andi	k0, (NBPG-4)			#0d: k0=page table offset
+	 PTR_SRL k0, (PGSHIFT-PTPSHIFT)		#0c: k0=VPN (aka va>>10)
+	andi	k0, (NPTEPG-1) << PTPSHIFT	#0d: k0=page table offset
 	PTR_ADDU k1, k0				#0e: k1=pte address
 	INT_L	k0, 0(k1)			#0f: k0=lo0 pte
 	nop					#10: load delay
@@ -496,7 +497,11 @@ NESTED_NOPROFILE(MIPSX(kern_intr), KERNFRAME_SIZ, ra)
 	INT_S	t1, CPU_INFO_IDEPTH(s2)		#   store new interrupt depth
 
 	/*
-	 * Now we can enable interrupts since no interrupts can be delivered
+	 * Now that we're at splhigh so all interrupts are masked
+	 * individually and we won't get interrupted here, turn the
+	 * global interrupt enable bit on again. This will allow
+	 * high-priority interrupts to be delivered once a
+	 * low-priority interrupt handler lowers spl to execute.
 	 */
 	mfc0	v1, MIPS_COP_0_STATUS
 	nop
@@ -550,7 +555,7 @@ NESTED_NOPROFILE(MIPSX(kern_intr), KERNFRAME_SIZ, ra)
 	 PTR_L	a0, TF_BASE+TF_REG_EPC(sp)
 #endif /* __HAVE_PREEMPTION */
 4:
-#endif /* __HAVE_FAST_SOFTINT */
+#endif /* __HAVE_FAST_SOFTINTS */
 	/*
 	 * Interrupts handled, restore registers and return from the interrupt.
 	 * First, clear interrupt enable
@@ -662,19 +667,18 @@ NESTED_NOPROFILE(MIPSX(user_gen_exception), CALLFRAME_SIZ, ra)
 #endif
 	move	sp, k0				# switch to kernel SP
 	move	MIPS_CURLWP, k1
-#ifdef NOFPU
-	li	t0, MIPS_SR_INT_IE		# reenable intrs
-#else
+#ifndef NOFPU
 	lui	t0, %hi(MIPS_SR_COP_1_BIT)
 	and	t0, a0
-	or	t0, MIPS_SR_INT_IE		# make sure intrs are still on
+	beqz	t0, 1f
+	 xor	t0, a0				# turn off the FPU
+	mtc0	t0, MIPS_COP_0_STATUS
+	 nop
+1:
 #endif
-	xor	t0, a0				# turn off the FPU & ints on
 /*
  * Call the trap handler.
  */
-	mtc0	t0, MIPS_COP_0_STATUS
-
 	jal	_C_LABEL(trap)
 	 REG_S	a3, CALLFRAME_RA(sp)		# for debugging
 /*
@@ -772,8 +776,13 @@ NESTED_NOPROFILE(MIPSX(user_intr), CALLFRAME_SIZ, ra)
 	move	s0, v0				# remember previous priority
 
 	/*
-	 * Now that we are at IPL_HIGH, we can turn off FPU and turn on
-	 * interrupts since they all masked.
+	 * Now that we're at splhigh so all interrupts are masked
+	 * individually and we won't get interrupted here, turn the
+	 * global interrupt enable bit on again. This will allow
+	 * high-priority interrupts to be delivered once a
+	 * low-priority interrupt handler lowers spl to execute.
+	 *
+	 * Also switch off the FPU.
 	 */
 	mfc0	v1, MIPS_COP_0_STATUS
 #ifndef NOFPU
@@ -1004,19 +1013,19 @@ END(MIPSX(systemcall))
 LEAF_NOPROFILE(MIPSX(kern_tlb_miss))
 	.set	noat
 	_MFC0	k0, MIPS_COP_0_BAD_VADDR	# get the fault address
-	li	k1, VM_MIN_KERNEL_ADDRESS	# compute index
-	PTR_SUBU k0, k1
-	INT_L	k1, _C_LABEL(Sysmapsize)	# index within range?
-	PTR_SRL	k0, PGSHIFT
-	sltu	k1, k0, k1
+	PTR_LA	k1, _C_LABEL(pmap_kern_segtab)	# get address of kernel segtab
+	PTR_SRL	k0, SEGSHIFT - PTR_SCALESHIFT	# get segtab index (part1)
+	and	k0, (NSEGPG-1) << PTR_SCALESHIFT # get segtab index (part2)
+	PTR_ADDU k1, k0				# add index to segtab addr
+	PTR_L	k1, 0(k1)			# load address of PTP
+	_MFC0	k0, MIPS_COP_0_BAD_VADDR	# get the fault address
 	/*
-	 * If we are beyond the bounds of Sysmap, let trap panic for us.
+	 * If there isn't a PTP for this, let trap panic for us.
 	 */
 	beqz	k1, _C_LABEL(MIPSX(kern_gen_exception))	# full trap processing
-	 nop					# - delay slot -
-	PTR_L	k1, _C_LABEL(Sysmap)
-	PTR_SLL	k0, 2				# compute offset from index
-	PTR_ADDU k1, k0
+	 PTR_SRL k0, PGSHIFT - PTPSHIFT		# - delay slot -
+	and	k0, (NPTEPG-1) << PTPSHIFT	# get ptp index (part2)
+	PTR_ADDU k1, k0				# add to PTP address
 	INT_L	k0, 0(k1)			# get PTE entry
 	_MFC0	k1, MIPS_COP_0_EXC_PC		# get return address
 	mtc0	k0, MIPS_COP_0_TLB_LOW		# save PTE entry
@@ -1025,7 +1034,8 @@ LEAF_NOPROFILE(MIPSX(kern_tlb_miss))
 	 nop
 	tlbwr					# write random TLB
 	j	k1
-	rfe
+	 rfe
+	.set	at
 END(MIPSX(kern_tlb_miss))
 
 #if 0
@@ -1082,11 +1092,35 @@ _C_LABEL(MIPSX(exceptionentry_end)):
 
 /*--------------------------------------------------------------------------
  *
+ * mipsN_tlb_get_asid --
+ *
+ *	Return the pid from the TLB pid reg.
+ *
+ *	tlb_asid_t mipsN_tlb_get_asid(void)
+ *
+ * Results:
+ *	The current ASID.
+ *
+ * Side effects:
+ *	None.
+ *
+ *--------------------------------------------------------------------------
+ */
+LEAF(MIPSX(tlb_get_asid))
+	mfc0	v0, MIPS_COP_0_TLB_HI		# Read the hi reg value
+	nop
+	and	v0, MIPS1_TLB_PID		# mask out only the PID
+	j	ra
+	 srl	v0, MIPS1_TLB_PID_SHIFT		# put PID in right spot
+END(MIPSX(tlb_get_asid))
+
+/*--------------------------------------------------------------------------
+ *
  * mipsN_tlb_set_asid --
  *
  *	Write the given pid into the TLB pid reg.
  *
- *	void mipsN_tlb_set_asid(uint32_t pid)
+ *	void mipsN_tlb_set_asid(tlb_asid_t pid)
  *
  * Results:
  *	None.
@@ -1098,6 +1132,7 @@ _C_LABEL(MIPSX(exceptionentry_end)):
  */
 LEAF(MIPSX(tlb_set_asid))
 	sll	a0, MIPS1_TLB_PID_SHIFT		# put PID in right spot
+	and	a0, MIPS1_TLB_PID
 	mtc0	a0, MIPS_COP_0_TLB_HI		# Write the hi reg value
 	j	ra
 	nop
@@ -1105,57 +1140,67 @@ END(MIPSX(tlb_set_asid))
 
 /*--------------------------------------------------------------------------
  *
- * mipsN_tlb_update --
+ * mipsN_tlb_update_addr --
  *
  *	Update the TLB if highreg is found; otherwise, do_nothing
  *
- *	int mipsN_tlb_update(vaddr_t va, register_t lowreg)
+ *	bool mipsN_tlb_update_addr(vaddr_t va, tlb_asid_t asid,
+ *	    pt_entry_t pte, bool insert);
  *
  * Results:
- *	< 0 if skipped, >= 0 if updated
+ *	0 if skipped, 1 if updated
  *
  * Side effects:
  *	None.
  *
  *--------------------------------------------------------------------------
  */
-LEAF(MIPSX(tlb_update))
-	mfc0	v1, MIPS_COP_0_STATUS		# save the status register
+LEAF(MIPSX(tlb_update_addr))
+	mfc0	ta0, MIPS_COP_0_STATUS		# save the status register
 	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts
 	nop
-	mfc0	t0, MIPS_COP_0_TLB_HI		# save current PID
+	mfc0	ta1, MIPS_COP_0_TLB_HI		# save current PID
 	nop
+	sll	a1, MIPS1_TLB_PID_SHIFT
+	or	a0, a1
 	mtc0	a0, MIPS_COP_0_TLB_HI		# set entryhi
 	nop
 	tlbp					# probe the existence
 	mfc0	v0, MIPS_COP_0_TLB_INDEX	# see what we got
-	mtc0	a1, MIPS_COP_0_TLB_LOW		# set new entrylo
+	mtc0	a2, MIPS_COP_0_TLB_LOW		# set new entrylo
 	bltz	v0, 2f				# index < 0 => !found
 	 nop
 	tlbwi					# update slot found
+	b	3f				# return
+	 li	v0, 1				#   and show success
 2:
-	mtc0	t0, MIPS_COP_0_TLB_HI		# restore current PID
+	beqz	a2, 3f				# return
+	 li	v0, 0				#   and show failure
+	tlbwr					# put it in a new slot
+	li	v0, 1				# show success
+3:
+	mtc0	ta1, MIPS_COP_0_TLB_HI		# restore current PID
 	j	ra
-	mtc0	v1, MIPS_COP_0_STATUS
-END(MIPSX(tlb_update))
+	 mtc0	ta0, MIPS_COP_0_STATUS		# restore interrupts
+END(MIPSX(tlb_update_addr))
 
 /*--------------------------------------------------------------------------
  *
- * mipsN_tlb_read_indexed --
+ * mipsN_tlb_read_entry --
  *
  *	Read the TLB entry.
  *
- *	void mipsN_tlb_read_indexed(register_t entry, struct tlbmask *tlb)
+ *	void mipsN_tlb_read_entry(register_t entry, struct tlbmask *tlb)
  *
  * Results:
  *	tlb will contain the TLB entry found (tlb_lo1/tlb_mask will be 0).
  *
  *--------------------------------------------------------------------------
  */
-LEAF(MIPSX(tlb_read_indexed))
-	mfc0	v1, MIPS_COP_0_STATUS		# Save the status register.
+LEAF(MIPSX(tlb_read_entry))
+	mfc0	ta0, MIPS_COP_0_STATUS		# Save the status register.
 	mtc0	zero, MIPS_COP_0_STATUS		# Disable interrupts
-	mfc0	t0, MIPS_COP_0_TLB_HI		# Get current PID
+	mfc0	ta1, MIPS_COP_0_TLB_HI		# Get current PID
 
 	sll	a0, MIPS1_TLB_INDEX_SHIFT
 	mtc0	a0, MIPS_COP_0_TLB_INDEX	# Set the index register
@@ -1164,36 +1209,36 @@ LEAF(MIPSX(tlb_read_indexed))
 	mfc0	t2, MIPS_COP_0_TLB_HI		# fetch the hi entry
 	mfc0	t3, MIPS_COP_0_TLB_LOW		# fetch the low entry
 
-	mtc0	t0, MIPS_COP_0_TLB_HI		# Restore proper PID
+	mtc0	ta1, MIPS_COP_0_TLB_HI		# Restore proper PID
 						# (before touching memory)
-	mtc0	v1, MIPS_COP_0_STATUS		# Restore the status register
+	mtc0	ta0, MIPS_COP_0_STATUS		# Restore the status register
 
 	PTR_S	t2, TLBMASK_HI(a1)
-	INT_S	t3, TLBMASK_LO0(a1)
-	INT_S	zero, TLBMASK_LO1(a1)
+	REG_S	t3, TLBMASK_LO0(a1)
+	REG_S	zero, TLBMASK_LO1(a1)
 	j	ra
 	 INT_S	zero, TLBMASK_MASK(a1)
-END(MIPSX(tlb_read_indexed))
+END(MIPSX(tlb_read_entry))
 
 /*--------------------------------------------------------------------------
  *
- * mipsX_tlb_write_indexed --
+ * mipsX_tlb_write_entry --
  *
  *	Write the TLB entry.
  *
- *	void mipsX_tlb_write_indexed(size_t entry, struct tlbmask *tlb)
+ *	void mipsX_tlb_write_entry(size_t entry, struct tlbmask *tlb)
  *
  * Results:
  *	None.
  *
  *--------------------------------------------------------------------------
  */
-LEAF(MIPSX(tlb_write_indexed))
+LEAF(MIPSX(tlb_write_entry))
 	PTR_L	t2, TLBMASK_HI(a1)		# fetch the hi entry
 	INT_L	t3, TLBMASK_LO0(a1)		# fetch the low entry
-	mfc0	v1, MIPS_COP_0_STATUS		# Save the status register.
+	mfc0	ta0, MIPS_COP_0_STATUS		# Save the status register.
 	mtc0	zero, MIPS_COP_0_STATUS		# Disable interrupts
-	mfc0	t0, MIPS_COP_0_TLB_HI		# Get current PID
+	mfc0	ta1, MIPS_COP_0_TLB_HI		# Get current PID
 
 	sll	a0, MIPS1_TLB_INDEX_SHIFT
 	mtc0	a0, MIPS_COP_0_TLB_INDEX	# Set the index register
@@ -1203,22 +1248,25 @@ LEAF(MIPSX(tlb_write_indexed))
 
 	tlbwi					# Write to the TLB entry
 
-	mtc0	t0, MIPS_COP_0_TLB_HI		# restore PID
+	mtc0	ta1, MIPS_COP_0_TLB_HI		# restore PID
 	j	ra
-	 mtc0	v1, MIPS_COP_0_STATUS		# Restore the status register
-END(MIPSX(tlb_write_indexed))
+	 mtc0	ta0, MIPS_COP_0_STATUS		# Restore the status register
+END(MIPSX(tlb_write_entry))
 
 /*
- * void mipsN_tlb_invalidate_addr(vaddr_t va)
+ * void mipsN_tlb_invalidate_addr(vaddr_t va, tlb_asid_t asid)
  *
  * Invalidate a TLB entry for given virtual address if found in TLB.
  */
 LEAF(MIPSX(tlb_invalidate_addr))
-	mfc0	v1, MIPS_COP_0_STATUS		# save status register
+	mfc0	ta0, MIPS_COP_0_STATUS		# save status register
 	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts
-	mfc0	t0, MIPS_COP_0_TLB_HI		# save current PID
+	mfc0	ta1, MIPS_COP_0_TLB_HI		# save current PID
 	nop
 
+	sll	a1, MIPS1_TLB_PID_SHIFT		# move ASID into position
+	and	a1, MIPS1_TLB_PID		# make it off
+	or	a0, a1				# merge with addr
 	mtc0	a0, MIPS_COP_0_TLB_HI		# look for addr & PID
 	nop
 	tlbp					# probe the entry in question
@@ -1231,9 +1279,9 @@ LEAF(MIPSX(tlb_invalidate_addr))
 	nop
 	tlbwi
 1:
-	mtc0	t0, MIPS_COP_0_TLB_HI		# restore PID
+	mtc0	ta1, MIPS_COP_0_TLB_HI		# restore PID
 	j	ra
-	 mtc0	v1, MIPS_COP_0_STATUS		# restore the status register
+	 mtc0	ta0, MIPS_COP_0_STATUS		# restore the status register
 END(MIPSX(tlb_invalidate_addr))
 
 /*
@@ -1243,8 +1291,8 @@ END(MIPSX(tlb_invalidate_addr))
  * leaving entries for kernel space marked global intact.
  */
 LEAF(MIPSX(tlb_invalidate_asids))
-	mfc0	t3, MIPS_COP_0_TLB_HI		# save EntryHi
-	mfc0	v1, MIPS_COP_0_STATUS		# save status register
+	mfc0	ta1, MIPS_COP_0_TLB_HI		# save EntryHi
+	mfc0	ta0, MIPS_COP_0_STATUS		# save status register
 	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts
 
 	INT_L	t2, _C_LABEL(mips_options) + MO_NUM_TLB_ENTRIES
@@ -1257,21 +1305,21 @@ LEAF(MIPSX(tlb_invalidate_asids))
 	mtc0	t1, MIPS_COP_0_TLB_INDEX	# set index
 	nop
 	tlbr					# obtain an entry
-	mfc0	ta0, MIPS_COP_0_TLB_LOW
+	mfc0	t0, MIPS_COP_0_TLB_LOW
 	nop
-	and	ta0, ta0, MIPS1_PG_G		# check to see it has G bit
-	bnez	ta0, 2f
+	and	t0, t0, MIPS1_PG_G		# check to see it has G bit
+	bnez	t0, 2f
 	 nop
 
-	mfc0	ta0, MIPS_COP_0_TLB_HI		# get va and ASID
+	mfc0	t0, MIPS_COP_0_TLB_HI		# get va and ASID
 	nop
-	and	ta0, MIPS1_TLB_PID 		# mask off ASID
-	srl	ta0, MIPS1_TLB_PID_SHIFT
-	sltu	ta1, ta0, a0			# < asid_lo
-	bnez	ta1, 2f				# yes, next tlb entry
+	and	t0, MIPS1_TLB_PID 		# mask off ASID
+	srl	t0, MIPS1_TLB_PID_SHIFT
+	sltu	v1, t0, a0			# < asid_lo
+	bnez	v1, 2f				# yes, next tlb entry
 	 nop
-	sltu	ta2, ta0, a1			# < asid_hi
-	beqz	ta2, 2f				# no, next tlb entry
+	sltu	v1, t0, a1			# < asid_hi
+	beqz	v1, 2f				# no, next tlb entry
 	 nop
 
 	mtc0	v0, MIPS_COP_0_TLB_HI		# make entryHi invalid
@@ -1283,10 +1331,10 @@ LEAF(MIPSX(tlb_invalidate_asids))
 	bne	t1, t2, 1b
 	nop
 
-	mtc0	t3, MIPS_COP_0_TLB_HI		# restore entryHi
+	mtc0	ta1, MIPS_COP_0_TLB_HI		# restore entryHi
 
 	j	ra				# new TLBpid will be set soon
-	 mtc0	v1, MIPS_COP_0_STATUS		# restore status register
+	 mtc0	ta0, MIPS_COP_0_STATUS		# restore status register
 END(MIPSX(tlb_invalidate_asids))
 
 /*
@@ -1297,52 +1345,52 @@ END(MIPSX(tlb_invalidate_asids))
 LEAF(MIPSX(tlb_invalidate_all))
 	INT_L	a0, _C_LABEL(mips_options) + MO_NUM_TLB_ENTRIES
 
-	mfc0	v1, MIPS_COP_0_STATUS		# save the status register.
+	mfc0	ta0, MIPS_COP_0_STATUS		# save the status register.
 	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts
 
-	mfc0	t0, MIPS_COP_0_TLB_HI		# save current PID
-	li	t1, MIPS_KSEG0_START		# invalid address
-	mtc0	t1, MIPS_COP_0_TLB_HI		# make entryHi invalid
+	mfc0	ta1, MIPS_COP_0_TLB_HI		# save current PID
+	li	t0, MIPS_KSEG0_START		# invalid address
+	mtc0	t0, MIPS_COP_0_TLB_HI		# make entryHi invalid
 	mtc0	zero, MIPS_COP_0_TLB_LOW	# zero out entryLo
 
-	move	t1, zero
+	move	t0, zero
 	sll	a0, MIPS1_TLB_INDEX_SHIFT
 
 	# do {} while (t1 < a0)
 1:
-	mtc0	t1, MIPS_COP_0_TLB_INDEX	# set TLBindex
-	addu	t1, t1, 1 << MIPS1_TLB_INDEX_SHIFT	# increment index
-	bne	t1, a0, 1b
+	mtc0	t0, MIPS_COP_0_TLB_INDEX	# set TLBindex
+	addu	t0, t0, 1 << MIPS1_TLB_INDEX_SHIFT	# increment index
+	bne	t0, a0, 1b
 	 tlbwi					# invalidate the entry
 
-	mtc0	t0, MIPS_COP_0_TLB_HI		# restore PID
+	mtc0	ta1, MIPS_COP_0_TLB_HI		# restore PID
 	j	ra
-	 mtc0	v1, MIPS_COP_0_STATUS		# restore status register
+	 mtc0	ta0, MIPS_COP_0_STATUS		# restore status register
 END(MIPSX(tlb_invalidate_all))
 
 /*
- * u_int mipsN_tlb_record_asids(u_long *bitmap, uint32_t asid_mask)
+ * u_int mipsN_tlb_record_asids(u_long *bitmap, uint32_t asid_max)
  *
  * Scan the random part of the TLB looking at non-global entries and
  * record each ASID in use into the bitmap.  Additionally, return the
  * number of new unique ASIDs encountered.
  */
 LEAF(MIPSX(tlb_record_asids))
-	mfc0	a3, MIPS_COP_0_TLB_HI		# save EntryHi
-	li	ta0, MIPS1_TLB_FIRST_RAND_ENTRY << MIPS1_TLB_INDEX_SHIFT
-	INT_L	ta1, _C_LABEL(mips_options) + MO_NUM_TLB_ENTRIES
+	mfc0	ta1, MIPS_COP_0_TLB_HI		# save EntryHi
+	li	v1, MIPS1_TLB_FIRST_RAND_ENTRY << MIPS1_TLB_INDEX_SHIFT
+	INT_L	a3, _C_LABEL(mips_options) + MO_NUM_TLB_ENTRIES
 	move	ta2, zero
 	li	ta3, 1
-	sll	ta1, MIPS1_TLB_INDEX_SHIFT
+	sll	a3, MIPS1_TLB_INDEX_SHIFT
 
-	mfc0	v1, MIPS_COP_0_STATUS		# save status register
+	mfc0	ta0, MIPS_COP_0_STATUS		# save status register
 	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts
 
 	move	v0, zero			# start at zero ASIDs
 
-	# do {} while (ta0 < ta1)
+	# do {} while (v1 < ta1)
 1:
-	mtc0	ta0, MIPS_COP_0_TLB_INDEX	# set index
+	mtc0	v1, MIPS_COP_0_TLB_INDEX	# set index
 	nop
 	tlbr					# obtain an entry
 	mfc0	t0, MIPS_COP_0_TLB_LOW
@@ -1355,7 +1403,8 @@ LEAF(MIPSX(tlb_record_asids))
 	nop
 	and	t0, MIPS1_TLB_PID
 	srl	t0, MIPS1_TLB_PID_SHIFT		# shift to low bits
-	and	t0, a1				# focus on asid_mask
+	bgt	t0, a1, 4f			# > ASID max? skip
+	 nop
 
 	srl	a2, t0, 3 + LONG_SCALESHIFT	# drop low 5 bits
 	sll	a2, LONG_SCALESHIFT		# make an index for the bitmap
@@ -1378,8 +1427,8 @@ LEAF(MIPSX(tlb_record_asids))
 	or	t2, t0				# or in the new ASID bits
 
 4:
-	addu	ta0, 1 << MIPS1_TLB_INDEX_SHIFT	# increment TLB entry #
-	bne	ta0, ta1, 1b			# keep lookup if not limit
+	addu	v1, 1 << MIPS1_TLB_INDEX_SHIFT	# increment TLB entry #
+	bne	v1, a3, 1b			# keep lookup if not limit
 	 nop
 
 	beqz	ta2, 5f				# do we have a cell to write?
@@ -1387,60 +1436,11 @@ LEAF(MIPSX(tlb_record_asids))
 
 	LONG_S	t2, 0(ta2)			# save the updated value.
 5:
-	mtc0	a3, MIPS_COP_0_TLB_HI		# restore entryHi
+	mtc0	ta1, MIPS_COP_0_TLB_HI		# restore entryHi
 
 	j	ra				# new TLBpid will be set soon
-	 mtc0	v1, MIPS_COP_0_STATUS		# restore status register
+	 mtc0	ta0, MIPS_COP_0_STATUS		# restore status register
 END(MIPSX(tlb_record_asids))
-
-/*--------------------------------------------------------------------------
- *
- * mipsN_tlb_enter --
- *
- *	Entr the
- *
- *	mipsN_tlb_enter(size_t tlb_index, vaddr_t va_asid, uint32_t tlb_lo)
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	None.
- *
- *--------------------------------------------------------------------------
- */
-LEAF(MIPSX(tlb_enter))
-	mfc0	t0, MIPS_COP_0_TLB_HI		# save current PID
-	nop
-	mtc0	a0, MIPS_COP_0_TLB_HI		# set entryhi
-	nop
-	tlbp					# probe the existence
-	mfc0	v0, MIPS_COP_0_TLB_INDEX	# see what we got
-	nop
-	bltz	v0, 2f				# index < 0 => !found
-	 nop
-	beq	v0, a0, 3f
-	 nop
-	li	t1, MIPS_KSEG0_START
-	mtc0	t1, MIPS_COP_0_TLB_HI		# set invalid address
-	nop
-	mtc0	zero, MIPS_COP_0_TLB_LOW	# set invalid entrylo
-	nop
-	tlbwi					# invalidate the old entry
-
-	mtc0	a1, MIPS_COP_0_TLB_HI		# set entryhi
-	nop
-2:
-	mtc0	a0, MIPS_COP_0_TLB_INDEX	# set the new location
-	nop
-3:
-	mtc0	a2, MIPS_COP_0_TLB_LOW		# set new entrylo
-	nop
-	tlbwi					# update the existing one
-3:
-	j	ra
-	 mtc0	t0, MIPS_COP_0_TLB_HI		# restore current PID
-END(MIPSX(tlb_enter))
 
 /*----------------------------------------------------------------------------
  *
@@ -1679,16 +1679,16 @@ _C_LABEL(MIPSX(locore_vec)):
 	PTR_WORD _C_LABEL(MIPSX(cpu_switch_resume))
 	PTR_WORD _C_LABEL(MIPSX(lwp_trampoline))
 	PTR_WORD _C_LABEL(MIPSX(wbflush))		# wbflush
+	PTR_WORD _C_LABEL(MIPSX(tlb_get_asid))
 	PTR_WORD _C_LABEL(MIPSX(tlb_set_asid))
 	PTR_WORD _C_LABEL(MIPSX(tlb_invalidate_asids))
 	PTR_WORD _C_LABEL(MIPSX(tlb_invalidate_addr))
 	PTR_WORD _C_LABEL(nullop)			# tlb_invalidate_globals
 	PTR_WORD _C_LABEL(MIPSX(tlb_invalidate_all))
 	PTR_WORD _C_LABEL(MIPSX(tlb_record_asids))
-	PTR_WORD _C_LABEL(MIPSX(tlb_update))
-	PTR_WORD _C_LABEL(MIPSX(tlb_enter))
-	PTR_WORD _C_LABEL(MIPSX(tlb_read_indexed))
-	PTR_WORD _C_LABEL(MIPSX(tlb_write_indexed))
+	PTR_WORD _C_LABEL(MIPSX(tlb_update_addr))
+	PTR_WORD _C_LABEL(MIPSX(tlb_read_entry))
+	PTR_WORD _C_LABEL(MIPSX(tlb_write_entry))
 
 	.globl _C_LABEL(MIPSX(locoresw))
 _C_LABEL(MIPSX(locoresw)):

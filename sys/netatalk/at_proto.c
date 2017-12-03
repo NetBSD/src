@@ -1,4 +1,4 @@
-/*	$NetBSD: at_proto.c,v 1.17.14.1 2014/08/20 00:04:35 tls Exp $	*/
+/*	$NetBSD: at_proto.c,v 1.17.14.2 2017/12/03 11:39:03 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at_proto.c,v 1.17.14.1 2014/08/20 00:04:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at_proto.c,v 1.17.14.2 2017/12/03 11:39:03 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,7 +55,6 @@ const struct protosw atalksw[] = {
 	.pr_domain = &atalkdomain,
 	.pr_protocol = ATPROTO_DDP,
 	.pr_flags = PR_ATOMIC|PR_ADDR,
-	.pr_output = ddp_output,
 	.pr_usrreqs = &ddp_usrreqs,
 	.pr_init = ddp_init,
     },
@@ -79,7 +78,6 @@ struct domain atalkdomain = {
 	.dom_mowner = MOWNER_INIT("",""),
 	.dom_sa_cmpofs = offsetof(struct sockaddr_at, sat_addr),
 	.dom_sa_cmplen = sizeof(struct at_addr),
-	.dom_rtcache = LIST_HEAD_INITIALIZER(atalkdomain.dom_rtcache)
 };
 
 int

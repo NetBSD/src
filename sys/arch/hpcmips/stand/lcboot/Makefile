@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11.14.1 2014/08/20 00:03:03 tls Exp $
+#	$NetBSD: Makefile,v 1.11.14.2 2017/12/03 11:36:15 jdolecek Exp $
 .include <bsd.own.mk>
 
 ROMICE?=	no
@@ -18,8 +18,6 @@ SRCS=	start.S main.c com.c conf.c dev_flash.c dev_net.c \
 STARTOBJS=
 
 NEWVERSWHAT=    "L-Card+ Boot"
-VERSIONFILE=    ${S}/arch/hpcmips/stand/lcboot/version
-
 
 # Make sure we override any optimization options specified by the user.
 #COPTS=  -Os
@@ -53,17 +51,6 @@ LIBSA=	${SALIB}
 
 LIBLIST=	${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN} ${LIBSA}
 
-# if there is a 'version' file, add rule for vers.c and add it to SRCS
-# and CLEANFILES
-.if exists (${VERSIONFILE})
-SRCS+=	vers.c
-CLEANFILES+=	vers.c
-.PHONY: vers.c
-vers.c: ${VERSIONFILE}
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
-	    ${.ALLSRC} 'hpcmips' ${NEWVERSWHAT}
-.endif
-
 CLEANFILES+=	${PROG}
 ${PROG}: ${OBJS} ${LIBKERN} ${LIBSA} ${LIBZ}
 	${_MKTARGET_LINK}
@@ -73,6 +60,8 @@ CLEANFILES+=	${SREC}
 all: ${SREC}
 ${SREC}: ${PROG}
 	${OBJCOPY} -S -O srec ${PROG} ${SREC}
+
+.include "${S}/conf/newvers_stand.mk"
 
 .include <bsd.prog.mk>
 .include <bsd.klinks.mk>

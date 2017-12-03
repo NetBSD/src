@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.56.2.2 2014/08/20 00:03:29 tls Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.56.2.3 2017/12/03 11:36:50 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.56.2.2 2014/08/20 00:03:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.56.2.3 2017/12/03 11:36:50 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -126,6 +126,8 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.56.2.2 2014/08/20 00:03:29 tls Exp
 #include <x86/vga_post.h>
 #endif
 
+#include <x86/cpuvar.h>
+
 #include <machine/autoconf.h>
 #include <machine/bootinfo.h>
 
@@ -135,6 +137,10 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.56.2.2 2014/08/20 00:03:29 tls Exp
 
 #if NACPICA > 0
 #include <machine/mpacpi.h>
+#if !defined(NO_PCI_EXTENDED_CONFIG)
+#include <dev/acpi/acpivar.h>
+#include <dev/acpi/acpi_mcfg.h>
+#endif
 #endif
 
 #include <machine/mpconfig.h>
@@ -209,6 +215,58 @@ const struct {
 };
 #undef _tag
 #undef _qe
+
+/* arch/xen does not support MSI/MSI-X yet. */
+#ifdef __HAVE_PCI_MSI_MSIX
+#define PCI_QUIRK_DISABLE_MSI	1 /* Neigher MSI nor MSI-X work */
+#define PCI_QUIRK_DISABLE_MSIX	2 /* MSI-X does not work */
+#define PCI_QUIRK_ENABLE_MSI_VM	3 /* Older chipset in VM where MSI and MSI-X works */
+
+#define _dme(vend, prod) \
+	{ PCI_QUIRK_DISABLE_MSI, PCI_ID_CODE(vend, prod) }
+#define _dmxe(vend, prod) \
+	{ PCI_QUIRK_DISABLE_MSIX, PCI_ID_CODE(vend, prod) }
+#define _emve(vend, prod) \
+	{ PCI_QUIRK_ENABLE_MSI_VM, PCI_ID_CODE(vend, prod) }
+const struct {
+	int type;
+	pcireg_t id;
+} pci_msi_quirk_tbl[] = {
+	_dme(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PCMC),
+	_dme(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82437FX),
+	_dme(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82437MX),
+	_dme(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82437VX),
+	_dme(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82439HX),
+	_dme(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82439TX),
+	_dme(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443GX),
+	_dme(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443GX_AGP),
+	_dme(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82440MX),
+	_dme(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82441FX),
+	_dme(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443BX),
+	_dme(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443BX_AGP),
+	_dme(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443BX_NOAGP),
+	_dme(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443GX_NOAGP),
+	_dme(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443LX),
+	_dme(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443LX_AGP),
+	_dme(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82810_MCH),
+	_dme(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82810E_MCH),
+	_dme(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_FULL_HUB),
+	_dme(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82820_MCH),
+	_dme(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82830MP_IO_1),
+	_dme(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82840_HB),
+	_dme(PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE_PCHB),
+	_dme(PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_PCHB),
+	_dme(PCI_VENDOR_AMD, PCI_PRODUCT_AMD_SC751_SC),
+	_dme(PCI_VENDOR_AMD, PCI_PRODUCT_AMD_SC761_SC),
+	_dme(PCI_VENDOR_AMD, PCI_PRODUCT_AMD_SC762_NB),
+
+	_emve(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82441FX), /* QEMU */
+	_emve(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443BX), /* VMWare */
+};
+#undef _dme
+#undef _dmxe
+#undef _emve
+#endif /* __HAVE_PCI_MSI_MSIX */
 
 /*
  * PCI doesn't have any special needs; just use the generic versions
@@ -333,7 +391,7 @@ pci_conf_selector(pcitag_t tag, int reg)
 	case 2:
 		return tag.mode1 & mode2_mask.mode1;
 	default:
-		panic("%s: mode not configured", __func__);
+		panic("%s: mode %d not configured", __func__, pci_mode);
 	}
 }
 
@@ -346,7 +404,7 @@ pci_conf_port(pcitag_t tag, int reg)
 	case 2:
 		return tag.mode2.port | reg;
 	default:
-		panic("%s: mode not configured", __func__);
+		panic("%s: mode %d not configured", __func__, pci_mode);
 	}
 }
 
@@ -366,13 +424,34 @@ pci_conf_select(uint32_t sel)
 			outb(PCI_MODE2_FORWARD_REG, tag.mode2.forward);
 		return;
 	default:
-		panic("%s: mode not configured", __func__);
+		panic("%s: mode %d not configured", __func__, pci_mode);
 	}
 }
+
+#ifdef __HAVE_PCI_MSI_MSIX
+static int
+pci_has_msi_quirk(pcireg_t id, int type)
+{
+	int i;
+
+	for (i = 0; i < __arraycount(pci_msi_quirk_tbl); i++) {
+		if (id == pci_msi_quirk_tbl[i].id &&
+		    type == pci_msi_quirk_tbl[i].type)
+			return 1;
+	}
+
+	return 0;
+}
+#endif
 
 void
 pci_attach_hook(device_t parent, device_t self, struct pcibus_attach_args *pba)
 {
+#ifdef __HAVE_PCI_MSI_MSIX
+	pci_chipset_tag_t pc = pba->pba_pc;
+	pcitag_t tag;
+	pcireg_t id, class;
+#endif
 
 	if (pba->pba_bus == 0)
 		aprint_normal(": configuration mode %d", pci_mode);
@@ -382,6 +461,66 @@ pci_attach_hook(device_t parent, device_t self, struct pcibus_attach_args *pba)
 #if NACPICA > 0
 	mpacpi_pci_attach_hook(parent, self, pba);
 #endif
+#if NACPICA > 0 && !defined(NO_PCI_EXTENDED_CONFIG)
+	acpimcfg_map_bus(self, pba->pba_pc, pba->pba_bus);
+#endif
+
+#ifdef __HAVE_PCI_MSI_MSIX
+	/*
+	 * In order to decide whether the system supports MSI we look
+	 * at the host bridge, which should be device 0 function 0 on
+	 * bus 0.  It is better to not enable MSI on systems that
+	 * support it than the other way around, so be conservative
+	 * here.  So we don't enable MSI if we don't find a host
+	 * bridge there.  We also deliberately don't enable MSI on
+	 * chipsets from low-end manifacturers like VIA and SiS.
+	 */
+	tag = pci_make_tag(pc, 0, 0, 0);
+	id = pci_conf_read(pc, tag, PCI_ID_REG);
+	class = pci_conf_read(pc, tag, PCI_CLASS_REG);
+
+	if (PCI_CLASS(class) != PCI_CLASS_BRIDGE ||
+	    PCI_SUBCLASS(class) != PCI_SUBCLASS_BRIDGE_HOST)
+		return;
+
+	/* VMware and KVM use old chipset, but they can use MSI/MSI-X */
+	if ((cpu_feature[1] & CPUID2_RAZ)
+	    && (pci_has_msi_quirk(id, PCI_QUIRK_ENABLE_MSI_VM))) {
+			pba->pba_flags |= PCI_FLAGS_MSI_OKAY;
+			pba->pba_flags |= PCI_FLAGS_MSIX_OKAY;
+	} else if (pci_has_msi_quirk(id, PCI_QUIRK_DISABLE_MSI)) {
+		pba->pba_flags &= ~PCI_FLAGS_MSI_OKAY;
+		pba->pba_flags &= ~PCI_FLAGS_MSIX_OKAY;
+		aprint_verbose("\n");
+		aprint_verbose_dev(self,
+		    "This pci host supports neither MSI nor MSI-X.");
+	} else if (pci_has_msi_quirk(id, PCI_QUIRK_DISABLE_MSIX)) {
+		pba->pba_flags |= PCI_FLAGS_MSI_OKAY;
+		pba->pba_flags &= ~PCI_FLAGS_MSIX_OKAY;
+		aprint_verbose("\n");
+		aprint_verbose_dev(self,
+		    "This pci host does not support MSI-X.");
+	} else {
+		pba->pba_flags |= PCI_FLAGS_MSI_OKAY;
+		pba->pba_flags |= PCI_FLAGS_MSIX_OKAY;
+	}
+
+	/*
+	 * Don't enable MSI on a HyperTransport bus.  In order to
+	 * determine that bus 0 is a HyperTransport bus, we look at
+	 * device 24 function 0, which is the HyperTransport
+	 * host/primary interface integrated on most 64-bit AMD CPUs.
+	 * If that device has a HyperTransport capability, bus 0 must
+	 * be a HyperTransport bus and we disable MSI.
+	 */
+	if (24 < pci_bus_maxdevs(pc, 0)) {
+		tag = pci_make_tag(pc, 0, 24, 0);
+		if (pci_get_capability(pc, tag, PCI_CAP_LDT, NULL, NULL)) {
+			pba->pba_flags &= ~PCI_FLAGS_MSI_OKAY;
+			pba->pba_flags &= ~PCI_FLAGS_MSIX_OKAY;
+		}
+	}
+#endif /* __HAVE_PCI_MSI_MSIX */
 }
 
 int
@@ -415,21 +554,23 @@ pci_make_tag(pci_chipset_tag_t pc, int bus, int device, int function)
 	switch (pci_mode) {
 	case 1:
 		if (bus >= 256 || device >= 32 || function >= 8)
-			panic("%s: bad request", __func__);
+			panic("%s: bad request(%d, %d, %d)", __func__,
+			    bus, device, function);
 
 		tag.mode1 = PCI_MODE1_ENABLE |
 			    (bus << 16) | (device << 11) | (function << 8);
 		return tag;
 	case 2:
 		if (bus >= 256 || device >= 16 || function >= 8)
-			panic("%s: bad request", __func__);
+			panic("%s: bad request(%d, %d, %d)", __func__,
+			    bus, device, function);
 
 		tag.mode2.port = 0xc000 | (device << 8);
 		tag.mode2.enable = 0xf0 | (function << 1);
 		tag.mode2.forward = bus;
 		return tag;
 	default:
-		panic("%s: mode not configured", __func__);
+		panic("%s: mode %d not configured", __func__, pci_mode);
 	}
 }
 
@@ -465,7 +606,7 @@ pci_decompose_tag(pci_chipset_tag_t pc, pcitag_t tag,
 			*fp = (tag.mode2.enable >> 1) & 0x7;
 		return;
 	default:
-		panic("%s: mode not configured", __func__);
+		panic("%s: mode %d not configured", __func__, pci_mode);
 	}
 }
 
@@ -475,6 +616,7 @@ pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 	pci_chipset_tag_t ipc;
 	pcireg_t data;
 	struct pci_conf_lock ocl;
+	int dev;
 
 	KASSERT((reg & 0x3) == 0);
 
@@ -482,6 +624,23 @@ pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 		if ((ipc->pc_present & PCI_OVERRIDE_CONF_READ) == 0)
 			continue;
 		return (*ipc->pc_ov->ov_conf_read)(ipc->pc_ctx, pc, tag, reg);
+	}
+
+	pci_decompose_tag(pc, tag, NULL, &dev, NULL);
+	if (__predict_false(pci_mode == 2 && dev >= 16))
+		return (pcireg_t) -1;
+
+	if (reg < 0)
+		return (pcireg_t) -1;
+	if (reg >= PCI_CONF_SIZE) {
+#if NACPICA > 0 && !defined(NO_PCI_EXTENDED_CONFIG)
+		if (reg >= PCI_EXTCONF_SIZE)
+			return (pcireg_t) -1;
+		acpimcfg_conf_read(pc, tag, reg, &data);
+		return data;
+#else
+		return (pcireg_t) -1;
+#endif
 	}
 
 	pci_conf_lock(&ocl, pci_conf_selector(tag, reg));
@@ -495,6 +654,7 @@ pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 {
 	pci_chipset_tag_t ipc;
 	struct pci_conf_lock ocl;
+	int dev;
 
 	KASSERT((reg & 0x3) == 0);
 
@@ -503,6 +663,22 @@ pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 			continue;
 		(*ipc->pc_ov->ov_conf_write)(ipc->pc_ctx, pc, tag, reg,
 		    data);
+		return;
+	}
+
+	pci_decompose_tag(pc, tag, NULL, &dev, NULL);
+	if (__predict_false(pci_mode == 2 && dev >= 16)) {
+		return;
+	}
+
+	if (reg < 0)
+		return;
+	if (reg >= PCI_CONF_SIZE) {
+#if NACPICA > 0 && !defined(NO_PCI_EXTENDED_CONFIG)
+		if (reg >= PCI_EXTCONF_SIZE)
+			return;
+		acpimcfg_conf_write(pc, tag, reg, data);
+#endif
 		return;
 	}
 
@@ -747,10 +923,6 @@ pci_chipset_tag_create(pci_chipset_tag_t opc, const uint64_t present,
 		return EINVAL;
 
 	pc = kmem_alloc(sizeof(struct pci_chipset_tag), KM_SLEEP);
-
-	if (pc == NULL)
-		return ENOMEM;
-
 	pc->pc_super = opc;
 
 	for (bits = present; bits != 0; bits = nbits) {
@@ -789,24 +961,28 @@ static bool
 x86_genfb_setmode(struct genfb_softc *sc, int newmode)
 {
 #if NGENFB > 0
+# if NACPICA > 0 && defined(VGA_POST)
 	static int curmode = WSDISPLAYIO_MODE_EMUL;
+# endif
 
 	switch (newmode) {
 	case WSDISPLAYIO_MODE_EMUL:
 		x86_genfb_mtrr_init(sc->sc_fboffset,
 		    sc->sc_height * sc->sc_stride);
-#if NACPICA > 0 && defined(VGA_POST)
+# if NACPICA > 0 && defined(VGA_POST)
 		if (curmode != newmode) {
 			if (vga_posth != NULL && acpi_md_vesa_modenum != 0) {
 				vga_post_set_vbe(vga_posth,
 				    acpi_md_vesa_modenum);
 			}
 		}
-#endif
+# endif
 		break;
 	}
 
+# if NACPICA > 0 && defined(VGA_POST)
 	curmode = newmode;
+# endif
 #endif
 	return true;
 }
@@ -915,6 +1091,8 @@ device_pci_register(device_t dev, void *aux)
 				if (ri->ri_bits != NULL) {
 					prop_dictionary_set_uint64(dict,
 					    "virtual_address",
+					    ri->ri_hwbits != NULL ?
+					    (vaddr_t)ri->ri_hworigbits :
 					    (vaddr_t)ri->ri_origbits);
 				}
 #endif
@@ -941,6 +1119,11 @@ device_pci_register(device_t dev, void *aux)
 
 #if NWSDISPLAY > 0 && NGENFB > 0
 				if (device_is_a(dev, "genfb")) {
+					prop_dictionary_set_bool(dict,
+					    "enable_shadowfb",
+					    ri->ri_hwbits != NULL ?
+					      true : false);
+
 					x86_genfb_set_console_dev(dev);
 #ifdef DDB
 					db_trap_callback =

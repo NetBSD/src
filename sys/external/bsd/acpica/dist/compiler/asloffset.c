@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -103,7 +103,7 @@ LsAmlOffsetWalk (
 
     /* Ignore actual data blocks for resource descriptors */
 
-    if (Op->Asl.CompileFlags & NODE_IS_RESOURCE_DATA)
+    if (Op->Asl.CompileFlags & OP_IS_RESOURCE_DATA)
     {
         return (AE_OK); /* Do NOT update the global AML offset */
     }
@@ -120,7 +120,7 @@ LsAmlOffsetWalk (
     /* Named resource descriptor (has a descriptor tag) */
 
     if ((Node->Type == ACPI_TYPE_LOCAL_RESOURCE) &&
-        (Op->Asl.CompileFlags & NODE_IS_RESOURCE_DESC))
+        (Op->Asl.CompileFlags & OP_IS_RESOURCE_DESC))
     {
         LsEmitOffsetTableEntry (FileId, Node, 0, Gbl_CurrentAmlOffset,
             Op->Asl.ParseOpName, 0, Op->Asl.Extra, AML_BUFFER_OP);
@@ -142,7 +142,6 @@ LsAmlOffsetWalk (
         }
 
         Length = Op->Asl.FinalAmlLength;
-        NamepathOffset = Gbl_CurrentAmlOffset + Length;
 
         /* Get to the NameSeg/NamePath Op (and length of the name) */
 
@@ -185,7 +184,7 @@ LsAmlOffsetWalk (
             break;
 
         case AML_PACKAGE_OP:
-        case AML_VAR_PACKAGE_OP:
+        case AML_VARIABLE_PACKAGE_OP:
 
             /* Get the package element count */
 
@@ -363,7 +362,7 @@ LsEmitOffsetTableEntry (
     /* Get the full pathname to the namespace node */
 
     TargetPath.Length = ACPI_ALLOCATE_LOCAL_BUFFER;
-    Status = AcpiNsHandleToPathname (Node, &TargetPath);
+    Status = AcpiNsHandleToPathname (Node, &TargetPath, FALSE);
     if (ACPI_FAILURE (Status))
     {
         return;

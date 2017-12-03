@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.82.2.2 2014/08/20 00:04:27 tls Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.82.2.3 2017/12/03 11:38:43 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -63,11 +63,15 @@ extern struct pool puffs_vapool;
 
 #ifdef PUFFSDEBUG
 extern int puffsdebug; /* puffs_subr.c */
-#define DPRINTF(x) if (puffsdebug > 0) printf x
-#define DPRINTF_VERBOSE(x) if (puffsdebug > 1) printf x
+#define DPRINTF(x) do { \
+		if (puffsdebug > 0) printf x; \
+	} while (/*CONSTCOND*/0)
+#define DPRINTF_VERBOSE(x) do { \
+		if (puffsdebug > 1) printf x; \
+	} while (/*CONSTCOND*/0)
 #else
-#define DPRINTF(x)
-#define DPRINTF_VERBOSE(x)
+#define DPRINTF(x) ((void)0)
+#define DPRINTF_VERBOSE(x) ((void)0)
 #endif
 
 #define MPTOPUFFSMP(mp) ((struct puffs_mount *)((mp)->mnt_data))
@@ -94,6 +98,8 @@ extern int puffsdebug; /* puffs_subr.c */
     ((pmp)->pmp_flags & PUFFS_KFLAG_CACHE_FS_TTL)
 #define PUFFS_USE_DOTDOTCACHE(pmp)	\
     ((pmp)->pmp_flags & PUFFS_KFLAG_CACHE_DOTDOT)
+#define PUFFS_USE_METAFLUSH(pmp)	\
+    (((pmp)->pmp_flags & PUFFS_KFLAG_NOFLUSH_META) == 0)
 
 #define PUFFS_WCACHEINFO(pmp)	(__USE(pmp), 0)
 
@@ -144,15 +150,6 @@ struct puffs_mount {
 
 	struct puffs_wq			pmp_msg_replywait;
 
-	struct puffs_node_hashlist	*pmp_pnodehash;
-	int				pmp_npnodehash;
-
-	/*
-	 * a list of cookies which is going to be puffs_getvnode'd.
-	 * this is merely a loose attempt to prevent races.
-	 */
-	LIST_HEAD(, puffs_newcookie)	pmp_newcookie;
-
 	struct mount			*pmp_mp;
 
 	struct vnode			*pmp_root;
@@ -197,6 +194,8 @@ struct puffs_mount {
 #define PNODE_FAF	0x004	/* issue all operations as FAF		*/
 #define PNODE_DOINACT 	0x008	/* if inactive-on-demand, call inactive */
 #define PNODE_SOPEXP	0x100	/* Node reclaim postponed in sop thread	*/
+#define PNODE_RDIRECT	0x200	/* bypass page cache on read		*/
+#define PNODE_WDIRECT	0x400	/* bypass page cache on write		*/
 
 #define PNODE_METACACHE_ATIME	0x10	/* cache atime metadata */
 #define PNODE_METACACHE_CTIME	0x20	/* cache atime metadata */
@@ -235,8 +234,6 @@ struct puffs_node {
 	int		pn_va_timeout;	/* attribute cache */
 	struct vattr *	pn_va_cache;	/* attribute cache */
 	struct vnode *  pn_parent;	/* parent cache */
-
-	LIST_ENTRY(puffs_node) pn_hashent;
 };
 
 typedef void (*parkdone_fn)(struct puffs_mount *, struct puffs_req *, void *);
@@ -272,7 +269,7 @@ void	puffs_releasenode(struct puffs_node *);
 void	puffs_referencenode(struct puffs_node *);
 
 #define PUFFS_NOSUCHCOOKIE (-1)
-int	puffs_cookie2vnode(struct puffs_mount *, puffs_cookie_t, int, int,
+int	puffs_cookie2vnode(struct puffs_mount *, puffs_cookie_t,
 			   struct vnode **);
 void	puffs_makecn(struct puffs_kcn *, struct puffs_kcred *,
 		     const struct componentname *, int);
@@ -287,7 +284,7 @@ void	puffs_parkdone_poll(struct puffs_mount *, struct puffs_req *, void *);
 void	puffs_mp_reference(struct puffs_mount *);
 void	puffs_mp_release(struct puffs_mount *);
 
-void	puffs_gop_size(struct vnode *, off_t, off_t *, int); 
+void	puffs_gop_size(struct vnode *, off_t, off_t *, int);
 void	puffs_gop_markupdate(struct vnode *, int);
 
 void	puffs_senderr(struct puffs_mount *, int, int, const char *,

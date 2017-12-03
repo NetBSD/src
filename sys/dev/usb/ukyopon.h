@@ -1,4 +1,4 @@
-/*	$NetBSD: ukyopon.h,v 1.4 2008/04/28 20:24:00 martin Exp $	*/
+/*	$NetBSD: ukyopon.h,v 1.4.46.1 2017/12/03 11:37:34 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -28,6 +28,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/ioccom.h>
 
 #ifdef _KERNEL
 #include <machine/limits.h>

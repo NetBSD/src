@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_futex.h,v 1.5.12.2 2013/06/23 06:20:16 tls Exp $ */
+/*	$NetBSD: linux_futex.h,v 1.5.12.3 2017/12/03 11:36:55 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -86,7 +86,7 @@ struct linux_robust_list_head {
 void	release_futexes(struct lwp *);
 struct linux_sys_futex_args;
 int	linux_do_futex(struct lwp *, const struct linux_sys_futex_args *,
-		       register_t *, struct timespec *);
+		       struct timespec *, register_t *);
 void	linux_futex_init(void);
 void	linux_futex_fini(void);
 

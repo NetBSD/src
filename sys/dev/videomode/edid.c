@@ -1,4 +1,4 @@
-/* $NetBSD: edid.c,v 1.11.14.1 2013/02/25 00:29:43 tls Exp $ */
+/* $NetBSD: edid.c,v 1.11.14.2 2017/12/03 11:37:36 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: edid.c,v 1.11.14.1 2013/02/25 00:29:43 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: edid.c,v 1.11.14.2 2017/12/03 11:37:36 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -286,6 +286,8 @@ edid_print(struct edid_info *edid)
 		    DIVIDE(DIVIDE(edid->edid_preferred_mode->dot_clock * 1000,
 		    edid->edid_preferred_mode->htotal),
 		    edid->edid_preferred_mode->vtotal));
+
+	printf("Number of extension blocks: %d\n", edid->edid_ext_block_count);
 }
 
 static const struct videomode *
@@ -568,6 +570,8 @@ edid_parse(uint8_t *data, struct edid_info *edid)
 	edid->edid_chroma.ec_bluey = EDID_CHROMA_BLUEY(data);
 	edid->edid_chroma.ec_whitex = EDID_CHROMA_WHITEX(data);
 	edid->edid_chroma.ec_whitey = EDID_CHROMA_WHITEY(data);
+
+	edid->edid_ext_block_count = EDID_EXT_BLOCK_COUNT(data);
 
 	/* lookup established modes */
 	edid->edid_nmodes = 0;

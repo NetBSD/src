@@ -1,9 +1,9 @@
-# $NetBSD: INSTALL,v 1.110.2.3 2014/08/20 00:02:43 tls Exp $
+# $NetBSD: INSTALL,v 1.110.2.4 2017/12/03 11:35:48 jdolecek Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD: GENERIC.in,v 1.125 2014/07/05 09:59:06 tsutsui Exp $
+# Created from: # NetBSD: GENERIC.in,v 1.135 2017/09/13 22:24:42 sevan Exp $
 #
 ##
 # GENERIC machine description file
@@ -29,7 +29,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.110.2.3 $"
+#ident 		"GENERIC-$Revision: 1.110.2.4 $"
 
 makeoptions	COPTS="-Os"
 
@@ -120,7 +120,6 @@ options 	WAPBL		# File system journaling support
 
 options 	EXEC_AOUT	# 32-bit aout executables (NetBSD-1.5.x)
 options 	COMPAT_AOUT_M68K # actually make some system calls work.
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 
 #
@@ -553,11 +552,8 @@ pseudo-device   btuart                  # Bluetooth HCI UART (H4)
 # removing fingerprint methods will have almost no impact on the kernel
 # code size.
 #
-#options VERIFIED_EXEC_FP_RMD160
 #options VERIFIED_EXEC_FP_SHA256
 #options VERIFIED_EXEC_FP_SHA384
 #options VERIFIED_EXEC_FP_SHA512
-#options VERIFIED_EXEC_FP_SHA1
-#options VERIFIED_EXEC_FP_MD5
 
 config	netbsd root on ? type ?

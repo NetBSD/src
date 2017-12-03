@@ -1,4 +1,4 @@
-/*	$NetBSD: keydb.h,v 1.12.2.1 2013/06/23 06:20:26 tls Exp $	*/
+/*	$NetBSD: keydb.h,v 1.12.2.2 2017/12/03 11:39:05 jdolecek Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keydb.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keydb.h,v 1.14 2000/08/02 17:58:26 sakane Exp $	*/
 
@@ -36,7 +36,7 @@
 
 #ifdef _KERNEL
 
-#include "opt_ipsec.h"
+#include <sys/localcount.h>
 
 #include <netipsec/key_var.h>
 #include <net/route.h>
@@ -67,16 +67,19 @@ struct secasindex {
 
 /* Security Association Data Base */
 struct secashead {
-	LIST_ENTRY(secashead) chain;
+	struct pslist_entry pslist_entry;
+	struct localcount localcount;	/* reference count */
 
 	struct secasindex saidx;
 
 	struct sadb_ident *idents;	/* source identity */
 	struct sadb_ident *identd;	/* destination identity */
 					/* XXX I don't know how to use them. */
+	size_t idents_len;		/* length of idents */
+	size_t identd_len;		/* length of identd */
 
 	u_int8_t state;			/* MATURE or DEAD. */
-	LIST_HEAD(_satree, secasvar) savtree[SADB_SASTATE_MAX+1];
+	struct pslist_head savlist[SADB_SASTATE_MAX+1];
 					/* SA chain */
 					/* The first of this list is newer SA */
 
@@ -90,9 +93,9 @@ struct comp_algo;
 
 /* Security Association */
 struct secasvar {
-	LIST_ENTRY(secasvar) chain;
+	struct pslist_entry pslist_entry;
+	struct localcount localcount;	/* reference count */
 
-	u_int refcnt;			/* reference count */
 	u_int8_t state;			/* Status of this Association */
 
 	u_int8_t alg_auth;		/* Authentication Algorithm Identifier*/
@@ -102,10 +105,13 @@ struct secasvar {
 	u_int32_t flags;		/* holder for SADB_KEY_FLAGS */
 
 	struct sadb_key *key_auth;	/* Key for Authentication */
+	size_t key_auth_len;		/* length of key_auth */
 	struct sadb_key *key_enc;	/* Key for Encryption */
+	size_t key_enc_len;		/* length of key_enc */
 	u_int ivlen;			/* length of IV */
 
 	struct secreplay *replay;	/* replay prevention */
+	size_t replay_len;		/* length of replay */
 	time_t created;			/* for lifetime */
 
 	struct sadb_lifetime *lft_c;	/* CURRENT lifetime, it's constant. */

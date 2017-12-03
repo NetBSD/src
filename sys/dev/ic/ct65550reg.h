@@ -1,4 +1,4 @@
-/*	$NetBSD: ct65550reg.h,v 1.2 2011/03/23 04:02:43 macallan Exp $	*/
+/*	$NetBSD: ct65550reg.h,v 1.2.16.1 2017/12/03 11:37:03 jdolecek Exp $	*/
 
 /*
  * Copyright 2006 by Michael Lorenz.
@@ -231,6 +231,9 @@
 #define XR_CURSOR_2_X_HI	0xad
 #define XR_CURSOR_2_Y_LO	0xae
 #define XR_CURSOR_2_Y_HI	0xaf
+
+/* reference clock is 14.31818MHz */
+#define CHIPS_REFCLOCK	14318180
 
 #define XR_VCLOCK_0_M		0xc0
 #define XR_VCLOCK_0_N		0xc1

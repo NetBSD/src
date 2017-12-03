@@ -1354,8 +1354,11 @@ drm_context_t *drmGetReservedContextList(int fd, int *count)
     }
 
     res.contexts = list;
-    if (drmIoctl(fd, DRM_IOCTL_RES_CTX, &res))
+    if (drmIoctl(fd, DRM_IOCTL_RES_CTX, &res)) {
+	drmFree(list);
+	drmFree(retval);
 	return NULL;
+    }
 
     for (i = 0; i < res.count; i++)
 	retval[i] = list[i].handle;

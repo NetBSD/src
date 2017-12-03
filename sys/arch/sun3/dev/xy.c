@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.72.14.1 2014/08/20 00:03:26 tls Exp $	*/
+/*	$NetBSD: xy.c,v 1.72.14.2 2017/12/03 11:36:46 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles D. Cranor
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.72.14.1 2014/08/20 00:03:26 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.72.14.2 2017/12/03 11:36:46 jdolecek Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -246,7 +246,9 @@ const struct cdevsw xy_cdevsw = {
  * dkdriver
  */
 
-struct dkdriver xydkdriver = { xystrategy };
+struct dkdriver xydkdriver = {
+	.d_strategy = xystrategy
+};
 
 /*
  * start: disk label fix code (XXX)
@@ -806,7 +808,7 @@ xy_getkauthreq(u_char cmd)
  * xyioctl: ioctls on XY drives.   based on ioctl's of other netbsd disks.
  */
 int 
-xyioctl(dev_t dev, u_long command, void *addr, int flag, struct lwp *l)
+xyioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
 	struct xy_softc *xy;
 	struct xd_iocmd *xio;
@@ -818,25 +820,19 @@ xyioctl(dev_t dev, u_long command, void *addr, int flag, struct lwp *l)
 	if (xy == NULL)
 		return ENXIO;
 
+	error = disk_ioctl(&xy->sc_dk, dev, cmd, addr, flag, l);
+	if (error != EPASSTHROUGH)
+		return error;
+
 	/* switch on ioctl type */
 
-	switch (command) {
+	switch (cmd) {
 	case DIOCSBAD:		/* set bad144 info */
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 		s = splbio();
 		memcpy(&xy->dkb, addr, sizeof(xy->dkb));
 		splx(s);
-		return 0;
-
-	case DIOCGDINFO:	/* get disk label */
-		memcpy(addr, xy->sc_dk.dk_label, sizeof(struct disklabel));
-		return 0;
-
-	case DIOCGPART:	/* get partition info */
-		((struct partinfo *)addr)->disklab = xy->sc_dk.dk_label;
-		((struct partinfo *)addr)->part =
-		    &xy->sc_dk.dk_label->d_partitions[DISKPART(dev)];
 		return 0;
 
 	case DIOCSDINFO:	/* set disk label */

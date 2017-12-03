@@ -1,4 +1,4 @@
-/*	$NetBSD: bthub.c,v 1.18.2.1 2014/08/20 00:03:36 tls Exp $	*/
+/*	$NetBSD: bthub.c,v 1.18.2.2 2017/12/03 11:36:59 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bthub.c,v 1.18.2.1 2014/08/20 00:03:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bthub.c,v 1.18.2.2 2017/12/03 11:36:59 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -121,7 +121,14 @@ bthub_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal("\n");
 
-	pmf_device_register(self, NULL, NULL);
+	if (!pmf_device_register(self, NULL, NULL)) {
+		/*
+		 * XXX this should not be allowed to happen, but
+		 * avoiding it needs a pretty big rearrangement of
+		 * device attachments.
+		 */
+		aprint_error_dev(self, "couldn't establish power handler\n");
+	}
 }
 
 static int

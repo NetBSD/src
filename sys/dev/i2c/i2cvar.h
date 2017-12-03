@@ -1,4 +1,4 @@
-/*	$NetBSD: i2cvar.h,v 1.8 2010/02/28 15:33:21 snj Exp $	*/
+/*	$NetBSD: i2cvar.h,v 1.8.20.1 2017/12/03 11:37:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -39,6 +39,7 @@
 #define	_DEV_I2C_I2CVAR_H_
 
 #include <dev/i2c/i2c_io.h>
+#include <prop/proplib.h>
 
 /* Flags passed to i2c routines. */
 #define	I2C_F_WRITE		0x00	/* new transfer is a write */
@@ -110,6 +111,7 @@ typedef struct i2c_controller {
 struct i2cbus_attach_args {
 	i2c_tag_t iba_tag;		/* the controller */
 	int iba_type;			/* bus type */
+	prop_array_t iba_child_devices;	/* child devices (direct config) */
 };
 
 /* Used to attach devices on the i2c bus. */

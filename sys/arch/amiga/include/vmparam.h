@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.42 2011/02/08 20:20:08 rmind Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.42.14.1 2017/12/03 11:35:48 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -57,26 +57,24 @@
 
 /*
  * USRSTACK is the top (end) of the user stack.
- *
- * These are a mixture of i386, sun3 and hp settings.. 
  */
 
 #ifndef USRSTACK
 #define	USRSTACK	0x1E000000
 #endif
-#define KUSER_AREA	(-UPAGES*PAGE_SIZE)
+
 /*
  * Virtual memory related constants, all in bytes
  */
 
 #ifndef MAXTSIZ
-#define	MAXTSIZ		(6*1024*1024)		/* max text size */
+#define	MAXTSIZ		(32*1024*1024)		/* max text size */
 #endif
 #ifndef DFLDSIZ
-#define	DFLDSIZ		(32*1024*1024)		/* initial data size limit */
+#define	DFLDSIZ		(64*1024*1024)		/* initial data size limit */
 #endif
 #ifndef MAXDSIZ
-#define	MAXDSIZ		(128*1024*1024)		/* max data size */
+#define	MAXDSIZ		(224*1024*1024)		/* max data size */
 #endif
 #ifndef	DFLSSIZ
 #define	DFLSSIZ		(2*1024*1024)		/* initial stack size limit */
@@ -84,13 +82,6 @@
 #ifndef	MAXSSIZ
 #define	MAXSSIZ		(32*1024*1024)		/* max stack size */
 #endif
-
-/*
- * Sizes of the system and user portions of the system page table.
- */
-/* SYSPTSIZE IS SILLY; IT SHOULD BE COMPUTED AT BOOT TIME */
-#define	SYSPTSIZE	(2 * NPTEPG)	/* 16mb */
-#define	USRPTSIZE 	(1 * NPTEPG)	/* 16mb */
 
 /*
  * PTEs for mapping user space into the kernel for phyio operations.
@@ -145,5 +136,5 @@ struct pmap_physseg {
 /*
  * number of kernel PT pages (initial only, can grow dynamically)
  */
-#define VM_KERNEL_PT_PAGES	((vm_size_t)8)		/* XXX: SYSPTSIZE */
+#define VM_KERNEL_PT_PAGES	((vm_size_t)10)
 #endif /* !_MACHINE_VMPARAM_H_ */

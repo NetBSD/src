@@ -1,4 +1,4 @@
-/*	$NetBSD: uha_isa.c,v 1.38.22.2 2014/08/20 00:03:39 tls Exp $	*/
+/*	$NetBSD: uha_isa.c,v 1.38.22.3 2017/12/03 11:37:05 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uha_isa.c,v 1.38.22.2 2014/08/20 00:03:39 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uha_isa.c,v 1.38.22.3 2017/12/03 11:37:05 jdolecek Exp $");
 
 #include "opt_ddb.h"
 
@@ -73,7 +73,7 @@ void	u14_init(struct uha_softc *);
 
 /*
  * Check the slots looking for a board we recognise
- * If we find one, note it's address (slot) and call
+ * If we find one, note its address (slot) and call
  * the actual probe routine to check it out.
  */
 int

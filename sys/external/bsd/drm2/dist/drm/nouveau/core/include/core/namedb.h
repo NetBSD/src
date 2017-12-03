@@ -28,8 +28,11 @@ nv_namedb(void *obj)
 	nouveau_parent_init(&(p)->base)
 #define nouveau_namedb_fini(p,s)                                               \
 	nouveau_parent_fini(&(p)->base, (s))
-#define nouveau_namedb_destroy(p)                                              \
-	nouveau_parent_destroy(&(p)->base)
+#define nouveau_namedb_destroy(p) do                                           \
+{                                                                              \
+	rwlock_destroy(&(p)->lock);                                            \
+	nouveau_parent_destroy(&(p)->base);                                    \
+} while (0)
 
 int  nouveau_namedb_create_(struct nouveau_object *, struct nouveau_object *,
 			    struct nouveau_oclass *, u32 pclass,

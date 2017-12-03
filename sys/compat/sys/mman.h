@@ -1,4 +1,4 @@
-/*	$NetBSD: mman.h,v 1.2 2005/12/11 12:20:29 christos Exp $	*/
+/*	$NetBSD: mman.h,v 1.2.122.1 2017/12/03 11:36:57 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -33,6 +33,12 @@
 
 #ifndef _COMPAT_SYS_MMAN_H_
 #define _COMPAT_SYS_MMAN_H_
+
+/*
+ * Deprecated flag; these are treated as MAP_PRIVATE internally by
+ * the kernel. 
+ */
+#define	COMPAT_MAP_COPY	0x0004	/* "copy" region at mmap time */
 
 __BEGIN_DECLS
 int	msync(void *, size_t);

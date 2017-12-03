@@ -1,4 +1,4 @@
-/*	$NetBSD: sparc64.h,v 1.11.20.1 2014/08/20 00:03:25 tls Exp $	*/
+/*	$NetBSD: sparc64.h,v 1.11.20.2 2017/12/03 11:36:45 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -58,5 +58,6 @@ bool prom_has_stopself(void);
 int  prom_stop_other(u_int);
 bool prom_has_stop_other(void);
 void prom_startcpu(u_int, void *, u_long);
+int prom_startcpu_by_cpuid(u_int, void *, u_long arg);
 
 #endif	/* _MACHINE_SPARC64_H_ */

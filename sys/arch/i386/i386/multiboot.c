@@ -1,4 +1,4 @@
-/*	$NetBSD: multiboot.c,v 1.21.18.1 2013/02/25 00:28:44 tls Exp $	*/
+/*	$NetBSD: multiboot.c,v 1.21.18.2 2017/12/03 11:36:17 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: multiboot.c,v 1.21.18.1 2013/02/25 00:28:44 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: multiboot.c,v 1.21.18.2 2017/12/03 11:36:17 jdolecek Exp $");
 
 #include "opt_multiboot.h"
 
@@ -593,7 +593,7 @@ setup_howto(struct multiboot_info *mi)
 	/* Skip kernel file name. */
 	while (*cl != '\0' && *cl != ' ')
 		cl++;
-	while (*cl != '\0' && *cl == ' ')
+	while (*cl == ' ')
 		cl++;
 
 	/* Check if there are flags and set 'howto' accordingly. */

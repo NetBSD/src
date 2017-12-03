@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci_pci.c,v 1.55.2.2 2014/08/20 00:03:48 tls Exp $	*/
+/*	$NetBSD: uhci_pci.c,v 1.55.2.3 2017/12/03 11:37:29 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.55.2.2 2014/08/20 00:03:48 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.55.2.3 2017/12/03 11:37:29 jdolecek Exp $");
 
 #include "ehci.h"
 
@@ -78,9 +78,9 @@ uhci_pci_match(device_t parent, cfdata_t match, void *aux)
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_SERIALBUS &&
 	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_SERIALBUS_USB &&
 	    PCI_INTERFACE(pa->pa_class) == PCI_INTERFACE_UHCI)
-		return (1);
+		return 1;
 
-	return (0);
+	return 0;
 }
 
 static void
@@ -93,13 +93,11 @@ uhci_pci_attach(device_t parent, device_t self, void *aux)
 	char const *intrstr;
 	pci_intr_handle_t ih;
 	pcireg_t csr;
-	const char *vendor;
-	usbd_status r;
 	int s;
 	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc.sc_dev = self;
-	sc->sc.sc_bus.hci_private = sc;
+	sc->sc.sc_bus.ub_hcpriv = sc;
 
 	pci_aprint_devinfo(pa, NULL);
 
@@ -120,7 +118,7 @@ uhci_pci_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_pc = pc;
 	sc->sc_tag = tag;
-	sc->sc.sc_bus.dmatag = pa->pa_dmat;
+	sc->sc.sc_bus.ub_dmatag = pa->pa_dmat;
 
 	/* Enable the device. */
 	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
@@ -133,7 +131,8 @@ uhci_pci_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_SCHED, uhci_intr, sc);
+	sc->sc_ih = pci_intr_establish_xname(pc, ih, IPL_USB, uhci_intr, sc,
+	    device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt");
 		if (intrstr != NULL)
@@ -157,31 +156,26 @@ uhci_pci_attach(device_t parent, device_t self, void *aux)
 
 	switch(pci_conf_read(pc, tag, PCI_USBREV) & PCI_USBREV_MASK) {
 	case PCI_USBREV_PRE_1_0:
-		sc->sc.sc_bus.usbrev = USBREV_PRE_1_0;
+		sc->sc.sc_bus.ub_revision = USBREV_PRE_1_0;
 		break;
 	case PCI_USBREV_1_0:
-		sc->sc.sc_bus.usbrev = USBREV_1_0;
+		sc->sc.sc_bus.ub_revision = USBREV_1_0;
 		break;
 	case PCI_USBREV_1_1:
-		sc->sc.sc_bus.usbrev = USBREV_1_1;
+		sc->sc.sc_bus.ub_revision = USBREV_1_1;
 		break;
 	default:
-		sc->sc.sc_bus.usbrev = USBREV_UNKNOWN;
+		sc->sc.sc_bus.ub_revision = USBREV_UNKNOWN;
 		break;
 	}
 
 	/* Figure out vendor for root hub descriptor. */
-	vendor = pci_findvendor(pa->pa_id);
 	sc->sc.sc_id_vendor = PCI_VENDOR(pa->pa_id);
-	if (vendor)
-		strlcpy(sc->sc.sc_vendor, vendor, sizeof(sc->sc.sc_vendor));
-	else
-		snprintf(sc->sc.sc_vendor, sizeof(sc->sc.sc_vendor),
-		    "vendor 0x%04x", PCI_VENDOR(pa->pa_id));
-
-	r = uhci_init(&sc->sc);
-	if (r != USBD_NORMAL_COMPLETION) {
-		aprint_error_dev(self, "init failed, error=%d\n", r);
+	pci_findvendor(sc->sc.sc_vendor, sizeof(sc->sc.sc_vendor),
+	    sc->sc.sc_id_vendor);
+	int err = uhci_init(&sc->sc);
+	if (err) {
+		aprint_error_dev(self, "init failed, error=%d\n", err);
 		return;
 	}
 	sc->sc_initialized = SC_INIT_UHCI;
@@ -208,7 +202,7 @@ uhci_pci_detach(device_t self, int flags)
 	if (sc->sc_initialized & SC_INIT_UHCI) {
 		rv = uhci_detach(&sc->sc, flags);
 		if (rv)
-			return (rv);
+			return rv;
 	}
 
 	if (sc->sc_initialized & SC_INIT_PMF)
@@ -230,7 +224,7 @@ uhci_pci_detach(device_t self, int flags)
 #if NEHCI > 0
 	usb_pci_rem(&sc->sc_pci);
 #endif
-	return (0);
+	return 0;
 }
 
 static bool

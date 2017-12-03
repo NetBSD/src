@@ -1,23 +1,24 @@
-#	$NetBSD: files.i915drmkms,v 1.6.2.2 2014/08/20 00:04:20 tls Exp $
+#	$NetBSD: files.i915drmkms,v 1.6.2.3 2017/12/03 11:37:59 jdolecek Exp $
 
 define	intelfbbus	{ }
-device	i915drmkms: drmkms, drmkms_pci, intelfbbus
+device	i915drmkms: drmkms, drmkms_pci, intelfbbus, agp_i810
 attach	i915drmkms at pci
 
-device	intelfb: intelfbbus, genfb, wsemuldisplaydev
+device	intelfb: intelfbbus, drmfb, drmfb_pci, wsemuldisplaydev
 attach	intelfb at intelfbbus
 
 makeoptions	i915drmkms	CPPFLAGS+="-I$S/external/bsd/drm2/dist/drm/i915"
 makeoptions	i915drmkms	CPPFLAGS+="-I$S/external/bsd/drm2/i915drm"
 
-makeoptions 	i915drmkms 	"CWARNFLAGS.i915_drv.c"+="-Wno-override-init"
-makeoptions 	i915drmkms 	"CWARNFLAGS.intel_display.c"+="-Wno-shadow"
+makeoptions 	i915drmkms 	"CWARNFLAGS.i915_drv.c"+="${${ACTIVE_CC} == gcc:? -Wno-override-init :}"
+makeoptions 	i915drmkms 	"CWARNFLAGS.i915_drv.c"+="${${ACTIVE_CC} == clang:? -Wno-initializer-overrides :}"
+makeoptions 	i915drmkms 	"CWARNFLAGS.intel_display.c"+="-Wno-shadow -Wno-conversion"
 makeoptions 	i915drmkms 	"CWARNFLAGS.intel_panel.c"+="-Wno-shadow"
 makeoptions 	i915drmkms 	"CWARNFLAGS.intel_pm.c"+="-Wno-shadow"
 
 # XXX x86 kludge.
-#makeoptions	i915drmkms	CPPFLAGS+="-DCONFIG_ACPI"
-makeoptions	i915drmkms	CPPFLAGS+="-DCONFIG_DRM_I915_FBDEV"
+makeoptions	i915drmkms	CPPFLAGS+="-DCONFIG_DRM_I915_FBDEV=1"
+makeoptions	i915drmkms	CPPFLAGS+="-DCONFIG_DRM_I915_PRELIMINARY_HW_SUPPORT=0"
 
 file	external/bsd/drm2/dist/drm/i915/dvo_ch7017.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/dvo_ch7xxx.c	i915drmkms
@@ -45,7 +46,7 @@ file	external/bsd/drm2/dist/drm/i915/i915_params.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/i915_suspend.c	i915drmkms
 file	external/bsd/drm2/i915drm/i915_sysfs.c		i915drmkms
 file	external/bsd/drm2/dist/drm/i915/i915_ums.c	i915drmkms
-#file	external/bsd/drm2/dist/drm/i915/intel_acpi.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/intel_acpi.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/intel_bios.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/intel_crt.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/intel_ddi.c	i915drmkms
@@ -60,8 +61,7 @@ file	external/bsd/drm2/dist/drm/i915/intel_hdmi.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/intel_i2c.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/intel_lvds.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/intel_modes.c	i915drmkms
-# XXX Restore once I figure out what this does...
-#file	external/bsd/drm2/dist/drm/i915/intel_opregion.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/intel_opregion.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/intel_overlay.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/intel_panel.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/intel_pm.c	i915drmkms

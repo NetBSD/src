@@ -1,9 +1,10 @@
-#	$NetBSD: files.acpi,v 1.93.6.1 2014/08/20 00:03:35 tls Exp $
+#	$NetBSD: files.acpi,v 1.93.6.2 2017/12/03 11:36:58 jdolecek Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
 defflag	opt_acpi.h	ACPIVERBOSE ACPI_DEBUG ACPI_ACTIVATE_DEV
 			ACPI_DSDT_OVERRIDE ACPI_SCANPCI ACPI_BREAKPOINT
+			ACPI__DIS_IS_BROKEN
 defparam opt_acpi.h	ACPI_DSDT_FILE := "\"/dev/null\""
 defparam opt_acpi.h	ACPI_BLACKLIST_YEAR = 2000
 
@@ -17,6 +18,7 @@ device	acpi: acpica, acpiapmbus, acpinodebus, acpiecdtbus, acpihpetbus, acpiwdrt
 attach	acpi at acpibus
 file	dev/acpi/acpi.c			acpi
 file	dev/acpi/acpi_debug.c		acpi
+file	dev/acpi/acpi_mcfg.c		acpi
 file	dev/acpi/acpi_pci.c		acpi
 file	dev/acpi/acpi_pci_link.c	acpi
 file	dev/acpi/acpi_power.c		acpi
@@ -168,6 +170,11 @@ device	vald
 attach	vald at acpinodebus with vald_acpi
 file	dev/acpi/vald_acpi.c		vald_acpi
 
+# Toshiba Dynabook hotkeys
+device	valz
+attach	valz at acpinodebus with valz_acpi
+file	dev/acpi/valz_acpi.c		valz_acpi
+
 # Sony SPIC (jog dial etc.)
 attach	spic at acpinodebus with spic_acpi
 file	dev/acpi/spic_acpi.c		spic_acpi
@@ -209,5 +216,13 @@ file	dev/acpi/fujhk_acpi.c		fujhk
 # Apple SMC
 attach	applesmc at acpinodebus with apple_smc_acpi
 file	dev/acpi/apple_smc_acpi.c	apple_smc_acpi
+
+# SD Host Controller
+attach	sdhc at acpinodebus with sdhc_acpi
+file	dev/acpi/sdhc_acpi.c		sdhc_acpi
+
+# QEMU Firmware Configuration (fw_cfg) device
+attach	qemufwcfg at acpinodebus with qemufwcfg_acpi
+file	dev/acpi/qemufwcfg_acpi.c	qemufwcfg_acpi
 
 include	"dev/acpi/wmi/files.wmi"

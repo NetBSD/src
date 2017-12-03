@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.41.14.1 2014/08/20 00:03:28 tls Exp $	*/
+/*	$NetBSD: zs.c,v 1.41.14.2 2017/12/03 11:36:49 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 Minoura Makoto
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.41.14.1 2014/08/20 00:03:28 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.41.14.2 2017/12/03 11:36:49 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,13 +151,15 @@ zs_match(device_t parent, cfdata_t cf, void *aux)
 	for (i = 0; i < ZS_MAXDEV; i++)
 		if (zsaddr == (void *)zs_physaddr[i]) /* XXX */
 			break;
+	if (i == ZS_MAXDEV) {
+		/* not a recognized address */
+		return 0;
+	}
 
 	ia->ia_size = 8;
 	if (intio_map_allocate_region(parent, ia, INTIO_MAP_TESTONLY))
 		return 0;
 
-	if (zsaddr != (void *)zs_physaddr[i])
-		return 0;
 	if (badaddr((void *)IIOV(zsaddr)))
 		return 0;
 

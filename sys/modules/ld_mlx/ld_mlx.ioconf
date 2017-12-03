@@ -1,0 +1,10 @@
+#       $NetBSD: ld_mlx.ioconf,v 1.1.18.2 2017/12/03 11:38:57 jdolecek Exp $
+
+ioconf ld_mlx
+
+include "conf/files"
+include "dev/pci/files.pci"
+
+pseudo-root mlx*
+
+ld* at mlx?

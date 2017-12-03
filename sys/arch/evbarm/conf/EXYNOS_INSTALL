@@ -1,0 +1,10 @@
+#
+#	$NetBSD: EXYNOS_INSTALL,v 1.1.18.2 2017/12/03 11:36:03 jdolecek Exp $
+#
+#	ODROID-XU -- ODROID-XU Exynos5410 based kernel
+#
+
+include "arch/evbarm/conf/EXYNOS"
+include "arch/evbarm/conf/INSTALL"
+
+options BOOTHOWTO=RB_SINGLE

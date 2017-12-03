@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.216.2.3 2014/08/20 00:03:03 tls Exp $
+# $NetBSD: GENERIC,v 1.216.2.4 2017/12/03 11:36:14 jdolecek Exp $
 #
 # GENERIC machine description file
 # 
@@ -18,13 +18,13 @@
 # of each device driver in this file see the section 4 man page for the
 # device.
 
-include		"arch/hpcmips/conf/std.hpcmips"
-include		"arch/hpcmips/conf/std.hpcmips.vr41"
-include		"arch/hpcmips/conf/std.hpcmips.tx39"
+include 	"arch/hpcmips/conf/std.hpcmips"
+include 	"arch/hpcmips/conf/std.hpcmips.vr41"
+include 	"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.216.2.3 $"
+#ident 		"GENERIC-$Revision: 1.216.2.4 $"
 
 maxusers	16
 
@@ -96,6 +96,7 @@ options 	WAPBL		# File system journaling support
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+#options 	UFS_EXTATTR	# Extended attribute support for UFS1
 
 # Networking options
 #options 	GATEWAY		# IP packet forwarding
@@ -128,15 +129,7 @@ options 	IPFILTER_COMPAT # Compat for IP-Filter
 #options	BPFJIT
 
 # NetBSD backwards compatibility
-options 	COMPAT_43
-options 	COMPAT_16
-options 	COMPAT_20
-options 	COMPAT_30	# NetBSD 3.0 compatibility.
-options 	COMPAT_40	# NetBSD 4.0 compatibility.
-options 	COMPAT_50	# NetBSD 5.0 compatibility.
-options 	COMPAT_60	# NetBSD 6.0 compatibility.
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
-
+include 	"conf/compat_netbsd16.config"
 
 #options 	NFS_BOOT_DHCP
 options 	NFS_BOOT_BOOTP
@@ -638,7 +631,7 @@ ukyopon* at uhub? port ?
 ucom*	at ukyopon? portno ?
 
 # USB scanners
-uscanner* at uhub? port ?
+#uscanner* at uhub? port ?
 
 # USB scanners that use SCSI emulation, e.g., HP5300
 usscanner* at uhub? port ?
@@ -651,6 +644,9 @@ uyap* at uhub? port ?
 ugen*	at uhub? port ?
 
 audio*	at uaudio?
+midi*	at midibus?
+
+spkr*	at audio?			# PC speaker (synthesized)
 
 # Pseudo-Devices
 
@@ -714,9 +710,6 @@ pseudo-device	ksyms			# /dev/ksyms
 # removing fingerprint methods will have almost no impact on the kernel
 # code size.
 #
-#options VERIFIED_EXEC_FP_RMD160
 #options VERIFIED_EXEC_FP_SHA256
 #options VERIFIED_EXEC_FP_SHA384
 #options VERIFIED_EXEC_FP_SHA512
-#options VERIFIED_EXEC_FP_SHA1
-#options VERIFIED_EXEC_FP_MD5

@@ -1,5 +1,5 @@
-/*	$NetBSD: ulfs_dirhash.h,v 1.5.2.2 2013/06/23 06:18:39 tls Exp $	*/
-/*  from NetBSD: dirhash.h,v 1.6 2008/06/04 11:33:19 ad Exp  */
+/*	$NetBSD: ulfs_dirhash.h,v 1.5.2.3 2017/12/03 11:39:22 jdolecek Exp $	*/
+/*  from NetBSD: dirhash.h,v 1.7 2013/06/09 17:57:09 dholland Exp  */
 
 /*
  * Copyright (c) 2001 Ian Dowse.  All rights reserved.
@@ -48,8 +48,8 @@
 #define DIRHASH_DEL	(-2)	/* deleted entry; may be part of chain */
 
 #define DIRALIGN	4
-#define DH_NFSTATS	(LFS_DIRECTSIZ(LFS_MAXNAMLEN + 1) / DIRALIGN)
-				 /* max DIRALIGN words in a directory entry */
+#define DH_NFSTATS	(LFS_MAXDIRENTRYSIZE / DIRALIGN)
+			 /* max DIRALIGN words in a directory entry */
 
 /*
  * Dirhash uses a score mechanism to achieve a hybrid between a
@@ -91,7 +91,7 @@ struct dirhash {
 	int	dh_hlen;	/* total slots in the 2-level hash array */
 	int	dh_hused;	/* entries in use */
 
-	u_int8_t *dh_blkfree;	/* free DIRALIGN words in each dir block */
+	uint8_t *dh_blkfree;	/* free DIRALIGN words in each dir block */
 	size_t	dh_blkfreesz;
 	int	dh_nblk;	/* size of dh_blkfree array */
 	int	dh_dirblks;	/* number of DIRBLKSIZ blocks in dir */
@@ -118,9 +118,9 @@ doff_t	ulfsdirhash_enduseful(struct inode *);
 int	ulfsdirhash_lookup(struct inode *, const char *, int, doff_t *,
 	    struct buf **, doff_t *);
 void	ulfsdirhash_newblk(struct inode *, doff_t);
-void	ulfsdirhash_add(struct inode *, struct lfs_direct *, doff_t);
-void	ulfsdirhash_remove(struct inode *, struct lfs_direct *, doff_t);
-void	ulfsdirhash_move(struct inode *, struct lfs_direct *, doff_t, doff_t);
+void	ulfsdirhash_add(struct inode *, LFS_DIRHEADER *, doff_t);
+void	ulfsdirhash_remove(struct inode *, LFS_DIRHEADER *, doff_t);
+void	ulfsdirhash_move(struct inode *, LFS_DIRHEADER *, doff_t, doff_t);
 void	ulfsdirhash_dirtrunc(struct inode *, doff_t);
 void	ulfsdirhash_free(struct inode *);
 void	ulfsdirhash_checkblock(struct inode *, char *, doff_t);

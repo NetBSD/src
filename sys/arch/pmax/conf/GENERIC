@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.173.2.3 2014/08/20 00:03:18 tls Exp $
+# $NetBSD: GENERIC,v 1.173.2.4 2017/12/03 11:36:35 jdolecek Exp $
 #
 # GENERIC machine description file
 # 
@@ -18,11 +18,11 @@
 # of each device driver in this file see the section 4 man page for the
 # device.
 
-include		"arch/pmax/conf/std.pmax"
+include 	"arch/pmax/conf/std.pmax"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.173.2.3 $"
+#ident		"GENERIC-$Revision: 1.173.2.4 $"
 
 maxusers	64
 
@@ -47,9 +47,11 @@ makeoptions	DEBUG="-g"
 options 	DDB			# in-kernel debugger
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 options 	DDB_ONPANIC=0		# don't enter debugger on panic
-#options 	DIAGNOSTIC		# extra kernel debugging checks
-#options 	DEBUG			# extra kernel debugging support
-options 	COMPAT_43		# compatibility with 4.3BSD binaries
+options 	DIAGNOSTIC		# extra kernel debugging checks
+options 	DEBUG			# extra kernel debugging support
+options		LOCKDEBUG
+#options	VMFAULT_TRACE
+#options	PMAP_FAULTINFO
 options 	KTRACE			# system call tracing support
 
 options 	SYSVMSG		# System V-like message queues
@@ -100,6 +102,7 @@ options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 options 	WAPBL		# File system journaling support
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+options 	UFS_EXTATTR	# Extended attribute support for UFS1
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 
 # Networking options
@@ -138,20 +141,7 @@ options 	IPFILTER_COMPAT # Compat for IP-Filter
 #options	BPFJIT
 
 # NetBSD backwards compatibility
-#options 	COMPAT_10	# NetBSD 1.0, (needed for X on 386?)
-#options 	COMPAT_11	# NetBSD 1.1, EXEC_ELF_NOTELESS
-options 	COMPAT_12	# NetBSD 1.2 reboot(), EXEC_ELF_NOTELESS
-options 	COMPAT_13	# NetBSD 1.3
-options 	COMPAT_14	# NetBSD 1.4
-options 	COMPAT_15	# NetBSD 1.5
-options 	COMPAT_16	# NetBSD 1.6
-options 	COMPAT_20	# NetBSD 2.0
-options 	COMPAT_30	# NetBSD 3.0
-options 	COMPAT_40	# NetBSD 4.0 compatibility.
-options 	COMPAT_50	# NetBSD 5.0 compatibility.
-options 	COMPAT_60	# NetBSD 6.0 compatibility.
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
-options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+include 	"conf/compat_netbsd12.config"
 
 # Workstation console options
 options 	FONT_BOLD8x16
@@ -202,6 +192,8 @@ lkkbd*	at	zsc1 channel ?		# keyboard port on A channels
 vsms*	at	zsc0 channel ?		# mouse port on A channels   
 
 audio*	at	bba?
+
+spkr*	at	audio?			# PC speaker (synthesized)
 
 dtkbd*	at	dt? addr ?
 dtms*	at	dt? addr ?
@@ -319,18 +311,22 @@ pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	wsfont			# wsfont control device
 pseudo-device	wsmux			# wsmux control device
 
+options 	FILEASSOC		# fileassoc(9) - required for Veriexec
+					# and PAX_SEGVGUARD
+
 # Veriexec
-#
-# a pseudo device needed for veriexec
-#pseudo-device	veriexec
+pseudo-device	veriexec
 #
 # Uncomment the fingerprint methods below that are desired. Note that
 # removing fingerprint methods will have almost no impact on the kernel
 # code size.
 #
-#options VERIFIED_EXEC_FP_RMD160
-#options VERIFIED_EXEC_FP_SHA256
-#options VERIFIED_EXEC_FP_SHA384
-#options VERIFIED_EXEC_FP_SHA512
-#options VERIFIED_EXEC_FP_SHA1
-#options VERIFIED_EXEC_FP_MD5
+options 	VERIFIED_EXEC_FP_SHA256
+options 	VERIFIED_EXEC_FP_SHA384
+options 	VERIFIED_EXEC_FP_SHA512
+
+options 	PAX_ASLR_DEBUG=1	# PaX ASLR debug
+options 	PAX_SEGVGUARD=0		# PaX Segmentation fault guard
+options 	PAX_MPROTECT=1		# PaX mprotect(2) restrictions
+options 	PAX_MPROTECT_DEBUG=1	# PaX mprotect debug
+options 	PAX_ASLR=1		# PaX Address Space Layout Randomization

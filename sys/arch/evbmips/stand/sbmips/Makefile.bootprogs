@@ -1,0 +1,142 @@
+# $NetBSD: Makefile.bootprogs,v 1.3.6.2 2017/12/03 11:36:10 jdolecek Exp $
+
+NOSSP=yes
+NOPIE=yes
+
+.include <bsd.own.mk>
+.include <bsd.klinks.mk>
+
+S=	${.CURDIR}/../../../../..
+COMMON=	${.CURDIR}/../common
+
+.PATH:	${COMMON}
+
+STRIPFLAG=
+BINMODE= 444
+
+# XXX SHOULD NOT NEED TO DEFINE THESE!
+LIBCRT0=
+LIBCRTI=
+LIBC=
+LIBCRTBEGIN=
+LIBCRTEND=
+
+STRIP?=	strip
+
+CHECKSIZE_CMD=	SIZE=${SIZE} ${HOST_SH} ${COMMON}/checksize.sh
+
+AFLAGS+=	-DASSEMBLER -D_LOCORE -mno-abicalls -mips64
+# -I${.CURDIR}/../.. done by Makefile.inc
+CPPFLAGS+=	-nostdinc -I${.OBJDIR} -D_STANDALONE -I${S}
+CFLAGS=		-Os -g -ffreestanding -mno-abicalls -msoft-float -G 0
+CFLAGS+=	-mips64
+CFLAGS+=	-Werror ${CWARNFLAGS}
+
+NETBSD_VERS!=${HOST_SH} ${S}/conf/osrelease.sh
+CPPFLAGS+= -DNETBSD_VERS='"${NETBSD_VERS}"'
+
+CWARNFLAGS+=	-Wno-main 
+CWARNFLAGS+=	-Wall -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
+CWARNFLAGS+=	-Wno-pointer-sign
+
+VERSIONFLAGS+=-n
+.include "${S}/conf/newvers_stand.mk"
+
+# 
+# Refer to CFE documentation for a description of these regions.
+# 
+
+REGION1_START=		0x20000000		# "Region 1 start"
+REGION1_SIZE!=		expr 256 \* 1024	# 256k
+
+LDSCRIPT=		${COMMON}/boot.ldscript
+
+# our memory lauout:
+
+#	'unified' boot loaders (e.g. netboot) can consume all of region
+#	1 for their text+data, or text+data+bss.
+
+UNIFIED_LOAD_ADDRESS=	${REGION1_START}
+UNIFIED_MAX_LOAD!=	expr ${REGION1_SIZE}
+UNIFIED_MAX_TOTAL!=	expr ${REGION1_SIZE}
+
+#UNIFIED_HEAP_START=	right after secondary bss
+UNIFIED_HEAP_LIMIT=	(${REGION1_START} + ${REGION1_SIZE})
+
+#	two-stage boot loaders must share region 1.  The first stage
+#	loads into the lowest portion, and uses the higest portion
+#	for its heap.  The second stage loads in between the primary image
+#	and the heap, and can reuse the memory after it (i.e. the primary's
+#	heap) for its own heap.
+
+PRIMARY_LOAD_ADDRESS=	${REGION1_START}
+#PRIMARY_MAX_LOAD=	booter dependent, no more than ${PRIMARY_MAX_TOTAL}
+PRIMARY_MAX_TOTAL!=	expr 16 \* 1024
+
+# XXX SECONDARY_LOAD_ADDRESS should be
+# XXX (${PRIMARY_LOAD_ADDRESS} + ${PRIMARY_MAX_TOTAL}) bt there's no easy
+# XXX way to do that calculation and 'ld' wants a single number.
+SECONDARY_LOAD_ADDRESS=	0x20004000	# XXX
+SECONDARY_MAX_LOAD!=	expr 112 \* 1024
+SECONDARY_MAX_TOTAL!=	expr ${REGION1_SIZE} - ${PRIMARY_MAX_TOTAL}
+
+PRIMARY_HEAP_START=	(${SECONDARY_LOAD_ADDRESS} + ${SECONDARY_MAX_LOAD})
+PRIMARY_HEAP_LIMIT=	(${REGION1_START} + ${REGION1_SIZE})
+
+#SECONDARY_HEAP_START=	right after secondary bss
+SECONDARY_HEAP_LIMIT=	(${REGION1_START} + ${REGION1_SIZE})
+
+#	standalone programs are like kernels.  They load at
+#	0xfffffc0000300000 and can use the rest of memory.
+
+STANDPROG_LOAD_ADDRESS=	0xfffffc0000300000
+
+
+FILE_FORMAT_CPPFLAGS=	-DBOOT_ELF
+
+UNIFIED_CPPFLAGS=	-DUNIFIED_BOOTBLOCK \
+			-DHEAP_LIMIT="${UNIFIED_HEAP_LIMIT}" \
+			${FILE_FORMAT_CPPFLAGS}
+
+PRIMARY_CPPFLAGS=	-DPRIMARY_BOOTBLOCK \
+			-DSECONDARY_LOAD_ADDRESS="${SECONDARY_LOAD_ADDRESS}" \
+			-DSECONDARY_MAX_LOAD="${SECONDARY_MAX_LOAD}" \
+			-DHEAP_LIMIT="${PRIMARY_HEAP_LIMIT}" \
+			-DHEAP_START="${PRIMARY_HEAP_START}"
+
+SECONDARY_CPPFLAGS=	-DSECONDARY_BOOTBLOCK \
+			-DHEAP_LIMIT="${SECONDARY_HEAP_LIMIT}" \
+			${FILE_FORMAT_CPPFLAGS}
+
+STANDPROG_CPPFLAGS=	-DSTANDALONE_PROGRAM
+
+.include <bsd.prog.mk>
+
+### find out what to use for libkern
+KERN_AS=	library
+.include "${S}/lib/libkern/Makefile.inc"
+LIBKERN=	${KERNLIB}
+
+### find out what to use for libz
+Z_AS=		library
+.include "${S}/lib/libz/Makefile.inc"
+LIBZ=		${ZLIB}
+
+### find out what to use for libsa
+SA_AS=		library
+SAMISCMAKEFLAGS+="SA_USE_LOADFILE=yes"
+.include "${S}/lib/libsa/Makefile.inc"
+LIBSA=		${SALIB}
+
+/usr/lib/crt0.o:
+	true
+
+/usr/lib/crtbegin.o:
+	true
+
+/usr/lib/crtend.o:
+	true
+
+cleandir: .WAIT cleandirlocal
+cleandirlocal:
+	-rm -rf lib

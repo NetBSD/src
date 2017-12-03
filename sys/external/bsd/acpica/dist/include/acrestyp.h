@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -327,6 +327,13 @@ typedef union acpi_resource_attribute
 
 } ACPI_RESOURCE_ATTRIBUTE;
 
+typedef struct acpi_resource_label
+{
+    UINT16                          StringLength;
+    char                            *StringPtr;
+
+} ACPI_RESOURCE_LABEL;
+
 typedef struct acpi_resource_source
 {
     UINT8                           Index;
@@ -345,6 +352,36 @@ typedef struct acpi_resource_source
     UINT8                           MaxAddressFixed; \
     ACPI_RESOURCE_ATTRIBUTE         Info;
 
+typedef struct acpi_address16_attribute
+{
+    UINT16                          Granularity;
+    UINT16                          Minimum;
+    UINT16                          Maximum;
+    UINT16                          TranslationOffset;
+    UINT16                          AddressLength;
+
+} ACPI_ADDRESS16_ATTRIBUTE;
+
+typedef struct acpi_address32_attribute
+{
+    UINT32                          Granularity;
+    UINT32                          Minimum;
+    UINT32                          Maximum;
+    UINT32                          TranslationOffset;
+    UINT32                          AddressLength;
+
+} ACPI_ADDRESS32_ATTRIBUTE;
+
+typedef struct acpi_address64_attribute
+{
+    UINT64                          Granularity;
+    UINT64                          Minimum;
+    UINT64                          Maximum;
+    UINT64                          TranslationOffset;
+    UINT64                          AddressLength;
+
+} ACPI_ADDRESS64_ATTRIBUTE;
+
 typedef struct acpi_resource_address
 {
     ACPI_RESOURCE_ADDRESS_COMMON
@@ -354,11 +391,7 @@ typedef struct acpi_resource_address
 typedef struct acpi_resource_address16
 {
     ACPI_RESOURCE_ADDRESS_COMMON
-    UINT16                          Granularity;
-    UINT16                          Minimum;
-    UINT16                          Maximum;
-    UINT16                          TranslationOffset;
-    UINT16                          AddressLength;
+    ACPI_ADDRESS16_ATTRIBUTE        Address;
     ACPI_RESOURCE_SOURCE            ResourceSource;
 
 } ACPI_RESOURCE_ADDRESS16;
@@ -366,11 +399,7 @@ typedef struct acpi_resource_address16
 typedef struct acpi_resource_address32
 {
     ACPI_RESOURCE_ADDRESS_COMMON
-    UINT32                          Granularity;
-    UINT32                          Minimum;
-    UINT32                          Maximum;
-    UINT32                          TranslationOffset;
-    UINT32                          AddressLength;
+    ACPI_ADDRESS32_ATTRIBUTE        Address;
     ACPI_RESOURCE_SOURCE            ResourceSource;
 
 } ACPI_RESOURCE_ADDRESS32;
@@ -378,11 +407,7 @@ typedef struct acpi_resource_address32
 typedef struct acpi_resource_address64
 {
     ACPI_RESOURCE_ADDRESS_COMMON
-    UINT64                          Granularity;
-    UINT64                          Minimum;
-    UINT64                          Maximum;
-    UINT64                          TranslationOffset;
-    UINT64                          AddressLength;
+    ACPI_ADDRESS64_ATTRIBUTE        Address;
     ACPI_RESOURCE_SOURCE            ResourceSource;
 
 } ACPI_RESOURCE_ADDRESS64;
@@ -391,11 +416,7 @@ typedef struct acpi_resource_extended_address64
 {
     ACPI_RESOURCE_ADDRESS_COMMON
     UINT8                           RevisionID;
-    UINT64                          Granularity;
-    UINT64                          Minimum;
-    UINT64                          Maximum;
-    UINT64                          TranslationOffset;
-    UINT64                          AddressLength;
+    ACPI_ADDRESS64_ATTRIBUTE        Address;
     UINT64                          TypeSpecific;
 
 } ACPI_RESOURCE_EXTENDED_ADDRESS64;
@@ -471,6 +492,7 @@ typedef struct acpi_resource_gpio
     UINT8                           Type; \
     UINT8                           ProducerConsumer;    /* For values, see Producer/Consumer above */\
     UINT8                           SlaveMode; \
+    UINT8                           ConnectionSharing; \
     UINT8                           TypeRevisionId; \
     UINT16                          TypeDataLength; \
     UINT16                          VendorLength; \
@@ -602,6 +624,90 @@ typedef struct acpi_resource_uart_serialbus
 #define ACPI_UART_CLEAR_TO_SEND                 (1<<6)
 #define ACPI_UART_REQUEST_TO_SEND               (1<<7)
 
+typedef struct acpi_resource_pin_function
+{
+    UINT8                           RevisionId;
+    UINT8                           PinConfig;
+    UINT8                           Sharable;           /* For values, see Interrupt Attributes above */
+    UINT16                          FunctionNumber;
+    UINT16                          PinTableLength;
+    UINT16                          VendorLength;
+    ACPI_RESOURCE_SOURCE            ResourceSource;
+    UINT16                          *PinTable;
+    UINT8                           *VendorData;
+
+} ACPI_RESOURCE_PIN_FUNCTION;
+
+typedef struct acpi_resource_pin_config
+{
+    UINT8                           RevisionId;
+    UINT8                           ProducerConsumer;   /* For values, see Producer/Consumer above */
+    UINT8                           Sharable;           /* For values, see Interrupt Attributes above */
+    UINT8                           PinConfigType;
+    UINT32                          PinConfigValue;
+    UINT16                          PinTableLength;
+    UINT16                          VendorLength;
+    ACPI_RESOURCE_SOURCE            ResourceSource;
+    UINT16                          *PinTable;
+    UINT8                           *VendorData;
+
+} ACPI_RESOURCE_PIN_CONFIG;
+
+/* Values for PinConfigType field above */
+
+#define ACPI_PIN_CONFIG_DEFAULT                 0
+#define ACPI_PIN_CONFIG_BIAS_PULL_UP            1
+#define ACPI_PIN_CONFIG_BIAS_PULL_DOWN          2
+#define ACPI_PIN_CONFIG_BIAS_DEFAULT            3
+#define ACPI_PIN_CONFIG_BIAS_DISABLE            4
+#define ACPI_PIN_CONFIG_BIAS_HIGH_IMPEDANCE     5
+#define ACPI_PIN_CONFIG_BIAS_BUS_HOLD           6
+#define ACPI_PIN_CONFIG_DRIVE_OPEN_DRAIN        7
+#define ACPI_PIN_CONFIG_DRIVE_OPEN_SOURCE       8
+#define ACPI_PIN_CONFIG_DRIVE_PUSH_PULL         9
+#define ACPI_PIN_CONFIG_DRIVE_STRENGTH          10
+#define ACPI_PIN_CONFIG_SLEW_RATE               11
+#define ACPI_PIN_CONFIG_INPUT_DEBOUNCE          12
+#define ACPI_PIN_CONFIG_INPUT_SCHMITT_TRIGGER   13
+
+typedef struct acpi_resource_pin_group
+{
+    UINT8                           RevisionId;
+    UINT8                           ProducerConsumer;   /* For values, see Producer/Consumer above */
+    UINT16                          PinTableLength;
+    UINT16                          VendorLength;
+    UINT16                          *PinTable;
+    ACPI_RESOURCE_LABEL             ResourceLabel;
+    UINT8                           *VendorData;
+
+} ACPI_RESOURCE_PIN_GROUP;
+
+typedef struct acpi_resource_pin_group_function
+{
+    UINT8                           RevisionId;
+    UINT8                           ProducerConsumer;   /* For values, see Producer/Consumer above */
+    UINT8                           Sharable;           /* For values, see Interrupt Attributes above */
+    UINT16                          FunctionNumber;
+    UINT16                          VendorLength;
+    ACPI_RESOURCE_SOURCE            ResourceSource;
+    ACPI_RESOURCE_LABEL             ResourceSourceLabel;
+    UINT8                           *VendorData;
+
+} ACPI_RESOURCE_PIN_GROUP_FUNCTION;
+
+typedef struct acpi_resource_pin_group_config
+{
+    UINT8                           RevisionId;
+    UINT8                           ProducerConsumer;   /* For values, see Producer/Consumer above */
+    UINT8                           Sharable;           /* For values, see Interrupt Attributes above */
+    UINT8                           PinConfigType;      /* For values, see PinConfigType above */
+    UINT32                          PinConfigValue;
+    UINT16                          VendorLength;
+    ACPI_RESOURCE_SOURCE            ResourceSource;
+    ACPI_RESOURCE_LABEL             ResourceSourceLabel;
+    UINT8                           *VendorData;
+
+} ACPI_RESOURCE_PIN_GROUP_CONFIG;
 
 /* ACPI_RESOURCE_TYPEs */
 
@@ -625,7 +731,12 @@ typedef struct acpi_resource_uart_serialbus
 #define ACPI_RESOURCE_TYPE_GPIO                 17  /* ACPI 5.0 */
 #define ACPI_RESOURCE_TYPE_FIXED_DMA            18  /* ACPI 5.0 */
 #define ACPI_RESOURCE_TYPE_SERIAL_BUS           19  /* ACPI 5.0 */
-#define ACPI_RESOURCE_TYPE_MAX                  19
+#define ACPI_RESOURCE_TYPE_PIN_FUNCTION         20  /* ACPI 6.2 */
+#define ACPI_RESOURCE_TYPE_PIN_CONFIG           21  /* ACPI 6.2 */
+#define ACPI_RESOURCE_TYPE_PIN_GROUP            22  /* ACPI 6.2 */
+#define ACPI_RESOURCE_TYPE_PIN_GROUP_FUNCTION   23  /* ACPI 6.2 */
+#define ACPI_RESOURCE_TYPE_PIN_GROUP_CONFIG     24  /* ACPI 6.2 */
+#define ACPI_RESOURCE_TYPE_MAX                  24
 
 /* Master union for resource descriptors */
 
@@ -654,6 +765,11 @@ typedef union acpi_resource_data
     ACPI_RESOURCE_SPI_SERIALBUS             SpiSerialBus;
     ACPI_RESOURCE_UART_SERIALBUS            UartSerialBus;
     ACPI_RESOURCE_COMMON_SERIALBUS          CommonSerialBus;
+    ACPI_RESOURCE_PIN_FUNCTION              PinFunction;
+    ACPI_RESOURCE_PIN_CONFIG                PinConfig;
+    ACPI_RESOURCE_PIN_GROUP                 PinGroup;
+    ACPI_RESOURCE_PIN_GROUP_FUNCTION        PinGroupFunction;
+    ACPI_RESOURCE_PIN_GROUP_CONFIG          PinGroupConfig;
 
     /* Common fields */
 

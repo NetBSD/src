@@ -1,4 +1,4 @@
-/* $NetBSD: viapcib.c,v 1.14 2011/07/05 07:08:17 mrg Exp $ */
+/* $NetBSD: viapcib.c,v 1.14.12.1 2017/12/03 11:36:18 jdolecek Exp $ */
 /* $FreeBSD: src/sys/pci/viapm.c,v 1.10 2005/05/29 04:42:29 nyan Exp $ */
 
 /*-
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viapcib.c,v 1.14 2011/07/05 07:08:17 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viapcib.c,v 1.14.12.1 2017/12/03 11:36:18 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -215,6 +215,7 @@ core_pcib:
 		viapcib_smbus_write(sc, SMBSLVCNT, b & ~1);
 
 		memset(&sc->sc_i2c, 0, sizeof(sc->sc_i2c));
+		memset(&iba, 0, sizeof(iba));
 #ifdef I2C_TYPE_SMBUS
 		iba.iba_type = I2C_TYPE_SMBUS;
 #endif

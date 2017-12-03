@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.h,v 1.2 2011/12/20 16:38:06 drochner Exp $	*/
+/*	$NetBSD: rnd.h,v 1.2.10.1 2017/12/03 11:36:57 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997,2011 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 #include <compat/netbsd32/netbsd32.h>
 #endif /* COMPAT_NETBSD32 */
 
-#include <sys/rnd.h>
+#include <sys/rndio.h>
 
 /*
  * NetBSD-5 used "void *state" in the rndsource_t struct.  rndsource_t

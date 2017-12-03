@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sysctl.h,v 1.5 2008/11/19 18:36:04 ad Exp $	*/
+/*	$NetBSD: linux_sysctl.h,v 1.5.26.1 2017/12/03 11:36:55 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -468,5 +468,7 @@
 
 void	linux_sysctl_init(void);
 void	linux_sysctl_fini(void);
+
+int	linux_sysctl_enable(SYSCTLFN_PROTO);
 
 #endif /* !_LINUX_SYSCTL_H */

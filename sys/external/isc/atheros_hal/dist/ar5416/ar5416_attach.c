@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar5416_attach.c,v 1.4 2011/03/07 11:25:44 cegger Exp $
+ * $Id: ar5416_attach.c,v 1.4.14.1 2017/12/03 11:38:41 jdolecek Exp $
  */
 #include "opt_ah.h"
 
@@ -86,8 +86,8 @@ ar5416InitState(struct ath_hal_5416 *ahp5416, uint16_t devid, HAL_SOFTC sc,
 	ah->ah_disable			= ar5416Disable;
 	ah->ah_configPCIE		= ar5416ConfigPCIE;
 	ah->ah_perCalibration		= ar5416PerCalibration;
-	ah->ah_perCalibrationN		= ar5416PerCalibrationN,
-	ah->ah_resetCalValid		= ar5416ResetCalValid,
+	ah->ah_perCalibrationN		= ar5416PerCalibrationN;
+	ah->ah_resetCalValid		= ar5416ResetCalValid;
 	ah->ah_setTxPowerLimit		= ar5416SetTxPowerLimit;
 	ah->ah_setTxPower		= ar5416SetTransmitPower;
 	ah->ah_setBoardValues		= ar5416SetBoardValues;
@@ -104,8 +104,8 @@ ar5416InitState(struct ath_hal_5416 *ahp5416, uint16_t devid, HAL_SOFTC sc,
 	ah->ah_stopPcuReceive		= ar5416StopPcuReceive;
 	ah->ah_setupRxDesc		= ar5416SetupRxDesc;
 	ah->ah_procRxDesc		= ar5416ProcRxDesc;
-	ah->ah_rxMonitor		= ar5416AniPoll,
-	ah->ah_procMibEvent		= ar5416ProcessMibIntr,
+	ah->ah_rxMonitor		= ar5416AniPoll;
+	ah->ah_procMibEvent		= ar5416ProcessMibIntr;
 
 	/* Misc Functions */
 	ah->ah_getDiagState		= ar5416GetDiagState;

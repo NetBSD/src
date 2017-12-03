@@ -1,4 +1,4 @@
-/* $NetBSD: if_cs_pcmcia.c,v 1.19.6.1 2012/11/20 03:02:31 tls Exp $ */
+/* $NetBSD: if_cs_pcmcia.c,v 1.19.6.2 2017/12/03 11:37:30 jdolecek Exp $ */
 
 /*-
  * Copyright (c)2001 YAMAMOTO Takashi,
@@ -27,15 +27,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_pcmcia.c,v 1.19.6.1 2012/11/20 03:02:31 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_pcmcia.c,v 1.19.6.2 2017/12/03 11:37:30 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/socket.h>
 #include <sys/queue.h>
-
-#include <sys/rnd.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>
@@ -110,8 +108,7 @@ cs_pcmcia_attach(device_t parent, device_t self, void *aux)
 
 	error = pcmcia_function_configure(pa->pf, cs_pcmcia_validate_config);
 	if (error) {
-		aprint_error_dev(self, "configure failed, error=%d\n",
-		    error);
+		aprint_error_dev(self, "configure failed, error=%d\n", error);
 		return;
 	}
 

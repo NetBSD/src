@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.128.6.1 2013/06/23 06:18:58 tls Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.128.6.2 2017/12/03 11:38:45 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.128.6.1 2013/06/23 06:18:58 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.128.6.2 2017/12/03 11:38:45 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -208,7 +208,7 @@ do_filereadv(int fd, const struct iovec *iovp, int iovcnt,
 	if (offset == NULL)
 		offset = &fp->f_offset;
 	else {
-		struct vnode *vp = fp->f_data;
+		struct vnode *vp = fp->f_vnode;
 		if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO) {
 			error = ESPIPE;
 			goto out;
@@ -234,10 +234,6 @@ do_filereadv(int fd, const struct iovec *iovp, int iovcnt,
 				goto out;
 			}
 			iov = kmem_alloc(iovlen, KM_SLEEP);
-			if (iov == NULL) {
-				error = ENOMEM;
-				goto out;
-			}
 			needfree = iov;
 		}
 		error = copyin(iovp, iov, iovlen);
@@ -269,8 +265,7 @@ do_filereadv(int fd, const struct iovec *iovp, int iovcnt,
 	 */
 	if (ktrpoint(KTR_GENIO))  {
 		ktriov = kmem_alloc(iovlen, KM_SLEEP);
-		if (ktriov != NULL)
-			memcpy(ktriov, auio.uio_iov, iovlen);
+		memcpy(ktriov, auio.uio_iov, iovlen);
 	}
 
 	cnt = auio.uio_resid;
@@ -413,7 +408,7 @@ do_filewritev(int fd, const struct iovec *iovp, int iovcnt,
 	if (offset == NULL)
 		offset = &fp->f_offset;
 	else {
-		struct vnode *vp = fp->f_data;
+		struct vnode *vp = fp->f_vnode;
 		if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO) {
 			error = ESPIPE;
 			goto out;
@@ -439,10 +434,6 @@ do_filewritev(int fd, const struct iovec *iovp, int iovcnt,
 				goto out;
 			}
 			iov = kmem_alloc(iovlen, KM_SLEEP);
-			if (iov == NULL) {
-				error = ENOMEM;
-				goto out;
-			}
 			needfree = iov;
 		}
 		error = copyin(iovp, iov, iovlen);
@@ -474,8 +465,7 @@ do_filewritev(int fd, const struct iovec *iovp, int iovcnt,
 	 */
 	if (ktrpoint(KTR_GENIO))  {
 		ktriov = kmem_alloc(iovlen, KM_SLEEP);
-		if (ktriov != NULL)
-			memcpy(ktriov, auio.uio_iov, iovlen);
+		memcpy(ktriov, auio.uio_iov, iovlen);
 	}
 
 	cnt = auio.uio_resid;

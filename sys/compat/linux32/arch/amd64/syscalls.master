@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.62.2.1 2014/08/20 00:03:33 tls Exp $
+	$NetBSD: syscalls.master,v 1.62.2.2 2017/12/03 11:36:55 jdolecek Exp $
 
 ; NetBSD i386 COMPAT_LINUX32 system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
@@ -88,7 +88,7 @@
 17	STD	{ int|linux32_sys||break(netbsd32_charp nsize); }
 18	OBSOL	ostat
 19	NOARGS	{ netbsd32_long|compat_43_netbsd32||olseek(int fd, \
-		    netbsd32_long offset, int chence); }
+		    netbsd32_long offset, int whence); }
 20	NOARGS 	{ pid_t|sys||getpid(void); }
 21	UNIMPL	mount
 22	UNIMPL	umount
@@ -122,7 +122,7 @@
 46	NOARGS	linux_setgid16 { int|netbsd32||setgid(gid_t gid); }
 47	NOARGS	linux_getgid16 { gid_t|sys||getgid(void); }
 48	STD	{ int|linux32_sys||signal(int signum, \
-		    linux32_handler_t handler); }
+		    linux32_handlerp_t handler); }
 49	NOARGS	linux_geteuid16 { uid_t|sys||geteuid(void); }
 50	NOARGS	linux_getegid16 { gid_t|sys||getegid(void); }
 51	NOARGS	{ int|netbsd32||acct(netbsd32_charp path); }
@@ -174,7 +174,7 @@
 		    netbsd32_charp link); }
 84	NOARGS	{ int|compat_43_netbsd32||lstat43(netbsd32_charp \
 		    path, netbsd32_stat43p_t ub); }
-85	NOARGS	{ int|netbsd32||readlink(netbsd32_charp name, \
+85	NOARGS	{ int|netbsd32||readlink(netbsd32_charp path, \
 		    netbsd32_charp buf, netbsd32_size_t count); }
 86	UNIMPL	uselib
 87	STD	{ int|linux32_sys||swapon(netbsd32_charp name); }
@@ -524,7 +524,8 @@
 307	STD	{ int|linux32_sys||faccessat(int fd, netbsd32_charp path, \
 		    int amode); }
 308	UNIMPL	pselect6
-309	UNIMPL	ppoll
+309	STD	{ int|linux32_sys||ppoll(netbsd32_pollfdp_t fds, u_int nfds, \
+		    linux32_timespecp_t timeout, linux32_sigsetp_t sigset); }
 310	UNIMPL	unshare
 311	STD	{ int|linux32_sys||set_robust_list( \
 		    linux32_robust_list_headp_t head, linux32_size_t len); }

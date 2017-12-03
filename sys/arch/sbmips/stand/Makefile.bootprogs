@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootprogs,v 1.10.6.1 2014/08/20 00:03:22 tls Exp $
+# $NetBSD: Makefile.bootprogs,v 1.10.6.2 2017/12/03 11:36:40 jdolecek Exp $
 
 .include <bsd.own.mk>
 .include <bsd.klinks.mk>
@@ -35,17 +35,8 @@ CWARNFLAGS+=	-Wno-main
 CWARNFLAGS+=	-Wall -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
 CWARNFLAGS+=	-Wno-pointer-sign
 
-# if there is a 'version' file, add rule for vers.c and add it to SRCS
-# and CLEANFILES
-.if exists(version)
-.PHONY: vers.c
-vers.c: version
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
-	    -N ${.CURDIR}/version "sbmips"
-
-SRCS+=	vers.c
-CLEANFILES+= vers.c
-.endif
+VERSIONFLAGS+=-n
+.include "${S}/conf/newvers_stand.mk"
 
 # 
 # Refer to CFE documentation for a description of these regions.

@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.279.2.3 2014/08/20 00:03:35 tls Exp $
+#	$NetBSD: DEVNAMES,v 1.279.2.4 2017/12/03 11:36:58 jdolecek Exp $
 #
 # This file contains all used device names and defined attributes in
 # alphabetical order. New devices added to the system somewhere should first
@@ -39,9 +39,7 @@ adb			mac68k
 adb			macppc
 adc			hpcsh
 ade			alpha
-adt7463c		MI
-adt7467c		MI
-adm1030c		MI
+adm1026hm		MI
 adv			MI
 adw			MI
 ae			evbmips
@@ -699,6 +697,8 @@ isdnctl			MI
 isdntel			MI
 isdntrc			MI
 isic			MI
+ismt			amd64
+ismt			i386
 isp			MI
 itesio			MI
 it8368e			hpcmips
@@ -784,6 +784,7 @@ lpt			sgimips
 lpt			sparc64
 lsi64854		MI		Attribute
 lxtphy			MI
+m25p			MI
 m38813c			hpcmips
 mace			sgimips
 macepci			sgimips
@@ -859,6 +860,9 @@ mcclock			pmax
 mcclock			prep
 mcd			MI
 mcmem			alpha
+mcp23s17gpio		MI
+mcp3kadc		MI
+mcp48x1dac		MI
 mcpcia			alpha
 mdio			evbppc
 mec			sgimips
@@ -966,6 +970,7 @@ nsphy			MI
 nsphyter		MI
 ntwoc			MI
 nubus			mac68k
+nvme			MI
 nvr			atari
 nvram			macppc
 oak			MI
@@ -1003,6 +1008,7 @@ ofppb			sparc64
 ofrom			shark
 ofrtc			MI
 ohci			MI
+oj6sh			MI
 oldscsi			pmax		Attribute
 oldscsibus		pmax
 oosiop			MI
@@ -1182,11 +1188,13 @@ rtii			MI
 rtk			MI
 rtl80x9			MI		Attribute
 rtsx			MI
+rtwn			MI
 rum			MI
 run			MI
 rx			MI
 ry			vax
 rz			pmax
+s390rtc			MI
 sab			MI
 sableio			alpha
 sacc			hpcarm
@@ -1319,6 +1327,7 @@ tcds			alpha
 tcic			i386
 tcom			MI
 tctrl			sparc
+tcu			MI
 tcx			sparc
 tcx			sparc64
 tdvfb			MI

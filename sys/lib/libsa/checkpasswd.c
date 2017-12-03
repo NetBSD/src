@@ -1,4 +1,4 @@
-/*	$NetBSD: checkpasswd.c,v 1.9 2011/01/06 02:45:13 jakllsch Exp $	*/
+/*	$NetBSD: checkpasswd.c,v 1.9.18.1 2017/12/03 11:38:46 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -84,8 +84,10 @@ getpass(const char *prompt)
 			putchar('\n');
 			break;
 		default:
-			*lp++ = c;
-			putchar('*');
+			if ((size_t)(lp - buf) < sizeof(buf) - 1) {
+				*lp++ = c;
+				putchar('*');
+			}
 			break;
 		}
 	}

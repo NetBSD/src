@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.4.12.1 2014/08/20 00:03:20 tls Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.4.12.2 2017/12/03 11:36:37 jdolecek Exp $	*/
 /*
  * Copyright (c) 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.4.12.1 2014/08/20 00:03:20 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.4.12.2 2017/12/03 11:36:37 jdolecek Exp $");
 
 #include "gtpci.h"
 #include "pci.h"
@@ -51,7 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.4.12.1 2014/08/20 00:03:20 tls Exp
 void gtpci_md_conf_interrupt(void *, int, int, int, int, int *);
 int gtpci_md_conf_hook(void *, int, int, int, pcireg_t);
 
-
 struct genppc_pci_chipset genppc_gtpci0_chipset = {
 	.pc_conf_v = NULL,
 	.pc_attach_hook = gtpci_attach_hook,
@@ -67,14 +66,22 @@ struct genppc_pci_chipset genppc_gtpci0_chipset = {
 	.pc_intr_establish = genppc_pci_intr_establish,
 	.pc_intr_disestablish = genppc_pci_intr_disestablish,
 	.pc_intr_setattr = genppc_pci_intr_setattr,
+	.pc_intr_type = genppc_pci_intr_type,
+	.pc_intr_alloc = genppc_pci_intr_alloc,
+	.pc_intr_release = genppc_pci_intr_release,
+	.pc_intx_alloc = genppc_pci_intx_alloc,
 
 	.pc_msi_v = &genppc_gtpci0_chipset,
 	GENPPC_PCI_MSI_INITIALIZER,
+
+	.pc_msix_v = &genppc_gtpci0_chipset,
+	GENPPC_PCI_MSIX_INITIALIZER,
 
 	.pc_conf_interrupt = gtpci_md_conf_interrupt,
 	.pc_decompose_tag = gtpci_decompose_tag,
 	.pc_conf_hook = gtpci_md_conf_hook,
 };
+
 struct genppc_pci_chipset genppc_gtpci1_chipset = {
 	.pc_conf_v = NULL,
 	.pc_attach_hook = gtpci_attach_hook,
@@ -90,9 +97,16 @@ struct genppc_pci_chipset genppc_gtpci1_chipset = {
 	.pc_intr_establish = genppc_pci_intr_establish,
 	.pc_intr_disestablish = genppc_pci_intr_disestablish,
 	.pc_intr_setattr = genppc_pci_intr_setattr,
+	.pc_intr_type = genppc_pci_intr_type,
+	.pc_intr_alloc = genppc_pci_intr_alloc,
+	.pc_intr_release = genppc_pci_intr_release,
+	.pc_intx_alloc = genppc_pci_intx_alloc,
 
 	.pc_msi_v = &genppc_gtpci1_chipset,
 	GENPPC_PCI_MSI_INITIALIZER,
+
+	.pc_msix_v = &genppc_gtpci1_chipset,
+	GENPPC_PCI_MSIX_INITIALIZER,
 
 	.pc_conf_interrupt = gtpci_md_conf_interrupt,
 	.pc_decompose_tag = gtpci_decompose_tag,

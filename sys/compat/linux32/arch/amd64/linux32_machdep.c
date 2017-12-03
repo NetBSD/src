@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_machdep.c,v 1.31.2.1 2014/08/20 00:03:32 tls Exp $ */
+/*	$NetBSD: linux32_machdep.c,v 1.31.2.2 2017/12/03 11:36:55 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -31,7 +31,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.31.2.1 2014/08/20 00:03:32 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.31.2.2 2017/12/03 11:36:55 jdolecek Exp $");
+
+#if defined(_KERNEL_OPT)
+#include "opt_user_ldt.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -275,15 +279,15 @@ linux32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	struct trapframe *tf;
 	struct proc *p = l->l_proc;
 
-#if defined(USER_LDT) && 0
-	pmap_ldt_cleanup(p);
+#if defined(USER_LDT)
+	pmap_ldt_cleanup(l);
 #endif
 
 	netbsd32_adjust_limits(p);
 
 	fpu_save_area_clear(l, __Linux_NPXCW__);
 
-	l->l_md.md_flags |= MDL_COMPAT32;	/* Forces iret not sysret */
+	l->l_md.md_flags = MDL_COMPAT32;	/* Forces iret not sysret */
 	pcb->pcb_flags = PCB_COMPAT32;
 
 	p->p_flag |= PK_32;
@@ -311,7 +315,7 @@ linux32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	tf->tf_ss = GSEL(GUDATA32_SEL, SEL_UPL);
 	tf->tf_ds = GSEL(GUDATA32_SEL, SEL_UPL);
 	tf->tf_es = GSEL(GUDATA32_SEL, SEL_UPL);
-	cpu_fsgs_zero(l);
+	cpu_segregs32_zero(l);
 	cpu_fsgs_reload(l, GSEL(GUDATA32_SEL, SEL_UPL), GSEL(GUDATA32_SEL, SEL_UPL));
 }
 
@@ -335,10 +339,10 @@ linux32_save_sigcontext(struct lwp *l, struct trapframe *tf,
 	struct pcb *pcb = lwp_getpcb(l);
 
 	/* Save register context. */
-	sc->sc_gs = tf->tf_gs;
-	sc->sc_fs = tf->tf_fs;
-	sc->sc_es = tf->tf_es;
-	sc->sc_ds = tf->tf_ds;
+	sc->sc_gs = tf->tf_gs & 0xFFFF;
+	sc->sc_fs = tf->tf_fs & 0xFFFF;
+	sc->sc_es = tf->tf_es & 0xFFFF;
+	sc->sc_ds = tf->tf_ds & 0xFFFF;
 	sc->sc_eflags = tf->tf_rflags;
 	sc->sc_edi = tf->tf_rdi;
 	sc->sc_esi = tf->tf_rsi;
@@ -349,9 +353,9 @@ linux32_save_sigcontext(struct lwp *l, struct trapframe *tf,
 	sc->sc_ecx = tf->tf_rcx;
 	sc->sc_eax = tf->tf_rax;
 	sc->sc_eip = tf->tf_rip;
-	sc->sc_cs = tf->tf_cs;
+	sc->sc_cs = tf->tf_cs & 0xFFFF;
 	sc->sc_esp_at_signal = tf->tf_rsp;
-	sc->sc_ss = tf->tf_ss;
+	sc->sc_ss = tf->tf_ss & 0xFFFF;
 	sc->sc_err = tf->tf_err;
 	sc->sc_trapno = tf->tf_trapno;
 	sc->sc_cr2 = pcb->pcb_cr2;
@@ -417,8 +421,9 @@ linux32_restore_sigcontext(struct lwp *l, struct linux32_sigcontext *scp,
 	/*
 	 * Check for security violations.
 	 */
-	if (((scp->sc_eflags ^ tf->tf_rflags) & PSL_USERSTATIC) != 0 ||
-	    !USERMODE(scp->sc_cs, scp->sc_eflags))
+	if (((scp->sc_eflags ^ tf->tf_rflags) & PSL_USERSTATIC) != 0)
+		return EINVAL;
+	if (!VALID_USER_CSEL32(scp->sc_cs))
 		return EINVAL;
 
 	if (scp->sc_fs != 0 && !VALID_USER_DSEL32(scp->sc_fs) &&

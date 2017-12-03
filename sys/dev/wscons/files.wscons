@@ -1,4 +1,4 @@
-# $NetBSD: files.wscons,v 1.46.2.1 2012/11/20 03:02:36 tls Exp $
+# $NetBSD: files.wscons,v 1.46.2.2 2017/12/03 11:37:37 jdolecek Exp $
 
 #
 # "Workstation Console" glue; attaches frame buffer to emulator & keyboard,
@@ -43,6 +43,8 @@ device	wskbd
 attach	wskbd at wskbddev
 device	wsmouse
 attach	wsmouse at wsmousedev
+device	wsbell
+attach	wsbell at wsbelldev
 
 file	dev/wscons/wsdisplay.c		wsdisplay		needs-flag
 file	dev/wscons/wsdisplay_compat_usl.c wsdisplay & wsdisplay_compat_usl
@@ -58,6 +60,7 @@ file	dev/wscons/wsevent.c		wsdisplay | wskbd | wsmouse | wsmux
 file	dev/wscons/wskbd.c		wskbd			needs-flag
 file	dev/wscons/wskbdutil.c		wskbd			needs-flag
 file	dev/wscons/wsmouse.c		wsmouse			needs-flag
+file	dev/wscons/wsbell.c		wsbell
 
 # rcons bit-depth options
 include "dev/rcons/files.rcons"
@@ -67,6 +70,7 @@ file	dev/wscons/wscons_rops.c	wsrasteremulops
 
 defpseudo	wsmux
 file	dev/wscons/wsmux.c		wsmux			needs-flag
+file	dev/wscons/wsbellmux.c		wsmux
 
 define	tpcalib
 file	dev/wscons/tpcalib.c		tpcalib
@@ -76,9 +80,12 @@ defflag opt_tpcalib.h		TPCALIBDEBUG
 # generic virtual console support on bitmapped framebuffers
 file	dev/wscons/wsdisplay_vcons.c		vcons
 file	dev/wscons/wsdisplay_vcons_util.c	vcons
-defflag	opt_vcons.h		VCONS_DRAW_INTR VCONS_INTR_DEBUG
+defflag	opt_vcons.h		VCONS_DRAW_INTR VCONS_INTR_DEBUG VCONS_DEBUG
 
 # generic support code for caching rendered glyphs in video memory
 define	glyphcache
 file	dev/wscons/wsdisplay_glyphcache.c	glyphcache
 defflag	opt_glyphcache.h GLYPHCACHE_DEBUG
+
+# linux event code keymap
+file	dev/wscons/linux_keymap.c	linux_keymap

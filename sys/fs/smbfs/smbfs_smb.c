@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_smb.c,v 1.42.12.1 2013/02/25 00:29:49 tls Exp $	*/
+/*	$NetBSD: smbfs_smb.c,v 1.42.12.2 2017/12/03 11:38:43 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_smb.c,v 1.42.12.1 2013/02/25 00:29:49 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_smb.c,v 1.42.12.2 2017/12/03 11:38:43 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,7 +116,7 @@ smbfs_getino(struct smbnode *dnp, const char *name, int nmlen)
 #endif
 	u_int32_t ino;
 
-	ino = dnp->n_ino + smbfs_hash(name, nmlen);
+	ino = dnp->n_ino + hash32_strn(name, nmlen, HASH32_STR_INIT);
 	if (ino <= 2)
 		ino += 3;
 	return ino;
@@ -778,7 +778,7 @@ smbfs_smb_move(struct smbnode *src, struct smbnode *tdnp,
 	struct mbchain *mbp;
 	int error;
 
-	error = smb_rq_alloc(rqp, SSTOCP(ssp), SMB_COM_MOVE, scred, &rqp);
+	error = smb_rq_alloc(SSTOCP(ssp), SMB_COM_MOVE, scred, &rqp);
 	if (error)
 		return error;
 	smb_rq_getrequest(rqp, &mbp);
@@ -1129,7 +1129,7 @@ static int
 smbfs_findopenLM2(struct smbfs_fctx *ctx, struct smbnode *dnp,
     const char *wildcard, int wclen, int attr, struct smb_cred *scred)
 {
-	ctx->f_name = malloc(SMB_MAXNAMLEN, M_SMBFSDATA, M_WAITOK);
+	ctx->f_name = malloc(SMB_MAXNAMLEN * 2, M_SMBFSDATA, M_WAITOK);
 	if (ctx->f_name == NULL)
 		return ENOMEM;
 	ctx->f_infolevel = SMB_DIALECT(SSTOVC(ctx->f_ssp)) < SMB_DIALECT_NTLM0_12 ?
@@ -1212,7 +1212,7 @@ smbfs_findnextLM2(struct smbfs_fctx *ctx, int limit)
 		return EINVAL;
 #endif
 	}
-	nmlen = min(size, SMB_MAXNAMLEN);
+	nmlen = min(size, SMB_MAXNAMLEN * 2);
 	cp = ctx->f_name;
 	error = md_get_mem(mbp, cp, nmlen, MB_MSYSTEM);
 	if (error)
@@ -1316,7 +1316,7 @@ smbfs_findnext(struct smbfs_fctx *ctx, int limit, struct smb_cred *scred)
 			continue;
 		break;
 	}
-	smbfs_fname_tolocal(SSTOVC(ctx->f_ssp), ctx->f_name, ctx->f_nmlen,
+	smbfs_fname_tolocal(SSTOVC(ctx->f_ssp), ctx->f_name, &ctx->f_nmlen,
 	    ctx->f_dnp->n_mount->sm_caseopt);
 	ctx->f_attr.fa_ino = smbfs_getino(ctx->f_dnp, ctx->f_name, ctx->f_nmlen);
 	return 0;

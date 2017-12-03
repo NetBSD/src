@@ -1,0 +1,7 @@
+#	$NetBSD $
+
+ioconf		vlan
+
+include		"conf/files"
+
+pseudo-device   vlan

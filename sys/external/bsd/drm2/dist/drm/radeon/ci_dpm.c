@@ -64,7 +64,7 @@ static const struct ci_pt_defaults defaults_bonaire_xt =
 	{ 0x17C, 0x172, 0x180, 0x1BC, 0x1B3, 0x1BD, 0x206, 0x200, 0x203, 0x25D, 0x25A, 0x255, 0x2C3, 0x2C5, 0x2B4 }
 };
 
-static const struct ci_pt_defaults defaults_bonaire_pro =
+static const struct ci_pt_defaults defaults_bonaire_pro __unused =
 {
 	1, 0xF, 0xFD, 0x19, 5, 45, 0, 0x65062,
 	{ 0x8C,  0x23F, 0x244, 0xA6,  0x83,  0x85,  0x86,  0x86,  0x83,  0xDB,  0xDB,  0xDA,  0x67,  0x60,  0x5F  },
@@ -78,7 +78,7 @@ static const struct ci_pt_defaults defaults_saturn_xt =
 	{ 0x187, 0x187, 0x187, 0x1C7, 0x1C7, 0x1C7, 0x210, 0x210, 0x210, 0x266, 0x266, 0x266, 0x2C9, 0x2C9, 0x2C9 }
 };
 
-static const struct ci_pt_defaults defaults_saturn_pro =
+static const struct ci_pt_defaults defaults_saturn_pro __unused =
 {
 	1, 0xF, 0xFD, 0x19, 5, 55, 0, 0x30000,
 	{ 0x96,  0x21D, 0x23B, 0xA1,  0x85,  0x87,  0x83,  0x84,  0x81,  0xE6,  0xE6,  0xE6,  0x71,  0x6A,  0x6A  },
@@ -361,29 +361,29 @@ static int ci_min_max_v_gnbl_pm_lid_from_bapm_vddc(struct radeon_device *rdev)
 	struct ci_power_info *pi = ci_get_pi(rdev);
 	u8 *hi_vid = pi->smc_powertune_table.BapmVddCVidHiSidd;
 	u8 *lo_vid = pi->smc_powertune_table.BapmVddCVidLoSidd;
-	int i, min, max;
+	int i, vmin, vmax;
 
-	min = max = hi_vid[0];
+	vmin = vmax = hi_vid[0];
 	for (i = 0; i < 8; i++) {
 		if (0 != hi_vid[i]) {
-			if (min > hi_vid[i])
-				min = hi_vid[i];
-			if (max < hi_vid[i])
-				max = hi_vid[i];
+			if (vmin > hi_vid[i])
+				vmin = hi_vid[i];
+			if (vmax < hi_vid[i])
+				vmax = hi_vid[i];
 		}
 
 		if (0 != lo_vid[i]) {
-			if (min > lo_vid[i])
-				min = lo_vid[i];
-			if (max < lo_vid[i])
-				max = lo_vid[i];
+			if (vmin > lo_vid[i])
+				vmin = lo_vid[i];
+			if (vmax < lo_vid[i])
+				vmax = lo_vid[i];
 		}
 	}
 
-	if ((min == 0) || (max == 0))
+	if ((vmin == 0) || (vmax == 0))
 		return -EINVAL;
-	pi->smc_powertune_table.GnbLPMLMaxVid = (u8)max;
-	pi->smc_powertune_table.GnbLPMLMinVid = (u8)min;
+	pi->smc_powertune_table.GnbLPMLMaxVid = (u8)vmax;
+	pi->smc_powertune_table.GnbLPMLMinVid = (u8)vmin;
 
 	return 0;
 }
@@ -2028,15 +2028,15 @@ static u8 ci_get_sleep_divider_id_from_clock(struct radeon_device *rdev,
 {
 	u32 i;
 	u32 tmp;
-	u32 min = (min_sclk_in_sr > CISLAND_MINIMUM_ENGINE_CLOCK) ?
+	u32 vmin = (min_sclk_in_sr > CISLAND_MINIMUM_ENGINE_CLOCK) ?
 		min_sclk_in_sr : CISLAND_MINIMUM_ENGINE_CLOCK;
 
-	if (sclk < min)
+	if (sclk < vmin)
 		return 0;
 
 	for (i = CISLAND_MAX_DEEPSLEEP_DIVIDER_ID;  ; i--) {
 		tmp = sclk / (1 << i);
-		if (tmp >= min || i == 0)
+		if (tmp >= vmin || i == 0)
 			break;
 	}
 

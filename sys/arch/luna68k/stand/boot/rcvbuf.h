@@ -1,4 +1,4 @@
-/*	$NetBSD: rcvbuf.h,v 1.1.6.3 2014/08/20 00:03:10 tls Exp $	*/
+/*	$NetBSD: rcvbuf.h,v 1.1.6.4 2017/12/03 11:36:23 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -78,9 +78,9 @@
 #define	RBUF_SIZE	128
 
 struct rcvbuf {
-	u_char	* volatile rb_push;
-	u_char	* volatile rb_pop;
-	u_char	 rb_buf[RBUF_SIZE + 4];
+	uint8_t	* volatile rb_push;
+	uint8_t	* volatile rb_pop;
+	uint8_t	 rb_buf[RBUF_SIZE + 4];
 };
 
 #define RBUF_INIT(n)							\

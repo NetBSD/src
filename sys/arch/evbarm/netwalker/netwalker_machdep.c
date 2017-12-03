@@ -1,4 +1,4 @@
-/*	$NetBSD: netwalker_machdep.c,v 1.9.2.2 2014/08/20 00:02:55 tls Exp $	*/
+/*	$NetBSD: netwalker_machdep.c,v 1.9.2.3 2017/12/03 11:36:06 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005, 2010  Genetec Corporation.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.9.2.2 2014/08/20 00:02:55 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.9.2.3 2017/12/03 11:36:06 jdolecek Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_arm_debug.h"
@@ -115,7 +115,6 @@ __KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.9.2.2 2014/08/20 00:02:55 tl
 #include "opt_imxuart.h"
 #include "opt_imx.h"
 #include "opt_imx51_ipuv3.h"
-#include "wsdisplay.h"
 #include "opt_machdep.h"
 
 #include <sys/param.h>
@@ -124,12 +123,17 @@ __KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.9.2.2 2014/08/20 00:02:55 tl
 #include <sys/termios.h>
 #include <sys/bus.h>
 
+#include "genfb.h"
+#include "netwalker_backlight.h"
+#include "netwalker_backlightvar.h"
+
 #include <machine/db_machdep.h>
 #ifdef KGDB
 #include <sys/kgdb.h>
 #endif
 
 #include <machine/bootconfig.h>
+#include <machine/autoconf.h>
 
 #include <arm/arm32/machdep.h>
 
@@ -140,6 +144,7 @@ __KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.9.2.2 2014/08/20 00:02:55 tl
 #include <arm/imx/imxuartreg.h>
 #include <arm/imx/imxuartvar.h>
 #include <arm/imx/imx51_iomuxreg.h>
+#include <arm/imx/imxgpiovar.h>
 
 #include <evbarm/netwalker/netwalker_reg.h>
 #include <evbarm/netwalker/netwalker.h>
@@ -153,7 +158,7 @@ __KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.9.2.2 2014/08/20 00:02:55 tl
 #define	KERNEL_TEXT_BASE	(KERNEL_BASE + 0x00100000)
 
 BootConfig bootconfig;		/* Boot config storage */
-static char bootargs[MAX_BOOT_STRING];
+static char bootargs[MAX_BOOT_STRING] = BOOT_ARGS;
 char *boot_args = NULL;
 
 extern char KERNEL_BASE_phys[];
@@ -177,6 +182,8 @@ void	kgdb_port_init(void);
 
 static void init_clocks(void);
 static void setup_ioports(void);
+
+static void netwalker_device_register(device_t, void *);
 
 #ifndef CONSPEED
 #define CONSPEED B115200	/* What RedBoot uses */
@@ -274,7 +281,6 @@ initarm(void *arg)
 	char mi_bootargs[] = BOOT_ARGS;
 	parse_mi_bootargs(mi_bootargs);
 #endif
-	bootargs[0] = '\0';
 
 #if defined(VERBOSE_INIT_ARM) || 1
 	printf("initarm: Configuring system");
@@ -336,6 +342,13 @@ initarm(void *arg)
 #ifdef BOOTHOWTO
 	boothowto |= BOOTHOWTO;
 #endif
+
+	boot_args = bootargs;
+	parse_mi_bootargs(boot_args);
+	printf("boot_args : %s\n", boot_args);
+
+	/* we've a specific device_register routine */
+	evbarm_device_register = netwalker_device_register;
 
 #ifdef VERBOSE_INIT_ARM
 	printf("initarm done.\n");
@@ -451,27 +464,21 @@ const struct iomux_setup iomux_setup_data[] = {
 	IOMUX_DATA(IOMUXC_GPIO3_IPP_IND_G_IN_3_SELECT_INPUT, INPUT_DAISY_0),
 	IOMUX_MP(CSI2_D12, ALT3, KEEPER | DSEHIGH | SRE), /* GPIO4_9 */
 	IOMUX_MP(CSI2_D13, ALT3, KEEPER | DSEHIGH | SRE),
-#if 1
 	IOMUX_MP(GPIO1_2, ALT1, DSEHIGH | ODE),	/* LCD backlight by PWM */
-#else
-	IOMUX_MP(GPIO1_2, ALT0, DSEHIGH | ODE),	/* LCD backlight by GPIO */
-#endif
-	IOMUX_MP(EIM_A19, ALT1, SRE | DSEHIGH),
+
+	IOMUX_MP(EIM_A19, ALT1, SRE | DSEHIGH),	/* GPIO2_13 */
+
 	/* XXX VGA pins */
 	IOMUX_M(DI_GP4, ALT4),
-	IOMUX_M(GPIO1_8, SION | ALT0),
-
 	IOMUX_MP(GPIO1_8, SION | ALT0, HYS | DSEMID | PU_100K),
-	/* I2C1 */
-	IOMUX_MP(EIM_D16, SION | ALT4, HYS | ODE | DSEHIGH | SRE),
-	IOMUX_MP(EIM_D19, SION | ALT4, SRE),	/* SCL */
-	IOMUX_MP(EIM_A19, ALT1, SRE | DSEHIGH), /* GPIO2_13 */
 
-#if 0
-	IOMUX_MP(EIM_A23, ALT1, 0),
-#else
+	/* I2C1 */
+	IOMUX_MP(EIM_D16, SION | ALT4, HYS | ODE | DSEHIGH | SRE),	/* SDA */
+	IOMUX_MP(EIM_D19, SION | ALT4, SRE),			       	/* SCL */
+	IOMUX_DATA(IOMUXC_I2C1_IPP_SDA_IN_SELECT_INPUT, INPUT_DAISY_0),
+	IOMUX_DATA(IOMUXC_I2C1_IPP_SCL_IN_SELECT_INPUT, INPUT_DAISY_0),
+
 	IOMUX_M(EIM_A23, ALT1),	/* GPIO2_17 */
-#endif
 
 	/* BT */
 	IOMUX_M(EIM_D20, ALT1),	/* GPIO2_4 BT host wakeup */
@@ -485,6 +492,7 @@ const struct iomux_setup iomux_setup_data[] = {
 	IOMUX_MP(EIM_D27, ALT3, KEEPER | PU_100K | DSEHIGH | SRE), /* RTS */
 	IOMUX_M(NANDF_D15, ALT3),	/* GPIO3_25 */
 	IOMUX_MP(NANDF_D14, ALT3, HYS | PULL | PU_100K ),	/* GPIO3_26 */
+	IOMUX_DATA(IOMUXC_UART3_IPP_UART_RTS_B_SELECT_INPUT, INPUT_DAISY_3),
 
 	/* OJ6SH-T25 */
 	IOMUX_M(CSI1_D9, ALT3),			/* GPIO3_13 */
@@ -520,12 +528,11 @@ const struct iomux_setup iomux_setup_data[] = {
 	/* 26M Osc */
 	IOMUX_MP(DI1_PIN12, ALT4, KEEPER | DSEHIGH | SRE), /* GPIO3_1 */
 
-	/* I2C */
-	IOMUX_MP(KEY_COL4, SION | ALT3, SRE),
+	/* I2C2 */
+	IOMUX_MP(KEY_COL5, SION | ALT3, HYS | ODE | DSEHIGH | SRE),	/* SDA */
+	IOMUX_MP(KEY_COL4, SION | ALT3, SRE),				/* SCL */
 	IOMUX_DATA(IOMUXC_I2C2_IPP_SCL_IN_SELECT_INPUT, INPUT_DAISY_1),
-	IOMUX_MP(KEY_COL5, SION | ALT3, HYS | ODE | DSEHIGH | SRE),
 	IOMUX_DATA(IOMUXC_I2C2_IPP_SDA_IN_SELECT_INPUT, INPUT_DAISY_1),
-	IOMUX_DATA(IOMUXC_UART3_IPP_UART_RTS_B_SELECT_INPUT, INPUT_DAISY_3),
 
 	/* NAND */
 	IOMUX_MP(NANDF_WE_B, ALT0, HVE | DSEHIGH | PULL | PU_47K),
@@ -671,20 +678,33 @@ consinit(void)
 #else
 		consaddr = IMX51_UART1_BASE;
 #endif
-		imxuart_cons_attach(&imx_bs_tag, consaddr, consrate, consmode);
-	    return;
+		imxuart_cnattach(&armv7_generic_bs_tag, consaddr, consrate, consmode);
+		return;
 	}
 #endif
-
 #endif
+}
 
-#if (NWSDISPLAY > 0) && defined(IMXIPUCONSOLE)
+static void
+netwalker_device_register(device_t self, void *aux)
+{
+	prop_dictionary_t dict = device_properties(self);
+
+#if NGENFB > 0
+	if (device_is_a(self, "genfb")) {
+		char *ptr;
+		if (get_bootconf_option(boot_args, "console",
+		    BOOTOPT_TYPE_STRING, &ptr) && strncmp(ptr, "fb", 2) == 0) {
+			prop_dictionary_set_bool(dict, "is_console", true);
 #if NUKBD > 0
-	ukbd_cnattach();
+			ukbd_cnattach();
 #endif
-	{
-		extern void netwalker_cnattach(void);
-		netwalker_cnattach();
+		} else {
+			prop_dictionary_set_bool(dict, "is_console", false);
+		}
+#if NNETWALKER_BACKLIGHT > 0
+		netwalker_backlight_genfb_parameter_set(dict);
+#endif
 	}
 #endif
 }
@@ -707,7 +727,7 @@ kgdb_port_init(void)
 {
 #if (NIMXUART > 0)
 	if (strcmp(kgdb_devname, "imxuart") == 0) {
-		imxuart_kgdb_attach(&imx_bs_tag, kgdb_addr,
+		imxuart_kgdb_attach(&armv7_generic_bs_tag, kgdb_addr,
 		kgdb_rate, kgdb_mode);
 	    return;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.107.2.1 2014/08/20 00:04:45 tls Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.107.2.2 2017/12/03 11:39:22 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.107.2.1 2014/08/20 00:04:45 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.107.2.2 2017/12/03 11:39:22 jdolecek Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -218,7 +218,7 @@ uvmpd_tune(void)
 	uvmexp.freetarg = val + atomic_swap_uint(&uvm_extrapages, 0);
 
 	uvmexp.wiredmax = uvmexp.npages / 3;
-	UVMHIST_LOG(pdhist, "<- done, freemin=%d, freetarg=%d, wiredmax=%d",
+	UVMHIST_LOG(pdhist, "<- done, freemin=%jd, freetarg=%jd, wiredmax=%jd",
 	      uvmexp.freemin, uvmexp.freetarg, uvmexp.wiredmax, 0);
 }
 
@@ -292,7 +292,7 @@ uvm_pageout(void *arg)
 		if (bufcnt < 0)
 			bufcnt = 0;
 
-		UVMHIST_LOG(pdhist,"  free/ftarg=%d/%d",
+		UVMHIST_LOG(pdhist,"  free/ftarg=%jd/%jd",
 		    uvmexp.free, uvmexp.freetarg, 0,0);
 
 		needsfree = uvmexp.free + uvmexp.paging < uvmexp.freetarg;

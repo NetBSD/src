@@ -1,4 +1,4 @@
-/*	$NetBSD: imxwdog.c,v 1.2.8.2 2014/08/20 00:02:46 tls Exp $	*/
+/*	$NetBSD: imxwdog.c,v 1.2.8.3 2017/12/03 11:35:53 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2010  Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxwdog.c,v 1.2.8.2 2014/08/20 00:02:46 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxwdog.c,v 1.2.8.3 2017/12/03 11:35:53 jdolecek Exp $");
 
 #include "opt_imx.h"
 
@@ -184,6 +184,5 @@ wdog_attach_common(device_t parent, device_t self,
 			reg |= WCR_WDE;
 			wdog_write(sc, IMX_WDOG_WCR, reg);
 		}
- 	}
+	}
 }
-

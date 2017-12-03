@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hippisubr.c,v 1.39.18.1 2014/08/20 00:04:34 tls Exp $	*/
+/*	$NetBSD: if_hippisubr.c,v 1.39.18.2 2017/12/03 11:39:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -30,9 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hippisubr.c,v 1.39.18.1 2014/08/20 00:04:34 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hippisubr.c,v 1.39.18.2 2017/12/03 11:39:02 jdolecek Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
+#endif
 
 
 #include <sys/param.h>
@@ -40,8 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_hippisubr.c,v 1.39.18.1 2014/08/20 00:04:34 tls E
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
-#include <sys/protosw.h>
-#include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/syslog.h>
@@ -71,7 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_hippisubr.c,v 1.39.18.1 2014/08/20 00:04:34 tls E
 #endif
 
 static int	hippi_output(struct ifnet *, struct mbuf *,
-			     const struct sockaddr *, struct rtentry *);
+			     const struct sockaddr *, const struct rtentry *);
 static void	hippi_input(struct ifnet *, struct mbuf *);
 
 /*
@@ -83,17 +83,15 @@ static void	hippi_input(struct ifnet *, struct mbuf *);
 
 static int
 hippi_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
-    struct rtentry *rt0)
+    const struct rtentry *rt)
 {
 	uint16_t htype;
 	uint32_t ifield = 0;
 	int error = 0;
 	struct mbuf *m = m0;
-	struct rtentry *rt;
 	struct hippi_header *hh;
 	uint32_t *cci;
 	uint32_t d2_len;
-	ALTQ_DECL(struct altq_pktattr pktattr;)
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
 		senderr(ENETDOWN);
@@ -102,44 +100,11 @@ hippi_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 	if (m->m_flags & (M_BCAST | M_MCAST))
 		senderr(EOPNOTSUPP);  /* XXX: some other error? */
 
-	if ((rt = rt0) != NULL) {
-		if ((rt->rt_flags & RTF_UP) == 0) {
-			if ((rt0 = rt = rtalloc1(dst, 1)) != NULL) {
-				rt->rt_refcnt--;
-				if (rt->rt_ifp != ifp)
-					return (*rt->rt_ifp->if_output)
-							(ifp, m0, dst, rt);
-			} else
-				senderr(EHOSTUNREACH);
-		}
-		if ((rt->rt_flags & RTF_GATEWAY) && dst->sa_family != AF_NS) {
-			if (rt->rt_gwroute == 0)
-				goto lookup;
-			if (((rt = rt->rt_gwroute)->rt_flags & RTF_UP) == 0) {
-				rtfree(rt); rt = rt0;
-			lookup: rt->rt_gwroute = rtalloc1(rt->rt_gateway, 1);
-				if ((rt = rt->rt_gwroute) == 0)
-					senderr(EHOSTUNREACH);
-				/* the "G" test below also prevents rt == rt0 */
-				if ((rt->rt_flags & RTF_GATEWAY) ||
-				    (rt->rt_ifp != ifp)) {
-					rt->rt_refcnt--;
-					rt0->rt_gwroute = 0;
-					senderr(EHOSTUNREACH);
-				}
-			}
-		}
-		if (rt->rt_flags & RTF_REJECT)
-			if (rt->rt_rmx.rmx_expire == 0 ||   /* XXX:  no ARP */
-			    time_second < rt->rt_rmx.rmx_expire)
-				senderr(rt == rt0 ? EHOSTDOWN : EHOSTUNREACH);
-	}
-
 	/*
 	 * If the queueing discipline needs packet classification,
 	 * do it before prepending link headers.
 	 */
-	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family, &pktattr);
+	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family);
 
 	switch (dst->sa_family) {
 #ifdef INET
@@ -217,7 +182,7 @@ hippi_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 		m_copyback(m, m->m_pkthdr.len, 8 - d2_len % 8, (void *) buffer);
 	}
 
-	return ifq_enqueue(ifp, m ALTQ_COMMA ALTQ_DECL(&pktattr));
+	return ifq_enqueue(ifp, m);
 
  bad:
 	if (m)
@@ -320,7 +285,7 @@ hippi_ifattach(struct ifnet *ifp, void *lla)
 	ifp->if_dlt = DLT_HIPPI;
 	ifp->if_mtu = HIPPIMTU;
 	ifp->if_output = hippi_output;
-	ifp->if_input = hippi_input;
+	ifp->_if_input = hippi_input;
 	ifp->if_baudrate = IF_Mbps(800);	/* XXX double-check */
 
 	if_set_sadl(ifp, lla, 6, true);

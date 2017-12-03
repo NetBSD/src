@@ -32,7 +32,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-static char const n8_id[] = "$Id: n8_rsa.c,v 1.1 2008/10/30 12:02:15 darran Exp $";
+static char const n8_id[] = "$Id: n8_rsa.c,v 1.1.42.1 2017/12/03 11:37:30 jdolecek Exp $";
 /*****************************************************************************/
 /** @file n8_rsa.c
  *  @brief Public RSA functions.
@@ -1087,7 +1087,6 @@ static N8_Status_t initPublicKey(N8_RSAKeyObject_t    *key_p,
        *
        * padding = digit_size - (pub_key_len % digit_size)
        */
-      memset(vAddr, 0x0, padding);
       memcpy(&vAddr[padding],
              material_p->publicKey.value_p,
              material_p->publicKey.lengthBytes);

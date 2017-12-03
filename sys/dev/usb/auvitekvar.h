@@ -1,4 +1,4 @@
-/* $NetBSD: auvitekvar.h,v 1.7.14.1 2014/08/20 00:03:51 tls Exp $ */
+/* $NetBSD: auvitekvar.h,v 1.7.14.2 2017/12/03 11:37:33 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -58,7 +58,7 @@ enum auvitek_board {
 
 struct auvitek_isoc {
 	struct auvitek_xfer	*i_ax;
-	usbd_xfer_handle	i_xfer;
+	struct usbd_xfer	*i_xfer;
 	uint8_t			*i_buf;
 	uint16_t		*i_frlengths;
 };
@@ -74,7 +74,7 @@ struct auvitek_xfer {
 	struct auvitek_softc	*ax_sc;
 	int			ax_endpt;
 	uint16_t		ax_maxpktlen;
-	usbd_pipe_handle	ax_pipe;
+	struct usbd_pipe *	ax_pipe;
 	struct auvitek_isoc	ax_i[AUVITEK_NISOC_XFERS];
 	uint32_t		ax_nframes;
 	uint32_t		ax_uframe_len;
@@ -85,14 +85,14 @@ struct auvitek_xfer {
 
 struct auvitek_bulk_xfer {
 	struct auvitek_softc	*bx_sc;
-	usbd_xfer_handle	bx_xfer;
+	struct usbd_xfer	*bx_xfer;
 	uint8_t			*bx_buffer;
 };
 
 struct auvitek_bulk {
 	struct auvitek_softc	*ab_sc;
 	int			ab_endpt;
-	usbd_pipe_handle	ab_pipe;
+	struct usbd_pipe	*ab_pipe;
 	struct auvitek_bulk_xfer ab_bx[AUVITEK_NBULK_XFERS];
 	bool			ab_running;
 };
@@ -103,10 +103,10 @@ struct auvitek_softc {
 	struct i2c_controller	sc_i2c;
 	kmutex_t		sc_i2c_lock;
 
-	usbd_device_handle	sc_udev;
+	struct usbd_device     *sc_udev;
 	int			sc_uport;
-	usbd_interface_handle	sc_isoc_iface;
-	usbd_interface_handle	sc_bulk_iface;
+	struct usbd_interface  *sc_isoc_iface;
+	struct usbd_interface  *sc_bulk_iface;
 
 	char			sc_running;
 	char			sc_dying;

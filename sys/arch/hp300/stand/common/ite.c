@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.16.14.1 2014/08/20 00:03:01 tls Exp $	*/
+/*	$NetBSD: ite.c,v 1.16.14.2 2017/12/03 11:36:13 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -236,7 +236,7 @@ iteprobe(struct consdev *cp)
 	int unit, pri;
 
 #ifdef CONSDEBUG
-	whichconsole = ++whichconsole % (NITE+1);
+	whichconsole = (whichconsole + 1) % (NITE+1);
 #endif
 
 	if (itecons != -1)

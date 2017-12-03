@@ -1,4 +1,4 @@
-/*      $NetBSD: scheduler.c,v 1.28.2.3 2014/08/20 00:04:41 tls Exp $	*/
+/*      $NetBSD: scheduler.c,v 1.28.2.4 2017/12/03 11:39:16 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.28.2.3 2014/08/20 00:04:41 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.28.2.4 2017/12/03 11:39:16 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -38,11 +38,10 @@ __KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.28.2.3 2014/08/20 00:04:41 tls Exp $
 #include <sys/select.h>
 #include <sys/systm.h>
 
+#include <rump-sys/kern.h>
+
 #include <rump/rumpuser.h>
 
-#include "rump_private.h"
-
-static struct cpu_info rump_cpus[MAXCPUS];
 static struct rumpcpu {
 	/* needed in fastpath */
 	struct cpu_info *rcpu_ci;
@@ -69,10 +68,19 @@ static struct rumpcpu {
 	int rcpu_align[0] __aligned(CACHE_LINE_SIZE);
 } rcpu_storage[MAXCPUS];
 
-struct cpu_info *rump_cpu = &rump_cpus[0];
+static inline struct rumpcpu *
+cpuinfo_to_rumpcpu(struct cpu_info *ci)
+{
+
+	return &rcpu_storage[cpu_index(ci)];
+}
+
+struct cpu_info rump_bootcpu;
 kcpuset_t *kcpuset_attached = NULL;
 kcpuset_t *kcpuset_running = NULL;
-int ncpu;
+int ncpu, ncpuonline;
+
+kmutex_t cpu_lock;
 
 #define RCPULWP_BUSY	((void *)-1)
 #define RCPULWP_WANTED	((void *)-2)
@@ -107,7 +115,7 @@ struct cpu_info *
 cpu_lookup(u_int index)
 {
 
-	return &rump_cpus[index];
+	return rcpu_storage[index].rcpu_ci;
 }
 
 static inline struct rumpcpu *
@@ -127,9 +135,7 @@ getnextcpu(void)
 void
 rump_cpus_bootstrap(int *nump)
 {
-	struct cpu_info *ci;
 	int num = *nump;
-	int i;
 
 	if (num > MAXCPUS) {
 		aprint_verbose("CPU limit: %d wanted, %d (MAXCPUS) "
@@ -137,16 +143,13 @@ rump_cpus_bootstrap(int *nump)
 		num = MAXCPUS;
 	}
 
-	for (i = 0; i < num; i++) {
-		ci = &rump_cpus[i];
-		ci->ci_index = i;
-	}
+	mutex_init(&cpu_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	kcpuset_create(&kcpuset_attached, true);
 	kcpuset_create(&kcpuset_running, true);
 
 	/* attach first cpu for bootstrap */
-	rump_cpu_attach(&rump_cpus[0]);
+	rump_cpu_attach(&rump_bootcpu);
 	ncpu = 1;
 	*nump = num;
 }
@@ -161,15 +164,22 @@ rump_scheduler_init(int numcpu)
 	rumpuser_mutex_init(&lwp0mtx, RUMPUSER_MTX_SPIN);
 	rumpuser_cv_init(&lwp0cv);
 	for (i = 0; i < numcpu; i++) {
+		if (i == 0) {
+			ci = &rump_bootcpu;
+		} else {
+			ci = kmem_zalloc(sizeof(*ci), KM_SLEEP);
+			ci->ci_index = i;
+		}
+
 		rcpu = &rcpu_storage[i];
-		ci = &rump_cpus[i];
 		rcpu->rcpu_ci = ci;
-		ci->ci_schedstate.spc_mutex =
-		    mutex_obj_alloc(MUTEX_DEFAULT, IPL_SCHED);
-		ci->ci_schedstate.spc_flags = SPCF_RUNNING;
 		rcpu->rcpu_wanted = 0;
 		rumpuser_cv_init(&rcpu->rcpu_cv);
 		rumpuser_mutex_init(&rcpu->rcpu_mtx, RUMPUSER_MTX_SPIN);
+
+		ci->ci_schedstate.spc_mutex =
+		    mutex_obj_alloc(MUTEX_DEFAULT, IPL_SCHED);
+		ci->ci_schedstate.spc_flags = SPCF_RUNNING;
 	}
 
 	mutex_init(&unruntime_lock, MUTEX_DEFAULT, IPL_SCHED);
@@ -182,7 +192,7 @@ void
 rump_schedlock_cv_wait(struct rumpuser_cv *cv)
 {
 	struct lwp *l = curlwp;
-	struct rumpcpu *rcpu = &rcpu_storage[l->l_cpu-&rump_cpus[0]];
+	struct rumpcpu *rcpu = cpuinfo_to_rumpcpu(l->l_cpu);
 
 	/* mutex will be taken and released in cpu schedule/unschedule */
 	rumpuser_cv_wait(cv, rcpu->rcpu_mtx);
@@ -192,7 +202,7 @@ int
 rump_schedlock_cv_timedwait(struct rumpuser_cv *cv, const struct timespec *ts)
 {
 	struct lwp *l = curlwp;
-	struct rumpcpu *rcpu = &rcpu_storage[l->l_cpu-&rump_cpus[0]];
+	struct rumpcpu *rcpu = cpuinfo_to_rumpcpu(l->l_cpu);
 
 	/* mutex will be taken and released in cpu schedule/unschedule */
 	return rumpuser_cv_timedwait(cv, rcpu->rcpu_mtx,
@@ -280,6 +290,7 @@ void
 rump_schedule_cpu_interlock(struct lwp *l, void *interlock)
 {
 	struct rumpcpu *rcpu;
+	struct cpu_info *ci;
 	void *old;
 	bool domigrate;
 	bool bound = l->l_pflag & LP_BOUND;
@@ -297,7 +308,7 @@ rump_schedule_cpu_interlock(struct lwp *l, void *interlock)
 	 */
 
 	KASSERT(l->l_target_cpu != NULL);
-	rcpu = &rcpu_storage[l->l_target_cpu-&rump_cpus[0]];
+	rcpu = cpuinfo_to_rumpcpu(l->l_target_cpu);
 	if (atomic_cas_ptr(&rcpu->rcpu_prevlwp, l, RCPULWP_BUSY) == l) {
 		if (interlock == rcpu->rcpu_mtx)
 			rumpuser_mutex_exit(rcpu->rcpu_mtx);
@@ -354,12 +365,19 @@ rump_schedule_cpu_interlock(struct lwp *l, void *interlock)
 	rumpuser_mutex_exit(rcpu->rcpu_mtx);
 
  fastlane:
-	l->l_cpu = l->l_target_cpu = rcpu->rcpu_ci;
+	ci = rcpu->rcpu_ci;
+	l->l_cpu = l->l_target_cpu = ci;
 	l->l_mutex = rcpu->rcpu_ci->ci_schedstate.spc_mutex;
 	l->l_ncsw++;
 	l->l_stat = LSONPROC;
 
-	rcpu->rcpu_ci->ci_curlwp = l;
+	/*
+	 * No interrupts, so ci_curlwp === cpu_onproc.
+	 * Okay, we could make an attempt to not set cpu_onproc
+	 * in the case that an interrupt is scheduled immediately
+	 * after a user proc, but leave that for later.
+	 */
+	ci->ci_curlwp = ci->ci_data.cpu_onproc = l;
 }
 
 void
@@ -431,8 +449,8 @@ rump_unschedule_cpu1(struct lwp *l, void *interlock)
 	void *old;
 
 	ci = l->l_cpu;
-	ci->ci_curlwp = NULL;
-	rcpu = &rcpu_storage[ci-&rump_cpus[0]];
+	ci->ci_curlwp = ci->ci_data.cpu_onproc = NULL;
+	rcpu = cpuinfo_to_rumpcpu(ci);
 
 	KASSERT(rcpu->rcpu_ci == ci);
 

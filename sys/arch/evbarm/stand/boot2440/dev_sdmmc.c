@@ -280,7 +280,7 @@ sdmmc_getdisklabel(struct sdmmc_softc *sc)
 		lp->d_nsectors = wd->sc_params.atap_sectors;
 		lp->d_ncylinders = wd->sc_params.atap_cylinders;*/
 		lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
-		lp->d_type = DTYPE_FLASH;
+		lp->d_type = DKTYPE_FLASH;
 		/*strncpy(lp->d_typename, (char *)wd->sc_params.atap_model, 16);*/
 		strncpy(lp->d_packname, "fictitious", 16);
 		/*if (wd->sc_capacity > UINT32_MAX)

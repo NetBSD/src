@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.107 2012/03/25 03:51:33 mrg Exp $	*/
+/*	$NetBSD: iommu.c,v 1.107.2.1 2017/12/03 11:36:44 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.107 2012/03/25 03:51:33 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.107.2.1 2017/12/03 11:36:44 jdolecek Exp $");
 
 #include "opt_ddb.h"
 
@@ -78,6 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.107 2012/03/25 03:51:33 mrg Exp $");
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
+#include <machine/hypervisor.h>
 
 #ifdef DEBUG
 #define IDB_BUSDMA	0x1
@@ -101,6 +102,10 @@ int iommudebug = 0x0;
 static	int iommu_strbuf_flush_done(struct strbuf_ctl *);
 static	void _iommu_dvmamap_sync(bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
 		bus_size_t, int);
+static void iommu_enter_sun4u(struct strbuf_ctl *sb, vaddr_t va, int64_t pa, int flags);
+static void iommu_enter_sun4v(struct strbuf_ctl *sb, vaddr_t va, int64_t pa, int flags);
+static void iommu_remove_sun4u(struct iommu_state *is, vaddr_t va, size_t len);
+static void iommu_remove_sun4v(struct iommu_state *is, vaddr_t va, size_t len);
 
 /*
  * initialise the UltraSPARC IOMMU (SBUS or PCI):
@@ -118,6 +123,8 @@ iommu_init(char *name, struct iommu_state *is, int tsbsize, uint32_t iovabase)
 	struct vm_page *pg;
 	struct pglist pglist;
 
+	DPRINTF(IDB_INFO, ("iommu_init: tsbsize %x iovabase %x\n", tsbsize, iovabase));
+	
 	/*
 	 * Setup the iommu.
 	 *
@@ -134,7 +141,13 @@ iommu_init(char *name, struct iommu_state *is, int tsbsize, uint32_t iovabase)
 	 * be hard-wired, so we read the start and size from the PROM and
 	 * just use those values.
 	 */
-	is->is_cr = IOMMUCR_EN;
+	if (strncmp(name, "pyro", 4) == 0) {
+		is->is_cr = IOMMUREG_READ(is, iommu_cr);
+		is->is_cr &= ~IOMMUCR_FIRE_BE;
+		is->is_cr |= (IOMMUCR_FIRE_SE | IOMMUCR_FIRE_CM_EN |
+		    IOMMUCR_FIRE_TE);
+	} else 
+		is->is_cr = IOMMUCR_EN;
 	is->is_tsbsize = tsbsize;
 	if (iovabase == -1) {
 		is->is_dvmabase = IOTSB_VSTART(is->is_tsbsize);
@@ -175,17 +188,18 @@ iommu_init(char *name, struct iommu_state *is, int tsbsize, uint32_t iovabase)
 	if (iommudebug & IDB_INFO)
 	{
 		/* Probe the iommu */
-
-		printf("iommu cr=%llx tsb=%llx\n",
-			(unsigned long long)bus_space_read_8(is->is_bustag,
+		if (!CPU_ISSUN4V) {
+			printf("iommu cr=%llx tsb=%llx\n",
+			    (unsigned long long)bus_space_read_8(is->is_bustag,
 				is->is_iommu,
 				offsetof(struct iommureg, iommu_cr)),
-			(unsigned long long)bus_space_read_8(is->is_bustag,
+			    (unsigned long long)bus_space_read_8(is->is_bustag,
 				is->is_iommu,
 				offsetof(struct iommureg, iommu_tsb)));
-		printf("TSB base %p phys %llx\n", (void *)is->is_tsb,
-			(unsigned long long)is->is_ptsb);
-		delay(1000000); /* 1 s */
+			printf("TSB base %p phys %llx\n", (void *)is->is_tsb,
+			    (unsigned long long)is->is_ptsb);
+			delay(1000000); /* 1 s */
+		}
 	}
 #endif
 
@@ -201,8 +215,9 @@ iommu_init(char *name, struct iommu_state *is, int tsbsize, uint32_t iovabase)
 	is->is_dvmamap = extent_create(name,
 	    is->is_dvmabase, is->is_dvmaend,
 	    0, 0, EX_NOWAIT);
-	/* XXXMRG Check is_dvmamap is valid. */
-
+	if (!is->is_dvmamap)
+		panic("iommu_init: extent_create() failed");
+	  
 	mutex_init(&is->is_lock, MUTEX_DEFAULT, IPL_HIGH);
 
 	/*
@@ -231,6 +246,9 @@ iommu_reset(struct iommu_state *is)
 	int i;
 	struct strbuf_ctl *sb;
 
+	if (CPU_ISSUN4V)
+		return;
+	
 	IOMMUREG_WRITE(is, iommu_tsb, is->is_ptsb);
 
 	/* Enable IOMMU in diagnostic mode */
@@ -270,8 +288,21 @@ iommu_reset(struct iommu_state *is)
 /*
  * Here are the iommu control routines.
  */
+
 void
 iommu_enter(struct strbuf_ctl *sb, vaddr_t va, int64_t pa, int flags)
+{
+	DPRINTF(IDB_IOMMU, ("iommu_enter: va %lx pa %lx flags %x\n",
+	    va, (long)pa, flags));
+	if (!CPU_ISSUN4V)
+		iommu_enter_sun4u(sb, va, pa, flags);
+	else
+		iommu_enter_sun4v(sb, va, pa, flags);
+}
+
+
+void
+iommu_enter_sun4u(struct strbuf_ctl *sb, vaddr_t va, int64_t pa, int flags)
 {
 	struct iommu_state *is = sb->sb_is;
 	int strbuf = (flags & BUS_DMA_STREAMING);
@@ -305,6 +336,35 @@ iommu_enter(struct strbuf_ctl *sb, vaddr_t va, int64_t pa, int flags)
 		(u_long)tte));
 }
 
+void
+iommu_enter_sun4v(struct strbuf_ctl *sb, vaddr_t va, int64_t pa, int flags)
+{
+	struct iommu_state *is = sb->sb_is;
+	u_int64_t tsbid = IOTSBSLOT(va, is->is_tsbsize);
+	paddr_t page_list[1], addr;
+	u_int64_t attr, nmapped;
+	int err;
+
+#ifdef DIAGNOSTIC
+	if (va < is->is_dvmabase || (va + PAGE_MASK) > is->is_dvmaend)
+		panic("viommu_enter: va %#lx not in DVMA space", va);
+#endif
+
+	attr = PCI_MAP_ATTR_READ | PCI_MAP_ATTR_WRITE;
+	if (flags & BUS_DMA_READ)
+		attr &= ~PCI_MAP_ATTR_READ;
+	if (flags & BUS_DMA_WRITE)
+		attr &= ~PCI_MAP_ATTR_WRITE;
+
+	page_list[0] = trunc_page(pa);
+	if (!pmap_extract(pmap_kernel(), (vaddr_t)page_list, &addr))
+		panic("viommu_enter: pmap_extract failed");
+	err = hv_pci_iommu_map(is->is_devhandle, tsbid, 1, attr,
+	    addr, &nmapped);
+	if (err != H_EOK || nmapped != 1)
+		panic("hv_pci_iommu_map: err=%d, nmapped=%lu", err, (long unsigned int)nmapped);
+}
+
 /*
  * Find the value of a DVMA address (debug routine).
  */
@@ -328,9 +388,22 @@ iommu_extract(struct iommu_state *is, vaddr_t dva)
  *
  * XXX: this function needs better internal error checking.
  */
+
+
 void
 iommu_remove(struct iommu_state *is, vaddr_t va, size_t len)
 {
+	DPRINTF(IDB_IOMMU, ("iommu_remove: va %lx len %zu\n", va, len));
+	if (!CPU_ISSUN4V)
+		iommu_remove_sun4u(is, va, len);
+	else
+		iommu_remove_sun4v(is, va, len);
+}
+
+void
+iommu_remove_sun4u(struct iommu_state *is, vaddr_t va, size_t len)
+{
+
 	int slot;
 
 #ifdef DIAGNOSTIC
@@ -381,6 +454,27 @@ iommu_remove(struct iommu_state *is, vaddr_t va, size_t len)
 
 		va += PAGE_SIZE;
 	}
+}
+
+void
+iommu_remove_sun4v(struct iommu_state *is, vaddr_t va, size_t len)
+{
+	u_int64_t tsbid = IOTSBSLOT(va, is->is_tsbsize);
+	u_int64_t ndemapped;
+	int err;
+
+#ifdef DIAGNOSTIC
+	if (va < is->is_dvmabase || (va + PAGE_MASK) > is->is_dvmaend)
+		panic("iommu_remove: va 0x%lx not in DVMA space", (u_long)va);
+	if (va != trunc_page(va)) {
+		printf("iommu_remove: unaligned va: %lx\n", va);
+		va = trunc_page(va);
+	}
+#endif
+
+	err = hv_pci_iommu_demap(is->is_devhandle, tsbid, 1, &ndemapped);
+	if (err != H_EOK || ndemapped != 1)
+		panic("hv_pci_iommu_unmap: err=%d", err);
 }
 
 static int
@@ -652,14 +746,8 @@ iommu_dvmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 	bus_size_t sgsize = map->_dm_dvmasize;
 
 	/* Flush the iommu */
-#ifdef DEBUG
-	if (!map->_dm_dvmastart) {
-		printf("iommu_dvmamap_unload: No dvmastart is zero\n");
-#ifdef DDB
-		Debugger();
-#endif
-	}
-#endif
+	if (!map->_dm_dvmastart)
+		panic("%s: error dvmastart is zero!\n", __func__);
 	iommu_remove(is, map->_dm_dvmastart, map->_dm_dvmasize);
 
 	/* Flush the caches */

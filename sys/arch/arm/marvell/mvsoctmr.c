@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsoctmr.c,v 1.8.2.2 2014/08/20 00:02:47 tls Exp $	*/
+/*	$NetBSD: mvsoctmr.c,v 1.8.2.3 2017/12/03 11:35:54 jdolecek Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsoctmr.c,v 1.8.2.2 2014/08/20 00:02:47 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsoctmr.c,v 1.8.2.3 2017/12/03 11:35:54 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mvsoc.h"
@@ -134,7 +134,7 @@ mvsoctmr_match(device_t parent, struct cfdata *match, void *aux)
 static void
 mvsoctmr_attach(device_t parent, device_t self, void *aux)
 {
-        struct mvsoctmr_softc *sc = device_private(self);
+	struct mvsoctmr_softc *sc = device_private(self);
 	struct marvell_attach_args *mva = aux;
 	uint32_t rstoutn;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipad.c,v 1.1 2011/12/31 00:08:48 christos Exp $	*/
+/*	$NetBSD: uipad.c,v 1.1.10.1 2017/12/03 11:37:34 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -37,12 +37,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipad.c,v 1.1 2011/12/31 00:08:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipad.c,v 1.1.10.1 2017/12/03 11:37:34 jdolecek Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_usb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/conf.h>
@@ -70,16 +73,24 @@ int	uipaddebug = 0;
 #endif
 
 struct uipad_softc {
- 	device_t		sc_dev;
-	usbd_device_handle	sc_udev;
+	device_t		sc_dev;
+	struct usbd_device *	sc_udev;
 };
 
-/*
- * Note that we do not attach to USB_PRODUCT_RIM_BLACKBERRY_PEARL_DUAL
- * as we let umass claim the device instead.
- */
 static const struct usb_devno uipad_devs[] = {
 	{ USB_VENDOR_APPLE, USB_PRODUCT_APPLE_IPAD },
+	{ USB_VENDOR_APPLE, USB_PRODUCT_APPLE_IPAD_2 },
+	{ USB_VENDOR_APPLE, USB_PRODUCT_APPLE_IPAD_3 },
+	{ USB_VENDOR_APPLE, USB_PRODUCT_APPLE_IPAD_MINI },
+#if 0
+	{ USB_VENDOR_APPLE, USB_PRODUCT_APPLE_IPHONE },
+	{ USB_VENDOR_APPLE, USB_PRODUCT_APPLE_IPHONE_3G },
+	{ USB_VENDOR_APPLE, USB_PRODUCT_APPLE_IPHONE_3GS },
+	{ USB_VENDOR_APPLE, USB_PRODUCT_APPLE_IPHONE_4 },
+	{ USB_VENDOR_APPLE, USB_PRODUCT_APPLE_IPHONE_4_VZW },
+	{ USB_VENDOR_APPLE, USB_PRODUCT_APPLE_IPHONE_4S },
+	{ USB_VENDOR_APPLE, USB_PRODUCT_APPLE_IPHONE_5 },
+#endif
 };
 
 #define uipad_lookup(v, p) usb_lookup(uipad_devs, v, p)
@@ -99,15 +110,15 @@ uipad_cmd(struct uipad_softc *sc, uint8_t requestType, uint8_t reqno,
 {
 	usb_device_request_t req;
 	usbd_status err;
- 
+
 	DPRINTF(("ipad cmd type=%x, number=%x, value=%d, index=%d\n",
 	    requestType, reqno, value, index));
         req.bmRequestType = requestType;
         req.bRequest = reqno;
-        USETW(req.wValue, value); 
+        USETW(req.wValue, value);
         USETW(req.wIndex, index);
         USETW(req.wLength, 0);
-   
+
         if ((err = usbd_do_request(sc->sc_udev, &req, NULL)) != 0)
 		aprint_error_dev(sc->sc_dev, "sending command failed %d\n",
 		    err);
@@ -116,26 +127,26 @@ uipad_cmd(struct uipad_softc *sc, uint8_t requestType, uint8_t reqno,
 static void
 uipad_charge(struct uipad_softc *sc)
 {
-	if (sc->sc_udev->power != USB_MAX_POWER)
+	if (sc->sc_udev->ud_power != USB_MAX_POWER)
 		uipad_cmd(sc, UT_VENDOR | UT_WRITE, 0x40, 0x6400, 0x6400);
 }
 
-int 
+int
 uipad_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
 	DPRINTFN(50, ("uipad_match\n"));
-	return uipad_lookup(uaa->vendor, uaa->product) != NULL ?
+	return uipad_lookup(uaa->uaa_vendor, uaa->uaa_product) != NULL ?
 	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
-void 
+void
 uipad_attach(device_t parent, device_t self, void *aux)
 {
 	struct uipad_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
-	usbd_device_handle	dev = uaa->device;
+	struct usbd_device *	dev = uaa->uaa_device;
 	char			*devinfop;
 
 	DPRINTFN(10,("uipad_attach: sc=%p\n", sc));
@@ -161,7 +172,7 @@ uipad_attach(device_t parent, device_t self, void *aux)
 	return;
 }
 
-int 
+int
 uipad_detach(device_t self, int flags)
 {
 	struct uipad_softc *sc = device_private(self);

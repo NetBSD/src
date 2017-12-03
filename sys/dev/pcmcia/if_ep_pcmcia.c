@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pcmcia.c,v 1.63 2009/09/05 12:31:00 tsutsui Exp $	*/
+/*	$NetBSD: if_ep_pcmcia.c,v 1.63.22.1 2017/12/03 11:37:30 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_pcmcia.c,v 1.63 2009/09/05 12:31:00 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_pcmcia.c,v 1.63.22.1 2017/12/03 11:37:30 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -308,8 +308,8 @@ ep_pcmcia_attach(device_t parent, device_t self, void *aux)
 		break;
 	}
 
-	epp = pcmcia_product_lookup(pa, ep_pcmcia_products, ep_pcmcia_nproducts,
-	    sizeof(ep_pcmcia_products[0]), NULL);
+	epp = pcmcia_product_lookup(pa, ep_pcmcia_products,
+	    ep_pcmcia_nproducts, sizeof(ep_pcmcia_products[0]), NULL);
 	if (!epp)
 		panic("ep_pcmcia_attach: impossible");
 

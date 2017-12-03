@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.20.14.1 2014/08/20 00:03:12 tls Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.20.14.2 2017/12/03 11:36:28 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 	
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.20.14.1 2014/08/20 00:03:12 tls Exp $"); 
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.20.14.2 2017/12/03 11:36:28 jdolecek Exp $"); 
 
 #ifdef _KERNEL_OPT
 #include "opt_cputype.h"
@@ -131,11 +131,11 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *returnmask)
 #endif
 
 	/* Save the FP state, if necessary, then copy it. */
-	ksc.sc_fpused = fpu_used_p();
+	ksc.sc_fpused = fpu_used_p(l);
 #if !defined(NOFPU)
 	if (ksc.sc_fpused) {
 		/* if FPU has current state, save it first */
-		fpu_save();
+		fpu_save(l);
 	}
 #endif
 	*(struct fpreg *)ksc.sc_fpregs = *(struct fpreg *)&pcb->pcb_fpregs;
@@ -275,7 +275,7 @@ compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigretur
 #endif
 #if !defined(NOFPU)
 	if (scp->sc_fpused) {
-		fpu_discard();
+		fpu_discard(l);
 	}
 #endif
 	*(struct fpreg *)&pcb->pcb_fpregs = *(struct fpreg *)scp->sc_fpregs;

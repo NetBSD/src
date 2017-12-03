@@ -1,4 +1,4 @@
-/*	$NetBSD: int.c,v 1.24.12.2 2014/08/20 00:03:22 tls Exp $	*/
+/*	$NetBSD: int.c,v 1.24.12.3 2017/12/03 11:36:41 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2009 Stephen M. Rumble 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: int.c,v 1.24.12.2 2014/08/20 00:03:22 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: int.c,v 1.24.12.3 2017/12/03 11:36:41 jdolecek Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -141,8 +141,12 @@ int_attach(device_t parent, device_t self, void *aux)
 
 	printf(" addr 0x%x\n", address);
 
-	bus_space_map(iot, address, 0, 0, &ioh);
-	iot = SGIMIPS_BUS_SPACE_NORMAL;
+	iot = normal_memt;
+	/*
+	 * XXX INT1 registers are spread *way* out, but for now this should
+	 * work
+	 */ 
+	bus_space_map(iot, address, 0x100, 0, &ioh);
 
 	switch (mach_type) {
 	case MACH_SGI_IP6 | MACH_SGI_IP10:

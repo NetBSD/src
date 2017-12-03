@@ -1,4 +1,4 @@
-/*	$NetBSD: pcu.h,v 1.9.2.2 2014/08/20 00:04:44 tls Exp $	*/
+/*	$NetBSD: pcu.h,v 1.9.2.3 2017/12/03 11:39:20 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -81,10 +81,10 @@ void	pcu_discard_all(lwp_t *);
 void	pcu_save_all(lwp_t *);
 
 void	pcu_load(const pcu_ops_t *);
-void	pcu_save(const pcu_ops_t *);
+void	pcu_save(const pcu_ops_t *, lwp_t *);
 void	pcu_save_all_on_cpu(void);
-void	pcu_discard(const pcu_ops_t *, bool);
-bool	pcu_valid_p(const pcu_ops_t *);
+void	pcu_discard(const pcu_ops_t *, lwp_t *, bool);
+bool	pcu_valid_p(const pcu_ops_t *, const lwp_t *);
 
 #else
 #define	pcu_switchpoint(l)

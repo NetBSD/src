@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpdev_pci.c,v 1.3.8.2 2014/08/20 00:04:38 tls Exp $	*/
+/*      $NetBSD: rumpdev_pci.c,v 1.3.8.3 2017/12/03 11:39:08 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2013 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpdev_pci.c,v 1.3.8.2 2014/08/20 00:04:38 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpdev_pci.c,v 1.3.8.3 2017/12/03 11:39:08 jdolecek Exp $");
 
 #include <sys/cdefs.h>
 #include <sys/param.h>
@@ -147,9 +147,45 @@ pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih,
 	return rumpcomp_pci_irq_establish(ih, func, arg);
 }
 
+int
+pci_intr_setattr(pci_chipset_tag_t pc, pci_intr_handle_t *ih,
+	int attr, uint64_t data)
+{
+
+	switch (attr) {
+	case PCI_INTR_MPSAFE:
+		return 0;
+	default:
+		return ENODEV;
+	}
+}
+
 void
 pci_intr_disestablish(pci_chipset_tag_t pc, void *not_your_above_ih)
 {
 
 	panic("%s: unimplemented", __func__);
 }
+
+#ifdef __HAVE_PCIIDE_MACHDEP_COMPAT_INTR_ESTABLISH
+#include <dev/pci/pcireg.h>
+#include <dev/pci/pcivar.h>
+#include <dev/pci/pciidereg.h>
+#include <dev/pci/pciidevar.h>
+
+void *
+pciide_machdep_compat_intr_establish(device_t dev,
+	const struct pci_attach_args *pa, int chan,
+	int (*func)(void *), void *arg)
+{
+	pci_intr_handle_t ih;
+	struct pci_attach_args mypa = *pa;
+
+	mypa.pa_intrline = PCIIDE_COMPAT_IRQ(chan);
+	if (pci_intr_map(&mypa, &ih) != 0)
+		return NULL;
+	return rumpcomp_pci_irq_establish(ih, func, arg);
+}
+
+__strong_alias(pciide_machdep_compat_intr_disestablish,pci_intr_disestablish);
+#endif /* __HAVE_PCIIDE_MACHDEP_COMPAT_INTR_ESTABLISH */

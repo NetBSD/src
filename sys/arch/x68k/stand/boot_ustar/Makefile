@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19.12.1 2014/08/20 00:03:28 tls Exp $
+#	$NetBSD: Makefile,v 1.19.12.2 2017/12/03 11:36:49 jdolecek Exp $
 
 NOMAN=		# defined
 
@@ -14,6 +14,8 @@ NEWVERSWHAT=	"${BOOT}"
 TEXT=		002000		# Primary (me)
 BOOT_TEXT=	006000		# Secondary (/boot)
 
+BOOT_MAXSIZE=	65536		# size enough to read /boot whole
+
 PROG=		fd$(BOOT)
 BINDIR=		/usr/mdec
 STRIPFLAG=
@@ -25,14 +27,11 @@ COMMONDIR=	$M/stand/common
 LIBIOCS=	$M/stand/libiocs
 SRCS=	boot_ustar.S
 
-SRCS+=		vers.c
-CLEANFILES+=	vers.c
-vers.c:	${VERSIONFILE}
-	${_MKTARGET_CREATE}
-	${HOST_SH} ${S}/conf/newvers_stand.sh \
-	    ${.ALLSRC} ${MACHINE} ${NEWVERSWHAT}
+
+.include "${S}/conf/newvers_stand.mk"
 
 CPPFLAGS+= -DTEXTADDR="0x$(TEXT)" -DBOOT_TEXTADDR="0x$(BOOT_TEXT)"
+CPPFLAGS+= -DBOOT_MAXSIZE="$(BOOT_MAXSIZE)"
 CPPFLAGS+= -DBOOT=\"$(BOOT)\" -DBOOT_VERS=\"$(VERSION)\"
 CPPFLAGS+= -I${COMMONDIR} -I${LIBIOCS} -I${S} -I. -D_STANDALONE
 CFLAGS+=   -m68000

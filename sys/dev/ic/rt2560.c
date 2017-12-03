@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2560.c,v 1.25 2012/02/18 13:38:35 drochner Exp $	*/
+/*	$NetBSD: rt2560.c,v 1.25.2.1 2017/12/03 11:37:04 jdolecek Exp $	*/
 /*	$OpenBSD: rt2560.c,v 1.15 2006/04/20 20:31:12 miod Exp $  */
 /*	$FreeBSD: rt2560.c,v 1.3 2006/03/21 21:15:43 damien Exp $*/
 
@@ -24,7 +24,7 @@
  * http://www.ralinktech.com/
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2560.c,v 1.25 2012/02/18 13:38:35 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2560.c,v 1.25.2.1 2017/12/03 11:37:04 jdolecek Exp $");
 
 
 #include <sys/param.h>
@@ -140,6 +140,7 @@ static void	rt2560_read_eeprom(struct rt2560_softc *);
 static int	rt2560_bbp_init(struct rt2560_softc *);
 static int	rt2560_init(struct ifnet *);
 static void	rt2560_stop(struct ifnet *, int);
+static void	rt2560_softintr(void *);
 
 /*
  * Supported rates for 802.11a/b/g modes (in 500Kbps unit).
@@ -353,6 +354,12 @@ rt2560_attach(void *xsc, int id)
 	aprint_normal_dev(sc->sc_dev, "MAC/BBP RT2560 (rev 0x%02x), RF %s\n",
 	    sc->asic_rev, rt2560_get_rf(sc->rf_rev));
 
+	sc->sc_soft_ih = softint_establish(SOFTINT_NET, rt2560_softintr, sc);
+	if (sc->sc_soft_ih == NULL) {
+		aprint_error_dev(sc->sc_dev, "could not establish softint\n)");
+		goto fail0;
+	}
+
 	/*
 	 * Allocate Tx and Rx rings.
 	 */
@@ -446,8 +453,17 @@ rt2560_attach(void *xsc, int id)
 		    IEEE80211_CHAN_DYN | IEEE80211_CHAN_2GHZ;
 	}
 
-	if_attach(ifp);
+	error = if_initialize(ifp);
+	if (error != 0) {
+		aprint_error_dev(sc->sc_dev, "if_initialize failed(%d)\n",
+		    error);
+		goto fail6;
+	}
 	ieee80211_ifattach(ic);
+	/* Use common softint-based if_input */
+	ifp->if_percpuq = if_percpuq_create(ifp);
+	if_register(ifp);
+
 	ic->ic_node_alloc = rt2560_node_alloc;
 	ic->ic_updateslot = rt2560_update_slot;
 	ic->ic_reset = rt2560_reset;
@@ -481,12 +497,14 @@ rt2560_attach(void *xsc, int id)
 
 	return 0;
 
+fail6:	rt2560_free_rx_ring(sc, &sc->rxq);
 fail5:	rt2560_free_tx_ring(sc, &sc->bcnq);
 fail4:	rt2560_free_tx_ring(sc, &sc->prioq);
 fail3:	rt2560_free_tx_ring(sc, &sc->atimq);
 fail2:	rt2560_free_tx_ring(sc, &sc->txq);
-fail1:
-	return ENXIO;
+fail1:	softint_disestablish(sc->sc_soft_ih);
+	sc->sc_soft_ih = NULL;
+fail0:	return ENXIO;
 }
 
 
@@ -511,6 +529,11 @@ rt2560_detach(void *xsc)
 	rt2560_free_tx_ring(sc, &sc->prioq);
 	rt2560_free_tx_ring(sc, &sc->bcnq);
 	rt2560_free_rx_ring(sc, &sc->rxq);
+
+	if (sc->sc_soft_ih != NULL) {
+		softint_disestablish(sc->sc_soft_ih);
+		sc->sc_soft_ih = NULL;
+	}
 
 	return 0;
 }
@@ -843,9 +866,12 @@ rt2560_next_scan(void *arg)
 {
 	struct rt2560_softc *sc = arg;
 	struct ieee80211com *ic = &sc->sc_ic;
+	int s;
 
+	s = splnet();
 	if (ic->ic_state == IEEE80211_S_SCAN)
 		ieee80211_next_scan(ic);
+	splx(s);
 }
 
 /*
@@ -868,10 +894,13 @@ rt2560_update_rssadapt(void *arg)
 {
 	struct rt2560_softc *sc = arg;
 	struct ieee80211com *ic = &sc->sc_ic;
+	int s;
 
+	s = splnet();
 	ieee80211_iterate_nodes(&ic->ic_sta, rt2560_iter_func, arg);
 
 	callout_reset(&sc->rssadapt_ch, hz / 10, rt2560_update_rssadapt, sc);
+	splx(s);
 }
 
 int
@@ -1067,6 +1096,9 @@ rt2560_tx_intr(struct rt2560_softc *sc)
 	struct rt2560_tx_desc *desc;
 	struct rt2560_tx_data *data;
 	struct rt2560_node *rn;
+	int s;
+
+	s = splnet();
 
 	for (;;) {
 		desc = &sc->txq.desc[sc->txq.next];
@@ -1112,7 +1144,8 @@ rt2560_tx_intr(struct rt2560_softc *sc)
 		case RT2560_TX_FAIL_INVALID:
 		case RT2560_TX_FAIL_OTHER:
 		default:
-			aprint_error_dev(sc->sc_dev, "sending data frame failed 0x%08x\n",
+			aprint_error_dev(sc->sc_dev,
+			    "sending data frame failed 0x%08x\n",
 			    le32toh(desc->flags));
 			ifp->if_oerrors++;
 		}
@@ -1140,7 +1173,9 @@ rt2560_tx_intr(struct rt2560_softc *sc)
 
 	sc->sc_tx_timer = 0;
 	ifp->if_flags &= ~IFF_OACTIVE;
-	rt2560_start(ifp);
+	rt2560_start(ifp); /* in softint */
+
+	splx(s);
 }
 
 void
@@ -1150,6 +1185,9 @@ rt2560_prio_intr(struct rt2560_softc *sc)
 	struct ifnet *ifp = ic->ic_ifp;
 	struct rt2560_tx_desc *desc;
 	struct rt2560_tx_data *data;
+	int s;
+
+	s = splnet();
 
 	for (;;) {
 		desc = &sc->prioq.desc[sc->prioq.next];
@@ -1208,7 +1246,9 @@ rt2560_prio_intr(struct rt2560_softc *sc)
 
 	sc->sc_tx_timer = 0;
 	ifp->if_flags &= ~IFF_OACTIVE;
-	rt2560_start(ifp);
+	rt2560_start(ifp); /* in softint */
+
+	splx(s);
 }
 
 /*
@@ -1226,7 +1266,7 @@ rt2560_decryption_intr(struct rt2560_softc *sc)
 	struct ieee80211_frame *wh;
 	struct ieee80211_node *ni;
 	struct mbuf *mnew, *m;
-	int hw, error;
+	int hw, error, s;
 
 	/* retrieve last decriptor index processed by cipher engine */
 	hw = (RAL_READ(sc, RT2560_SECCSR0) - sc->rxq.physaddr) /
@@ -1308,9 +1348,11 @@ rt2560_decryption_intr(struct rt2560_softc *sc)
 		desc->physaddr = htole32(data->map->dm_segs->ds_addr);
 
 		/* finalize mbuf */
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len =
 		    (le32toh(desc->flags) >> 16) & 0xfff;
+
+		s = splnet();
 
 		if (sc->sc_drvbpf != NULL) {
 			struct rt2560_rx_radiotap_header *tap = &sc->sc_rxtap;
@@ -1347,6 +1389,8 @@ rt2560_decryption_intr(struct rt2560_softc *sc)
 		/* node is no longer needed */
 		ieee80211_free_node(ni);
 
+		splx(s);
+
 skip:		desc->flags = htole32(RT2560_RX_BUSY);
 
 		bus_dmamap_sync(sc->sc_dmat, sc->rxq.map,
@@ -1363,8 +1407,10 @@ skip:		desc->flags = htole32(RT2560_RX_BUSY);
 	 * In HostAP mode, ieee80211_input() will enqueue packets in if_snd
 	 * without calling if_start().
 	 */
+	s = splnet();
 	if (!IFQ_IS_EMPTY(&ifp->if_snd) && !(ifp->if_flags & IFF_OACTIVE))
 		rt2560_start(ifp);
+	splx(s);
 }
 
 /*
@@ -1471,16 +1517,33 @@ rt2560_intr(void *arg)
 
 	if ((r = RAL_READ(sc, RT2560_CSR7)) == 0)
 		return 0;       /* not for us */
-	
+
 	/* disable interrupts */
 	RAL_WRITE(sc, RT2560_CSR8, 0xffffffff);
-
-	/* acknowledge interrupts */
-	RAL_WRITE(sc, RT2560_CSR7, r);
 
 	/* don't re-enable interrupts if we're shutting down */
 	if (!(ifp->if_flags & IFF_RUNNING))
 		return 0;
+
+	softint_schedule(sc->sc_soft_ih);
+	return 1;
+}
+
+static void
+rt2560_softintr(void *arg)
+{
+	struct rt2560_softc *sc = arg;
+	struct ifnet *ifp = &sc->sc_if;
+	uint32_t r;
+
+	if (!device_is_active(sc->sc_dev) || !(ifp->if_flags & IFF_RUNNING))
+		return;
+
+	if ((r = RAL_READ(sc, RT2560_CSR7)) == 0)
+		goto out;
+
+	/* acknowledge interrupts */
+	RAL_WRITE(sc, RT2560_CSR7, r);
 
 	if (r & RT2560_BEACON_EXPIRE)
 		rt2560_beacon_expire(sc);
@@ -1503,10 +1566,9 @@ rt2560_intr(void *arg)
 	if (r & RT2560_RX_DONE)
 		rt2560_rx_intr(sc);
 
+out:
 	/* re-enable interrupts */
 	RAL_WRITE(sc, RT2560_CSR8, RT2560_INTR_MASK);
-
-	return 1;
 }
 
 /* quickly determine if a given rate is CCK or OFDM */
@@ -2072,8 +2134,8 @@ rt2560_start(struct ifnet *ifp)
 			if (m0 == NULL)
 				break;
 
-			ni = (struct ieee80211_node *)m0->m_pkthdr.rcvif;
-			m0->m_pkthdr.rcvif = NULL;
+			ni = M_GETCTX(m0, struct ieee80211_node *);
+			M_CLEARCTX(m0);
 			bpf_mtap3(ic->ic_rawbpf, m0);
 			if (rt2560_tx_mgt(sc, m0, ni) != 0)
 				break;
@@ -2858,5 +2920,4 @@ rt2560_stop(struct ifnet *ifp, int disable)
 	rt2560_reset_tx_ring(sc, &sc->prioq);
 	rt2560_reset_tx_ring(sc, &sc->bcnq);
 	rt2560_reset_rx_ring(sc, &sc->rxq);
-
 }

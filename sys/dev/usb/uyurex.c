@@ -1,4 +1,4 @@
-/*	$NetBSD: uyurex.c,v 1.7.6.1 2013/02/25 00:29:43 tls Exp $ */
+/*	$NetBSD: uyurex.c,v 1.7.6.2 2017/12/03 11:37:36 jdolecek Exp $ */
 /*	$OpenBSD: uyurex.c,v 1.3 2010/03/04 03:47:22 deraadt Exp $ */
 
 /*
@@ -22,13 +22,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uyurex.c,v 1.7.6.1 2013/02/25 00:29:43 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uyurex.c,v 1.7.6.2 2017/12/03 11:37:36 jdolecek Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_usb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/device.h>
 #include <sys/conf.h>
 #include <sys/envsys.h>
@@ -65,7 +69,7 @@ int	uyurexdebug = 0;
 
 struct uyurex_softc {
 	struct uhidev		 sc_hdev;
-	usbd_device_handle	 sc_udev;
+	struct usbd_device *	 sc_udev;
 	u_char			 sc_dying;
 	uint16_t		 sc_flag;
 
@@ -113,25 +117,23 @@ extern struct cfdriver uyurex_cd;
 CFATTACH_DECL_NEW(uyurex, sizeof(struct uyurex_softc),
     uyurex_match, uyurex_attach, uyurex_detach, uyurex_activate);
 
-int 
+int
 uyurex_match(device_t parent, cfdata_t match, void *aux)
 {
-	struct usb_attach_arg *uaa = aux;
-	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)uaa;
+	struct uhidev_attach_arg *uha = aux;
 
-	if (uyurex_lookup(uha->uaa->vendor, uha->uaa->product) == NULL)
+	if (uyurex_lookup(uha->uiaa->uiaa_vendor, uha->uiaa->uiaa_product) == NULL)
 		return UMATCH_NONE;
 
 	return (UMATCH_VENDOR_PRODUCT);
 }
 
-void 
+void
 uyurex_attach(device_t parent, device_t self, void *aux)
 {
 	struct uyurex_softc *sc = device_private(self);
-	struct usb_attach_arg *uaa = aux;
-	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)uaa;
-	usbd_device_handle dev = uha->parent->sc_udev;
+	struct uhidev_attach_arg *uha = aux;
+	struct usbd_device *dev = uha->parent->sc_udev;
 	int size, repid, err;
 	void *desc;
 
@@ -150,12 +152,16 @@ uyurex_attach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 	aprint_naive("\n");
 
+	/*
+	 * XXX uhidev_open enables the interrupt, so we should do it as
+	 * one of the final things here.
+	 */
 	err = uhidev_open(&sc->sc_hdev);
 	if (err) {
 		aprint_error_dev(self, "uyurex_open: uhidev_open %d\n", err);
 		return;
 	}
-	sc->sc_ibuf = malloc(sc->sc_ilen, M_USBDEV, M_WAITOK);
+	sc->sc_ibuf = kmem_alloc(sc->sc_ilen, KM_SLEEP);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 	    sc->sc_hdev.sc_dev);
@@ -198,7 +204,7 @@ uyurex_attach(device_t parent, device_t self, void *aux)
 	uyurex_set_mode(sc, 0);
 }
 
-int 
+int
 uyurex_detach(device_t self, int flags)
 {
 	struct uyurex_softc *sc = device_private(self);
@@ -211,7 +217,7 @@ uyurex_detach(device_t self, int flags)
 	sysmon_envsys_unregister(sc->sc_sme);
 
 	if (sc->sc_ibuf != NULL) {
-		free(sc->sc_ibuf, M_USBDEV);
+		kmem_free(sc->sc_ibuf, sc->sc_ilen);
 		sc->sc_ibuf = NULL;
 	}
 

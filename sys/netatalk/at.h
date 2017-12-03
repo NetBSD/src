@@ -1,4 +1,4 @@
-/*	$NetBSD: at.h,v 1.7 2005/12/10 23:29:05 elad Exp $	*/
+/*	$NetBSD: at.h,v 1.7.120.1 2017/12/03 11:39:03 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -59,19 +59,19 @@ typedef __sa_family_t	sa_family_t;
  * AppleTalk address.
  */
 struct at_addr {
-	u_int16_t         s_net;
-	u_int8_t          s_node;
+	uint16_t         s_net;
+	uint8_t          s_node;
 };
 
-#define ATADDR_ANYNET	(u_int16_t)0x0000
-#define ATADDR_ANYNODE	(u_int8_t)0x00
-#define ATADDR_ANYPORT	(u_int8_t)0x00
-#define ATADDR_BCAST	(u_int8_t)0xff	/* There is no BCAST for NET */
+#define ATADDR_ANYNET	(uint16_t)0x0000
+#define ATADDR_ANYNODE	(uint8_t)0x00
+#define ATADDR_ANYPORT	(uint8_t)0x00
+#define ATADDR_BCAST	(uint8_t)0xff	/* There is no BCAST for NET */
 
 struct netrange {
-	u_int8_t	nr_phase;
-	u_int16_t	nr_firstnet;
-	u_int16_t	nr_lastnet;
+	uint8_t		nr_phase;
+	uint16_t	nr_firstnet;
+	uint16_t	nr_lastnet;
 };
 
 /*
@@ -82,9 +82,9 @@ struct netrange {
  * by the kernel.
  */
 struct sockaddr_at {
-	u_int8_t	sat_len;
+	uint8_t		sat_len;
 	sa_family_t	sat_family;
-	u_int8_t        sat_port;
+	uint8_t		sat_port;
 	struct at_addr  sat_addr;
 	union {
 		struct netrange r_netrange;
@@ -100,6 +100,14 @@ struct sockaddr_at {
 
 extern struct domain atalkdomain;
 extern const struct protosw atalksw[];
+#endif
+
+#if defined(_KERNEL) || defined(_TEST)
+#define ATALK_ADDRSTRLEN 10
+
+extern struct domain atalkdomain;
+int at_print(char *, size_t, const struct at_addr *);
+int sat_print(char *, size_t, const void *);
 #endif
 
 #endif	/* !_NETATALK_AT_H_ */

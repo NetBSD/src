@@ -16,3 +16,7 @@
         A default command line can be saved to flash as initrd image.
 1.10:	Read correct MAC address from flash on QNAP-TS systems with re(4)
 	NIC.
+1.11:	Pass precise model information and flags with bootinfo.
+	Synology DS207/209 LED and 2nd disk power-up support.
+1.12:	Some more Synology DS20x fixes, to make sure both drives have been
+	spun up. Also detect PCI-vendor 0x1148 (S&K) as Synology.

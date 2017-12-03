@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -71,8 +71,8 @@ static char             KeyBuffer[LOCAL_BUFFER_SIZE];
 static char             ErrorBuffer[LOCAL_BUFFER_SIZE];
 
 /*
- * Tables supported in the Windows registry. SSDTs are not placed into
- * the registry, a limitation.
+ * Tables supported in the Windows registry. Zero or more SSDTs are assumed to
+ * follow these tables.
  */
 static char             *SupportedTables[] =
 {
@@ -82,9 +82,9 @@ static char             *SupportedTables[] =
     "FACP"
 };
 
-/* Max index for table above */
+/* Number of table names for the table above. */
 
-#define ACPI_OS_MAX_TABLE_INDEX     3
+#define ACPI_OS_NUM_TABLE_ENTRIES   4
 
 
 /******************************************************************************
@@ -171,14 +171,32 @@ AcpiOsGetTableByIndex (
     ACPI_PHYSICAL_ADDRESS   *Address)
 {
     ACPI_STATUS             Status;
+    char                    *Signature;
 
 
-    if (Index > ACPI_OS_MAX_TABLE_INDEX)
+    if (Index < ACPI_OS_NUM_TABLE_ENTRIES)
     {
-        return (AE_LIMIT);
+        Signature = SupportedTables[Index];
+        Index = 0;
+    }
+    else
+    {
+        Signature = ACPI_SIG_SSDT;
+        Index -= ACPI_OS_NUM_TABLE_ENTRIES;
     }
 
-    Status = AcpiOsGetTableByName (SupportedTables[Index], 0, Table, Address);
+    Status = AcpiOsGetTableByName (Signature, Index, Table, Address);
+
+    if (ACPI_SUCCESS (Status))
+    {
+        *Instance = Index;
+    }
+    else if (Status == AE_NOT_FOUND && ACPI_COMPARE_NAME (Signature, ACPI_SIG_SSDT))
+    {
+        /* Treat SSDTs that are not found as invalid index. */
+        Status = (AE_LIMIT);
+    }
+
     return (Status);
 }
 
@@ -222,13 +240,12 @@ AcpiOsGetTableByName (
     HKEY                    SubKey;
     ULONG                   i;
     ACPI_TABLE_HEADER       *ReturnTable;
+    ACPI_STATUS             Status = AE_OK;
 
 
-    /*
-     * Windows has no SSDTs in the registry, so multiple instances are
-     * not supported.
-     */
-    if (Instance > 0)
+    /* Multiple instances are only supported for SSDT tables. */
+
+    if (Instance > 0 && !ACPI_COMPARE_NAME (Signature, ACPI_SIG_SSDT))
     {
         return (AE_LIMIT);
     }
@@ -237,10 +254,32 @@ AcpiOsGetTableByName (
 
     while (1)
     {
-        ACPI_STRCPY (KeyBuffer, "HARDWARE\\ACPI\\");
+        strcpy (KeyBuffer, "HARDWARE\\ACPI\\");
         if (AcpiUtSafeStrcat (KeyBuffer, sizeof (KeyBuffer), Signature))
         {
             return (AE_BUFFER_OVERFLOW);
+        }
+
+        /*
+         * Windows stores SSDT at SSDT, SSD1, ..., SSD9, SSDA, ..., SSDS, SSDT,
+         * SSDU, ..., SSDY. If the first (0th) and the 29th tables have the same
+         * OEM ID, Table ID and Revision, then the 29th entry will overwrite the
+         * first entry... Let's hope that we do not have that many entries.
+         */
+        if (Instance > 0 && ACPI_COMPARE_NAME (Signature, ACPI_SIG_SSDT))
+        {
+            if (Instance < 10)
+            {
+                KeyBuffer[strlen (KeyBuffer) - 1] = '0' + (char) Instance;
+            }
+            else if (Instance < 29)
+            {
+                KeyBuffer[strlen (KeyBuffer) - 1] = 'A' + (char) (Instance - 10);
+            }
+            else
+            {
+                return (AE_LIMIT);
+            }
         }
 
         WinStatus = RegOpenKeyEx (HKEY_LOCAL_MACHINE, KeyBuffer,
@@ -263,6 +302,12 @@ AcpiOsGetTableByName (
             else if (ACPI_COMPARE_NAME (Signature, "XSDT"))
             {
                 Signature = "RSDT";
+            }
+            else if (ACPI_COMPARE_NAME (Signature, ACPI_SIG_SSDT))
+            {
+                /* SSDT may not be present on older Windows versions, but it is
+                 * also possible that the index is not found. */
+                return (AE_NOT_FOUND);
             }
             else
             {
@@ -294,7 +339,8 @@ AcpiOsGetTableByName (
         {
             fprintf (stderr, "Could not open %s entry: %s\n",
                 Signature, WindowsFormatException (WinStatus));
-            return (AE_ERROR);
+            Status = AE_ERROR;
+            goto Cleanup;
         }
 
         RegCloseKey (Handle);
@@ -313,7 +359,8 @@ AcpiOsGetTableByName (
         {
             fprintf (stderr, "Could not get %s registry entry: %s\n",
                 Signature, WindowsFormatException (WinStatus));
-            return (AE_ERROR);
+            Status = AE_ERROR;
+            goto Cleanup;
         }
 
         if (Type == REG_BINARY)
@@ -330,7 +377,8 @@ AcpiOsGetTableByName (
     {
         fprintf (stderr, "Could not read the %s table size: %s\n",
             Signature, WindowsFormatException (WinStatus));
-        return (AE_ERROR);
+        Status = AE_ERROR;
+        goto Cleanup;
     }
 
     /* Allocate a new buffer for the table */
@@ -338,6 +386,7 @@ AcpiOsGetTableByName (
     ReturnTable = malloc (DataSize);
     if (!ReturnTable)
     {
+        Status = AE_NO_MEMORY;
         goto Cleanup;
     }
 
@@ -350,15 +399,16 @@ AcpiOsGetTableByName (
         fprintf (stderr, "Could not read %s data: %s\n",
             Signature, WindowsFormatException (WinStatus));
         free (ReturnTable);
-        return (AE_ERROR);
+        Status = AE_ERROR;
+        goto Cleanup;
     }
-
-Cleanup:
-    RegCloseKey (Handle);
 
     *Table = ReturnTable;
     *Address = 0;
-    return (AE_OK);
+
+Cleanup:
+    RegCloseKey (Handle);
+    return (Status);
 }
 
 

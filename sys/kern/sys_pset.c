@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pset.c,v 1.17.12.1 2014/08/20 00:04:29 tls Exp $	*/
+/*	$NetBSD: sys_pset.c,v 1.17.12.2 2017/12/03 11:38:45 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pset.c,v 1.17.12.1 2014/08/20 00:04:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pset.c,v 1.17.12.2 2017/12/03 11:38:45 jdolecek Exp $");
 
 #include <sys/param.h>
 
@@ -380,6 +380,7 @@ sys_pset_assign(struct lwp *l, const struct sys_pset_assign_args *uap,
 				mutex_exit(&cpu_lock);
 				return EPERM;
 			}
+			lwp_unlock(t);
 		}
 		/*
 		 * Set the processor-set ID.

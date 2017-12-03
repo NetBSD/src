@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_explode.c,v 1.11.12.1 2013/06/23 06:20:08 tls Exp $ */
+/*	$NetBSD: fpu_explode.c,v 1.11.12.2 2017/12/03 11:36:23 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_explode.c,v 1.11.12.1 2013/06/23 06:20:08 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_explode.c,v 1.11.12.2 2017/12/03 11:36:23 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -183,18 +183,17 @@ static int
 fpu_xtof(struct fpn *fp, uint32_t i, uint32_t j, uint32_t k)
 {
 	int exp;
-	uint32_t frac, f0, f1, f2;
+	uint32_t f0, f1, f2;
 #define EXT_SHIFT (EXT_FRACBITS - 1 - 32 - FP_LG)
 
 	exp = (i >> (32 - 1 - EXT_EXPBITS)) & mask(EXT_EXPBITS);
 	f0 = j >> EXT_SHIFT;
 	f1 = (j << (32 - EXT_SHIFT)) | (k >> EXT_SHIFT);
 	f2 = k << (32 - EXT_SHIFT);
-	frac = j | k;
 
 	/* m68k extended does not imply denormal by exp==0 */
 	if (exp == 0) {
-		if (frac == 0)
+		if ((j | k) == 0)
 			return (FPC_ZERO);
 		fp->fp_exp = - EXT_EXP_BIAS;
 		fp->fp_mant[0] = f0;
@@ -204,7 +203,8 @@ fpu_xtof(struct fpn *fp, uint32_t i, uint32_t j, uint32_t k)
 		return (FPC_NUM);
 	}
 	if (exp == (2 * EXT_EXP_BIAS + 1)) {
-		if (frac == 0)
+		/* MSB is an integer part and don't care */
+		if ((j & 0x7fffffff) == 0 && k == 0)
 			return (FPC_INF);
 		fp->fp_mant[0] = f0;
 		fp->fp_mant[1] = f1;

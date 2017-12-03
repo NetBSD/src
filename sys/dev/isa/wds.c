@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.75.18.1 2012/11/20 03:02:11 tls Exp $	*/
+/*	$NetBSD: wds.c,v 1.75.18.2 2017/12/03 11:37:05 jdolecek Exp $	*/
 
 /*
  * XXX
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wds.c,v 1.75.18.1 2012/11/20 03:02:11 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wds.c,v 1.75.18.2 2017/12/03 11:37:05 jdolecek Exp $");
 
 #include "opt_ddb.h"
 
@@ -209,7 +209,8 @@ int wds_debug = 0;
 #define	WDS_ABORT_TIMEOUT	2000	/* time to wait for abort (mSec) */
 
 integrate void
-wds_wait(bus_space_tag_t iot, bus_space_handle_t ioh, int port, int mask, int val)
+wds_wait(bus_space_tag_t iot, bus_space_handle_t ioh, int port, int mask,
+    int val)
 {
 
 	while ((bus_space_read_1(iot, ioh, port) & mask) != val)
@@ -336,7 +337,8 @@ wdsattach(device_t parent, device_t self, void *aux)
 #ifdef notyet
 	if (wpd.sc_drq != -1) {
 		if ((error = isa_dmacascade(ic, wpd.sc_drq)) != 0) {
-			aprint_error_dev(sc->sc_dev, "unable to cascade DRQ, error = %d\n", error);
+			aprint_error_dev(sc->sc_dev,
+			    "unable to cascade DRQ, error = %d\n", error);
 			return;
 		}
 	}
@@ -345,7 +347,8 @@ wdsattach(device_t parent, device_t self, void *aux)
 	    wdsintr, sc);
 #else
 	if ((error = isa_dmacascade(ic, ia->ia_drq[0].ir_drq)) != 0) {
-		aprint_error_dev(sc->sc_dev, "unable to cascade DRQ, error = %d\n", error);
+		aprint_error_dev(sc->sc_dev,
+		    "unable to cascade DRQ, error = %d\n", error);
 		return;
 	}
 
@@ -490,7 +493,8 @@ wdsintr(void *arg)
 		break;
 
 	default:
-		aprint_error_dev(sc->sc_dev, "unrecognized interrupt type %02x", c);
+		aprint_error_dev(sc->sc_dev,
+		    "unrecognized interrupt type %02x", c);
 		break;
 	}
 
@@ -593,7 +597,8 @@ wds_create_scbs(struct wds_softc *sc, void *mem, size_t size)
 	error = bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0, &seg,
 	    1, &rseg, BUS_DMA_NOWAIT);
 	if (error) {
-		aprint_error_dev(sc->sc_dev, "can't allocate memory for scbs\n");
+		aprint_error_dev(sc->sc_dev,
+		    "can't allocate memory for scbs\n");
 		return (error);
 	}
 
@@ -795,15 +800,15 @@ wds_done(struct wds_softc *sc, struct wds_scb *scb, u_char stat)
 				 */
 				switch (scb->cmd.venderr) {
 				case 0x00:
-					aprint_error_dev(sc->sc_dev, "Is this "
-					    "an error?\n");
+					aprint_error_dev(sc->sc_dev,
+					    "Is this an error?\n");
 					/* Experiment. */
 					xs->error = XS_DRIVER_STUFFUP;
 					break;
 				case 0x01:
 #if 0
-					aprint_error_dev(sc->sc_dev, "OK, see SCSI "
-					    "error field.\n");
+					aprint_error_dev(sc->sc_dev,
+					    "OK, see SCSI error field.\n");
 #endif
 					if (scb->cmd.stat == SCSI_CHECK ||
 					    scb->cmd.stat == SCSI_BUSY) {
@@ -864,7 +869,8 @@ wds_done(struct wds_softc *sc, struct wds_scb *scb, u_char stat)
 }
 
 int
-wds_find(bus_space_tag_t iot, bus_space_handle_t ioh, struct wds_probe_data *sc)
+wds_find(bus_space_tag_t iot, bus_space_handle_t ioh,
+    struct wds_probe_data *sc)
 {
 	int i;
 
@@ -1059,7 +1065,8 @@ wdsminphys(struct buf *bp)
  * Send a SCSI command.
  */
 void
-wds_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
+wds_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
+    void *arg)
 {
 	struct scsipi_xfer *xs;
 	struct scsipi_periph *periph;
@@ -1087,7 +1094,8 @@ wds_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *
 			 * Let's not worry about UIO. There isn't any code
 			 * for the non-SG boards anyway!
 			 */
-			aprint_error_dev(sc->sc_dev, "UIO is untested and disabled!\n");
+			aprint_error_dev(sc->sc_dev,
+			    "UIO is untested and disabled!\n");
 			xs->error = XS_DRIVER_STUFFUP;
 			scsipi_done(xs);
 			return;
@@ -1114,8 +1122,8 @@ wds_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *
 
 		/* Zero out the command structure. */
 		if (xs->cmdlen > sizeof(scb->cmd.scb)) {
-			aprint_error_dev(sc->sc_dev, "cmdlen %d too large for SCB\n",
-			    xs->cmdlen);
+			aprint_error_dev(sc->sc_dev,
+			    "cmdlen %d too large for SCB\n", xs->cmdlen);
 			xs->error = XS_DRIVER_STUFFUP;
 			goto out_bad;
 		}
@@ -1164,7 +1172,8 @@ wds_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *
 
 			default:
 				xs->error = XS_DRIVER_STUFFUP;
-				aprint_error_dev(sc->sc_dev, "error %d loading DMA map\n", error);
+				aprint_error_dev(sc->sc_dev,
+				    "error %d loading DMA map\n", error);
  out_bad:
 				wds_free_scb(sc, scb);
 				scsipi_done(xs);

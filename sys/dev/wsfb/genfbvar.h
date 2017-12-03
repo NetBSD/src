@@ -1,4 +1,4 @@
-/*	$NetBSD: genfbvar.h,v 1.21.12.1 2014/08/20 00:03:52 tls Exp $ */
+/*	$NetBSD: genfbvar.h,v 1.21.12.2 2017/12/03 11:37:37 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -111,9 +111,8 @@ struct genfb_softc {
 	struct genfb_mode_callback *sc_modecb;
 	int sc_backlight_level, sc_backlight_on;
 	void *sc_fbaddr;	/* kva */
-#ifdef GENFB_SHADOWFB
 	void *sc_shadowfb;
-#endif
+	bool sc_enable_shadowfb;
 	bus_addr_t sc_fboffset;	/* bus address */
 	int sc_width, sc_height, sc_stride, sc_depth;
 	size_t sc_fbsize;

@@ -1,4 +1,4 @@
-/* $NetBSD: pxa2x0_lcd.c,v 1.33.6.1 2014/08/20 00:02:48 tls Exp $ */
+/* $NetBSD: pxa2x0_lcd.c,v 1.33.6.2 2017/12/03 11:35:57 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_lcd.c,v 1.33.6.1 2014/08/20 00:02:48 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_lcd.c,v 1.33.6.2 2017/12/03 11:35:57 jdolecek Exp $");
 
 #include "opt_pxa2x0_lcd.h"
 
@@ -566,7 +566,7 @@ pxa2x0_lcd_new_screen(struct pxa2x0_lcd_softc *sc, int depth,
 			PTE_SYNC(ptep);
 			va += PAGE_SIZE;
 		}
-		tlb_flush();
+		cpu_tlb_flushID();
 	}
 
 	memset(scr->buf_va, 0, scr->buf_size);

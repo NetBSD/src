@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pppvar.h,v 1.27 2008/02/20 17:05:53 matt Exp $	*/
+/*	$NetBSD: if_pppvar.h,v 1.27.54.1 2017/12/03 11:39:02 jdolecek Exp $	*/
 /*	Id: if_pppvar.h,v 1.3 1996/07/01 01:04:37 paulus Exp	 */
 
 /*
@@ -159,7 +159,7 @@ void	ppp_restart(struct ppp_softc *);
 void	ppppktin(struct ppp_softc *, struct mbuf *, int);
 struct	mbuf *ppp_dequeue(struct ppp_softc *);
 int	pppoutput(struct ifnet *, struct mbuf *, const struct sockaddr *,
-	    struct rtentry *);
+	    const struct rtentry *);
 #endif /* _KERNEL */
 
 #endif /* !_NET_IF_PPPVAR_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmpsc.c,v 1.43.14.1 2014/08/20 00:03:39 tls Exp $	*/
+/*	$NetBSD: gtmpsc.c,v 1.43.14.2 2017/12/03 11:37:05 jdolecek Exp $	*/
 /*
  * Copyright (c) 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.43.14.1 2014/08/20 00:03:39 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.43.14.2 2017/12/03 11:37:05 jdolecek Exp $");
 
 #include "opt_kgdb.h"
 
@@ -82,11 +82,8 @@ unsigned int gtmpsc_debug = 0;
 # define DPRINTF(x)
 #endif
 
-#define GTMPSCUNIT_MASK    0x7ffff
-#define GTMPSCDIALOUT_MASK 0x80000
-
-#define GTMPSCUNIT(x)      (minor(x) & GTMPSCUNIT_MASK)
-#define GTMPSCDIALOUT(x)   (minor(x) & GTMPSCDIALOUT_MASK)
+#define GTMPSCUNIT(x)      TTUNIT(x)
+#define GTMPSCDIALOUT(x)   TTDIALOUT(x)
 
 #define CLEANUP_AND_RETURN_RXDMA(sc, ix)				    \
 	do {								    \

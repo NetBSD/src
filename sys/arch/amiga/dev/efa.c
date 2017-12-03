@@ -1,4 +1,4 @@
-/*	$NetBSD: efa.c,v 1.11.2.1 2014/08/20 00:02:43 tls Exp $ */
+/*	$NetBSD: efa.c,v 1.11.2.2 2017/12/03 11:35:48 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -136,8 +136,6 @@ efa_attach(device_t parent, device_t self, void *aux)
 
 	gayle_init();
 
-	sc->sc_dev = self;
-
 	efa_set_opts(sc);
 
 	if (!efa_mapbase(sc)) {
@@ -200,23 +198,28 @@ efa_attach(device_t parent, device_t self, void *aux)
 static void
 efa_attach_channel(struct efa_softc *sc, int chnum) 
 {
+#ifdef EFA_DEBUG
+	device_t self;
+
+	self = sc->sc_wdcdev.sc_atac.atac_dev;
+#endif /* EFA_DEBUG */
+
 	sc->sc_chanlist[chnum] = &sc->sc_ports[chnum].chan;
 
 	sc->sc_ports[chnum].chan.ch_channel = chnum;
 	sc->sc_ports[chnum].chan.ch_atac = &sc->sc_wdcdev.sc_atac;
-	sc->sc_ports[chnum].chan.ch_queue = &sc->sc_ports[chnum].queue;
 
 	if (!sc->sc_32bit_io)
 		efa_select_regset(sc, chnum, 0); /* Start in PIO0. */
 	else
 		efa_select_regset(sc, chnum, 3); 
 
-	wdc_init_shadow_regs(&sc->sc_ports[chnum].chan);
+	wdc_init_shadow_regs(CHAN_TO_WDC_REGS(&sc->sc_ports[chnum].chan));
 
 	wdcattach(&sc->sc_ports[chnum].chan);	
 
 #ifdef EFA_DEBUG
-	aprint_normal_dev(sc->sc_dev, "done init for channel %d\n", chnum);
+	aprint_normal_dev(self, "done init for channel %d\n", chnum);
 #endif
 
 }
@@ -238,6 +241,10 @@ efa_poll_kthread(void *arg)
 static void
 efa_set_opts(struct efa_softc *sc)
 {
+	device_t self;
+
+	self = sc->sc_wdcdev.sc_atac.atac_dev;
+
 #ifdef EFA_32BIT_IO 
 	sc->sc_32bit_io = true;	
 #else
@@ -251,10 +258,10 @@ efa_set_opts(struct efa_softc *sc)
 #endif /* EFA_NO_INTR */
 
 	if (sc->sc_no_intr)
-		aprint_verbose_dev(sc->sc_dev, "hardware interrupt disabled\n");
+		aprint_verbose_dev(self, "hardware interrupt disabled\n");
 
 	if (sc->sc_32bit_io)
-		aprint_verbose_dev(sc->sc_dev, "32-bit I/O enabled\n");
+		aprint_verbose_dev(self, "32-bit I/O enabled\n");
 }
 
 int
@@ -301,9 +308,14 @@ efa_intr(void *arg)
 static bool
 efa_mapbase(struct efa_softc *sc) 
 {
-	int i, j;
 	static struct bus_space_tag fata_cmd_iot;
 	static struct bus_space_tag gayle_cmd_iot;
+	int i, j;
+#ifdef EFA_DEBUG
+	device_t self;
+
+	self = sc->sc_wdcdev.sc_atac.atac_dev;
+#endif /* EFA_DEBUG */
 	
 	gayle_cmd_iot.base = (bus_addr_t) ztwomap(GAYLE_IDE_BASE + 2);
 	gayle_cmd_iot.absm = &amiga_bus_stride_4swap;
@@ -311,7 +323,7 @@ efa_mapbase(struct efa_softc *sc)
 	fata_cmd_iot.absm = &amiga_bus_stride_4swap;
 
 #ifdef EFA_DEBUG
-	aprint_normal_dev(sc->sc_dev, "Gayle %x -> %x, FastATA %x -> %x\n",
+	aprint_normal_dev(self, "Gayle %x -> %x, FastATA %x -> %x\n",
 	    GAYLE_IDE_BASE, gayle_cmd_iot.base, FATA1_BASE, fata_cmd_iot.base);
 #endif
 
@@ -370,9 +382,14 @@ efa_mapreg_gayle(struct efa_softc *sc)
 static bool
 efa_mapreg_native(struct efa_softc *sc) 
 {
-	int i,j;
 	struct wdc_regs *wdr_gayle = &sc->sc_gayle_wdc_regs;
 	struct wdc_regs *wdr_fata;
+	int i,j;
+#ifdef EFA_DEBUG
+	device_t self;
+
+	self = sc->sc_wdcdev.sc_atac.atac_dev;
+#endif /* EFA_DEBUG */
 
 	for (i = 0; i < FATA1_CHANNELS; i++) {
 
@@ -383,7 +400,7 @@ efa_mapreg_native(struct efa_softc *sc)
 
 			if (pio_offsets[j] == PIO_NSUPP) {
 #ifdef EFA_DEBUG
-				aprint_normal_dev(sc->sc_dev, 
+				aprint_normal_dev(self, 
 				    "Skipping mapping for PIO mode %x\n", j);
 #endif
 				continue;
@@ -395,7 +412,7 @@ efa_mapreg_native(struct efa_softc *sc)
 			    return false;
 			}
 #ifdef EFA_DEBUG
-			aprint_normal_dev(sc->sc_dev, 
+			aprint_normal_dev(self, 
 			    "Chan %x PIO mode %x mapped %x -> %x\n",
 			    i, j, (bus_addr_t) kvtop((void*) 
 			    wdr_fata->cmd_baseioh), (unsigned int) 
@@ -465,15 +482,20 @@ efa_setup_channel(struct ata_channel *chp)
 	struct ata_drive_datas *drvp;
 	struct efa_softc *sc;
 	int ipl;
+#ifdef EFA_DEBUG
+	device_t self;
+#endif /* EFA_DEBUG */
 
 	chnum = chp->ch_channel;
 	atac = chp->ch_atac;
+
 	sc = device_private(atac->atac_dev);
 
 	mode = 5; /* start with fastest possible setting */
 
 #ifdef EFA_DEBUG
-	aprint_normal_dev(sc->sc_dev, "efa_setup_channel for ch %d\n",
+	self = sc->sc_wdcdev.sc_atac.atac_dev;
+	aprint_normal_dev(self, "efa_setup_channel for ch %d\n",
 	    chnum);
 #endif /* EFA_DEBUG */
 
@@ -492,7 +514,7 @@ efa_setup_channel(struct ata_channel *chp)
 		/* TODO: check if sc_ports->mode_ok */
 
 #ifdef EFA_DEBUG
-		aprint_normal_dev(sc->sc_dev, "drive %d supports %d\n",
+		aprint_normal_dev(self, "drive %d supports %d\n",
 		    drive, drvp->PIO_cap);
 #endif /* EFA_DEBUG */
 
@@ -502,7 +524,7 @@ efa_setup_channel(struct ata_channel *chp)
 	/* Change FastATA register set. */
 	efa_select_regset(sc, chnum, mode);
 	/* re-init shadow regs */
-	wdc_init_shadow_regs(&sc->sc_ports[chnum].chan);
+	wdc_init_shadow_regs(CHAN_TO_WDC_REGS(&sc->sc_ports[chnum].chan));
 
 	splx(ipl);
 }
@@ -511,12 +533,17 @@ static void
 efa_select_regset(struct efa_softc *sc, int chnum, uint8_t piomode) 
 {
 	struct wdc_softc *wdc;
+#ifdef EFA_DEBUG
+	device_t self;
+
+	self = sc->sc_wdcdev.sc_atac.atac_dev;
+#endif /* EFA_DEBUG */
 
 	wdc = CHAN_TO_WDC(&sc->sc_ports[chnum].chan);	
 	wdc->regs[chnum] = sc->sc_ports[chnum].wdr[piomode]; 
 
 #ifdef EFA_DEBUG
-	aprint_normal_dev(sc->sc_dev, "switched ch %d to PIO %d\n",
+	aprint_normal_dev(self, "switched ch %d to PIO %d\n",
 	    chnum, piomode);
 
 	efa_debug_print_regmapping(&wdc->regs[chnum]);

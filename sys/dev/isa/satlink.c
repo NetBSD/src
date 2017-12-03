@@ -1,4 +1,4 @@
-/*	$NetBSD: satlink.c,v 1.42.22.2 2014/08/20 00:03:39 tls Exp $	*/
+/*	$NetBSD: satlink.c,v 1.42.22.3 2017/12/03 11:37:05 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satlink.c,v 1.42.22.2 2014/08/20 00:03:39 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satlink.c,v 1.42.22.3 2017/12/03 11:37:05 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -456,11 +456,19 @@ filt_satlinkread(struct knote *kn, long hint)
 	return (1);
 }
 
-static const struct filterops satlinkread_filtops =
-	{ 1, NULL, filt_satlinkrdetach, filt_satlinkread };
+static const struct filterops satlinkread_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_satlinkrdetach,
+	.f_event = filt_satlinkread,
+};
 
-static const struct filterops satlink_seltrue_filtops =
-	{ 1, NULL, filt_satlinkrdetach, filt_seltrue };
+static const struct filterops satlink_seltrue_filtops = {
+	.f_isfd = 1,
+	.f_attach = NULL,
+	.f_detach = filt_satlinkrdetach,
+	.f_event = filt_seltrue,
+};
 
 int
 satlinkkqfilter(dev_t dev, struct knote *kn)

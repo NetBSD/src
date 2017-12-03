@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_engine_disp_dacnv50.c,v 1.1.1.1.6.2 2014/08/20 00:04:12 tls Exp $	*/
+/*	$NetBSD: nouveau_engine_disp_dacnv50.c,v 1.1.1.1.6.3 2017/12/03 11:37:53 jdolecek Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_engine_disp_dacnv50.c,v 1.1.1.1.6.2 2014/08/20 00:04:12 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_engine_disp_dacnv50.c,v 1.1.1.1.6.3 2017/12/03 11:37:53 jdolecek Exp $");
 
 #include <core/os.h>
 #include <core/class.h>
@@ -97,6 +97,7 @@ nv50_dac_mthd(struct nouveau_object *object, u32 mthd, void *args, u32 size)
 		break;
 	default:
 		BUG_ON(1);
+		ret = -EIO;	/* XXX GCC */
 	}
 
 	return ret;

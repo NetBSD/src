@@ -1,4 +1,4 @@
-/*	$NetBSD: ixm1200_machdep.c,v 1.51.2.2 2014/08/20 00:02:55 tls Exp $ */
+/*	$NetBSD: ixm1200_machdep.c,v 1.51.2.3 2017/12/03 11:36:05 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2002, 2003
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.51.2.2 2014/08/20 00:02:55 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.51.2.3 2017/12/03 11:36:05 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -90,10 +90,6 @@ __KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.51.2.2 2014/08/20 00:02:55 tls
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
-#ifndef DB_ELFSIZE
-#error Must define DB_ELFSIZE!
-#endif
-#define ELFSIZE	DB_ELFSIZE
 #include <sys/exec_elf.h>
 #endif
 
@@ -150,10 +146,10 @@ BootConfig bootconfig;          /* Boot config storage */
 char *boot_args = NULL;
 char *boot_file = NULL;
 
-vm_offset_t physical_start;
-vm_offset_t physical_freestart;
-vm_offset_t physical_freeend;
-vm_offset_t physical_end;
+vaddr_t physical_start;
+vaddr_t physical_freestart;
+vaddr_t physical_freeend;
+vaddr_t physical_end;
 u_int free_pages;
 
 /*int debug_flags;*/
@@ -161,7 +157,7 @@ u_int free_pages;
 int max_processes = 64;                 /* Default number */
 #endif  /* !PMAP_STATIC_L1S */
 
-vm_offset_t msgbufphys;
+paddr_t msgbufphys;
 
 extern int end;
 
@@ -676,7 +672,7 @@ initarm(void *arg)
 #ifdef VERBOSE_INIT_ARM
 	printf("page ");
 #endif
-	uvm_setpagesize();	/* initialize PAGE_SIZE-dependent variables */
+	uvm_md_init();
 	uvm_page_physload(atop(physical_freestart), atop(physical_freeend),
 	    atop(physical_freestart), atop(physical_freeend),
 	    VM_FREELIST_DEFAULT);

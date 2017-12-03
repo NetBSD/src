@@ -1,0 +1,11 @@
+# $NetBSD: majors.usb,v 1.1.18.2 2017/12/03 11:36:57 jdolecek Exp $
+#
+# MI major assignments for USB devices
+#
+device-major	usb		char 220		usb
+device-major	uhid		char 221		uhid
+device-major	ulpt		char 222		ulpt
+device-major	ugen		char 223		ugen
+device-major	ucom		char 224		ucom
+device-major	urio		char 225		urio
+device-major	uscanner	char 226		uscanner

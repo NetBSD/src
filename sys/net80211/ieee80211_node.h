@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.h,v 1.24 2011/10/07 16:51:45 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_node.h,v 1.24.12.1 2017/12/03 11:39:03 jdolecek Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -47,7 +47,7 @@
  * (waiting for a response to a management frame when operating
  * as a station), and node inactivity processing (when operating
  * as an AP).  For inactivity processing each node has a timeout
- * set in it's ni_inact field that is decremented on each timeout
+ * set in its ni_inact field that is decremented on each timeout
  * and the node is reclaimed when the counter goes to zero.  We
  * use different inactivity timeout values depending on whether
  * the node is associated and authorized (either by 802.1x or

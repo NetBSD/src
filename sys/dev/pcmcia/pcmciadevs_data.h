@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.232 2012/08/23 10:39:25 kiyohara Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.232.2.1 2017/12/03 11:37:31 jdolecek Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.230 2012/08/23 10:37:56 kiyohara Exp
+ *	NetBSD: pcmciadevs,v 1.232 2016/06/01 23:31:53 pgoyette Exp
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -118,6 +118,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "3Com Corporation",
 	    "3Com 3c574-TX 10/100Mbps Ethernet",	}
+	,
+	{
+	    PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3CRWE777A,
+	    PCMCIA_CIS_3COM_3CRWE777A,
+	    0,
+	    "3Com Corporation",
+	    "3Com AirConnect Wireless LAN",	}
 	,
 	{
 	    PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3C1,

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_isapnp.c,v 1.34 2008/08/27 05:33:47 christos Exp $	*/
+/*	$NetBSD: if_ep_isapnp.c,v 1.34.38.1 2017/12/03 11:37:05 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone <jonathan@NetBSD.org>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_isapnp.c,v 1.34 2008/08/27 05:33:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_isapnp.c,v 1.34.38.1 2017/12/03 11:37:05 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,8 @@ ep_isapnp_attach(device_t parent, device_t self, void *aux)
 	struct isapnp_attach_args *ipa = aux;
 	int chipset;
 
-	printf("\n");
+	aprint_naive("\n");
+	aprint_normal("\n");
 
 	sc->sc_dev = self;
 	if (isapnp_config(ipa->ipa_iot, ipa->ipa_memt, ipa)) {
@@ -95,8 +96,7 @@ ep_isapnp_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	printf("%s: %s %s\n", device_xname(sc->sc_dev), ipa->ipa_devident,
-	    ipa->ipa_devclass);
+	aprint_normal("%s %s\n", ipa->ipa_devident, ipa->ipa_devclass);
 
 	sc->sc_iot = ipa->ipa_iot;
 	sc->sc_ioh = ipa->ipa_io[0].h;

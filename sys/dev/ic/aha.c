@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.61 2010/11/13 13:52:00 uebayasi Exp $	*/
+/*	$NetBSD: aha.c,v 1.61.18.1 2017/12/03 11:37:02 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aha.c,v 1.61 2010/11/13 13:52:00 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aha.c,v 1.61.18.1 2017/12/03 11:37:02 jdolecek Exp $");
 
 #include "opt_ddb.h"
 
@@ -169,7 +169,8 @@ aha_cmd(bus_space_tag_t iot, bus_space_handle_t ioh, struct aha_softc *sc,
 	 * queue feeding to us.
 	 */
 	if (ocnt) {
-		while ((bus_space_read_1(iot, ioh, AHA_STAT_PORT)) & AHA_STAT_DF)
+		while ((bus_space_read_1(iot, ioh, AHA_STAT_PORT))
+		    & AHA_STAT_DF)
 			bus_space_read_1(iot, ioh, AHA_DATA_PORT);
 	}
 	/*
@@ -185,8 +186,10 @@ aha_cmd(bus_space_tag_t iot, bus_space_handle_t ioh, struct aha_softc *sc,
 		}
 		if (!i) {
 			if (opcode != AHA_INQUIRE_REVISION)
-				printf("%s: aha_cmd, cmd/data port full\n", name);
-			bus_space_write_1(iot, ioh, AHA_CTRL_PORT, AHA_CTRL_SRST);
+				printf("%s: aha_cmd, cmd/data port full\n",
+				    name);
+			bus_space_write_1(iot, ioh, AHA_CTRL_PORT,
+			    AHA_CTRL_SRST);
 			return (1);
 		}
 		bus_space_write_1(iot, ioh, AHA_CMD_PORT, *ibuf++);
@@ -206,7 +209,8 @@ aha_cmd(bus_space_tag_t iot, bus_space_handle_t ioh, struct aha_softc *sc,
 			if (opcode != AHA_INQUIRE_REVISION)
 				printf("%s: aha_cmd, cmd/data port empty %d\n",
 				    name, ocnt);
-			bus_space_write_1(iot, ioh, AHA_CTRL_PORT, AHA_CTRL_SRST);
+			bus_space_write_1(iot, ioh, AHA_CTRL_PORT,
+			    AHA_CTRL_SRST);
 			return (1);
 		}
 		*obuf++ = bus_space_read_1(iot, ioh, AHA_DATA_PORT);
@@ -705,7 +709,8 @@ aha_done(struct aha_softc *sc, struct aha_ccb *ccb)
 		} else if (ccb->target_stat != SCSI_OK) {
 			switch (ccb->target_stat) {
 			case SCSI_CHECK:
-				s1 = (struct scsi_sense_data *) (((char *) (&ccb->scsi_cmd)) +
+				s1 = (struct scsi_sense_data *)
+				    (((char *)(&ccb->scsi_cmd)) +
 				    ccb->scsi_cmd_length);
 				s2 = &xs->sense.scsi_sense;
 				*s2 = *s1;
@@ -731,7 +736,8 @@ aha_done(struct aha_softc *sc, struct aha_ccb *ccb)
  * Find the board and find its irq/drq
  */
 int
-aha_find(bus_space_tag_t iot, bus_space_handle_t ioh, struct aha_probe_data *sc)
+aha_find(bus_space_tag_t iot, bus_space_handle_t ioh,
+    struct aha_probe_data *sc)
 {
 	int i;
 	u_char sts;
@@ -756,7 +762,8 @@ aha_find(bus_space_tag_t iot, bus_space_handle_t ioh, struct aha_probe_data *sc)
 	 * that it's not there.. good for the probe
 	 */
 
-	bus_space_write_1(iot, ioh, AHA_CTRL_PORT, AHA_CTRL_HRST | AHA_CTRL_SRST);
+	bus_space_write_1(iot, ioh, AHA_CTRL_PORT,
+	    AHA_CTRL_HRST | AHA_CTRL_SRST);
 
 	delay(100);
 	for (i = AHA_RESET_TIMEOUT; i; i--) {
@@ -924,11 +931,12 @@ aha_init(struct aha_softc *sc)
 
 	for (i = 0; i < 8; i++) {
 		if (!setup.reply.sync[i].valid ||
-		    (!setup.reply.sync[i].offset && !setup.reply.sync[i].period))
+		    (!setup.reply.sync[i].offset
+			&& !setup.reply.sync[i].period))
 			continue;
 		printf("%s targ %d: sync, offset %d, period %dnsec\n",
-		    device_xname(sc->sc_dev), i,
-		    setup.reply.sync[i].offset, setup.reply.sync[i].period * 50 + 200);
+		    device_xname(sc->sc_dev), i, setup.reply.sync[i].offset,
+		    setup.reply.sync[i].period * 50 + 200);
 	}
 
 	/*
@@ -957,16 +965,14 @@ aha_init(struct aha_softc *sc)
 	    1, sizeof(struct aha_control), 0, BUS_DMA_NOWAIT,
 	    &sc->sc_dmamap_control)) != 0) {
 		aprint_error_dev(sc->sc_dev,
-		    "unable to create control DMA map, error = %d\n",
-		    error);
+		    "unable to create control DMA map, error = %d\n", error);
 		return (error);
 	}
 	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_dmamap_control,
 	    sc->sc_control, sizeof(struct aha_control), NULL,
 	    BUS_DMA_NOWAIT)) != 0) {
 		aprint_error_dev(sc->sc_dev,
-		    "unable to load control DMA map, error = %d\n",
-		    error);
+		    "unable to load control DMA map, error = %d\n", error);
 		return (error);
 	}
 
@@ -1314,7 +1320,8 @@ aha_poll(struct aha_softc *sc, struct scsipi_xfer *xs, int count)
 		 * If we had interrupts enabled, would we
 		 * have got an interrupt?
 		 */
-		if (bus_space_read_1(iot, ioh, AHA_INTR_PORT) & AHA_INTR_ANYINTR)
+		if (bus_space_read_1(iot, ioh, AHA_INTR_PORT)
+		    & AHA_INTR_ANYINTR)
 			aha_intr(sc);
 		if (xs->xs_status & XS_STS_DONE)
 			return (0);

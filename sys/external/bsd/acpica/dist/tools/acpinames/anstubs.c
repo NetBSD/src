@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -60,71 +60,6 @@
 
 /* Utilities */
 
-void
-AcpiUtSubsystemShutdown (
-    void)
-{
-}
-
-ACPI_STATUS
-AcpiUtExecute_STA (
-    ACPI_NAMESPACE_NODE     *DeviceNode,
-    UINT32                  *StatusFlags)
-{
-    return (AE_NOT_IMPLEMENTED);
-}
-
-ACPI_STATUS
-AcpiUtExecute_HID (
-    ACPI_NAMESPACE_NODE     *DeviceNode,
-    ACPI_PNP_DEVICE_ID      **ReturnId)
-{
-    return (AE_NOT_IMPLEMENTED);
-}
-
-ACPI_STATUS
-AcpiUtExecute_CID (
-    ACPI_NAMESPACE_NODE     *DeviceNode,
-    ACPI_PNP_DEVICE_ID_LIST **ReturnCidList)
-{
-    return (AE_NOT_IMPLEMENTED);
-}
-
-ACPI_STATUS
-AcpiUtExecute_UID (
-    ACPI_NAMESPACE_NODE     *DeviceNode,
-    ACPI_PNP_DEVICE_ID      **ReturnId)
-{
-    return (AE_NOT_IMPLEMENTED);
-}
-
-ACPI_STATUS
-AcpiUtExecute_SUB (
-    ACPI_NAMESPACE_NODE     *DeviceNode,
-    ACPI_PNP_DEVICE_ID      **ReturnId)
-{
-    return (AE_NOT_IMPLEMENTED);
-}
-
-ACPI_STATUS
-AcpiUtExecutePowerMethods (
-    ACPI_NAMESPACE_NODE     *DeviceNode,
-    const char              **MethodNames,
-    UINT8                   MethodCount,
-    UINT8                   *OutValues)
-{
-    return (AE_NOT_IMPLEMENTED);
-}
-
-ACPI_STATUS
-AcpiUtEvaluateNumericObject (
-    char                    *ObjectName,
-    ACPI_NAMESPACE_NODE     *DeviceNode,
-    UINT64                  *Value)
-{
-    return (AE_NOT_IMPLEMENTED);
-}
-
 ACPI_STATUS
 AcpiUtCopyIobjectToEobject (
     ACPI_OPERAND_OBJECT     *Obj,
@@ -150,8 +85,7 @@ AcpiUtCopyIobjectToIobject (
     return (AE_NOT_IMPLEMENTED);
 }
 
-
-/* Hardware manager */
+/* Hardware */
 
 UINT32
 AcpiHwGetMode (
@@ -160,22 +94,7 @@ AcpiHwGetMode (
     return (0);
 }
 
-
 /* Event manager */
-
-ACPI_STATUS
-AcpiEvInstallXruptHandlers (
-    void)
-{
-    return (AE_OK);
-}
-
-ACPI_STATUS
-AcpiEvInitializeEvents (
-    void)
-{
-    return (AE_OK);
-}
 
 ACPI_STATUS
 AcpiEvInstallRegionHandlers (
@@ -193,42 +112,27 @@ AcpiEvInitializeOpRegions (
 
 ACPI_STATUS
 AcpiEvInitializeRegion (
-    ACPI_OPERAND_OBJECT     *RegionObj,
-    BOOLEAN                 AcpiNsLocked)
-{
-    return (AE_OK);
-}
-
-#if (!ACPI_REDUCED_HARDWARE)
-ACPI_STATUS
-AcpiEvDeleteGpeBlock (
-    ACPI_GPE_BLOCK_INFO     *GpeBlock)
+    ACPI_OPERAND_OBJECT     *RegionObj)
 {
     return (AE_OK);
 }
 
 ACPI_STATUS
-AcpiEnable (
+AcpiEvInstallXruptHandlers (
     void)
 {
     return (AE_OK);
 }
-#endif /* !ACPI_REDUCED_HARDWARE */
+
+ACPI_STATUS
+AcpiEvInitializeEvents (
+    void)
+{
+    return (AE_OK);
+}
 
 
 /* AML Interpreter */
-
-void
-AcpiExUnlinkMutex (
-    ACPI_OPERAND_OBJECT     *ObjDesc)
-{
-}
-
-void
-AcpiExReleaseAllMutexes (
-    ACPI_THREAD_STATE       *Thread)
-{
-}
 
 ACPI_STATUS
 AcpiExReadDataFromField (
@@ -246,29 +150,6 @@ AcpiExWriteDataToField (
     ACPI_OPERAND_OBJECT     **ResultDesc)
 {
     return (AE_NOT_IMPLEMENTED);
-}
-
-ACPI_STATUS
-AcpiExPrepFieldValue (
-    ACPI_CREATE_FIELD_INFO  *Info)
-{
-    return (AE_OK);
-}
-
-ACPI_STATUS
-AcpiExAcquireMutexObject (
-    UINT16                  Timeout,
-    ACPI_OPERAND_OBJECT     *ObjDesc,
-    ACPI_THREAD_ID          ThreadId)
-{
-    return (AE_OK);
-}
-
-ACPI_STATUS
-AcpiExReleaseMutexObject (
-    ACPI_OPERAND_OBJECT     *ObjDesc)
-{
-    return (AE_OK);
 }
 
 ACPI_STATUS
@@ -297,13 +178,74 @@ AcpiNsExecModuleCodeList (
 {
 }
 
+void
+AcpiExDoDebugObject (
+    ACPI_OPERAND_OBJECT     *SourceDesc,
+    UINT32                  Level,
+    UINT32                  Index)
+{
+    return;
+}
+
+void
+AcpiExStartTraceMethod (
+    ACPI_NAMESPACE_NODE     *MethodNode,
+    ACPI_OPERAND_OBJECT     *ObjDesc,
+    ACPI_WALK_STATE         *WalkState)
+{
+    return;
+}
+
+void
+AcpiExStopTraceMethod (
+    ACPI_NAMESPACE_NODE     *MethodNode,
+    ACPI_OPERAND_OBJECT     *ObjDesc,
+    ACPI_WALK_STATE         *WalkState)
+{
+    return;
+}
+
+void
+AcpiExStartTraceOpcode (
+    ACPI_PARSE_OBJECT       *Op,
+    ACPI_WALK_STATE         *WalkState)
+{
+    return;
+}
+
+void
+AcpiExStopTraceOpcode (
+    ACPI_PARSE_OBJECT       *Op,
+    ACPI_WALK_STATE         *WalkState)
+
+{
+    return;
+}
+
+void
+AcpiExTracePoint (
+    ACPI_TRACE_EVENT_TYPE   Type,
+    BOOLEAN                 Begin,
+    UINT8                   *Aml,
+    char                    *Pathname)
+{
+    return;
+}
+
 
 /* Dispatcher */
 
 ACPI_STATUS
-AcpiDsInitializeObjects (
-    UINT32                  TableIndex,
-    ACPI_NAMESPACE_NODE     *StartNode)
+AcpiDsAutoSerializeMethod (
+    ACPI_NAMESPACE_NODE     *Node,
+    ACPI_OPERAND_OBJECT     *ObjDesc)
+{
+    return (AE_OK);
+}
+
+ACPI_STATUS
+AcpiDsInitializeRegion (
+    ACPI_HANDLE             ObjHandle)
 {
     return (AE_OK);
 }
@@ -405,45 +347,4 @@ AcpiDsExecEndOp (
     ACPI_WALK_STATE         *State)
 {
     return (AE_NOT_IMPLEMENTED);
-}
-
-
-/* AML Debugger */
-
-void
-AcpiDbDisplayArgumentObject (
-    ACPI_OPERAND_OBJECT     *ObjDesc,
-    ACPI_WALK_STATE         *WalkState)
-{
-}
-
-ACPI_STATUS
-AcpiDbInitialize (
-    void)
-{
-    return (AE_OK);
-}
-
-void
-AcpiDbTerminate (
-    void)
-{
-}
-
-/* OSL interfaces */
-
-ACPI_THREAD_ID
-AcpiOsGetThreadId (
-    void)
-{
-    return (0xFFFF);
-}
-
-ACPI_STATUS
-AcpiOsExecute (
-    ACPI_EXECUTE_TYPE       Type,
-    ACPI_OSD_EXEC_CALLBACK  Function,
-    void                    *Context)
-{
-    return (AE_SUPPORT);
 }

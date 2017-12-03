@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.32 2012/02/28 20:26:37 mbalmer Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.32.2.1 2017/12/03 11:36:50 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.32 2012/02/28 20:26:37 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.32.2.1 2017/12/03 11:36:50 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -200,11 +200,19 @@ void *
 isa_intr_establish(isa_chipset_tag_t ic, int irq, int type, int level,
     int (*ih_fun)(void *), void *ih_arg)
 {
+	return isa_intr_establish_xname(ic, irq, type, level,
+	    ih_fun, ih_arg, "unknown");
+}
+
+void *
+isa_intr_establish_xname(isa_chipset_tag_t ic, int irq, int type, int level,
+    int (*ih_fun)(void *), void *ih_arg, const char *xname)
+{
 	struct pic *pic;
 	int pin;
 #if NIOAPIC > 0
-	int mpih;
-	struct ioapic_softc *ioapic;
+	intr_handle_t mpih = 0;
+	struct ioapic_softc *ioapic = NULL;
 #endif
 
 	pin = irq;
@@ -229,20 +237,48 @@ isa_intr_establish(isa_chipset_tag_t ic, int irq, int type, int level,
 			printf("isa_intr_establish: no MP mapping found\n");
 	}
 #endif
-	return intr_establish(irq, pic, pin, type, level, ih_fun, ih_arg,
-	    false);
+#if defined(XEN)
+	KASSERT(APIC_IRQ_ISLEGACY(irq));
+
+	int evtch;
+	char evname[16];
+
+	mpih |= APIC_IRQ_LEGACY_IRQ(irq);
+
+	evtch = xen_pirq_alloc((intr_handle_t *)&mpih, type); /* XXX: legacy - xen just tosses irq back at us */
+	if (evtch == -1)
+		return NULL;
+#if NIOAPIC > 0
+	if (ioapic)
+		snprintf(evname, sizeof(evname), "%s pin %d",
+		    device_xname(ioapic->sc_dev), pin);
+	else
+#endif
+		snprintf(evname, sizeof(evname), "irq%d", irq);
+
+	aprint_debug("irq: %d requested on pic: %s.\n", irq, pic->pic_name);
+
+	return (void *)pirq_establish(irq, evtch, ih_fun, ih_arg, level,
+	    evname);
+#else /* defined(XEN) */
+	return intr_establish_xname(irq, pic, pin, type, level, ih_fun, ih_arg,
+	    false, xname);
+#endif
+
 }
 
 /* Deregister an interrupt handler. */
 void
 isa_intr_disestablish(isa_chipset_tag_t ic, void *arg)
 {
+#if !defined(XEN)
 	struct intrhand *ih = arg;
 
 	if (!LEGAL_IRQ(ih->ih_pin))
 		panic("intr_disestablish: bogus irq");
 
 	intr_disestablish(ih);
+#endif	
 }
 
 void

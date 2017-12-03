@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.c,v 1.72 2012/02/12 16:34:09 matt Exp $	*/
+/*	$NetBSD: macrom.c,v 1.72.6.1 2017/12/03 11:36:24 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: macrom.c,v 1.72 2012/02/12 16:34:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: macrom.c,v 1.72.6.1 2017/12/03 11:36:24 jdolecek Exp $");
 
 #include "opt_adb.h"
 #include "opt_ddb.h"
@@ -1125,7 +1125,7 @@ mrg_initadbintr(void)
 }
 
 /*
- * NOTE:  By eliminating the setvectors routine and moving it's function
+ * NOTE:  By eliminating the setvectors routine and moving its function
  *        to here we only have to deal with re-locating MacOS Addresses
  *        once and all in one place.
  */

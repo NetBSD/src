@@ -1,4 +1,4 @@
-/* $NetBSD: mt2131.c,v 1.4 2011/10/02 19:03:56 jmcneill Exp $ */
+/* $NetBSD: mt2131.c,v 1.4.12.1 2017/12/03 11:37:02 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt2131.c,v 1.4 2011/10/02 19:03:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mt2131.c,v 1.4.12.1 2017/12/03 11:37:02 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,9 +101,6 @@ mt2131_open(device_t parent, i2c_tag_t t, i2c_addr_t a)
 	}
 
 	sc = kmem_alloc(sizeof(*sc), KM_SLEEP);
-	if (sc == NULL)
-                return NULL;
-
 	sc->parent = parent;
 	sc->tag = t;
 	sc->addr = a;
@@ -255,7 +252,7 @@ mt2131_write(struct mt2131_softc *sc, uint8_t a, uint8_t v)
 	return ret;
 }
 
-MODULE(MODULE_CLASS_DRIVER, mt2131, "iic");
+MODULE(MODULE_CLASS_DRIVER, mt2131, "i2cexec");
 
 static int
 mt2131_modcmd(modcmd_t cmd, void *priv)

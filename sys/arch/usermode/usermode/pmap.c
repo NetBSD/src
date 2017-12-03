@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.105 2012/07/28 19:08:26 matt Exp $ */
+/* $NetBSD: pmap.c,v 1.105.2.1 2017/12/03 11:36:47 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.105 2012/07/28 19:08:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.105.2.1 2017/12/03 11:36:47 jdolecek Exp $");
 
 #include "opt_memsize.h"
 #include "opt_kmempages.h"
@@ -335,8 +335,8 @@ pmap_bootstrap(void)
 	fpos += pm_entries_size;
 
 	/* set up kernel pmap and add a l1 map */
-        pmap = pmap_kernel(); 
-        memset(pmap, 0, sizeof(*pmap)); 
+        pmap = pmap_kernel();
+        memset(pmap, 0, sizeof(*pmap));
 	pmap->pm_count = 1;		/* reference */
 	pmap->pm_flags = PM_ACTIVE;	/* kernel pmap is allways active */
 	pmap->pm_l1 = (struct pmap_l2 **) kmem_kvm_cur_start;

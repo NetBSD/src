@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -44,7 +44,6 @@
 #define _DECLARE_PR_GLOBALS
 
 #include "aslcompiler.h"
-#include "dtcompiler.h"
 
 /*
  * TBDs:
@@ -67,6 +66,14 @@ PrDoDirective (
     char                    *DirectiveToken,
     char                    **Next);
 
+static void
+PrGetNextLineInit (
+    void);
+
+static UINT32
+PrGetNextLine (
+    FILE                    *Handle);
+
 static int
 PrMatchDirective (
     char                    *Directive);
@@ -85,27 +92,40 @@ PrDbgPrint (
     char                    *Action,
     char                    *DirectiveName);
 
+static void
+PrDoIncludeBuffer (
+    char                    *Pathname,
+    char                    *BufferName);
+
+static void
+PrDoIncludeFile (
+    char                    *Pathname);
+
 
 /*
  * Supported preprocessor directives
+ * Each entry is of the form "Name, ArgumentCount"
  */
 static const PR_DIRECTIVE_INFO      Gbl_DirectiveInfo[] =
 {
-    {"define",  1},
-    {"elif",    0}, /* Converted to #else..#if internally */
-    {"else",    0},
-    {"endif",   0},
-    {"error",   1},
-    {"if",      1},
-    {"ifdef",   1},
-    {"ifndef",  1},
-    {"include", 0}, /* Argument is not standard format, so 0 */
-    {"line",    1},
-    {"pragma",  1},
-    {"undef",   1},
-    {"warning", 1},
-    {NULL,      0}
+    {"define",          1},
+    {"elif",            0}, /* Converted to #else..#if internally */
+    {"else",            0},
+    {"endif",           0},
+    {"error",           1},
+    {"if",              1},
+    {"ifdef",           1},
+    {"ifndef",          1},
+    {"include",         0}, /* Argument is not standard format, so just use 0 here */
+    {"includebuffer",   0}, /* Argument is not standard format, so just use 0 here */
+    {"line",            1},
+    {"pragma",          1},
+    {"undef",           1},
+    {"warning",         1},
+    {NULL,              0}
 };
+
+/* This table must match ordering of above table exactly */
 
 enum Gbl_DirectiveIndexes
 {
@@ -118,10 +138,11 @@ enum Gbl_DirectiveIndexes
     PR_DIRECTIVE_IFDEF,
     PR_DIRECTIVE_IFNDEF,
     PR_DIRECTIVE_INCLUDE,
+    PR_DIRECTIVE_INCLUDEBUFFER,
     PR_DIRECTIVE_LINE,
     PR_DIRECTIVE_PRAGMA,
     PR_DIRECTIVE_UNDEF,
-    PR_DIRECTIVE_WARNING,
+    PR_DIRECTIVE_WARNING
 };
 
 #define ASL_DIRECTIVE_NOT_FOUND     -1
@@ -171,7 +192,7 @@ PrInitializeGlobals (
     /* Init globals */
 
     Gbl_InputFileList = NULL;
-    Gbl_CurrentLineNumber = 0;
+    Gbl_CurrentLineNumber = 1;
     Gbl_PreprocessorLineNumber = 1;
     Gbl_PreprocessorError = FALSE;
 
@@ -256,7 +277,7 @@ PrDoPreprocess (
 
     } while (MoreInputFiles);
 
-    /* Point compiler input to the new preprocessor output file (.i) */
+    /* Point compiler input to the new preprocessor output file (.pre) */
 
     FlCloseFile (ASL_FILE_INPUT);
     Gbl_Files[ASL_FILE_INPUT].Handle = Gbl_Files[ASL_FILE_PREPROCESSOR].Handle;
@@ -265,7 +286,10 @@ PrDoPreprocess (
     /* Reset globals to allow compiler to run */
 
     FlSeekFile (ASL_FILE_INPUT, 0);
-    Gbl_CurrentLineNumber = 1;
+    if (!Gbl_PreprocessOnly)
+    {
+        Gbl_CurrentLineNumber = 0;
+    }
 
     DbgPrint (ASL_DEBUG_OUTPUT, "Preprocessing phase complete \n\n");
 }
@@ -282,7 +306,8 @@ PrDoPreprocess (
  * DESCRIPTION: Preprocess one entire file, line-by-line.
  *
  * Input:  Raw user ASL from ASL_FILE_INPUT
- * Output: Preprocessed file written to ASL_FILE_PREPROCESSOR
+ * Output: Preprocessed file written to ASL_FILE_PREPROCESSOR and
+ *         (optionally) ASL_FILE_PREPROCESSOR_USER
  *
  ******************************************************************************/
 
@@ -290,7 +315,7 @@ static void
 PrPreprocessInputFile (
     void)
 {
-    UINT32                  Offset;
+    UINT32                  Status;
     char                    *Token;
     char                    *ReplaceString;
     PR_DEFINE_INFO          *DefineInfo;
@@ -299,10 +324,20 @@ PrPreprocessInputFile (
     int                     OffsetAdjust;
 
 
-    /* Scan line-by-line. Comments and blank lines are skipped by this function */
+    PrGetNextLineInit ();
 
-    while ((Offset = DtGetNextLine (Gbl_Files[ASL_FILE_INPUT].Handle)) != ASL_EOF)
+    /* Scan source line-by-line and process directives. Then write the .i file */
+
+    while ((Status = PrGetNextLine (Gbl_Files[ASL_FILE_INPUT].Handle)) != ASL_EOF)
     {
+        Gbl_CurrentLineNumber++;
+        Gbl_LogicalLineNumber++;
+
+        if (Status == ASL_IGNORE_LINE)
+        {
+            goto WriteEntireLine;
+        }
+
         /* Need a copy of the input line for strok() */
 
         strcpy (Gbl_MainTokenBuffer, Gbl_CurrentLineBuffer);
@@ -382,31 +417,13 @@ PrPreprocessInputFile (
             Token = PrGetNextToken (NULL, PR_TOKEN_SEPARATORS, &Next);
         }
 
-#if 0
-/* Line prefix */
-        FlPrintFile (ASL_FILE_PREPROCESSOR, "/* %14s  %.5u  i:%.5u */ ",
-            Gbl_Files[ASL_FILE_INPUT].Filename,
-            Gbl_CurrentLineNumber, Gbl_PreprocessorLineNumber);
-#endif
-
-        /*
-         * Emit a #line directive if necessary, to keep the line numbers in
-         * the (.i) file synchronized with the original source code file, so
-         * that the correct line number appears in any error messages
-         * generated by the actual compiler.
-         */
-        if (Gbl_CurrentLineNumber > (Gbl_PreviousLineNumber + 1))
-        {
-            FlPrintFile (ASL_FILE_PREPROCESSOR, "#line %u\n",
-                Gbl_CurrentLineNumber);
-        }
-
-        Gbl_PreviousLineNumber = Gbl_CurrentLineNumber;
         Gbl_PreprocessorLineNumber++;
 
+
+WriteEntireLine:
         /*
          * Now we can write the possibly modified source line to the
-         * preprocessor (.i) file
+         * preprocessor file(s).
          */
         FlWriteFile (ASL_FILE_PREPROCESSOR, Gbl_CurrentLineBuffer,
             strlen (Gbl_CurrentLineBuffer));
@@ -433,7 +450,7 @@ PrDoDirective (
     char                    **Next)
 {
     char                    *Token = Gbl_MainTokenBuffer;
-    char                    *Token2;
+    char                    *Token2 = NULL;
     char                    *End;
     UINT64                  Value;
     ACPI_SIZE               TokenOffset;
@@ -452,11 +469,21 @@ PrDoDirective (
         PrError (ASL_ERROR, ASL_MSG_UNKNOWN_DIRECTIVE,
             THIS_TOKEN_OFFSET (DirectiveToken));
 
-        DbgPrint (ASL_DEBUG_OUTPUT, PR_PREFIX_ID
+        DbgPrint (ASL_PARSE_OUTPUT, PR_PREFIX_ID
             "#%s: Unknown directive\n",
             Gbl_CurrentLineNumber, DirectiveToken);
         return;
     }
+
+    /*
+     * Emit a line directive into the preprocessor file (.pre) after
+     * every matched directive. This is passed through to the compiler
+     * so that error/warning messages are kept in sync with the
+     * original source file.
+     */
+    FlPrintFile (ASL_FILE_PREPROCESSOR, "#line %u \"%s\" // #%s\n",
+        Gbl_CurrentLineNumber, Gbl_Files[ASL_FILE_INPUT].Filename,
+        Gbl_DirectiveInfo[Directive].Name);
 
     /*
      * If we are currently ignoring this block and we encounter a #else or
@@ -470,7 +497,8 @@ PrDoDirective (
         case PR_DIRECTIVE_ELSE:
         case PR_DIRECTIVE_ELIF:
 
-            if (Gbl_DirectiveStack && Gbl_DirectiveStack->IgnoringThisCodeBlock)
+            if (Gbl_DirectiveStack &&
+                Gbl_DirectiveStack->IgnoringThisCodeBlock)
             {
                 PrDbgPrint ("Ignoring", Gbl_DirectiveInfo[Directive].Name);
                 return;
@@ -539,10 +567,19 @@ PrDoDirective (
 
     /* Most directives have at least one argument */
 
-    if (Gbl_DirectiveInfo[Directive].ArgCount == 1)
+    if (Gbl_DirectiveInfo[Directive].ArgCount >= 1)
     {
         Token = PrGetNextToken (NULL, PR_TOKEN_SEPARATORS, Next);
         if (!Token)
+        {
+            goto SyntaxError;
+        }
+    }
+
+    if (Gbl_DirectiveInfo[Directive].ArgCount >= 2)
+    {
+        Token2 = PrGetNextToken (NULL, PR_TOKEN_SEPARATORS, Next);
+        if (!Token2)
         {
             goto SyntaxError;
         }
@@ -599,7 +636,7 @@ PrDoDirective (
             Gbl_IgnoringThisCodeBlock = TRUE;
         }
 
-        DbgPrint (ASL_DEBUG_OUTPUT, PR_PREFIX_ID
+        DbgPrint (ASL_PARSE_OUTPUT, PR_PREFIX_ID
             "Resolved #if: %8.8X%8.8X %s\n",
             Gbl_CurrentLineNumber, ACPI_FORMAT_UINT64 (Value),
             Gbl_IgnoringThisCodeBlock ? "<Skipping Block>" : "<Executing Block>");
@@ -636,8 +673,9 @@ PrDoDirective (
         if (*(&Gbl_CurrentLineBuffer[TokenOffset]) == '(')
         {
 #ifndef MACROS_SUPPORTED
-            AcpiOsPrintf ("%s ERROR - line %u: #define macros are not supported yet\n",
-                Gbl_CurrentLineBuffer, Gbl_CurrentLineNumber);
+            AcpiOsPrintf (
+                "%s ERROR - line %u: #define macros are not supported yet\n",
+                Gbl_CurrentLineBuffer, Gbl_LogicalLineNumber);
             exit(1);
 #else
             PrAddMacro (Token, Next);
@@ -654,11 +692,13 @@ PrDoDirective (
                 {
                     Token2++;
                 }
+
                 End = Token2;
                 while (*End != '\n')
                 {
                     End++;
                 }
+
                 *End = 0;
             }
             else
@@ -672,9 +712,9 @@ PrDoDirective (
                 Token2 = "";
             }
 #endif
-            DbgPrint (ASL_DEBUG_OUTPUT, PR_PREFIX_ID
+            DbgPrint (ASL_PARSE_OUTPUT, PR_PREFIX_ID
                 "New #define: %s->%s\n",
-                Gbl_CurrentLineNumber, Token, Token2);
+                Gbl_LogicalLineNumber, Token, Token2);
 
             PrAddDefine (Token, Token2, FALSE);
         }
@@ -700,11 +740,32 @@ PrDoDirective (
             goto SyntaxError;
         }
 
-        DbgPrint (ASL_DEBUG_OUTPUT, PR_PREFIX_ID
+        DbgPrint (ASL_PARSE_OUTPUT, PR_PREFIX_ID
             "Start #include file \"%s\"\n", Gbl_CurrentLineNumber,
             Token, Gbl_CurrentLineNumber);
 
-        PrOpenIncludeFile (Token);
+        PrDoIncludeFile (Token);
+        break;
+
+    case PR_DIRECTIVE_INCLUDEBUFFER:
+
+        Token = PrGetNextToken (NULL, " \"<>", Next);
+        if (!Token)
+        {
+            goto SyntaxError;
+        }
+
+        Token2 = PrGetNextToken (NULL, PR_TOKEN_SEPARATORS, Next);
+        if (!Token2)
+        {
+            goto SyntaxError;
+        }
+
+        DbgPrint (ASL_PARSE_OUTPUT, PR_PREFIX_ID
+            "Start #includebuffer input from file \"%s\", buffer name %s\n",
+            Gbl_CurrentLineNumber, Token, Token2);
+
+        PrDoIncludeBuffer (Token, Token2);
         break;
 
     case PR_DIRECTIVE_LINE:
@@ -718,14 +779,11 @@ PrDoDirective (
             return;
         }
 
-        DbgPrint (ASL_DEBUG_OUTPUT, PR_PREFIX_ID
+        DbgPrint (ASL_PARSE_OUTPUT, PR_PREFIX_ID
             "User #line invocation %s\n", Gbl_CurrentLineNumber,
             Token);
 
-        /* Update local line numbers */
-
         Gbl_CurrentLineNumber = (UINT32) Value;
-        Gbl_PreviousLineNumber = 0;
 
         /* Emit #line into the preprocessor file */
 
@@ -768,7 +826,7 @@ PrDoDirective (
 
     case PR_DIRECTIVE_UNDEF:
 
-        DbgPrint (ASL_DEBUG_OUTPUT, PR_PREFIX_ID
+        DbgPrint (ASL_PARSE_OUTPUT, PR_PREFIX_ID
             "#undef: %s\n", Gbl_CurrentLineNumber, Token);
 
         PrRemoveDefine (Token);
@@ -778,12 +836,15 @@ PrDoDirective (
 
         PrError (ASL_WARNING, ASL_MSG_WARNING_DIRECTIVE,
             THIS_TOKEN_OFFSET (Token));
+
+        Gbl_SourceLine = 0;
+        Gbl_NextError = Gbl_ErrorLog;
         break;
 
     default:
 
         /* Should never get here */
-        DbgPrint (ASL_DEBUG_OUTPUT, PR_PREFIX_ID
+        DbgPrint (ASL_PARSE_OUTPUT, PR_PREFIX_ID
             "Unrecognized directive: %u\n",
             Gbl_CurrentLineNumber, Directive);
         break;
@@ -796,6 +857,166 @@ SyntaxError:
     PrError (ASL_ERROR, ASL_MSG_DIRECTIVE_SYNTAX,
         THIS_TOKEN_OFFSET (DirectiveToken));
     return;
+}
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    PrGetNextLine, PrGetNextLineInit
+ *
+ * PARAMETERS:  Handle              - Open file handle for the source file
+ *
+ * RETURN:      Status of the GetLine operation:
+ *              AE_OK               - Normal line, OK status
+ *              ASL_IGNORE_LINE     - Line is blank or part of a multi-line
+ *                                      comment
+ *              ASL_EOF             - End-of-file reached
+ *
+ * DESCRIPTION: Get the next text line from the input file. Does not strip
+ *              comments.
+ *
+ ******************************************************************************/
+
+#define PR_NORMAL_TEXT          0
+#define PR_MULTI_LINE_COMMENT   1
+#define PR_SINGLE_LINE_COMMENT  2
+#define PR_QUOTED_STRING        3
+
+static UINT8                    AcpiGbl_LineScanState = PR_NORMAL_TEXT;
+
+static void
+PrGetNextLineInit (
+    void)
+{
+    AcpiGbl_LineScanState = 0;
+}
+
+static UINT32
+PrGetNextLine (
+    FILE                    *Handle)
+{
+    UINT32                  i;
+    int                     c = 0;
+    int                     PreviousChar;
+
+
+    /* Always clear the global line buffer */
+
+    memset (Gbl_CurrentLineBuffer, 0, Gbl_LineBufferSize);
+    for (i = 0; ;)
+    {
+        /*
+         * If line is too long, expand the line buffers. Also increases
+         * Gbl_LineBufferSize.
+         */
+        if (i >= Gbl_LineBufferSize)
+        {
+            UtExpandLineBuffers ();
+        }
+
+        PreviousChar = c;
+        c = getc (Handle);
+        if (c == EOF)
+        {
+            /*
+             * On EOF: If there is anything in the line buffer, terminate
+             * it with a newline, and catch the EOF on the next call
+             * to this function.
+             */
+            if (i > 0)
+            {
+                Gbl_CurrentLineBuffer[i] = '\n';
+                return (AE_OK);
+            }
+
+            return (ASL_EOF);
+        }
+
+        /* Update state machine as necessary */
+
+        switch (AcpiGbl_LineScanState)
+        {
+        case PR_NORMAL_TEXT:
+
+            /* Check for multi-line comment start */
+
+            if ((PreviousChar == '/') && (c == '*'))
+            {
+                AcpiGbl_LineScanState = PR_MULTI_LINE_COMMENT;
+            }
+
+            /* Check for single-line comment start */
+
+            else if ((PreviousChar == '/') && (c == '/'))
+            {
+                AcpiGbl_LineScanState = PR_SINGLE_LINE_COMMENT;
+            }
+
+            /* Check for quoted string start */
+
+            else if (PreviousChar == '"')
+            {
+                AcpiGbl_LineScanState = PR_QUOTED_STRING;
+            }
+            break;
+
+        case PR_QUOTED_STRING:
+
+            if (PreviousChar == '"')
+            {
+                AcpiGbl_LineScanState = PR_NORMAL_TEXT;
+            }
+            break;
+
+        case PR_MULTI_LINE_COMMENT:
+
+            /* Check for multi-line comment end */
+
+            if ((PreviousChar == '*') && (c == '/'))
+            {
+                AcpiGbl_LineScanState = PR_NORMAL_TEXT;
+            }
+            break;
+
+        case PR_SINGLE_LINE_COMMENT: /* Just ignore text until EOL */
+        default:
+            break;
+        }
+
+        /* Always copy the character into line buffer */
+
+        Gbl_CurrentLineBuffer[i] = (char) c;
+        i++;
+
+        /* Always exit on end-of-line */
+
+        if (c == '\n')
+        {
+            /* Handle multi-line comments */
+
+            if (AcpiGbl_LineScanState == PR_MULTI_LINE_COMMENT)
+            {
+                return (ASL_IGNORE_LINE);
+            }
+
+            /* End of single-line comment */
+
+            if (AcpiGbl_LineScanState == PR_SINGLE_LINE_COMMENT)
+            {
+                AcpiGbl_LineScanState = PR_NORMAL_TEXT;
+                return (AE_OK);
+            }
+
+            /* Blank line */
+
+            if (i == 1)
+            {
+                return (ASL_IGNORE_LINE);
+            }
+
+            return (AE_OK);
+        }
+    }
 }
 
 
@@ -954,9 +1175,92 @@ PrDbgPrint (
 {
 
     DbgPrint (ASL_DEBUG_OUTPUT, "Pr(%.4u) - [%u %s] "
-        "%*s %s #%s, Depth %u\n",
+        "%*s %s #%s, IfDepth %u\n",
         Gbl_CurrentLineNumber, Gbl_IfDepth,
         Gbl_IgnoringThisCodeBlock ? "I" : "E",
         Gbl_IfDepth * 4, " ",
         Action, DirectiveName, Gbl_IfDepth);
+}
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    PrDoIncludeFile
+ *
+ * PARAMETERS:  Pathname                - Name of the input file
+ *
+ * RETURN:      None.
+ *
+ * DESCRIPTION: Open an include file, from #include.
+ *
+ ******************************************************************************/
+
+static void
+PrDoIncludeFile (
+    char                    *Pathname)
+{
+    char                    *FullPathname;
+
+
+    (void) PrOpenIncludeFile (Pathname, "r", &FullPathname);
+}
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    PrDoIncludeBuffer
+ *
+ * PARAMETERS:  Pathname                - Name of the input binary file
+ *              BufferName              - ACPI namepath of the buffer
+ *
+ * RETURN:      None.
+ *
+ * DESCRIPTION: Create an ACPI buffer object from a binary file. The contents
+ *              of the file are emitted into the buffer object as ascii
+ *              hex data. From #includebuffer.
+ *
+ ******************************************************************************/
+
+static void
+PrDoIncludeBuffer (
+    char                    *Pathname,
+    char                    *BufferName)
+{
+    char                    *FullPathname;
+    FILE                    *BinaryBufferFile;
+    UINT32                  i = 0;
+    UINT8                   c;
+
+
+    BinaryBufferFile = PrOpenIncludeFile (Pathname, "rb", &FullPathname);
+    if (!BinaryBufferFile)
+    {
+        return;
+    }
+
+    /* Emit "Name (XXXX, Buffer() {" header */
+
+    FlPrintFile (ASL_FILE_PREPROCESSOR, "Name (%s, Buffer()\n{", BufferName);
+
+    /* Dump the entire file in ascii hex format */
+
+    while (fread (&c, 1, 1, BinaryBufferFile))
+    {
+        if (!(i % 8))
+        {
+            FlPrintFile (ASL_FILE_PREPROCESSOR, "\n   ", c);
+        }
+
+        FlPrintFile (ASL_FILE_PREPROCESSOR, " 0x%2.2X,", c);
+        i++;
+    }
+
+    DbgPrint (ASL_PARSE_OUTPUT, PR_PREFIX_ID
+        "#includebuffer: read %u bytes from %s\n",
+        Gbl_CurrentLineNumber, i, FullPathname);
+
+    /* Close the Name() operator */
+
+    FlPrintFile (ASL_FILE_PREPROCESSOR, "\n})\n", BufferName);
+    fclose (BinaryBufferFile);
 }

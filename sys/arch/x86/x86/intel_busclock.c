@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_busclock.c,v 1.13.12.1 2014/08/20 00:03:29 tls Exp $	*/
+/*	$NetBSD: intel_busclock.c,v 1.13.12.2 2017/12/03 11:36:50 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_busclock.c,v 1.13.12.1 2014/08/20 00:03:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_busclock.c,v 1.13.12.2 2017/12/03 11:36:50 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,8 +102,6 @@ p3_get_bus_clock(struct cpu_info *ci)
 		break;
 	case 0xc: /* Core i7, Atom, model 1 */
 		/*
-		 * XXX (See also case 0xe)
-		 * Some core i7 CPUs can report model 0xc.
 		 * Newer CPUs will GP when attemping to access MSR_FSB_FREQ.
 		 * In the long-term, use ACPI instead of all this.
 		 */
@@ -272,6 +270,47 @@ p3_get_bus_clock(struct cpu_info *ci)
 			goto print_msr;
 		}
 		break;
+	case 0x4c: /* Airmont */
+		if (rdmsr_safe(MSR_FSB_FREQ, &msr) == EFAULT) {
+			aprint_debug_dev(ci->ci_dev,
+			    "unable to determine bus speed");
+			goto print_msr;
+		}
+		bus = (msr >> 0) & 0x0f;
+		switch (bus) {
+		case 0:
+			bus_clock =  8333;
+			break;
+		case 1:
+			bus_clock = 10000;
+			break;
+		case 2:
+			bus_clock = 13333;
+			break;
+		case 3:
+			bus_clock = 11666;
+			break;
+		case 4:
+			bus_clock =  8000;
+			break;
+		case 5:
+			bus_clock =  9333;
+			break;
+		case 6:
+			bus_clock =  9000;
+			break;
+		case 7:
+			bus_clock =  8888;
+			break;
+		case 8:
+			bus_clock =  8750;
+			break;
+		default:
+			aprint_debug("%s: unknown Airmont FSB_FREQ value %d",
+			    device_xname(ci->ci_dev), bus);
+			goto print_msr;
+		}
+		break;
 	default:
 		aprint_debug("%s: unknown i686 model %02x, can't get bus clock",
 		    device_xname(ci->ci_dev),
@@ -316,7 +355,7 @@ p4_get_bus_clock(struct cpu_info *ci)
 		switch (bus) {
 		case 0:
 			bus_clock = (CPUID_TO_MODEL(ci->ci_signature) == 2) ?
-			    10000 : 26666;
+			    10000 : 26667;
 			break;
 		case 1:
 			bus_clock = 13333;
@@ -325,7 +364,10 @@ p4_get_bus_clock(struct cpu_info *ci)
 			bus_clock = 20000;
 			break;
 		case 3:
-			bus_clock = 16666;
+			bus_clock = 16667;
+			break;
+		case 4:
+			bus_clock = 33333;
 			break;
 		default:
 			aprint_debug("%s: unknown Pentium 4 (model %d) "

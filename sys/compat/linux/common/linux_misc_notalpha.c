@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc_notalpha.c,v 1.108 2010/11/02 18:14:05 chs Exp $	*/
+/*	$NetBSD: linux_misc_notalpha.c,v 1.108.18.1 2017/12/03 11:36:55 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.108 2010/11/02 18:14:05 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.108.18.1 2017/12/03 11:36:55 jdolecek Exp $");
 
 /*
  * Note that we must NOT include "opt_compat_linux32.h" here,
@@ -44,7 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.108 2010/11/02 18:14:05 ch
 #include <sys/kernel.h>
 #include <sys/mman.h>
 #include <sys/mount.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/namei.h>
 #include <sys/proc.h>

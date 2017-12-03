@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_bo_vm.c,v 1.3.2.2 2014/08/20 00:04:22 tls Exp $	*/
+/*	$NetBSD: ttm_bo_vm.c,v 1.3.2.3 2017/12/03 11:38:01 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_bo_vm.c,v 1.3.2.2 2014/08/20 00:04:22 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_bo_vm.c,v 1.3.2.3 2017/12/03 11:38:01 jdolecek Exp $");
 
 #include <sys/types.h>
 
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: ttm_bo_vm.c,v 1.3.2.2 2014/08/20 00:04:22 tls Exp $"
 #include <ttm/ttm_bo_driver.h>
 
 static int	ttm_bo_uvm_fault_idle(struct ttm_buffer_object *,
-		    struct uvm_faultinfo *, struct uvm_object *);
+		    struct uvm_faultinfo *);
 static int	ttm_bo_uvm_lookup(struct ttm_bo_device *, unsigned long,
 		    unsigned long, struct ttm_buffer_object **);
 
@@ -89,7 +89,11 @@ ttm_bo_uvm_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr,
 	unsigned i;
 	vm_prot_t vm_prot;	/* VM_PROT_* */
 	pgprot_t pgprot;	/* VM_PROT_* | PMAP_* cacheability flags */
+	unsigned mmapflags;
 	int ret;
+
+	/* Thanks, uvm, but we don't need this lock.  */
+	mutex_exit(uobj->vmobjlock);
 
 	/* Copy-on-write mappings make no sense for the graphics aperture.  */
 	if (UVM_ET_ISCOPYONWRITE(ufi->entry)) {
@@ -106,7 +110,7 @@ ttm_bo_uvm_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr,
 		 * It's currently locked.  Unlock the fault, wait for
 		 * it, and start over.
 		 */
-		uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj);
+		uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, NULL);
 		(void)ttm_bo_wait_unreserved(bo);
 		return -ERESTART;
 	}
@@ -114,7 +118,7 @@ ttm_bo_uvm_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr,
 	/* drm prime buffers are not mappable.  XXX Catch this earlier?  */
 	if (bo->ttm && ISSET(bo->ttm->page_flags, TTM_PAGE_FLAG_SG)) {
 		ret = -EINVAL;
-		goto out0;
+		goto out1;
 	}
 
 	/* Notify the driver of a fault if it wants.  */
@@ -123,14 +127,15 @@ ttm_bo_uvm_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr,
 		if (ret) {
 			if (ret == -ERESTART)
 				ret = -EIO;
-			goto out0;
+			goto out1;
 		}
 	}
 
-	ret = ttm_bo_uvm_fault_idle(bo, ufi, uobj);
+	ret = ttm_bo_uvm_fault_idle(bo, ufi);
 	if (ret) {
-		/* Unlocks if it restarts.  */
 		KASSERT(ret == -ERESTART);
+		/* ttm_bo_uvm_fault_idle calls uvmfault_unlockall for us.  */
+		ttm_bo_unreserve(bo);
 		/* XXX errno Linux->NetBSD */
 		return -ret;
 	}
@@ -178,13 +183,19 @@ ttm_bo_uvm_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr,
 		/* XXX PGO_ALLPAGES?  */
 		if (pps[i] == PGO_DONTCARE)
 			continue;
-		if (bo->mem.bus.is_iomem)
-			paddr = bus_space_mmap(bdev->memt, u.base,
-			    ((startpage + i) << PAGE_SHIFT), vm_prot, 0);
-		else
+		if (bo->mem.bus.is_iomem) {
+			const paddr_t cookie = bus_space_mmap(bdev->memt,
+			    u.base, ((startpage + i) << PAGE_SHIFT), vm_prot,
+			    0);
+
+			paddr = pmap_phys_address(cookie);
+			mmapflags = pmap_mmap_flags(cookie);
+		} else {
 			paddr = page_to_phys(u.ttm->pages[startpage + i]);
+			mmapflags = 0;
+		}
 		ret = -pmap_enter(ufi->orig_map->pmap, vaddr + i*PAGE_SIZE,
-		    paddr, vm_prot, (PMAP_CANFAIL | pgprot));
+		    paddr, vm_prot, (PMAP_CANFAIL | pgprot | mmapflags));
 		if (ret)
 			goto out3;
 	}
@@ -192,14 +203,13 @@ ttm_bo_uvm_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr,
 out3:	pmap_update(ufi->orig_map->pmap);
 out2:	ttm_mem_io_unlock(man);
 out1:	ttm_bo_unreserve(bo);
-out0:	uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj);
+out0:	uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, NULL);
 	/* XXX errno Linux->NetBSD */
 	return -ret;
 }
 
 static int
-ttm_bo_uvm_fault_idle(struct ttm_buffer_object *bo, struct uvm_faultinfo *ufi,
-    struct uvm_object *uobj)
+ttm_bo_uvm_fault_idle(struct ttm_buffer_object *bo, struct uvm_faultinfo *ufi)
 {
 	struct ttm_bo_device *const bdev = bo->bdev;
 	int ret = 0;
@@ -211,7 +221,7 @@ ttm_bo_uvm_fault_idle(struct ttm_buffer_object *bo, struct uvm_faultinfo *ufi,
 	if (ttm_bo_wait(bo, false, false, true) == 0)
 		goto out;
 
-	uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj);
+	uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, NULL);
 	(void)ttm_bo_wait(bo, false, true, false);
 	ret = -ERESTART;
 

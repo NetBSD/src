@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.12 2012/02/10 17:35:49 para Exp $	*/
+/*	$NetBSD: param.h,v 1.12.6.1 2017/12/03 11:35:59 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -37,7 +37,8 @@
  *
  *	@(#)param.h	8.1 (Berkeley) 6/10/93
  */
-
+#ifndef _MACHINE_PARAM_H_
+#define _MACHINE_PARAM_H_
 /*
  * Machine dependent constants for CES FIC8234.
  */
@@ -83,3 +84,4 @@
 
 void	_delay(u_int);
 #endif /* _KERNEL && !_LOCORE */
+#endif /* _MACHINE_PARAM_H_ */

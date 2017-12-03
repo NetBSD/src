@@ -33,7 +33,11 @@ struct nouveau_mem {
 
 	struct nouveau_mm_node *tag;
 	struct list_head regions;
+#ifdef __NetBSD__
+	bus_dmamap_t pages;
+#else
 	dma_addr_t *pages;
+#endif
 	u32 memtype;
 	u64 offset;
 	u64 size;
@@ -105,6 +109,7 @@ extern struct nouveau_oclass *nvaa_fb_oclass;
 extern struct nouveau_oclass *nvaf_fb_oclass;
 extern struct nouveau_oclass *nvc0_fb_oclass;
 extern struct nouveau_oclass *nve0_fb_oclass;
+extern struct nouveau_oclass *gk20a_fb_oclass;
 extern struct nouveau_oclass *gm107_fb_oclass;
 
 #include <subdev/bios/ramcfg.h>

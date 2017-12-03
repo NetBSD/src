@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.93.12.1 2014/08/20 00:04:28 tls Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.93.12.2 2017/12/03 11:38:44 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.93.12.1 2014/08/20 00:04:28 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.93.12.2 2017/12/03 11:38:44 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,8 +177,6 @@ acct_chkfree(void)
 	fsblkcnt_t bavail;
 
 	sb = kmem_alloc(sizeof(*sb), KM_SLEEP);
-	if (sb == NULL)
-		return (ENOMEM);
 	error = VFS_STATVFS(acct_vp->v_mount, sb);
 	if (error != 0) {
 		kmem_free(sb, sizeof(*sb));

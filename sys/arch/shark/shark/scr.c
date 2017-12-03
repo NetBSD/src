@@ -1,4 +1,4 @@
-/*	$NetBSD: scr.c,v 1.27.6.2 2014/08/20 00:03:24 tls Exp $	*/
+/*	$NetBSD: scr.c,v 1.27.6.3 2017/12/03 11:36:43 jdolecek Exp $	*/
 
 /*
  * Copyright 1997
@@ -102,7 +102,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.27.6.2 2014/08/20 00:03:24 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.27.6.3 2017/12/03 11:36:43 jdolecek Exp $");
 
 #include "opt_ddb.h"
 
@@ -168,7 +168,7 @@ __KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.27.6.2 2014/08/20 00:03:24 tls Exp $");
     #define KERNEL_DEBUG
     #define ASSERT(f)	        do { if (!(f)) { DEBUGGER;} }while(0)
     #define TOGGLE_TEST_PIN()   scrToggleTestPin()
-    #define INVALID_STATE_CMD(sc,state,cmd)  invalidStateCmd(sc,state,cmd,__LINE__); 
+    #define INVALID_STATE_CMD(sc,state,cmd)  invalidStateCmd(sc,state,cmd,__LINE__);
 #else
     #define ASSERT(f)
     #define TOGGLE_TEST_PIN()
@@ -507,14 +507,14 @@ struct scr_softc
 static int devices = 0;
 
 /* used as reference for tsleep */
-static int tsleepIdent;   
+static int tsleepIdent;
 
 
 /* 
 ** only 1 device is using the hat at any one time
 ** variable below must be acquired using splhigh before using the hat
 */
-static int hatLock = false;     
+static int hatLock = false;
 
 
 
@@ -579,7 +579,7 @@ static unsigned char hatStack[HATSTACKSIZE];   /* actual stack used during a FIQ
 int     scrprobe(device_t, cfdata_t, void *);
 void    scrattach(device_t, device_t, void *);
 
-static void   initStates(struct scr_softc * sc); 
+static void   initStates(struct scr_softc * sc);
 
 
 
@@ -604,7 +604,7 @@ static void   coldResetSM(struct scr_softc * sc,int cnd);
 static void   t0SendByteSM(struct scr_softc * sc,int cnd);
 static void   t0RecvByteSM(struct scr_softc * sc,int cnd);
 
-static void   cardOff(struct scr_softc * sc);              
+static void   cardOff(struct scr_softc * sc);
 
 /* 
 ** functions used for our own timeout routines.
@@ -615,9 +615,9 @@ static void scrClkInit(void);
 static void scrClkStart(struct scr_softc* sc,int countPerTick);
 static void scrClkAdj(int count);
 static void scrClkStop(void);
-static void hatClkIrq(int count);               
+static void hatClkIrq(int count);
 
-static void scrTimeout(void (*func)(struct scr_softc*,int), struct scr_softc*, int arg, int count);  
+static void scrTimeout(void (*func)(struct scr_softc*,int), struct scr_softc*, int arg, int count);
 static void scrUntimeout(void (*func)(struct scr_softc*,int), struct scr_softc*, int arg);
 
 
@@ -693,7 +693,7 @@ int
 scrprobe(device_t parent, cfdata_t match, void *aux)
 {
     struct isa_attach_args  *ia = aux;
-    int                     rv = 0;           
+    int                     rv = 0;
 
     KERN_DEBUG (scrdebug, SCRPROBE_DEBUG_INFO,("scrprobe: called, name = %s\n",
                                                device_cfdata(parent)->cf_name));
@@ -701,7 +701,7 @@ scrprobe(device_t parent, cfdata_t match, void *aux)
     if (device_is_a(parent, "ofisascr") && devices == 0)
     {
         /* set "devices" to ensure that we respond only once */
-        devices++;      
+        devices++;
 
         /* tell the caller that we are not using any resource */
 	ia->ia_nio = 0;
@@ -810,13 +810,13 @@ scrattach(device_t parent, device_t self, void *aux)
 */
 static void initStates(struct scr_softc * sc)
 {
-    sc->masterS         = msIdleOff;    
-    sc->t0RecvS         = t0rsIdle;         
-    sc->t0SendS         = t0ssIdle;         
-    sc->coldResetS      = crsIdle;          
-    sc->ATRS            = atrsIdle;         
-    sc->t0RecvByteS     = t0rbsIdle;            
-    sc->t0SendByteS     = t0sbsIdle;            
+    sc->masterS         = msIdleOff;
+    sc->t0RecvS         = t0rsIdle;
+    sc->t0SendS         = t0ssIdle;
+    sc->coldResetS      = crsIdle;
+    sc->ATRS            = atrsIdle;
+    sc->t0RecvByteS     = t0rbsIdle;
+    sc->t0SendByteS     = t0sbsIdle;
 }
 
 
@@ -1055,7 +1055,7 @@ scrioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
                 savedInts = disable_interrupts(I32_bit | F32_bit);
                 if (sc->masterS == msIdleOn)
                 {
-                    pIoctlStatus->status = CARD_ON;   
+                    pIoctlStatus->status = CARD_ON;
                 }
                 else
                 {
@@ -1090,7 +1090,7 @@ scrioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
                 }
                 splx(s);
         
-                tsleep(&tsleepIdent ,PZERO,"hat", 1); 
+                tsleep(&tsleepIdent ,PZERO,"hat", 1);
             }
             
             
@@ -1121,7 +1121,7 @@ scrioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
                 
                 // start bottom half
                 scrClkStart (sc,400);
-                savedInts = disable_interrupts(I32_bit | F32_bit);     
+                savedInts = disable_interrupts(I32_bit | F32_bit);
                 masterSM(sc,mcOn);
                 restore_interrupts(savedInts);
                 
@@ -1159,7 +1159,7 @@ scrioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
                     
                     // wait for a while 
-                    tsleep(&tsleepIdent ,PZERO,"hat", 1);  
+                    tsleep(&tsleepIdent ,PZERO,"hat", 1);
                 }
 
 
@@ -1170,7 +1170,7 @@ scrioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
                 /* need to fix up count bits in non hat interrupt time, so */
                 if (sc->status == ERROR_OK)
                 {
-                    sc->clkCountStartRecv = CLK_COUNT_START;  
+                    sc->clkCountStartRecv = CLK_COUNT_START;
                     sc->clkCountDataRecv  = sc->clkCountStartRecv * START_2_DATA;
                     sc->clkCountDataSend  = CLK_COUNT_DATA;
                 }
@@ -1198,7 +1198,7 @@ scrioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
             // david,jim hack to stop ioctl memcpy problem, to be removed when problem fixed ejg
             if (sc->pIoctlOn->status != ERROR_OK)
             {
-                sc->pIoctlOn->atrLen = 0; 
+                sc->pIoctlOn->atrLen = 0;
             }
             break;
         
@@ -1234,7 +1234,7 @@ scrioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
                 }
                 splx(s);
                 
-                tsleep(&tsleepIdent ,PZERO,"hat", 1); 
+                tsleep(&tsleepIdent ,PZERO,"hat", 1);
             }
             
             // check to see if the card is in
@@ -1263,7 +1263,7 @@ scrioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
                 
                 // start bottom half
                 scrClkStart (sc,sc->clkCountDataSend);
-                savedInts = disable_interrupts(I32_bit | F32_bit); 
+                savedInts = disable_interrupts(I32_bit | F32_bit);
                 if (sc->pIoctlT0->writeBuffer)
                 {
                     masterSM(sc,mcT0DataSend);
@@ -1308,8 +1308,8 @@ scrioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
                     
                     // wait for a while 
-                    tsleep(&tsleepIdent ,PZERO,"hat", 1); 
-                }
+                    tsleep(&tsleepIdent ,PZERO,"hat", 1);
+	       }
 
                 // stop bottom half
                 scrClkStop();
@@ -1331,7 +1331,7 @@ scrioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
             // david, jim hack to stop ioctl memcpy problem, to be removed when problem fixed ejg
             if (sc->pIoctlT0->status != ERROR_OK)
             {
-                sc->pIoctlT0->dataLen = 0;   
+                sc->pIoctlT0->dataLen = 0;
             }
             break;
 
@@ -1430,15 +1430,15 @@ static void masterSM(struct scr_softc * sc,int cmd)
                         */
                         
                         /* set initial values */
-                        sc->status          = 0;        
-                        sc->convention      = CONVENTION_UNKNOWN;            
-                        sc->protocolType    = 0;        
-                        sc->N               = N_DEFAULT;    
-                        sc->Fi              = Fi_DEFAULT;   
-                        sc->Di              = Di_DEFAULT;   
-                        sc->Wi              = Wi_DEFAULT;   
+                        sc->status          = 0;
+                        sc->convention      = CONVENTION_UNKNOWN;
+                        sc->protocolType    = 0;
+                        sc->N               = N_DEFAULT;
+                        sc->Fi              = Fi_DEFAULT;
+                        sc->Di              = Di_DEFAULT;
+                        sc->Wi              = Wi_DEFAULT;
                         sc->cardFreq        = CARD_FREQ_DEF;
-                        sc->clkCountStartRecv = CLK_COUNT_START;  
+                        sc->clkCountStartRecv = CLK_COUNT_START;
                         sc->clkCountDataRecv  = sc->clkCountStartRecv * START_2_DATA;
                         sc->clkCountDataSend  = CLK_COUNT_DATA;
                         
@@ -1517,7 +1517,7 @@ static void masterSM(struct scr_softc * sc,int cmd)
                     ** card is on, and we want to T0 Send, so 
                     ** as t0SendSM to do work 
                     */
-                    sc->status  = ERROR_OK;        
+                    sc->status  = ERROR_OK;
                     sc->masterS = msT0Send;
                     t0SendSM(sc,t0scStart);
                     break;
@@ -1527,7 +1527,7 @@ static void masterSM(struct scr_softc * sc,int cmd)
                     ** card is on, and we want to T0 Recv, so 
                     ** as t0RecvSM to do work 
                     */
-                    sc->status  = ERROR_OK;        
+                    sc->status  = ERROR_OK;
                     sc->masterS = msT0Recv;
                     t0RecvSM(sc,t0rcStart);
                     break;
@@ -1642,8 +1642,8 @@ static void   t0SendSM         (struct scr_softc * sc, int cmd)
         switch(cmd)
         {
             case t0scTWorkWaiting:
-                ASSERT(sc->t0SendS != t0ssIdle); 
-                
+                ASSERT(sc->t0SendS != t0ssIdle);
+
                 /* kill all lower machines */
                 t0SendByteSM(sc,t0sbcAbort);
                 t0RecvByteSM(sc,t0rbcAbort);
@@ -1664,7 +1664,7 @@ static void   t0SendSM         (struct scr_softc * sc, int cmd)
         }
 
         /* change states */
-        sc->t0SendS = t0ssIdle;   
+        sc->t0SendS = t0ssIdle;
         masterSM(sc,mcT0Send);
         return;
     }
@@ -1678,7 +1678,7 @@ static void   t0SendSM         (struct scr_softc * sc, int cmd)
                     /* set initial values */
                     sc->t0SendS = t0ssSendHeader;
                     sc->t0ByteParent = t0SendSM;
-                    sc->commandCount = 0;   
+                    sc->commandCount = 0;
                     sc->dataCount = 0;
                     sc->dataMax = sc->pIoctlT0->command[CMD_BUF_DATA_LEN_OFF];
                     sc->dataByte = sc->pIoctlT0->command[sc->commandCount];
@@ -1732,7 +1732,7 @@ static void   t0SendSM         (struct scr_softc * sc, int cmd)
                         sc->t0SendS = t0ssSendData;
                         sc->dataByte = sc->pIoctlT0->data[sc->dataCount];
                         t0SendByteSM(sc,t0sbcStart);
-                        sc->dataCount++;    
+                        sc->dataCount++;
                     }
 
                     /* see if we should send one data byte */
@@ -1743,7 +1743,7 @@ static void   t0SendSM         (struct scr_softc * sc, int cmd)
                         sc->t0SendS = t0ssSendByte;
                         sc->dataByte = sc->pIoctlT0->data[ sc->dataCount];
                         t0SendByteSM(sc,t0sbcStart);
-                        sc->dataCount++;    
+                        sc->dataCount++;
                     }
 
                     /* see if we should extend the work waiting period */
@@ -1825,7 +1825,7 @@ static void   t0SendSM         (struct scr_softc * sc, int cmd)
                         sc->t0SendS = t0ssSendData;
                         sc->dataByte = sc->pIoctlT0->data[ sc->dataCount];
                         t0SendByteSM(sc,t0sbcStart);
-                        sc->dataCount++;    
+                        sc->dataCount++;
                     }
 
                     /* wait for sw1 byte */
@@ -1940,8 +1940,8 @@ static void   t0RecvSM (struct scr_softc * sc,int cmd)
         {
     
             case t0rcTWorkWaiting:
-                ASSERT(sc->t0RecvS != t0rsIdle); 
-                
+                ASSERT(sc->t0RecvS != t0rsIdle);
+
                 /* kill all lower level machines */
                 t0SendByteSM(sc,t0sbcAbort);
                 t0RecvByteSM(sc,t0rbcAbort);
@@ -1965,7 +1965,7 @@ static void   t0RecvSM (struct scr_softc * sc,int cmd)
 
 
         /* change state */
-        sc->t0RecvS = t0rsIdle;   
+        sc->t0RecvS = t0rsIdle;
         masterSM(sc,mcT0Recv);
 
         /* all done */
@@ -1981,7 +1981,7 @@ static void   t0RecvSM (struct scr_softc * sc,int cmd)
                     /* set initial values */
                     sc->t0RecvS = t0rsSendHeader;
                     sc->t0ByteParent = t0RecvSM;
-                    sc->commandCount = 0;   
+                    sc->commandCount = 0;
                     sc->dataCount = 0;
                     sc->dataMax = sc->pIoctlT0->command[CMD_BUF_DATA_LEN_OFF];
                     if (sc->dataMax == 0)
@@ -2100,7 +2100,7 @@ static void   t0RecvSM (struct scr_softc * sc,int cmd)
                     /* clock in byte */
                     scrUntimeout(t0RecvSM, sc,t0rcTWorkWaiting);
                     sc->pIoctlT0->data[sc->dataCount] = sc->dataByte;
-                    sc->dataCount++;    
+                    sc->dataCount++;
 
 
                     if (sc->dataCount < sc->dataMax)
@@ -2133,7 +2133,7 @@ static void   t0RecvSM (struct scr_softc * sc,int cmd)
                     /* clock in data */
                     scrUntimeout(t0RecvSM, sc,t0rcTWorkWaiting);
                     sc->pIoctlT0->data[sc->dataCount] = sc->dataByte;
-                    sc->dataCount++;    
+                    sc->dataCount++;
 
                     /* decide if we have all data */
                     if (sc->dataCount >= sc->dataMax)
@@ -2178,7 +2178,7 @@ static void   t0RecvSM (struct scr_softc * sc,int cmd)
                     scrUntimeout(t0RecvSM, sc,t0rcTWorkWaiting);
                     sc->pIoctlT0->sw2 = sc->dataByte;
 
-                    sc->t0RecvS = t0rsIdle; 
+                    sc->t0RecvS = t0rsIdle;
                     masterSM(sc,mcT0Recv);
                     break;
 
@@ -2263,7 +2263,7 @@ static void   coldResetSM(struct scr_softc * sc,int cmd)
 
                     /* tell master state machine that we are all done */
                     sc->coldResetS = crsIdle;
-                    masterSM(sc,mcColdReset);       
+                    masterSM(sc,mcColdReset);
                     break;
 
                 default:
@@ -2401,7 +2401,7 @@ static void ATRSM (struct scr_softc * sc,int cmd)
             {
                 case gcT0RecvByte:
                     scrUntimeout(ATRSM,sc,atrcT3);
-                    sc->pIoctlOn->atrBuf[sc->pIoctlOn->atrLen] = sc->dataByte;  
+                    sc->pIoctlOn->atrBuf[sc->pIoctlOn->atrLen] = sc->dataByte;
                     sc->pIoctlOn->atrLen++;
                     if(sc->pIoctlOn->atrLen >= ATR_BUF_MAX)
                     {
@@ -2456,7 +2456,7 @@ static void ATRSM (struct scr_softc * sc,int cmd)
                         /* if there are no TDx following set T0 protocol */
                         if (!ISSET(sc->atrY,ATR_Y_TD))
                         {
-                            sc->protocolType    = PROTOCOL_T0;      
+                            sc->protocolType    = PROTOCOL_T0;
                         }
     
     
@@ -2773,7 +2773,7 @@ static void   t0RecvByteSM(struct scr_softc* sc,int cmd)
         scrUntimeout(t0RecvByteSM, sc,t0rbcTErrorStop);
 
         scrSetDataHighZ();
-        sc->t0RecvByteS = t0rbsIdle; 
+        sc->t0RecvByteS = t0rbsIdle;
         return;
     }
 
@@ -2788,7 +2788,7 @@ static void   t0RecvByteSM(struct scr_softc* sc,int cmd)
                     sc->shiftBits   = 0;
                     sc->shiftByte   = 0;
                     sc->shiftParity = 0;
-                    sc->shiftParityCount = 0; 
+                    sc->shiftParityCount = 0;
                     scrClkAdj(sc->clkCountStartRecv); /* recv data clock running at 5 times */
 
                     /* check if start bit is already here */
@@ -2828,7 +2828,7 @@ static void   t0RecvByteSM(struct scr_softc* sc,int cmd)
                     else
                     {
                         /* found start bit, look for mid bit */
-                        scrTimeout(t0RecvByteSM,sc,t0rbcTFindStartMid,sc->clkCountStartRecv * 2); 
+                        scrTimeout(t0RecvByteSM,sc,t0rbcTFindStartMid,sc->clkCountStartRecv * 2);
                         sc->t0RecvByteS = t0rbsFindStartMid;
                     }
                     break;
@@ -2909,9 +2909,9 @@ static void   t0RecvByteSM(struct scr_softc* sc,int cmd)
                         {
                             /* adjust counts down to 1/2 freq */
                             sc->cardFreq        = CARD_FREQ_DEF / 2;
-                            sc->clkCountStartRecv   = sc->clkCountStartRecv *2; 
-                            sc->clkCountDataRecv    = sc->clkCountDataRecv  *2;  
-                            sc->clkCountDataSend    = sc->clkCountDataSend  *2;  
+                            sc->clkCountStartRecv   = sc->clkCountStartRecv *2;
+                            sc->clkCountDataRecv    = sc->clkCountDataRecv  *2;
+                            sc->clkCountDataSend    = sc->clkCountDataSend  *2;
 
 
                             /* adjust this so that we have clocked in only fist bit of TS */
@@ -3440,7 +3440,7 @@ static void scrClkInit(void)
 */
 static void scrClkStart(struct scr_softc * sc,int countPerTick)
 {
-    u_int savedInts; 
+    u_int savedInts;
 
     savedInts = disable_interrupts(I32_bit | F32_bit);
 
@@ -3491,7 +3491,7 @@ static void scrClkStart(struct scr_softc * sc,int countPerTick)
 */
 static void scrClkAdj (int count)
 {   
-    u_int savedInts; 
+    u_int savedInts;
 
     if (count != scrClkCount)
     {
@@ -3538,7 +3538,7 @@ static void scrClkAdj (int count)
 */
 static void scrClkStop(void)
 {
-    u_int savedInts; 
+    u_int savedInts;
     savedInts = disable_interrupts(I32_bit | F32_bit);
 
     ASSERT(scrClkEnable);
@@ -3986,10 +3986,10 @@ char * getText(int x)
 
             /* states in in TO Recv Byte state machine */
         case    t0rbsIdle:          return "t0rbsIdle";
-        case    t0rbsFindStartEdge: return "t0rbcFindStartEdge";    
-        case    t0rbsFindStartMid:  return "t0rbcFindStartMid"; 
-        case    t0rbsClockData:     return "t0rbcClockData";    
-        case    t0rbsSendError:     return "t0rbcSendError";    
+        case    t0rbsFindStartEdge: return "t0rbcFindStartEdge";
+        case    t0rbsFindStartMid:  return "t0rbcFindStartMid";
+        case    t0rbsClockData:     return "t0rbcClockData";
+        case    t0rbsSendError:     return "t0rbcSendError";
 
 
             /* commands to T0 Send Byte  state machine */

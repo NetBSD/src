@@ -1,4 +1,4 @@
-/*	$NetBSD: bhareg.h,v 1.20 2008/04/28 20:23:49 martin Exp $	*/
+/*	$NetBSD: bhareg.h,v 1.20.44.1 2017/12/03 11:37:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -166,6 +166,7 @@ struct bha_mbx_in {
 #define BHA_MBI_ABORT	0x2	/* aborted ccb */
 #define BHA_MBI_UNKNOWN	0x3	/* Tried to abort invalid CCB */
 #define BHA_MBI_ERROR	0x4	/* Completed with error */
+#define BHA_MBI_BADCCB	0x5	/* invalid CCB */
 
 #if	defined(BIG_DMA)
 WARNING...THIS WON'T WORK(won't fit on 1 page)

@@ -1,4 +1,4 @@
-#	$NetBSD: P6032,v 1.65.2.2 2014/08/20 00:02:41 tls Exp $
+#	$NetBSD: P6032,v 1.65.2.3 2017/12/03 11:35:45 jdolecek Exp $
 #
 # Algorithmics P-6032 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P6032-$Revision: 1.65.2.2 $"
+#ident 		"P6032-$Revision: 1.65.2.3 $"
 
 maxusers 32
 
@@ -23,9 +23,10 @@ options 	NTP			# kernel PLL for NTP
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC		# Cheap kernel consistency checks
 options 	DDB			# kernel debugger
+pseudo-device	ksyms
 makeoptions	DEBUG="-g"
 #makeoptions	DEBUGLIST="pattern1 pattern2 ..."
-options 	SYMTAB_SPACE=450000
+makeoptions	COPY_SYMTAB=1
 
 # File systems
 file-system	FFS		# Fast file system
@@ -55,22 +56,8 @@ options 	IPSEC		# IP security
 #options	SLJIT
 #options	BPFJIT
 
-# 4.3BSD compatibility.  Should be optional, but necessary for now.
-options 	COMPAT_43
-
 # Binary compatibility with previous versions of NetBSD.
-#options 	COMPAT_09
-options 	COMPAT_10
-options 	COMPAT_11
-options 	COMPAT_12
-options 	COMPAT_13
-options 	COMPAT_14
-options 	COMPAT_15
-options 	COMPAT_16
-options 	COMPAT_20
-options 	COMPAT_30	# NetBSD 3.0 compatibility.
-options 	COMPAT_40	# NetBSD 4.0 compatibility.
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+include 	"conf/compat_netbsd10.config"
 
 # System V-like message queues
 options 	SYSVMSG
@@ -221,7 +208,7 @@ mcclock* at	isa? port 0x70
 #pms*	at	pckbc?				# PS/2-style mouse (aux port)
 #attimer*	at	isa?			# AT Timer
 #pcppi*	at	isa?				# PC prog. periph. interface
-#spkr0	at	pcppi?				# IBM BASIC emulation
+#spkr*	at	pcppi?				# IBM BASIC emulation
 #isabeep0 at	pcppi?				# "keyboard" beep
 #midi*	at	pcppi?
 com*	at	isa? port 0x3f8 irq 4		# standard serial ports
@@ -248,6 +235,7 @@ fdc0	at	isa? port 0x3f0 irq 6 drq 2	# floppy controller
 #wss*	at	isa? port 0x530 irq 9 drq 0	# Windows Sound System
 #wss*	at	isapnp?
 #audio*	at	wss?
+#spkr*	at	audio?				# PC speaker (synthesized)
 #midi*	at	wss?
 #sb*	at	isa? port 0x220 irq 5 drq 1	# SoundBlaster
 #sb*	at	isapnp?

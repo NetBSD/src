@@ -1,4 +1,4 @@
-/*	$NetBSD: netwalker_backlight.c,v 1.1.10.2 2014/08/20 00:02:55 tls Exp $	*/
+/*	$NetBSD: netwalker_backlight.c,v 1.1.10.3 2017/12/03 11:36:06 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2014  Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwalker_backlight.c,v 1.1.10.2 2014/08/20 00:02:55 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwalker_backlight.c,v 1.1.10.3 2017/12/03 11:36:06 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -37,6 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: netwalker_backlight.c,v 1.1.10.2 2014/08/20 00:02:55
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
+#include <dev/wsfb/genfbvar.h>
 
 #include <dev/sysmon/sysmonvar.h>
 #include <dev/sysmon/sysmon_taskq.h>
@@ -48,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: netwalker_backlight.c,v 1.1.10.2 2014/08/20 00:02:55
 
 #include <evbarm/netwalker/netwalker_backlightvar.h>
 
-#define BRIGHTNESS_MAX	16
+#define BRIGHTNESS_MAX	255
 
 struct netwalker_backlight_softc {
 	struct imxpwm_softc sc_imxpwm;
@@ -58,6 +59,9 @@ struct netwalker_backlight_softc {
 };
 
 static struct netwalker_backlight_softc *netwalker_backlight_sc;
+
+static struct genfb_parameter_callback gpc_backlight;
+static struct genfb_parameter_callback gpc_brightness;
 
 static int netwalker_backlight_match(device_t, cfdata_t, void *);
 static void netwalker_backlight_attach(device_t, device_t, void *);
@@ -142,6 +146,86 @@ netwalker_backlight_detach(device_t self, int flags)
 	imxpwm_set_pwm(imxpwm, 0);
 	pmf_device_deregister(self);
 	return 0;
+}
+
+static int
+netwalker_backlight_get_backlight(void *cookie, int *state)
+{
+	struct netwalker_backlight_softc *sc = *(struct netwalker_backlight_softc **)cookie;
+	*state = sc->sc_islit;
+	return 0;
+}
+
+static int
+netwalker_backlight_set_backlight(void *cookie, int state)
+{
+	struct netwalker_backlight_softc *sc = *(struct netwalker_backlight_softc **)cookie;
+
+	KASSERT(state >= 0 && state <= 1);
+
+	sc->sc_islit = state;
+	netwalker_set_brightness(sc, sc->sc_brightness);
+
+	return 0;
+}
+
+static int
+netwalker_backlight_get_brightness(void *cookie, int *level)
+{
+	struct netwalker_backlight_softc *sc = *(struct netwalker_backlight_softc **)cookie;
+
+	if (sc->sc_brightness < 0)
+		return ENODEV;
+
+	*level = sc->sc_brightness;
+	return 0;
+}
+
+static int
+netwalker_backlight_set_brightness(void *cookie, int level)
+{
+	struct netwalker_backlight_softc *sc = *(struct netwalker_backlight_softc **)cookie;
+
+	KASSERT(level >= 0 && level <= 255);
+
+	sc->sc_brightness = level;
+	netwalker_set_brightness(sc, sc->sc_brightness);
+
+	return 0;
+}
+
+static int
+netwalker_backlight_upd_brightness(void *cookie, int delta)
+{
+	struct netwalker_backlight_softc *sc = *(struct netwalker_backlight_softc **)cookie;
+
+	if (sc->sc_brightness < 0)
+		return ENODEV;
+
+	sc->sc_brightness += delta;
+	if (sc->sc_brightness < 0) sc->sc_brightness = 0;
+	if (sc->sc_brightness > 255) sc->sc_brightness = 255;
+	netwalker_set_brightness(sc, sc->sc_brightness);
+
+	return 0;
+}
+
+void
+netwalker_backlight_genfb_parameter_set(prop_dictionary_t dict)
+{
+	gpc_backlight.gpc_cookie = (void *)&netwalker_backlight_sc;
+	gpc_backlight.gpc_set_parameter = netwalker_backlight_set_backlight;
+	gpc_backlight.gpc_get_parameter = netwalker_backlight_get_backlight;
+	gpc_backlight.gpc_upd_parameter = NULL;
+	prop_dictionary_set_uint64(dict, "backlight_callback",
+	    (uint64_t)(uintptr_t)&gpc_backlight);
+
+	gpc_brightness.gpc_cookie = (void *)&netwalker_backlight_sc;
+	gpc_brightness.gpc_set_parameter = netwalker_backlight_set_brightness;
+	gpc_brightness.gpc_get_parameter = netwalker_backlight_get_brightness;
+	gpc_brightness.gpc_upd_parameter = netwalker_backlight_upd_brightness;
+	prop_dictionary_set_uint64(dict, "brightness_callback",
+	    (uint64_t)(uintptr_t)&gpc_brightness);
 }
 
 /*

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.mac68k,v 1.23 2011/10/03 19:22:59 hauke Exp $
+#	$NetBSD: majors.mac68k,v 1.23.12.1 2017/12/03 11:36:24 jdolecek Exp $
 #
 # Device majors for mac68k
 #
@@ -49,7 +49,7 @@ device-major	cgd		char 51  block 23	cgd
 device-major	ksyms		char 52			ksyms
 device-major	wsfont		char 53			wsfont
 device-major	cpi		char 54			cpi
-device-major	sysmon		char 55			sysmon_wdog
+device-major	sysmon		char 55			sysmon
 
 device-major	nsmb		char 98			nsmb
 

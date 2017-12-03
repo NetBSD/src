@@ -1,0 +1,61 @@
+# $NetBSD: files.fdt,v 1.22.2.2 2017/12/03 11:37:01 jdolecek Exp $
+
+include	"external/bsd/libfdt/conf/files.libfdt"
+
+defflag	opt_fdt.h				FDT: libfdt, ofw_subr
+
+define	fdtbus { } : clk
+
+device	fdt { [pass = 10] } : fdtbus
+attach	fdt at fdtbus
+file	dev/fdt/fdtbus.c			fdt
+
+device	fregulator
+attach	fregulator at fdt
+file	dev/fdt/fixedregulator.c		fregulator
+
+device	gregulator
+attach	gregulator at fdt
+file	dev/fdt/gpioregulator.c			gregulator
+
+device	fclock: clk
+attach	fclock at fdt
+file	dev/fdt/fixedclock.c			fclock
+
+device	ffclock: clk
+attach	ffclock at fdt
+file	dev/fdt/fixedfactorclock.c		ffclock
+
+device	gpiokeys: sysmon_envsys, sysmon_power, wskbddev, linux_keymap
+attach	gpiokeys at fdt
+file	dev/fdt/gpiokeys.c			gpiokeys
+
+device	gpioleds: leds
+attach	gpioleds at fdt
+file	dev/fdt/gpioleds.c			gpioleds
+
+file	dev/fdt/fdt_openfirm.c			fdtbus
+file	dev/fdt/fdt_subr.c			fdtbus
+file	dev/fdt/fdt_clock.c			fdtbus
+file	dev/fdt/fdt_dma.c			fdtbus
+file	dev/fdt/fdt_gpio.c			fdtbus
+file	dev/fdt/fdt_i2c.c			fdtbus
+file	dev/fdt/fdt_intr.c			fdtbus
+file	dev/fdt/fdt_mmc_pwrseq.c		fdtbus
+file	dev/fdt/fdt_phy.c			fdtbus
+file	dev/fdt/fdt_power.c			fdtbus
+file	dev/fdt/fdt_regulator.c			fdtbus
+file	dev/fdt/fdt_reset.c			fdtbus
+file	dev/fdt/fdt_rtc.c			fdtbus
+file	dev/fdt/fdt_pinctrl.c			fdtbus
+
+device	cpus { } : fdtbus
+attach	cpus at fdt
+file	dev/fdt/cpus.c				cpus
+
+device	mmcpwrseq
+attach	mmcpwrseq at fdt
+file	dev/fdt/mmc_pwrseq_simple.c		mmcpwrseq
+
+define	fdt_display_timing
+file	dev/fdt/display_timing.c		fdt_display_timing

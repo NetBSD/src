@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.88.2.1 2014/08/20 00:04:31 tls Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.88.2.2 2017/12/03 11:38:48 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.88.2.1 2014/08/20 00:04:31 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.88.2.2 2017/12/03 11:38:48 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.88.2.1 2014/08/20 00:04:31 tls Exp
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
-#include <sys/malloc.h>
 #include <sys/kauth.h>
 #include <sys/module.h>
 
@@ -146,9 +145,6 @@ umapfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 
 	amp = kmem_zalloc(sizeof(struct umap_mount), KM_SLEEP);
 	mp->mnt_data = amp;
-	amp->umapm_vfs = lowerrootvp->v_mount;
-	if (amp->umapm_vfs->mnt_flag & MNT_LOCAL)
-		mp->mnt_flag |= MNT_LOCAL;
 
 	/*
 	 * Now copy in the number of entries and maps for umap mapping.
@@ -225,11 +221,17 @@ umapfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 
 	error = set_statvfs_info(path, UIO_USERSPACE, args->umap_target,
 	    UIO_USERSPACE, mp->mnt_op->vfs_name, mp, l);
+	if (error)
+		return error;
+
+	mp->mnt_lower = lowerrootvp->v_mount;
+	if (mp->mnt_lower->mnt_flag & MNT_LOCAL)
+		mp->mnt_flag |= MNT_LOCAL;
 #ifdef UMAPFS_DIAGNOSTIC
 	printf("umapfs_mount: lower %s, alias at %s\n",
 		mp->mnt_stat.f_mntfromname, mp->mnt_stat.f_mntonname);
 #endif
-	return error;
+	return 0;
 }
 
 /*
@@ -295,7 +297,7 @@ struct vfsops umapfs_vfsops = {
 	.vfs_done = layerfs_done,
 	.vfs_snapshot = layerfs_snapshot,
 	.vfs_extattrctl = vfs_stdextattrctl,
-	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_suspendctl = layerfs_suspendctl,
 	.vfs_renamelock_enter = layerfs_renamelock_enter,
 	.vfs_renamelock_exit = layerfs_renamelock_exit,
 	.vfs_fsync = (void *)eopnotsupp,

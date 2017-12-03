@@ -1,4 +1,4 @@
-/* $NetBSD: siisata_pci.c,v 1.10.6.2 2014/08/20 00:03:48 tls Exp $ */
+/* $NetBSD: siisata_pci.c,v 1.10.6.3 2017/12/03 11:37:29 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata_pci.c,v 1.10.6.2 2014/08/20 00:03:48 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata_pci.c,v 1.10.6.3 2017/12/03 11:37:29 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -92,7 +92,13 @@ static const struct siisata_pci_board siisata_pci_boards[] = {
 	{
 		.spb_vend = PCI_VENDOR_CMDTECH,
 		.spb_prod = PCI_PRODUCT_CMDTECH_3132,
-		.spb_port = 2, 
+		.spb_port = 2,
+		.spb_chip = 3132,
+	},
+	{
+		.spb_vend = PCI_VENDOR_CMDTECH,
+		.spb_prod = PCI_PRODUCT_CMDTECH_AAR_1220SA,
+		.spb_port = 2,
 		.spb_chip = 3132,
 	},
 	{
@@ -150,7 +156,7 @@ siisata_pci_attach(device_t parent, device_t self, void *aux)
 	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_atac.atac_dev = self;
-	
+
 	psc->sc_pc = pa->pa_pc;
 	psc->sc_pcitag = pa->pa_tag;
 
@@ -209,9 +215,10 @@ siisata_pci_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pa->pa_pc, intrhandle, intrbuf, sizeof(intrbuf));
-	psc->sc_ih = pci_intr_establish(pa->pa_pc, intrhandle,
-	    IPL_BIO, siisata_intr, sc);
+	intrstr = pci_intr_string(pa->pa_pc, intrhandle, intrbuf,
+	    sizeof(intrbuf));
+	psc->sc_ih = pci_intr_establish_xname(pa->pa_pc, intrhandle,
+	    IPL_BIO, siisata_intr, sc, device_xname(self));
 	if (psc->sc_ih == NULL) {
 		bus_space_unmap(sc->sc_grt, sc->sc_grh, grsize);
 		bus_space_unmap(sc->sc_prt, sc->sc_prh, prsize);
@@ -289,7 +296,7 @@ siisata_pci_detach(device_t dv, int flags)
 
 	bus_space_unmap(sc->sc_prt, sc->sc_prh, sc->sc_prs);
 	bus_space_unmap(sc->sc_grt, sc->sc_grh, sc->sc_grs);
-	
+
 	return 0;
 }
 
@@ -303,6 +310,6 @@ siisata_pci_resume(device_t dv, const pmf_qual_t *qual)
 	s = splbio();
 	siisata_resume(sc);
 	splx(s);
-	
+
 	return true;
 }
