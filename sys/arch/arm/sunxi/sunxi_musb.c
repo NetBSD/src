@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_musb.c,v 1.2 2017/10/29 16:02:46 jmcneill Exp $ */
+/* $NetBSD: sunxi_musb.c,v 1.3 2017/12/03 14:35:07 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -32,7 +32,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_musb.c,v 1.2 2017/10/29 16:02:46 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_musb.c,v 1.3 2017/12/03 14:35:07 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -182,106 +182,79 @@ sunxi_musb_filt(bus_size_t o)
 static uint8_t
 sunxi_musb_bs_r_1(void *t, bus_space_handle_t h, bus_size_t o)
 {
-	const struct bus_space *bs = t;
-	const struct bus_space *bs_parent = bs->bs_cookie;
-
 	switch (o) {
 	case MUSB2_REG_HWVERS:
 		return 0;	/* no known equivalent */
 	}
 
-	return bus_space_read_1(bs_parent, h, sunxi_musb_reg(o));
+	return bus_space_read_1((bus_space_tag_t)t, h, sunxi_musb_reg(o));
 }
 
 static uint16_t
 sunxi_musb_bs_r_2(void *t, bus_space_handle_t h, bus_size_t o)
 {
-	const struct bus_space *bs = t;
-	const struct bus_space *bs_parent = bs->bs_cookie;
-
-	return bus_space_read_2(bs_parent, h, sunxi_musb_reg(o));
+	return bus_space_read_2((bus_space_tag_t)t, h, sunxi_musb_reg(o));
 }
 
 static void
 sunxi_musb_bs_w_1(void *t, bus_space_handle_t h, bus_size_t o,
     uint8_t v)
 {
-	const struct bus_space *bs = t;
-	const struct bus_space *bs_parent = bs->bs_cookie;
-
 	if (sunxi_musb_filt(o) != 0)
 		return;
 
-	bus_space_write_1(bs_parent, h, sunxi_musb_reg(o), v);
+	bus_space_write_1((bus_space_tag_t)t, h, sunxi_musb_reg(o), v);
 }
 
 static void
 sunxi_musb_bs_w_2(void *t, bus_space_handle_t h, bus_size_t o,
     uint16_t v)
 {
-	const struct bus_space *bs = t;
-	const struct bus_space *bs_parent = bs->bs_cookie;
-
 	if (sunxi_musb_filt(o) != 0)
 		return;
 
-	bus_space_write_2(bs_parent, h, sunxi_musb_reg(o), v);
+	bus_space_write_2((bus_space_tag_t)t, h, sunxi_musb_reg(o), v);
 }
 
 static void
 sunxi_musb_bs_rm_1(void *t, bus_space_handle_t h, bus_size_t o,
     uint8_t *d, bus_size_t c)
 {
-	const struct bus_space *bs = t;
-	const struct bus_space *bs_parent = bs->bs_cookie;
-
-	bus_space_read_multi_1(bs_parent, h, sunxi_musb_reg(o), d, c);
+	bus_space_read_multi_1((bus_space_tag_t)t, h, sunxi_musb_reg(o), d, c);
 }
 
 static void
 sunxi_musb_bs_rm_4(void *t, bus_space_handle_t h, bus_size_t o,
     uint32_t *d, bus_size_t c)
 {
-	const struct bus_space *bs = t;
-	const struct bus_space *bs_parent = bs->bs_cookie;
-
-	bus_space_read_multi_4(bs_parent, h, sunxi_musb_reg(o), d, c);
+	bus_space_read_multi_4((bus_space_tag_t)t, h, sunxi_musb_reg(o), d, c);
 }
 
 static void
 sunxi_musb_bs_wm_1(void *t, bus_space_handle_t h, bus_size_t o,
     const uint8_t *d, bus_size_t c)
 {
-	const struct bus_space *bs = t;
-	const struct bus_space *bs_parent = bs->bs_cookie;
-
 	if (sunxi_musb_filt(o) != 0)
 		return;
 
-	bus_space_write_multi_1(bs_parent, h, sunxi_musb_reg(o), d, c);
+	bus_space_write_multi_1((bus_space_tag_t)t, h, sunxi_musb_reg(o), d, c);
 }
 
 static void
 sunxi_musb_bs_wm_4(void *t, bus_space_handle_t h, bus_size_t o,
     const uint32_t *d, bus_size_t c)
 {
-	const struct bus_space *bs = t;
-	const struct bus_space *bs_parent = bs->bs_cookie;
-
 	if (sunxi_musb_filt(o) != 0)
 		return;
 
-	bus_space_write_multi_4(bs_parent, h, sunxi_musb_reg(o), d, c);
+	bus_space_write_multi_4((bus_space_tag_t)t, h, sunxi_musb_reg(o), d, c);
 }
 
 static void
 sunxi_musb_bs_barrier(void *t, bus_space_handle_t h, bus_size_t o,
     bus_size_t l, int f)
 {
-	const struct bus_space *bs = t;
-	const struct bus_space *bs_parent = bs->bs_cookie;
-
-	bus_space_barrier(bs_parent, h, o, l, f);
+	bus_space_barrier((bus_space_tag_t)t, h, o, l, f);
 }
 
 static int
