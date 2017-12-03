@@ -1,8 +1,10 @@
-#	$NetBSD: Makefile,v 1.2 2016/09/27 03:53:09 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.3 2017/12/03 11:38:58 jdolecek Exp $
 
 .include "../Makefile.inc"
 
 .PATH:	${S}/dev/pci ${S}/dev/ic
+
+CFLAGS+=	-DNVME_DEBUG -DDEBUG -DDIAGNOSTIC -DLOCKDEBUG
 
 KMOD=	nvme
 IOCONF=	nvme.ioconf
