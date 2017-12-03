@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_ioctl.c,v 1.26 2017/06/24 11:31:26 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_ioctl.c,v 1.27 2017/12/03 07:23:45 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -464,12 +464,12 @@ void
 unref_session(session_t *session)
 {
 
-	mutex_enter(&session->lock);
+	mutex_enter(&iscsi_cleanup_mtx);
 	KASSERT(session != NULL);
 	KASSERT(session->refcount > 0);
 	if (--session->refcount == 0)
 		cv_broadcast(&session->sess_cv);
-	mutex_exit(&session->lock);
+	mutex_exit(&iscsi_cleanup_mtx);
 }
 
 
