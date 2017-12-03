@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_parse.y,v 1.44 2017/01/20 23:00:30 rmind Exp $	*/
+/*	$NetBSD: npf_parse.y,v 1.45 2017/12/03 23:48:03 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2011-2017 The NetBSD Foundation, Inc.
@@ -353,7 +353,7 @@ mapseg
 
 map
 	: MAP ifref map_sd map_algo mapseg map_type mapseg
-	  PASS opt_proto filt_opts
+	  PASS opt_proto all_or_filt_opts
 	{
 		npfctl_build_natseg($3, $6, $2, &$5, &$7, &$9, &$10, $4);
 	}
