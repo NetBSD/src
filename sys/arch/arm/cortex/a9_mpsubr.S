@@ -1,4 +1,4 @@
-/*	$NetBSD: a9_mpsubr.S,v 1.18.2.5 2017/07/08 17:01:52 snj Exp $	*/
+/*	$NetBSD: a9_mpsubr.S,v 1.18.2.6 2017/12/03 10:29:12 snj Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -337,6 +337,10 @@ cortex_init:
 	and	r0, r0, #(PSR_MODE)	/* Mode is in the low 5 bits of CPSR */
 	teq	r0, #(PSR_HYP32_MODE)	/* Hyp Mode? */
 	bne	1f
+
+	/* Set CNTVOFF to 0 */
+	mov	r0, #0
+	mcrr	p15, 4, r0, r0, c14
 
 	/* Ensure that IRQ, and FIQ will be disabled after eret */
 	mrs	r0, cpsr
