@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.2,v 1.1.2.55 2017/12/02 10:54:01 snj Exp $
+# $NetBSD: CHANGES-7.2,v 1.1.2.56 2017/12/03 10:34:39 snj Exp $
 
 A complete list of changes from the NetBSD 7.1 release to the NetBSD 7.2
 release:
@@ -4881,4 +4881,20 @@ xsrc/xfree/xc/lib/font/fontfile/fontdir.c	patch
 	Pull up fixes to libXfont and libXcurses for CVEs
 	2017-13722, 2017-13720, 2017-16611, and 2017-16612.
 	[mrg, ticket #1535]
+
+share/man/man9/kmem.9				1.20 via patch
+share/man/man9/vmem.9				1.16
+sys/kern/subr_kmem.c				1.62
+sys/kern/subr_vmem.c				1.94
+
+	fix vmem_alloc() to never return an error for VM_SLEEP requests,
+	thus fixing kmem_alloc() to never return NULL for KM_SLEEP
+	requests. instead these operations will retry forever, which was
+	the intent.
+	[mlelstv, ticket #1521]
+
+sys/arch/arm/cortex/a9_mpsubr.S			1.52
+
+	Ensure CNTVOFF is 0 before dropping out of Hyp mode
+	[skrll, ticket #1524]
 
