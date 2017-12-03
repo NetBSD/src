@@ -559,6 +559,7 @@ iscsi_done(ccb_t *ccb)
 	DEB(9, ("iscsi_done\n"));
 
 	if (xs != NULL) {
+		ccb->xs = NULL;
 		xs->resid = ccb->residual;
 
 		switch (ccb->status) {
@@ -596,14 +597,14 @@ iscsi_done(ccb_t *ccb)
 			break;
 		}
 
+		unref_session(ccb->session);
+
 		DEB(99, ("Calling scsipi_done (%p), err = %d\n", xs, xs->error));
 		scsipi_done(xs);
 		DEB(99, ("scsipi_done returned\n"));
 	} else {
 		DEBOUT(("ISCSI: iscsi_done CCB %p without XS\n", ccb));
 	}
-
-	unref_session(ccb->session);
 }
 
 SYSCTL_SETUP(sysctl_iscsi_setup, "ISCSI subtree setup")
