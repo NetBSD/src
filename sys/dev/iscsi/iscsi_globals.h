@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_globals.h,v 1.22 2017/02/05 12:05:46 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_globals.h,v 1.23 2017/12/03 19:07:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -207,28 +207,28 @@ typedef struct {
 */
 
 struct pdu_s {
-	TAILQ_ENTRY(pdu_s)	chain;	/* freelist or wait list (or no list) */
-	TAILQ_ENTRY(pdu_s)	send_chain;
+	TAILQ_ENTRY(pdu_s)	pdu_chain;	/* freelist or wait list (or no list) */
+	TAILQ_ENTRY(pdu_s)	pdu_send_chain;
 				/* chaining PDUs waiting to be sent */
-	pdu_disp_t		disp; /* what to do with this pdu */
-	uint32_t		flags; 	/* various processing flags */
-	pdu_header_t		pdu; /* Buffer for PDU associated with cmd */
-	void			*temp_data; /* (free after use) */
-	uint32_t		temp_data_len;	/* size of temp data */
+	pdu_disp_t		pdu_disp; /* what to do with this pdu */
+	uint32_t		pdu_flags; 	/* various processing flags */
+	pdu_header_t		pdu_hdr; /* Buffer for PDU associated with cmd */
+	void			*pdu_temp_data; /* (free after use) */
+	uint32_t		pdu_temp_data_len;	/* size of temp data */
 
-	struct uio		uio; /* UIO structure */
-	struct iovec		io_vec[4];
+	struct uio		pdu_uio; /* UIO structure */
+	struct iovec		pdu_io_vec[4];
 				/* Header + data + data-digest + padding */
 
-	struct uio		save_uio;
+	struct uio		pdu_save_uio;
 				/* UIO structure save for retransmits */
-	struct iovec		save_iovec[4];
+	struct iovec		pdu_save_iovec[4];
 				/* Header + data + data-digest + padding */
-	uint32_t		data_digest;
+	uint32_t		pdu_data_digest;
 				/* holds data digest if enabled */
-	ccb_t			*owner;
+	ccb_t			*pdu_owner;
 				/* the ccb this PDU belongs to (if any) */
-	connection_t		*connection;
+	connection_t		*pdu_connection;
 				/* the connection this PDU belongs to */
 };
 
@@ -244,57 +244,57 @@ typedef struct pdu_list_s pdu_list_t;
 */
 
 struct ccb_s {
-	TAILQ_ENTRY(ccb_s)	chain;
+	TAILQ_ENTRY(ccb_s)	ccb_chain;
 	/* either freelist or waiting list (or no list) */
 
-	uint32_t		status; /* Status gets entered here */
-	ccb_disp_t		disp;	/* what to do with this ccb */
+	uint32_t		ccb_status; /* Status gets entered here */
+	ccb_disp_t		ccb_disp;	/* what to do with this ccb */
 
-	struct callout		timeout; /* To make sure it isn't lost */
-	TAILQ_ENTRY(ccb_s)	tchain;
-	tout_state_t		timedout;
-	int			num_timeouts;
+	struct callout		ccb_timeout; /* To make sure it isn't lost */
+	TAILQ_ENTRY(ccb_s)	ccb_tchain;
+	tout_state_t		ccb_timedout;
+	int			ccb_num_timeouts;
 	/* How often we've sent out SNACK without answer */
-	int			total_tries;
+	int			ccb_total_tries;
 	/* How often we've tried to recover */
 
-	uint32_t		ITT;
+	uint32_t		ccb_ITT;
 	/* task tag: ITT counter + sess id + CCB index */
-	sernum_buffer_t		DataSN_buf;
+	sernum_buffer_t		ccb_DataSN_buf;
 	/* Received Data Seq nums (read ops only) */
 
-	void			*par;
+	void			*ccb_par;
 	/* misc. parameter for this request */
-	struct scsipi_xfer	*xs;
+	struct scsipi_xfer	*ccb_xs;
 	/* the scsipi_xfer for this cmd */
 
-	void			*temp_data;
+	void			*ccb_temp_data;
 	/* to hold state (mainly during negotiation) */
-	void			*text_data;
+	void			*ccb_text_data;
 	/* holds accumulated text for continued PDUs */
-	uint32_t		text_len;
+	uint32_t		ccb_text_len;
 	/* length of text data so far */
 
-	uint64_t		lun; /* LUN */
-	uint32_t		tag; /* Command tag */
-	uint8_t			*cmd; /* SCSI command block */
-	uint16_t		cmdlen; /* SCSI command block length */
-	bool			data_in; /* if this is a read request */
-	uint8_t			*data_ptr; /* data pointer for read/write */
-	uint32_t		data_len; /* total data length */
-	uint32_t		xfer_len; /* data transferred on read */
-	uint32_t		residual; /* residual data size */
+	uint64_t		ccb_lun; /* LUN */
+	uint32_t		ccb_tag; /* Command tag */
+	uint8_t			*ccb_cmd; /* SCSI command block */
+	uint16_t		ccb_cmdlen; /* SCSI command block length */
+	bool			ccb_data_in; /* if this is a read request */
+	uint8_t			*ccb_data_ptr; /* data pointer for read/write */
+	uint32_t		ccb_data_len; /* total data length */
+	uint32_t		ccb_xfer_len; /* data transferred on read */
+	uint32_t		ccb_residual; /* residual data size */
 
-	void			*sense_ptr; /* sense data pointer */
-	int			sense_len_req; /* requested sense data length */
-	int			sense_len_got; /* actual sense data length */
+	void			*ccb_sense_ptr; /* sense data pointer */
+	int			ccb_sense_len_req; /* requested sense data length */
+	int			ccb_sense_len_got; /* actual sense data length */
 
-	pdu_t			*pdu_waiting; /* PDU waiting to be ack'ed */
-	volatile uint32_t	CmdSN; /* CmdSN associated with waiting PDU */
+	pdu_t			*ccb_pdu_waiting; /* PDU waiting to be ack'ed */
+	volatile uint32_t	ccb_CmdSN; /* CmdSN associated with waiting PDU */
 
-	int			flags;
-	connection_t		*connection; /* connection for CCB */
-	session_t		*session; /* session for CCB */
+	int			ccb_flags;
+	connection_t		*ccb_connection; /* connection for CCB */
+	session_t		*ccb_session; /* session for CCB */
 };
 
 
@@ -308,84 +308,84 @@ typedef struct ccb_list_s ccb_list_t;
    Per connection data: the connection structure
 */
 struct connection_s {
-	TAILQ_ENTRY(connection_s)	connections;
+	TAILQ_ENTRY(connection_s)	c_connections;
 
-	kmutex_t			lock;
-	kcondvar_t			conn_cv;
-	kcondvar_t			pdu_cv;
-	kcondvar_t			ccb_cv;
-	kcondvar_t			idle_cv;
+	kmutex_t			c_lock;
+	kcondvar_t			c_conn_cv;
+	kcondvar_t			c_pdu_cv;
+	kcondvar_t			c_ccb_cv;
+	kcondvar_t			c_idle_cv;
 
-	pdu_list_t			pdu_pool; /* the free PDU pool */
+	pdu_list_t			c_pdu_pool; /* the free PDU pool */
 
-	ccb_list_t			ccbs_waiting;
+	ccb_list_t			c_ccbs_waiting;
 					/* CCBs waiting for completion */
 
-	pdu_list_t			pdus_to_send;
+	pdu_list_t			c_pdus_to_send;
 					/* the PDUs waiting to be sent */
 
-	sernum_buffer_t			StatSN_buf;
+	sernum_buffer_t			c_StatSN_buf;
 					/* to keep track of received StatSNs */
 
-	uint32_t			max_transfer;
+	uint32_t			c_max_transfer;
 		/* min(MaxRecvDataSegmentLength, MaxBurstLength) */
-	uint32_t			max_firstimmed;
+	uint32_t			c_max_firstimmed;
 		/* 0 if InitialR2T=Yes, else
 		   min of (MaxRecvDataSegmentLength, FirstBurstLength) */
-	uint32_t			max_firstdata;
+	uint32_t			c_max_firstdata;
 		/* 0 if ImmediateData=No, else min of */
 		/* (MaxRecvDataSegmentLength, FirstBurstLength) */
 
-	uint32_t			MaxRecvDataSegmentLength;
+	uint32_t			c_MaxRecvDataSegmentLength;
 					/* Target's value */
-	uint32_t			Our_MaxRecvDataSegmentLength;
+	uint32_t			c_Our_MaxRecvDataSegmentLength;
 					/* Our own value */
-	bool				HeaderDigest;	/* TRUE if doing CRC */
-	bool				DataDigest;	/* TRUE if doing CRC */
-	uint32_t			Time2Wait;
+	bool				c_HeaderDigest;	/* TRUE if doing CRC */
+	bool				c_DataDigest;	/* TRUE if doing CRC */
+	uint32_t			c_Time2Wait;
 					/* Negotiated default or logout value */
-	uint32_t			Time2Retain;
+	uint32_t			c_Time2Retain;
 					/* Negotiated default or logout value */
 
-	uint16_t			id;
+	uint16_t			c_id;
 		/* connection ID (unique within session) */
 
-	conn_state_t			state; /* State of connection */
+	conn_state_t			c_state; /* State of connection */
 
-	struct lwp			*threadobj;
+	struct lwp			*c_threadobj;
 		/* proc/thread pointer of socket owner */
-	struct file			*sock;	/* the connection's socket */
-	session_t			*session;
+	struct file			*c_sock;	/* the connection's socket */
+	session_t			*c_session;
 					/* back pointer to the owning session */
 
-	struct lwp			*rcvproc; /* receive thread */
-	struct lwp			*sendproc; /* send thread */
+	struct lwp			*c_rcvproc; /* receive thread */
+	struct lwp			*c_sendproc; /* send thread */
 
-	uint32_t			terminating;
+	uint32_t			c_terminating;
 					/* if closing down: status */
-	int				recover; /* recovery count */
+	int				c_recover; /* recovery count */
 		/* (reset on first successful data transfer) */
-	volatile unsigned		usecount; /* number of active CCBs */
-	volatile unsigned		pducount; /* number of active PDUs */
+	volatile unsigned		c_usecount; /* number of active CCBs */
+	volatile unsigned		c_pducount; /* number of active PDUs */
 
-	bool				destroy; /* conn will be destroyed */
-	bool				in_session;
+	bool				c_destroy; /* conn will be destroyed */
+	bool				c_in_session;
 		/* if it's linked into the session list */
-	logout_state_t			loggedout;
+	logout_state_t			c_loggedout;
 		/* status of logout (for recovery) */
-	struct callout			timeout;
+	struct callout			c_timeout;
 		/* Timeout for checking if connection is dead */
-	TAILQ_ENTRY(connection_s)	tchain;
-	tout_state_t			timedout;
-	int				num_timeouts;
+	TAILQ_ENTRY(connection_s)	c_tchain;
+	tout_state_t			c_timedout;
+	int				c_num_timeouts;
 		/* How often we've sent out a NOP without answer */
-	uint32_t			idle_timeout_val;
+	uint32_t			c_idle_timeout_val;
 		/* Connection timeout value when idle */
 
-	iscsi_login_parameters_t	*login_par;
+	iscsi_login_parameters_t	*c_login_par;
 					/* only valid during login */
 
-	pdu_t				pdu[PDUS_PER_CONNECTION]; /* PDUs */
+	pdu_t				c_pdu[PDUS_PER_CONNECTION]; /* PDUs */
 };
 
 /* the connection list type */
@@ -403,64 +403,64 @@ struct session_s {
 	   NOTE: sc_adapter MUST be the first field in this structure so we can
 	   easily get from adapter to session.
 	 */
-	struct scsipi_adapter	sc_adapter;
-	struct scsipi_channel	sc_channel;
+	struct scsipi_adapter	s_sc_adapter;
+	struct scsipi_channel	s_sc_channel;
 
-	device_t		child_dev;
+	device_t		s_child_dev;
 	/* the child we're associated with - (NULL if not mapped) */
 
-	int			refcount;	/* session in use by scsipi */
+	int			s_refcount;	/* session in use by scsipi */
 
 	/* local stuff */
-	TAILQ_ENTRY(session_s)	sessions;	/* the list of sessions */
+	TAILQ_ENTRY(session_s)	s_sessions;	/* the list of sessions */
 
-	kmutex_t		lock;
-	kcondvar_t		sess_cv;
-	kcondvar_t		ccb_cv;
+	kmutex_t		s_lock;
+	kcondvar_t		s_sess_cv;
+	kcondvar_t		s_ccb_cv;
 
-	ccb_list_t		ccb_pool;	/* The free CCB pool */
+	ccb_list_t		s_ccb_pool;	/* The free CCB pool */
 
-	int			send_window;
+	int			s_send_window;
 
-	uint16_t		id;	/* session ID (unique within driver) */
-	uint16_t		TSIH;	/* Target assigned session ID */
+	uint16_t		s_id;	/* session ID (unique within driver) */
+	uint16_t		s_TSIH;	/* Target assigned session ID */
 
-	uint32_t		CmdSN;	 /* Current CmdSN */
-	uint32_t		ExpCmdSN; /* Current max ExpCmdSN received */
-	uint32_t		MaxCmdSN; /* Current MaxCmdSN */
+	uint32_t		s_CmdSN;	 /* Current CmdSN */
+	uint32_t		s_ExpCmdSN; /* Current max ExpCmdSN received */
+	uint32_t		s_MaxCmdSN; /* Current MaxCmdSN */
 
 	/* negotiated values */
-	uint32_t		ErrorRecoveryLevel;
-	uint32_t		FirstBurstLength;
-	uint32_t		MaxBurstLength;
-	bool			ImmediateData;
-	bool			InitialR2T;
-	uint32_t		MaxOutstandingR2T;
-	uint32_t		MaxConnections;
-	uint32_t		DefaultTime2Wait;
-	uint32_t		DefaultTime2Retain;
+	uint32_t		s_ErrorRecoveryLevel;
+	uint32_t		s_FirstBurstLength;
+	uint32_t		s_MaxBurstLength;
+	bool			s_ImmediateData;
+	bool			s_InitialR2T;
+	uint32_t		s_MaxOutstandingR2T;
+	uint32_t		s_MaxConnections;
+	uint32_t		s_DefaultTime2Wait;
+	uint32_t		s_DefaultTime2Retain;
 
-	iscsi_login_session_type_t login_type;	/* session type */
+	iscsi_login_session_type_t s_login_type;	/* session type */
 
 	/* for send_targets requests */
-	uint8_t			*target_list;
-	uint32_t		target_list_len;
+	uint8_t			*s_target_list;
+	uint32_t		s_target_list_len;
 
-	uint32_t		conn_id;	/* connection ID counter */
+	uint32_t		s_conn_id;	/* connection ID counter */
 
-	uint32_t		terminating;	/* if closing down: status */
+	uint32_t		s_terminating;	/* if closing down: status */
 
-	uint32_t		active_connections;
+	uint32_t		s_active_connections;
 				/* currently active connections */
-	uint32_t		total_connections;
+	uint32_t		s_total_connections;
 	/* connections associated with this session (active or winding down) */
-	connection_list_t	conn_list;	/* the list of connections */
-	connection_t		*mru_connection;
+	connection_list_t	s_conn_list;	/* the list of connections */
+	connection_t		*s_mru_connection;
 				/* the most recently used connection */
 
-	ccb_t			ccb[CCBS_PER_SESSION];		/* CCBs */
+	ccb_t			s_ccb[CCBS_PER_SESSION];	/* CCBs */
 
-	char			tgtname[ISCSI_STRING_LENGTH + 1];
+	char			s_tgtname[ISCSI_STRING_LENGTH + 1];
 				/* iSCSI target name */
 };
 
@@ -475,11 +475,11 @@ typedef struct session_list_s session_list_t;
 */
 
 typedef struct event_s {
-	TAILQ_ENTRY(event_s)	link;		/* next event in queue */
-	iscsi_event_t		event_kind;	/* which event */
-	uint32_t		session_id;	/* affected session ID */
-	uint32_t		connection_id;	/* affected connection ID */
-	uint32_t		reason;		/* event reason */
+	TAILQ_ENTRY(event_s)	ev_link;	/* next event in queue */
+	iscsi_event_t		ev_event_kind;	/* which event */
+	uint32_t		ev_session_id;	/* affected session ID */
+	uint32_t		ev_connection_id;/* affected connection ID */
+	uint32_t		ev_reason;		/* event reason */
 } event_t;
 
 /* the event list entry type */
@@ -489,12 +489,12 @@ typedef struct event_list_s event_list_t;
 
 
 typedef struct event_handler_s {
-	TAILQ_ENTRY(event_handler_s)	link;	/* next handler */
-	uint32_t			id;	/* unique ID */
-	event_list_t			events;	/* list of events pending */
-	iscsi_wait_event_parameters_t	*waiter; /* waiting parameter */
+	TAILQ_ENTRY(event_handler_s)	evh_link;	/* next handler */
+	uint32_t			evh_id;	/* unique ID */
+	event_list_t			evh_events;	/* list of events pending */
+	iscsi_wait_event_parameters_t	*evh_waiter; /* waiting parameter */
 	/* following to detect dead handlers */
-	event_t				*first_in_list;
+	event_t				*evh_first_in_list;
 } event_handler_t;
 
 /* the event list entry type */
@@ -504,9 +504,9 @@ typedef struct event_handler_list_s event_handler_list_t;
 
 /* /dev/iscsi0 state */
 struct iscsifd {
-	TAILQ_ENTRY(iscsifd)		link;
-	device_t	dev;
-	int		unit;
+	TAILQ_ENTRY(iscsifd)		fd_link;
+	device_t	fd_dev;
+	int		fd_unit;
 };
 
 /* -------------------------  Global Variables  ----------------------------- */
@@ -536,8 +536,8 @@ extern int iscsi_debug_level;	/* How much debug info to display */
 #define DEBOUT(x) printf x
 #define DEB(lev,x) { if (iscsi_debug_level >= lev) printf x ;}
 #define DEBC(conn,lev,x) { if (iscsi_debug_level >= lev) { printf("S%dC%d: ", \
-				conn ? conn->session->id : -1, \
-				conn ? conn->id : -1); printf x ;}}
+				conn ? conn->c_session->s_id : -1, \
+				conn ? conn->c_id : -1); printf x ;}}
 
 #define STATIC static
 
@@ -713,8 +713,8 @@ void iscsi_rcv_thread(void *);
 
 /* in iscsi_utils.c */
 
-uint32_t gen_digest(void *, int);
-uint32_t gen_digest_2(void *, int, void *, int);
+uint32_t gen_digest(const void *, size_t);
+uint32_t gen_digest_2(const void *, size_t, const void *, size_t);
 
 void create_ccbs(session_t *);
 void destroy_ccbs(session_t *);
