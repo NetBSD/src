@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.360.2.4 2017/12/03 11:37:07 jdolecek Exp $
+#	$NetBSD: files.pci,v 1.360.2.5 2017/12/03 14:21:05 jdolecek Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -106,11 +106,6 @@ file	dev/pci/icp_pci.c		icp_pci
 # Adaptec FSA RAID controllers
 attach	aac at pci with aac_pci
 file	dev/pci/aac_pci.c		aac_pci
-
-# IBM ServeRAID RAID controllers
-device  ips: scsi
-attach  ips at pci
-file    dev/pci/ips.c                   ips
 
 # DPT EATA SCSI controllers
 attach	dpt at pci with dpt_pci
