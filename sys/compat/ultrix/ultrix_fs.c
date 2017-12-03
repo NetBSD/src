@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_fs.c,v 1.57 2017/04/13 09:18:18 hannken Exp $	*/
+/*	$NetBSD: ultrix_fs.c,v 1.58 2017/12/03 12:53:52 maxv Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.57 2017/04/13 09:18:18 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.58 2017/12/03 12:53:52 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -276,7 +276,7 @@ ultrix_sys_getmnt(struct lwp *l, const struct ultrix_sys_getmnt_args *uap, regis
 				make_ultrix_mntent(sp, &tem);
 				if ((error = copyout((void *)&tem, sfsp,
 				    sizeof(tem))) != 0) {
-					goto bad;
+					goto bad_freeiter;
 				}
 				sfsp++;
 				count++;
@@ -289,8 +289,9 @@ ultrix_sys_getmnt(struct lwp *l, const struct ultrix_sys_getmnt_args *uap, regis
 	else
 		*retval = count;
 
-bad:
+bad_freeiter:
 	mountlist_iterator_destroy(iter);
+bad:
 	if (path)
 		free(path, M_TEMP);
 	return error;
