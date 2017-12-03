@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_pdu.h,v 1.3 2016/06/15 03:40:59 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_pdu.h,v 1.4 2017/12/03 19:07:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -406,13 +406,13 @@ typedef struct nop_in_pdu_s nop_in_pdu_t;
 
 struct pdu_header_s
 {
-	uint8_t Opcode;
-	uint8_t Flags;
-	uint8_t OpcodeSpecific[2];
-	uint8_t TotalAHSLength;
-	uint8_t DataSegmentLength[3];
-	uint64_t LUN;
-	uint32_t InitiatorTaskTag;
+	uint8_t pduh_Opcode;
+	uint8_t pduh_Flags;
+	uint8_t pduh_OpcodeSpecific[2];
+	uint8_t pduh_TotalAHSLength;
+	uint8_t pduh_DataSegmentLength[3];
+	uint64_t pduh_LUN;
+	uint32_t pduh_InitiatorTaskTag;
 	union
 	{
 		scsi_command_pdu_t command;
@@ -433,8 +433,8 @@ struct pdu_header_s
 		reject_pdu_t reject;
 		nop_out_pdu_t nop_out;
 		nop_in_pdu_t nop_in;
-	} p;
-	uint32_t HeaderDigest;
+	} pduh_p;
+	uint32_t pduh_HeaderDigest;
 } __packed;
 
 typedef struct pdu_header_s pdu_header_t;
