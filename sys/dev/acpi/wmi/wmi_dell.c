@@ -1,4 +1,4 @@
-/*	$NetBSD: wmi_dell.c,v 1.10 2017/12/03 17:40:48 bouyer Exp $ */
+/*	$NetBSD: wmi_dell.c,v 1.11 2017/12/03 23:43:00 christos Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmi_dell.c,v 1.10 2017/12/03 17:40:48 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmi_dell.c,v 1.11 2017/12/03 23:43:00 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -164,8 +164,10 @@ wmi_dell_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 	data = (uint32_t *)obj->Buffer.Pointer;
-	if (data[0] != 0x4C4C4544 || data[1] != 0x494D5720) {
-		aprint_error(": wrong WMI descriptor signature 0x%x 0x%x",
+#define WMI_LLED 	0x4C4C4544 
+#define WMI_IMWsp	0x494D5720
+	if (data[0] != WMI_LLED || data[1] != WMI_IMWsp) {
+		aprint_error(": wrong WMI descriptor signature %#x %#x",
 		    data[0], data[1]);
 	}
 	sc->sc_version = data[2];
@@ -230,7 +232,7 @@ wmi_dell_resume(device_t self, const pmf_qual_t *qual)
 static void
 wmi_dell_action(struct wmi_dell_softc *sc, uint16_t *data, int len)
 {
-	int i;
+	size_t i;
 	for (i = 0; i < __arraycount(wmi_dell_actions); i++) {
 		const struct wmi_dell_actions *wda = &wmi_dell_actions[i];
 		if (wda->wda_type == data[0] &&
@@ -240,27 +242,25 @@ wmi_dell_action(struct wmi_dell_softc *sc, uint16_t *data, int len)
 				DPRINTF((" ignored"));
 				return;
 			case WMI_DELLA_PMF:
-				DPRINTF((" pmf %d",
-				    wda->wda_data));
-				pmf_event_inject(NULL,
-				    wda->wda_data);
+				DPRINTF((" pmf %d", wda->wda_data));
+				pmf_event_inject(NULL, wda->wda_data);
 				return;
 			case WMI_DELLA_PSW:
-				DPRINTF((" psw %d",
-				    wda->wda_data));
+				DPRINTF((" psw %d", wda->wda_data));
 				sysmon_pswitch_event(
 				    &sc->sc_smpsw[wda->wda_data],
 				    PSWITCH_EVENT_PRESSED);
 				return;
 			default:
-				printf("unknown dell wmi action %d\n",
+				aprint_debug_dev(sc->sc_dev,
+				    "unknown dell wmi action %d\n",
 				    wda->wda_action);
 				return;
 			}
 
 		}
 	}
-	aprint_debug_dev(sc->sc_dev, "unkown event 0x%4X 0x%4X\n",
+	aprint_debug_dev(sc->sc_dev, "unknown event %#4X %#4X\n",
 	    data[0], data[1]);
 }
 
@@ -312,7 +312,7 @@ wmi_dell_notify_handler(ACPI_HANDLE hdl, uint32_t evt, void *aux)
 			continue;
 		}
 		for (i = 1; i < len; i++)
-			DPRINTF((" 0x%04X", data[i]));
+			DPRINTF((" %#04X", data[i]));
 		wmi_dell_action(sc, &data[1], len - 1);
 		DPRINTF(("\n"));
 		data = &data[len];
@@ -332,7 +332,7 @@ out:
 
 	if (ACPI_FAILURE(rv))
 		aprint_error_dev(sc->sc_dev, "failed to get data for "
-		    "event 0x%02X: %s\n", evt, AcpiFormatException(rv));
+		    "event %#02X: %s\n", evt, AcpiFormatException(rv));
 }
 
 MODULE(MODULE_CLASS_DRIVER, wmidell, "acpiwmi,sysmon_power");
@@ -347,9 +347,7 @@ wmidell_modcmd(modcmd_t cmd, void *aux)
 	int rv = 0;
 
 	switch (cmd) {
-
 	case MODULE_CMD_INIT:
-
 #ifdef _MODULE
 		rv = config_init_component(cfdriver_ioconf_wmidell,
 		    cfattach_ioconf_wmidell, cfdata_ioconf_wmidell);
@@ -357,7 +355,6 @@ wmidell_modcmd(modcmd_t cmd, void *aux)
 		break;
 
 	case MODULE_CMD_FINI:
-
 #ifdef _MODULE
 		rv = config_fini_component(cfdriver_ioconf_wmidell,
 		    cfattach_ioconf_wmidell, cfdata_ioconf_wmidell);
