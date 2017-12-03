@@ -1,4 +1,4 @@
-/*	$NetBSD: wmi_dell.c,v 1.9 2015/04/23 23:23:00 pgoyette Exp $ */
+/*	$NetBSD: wmi_dell.c,v 1.10 2017/12/03 17:40:48 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmi_dell.c,v 1.9 2015/04/23 23:23:00 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmi_dell.c,v 1.10 2017/12/03 17:40:48 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -43,27 +43,67 @@ __KERNEL_RCSID(0, "$NetBSD: wmi_dell.c,v 1.9 2015/04/23 23:23:00 pgoyette Exp $"
 
 #include <dev/sysmon/sysmonvar.h>
 
+#ifdef WMI_DEBUG
+#define DPRINTF(x)	printf x
+#else
+#define DPRINTF(x)
+#endif
+
 #define _COMPONENT			ACPI_RESOURCE_COMPONENT
 ACPI_MODULE_NAME			("wmi_dell")
-
-#define WMI_DELL_HOTKEY_BRIGHTNESS_DOWN	0xE005
-#define WMI_DELL_HOTKEY_BRIGHTNESS_UP	0xE006
-#define WMI_DELL_HOTKEY_DISPLAY_CYCLE	0xE00B
-#define WMI_DELL_HOTKEY_VOLUME_MUTE	0xE020
-#define WMI_DELL_HOTKEY_VOLUME_DOWN	0xE02E
-#define WMI_DELL_HOTKEY_VOLUME_UP	0xE030
-/*      WMI_DELL_HOTKEY_UNKNOWN		0xXXXX */
 
 #define WMI_DELL_PSW_DISPLAY_CYCLE	0
 #define WMI_DELL_PSW_COUNT		1
 
 #define WMI_DELL_GUID_EVENT		"9DBB5994-A997-11DA-B012-B622A1EF5492"
+#define WMI_DELL_GUID_DESC		"8D9DDCBC-A997-11DA-B012-B622A1EF5492"
 
 struct wmi_dell_softc {
 	device_t		sc_dev;
 	device_t		sc_parent;
+	int			sc_version;
 	struct sysmon_pswitch	sc_smpsw[WMI_DELL_PSW_COUNT];
 	bool			sc_smpsw_valid;
+};
+
+#define WMI_DELLA_PMF	0x0
+#define WMI_DELLA_PSW	0x1
+#define WMI_DELLA_IGN	0x2
+
+const struct wmi_dell_actions {
+	u_int	wda_action;
+	u_int	wda_type;
+	u_int	wda_subtype;
+	u_int	wda_data;
+} wmi_dell_actions[] = {
+	/* type 0 */
+	/* brightness control */
+	{WMI_DELLA_PMF, 0x0000, 0xe005, PMFE_DISPLAY_BRIGHTNESS_DOWN},
+	{WMI_DELLA_PMF, 0x0000, 0xe006, PMFE_DISPLAY_BRIGHTNESS_UP},
+	{WMI_DELLA_PSW, 0x0000, 0xe00b, WMI_DELL_PSW_DISPLAY_CYCLE},
+
+	{WMI_DELLA_PMF, 0x0000, 0xe008, PMFE_RADIO_TOGGLE},
+	{WMI_DELLA_IGN, 0x0000, 0xe00c, 0}, /* keyboard illumination */
+
+	/* volume control */
+	{WMI_DELLA_PMF, 0x0000, 0xe020, PMFE_AUDIO_VOLUME_TOGGLE},
+	{WMI_DELLA_PMF, 0x0000, 0xe02e, PMFE_AUDIO_VOLUME_DOWN},
+	{WMI_DELLA_PMF, 0x0000, 0xe030, PMFE_AUDIO_VOLUME_UP},
+	{WMI_DELLA_PMF, 0x0000, 0xe0f8, PMFE_AUDIO_VOLUME_DOWN},
+	{WMI_DELLA_PMF, 0x0000, 0xe0f9, PMFE_AUDIO_VOLUME_UP},
+
+
+	/* type 0x10 */
+	{WMI_DELLA_PMF, 0x0010, 0x0057, PMFE_DISPLAY_BRIGHTNESS_DOWN},
+	{WMI_DELLA_PMF, 0x0010, 0x0058, PMFE_DISPLAY_BRIGHTNESS_UP},
+	{WMI_DELLA_IGN, 0x0010, 0x0151, 0}, /* Fn-lock */
+	{WMI_DELLA_IGN, 0x0010, 0x0152, 0}, /* keyboard illumination */
+	{WMI_DELLA_PMF, 0x0010, 0x0153, PMFE_RADIO_TOGGLE},
+	{WMI_DELLA_IGN, 0x0010, 0x0155, 0}, /* Stealth mode toggle */
+	{WMI_DELLA_IGN, 0x0010, 0xE035, 0}, /* Fn-lock */
+
+	/* type 0x11 */
+	{WMI_DELLA_IGN, 0x0011, 0x02eb5, 0}, /* keyboard illumination */
 };
 
 static int	wmi_dell_match(device_t, cfdata_t, void *);
@@ -87,6 +127,9 @@ wmi_dell_attach(device_t parent, device_t self, void *aux)
 {
 	struct wmi_dell_softc *sc = device_private(self);
 	ACPI_STATUS rv;
+	ACPI_BUFFER obuf;
+	ACPI_OBJECT *obj;
+	uint32_t *data;
 	int e;
 
 	sc->sc_dev = self;
@@ -100,8 +143,34 @@ wmi_dell_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	memset(&obuf, 0, sizeof(obuf));
+	rv = acpi_wmi_data_query(parent, WMI_DELL_GUID_DESC, 0, &obuf);
+	if (ACPI_FAILURE(rv)) {
+		aprint_error(": failed to query WMI descriptor: %s\n",
+		    AcpiFormatException(rv));
+		return;
+	}
+	obj = obuf.Pointer;
+	if (obj->Type != ACPI_TYPE_BUFFER) {
+		aprint_error(": wrong type %d for WMI descriptor\n", obj->Type);
+		return;
+	}
+	if (obj->Buffer.Length != 128) {
+		aprint_error(": wrong len %d for WMI descriptor",
+		    obj->Buffer.Length);
+		if (obj->Buffer.Length < 16) {
+			aprint_error("\n");
+			return;
+		}
+	}
+	data = (uint32_t *)obj->Buffer.Pointer;
+	if (data[0] != 0x4C4C4544 || data[1] != 0x494D5720) {
+		aprint_error(": wrong WMI descriptor signature 0x%x 0x%x",
+		    data[0], data[1]);
+	}
+	sc->sc_version = data[2];
 	aprint_naive("\n");
-	aprint_normal(": Dell WMI mappings\n");
+	aprint_normal(": Dell WMI mappings version %d\n", sc->sc_version);
 
 	sc->sc_smpsw[WMI_DELL_PSW_DISPLAY_CYCLE].smpsw_name =
 	    PSWITCH_HK_DISPLAY_CYCLE;
@@ -159,6 +228,43 @@ wmi_dell_resume(device_t self, const pmf_qual_t *qual)
 }
 
 static void
+wmi_dell_action(struct wmi_dell_softc *sc, uint16_t *data, int len)
+{
+	int i;
+	for (i = 0; i < __arraycount(wmi_dell_actions); i++) {
+		const struct wmi_dell_actions *wda = &wmi_dell_actions[i];
+		if (wda->wda_type == data[0] &&
+		    wda->wda_subtype == data[1]) {
+			switch(wda->wda_action) {
+			case WMI_DELLA_IGN:
+				DPRINTF((" ignored"));
+				return;
+			case WMI_DELLA_PMF:
+				DPRINTF((" pmf %d",
+				    wda->wda_data));
+				pmf_event_inject(NULL,
+				    wda->wda_data);
+				return;
+			case WMI_DELLA_PSW:
+				DPRINTF((" psw %d",
+				    wda->wda_data));
+				sysmon_pswitch_event(
+				    &sc->sc_smpsw[wda->wda_data],
+				    PSWITCH_EVENT_PRESSED);
+				return;
+			default:
+				printf("unknown dell wmi action %d\n",
+				    wda->wda_action);
+				return;
+			}
+
+		}
+	}
+	aprint_debug_dev(sc->sc_dev, "unkown event 0x%4X 0x%4X\n",
+	    data[0], data[1]);
+}
+
+static void
 wmi_dell_notify_handler(ACPI_HANDLE hdl, uint32_t evt, void *aux)
 {
 	struct wmi_dell_softc *sc;
@@ -166,7 +272,8 @@ wmi_dell_notify_handler(ACPI_HANDLE hdl, uint32_t evt, void *aux)
 	ACPI_OBJECT *obj;
 	ACPI_BUFFER buf;
 	ACPI_STATUS rv;
-	uint32_t val;
+	uint16_t *data, *end;
+	int i, len;
 
 	buf.Pointer = NULL;
 
@@ -183,45 +290,40 @@ wmi_dell_notify_handler(ACPI_HANDLE hdl, uint32_t evt, void *aux)
 		goto out;
 	}
 
-	val = obj->Buffer.Pointer[1] & 0xFFFF;
+	data = (void *)(&obj->Buffer.Pointer[0]);
+	end = (void *)(&obj->Buffer.Pointer[obj->Buffer.Length]);
 
-	switch (val) {
-
-	case WMI_DELL_HOTKEY_BRIGHTNESS_DOWN:
-		pmf_event_inject(NULL, PMFE_DISPLAY_BRIGHTNESS_DOWN);
-		break;
-
-	case WMI_DELL_HOTKEY_BRIGHTNESS_UP:
-		pmf_event_inject(NULL, PMFE_DISPLAY_BRIGHTNESS_UP);
-		break;
-
-	case WMI_DELL_HOTKEY_DISPLAY_CYCLE:
-
-		if (sc->sc_smpsw_valid != true) {
-			rv = AE_ABORT_METHOD;
+	DPRINTF(("wmi_dell_notify_handler buffer len %d\n",
+	    obj->Buffer.Length));
+	while (data < end) {
+		DPRINTF(("wmi_dell_notify_handler len %d", data[0]));
+		if (data[0] == 0) {
+			DPRINTF(("\n"));
 			break;
 		}
+		len = data[0] + 1;
 
-		sysmon_pswitch_event(&sc->sc_smpsw[WMI_DELL_PSW_DISPLAY_CYCLE],
-		    PSWITCH_EVENT_PRESSED);
-		break;
-
-	case WMI_DELL_HOTKEY_VOLUME_MUTE:
-		pmf_event_inject(NULL, PMFE_AUDIO_VOLUME_TOGGLE);
-		break;
-
-	case WMI_DELL_HOTKEY_VOLUME_DOWN:
-		pmf_event_inject(NULL, PMFE_AUDIO_VOLUME_DOWN);
-		break;
-
-	case WMI_DELL_HOTKEY_VOLUME_UP:
-		pmf_event_inject(NULL, PMFE_AUDIO_VOLUME_UP);
-		break;
-
-	default:
-		aprint_debug_dev(sc->sc_dev,
-		    "unknown key 0x%02X for event 0x%02X\n", val, evt);
-		break;
+		if (&data[len] >= end) {
+			DPRINTF(("\n"));
+			break;
+		}
+		if (len < 2) {
+			DPRINTF(("\n"));
+			continue;
+		}
+		for (i = 1; i < len; i++)
+			DPRINTF((" 0x%04X", data[i]));
+		wmi_dell_action(sc, &data[1], len - 1);
+		DPRINTF(("\n"));
+		data = &data[len];
+		/* 
+		 * WMI interface version 0 don't clear the buffer from previous
+		 * event, so if the current event is smaller than the previous
+		 * one there will be garbage after the current event.
+		 * workaround by processing only the first event
+		 */
+		if (sc->sc_version == 0)
+			break;
 	}
 
 out:
