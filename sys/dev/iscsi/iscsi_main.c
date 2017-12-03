@@ -141,8 +141,8 @@ iscsiopen(dev_t dev, int flag, int mode, struct lwp *l)
 		return error;
 
 	d = kmem_alloc(sizeof(*d), KM_SLEEP);
-	d->dev = sc->dev;
-	d->unit = unit;
+	d->fd_dev = sc->dev;
+	d->fd_unit = unit;
 
 	mutex_enter(&sc->lock);
 	if (iscsi_detaching) {
@@ -152,7 +152,7 @@ iscsiopen(dev_t dev, int flag, int mode, struct lwp *l)
 		fd_abort(curproc, fp, fd);
 		return ENXIO;
 	}
-	TAILQ_INSERT_TAIL(&sc->fds, d, link);
+	TAILQ_INSERT_TAIL(&sc->fds, d, fd_link);
 	mutex_exit(&sc->lock);
 
 	return fd_clone(fp, fd, flag, &iscsi_fileops, d);
@@ -164,14 +164,14 @@ iscsiclose(struct file *fp)
 	struct iscsifd *d = fp->f_iscsi;
 	struct iscsi_softc *sc;
 
-	sc = device_lookup_private(&iscsi_cd, d->unit);
+	sc = device_lookup_private(&iscsi_cd, d->fd_unit);
 	if (sc == NULL) {
 		DEBOUT(("%s: Cannot find private data\n",__func__));
 		return ENXIO;
 	}
 
 	mutex_enter(&sc->lock);
-	TAILQ_REMOVE(&sc->fds, d, link);
+	TAILQ_REMOVE(&sc->fds, d, fd_link);
 	mutex_exit(&sc->lock);
 
 	kmem_free(d, sizeof(*d));
@@ -349,15 +349,15 @@ getquirks(const char *iqn)
  */
 
 int
-map_session(session_t *session, device_t dev)
+map_session(session_t *sess, device_t dev)
 {
-	struct scsipi_adapter *adapt = &session->sc_adapter;
-	struct scsipi_channel *chan = &session->sc_channel;
+	struct scsipi_adapter *adapt = &sess->s_sc_adapter;
+	struct scsipi_channel *chan = &sess->s_sc_channel;
 	const quirktab_t	*tgt;
 
-	mutex_enter(&session->lock);
-	session->send_window = max(2, window_size(session, CCBS_FOR_SCSIPI));
-	mutex_exit(&session->lock);
+	mutex_enter(&sess->s_lock);
+	sess->s_send_window = max(2, window_size(sess, CCBS_FOR_SCSIPI));
+	mutex_exit(&sess->s_lock);
 
 	/*
 	 * Fill in the scsipi_adapter.
@@ -366,7 +366,7 @@ map_session(session_t *session, device_t dev)
 	adapt->adapt_nchannels = 1;
 	adapt->adapt_request = iscsi_scsipi_request;
 	adapt->adapt_minphys = iscsi_minphys;
-	adapt->adapt_openings = session->send_window;
+	adapt->adapt_openings = sess->s_send_window;
 	adapt->adapt_max_periph = CCBS_FOR_SCSIPI;
 	adapt->adapt_flags = SCSIPI_ADAPT_MPSAFE;
 
@@ -384,11 +384,11 @@ map_session(session_t *session, device_t dev)
 	chan->chan_flags = SCSIPI_CHAN_NOSETTLE | SCSIPI_CHAN_CANGROW;
 	chan->chan_ntargets = 1;
 	chan->chan_nluns = 16;		/* ToDo: ??? */
-	chan->chan_id = session->id;
+	chan->chan_id = sess->s_id;
 
-	session->child_dev = config_found(dev, chan, scsiprint);
+	sess->s_child_dev = config_found(dev, chan, scsiprint);
 
-	return session->child_dev != NULL;
+	return sess->s_child_dev != NULL;
 }
 
 
@@ -403,13 +403,13 @@ map_session(session_t *session, device_t dev)
  */
 
 int
-unmap_session(session_t *session)
+unmap_session(session_t *sess)
 {
 	device_t dev;
 	int rv = 1;
 
-	if ((dev = session->child_dev) != NULL) {
-		session->child_dev = NULL;
+	if ((dev = sess->s_child_dev) != NULL) {
+		sess->s_child_dev = NULL;
 		if (config_detach(dev, 0))
 			rv = 0;
 	}
@@ -422,22 +422,22 @@ unmap_session(session_t *session)
  *    Try to grow openings up to current window size
  */
 static void
-grow_resources(session_t *session)
+grow_resources(session_t *sess)
 {
-	struct scsipi_adapter *adapt = &session->sc_adapter;
+	struct scsipi_adapter *adapt = &sess->s_sc_adapter;
 	int win;
 
-	mutex_enter(&session->lock);
-	if (session->refcount < CCBS_FOR_SCSIPI &&
-	    session->send_window < CCBS_FOR_SCSIPI) {
-		win = window_size(session, CCBS_FOR_SCSIPI - session->refcount);
-		if (win > session->send_window) {
-			session->send_window++;
+	mutex_enter(&sess->s_lock);
+	if (sess->s_refcount < CCBS_FOR_SCSIPI &&
+	    sess->s_send_window < CCBS_FOR_SCSIPI) {
+		win = window_size(sess, CCBS_FOR_SCSIPI - sess->s_refcount);
+		if (win > sess->s_send_window) {
+			sess->s_send_window++;
 			adapt->adapt_openings++;
-			DEB(5, ("Grow send window to %d\n", session->send_window));
+			DEB(5, ("Grow send window to %d\n", sess->s_send_window));
 		}
 	}
-	mutex_exit(&session->lock);
+	mutex_exit(&sess->s_lock);
 }
 
 /******************************************************************************/
@@ -457,14 +457,14 @@ iscsi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 {
 	struct scsipi_adapter *adapt = chan->chan_adapter;
 	struct scsipi_xfer *xs;
-	session_t *session;
+	session_t *sess;
 	int flags;
 	struct scsipi_xfer_mode *xm;
 	int error;
 
-	session = (session_t *) adapt;	/* adapter is first field in session */
+	sess = (session_t *) adapt;	/* adapter is first field in session */
 
-	error = ref_session(session);
+	error = ref_session(sess);
 
 	switch (req) {
 	case ADAPTER_REQ_RUN_XFER:
@@ -474,7 +474,7 @@ iscsi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 
 		if (error) {
 			DEB(9, ("ISCSI: refcount too high: %d, winsize %d\n",
-				session->refcount, session->send_window));
+				sess->s_refcount, sess->s_send_window));
 			xs->error = XS_BUSY;
 			xs->status = XS_BUSY;
 			scsipi_done(xs);
@@ -501,13 +501,13 @@ iscsi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 			break;
 		}
 
-		send_run_xfer(session, xs);
-		DEB(15, ("scsipi_req returns, refcount = %d\n", session->refcount));
+		send_run_xfer(sess, xs);
+		DEB(15, ("scsipi_req returns, refcount = %d\n", sess->s_refcount));
 		return;
 
 	case ADAPTER_REQ_GROW_RESOURCES:
 		DEB(5, ("ISCSI: scsipi_request GROW_RESOURCES\n"));
-		grow_resources(session);
+		grow_resources(sess);
 		break;
 
 	case ADAPTER_REQ_SET_XFER_MODE:
@@ -523,7 +523,7 @@ iscsi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 	}
 
 	if (!error)
-		unref_session(session);
+		unref_session(sess);
 }
 
 /* cap the transfer at 64K */
@@ -555,14 +555,15 @@ iscsi_minphys(struct buf *bp)
 void
 iscsi_done(ccb_t *ccb)
 {
-	struct scsipi_xfer *xs = ccb->xs;
+	struct scsipi_xfer *xs = ccb->ccb_xs;
 	DEB(9, ("iscsi_done\n"));
 
 	if (xs != NULL) {
-		ccb->xs = NULL;
-		xs->resid = ccb->residual;
+		xs->resid = ccb->ccb_residual;
+		ccb->ccb_xs = NULL;
+		xs->resid = ccb->ccb_residual;
 
-		switch (ccb->status) {
+		switch (ccb->ccb_status) {
 		case ISCSI_STATUS_SUCCESS:
 			xs->error = XS_NOERROR;
 			xs->status = SCSI_OK;
@@ -575,7 +576,7 @@ iscsi_done(ccb_t *ccb)
 
 		case ISCSI_STATUS_TARGET_BUSY:
 		case ISCSI_STATUS_NO_RESOURCES:
-			DEBC(ccb->connection, 5, ("target busy, ccb %p\n", ccb));
+			DEBC(ccb->ccb_connection, 5, ("target busy, ccb %p\n", ccb));
 			xs->error = XS_BUSY;
 			xs->status = SCSI_BUSY;
 			break;
@@ -587,7 +588,7 @@ iscsi_done(ccb_t *ccb)
 			break;
 
 		case ISCSI_STATUS_QUEUE_FULL:
-			DEBC(ccb->connection, 5, ("queue full, ccb %p\n", ccb));
+			DEBC(ccb->ccb_connection, 5, ("queue full, ccb %p\n", ccb));
 			xs->error = XS_BUSY;
 			xs->status = SCSI_QUEUE_FULL;
 			break;
@@ -597,7 +598,7 @@ iscsi_done(ccb_t *ccb)
 			break;
 		}
 
-		unref_session(ccb->session);
+		unref_session(ccb->ccb_session);
 
 		DEB(99, ("Calling scsipi_done (%p), err = %d\n", xs, xs->error));
 		scsipi_done(xs);
