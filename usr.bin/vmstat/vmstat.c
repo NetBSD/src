@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.221 2017/12/02 08:15:43 mrg Exp $ */
+/* $NetBSD: vmstat.c,v 1.222 2017/12/03 21:09:01 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.221 2017/12/02 08:15:43 mrg Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.222 2017/12/03 21:09:01 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -893,8 +893,10 @@ dosum(void)
 	} else {
 		struct uvmexp uvmexp_kernel;
 		struct pool pool, *pp = &pool;
+		struct pool_allocator pa;
 		TAILQ_HEAD(,pool) pool_head;
 		void *addr;
+		uint64_t bytes;
 
 		kread(namelist, X_UVMEXP, &uvmexp_kernel, sizeof(uvmexp_kernel));
 #define COPY(field) uvmexp.field = uvmexp_kernel.field
@@ -963,13 +965,15 @@ dosum(void)
 #undef COPY
 		kread(namelist, X_POOLHEAD, &pool_head, sizeof(pool_head));
 		addr = TAILQ_FIRST(&pool_head);
+		uvmexp.poolpages = 0;
 		for (; addr != NULL; addr = TAILQ_NEXT(pp, pr_poollist)) {
 			deref_kptr(addr, pp, sizeof(*pp), "pool chain trashed");
-			/*
-			 * XXXMRG
-			if ((pp->pr_roflags & PR_RECURSIVE) == 0)
-			 */
-				uvmexp.poolpages += pp->pr_npages;
+			deref_kptr(addr, &pa, sizeof(pa), "pool_allocator trashed");
+			 // XXX deref pr_alloc first
+			bytes = pp->pr_npages * pa.pa_pagesz;
+			if ((pp->pr_roflags & PR_RECURSIVE) != 0)
+				bytes -= (pp->pr_nout * pp->pr_size);
+			uvmexp.poolpages += bytes / uvmexp.pagesize;
 		}
 	}
 
