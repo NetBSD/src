@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_43.c,v 1.61 2017/07/29 04:02:49 riastradh Exp $	*/
+/*	$NetBSD: vfs_syscalls_43.c,v 1.62 2017/12/03 15:23:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.61 2017/07/29 04:02:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.62 2017/12/03 15:23:30 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -463,6 +463,10 @@ again:
 				off += reclen;
 			continue;
 		}
+		if (bdp->d_namlen >= sizeof(idb.d_name))
+			idb.d_namlen = sizeof(idb.d_name) - 1;
+		else
+			idb.d_namlen = bdp->d_namlen;
 		old_reclen = _DIRENT_RECLEN(&idb, bdp->d_namlen);
 		if (reclen > len || resid < old_reclen) {
 			/* entry too big for buffer, so just stop */
@@ -476,9 +480,10 @@ again:
 		 */
 		idb.d_fileno = (uint32_t)bdp->d_fileno;
 		idb.d_reclen = (uint16_t)old_reclen;
-		idb.d_namlen = (uint16_t)bdp->d_namlen;
-		memcpy(idb.d_name, bdp->d_name, MIN(sizeof(idb.d_name),
-		    idb.d_namlen));
+		idb.d_fileno = (uint32_t)bdp->d_fileno;
+		(void)memcpy(idb.d_name, bdp->d_name, idb.d_namlen);
+		memset(idb.d_name + idb.d_namlen, 0,
+		    idb.d_reclen - _DIRENT_NAMEOFF(&idb) - idb.d_namlen);
 		if ((error = copyout(&idb, outp, old_reclen)))
 			goto out;
 		/* advance past this real entry */
