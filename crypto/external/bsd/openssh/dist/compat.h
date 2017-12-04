@@ -1,5 +1,5 @@
-/*	$NetBSD: compat.h,v 1.9 2017/04/18 18:41:46 christos Exp $	*/
-/* $OpenBSD: compat.h,v 1.48 2015/05/26 23:23:40 dtucker Exp $ */
+/*	$NetBSD: compat.h,v 1.9.4.1 2017/12/04 10:55:18 snj Exp $	*/
+/* $OpenBSD: compat.h,v 1.49 2017/04/30 23:13:25 djm Exp $ */
 
 /*
  * Copyright (c) 1999, 2000, 2001 Markus Friedl.  All rights reserved.
@@ -65,15 +65,11 @@
 #define SSH_BUG_DHGEX_LARGE	0x40000000
 #define SSH_BUG_LARGEWINDOW     0x80000000
 
-void     enable_compat13(void);
-void     enable_compat20(void);
 u_int    compat_datafellows(const char *);
 int	 proto_spec(const char *);
 const char	*compat_cipher_proposal(const char *);
 char	*compat_pkalg_proposal(char *);
 const char	*compat_kex_proposal(const char *);
 
-extern int compat13;
-extern int compat20;
 extern int datafellows;
 #endif

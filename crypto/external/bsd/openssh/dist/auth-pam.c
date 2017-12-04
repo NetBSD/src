@@ -50,7 +50,7 @@
 /*
  * NetBSD local changes
  */
-__RCSID("$NetBSD: auth-pam.c,v 1.11 2017/04/18 18:41:46 christos Exp $");
+__RCSID("$NetBSD: auth-pam.c,v 1.11.4.1 2017/12/04 10:55:18 snj Exp $");
 #undef USE_POSIX_THREADS /* Not yet */
 #define HAVE_SECURITY_PAM_APPL_H
 #define HAVE_PAM_GETENVLIST
@@ -120,7 +120,6 @@ void sshpam_password_change_required(int);
 
 extern ServerOptions options;
 extern Buffer loginmsg;
-extern int compat20;
 extern u_int utmp_len;
 
 /* so we don't silently change behaviour */
@@ -489,18 +488,16 @@ sshpam_thread(void *ctxtp)
 	if (sshpam_err != PAM_SUCCESS)
 		goto auth_fail;
 
-	if (compat20) {
-		if (!do_pam_account()) {
-			sshpam_err = PAM_ACCT_EXPIRED;
+	if (!do_pam_account()) {
+		sshpam_err = PAM_ACCT_EXPIRED;
+		goto auth_fail;
+	}
+	if (sshpam_authctxt->force_pwchange) {
+		sshpam_err = pam_chauthtok(sshpam_handle,
+		    PAM_CHANGE_EXPIRED_AUTHTOK);
+		if (sshpam_err != PAM_SUCCESS)
 			goto auth_fail;
-		}
-		if (sshpam_authctxt->force_pwchange) {
-			sshpam_err = pam_chauthtok(sshpam_handle,
-			    PAM_CHANGE_EXPIRED_AUTHTOK);
-			if (sshpam_err != PAM_SUCCESS)
-				goto auth_fail;
-			sshpam_password_change_required(0);
-		}
+		sshpam_password_change_required(0);
 	}
 
 	buffer_put_cstring(&buffer, "OK");

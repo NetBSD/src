@@ -1,5 +1,5 @@
-/*	$NetBSD: sftp.c,v 1.21 2017/04/18 18:41:46 christos Exp $	*/
-/* $OpenBSD: sftp.c,v 1.178 2017/02/15 01:46:47 djm Exp $ */
+/*	$NetBSD: sftp.c,v 1.21.4.1 2017/12/04 10:55:18 snj Exp $	*/
+/* $OpenBSD: sftp.c,v 1.180 2017/06/10 06:33:34 djm Exp $ */
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
  *
@@ -17,7 +17,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sftp.c,v 1.21 2017/04/18 18:41:46 christos Exp $");
+__RCSID("$NetBSD: sftp.c,v 1.21.4.1 2017/12/04 10:55:18 snj Exp $");
 
 #include <sys/param.h>	/* MIN MAX */
 #include <sys/types.h>
@@ -92,6 +92,7 @@ volatile sig_atomic_t interrupted = 0;
 
 /* I wish qsort() took a separate ctx for the comparison function...*/
 int sort_flag;
+glob_t *sort_glob;
 
 /* Context used for commandline completion */
 struct complete_ctx {
@@ -867,6 +868,38 @@ do_ls_dir(struct sftp_conn *conn, const char *path,
 	return (0);
 }
 
+static int
+sglob_comp(const void *aa, const void *bb)
+{
+	u_int a = *(const u_int *)aa;
+	u_int b = *(const u_int *)bb;
+	const char *ap = sort_glob->gl_pathv[a];
+	const char *bp = sort_glob->gl_pathv[b];
+#if 0
+	const struct stat *as = sort_glob->gl_statv[a];
+	const struct stat *bs = sort_glob->gl_statv[b];
+#else
+	struct stat ass, bss;
+	const struct stat *as = &ass;
+	const struct stat *bs = &bss;
+#endif
+	int rmul = sort_flag & LS_REVERSE_SORT ? -1 : 1;
+
+#define NCMP(a,b) (a == b ? 0 : (a < b ? 1 : -1))
+	if (sort_flag & LS_NAME_SORT)
+		return (rmul * strcmp(ap, bp));
+#if 1
+	if (stat(ap, &ass) == -1 || stat(bp, &bss) == -1)
+		return 0;
+#endif
+	else if (sort_flag & LS_TIME_SORT)
+		return (rmul * timespeccmp(&as->st_mtim, &bs->st_mtim, <));
+	else if (sort_flag & LS_SIZE_SORT)
+		return (rmul * NCMP(as->st_size, bs->st_size));
+
+	fatal("Unknown ls sort type");
+}
+
 /* sftp ls.1 replacement which handles path globs */
 static int
 do_globbed_ls(struct sftp_conn *conn, const char *path,
@@ -876,7 +909,8 @@ do_globbed_ls(struct sftp_conn *conn, const char *path,
 	glob_t g;
 	int err, r;
 	struct winsize ws;
-	u_int i, c = 1, colspace = 0, columns = 1, m = 0, width = 80;
+	u_int i, j, nentries, *indices = NULL, c = 1;
+	u_int colspace = 0, columns = 1, m = 0, width = 80;
 	struct stat *stp;
 #ifndef GLOB_KEEPSTAT
 	struct stat st;
@@ -931,7 +965,26 @@ do_globbed_ls(struct sftp_conn *conn, const char *path,
 		colspace = width / columns;
 	}
 
-	for (i = 0; g.gl_pathv[i] && !interrupted; i++) {
+	/*
+	 * Sorting: rather than mess with the contents of glob_t, prepare
+	 * an array of indices into it and sort that. For the usual
+	 * unsorted case, the indices are just the identity 1=1, 2=2, etc.
+	 */
+	for (nentries = 0; g.gl_pathv[nentries] != NULL; nentries++)
+		;	/* count entries */
+	indices = calloc(nentries, sizeof(*indices));
+	for (i = 0; i < nentries; i++)
+		indices[i] = i;
+
+	if (lflag & SORT_FLAGS) {
+		sort_glob = &g;
+		sort_flag = lflag & (SORT_FLAGS|LS_REVERSE_SORT);
+		qsort(indices, nentries, sizeof(*indices), sglob_comp);
+		sort_glob = NULL;
+	}
+
+	for (j = 0; j < nentries && !interrupted; j++) {
+		i = indices[j];
 		fname = path_strip(g.gl_pathv[i], strip_path);
 		if (lflag & LS_LONG_VIEW) {
 #if GLOB_KEEPSTAT != 0
@@ -964,6 +1017,7 @@ do_globbed_ls(struct sftp_conn *conn, const char *path,
  out:
 	if (g.gl_pathc)
 		globfree(&g);
+	free(indices);
 
 	return 0;
 }
@@ -2235,7 +2289,7 @@ usage(void)
 	extern char *__progname;
 
 	fprintf(stderr,
-	    "usage: %s [-1246aCfpqrv] [-B buffer_size] [-b batchfile] [-c cipher]\n"
+	    "usage: %s [-46aCfpqrv] [-B buffer_size] [-b batchfile] [-c cipher]\n"
 	    "          [-D sftp_server_path] [-F ssh_config] "
 	    "[-i identity_file] [-l limit]\n"
 	    "          [-o ssh_option] [-P port] [-R num_requests] "

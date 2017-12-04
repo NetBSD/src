@@ -1,5 +1,5 @@
-/*	$NetBSD: sftp-client.c,v 1.18 2017/04/18 18:41:46 christos Exp $	*/
-/* $OpenBSD: sftp-client.c,v 1.126 2017/01/03 05:46:51 djm Exp $ */
+/*	$NetBSD: sftp-client.c,v 1.18.4.1 2017/12/04 10:55:18 snj Exp $	*/
+/* $OpenBSD: sftp-client.c,v 1.127 2017/08/11 04:41:08 djm Exp $ */
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
  *
@@ -22,7 +22,7 @@
 /* XXX: copy between two remote sites */
 
 #include "includes.h"
-__RCSID("$NetBSD: sftp-client.c,v 1.18 2017/04/18 18:41:46 christos Exp $");
+__RCSID("$NetBSD: sftp-client.c,v 1.18.4.1 2017/12/04 10:55:18 snj Exp $");
 
 #include <sys/param.h>	/* MIN MAX */
 #include <sys/types.h>
@@ -131,7 +131,7 @@ get_msg(struct sftp_conn *conn, struct sshbuf *m)
 		fatal("%s: buffer error: %s", __func__, ssh_err(r));
 	if (atomicio6(read, conn->fd_in, p, 4,
 	    conn->limit_kbps > 0 ? sftpio : NULL, &conn->bwlimit_in) != 4) {
-		if (errno == EPIPE)
+		if (errno == EPIPE || errno == ECONNRESET)
 			fatal("Connection closed");
 		else
 			fatal("Couldn't read packet: %s", strerror(errno));

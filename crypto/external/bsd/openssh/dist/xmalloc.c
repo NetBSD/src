@@ -1,6 +1,5 @@
-/*	$NetBSD: xmalloc.c,v 1.9 2017/04/18 18:41:46 christos Exp $	*/
-/* $OpenBSD: xmalloc.c,v 1.33 2016/02/15 09:47:49 dtucker Exp $ */
-
+/*	$NetBSD: xmalloc.c,v 1.9.4.1 2017/12/04 10:55:19 snj Exp $	*/
+/* $OpenBSD: xmalloc.c,v 1.34 2017/05/31 09:15:42 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -16,7 +15,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: xmalloc.c,v 1.9 2017/04/18 18:41:46 christos Exp $");
+__RCSID("$NetBSD: xmalloc.c,v 1.9.4.1 2017/12/04 10:55:19 snj Exp $");
 #include <sys/param.h>
 #include <stdarg.h>
 #include <stdint.h>
@@ -74,6 +73,18 @@ xreallocarray(void *ptr, size_t nmemb, size_t size)
 	new_ptr = reallocarray(ptr, nmemb, size);
 	if (new_ptr == NULL)
 		fatal("xreallocarray: out of memory (%zu elements of %zu bytes)",
+		    nmemb, size);
+	return new_ptr;
+}
+
+void *
+xrecallocarray(void *ptr, size_t onmemb, size_t nmemb, size_t size)
+{
+	void *new_ptr;
+
+	new_ptr = recallocarray(ptr, onmemb, nmemb, size);
+	if (new_ptr == NULL)
+		fatal("xrecallocarray: out of memory (%zu elements of %zu bytes)",
 		    nmemb, size);
 	return new_ptr;
 }

@@ -1,5 +1,5 @@
-/*	$NetBSD: auth-options.c,v 1.15 2017/04/18 18:41:46 christos Exp $	*/
-/* $OpenBSD: auth-options.c,v 1.72 2016/11/30 02:57:40 djm Exp $ */
+/*	$NetBSD: auth-options.c,v 1.15.4.1 2017/12/04 10:55:18 snj Exp $	*/
+/* $OpenBSD: auth-options.c,v 1.74 2017/09/12 06:32:07 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -13,7 +13,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth-options.c,v 1.15 2017/04/18 18:41:46 christos Exp $");
+__RCSID("$NetBSD: auth-options.c,v 1.15.4.1 2017/12/04 10:55:18 snj Exp $");
 #include <sys/types.h>
 #include <sys/queue.h>
 
@@ -63,9 +63,13 @@ char *authorized_principals = NULL;
 
 extern ServerOptions options;
 
+/* XXX refactor to be stateless */
+
 void
 auth_clear_options(void)
 {
+	struct ssh *ssh = active_state;		/* XXX */
+
 	no_agent_forwarding_flag = 0;
 	no_port_forwarding_flag = 0;
 	no_pty_flag = 0;
@@ -83,7 +87,7 @@ auth_clear_options(void)
 	free(authorized_principals);
 	authorized_principals = NULL;
 	forced_tun_device = -1;
-	channel_clear_permitted_opens();
+	channel_clear_permitted_opens(ssh);
 }
 
 /*
@@ -119,6 +123,7 @@ match_flag(const char *opt, int allow_negate, const char **optsp, const char *ms
 /*
  * return 1 if access is granted, 0 if not.
  * side effect: sets key option flags
+ * XXX remove side effects; fill structure instead.
  */
 int
 auth_parse_options(struct passwd *pw, const char *opts, const char *file,
@@ -382,7 +387,7 @@ auth_parse_options(struct passwd *pw, const char *opts, const char *file,
 				goto bad_option;
 			}
 			if ((options.allow_tcp_forwarding & FORWARD_LOCAL) != 0)
-				channel_add_permitted_opens(host, port);
+				channel_add_permitted_opens(ssh, host, port);
 			free(patterns);
 			goto next_option;
 		}

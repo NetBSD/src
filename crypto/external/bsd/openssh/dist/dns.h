@@ -1,5 +1,5 @@
-/*	$NetBSD: dns.h,v 1.9 2017/04/18 18:41:46 christos Exp $	*/
-/* $OpenBSD: dns.h,v 1.15 2015/05/08 06:45:13 djm Exp $ */
+/*	$NetBSD: dns.h,v 1.9.4.1 2017/12/04 10:55:18 snj Exp $	*/
+/* $OpenBSD: dns.h,v 1.17 2017/09/14 04:32:21 djm Exp $ */
 
 /*
  * Copyright (c) 2003 Wesley Griffin. All rights reserved.

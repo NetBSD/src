@@ -1,5 +1,5 @@
-/*	$NetBSD: myproposal.h,v 1.16 2017/04/18 18:41:46 christos Exp $	*/
-/* $OpenBSD: myproposal.h,v 1.54 2016/09/28 16:33:07 djm Exp $ */
+/*	$NetBSD: myproposal.h,v 1.16.4.1 2017/12/04 10:55:18 snj Exp $	*/
+/* $OpenBSD: myproposal.h,v 1.55 2017/05/07 23:13:42 djm Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -65,8 +65,7 @@
 	"aes128-ctr,aes192-ctr,aes256-ctr," \
 	"aes128-gcm@openssh.com,aes256-gcm@openssh.com"
 
-#define KEX_CLIENT_ENCRYPT KEX_SERVER_ENCRYPT "," \
-	"aes128-cbc,aes192-cbc,aes256-cbc"
+#define KEX_CLIENT_ENCRYPT KEX_SERVER_ENCRYPT
 
 #define	KEX_SERVER_MAC \
 	"umac-64-etm@openssh.com," \

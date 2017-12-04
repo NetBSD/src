@@ -1,5 +1,5 @@
-/*	$NetBSD: auth2-none.c,v 1.7 2017/04/18 18:41:46 christos Exp $	*/
-/* $OpenBSD: auth2-none.c,v 1.18 2014/07/15 15:54:14 millert Exp $ */
+/*	$NetBSD: auth2-none.c,v 1.7.4.1 2017/12/04 10:55:18 snj Exp $	*/
+/* $OpenBSD: auth2-none.c,v 1.20 2017/05/30 14:29:59 markus Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -25,13 +25,13 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-none.c,v 1.7 2017/04/18 18:41:46 christos Exp $");
+__RCSID("$NetBSD: auth2-none.c,v 1.7.4.1 2017/12/04 10:55:18 snj Exp $");
 #include <sys/types.h>
 #include <stdarg.h>
 #include <stdio.h>
 
 #include "xmalloc.h"
-#include "key.h"
+#include "sshkey.h"
 #include "hostfile.h"
 #include "auth.h"
 #include "packet.h"
@@ -41,6 +41,7 @@ __RCSID("$NetBSD: auth2-none.c,v 1.7 2017/04/18 18:41:46 christos Exp $");
 #include "servconf.h"
 #include "compat.h"
 #include "ssh2.h"
+#include "ssherr.h"
 #ifdef GSSAPI
 #include "ssh-gss.h"
 #endif
@@ -53,12 +54,15 @@ extern ServerOptions options;
 static int none_enabled = 1;
 
 static int
-userauth_none(Authctxt *authctxt)
+userauth_none(struct ssh *ssh)
 {
+	int r;
+
 	none_enabled = 0;
-	packet_check_eom();
+	if ((r = sshpkt_get_end(ssh)) != 0)
+		fatal("%s: %s", __func__, ssh_err(r));
 	if (options.permit_empty_passwd && options.password_authentication)
-		return (PRIVSEP(auth_password(authctxt, "")));
+		return (PRIVSEP(auth_password(ssh->authctxt, "")));
 	return (0);
 }
 
