@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.85 2017/12/04 09:14:23 bouyer Exp $	*/
+/*	$NetBSD: comvar.h,v 1.86 2017/12/04 09:55:37 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -92,19 +92,19 @@ int com_is_console(bus_space_tag_t, bus_addr_t, bus_space_handle_t *);
 #define	COM_REG_LSR		10
 #define	COM_REG_MSR		11
 #define	COM_REG_USR		31	/* 16750/SUNXI */
-#ifdef COM_AWIN
-#error "COM_AWIN not compatible with COM_REGMAP"
-#endif
+#define	COM_REG_TFL		com_tfl		/* SUNXI */
+#define	COM_REG_RFL		com_rfl		/* SUNXI */
+#define	COM_REG_HALT		com_halt	/* SUNXI */
 
 struct com_regs {
 	bus_space_tag_t		cr_iot;
 	bus_space_handle_t	cr_ioh;
 	bus_addr_t		cr_iobase;
 	bus_size_t		cr_nports;
-	bus_size_t		cr_map[32];
+	bus_size_t		cr_map[42];
 };
 
-extern const bus_size_t com_std_map[32];
+extern const bus_size_t com_std_map[42];
 
 #define	COM_INIT_REGS(regs, tag, hdl, addr)				\
 	do {								\
