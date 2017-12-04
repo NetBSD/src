@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.89 2017/12/04 13:56:05 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.90 2017/12/04 19:53:44 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -8244,4 +8244,29 @@ etc/rc.d/sshd					1.24
 
 	Don't try to generate sshv1 keys on new systems.
 	[sevan, ticket #321]
+
+libexec/httpd/cgi-bozo.c			1.39
+
+	PR bin/52194: bozohttpd fails to exec scripts via the
+	-C mechanism sometimes with EFAULT due to not NULL
+	terminated environment.
+	[martin, ticket #409]
+
+usr.sbin/inetd/inetd.c				1.125
+
+	Bump MAXARGV from 20 to 64 - with bozohttpd and all config
+	on the command line it is easy to hit the (silent) limit.
+	[martin, ticket #410]
+
+sys/arch/i386/conf/GENERIC			1.1171
+
+	Add vioscsi and viornd virtio devices.  PR port-i386/52774.
+	[martin, ticket #413]
+
+distrib/sets/lists/comp/mi			1.2152
+include/Makefile				1.144
+include/endian.h				1.1
+
+	Add endian.h header.  Simply includes sys/endian.h
+	[maya, ticket #416]
 
