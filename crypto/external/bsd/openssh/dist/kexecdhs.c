@@ -1,6 +1,5 @@
-/*	$NetBSD: kexecdhs.c,v 1.8 2017/04/18 18:41:46 christos Exp $	*/
-/* $OpenBSD: kexecdhs.c,v 1.15 2015/12/04 16:41:28 markus Exp $ */
-
+/*	$NetBSD: kexecdhs.c,v 1.8.4.1 2017/12/04 10:55:18 snj Exp $	*/
+/* $OpenBSD: kexecdhs.c,v 1.16 2017/05/30 14:23:52 markus Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  * Copyright (c) 2010 Damien Miller.  All rights reserved.
@@ -27,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: kexecdhs.c,v 1.8 2017/04/18 18:41:46 christos Exp $");
+__RCSID("$NetBSD: kexecdhs.c,v 1.8.4.1 2017/12/04 10:55:18 snj Exp $");
 #include <sys/types.h>
 #include <string.h>
 #include <signal.h>
@@ -47,7 +46,7 @@ __RCSID("$NetBSD: kexecdhs.c,v 1.8 2017/04/18 18:41:46 christos Exp $");
 #include "ssherr.h"
 #include "sshbuf.h"
 
-static int input_kex_ecdh_init(int, u_int32_t, void *);
+static int input_kex_ecdh_init(int, u_int32_t, struct ssh *);
 
 int
 kexecdh_server(struct ssh *ssh)
@@ -58,9 +57,8 @@ kexecdh_server(struct ssh *ssh)
 }
 
 static int
-input_kex_ecdh_init(int type, u_int32_t seq, void *ctxt)
+input_kex_ecdh_init(int type, u_int32_t seq, struct ssh *ssh)
 {
-	struct ssh *ssh = ctxt;
 	struct kex *kex = ssh->kex;
 	EC_POINT *client_public;
 	EC_KEY *server_key = NULL;

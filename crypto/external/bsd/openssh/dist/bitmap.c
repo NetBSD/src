@@ -1,4 +1,4 @@
-/*	$NetBSD: bitmap.c,v 1.5 2017/04/18 18:41:46 christos Exp $	*/
+/*	$NetBSD: bitmap.c,v 1.5.4.1 2017/12/04 10:55:18 snj Exp $	*/
 /*
  * Copyright (c) 2015 Damien Miller <djm@mindrot.org>
  *
@@ -15,7 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: bitmap.c,v 1.5 2017/04/18 18:41:46 christos Exp $");
+__RCSID("$NetBSD: bitmap.c,v 1.5.4.1 2017/12/04 10:55:18 snj Exp $");
 
 #include <sys/types.h>
 #include <string.h>
@@ -54,8 +54,9 @@ void
 bitmap_free(struct bitmap *b)
 {
 	if (b != NULL && b->d != NULL) {
-		explicit_bzero(b->d, b->len);
+		bitmap_zero(b);
 		free(b->d);
+		b->d = NULL;
 	}
 	free(b);
 }
@@ -87,10 +88,10 @@ reserve(struct bitmap *b, u_int n)
 		return -1; /* invalid */
 	nlen = (n / BITMAP_BITS) + 1;
 	if (b->len < nlen) {
-		if ((tmp = reallocarray(b->d, nlen, BITMAP_BYTES)) == NULL)
+		if ((tmp = recallocarray(b->d, b->len,
+		    nlen, BITMAP_BYTES)) == NULL)
 			return -1;
 		b->d = tmp;
-		memset(b->d + b->len, 0, (nlen - b->len) * BITMAP_BYTES);
 		b->len = nlen;
 	}
 	return 0;

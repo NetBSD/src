@@ -1,5 +1,5 @@
-/*	$NetBSD: auth2-kbdint.c,v 1.7 2017/04/18 18:41:46 christos Exp $	*/
-/* $OpenBSD: auth2-kbdint.c,v 1.7 2014/07/15 15:54:14 millert Exp $ */
+/*	$NetBSD: auth2-kbdint.c,v 1.7.4.1 2017/12/04 10:55:18 snj Exp $	*/
+/* $OpenBSD: auth2-kbdint.c,v 1.8 2017/05/30 14:29:59 markus Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-kbdint.c,v 1.7 2017/04/18 18:41:46 christos Exp $");
+__RCSID("$NetBSD: auth2-kbdint.c,v 1.7.4.1 2017/12/04 10:55:18 snj Exp $");
 #include <sys/types.h>
 
 #include "xmalloc.h"
@@ -42,7 +42,7 @@ __RCSID("$NetBSD: auth2-kbdint.c,v 1.7 2017/04/18 18:41:46 christos Exp $");
 extern ServerOptions options;
 
 static int
-userauth_kbdint(Authctxt *authctxt)
+userauth_kbdint(struct ssh *ssh)
 {
 	int authenticated = 0;
 	char *lang, *devs;
@@ -54,7 +54,7 @@ userauth_kbdint(Authctxt *authctxt)
 	debug("keyboard-interactive devs %s", devs);
 
 	if (options.challenge_response_authentication)
-		authenticated = auth2_challenge(authctxt, devs);
+		authenticated = auth2_challenge(ssh, devs);
 
 	free(devs);
 	free(lang);

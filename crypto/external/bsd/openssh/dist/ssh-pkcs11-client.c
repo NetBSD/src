@@ -1,6 +1,5 @@
-/*	$NetBSD: ssh-pkcs11-client.c,v 1.9 2017/04/18 18:41:46 christos Exp $	*/
-/* $OpenBSD: ssh-pkcs11-client.c,v 1.6 2015/12/11 00:20:04 mmcc Exp $ */
-
+/*	$NetBSD: ssh-pkcs11-client.c,v 1.9.4.1 2017/12/04 10:55:18 snj Exp $	*/
+/* $OpenBSD: ssh-pkcs11-client.c,v 1.7 2017/05/30 08:52:19 markus Exp $ */
 /*
  * Copyright (c) 2010 Markus Friedl.  All rights reserved.
  *
@@ -17,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: ssh-pkcs11-client.c,v 1.9 2017/04/18 18:41:46 christos Exp $");
+__RCSID("$NetBSD: ssh-pkcs11-client.c,v 1.9.4.1 2017/12/04 10:55:18 snj Exp $");
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -104,7 +103,7 @@ static int
 pkcs11_rsa_private_encrypt(int flen, const u_char *from, u_char *to, RSA *rsa,
     int padding)
 {
-	Key key;
+	struct sshkey key;	/* XXX */
 	u_char *blob, *signature = NULL;
 	u_int blen, slen = 0;
 	int ret = -1;
@@ -184,7 +183,7 @@ pkcs11_start_helper(void)
 int
 pkcs11_add_provider(char *name, char *pin, Key ***keysp)
 {
-	Key *k;
+	struct sshkey *k;
 	int i, nkeys;
 	u_char *blob;
 	u_int blen;

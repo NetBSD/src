@@ -1,6 +1,5 @@
-/*	$NetBSD: kexgexs.c,v 1.13 2017/04/18 18:41:46 christos Exp $	*/
-/* $OpenBSD: kexgexs.c,v 1.30 2016/09/12 01:22:38 deraadt Exp $ */
-
+/*	$NetBSD: kexgexs.c,v 1.13.4.1 2017/12/04 10:55:18 snj Exp $	*/
+/* $OpenBSD: kexgexs.c,v 1.31 2017/05/30 14:23:52 markus Exp $ */
 /*
  * Copyright (c) 2000 Niels Provos.  All rights reserved.
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -27,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: kexgexs.c,v 1.13 2017/04/18 18:41:46 christos Exp $");
+__RCSID("$NetBSD: kexgexs.c,v 1.13.4.1 2017/12/04 10:55:18 snj Exp $");
 
 #include <sys/param.h>	/* MIN MAX */
 #include <stdio.h>
@@ -54,8 +53,8 @@ __RCSID("$NetBSD: kexgexs.c,v 1.13 2017/04/18 18:41:46 christos Exp $");
 #include "sshbuf.h"
 #include "misc.h"
 
-static int input_kex_dh_gex_request(int, u_int32_t, void *);
-static int input_kex_dh_gex_init(int, u_int32_t, void *);
+static int input_kex_dh_gex_request(int, u_int32_t, struct ssh *);
+static int input_kex_dh_gex_init(int, u_int32_t, struct ssh *);
 
 int
 kexgex_server(struct ssh *ssh)
@@ -67,9 +66,8 @@ kexgex_server(struct ssh *ssh)
 }
 
 static int
-input_kex_dh_gex_request(int type, u_int32_t seq, void *ctxt)
+input_kex_dh_gex_request(int type, u_int32_t seq, struct ssh *ssh)
 {
-	struct ssh *ssh = ctxt;
 	struct kex *kex = ssh->kex;
 	int r;
 	u_int min = 0, max = 0, nbits = 0;
@@ -120,9 +118,8 @@ input_kex_dh_gex_request(int type, u_int32_t seq, void *ctxt)
 }
 
 static int
-input_kex_dh_gex_init(int type, u_int32_t seq, void *ctxt)
+input_kex_dh_gex_init(int type, u_int32_t seq, struct ssh *ssh)
 {
-	struct ssh *ssh = ctxt;
 	struct kex *kex = ssh->kex;
 	BIGNUM *shared_secret = NULL, *dh_client_pub = NULL;
 	struct sshkey *server_host_public, *server_host_private;

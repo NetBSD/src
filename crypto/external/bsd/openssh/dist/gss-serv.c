@@ -1,5 +1,5 @@
-/*	$NetBSD: gss-serv.c,v 1.10 2017/04/18 18:41:46 christos Exp $	*/
-/* $OpenBSD: gss-serv.c,v 1.29 2015/05/22 03:50:02 djm Exp $ */
+/*	$NetBSD: gss-serv.c,v 1.10.4.1 2017/12/04 10:55:18 snj Exp $	*/
+/* $OpenBSD: gss-serv.c,v 1.30 2017/06/24 06:34:38 djm Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Simon Wilkinson. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: gss-serv.c,v 1.10 2017/04/18 18:41:46 christos Exp $");
+__RCSID("$NetBSD: gss-serv.c,v 1.10.4.1 2017/12/04 10:55:18 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -395,6 +395,15 @@ ssh_gssapi_checkmic(Gssctxt *ctx, gss_buffer_t gssbuf, gss_buffer_t gssmic)
 	    gssbuf, gssmic, NULL);
 
 	return (ctx->major);
+}
+
+/* Privileged */
+const char *ssh_gssapi_displayname(void)
+{
+	if (gssapi_client.displayname.length == 0 ||
+	    gssapi_client.displayname.value == NULL)
+		return NULL;
+	return (char *)gssapi_client.displayname.value;
 }
 
 #endif
