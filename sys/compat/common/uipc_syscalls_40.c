@@ -1,9 +1,9 @@
-/*	$NetBSD: uipc_syscalls_40.c,v 1.13.6.1 2017/11/30 15:57:37 martin Exp $	*/
+/*	$NetBSD: uipc_syscalls_40.c,v 1.13.6.2 2017/12/04 13:55:00 martin Exp $	*/
 
 /* written by Pavel Cahyna, 2006. Public domain. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_40.c,v 1.13.6.1 2017/11/30 15:57:37 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_40.c,v 1.13.6.2 2017/12/04 13:55:00 martin Exp $");
 
 /*
  * System call interface to the socket abstraction.
@@ -124,7 +124,9 @@ compat_ifconf(u_long cmd, void *data)
 			}
 			space -= sz;
 
+#ifdef COMPAT_OSOCK
 		next_ifa:
+#endif
 			s = pserialize_read_enter();
 			ifa_release(ifa, &psref_ifa);
 		}
