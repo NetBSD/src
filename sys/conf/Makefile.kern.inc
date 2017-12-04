@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.260 2017/07/15 15:20:52 christos Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.261 2017/12/04 09:44:33 martin Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -321,7 +321,9 @@ ${_s:T:R}.o: ${_s}
 .include "${S}/conf/cscope.mk"
 .include "${S}/conf/gdbinit.mk"
 .include "${S}/conf/ssp.mk"
+.if "${_SKIP_DTS}" != "yes"
 .include "${S}/conf/dts.mk"
+.endif
 
 ##
 ## (7) misc targets: install, clean(dir), depend(all), lint, links, tags,

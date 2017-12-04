@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc64,v 1.82 2016/03/19 18:50:25 martin Exp $
+# 	$NetBSD: Makefile.sparc64,v 1.83 2017/12/04 09:44:33 martin Exp $
 
 #=========================================================================
 #
@@ -162,6 +162,7 @@ cpu_in_cksum.o lock_stubs.o: assym.h
 ##
 ## (9) port independent kernel machinery
 ##
+_SKIP_DTS=yes
 .include "$S/conf/Makefile.kern.inc"
 
 ##
