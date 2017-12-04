@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.29 2017/09/26 07:42:06 knakahara Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.30 2017/12/04 09:29:42 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -1355,9 +1355,7 @@ fail:
 } /* ixgbe_allocate_receive_buffers */
 
 /************************************************************************
- * ixgbe_setup_receive_ring
- *
- *   Initialize a receive ring and its buffers.
+ * ixgbe_free_receive_ring
  ************************************************************************/
 static void
 ixgbe_free_receive_ring(struct rx_ring *rxr)
@@ -1408,17 +1406,6 @@ ixgbe_setup_receive_ring(struct rx_ring *rxr)
 
 	/* Free current RX buffer structs and their mbufs */
 	ixgbe_free_receive_ring(rxr);
-
-	IXGBE_RX_UNLOCK(rxr);
-
-	/* Now reinitialize our supply of jumbo mbufs.  The number
-	 * or size of jumbo mbufs may have changed.
-	 */
-	ixgbe_jcl_reinit(&adapter->jcl_head, rxr->ptag->dt_dmat,
-	    (2 * adapter->num_rx_desc) * adapter->num_queues,
-	    adapter->rx_mbuf_sz);
-
-	IXGBE_RX_LOCK(rxr);
 
 	/* Now replenish the mbufs */
 	for (int j = 0; j != rxr->num_desc; ++j) {
@@ -1525,6 +1512,15 @@ ixgbe_setup_receive_structures(struct adapter *adapter)
 {
 	struct rx_ring *rxr = adapter->rx_rings;
 	int            j;
+
+	/*
+	 * Now reinitialize our supply of jumbo mbufs.  The number
+	 * or size of jumbo mbufs may have changed.
+	 * Assume all of rxr->ptag are the same.
+	 */
+	ixgbe_jcl_reinit(&adapter->jcl_head, rxr->ptag->dt_dmat,
+	    (2 * adapter->num_rx_desc) * adapter->num_queues,
+	    adapter->rx_mbuf_sz);
 
 	for (j = 0; j < adapter->num_queues; j++, rxr++)
 		if (ixgbe_setup_receive_ring(rxr))
