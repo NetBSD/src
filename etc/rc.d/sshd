@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: sshd,v 1.24 2017/10/07 21:41:51 sevan Exp $
+# $NetBSD: sshd,v 1.25 2017/12/04 14:50:33 kre Exp $
 #
 
 # PROVIDE: sshd
@@ -45,10 +45,10 @@ _EOF
 
 sshd_precmd()
 {
-	if [ ! -f /etc/ssh/ssh_host_dsa_key -o \
-	    ! -f /etc/ssh/ssh_host_ecdsa_key -o \
-	    ! -f /etc/ssh/ssh_host_ed25519_key -o \
-	    ! -f /etc/ssh/ssh_host_rsa_key ]; then
+	if ! [ -f /etc/ssh/ssh_host_dsa_key ]	  ||
+	   ! [ -f /etc/ssh/ssh_host_ecdsa_key ]	  ||
+	   ! [ -f /etc/ssh/ssh_host_ed25519_key ] ||
+	   ! [ -f /etc/ssh/ssh_host_rsa_key ];	    then
 		run_rc_command keygen
 	fi
 }
