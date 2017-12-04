@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.88 2017/12/04 11:01:06 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.89 2017/12/04 13:56:05 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -8002,7 +8002,7 @@ sys/netipsec/key.h				1.33
 	softint.
 	[ozaki-r, ticket #406]
 
-sys/compat/common/uipc_syscalls_40.c		1.14
+sys/compat/common/uipc_syscalls_40.c		1.14-1.15
 sys/compat/linux/common/linux_socket.c		1.139
 sys/compat/linux32/common/linux32_socket.c	1.28
 sys/net/if.c					1.400
