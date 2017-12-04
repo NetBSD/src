@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.345 2017/10/31 10:45:19 martin Exp $ */
+/* $NetBSD: com.c,v 1.346 2017/12/04 09:55:37 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.345 2017/10/31 10:45:19 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.346 2017/12/04 09:55:37 bouyer Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -253,9 +253,10 @@ void	com_kgdb_putc(void *, int);
 #define	COM_REG_STD { \
 	com_data, com_data, com_dlbl, com_dlbh, com_ier, com_iir, com_fifo, \
 	com_efr, com_lcr, com_mcr, com_lsr, com_msr, 0, 0, 0, 0, 0, 0, 0, 0, \
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, com_usr }
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, com_usr, com_tfl, com_rfl, \
+	0, 0, 0, 0, 0, 0, 0, com_halt }
 
-const bus_size_t com_std_map[32] = COM_REG_STD;
+const bus_size_t com_std_map[42] = COM_REG_STD;
 #endif /* COM_REGMAP */
 
 #define	COMDIALOUT_MASK	TTDIALOUT_MASK
