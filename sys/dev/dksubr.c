@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.100 2017/10/29 09:44:17 mlelstv Exp $ */
+/* $NetBSD: dksubr.c,v 1.101 2017/12/04 22:15:52 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.100 2017/10/29 09:44:17 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.101 2017/12/04 22:15:52 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -422,6 +422,7 @@ dk_start(struct dk_softc *dksc, struct buf *bp)
 			error = dkd->d_diskstart(dksc->sc_dev, bp);
 			mutex_enter(&dksc->sc_iolock);
 			if (error == EAGAIN) {
+				KASSERT(dksc->sc_deferred == NULL);
 				dksc->sc_deferred = bp;
 				disk_unbusy(&dksc->sc_dkdev, 0, (bp->b_flags & B_READ));
 				disk_wait(&dksc->sc_dkdev);
