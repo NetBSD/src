@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2138.2.3 2017/10/11 22:54:09 snj Exp $
+#	$NetBSD: mi,v 1.2138.2.4 2017/12/04 19:48:55 snj Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -775,6 +775,7 @@
 ./usr/include/dns_sd.h				comp-mdns-include	mdns
 ./usr/include/dwarf.h				comp-c-include
 ./usr/include/elf.h				comp-c-include
+./usr/include/endian.h				comp-c-include
 ./usr/include/err.h				comp-c-include
 ./usr/include/errno.h				comp-c-include
 ./usr/include/eti.h				comp-c-include
