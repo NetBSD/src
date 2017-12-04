@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: sshd,v 1.23 2014/10/19 16:33:01 christos Exp $
+# $NetBSD: sshd,v 1.23.8.1 2017/12/04 10:59:46 snj Exp $
 #
 
 # PROVIDE: sshd
@@ -35,7 +35,6 @@ sshd_keygen()
 			"${keygen}" -t "${type}" ${bitarg} -f "${f}" -N ''
 		fi
 	done << _EOF
-rsa1	0	ssh_host_key		1	RSA
 dsa	1024	ssh_host_dsa_key	2	DSA
 ecdsa	521	ssh_host_ecdsa_key	1	ECDSA
 ed25519	-1	ssh_host_ed25519_key	1	ED25519
@@ -46,8 +45,7 @@ _EOF
 
 sshd_precmd()
 {
-	if [ ! -f /etc/ssh/ssh_host_key -o \
-	    ! -f /etc/ssh/ssh_host_dsa_key -o \
+	if [ ! -f /etc/ssh/ssh_host_dsa_key -o \
 	    ! -f /etc/ssh/ssh_host_ecdsa_key -o \
 	    ! -f /etc/ssh/ssh_host_ed25519_key -o \
 	    ! -f /etc/ssh/ssh_host_rsa_key ]; then
