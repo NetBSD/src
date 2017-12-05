@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.187 2017/11/25 16:31:03 jmcneill Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.188 2017/12/05 19:17:11 jmcneill Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -835,7 +835,7 @@ all)
 	makedev drvctl
 	makedev video
 	makedev dtv
-	makedev drm0
+	makedev drm0 drm1 drm2 drm3
 	makedev altmem
 	makedev zfs
 	makedev lua
