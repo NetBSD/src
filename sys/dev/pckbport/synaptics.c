@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.35 2017/11/07 12:39:07 ryoon Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.36 2017/12/05 18:04:21 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,7 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.35 2017/11/07 12:39:07 ryoon Exp $");
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.36 2017/12/05 18:04:21 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,6 +118,7 @@ static int synaptics_scale_y = 16;
 static int synaptics_max_speed_x = 32;
 static int synaptics_max_speed_y = 32;
 static int synaptics_movement_threshold = 4;
+static int synaptics_movement_enable = 1;
 
 /* Sysctl nodes. */
 static int synaptics_button_boundary_nodenum;
@@ -140,6 +141,7 @@ static int synaptics_scale_y_nodenum;
 static int synaptics_max_speed_x_nodenum;
 static int synaptics_max_speed_y_nodenum;
 static int synaptics_movement_threshold_nodenum;
+static int synaptics_movement_enable_nodenum;
 
 static int
 synaptics_poll_cmd(struct pms_softc *psc, ...)
@@ -714,6 +716,18 @@ pms_sysctl_synaptics(struct sysctllog **clog)
 
 	if ((rc = sysctl_createv(clog, 0, NULL, &node,
 	    CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+	    CTLTYPE_INT, "movement_enable",
+	    SYSCTL_DESCR("Enable movement reporting"),
+	    pms_sysctl_synaptics_verify, 0,
+	    &synaptics_movement_enable,
+	    0, CTL_HW, root_num, CTL_CREATE,
+	    CTL_EOL)) != 0)
+		goto err;
+
+	synaptics_movement_enable_nodenum = node->sysctl_num;
+
+	if ((rc = sysctl_createv(clog, 0, NULL, &node,
+	    CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
 	    CTLTYPE_INT, "button_boundary",
 	    SYSCTL_DESCR("Top edge of button area"),
 	    pms_sysctl_synaptics_verify, 0,
@@ -808,14 +822,18 @@ pms_sysctl_synaptics_verify(SYSCTLFN_ARGS)
 		if (t < 0 || t > (SYNAPTICS_EDGE_MAX / 4))
 			return (EINVAL);
 	} else
-	if (node.sysctl_num == synaptics_button_boundary) {
+	if (node.sysctl_num == synaptics_button_boundary_nodenum) {
 		if (t < 0 || t < SYNAPTICS_EDGE_BOTTOM || 
 		    t > SYNAPTICS_EDGE_TOP)
 			return (EINVAL);
 	} else
-	if (node.sysctl_num == synaptics_button2 ||
-	    node.sysctl_num == synaptics_button3) {
+	if (node.sysctl_num == synaptics_button2_nodenum ||
+	    node.sysctl_num == synaptics_button3_nodenum) {
 		if (t < SYNAPTICS_EDGE_LEFT || t > SYNAPTICS_EDGE_RIGHT)
+			return (EINVAL);
+	} else
+	if (node.sysctl_num == synaptics_movement_enable_nodenum) {
+		if (t < 0 || t > 1)
 			return (EINVAL);
 	} else
 		return (EINVAL);
@@ -1558,7 +1576,7 @@ pms_synaptics_process_packet(struct pms_softc *psc, struct synaptics_packet *sp)
 	 * Do movement processing IFF we have a single finger and no palm or
 	 * a secondary finger and no palm.
 	 */
-	if (palm == 0) {
+	if (palm == 0 && synaptics_movement_enable) {
 		if (fingers == 1) {
 			synaptics_movement(sc, sp, sp->sp_finger, &dx, &dy);
 		} else {
