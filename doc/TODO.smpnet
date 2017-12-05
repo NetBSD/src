@@ -1,4 +1,4 @@
-$NetBSD: TODO.smpnet,v 1.17 2017/11/20 09:01:20 ozaki-r Exp $
+$NetBSD: TODO.smpnet,v 1.18 2017/12/05 03:23:29 ozaki-r Exp $
 
 MP-safe components
 ==================
@@ -173,3 +173,12 @@ ec_multiaddrs must be protected by ec_lock.  The core of ethernet subsystem is
 already MP-safe, however, device drivers that use the data should also be fixed.
 A typical change should be to protect manipulations of the data via ETHER_*
 macros such as ETHER_FIRST_MULTI by ETHER_LOCK and ETHER_UNLOCK.
+
+ALTQ
+----
+
+If ALTQ is enabled in the kernel, it enforces to use just one Tx queue (if_snd)
+for packet transmissions, resulting in serializing all Tx packet processing on
+the queue.  We should probably design and implement an alternative queuing
+mechanism that deals with multi-core systems at the first place, not making the
+existing ALTQ MP-safe because it's just annoying.
