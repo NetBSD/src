@@ -72,7 +72,9 @@ option interface_mtu
 # A ServerID is required by RFC2131.
 require dhcp_server_identifier
 
-# Generate Stable Private IPv6 Addresses instead of hardware based ones
+# Generate SLAAC address using the Hardware Address of the interface
+#slaac hwaddr
+# OR generate Stable Private IPv6 Addresses based from the DUID
 slaac private
 ```
 
