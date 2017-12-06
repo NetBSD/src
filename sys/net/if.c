@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.405 2017/12/06 09:03:12 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.406 2017/12/06 09:54:47 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.405 2017/12/06 09:03:12 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.406 2017/12/06 09:54:47 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -715,7 +715,10 @@ if_initialize(ifnet_t *ifp)
 	IF_AFDATA_LOCK_INIT(ifp);
 
 	if (if_is_link_state_changeable(ifp)) {
-		ifp->if_link_si = softint_establish(SOFTINT_NET,
+		u_int flags = SOFTINT_NET;
+		flags |= ISSET(ifp->if_extflags, IFEF_MPSAFE) ?
+		    SOFTINT_MPSAFE : 0;
+		ifp->if_link_si = softint_establish(flags,
 		    if_link_state_change_si, ifp);
 		if (ifp->if_link_si == NULL) {
 			rv = ENOMEM;
@@ -2191,6 +2194,21 @@ link_rtrequest(int cmd, struct rtentry *rt, const struct rt_addrinfo *info)
 		if (LQ_ITEM((q), (i)) == LINK_STATE_UNSET)		      \
 			break;						      \
 	}
+
+/*
+ * XXX reusing (ifp)->if_snd->ifq_lock rather than having another spin mutex
+ * for each ifnet.  It doesn't matter because:
+ * - if IFEF_MPSAFE is enabled, if_snd isn't used and lock contentions on
+ *   ifq_lock don't happen
+ * - if IFEF_MPSAFE is disabled, there is no lock contention on ifq_lock
+ *   because if_snd, if_link_state_change and if_link_state_change_softint
+ *   are all called with KERNEL_LOCK
+ */
+#define IF_LINK_STATE_CHANGE_LOCK(ifp)		\
+	mutex_enter((ifp)->if_snd.ifq_lock)
+#define IF_LINK_STATE_CHANGE_UNLOCK(ifp)	\
+	mutex_exit((ifp)->if_snd.ifq_lock)
+
 /*
  * Handle a change in the interface link state and
  * queue notifications.
@@ -2198,7 +2216,7 @@ link_rtrequest(int cmd, struct rtentry *rt, const struct rt_addrinfo *info)
 void
 if_link_state_change(struct ifnet *ifp, int link_state)
 {
-	int s, idx;
+	int idx;
 
 	KASSERTMSG(if_is_link_state_changeable(ifp),
 	    "%s: IFEF_NO_LINK_STATE_CHANGE must not be set, but if_extflags=0x%x",
@@ -2218,7 +2236,7 @@ if_link_state_change(struct ifnet *ifp, int link_state)
 		return;
 	}
 
-	s = splnet();
+	IF_LINK_STATE_CHANGE_LOCK(ifp);
 
 	/* Find the last unset event in the queue. */
 	LQ_FIND_UNSET(ifp->if_link_queue, idx);
@@ -2262,7 +2280,7 @@ if_link_state_change(struct ifnet *ifp, int link_state)
 	softint_schedule(ifp->if_link_si);
 
 out:
-	splx(s);
+	IF_LINK_STATE_CHANGE_UNLOCK(ifp);
 }
 
 /*
@@ -2273,12 +2291,15 @@ if_link_state_change_softint(struct ifnet *ifp, int link_state)
 {
 	struct domain *dp;
 	int s = splnet();
+	bool notify;
 
 	KASSERT(!cpu_intr_p());
 
+	IF_LINK_STATE_CHANGE_LOCK(ifp);
+
 	/* Ensure the change is still valid. */
 	if (ifp->if_link_state == link_state) {
-		splx(s);
+		IF_LINK_STATE_CHANGE_UNLOCK(ifp);
 		return;
 	}
 
@@ -2301,17 +2322,20 @@ if_link_state_change_softint(struct ifnet *ifp, int link_state)
 	 * listeners would have an address and expect it to work right
 	 * away.
 	 */
-	if (link_state == LINK_STATE_UP &&
-	    ifp->if_link_state == LINK_STATE_UNKNOWN)
-	{
+	notify = (link_state == LINK_STATE_UP &&
+	    ifp->if_link_state == LINK_STATE_UNKNOWN);
+	ifp->if_link_state = link_state;
+	/* The following routines may sleep so release the spin mutex */
+	IF_LINK_STATE_CHANGE_UNLOCK(ifp);
+
+	KERNEL_LOCK_UNLESS_NET_MPSAFE();
+	if (notify) {
 		DOMAIN_FOREACH(dp) {
 			if (dp->dom_if_link_state_change != NULL)
 				dp->dom_if_link_state_change(ifp,
 				    LINK_STATE_DOWN);
 		}
 	}
-
-	ifp->if_link_state = link_state;
 
 	/* Notify that the link state has changed. */
 	rt_ifmsg(ifp);
@@ -2325,6 +2349,7 @@ if_link_state_change_softint(struct ifnet *ifp, int link_state)
 		if (dp->dom_if_link_state_change != NULL)
 			dp->dom_if_link_state_change(ifp, link_state);
 	}
+	KERNEL_UNLOCK_UNLESS_NET_MPSAFE();
 	splx(s);
 }
 
@@ -2337,16 +2362,23 @@ if_link_state_change_si(void *arg)
 	struct ifnet *ifp = arg;
 	int s;
 	uint8_t state;
+	bool schedule;
 
 	SOFTNET_KERNEL_LOCK_UNLESS_NET_MPSAFE();
 	s = splnet();
 
 	/* Pop a link state change from the queue and process it. */
+	IF_LINK_STATE_CHANGE_LOCK(ifp);
 	LQ_POP(ifp->if_link_queue, state);
+	IF_LINK_STATE_CHANGE_UNLOCK(ifp);
+
 	if_link_state_change_softint(ifp, state);
 
 	/* If there is a link state change to come, schedule it. */
-	if (LQ_ITEM(ifp->if_link_queue, 0) != LINK_STATE_UNSET)
+	IF_LINK_STATE_CHANGE_LOCK(ifp);
+	schedule = (LQ_ITEM(ifp->if_link_queue, 0) != LINK_STATE_UNSET);
+	IF_LINK_STATE_CHANGE_UNLOCK(ifp);
+	if (schedule)
 		softint_schedule(ifp->if_link_si);
 
 	splx(s);
