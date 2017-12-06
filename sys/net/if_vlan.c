@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.115 2017/12/06 05:59:59 ozaki-r Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.116 2017/12/06 07:40:16 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.115 2017/12/06 05:59:59 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.116 2017/12/06 07:40:16 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -584,6 +584,8 @@ vlan_unconfig_locked(struct ifvlan *ifv, struct ifvlan_linkmib *nmib)
 	KASSERT(mutex_owned(ifp->if_ioctl_lock));
 	KASSERT(mutex_owned(&ifv->ifv_lock));
 
+	ifp->if_flags &= ~(IFF_UP|IFF_RUNNING);
+
 	omib = ifv->ifv_mib;
 	p = omib->ifvm_p;
 
@@ -652,7 +654,6 @@ vlan_unconfig_locked(struct ifvlan *ifv, struct ifvlan_linkmib *nmib)
 	if ((ifp->if_flags & IFF_PROMISC) != 0)
 		vlan_safe_ifpromisc_locked(ifp, 0);
 	if_down(ifp);
-	ifp->if_flags &= ~(IFF_UP|IFF_RUNNING);
 	ifp->if_capabilities = 0;
 	mutex_enter(&ifv->ifv_lock);
 done:
@@ -974,10 +975,11 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		if (error != 0) {
 			break;
 		}
-		ifp->if_flags |= IFF_RUNNING;
 
 		/* Update promiscuous mode, if necessary. */
 		vlan_set_promisc(ifp);
+
+		ifp->if_flags |= IFF_RUNNING;
 		break;
 
 	case SIOCGETVLAN:

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_faith.c,v 1.56 2017/10/23 09:32:00 msaitoh Exp $	*/
+/*	$NetBSD: if_faith.c,v 1.57 2017/12/06 07:40:16 ozaki-r Exp $	*/
 /*	$KAME: if_faith.c,v 1.21 2001/02/20 07:59:26 itojun Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.56 2017/10/23 09:32:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.57 2017/12/06 07:40:16 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -263,9 +263,9 @@ faithioctl(struct ifnet *ifp, u_long cmd, void *data)
 	switch (cmd) {
 
 	case SIOCINITIFADDR:
-		ifp->if_flags |= IFF_UP | IFF_RUNNING;
 		ifa = (struct ifaddr *)data;
 		ifa->ifa_rtrequest = faithrtrequest;
+		ifp->if_flags |= IFF_UP | IFF_RUNNING;
 		/*
 		 * Everything else is done at a higher level.
 		 */

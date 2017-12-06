@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.142 2017/12/06 05:11:10 ozaki-r Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.143 2017/12/06 07:40:16 ozaki-r Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.142 2017/12/06 05:11:10 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.143 2017/12/06 07:40:16 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -1328,14 +1328,13 @@ bridge_init(struct ifnet *ifp)
 {
 	struct bridge_softc *sc = ifp->if_softc;
 
-	if (ifp->if_flags & IFF_RUNNING)
-		return 0;
+	KASSERT((ifp->if_flags & IFF_RUNNING) == 0);
 
 	callout_reset(&sc->sc_brcallout, bridge_rtable_prune_period * hz,
 	    bridge_timer, sc);
+	bstp_initialization(sc);
 
 	ifp->if_flags |= IFF_RUNNING;
-	bstp_initialization(sc);
 	return 0;
 }
 
@@ -1349,15 +1348,12 @@ bridge_stop(struct ifnet *ifp, int disable)
 {
 	struct bridge_softc *sc = ifp->if_softc;
 
-	if ((ifp->if_flags & IFF_RUNNING) == 0)
-		return;
+	KASSERT((ifp->if_flags & IFF_RUNNING) != 0);
+	ifp->if_flags &= ~IFF_RUNNING;
 
 	callout_stop(&sc->sc_brcallout);
 	bstp_stop(sc);
-
 	bridge_rtflush(sc, IFBF_FLUSHDYN);
-
-	ifp->if_flags &= ~IFF_RUNNING;
 }
 
 /*

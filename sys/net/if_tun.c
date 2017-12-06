@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.141 2017/10/30 16:01:19 ozaki-r Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.142 2017/12/06 07:40:16 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.141 2017/10/30 16:01:19 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.142 2017/12/06 07:40:16 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -421,8 +421,6 @@ tun_enable(struct tun_softc *tp, const struct ifaddr *ifa)
 	TUNDEBUG("%s: %s\n", __func__, ifp->if_xname);
 
 	mutex_enter(&tp->tun_lock);
-	ifp->if_flags |= IFF_UP | IFF_RUNNING;
-
 	tp->tun_flags &= ~(TUN_IASET|TUN_DSTADDR);
 
 	switch (ifa->ifa_addr->sa_family) {
@@ -462,6 +460,7 @@ tun_enable(struct tun_softc *tp, const struct ifaddr *ifa)
 	default:
 		break;
 	}
+	ifp->if_flags |= IFF_UP | IFF_RUNNING;
 	mutex_exit(&tp->tun_lock);
 }
 
