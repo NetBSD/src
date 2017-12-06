@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.114 2017/12/06 05:11:10 ozaki-r Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.115 2017/12/06 05:59:59 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.114 2017/12/06 05:11:10 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.115 2017/12/06 05:59:59 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -255,6 +255,16 @@ vlan_safe_ifpromisc(struct ifnet *ifp, int pswitch)
 	return e;
 }
 
+static inline int
+vlan_safe_ifpromisc_locked(struct ifnet *ifp, int pswitch)
+{
+	int e;
+	KERNEL_LOCK_UNLESS_NET_MPSAFE();
+	e = ifpromisc_locked(ifp, pswitch);
+	KERNEL_UNLOCK_UNLESS_NET_MPSAFE();
+	return e;
+}
+
 void
 vlanattach(int n)
 {
@@ -387,7 +397,9 @@ vlan_clone_destroy(struct ifnet *ifp)
 	LIST_REMOVE(ifv, ifv_list);
 	mutex_exit(&ifv_list.lock);
 
+	mutex_enter(ifp->if_ioctl_lock);
 	vlan_unconfig(ifp);
+	mutex_exit(ifp->if_ioctl_lock);
 	if_detach(ifp);
 
 	psref_target_destroy(&ifv->ifv_mib->ifvm_psref, ifvm_psref_class);
@@ -549,6 +561,8 @@ vlan_unconfig(struct ifnet *ifp)
 	struct ifvlan_linkmib *nmib = NULL;
 	int error;
 
+	KASSERT(mutex_owned(ifp->if_ioctl_lock));
+
 	nmib = kmem_alloc(sizeof(*nmib), KM_SLEEP);
 
 	mutex_enter(&ifv->ifv_lock);
@@ -567,6 +581,7 @@ vlan_unconfig_locked(struct ifvlan *ifv, struct ifvlan_linkmib *nmib)
 	struct ifvlan_linkmib *omib;
 	int error = 0;
 
+	KASSERT(mutex_owned(ifp->if_ioctl_lock));
 	KASSERT(mutex_owned(&ifv->ifv_lock));
 
 	omib = ifv->ifv_mib;
@@ -635,7 +650,7 @@ vlan_unconfig_locked(struct ifvlan *ifv, struct ifvlan_linkmib *nmib)
 #endif
 
 	if ((ifp->if_flags & IFF_PROMISC) != 0)
-		vlan_safe_ifpromisc(ifp, 0);
+		vlan_safe_ifpromisc_locked(ifp, 0);
 	if_down(ifp);
 	ifp->if_flags &= ~(IFF_UP|IFF_RUNNING);
 	ifp->if_capabilities = 0;
@@ -806,6 +821,10 @@ vlan_ifdetach(struct ifnet *p)
 
 	i = 0;
 	LIST_FOREACH(ifv, &ifv_list.list, ifv_list) {
+		struct ifnet *ifp = &ifv->ifv_if;
+
+		/* Need if_ioctl_lock that must be held before ifv_lock. */
+		mutex_enter(ifp->if_ioctl_lock);
 		mutex_enter(&ifv->ifv_lock);
 		if (ifv->ifv_mib->ifvm_p == p) {
 			KASSERTMSG(i < cnt, "no memory for unconfig, parent=%s",
@@ -818,6 +837,7 @@ vlan_ifdetach(struct ifnet *p)
 
 		}
 		mutex_exit(&ifv->ifv_lock);
+		mutex_exit(ifp->if_ioctl_lock);
 	}
 
 	mutex_exit(&ifv_list.lock);
