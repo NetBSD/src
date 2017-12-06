@@ -28,8 +28,9 @@
 #ifndef BPF_HEADER
 #define BPF_HEADER
 
-#define BPF_EOF			1 << 0
-#define BPF_PARTIALCSUM		2 << 0
+#define	BPF_READING		(1U << 0)
+#define	BPF_EOF			(1U << 1)
+#define	BPF_PARTIALCSUM		(1U << 2)
 
 #include "dhcpcd.h"
 
@@ -39,7 +40,7 @@ int bpf_open(struct interface *, int (*)(struct interface *, int));
 int bpf_close(struct interface *, int);
 int bpf_attach(int, void *, unsigned int);
 ssize_t bpf_send(const struct interface *, int, uint16_t, const void *, size_t);
-ssize_t bpf_read(struct interface *, int, void *, size_t, int *);
+ssize_t bpf_read(struct interface *, int, void *, size_t, unsigned int *);
 int bpf_arp(struct interface *, int);
 int bpf_bootp(struct interface *, int);
 #endif

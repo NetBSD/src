@@ -336,6 +336,8 @@ ipv6nd_expire(struct interface *ifp, uint32_t seconds)
 {
 	struct ra *rap;
 	struct timespec now;
+	uint32_t vltime = seconds;
+	uint32_t pltime = seconds / 2;
 
 	if (ifp->ctx->ra_routers == NULL)
 		return;
@@ -347,13 +349,18 @@ ipv6nd_expire(struct interface *ifp, uint32_t seconds)
 			rap->acquired = now;
 			rap->expired = seconds ? 0 : 1;
 			if (seconds) {
-				struct ipv6_addr *ap;
+				struct ipv6_addr *ia;
 
 				rap->lifetime = seconds;
-				TAILQ_FOREACH(ap, &rap->addrs, next) {
-					if (ap->prefix_vltime) {
-						ap->prefix_vltime = seconds;
-						ap->prefix_pltime = seconds / 2;
+				TAILQ_FOREACH(ia, &rap->addrs, next) {
+					if (ia->prefix_pltime > pltime ||
+					    ia->prefix_vltime > vltime)
+					{
+						ia->acquired = now;
+						if (ia->prefix_pltime != 0)
+							ia->prefix_pltime =
+							    pltime;
+						ia->prefix_vltime = vltime;
 					}
 				}
 				ipv6_addaddrs(&rap->addrs);
@@ -1088,7 +1095,7 @@ handle_flag:
 #define LOG_DHCP6	logdebug
 #endif
 	if (rap->flags & ND_RA_FLAG_MANAGED) {
-		if (new_data && dhcp6_start(ifp, DH6S_INIT) == -1)
+		if (new_data && dhcp6_start(ifp, DH6S_REQUEST) == -1)
 			LOG_DHCP6("dhcp6_start: %s", ifp->name);
 	} else if (rap->flags & ND_RA_FLAG_OTHER) {
 		if (new_data && dhcp6_start(ifp, DH6S_INFORM) == -1)
@@ -1559,14 +1566,17 @@ ipv6nd_handledata(void *arg)
 		return;
 	}
 
+	/* Find the receiving interface */
 	TAILQ_FOREACH(ifp, ctx->ifaces, next) {
-		if (ifp->active &&
-		    ifp->index == (unsigned int)pkt.ipi6_ifindex) {
-			if (!(ifp->options->options & DHCPCD_IPV6))
-				return;
+		if (ifp->index == (unsigned int)pkt.ipi6_ifindex)
 			break;
-		}
 	}
+
+	/* Don't do anything if the user hasn't configured it. */
+	if (ifp != NULL &&
+	    (ifp->active != IF_ACTIVE_USER ||
+	    !(ifp->options->options & DHCPCD_IPV6)))
+		return;
 
 	icp = (struct icmp6_hdr *)ctx->rcvhdr.msg_iov[0].iov_base;
 	if (icp->icmp6_code == 0) {

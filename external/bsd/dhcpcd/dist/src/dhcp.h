@@ -215,6 +215,7 @@ struct dhcp_state {
 	int socket;
 
 	int bpf_fd;
+	unsigned int bpf_flags;
 	struct ipv4_addr *addr;
 	uint8_t added;
 
