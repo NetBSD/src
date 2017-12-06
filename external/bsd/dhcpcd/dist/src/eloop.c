@@ -785,6 +785,8 @@ eloop_signal_mask(struct eloop *eloop, sigset_t *oldset)
 		return -1;
 
 #ifndef HAVE_KQUEUE
+	_eloop = eloop;
+
 	memset(&sa, 0, sizeof(sa));
 	sa.sa_sigaction = eloop_signal3;
 	sa.sa_flags = SA_SIGINFO;
@@ -876,8 +878,6 @@ eloop_start(struct eloop *eloop, sigset_t *signals)
 #endif
 #ifndef HAVE_KQUEUE
 	int timeout;
-
-	_eloop = eloop;
 #endif
 
 	assert(eloop != NULL);
