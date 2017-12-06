@@ -1,4 +1,4 @@
-/*	$NetBSD: fmtcheck.c,v 1.12 2017/12/06 12:28:53 rin Exp $	*/
+/*	$NetBSD: fmtcheck.c,v 1.13 2017/12/06 12:30:27 rin Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fmtcheck.c,v 1.12 2017/12/06 12:28:53 rin Exp $");
+__RCSID("$NetBSD: fmtcheck.c,v 1.13 2017/12/06 12:30:27 rin Exp $");
 #endif
 
 #include "namespace.h"
@@ -242,7 +242,7 @@ get_next_format(const char **pf, EFT eft)
 	}
 
 	/* Eat any of the flags */
-	while (*f && (strchr("#0- +", *f)))
+	while (*f && (strchr("#'0- +", *f)))
 		f++;
 
 	if (*f == '*') {
