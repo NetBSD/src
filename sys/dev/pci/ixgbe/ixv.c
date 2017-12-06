@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.74 2017/11/16 03:07:18 ozaki-r Exp $*/
+/*$NetBSD: ixv.c,v 1.75 2017/12/06 04:08:50 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -1592,9 +1592,6 @@ ixv_initialize_rss_mapping(struct adapter *adapter)
 		    __func__);
 	if (rss_hash_config & RSS_HASHTYPE_RSS_UDP_IPV4)
 		mrqc |= IXGBE_MRQC_RSS_FIELD_IPV4_UDP;
-	if (rss_hash_config & RSS_HASHTYPE_RSS_UDP_IPV4_EX)
-		device_printf(adapter->dev, "%s: RSS_HASHTYPE_RSS_UDP_IPV4_EX defined, but not supported\n",
-		    __func__);
 	if (rss_hash_config & RSS_HASHTYPE_RSS_UDP_IPV6)
 		mrqc |= IXGBE_MRQC_RSS_FIELD_IPV6_UDP;
 	if (rss_hash_config & RSS_HASHTYPE_RSS_UDP_IPV6_EX)
