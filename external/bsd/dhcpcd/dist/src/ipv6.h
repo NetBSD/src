@@ -250,7 +250,7 @@ struct ipv6_addr *ipv6_findmaskaddr(struct dhcpcd_ctx *,
     const struct in6_addr *);
 #define ipv6_linklocal(ifp) ipv6_iffindaddr((ifp), NULL, IN6_IFF_NOTUSEABLE)
 int ipv6_addlinklocalcallback(struct interface *, void (*)(void *), void *);
-struct ipv6_addr *ipv6_newaddr(struct interface *, struct in6_addr *, uint8_t,
+struct ipv6_addr *ipv6_newaddr(struct interface *, const struct in6_addr *, uint8_t,
     unsigned int);
 void ipv6_freeaddr(struct ipv6_addr *);
 void ipv6_freedrop(struct interface *, int);

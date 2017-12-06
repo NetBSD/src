@@ -60,6 +60,7 @@
 
 static const char * const if_params[] = {
 	"interface",
+	"protocol",
 	"reason",
 	"pid",
 	"ifcarrier",
@@ -217,9 +218,25 @@ arraytostr(const char *const *argv, char **s)
 	return (ssize_t)len;
 }
 
+#define	PROTO_NONE	0
+#define	PROTO_DHCP	1
+#define	PROTO_IPV4LL	2
+#define	PROTO_RA	3
+#define	PROTO_DHCP6	4
+#define	PROTO_STATIC6	5
+static const char *protocols[] = {
+	NULL,
+	"dhcp",
+	"ipv4ll",
+	"ra",
+	"dhcp6",
+	"static6"
+};
+
 static ssize_t
 make_env(const struct interface *ifp, const char *reason, char ***argv)
 {
+	int protocol, r;
 	char **env, **nenv, *p;
 	size_t e, elen, l;
 #if defined(INET) || defined(INET6)
@@ -229,7 +246,6 @@ make_env(const struct interface *ifp, const char *reason, char ***argv)
 	const struct interface *ifp2;
 	int af;
 #ifdef INET
-	int dhcp, ipv4ll;
 	const struct dhcp_state *state;
 #ifdef IPV4LL
 	const struct ipv4ll_state *istate;
@@ -237,44 +253,41 @@ make_env(const struct interface *ifp, const char *reason, char ***argv)
 #endif
 #ifdef INET6
 	const struct dhcp6_state *d6_state;
-	int static6, dhcp6, ra;
 #endif
 
 #ifdef INET
-	dhcp = ipv4ll = 0;
 	state = D_STATE(ifp);
 #ifdef IPV4LL
 	istate = IPV4LL_CSTATE(ifp);
 #endif
 #endif
 #ifdef INET6
-	static6 = dhcp6 = ra = 0;
 	d6_state = D6_CSTATE(ifp);
 #endif
 	if (strcmp(reason, "TEST") == 0) {
 		if (1 == 2) {}
 #ifdef INET6
 		else if (d6_state && d6_state->new)
-			dhcp6 = 1;
+			protocol = PROTO_DHCP6;
 		else if (ipv6nd_hasra(ifp))
-			ra = 1;
+			protocol = PROTO_RA;
 #endif
 #ifdef INET
 #ifdef IPV4LL
 		else if (istate && istate->addr != NULL)
-			ipv4ll = 1;
+			protocol = PROTO_IPV4LL;
 #endif
 		else
-			dhcp = 1;
+			protocol = PROTO_DHCP;
 #endif
 	}
 #ifdef INET6
 	else if (strcmp(reason, "STATIC6") == 0)
-		static6 = 1;
+		protocol = PROTO_STATIC6;
 	else if (reason[strlen(reason) - 1] == '6')
-		dhcp6 = 1;
+		protocol = PROTO_DHCP6;
 	else if (strcmp(reason, "ROUTERADVERT") == 0)
-		ra = 1;
+		protocol = PROTO_RA;
 #endif
 	else if (strcmp(reason, "PREINIT") == 0 ||
 	    strcmp(reason, "CARRIER") == 0 ||
@@ -282,16 +295,14 @@ make_env(const struct interface *ifp, const char *reason, char ***argv)
 	    strcmp(reason, "UNKNOWN") == 0 ||
 	    strcmp(reason, "DEPARTED") == 0 ||
 	    strcmp(reason, "STOPPED") == 0)
-	{
-		/* This space left intentionally blank */
-	}
+		protocol = PROTO_NONE;
 #ifdef INET
 #ifdef IPV4LL
 	else if (strcmp(reason, "IPV4LL") == 0)
-		ipv4ll = 1;
+		protocol = PROTO_IPV4LL;
 #endif
 	else
-		dhcp = 1;
+		protocol = PROTO_DHCP;
 #endif
 
 	/* When dumping the lease, we only want to report interface and
@@ -303,7 +314,7 @@ make_env(const struct interface *ifp, const char *reason, char ***argv)
 
 #define EMALLOC(i, l) if ((env[(i)] = malloc((l))) == NULL) goto eexit;
 	/* Make our env + space for profile, wireless and debug */
-	env = calloc(1, sizeof(char *) * (elen + 4 + 1));
+	env = calloc(1, sizeof(char *) * (elen + 5 + 1));
 	if (env == NULL)
 		goto eexit;
 	e = strlen("interface") + strlen(ifp->name) + 2;
@@ -361,15 +372,15 @@ make_env(const struct interface *ifp, const char *reason, char ***argv)
 		env[10] = strdup("if_down=false");
 	} else if (1 == 2 /* appease ifdefs */
 #ifdef INET
-	    || (dhcp && state && state->new)
+	    || (protocol == PROTO_DHCP && state && state->new)
 #ifdef IPV4LL
-	    || (ipv4ll && IPV4LL_STATE_RUNNING(ifp))
+	    || (protocol == PROTO_IPV4LL && IPV4LL_STATE_RUNNING(ifp))
 #endif
 #endif
 #ifdef INET6
-	    || (static6 && IPV6_STATE_RUNNING(ifp))
-	    || (dhcp6 && d6_state && d6_state->new)
-	    || (ra && ipv6nd_hasra(ifp))
+	    || (protocol == PROTO_STATIC6 && IPV6_STATE_RUNNING(ifp))
+	    || (protocol == PROTO_DHCP6 && d6_state && d6_state->new)
+	    || (protocol == PROTO_RA && ipv6nd_hasra(ifp))
 #endif
 	    )
 	{
@@ -381,6 +392,12 @@ make_env(const struct interface *ifp, const char *reason, char ***argv)
 	}
 	if (env[9] == NULL || env[10] == NULL)
 		goto eexit;
+	if (protocols[protocol] != NULL) {
+		r = asprintf(&env[elen], "protocol=%s", protocols[protocol]);
+		if (r == -1)
+			goto eexit;
+		elen++;
+	}
 	if ((af = dhcpcd_ifafwaiting(ifp)) != AF_MAX) {
 		e = 20;
 		EMALLOC(elen, e);
@@ -425,7 +442,7 @@ make_env(const struct interface *ifp, const char *reason, char ***argv)
 		}
 	}
 #ifdef INET
-	if (dhcp && state && state->old) {
+	if (protocol == PROTO_DHCP && state && state->old) {
 		n = dhcp_env(NULL, NULL, state->old, state->old_len, ifp);
 		if (n == -1)
 			goto eexit;
@@ -447,7 +464,7 @@ make_env(const struct interface *ifp, const char *reason, char ***argv)
 	}
 #endif
 #ifdef INET6
-	if (dhcp6 && d6_state && d6_state->old) {
+	if (protocol == PROTO_DHCP6 && d6_state && d6_state->old) {
 		n = dhcp6_env(NULL, NULL, ifp,
 		    d6_state->old, d6_state->old_len);
 		if (n > 0) {
@@ -468,7 +485,7 @@ make_env(const struct interface *ifp, const char *reason, char ***argv)
 dumplease:
 #ifdef INET
 #ifdef IPV4LL
-	if (ipv4ll) {
+	if (protocol == PROTO_IPV4LL) {
 		n = ipv4ll_env(NULL, NULL, ifp);
 		if (n > 0) {
 			nenv = realloc(env, sizeof(char *) *
@@ -483,7 +500,7 @@ dumplease:
 		}
 	}
 #endif
-	if (dhcp && state && state->new) {
+	if (protocol == PROTO_DHCP && state && state->new) {
 		n = dhcp_env(NULL, NULL, state->new, state->new_len, ifp);
 		if (n > 0) {
 			nenv = realloc(env, sizeof(char *) *
@@ -503,7 +520,7 @@ dumplease:
 	}
 #endif
 #ifdef INET6
-	if (static6) {
+	if (protocol == PROTO_STATIC6) {
 		n = ipv6_env(NULL, NULL, ifp);
 		if (n > 0) {
 			nenv = realloc(env, sizeof(char *) *
@@ -517,7 +534,7 @@ dumplease:
 			elen += (size_t)n;
 		}
 	}
-	if (dhcp6 && D6_STATE_RUNNING(ifp)) {
+	if (protocol == PROTO_DHCP6 && D6_STATE_RUNNING(ifp)) {
 		n = dhcp6_env(NULL, NULL, ifp,
 		    d6_state->new, d6_state->new_len);
 		if (n > 0) {
@@ -533,7 +550,7 @@ dumplease:
 			elen += (size_t)n;
 		}
 	}
-	if (ra) {
+	if (protocol == PROTO_RA) {
 		n = ipv6nd_env(NULL, NULL, ifp);
 		if (n > 0) {
 			nenv = realloc(env, sizeof(char *) *
