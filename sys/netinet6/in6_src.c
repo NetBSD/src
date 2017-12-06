@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_src.c,v 1.83 2017/11/24 14:03:25 roy Exp $	*/
+/*	$NetBSD: in6_src.c,v 1.84 2017/12/06 14:17:42 roy Exp $	*/
 /*	$KAME: in6_src.c,v 1.159 2005/10/19 01:40:32 t-momose Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.83 2017/11/24 14:03:25 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.84 2017/12/06 14:17:42 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -134,6 +134,9 @@ static int walk_addrsel_policy(int (*)(struct in6_addrpolicy *, void *),
 				    void *);
 static int dump_addrsel_policyent(struct in6_addrpolicy *, void *);
 static struct in6_addrpolicy *match_addrsel_policy(struct sockaddr_in6 *);
+
+#define	IFA6_IS_VALIDATED(ia) \
+	(((ia)->ia6_flags & (IN6_IFF_TENTATIVE | IN6_IFF_DETACHED)) == 0)
 
 /*
  * Return an IPv6 address, which is the most appropriate for a given
@@ -219,12 +222,6 @@ in6_select_best_ia(struct sockaddr_in6 *dstsock, struct in6_addr *dst,
 		/* avoid unusable addresses */
 		if ((ia->ia6_flags & (IN6_IFF_DUPLICATED | IN6_IFF_ANYCAST)))
 			continue;
-		/* Prefer validated addresses */
-		if (!(ia->ia6_flags & (IN6_IFF_TENTATIVE | IN6_IFF_DETACHED)) &&
-		    ia_best != NULL &&
-		    ia_best->ia6_flags & (IN6_IFF_TENTATIVE | IN6_IFF_DETACHED))
-			REPLACE(0);
-
 		if (!ip6_use_deprecated && IFA6_IS_DEPRECATED(ia))
 			continue;
 
@@ -261,7 +258,12 @@ in6_select_best_ia(struct sockaddr_in6 *dstsock, struct in6_addr *dst,
 		/*
 		 * Rule 3: Avoid deprecated addresses.  Note that the case of
 		 * !ip6_use_deprecated is already rejected above.
+		 * Treat unvalidated addresses as deprecated here.
 		 */
+		if (IFA6_IS_VALIDATED(ia_best) && !IFA6_IS_VALIDATED(ia))
+			NEXT(3);
+		if (!IFA6_IS_VALIDATED(ia_best) && IFA6_IS_VALIDATED(ia))
+			REPLACE(3);
 		if (!IFA6_IS_DEPRECATED(ia_best) && IFA6_IS_DEPRECATED(ia))
 			NEXT(3);
 		if (IFA6_IS_DEPRECATED(ia_best) && !IFA6_IS_DEPRECATED(ia))
