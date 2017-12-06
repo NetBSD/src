@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.403 2017/12/06 08:12:54 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.404 2017/12/06 08:23:17 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.403 2017/12/06 08:12:54 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.404 2017/12/06 08:23:17 knakahara Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -2762,6 +2762,43 @@ if_held(struct ifnet *ifp)
 	return psref_held(&ifp->if_psref, ifnet_psref_class);
 }
 
+/*
+ * Some tunnel interfaces can nest, e.g. IPv4 over IPv4 gif(4) tunnel over IPv4.
+ * Check the tunnel nesting count.
+ * Return > 0, if tunnel nesting count is more than limit.
+ * Return 0, if tunnel nesting count is equal or less than limit.
+ */
+int
+if_tunnel_check_nesting(struct ifnet *ifp, struct mbuf *m, int limit)
+{
+	struct m_tag *mtag;
+	int *count;
+
+	mtag = m_tag_find(m, PACKET_TAG_TUNNEL_INFO, NULL);
+	if (mtag != NULL) {
+		count = (int *)(mtag + 1);
+		if (++(*count) > limit) {
+			log(LOG_NOTICE,
+			    "%s: recursively called too many times(%d)\n",
+			    ifp->if_xname, *count);
+			return EIO;
+		}
+	} else {
+		mtag = m_tag_get(PACKET_TAG_TUNNEL_INFO, sizeof(*count),
+		    M_NOWAIT);
+		if (mtag != NULL) {
+			m_tag_prepend(m, mtag);
+			count = (int *)(mtag + 1);
+			*count = 0;
+		} else {
+			log(LOG_DEBUG,
+			    "%s: m_tag_get() failed, recursion calls are not prevented.\n",
+			    ifp->if_xname);
+		}
+	}
+
+	return 0;
+}
 
 /* common */
 int
