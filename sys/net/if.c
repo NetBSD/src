@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.402 2017/12/06 05:59:59 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.403 2017/12/06 08:12:54 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.402 2017/12/06 05:59:59 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.403 2017/12/06 08:12:54 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -209,6 +209,9 @@ static int if_transmit(struct ifnet *, struct mbuf *);
 static int if_clone_create(const char *);
 static int if_clone_destroy(const char *);
 static void if_link_state_change_si(void *);
+static void if_up_locked(struct ifnet *);
+static void _if_down(struct ifnet *);
+static void if_down_deactivated(struct ifnet *);
 
 struct if_percpuq {
 	struct ifnet	*ipq_ifp;
@@ -1333,7 +1336,7 @@ if_detach(struct ifnet *ifp)
 	/*
 	 * Do an if_down() to give protocols a chance to do something.
 	 */
-	if_down(ifp);
+	if_down_deactivated(ifp);
 
 #ifdef ALTQ
 	if (ALTQ_IS_ENABLED(&ifp->if_snd))
@@ -2400,13 +2403,8 @@ p2p_rtrequest(int req, struct rtentry *rt,
 	pserialize_read_exit(s);
 }
 
-/*
- * Mark an interface down and notify protocols of
- * the transition.
- * NOTE: must be called at splsoftnet or equivalent.
- */
-void
-if_down(struct ifnet *ifp)
+static void
+_if_down(struct ifnet *ifp)
 {
 	struct ifaddr *ifa;
 	struct domain *dp;
@@ -2442,19 +2440,50 @@ if_down(struct ifnet *ifp)
 	}
 }
 
+static void
+if_down_deactivated(struct ifnet *ifp)
+{
+
+	KASSERT(if_is_deactivated(ifp));
+	_if_down(ifp);
+}
+
+void
+if_down_locked(struct ifnet *ifp)
+{
+
+	KASSERT(mutex_owned(ifp->if_ioctl_lock));
+	_if_down(ifp);
+}
+
 /*
- * Mark an interface up and notify protocols of
+ * Mark an interface down and notify protocols of
  * the transition.
  * NOTE: must be called at splsoftnet or equivalent.
  */
 void
-if_up(struct ifnet *ifp)
+if_down(struct ifnet *ifp)
+{
+
+	mutex_enter(ifp->if_ioctl_lock);
+	if_down_locked(ifp);
+	mutex_exit(ifp->if_ioctl_lock);
+}
+
+/*
+ * Must be called with holding if_ioctl_lock.
+ */
+static void
+if_up_locked(struct ifnet *ifp)
 {
 #ifdef notyet
 	struct ifaddr *ifa;
 #endif
 	struct domain *dp;
 
+	KASSERT(mutex_owned(ifp->if_ioctl_lock));
+
+	KASSERT(!if_is_deactivated(ifp));
 	ifp->if_flags |= IFF_UP;
 	nanotime(&ifp->if_lastchange);
 #ifdef notyet
@@ -2497,6 +2526,20 @@ if_slowtimo(void *arg)
 
 	if (__predict_true(ifp->if_slowtimo != NULL))
 		callout_schedule(ifp->if_slowtimo_ch, hz / IFNET_SLOWHZ);
+}
+
+/*
+ * Mark an interface up and notify protocols of
+ * the transition.
+ * NOTE: must be called at splsoftnet or equivalent.
+ */
+void
+if_up(struct ifnet *ifp)
+{
+
+	mutex_enter(ifp->if_ioctl_lock);
+	if_up_locked(ifp);
+	mutex_exit(ifp->if_ioctl_lock);
 }
 
 /*
@@ -2789,12 +2832,12 @@ ifioctl_common(struct ifnet *ifp, u_long cmd, void *data)
 		KERNEL_LOCK_IF_IFP_MPSAFE(ifp);
 		if (ifp->if_flags & IFF_UP && (ifr->ifr_flags & IFF_UP) == 0) {
 			s = splsoftnet();
-			if_down(ifp);
+			if_down_locked(ifp);
 			splx(s);
 		}
 		if (ifr->ifr_flags & IFF_UP && (ifp->if_flags & IFF_UP) == 0) {
 			s = splsoftnet();
-			if_up(ifp);
+			if_up_locked(ifp);
 			splx(s);
 		}
 		KERNEL_UNLOCK_IF_IFP_MPSAFE(ifp);
@@ -3103,7 +3146,7 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 	if (((oif_flags ^ ifp->if_flags) & IFF_UP) != 0) {
 		if ((ifp->if_flags & IFF_UP) != 0) {
 			int s = splsoftnet();
-			if_up(ifp);
+			if_up_locked(ifp);
 			splx(s);
 		}
 	}
