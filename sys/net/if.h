@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.245 2017/12/06 05:11:10 ozaki-r Exp $	*/
+/*	$NetBSD: if.h,v 1.246 2017/12/06 05:59:59 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -1015,6 +1015,7 @@ int	ifaddrpref_ioctl(struct socket *, u_long, void *, struct ifnet *);
 extern int (*ifioctl)(struct socket *, u_long, void *, struct lwp *);
 int	ifioctl_common(struct ifnet *, u_long, void *);
 int	ifpromisc(struct ifnet *, int);
+int	ifpromisc_locked(struct ifnet *, int);
 int	if_addr_init(ifnet_t *, struct ifaddr *, bool);
 int	if_do_dad(struct ifnet *);
 int	if_mcast_op(ifnet_t *, const unsigned long, const struct sockaddr *);
