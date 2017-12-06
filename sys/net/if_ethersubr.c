@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.247 2017/11/22 04:27:57 msaitoh Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.248 2017/12/06 04:00:07 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.247 2017/11/22 04:27:57 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.248 2017/12/06 04:00:07 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1005,7 +1005,7 @@ ether_ifdetach(struct ifnet *ifp)
 	ETHER_LOCK(ec);
 	while ((enm = LIST_FIRST(&ec->ec_multiaddrs)) != NULL) {
 		LIST_REMOVE(enm, enm_list);
-		kmem_intr_free(enm, sizeof(*enm));
+		kmem_free(enm, sizeof(*enm));
 		ec->ec_multicnt--;
 	}
 	ETHER_UNLOCK(ec);
@@ -1223,8 +1223,7 @@ ether_addmulti(const struct sockaddr *sa, struct ethercom *ec)
 	int error = 0;
 
 	/* Allocate out of lock */
-	/* XXX still can be called in softint */
-	enm = kmem_intr_alloc(sizeof(*enm), KM_SLEEP);
+	enm = kmem_alloc(sizeof(*enm), KM_SLEEP);
 	if (enm == NULL)
 		return ENOBUFS;
 
@@ -1269,7 +1268,7 @@ ether_addmulti(const struct sockaddr *sa, struct ethercom *ec)
 out:
 	ETHER_UNLOCK(ec);
 	if (enm != NULL)
-		kmem_intr_free(enm, sizeof(*enm));
+		kmem_free(enm, sizeof(*enm));
 	return error;
 }
 
@@ -1311,7 +1310,7 @@ ether_delmulti(const struct sockaddr *sa, struct ethercom *ec)
 	ec->ec_multicnt--;
 	ETHER_UNLOCK(ec);
 
-	kmem_intr_free(enm, sizeof(*enm));
+	kmem_free(enm, sizeof(*enm));
 	/*
 	 * Return ENETRESET to inform the driver that the list has changed
 	 * and its reception filter should be adjusted accordingly.
