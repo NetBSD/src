@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.401 2017/12/06 05:11:10 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.402 2017/12/06 05:59:59 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.401 2017/12/06 05:11:10 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.402 2017/12/06 05:59:59 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -2506,12 +2506,12 @@ if_slowtimo(void *arg)
  * Results are undefined if the "off" and "on" requests are not matched.
  */
 int
-ifpromisc(struct ifnet *ifp, int pswitch)
+ifpromisc_locked(struct ifnet *ifp, int pswitch)
 {
 	int pcount, ret = 0;
 	short nflags;
 
-	mutex_enter(ifp->if_ioctl_lock);
+	KASSERT(mutex_owned(ifp->if_ioctl_lock));
 
 	pcount = ifp->if_pcount;
 	if (pswitch) {
@@ -2534,8 +2534,19 @@ ifpromisc(struct ifnet *ifp, int pswitch)
 		ifp->if_pcount = pcount;
 	}
 out:
-	mutex_exit(ifp->if_ioctl_lock);
 	return ret;
+}
+
+int
+ifpromisc(struct ifnet *ifp, int pswitch)
+{
+	int e;
+
+	mutex_enter(ifp->if_ioctl_lock);
+	e = ifpromisc_locked(ifp, pswitch);
+	mutex_exit(ifp->if_ioctl_lock);
+
+	return e;
 }
 
 /*
