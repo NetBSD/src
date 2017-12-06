@@ -194,7 +194,8 @@ eexit:
 /* BPF requires that we read the entire buffer.
  * So we pass the buffer in the API so we can loop on >1 packet. */
 ssize_t
-bpf_read(struct interface *ifp, int fd, void *data, size_t len, int *flags)
+bpf_read(struct interface *ifp, int fd, void *data, size_t len,
+    unsigned int *flags)
 {
 	ssize_t fl = (ssize_t)bpf_frame_header_len(ifp);
 	ssize_t bytes;
@@ -203,7 +204,7 @@ bpf_read(struct interface *ifp, int fd, void *data, size_t len, int *flags)
 	struct bpf_hdr packet;
 	const char *payload;
 
-	*flags = 0;
+	*flags &= ~BPF_EOF;
 	for (;;) {
 		if (state->buffer_len == 0) {
 			bytes = read(fd, state->buffer, state->buffer_size);
