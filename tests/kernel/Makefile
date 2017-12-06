@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.46 2017/04/03 05:06:28 kamil Exp $
+# $NetBSD: Makefile,v 1.47 2017/12/06 13:54:26 christos Exp $
 
 NOMAN=		# defined
 
@@ -19,6 +19,7 @@ TESTS_C+=	t_sysctl
 TESTS_SH=	t_umount
 TESTS_SH+=	t_umountstress
 TESTS_SH+=	t_ps_strings
+TESTS_SH+=	t_interp
 
 BINDIR=		${TESTSDIR}
 PROGS=		h_ps_strings1
