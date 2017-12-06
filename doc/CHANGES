@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2336 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2337 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -89,3 +89,4 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	qemufwcfg(4): Add driver for QEMU Firmware Configuration device.
 		[jmcneill 20171125]
 	gdb(1): Updated to 8.0.1.  [christos 20171128]
+	dhcpcd(8): Import dhcpcd-7.0.0-rc4. [roy 20171206]
