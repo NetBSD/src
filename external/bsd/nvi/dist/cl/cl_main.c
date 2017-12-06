@@ -1,4 +1,4 @@
-/*	$NetBSD: cl_main.c,v 1.8 2017/11/06 03:27:34 rin Exp $ */
+/*	$NetBSD: cl_main.c,v 1.9 2017/12/06 17:16:14 jmcneill Exp $ */
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -16,7 +16,7 @@
 static const char sccsid[] = "Id: cl_main.c,v 10.54 2001/07/29 19:07:27 skimo Exp  (Berkeley) Date: 2001/07/29 19:07:27 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: cl_main.c,v 1.8 2017/11/06 03:27:34 rin Exp $");
+__RCSID("$NetBSD: cl_main.c,v 1.9 2017/12/06 17:16:14 jmcneill Exp $");
 #endif
 
 #include <sys/types.h>
@@ -314,8 +314,12 @@ h_winch(int signo)
 	F_SET(clp, CL_SIGWINCH);
 
 	/* If there was a previous handler, call that. */
-	if (clp->oact[INDX_WINCH].sa_handler)
+	if (clp->oact[INDX_WINCH].sa_handler != SIG_DFL &&
+	    clp->oact[INDX_WINCH].sa_handler != SIG_IGN &&
+	    clp->oact[INDX_WINCH].sa_handler != SIG_ERR &&
+	    clp->oact[INDX_WINCH].sa_handler != SIG_HOLD) {
 		clp->oact[INDX_WINCH].sa_handler(signo);
+	}
 }
 #undef	GLOBAL_CLP
 
