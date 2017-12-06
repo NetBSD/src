@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.116 2017/12/06 07:40:16 ozaki-r Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.117 2017/12/06 08:12:54 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.116 2017/12/06 07:40:16 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.117 2017/12/06 08:12:54 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -653,7 +653,7 @@ vlan_unconfig_locked(struct ifvlan *ifv, struct ifvlan_linkmib *nmib)
 
 	if ((ifp->if_flags & IFF_PROMISC) != 0)
 		vlan_safe_ifpromisc_locked(ifp, 0);
-	if_down(ifp);
+	if_down_locked(ifp);
 	ifp->if_capabilities = 0;
 	mutex_enter(&ifv->ifv_lock);
 done:
