@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_ioctl.c,v 1.28 2017/12/03 19:07:10 christos Exp $	*/
+/*	$NetBSD: iscsi_ioctl.c,v 1.29 2017/12/06 04:29:58 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -443,7 +443,7 @@ ref_session(session_t *sess)
 	int rc = 1;
 
 	mutex_enter(&iscsi_cleanup_mtx);
-	KASSERT(session != NULL);
+	KASSERT(sess != NULL);
 	if (sess->s_refcount <= CCBS_PER_SESSION) {
 		sess->s_refcount++;
 		rc = 0;
