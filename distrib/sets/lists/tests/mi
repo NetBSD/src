@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.767 2017/11/19 21:05:26 martin Exp $
+# $NetBSD: mi,v 1.768 2017/12/06 13:55:31 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2156,6 +2156,7 @@
 ./usr/tests/kernel/t_extattrctl			tests-kernel-tests	atf,rump
 ./usr/tests/kernel/t_extent			tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_filedesc			tests-kernel-tests	atf,rump
+./usr/tests/kernel/t_interp			tests-kernel-tests	atf
 ./usr/tests/kernel/t_kauth_pr_47598		tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_lock			tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_lockf			tests-kernel-tests	compattestfile,atf
