@@ -1,4 +1,4 @@
-/*	$NetBSD: fmtcheck.c,v 1.14 2017/12/06 12:32:02 rin Exp $	*/
+/*	$NetBSD: fmtcheck.c,v 1.15 2017/12/06 14:05:14 rin Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fmtcheck.c,v 1.14 2017/12/06 12:32:02 rin Exp $");
+__RCSID("$NetBSD: fmtcheck.c,v 1.15 2017/12/06 14:05:14 rin Exp $");
 #endif
 
 #include "namespace.h"
@@ -149,11 +149,13 @@ get_next_format_from_precision(const char **pf)
 			f += 2;
 			modifier = MOD_QUAD;
 		}
-#ifdef _WIN64
 		else {
+#ifdef _WIN64
 			modifier = MOD_QUAD;
-		}
+#else
+			modifier = MOD_NONE;
 #endif
+		}
 		break;
 #endif
 	default:
