@@ -1,4 +1,4 @@
-/*	$NetBSD: if_l2tp.c,v 1.15 2017/11/16 03:07:18 ozaki-r Exp $	*/
+/*	$NetBSD: if_l2tp.c,v 1.16 2017/12/06 08:23:17 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.15 2017/11/16 03:07:18 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.16 2017/12/06 08:23:17 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1336,44 +1336,11 @@ l2tp_encap_detach(struct l2tp_variant *var)
 	return error;
 }
 
-/*
- * TODO:
- * unify with gif_check_nesting().
- */
 int
 l2tp_check_nesting(struct ifnet *ifp, struct mbuf *m)
 {
-	struct m_tag *mtag;
-	int *count;
 
-	mtag = m_tag_find(m, PACKET_TAG_TUNNEL_INFO, NULL);
-	if (mtag != NULL) {
-		count = (int *)(mtag + 1);
-		if (++(*count) > max_l2tp_nesting) {
-			log(LOG_NOTICE,
-			    "%s: recursively called too many times(%d)\n",
-			    if_name(ifp),
-			    *count);
-			return EIO;
-		}
-	} else {
-		mtag = m_tag_get(PACKET_TAG_TUNNEL_INFO, sizeof(*count),
-		    M_NOWAIT);
-		if (mtag != NULL) {
-			m_tag_prepend(m, mtag);
-			count = (int *)(mtag + 1);
-			*count = 0;
-		}
-#ifdef L2TP_DEBUG
-		else {
-			log(LOG_DEBUG,
-			    "%s: m_tag_get() failed, recursion calls are not prevented.\n",
-			    if_name(ifp));
-		}
-#endif
-	}
-
-	return 0;
+	return if_tunnel_check_nesting(ifp, m, max_l2tp_nesting);
 }
 
 /*
