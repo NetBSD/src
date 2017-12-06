@@ -1,6 +1,7 @@
-/* $NetBSD: ixgbe_type.h,v 1.29 2017/10/04 08:47:26 msaitoh Exp $ */
+/* $NetBSD: ixgbe_type.h,v 1.30 2017/12/06 04:08:50 msaitoh Exp $ */
 
 /******************************************************************************
+  SPDX-License-Identifier: BSD-3-Clause
 
   Copyright (c) 2001-2017, Intel Corporation
   All rights reserved.
