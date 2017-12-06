@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agr.c,v 1.41 2017/01/28 22:56:09 maya Exp $	*/
+/*	$NetBSD: if_agr.c,v 1.42 2017/12/06 04:37:00 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.41 2017/01/28 22:56:09 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.42 2017/12/06 04:37:00 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -254,62 +254,6 @@ agrport_ioctl(struct agr_port *port, u_long cmd, void *arg)
 /*
  * INTERNAL FUNCTIONS
  */
-
-/*
- * Enable vlan hardware assist for the specified port.
- */
-static int
-agr_vlan_add(struct agr_port *port, void *arg)
-{
-	struct ifnet *ifp = port->port_ifp;
-	struct ethercom *ec_port = (void *)ifp;
-	int error=0;
-
-	if (ec_port->ec_nvlans++ == 0 &&
-	    (ec_port->ec_capabilities & ETHERCAP_VLAN_MTU) != 0) {
-		struct ifnet *p = port->port_ifp;
-		/*
-		 * Enable Tx/Rx of VLAN-sized frames.
-		 */
-		ec_port->ec_capenable |= ETHERCAP_VLAN_MTU;
-		if (p->if_flags & IFF_UP) {
-			error = if_flags_set(p, p->if_flags);
-			if (error) {
-				if (ec_port->ec_nvlans-- == 1)
-					ec_port->ec_capenable &=
-					    ~ETHERCAP_VLAN_MTU;
-				return (error);
-			}
-		}
-	}
-
-	return error;
-}
-
-/*
- * Disable vlan hardware assist for the specified port.
- */
-static int
-agr_vlan_del(struct agr_port *port, void *arg)
-{
-	struct ethercom *ec_port = (void *)port->port_ifp;
-
-	/* Disable vlan support */
-	if (ec_port->ec_nvlans-- == 1) {
-		/*
-		 * Disable Tx/Rx of VLAN-sized frames.
-		 */
-		ec_port->ec_capenable &= ~ETHERCAP_VLAN_MTU;
-		if (port->port_ifp->if_flags & IFF_UP) {
-			(void)if_flags_set(port->port_ifp,
-			    port->port_ifp->if_flags);
-		}
-	}
-
-	return 0;
-}
-
-
 /*
  * Check for vlan attach/detach.
  * ec->ec_nvlans is directly modified by the vlan driver.
@@ -332,8 +276,9 @@ agr_vlan_check(struct ifnet *ifp, struct agr_softc *sc)
 		agr_port_foreach(sc, agr_vlan_add, NULL);
 		sc->sc_nvlans = ec->ec_nvlans;
 	} else if (ec->ec_nvlans == 0) {
+		bool force_zero = false;
 		/* vlan removed */
-		agr_port_foreach(sc, agr_vlan_del, NULL);
+		agr_port_foreach(sc, agr_vlan_del, &force_zero);
 		sc->sc_nvlans = 0;
 	}
 }

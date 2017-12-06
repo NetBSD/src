@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agrsubr.h,v 1.4 2007/02/21 23:00:07 thorpej Exp $	*/
+/*	$NetBSD: if_agrsubr.h,v 1.5 2017/12/06 04:37:00 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -50,5 +50,8 @@ int agr_configmulti_ifreq(struct agr_softc *, struct agr_multiaddrs *,
     struct ifreq *, bool);
 
 int agr_port_getmedia(struct agr_port *, u_int *, u_int *);
+
+int agr_vlan_add(struct agr_port *, void *);
+int agr_vlan_del(struct agr_port *, void *);
 
 #endif /* !_NET_AGR_IF_AGRSUBR_H_ */
