@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agrsubr.c,v 1.10 2015/08/24 22:21:26 pooka Exp $	*/
+/*	$NetBSD: if_agrsubr.c,v 1.11 2017/12/06 04:37:00 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agrsubr.c,v 1.10 2015/08/24 22:21:26 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agrsubr.c,v 1.11 2017/12/06 04:37:00 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_agrsubr.c,v 1.10 2015/08/24 22:21:26 pooka Exp $"
 #include <sys/sockio.h>
 
 #include <net/if.h>
+#include <net/if_ether.h>
 
 #include <net/agr/if_agrvar_impl.h>
 #include <net/agr/if_agrsubr.h>
@@ -271,4 +272,66 @@ agr_port_getmedia(struct agr_port *port, u_int *media, u_int *status)
 	}
 
 	return error;
+}
+
+/* ==================== */
+
+/*
+ * Enable vlan hardware assist for the specified port.
+ */
+int
+agr_vlan_add(struct agr_port *port, void *arg)
+{
+	struct ifnet *ifp = port->port_ifp;
+	struct ethercom *ec_port = (void *)ifp;
+	int error=0;
+
+	if (ec_port->ec_nvlans++ == 0 &&
+	    (ec_port->ec_capabilities & ETHERCAP_VLAN_MTU) != 0) {
+		struct ifnet *p = port->port_ifp;
+		/*
+		 * Enable Tx/Rx of VLAN-sized frames.
+		 */
+		ec_port->ec_capenable |= ETHERCAP_VLAN_MTU;
+		if (p->if_flags & IFF_UP) {
+			error = if_flags_set(p, p->if_flags);
+			if (error) {
+				if (ec_port->ec_nvlans-- == 1)
+					ec_port->ec_capenable &=
+					    ~ETHERCAP_VLAN_MTU;
+				return (error);
+			}
+		}
+	}
+
+	return error;
+}
+
+/*
+ * Disable vlan hardware assist for the specified port.
+ */
+int
+agr_vlan_del(struct agr_port *port, void *arg)
+{
+	struct ethercom *ec_port = (void *)port->port_ifp;
+	bool *force_zero = (bool *)arg;
+
+	KASSERT(force_zero != NULL);
+
+	/* Disable vlan support */
+	if ((*force_zero && ec_port->ec_nvlans > 0) ||
+	    ec_port->ec_nvlans-- == 1) {
+		if (*force_zero)
+			ec_port->ec_nvlans = 0;
+		/*
+		 * Disable Tx/Rx of VLAN-sized frames.
+		 */
+		ec_port->ec_capenable &= ~ETHERCAP_VLAN_MTU;
+		if (port->port_ifp->if_flags & IFF_UP) {
+			(void)if_flags_set(port->port_ifp,
+			    port->port_ifp->if_flags);
+		}
+	}
+
+	return 0;
 }
