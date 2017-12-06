@@ -461,9 +461,6 @@ if_route(unsigned char cmd, const struct rt *rt)
 	char *bp = rtmsg.buffer;
 	struct sockaddr_dl sdl;
 	bool gateway_unspec;
-#ifdef RTA_LABEL
-	struct sockaddr_rtlabel label;
-#endif
 
 	assert(rt != NULL);
 	ctx = rt->rt_ifp->ctx;
@@ -584,23 +581,6 @@ if_route(unsigned char cmd, const struct rt *rt)
 
 	if (rtm->rtm_addrs & RTA_IFA)
 		ADDSA(&rt->rt_ifa);
-
-#ifdef RTA_LABEL
-	if (rtm->rtm_addrs & RTA_LABEL) {
-		int len;
-
-		memset(&label, 0, sizeof(label));
-		label.sr_family = AF_UNSPEC;
-		label.sr_len = sizeof(label);
-		len = snprintf(label.sr_label, sizeof(label.sr_label),
-		    PACKAGE " %d", getpid());
-		/* Don't add the label if we failed to create it. */
-		if (len == -1 || (size_t)len > sizeof(label.sr_label))
-			rtm->rtm_addrs &= ~RTA_LABEL;
-		else
-			ADDSA((struct sockaddr *)&label);
-	}
-#endif
 
 #undef ADDSA
 
@@ -1184,6 +1164,12 @@ if_ifa(struct dhcpcd_ctx *ctx, const struct ifa_msghdr *ifam)
 		}
 #endif
 
+#ifdef __KAME__
+		if (IN6_IS_ADDR_LINKLOCAL(&addr6))
+			/* Remove the scope from the address */
+			addr6.s6_addr[2] = addr6.s6_addr[3] = '\0';
+#endif
+
 		ipv6_handleifa(ctx, ifam->ifam_type, NULL,
 		    ifp->name, &addr6, ipv6_prefixlen(&mask6), addrflags);
 		break;
@@ -1345,18 +1331,6 @@ ip6_temp_valid_lifetime(__unused const char *ifname)
 	return val < 0 ? TEMP_VALID_LIFETIME : val;
 }
 #endif
-
-static int
-if_raflush(int s)
-{
-	char dummy[IFNAMSIZ + 8];
-
-	strlcpy(dummy, "lo0", sizeof(dummy));
-	if (ioctl(s, SIOCSRTRFLUSH_IN6, (void *)&dummy) == -1 ||
-	    ioctl(s, SIOCSPFXFLUSH_IN6, (void *)&dummy) == -1)
-		return -1;
-	return 0;
-}
 
 #ifdef SIOCIFAFATTACH
 static int
@@ -1533,11 +1507,18 @@ if_checkipv6(struct dhcpcd_ctx *ctx, const struct interface *ifp)
 	ra = 0;
 	if (!(ctx->options & DHCPCD_TEST)) {
 #endif
+#if defined(IPV6CTL_ACCEPT_RTADV) || defined(ND6_IFF_ACCEPT_RTADV)
 		/* Flush the kernel knowledge of advertised routers
 		 * and prefixes so the kernel does not expire prefixes
 		 * and default routes we are trying to own. */
-		if (if_raflush(s) == -1)
-			logwarn("if_raflush");
+		char dummy[IFNAMSIZ + 8];
+
+		strlcpy(dummy, "lo0", sizeof(dummy));
+		if (ioctl(s, SIOCSRTRFLUSH_IN6, (void *)&dummy) == -1)
+			logwarn("SIOCSRTRFLUSH_IN6");
+		if (ioctl(s, SIOCSPFXFLUSH_IN6, (void *)&dummy) == -1)
+			logwarn("SIOCSPFXFLUSH_IN6");
+#endif
 	}
 
 	ctx->ra_global = ra;
