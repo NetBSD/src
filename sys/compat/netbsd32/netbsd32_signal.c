@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_signal.c,v 1.43 2016/09/18 05:16:21 christos Exp $	*/
+/*	$NetBSD: netbsd32_signal.c,v 1.44 2017/12/06 19:15:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.43 2016/09/18 05:16:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.44 2017/12/06 19:15:27 christos Exp $");
 
 #if defined(_KERNEL_OPT) 
 #include "opt_ktrace.h"
@@ -226,6 +226,7 @@ netbsd32_ksi32_to_ksi(struct _ksiginfo *si, const struct __ksiginfo32 *si32)
 	}
 }
 
+#ifdef notyet
 #ifdef KTRACE
 static void
 netbsd32_ksi_to_ksi32(struct __ksiginfo32 *si32, const struct _ksiginfo *si)
@@ -267,6 +268,7 @@ netbsd32_ksi_to_ksi32(struct __ksiginfo32 *si32, const struct _ksiginfo *si)
 		break;
 	}
 }
+#endif
 #endif
 
 void
@@ -513,6 +515,7 @@ struct netbsd32_ktr_psig {
 	/* and optional siginfo_t */
 };
 
+#ifdef notyet
 #ifdef KTRACE
 void
 netbsd32_ktrpsig(int sig, sig_t action, const sigset_t *mask,
@@ -548,5 +551,4 @@ netbsd32_ktrpsig(int sig, sig_t action, const sigset_t *mask,
 	ktraddentry(l, kte, KTA_WAITOK);
 }
 #endif
-
-
+#endif
