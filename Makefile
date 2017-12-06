@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.320 2017/12/06 19:27:56 uwe Exp $
+#	$NetBSD: Makefile,v 1.321 2017/12/06 19:34:00 uwe Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -235,10 +235,10 @@ BUILDTARGETS+=	includes
 .endif
 BUILDTARGETS+=	do-lib
 BUILDTARGETS+=	do-compat-lib
-.if !defined(NOBINARIES)
 .if ${MKX11} != "no"
 BUILDTARGETS+=	do-x11
 .endif
+.if !defined(NOBINARIES)
 BUILDTARGETS+=	do-build
 .if ${MKEXTSRC} != "no"
 BUILDTARGETS+=	do-extsrc
