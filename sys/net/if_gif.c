@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.134 2017/11/27 05:05:50 knakahara Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.135 2017/12/06 08:23:17 knakahara Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.134 2017/11/27 05:05:50 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.135 2017/12/06 08:23:17 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -445,34 +445,8 @@ out:
 static int
 gif_check_nesting(struct ifnet *ifp, struct mbuf *m)
 {
-	struct m_tag *mtag;
-	int *count;
 
-	mtag = m_tag_find(m, PACKET_TAG_TUNNEL_INFO, NULL);
-	if (mtag != NULL) {
-		count = (int *)(mtag + 1);
-		if (++(*count) > max_gif_nesting) {
-			log(LOG_NOTICE,
-			    "%s: recursively called too many times(%d)\n",
-			    if_name(ifp),
-			    *count);
-			return EIO;
-		}
-	} else {
-		mtag = m_tag_get(PACKET_TAG_TUNNEL_INFO, sizeof(*count),
-		    M_NOWAIT);
-		if (mtag != NULL) {
-			m_tag_prepend(m, mtag);
-			count = (int *)(mtag + 1);
-			*count = 0;
-		} else {
-			log(LOG_DEBUG,
-			    "%s: m_tag_get() failed, recursion calls are not prevented.\n",
-			    if_name(ifp));
-		}
-	}
-
-	return 0;
+	return if_tunnel_check_nesting(ifp, m, max_gif_nesting);
 }
 
 static int
