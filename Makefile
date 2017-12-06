@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.319 2017/10/04 23:54:33 christos Exp $
+#	$NetBSD: Makefile,v 1.320 2017/12/06 19:27:56 uwe Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -97,9 +97,9 @@
 #                    if ${MKCOMPAT} != "no".
 #   do-compat-lib:   builds and installs prerequisites from compat/lib
 #                    if ${MKCOMPAT} != "no".
+#   do-x11:          builds and installs X11 tools and libraries
+#                    from src/external/mit/xorg if ${MKX11} != "no".
 #   do-build:        builds and installs the entire system.
-#   do-x11:          builds and installs X11 if ${MKX11} != "no"; either
-#                    X11R7 from src/external/mit/xorg 
 #   do-extsrc:       builds and installs extsrc if ${MKEXTSRC} != "no".
 #   do-obsolete:     installs the obsolete sets (for the postinstall-* targets).
 #
