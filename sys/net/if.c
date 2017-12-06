@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.400 2017/11/22 10:19:14 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.401 2017/12/06 05:11:10 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.400 2017/11/22 10:19:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.401 2017/12/06 05:11:10 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1322,9 +1322,6 @@ if_detach(struct ifnet *ifp)
 	psref_target_destroy(&ifp->if_psref, ifnet_psref_class);
 	PSLIST_ENTRY_DESTROY(ifp, if_pslist_entry);
 
-	mutex_obj_free(ifp->if_ioctl_lock);
-	ifp->if_ioctl_lock = NULL;
-
 	if (ifp->if_slowtimo != NULL && ifp->if_slowtimo_ch != NULL) {
 		ifp->if_slowtimo = NULL;
 		callout_halt(ifp->if_slowtimo_ch, NULL);
@@ -1352,6 +1349,10 @@ if_detach(struct ifnet *ifp)
 	if (ifp->if_carp != NULL && ifp->if_type != IFT_CARP)
 		carp_ifdetach(ifp);
 #endif
+
+	/* carp_ifdetach still uses the lock */
+	mutex_obj_free(ifp->if_ioctl_lock);
+	ifp->if_ioctl_lock = NULL;
 
 	/*
 	 * Rip all the addresses off the interface.  This should make
@@ -2507,8 +2508,10 @@ if_slowtimo(void *arg)
 int
 ifpromisc(struct ifnet *ifp, int pswitch)
 {
-	int pcount, ret;
+	int pcount, ret = 0;
 	short nflags;
+
+	mutex_enter(ifp->if_ioctl_lock);
 
 	pcount = ifp->if_pcount;
 	if (pswitch) {
@@ -2518,11 +2521,11 @@ ifpromisc(struct ifnet *ifp, int pswitch)
 		 * consult IFF_PROMISC when it is brought up.
 		 */
 		if (ifp->if_pcount++ != 0)
-			return 0;
+			goto out;
 		nflags = ifp->if_flags | IFF_PROMISC;
 	} else {
 		if (--ifp->if_pcount > 0)
-			return 0;
+			goto out;
 		nflags = ifp->if_flags & ~IFF_PROMISC;
 	}
 	ret = if_flags_set(ifp, nflags);
@@ -2530,6 +2533,8 @@ ifpromisc(struct ifnet *ifp, int pswitch)
 	if (ret != 0) {
 		ifp->if_pcount = pcount;
 	}
+out:
+	mutex_exit(ifp->if_ioctl_lock);
 	return ret;
 }
 
@@ -3402,6 +3407,8 @@ if_flags_set(ifnet_t *ifp, const short flags)
 {
 	int rc;
 
+	KASSERT(mutex_owned(ifp->if_ioctl_lock));
+
 	if (ifp->if_setflags != NULL)
 		rc = (*ifp->if_setflags)(ifp, flags);
 	else {
@@ -3448,6 +3455,30 @@ if_mcast_op(ifnet_t *ifp, const unsigned long cmd, const struct sockaddr *sa)
 	}
 
 	return rc;
+}
+
+int
+if_enable_vlan_mtu(struct ifnet *ifp)
+{
+	int error;
+
+	mutex_enter(ifp->if_ioctl_lock);
+	error= ether_enable_vlan_mtu(ifp);
+	mutex_exit(ifp->if_ioctl_lock);
+
+	return error;
+}
+
+int
+if_disable_vlan_mtu(struct ifnet *ifp)
+{
+	int error;
+
+	mutex_enter(ifp->if_ioctl_lock);
+	error= ether_disable_vlan_mtu(ifp);
+	mutex_exit(ifp->if_ioctl_lock);
+
+	return error;
 }
 
 static void

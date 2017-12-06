@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.113 2017/11/27 01:34:06 jmcneill Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.114 2017/12/06 05:11:10 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.113 2017/11/27 01:34:06 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.114 2017/12/06 05:11:10 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -451,7 +451,8 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, uint16_t tag)
 		nmib->ifvm_mintu = ETHERMIN;
 
 		if (ec->ec_nvlans++ == 0) {
-			if ((error = ether_enable_vlan_mtu(p)) >= 0) {
+			error = if_enable_vlan_mtu(p);
+			if (error >= 0) {
 				if (error) {
 					ec->ec_nvlans--;
 					goto done;
@@ -593,7 +594,7 @@ vlan_unconfig_locked(struct ifvlan *ifv, struct ifvlan_linkmib *nmib)
 	    {
 		struct ethercom *ec = (void *)p;
 		if (--ec->ec_nvlans == 0)
-			(void)ether_disable_vlan_mtu(p);
+			(void)if_disable_vlan_mtu(p);
 
 		ether_ifdetach(ifp);
 		/* Restore vlan_ioctl overwritten by ether_ifdetach */

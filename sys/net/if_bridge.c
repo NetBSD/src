@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.141 2017/11/17 07:52:07 ozaki-r Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.142 2017/12/06 05:11:10 ozaki-r Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.141 2017/11/17 07:52:07 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.142 2017/12/06 05:11:10 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -772,7 +772,8 @@ bridge_ioctl_add(struct bridge_softc *sc, void *arg)
 		}
 		/* FALLTHROUGH */
 	case IFT_L2TP:
-		if ((error = ether_enable_vlan_mtu(ifs)) > 0)
+		error = if_enable_vlan_mtu(ifs);
+		if (error > 0)
 			goto out;
 		/*
 		 * Place the interface into promiscuous mode.
@@ -853,7 +854,7 @@ bridge_ioctl_del(struct bridge_softc *sc, void *arg)
 		 * Don't call it with holding a spin lock.
 		 */
 		(void) ifpromisc(ifs, 0);
-		(void) ether_disable_vlan_mtu(ifs);
+		(void) if_disable_vlan_mtu(ifs);
 		break;
 	default:
 #ifdef DIAGNOSTIC
