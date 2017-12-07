@@ -1,4 +1,4 @@
-/* $NetBSD: t_strfmon.c,v 1.1 2017/08/16 13:53:20 joerg Exp $ */
+/* $NetBSD: t_strfmon.c,v 1.2 2017/12/07 22:23:14 kre Exp $ */
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_strfmon.c,v 1.1 2017/08/16 13:53:20 joerg Exp $");
+__RCSID("$NetBSD: t_strfmon.c,v 1.2 2017/12/07 22:23:14 kre Exp $");
 
 #include <atf-c.h>
 #include <locale.h>
@@ -50,9 +50,9 @@ ATF_TC_BODY(strfmon, tc)
 		const char *locale;
 		const char *expected;
 	} tests[] = {
-	    { "C", "[**1234.57] [**1234.57]" },
-	    { "de_DE.UTF-8", "[ **1234,57 €] [ **1.234,57 EUR ]" },
-	    { "en_GB.UTF-8", "[ £**1234.57] [ GBP **1,234.57]" },
+	    { "C", "[ **1234.57] [ **1234.57]" },
+	    { "de_DE.UTF-8", "[ **1234,57 €] [ **1.234,57 EUR]" },
+	    { "en_GB.UTF-8", "[ £**1234.57] [ GBP**1,234.57]" },
 	};
 	locale_t loc;
 	size_t i;
