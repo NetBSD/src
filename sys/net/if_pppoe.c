@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.132 2017/11/17 07:37:12 ozaki-r Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.133 2017/12/07 10:22:04 ozaki-r Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.132 2017/11/17 07:37:12 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.133 2017/12/07 10:22:04 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -135,9 +135,7 @@ struct pppoetag {
 
 #define PPPOE_LOCK(_sc, _op)	rw_enter(&(_sc)->sc_lock, (_op))
 #define PPPOE_UNLOCK(_sc)	rw_exit(&(_sc)->sc_lock)
-#define PPPOE_LOCKED(_sc)	rw_lock_held(&(_sc)->sc_lock)
 #define PPPOE_WLOCKED(_sc)	rw_write_held(&(_sc)->sc_lock)
-#define PPPOE_RLOCKED(_sc)	rw_read_held(&(_sc)->sc_lock)
 
 #ifdef PPPOE_MPSAFE
 #define DECLARE_SPLNET_VARIABLE
@@ -1056,8 +1054,6 @@ pppoe_output(struct pppoe_softc *sc, struct mbuf *m)
 	struct ether_header *eh;
 	uint16_t etype;
 
-	KASSERT(PPPOE_LOCKED(sc));
-
 	if (sc->sc_eth_if == NULL) {
 		m_freem(m);
 		return EIO;
@@ -1260,8 +1256,6 @@ pppoe_send_padi(struct pppoe_softc *sc)
 	struct mbuf *m0;
 	int len, l1 = 0, l2 = 0; /* XXX: gcc */
 	uint8_t *p;
-
-	KASSERT(PPPOE_LOCKED(sc));
 
 	if (sc->sc_state >PPPOE_STATE_PADI_SENT)
 		panic("pppoe_send_padi in state %d", sc->sc_state);
@@ -1537,8 +1531,6 @@ pppoe_send_padr(struct pppoe_softc *sc)
 	uint8_t *p;
 	size_t len, l1 = 0; /* XXX: gcc */
 
-	KASSERT(PPPOE_LOCKED(sc));
-
 	if (sc->sc_state != PPPOE_STATE_PADR_SENT)
 		return EIO;
 
@@ -1632,8 +1624,6 @@ pppoe_send_pado(struct pppoe_softc *sc)
 	uint8_t *p;
 	size_t len;
 
-	KASSERT(PPPOE_LOCKED(sc)); /* required by pppoe_output(). */
-
 	if (sc->sc_state != PPPOE_STATE_PADO_SENT)
 		return EIO;
 
@@ -1707,8 +1697,6 @@ pppoe_tls(struct sppp *sp)
 	struct pppoe_softc *sc = (void *)sp;
 	int wtime;
 
-	KASSERT(!PPPOE_LOCKED(sc));
-
 	PPPOE_LOCK(sc, RW_READER);
 
 	if (sc->sc_state != PPPOE_STATE_INITIAL) {
@@ -1737,8 +1725,6 @@ static void
 pppoe_tlf(struct sppp *sp)
 {
 	struct pppoe_softc *sc = (void *)sp;
-
-	KASSERT(!PPPOE_LOCKED(sc));
 
 	PPPOE_LOCK(sc, RW_WRITER);
 
