@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.768 2017/12/06 13:55:31 christos Exp $
+# $NetBSD: mi,v 1.769 2017/12/07 19:48:12 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2120,6 +2120,7 @@
 ./usr/tests/kernel/arch/x86			tests-obsolete		obsolete
 ./usr/tests/kernel/h_ps_strings1		tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/h_ps_strings2		tests-kernel-tests	compattestfile,atf
+./usr/tests/kernel/h_segv			tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/kqueue			tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/kqueue/Atffile		tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/kqueue/Kyuafile		tests-kernel-tests	compattestfile,atf,kyua
@@ -2178,6 +2179,7 @@
 ./usr/tests/kernel/t_ptrace_waitpid		tests-obsolete		obsolete
 ./usr/tests/kernel/t_pty			tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_rnd			tests-kernel-tests	atf,rump
+./usr/tests/kernel/t_trapsignal			tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_sigaction			tests-obsolete		obsolete
 ./usr/tests/kernel/t_subr_prf			tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_sysctl			tests-kernel-tests	compattestfile,atf
