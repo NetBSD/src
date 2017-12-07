@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.158 2017/08/13 21:00:58 mlelstv Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.159 2017/12/07 21:53:41 chs Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.158 2017/08/13 21:00:58 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.159 2017/12/07 21:53:41 chs Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -203,10 +203,12 @@ ffs_alloc(struct inode *ip, daddr_t lbn, daddr_t bpref, int size,
 	 * be locked by the current thread.
 	 */
 
-	if (ITOV(ip)->v_type == VREG &&
-	    ffs_lblktosize(fs, (voff_t)lbn) < round_page(ITOV(ip)->v_size)) {
+	struct vnode *vp = ITOV(ip);
+	if (vp->v_type == VREG &&
+	    ffs_lblktosize(fs, (voff_t)lbn) < round_page(vp->v_size) &&
+	    ((vp->v_vflag & VV_MAPPED) != 0 || (size & PAGE_MASK) != 0 ||
+	     ffs_blkoff(fs, size) != 0)) {
 		struct vm_page *pg;
-		struct vnode *vp = ITOV(ip);
 		struct uvm_object *uobj = &vp->v_uobj;
 		voff_t off = trunc_page(ffs_lblktosize(fs, lbn));
 		voff_t endoff = round_page(ffs_lblktosize(fs, lbn) + size);
@@ -214,10 +216,8 @@ ffs_alloc(struct inode *ip, daddr_t lbn, daddr_t bpref, int size,
 		mutex_enter(uobj->vmobjlock);
 		while (off < endoff) {
 			pg = uvm_pagelookup(uobj, off);
-			KASSERT((pg == NULL && (vp->v_vflag & VV_MAPPED) == 0 &&
-				 (size & PAGE_MASK) == 0 && 
-				 ffs_blkoff(fs, size) == 0) ||
-				(pg != NULL && pg->owner == curproc->p_pid &&
+			KASSERT((pg != NULL && pg->owner_tag != NULL &&
+				 pg->owner == curproc->p_pid &&
 				 pg->lowner == curlwp->l_lid));
 			off += PAGE_SIZE;
 		}
