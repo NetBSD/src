@@ -1,6 +1,6 @@
-.\"	$NetBSD: libnpf.3,v 1.4 2016/12/27 21:25:12 wiz Exp $
+.\"	$NetBSD: libnpf.3,v 1.5 2017/12/07 00:22:06 rmind Exp $
 .\"
-.\" Copyright (c) 2011-2015 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2011-2017 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This material is based upon work partially supported by The
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 19, 2015
+.Dd December 7, 2017
 .Dt LIBNPF 3
 .Os
 .Sh NAME
@@ -110,23 +110,24 @@ The configuration can be submitted to the kernel.
 .Ss Configuration
 .Bl -tag -width 4n
 .It Fn npf_config_create
-Create a configuration.
+Create a new configuration object.
 .It Fn npf_config_submit "ncf" "fd" "errinfo"
-Submit configuration
-.Fa ncf
+Submit the configuration object, specified by
+.Fa ncf ,
 to the kernel.
-On error, the the description is written into the structure specified by
+On failure, the error information is written into the structure
+specified by
 .Fa errinfo .
 .It Fn npf_config_export "fd" "len"
-Serialize the given configuration and return binary object and its
-length in
+Serialize the current configuration and return the binary object as
+well as its length in
 .Fa len
 parameter.
 The binary object is dynamically allocated and should be destroyed using
 .Xr free 3 .
 .It Fn npf_config_import "blob" "len"
 Read the configuration from a binary object of the specified length,
-unserialize, construct and return the configuration object.
+unserialize, and return the configuration object.
 .It Fn npf_config_flush "fd"
 Flush the current configuration.
 .It Fn npf_config_retrieve "fd" "active" "loaded"
@@ -135,7 +136,7 @@ Retrieve and return the loaded configuration from the kernel.
 Indicate whether the retrieved configuration is active (true if yes
 and false otherwise).
 .It Fn npf_config_destroy "ncf"
-Destroy the configuration
+Destroy the configuration object, specified by
 .Fa ncf .
 .El
 .\" ---
@@ -143,91 +144,97 @@ Destroy the configuration
 .Bl -tag -width 4n
 .It Fn npf_rule_create "name" "attr" "ifname"
 Create a rule with a given name, attribute and priorty.
-Name can be
+If the name is specified, then it should be unique within the
+configuration object.
+Otherwise, the name can be
 .Dv NULL ,
-in which case rule has no unique identifier.
-Otherwise, rules shall not have duplicate names.
+in which case the rule will have no identifier.
 The following attributes, which can be ORed, are available:
 .Bl -tag -width indent
 .It Dv NPF_RULE_PASS
-Decision of this rule is "pass".
+The decision of this rule shall be "pass".
 If this attribute is not
-specified, then packet "block" (drop) is the default.
+specified, then "block" (drop the packet) is the default.
 .It Dv NPF_RULE_IN
-Match incoming packets.
+Match the incoming packets.
 .It Dv NPF_RULE_OUT
-Match outgoing packets.
+Match the outgoing packets.
 .It Dv NPF_RULE_FINAL
-Indicates that on rule match, further processing of the
-ruleset should be stopped and this rule applied instantly.
+Indicate that on rule match, further processing of the ruleset should
+be stopped and this rule should be applied instantly.
 .It Dv NPF_RULE_STATEFUL
-Create a state (session) on match, track the connection and
-therefore pass the backwards stream without inspection.
+Create a state (session) on match, track the connection and pass the
+backwards stream (the returning packets) without the ruleset inspection.
 The state is uniquely identified by a 5-tuple (source and destination
 IP addresses, port numbers and an interface identifier).
 .It Dv NPF_RULE_MULTIENDS
-Exclude the interface from the state identifier.
+Exclude the interface identifier from the state key i.e. use a 4-tuple.
 .It Dv NPF_RULE_RETRST
 Return TCP RST packet in a case of packet block.
 .It Dv NPF_RULE_RETICMP
 Return ICMP destination unreachable in a case of packet block.
 .It Dv NPF_RULE_GROUP
 Allow this rule to have sub-rules.
-If used with
+If this flag is used with the
 .Dv NPF_RULE_DYNAMIC
-flag set, the can be added dynamically.
+flag set, then it is a dynamic group.
+The sub-rules can be added dynamically to a dynamic group, also meaning
+that the sub-rules must have the
+.Dv NPF_RULE_DYNAMIC
+flag set.
 Otherwise rules must be added statically i.e. created with the configuration.
 .It Dv NPF_RULE_DYNAMIC
 Indicate that the rule is dynamic.
+Such rules can only be added to the dynamic groups.
 .El
 .Pp
-Interface is specified by
-.Fa ifname ,
-which is a string.
+The interface is specified by the
+.Fa ifname
+string.
 .Dv NULL
 indicates any interface.
 .\" ---
 .It Fn npf_rule_setcode "rl" "type" "code" "len"
-Assign compiled code for the rule specified by
-.Fa rl ,
-used for filter criteria.
-Pointer to the binary code is specified by
+Assign the code for the rule specified by
+.Fa rl .
+The code is used to implement the filter criteria.
+The pointer to the binary code is specified by
 .Fa code ,
-and size of the memory area by
-.Fa len .
-Type of the code is specified by
+the size of the memory area by
+.Fa len ,
+and the type of the code is specified by
 .Fa type .
-Currently, only BPF byte-code is supported and
+Currently, only the BPF byte-code is supported and the
 .Dv NPF_CODE_BPF
-should be passed.
+constant should be passed.
 .\" ---
 .It Fn npf_rule_setkey "rl" "type" "key" "len"
 Assign a key for the rule specified by
 .Fa rl .
-Binary key is specified by
+The binary key is specified by
 .Fa key ,
 and its size by
 .Fa len .
 The size shall not exceed
 .Dv NPF_RULE_MAXKEYLEN .
-The kernel does not validate the key is unique, it is the responsibility
-of the caller.
+The kernel does not check whether key is unique, therefore it is the
+responsibility of the caller.
 .\" ---
 .It Fn npf_rule_setinfo "rl" "info" "len"
-Associate arbitrary information blob specified by
+Associate an arbitrary information blob specified by
 .Fa info ,
 and its size by
 .Fa len .
-This may be used for such purposes as byte-code annotation.
+This may be used for such purposes as the byte-code annotation.
 .\" ---
 .It Fn npf_rule_setprio "rl" "pri"
 Set priority to the rule.
 Negative priorities are invalid.
 .Pp
-Priority is the order of the rule in the ruleset.
-Lower value means first to process, higher value - last to process.
+The priority is the order of the rule in the ruleset.
+The lower value means first to process, the higher value - last to process.
 If multiple rules are inserted with the same priority,
-the order is unspecified.
+then the order is unspecified.
 .Pp
 The special constants
 .Dv NPF_PRI_FIRST
@@ -242,9 +249,9 @@ assigned and will share this level in the ordered way.
 Set a procedure for the specified rule.
 .\" ---
 .It Fn npf_rule_insert "ncf" "parent" "rl"
-Insert the rule into the set of parent rule specified by
+Insert the rule into the set of the parent rule specified by
 .Fa parent .
-If value of
+If the value of
 .Fa parent
 is
 .Dv NULL ,
@@ -258,7 +265,7 @@ The binary object is dynamically allocated and should be destroyed using
 .Xr free 3 .
 .\" ---
 .It Fn npf_rule_destroy "rl"
-Destroy the given rule.
+Destroy the given rule object.
 .El
 .\" -----
 .Ss Rule procedure interface
@@ -266,15 +273,15 @@ Destroy the given rule.
 .It Fn npf_rproc_create "name"
 Create a rule procedure with a given
 .Fa name .
-Name must be unique for each procedure.
+Thr name must be unique for each procedure.
 .It Fn npf_rproc_insert "ncf" "rp"
-Insert rule procedure into the specified configuration.
+Insert the rule procedure into the specified configuration object.
 .El
 .\" -----
 .Ss Translation interface
 .Bl -tag -width 4n
 .It Fn npf_nat_create "type" "flags" "ifname" "addr" "af" "port"
-Create a NAT translation policy of a specified type.
+Create a NAT policy of a specified type.
 There are two types:
 .Bl -tag -width "NPF_NAT_PORTMAP "
 .It Dv NPF_NATIN
@@ -289,27 +296,28 @@ The following
 are supported:
 .Bl -tag -width "NPF_NAT_PORTMAP "
 .It Dv NPF_NAT_STATIC
-Perform static (stateless) NAT rather than dynamic (stateful).
+Perform static (stateless) translation rather than dynamic (stateful).
 .It Dv NPF_NAT_PORTS
-Indicates to perform port translation.
-Otherwise, port translation is not performed and
+Perform the port translation.
+If this flag is not specified, then the port translation is not performed
+and the
 .Fa port
-is ignored.
+parameter is ignored.
 .It Dv NPF_NAT_PORTMAP
-Effective only if
+Create a port map and select a random port for translation.
+If enabled, then the value specified by the
+.Fa port
+parameter is ignored.
+This flag is effective only if the
 .Dv NPF_NAT_PORTS
 flag is set.
-Indicates to create a port map and select a random port for translation.
-Otherwise, port is translated to the value specified by
-.Fa port
-is used.
 .El
 .Pp
-Translation address is specified by
+The translation address is specified by
 .Fa addr ,
 and its family by
 .Fa af .
-Family must be either
+The family must be either
 .Dv AF_INET
 for IPv4 or
 .Dv AF_INET6
@@ -328,19 +336,29 @@ Insert NAT policy, its rule, into the specified configuration.
 .Ss Table interface
 .Bl -tag -width 4n
 .It Fn npf_table_create "name" "index" "type"
-Create NPF table of specified type.
-The following types are supported:
-.Bl -tag -width "NPF_TABLE_TREE "
-.It Dv NPF_TABLE_HASH
-Indicates to use hash table for storage.
-.It Dv NPF_TABLE_TREE
-Indicates to use red-black tree for storage.
-Table is identified by the
+Create an NPF table of a specified type.
+The table is identified by the
 .Fa name
 and
 .Fa index ,
 which should be in the range between 1 and
 .Dv NPF_MAX_TABLE_ID .
+.Pp
+The following types are supported:
+.Bl -tag -width "NPF_TABLE_HASH"
+.It Dv NPF_TABLE_HASH
+Indicates to use a hash table for storage.
+.It Dv NPF_TABLE_TREE
+Indicates to use a tree for storage, supporting the longest
+prefix match.
+.It Dv NPF_TABLE_CDB
+Indicates to use constant database for storage, typically using
+a perfect hash table.
+In such case, the database produced by
+.Xr cdbw 3
+should be set using the
+.Fn npf_table_setdata
+function.
 .El
 .\" ---
 .It Fn npf_table_add_entry "tl" "af" "addr" "mask"
@@ -350,7 +368,7 @@ and
 .Fa mask ,
 to the table specified by
 .Fa tl .
-Family, specified by
+The family, specified by
 .Fa af ,
 must be either
 .Dv AF_INET
@@ -358,8 +376,8 @@ for IPv4 or
 .Dv AF_INET6
 for IPv6 address.
 .It Fn npf_table_insert "ncf" "tl"
-Insert table into set of configuration.
-Routine performs a check for duplicate table ID.
+Add the table to the configuration object.
+This routine performs a check for duplicate table IDs.
 .\" ---
 .It Fn npf_table_destroy "tl"
 Destroy the specified table.
