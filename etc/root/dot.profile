@@ -1,12 +1,11 @@
-#	$NetBSD: dot.profile,v 1.28 2016/03/08 09:51:15 mlelstv Exp $
+#	$NetBSD: dot.profile,v 1.29 2017/12/07 18:26:51 jmcneill Exp $
 
 export PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/pkg/sbin:/usr/pkg/bin
 export PATH=${PATH}:/usr/X11R7/bin:/usr/X11R6/bin:/usr/local/sbin:/usr/local/bin
 
 # Uncomment the following line(s) to install binary packages
-# from ftp.NetBSD.org via pkg_add.  (See also pkg_install.conf)
-#export PKG_PATH=ftp://ftp.NetBSD.org/pub/pkgsrc/packages/NetBSD/$(uname -m)/7.0/All
-#export PKG_PATH="${PKG_PATH};ftp://ftp.NetBSD.org/pub/pkgsrc/packages/NetBSD/$(uname -m)/6.0/All"
+# from cdn.NetBSD.org via pkg_add.  (See also pkg_install.conf)
+#export PKG_PATH="http://cdn.NetBSD.org/pub/pkgsrc/packages/NetBSD/$(uname -p)/$(uname -r|cut -f '1 2' -d.|cut -f 1 -d_)/All"
 
 export BLOCKSIZE=1k
 
