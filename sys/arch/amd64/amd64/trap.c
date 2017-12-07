@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.106 2017/12/07 03:25:51 riastradh Exp $	*/
+/*	$NetBSD: trap.c,v 1.107 2017/12/07 23:13:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2017 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.106 2017/12/07 03:25:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.107 2017/12/07 23:13:17 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -85,6 +85,11 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.106 2017/12/07 03:25:51 riastradh Exp $")
 #include <sys/ucontext.h>
 
 #include <uvm/uvm_extern.h>
+
+#ifdef COMPAT_NETBSD32
+#include <sys/exec.h>
+#include <compat/netbsd32/netbsd32_exec.h>
+#endif
 
 #include <machine/cpufunc.h>
 #include <x86/fpu.h>
@@ -145,6 +150,10 @@ const char * const trap_type[] = {
 int	trap_types = __arraycount(trap_type);
 
 #define	IDTVEC(name)	__CONCAT(X, name)
+
+#ifdef TRAP_SIGDEBUG
+static void frame_dump(struct trapframe *, struct pcb *);
+#endif
 
 static void
 onfault_restore(struct trapframe *frame, void *onfault, int error)
@@ -407,11 +416,37 @@ trap(struct trapframe *frame)
 		trap_user_kernelmode(frame, type, l, p);
 		goto we_re_toast;
 
-	case T_PROTFLT|T_USER:
+	case T_PROTFLT|T_USER:		/* protection fault */
+#if defined(COMPAT_NETBSD32) && defined(COMPAT_10)
+	{
+		static const char lcall[7] = { 0x9a, 0, 0, 0, 0, 7, 0 };
+		const size_t sz = sizeof(lcall);
+		char tmp[sz];
+
+		/* Check for the oosyscall lcall instruction. */
+		if (p->p_emul == &emul_netbsd32 &&
+		    frame->tf_rip < VM_MAXUSER_ADDRESS32 - sz &&
+		    copyin((void *)frame->tf_rip, tmp, sz) == 0 &&
+		    memcmp(tmp, lcall, sz) == 0) {
+
+			/* Advance past the lcall. */
+			frame->tf_rip += sz;
+
+			/* Do the syscall. */
+			p->p_md.md_syscall(frame);
+			goto out;
+		}
+	}
+#endif
 	case T_TSSFLT|T_USER:
 	case T_SEGNPFLT|T_USER:
 	case T_STKFLT|T_USER:
 	case T_ALIGNFLT|T_USER:
+#ifdef TRAP_SIGDEBUG
+		printf("pid %d.%d (%s): BUS/SEGV (%#x) at rip %#lx addr %#lx\n",
+		    p->p_pid, l->l_lid, p->p_comm, type, frame->tf_rip, rcr2());
+		frame_dump(frame, pcb);
+#endif
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_trap = type & ~T_USER;
 		ksi.ksi_addr = (void *)rcr2();
@@ -439,8 +474,13 @@ trap(struct trapframe *frame)
 		}
 		goto trapsignal;
 
-	case T_PRIVINFLT|T_USER:
-	case T_FPOPFLT|T_USER:
+	case T_PRIVINFLT|T_USER:	/* privileged instruction fault */
+	case T_FPOPFLT|T_USER:		/* coprocessor operand fault */
+#ifdef TRAP_SIGDEBUG
+		printf("pid %d.%d (%s): ILL at rip %#lx addr %#lx\n",
+		    p->p_pid, l->l_lid, p->p_comm, frame->tf_rip, rcr2());
+		frame_dump(frame, pcb);
+#endif
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGILL;
 		ksi.ksi_trap = type & ~T_USER;
@@ -681,7 +721,14 @@ faultcommon:
 			break;
 		}
 
-		(*p->p_emul->e_trapsignal)(l, &ksi);
+#ifdef TRAP_SIGDEBUG
+		printf("pid %d.%d (%s): signal %d at rip %#lx addr %#lx "
+		    "error %d trap %d cr2 %p\n", p->p_pid, l->l_lid, p->p_comm,
+		    ksi.ksi_signo, frame->tf_rip, va, error, ksi.ksi_trap,
+		    ksi.ksi_addr);
+		frame_dump(frame, pcb);
+#endif
+ 		(*p->p_emul->e_trapsignal)(l, &ksi);
 		break;
 	}
 
@@ -707,8 +754,8 @@ faultcommon:
 		}
 		goto we_re_toast;
 
-	case T_BPTFLT|T_USER:
-	case T_TRCTRAP|T_USER:
+	case T_BPTFLT|T_USER:		/* bpt instruction fault */
+	case T_TRCTRAP|T_USER:		/* trace trap */
 		/*
 		 * Don't go single-stepping into a RAS.
 		 */
@@ -756,3 +803,37 @@ startlwp(void *arg)
 	userret(l);
 }
 
+#ifdef TRAP_SIGDEBUG
+void
+frame_dump(struct trapframe *tf, struct pcb *pcb)
+{
+	int i;
+	unsigned long *p;
+
+	printf("trapframe %p\n", tf);
+	printf("rip 0x%016lx  rsp 0x%016lx  rfl 0x%016lx\n",
+	    tf->tf_rip, tf->tf_rsp, tf->tf_rflags);
+	printf("rdi 0x%016lx  rsi 0x%016lx  rdx 0x%016lx\n",
+	    tf->tf_rdi, tf->tf_rsi, tf->tf_rdx);
+	printf("rcx 0x%016lx  r8  0x%016lx  r9  0x%016lx\n",
+	    tf->tf_rcx, tf->tf_r8, tf->tf_r9);
+	printf("r10 0x%016lx  r11 0x%016lx  r12 0x%016lx\n",
+	    tf->tf_r10, tf->tf_r11, tf->tf_r12);
+	printf("r13 0x%016lx  r14 0x%016lx  r15 0x%016lx\n",
+	    tf->tf_r13, tf->tf_r14, tf->tf_r15);
+	printf("rbp 0x%016lx  rbx 0x%016lx  rax 0x%016lx\n",
+	    tf->tf_rbp, tf->tf_rbx, tf->tf_rax);
+	printf("cs 0x%04lx  ds 0x%04lx  es 0x%04lx  "
+	       "fs 0x%04lx  gs 0x%04lx  ss 0x%04lx\n",
+		tf->tf_cs & 0xffff, tf->tf_ds & 0xffff, tf->tf_es & 0xffff,
+		tf->tf_fs & 0xffff, tf->tf_gs & 0xffff, tf->tf_ss & 0xffff);
+	printf("fsbase 0x%016lx gsbase 0x%016lx\n",
+	       pcb->pcb_fs, pcb->pcb_gs);
+	printf("\n");
+	printf("Stack dump:\n");
+	for (i = 0, p = (unsigned long *) tf; i < 20; i ++, p += 4)
+		printf(" 0x%.16lx  0x%.16lx  0x%.16lx  0x%.16lx\n",
+		       p[0], p[1], p[2], p[3]);
+	printf("\n");
+}
+#endif
