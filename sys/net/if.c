@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.406 2017/12/06 09:54:47 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.407 2017/12/07 01:23:53 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.406 2017/12/06 09:54:47 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.407 2017/12/07 01:23:53 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1378,9 +1378,11 @@ if_detach(struct ifnet *ifp)
 again:
 	/*
 	 * At this point, no other one tries to remove ifa in the list,
-	 * so we don't need to take a lock or psref.
+	 * so we don't need to take a lock or psref.  Avoid using
+	 * IFADDR_READER_FOREACH to pass over an inspection of contract
+	 * violations of pserialize.
 	 */
-	IFADDR_READER_FOREACH(ifa, ifp) {
+	IFADDR_WRITER_FOREACH(ifa, ifp) {
 		family = ifa->ifa_addr->sa_family;
 #ifdef IFAREF_DEBUG
 		printf("if_detach: ifaddr %p, family %d, refcnt %d\n",
