@@ -1,4 +1,4 @@
-.\"	$NetBSD: strfmon.3,v 1.7 2017/08/16 17:41:36 wiz Exp $
+.\"	$NetBSD: strfmon.3,v 1.8 2017/12/07 22:19:17 kre Exp $
 .\"
 .\" Copyright (c) 2001 Jeroen Ruigrok van der Werven <asmodai@FreeBSD.org>
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" 	From: FreeBSD: Id: strfmon.3,v 1.7 2003/01/06 06:21:25 tjr Exp
 .\"
-.Dd August 15, 2017
+.Dd December 7, 2017
 .Dt STRFMON 3
 .Os
 .Sh NAME
@@ -102,7 +102,13 @@ By default, there is no minimum width.
 A
 .Sq Cm #
 sign followed by a decimal number specifying the maximum
-expected number of digits after the radix character.
+expected number of digits before the radix character.
+When this option is used, values that do not exceed the
+specified number of digits are formatted so they will be
+correctly aligned with other values printed using the same
+format.
+This includes always leaving space for a possible sign
+indicator, even if none is needed for a particular value.
 .It
 A
 .Sq Cm \&.
