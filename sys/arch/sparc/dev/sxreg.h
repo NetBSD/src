@@ -1,4 +1,4 @@
-/*	$NetBSD: sxreg.h,v 1.14 2017/10/30 21:41:39 macallan Exp $	*/
+/*	$NetBSD: sxreg.h,v 1.15 2017/12/07 19:15:56 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -289,5 +289,13 @@
 
 #define SX_ADDV(sa, sb, d, cnt) (0xa0000000 | ((cnt) << 24) | SX_ADD_V | \
 		((sa) << 14) | ((d) << 7) | (sb))
+
+/* MISC group */
+#define SX_GTHR		(3 << 21)	/* sa with spacing sb -> d */
+#define SX_SCTR		(2 << 21)	/* sa -> d with spacing sb */
+#define SX_GATHER(sa, sb, d, cnt) (0xe0000000 | ((cnt << 24) | SX_GTHR | \
+		((sa) << 14) | ((d << 7) | (sb))
+#define SX_SCATTER(sa, sb, d, cnt) (0xe0000000 | ((cnt << 24) | SX_SCRT | \
+		((sa) << 14) | ((d << 7) | (sb))
 
 #endif /* SXREG_H */
