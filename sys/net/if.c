@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.407 2017/12/07 01:23:53 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.408 2017/12/07 03:16:24 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.407 2017/12/07 01:23:53 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.408 2017/12/07 03:16:24 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -3517,6 +3517,7 @@ if_addr_init(ifnet_t *ifp, struct ifaddr *ifa, const bool src)
 {
 	int rc;
 
+	KASSERT(mutex_owned(ifp->if_ioctl_lock));
 	if (ifp->if_initaddr != NULL)
 		rc = (*ifp->if_initaddr)(ifp, ifa, src);
 	else if (src ||
