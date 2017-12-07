@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.547 2017/12/06 09:03:12 ozaki-r Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.548 2017/12/07 00:38:38 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.547 2017/12/06 09:03:12 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.548 2017/12/07 00:38:38 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -5814,6 +5814,14 @@ wm_init_locked(struct ifnet *ifp)
 		break;
 	}
 
+	/*
+	 * Set the receive filter.
+	 *
+	 * For 82575 and 82576, the RX descriptors must be initialized after
+	 * the setting of RCTL.EN in wm_set_filter()
+	 */
+	wm_set_filter(sc);
+
 	/* On 575 and later set RDT only if RX enabled */
 	if ((sc->sc_flags & WM_F_NEWQUEUE) != 0) {
 		int qidx;
@@ -5827,9 +5835,6 @@ wm_init_locked(struct ifnet *ifp)
 			}
 		}
 	}
-
-	/* Set the receive filter. */
-	wm_set_filter(sc);
 
 	wm_unset_stopping_flags(sc);
 
@@ -6688,13 +6693,13 @@ wm_init_rx_buffer(struct wm_softc *sc, struct wm_rxqueue *rxq)
 				return ENOMEM;
 			}
 		} else {
-			if ((sc->sc_flags & WM_F_NEWQUEUE) == 0)
-				wm_init_rxdesc(rxq, i);
 			/*
-			 * For 82575 and newer device, the RX descriptors
-			 * must be initialized after the setting of RCTL.EN in
+			 * For 82575 and 82576, the RX descriptors must be
+			 * initialized after the setting of RCTL.EN in
 			 * wm_set_filter()
 			 */
+			if ((sc->sc_flags & WM_F_NEWQUEUE) == 0)
+				wm_init_rxdesc(rxq, i);
 		}
 	}
 	rxq->rxq_ptr = 0;
