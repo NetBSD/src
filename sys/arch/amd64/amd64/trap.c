@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.105 2017/12/02 12:40:03 maxv Exp $	*/
+/*	$NetBSD: trap.c,v 1.106 2017/12/07 03:25:51 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2017 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.105 2017/12/02 12:40:03 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.106 2017/12/07 03:25:51 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -518,16 +518,26 @@ trap(struct trapframe *frame)
 
 		if (frame->tf_err & PGEX_X) {
 			/* SMEP might have brought us here */
-			if (cr2 < VM_MAXUSER_ADDRESS)
-				panic("prevented execution of %p (SMEP)",
-				    (void *)cr2);
+			if (cr2 < VM_MAXUSER_ADDRESS) {
+				if (cr2 == 0)
+					panic("prevented jump to null"
+					    " instruction pointer (SMEP)");
+				else
+					panic("prevented execution of"
+					    " user address %p (SMEP)",
+					    (void *)cr2);
+			}
 		}
 
 		if (cr2 < VM_MAXUSER_ADDRESS) {
 			/* SMAP might have brought us here */
-			if (onfault_handler(pcb, frame) == NULL)
-				panic("prevented access to %p (SMAP)",
+			if (onfault_handler(pcb, frame) == NULL) {
+				panic("prevented %s %p (SMAP)",
+				    (cr2 < PAGE_SIZE
+					? "null pointer dereference at"
+					: "access to"),
 				    (void *)cr2);
+			}
 		}
 
 		goto faultcommon;
