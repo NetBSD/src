@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.77 2017/11/17 08:22:02 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.78 2017/12/07 22:56:23 christos Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.77 2017/11/17 08:22:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.78 2017/12/07 22:56:23 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -3154,6 +3154,8 @@ static void
 xhci_setup_tthub(struct usbd_pipe *pipe, uint32_t *cp)
 {
 	struct usbd_device *dev = pipe->up_dev;
+	struct usbd_device *myhub = dev->ud_myhub;
+	struct usbd_port *myhsport = dev->ud_myhsport;
 	usb_device_descriptor_t * const dd = &dev->ud_ddesc;
 	uint32_t speed = dev->ud_speed;
 	uint8_t tthubslot, ttportnum;
@@ -3177,19 +3179,17 @@ xhci_setup_tthub(struct usbd_pipe *pipe, uint32_t *cp)
 	 *   parent hub is not HS hub ||
 	 *   attached to root hub.
 	 */
-	if (dev->ud_myhsport != NULL &&
-	    dev->ud_myhub != NULL && dev->ud_myhub->ud_depth != 0 &&
-	    (dev->ud_myhub != NULL &&
-	     dev->ud_myhub->ud_speed == USB_SPEED_HIGH) &&
+	if (myhsport && myhub && myhub->ud_depth &&
+	    myhub->ud_speed == USB_SPEED_HIGH &&
 	    (speed == USB_SPEED_LOW || speed == USB_SPEED_FULL)) {
-		ttportnum = dev->ud_myhsport->up_portno;
-		tthubslot = dev->ud_myhsport->up_parent->ud_addr;
+		ttportnum = myhsport->up_portno;
+		tthubslot = myhsport->up_parent->ud_addr;
 	} else {
 		ttportnum = 0;
 		tthubslot = 0;
 	}
 	DPRINTFN(4, "myhsport %#jx ttportnum=%jd tthubslot=%jd",
-	    (uintptr_t)dev->ud_myhsport, ttportnum, tthubslot, 0);
+	    (uintptr_t)myhsport, ttportnum, tthubslot, 0);
 
 	/* ishub is valid after reading UDESC_DEVICE */
 	ishub = (dd->bDeviceClass == UDCLASS_HUB);
@@ -3218,13 +3218,9 @@ xhci_setup_tthub(struct usbd_pipe *pipe, uint32_t *cp)
 	 */
 	if (ishub && speed == USB_SPEED_HIGH && IS_TTHUB(dd))
 		usemtt = true;
-	else if (!ishub &&
-	     (speed == USB_SPEED_LOW || speed == USB_SPEED_FULL) &&
-	     dev->ud_myhub != NULL && dev->ud_myhub->ud_depth != 0 &&
-	     (dev->ud_myhub != NULL &&
-	      dev->ud_myhub->ud_speed == USB_SPEED_HIGH) &&
-	     dev->ud_myhsport != NULL &&
-	     IS_TTHUB(&dev->ud_myhsport->up_parent->ud_ddesc))
+	else if (!ishub && (speed == USB_SPEED_LOW || speed == USB_SPEED_FULL) &&
+	     myhub && myhub->ud_depth && myhub->ud_speed == USB_SPEED_HIGH &&
+	     myhsport && IS_TTHUB(&myhsport->up_parent->ud_ddesc))
 		usemtt = true;
 	else
 		usemtt = false;
