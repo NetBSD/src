@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.90 2017/12/04 19:53:44 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.91 2017/12/08 06:19:01 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -8270,3 +8270,48 @@ include/endian.h				1.1
 	Add endian.h header.  Simply includes sys/endian.h
 	[maya, ticket #416]
 
+sys/external/bsd/drm2/drm/drm_drv.c		1.20
+
+	drm_stat: Fix device minor calculation to make X work with multiple
+	graphics cards.
+	[jmcneill, ticket #422]
+
+etc/MAKEDEV.tmpl				1.188
+
+	Make a few more drm nodes.
+	[jmcneill, ticket #423]
+
+external/historical/nawk/dist/lex.c		1.3
+
+	awk: Fix memory leak (PR#52516 reported by Guy Incognito).
+	[dholland, ticket #425]
+
+external/bsd/nvi/dist/cl/cl_main.c		1.9
+
+	Corrects an issue where vi crashes after a window is resized.
+	[jmcneill, ticket #428]
+
+sys/arch/sparc/include/cpu.h			1.99
+sys/arch/sparc/sparc/cpu.c			1.250
+sys/arch/sparc/sparc/intr.c			1.119
+
+	- Return early in xcall() if the function is sparc_noop() instead of
+	  triggering the IPI and then ignoring responses (or lack thereof).
+	- Write the .tag field last to avoid a race when polling for an
+	  incoming IPI.
+	- Add event counters for IPIs being caught with the mutex not held,
+	  and for messages that are already marked as completed.
+	[macallan, ticket #429]
+
+etc/root/dot.cshrc				1.26
+etc/root/dot.profile				1.29
+
+	Update example PKG_PATH entry to use the CDN frontend, use uname -p
+	instead of uname -m for processor subdirectory, and derive the OS
+	release from uname -r.
+	[jmcneill, ticket #430]
+
+sys/net/if_pppoe.c				1.133
+
+	Remove wrong assertions. From s-yamaguchi@IIJ.
+	[ozaki-r, ticket #431]
