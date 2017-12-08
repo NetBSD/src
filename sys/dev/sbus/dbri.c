@@ -1,4 +1,4 @@
-/*	$NetBSD: dbri.c,v 1.35 2013/10/19 21:00:32 mrg Exp $	*/
+/*	$NetBSD: dbri.c,v 1.36 2017/12/08 07:47:00 mrg Exp $	*/
 
 /*
  * Copyright (C) 1997 Rudolf Koenig (rfkoenig@immd4.informatik.uni-erlangen.de)
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.35 2013/10/19 21:00:32 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.36 2017/12/08 07:47:00 mrg Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -367,6 +367,10 @@ dbri_attach_sbus(device_t parent, device_t self, void *aux)
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
 
+#ifndef DBRI_SPIN
+	cv_init(&sc->sc_cv, "dbricv");
+#endif
+
 	bus_intr_establish(sa->sa_bustag, sa->sa_pri, IPL_SCHED, dbri_intr,
 	    sc);
 
@@ -444,8 +448,11 @@ dbri_config_interrupts(device_t dev)
 {
 	struct dbri_softc *sc = device_private(dev);
 
-	if (sc->sc_init_done != 0)
+	mutex_spin_enter(&sc->sc_intr_lock);
+	if (sc->sc_init_done != 0) {
+		mutex_spin_exit(&sc->sc_intr_lock);
 		return 0;
+	}
 
 	sc->sc_init_done = 1;
 
@@ -453,14 +460,19 @@ dbri_config_interrupts(device_t dev)
 	if (mmcodec_init(sc) == -1) {
 		printf("%s: no codec detected, aborting\n",
 		    device_xname(dev));
+		mutex_spin_exit(&sc->sc_intr_lock);
 		return 0;
 	}
+	mutex_spin_exit(&sc->sc_intr_lock);
 
 	/* Attach ourselves to the high level audio interface */
 	audio_attach_mi(&dbri_hw_if, sc, sc->sc_dev);
 
 	/* power down until open() */
+	mutex_spin_enter(&sc->sc_intr_lock);
 	dbri_set_power(sc, 0);
+	mutex_spin_exit(&sc->sc_intr_lock);
+
 	return 0;
 }
 
@@ -532,6 +544,8 @@ dbri_init(struct dbri_softc *sc)
 	bus_addr_t dmaaddr;
 	int n;
 
+	KASSERT(mutex_owned(sc->sc_intr_lock));
+
 	dbri_reset(sc);
 
 	cmd = dbri_command_lock(sc);
@@ -562,6 +576,7 @@ dbri_init(struct dbri_softc *sc)
 	*(cmd++) = dmaaddr;
 
 	dbri_command_send(sc, cmd);
+
 	return (0);
 }
 
@@ -603,7 +618,7 @@ dbri_command_send(struct dbri_softc *sc, volatile uint32_t *cmd)
 	bus_space_tag_t iot = sc->sc_iot;
 	int maxloops = 1000000;
 
-	mutex_spin_enter(&sc->sc_intr_lock);
+	KASSERT(mutex_owned(sc->sc_intr_lock));
 
 	sc->sc_locked--;
 
@@ -641,8 +656,6 @@ dbri_command_send(struct dbri_softc *sc, volatile uint32_t *cmd)
 		}
 	}
 
-	mutex_spin_exit(&sc->sc_intr_lock);
-
 	return;
 }
 
@@ -650,6 +663,9 @@ static void
 dbri_process_interrupt_buffer(struct dbri_softc *sc)
 {
 	int32_t i;
+	int orig_irqp = sc->sc_irqp;
+
+	KASSERT(mutex_owned(sc->sc_intr_lock));
 
 	while ((i = sc->sc_dma->intr[sc->sc_irqp]) != 0) {
 		sc->sc_dma->intr[sc->sc_irqp] = 0;
@@ -661,6 +677,10 @@ dbri_process_interrupt_buffer(struct dbri_softc *sc)
 			sc->sc_irqp++;
 
 		dbri_process_interrupt(sc, i);
+
+		/* don't loop more than once. */
+		if (orig_irqp == sc->sc_irqp)
+			break;
 	}
 
 	return;
@@ -688,6 +708,7 @@ dbri_process_interrupt(struct dbri_softc *sc, int32_t i)
 		int td;
 		struct dbri_desc *dd;
 
+		DPRINTF("%s:%d tx complete\n", __func__, channel);
 		td = sc->sc_pipe[channel].desc;
 		dd = &sc->sc_desc[td];
 
@@ -696,7 +717,7 @@ dbri_process_interrupt(struct dbri_softc *sc, int32_t i)
 		break;
 	}
 	case DBRI_INTR_FXDT:		/* fixed data change */
-		DPRINTF("dbri_intr: Fixed data change (%d: %x)\n", channel,
+		DPRINTF("%s:%d: Fixed data change: %x\n", __func__, channel,
 		    val);
 #if 0
 		printf("reg: %08x\n", sc->sc_mm.status);
@@ -706,8 +727,8 @@ dbri_process_interrupt(struct dbri_softc *sc, int32_t i)
 		if (sc->sc_pipe[channel].prec)
 			*(sc->sc_pipe[channel].prec) = val;
 #ifndef DBRI_SPIN
-		DPRINTF("%s: wakeup %p\n", device_xname(sc->sc_dev), sc);
-		wakeup(sc);
+		DPRINTF("%s: cv_broadcast %p\n", device_xname(sc->sc_dev), sc);
+		cv_broadcast(&sc->sc_cv);
 #endif
 		break;
 	case DBRI_INTR_SBRI:
@@ -718,6 +739,7 @@ dbri_process_interrupt(struct dbri_softc *sc, int32_t i)
 		int td;
 		struct dbri_desc *dd;
 
+		DPRINTF("dbri_intr: buffer ready (%d)\n", channel);
 		td = sc->sc_pipe[channel].desc;
 		dd = &sc->sc_desc[td];
 
@@ -973,6 +995,8 @@ mmcodec_setcontrol(struct dbri_softc *sc)
 	int bail = 0;
 #if DBRI_SPIN
 	int i;
+#else
+	int error;
 #endif
 
 	/*
@@ -1034,8 +1058,12 @@ mmcodec_setcontrol(struct dbri_softc *sc)
 	}
 #else
 	while (((sc->sc_mm.status & 0xe4) != 0x20) && (bail < 10)) {
-		DPRINTF("%s: tsleep %p\n", device_xname(sc->sc_dev), sc);
-		tsleep(sc, PCATCH | PZERO, "dbrifxdt", hz);
+		DPRINTF("%s: cv_wait_sig %p\n", device_xname(sc->sc_dev), sc);
+		error = cv_timedwait_sig(&sc->sc_cv, &sc->sc_intr_lock, hz);
+		if (error == EINTR) {
+			DPRINTF("%s: interrupted\n", device_xname(sc->sc_dev));
+			return -1;
+		}
 		bail++;
 	}
 #endif
@@ -1324,8 +1352,6 @@ setup_ring_xmit(struct dbri_softc *sc, int pipe, int which, int num, int blksz,
 	dd->callback = callback;
 	dd->callback_args = callback_args;
 
-	mutex_spin_enter(&sc->sc_intr_lock);
-
 	/* the pipe shouldn't be active */
 	if (pipe_active(sc, pipe)) {
 		aprint_error("pipe active (CDP)\n");
@@ -1359,8 +1385,6 @@ setup_ring_xmit(struct dbri_softc *sc, int pipe, int which, int num, int blksz,
 		dbri_command_send(sc, cmd);
 		DPRINTF("%s: starting DMA\n", __func__);
 	}
-
-	mutex_spin_exit(&sc->sc_intr_lock);
 
 	return;
 }
@@ -1421,8 +1445,6 @@ setup_ring_recv(struct dbri_softc *sc, int pipe, int which, int num, int blksz,
 	dd->callback = callback;
 	dd->callback_args = callback_args;
 
-	mutex_spin_enter(&sc->sc_intr_lock);
-
 	/* the pipe shouldn't be active */
 	if (pipe_active(sc, pipe)) {
 		aprint_error("pipe active (CDP)\n");
@@ -1456,8 +1478,6 @@ setup_ring_recv(struct dbri_softc *sc, int pipe, int which, int num, int blksz,
 		dbri_command_send(sc, cmd);
 		DPRINTF("%s: starting DMA\n", __func__);
 	}
-
-	mutex_spin_exit(&sc->sc_intr_lock);
 
 	return;
 }
@@ -2211,7 +2231,9 @@ dbri_suspend(device_t self, const pmf_qual_t *qual)
 {
 	struct dbri_softc *sc = device_private(self);
 
+	mutex_spin_enter(&sc->sc_intr_lock);
 	dbri_set_power(sc, 0);
+	mutex_spin_exit(&sc->sc_intr_lock);
 	return true;
 }
 
@@ -2226,8 +2248,8 @@ dbri_resume(device_t self, const pmf_qual_t *qual)
 	if (sc->sc_playing) {
 		volatile uint32_t *cmd;
 
-		dbri_bring_up(sc);
 		mutex_spin_enter(&sc->sc_intr_lock);
+		dbri_bring_up(sc);
 		cmd = dbri_command_lock(sc);
 		*(cmd++) = DBRI_CMD(DBRI_COMMAND_SDP,
 		    0, sc->sc_pipe[4].sdp |
