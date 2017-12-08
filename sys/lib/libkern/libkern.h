@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.124 2016/07/07 06:55:43 msaitoh Exp $	*/
+/*	$NetBSD: libkern.h,v 1.125 2017/12/08 21:51:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -448,6 +448,7 @@ intmax_t strtoi(const char * __restrict, char ** __restrict, int, intmax_t,
     intmax_t, int *);
 uintmax_t strtou(const char * __restrict, char ** __restrict, int, uintmax_t,
     uintmax_t, int *);
+void	 hexdump(const char *, const void *, size_t);
 
 int	 snprintb(char *, size_t, const char *, uint64_t);
 int	 snprintb_m(char *, size_t, const char *, uint64_t, size_t);
