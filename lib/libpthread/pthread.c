@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.150 2017/07/11 15:21:35 joerg Exp $	*/
+/*	$NetBSD: pthread.c,v 1.151 2017/12/08 09:24:31 kre Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.150 2017/07/11 15:21:35 joerg Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.151 2017/12/08 09:24:31 kre Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -1202,8 +1202,8 @@ pthread__park(pthread_t self, pthread_mutex_t *lock,
 		 * If we deferred unparking a thread, arrange to
 		 * have _lwp_park() restart it before blocking.
 		 */
-		error = _lwp_park(CLOCK_REALTIME, TIMER_ABSTIME, abstime,
-		    self->pt_unpark, hint, hint);
+		error = _lwp_park(CLOCK_REALTIME, TIMER_ABSTIME,
+		    __UNCONST(abstime), self->pt_unpark, hint, hint);
 		self->pt_unpark = 0;
 		if (error != 0) {
 			switch (rv = errno) {
