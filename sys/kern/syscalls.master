@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.286 2016/11/02 00:11:59 pgoyette Exp $
+	$NetBSD: syscalls.master,v 1.287 2017/12/08 01:19:29 christos Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -975,7 +975,7 @@
 			    int flags, const struct timespec *rqtp, \
 			    struct timespec *rmtp); }
 478	STD 		{ int|sys|60|_lwp_park(clockid_t clock_id, int flags, \
-			    const struct timespec *ts, lwpid_t unpark, \
+			    struct timespec *ts, lwpid_t unpark, \
 			    const void *hint, const void *unparkhint); }
 479	NOERR	RUMP	{ int|sys||posix_fallocate(int fd, int PAD, off_t pos, \
 			    off_t len); }

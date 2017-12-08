@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.12 2014/01/31 20:44:17 christos Exp $	*/
+/*	$NetBSD: lwp.h,v 1.13 2017/12/08 01:19:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@ void	_lwp_setprivate(void *);
 int	_lwp_kill(lwpid_t, int);
 int	_lwp_detach(lwpid_t);
 #ifndef __LIBC12_SOURCE__
-int	_lwp_park(clockid_t, int, const struct timespec *, lwpid_t,
+int	_lwp_park(clockid_t, int, struct timespec *, lwpid_t,
     const void *, const void *) __RENAME(___lwp_park60);
 #endif
 int	_lwp_unpark(lwpid_t, const void *);
