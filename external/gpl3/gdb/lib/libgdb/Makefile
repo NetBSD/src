@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2017/12/08 14:07:58 rin Exp $
+#	$NetBSD: Makefile,v 1.17 2017/12/08 14:10:29 rin Exp $
 
 NOCTF=
 HOSTPROG_CXX=   1
@@ -12,8 +12,6 @@ LIB=		gdb
 GDBARCHDIR=	${.CURDIR}/arch/${GDB_MACHINE_ARCH}
 
 .include "${GDBARCHDIR}/defs.mk"
-
-DIST=		${NETBSDSRCDIR}/gnu/dist/gdb6
 
 SRCS=		${G_LIBGDB_OBS:.o=.c}
 GCPPFLAGS=	${G_INTERNAL_CFLAGS}
