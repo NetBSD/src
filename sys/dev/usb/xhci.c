@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.78 2017/12/07 22:56:23 christos Exp $	*/
+/*	$NetBSD: xhci.c,v 1.79 2017/12/08 21:51:07 christos Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.78 2017/12/07 22:56:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.79 2017/12/08 21:51:07 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -73,6 +73,11 @@ __KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.78 2017/12/07 22:56:23 christos Exp $");
 #ifndef XHCI_DEBUG
 #define xhcidebug 0
 #else /* !XHCI_DEBUG */
+#define HEXDUMP(a, b, c) \
+    do { \
+	    if (xhcidebug > 0) \
+		    hexdump(a, b, c); \
+    } while (/*CONSTCOND*/0)
 static int xhcidebug = 0;
 
 SYSCTL_SETUP(sysctl_hw_xhci_setup, "sysctl hw.xhci setup")
@@ -104,6 +109,10 @@ fail:
 
 #endif /* !XHCI_DEBUG */
 #endif /* USB_DEBUG */
+
+#ifndef HEXDUMP
+#define HEXDUMP(a, b, c)
+#endif
 
 #define DPRINTFN(N,FMT,A,B,C,D) USBHIST_LOGN(xhcidebug,N,FMT,A,B,C,D)
 #define XHCIHIST_FUNC() USBHIST_FUNC()
@@ -720,35 +729,6 @@ xhci_hc_reset(struct xhci_softc * const sc)
 }
 
 
-static void
-hexdump(const char *msg, const void *base, size_t len)
-{
-#if 0
-	size_t cnt;
-	const uint32_t *p;
-	extern paddr_t vtophys(vaddr_t);
-
-	p = base;
-	cnt = 0;
-
-	printf("*** %s (%zu bytes @ %p %p)\n", msg, len, base,
-	    (void *)vtophys((vaddr_t)base));
-
-	while (cnt < len) {
-		if (cnt % 16 == 0)
-			printf("%p: ", p);
-		else if (cnt % 8 == 0)
-			printf(" |");
-		printf(" %08x", *p++);
-		cnt += 4;
-		if (cnt % 16 == 0)
-			printf("\n");
-	}
-	if (cnt % 16 != 0)
-		printf("\n");
-#endif
-}
-
 /* 7.2 xHCI Support Protocol Capability */
 static void
 xhci_id_protocols(struct xhci_softc *sc, bus_size_t ecp)
@@ -1184,10 +1164,8 @@ xhci_init(struct xhci_softc *sc)
 	xhci_op_write_8(sc, XHCI_CRCR, xhci_ring_trbp(&sc->sc_cr, 0) |
 	    sc->sc_cr.xr_cs);
 
-#if 0
-	hexdump("eventst", KERNADDR(&sc->sc_eventst_dma, 0),
+	HEXDUMP("eventst", KERNADDR(&sc->sc_eventst_dma, 0),
 	    XHCI_ERSTE_SIZE * XHCI_EVENT_RING_SEGMENTS);
-#endif
 
 	if ((sc->sc_quirks & XHCI_DEFERRED_START) == 0)
 		xhci_start(sc);
@@ -1363,7 +1341,9 @@ xhci_configure_endpoint(struct usbd_pipe *pipe)
 {
 	struct xhci_softc * const sc = XHCI_PIPE2SC(pipe);
 	struct xhci_slot * const xs = pipe->up_dev->ud_hcpriv;
+#ifdef XHCI_DEBUG
 	const u_int dci = xhci_ep_get_dci(pipe->up_endpoint->ue_edesc);
+#endif
 	struct xhci_trb trb;
 	usbd_status err;
 
@@ -1379,9 +1359,9 @@ xhci_configure_endpoint(struct usbd_pipe *pipe)
 	/* set up context */
 	xhci_setup_ctx(pipe);
 
-	hexdump("input control context", xhci_slot_get_icv(sc, xs, 0),
+	HEXDUMP("input control context", xhci_slot_get_icv(sc, xs, 0),
 	    sc->sc_ctxsz * 1);
-	hexdump("input endpoint context", xhci_slot_get_icv(sc, xs,
+	HEXDUMP("input endpoint context", xhci_slot_get_icv(sc, xs,
 	    xhci_dci_to_ici(dci)), sc->sc_ctxsz * 1);
 
 	trb.trb_0 = xhci_slot_get_icp(sc, xs, 0);
@@ -1392,7 +1372,7 @@ xhci_configure_endpoint(struct usbd_pipe *pipe)
 	err = xhci_do_command(sc, &trb, USBD_DEFAULT_TIMEOUT);
 
 	usb_syncmem(&xs->xs_dc_dma, 0, sc->sc_pgsz, BUS_DMASYNC_POSTREAD);
-	hexdump("output context", xhci_slot_get_dcv(sc, xs, dci),
+	HEXDUMP("output context", xhci_slot_get_dcv(sc, xs, dci),
 	    sc->sc_ctxsz * 1);
 
 	return err;
@@ -2363,7 +2343,7 @@ xhci_new_device(device_t parent, struct usbd_bus *bus, int depth,
 		usbd_delay_ms(dev, USB_SET_ADDRESS_SETTLE);
 
 		cp = xhci_slot_get_dcv(sc, xs, XHCI_DCI_SLOT);
-		//hexdump("slot context", cp, sc->sc_ctxsz);
+		HEXDUMP("slot context", cp, sc->sc_ctxsz);
 		uint8_t addr = XHCI_SCTX_3_DEV_ADDR_GET(le32toh(cp[3]));
 		DPRINTFN(4, "device address %ju", addr, 0, 0, 0);
 		/*
@@ -2821,7 +2801,7 @@ xhci_update_ep0_mps(struct xhci_softc * const sc,
 
 	/* sync input contexts before they are read from memory */
 	usb_syncmem(&xs->xs_ic_dma, 0, sc->sc_pgsz, BUS_DMASYNC_PREWRITE);
-	hexdump("input context", xhci_slot_get_icv(sc, xs, 0),
+	HEXDUMP("input context", xhci_slot_get_icv(sc, xs, 0),
 	    sc->sc_ctxsz * 4);
 
 	trb.trb_0 = xhci_slot_get_icp(sc, xs, 0);
@@ -2942,7 +2922,7 @@ xhci_set_address(struct usbd_device *dev, uint32_t slot, bool bsr)
 
 	xhci_setup_ctx(dev->ud_pipe0);
 
-	hexdump("input context", xhci_slot_get_icv(sc, xs, 0),
+	HEXDUMP("input context", xhci_slot_get_icv(sc, xs, 0),
 	    sc->sc_ctxsz * 3);
 
 	xhci_set_dcba(sc, DMAADDR(&xs->xs_dc_dma, 0), slot);
@@ -2950,7 +2930,7 @@ xhci_set_address(struct usbd_device *dev, uint32_t slot, bool bsr)
 	err = xhci_address_device(sc, xhci_slot_get_icp(sc, xs, 0), slot, bsr);
 
 	usb_syncmem(&xs->xs_dc_dma, 0, sc->sc_pgsz, BUS_DMASYNC_POSTREAD);
-	hexdump("output context", xhci_slot_get_dcv(sc, xs, 0),
+	HEXDUMP("output context", xhci_slot_get_dcv(sc, xs, 0),
 	    sc->sc_ctxsz * 2);
 
 	return err;

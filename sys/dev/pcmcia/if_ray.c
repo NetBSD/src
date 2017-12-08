@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.86 2017/01/13 14:48:18 maya Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.87 2017/12/08 21:51:07 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.86 2017/01/13 14:48:18 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.87 2017/12/08 21:51:07 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -368,10 +368,6 @@ static struct timeval rtv, tv1, tv2, *ttp, *ltp;
 	printf x ;				\
 	} } while (0)
 
-#define	HEXDF_NOCOMPRESS	0x1
-#define	HEXDF_NOOFFSET		0x2
-#define HEXDF_NOASCII		0x4
-void hexdump(const u_int8_t *, int, int, int, int);
 static void ray_dump_mbuf(struct ray_softc *, struct mbuf *);
 
 #else	/* !RAY_DEBUG */
@@ -1295,7 +1291,7 @@ ray_recv(struct ray_softc *sc, bus_size_t ccs)
 #ifdef RAY_DEBUG
 	/* have a look if you want to see how the card rx works :) */
 	if (ray_debug && ray_debug_dump_desc)
-		hexdump((char *)sc->sc_memh + RAY_RCS_BASE, 0x400, 16, 4, 0);
+		hexdump(__func__, (char *)sc->sc_memh + RAY_RCS_BASE, 0x400);
 #endif
 
 	m = 0;
@@ -1448,7 +1444,7 @@ done:
 			RAY_DPRINTF(("%s: mgt packet not supported\n",
 			    device_xname(sc->sc_dev)));
 #ifdef RAY_DEBUG
-			hexdump((const u_int8_t*)frame, pktlen, 16, 4, 0);
+			hexdump(__func__, (const u_int8_t*)frame, pktlen);
 #endif
 			RAY_DPRINTF(("\n"));
 			break;
@@ -1537,7 +1533,7 @@ ray_recv_auth(struct ray_softc *sc, struct ieee80211_frame *frame)
 		RAY_DPRINTF(("%s: recv auth packet:\n",
 		    device_xname(sc->sc_dev)));
 #ifdef RAY_DEBUG
-		hexdump((const u_int8_t *)frame, sizeof(*frame) + 6, 16, 4, 0);
+		hexdump(__func__, (const u_int8_t *)frame, sizeof(*frame) + 6);
 #endif
 		RAY_DPRINTF(("\n"));
 
@@ -3067,108 +3063,13 @@ ray_write_region(struct ray_softc *sc, bus_size_t off, void *vp, size_t c)
 
 #ifdef RAY_DEBUG
 
-#define PRINTABLE(c) ((c) >= 0x20 && (c) <= 0x7f)
-
-void
-hexdump(const u_int8_t *d, int len, int br, int div, int fl)
-{
-	int i, j, offw, first, tlen, ni, nj, sp;
-
-	sp = br / div;
-	offw = 0;
-	if (len && (fl & HEXDF_NOOFFSET) == 0) {
-		tlen = len;
-		do {
-			offw++;
-		} while (tlen /= br);
-	}
-	if (offw)
-		printf("%0*x: ", offw, 0);
-	for (i = 0; i < len; i++, d++) {
-		if (i && (i % br) == 0) {
-			if ((fl & HEXDF_NOASCII) == 0) {
-				printf("   ");
-				d -= br;
-				for (j = 0; j < br; d++, j++) {
-					if (j && (j % sp) == 0)
-						printf(" ");
-					if (PRINTABLE(*d))
-						printf("%c", (int)*d);
-					else
-						printf(".");
-				}
-			}
-			if (offw)
-				printf("\n%0*x: ", offw, i);
-			else
-				printf("\n");
-			if ((fl & HEXDF_NOCOMPRESS) == 0) {
-				first = 1;
-				while (len - i >= br) {
-					if (memcmp(d, d - br, br))
-						break;
-					d += br;
-					i += br;
-					if (first) {
-						printf("*");
-						first = 0;
-					}
-				}
-				if (len == i) {
-					printf("\n%0*x", offw, i);
-					return;
-				}
-			}
-		} else if (i && (i % sp) == 0)
-			printf(" ");
-		printf("%02x ", *d);
-	}
-	if (len && (((i - 1) % br) || i == 1)) {
-		if ((fl & HEXDF_NOASCII) == 0) {
-			i = i % br ? i % br : br;
-			ni = (br - i) % br;
-			j = (i - 1) / sp;
-			nj = (div - j - 1) % div;
-			j = 3 * ni + nj + 3;
-			printf("%*s", j, "");
-			d -= i;
-			for (j = 0; j < i; d++, j++) {
-				if (j && (j % sp) == 0)
-					printf(" ");
-				if (PRINTABLE(*d))
-					printf("%c", (int)*d);
-				else
-					printf(".");
-			}
-		}
-		printf("\n");
-	}
-}
-
-
-
 static void
 ray_dump_mbuf(struct ray_softc *sc, struct mbuf *m)
 {
-	u_int8_t *d, *ed;
-	u_int i;
-
 	printf("%s: pkt dump:", device_xname(sc->sc_dev));
-	i = 0;
 	for (; m; m = m->m_next) {
-		d = mtod(m, u_int8_t *);
-		ed = d + m->m_len;
-
-		for (; d < ed; i++, d++) {
-			if ((i % 16) == 0)
-				printf("\n\t");
-			else if ((i % 8) == 0)
-				printf("  ");
-			printf(" %02x", *d);
-		}
+		hexdump(NULL, mtod(m, void *), m->m_len);
 	}
-	if ((i - 1) % 16)
-		printf("\n");
 }
 #endif	/* RAY_DEBUG */
 
