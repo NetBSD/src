@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.63 2016/10/31 23:53:12 christos Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.64 2017/12/08 09:24:31 kre Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex.c,v 1.63 2016/10/31 23:53:12 christos Exp $");
+__RCSID("$NetBSD: pthread_mutex.c,v 1.64 2017/12/08 09:24:31 kre Exp $");
 
 #include <sys/types.h>
 #include <sys/lwpctl.h>
@@ -394,8 +394,9 @@ pthread__mutex_lock_slow(pthread_mutex_t *ptm, const struct timespec *ts)
 		 */
 		while (self->pt_mutexwait) {
 			self->pt_blocking++;
-			error = _lwp_park(CLOCK_REALTIME, TIMER_ABSTIME, ts,
-			    self->pt_unpark, __UNVOLATILE(&ptm->ptm_waiters),
+			error = _lwp_park(CLOCK_REALTIME, TIMER_ABSTIME,
+			    __UNCONST(ts), self->pt_unpark,
+			    __UNVOLATILE(&ptm->ptm_waiters),
 			    __UNVOLATILE(&ptm->ptm_waiters));
 			self->pt_unpark = 0;
 			self->pt_blocking--;
