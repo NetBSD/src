@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_compat.c,v 1.4 2017/12/08 09:24:31 kre Exp $	*/
+/*	$NetBSD: pthread_compat.c,v 1.5 2017/12/08 09:41:16 kre Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_compat.c,v 1.4 2017/12/08 09:24:31 kre Exp $");
+__RCSID("$NetBSD: pthread_compat.c,v 1.5 2017/12/08 09:41:16 kre Exp $");
 
 #include <sys/param.h>
 #include <sys/syscall.h>
@@ -89,9 +89,12 @@ _lwp_park(clockid_t a, int b, const struct timespec *c, lwpid_t d,
     const void *e, const void *f)
 {
 
-	struct timespec t = *c;
+	if (c != NULL) {
+		struct timespec t = *c;
 
-	return syscall(SYS____lwp_park60, a, b, &t, d, e, f);
+		return syscall(SYS____lwp_park60, a, b, &t, d, e, f);
+	} else
+		return syscall(SYS____lwp_park60, a, b, NULL, d, e, f);
 }
 
 int
