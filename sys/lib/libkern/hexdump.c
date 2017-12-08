@@ -27,9 +27,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hexdump.c,v 1.2 2017/12/08 23:49:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hexdump.c,v 1.3 2017/12/08 23:57:57 christos Exp $");
 
-#ifndef _KERNEL
+#ifdef DEBUG_HEXDUMP
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
@@ -83,7 +83,7 @@ hexdump(const char *msg, const void *ptr, size_t len)
 	}
 }
 
-#ifndef _KERNEL
+#ifdef DEBUG_HEXDUMP
 int
 main(int argc, char *argv[])
 {
