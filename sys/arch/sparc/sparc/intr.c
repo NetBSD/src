@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.118 2013/11/16 23:54:01 mrg Exp $ */
+/*	$NetBSD: intr.c,v 1.118.22.1 2017/12/08 06:05:15 msaitoh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.118 2013/11/16 23:54:01 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.118.22.1 2017/12/08 06:05:15 msaitoh Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
@@ -75,6 +75,8 @@ static int intr_biglock_wrapper(void *);
 
 void *xcall_cookie;
 #endif
+
+extern kmutex_t xpmsg_mutex;
 
 void	strayintr(struct clockframe *);
 #ifdef DIAGNOSTIC
@@ -241,7 +243,7 @@ nmi_hard(void)
 			DELAY(1);
 			if (n-- > 0)
 				continue;
-			printf("nmi_hard: SMP botch.");
+			printf("nmi_hard: SMP botch.\n");
 			break;
 		}
 	}
@@ -363,6 +365,27 @@ xcallintr(void *v)
 	/* Tally */
 	if (v != xcallintr)
 		cpuinfo.ci_sintrcnt[13].ev_count++;
+
+	if (mutex_owned(&xpmsg_mutex) == 0) {
+		cpuinfo.ci_xpmsg_mutex_not_held.ev_count++;
+#ifdef DEBUG
+		printf("%s: mutex not held\n", __func__);
+#endif
+		cpuinfo.msg.complete = 1;
+		kpreempt_enable();
+		return;
+	}
+
+	if (cpuinfo.msg.complete != 0) {
+		cpuinfo.ci_xpmsg_bogus.ev_count++;
+#ifdef DEBUG
+		volatile struct xpmsg_func *p = &cpuinfo.msg.u.xpmsg_func;
+		printf("%s: bogus message %08x %08x %08x %08x\n", __func__,
+		    cpuinfo.msg.tag, (uint32_t)p->func, p->arg0, p->arg1);
+#endif
+		kpreempt_enable();
+		return;
+	}
 
 	/* notyet - cpuinfo.msg.received = 1; */
 	switch (cpuinfo.msg.tag) {
