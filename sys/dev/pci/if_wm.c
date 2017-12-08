@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.548 2017/12/07 00:38:38 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.549 2017/12/08 05:22:23 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.548 2017/12/07 00:38:38 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.549 2017/12/08 05:22:23 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -5937,7 +5937,7 @@ wm_stop_locked(struct ifnet *ifp, int disable)
 
 	/* Mark the interface as down and cancel the watchdog timer. */
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
-	if_watchdog_stop(ifp);
+	ifp->if_timer = 0;
 
 	if (disable) {
 		for (i = 0; i < sc->sc_nqueues; i++) {
@@ -7373,7 +7373,7 @@ wm_send_common_locked(struct ifnet *ifp, struct wm_txqueue *txq,
 
 	if (txq->txq_free != ofree) {
 		/* Set a watchdog timer in case the chip flakes out. */
-		if_watchdog_reset(ifp, 5);
+		ifp->if_timer = 5;
 	}
 }
 
@@ -7945,7 +7945,7 @@ wm_nq_send_common_locked(struct ifnet *ifp, struct wm_txqueue *txq,
 
 	if (sent) {
 		/* Set a watchdog timer in case the chip flakes out. */
-		if_watchdog_reset(ifp, 5);
+		ifp->if_timer = 5;
 	}
 }
 
@@ -8082,7 +8082,7 @@ wm_txeof(struct wm_softc *sc, struct wm_txqueue *txq)
 	 * timer.
 	 */
 	if (txq->txq_sfree == WM_TXQUEUELEN(txq))
-		if_watchdog_stop(ifp);
+		ifp->if_timer = 0;
 
 	return processed;
 }

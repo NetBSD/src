@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.250 2017/12/08 04:03:51 ozaki-r Exp $	*/
+/*	$NetBSD: if.h,v 1.251 2017/12/08 05:22:23 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -1044,9 +1044,6 @@ if_get_index(const struct ifnet *ifp)
 bool	if_held(struct ifnet *);
 
 void	if_input(struct ifnet *, struct mbuf *);
-
-void	if_watchdog_reset(struct ifnet *, short);
-void	if_watchdog_stop(struct ifnet *);
 
 struct if_percpuq *
 	if_percpuq_create(struct ifnet *);
