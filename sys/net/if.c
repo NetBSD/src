@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.410 2017/12/08 04:03:51 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.411 2017/12/08 05:22:23 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.410 2017/12/08 04:03:51 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.411 2017/12/08 05:22:23 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -771,11 +771,9 @@ if_register(ifnet_t *ifp)
 	rt_ifannouncemsg(ifp, IFAN_ARRIVAL);
 
 	if (ifp->if_slowtimo != NULL) {
-		int flags = ISSET(ifp->if_extflags, IFEF_MPSAFE) ?
-		    CALLOUT_MPSAFE : 0;
 		ifp->if_slowtimo_ch =
 		    kmem_zalloc(sizeof(*ifp->if_slowtimo_ch), KM_SLEEP);
-		callout_init(ifp->if_slowtimo_ch, flags);
+		callout_init(ifp->if_slowtimo_ch, 0);
 		callout_setfunc(ifp->if_slowtimo_ch, if_slowtimo, ifp);
 		if_slowtimo(ifp);
 	}
@@ -2539,18 +2537,6 @@ if_up_locked(struct ifnet *ifp)
 }
 
 /*
- * XXX reusing (ifp)->if_snd->ifq_lock rather than having another spin mutex
- * for each ifnet.  It doesn't matter because:
- * - if IFEF_MPSAFE is enabled, if_snd isn't used and lock contention on
- *   ifq_lock don't happen
- * - if IFEF_MPSAFE is disabled, there is no lock contention on ifq_lock
- *   because if_snd and if_watchdog_reset is used with KERNEL_LOCK on packet
- *   transmissions and if_slowtimo is also called with KERNEL_LOCK
- */
-#define IF_WATCHDOG_LOCK(ifp)	mutex_enter((ifp)->if_snd.ifq_lock)
-#define IF_WATCHDOG_UNLOCK(ifp)	mutex_exit((ifp)->if_snd.ifq_lock)
-
-/*
  * Handle interface slowtimo timer routine.  Called
  * from softclock, we decrement timer (if set) and
  * call the appropriate interface routine on expiration.
@@ -2561,38 +2547,19 @@ if_slowtimo(void *arg)
 	void (*slowtimo)(struct ifnet *);
 	struct ifnet *ifp = arg;
 	int s;
-	bool fire;
 
 	slowtimo = ifp->if_slowtimo;
 	if (__predict_false(slowtimo == NULL))
 		return;
 
 	s = splnet();
-	IF_WATCHDOG_LOCK(ifp);
-	fire = (ifp->if_timer != 0 && --ifp->if_timer == 0);
-	IF_WATCHDOG_UNLOCK(ifp);
-	if (fire)
+	if (ifp->if_timer != 0 && --ifp->if_timer == 0)
 		(*slowtimo)(ifp);
+
 	splx(s);
 
 	if (__predict_true(ifp->if_slowtimo != NULL))
 		callout_schedule(ifp->if_slowtimo_ch, hz / IFNET_SLOWHZ);
-}
-
-void
-if_watchdog_reset(struct ifnet *ifp, short v)
-{
-
-	IF_WATCHDOG_LOCK(ifp);
-	ifp->if_timer = v;
-	IF_WATCHDOG_UNLOCK(ifp);
-}
-
-void
-if_watchdog_stop(struct ifnet *ifp)
-{
-
-	if_watchdog_reset(ifp, 0);
 }
 
 /*
