@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.24 2017/12/07 15:21:34 christos Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.25 2017/12/08 15:54:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,13 +118,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.24 2017/12/07 15:21:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.25 2017/12/08 15:54:40 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
 #include "opt_ktrace.h"
 #include "opt_pax.h"
 #include "opt_compat_netbsd32.h"
+#endif
+
+#if defined(__HAVE_COMPAT_NETBSD32) && !defined(COMPAT_NETBSD32) \
+    && !defined(_RUMPKERNEL)
+#define COMPAT_NETBSD32
 #endif
 
 #include <sys/param.h>
