@@ -1,4 +1,4 @@
-/*	$NetBSD: timevar.h,v 1.36 2016/03/08 05:02:55 christos Exp $	*/
+/*	$NetBSD: timevar.h,v 1.37 2017/12/08 01:19:29 christos Exp $	*/
 
 /*
  *  Copyright (c) 2005, 2008 The NetBSD Foundation.
@@ -151,6 +151,7 @@ void	adjtime1(const struct timeval *, struct timeval *, struct proc *);
 int	clock_getres1(clockid_t, struct timespec *);
 int	clock_gettime1(clockid_t, struct timespec *);
 int	clock_settime1(struct proc *, clockid_t, const struct timespec *, bool);
+void	clock_timeleft(clockid_t, struct timespec *, struct timespec *);
 int	dogetitimer(struct proc *, int, struct itimerval *);
 int	dosetitimer(struct proc *, int, struct itimerval *);
 int	dotimer_gettime(int, struct proc *, struct itimerspec *);
