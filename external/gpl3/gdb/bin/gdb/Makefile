@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2017/11/30 15:26:54 christos Exp $
+#	$NetBSD: Makefile,v 1.14 2017/12/08 14:19:47 rin Exp $
 
 NOCTF=
 .include <bsd.own.mk>
@@ -92,7 +92,9 @@ DPADD+=		${LIBEXPAT} ${LIBLZMA} ${LIBZ} ${LIBCURSES} ${LIBINTL} ${LIBM} ${LIBKVM
 HOST_CC:=       ${HOST_CXX}
 CC:=            ${CXX}
 CFLAGS:=        ${CXXFLAGS} -std=gnu++11 -Wno-error=stack-protector
-
+.if ${ACTIVE_CC} == "clang"
+CFLAGS+=	-Wno-deprecated
+.endif
 
 .PATH: ${DIST}/gdb ${DIST}/gdb/mi ${DIST}/gdb/cli ${DIST}/gdb/tui \
     ${DIST}/gdb/signals ${DIST}/gdb/doc ${.CURDIR}/../arch/${GDB_MACHINE_ARCH}
