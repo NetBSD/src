@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_mod.c,v 1.8 2017/12/01 22:14:52 joerg Exp $	*/
+/*	$NetBSD: linux_mod.c,v 1.9 2017/12/08 15:31:13 kre Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_mod.c,v 1.8 2017/12/01 22:14:52 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_mod.c,v 1.9 2017/12/08 15:31:13 kre Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
@@ -158,7 +158,6 @@ compat_linux_modcmd(modcmd_t cmd, void *arg)
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		linux_enabled = 0;
 		linux_futex_init();
 		linux_sysctl_init();
 		return 0;
