@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.107 2017/12/07 23:13:17 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.108 2017/12/08 21:52:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2017 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.107 2017/12/07 23:13:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.108 2017/12/08 21:52:21 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -152,7 +152,10 @@ int	trap_types = __arraycount(trap_type);
 #define	IDTVEC(name)	__CONCAT(X, name)
 
 #ifdef TRAP_SIGDEBUG
-static void frame_dump(struct trapframe *, struct pcb *);
+static void sigdebug(const struct trapframe *, const ksiginfo_t *, int);
+#define SIGDEBUG(a, b, c) sigdebug(a, b, c)
+#else
+#define SIGDEBUG(a, b, c)
 #endif
 
 static void
@@ -442,11 +445,6 @@ trap(struct trapframe *frame)
 	case T_SEGNPFLT|T_USER:
 	case T_STKFLT|T_USER:
 	case T_ALIGNFLT|T_USER:
-#ifdef TRAP_SIGDEBUG
-		printf("pid %d.%d (%s): BUS/SEGV (%#x) at rip %#lx addr %#lx\n",
-		    p->p_pid, l->l_lid, p->p_comm, type, frame->tf_rip, rcr2());
-		frame_dump(frame, pcb);
-#endif
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_trap = type & ~T_USER;
 		ksi.ksi_addr = (void *)rcr2();
@@ -476,11 +474,6 @@ trap(struct trapframe *frame)
 
 	case T_PRIVINFLT|T_USER:	/* privileged instruction fault */
 	case T_FPOPFLT|T_USER:		/* coprocessor operand fault */
-#ifdef TRAP_SIGDEBUG
-		printf("pid %d.%d (%s): ILL at rip %#lx addr %#lx\n",
-		    p->p_pid, l->l_lid, p->p_comm, frame->tf_rip, rcr2());
-		frame_dump(frame, pcb);
-#endif
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGILL;
 		ksi.ksi_trap = type & ~T_USER;
@@ -721,13 +714,7 @@ faultcommon:
 			break;
 		}
 
-#ifdef TRAP_SIGDEBUG
-		printf("pid %d.%d (%s): signal %d at rip %#lx addr %#lx "
-		    "error %d trap %d cr2 %p\n", p->p_pid, l->l_lid, p->p_comm,
-		    ksi.ksi_signo, frame->tf_rip, va, error, ksi.ksi_trap,
-		    ksi.ksi_addr);
-		frame_dump(frame, pcb);
-#endif
+		SIGDEBUG(frame, &ksi, error);
  		(*p->p_emul->e_trapsignal)(l, &ksi);
 		break;
 	}
@@ -782,6 +769,7 @@ out:
 	userret(l);
 	return;
 trapsignal:
+	SIGDEBUG(frame, &ksi, 0);
 	(*p->p_emul->e_trapsignal)(l, &ksi);
 	userret(l);
 }
@@ -804,36 +792,42 @@ startlwp(void *arg)
 }
 
 #ifdef TRAP_SIGDEBUG
-void
-frame_dump(struct trapframe *tf, struct pcb *pcb)
+static void
+frame_dump(const struct trapframe *tf, struct pcb *pcb)
 {
-	int i;
-	unsigned long *p;
 
 	printf("trapframe %p\n", tf);
-	printf("rip 0x%016lx  rsp 0x%016lx  rfl 0x%016lx\n",
+	printf("rip %#018lx  rsp %#018lx  rfl %#018lx\n",
 	    tf->tf_rip, tf->tf_rsp, tf->tf_rflags);
-	printf("rdi 0x%016lx  rsi 0x%016lx  rdx 0x%016lx\n",
+	printf("rdi %#018lx  rsi %#018lx  rdx %#018lx\n",
 	    tf->tf_rdi, tf->tf_rsi, tf->tf_rdx);
-	printf("rcx 0x%016lx  r8  0x%016lx  r9  0x%016lx\n",
+	printf("rcx %#018lx  r8  %#018lx  r9  %#018lx\n",
 	    tf->tf_rcx, tf->tf_r8, tf->tf_r9);
-	printf("r10 0x%016lx  r11 0x%016lx  r12 0x%016lx\n",
+	printf("r10 %#018lx  r11 %#018lx  r12 %#018lx\n",
 	    tf->tf_r10, tf->tf_r11, tf->tf_r12);
-	printf("r13 0x%016lx  r14 0x%016lx  r15 0x%016lx\n",
+	printf("r13 %#018lx  r14 %#018lx  r15 %#018lx\n",
 	    tf->tf_r13, tf->tf_r14, tf->tf_r15);
-	printf("rbp 0x%016lx  rbx 0x%016lx  rax 0x%016lx\n",
+	printf("rbp %#018lx  rbx %#018lx  rax %#018lx\n",
 	    tf->tf_rbp, tf->tf_rbx, tf->tf_rax);
-	printf("cs 0x%04lx  ds 0x%04lx  es 0x%04lx  "
-	       "fs 0x%04lx  gs 0x%04lx  ss 0x%04lx\n",
-		tf->tf_cs & 0xffff, tf->tf_ds & 0xffff, tf->tf_es & 0xffff,
-		tf->tf_fs & 0xffff, tf->tf_gs & 0xffff, tf->tf_ss & 0xffff);
-	printf("fsbase 0x%016lx gsbase 0x%016lx\n",
-	       pcb->pcb_fs, pcb->pcb_gs);
+	printf("cs %#04lx  ds %#04lx  es %#04lx  "
+	    "fs %#04lx  gs %#04lx  ss %#04lx\n",
+	    tf->tf_cs & 0xffff, tf->tf_ds & 0xffff, tf->tf_es & 0xffff,
+	    tf->tf_fs & 0xffff, tf->tf_gs & 0xffff, tf->tf_ss & 0xffff);
+	printf("fsbase %#018lx gsbase %#018lx\n", pcb->pcb_fs, pcb->pcb_gs);
 	printf("\n");
-	printf("Stack dump:\n");
-	for (i = 0, p = (unsigned long *) tf; i < 20; i ++, p += 4)
-		printf(" 0x%.16lx  0x%.16lx  0x%.16lx  0x%.16lx\n",
-		       p[0], p[1], p[2], p[3]);
-	printf("\n");
+	hexdump("Stack dump", tf, 256);
+}
+
+static void
+sigdebug(const struct trapframe *tf, const ksiginfo_t *ksi, int e)
+{
+	struct lwp *l = curlwp;
+	struct proc *p = l->l_proc;
+
+	printf("pid %d.%d (%s): signal %d (trap %#lx) "
+	    "@rip %#lx addr %#lx error=%d\n",
+	    p->p_pid, l->l_lid, p->p_comm, ksi->ksi_signo, tf->tf_trapno,
+	    tf->tf_rip, rcr2(), e);
+	frame_dump(tf, lwp_getpcb(l));
 }
 #endif
