@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.143 2017/12/06 07:40:16 ozaki-r Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.144 2017/12/08 04:03:51 ozaki-r Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.143 2017/12/06 07:40:16 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.144 2017/12/08 04:03:51 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -772,7 +772,9 @@ bridge_ioctl_add(struct bridge_softc *sc, void *arg)
 		}
 		/* FALLTHROUGH */
 	case IFT_L2TP:
-		error = if_enable_vlan_mtu(ifs);
+		mutex_enter(ifs->if_ioctl_lock);
+		error = ether_enable_vlan_mtu(ifs);
+		mutex_exit(ifs->if_ioctl_lock);
 		if (error > 0)
 			goto out;
 		/*
@@ -854,7 +856,9 @@ bridge_ioctl_del(struct bridge_softc *sc, void *arg)
 		 * Don't call it with holding a spin lock.
 		 */
 		(void) ifpromisc(ifs, 0);
-		(void) if_disable_vlan_mtu(ifs);
+		mutex_enter(ifs->if_ioctl_lock);
+		(void) ether_disable_vlan_mtu(ifs);
+		mutex_exit(ifs->if_ioctl_lock);
 		break;
 	default:
 #ifdef DIAGNOSTIC

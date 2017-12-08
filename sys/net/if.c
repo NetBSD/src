@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.409 2017/12/07 10:05:42 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.410 2017/12/08 04:03:51 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.409 2017/12/07 10:05:42 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.410 2017/12/08 04:03:51 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -3612,30 +3612,6 @@ if_mcast_op(ifnet_t *ifp, const unsigned long cmd, const struct sockaddr *sa)
 	}
 
 	return rc;
-}
-
-int
-if_enable_vlan_mtu(struct ifnet *ifp)
-{
-	int error;
-
-	mutex_enter(ifp->if_ioctl_lock);
-	error= ether_enable_vlan_mtu(ifp);
-	mutex_exit(ifp->if_ioctl_lock);
-
-	return error;
-}
-
-int
-if_disable_vlan_mtu(struct ifnet *ifp)
-{
-	int error;
-
-	mutex_enter(ifp->if_ioctl_lock);
-	error= ether_disable_vlan_mtu(ifp);
-	mutex_exit(ifp->if_ioctl_lock);
-
-	return error;
 }
 
 static void

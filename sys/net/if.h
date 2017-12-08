@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.249 2017/12/06 09:03:12 ozaki-r Exp $	*/
+/*	$NetBSD: if.h,v 1.250 2017/12/08 04:03:51 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -1022,8 +1022,6 @@ int	if_do_dad(struct ifnet *);
 int	if_mcast_op(ifnet_t *, const unsigned long, const struct sockaddr *);
 int	if_flags_set(struct ifnet *, const short);
 int	if_clone_list(int, char *, int *);
-int	if_enable_vlan_mtu(struct ifnet *);
-int	if_disable_vlan_mtu(struct ifnet *);
 
 struct	ifnet *ifunit(const char *);
 struct	ifnet *if_get(const char *, struct psref *);
