@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2017/11/29 22:39:59 christos Exp $
+#	$NetBSD: Makefile,v 1.16 2017/12/08 14:07:58 rin Exp $
 
 NOCTF=
 HOSTPROG_CXX=   1
@@ -6,8 +6,6 @@ HOSTPROG_CXX=   1
 .include <bsd.own.mk>
 
 .include "../Makefile.inc"
-
-
 
 LIBISPRIVATE=	yes
 LIB=		gdb
