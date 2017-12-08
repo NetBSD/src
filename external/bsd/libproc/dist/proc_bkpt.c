@@ -31,7 +31,7 @@
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/lib/libproc/proc_bkpt.c 287106 2015-08-24 12:17:15Z andrew $");
 #else
-__RCSID("$NetBSD: proc_bkpt.c,v 1.4 2015/09/25 19:09:38 christos Exp $");
+__RCSID("$NetBSD: proc_bkpt.c,v 1.5 2017/12/08 13:36:22 rin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -85,7 +85,7 @@ proc_bkptset(struct proc_handle *phdl, uintptr_t address,
 		return (-1);
 	}
 
-	DPRINTFX("adding breakpoint at 0x%lx", address);
+	DPRINTFX("adding breakpoint at 0x%" PRIxPTR, address);
 
 	stopped = 0;
 	if (phdl->status != PS_STOP) {
@@ -105,7 +105,7 @@ proc_bkptset(struct proc_handle *phdl, uintptr_t address,
 	piod.piod_len  = sizeof(saved->data);
 	if (ptrace(PT_IO, proc_getpid(phdl), &piod, 0) < 0) {
 		DPRINTF("ERROR: couldn't read instruction at address 0x%"
-		    PRIuPTR, address);
+		    PRIxPTR, address);
 		ret = -1;
 		goto done;
 	}
@@ -119,7 +119,7 @@ proc_bkptset(struct proc_handle *phdl, uintptr_t address,
 	piod.piod_len  = sizeof(PTRACE_BREAKPOINT);
 	if (ptrace(PT_IO, proc_getpid(phdl), &piod, 0) < 0) {
 		DPRINTF("ERROR: couldn't write instruction at address 0x%"
-		    PRIuPTR, address);
+		    PRIxPTR, address);
 		ret = -1;
 		goto done;
 	}
@@ -146,7 +146,7 @@ proc_bkptdel(struct proc_handle *phdl, uintptr_t address,
 		return (-1);
 	}
 
-	DPRINTFX("removing breakpoint at 0x%lx", address);
+	DPRINTFX("removing breakpoint at 0x%" PRIxPTR, address);
 
 	stopped = 0;
 	if (phdl->status != PS_STOP) {
@@ -165,7 +165,7 @@ proc_bkptdel(struct proc_handle *phdl, uintptr_t address,
 	piod.piod_len  = sizeof(saved->data);
 	if (ptrace(PT_IO, proc_getpid(phdl), &piod, 0) < 0) {
 		DPRINTF("ERROR: couldn't write instruction at address 0x%"
-		    PRIuPTR, address);
+		    PRIxPTR, address);
 		ret = -1;
 	}
 
