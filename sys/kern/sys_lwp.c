@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.61 2017/06/01 02:45:13 chs Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.62 2017/12/08 01:19:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.61 2017/06/01 02:45:13 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.62 2017/12/08 01:19:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -542,10 +542,13 @@ lwp_park(clockid_t clock_id, int flags, struct timespec *ts, const void *hint)
 	kmutex_t *mp;
 	wchan_t wchan;
 	int timo, error;
+	struct timespec start;
 	lwp_t *l;
+	bool timeremain = !(flags & TIMER_ABSTIME) && ts;
 
 	if (ts != NULL) {
-		if ((error = ts2timo(clock_id, flags, ts, &timo, NULL)) != 0)
+		if ((error = ts2timo(clock_id, flags, ts, &timo, 
+		    timeremain ? &start : NULL)) != 0)
 			return error;
 		KASSERT(timo != 0);
 	} else {
@@ -575,12 +578,15 @@ lwp_park(clockid_t clock_id, int flags, struct timespec *ts, const void *hint)
 	switch (error) {
 	case EWOULDBLOCK:
 		error = ETIMEDOUT;
+		if (timeremain)
+			memset(ts, 0, sizeof(*ts));
 		break;
 	case ERESTART:
 		error = EINTR;
-		break;
+		/*FALLTHROUGH*/
 	default:
-		/* nothing */
+		if (timeremain)
+			clock_timeleft(clock_id, ts, &start);
 		break;
 	}
 	return error;
@@ -598,7 +604,7 @@ sys____lwp_park60(struct lwp *l, const struct sys____lwp_park60_args *uap,
 	/* {
 		syscallarg(clockid_t)			clock_id;
 		syscallarg(int)				flags;
-		syscallarg(const struct timespec *)	ts;
+		syscallarg(struct timespec *)		ts;
 		syscallarg(lwpid_t)			unpark;
 		syscallarg(const void *)		hint;
 		syscallarg(const void *)		unparkhint;
@@ -621,8 +627,11 @@ sys____lwp_park60(struct lwp *l, const struct sys____lwp_park60_args *uap,
 			return error;
 	}
 
-	return lwp_park(SCARG(uap, clock_id), SCARG(uap, flags), tsp,
+	error = lwp_park(SCARG(uap, clock_id), SCARG(uap, flags), tsp,
 	    SCARG(uap, hint));
+	if (SCARG(uap, ts) != NULL && (SCARG(uap, flags) & TIMER_ABSTIME) == 0)
+		(void)copyout(tsp, SCARG(uap, ts), sizeof(*tsp));
+	return error;
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_time.c,v 1.19 2017/01/05 23:29:14 pgoyette Exp $	*/
+/*	$NetBSD: subr_time.c,v 1.20 2017/12/08 01:19:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_time.c,v 1.19 2017/01/05 23:29:14 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_time.c,v 1.20 2017/12/08 01:19:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -225,6 +225,17 @@ gettimeleft(struct timespec *ts, struct timespec *sleepts)
 	*sleepts = sleptts;
 
 	return tstohz(ts);
+}
+
+void
+clock_timeleft(clockid_t clockid, struct timespec *ts, struct timespec *sleepts)
+{
+	struct timespec sleptts;
+
+	clock_gettime1(clockid, &sleptts);
+	timespecadd(ts, sleepts, ts);
+	timespecsub(ts, &sleptts, ts);
+	*sleepts = sleptts;
 }
 
 static void
