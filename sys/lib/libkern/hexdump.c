@@ -27,43 +27,67 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hexdump.c,v 1.1 2017/12/08 21:51:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hexdump.c,v 1.2 2017/12/08 23:49:01 christos Exp $");
 
+#ifndef _KERNEL
+#include <stdio.h>
+#include <ctype.h>
+#include <string.h>
+#include <stdlib.h>
+static const char hexdigits[] = "0123456789abcdef";
+#else
 #include <lib/libkern/libkern.h>
 #include <sys/systm.h>
+#endif
+
+#define MID (3 * 8)
+#define BAR ((3 * 16) + 1)
+#define ASC (BAR + 2)
+#define NL (BAR + 18)
 
 void
 hexdump(const char *msg, const void *ptr, size_t len)
 {
-	size_t i;
+	size_t i, p, q;
 	const unsigned char *u = ptr;
+	char buf[NL + 2];
 
 	if (msg)
 		printf("%s: %zu bytes @ %p\n", msg, len, ptr);
-        for (i = 0; i < len; ) {
-                printf("%02x ", u[i++]);
-                if (!(i & 0x7))
-                        printf(" ");
-                if (!(i & 0xf)) {
-                        printf("| ");
-                        for (size_t j = i - 16; j < i; j++) {
-				unsigned char c = u[j];
-                                printf("%c", isprint(c) ? c : '.');
-			}
-                        printf("\n");
-                }
-        }
-	if ((i = (len & 0xf)) != 0) {
-                for (size_t j = 16 - i; j > 0; j--) {
-                        printf("   ");
-                        if (!(j & 0x7) && i != 8)
-                                printf(" ");
-                }
-                printf(" | ");
-                for (size_t j = len - i; j < len; j++) {
-			unsigned char c = u[j];
-			printf("%c", isprint(c) ? c : '.');
+
+	buf[BAR] = '|';
+	buf[BAR + 1] = ' ';
+	buf[NL] = '\n';
+	buf[NL + 1] = '\0';
+	memset(buf, ' ', BAR);
+        for (q = p = i = 0; i < len; i++) {
+		unsigned char c = u[i];
+		buf[p++] = hexdigits[(c >> 4) & 0xf];
+		buf[p++] = hexdigits[(c >> 0) & 0xf];
+		buf[p++] = ' ';
+                if (q == 7)
+		       buf[p++] = ' ';
+
+		buf[ASC + q++] = isprint(c) ? c : '.';
+
+		if (q == 16) {
+			q = p = 0;
+			printf("%s", buf);
+			memset(buf, ' ', BAR);
 		}
-		printf("\n");
         }
+	if (q) {
+		buf[ASC + q++] = '\n';
+		buf[ASC + q] = '\0';
+		printf("%s", buf);
+	}
 }
+
+#ifndef _KERNEL
+int
+main(int argc, char *argv[])
+{
+	hexdump("foo", main, atoi(argv[1]));
+	return 0;
+}
+#endif
