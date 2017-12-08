@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2017/12/08 14:10:29 rin Exp $
+#	$NetBSD: Makefile,v 1.18 2017/12/08 14:19:47 rin Exp $
 
 NOCTF=
 HOSTPROG_CXX=   1
@@ -58,6 +58,9 @@ CWARNFLAGS.clang+=	-Wno-switch
 HOST_CC:=       ${HOST_CXX}
 CC:=            ${CXX}
 CFLAGS:=        ${CXXFLAGS} -std=gnu++11 -Wno-error=stack-protector
+.if ${ACTIVE_CC} == "clang"
+CFLAGS+=	-Wno-deprecated
+.endif
 
 .PATH: ${DIST}/gdb ${DIST}/gdb/arch ${DIST}/gdb/mi ${DIST}/gdb/cli  \
     ${DIST}/gdb/tui ${DIST}/gdb/python ${DIST}/gdb/common ${DIST}/gdb/target \
