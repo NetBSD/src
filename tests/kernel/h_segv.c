@@ -1,4 +1,4 @@
-/*	$NetBSD: h_segv.c,v 1.1 2017/12/07 19:46:40 christos Exp $	*/
+/*	$NetBSD: h_segv.c,v 1.2 2017/12/08 14:40:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: h_segv.c,v 1.1 2017/12/07 19:46:40 christos Exp $");
+__RCSID("$NetBSD: h_segv.c,v 1.2 2017/12/08 14:40:45 christos Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -69,7 +69,7 @@ foo(int s)
 static __dead void
 usage(void)
 {
-	fprintf(stderr, "Usage: %s recurse|mask|unhandle ...\n", getprogname());
+	fprintf(stderr, "Usage: %s recurse|mask|handle ...\n", getprogname());
 	exit(EXIT_FAILURE);
 }
 
