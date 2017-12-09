@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.25 2017/12/08 15:54:40 christos Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.26 2017/12/09 05:18:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.25 2017/12/08 15:54:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.26 2017/12/09 05:18:45 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -1378,7 +1378,7 @@ process_doregs(struct lwp *curl /*tracer*/,
 	const bool pk32 = (l->l_proc->p_flag & PK_32) != 0;
 
 	if (__predict_false(pk32)) {
-		s = sizeof(struct reg32);
+		s = sizeof(process_reg32);
 		r = (regfunc_t)process_read_regs32;
 		w = (regfunc_t)process_write_regs32;
 	} else
@@ -1418,7 +1418,7 @@ process_dofpregs(struct lwp *curl /*tracer*/,
 	const bool pk32 = (l->l_proc->p_flag & PK_32) != 0;
 
 	if (__predict_false(pk32)) {
-		s = sizeof(struct fpreg32);
+		s = sizeof(process_fpreg32);
 		r = (regfunc_t)process_read_fpregs32;
 		w = (regfunc_t)process_write_fpregs32;
 	} else
@@ -1458,7 +1458,7 @@ process_dodbregs(struct lwp *curl /*tracer*/,
 	const bool pk32 = (l->l_proc->p_flag & PK_32) != 0;
 
 	if (__predict_false(pk32)) {
-		s = sizeof(struct dbreg32);
+		s = sizeof(process_dbreg32);
 		r = (regfunc_t)process_read_dbregs32;
 		w = (regfunc_t)process_write_dbregs32;
 	} else
