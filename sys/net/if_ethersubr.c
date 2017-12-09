@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.249 2017/12/09 10:19:42 maxv Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.250 2017/12/09 10:51:30 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.249 2017/12/09 10:19:42 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.250 2017/12/09 10:51:30 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -192,7 +192,7 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 {
 	uint16_t etype = 0;
 	int error = 0, hdrcmplt = 0;
- 	uint8_t esrc[6], edst[6];
+	uint8_t esrc[6], edst[6];
 	struct mbuf *m = m0;
 	struct mbuf *mcopy = NULL;
 	struct ether_header *eh;
@@ -301,7 +301,7 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 		break;
 #endif
 #ifdef NETATALK
-    case AF_APPLETALK: {
+	case AF_APPLETALK: {
 		struct ifaddr *ifa;
 		int s;
 
@@ -347,7 +347,7 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 		pserialize_read_exit(s);
 		KERNEL_UNLOCK_ONE(NULL);
 		break;
-	    }
+	}
 #endif /* NETATALK */
 	case pseudo_AF_HDRCMPLT:
 		hdrcmplt = 1;
@@ -357,7 +357,7 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 		/* FALLTHROUGH */
 
 	case AF_UNSPEC:
- 		memcpy(edst,
+		memcpy(edst,
 		    ((const struct ether_header *)dst->sa_data)->ether_dhost,
 		    sizeof(edst));
 		/* AF_UNSPEC doesn't swap the byte order of the ether_type. */
@@ -401,7 +401,7 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 	eh = mtod(m, struct ether_header *);
 	/* Note: etype is already in network byte order. */
 	(void)memcpy(&eh->ether_type, &etype, sizeof(eh->ether_type));
- 	memcpy(eh->ether_dhost, edst, sizeof(edst));
+	memcpy(eh->ether_dhost, edst, sizeof(edst));
 	if (hdrcmplt)
 		memcpy(eh->ether_shost, esrc, sizeof(eh->ether_shost));
 	else
@@ -538,7 +538,7 @@ altq_etherclassify(struct ifaltq *ifq, struct mbuf *m)
 
 	return;
 
- bad:
+bad:
 	m->m_pkthdr.pattr_class = NULL;
 	m->m_pkthdr.pattr_hdr = NULL;
 	m->m_pkthdr.pattr_af = AF_UNSPEC;
@@ -579,7 +579,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	etype = ntohs(eh->ether_type);
 	ehlen = sizeof(*eh);
 
-	if(__predict_false(earlypkts < 100 || !rnd_initial_entropy)) {
+	if (__predict_false(earlypkts < 100 || !rnd_initial_entropy)) {
 		rnd_add_data(NULL, eh, ehlen, 0);
 		earlypkts++;
 	}
@@ -640,6 +640,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 			return;
 	}
 #endif /* NCARP > 0 */
+
 	if ((m->m_flags & (M_BCAST | M_MCAST | M_PROMISC)) == 0 &&
 	    (ifp->if_flags & IFF_PROMISC) != 0 &&
 	    memcmp(CLLADDR(ifp->if_sadl), eh->ether_dhost,
@@ -695,7 +696,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 		/*
 		 * If there is a tag of 0, then the VLAN header was probably
 		 * just being used to store the priority.  Extract the ether
-		 * type, and if IP or IPV6, let them deal with it. 
+		 * type, and if IP or IPV6, let them deal with it.
 		 */
 		if (m->m_len <= sizeof(*evl)
 		    && EVL_VLANOFTAG(evl->evl_tag) == 0) {
@@ -804,7 +805,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 				m_freem(m);
 				return;
 			}
-#ifdef GATEWAY  
+#ifdef GATEWAY
 			if (ip6flow_fastforward(&m))
 				return;
 #endif
@@ -878,10 +879,10 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 			m_freem(m);
 			return;
 		}
-#else /* ISO || LLC || NETATALK*/
+#else /* LLC || NETATALK */
 		m_freem(m);
 		return;
-#endif /* ISO || LLC || NETATALK*/
+#endif /* LLC || NETATALK */
 	}
 
 	if (__predict_true(pktq)) {
@@ -1113,7 +1114,7 @@ const uint8_t ether_ip6multicast_max[ETHER_ADDR_LEN] =
 int
 ether_aton_r(u_char *dest, size_t len, const char *str)
 {
-        const u_char *cp = (const void *)str;
+	const u_char *cp = (const void *)str;
 	u_char *ep;
 
 #define atox(c)	(((c) <= '9') ? ((c) - '0') : ((toupper(c) - 'A') + 10))
@@ -1122,18 +1123,19 @@ ether_aton_r(u_char *dest, size_t len, const char *str)
 		return ENOSPC;
 
 	ep = dest + ETHER_ADDR_LEN;
-	 
+
 	while (*cp) {
-                if (!isxdigit(*cp))
-                        return EINVAL;
+		if (!isxdigit(*cp))
+			return EINVAL;
 		*dest = atox(*cp);
 		cp++;
-                if (isxdigit(*cp)) {
-                        *dest = (*dest << 4) | atox(*cp);
+		if (isxdigit(*cp)) {
+			*dest = (*dest << 4) | atox(*cp);
 			dest++;
 			cp++;
-                } else
+		} else {
 			dest++;
+		}
 		if (dest == ep)
 			return *cp == '\0' ? 0 : ENAMETOOLONG;
 		switch (*cp) {
@@ -1143,7 +1145,7 @@ ether_aton_r(u_char *dest, size_t len, const char *str)
 			cp++;
 			break;
 		}
-        }
+	}
 	return ENOBUFS;
 }
 
@@ -1501,7 +1503,7 @@ ether_disable_vlan_mtu(struct ifnet *ifp)
 	 * Disable Tx/Rx of VLAN-sized frames.
 	 */
 	ec->ec_capenable &= ~ETHERCAP_VLAN_MTU;
-	
+
 	/* Interface is down, defer for later */
 	if ((ifp->if_flags & IFF_UP) == 0)
 		return 0;
