@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.66 2017/01/27 17:22:16 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.67 2017/12/09 03:22:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,16 +41,21 @@
 #include <sys/featuretest.h>
 #include <mips/int_types.h>
 
-typedef	unsigned int	__cpu_simple_lock_nv_t;
+typedef __int32_t		__register32_t;
+typedef __int64_t		__register64_t;
+typedef __uint32_t		__fpregister32_t;
+typedef __uint64_t		__fpregister64_t;
+
+typedef	unsigned int		__cpu_simple_lock_nv_t;
 #if defined(__mips_o32)
-typedef __int32_t	__register_t;
+typedef __register32_t		__register_t;
 #else
-typedef __int64_t	__register_t;
+typedef __register64_t		__register_t;
 #endif
 #if defined(__mips_o64) || defined(__mips_o32)
-typedef	__uint32_t	__fpregister_t;
+typedef	__fpregister32_t	__fpregister_t;
 #else
-typedef	__uint64_t	__fpregister_t;
+typedef	__fpregister64_t	__fpregister_t;
 #endif
 
 /*
