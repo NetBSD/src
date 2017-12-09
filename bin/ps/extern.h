@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.38 2016/12/02 21:59:03 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.39 2017/12/09 14:56:54 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -93,7 +93,7 @@ void	 tdev(struct pinfo *, VARENT *, enum mode);
 void	 tname(struct pinfo *, VARENT *, enum mode);
 void	 tsize(struct pinfo *, VARENT *, enum mode);
 void	 ucomm(struct pinfo *, VARENT *, enum mode);
-void	 uname(struct pinfo *, VARENT *, enum mode);
+void	 usrname(struct pinfo *, VARENT *, enum mode);
 void	 uvar(struct pinfo *, VARENT *, enum mode);
 void	 vsize(struct pinfo *, VARENT *, enum mode);
 void	 wchan(struct pinfo *, VARENT *, enum mode);
