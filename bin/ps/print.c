@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.127 2016/12/12 20:35:36 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.128 2017/12/09 14:56:54 kamil Exp $	*/
 
 /*
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.127 2016/12/12 20:35:36 christos Exp $");
+__RCSID("$NetBSD: print.c,v 1.128 2017/12/09 14:56:54 kamil Exp $");
 #endif
 #endif /* not lint */
 
@@ -629,7 +629,7 @@ pri(struct pinfo *pi, VARENT *ve, enum mode mode)
 }
 
 void
-uname(struct pinfo *pi, VARENT *ve, enum mode mode)
+usrname(struct pinfo *pi, VARENT *ve, enum mode mode)
 {
 	struct kinfo_proc2 *k = pi->ki;
 	VAR *v;
