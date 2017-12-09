@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2017/11/15 00:48:42 jmcneill Exp $
+# $NetBSD: Makefile,v 1.6 2017/12/09 22:42:17 pgoyette Exp $
 
 .include "../Makefile.inc"
 
@@ -13,5 +13,9 @@ SRCS+=	hamming.c
 SRCS+=	nand_micron.c
 SRCS+=	nand_samsung.c
 SRCS+=	nand_toshiba.c
+
+.PATH:	${S}/dev/flash
+
+SRCS+=	flash_mtdparts.c
 
 .include <bsd.kmodule.mk>
