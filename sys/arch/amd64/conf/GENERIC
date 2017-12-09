@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.473 2017/12/05 21:00:26 dholland Exp $
+# $NetBSD: GENERIC,v 1.474 2017/12/09 00:29:32 riastradh Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.473 $"
+#ident		"GENERIC-$Revision: 1.474 $"
 
 maxusers	64		# estimated number of users
 
@@ -395,6 +395,7 @@ wsdisplay*	at vga? console ?
 wsdisplay*	at wsemuldisplaydev?
 wskbd*		at pckbd? console ?
 wsmouse*	at pms? mux 0
+wsmouse*	at wsmousedev?
 
 attimer0	at isa?
 pcppi0		at isa?
