@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.108 2017/12/08 21:52:21 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.109 2017/12/09 00:52:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2017 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.108 2017/12/08 21:52:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.109 2017/12/09 00:52:41 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -815,7 +815,7 @@ frame_dump(const struct trapframe *tf, struct pcb *pcb)
 	    tf->tf_fs & 0xffff, tf->tf_gs & 0xffff, tf->tf_ss & 0xffff);
 	printf("fsbase %#018lx gsbase %#018lx\n", pcb->pcb_fs, pcb->pcb_gs);
 	printf("\n");
-	hexdump("Stack dump", tf, 256);
+	hexdump(printf, "Stack dump", tf, 256);
 }
 
 static void
