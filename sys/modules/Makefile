@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.195 2017/08/11 12:58:14 maxv Exp $
+#	$NetBSD: Makefile,v 1.196 2017/12/09 08:03:07 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -70,6 +70,7 @@ SUBDIR+=	if_strip
 SUBDIR+=	if_tun tun
 SUBDIR+=	if_vlan
 SUBDIR+=	iic
+SUBDIR+=	ip_ecn
 SUBDIR+=	ipl
 SUBDIR+=	kernfs
 SUBDIR+=	layerfs

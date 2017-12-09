@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.135 2017/12/06 08:23:17 knakahara Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.136 2017/12/09 08:03:06 pgoyette Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.135 2017/12/06 08:23:17 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.136 2017/12/09 08:03:06 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1187,4 +1187,4 @@ gif_update_variant(struct gif_softc *sc, struct gif_variant *nvar)
  */
 #include "if_module.h"
 
-IF_MODULE(MODULE_CLASS_DRIVER, gif, "")
+IF_MODULE(MODULE_CLASS_DRIVER, gif, "ip_ecn")
