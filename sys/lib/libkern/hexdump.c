@@ -27,15 +27,17 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hexdump.c,v 1.3 2017/12/08 23:57:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hexdump.c,v 1.4 2017/12/09 00:51:52 christos Exp $");
 
 #ifdef DEBUG_HEXDUMP
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
 #include <stdlib.h>
+#define RET int
 static const char hexdigits[] = "0123456789abcdef";
 #else
+#define RET void
 #include <lib/libkern/libkern.h>
 #include <sys/systm.h>
 #endif
@@ -46,20 +48,20 @@ static const char hexdigits[] = "0123456789abcdef";
 #define NL (BAR + 18)
 
 void
-hexdump(const char *msg, const void *ptr, size_t len)
+hexdump(RET (*pr)(const char *, ...) __printflike(1, 2), const char *msg,
+    const void *ptr, size_t len)
 {
 	size_t i, p, q;
 	const unsigned char *u = ptr;
 	char buf[NL + 2];
 
 	if (msg)
-		printf("%s: %zu bytes @ %p\n", msg, len, ptr);
+		(*pr)("%s: %zu bytes @ %p\n", msg, len, ptr);
 
 	buf[BAR] = '|';
 	buf[BAR + 1] = ' ';
 	buf[NL] = '\n';
 	buf[NL + 1] = '\0';
-	memset(buf, ' ', BAR);
         for (q = p = i = 0; i < len; i++) {
 		unsigned char c = u[i];
 		buf[p++] = hexdigits[(c >> 4) & 0xf];
@@ -72,14 +74,15 @@ hexdump(const char *msg, const void *ptr, size_t len)
 
 		if (q == 16) {
 			q = p = 0;
-			printf("%s", buf);
-			memset(buf, ' ', BAR);
+			(*pr)("%s", buf);
 		}
         }
 	if (q) {
+		while (p < BAR)
+			buf[p++] = ' ';
 		buf[ASC + q++] = '\n';
 		buf[ASC + q] = '\0';
-		printf("%s", buf);
+		(*pr)("%s", buf);
 	}
 }
 
@@ -87,7 +90,7 @@ hexdump(const char *msg, const void *ptr, size_t len)
 int
 main(int argc, char *argv[])
 {
-	hexdump("foo", main, atoi(argv[1]));
+	hexdump(printf, "foo", main, atoi(argv[1]));
 	return 0;
 }
 #endif
