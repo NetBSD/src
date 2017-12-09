@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1172 2017/11/30 11:56:45 jmcneill Exp $
+# $NetBSD: GENERIC,v 1.1173 2017/12/09 00:29:33 riastradh Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.1172 $"
+#ident		"GENERIC-$Revision: 1.1173 $"
 
 maxusers	64		# estimated number of users
 
@@ -536,6 +536,7 @@ wsdisplay*	at wsemuldisplaydev?
 #wsdisplay*	at machfb? console ?
 wskbd*		at pckbd? console ?
 wsmouse*	at pms? mux 0
+wsmouse*	at wsmousedev?
 
 # VIA Unichrome framebuffer console
 #unichromefb*	at pci? dev ? function ?
