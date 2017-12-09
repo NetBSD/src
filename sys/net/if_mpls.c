@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mpls.c,v 1.31 2017/12/08 17:49:54 maxv Exp $ */
+/*	$NetBSD: if_mpls.c,v 1.32 2017/12/09 10:30:30 maxv Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.31 2017/12/08 17:49:54 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.32 2017/12/09 10:30:30 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -360,6 +360,12 @@ mpls_lse(struct mbuf *m)
 	uint psize = sizeof(struct sockaddr_mpls);
 	bool push_back_alert = false;
 
+	/* If we're not accepting MPLS frames, leave now. */
+	if (!mpls_frame_accept) {
+		error = EINVAL;
+		goto done;
+	}
+
 	if (m->m_len < sizeof(union mpls_shim) &&
 	    (m = m_pullup(m, sizeof(union mpls_shim))) == NULL)
 		goto done;
@@ -368,10 +374,7 @@ mpls_lse(struct mbuf *m)
 	dst.smpls_family = AF_MPLS;
 	dst.smpls_addr.s_addr = ntohl(mtod(m, union mpls_shim *)->s_addr);
 
-	/* Check if we're accepting MPLS Frames */
 	error = EINVAL;
-	if (!mpls_frame_accept)
-		goto done;
 
 	/* TTL decrement */
 	if ((m = mpls_ttl_dec(m)) == NULL)
