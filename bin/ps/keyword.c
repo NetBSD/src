@@ -1,4 +1,4 @@
-/*	$NetBSD: keyword.c,v 1.54 2014/01/15 08:07:53 mlelstv Exp $	*/
+/*	$NetBSD: keyword.c,v 1.55 2017/12/09 14:56:54 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)keyword.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: keyword.c,v 1.54 2014/01/15 08:07:53 mlelstv Exp $");
+__RCSID("$NetBSD: keyword.c,v 1.55 2017/12/09 14:56:54 kamil Exp $");
 #endif
 #endif /* not lint */
 
@@ -126,7 +126,7 @@ VAR var[] = {
 	VAR4("emul", "EMUL", LJUST, emul),
 	VAR6("etime", "ELAPSED", 0, elapsed, POFF(p_ustart_sec), TIMEVAL),
 	UID("euid", "EUID", p_uid),
-	VAR4("euser", "EUSER", LJUST, uname),
+	VAR4("euser", "EUSER", LJUST, usrname),
 	PVAR("f", "F", 0, p_flag, INT, "x"),
 	VAR3("flags", "f", ALIAS),
 	GID("gid", "GID", p_gid),
@@ -213,7 +213,7 @@ VAR var[] = {
 	VAR4("ucomm", "UCOMM", LJUST, ucomm),
 	UID("uid", "UID", p_uid),
 	LVAR("upr", "UPR", 0, l_usrpri, UCHAR, "u"),
-	VAR4("user", "USER", LJUST, uname),
+	VAR4("user", "USER", LJUST, usrname),
 	VAR3("usrpri", "upr", ALIAS),
 	VAR6("utime", "UTIME", 0, putimeval, POFF(p_uutime_sec), TIMEVAL),
 	VAR3("vsize", "vsz", ALIAS),
