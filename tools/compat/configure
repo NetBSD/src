@@ -4520,6 +4520,19 @@ fi
 cat >>confdefs.h <<_ACEOF
 #define HAVE_DECL_ASPRINTF $ac_have_decl
 _ACEOF
+ac_fn_c_check_decl "$LINENO" "asnprintf" "ac_cv_have_decl_asnprintf" "
+#include <stdio.h>
+
+"
+if test "x$ac_cv_have_decl_asnprintf" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_ASNPRINTF $ac_have_decl
+_ACEOF
 ac_fn_c_check_decl "$LINENO" "vasprintf" "ac_cv_have_decl_vasprintf" "
 #include <stdio.h>
 
@@ -4999,6 +5012,8 @@ else
 # ifdef _MSC_VER
 #  include <malloc.h>
 #  define alloca _alloca
+# elif defined(__NetBSD__) || defined(__FreeBSD__) || defined(__DragonFly__) || defined(__OpenBSD__)
+#   include <stdlib.h>
 # else
 #  ifdef HAVE_ALLOCA_H
 #   include <alloca.h>
