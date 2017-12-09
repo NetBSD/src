@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.79 2017/12/08 21:51:07 christos Exp $	*/
+/*	$NetBSD: xhci.c,v 1.80 2017/12/09 00:54:31 christos Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.79 2017/12/08 21:51:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.80 2017/12/09 00:54:31 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -76,7 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.79 2017/12/08 21:51:07 christos Exp $");
 #define HEXDUMP(a, b, c) \
     do { \
 	    if (xhcidebug > 0) \
-		    hexdump(a, b, c); \
+		    hexdump(printf, a, b, c); \
     } while (/*CONSTCOND*/0)
 static int xhcidebug = 0;
 
