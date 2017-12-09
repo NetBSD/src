@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.87 2017/12/08 21:51:07 christos Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.88 2017/12/09 00:53:55 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.87 2017/12/08 21:51:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.88 2017/12/09 00:53:55 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -1291,7 +1291,8 @@ ray_recv(struct ray_softc *sc, bus_size_t ccs)
 #ifdef RAY_DEBUG
 	/* have a look if you want to see how the card rx works :) */
 	if (ray_debug && ray_debug_dump_desc)
-		hexdump(__func__, (char *)sc->sc_memh + RAY_RCS_BASE, 0x400);
+		hexdump(printf, __func__, (char *)sc->sc_memh + RAY_RCS_BASE,
+		    0x400);
 #endif
 
 	m = 0;
@@ -1444,7 +1445,7 @@ done:
 			RAY_DPRINTF(("%s: mgt packet not supported\n",
 			    device_xname(sc->sc_dev)));
 #ifdef RAY_DEBUG
-			hexdump(__func__, (const u_int8_t*)frame, pktlen);
+			hexdump(printf, __func__, frame, pktlen);
 #endif
 			RAY_DPRINTF(("\n"));
 			break;
@@ -1533,7 +1534,7 @@ ray_recv_auth(struct ray_softc *sc, struct ieee80211_frame *frame)
 		RAY_DPRINTF(("%s: recv auth packet:\n",
 		    device_xname(sc->sc_dev)));
 #ifdef RAY_DEBUG
-		hexdump(__func__, (const u_int8_t *)frame, sizeof(*frame) + 6);
+		hexdump(printf, __func__, frame, sizeof(*frame) + 6);
 #endif
 		RAY_DPRINTF(("\n"));
 
@@ -3068,7 +3069,7 @@ ray_dump_mbuf(struct ray_softc *sc, struct mbuf *m)
 {
 	printf("%s: pkt dump:", device_xname(sc->sc_dev));
 	for (; m; m = m->m_next) {
-		hexdump(NULL, mtod(m, void *), m->m_len);
+		hexdump(printf, NULL, mtod(m, void *), m->m_len);
 	}
 }
 #endif	/* RAY_DEBUG */
