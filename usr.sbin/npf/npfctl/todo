@@ -1,7 +1,11 @@
 -- how to convert other packet filters to npf
 -- have a way to use npflog to log packets to syslog
+   We have npfd that logs to a file
 -- have a way to match dropped packets to rules
+   We keep this information now and we pass it to nplog using the OpenBSD
+   pflog format.
 -- have a way to list the active nat sessions
+   Use "npfctl list"
 -- npfctl start does not load the configuration if not loaded.
    It is not clear you need to reload first. Or if it loads it should
    print the error messages. Or it should be called enable/disable since
