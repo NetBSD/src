@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.89 2017/09/26 07:42:06 knakahara Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.90 2017/12/10 08:48:15 maxv Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.81 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.89 2017/09/26 07:42:06 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.90 2017/12/10 08:48:15 maxv Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -358,6 +358,8 @@ ieee80211_input(struct ieee80211com *ic, struct mbuf *m,
 			ic->ic_stats.is_rx_tooshort++;
 			goto out;		/* XXX */
 		}
+		wh = mtod(m, struct ieee80211_frame *);
+
 		switch (ic->ic_opmode) {
 		case IEEE80211_M_STA:
 			if (dir != IEEE80211_FC1_DIR_FROMDS) {
