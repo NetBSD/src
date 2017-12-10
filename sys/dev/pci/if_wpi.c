@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wpi.c,v 1.78 2017/05/23 02:19:14 ozaki-r Exp $	*/
+/*	$NetBSD: if_wpi.c,v 1.78.2.1 2017/12/10 10:10:24 snj Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.78 2017/05/23 02:19:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.78.2.1 2017/12/10 10:10:24 snj Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -366,7 +366,12 @@ wpi_attach(device_t parent __unused, device_t self, void *aux)
 	IFQ_SET_READY(&ifp->if_snd);
 	memcpy(ifp->if_xname, device_xname(self), IFNAMSIZ);
 
-	if_initialize(ifp);
+	error = if_initialize(ifp);
+	if (error != 0) {
+		aprint_error_dev(sc->sc_dev, "if_initialize failed(%d)\n",
+		    error);
+		goto fail5;
+	}
 	ieee80211_ifattach(ic);
 	/* Use common softint-based if_input */
 	ifp->if_percpuq = if_percpuq_create(ifp);
@@ -409,6 +414,7 @@ wpi_attach(device_t parent __unused, device_t self, void *aux)
 	return;
 
 	/* free allocated memory if something failed during attachment */
+fail5:	wpi_free_rx_ring(sc, &sc->rxq);
 fail4:	wpi_free_tx_ring(sc, &sc->cmdq);
 fail3:	while (--ac >= 0)
 		wpi_free_tx_ring(sc, &sc->txq[ac]);

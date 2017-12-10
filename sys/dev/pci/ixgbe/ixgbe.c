@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/if_ix.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixgbe.c,v 1.88.2.4 2017/11/21 11:38:19 martin Exp $*/
+/*$NetBSD: ixgbe.c,v 1.88.2.5 2017/12/10 10:10:24 snj Exp $*/
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -3122,6 +3122,7 @@ ixgbe_setup_interface(device_t dev, struct adapter *adapter)
 {
 	struct ethercom *ec = &adapter->osdep.ec;
 	struct ifnet   *ifp;
+	int rv;
 
 	INIT_DEBUGOUT("ixgbe_setup_interface: begin");
 
@@ -3149,7 +3150,11 @@ ixgbe_setup_interface(device_t dev, struct adapter *adapter)
 	IFQ_SET_MAXLEN(&ifp->if_snd, adapter->num_tx_desc - 2);
 	IFQ_SET_READY(&ifp->if_snd);
 
-	if_initialize(ifp);
+	rv = if_initialize(ifp);
+	if (rv != 0) {
+		aprint_error_dev(dev, "if_initialize failed(%d)\n", rv);
+		return rv;
+	}
 	adapter->ipq = if_percpuq_create(&adapter->osdep.ec.ec_if);
 	ether_ifattach(ifp, adapter->hw.mac.addr);
 	/*

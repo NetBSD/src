@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.161 2017/02/02 10:05:35 nonaka Exp $  */
+/*	$NetBSD: atw.c,v 1.161.6.1 2017/12/10 10:10:23 snj Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.161 2017/02/02 10:05:35 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.161.6.1 2017/12/10 10:10:23 snj Exp $");
 
 
 #include <sys/param.h>
@@ -621,7 +621,7 @@ atw_attach(struct atw_softc *sc)
 	atw_reset(sc);
 
 	if (atw_read_srom(sc) == -1)
-		return;
+		goto fail_5;
 
 	sc->sc_rftype = __SHIFTOUT(sc->sc_srom[ATW_SR_CSR20],
 	    ATW_SR_RFTYPE_MASK);
@@ -631,14 +631,14 @@ atw_attach(struct atw_softc *sc)
 
 	if (sc->sc_rftype >= __arraycount(type_strings)) {
 		aprint_error_dev(sc->sc_dev, "unknown RF\n");
-		return;
+		goto fail_5;
 	}
 	if (sc->sc_bbptype >= __arraycount(type_strings)) {
 		aprint_error_dev(sc->sc_dev, "unknown BBP\n");
-		return;
+		goto fail_5;
 	}
 
-	printf("%s: %s RF, %s BBP", device_xname(sc->sc_dev),
+	aprint_normal_dev(sc->sc_dev, "%s RF, %s BBP",
 	    type_strings[sc->sc_rftype], type_strings[sc->sc_bbptype]);
 
 	/* XXX There exists a Linux driver which seems to use RFType = 0 for
@@ -674,8 +674,8 @@ atw_attach(struct atw_softc *sc)
 	case ATW_BBPTYPE_MARVEL:
 		break;
 	case ATW_C_BBPTYPE_RFMD:
-		printf("%s: ADM8211C MAC/RFMD BBP not supported yet.\n",
-		    device_xname(sc->sc_dev));
+		aprint_error_dev(sc->sc_dev,
+		    "ADM8211C MAC/RFMD BBP not supported yet.\n");
 		break;
 	}
 
@@ -757,11 +757,12 @@ atw_attach(struct atw_softc *sc)
 	ic->ic_myaddr[5] = __SHIFTOUT(reg, ATW_PAR1_PAB5_MASK);
 
 	if (IEEE80211_ADDR_EQ(ic->ic_myaddr, empty_macaddr)) {
-		printf(" could not get mac address, attach failed\n");
-		return;
+		aprint_error_dev(sc->sc_dev,
+		    "could not get mac address, attach failed\n");
+		goto fail_5;
 	}
 
-	printf(" 802.11 address %s\n", ether_sprintf(ic->ic_myaddr));
+	aprint_normal(" 802.11 address %s\n", ether_sprintf(ic->ic_myaddr));
 
 	memcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 	ifp->if_softc = sc;
@@ -791,7 +792,12 @@ atw_attach(struct atw_softc *sc)
 	 * Call MI attach routines.
 	 */
 
-	if_initialize(ifp);
+	error = if_initialize(ifp);
+	if (error != 0) {
+		aprint_error_dev(sc->sc_dev, "if_initialize failed(%d)\n",
+		    error);
+		goto fail_5;
+	}
 	ieee80211_ifattach(ic);
 	/* Use common softint-based if_input */
 	ifp->if_percpuq = if_percpuq_create(ifp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.99.6.1 2017/11/08 22:20:59 snj Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.99.6.2 2017/12/10 10:10:25 snj Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.99.6.1 2017/11/08 22:20:59 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.99.6.2 2017/12/10 10:10:25 snj Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -380,7 +380,17 @@ tap_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ec.ec_capabilities = ETHERCAP_VLAN_MTU | ETHERCAP_JUMBO_MTU;
 
 	/* Those steps are mandatory for an Ethernet driver. */
-	if_initialize(ifp);
+	error = if_initialize(ifp);
+	if (error != 0) {
+		aprint_error_dev(self, "if_initialize failed(%d)\n", error);
+		ifmedia_removeall(&sc->sc_im);
+		pmf_device_deregister(self);
+		mutex_destroy(&sc->sc_rdlock);
+		mutex_destroy(&sc->sc_kqlock);
+		seldestroy(&sc->sc_rsel);
+
+		return; /* Error */
+	}
 	ether_ifattach(ifp, enaddr);
 	if_register(ifp);
 
@@ -404,8 +414,8 @@ tap_attach(device_t parent, device_t self, void *aux)
 	    tap_sysctl_handler, 0, (void *)sc, 18,
 	    CTL_NET, AF_LINK, tap_node, device_unit(sc->sc_dev),
 	    CTL_EOL)) != 0)
-		aprint_error_dev(self, "sysctl_createv returned %d, ignoring\n",
-		    error);
+		aprint_error_dev(self,
+		    "sysctl_createv returned %d, ignoring\n", error);
 }
 
 /*
@@ -442,7 +452,7 @@ tap_detach(device_t self, int flags)
 		    "sysctl_destroyv returned %d, ignoring\n", error);
 	ether_ifdetach(ifp);
 	if_detach(ifp);
-	ifmedia_delete_instance(&sc->sc_im, IFM_INST_ANY);
+	ifmedia_removeall(&sc->sc_im);
 	seldestroy(&sc->sc_rsel);
 	mutex_destroy(&sc->sc_rdlock);
 	mutex_destroy(&sc->sc_kqlock);

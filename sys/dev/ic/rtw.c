@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.126 2017/05/23 02:19:14 ozaki-r Exp $ */
+/* $NetBSD: rtw.c,v 1.126.2.1 2017/12/10 10:10:23 snj Exp $ */
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 David Young.  All rights
  * reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.126 2017/05/23 02:19:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.126.2.1 2017/12/10 10:10:23 snj Exp $");
 
 
 #include <sys/param.h>
@@ -4225,11 +4225,16 @@ rtw_attach(struct rtw_softc *sc)
 	rtw_set80211props(&sc->sc_ic);
 
 	rtw_led_attach(&sc->sc_led_state, (void *)sc);
+	NEXT_ATTACH_STATE(sc, FINISH_LED_ATTACH);
 
 	/*
 	 * Call MI attach routines.
 	 */
-	if_initialize(ifp);
+	rc = if_initialize(ifp);
+	if (rc != 0) {
+		aprint_error_dev(sc->sc_dev, "if_initialize failed(%d)\n", rc);
+		goto err;
+	}
 	ieee80211_ifattach(ic);
 	/* Use common softint-based if_input */
 	ifp->if_percpuq = if_percpuq_create(ifp);
@@ -4276,6 +4281,7 @@ rtw_detach(struct rtw_softc *sc)
 		callout_stop(&sc->sc_scan_ch);
 		ieee80211_ifdetach(&sc->sc_ic);
 		if_detach(ifp);
+	case FINISH_LED_ATTACH:
 		rtw_led_detach(&sc->sc_led_state);
 		/*FALLTHROUGH*/
 	case FINISH_ID_STA:

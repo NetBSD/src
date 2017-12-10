@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.97.2.9 2017/11/27 14:11:17 martin Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.97.2.10 2017/12/10 10:10:25 snj Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.97.2.9 2017/11/27 14:11:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.97.2.10 2017/12/10 10:10:25 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -317,6 +317,7 @@ vlan_clone_create(struct if_clone *ifc, int unit)
 	struct ifvlan *ifv;
 	struct ifnet *ifp;
 	struct ifvlan_linkmib *mib;
+	int rv;
 
 	ifv = malloc(sizeof(struct ifvlan), M_DEVBUF, M_WAITOK|M_ZERO);
 	mib = kmem_zalloc(sizeof(struct ifvlan_linkmib), KM_SLEEP);
@@ -343,11 +344,28 @@ vlan_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_ioctl = vlan_ioctl;
 	IFQ_SET_READY(&ifp->if_snd);
 
-	if_initialize(ifp);
+	rv = if_initialize(ifp);
+	if (rv != 0) {
+		aprint_error("%s: if_initialize failed(%d)\n", ifp->if_xname,
+		    rv);
+		goto fail;
+	}
+
 	vlan_reset_linkname(ifp);
 	if_register(ifp);
+	return 0;
 
-	return (0);
+fail:
+	mutex_enter(&ifv_list.lock);
+	LIST_REMOVE(ifv, ifv_list);
+	mutex_exit(&ifv_list.lock);
+
+	mutex_destroy(&ifv->ifv_lock);
+	psref_target_destroy(&ifv->ifv_mib->ifvm_psref, ifvm_psref_class);
+	kmem_free(ifv->ifv_mib, sizeof(struct ifvlan_linkmib));
+	free(ifv, M_DEVBUF);
+
+	return rv;
 }
 
 static int

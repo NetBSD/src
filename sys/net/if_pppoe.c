@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.125.6.3 2017/12/08 06:12:35 msaitoh Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.125.6.4 2017/12/10 10:10:25 snj Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.125.6.3 2017/12/08 06:12:35 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.125.6.4 2017/12/10 10:10:25 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -221,7 +221,8 @@ static int pppoe_send_padt(struct ifnet *, u_int, const uint8_t *);
 static int pppoe_output(struct pppoe_softc *, struct mbuf *);
 
 /* internal helper functions */
-static struct pppoe_softc * pppoe_find_softc_by_session(u_int, struct ifnet *, krw_t);
+static struct pppoe_softc * pppoe_find_softc_by_session(u_int, struct ifnet *,
+    krw_t);
 static struct pppoe_softc * pppoe_find_softc_by_hunique(uint8_t *, size_t,
     struct ifnet *, krw_t);
 static struct mbuf *pppoe_get_mbuf(size_t len);
@@ -291,6 +292,7 @@ static int
 pppoe_clone_create(struct if_clone *ifc, int unit)
 {
 	struct pppoe_softc *sc;
+	int rv;
 
 	sc = malloc(sizeof(struct pppoe_softc), M_DEVBUF, M_WAITOK|M_ZERO);
 
@@ -323,7 +325,13 @@ pppoe_clone_create(struct if_clone *ifc, int unit)
 	sc->sc_sppp.pp_tlf = pppoe_tlf;
 	sc->sc_sppp.pp_framebytes = PPPOE_HEADERLEN;	/* framing added to ppp packets */
 
-	if_initialize(&sc->sc_sppp.pp_if);
+	rv = if_initialize(&sc->sc_sppp.pp_if);
+	if (rv != 0) {
+		callout_halt(&sc->sc_timeout, NULL);
+		callout_destroy(&sc->sc_timeout);
+		free(sc, M_DEVBUF);
+		return rv;
+	}
 	sc->sc_sppp.pp_if.if_percpuq = if_percpuq_create(&sc->sc_sppp.pp_if);
 	sppp_attach(&sc->sc_sppp.pp_if);
 	if_register(&sc->sc_sppp.pp_if);
@@ -358,7 +366,6 @@ pppoe_clone_destroy(struct ifnet *ifp)
 	}
 	rw_exit(&pppoe_softc_list_lock);
 
-
 	bpf_detach(ifp);
 	sppp_detach(&sc->sc_sppp.pp_if);
 	if_detach(ifp);
@@ -377,7 +384,7 @@ pppoe_clone_destroy(struct ifnet *ifp)
 
 	free(sc, M_DEVBUF);
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -632,8 +639,9 @@ pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 #endif
 			rcvif = m_get_rcvif_psref(m, &psref);
 			if (rcvif != NULL) {
-				sc = pppoe_find_softc_by_hunique(mtod(n, char *) + noff,
-				    len, rcvif, RW_READER);
+				sc = pppoe_find_softc_by_hunique(
+					mtod(n, char *) + noff, len, rcvif,
+					RW_READER);
 			}
 			m_put_rcvif_psref(rcvif, &psref);
 			if (sc != NULL) {
@@ -1013,8 +1021,7 @@ pppoe_data_input(struct mbuf *m)
 		struct mbuf *p;
 
 		printf("%s: pkthdr.len=%d, pppoe.len=%d",
-			sc->sc_sppp.pp_if.if_xname,
-			m->m_pkthdr.len, plen);
+		    sc->sc_sppp.pp_if.if_xname, m->m_pkthdr.len, plen);
 		p = m;
 		while (p) {
 			printf(" l=%d", p->m_len);
@@ -1028,7 +1035,10 @@ pppoe_data_input(struct mbuf *m)
 	if (m->m_pkthdr.len < plen)
 		goto drop;
 
-	/* fix incoming interface pointer (not the raw ethernet interface anymore) */
+	/*
+	 *  Fix incoming interface pointer (not the raw ethernet interface
+	 * anymore)
+	 */
 	m_set_rcvif(m, &sc->sc_sppp.pp_if);
 
 	/* pass packet up and account for it */
@@ -1055,7 +1065,8 @@ pppoe_output(struct pppoe_softc *sc, struct mbuf *m)
 	memset(&dst, 0, sizeof dst);
 	dst.sa_family = AF_UNSPEC;
 	eh = (struct ether_header*)&dst.sa_data;
-	etype = sc->sc_state == PPPOE_STATE_SESSION ? ETHERTYPE_PPPOE : ETHERTYPE_PPPOEDISC;
+	etype = sc->sc_state == PPPOE_STATE_SESSION
+	    ? ETHERTYPE_PPPOE : ETHERTYPE_PPPOEDISC;
 	eh->ether_type = htons(etype);
 	memcpy(&eh->ether_dhost, &sc->sc_dest, sizeof sc->sc_dest);
 
@@ -1086,7 +1097,7 @@ pppoe_ioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 		if (kauth_authorize_network(l->l_cred, KAUTH_NETWORK_INTERFACE,
 		    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp, (void *)cmd,
 		    NULL) != 0)
-			return (EPERM);
+			return EPERM;
 		if (parms->eth_ifname[0] != 0) {
 			struct ifnet	*eth_if;
 
@@ -1377,8 +1388,7 @@ pppoe_timeout(void *arg)
 				if (sc->sc_sppp.pp_if.if_flags & IFF_DEBUG)
 					printf("%s: failed to send PADI"
 					    ", error=%d\n",
-					    sc->sc_sppp.pp_if.if_xname,
-					    err);
+					    sc->sc_sppp.pp_if.if_xname, err);
 			}
 			callout_reset(&sc->sc_timeout,
 			    PPPOE_DISC_TIMEOUT * (1 + sc->sc_padi_retried),
@@ -1456,7 +1466,8 @@ pppoe_disconnect(struct pppoe_softc *sc)
 		if (sc->sc_sppp.pp_if.if_flags & IFF_DEBUG)
 			printf("%s: disconnecting\n",
 			    sc->sc_sppp.pp_if.if_xname);
-		err = pppoe_send_padt(sc->sc_eth_if, sc->sc_session, (const uint8_t *)&sc->sc_dest);
+		err = pppoe_send_padt(sc->sc_eth_if, sc->sc_session,
+		    (const uint8_t *)&sc->sc_dest);
 	}
 
 	/* cleanup softc */

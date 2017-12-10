@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.134.6.3 2017/11/23 13:34:24 martin Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.134.6.4 2017/12/10 10:10:24 snj Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.134.6.3 2017/11/23 13:34:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.134.6.4 2017/12/10 10:10:24 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -436,12 +436,23 @@ bridge_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_dlt = DLT_EN10MB;
 	ifp->if_hdrlen = ETHER_HDR_LEN;
 
-	if_initialize(ifp);
+	error = if_initialize(ifp);
+	if (error != 0) {
+		pserialize_destroy(sc->sc_iflist_psref.bip_psz);
+		mutex_destroy(&sc->sc_iflist_psref.bip_lock);
+		callout_destroy(&sc->sc_brcallout);
+		callout_destroy(&sc->sc_bstpcallout);
+		workqueue_destroy(sc->sc_rtage_wq);
+		bridge_rtable_fini(sc);
+		kmem_free(sc, sizeof(*sc));
+
+		return error;
+	}
 	if_register(ifp);
 
 	if_alloc_sadl(ifp);
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -480,12 +491,12 @@ bridge_clone_destroy(struct ifnet *ifp)
 
 	pserialize_destroy(sc->sc_iflist_psref.bip_psz);
 	mutex_destroy(&sc->sc_iflist_psref.bip_lock);
-
+	callout_destroy(&sc->sc_brcallout);
+	callout_destroy(&sc->sc_bstpcallout);
 	workqueue_destroy(sc->sc_rtage_wq);
-
 	kmem_free(sc, sizeof(*sc));
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -530,7 +541,7 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		     KAUTH_REQ_NETWORK_INTERFACE_BRIDGE_SETPRIV,
 		     ifd, NULL, NULL);
 		if (error)
-			return (error);
+			return error;
 
 		break;
 	}
@@ -618,7 +629,7 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	splx(s);
 
-	return (error);
+	return error;
 }
 
 /*
@@ -733,7 +744,7 @@ bridge_ioctl_add(struct bridge_softc *sc, void *arg)
 
 	ifs = if_get(req->ifbr_ifsname, &psref);
 	if (ifs == NULL)
-		return (ENOENT);
+		return ENOENT;
 
 	if (ifs->if_bridge == sc) {
 		error = EEXIST;
@@ -807,7 +818,7 @@ bridge_ioctl_add(struct bridge_softc *sc, void *arg)
 		if (bif != NULL)
 			kmem_free(bif, sizeof(*bif));
 	}
-	return (error);
+	return error;
 }
 
 static int
@@ -873,7 +884,7 @@ bridge_ioctl_gifflags(struct bridge_softc *sc, void *arg)
 
 	bif = bridge_lookup_member(sc, req->ifbr_ifsname, &psref);
 	if (bif == NULL)
-		return (ENOENT);
+		return ENOENT;
 
 	req->ifbr_ifsflags = bif->bif_flags;
 	req->ifbr_state = bif->bif_state;
@@ -883,7 +894,7 @@ bridge_ioctl_gifflags(struct bridge_softc *sc, void *arg)
 
 	bridge_release_member(sc, bif, &psref);
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -895,7 +906,7 @@ bridge_ioctl_sifflags(struct bridge_softc *sc, void *arg)
 
 	bif = bridge_lookup_member(sc, req->ifbr_ifsname, &psref);
 	if (bif == NULL)
-		return (ENOENT);
+		return ENOENT;
 
 	if (req->ifbr_ifsflags & IFBIF_STP) {
 		switch (bif->bif_ifp->if_type) {
@@ -907,7 +918,7 @@ bridge_ioctl_sifflags(struct bridge_softc *sc, void *arg)
 		default:
 			/* Nothing else can. */
 			bridge_release_member(sc, bif, &psref);
-			return (EINVAL);
+			return EINVAL;
 		}
 	}
 
@@ -918,7 +929,7 @@ bridge_ioctl_sifflags(struct bridge_softc *sc, void *arg)
 	if (sc->sc_if.if_flags & IFF_RUNNING)
 		bstp_initialization(sc);
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -929,7 +940,7 @@ bridge_ioctl_scache(struct bridge_softc *sc, void *arg)
 	sc->sc_brtmax = param->ifbrp_csize;
 	bridge_rttrim(sc);
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -939,7 +950,7 @@ bridge_ioctl_gcache(struct bridge_softc *sc, void *arg)
 
 	param->ifbrp_csize = sc->sc_brtmax;
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -1023,7 +1034,7 @@ bridge_ioctl_rts(struct bridge_softc *sc, void *arg)
 	int count = 0, error = 0, len;
 
 	if (bac->ifbac_len == 0)
-		return (0);
+		return 0;
 
 	BRIDGE_RT_LOCK(sc);
 
@@ -1051,7 +1062,7 @@ bridge_ioctl_rts(struct bridge_softc *sc, void *arg)
 	BRIDGE_RT_UNLOCK(sc);
 
 	bac->ifbac_len = sizeof(bareq) * count;
-	return (error);
+	return error;
 }
 
 static int
@@ -1064,14 +1075,14 @@ bridge_ioctl_saddr(struct bridge_softc *sc, void *arg)
 
 	bif = bridge_lookup_member(sc, req->ifba_ifsname, &psref);
 	if (bif == NULL)
-		return (ENOENT);
+		return ENOENT;
 
 	error = bridge_rtupdate(sc, req->ifba_dst, bif->bif_ifp, 1,
 	    req->ifba_flags);
 
 	bridge_release_member(sc, bif, &psref);
 
-	return (error);
+	return error;
 }
 
 static int
@@ -1081,7 +1092,7 @@ bridge_ioctl_sto(struct bridge_softc *sc, void *arg)
 
 	sc->sc_brttimeout = param->ifbrp_ctime;
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -1091,7 +1102,7 @@ bridge_ioctl_gto(struct bridge_softc *sc, void *arg)
 
 	param->ifbrp_ctime = sc->sc_brttimeout;
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -1109,7 +1120,7 @@ bridge_ioctl_flush(struct bridge_softc *sc, void *arg)
 
 	bridge_rtflush(sc, req->ifbr_ifsflags);
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -1119,7 +1130,7 @@ bridge_ioctl_gpri(struct bridge_softc *sc, void *arg)
 
 	param->ifbrp_prio = sc->sc_bridge_priority;
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -1132,7 +1143,7 @@ bridge_ioctl_spri(struct bridge_softc *sc, void *arg)
 	if (sc->sc_if.if_flags & IFF_RUNNING)
 		bstp_initialization(sc);
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -1142,7 +1153,7 @@ bridge_ioctl_ght(struct bridge_softc *sc, void *arg)
 
 	param->ifbrp_hellotime = sc->sc_bridge_hello_time >> 8;
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -1151,13 +1162,13 @@ bridge_ioctl_sht(struct bridge_softc *sc, void *arg)
 	struct ifbrparam *param = arg;
 
 	if (param->ifbrp_hellotime == 0)
-		return (EINVAL);
+		return EINVAL;
 	sc->sc_bridge_hello_time = param->ifbrp_hellotime << 8;
 
 	if (sc->sc_if.if_flags & IFF_RUNNING)
 		bstp_initialization(sc);
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -1167,7 +1178,7 @@ bridge_ioctl_gfd(struct bridge_softc *sc, void *arg)
 
 	param->ifbrp_fwddelay = sc->sc_bridge_forward_delay >> 8;
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -1176,13 +1187,13 @@ bridge_ioctl_sfd(struct bridge_softc *sc, void *arg)
 	struct ifbrparam *param = arg;
 
 	if (param->ifbrp_fwddelay == 0)
-		return (EINVAL);
+		return EINVAL;
 	sc->sc_bridge_forward_delay = param->ifbrp_fwddelay << 8;
 
 	if (sc->sc_if.if_flags & IFF_RUNNING)
 		bstp_initialization(sc);
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -1192,7 +1203,7 @@ bridge_ioctl_gma(struct bridge_softc *sc, void *arg)
 
 	param->ifbrp_maxage = sc->sc_bridge_max_age >> 8;
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -1201,13 +1212,13 @@ bridge_ioctl_sma(struct bridge_softc *sc, void *arg)
 	struct ifbrparam *param = arg;
 
 	if (param->ifbrp_maxage == 0)
-		return (EINVAL);
+		return EINVAL;
 	sc->sc_bridge_max_age = param->ifbrp_maxage << 8;
 
 	if (sc->sc_if.if_flags & IFF_RUNNING)
 		bstp_initialization(sc);
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -1219,7 +1230,7 @@ bridge_ioctl_sifprio(struct bridge_softc *sc, void *arg)
 
 	bif = bridge_lookup_member(sc, req->ifbr_ifsname, &psref);
 	if (bif == NULL)
-		return (ENOENT);
+		return ENOENT;
 
 	bif->bif_priority = req->ifbr_priority;
 
@@ -1228,7 +1239,7 @@ bridge_ioctl_sifprio(struct bridge_softc *sc, void *arg)
 
 	bridge_release_member(sc, bif, &psref);
 
-	return (0);
+	return 0;
 }
 
 #if defined(BRIDGE_IPF)
@@ -1239,7 +1250,7 @@ bridge_ioctl_gfilt(struct bridge_softc *sc, void *arg)
 
 	param->ifbrp_filter = sc->sc_filter_flags;
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -1249,7 +1260,7 @@ bridge_ioctl_sfilt(struct bridge_softc *sc, void *arg)
 	uint32_t nflags, oflags;
 
 	if (param->ifbrp_filter & ~IFBF_FILT_MASK)
-		return (EINVAL);
+		return EINVAL;
 
 	nflags = param->ifbrp_filter;
 	oflags = sc->sc_filter_flags;
@@ -1265,7 +1276,7 @@ bridge_ioctl_sfilt(struct bridge_softc *sc, void *arg)
 
 	sc->sc_filter_flags = nflags;
 
-	return (0);
+	return 0;
 }
 #endif /* BRIDGE_IPF */
 
@@ -1278,7 +1289,7 @@ bridge_ioctl_sifcost(struct bridge_softc *sc, void *arg)
 
 	bif = bridge_lookup_member(sc, req->ifbr_ifsname, &psref);
 	if (bif == NULL)
-		return (ENOENT);
+		return ENOENT;
 
 	bif->bif_path_cost = req->ifbr_path_cost;
 
@@ -1287,7 +1298,7 @@ bridge_ioctl_sifcost(struct bridge_softc *sc, void *arg)
 
 	bridge_release_member(sc, bif, &psref);
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -1322,14 +1333,14 @@ bridge_init(struct ifnet *ifp)
 	struct bridge_softc *sc = ifp->if_softc;
 
 	if (ifp->if_flags & IFF_RUNNING)
-		return (0);
+		return 0;
 
 	callout_reset(&sc->sc_brcallout, bridge_rtable_prune_period * hz,
 	    bridge_timer, sc);
 
 	ifp->if_flags |= IFF_RUNNING;
 	bstp_initialization(sc);
-	return (0);
+	return 0;
 }
 
 /*
@@ -1440,7 +1451,7 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
 	if (m->m_len < ETHER_HDR_LEN) {
 		m = m_pullup(m, ETHER_HDR_LEN);
 		if (m == NULL)
-			return (0);
+			return 0;
 	}
 
 	eh = mtod(m, struct ether_header *);
@@ -1566,7 +1577,7 @@ next:
 
 		if (!used)
 			m_freem(m);
-		return (0);
+		return 0;
 	}
 
  sendunicast:
@@ -1576,12 +1587,12 @@ next:
 
 	if ((dst_if->if_flags & IFF_RUNNING) == 0) {
 		m_freem(m);
-		return (0);
+		return 0;
 	}
 
 	bridge_enqueue(sc, dst_if, m, 0);
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -2395,12 +2406,12 @@ bridge_rtnode_lookup(struct bridge_softc *sc, const uint8_t *addr)
 	LIST_FOREACH(brt, &sc->sc_rthash[hash], brt_hash) {
 		dir = memcmp(addr, brt->brt_addr, ETHER_ADDR_LEN);
 		if (dir == 0)
-			return (brt);
+			return brt;
 		if (dir > 0)
-			return (NULL);
+			return NULL;
 	}
 
-	return (NULL);
+	return NULL;
 }
 
 /*
@@ -2429,7 +2440,7 @@ bridge_rtnode_insert(struct bridge_softc *sc, struct bridge_rtnode *brt)
 	do {
 		dir = memcmp(brt->brt_addr, lbrt->brt_addr, ETHER_ADDR_LEN);
 		if (dir == 0)
-			return (EEXIST);
+			return EEXIST;
 		if (dir > 0) {
 			LIST_INSERT_BEFORE(lbrt, brt, brt_hash);
 			goto out;
@@ -2449,7 +2460,7 @@ bridge_rtnode_insert(struct bridge_softc *sc, struct bridge_rtnode *brt)
 	LIST_INSERT_HEAD(&sc->sc_rtlist, brt, brt_list);
 	sc->sc_brtcnt++;
 
-	return (0);
+	return 0;
 }
 
 /*

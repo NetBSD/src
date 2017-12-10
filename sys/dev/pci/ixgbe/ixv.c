@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixv.c,v 1.56.2.1 2017/09/23 17:47:34 snj Exp $*/
+/*$NetBSD: ixv.c,v 1.56.2.2 2017/12/10 10:10:24 snj Exp $*/
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -100,7 +100,7 @@ static int	ixv_setup_msix(struct adapter *);
 static void	ixv_free_pci_resources(struct adapter *);
 static void     ixv_local_timer(void *);
 static void     ixv_local_timer_locked(void *);
-static void     ixv_setup_interface(device_t, struct adapter *);
+static int      ixv_setup_interface(device_t, struct adapter *);
 static void     ixv_config_link(struct adapter *);
 
 static void     ixv_initialize_transmit_units(struct adapter *);
@@ -442,7 +442,11 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 	adapter->enable_aim = ixv_enable_aim;
 
 	/* Setup OS specific network interface */
-	ixv_setup_interface(dev, adapter);
+	error = ixv_setup_interface(dev, adapter);
+	if (error != 0) {
+		aprint_error_dev(dev, "ixv_setup_interface() failed!\n");
+		goto err_late;
+	}
 
 	/* Do the stats setup */
 	ixv_save_stats(adapter);
@@ -1663,11 +1667,12 @@ ixv_free_pci_resources(struct adapter * adapter)
  *  Setup networking device structure and register an interface.
  *
  **********************************************************************/
-static void
+static int
 ixv_setup_interface(device_t dev, struct adapter *adapter)
 {
 	struct ethercom *ec = &adapter->osdep.ec;
 	struct ifnet   *ifp;
+	int rv;
 
 	INIT_DEBUGOUT("ixv_setup_interface: begin");
 
@@ -1689,7 +1694,11 @@ ixv_setup_interface(device_t dev, struct adapter *adapter)
 	IFQ_SET_MAXLEN(&ifp->if_snd, adapter->num_tx_desc - 2);
 	IFQ_SET_READY(&ifp->if_snd);
 
-	if_initialize(ifp);
+	rv = if_initialize(ifp);
+	if (rv != 0) {
+		aprint_error_dev(dev, "if_initialize failed(%d)\n", rv);
+		return rv;
+	}
 	adapter->ipq = if_percpuq_create(&adapter->osdep.ec.ec_if);
 	ether_ifattach(ifp, adapter->hw.mac.addr);
 	/*
@@ -1741,7 +1750,7 @@ ixv_setup_interface(device_t dev, struct adapter *adapter)
 	ifmedia_add(&adapter->media, IFM_ETHER | IFM_AUTO, 0, NULL);
 	ifmedia_set(&adapter->media, IFM_ETHER | IFM_AUTO);
 
-	return;
+	return 0;
 }
 	
 static void

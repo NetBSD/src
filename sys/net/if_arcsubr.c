@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.77 2017/02/14 03:05:06 ozaki-r Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.77.6.1 2017/12/10 10:10:24 snj Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.77 2017/02/14 03:05:06 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.77.6.1 2017/12/10 10:10:24 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -610,10 +610,11 @@ arc_sprintf(uint8_t *ap)
 /*
  * Perform common duties while attaching to interface list
  */
-void
+int
 arc_ifattach(struct ifnet *ifp, uint8_t lla)
 {
 	struct arccom *ac;
+	int rv;
 
 	ifp->if_type = IFT_ARCNET;
 	ifp->if_addrlen = 1;
@@ -635,10 +636,15 @@ arc_ifattach(struct ifnet *ifp, uint8_t lla)
 		log(LOG_ERR,"%s: link address 0 reserved for broadcasts.  Please change it and ifconfig %s down up\n",
 		   ifp->if_xname, ifp->if_xname);
 	}
-	if_attach(ifp);
+	rv = if_attach(ifp);
+	if (rv != 0)
+		return rv;
+
 	if_set_sadl(ifp, &lla, sizeof(lla), true);
 
 	ifp->if_broadcastaddr = &arcbroadcastaddr;
 
 	bpf_attach(ifp, DLT_ARCNET, ARC_HDRLEN);
+
+	return 0;
 }

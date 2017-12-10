@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.72 2016/12/22 12:55:28 ozaki-r Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.72.8.1 2017/12/10 10:10:25 snj Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.72 2016/12/22 12:55:28 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.72.8.1 2017/12/10 10:10:25 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -187,7 +187,16 @@ allocif(int unit, struct shmif_sc **scp)
 	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&sc->sc_cv, "shmifcv");
 
-	if_initialize(ifp);
+	error = if_initialize(ifp);
+	if (error != 0) {
+		aprint_error("shmif%d: if_initialize failed(%d)\n", unit,
+		    error);
+		cv_destroy(&sc->sc_cv);
+		mutex_destroy(&sc->sc_mtx);
+		kmem_free(sc, sizeof(*sc));
+
+		return error;
+	}
 	ether_ifattach(ifp, enaddr);
 	if_register(ifp);
 
