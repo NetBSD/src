@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_parse.y,v 1.45 2017/12/03 23:48:03 mlelstv Exp $	*/
+/*	$NetBSD: npf_parse.y,v 1.46 2017/12/10 22:04:41 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2017 The NetBSD Foundation, Inc.
@@ -124,6 +124,7 @@ yyerror(const char *fmt, ...)
 %token			IFADDRS
 %token			INTERFACE
 %token			MAP
+%token			NO_PORTS
 %token			MINUS
 %token			NAME
 %token			NPT66
@@ -172,7 +173,7 @@ yyerror(const char *fmt, ...)
 %type	<num>		port, opt_final, number, afamily, opt_family
 %type	<num>		block_or_pass, rule_dir, group_dir, block_opts
 %type	<num>		maybe_not, opt_stateful, icmp_type, table_type
-%type	<num>		map_sd, map_algo, map_type
+%type	<num>		map_sd, map_algo, map_flags, map_type
 %type	<var>		static_ifaddrs, addr_or_ifaddr
 %type	<var>		port_range, icmp_type_and_code
 %type	<var>		filt_addr, addr_and_mask, tcp_flags, tcp_flags_and_mask
@@ -337,6 +338,11 @@ map_algo
 	|		{ $$ = 0; }
 	;
 
+map_flags
+	: NO_PORTS	{ $$ = NPF_NAT_PORTS; }
+	|		{ $$ = 0; }
+	;
+
 map_type
 	: ARROWBOTH	{ $$ = NPF_NATIN | NPF_NATOUT; }
 	| ARROWLEFT	{ $$ = NPF_NATIN; }
@@ -352,18 +358,18 @@ mapseg
 	;
 
 map
-	: MAP ifref map_sd map_algo mapseg map_type mapseg
+	: MAP ifref map_sd map_algo map_flags mapseg map_type mapseg
 	  PASS opt_proto all_or_filt_opts
 	{
-		npfctl_build_natseg($3, $6, $2, &$5, &$7, &$9, &$10, $4);
+		npfctl_build_natseg($3, $7, $5, $2, &$6, &$8, &$10, &$11, $4);
 	}
-	| MAP ifref map_sd map_algo mapseg map_type mapseg
+	| MAP ifref map_sd map_algo map_flags mapseg map_type mapseg
 	{
-		npfctl_build_natseg($3, $6, $2, &$5, &$7, NULL, NULL, $4);
+		npfctl_build_natseg($3, $7, $5, $2, &$6, &$8, NULL, NULL, $4);
 	}
-	| MAP ifref map_sd map_algo proto mapseg map_type mapseg
+	| MAP ifref map_sd map_algo map_flags proto mapseg map_type mapseg
 	{
-		npfctl_build_natseg($3, $7, $2, &$6, &$8, &$5, NULL, $4);
+		npfctl_build_natseg($3, $8, $5, $2, &$7, &$9, &$6, NULL, $4);
 	}
 	| MAP RULESET group_opts
 	{
