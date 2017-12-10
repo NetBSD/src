@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.usermode,v 1.39 2015/08/27 03:20:13 uebayasi Exp $
+# $NetBSD: Makefile.usermode,v 1.40 2017/12/10 14:29:47 christos Exp $
 
 USETOOLS?=			no
 NEED_OWN_INSTALL_TARGET?=	no
@@ -86,12 +86,12 @@ NVFLAGS=	-n
 ##
 
 .if !make(obj) && !make(clean) && !make(cleandir)
-.BEGIN:
-	@rm -f i386 && \
+.BEGIN::
+	-@rm -f i386 && \
 		ln -s $S/arch/i386/include i386
-	@rm -f amd64 && \
+	-@rm -f amd64 && \
 		ln -s $S/arch/amd64/include amd64
-	@rm -f arm && \
+	-@rm -f arm && \
 		ln -s $S/arch/arm/include arm
 .endif
 
