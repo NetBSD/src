@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.770 2017/12/08 01:19:29 christos Exp $
+# $NetBSD: mi,v 1.771 2017/12/10 15:39:37 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2118,6 +2118,8 @@
 ./usr/tests/kernel/arch/i386/t_ptrace_waitid	tests-obsolete		obsolete
 ./usr/tests/kernel/arch/i386/t_ptrace_waitpid	tests-obsolete		obsolete
 ./usr/tests/kernel/arch/x86			tests-obsolete		obsolete
+./usr/tests/kernel/h_getprocpath		tests-kernel-tests	compattestfile,atf
+./usr/tests/kernel/h_interpreter		tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/h_ps_strings1		tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/h_ps_strings2		tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/h_segv			tests-kernel-tests	compattestfile,atf
@@ -2169,6 +2171,7 @@
 ./usr/tests/kernel/t_pollts			tests-obsolete		obsolete
 ./usr/tests/kernel/t_posix_fadvise		tests-obsolete		obsolete
 ./usr/tests/kernel/t_posix_fallocate		tests-obsolete		obsolete
+./usr/tests/kernel/t_procpath			tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_ps_strings			tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_ptrace			tests-obsolete		obsolete
 ./usr/tests/kernel/t_ptrace_wait		tests-obsolete		obsolete
