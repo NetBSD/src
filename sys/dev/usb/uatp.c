@@ -1,4 +1,4 @@
-/*	$NetBSD: uatp.c,v 1.14 2017/04/09 16:40:42 riastradh Exp $	*/
+/*	$NetBSD: uatp.c,v 1.15 2017/12/10 17:03:07 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 The NetBSD Foundation, Inc.
@@ -146,7 +146,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.14 2017/04/09 16:40:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.15 2017/12/10 17:03:07 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -170,8 +170,8 @@ __KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.14 2017/04/09 16:40:42 riastradh Exp $");
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/uhidev.h>
-#include <dev/usb/hid.h>
 #include <dev/usb/usbhid.h>
+#include <dev/hid/hid.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsmousevar.h>

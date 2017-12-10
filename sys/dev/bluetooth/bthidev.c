@@ -1,4 +1,4 @@
-/*	$NetBSD: bthidev.c,v 1.29 2014/08/05 07:55:31 rtr Exp $	*/
+/*	$NetBSD: bthidev.c,v 1.30 2017/12/10 17:03:07 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bthidev.c,v 1.29 2014/08/05 07:55:31 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bthidev.c,v 1.30 2017/12/10 17:03:07 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: bthidev.c,v 1.29 2014/08/05 07:55:31 rtr Exp $");
 #include <netbt/bluetooth.h>
 #include <netbt/l2cap.h>
 
-#include <dev/usb/hid.h>
+#include <dev/hid/hid.h>
 #include <dev/bluetooth/btdev.h>
 #include <dev/bluetooth/bthid.h>
 #include <dev/bluetooth/bthidev.h>
