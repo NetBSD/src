@@ -1,4 +1,4 @@
-/* $Id: args_prep.c,v 1.3 2017/01/14 21:57:20 christos Exp $ */
+/* $Id: args_prep.c,v 1.4 2017/12/10 02:26:41 christos Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
 #define _LOCORE
 #include <arm/imx/imx23var.h>
 #undef _LOCORE
-#include <evbarm/bootconfig.h>
+#include <machine/bootconfig.h>
 
 #include <arm/imx/imx23_digctlreg.h>
 #include <arm/imx/imx23_uartdbgreg.h>
