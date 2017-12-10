@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_encap.c,v 1.65 2017/06/01 02:45:14 chs Exp $	*/
+/*	$NetBSD: ip_encap.c,v 1.65.2.1 2017/12/10 09:41:31 snj Exp $	*/
 /*	$KAME: ip_encap.c,v 1.73 2001/10/02 08:30:58 itojun Exp $	*/
 
 /*
@@ -68,7 +68,7 @@
 #define USE_RADIX
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.65 2017/06/01 02:45:14 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.65.2.1 2017/12/10 09:41:31 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mrouting.h"
@@ -135,7 +135,6 @@ static int mask_matchlen(const struct sockaddr *);
 static int mask_match(const struct encaptab *, const struct sockaddr *,
 		const struct sockaddr *);
 #endif
-static void encap_fillarg(struct mbuf *, const struct encaptab *);
 
 /*
  * In encap[46]_lookup(), ep->func can sleep(e.g. rtalloc1) while walking
@@ -363,8 +362,7 @@ encap4_input(struct mbuf *m, ...)
 		/* found a match, "match" has the best one */
 		esw = match->esw;
 		if (esw && esw->encapsw4.pr_input) {
-			encap_fillarg(m, match);
-			(*esw->encapsw4.pr_input)(m, off, proto);
+			(*esw->encapsw4.pr_input)(m, off, proto, match->arg);
 			psref_release(&match_psref, &match->psref,
 			    encaptab.elem_class);
 		} else {
@@ -506,8 +504,8 @@ encap6_input(struct mbuf **mp, int *offp, int proto)
 		esw = match->esw;
 		if (esw && esw->encapsw6.pr_input) {
 			int ret;
-			encap_fillarg(m, match);
-			ret = (*esw->encapsw6.pr_input)(mp, offp, proto);
+			ret = (*esw->encapsw6.pr_input)(mp, offp, proto,
+			    match->arg);
 			psref_release(&match_psref, &match->psref,
 			    encaptab.elem_class);
 			return ret;
@@ -1063,33 +1061,6 @@ mask_match(const struct encaptab *ep,
 		return 0;
 }
 #endif
-
-static void
-encap_fillarg(struct mbuf *m, const struct encaptab *ep)
-{
-	struct m_tag *mtag;
-
-	mtag = m_tag_get(PACKET_TAG_ENCAP, sizeof(void *), M_NOWAIT);
-	if (mtag) {
-		*(void **)(mtag + 1) = ep->arg;
-		m_tag_prepend(m, mtag);
-	}
-}
-
-void *
-encap_getarg(struct mbuf *m)
-{
-	void *p;
-	struct m_tag *mtag;
-
-	p = NULL;
-	mtag = m_tag_find(m, PACKET_TAG_ENCAP, NULL);
-	if (mtag != NULL) {
-		p = *(void **)(mtag + 1);
-		m_tag_delete(m, mtag);
-	}
-	return p;
-}
 
 int
 encap_lock_enter(void)

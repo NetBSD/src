@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.h,v 1.16 2016/07/04 04:22:47 knakahara Exp $	*/
+/*	$NetBSD: in_gif.h,v 1.16.10.1 2017/12/10 09:41:31 snj Exp $	*/
 /*	$KAME: in_gif.h,v 1.6 2001/07/25 00:55:48 itojun Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 extern int ip_gif_ttl;
 
 struct gif_softc;
-void in_gif_input(struct mbuf *, int, int);
+void in_gif_input(struct mbuf *, int, int, void *);
 int in_gif_output(struct ifnet *, int, struct mbuf *);
 #ifdef GIF_ENCAPCHECK
 int gif_encapcheck4(struct mbuf *, int, int, void *);
