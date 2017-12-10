@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.27 2017/10/22 13:56:49 jmcneill Exp $ */
+/* $NetBSD: fdtvar.h,v 1.28 2017/12/10 21:38:27 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -236,6 +236,8 @@ int		fdtbus_register_phy_controller(device_t, int,
 		    const struct fdtbus_phy_controller_func *);
 int		fdtbus_register_mmc_pwrseq(device_t, int,
 		    const struct fdtbus_mmc_pwrseq_func *);
+
+void		fdtbus_set_decoderegprop(bool);
 
 int		fdtbus_get_reg(int, u_int, bus_addr_t *, bus_size_t *);
 int		fdtbus_get_reg_byname(int, const char *, bus_addr_t *,

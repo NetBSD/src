@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.30 2017/11/02 09:42:44 skrll Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.31 2017/12/10 21:38:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -75,15 +75,17 @@
 #define	VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
 
 /*
- * we support 2 free lists:
+ * we support 3 free lists:
  *
  *	- DEFAULT for all systems
- *	- ISADMA for the ISA DMA range
+ *	- ISADMA for the ISA DMA range (could be unused)
+ *	- DIRECTMAP for systems with direct KVA mapped pages
  */
 
-#define	VM_NFREELIST		2
+#define	VM_NFREELIST		3
 #define	VM_FREELIST_DEFAULT	0
 #define	VM_FREELIST_ISADMA	1
+#define	VM_FREELIST_DIRECTMAP	2
 
 #endif /* _KERNEL || _KMEMUSER */
 
