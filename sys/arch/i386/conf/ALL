@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.431 2017/11/30 11:56:45 jmcneill Exp $
+# $NetBSD: ALL,v 1.432 2017/12/10 17:19:48 bouyer Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"ALL-$Revision: 1.431 $"
+#ident		"ALL-$Revision: 1.432 $"
 
 maxusers	64		# estimated number of users
 
@@ -702,6 +702,10 @@ iic*	at nfsmb?
 piixpm* at pci? dev ? function ?	# PIIX4 compatible PM controller
 iic*	at piixpm?			# SMBus on PIIX4
 
+# I2C controller as found in some Intel PCH devices.
+dwiic*		at pci?			# I2C controller
+iic*		at dwiic?
+
 # dbCool Thermal monitor and fan controller
 dbcool* at iic? addr 0x2C		# Unknown other motherboard(s)
 dbcool* at iic? addr 0x2D		# Tyan S2881
@@ -765,6 +769,13 @@ sdtemp* at iic? addr 0x1c
 sdtemp* at iic? addr 0x1d
 sdtemp* at iic? addr 0x1e
 sdtemp* at iic? addr 0x1f
+
+# I2C HID devices
+ihidev* at iic?
+
+# I2C Mice
+ims*	at ihidev? reportid ?
+wsmouse* at ims? mux 0
 
 # I2O devices
 iop*	at pci? dev ? function ?	# I/O processor
