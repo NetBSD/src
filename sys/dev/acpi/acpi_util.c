@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_util.c,v 1.9 2017/12/10 16:51:30 bouyer Exp $ */
+/*	$NetBSD: acpi_util.c,v 1.10 2017/12/10 18:52:41 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.9 2017/12/10 16:51:30 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.10 2017/12/10 18:52:41 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -520,7 +520,7 @@ acpi_intr_establish(device_t dev, uint64_t c,
     unsigned int (*intr)(void *), void *iarg)
 {
 	ACPI_STATUS rv;
-	ACPI_HANDLE hdl = (void *)c;
+	ACPI_HANDLE hdl = (void *)(uintptr_t)c;
 	struct acpi_resources res;
 	struct acpi_irq *irq;
 	struct acpi_irq_handler *aih = NULL;
