@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ctl.c,v 1.49 2017/10/30 03:02:35 ozaki-r Exp $	*/
+/*	$NetBSD: npf_ctl.c,v 1.50 2017/12/10 01:18:21 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.49 2017/10/30 03:02:35 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.50 2017/12/10 01:18:21 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -371,11 +371,17 @@ npf_mk_rules(npf_t *npf, npf_ruleset_t *rlset, prop_array_t rules,
 	it = prop_array_iterator(rules);
 	while ((rldict = prop_object_iterator_next(it)) != NULL) {
 		npf_rule_t *rl = NULL;
+		const char *name;
 
-		/* Generate a single rule. */
 		error = npf_mk_singlerule(npf, rldict, rpset, &rl, errdict);
 		if (error) {
 			break;
+		}
+		if (prop_dictionary_get_cstring_nocopy(rldict, "name", &name) &&
+		    npf_ruleset_lookup(rlset, name) != NULL) {
+			NPF_ERR_DEBUG(errdict);
+			npf_rule_free(rl);
+			return EEXIST;
 		}
 		npf_ruleset_insert(rlset, rl);
 	}
