@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_emmc.c,v 1.31 2017/07/30 16:54:36 jmcneill Exp $	*/
+/*	$NetBSD: bcm2835_emmc.c,v 1.32 2017/12/10 21:38:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.31 2017/07/30 16:54:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.32 2017/12/10 21:38:26 skrll Exp $");
 
 #include "bcmdmac.h"
 
@@ -43,12 +43,15 @@ __KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.31 2017/07/30 16:54:36 jmcneill E
 #include <sys/kernel.h>
 
 #include <arm/broadcom/bcm2835reg.h>
-#include <arm/broadcom/bcm_amba.h>
 #include <arm/broadcom/bcm2835_dmac.h>
 
 #include <dev/sdmmc/sdhcreg.h>
 #include <dev/sdmmc/sdhcvar.h>
 #include <dev/sdmmc/sdmmcvar.h>
+
+#include <dev/fdt/fdtvar.h>
+
+#include <arm/fdt/arm_fdtvar.h>
 
 enum bcmemmc_dma_state {
 	EMMC_DMA_STATE_IDLE,
@@ -64,6 +67,7 @@ struct bcmemmc_softc {
 	bus_size_t		sc_ios;
 	struct sdhc_host	*sc_hosts[1];
 	void			*sc_ih;
+	int			sc_phandle;
 
 	kcondvar_t		sc_cv;
 
@@ -91,12 +95,13 @@ CFATTACH_DECL_NEW(bcmemmc, sizeof(struct bcmemmc_softc),
 static int
 bcmemmc_match(device_t parent, struct cfdata *match, void *aux)
 {
-	struct amba_attach_args *aaa = aux;
+	const char * const compatible[] = {
+	    "brcm,bcm2835-sdhci",
+	    NULL
+	};
+	struct fdt_attach_args * const faa = aux;
 
-	if (strcmp(aaa->aaa_name, "emmc") != 0)
-		return 0;
-
-	return 1;
+	return of_match_compatible(faa->faa_phandle, compatible);
 }
 
 /* ARGSUSED */
@@ -104,14 +109,13 @@ static void
 bcmemmc_attach(device_t parent, device_t self, void *aux)
 {
 	struct bcmemmc_softc *sc = device_private(self);
+	struct fdt_attach_args * const faa = aux;
 	prop_dictionary_t dict = device_properties(self);
-	struct amba_attach_args *aaa = aux;
-	prop_number_t frequency;
 	bool disable = false;
 	int error;
 
 	sc->sc.sc_dev = self;
- 	sc->sc.sc_dmat = aaa->aaa_dmat;
+	sc->sc.sc_dmat = faa->faa_dmat;
 	sc->sc.sc_flags = 0;
 	sc->sc.sc_flags |= SDHC_FLAG_32BIT_ACCESS;
 	sc->sc.sc_flags |= SDHC_FLAG_HOSTCAPS;
@@ -121,7 +125,7 @@ bcmemmc_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc.sc_host = sc->sc_hosts;
 	sc->sc.sc_clkbase = 50000;	/* Default to 50MHz */
-	sc->sc_iot = aaa->aaa_iot;
+	sc->sc_iot = faa->faa_bst;
 
 	prop_dictionary_get_bool(dict, "disable", &disable);
 	if (disable) {
@@ -130,34 +134,55 @@ bcmemmc_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	/* Fetch the EMMC clock frequency from property if set. */
-	frequency = prop_dictionary_get(dict, "frequency");
-	if (frequency != NULL) {
-		sc->sc.sc_clkbase = prop_number_integer_value(frequency) / 1000;
-	}
+	bus_addr_t addr;
+	bus_size_t size;
 
-	error = bus_space_map(sc->sc_iot, aaa->aaa_addr, aaa->aaa_size, 0,
-	    &sc->sc_ioh);
+	const int phandle = faa->faa_phandle;
+	error = fdtbus_get_reg(phandle, 0, &addr, &size);
 	if (error) {
-		aprint_error(": can't map registers for %s: %d\n",
-		    aaa->aaa_name, error);
+		aprint_error_dev(sc->sc.sc_dev, "unable to map device\n");
 		return;
 	}
-	sc->sc_iob = aaa->aaa_addr;
-	sc->sc_ios = aaa->aaa_size;
+	sc->sc_phandle = phandle;
+
+	/* Enable clocks */
+	struct clk *clk;
+	for (int i = 0; (clk = fdtbus_clock_get_index(phandle, i)); i++) {
+		if (clk_enable(clk) != 0) {
+			aprint_error(": failed to enable clock #%d\n", i);
+			return;
+		}
+		if (i == 0)
+			sc->sc.sc_clkbase = clk_get_rate(clk) / 1000;
+	}
+	aprint_debug_dev(self, "ref freq %u kHz\n", sc->sc.sc_clkbase);
+
+	error = bus_space_map(sc->sc_iot, addr, size, 0, &sc->sc_ioh);
+	if (error) {
+		aprint_error_dev(sc->sc.sc_dev, "unable to map device\n");
+		return;
+	}
+	sc->sc_iob = addr;
+	sc->sc_ios = size;
 
 	aprint_naive(": SDHC controller\n");
 	aprint_normal(": SDHC controller\n");
 
- 	sc->sc_ih = intr_establish(aaa->aaa_intr, IPL_SDMMC, IST_LEVEL, sdhc_intr,
- 	    &sc->sc);
+	char intrstr[128];
+	if (!fdtbus_intr_str(phandle, 0, intrstr, sizeof(intrstr))) {
+		aprint_error(": failed to decode interrupt\n");
+		return;
+	}
+
+	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_SDMMC, IST_LEVEL,
+	    sdhc_intr, &sc->sc);
 
 	if (sc->sc_ih == NULL) {
-		aprint_error_dev(self, "failed to establish interrupt %d\n",
-		    aaa->aaa_intr);
+		aprint_error_dev(self, "failed to establish interrupt %s\n",
+		    intrstr);
 		goto fail;
 	}
-	aprint_normal_dev(self, "interrupting on intr %d\n", aaa->aaa_intr);
+	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 
 #if NBCMDMAC > 0
 	sc->sc_dmac = bcm_dmac_alloc(BCM_DMAC_TYPE_NORMAL, IPL_SDMMC,
@@ -213,7 +238,7 @@ done:
 fail:
 	/* XXX add bus_dma failure cleanup */
 	if (sc->sc_ih) {
-		intr_disestablish(sc->sc_ih);
+		fdtbus_intr_disestablish(sc->sc_phandle, sc->sc_ih);
 		sc->sc_ih = NULL;
 	}
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
@@ -236,7 +261,7 @@ bcmemmc_attach_i(device_t self)
 fail:
 	/* XXX add bus_dma failure cleanup */
 	if (sc->sc_ih) {
-		intr_disestablish(sc->sc_ih);
+		fdtbus_intr_disestablish(sc->sc_phandle, sc->sc_ih);
 		sc->sc_ih = NULL;
 	}
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
@@ -248,6 +273,7 @@ bcmemmc_xfer_data_dma(struct sdhc_softc *sdhc_sc, struct sdmmc_command *cmd)
 {
 	struct bcmemmc_softc * const sc = device_private(sdhc_sc->sc_dev);
 	kmutex_t *plock = sdhc_host_lock(sc->sc_hosts[0]);
+	const bus_addr_t ad_sdhcdata = sc->sc_iob + SDHC_DATA;
 	size_t seg;
 	int error;
 
@@ -272,8 +298,7 @@ bcmemmc_xfer_data_dma(struct sdhc_softc *sdhc_sc, struct sdmmc_command *cmd)
 			if ((sc->sc_cblk[seg].cb_txfr_len & 0xf) == 0)
 				sc->sc_cblk[seg].cb_ti |= DMAC_TI_DEST_WIDTH;
 			sc->sc_cblk[seg].cb_ti |= DMAC_TI_SRC_DREQ;
-			sc->sc_cblk[seg].cb_source_ad =
-			    sc->sc_iob + SDHC_DATA;
+			sc->sc_cblk[seg].cb_source_ad = ad_sdhcdata;
 			sc->sc_cblk[seg].cb_dest_ad =
 			    cmd->c_dmamap->dm_segs[seg].ds_addr;
 		} else {
@@ -288,8 +313,7 @@ bcmemmc_xfer_data_dma(struct sdhc_softc *sdhc_sc, struct sdmmc_command *cmd)
 			sc->sc_cblk[seg].cb_ti |= DMAC_TI_WAIT_RESP;
 			sc->sc_cblk[seg].cb_source_ad =
 			    cmd->c_dmamap->dm_segs[seg].ds_addr;
-			sc->sc_cblk[seg].cb_dest_ad =
-			    sc->sc_iob + SDHC_DATA;
+			sc->sc_cblk[seg].cb_dest_ad = ad_sdhcdata;
 		}
 		sc->sc_cblk[seg].cb_stride = 0;
 		if (seg == cmd->c_dmamap->dm_nsegs - 1) {

@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_genfb.c,v 1.7 2014/09/05 21:15:42 macallan Exp $ */
+/* $NetBSD: bcm2835_genfb.c,v 1.8 2017/12/10 21:38:26 skrll Exp $ */
 
 /*-
  * Copyright (c) 2013 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_genfb.c,v 1.7 2014/09/05 21:15:42 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_genfb.c,v 1.8 2017/12/10 21:38:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -41,7 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: bcm2835_genfb.c,v 1.7 2014/09/05 21:15:42 macallan E
 #include <sys/bus.h>
 #include <sys/kmem.h>
 
-#include <arm/broadcom/bcm_amba.h>
+#include <dev/fdt/fdtvar.h>
 
 #include <dev/wsfb/genfbvar.h>
 
@@ -73,16 +73,17 @@ CFATTACH_DECL_NEW(bcmgenfb, sizeof(struct bcmgenfb_softc),
 static int
 bcmgenfb_match(device_t parent, cfdata_t match, void *aux)
 {
-	struct amba_attach_args *aaa = aux;
+	const char * const compatible[] = { "brcm,bcm2835-fb", NULL };
+	struct fdt_attach_args * const faa = aux;
 
-	return !strcmp(aaa->aaa_name, "fb");
+	return of_match_compatible(faa->faa_phandle, compatible);
 }
 
 static void
 bcmgenfb_attach(device_t parent, device_t self, void *aux)
 {
 	struct bcmgenfb_softc *sc = device_private(self);
-	struct amba_attach_args *aaa = aux;
+	struct fdt_attach_args * const faa = aux;
 	prop_dictionary_t dict = device_properties(self);
 	static const struct genfb_ops zero_ops;
 	struct genfb_ops ops = zero_ops;
@@ -90,7 +91,7 @@ bcmgenfb_attach(device_t parent, device_t self, void *aux)
 	int error;
 
 	sc->sc_gen.sc_dev = self;
-	sc->sc_iot = aaa->aaa_iot;
+	sc->sc_iot = faa->faa_bst;
 
 	sc->sc_wstype = WSDISPLAY_TYPE_VC4;
 	prop_dictionary_get_uint32(dict, "wsdisplay_type", &sc->sc_wstype);
