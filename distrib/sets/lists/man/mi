@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1565 2017/11/29 09:34:01 wiz Exp $
+# $NetBSD: mi,v 1.1566 2017/12/10 20:51:55 bouyer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1301,10 +1301,12 @@
 ./usr/share/man/cat4/igphy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/igsfb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/iha.0			man-sys-catman		.cat
+./usr/share/man/cat4/ihidev.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ihphy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/iic.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ikphy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/imp.0			man-obsolete		obsolete
+./usr/share/man/cat4/ims.0			man-sys-catman		.cat
 ./usr/share/man/cat4/inet.0			man-sys-catman		.cat
 ./usr/share/man/cat4/inet6.0			man-sys-catman		.cat
 ./usr/share/man/cat4/inphy.0			man-sys-catman		.cat
@@ -4391,9 +4393,11 @@
 ./usr/share/man/html4/igphy.html		man-sys-htmlman		html
 ./usr/share/man/html4/igsfb.html		man-sys-htmlman		html
 ./usr/share/man/html4/iha.html			man-sys-htmlman		html
+./usr/share/man/html4/ihidev.html		man-sys-htmlman		html
 ./usr/share/man/html4/ihphy.html		man-sys-htmlman		html
 ./usr/share/man/html4/iic.html			man-sys-htmlman		html
 ./usr/share/man/html4/ikphy.html		man-sys-htmlman		html
+./usr/share/man/html4/ims.html			man-sys-htmlman		html
 ./usr/share/man/html4/inet.html			man-sys-htmlman		html
 ./usr/share/man/html4/inet6.html		man-sys-htmlman		html
 ./usr/share/man/html4/inphy.html		man-sys-htmlman		html
@@ -7315,10 +7319,12 @@
 ./usr/share/man/man4/igphy.4			man-sys-man		.man
 ./usr/share/man/man4/igsfb.4			man-sys-man		.man
 ./usr/share/man/man4/iha.4			man-sys-man		.man
+./usr/share/man/man4/ihidev.4			man-sys-man		.man
 ./usr/share/man/man4/ihphy.4			man-sys-man		.man
 ./usr/share/man/man4/iic.4			man-sys-man		.man
 ./usr/share/man/man4/ikphy.4			man-sys-man		.man
 ./usr/share/man/man4/imp.4			man-obsolete		obsolete
+./usr/share/man/man4/ims.4			man-sys-man		.man
 ./usr/share/man/man4/inet.4			man-sys-man		.man
 ./usr/share/man/man4/inet6.4			man-sys-man		.man
 ./usr/share/man/man4/inphy.4			man-sys-man		.man
