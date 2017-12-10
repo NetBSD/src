@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_worker.c,v 1.3 2017/01/02 21:49:51 rmind Exp $	*/
+/*	$NetBSD: npf_worker.c,v 1.4 2017/12/10 01:18:21 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010-2015 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_worker.c,v 1.3 2017/01/02 21:49:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_worker.c,v 1.4 2017/12/10 01:18:21 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -148,9 +148,12 @@ void
 npf_worker_unregister(npf_t *npf, npf_workfunc_t func)
 {
 	const unsigned idx = npf->worker_id;
-	npf_worker_t *wrk = &npf_workers[idx];
+	npf_worker_t *wrk;
 	npf_t *instance;
 
+	if (!npf_worker_count)
+		return;
+	wrk = &npf_workers[idx];
 	mutex_enter(&wrk->worker_lock);
 	npf_worker_testset(wrk, func, NULL);
 	if ((instance = wrk->instances) == npf) {
