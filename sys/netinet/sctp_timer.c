@@ -1,5 +1,5 @@
 /*	$KAME: sctp_timer.c,v 1.30 2005/06/16 18:29:25 jinmei Exp $	*/
-/*	$NetBSD: sctp_timer.c,v 1.3 2016/12/08 05:16:33 ozaki-r Exp $	*/
+/*	$NetBSD: sctp_timer.c,v 1.4 2017/12/10 11:03:58 rjs Exp $	*/
 
 /*
  * Copyright (C) 2002, 2003, 2004 Cisco Systems Inc,
@@ -30,11 +30,12 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_timer.c,v 1.3 2016/12/08 05:16:33 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_timer.c,v 1.4 2017/12/10 11:03:58 rjs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #include "opt_sctp.h"
+#include "opt_ipsec.h"
 #endif /* _KERNEL_OPT */
 
 #include <sys/param.h>
