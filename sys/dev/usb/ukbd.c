@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.138 2017/08/13 22:19:56 jakllsch Exp $        */
+/*      $NetBSD: ukbd.c,v 1.139 2017/12/10 17:03:07 bouyer Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.138 2017/08/13 22:19:56 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.139 2017/12/10 17:03:07 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -66,8 +66,8 @@ __KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.138 2017/08/13 22:19:56 jakllsch Exp $");
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/usb_quirks.h>
 #include <dev/usb/uhidev.h>
-#include <dev/usb/hid.h>
 #include <dev/usb/ukbdvar.h>
+#include <dev/hid/hid.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wskbdvar.h>
@@ -352,10 +352,10 @@ const struct wskbd_accessops ukbd_accessops = {
 	ukbd_ioctl,
 };
 
-extern const struct wscons_keydesc ukbd_keydesctab[];
+extern const struct wscons_keydesc hidkbd_keydesctab[];
 
 const struct wskbd_mapdata ukbd_keymapdata = {
-	ukbd_keydesctab,
+	hidkbd_keydesctab,
 #if defined(UKBD_LAYOUT)
 	UKBD_LAYOUT,
 #elif defined(PCKBD_LAYOUT)

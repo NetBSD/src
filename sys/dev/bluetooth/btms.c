@@ -1,4 +1,4 @@
-/*	$NetBSD: btms.c,v 1.12 2014/12/13 19:28:55 nonaka Exp $	*/
+/*	$NetBSD: btms.c,v 1.13 2017/12/10 17:03:07 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btms.c,v 1.12 2014/12/13 19:28:55 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btms.c,v 1.13 2017/12/10 17:03:07 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -79,7 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: btms.c,v 1.12 2014/12/13 19:28:55 nonaka Exp $");
 #include <dev/bluetooth/bthid.h>
 #include <dev/bluetooth/bthidev.h>
 
-#include <dev/usb/hid.h>
+#include <dev/hid/hid.h>
 #include <dev/usb/usb.h>
 #include <dev/usb/usbhid.h>
 

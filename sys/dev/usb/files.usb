@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.147 2017/10/19 23:58:41 jmcneill Exp $
+#	$NetBSD: files.usb,v 1.148 2017/12/10 17:03:07 bouyer Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -162,10 +162,9 @@ defflag		opt_ukbd.h 	GDIUM_KEYBOARD_HACK
 device	ukbd: hid, wskbddev
 attach	ukbd at uhidbus
 file	dev/usb/ukbd.c			ukbd			needs-flag
-file	dev/usb/ukbdmap.c		ukbd | btkbd | linux_keymap
 
 # Mice
-device	ums: hid, wsmousedev
+device	ums: hid, hidms, wsmousedev
 attach	ums at uhidbus
 file	dev/usb/ums.c			ums
 

@@ -1,8 +1,7 @@
-/*	$NetBSD: usbhid.h,v 1.17 2017/12/10 17:03:07 bouyer Exp $	*/
-/*	$FreeBSD: src/sys/dev/usb/usbhid.h,v 1.7 1999/11/17 22:33:51 n_hibma Exp $ */
+/*	$NetBSD: hidms.h,v 1.1 2017/12/10 17:03:07 bouyer Exp $	*/
 
 /*
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2017 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -31,37 +30,34 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <dev/wscons/wsconsio.h>
+#include <dev/wscons/wsmousevar.h>
 
-#ifndef _DEV_USB_USBHID_H_
-#define _DEV_USB_USBHID_H_
+#define MAX_BUTTONS	31	/* must not exceed size of sc_buttons */
 
-#define UR_GET_HID_DESCRIPTOR	0x06
-#define  UDESC_HID		0x21
-#define  UDESC_REPORT		0x22
-#define  UDESC_PHYSICAL		0x23
-#define UR_SET_HID_DESCRIPTOR	0x07
-#define UR_GET_REPORT		0x01
-#define UR_SET_REPORT		0x09
-#define UR_GET_IDLE		0x02
-#define UR_SET_IDLE		0x0a
-#define UR_GET_PROTOCOL		0x03
-#define UR_SET_PROTOCOL		0x0b
+struct hidms {
+	struct hid_location hidms_loc_x, hidms_loc_y, hidms_loc_z, hidms_loc_w;
+	struct hid_location hidms_loc_btn[MAX_BUTTONS];
 
-typedef struct usb_hid_descriptor {
-	uByte		bLength;
-	uByte		bDescriptorType;
-	uWord		bcdHID;
-	uByte		bCountryCode;
-	uByte		bNumDescriptors;
-	struct {
-		uByte		bDescriptorType;
-		uWord		wDescriptorLength;
-	} descrs[1];
-} UPACKED usb_hid_descriptor_t;
-#define USB_HID_DESCRIPTOR_SIZE(n) (9+(n)*3)
+	u_int flags;		/* device configuration */
+#define HIDMS_Z			0x001	/* z direction available */
+#define HIDMS_SPUR_BUT_UP	0x002	/* spurious button up events */
+#define HIDMS_REVZ		0x004	/* Z-axis is reversed */
+#define HIDMS_W			0x008	/* w direction/tilt available */
+#define HIDMS_ABS		0x010	/* absolute position, touchpanel */
+#define HIDMS_TIP_SWITCH  	0x020	/* digitizer tip switch */
+#define HIDMS_SEC_TIP_SWITCH 	0x040	/* digitizer secondary tip switch */
+#define HIDMS_BARREL_SWITCH 	0x080	/* digitizer barrel switch */
+#define HIDMS_ERASER 		0x100	/* digitizer eraser */
+#define HIDMS_DIGITIZER 	0x200	/* digitizer */
 
-#define UHID_INPUT_REPORT 0x01
-#define UHID_OUTPUT_REPORT 0x02
-#define UHID_FEATURE_REPORT 0x03
+	int nbuttons;
 
-#endif /* _DEV_USB_USBHID_H_ */
+	uint32_t hidms_buttons;	/* mouse button status */
+	device_t hidms_wsmousedev;
+};
+
+bool hidms_setup(device_t, struct hidms *, int, void *, int);
+void hidms_attach(device_t, struct hidms *, const struct wsmouse_accessops *);
+void hidms_intr(struct hidms *, void *, u_int);
+

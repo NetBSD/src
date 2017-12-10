@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1185 2017/11/25 16:31:03 jmcneill Exp $
+#	$NetBSD: files,v 1.1186 2017/12/10 17:03:07 bouyer Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -378,6 +378,9 @@ file	dev/ic/nslm7x.c			lm			needs-flag
 
 device	spdmem
 file	dev/ic/spdmem.c			spdmem
+
+# Generic HID support (used by USB, bluetooth and i2c)
+include "dev/hid/files.hid"
 
 # I2C device support
 include "dev/i2c/files.i2c"
@@ -1290,10 +1293,6 @@ file	dev/ic/sl811hs.c		slhci			needs-flag
 # DesignWare OTG host controller
 #
 include "external/bsd/dwc2/conf/files.dwc2"
-
-# USB HID processing (as used by bluetooth and usb code)
-define	hid
-file	dev/usb/hid.c			hid
 
 # SD Host controller
 device	sdhc: sdmmcbus

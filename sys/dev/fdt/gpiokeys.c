@@ -1,4 +1,4 @@
-/* $NetBSD: gpiokeys.c,v 1.5 2017/09/23 23:54:30 jmcneill Exp $ */
+/* $NetBSD: gpiokeys.c,v 1.6 2017/12/10 17:03:07 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpiokeys.c,v 1.5 2017/09/23 23:54:30 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpiokeys.c,v 1.6 2017/12/10 17:03:07 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -59,9 +59,9 @@ static void	gpiokeys_attach(device_t, device_t, void *);
 static void	gpiokeys_tick(void *);
 static void	gpiokeys_task(void *);
 
-extern const struct wscons_keydesc ukbd_keydesctab[];
+extern const struct wscons_keydesc hidkbd_keydesctab[];
 static const struct wskbd_mapdata gpiokeys_keymapdata = {
-	ukbd_keydesctab,
+	hidkbd_keydesctab,
 	KB_US,
 };
 

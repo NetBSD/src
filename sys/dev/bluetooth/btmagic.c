@@ -1,4 +1,4 @@
-/*	$NetBSD: btmagic.c,v 1.16 2016/07/07 06:55:41 msaitoh Exp $	*/
+/*	$NetBSD: btmagic.c,v 1.17 2017/12/10 17:03:07 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btmagic.c,v 1.16 2016/07/07 06:55:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btmagic.c,v 1.17 2017/12/10 17:03:07 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -108,7 +108,7 @@ __KERNEL_RCSID(0, "$NetBSD: btmagic.c,v 1.16 2016/07/07 06:55:41 msaitoh Exp $")
 #include <dev/bluetooth/bthid.h>
 #include <dev/bluetooth/bthidev.h>
 
-#include <dev/usb/hid.h>
+#include <dev/hid/hid.h>
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdevs.h>
 

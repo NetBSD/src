@@ -1,4 +1,4 @@
-/*	$NetBSD: hid.c,v 1.47 2017/06/01 02:45:11 chs Exp $	*/
+/*	$NetBSD: hid.c,v 1.1 2017/12/10 17:03:07 bouyer Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.c,v 1.11 1999/11/17 22:33:39 n_hibma Exp $ */
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hid.c,v 1.47 2017/06/01 02:45:11 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hid.c,v 1.1 2017/12/10 17:03:07 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: hid.c,v 1.47 2017/06/01 02:45:11 chs Exp $");
 #include <dev/usb/usb.h>
 #include <dev/usb/usbhid.h>
 
-#include <dev/usb/hid.h>
+#include <dev/hid/hid.h>
 
 #ifdef UHIDEV_DEBUG
 #define DPRINTF(x)	if (uhidevdebug) printf x

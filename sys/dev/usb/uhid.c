@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.100 2017/10/25 08:12:39 maya Exp $	*/
+/*	$NetBSD: uhid.c,v 1.101 2017/12/10 17:03:07 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2008, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.100 2017/10/25 08:12:39 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.101 2017/12/10 17:03:07 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -64,8 +64,8 @@ __KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.100 2017/10/25 08:12:39 maya Exp $");
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
-#include <dev/usb/hid.h>
 #include <dev/usb/usb_quirks.h>
+#include <dev/hid/hid.h>
 
 #include <dev/usb/uhidev.h>
 

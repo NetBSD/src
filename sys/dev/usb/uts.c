@@ -1,4 +1,4 @@
-/*	$NetBSD: uts.c,v 1.7 2017/05/17 14:15:29 macallan Exp $	*/
+/*	$NetBSD: uts.c,v 1.8 2017/12/10 17:03:07 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uts.c,v 1.7 2017/05/17 14:15:29 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uts.c,v 1.8 2017/12/10 17:03:07 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: uts.c,v 1.7 2017/05/17 14:15:29 macallan Exp $");
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/usb_quirks.h>
 #include <dev/usb/uhidev.h>
-#include <dev/usb/hid.h>
+#include <dev/hid/hid.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsmousevar.h>
