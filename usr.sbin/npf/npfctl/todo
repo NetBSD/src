@@ -2,7 +2,7 @@
 -- have a way to use npflog to log packets to syslog
    We have npfd that logs to a file
 -- have a way to match dropped packets to rules
-   We keep this information now and we pass it to nplog using the OpenBSD
+   We keep this information now and we pass it to npflog using the OpenBSD
    pflog format.
 -- have a way to list the active nat sessions
    Use "npfctl list"
