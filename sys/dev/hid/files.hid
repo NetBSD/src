@@ -1,0 +1,13 @@
+#       $NetBSD: files.hid,v 1.1 2017/12/10 17:03:07 bouyer Exp $
+
+# Human Interface Devices
+# Used by USB, bluetooth and i2c
+
+# HID processing
+define  hid
+file    dev/hid/hid.c			hid
+
+define	hidms
+file    dev/hid/hidms.c			hidms
+
+file	dev/hid/hidkbdmap.c		ukbd | btkbd | linux_keymap
