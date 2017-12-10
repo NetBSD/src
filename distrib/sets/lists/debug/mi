@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.231 2017/12/08 13:15:41 christos Exp $
+# $NetBSD: mi,v 1.232 2017/12/10 15:41:08 christos Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -1692,6 +1692,7 @@
 ./usr/libdata/debug/usr/tests/kernel/arch/i386/t_ptrace_wait6.debug	tests-obsolete		obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/arch/i386/t_ptrace_waitid.debug	tests-obsolete		obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/arch/i386/t_ptrace_waitpid.debug	tests-obsolete		obsolete,compattestfile
+./usr/libdata/debug/usr/tests/kernel/h_getprocpath.debug		tests-kernel-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/h_ps_strings1.debug		tests-kernel-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/h_ps_strings2.debug		tests-kernel-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/h_segv.debug			tests-kernel-tests	debug,atf,compattestfile
