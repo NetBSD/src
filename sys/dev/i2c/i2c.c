@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.56 2017/10/28 04:53:55 riastradh Exp $	*/
+/*	$NetBSD: i2c.c,v 1.57 2017/12/10 16:53:32 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.56 2017/10/28 04:53:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.57 2017/12/10 16:53:32 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,6 +140,7 @@ iic_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	ia.ia_name = NULL;
 	ia.ia_ncompat = 0;
 	ia.ia_compat = NULL;
+	ia.ia_prop = NULL;
 
 	for (ia.ia_addr = 0; ia.ia_addr <= I2C_MAX_ADDR; ia.ia_addr++) {
 		if (sc->sc_devices[ia.ia_addr] != NULL)
@@ -262,6 +263,7 @@ iic_attach(device_t parent, device_t self, void *aux)
 			ia.ia_name = name;
 			ia.ia_cookie = cookie;
 			ia.ia_size = size;
+			ia.ia_prop = dev;
 
 			buf = NULL;
 			cdata = prop_dictionary_get(dev, "compatible");

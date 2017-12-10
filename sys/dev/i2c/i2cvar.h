@@ -1,4 +1,4 @@
-/*	$NetBSD: i2cvar.h,v 1.9 2015/12/13 17:14:56 jmcneill Exp $	*/
+/*	$NetBSD: i2cvar.h,v 1.10 2017/12/10 16:53:32 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -125,6 +125,7 @@ struct i2c_attach_args {
 	int		ia_ncompat;	/* number of pointers in the
 					   ia_compat array */
 	const char **	ia_compat;	/* chip names */
+	prop_dictionary_t ia_prop;	/* dictionnary for this device */
 	/*
 	 * The following is of limited usefulness and should only be used
 	 * in rare cases where we really know what we are doing. Example:
@@ -134,6 +135,8 @@ struct i2c_attach_args {
 	 * may be present. Example: on OpenFirmware machines the device
 	 * tree OF node - if available. This info is hard to transport
 	 * down to MD drivers through the MI i2c bus otherwise.
+	 * 
+	 * On ACPI platforms this is the ACPI_HANDLE of the device.
 	 */
 	uintptr_t	ia_cookie;	/* OF node in openfirmware machines */
 };
