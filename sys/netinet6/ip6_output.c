@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.191.6.2 2017/10/21 19:43:54 snj Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.191.6.3 2017/12/10 09:24:30 snj Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.191.6.2 2017/10/21 19:43:54 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.191.6.3 2017/12/10 09:24:30 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -134,7 +134,7 @@ static int ip6_insert_jumboopt(struct ip6_exthdrs *, u_int32_t);
 static int ip6_splithdr(struct mbuf *, struct ip6_exthdrs *);
 static int ip6_getpmtu(struct rtentry *, struct ifnet *, u_long *, int *);
 static int copypktopts(struct ip6_pktopts *, struct ip6_pktopts *, int);
-static int ip6_ifaddrvalid(const struct in6_addr *);
+static int ip6_ifaddrvalid(const struct in6_addr *, const struct in6_addr *);
 static int ip6_handle_rthdr(struct ip6_rthdr *, struct ip6_hdr *);
 
 #ifdef RFC2292
@@ -605,7 +605,9 @@ ip6_output(
 	/* scope check is done. */
 
 	/* Ensure we only send from a valid address. */
-	if ((error = ip6_ifaddrvalid(&src0)) != 0) {
+	if ((ifp->if_flags & IFF_LOOPBACK) == 0 &&
+	    (error = ip6_ifaddrvalid(&src0, &dst0)) != 0)
+	{
 		char ip6buf[INET6_ADDRSTRLEN];
 		nd6log(LOG_ERR,
 		    "refusing to send from invalid address %s (pid %d)\n",
@@ -3363,27 +3365,31 @@ ip6_optlen(struct in6pcb *in6p)
  * if the packet could be dropped without error (protocol dependent).
  */
 static int
-ip6_ifaddrvalid(const struct in6_addr *addr)
+ip6_ifaddrvalid(const struct in6_addr *src, const struct in6_addr *dst)
 {
 	struct sockaddr_in6 sin6;
 	int s, error;
 	struct ifaddr *ifa;
 	struct in6_ifaddr *ia6;
 
-	if (IN6_IS_ADDR_UNSPECIFIED(addr))
+	if (IN6_IS_ADDR_UNSPECIFIED(src))
 		return 0;
 
 	memset(&sin6, 0, sizeof(sin6));
 	sin6.sin6_family = AF_INET6;
 	sin6.sin6_len = sizeof(sin6);
-	sin6.sin6_addr = *addr;
+	sin6.sin6_addr = *src;
 
 	s = pserialize_read_enter();
 	ifa = ifa_ifwithaddr(sin6tosa(&sin6));
 	if ((ia6 = ifatoia6(ifa)) == NULL ||
 	    ia6->ia6_flags & (IN6_IFF_ANYCAST | IN6_IFF_DUPLICATED))
 		error = -1;
-	else if (ia6->ia6_flags & (IN6_IFF_TENTATIVE | IN6_IFF_DETACHED))
+	else if (ia6->ia6_flags & IN6_IFF_TENTATIVE)
+		error = 1;
+	else if (ia6->ia6_flags & IN6_IFF_DETACHED &&
+	    (sin6.sin6_addr = *dst, ifa_ifwithaddr(sin6tosa(&sin6)) == NULL))
+		/* Allow internal traffic to DETACHED addresses */
 		error = 1;
 	else
 		error = 0;

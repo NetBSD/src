@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.178.2.1 2017/10/21 19:43:54 snj Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.178.2.2 2017/12/10 09:24:30 snj Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.178.2.1 2017/10/21 19:43:54 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.178.2.2 2017/12/10 09:24:30 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -511,13 +511,33 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 #endif
 	    rt->rt_ifp->if_type == IFT_LOOP) {
 		struct in6_ifaddr *ia6 = (struct in6_ifaddr *)rt->rt_ifa;
+		int addrok;
+
 		if (ia6->ia6_flags & IN6_IFF_ANYCAST)
 			m->m_flags |= M_ANYCAST6;
 		/*
 		 * packets to a tentative, duplicated, or somehow invalid
 		 * address must not be accepted.
 		 */
-		if (!(ia6->ia6_flags & (IN6_IFF_NOTREADY | IN6_IFF_DETACHED))) {
+		if (ia6->ia6_flags & IN6_IFF_NOTREADY)
+			addrok = 0;
+		else if (ia6->ia6_flags & IN6_IFF_DETACHED &&
+		    !IN6_IS_ADDR_UNSPECIFIED(&ip6->ip6_src))
+		{
+			/* Allow internal traffic to DETACHED addresses */
+			struct sockaddr_in6 sin6;
+			int s;
+
+			memset(&sin6, 0, sizeof(sin6));
+			sin6.sin6_family = AF_INET6;
+			sin6.sin6_len = sizeof(sin6);
+			sin6.sin6_addr = ip6->ip6_src;
+			s = pserialize_read_enter();
+			addrok = (ifa_ifwithaddr(sin6tosa(&sin6)) != NULL);
+			pserialize_read_exit(s);
+		} else
+			addrok = 1;
+		if (addrok) {
 			/* this address is ready */
 			ours = 1;
 			deliverifp = ia6->ia_ifp;	/* correct? */
