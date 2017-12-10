@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_cm.c,v 1.1 2015/11/21 07:41:29 mlelstv Exp $ */
+/*	$NetBSD: bcm2835_cm.c,v 1.2 2017/12/10 21:38:26 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_cm.c,v 1.1 2015/11/21 07:41:29 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_cm.c,v 1.2 2017/12/10 21:38:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,9 +43,11 @@ __KERNEL_RCSID(0, "$NetBSD: bcm2835_cm.c,v 1.1 2015/11/21 07:41:29 mlelstv Exp $
 #include <sys/bus.h>
 
 #include <arm/broadcom/bcm2835reg.h>
-#include <arm/broadcom/bcm_amba.h>
-
 #include <arm/broadcom/bcm2835_cm.h>
+
+#include <dev/fdt/fdtvar.h>
+
+#include <arm/fdt/arm_fdtvar.h>
 
 struct bcm2835cm_softc {
 	device_t		sc_dev;
@@ -63,45 +65,51 @@ static int bcmcm_match(device_t, cfdata_t, void *);
 static void bcmcm_attach(device_t, device_t, void *);
 static int bcmcm_wait(struct bcm2835cm_softc *, int, int);
 
-CFATTACH_DECL_NEW(bcmcm_amba, sizeof(struct bcm2835cm_softc),
+CFATTACH_DECL_NEW(bcmcm_fdt, sizeof(struct bcm2835cm_softc),
     bcmcm_match, bcmcm_attach, NULL, NULL);
 
 /* ARGSUSED */
 static int
 bcmcm_match(device_t parent, cfdata_t match, void *aux)
 {
-	struct amba_attach_args *aaa = aux;
+	const char * const compatible[] = {
+	    "brcm,bcm2835-cprman",
+	    NULL
+	};
+	struct fdt_attach_args * const faa = aux;
 
-	if (strcmp(aaa->aaa_name, "bcmcm") != 0)
-		return 0;
-
-	if (aaa->aaa_addr != BCM2835_CM_BASE)
-		return 0;
-
-	return 1;
+	return of_match_compatible(faa->faa_phandle, compatible);
 }
 
 static void
 bcmcm_attach(device_t parent, device_t self, void *aux)
 {
 	struct bcm2835cm_softc *sc = device_private(self);
- 	struct amba_attach_args *aaa = aux;
+	struct fdt_attach_args * const faa = aux;
 
 	aprint_naive("\n");
 	aprint_normal(": CM\n");
 
 	sc->sc_dev = self;
-	sc->sc_iot = aaa->aaa_iot;
+	sc->sc_iot = faa->faa_bst;
+	const int phandle = faa->faa_phandle;
 
-	if (bus_space_map(aaa->aaa_iot, aaa->aaa_addr, BCM2835_CM_SIZE, 0,
-	    &sc->sc_ioh)) {
+	bus_addr_t addr;
+	bus_size_t size;
+
+	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
+		aprint_error(": missing 'reg' property\n");
+		return;
+	}
+
+	if (bus_space_map(faa->faa_bst, addr, size, 0, &sc->sc_ioh)) {
 		aprint_error_dev(sc->sc_dev, "unable to map device\n");
-		goto fail0;
+		return;
 	}
 
 	/* Success!  */
 
-fail0:	return;
+	return;
 }
 
 static int
@@ -167,7 +175,8 @@ bcm_cm_set(enum bcm_cm_clock clk, uint32_t ctl, uint32_t div)
 	div &= ~CM_DIV_PASSWD;
 	div |= __SHIFTIN(CM_PASSWD, CM_DIV_PASSWD);
 
-	/* if clock is running, turn it off and wait for
+	/*
+	 * if clock is running, turn it off and wait for
 	 * the cycle to end
 	 */
 	r = CM_READ(sc, ctlreg);
