@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.20 2015/05/03 02:50:59 pgoyette Exp $
+#	$NetBSD: files.pci,v 1.21 2017/12/10 17:12:54 bouyer Exp $
 
 device 	aapic
 attach 	aapic at pci
@@ -38,6 +38,9 @@ file	arch/x86/pci/amdnb_misc.c	amdnb_misc
 device	amdtemp: sysmon_envsys
 attach	amdtemp at amdnb_miscbus
 file	arch/x86/pci/amdtemp.c		amdtemp
+
+attach  dwiic at pci with pcidwiic
+file    arch/x86/pci/dwiic_pci.c	pcidwiic
 
 # PCI-LPC bridges
 device rdcpcib: isabus, sysmon_wdog
