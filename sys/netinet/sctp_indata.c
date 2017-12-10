@@ -1,4 +1,4 @@
-/*	$NetBSD: sctp_indata.c,v 1.4 2016/04/25 21:21:02 rjs Exp $ */
+/*	$NetBSD: sctp_indata.c,v 1.5 2017/12/10 11:52:14 rjs Exp $ */
 /*	$KAME: sctp_indata.c,v 1.36 2005/03/06 16:04:17 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_indata.c,v 1.4 2016/04/25 21:21:02 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_indata.c,v 1.5 2017/12/10 11:52:14 rjs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -205,7 +205,7 @@ sctp_build_ctl_nchunk(struct sctp_tcb *stcb, uint32_t tsn, uint32_t ppid,
 	outinfo->sinfo_stream = stream_no;
 	outinfo->sinfo_ssn = stream_seq;
 	if (flags & SCTP_DATA_UNORDERED) {
-		outinfo->sinfo_flags = MSG_UNORDERED;
+		outinfo->sinfo_flags = SCTP_UNORDERED;
 	} else {
 		outinfo->sinfo_flags = 0;
 	}
@@ -256,7 +256,7 @@ sctp_build_ctl(struct sctp_tcb *stcb, struct sctp_tmit_chunk *chk)
 	outinfo->sinfo_stream = chk->rec.data.stream_number;
 	outinfo->sinfo_ssn = chk->rec.data.stream_seq;
 	if (chk->rec.data.rcv_flags & SCTP_DATA_UNORDERED) {
-		outinfo->sinfo_flags = MSG_UNORDERED;
+		outinfo->sinfo_flags = SCTP_UNORDERED;
 	} else {
 		outinfo->sinfo_flags = 0;
 	}
