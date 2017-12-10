@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_l2tp.c,v 1.5.8.1 2017/07/12 13:42:11 martin Exp $	*/
+/*	$NetBSD: in6_l2tp.c,v 1.5.8.2 2017/12/10 09:41:32 snj Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_l2tp.c,v 1.5.8.1 2017/07/12 13:42:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_l2tp.c,v 1.5.8.2 2017/12/10 09:41:32 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_l2tp.h"
@@ -75,7 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: in6_l2tp.c,v 1.5.8.1 2017/07/12 13:42:11 martin Exp 
 #define L2TP_HLIM6		64
 int ip6_l2tp_hlim = L2TP_HLIM6;
 
-static int in6_l2tp_input(struct mbuf **, int *, int);
+static int in6_l2tp_input(struct mbuf **, int *, int, void *);
 
 static const struct encapsw in6_l2tp_encapsw = {
 	.encapsw6 = {
@@ -241,7 +241,7 @@ looped:
 }
 
 static int
-in6_l2tp_input(struct mbuf **mp, int *offp, int proto)
+in6_l2tp_input(struct mbuf **mp, int *offp, int proto, void *eparg __unused)
 {
 	struct mbuf *m = *mp;
 	int off = *offp;

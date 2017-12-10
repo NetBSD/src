@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_encap.h,v 1.22 2016/07/04 04:35:09 knakahara Exp $	*/
+/*	$NetBSD: ip_encap.h,v 1.22.10.1 2017/12/10 09:41:31 snj Exp $	*/
 /*	$KAME: ip_encap.h,v 1.7 2000/03/25 07:23:37 sumikawa Exp $	*/
 
 /*
@@ -46,13 +46,13 @@ struct encapsw {
 	union {
 		struct encapsw4 {
 			void	(*pr_input)	/* input to protocol (from below) */
-				(struct mbuf *, int, int);
+				(struct mbuf *, int, int, void *);
 			void	*(*pr_ctlinput)		/* control input (from below) */
 				(int, const struct sockaddr *, void *, void *);
 		} _encapsw4;
 		struct encapsw6 {
 			int	(*pr_input)	/* input to protocol (from below) */
-				(struct mbuf **, int *, int);
+				(struct mbuf **, int *, int, void *);
 			void	*(*pr_ctlinput)		/* control input (from below) */
 				(int, const struct sockaddr *, void *, void *);
 		} _encapsw6;
@@ -110,7 +110,6 @@ const struct encaptab *encap_attach_func(int, int,
 	const struct encapsw *, void *);
 void	*encap6_ctlinput(int, const struct sockaddr *, void *);
 int	encap_detach(const struct encaptab *);
-void	*encap_getarg(struct mbuf *);
 
 int	encap_lock_enter(void);
 void	encap_lock_exit(void);
