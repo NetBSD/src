@@ -1,4 +1,4 @@
-.\"    $NetBSD: npf.conf.5,v 1.49 2017/07/03 21:35:31 wiz Exp $
+.\"    $NetBSD: npf.conf.5,v 1.50 2017/12/10 22:04:41 rmind Exp $
 .\"
 .\" Copyright (c) 2009-2017 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 19, 2017
+.Dd December 10, 2017
 .Dt NPF.CONF 5
 .Os
 .Sh NAME
@@ -233,6 +233,14 @@ procedure "someproc" {
 .Ed
 .Pp
 In this case, the procedure calls the logging and normalisation modules.
+The logging facility requires the npf_ext_log kernel module which would
+normally get auto-loaded by NPF.
+The specified npflog interface would also be auto-created once the
+configuration is loaded.
+The log packets can be written to a file using the
+.Xr npfd 8
+daemon.
+.Pp
 Traffic normalisation has a set of different mechanisms.
 In the example above, the normalisation procedure has arguments which
 apply the following mechanisms: IPv4 ID randomisation, Don't Fragment (DF)
@@ -248,8 +256,7 @@ i.e., the next line is considered an extension of the present line.
 .Sh GRAMMAR
 The following is a non-formal BNF-like definition of the grammar.
 The definition is simplified and is intended to be human readable,
-therefore it does not strictly represent the full syntax, which
-is more flexible.
+therefore it does not strictly represent the formal grammar.
 .Bd -literal
 ; Syntax of a single line.  Lines can be separated by LF (\\n) or
 ; a semicolon.  Comments start with a hash (#) character.
@@ -279,9 +286,12 @@ table-def	= "table" table-id "type" ( "hash" | "tree" | "cdb" )
 ; Mapping for address translation.
 
 map		= "map" interface
-		  ( "static" [ "algo" algorithm ] | "dynamic" ) [ proto ]
+		  ( "static" [ "algo" algorithm ] | "dynamic" )
+		  [ map-flags ] [ proto ]
 		  net-seg ( "->" | "<-" | "<->" ) net-seg
 		  [ "pass" [ proto ] filt-opts ]
+
+map-flags	= "no-ports"
 
 ; Rule procedure definition.  The name should be in the double quotes.
 ;
@@ -352,8 +362,7 @@ map $ext_if dynamic 10.1.1.0/24 -> $ext_if
 map $ext_if dynamic proto tcp 10.1.1.2 port 22 <- $ext_if port 9022
 
 procedure "log" {
-	# Note: npf_ext_log kernel module should be loaded, if not built-in.
-	# Also, the interface created, e.g.: ifconfig npflog0 create
+	# The logging facility can be used together with npfd(8).
 	log: npflog0
 }
 
@@ -387,7 +396,8 @@ group default {
 .Xr bpf 4 ,
 .Xr npf 7 ,
 .Xr pcap-filter 7 ,
-.Xr npfctl 8
+.Xr npfctl 8 ,
+.Xr npfd 8
 .Sh HISTORY
 NPF first appeared in
 .Nx 6.0 .

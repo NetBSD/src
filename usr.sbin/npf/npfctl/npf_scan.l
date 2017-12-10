@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_scan.l,v 1.25 2017/01/03 01:29:49 rmind Exp $	*/
+/*	$NetBSD: npf_scan.l,v 1.26 2017/12/10 22:04:41 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -97,6 +97,7 @@ static			return TSTATIC;
 dynamic			return TDYNAMIC;
 file			return TFILE;
 map			return MAP;
+no-ports		return NO_PORTS;
 set			return SET;
 "<->"			return ARROWBOTH;
 "<-"			return ARROWLEFT;

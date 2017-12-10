@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_build.c,v 1.44 2017/01/19 20:18:17 rmind Exp $	*/
+/*	$NetBSD: npf_build.c,v 1.45 2017/12/10 22:04:41 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2011-2017 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_build.c,v 1.44 2017/01/19 20:18:17 rmind Exp $");
+__RCSID("$NetBSD: npf_build.c,v 1.45 2017/12/10 22:04:41 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -493,7 +493,7 @@ npfctl_build_maprset(const char *name, int attr, const char *ifname)
 		attr |= attr_di;
 	}
 	/* Allow only "in/out" attributes. */
-	attr = NPF_RULE_GROUP | NPF_RULE_GROUP | (attr & attr_di);
+	attr = NPF_RULE_GROUP | NPF_RULE_DYNAMIC | (attr & attr_di);
 	rl = npf_rule_create(name, attr, ifname);
 	npf_nat_insert(npf_conf, rl, NPF_PRI_LAST);
 }
@@ -594,6 +594,11 @@ npfctl_build_nat(int type, const char *ifname, const addr_port_t *ap,
 	nl_nat_t *nat;
 
 	if (ap->ap_portrange) {
+		/*
+		 * The port forwarding case.  In such case, there has to
+		 * be a single port used for translation; we keep the port
+		 * translation on, but disable the port map.
+		 */
 		port = npfctl_get_singleport(ap->ap_portrange);
 		flags &= ~NPF_NAT_PORTMAP;
 		flags |= NPF_NAT_PORTS;
@@ -615,7 +620,7 @@ npfctl_build_nat(int type, const char *ifname, const addr_port_t *ap,
  * npfctl_build_natseg: validate and create NAT policies.
  */
 void
-npfctl_build_natseg(int sd, int type, const char *ifname,
+npfctl_build_natseg(int sd, int type, unsigned mflags, const char *ifname,
     const addr_port_t *ap1, const addr_port_t *ap2, const opt_proto_t *op,
     const filt_opts_t *fopts, u_int algo)
 {
@@ -648,6 +653,13 @@ npfctl_build_natseg(int sd, int type, const char *ifname,
 		break;
 	default:
 		abort();
+	}
+
+	/*
+	 * Apply the flag modifications.
+	 */
+	if (mflags & NPF_NAT_PORTS) {
+		flags &= ~(NPF_NAT_PORTS | NPF_NAT_PORTMAP);
 	}
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_show.c,v 1.24 2017/05/14 21:38:23 christos Exp $	*/
+/*	$NetBSD: npf_show.c,v 1.25 2017/12/10 22:04:41 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_show.c,v 1.24 2017/05/14 21:38:23 christos Exp $");
+__RCSID("$NetBSD: npf_show.c,v 1.25 2017/12/10 22:04:41 rmind Exp $");
 
 #include <sys/socket.h>
 #define	__FAVOR_BSD
@@ -463,8 +463,10 @@ npfctl_print_nat(npf_conf_info_t *ctx, nl_nat_t *nt)
 	flags = npf_nat_getflags(nt);
 
 	/* Print out the NAT policy with the filter criteria. */
-	fprintf(ctx->fp, "map %s %s %s %s %s pass ",
+	fprintf(ctx->fp, "map %s %s %s%s%s %s %s pass ",
 	    ifname, (flags & NPF_NAT_STATIC) ? "static" : "dynamic",
+	    "" /* XXX algo, */,
+	    (flags & NPF_NAT_PORTS) ? "" : "no-ports ",
 	    seg1, arrow, seg2);
 	npfctl_print_filter(ctx, rl);
 	npfctl_print_id(ctx, rl);
