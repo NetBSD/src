@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_crypto.c,v 1.17 2015/08/24 22:21:26 pooka Exp $	*/
+/*	$NetBSD: ieee80211_crypto.c,v 1.18 2017/12/10 08:56:23 maxv Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto.c,v 1.12 2005/08/08 18:46:35 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto.c,v 1.17 2015/08/24 22:21:26 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto.c,v 1.18 2017/12/10 08:56:23 maxv Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -565,7 +565,7 @@ ieee80211_crypto_encap(struct ieee80211com *ic,
  */
 struct ieee80211_key *
 ieee80211_crypto_decap(struct ieee80211com *ic,
-	struct ieee80211_node *ni, struct mbuf *m, int hdrlen)
+	struct ieee80211_node *ni, struct mbuf **mp, int hdrlen)
 {
 #define	IEEE80211_WEP_HDRLEN	(IEEE80211_WEP_IVLEN + IEEE80211_WEP_KIDLEN)
 #define	IEEE80211_WEP_MINLEN \
@@ -574,6 +574,7 @@ ieee80211_crypto_decap(struct ieee80211com *ic,
 	struct ieee80211_key *k;
 	struct ieee80211_frame *wh;
 	const struct ieee80211_cipher *cip;
+	struct mbuf *m = *mp;
 	u_int8_t keyid;
 
 	/* NB: this minimum size data frame could be bigger */
@@ -605,6 +606,7 @@ ieee80211_crypto_decap(struct ieee80211com *ic,
 	cip = k->wk_cipher;
 	if (m->m_len < hdrlen + cip->ic_header &&
 	    (m = m_pullup(m, hdrlen + cip->ic_header)) == NULL) {
+		*mp = NULL;
 		IEEE80211_DPRINTF(ic, IEEE80211_MSG_CRYPTO,
 		    "[%s] unable to pullup %s header\n",
 		    ether_sprintf(wh->i_addr2), cip->ic_name);

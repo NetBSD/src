@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.90 2017/12/10 08:48:15 maxv Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.91 2017/12/10 08:56:23 maxv Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.81 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.90 2017/12/10 08:48:15 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.91 2017/12/10 08:56:23 maxv Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -454,7 +454,7 @@ ieee80211_input(struct ieee80211com *ic, struct mbuf *m,
 				IEEE80211_NODE_STAT(ni, rx_noprivacy);
 				goto out;
 			}
-			key = ieee80211_crypto_decap(ic, ni, m, hdrspace);
+			key = ieee80211_crypto_decap(ic, ni, &m, hdrspace);
 			if (key == NULL) {
 				/* NB: stats+msgs handled in crypto_decap */
 				IEEE80211_NODE_STAT(ni, rx_wepfail);
@@ -595,7 +595,7 @@ ieee80211_input(struct ieee80211com *ic, struct mbuf *m,
 				goto out;
 			}
 			hdrspace = ieee80211_hdrspace(ic, wh);
-			key = ieee80211_crypto_decap(ic, ni, m, hdrspace);
+			key = ieee80211_crypto_decap(ic, ni, &m, hdrspace);
 			if (key == NULL) {
 				/* NB: stats+msgs handled in crypto_decap */
 				goto out;

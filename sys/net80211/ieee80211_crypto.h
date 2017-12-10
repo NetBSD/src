@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_crypto.h,v 1.11 2009/01/03 03:43:23 yamt Exp $	*/
+/*	$NetBSD: ieee80211_crypto.h,v 1.12 2017/12/10 08:56:23 maxv Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -181,7 +181,7 @@ int	ieee80211_crypto_available(u_int cipher);
 struct ieee80211_key *ieee80211_crypto_encap(struct ieee80211com *,
 		struct ieee80211_node *, struct mbuf *);
 struct ieee80211_key *ieee80211_crypto_decap(struct ieee80211com *,
-		struct ieee80211_node *, struct mbuf *, int);
+		struct ieee80211_node *, struct mbuf **, int);
 
 /*
  * Check and remove any MIC.
