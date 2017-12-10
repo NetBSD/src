@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ruleset.c,v 1.45 2017/01/29 00:15:54 christos Exp $	*/
+/*	$NetBSD: npf_ruleset.c,v 1.46 2017/12/10 01:18:21 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2015 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.45 2017/01/29 00:15:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.46 2017/12/10 01:18:21 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -208,7 +208,7 @@ npf_ruleset_insert(npf_ruleset_t *rlset, npf_rule_t *rl)
 	}
 }
 
-static npf_rule_t *
+npf_rule_t *
 npf_ruleset_lookup(npf_ruleset_t *rlset, const char *name)
 {
 	npf_rule_t *rl;
