@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.91 2017/12/08 06:19:01 msaitoh Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.92 2017/12/10 10:33:40 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -8315,3 +8315,134 @@ sys/net/if_pppoe.c				1.133
 
 	Remove wrong assertions. From s-yamaguchi@IIJ.
 	[ozaki-r, ticket #431]
+
+sys/netinet/ip_input.c				1.363
+sys/netinet6/in6_src.c				1.83-1.84
+sys/netinet6/ip6_input.c			1.184-1.185
+sys/netinet6/ip6_output.c			1.194-1.195
+
+	Allow local communication over DETACHED addresses.
+	Allow binding to DETACHED or TENTATIVE addresses as we deny
+	sending upstream from them anyway.
+	Prefer non DETACHED or TENTATIVE addresses.
+	[roy, ticket #390]
+
+sys/kern/kern_lwp.c				1.191
+
+	Also wait interruptibly when exiting. Avoids deadlocked on exit
+	processes create by golang.
+	[christos, ticket #417]
+
+sys/compat/common/vfs_syscalls_12.c		1.35
+sys/compat/common/vfs_syscalls_43.c		1.62
+
+	Zero out the rest of the directory record.
+	[christos, ticket #418]
+
+sys/net/if_stf.c				1.103
+sys/net/if_stf.h				1.8
+sys/netinet/in_gif.c				1.89
+sys/netinet/in_gif.h				1.17
+sys/netinet/in_l2tp.c				1.4
+sys/netinet/ip_encap.c				1.66
+sys/netinet/ip_encap.h				1.23
+sys/netinet/ip_mroute.c				1.148
+sys/netinet6/in6_gif.c				1.87
+sys/netinet6/in6_gif.h				1.16
+sys/netinet6/in6_l2tp.c				1.7
+sys/netipsec/xform.h				1.13
+sys/netipsec/xform_ipip.c			1.55
+
+	Add argument to encapsw->pr_input() instead of m_tag.
+	[knakahara, ticket #419]
+
+etc/rc.d/sshd					1.25
+
+	Do away with (not well specified, even if it happens to work)
+	absurd 15 arg test ([ ]) expression, and replace it with several
+	well defined 2 arg tests, combined with (also well defined) sh
+	syntax.
+	[sevan, ticket #420]
+
+sys/dev/pci/if_wm.c				1.545-1.546
+
+	- Don't allocate MSI-X interrupt on 82583. 82583 chip has a
+	  MSI-X capability in the PCI configuration space but it doesn't
+	  support it. At least the document doesn't say anything about
+	  MSI-X.  Fixes PR#52767.
+	- 82583 supports jumbo frame. Fixes PR#52773.
+	- Cleanup comment.
+	[msaitoh, ticket #424]
+
+sys/dev/pcmcia/if_malo_pcmcia.c			1.14
+
+	Fix two spl leaks.
+	[msaitoh, ticket #426]
+
+sys/arch/amiga/dev/if_bah_zbus.c		1.17
+sys/arch/arm/broadcom/bcm53xx_eth.c		1.30
+sys/arch/powerpc/booke/dev/pq3etsec.c		1.32
+sys/arch/usermode/dev/if_veth.c			1.9
+sys/dev/ic/an.c					1.66
+sys/dev/ic/athn.c				1.17
+sys/dev/ic/atw.c				1.162
+sys/dev/ic/bwi.c				1.33
+sys/dev/ic/dwc_gmac.c				1.41-1.42
+sys/dev/ic/malo.c				1.10
+sys/dev/ic/rt2560.c				1.31
+sys/dev/ic/rt2661.c				1.36
+sys/dev/ic/rt2860.c				1.29
+sys/dev/ic/rtw.c				1.127
+sys/dev/ic/rtwvar.h				1.46
+sys/dev/ic/smc90cx6.c				1.71
+sys/dev/ic/smc90cx6var.h			1.12
+sys/dev/ic/wi.c					1.244
+sys/dev/pci/if_ipw.c				1.66
+sys/dev/pci/if_iwi.c				1.104
+sys/dev/pci/if_iwm.c				1.76
+sys/dev/pci/if_iwn.c				1.86
+sys/dev/pci/if_rtwn.c				1.13
+sys/dev/pci/if_wm.c				1.541
+sys/dev/pci/if_wpi.c				1.79
+sys/dev/pci/ixgbe/ixgbe.c			1.106
+sys/dev/pci/ixgbe/ixv.c				1.73 via patch
+sys/dev/pcmcia/if_malo_pcmcia.c			1.15
+sys/dev/scsipi/if_se.c				1.95
+sys/dev/usb/if_upl.c				1.60
+sys/net/if.c					1.396
+sys/net/if.h					1.241
+sys/net/if_arc.h				1.23
+sys/net/if_arcsubr.c				1.78
+sys/net/if_bridge.c				1.136-1.137
+sys/net/if_etherip.c				1.39
+sys/net/if_faith.c				1.56
+sys/net/if_gif.c				1.131
+sys/net/if_loop.c				1.96
+sys/net/if_mpls.c				1.30
+sys/net/if_pppoe.c				1.129
+sys/net/if_srt.c				1.27
+sys/net/if_stf.c				1.102
+sys/net/if_tap.c				1.100
+sys/net/if_vlan.c				1.105
+sys/netinet/ip_carp.c				1.91
+sys/rump/net/lib/libshmif/if_shmem.c		1.73-1.74
+sys/rump/net/lib/libvirtif/if_virt.c		1.55-1.56
+
+	- When resource shortage occurred in if_initialize() or
+	  if_attach(), don't panic. Instead return error code.
+	- If if_initialize() or if_attach failed in a attach function,
+	  free resources and return.
+	- Add some missing frees in a detach function.
+	- KNF
+	[msaitoh, ticket #427]
+
+sys/dev/pci/if_wm.c				1.548
+
+	Fix a bug that 8257[56] can't receive packet.  PR#52717.
+	[msaitoh, ticket #432]
+
+lib/libc/gen/signal.3				1.28
+
+	The list of async-signal-safe functions is in sigaction(2).
+	[dholland, ticket #433]
+
