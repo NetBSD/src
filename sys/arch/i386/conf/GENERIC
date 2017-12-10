@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1173 2017/12/09 00:29:33 riastradh Exp $
+# $NetBSD: GENERIC,v 1.1174 2017/12/10 17:19:48 bouyer Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.1173 $"
+#ident		"GENERIC-$Revision: 1.1174 $"
 
 maxusers	64		# estimated number of users
 
@@ -653,6 +653,10 @@ iic*	at nfsmb?
 piixpm* at pci? dev ? function ?	# PIIX4 compatible PM controller
 iic*	at piixpm?			# SMBus on PIIX4
 
+# I2C controller as found in some Intel PCH devices.
+dwiic*		at pci?			# I2C controller
+iic*		at dwiic?
+
 # dbCool Thermal monitor and fan controller
 #dbcool* at iic? addr 0x2C		# Unknown other motherboard(s)
 #dbcool* at iic? addr 0x2D		# Tyan S2881
@@ -712,6 +716,13 @@ nsclpcsio*	at isa?
 #sdtemp* at iic? addr 0x1d
 #sdtemp* at iic? addr 0x1e
 #sdtemp* at iic? addr 0x1f
+
+# I2C HID devices
+ihidev* at iic?
+
+# I2C Mice
+ims*	at ihidev? reportid ?
+wsmouse* at ims? mux 0
 
 # I2O devices
 iop*	at pci? dev ? function ?	# I/O processor

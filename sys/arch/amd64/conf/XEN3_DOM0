@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.141 2017/11/06 02:57:18 rin Exp $
+# $NetBSD: XEN3_DOM0,v 1.142 2017/12/10 17:19:48 bouyer Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -10,7 +10,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 #options 	UVMHIST_PRINT
 #options 	SYSCALL_DEBUG
 
-#ident		"XEN3_DOM0-$Revision: 1.141 $"
+#ident		"XEN3_DOM0-$Revision: 1.142 $"
 
 maxusers	32		# estimated number of users
 
@@ -303,6 +303,10 @@ amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
 ichsmb* at pci? dev ? function ?
 iic*	at ichsmb?
 
+# I2C controller as found in some Intel PCH devices.
+dwiic*		at pci?			# I2C controller
+iic*		at dwiic?
+
 # Thermal monitor and fan controller
 #dbcool* at iic? addr 0x2C		# Unknown other motherboard(s)
 #dbcool* at iic? addr 0x2D		# Tyan S2881
@@ -427,6 +431,13 @@ tlphy*	at mii? phy ?			# ThunderLAN PHYs
 tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
 urlphy* at mii? phy ?			# Realtek RTL8150L internal PHYs
+
+# I2C HID devices
+ihidev* at iic?
+
+# I2C Mice
+ims*	at ihidev? reportid ?
+wsmouse* at ims? mux 0
 
 # I2O devices
 iop*	at pci? dev ? function ?	# I/O processor
