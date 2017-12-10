@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.7 2014/03/25 18:35:32 christos Exp $	*/
+/*	$NetBSD: misc.c,v 1.8 2017/12/10 02:32:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -166,6 +166,7 @@ alloc_pread(int fd, off_t off, size_t len)
 	return (buf);
 }
 
+#if 0
 /*
  * Display a region in traditional hexdump format.
  */
@@ -205,6 +206,7 @@ hexdump(void *region, size_t len)
     }
     pager_close();
 }
+#endif
 
 void
 dev_cleanup(void)
