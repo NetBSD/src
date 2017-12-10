@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2161 2017/11/30 08:14:03 martin Exp $
+#	$NetBSD: mi,v 1.2162 2017/12/10 20:38:14 bouyer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -413,6 +413,7 @@
 ./usr/include/dev/hdaudio/hdaudioio.h		comp-c-include
 ./usr/include/dev/hdaudio/hdaudioreg.h		comp-c-include
 ./usr/include/dev/hdmicec/hdmicecio.h		comp-c-include
+./usr/include/dev/hid/hid.h			comp-c-include
 ./usr/include/dev/hpc/hpcfbio.h			comp-c-include
 ./usr/include/dev/i2c/i2c_bus.h			comp-obsolete		obsolete
 ./usr/include/dev/i2c/i2c_eeprom.h		comp-obsolete		obsolete

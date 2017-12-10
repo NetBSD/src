@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.9 2016/01/07 16:10:49 jakllsch Exp $	*/
+/*	$NetBSD: parse.c,v 1.10 2017/12/10 20:38:14 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001 Lennart Augustsson <augustss@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: parse.c,v 1.9 2016/01/07 16:10:49 jakllsch Exp $");
+__RCSID("$NetBSD: parse.c,v 1.10 2017/12/10 20:38:14 bouyer Exp $");
 
 #include <assert.h>
 #include <stdlib.h>
@@ -35,7 +35,7 @@ __RCSID("$NetBSD: parse.c,v 1.9 2016/01/07 16:10:49 jakllsch Exp $");
 #include <sys/time.h>
 
 #include <dev/usb/usb.h>
-#include <dev/usb/usbhid.h>
+#include <dev/hid/hid.h>
 
 #include "usbhid.h"
 #include "usbvar.h"
