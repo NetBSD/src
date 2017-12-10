@@ -1,5 +1,5 @@
 /*	$KAME: sctp_usrreq.c,v 1.50 2005/06/16 20:45:29 jinmei Exp $	*/
-/*	$NetBSD: sctp_usrreq.c,v 1.8 2017/10/17 19:23:42 rjs Exp $	*/
+/*	$NetBSD: sctp_usrreq.c,v 1.9 2017/12/10 11:52:14 rjs Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_usrreq.c,v 1.8 2017/10/17 19:23:42 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_usrreq.c,v 1.9 2017/12/10 11:52:14 rjs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -783,12 +783,6 @@ sctp_disconnect(struct socket *so)
 				/*
 				 * we still got (or just got) data to send,
 				 * so set SHUTDOWN_PENDING
-				 */
-				/*
-				 * XXX sockets draft says that MSG_EOF should
-				 * be sent with no data.
-				 * currently, we will allow user data to be
-				 * sent first and move to SHUTDOWN-PENDING
 				 */
 				asoc->state |= SCTP_STATE_SHUTDOWN_PENDING;
 			}
@@ -2785,8 +2779,8 @@ sctp_optsset(struct socket *so, struct sockopt *sopt)
 		}
 		/* Mask off the flags that are allowed */
 		s_info->sinfo_flags = (s_info->sinfo_flags &
-				       (MSG_UNORDERED | MSG_ADDR_OVER |
-					MSG_PR_SCTP_TTL | MSG_PR_SCTP_BUF));
+				       (SCTP_UNORDERED | SCTP_ADDR_OVER |
+					SCTP_PR_SCTP_TTL | SCTP_PR_SCTP_BUF));
 		/* Copy it in */
 		stcb->asoc.def_send = *s_info;
 		SCTP_TCB_UNLOCK(stcb);
