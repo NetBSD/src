@@ -1,100 +1,98 @@
-#	$NetBSD: files.bcm2835,v 1.28 2017/07/30 23:48:32 jmcneill Exp $
+#	$NetBSD: files.bcm2835,v 1.29 2017/12/10 21:38:26 skrll Exp $
 #
 # Configuration info for Broadcom BCM2835 ARM Peripherals
 #
 
-defflag	opt_bcm283x.h			BCM2836
-
 include "arch/arm/pic/files.pic"
 
-define bcmmboxbus { }
-
+file	arch/arm/arm32/arm32_boot.c
+file	arch/arm/arm32/arm32_kvminit.c
+file	arch/arm/arm32/arm32_reboot.c
 file	arch/arm/arm32/irq_dispatch.S
+file	arch/arm/arm32/armv7_generic_space.c
+file	arch/arm/arm32/armv7_generic_dma.c
+file	arch/arm/arm/bus_space_a4x.S
+
 file	arch/arm/broadcom/bcm2835_dma.c
 file	arch/arm/broadcom/bcm2835_mbox_subr.c
 
-# OBIO just an attach point
-device	obio { [addr=-1], [size=0], [intr=-1]
-	     } : bus_space_generic, pic, pic_splfuncs
-attach	obio at mainbus
-file	arch/arm/broadcom/bcm2835_obio.c	obio needs-count
+file	arch/arm/broadcom/bcm283x_platform.c
 
-# OBIO files
-file	arch/arm/broadcom/bcm2835_space.c	obio
-file	arch/arm/arm/bus_space_a4x.S		obio
+define mpcorebus { }
 
 # ARMv7 Generic Timer
-device	armgtmr
-attach	armgtmr at obio
-file	arch/arm/cortex/gtmr.c			armgtmr
+device armgtmr
+attach armgtmr at mpcorebus
+file	arch/arm/cortex/gtmr.c                  armgtmr
+
+define bcmmboxbus { }
+
+file	arch/arm/broadcom/bcm2835_space.c
 
 # Interrupt Controller (BCM2835_ARMICU_BASE) #, pic_splfuncs
 device	bcmicu: pic, pic_splfuncs
-attach	bcmicu at obio with bcmicu
+attach	bcmicu at fdt with bcmicu
 file	arch/arm/broadcom/bcm2835_intr.c	bcmicu
 
 # VC Mailbox (BCM2835_ARMMBOX_BASE)
 device	bcmmbox: bcmmboxbus
-attach	bcmmbox at obio with bcmmbox
+attach	bcmmbox at fdt with bcmmbox
 file	arch/arm/broadcom/bcm2835_mbox.c	bcmmbox
 
 # System Timer (BCM2835_TIMER_BASE)
 device	bcmtmr
-attach	bcmtmr at obio with bcmtmr_amba
-file	arch/arm/broadcom/bcm2835_tmr.c		bcmtmr & !bcm2836
+attach	bcmtmr at fdt with bcmtmr_fdt
+file	arch/arm/broadcom/bcm2835_tmr.c		bcmtmr & !soc_bcm2836
 
 # Power Management, Reset Controller, and Watchdog (BCM2835_PM_BASE)
-device	bcmpm: sysmon_wdog
-attach	bcmpm at obio with bcmpm_amba
-file	arch/arm/broadcom/bcm2835_pm.c		bcmpm
+device	watchdog: sysmon_wdog
+attach	watchdog at fdt with bcmpmwdog_fdt
+file	arch/arm/broadcom/bcm2835_pmwdog.c	bcmpmwdog_fdt
 
 # Random number generator (BCM2835_RNG_BASE)
 device	bcmrng
-attach	bcmrng at obio with bcmrng_amba
+attach bcmrng at fdt with bcmrng_fdt
 file	arch/arm/broadcom/bcm2835_rng.c		bcmrng
 
-# UART Interface (BCM2835_UART0_BASE)
-attach	plcom at obio with bcmplcom
-file	arch/arm/broadcom/bcm2835_plcom.c	bcmplcom
+# AUX
+device	bcmaux
+attach	bcmaux at fdt with bcmaux_fdt
+file	arch/arm/broadcom/bcm2835_aux.c		bcmaux
 
 # AUX UART (BCM2835_AUX_UART_BASE)
-attach	com at obio with bcmcom
+attach	com at fdt with bcmcom
 file	arch/arm/broadcom/bcm2835_com.c		bcmcom
 
 # External Mass Media Controller (BCM2835_EMMC_BASE)
-attach	sdhc at obio with bcmemmc
+attach	sdhc at fdt with bcmemmc
 file	arch/arm/broadcom/bcm2835_emmc.c	bcmemmc
 
 # SD Host Controller (BCM2835_SDHOST_BASE)
 device	sdhost: sdmmcbus
-attach	sdhost at obio with bcmsdhost
+attach	sdhost at fdt with bcmsdhost
 file	arch/arm/broadcom/bcm2835_sdhost.c	bcmsdhost	needs-flag
 
 # DMA Controller (BCM2835_DMA0_BASE)
 device	bcmdmac
-attach	bcmdmac at obio with bcmdmac_amba
+attach	bcmdmac at fdt with bcmdmac_fdt
 file	arch/arm/broadcom/bcm2835_dmac.c	bcmdmac		needs-flag
 
 # USB (BCM2835_USB_BASE)
-attach dwctwo at obio with bcmdwctwo
+attach dwctwo at fdt with bcmdwctwo
 file	arch/arm/broadcom/bcm2835_dwctwo.c	bcmdwctwo	needs-flag
-
-# GPIO misc. functions
-define	bcm2835_gpio_subr
-file	arch/arm/broadcom/bcm2835_gpio_subr.c	bcm2835_gpio_subr
 
 # SPI controller (BCM2835_SPI0_BASE)
 device	bcmspi: spibus, bcm2835_gpio_subr
-attach	bcmspi at obio
+attach	bcmspi at fdt
 file	arch/arm/broadcom/bcm2835_spi.c		bcmspi	needs-flag
 
 # BSC (I2C) controller (BCM2835_BSC[01]_BASE)
 device	bsciic: i2cbus, bcm2835_gpio_subr
-attach	bsciic at obio
+attach	bsciic at fdt
 file	arch/arm/broadcom/bcm2835_bsc.c		bsciic	needs-flag
 
 # Generic framebuffer console driver
-attach	genfb at obio with bcmgenfb: edid
+attach genfb at fdt with bcmgenfb: edid
 file	arch/arm/broadcom/bcm2835_genfb.c	bcmgenfb	needs-flag
 
 # VCHIQ
@@ -107,16 +105,20 @@ file	arch/arm/broadcom/bcm2835_vcaudio.c	vcaudio
 
 # GPIO
 device	bcmgpio: gpiobus
-attach	bcmgpio at obio
+attach	bcmgpio at fdt
 file	arch/arm/broadcom/bcm2835_gpio.c
 
 # Clock Manager (BCM2835_CM_BASE)
-device	bcmcm
-attach	bcmcm at obio with bcmcm_amba
-file	arch/arm/broadcom/bcm2835_cm.c		bcmcm		needs-flag
+device	bcmcprman
+attach	bcmcprman at fdt with bcmcprman_fdt
+file	arch/arm/broadcom/bcm2835_cprman.c	bcmcprman	needs-flag
 
 # PWM Controller (BCM2835_PWM_BASE)
 device	bcmpwm
-attach	bcmpwm at obio with bcmpwm_amba
+attach	bcmpwm at fdt with bcmpwm
 file	arch/arm/broadcom/bcm2835_pwm.c		bcmpwm		needs-flag
+
+# SOC parameters
+defflag	opt_bcm283x.h			SOC_BCM2836
+defflag	opt_bcm283x.h			SOC_BCM2835
 

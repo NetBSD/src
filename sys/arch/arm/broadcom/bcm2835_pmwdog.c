@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_pm.c,v 1.4 2017/12/10 21:38:26 skrll Exp $	*/
+/*	$NetBSD: bcm2835_pmwdog.c,v 1.1 2017/12/10 21:38:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2016 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_pm.c,v 1.4 2017/12/10 21:38:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_pmwdog.c,v 1.1 2017/12/10 21:38:26 skrll Exp $");
 
 
 #include <sys/param.h>
@@ -98,7 +98,7 @@ bcmpmwdog_match(device_t parent, cfdata_t match, void *aux)
 static void
 bcmpmwdog_attach(device_t parent, device_t self, void *aux)
 {
-        struct bcm2835pmwdog_softc *sc = device_private(self);
+	struct bcm2835pmwdog_softc *sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
 

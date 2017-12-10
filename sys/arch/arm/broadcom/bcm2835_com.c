@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_com.c,v 1.3 2017/07/31 23:54:19 jmcneill Exp $ */
+/* $NetBSD: bcm2835_com.c,v 1.4 2017/12/10 21:38:26 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_com.c,v 1.3 2017/07/31 23:54:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_com.c,v 1.4 2017/12/10 21:38:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -36,10 +36,11 @@ __KERNEL_RCSID(0, "$NetBSD: bcm2835_com.c,v 1.3 2017/07/31 23:54:19 jmcneill Exp
 #include <sys/systm.h>
 #include <sys/termios.h>
 
-#include <arm/broadcom/bcm_amba.h>
 #include <arm/broadcom/bcm2835reg.h>
 #include <arm/broadcom/bcm2835var.h>
 #include <arm/broadcom/bcm2835_intr.h>
+
+#include <dev/fdt/fdtvar.h>
 
 #include <dev/ic/comvar.h>
 
@@ -49,51 +50,114 @@ static void	bcm_com_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(bcmcom, sizeof(struct com_softc),
 	bcm_com_match, bcm_com_attach, NULL, NULL);
 
+static const char * const compatible[] = {
+	"brcm,bcm2835-aux-uart",
+	NULL
+};
+
 static int
 bcm_com_match(device_t parent, cfdata_t cf, void *aux)
 {
-	struct amba_attach_args *aaa = aux;
+	struct fdt_attach_args * const faa = aux;
 
-	return strcmp(aaa->aaa_name, "com") == 0;
+	return of_match_compatible(faa->faa_phandle, compatible);
 }
 
 static void
 bcm_com_attach(device_t parent, device_t self, void *aux)
 {
 	struct com_softc * const sc = device_private(self);
-	struct amba_attach_args * const aaa = aux;
-	const prop_dictionary_t dict = device_properties(self);
-	bus_space_tag_t bst = &bcm2835_a4x_bs_tag;
+	struct fdt_attach_args * const faa = aux;
+	const int phandle = faa->faa_phandle;
+
+	bus_space_tag_t bst = faa->faa_a4x_bst;
 	bus_space_handle_t bsh;
+	bus_addr_t addr;
+	bus_size_t size;
 	void *ih;
 
 	sc->sc_dev = self;
 	sc->sc_type = COM_TYPE_BCMAUXUART;
 
-	prop_dictionary_get_uint32(dict, "frequency", &sc->sc_frequency);
-	if (sc->sc_frequency == 0) {
-		aprint_error(": couldn't get frequency\n");
+	int error = fdtbus_get_reg(phandle, 0, &addr, &size);
+	if (error) {
+		aprint_error_dev(sc->sc_dev, "unable to map device\n");
 		return;
 	}
-	sc->sc_frequency *= 2;
 
-	if (com_is_console(bst, aaa->aaa_addr, &bsh) == 0 &&
-	    bus_space_map(bst, aaa->aaa_addr, aaa->aaa_size, 0, &bsh) != 0) {
+	if (com_is_console(bst, addr, &bsh) == 0 &&
+	    bus_space_map(bst, addr, size, 0, &bsh) != 0) {
 		aprint_error(": can't map device\n");
 		return;
 	}
 
-	COM_INIT_REGS(sc->sc_regs, bst, bsh, aaa->aaa_addr);
+	/* Enable clocks */
+	struct clk *clk;
+	for (int i = 0; (clk = fdtbus_clock_get_index(phandle, i)); i++) {
+		if (clk_enable(clk) != 0) {
+			aprint_error(": failed to enable clock #%d\n", i);
+			return;
+		}
+		/* First clock is UARTCLK */
+		if (i == 0)
+			sc->sc_frequency = clk_get_rate(clk);
+	}
+
+	sc->sc_frequency *= 2;
+
+	COM_INIT_REGS(sc->sc_regs, bst, bsh, addr);
 
 	com_attach_subr(sc);
 	aprint_naive("\n");
 
-	ih = intr_establish(aaa->aaa_intr, IPL_SERIAL, IST_LEVEL | IST_MPSAFE,
-	    comintr, sc);
-	if (ih == NULL) {
-		aprint_error_dev(self, "failed to establish interrupt %d\n",
-		    aaa->aaa_intr);
+	char intrstr[128];
+	if (!fdtbus_intr_str(phandle, 0, intrstr, sizeof(intrstr))) {
+		aprint_error(": failed to decode interrupt\n");
 		return;
 	}
-	aprint_normal_dev(self, "interrupting on intr %d\n", aaa->aaa_intr);
+
+	ih = fdtbus_intr_establish(phandle, 0, IPL_SERIAL, FDT_INTR_MPSAFE,
+	    comintr, sc);
+	if (ih == NULL) {
+		aprint_error_dev(self, "failed to establish interrupt %s\n",
+		    intrstr);
+		return;
+	}
+	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 }
+
+static int
+bcmaux_com_console_match(int phandle)
+{
+
+	return of_match_compatible(phandle, compatible);
+}
+
+static void
+bcmaux_com_console_consinit(struct fdt_attach_args *faa, u_int uart_freq)
+{
+	const int phandle = faa->faa_phandle;
+	bus_space_tag_t bst = faa->faa_a4x_bst;
+	bus_addr_t addr;
+	tcflag_t flags;
+	int speed;
+
+	fdtbus_get_reg(phandle, 0, &addr, NULL);
+	speed = fdtbus_get_stdout_speed();
+	if (speed < 0)
+		speed = 115200;	/* default */
+	flags = fdtbus_get_stdout_flags();
+
+	if (comcnattach(bst, addr, speed, uart_freq, COM_TYPE_BCMAUXUART,
+	    flags))
+		panic("Cannot initialize bcm com console");
+
+	cn_set_magic("+++++");
+}
+
+static const struct fdt_console bcmaux_com_console = {
+	.match = bcmaux_com_console_match,
+	.consinit = bcmaux_com_console_consinit,
+};
+
+FDT_CONSOLE(bcmcom, &bcmaux_com_console);

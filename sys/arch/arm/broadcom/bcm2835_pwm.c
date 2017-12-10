@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_pwm.c,v 1.2 2016/02/02 13:55:50 skrll Exp $ */
+/*	$NetBSD: bcm2835_pwm.c,v 1.3 2017/12/10 21:38:26 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_pwm.c,v 1.2 2016/02/02 13:55:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_pwm.c,v 1.3 2017/12/10 21:38:26 skrll Exp $");
 
 #include "bcmdmac.h"
 
@@ -50,9 +50,10 @@ __KERNEL_RCSID(0, "$NetBSD: bcm2835_pwm.c,v 1.2 2016/02/02 13:55:50 skrll Exp $"
 #include <sys/intr.h>
 
 #include <arm/broadcom/bcm2835reg.h>
-#include <arm/broadcom/bcm_amba.h>
 
 #include <arm/broadcom/bcm2835_pwm.h>
+
+#include <dev/fdt/fdtvar.h>
 
 struct bcm_pwm_channel {
 	struct bcm2835pwm_softc *sc;
@@ -69,6 +70,7 @@ struct bcm2835pwm_softc {
 	bus_space_handle_t	sc_ioh;
 	bus_addr_t		sc_iob;
 
+	struct clk		*sc_clk;
 	int			sc_clockrate;
 	struct bcm_pwm_channel	sc_channels[2];
 	kmutex_t		sc_lock;
@@ -83,45 +85,58 @@ static int bcmpwm_match(device_t, cfdata_t, void *);
 static void bcmpwm_attach(device_t, device_t, void *);
 static int bcmpwm_wait(struct bcm2835pwm_softc *);
 
-CFATTACH_DECL_NEW(bcmpwm_amba, sizeof(struct bcm2835pwm_softc),
+CFATTACH_DECL_NEW(bcmpwm, sizeof(struct bcm2835pwm_softc),
     bcmpwm_match, bcmpwm_attach, NULL, NULL);
 
 /* ARGSUSED */
 static int
 bcmpwm_match(device_t parent, cfdata_t match, void *aux)
 {
-	struct amba_attach_args *aaa = aux;
+	const char * const compatible[] = { "brcm,bcm2835-pwm", NULL };
+	struct fdt_attach_args * const faa = aux;
 
-	if (strcmp(aaa->aaa_name, "bcmpwm") != 0)
-		return 0;
-
-	if (aaa->aaa_addr != BCM2835_PWM_BASE)
-		return 0;
-
-	return 1;
+	return of_match_compatible(faa->faa_phandle, compatible);
 }
 
 static void
 bcmpwm_attach(device_t parent, device_t self, void *aux)
 {
 	struct bcm2835pwm_softc *sc = device_private(self);
- 	struct amba_attach_args *aaa = aux;
-	const prop_dictionary_t cfg = device_properties(self);
-
-	aprint_naive("\n");
-	aprint_normal(": PWM\n");
+	struct fdt_attach_args * const faa = aux;
+	const int phandle = faa->faa_phandle;
+	bus_size_t size;
 
 	sc->sc_dev = self;
-	sc->sc_iot = aaa->aaa_iot;
-	sc->sc_iob = aaa->aaa_addr;
+	sc->sc_iot = faa->faa_bst;
 
-	if (bus_space_map(aaa->aaa_iot, aaa->aaa_addr, BCM2835_PWM_SIZE, 0,
-	    &sc->sc_ioh)) {
-		aprint_error_dev(sc->sc_dev, "unable to map device\n");
-		goto fail0;
+	int error = fdtbus_get_reg(phandle, 0, &sc->sc_iob, &size);
+	if (error) {
+		aprint_error(": failed to get registers\n");
+		return;
 	}
 
-	prop_dictionary_get_uint32(cfg, "pwmclockrate", &sc->sc_clockrate);
+	if (bus_space_map(sc->sc_iot, sc->sc_iob, size, 0,
+	    &sc->sc_ioh)) {
+		aprint_error_dev(sc->sc_dev, "unable to map device\n");
+		return;
+	}
+
+	sc->sc_clk = fdtbus_clock_get_index(phandle, 0);
+	if (sc->sc_clk == NULL) {
+		aprint_error(": couldn't get clk\n");
+		return;
+	}
+
+	error = clk_enable(sc->sc_clk);
+	if (error != 0) {
+		aprint_error(": couldn't enable clk\n");
+		return;
+	}
+
+	aprint_naive("\n");
+	aprint_normal(": Pulse Width Modulator\n");
+
+	sc->sc_clockrate = clk_get_rate(sc->sc_clk);
 
 	sc->sc_channels[0].sc = sc;
 	sc->sc_channels[0].ctlmask = PWM_CTL_MSEN1 | PWM_CTL_USEF1 |
@@ -153,7 +168,7 @@ bcmpwm_attach(device_t parent, device_t self, void *aux)
 
 	/* Success!  */
 
-fail0:	return;
+	return;
 }
 
 struct bcm_pwm_channel *

@@ -1,4 +1,4 @@
-/* $NetBSD: vchiq_netbsd.h,v 1.1 2013/03/08 12:32:31 jmcneill Exp $ */
+/* $NetBSD: vchiq_netbsd.h,v 1.2 2017/12/10 21:38:27 skrll Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -35,5 +35,7 @@
 struct vchiq_attach_args {
 	const char	*vaa_name;
 };
+
+void	vchiq_platform_attach(bus_dma_tag_t tag);
 
 #endif /* !_VCHIQ_NETBSD_H */

@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_dmac.c,v 1.15 2017/06/01 02:45:05 chs Exp $ */
+/* $NetBSD: bcm2835_dmac.c,v 1.16 2017/12/10 21:38:26 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_dmac.c,v 1.15 2017/06/01 02:45:05 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_dmac.c,v 1.16 2017/12/10 21:38:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -39,11 +39,14 @@ __KERNEL_RCSID(0, "$NetBSD: bcm2835_dmac.c,v 1.15 2017/06/01 02:45:05 chs Exp $"
 #include <sys/kmem.h>
 #include <sys/mutex.h>
 
-#include <arm/broadcom/bcm_amba.h>
 #include <arm/broadcom/bcm2835reg.h>
 #include <arm/broadcom/bcm2835_intr.h>
 
 #include <arm/broadcom/bcm2835_dmac.h>
+
+#include <dev/fdt/fdtvar.h>
+
+#include <arm/fdt/arm_fdtvar.h>
 
 #define BCM_DMAC_CHANNELMASK	0x00000fff
 
@@ -68,6 +71,8 @@ struct bcm_dmac_softc {
 	device_t sc_dev;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
+	int sc_phandle;
+
 	kmutex_t sc_lock;
 	struct bcm_dmac_channel *sc_channels;
 	int sc_nchannels;
@@ -88,21 +93,19 @@ static int	bcm_dmac_intr(void *);
 void		bcm_dmac_dump_regs(void);
 #endif
 
-CFATTACH_DECL_NEW(bcmdmac_amba, sizeof(struct bcm_dmac_softc),
+CFATTACH_DECL_NEW(bcmdmac_fdt, sizeof(struct bcm_dmac_softc),
 	bcm_dmac_match, bcm_dmac_attach, NULL, NULL);
 
 static int
 bcm_dmac_match(device_t parent, cfdata_t cf, void *aux)
 {
-	struct amba_attach_args *aaa = aux;
+	const char * const compatible[] = {
+		"brcm,bcm2835-dma",
+		NULL
+	};
+	struct fdt_attach_args * const faa = aux;
 
-	if (strcmp(aaa->aaa_name, "bcmdmac") != 0)
-		return 0;
-
-	if (aaa->aaa_addr != BCM2835_DMA0_BASE)
-		return 0;
-
-	return 1;
+	return of_match_compatible(faa->faa_phandle, compatible);
 }
 
 static void
@@ -110,16 +113,26 @@ bcm_dmac_attach(device_t parent, device_t self, void *aux)
 {
 	struct bcm_dmac_softc *sc = device_private(self);
 	const prop_dictionary_t cfg = device_properties(self);
+	struct fdt_attach_args * const faa = aux;
 	struct bcm_dmac_channel *ch;
-	struct amba_attach_args *aaa = aux;
 	uint32_t val;
 	int index;
 
-	sc->sc_dev = self;
-	sc->sc_iot = aaa->aaa_iot;
+	const int phandle = faa->faa_phandle;
 
-	if (bus_space_map(aaa->aaa_iot, aaa->aaa_addr, aaa->aaa_size, 0,
-	    &sc->sc_ioh)) {
+	sc->sc_dev = self;
+	sc->sc_iot = faa->faa_bst;
+	sc->sc_phandle = phandle;
+
+	bus_addr_t addr;
+	bus_size_t size;
+
+	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
+		aprint_error(": missing 'reg' property\n");
+		return;
+	}
+
+	if (bus_space_map(sc->sc_iot, addr, size, 0, &sc->sc_ioh)) {
 		aprint_error(": unable to map device\n");
 		return;
 	}
@@ -212,11 +225,21 @@ bcm_dmac_alloc(enum bcm_dmac_type type, int ipl,
 		return NULL;
 
 	KASSERT(ch->ch_ih == NULL);
-	ch->ch_ih = intr_establish(BCM2835_INT_DMA0 + ch->ch_index,
-	    ipl, IST_LEVEL, bcm_dmac_intr, ch);
+
+	const int phandle = sc->sc_phandle;
+	char intrstr[128];
+
+	if (!fdtbus_intr_str(phandle, ch->ch_index, intrstr, sizeof(intrstr))) {
+		aprint_error(": failed to decode interrupt\n");
+		return NULL;
+	}
+
+	ch->ch_ih = fdtbus_intr_establish(phandle, ch->ch_index, ipl, 0,
+	    bcm_dmac_intr, ch);
 	if (ch->ch_ih == NULL) {
 		aprint_error_dev(sc->sc_dev,
-		    "failed to establish interrupt for DMA%d\n", ch->ch_index);
+		    "failed to establish interrupt for DMA%d and %s\n", ch->ch_index,
+		    intrstr);
 		ch->ch_callback = NULL;
 		ch->ch_callbackarg = NULL;
 		ch = NULL;
@@ -240,7 +263,7 @@ bcm_dmac_free(struct bcm_dmac_channel *ch)
 	DMAC_WRITE(sc, DMAC_CS(ch->ch_index), val);
 
 	mutex_enter(&sc->sc_lock);
-	intr_disestablish(ch->ch_ih);
+	fdtbus_intr_disestablish(sc->sc_phandle, ch->ch_ih);
 	ch->ch_ih = NULL;
 	ch->ch_callback = NULL;
 	ch->ch_callbackarg = NULL;

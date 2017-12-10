@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.40 2017/07/06 15:09:17 skrll Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.41 2017/12/10 21:38:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -121,10 +121,11 @@
  * SUCH DAMAGE.
  */
 
+#include "opt_fdt.h"
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.40 2017/07/06 15:09:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.41 2017/12/10 21:38:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -141,6 +142,10 @@ __KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.40 2017/07/06 15:09:17 skrll Exp
 #include <arm/undefined.h>
 #include <arm/bootconfig.h>
 #include <arm/arm32/machdep.h>
+
+#if defined(FDT)
+#include <arch/evbarm/fdt/platform.h>
+#endif
 
 #ifdef MULTIPROCESSOR
 #ifndef __HAVE_CPU_UAREA_ALLOC_IDLELWP
@@ -211,6 +216,11 @@ arm32_bootmem_init(paddr_t memstart, psize_t memsize, vsize_t kernelstart)
 	bmi->bmi_kernelstart = kernelstart;
 	bmi->bmi_kernelend = KERN_VTOPHYS(bmi, round_page((vaddr_t)_end));
 
+#if defined(FDT)
+	fdt_add_reserved_memory_range(bmi->bmi_kernelstart,
+	    bmi->bmi_kernelend - bmi->bmi_kernelstart);
+#endif
+
 #ifdef VERBOSE_INIT_ARM
 	printf("%s: kernelend=%#lx\n", __func__, bmi->bmi_kernelend);
 #endif
@@ -229,6 +239,7 @@ arm32_bootmem_init(paddr_t memstart, psize_t memsize, vsize_t kernelstart)
 #endif
 	pv++;
 
+#if !defined(FDT)
 	/*
 	 * Add a free block for any memory before the kernel.
 	 */
@@ -244,6 +255,7 @@ arm32_bootmem_init(paddr_t memstart, psize_t memsize, vsize_t kernelstart)
 #endif
 		pv++;
 	}
+#endif
 
 	bmi->bmi_nfreeblocks = pv - bmi->bmi_freeblocks;
 
@@ -358,6 +370,9 @@ valloc_pages(struct bootmem_info *bmi, pv_addr_t *pv, size_t npages,
 	 */
 	KASSERT((armreg_ttbr_read() & ~(L1_TABLE_SIZE - 1)) != free_pv->pv_pa);
 
+#if defined(FDT)
+	fdt_add_reserved_memory_range(free_pv->pv_pa, nbytes);
+#endif
 	pv->pv_pa = free_pv->pv_pa;
 	pv->pv_va = free_pv->pv_va;
 	pv->pv_size = nbytes;

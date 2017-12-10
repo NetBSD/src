@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI,v 1.77 2017/11/05 09:05:20 skrll Exp $
+#	$NetBSD: RPI,v 1.78 2017/12/10 21:38:26 skrll Exp $
 #
 #	RPi -- Raspberry Pi
 #
@@ -7,9 +7,20 @@
 include	"arch/evbarm/conf/std.rpi"
 include "arch/evbarm/conf/GENERIC.common"
 
-# CPU options
+makeoptions DTSGNUARCH="arm arm64"
+makeoptions DTSSUBDIR="broadcom"
+
+makeoptions	DTS="
+	bcm2835-rpi-a.dts
+	bcm2835-rpi-a-plus.dts
+	bcm2835-rpi-b.dts
+	bcm2835-rpi-b-plus.dts
+	bcm2835-rpi-b-rev2.dts
+	bcm2835-rpi-zero.dts
+"
 
 options 	CPU_ARM1176
+options 	SOC_BCM2835
 options 	TPIDRPRW_IS_CURLWP
 options 	ARM11_COMPAT_MMU
 options 	__HAVE_MM_MD_CACHE_ALIASING
@@ -42,27 +53,46 @@ options 	PLCONSOLE
 
 config		netbsd		root on ? type ?
 
-# The main bus device
-mainbus0	at root
+# Device tree support
+armfdt0		at root
+fdt*		at fdtbus?
 
 # The CPU(s)
-cpu*		at mainbus?
+cpus*		at fdt? pass 0
+cpu*		at cpus?
 
-# OBIO
-obio0		at mainbus?
+fclock*		at fdt? pass 0
 
 # Interrupt Controller
-bcmicu0		at obio?
+bcmicu*		at fdt? pass 1
+
+# System timer
+bcmtmr0		at fdt? pass 1
+
+# Clock manager
+bcmcprman0 	at fdt? pass 1
+
+# AUX
+bcmaux0		at fdt? pass 2
+
+# pulse width modulator manager
+#bcmpwm0 	at fdt?
+
+fregulator*	at fdt?
+gpiokeys*	at fdt?
+
+# GPIO LEDs
+gpioleds*	at fdt?
 
 # VC Mailbox
-bcmmbox0	at obio?
-vcmbox0 	at bcmmbox0
+bcmmbox*	at fdt?
+vcmbox* 	at bcmmbox?
 
 # DMA Controller
-bcmdmac0	at obio?
+bcmdmac0	at fdt?
 
 # VCHIQ
-vchiq0		at obio?
+vchiq0		at fdt?
 
 # AUDS
 vcaudio0	at vchiq0
@@ -71,42 +101,38 @@ audio*		at audiobus?
 spkr*		at audio?		# PC speaker (synthesized)
 
 # PL011 uart
-plcom0		at obio?
+plcom*		at fdt?
 
 # AUX UART
-com0		at obio?
+com0		at fdt?
 
 # Framebuffer console
-genfb0		at obio?
+genfb0		at fdt?
 wsdisplay*	at genfb?
 options		VCONS_DRAW_INTR
 #options 	RPI_HWCURSOR
 
-# System timer
-bcmtmr0		at obio?
-
 # Power management, Reset controller and Watchdog registers
-bcmpm0		at obio?
+watchdog0	at fdt?
 
 # Random number generator
-bcmrng0 	at obio?
+bcmrng0 	at fdt?
 
 # GPIO
-bcmgpio0	at obio?	# pins  0 ... 31
-bcmgpio1	at obio?	# pins 32 ... 53
+bcmgpio*	at fdt?
 
 # Arasan SD/MMC Interface
-sdhc* at obio?
-sdmmc*  at sdhc?
+sdhc*		at fdt?
+sdmmc*		at sdhc?
 
 # SD host controller
-sdhost* at obio?
-sdmmc* at sdhost?
+sdhost* 	at fdt?
+sdmmc* 		at sdhost?
 
 ld*     at sdmmc?
 
 # On-board USB
-dwctwo* 	at obio?
+dwctwo* 	at fdt?
 usb* 		at dwctwo?
 
 # USB device drivers
@@ -141,7 +167,7 @@ urlphy*		at mii? phy ?		# Realtek RTL8150L internal PHYs
 ukphy*		at mii? phy ?		# generic unknown PHYs
 
 # Broadcom Serial Control (I2C)
-bsciic* at obio?
+bsciic* at fdt?
 iic* at i2cbus?
 
 # 'DS3231 Raspberry Pi RTC Board Real Time Clock Module for Arduino'
@@ -152,7 +178,7 @@ iic* at i2cbus?
 #dsrtc* at iic1 addr 0x6f flags 7940
 
 # SPI controller
-bcmspi* at obio?
+bcmspi* at fdt?
 spi* at spibus?
 
 # MCP3x0x ADC
@@ -210,6 +236,7 @@ options 	WSDISPLAY_DEFAULTSCREENS=4
 #pseudo-device	pflog			# PF log if
 
 # miscellaneous pseudo-devices
+pseudo-device	openfirm
 
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor

@@ -1,4 +1,4 @@
-/* $NetBSD: vchiq_kmod_netbsd.c,v 1.9 2017/11/05 09:11:43 skrll Exp $ */
+/* $NetBSD: vchiq_kmod_netbsd.c,v 1.10 2017/12/10 21:38:27 skrll Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vchiq_kmod_netbsd.c,v 1.9 2017/11/05 09:11:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vchiq_kmod_netbsd.c,v 1.10 2017/12/10 21:38:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,9 +39,10 @@ __KERNEL_RCSID(0, "$NetBSD: vchiq_kmod_netbsd.c,v 1.9 2017/11/05 09:11:43 skrll 
 #include <sys/bus.h>
 #include <sys/sysctl.h>
 
-#include <arm/broadcom/bcm_amba.h>
 #include <arm/broadcom/bcm2835reg.h>
 #include <arm/broadcom/bcm2835_intr.h>
+
+#include <dev/fdt/fdtvar.h>
 
 #include "vchiq_arm.h"
 #include "vchiq_2835.h"
@@ -58,6 +59,7 @@ struct vchiq_softc {
 	void *sc_ih;
 
 	int sc_intr;
+	int sc_phandle;
 };
 
 static struct vchiq_softc *vchiq_softc = NULL;
@@ -73,10 +75,10 @@ static void vchiq_defer(device_t);
 int vchiq_init(void);
 
 
-#define VCHIQ_DOORBELL0		0x40
-#define VCHIQ_DOORBELL1		0x44
-#define VCHIQ_DOORBELL2		0x48
-#define VCHIQ_DOORBELL3		0x4C
+#define VCHIQ_DOORBELL0		0x0
+#define VCHIQ_DOORBELL1		0x4
+#define VCHIQ_DOORBELL2		0x8
+#define VCHIQ_DOORBELL3		0xC
 
 
 CFATTACH_DECL_NEW(vchiq, sizeof(struct vchiq_softc),
@@ -85,32 +87,40 @@ CFATTACH_DECL_NEW(vchiq, sizeof(struct vchiq_softc),
 static int
 vchiq_match(device_t parent, cfdata_t match, void *aux)
 {
-	struct amba_attach_args *aaa = aux;
-	
-	if (strcmp(aaa->aaa_name, "bcmvchiq") != 0)
-		return 0;
+	const char * const compatible[] = { "brcm,bcm2835-vchiq", NULL };
+	struct fdt_attach_args * const faa = aux;
 
-	return 1;
+	return of_match_compatible(faa->faa_phandle, compatible);
 }
 
 static void
 vchiq_attach(device_t parent, device_t self, void *aux)
 {
 	struct vchiq_softc *sc = device_private(self);
-	struct amba_attach_args *aaa = aux;
+	struct fdt_attach_args * const faa = aux;
+	const int phandle = faa->faa_phandle;
 
 	aprint_naive("\n");
 	aprint_normal(": BCM2835 VCHIQ\n");
 
 	sc->sc_dev = self;
-	sc->sc_iot = aaa->aaa_iot;
-	sc->sc_intr = aaa->aaa_intr;
+	sc->sc_iot = faa->faa_bst;
+	sc->sc_phandle = phandle;
 
-	if (bus_space_map(aaa->aaa_iot, aaa->aaa_addr, aaa->aaa_size, 0,
-	    &sc->sc_ioh)) {
-		aprint_error_dev(self, "unable to map device\n");
+	bus_addr_t addr;
+	bus_size_t size;
+
+	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
+		aprint_error(": couldn't get register address\n");
 		return;
 	}
+
+	if (bus_space_map(faa->faa_bst, addr, size, 0, &sc->sc_ioh) != 0) {
+		aprint_error_dev(sc->sc_dev, "unable to map device\n");
+		return;
+	}
+
+	vchiq_platform_attach(faa->faa_dmat);
 
 	vchiq_softc = sc;
 
@@ -122,16 +132,24 @@ vchiq_defer(device_t self)
 {
 	struct vchiq_attach_args vaa;
 	struct vchiq_softc *sc = device_private(self);
+	const int phandle = sc->sc_phandle;
 
 	vchiq_core_initialize();
 
-	sc->sc_ih = intr_establish(sc->sc_intr, IPL_VM, IST_LEVEL | IST_MPSAFE,
-	    vchiq_intr, sc);
-	if (sc->sc_ih == NULL) {
-		aprint_error_dev(self, "failed to establish interrupt %d\n",
-		    sc->sc_intr);
+	char intrstr[128];
+	if (!fdtbus_intr_str(phandle, 0, intrstr, sizeof(intrstr))) {
+		aprint_error(": failed to decode interrupt\n");
 		return;
 	}
+
+	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_VM, FDT_INTR_MPSAFE,
+	    vchiq_intr, sc);
+	if (sc->sc_ih == NULL) {
+		aprint_error_dev(self, "failed to establish interrupt %s\n",
+		    intrstr);
+		return;
+	}
+	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 
 	vchiq_init();
 

@@ -38,29 +38,34 @@
 
 #include "assym.h"
 
-RCSID("$NetBSD: rpi2_start.S,v 1.3 2015/12/17 08:02:42 skrll Exp $")
+RCSID("$NetBSD: rpi2_start.S,v 1.4 2017/12/10 21:38:27 skrll Exp $")
+
+#if defined(KERNEL_BASES_EQUAL)
+#define CALL(f)		bl	_C_LABEL(f)
+#else
+#define	CALL(f)	\
+	movw	fp, #:lower16:_C_LABEL(f); \
+	movt	fp, #:upper16:_C_LABEL(f); \
+	sub	fp, fp, #KERNEL_BASE_VOFFSET; \
+	blx	fp
+#endif
 
 #if defined(VERBOSE_INIT_ARM)
-#define	XPUTC(n)	mov r0, n; bl plputc
+#define	XPUTC(n)	mov r0, n; CALL(bcm2836_platform_early_putchar)
 #if KERNEL_BASE_VOFFSET == 0
-#define	XPUTC2(n)	mov r0, n; bl plputc
+#define	XPUTC2(n)	mov r0, n; CALL(bcm2836_platform_early_putchar)
 #else
 #define XPUTC2(n)	mov r0, n; blx r11
 #endif
-#ifdef __ARMEB__
-#define COM_BSWAP
-#endif
-#define COM_MULT	4
 #else
 #define	XPUTC(n)
 #define	XPUTC2(n)
 #endif
 
-#define INIT_MEMSIZE	128
-#define	TEMP_L1_TABLE	(KERNEL_BASE - KERNEL_BASE_VOFFSET + INIT_MEMSIZE * L1_S_SIZE - L1_TABLE_SIZE)
+#define INIT_MEMSIZE	(0x40000000 / L1_S_SIZE)
+#define	TEMP_L1_TABLE	(KERNEL_BASE - KERNEL_BASE_VOFFSET + 128 * L1_S_SIZE - L1_TABLE_SIZE)
 
-#define	MD_CPU_HATCH	_C_LABEL(bcm2836_cpu_hatch)
-
+#define	MD_CPU_HATCH	_C_LABEL(arm_fdt_cpu_hatch)
 /*
  * Kernel start routine for RPI2 board.
  * At this point, this code has been loaded into SDRAM
@@ -81,8 +86,8 @@ _C_LABEL(rpi_start):
 	/*
 	 * Save any arguments passed to us.
 	 */
-	movw	r4, #:lower16:rpi_boot_regs
-	movt	r4, #:upper16:rpi_boot_regs
+	movw	r4, #:lower16:uboot_args
+	movt	r4, #:upper16:uboot_args
 #if KERNEL_BASE_VOFFSET != 0
 	/*
 	 * But since .start is at 0x40000000 and .text is at 0x8000000, we
@@ -124,11 +129,12 @@ _C_LABEL(rpi_start):
 #else
 	/*
 	 * After the MMU is on, we can execute in the normal .text segment
-	 * so setup the lr to be in .text.  Cache the address for plputc
-	 * before we go.
+	 * so setup the lr to be in .text.  Cache the address for
+	 * bcm283x_platform_early_putchar before we go.
 	 */
 #if defined(VERBOSE_INIT_ARM)
-	adr	r11, plputc		@ for XPUTC2
+	movw	r11, #:lower16:bcm2836_platform_early_putchar
+	movt	r11, #:upper16:bcm2836_platform_early_putchar
 #endif
 	movw	lr, #:lower16:1f
 	movt	lr, #:upper16:1f
@@ -165,83 +171,6 @@ _C_LABEL(rpi_start):
 
 #include <arm/cortex/a9_mpsubr.S>
 
-#if defined(VERBOSE_INIT_ARM)
-
-#define	PL01XCOM_FR	0x18	/* Flag Register */
-#define	PL01XCOM_DR	0x00	/* Data Register */
-#define	PL01X_FR_TXFE	0x080	/* Transmit fifo empty */
-
-#define COM_DATA	PL01XCOM_DR
-#define	COM_LSR		PL01XCOM_FR
-#define	LSR_TSRE	PL01X_FR_TXFE
-#define COM_MULT	4
-
-#define CONSADDR	0x3f201000
-
-#define TIMO		0x25000
-#ifndef COM_MULT
-#define COM_MULT	1
-#endif
-	.global	_C_LABEL(plputc)
-_C_LABEL(plputc):
-
-	mov	r2, #TIMO
-	movw	r3, #:lower16:CONSADDR
-	movt	r3, #:upper16:CONSADDR
-1:
-#if COM_MULT == 1
-	ldrb	r1, [r3, #(COM_LSR*COM_MULT)]
-#else
-#if COM_MULT == 2
-	ldrh	r1, [r3, #(COM_LSR*COM_MULT)]
-#elif COM_MULT == 4
-	ldr	r1, [r3, #(COM_LSR*COM_MULT)]
-#endif
-#ifdef COM_BSWAP
-	lsr	r1, r1, #(COM_MULT-1)*8
-#endif
-#endif
-	tst	r1, #LSR_TSRE
-	bne	2f
-	subs	r2, r2, #1
-	bne	1b
-2:
-#if COM_MULT == 1
-	strb	r0, [r3, #COM_DATA]
-#else
-#ifdef COM_BSWAP
-	lsl	r0, r0, #(COM_MULT-1)*8
-#endif
-#if COM_MULT == 2
-	strh	r0, [r3, #COM_DATA]
-#else
-	str	r0, [r3, #COM_DATA]
-#endif
-#endif
-
-	mov	r2, #TIMO
-3:
-#if COM_MULT == 1
-	ldrb	r1, [r3, #(COM_LSR*COM_MULT)]
-#else
-#if COM_MULT == 2
-	ldrh	r1, [r3, #(COM_LSR*COM_MULT)]
-#elif COM_MULT == 4
-	ldr	r1, [r3, #(COM_LSR*COM_MULT)]
-#endif
-#ifdef COM_BSWAP
-	lsr	r1, r1, #(COM_MULT-1)*8
-#endif
-#endif
-	tst	r1, #LSR_TSRE
-	bne	4f
-	subs	r2, r2, #1
-	bne	3b
-4:
-	bx	lr
-#endif /* VERBOSE_INIT_ARM */
-
-
 .Lmmu_init_table:
 	/* Map KERNEL_BASE VA to SDRAM PA, write-back cacheable, shareable */
 	MMU_INIT(KERNEL_BASE, KERNEL_BASE - KERNEL_BASE_VOFFSET, INIT_MEMSIZE,
@@ -255,15 +184,18 @@ _C_LABEL(plputc):
 #endif
 
 	/* Map the 16MB of peripherals */
-	MMU_INIT(RPI_KERNEL_IO_VBASE, RPI_KERNEL_IO_PBASE,
-	    (RPI_KERNEL_IO_VSIZE + L1_S_SIZE - 1) / L1_S_SIZE,
+	MMU_INIT(BCM2836_PERIPHERALS_VBASE, BCM2836_PERIPHERALS_BASE,
+	    (BCM2835_PERIPHERALS_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
 		L1_S_PROTO_armv7 | L1_S_APv7_KRW | L1_S_V6_XN)
 
 	/* Map the 16MB of peripherals */
-	MMU_INIT(RPI_KERNEL_IO_PBASE, RPI_KERNEL_IO_PBASE,
-	    (RPI_KERNEL_IO_VSIZE + L1_S_SIZE - 1) / L1_S_SIZE,
+	MMU_INIT(BCM2836_PERIPHERALS_BASE, BCM2836_PERIPHERALS_BASE,
+	    (BCM2835_PERIPHERALS_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
 		L1_S_PROTO_armv7 | L1_S_APv7_KRW | L1_S_V6_XN)
 
+	MMU_INIT(BCM2836_ARM_LOCAL_VBASE, BCM2836_ARM_LOCAL_BASE,
+	    (BCM2836_ARM_LOCAL_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
+	    L1_S_PROTO_armv7 | L1_S_APv7_KRW | L1_S_V6_XN)
 
 	/* end of table */
 	MMU_INIT(0, 0, 0, 0)

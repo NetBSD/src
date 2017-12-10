@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_spi.c,v 1.4 2015/07/29 14:22:49 skrll Exp $	*/
+/*	$NetBSD: bcm2835_spi.c,v 1.5 2017/12/10 21:38:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 2012 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_spi.c,v 1.4 2015/07/29 14:22:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_spi.c,v 1.5 2017/12/10 21:38:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -40,16 +40,17 @@ __KERNEL_RCSID(0, "$NetBSD: bcm2835_spi.c,v 1.4 2015/07/29 14:22:49 skrll Exp $"
 #include <sys/bitops.h>
 #include <dev/spi/spivar.h>
 
-#include <arm/broadcom/bcm_amba.h>
 #include <arm/broadcom/bcm2835reg.h>
 #include <arm/broadcom/bcm2835_spireg.h>
-#include <arm/broadcom/bcm2835_gpio_subr.h>
+
+#include <dev/fdt/fdtvar.h>
+
+#include <arm/fdt/arm_fdtvar.h>
 
 struct bcmspi_softc {
 	device_t		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
-	bus_size_t		sc_ios;
 	void			*sc_intrh;
 	struct spi_controller	sc_spi;
 	SIMPLEQ_HEAD(,spi_transfer) sc_q;
@@ -78,43 +79,56 @@ CFATTACH_DECL_NEW(bcmspi, sizeof(struct bcmspi_softc),
 static int
 bcmspi_match(device_t parent, cfdata_t cf, void *aux)
 {
-	struct amba_attach_args * const aaa = aux;
+	const char * const compatible[] = {
+		"brcm,bcm2835-spi",
+		NULL
+	};
+	struct fdt_attach_args * const faa = aux;
 
-	if (strcmp(aaa->aaa_name, "bcmspi") != 0)
-		return 0;
-
-	return 1;
+	return of_match_compatible(faa->faa_phandle, compatible);
 }
 
 static void
 bcmspi_attach(device_t parent, device_t self, void *aux)
 {
-	struct amba_attach_args * const aaa = aux;
 	struct bcmspi_softc * const sc = device_private(self);
+	struct fdt_attach_args * const faa = aux;
 	struct spibus_attach_args sba;
 
 	aprint_naive("\n");
 	aprint_normal(": SPI\n");
 
 	sc->sc_dev = self;
+	sc->sc_iot = faa->faa_bst;
 	SIMPLEQ_INIT(&sc->sc_q);
-	sc->sc_iot = aaa->aaa_iot;
-	if (bus_space_map(aaa->aaa_iot, aaa->aaa_addr, aaa->aaa_size, 0,
-	    &sc->sc_ioh) != 0) {
+
+	const int phandle = faa->faa_phandle;
+	bus_addr_t addr;
+	bus_size_t size;
+
+	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
+		aprint_error(": missing 'reg' property\n");
+		return;
+	}
+
+	if (bus_space_map(sc->sc_iot, addr, size, 0, &sc->sc_ioh) != 0) {
 		aprint_error_dev(sc->sc_dev, "unable to map device\n");
 		return;
 	}
-	sc->sc_ios = aaa->aaa_size;
 
-	for (u_int pin = 7; pin <= 11; pin++)
-		bcm2835gpio_function_select(pin, BCM2835_GPIO_ALT0);
+	char intrstr[128];
+	if (!fdtbus_intr_str(phandle, 0, intrstr, sizeof(intrstr))) {
+		aprint_error(": failed to decode interrupt\n");
+		return;
+	}
 
-	sc->sc_intrh = intr_establish(aaa->aaa_intr, IPL_VM, IST_LEVEL,
+	sc->sc_intrh = fdtbus_intr_establish(phandle, 0, IPL_VM, 0,
 	    bcmspi_intr, sc);
 	if (sc->sc_intrh == NULL) {
 		aprint_error_dev(sc->sc_dev, "unable to establish interrupt\n");
 		return;
 	}
+	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 
 	sc->sc_spi.sct_cookie = sc;
 	sc->sc_spi.sct_configure = bcmspi_configure;

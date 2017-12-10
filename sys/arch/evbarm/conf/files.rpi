@@ -1,18 +1,12 @@
-#	$NetBSD: files.rpi,v 1.8 2016/05/20 16:40:40 christos Exp $
+#	$NetBSD: files.rpi,v 1.9 2017/12/10 21:38:26 skrll Exp $
 #
 # Raspberry Pi
 #
 
-file   arch/arm/arm32/arm32_boot.c
-file   arch/arm/arm32/arm32_kvminit.c
-file   arch/arm/arm32/arm32_reboot.c
-
-file	arch/evbarm/rpi/rpi_machdep.c
 file	arch/evbarm/rpi/vcprop_subr.c
 makeoptions	"COPTS.vcprop_subr.c"+="-fno-stack-protector"
 
-# Kernel boot arguments
-defparam opt_machdep.h				BOOT_ARGS
+include "arch/evbarm/conf/files.fdt"
 
 # CPU support and integrated peripherals
 include "arch/arm/broadcom/files.bcm2835"

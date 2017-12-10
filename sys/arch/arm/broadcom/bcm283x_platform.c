@@ -1,11 +1,8 @@
-/*	$NetBSD: rpi_machdep.c,v 1.82 2017/11/07 09:05:05 ryo Exp $	*/
+/*	$NetBSD: bcm283x_platform.c,v 1.1 2017/12/10 21:38:26 skrll Exp $	*/
 
 /*-
- * Copyright (c) 2012 The NetBSD Foundation, Inc.
+ * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Nick Hudson
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -16,21 +13,21 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+ * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.82 2017/11/07 09:05:05 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.1 2017/12/10 21:38:26 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -38,7 +35,7 @@ __KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.82 2017/11/07 09:05:05 ryo Exp $")
 #include "opt_ddb.h"
 #include "opt_evbarm_boardtype.h"
 #include "opt_kgdb.h"
-#include "opt_multiprocessor.h"
+#include "opt_fdt.h"
 #include "opt_rpi.h"
 #include "opt_vcprop.h"
 
@@ -53,55 +50,45 @@ __KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.82 2017/11/07 09:05:05 ryo Exp $")
 #include "ukbd.h"
 
 #include <sys/param.h>
+#include <sys/bus.h>
+#include <sys/cpu.h>
 #include <sys/device.h>
 #include <sys/termios.h>
-#include <sys/reboot.h>
-#include <sys/sysctl.h>
-#include <sys/bus.h>
 
 #include <net/if_ether.h>
+
 #include <prop/proplib.h>
 
-#include <dev/cons.h>
+#include <dev/fdt/fdtvar.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <arm/arm32/machdep.h>
-
-#include <machine/autoconf.h>
-#include <machine/vmparam.h>
 #include <machine/bootconfig.h>
-#include <machine/pmap.h>
+#include <arm/cpufunc.h>
+
+#include <libfdt.h>
+
+#include <arm/arm32/machdep.h>
 
 #include <arm/broadcom/bcm2835reg.h>
 #include <arm/broadcom/bcm2835var.h>
-#include <arm/broadcom/bcm2835_pmvar.h>
+#include <arm/broadcom/bcm2835_intr.h>
 #include <arm/broadcom/bcm2835_mbox.h>
-#include <arm/broadcom/bcm2835_gpio_subr.h>
-#include <arm/broadcom/bcm_amba.h>
+#include <arm/broadcom/bcm2835_pmwdogvar.h>
+
+#include <evbarm/dev/plcomreg.h>
+#include <evbarm/dev/plcomvar.h>
+
+#include <dev/ic/ns16550reg.h>
+#include <dev/ic/comreg.h>
 
 #include <evbarm/rpi/vcio.h>
 #include <evbarm/rpi/vcpm.h>
 #include <evbarm/rpi/vcprop.h>
 
-#include <evbarm/rpi/rpi.h>
+#include <arm/fdt/arm_fdtvar.h>
 
 #include <arm/cortex/gtmr_var.h>
-
-#ifdef DDB
-#include <machine/db_machdep.h>
-#include <ddb/db_sym.h>
-#include <ddb/db_extern.h>
-#endif
-
-#if NPLCOM > 0
-#include <evbarm/dev/plcomreg.h>
-#include <evbarm/dev/plcomvar.h>
-#endif
-
-#if NCOM > 0
-#include <dev/ic/comvar.h>
-#endif
 
 #if NGENFB > 0
 #include <dev/videomode/videomode.h>
@@ -113,15 +100,91 @@ __KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.82 2017/11/07 09:05:05 ryo Exp $")
 #include <dev/usb/ukbdvar.h>
 #endif
 
-extern int KERNEL_BASE_phys[];
-extern int KERNEL_BASE_virt[];
+#ifdef DDB
+#include <machine/db_machdep.h>
+#include <ddb/db_sym.h>
+#include <ddb/db_extern.h>
+#endif
 
-BootConfig bootconfig;		/* Boot config storage */
-static char bootargs[VCPROP_MAXCMDLINE];
-char *boot_args = NULL;
+void bcm283x_platform_early_putchar(vaddr_t, paddr_t, char c);
+void bcm2835_platform_early_putchar(char c);
+void bcm2836_platform_early_putchar(char c);
+void bcm2837_platform_early_putchar(char c);
 
-static void rpi_bootparams(void);
-static void rpi_device_register(device_t, void *);
+extern void bcmgenfb_set_console_dev(device_t dev);
+void bcmgenfb_set_ioctl(int(*)(void *, void *, u_long, void *, int, struct lwp *));
+extern void bcmgenfb_ddb_trap_callback(int where);
+static int rpi_ioctl(void *, void *, u_long, void *, int, lwp_t *);
+
+extern struct bus_space armv7_generic_bs_tag;
+extern struct bus_space armv7_generic_a4x_bs_tag;
+extern struct arm32_bus_dma_tag armv7_generic_dma_tag;
+
+/* Prototypes for all the bus_space structure functions */
+bs_protos(bcm2835);
+bs_protos(bcm2835_a4x);
+bs_protos(armv7_generic);
+bs_protos(armv7_generic_a4x);
+bs_protos(generic);
+bs_protos(generic_armv4);
+bs_protos(a4x);
+bs_protos(bs_notimpl);
+
+#if 0
+#if __ARMEB__
+#define NSWAP(n)	n ## _swap
+#else
+#define NSWAP(n)	n
+#endif
+#endif
+
+struct arm32_dma_range bcm2835_dma_ranges[] = {
+	[0] = {
+		.dr_sysbase = 0,
+		.dr_busbase = BCM2835_BUSADDR_CACHE_COHERENT,
+	}
+};
+
+struct arm32_dma_range bcm2836_dma_ranges[] = {
+	[0] = {
+		.dr_sysbase = 0,
+		.dr_busbase = BCM2835_BUSADDR_CACHE_DIRECT,
+	}
+};
+
+
+#if defined(SOC_BCM2835)
+static const struct pmap_devmap *
+bcm2835_platform_devmap(void)
+{
+	static const struct pmap_devmap devmap[] = {
+		DEVMAP_ENTRY(BCM2835_PERIPHERALS_VBASE, BCM2835_PERIPHERALS_BASE,
+		    BCM2835_PERIPHERALS_SIZE),	/* 16Mb */
+
+		DEVMAP_ENTRY_END
+	};
+
+	return devmap;
+}
+#endif
+
+#if defined(SOC_BCM2836)
+static const struct pmap_devmap *
+bcm2836_platform_devmap(void)
+{
+	static const struct pmap_devmap devmap[] = {
+		DEVMAP_ENTRY(BCM2836_PERIPHERALS_VBASE, BCM2836_PERIPHERALS_BASE,
+		    BCM2835_PERIPHERALS_SIZE),	/* 16Mb */
+
+		DEVMAP_ENTRY(BCM2836_ARM_LOCAL_VBASE, BCM2836_ARM_LOCAL_BASE,
+		    BCM2836_ARM_LOCAL_SIZE),
+
+		DEVMAP_ENTRY_END
+	};
+
+	return devmap;
+}
+#endif
 
 /*
  * Macros to translate between physical and virtual for a subset of the
@@ -132,6 +195,7 @@ static void rpi_device_register(device_t, void *);
 #define KERN_VTOPHYS(va) ((paddr_t)((vaddr_t)va - KERN_VTOPDIFF))
 #define KERN_PHYSTOV(pa) ((vaddr_t)((paddr_t)pa + KERN_VTOPDIFF))
 
+
 #ifndef RPI_FB_WIDTH
 #define RPI_FB_WIDTH	1280
 #endif
@@ -140,58 +204,14 @@ static void rpi_device_register(device_t, void *);
 #endif
 
 int uart_clk = BCM2835_UART0_CLK;
+int core_clk;
 
-#define	PLCONADDR BCM2835_UART0_BASE
-
-#ifndef CONSDEVNAME
-#define CONSDEVNAME "plcom"
-#endif
-
-#ifndef PLCONSPEED
-#define PLCONSPEED B115200
-#endif
-#ifndef PLCONMODE
-#define PLCONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
-#endif
-#ifndef PLCOMCNUNIT
-#define PLCOMCNUNIT -1
-#endif
-
-#if (NPLCOM > 0)
-static const bus_addr_t consaddr = (bus_addr_t)PLCONADDR;
-
-int plcomcnspeed = PLCONSPEED;
-int plcomcnmode = PLCONMODE;
-#endif
-
-#include "opt_kgdb.h"
-#if (NPLCOM == 0)
-#error Enable plcom for KGDB support
-#endif
-#ifdef KGDB
-#include <sys/kgdb.h>
-static void kgdb_port_init(void);
-#endif
-
-#if (NPLCOM > 0 && (defined(PLCONSOLE) || defined(KGDB)))
-static struct plcom_instance rpi_pi = {
-	.pi_type = PLCOM_TYPE_PL011,
-	.pi_flags = PLC_FLAG_32BIT_ACCESS,
-	.pi_iot = &bcm2835_bs_tag,
-	.pi_size = BCM2835_UART0_SIZE
-    };
-#endif
-
-/* Smallest amount of RAM start.elf could give us. */
-#define RPI_MINIMUM_SPLIT (128U * 1024 * 1024)
-
-static struct __aligned(16) {
+static struct {
 	struct vcprop_buffer_hdr	vb_hdr;
 	struct vcprop_tag_clockrate	vbt_uartclockrate;
-	struct vcprop_tag_clockrate	vbt_coreclockrate;
-	struct vcprop_tag_boardrev	vbt_boardrev;
+	struct vcprop_tag_clockrate	vbt_vpuclockrate;
 	struct vcprop_tag end;
-} vb_uart = {
+} vb_uart __cacheline_aligned = {
 	.vb_hdr = {
 		.vpb_len = sizeof(vb_uart),
 		.vpb_rcode = VCPROP_PROCESS_REQUEST,
@@ -204,27 +224,20 @@ static struct __aligned(16) {
 		},
 		.id = VCPROP_CLK_UART
 	},
-	.vbt_coreclockrate = {
+	.vbt_vpuclockrate = {
 		.tag = {
 			.vpt_tag = VCPROPTAG_GET_CLOCKRATE,
-			.vpt_len = VCPROPTAG_LEN(vb_uart.vbt_coreclockrate),
+			.vpt_len = VCPROPTAG_LEN(vb_uart.vbt_vpuclockrate),
 			.vpt_rcode = VCPROPTAG_REQUEST
 		},
 		.id = VCPROP_CLK_CORE
-	},
-	.vbt_boardrev = {
-		.tag = {
-			.vpt_tag = VCPROPTAG_GET_BOARDREVISION,
-			.vpt_len = VCPROPTAG_LEN(vb_uart.vbt_boardrev),
-			.vpt_rcode = VCPROPTAG_REQUEST
-		},
 	},
 	.end = {
 		.vpt_tag = VCPROPTAG_NULL
 	}
 };
 
-static struct __aligned(16) {
+static struct {
 	struct vcprop_buffer_hdr	vb_hdr;
 	struct vcprop_tag_fwrev		vbt_fwrev;
 	struct vcprop_tag_boardmodel	vbt_boardmodel;
@@ -236,9 +249,9 @@ static struct __aligned(16) {
 	struct vcprop_tag_cmdline	vbt_cmdline;
 	struct vcprop_tag_clockrate	vbt_emmcclockrate;
 	struct vcprop_tag_clockrate	vbt_armclockrate;
-	struct vcprop_tag_clockrate	vbt_coreclockrate;
+	struct vcprop_tag_clockrate	vbt_vpuclockrate;
 	struct vcprop_tag end;
-} vb = {
+} vb __cacheline_aligned = {
 	.vb_hdr = {
 		.vpb_len = sizeof(vb),
 		.vpb_rcode = VCPROP_PROCESS_REQUEST,
@@ -315,10 +328,10 @@ static struct __aligned(16) {
 		},
 		.id = VCPROP_CLK_ARM
 	},
-	.vbt_coreclockrate = {
+	.vbt_vpuclockrate = {
 		.tag = {
 			.vpt_tag = VCPROPTAG_GET_CLOCKRATE,
-			.vpt_len = VCPROPTAG_LEN(vb.vbt_coreclockrate),
+			.vpt_len = VCPROPTAG_LEN(vb.vbt_vpuclockrate),
 			.vpt_rcode = VCPROPTAG_REQUEST
 		},
 		.id = VCPROP_CLK_CORE
@@ -329,11 +342,11 @@ static struct __aligned(16) {
 };
 
 #if NGENFB > 0
-static struct __aligned(16) {
+static struct {
 	struct vcprop_buffer_hdr	vb_hdr;
 	struct vcprop_tag_edidblock	vbt_edid;
 	struct vcprop_tag end;
-} vb_edid = {
+} vb_edid __cacheline_aligned = {
 	.vb_hdr = {
 		.vpb_len = sizeof(vb_edid),
 		.vpb_rcode = VCPROP_PROCESS_REQUEST,
@@ -351,7 +364,7 @@ static struct __aligned(16) {
 	}
 };
 
-static struct __aligned(16) {
+static struct {
 	struct vcprop_buffer_hdr	vb_hdr;
 	struct vcprop_tag_fbres		vbt_res;
 	struct vcprop_tag_fbres		vbt_vres;
@@ -361,7 +374,7 @@ static struct __aligned(16) {
 	struct vcprop_tag_blankscreen	vbt_blank;
 	struct vcprop_tag_fbpitch	vbt_pitch;
 	struct vcprop_tag end;
-} vb_setfb = {
+} vb_setfb __cacheline_aligned = {
 	.vb_hdr = {
 		.vpb_len = sizeof(vb_setfb),
 		.vpb_rcode = VCPROP_PROCESS_REQUEST,
@@ -428,10 +441,7 @@ static struct __aligned(16) {
 	},
 };
 
-extern void bcmgenfb_set_console_dev(device_t dev);
-void bcmgenfb_set_ioctl(int(*)(void *, void *, u_long, void *, int, struct lwp *));
-extern void bcmgenfb_ddb_trap_callback(int where);
-static int rpi_ioctl(void *, void *, u_long, void *, int, lwp_t *);
+#endif
 
 static int rpi_video_on = WSDISPLAYIO_VIDEO_ON;
 
@@ -445,106 +455,89 @@ static int cursor_x = 0, cursor_y = 0, hot_x = 0, hot_y = 0, cursor_on = 0;
 static uint32_t cursor_cmap[4];
 static uint8_t cursor_mask[8 * 64], cursor_bitmap[8 * 64];
 #endif
-#endif
 
-/*
- * Return true if this model Raspberry Pi has Bluetooth/Wi-Fi support
- */
-static bool
-rpi_rev_has_btwifi(uint32_t rev)
+u_int
+bcm283x_clk_get_rate_uart(void)
 {
-	if ((rev & VCPROP_REV_ENCFLAG) == 0)
-		return false;
 
-	switch (__SHIFTOUT(rev, VCPROP_REV_MODEL)) {
-	case RPI_MODEL_B_PI3:
-	case RPI_MODEL_ZERO_W:
-		return true;
-	default:
-		return false;
-	}
+	if (vcprop_tag_success_p(&vb_uart.vbt_uartclockrate.tag))
+		return vb_uart.vbt_uartclockrate.rate;
+	return 0;
 }
 
-static void
-rpi_uartinit(void)
+u_int
+bcm283x_clk_get_rate_vpu(void)
 {
-	const paddr_t pa = BCM2835_PERIPHERALS_BUS_TO_PHYS(BCM2835_ARMMBOX_BASE);
-	const bus_space_tag_t iot = &bcm2835_bs_tag;
-	const bus_space_handle_t ioh = BCM2835_IOPHYSTOVIRT(pa);
+
+	if (vcprop_tag_success_p(&vb.vbt_vpuclockrate.tag) &&
+	    vb.vbt_vpuclockrate.rate > 0) {
+		return vb.vbt_vpuclockrate.rate;
+	}
+	return 0;
+}
+
+u_int
+bcm283x_clk_get_rate_emmc(void)
+{
+
+	if (vcprop_tag_success_p(&vb.vbt_emmcclockrate.tag) &&
+	    vb.vbt_emmcclockrate.rate > 0) {
+		return vb.vbt_emmcclockrate.rate;
+	}
+	return 0;
+}
+
+
+
+static void
+bcm283x_uartinit(bus_space_tag_t iot, bus_space_handle_t ioh)
+{
 	uint32_t res;
 
-	bcm2835_mbox_write(iot, ioh, BCMMBOX_CHANARM2VC, KERN_VTOPHYS(&vb_uart));
+	bcm2835_mbox_write(iot, ioh, BCMMBOX_CHANARM2VC,
+	    KERN_VTOPHYS(&vb_uart));
 
 	bcm2835_mbox_read(iot, ioh, BCMMBOX_CHANARM2VC, &res);
 
 	cpu_dcache_inv_range((vaddr_t)&vb_uart, sizeof(vb_uart));
 
-	if (vcprop_tag_success_p(&vb_uart.vbt_boardrev.tag)) {
-		if (rpi_rev_has_btwifi(vb_uart.vbt_boardrev.rev)) {
-#if NCOM > 0
-			/* Enable AUX UART on GPIO header */
-			bcm2835gpio_function_select(14, BCM2835_GPIO_ALT5);
-			bcm2835gpio_function_select(15, BCM2835_GPIO_ALT5);
-#else
-			/* Enable UART0 (PL011) on GPIO header */
-			bcm2835gpio_function_select(14, BCM2835_GPIO_ALT0);
-			bcm2835gpio_function_select(15, BCM2835_GPIO_ALT0);
-#endif
-		}
-	}
-
 	if (vcprop_tag_success_p(&vb_uart.vbt_uartclockrate.tag))
 		uart_clk = vb_uart.vbt_uartclockrate.rate;
+	if (vcprop_tag_success_p(&vb_uart.vbt_vpuclockrate.tag))
+		core_clk = vb_uart.vbt_vpuclockrate.rate;
 }
 
-
+#if defined(SOC_BCM2835)
 static void
-rpi_pinctrl(void)
-{
-#if NBCMSDHOST > 0
-	if (rpi_rev_has_btwifi(vb.vbt_boardrev.rev)) {
-		/*
-		 * If the sdhost driver is present, map the SD card slot to the
-		 * SD host controller and the sdhci driver to the SDIO pins.
-		 */
-		for (int pin = 48; pin <= 53; pin++) {
-			/* Enable SDHOST on SD card slot */
-			bcm2835gpio_function_select(pin, BCM2835_GPIO_ALT0);
-		}
-		for (int pin = 34; pin <= 39; pin++) {
-			/* Enable SDHCI on SDIO */
-			bcm2835gpio_function_select(pin, BCM2835_GPIO_ALT3);
-			bcm2835gpio_function_setpull(pin,
-			    pin == 34 ? BCM2835_GPIO_GPPUD_PULLOFF :
-			    BCM2835_GPIO_GPPUD_PULLUP);
-		}
-	}
-#endif
-
-	if (rpi_rev_has_btwifi(vb.vbt_boardrev.rev)) {
-#if NCOM > 0
-		/* Enable UART0 (PL011) on BT */
-		bcm2835gpio_function_select(32, BCM2835_GPIO_ALT3);
-		bcm2835gpio_function_select(33, BCM2835_GPIO_ALT3);
-#else
-		/* Enable AUX UART on BT */
-		bcm2835gpio_function_select(32, BCM2835_GPIO_ALT5);
-		bcm2835gpio_function_select(33, BCM2835_GPIO_ALT5);
-#endif
-		bcm2835gpio_function_setpull(32, BCM2835_GPIO_GPPUD_PULLOFF);
-		bcm2835gpio_function_setpull(33, BCM2835_GPIO_GPPUD_PULLUP);
-		bcm2835gpio_function_select(43, BCM2835_GPIO_ALT0);
-		bcm2835gpio_function_setpull(43, BCM2835_GPIO_GPPUD_PULLOFF);
-	}
-}
-
-
-static void
-rpi_bootparams(void)
+bcm2835_uartinit(void)
 {
 	const paddr_t pa = BCM2835_PERIPHERALS_BUS_TO_PHYS(BCM2835_ARMMBOX_BASE);
 	const bus_space_tag_t iot = &bcm2835_bs_tag;
 	const bus_space_handle_t ioh = BCM2835_IOPHYSTOVIRT(pa);
+
+	bcm283x_uartinit(iot, ioh);
+}
+#endif
+
+#if defined(SOC_BCM2836)
+static void
+bcm2836_uartinit(void)
+{
+	const paddr_t pa = BCM2836_PERIPHERALS_BUS_TO_PHYS(BCM2835_ARMMBOX_BASE);
+	const bus_space_tag_t iot = &bcm2836_bs_tag;
+	const bus_space_handle_t ioh = BCM2835_IOPHYSTOVIRT(pa);
+
+	bcm283x_uartinit(iot, ioh);
+}
+#endif
+
+#define	BCM283x_MINIMUM_SPLIT	(128U * 1024 * 1024)
+
+static size_t bcm283x_memorysize;
+
+static void
+bcm283x_bootparams(bus_space_tag_t iot, bus_space_handle_t ioh)
+{
 	uint32_t res;
 
 	bcm2835_mbox_write(iot, ioh, BCMMBOX_CHANPM, (
@@ -575,22 +568,24 @@ rpi_bootparams(void)
 	if (!vcprop_buffer_success_p(&vb.vb_hdr)) {
 		bootconfig.dramblocks = 1;
 		bootconfig.dram[0].address = 0x0;
-		bootconfig.dram[0].pages = atop(RPI_MINIMUM_SPLIT);
+		bootconfig.dram[0].pages = atop(BCM283x_MINIMUM_SPLIT);
 		return;
 	}
 
 	struct vcprop_tag_memory *vptp_mem = &vb.vbt_memory;
-
 	if (vcprop_tag_success_p(&vptp_mem->tag)) {
 		size_t n = vcprop_tag_resplen(&vptp_mem->tag) /
 		    sizeof(struct vcprop_memory);
 
+		bcm283x_memorysize = 0;
 		bootconfig.dramblocks = 0;
 
 		for (int i = 0; i < n && i < DRAM_BLOCKS; i++) {
 			bootconfig.dram[i].address = vptp_mem->mem[i].base;
 			bootconfig.dram[i].pages = atop(vptp_mem->mem[i].size);
 			bootconfig.dramblocks++;
+
+			bcm283x_memorysize += vptp_mem->mem[i].size;
 		}
 	}
 
@@ -598,15 +593,22 @@ rpi_bootparams(void)
 		curcpu()->ci_data.cpu_cc_freq = vb.vbt_armclockrate.rate;
 
 #ifdef VERBOSE_INIT_ARM
+	if (vcprop_tag_success_p(&vb.vbt_memory.tag)) {
+		printf("%s: memory size  %d\n", __func__,
+		    vb.vbt_armclockrate.rate);
+	}
+	if (vcprop_tag_success_p(&vb.vbt_armclockrate.tag))
+		printf("%s: arm clock    %d\n", __func__,
+		    vb.vbt_armclockrate.rate);
 	if (vcprop_tag_success_p(&vb.vbt_fwrev.tag))
 		printf("%s: firmware rev %x\n", __func__,
 		    vb.vbt_fwrev.rev);
-	if (vcprop_tag_success_p(&vb.vbt_macaddr.tag))
-		printf("%s: mac-address  %llx\n", __func__,
-		    vb.vbt_macaddr.addr);
 	if (vcprop_tag_success_p(&vb.vbt_boardmodel.tag))
 		printf("%s: board model  %x\n", __func__,
 		    vb.vbt_boardmodel.model);
+	if (vcprop_tag_success_p(&vb.vbt_macaddr.tag))
+		printf("%s: mac-address  %llx\n", __func__,
+		    vb.vbt_macaddr.addr);
 	if (vcprop_tag_success_p(&vb.vbt_boardrev.tag))
 		printf("%s: board rev    %x\n", __func__,
 		    vb.vbt_boardrev.rev);
@@ -623,56 +625,53 @@ rpi_bootparams(void)
 #endif
 }
 
+#if defined(SOC_BCM2835)
+static void
+bcm2835_bootparams(void)
+{
+	const paddr_t pa = BCM2835_PERIPHERALS_BUS_TO_PHYS(BCM2835_ARMMBOX_BASE);
+	const bus_space_tag_t iot = &bcm2835_bs_tag;
+	const bus_space_handle_t ioh = BCM2835_IOPHYSTOVIRT(pa);
+
+	bcm283x_bootparams(iot, ioh);
+}
+#endif
+
+#if defined(SOC_BCM2836)
+static void
+bcm2836_bootparams(void)
+{
+	const paddr_t pa = BCM2836_PERIPHERALS_BUS_TO_PHYS(BCM2835_ARMMBOX_BASE);
+	const bus_space_tag_t iot = &bcm2836_bs_tag;
+	const bus_space_handle_t ioh = BCM2835_IOPHYSTOVIRT(pa);
+
+	bcm283x_bootparams(iot, ioh);
+}
 
 static void
-rpi_bootstrap(void)
+bcm2836_bootstrap(void)
 {
-#ifdef BCM2836
-#define RPI_CPU_MAX	4
-
-#ifdef MULTIPROCESSOR
+	arm_cpu_max = 4;
 	extern int cortex_mmuinfo;
 
-	arm_cpu_max = RPI_CPU_MAX;
 	cortex_mmuinfo = armreg_ttbr_read();
-
 #ifdef VERBOSE_INIT_ARM
-	printf("%s: %d cpus present\n", __func__, arm_cpu_max);
 	printf("%s: cortex_mmuinfo %x\n", __func__, cortex_mmuinfo);
 #endif
-#endif /* MULTIPROCESSOR */
 
-	/*
-	 * Even if no options MULTIPROCESSOR,
-	 * It is need to initialize the secondary CPU,
-	 * and go into wfi loop (cortex_mpstart),
-	 * otherwise system would be freeze...
-	 */
 	extern void cortex_mpstart(void);
 
-	for (size_t i = 1; i < RPI_CPU_MAX; i++) {
-		bus_space_tag_t iot = &bcm2835_bs_tag;
+	for (size_t i = 1; i < arm_cpu_max; i++) {
+		bus_space_tag_t iot = &bcm2836_bs_tag;
 		bus_space_handle_t ioh = BCM2836_ARM_LOCAL_VBASE;
 
 		bus_space_write_4(iot, ioh,
 		    BCM2836_LOCAL_MAILBOX3_SETN(i),
 		    (uint32_t)cortex_mpstart);
-
-		int timeout = 20;
-		while (timeout-- > 0) {
-			uint32_t val;
-
-			val = bus_space_read_4(iot, ioh,
-			    BCM2836_LOCAL_MAILBOX3_CLRN(i));
-			if (val == 0)
-				break;
-		}
 	}
-#endif /* BCM2836 */
 
-#ifdef MULTIPROCESSOR
-	/* Wake up APs in case firmware has placed them in WFE state */
-	__asm __volatile("sev");
+	/* Wake up AP in case firmware has placed it in WFE state */
+	__asm __volatile("sev" ::: "memory");
 
 	for (int loop = 0; loop < 16; loop++) {
 		if (arm_cpu_hatched == __BITS(arm_cpu_max - 1, 1))
@@ -686,254 +685,9 @@ rpi_bootstrap(void)
 			    __func__, i);
 		}
 	}
-#endif /* MULTIPROCESSOR */
 }
 
-/*
- * Static device mappings. These peripheral registers are mapped at
- * fixed virtual addresses very early in initarm() so that we can use
- * them while booting the kernel, and stay at the same address
- * throughout whole kernel's life time.
- *
- * We use this table twice; once with bootstrap page table, and once
- * with kernel's page table which we build up in initarm().
- *
- * Since we map these registers into the bootstrap page table using
- * pmap_devmap_bootstrap() which calls pmap_map_chunk(), we map
- * registers segment-aligned and segment-rounded in order to avoid
- * using the 2nd page tables.
- */
-
-#define _A(a)	((a) & ~L1_S_OFFSET)
-#define _S(s)	(((s) + L1_S_SIZE - 1) & ~(L1_S_SIZE-1))
-
-static const struct pmap_devmap rpi_devmap[] = {
-	{
-		_A(RPI_KERNEL_IO_VBASE),
-		_A(RPI_KERNEL_IO_PBASE),
-		_S(RPI_KERNEL_IO_VSIZE),	/* 16Mb */
-		VM_PROT_READ|VM_PROT_WRITE,
-		PTE_NOCACHE,
-	},
-#if defined(BCM2836)
-	{
-		_A(RPI_KERNEL_LOCAL_VBASE),
-		_A(RPI_KERNEL_LOCAL_PBASE),
-		_S(RPI_KERNEL_LOCAL_VSIZE),
-		VM_PROT_READ|VM_PROT_WRITE,
-		PTE_NOCACHE,
-	},
-#endif
-	{ 0, 0, 0, 0, 0 }
-};
-
-#undef  _A
-#undef  _S
-
-/*
- * u_int initarm(...)
- *
- * Initial entry point on startup. This gets called before main() is
- * entered.
- * It should be responsible for setting up everything that must be
- * in place when main is called.
- * This includes
- *   Taking a copy of the boot configuration structure.
- *   Initialising the physical console so characters can be printed.
- *   Setting up page tables for the kernel
- */
-u_int
-initarm(void *arg)
-{
-
-	/*
-	 * Heads up ... Setup the CPU / MMU / TLB functions
-	 */
-	if (set_cpufuncs())
-		panic("cpu not recognized!");
-
-	/* map some peripheral registers */
-	pmap_devmap_bootstrap((vaddr_t)armreg_ttbr_read() & -L1_TABLE_SIZE,
-	    rpi_devmap);
-
-	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
-
-	rpi_uartinit();
-
-	consinit();
-
-	/* Talk to the user */
-#define BDSTR(s)	_BDSTR(s)
-#define _BDSTR(s)	#s
-	printf("\nNetBSD/evbarm (" BDSTR(EVBARM_BOARDTYPE) ") booting ...\n");
-
-#ifdef CORTEX_PMC
-	cortex_pmc_ccnt_init();
-#endif
-
-	rpi_bootparams();
-
-	rpi_bootstrap();
-
-	if (vcprop_tag_success_p(&vb.vbt_armclockrate.tag)) {
-		curcpu()->ci_data.cpu_cc_freq = vb.vbt_armclockrate.rate;
-#ifdef VERBOSE_INIT_ARM
-		printf("%s: arm clock   %d\n", __func__,
-		    vb.vbt_armclockrate.rate);
-#endif
-	}
-
-#ifdef VERBOSE_INIT_ARM
-	printf("initarm: Configuring system ...\n");
-#endif
-
-	psize_t ram_size = bootconfig.dram[0].pages * PAGE_SIZE;
-
-#ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
-	if (ram_size > KERNEL_VM_BASE - KERNEL_BASE) {
-		printf("%s: dropping RAM size from %luMB to %uMB\n",
-		    __func__, (unsigned long) (ram_size >> 20),
-		    (KERNEL_VM_BASE - KERNEL_BASE) >> 20);
-		ram_size = KERNEL_VM_BASE - KERNEL_BASE;
-	}
-#endif
-
-	/*
-	 * If MEMSIZE specified less than what we really have, limit ourselves
-	 * to that.
-	 */
-#ifdef MEMSIZE
-	if (ram_size == 0 || ram_size > (unsigned)MEMSIZE * 1024 * 1024)
-		ram_size = (unsigned)MEMSIZE * 1024 * 1024;
-#else
-	KASSERTMSG(ram_size > 0, "RAM size unknown and MEMSIZE undefined");
-#endif
-
-	arm32_bootmem_init(bootconfig.dram[0].address, ram_size,
-	    (uintptr_t)KERNEL_BASE_phys);
-
-#ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
-	const bool mapallmem_p = true;
-	KASSERT(ram_size <= KERNEL_VM_BASE - KERNEL_BASE);
-#else
-	const bool mapallmem_p = false;
-#endif
-
-	arm32_kernel_vm_init(KERNEL_VM_BASE, ARM_VECTORS_HIGH, 0, rpi_devmap,
-	    mapallmem_p);
-
-	cpu_reset_address = bcm2835_system_reset;
-
-#ifdef VERBOSE_INIT_ARM
-	printf("done.\n");
-#endif
-
-#ifdef KGDB
-	kgdb_port_init();
-#endif
-
-#ifdef __HAVE_MEMORY_DISK__
-	md_root_setconf(memory_disk, sizeof memory_disk);
-#endif
-
-	if (vcprop_tag_success_p(&vb.vbt_cmdline.tag))
-		strlcpy(bootargs, vb.vbt_cmdline.cmdline, sizeof(bootargs));
-	boot_args = bootargs;
-	parse_mi_bootargs(boot_args);
-
-#ifdef BOOTHOWTO
-	boothowto |= BOOTHOWTO;
-#endif
-
-	/* we've a specific device_register routine */
-	evbarm_device_register = rpi_device_register;
-
-	/* Change pinctrl settings */
-	rpi_pinctrl();
-
-	return initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, NULL, 0);
-}
-
-static void
-consinit_plcom(void)
-{
-#if (NPLCOM > 0 && defined(PLCONSOLE))
-	/*
-	 * Initialise the diagnostic serial console
-	 * This allows a means of generating output during initarm().
-	 */
-	rpi_pi.pi_iobase = consaddr;
-
-	plcomcnattach(&rpi_pi, plcomcnspeed, uart_clk,
-	    plcomcnmode, PLCOMCNUNIT);
-#endif
-}
-
-static void
-consinit_com(void)
-{
-#if NCOM > 0
-	bus_space_tag_t iot = &bcm2835_a4x_bs_tag;
-	const bus_addr_t addr = BCM2835_AUX_UART_BASE;
-	const int speed = B115200;
-	u_int freq = 0;
-	const u_int flags = TTYDEF_CFLAG;
-
-	if (vcprop_tag_success_p(&vb_uart.vbt_coreclockrate.tag))
-		freq = vb.vbt_coreclockrate.rate * 2;
-
-	comcnattach(iot, addr, speed, freq, COM_TYPE_BCMAUXUART, flags);
-#endif
-}
-
-void
-consinit(void)
-{
-	static int consinit_called = 0;
-	bool use_auxuart = false;
-
-	if (consinit_called != 0)
-		return;
-
-	consinit_called = 1;
-
-#if NCOM > 0
-	if (vcprop_tag_success_p(&vb_uart.vbt_boardrev.tag) &&
-	    rpi_rev_has_btwifi(vb_uart.vbt_boardrev.rev)) {
-		use_auxuart = true;
-	}
-#endif
-
-	if (use_auxuart)
-		consinit_com();
-	else
-		consinit_plcom();
-}
-
-#ifdef KGDB
-#if !defined(KGDB_PLCOMUNIT) || !defined(KGDB_DEVRATE) || !defined(KGDB_CONMODE)
-#error Specify KGDB_PLCOMUNIT, KGDB_DEVRATE and KGDB_CONMODE for KGDB.
-#endif
-
-void
-static kgdb_port_init(void)
-{
-	static int kgdbsinit_called = 0;
-	int res;
-
-	if (kgdbsinit_called != 0)
-		return;
-
-	kgdbsinit_called = 1;
-
-	rpi_pi.pi_iobase = consaddr;
-
-	res = plcom_kgdb_attach(&rpi_pi, KGDB_DEVRATE, uart_clk,
-	    KGDB_CONMODE, KGDB_PLCOMUNIT);
-	if (res)
-		panic("KGDB uart can not be initialized, err=%d.", res);
-}
-#endif
+#endif	/* SOC_BCM2836 */
 
 #if NGENFB > 0
 static bool
@@ -1096,7 +850,7 @@ rpi_fb_init(prop_dictionary_t dict, void *aux)
 	}
 
 #if defined(RPI_HWCURSOR)
-	struct amba_attach_args *aaa = aux;
+	struct fdt_attach_args *faa = aux;
 	bus_space_handle_t hc;
 
 	hcursor = rpi_alloc_mem(CURSOR_ARGB_SIZE, PAGE_SIZE,
@@ -1107,13 +861,13 @@ rpi_fb_init(prop_dictionary_t dict, void *aux)
 	printf("pcursor: %08x\n", (uint32_t)pcursor);
 	printf("fb: %08x\n", (uint32_t)vb_setfb.vbt_allocbuf.address);
 #endif
-	if (bus_space_map(aaa->aaa_iot, pcursor, CURSOR_ARGB_SIZE,
+	if (bus_space_map(faa->faa_bst, pcursor, CURSOR_ARGB_SIZE,
 	    BUS_SPACE_MAP_LINEAR|BUS_SPACE_MAP_PREFETCHABLE, &hc) != 0) {
 		printf("couldn't map cursor memory\n");
 	} else {
 		int i, j, k;
 
-		cmem = bus_space_vaddr(aaa->aaa_iot, hc);
+		cmem = bus_space_vaddr(faa->faa_bst, hc);
 		k = 0;
 		for (j = 0; j < 64; j++) {
 			for (i = 0; i < 64; i++) {
@@ -1269,61 +1023,163 @@ rpi_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, lwp_t *l)
 
 #endif
 
+SYSCTL_SETUP(sysctl_machdep_rpi, "sysctl machdep subtree setup (rpi)")
+{
+	sysctl_createv(clog, 0, NULL, NULL,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "machdep", NULL,
+	    NULL, 0, NULL, 0, CTL_MACHDEP, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+	    CTLFLAG_PERMANENT|CTLFLAG_READONLY,
+	    CTLTYPE_INT, "firmware_revision", NULL, NULL, 0,
+	    &vb.vbt_fwrev.rev, 0, CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+	    CTLFLAG_PERMANENT|CTLFLAG_READONLY,
+	    CTLTYPE_INT, "board_model", NULL, NULL, 0,
+	    &vb.vbt_boardmodel.model, 0, CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+	    CTLFLAG_PERMANENT|CTLFLAG_READONLY,
+	    CTLTYPE_INT, "board_revision", NULL, NULL, 0,
+	    &vb.vbt_boardrev.rev, 0, CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+	    CTLFLAG_PERMANENT|CTLFLAG_READONLY|CTLFLAG_HEX|CTLFLAG_PRIVATE,
+	    CTLTYPE_QUAD, "serial", NULL, NULL, 0,
+	    &vb.vbt_serial.sn, 0, CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+}
+
+#if defined(SOC_BCM2835)
 static void
-rpi_device_register(device_t dev, void *aux)
+bcm2835_platform_bootstrap(void)
+{
+
+	fdtbus_set_decoderegprop(false);
+
+	bcm2835_uartinit();
+
+	bcm2835_bootparams();
+}
+#endif
+
+#if defined(SOC_BCM2836)
+static void
+bcm2836_platform_bootstrap(void)
+{
+
+	fdtbus_set_decoderegprop(false);
+
+	bcm2836_uartinit();
+
+	bcm2836_bootparams();
+
+	bcm2836_bootstrap();
+}
+#endif
+
+#if defined(SOC_BCM2835)
+static void
+bcm2835_platform_init_attach_args(struct fdt_attach_args *faa)
+{
+
+	faa->faa_bst = &bcm2835_bs_tag;
+	faa->faa_a4x_bst = &bcm2835_a4x_bs_tag;
+	faa->faa_dmat = &bcm2835_bus_dma_tag;
+
+	bcm2835_bus_dma_tag._ranges = bcm2835_dma_ranges;
+	bcm2835_bus_dma_tag._nranges = __arraycount(bcm2835_dma_ranges);
+	bcm2835_dma_ranges[0].dr_len = bcm283x_memorysize;
+}
+#endif
+
+#if defined(SOC_BCM2836)
+static void
+bcm2836_platform_init_attach_args(struct fdt_attach_args *faa)
+{
+
+	faa->faa_bst = &bcm2836_bs_tag;
+	faa->faa_a4x_bst = &bcm2836_a4x_bs_tag;
+	faa->faa_dmat = &bcm2835_bus_dma_tag;
+
+	bcm2835_bus_dma_tag._ranges = bcm2836_dma_ranges;
+	bcm2835_bus_dma_tag._nranges = __arraycount(bcm2836_dma_ranges);
+	bcm2836_dma_ranges[0].dr_len = bcm283x_memorysize;
+}
+#endif
+
+
+void
+bcm283x_platform_early_putchar(vaddr_t va, paddr_t pa, char c)
+{
+	volatile uint32_t *uartaddr =
+	    (armreg_sctlr_read() & CPU_CONTROL_MMU_ENABLE) ?
+		(volatile uint32_t *)va :
+		(volatile uint32_t *)pa;
+
+	while ((uartaddr[PL01XCOM_FR / 4] & PL01X_FR_TXFF) != 0)
+		continue;
+
+	uartaddr[PL01XCOM_DR / 4] = c;
+
+	while ((uartaddr[PL01XCOM_FR / 4] & PL01X_FR_TXFE) == 0)
+		continue;
+}
+
+void
+bcm2835_platform_early_putchar(char c)
+{
+	paddr_t pa = BCM2835_PERIPHERALS_BUS_TO_PHYS(BCM2835_UART0_BASE);
+	vaddr_t va = BCM2835_IOPHYSTOVIRT(pa);
+
+	bcm283x_platform_early_putchar(va, pa, c);
+}
+
+void
+bcm2836_platform_early_putchar(char c)
+{
+	paddr_t pa = BCM2836_PERIPHERALS_BUS_TO_PHYS(BCM2835_UART0_BASE);
+	vaddr_t va = BCM2835_IOPHYSTOVIRT(pa);
+
+	bcm283x_platform_early_putchar(va, pa, c);
+}
+
+#define	BCM283x_REF_FREQ	19200000
+
+void
+bcm2837_platform_early_putchar(char c)
+{
+#define AUCONSADDR_PA	BCM2836_PERIPHERALS_BUS_TO_PHYS(BCM2835_AUX_UART_BASE)
+#define AUCONSADDR_VA	BCM2835_IOPHYSTOVIRT(AUCONSADDR_PA)
+	volatile uint32_t *uartaddr =
+	    (armreg_sctlr_read() & CPU_CONTROL_MMU_ENABLE) ?
+		(volatile uint32_t *)AUCONSADDR_VA :
+		(volatile uint32_t *)AUCONSADDR_PA;
+
+	while ((uartaddr[com_lsr] & LSR_TXRDY) == 0)
+		;
+
+	uartaddr[com_data] = c;
+}
+
+static void
+bcm283x_platform_device_register(device_t dev, void *aux)
 {
 	prop_dictionary_t dict = device_properties(dev);
 
-#if defined(BCM2836)
-	if (device_is_a(dev, "armgtmr")) {
-		/*
-		 * The frequency of the generic timer is the reference
-		 * frequency.
-		 */
-		prop_dictionary_set_uint32(dict, "frequency", RPI_REF_FREQ);
-		return;
-	}
-#endif
-
-	if (device_is_a(dev, "plcom") &&
-	    vcprop_tag_success_p(&vb_uart.vbt_uartclockrate.tag) &&
-	    vb_uart.vbt_uartclockrate.rate > 0) {
-		prop_dictionary_set_uint32(dict,
-		    "frequency", vb_uart.vbt_uartclockrate.rate);
-	}
-	if (device_is_a(dev, "com") &&
-	    vcprop_tag_success_p(&vb.vbt_coreclockrate.tag) &&
-	    vb.vbt_coreclockrate.rate > 0) {
-		prop_dictionary_set_uint32(dict,
-		    "frequency", vb.vbt_coreclockrate.rate);
-	}
 	if (device_is_a(dev, "bcmdmac") &&
 	    vcprop_tag_success_p(&vb.vbt_dmachan.tag)) {
 		prop_dictionary_set_uint32(dict,
 		    "chanmask", vb.vbt_dmachan.mask);
 	}
-	if (device_is_a(dev, "sdhc") &&
-	    vcprop_tag_success_p(&vb.vbt_emmcclockrate.tag) &&
-	    vb.vbt_emmcclockrate.rate > 0) {
-		prop_dictionary_set_uint32(dict,
-		    "frequency", vb.vbt_emmcclockrate.rate);
-	}
-	if (device_is_a(dev, "sdhost") &&
-	    vcprop_tag_success_p(&vb.vbt_coreclockrate.tag) &&
-	    vb.vbt_coreclockrate.rate > 0) {
-		prop_dictionary_set_uint32(dict,
-		    "frequency", vb.vbt_coreclockrate.rate);
-		if (!rpi_rev_has_btwifi(vb.vbt_boardrev.rev)) {
-			/* No btwifi and sdhost driver is present */
-			prop_dictionary_set_bool(dict, "disable", true);
-		}
-	}
+#if NSDHC > 0
 	if (booted_device == NULL &&
 	    device_is_a(dev, "ld") &&
 	    device_is_a(device_parent(dev), "sdmmc")) {
 		booted_partition = 0;
 		booted_device = dev;
 	}
+#endif
 	if (device_is_a(dev, "usmsc") &&
 	    vcprop_tag_success_p(&vb.vbt_macaddr.tag)) {
 		const uint8_t enaddr[ETHER_ADDR_LEN] = {
@@ -1354,7 +1210,6 @@ rpi_device_register(device_t dev, void *aux)
 #ifdef DDB
 		db_trap_callback = bcmgenfb_ddb_trap_callback;
 #endif
-
 		if (rpi_fb_init(dict, aux) == false)
 			return;
 		if (get_bootconf_option(boot_args, "console",
@@ -1369,39 +1224,60 @@ rpi_device_register(device_t dev, void *aux)
 		}
 	}
 #endif
-
-	/* BSC0 is used internally on some boards */
-	if (device_is_a(dev, "bsciic") &&
-	    ((struct amba_attach_args *)aux)->aaa_addr == BCM2835_BSC0_BASE) {
-		if (rpi_rev_has_btwifi(vb.vbt_boardrev.rev)) {
-			prop_dictionary_set_bool(dict, "disable", true);
-		}
-	}
 }
 
-SYSCTL_SETUP(sysctl_machdep_rpi, "sysctl machdep subtree setup (rpi)")
+static u_int
+bcm283x_platform_uart_freq(void)
 {
-	sysctl_createv(clog, 0, NULL, NULL,
-	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "machdep", NULL,
-	    NULL, 0, NULL, 0, CTL_MACHDEP, CTL_EOL);
 
-	sysctl_createv(clog, 0, NULL, NULL,
-	    CTLFLAG_PERMANENT|CTLFLAG_READONLY,
-	    CTLTYPE_INT, "firmware_revision", NULL, NULL, 0,
-	    &vb.vbt_fwrev.rev, 0, CTL_MACHDEP, CTL_CREATE, CTL_EOL);
-
-	sysctl_createv(clog, 0, NULL, NULL,
-	    CTLFLAG_PERMANENT|CTLFLAG_READONLY,
-	    CTLTYPE_INT, "board_model", NULL, NULL, 0,
-	    &vb.vbt_boardmodel.model, 0, CTL_MACHDEP, CTL_CREATE, CTL_EOL);
-
-	sysctl_createv(clog, 0, NULL, NULL,
-	    CTLFLAG_PERMANENT|CTLFLAG_READONLY,
-	    CTLTYPE_INT, "board_revision", NULL, NULL, 0,
-	    &vb.vbt_boardrev.rev, 0, CTL_MACHDEP, CTL_CREATE, CTL_EOL);
-
-	sysctl_createv(clog, 0, NULL, NULL,
-	    CTLFLAG_PERMANENT|CTLFLAG_READONLY|CTLFLAG_HEX|CTLFLAG_PRIVATE,
-	    CTLTYPE_QUAD, "serial", NULL, NULL, 0,
-	    &vb.vbt_serial.sn, 0, CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+	return uart_clk;
 }
+
+#if defined(SOC_BCM2835)
+static const struct arm_platform bcm2835_platform = {
+	.devmap = bcm2835_platform_devmap,
+	.bootstrap = bcm2835_platform_bootstrap,
+	.init_attach_args = bcm2835_platform_init_attach_args,
+	.early_putchar = bcm2835_platform_early_putchar,
+	.device_register = bcm283x_platform_device_register,
+	.reset = bcm2835_system_reset,
+	.delay = bcm2835_tmr_delay,
+	.uart_freq = bcm283x_platform_uart_freq,
+};
+
+ARM_PLATFORM(bcm2835, "brcm,bcm2835", &bcm2835_platform);
+#endif
+
+#if defined(SOC_BCM2836)
+static u_int
+bcm2837_platform_uart_freq(void)
+{
+
+	return core_clk * 2;
+}
+
+static const struct arm_platform bcm2836_platform = {
+	.devmap = bcm2836_platform_devmap,
+	.bootstrap = bcm2836_platform_bootstrap,
+	.init_attach_args = bcm2836_platform_init_attach_args,
+	.early_putchar = bcm2836_platform_early_putchar,
+	.device_register = bcm283x_platform_device_register,
+	.reset = bcm2835_system_reset,
+	.delay = gtmr_delay,
+	.uart_freq = bcm283x_platform_uart_freq,
+};
+
+static const struct arm_platform bcm2837_platform = {
+	.devmap = bcm2836_platform_devmap,
+	.bootstrap = bcm2836_platform_bootstrap,
+	.init_attach_args = bcm2836_platform_init_attach_args,
+	.early_putchar = bcm2837_platform_early_putchar,
+	.device_register = bcm283x_platform_device_register,
+	.reset = bcm2835_system_reset,
+	.delay = gtmr_delay,
+	.uart_freq = bcm2837_platform_uart_freq,
+};
+
+ARM_PLATFORM(bcm2836, "brcm,bcm2836", &bcm2836_platform);
+ARM_PLATFORM(bcm2837, "brcm,bcm2837", &bcm2837_platform);
+#endif

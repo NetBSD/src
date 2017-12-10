@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_bsc.c,v 1.7 2017/10/28 00:37:12 pgoyette Exp $	*/
+/*	$NetBSD: bcm2835_bsc.c,v 1.8 2017/12/10 21:38:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 2012 Jonathan A. Kollasch
@@ -27,11 +27,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_bsc.c,v 1.7 2017/10/28 00:37:12 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_bsc.c,v 1.8 2017/12/10 21:38:26 skrll Exp $");
+
+#if defined(_KERNEL_OPT)
+#include "opt_kernhist.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/device.h>
+#include <sys/kernhist.h>
 #include <sys/intr.h>
 #include <sys/mutex.h>
 #include <sys/once.h>
@@ -39,15 +44,10 @@ __KERNEL_RCSID(0, "$NetBSD: bcm2835_bsc.c,v 1.7 2017/10/28 00:37:12 pgoyette Exp
 
 #include <dev/i2c/i2cvar.h>
 
-#include <arm/broadcom/bcm_amba.h>
 #include <arm/broadcom/bcm2835reg.h>
 #include <arm/broadcom/bcm2835_bscreg.h>
-#include <arm/broadcom/bcm2835_gpio_subr.h>
 
-#if defined(_KERNEL_OPT)
-#include "opt_kernhist.h"
-#endif
-#include <sys/kernhist.h>
+#include <dev/fdt/fdtvar.h>
 
 KERNHIST_DEFINE(bsciichist);
 
@@ -55,10 +55,13 @@ struct bsciic_softc {
 	device_t sc_dev;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
-	bus_size_t sc_ios;
 	struct i2c_controller sc_i2c;
 	kmutex_t sc_buslock;
 	void *sc_inth;
+
+	struct clk *sc_clk;
+	u_int sc_frequency;
+	u_int sc_clkrate;
 };
 
 static int bsciic_match(device_t, cfdata_t, void *);
@@ -86,32 +89,35 @@ bsciic_init(void)
 static int
 bsciic_match(device_t parent, cfdata_t match, void *aux)
 {
-	struct amba_attach_args * const aaa = aux;
+	const char * const compatible[] = { "brcm,bcm2835-i2c", NULL };
+	struct fdt_attach_args * const faa = aux;
 
-	if (strcmp(aaa->aaa_name, "bcmbsc") != 0)
-		return 0;
-
-	return 1;
+	return of_match_compatible(faa->faa_phandle, compatible);
 }
 
 static void
 bsciic_attach(device_t parent, device_t self, void *aux)
 {
 	struct bsciic_softc * const sc = device_private(self);
-	struct amba_attach_args * const aaa = aux;
+	struct fdt_attach_args * const faa = aux;
+	const int phandle = faa->faa_phandle;
 	prop_dictionary_t prop = device_properties(self);
 	struct i2cbus_attach_args iba;
-	u_int bscunit = ~0;
 	bool disable = false;
-	static ONCE_DECL(control);
 
-	switch (aaa->aaa_addr) {
-	case BCM2835_BSC0_BASE:
-		bscunit = 0;
-		break;
-	case BCM2835_BSC1_BASE:
-		bscunit = 1;
-		break;
+	static ONCE_DECL(control);
+	RUN_ONCE(&control, bsciic_init);
+
+	bus_addr_t addr;
+	bus_size_t size;
+
+	sc->sc_dev = self;
+	sc->sc_iot = faa->faa_bst;
+
+	int error = fdtbus_get_reg(phandle, 0, &addr, &size);
+	if (error) {
+		aprint_error(": unable to get device registers\n");
+		return;
 	}
 
 	prop_dictionary_get_bool(prop, "disable", &disable);
@@ -121,42 +127,43 @@ bsciic_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	aprint_naive("\n");
-	aprint_normal(": BSC%u\n", bscunit);
+	/* Enable clock */
+	sc->sc_clk = fdtbus_clock_get_index(phandle, 0);
+	if (sc->sc_clk == NULL) {
+		aprint_error(": couldn't acquire clock\n");
+		return;
+	}
 
-	RUN_ONCE(&control, bsciic_init);
+	if (clk_enable(sc->sc_clk) != 0) {
+		aprint_error(": failed to enable clock\n");
+		return;
+	}
 
-	sc->sc_dev = self;
+	sc->sc_frequency = clk_get_rate(sc->sc_clk);
 
-	mutex_init(&sc->sc_buslock, MUTEX_DEFAULT, IPL_NONE);
+	if (of_getprop_uint32(phandle, "clock-frequency",
+	    &sc->sc_clkrate) != 0) {
+		sc->sc_clkrate = 100000;
+	}
 
-	sc->sc_iot = aaa->aaa_iot;
-	if (bus_space_map(aaa->aaa_iot, aaa->aaa_addr, aaa->aaa_size, 0,
-	    &sc->sc_ioh) != 0) {
+	if (bus_space_map(sc->sc_iot, addr, size, 0, &sc->sc_ioh)) {
 		aprint_error_dev(sc->sc_dev, "unable to map device\n");
 		return;
 	}
-	sc->sc_ios = aaa->aaa_size;
 
-	switch (aaa->aaa_addr) {
-	case BCM2835_BSC0_BASE:
-		/* SDA0 on GPIO0, SCL0 on GPIO1 */
-		bcm2835gpio_function_select(0, BCM2835_GPIO_ALT0);
-		bcm2835gpio_function_select(1, BCM2835_GPIO_ALT0);
-		break;
-	case BCM2835_BSC1_BASE:
-		/* SDA1 on GPIO2, SCL1 on GPIO3 */
-		bcm2835gpio_function_select(2, BCM2835_GPIO_ALT0);
-		bcm2835gpio_function_select(3, BCM2835_GPIO_ALT0);
-		break;
-	}
+	aprint_naive("\n");
+	aprint_normal(": Broadcom Serial Controller\n");
+
+	mutex_init(&sc->sc_buslock, MUTEX_DEFAULT, IPL_NONE);
 
 	/* clear FIFO, disable controller */
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BSC_C, BSC_C_CLEAR_CLEAR);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BSC_S, BSC_S_CLKT |
 	    BSC_S_ERR | BSC_S_DONE);
+
+	u_int divider = howmany(sc->sc_frequency, sc->sc_clkrate);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BSC_DIV,
-	   __SHIFTIN(250000000/100000, BSC_DIV_CDIV)); // XXX may not be this
+	   __SHIFTIN(divider, BSC_DIV_CDIV));
 
 	sc->sc_i2c.ic_cookie = sc;
 	sc->sc_i2c.ic_acquire_bus = bsciic_acquire_bus;

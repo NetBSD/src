@@ -1,4 +1,4 @@
-/*	$NetBSD: a9_mpsubr.S,v 1.53 2017/11/10 22:54:20 matt Exp $	*/
+/*	$NetBSD: a9_mpsubr.S,v 1.54 2017/12/10 21:38:26 skrll Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -44,10 +44,10 @@
 #define CALL(f)		bl	_C_LABEL(f)
 #else
 #define	CALL(f)	\
-	movw	ip, #:lower16:_C_LABEL(f); \
-	movt	ip, #:upper16:_C_LABEL(f); \
-	sub	ip, ip, #KERNEL_BASE_VOFFSET; \
-	blx	ip
+	movw	fp, #:lower16:_C_LABEL(f); \
+	movt	fp, #:upper16:_C_LABEL(f); \
+	sub	fp, fp, #KERNEL_BASE_VOFFSET; \
+	blx	fp
 #endif
 
 #if defined(CPU_CORTEXA7) || defined(CPU_CORTEXA15) || defined(CPU_CORTEXA17) \

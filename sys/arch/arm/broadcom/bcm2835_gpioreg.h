@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_gpioreg.h,v 1.3 2014/04/22 18:51:35 kardel Exp $	*/
+/*	$NetBSD: bcm2835_gpioreg.h,v 1.4 2017/12/10 21:38:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -46,20 +46,23 @@
 #define BCM2835_GPIO_GPLEN(x)	(0x070 + (x) * sizeof(uint32_t))
 #define BCM2835_GPIO_GPAREN(x)	(0x07C + (x) * sizeof(uint32_t))
 #define BCM2835_GPIO_GPAFEN(x)	(0x088 + (x) * sizeof(uint32_t))
+
 #define BCM2835_GPIO_GPPUD	(0x094)
-#define BCM2835_GPIO_GPPUD_PULLOFF  0x0
-#define BCM2835_GPIO_GPPUD_PULLDOWN 0x1
-#define BCM2835_GPIO_GPPUD_PULLUP   0x2
+/* brcm,pull property */
+#define  BCM2835_GPIO_GPPUD_PULLOFF	0x0
+#define  BCM2835_GPIO_GPPUD_PULLDOWN	0x1
+#define  BCM2835_GPIO_GPPUD_PULLUP	0x2
 #define BCM2835_GPIO_GPPUDCLK(x)	(0x098 + (x) * sizeof(uint32_t))
 #define BCM2835_GPIO_GPPUD_PINS_PER_REGISTER 32
 
-#define BCM2835_GPIO_IN		00
-#define BCM2835_GPIO_OUT	01
-#define BCM2835_GPIO_ALT5	02
-#define BCM2835_GPIO_ALT4	03
-#define BCM2835_GPIO_ALT0	04
-#define BCM2835_GPIO_ALT1	05
-#define BCM2835_GPIO_ALT2	06
-#define BCM2835_GPIO_ALT3	07
+/* brcm,function property */
+#define BCM2835_GPIO_IN		0
+#define BCM2835_GPIO_OUT	1
+#define BCM2835_GPIO_ALT5	2
+#define BCM2835_GPIO_ALT4	3
+#define BCM2835_GPIO_ALT0	4
+#define BCM2835_GPIO_ALT1	5
+#define BCM2835_GPIO_ALT2	6
+#define BCM2835_GPIO_ALT3	7
 
 #endif /* _BROADCOM_BCM2835_GPIOREG_H_ */

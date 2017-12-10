@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.15 2017/11/09 21:38:48 skrll Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.16 2017/12/10 21:38:27 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.15 2017/11/09 21:38:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.16 2017/12/10 21:38:27 skrll Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -108,14 +108,6 @@ static void fdt_device_register(device_t, void *);
 static void fdt_reset(void);
 static void fdt_powerdown(void);
 
-#ifdef PMAP_NEED_ALLOC_POOLPAGE
-static struct boot_physmem bp_lowgig = {
-	.bp_pages = (KERNEL_VM_BASE - KERNEL_BASE) / NBPG,
-	.bp_freelist = VM_FREELIST_ISADMA,
-	.bp_flags = 0
-};
-#endif
-
 #ifdef VERBOSE_INIT_ARM
 static void
 fdt_putchar(char c)
@@ -183,7 +175,7 @@ fdt_get_memory(uint64_t *paddr, uint64_t *psize)
 	}
 }
 
-static void
+void
 fdt_add_reserved_memory_range(uint64_t addr, uint64_t size)
 {
 	int error;
@@ -372,13 +364,13 @@ initarm(void *arg)
 	DPRINT(" devmap");
 	pmap_devmap_register(plat->devmap());
 
-	DPRINT(" bootstrap");
-	plat->bootstrap();
-
 	/* Heads up ... Setup the CPU / MMU / TLB functions. */
 	DPRINT(" cpufunc");
 	if (set_cpufuncs())
 		panic("cpu not recognized!");
+
+	DPRINT(" bootstrap");
+	plat->bootstrap();
 
 	/*
 	 * If stdout-path is specified on the command line, override the
@@ -440,11 +432,13 @@ initarm(void *arg)
 	/* Parse ramdisk info */
 	fdt_probe_initrd(&initrd_start, &initrd_end);
 
-	/* Populate bootconfig structure for the benefit of pmap.c. */
+	/*
+	 * Populate bootconfig structure for the benefit of
+	 * dodumpsys
+	 */
 	fdt_build_bootconfig(memory_addr, memory_size);
 
-	arm32_bootmem_init(bootconfig.dram[0].address, memory_size,
-	    KERNEL_BASE_PHYS);
+	arm32_bootmem_init(memory_addr, memory_size, KERNEL_BASE_PHYS);
 	arm32_kernel_vm_init(KERNEL_VM_BASE, ARM_VECTORS_HIGH, 0,
 	    plat->devmap(), mapallmem_p);
 
@@ -452,16 +446,30 @@ initarm(void *arg)
 
 	parse_mi_bootargs(boot_args);
 
-#ifdef PMAP_NEED_ALLOC_POOLPAGE
-	bp_lowgig.bp_start = memory_addr / NBPG;
-	if (atop(ram_size) > bp_lowgig.bp_pages) {
-		arm_poolpage_vmfreelist = bp_lowgig.bp_freelist;
-		return initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE,
-		    &bp_lowgig, 1);
-	}
-#endif
+	#define MAX_PHYSMEM 4
+	static struct boot_physmem fdt_physmem[MAX_PHYSMEM];
+	int nfdt_physmem = 0;
+	struct extent_region *er;
 
-	return initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, NULL, 0);
+	LIST_FOREACH(er, &fdt_memory_ext->ex_regions, er_link) {
+		DPRINTF("  %lx - %lx\n", er->er_start, er->er_end);
+		struct boot_physmem *bp = &fdt_physmem[nfdt_physmem++];
+
+		KASSERT(nfdt_physmem < MAX_PHYSMEM);
+		bp->bp_start = atop(er->er_start);
+		bp->bp_pages = atop(er->er_end - er->er_start);
+		bp->bp_freelist = VM_FREELIST_DEFAULT;
+
+#ifdef PMAP_NEED_ALLOC_POOLPAGE
+		if (atop(memory_size) > bp->bp_pages) {
+			arm_poolpage_vmfreelist = VM_FREELIST_DIRECTMAP;
+			bp->bp_freelist = VM_FREELIST_DIRECTMAP;
+		}
+#endif
+	}
+
+	return initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, fdt_physmem,
+	     nfdt_physmem);
 }
 
 static void

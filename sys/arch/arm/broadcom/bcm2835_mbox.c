@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_mbox.c,v 1.11 2015/07/29 14:22:49 skrll Exp $	*/
+/*	$NetBSD: bcm2835_mbox.c,v 1.12 2017/12/10 21:38:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_mbox.c,v 1.11 2015/07/29 14:22:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_mbox.c,v 1.12 2017/12/10 21:38:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,10 +40,11 @@ __KERNEL_RCSID(0, "$NetBSD: bcm2835_mbox.c,v 1.11 2015/07/29 14:22:49 skrll Exp 
 #include <sys/bus.h>
 #include <sys/mutex.h>
 
-#include <arm/broadcom/bcm_amba.h>
 #include <arm/broadcom/bcm2835_mbox.h>
 #include <arm/broadcom/bcm2835_mboxreg.h>
 #include <arm/broadcom/bcm2835reg.h>
+
+#include <dev/fdt/fdtvar.h>
 
 struct bcm2835mbox_softc {
 	device_t sc_dev;
@@ -74,45 +75,59 @@ CFATTACH_DECL_NEW(bcmmbox, sizeof(struct bcm2835mbox_softc),
 static int
 bcmmbox_match(device_t parent, cfdata_t match, void *aux)
 {
-	struct amba_attach_args *aaa = aux;
+	const char * const compatible[] = { "brcm,bcm2835-mbox", NULL };
+	struct fdt_attach_args * const faa = aux;
 
-	if (strcmp(aaa->aaa_name, "bcmmbox") != 0)
-		return 0;
-
-	return 1;
+	return of_match_compatible(faa->faa_phandle, compatible);
 }
 
 static void
 bcmmbox_attach(device_t parent, device_t self, void *aux)
 {
 	struct bcm2835mbox_softc *sc = device_private(self);
-	struct amba_attach_args *aaa = aux;
+	struct fdt_attach_args * const faa = aux;
 	struct bcmmbox_attach_args baa;
+	const int phandle = faa->faa_phandle;
 	int i;
 
 	aprint_naive("\n");
 	aprint_normal(": VC mailbox\n");
 
 	sc->sc_dev = self;
-	sc->sc_iot = aaa->aaa_iot;
-	sc->sc_dmat = aaa->aaa_dmat;
+	sc->sc_iot = faa->faa_bst;
+	sc->sc_dmat = faa->faa_dmat;
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_VM);
 	for (i = 0; i < BCM2835_MBOX_NUMCHANNELS; ++i)
 		cv_init(&sc->sc_chan[i], "bcmmbox");
 
-	if (bus_space_map(aaa->aaa_iot, aaa->aaa_addr, BCM2835_MBOX_SIZE, 0,
-	    &sc->sc_ioh)) {
+	bus_addr_t addr;
+	bus_size_t size;
+
+	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
+		aprint_error(": couldn't get register address\n");
+		return;
+	}
+
+	if (bus_space_map(faa->faa_bst, addr, size, 0, &sc->sc_ioh) != 0) {
 		aprint_error_dev(sc->sc_dev, "unable to map device\n");
 		return;
 	}
 
-	sc->sc_intrh = intr_establish(aaa->aaa_intr, IPL_VM, IST_LEVEL,
-	    bcmmbox_intr, sc);
-	if (sc->sc_intrh == NULL) {
-		aprint_error_dev(sc->sc_dev, "unable to establish interrupt\n");
+	char intrstr[128];
+	if (!fdtbus_intr_str(phandle, 0, intrstr, sizeof(intrstr))) {
+		aprint_error(": failed to decode interrupt\n");
 		return;
 	}
+
+	sc->sc_intrh = fdtbus_intr_establish(phandle, 0, IPL_VM, IST_LEVEL,
+	    bcmmbox_intr, sc);
+	if (sc->sc_intrh == NULL) {
+		aprint_error_dev(self, "failed to establish interrupt %s\n",
+		    intrstr);
+		return;
+	}
+	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 
 	/* enable mbox interrupt */
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCM2835_MBOX_CFG,
@@ -121,7 +136,7 @@ bcmmbox_attach(device_t parent, device_t self, void *aux)
 	if (bcm2835mbox_sc == NULL)
 		bcm2835mbox_sc = sc;
 
-	baa.baa_dmat = aaa->aaa_dmat;
+	baa.baa_dmat = sc->sc_dmat;
 	sc->sc_platdev = config_found_ia(self, "bcmmboxbus", &baa, NULL);
 }
 

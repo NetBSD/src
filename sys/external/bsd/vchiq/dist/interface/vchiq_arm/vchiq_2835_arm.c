@@ -54,6 +54,7 @@
 
 #include "vchiq_arm.h"
 #include "vchiq_2835.h"
+#include "vchiq_netbsd.h"
 #include "vchiq_connected.h"
 
 #define MAX_FRAGMENTS (VCHIQ_NUM_CURRENT_BULKS * 2)
@@ -64,6 +65,7 @@ typedef struct vchiq_2835_state_struct {
 } VCHIQ_2835_ARM_STATE_T;
 
 /* BSD DMA */
+static bus_dma_tag_t dma_tag;
 static bus_dmamap_t dma_map;
 
 static unsigned int g_cache_line_size = CACHE_LINE_SIZE;
@@ -74,6 +76,11 @@ static char *g_free_fragments;
 struct semaphore g_free_fragments_sema;
 static struct semaphore g_free_fragments_mutex;
 
+void
+vchiq_platform_attach(bus_dma_tag_t tag)
+{
+	dma_tag = tag;
+}
 
 int __init
 vchiq_platform_init(VCHIQ_STATE_T *state)
@@ -98,7 +105,7 @@ vchiq_platform_init(VCHIQ_STATE_T *state)
 	frag_mem_size = PAGE_ALIGN(g_fragments_size * MAX_FRAGMENTS);
 
 	dma_nsegs = __arraycount(dma_segs);
-	err = bus_dmamem_alloc(&bcm2835_bus_dma_tag,
+	err = bus_dmamem_alloc(dma_tag,
 	    slot_mem_size + frag_mem_size, PAGE_SIZE, 0,
 	    dma_segs, dma_nsegs, &dma_nsegs, BUS_DMA_WAITOK);
 	if (err) {
@@ -107,7 +114,7 @@ vchiq_platform_init(VCHIQ_STATE_T *state)
 		goto failed_alloc;
 	}
 
-	err = bus_dmamem_map(&bcm2835_bus_dma_tag,
+	err = bus_dmamem_map(dma_tag,
 	    dma_segs, dma_nsegs, slot_mem_size + frag_mem_size,
 	    (void **)&slot_mem, BUS_DMA_COHERENT | BUS_DMA_WAITOK);
 	if (err) {
@@ -116,7 +123,7 @@ vchiq_platform_init(VCHIQ_STATE_T *state)
 		goto failed_alloc;
 	}
 
-	err = bus_dmamap_create(&bcm2835_bus_dma_tag,
+	err = bus_dmamap_create(dma_tag,
 	    slot_mem_size + frag_mem_size, 1,	/* maxsize, nsegments */
 	    slot_mem_size + frag_mem_size, 0,	/* maxsegsize, boundary */
 	    BUS_DMA_WAITOK,
@@ -127,7 +134,7 @@ vchiq_platform_init(VCHIQ_STATE_T *state)
 		goto failed_alloc;
 	}
 
-	err = bus_dmamap_load(&bcm2835_bus_dma_tag, dma_map, slot_mem,
+	err = bus_dmamap_load(dma_tag, dma_map, slot_mem,
 	    slot_mem_size + frag_mem_size, NULL, BUS_DMA_WAITOK);
 	if (err) {
 		vchiq_log_error(vchiq_core_log_level, "cannot load DMA map (%d)", err);
@@ -173,10 +180,10 @@ vchiq_platform_init(VCHIQ_STATE_T *state)
 	/* Send the base address of the slots to VideoCore */
 	dsb(); /* Ensure all writes have completed */
 
-	bus_dmamap_sync(&bcm2835_bus_dma_tag, dma_map, 0, slot_mem_size,
+	bus_dmamap_sync(dma_tag, dma_map, 0, slot_mem_size,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	bcm_mbox_write(BCM2835_MBOX_CHAN_VCHIQ, (unsigned int)slot_phys);
-	bus_dmamap_sync(&bcm2835_bus_dma_tag, dma_map, 0, slot_mem_size,
+	bus_dmamap_sync(dma_tag, dma_map, 0, slot_mem_size,
 	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 	vchiq_log_info(vchiq_arm_log_level,
@@ -190,9 +197,9 @@ vchiq_platform_init(VCHIQ_STATE_T *state)
 failed_vchiq_init:
 failed_init_slots:
 failed_load:
-	bus_dmamap_unload(&bcm2835_bus_dma_tag, dma_map);
+	bus_dmamap_unload(dma_tag, dma_map);
 failed_alloc:
-	bus_dmamap_destroy(&bcm2835_bus_dma_tag, dma_map);
+	bus_dmamap_destroy(dma_tag, dma_map);
 
    return err;
 }
@@ -201,8 +208,8 @@ void __exit
 vchiq_platform_exit(VCHIQ_STATE_T *state)
 {
 
-	bus_dmamap_unload(&bcm2835_bus_dma_tag, dma_map);
-	bus_dmamap_destroy(&bcm2835_bus_dma_tag, dma_map);
+	bus_dmamap_unload(dma_tag, dma_map);
+	bus_dmamap_destroy(dma_tag, dma_map);
 }
 
 
@@ -291,26 +298,26 @@ vchiq_prepare_bulk_data(VCHIQ_BULK_T *bulk, VCHI_MEM_HANDLE_T memhandle,
 	    (maxsegs * sizeof(unsigned long));
 	bi->proc = curproc;
 
-	ret = bus_dmamem_alloc(&bcm2835_bus_dma_tag, bi->pagelist_size,
+	ret = bus_dmamem_alloc(dma_tag, bi->pagelist_size,
 	    0 /*CACHE_LINE_SIZE*/, 0, bi->pagelist_sgs,
 	    __arraycount(bi->pagelist_sgs), &nsegs, BUS_DMA_WAITOK);
 
 	if (ret != 0)
 		goto fail1;
 
-	ret = bus_dmamem_map(&bcm2835_bus_dma_tag, bi->pagelist_sgs, nsegs,
+	ret = bus_dmamem_map(dma_tag, bi->pagelist_sgs, nsegs,
 	    bi->pagelist_size, &bi->pagelist, BUS_DMA_COHERENT | BUS_DMA_WAITOK);
 	if (ret != 0)
 		goto fail2;
 
 	pagelist = bi->pagelist;
 
-	ret = bus_dmamap_create(&bcm2835_bus_dma_tag, bi->pagelist_size,
+	ret = bus_dmamap_create(dma_tag, bi->pagelist_size,
 	    nsegs, bi->pagelist_size, 0, BUS_DMA_WAITOK, &bi->pagelist_map);
 	if (ret != 0)
 		goto fail3;
 
-	ret = bus_dmamap_load(&bcm2835_bus_dma_tag, bi->pagelist_map, pagelist,
+	ret = bus_dmamap_load(dma_tag, bi->pagelist_map, pagelist,
 	    bi->pagelist_size, NULL, BUS_DMA_WAITOK | BUS_DMA_WRITE);
 	if (ret != 0)
 		goto fail4;
@@ -326,13 +333,13 @@ vchiq_prepare_bulk_data(VCHIQ_BULK_T *bulk, VCHI_MEM_HANDLE_T memhandle,
 		}
 	}
 
-	ret = bus_dmamap_create(&bcm2835_bus_dma_tag, size, maxsegs, size, 0,
+	ret = bus_dmamap_create(dma_tag, size, maxsegs, size, 0,
 	    BUS_DMA_WAITOK, &bi->dmamap);
 
 	if (ret != 0)
 		goto fail6;
 
-	ret = bus_dmamap_load(&bcm2835_bus_dma_tag, bi->dmamap, buf, size,
+	ret = bus_dmamap_load(dma_tag, bi->dmamap, buf, size,
 	    curproc, BUS_DMA_WAITOK | dmaflags);
 
 	if (ret != 0)
@@ -382,7 +389,7 @@ vchiq_prepare_bulk_data(VCHIQ_BULK_T *bulk, VCHI_MEM_HANDLE_T memhandle,
 		up(&g_free_fragments_mutex);
 		pagelist->type = PAGELIST_READ_WITH_FRAGMENTS +
 		    (fragments - g_fragments_base) / g_fragments_size;
-		bus_dmamap_sync(&bcm2835_bus_dma_tag, dma_map,
+		bus_dmamap_sync(dma_tag, dma_map,
 		    (char *)fragments - g_fragments_base, sizeof(*fragments),
 		    BUS_DMASYNC_PREREAD);
 	}
@@ -393,33 +400,33 @@ vchiq_prepare_bulk_data(VCHIQ_BULK_T *bulk, VCHI_MEM_HANDLE_T memhandle,
 	 */
 	bulk->remote_data = bi;
 
-	bus_dmamap_sync(&bcm2835_bus_dma_tag, bi->pagelist_map, 0,
+	bus_dmamap_sync(dma_tag, bi->pagelist_map, 0,
 	    bi->pagelist_size, BUS_DMASYNC_PREWRITE);
 
-	bus_dmamap_sync(&bcm2835_bus_dma_tag, bi->dmamap, 0, bi->size,
+	bus_dmamap_sync(dma_tag, bi->dmamap, 0, bi->size,
 	    pagelist->type == PAGELIST_WRITE ?
 	    BUS_DMASYNC_PREWRITE : BUS_DMASYNC_PREREAD);
 
 	return VCHIQ_SUCCESS;
 
 fail7:
-	bus_dmamap_destroy(&bcm2835_bus_dma_tag, bi->dmamap);
+	bus_dmamap_destroy(dma_tag, bi->dmamap);
 
 fail6:
 	if (IS_USER_ADDRESS(bi->buf))
 		uvm_vsunlock(curproc->p_vmspace, bi->buf, bi->size);
 
 fail5:
-	bus_dmamap_unload(&bcm2835_bus_dma_tag, bi->pagelist_map);
+	bus_dmamap_unload(dma_tag, bi->pagelist_map);
 
 fail4:
-	bus_dmamap_destroy(&bcm2835_bus_dma_tag, bi->pagelist_map);
+	bus_dmamap_destroy(dma_tag, bi->pagelist_map);
 
 fail3:
-	bus_dmamem_unmap(&bcm2835_bus_dma_tag, bi->pagelist, bi->pagelist_size);
+	bus_dmamem_unmap(dma_tag, bi->pagelist, bi->pagelist_size);
 
 fail2:
-	bus_dmamem_free(&bcm2835_bus_dma_tag, bi->pagelist_sgs,
+	bus_dmamem_free(dma_tag, bi->pagelist_sgs,
 	    __arraycount(bi->pagelist_sgs));
 
 fail1:
@@ -438,10 +445,10 @@ vchiq_complete_bulk(VCHIQ_BULK_T *bulk)
 		vchiq_log_trace(vchiq_arm_log_level,
 			"free_pagelist - %x, %d", (unsigned int)pagelist, actual);
 
-		bus_dmamap_sync(&bcm2835_bus_dma_tag, bi->pagelist_map, 0,
+		bus_dmamap_sync(dma_tag, bi->pagelist_map, 0,
 		    bi->pagelist_size, BUS_DMASYNC_POSTWRITE);
 
-		bus_dmamap_sync(&bcm2835_bus_dma_tag, bi->dmamap, 0, bi->size,
+		bus_dmamap_sync(dma_tag, bi->dmamap, 0, bi->size,
 		    pagelist->type == PAGELIST_WRITE ?
 		    BUS_DMASYNC_POSTWRITE : BUS_DMASYNC_POSTREAD);
 
@@ -452,7 +459,7 @@ vchiq_complete_bulk(VCHIQ_BULK_T *bulk)
 			    g_fragments_size;
 			int head_bytes, tail_bytes;
 
-			bus_dmamap_sync(&bcm2835_bus_dma_tag, dma_map,
+			bus_dmamap_sync(dma_tag, dma_map,
 			    (char *)fragments - g_fragments_base, g_fragments_size,
 			    BUS_DMASYNC_POSTREAD);
 
@@ -493,16 +500,16 @@ vchiq_complete_bulk(VCHIQ_BULK_T *bulk)
 			up(&g_free_fragments_mutex);
 			up(&g_free_fragments_sema);
 		}
-		bus_dmamap_unload(&bcm2835_bus_dma_tag, bi->dmamap);
-		bus_dmamap_destroy(&bcm2835_bus_dma_tag, bi->dmamap);
+		bus_dmamap_unload(dma_tag, bi->dmamap);
+		bus_dmamap_destroy(dma_tag, bi->dmamap);
 		if (IS_USER_ADDRESS(bi->buf))
 			uvm_vsunlock(bi->proc->p_vmspace, bi->buf, bi->size);
 
-		bus_dmamap_unload(&bcm2835_bus_dma_tag, bi->pagelist_map);
-		bus_dmamap_destroy(&bcm2835_bus_dma_tag, bi->pagelist_map);
-		bus_dmamem_unmap(&bcm2835_bus_dma_tag, bi->pagelist,
+		bus_dmamap_unload(dma_tag, bi->pagelist_map);
+		bus_dmamap_destroy(dma_tag, bi->pagelist_map);
+		bus_dmamem_unmap(dma_tag, bi->pagelist,
 		    bi->pagelist_size);
-		bus_dmamem_free(&bcm2835_bus_dma_tag, bi->pagelist_sgs,
+		bus_dmamem_free(dma_tag, bi->pagelist_sgs,
 		    __arraycount(bi->pagelist_sgs));
 		kmem_free(bi, sizeof(*bi));
 	}
