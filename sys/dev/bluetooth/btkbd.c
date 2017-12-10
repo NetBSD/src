@@ -1,4 +1,4 @@
-/*	$NetBSD: btkbd.c,v 1.17 2014/11/16 16:20:00 ozaki-r Exp $	*/
+/*	$NetBSD: btkbd.c,v 1.18 2017/12/10 17:03:07 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btkbd.c,v 1.17 2014/11/16 16:20:00 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btkbd.c,v 1.18 2017/12/10 17:03:07 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -81,7 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: btkbd.c,v 1.17 2014/11/16 16:20:00 ozaki-r Exp $");
 #include <dev/bluetooth/bthid.h>
 #include <dev/bluetooth/bthidev.h>
 
-#include <dev/usb/hid.h>
+#include <dev/hid/hid.h>
 #include <dev/usb/usb.h>
 #include <dev/usb/usbhid.h>
 
@@ -163,10 +163,10 @@ static const struct wskbd_accessops btkbd_accessops = {
 };
 
 /* wskbd(4) keymap data */
-extern const struct wscons_keydesc ukbd_keydesctab[];
+extern const struct wscons_keydesc hidkbd_keydesctab[];
 
 const struct wskbd_mapdata btkbd_keymapdata = {
-	ukbd_keydesctab,
+	hidkbd_keydesctab,
 #if defined(BTKBD_LAYOUT)
 	BTKBD_LAYOUT,
 #elif defined(PCKBD_LAYOUT)
