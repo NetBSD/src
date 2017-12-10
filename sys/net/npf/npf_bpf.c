@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_bpf.c,v 1.12 2016/12/26 23:05:06 christos Exp $	*/
+/*	$NetBSD: npf_bpf.c,v 1.13 2017/12/10 00:07:36 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_bpf.c,v 1.12 2016/12/26 23:05:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_bpf.c,v 1.13 2017/12/10 00:07:36 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -181,9 +181,11 @@ npf_cop_table(const bpf_ctx_t *bc, bpf_args_t *args, uint32_t A)
 	const npf_addr_t *addr;
 	npf_table_t *t;
 
-	KASSERT(npf_iscached(npc, NPC_IP46));
-
-	if ((t = npf_tableset_getbyid(tblset, tid)) == NULL) {
+	if (!npf_iscached(npc, NPC_IP46)) {
+		return 0;
+	}
+	t = npf_tableset_getbyid(tblset, tid);
+	if (__predict_false(!t)) {
 		return 0;
 	}
 	addr = npc->npc_ips[(A & SRC_FLAG_BIT) ? NPF_SRC : NPF_DST];
