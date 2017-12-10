@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc64,v 1.83 2017/12/04 09:44:33 martin Exp $
+# 	$NetBSD: Makefile.sparc64,v 1.84 2017/12/10 14:29:47 christos Exp $
 
 #=========================================================================
 #
@@ -138,9 +138,9 @@ cpu_in_cksum.o lock_stubs.o: assym.h
 # would be defined
 .MAIN: all
 
-.if make(depend) || make(all) || make(dependall)
-.BEGIN:
-	@rm -f sparc && \
+.if !make(obj) && !make(clean) && !make(cleandir)
+.BEGIN::
+	-@rm -f sparc && \
 		ln -s $S/arch/sparc/include sparc
 .endif
 
