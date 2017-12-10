@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2337 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2338 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -90,3 +90,4 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 		[jmcneill 20171125]
 	gdb(1): Updated to 8.0.1.  [christos 20171128]
 	dhcpcd(8): Import dhcpcd-7.0.0-rc4. [roy 20171206]
+	ihidev(4), ims(4): Added drivers for i2c HID mice. [bouyer 20171210]
