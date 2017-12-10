@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.125 2017/06/01 02:45:13 chs Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.126 2017/12/10 03:08:32 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.125 2017/06/01 02:45:13 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.126 2017/12/10 03:08:32 pgoyette Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -1036,6 +1036,23 @@ module_do_load(const char *name, bool isdep, int flags,
 		    name, mi->mi_name);
 		error = ENOENT;
 		goto fail;
+	}
+
+	/*
+	 * If we loaded a module from the filesystem, check the actual
+	 * module name (from the modinfo_t) to ensure another module
+	 * with the same name doesn't already exist.  (There's no
+	 * guarantee the filename will match the module name, and the
+	 * dup-symbols check may not be sufficient.)
+	 */
+	if (mod->mod_source == MODULE_SOURCE_FILESYS) {
+		mod2 = module_lookup(mod->mod_info->mi_name);
+		if (mod2 && mod2 != mod) {
+			module_error("module with name `%s' already loaded",
+			    mod2->mod_info->mi_name);
+			error = EEXIST;
+			goto fail;
+		}
 	}
 
 	/*
