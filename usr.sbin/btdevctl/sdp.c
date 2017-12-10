@@ -1,4 +1,4 @@
-/*	$NetBSD: sdp.c,v 1.9 2011/03/20 19:46:13 plunky Exp $	*/
+/*	$NetBSD: sdp.c,v 1.10 2017/12/10 20:38:14 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sdp.c,v 1.9 2011/03/20 19:46:13 plunky Exp $");
+__RCSID("$NetBSD: sdp.c,v 1.10 2017/12/10 20:38:14 bouyer Exp $");
 
 #include <sys/types.h>
 
@@ -65,6 +65,7 @@ __RCSID("$NetBSD: sdp.c,v 1.9 2011/03/20 19:46:13 plunky Exp $");
 #include <dev/bluetooth/btsco.h>
 #include <dev/usb/usb.h>
 #include <dev/usb/usbhid.h>
+#include <dev/hid/hid.h>
 
 #include <prop/proplib.h>
 

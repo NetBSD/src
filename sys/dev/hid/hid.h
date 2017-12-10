@@ -1,4 +1,4 @@
-/*	$NetBSD: hid.h,v 1.1 2017/12/10 17:03:07 bouyer Exp $	*/
+/*	$NetBSD: hid.h,v 1.2 2017/12/10 20:38:14 bouyer Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.h,v 1.7 1999/11/17 22:33:40 n_hibma Exp $ */
 
 /*
@@ -34,7 +34,7 @@
 #ifndef _HIDHID_H_
 #define _HIDHID_H_
 
-#ifdef _KERNEL
+#if defined(_KERNEL) || defined(_RUMPKERNEL)
 
 enum hid_kind {
 	hid_input,
@@ -93,7 +93,7 @@ long hid_get_data(const u_char *, const struct hid_location *);
 u_long hid_get_udata(const u_char *, const struct hid_location *);
 int hid_is_collection(const void *, int, uint8_t, uint32_t);
 
-#endif /*  _KERNEL */
+#endif /* _KERNEL || _RUMPKERNEL */
 
 /* Usage pages */
 #define HUP_UNDEFINED		0x0000
