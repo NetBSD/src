@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.94.6.2 2017/11/23 02:13:31 snj Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.94.6.3 2017/12/10 10:10:25 snj Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.94.6.2 2017/11/23 02:13:31 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.94.6.3 2017/12/10 10:10:25 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -175,6 +175,7 @@ static int
 loop_clone_create(struct if_clone *ifc, int unit)
 {
 	struct ifnet *ifp;
+	int rv;
 
 	ifp = if_alloc(IFT_LOOP);
 
@@ -195,7 +196,11 @@ loop_clone_create(struct if_clone *ifc, int unit)
 	IFQ_SET_READY(&ifp->if_snd);
 	if (unit == 0)
 		lo0ifp = ifp;
-	if_attach(ifp);
+	rv = if_attach(ifp);
+	if (rv != 0) {
+		if_free(ifp);
+		return rv;
+	}
 	if_alloc_sadl(ifp);
 	bpf_attach(ifp, DLT_NULL, sizeof(u_int));
 #ifdef MBUFTRACE

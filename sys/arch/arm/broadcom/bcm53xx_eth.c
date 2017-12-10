@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.29 2016/12/15 09:28:02 ozaki-r Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_eth.c,v 1.29.8.1 2017/12/10 10:10:23 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -321,38 +321,44 @@ bcmeth_ccb_attach(device_t parent, device_t self, void *aux)
 	error = bcmeth_rxq_attach(sc, &sc->sc_rxq, 0);
 	if (error) {
 		aprint_error(": failed to init rxq: %d\n", error);
-		return;
+		goto fail_1;
 	}
 
 	error = bcmeth_txq_attach(sc, &sc->sc_txq, 0);
 	if (error) {
 		aprint_error(": failed to init txq: %d\n", error);
-		return;
+		goto fail_1;
 	}
 
 	error = bcmeth_mapcache_create(sc, &sc->sc_rx_mapcache, 
 	    BCMETH_MAXRXMBUFS, MCLBYTES, BCMETH_NRXSEGS);
 	if (error) {
 		aprint_error(": failed to allocate rx dmamaps: %d\n", error);
-		return;
+		goto fail_1;
 	}
 
 	error = bcmeth_mapcache_create(sc, &sc->sc_tx_mapcache, 
 	    BCMETH_MAXTXMBUFS, MCLBYTES, BCMETH_NTXSEGS);
 	if (error) {
 		aprint_error(": failed to allocate tx dmamaps: %d\n", error);
-		return;
+		goto fail_1;
 	}
 
 	error = workqueue_create(&sc->sc_workq, xname, bcmeth_worker, sc,
 	    (PRI_USER + MAXPRI_USER) / 2, IPL_NET, WQ_MPSAFE|WQ_PERCPU);
 	if (error) {
 		aprint_error(": failed to create workqueue: %d\n", error);
-		return;
+		goto fail_2;
 	}
 
 	sc->sc_soft_ih = softint_establish(SOFTINT_MPSAFE | SOFTINT_NET,
 	    bcmeth_soft_intr, sc);
+
+	if (sc->sc_ih == NULL) {
+		aprint_error_dev(self, "failed to establish interrupt %d\n",
+		     loc->loc_intrs[0]);
+		goto fail_3;
+	}
 
 	sc->sc_ih = intr_establish(loc->loc_intrs[0], IPL_VM, IST_LEVEL,
 	    bcmeth_intr, sc);
@@ -360,6 +366,7 @@ bcmeth_ccb_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt %d\n",
 		     loc->loc_intrs[0]);
+		goto fail_4;
 	} else {
 		aprint_normal_dev(self, "interrupting on irq %d\n",
 		     loc->loc_intrs[0]);
@@ -401,7 +408,12 @@ bcmeth_ccb_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Attach the interface.
 	 */
-	if_initialize(ifp);
+	error = if_initialize(ifp);
+	if (error != 0) {
+		aprint_error_dev(sc->sc_dev, "if_initialize failed(%d)\n",
+		    error);
+		goto fail_5;
+	}
 	ether_ifattach(ifp, sc->sc_enaddr);
 	if_register(ifp);
 
@@ -419,6 +431,20 @@ bcmeth_ccb_attach(device_t parent, device_t self, void *aux)
 	evcnt_attach_dynamic(&sc->sc_ev_rx_badmagic_hi, EVCNT_TYPE_MISC,
 	    NULL, xname, "rx badmagic hi");
 #endif
+
+	return;
+
+fail_5:
+	ifmedia_removeall(&sc->sc_media);
+fail_4:
+	intr_disestablish(sc->sc_ih);
+fail_3:
+	softint_disestablish(sc->sc_soft_ih);
+fail_2:	
+	workqueue_destroy(sc->sc_workq);
+fail_1:	
+	mutex_obj_free(sc->sc_lock);
+	mutex_obj_free(sc->sc_hwlock);
 }
 
 static int

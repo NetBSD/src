@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6var.h,v 1.11 2012/10/27 17:18:22 chs Exp $	*/
+/*	$NetBSD: smc90cx6var.h,v 1.11.30.1 2017/12/10 10:10:23 snj Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ struct bah_softc {
 	u_char	sc_retransmits[2];	/* unused at the moment */
 };
 
-void	bah_attach_subr(struct bah_softc *);
+int	bah_attach_subr(struct bah_softc *);
 int	bahintr(void *);
 
 #endif

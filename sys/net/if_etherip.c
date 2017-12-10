@@ -1,4 +1,4 @@
-/*      $NetBSD: if_etherip.c,v 1.38 2016/07/11 11:31:51 msaitoh Exp $        */
+/*      $NetBSD: if_etherip.c,v 1.38.10.1 2017/12/10 10:10:25 snj Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.38 2016/07/11 11:31:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.38.10.1 2017/12/10 10:10:25 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -266,7 +266,13 @@ etherip_attach(device_t parent, device_t self, void *aux)
 	 * Those steps are mandatory for an Ethernet driver, the first call
 	 * being common to all network interface drivers.
 	 */
-	if_attach(ifp);
+	error = if_attach(ifp);
+	if (error != 0) {
+		aprint_error_dev(self, "if_attach failed(%d)\n", error);
+		ifmedia_delete_instance(&sc->sc_im, IFM_INST_ANY);
+		pmf_device_deregister(self);
+		return;
+	}
 	ether_ifattach(ifp, enaddr);
 
 	/*

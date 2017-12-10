@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.239.2.1 2017/07/01 08:56:06 snj Exp $	*/
+/*	$NetBSD: if.h,v 1.239.2.2 2017/12/10 10:10:24 snj Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -923,6 +923,7 @@ do {									\
 
 #define IFQ_LOCK_INIT(ifq)	(ifq)->ifq_lock =			\
 	    mutex_obj_alloc(MUTEX_DEFAULT, IPL_NET)
+#define IFQ_LOCK_DESTROY(ifq)	mutex_obj_free((ifq)->ifq_lock)
 #define IFQ_LOCK(ifq)		mutex_enter((ifq)->ifq_lock)
 #define IFQ_UNLOCK(ifq)		mutex_exit((ifq)->ifq_lock)
 
@@ -946,9 +947,9 @@ void if_activate_sadl(struct ifnet *, struct ifaddr *,
     const struct sockaddr_dl *);
 void	if_set_sadl(struct ifnet *, const void *, u_char, bool);
 void	if_alloc_sadl(struct ifnet *);
-void	if_initialize(struct ifnet *);
+int	if_initialize(struct ifnet *);
 void	if_register(struct ifnet *);
-void	if_attach(struct ifnet *); /* Deprecated. Use if_initialize and if_register */
+int	if_attach(struct ifnet *); /* Deprecated. Use if_initialize and if_register */
 void	if_attachdomain(void);
 void	if_deactivate(struct ifnet *);
 bool	if_is_deactivated(const struct ifnet *);

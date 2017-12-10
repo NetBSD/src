@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.59 2017/01/12 18:26:08 maya Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.59.8.1 2017/12/10 10:10:24 snj Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.59 2017/01/12 18:26:08 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.59.8.1 2017/12/10 10:10:24 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -228,6 +228,7 @@ upl_attach(device_t parent, device_t self, void *aux)
 	usb_interface_descriptor_t	*id;
 	usb_endpoint_descriptor_t	*ed;
 	int			i;
+	int			rv;
 
 	DPRINTFN(5,(" : upl_attach: sc=%p, dev=%p", sc, dev));
 
@@ -307,7 +308,12 @@ upl_attach(device_t parent, device_t self, void *aux)
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Attach the interface. */
-	if_initialize(ifp);
+	rv = if_initialize(ifp);
+	if (rv != 0) {
+		aprint_error_dev(self, "if_initialize failed(%d)\n", rv);
+		splx(s);
+		return;
+	}
 	if_register(ifp);
 	if_alloc_sadl(ifp);
 

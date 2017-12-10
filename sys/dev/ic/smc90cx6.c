@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6.c,v 1.70 2017/05/23 02:43:13 ozaki-r Exp $ */
+/*	$NetBSD: smc90cx6.c,v 1.70.2.1 2017/12/10 10:10:23 snj Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.70 2017/05/23 02:43:13 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.70.2.1 2017/12/10 10:10:23 snj Exp $");
 
 /* #define BAHSOFTCOPY */
 #define BAHRETRANSMIT /**/
@@ -140,11 +140,11 @@ void	bah_reconwatch(void *);
 #define GETMEM(off)	bus_space_read_1(bst_m, mem, (off))
 #define PUTMEM(off, v)	bus_space_write_1(bst_m, mem, (off), (v))
 
-void
+int
 bah_attach_subr(struct bah_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_arccom.ac_if;
-	int s;
+	int s, rv;
 	u_int8_t linkaddress;
 
 	bus_space_tag_t bst_r = sc->sc_bst_r;
@@ -197,7 +197,9 @@ bah_attach_subr(struct bah_softc *sc)
 
 	ifp->if_mtu = ARCMTU;
 
-	arc_ifattach(ifp, linkaddress);
+	rv = arc_ifattach(ifp, linkaddress);
+	if (rv != 0)
+		return rv;
 	if_deferred_start_init(ifp, NULL);
 
 #ifdef BAHSOFTCOPY
@@ -207,6 +209,7 @@ bah_attach_subr(struct bah_softc *sc)
 #endif
 
 	callout_init(&sc->sc_recon_ch, 0);
+	return 0;
 }
 
 /*

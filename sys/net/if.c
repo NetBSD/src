@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.394.2.2 2017/11/30 15:57:37 martin Exp $	*/
+/*	$NetBSD: if.c,v 1.394.2.3 2017/12/10 10:10:24 snj Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.394.2.2 2017/11/30 15:57:37 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.394.2.3 2017/12/10 10:10:24 snj Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -670,9 +670,11 @@ skip:
  *     ether_ifattach(ifp, enaddr);
  *     if_register(ifp);
  */
-void
+int
 if_initialize(ifnet_t *ifp)
 {
+	int rv = 0;
+
 	KASSERT(if_indexlim > 0);
 	TAILQ_INIT(&ifp->if_addrlist);
 
@@ -711,8 +713,10 @@ if_initialize(ifnet_t *ifp)
 	if (if_is_link_state_changeable(ifp)) {
 		ifp->if_link_si = softint_establish(SOFTINT_NET,
 		    if_link_state_change_si, ifp);
-		if (ifp->if_link_si == NULL)
-			panic("%s: softint_establish() failed", __func__);
+		if (ifp->if_link_si == NULL) {
+			rv = ENOMEM;
+			goto fail;
+		}
 	}
 
 	PSLIST_ENTRY_INIT(ifp, if_pslist_entry);
@@ -724,6 +728,18 @@ if_initialize(ifnet_t *ifp)
 	IFNET_LOCK();
 	if_getindex(ifp);
 	IFNET_UNLOCK();
+
+	return 0;
+
+fail:
+	IF_AFDATA_LOCK_DESTROY(ifp);
+
+	pfil_run_ifhooks(if_pfil, PFIL_IFNET_DETACH, ifp);
+	(void)pfil_head_destroy(ifp->if_pfil);
+
+	IFQ_LOCK_DESTROY(&ifp->if_snd);
+
+	return rv;
 }
 
 /*
@@ -1094,13 +1110,19 @@ if_input(struct ifnet *ifp, struct mbuf *m)
  * migrate softint-based if_input without much changes. If you don't
  * want to enable it, use if_initialize instead.
  */
-void
+int
 if_attach(ifnet_t *ifp)
 {
+	int rv;
 
-	if_initialize(ifp);
+	rv = if_initialize(ifp);
+	if (rv != 0)
+		return rv;
+
 	ifp->if_percpuq = if_percpuq_create(ifp);
 	if_register(ifp);
+
+	return 0;
 }
 
 void

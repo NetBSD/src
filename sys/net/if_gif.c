@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.126.2.3 2017/10/24 08:47:24 snj Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.126.2.4 2017/12/10 10:10:25 snj Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.126.2.3 2017/10/24 08:47:24 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.126.2.4 2017/12/10 10:10:25 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -105,7 +105,7 @@ static struct {
 static void	gif_ro_init_pc(void *, void *, struct cpu_info *);
 static void	gif_ro_fini_pc(void *, void *, struct cpu_info *);
 
-static void	gifattach0(struct gif_softc *);
+static int	gifattach0(struct gif_softc *);
 static int	gif_output(struct ifnet *, struct mbuf *,
 			   const struct sockaddr *, const struct rtentry *);
 static void	gif_start(struct ifnet *);
@@ -242,12 +242,17 @@ static int
 gif_clone_create(struct if_clone *ifc, int unit)
 {
 	struct gif_softc *sc;
+	int rv;
 
 	sc = kmem_zalloc(sizeof(struct gif_softc), KM_SLEEP);
 
 	if_initname(&sc->gif_if, ifc->ifc_name, unit);
 
-	gifattach0(sc);
+	rv = gifattach0(sc);
+	if (rv != 0) {
+		kmem_free(sc, sizeof(struct gif_softc));
+		return rv;
+	}
 
 	sc->gif_ro_percpu = percpu_alloc(sizeof(struct gif_ro));
 	percpu_foreach(sc->gif_ro_percpu, gif_ro_init_pc, NULL);
@@ -255,12 +260,13 @@ gif_clone_create(struct if_clone *ifc, int unit)
 	mutex_enter(&gif_softcs.lock);
 	LIST_INSERT_HEAD(&gif_softcs.list, sc, gif_list);
 	mutex_exit(&gif_softcs.lock);
-	return (0);
+	return 0;
 }
 
-static void
+static int
 gifattach0(struct gif_softc *sc)
 {
+	int rv;
 
 	sc->encap_cookie4 = sc->encap_cookie6 = NULL;
 
@@ -279,10 +285,14 @@ gifattach0(struct gif_softc *sc)
 	sc->gif_if.if_dlt    = DLT_NULL;
 	sc->gif_if.if_softc  = sc;
 	IFQ_SET_READY(&sc->gif_if.if_snd);
-	if_initialize(&sc->gif_if);
+	rv = if_initialize(&sc->gif_if);
+	if (rv != 0)
+		return rv;
+
 	if_register(&sc->gif_if);
 	if_alloc_sadl(&sc->gif_if);
 	bpf_attach(&sc->gif_if, DLT_NULL, sizeof(u_int));
+	return 0;
 }
 
 static void
@@ -327,7 +337,7 @@ gif_clone_destroy(struct ifnet *ifp)
 
 	kmem_free(sc, sizeof(struct gif_softc));
 
-	return (0);
+	return 0;
 }
 
 #ifdef GIF_ENCAPCHECK

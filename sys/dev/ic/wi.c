@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.243 2017/03/29 09:04:35 msaitoh Exp $	*/
+/*	$NetBSD: wi.c,v 1.243.6.1 2017/12/10 10:10:23 snj Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.243 2017/03/29 09:04:35 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.243.6.1 2017/12/10 10:10:23 snj Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -373,7 +373,7 @@ wi_attach(struct wi_softc *sc, const u_int8_t *macaddr)
 	static const u_int8_t empty_macaddr[IEEE80211_ADDR_LEN] = {
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 	};
-	int s;
+	int s, rv;
 
 	sc->sc_soft_ih = softint_establish(SOFTINT_NET, wi_softintr, sc);
 	if (sc->sc_soft_ih == NULL) {
@@ -550,7 +550,11 @@ wi_attach(struct wi_softc *sc, const u_int8_t *macaddr)
 	/*
 	 * Call MI attach routines.
 	 */
-	if_initialize(ifp);
+	rv = if_initialize(ifp);
+	if (rv != 0) {
+		aprint_error_dev(sc->sc_dev, "if_initialize failed(%d)\n", rv);
+		goto fail_2;
+	}
 	ieee80211_ifattach(ic);
 	/* Use common softint-based if_input */
 	ifp->if_percpuq = if_percpuq_create(ifp);
@@ -587,6 +591,9 @@ wi_attach(struct wi_softc *sc, const u_int8_t *macaddr)
 	splx(s);
 	ieee80211_announce(ic);
 	return 0;
+
+fail_2:
+	callout_destroy(&sc->sc_rssadapt_ch);
 
 fail:	splx(s);
 	softint_disestablish(sc->sc_soft_ih);
