@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.aarch64,v 1.7 2016/05/05 21:14:14 rjs Exp $
+#	$NetBSD: Makefile.aarch64,v 1.8 2017/12/10 14:29:47 christos Exp $
 
 # Makefile for NetBSD
 #
@@ -92,9 +92,9 @@ spl.o vectors.o: assym.h
 # would be defined
 .MAIN: all
 
-.if make(depend) || make(all) || make(dependall)
-.BEGIN:
-	@rm -f arm && \
+.if !make(obj) && !make(clean) && !make(cleandir)
+.BEGIN::
+	-@rm -f arm && \
 		ln -s $S/arch/arm/include arm
 .endif
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.186 2017/08/09 19:11:13 maxv Exp $
+#	$NetBSD: Makefile.i386,v 1.187 2017/12/10 14:29:47 christos Exp $
 
 # Makefile for NetBSD
 #
@@ -94,8 +94,8 @@ acpi_wakeup_low.o busfunc.o: assym.h
 ##
 
 .if !make(obj) && !make(clean) && !make(cleandir)
-.BEGIN:
-	@rm -f i386 && \
+.BEGIN::
+	-@rm -f i386 && \
 		ln -s $S/arch/i386/include i386
 .endif
 
