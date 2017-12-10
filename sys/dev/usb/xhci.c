@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.80 2017/12/09 00:54:31 christos Exp $	*/
+/*	$NetBSD: xhci.c,v 1.81 2017/12/10 17:50:01 hannken Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.80 2017/12/09 00:54:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.81 2017/12/10 17:50:01 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1341,7 +1341,7 @@ xhci_configure_endpoint(struct usbd_pipe *pipe)
 {
 	struct xhci_softc * const sc = XHCI_PIPE2SC(pipe);
 	struct xhci_slot * const xs = pipe->up_dev->ud_hcpriv;
-#ifdef XHCI_DEBUG
+#ifdef USB_DEBUG
 	const u_int dci = xhci_ep_get_dci(pipe->up_endpoint->ue_edesc);
 #endif
 	struct xhci_trb trb;
