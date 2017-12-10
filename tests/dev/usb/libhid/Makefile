@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.1 2016/01/05 17:22:39 jakllsch Exp $
+#	$NetBSD: Makefile,v 1.2 2017/12/10 20:38:14 bouyer Exp $
 #
 
 .include <bsd.own.mk>
 
 RUMPTOP= ${NETBSDSRCDIR}/sys/rump
-.PATH:	${.CURDIR}/../../../../sys/dev/usb
+.PATH:	${.CURDIR}/../../../../sys/dev/hid
 
 LIB=	rumpdev_hid
 LIBISPRIVATE= #defined

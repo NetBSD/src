@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1164 2017/10/24 02:22:09 kre Exp $
+# $NetBSD: mi,v 1.1165 2017/12/10 20:38:13 bouyer Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1069,6 +1069,7 @@
 ./usr/include/dev/filemon			base-c-usr
 ./usr/include/dev/hdaudio			base-c-usr
 ./usr/include/dev/hdmicec			base-c-usr
+./usr/include/dev/hid				base-c-usr
 ./usr/include/dev/hpc				base-c-usr
 ./usr/include/dev/i2c				base-c-usr
 ./usr/include/dev/i2o				base-c-usr
