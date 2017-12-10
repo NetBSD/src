@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_conn.h,v 1.12 2017/01/29 00:15:54 christos Exp $	*/
+/*	$NetBSD: npf_conn.h,v 1.13 2017/12/10 00:07:36 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -88,7 +88,12 @@ struct npf_conn {
 	npf_state_t		c_state;
 	u_int			c_refcnt;
 	uint64_t		c_atime;
-	npf_match_info_t	c_mi;
+
+	/*
+	 * Save the matching rule ID and flags.
+	 */
+	uint64_t		c_rid;
+	u_int			c_retfl;
 };
 
 #endif

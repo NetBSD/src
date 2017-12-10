@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ext_normalize.c,v 1.5 2017/01/29 00:15:54 christos Exp $	*/
+/*	$NetBSD: npf_ext_normalize.c,v 1.6 2017/12/10 00:07:36 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ext_normalize.c,v 1.5 2017/01/29 00:15:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ext_normalize.c,v 1.6 2017/12/10 00:07:36 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>
@@ -147,8 +147,8 @@ npf_normalize(npf_cache_t *npc, void *params, const npf_match_info_t *mi,
     int *decision)
 {
 	npf_normalize_t *np = params;
-	struct tcphdr *th = npc->npc_l4.tcp;
 	uint16_t cksum, mss, maxmss = np->n_maxmss;
+	struct tcphdr *th;
 	int wscale;
 
 	/* Skip, if already blocking. */
@@ -160,6 +160,7 @@ npf_normalize(npf_cache_t *npc, void *params, const npf_match_info_t *mi,
 	if (npf_iscached(npc, NPC_IP4) && (np->n_random_id || np->n_minttl)) {
 		npf_normalize_ip4(npc, np);
 	}
+	th = npc->npc_l4.tcp;
 
 	/*
 	 * TCP Maximum Segment Size (MSS) "clamping".  Only if SYN packet.
@@ -180,8 +181,13 @@ npf_normalize(npf_cache_t *npc, void *params, const npf_match_info_t *mi,
 	}
 	maxmss = htons(maxmss);
 
-	/* Store new MSS, calculate TCP checksum and update it. */
-	if (npf_fetch_tcpopts(npc, &maxmss, &wscale)) {
+	/*
+	 * Store new MSS, calculate TCP checksum and update it.
+	 * WARNING: must re-fetch the TCP header after the modification.
+	 */
+	if (npf_fetch_tcpopts(npc, &maxmss, &wscale) &&
+	    nbuf_cksum_barrier(npc->npc_nbuf, mi->mi_di)) {
+		th = npc->npc_l4.tcp;
 		cksum = npf_fixup16_cksum(th->th_sum, mss, maxmss);
 		th->th_sum = cksum;
 	}

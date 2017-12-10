@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_conn.c,v 1.23 2017/01/29 00:15:54 christos Exp $	*/
+/*	$NetBSD: npf_conn.c,v 1.24 2017/12/10 00:07:36 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2014-2015 Mindaugas Rasiukevicius <rmind at netbsd org>
@@ -100,7 +100,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_conn.c,v 1.23 2017/01/29 00:15:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_conn.c,v 1.24 2017/12/10 00:07:36 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -727,7 +727,8 @@ npf_conn_pass(const npf_conn_t *con, npf_match_info_t *mi, npf_rproc_t **rp)
 {
 	KASSERT(con->c_refcnt > 0);
 	if (__predict_true(con->c_flags & CONN_PASS)) {
-		*mi = con->c_mi;
+		mi->mi_rid = con->c_rid;
+		mi->mi_retfl = con->c_retfl;
 		*rp = con->c_rproc;
 		return true;
 	}
@@ -752,8 +753,10 @@ npf_conn_setpass(npf_conn_t *con, const npf_match_info_t *mi, npf_rproc_t *rp)
 	 */
 	atomic_or_uint(&con->c_flags, CONN_PASS);
 	con->c_rproc = rp;
-	if (rp)
-		con->c_mi = *mi;
+	if (rp) {
+		con->c_rid = mi->mi_rid;
+		con->c_retfl = mi->mi_retfl;
+	}
 }
 
 /*

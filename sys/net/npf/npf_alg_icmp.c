@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_alg_icmp.c,v 1.24 2016/12/26 23:05:06 christos Exp $	*/
+/*	$NetBSD: npf_alg_icmp.c,v 1.25 2017/12/10 00:07:36 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_alg_icmp.c,v 1.24 2016/12/26 23:05:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_alg_icmp.c,v 1.25 2017/12/10 00:07:36 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
@@ -336,31 +336,25 @@ npfa_icmp_nat(npf_cache_t *npc, npf_nat_t *nt, bool forw)
 	/*
 	 * Fetch the IP and port in the _embedded_ packet.  Also, fetch
 	 * the IPv4 and TCP/UDP checksums before they are rewritten.
-	 * Calculate the part of the ICMP checksum fixup.
 	 */
 	const int proto = enpc.npc_proto;
 	uint16_t ipcksum = 0, l4cksum = 0;
-	npf_addr_t *addr;
-	in_port_t port;
-
-	npf_nat_getorig(nt, &addr, &port);
+	in_port_t old_port = 0;
 
 	if (npf_iscached(&enpc, NPC_IP4)) {
 		const struct ip *eip = enpc.npc_ip.v4;
 		ipcksum = eip->ip_sum;
 	}
-	cksum = npf_addr_cksum(cksum, enpc.npc_alen, enpc.npc_ips[which], addr);
-
 	switch (proto) {
 	case IPPROTO_TCP: {
 		const struct tcphdr *th = enpc.npc_l4.tcp;
-		cksum = npf_fixup16_cksum(cksum, th->th_sport, port);
+		old_port = th->th_sport;
 		l4cksum = th->th_sum;
 		break;
 	}
 	case IPPROTO_UDP: {
 		const struct udphdr *uh = enpc.npc_l4.udp;
-		cksum = npf_fixup16_cksum(cksum, uh->uh_sport, port);
+		old_port = uh->uh_sport;
 		l4cksum = uh->uh_sum;
 		break;
 	}
@@ -369,6 +363,20 @@ npfa_icmp_nat(npf_cache_t *npc, npf_nat_t *nt, bool forw)
 		break;
 	default:
 		return false;
+	}
+
+	/*
+	 * Get the original IP address and port.
+	 * Calculate the part of the ICMP checksum fixup.
+	 */
+	npf_addr_t *addr;
+	in_port_t port;
+
+	npf_nat_getorig(nt, &addr, &port);
+
+	cksum = npf_addr_cksum(cksum, enpc.npc_alen, enpc.npc_ips[which], addr);
+	if (port) {
+		cksum = npf_fixup16_cksum(cksum, old_port, port);
 	}
 
 	/*
