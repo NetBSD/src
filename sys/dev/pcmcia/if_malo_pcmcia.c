@@ -1,4 +1,4 @@
-/*	$NetBSD: if_malo_pcmcia.c,v 1.13 2017/02/02 10:05:35 nonaka Exp $	*/
+/*	$NetBSD: if_malo_pcmcia.c,v 1.13.6.1 2017/12/10 09:50:59 snj Exp $	*/
 /*      $OpenBSD: if_malo.c,v 1.65 2009/03/29 21:53:53 sthen Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_malo_pcmcia.c,v 1.13 2017/02/02 10:05:35 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_malo_pcmcia.c,v 1.13.6.1 2017/12/10 09:50:59 snj Exp $");
 
 #ifdef _MODULE
 #include <sys/module.h>
@@ -242,6 +242,7 @@ malo_pcmcia_activate(device_t dev, devact_t act)
 		if_deactivate(ifp);
 		break;
 	default:
+		splx(s);
 		return EOPNOTSUPP;
 	}
 	splx(s);
@@ -1983,6 +1984,7 @@ cmalo_cmd_response(struct malo_softc *sc)
 	if (psize > MALO_CMD_BUFFER_SIZE) {
 		aprint_error_dev(sc->sc_dev,
 		    "command response too large: %dbyte\n", psize);
+		splx(s);
 		return EIO;
 	}
 
