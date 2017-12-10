@@ -1,4 +1,4 @@
-/* $NetBSD: platform.h,v 1.1 2017/05/30 10:27:53 jmcneill Exp $ */
+/* $NetBSD: platform.h,v 1.2 2017/12/10 21:38:27 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,6 +28,8 @@
 
 #ifndef _EVBARM_FDT_PLATFORM_H
 #define _EVBARM_FDT_PLATFORM_H
+
+void fdt_add_reserved_memory_range(uint64_t, uint64_t);
 
 #ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
 #define KERNEL_VM_BASE		0xc0000000
