@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.78 2017/10/07 18:22:06 jmcneill Exp $
+#	$NetBSD: files.i2c,v 1.79 2017/12/10 17:05:54 bouyer Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -284,3 +284,22 @@ file	dev/i2c/tcagpio.c			tcagpio
 device	sy8106a
 attach	sy8106a at iic
 file	dev/i2c/sy8106a.c			sy8106a
+
+# HID over i2c
+# HID "bus"
+define  ihidbus {[ reportid = -1 ]}
+
+# HID root device for multiple report IDs
+device  ihidev: hid, ihidbus
+attach  ihidev at iic
+file    dev/i2c/ihidev.c			ihidev
+
+#HID mice
+device	ims: hid, hidms, wsmousedev
+attach	ims at ihidbus
+file	dev/i2c/ims.c				ims
+
+#HID multitouch
+device	imt: hid, hidmt, wsmousedev
+attach	imt at ihidbus
+file	dev/i2c/imt.c				imt
