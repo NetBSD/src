@@ -1,4 +1,4 @@
-/*      $NetBSD: usbhidaction.c,v 1.27 2016/12/31 10:13:15 dholland Exp $ */
+/*      $NetBSD: usbhidaction.c,v 1.28 2017/12/10 20:38:14 bouyer Exp $ */
 
 /*
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: usbhidaction.c,v 1.27 2016/12/31 10:13:15 dholland Exp $");
+__RCSID("$NetBSD: usbhidaction.c,v 1.28 2017/12/10 20:38:14 bouyer Exp $");
 #endif
 
 #include <stdio.h>
@@ -45,7 +45,7 @@ __RCSID("$NetBSD: usbhidaction.c,v 1.27 2016/12/31 10:13:15 dholland Exp $");
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <dev/usb/usb.h>
-#include <dev/usb/usbhid.h>
+#include <dev/hid/hid.h>
 #include <usbhid.h>
 #include <util.h>
 #include <syslog.h>
