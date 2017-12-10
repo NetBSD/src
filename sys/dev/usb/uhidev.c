@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.72 2017/09/02 04:35:51 ryoon Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.73 2017/12/10 17:03:07 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.72 2017/09/02 04:35:51 ryoon Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.73 2017/12/10 17:03:07 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -57,10 +57,10 @@ __KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.72 2017/09/02 04:35:51 ryoon Exp $");
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
-#include <dev/usb/hid.h>
 #include <dev/usb/usb_quirks.h>
 
 #include <dev/usb/uhidev.h>
+#include <dev/hid/hid.h>
 
 /* Report descriptor for broken Wacom Graphire */
 #include <dev/usb/ugraphire_rdesc.h>

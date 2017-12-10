@@ -1,4 +1,4 @@
-/* $NetBSD: tcakp.c,v 1.4 2017/08/31 19:55:43 jmcneill Exp $ */
+/* $NetBSD: tcakp.c,v 1.5 2017/12/10 17:03:07 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcakp.c,v 1.4 2017/08/31 19:55:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcakp.c,v 1.5 2017/12/10 17:03:07 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -306,9 +306,9 @@ static const struct wskbd_consops tcakp_consops = {
 };
 #endif
 
-extern const struct wscons_keydesc ukbd_keydesctab[];
+extern const struct wscons_keydesc hidkbd_keydesctab[];
 static const struct wskbd_mapdata tcakp_keymapdata = {
-	ukbd_keydesctab,
+	hidkbd_keydesctab,
 	KB_US,
 };
 
