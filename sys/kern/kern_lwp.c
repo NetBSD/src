@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.189 2017/06/01 02:45:13 chs Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.189.2.1 2017/12/10 09:35:03 snj Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.189 2017/06/01 02:45:13 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.189.2.1 2017/12/10 09:35:03 snj Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -645,8 +645,9 @@ lwp_wait(struct lwp *l, lwpid_t lid, lwpid_t *departed, bool exiting)
 		 */
 		if (exiting) {
 			KASSERT(p->p_nlwps > 1);
-			cv_wait(&p->p_lwpcv, p->p_lock);
-			error = EAGAIN;
+			error = cv_wait_sig(&p->p_lwpcv, p->p_lock);
+			if (error == 0)
+				error = EAGAIN;
 			break;
 		}
 
