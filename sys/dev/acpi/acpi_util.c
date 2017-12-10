@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_util.c,v 1.8 2011/06/21 03:37:21 jruoho Exp $ */
+/*	$NetBSD: acpi_util.c,v 1.9 2017/12/10 16:51:30 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -65,12 +65,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.8 2011/06/21 03:37:21 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.9 2017/12/10 16:51:30 bouyer Exp $");
 
 #include <sys/param.h>
+#include <sys/kmem.h>
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
+#include <dev/acpi/acpi_intr.h>
 
 #define _COMPONENT	ACPI_BUS_COMPONENT
 ACPI_MODULE_NAME	("acpi_util")
@@ -505,4 +507,64 @@ out:
 		ACPI_FREE(buf.Pointer);
 
 	return ci;
+}
+
+struct acpi_irq_handler {
+	ACPI_HANDLE aih_hdl;
+	uint32_t aih_irq;
+	int (*aih_intr)(void *);
+};
+
+void *
+acpi_intr_establish(device_t dev, uint64_t c,
+    unsigned int (*intr)(void *), void *iarg)
+{
+	ACPI_STATUS rv;
+	ACPI_HANDLE hdl = (void *)c;
+	struct acpi_resources res;
+	struct acpi_irq *irq;
+	struct acpi_irq_handler *aih = NULL;
+
+	rv = acpi_resource_parse(dev, hdl, "_CRS", &res,
+	    &acpi_resource_parse_ops_quiet);
+	if (ACPI_FAILURE(rv))
+		return NULL;
+
+	irq = acpi_res_irq(&res, 0);
+	if (irq == NULL)
+		goto end;
+
+	aih = kmem_alloc(sizeof(struct acpi_irq_handler), KM_NOSLEEP);
+	if (aih == NULL)
+		goto end;
+
+	aih->aih_hdl = hdl;
+	aih->aih_irq = irq->ar_irq;
+	rv = AcpiOsInstallInterruptHandler(irq->ar_irq, intr, iarg);
+	if (ACPI_FAILURE(rv)) {
+		kmem_free(aih, sizeof(struct acpi_irq_handler));
+		aih = NULL;
+	}
+end:
+	acpi_resource_cleanup(&res);
+	return aih;
+}
+
+void
+acpi_intr_disestablish(void *c, unsigned int (*intr)(void *))
+{
+	struct acpi_irq_handler *aih = c;
+
+	AcpiOsRemoveInterruptHandler(aih->aih_irq, intr);
+	kmem_free(aih, sizeof(struct acpi_irq_handler));
+	return;
+}
+
+const char *
+acpi_intr_string(void *c, char *buf, size_t size)
+{
+	struct acpi_irq_handler *aih = c;
+	intr_handle_t ih = aih->aih_irq;
+
+	return intr_string(ih, buf, size);
 }
