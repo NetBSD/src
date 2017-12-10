@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_dwctwo.c,v 1.7 2016/04/23 10:15:27 skrll Exp $	*/
+/*	$NetBSD: bcm2835_dwctwo.c,v 1.8 2017/12/10 21:38:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_dwctwo.c,v 1.7 2016/04/23 10:15:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_dwctwo.c,v 1.8 2017/12/10 21:38:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,7 +40,8 @@ __KERNEL_RCSID(0, "$NetBSD: bcm2835_dwctwo.c,v 1.7 2016/04/23 10:15:27 skrll Exp
 #include <sys/workqueue.h>
 
 #include <arm/broadcom/bcm2835reg.h>
-#include <arm/broadcom/bcm_amba.h>
+
+#include <dev/fdt/fdtvar.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -56,6 +57,7 @@ struct bcmdwc2_softc {
 	struct dwc2_softc	sc_dwc2;
 
 	void			*sc_ih;
+	int			sc_phandle;
 };
 
 static struct dwc2_core_params bcmdwc2_params = {
@@ -99,12 +101,14 @@ CFATTACH_DECL_NEW(bcmdwctwo, sizeof(struct bcmdwc2_softc),
 static int
 bcmdwc2_match(device_t parent, struct cfdata *match, void *aux)
 {
-	struct amba_attach_args *aaa = aux;
+	const char * const compatible[] = {
+	    "brcm,bcm2708-usb",
+	    "brcm,bcm2835-usb",
+	    NULL
+	};
+	struct fdt_attach_args * const faa = aux;
 
-	if (strcmp(aaa->aaa_name, "dwctwo") != 0)
-		return 0;
-
-	return 1;
+	return of_match_compatible(faa->faa_phandle, compatible);
 }
 
 /* ARGSUSED */
@@ -112,44 +116,57 @@ static void
 bcmdwc2_attach(device_t parent, device_t self, void *aux)
 {
 	struct bcmdwc2_softc *sc = device_private(self);
-	struct amba_attach_args *aaa = aux;
+	struct fdt_attach_args * const faa = aux;
+	const int phandle = faa->faa_phandle;
+	bus_addr_t addr;
+	bus_size_t size;
 	int error;
-
-	sc->sc_dwc2.sc_dev = self;
-
-	sc->sc_dwc2.sc_iot = aaa->aaa_iot;
-	sc->sc_dwc2.sc_bus.ub_dmatag = aaa->aaa_dmat;
-	sc->sc_dwc2.sc_params = &bcmdwc2_params;
-
-	error = bus_space_map(aaa->aaa_iot, aaa->aaa_addr, aaa->aaa_size, 0,
-	    &sc->sc_dwc2.sc_ioh);
-	if (error) {
-		aprint_error_dev(self,
-		    "can't map registers for %s: %d\n", aaa->aaa_name, error);
-		return;
-	}
 
 	aprint_naive(": USB controller\n");
 	aprint_normal(": USB controller\n");
 
-	sc->sc_ih = intr_establish(aaa->aaa_intr, IPL_VM,
-	    IST_LEVEL | IST_MPSAFE, dwc2_intr, &sc->sc_dwc2);
+	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
+		aprint_error(": couldn't get registers\n");
+		return;
+	}
+
+	sc->sc_phandle = phandle;
+	sc->sc_dwc2.sc_dev = self;
+	sc->sc_dwc2.sc_iot = faa->faa_bst;
+	sc->sc_dwc2.sc_bus.ub_dmatag = faa->faa_dmat;
+	sc->sc_dwc2.sc_params = &bcmdwc2_params;
+
+	error = bus_space_map(faa->faa_bst, addr, size, 0, &sc->sc_dwc2.sc_ioh);
+	if (error) {
+		aprint_error(": couldn't map device\n");
+		return;
+	}
+
+	char intrstr[128];
+	if (!fdtbus_intr_str(phandle, 0, intrstr, sizeof(intrstr))) {
+		aprint_error(": failed to decode interrupt\n");
+		return;
+	}
+
+	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_VM, FDT_INTR_MPSAFE,
+	    dwc2_intr, &sc->sc_dwc2);
 
 	if (sc->sc_ih == NULL) {
-		aprint_error_dev(self, "failed to establish interrupt %d\n",
-		     aaa->aaa_intr);
+		aprint_error_dev(self, "failed to establish interrupt %s\n",
+		    intrstr);
 		goto fail;
 	}
-	config_defer(self, bcmdwc2_deferred);
+	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
+	config_interrupts(self, bcmdwc2_deferred);
 
 	return;
 
 fail:
 	if (sc->sc_ih) {
-		intr_disestablish(sc->sc_ih);
+		fdtbus_intr_disestablish(sc->sc_phandle, sc->sc_ih);
 		sc->sc_ih = NULL;
 	}
-	bus_space_unmap(sc->sc_dwc2.sc_iot, sc->sc_dwc2.sc_ioh, aaa->aaa_size);
+	bus_space_unmap(sc->sc_dwc2.sc_iot, sc->sc_dwc2.sc_ioh, size);
 }
 
 static void

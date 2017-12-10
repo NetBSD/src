@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_sdhost.c,v 1.3 2017/08/16 20:54:19 jmcneill Exp $ */
+/* $NetBSD: bcm2835_sdhost.c,v 1.4 2017/12/10 21:38:26 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_sdhost.c,v 1.3 2017/08/16 20:54:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_sdhost.c,v 1.4 2017/12/10 21:38:26 skrll Exp $");
+
+#include "bcmdmac.h"
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -38,12 +40,15 @@ __KERNEL_RCSID(0, "$NetBSD: bcm2835_sdhost.c,v 1.3 2017/08/16 20:54:19 jmcneill 
 #include <sys/gpio.h>
 
 #include <arm/broadcom/bcm2835reg.h>
-#include <arm/broadcom/bcm_amba.h>
 #include <arm/broadcom/bcm2835_dmac.h>
 
 #include <dev/sdmmc/sdmmcvar.h>
 #include <dev/sdmmc/sdmmcchip.h>
 #include <dev/sdmmc/sdmmc_ioreg.h>
+
+#include <dev/fdt/fdtvar.h>
+
+#include <arm/fdt/arm_fdtvar.h>
 
 #define	SDCMD		0x00
 #define	 SDCMD_NEW	__BIT(15)
@@ -172,29 +177,42 @@ CFATTACH_DECL_NEW(bcmsdhost, sizeof(struct sdhost_softc),
 static int
 sdhost_match(device_t parent, cfdata_t cf, void *aux)
 {
-	struct amba_attach_args * const aaa = aux;
+	const char * const compatible[] = {
+	    "brcm,bcm2835-sdhost",
+	    NULL
+	};
+	struct fdt_attach_args * const faa = aux;
 
-	return strcmp(aaa->aaa_name, "sdhost") == 0;
+	return of_match_compatible(faa->faa_phandle, compatible);
 }
 
 static void
 sdhost_attach(device_t parent, device_t self, void *aux)
 {
 	struct sdhost_softc * const sc = device_private(self);
-	struct amba_attach_args * const aaa = aux;
+	struct fdt_attach_args * const faa = aux;
 	prop_dictionary_t dict = device_properties(self);
 	bool disable = false;
 
 	sc->sc_dev = self;
-	sc->sc_bst = aaa->aaa_iot;
-	sc->sc_dmat = aaa->aaa_dmat;
-	sc->sc_addr = aaa->aaa_addr;
+	sc->sc_bst = faa->faa_bst;
+	sc->sc_dmat = faa->faa_dmat;
+
+	const int phandle = faa->faa_phandle;
+	bus_addr_t addr;
+	bus_size_t size;
+
+	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
+		aprint_error(": missing 'reg' property\n");
+		return;
+	}
+
+	sc->sc_addr = addr;
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_BIO);
 	cv_init(&sc->sc_intr_cv, "sdhostintr");
 	cv_init(&sc->sc_dma_cv, "sdhostdma");
 
-	if (bus_space_map(sc->sc_bst, aaa->aaa_addr, aaa->aaa_size, 0,
-	    &sc->sc_bsh) != 0) {
+	if (bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh) != 0) {
 		aprint_error(": couldn't map registers\n");
 		return;
 	}
@@ -208,11 +226,15 @@ sdhost_attach(device_t parent, device_t self, void *aux)
 		aprint_normal(": disabled\n");
 		return;
 	}
-
-	prop_dictionary_get_uint32(dict, "frequency", &sc->sc_rate);
-	if (sc->sc_rate == 0) {
-		aprint_error_dev(self, "couldn't get clock frequency\n");
-		return;
+	/* Enable clocks */
+	struct clk *clk;
+	for (int i = 0; (clk = fdtbus_clock_get_index(phandle, i)); i++) {
+		if (clk_enable(clk) != 0) {
+			aprint_error(": failed to enable clock #%d\n", i);
+			return;
+		}
+		if (i == 0)
+			sc->sc_rate = clk_get_rate(clk);
 	}
 
 	aprint_debug_dev(self, "ref freq %u Hz\n", sc->sc_rate);
@@ -222,14 +244,20 @@ sdhost_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_ih = intr_establish(aaa->aaa_intr, IPL_SDMMC, IST_LEVEL,
-	    sdhost_intr, sc);
-	if (sc->sc_ih == NULL) {
-		aprint_error_dev(self, "failed to establish interrupt %d\n",
-		    aaa->aaa_intr);
+	char intrstr[128];
+	if (!fdtbus_intr_str(phandle, 0, intrstr, sizeof(intrstr))) {
+		aprint_error(": failed to decode interrupt\n");
 		return;
 	}
-	aprint_normal_dev(self, "interrupting on intr %d\n", aaa->aaa_intr);
+
+	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_SDMMC,
+	    FDT_INTR_MPSAFE, sdhost_intr, sc);
+	if (sc->sc_ih == NULL) {
+		aprint_error_dev(self, "failed to establish interrupt %s\n",
+		    intrstr);
+		return;
+	}
+	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 
 	config_interrupts(self, sdhost_attach_i);
 }
@@ -335,6 +363,8 @@ sdhost_dma_transfer(struct sdhost_softc *sc, struct sdmmc_command *cmd)
 		    __SHIFTIN(13, DMAC_TI_PERMAP); /* SD HOST */
 		sc->sc_cblk[seg].cb_txfr_len =
 		    cmd->c_dmamap->dm_segs[seg].ds_len;
+		const bus_addr_t ad_sddata = sc->sc_addr + SDDATA;
+
 		/*
 		 * All transfers are assumed to be multiples of 32-bits.
 		 */
@@ -349,8 +379,7 @@ sdhost_dma_transfer(struct sdhost_softc *sc, struct sdmmc_command *cmd)
 			if ((sc->sc_cblk[seg].cb_txfr_len & 0xf) == 0)
 				sc->sc_cblk[seg].cb_ti |= DMAC_TI_DEST_WIDTH;
 			sc->sc_cblk[seg].cb_ti |= DMAC_TI_SRC_DREQ;
-			sc->sc_cblk[seg].cb_source_ad =
-			    sc->sc_addr + SDDATA;
+			sc->sc_cblk[seg].cb_source_ad = ad_sddata;
 			sc->sc_cblk[seg].cb_dest_ad =
 			    cmd->c_dmamap->dm_segs[seg].ds_addr;
 		} else {
@@ -365,8 +394,7 @@ sdhost_dma_transfer(struct sdhost_softc *sc, struct sdmmc_command *cmd)
 			sc->sc_cblk[seg].cb_ti |= DMAC_TI_WAIT_RESP;
 			sc->sc_cblk[seg].cb_source_ad =
 			    cmd->c_dmamap->dm_segs[seg].ds_addr;
-			sc->sc_cblk[seg].cb_dest_ad =
-			    sc->sc_addr + SDDATA;
+			sc->sc_cblk[seg].cb_dest_ad = ad_sddata;
 		}
 		sc->sc_cblk[seg].cb_stride = 0;
 		if (seg == cmd->c_dmamap->dm_nsegs - 1) {

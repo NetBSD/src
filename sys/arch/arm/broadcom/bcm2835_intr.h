@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_intr.h,v 1.3 2015/07/29 10:47:58 skrll Exp $	*/
+/*	$NetBSD: bcm2835_intr.h,v 1.4 2017/12/10 21:38:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -32,18 +32,10 @@
 #ifndef _BCM2835_INTR_H_
 #define	_BCM2835_INTR_H_
 
-#define	ARM_IRQ_HANDLER	_C_LABEL(bcm2835_irq_handler)
-
 #ifndef _LOCORE
 
-void bcm2835_irq_handler(void *);
-
-#define PIC_MAXSOURCES 96 + (4*32)
-#define PIC_MAXMAXSOURCES 96 + (4*32) + 32
-
-#include <arm/pic/picvar.h>
-
-void bcm2836mp_intr_init(struct cpu_info *);
+CTASSERT(PIC_MAXSOURCES >= 96 + (4*32));
+CTASSERT(PIC_MAXMAXSOURCES >= 96 + (4*32) + 32);
 
 #endif	/* _LOCORE */
 
