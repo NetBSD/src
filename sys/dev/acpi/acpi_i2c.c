@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_i2c.c,v 1.1 2017/12/10 16:51:30 bouyer Exp $ */
+/* $NetBSD: acpi_i2c.c,v 1.2 2017/12/11 08:40:45 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -30,11 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_i2c.c,v 1.1 2017/12/10 16:51:30 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_i2c.c,v 1.2 2017/12/11 08:40:45 bouyer Exp $");
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_i2c.h>
+
+#define _COMPONENT	ACPI_BUS_COMPONENT
+ACPI_MODULE_NAME	("acpi_i2c")
 
 static void
 acpi_enter_i2c_hid(struct acpi_devnode *devnode, prop_dictionary_t dev)
