@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_psref.c,v 1.7 2017/06/01 02:45:13 chs Exp $	*/
+/*	$NetBSD: subr_psref.c,v 1.8 2017/12/11 02:33:17 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_psref.c,v 1.7 2017/06/01 02:45:13 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_psref.c,v 1.8 2017/12/11 02:33:17 knakahara Exp $");
 
 #include <sys/types.h>
 #include <sys/condvar.h>
@@ -78,7 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_psref.c,v 1.7 2017/06/01 02:45:13 chs Exp $");
 #include <sys/queue.h>
 #include <sys/xcall.h>
 
-LIST_HEAD(psref_head, psref);
+SLIST_HEAD(psref_head, psref);
 
 static bool	_psref_held(const struct psref_target *, struct psref_class *,
 		    bool);
@@ -135,7 +135,7 @@ psref_cpu_drained_p(void *p, void *cookie, struct cpu_info *ci __unused)
 	const struct psref_cpu *pcpu = p;
 	bool *retp = cookie;
 
-	if (!LIST_EMPTY(&pcpu->pcpu_head))
+	if (!SLIST_EMPTY(&pcpu->pcpu_head))
 		*retp = false;
 }
 
@@ -194,7 +194,7 @@ psref_check_duplication(struct psref_cpu *pcpu, struct psref *psref,
 	bool found = false;
 	struct psref *_psref;
 
-	LIST_FOREACH(_psref, &pcpu->pcpu_head, psref_entry) {
+	SLIST_FOREACH(_psref, &pcpu->pcpu_head, psref_entry) {
 		if (_psref == psref &&
 		    _psref->psref_target == target) {
 			found = true;
@@ -250,7 +250,7 @@ psref_acquire(struct psref *psref, const struct psref_target *target,
 #endif
 
 	/* Record our reference.  */
-	LIST_INSERT_HEAD(&pcpu->pcpu_head, psref, psref_entry);
+	SLIST_INSERT_HEAD(&pcpu->pcpu_head, psref, psref_entry);
 	psref->psref_target = target;
 	psref->psref_lwp = curlwp;
 	psref->psref_cpu = curcpu();
@@ -273,6 +273,7 @@ void
 psref_release(struct psref *psref, const struct psref_target *target,
     struct psref_class *class)
 {
+	struct psref_cpu *pcpu;
 	int s;
 
 	KASSERTMSG((kpreempt_disabled() || cpu_softintr_p() ||
@@ -302,7 +303,9 @@ psref_release(struct psref *psref, const struct psref_target *target,
 	 * (as does blocking interrupts).
 	 */
 	s = splraiseipl(class->prc_iplcookie);
-	LIST_REMOVE(psref, psref_entry);
+	pcpu = percpu_getref(class->prc_percpu);
+	SLIST_REMOVE(&pcpu->pcpu_head, psref, psref, psref_entry);
+	percpu_putref(class->prc_percpu);
 	splx(s);
 
 	/* If someone is waiting for users to drain, notify 'em.  */
@@ -353,7 +356,7 @@ psref_copy(struct psref *pto, const struct psref *pfrom,
 	pcpu = percpu_getref(class->prc_percpu);
 
 	/* Record the new reference.  */
-	LIST_INSERT_HEAD(&pcpu->pcpu_head, pto, psref_entry);
+	SLIST_INSERT_HEAD(&pcpu->pcpu_head, pto, psref_entry);
 	pto->psref_target = pfrom->psref_target;
 	pto->psref_lwp = curlwp;
 	pto->psref_cpu = curcpu();
@@ -474,7 +477,7 @@ _psref_held(const struct psref_target *target, struct psref_class *class,
 	pcpu = percpu_getref(class->prc_percpu);
 
 	/* Search through all the references on this CPU.  */
-	LIST_FOREACH(psref, &pcpu->pcpu_head, psref_entry) {
+	SLIST_FOREACH(psref, &pcpu->pcpu_head, psref_entry) {
 		/* Sanity-check the reference's CPU.  */
 		KASSERTMSG((psref->psref_cpu == curcpu()),
 		    "passive reference transferred from CPU %u to CPU %u",
