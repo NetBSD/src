@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.285 2017/11/17 07:37:12 ozaki-r Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.286 2017/12/11 05:47:18 ryo Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.285 2017/11/17 07:37:12 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.286 2017/12/11 05:47:18 ryo Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1411,9 +1411,8 @@ ip_pktinfo_prepare(const struct in_pktinfo *pktinfo, struct ip_pktopts *pktopts,
  */
 int
 ip_setpktopts(struct mbuf *control, struct ip_pktopts *pktopts, int *flags,
-    struct inpcb *inp, kauth_cred_t cred, int uproto)
+    struct inpcb *inp, kauth_cred_t cred)
 {
-	struct inpcb *xinp;
 	struct cmsghdr *cm;
 	struct in_pktinfo *pktinfo;
 	int error;
@@ -1453,16 +1452,6 @@ ip_setpktopts(struct mbuf *control, struct ip_pktopts *pktopts, int *flags,
 			    cred);
 			if (error != 0)
 				return error;
-
-			if ((uproto == IPPROTO_UDP) &&
-			    !in_nullhost(pktopts->ippo_laddr.sin_addr)) {
-				/* Checking laddr:port already in use? */
-				xinp = in_pcblookup_bind(&udbtable,
-				    pktopts->ippo_laddr.sin_addr,
-				    inp->inp_lport);
-				if ((xinp != NULL) && (xinp != inp))
-					return EADDRINUSE;
-			}
 			break;
 		default:
 			return ENOPROTOOPT;
