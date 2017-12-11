@@ -1,4 +1,4 @@
-/*	$NetBSD: t_pktinfo_send.c,v 1.1 2017/08/10 04:31:58 ryo Exp $	*/
+/*	$NetBSD: t_pktinfo_send.c,v 1.2 2017/12/11 05:47:18 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_pktinfo_send.c,v 1.1 2017/08/10 04:31:58 ryo Exp $");
+__RCSID("$NetBSD: t_pktinfo_send.c,v 1.2 2017/12/11 05:47:18 ryo Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -360,22 +360,8 @@ ATF_TC_BODY(pktinfo_send_bindother, tc)
 	RL(client = rump_sys_socket(AF_INET, SOCK_DGRAM, 0));
 	RL(rv = sock_bind(client, "127.0.0.3", CLIENTPORT));
 
-	/*
-	 * other socket is bound "127.0.0.2:12345".
-	 * client socket is bound "127.0.0.3:12345".
-	 * client socket sendto w/IP_PKTINFO "127.0.0.2",
-	 * this should be error as EADDRINUSE.
-	 */
-	rv = sendto_pktinfo(client, message, strlen(message), 0,
-	    "127.0.0.2", "127.0.0.1", SERVERPORT);
-
-	ATF_REQUIRE_MSG(rv == -1,
-	    "sendmsg with in-use address:port should be error,"
-	    " but success");
-	ATF_REQUIRE_MSG(errno == EADDRINUSE,
-	    "sendmsg with in-use address:port should be EADDRINUSE,"
-	    " but got %s", strerror(errno));
-
+	/* do sendmsg w/IP_PKTINFO tests */
+	do_send_pktinfo_tests(client, server, message, strlen(message));
 
 	rump_sys_close(client);
 	rump_sys_close(server);
