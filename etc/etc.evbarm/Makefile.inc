@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.91 2017/11/30 19:54:50 jmcneill Exp $
+#	$NetBSD: Makefile.inc,v 1.92 2017/12/11 11:38:14 jmcneill Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -175,19 +175,19 @@ SNAP_MD_POST_DEPS+=	smp_armv7
 .if !empty(KERNEL_SETS:MRPI)
 smp_rpi: __mkimage
 .if empty(ALL_KERNELS) || !empty(ALL_KERNELS:MRPI)
-MKI_OPTS.smp_rpi=	-K ${IMAGE.kern}/netbsd-RPI.bin.gz
+MKI_OPTS.smp_rpi=	-K ${IMAGE.kern}/netbsd-RPI.img.gz
 SNAP_MD_POST_DEPS+=	smp_rpi
 .endif
-smp_rpi_inst: ${IMAGE.instk}/netbsd-RPI_INSTALL.bin.gz __mkimage
+smp_rpi_inst: ${IMAGE.instk}/netbsd-RPI_INSTALL.img.gz __mkimage
 .if empty(ALL_KERNELS) || !empty(ALL_KERNELS:MRPI_INSTALL)
-MKI_OPTS.smp_rpi_inst=	-b -K ${IMAGE.instk}/netbsd-RPI_INSTALL.bin.gz
+MKI_OPTS.smp_rpi_inst=	-b -K ${IMAGE.instk}/netbsd-RPI_INSTALL.img.gz
 SNAP_MD_POST_DEPS+=	smp_rpi_inst
 .endif
 .endif
 
 snap_md_post: check_DESTDIR check_RELEASEDIR snap_post .WAIT ${SNAP_MD_POST_DEPS}
 
-KERNEL_SUFFIXES=	bin srec ub
+KERNEL_SUFFIXES=	bin img srec ub
 
 INSTALLATION_DIRS+=	binary/gzimg		\
 			installation/instkernel
