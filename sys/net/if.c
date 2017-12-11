@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.412 2017/12/11 03:25:45 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.413 2017/12/11 03:29:20 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.412 2017/12/11 03:25:45 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.413 2017/12/11 03:29:20 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1313,9 +1313,9 @@ if_detach(struct ifnet *ifp)
 	s = splnet();
 
 	sysctl_teardown(&ifp->if_sysctl_log);
-	mutex_enter(ifp->if_ioctl_lock);
+	IFNET_LOCK(ifp);
 	if_deactivate(ifp);
-	mutex_exit(ifp->if_ioctl_lock);
+	IFNET_UNLOCK(ifp);
 
 	IFNET_GLOBAL_LOCK();
 	ifindex2ifnet[ifp->if_index] = NULL;
@@ -1604,9 +1604,9 @@ if_clone_destroy(const char *name)
 		return ENXIO;
 
 	/* We have to disable ioctls here */
-	mutex_enter(ifp->if_ioctl_lock);
+	IFNET_LOCK(ifp);
 	ifp->if_ioctl = if_nullioctl;
-	mutex_exit(ifp->if_ioctl_lock);
+	IFNET_UNLOCK(ifp);
 
 	/*
 	 * We cannot call ifc_destroy with holding ifp.
@@ -2486,7 +2486,7 @@ void
 if_down_locked(struct ifnet *ifp)
 {
 
-	KASSERT(mutex_owned(ifp->if_ioctl_lock));
+	KASSERT(IFNET_LOCKED(ifp));
 	_if_down(ifp);
 }
 
@@ -2499,9 +2499,9 @@ void
 if_down(struct ifnet *ifp)
 {
 
-	mutex_enter(ifp->if_ioctl_lock);
+	IFNET_LOCK(ifp);
 	if_down_locked(ifp);
-	mutex_exit(ifp->if_ioctl_lock);
+	IFNET_UNLOCK(ifp);
 }
 
 /*
@@ -2515,7 +2515,7 @@ if_up_locked(struct ifnet *ifp)
 #endif
 	struct domain *dp;
 
-	KASSERT(mutex_owned(ifp->if_ioctl_lock));
+	KASSERT(IFNET_LOCKED(ifp));
 
 	KASSERT(!if_is_deactivated(ifp));
 	ifp->if_flags |= IFF_UP;
@@ -2571,9 +2571,9 @@ void
 if_up(struct ifnet *ifp)
 {
 
-	mutex_enter(ifp->if_ioctl_lock);
+	IFNET_LOCK(ifp);
 	if_up_locked(ifp);
-	mutex_exit(ifp->if_ioctl_lock);
+	IFNET_UNLOCK(ifp);
 }
 
 /*
@@ -2588,7 +2588,7 @@ ifpromisc_locked(struct ifnet *ifp, int pswitch)
 	int pcount, ret = 0;
 	short nflags;
 
-	KASSERT(mutex_owned(ifp->if_ioctl_lock));
+	KASSERT(IFNET_LOCKED(ifp));
 
 	pcount = ifp->if_pcount;
 	if (pswitch) {
@@ -2619,9 +2619,9 @@ ifpromisc(struct ifnet *ifp, int pswitch)
 {
 	int e;
 
-	mutex_enter(ifp->if_ioctl_lock);
+	IFNET_LOCK(ifp);
 	e = ifpromisc_locked(ifp, pswitch);
-	mutex_exit(ifp->if_ioctl_lock);
+	IFNET_UNLOCK(ifp);
 
 	return e;
 }
@@ -3195,7 +3195,7 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 	oif_flags = ifp->if_flags;
 
 	KERNEL_LOCK_UNLESS_IFP_MPSAFE(ifp);
-	mutex_enter(ifp->if_ioctl_lock);
+	IFNET_LOCK(ifp);
 
 	error = (*ifp->if_ioctl)(ifp, cmd, data);
 	if (error != ENOTTY)
@@ -3226,7 +3226,7 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 		ifreqn2o(oifr, ifr);
 #endif
 
-	mutex_exit(ifp->if_ioctl_lock);
+	IFNET_UNLOCK(ifp);
 	KERNEL_UNLOCK_UNLESS_IFP_MPSAFE(ifp);
 out:
 	if_put(ifp, &psref);
@@ -3484,7 +3484,7 @@ if_addr_init(ifnet_t *ifp, struct ifaddr *ifa, const bool src)
 {
 	int rc;
 
-	KASSERT(mutex_owned(ifp->if_ioctl_lock));
+	KASSERT(IFNET_LOCKED(ifp));
 	if (ifp->if_initaddr != NULL)
 		rc = (*ifp->if_initaddr)(ifp, ifa, src);
 	else if (src ||
@@ -3532,7 +3532,7 @@ if_flags_set(ifnet_t *ifp, const short flags)
 {
 	int rc;
 
-	KASSERT(mutex_owned(ifp->if_ioctl_lock));
+	KASSERT(IFNET_LOCKED(ifp));
 
 	if (ifp->if_setflags != NULL)
 		rc = (*ifp->if_setflags)(ifp, flags);

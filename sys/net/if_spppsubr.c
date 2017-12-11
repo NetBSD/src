@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.176 2017/12/07 03:16:24 ozaki-r Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.177 2017/12/11 03:29:20 ozaki-r Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.176 2017/12/07 03:16:24 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.177 2017/12/11 03:29:20 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -5271,7 +5271,7 @@ sppp_set_ip_addrs_work(struct work *wk, struct sppp *sp)
 	uint32_t myaddr = 0, hisaddr = 0;
 	int s;
 
-	mutex_enter(ifp->if_ioctl_lock);
+	IFNET_LOCK(ifp);
 
 	/*
 	 * Pick the first AF_INET address from the list,
@@ -5336,7 +5336,7 @@ sppp_set_ip_addrs_work(struct work *wk, struct sppp *sp)
 			    ifp->if_xname, ifp->if_mtu);
 	}
 
-	mutex_exit(ifp->if_ioctl_lock);
+	IFNET_UNLOCK(ifp);
 
 	sppp_notify_con(sp);
 }
@@ -5369,7 +5369,7 @@ sppp_clear_ip_addrs_work(struct work *wk, struct sppp *sp)
 	struct sockaddr_in *si, *dest;
 	int s;
 
-	mutex_enter(ifp->if_ioctl_lock);
+	IFNET_LOCK(ifp);
 
 	/*
 	 * Pick the first AF_INET address from the list,
@@ -5421,7 +5421,7 @@ sppp_clear_ip_addrs_work(struct work *wk, struct sppp *sp)
 			    ifp->if_xname, ifp->if_mtu);
 	}
 
-	mutex_exit(ifp->if_ioctl_lock);
+	IFNET_UNLOCK(ifp);
 }
 
 static void
@@ -5539,7 +5539,7 @@ sppp_set_ip6_addr(struct sppp *sp, const struct in6_addr *src)
 	int s;
 	struct psref psref;
 
-	mutex_enter(ifp->if_ioctl_lock);
+	IFNET_LOCK(ifp);
 
 	/*
 	 * Pick the first link-local AF_INET6 address from the list,
@@ -5579,7 +5579,7 @@ sppp_set_ip6_addr(struct sppp *sp, const struct in6_addr *src)
 		ifa_release(ifa, &psref);
 	}
 
-	mutex_exit(ifp->if_ioctl_lock);
+	IFNET_UNLOCK(ifp);
 }
 #endif
 
