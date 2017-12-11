@@ -1,4 +1,4 @@
-/*	$NetBSD: softmagic.c,v 1.17 2017/09/08 13:40:25 christos Exp $	*/
+/*	$NetBSD: softmagic.c,v 1.18 2017/12/11 23:19:38 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -37,7 +37,7 @@
 #if 0
 FILE_RCSID("@(#)$File: softmagic.c,v 1.249 2017/06/19 18:30:25 christos Exp $")
 #else
-__RCSID("$NetBSD: softmagic.c,v 1.17 2017/09/08 13:40:25 christos Exp $");
+__RCSID("$NetBSD: softmagic.c,v 1.18 2017/12/11 23:19:38 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -127,6 +127,8 @@ private const char * __attribute__((__format_arg__(3)))
 file_fmtcheck(struct magic_set *ms, const struct magic *m, const char *def,
 	const char *file, size_t line)
 {
+	if (strchr(m->desc, '%') == NULL)
+		return m->desc;
 	const char *ptr = fmtcheck(m->desc, def);
 	if (ptr == def)
 		file_magerror(ms,
