@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.251 2017/12/08 05:22:23 ozaki-r Exp $	*/
+/*	$NetBSD: if.h,v 1.252 2017/12/11 03:25:45 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -1185,9 +1185,9 @@ __END_DECLS
 		}							\
 	} while (0)
 
-#define	IFNET_LOCK()			mutex_enter(&ifnet_mtx)
-#define	IFNET_UNLOCK()			mutex_exit(&ifnet_mtx)
-#define	IFNET_LOCKED()			mutex_owned(&ifnet_mtx)
+#define	IFNET_GLOBAL_LOCK()			mutex_enter(&ifnet_mtx)
+#define	IFNET_GLOBAL_UNLOCK()			mutex_exit(&ifnet_mtx)
+#define	IFNET_GLOBAL_LOCKED()			mutex_owned(&ifnet_mtx)
 
 #define IFNET_READER_EMPTY() \
 	(PSLIST_READER_FIRST(&ifnet_pslist, struct ifnet, if_pslist_entry) == NULL)

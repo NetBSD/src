@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_os.c,v 1.8 2017/11/17 07:37:12 ozaki-r Exp $	*/
+/*	$NetBSD: npf_os.c,v 1.9 2017/12/11 03:25:46 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2009-2016 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_os.c,v 1.8 2017/11/17 07:37:12 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_os.c,v 1.9 2017/12/11 03:25:46 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pf.h"
@@ -313,11 +313,11 @@ npf_ifop_flush(void *arg)
 	ifnet_t *ifp;
 
 	KERNEL_LOCK(1, NULL);
-	IFNET_LOCK();
+	IFNET_GLOBAL_LOCK();
 	IFNET_WRITER_FOREACH(ifp) {
 		ifp->if_pf_kif = arg;
 	}
-	IFNET_UNLOCK();
+	IFNET_GLOBAL_UNLOCK();
 	KERNEL_UNLOCK_ONE(NULL);
 }
 

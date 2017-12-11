@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ifaddr.c,v 1.2 2017/01/03 00:58:05 rmind Exp $	*/
+/*	$NetBSD: npf_ifaddr.c,v 1.3 2017/12/11 03:25:46 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ifaddr.c,v 1.2 2017/01/03 00:58:05 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ifaddr.c,v 1.3 2017/12/11 03:25:46 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -170,11 +170,11 @@ npf_ifaddr_syncall(npf_t *npf)
 	ifnet_t *ifp;
 
 	KERNEL_LOCK(1, NULL);
-	IFNET_LOCK();
+	IFNET_GLOBAL_LOCK();
 	IFNET_WRITER_FOREACH(ifp) {
 		npf_ifaddr_sync(npf, ifp);
 	}
-	IFNET_UNLOCK();
+	IFNET_GLOBAL_UNLOCK();
 	KERNEL_UNLOCK_ONE(NULL);
 }
 

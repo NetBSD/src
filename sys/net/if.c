@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.411 2017/12/08 05:22:23 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.412 2017/12/11 03:25:45 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.411 2017/12/08 05:22:23 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.412 2017/12/11 03:25:45 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -732,9 +732,9 @@ if_initialize(ifnet_t *ifp)
 	ifp->if_ioctl_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
 	LIST_INIT(&ifp->if_multiaddrs);
 
-	IFNET_LOCK();
+	IFNET_GLOBAL_LOCK();
 	if_getindex(ifp);
-	IFNET_UNLOCK();
+	IFNET_GLOBAL_UNLOCK();
 
 	return 0;
 
@@ -781,10 +781,10 @@ if_register(ifnet_t *ifp)
 	if (ifp->if_transmit == NULL || ifp->if_transmit == if_nulltransmit)
 		ifp->if_transmit = if_transmit;
 
-	IFNET_LOCK();
+	IFNET_GLOBAL_LOCK();
 	TAILQ_INSERT_TAIL(&ifnet_list, ifp, if_list);
 	IFNET_WRITER_INSERT_TAIL(ifp);
-	IFNET_UNLOCK();
+	IFNET_GLOBAL_UNLOCK();
 }
 
 /*
@@ -1317,12 +1317,12 @@ if_detach(struct ifnet *ifp)
 	if_deactivate(ifp);
 	mutex_exit(ifp->if_ioctl_lock);
 
-	IFNET_LOCK();
+	IFNET_GLOBAL_LOCK();
 	ifindex2ifnet[ifp->if_index] = NULL;
 	TAILQ_REMOVE(&ifnet_list, ifp, if_list);
 	IFNET_WRITER_REMOVE(ifp);
 	pserialize_perform(ifnet_psz);
-	IFNET_UNLOCK();
+	IFNET_GLOBAL_UNLOCK();
 
 	/* Wait for all readers to drain before freeing.  */
 	psref_target_destroy(&ifp->if_psref, ifnet_psref_class);
@@ -1793,11 +1793,11 @@ ifa_insert(struct ifnet *ifp, struct ifaddr *ifa)
 
 	ifa->ifa_ifp = ifp;
 
-	IFNET_LOCK();
+	IFNET_GLOBAL_LOCK();
 	TAILQ_INSERT_TAIL(&ifp->if_addrlist, ifa, ifa_list);
 	IFADDR_ENTRY_INIT(ifa);
 	IFADDR_WRITER_INSERT_TAIL(ifp, ifa);
-	IFNET_UNLOCK();
+	IFNET_GLOBAL_UNLOCK();
 
 	ifaref(ifa);
 }
@@ -1808,13 +1808,13 @@ ifa_remove(struct ifnet *ifp, struct ifaddr *ifa)
 
 	KASSERT(ifa->ifa_ifp == ifp);
 
-	IFNET_LOCK();
+	IFNET_GLOBAL_LOCK();
 	TAILQ_REMOVE(&ifp->if_addrlist, ifa, ifa_list);
 	IFADDR_WRITER_REMOVE(ifa);
 #ifdef NET_MPSAFE
 	pserialize_perform(ifnet_psz);
 #endif
-	IFNET_UNLOCK();
+	IFNET_GLOBAL_UNLOCK();
 
 #ifdef NET_MPSAFE
 	psref_target_destroy(&ifa->ifa_psref, ifa_psref_class);
