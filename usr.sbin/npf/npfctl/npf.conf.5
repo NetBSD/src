@@ -1,4 +1,4 @@
-.\"    $NetBSD: npf.conf.5,v 1.50 2017/12/10 22:04:41 rmind Exp $
+.\"    $NetBSD: npf.conf.5,v 1.51 2017/12/11 23:07:49 wiz Exp $
 .\"
 .\" Copyright (c) 2009-2017 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -98,7 +98,6 @@ Tables of type "hash" and "cdb" can only contain IP addresses.
 Also, the latter can only be static.
 .Ss Interfaces
 Interfaces can be specified as the values of the variables:
-.Pp
 .Bd -literal
 $pub_if_list = { inet4(wm0), inet4(wm1) }
 .Ed
@@ -131,7 +130,6 @@ keyword can be used in combination to make the filtering more narrow.
 .Ss Groups
 Groups may have the following options: name, interface, and direction.
 They are defined in the following form:
-.Pp
 .Bd -literal
 group "my-name" in on wm0 {
 	# List of rules
