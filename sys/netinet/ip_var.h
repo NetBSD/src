@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.120 2017/08/10 04:31:58 ryo Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.121 2017/12/11 05:47:18 ryo Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -215,7 +215,7 @@ void	in_init(void);
 
 int	 ip_ctloutput(int, struct socket *, struct sockopt *);
 int	 ip_setpktopts(struct mbuf *, struct ip_pktopts *, int *,
-	    struct inpcb *, kauth_cred_t, int);
+	    struct inpcb *, kauth_cred_t);
 void	 ip_drain(void);
 void	 ip_drainstub(void);
 void	 ip_freemoptions(struct ip_moptions *);

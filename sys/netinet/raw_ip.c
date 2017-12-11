@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.166 2017/08/10 04:31:58 ryo Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.167 2017/12/11 05:47:18 ryo Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.166 2017/08/10 04:31:58 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.167 2017/12/11 05:47:18 ryo Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -322,8 +322,7 @@ rip_output(struct mbuf *m, struct inpcb *inp, struct mbuf *control,
 
 	/* Setup IP outgoing packet options */
 	memset(&pktopts, 0, sizeof(pktopts));
-	error = ip_setpktopts(control, &pktopts, &flags, inp, cred,
-	    IPPROTO_RAW);
+	error = ip_setpktopts(control, &pktopts, &flags, inp, cred);
 	if (control != NULL)
 		m_freem(control);
 	if (error != 0)
