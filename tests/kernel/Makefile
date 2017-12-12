@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.50 2017/12/10 15:37:54 christos Exp $
+# $NetBSD: Makefile,v 1.51 2017/12/12 18:19:45 christos Exp $
 
 NOMAN=		# defined
 
@@ -46,9 +46,10 @@ LDADD.t_extattrctl+= -lrump -lpthread
 LDADD.t_filedesc+=  ${LDADD.t_rnd}
 LDADD.t_rnd+=  -lrumpvfs -lrumpdev_rnd -lrumpdev -lrump -lrumpuser
 LDADD.t_rnd+=  -lrump -lpthread
-LDADD.t_timeleft+=	-lpthread
 
 .endif
+
+LDADD.t_timeleft+=	-lpthread
 
 CPPFLAGS+=	-D_KERNTYPES
 
