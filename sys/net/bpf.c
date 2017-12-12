@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.220 2017/11/30 20:25:55 christos Exp $	*/
+/*	$NetBSD: bpf.c,v 1.221 2017/12/12 06:26:57 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.220 2017/11/30 20:25:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.221 2017/12/12 06:26:57 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -662,7 +662,7 @@ bpf_read(struct file *fp, off_t *offp, struct uio *uio,
 
 	mutex_enter(d->bd_mtx);
 	if (d->bd_state == BPF_WAITING)
-		callout_halt(&d->bd_callout, d->bd_buf_mtx);
+		callout_halt(&d->bd_callout, d->bd_mtx);
 	timed_out = (d->bd_state == BPF_TIMED_OUT);
 	d->bd_state = BPF_IDLE;
 	mutex_exit(d->bd_mtx);
