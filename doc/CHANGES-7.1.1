@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1.1,v 1.1.2.39 2017/12/02 10:53:44 snj Exp $
+# $NetBSD: CHANGES-7.1.1,v 1.1.2.40 2017/12/12 09:14:41 snj Exp $
 
 A complete list of changes from the NetBSD 7.1 release to the NetBSD 7.1.1
 release:
@@ -3819,4 +3819,9 @@ xsrc/xfree/xc/lib/font/fontfile/fontdir.c	patch
 	Pull up fixes to libXfont and libXcurses for CVEs
 	2017-13722, 2017-13720, 2017-16611, and 2017-16612.
 	[mrg, ticket #1535]
+
+sys/arch/x86/x86/fpu.c				1.19 via patch
+
+	Properly mask mxcsr to prevent faults.
+	[maxv, ticket #1540]
 
