@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.2,v 1.1.2.56 2017/12/03 10:34:39 snj Exp $
+# $NetBSD: CHANGES-7.2,v 1.1.2.57 2017/12/12 09:14:27 snj Exp $
 
 A complete list of changes from the NetBSD 7.1 release to the NetBSD 7.2
 release:
@@ -4897,4 +4897,9 @@ sys/arch/arm/cortex/a9_mpsubr.S			1.52
 
 	Ensure CNTVOFF is 0 before dropping out of Hyp mode
 	[skrll, ticket #1524]
+
+sys/arch/x86/x86/fpu.c				1.19 via patch
+
+	Properly mask mxcsr to prevent faults.
+	[maxv, ticket #1540]
 
