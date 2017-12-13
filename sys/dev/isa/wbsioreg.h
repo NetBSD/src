@@ -1,4 +1,4 @@
-/* $NetBSD: wbsioreg.h,v 1.6 2017/12/13 00:26:06 knakahara Exp $ */
+/* $NetBSD: wbsioreg.h,v 1.7 2017/12/13 00:27:53 knakahara Exp $ */
 
 /* $OpenBSD: wbsioreg.h,v 1.4 2015/01/02 23:02:54 chris Exp $ */
 /*
@@ -96,8 +96,15 @@
 #define WBSIO_GPIO_ADDR_MSB	0x60	/* Address [15:8] */
 #define WBSIO_GPIO_ADDR_LSB	0x61	/* Address [7:0] */
 #define WBSIO_GPIO_CONF		0x30	/* GPIO0, WDT1 config */
+#define WBSIO_WDT_MODE		0xF5	/* WDT1 Control Mode */
+#define WBSIO_WDT_CNTR		0xF6	/* WDT1 Counter */
+#define WBSIO_WDT_STAT		0xF7	/* WDT1 Control & Status */
+#define WBSIO_GPIO4_MFS		0xEE	/* GPIO4 Multi-Function Select */
 
+#define WBSIO_GPIO0_WDT1	__BIT(0)
 #define WBSIO_GPIO0_ENABLE	__BIT(1)
+
+						/* Reserved */
 #define WBSIO_GPIO_BASEADDR	__BIT(3)	/* Base address mode */
 #define WBSIO_GPIO1_ENABLE	__BIT(1)
 #define WBSIO_GPIO2_ENABLE	__BIT(2)
@@ -116,8 +123,20 @@
 #define WBSIO_GPIO_DAT		0x02	/* Data */
 #define WBSIO_GPIO_INV		0x03	/* Inversion */
 #define WBSIO_GPIO_DST		0x04	/* Event Status */
-#define WBSIO_GPIO_WDTMOD	0x05
-#define WBSIO_GPIO_WDTTIM	0x06
+					/* WDT1 Control Mode */
+					/* WDT1 control */
+#define WBSIO_WDT_MODE_LEVEL	__BIT(0)
+					/* enable/disable KBRST */
+#define WBSIO_WDT_MODE_KBCRST	__BIT(2)
+#define WBSIO_WDT_MODE_MINUTES	__BIT(3)
+#define WBSIO_WDT_MODE_FASTER	__BIT(4)
+
+#define WBSIO_WDT_CNTR_STOP	0
+#define WBSIO_WDT_CNTR_MAX	255
+
+#define WBSIO_WDT_STAT_TIMEOUT	__BIT(4)
+#define WBSIO_WDT_STAT_EVENT	__BIT(5)
+
 
 /* NCT6779D */
 #define WBSIO_NCT6779D_MFS2_GP00	__BIT(0)
@@ -159,3 +178,4 @@
 #define WBSIO_NCT6779D_MFS5_GP74	__BIT(5)
 #define WBSIO_NCT6779D_MFS5_GP75	__BIT(6)
 #define WBSIO_NCT6779D_MFS5_GP76	__BIT(7)
+#define WBSIO_NCT6779D_GPIO4_WDTO	__BIT(4)
