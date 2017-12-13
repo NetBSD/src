@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.436 2017/11/07 04:09:08 mlelstv Exp $ */
+/*	$NetBSD: wd.c,v 1.437 2017/12/13 10:24:31 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.436 2017/11/07 04:09:08 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.437 2017/12/13 10:24:31 pgoyette Exp $");
 
 #include "opt_ata.h"
 #include "opt_wd.h"
@@ -535,12 +535,12 @@ wddetach(device_t self, int flags)
 
 #ifdef WD_SOFTBADSECT
 	/* Clean out the bad sector list */
-	while (!SLIST_EMPTY(&sc->sc_bslist)) {
-		void *head = SLIST_FIRST(&sc->sc_bslist);
-		SLIST_REMOVE_HEAD(&sc->sc_bslist, dbs_next);
+	while (!SLIST_EMPTY(&wd->sc_bslist)) {
+		void *head = SLIST_FIRST(&wd->sc_bslist);
+		SLIST_REMOVE_HEAD(&wd->sc_bslist, dbs_next);
 		free(head, M_TEMP);
 	}
-	sc->sc_bscount = 0;
+	wd->sc_bscount = 0;
 #endif
 
 	pmf_device_deregister(self);
@@ -586,11 +586,13 @@ wdstrategy(struct buf *bp)
 	 */
 	if (__predict_false(!SLIST_EMPTY(&wd->sc_bslist))) {
 		struct disk_badsectors *dbs;
-		daddr_t maxblk = blkno + (bp->b_bcount / wd->sc_blksize) - 1;
+		daddr_t maxblk = bp->b_rawblkno +
+		    (bp->b_bcount / wd->sc_blksize) - 1;
 
 		mutex_enter(&wd->sc_lock);
 		SLIST_FOREACH(dbs, &wd->sc_bslist, dbs_next)
-			if ((dbs->dbs_min <= blkno && blkno <= dbs->dbs_max) ||
+			if ((dbs->dbs_min <= bp->b_rawblkno &&
+			     bp->b_rawblkno <= dbs->dbs_max) ||
 			    (dbs->dbs_min <= maxblk && maxblk <= dbs->dbs_max)){
 				mutex_exit(&wd->sc_lock);
 				goto err;
