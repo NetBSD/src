@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.16 2017/12/10 21:38:27 skrll Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.17 2017/12/13 00:22:24 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.16 2017/12/10 21:38:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.17 2017/12/13 00:22:24 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -446,7 +446,7 @@ initarm(void *arg)
 
 	parse_mi_bootargs(boot_args);
 
-	#define MAX_PHYSMEM 4
+	#define MAX_PHYSMEM 16
 	static struct boot_physmem fdt_physmem[MAX_PHYSMEM];
 	int nfdt_physmem = 0;
 	struct extent_region *er;
@@ -455,7 +455,7 @@ initarm(void *arg)
 		DPRINTF("  %lx - %lx\n", er->er_start, er->er_end);
 		struct boot_physmem *bp = &fdt_physmem[nfdt_physmem++];
 
-		KASSERT(nfdt_physmem < MAX_PHYSMEM);
+		KASSERT(nfdt_physmem <= MAX_PHYSMEM);
 		bp->bp_start = atop(er->er_start);
 		bp->bp_pages = atop(er->er_end - er->er_start);
 		bp->bp_freelist = VM_FREELIST_DEFAULT;
