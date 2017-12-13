@@ -785,5 +785,5 @@ Steven M. Schultz for providing 2.8BSD, 2.10BSD, 2.11BSD manual pages.
 Copyright (c) 1997-2012 Wolfram Schneider <wosch@FreeBSD.ORG>
 URL: http://svnweb.freebsd.org/base/head/share/misc/bsd-family-tree
 
-$FreeBSD: head/share/misc/bsd-family-tree 316082 2017-03-28 09:02:42Z maxim $
-$NetBSD: bsd-family-tree,v 1.60 2017/12/12 18:44:57 maya Exp $
+$FreeBSD: head/share/misc/bsd-family-tree 326724 2017-12-09 05:05:25Z imp $
+$NetBSD: bsd-family-tree,v 1.61 2017/12/13 11:17:54 maya Exp $
