@@ -1,4 +1,4 @@
-/*	$NetBSD: wbsio.c,v 1.19 2017/12/13 00:29:02 knakahara Exp $	*/
+/*	$NetBSD: wbsio.c,v 1.20 2017/12/13 00:31:46 knakahara Exp $	*/
 /*	$OpenBSD: wbsio.c,v 1.10 2015/03/14 03:38:47 jsg Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
@@ -470,7 +470,8 @@ wbsio_gpio_search(device_t parent, cfdata_t cf, const int *slocs, void *aux)
 		sc->sc_gpio_rt = true;
 		break;
 	default:
-		aprint_error_dev(parent, "GPIO is not supported\n");
+		aprint_error_dev(parent, "%s's GPIO is not supported yet\n",
+		    product->str);
 		return -1;
 	}
 
