@@ -1,0 +1,9 @@
+# $NetBSD: files.mtkatlas,v 1.1.2.1 2017/12/13 01:24:08 matt Exp $
+#
+# Mediatek Atlas evaluation board configuration info
+#
+
+include "arch/evbarm/conf/files.fdt"
+
+include "arch/arm/mediatek/files.mtk"
+
