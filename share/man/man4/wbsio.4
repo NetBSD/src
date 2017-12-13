@@ -1,4 +1,4 @@
-.\"	$NetBSD: wbsio.4,v 1.7 2017/12/13 00:32:32 knakahara Exp $
+.\"	$NetBSD: wbsio.4,v 1.8 2017/12/13 12:12:35 wiz Exp $
 .\"	$OpenBSD: wbsio.4,v 1.2 2008/02/17 16:48:47 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
@@ -31,19 +31,22 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the Winbond (was spun off as Nuvoton) LPC Super I/O
-ICs.
+driver provides support for the Winbond (was spun off as Nuvoton)
+LPC Super I/O ICs.
 The hardware monitoring function and GPIO are currently supported.
 .Pp
 Support for the hardware monitor function is provided through the
 .Xr lm 4
-driver. The GPIO function supports 64 pins for NCT6795D. Access to the pins
-provided by the gpio(4) interface.
+driver.
+The GPIO function supports 64 pins for NCT6795D.
+Access to the pins provided by the
+.Xr gpio 4
+interface.
 .Sh SEE ALSO
+.Xr gpio 4 ,
 .Xr intro 4 ,
 .Xr isa 4 ,
-.Xr lm 4 ,
-.Xr gpio 4
+.Xr lm 4
 .Sh HISTORY
 The
 .Nm
