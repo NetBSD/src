@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.157 2017/12/13 11:31:42 uwe Exp $	*/
+/*	$NetBSD: route.c,v 1.158 2017/12/13 17:42:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.157 2017/12/13 11:31:42 uwe Exp $");
+__RCSID("$NetBSD: route.c,v 1.158 2017/12/13 17:42:44 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,6 +68,7 @@ __RCSID("$NetBSD: route.c,v 1.157 2017/12/13 11:31:42 uwe Exp $");
 #include <time.h>
 #include <paths.h>
 #include <err.h>
+#include <util.h>
 
 #include "keywords.h"
 #include "extern.h"
@@ -1291,14 +1292,10 @@ const char * const msgtypes[] = {
 	[RTM_CHGADDR] = "RTM_CHGADDR: address being changed on iface",
 };
 
-const char metricnames[] =
-"\011pksent\010rttvar\7rtt\6ssthresh\5sendpipe\4recvpipe\3expire\2hopcount\1mtu";
-const char routeflags[] =
-"\1UP\2GATEWAY\3HOST\4REJECT\5DYNAMIC\6MODIFIED\7DONE\010MASK_PRESENT\011CONNECTED\012XRESOLVE\013LLINFO\014STATIC\015BLACKHOLE\016CLONED\017PROTO2\020PROTO1\023LOCAL\024BROADCAST";
-const char ifnetflags[] =
-"\1UP\2BROADCAST\3DEBUG\4LOOPBACK\5PTP\6NOTRAILERS\7RUNNING\010NOARP\011PROMISC\012ALLMULTI\013OACTIVE\014SIMPLEX\015LINK0\016LINK1\017LINK2\020MULTICAST";
-const char addrnames[] =
-"\1DST\2GATEWAY\3NETMASK\4GENMASK\5IFP\6IFA\7AUTHOR\010BRD\011TAG";
+const char metricnames[] = RTVBITS;
+const char routeflags[] = RTFBITS;
+const char ifnetflags[] = IFFBITS;
+const char addrnames[] = RTABITS;
 
 
 #ifndef SMALL
@@ -1659,30 +1656,10 @@ pmsg_addrs(const char *cp, int addrs)
 static void
 bprintf(FILE *fp, int b, const char *f)
 {
-	int i;
-	int gotsome = 0;
-	const uint8_t *s = (const uint8_t *)f;
+	char buf[1024];
 
-	if (b == 0) {
-		fputs("none", fp);
-		return;
-	}
-	while ((i = *s++) != 0) {
-		if (b & (1 << (i-1))) {
-			if (gotsome == 0)
-				i = '<';
-			else
-				i = ',';
-			(void)putc(i, fp);
-			gotsome = 1;
-			for (; (i = *s) > 32; s++)
-				(void)putc(i, fp);
-		} else
-			while (*s > 32)
-				s++;
-	}
-	if (gotsome)
-		(void)putc('>', fp);
+	snprintb(buf, sizeof(buf), f, b);
+	fputs(buf, fp);
 }
 
 int
