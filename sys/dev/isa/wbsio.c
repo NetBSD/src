@@ -1,4 +1,4 @@
-/*	$NetBSD: wbsio.c,v 1.15 2017/08/18 04:07:51 msaitoh Exp $	*/
+/*	$NetBSD: wbsio.c,v 1.16 2017/12/13 00:26:06 knakahara Exp $	*/
 /*	$OpenBSD: wbsio.c,v 1.10 2015/03/14 03:38:47 jsg Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
@@ -20,11 +20,14 @@
  * Winbond LPC Super I/O driver.
  */
 
+#include <sys/cdefs.h>
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/module.h>
 #include <sys/systm.h>
+#include <sys/mutex.h>
+#include <sys/gpio.h>
 
 #include <sys/bus.h>
 
@@ -32,15 +35,34 @@
 #include <dev/isa/isavar.h>
 #include <dev/isa/wbsioreg.h>
 
+/* Don't use gpio for now in the module */
+#ifndef _MODULE
+#include "gpio.h"
+#endif
+#if NGPIO > 0
+#include <dev/gpio/gpiovar.h>
+#endif
+
 struct wbsio_softc {
 	device_t	sc_dev;
 	device_t	sc_lm_dev;
+#if NGPIO > 0
+	device_t	sc_gpio_dev;
+#endif
 
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 
 	struct isa_attach_args	sc_ia;
 	struct isa_io		sc_io;
+
+#if NGPIO > 0
+	bus_space_handle_t	sc_gpio_ioh;
+	kmutex_t		sc_gpio_lock;
+	struct gpio_chipset_tag	sc_gpio_gc;
+	struct gpio_pin		sc_gpio_pins[WBSIO_GPIO_NPINS];
+	bool			sc_gpio_rt;
+#endif
 };
 
 static const struct wbsio_product {
@@ -79,6 +101,17 @@ static int	wbsio_rescan(device_t, const char *, const int *);
 static void	wbsio_childdet(device_t, device_t);
 static int	wbsio_print(void *, const char *);
 static int	wbsio_search(device_t, cfdata_t, const int *, void *);
+#if NGPIO > 0
+static int	wbsio_gpio_search(device_t, cfdata_t, const int *, void *);
+static int	wbsio_gpio_rt_init(struct wbsio_softc *);
+static int	wbsio_gpio_rt_read(struct wbsio_softc *, int, int);
+static void	wbsio_gpio_rt_write(struct wbsio_softc *, int, int, int);
+static int	wbsio_gpio_rt_pin_read(void *, int);
+static void	wbsio_gpio_rt_pin_write(void *, int, int);
+static void	wbsio_gpio_rt_pin_ctl(void *, int, int);
+static void	wbsio_gpio_enable_nct6779d(device_t);
+static void	wbsio_gpio_pinconfig_nct6779d(device_t);
+#endif
 
 CFATTACH_DECL2_NEW(wbsio, sizeof(struct wbsio_softc),
     wbsio_match, wbsio_attach, wbsio_detach, NULL,
@@ -229,6 +262,11 @@ wbsio_attach(device_t parent, device_t self, void *aux)
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 	wbsio_rescan(self, "wbsio", NULL);
+
+#if NGPIO > 0
+
+	wbsio_rescan(self, "gpiobus", NULL);
+#endif
 }
 
 int
@@ -241,6 +279,17 @@ wbsio_detach(device_t self, int flags)
 		return rc;
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, WBSIO_IOSIZE);
 	pmf_device_deregister(self);
+
+#if NGPIO > 0
+	if (sc->sc_gpio_dev) {
+		bus_space_unmap(sc->sc_iot, sc->sc_gpio_ioh,
+		    WBSIO_GPIO_IOSIZE);
+	}
+
+	if (sc->sc_gpio_rt) {
+		mutex_destroy(&sc->sc_gpio_lock);
+	}
+#endif
 	return 0;
 }
 
@@ -248,6 +297,13 @@ int
 wbsio_rescan(device_t self, const char *ifattr, const int *locators)
 {
 
+#if NGPIO > 0
+	if (ifattr_match(ifattr, "gpiobus")) {
+		config_search_loc(wbsio_gpio_search, self,
+		    ifattr, locators, NULL);
+		return 0;
+	}
+#endif
 	config_search_loc(wbsio_search, self, ifattr, locators, NULL);
 
 	return 0;
@@ -337,6 +393,357 @@ wbsio_print(void *aux, const char *pnp)
 		    ia->ia_io[0].ir_size - 1);
 	return (UNCONF);
 }
+
+#if NGPIO > 0
+static int
+wbsio_gpio_search(device_t parent, cfdata_t cf, const int *slocs, void *aux)
+{
+	struct wbsio_softc *sc = device_private(parent);
+	const struct wbsio_product *product;
+	struct gpiobus_attach_args gba;
+	uint16_t devid;
+	uint8_t rev;
+	int i;
+
+	/* Enter configuration mode */
+	wbsio_conf_enable(sc->sc_iot, sc->sc_ioh);
+	/* Read device ID and revision */
+	devid = wbsio_conf_read(sc->sc_iot, sc->sc_ioh, WBSIO_ID);
+	rev = wbsio_conf_read(sc->sc_iot, sc->sc_ioh, WBSIO_REV);
+	/* Escape from configuration mode */
+	wbsio_conf_disable(sc->sc_iot, sc->sc_ioh);
+
+	if ((product = wbsio_lookup(devid, rev)) == NULL) {
+		aprint_error_dev(parent, "%s: Unknown device.\n", __func__);
+		return -1;
+	}
+
+	sc->sc_gpio_rt = false;
+
+	switch (product->id) {
+	case WBSIO_ID_NCT6779D:
+		wbsio_gpio_enable_nct6779d(parent);
+		sc->sc_gpio_rt = true;
+		break;
+	default:
+		aprint_error_dev(parent, "GPIO is not supported\n");
+		return -1;
+	}
+
+	if (sc->sc_gpio_rt) {
+		if (wbsio_gpio_rt_init(sc) != 0) {
+			sc->sc_gpio_rt = false;
+			return -1;
+		}
+		sc->sc_gpio_gc.gp_cookie = sc;
+		sc->sc_gpio_gc.gp_pin_read = wbsio_gpio_rt_pin_read;
+		sc->sc_gpio_gc.gp_pin_write = wbsio_gpio_rt_pin_write;
+		sc->sc_gpio_gc.gp_pin_ctl = wbsio_gpio_rt_pin_ctl;
+	} else {
+		aprint_error_dev(parent,
+		    "GPIO indirect access is not supported\n");
+		return -1;
+	}
+
+	for (i = 0; i < WBSIO_GPIO_NPINS; i++) {
+		sc->sc_gpio_pins[i].pin_num = i;
+		sc->sc_gpio_pins[i].pin_caps = GPIO_PIN_INPUT |
+		    GPIO_PIN_OUTPUT | GPIO_PIN_INVIN | GPIO_PIN_INVOUT;
+
+		/* safe defaults */
+		sc->sc_gpio_pins[i].pin_flags = GPIO_PIN_INPUT;
+		sc->sc_gpio_pins[i].pin_state = GPIO_PIN_LOW;
+		sc->sc_gpio_gc.gp_pin_ctl(sc, i, sc->sc_gpio_pins[i].pin_flags);
+		sc->sc_gpio_gc.gp_pin_write(sc, i, sc->sc_gpio_pins[i].pin_state);
+	}
+
+	switch (product->id) {
+	case WBSIO_ID_NCT6779D:
+		wbsio_gpio_pinconfig_nct6779d(parent);
+		break;
+	}
+
+	gba.gba_gc = &sc->sc_gpio_gc;
+	gba.gba_pins = sc->sc_gpio_pins;
+	gba.gba_npins = WBSIO_GPIO_NPINS;
+
+	sc->sc_gpio_dev = config_attach(parent, cf, &gba, gpiobus_print);
+
+	return 0;
+}
+
+static int
+wbsio_gpio_rt_init(struct wbsio_softc *sc)
+{
+	uint16_t iobase;
+	uint8_t reg0, reg1;
+
+	/* Enter configuration mode */
+	wbsio_conf_enable(sc->sc_iot, sc->sc_ioh);
+
+	/* Get GPIO Register Table address */
+	wbsio_conf_write(sc->sc_iot, sc->sc_ioh, WBSIO_LDN, WBSIO_LDN_GPIO0);
+	reg0 = wbsio_conf_read(sc->sc_iot, sc->sc_ioh, WBSIO_GPIO_ADDR_LSB);
+	reg1 = wbsio_conf_read(sc->sc_iot, sc->sc_ioh, WBSIO_GPIO_ADDR_MSB);
+	iobase = (reg1 << 8) | (reg0 & ~0x7);
+
+	/* Escape from configuration mode */
+	wbsio_conf_disable(sc->sc_iot, sc->sc_ioh);
+
+	if (bus_space_map(sc->sc_iot, iobase, WBSIO_GPIO_IOSIZE,
+	    0, &sc->sc_gpio_ioh)) {
+		aprint_error_dev(sc->sc_dev,
+		    "can't map gpio to i/o space\n");
+		return -1;
+	}
+
+	aprint_normal_dev(sc->sc_dev, "GPIO: port 0x%x-0x%x\n",
+	    iobase, iobase + WBSIO_GPIO_IOSIZE);
+
+	mutex_init(&sc->sc_gpio_lock, MUTEX_DEFAULT, IPL_NONE);
+
+	return 0;
+}
+
+static int
+wbsio_gpio_rt_read(struct wbsio_softc *sc, int port, int reg)
+{
+	int v;
+
+	mutex_enter(&sc->sc_gpio_lock);
+
+	bus_space_write_1(sc->sc_iot, sc->sc_gpio_ioh,
+	    WBSIO_GPIO_GSR, port);
+	v = bus_space_read_1(sc->sc_iot, sc->sc_gpio_ioh, reg);
+
+	mutex_exit(&sc->sc_gpio_lock);
+
+	return v;
+}
+
+static void
+wbsio_gpio_rt_write(struct wbsio_softc *sc, int port, int reg, int value)
+{
+
+	mutex_enter(&sc->sc_gpio_lock);
+
+	bus_space_write_1(sc->sc_iot, sc->sc_gpio_ioh,
+	    WBSIO_GPIO_GSR, port);
+	bus_space_write_1(sc->sc_iot, sc->sc_gpio_ioh,
+	    reg, value);
+
+	mutex_exit(&sc->sc_gpio_lock);
+}
+
+static int
+wbsio_gpio_rt_pin_read(void *aux, int pin)
+{
+	struct wbsio_softc *sc = (struct wbsio_softc *)aux;
+	int port, shift, data;
+
+	port = (pin >> 3) & 0x07;
+	shift = pin & 0x07;
+
+	data = wbsio_gpio_rt_read(sc, port, WBSIO_GPIO_DAT);
+
+	return ((data >> shift) & 0x01);
+}
+
+static void
+wbsio_gpio_rt_pin_write(void *aux, int pin, int v)
+{
+	struct wbsio_softc *sc = (struct wbsio_softc *)aux;
+	int port, shift, data;
+
+	port = (pin >> 3) & 0x07;
+	shift = pin & 0x07;
+
+	data = wbsio_gpio_rt_read(sc, port, WBSIO_GPIO_DAT);
+
+	if (v == 0)
+		data &= ~(1 << shift);
+	else if (v == 1)
+		data |= (1 << shift);
+
+	wbsio_gpio_rt_write(sc, port, WBSIO_GPIO_DAT, data);
+}
+
+static void
+wbsio_gpio_rt_pin_ctl(void *aux, int pin, int flags)
+{
+	struct wbsio_softc *sc = (struct wbsio_softc *)aux;
+	uint8_t ior, inv;
+	int port, shift;
+
+	port = (pin >> 3) & 0x07;
+	shift = pin & 0x07;
+
+	ior = wbsio_gpio_rt_read(sc, port, WBSIO_GPIO_IOR);
+	inv = wbsio_gpio_rt_read(sc, port, WBSIO_GPIO_INV);
+
+	if (flags & GPIO_PIN_INPUT) {
+		ior |= (1 << shift);
+		inv &= ~(1 << shift);
+	} else if (flags & GPIO_PIN_OUTPUT) {
+		ior &= ~(1 << shift);
+		inv &= ~(1 << shift);
+	} else if (flags & GPIO_PIN_INVIN) {
+		ior |= (1 << shift);
+		inv |= (1 << shift);
+	} else if (flags & GPIO_PIN_INVOUT) {
+		ior &= ~(1 << shift);
+		inv |= (1 << shift);
+	}
+
+	wbsio_gpio_rt_write(sc, port, WBSIO_GPIO_IOR, ior);
+	wbsio_gpio_rt_write(sc, port, WBSIO_GPIO_INV, inv);
+}
+
+static void
+wbsio_gpio_enable_nct6779d(device_t parent)
+{
+	struct wbsio_softc *sc = device_private(parent);
+	uint8_t reg, conf;
+
+	/* Enter configuration mode */
+	wbsio_conf_enable(sc->sc_iot, sc->sc_ioh);
+
+	wbsio_conf_write(sc->sc_iot, sc->sc_ioh, WBSIO_LDN, WBSIO_LDN_GPIO0);
+	reg = WBSIO_GPIO_CONF;
+	conf = wbsio_conf_read(sc->sc_iot, sc->sc_ioh, reg);
+	/* Activate Register Table access */
+	conf |= WBSIO_GPIO_BASEADDR;
+
+	conf |= WBSIO_GPIO0_ENABLE;
+	wbsio_conf_write(sc->sc_iot, sc->sc_ioh, reg, conf);
+
+	wbsio_conf_write(sc->sc_iot, sc->sc_ioh, WBSIO_LDN, WBSIO_LDN_GPIO1);
+	reg = WBSIO_GPIO_CONF;
+	conf = wbsio_conf_read(sc->sc_iot, sc->sc_ioh, reg);
+	conf |= WBSIO_GPIO1_ENABLE;
+	conf |= WBSIO_GPIO2_ENABLE;
+	conf |= WBSIO_GPIO3_ENABLE;
+	conf |= WBSIO_GPIO4_ENABLE;
+	conf |= WBSIO_GPIO5_ENABLE;
+	conf |= WBSIO_GPIO6_ENABLE;
+	conf |= WBSIO_GPIO7_ENABLE;
+	wbsio_conf_write(sc->sc_iot, sc->sc_ioh, reg, conf);
+
+	/* Escape from configuration mode */
+	wbsio_conf_disable(sc->sc_iot, sc->sc_ioh);
+}
+
+static void
+wbsio_gpio_pinconfig_nct6779d(device_t parent)
+{
+	struct wbsio_softc *sc = device_private(parent);
+	uint8_t sfr, mfs0, mfs1, mfs2, mfs3;
+	uint8_t mfs4, mfs5, mfs6, gopt2, hm_conf;
+
+	/* Enter configuration mode */
+	wbsio_conf_enable(sc->sc_iot, sc->sc_ioh);
+
+	/* Strapping Function Result */
+	sfr = wbsio_conf_read(sc->sc_iot, sc->sc_ioh, WBSIO_SFR);
+	sfr &= ~(WBSIO_SFR_LPT | WBSIO_SFR_DSW | WBSIO_SFR_AMDPWR);
+
+	/* Read current configuration */
+	mfs0 = wbsio_conf_read(sc->sc_iot, sc->sc_ioh, WBSIO_MFS0);
+	mfs1 = wbsio_conf_read(sc->sc_iot, sc->sc_ioh, WBSIO_MFS1);
+	mfs2 = wbsio_conf_read(sc->sc_iot, sc->sc_ioh, WBSIO_MFS2);
+	mfs3 = wbsio_conf_read(sc->sc_iot, sc->sc_ioh, WBSIO_MFS3);
+	mfs4 = wbsio_conf_read(sc->sc_iot, sc->sc_ioh, WBSIO_MFS4);
+	mfs5 = wbsio_conf_read(sc->sc_iot, sc->sc_ioh, WBSIO_MFS5);
+	mfs6 = wbsio_conf_read(sc->sc_iot, sc->sc_ioh, WBSIO_MFS6);
+	gopt2 = wbsio_conf_read(sc->sc_iot, sc->sc_ioh, WBSIO_GOPT2);
+
+	wbsio_conf_write(sc->sc_iot, sc->sc_ioh, WBSIO_LDN, WBSIO_LDN_HM);
+	hm_conf = wbsio_conf_read(sc->sc_iot, sc->sc_ioh, WBSIO_HM_CONF);
+
+	/* GPIO0 pin configs */
+	mfs2 |= WBSIO_NCT6779D_MFS2_GP00;
+	mfs2 |= WBSIO_NCT6779D_MFS2_GP01;
+	mfs2 |= WBSIO_NCT6779D_MFS2_GP02;
+	mfs2 &= ~WBSIO_NCT6779D_MFS2_GP03_MASK;
+	mfs2 |= WBSIO_NCT6779D_MFS2_GP04;
+	mfs2 |= WBSIO_NCT6779D_MFS2_GP05;
+	mfs2 |= WBSIO_NCT6779D_MFS2_GP06;
+	mfs3 |= WBSIO_NCT6779D_MFS3_GP07_MASK;
+
+	/* GPIO1 pin configs */
+	mfs4 |= WBSIO_NCT6779D_MFS4_GP10_GP17;
+
+	/* GPIO2 pin configs */
+	mfs4 |= WBSIO_NCT6779D_MFS4_GP20_GP21;
+	mfs4 |= WBSIO_NCT6779D_MFS4_GP22_GP23;
+	mfs1 &= ~WBSIO_NCT6779D_MFS1_GP24_MASK;
+	gopt2 &= ~WBSIO_NCT6779D_GOPT2_GP24_MASK;
+	mfs4 &= ~WBSIO_NCT6779D_MFS4_GP25_MASK;
+	gopt2 &= ~WBSIO_NCT6779D_GOPT2_GP25_MASK;
+	mfs6 |= WBSIO_NCT6779D_MFS6_GP26;
+	mfs6 &= ~WBSIO_NCT6779D_MFS6_GP27_MASK;
+
+	/* GPIO3 pin configs */
+	mfs0 &= ~WBSIO_NCT6779D_MFS0_GP30_MASK;
+	mfs0 |= WBSIO_NCT6779D_MFS0_GP30;
+	mfs1 &= ~WBSIO_NCT6779D_MFS1_GP31_MASK;
+	mfs0 |= WBSIO_NCT6779D_MFS0_GP31;
+	mfs1 &= ~WBSIO_NCT6779D_MFS1_GP32_MASK;
+	mfs0 |= WBSIO_NCT6779D_MFS0_GP32;
+	mfs6 &= ~WBSIO_NCT6779D_MFS6_GP33_MASK;
+	mfs6 |= WBSIO_NCT6779D_MFS6_GP33;
+	/* GP34, 35 and 36 are enabled by LPT_EN=0 */
+	/* GP37 is not existed */
+
+	/* GPIO4 pin configs */
+	mfs1 |= WBSIO_NCT6779D_MFS1_GP40;
+	/* GP41 to GP46 requires LPT_EN=0 */
+	mfs0 &= ~WBSIO_NCT6779D_MFS0_GP41_MASK;
+	mfs0 |= WBSIO_NCT6779D_MFS0_GP41;
+	mfs1 |= WBSIO_NCT6779D_MFS1_GP42;
+	mfs1 |= WBSIO_NCT6779D_MFS1_GP42;
+	gopt2 |= WBSIO_NCT6779D_GOPT2_GP43;
+	mfs1 |= WBSIO_NCT6779D_MFS1_GP44_GP45_MASK;
+	gopt2 &= ~WBSIO_NCT6779D_GOPT2_GP46_MASK;
+	mfs1 |= WBSIO_NCT6779D_MFS1_GP47;
+
+	/* GPIO5 pin configs */
+	/* GP50 to GP55 requires DSW_EN=0 */
+	hm_conf &= ~WBSIO_NCT6779D_HM_GP50_MASK;
+	/* GP51 is enabled by DSW_EN=0 */
+	hm_conf &= ~WBSIO_NCT6779D_HM_GP52_MASK;
+	/* GP53 and GP54 are enabled by DSW_EN=0 */
+	hm_conf &= ~WBSIO_NCT6779D_HM_GP55_MASK;
+	/* GP56 and GP57 are enabled by AMDPWR_EN=0 */
+
+	/* GPIO6 pin configs are shared with GP43 */
+
+	/* GPIO7 pin configs */
+	/* GP70 to GP73 are enabled by TEST_MODE_EN */
+	mfs5 |= WBSIO_NCT6779D_MFS5_GP74;
+	mfs5 |= WBSIO_NCT6779D_MFS5_GP75;
+	mfs5 |= WBSIO_NCT6779D_MFS5_GP76;
+	/* GP77 is not existed */
+
+	/* Write all pin configs */
+	wbsio_conf_write(sc->sc_iot, sc->sc_ioh, WBSIO_SFR, sfr);
+	wbsio_conf_write(sc->sc_iot, sc->sc_ioh, WBSIO_MFS0, mfs0);
+	wbsio_conf_write(sc->sc_iot, sc->sc_ioh, WBSIO_MFS1, mfs1);
+	wbsio_conf_write(sc->sc_iot, sc->sc_ioh, WBSIO_MFS2, mfs2);
+	wbsio_conf_write(sc->sc_iot, sc->sc_ioh, WBSIO_MFS3, mfs3);
+	wbsio_conf_write(sc->sc_iot, sc->sc_ioh, WBSIO_MFS4, mfs4);
+	wbsio_conf_write(sc->sc_iot, sc->sc_ioh, WBSIO_MFS5, mfs5);
+	wbsio_conf_write(sc->sc_iot, sc->sc_ioh, WBSIO_MFS6, mfs6);
+	wbsio_conf_write(sc->sc_iot, sc->sc_ioh, WBSIO_GOPT2, gopt2);
+
+	wbsio_conf_write(sc->sc_iot, sc->sc_ioh, WBSIO_LDN, WBSIO_LDN_HM);
+	wbsio_conf_write(sc->sc_iot, sc->sc_ioh, WBSIO_HM_CONF, hm_conf);
+
+	/* Escape from configuration mode */
+	wbsio_conf_disable(sc->sc_iot, sc->sc_ioh);
+}
+
+#endif
 
 MODULE(MODULE_CLASS_DRIVER, wbsio, NULL);
 
