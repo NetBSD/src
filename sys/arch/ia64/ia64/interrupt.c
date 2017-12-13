@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.7 2017/04/08 17:44:27 scole Exp $ */
+/* $NetBSD: interrupt.c,v 1.8 2017/12/13 16:50:46 scole Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.7 2017/04/08 17:44:27 scole Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.8 2017/12/13 16:50:46 scole Exp $");
 
 #include "opt_ddb.h"
 
@@ -381,5 +381,11 @@ db_print_vector(u_int vector, int always)
 		sapic_print(i->sapic, i->irq);
 	} else if (always)
 		db_printf("vector %u: unassigned\n", vector);
+}
+
+const char *
+intr_string(intr_handle_t ih, char *buf, size_t len)
+{
+	panic("XXX %s not implemented", __func__);
 }
 #endif
