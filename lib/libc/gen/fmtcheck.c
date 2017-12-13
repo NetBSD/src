@@ -1,4 +1,4 @@
-/*	$NetBSD: fmtcheck.c,v 1.15 2017/12/06 14:05:14 rin Exp $	*/
+/*	$NetBSD: fmtcheck.c,v 1.16 2017/12/13 06:43:45 rin Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fmtcheck.c,v 1.15 2017/12/06 14:05:14 rin Exp $");
+__RCSID("$NetBSD: fmtcheck.c,v 1.16 2017/12/13 06:43:45 rin Exp $");
 #endif
 
 #include "namespace.h"
@@ -344,8 +344,5 @@ fmtcheck(const char *f1, const char *f2)
 		if (f1t != f2t)
 			return f2;
 	}
-	if (get_next_format(&f2p, f2t) != FMTCHECK_DONE)
-		return f2;
-	else
-		return f1;
+	return f1;
 }
