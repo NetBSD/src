@@ -1,0 +1,285 @@
+/*
+ * Copyright (c) 2017 MediaTek Inc.
+ * Author: Eddie Huang <eddie.huang@mediatek.com>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+#include <dt-bindings/interrupt-controller/irq.h>
+#include <dt-bindings/interrupt-controller/arm-gic.h>
+
+/ {
+	model = "Mercury";
+	compatible = "mediatek,mercury";
+	interrupt-parent = <&gic>;
+	#address-cells = <2>;
+	#size-cells = <2>;
+
+	cpus {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		cpu0: cpu@0 {
+			device_type = "cpu";
+			compatible = "arm,cortex-a53";
+			reg = <0x0>;
+			next-level-cache = <&L2_0>;
+			enable-method = "psci";
+		};
+
+		cpu1: cpu@1 {
+			device_type = "cpu";
+			compatible = "arm,cortex-a53";
+			reg = <0x1>;
+			next-level-cache = <&L2_0>;
+			enable-method = "psci";
+		};
+
+		cpu2: cpu@2 {
+			device_type = "cpu";
+			compatible = "arm,cortex-a53";
+			reg = <0x2>;
+			next-level-cache = <&L2_0>;
+			enable-method = "psci";
+		};
+
+		cpu3: cpu@3 {
+			device_type = "cpu";
+			compatible = "arm,cortex-a53";
+			reg = <0x3>;
+			next-level-cache = <&L2_0>;
+			enable-method = "psci";
+		};
+
+		L2_0: l2-cache0 {
+			compatible = "cache";
+		};
+	};
+
+	psci {
+		compatible	= "arm,psci";
+		method		= "smc";
+		cpu_on		= <0x84000003>;
+	};
+
+	clocks {
+		#address-cells = <2>;
+		#size-cells = <2>;
+		compatible = "simple-bus";
+		ranges;
+
+		clk26m: clk26m {
+			compatible = "fixed-clock";
+			#clock-cells = <0>;
+			clock-frequency = <26000000>;
+		};
+
+		clk32k: clk32k {
+			compatible = "fixed-clock";
+			#clock-cells = <0>;
+			clock-frequency = <32000>;
+		};
+
+		uart_clk: dummy26m {
+			compatible = "fixed-clock";
+			clock-frequency = <26000000>;
+			#clock-cells = <0>;
+		};
+	};
+
+	timer {
+		compatible = "arm,armv7-timer";
+		interrupt-parent = <&gic>;
+		interrupts = <GIC_PPI 13
+			     (GIC_CPU_MASK_SIMPLE(4) | IRQ_TYPE_LEVEL_LOW)>,
+			     <GIC_PPI 14
+			     (GIC_CPU_MASK_SIMPLE(4) | IRQ_TYPE_LEVEL_LOW)>,
+			     <GIC_PPI 11
+			     (GIC_CPU_MASK_SIMPLE(4) | IRQ_TYPE_LEVEL_LOW)>,
+			     <GIC_PPI 10
+			     (GIC_CPU_MASK_SIMPLE(4) | IRQ_TYPE_LEVEL_LOW)>;
+		clock-frequency = <13000000>;
+	};
+
+	soc {
+		#address-cells = <2>;
+		#size-cells = <2>;
+		compatible = "simple-bus";
+		ranges;
+
+		topckgen: topckgen@10000000 {
+			compatible = "mediatek,mercury-topckgen", "syscon";
+			reg = <0 0x10000000 0 0x1000>;
+			#clock-cells = <1>;
+		};
+
+		pio: pinctrl@10005000 {
+			compatible = "mediatek,mercury-pinctrl";
+			reg = <0 0x10005000 0 0x1000>;
+			gpio-controller;
+			#gpio-cells = <2>;
+		};
+
+		eint: interrupt-controller@1000b000 {
+			compatible = "mediatek,mercury-eint";
+			reg = <0 0x1000b000 0 0x1000>;
+			interrupts = <GIC_SPI 134 IRQ_TYPE_LEVEL_HIGH>;
+			#interrupt-cells = <2>;
+		};
+
+		gic: interrupt-controller@10310000 {
+			compatible = "arm,gic-400";
+			interrupt-controller;
+			#interrupt-cells = <3>;
+			interrupt-parent = <&gic>;
+			reg = <0 0x10310000 0 0x1000>,
+			      <0 0x10320000 0 0x1000>,
+			      <0 0x10340000 0 0x2000>,
+			      <0 0x10360000 0 0x2000>;
+			interrupts = <GIC_PPI 9
+				     (GIC_CPU_MASK_SIMPLE(4) | IRQ_TYPE_LEVEL_HIGH)>;
+		};
+
+		pwrap: pwrap@1000f000 {
+			compatible = "mediatek,mercury-pwrap";
+			reg = <0 0x1000f000 0 0x1000>;
+			reg-names = "pwrap";
+			interrupts = <GIC_SPI 204 IRQ_TYPE_LEVEL_LOW>;
+		};
+
+		uart0: uart0@11005000 {
+			compatible = "mediatek,mercury-uart";
+			reg = <0 0x11005000 0 0x1000>; /* UART base */
+			interrupts = <GIC_SPI 84 IRQ_TYPE_LEVEL_LOW>; /* UART IRQ */
+		};
+
+		uart1: uart1@11006000 {
+			compatible = "mediatek,mercury-uart";
+			reg = <0 0x11006000 0 0x1000>; /* UART base */
+			interrupts = <GIC_SPI 85 IRQ_TYPE_LEVEL_LOW>; /* UART IRQ */
+		};
+
+		uart2: uart2@11007000 {
+			compatible = "mediatek,mercury-uart";
+			reg = <0 0x11007000 0 0x1000>; /* UART base */
+			interrupts = <GIC_SPI 212 IRQ_TYPE_LEVEL_LOW>; /* UART IRQ */
+		};
+
+		pwm: pwm@11008000 {
+			compatible = "mediatek,mercury-pwm";
+			reg = <0 0x11008000 0 0x1000>;
+			interrupts = <GIC_SPI 76 IRQ_TYPE_LEVEL_LOW>;
+		};
+
+		i2c0: i2c@11009000 {
+			compatible = "mediatek,mercury-i2c";
+			reg = <0 0x11009000 0 0x90>,
+			      <0 0x11000180 0 0x80>;
+			interrupts = <GIC_SPI 80 IRQ_TYPE_LEVEL_LOW>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+		};
+
+		i2c1: i2c@1100a000 {
+			compatible = "mediatek,mercury-i2c";
+			reg = <0 0x1100a000 0 0x90>,
+			      <0 0x11000200 0 0x80>;
+			interrupts = <GIC_SPI 81 IRQ_TYPE_LEVEL_LOW>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+		};
+
+		i2c2: i2c@1100b000 {
+			compatible = "mediatek,mercury-i2c";
+			reg = <0 0x1100b000 0 0x90>,
+			      <0 0x11000280 0 0x80>;
+			interrupts = <GIC_SPI 82 IRQ_TYPE_LEVEL_LOW>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+		};
+
+		spi: spi@1100c000 {
+			compatible = "mediatek,mercury-spi";
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <0 0x1100c000 0 0x1000>;
+			interrupts = <GIC_SPI 104 IRQ_TYPE_LEVEL_LOW>;
+		};
+
+		feth: feth@11180000 {
+			compatible = "mediatek,mercury-feth";
+			reg = <0 0x11180080 0 0x1000>;
+			interrupts = <GIC_SPI 143 IRQ_TYPE_LEVEL_LOW>;
+			status = "disabled";
+		};
+
+		mmc0: mmc@11120000 {
+			compatible = "mediatek,mercury-mmc";
+			reg = <0 0x11120000 0 0x1000>;
+			interrupts = <GIC_SPI 78 IRQ_TYPE_LEVEL_LOW>;
+		};
+
+		mmc1: mmc@11130000 {
+			compatible = "mediatek,mercury-mmc";
+			reg = <0 0x11130000 0 0x1000>;
+			interrupts = <GIC_SPI 79 IRQ_TYPE_LEVEL_LOW>;
+		};
+
+		usb0: usb0@11100000 {
+			compatible = "mediatek,mercury-usb20";
+			reg = <0 0x11100000 0 0x1000>;
+			interrupts = <GIC_SPI 72 IRQ_TYPE_LEVEL_LOW>;
+			interrupts-names = "usb0_in_72";
+			/* clocks = <&topckgen CLK_TOP_USB_PHY48M>, */
+			/* 	 <&topckgen CLK_TOP_USBIF>, */
+			/* 	 <&topckgen CLK_TOP_USB>, */
+			/* 	 <&topckgen CLK_TOP_USB_1P>; */
+			/* clock-names = "usbpll", "usbmcu", "usb", "icusb"; */
+			phys = <&u2port0 0>;
+			phy-names = "usb0";
+			status = "disabled";
+		};
+
+		u2port0: usb-phy0@11110800 {
+			compatible = "mediatek,mercury-usb20-phy";
+			reg = <0 0x11110800 0 0x800>;
+			reg-names = "port0";
+			/* clocks = <&clk26m>; */
+			/* clock-names = "ref"; */
+			#phy-cells = <1>;
+			status = "disabled";
+		};
+
+		usb1: usb1@11190000 {
+			compatible = "mediatek,mercury-usb20";
+			reg = <0 0x11190000 0 0x1000>;
+			interrupts = <GIC_SPI 210 IRQ_TYPE_LEVEL_LOW>;
+			interrupts-names = "usb1_in_210";
+			/* clocks = <&topckgen CLK_TOP_USB_PHY48M>, */
+			/* 	 <&topckgen CLK_TOP_USBIF>, */
+			/* 	 <&topckgen CLK_TOP_USB>, */
+			/* 	 <&topckgen CLK_TOP_USB_1P>; */
+			/* clock-names = "usbpll", "usbmcu", "usb", "icusb"; */
+			phys = <&u2port1 0>;
+			phy-names = "usb1";
+			status = "disabled";
+		};
+
+		u2port1: usb-phy1@11110900 {
+			compatible = "mediatek,mercury-usb20-phy";
+			reg = <0 0x11110900 0 0x800>;
+			reg-names = "port1";
+			/* clocks = <&clk26m>; */
+			/* clock-names = "ref"; */
+			#phy-cells = <1>;
+			status = "disabled";
+		};
+	};
+};
