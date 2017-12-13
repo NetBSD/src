@@ -1,4 +1,4 @@
-/*	$NetBSD: a9_mpsubr.S,v 1.47.8.1 2017/07/06 05:28:43 martin Exp $	*/
+/*	$NetBSD: a9_mpsubr.S,v 1.47.8.1.2.1 2017/12/13 01:04:52 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,7 +39,7 @@
 
 //#define MPDEBUG
 
-// Marco to call routines in .text
+// Macro to call routines in .text
 #if defined(KERNEL_BASES_EQUAL)
 #define CALL(f)		bl	_C_LABEL(f)
 #else
@@ -50,6 +50,12 @@
 	blx	ip
 #endif
 
+#if defined(CPU_CORTEXA7) || defined(CPU_CORTEXA15) || defined(CPU_CORTEXA17) \
+    || defined(CPU_CORTEXA35)
+	.arch		armv7a
+	.arch_extension	virt
+#define CPU_CORTEXVIRT
+#endif
 
 // We'll modify va and pa at run time so we can use relocatable addresses.
 #define MMU_INIT(va,pa,n_sec,attr) \
@@ -162,7 +168,8 @@ arm_boot_l1pt_init:
 // bits to clear in the Control Register
 //
 #define CPU_CONTROL_CLR \
-	(CPU_CONTROL_AFLT_ENABLE_CLR)
+	(CPU_CONTROL_AFLT_ENABLE_CLR	|	\
+	 CPU_CONTROL_TR_ENABLE)
 
 arm_cpuinit:
 	// Because the MMU may already be on do a typical sequence to set
@@ -249,9 +256,7 @@ arm_cpuinit:
 	movt	r3, #:upper16:CPU_CONTROL_SET
 #endif
 	orr	r0, r1, r3
-#if defined(CPU_CONTROL_CLR) && (CPU_CONTROL_CLR != 0)
 	bic	r0, r0, #CPU_CONTROL_CLR
-#endif
 	//cmp	r0, r1			// any changes to SCTLR?
 	//bxeq	ip			//    no, then return.
 
@@ -347,17 +352,19 @@ xputc:
 cortex_init:
 	mov	r10, lr				// save lr
 
-#if defined(CPU_CORTEXA7) || defined(CPU_CORTEXA15) || defined(CPU_CORTEXA17)
+#if defined(CPU_CORTEXVIRT)
 	/* Leave HYP mode and move into supervisor mode with IRQs/FIQs disabled. */
 	mrs	r0, cpsr
-	and	r0, r0, #(PSR_MODE)	/* Mode is in the low 5 bits of CPSR */
-	teq	r0, #(PSR_HYP32_MODE)	/* Hyp Mode? */
+	and	r1, r0, #(PSR_MODE)	/* Mode is in the low 5 bits of CPSR */
+	teq	r1, #(PSR_HYP32_MODE)	/* Hyp Mode? */
 	bne	1f
 
+	/* Set CNTVOFF to 0 */
+	mov	r1, #0
+	mcrr	p15, 4, r1, r1, c14
+
 	/* Ensure that IRQ, and FIQ will be disabled after eret */
-	mrs	r0, cpsr
-	bic	r0, r0, #(PSR_MODE)
-	orr	r0, r0, #(PSR_SVC32_MODE)
+	eor	r0, r0, #(PSR_SVC32_MODE^PSR_HYP32_MODE)
 	orr	r0, r0, #(I32_bit | F32_bit)
 	msr	spsr_cxsf, r0
 	/* Exit hypervisor mode */
