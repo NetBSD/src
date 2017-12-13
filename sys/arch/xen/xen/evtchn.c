@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.78 2017/11/11 17:02:53 riastradh Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.79 2017/12/13 16:30:18 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.78 2017/11/11 17:02:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.79 2017/12/13 16:30:18 bouyer Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -744,6 +744,8 @@ pirq_establish(int pirq, int evtch, int (*func)(void *), void *arg, int level,
 		printf("pirq_establish: can't allocate handler info\n");
 		return NULL;
 	}
+
+	KASSERT(evtch > 0);
 
 	ih->pirq = pirq;
 	ih->evtch = evtch;
