@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.55 2017/11/26 11:37:10 maxv Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.56 2017/12/13 16:30:18 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2009 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.55 2017/11/26 11:37:10 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.56 2017/12/13 16:30:18 bouyer Exp $");
 
 #include "opt_ddb.h"
 
@@ -575,10 +575,13 @@ ioapic_addroute(struct pic *pic, struct cpu_info *ci, int pin,
 
 	int port, irq;
 	irq = vect2irq[idtvec];
+	KASSERT(irq != 0);
 	port = bind_pirq_to_evtch(irq);
 	KASSERT(port < NR_EVENT_CHANNELS);
+	KASSERT(port >= 0);
 
-	irq2port[irq] = port;
+	KASSERT(irq2port[irq] == 0);
+	irq2port[irq] = port + 1;
 
 	xen_atomic_set_bit(&ci->ci_evtmask[0], port);
 #endif
@@ -595,7 +598,6 @@ ioapic_delroute(struct pic *pic, struct cpu_info *ci, int pin,
 #if defined(XEN)
 	int port, irq;
 	irq = vect2irq[idtvec];
-	port = bind_pirq_to_evtch(irq);
 	port = unbind_pirq_from_evtch(irq);
 
 	KASSERT(port < NR_EVENT_CHANNELS);

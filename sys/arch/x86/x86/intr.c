@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.112 2017/11/11 21:05:58 riastradh Exp $	*/
+/*	$NetBSD: intr.c,v 1.113 2017/12/13 16:30:18 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.112 2017/11/11 21:05:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.113 2017/12/13 16:30:18 bouyer Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -1259,6 +1259,7 @@ intr_establish_xname(int legacy_irq, struct pic *pic, int pin,
 
 #if NPCI > 0 || NISA > 0
 	struct pintrhand *pih;
+	intr_handle_t irq;
 	int evtchn;
 	char evname[16];
 
@@ -1267,12 +1268,12 @@ intr_establish_xname(int legacy_irq, struct pic *pic, int pin,
 	KASSERTMSG(!(legacy_irq == -1 && pic == &i8259_pic),
 	    "non-legacy IRQon i8259 ");
 
-	if (legacy_irq == -1) {
+	if (pic->pic_type != PIC_I8259) {
 #if NIOAPIC > 0
 		/* will do interrupts via I/O APIC */
-		legacy_irq = APIC_INT_VIA_APIC;
-		legacy_irq |= pic->pic_apicid << APIC_INT_APIC_SHIFT;
-		legacy_irq |= pin << APIC_INT_PIN_SHIFT;
+		irq = APIC_INT_VIA_APIC;
+		irq |= pic->pic_apicid << APIC_INT_APIC_SHIFT;
+		irq |= pin << APIC_INT_PIN_SHIFT;
 		snprintf(evname, sizeof(evname), "%s pin %d",
 		    pic->pic_name, pin);
 #else /* NIOAPIC */
@@ -1280,10 +1281,11 @@ intr_establish_xname(int legacy_irq, struct pic *pic, int pin,
 #endif /* NIOAPIC */
 	} else {
 		snprintf(evname, sizeof(evname), "irq%d", legacy_irq);
+		irq = legacy_irq;
 	}
 
-	evtchn = xen_pirq_alloc((intr_handle_t *)&legacy_irq, type);
-	pih = pirq_establish(legacy_irq & 0xff, evtchn, handler, arg, level,
+	evtchn = xen_pirq_alloc(&irq, type);
+	pih = pirq_establish(irq & 0xff, evtchn, handler, arg, level,
 	    evname);
 	pih->pic_type = pic->pic_type;
 	return pih;
