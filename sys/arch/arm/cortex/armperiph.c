@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: armperiph.c,v 1.11 2017/05/26 21:17:46 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: armperiph.c,v 1.11.6.1 2017/12/13 01:03:41 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -106,6 +106,14 @@ static const struct armperiph_info a17_devices[] = {
 };
 #endif
 
+#ifdef CPU_CORTEXA35
+static const struct armperiph_info a35_devices[] = {
+	{ "armgic",  0, 0x4000 },
+	{ "armgtmr", 0, 0 },
+	{ "", 0, 0 },
+};
+#endif
+
 #ifdef CPU_CORTEXA57
 static const struct armperiph_info a57_devices[] = {
 	{ "armgic",  0x1000, 0x2000 },
@@ -134,6 +142,9 @@ static const struct mpcore_config {
 #endif
 #ifdef CPU_CORTEXA17
 	{ a17_devices, 0x410fc0e0, 8*4096 },
+#endif
+#ifdef CPU_CORTEXA35
+	{ a35_devices, 0x410fd040, 8*4096 },
 #endif
 #ifdef CPU_CORTEXA57
 	{ a57_devices, 0x410fd070, 8*4096 },
