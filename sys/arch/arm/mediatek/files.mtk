@@ -1,0 +1,83 @@
+#
+# Configuration info for Mediatek ARM Peripherals
+#
+
+include "arch/arm/pic/files.pic"
+include "arch/arm/cortex/files.cortex"
+
+file	arch/arm/arm32/arm32_boot.c
+file	arch/arm/arm32/arm32_kvminit.c
+file	arch/arm/arm32/arm32_reboot.c
+file	arch/arm/arm32/irq_dispatch.S
+
+file	arch/arm/arm32/armv7_generic_space.c
+file	arch/arm/arm32/armv7_generic_dma.c
+file	arch/arm/arm/bus_space_a4x.S
+
+file	arch/arm/mediatek/mtk_platform.c
+
+#file	arch/arm/mediatek/mtk_board.c
+#file	arch/arm/mediatek/mtk_space.c
+
+# Console parameters
+defparam opt_mtk.h			CONADDR
+defparam opt_mtk.h			CONSPEED
+defparam opt_mtk.h			CONMODE
+defparam opt_mtk.h			MEMSIZE
+defflag opt_mtk.h			MTK_CONSOLE_EARLY
+
+# UART
+options COM_MTK
+
+attach	com at fdt with mtk_com
+file	arch/arm/mediatek/mtk_com.c		mtk_com needs-flag
+
+# SPI controller (mtk spi bus)
+device mtkspi: spibus
+attach  mtkspi at fdt with mtk_spi
+file    arch/arm/mediatek/mtk_spi.c             mtk_spi
+
+# PWM
+device mtkpwm
+attach mtkpwm at fdt with mtk_pwm
+file   arch/arm/mediatek/mtk_pwm.c             mtk_pwm
+
+# PWRAP
+device	mtkpwrap : pwrapbus
+attach	mtkpwrap at fdt with mtk_pwrap
+file	arch/arm/mediatek/mtk_pwrap.c		mtk_pwrap
+
+# MMC/SD controller
+options        MTK_MMC
+device mtkmmc: sdmmcbus
+attach mtkmmc at fdt with mtk_mmc
+file   arch/arm/mediatek/mtk_mmc.c             mtk_mmc
+
+# GPIO Controller
+device mtkgpio: gpiobus
+attach mtkgpio at fdt with mtk_gpio
+file   arch/arm/mediatek/mtk_gpio.c        mtk_gpio
+
+# External interrupt controller
+device eint
+attach eint at fdt with mtk_eint
+file   arch/arm/mediatek/mtk_eint.c    mtk_eint
+
+# I2C
+device	mtki2c : i2cbus, i2cexec
+attach	mtki2c at fdt with mtk_i2c
+file	arch/arm/mediatek/mtk_i2c.c		mtk_i2c
+
+# USB2 OTG Controller
+#options 	MOTG_MEDIATEK
+attach	motg at fdt with mtk_musb
+file	arch/arm/mediatek/mtk_musb.c		mtk_musb
+
+# USB PHY
+device	usbphy
+attach	usbphy at fdt with mtk_usbphy
+file	arch/arm/mediatek/mtk_usbphy.c		mtk_usbphy
+
+device 	mfe: ether, ifnet, arp, mii
+attach	mfe at fdt with mtk_ether
+file	arch/arm/mediatek/mtk_ether.c		mtk_ether
