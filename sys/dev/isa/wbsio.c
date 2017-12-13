@@ -1,4 +1,4 @@
-/*	$NetBSD: wbsio.c,v 1.16 2017/12/13 00:26:06 knakahara Exp $	*/
+/*	$NetBSD: wbsio.c,v 1.17 2017/12/13 00:27:01 knakahara Exp $	*/
 /*	$OpenBSD: wbsio.c,v 1.10 2015/03/14 03:38:47 jsg Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
@@ -668,7 +668,7 @@ wbsio_gpio_pinconfig_nct6779d(device_t parent)
 	mfs2 |= WBSIO_NCT6779D_MFS2_GP04;
 	mfs2 |= WBSIO_NCT6779D_MFS2_GP05;
 	mfs2 |= WBSIO_NCT6779D_MFS2_GP06;
-	mfs3 |= WBSIO_NCT6779D_MFS3_GP07_MASK;
+	mfs3 &= ~WBSIO_NCT6779D_MFS3_GP07_MASK;
 
 	/* GPIO1 pin configs */
 	mfs4 |= WBSIO_NCT6779D_MFS4_GP10_GP17;
@@ -703,7 +703,7 @@ wbsio_gpio_pinconfig_nct6779d(device_t parent)
 	mfs1 |= WBSIO_NCT6779D_MFS1_GP42;
 	mfs1 |= WBSIO_NCT6779D_MFS1_GP42;
 	gopt2 |= WBSIO_NCT6779D_GOPT2_GP43;
-	mfs1 |= WBSIO_NCT6779D_MFS1_GP44_GP45_MASK;
+	mfs1 &= ~WBSIO_NCT6779D_MFS1_GP44_GP45_MASK;
 	gopt2 &= ~WBSIO_NCT6779D_GOPT2_GP46_MASK;
 	mfs1 |= WBSIO_NCT6779D_MFS1_GP47;
 
