@@ -1,0 +1,159 @@
+# $NetBSD: MTKATLAS,v 1.1.2.1 2017/12/13 01:24:08 matt Exp $
+#
+#	MTK ATLAS board
+#
+
+include	"arch/evbarm/conf/std.mtkatlas"
+include	"arch/evbarm/conf/GENERIC.common"
+
+makeoptions	DTS="
+	mtkatlas.dts
+"
+
+no makeoptions	CPUFLAGS
+makeoptions	CPUFLAGS="-mcpu=cortex-a7 -mfpu=neon"
+#no makeoptions	BOARDTYPE
+#makeoptions	BOARDTYPE="mtkatlas"
+#no makeoptions	KERNEL_BASE_PHYS
+#no makeoptions	KERNEL_BASE_VIRT
+#makeoptions 	KERNEL_BASE_PHYS="0x40100000"
+#makeoptions 	KERNEL_BASE_VIRT="0x80100000"
+#options 	PMAP_NEED_ALLOC_POOLPAGE
+options 	CPU_CORTEXA7
+options 	CPU_CORTEXA35
+
+options 	MULTIPROCESSOR
+options 	MEMSIZE=384
+options 	MTK_CONSOLE_EARLY
+options 	MTK_MERCURY	# MTK chipname
+
+pseudo-device 	openfirm	# /dev/openfirm
+
+#options 	DEBUG
+options 	VERBOSE_INIT_ARM # verbose bootstraping messages
+makeoptions	DEBUG="-g"	# compile full symbol table
+makeoptions	COPY_SYMTAB=1
+
+## USB Debugging options
+options USB_DEBUG
+options MOTG_DEBUG
+options UMASS_DEBUG
+options UHUB_DEBUG
+options KERNHIST_PRINT
+
+config		netbsd		root on ? type ?
+
+# Device tree support
+armfdt0		at root
+fdt*		at fdtbus?
+
+# PMIC Pwrap
+mtkpwrap*	at fdt?
+pwrap0		at mtkpwrap?
+mt6392pmic*	at pwrap0
+mt6392reg*	at mt6392pmic?
+
+# CPUs
+cpus*		at fdt? pass 0
+cpu*		at cpus?
+
+# Power state coordination interface
+psci*		at fdt?
+
+# Timer
+gtmr*		at fdt? pass 1		# ARM Generic Timer
+armgtmr0	at gtmr?
+
+# Interrupt controller
+gic*		at fdt? pass 1		# GIC
+armgic0		at gic?
+
+# UART
+com*		at fdt?			# UART
+options 	CONADDR=0x11005000, CONSPEED=921600
+
+# SPI controller
+mtkspi0		at fdt?
+spi* 		at spibus?
+
+#spidev0 at spi? slave 0 flags 0
+
+# PWM
+mtkpwm*        at fdt?
+
+# MMC/SD controllers
+mtkmmc0		at fdt? 
+sdmmc0		at mtkmmc0
+ld0			at sdmmc0
+
+# GPIO controller
+mtkgpio*	at fdt?
+
+# External interrupt controller
+eint*		at fdt?
+
+# On-board I2C busses
+mtki2c0		at fdt? 			# I2C0
+iic0		at mtki2c0
+seeprom0	at iic0 addr 0x50
+
+mtki2c1		at fdt? 			# I2C1
+iic1		at mtki2c1
+seeprom1	at iic1 addr 0x50
+
+mtki2c2		at fdt? 			# I2C2
+iic2		at mtki2c2
+seeprom2	at iic2 addr 0x50
+
+# SCSI bus support
+scsibus* at scsi?
+
+# SCSI devices
+sd*	at scsibus? target ? lun ?	# SCSI disk drives
+st*	at scsibus? target ? lun ?	# SCSI tape drives
+cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
+ch*	at scsibus? target ? lun ?	# SCSI autochangers
+ses*	at scsibus? target ? lun ?	# SCSI Enclosure Services devices
+ss*	at scsibus? target ? lun ?	# SCSI scanners
+uk*	at scsibus? target ? lun ?	# SCSI unknown
+
+# On-board MUSB 2.0 phy Port0
+usbphy*		at fdt?
+
+# On-board MUSB 2.0 Port0
+motg*		at fdt?
+
+usb*	at motg?
+
+# USB Hubs
+uhub*	at usb?
+uhub*	at uhub? port ?
+
+# USB HID device
+uhidev*	at uhub? port ? configuration ? interface ?
+# USB Mice
+ums*	at uhidev? reportid ?
+wsmouse* at ums? mux 0
+
+# USB Keyboards
+ukbd*	at uhidev? reportid ?
+wskbd*	at ukbd? console ? mux 1
+
+# USB serial adapter
+ucycom*	at uhidev? reportid ?
+
+# USB Generic HID devices
+uhid*	at uhidev? reportid ?
+
+# USB Mass Storage
+umass*	at uhub? port ? configuration ? interface ?
+wd* at umass?
+
+# Prolific PL2301/PL2302 host-to-host adapter
+upl*	at uhub? port ?
+
+# USB Generic driver
+ugen*	at uhub? port ?
+
+pseudo-device 	wsmux
+pseudo-device 	wsfont

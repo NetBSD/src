@@ -1,0 +1,32 @@
+# $NetBSD: std.mtkatlas,v 1.1.2.1 2017/12/13 01:24:08 matt Exp $
+#
+# standard NetBSD/evbarm for Medaitek based options
+
+machine	evbarm arm
+include 	"arch/evbarm/conf/std.evbarm"
+
+# Pull in config definitions.
+include		"arch/evbarm/conf/files.mtkatlas"
+
+options 	FDT				# Flattened Device Tree support
+options 	MODULAR
+options 	MODULAR_DEFAULT_AUTOLOAD
+options 	__HAVE_CPU_COUNTER
+#options 	CORTEX_PMC
+options 	__HAVE_FAST_SOFTINTS		# should be in types.h
+options 	ARM_HAS_VBAR
+options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
+options 	TPIDRPRW_IS_CURCPU
+options 	FPU_VFP
+
+options         KERNEL_BASE_EXT=0x80000000
+makeoptions     LOADADDRESS="0x40100000"
+
+makeoptions	KERNEL_BASE_PHYS="0x40100000"
+makeoptions	KERNEL_BASE_VIRT="0x80100000"
+makeoptions	BOARDTYPE="mtkatlas"
+makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.${BOARDTYPE:tl}"
+makeoptions	CPUFLAGS="-mcpu=generic-armv7-a -mfpu=neon"
+
+options 	ARM_INTR_IMPL="<arch/arm/fdt/fdt_intr.h>"
+options		ARM_GENERIC_TODR

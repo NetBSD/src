@@ -1,0 +1,10 @@
+# $NetBSD: MTKATLAS_INSTALL,v 1.1.2.1 2017/12/13 01:24:08 matt Exp $
+#
+#	installation-sized ramdisk
+#
+
+include "arch/evbarm/conf/MTKATLAS"
+include "arch/evbarm/conf/INSTALL"
+
+options 	BOOTHOWTO=RB_SINGLE
+#makeoption 	DEBUG
