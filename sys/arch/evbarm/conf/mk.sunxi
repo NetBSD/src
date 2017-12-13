@@ -1,10 +1,7 @@
-#	$NetBSD: mk.sunxi,v 1.1.4.2 2017/07/18 19:13:09 snj Exp $
+#	$NetBSD: mk.sunxi,v 1.1.4.2.2.1 2017/12/13 01:07:43 matt Exp $
 
 SYSTEM_FIRST_OBJ=	sunxi_start.o
 SYSTEM_FIRST_SFILE=	${THISARM}/sunxi/sunxi_start.S
-
-AFLAGS.sunxi_start.S+=	-Wa,-march=armv7-a+virt
-AFLAGS.psci_arm.S+=	-Wa,-march=armv7-a+sec+virt
 
 GENASSYM_EXTRAS+=	${THISARM}/sunxi/genassym.cf
 
