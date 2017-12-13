@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2017/10/10 19:30:06 christos Exp $
+#	$NetBSD: Makefile,v 1.31 2017/12/13 17:42:44 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 .include <bsd.own.mk>
@@ -16,6 +16,9 @@ DPADD.rump += ${LIBRUMPRES}
 .if (${USE_INET6} != "no")
 CPPFLAGS+=-DINET6
 .endif
+
+LDADD+=-lutil
+DPADD+=${LIBUTIL}
 
 # The Makefile over in ../../distrib/utils/x_route
 # would like keywords.[ch] to always exist here, so
