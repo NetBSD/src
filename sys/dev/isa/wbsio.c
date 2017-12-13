@@ -1,4 +1,4 @@
-/*	$NetBSD: wbsio.c,v 1.17 2017/12/13 00:27:01 knakahara Exp $	*/
+/*	$NetBSD: wbsio.c,v 1.18 2017/12/13 00:27:53 knakahara Exp $	*/
 /*	$OpenBSD: wbsio.c,v 1.10 2015/03/14 03:38:47 jsg Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
@@ -34,6 +34,7 @@
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 #include <dev/isa/wbsioreg.h>
+#include <dev/sysmon/sysmonvar.h>
 
 /* Don't use gpio for now in the module */
 #ifndef _MODULE
@@ -52,6 +53,7 @@ struct wbsio_softc {
 
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
+	kmutex_t		sc_conf_lock;
 
 	struct isa_attach_args	sc_ia;
 	struct isa_io		sc_io;
@@ -63,6 +65,9 @@ struct wbsio_softc {
 	struct gpio_pin		sc_gpio_pins[WBSIO_GPIO_NPINS];
 	bool			sc_gpio_rt;
 #endif
+
+	struct sysmon_wdog	sc_smw;
+	bool			sc_smw_valid;
 };
 
 static const struct wbsio_product {
@@ -101,6 +106,7 @@ static int	wbsio_rescan(device_t, const char *, const int *);
 static void	wbsio_childdet(device_t, device_t);
 static int	wbsio_print(void *, const char *);
 static int	wbsio_search(device_t, cfdata_t, const int *, void *);
+static bool	wbsio_suspend(device_t, const pmf_qual_t *);
 #if NGPIO > 0
 static int	wbsio_gpio_search(device_t, cfdata_t, const int *, void *);
 static int	wbsio_gpio_rt_init(struct wbsio_softc *);
@@ -112,22 +118,35 @@ static void	wbsio_gpio_rt_pin_ctl(void *, int, int);
 static void	wbsio_gpio_enable_nct6779d(device_t);
 static void	wbsio_gpio_pinconfig_nct6779d(device_t);
 #endif
+static void	wbsio_wdog_attach(device_t);
+static int	wbsio_wdog_detach(device_t);
+static int	wbsio_wdog_setmode(struct sysmon_wdog *);
+static int	wbsio_wdog_tickle(struct sysmon_wdog *);
+static void	wbsio_wdog_setcounter(struct wbsio_softc *, uint8_t);
+static void	wbsio_wdog_clear_timeout(struct wbsio_softc *);
 
 CFATTACH_DECL2_NEW(wbsio, sizeof(struct wbsio_softc),
     wbsio_match, wbsio_attach, wbsio_detach, NULL,
     wbsio_rescan, wbsio_childdet);
 
 static __inline void
-wbsio_conf_enable(bus_space_tag_t iot, bus_space_handle_t ioh)
+wbsio_conf_enable(kmutex_t *lock, bus_space_tag_t iot, bus_space_handle_t ioh)
 {
+	if (lock)
+		mutex_enter(lock);
+
 	bus_space_write_1(iot, ioh, WBSIO_INDEX, WBSIO_CONF_EN_MAGIC);
 	bus_space_write_1(iot, ioh, WBSIO_INDEX, WBSIO_CONF_EN_MAGIC);
 }
 
 static __inline void
-wbsio_conf_disable(bus_space_tag_t iot, bus_space_handle_t ioh)
+wbsio_conf_disable(kmutex_t *lock, bus_space_tag_t iot, bus_space_handle_t ioh)
 {
+
 	bus_space_write_1(iot, ioh, WBSIO_INDEX, WBSIO_CONF_DS_MAGIC);
+
+	if (lock)
+		mutex_exit(lock);
 }
 
 static __inline uint8_t
@@ -188,11 +207,11 @@ wbsio_match(device_t parent, cfdata_t match, void *aux)
 	iot = ia->ia_iot;
 	if (bus_space_map(iot, ia->ia_io[0].ir_addr, WBSIO_IOSIZE, 0, &ioh))
 		return 0;
-	wbsio_conf_enable(iot, ioh);
+	wbsio_conf_enable(NULL, iot, ioh);
 	id = wbsio_conf_read(iot, ioh, WBSIO_ID);
 	rev = wbsio_conf_read(iot, ioh, WBSIO_REV);
 	aprint_debug("wbsio_probe: id 0x%02x, rev 0x%02x\n", id, rev);
-	wbsio_conf_disable(iot, ioh);
+	wbsio_conf_disable(NULL, iot, ioh);
 	bus_space_unmap(iot, ioh, WBSIO_IOSIZE);
 
 	if ((product = wbsio_lookup(id, rev)) == NULL)
@@ -228,8 +247,10 @@ wbsio_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	mutex_init(&sc->sc_conf_lock, MUTEX_DEFAULT, IPL_NONE);
+
 	/* Enter configuration mode */
-	wbsio_conf_enable(sc->sc_iot, sc->sc_ioh);
+	wbsio_conf_enable(&sc->sc_conf_lock, sc->sc_iot, sc->sc_ioh);
 
 	/* Read device ID */
 	id = wbsio_conf_read(sc->sc_iot, sc->sc_ioh, WBSIO_ID);
@@ -237,7 +258,7 @@ wbsio_attach(device_t parent, device_t self, void *aux)
 	rev = wbsio_conf_read(sc->sc_iot, sc->sc_ioh, WBSIO_REV);
 
 	/* Escape from configuration mode */
-	wbsio_conf_disable(sc->sc_iot, sc->sc_ioh);
+	wbsio_conf_disable(&sc->sc_conf_lock, sc->sc_iot, sc->sc_ioh);
 
 	if ((product = wbsio_lookup(id, rev)) == NULL) {
 		aprint_error_dev(self, "Unknown device. Failed to attach\n");
@@ -259,8 +280,11 @@ wbsio_attach(device_t parent, device_t self, void *aux)
 	} else
 		aprint_normal("0x%02x\n", rev);
 
-	if (!pmf_device_register(self, NULL, NULL))
+	if (!pmf_device_register(self, wbsio_suspend, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
+
+	wbsio_wdog_attach(self);
+
 	wbsio_rescan(self, "wbsio", NULL);
 
 #if NGPIO > 0
@@ -274,6 +298,9 @@ wbsio_detach(device_t self, int flags)
 {
 	struct wbsio_softc *sc = device_private(self);
 	int rc;
+
+	if ((rc = wbsio_wdog_detach(self)) != 0)
+		return rc;
 
 	if ((rc = config_detach_children(self, flags)) != 0)
 		return rc;
@@ -290,6 +317,8 @@ wbsio_detach(device_t self, int flags)
 		mutex_destroy(&sc->sc_gpio_lock);
 	}
 #endif
+
+	mutex_destroy(&sc->sc_conf_lock);
 	return 0;
 }
 
@@ -328,7 +357,7 @@ wbsio_search(device_t parent, cfdata_t cf, const int *slocs, void *aux)
 	uint8_t reg0, reg1, rev;
 
 	/* Enter configuration mode */
-	wbsio_conf_enable(sc->sc_iot, sc->sc_ioh);
+	wbsio_conf_enable(&sc->sc_conf_lock, sc->sc_iot, sc->sc_ioh);
 
 	/* Select HM logical device */
 	wbsio_conf_write(sc->sc_iot, sc->sc_ioh, WBSIO_LDN, WBSIO_LDN_HM);
@@ -343,7 +372,7 @@ wbsio_search(device_t parent, cfdata_t cf, const int *slocs, void *aux)
 	reg1 = wbsio_conf_read(sc->sc_iot, sc->sc_ioh, WBSIO_HM_ADDR_MSB);
 
 	/* Escape from configuration mode */
-	wbsio_conf_disable(sc->sc_iot, sc->sc_ioh);
+	wbsio_conf_disable(&sc->sc_conf_lock, sc->sc_iot, sc->sc_ioh);
 
 	iobase = (reg1 << 8) | (reg0 & ~0x7);
 
@@ -351,12 +380,12 @@ wbsio_search(device_t parent, cfdata_t cf, const int *slocs, void *aux)
 		return -1;
 
 	/* Enter configuration mode */
-	wbsio_conf_enable(sc->sc_iot, sc->sc_ioh);
+	wbsio_conf_enable(&sc->sc_conf_lock, sc->sc_iot, sc->sc_ioh);
 	/* Read device ID and revision */
 	devid = wbsio_conf_read(sc->sc_iot, sc->sc_ioh, WBSIO_ID);
 	rev = wbsio_conf_read(sc->sc_iot, sc->sc_ioh, WBSIO_REV);
 	/* Escape from configuration mode */
-	wbsio_conf_disable(sc->sc_iot, sc->sc_ioh);
+	wbsio_conf_disable(&sc->sc_conf_lock, sc->sc_iot, sc->sc_ioh);
 
 	if ((product = wbsio_lookup(devid, rev)) == NULL) {
 		aprint_error_dev(parent, "%s: Unknown device.\n", __func__);
@@ -394,6 +423,20 @@ wbsio_print(void *aux, const char *pnp)
 	return (UNCONF);
 }
 
+static bool
+wbsio_suspend(device_t self, const pmf_qual_t *qual)
+{
+	struct wbsio_softc *sc = device_private(self);
+
+	if (sc->sc_smw_valid) {
+		if ((sc->sc_smw.smw_mode & WDOG_MODE_MASK)
+		    != WDOG_MODE_DISARMED)
+			return false;
+	}
+
+	return true;
+}
+
 #if NGPIO > 0
 static int
 wbsio_gpio_search(device_t parent, cfdata_t cf, const int *slocs, void *aux)
@@ -406,12 +449,12 @@ wbsio_gpio_search(device_t parent, cfdata_t cf, const int *slocs, void *aux)
 	int i;
 
 	/* Enter configuration mode */
-	wbsio_conf_enable(sc->sc_iot, sc->sc_ioh);
+	wbsio_conf_enable(&sc->sc_conf_lock, sc->sc_iot, sc->sc_ioh);
 	/* Read device ID and revision */
 	devid = wbsio_conf_read(sc->sc_iot, sc->sc_ioh, WBSIO_ID);
 	rev = wbsio_conf_read(sc->sc_iot, sc->sc_ioh, WBSIO_REV);
 	/* Escape from configuration mode */
-	wbsio_conf_disable(sc->sc_iot, sc->sc_ioh);
+	wbsio_conf_disable(&sc->sc_conf_lock, sc->sc_iot, sc->sc_ioh);
 
 	if ((product = wbsio_lookup(devid, rev)) == NULL) {
 		aprint_error_dev(parent, "%s: Unknown device.\n", __func__);
@@ -479,7 +522,7 @@ wbsio_gpio_rt_init(struct wbsio_softc *sc)
 	uint8_t reg0, reg1;
 
 	/* Enter configuration mode */
-	wbsio_conf_enable(sc->sc_iot, sc->sc_ioh);
+	wbsio_conf_enable(&sc->sc_conf_lock, sc->sc_iot, sc->sc_ioh);
 
 	/* Get GPIO Register Table address */
 	wbsio_conf_write(sc->sc_iot, sc->sc_ioh, WBSIO_LDN, WBSIO_LDN_GPIO0);
@@ -488,7 +531,7 @@ wbsio_gpio_rt_init(struct wbsio_softc *sc)
 	iobase = (reg1 << 8) | (reg0 & ~0x7);
 
 	/* Escape from configuration mode */
-	wbsio_conf_disable(sc->sc_iot, sc->sc_ioh);
+	wbsio_conf_disable(&sc->sc_conf_lock, sc->sc_iot, sc->sc_ioh);
 
 	if (bus_space_map(sc->sc_iot, iobase, WBSIO_GPIO_IOSIZE,
 	    0, &sc->sc_gpio_ioh)) {
@@ -606,7 +649,7 @@ wbsio_gpio_enable_nct6779d(device_t parent)
 	uint8_t reg, conf;
 
 	/* Enter configuration mode */
-	wbsio_conf_enable(sc->sc_iot, sc->sc_ioh);
+	wbsio_conf_enable(&sc->sc_conf_lock, sc->sc_iot, sc->sc_ioh);
 
 	wbsio_conf_write(sc->sc_iot, sc->sc_ioh, WBSIO_LDN, WBSIO_LDN_GPIO0);
 	reg = WBSIO_GPIO_CONF;
@@ -630,7 +673,7 @@ wbsio_gpio_enable_nct6779d(device_t parent)
 	wbsio_conf_write(sc->sc_iot, sc->sc_ioh, reg, conf);
 
 	/* Escape from configuration mode */
-	wbsio_conf_disable(sc->sc_iot, sc->sc_ioh);
+	wbsio_conf_disable(&sc->sc_conf_lock, sc->sc_iot, sc->sc_ioh);
 }
 
 static void
@@ -641,7 +684,7 @@ wbsio_gpio_pinconfig_nct6779d(device_t parent)
 	uint8_t mfs4, mfs5, mfs6, gopt2, hm_conf;
 
 	/* Enter configuration mode */
-	wbsio_conf_enable(sc->sc_iot, sc->sc_ioh);
+	wbsio_conf_enable(&sc->sc_conf_lock, sc->sc_iot, sc->sc_ioh);
 
 	/* Strapping Function Result */
 	sfr = wbsio_conf_read(sc->sc_iot, sc->sc_ioh, WBSIO_SFR);
@@ -740,10 +783,157 @@ wbsio_gpio_pinconfig_nct6779d(device_t parent)
 	wbsio_conf_write(sc->sc_iot, sc->sc_ioh, WBSIO_HM_CONF, hm_conf);
 
 	/* Escape from configuration mode */
-	wbsio_conf_disable(sc->sc_iot, sc->sc_ioh);
+	wbsio_conf_disable(&sc->sc_conf_lock, sc->sc_iot, sc->sc_ioh);
 }
 
-#endif
+#endif /* NGPIO > 0 */
+
+static void
+wbsio_wdog_attach(device_t self)
+{
+	struct wbsio_softc *sc = device_private(self);
+	const struct wbsio_product *product;
+	uint8_t gpio, mode;
+	uint16_t devid;
+	uint8_t rev;
+
+	sc->sc_smw_valid = false;
+
+	wbsio_conf_enable(&sc->sc_conf_lock, sc->sc_iot, sc->sc_ioh);
+	devid = wbsio_conf_read(sc->sc_iot, sc->sc_ioh, WBSIO_ID);
+	rev = wbsio_conf_read(sc->sc_iot, sc->sc_ioh, WBSIO_REV);
+	wbsio_conf_disable(&sc->sc_conf_lock, sc->sc_iot, sc->sc_ioh);
+
+	if ((product = wbsio_lookup(devid, rev)) == NULL) {
+		return;
+	}
+
+	switch (product->id) {
+	case WBSIO_ID_NCT6779D:
+		break;
+	default:
+		/* WDT is not supoorted */
+		return;
+	}
+
+	wbsio_wdog_setcounter(sc, WBSIO_WDT_CNTR_STOP);
+
+	wbsio_conf_enable(&sc->sc_conf_lock, sc->sc_iot, sc->sc_ioh);
+	wbsio_conf_write(sc->sc_iot, sc->sc_ioh, WBSIO_LDN, WBSIO_LDN_GPIO0);
+
+	gpio = wbsio_conf_read(sc->sc_iot, sc->sc_ioh, WBSIO_GPIO_CONF);
+	mode = wbsio_conf_read(sc->sc_iot, sc->sc_ioh, WBSIO_WDT_MODE);
+
+	gpio |= WBSIO_GPIO0_WDT1;
+
+	mode &= ~WBSIO_WDT_MODE_FASTER;
+	mode &= ~WBSIO_WDT_MODE_MINUTES;
+	mode &= ~WBSIO_WDT_MODE_KBCRST;
+	mode &= ~WBSIO_WDT_MODE_LEVEL;
+
+	/* initialize WDT mode */
+	wbsio_conf_write(sc->sc_iot, sc->sc_ioh, WBSIO_WDT_MODE, mode);
+	/* Activate WDT1 function */
+	wbsio_conf_write(sc->sc_iot, sc->sc_ioh, WBSIO_GPIO_CONF, gpio);
+
+	wbsio_conf_disable(&sc->sc_conf_lock, sc->sc_iot, sc->sc_ioh);
+
+	sc->sc_smw.smw_name = device_xname(self);
+	sc->sc_smw.smw_cookie = sc;
+	sc->sc_smw.smw_setmode = wbsio_wdog_setmode;
+	sc->sc_smw.smw_tickle = wbsio_wdog_tickle;
+	sc->sc_smw.smw_period = WBSIO_WDT_CNTR_MAX;
+
+	if (sysmon_wdog_register(&sc->sc_smw))
+		aprint_error_dev(self, "couldn't register with sysmon\n");
+	else
+		sc->sc_smw_valid = true;
+}
+
+static int
+wbsio_wdog_detach(device_t self)
+{
+	struct wbsio_softc *sc = device_private(self);
+	int error;
+
+	error = 0;
+
+	if (sc->sc_smw_valid) {
+		if ((sc->sc_smw.smw_mode & WDOG_MODE_MASK)
+		    != WDOG_MODE_DISARMED)
+			return EBUSY;
+
+		error = sysmon_wdog_unregister(&sc->sc_smw);
+	}
+
+	if (!error)
+		sc->sc_smw_valid = false;
+
+	return error;
+}
+
+static int
+wbsio_wdog_setmode(struct sysmon_wdog *smw)
+{
+
+	switch(smw->smw_mode & WDOG_MODE_MASK) {
+	case WDOG_MODE_DISARMED:
+		wbsio_wdog_setcounter(smw->smw_cookie, WBSIO_WDT_CNTR_STOP);
+		wbsio_wdog_clear_timeout(smw->smw_cookie);
+		break;
+	default:
+		if (smw->smw_period > WBSIO_WDT_CNTR_MAX
+		    || smw->smw_period == 0)
+			return EINVAL;
+
+		wbsio_wdog_setcounter(smw->smw_cookie, smw->smw_period);
+	}
+
+	return 0;
+}
+
+static void
+wbsio_wdog_setcounter(struct wbsio_softc *sc, uint8_t period)
+{
+
+	KASSERT(!mutex_owned(&sc->sc_conf_lock));
+
+	wbsio_conf_enable(&sc->sc_conf_lock, sc->sc_iot, sc->sc_ioh);
+
+	wbsio_conf_write(sc->sc_iot, sc->sc_ioh, WBSIO_LDN, WBSIO_LDN_GPIO0);
+	wbsio_conf_write(sc->sc_iot, sc->sc_ioh, WBSIO_WDT_CNTR, period);
+
+	wbsio_conf_write(sc->sc_iot, sc->sc_ioh, WBSIO_LDN, WBSIO_LDN_GPIO0);
+
+
+	wbsio_conf_disable(&sc->sc_conf_lock, sc->sc_iot, sc->sc_ioh);
+}
+
+static void
+wbsio_wdog_clear_timeout(struct wbsio_softc *sc)
+{
+	uint8_t st;
+
+	KASSERT(!mutex_owned(&sc->sc_conf_lock));
+
+	wbsio_conf_enable(&sc->sc_conf_lock, sc->sc_iot, sc->sc_ioh);
+
+	st = wbsio_conf_read(sc->sc_iot, sc->sc_ioh, WBSIO_WDT_STAT);
+	st &= ~WBSIO_WDT_STAT_TIMEOUT;
+	wbsio_conf_write(sc->sc_iot, sc->sc_ioh, WBSIO_WDT_STAT, st);
+
+	wbsio_conf_disable(&sc->sc_conf_lock, sc->sc_iot, sc->sc_ioh);
+}
+
+static int
+wbsio_wdog_tickle(struct sysmon_wdog *smw)
+{
+
+	wbsio_wdog_setcounter(smw->smw_cookie, smw->smw_period);
+
+	return 0;
+}
+
 
 MODULE(MODULE_CLASS_DRIVER, wbsio, NULL);
 
