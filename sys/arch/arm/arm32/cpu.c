@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.115 2017/06/01 02:45:05 chs Exp $	*/
+/*	$NetBSD: cpu.c,v 1.115.6.1 2017/12/13 00:59:11 matt Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.115 2017/06/01 02:45:05 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.115.6.1 2017/12/13 00:59:11 matt Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -514,6 +514,8 @@ const struct cpuidtab cpuids[] = {
 	  pN_steppings, "7A" },
 	{ CPU_ID_CORTEXA17R1,	CPU_CLASS_CORTEX,	"Cortex-A17 r1",
 	  pN_steppings, "7A" },
+	{ CPU_ID_CORTEXA35R0,	CPU_CLASS_CORTEX,	"Cortex-A35 r0",
+	  pN_steppings, "8A" },
 	{ CPU_ID_CORTEXA53R0,	CPU_CLASS_CORTEX,	"Cortex-A53 r0",
 	  pN_steppings, "8A" },
 	{ CPU_ID_CORTEXA57R0,	CPU_CLASS_CORTEX,	"Cortex-A57 r0",
