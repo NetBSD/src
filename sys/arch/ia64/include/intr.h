@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.6 2017/04/08 18:02:21 scole Exp $	*/
+/*	$NetBSD: intr.h,v 1.7 2017/12/13 16:50:46 scole Exp $	*/
 
 /* XXX: cherry: To Be fixed when we switch on interrupts. */
 
@@ -66,6 +66,10 @@ extern uint64_t ia64_lapic_address;
 
 #define IA64_INTERRUPT_BLOCK \
 	(struct ia64_interrupt_block *)IA64_PHYS_TO_RR6(ia64_lapic_address)
+
+/* XXX acpi */
+typedef uint64_t intr_handle_t;
+const char *intr_string(intr_handle_t, char *, size_t);
 
 void *intr_establish(int, int, int, int (*)(void *), void *);
 void intr_disestablish(void *);
