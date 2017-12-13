@@ -1,4 +1,4 @@
-/*	$NetBSD: lapi.c,v 1.9 2017/04/26 13:17:33 mbalmer Exp $	*/
+/*	$NetBSD: lapi.c,v 1.10 2017/12/13 13:00:14 mbalmer Exp $	*/
 
 /*
 ** Id: lapi.c,v 2.259 2016/02/29 14:27:14 roberto Exp 
@@ -541,6 +541,7 @@ LUA_API void lua_pushcclosure (lua_State *L, lua_CFunction fn, int n) {
   lua_lock(L);
   if (n == 0) {
     setfvalue(L->top, fn);
+    api_incr_top(L);
   }
   else {
     CClosure *cl;
@@ -554,9 +555,9 @@ LUA_API void lua_pushcclosure (lua_State *L, lua_CFunction fn, int n) {
       /* does not need barrier because closure is white */
     }
     setclCvalue(L, L->top, cl);
+    api_incr_top(L);
+    luaC_checkGC(L);
   }
-  api_incr_top(L);
-  luaC_checkGC(L);
   lua_unlock(L);
 }
 
