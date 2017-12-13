@@ -1,4 +1,4 @@
-/*	$NetBSD: wbsio.c,v 1.18 2017/12/13 00:27:53 knakahara Exp $	*/
+/*	$NetBSD: wbsio.c,v 1.19 2017/12/13 00:29:02 knakahara Exp $	*/
 /*	$OpenBSD: wbsio.c,v 1.10 2015/03/14 03:38:47 jsg Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
@@ -37,9 +37,10 @@
 #include <dev/sysmon/sysmonvar.h>
 
 /* Don't use gpio for now in the module */
-#ifndef _MODULE
+#if !defined(_MODULE) && defined(WBSIO_GPIO)
 #include "gpio.h"
 #endif
+
 #if NGPIO > 0
 #include <dev/gpio/gpiovar.h>
 #endif
