@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2017/12/08 14:19:47 rin Exp $
+#	$NetBSD: Makefile,v 1.12 2017/12/13 21:52:55 joerg Exp $
 NOCTF=
 .include "../Makefile.inc"
 
@@ -26,12 +26,10 @@ NOMAN=		# defined
 .include <bsd.prog.mk>
 
 # Force c++
-HOST_CC:=       ${HOST_CXX}
-CC:=            ${CXX}
-CFLAGS:=        ${CXXFLAGS} -std=gnu++11 -Wno-error=stack-protector
-.if ${ACTIVE_CC} == "clang"
-CFLAGS+=	-Wno-deprecated
-.endif
+CWARNFLAGS.clang+=	-Wno-deprecated
+HOST_CC:=		${HOST_CXX}
+CC:=			${CXX}
+CFLAGS:=		${CXXFLAGS} -std=gnu++11 -Wno-error=stack-protector
 
 LIBOPCODESDIR!=   cd ${.CURDIR}/../../lib/libopcodes   && ${PRINTOBJDIR}
 LIBBFDDIR!=       cd ${.CURDIR}/../../lib/libbfd       && ${PRINTOBJDIR}
