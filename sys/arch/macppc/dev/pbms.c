@@ -1,4 +1,4 @@
-/* $Id: pbms.c,v 1.14 2016/04/28 14:00:23 skrll Exp $ */
+/* $Id: pbms.c,v 1.15 2017/12/13 09:46:05 maya Exp $ */
 
 /*
  * Copyright (c) 2005, Johan Wallén
@@ -129,7 +129,7 @@
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/uhidev.h>
-#include <dev/usb/hid.h>
+#include <dev/hid/hid.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsmousevar.h>
