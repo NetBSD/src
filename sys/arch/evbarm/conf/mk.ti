@@ -1,4 +1,4 @@
-#	$NetBSD: mk.ti,v 1.2 2017/12/09 11:52:38 jmcneill Exp $
+#	$NetBSD: mk.ti,v 1.3 2017/12/13 13:52:13 jmcneill Exp $
 
 .if !empty(MACHINE_ARCH:M*eb)
 EXTRA_LINKFLAGS+=	--be8
@@ -17,16 +17,20 @@ _OSRELEASE!=		${HOST_SH} $S/conf/osrelease.sh
 MKUBOOTIMAGEARGS=	-A arm -T kernel -O linux
 MKUBOOTIMAGEARGS+=	-a $(KERNEL_BASE_PHYS) -e $(KERNEL_BASE_PHYS)
 MKUBOOTIMAGEARGS+=	-n "NetBSD/$(BOARDTYPE) ${_OSRELEASE}"
+MKUBOOTIMAGEARGS_NONE=	${MKUBOOTIMAGEARGS} -C none
 MKUBOOTIMAGEARGS_GZ=	${MKUBOOTIMAGEARGS} -C gz
 
 SYSTEM_LD_TAIL_EXTRA+=; \
 	echo ${OBJCOPY} -S -O binary $@ $@.bin; \
 	${OBJCOPY} -S -O binary $@ $@.bin; \
+	echo ${TOOL_MKUBOOTIMAGE} ${MKUBOOTIMAGEARGS_NONE} $@.bin $@.ub; \
+	${TOOL_MKUBOOTIMAGE} ${MKUBOOTIMAGEARGS_NONE} $@.bin $@.ub; \
 	echo ${TOOL_GZIP} -c $@.bin > $@.bin.gz; \
 	${TOOL_GZIP} -c $@.bin > $@.bin.gz; \
-	echo ${TOOL_MKUBOOTIMAGE} ${MKUBOOTIMAGEARGS_GZ} $@.bin.gz $@.ub; \
-	${TOOL_MKUBOOTIMAGE} ${MKUBOOTIMAGEARGS_GZ} $@.bin.gz $@.ub
+	echo ${TOOL_MKUBOOTIMAGE} ${MKUBOOTIMAGEARGS_GZ} $@.bin.gz $@.gz.ub; \
+	${TOOL_MKUBOOTIMAGE} ${MKUBOOTIMAGEARGS_GZ} $@.bin.gz $@.gz.ub
 
 EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.bin@}
-EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.bin.gz@}
 EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.ub@}
+EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.bin.gz@}
+EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.gz.ub@}
