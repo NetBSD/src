@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.53.2.1 2017/10/24 09:14:59 snj Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.53.2.1.2.1 2017/12/13 00:57:58 matt Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -642,6 +642,7 @@ vfp_setcontext(struct lwp *l, const mcontext_t *mcp)
 	struct pcb * const pcb = lwp_getpcb(l);
 
 	pcu_discard(&arm_vfp_ops, l, true);
+	KASSERT((pcb->pcb_vfp.vfp_fpexc & VFP_FPEXC_EN) == 0);
 	pcb->pcb_vfp.vfp_fpscr = mcp->__fpu.__vfpregs.__vfp_fpscr;
 	memcpy(pcb->pcb_vfp.vfp_regs, mcp->__fpu.__vfpregs.__vfp_fstmx,
 	    sizeof(mcp->__fpu.__vfpregs.__vfp_fstmx));
