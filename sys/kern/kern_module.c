@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.128 2017/12/14 10:39:32 martin Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.129 2017/12/14 11:45:40 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.128 2017/12/14 10:39:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.129 2017/12/14 11:45:40 pgoyette Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -1047,6 +1047,14 @@ module_do_load(const char *name, bool isdep, int flags,
 	 */
 	if (mod->mod_source == MODULE_SOURCE_FILESYS) {
 		mod2 = module_lookup(mod->mod_info->mi_name);
+		if (mod2 == NULL) {
+			TAILQ_FOREACH(mod2, pending, mod_chain) {
+				if (strcmp(mod2->mod_info->mi_name, name) == 0) {
+					break;
+				}
+			}
+		}
+
 		if (mod2 == NULL) {
 			module_error("newly added module `%s'"
 			    " not found", mod->mod_info->mi_name);
