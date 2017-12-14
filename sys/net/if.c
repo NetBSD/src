@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.413 2017/12/11 03:29:20 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.414 2017/12/14 05:46:54 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.413 2017/12/11 03:29:20 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.414 2017/12/14 05:46:54 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1317,17 +1317,6 @@ if_detach(struct ifnet *ifp)
 	if_deactivate(ifp);
 	IFNET_UNLOCK(ifp);
 
-	IFNET_GLOBAL_LOCK();
-	ifindex2ifnet[ifp->if_index] = NULL;
-	TAILQ_REMOVE(&ifnet_list, ifp, if_list);
-	IFNET_WRITER_REMOVE(ifp);
-	pserialize_perform(ifnet_psz);
-	IFNET_GLOBAL_UNLOCK();
-
-	/* Wait for all readers to drain before freeing.  */
-	psref_target_destroy(&ifp->if_psref, ifnet_psref_class);
-	PSLIST_ENTRY_DESTROY(ifp, if_pslist_entry);
-
 	if (ifp->if_slowtimo != NULL && ifp->if_slowtimo_ch != NULL) {
 		ifp->if_slowtimo = NULL;
 		callout_halt(ifp->if_slowtimo_ch, NULL);
@@ -1355,10 +1344,6 @@ if_detach(struct ifnet *ifp)
 	if (ifp->if_carp != NULL && ifp->if_type != IFT_CARP)
 		carp_ifdetach(ifp);
 #endif
-
-	/* carp_ifdetach still uses the lock */
-	mutex_obj_free(ifp->if_ioctl_lock);
-	ifp->if_ioctl_lock = NULL;
 
 	/*
 	 * Rip all the addresses off the interface.  This should make
@@ -1457,6 +1442,17 @@ again:
 		}
 	}
 
+	/* Wait for all readers to drain before freeing.  */
+	IFNET_GLOBAL_LOCK();
+	ifindex2ifnet[ifp->if_index] = NULL;
+	TAILQ_REMOVE(&ifnet_list, ifp, if_list);
+	IFNET_WRITER_REMOVE(ifp);
+	pserialize_perform(ifnet_psz);
+	IFNET_GLOBAL_UNLOCK();
+
+	psref_target_destroy(&ifp->if_psref, ifnet_psref_class);
+	PSLIST_ENTRY_DESTROY(ifp, if_pslist_entry);
+
 	pfil_run_ifhooks(if_pfil, PFIL_IFNET_DETACH, ifp);
 	(void)pfil_head_destroy(ifp->if_pfil);
 
@@ -1502,6 +1498,9 @@ again:
 		if_percpuq_destroy(ifp->if_percpuq);
 		ifp->if_percpuq = NULL;
 	}
+
+	mutex_obj_free(ifp->if_ioctl_lock);
+	ifp->if_ioctl_lock = NULL;
 
 	splx(s);
 
