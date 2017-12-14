@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1490 2017/12/14 16:48:28 jmcneill Exp $
+#	$NetBSD: 3RDPARTY,v 1.1491 2017/12/14 16:49:11 jmcneill Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1705,7 +1705,7 @@ Notes:
 
 Package:	dtc,libfdt
 Version:	1.4.4
-Current Vers:	1.4.4
+Current Vers:	1.4.5
 Maintainer:	David Gibson <david@gibson.dropbear.id.au>, Jon Loeliger <jdl@jdl.com>
 Archive Site:	https://git.kernel.org/pub/scm/utils/dtc/dtc.git
 Home Page:	https://git.kernel.org/pub/scm/utils/dtc/dtc.git
