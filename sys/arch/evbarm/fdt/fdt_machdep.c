@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.17 2017/12/13 00:22:24 jmcneill Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.18 2017/12/14 11:39:31 martin Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.17 2017/12/13 00:22:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.18 2017/12/14 11:39:31 martin Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -178,17 +178,16 @@ fdt_get_memory(uint64_t *paddr, uint64_t *psize)
 void
 fdt_add_reserved_memory_range(uint64_t addr, uint64_t size)
 {
-	int error;
+	uint64_t start = trunc_page(addr);
+	uint64_t end = round_page(addr + size);
 
-	addr = trunc_page(addr);
-	size = round_page(size);
-
-	error = extent_free(fdt_memory_ext, addr, size, EX_NOWAIT);
+	int error = extent_free(fdt_memory_ext, start,
+	     end - start, EX_NOWAIT);
 	if (error != 0)
 		printf("MEM ERROR: res %llx-%llx failed: %d\n",
-		    addr, addr + size, error);
+		    start, end, error);
 	else
-		DPRINTF("MEM: res %llx-%llx\n", addr, addr + size);
+		DPRINTF("MEM: res %llx-%llx\n", start, end);
 }
 
 /*
@@ -242,8 +241,8 @@ fdt_build_bootconfig(uint64_t mem_addr, uint64_t mem_size)
 		    EX_NOWAIT);
 		if (error != 0)
 			printf("MEM ERROR: add %llx-%llx failed: %d\n",
-			    addr, size, error);
-		DPRINTF("MEM: add %llx-%llx\n", addr, size);
+			    addr, addr + size, error);
+		DPRINTF("MEM: add %llx-%llx\n", addr, addr + size);
 	}
 
 	fdt_add_reserved_memory(max_addr);
