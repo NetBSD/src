@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_psref.c,v 1.8 2017/12/11 02:33:17 knakahara Exp $	*/
+/*	$NetBSD: subr_psref.c,v 1.9 2017/12/14 05:45:55 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_psref.c,v 1.8 2017/12/11 02:33:17 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_psref.c,v 1.9 2017/12/14 05:45:55 ozaki-r Exp $");
 
 #include <sys/types.h>
 #include <sys/condvar.h>
@@ -187,22 +187,40 @@ psref_target_init(struct psref_target *target,
 }
 
 #ifdef DEBUG
+static bool
+psref_exist(struct psref_cpu *pcpu, struct psref *psref)
+{
+	struct psref *_psref;
+
+	SLIST_FOREACH(_psref, &pcpu->pcpu_head, psref_entry) {
+		if (_psref == psref)
+			return true;
+	}
+	return false;
+}
+
 static void
 psref_check_duplication(struct psref_cpu *pcpu, struct psref *psref,
     const struct psref_target *target)
 {
 	bool found = false;
-	struct psref *_psref;
 
-	SLIST_FOREACH(_psref, &pcpu->pcpu_head, psref_entry) {
-		if (_psref == psref &&
-		    _psref->psref_target == target) {
-			found = true;
-			break;
-		}
-	}
+	found = psref_exist(pcpu, psref);
 	if (found) {
-		panic("trying to acquire a target twice with the same psref: "
+		panic("The psref is already in the list (acquiring twice?): "
+		    "psref=%p target=%p", psref, target);
+	}
+}
+
+static void
+psref_check_existence(struct psref_cpu *pcpu, struct psref *psref,
+    const struct psref_target *target)
+{
+	bool found = false;
+
+	found = psref_exist(pcpu, psref);
+	if (!found) {
+		panic("The psref isn't in the list (releasing unused psref?): "
 		    "psref=%p target=%p", psref, target);
 	}
 }
@@ -304,6 +322,10 @@ psref_release(struct psref *psref, const struct psref_target *target,
 	 */
 	s = splraiseipl(class->prc_iplcookie);
 	pcpu = percpu_getref(class->prc_percpu);
+#ifdef DEBUG
+	/* Sanity-check if the target is surely acquired before.  */
+	psref_check_existence(pcpu, psref, target);
+#endif
 	SLIST_REMOVE(&pcpu->pcpu_head, psref, psref, psref_entry);
 	percpu_putref(class->prc_percpu);
 	splx(s);
