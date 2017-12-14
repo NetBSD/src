@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.233 2017/12/14 05:47:45 ozaki-r Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.234 2017/12/14 05:48:59 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.233 2017/12/14 05:47:45 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.234 2017/12/14 05:48:59 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -622,6 +622,7 @@ route_output_get_ifa(const struct rt_addrinfo info, const struct rtentry *rt,
 		if (info.rti_info[RTAX_IFA] == NULL &&
 		    info.rti_info[RTAX_GATEWAY] == NULL)
 			goto next;
+		ifa_release(ifa, psref);
 		if (info.rti_info[RTAX_IFA] == NULL) {
 			/* route change <dst> <gw> -ifp <if> */
 			ifa = ifaof_ifpforaddr_psref(info.rti_info[RTAX_GATEWAY],
