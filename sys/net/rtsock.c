@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.231 2017/11/19 18:49:51 christos Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.232 2017/12/14 05:43:14 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.231 2017/11/19 18:49:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.232 2017/12/14 05:43:14 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -495,7 +495,7 @@ COMPATNAME(route_purgeif)(struct socket *so, struct ifnet *ifp)
 }
 
 #if defined(INET) || defined(INET6)
-static int
+static int __noinline
 route_get_sdl_index(struct rt_addrinfo *info, int *sdl_index)
 {
 	struct rtentry *nrt;
@@ -515,7 +515,7 @@ route_get_sdl_index(struct rt_addrinfo *info, int *sdl_index)
 }
 #endif
 
-static void
+static void __noinline
 route_get_sdl(const struct ifnet *ifp, const struct sockaddr *dst,
     struct sockaddr_dl *sdl, int *flags)
 {
@@ -551,7 +551,7 @@ route_get_sdl(const struct ifnet *ifp, const struct sockaddr *dst,
 	}
 }
 
-static int
+static int __noinline
 route_output_report(struct rtentry *rt, struct rt_addrinfo *info,
     struct rt_xmsghdr *rtm, struct rt_xmsghdr **new_rtm)
 {
@@ -606,7 +606,7 @@ route_output_report(struct rtentry *rt, struct rt_addrinfo *info,
 	return 0;
 }
 
-static struct ifaddr *
+static struct ifaddr * __noinline
 route_output_get_ifa(const struct rt_addrinfo info, const struct rtentry *rt,
     struct ifnet **ifp, struct psref *psref)
 {
@@ -653,7 +653,7 @@ out:
 	return ifa;
 }
 
-static int
+static int __noinline
 route_output_change(struct rtentry *rt, struct rt_addrinfo *info,
     struct rt_xmsghdr *rtm)
 {
