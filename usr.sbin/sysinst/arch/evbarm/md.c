@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.4 2015/05/10 10:14:02 martin Exp $ */
+/*	$NetBSD: md.c,v 1.5 2017/12/14 14:12:39 skrll Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -209,7 +209,7 @@ md_post_extract(void)
 	if (boardtype == BOARD_TYPE_NORMAL)
 		return 0;
 	if (boardtype == BOARD_TYPE_RPI) {
-		snprintf(kernelbin, 100, "%s/netbsd.bin", targetroot_mnt);
+		snprintf(kernelbin, 100, "%s/netbsd.img", targetroot_mnt);
 		if (file_exists_p(kernelbin)) {
 			run_program(RUN_DISPLAY,
 			    "/bin/cp %s /targetroot/boot/kernel.img", kernelbin);
