@@ -1,4 +1,4 @@
-/*	$NetBSD: specspec.c,v 1.3 2015/01/07 20:50:36 joerg Exp $	*/
+/*	$NetBSD: specspec.c,v 1.4 2017/12/14 18:34:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 Poul-Henning Kamp
@@ -31,7 +31,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: specspec.c,v 1.3 2015/01/07 20:50:36 joerg Exp $");
+__RCSID("$NetBSD: specspec.c,v 1.4 2017/12/14 18:34:41 christos Exp $");
 
 #include <err.h>
 #include <grp.h>
@@ -73,7 +73,7 @@ shownode(NODE *n, int f, char const *path)
 	if (f & F_MODE)
 		printf(" mode=%o", n->st_mode);
 	if (f & F_NLINK)
-		printf(" nlink=%d", (int)n->st_nlink);
+		printf(" nlink=%ju", (uintmax_t)n->st_nlink);
 	if (f & F_SIZE)
 		printf(" size=%jd", (intmax_t)n->st_size);
 	if (f & F_UID)
