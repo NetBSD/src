@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.51 2017/12/12 18:19:45 christos Exp $
+# $NetBSD: Makefile,v 1.52 2017/12/14 14:38:17 nakayama Exp $
 
 NOMAN=		# defined
 
@@ -29,8 +29,9 @@ PROGS=		h_ps_strings1
 PROGS+=		h_ps_strings2
 PROGS+=		h_segv
 PROGS+=		h_getprocpath
-PROGS+=		h_interpreter
-SRCS.h_interpreter += h_interpreter.sh
+
+SCRIPTSDIR=	${TESTSDIR}
+SCRIPTS=	h_interpreter.sh
 
 LDADD.t_mqueue+= -lrt
 
