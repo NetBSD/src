@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.254 2017/12/15 04:03:46 ozaki-r Exp $	*/
+/*	$NetBSD: if.h,v 1.255 2017/12/15 04:06:42 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -235,86 +235,111 @@ struct in6_multi;
 
 typedef unsigned short if_index_t;
 
+/*
+ * Interface.  Field markings and the corresponding locks:
+ *
+ * i:	IFNET_LOCK (a.k.a., if_ioctl_lock)
+ * q:	ifq_lock (struct ifaltq)
+ * a:	if_afdata_lock
+ * 6:	in6_multilock (global lock)
+ * ::	unlocked, stable
+ * ?:	unkown, maybe unsafe
+ *
+ * Lock order: IFNET_LOCK => in6_multilock => if_afdata_lock => ifq_lock
+ *   Note that currently if_afdata_lock and ifq_lock aren't held
+ *   at the same time, but define the order anyway.
+ *
+ * Lock order of IFNET_LOCK with other locks:
+ *     softnet_lock => solock => IFNET_LOCK => ND6_LOCK, in_multilock
+ */
 typedef struct ifnet {
-	void	*if_softc;		/* lower-level data for this if */
+	void		*if_softc;	/* :: lower-level data for this if */
 	/* DEPRECATED. Keep it to avoid breaking kvm(3) users */
-	TAILQ_ENTRY(ifnet) if_list;	/* all struct ifnets are chained */
-	TAILQ_HEAD(, ifaddr) if_addrlist; /* linked list of addresses per if */
-	char	if_xname[IFNAMSIZ];	/* external name (name + unit) */
-	int	if_pcount;		/* number of promiscuous listeners */
-	struct bpf_if *if_bpf;		/* packet filter structure */
-	if_index_t	if_index;	/* numeric abbreviation for this if */
-	short	if_timer;		/* time 'til if_slowtimo called */
-	unsigned short	if_flags;	/* up/down, broadcast, etc. */
-	short	if_extflags;		/* if_output MP-safe, etc. */
-	struct	if_data if_data;	/* statistics and other data about if */
+	TAILQ_ENTRY(ifnet)
+			if_list;	/* i: all struct ifnets are chained */
+	TAILQ_HEAD(, ifaddr)
+			if_addrlist;	/* i: linked list of addresses per if */
+	char		if_xname[IFNAMSIZ];
+					/* :: external name (name + unit) */
+	int		if_pcount;	/* i: number of promiscuous listeners */
+	struct bpf_if	*if_bpf;	/* :: packet filter structure */
+	if_index_t	if_index;	/* :: numeric abbreviation for this if */
+	short		if_timer;	/* ?: time 'til if_slowtimo called */
+	unsigned short	if_flags;	/* i: up/down, broadcast, etc. */
+	short		if_extflags;	/* :: if_output MP-safe, etc. */
+	struct if_data	if_data;	/* ?: statistics and other data about if */
 	/*
 	 * Procedure handles.  If you add more of these, don't forget the
 	 * corresponding NULL stub in if.c.
 	 */
-	int	(*if_output)		/* output routine (enqueue) */
-		    (struct ifnet *, struct mbuf *, const struct sockaddr *,
-		     const struct rtentry *);
-	void	(*_if_input)		/* input routine (from h/w driver) */
-		    (struct ifnet *, struct mbuf *);
-	void	(*if_start)		/* initiate output routine */
-		    (struct ifnet *);
-	int	(*if_transmit)		/* output routine, must be MP-safe */
-		    (struct ifnet *, struct mbuf *);
-	int	(*if_ioctl)		/* ioctl routine */
-		    (struct ifnet *, u_long, void *);
-	int	(*if_init)		/* init routine */
-		    (struct ifnet *);
-	void	(*if_stop)		/* stop routine */
-		    (struct ifnet *, int);
-	void	(*if_slowtimo)		/* timer routine */
-		    (struct ifnet *);
+	int		(*if_output)	/* :: output routine (enqueue) */
+			    (struct ifnet *, struct mbuf *, const struct sockaddr *,
+			     const struct rtentry *);
+	void		(*_if_input)	/* :: input routine (from h/w driver) */
+			    (struct ifnet *, struct mbuf *);
+	void		(*if_start)	/* :: initiate output routine */
+			    (struct ifnet *);
+	int		(*if_transmit)	/* :: output routine, must be MP-safe */
+			    (struct ifnet *, struct mbuf *);
+	int		(*if_ioctl)	/* :: ioctl routine */
+			    (struct ifnet *, u_long, void *);
+	int		(*if_init)	/* :: init routine */
+			    (struct ifnet *);
+	void		(*if_stop)	/* :: stop routine */
+			    (struct ifnet *, int);
+	void		(*if_slowtimo)	/* :: timer routine */
+			    (struct ifnet *);
 #define	if_watchdog	if_slowtimo
-	void	(*if_drain)		/* routine to release resources */
-		    (struct ifnet *);
-	struct ifaltq if_snd;		/* output queue (includes altq) */
-	struct ifaddr	*if_dl;		/* identity of this interface. */
-	const struct	sockaddr_dl *if_sadl;	/* pointer to sockaddr_dl
-						 * of if_dl
-						 */
-	/* if_hwdl: h/w identity
-	 *
+	void		(*if_drain)	/* :: routine to release resources */
+			    (struct ifnet *);
+	struct ifaltq	if_snd;		/* q: output queue (includes altq) */
+	struct ifaddr	*if_dl;		/* i: identity of this interface. */
+	const struct sockaddr_dl
+			*if_sadl;	/* i: pointer to sockaddr_dl of if_dl */
+	/*
 	 * May be NULL.  If not NULL, it is the address assigned
 	 * to the interface by the manufacturer, so it very likely
 	 * to be unique.  It MUST NOT be deleted.  It is highly
 	 * suitable for deriving the EUI64 for the interface.
 	 */
-	struct ifaddr	*if_hwdl;
-	const uint8_t *if_broadcastaddr;/* linklevel broadcast bytestring */
-	struct bridge_softc	*if_bridge;	/* bridge glue */
-	struct bridge_iflist	*if_bridgeif;	/* shortcut to interface list entry */
-	int	if_dlt;			/* data link type (<net/dlt.h>) */
-	pfil_head_t *	if_pfil;	/* filtering point */
-	uint64_t if_capabilities;	/* interface capabilities */
-	uint64_t if_capenable;		/* capabilities enabled */
+	struct ifaddr	*if_hwdl;	/* i: h/w identity */
+	const uint8_t	*if_broadcastaddr;
+					/* :: linklevel broadcast bytestring */
+	struct bridge_softc
+			*if_bridge;	/* i: bridge glue */
+	struct bridge_iflist
+			*if_bridgeif;	/* i: shortcut to interface list entry */
+	int		if_dlt;		/* :: data link type (<net/dlt.h>) */
+	pfil_head_t *	if_pfil;	/* :: filtering point */
+	uint64_t	if_capabilities;
+					/* i: interface capabilities */
+	uint64_t	if_capenable;	/* i: capabilities enabled */
 	union {
 		void *		carp_s;	/* carp structure (used by !carp ifs) */
 		struct ifnet	*carp_d;/* ptr to carpdev (used by carp ifs) */
-	} if_carp_ptr;
+	}		if_carp_ptr;	/* ?: */
 #define if_carp		if_carp_ptr.carp_s
 #define if_carpdev	if_carp_ptr.carp_d
 	/*
 	 * These are pre-computed based on an interfaces enabled
 	 * capabilities, for speed elsewhere.
 	 */
-	int	if_csum_flags_tx;	/* M_CSUM_* flags for Tx */
-	int	if_csum_flags_rx;	/* M_CSUM_* flags for Rx */
+	int		if_csum_flags_tx;
+					/* i: M_CSUM_* flags for Tx */
+	int		if_csum_flags_rx;
+					/* i: M_CSUM_* flags for Rx */
 
-	void	*if_afdata[AF_MAX];
-	struct	mowner *if_mowner;	/* who owns mbufs for this interface */
+	void		*if_afdata[AF_MAX];
+					/* a: */
+	struct mowner	*if_mowner;	/* ?: who owns mbufs for this interface */
 
-	void	*if_agrprivate;		/* used only when #if NAGR > 0 */
+	void		*if_agrprivate;	/* ?: used only when #if NAGR > 0 */
 
 	/*
 	 * pf specific data, used only when #if NPF > 0.
 	 */
-	void	*if_pf_kif;		/* pf interface abstraction */
-	void	*if_pf_groups;		/* pf interface groups */
+	void		*if_pf_kif;	/* ?: pf interface abstraction */
+	void		*if_pf_groups;	/* ?: pf interface groups */
 	/*
 	 * During an ifnet's lifetime, it has only one if_index, but
 	 * and if_index is not sufficient to identify an ifnet
@@ -324,29 +349,40 @@ typedef struct ifnet {
 	 * is assigned when it if_attach()s.  Now, the kernel can use the
 	 * pair (if_index, if_index_gen) as a weak reference to an ifnet.
 	 */
-	uint64_t if_index_gen;		/* generation number for the ifnet
+	uint64_t	if_index_gen;	/* :: generation number for the ifnet
 					 * at if_index: if two ifnets' index
 					 * and generation number are both the
 					 * same, they are the same ifnet.
 					 */
-	struct sysctllog	*if_sysctl_log;
-	int (*if_initaddr)(struct ifnet *, struct ifaddr *, bool);
-	int (*if_mcastop)(struct ifnet *, const unsigned long,
-	    const struct sockaddr *);
-	int (*if_setflags)(struct ifnet *, const short);
-	kmutex_t	*if_ioctl_lock;
+	struct sysctllog
+			*if_sysctl_log;	/* :: */
+	int		(*if_initaddr)  /* :: */
+			    (struct ifnet *, struct ifaddr *, bool);
+	int		(*if_mcastop)	/* :: */
+			    (struct ifnet *, const unsigned long,
+			    const struct sockaddr *);
+	int		(*if_setflags)	/* :: */
+			    (struct ifnet *, const short);
+	kmutex_t	*if_ioctl_lock;	/* :: */
 #ifdef _KERNEL /* XXX kvm(3) */
-	struct callout *if_slowtimo_ch;
-	struct krwlock	*if_afdata_lock;
-	struct if_percpuq	*if_percpuq; /* We should remove it in the future */
-	void	*if_link_si;		/* softint to handle link state changes */
-	uint16_t	if_link_queue;	/* masked link state change queue */
-	struct pslist_entry	if_pslist_entry;
-	struct psref_target     if_psref;
-	struct pslist_head	if_addr_pslist;
-	struct if_deferred_start	*if_deferred_start;
+	struct callout	*if_slowtimo_ch;/* :: */
+	struct krwlock	*if_afdata_lock;/* :: */
+	struct if_percpuq
+			*if_percpuq;	/* :: we should remove it in the future */
+	void		*if_link_si;	/* :: softint to handle link state changes */
+	uint16_t	if_link_queue;	/* q: masked link state change queue */
+	struct pslist_entry
+			if_pslist_entry;/* i: */
+	struct psref_target
+			if_psref;	/* :: */
+	struct pslist_head
+			if_addr_pslist;	/* i: */
+	struct if_deferred_start
+			*if_deferred_start;
+					/* :: */
 	/* XXX should be protocol independent */
-	LIST_HEAD(, in6_multi) if_multiaddrs;
+	LIST_HEAD(, in6_multi)
+			if_multiaddrs;	/* 6: */
 #endif
 } ifnet_t;
  
