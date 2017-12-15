@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.414 2017/12/14 05:46:54 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.415 2017/12/15 04:03:46 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.414 2017/12/14 05:46:54 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.415 2017/12/15 04:03:46 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -2721,12 +2721,27 @@ if_put(const struct ifnet *ifp, struct psref *psref)
 	psref_release(psref, &ifp->if_psref, ifnet_psref_class);
 }
 
+/*
+ * Return ifp having idx. Return NULL if not found.  Normally if_byindex
+ * should be used.
+ */
+ifnet_t *
+_if_byindex(u_int idx)
+{
+
+	return (__predict_true(idx < if_indexlim)) ? ifindex2ifnet[idx] : NULL;
+}
+
+/*
+ * Return ifp having idx. Return NULL if not found or the found ifp is
+ * already deactivated.
+ */
 ifnet_t *
 if_byindex(u_int idx)
 {
 	ifnet_t *ifp;
 
-	ifp = (__predict_true(idx < if_indexlim)) ? ifindex2ifnet[idx] : NULL;
+	ifp = _if_byindex(idx);
 	if (ifp != NULL && if_is_deactivated(ifp))
 		ifp = NULL;
 	return ifp;
@@ -3570,6 +3585,10 @@ if_mcast_op(ifnet_t *ifp, const unsigned long cmd, const struct sockaddr *sa)
 	int rc;
 	struct ifreq ifr;
 
+	/* CARP still doesn't deal with the lock yet */
+#if !defined(NCARP) || (NCARP == 0)
+	KASSERT(IFNET_LOCKED(ifp));
+#endif
 	if (ifp->if_mcastop != NULL)
 		rc = (*ifp->if_mcastop)(ifp, cmd, sa);
 	else {

@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.253 2017/12/11 03:29:20 ozaki-r Exp $	*/
+/*	$NetBSD: if.h,v 1.254 2017/12/15 04:03:46 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -1026,6 +1026,7 @@ int	if_clone_list(int, char *, int *);
 struct	ifnet *ifunit(const char *);
 struct	ifnet *if_get(const char *, struct psref *);
 ifnet_t *if_byindex(u_int);
+ifnet_t *_if_byindex(u_int);
 ifnet_t *if_get_byindex(u_int, struct psref *);
 ifnet_t *if_get_bylla(const void *, unsigned char, struct psref *);
 void	if_put(const struct ifnet *, struct psref *);

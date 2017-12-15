@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.210 2017/11/17 07:37:12 ozaki-r Exp $	*/
+/*	$NetBSD: in.c,v 1.211 2017/12/15 04:03:46 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.210 2017/11/17 07:37:12 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.211 2017/12/15 04:03:46 ozaki-r Exp $");
 
 #include "arp.h"
 
@@ -912,11 +912,14 @@ in_addrhash_remove(struct in_ifaddr *ia)
 void
 in_purgeif(struct ifnet *ifp)		/* MUST be called at splsoftnet() */
 {
+
+	IFNET_LOCK(ifp);
 	if_purgeaddrs(ifp, AF_INET, in_purgeaddr);
 	igmp_purgeif(ifp);		/* manipulates pools */
 #ifdef MROUTING
 	ip_mrouter_detach(ifp);
 #endif
+	IFNET_UNLOCK(ifp);
 }
 
 /*
