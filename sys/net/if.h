@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.255 2017/12/15 04:06:42 ozaki-r Exp $	*/
+/*	$NetBSD: if.h,v 1.256 2017/12/15 04:07:20 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -427,11 +427,33 @@ typedef struct ifnet {
 #define	IFEF_NO_LINK_STATE_CHANGE	__BIT(1)	/* doesn't use link state interrupts */
 
 /*
- * The following if_XXX() handlers don't take KERNEL_LOCK if the interface
- * is set IFEF_MPSAFE:
- *   - if_start
- *   - if_output
- *   - if_ioctl
+ * The guidelines for converting an interface to IFEF_MPSAFE are as follows
+ *
+ * Enabling IFEF_MPSAFE on an interface suppresses taking KERNEL_LOCK when
+ * calling the following handlers:
+ * - if_start
+ *   - Note that if_transmit is always called without KERNEL_LOCK
+ * - if_output
+ * - if_ioctl
+ * - if_init
+ * - if_stop
+ *
+ * This means that an interface with IFEF_MPSAFE must make the above handlers
+ * MP-safe or take KERNEL_LOCK by itself inside handlers that aren't MP-safe
+ * yet.
+ *
+ * There are some additional restrictions to access member variables of struct
+ * ifnet:
+ * - if_flags
+ *   - Must be updated with holding IFNET_LOCK
+ *   - You cannot use the flag in Tx/Rx paths anymore because there is no
+ *     synchronization on the flag except for IFNET_LOCK
+ * - if_watchdog and if_timer
+ *   - The watchdog framework works only for non-IFEF_MPSAFE interfaces
+ *     that rely on KERNEL_LOCK
+ *   - Interfaces with IFEF_MPSAFE have to provide its own watchdog mechanism
+ *     if needed
+ *     - Keep if_watchdog NULL when calling if_attach
  */
 
 #ifdef _KERNEL
