@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.h,v 1.54 2017/01/29 00:15:54 christos Exp $	*/
+/*	$NetBSD: npf.h,v 1.55 2017/12/15 21:00:26 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -159,7 +159,7 @@ typedef struct {
 	uint8_t			npc_alen;
 
 	/* IP header length and L4 protocol. */
-	uint8_t			npc_hlen;
+	uint32_t		npc_hlen;
 	uint16_t		npc_proto;
 
 	/* IPv4, IPv6. */
