@@ -1,4 +1,4 @@
-/* $NetBSD: TODO.modules,v 1.13 2017/08/21 10:38:19 pgoyette Exp $ */
+/* $NetBSD: TODO.modules,v 1.14 2017/12/15 21:57:09 pgoyette Exp $ */
 
 Some notes on the limitations of our current (as of 7.99.35) module
 subsystem.  This list was triggered by an Email exchange between
@@ -77,7 +77,7 @@ christos and pgoyette.
 	sysmon_power code is modularized, it is referenced by the
 	acpi code which has not been modularized.  Therefore, if your
 	configuration has acpi, then you must include the "sysmon_power"
-	module built-in the kernel.  And therefore your also need to
+	module built-in the kernel.  And therefore you also need to
 	have "sysmon_taskq" and "sysmon" built-in since "sysmon_power"
 	rerefences them.
 
@@ -163,3 +163,10 @@ christos and pgoyette.
     other modules on which a module depends.  We really need a common
     mechanism to define and build modules, whether they are included as
     "built-in" modules or as separately-loadable modules.
+
+16. PR kern/52821 exposes another limitation of config(1) WRT modules.
+    Here, an explicit device attachment is required, because we cannot
+    rely on all kernel configs to contain the attribute at which the
+    modular driver wants to attach.  Unfortunately, the explicit
+    attachment causes conflicts with built-in drivers.  (See the PR for
+    more details.)
