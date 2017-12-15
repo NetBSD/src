@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.44 2017/12/15 11:49:32 pgoyette Exp $ */
+/* $NetBSD: pad.c,v 1.45 2017/12/15 23:57:42 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.44 2017/12/15 11:49:32 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.45 2017/12/15 23:57:42 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -903,6 +903,8 @@ MODULE(MODULE_CLASS_DRIVER, pad, "audio");
 
 #ifdef _MODULE
 
+/* XXX These should really be created by config(1)'s IOCONF mechanism */
+
 static const struct cfiattrdata audiobuscf_iattrdata = {
 	"audiobus", 0, { { NULL, NULL, 0 }, }
 };
@@ -928,6 +930,19 @@ static struct cfdata pad_cfdata[] = {
 };
 #endif
 
+/* provide the vectors required for config_{init,fini}_component() */
+
+struct cfdriver * const pad_cfdriver[] = { &pad_cd, NULL };
+
+static struct cfattach * const pad_cfattachinit[] = { &pad_ca, NULL };
+
+static const struct cfattachinit pad_cfattach[] = {
+	{ "pad", pad_cfattachinit },
+	{ NULL, NULL }
+};
+
+#endif
+
 static int
 pad_modcmd(modcmd_t cmd, void *arg)
 {
@@ -939,59 +954,39 @@ pad_modcmd(modcmd_t cmd, void *arg)
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 #ifdef _MODULE
-		error = config_cfdriver_attach(&pad_cd);
-		if (error) {
+		error = config_init_component(pad_cfdriver, pad_cfattach,
+		    pad_cfdata);
+		if (error)
 			break;
-		}
-
-		error = config_cfattach_attach(pad_cd.cd_name, &pad_ca);
-		if (error) {
-			config_cfdriver_detach(&pad_cd);
-			aprint_error("%s: unable to register cfattach\n",
-				pad_cd.cd_name);
-
-			break;
-		}
-
-		error = config_cfdata_attach(pad_cfdata, 1);
-		if (error) {
-			config_cfattach_detach(pad_cd.cd_name, &pad_ca);
-			config_cfdriver_detach(&pad_cd);
-			aprint_error("%s: unable to register cfdata\n",
-				pad_cd.cd_name);
-
-			break;
-		}
 
 		error = devsw_attach(pad_cd.cd_name, NULL, &bmajor,
-		    &pad_cdevsw, &cmajor);
+			    &pad_cdevsw, &cmajor);
 		if (error) {
-			config_cfdata_detach(pad_cfdata);
-			config_cfattach_detach(pad_cd.cd_name, &pad_ca);
-			config_cfdriver_detach(&pad_cd);
-			aprint_error("%s: unable to register devsw\n",
-				pad_cd.cd_name);
-
+			config_fini_component(pad_cfdriver, pad_cfattach,
+			    pad_cfdata);
 			break;
 		}
 
 		(void)config_attach_pseudo(pad_cfdata);
 #endif
-
 		break;
+
 	case MODULE_CMD_FINI:
 #ifdef _MODULE
-		error = config_cfdata_detach(pad_cfdata);
+		error = devsw_detach(NULL, &pad_cdevsw);
+		if (error)
+			break;
+
+		error = config_fini_component(pad_cfdriver, pad_cfattach,
+		    pad_cfdata);
 		if (error) {
+			error = devsw_attach(pad_cd.cd_name, NULL, &bmajor,
+			    &pad_cdevsw, &cmajor);
 			break;
 		}
-
-		config_cfattach_detach(pad_cd.cd_name, &pad_ca);
-		config_cfdriver_detach(&pad_cd);
-		devsw_detach(NULL, &pad_cdevsw);
 #endif
-
 		break;
+
 	default:
 		error = ENOTTY;
 	}
