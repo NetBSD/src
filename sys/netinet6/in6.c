@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.254 2017/11/23 07:09:20 ozaki-r Exp $	*/
+/*	$NetBSD: in6.c,v 1.255 2017/12/15 04:03:46 ozaki-r Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.254 2017/11/23 07:09:20 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.255 2017/12/15 04:03:46 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1385,6 +1385,7 @@ in6_purgeaddr(struct ifaddr *ifa)
 	struct in6_multi_mship *imm;
 
 	KASSERT(!ifa_held(ifa));
+	KASSERT(IFNET_LOCKED(ifp));
 
 	ifa->ifa_flags |= IFA_DESTROYING;
 
@@ -1400,12 +1401,14 @@ in6_purgeaddr(struct ifaddr *ifa)
 	/*
 	 * leave from multicast groups we have joined for the interface
 	 */
+    again:
 	mutex_enter(&in6_ifaddr_lock);
 	while ((imm = LIST_FIRST(&ia->ia6_memberships)) != NULL) {
 		LIST_REMOVE(imm, i6mm_chain);
 		mutex_exit(&in6_ifaddr_lock);
+		KASSERT(imm->i6mm_maddr->in6m_ifp == ifp);
 		in6_leavegroup(imm);
-		mutex_enter(&in6_ifaddr_lock);
+		goto again;
 	}
 	mutex_exit(&in6_ifaddr_lock);
 
@@ -1456,7 +1459,9 @@ void
 in6_purgeif(struct ifnet *ifp)
 {
 
+	IFNET_LOCK(ifp);
 	in6_ifdetach(ifp);
+	IFNET_UNLOCK(ifp);
 }
 
 void

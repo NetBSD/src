@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.239 2017/11/17 07:37:12 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.c,v 1.240 2017/12/15 04:03:46 ozaki-r Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.239 2017/11/17 07:37:12 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.240 2017/12/15 04:03:46 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -614,6 +614,7 @@ nd6_timer_work(struct work *wk, void *arg)
 		/* check address lifetime */
 		if (IFA6_IS_INVALID(ia6)) {
 			int regen = 0;
+			struct ifnet *ifp;
 
 			/*
 			 * If the expiring address is temporary, try
@@ -627,13 +628,30 @@ nd6_timer_work(struct work *wk, void *arg)
 			 */
 			if (ip6_use_tempaddr &&
 			    (ia6->ia6_flags & IN6_IFF_TEMPORARY) != 0) {
+				IFNET_LOCK(ia6->ia_ifa.ifa_ifp);
 				if (regen_tmpaddr(ia6) == 0)
 					regen = 1;
+				IFNET_UNLOCK(ia6->ia_ifa.ifa_ifp);
 			}
 
-			ia6_release(ia6, &psref);
- 			in6_purgeaddr(&ia6->ia_ifa);
+			ifp = ia6->ia_ifa.ifa_ifp;
+			IFNET_LOCK(ifp);
+			/*
+			 * Need to take the lock first to prevent if_detach
+			 * from running in6_purgeaddr concurrently.
+			 */
+			if (!if_is_deactivated(ifp)) {
+				ia6_release(ia6, &psref);
+				in6_purgeaddr(&ia6->ia_ifa);
+			} else {
+				/*
+				 * ifp is being destroyed, ia6 will be destroyed
+				 * by if_detach.
+				 */
+				ia6_release(ia6, &psref);
+			}
 			ia6 = NULL;
+			IFNET_UNLOCK(ifp);
 
 			if (regen)
 				goto addrloop; /* XXX: see below */
@@ -1883,20 +1901,53 @@ nd6_ioctl(u_long cmd, void *data, struct ifnet *ifp)
 			_s = pserialize_read_enter();
 			for (ia = IN6_ADDRLIST_READER_FIRST(); ia;
 			     ia = ia_next) {
+				struct ifnet *ifa_ifp;
+				int bound;
+				struct psref psref;
+
 				/* ia might be removed.  keep the next ptr. */
 				ia_next = IN6_ADDRLIST_READER_NEXT(ia);
 
 				if ((ia->ia6_flags & IN6_IFF_AUTOCONF) == 0)
 					continue;
 
-				if (ia->ia6_ndpr == pfx) {
-					pserialize_read_exit(_s);
-					ND6_UNLOCK();
-					/* XXX NOMPSAFE? */
-					/* in6_purgeaddr may destroy pfx. */
+				if (ia->ia6_ndpr != pfx)
+					continue;
+
+				bound = curlwp_bind();
+				ia6_acquire(ia, &psref);
+				pserialize_read_exit(_s);
+				ND6_UNLOCK();
+
+				ifa_ifp = ia->ia_ifa.ifa_ifp;
+				if (ifa_ifp == ifp) {
+					/* Already have IFNET_LOCK(ifp) */
+					KASSERT(!if_is_deactivated(ifp));
+					ia6_release(ia, &psref);
 					in6_purgeaddr(&ia->ia_ifa);
+					curlwp_bindx(bound);
 					goto restart;
 				}
+				IFNET_LOCK(ifa_ifp);
+				/*
+				 * Need to take the lock first to prevent
+				 * if_detach from running in6_purgeaddr
+				 * concurrently.
+				 */
+				if (!if_is_deactivated(ifa_ifp)) {
+					ia6_release(ia, &psref);
+					in6_purgeaddr(&ia->ia_ifa);
+				} else {
+					/*
+					 * ifp is being destroyed, ia will be
+					 * destroyed by if_detach.
+					 */
+					ia6_release(ia, &psref);
+					/* XXX may cause busy loop */
+				}
+				IFNET_UNLOCK(ifa_ifp);
+				curlwp_bindx(bound);
+				goto restart;
 			}
 			pserialize_read_exit(_s);
 

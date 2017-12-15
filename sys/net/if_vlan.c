@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.119 2017/12/11 03:29:20 ozaki-r Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.120 2017/12/15 04:03:46 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.119 2017/12/11 03:29:20 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.120 2017/12/15 04:03:46 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1160,7 +1160,9 @@ vlan_ether_addmulti(struct ifvlan *ifv, struct ifreq *ifr)
 	mib = ifv->ifv_mib;
 
 	KERNEL_LOCK_UNLESS_IFP_MPSAFE(mib->ifvm_p);
+	IFNET_LOCK(mib->ifvm_p);
 	error = if_mcast_op(mib->ifvm_p, SIOCADDMULTI, sa);
+	IFNET_UNLOCK(mib->ifvm_p);
 	KERNEL_UNLOCK_UNLESS_IFP_MPSAFE(mib->ifvm_p);
 
 	if (error != 0)
@@ -1201,7 +1203,9 @@ vlan_ether_delmulti(struct ifvlan *ifv, struct ifreq *ifr)
 
 	/* We no longer use this multicast address.  Tell parent so. */
 	mib = ifv->ifv_mib;
+	IFNET_LOCK(mib->ifvm_p);
 	error = if_mcast_op(mib->ifvm_p, SIOCDELMULTI, sa);
+	IFNET_UNLOCK(mib->ifvm_p);
 
 	if (error == 0) {
 		/* And forget about this address. */
@@ -1236,8 +1240,10 @@ vlan_ether_purgemulti(struct ifvlan *ifv)
 	}
 
 	while ((mc = LIST_FIRST(&ifv->ifv_mc_listhead)) != NULL) {
+		IFNET_LOCK(mib->ifvm_p);
 		(void)if_mcast_op(mib->ifvm_p, SIOCDELMULTI,
 		    (const struct sockaddr *)&mc->mc_addr);
+		IFNET_UNLOCK(mib->ifvm_p);
 		LIST_REMOVE(mc, mc_entries);
 		free(mc, M_DEVBUF);
 	}
