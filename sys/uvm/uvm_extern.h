@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.207 2017/12/02 08:15:43 mrg Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.208 2017/12/15 16:03:29 maya Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -552,7 +552,7 @@ extern bool vm_page_zero_enable;
 struct vmspace {
 	struct	vm_map vm_map;	/* VM address map */
 	int	vm_refcnt;	/* number of references *
-				 * note: protected by vm_map.ref_lock */
+				 * note: protected by vm_map.misc_lock */
 	void *	vm_shm;		/* SYS5 shared memory private data XXX */
 /* we copy from vm_startcopy to the end of the structure on fork */
 #define vm_startcopy vm_rssize
