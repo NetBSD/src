@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.43 2017/11/30 20:25:55 christos Exp $ */
+/* $NetBSD: pad.c,v 1.44 2017/12/15 11:49:32 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.43 2017/11/30 20:25:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.44 2017/12/15 11:49:32 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -899,9 +899,9 @@ pad_swvol_dtor(stream_filter_t *this)
 		kmem_free(this, sizeof(auvolconv_filter_t));
 }
 
-#ifdef _MODULE
-
 MODULE(MODULE_CLASS_DRIVER, pad, "audio");
+
+#ifdef _MODULE
 
 static const struct cfiattrdata audiobuscf_iattrdata = {
 	"audiobus", 0, { { NULL, NULL, 0 }, }
@@ -926,18 +926,22 @@ static struct cfdata pad_cfdata[] = {
 	},
 	{ NULL, NULL, 0, 0, NULL, 0, NULL }
 };
+#endif
 
 static int
 pad_modcmd(modcmd_t cmd, void *arg)
 {
+#ifdef _MODULE
 	devmajor_t cmajor = NODEVMAJOR, bmajor = NODEVMAJOR;
-	int error;
+#endif
+	int error = 0;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
+#ifdef _MODULE
 		error = config_cfdriver_attach(&pad_cd);
 		if (error) {
-			return error;
+			break;
 		}
 
 		error = config_cfattach_attach(pad_cd.cd_name, &pad_ca);
@@ -946,7 +950,7 @@ pad_modcmd(modcmd_t cmd, void *arg)
 			aprint_error("%s: unable to register cfattach\n",
 				pad_cd.cd_name);
 
-			return error;
+			break;
 		}
 
 		error = config_cfdata_attach(pad_cfdata, 1);
@@ -956,41 +960,41 @@ pad_modcmd(modcmd_t cmd, void *arg)
 			aprint_error("%s: unable to register cfdata\n",
 				pad_cd.cd_name);
 
-			return error;
+			break;
 		}
 
 		error = devsw_attach(pad_cd.cd_name, NULL, &bmajor,
 		    &pad_cdevsw, &cmajor);
 		if (error) {
-			error = config_cfdata_detach(pad_cfdata);
-			if (error) {
-				return error;
-			}
+			config_cfdata_detach(pad_cfdata);
 			config_cfattach_detach(pad_cd.cd_name, &pad_ca);
 			config_cfdriver_detach(&pad_cd);
 			aprint_error("%s: unable to register devsw\n",
 				pad_cd.cd_name);
 
-			return error;
+			break;
 		}
 
 		(void)config_attach_pseudo(pad_cfdata);
+#endif
 
-		return 0;
+		break;
 	case MODULE_CMD_FINI:
+#ifdef _MODULE
 		error = config_cfdata_detach(pad_cfdata);
 		if (error) {
-			return error;
+			break;
 		}
 
 		config_cfattach_detach(pad_cd.cd_name, &pad_ca);
 		config_cfdriver_detach(&pad_cd);
 		devsw_detach(NULL, &pad_cdevsw);
-
-		return 0;
-	default:
-		return ENOTTY;
-	}
-}
-
 #endif
+
+		break;
+	default:
+		error = ENOTTY;
+	}
+
+	return error;
+}
