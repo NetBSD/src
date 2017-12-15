@@ -1,4 +1,4 @@
-/* $NetBSD: sun6i_dma.c,v 1.2 2017/08/06 17:13:15 jmcneill Exp $ */
+/* $NetBSD: sun6i_dma.c,v 1.3 2017/12/15 02:24:22 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun6i_dma.c,v 1.2 2017/08/06 17:13:15 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun6i_dma.c,v 1.3 2017/12/15 02:24:22 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -96,6 +96,7 @@ static const struct of_compat_data compat_data[] = {
 	{ "allwinner,sun6i-a31-dma",		16 },
 	{ "allwinner,sun8i-a83t-dma",		8 },
 	{ "allwinner,sun8i-h3-dma",		12 },
+	{ "allwinner,sun50i-a64-dma",		8 },
 	{ NULL }
 };
 
