@@ -1,4 +1,4 @@
-/*	$NetBSD: in_l2tp.c,v 1.6 2017/12/15 04:58:31 knakahara Exp $	*/
+/*	$NetBSD: in_l2tp.c,v 1.7 2017/12/15 05:01:16 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_l2tp.c,v 1.6 2017/12/15 04:58:31 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_l2tp.c,v 1.7 2017/12/15 05:01:16 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_l2tp.h"
@@ -369,12 +369,10 @@ in_l2tp_match(struct mbuf *m, int off, int proto, void *arg)
 	KASSERT(proto == IPPROTO_L2TP);
 
 	if (m->m_len < off + sizeof(uint32_t)) {
-		m = m_pullup(m, off + sizeof(uint32_t));
-		if (!m) {
-			/* if payload length < 4 octets */
+		/* if payload length < 4 octets */
+		if(!m_ensure_contig(&m, off + sizeof(uint32_t)))
 			return 0;
-		}
-        }
+	}
 
 	/* get L2TP session ID */
 	m_copydata(m, off, sizeof(uint32_t), (void *)&sess_id);
