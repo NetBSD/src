@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.41 2014/05/19 20:39:23 rmind Exp $	*/
+/*	$NetBSD: cpu.h,v 1.42 2017/12/16 00:37:51 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2007 YAMAMOTO Takashi,
@@ -63,6 +63,14 @@ void cpu_need_resched(struct cpu_info *, int);
 #define	cpu_did_resched(l)	/* nothing */
 #endif
 
+/*
+ * CPU_INFO_ITERATOR() may be supplied by machine dependent code as it
+ * controls how the cpu_info structures are allocated.
+ * 
+ * This macro must always iterate just the boot-CPU when the system has
+ * not attached any cpus via mi_cpu_attach() yet, and the "ncpu" variable
+ * is zero.
+ */
 #ifndef CPU_INFO_ITERATOR
 #define	CPU_INFO_ITERATOR		int
 #define	CPU_INFO_FOREACH(cii, ci)	\

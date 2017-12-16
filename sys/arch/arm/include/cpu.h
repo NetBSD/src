@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.93 2017/04/04 09:26:32 sevan Exp $	*/
+/*	$NetBSD: cpu.h,v 1.94 2017/12/16 00:37:51 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -235,7 +235,7 @@ extern struct cpu_info *cpu_info[];
 #define cpu_number()		(curcpu()->ci_index)
 #define CPU_IS_PRIMARY(ci)	((ci)->ci_index == 0)
 #define CPU_INFO_FOREACH(cii, ci)			\
-	cii = 0, ci = cpu_info[0]; cii < ncpu && (ci = cpu_info[cii]) != NULL; cii++
+	cii = 0, ci = cpu_info[0]; cii < (ncpu ? ncpu : 1) && (ci = cpu_info[cii]) != NULL; cii++
 #else
 #define cpu_number()            0
 
