@@ -1,0 +1,7 @@
+# $NetBSD: pad.ioconf,v 1.1 2017/12/16 06:39:07 pgoyette Exp $
+
+ioconf pad
+
+include "conf/files"
+
+pseudo-device pad

@@ -1,10 +1,11 @@
-# $NetBSD: Makefile,v 1.2 2014/11/18 01:56:41 jmcneill Exp $
+# $NetBSD: Makefile,v 1.3 2017/12/16 06:39:07 pgoyette Exp $
 
 .include "../Makefile.inc"
 
 .PATH:	${S}/dev/pad
 
 KMOD=   pad
+IOCONF=	pad.ioconf
 
 SRCS=	pad.c
 
