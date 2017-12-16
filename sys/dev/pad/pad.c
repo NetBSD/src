@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.46 2017/12/16 02:13:13 mrg Exp $ */
+/* $NetBSD: pad.c,v 1.47 2017/12/16 02:45:14 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.46 2017/12/16 02:13:13 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.47 2017/12/16 02:45:14 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -928,7 +928,6 @@ static struct cfdata pad_cfdata[] = {
 	},
 	{ NULL, NULL, 0, 0, NULL, 0, NULL }
 };
-#endif
 
 /* provide the vectors required for config_{init,fini}_component() */
 
@@ -940,7 +939,7 @@ static const struct cfattachinit pad_cfattach[] = {
 	{ "pad", pad_cfattachinit },
 	{ NULL, NULL }
 };
-
+#endif
 
 static int
 pad_modcmd(modcmd_t cmd, void *arg)
