@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.444 2017/12/16 15:58:56 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.445 2017/12/16 16:04:20 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.444 2017/12/16 15:58:56 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.445 2017/12/16 16:04:20 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -2994,7 +2994,10 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag,
 			filter = vc->sc_pfilters[0];
 			filter->set_fetcher(filter, &ufetcher.base);
 			fetcher = &vc->sc_pfilters[vc->sc_npfilters - 1]->base;
-			cc = sc->sc_mixring.sc_mpr.blksize * 2;
+			if (sc->sc_usemixer)
+				cc = sc->sc_mixring.sc_mpr.blksize * 2;
+			else
+				cc = vc->sc_mpr.blksize * 2;
 			error = fetcher->fetch_to(sc, fetcher, &stream, cc);
 			if (error != 0) {
 				fetcher = &ufetcher.base;
@@ -5535,12 +5538,14 @@ mix_write(void *arg)
 			sc->sc_mixring.sc_mpr.blksize);
 	}
 
-	if (vc->sc_npfilters > 0) {
+	if (vc->sc_npfilters > 0 &&
+	    (sc->sc_usemixer || sc->sc_trigger_started)) {
 		null_fetcher.fetch_to = null_fetcher_fetch_to;
 		filter = vc->sc_pfilters[0];
 		filter->set_fetcher(filter, &null_fetcher);
 		fetcher = &vc->sc_pfilters[vc->sc_npfilters - 1]->base;
-		fetcher->fetch_to(sc, fetcher, &vc->sc_mpr.s, vc->sc_mpr.blksize);
+		fetcher->fetch_to(sc, fetcher, &vc->sc_mpr.s,
+		    vc->sc_mpr.blksize * 2);
  	}
 
 	if (sc->hw_if->trigger_output && sc->sc_trigger_started == false) {
