@@ -1,5 +1,5 @@
 #
-#	$NetBSD: SUNXI,v 1.55 2017/12/03 17:18:53 jmcneill Exp $
+#	$NetBSD: SUNXI,v 1.56 2017/12/16 20:44:54 jmcneill Exp $
 #
 #	Allwinner sunxi family
 #
@@ -235,7 +235,7 @@ axp20xreg*	at axp20x?
 axp22x*		at iic?			# AXP221 Power Management IC
 sy8106a*	at iic?			# Silergy SY81061 regulator
 pcf8563rtc*	at iic?			# PCF8563 RTC
-#seeprom*	at iic?			# AT24Cxx Serial EEPROM
+seeprom*	at iic?			# AT24Cxx Serial EEPROM
 
 # RTC
 sunxirtc*	at fdt?			# RTC
