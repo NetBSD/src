@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock_70.c,v 1.1 2016/09/21 10:50:23 roy Exp $	*/
+/*	$NetBSD: rtsock_70.c,v 1.2 2017/12/16 09:10:30 maxv Exp $	*/
 
 /*
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock_70.c,v 1.1 2016/09/21 10:50:23 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock_70.c,v 1.2 2017/12/16 09:10:30 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -43,7 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: rtsock_70.c,v 1.1 2016/09/21 10:50:23 roy Exp $");
 #include <compat/net/if.h>
 #include <compat/net/route.h>
 
-#if defined(COMPAT_70)
 void
 compat_70_rt_newaddrmsg1(int cmd, struct ifaddr *ifa)
 {
@@ -112,4 +111,3 @@ compat_70_iflist_addr(struct rt_walkarg *w, struct ifaddr *ifa,
 	}
 	return error;
 }
-#endif /* COMPAT_70 */
