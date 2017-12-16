@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_timer.c,v 1.2 2017/08/25 21:52:01 jmcneill Exp $ */
+/* $NetBSD: sunxi_timer.c,v 1.3 2017/12/16 20:04:38 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_timer.c,v 1.2 2017/08/25 21:52:01 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_timer.c,v 1.3 2017/12/16 20:04:38 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_timer.c,v 1.2 2017/08/25 21:52:01 jmcneill Exp
 
 #include <arm/fdt/arm_fdtvar.h>
 
+/* Timer 0 registers */
 #define	TMR_IRQ_EN_REG		0x00
 #define	 TMR_IRQ_EN(n)		__BIT(n)
 #define	TMR_IRQ_STAS_REG	0x04
@@ -57,12 +58,18 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_timer.c,v 1.2 2017/08/25 21:52:01 jmcneill Exp
 #define	 TMR0_CTRL_EN		__BIT(0)
 #define	TMR0_INTV_VALUE_REG	0x14
 #define	TMR0_CURNT_VALUE_REG	0x18
-#define	COUNTER64_CTRL_REG	0xa0
-#define	 COUNTER64_CTRL_CLK_SRC_SEL	__BIT(2)
-#define	 COUNTER64_CTRL_RLATCH_EN	__BIT(1)
-#define	 COUNTER64_CTRL_CLR_EN		__BIT(0)
-#define	COUNTER64_LOW_REG	0xa4
-#define	COUNTER64_HI_REG	0xa8
+
+/* Timer 1 is used for delay() */
+
+/* Timer 2 registers */
+#define	TMR2_CTRL_REG		0x30
+#define	 TMR2_CTRL_MODE		__BIT(7)
+#define	 TMR2_CTRL_CLK_SRC	__BITS(3,2)
+#define	  TMR2_CTRL_CLK_SRC_OSC24M	1
+#define	 TMR2_CTRL_RELOAD	__BIT(1)
+#define	 TMR2_CTRL_EN		__BIT(0)
+#define	TMR2_INTV_VALUE_REG	0x34
+#define	TMR2_CURNT_VALUE_REG	0x38
 
 static const char * const compatible[] = {
 	"allwinner,sun4i-a10-timer",
@@ -132,17 +139,9 @@ static u_int
 sunxi_timer_get_timecount(struct timecounter *tc)
 {
 	struct sunxi_timer_softc * const sc = tc->tc_priv;
-	uint32_t val;
 
-	/* Enable read latch and wait for it to clear */
-	val = TIMER_READ(sc, COUNTER64_CTRL_REG);
-	val |= COUNTER64_CTRL_RLATCH_EN;
-	TIMER_WRITE(sc, COUNTER64_CTRL_REG, val);
-	do {
-		val = TIMER_READ(sc, COUNTER64_CTRL_REG);
-	} while (val & COUNTER64_CTRL_RLATCH_EN);
-
-	return TIMER_READ(sc, COUNTER64_LOW_REG);
+	/* Timer current value is a 32-bit down counter. */
+	return ~TIMER_READ(sc, TMR2_CURNT_VALUE_REG);
 }
 
 static int
@@ -162,7 +161,6 @@ sunxi_timer_attach(device_t parent, device_t self, void *aux)
 	const int phandle = faa->faa_phandle;
 	bus_addr_t addr;
 	bus_size_t size;
-	uint32_t val;
 
 	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");
@@ -190,23 +188,23 @@ sunxi_timer_attach(device_t parent, device_t self, void *aux)
 	/* Disable IRQs and all timers */
 	TIMER_WRITE(sc, TMR_IRQ_EN_REG, 0);
 	TIMER_WRITE(sc, TMR_IRQ_STAS_REG, TIMER_READ(sc, TMR_IRQ_STAS_REG));
-	/* Enable Timer 0 */
+	/* Enable Timer 0 (hardclock) */
 	TIMER_WRITE(sc, TMR0_INTV_VALUE_REG, rate / hz);
 	TIMER_WRITE(sc, TMR0_CTRL_REG,
 	    __SHIFTIN(TMR0_CTRL_CLK_SRC_OSC24M, TMR0_CTRL_CLK_SRC) |
 	    TMR0_CTRL_RELOAD | TMR0_CTRL_EN);
-
-	/* Set 64-bit counter source to OSC24M */
-	val = TIMER_READ(sc, COUNTER64_CTRL_REG);
-	val &= ~COUNTER64_CTRL_CLK_SRC_SEL;
-	TIMER_WRITE(sc, COUNTER64_CTRL_REG, val);
+	/* Enable Timer 2 (timecounter) */
+	TIMER_WRITE(sc, TMR2_INTV_VALUE_REG, ~0u);
+	TIMER_WRITE(sc, TMR2_CTRL_REG,
+	    __SHIFTIN(TMR2_CTRL_CLK_SRC_OSC24M, TMR2_CTRL_CLK_SRC) |
+	    TMR2_CTRL_RELOAD | TMR2_CTRL_EN);
 
 	/* Timecounter setup */
 	tc->tc_get_timecount = sunxi_timer_get_timecount;
 	tc->tc_counter_mask = ~0u,
 	tc->tc_frequency = clk_get_rate(sc->sc_clk);
-	tc->tc_name = "CNT64";
-	tc->tc_quality = arm_has_mpext_p ? -1 : 200;
+	tc->tc_name = "Timer 2";
+	tc->tc_quality = 200;
 	tc->tc_priv = sc;
 	tc_init(tc);
 
