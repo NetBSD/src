@@ -1,4 +1,4 @@
-/* $NetBSD: sun4i_a10_ccu.c,v 1.5 2017/11/13 15:01:16 jmcneill Exp $ */
+/* $NetBSD: sun4i_a10_ccu.c,v 1.6 2017/12/16 16:40:33 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun4i_a10_ccu.c,v 1.5 2017/11/13 15:01:16 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun4i_a10_ccu.c,v 1.6 2017/12/16 16:40:33 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -103,6 +103,7 @@ static const struct sunxi_ccu_nkmp_tbl sun4i_a10_pll1_table[] = {
 	{  912000000, 19, 1, 0, 0 },
 	{  864000000, 18, 1, 0, 0 },
 	{  720000000, 30, 0, 0, 0 },
+	{  624000000, 26, 0, 0, 0 },
 	{  528000000, 22, 0, 0, 0 },
 	{  312000000, 13, 0, 0, 0 },
 	{  144000000, 12, 0, 0, 1 },
