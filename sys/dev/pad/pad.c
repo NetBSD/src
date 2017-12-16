@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.47 2017/12/16 02:45:14 pgoyette Exp $ */
+/* $NetBSD: pad.c,v 1.48 2017/12/16 06:39:07 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.47 2017/12/16 02:45:14 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.48 2017/12/16 06:39:07 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -346,10 +346,11 @@ pad_open(dev_t dev, int flags, int fmt, struct lwp *l)
 	cf->cf_unit = i;
 	cf->cf_fstate = FSTATE_STAR;
 
-	if (device_lookup(&pad_cd, minor(dev)) == NULL)
+	paddev = device_lookup(&pad_cd, minor(dev));
+	if (paddev == NULL)
 		paddev = config_attach_pseudo(cf);
-	else
-		paddev = device_lookup(&pad_cd, minor(dev));
+	if (paddev == NULL)
+		return ENXIO;
 
 	sc = device_private(paddev);
 	if (sc == NULL)
@@ -903,39 +904,18 @@ MODULE(MODULE_CLASS_DRIVER, pad, "audio");
 
 #ifdef _MODULE
 
-/* XXX These should really be created by config(1)'s IOCONF mechanism */
+#include "ioconf.c"
 
-static const struct cfiattrdata audiobuscf_iattrdata = {
-	"audiobus", 0, { { NULL, NULL, 0 }, }
-};
-static const struct cfiattrdata * const pad_attrs[] = {
-	&audiobuscf_iattrdata, NULL
-};
+devmajor_t cmajor = NODEVMAJOR, bmajor = NODEVMAJOR;
 
-CFDRIVER_DECL(pad, DV_DULL, pad_attrs);
-extern struct cfattach pad_ca;
-static int padloc[] = { -1, -1 };
+/*
+ * We need our own version of cfattach since config(1)'s ioconf does not
+ * generate what we need
+ */
 
-static struct cfdata pad_cfdata[] = {
-	{
-		.cf_name = "pad",
-		.cf_atname = "pad",
-		.cf_unit = 0,
-		.cf_fstate = FSTATE_STAR,
-		.cf_loc = padloc,
-		.cf_flags = 0,
-		.cf_pspec = NULL,
-	},
-	{ NULL, NULL, 0, 0, NULL, 0, NULL }
-};
+static struct cfattach *pad_cfattachinit[] = { &pad_ca, NULL };
 
-/* provide the vectors required for config_{init,fini}_component() */
-
-struct cfdriver * const pad_cfdriver[] = { &pad_cd, NULL };
-
-static struct cfattach * const pad_cfattachinit[] = { &pad_ca, NULL };
-
-static const struct cfattachinit pad_cfattach[] = {
+static struct cfattachinit pad_cfattach[] = {
 	{ "pad", pad_cfattachinit },
 	{ NULL, NULL }
 };
@@ -944,28 +924,25 @@ static const struct cfattachinit pad_cfattach[] = {
 static int
 pad_modcmd(modcmd_t cmd, void *arg)
 {
-#ifdef _MODULE
-	devmajor_t cmajor = NODEVMAJOR, bmajor = NODEVMAJOR;
-#endif
 	int error = 0;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 #ifdef _MODULE
-		error = config_init_component(pad_cfdriver, pad_cfattach,
-		    pad_cfdata);
+		pad_cfattach[1] = cfattach_ioconf_pad[0];
+		error = config_init_component(cfdriver_ioconf_pad,
+		    pad_cfattach, cfdata_ioconf_pad);
 		if (error)
 			break;
 
 		error = devsw_attach(pad_cd.cd_name, NULL, &bmajor,
 			    &pad_cdevsw, &cmajor);
 		if (error) {
-			config_fini_component(pad_cfdriver, pad_cfattach,
-			    pad_cfdata);
+			config_fini_component(cfdriver_ioconf_pad,
+			    pad_cfattach, cfdata_ioconf_pad);
 			break;
 		}
 
-		(void)config_attach_pseudo(pad_cfdata);
 #endif
 		break;
 
@@ -975,8 +952,8 @@ pad_modcmd(modcmd_t cmd, void *arg)
 		if (error)
 			break;
 
-		error = config_fini_component(pad_cfdriver, pad_cfattach,
-		    pad_cfdata);
+		error = config_fini_component(cfdriver_ioconf_pad,
+		    pad_cfattach, cfdata_ioconf_pad);
 		if (error) {
 			error = devsw_attach(pad_cd.cd_name, NULL, &bmajor,
 			    &pad_cdevsw, &cmajor);
