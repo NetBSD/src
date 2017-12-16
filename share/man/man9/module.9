@@ -1,4 +1,4 @@
-.\"	$NetBSD: module.9,v 1.39 2017/12/16 12:40:30 pgoyette Exp $
+.\"	$NetBSD: module.9,v 1.40 2017/12/16 21:13:07 pgoyette Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -133,12 +133,15 @@ have unique names.
 .Pp
 The
 .Fa required
-argument contains a comma-separated list of module names that are required
-by this module.
+argument is a quoted string containing a comma-separated list of module
+names that are required by this module.
 The list must not contain any white-space.
 When a module is loaded, all of its required modules are auto-loaded and
 initialized before the module itself is loaded.
 Loading of required modules is a recursive operation.
+.Pp
+If there are no required modules, this argument should be specified as
+.Dv NULL .
 .Pp
 In addition to the explicit arguments, the
 .Fn MODULE
@@ -148,8 +151,12 @@ function.
 This function is defined as:
 .Bl -tag -width modcmd -offset indent
 .It Ft int
-.Fn modcmd "modcmd_t cmd" "void *data"
+.Fn xxx_modcmd "modcmd_t cmd" "void *data"
 .El
+.Pp
+(where xxx is the name of the module, from the
+.Dv MODULE
+macro).
 .Pp
 The
 .Fa cmd
