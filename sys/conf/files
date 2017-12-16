@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1187 2017/12/10 17:12:54 bouyer Exp $
+#	$NetBSD: files,v 1.1188 2017/12/16 09:34:18 maxv Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -149,7 +149,7 @@ defflag	opt_compat_netbsd.h	COMPAT_09: COMPAT_10, COMPAT_NETBSD
 defflag				COMPAT_OSSAUDIO
 defflag				COMPAT_FREEBSD: COMPAT_30
 defflag				COMPAT_IBCS2
-defflag				COMPAT_LINUX: COMPAT_16
+defflag				COMPAT_LINUX: COMPAT_NETBSD
 defflag				COMPAT_OSF1
 defflag				COMPAT_SUNOS: COMPAT_30
 defflag	opt_compat_svr4.h	COMPAT_SVR4 COMPAT_SVR4_32 SVR4_COMPAT_SOLARIS2
