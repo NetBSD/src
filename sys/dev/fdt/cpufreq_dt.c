@@ -1,4 +1,4 @@
-/* $NetBSD: cpufreq_dt.c,v 1.2 2017/10/05 01:28:01 jmcneill Exp $ */
+/* $NetBSD: cpufreq_dt.c,v 1.3 2017/12/16 16:41:18 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufreq_dt.c,v 1.2 2017/10/05 01:28:01 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufreq_dt.c,v 1.3 2017/12/16 16:41:18 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,31 +94,35 @@ cpufreq_dt_set_rate(struct cpufreq_dt_softc *sc, u_int freq_khz)
 
 	old_rate = clk_get_rate(sc->sc_clk);
 	new_rate = freq_khz * 1000;
+	new_uv = opp->voltage_uv;
 
 	if (old_rate == new_rate)
 		return 0;
 
-	error = fdtbus_regulator_get_voltage(sc->sc_supply, &old_uv);
-	if (error != 0)
-		return error;
-	new_uv = opp->voltage_uv;
-
-	if (new_uv > old_uv) {
-		error = fdtbus_regulator_set_voltage(sc->sc_supply,
-		    new_uv, new_uv);
+	if (sc->sc_supply != NULL) {
+		error = fdtbus_regulator_get_voltage(sc->sc_supply, &old_uv);
 		if (error != 0)
 			return error;
+
+		if (new_uv > old_uv) {
+			error = fdtbus_regulator_set_voltage(sc->sc_supply,
+			    new_uv, new_uv);
+			if (error != 0)
+				return error;
+		}
 	}
 
 	error = clk_set_rate(sc->sc_clk, new_rate);
 	if (error != 0)
 		return error;
 
-	if (new_uv < old_uv) {
-		error = fdtbus_regulator_set_voltage(sc->sc_supply,
-		    new_uv, new_uv);
-		if (error != 0)
-			return error;
+	if (sc->sc_supply != NULL) {
+		if (new_uv < old_uv) {
+			error = fdtbus_regulator_set_voltage(sc->sc_supply,
+			    new_uv, new_uv);
+			if (error != 0)
+				return error;
+		}
 	}
 
 	if (error == 0) {
@@ -298,10 +302,13 @@ cpufreq_dt_parse(struct cpufreq_dt_softc *sc)
 	int len, i;
 	u_int lat;
 
-	sc->sc_supply = fdtbus_regulator_acquire(phandle, "cpu-supply");
-	if (sc->sc_supply == NULL) {
-		aprint_error_dev(sc->sc_dev, "couldn't acquire cpu-supply\n");
-		return ENXIO;
+	if (of_hasprop(phandle, "cpu-supply")) {
+		sc->sc_supply = fdtbus_regulator_acquire(phandle, "cpu-supply");
+		if (sc->sc_supply == NULL) {
+			aprint_error_dev(sc->sc_dev,
+			    "couldn't acquire cpu-supply\n");
+			return ENXIO;
+		}
 	}
 	sc->sc_clk = fdtbus_clock_get_index(phandle, 0);
 	if (sc->sc_clk == NULL) {
@@ -347,8 +354,7 @@ cpufreq_dt_match(device_t parent, cfdata_t cf, void *aux)
 		return 0;
 
 	if (!of_hasprop(phandle, "operating-points") ||
-	    !of_hasprop(phandle, "clocks") ||
-	    !of_hasprop(phandle, "cpu-supply"))
+	    !of_hasprop(phandle, "clocks"))
 		return 0;
 
 	return 1;
