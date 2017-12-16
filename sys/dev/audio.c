@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.442 2017/11/30 20:25:54 christos Exp $	*/
+/*	$NetBSD: audio.c,v 1.443 2017/12/16 15:56:00 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.442 2017/11/30 20:25:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.443 2017/12/16 15:56:00 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -2223,10 +2223,10 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 			}
 		}
 		audio_initbufs(sc, NULL);
-		if (audio_can_playback(sc))
+		if (sc->sc_usemixer && audio_can_playback(sc))
 			audio_init_ringbuffer(sc, &sc->sc_mixring.sc_mpr,
 			    AUMODE_PLAY);
-		if (audio_can_capture(sc))
+		if (sc->sc_usemixer && audio_can_capture(sc))
 			audio_init_ringbuffer(sc, &sc->sc_mixring.sc_mrr,
 			    AUMODE_RECORD);
 		sc->schedule_wih = false;
