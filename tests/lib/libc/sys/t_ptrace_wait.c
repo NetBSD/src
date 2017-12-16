@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.13 2017/12/14 22:06:54 christos Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.14 2017/12/16 14:45:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.13 2017/12/14 22:06:54 christos Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.14 2017/12/16 14:45:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1102,6 +1102,8 @@ ATF_TC_BODY(eventmask3, tc)
 #endif
 	ptrace_event_t set_event, get_event;
 	const int len = sizeof(ptrace_event_t);
+
+	atf_tc_expect_fail("PR kern/51630");
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
 	SYSCALL_REQUIRE((child = fork()) != -1);
@@ -5916,6 +5918,8 @@ ATF_TC_BODY(signal5, tc)
 #endif
 	sigset_t intmask;
 
+	atf_tc_expect_fail("wrong signal");
+
 	DPRINTF("Before forking process PID=%d\n", getpid());
 	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
@@ -5989,6 +5993,8 @@ ATF_TC_BODY(signal6, tc)
 	const int slen = sizeof(state);
 	ptrace_event_t event;
 	const int elen = sizeof(event);
+
+	atf_tc_expect_timeout("PR kern/51918");
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
 	SYSCALL_REQUIRE((child = fork()) != -1);
@@ -6119,6 +6125,8 @@ ATF_TC_BODY(signal7, tc)
 	ptrace_event_t event;
 	const int elen = sizeof(event);
 
+	atf_tc_expect_fail("PR kern/51918 PR kern/51630");
+
 	DPRINTF("Before forking process PID=%d\n", getpid());
 	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
@@ -6247,6 +6255,8 @@ ATF_TC_BODY(signal8, tc)
 	ptrace_event_t event;
 	const int elen = sizeof(event);
 
+	atf_tc_expect_fail("PR kern/51918");
+
 	DPRINTF("Before forking process PID=%d\n", getpid());
 	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
@@ -6352,6 +6362,8 @@ ATF_TC_BODY(signal9, tc)
 	static const size_t ssize = 16*1024;
 	void *stack;
 
+	atf_tc_expect_fail("PR kern/51918");
+
 	DPRINTF("Before forking process PID=%d\n", getpid());
 	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
@@ -6453,6 +6465,8 @@ ATF_TC_BODY(signal10, tc)
 	lwpid_t lid;
 	static const size_t ssize = 16*1024;
 	void *stack;
+
+	atf_tc_expect_fail("PR kern/51918");
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
 	SYSCALL_REQUIRE((child = fork()) != -1);
@@ -7246,7 +7260,6 @@ ATF_TC_BODY(resume1, tc)
 
 	// Times out
 	atf_tc_expect_timeout("PR kern/51995");
-	ATF_REQUIRE(0 && "In order to get reliable failure, abort");
 
 	SYSCALL_REQUIRE(msg_open(&fds) == 0);
 
