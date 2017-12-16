@@ -1,10 +1,11 @@
-#	$NetBSD: files.kern,v 1.15 2017/05/19 00:01:33 pgoyette Exp $
+#	$NetBSD: files.kern,v 1.16 2017/12/16 10:15:12 maxv Exp $
 
 #
 # kernel sources
 #
 define	kern:	machdep, uvm
 defflag	opt_kern.h			KERN
+file	compat/common/compat_util.c	kern
 file	compat/common/compat_mod.c	compat_netbsd | compat_netbsd32
 file	conf/debugsyms.c		kern
 file	conf/param.c			kern
