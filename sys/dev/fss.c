@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.99 2017/10/28 03:47:24 riastradh Exp $	*/
+/*	$NetBSD: fss.c,v 1.100 2017/12/17 22:09:47 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.99 2017/10/28 03:47:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.100 2017/12/17 22:09:47 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1321,7 +1321,14 @@ fss_modcmd(modcmd_t cmd, void *arg)
 			    &fss_cdevsw, &fss_cmajor);
 			break;
 		}
-		config_cfdriver_detach(&fss_cd);
+		error = config_cfdriver_detach(&fss_cd);
+		if (error) {
+			devsw_attach(fss_cd.cd_name,
+			    &fss_bdevsw, &fss_bmajor, &fss_cdevsw, &fss_cmajor);
+			devsw_attach(fss_cd.cd_name, &fss_bdevsw, &fss_bmajor,
+			    &fss_cdevsw, &fss_cmajor);
+			break;
+		}
 		mutex_destroy(&fss_device_lock);
 		break;
 
