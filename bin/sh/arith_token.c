@@ -1,4 +1,4 @@
-/*	$NetBSD: arith_token.c,v 1.6 2017/07/24 13:21:14 kre Exp $	*/
+/*	$NetBSD: arith_token.c,v 1.7 2017/12/17 04:06:03 kre Exp $	*/
 
 /*-
  * Copyright (c) 2002
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: arith_token.c,v 1.6 2017/07/24 13:21:14 kre Exp $");
+__RCSID("$NetBSD: arith_token.c,v 1.7 2017/12/17 04:06:03 kre Exp $");
 #endif /* not lint */
 
 #include <inttypes.h>
@@ -87,6 +87,14 @@ arith_token(void)
 			 * strtoimax() stops...
 			 */
 			a_t_val.val = strtoimax(buf, &end, 0);
+			if (is_in_name(*end)) {
+				token = *end;
+				while (is_in_name(*++end))
+					continue;
+				error("arithmetic: unexpected '%c' "
+				      "(out of range) in numeric constant: "
+				      "%.*s", token, (int)(end - buf), buf);
+			}
 			arith_buf = end;
 			VTRACE(DBG_ARITH, ("Arith token ARITH_NUM=%jd\n",
 			    a_t_val.val));
