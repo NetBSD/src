@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.102 2016/10/19 00:08:42 nonaka Exp $	*/
+/*	$NetBSD: cpu.h,v 1.103 2017/12/17 17:18:34 chs Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -32,6 +32,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 #ifndef	_POWERPC_CPU_H_
 #define	_POWERPC_CPU_H_
 
@@ -54,6 +55,8 @@ struct cache_info {
 #include <sys/intr.h>
 #include <sys/device_if.h>
 #include <sys/evcnt.h>
+#include <sys/param.h>
+#include <sys/kernel.h>
 #endif
 
 #include <sys/cpu_data.h>
@@ -191,7 +194,7 @@ extern struct cpuset_info cpuset_info;
 #define CPU_IS_PRIMARY(ci)	((ci)->ci_cpuid == 0)
 #define CPU_INFO_ITERATOR	int
 #define CPU_INFO_FOREACH(cii, ci)				\
-	cii = 0, ci = &cpu_info[0]; cii < ncpu; cii++, ci++
+	cii = 0, ci = &cpu_info[0]; cii < (ncpu ? ncpu : 1); cii++, ci++
 
 #else
 #define cpu_number()		0
