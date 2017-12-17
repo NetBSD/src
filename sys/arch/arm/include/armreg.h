@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.113 2017/10/24 20:24:12 skrll Exp $	*/
+/*	$NetBSD: armreg.h,v 1.114 2017/12/17 09:39:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -724,7 +724,7 @@
 #define CORTEXA9_MPIDR_MP	MPIDR_MP
 #define CORTEXA9_MPIDR_U	MPIDR_U
 #define	CORTEXA9_MPIDR_CLID	__BITS(11,8)	/* AFF1 = cluster id */
-#define CORTEXA9_MPIDR_CPUID	__BITS(0,1)	/* AFF0 = phisycal core id */
+#define CORTEXA9_MPIDR_CPUID	__BITS(0,1)	/* AFF0 = physical core id */
 
 /* MPIDR implementation of Marvell PJ4B-MP: AFF2 is not used */
 #define PJ4B_MPIDR_MP		MPIDR_MP
