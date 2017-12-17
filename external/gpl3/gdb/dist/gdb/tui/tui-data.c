@@ -576,6 +576,9 @@ tui_alloc_content (int num_elements, enum tui_win_type type)
   struct tui_win_element *element_block_ptr;
   int i;
 
+  if (num_elements <= 0)
+    return NULL;
+
   content = XNEWVEC (struct tui_win_element *, num_elements);
 
   /*

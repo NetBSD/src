@@ -559,6 +559,9 @@ tui_show_exec_info_content (struct tui_win_info *win_info)
     = win_info->detail.source_info.execution_info;
   int cur_line;
 
+  if (exec_info->handle == NULL)
+    return;
+
   werase (exec_info->handle);
   tui_refresh_win (exec_info);
   for (cur_line = 1; (cur_line <= exec_info->content_size); cur_line++)
@@ -577,6 +580,9 @@ tui_erase_exec_info_content (struct tui_win_info *win_info)
 {
   struct tui_gen_win_info *exec_info
     = win_info->detail.source_info.execution_info;
+
+  if (exec_info->handle == NULL)
+    return;
 
   werase (exec_info->handle);
   tui_refresh_win (exec_info);
