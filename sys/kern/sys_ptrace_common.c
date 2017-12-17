@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.28 2017/12/17 15:43:27 christos Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.29 2017/12/17 20:59:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.28 2017/12/17 15:43:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.29 2017/12/17 20:59:27 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -531,31 +531,24 @@ ptrace_update_lwp(struct proc *t, struct lwp **lt, lwpid_t lid)
 }
 
 static int
-ptrace_get_siginfo(struct proc *t, void *addr, size_t data)
+ptrace_get_siginfo(struct proc *t, struct ptrace_methods *ptm, void *addr,
+    size_t data)
 {
 	struct ptrace_siginfo psi;
 
-	if (data != sizeof(psi)) {
-		DPRINTF(("%s: %zu != %zu\n", __func__, data, sizeof(psi)));
-		return EINVAL;
-	}
 	psi.psi_siginfo._info = t->p_sigctx.ps_info;
 	psi.psi_lwpid = t->p_sigctx.ps_lwp;
 
-	return copyout(&psi, addr, sizeof(psi));
+	return ptm->ptm_copyout_siginfo(&psi, addr, data);
 }
 
 static int
-ptrace_set_siginfo(struct proc *t, struct lwp **lt, void *addr, size_t data)
+ptrace_set_siginfo(struct proc *t, struct lwp **lt, struct ptrace_methods *ptm,
+    void *addr, size_t data)
 {
 	struct ptrace_siginfo psi;
 
-	if (data != sizeof(psi)) {
-		DPRINTF(("%s: %zu != %zu\n", __func__, data, sizeof(psi)));
-		return EINVAL;
-	}
-
-	int error = copyin(addr, &psi, sizeof(psi));
+	int error = ptm->ptm_copyin_siginfo(&psi, addr, data);
 	if (error)
 		return error;
 
@@ -1056,11 +1049,11 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 		break;
 
 	case PT_IO:
-		if ((error = ptm->ptm_copyinpiod(&piod, addr)) != 0)
+		if ((error = ptm->ptm_copyin_piod(&piod, addr, data)) != 0)
 			break;
 		if ((error = ptrace_doio(l, t, lt, &piod, addr, &vm)) != 0)
 			break;
-		(void) ptm->ptm_copyoutpiod(&piod, addr);
+		(void) ptm->ptm_copyout_piod(&piod, addr, data);
 		uvmspace_free(vm);
 		break;
 
@@ -1289,11 +1282,11 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 		break;
 
 	case PT_SET_SIGINFO:
-		error = ptrace_set_siginfo(t, &lt, addr, data);
+		error = ptrace_set_siginfo(t, &lt, ptm, addr, data);
 		break;
 
 	case PT_GET_SIGINFO:
-		error = ptrace_get_siginfo(t, addr, data);
+		error = ptrace_get_siginfo(t, ptm, addr, data);
 		break;
 
 	case PT_SET_SIGMASK:
