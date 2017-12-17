@@ -542,15 +542,12 @@ NewArchiveMember ObjectFactory::createWeakExternal(StringRef Sym,
   SymbolTable[2].Name.Offset.Offset = sizeof(uint32_t);
 
   //__imp_ String Table
-  if (Imp) {
-    SymbolTable[3].Name.Offset.Offset = sizeof(uint32_t) + Sym.size() + 7;
-    writeStringTable(Buffer, {std::string("__imp_").append(Sym),
-                              std::string("__imp_").append(Weak)});
-  } else {
-    SymbolTable[3].Name.Offset.Offset = sizeof(uint32_t) + Sym.size() + 1;
-    writeStringTable(Buffer, {Sym, Weak});
-  }
+  StringRef Prefix = Imp ? "__imp_" : "";
+  SymbolTable[3].Name.Offset.Offset =
+      sizeof(uint32_t) + Sym.size() + Prefix.size() + 1;
   append(Buffer, SymbolTable);
+  writeStringTable(Buffer, {(Prefix + Sym).str(),
+                            (Prefix + Weak).str()});
 
   // Copied here so we can still use writeStringTable
   char *Buf = Alloc.Allocate<char>(Buffer.size());
@@ -560,7 +557,7 @@ NewArchiveMember ObjectFactory::createWeakExternal(StringRef Sym,
 
 std::error_code writeImportLibrary(StringRef ImportName, StringRef Path,
                                    ArrayRef<COFFShortExport> Exports,
-                                   MachineTypes Machine) {
+                                   MachineTypes Machine, bool MakeWeakAliases) {
 
   std::vector<NewArchiveMember> Members;
   ObjectFactory OF(llvm::sys::path::filename(ImportName), Machine);
@@ -578,7 +575,7 @@ std::error_code writeImportLibrary(StringRef ImportName, StringRef Path,
     if (E.Private)
       continue;
 
-    if (E.isWeak()) {
+    if (E.isWeak() && MakeWeakAliases) {
       Members.push_back(OF.createWeakExternal(E.Name, E.ExtName, false));
       Members.push_back(OF.createWeakExternal(E.Name, E.ExtName, true));
       continue;
@@ -590,7 +587,7 @@ std::error_code writeImportLibrary(StringRef ImportName, StringRef Path,
     if (E.Constant)
       ImportType = IMPORT_CONST;
 
-    StringRef SymbolName = E.isWeak() ? E.ExtName : E.Name;
+    StringRef SymbolName = E.SymbolName.empty() ? E.Name : E.SymbolName;
     ImportNameType NameType = getNameType(SymbolName, E.Name, Machine);
     Expected<std::string> Name = E.ExtName.empty()
                                      ? SymbolName
