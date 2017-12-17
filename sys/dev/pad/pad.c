@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.48 2017/12/16 06:39:07 pgoyette Exp $ */
+/* $NetBSD: pad.c,v 1.49 2017/12/17 21:57:11 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.48 2017/12/16 06:39:07 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.49 2017/12/17 21:57:11 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -955,7 +955,7 @@ pad_modcmd(modcmd_t cmd, void *arg)
 		error = config_fini_component(cfdriver_ioconf_pad,
 		    pad_cfattach, cfdata_ioconf_pad);
 		if (error) {
-			error = devsw_attach(pad_cd.cd_name, NULL, &bmajor,
+			devsw_attach(pad_cd.cd_name, NULL, &bmajor,
 			    &pad_cdevsw, &cmajor);
 			break;
 		}
