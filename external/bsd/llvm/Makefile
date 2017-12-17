@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2017/08/01 20:07:37 joerg Exp $
+#	$NetBSD: Makefile,v 1.10 2017/12/17 21:16:57 joerg Exp $
 
 .include <bsd.init.mk>
 
@@ -33,6 +33,6 @@ checkout-mclinker:
 import-clang:
 	cd ${CLANG_SRCDIR} && cvs -d cvs.netbsd.org:/cvsroot import -m "Import clang ${CLANG_REVISION} from ${SVN_BRANCH}" src/external/bsd/llvm/dist/clang LLVM clang-${CLANG_REVISION:C,^r,,}
 import-llvm:
-	cd ${LLVM_SRCDIR} && cvs -d cvs.netbsd.org:/cvsroot import -m "Import LLVM ${CLANG_REVISION} from ${SVN_BRANCH}" src/external/bsd/llvm/dist/llvm LLVM llvm-${LLVM_REVISION:C,^r,,}
+	cd ${LLVM_SRCDIR} && cvs -d cvs.netbsd.org:/cvsroot import -m "Import LLVM ${LLVM_REVISION} from ${SVN_BRANCH}" src/external/bsd/llvm/dist/llvm LLVM llvm-${LLVM_REVISION:C,^r,,}
 
 .include <bsd.subdir.mk>
