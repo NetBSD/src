@@ -247,32 +247,35 @@ tui_make_all_invisible (void)
   make_all_visible (0);
 }
 
+static void
+tui_refresh_wi(struct tui_gen_win_info *wi)
+{
+  if (wi == NULL || wi->handle == NULL || !wi->is_visible)
+    return;
+
+  touchwin (wi->handle);
+  tui_refresh_win (wi);
+}
+
 /* Function to refresh all the windows currently displayed.  */
 
 void
 tui_refresh_all (struct tui_win_info **list)
 {
   int type;
-  struct tui_gen_win_info *locator = tui_locator_win_info_ptr ();
 
   for (type = SRC_WIN; (type < MAX_MAJOR_WINDOWS); type++)
     {
-      if (list[type] && list[type]->generic.is_visible)
+      if (!list[type] || !list[type]->generic.is_visible)
+	continue;
+      if (type == SRC_WIN || type == DISASSEM_WIN)
 	{
-	  if (type == SRC_WIN || type == DISASSEM_WIN)
-	    {
-	      touchwin (list[type]->detail.source_info.execution_info->handle);
-	      tui_refresh_win (list[type]->detail.source_info.execution_info);
-	    }
-	  touchwin (list[type]->generic.handle);
-	  tui_refresh_win (&list[type]->generic);
+	  tui_refresh_wi (list[type]->detail.source_info.execution_info);
 	}
+      tui_refresh_wi (&list[type]->generic);
     }
-  if (locator->is_visible)
-    {
-      touchwin (locator->handle);
-      tui_refresh_win (locator);
-    }
+
+  tui_refresh_wi (tui_locator_win_info_ptr ());
 }
 
 
