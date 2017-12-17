@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ptrace.c,v 1.4 2017/02/23 03:34:22 kamil Exp $	*/
+/*	$NetBSD: netbsd32_ptrace.c,v 1.5 2017/12/17 20:59:27 christos Exp $	*/
 
 /*
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ptrace.c,v 1.4 2017/02/23 03:34:22 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ptrace.c,v 1.5 2017/12/17 20:59:27 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ptrace.h"
@@ -54,17 +54,13 @@ extern struct emul emul_netbsd32;
  * PTRACE methods
  */
 
-static int netbsd32_copyinpiod(struct ptrace_io_desc *, const void *);
-static void netbsd32_copyoutpiod(const struct ptrace_io_desc *, void *);
-static int netbsd32_doregs(struct lwp *, struct lwp *, struct uio *);
-static int netbsd32_dofpregs(struct lwp *, struct lwp *, struct uio *);
-static int netbsd32_dodbregs(struct lwp *, struct lwp *, struct uio *);
-
-
 static int
-netbsd32_copyinpiod(struct ptrace_io_desc *piod, const void *addr)
+netbsd32_copyin_piod(struct ptrace_io_desc *piod, const void *addr, size_t len)
 {
 	struct netbsd32_ptrace_io_desc piod32;
+
+	if (len != 0 && sizeof(piod32) != len)
+		return EINVAL;
 
 	int error = copyin(addr, &piod32, sizeof(piod32));
 	if (error)
@@ -77,18 +73,49 @@ netbsd32_copyinpiod(struct ptrace_io_desc *piod, const void *addr)
 	return 0;
 }
 
-static void
-netbsd32_copyoutpiod(const struct ptrace_io_desc *piod, void *addr)
+static int
+netbsd32_copyout_piod(const struct ptrace_io_desc *piod, void *addr, size_t len)
 {
 	struct netbsd32_ptrace_io_desc piod32;
+
+	if (len != 0 && sizeof(piod32) != len)
+		return EINVAL;
 
 	piod32.piod_op = piod->piod_op;
 	NETBSD32PTR32(piod32.piod_offs, piod->piod_offs);
 	NETBSD32PTR32(piod32.piod_addr, piod->piod_addr);
 	piod32.piod_len = (netbsd32_size_t)piod->piod_len;
-	(void) copyout(&piod32, addr, sizeof(piod32));
+	return copyout(&piod32, addr, sizeof(piod32));
 }
 
+static int
+netbsd32_copyin_siginfo(struct ptrace_siginfo *psi, const void *addr, size_t len)
+{
+	struct netbsd32_ptrace_siginfo psi32;
+
+	if (sizeof(psi32) != len)
+		return EINVAL;
+
+	int error = copyin(addr, &psi32, sizeof(psi32));
+	if (error)
+		return error;
+	psi->psi_lwpid = psi32.psi_lwpid;
+	netbsd32_si32_to_si(&psi->psi_siginfo, &psi32.psi_siginfo);
+	return 0;
+}
+
+static int
+netbsd32_copyout_siginfo(const struct ptrace_siginfo *psi, void *addr, size_t len)
+{
+	struct netbsd32_ptrace_siginfo psi32;
+
+	if (sizeof(psi32) != len)
+		return EINVAL;
+
+	psi32.psi_lwpid = psi->psi_lwpid;
+	netbsd32_si_to_si32(&psi32.psi_siginfo, &psi->psi_siginfo);
+	return copyout(&psi32, addr, sizeof(psi32));
+}
 
 static int
 netbsd32_doregs(struct lwp *curl /*tracer*/,
@@ -205,8 +232,10 @@ netbsd32_dodbregs(struct lwp *curl /*tracer*/,
 }
 
 static struct ptrace_methods netbsd32_ptm = {
-	.ptm_copyinpiod = netbsd32_copyinpiod,
-	.ptm_copyoutpiod = netbsd32_copyoutpiod,
+	.ptm_copyin_piod = netbsd32_copyin_piod,
+	.ptm_copyout_piod = netbsd32_copyout_piod,
+	.ptm_copyin_siginfo = netbsd32_copyin_siginfo,
+	.ptm_copyout_siginfo = netbsd32_copyout_siginfo,
 	.ptm_doregs = netbsd32_doregs,
 	.ptm_dofpregs = netbsd32_dofpregs,
 	.ptm_dodbregs = netbsd32_dodbregs
