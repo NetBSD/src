@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace.c,v 1.4 2017/02/23 03:34:22 kamil Exp $	*/
+/*	$NetBSD: sys_ptrace.c,v 1.5 2017/12/17 20:59:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace.c,v 1.4 2017/02/23 03:34:22 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace.c,v 1.5 2017/12/17 20:59:27 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -149,24 +149,47 @@ __KERNEL_RCSID(0, "$NetBSD: sys_ptrace.c,v 1.4 2017/02/23 03:34:22 kamil Exp $")
  * PTRACE methods
  */
 
-static int ptrace_copyinpiod(struct ptrace_io_desc *, const void *);
-static void ptrace_copyoutpiod(const struct ptrace_io_desc *, void *);
-
 static int
-ptrace_copyinpiod(struct ptrace_io_desc *piod, const void *addr)
+ptrace_copyin_piod(struct ptrace_io_desc *piod, const void *addr, size_t len)
 {
+	if (len != 0 && sizeof(*piod) != len)
+		return EINVAL;
+
 	return copyin(addr, piod, sizeof(*piod));
 }
 
-static void
-ptrace_copyoutpiod(const struct ptrace_io_desc *piod, void *addr)
+static int
+ptrace_copyout_piod(const struct ptrace_io_desc *piod, void *addr, size_t len)
 {
-	(void) copyout(piod, addr, sizeof(*piod));
+	if (len != 0 && sizeof(*piod) != len)
+		return EINVAL;
+
+	return copyout(piod, addr, sizeof(*piod));
+}
+
+static int
+ptrace_copyin_siginfo(struct ptrace_siginfo *psi, const void *addr, size_t len)
+{
+	if (sizeof(*psi) != len)
+		return EINVAL;
+
+	return copyin(addr, psi, sizeof(*psi));
+}
+
+static int
+ptrace_copyout_siginfo(const struct ptrace_siginfo *psi, void *addr, size_t len)
+{
+	if (sizeof(*psi) != len)
+		return EINVAL;
+
+	return copyout(psi, addr, sizeof(*psi));
 }
 
 static struct ptrace_methods native_ptm = {
-	.ptm_copyinpiod = ptrace_copyinpiod,
-	.ptm_copyoutpiod = ptrace_copyoutpiod,
+	.ptm_copyin_piod = ptrace_copyin_piod,
+	.ptm_copyout_piod = ptrace_copyout_piod,
+	.ptm_copyin_siginfo = ptrace_copyin_siginfo,
+	.ptm_copyout_siginfo = ptrace_copyout_siginfo,
 	.ptm_doregs = process_doregs,
 	.ptm_dofpregs = process_dofpregs,
 	.ptm_dodbregs = process_dodbregs,

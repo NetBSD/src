@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_signal.c,v 1.44 2017/12/06 19:15:27 christos Exp $	*/
+/*	$NetBSD: netbsd32_signal.c,v 1.45 2017/12/17 20:59:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.44 2017/12/06 19:15:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.45 2017/12/17 20:59:27 christos Exp $");
 
 #if defined(_KERNEL_OPT) 
 #include "opt_ktrace.h"
@@ -310,6 +310,49 @@ netbsd32_si_to_si32(siginfo32_t *si32, const siginfo_t *si)
 	case SIGIO:
 		si32->si_band = si->si_band;
 		si32->si_fd = si->si_fd;
+		break;
+	}
+}
+
+void
+netbsd32_si32_to_si(siginfo_t *si, const siginfo32_t *si32)
+{
+	memset(si, 0, sizeof (*si));
+	si->si_signo = si32->si_signo;
+	si->si_code = si32->si_code;
+	si->si_errno = si32->si_errno;
+
+	switch (si->si_signo) {
+	case 0:	/* SA */
+		si->si_value.sival_int = si32->si_value.sival_int;
+		break;
+	case SIGILL:
+	case SIGBUS:
+	case SIGSEGV:
+	case SIGFPE:
+	case SIGTRAP:
+		si->si_addr = (void *)(uintptr_t)si32->si_addr;
+		si->si_trap = si32->si_trap;
+		break;
+	case SIGALRM:
+	case SIGVTALRM:
+	case SIGPROF:
+	default:
+		si->si_pid = si32->si_pid;
+		si->si_uid = si32->si_uid;
+		si->si_value.sival_int = si32->si_value.sival_int;
+		break;
+	case SIGCHLD:
+		si->si_pid = si32->si_pid;
+		si->si_uid = si32->si_uid;
+		si->si_status = si32->si_status;
+		si->si_utime = si32->si_utime;
+		si->si_stime = si32->si_stime;
+		break;
+	case SIGURG:
+	case SIGIO:
+		si->si_band = si32->si_band;
+		si->si_fd = si32->si_fd;
 		break;
 	}
 }
