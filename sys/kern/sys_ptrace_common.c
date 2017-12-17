@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.27 2017/12/17 04:35:21 christos Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.28 2017/12/17 15:43:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.27 2017/12/17 04:35:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.28 2017/12/17 15:43:27 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -170,6 +170,48 @@ static kmutex_t ptrace_mtx;
 static kcondvar_t ptrace_cv;
 #endif
 
+#ifdef PT_GETREGS
+# define case_PT_GETREGS	case PT_GETREGS:
+#else
+# define case_PT_GETREGS
+#endif
+
+#ifdef PT_SETREGS
+# define case_PT_SETREGS	case PT_SETREGS:
+#else
+# define case_PT_SETREGS
+#endif
+
+#ifdef PT_GETFPREGS
+# define case_PT_GETFPREGS	case PT_GETFPREGS:
+#else
+# define case_PT_GETFPREGS
+#endif
+
+#ifdef PT_SETFPREGS
+# define case_PT_SETFPREGS	case PT_SETFPREGS:
+#else
+# define case_PT_SETFPREGS
+#endif
+
+#ifdef PT_GETDBREGS
+# define case_PT_GETDBREGS	case PT_GETDBREGS:
+#else
+# define case_PT_GETDBREGS
+#endif
+
+#ifdef PT_SETDBREGS
+# define case_PT_SETDBREGS	case PT_SETDBREGS:
+#else
+# define case_PT_SETDBREGS
+#endif
+
+#if defined(PT_SETREGS) || defined(PT_GETREGS) || \
+    defined(PT_SETFPREGS) || defined(PT_GETFOREGS) || \
+    defined(PT_SETDBREGS) || defined(PT_GETDBREGS)
+# define PT_REGISTERS
+#endif
+
 static int
 ptrace_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
     void *arg0, void *arg1, void *arg2, void *arg3)
@@ -196,24 +238,12 @@ ptrace_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 	case PT_READ_I:
 	case PT_READ_D:
 	case PT_IO:
-#ifdef PT_GETREGS
-	case PT_GETREGS:
-#endif
-#ifdef PT_SETREGS
-	case PT_SETREGS:
-#endif
-#ifdef PT_GETFPREGS
-	case PT_GETFPREGS:
-#endif
-#ifdef PT_SETFPREGS
-	case PT_SETFPREGS:
-#endif
-#ifdef PT_GETDBREGS
-	case PT_GETDBREGS:
-#endif
-#ifdef PT_SETDBREGS
-	case PT_SETDBREGS:
-#endif
+	case_PT_GETREGS
+	case_PT_SETREGS
+	case_PT_GETFPREGS
+	case_PT_SETFPREGS
+	case_PT_GETDBREGS
+	case_PT_SETDBREGS
 	case PT_SET_EVENT_MASK:
 	case PT_GET_EVENT_MASK:
 	case PT_GET_PROCESS_STATE:
@@ -339,11 +369,11 @@ ptrace_allowed(struct lwp *l, int req, struct proc *t, struct proc *p)
 
 	/* Make sure we can operate on it. */
 	switch (req) {
-	case  PT_TRACE_ME:
+	case PT_TRACE_ME:
 		/* Saying that you're being traced is always legal. */
 		return 0;
 
-	case  PT_ATTACH:
+	case PT_ATTACH:
 		/*
 		 * You can't attach to a process if:
 		 *	(1) it's the process that's doing the attaching,
@@ -374,33 +404,21 @@ ptrace_allowed(struct lwp *l, int req, struct proc *t, struct proc *p)
 			return EPERM;
 		return 0;
 
-	case  PT_READ_I:
-	case  PT_READ_D:
-	case  PT_WRITE_I:
-	case  PT_WRITE_D:
-	case  PT_IO:
-	case  PT_SET_SIGINFO:
-	case  PT_GET_SIGINFO:
-	case  PT_SET_SIGMASK:
-	case  PT_GET_SIGMASK:
-#ifdef PT_GETREGS
-	case  PT_GETREGS:
-#endif
-#ifdef PT_SETREGS
-	case  PT_SETREGS:
-#endif
-#ifdef PT_GETFPREGS
-	case  PT_GETFPREGS:
-#endif
-#ifdef PT_SETFPREGS
-	case  PT_SETFPREGS:
-#endif
-#ifdef PT_GETDBREGS
-	case  PT_GETDBREGS:
-#endif
-#ifdef PT_SETDBREGS
-	case  PT_SETDBREGS:
-#endif
+	case PT_READ_I:
+	case PT_READ_D:
+	case PT_WRITE_I:
+	case PT_WRITE_D:
+	case PT_IO:
+	case PT_SET_SIGINFO:
+	case PT_GET_SIGINFO:
+	case PT_SET_SIGMASK:
+	case PT_GET_SIGMASK:
+	case_PT_GETREGS
+	case_PT_SETREGS
+	case_PT_GETFPREGS
+	case_PT_SETFPREGS
+	case_PT_GETDBREGS
+	case_PT_SETDBREGS
 #ifdef __HAVE_PTRACE_MACHDEP
 	PTRACE_MACHDEP_REQUEST_CASES
 #endif
@@ -416,23 +434,23 @@ ptrace_allowed(struct lwp *l, int req, struct proc *t, struct proc *p)
 			return EPERM;
 		/*FALLTHROUGH*/
 
-	case  PT_CONTINUE:
-	case  PT_KILL:
-	case  PT_DETACH:
-	case  PT_LWPINFO:
-	case  PT_SYSCALL:
-	case  PT_SYSCALLEMU:
-	case  PT_DUMPCORE:
+	case PT_CONTINUE:
+	case PT_KILL:
+	case PT_DETACH:
+	case PT_LWPINFO:
+	case PT_SYSCALL:
+	case PT_SYSCALLEMU:
+	case PT_DUMPCORE:
 #ifdef PT_STEP
-	case  PT_STEP:
-	case  PT_SETSTEP:
-	case  PT_CLEARSTEP:
+	case PT_STEP:
+	case PT_SETSTEP:
+	case PT_CLEARSTEP:
 #endif
-	case  PT_SET_EVENT_MASK:
-	case  PT_GET_EVENT_MASK:
-	case  PT_GET_PROCESS_STATE:
-	case  PT_RESUME:
-	case  PT_SUSPEND:
+	case PT_SET_EVENT_MASK:
+	case PT_GET_EVENT_MASK:
+	case PT_GET_PROCESS_STATE:
+	case PT_RESUME:
+	case PT_SUSPEND:
 		/*
 		 * You can't do what you want to the process if:
 		 *	(1) It's not being traced at all,
@@ -738,29 +756,18 @@ ptrace_startstop(struct proc *t, struct lwp **lt, int rq, void *addr,
 	return 0;
 }
 
+#ifdef PT_REGISTERS
 static int
 ptrace_uio_dir(int req)
 {
 	switch (req) {
-#if defined(PT_GETREGS)
-	case PT_GETREGS:
-#endif
-#if defined(PT_GETFPREGS)
-	case PT_GETFPREGS:
-#endif
-#if defined(PT_GETDBREGS)
-	case PT_GETDBREGS:
-#endif
+	case_PT_GETREGS
+	case_PT_GETFPREGS
+	case_PT_GETDBREGS
 		return UIO_READ;
-#if defined(PT_SETREGS)
-	case PT_SETREGS:
-#endif
-#if defined(PT_SETFPREGS)
-	case PT_SETFPREGS:
-#endif
-#if defined(PT_SETDBREGS)
-	case PT_SETDBREGS:
-#endif
+	case_PT_SETREGS
+	case_PT_SETFPREGS
+	case_PT_SETDBREGS
 		return UIO_WRITE;
 	default:
 		return -1;
@@ -784,12 +791,8 @@ ptrace_regs(struct lwp *l, struct lwp **lt, int rq, struct ptrace_methods *ptm,
 
 	switch (rq) {
 #if defined(PT_SETREGS) || defined(PT_GETREGS)
-#if defined(PT_GETREGS)
-	case PT_GETREGS:
-#endif
-#if defined(PT_GETREGS)
-	case PT_SETREGS:
-#endif
+	case_PT_GETREGS
+	case_PT_SETREGS
 		if (!process_validregs(*lt))
 			return EINVAL;
 		size = PROC_REGSZ(t);
@@ -797,12 +800,8 @@ ptrace_regs(struct lwp *l, struct lwp **lt, int rq, struct ptrace_methods *ptm,
 		break;
 #endif
 #if defined(PT_SETFPREGS) || defined(PT_GETFPREGS)
-#if defined(PT_GETFPREGS)
-	case PT_GETFPREGS:
-#endif
-#if defined(PT_GETFPREGS)
-	case PT_SETFPREGS:
-#endif
+	case_PT_GETFPREGS
+	case_PT_SETFPREGS
 		if (!process_validfpregs(*lt))
 			return EINVAL;
 		size = PROC_FPREGSZ(t);
@@ -810,12 +809,8 @@ ptrace_regs(struct lwp *l, struct lwp **lt, int rq, struct ptrace_methods *ptm,
 		break;
 #endif
 #if defined(PT_SETDBREGS) || defined(PT_GETDBREGS)
-#if defined(PT_GETDBREGS)
-	case PT_GETDBREGS:
-#endif
-#if defined(PT_GETDBREGS)
-	case PT_SETDBREGS:
-#endif
+	case_PT_GETDBREGS
+	case_PT_SETDBREGS
 		if (!process_validdbregs(*lt))
 			return EINVAL;
 		size = PROC_DBREGSZ(t);
@@ -846,6 +841,135 @@ ptrace_regs(struct lwp *l, struct lwp **lt, int rq, struct ptrace_methods *ptm,
 	uvmspace_free(vm);
 	return error;
 }
+#endif
+
+static int
+ptrace_sendsig(struct proc *t, struct lwp *lt, int signo, int resume_all)
+{
+	ksiginfo_t ksi;
+
+	t->p_fpid = 0;
+	t->p_vfpid = 0;
+	t->p_vfpid_done = 0;
+	t->p_lwp_created = 0;
+	t->p_lwp_exited = 0;
+
+	/* Finally, deliver the requested signal (or none). */
+	if (t->p_stat == SSTOP) {
+		/*
+		 * Unstop the process.  If it needs to take a
+		 * signal, make all efforts to ensure that at
+		 * an LWP runs to see it.
+		 */
+		t->p_xsig = signo;
+		if (resume_all)
+			proc_unstop(t);
+		else
+			lwp_unstop(lt);
+		return 0;
+	}
+
+	KSI_INIT_EMPTY(&ksi);
+	if (t->p_sigctx.ps_faked) {
+		if (signo != t->p_sigctx.ps_info._signo)
+			return EINVAL;
+		t->p_sigctx.ps_faked = false;
+		ksi.ksi_info = t->p_sigctx.ps_info;
+		ksi.ksi_lid = t->p_sigctx.ps_lwp;
+	} else if (signo == 0) {
+		return 0;
+	} else {
+		ksi.ksi_signo = signo;
+	}
+
+	kpsignal2(t, &ksi);
+	return 0;
+}
+
+static int
+ptrace_dumpcore(struct lwp *lt, char *path, size_t len)
+{
+	int error;
+	if (path != NULL) {
+
+		if (len >= MAXPATHLEN)
+			return EINVAL;
+
+		char *src = path;
+		path = kmem_alloc(len + 1, KM_SLEEP);
+		error = copyin(src, path, len);
+		if (error)
+			goto out;
+		path[len] = '\0';
+	}
+	error = (*coredump_vec)(lt, path);
+out:
+	if (path)
+		kmem_free(path, len + 1);
+	return error;
+}
+
+static int
+ptrace_doio(struct lwp *l, struct proc *t, struct lwp *lt,
+    struct ptrace_io_desc *piod, void *addr, struct vmspace **vm)
+{
+	struct uio uio;
+	struct iovec iov;
+	int error, tmp;
+
+	error = 0;
+	iov.iov_base = piod->piod_addr;
+	iov.iov_len = piod->piod_len;
+	uio.uio_iov = &iov;
+	uio.uio_iovcnt = 1;
+	uio.uio_offset = (off_t)(unsigned long)piod->piod_offs;
+	uio.uio_resid = piod->piod_len;
+
+	switch (piod->piod_op) {
+	case PIOD_READ_D:
+	case PIOD_READ_I:
+		uio.uio_rw = UIO_READ;
+		break;
+	case PIOD_WRITE_D:
+	case PIOD_WRITE_I:
+		/*
+		 * Can't write to a RAS
+		 */
+		if (ras_lookup(t, addr) != (void *)-1) {
+			return EACCES;
+		}
+		uio.uio_rw = UIO_WRITE;
+		break;
+	case PIOD_READ_AUXV:
+		uio.uio_rw = UIO_READ;
+		tmp = t->p_execsw->es_arglen;
+		if (uio.uio_offset > tmp)
+			return EIO;
+		if (uio.uio_resid > tmp - uio.uio_offset)
+			uio.uio_resid = tmp - uio.uio_offset;
+		piod->piod_len = iov.iov_len = uio.uio_resid;
+		error = process_auxv_offset(t, &uio);
+		break;
+	default:
+		error = EINVAL;
+		break;
+	}
+	if (error)
+		return error;
+	error = proc_vmspace_getref(l->l_proc, vm);
+	if (error)
+		return error;
+
+	uio.uio_vmspace = *vm;
+
+	error = process_domem(l, lt, &uio);
+	if (error) {
+		uvmspace_free(*vm);
+		return error;
+	}
+	piod->piod_len -= uio.uio_resid;
+	return 0;
+}
 
 int
 do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
@@ -855,16 +979,11 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 	struct lwp *lt = NULL;
 	struct lwp *lt2;
 	struct proc *t;				/* target process */
-	struct uio uio;
-	struct iovec iov;
 	struct ptrace_io_desc piod;
 	struct vmspace *vm;
 	int error, write, tmp, pheld;
 	int signo = 0;
 	int resume_all;
-	ksiginfo_t ksi;
-	char *path;
-	int len = 0;
 	error = 0;
 
 	/*
@@ -912,124 +1031,45 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 	resume_all = 1;
 
 	switch (req) {
-	case  PT_TRACE_ME:
+	case PT_TRACE_ME:
 		/* Just set the trace flag. */
 		SET(t->p_slflag, PSL_TRACED);
 		t->p_opptr = t->p_pptr;
 		break;
 
-	case  PT_WRITE_I:		/* XXX no separate I and D spaces */
-	case  PT_WRITE_D:
-#if defined(__HAVE_RAS)
-		/*
-		 * Can't write to a RAS
-		 */
-		if (ras_lookup(t, addr) != (void *)-1) {
-			error = EACCES;
-			break;
-		}
-#endif
+	case PT_WRITE_I:		/* XXX no separate I and D spaces */
+	case PT_WRITE_D:
 		write = 1;
 		tmp = data;
 		/* FALLTHROUGH */
-
-	case  PT_READ_I:		/* XXX no separate I and D spaces */
-	case  PT_READ_D:
-		/* write = 0 done above. */
-		iov.iov_base = (void *)&tmp;
-		iov.iov_len = sizeof(tmp);
-		uio.uio_iov = &iov;
-		uio.uio_iovcnt = 1;
-		uio.uio_offset = (off_t)(unsigned long)addr;
-		uio.uio_resid = sizeof(tmp);
-		uio.uio_rw = write ? UIO_WRITE : UIO_READ;
-		UIO_SETUP_SYSSPACE(&uio);
-
-		error = process_domem(l, lt, &uio);
+	case PT_READ_I:			/* XXX no separate I and D spaces */
+	case PT_READ_D:
+		piod.piod_addr = &tmp;
+		piod.piod_len = sizeof(tmp);
+		piod.piod_offs = addr;
+		piod.piod_op = write ? PIOD_WRITE_D : PIOD_READ_D;
+		if ((error = ptrace_doio(l, t, lt, &piod, addr, &vm)) != 0)
+			break;
 		if (!write)
 			*retval = tmp;
-		break;
-
-	case  PT_IO:
-		error = ptm->ptm_copyinpiod(&piod, addr);
-		if (error)
-			break;
-
-		iov.iov_base = piod.piod_addr;
-		iov.iov_len = piod.piod_len;
-		uio.uio_iov = &iov;
-		uio.uio_iovcnt = 1;
-		uio.uio_offset = (off_t)(unsigned long)piod.piod_offs;
-		uio.uio_resid = piod.piod_len;
-
-		switch (piod.piod_op) {
-		case PIOD_READ_D:
-		case PIOD_READ_I:
-			uio.uio_rw = UIO_READ;
-			break;
-		case PIOD_WRITE_D:
-		case PIOD_WRITE_I:
-			/*
-			 * Can't write to a RAS
-			 */
-			if (ras_lookup(t, addr) != (void *)-1) {
-				return EACCES;
-			}
-			uio.uio_rw = UIO_WRITE;
-			break;
-		case PIOD_READ_AUXV:
-			req = PT_READ_D;
-			uio.uio_rw = UIO_READ;
-			tmp = t->p_execsw->es_arglen;
-			if (uio.uio_offset > tmp)
-				return EIO;
-			if (uio.uio_resid > tmp - uio.uio_offset)
-				uio.uio_resid = tmp - uio.uio_offset;
-			piod.piod_len = iov.iov_len = uio.uio_resid;
-			error = process_auxv_offset(t, &uio);
-			break;
-		default:
-			error = EINVAL;
-			break;
-		}
-		if (error)
-			break;
-		error = proc_vmspace_getref(l->l_proc, &vm);
-		if (error)
-			break;
-		uio.uio_vmspace = vm;
-
-		error = process_domem(l, lt, &uio);
-		piod.piod_len -= uio.uio_resid;
-		(void) ptm->ptm_copyoutpiod(&piod, addr);
-
 		uvmspace_free(vm);
 		break;
 
-	case  PT_DUMPCORE:
-		if ((path = addr) != NULL) {
-			char *dst;
-			len = data;
+	case PT_IO:
+		if ((error = ptm->ptm_copyinpiod(&piod, addr)) != 0)
+			break;
+		if ((error = ptrace_doio(l, t, lt, &piod, addr, &vm)) != 0)
+			break;
+		(void) ptm->ptm_copyoutpiod(&piod, addr);
+		uvmspace_free(vm);
+		break;
 
-			if (len < 0 || len >= MAXPATHLEN) {
-				error = EINVAL;
-				break;
-			}
-			dst = kmem_alloc(len + 1, KM_SLEEP);
-			if ((error = copyin(path, dst, len)) != 0) {
-				kmem_free(dst, len + 1);
-				break;
-			}
-			path = dst;
-			path[len] = '\0';
-		}
-		error = (*coredump_vec)(lt, path);
-		if (path)
-			kmem_free(path, len + 1);
+	case PT_DUMPCORE:
+		error = ptrace_dumpcore(lt, addr, data);
 		break;
 
 #ifdef PT_STEP
-	case  PT_STEP:
+	case PT_STEP:
 		/*
 		 * From the 4.4BSD PRM:
 		 * "Execution continues as in request PT_CONTINUE; however
@@ -1037,9 +1077,9 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 		 * instruction, execution stops again. [ ... ]"
 		 */
 #endif
-	case  PT_CONTINUE:
-	case  PT_SYSCALL:
-	case  PT_DETACH:
+	case PT_CONTINUE:
+	case PT_SYSCALL:
+	case PT_DETACH:
 		if (req == PT_SYSCALL) {
 			if (!ISSET(t->p_slflag, PSL_SYSCALL)) {
 				SET(t->p_slflag, PSL_SYSCALL);
@@ -1187,41 +1227,10 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 			CLR(lt->l_pflag, LP_SINGLESTEP);
 		}
 	sendsig:
-		t->p_fpid = 0;
-		t->p_vfpid = 0;
-		t->p_vfpid_done = 0;
-		t->p_lwp_created = 0;
-		t->p_lwp_exited = 0;
-		/* Finally, deliver the requested signal (or none). */
-		if (t->p_stat == SSTOP) {
-			/*
-			 * Unstop the process.  If it needs to take a
-			 * signal, make all efforts to ensure that at
-			 * an LWP runs to see it.
-			 */
-			t->p_xsig = signo;
-			if (resume_all)
-				proc_unstop(t);
-			else
-				lwp_unstop(lt);
-		} else if (t->p_sigctx.ps_faked) {
-			if (signo != t->p_sigctx.ps_info._signo) {
-				error = EINVAL;
-				break;
-			}
-			t->p_sigctx.ps_faked = false;
-			KSI_INIT_EMPTY(&ksi);
-			ksi.ksi_info = t->p_sigctx.ps_info;
-			ksi.ksi_lid = t->p_sigctx.ps_lwp;
-			kpsignal2(t, &ksi);
-		} else if (signo != 0) {
-			KSI_INIT_EMPTY(&ksi);
-			ksi.ksi_signo = signo;
-			kpsignal2(t, &ksi);
-		}
+		error = ptrace_sendsig(t, lt, signo, resume_all);
 		break;
 
-	case  PT_SYSCALLEMU:
+	case PT_SYSCALLEMU:
 		if (!ISSET(t->p_slflag, PSL_SYSCALL) || t->p_stat != SSTOP) {
 			error = EINVAL;
 			break;
@@ -1230,10 +1239,10 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 		break;
 
 #ifdef PT_STEP
-	case  PT_SETSTEP:
+	case PT_SETSTEP:
 		write = 1;
 
-	case  PT_CLEARSTEP:
+	case PT_CLEARSTEP:
 		/* write = 0 done above. */
 		if ((error = ptrace_update_lwp(t, &lt, data)) != 0)
 			break;
@@ -1245,12 +1254,12 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 		break;
 #endif
 
-	case  PT_KILL:
+	case PT_KILL:
 		/* just send the process a KILL signal. */
 		signo = SIGKILL;
 		goto sendsig;	/* in PT_CONTINUE, above. */
 
-	case  PT_ATTACH:
+	case PT_ATTACH:
 		/*
 		 * Go ahead and set the trace flag.
 		 * Save the old parent (it's reset in
@@ -1263,15 +1272,15 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 		signo = SIGSTOP;
 		goto sendsig;
 
-	case  PT_GET_EVENT_MASK:
+	case PT_GET_EVENT_MASK:
 		error = ptrace_get_event_mask(t, addr, data);
 		break;
 
-	case  PT_SET_EVENT_MASK:
+	case PT_SET_EVENT_MASK:
 		error = ptrace_set_event_mask(t, addr, data);
 		break;
 
-	case  PT_GET_PROCESS_STATE:
+	case PT_GET_PROCESS_STATE:
 		error = ptrace_get_process_state(t, addr, data);
 		break;
 
@@ -1279,45 +1288,31 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 		error = ptrace_lwpinfo(t, &lt, addr, data);
 		break;
 
-	case  PT_SET_SIGINFO:
+	case PT_SET_SIGINFO:
 		error = ptrace_set_siginfo(t, &lt, addr, data);
 		break;
 
-	case  PT_GET_SIGINFO:
+	case PT_GET_SIGINFO:
 		error = ptrace_get_siginfo(t, addr, data);
 		break;
 
-	case  PT_SET_SIGMASK:
-	case  PT_GET_SIGMASK:
+	case PT_SET_SIGMASK:
+	case PT_GET_SIGMASK:
 		error = ptrace_sigmask(t, &lt, req, addr, data);
 		break;
 
-	case  PT_RESUME:
-	case  PT_SUSPEND:
+	case PT_RESUME:
+	case PT_SUSPEND:
 		error = ptrace_startstop(t, &lt, req, addr, data);
 		break;
 
-#if defined(PT_SETREGS) || defined(PT_GETREGS) || \
-    defined(PT_SETFPREGS) || defined(PT_GETFOREGS) || \
-    defined(PT_SETDBREGS) || defined(PT_GETDBREGS)
-#ifdef PT_SETREGS
-	case  PT_SETREGS:
-#endif
-#ifdef PT_GETREGS
-	case  PT_GETREGS:
-#endif
-#ifdef PT_SETFPREGS
-	case  PT_SETFPREGS:
-#endif
-#ifdef PT_GETFPREGS
-	case  PT_GETFPREGS:
-#endif
-#ifdef PT_SETDBREGS
-	case  PT_SETDBREGS:
-#endif
-#ifdef PT_GETDBREGS
-	case  PT_GETDBREGS:
-#endif
+#ifdef PT_REGISTERS
+	case_PT_SETREGS
+	case_PT_GETREGS
+	case_PT_SETFPREGS
+	case_PT_GETFPREGS
+	case_PT_SETDBREGS
+	case_PT_GETDBREGS
 		error = ptrace_regs(l, &lt, req, ptm, addr, data);
 		break;
 #endif
@@ -1343,9 +1338,7 @@ out:
 
 typedef int (*regfunc_t)(struct lwp *, void *);
 
-#if defined(PT_GETDBREGS) || defined(PT_SETDBREGS) || \
-    defined(PT_GETFPREGS) || defined(PT_SETFPREGS) || \
-    defined(PT_GETREGS) || defined(PT_SETREGS)
+#ifdef PT_REGISTERS
 static int
 proc_regio(struct lwp *l, struct uio *uio, size_t kl, regfunc_t r, regfunc_t w)
 {
