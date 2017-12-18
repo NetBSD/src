@@ -1,4 +1,4 @@
-/* $NetBSD: bwfm.c,v 1.5 2017/12/18 12:36:16 jmcneill Exp $ */
+/* $NetBSD: bwfm.c,v 1.6 2017/12/18 12:42:21 jmcneill Exp $ */
 /* $OpenBSD: bwfm.c,v 1.5 2017/10/16 22:27:16 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -60,7 +60,6 @@ void	 bwfm_stop(struct ifnet *, int);
 void	 bwfm_watchdog(struct ifnet *);
 int	 bwfm_ioctl(struct ifnet *, u_long, void *);
 int	 bwfm_media_change(struct ifnet *);
-void	 bwfm_media_status(struct ifnet *, struct ifmediareq *);
 
 int	 bwfm_send_mgmt(struct ieee80211com *, struct ieee80211_node *,
 	     int, int);
@@ -257,7 +256,7 @@ bwfm_attach(struct bwfm_softc *sc)
 	ic->ic_recv_mgmt = bwfm_recv_mgmt;
 	ic->ic_crypto.cs_key_set = bwfm_key_set;
 	ic->ic_crypto.cs_key_delete = bwfm_key_delete;
-	ieee80211_media_init(ic, bwfm_media_change, bwfm_media_status);
+	ieee80211_media_init(ic, bwfm_media_change, ieee80211_media_status);
 
 	ieee80211_announce(ic);
 
@@ -763,11 +762,6 @@ int
 bwfm_media_change(struct ifnet *ifp)
 {
 	return 0;
-}
-
-void
-bwfm_media_status(struct ifnet *ifp, struct ifmediareq *imr)
-{
 }
 
 /* Chip initialization (SDIO, PCIe) */
