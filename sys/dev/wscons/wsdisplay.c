@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.143 2017/11/03 18:49:37 maya Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.144 2017/12/18 18:59:32 jmcneill Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.143 2017/11/03 18:49:37 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.144 2017/12/18 18:59:32 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_wsdisplay_compat.h"
@@ -71,6 +71,9 @@ __KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.143 2017/11/03 18:49:37 maya Exp $")
 
 #include "locators.h"
 
+/* Console device before replaced by wsdisplay */
+static struct consdev *wsdisplay_ocn;
+
 struct wsscreen_internal {
 	const struct wsdisplay_emulops *emulops;
 	void	*emulcookie;
@@ -97,6 +100,10 @@ struct wsscreen {
 
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	int scr_rawkbd;
+#endif
+
+#ifdef WSDISPLAY_MULTICONS
+	callout_t scr_getc_ch;
 #endif
 
 	struct wsdisplay_softc *sc;
@@ -234,14 +241,15 @@ static int wsdisplay_console_attached;
 static struct wsdisplay_softc *wsdisplay_console_device;
 static struct wsscreen_internal wsdisplay_console_conf;
 
-static int wsdisplay_getc_dummy(dev_t);
+static int wsdisplay_getc(dev_t);
 static void wsdisplay_pollc(dev_t, int);
 
 static int wsdisplay_cons_pollmode;
+static int (*wsdisplay_cons_kbd_getc)(dev_t);
 static void (*wsdisplay_cons_kbd_pollc)(dev_t, int);
 
 static struct consdev wsdisplay_cons = {
-	NULL, NULL, wsdisplay_getc_dummy, wsdisplay_cnputc,
+	NULL, NULL, wsdisplay_getc, wsdisplay_cnputc,
 	wsdisplay_pollc, NULL, NULL, NULL, NODEV, CN_NORMAL
 };
 
@@ -261,6 +269,27 @@ static void wsdisplay_swdone_cb(void *, int, int);
 static int wsdisplay_dosync(struct wsdisplay_softc *, int);
 
 int wsdisplay_clearonclose;
+
+#ifdef WSDISPLAY_MULTICONS
+static void
+wsscreen_getc_poll(void *priv)
+{
+	struct wsscreen *scr = priv;
+	int c;
+
+	if (wsdisplay_ocn && wsdisplay_ocn->cn_getc &&
+	    WSSCREEN_HAS_EMULATOR(scr) && WSSCREEN_HAS_TTY(scr)) {
+		struct tty *tp = scr->scr_tty;
+		do {
+			c = wsdisplay_ocn->cn_getc(wsdisplay_ocn->cn_dev);
+			if (c != -1)
+				(*tp->t_linesw->l_rint)((unsigned char)c, tp);
+		} while (c != -1);
+	}
+
+	callout_schedule(&scr->scr_getc_ch, mstohz(10));
+}
+#endif
 
 struct wsscreen *
 wsscreen_attach(struct wsdisplay_softc *sc, int console, const char *emul,
@@ -315,6 +344,12 @@ wsscreen_attach(struct wsdisplay_softc *sc, int console, const char *emul,
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	scr->scr_rawkbd = 0;
 #endif
+#ifdef WSDISPLAY_MULTICONS
+	callout_init(&scr->scr_getc_ch, 0);
+	callout_setfunc(&scr->scr_getc_ch, wsscreen_getc_poll, scr);
+	if (console)
+		callout_schedule(&scr->scr_getc_ch, mstohz(10));
+#endif
 	return (scr);
 }
 
@@ -334,6 +369,8 @@ wsscreen_detach(struct wsscreen *scr)
 	}
 	if (scr->scr_dconf->scrdata->capabilities & WSSCREEN_FREE)
 		free(__UNCONST(scr->scr_dconf->scrdata), M_DEVBUF);
+	callout_halt(&scr->scr_getc_ch, NULL);
+	callout_destroy(&scr->scr_getc_ch);
 	free(scr->scr_dconf, M_DEVBUF);
 	free(scr, M_DEVBUF);
 }
@@ -884,6 +921,8 @@ wsdisplay_cnattach(const struct wsscreen_descr *type, void *cookie,
 								  ccol, crow,
 								  defattr);
 
+	if (cn_tab != &wsdisplay_cons)
+		wsdisplay_ocn = cn_tab;
 	cn_tab = &wsdisplay_cons;
 	wsdisplay_console_initted = 2;
 }
@@ -910,6 +949,8 @@ wsdisplay_preattach(const struct wsscreen_descr *type, void *cookie,
 								  ccol, crow,
 								  defattr);
 
+	if (cn_tab != &wsdisplay_cons)
+		wsdisplay_ocn = cn_tab;
 	cn_tab = &wsdisplay_cons;
 	wsdisplay_console_initted = 1;
 }
@@ -919,7 +960,7 @@ wsdisplay_cndetach(void)
 {
 	KASSERT(wsdisplay_console_initted == 2);
 
-	cn_tab = NULL;
+	cn_tab = wsdisplay_ocn;
 	wsdisplay_console_initted = 0;
 }
 
@@ -1631,6 +1672,14 @@ wsdisplaystart(struct tty *tp)
 		KASSERT(WSSCREEN_HAS_EMULATOR(scr));
 		(*scr->scr_dconf->wsemul->output)(scr->scr_dconf->wsemulcookie,
 						  tbuf, n, 0);
+#ifdef WSDISPLAY_MULTICONS
+		if (scr->scr_dconf == &wsdisplay_console_conf &&
+		    wsdisplay_ocn && wsdisplay_ocn->cn_putc) {
+			for (int i = 0; i < n; i++)
+				wsdisplay_ocn->cn_putc(
+				    wsdisplay_ocn->cn_dev, tbuf[i]);
+		}
+#endif
 	}
 	ndflush(&tp->t_outq, n);
 
@@ -1641,6 +1690,15 @@ wsdisplaystart(struct tty *tp)
 			KASSERT(WSSCREEN_HAS_EMULATOR(scr));
 			(*scr->scr_dconf->wsemul->output)
 			    (scr->scr_dconf->wsemulcookie, tbuf, n, 0);
+
+#ifdef WSDISPLAY_MULTICONS
+			if (scr->scr_dconf == &wsdisplay_console_conf &&
+			    wsdisplay_ocn && wsdisplay_ocn->cn_putc) {
+				for (int i = 0; i < n; i++)
+					wsdisplay_ocn->cn_putc(
+					    wsdisplay_ocn->cn_dev, tbuf[i]);
+			}
+#endif
 		}
 		ndflush(&tp->t_outq, n);
 	}
@@ -2229,11 +2287,31 @@ wsdisplay_cnputc(dev_t dev, int i)
 
 	dc = &wsdisplay_console_conf;
 	(*dc->wsemul->output)(dc->wsemulcookie, &c, 1, 1);
+
+#ifdef WSDISPLAY_MULTICONS
+	if (wsdisplay_ocn && wsdisplay_ocn->cn_putc)
+		wsdisplay_ocn->cn_putc(wsdisplay_ocn->cn_dev, i);
+#endif
 }
 
 static int
-wsdisplay_getc_dummy(dev_t dev)
+wsdisplay_getc(dev_t dev)
 {
+	int c;
+
+	if (wsdisplay_cons_kbd_getc) {
+		c = wsdisplay_cons_kbd_getc(wsdisplay_cons.cn_dev);
+		if (c > 0)
+			return c;
+	}
+
+#ifdef WSDISPLAY_MULTICONS
+	if (wsdisplay_ocn && wsdisplay_ocn->cn_getc) {
+		c = wsdisplay_ocn->cn_getc(wsdisplay_ocn->cn_dev);
+		if (c > 0)
+			return c;
+	}
+#endif
 	/* panic? */
 	return (0);
 }
@@ -2253,21 +2331,27 @@ wsdisplay_pollc(dev_t dev, int on)
 	/* notify to kbd drivers */
 	if (wsdisplay_cons_kbd_pollc)
 		(*wsdisplay_cons_kbd_pollc)(NODEV, on);
+
+#ifdef WSDISPLAY_MULTICONS
+	/* notify to old console driver */
+	if (wsdisplay_ocn && wsdisplay_ocn->cn_pollc)
+		wsdisplay_ocn->cn_pollc(wsdisplay_ocn->cn_dev, on);
+#endif
 }
 
 void
 wsdisplay_set_cons_kbd(int (*get)(dev_t), void (*poll)(dev_t, int),
 	void (*bell)(dev_t, u_int, u_int, u_int))
 {
-	wsdisplay_cons.cn_getc = get;
 	wsdisplay_cons.cn_bell = bell;
+	wsdisplay_cons_kbd_getc = get;
 	wsdisplay_cons_kbd_pollc = poll;
 }
 
 void
 wsdisplay_unset_cons_kbd(void)
 {
-	wsdisplay_cons.cn_getc = wsdisplay_getc_dummy;
 	wsdisplay_cons.cn_bell = NULL;
-	wsdisplay_cons_kbd_pollc = 0;
+	wsdisplay_cons_kbd_getc = NULL;
+	wsdisplay_cons_kbd_pollc = NULL;
 }
