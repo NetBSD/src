@@ -1,4 +1,4 @@
-/* $NetBSD: bwfm.c,v 1.6 2017/12/18 12:42:21 jmcneill Exp $ */
+/* $NetBSD: bwfm.c,v 1.7 2017/12/18 13:56:14 jmcneill Exp $ */
 /* $OpenBSD: bwfm.c,v 1.5 2017/10/16 22:27:16 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -422,6 +422,13 @@ bwfm_init(struct ifnet *ifp)
 	bwfm_fwvar_var_set_int(sc, "arpoe", 0);
 	bwfm_fwvar_var_set_int(sc, "ndoe", 0);
 	bwfm_fwvar_var_set_int(sc, "toe", 0);
+
+	/* Accept all multicast frames. */
+	bwfm_fwvar_var_set_int(sc, "allmulti", 1);
+
+	/* Setup promiscuous mode */
+	bwfm_fwvar_cmd_set_int(sc, BWFM_C_SET_PROMISC,
+	    (ifp->if_flags & IFF_PROMISC) ? 1 : 0);
 
 	/*
 	 * Tell the firmware supplicant that we are going to handle the
@@ -1494,12 +1501,6 @@ bwfm_connect(struct bwfm_softc *sc)
 		}
 		kmem_free(params, sizeof(*params));
 	}
-
-	/* XXX: added for testing only, remove */
-	bwfm_fwvar_var_set_int(sc, "allmulti", 1);
-#if 0
-	bwfm_fwvar_cmd_set_int(sc, BWFM_C_SET_PROMISC, 1);
-#endif
 }
 
 void
