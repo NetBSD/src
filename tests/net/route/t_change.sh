@@ -1,4 +1,4 @@
-#	$NetBSD: t_change.sh,v 1.11 2017/03/24 04:06:19 ozaki-r Exp $
+#	$NetBSD: t_change.sh,v 1.12 2017/12/18 04:11:46 ozaki-r Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -125,7 +125,7 @@ destination: 192.168.0.0
     gateway: 10.0.0.1
  local addr: 10.0.0.10
   interface: shmif0
-      flags: <UP,GATEWAY,DONE,STATIC>
+      flags: 0x843<UP,GATEWAY,DONE,STATIC>
  recvpipe  sendpipe  ssthresh  rtt,msec    rttvar  hopcount      mtu     expire
 	EOF
 	rump.route -n get 192.168.0.1 > ./output
@@ -144,7 +144,7 @@ destination: 192.168.0.0
     gateway: 10.0.0.1
  local addr: 10.0.0.11
   interface: shmif0
-      flags: <UP,GATEWAY,DONE,STATIC>
+      flags: 0x843<UP,GATEWAY,DONE,STATIC>
  recvpipe  sendpipe  ssthresh  rtt,msec    rttvar  hopcount      mtu     expire
 	EOF
 	rump.route -n get 192.168.0.1 > ./output
@@ -192,7 +192,7 @@ destination: 192.168.0.0
     gateway: 10.0.0.1
  local addr: 10.0.0.10
   interface: shmif0
-      flags: <UP,GATEWAY,DONE,STATIC>
+      flags: 0x843<UP,GATEWAY,DONE,STATIC>
  recvpipe  sendpipe  ssthresh  rtt,msec    rttvar  hopcount      mtu     expire
 	EOF
 	rump.route -n get 192.168.0.1 > ./output
@@ -211,7 +211,7 @@ destination: 192.168.0.0
     gateway: 10.0.0.1
  local addr: 10.0.0.11
   interface: shmif1
-      flags: <UP,GATEWAY,DONE,STATIC>
+      flags: 0x843<UP,GATEWAY,DONE,STATIC>
  recvpipe  sendpipe  ssthresh  rtt,msec    rttvar  hopcount      mtu     expire
 	EOF
 	rump.route -n get 192.168.0.1 > ./output
@@ -259,7 +259,7 @@ destination: 192.168.0.0
     gateway: 10.0.0.1
  local addr: 10.0.0.10
   interface: shmif0
-      flags: <UP,GATEWAY,DONE,STATIC>
+      flags: 0x843<UP,GATEWAY,DONE,STATIC>
  recvpipe  sendpipe  ssthresh  rtt,msec    rttvar  hopcount      mtu     expire
 	EOF
 	rump.route -n get 192.168.0.1 > ./output
@@ -278,7 +278,7 @@ destination: 192.168.0.0
     gateway: 10.0.0.1
  local addr: 10.0.0.11
   interface: shmif1
-      flags: <UP,GATEWAY,DONE,STATIC>
+      flags: 0x843<UP,GATEWAY,DONE,STATIC>
  recvpipe  sendpipe  ssthresh  rtt,msec    rttvar  hopcount      mtu     expire
 	EOF
 	rump.route -n get 192.168.0.1 > ./output

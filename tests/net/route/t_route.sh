@@ -1,4 +1,4 @@
-#	$NetBSD: t_route.sh,v 1.13 2017/06/28 04:10:47 ozaki-r Exp $
+#	$NetBSD: t_route.sh,v 1.14 2017/12/18 04:11:46 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -234,7 +234,7 @@ test_route_get()
 destination: 10.0.1.2
  local addr: 10.0.1.2
   interface: lo0
-      flags: <UP,HOST,DONE,LOCAL>
+      flags: 0x40045<UP,HOST,DONE,LOCAL>
  recvpipe  sendpipe  ssthresh  rtt,msec    rttvar  hopcount      mtu     expire
 	EOF
 	rump.route -n get $IP4SRC > ./output
@@ -250,7 +250,7 @@ destination: 10.0.1.0
        mask: 255.255.255.0
  local addr: 10.0.1.2
   interface: shmif0
-      flags: <UP,DONE,CONNECTED>
+      flags: 0x141<UP,DONE,CONNECTED>
  recvpipe  sendpipe  ssthresh  rtt,msec    rttvar  hopcount      mtu     expire
 	EOF
 	rump.route -n get $IP4SRCGW > ./output
@@ -266,7 +266,7 @@ destination: default
     gateway: 10.0.1.1
  local addr: 10.0.1.2
   interface: shmif0
-      flags: <UP,GATEWAY,DONE,STATIC>
+      flags: 0x843<UP,GATEWAY,DONE,STATIC>
  recvpipe  sendpipe  ssthresh  rtt,msec    rttvar  hopcount      mtu     expire
 	EOF
 	rump.route -n get $IP4DST > ./output
@@ -284,7 +284,7 @@ destination: 10.0.1.0
        mask: 255.255.255.0
  local addr: 10.0.1.2
   interface: shmif0
-      flags: <UP,DONE,CONNECTED>
+      flags: 0x141<UP,DONE,CONNECTED>
  recvpipe  sendpipe  ssthresh  rtt,msec    rttvar  hopcount      mtu     expire
 	EOF
 	rump.route -n get $IP4SRCGW > ./output
@@ -309,7 +309,7 @@ test_route_get6()
 destination: fc00:0:0:1::2
  local addr: fc00:0:0:1::2
   interface: lo0
-      flags: <UP,HOST,DONE,LOCAL>
+      flags: 0x40045<UP,HOST,DONE,LOCAL>
  recvpipe  sendpipe  ssthresh  rtt,msec    rttvar  hopcount      mtu     expire
 	EOF
 	rump.route -n get -inet6 $IP6SRC > ./output
@@ -324,7 +324,7 @@ destination: fc00:0:0:1::
        mask: ffff:ffff:ffff:ffff::
  local addr: fc00:0:0:1::2
   interface: shmif0
-      flags: <UP,DONE,CONNECTED>
+      flags: 0x141<UP,DONE,CONNECTED>
  recvpipe  sendpipe  ssthresh  rtt,msec    rttvar  hopcount      mtu     expire
 	EOF
 	rump.route -n get -inet6 $IP6SRCGW > ./output
@@ -340,7 +340,7 @@ destination: ::
     gateway: fc00:0:0:1::1
  local addr: fc00:0:0:1::2
   interface: shmif0
-      flags: <UP,GATEWAY,DONE,STATIC>
+      flags: 0x843<UP,GATEWAY,DONE,STATIC>
  recvpipe  sendpipe  ssthresh  rtt,msec    rttvar  hopcount      mtu     expire
 	EOF
 	rump.route -n get -inet6 $IP6DST > ./output
@@ -358,7 +358,7 @@ destination: fc00:0:0:1::
        mask: ffff:ffff:ffff:ffff::
  local addr: fc00:0:0:1::2
   interface: shmif0
-      flags: <UP,DONE,CONNECTED>
+      flags: 0x141<UP,DONE,CONNECTED>
  recvpipe  sendpipe  ssthresh  rtt,msec    rttvar  hopcount      mtu     expire
 	EOF
 	rump.route -n get -inet6 $IP6SRCGW > ./output
