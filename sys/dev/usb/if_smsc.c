@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.30 2016/12/15 09:28:06 ozaki-r Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.31 2017/12/18 20:25:07 skrll Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /* $FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -277,7 +277,7 @@ smsc_miibus_readreg(device_t dev, int phy, int reg)
 done:
 	smsc_unlock_mii(sc);
 
-	return val & 0xFFFF;
+	return val & 0xffff;
 }
 
 void
