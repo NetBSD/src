@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.105 2017/09/22 03:11:43 macallan Exp $
+#	$NetBSD: files.macppc,v 1.106 2017/12/18 15:53:38 skrll Exp $
 #
 # macppc-specific configuration info
 
@@ -63,11 +63,6 @@ include "dev/scsipi/files.scsipi"
 # Machine-independent ATA drivers
 #
 include "dev/ata/files.ata"
-
-#
-# Generic OpenFirmware device support
-#
-include "dev/ofw/files.ofw"
 
 #
 # Machine-independent I2O drivers
