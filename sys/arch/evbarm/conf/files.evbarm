@@ -1,4 +1,4 @@
-#	$NetBSD: files.evbarm,v 1.27 2017/08/30 23:57:27 jmcneill Exp $
+#	$NetBSD: files.evbarm,v 1.28 2017/12/18 15:53:38 skrll Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -52,11 +52,5 @@ file	arch/evbarm/dev/plcom.c			plcom needs-flag
 # Maximum number of memory ranges
 #
 defparam	opt_machdep.h			DRAM_BLOCKS
-
-#
-# Flattened Device Tree (FDT) support
-#
-include "dev/ofw/files.ofw"
-include "dev/fdt/files.fdt"
 
 include "arch/arm/conf/majors.arm32"

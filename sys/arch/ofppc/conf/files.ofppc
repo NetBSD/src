@@ -1,4 +1,4 @@
-#	$NetBSD: files.ofppc,v 1.46 2011/08/04 15:07:04 phx Exp $
+#	$NetBSD: files.ofppc,v 1.47 2017/12/18 15:53:39 skrll Exp $
 #
 # NetBSD/ofppc configuration info
 #
@@ -38,11 +38,6 @@ include "arch/powerpc/pic/files.pic"
 include "arch/powerpc/pic/files.ipi"
 
 #
-# Generic OpenFirmware device support
-#
-#include "dev/ofw/files.ofw"
-
-#
 # I2O device support
 #
 include "dev/i2o/files.i2o"
@@ -64,10 +59,6 @@ define mainbus {}
 device mainbus: mainbus
 attach mainbus at root
 file	arch/ofppc/ofppc/mainbus.c		mainbus
-
-defpseudo openfirm
-file	dev/ofw/openfirmio.c			openfirm needs-flag
-file	dev/ofw/ofw_subr.c			ofbus | openfirm
 
 device	rtas
 attach	rtas at mainbus
