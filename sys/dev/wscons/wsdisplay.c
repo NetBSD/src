@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.144 2017/12/18 18:59:32 jmcneill Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.145 2017/12/18 22:44:30 christos Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.144 2017/12/18 18:59:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.145 2017/12/18 22:44:30 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_wsdisplay_compat.h"
@@ -369,8 +369,10 @@ wsscreen_detach(struct wsscreen *scr)
 	}
 	if (scr->scr_dconf->scrdata->capabilities & WSSCREEN_FREE)
 		free(__UNCONST(scr->scr_dconf->scrdata), M_DEVBUF);
+#ifdef WSDISPLAY_MULTICONS
 	callout_halt(&scr->scr_getc_ch, NULL);
 	callout_destroy(&scr->scr_getc_ch);
+#endif
 	free(scr->scr_dconf, M_DEVBUF);
 	free(scr, M_DEVBUF);
 }
