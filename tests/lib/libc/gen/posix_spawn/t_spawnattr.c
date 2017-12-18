@@ -1,4 +1,4 @@
-/* $NetBSD: t_spawnattr.c,v 1.1 2012/02/13 21:03:08 martin Exp $ */
+/* $NetBSD: t_spawnattr.c,v 1.2 2017/12/18 13:18:23 christos Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -51,20 +51,21 @@ static int get_different_priority(void);
 static int
 get_different_scheduler()
 {
-	int scheduler, max, min, new;
-
-	max = MAX(MAX(SCHED_FIFO, SCHED_OTHER), SCHED_RR);
-	min = MIN(MIN(SCHED_FIFO, SCHED_OTHER), SCHED_RR);
+	/*
+	 * We don't want to use SCHED_OTHER because it does not have
+	 * different priorities.
+	 */
 
 	/* get current schedule policy */
-	scheduler = sched_getscheduler(0);
-					
-	/* new scheduler */
-	new = (scheduler + 1);
-	if (new > max)
-		new = min;
-								
-	return new;
+	switch (sched_getscheduler(0)) {
+	case SCHED_RR:
+		return SCHED_FIFO;
+	case SCHED_FIFO:
+	case SCHED_OTHER:
+		return SCHED_RR;
+	default:
+		abort();
+	}
 }
 
 static int
