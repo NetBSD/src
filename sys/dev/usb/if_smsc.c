@@ -1,7 +1,7 @@
-/*	$NetBSD: if_smsc.c,v 1.31 2017/12/18 20:25:07 skrll Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.32 2017/12/18 20:32:02 skrll Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
-/* $FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
+/*	$FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
 /*-
  * Copyright (c) 2012
  *	Ben Gray <bgray@freebsd.org>.
@@ -364,7 +364,6 @@ smsc_miibus_statchg(struct ifnet *ifp)
 			afc_cfg |= 0xf;
 		else
 			afc_cfg &= ~0xf;
-
 	} else {
 		smsc_dbg_printf(sc, "half duplex operation\n");
 		sc->sc_mac_csr &= ~SMSC_MAC_CSR_FDPX;
@@ -413,6 +412,7 @@ smsc_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 static inline uint32_t
 smsc_hash(uint8_t addr[ETHER_ADDR_LEN])
 {
+
 	return (ether_crc32_be(addr, ETHER_ADDR_LEN) >> 26) & 0x3f;
 }
 
