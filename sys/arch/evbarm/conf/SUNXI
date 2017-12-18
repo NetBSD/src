@@ -1,5 +1,5 @@
 #
-#	$NetBSD: SUNXI,v 1.56 2017/12/16 20:44:54 jmcneill Exp $
+#	$NetBSD: SUNXI,v 1.57 2017/12/18 19:00:42 jmcneill Exp $
 #
 #	Allwinner sunxi family
 #
@@ -286,6 +286,7 @@ options 	WSDISPLAY_COMPAT_SYSCONS
 options 	WSDISPLAY_COMPAT_USL
 options 	WSDISPLAY_COMPAT_RAWKBD
 options 	WSDISPLAY_DEFAULTSCREENS=4
+options 	WSDISPLAY_MULTICONS
 
 # Touch Screen controller
 sunxits*	at fdt?			# Touch Screen controller
