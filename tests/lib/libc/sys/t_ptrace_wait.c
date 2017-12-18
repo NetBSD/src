@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.14 2017/12/16 14:45:25 christos Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.15 2017/12/18 19:20:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.14 2017/12/16 14:45:25 christos Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.15 2017/12/18 19:20:40 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -7260,6 +7260,8 @@ ATF_TC_BODY(resume1, tc)
 
 	// Times out
 	atf_tc_expect_timeout("PR kern/51995");
+	// Hangs with qemu
+	ATF_REQUIRE(0 && "In order to get reliable failure, abort");
 
 	SYSCALL_REQUIRE(msg_open(&fds) == 0);
 
