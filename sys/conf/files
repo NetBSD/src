@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1188 2017/12/16 09:34:18 maxv Exp $
+#	$NetBSD: files,v 1.1189 2017/12/18 15:53:39 skrll Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -1631,3 +1631,9 @@ include "dev/ic/files.athn"
 # MI clk api
 #
 include "dev/clk/files.clk"
+
+#
+# Flattened Device Tree (FDT) support
+#
+include "dev/ofw/files.ofw"
+include "dev/fdt/files.fdt"
