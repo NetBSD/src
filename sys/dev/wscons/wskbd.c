@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.140 2017/06/13 00:42:27 nat Exp $ */
+/* $NetBSD: wskbd.c,v 1.141 2017/12/18 18:57:21 jmcneill Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.140 2017/06/13 00:42:27 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.141 2017/12/18 18:57:21 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1400,6 +1400,10 @@ wskbd_cngetc(dev_t dev)
 			(*wskbd_console_data.t_consops->getc)
 				(wskbd_console_data.t_consaccesscookie,
 				 &type, &data);
+			if (type == 0) {
+				/* No data returned */
+				return 0;
+			}
 			if (type == WSCONS_EVENT_ASCII) {
 				/*
 				 * We assume that when the driver falls back
