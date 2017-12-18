@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.115 2017/12/17 20:59:27 christos Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.116 2017/12/18 00:33:32 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008, 2015 Matthew R. Green
@@ -49,6 +49,7 @@
 #include <compat/sys/ucontext.h>
 #include <compat/sys/mount.h>
 #include <compat/sys/signal.h>
+#include <compat/sys/siginfo.h>
 
 #include <nfs/rpcv2.h>
 
