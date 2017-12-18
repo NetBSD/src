@@ -1,4 +1,4 @@
-#	$NetBSD: files.shark,v 1.20 2017/03/10 00:09:13 macallan Exp $
+#	$NetBSD: files.shark,v 1.21 2017/12/18 15:53:39 skrll Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -38,7 +38,6 @@ include "dev/pckbport/files.pckbport"
 include "dev/ata/files.ata"
 
 # Common OFW files
-include "dev/ofw/files.ofw"
 include "arch/arm/ofw/files.ofw"
 attach	ofbus at root with ofbus_root
 file	arch/shark/ofw/ofw.c
