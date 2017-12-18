@@ -1,10 +1,6 @@
 if test "${soc}" = "sunxi" ; then
 	setenv kernel netbsd-SUNXI.ub
-	if test "${fdtfile}" = "allwinner/sun50i-a64-pinebook.dtb" ; ten
-		setenv bootargs 'root=ld0a console=fb'
-	else
-		setenv bootargs 'root=ld0a'
-	fi
+	setenv bootargs 'root=ld0a'
 	setenv mmcpart 0:1
 	setenv use_fdt 1
 fi
