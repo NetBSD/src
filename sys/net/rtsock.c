@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.235 2017/12/18 05:35:01 ozaki-r Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.236 2017/12/18 05:35:36 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.235 2017/12/18 05:35:01 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.236 2017/12/18 05:35:36 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -666,7 +666,7 @@ route_output_change(struct rtentry *rt, struct rt_addrinfo *info,
     struct rt_xmsghdr *rtm)
 {
 	int error = 0;
-	struct ifnet *ifp = NULL, *new_ifp;
+	struct ifnet *ifp = NULL, *new_ifp = NULL;
 	struct ifaddr *ifa = NULL, *new_ifa;
 	struct psref psref_ifa, psref_new_ifa, psref_ifp, psref_new_ifp;
 	bool newgw, ifp_changed = false;
