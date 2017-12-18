@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.139 2017/12/10 17:03:07 bouyer Exp $        */
+/*      $NetBSD: ukbd.c,v 1.140 2017/12/18 18:58:00 jmcneill Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.139 2017/12/10 17:03:07 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.140 2017/12/18 18:58:00 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -964,15 +964,20 @@ ukbd_cngetc(void *v, u_int *type, int *data)
 
 	DPRINTFN(0,("ukbd_cngetc: enter\n"));
 	sc->sc_flags |= FLAG_POLLING;
-	while (sc->sc_npollchar <= 0)
+	if (sc->sc_npollchar <= 0)
 		usbd_dopoll(sc->sc_hdev.sc_parent->sc_iface);
 	sc->sc_flags &= ~FLAG_POLLING;
-	c = sc->sc_pollchars[0];
-	sc->sc_npollchar--;
-	memmove(sc->sc_pollchars, sc->sc_pollchars+1,
-	       sc->sc_npollchar * sizeof(uint16_t));
-	*type = c & RELEASE ? WSCONS_EVENT_KEY_UP : WSCONS_EVENT_KEY_DOWN;
-	*data = c & CODEMASK;
+	if (sc->sc_npollchar > 0) {
+		c = sc->sc_pollchars[0];
+		sc->sc_npollchar--;
+		memmove(sc->sc_pollchars, sc->sc_pollchars+1,
+		       sc->sc_npollchar * sizeof(uint16_t));
+		*type = c & RELEASE ? WSCONS_EVENT_KEY_UP : WSCONS_EVENT_KEY_DOWN;
+		*data = c & CODEMASK;
+	} else {
+		*type = 0;
+		*data = 0;
+	}
 	DPRINTFN(0,("ukbd_cngetc: return 0x%02x\n", c));
 	if (broken)
 		ukbd_cnpollc(v, 0);
