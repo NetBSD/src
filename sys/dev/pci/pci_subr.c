@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.196 2017/10/25 08:21:41 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.197 2017/12/18 04:48:28 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.196 2017/10/25 08:21:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.197 2017/12/18 04:48:28 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -4290,7 +4290,7 @@ pci_conf_print_type1(
     const pcireg_t *regs)
 {
 	int off, width;
-	pcireg_t rval;
+	pcireg_t rval, csreg;
 	uint32_t base, limit;
 	uint32_t base_h, limit_h;
 	uint64_t pbase, plimit;
@@ -4407,7 +4407,8 @@ pci_conf_print_type1(
 	} else
 		printf("      range: not set\n");
 
-	if (regs[o2i(PCI_COMMAND_STATUS_REG)] & PCI_STATUS_CAPLIST_SUPPORT)
+	csreg = regs[o2i(PCI_COMMAND_STATUS_REG)];
+	if (csreg & PCI_STATUS_CAPLIST_SUPPORT)
 		printf("    Capability list pointer: 0x%02x\n",
 		    PCI_CAPLIST_PTR(regs[o2i(PCI_CAPLISTPTR_REG)]));
 	else
@@ -4449,6 +4450,13 @@ pci_conf_print_type1(
 	onoff("Secondary SERR forwarding", rval, PCI_BRIDGE_CONTROL_SERR);
 	onoff("ISA enable", rval, PCI_BRIDGE_CONTROL_ISA);
 	onoff("VGA enable", rval, PCI_BRIDGE_CONTROL_VGA);
+	/*
+	 * VGA 16bit decode bit has meaning if the VGA enable bit or the
+	 * VGA Palette Snoop Enable bit is set.
+	 */
+	if (((rval & PCI_BRIDGE_CONTROL_VGA) != 0)
+	    || ((csreg & PCI_COMMAND_PALETTE_ENABLE) != 0))
+		onoff("VGA 16bit enable", rval, PCI_BRIDGE_CONTROL_VGA16);
 	onoff("Master abort reporting", rval, PCI_BRIDGE_CONTROL_MABRT);
 	onoff("Secondary bus reset", rval, PCI_BRIDGE_CONTROL_SECBR);
 	onoff("Fast back-to-back capable", rval,PCI_BRIDGE_CONTROL_SECFASTB2B);
