@@ -1,4 +1,4 @@
-/* $NetBSD: bwfm.c,v 1.4 2017/10/23 15:21:10 jmcneill Exp $ */
+/* $NetBSD: bwfm.c,v 1.5 2017/12/18 12:36:16 jmcneill Exp $ */
 /* $OpenBSD: bwfm.c,v 1.5 2017/10/16 22:27:16 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -148,6 +148,9 @@ bwfm_attach(struct bwfm_softc *sc)
 		t->t_sc = sc;
 		pcq_put(sc->sc_freetask, t);
 	}
+
+	/* Stop the device in case it was previously initialized */
+	bwfm_fwvar_cmd_set_int(sc, BWFM_C_DOWN, 1);
 
 	if (bwfm_fwvar_cmd_get_int(sc, BWFM_C_GET_VERSION, &tmp)) {
 		printf("%s: could not read io type\n", DEVNAME(sc));
