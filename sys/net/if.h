@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.256 2017/12/15 04:07:20 ozaki-r Exp $	*/
+/*	$NetBSD: if.h,v 1.257 2017/12/18 08:24:29 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -448,6 +448,16 @@ typedef struct ifnet {
  *   - Must be updated with holding IFNET_LOCK
  *   - You cannot use the flag in Tx/Rx paths anymore because there is no
  *     synchronization on the flag except for IFNET_LOCK
+ *   - Note that IFNET_LOCK can't be taken in softint because it's known
+ *     that it causes a deadlock
+ *     - Some synchronization mechanisms such as pserialize_perform are called
+ *       with IFNET_LOCK and also require context switches on every CPUs
+ *       that mean softints finish so trying to take IFNET_LOCK in softint
+ *       might block on IFNET_LOCK and prevent such synchronization mechanisms
+ *       from being completed
+ *     - Currently the deadlock occurs only if NET_MPSAFE is enabled, however,
+ *       we should deal with the restriction because NET_MPSAFE will be enabled
+ *       by default in the future
  * - if_watchdog and if_timer
  *   - The watchdog framework works only for non-IFEF_MPSAFE interfaces
  *     that rely on KERNEL_LOCK
