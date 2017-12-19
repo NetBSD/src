@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.68 2017/08/08 08:04:06 maxv Exp $
+	$NetBSD: syscalls.master,v 1.69 2017/12/19 08:27:05 kamil Exp $
 
 ;	from: @(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -158,7 +158,7 @@
 67	OBSOL		vread
 68	OBSOL		vwrite
 69	NOARGS		{ int|sys||sbrk(intptr_t incr); }
-70	NOARGS		{ int|sys||sstk(int incr); }
+70	OBSOL		sstk
 71	NOARGS		{ int|compat_43_sys||mmap(void *addr, size_t len, \
 			    int prot, int flags, int fd, long pos); } ommap
 72	NOARGS		{ int|sys||ovadvise(int anom); } vadvise
