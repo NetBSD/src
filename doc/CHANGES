@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2339 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2340 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -93,4 +93,4 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	ihidev(4), ims(4): Added drivers for i2c HID mice. [bouyer 20171210]
 	lua: Applied 6th bugfix to Lua 5.3.4 from lua.org/bugs.html.
 		[mbalmer 20171213]
-
+	sstk: Remove the "stack section size change" syscall [kamil 20171219]
