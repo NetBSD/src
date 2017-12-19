@@ -1,4 +1,4 @@
-/* $NetBSD: aoutm68k_syscalls.c,v 1.45 2017/05/10 06:19:48 riastradh Exp $ */
+/* $NetBSD: aoutm68k_syscalls.c,v 1.46 2017/12/19 08:09:36 kamil Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aoutm68k_syscalls.c,v 1.45 2017/05/10 06:19:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aoutm68k_syscalls.c,v 1.46 2017/12/19 08:09:36 kamil Exp $");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)
@@ -152,7 +152,7 @@ const char *const aoutm68k_syscallnames[] = {
 	/*  67 */	"#67 (obsolete vread)",
 	/*  68 */	"#68 (obsolete vwrite)",
 	/*  69 */	"sbrk",
-	/*  70 */	"sstk",
+	/*  70 */	"#70 (obsolete sstk)",
 #if defined(COMPAT_43) || !defined(_KERNEL)
 	/*  71 */	"ommap",
 #else
@@ -899,7 +899,7 @@ const char *const altaoutm68k_syscallnames[] = {
 	/*  67 */	NULL, /* obsolete vread */
 	/*  68 */	NULL, /* obsolete vwrite */
 	/*  69 */	NULL, /* sbrk */
-	/*  70 */	NULL, /* sstk */
+	/*  70 */	NULL, /* obsolete sstk */
 #if defined(COMPAT_43) || !defined(_KERNEL)
 	/*  71 */	"mmap",
 #else
