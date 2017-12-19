@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.172 2017/06/01 02:45:08 chs Exp $	*/
+/*	$NetBSD: ccd.c,v 1.173 2017/12/19 03:24:09 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.172 2017/06/01 02:45:08 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.173 2017/12/19 03:24:09 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -218,7 +218,6 @@ static	void printiinfo(struct ccdiinfo *);
 
 static LIST_HEAD(, ccd_softc) ccds = LIST_HEAD_INITIALIZER(ccds);
 static kmutex_t ccd_lock;
-static size_t ccd_nactive = 0;
 
 #ifdef _MODULE
 static struct sysctllog *ccd_clog;
@@ -275,7 +274,6 @@ ccdget(int unit, int make) {
 		return NULL;
 	mutex_enter(&ccd_lock);
 	LIST_INSERT_HEAD(&ccds, sc, sc_link);
-	ccd_nactive++;
 	mutex_exit(&ccd_lock);
 	return sc;
 }
@@ -284,7 +282,6 @@ static void
 ccdput(struct ccd_softc *sc) {
 	mutex_enter(&ccd_lock);
 	LIST_REMOVE(sc, sc_link);
-	ccd_nactive--;
 	mutex_exit(&ccd_lock);
 	ccddestroy(sc);
 }
@@ -1721,7 +1718,7 @@ ccd_modcmd(modcmd_t cmd, void *arg)
 	case MODULE_CMD_FINI:
 #ifdef _MODULE
 		mutex_enter(&ccd_lock);
-		if (ccd_nactive) {
+		if (!LIST_EMPTY(ccds)) {
 			mutex_exit(&ccd_lock);
 			error = EBUSY;
 		} else {
