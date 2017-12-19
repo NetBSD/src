@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.77 2017/12/19 08:25:37 kamil Exp $
+	$NetBSD: syscalls.master,v 1.78 2017/12/19 18:24:21 kamil Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -128,7 +128,7 @@
 66	NOARGS		{ int|sys||vfork(void); }
 67	OBSOL		vread
 68	OBSOL		vwrite
-69	NOARGS		{ int|sys||sbrk(intptr_t incr); }
+69	OBSOL		sbrk
 70	OBSOL		sstk
 71	STD		{ void *|sunos_sys||mmap(void *addr, size_t len, \
 			    int prot, int flags, int fd, long pos); }
