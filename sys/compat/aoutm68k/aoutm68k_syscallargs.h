@@ -1,4 +1,4 @@
-/* $NetBSD: aoutm68k_syscallargs.h,v 1.46 2017/05/10 06:19:48 riastradh Exp $ */
+/* $NetBSD: aoutm68k_syscallargs.h,v 1.47 2017/12/19 08:09:36 kamil Exp $ */
 
 /*
  * System call argument lists.
@@ -191,8 +191,6 @@ struct compat_12_sys_msync_args;
 #endif
 
 struct sys_sbrk_args;
-
-struct sys_sstk_args;
 #if defined(COMPAT_43) || !defined(_KERNEL)
 
 struct compat_43_sys_mmap_args;
@@ -823,8 +821,6 @@ int	compat_12_sys_msync(struct lwp *, const struct compat_12_sys_msync_args *, r
 int	sys_vfork(struct lwp *, const void *, register_t *);
 
 int	sys_sbrk(struct lwp *, const struct sys_sbrk_args *, register_t *);
-
-int	sys_sstk(struct lwp *, const struct sys_sstk_args *, register_t *);
 
 #if defined(COMPAT_43) || !defined(_KERNEL)
 int	compat_43_sys_mmap(struct lwp *, const struct compat_43_sys_mmap_args *, register_t *);

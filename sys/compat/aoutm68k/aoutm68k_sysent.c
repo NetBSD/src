@@ -1,4 +1,4 @@
-/* $NetBSD: aoutm68k_sysent.c,v 1.50 2017/05/10 06:19:48 riastradh Exp $ */
+/* $NetBSD: aoutm68k_sysent.c,v 1.51 2017/12/19 08:09:36 kamil Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aoutm68k_sysent.c,v 1.50 2017/05/10 06:19:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aoutm68k_sysent.c,v 1.51 2017/12/19 08:09:36 kamil Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -421,9 +421,8 @@ struct sysent aoutm68k_sysent[] = {
 		.sy_call = (sy_call_t *)sys_sbrk
 	},		/* 69 = sbrk */
 	{
-		ns(struct sys_sstk_args),
-		.sy_call = (sy_call_t *)sys_sstk
-	},		/* 70 = sstk */
+		.sy_call = sys_nosys,
+	},		/* 70 = filler */
 #if defined(COMPAT_43) || !defined(_KERNEL)
 	{
 		ns(struct compat_43_sys_mmap_args),

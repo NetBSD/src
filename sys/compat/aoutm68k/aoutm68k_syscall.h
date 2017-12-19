@@ -1,4 +1,4 @@
-/* $NetBSD: aoutm68k_syscall.h,v 1.48 2017/05/10 06:19:48 riastradh Exp $ */
+/* $NetBSD: aoutm68k_syscall.h,v 1.49 2017/12/19 08:09:36 kamil Exp $ */
 
 /*
  * System call numbers.
@@ -267,9 +267,7 @@
 /* syscall: "sbrk" ret: "int" args: "intptr_t" */
 #define	AOUTM68K_SYS_sbrk	69
 
-/* syscall: "sstk" ret: "int" args: "int" */
-#define	AOUTM68K_SYS_sstk	70
-
+				/* 70 is obsolete sstk */
 #if defined(COMPAT_43) || !defined(_KERNEL)
 /* syscall: "ommap" ret: "int" args: "void *" "size_t" "int" "int" "int" "long" */
 #define	AOUTM68K_SYS_ommap	71
