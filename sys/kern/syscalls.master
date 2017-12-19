@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.287 2017/12/08 01:19:29 christos Exp $
+	$NetBSD: syscalls.master,v 1.288 2017/12/19 08:48:19 kamil Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -176,7 +176,7 @@
 67	OBSOL		vread
 68	OBSOL		vwrite
 69	STD 		{ int|sys||sbrk(intptr_t incr); }
-70	STD 		{ int|sys||sstk(int incr); }
+70	OBSOL 		sstk
 71	COMPAT_43 MODULAR compat	\
 		{ int|sys||mmap(void *addr, size_t len, int prot, \
 			    int flags, int fd, long pos); } ommap

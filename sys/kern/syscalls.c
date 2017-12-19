@@ -1,4 +1,4 @@
-/* $NetBSD: syscalls.c,v 1.306 2017/12/08 01:20:52 christos Exp $ */
+/* $NetBSD: syscalls.c,v 1.307 2017/12/19 08:48:19 kamil Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscalls.c,v 1.306 2017/12/08 01:20:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscalls.c,v 1.307 2017/12/19 08:48:19 kamil Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_modular.h"
@@ -97,7 +97,7 @@ const char *const syscallnames[] = {
 	/*  67 */	"#67 (obsolete vread)",
 	/*  68 */	"#68 (obsolete vwrite)",
 	/*  69 */	"sbrk",
-	/*  70 */	"sstk",
+	/*  70 */	"#70 (obsolete sstk)",
 	/*  71 */	"compat_43_ommap",
 	/*  72 */	"vadvise",
 	/*  73 */	"munmap",
@@ -634,7 +634,7 @@ const char *const altsyscallnames[] = {
 	/*  67 */	NULL, /* obsolete vread */
 	/*  68 */	NULL, /* obsolete vwrite */
 	/*  69 */	NULL, /* sbrk */
-	/*  70 */	NULL, /* sstk */
+	/*  70 */	NULL, /* obsolete sstk */
 	/*  71 */	NULL, /* compat_43_ommap */
 	/*  72 */	"ovadvise",
 	/*  73 */	NULL, /* munmap */

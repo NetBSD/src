@@ -1,4 +1,4 @@
-/* $NetBSD: systrace_args.c,v 1.24 2017/05/10 06:19:47 riastradh Exp $ */
+/* $NetBSD: systrace_args.c,v 1.25 2017/12/19 08:48:19 kamil Exp $ */
 
 /*
  * System call argument to DTrace register array converstion.
@@ -526,13 +526,6 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	case 69: {
 		const struct sys_sbrk_args *p = params;
 		iarg[0] = SCARG(p, incr); /* intptr_t */
-		*n_args = 1;
-		break;
-	}
-	/* sys_sstk */
-	case 70: {
-		const struct sys_sstk_args *p = params;
-		iarg[0] = SCARG(p, incr); /* int */
 		*n_args = 1;
 		break;
 	}
@@ -4492,16 +4485,6 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		switch(ndx) {
 		case 0:
 			p = "intptr_t";
-			break;
-		default:
-			break;
-		};
-		break;
-	/* sys_sstk */
-	case 70:
-		switch(ndx) {
-		case 0:
-			p = "int";
 			break;
 		default:
 			break;
@@ -10233,11 +10216,6 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 	case 66:
 	/* sys_sbrk */
 	case 69:
-		if (ndx == 0 || ndx == 1)
-			p = "int";
-		break;
-	/* sys_sstk */
-	case 70:
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
