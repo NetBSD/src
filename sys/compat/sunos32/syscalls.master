@@ -1,4 +1,4 @@
-;	$NetBSD: syscalls.master,v 1.23 2017/12/19 08:24:41 kamil Exp $
+;	$NetBSD: syscalls.master,v 1.24 2017/12/19 18:25:53 kamil Exp $
 
 ;	from :NetBSD: syscalls.master,v 1.57 2000/12/09 07:10:36 mycroft Exp
 
@@ -134,7 +134,7 @@
 66	NOARGS		{ int|sys||vfork(void); }
 67	OBSOL		vread
 68	OBSOL		vwrite
-69	NOARGS		{ int|netbsd32||sbrk(netbsd32_intptr_t incr); }
+69	OBSOL		sbrk
 70	OBSOL		sstk
 71	STD		{ netbsd32_voidp|sunos32_sys||mmap(netbsd32_voidp addr, netbsd32_size_t len, \
 			    int prot, int flags, int fd, netbsd32_long pos); }
