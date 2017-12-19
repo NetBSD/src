@@ -1,4 +1,4 @@
-/*	$NetBSD: uhso.c,v 1.25 2017/01/11 22:09:38 maya Exp $	*/
+/*	$NetBSD: uhso.c,v 1.26 2017/12/19 06:40:22 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2009 Iain Hibbert
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.25 2017/01/11 22:09:38 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.26 2017/12/19 06:40:22 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1993,6 +1993,7 @@ uhso_ifnet_detach(struct uhso_port *hp)
 	s = splnet();
 	bpf_detach(ifp);
 	if_detach(ifp);
+	if_free(ifp);
 	splx(s);
 
 	kmem_free(hp, sizeof(struct uhso_port));
