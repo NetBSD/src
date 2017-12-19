@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.168 2017/12/19 08:48:19 kamil Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.169 2017/12/19 18:34:47 kamil Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.168 2017/12/19 08:48:19 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.169 2017/12/19 18:34:47 kamil Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -86,25 +86,6 @@ range_test(struct vm_map *map, vaddr_t addr, vsize_t size, bool ismmap)
 #endif
 
 	return res;
-}
-
-/*
- * unimplemented VM system calls:
- */
-
-/*
- * sys_sbrk: sbrk system call.
- */
-
-/* ARGSUSED */
-int
-sys_sbrk(struct lwp *l, const struct sys_sbrk_args *uap, register_t *retval)
-{
-	/* {
-		syscallarg(intptr_t) incr;
-	} */
-
-	return ENOSYS;
 }
 
 /*
