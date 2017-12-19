@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.153 2017/07/06 11:09:00 martin Exp $
+#	$NetBSD: files.sparc64,v 1.154 2017/12/19 14:34:08 nakayama Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -11,7 +11,7 @@ maxusers 2 8 1024
 defflag	opt_sparc_arch.h	SUN4U SUN4V
 
 define mainbus {}
-device mainbus: mainbus
+device mainbus: mainbus, ofw_subr
 attach mainbus at root
 
 define upa {}
@@ -313,9 +313,6 @@ file	arch/sparc64/sparc64/sunos32_machdep.c	compat_sunos & compat_netbsd32
 file	dev/md_root.c			memory_disk_hooks
 
 include "arch/sparc64/conf/majors.sparc64"
-
-# OpenFirmware convenience stuff
-file  dev/ofw/ofw_subr.c
 
 # Virtual rtc
 device	vrtc
