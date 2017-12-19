@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.167 2017/10/27 12:01:08 utkarsh009 Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.168 2017/12/19 08:48:19 kamil Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.167 2017/10/27 12:01:08 utkarsh009 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.168 2017/12/19 08:48:19 kamil Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -102,21 +102,6 @@ sys_sbrk(struct lwp *l, const struct sys_sbrk_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(intptr_t) incr;
-	} */
-
-	return ENOSYS;
-}
-
-/*
- * sys_sstk: sstk system call.
- */
-
-/* ARGSUSED */
-int
-sys_sstk(struct lwp *l, const struct sys_sstk_args *uap, register_t *retval)
-{
-	/* {
-		syscallarg(int) incr;
 	} */
 
 	return ENOSYS;
