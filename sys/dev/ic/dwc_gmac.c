@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.43 2017/11/16 03:07:17 ozaki-r Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.44 2017/12/19 03:32:35 ozaki-r Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.43 2017/11/16 03:07:17 ozaki-r Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.44 2017/12/19 03:32:35 ozaki-r Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -223,7 +223,9 @@ dwc_gmac_attach(struct dwc_gmac_softc *sc, uint32_t mii_clk)
 	ifp->if_softc = sc;
 	strlcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
+#ifdef DWCGMAC_MPSAFE
 	ifp->if_extflags = IFEF_MPSAFE;
+#endif
 	ifp->if_ioctl = dwc_gmac_ioctl;
 	ifp->if_start = dwc_gmac_start;
 	ifp->if_init = dwc_gmac_init;
