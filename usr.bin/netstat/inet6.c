@@ -1,4 +1,4 @@
-/*	$NetBSD: inet6.c,v 1.69 2016/12/17 09:12:22 mlelstv Exp $	*/
+/*	$NetBSD: inet6.c,v 1.70 2017/12/19 17:05:15 kre Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 
 /*
@@ -64,7 +64,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet6.c,v 1.69 2016/12/17 09:12:22 mlelstv Exp $");
+__RCSID("$NetBSD: inet6.c,v 1.70 2017/12/19 17:05:15 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -860,7 +860,7 @@ ip6_ifstats(const char *ifname)
 #undef p_5
 }
 
-static	const char *icmp6names[] = {
+static	const char *icmp6names[256] = {
 	"#0",
 	"unreach",
 	"packet too big",
@@ -1004,17 +1004,17 @@ static	const char *icmp6names[] = {
 	"node information reply",
 	"#141",
 	"#142",
-	"#143",
-	"#144",
-	"#145",
-	"#146",
-	"#147",
+	"multicast listener report (v2)",
+	"home agent discovery request",
+	"home agent discovery reply",
+	"mobile prefix solicitation",
+	"mobile prefix advertisement",
 	"#148",
 	"#149",	
 	"#150",
-	"#151",
-	"#152",
-	"#153",
+	"multicast router advertisement",
+	"multicast router solicitation",
+	"multicast router termination",
 	"#154",
 	"#155",
 	"#156",
