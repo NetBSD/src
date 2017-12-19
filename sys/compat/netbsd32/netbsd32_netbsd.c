@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.210 2017/12/19 18:34:47 kamil Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.211 2017/12/19 19:40:03 kamil Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.210 2017/12/19 18:34:47 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.211 2017/12/19 19:40:03 kamil Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -2006,17 +2006,6 @@ netbsd32___fhopen40(struct lwp *l, const struct netbsd32___fhopen40_args *uap, r
 }
 
 /* virtual memory syscalls */
-int
-netbsd32_ovadvise(struct lwp *l, const struct netbsd32_ovadvise_args *uap, register_t *retval)
-{
-	/* {
-		syscallarg(int) anom;
-	} */
-	struct sys_ovadvise_args ua;
-
-	NETBSD32TO64_UAP(anom);
-	return (sys_ovadvise(l, &ua, retval));
-}
 
 void
 netbsd32_adjust_limits(struct proc *p)
