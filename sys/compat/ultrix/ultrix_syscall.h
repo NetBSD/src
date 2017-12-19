@@ -1,4 +1,4 @@
-/* $NetBSD: ultrix_syscall.h,v 1.68 2017/05/10 06:19:49 riastradh Exp $ */
+/* $NetBSD: ultrix_syscall.h,v 1.69 2017/12/19 08:23:22 kamil Exp $ */
 
 /*
  * System call numbers.
@@ -159,9 +159,7 @@
 /* syscall: "sbrk" ret: "int" args: "intptr_t" */
 #define	ULTRIX_SYS_sbrk	69
 
-/* syscall: "sstk" ret: "int" args: "int" */
-#define	ULTRIX_SYS_sstk	70
-
+				/* 70 is obsolete sstk */
 /* syscall: "mmap" ret: "int" args: "void *" "size_t" "int" "u_int" "int" "long" */
 #define	ULTRIX_SYS_mmap	71
 

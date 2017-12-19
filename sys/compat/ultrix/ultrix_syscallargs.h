@@ -1,4 +1,4 @@
-/* $NetBSD: ultrix_syscallargs.h,v 1.63 2017/05/10 06:19:49 riastradh Exp $ */
+/* $NetBSD: ultrix_syscallargs.h,v 1.64 2017/12/19 08:23:22 kamil Exp $ */
 
 /*
  * System call argument lists.
@@ -146,8 +146,6 @@ struct sys_chroot_args;
 struct compat_43_sys_fstat_args;
 
 struct sys_sbrk_args;
-
-struct sys_sstk_args;
 
 struct ultrix_sys_mmap_args {
 	syscallarg(void *) addr;
@@ -527,8 +525,6 @@ int	compat_43_sys_getpagesize(struct lwp *, const void *, register_t *);
 int	sys_vfork(struct lwp *, const void *, register_t *);
 
 int	sys_sbrk(struct lwp *, const struct sys_sbrk_args *, register_t *);
-
-int	sys_sstk(struct lwp *, const struct sys_sstk_args *, register_t *);
 
 int	ultrix_sys_mmap(struct lwp *, const struct ultrix_sys_mmap_args *, register_t *);
 

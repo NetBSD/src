@@ -1,4 +1,4 @@
-/* $NetBSD: ultrix_sysent.c,v 1.70 2017/05/10 06:19:49 riastradh Exp $ */
+/* $NetBSD: ultrix_sysent.c,v 1.71 2017/12/19 08:23:22 kamil Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_sysent.c,v 1.70 2017/05/10 06:19:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_sysent.c,v 1.71 2017/12/19 08:23:22 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -291,9 +291,8 @@ struct sysent ultrix_sysent[] = {
 		.sy_call = (sy_call_t *)sys_sbrk
 	},		/* 69 = sbrk */
 	{
-		ns(struct sys_sstk_args),
-		.sy_call = (sy_call_t *)sys_sstk
-	},		/* 70 = sstk */
+		.sy_call = sys_nosys,
+	},		/* 70 = filler */
 	{
 		ns(struct ultrix_sys_mmap_args),
 		.sy_flags = SYCALL_ARG_PTR,
