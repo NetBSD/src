@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_systrace_args.c,v 1.19 2017/05/10 06:19:49 riastradh Exp $ */
+/* $NetBSD: netbsd32_systrace_args.c,v 1.20 2017/12/19 07:58:50 kamil Exp $ */
 
 /*
  * System call argument to DTrace register array converstion.
@@ -3423,7 +3423,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		const struct netbsd32____lwp_park60_args *p = params;
 		iarg[0] = SCARG(p, clock_id); /* netbsd32_clockid_t */
 		iarg[1] = SCARG(p, flags); /* int */
-		uarg[2] = (intptr_t) SCARG(p, ts).i32; /* const netbsd32_timespecp_t */
+		uarg[2] = (intptr_t) SCARG(p, ts).i32; /* netbsd32_timespecp_t */
 		iarg[3] = SCARG(p, unpark); /* lwpid_t */
 		uarg[4] = (intptr_t) SCARG(p, hint).i32; /* netbsd32_voidp */
 		uarg[5] = (intptr_t) SCARG(p, unparkhint).i32; /* netbsd32_voidp */
@@ -9265,7 +9265,7 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			p = "int";
 			break;
 		case 2:
-			p = "const netbsd32_timespecp_t";
+			p = "netbsd32_timespecp_t";
 			break;
 		case 3:
 			p = "lwpid_t";
