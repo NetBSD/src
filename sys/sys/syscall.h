@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.h,v 1.300 2017/12/08 01:20:53 christos Exp $ */
+/* $NetBSD: syscall.h,v 1.301 2017/12/19 08:48:19 kamil Exp $ */
 
 /*
  * System call numbers.
@@ -216,9 +216,7 @@
 /* syscall: "sbrk" ret: "int" args: "intptr_t" */
 #define	SYS_sbrk	69
 
-/* syscall: "sstk" ret: "int" args: "int" */
-#define	SYS_sstk	70
-
+				/* 70 is obsolete sstk */
 /* syscall: "compat_43_ommap" ret: "int" args: "void *" "size_t" "int" "int" "int" "long" */
 #define	SYS_compat_43_ommap	71
 
