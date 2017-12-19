@@ -1,4 +1,4 @@
-/* $NetBSD: sunos_sysent.c,v 1.87 2017/05/10 06:19:49 riastradh Exp $ */
+/* $NetBSD: sunos_sysent.c,v 1.88 2017/12/19 08:25:37 kamil Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_sysent.c,v 1.87 2017/05/10 06:19:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_sysent.c,v 1.88 2017/12/19 08:25:37 kamil Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -306,9 +306,8 @@ struct sysent sunos_sysent[] = {
 		.sy_call = (sy_call_t *)sys_sbrk
 	},		/* 69 = sbrk */
 	{
-		ns(struct sys_sstk_args),
-		.sy_call = (sy_call_t *)sys_sstk
-	},		/* 70 = sstk */
+		.sy_call = sys_nosys,
+	},		/* 70 = filler */
 	{
 		ns(struct sunos_sys_mmap_args),
 		.sy_flags = SYCALL_ARG_PTR,
