@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_systrace_args.c,v 1.21 2017/12/19 08:48:19 kamil Exp $ */
+/* $NetBSD: netbsd32_systrace_args.c,v 1.22 2017/12/19 18:34:47 kamil Exp $ */
 
 /*
  * System call argument to DTrace register array converstion.
@@ -520,13 +520,6 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	/* sys_vfork */
 	case 66: {
 		*n_args = 0;
-		break;
-	}
-	/* netbsd32_sbrk */
-	case 69: {
-		const struct netbsd32_sbrk_args *p = params;
-		iarg[0] = SCARG(p, incr); /* netbsd32_intptr_t */
-		*n_args = 1;
 		break;
 	}
 	/* netbsd32_ommap */
@@ -4265,16 +4258,6 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		break;
 	/* sys_vfork */
 	case 66:
-		break;
-	/* netbsd32_sbrk */
-	case 69:
-		switch(ndx) {
-		case 0:
-			p = "netbsd32_intptr_t";
-			break;
-		default:
-			break;
-		};
 		break;
 	/* netbsd32_ommap */
 	case 71:
@@ -9647,11 +9630,6 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		break;
 	/* sys_vfork */
 	case 66:
-	/* netbsd32_sbrk */
-	case 69:
-		if (ndx == 0 || ndx == 1)
-			p = "int";
-		break;
 	/* netbsd32_ommap */
 	case 71:
 		if (ndx == 0 || ndx == 1)

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.117 2017/12/19 08:48:19 kamil Exp $
+	$NetBSD: syscalls.master,v 1.118 2017/12/19 18:34:47 kamil Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -174,7 +174,7 @@
 66	NOARGS		{ int|sys||vfork(void); }
 67	OBSOL		vread
 68	OBSOL		vwrite
-69	STD		{ int|netbsd32||sbrk(netbsd32_intptr_t incr); }
+69	OBSOL		sbrk
 70	OBSOL		sstk
 71	COMPAT_43	{ int|netbsd32||ommap(netbsd32_voidp addr, \
 			    netbsd32_size_t len, int prot, int flags, int fd, \
