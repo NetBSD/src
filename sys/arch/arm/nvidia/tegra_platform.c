@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_platform.c,v 1.8 2017/10/22 20:35:32 skrll Exp $ */
+/* $NetBSD: tegra_platform.c,v 1.9 2017/12/19 09:04:18 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "ukbd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_platform.c,v 1.8 2017/10/22 20:35:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_platform.c,v 1.9 2017/12/19 09:04:18 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -79,7 +79,7 @@ tegra_platform_devmap(void)
 			     TEGRA_AHB_A2_BASE,
 			     TEGRA_AHB_A2_SIZE),
 		DEVMAP_ENTRY_END
-	};	
+	};
 
 	return devmap;
 }
