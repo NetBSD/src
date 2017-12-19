@@ -1,4 +1,4 @@
-/* $NetBSD: vexpress_platform.c,v 1.5 2017/11/18 00:25:43 jmcneill Exp $ */
+/* $NetBSD: vexpress_platform.c,v 1.6 2017/12/19 09:04:19 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_fdt_arm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vexpress_platform.c,v 1.5 2017/11/18 00:25:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vexpress_platform.c,v 1.6 2017/12/19 09:04:19 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -143,7 +143,7 @@ vexpress_platform_devmap(void)
 			     VEXPRESS_GIC_PBASE,
 			     VEXPRESS_GIC_SIZE),
 		DEVMAP_ENTRY_END
-	};	
+	};
 
 	return devmap;
 }
