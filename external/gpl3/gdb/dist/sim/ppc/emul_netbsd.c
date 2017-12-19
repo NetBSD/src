@@ -1155,7 +1155,7 @@ static emul_syscall_descriptor netbsd_descriptors[] = {
   /* 69 */ { 0, "sbrk" },
   { 0, }, /* 70 is obsolete sstk */
   { 0, }, /* 71 is old mmap */
-  /* 72 */ { 0, "vadvise" },
+  { 0, }, /* 72 is obsolete vadvise */
   /* 73 */ { 0, "munmap" },
   /* 74 */ { 0, "mprotect" },
   /* 75 */ { 0, "madvise" },
