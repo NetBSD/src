@@ -1,4 +1,4 @@
-/*	$NetBSD: trace.h,v 1.11 2005/12/11 12:25:21 christos Exp $	*/
+/*	$NetBSD: trace.h,v 1.12 2017/12/19 18:47:58 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -70,11 +70,6 @@
 #define	TR_SWAPIN	32	/* drum page fault */
 #define	TR_PGINDONE	33	/* page in done */
 #define	TR_SWAPIO	34	/* swap i/o request arrives */
-
-/*
- * System call trace points.
- */
-#define	TR_VADVISE	40	/* vadvise occurred with <arg, pid> */
 
 /*
  * Miscellaneous
