@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.118 2017/12/19 18:34:47 kamil Exp $
+	$NetBSD: syscalls.master,v 1.119 2017/12/19 19:40:03 kamil Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -179,7 +179,7 @@
 71	COMPAT_43	{ int|netbsd32||ommap(netbsd32_voidp addr, \
 			    netbsd32_size_t len, int prot, int flags, int fd, \
 			    netbsd32_long pos); }
-72	STD		{ int|netbsd32||ovadvise(int anom); } vadvise
+72	OBSOL		vadvise
 73	STD		{ int|netbsd32||munmap(netbsd32_voidp addr, \
 			    netbsd32_size_t len); }
 74	STD		{ int|netbsd32||mprotect(netbsd32_voidp addr, \
