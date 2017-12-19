@@ -1,4 +1,4 @@
-/* $NetBSD: rump_syscalls.c,v 1.133 2017/12/08 01:20:53 christos Exp $ */
+/* $NetBSD: rump_syscalls.c,v 1.134 2017/12/19 08:48:19 kamil Exp $ */
 
 /*
  * System call vector and marshalling for rump.
@@ -15,7 +15,7 @@
 
 #ifdef __NetBSD__
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.133 2017/12/08 01:20:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.134 2017/12/19 08:48:19 kamil Exp $");
 
 #include <sys/fstypes.h>
 #include <sys/proc.h>
@@ -6780,8 +6780,9 @@ struct sysent rump_sysent[] = {
 		.sy_call = (sy_call_t *)rumpns_enosys,
 },		/* 69 = sbrk */
 	{
+		.sy_flags = SYCALL_NOSYS,
 		.sy_call = (sy_call_t *)rumpns_enosys,
-},		/* 70 = sstk */
+	},		/* 70 = filler */
 	{
 		.sy_flags = SYCALL_NOSYS,
 		.sy_call = (sy_call_t *)rumpns_sys_nomodule,

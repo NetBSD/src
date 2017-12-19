@@ -1,4 +1,4 @@
-/* $NetBSD: syscallargs.h,v 1.284 2017/12/08 01:20:53 christos Exp $ */
+/* $NetBSD: syscallargs.h,v 1.285 2017/12/19 08:48:19 kamil Exp $ */
 
 /*
  * System call argument lists.
@@ -432,13 +432,6 @@ struct sys_sbrk_args {
 	syscallarg(intptr_t) incr;
 };
 check_syscall_args(sys_sbrk)
-#endif /* !RUMP_CLIENT */
-
-#ifndef RUMP_CLIENT
-struct sys_sstk_args {
-	syscallarg(int) incr;
-};
-check_syscall_args(sys_sstk)
 #endif /* !RUMP_CLIENT */
 
 #ifndef RUMP_CLIENT
@@ -3299,8 +3292,6 @@ int	compat_12_sys_msync(struct lwp *, const struct compat_12_sys_msync_args *, r
 int	sys_vfork(struct lwp *, const void *, register_t *);
 
 int	sys_sbrk(struct lwp *, const struct sys_sbrk_args *, register_t *);
-
-int	sys_sstk(struct lwp *, const struct sys_sstk_args *, register_t *);
 
 int	compat_43_sys_mmap(struct lwp *, const struct compat_43_sys_mmap_args *, register_t *);
 

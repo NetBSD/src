@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.208 2017/12/06 19:15:27 christos Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.209 2017/12/19 08:48:19 kamil Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.208 2017/12/06 19:15:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.209 2017/12/19 08:48:19 kamil Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -710,18 +710,6 @@ netbsd32_sbrk(struct lwp *l, const struct netbsd32_sbrk_args *uap, register_t *r
 
 	NETBSD32TO64_UAP(incr);
 	return (sys_sbrk(l, &ua, retval));
-}
-
-int
-netbsd32_sstk(struct lwp *l, const struct netbsd32_sstk_args *uap, register_t *retval)
-{
-	/* {
-		syscallarg(int) incr;
-	} */
-	struct sys_sstk_args ua;
-
-	NETBSD32TO64_UAP(incr);
-	return (sys_sstk(l, &ua, retval));
 }
 
 int
