@@ -1,4 +1,4 @@
-/* $NetBSD: sunos_syscall.h,v 1.92 2017/05/10 06:19:49 riastradh Exp $ */
+/* $NetBSD: sunos_syscall.h,v 1.93 2017/12/19 08:25:37 kamil Exp $ */
 
 /*
  * System call numbers.
@@ -159,9 +159,7 @@
 /* syscall: "sbrk" ret: "int" args: "intptr_t" */
 #define	SUNOS_SYS_sbrk	69
 
-/* syscall: "sstk" ret: "int" args: "int" */
-#define	SUNOS_SYS_sstk	70
-
+				/* 70 is obsolete sstk */
 /* syscall: "mmap" ret: "void *" args: "void *" "size_t" "int" "int" "int" "long" */
 #define	SUNOS_SYS_mmap	71
 

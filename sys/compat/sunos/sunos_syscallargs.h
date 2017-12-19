@@ -1,4 +1,4 @@
-/* $NetBSD: sunos_syscallargs.h,v 1.76 2017/05/10 06:19:49 riastradh Exp $ */
+/* $NetBSD: sunos_syscallargs.h,v 1.77 2017/12/19 08:25:37 kamil Exp $ */
 
 /*
  * System call argument lists.
@@ -168,8 +168,6 @@ struct sunos_sys_omsync_args {
 check_syscall_args(sunos_sys_omsync)
 
 struct sys_sbrk_args;
-
-struct sys_sstk_args;
 
 struct sunos_sys_mmap_args {
 	syscallarg(void *) addr;
@@ -555,8 +553,6 @@ int	sunos_sys_omsync(struct lwp *, const struct sunos_sys_omsync_args *, registe
 int	sys_vfork(struct lwp *, const void *, register_t *);
 
 int	sys_sbrk(struct lwp *, const struct sys_sbrk_args *, register_t *);
-
-int	sys_sstk(struct lwp *, const struct sys_sstk_args *, register_t *);
 
 int	sunos_sys_mmap(struct lwp *, const struct sunos_sys_mmap_args *, register_t *);
 

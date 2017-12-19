@@ -1,4 +1,4 @@
-/* $NetBSD: sunos_syscalls.c,v 1.91 2017/05/10 06:19:49 riastradh Exp $ */
+/* $NetBSD: sunos_syscalls.c,v 1.92 2017/12/19 08:25:37 kamil Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_syscalls.c,v 1.91 2017/05/10 06:19:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_syscalls.c,v 1.92 2017/12/19 08:25:37 kamil Exp $");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)
@@ -98,7 +98,7 @@ const char *const sunos_syscallnames[] = {
 	/*  67 */	"#67 (obsolete vread)",
 	/*  68 */	"#68 (obsolete vwrite)",
 	/*  69 */	"sbrk",
-	/*  70 */	"sstk",
+	/*  70 */	"#70 (obsolete sstk)",
 	/*  71 */	"mmap",
 	/*  72 */	"vadvise",
 	/*  73 */	"munmap",
@@ -371,7 +371,7 @@ const char *const altsunos_syscallnames[] = {
 	/*  67 */	NULL, /* obsolete vread */
 	/*  68 */	NULL, /* obsolete vwrite */
 	/*  69 */	NULL, /* sbrk */
-	/*  70 */	NULL, /* sstk */
+	/*  70 */	NULL, /* obsolete sstk */
 	/*  71 */	NULL, /* mmap */
 	/*  72 */	"ovadvise",
 	/*  73 */	NULL, /* munmap */
