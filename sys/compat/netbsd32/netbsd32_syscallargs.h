@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_syscallargs.h,v 1.129 2017/05/10 06:19:49 riastradh Exp $ */
+/* $NetBSD: netbsd32_syscallargs.h,v 1.130 2017/12/19 07:58:50 kamil Exp $ */
 
 /*
  * System call argument lists.
@@ -2563,7 +2563,7 @@ check_syscall_args(netbsd32_clock_nanosleep)
 struct netbsd32____lwp_park60_args {
 	syscallarg(netbsd32_clockid_t) clock_id;
 	syscallarg(int) flags;
-	syscallarg(const netbsd32_timespecp_t) ts;
+	syscallarg(netbsd32_timespecp_t) ts;
 	syscallarg(lwpid_t) unpark;
 	syscallarg(netbsd32_voidp) hint;
 	syscallarg(netbsd32_voidp) unparkhint;

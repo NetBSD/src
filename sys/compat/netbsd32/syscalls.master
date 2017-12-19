@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.115 2016/10/19 09:44:01 skrll Exp $
+	$NetBSD: syscalls.master,v 1.116 2017/12/19 07:58:50 kamil Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -1047,7 +1047,7 @@
 			    netbsd32_timespecp_t rmtp); }
 478	STD 		{ int|netbsd32|60|_lwp_park(\
 			    netbsd32_clockid_t clock_id, \
-			    int flags, const netbsd32_timespecp_t ts, \
+			    int flags, netbsd32_timespecp_t ts, \
 			    lwpid_t unpark, netbsd32_voidp hint, \
 			    netbsd32_voidp unparkhint); }
 479	NOERR		{ int|netbsd32||posix_fallocate(int fd, int PAD, \
@@ -1059,4 +1059,3 @@
 			    netbsd32_wrusagep_t wru, netbsd32_siginfop_t info); }
 482	STD		{ int|netbsd32||clock_getcpuclockid2(idtype_t idtype, \
 			    id_t id, netbsd32_clockidp_t clock_id); }
-

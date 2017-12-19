@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_syscall.h,v 1.129 2017/05/10 06:19:49 riastradh Exp $ */
+/* $NetBSD: netbsd32_syscall.h,v 1.130 2017/12/19 07:58:50 kamil Exp $ */
 
 /*
  * System call numbers.
@@ -1248,7 +1248,7 @@
 /* syscall: "netbsd32_clock_nanosleep" ret: "int" args: "netbsd32_clockid_t" "int" "const netbsd32_timespecp_t" "netbsd32_timespecp_t" */
 #define	NETBSD32_SYS_netbsd32_clock_nanosleep	477
 
-/* syscall: "netbsd32____lwp_park60" ret: "int" args: "netbsd32_clockid_t" "int" "const netbsd32_timespecp_t" "lwpid_t" "netbsd32_voidp" "netbsd32_voidp" */
+/* syscall: "netbsd32____lwp_park60" ret: "int" args: "netbsd32_clockid_t" "int" "netbsd32_timespecp_t" "lwpid_t" "netbsd32_voidp" "netbsd32_voidp" */
 #define	NETBSD32_SYS_netbsd32____lwp_park60	478
 
 /* syscall: "netbsd32_posix_fallocate" ret: "int" args: "int" "int" "netbsd32_off_t" "netbsd32_off_t" */
