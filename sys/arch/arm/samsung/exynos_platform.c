@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_platform.c,v 1.7 2017/10/22 20:35:32 skrll Exp $ */
+/* $NetBSD: exynos_platform.c,v 1.8 2017/12/19 09:04:19 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "ukbd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.7 2017/10/22 20:35:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.8 2017/12/19 09:04:19 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -70,7 +70,7 @@ exynos_platform_devmap(void)
 			     EXYNOS5_AUDIOCORE_PBASE,
 			     EXYNOS5_AUDIOCORE_SIZE),
 		DEVMAP_ENTRY_END
-	};	
+	};
 
 	return devmap;
 }
