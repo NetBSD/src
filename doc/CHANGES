@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2340 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2341 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -94,3 +94,4 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	lua: Applied 6th bugfix to Lua 5.3.4 from lua.org/bugs.html.
 		[mbalmer 20171213]
 	sstk: Remove the "stack section size change" syscall [kamil 20171219]
+	sbrk: Remove the "data section size change" syscall [kamil 20171219]
