@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1566 2017/12/10 20:51:55 bouyer Exp $
+# $NetBSD: mi,v 1.1567 2017/12/19 01:49:18 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1311,6 +1311,7 @@
 ./usr/share/man/cat4/inet6.0			man-sys-catman		.cat
 ./usr/share/man/cat4/inphy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/intersil7170.0		man-sys-catman		.cat
+./usr/share/man/cat4/intro.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ioasic.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ioat.0			man-sys-catman		.cat
 ./usr/share/man/cat4/iop.0			man-sys-catman		.cat
@@ -4402,6 +4403,7 @@
 ./usr/share/man/html4/inet6.html		man-sys-htmlman		html
 ./usr/share/man/html4/inphy.html		man-sys-htmlman		html
 ./usr/share/man/html4/intersil7170.html		man-sys-htmlman		html
+./usr/share/man/html4/intro.html		man-sys-htmlman		html
 ./usr/share/man/html4/ioasic.html		man-sys-htmlman		html
 ./usr/share/man/html4/ioat.html			man-sys-htmlman		html
 ./usr/share/man/html4/iop.html			man-sys-htmlman		html
@@ -7329,6 +7331,7 @@
 ./usr/share/man/man4/inet6.4			man-sys-man		.man
 ./usr/share/man/man4/inphy.4			man-sys-man		.man
 ./usr/share/man/man4/intersil7170.4		man-sys-man		.man
+./usr/share/man/man4/intro.4			man-sys-man		.man
 ./usr/share/man/man4/ioasic.4			man-sys-man		.man
 ./usr/share/man/man4/ioat.4			man-sys-man		.man
 ./usr/share/man/man4/iop.4			man-sys-man		.man
