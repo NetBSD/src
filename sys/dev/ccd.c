@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.173 2017/12/19 03:24:09 pgoyette Exp $	*/
+/*	$NetBSD: ccd.c,v 1.174 2017/12/19 03:31:12 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.173 2017/12/19 03:24:09 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.174 2017/12/19 03:31:12 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -1718,7 +1718,7 @@ ccd_modcmd(modcmd_t cmd, void *arg)
 	case MODULE_CMD_FINI:
 #ifdef _MODULE
 		mutex_enter(&ccd_lock);
-		if (!LIST_EMPTY(ccds)) {
+		if (!LIST_EMPTY(&ccds)) {
 			mutex_exit(&ccd_lock);
 			error = EBUSY;
 		} else {
