@@ -1,4 +1,4 @@
-.\" $NetBSD: intro.4,v 1.1 2017/12/19 01:46:57 christos Exp $
+.\" $NetBSD: intro.4,v 1.2 2017/12/19 01:59:48 christos Exp $
 .\"
 .\" Copyright (c) 1996 David E. O'Brien, Joerg Wunsch
 .\"
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: head/share/man/man4/intro.4 131530 2004-07-03 18:29:24Z ru $
 .\"
-.Dd January 20, 1996
+.Dd December 18, 2017
 .Dt INTRO 4
 .Os
 .Sh NAME
@@ -116,9 +116,9 @@ For the latter group of devices, the
 differentiation is conventionally done by prepending the letter
 .Ql r
 to the path name of the device node, for example
-.Pa /dev/rda0
+.Pa /dev/rsd0[cd]
 denotes the raw device for the first SCSI disk, while
-.Pa /dev/da0
+.Pa /dev/sd0[cd]
 is the corresponding device node for the buffered device.
 .Pp
 Unbuffered devices should be used for all actions that are not related
@@ -152,11 +152,12 @@ for a detailed description of the files involved.
 The individual manual pages in this section provide a sample line for the
 configuration file in their synopsis portion.
 See also the sample config file
-.Pa /sys/i386/conf/LINT
+.Pa /usr/src/sys/arch/i386/conf/GENERIC
 (for the
 .Em i386
 architecture).
 .Sh SEE ALSO
+.Xr config 1 ,
 .Xr close 2 ,
 .Xr ioctl 2 ,
 .Xr mmap 2 ,
@@ -165,12 +166,13 @@ architecture).
 .Xr select 2 ,
 .Xr socket 2 ,
 .Xr write 2 ,
-.Xr devfs 5 ,
+.\" .Xr devfs 5 ,
 .Xr hier 7 ,
-.Xr config 8
 .Sh HISTORY
 This manual page first appeared in
-.Fx 2.1 .
+.Fx 2.1 
+and
+.Nx 9 .
 .Sh AUTHORS
 .An -nosplit
 This man page has been written by
