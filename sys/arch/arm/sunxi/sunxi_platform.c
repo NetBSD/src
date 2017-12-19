@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_platform.c,v 1.16 2017/11/06 21:03:58 jmcneill Exp $ */
+/* $NetBSD: sunxi_platform.c,v 1.17 2017/12/19 09:04:19 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_fdt_arm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.16 2017/11/06 21:03:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.17 2017/12/19 09:04:19 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -107,7 +107,7 @@ sunxi_platform_devmap(void)
 			     SUNXI_CORE_PBASE,
 			     SUNXI_CORE_SIZE),
 		DEVMAP_ENTRY_END
-	};	
+	};
 
 	return devmap;
 }
