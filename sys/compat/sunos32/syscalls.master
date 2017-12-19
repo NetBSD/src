@@ -1,4 +1,4 @@
-;	$NetBSD: syscalls.master,v 1.24 2017/12/19 18:25:53 kamil Exp $
+;	$NetBSD: syscalls.master,v 1.25 2017/12/19 19:19:50 kamil Exp $
 
 ;	from :NetBSD: syscalls.master,v 1.57 2000/12/09 07:10:36 mycroft Exp
 
@@ -138,7 +138,7 @@
 70	OBSOL		sstk
 71	STD		{ netbsd32_voidp|sunos32_sys||mmap(netbsd32_voidp addr, netbsd32_size_t len, \
 			    int prot, int flags, int fd, netbsd32_long pos); }
-72	NOARGS		{ int|netbsd32||ovadvise(int anom); } vadvise
+72	OBSOL		vadvise
 73	NOARGS		{ int|netbsd32||munmap(netbsd32_voidp addr, netbsd32_size_t len); }
 74	NOARGS		{ int|netbsd32||mprotect(netbsd32_voidp addr, netbsd32_size_t len, \
 			    int prot); }
