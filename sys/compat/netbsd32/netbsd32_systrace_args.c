@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_systrace_args.c,v 1.22 2017/12/19 18:34:47 kamil Exp $ */
+/* $NetBSD: netbsd32_systrace_args.c,v 1.23 2017/12/19 19:40:03 kamil Exp $ */
 
 /*
  * System call argument to DTrace register array converstion.
@@ -532,13 +532,6 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		iarg[4] = SCARG(p, fd); /* int */
 		iarg[5] = SCARG(p, pos); /* netbsd32_long */
 		*n_args = 6;
-		break;
-	}
-	/* netbsd32_ovadvise */
-	case 72: {
-		const struct netbsd32_ovadvise_args *p = params;
-		iarg[0] = SCARG(p, anom); /* int */
-		*n_args = 1;
 		break;
 	}
 	/* netbsd32_munmap */
@@ -4279,16 +4272,6 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		case 5:
 			p = "netbsd32_long";
-			break;
-		default:
-			break;
-		};
-		break;
-	/* netbsd32_ovadvise */
-	case 72:
-		switch(ndx) {
-		case 0:
-			p = "int";
 			break;
 		default:
 			break;
@@ -9632,11 +9615,6 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 	case 66:
 	/* netbsd32_ommap */
 	case 71:
-		if (ndx == 0 || ndx == 1)
-			p = "int";
-		break;
-	/* netbsd32_ovadvise */
-	case 72:
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
