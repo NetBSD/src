@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.115 2017/12/20 15:12:04 skrll Exp $	*/
+/*	$NetBSD: armreg.h,v 1.116 2017/12/20 15:22:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -528,19 +528,6 @@
 #define	CPU_CSSR_L1		0x00000000
 #define	CPU_CSSR_InD		0x00000001
 
-/* ARMv7A CP15 Global Timer definitions */
-#define	CNTKCTL_PL0PTEN		0x00000200	/* PL0 Physical Timer Enable */
-#define	CNTKCTL_PL0VTEN		0x00000100	/* PL0 Virtual Timer Enable */
-#define	CNTKCTL_EVNTI		0x000000f0	/* CNTVCT Event Bit Select */
-#define	CNTKCTL_EVNTDIR		0x00000008	/* CNTVCT Event Dir (1->0) */
-#define	CNTKCTL_EVNTEN		0x00000004	/* CNTVCT Event Enable */
-#define	CNTKCTL_PL0PCTEN	0x00000200	/* PL0 Physical Counter Enable */
-#define	CNTKCTL_PL0VCTEN	0x00000100	/* PL0 Virtual Counter Enable */
-
-#define	CNT_CTL_ISTATUS		0x00000004	/* Timer is asserted */
-#define	CNT_CTL_IMASK		0x00000002	/* Timer output is masked */
-#define	CNT_CTL_ENABLE		0x00000001	/* Timer is enabled */
-
 /* Fault status register definitions */
 
 #define FAULT_TYPE_MASK 0x0f
@@ -734,23 +721,24 @@
 #define PJ4B_MPIDR_CPUID	__BITS(0,3)	/* AFF0 = core id */
 
 /* Defines for ARM Generic Timer */
-#define ARM_CNTCTL_ENABLE		__BIT(0) // Timer Enabled
-#define ARM_CNTCTL_IMASK		__BIT(1) // Mask Interrupt
-#define ARM_CNTCTL_ISTATUS		__BIT(2) // Interrupt is pending
+#define ARM_CNTCTL_ISTATUS	__BIT(2)	// Interrupt is pending
+#define ARM_CNTCTL_IMASK	__BIT(1)	// Mask Interrupt
+#define ARM_CNTCTL_ENABLE	__BIT(0)	// Timer Enabled
 
-#define ARM_CNTKCTL_PL0PTEN		__BIT(9)
-#define ARM_CNTKCTL_PL0VTEN		__BIT(8)
-#define ARM_CNTKCTL_EVNTI		__BITS(7,4)
-#define ARM_CNTKCTL_EVNTDIR		__BIT(3)
-#define ARM_CNTKCTL_EVNTEN		__BIT(2)
-#define ARM_CNTKCTL_PL0VCTEN		__BIT(1)
-#define ARM_CNTKCTL_PL0PCTEN		__BIT(0)
+#define ARM_CNTKCTL_PL0PTEN	__BIT(9)	/* PL0 Physical Timer Enable */
+#define ARM_CNTKCTL_PL0VTEN	__BIT(8)	/* PL0 Virtual Timer Enable */
+#define ARM_CNTKCTL_EVNTI	__BITS(7,4)	/* CNTVCT Event Bit Select */
+#define ARM_CNTKCTL_EVNTDIR	__BIT(3)	/* CNTVCT Event Dir (1->0) */
+#define ARM_CNTKCTL_EVNTEN	__BIT(2)	/* CNTVCT Event Enable */
+#define ARM_CNTKCTL_PL0VCTEN	__BIT(1)	/* PL0 Virtual Counter Enable */
+#define ARM_CNTKCTL_PL0PCTEN	__BIT(0)	/* PL0 Physical Counter Enable */
 
-#define ARM_CNTHCTL_EVNTI		__BITS(7,4)
-#define ARM_CNTHCTL_EVNTDIR		__BIT(3)
-#define ARM_CNTHCTL_EVNTEN		__BIT(2)
-#define ARM_CNTHCTL_PL1PCTEN		__BIT(1)
-#define ARM_CNTHCTL_PL1VCTEN		__BIT(0)
+/* CNCHCTL, Timer PL2 Control register, Virtualization Extensions */
+#define ARM_CNTHCTL_EVNTI	__BITS(7,4)
+#define ARM_CNTHCTL_EVNTDIR	__BIT(3)
+#define ARM_CNTHCTL_EVNTEN	__BIT(2)
+#define ARM_CNTHCTL_PL1PCEN	__BIT(1)
+#define ARM_CNTHCTL_PL1PCTEN	__BIT(0)
 
 #define ARM_A5_TLBDATA_DOM		__BITS(62,59)
 #define ARM_A5_TLBDATA_AP		__BITS(58,56)
