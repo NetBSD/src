@@ -1,4 +1,4 @@
-.\"	$NetBSD: module.9,v 1.41 2017/12/20 03:24:56 pgoyette Exp $
+.\"	$NetBSD: module.9,v 1.42 2017/12/20 10:01:38 wiz Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -114,7 +114,7 @@ The module is a device driver - see
 The module provides an alternate execution environment - see the various
 .Dv COMPAT_xxx
 options in
-.Xr options 9
+.Xr options 4
 .It Dv MODULE_CLASS_SECMODEL
 The module provides a security model - see
 .Xr secmodel 9
@@ -509,7 +509,7 @@ is for finding modules passed in by the boot loader.
 The kernel module subsystem first appeared in
 .Nx 5.0 .
 It replaces the
-.Dq Tn LKM
+.Dq LKM
 subsystem from earlier releases.
 .Sh AUTHORS
 .An -nosplit
