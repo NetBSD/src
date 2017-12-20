@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.115 2017/12/06 04:08:50 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.116 2017/12/20 08:51:42 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -1043,10 +1043,6 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 	hw->eeprom.ops.read(hw, IXGBE_ETRACKID_L, &low);
 	aprint_normal(" ETrackID %08x\n", ((uint32_t)high << 16) | low);
 
-	/* Setup OS specific network interface */
-	if (ixgbe_setup_interface(dev, adapter) != 0)
-		goto err_late;
-
 	if (adapter->feat_en & IXGBE_FEATURE_MSIX)
 		error = ixgbe_allocate_msix(adapter, pa);
 	else
@@ -1073,6 +1069,10 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 	default:
 		break;
 	}
+
+	/* Setup OS specific network interface */
+	if (ixgbe_setup_interface(dev, adapter) != 0)
+		goto err_late;
 
 	/*
 	 *  Print PHY ID only for copper PHY. On device which has SFP(+) cage
@@ -1155,8 +1155,6 @@ err_late:
 	ixgbe_free_receive_structures(adapter);
 	free(adapter->queues, M_DEVBUF);
 err_out:
-	if (adapter->ifp != NULL)
-		if_free(adapter->ifp);
 	ctrl_ext = IXGBE_READ_REG(&adapter->hw, IXGBE_CTRL_EXT);
 	ctrl_ext &= ~IXGBE_CTRL_EXT_DRV_LOAD;
 	IXGBE_WRITE_REG(&adapter->hw, IXGBE_CTRL_EXT, ctrl_ext);
