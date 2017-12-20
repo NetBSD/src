@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.62 2017/12/16 10:15:12 maxv Exp $
+#	$NetBSD: Makefile,v 1.63 2017/12/20 04:46:19 maya Exp $
 
 LIB=		compat
 NOPIC=		# defined
@@ -26,12 +26,12 @@ libinstall::
 lib${LIB}.o:: ${OBJS:O}
 	@echo building standard ${LIB} library
 	@rm -f lib${LIB}.o
-	@${LD} -r -o lib${LIB}.o `NM=${NM} ${LORDER} ${OBJS} | ${TSORT}`
+	@${LD} -r -o lib${LIB}.o ${LDFLAGS} `NM=${NM} ${LORDER} ${OBJS} | ${TSORT}`
 
 lib${LIB}.po:: ${POBJS:O}
 	@echo building profiled ${LIB} library
 	@rm -f lib${LIB}.po
-	@${LD} -r -o lib${LIB}.po `NM=${NM} ${LORDER} ${POBJS} | ${TSORT}`
+	@${LD} -r -o lib${LIB}.po ${LDFLAGS} `NM=${NM} ${LORDER} ${POBJS} | ${TSORT}`
 
 showsources: ${SRCS}
 	@echo ${.ALLSRC}
