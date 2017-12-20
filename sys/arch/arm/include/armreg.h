@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.114 2017/12/17 09:39:00 skrll Exp $	*/
+/*	$NetBSD: armreg.h,v 1.115 2017/12/20 15:12:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -743,8 +743,8 @@
 #define ARM_CNTKCTL_EVNTI		__BITS(7,4)
 #define ARM_CNTKCTL_EVNTDIR		__BIT(3)
 #define ARM_CNTKCTL_EVNTEN		__BIT(2)
-#define ARM_CNTKCTL_PL0PCTEN		__BIT(1)
-#define ARM_CNTKCTL_PL0VCTEN		__BIT(0)
+#define ARM_CNTKCTL_PL0VCTEN		__BIT(1)
+#define ARM_CNTKCTL_PL0PCTEN		__BIT(0)
 
 #define ARM_CNTHCTL_EVNTI		__BITS(7,4)
 #define ARM_CNTHCTL_EVNTDIR		__BIT(3)
