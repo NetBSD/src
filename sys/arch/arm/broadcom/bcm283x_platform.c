@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm283x_platform.c,v 1.1 2017/12/10 21:38:26 skrll Exp $	*/
+/*	$NetBSD: bcm283x_platform.c,v 1.2 2017/12/20 14:35:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.1 2017/12/10 21:38:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.2 2017/12/20 14:35:12 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -129,14 +129,6 @@ bs_protos(generic);
 bs_protos(generic_armv4);
 bs_protos(a4x);
 bs_protos(bs_notimpl);
-
-#if 0
-#if __ARMEB__
-#define NSWAP(n)	n ## _swap
-#else
-#define NSWAP(n)	n
-#endif
-#endif
 
 struct arm32_dma_range bcm2835_dma_ranges[] = {
 	[0] = {
