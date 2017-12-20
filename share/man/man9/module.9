@@ -1,4 +1,4 @@
-.\"	$NetBSD: module.9,v 1.40 2017/12/16 21:13:07 pgoyette Exp $
+.\"	$NetBSD: module.9,v 1.41 2017/12/20 03:24:56 pgoyette Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -103,7 +103,7 @@ structure.
 The
 .Fa class
 argument identifies the class of module, and must be one of the following:
-.Bl -tag -width XXX -offset indent
+.Bl -tag -width MODULE_CLASS_SECMODEL -offset indent
 .It Dv MODULE_CLASS_VFS
 The module provide a virtual file system - see
 .Xr vfs 9
