@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.33 2017/09/14 07:58:44 mrg Exp $
+# $NetBSD: INSTALL,v 1.34 2017/12/20 08:10:13 rin Exp $
 #
 # INSTALL config file (GENERIC with memory disk root)
 #
@@ -35,8 +35,10 @@ no file-system		TMPFS
 
 no options 		WAPBL
 
-include 		"conf/compat_netbsd14.config"
 no options 		COMPAT_NETBSD32
+no options 		COMPAT_13
+no options 		COMPAT_43
+no options 		COMPAT_44
 
 no options 		COMPAT_OSSAUDIO
 
