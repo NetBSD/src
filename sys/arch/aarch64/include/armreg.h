@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.2 2015/04/27 06:54:12 skrll Exp $ */
+/* $NetBSD: armreg.h,v 1.3 2017/12/20 14:58:08 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@ AARCH64REG_READ_INLINE(nzcv)		// condition codes
 AARCH64REG_WRITE_INLINE(nzcv)
 
 static const uintmax_t
-    NZCV_N = __BIT(31), // Negative 
+    NZCV_N = __BIT(31), // Negative
     NZCV_Z = __BIT(30), // Zero
     NZCV_C = __BIT(29), // Carry
     NZCV_V = __BIT(28); // Overflow
@@ -141,7 +141,7 @@ static const uintmax_t
 AARCH64REG_READ_INLINE(tpidr_el0)	// Thread Pointer ID Register (RW)
 AARCH64REG_WRITE_INLINE(tpidr_el0)
 
-/* 
+/*
  * From here on, these can only be accessed at EL1 (kernel)
  */
 
@@ -290,7 +290,7 @@ AARCH64REG_WRITE_INLINE(spsr_el1)
 
 static const uintmax_t
     SPSR_NZCV	  = __BITS(31,28),	// mask of N Z C V
-     SPSR_N	  = __BIT(31),		// Negative 
+     SPSR_N	  = __BIT(31),		// Negative
      SPSR_Z	  = __BIT(30),		// Zero
      SPSR_C	  = __BIT(29),		// Carry
      SPSR_V	  = __BIT(28),		// oVerflow
