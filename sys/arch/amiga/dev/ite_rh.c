@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_rh.c,v 1.13 2009/10/26 19:16:54 cegger Exp $ */
+/*	$NetBSD: ite_rh.c,v 1.14 2017/12/20 05:27:06 msaitoh Exp $ */
 
 /*
  * Copyright (c) 1994 Markus Wild
@@ -33,7 +33,7 @@
 #include "opt_retina.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_rh.c,v 1.13 2009/10/26 19:16:54 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_rh.c,v 1.14 2017/12/20 05:27:06 msaitoh Exp $");
 
 #include "grfrh.h"
 #if NGRFRH > 0
@@ -61,7 +61,7 @@ static void screen_down(struct ite_softc *, int, int, int);
 /*
  * grfrh_cnprobe is called when the console is being initialized
  * i.e. very early.  grfconfig() has been called, so this implies
- * that rt_init() was called.  If we are functioning rh_inited
+ * that rh_init() was called.  If we are functioning rh_inited
  * will be true.
  */
 int
