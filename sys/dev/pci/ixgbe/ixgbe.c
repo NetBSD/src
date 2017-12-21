@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.116 2017/12/20 08:51:42 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.117 2017/12/21 06:49:26 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -5886,6 +5886,7 @@ ixgbe_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 	/* and Link */
 	cpu_id++;
 	snprintf(intr_xname, sizeof(intr_xname), "%s link", device_xname(dev));
+	adapter->vector = vector;
 	intrstr = pci_intr_string(pc, adapter->osdep.intrs[vector], intrbuf,
 	    sizeof(intrbuf));
 #ifdef IXGBE_MPSAFE
@@ -5914,7 +5915,6 @@ ixgbe_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 	else
 		aprint_normal("\n");
 
-	adapter->vector = vector;
 	/* Tasklets for Link, SFP and Multispeed Fiber */
 	adapter->link_si = softint_establish(SOFTINT_NET |IXGBE_SOFTINFT_FLAGS,
 	    ixgbe_handle_link, adapter);
