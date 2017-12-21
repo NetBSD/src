@@ -1,4 +1,4 @@
-/*	$NetBSD: hci.h,v 1.43 2017/01/28 19:19:41 jakllsch Exp $	*/
+/*	$NetBSD: hci.h,v 1.44 2017/12/21 09:30:30 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -54,7 +54,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: hci.h,v 1.43 2017/01/28 19:19:41 jakllsch Exp $
+ * $Id: hci.h,v 1.44 2017/12/21 09:30:30 plunky Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/ng_hci.h,v 1.6 2005/01/07 01:45:43 imp Exp $
  */
 
@@ -105,7 +105,8 @@
 #define HCI_SPEC_V40			0x06 /* v4.0 */
 #define HCI_SPEC_V41			0x07 /* v4.1 */
 #define HCI_SPEC_V42			0x08 /* v4.2 */
-/* 0x09 - 0xFF - reserved for future use */
+#define HCI_SPEC_V50			0x09 /* v5.0 */
+/* 0x0A - 0xFF - reserved for future use */
 
 /* LMP features (and page 0 of extended features) */
 /* ------------------- byte 0 --------------------*/
