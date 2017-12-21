@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.76 2017/12/21 06:43:17 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.77 2017/12/21 06:49:26 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -2696,6 +2696,7 @@ ixv_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 	/* and Mailbox */
 	cpu_id++;
 	snprintf(intr_xname, sizeof(intr_xname), "%s link", device_xname(dev));
+	adapter->vector = vector;
 	intrstr = pci_intr_string(pc, adapter->osdep.intrs[vector], intrbuf,
 	    sizeof(intrbuf));
 #ifdef IXGBE_MPSAFE
@@ -2724,7 +2725,6 @@ ixv_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 	else
 		aprint_normal("\n");
 
-	adapter->vector = vector;
 	/* Tasklets for Mailbox */
 	adapter->link_si = softint_establish(SOFTINT_NET |IXGBE_SOFTINFT_FLAGS,
 	    ixv_handle_link, adapter);
