@@ -1,4 +1,4 @@
-.\" $NetBSD: rfcomm_sppd.1,v 1.12 2014/03/18 18:20:45 riastradh Exp $
+.\" $NetBSD: rfcomm_sppd.1,v 1.13 2017/12/21 08:59:27 plunky Exp $
 .\"
 .\" Copyright (c) 2006 Itronix Inc.
 .\" All rights reserved.
@@ -122,7 +122,7 @@ is specified, the connection will be set up on a system determined device.
 Set connection link mode.
 Supported modes are:
 .Pp
-.Bl -tag -compact -offset indent
+.Bl -tag -compact -width encrypt -offset xx
 .It auth
 require devices be paired.
 .It encrypt
@@ -145,7 +145,7 @@ is given, the default
 service class will be used.
 Known service classes are:
 .Pp
-.Bl -tag -compact -offset indent
+.Bl -tag -compact -width DUN -offset xx
 .It DUN
 Dialup Networking
 .It LAN
