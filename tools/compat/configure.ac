@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.87 2017/01/07 21:30:42 christos Exp $
+#	$NetBSD: configure.ac,v 1.87.6.1 2017/12/21 19:11:21 snj Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -78,7 +78,7 @@ AC_CHECK_HEADERS(sys/ioctl.h sys/mman.h sys/param.h \
 
 # Find headers that may not be available.
 AC_HEADER_DIRENT
-AC_CHECK_HEADERS(sys/mtio.h sys/sysmacros.h sys/syslimits.h \
+AC_CHECK_HEADERS(sys/mtio.h sys/sysmacros.h sys/syslimits.h stdio_ext.h \
 	getopt.h features.h malloc.h sys/poll.h pthread.h stddef.h rpc/types.h)
 AC_CHECK_HEADERS(sys/bswap.h machine/bswap.h sys/cdefs.h machine/endian.h \
 	sys/endian.h sys/featuretest.h err.h inttypes.h libgen.h paths.h \
@@ -140,8 +140,8 @@ AC_CHECK_MEMBERS(struct statvfs.f_iosize,,, [#include <sys/statvfs.h>])
 AC_CHECK_MEMBERS(struct tm.tm_gmtoff,,, [#include <time.h>])
 
 # Global variable decls.
-AC_CHECK_DECLS([asprintf, vasprintf, vasnprintf, vsnprintf, fgetln, fparseln
-	getdelim, getline, snprintf],,, [
+AC_CHECK_DECLS([asprintf, asnprintf, vasprintf, vasnprintf, vsnprintf, fgetln, fparseln,
+	fpurge, getdelim, getline, snprintf],,, [
 #include <stdio.h>
 ])
 
