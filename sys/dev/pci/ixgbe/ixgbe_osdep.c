@@ -1,6 +1,8 @@
+/* $NetBSD: ixgbe_osdep.c,v 1.1.12.1 2017/12/21 19:28:54 snj Exp $ */
+
 /******************************************************************************
 
-  Copyright (c) 2001-2015, Intel Corporation 
+  Copyright (c) 2001-2017, Intel Corporation 
   All rights reserved.
   
   Redistribution and use in source and binary forms, with or without 
@@ -30,7 +32,7 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_osdep.c 292674 2015-12-23 22:45:17Z sbruno $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_osdep.c 320688 2017-07-05 17:27:03Z erj $*/
 
 #include "ixgbe_osdep.h"
 #include "ixgbe.h"
@@ -88,8 +90,7 @@ inline u32
 ixgbe_read_reg(struct ixgbe_hw *hw, u32 reg)
 {
 	return bus_space_read_4(((struct adapter *)hw->back)->osdep.mem_bus_space_tag,
-	    ((struct adapter *)hw->back)->osdep.mem_bus_space_handle,
-	    reg);
+	    ((struct adapter *)hw->back)->osdep.mem_bus_space_handle, reg);
 }
 
 inline void

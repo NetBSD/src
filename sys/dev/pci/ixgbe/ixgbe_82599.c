@@ -1,37 +1,39 @@
-/******************************************************************************
+/* $NetBSD: ixgbe_82599.c,v 1.14.8.1 2017/12/21 19:28:54 snj Exp $ */
 
-  Copyright (c) 2001-2015, Intel Corporation 
+/******************************************************************************
+  SPDX-License-Identifier: BSD-3-Clause
+
+  Copyright (c) 2001-2017, Intel Corporation
   All rights reserved.
-  
-  Redistribution and use in source and binary forms, with or without 
+
+  Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions are met:
-  
-   1. Redistributions of source code must retain the above copyright notice, 
+
+   1. Redistributions of source code must retain the above copyright notice,
       this list of conditions and the following disclaimer.
-  
-   2. Redistributions in binary form must reproduce the above copyright 
-      notice, this list of conditions and the following disclaimer in the 
+
+   2. Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
       documentation and/or other materials provided with the distribution.
-  
-   3. Neither the name of the Intel Corporation nor the names of its 
-      contributors may be used to endorse or promote products derived from 
+
+   3. Neither the name of the Intel Corporation nor the names of its
+      contributors may be used to endorse or promote products derived from
       this software without specific prior written permission.
-  
+
   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
-  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
-  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
-  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
-  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
-  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_82599.c 292674 2015-12-23 22:45:17Z sbruno $*/
-/*$NetBSD: ixgbe_82599.c,v 1.14 2016/12/02 10:42:04 msaitoh Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_82599.c 320688 2017-07-05 17:27:03Z erj $*/
 
 #include "ixgbe_type.h"
 #include "ixgbe_82599.h"
@@ -395,6 +397,10 @@ s32 ixgbe_init_ops_82599(struct ixgbe_hw *hw)
 	/* Manageability interface */
 	mac->ops.set_fw_drv_ver = ixgbe_set_fw_drv_ver_generic;
 
+	mac->ops.bypass_rw = ixgbe_bypass_rw_generic;
+	mac->ops.bypass_valid_rd = ixgbe_bypass_valid_rd_generic;
+	mac->ops.bypass_set = ixgbe_bypass_set_generic;
+	mac->ops.bypass_rd_eep = ixgbe_bypass_rd_eep_generic;
 
 	mac->ops.get_rtrup2tc = ixgbe_dcb_get_rtrup2tc_generic;
 
@@ -1178,11 +1184,15 @@ mac_reset_top:
 
 	/* Add the SAN MAC address to the RAR only if it's a valid address */
 	if (ixgbe_validate_mac_addr(hw->mac.san_addr) == 0) {
-		hw->mac.ops.set_rar(hw, hw->mac.num_rar_entries - 1,
-				    hw->mac.san_addr, 0, IXGBE_RAH_AV);
-
 		/* Save the SAN MAC RAR index */
 		hw->mac.san_mac_rar_index = hw->mac.num_rar_entries - 1;
+
+		hw->mac.ops.set_rar(hw, hw->mac.san_mac_rar_index,
+				    hw->mac.san_addr, 0, IXGBE_RAH_AV);
+
+		/* clear VMDq pool/queue selection for this RAR */
+		hw->mac.ops.clear_vmdq(hw, hw->mac.san_mac_rar_index,
+				       IXGBE_CLEAR_VMDQ_ALL);
 
 		/* Reserve the last RAR for the SAN MAC address */
 		hw->mac.num_rar_entries--;
@@ -1382,9 +1392,6 @@ s32 ixgbe_init_fdir_perfect_82599(struct ixgbe_hw *hw, u32 fdirctrl,
 		    (0x6 << IXGBE_FDIRCTRL_FLEX_SHIFT) |
 		    (0xA << IXGBE_FDIRCTRL_MAX_LENGTH_SHIFT) |
 		    (4 << IXGBE_FDIRCTRL_FULL_THRESH_SHIFT);
-	if ((hw->mac.type == ixgbe_mac_X550) ||
-	    (hw->mac.type == ixgbe_mac_X550EM_x))
-		fdirctrl |= IXGBE_FDIRCTRL_DROP_NO_MATCH;
 
 	if (cloud_mode)
 		fdirctrl |=(IXGBE_FDIRCTRL_FILTERMODE_CLOUD <<
@@ -1413,7 +1420,8 @@ void ixgbe_set_fdir_drop_queue_82599(struct ixgbe_hw *hw, u8 dropqueue)
 	/* Set drop queue */
 	fdirctrl |= (dropqueue << IXGBE_FDIRCTRL_DROP_Q_SHIFT);
 	if ((hw->mac.type == ixgbe_mac_X550) ||
-	    (hw->mac.type == ixgbe_mac_X550EM_x))
+	    (hw->mac.type == ixgbe_mac_X550EM_x) ||
+	    (hw->mac.type == ixgbe_mac_X550EM_a))
 		fdirctrl |= IXGBE_FDIRCTRL_DROP_NO_MATCH;
 
 	IXGBE_WRITE_REG(hw, IXGBE_FDIRCMD,
@@ -1739,15 +1747,17 @@ s32 ixgbe_fdir_set_input_mask_82599(struct ixgbe_hw *hw,
 
 	switch (IXGBE_NTOHS(input_mask->formatted.vlan_id) & 0xEFFF) {
 	case 0x0000:
-		/* mask VLAN ID, fall through to mask VLAN priority */
+		/* mask VLAN ID */
 		fdirm |= IXGBE_FDIRM_VLANID;
+		/* fall through */
 	case 0x0FFF:
 		/* mask VLAN priority */
 		fdirm |= IXGBE_FDIRM_VLANP;
 		break;
 	case 0xE000:
-		/* mask VLAN ID only, fall through */
+		/* mask VLAN ID only */
 		fdirm |= IXGBE_FDIRM_VLANID;
+		/* fall through */
 	case 0xEFFF:
 		/* no VLAN fields masked */
 		break;
@@ -1758,8 +1768,9 @@ s32 ixgbe_fdir_set_input_mask_82599(struct ixgbe_hw *hw,
 
 	switch (input_mask->formatted.flex_bytes & 0xFFFF) {
 	case 0x0000:
-		/* Mask Flex Bytes, fall through */
+		/* Mask Flex Bytes */
 		fdirm |= IXGBE_FDIRM_FLEX;
+		/* fall through */
 	case 0xFFFF:
 		break;
 	default:
@@ -1810,14 +1821,23 @@ s32 ixgbe_fdir_set_input_mask_82599(struct ixgbe_hw *hw,
 		}
 		IXGBE_WRITE_REG_BE32(hw, IXGBE_FDIRIP6M, fdirip6m);
 
-		/* Set all bits in FDIRTCPM, FDIRUDPM, FDIRSIP4M and
-		 * FDIRDIP4M in cloud mode to allow L3/L3 packets to
-		 * tunnel.
+		/* Set all bits in FDIRTCPM, FDIRUDPM, FDIRSCTPM,
+		 * FDIRSIP4M and FDIRDIP4M in cloud mode to allow
+		 * L3/L3 packets to tunnel.
 		 */
 		IXGBE_WRITE_REG(hw, IXGBE_FDIRTCPM, 0xFFFFFFFF);
 		IXGBE_WRITE_REG(hw, IXGBE_FDIRUDPM, 0xFFFFFFFF);
 		IXGBE_WRITE_REG_BE32(hw, IXGBE_FDIRDIP4M, 0xFFFFFFFF);
 		IXGBE_WRITE_REG_BE32(hw, IXGBE_FDIRSIP4M, 0xFFFFFFFF);
+		switch (hw->mac.type) {
+		case ixgbe_mac_X550:
+		case ixgbe_mac_X550EM_x:
+		case ixgbe_mac_X550EM_a:
+			IXGBE_WRITE_REG(hw, IXGBE_FDIRSCTPM, 0xFFFFFFFF);
+			break;
+		default:
+			break;
+		}
 	}
 
 	/* Now mask VM pool and destination IPv6 - bits 5 and 2 */
@@ -1835,6 +1855,7 @@ s32 ixgbe_fdir_set_input_mask_82599(struct ixgbe_hw *hw,
 		switch (hw->mac.type) {
 		case ixgbe_mac_X550:
 		case ixgbe_mac_X550EM_x:
+		case ixgbe_mac_X550EM_a:
 			IXGBE_WRITE_REG(hw, IXGBE_FDIRSCTPM, ~fdirtcpm);
 			break;
 		default:
@@ -2014,6 +2035,7 @@ s32 ixgbe_fdir_add_perfect_filter_82599(struct ixgbe_hw *hw,
 			DEBUGOUT(" Error on src/dst port\n");
 			return IXGBE_ERR_CONFIG;
 		}
+		/* fall through */
 	case IXGBE_ATR_FLOW_TYPE_TCPV4:
 	case IXGBE_ATR_FLOW_TYPE_TUNNELED_TCPV4:
 	case IXGBE_ATR_FLOW_TYPE_UDPV4:
@@ -2159,9 +2181,9 @@ s32 ixgbe_identify_phy_82599(struct ixgbe_hw *hw)
  *
  *  Determines physical layer capabilities of the current configuration.
  **/
-u32 ixgbe_get_supported_physical_layer_82599(struct ixgbe_hw *hw)
+u64 ixgbe_get_supported_physical_layer_82599(struct ixgbe_hw *hw)
 {
-	u32 physical_layer = IXGBE_PHYSICAL_LAYER_UNKNOWN;
+	u64 physical_layer = IXGBE_PHYSICAL_LAYER_UNKNOWN;
 	u32 autoc = IXGBE_READ_REG(hw, IXGBE_AUTOC);
 	u32 autoc2 = IXGBE_READ_REG(hw, IXGBE_AUTOC2);
 	u32 pma_pmd_10g_serial = autoc2 & IXGBE_AUTOC2_10G_SERIAL_PMA_PMD_MASK;
