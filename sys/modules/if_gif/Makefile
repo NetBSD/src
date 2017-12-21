@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2016/08/18 11:41:58 knakahara Exp $
+# $NetBSD: Makefile,v 1.2.12.1 2017/12/21 19:14:41 snj Exp $
 
 .include "../Makefile.inc"
 
@@ -6,7 +6,7 @@
 
 KMOD=		if_gif
 IOCONF=		gif.ioconf
-SRCS=		if_gif.c in_gif.c in6_gif.c ip_ecn.c
+SRCS=		if_gif.c in_gif.c in6_gif.c
 
 CPPFLAGS+=	-DINET
 CPPFLAGS+=	-DINET6
