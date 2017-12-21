@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.75 2017/12/06 04:08:50 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.76 2017/12/21 06:43:17 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -496,16 +496,16 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 	/* hw.ix defaults init */
 	adapter->enable_aim = ixv_enable_aim;
 
+	error = ixv_allocate_msix(adapter, pa);
+	if (error) {
+		device_printf(dev, "ixv_allocate_msix() failed!\n");
+		goto err_late;
+	}
+
 	/* Setup OS specific network interface */
 	error = ixv_setup_interface(dev, adapter);
 	if (error != 0) {
 		aprint_error_dev(dev, "ixv_setup_interface() failed!\n");
-		goto err_late;
-	}
-
-	error = ixv_allocate_msix(adapter, pa);
-	if (error) {
-		device_printf(dev, "ixv_allocate_msix() failed!\n");
 		goto err_late;
 	}
 
