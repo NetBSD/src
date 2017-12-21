@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.15 2017/12/18 19:20:40 christos Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.16 2017/12/21 09:56:47 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.15 2017/12/18 19:20:40 christos Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.16 2017/12/21 09:56:47 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -7063,6 +7063,9 @@ ATF_TC_BODY(suspend1, tc)
 	struct ptrace_siginfo psi;
 	volatile int go = 0;
 
+	// Hangs with qemu
+	ATF_REQUIRE(0 && "In order to get reliable failure, abort");
+
 	DPRINTF("Before forking process PID=%d\n", getpid());
 	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
@@ -7183,6 +7186,9 @@ ATF_TC_BODY(suspend2, tc)
 	int status;
 #endif
 	struct ptrace_siginfo psi;
+
+	// Hangs with qemu
+	ATF_REQUIRE(0 && "In order to get reliable failure, abort");
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
 	SYSCALL_REQUIRE((child = fork()) != -1);
