@@ -1,4 +1,4 @@
-/*	$NetBSD: btpin.c,v 1.6 2011/08/29 13:50:13 joerg Exp $	*/
+/*	$NetBSD: btpin.c,v 1.7 2017/12/21 09:04:34 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2006 Itronix, Inc.  All rights reserved.");
-__RCSID("$NetBSD: btpin.c,v 1.6 2011/08/29 13:50:13 joerg Exp $");
+__RCSID("$NetBSD: btpin.c,v 1.7 2017/12/21 09:04:34 plunky Exp $");
 
 #include <sys/types.h>
 #include <sys/un.h>
@@ -137,10 +137,10 @@ main(int ac, char *av[])
 	}
 
 	s = socket(PF_LOCAL, SOCK_STREAM, 0);
-	if (s < 0)
+	if (s == -1)
 		err(EXIT_FAILURE, "socket");
 
-	if (connect(s, (struct sockaddr *)&un, sizeof(un)) < 0)
+	if (connect(s, (struct sockaddr *)&un, sizeof(un)) == -1)
 		err(EXIT_FAILURE, "connect(\"%s\")", un.sun_path);
 	
 	if (send(s, &rp, sizeof(rp), 0) != sizeof(rp))
@@ -152,18 +152,18 @@ main(int ac, char *av[])
 		exit(EXIT_SUCCESS);
 
 	s = socket(PF_BLUETOOTH, SOCK_SEQPACKET, BTPROTO_L2CAP);
-	if (s < 0)
+	if (s == -1)
 		err(EXIT_FAILURE, "socket");
 
 	ch = L2CAP_LM_AUTH;
-	if (setsockopt(s, BTPROTO_L2CAP, SO_L2CAP_LM, &ch, sizeof(ch)) < 0)
+	if (setsockopt(s, BTPROTO_L2CAP, SO_L2CAP_LM, &ch, sizeof(ch)) == -1)
 		err(EXIT_FAILURE, "SO_L2CAP_LM");
 
 	memset(&bt, 0, sizeof(bt));
 	bt.bt_len = sizeof(bt);
 	bt.bt_family = AF_BLUETOOTH;
 	bdaddr_copy(&bt.bt_bdaddr, &rp.laddr);
-	if (bind(s, (struct sockaddr *)&bt, sizeof(bt)) < 0)
+	if (bind(s, (struct sockaddr *)&bt, sizeof(bt)) == -1)
 		err(EXIT_FAILURE, "bind");
 
 	fprintf(stdout, "Pairing.. ");
@@ -171,7 +171,7 @@ main(int ac, char *av[])
 
 	bt.bt_psm = L2CAP_PSM_SDP;
 	bdaddr_copy(&bt.bt_bdaddr, &rp.raddr);
-	if (connect(s, (struct sockaddr *)&bt, sizeof(bt)) < 0) {
+	if (connect(s, (struct sockaddr *)&bt, sizeof(bt)) == -1) {
 		fprintf(stdout, "failed (%s)\n", strerror(errno));
 		exit(EXIT_FAILURE);
 	}
