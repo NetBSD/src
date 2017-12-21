@@ -1,4 +1,4 @@
-.\"	$NetBSD: module.9,v 1.38 2015/10/04 22:51:19 pgoyette Exp $
+.\"	$NetBSD: module.9,v 1.38.8.1 2017/12/21 21:48:01 snj Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 5, 2015
+.Dd December 16, 2017
 .Dt MODULE 9
 .Os
 .Sh NAME
@@ -100,6 +100,49 @@ The
 macro creates and initializes a
 .Vt modinfo_t
 structure.
+The
+.Fa class
+argument identifies the class of module, and must be one of the following:
+.Bl -tag -width XXX -offset indent
+.It Dv MODULE_CLASS_VFS
+The module provide a virtual file system - see
+.Xr vfs 9
+.It Dv MODULE_CLASS_DRIVER
+The module is a device driver - see
+.Xr driver 9
+.It Dv MODULE_CLASS_EXEC
+The module provides an alternate execution environment - see the various
+.Dv COMPAT_xxx
+options in
+.Xr options 9
+.It Dv MODULE_CLASS_SECMODEL
+The module provides a security model - see
+.Xr secmodel 9
+.It Dv MODULE_CLASS_BUFQ
+The module provides a buffer queue strategy - see
+.Xr bufq 9
+.It Dv MODULE_CLASS_MISC
+The module provides miscellaneous kernel services
+.El
+.Pp
+The
+.Fa name
+argument provides the name of the module.
+Loaded modules, including those that are built-in to the kernel, must all
+have unique names.
+.Pp
+The
+.Fa required
+argument is a quoted string containing a comma-separated list of module
+names that are required by this module.
+The list must not contain any white-space.
+When a module is loaded, all of its required modules are auto-loaded and
+initialized before the module itself is loaded.
+Loading of required modules is a recursive operation.
+.Pp
+If there are no required modules, this argument should be specified as
+.Dv NULL .
+.Pp
 In addition to the explicit arguments, the
 .Fn MODULE
 macro creates a reference to the module's
@@ -108,8 +151,12 @@ function.
 This function is defined as:
 .Bl -tag -width modcmd -offset indent
 .It Ft int
-.Fn modcmd "modcmd_t cmd" "void *data"
+.Fn xxx_modcmd "modcmd_t cmd" "void *data"
 .El
+.Pp
+(where xxx is the name of the module, from the
+.Dv MODULE
+macro).
 .Pp
 The
 .Fa cmd
