@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.105 2017/06/01 02:45:05 chs Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.105.2.1 2017/12/21 19:53:28 snj Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.105 2017/06/01 02:45:05 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.105.2.1 2017/12/21 19:53:28 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -164,6 +164,43 @@ netbsd32_setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	tf->tf_ss = LSEL(LUDATA32_SEL, SEL_UPL);
 }
 
+static void
+netbsd32_buildcontext(struct lwp *l, struct trapframe *tf, void *fp,
+    sig_t catcher, int onstack)
+{
+	/*
+	 * Build context to run handler in.
+	 */
+	tf->tf_ds = GSEL(GUDATA32_SEL, SEL_UPL);
+	tf->tf_es = GSEL(GUDATA32_SEL, SEL_UPL);
+#if 0
+	tf->tf_fs = GSEL(GUDATA32_SEL, SEL_UPL);
+	tf->tf_gs = GSEL(GUDATA32_SEL, SEL_UPL);
+#endif
+
+	/* Ensure FP state is sane. */
+	fpu_save_area_reset(l);
+
+	tf->tf_rip = (uint64_t)catcher;
+	tf->tf_cs = GSEL(GUCODE32_SEL, SEL_UPL);
+	tf->tf_rflags &= ~PSL_CLEARSIG;
+	tf->tf_rsp = (uint64_t)fp;
+	tf->tf_ss = GSEL(GUDATA32_SEL, SEL_UPL);
+
+	/* Remember that we're now on the signal stack. */
+	if (onstack)
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
+	if ((vaddr_t)catcher >= VM_MAXUSER_ADDRESS32) {
+		/*
+		 * process has given an invalid address for the
+		 * handler. Stop it, but do not do it before so
+		 * we can return the right info to userland (or in core dump)
+		 */
+		sigexit(l, SIGILL);
+		/* NOTREACHED */
+	}
+}
+
 #ifdef COMPAT_16
 static void
 netbsd32_sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
@@ -249,35 +286,7 @@ netbsd32_sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 		/* NOTREACHED */
 	}
 
-	/*
-	 * Build context to run handler in.
-	 */
-	tf->tf_ds = GSEL(GUDATA32_SEL, SEL_UPL);
-	tf->tf_es = GSEL(GUDATA32_SEL, SEL_UPL);
-	tf->tf_fs = GSEL(GUDATA32_SEL, SEL_UPL);
-	tf->tf_gs = GSEL(GUDATA32_SEL, SEL_UPL);
-
-	/* Ensure FP state is sane. */
-	fpu_save_area_reset(l);
-
-	tf->tf_rip = (uint64_t)catcher;
-	tf->tf_cs = GSEL(GUCODE32_SEL, SEL_UPL);
-	tf->tf_rflags &= ~PSL_CLEARSIG;
-	tf->tf_rsp = (uint64_t)fp;
-	tf->tf_ss = GSEL(GUDATA32_SEL, SEL_UPL);
-
-	/* Remember that we're now on the signal stack. */
-	if (onstack)
-		l->l_sigstk.ss_flags |= SS_ONSTACK;
-	if ((vaddr_t)catcher >= VM_MAXUSER_ADDRESS32) {
-		/*
-		 * process has given an invalid address for the
-		 * handler. Stop it, but do not do it before so
-		 * we can return the right info to userland (or in core dump)
-		 */
-		sigexit(l, SIGILL);
-		/* NOTREACHED */
-	}
+	netbsd32_buildcontext(l, tf, fp, catcher, onstack);
 }
 #endif
 
@@ -346,35 +355,7 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 		/* NOTREACHED */
 	}
 
-	/*
-	 * Build context to run handler in.
-	 */
-	tf->tf_ds = GSEL(GUDATA32_SEL, SEL_UPL);
-	tf->tf_es = GSEL(GUDATA32_SEL, SEL_UPL);
-	tf->tf_fs = GSEL(GUDATA32_SEL, SEL_UPL);
-	tf->tf_gs = GSEL(GUDATA32_SEL, SEL_UPL);
-
-	tf->tf_rip = (uint64_t)catcher;
-	tf->tf_cs = GSEL(GUCODE32_SEL, SEL_UPL);
-	tf->tf_rflags &= ~PSL_CLEARSIG;
-	tf->tf_rsp = (uint64_t)fp;
-	tf->tf_ss = GSEL(GUDATA32_SEL, SEL_UPL);
-
-	/* Ensure FP state is sane. */
-	fpu_save_area_reset(l);
-
-	/* Remember that we're now on the signal stack. */
-	if (onstack)
-		l->l_sigstk.ss_flags |= SS_ONSTACK;
-	if ((vaddr_t)catcher >= VM_MAXUSER_ADDRESS32) {
-		/*
-		 * process has given an invalid address for the
-		 * handler. Stop it, but do not do it before so
-		 * we can return the right info to userland (or in core dump)
-		 */
-		sigexit(l, SIGILL);
-		/* NOTREACHED */
-	}
+	netbsd32_buildcontext(l, tf, fp, catcher, onstack);
 }
 
 void
