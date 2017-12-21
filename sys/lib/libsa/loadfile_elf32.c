@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_elf32.c,v 1.51 2017/11/15 18:02:37 maxv Exp $ */
+/* $NetBSD: loadfile_elf32.c,v 1.52 2017/12/21 14:28:39 maxv Exp $ */
 
 /*
  * Copyright (c) 1997, 2008, 2017 The NetBSD Foundation, Inc.
@@ -351,6 +351,11 @@ ELFNAMEEND(loadfile_dynamic)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 	maxp = marks[MARK_END];
 
 	internalize_ehdr(elf->e_ident[EI_DATA], elf);
+
+	if (elf->e_type != ET_REL) {
+		errno = EINVAL;
+		return 1;
+	}
 
 	/* Create a local copy of the SECTION HEADERS. */
 	shdrsz = elf->e_shnum * sizeof(Elf_Shdr);
