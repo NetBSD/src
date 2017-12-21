@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.100 2017/12/17 22:09:47 pgoyette Exp $	*/
+/*	$NetBSD: fss.c,v 1.101 2017/12/21 15:50:33 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.100 2017/12/17 22:09:47 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.101 2017/12/21 15:50:33 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -980,6 +980,8 @@ restart:
 		todo -= len;
 	}
 	error = biowait(mbp);
+	if (error == 0 && mbp->b_resid != 0)
+		error = EIO;
 	putiobuf(mbp);
 
 	mutex_enter(&sc->sc_slock);
@@ -1204,6 +1206,8 @@ fss_bs_thread(void *arg)
 			bdev_strategy(nbp);
 
 			error = biowait(nbp);
+			if (error == 0 && nbp->b_resid != 0)
+				error = EIO;
 			if (error != 0) {
 				bp->b_resid = bp->b_bcount;
 				bp->b_error = nbp->b_error;
