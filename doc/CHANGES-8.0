@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.93 2017/12/21 22:07:07 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.94 2017/12/21 23:06:58 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -8450,15 +8450,6 @@ sys/compat/ultrix/ultrix_fs.c			1.58
 
 	Fix uninitialized pointer.
 	[maxv, ticket #434]
-
-tools/compat/compat_defs.h			1.108
-tools/compat/configure				1.87-1.88
-tools/compat/configure.ac			1.88-1.89
-tools/compat/fpurge.c				1.2
-tools/compat/nbtool_config.h.in			1.41-1.42
-
-	Fix build on Cygwin.  PR toolchain/52797.
-	[sevan, ticket #435]
 
 distrib/sets/lists/modules/mi			1.112
 sys/modules/Makefile				1.196

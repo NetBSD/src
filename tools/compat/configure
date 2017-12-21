@@ -4097,7 +4097,7 @@ fi
 
 fi
 
-for ac_header in sys/mtio.h sys/sysmacros.h sys/syslimits.h stdio_ext.h \
+for ac_header in sys/mtio.h sys/sysmacros.h sys/syslimits.h \
 	getopt.h features.h malloc.h sys/poll.h pthread.h stddef.h rpc/types.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
@@ -4520,19 +4520,6 @@ fi
 cat >>confdefs.h <<_ACEOF
 #define HAVE_DECL_ASPRINTF $ac_have_decl
 _ACEOF
-ac_fn_c_check_decl "$LINENO" "asnprintf" "ac_cv_have_decl_asnprintf" "
-#include <stdio.h>
-
-"
-if test "x$ac_cv_have_decl_asnprintf" = xyes; then :
-  ac_have_decl=1
-else
-  ac_have_decl=0
-fi
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_DECL_ASNPRINTF $ac_have_decl
-_ACEOF
 ac_fn_c_check_decl "$LINENO" "vasprintf" "ac_cv_have_decl_vasprintf" "
 #include <stdio.h>
 
@@ -4585,44 +4572,19 @@ fi
 cat >>confdefs.h <<_ACEOF
 #define HAVE_DECL_FGETLN $ac_have_decl
 _ACEOF
-ac_fn_c_check_decl "$LINENO" "fparseln" "ac_cv_have_decl_fparseln" "
+ac_fn_c_check_decl "$LINENO" "fparseln
+	getdelim" "ac_cv_have_decl_fparseln__getdelim" "
 #include <stdio.h>
 
 "
-if test "x$ac_cv_have_decl_fparseln" = xyes; then :
+if test "x$ac_cv_have_decl_fparseln__getdelim" = xyes; then :
   ac_have_decl=1
 else
   ac_have_decl=0
 fi
 
 cat >>confdefs.h <<_ACEOF
-#define HAVE_DECL_FPARSELN $ac_have_decl
-_ACEOF
-ac_fn_c_check_decl "$LINENO" "fpurge" "ac_cv_have_decl_fpurge" "
-#include <stdio.h>
-
-"
-if test "x$ac_cv_have_decl_fpurge" = xyes; then :
-  ac_have_decl=1
-else
-  ac_have_decl=0
-fi
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_DECL_FPURGE $ac_have_decl
-_ACEOF
-ac_fn_c_check_decl "$LINENO" "getdelim" "ac_cv_have_decl_getdelim" "
-#include <stdio.h>
-
-"
-if test "x$ac_cv_have_decl_getdelim" = xyes; then :
-  ac_have_decl=1
-else
-  ac_have_decl=0
-fi
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_DECL_GETDELIM $ac_have_decl
+#define HAVE_DECL_FPARSELN__GETDELIM $ac_have_decl
 _ACEOF
 ac_fn_c_check_decl "$LINENO" "getline" "ac_cv_have_decl_getline" "
 #include <stdio.h>
