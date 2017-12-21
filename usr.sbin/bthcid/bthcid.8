@@ -1,4 +1,4 @@
-.\" $NetBSD: bthcid.8,v 1.9 2014/03/18 18:20:46 riastradh Exp $
+.\" $NetBSD: bthcid.8,v 1.10 2017/12/21 09:00:19 plunky Exp $
 .\"
 .\" Copyright (c) 2006 Itronix Inc.
 .\" All rights reserved.
@@ -52,7 +52,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $Id: bthcid.8,v 1.9 2014/03/18 18:20:46 riastradh Exp $
+.\" $Id: bthcid.8,v 1.10 2017/12/21 09:00:19 plunky Exp $
 .\" $FreeBSD: src/usr.sbin/bluetooth/hcsecd/hcsecd.8,v 1.6 2006/02/11 15:36:37 markus Exp $
 .\"
 .Dd September 29, 2006
@@ -75,7 +75,7 @@ The
 daemon handles Link Key and PIN code requests for Bluetooth devices.
 It opens a raw HCI socket and listens for the following HCI events.
 .Pp
-.Bl -tag -width XXXX -compact
+.Bl -tag -compact
 .It Dv Link_Key_Request
 .Nm
 scans the
@@ -124,7 +124,7 @@ Keys may be examined, deleted or moved to device storage using the
 program.
 .Pp
 The command line options are as follows:
-.Bl -tag -width XXXX
+.Bl -tag -width ".Fl s Ar socket_name"
 .It Fl d Ar device
 Specify the local Bluetooth device address.
 The default is BDADDR_ANY.
