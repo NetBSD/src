@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.101 2017/12/21 15:50:33 hannken Exp $	*/
+/*	$NetBSD: fss.c,v 1.102 2017/12/21 15:51:07 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.101 2017/12/21 15:50:33 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.102 2017/12/21 15:51:07 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -280,20 +280,26 @@ fss_strategy(struct buf *bp)
 	mutex_enter(&sc->sc_slock);
 
 	if (write || !FSS_ISVALID(sc)) {
-
-		mutex_exit(&sc->sc_slock);
-
 		bp->b_error = (write ? EROFS : ENXIO);
-		bp->b_resid = bp->b_bcount;
-		biodone(bp);
-		return;
+		goto done;
 	}
+	/* Check bounds for non-persistent snapshots. */
+	if ((sc->sc_flags & FSS_PERSISTENT) == 0 &&
+	    bounds_check_with_mediasize(bp, DEV_BSIZE,
+	    btodb(FSS_CLTOB(sc, sc->sc_clcount - 1) + sc->sc_clresid)) <= 0)
+		goto done;
 
 	bp->b_rawblkno = bp->b_blkno;
 	bufq_put(sc->sc_bufq, bp);
 	cv_signal(&sc->sc_work_cv);
 
 	mutex_exit(&sc->sc_slock);
+	return;
+
+done:
+	mutex_exit(&sc->sc_slock);
+	bp->b_resid = bp->b_bcount;
+	biodone(bp);
 }
 
 int
