@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.c,v 1.20 2017/11/26 14:29:48 maxv Exp $	*/
+/*	$NetBSD: mm.c,v 1.21 2017/12/21 14:32:06 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -29,10 +29,6 @@
  */
 
 #include "prekern.h"
-
-#define PAD_TEXT	0xCC
-#define PAD_RODATA	0x00
-#define PAD_DATA	0x00
 
 #define ELFROUND	64
 
