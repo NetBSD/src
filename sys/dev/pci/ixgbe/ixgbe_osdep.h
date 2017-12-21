@@ -1,6 +1,9 @@
-/******************************************************************************
+/* $NetBSD: ixgbe_osdep.h,v 1.17.6.1 2017/12/21 19:28:54 snj Exp $ */
 
-  Copyright (c) 2001-2015, Intel Corporation 
+/******************************************************************************
+  SPDX-License-Identifier: BSD-3-Clause
+
+  Copyright (c) 2001-2017, Intel Corporation 
   All rights reserved.
   
   Redistribution and use in source and binary forms, with or without 
@@ -30,11 +33,10 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_osdep.h 294734 2016-01-25 16:18:53Z smh $*/
-/*$NetBSD: ixgbe_osdep.h,v 1.17 2017/01/18 10:22:09 msaitoh Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_osdep.h 320688 2017-07-05 17:27:03Z erj $*/
 
-#ifndef _IXGBE_OS_H_
-#define _IXGBE_OS_H_
+#ifndef _IXGBE_OSDEP_H_
+#define _IXGBE_OSDEP_H_
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -53,7 +55,7 @@
 #include <net/if_ether.h>
 
 #define ASSERT(x) if(!(x)) panic("IXGBE: x")
-#define EWARN(H, W, S) printf(W)
+#define EWARN(H, W) printf(W)
 
 enum {
 	IXGBE_ERROR_SOFTWARE,
@@ -134,10 +136,13 @@ enum {
 #define IXGBE_NTOHS(_i)	ntohs(_i)
 
 /* XXX these need to be revisited */
+#define IXGBE_CPU_TO_LE16 htole16
 #define IXGBE_CPU_TO_LE32 htole32
+#define IXGBE_LE32_TO_CPU le32toh
 #define IXGBE_LE32_TO_CPUS(x)
 #define IXGBE_CPU_TO_BE16 htobe16
 #define IXGBE_CPU_TO_BE32 htobe32
+#define IXGBE_BE32_TO_CPU be32toh
 
 typedef uint8_t		u8;
 typedef int8_t		s8;
@@ -209,7 +214,7 @@ struct ixgbe_osdep
 };
 
 /* These routines need struct ixgbe_hw declared */
-struct ixgbe_hw; 
+struct ixgbe_hw;
 device_t ixgbe_dev_from_hw(struct ixgbe_hw *hw);
 
 /* These routines are needed by the shared code */
@@ -235,4 +240,4 @@ extern void ixgbe_write_reg_array(struct ixgbe_hw *, u32, u32, u32);
 #define IXGBE_WRITE_REG_ARRAY(a, reg, offset, val) \
     ixgbe_write_reg_array(a, reg, offset, val)
 
-#endif /* _IXGBE_OS_H_ */
+#endif /* _IXGBE_OSDEP_H_ */

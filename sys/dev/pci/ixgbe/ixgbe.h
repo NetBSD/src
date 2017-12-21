@@ -1,35 +1,40 @@
-/******************************************************************************
+/* $NetBSD: ixgbe.h,v 1.24.6.2 2017/12/21 19:28:54 snj Exp $ */
 
-  Copyright (c) 2001-2015, Intel Corporation 
+/******************************************************************************
+  SPDX-License-Identifier: BSD-3-Clause
+
+  Copyright (c) 2001-2017, Intel Corporation
   All rights reserved.
-  
-  Redistribution and use in source and binary forms, with or without 
+
+  Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions are met:
-  
-   1. Redistributions of source code must retain the above copyright notice, 
+
+   1. Redistributions of source code must retain the above copyright notice,
       this list of conditions and the following disclaimer.
-  
-   2. Redistributions in binary form must reproduce the above copyright 
-      notice, this list of conditions and the following disclaimer in the 
+
+   2. Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
       documentation and/or other materials provided with the distribution.
-  
-   3. Neither the name of the Intel Corporation nor the names of its 
-      contributors may be used to endorse or promote products derived from 
+
+   3. Neither the name of the Intel Corporation nor the names of its
+      contributors may be used to endorse or promote products derived from
       this software without specific prior written permission.
-  
+
   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
-  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
-  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
-  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
-  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
-  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe.h 320688 2017-07-05 17:27:03Z erj $*/
+
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -58,8 +63,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-/*$FreeBSD: head/sys/dev/ixgbe/ixgbe.h 303890 2016-08-09 19:32:06Z dumbbell $*/
-/*$NetBSD: ixgbe.h,v 1.24.6.1 2017/08/31 11:37:37 martin Exp $*/
 
 
 #ifndef _IXGBE_H_
@@ -107,17 +110,12 @@
 #include <sys/interrupt.h>
 #include <sys/bitops.h>
 
-#ifdef PCI_IOV
-#include <sys/nv.h>
-#include <sys/iov_schema.h>
-#include <dev/pci/pci_iov.h>
-#endif
-
 #include "ixgbe_netbsd.h"
 #include "ixgbe_api.h"
 #include "ixgbe_common.h"
 #include "ixgbe_phy.h"
 #include "ixgbe_vf.h"
+#include "ixgbe_features.h"
 
 /* Tunables */
 
@@ -156,32 +154,32 @@
  * pass between any two TX clean operations, such only happening
  * when the TX hardware is functioning.
  */
-#define IXGBE_WATCHDOG                   (10 * hz)
+#define IXGBE_WATCHDOG  (10 * hz)
 
 /*
  * This parameters control when the driver calls the routine to reclaim
  * transmit descriptors.
  */
-#define IXGBE_TX_CLEANUP_THRESHOLD	(adapter->num_tx_desc / 8)
-#define IXGBE_TX_OP_THRESHOLD		(adapter->num_tx_desc / 32)
+#define IXGBE_TX_CLEANUP_THRESHOLD(_a)  ((_a)->num_tx_desc / 8)
+#define IXGBE_TX_OP_THRESHOLD(_a)       ((_a)->num_tx_desc / 32)
 
 /* These defines are used in MTU calculations */
-#define IXGBE_MAX_FRAME_SIZE	9728
-#define IXGBE_MTU_HDR		(ETHER_HDR_LEN + ETHER_CRC_LEN)
-#define IXGBE_MTU_HDR_VLAN	(ETHER_HDR_LEN + ETHER_CRC_LEN + \
-				 ETHER_VLAN_ENCAP_LEN)
-#define IXGBE_MAX_MTU		(IXGBE_MAX_FRAME_SIZE - IXGBE_MTU_HDR)
-#define IXGBE_MAX_MTU_VLAN	(IXGBE_MAX_FRAME_SIZE - IXGBE_MTU_HDR_VLAN)
+#define IXGBE_MAX_FRAME_SIZE  9728
+#define IXGBE_MTU_HDR         (ETHER_HDR_LEN + ETHER_CRC_LEN)
+#define IXGBE_MTU_HDR_VLAN    (ETHER_HDR_LEN + ETHER_CRC_LEN + \
+                               ETHER_VLAN_ENCAP_LEN)
+#define IXGBE_MAX_MTU         (IXGBE_MAX_FRAME_SIZE - IXGBE_MTU_HDR)
+#define IXGBE_MAX_MTU_VLAN    (IXGBE_MAX_FRAME_SIZE - IXGBE_MTU_HDR_VLAN)
 
 /* Flow control constants */
-#define IXGBE_FC_PAUSE		0xFFFF
-#define IXGBE_FC_HI		0x20000
-#define IXGBE_FC_LO		0x10000
+#define IXGBE_FC_PAUSE        0xFFFF
+#define IXGBE_FC_HI           0x20000
+#define IXGBE_FC_LO           0x10000
 
 /*
  * Used for optimizing small rx mbufs.  Effort is made to keep the copy
  * small and aligned for the CPU L1 cache.
- * 
+ *
  * MHLEN is typically 168 bytes, giving us 8-byte alignment.  Getting
  * 32 byte alignment needed for the fast bcopy results in 8 bytes being
  * wasted.  Getting 64 byte alignment, which _should_ be ideal for
@@ -189,9 +187,9 @@
  * in observed efficiency of the optimization, 97.9% -> 81.8%.
  */
 #define	MPKTHSIZE		(offsetof(struct _mbuf_dummy, m_pktdat))
-#define IXGBE_RX_COPY_HDR_PADDED	((((MPKTHSIZE - 1) / 32) + 1) * 32)
-#define IXGBE_RX_COPY_LEN		(MSIZE - IXGBE_RX_COPY_HDR_PADDED)
-#define IXGBE_RX_COPY_ALIGN		(IXGBE_RX_COPY_HDR_PADDED - MPKTHSIZE)
+#define IXGBE_RX_COPY_HDR_PADDED  ((((MPKTHSIZE - 1) / 32) + 1) * 32)
+#define IXGBE_RX_COPY_LEN         (MSIZE - IXGBE_RX_COPY_HDR_PADDED)
+#define IXGBE_RX_COPY_ALIGN       (IXGBE_RX_COPY_HDR_PADDED - MPKTHSIZE)
 
 /* Keep older OS drivers building... */
 #if !defined(SYSCTL_ADD_UQUAD)
@@ -214,19 +212,19 @@
 #define HW_DEBUGOUT2(S, A, B)       if (DEBUG_HW) printf(S "\n", A, B)
 
 #define MAX_NUM_MULTICAST_ADDRESSES     128
-#define IXGBE_82598_SCATTER		100
-#define IXGBE_82599_SCATTER		32
-#define MSIX_82598_BAR			3
-#define MSIX_82599_BAR			4
-#define IXGBE_TSO_SIZE			262140
-#define IXGBE_RX_HDR			128
-#define IXGBE_VFTA_SIZE			128
-#define IXGBE_BR_SIZE			4096
-#define IXGBE_QUEUE_MIN_FREE		32
-#define IXGBE_MAX_TX_BUSY		10
-#define IXGBE_QUEUE_HUNG		0x80000000
+#define IXGBE_82598_SCATTER             100
+#define IXGBE_82599_SCATTER             32
+#define MSIX_82598_BAR                  3
+#define MSIX_82599_BAR                  4
+#define IXGBE_TSO_SIZE                  262140
+#define IXGBE_RX_HDR                    128
+#define IXGBE_VFTA_SIZE                 128
+#define IXGBE_BR_SIZE                   4096
+#define IXGBE_QUEUE_MIN_FREE            32
+#define IXGBE_MAX_TX_BUSY               10
+#define IXGBE_QUEUE_HUNG                0x80000000
 
-#define IXV_EITR_DEFAULT		128
+#define IXGBE_EITR_DEFAULT		128
 
 /* IOCTL define to gather SFP+ Diagnostic data */
 #define SIOCGI2C	SIOCGIFGENERIC
@@ -252,59 +250,24 @@
 #define IXGBE_BULK_LATENCY	1200
 
 /* Using 1FF (the max value), the interval is ~1.05ms */
-#define IXGBE_LINK_ITR_QUANTA	0x1FF
-#define IXGBE_LINK_ITR		((IXGBE_LINK_ITR_QUANTA << 3) & \
-				    IXGBE_EITR_ITR_INT_MASK)
-
-/* MAC type macros */
-#define IXGBE_IS_X550VF(_adapter) \
-	((_adapter->hw.mac.type == ixgbe_mac_X550_vf) || \
-	 (_adapter->hw.mac.type == ixgbe_mac_X550EM_x_vf))
-
-#define IXGBE_IS_VF(_adapter) \
-	(IXGBE_IS_X550VF(_adapter) || \
-	 (_adapter->hw.mac.type == ixgbe_mac_X540_vf) || \
-	 (_adapter->hw.mac.type == ixgbe_mac_82599_vf))
-
-#ifdef PCI_IOV
-#define IXGBE_VF_INDEX(vmdq)  ((vmdq) / 32)
-#define IXGBE_VF_BIT(vmdq)    (1 << ((vmdq) % 32))
-
-#define IXGBE_VT_MSG_MASK	0xFFFF
-
-#define IXGBE_VT_MSGINFO(msg)	\
-	(((msg) & IXGBE_VT_MSGINFO_MASK) >> IXGBE_VT_MSGINFO_SHIFT)
-
-#define IXGBE_VF_GET_QUEUES_RESP_LEN	5
-
-#define IXGBE_API_VER_1_0	0		
-#define IXGBE_API_VER_2_0	1	/* Solaris API.  Not supported. */
-#define IXGBE_API_VER_1_1	2
-#define IXGBE_API_VER_UNKNOWN	UINT16_MAX
-
-enum ixgbe_iov_mode {
-	IXGBE_64_VM,
-	IXGBE_32_VM,
-	IXGBE_NO_VM
-};
-#endif /* PCI_IOV */
+#define IXGBE_LINK_ITR_QUANTA  0x1FF
+#define IXGBE_LINK_ITR         ((IXGBE_LINK_ITR_QUANTA << 3) & \
+                                IXGBE_EITR_ITR_INT_MASK)
 
 
-/*
- *****************************************************************************
+
+/************************************************************************
  * vendor_info_array
- * 
- * This array contains the list of Subvendor/Subdevice IDs on which the driver
- * should load.
- * 
- *****************************************************************************
- */
+ *
+ *   Contains the list of Subvendor/Subdevice IDs on
+ *   which the driver should load.
+ ************************************************************************/
 typedef struct _ixgbe_vendor_info_t {
-	unsigned int    vendor_id;
-	unsigned int    device_id;
-	unsigned int    subvendor_id;
-	unsigned int    subdevice_id;
-	unsigned int    index;
+	unsigned int vendor_id;
+	unsigned int device_id;
+	unsigned int subvendor_id;
+	unsigned int subdevice_id;
+	unsigned int index;
 } ixgbe_vendor_info_t;
 
 /* This is used to get SFP+ module data */
@@ -315,58 +278,63 @@ struct ixgbe_i2c_req {
         u8 data[8];
 };
 
+struct ixgbe_bp_data {
+	u32 low;
+	u32 high;
+	u32 log;
+};
 
 struct ixgbe_tx_buf {
 	union ixgbe_adv_tx_desc	*eop;
-	struct mbuf	*m_head;
-	bus_dmamap_t	map;
+	struct mbuf             *m_head;
+	bus_dmamap_t            map;
 };
 
 struct ixgbe_rx_buf {
-	struct mbuf	*buf;
-	struct mbuf	*fmp;
-	bus_dmamap_t	pmap;
-	u_int		flags;
-#define IXGBE_RX_COPY	0x01
-	uint64_t	addr;
+	struct mbuf    *buf;
+	struct mbuf    *fmp;
+	bus_dmamap_t   pmap;
+	u_int          flags;
+#define IXGBE_RX_COPY  0x01
+	uint64_t       addr;
 };
 
 /*
- * Bus dma allocation structure used by ixgbe_dma_malloc and ixgbe_dma_free.
+ * Bus dma allocation structure used by ixgbe_dma_malloc and ixgbe_dma_free
  */
 struct ixgbe_dma_alloc {
-	bus_addr_t		dma_paddr;
-	void			*dma_vaddr;
-	ixgbe_dma_tag_t		*dma_tag;
-	bus_dmamap_t		dma_map;
-	bus_dma_segment_t	dma_seg;
-	bus_size_t		dma_size;
+	bus_addr_t        dma_paddr;
+	void              *dma_vaddr;
+	ixgbe_dma_tag_t   *dma_tag;
+	bus_dmamap_t      dma_map;
+	bus_dma_segment_t dma_seg;
+	bus_size_t        dma_size;
 };
 
 struct ixgbe_mc_addr {
-	u8 addr[IXGBE_ETH_LENGTH_OF_ADDRESS];
+	u8  addr[IXGBE_ETH_LENGTH_OF_ADDRESS];
 	u32 vmdq;
 };
 
 /*
-** Driver queue struct: this is the interrupt container
-**  for the associated tx and rx ring.
-*/
+ * Driver queue struct: this is the interrupt container
+ *                      for the associated tx and rx ring.
+ */
 struct ix_queue {
-	struct adapter		*adapter;
-	u32			msix;           /* This queue's MSIX vector */
-	u32			eims;           /* This queue's EIMS bit */
-	u32			eitr_setting;
-	u32			me;
-	struct resource		*res;
-	void			*tag;
-	int			busy;
-	struct tx_ring		*txr;
-	struct rx_ring		*rxr;
-	void			*que_si;
-	struct evcnt		irqs;
-	char			namebuf[32];
-	char			evnamebuf[32];
+	struct adapter   *adapter;
+	u32              msix;           /* This queue's MSI-X vector */
+	u32              eims;           /* This queue's EIMS bit */
+	u32              eitr_setting;
+	u32              me;
+	struct resource  *res;
+	void             *tag;
+	int              busy;
+	struct tx_ring   *txr;
+	struct rx_ring   *rxr;
+	void             *que_si;
+	struct evcnt     irqs;
+	char             namebuf[32];
+	char             evnamebuf[32];
 };
 
 /*
@@ -388,14 +356,13 @@ struct tx_ring {
 	u32			txd_cmd;
 	ixgbe_dma_tag_t		*txtag;
 	char			mtx_name[16];
-#ifndef IXGBE_LEGACY_TX
 	pcq_t			*txr_interq;
 	void			*txr_si;
-#endif
-#ifdef IXGBE_FDIR
+
+	/* Flow Director */
 	u16			atr_sample;
 	u16			atr_count;
-#endif
+
 	u32			bytes;  /* used for AIM */
 	u32			packets;
 	/* Soft Stats */
@@ -440,32 +407,25 @@ struct rx_ring {
 	struct evcnt 		rx_discarded;
 	struct evcnt 		no_jmbuf;
 	u64 			rsc_num;
-#ifdef IXGBE_FDIR
-	u64			flm;
-#endif
-};
 
-#ifdef PCI_IOV
-#define IXGBE_VF_CTS		(1 << 0) /* VF is clear to send. */
-#define IXGBE_VF_CAP_MAC	(1 << 1) /* VF is permitted to change MAC. */
-#define IXGBE_VF_CAP_VLAN	(1 << 2) /* VF is permitted to join vlans. */
-#define IXGBE_VF_ACTIVE		(1 << 3) /* VF is active. */
+	/* Flow Director */
+	u64			flm;
+};
 
 #define IXGBE_MAX_VF_MC 30  /* Max number of multicast entries */
 
 struct ixgbe_vf {
-	u_int		pool;
-	u_int		rar_index;
-	u_int		max_frame_size;
-	uint32_t	flags;
-	uint8_t		ether_addr[ETHER_ADDR_LEN];
-	uint16_t	mc_hash[IXGBE_MAX_VF_MC];
-	uint16_t	num_mc_hashes;
-	uint16_t	default_vlan;
-	uint16_t	vlan_tag;
-	uint16_t	api_ver;
+	u_int    pool;
+	u_int    rar_index;
+	u_int    max_frame_size;
+	uint32_t flags;
+	uint8_t  ether_addr[ETHER_ADDR_LEN];
+	uint16_t mc_hash[IXGBE_MAX_VF_MC];
+	uint16_t num_mc_hashes;
+	uint16_t default_vlan;
+	uint16_t vlan_tag;
+	uint16_t api_ver;
 };
-#endif /* PCI_IOV */
 
 /* Our adapter structure */
 struct adapter {
@@ -482,14 +442,14 @@ struct adapter {
 	/*
 	 * Interrupt resources: this set is
 	 * either used for legacy, or for Link
-	 * when doing MSIX
+	 * when doing MSI-X
 	 */
 	void			*tag;
 	struct resource 	*res;
 
 	struct ifmedia		media;
 	callout_t		timer;
-	int			msix;
+	int			link_rid;
 	int			if_flags;
 
 	kmutex_t		core_mtx;
@@ -497,16 +457,14 @@ struct adapter {
 	unsigned int		num_queues;
 
 	/*
-	** Shadow VFTA table, this is needed because
-	** the real vlan filter table gets cleared during
-	** a soft reset and the driver needs to be able
-	** to repopulate it.
-	*/
+	 * Shadow VFTA table, this is needed because
+	 * the real vlan filter table gets cleared during
+	 * a soft reset and the driver needs to be able
+	 * to repopulate it.
+	 */
 	u32			shadow_vfta[IXGBE_VFTA_SIZE];
 
 	/* Info about the interface */
-	u32			optics;
-	u32			fc; /* local flow ctrl setting */
 	int			advertise;  /* link speeds */
 	bool			enable_aim; /* adaptive interrupt moderation */
 	bool			link_active;
@@ -516,7 +474,6 @@ struct adapter {
 	bool			link_up;
 	u32 			vector;
 	u16			dmac;
-	bool			eee_enabled;
 	u32			phy_layer;
 
 	/* Power management-related */
@@ -531,34 +488,33 @@ struct adapter {
 	void			*link_si;  /* Link tasklet */
 	void			*mod_si;   /* SFP tasklet */
 	void			*msf_si;   /* Multispeed Fiber */
-#ifdef PCI_IOV
 	void			*mbx_si;   /* VF -> PF mailbox interrupt */
-#endif /* PCI_IOV */
-#ifdef IXGBE_FDIR
+
+	/* Flow Director */
 	int			fdir_reinit;
 	void			*fdir_si;
-#endif
+
 	void			*phy_si;   /* PHY intr tasklet */
 
 	/*
-	** Queues: 
-	**   This is the irq holder, it has
-	**   and RX/TX pair or rings associated
-	**   with it.
-	*/
+	 * Queues:
+	 *   This is the irq holder, it has
+	 *   and RX/TX pair or rings associated
+	 *   with it.
+	 */
 	struct ix_queue		*queues;
 
 	/*
-	 * Transmit rings:
-	 *	Allocated at run time, an array of rings.
+	 * Transmit rings
+	 *      Allocated at run time, an array of rings
 	 */
 	struct tx_ring		*tx_rings;
 	u32			num_tx_desc;
 	u32			tx_process_limit;
 
 	/*
-	 * Receive rings:
-	 *	Allocated at run time, an array of rings.
+	 * Receive rings
+	 *      Allocated at run time, an array of rings
 	 */
 	struct rx_ring		*rx_rings;
 	u64			active_queues;
@@ -567,15 +523,19 @@ struct adapter {
 
 	/* Multicast array memory */
 	struct ixgbe_mc_addr	*mta;
+
+	/* SR-IOV */
+	int                     iov_mode;
 	int			num_vfs;
 	int			pool;
-#ifdef PCI_IOV
 	struct ixgbe_vf		*vfs;
-#endif
-#ifdef DEV_NETMAP
+
+	/* Bypass */
+	struct ixgbe_bp_data    bypass;
+
+	/* Netmap */
 	void 			(*init_locked)(struct adapter *);
 	void 			(*stop_locked)(void *);
-#endif
 
 	/* Misc stats maintained by the driver */
 	struct evcnt   		mbuf_defrag_failed;
@@ -608,6 +568,10 @@ struct adapter {
 	u64			iqdrops;
 	u64			noproto;
 #endif
+	/* Feature capable/enabled flags.  See ixgbe_features.h */
+	u32                     feat_cap;
+	u32                     feat_en;
+
 	struct sysctllog	*sysctllog;
 	const struct sysctlnode *sysctltop;
 	ixgbe_extmem_head_t jcl_head;
@@ -618,7 +582,7 @@ struct adapter {
 #define ETHERTYPE_IEEE1588      0x88F7
 #define PICOSECS_PER_TICK       20833
 #define TSYNC_UDP_PORT          319 /* UDP port for the protocol */
-#define IXGBE_ADVTXD_TSTAMP	0x00080000
+#define IXGBE_ADVTXD_TSTAMP     0x00080000
 
 
 #define IXGBE_CORE_LOCK_INIT(_sc, _name) \
@@ -668,10 +632,13 @@ struct adapter {
 /* Sysctl help messages; displayed with sysctl -d */
 #define IXGBE_SYSCTL_DESC_ADV_SPEED \
 	"\nControl advertised link speed using these flags:\n" \
-	"\t0x1 - advertise 100M\n" \
-	"\t0x2 - advertise 1G\n" \
-	"\t0x4 - advertise 10G\n\n" \
-	"\t100M is only supported on certain 10GBaseT adapters."
+	"\t0x01 - advertise 100M\n" \
+	"\t0x02 - advertise 1G\n" \
+        "\t0x04 - advertise 10G\n" \
+        "\t0x08 - advertise 10M\n" \
+        "\t0x10 - advertise 2.5G\n" \
+        "\t0x20 - advertise 5G\n\n" \
+        "\t5G, 2.5G, 100M and 10M are only supported on certain adapters."
 
 #define IXGBE_SYSCTL_DESC_SET_FC \
 	"\nSet flow control mode using these values:\n" \
@@ -679,32 +646,6 @@ struct adapter {
 	"\t1 - rx pause\n" \
 	"\t2 - tx pause\n" \
 	"\t3 - tx and rx pause"
-
-static inline bool
-ixgbe_is_sfp(struct ixgbe_hw *hw)
-{
-	switch (hw->phy.type) {
-	case ixgbe_phy_sfp_avago:
-	case ixgbe_phy_sfp_ftl:
-	case ixgbe_phy_sfp_intel:
-	case ixgbe_phy_sfp_unknown:
-	case ixgbe_phy_sfp_passive_tyco:
-	case ixgbe_phy_sfp_passive_unknown:
-	case ixgbe_phy_sfp_unsupported:
-	case ixgbe_phy_qsfp_passive_unknown:
-	case ixgbe_phy_qsfp_active_unknown:
-	case ixgbe_phy_qsfp_intel:
-	case ixgbe_phy_qsfp_unknown:
-		return TRUE;
-	default:
-		break;
-	}
-
-	if (hw->phy.sfp_type == ixgbe_sfp_type_not_present)
-		return TRUE;
-
-	return FALSE;
-}
 
 /* Workaround to make 8.0 buildable */
 #if __FreeBSD_version >= 800000 && __FreeBSD_version < 800504
@@ -720,22 +661,38 @@ drbr_needs_enqueue(struct ifnet *ifp, struct buf_ring *br)
 #endif
 
 /*
-** Find the number of unrefreshed RX descriptors
-*/
+ * Find the number of unrefreshed RX descriptors
+ */
 static inline u16
 ixgbe_rx_unrefreshed(struct rx_ring *rxr)
-{       
+{
 	if (rxr->next_to_check > rxr->next_to_refresh)
 		return (rxr->next_to_check - rxr->next_to_refresh - 1);
 	else
 		return ((rxr->num_desc + rxr->next_to_check) -
 		    rxr->next_to_refresh - 1);
-}       
+}
+
+static inline int
+ixgbe_legacy_ring_empty(struct ifnet *ifp, pcq_t *dummy)
+{
+	UNREFERENCED_1PARAMETER(dummy);
+
+	return IFQ_IS_EMPTY(&ifp->if_snd);
+}
+
+static inline int
+ixgbe_mq_ring_empty(struct ifnet *dummy, pcq_t *interq)
+{
+	UNREFERENCED_1PARAMETER(dummy);
+
+	return (pcq_peek(interq) == NULL);
+}
 
 /*
-** This checks for a zero mac addr, something that will be likely
-** unless the Admin on the Host has created one.
-*/
+ * This checks for a zero mac addr, something that will be likely
+ * unless the Admin on the Host has created one.
+ */
 static inline bool
 ixv_check_ether_addr(u8 *addr)
 {
@@ -744,176 +701,31 @@ ixv_check_ether_addr(u8 *addr)
 	if ((addr[0] == 0 && addr[1]== 0 && addr[2] == 0 &&
 	    addr[3] == 0 && addr[4]== 0 && addr[5] == 0))
 		status = FALSE;
+
 	return (status);
 }
 
 /* Shared Prototypes */
+void ixgbe_legacy_start(struct ifnet *);
+int  ixgbe_legacy_start_locked(struct ifnet *, struct tx_ring *);
+int  ixgbe_mq_start(struct ifnet *, struct mbuf *);
+int  ixgbe_mq_start_locked(struct ifnet *, struct tx_ring *);
+void ixgbe_deferred_mq_start(void *);
 
-void	ixgbe_start(struct ifnet *);
-void	ixgbe_start_locked(struct tx_ring *, struct ifnet *);
-#ifndef IXGBE_LEGACY_TX
-int	ixgbe_mq_start(struct ifnet *, struct mbuf *);
-int	ixgbe_mq_start_locked(struct ifnet *, struct tx_ring *);
-void	ixgbe_deferred_mq_start(void *);
-#endif /* !IXGBE_LEGACY_TX */
+int  ixgbe_allocate_queues(struct adapter *);
+int  ixgbe_setup_transmit_structures(struct adapter *);
+void ixgbe_free_transmit_structures(struct adapter *);
+int  ixgbe_setup_receive_structures(struct adapter *);
+void ixgbe_free_receive_structures(struct adapter *);
+void ixgbe_txeof(struct tx_ring *);
+bool ixgbe_rxeof(struct ix_queue *);
 
-int	ixgbe_allocate_queues(struct adapter *);
-int	ixgbe_allocate_transmit_buffers(struct tx_ring *);
-int	ixgbe_setup_transmit_structures(struct adapter *);
-void	ixgbe_free_transmit_structures(struct adapter *);
-int	ixgbe_allocate_receive_buffers(struct rx_ring *);
-int	ixgbe_setup_receive_structures(struct adapter *);
-void	ixgbe_free_receive_structures(struct adapter *);
-void	ixgbe_txeof(struct tx_ring *);
-bool	ixgbe_rxeof(struct ix_queue *);
+const struct sysctlnode *ixgbe_sysctl_instance(struct adapter *);
 
-int	ixgbe_dma_malloc(struct adapter *,
-	    bus_size_t, struct ixgbe_dma_alloc *, int);
-void	ixgbe_dma_free(struct adapter *, struct ixgbe_dma_alloc *);
-
-#ifdef PCI_IOV
-
-static inline boolean_t
-ixgbe_vf_mac_changed(struct ixgbe_vf *vf, const uint8_t *mac)
-{
-	return (bcmp(mac, vf->ether_addr, ETHER_ADDR_LEN) != 0);
-}
-
-static inline void
-ixgbe_send_vf_msg(struct adapter *adapter, struct ixgbe_vf *vf, u32 msg)
-{
-
-	if (vf->flags & IXGBE_VF_CTS)
-		msg |= IXGBE_VT_MSGTYPE_CTS;
-	
-	ixgbe_write_mbx(&adapter->hw, &msg, 1, vf->pool);
-}
-
-static inline void
-ixgbe_send_vf_ack(struct adapter *adapter, struct ixgbe_vf *vf, u32 msg)
-{
-	msg &= IXGBE_VT_MSG_MASK;
-	ixgbe_send_vf_msg(adapter, vf, msg | IXGBE_VT_MSGTYPE_ACK);
-}
-
-static inline void
-ixgbe_send_vf_nack(struct adapter *adapter, struct ixgbe_vf *vf, u32 msg)
-{
-	msg &= IXGBE_VT_MSG_MASK;
-	ixgbe_send_vf_msg(adapter, vf, msg | IXGBE_VT_MSGTYPE_NACK);
-}
-
-static inline void
-ixgbe_process_vf_ack(struct adapter *adapter, struct ixgbe_vf *vf)
-{
-	if (!(vf->flags & IXGBE_VF_CTS))
-		ixgbe_send_vf_nack(adapter, vf, 0);
-}
-
-static inline enum ixgbe_iov_mode
-ixgbe_get_iov_mode(struct adapter *adapter)
-{
-	if (adapter->num_vfs == 0)
-		return (IXGBE_NO_VM);
-	if (adapter->num_queues <= 2)
-		return (IXGBE_64_VM);
-	else if (adapter->num_queues <= 4)
-		return (IXGBE_32_VM);
-	else
-		return (IXGBE_NO_VM);
-}
-
-static inline u16
-ixgbe_max_vfs(enum ixgbe_iov_mode mode)
-{
-	/*
-	 * We return odd numbers below because we
-	 * reserve 1 VM's worth of queues for the PF.
-	 */
-	switch (mode) {
-	case IXGBE_64_VM:
-		return (63);
-	case IXGBE_32_VM:
-		return (31);
-	case IXGBE_NO_VM:
-	default:
-		return (0);
-	}
-}
-
-static inline int
-ixgbe_vf_queues(enum ixgbe_iov_mode mode)
-{
-	switch (mode) {
-	case IXGBE_64_VM:
-		return (2);
-	case IXGBE_32_VM:
-		return (4);
-	case IXGBE_NO_VM:
-	default:
-		return (0);
-	}
-}
-
-static inline int
-ixgbe_vf_que_index(enum ixgbe_iov_mode mode, u32 vfnum, int num)
-{
-	return ((vfnum * ixgbe_vf_queues(mode)) + num);
-}
-
-static inline int
-ixgbe_pf_que_index(enum ixgbe_iov_mode mode, int num)
-{
-	return (ixgbe_vf_que_index(mode, ixgbe_max_vfs(mode), num));
-}
-
-static inline void
-ixgbe_update_max_frame(struct adapter * adapter, int max_frame)
-{
-	if (adapter->max_frame_size < max_frame)
-		adapter->max_frame_size = max_frame;
-}
-
-static inline u32
-ixgbe_get_mrqc(enum ixgbe_iov_mode mode)
-{
-       u32 mrqc = 0;
-       switch (mode) {
-       case IXGBE_64_VM:
-               mrqc = IXGBE_MRQC_VMDQRSS64EN;
-               break;
-       case IXGBE_32_VM:
-               mrqc = IXGBE_MRQC_VMDQRSS32EN;
-               break;
-        case IXGBE_NO_VM:
-                mrqc = 0;
-                break;
-       default:
-            panic("Unexpected SR-IOV mode %d", mode);
-       }
-        return(mrqc);
-}
-
-
-static inline u32
-ixgbe_get_mtqc(enum ixgbe_iov_mode mode)
-{
-       uint32_t mtqc = 0;
-        switch (mode) {
-        case IXGBE_64_VM:
-               mtqc |= IXGBE_MTQC_64VF | IXGBE_MTQC_VT_ENA;
-                break;
-        case IXGBE_32_VM:
-               mtqc |= IXGBE_MTQC_32VF | IXGBE_MTQC_VT_ENA;
-                break;
-        case IXGBE_NO_VM:
-                mtqc = IXGBE_MTQC_64Q_1PB;
-                break;
-        default:
-                panic("Unexpected SR-IOV mode %d", mode);
-        }
-        return(mtqc);
-}
-#endif /* PCI_IOV */
+#include "ixgbe_bypass.h"
+#include "ixgbe_sriov.h"
+#include "ixgbe_fdir.h"
+#include "ixgbe_rss.h"
+#include "ixgbe_netmap.h"
 
 #endif /* _IXGBE_H_ */
