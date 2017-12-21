@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.18 2017/12/14 11:39:31 martin Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.19 2017/12/21 08:28:55 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.18 2017/12/14 11:39:31 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.19 2017/12/21 08:28:55 skrll Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -64,7 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.18 2017/12/14 11:39:31 martin Exp 
 
 #include <machine/bootconfig.h>
 #include <arm/armreg.h>
-#include <arm/undefined.h>
 
 #include <arm/arm32/machdep.h>
 
