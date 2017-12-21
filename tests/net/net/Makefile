@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.20 2017/03/31 06:41:40 ozaki-r Exp $
+# $NetBSD: Makefile,v 1.20.4.1 2017/12/21 21:08:13 snj Exp $
 #
 
 .include <bsd.own.mk>
@@ -10,6 +10,7 @@ TESTS_C+=	t_tcp
 TESTS_C+=	t_udp
 TESTS_C+=	t_pktinfo
 .if (${MKRUMP} != "no") && !defined(BSD_MK_COMPAT_FILE)
+TESTS_C+=	t_pktinfo_send
 TESTS_C+=	t_raw
 
 .for name in forwarding ipaddress ipv6address ipv6_lifetime mtudisc mtudisc6 \
@@ -19,6 +20,9 @@ TESTS_SH_SRC_t_${name}=	../net_common.sh t_${name}.sh
 .endfor
 .endif
 
+LDADD.t_pktinfo_send+=	-lrumpnet_local -lrumpnet_netinet -lrumpnet_net
+LDADD.t_pktinfo_send+=	-lrumpdev -lrumpnet_shmif -lrumpnet
+LDADD.t_pktinfo_send+=	-lrumpvfs -lrump -lrumpuser -lrump -lpthread
 LDADD.t_raw+=	-lrumpnet_local -lrumpnet_netinet -lrumpnet_net -lrumpdev
 LDADD.t_raw+=	-lrumpnet -lrumpvfs -lrump -lrumpuser -lrump -lpthread
 

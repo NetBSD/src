@@ -1,4 +1,4 @@
-.\"	$NetBSD: ip.4,v 1.36 2013/07/13 09:24:25 njoly Exp $
+.\"	$NetBSD: ip.4,v 1.36.20.1 2017/12/21 21:08:13 snj Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)ip.4	8.2 (Berkeley) 11/30/93
 .\"
-.Dd June 27, 2013
+.Dd August 10, 2017
 .Dt IP 4
 .Os
 .Sh NAME
@@ -121,6 +121,7 @@ structure, which contains
 	struct in_addr ipi_addr;	/* the source or destination address */
 	unsigned int ipi_ifindex;	/* the interface index */
 .Ed
+.Pp
 and added to the control portion of the message:
 The cmsghdr fields have the following values:
 .Bd -literal
@@ -128,6 +129,16 @@ cmsg_len = CMSG_LEN(sizeof(struct in_pktinfo))
 cmsg_level = IPPROTO_IP
 cmsg_type = IP_PKTINFO
 .Ed
+.Pp
+For
+.Xr sendmsg 2 ,
+the source address or output interface can be specified by adding
+.Dv IP_PKTINFO
+to the control part of the message on a
+.Dv SOCK_DGRAM
+or
+.Dv SOCK_RAW
+socket.
 .Pp
 The
 .Dv IP_PORTALGO

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.279.2.1 2017/07/07 09:23:01 martin Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.279.2.2 2017/12/21 21:08:13 snj Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.279.2.1 2017/07/07 09:23:01 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.279.2.2 2017/12/21 21:08:13 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -127,6 +127,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.279.2.1 2017/07/07 09:23:01 martin E
 #include <netinet/in_offload.h>
 #include <netinet/portalgo.h>
 #include <netinet/udp.h>
+#include <netinet/udp_var.h>
 
 #ifdef INET6
 #include <netinet6/ip6_var.h>
@@ -329,8 +330,9 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 		mtu = ifp->if_mtu;
 		ip->ip_ttl = 1;
 		isbroadcast = in_broadcast(dst->sin_addr, ifp);
-	} else if ((IN_MULTICAST(ip->ip_dst.s_addr) ||
-	    ip->ip_dst.s_addr == INADDR_BROADCAST) &&
+	} else if (((IN_MULTICAST(ip->ip_dst.s_addr) ||
+	    ip->ip_dst.s_addr == INADDR_BROADCAST) ||
+	    (flags & IP_ROUTETOIFINDEX)) &&
 	    imo != NULL && imo->imo_multicast_if_index != 0) {
 		ifp = mifp = if_get_byindex(imo->imo_multicast_if_index, &psref);
 		if (ifp == NULL) {
@@ -344,7 +346,31 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 			error = EADDRNOTAVAIL;
 			goto bad;
 		}
-		isbroadcast = 0;
+		if (IN_MULTICAST(ip->ip_dst.s_addr) ||
+		    ip->ip_dst.s_addr == INADDR_BROADCAST) {
+			isbroadcast = 0;
+		} else {
+			/* IP_ROUTETOIFINDEX */
+			isbroadcast = in_broadcast(dst->sin_addr, ifp);
+			if ((isbroadcast == 0) && ((ifp->if_flags &
+			    (IFF_LOOPBACK | IFF_POINTOPOINT)) == 0) &&
+			    (in_direct(dst->sin_addr, ifp) == 0)) {
+				/* gateway address required */
+				if (rt == NULL)
+					rt = rtcache_init(ro);
+				if (rt == NULL || rt->rt_ifp != ifp) {
+					IP_STATINC(IP_STAT_NOROUTE);
+					error = EHOSTUNREACH;
+					goto bad;
+				}
+				rt->rt_use++;
+				if (rt->rt_flags & RTF_GATEWAY)
+					dst = satosin(rt->rt_gateway);
+				if (rt->rt_flags & RTF_HOST)
+					isbroadcast =
+					    rt->rt_flags & RTF_BROADCAST;
+			}
+		}
 	} else {
 		if (rt == NULL)
 			rt = rtcache_init(ro);
@@ -1318,6 +1344,120 @@ ip_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 		inp->inp_flags = inpflags;
 	}
 	return error;
+}
+
+static int
+ip_pktinfo_prepare(const struct in_pktinfo *pktinfo, struct ip_pktopts *pktopts,
+    int *flags, kauth_cred_t cred)
+{
+	struct ip_moptions *imo;
+	int error = 0;
+	bool addrset = false;
+
+	if (!in_nullhost(pktinfo->ipi_addr)) {
+		pktopts->ippo_laddr.sin_addr = pktinfo->ipi_addr;
+		/* EADDRNOTAVAIL? */
+		error = in_pcbbindableaddr(&pktopts->ippo_laddr, cred);
+		if (error != 0)
+			return error;
+		addrset = true;
+	}
+
+	if (pktinfo->ipi_ifindex != 0) {
+		if (!addrset) {
+			struct ifnet *ifp;
+			struct in_ifaddr *ia;
+			int s;
+
+			/* pick up primary address */
+			s = pserialize_read_enter();
+			ifp = if_byindex(pktinfo->ipi_ifindex);
+			if (ifp == NULL) {
+				pserialize_read_exit(s);
+				return EADDRNOTAVAIL;
+			}
+			ia = in_get_ia_from_ifp(ifp);
+			if (ia == NULL) {
+				pserialize_read_exit(s);
+				return EADDRNOTAVAIL;
+			}
+			pktopts->ippo_laddr.sin_addr = IA_SIN(ia)->sin_addr;
+			pserialize_read_exit(s);
+		}
+
+		/*
+		 * If specified ipi_ifindex,
+		 * use copied or locally initialized ip_moptions.
+		 * Original ip_moptions must not be modified.
+		 */
+		imo = &pktopts->ippo_imobuf;	/* local buf in pktopts */
+		if (pktopts->ippo_imo != NULL) {
+			memcpy(imo, pktopts->ippo_imo, sizeof(*imo));
+		} else {
+			memset(imo, 0, sizeof(*imo));
+			imo->imo_multicast_ttl = IP_DEFAULT_MULTICAST_TTL;
+			imo->imo_multicast_loop = IP_DEFAULT_MULTICAST_LOOP;
+		}
+		imo->imo_multicast_if_index = pktinfo->ipi_ifindex;
+		pktopts->ippo_imo = imo;
+		*flags |= IP_ROUTETOIFINDEX;
+	}
+	return error;
+}
+
+/*
+ * Set up IP outgoing packet options. Even if control is NULL,
+ * pktopts->ippo_laddr and pktopts->ippo_imo are set and used.
+ */
+int
+ip_setpktopts(struct mbuf *control, struct ip_pktopts *pktopts, int *flags,
+    struct inpcb *inp, kauth_cred_t cred)
+{
+	struct cmsghdr *cm;
+	struct in_pktinfo *pktinfo;
+	int error;
+
+	pktopts->ippo_imo = inp->inp_moptions;
+	sockaddr_in_init(&pktopts->ippo_laddr, &inp->inp_laddr, 0);
+
+	if (control == NULL)
+		return 0;
+
+	/*
+	 * XXX: Currently, we assume all the optional information is
+	 * stored in a single mbuf.
+	 */
+	if (control->m_next)
+		return EINVAL;
+
+	for (; control->m_len > 0;
+	    control->m_data += CMSG_ALIGN(cm->cmsg_len),
+	    control->m_len -= CMSG_ALIGN(cm->cmsg_len)) {
+		cm = mtod(control, struct cmsghdr *);
+		if ((control->m_len < sizeof(*cm)) ||
+		    (cm->cmsg_len == 0) ||
+		    (cm->cmsg_len > control->m_len)) {
+			return EINVAL;
+		}
+		if (cm->cmsg_level != IPPROTO_IP)
+			continue;
+
+		switch (cm->cmsg_type) {
+		case IP_PKTINFO:
+			if (cm->cmsg_len != CMSG_LEN(sizeof(struct in_pktinfo)))
+				return EINVAL;
+
+			pktinfo = (struct in_pktinfo *)CMSG_DATA(cm);
+			error = ip_pktinfo_prepare(pktinfo, pktopts, flags,
+			    cred);
+			if (error != 0)
+				return error;
+			break;
+		default:
+			return ENOPROTOOPT;
+		}
+	}
+	return 0;
 }
 
 /*

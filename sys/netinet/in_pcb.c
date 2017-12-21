@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.178 2017/04/25 05:44:11 ozaki-r Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.178.4.1 2017/12/21 21:08:13 snj Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.178 2017/04/25 05:44:11 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.178.4.1 2017/12/21 21:08:13 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -270,8 +270,8 @@ in_pcbsetport(struct sockaddr_in *sin, struct inpcb *inp, kauth_cred_t cred)
 	return (0);
 }
 
-static int
-in_pcbbind_addr(struct inpcb *inp, struct sockaddr_in *sin, kauth_cred_t cred)
+int
+in_pcbbindableaddr(struct sockaddr_in *sin, kauth_cred_t cred)
 {
 	int error = EADDRNOTAVAIL;
 	struct ifaddr *ifa = NULL;
@@ -298,13 +298,20 @@ in_pcbbind_addr(struct inpcb *inp, struct sockaddr_in *sin, kauth_cred_t cred)
 		if (ia->ia4_flags & IN_IFF_DUPLICATED)
 			goto error;
 	}
+	error = 0;
+ error:
 	pserialize_read_exit(s);
+	return error;
+}
 
-	inp->inp_laddr = sin->sin_addr;
+static int
+in_pcbbind_addr(struct inpcb *inp, struct sockaddr_in *sin, kauth_cred_t cred)
+{
+	int error;
 
-	return (0);
-error:
-	pserialize_read_exit(s);
+	error = in_pcbbindableaddr(sin, cred);
+	if (error == 0)
+		inp->inp_laddr = sin->sin_addr;
 	return error;
 }
 
