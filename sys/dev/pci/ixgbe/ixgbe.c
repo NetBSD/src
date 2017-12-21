@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.117 2017/12/21 06:49:26 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.118 2017/12/21 09:24:45 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -5666,8 +5666,9 @@ ixgbe_allocate_legacy(struct adapter *adapter,
 	counts[PCI_INTR_TYPE_MSIX] = 0;
 	counts[PCI_INTR_TYPE_MSI] =
 	    (adapter->feat_en & IXGBE_FEATURE_MSI) ? 1 : 0;
+	/* Check not feat_en but feat_cap to fallback to INTx */
 	counts[PCI_INTR_TYPE_INTX] =
-	    (adapter->feat_en & IXGBE_FEATURE_LEGACY_IRQ) ? 1 : 0;
+	    (adapter->feat_cap & IXGBE_FEATURE_LEGACY_IRQ) ? 1 : 0;
 
 alloc_retry:
 	if (pci_intr_alloc(pa, &adapter->osdep.intrs, counts, max_type) != 0) {
@@ -5691,7 +5692,12 @@ alloc_retry:
 			/* The next try is for INTx: Disable MSI */
 			max_type = PCI_INTR_TYPE_INTX;
 			counts[PCI_INTR_TYPE_INTX] = 1;
-			goto alloc_retry;
+			adapter->feat_en &= ~IXGBE_FEATURE_MSI;
+			if (adapter->feat_cap & IXGBE_FEATURE_LEGACY_IRQ) {
+				adapter->feat_en |= IXGBE_FEATURE_LEGACY_IRQ;
+				goto alloc_retry;
+			} else
+				break;
 		case PCI_INTR_TYPE_INTX:
 		default:
 			/* See below */
@@ -5958,6 +5964,13 @@ ixgbe_configure_interrupts(struct adapter *adapter)
 	if (!(adapter->feat_cap & IXGBE_FEATURE_MSIX))
 		goto msi;
 
+	/*
+	 *  NetBSD only: Use single vector MSI when number of CPU is 1 to save
+	 * interrupt slot.
+	 */
+	if (ncpu == 1)
+		goto msi;
+	
 	/* First try MSI-X */
 	msgs = pci_msix_count(adapter->osdep.pc, adapter->osdep.tag);
 	msgs = MIN(msgs, IXG_MAX_NINTR);
