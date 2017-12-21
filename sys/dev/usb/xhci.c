@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.72.2.4 2017/11/23 13:29:32 martin Exp $	*/
+/*	$NetBSD: xhci.c,v 1.72.2.5 2017/12/21 21:53:31 snj Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.72.2.4 2017/11/23 13:29:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.72.2.5 2017/12/21 21:53:31 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -3147,8 +3147,10 @@ static void
 xhci_setup_tthub(struct usbd_pipe *pipe, uint32_t *cp)
 {
 	struct usbd_device *dev = pipe->up_dev;
+	struct usbd_port *myhsport = dev->ud_myhsport;
 	usb_device_descriptor_t * const dd = &dev->ud_ddesc;
 	uint32_t speed = dev->ud_speed;
+	uint8_t rhaddr = dev->ud_bus->ub_rhaddr;
 	uint8_t tthubslot, ttportnum;
 	bool ishub;
 	bool usemtt;
@@ -3170,19 +3172,17 @@ xhci_setup_tthub(struct usbd_pipe *pipe, uint32_t *cp)
 	 *   parent hub is not HS hub ||
 	 *   attached to root hub.
 	 */
-	if (dev->ud_myhsport != NULL &&
-	    dev->ud_myhub != NULL && dev->ud_myhub->ud_depth != 0 &&
-	    (dev->ud_myhub != NULL &&
-	     dev->ud_myhub->ud_speed == USB_SPEED_HIGH) &&
+	if (myhsport &&
+	    myhsport->up_parent->ud_addr != rhaddr &&
 	    (speed == USB_SPEED_LOW || speed == USB_SPEED_FULL)) {
-		ttportnum = dev->ud_myhsport->up_portno;
-		tthubslot = dev->ud_myhsport->up_parent->ud_addr;
+		ttportnum = myhsport->up_portno;
+		tthubslot = myhsport->up_parent->ud_addr;
 	} else {
 		ttportnum = 0;
 		tthubslot = 0;
 	}
 	DPRINTFN(4, "myhsport %#jx ttportnum=%jd tthubslot=%jd",
-	    (uintptr_t)dev->ud_myhsport, ttportnum, tthubslot, 0);
+	    (uintptr_t)myhsport, ttportnum, tthubslot, 0);
 
 	/* ishub is valid after reading UDESC_DEVICE */
 	ishub = (dd->bDeviceClass == UDCLASS_HUB);
@@ -3198,33 +3198,30 @@ xhci_setup_tthub(struct usbd_pipe *pipe, uint32_t *cp)
 		DPRINTFN(4, "nports=%jd ttt=%jd", hd->bNbrPorts, ttt, 0, 0);
 	}
 
-#define IS_TTHUB(dd) \
-    ((dd)->bDeviceProtocol == UDPROTO_HSHUBSTT || \
-     (dd)->bDeviceProtocol == UDPROTO_HSHUBMTT)
+#define IS_MTTHUB(dd) \
+     ((dd)->bDeviceProtocol == UDPROTO_HSHUBMTT)
 
 	/*
 	 * MTT flag is set if
-	 * 1. this is HS hub && MTT is enabled
-	 *  or
-	 * 2. this is not hub && this is LS or FS device &&
-	 *    MTT of parent HS hub (and its parent, too) is enabled
+	 * 1. this is HS hub && MTTs are supported and enabled;  or
+	 * 2. this is LS or FS device && there is a parent HS hub where MTTs
+	 *    are supported and enabled.
+	 *
+	 * XXX enabled is not tested yet
 	 */
-	if (ishub && speed == USB_SPEED_HIGH && IS_TTHUB(dd))
+	if (ishub && speed == USB_SPEED_HIGH && IS_MTTHUB(dd))
 		usemtt = true;
-	else if (!ishub &&
-	     (speed == USB_SPEED_LOW || speed == USB_SPEED_FULL) &&
-	     dev->ud_myhub != NULL && dev->ud_myhub->ud_depth != 0 &&
-	     (dev->ud_myhub != NULL &&
-	      dev->ud_myhub->ud_speed == USB_SPEED_HIGH) &&
-	     dev->ud_myhsport != NULL &&
-	     IS_TTHUB(&dev->ud_myhsport->up_parent->ud_ddesc))
+	else if ((speed == USB_SPEED_LOW || speed == USB_SPEED_FULL) &&
+	    myhsport &&
+	    myhsport->up_parent->ud_addr != rhaddr &&
+	    IS_MTTHUB(&myhsport->up_parent->ud_ddesc))
 		usemtt = true;
 	else
 		usemtt = false;
 	DPRINTFN(4, "class %ju proto %ju ishub %jd usemtt %jd",
 	    dd->bDeviceClass, dd->bDeviceProtocol, ishub, usemtt);
 
-#undef IS_TTHUB
+#undef IS_MTTHUB
 
 	cp[0] |=
 	    XHCI_SCTX_0_HUB_SET(ishub ? 1 : 0) |
