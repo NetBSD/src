@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.125 2017/06/01 02:45:13 chs Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.125.2.1 2017/12/21 21:37:03 snj Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.125 2017/06/01 02:45:13 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.125.2.1 2017/12/21 21:37:03 snj Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -1039,6 +1039,23 @@ module_do_load(const char *name, bool isdep, int flags,
 	}
 
 	/*
+	 * If we loaded a module from the filesystem, check the actual
+	 * module name (from the modinfo_t) to ensure another module
+	 * with the same name doesn't already exist.  (There's no
+	 * guarantee the filename will match the module name, and the
+	 * dup-symbols check may not be sufficient.)
+	 */
+	if (mod->mod_source == MODULE_SOURCE_FILESYS) {
+		mod2 = module_lookup(mod->mod_info->mi_name);
+		if ( mod2 && mod2 != mod) {
+			module_error("module with name `%s' already loaded",
+			    mod2->mod_info->mi_name);
+			error = EEXIST;
+			goto fail;
+		}
+	}
+
+	/*
 	 * Block circular dependencies.
 	 */
 	TAILQ_FOREACH(mod2, pending, mod_chain) {
@@ -1133,6 +1150,18 @@ module_do_load(const char *name, bool isdep, int flags,
 	}
 
 	/*
+	 * If a recursive load already added a module with the same
+	 * name, abort.
+	 */
+	mod2 = module_lookup(mi->mi_name);
+	if (mod2 && mod2 != mod) {
+		module_error("recursive load causes duplicate module `%s'",
+		    mi->mi_name);
+		error = EEXIST;
+		goto fail1;
+	}
+
+	/*
 	 * Good, the module loaded successfully.  Put it onto the
 	 * list and add references to its requisite modules.
 	 */
@@ -1154,6 +1183,8 @@ module_do_load(const char *name, bool isdep, int flags,
 	module_print("module `%s' loaded successfully", mi->mi_name);
 	return 0;
 
+ fail1:
+	(*mi->mi_modcmd)(MODULE_CMD_FINI, NULL);
  fail:
 	kobj_unload(mod->mod_kobj);
  fail2:
