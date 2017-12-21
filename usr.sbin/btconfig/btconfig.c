@@ -1,4 +1,4 @@
-/* $NetBSD: btconfig.c,v 1.27 2015/11/28 09:25:45 plunky Exp $ */
+/* $NetBSD: btconfig.c,v 1.28 2017/12/21 09:31:22 plunky Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2006 Itronix, Inc.  All rights reserved.");
-__RCSID("$NetBSD: btconfig.c,v 1.27 2015/11/28 09:25:45 plunky Exp $");
+__RCSID("$NetBSD: btconfig.c,v 1.28 2017/12/21 09:31:22 plunky Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/param.h>
@@ -651,20 +651,22 @@ print_info(int level)
 	if (level-- < 1 || (btr.btr_flags & BTF_UP) == 0)
 		return;
 
-	load_value(HCI_CMD_READ_LOCAL_VER, &version, sizeof(version));
+	load_value(HCI_CMD_READ_LOCAL_VER, buf, 3);
 	printf("\tHCI version: ");
-	switch(version) {
-	case HCI_SPEC_V10:	printf("1.0b\n");	break;
-	case HCI_SPEC_V11:	printf("1.1\n");	break;
-	case HCI_SPEC_V12:	printf("1.2\n");	break;
-	case HCI_SPEC_V20:	printf("2.0 + EDR\n");	break;
-	case HCI_SPEC_V21:	printf("2.1 + EDR\n");	break;
-	case HCI_SPEC_V30:	printf("3.0 + HS\n");	break;
-	case HCI_SPEC_V40:	printf("4.0\n");	break;
-	case HCI_SPEC_V41:	printf("4.1\n");	break;
-	case HCI_SPEC_V42:	printf("4.2\n");	break;
-	default:		printf("[%d]\n", version);	break;
+	switch((version = buf[0])) {
+	case HCI_SPEC_V10:	printf("1.0b");		break;
+	case HCI_SPEC_V11:	printf("1.1");		break;
+	case HCI_SPEC_V12:	printf("1.2");		break;
+	case HCI_SPEC_V20:	printf("2.0 + EDR");	break;
+	case HCI_SPEC_V21:	printf("2.1 + EDR");	break;
+	case HCI_SPEC_V30:	printf("3.0 + HS");	break;
+	case HCI_SPEC_V40:	printf("4.0");		break;
+	case HCI_SPEC_V41:	printf("4.1");		break;
+	case HCI_SPEC_V42:	printf("4.2");		break;
+	case HCI_SPEC_V50:	printf("5.0");		break;
+	default:		printf("[%d]", version);break;
 	}
+	printf(" rev 0x%04x\n", le16dec(&buf[1]));
 
 	load_value(HCI_CMD_READ_UNIT_CLASS, buf, HCI_CLASS_SIZE);
 	print_class("\tclass:", buf);
