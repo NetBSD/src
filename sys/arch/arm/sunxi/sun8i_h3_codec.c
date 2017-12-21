@@ -1,4 +1,4 @@
-/* $NetBSD: sun8i_h3_codec.c,v 1.2 2017/08/07 21:50:34 jmcneill Exp $ */
+/* $NetBSD: sun8i_h3_codec.c,v 1.3 2017/12/21 11:52:00 nat Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun8i_h3_codec.c,v 1.2 2017/08/07 21:50:34 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun8i_h3_codec.c,v 1.3 2017/12/21 11:52:00 nat Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -42,8 +42,8 @@ __KERNEL_RCSID(0, "$NetBSD: sun8i_h3_codec.c,v 1.2 2017/08/07 21:50:34 jmcneill 
 #include <arm/sunxi/sunxi_codec.h>
 
 #define	H3_PR_CFG		0x00
+#define	 H3_AC_PR_RST		__BIT(28)
 #define	 H3_AC_PR_RW		__BIT(24)
-#define	 H3_AC_PR_RST		__BIT(18)
 #define	 H3_AC_PR_ADDR		__BITS(20,16)
 #define	 H3_ACDA_PR_WDAT	__BITS(15,8)
 #define	 H3_ACDA_PR_RDAT	__BITS(7,0)
