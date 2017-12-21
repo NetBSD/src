@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_send.c,v 1.34 2017/02/25 12:03:57 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_send.c,v 1.34.6.1 2017/12/21 19:17:43 snj Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -395,7 +395,7 @@ iscsi_send_thread(void *par)
 		/* notify event handlers of connection shutdown */
 		DEBC(conn, 1, ("%s\n", (conn->destroy) ? "TERMINATED" : "RECOVER"));
 		add_event((conn->destroy) ? ISCSI_CONNECTION_TERMINATED
-								  : ISCSI_RECOVER_CONNECTION,
+					  : ISCSI_RECOVER_CONNECTION,
 				  sess->id, conn->id, conn->terminating);
 
 		DEBC(conn, 1, ("Waiting for conn_idle\n"));
@@ -1251,10 +1251,15 @@ send_task_management(connection_t *conn, ccb_t *ref_ccb, struct scsipi_xfer *xs,
 
 	ccb = get_ccb(conn, xs == NULL);
 	/* can only happen if terminating... */
-	if (ccb == NULL)
+	if (ccb == NULL) {
+		DEBC(conn, 0, ("send_task_management, ref_ccb=%p, xs=%p, term=%d. No CCB\n",
+			ref_ccb, xs, conn->terminating));
 		return conn->terminating;
+	}
 	ppdu = get_pdu(conn, xs == NULL);
 	if (ppdu == NULL) {
+		DEBC(conn, 0, ("send_task_management, ref_ccb=%p, xs=%p, term=%d. No PDU\n",
+			ref_ccb, xs, conn->terminating));
 		free_ccb(ccb);
 		return conn->terminating;
 	}
@@ -1489,6 +1494,7 @@ send_run_xfer(session_t *session, struct scsipi_xfer *xs)
 
 	if (xs->xs_control & XS_CTL_RESET) {
 		if (send_task_management(conn, NULL, xs, TARGET_WARM_RESET)) {
+			DEBC(conn, 0, ("send_task_management TARGET_WARM_RESET failed\n"));
 			xs->error = XS_SELTIMEOUT;
 			scsipi_done(xs);
 			unref_session(session);
