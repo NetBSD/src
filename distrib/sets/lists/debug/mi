@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.216.2.5 2017/11/17 20:43:10 snj Exp $
+# $NetBSD: mi,v 1.216.2.6 2017/12/21 21:08:13 snj Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -2280,6 +2280,7 @@
 ./usr/libdata/debug/usr/tests/net/mcast/mcast.debug		tests-net-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/net/mcast/t_mcast.debug		tests-obsolete		debug,atf,rump,obsolete
 ./usr/libdata/debug/usr/tests/net/net/t_pktinfo.debug		tests-net-debug		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/net/net/t_pktinfo_test.debug	tests-net-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/net/net/t_raw.debug		tests-net-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/net/net/t_tcp.debug		tests-net-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/net/net/t_udp.debug		tests-net-debug		debug,atf,compattestfile

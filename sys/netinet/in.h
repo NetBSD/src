@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.100 2017/02/16 08:12:44 knakahara Exp $	*/
+/*	$NetBSD: in.h,v 1.100.6.1 2017/12/21 21:08:13 snj Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -562,6 +562,7 @@ extern	u_char	ip_protox[];
 extern const struct sockaddr_in in_any;
 
 int	in_broadcast(struct in_addr, struct ifnet *);
+int	in_direct(struct in_addr, struct ifnet *);
 int	in_canforward(struct in_addr);
 int	cpu_in_cksum(struct mbuf *, int, int, uint32_t);
 int	in_cksum(struct mbuf *, int);

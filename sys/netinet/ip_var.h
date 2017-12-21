@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.119 2017/03/31 06:49:44 ozaki-r Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.119.6.1 2017/12/21 21:08:13 snj Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -123,6 +123,12 @@ struct ip_moptions {
 	struct	  in_multi *imo_membership[IP_MAX_MEMBERSHIPS];
 };
 
+struct ip_pktopts {
+	struct sockaddr_in ippo_laddr;	/* source address */
+	struct ip_moptions *ippo_imo;	/* inp->inp_moptions or &ippo_imobuf */
+	struct ip_moptions ippo_imobuf;	/* use when IP_PKTINFO */
+};
+
 /*
  * IP statistics.
  * Each counter is an unsigned 64-bit value.
@@ -182,6 +188,7 @@ __CTASSERT(SO_BROADCAST ==	0x0020);
 
 #define	IP_IGMP_MCAST		0x0040		/* IGMP for mcast join/leave */
 #define	IP_MTUDISC		0x0400		/* Path MTU Discovery; set DF */
+#define	IP_ROUTETOIFINDEX	0x0800	/* force route imo_multicast_if_index */
 
 extern struct domain inetdomain;
 extern const struct pr_usrreqs rip_usrreqs;
@@ -207,6 +214,8 @@ void	ip_init(void);
 void	in_init(void);
 
 int	 ip_ctloutput(int, struct socket *, struct sockopt *);
+int	 ip_setpktopts(struct mbuf *, struct ip_pktopts *, int *,
+	    struct inpcb *, kauth_cred_t);
 void	 ip_drain(void);
 void	 ip_drainstub(void);
 void	 ip_freemoptions(struct ip_moptions *);
@@ -233,7 +242,7 @@ void *	 rip_ctlinput(int, const struct sockaddr *, void *);
 int	 rip_ctloutput(int, struct socket *, struct sockopt *);
 void	 rip_init(void);
 void	 rip_input(struct mbuf *, ...);
-int	 rip_output(struct mbuf *, struct inpcb *);
+int	 rip_output(struct mbuf *, struct inpcb *, struct mbuf *, struct lwp *);
 int	 rip_usrreq(struct socket *,
 	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct lwp *);
 

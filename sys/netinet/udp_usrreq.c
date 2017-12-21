@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.233 2017/04/20 08:46:07 ozaki-r Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.233.4.1 2017/12/21 21:08:13 snj Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.233 2017/04/20 08:46:07 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.233.4.1 2017/12/21 21:08:13 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -773,14 +773,16 @@ end:
 	return error;
 }
 
-
 int
-udp_output(struct mbuf *m, struct inpcb *inp)
+udp_output(struct mbuf *m, struct inpcb *inp, struct mbuf *control,
+    struct lwp *l)
 {
 	struct udpiphdr *ui;
 	struct route *ro;
+	struct ip_pktopts pktopts;
+	kauth_cred_t cred;
 	int len = m->m_pkthdr.len;
-	int error = 0;
+	int error, flags = 0;
 
 	MCLAIM(m, &udp_tx_mowner);
 
@@ -803,13 +805,29 @@ udp_output(struct mbuf *m, struct inpcb *inp)
 		goto release;
 	}
 
+	if (l == NULL)
+		cred = NULL;
+	else
+		cred = l->l_cred;
+
+	/* Setup IP outgoing packet options */
+	memset(&pktopts, 0, sizeof(pktopts));
+	error = ip_setpktopts(control, &pktopts, &flags, inp, cred);
+	if (error != 0)
+		goto release;
+
+	if (control != NULL) {
+		m_freem(control);
+		control = NULL;
+	}
+
 	/*
 	 * Fill in mbuf with extended UDP header
 	 * and addresses and length put into network format.
 	 */
 	ui = mtod(m, struct udpiphdr *);
 	ui->ui_pr = IPPROTO_UDP;
-	ui->ui_src = inp->inp_laddr;
+	ui->ui_src = pktopts.ippo_laddr.sin_addr;
 	ui->ui_dst = inp->inp_faddr;
 	ui->ui_sport = inp->inp_lport;
 	ui->ui_dport = inp->inp_fport;
@@ -837,13 +855,14 @@ udp_output(struct mbuf *m, struct inpcb *inp)
 	((struct ip *)ui)->ip_tos = inp->inp_ip.ip_tos;	/* XXX */
 	UDP_STATINC(UDP_STAT_OPACKETS);
 
-	return (ip_output(m, inp->inp_options, ro,
-	    inp->inp_socket->so_options & (SO_DONTROUTE | SO_BROADCAST),
-	    inp->inp_moptions, inp));
+	flags |= inp->inp_socket->so_options & (SO_DONTROUTE|SO_BROADCAST);
+	return ip_output(m, inp->inp_options, ro, flags, pktopts.ippo_imo, inp);
 
-release:
+ release:
+	if (control != NULL)
+		m_freem(control);
 	m_freem(m);
-	return (error);
+	return error;
 }
 
 static int
@@ -1075,12 +1094,6 @@ udp_send(struct socket *so, struct mbuf *m, struct sockaddr *nam,
 	KASSERT(inp != NULL);
 	KASSERT(m != NULL);
 
-	if (control && control->m_len) {
-		m_freem(control);
-		m_freem(m);
-		return EINVAL;
-	}
-
 	memset(&laddr, 0, sizeof laddr);
 
 	s = splsoftnet();
@@ -1099,16 +1112,19 @@ udp_send(struct socket *so, struct mbuf *m, struct sockaddr *nam,
 			goto die;
 		}
 	}
-	error = udp_output(m, inp);
+	error = udp_output(m, inp, control, l);
 	m = NULL;
+	control = NULL;
 	if (nam) {
 		in_pcbdisconnect(inp);
 		inp->inp_laddr = laddr;		/* XXX */
 		in_pcbstate(inp, INP_BOUND);	/* XXX */
 	}
   die:
-	if (m)
+	if (m != NULL)
 		m_freem(m);
+	if (control != NULL)
+		m_freem(control);
 
 	splx(s);
 	return error;
