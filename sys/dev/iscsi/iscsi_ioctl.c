@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_ioctl.c,v 1.25 2017/02/25 12:03:57 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_ioctl.c,v 1.25.6.1 2017/12/21 19:17:43 snj Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -464,12 +464,12 @@ void
 unref_session(session_t *session)
 {
 
-	mutex_enter(&session->lock);
+	mutex_enter(&iscsi_cleanup_mtx);
 	KASSERT(session != NULL);
 	KASSERT(session->refcount > 0);
 	if (--session->refcount == 0)
 		cv_broadcast(&session->sess_cv);
-	mutex_exit(&session->lock);
+	mutex_exit(&iscsi_cleanup_mtx);
 }
 
 
@@ -520,16 +520,19 @@ kill_connection(connection_t *conn, uint32_t status, int logout, bool recover)
 	terminating = conn->terminating;
 	if (!terminating)
 		conn->terminating = status;
-	mutex_exit(&iscsi_cleanup_mtx);
 
 	/* Don't recurse */
 	if (terminating) {
+		mutex_exit(&iscsi_cleanup_mtx);
+
+		KASSERT(conn->state != ST_FULL_FEATURE);
 		DEBC(conn, 1, ("Kill_connection exiting (already terminating)\n"));
 		goto done;
 	}
 
 	if (conn->state == ST_FULL_FEATURE) {
 		sess->active_connections--;
+		conn->state = ST_WINDING_DOWN;
 
 		/* If this is the last connection and ERL < 2, reset TSIH */
 		if (!sess->active_connections && sess->ErrorRecoveryLevel < 2)
@@ -538,9 +541,6 @@ kill_connection(connection_t *conn, uint32_t status, int logout, bool recover)
 		/* Don't try to log out if the socket is broken or we're in the middle */
 		/* of logging in */
 		if (logout >= 0) {
-			conn->state = ST_WINDING_DOWN;
-			connection_timeout_start(conn, CONNECTION_TIMEOUT);
-
 			if (sess->ErrorRecoveryLevel < 2 &&
 			    logout == RECOVER_CONNECTION) {
 				logout = LOGOUT_CONNECTION;
@@ -549,20 +549,29 @@ kill_connection(connection_t *conn, uint32_t status, int logout, bool recover)
 			    logout == LOGOUT_CONNECTION) {
 				logout = LOGOUT_SESSION;
 			}
+			mutex_exit(&iscsi_cleanup_mtx);
+
+			connection_timeout_start(conn, CONNECTION_TIMEOUT);
+
 			if (!send_logout(conn, conn, logout, FALSE)) {
 				conn->terminating = ISCSI_STATUS_SUCCESS;
 				return;
 			}
 			/*
-			 * if the logout request was successfully sent, the logout response
-			 * handler will do the rest of the termination processing. If the
-			 * logout doesn't get a response, we'll get back in here once
-			 * the timeout hits.
+			 * if the logout request was successfully sent,
+			 * the logout response handler will do the rest
+			 * of the termination processing. If the logout
+			 * doesn't get a response, we'll get back in here
+			 * once the timeout hits.
 			 */
+
+			mutex_enter(&iscsi_cleanup_mtx);
 		}
+
 	}
 
 	conn->state = ST_SETTLING;
+	mutex_exit(&iscsi_cleanup_mtx);
 
 done:
 	/* let send thread take over next step of cleanup */
@@ -1641,6 +1650,7 @@ add_connection_cleanup(connection_t *conn)
 	if (conn->in_session) {
 		sess = conn->session;
 		conn->in_session = FALSE;
+		conn->session = NULL;
 		TAILQ_REMOVE(&sess->conn_list, conn, connections);
 		sess->mru_connection = TAILQ_FIRST(&sess->conn_list);
 	}
