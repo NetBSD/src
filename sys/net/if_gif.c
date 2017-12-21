@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.136 2017/12/09 08:03:06 pgoyette Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.137 2017/12/21 09:35:38 knakahara Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.136 2017/12/09 08:03:06 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.137 2017/12/21 09:35:38 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -382,11 +382,8 @@ gif_encapcheck(struct mbuf *m, int off, int proto, void *arg)
 		return 0;
 
 	var = gif_getref_variant(sc, &psref);
-	if (var->gv_psrc == NULL || var->gv_pdst == NULL)
-		goto out;
-
 	/* no physical address */
-	if (!var->gv_psrc || !var->gv_pdst)
+	if (var->gv_psrc == NULL || var->gv_pdst == NULL)
 		goto out;
 
 	switch (proto) {
