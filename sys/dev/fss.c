@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.102 2017/12/21 15:51:07 hannken Exp $	*/
+/*	$NetBSD: fss.c,v 1.103 2017/12/21 15:51:39 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.102 2017/12/21 15:51:07 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.103 2017/12/21 15:51:39 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,7 @@ static void fss_softc_free(struct fss_softc *);
 static int fss_read_cluster(struct fss_softc *, u_int32_t);
 static void fss_bs_thread(void *);
 static int fss_bs_io(struct fss_softc *, fss_io_type,
-    u_int32_t, off_t, int, void *);
+    u_int32_t, off_t, int, void *, size_t *);
 static u_int32_t *fss_bs_indir(struct fss_softc *, u_int32_t);
 
 static kmutex_t fss_device_lock;	/* Protect all units. */
@@ -1009,7 +1009,7 @@ restart:
  */
 static int
 fss_bs_io(struct fss_softc *sc, fss_io_type rw,
-    u_int32_t cl, off_t off, int len, void *data)
+    u_int32_t cl, off_t off, int len, void *data, size_t *resid)
 {
 	int error;
 
@@ -1020,7 +1020,7 @@ fss_bs_io(struct fss_softc *sc, fss_io_type rw,
 	error = vn_rdwr((rw == FSS_READ ? UIO_READ : UIO_WRITE), sc->sc_bs_vp,
 	    data, len, off, UIO_SYSSPACE,
 	    IO_ADV_ENCODE(POSIX_FADV_NOREUSE) | IO_NODELOCKED,
-	    sc->sc_bs_lwp->l_cred, NULL, NULL);
+	    sc->sc_bs_lwp->l_cred, resid, NULL);
 	if (error == 0) {
 		mutex_enter(sc->sc_bs_vp->v_interlock);
 		error = VOP_PUTPAGES(sc->sc_bs_vp, trunc_page(off),
@@ -1049,7 +1049,7 @@ fss_bs_indir(struct fss_softc *sc, u_int32_t cl)
 
 	if (sc->sc_indir_dirty) {
 		if (fss_bs_io(sc, FSS_WRITE, sc->sc_indir_cur, 0,
-		    FSS_CLSIZE(sc), (void *)sc->sc_indir_data) != 0)
+		    FSS_CLSIZE(sc), (void *)sc->sc_indir_data, NULL) != 0)
 			return NULL;
 		setbit(sc->sc_indir_valid, sc->sc_indir_cur);
 	}
@@ -1059,7 +1059,7 @@ fss_bs_indir(struct fss_softc *sc, u_int32_t cl)
 
 	if (isset(sc->sc_indir_valid, sc->sc_indir_cur)) {
 		if (fss_bs_io(sc, FSS_READ, sc->sc_indir_cur, 0,
-		    FSS_CLSIZE(sc), (void *)sc->sc_indir_data) != 0)
+		    FSS_CLSIZE(sc), (void *)sc->sc_indir_data, NULL) != 0)
 			return NULL;
 	} else
 		memset(sc->sc_indir_data, 0, FSS_CLSIZE(sc));
@@ -1080,6 +1080,7 @@ fss_bs_thread(void *arg)
 	long off;
 	char *addr;
 	u_int32_t c, cl, ch, *indirp;
+	size_t resid;
 	struct buf *bp, *nbp;
 	struct fss_softc *sc;
 	struct fss_cache *scp, *scl;
@@ -1116,14 +1117,18 @@ fss_bs_thread(void *arg)
 				disk_busy(sc->sc_dkdev);
 				error = fss_bs_io(sc, FSS_READ, 0,
 				    dbtob(bp->b_blkno), bp->b_bcount,
-				    bp->b_data);
+				    bp->b_data, &resid);
+				if (error)
+					resid = bp->b_bcount;
 				disk_unbusy(sc->sc_dkdev,
 				    (error ? 0 : bp->b_bcount), is_read);
-			} else
+			} else {
 				error = ENXIO;
+				resid = bp->b_bcount;
+			}
 
 			bp->b_error = error;
-			bp->b_resid = (error ? bp->b_bcount : 0);
+			bp->b_resid = resid;
 			biodone(bp);
 
 			mutex_enter(&sc->sc_slock);
@@ -1144,7 +1149,7 @@ fss_bs_thread(void *arg)
 			indirp = fss_bs_indir(sc, scp->fc_cluster);
 			if (indirp != NULL) {
 				error = fss_bs_io(sc, FSS_WRITE, sc->sc_clnext,
-				    0, FSS_CLSIZE(sc), scp->fc_data);
+				    0, FSS_CLSIZE(sc), scp->fc_data, NULL);
 			} else
 				error = EIO;
 
@@ -1265,8 +1270,8 @@ fss_bs_thread(void *arg)
 			/*
 			 * Read from backing store.
 			 */
-			error =
-			    fss_bs_io(sc, FSS_READ, *indirp, off, len, addr);
+			error = fss_bs_io(sc, FSS_READ,
+			    *indirp, off, len, addr, NULL);
 
 			mutex_enter(&sc->sc_slock);
 			if (error) {
