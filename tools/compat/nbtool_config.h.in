@@ -1,6 +1,6 @@
 /* nbtool_config.h.in.  Generated from configure.ac by autoheader.  */
 
-/*      $NetBSD: nbtool_config.h.in,v 1.40.6.1 2017/12/21 19:11:21 snj Exp $    */
+/*      $NetBSD: nbtool_config.h.in,v 1.40.6.2 2017/12/21 23:06:58 snj Exp $    */
  
 #ifndef __NETBSD_NBTOOL_CONFIG_H__
 #define __NETBSD_NBTOOL_CONFIG_H__
@@ -46,10 +46,6 @@
 
 /* Define to 1 if you have the <ctype.h> header file. */
 #undef HAVE_CTYPE_H
-
-/* Define to 1 if you have the declaration of `asnprintf', and to 0 if you
-   don't. */
-#undef HAVE_DECL_ASNPRINTF
 
 /* Define to 1 if you have the declaration of `asprintf', and to 0 if you
    don't. */
@@ -130,21 +126,13 @@
    */
 #undef HAVE_DECL_FGETLN
 
-/* Define to 1 if you have the declaration of `fparseln', and to 0 if you
-   don't. */
-#undef HAVE_DECL_FPARSELN
-
-/* Define to 1 if you have the declaration of `fpurge', and to 0 if you don't.
-   */
-#undef HAVE_DECL_FPURGE
+/* Define to 1 if you have the declaration of `fparseln getdelim', and to 0 if
+   you don't. */
+#undef HAVE_DECL_FPARSELN__GETDELIM
 
 /* Define to 1 if you have the declaration of `fstatvfs', and to 0 if you
    don't. */
 #undef HAVE_DECL_FSTATVFS
-
-/* Define to 1 if you have the declaration of `getdelim', and to 0 if you
-   don't. */
-#undef HAVE_DECL_GETDELIM
 
 /* Define to 1 if you have the declaration of `getline', and to 0 if you
    don't. */
@@ -624,9 +612,6 @@
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H
-
-/* Define to 1 if you have the <stdio_ext.h> header file. */
-#undef HAVE_STDIO_EXT_H
 
 /* Define to 1 if you have the <stdio.h> header file. */
 #undef HAVE_STDIO_H
