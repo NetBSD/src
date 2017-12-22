@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2011/03/18 19:46:19 dyoung Exp $
+#	$NetBSD: Makefile,v 1.8 2017/12/22 07:19:02 maxv Exp $
 
 # Makefile for amd64 tags file and boot blocks
 
@@ -38,6 +38,6 @@ links:
 
 
 SUBDIR=	compile include ../x86/include ../xen/include \
-	../i386/include ../i386/stand
+	../i386/include ../i386/stand stand
 
 .include <bsd.subdir.mk>
