@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.743 2017/10/31 00:20:51 khorben Exp $
+$NetBSD: usbdevs,v 1.744 2017/12/22 13:59:32 jakllsch Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -2840,6 +2840,7 @@ product ROLAND UMONE		0x012a	UM-ONE MIDI I/F
 product ROLAND QUADCAPTURE	0x012f	QUAD-CAPTURE
 
 /* RT Systems products */
+product RTSYS RTS03		0x9100	RTS-03
 product RTSYS CT57A		0x9e51	CT57A Radio Cable
 
 /* Sagem products */
