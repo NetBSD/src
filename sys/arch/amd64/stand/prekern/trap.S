@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.1 2017/10/10 09:29:14 maxv Exp $	*/
+/*	$NetBSD: trap.S,v 1.2 2017/12/22 07:37:27 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -178,15 +178,14 @@ IDTVEC_END(exceptions)
 
 /*
  * Arguments pushed on the stack:
- *  tf_trapno
- *  tf_err: Dummy inserted if not defined
- *  tf_rip
- *  tf_cs
- *  tf_rflags
- *  tf_rsp
- *  tf_ss
+ *  sf_trapno
+ *  sf_err  (dummy inserted if not defined)
+ *  sf_rip
+ *  sf_cs
+ *  sf_rflags
+ *  sf_rsp
+ *  sf_ss
  */
-
 NENTRY(alltraps)
 	movq	%rsp,%rdi
 	call	_C_LABEL(trap)
