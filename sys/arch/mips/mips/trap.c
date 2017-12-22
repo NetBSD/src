@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.244 2017/07/14 20:32:32 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.245 2017/12/22 22:59:25 maya Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.244 2017/07/14 20:32:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.245 2017/12/22 22:59:25 maya Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -391,11 +391,7 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 
 		onfault = pcb->pcb_onfault;
 		pcb->pcb_onfault = NULL;
-		if (p->p_emul->e_fault) {
-			rv = (*p->p_emul->e_fault)(p, va, ftype);
-		} else {
-			rv = uvm_fault(map, va, ftype);
-		}
+		rv = uvm_fault(map, va, ftype);
 		pcb->pcb_onfault = onfault;
 
 #if defined(VMFAULT_TRACE)
