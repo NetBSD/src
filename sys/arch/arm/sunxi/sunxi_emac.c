@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_emac.c,v 1.11 2017/12/01 17:47:51 jmcneill Exp $ */
+/* $NetBSD: sunxi_emac.c,v 1.12 2017/12/22 13:39:57 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2016-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.11 2017/12/01 17:47:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.12 2017/12/22 13:39:57 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1327,7 +1327,7 @@ sunxi_emac_get_resources(struct sunxi_emac_softc *sc)
 	}
 	sc->rst_ephy = fdtbus_reset_get(phandle, "ephy");
 	if (sc->rst_ephy == NULL) {
-		int phy_phandle = fdtbus_get_phandle(phandle, "phy-phandle");
+		int phy_phandle = fdtbus_get_phandle(phandle, "phy-handle");
 		if (phy_phandle != -1)
 			sc->rst_ephy = fdtbus_reset_get_index(phy_phandle, 0);
 	}
