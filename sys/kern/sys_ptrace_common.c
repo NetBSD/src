@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.29 2017/12/17 20:59:27 christos Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.30 2017/12/22 15:02:57 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.29 2017/12/17 20:59:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.30 2017/12/22 15:02:57 kamil Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -972,6 +972,8 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 	struct lwp *lt = NULL;
 	struct lwp *lt2;
 	struct proc *t;				/* target process */
+	struct uio uio;
+	struct iovec iov;
 	struct ptrace_io_desc piod;
 	struct vmspace *vm;
 	int error, write, tmp, pheld;
@@ -1032,20 +1034,34 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 
 	case PT_WRITE_I:		/* XXX no separate I and D spaces */
 	case PT_WRITE_D:
+#if defined(__HAVE_RAS)
+		/*
+		 * Can't write to a RAS
+		 */
+		if (ras_lookup(t, addr) != (void *)-1) {
+			error = EACCES;
+			break;
+		}
+#endif
 		write = 1;
 		tmp = data;
 		/* FALLTHROUGH */
 	case PT_READ_I:			/* XXX no separate I and D spaces */
 	case PT_READ_D:
-		piod.piod_addr = &tmp;
-		piod.piod_len = sizeof(tmp);
-		piod.piod_offs = addr;
-		piod.piod_op = write ? PIOD_WRITE_D : PIOD_READ_D;
-		if ((error = ptrace_doio(l, t, lt, &piod, addr, &vm)) != 0)
-			break;
+		/* write = 0 done above. */
+		iov.iov_base = (void *)&tmp;
+		iov.iov_len = sizeof(tmp);
+		uio.uio_iov = &iov;
+		uio.uio_iovcnt = 1;
+		uio.uio_offset = (off_t)(unsigned long)addr;
+		uio.uio_resid = sizeof(tmp);
+		uio.uio_rw = write ? UIO_WRITE : UIO_READ;
+		UIO_SETUP_SYSSPACE(&uio);
+
+		error = process_domem(l, lt, &uio);
+
 		if (!write)
 			*retval = tmp;
-		uvmspace_free(vm);
 		break;
 
 	case PT_IO:
