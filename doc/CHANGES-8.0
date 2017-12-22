@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.94 2017/12/21 23:06:58 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.95 2017/12/22 06:06:21 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -8586,7 +8586,7 @@ sys/arch/amd64/amd64/netbsd32_machdep.c		1.114
 	Merge context building code.
 	[christos, ticket #444]
 
-distrib/sets/lists/debug/mi			1.222
+distrib/sets/lists/debug/mi			1.222-1.223
 distrib/sets/lists/tests/mi			1.760
 share/man/man4/ip.4				1.38
 sys/netinet/in.c				1.207
