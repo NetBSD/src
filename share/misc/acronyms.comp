@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.186 2017/09/21 00:40:10 ginsbach Exp $
+$NetBSD: acronyms.comp,v 1.187 2017/12/22 02:36:46 ginsbach Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -147,6 +147,7 @@ BSD	Berkeley Software Distribution
 BSF	bit scan forward
 BSOD	blue screen of death
 BSP	binary space partition
+BSP	board support package
 BSP	bootstrap processor
 BSR	bit scan reverse
 BSS	basic service set
