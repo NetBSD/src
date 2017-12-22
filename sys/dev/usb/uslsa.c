@@ -1,4 +1,4 @@
-/* $NetBSD: uslsa.c,v 1.24 2017/12/22 14:13:55 jakllsch Exp $ */
+/* $NetBSD: uslsa.c,v 1.25 2017/12/22 14:41:55 jakllsch Exp $ */
 
 /* from ugensa.c */
 
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uslsa.c,v 1.24 2017/12/22 14:13:55 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uslsa.c,v 1.25 2017/12/22 14:41:55 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -143,7 +143,7 @@ static const struct usb_devno uslsa_devs[] = {
         { USB_VENDOR_SILABS,            USB_PRODUCT_SILABS_CP210X_2 },
         { USB_VENDOR_SILABS,            USB_PRODUCT_SILABS_SUNNTO },
         { USB_VENDOR_SILABS2,           USB_PRODUCT_SILABS2_DCU11CLONE },
-        { USB_VENDOR_USI,               USB_PRODUCT_USI_MC60 }
+        { USB_VENDOR_USI,               USB_PRODUCT_USI_MC60 },
 	{ USB_VENDOR_WMR,		USB_PRODUCT_WMR_RIGBLASTER },
 };
 
