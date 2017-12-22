@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdi.c,v 1.65 2017/05/30 20:26:26 jnemeth Exp $	*/
+/*	$NetBSD: uftdi.c,v 1.66 2017/12/22 14:18:29 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.65 2017/05/30 20:26:26 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.66 2017/12/22 14:18:29 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -166,6 +166,7 @@ static const struct usb_devno uftdi_devs[] = {
 	{ USB_VENDOR_MELCO, USB_PRODUCT_MELCO_PCOPRS1 },
 	{ USB_VENDOR_RATOC, USB_PRODUCT_RATOC_REXUSB60F },
 	{ USB_VENDOR_RTSYS, USB_PRODUCT_RTSYS_CT57A },
+	{ USB_VENDOR_RTSYS, USB_PRODUCT_RTSYS_RTS03 },
 	{ USB_VENDOR_SEALEVEL, USB_PRODUCT_SEALEVEL_USBSERIAL },
 	{ USB_VENDOR_SEALEVEL, USB_PRODUCT_SEALEVEL_SEAPORT4P1 },
 	{ USB_VENDOR_SEALEVEL, USB_PRODUCT_SEALEVEL_SEAPORT4P2 },
