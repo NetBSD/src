@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.16 2017/12/21 09:56:47 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.17 2017/12/22 17:35:14 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.16 2017/12/21 09:56:47 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.17 2017/12/22 17:35:14 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -7063,6 +7063,9 @@ ATF_TC_BODY(suspend1, tc)
 	struct ptrace_siginfo psi;
 	volatile int go = 0;
 
+	// Feature pending for refactoring
+	atf_tc_expect_fail("PR kern/51995");
+
 	// Hangs with qemu
 	ATF_REQUIRE(0 && "In order to get reliable failure, abort");
 
@@ -7187,6 +7190,9 @@ ATF_TC_BODY(suspend2, tc)
 #endif
 	struct ptrace_siginfo psi;
 
+	// Feature pending for refactoring
+	atf_tc_expect_fail("PR kern/51995");
+
 	// Hangs with qemu
 	ATF_REQUIRE(0 && "In order to get reliable failure, abort");
 
@@ -7264,8 +7270,9 @@ ATF_TC_BODY(resume1, tc)
 	struct ptrace_lwpinfo pl;
 	struct ptrace_siginfo psi;
 
-	// Times out
-	atf_tc_expect_timeout("PR kern/51995");
+	// Feature pending for refactoring
+	atf_tc_expect_fail("PR kern/51995");
+
 	// Hangs with qemu
 	ATF_REQUIRE(0 && "In order to get reliable failure, abort");
 
