@@ -1,4 +1,4 @@
-/* $NetBSD: sun8i-h3-nanopi-m1.dts,v 1.1 2017/12/22 00:56:44 jmcneill Exp $ */
+/* $NetBSD: sun8i-h3-nanopi-m1.dts,v 1.2 2017/12/22 13:27:29 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,3 +28,10 @@
 
 #include "../../../external/gpl2/dts/dist/arch/arm/boot/dts/sun8i-h3-nanopi-m1.dts"
 #include "sun8i-h3.dtsi"
+
+&emac {
+	phy-handle = <&int_mii_phy>;
+	phy-mode = "mii";
+	allwinner,leds-active-low;
+	status = "okay";
+};
