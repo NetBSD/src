@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.744 2017/12/22 13:59:32 jakllsch Exp $
+$NetBSD: usbdevs,v 1.745 2017/12/22 14:03:39 jakllsch Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -562,6 +562,7 @@ vendor MOTOROLA2	0x22b8	Motorola
 vendor PINNACLE		0x2304	Pinnacle Systems
 vendor ARDUINO		0x2341	Arduino SA
 vendor TPLINK		0x2357	TP-Link
+vendor WMR		0x2405	West Mountain Radio
 vendor TRIPPLITE	0x2478	Tripp-Lite
 vendor HIROSE		0x2631	Hirose Electric
 vendor NHJ		0x2770	NHJ
@@ -3412,6 +3413,9 @@ product WACOM CTH690K0		0x033e	Intuos Art CTH-690/K0
 
 /* Weltrend Semiconductor */
 product WELTREND HID		0x2201	HID Device
+
+/* West Mountain Radio products */
+product WMR RIGBLASTER		0x0003	RIGblaster
 
 /* Western Digital products */
 product WESTERN EXTHDD		0x0400	External HDD
