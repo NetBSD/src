@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.6 2017/11/26 10:21:20 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.7 2017/12/22 07:37:27 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2007, 2008, 2016, 2017 The NetBSD Foundation, Inc.
@@ -349,18 +349,17 @@ no_NOX:
  * ------------------+
  *                  (5)
  *
- * Virtual address space of the prekern:
- * +---------------+----------+------------------+-------------+
- * | PREKERN IMAGE |**UNUSED**| BOOTSTRAP TABLES | ISA I/O MEM |
- * +---------------+----------+------------------+-------------+
+ * The virtual address space is the same, since it is identity-mapped (va = pa).
+ * However, the KERNEL IMAGE is mapped as read-only: the prekern reads it, but
+ * won't write to it. (Needed when relocating the kernel.)
  *
  * PROC0 STK is obviously not linked as a page level. It just happens to be
  * caught between L4 and L3.
  *
  * (PROC0 STK + L4 + L3 + L2 + L1) is later referred to as BOOTSTRAP TABLES.
  *
- * Important note: the kernel segments are properly 4k-aligned
- * (see kern.ldscript), so there's no need to enforce alignment.
+ * Important note: the prekern segments are properly 4k-aligned
+ * (see prekern.ldscript), so there's no need to enforce alignment.
  */
 
 	/* Find end of the prekern image; brings us on (1). */
