@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.175 2017/06/08 01:09:52 chs Exp $	*/
+/*	$NetBSD: lwp.h,v 1.176 2017/12/22 10:24:49 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010
@@ -543,6 +543,8 @@ curlwp_bind(void)
 static inline void
 curlwp_bindx(int bound)
 {
+
+	KASSERT(curlwp->l_pflag & LP_BOUND);
 	curlwp->l_pflag ^= bound ^ LP_BOUND;
 }
 
