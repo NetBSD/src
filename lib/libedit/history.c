@@ -1,4 +1,4 @@
-/*	$NetBSD: history.c,v 1.58 2017/09/01 10:19:10 christos Exp $	*/
+/*	$NetBSD: history.c,v 1.59 2017/12/23 18:25:03 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)history.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: history.c,v 1.58 2017/09/01 10:19:10 christos Exp $");
+__RCSID("$NetBSD: history.c,v 1.59 2017/12/23 18:25:03 uwe Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -1082,11 +1082,13 @@ FUNW(history)(TYPE(History) *h, TYPE(HistEvent) *ev, int fun, ...)
 		break;
 
 	case H_NSAVE_FP:
-		retval = history_save_fp(h, va_arg(va, size_t),
-		    va_arg(va, FILE *));
+	{
+		size_t sz = va_arg(va, size_t);
+		retval = history_save_fp(h, sz, va_arg(va, FILE *));
 		if (retval == -1)
 		    he_seterrev(ev, _HE_HIST_WRITE);
 		break;
+	}
 
 	case H_PREV_EVENT:
 		retval = history_prev_event(h, ev, va_arg(va, int));
