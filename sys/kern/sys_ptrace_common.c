@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.30 2017/12/22 15:02:57 kamil Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.31 2017/12/23 22:12:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.30 2017/12/22 15:02:57 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.31 2017/12/23 22:12:19 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -904,7 +904,7 @@ out:
 
 static int
 ptrace_doio(struct lwp *l, struct proc *t, struct lwp *lt,
-    struct ptrace_io_desc *piod, void *addr, struct vmspace **vm)
+    struct ptrace_io_desc *piod, void *addr, bool sysspace)
 {
 	struct uio uio;
 	struct iovec iov;
@@ -947,19 +947,23 @@ ptrace_doio(struct lwp *l, struct proc *t, struct lwp *lt,
 		error = EINVAL;
 		break;
 	}
-	if (error)
-		return error;
-	error = proc_vmspace_getref(l->l_proc, vm);
+
 	if (error)
 		return error;
 
-	uio.uio_vmspace = *vm;
+	if (sysspace) {
+		uio.uio_vmspace = vmspace_kernel();
+	} else {
+		error = proc_vmspace_getref(l->l_proc, &uio.uio_vmspace);
+		if (error)
+			return error;
+	}
 
 	error = process_domem(l, lt, &uio);
-	if (error) {
-		uvmspace_free(*vm);
+	if (!sysspace)
+		uvmspace_free(uio.uio_vmspace);
+	if (error)
 		return error;
-	}
 	piod->piod_len -= uio.uio_resid;
 	return 0;
 }
@@ -972,10 +976,7 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 	struct lwp *lt = NULL;
 	struct lwp *lt2;
 	struct proc *t;				/* target process */
-	struct uio uio;
-	struct iovec iov;
 	struct ptrace_io_desc piod;
-	struct vmspace *vm;
 	int error, write, tmp, pheld;
 	int signo = 0;
 	int resume_all;
@@ -1034,32 +1035,17 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 
 	case PT_WRITE_I:		/* XXX no separate I and D spaces */
 	case PT_WRITE_D:
-#if defined(__HAVE_RAS)
-		/*
-		 * Can't write to a RAS
-		 */
-		if (ras_lookup(t, addr) != (void *)-1) {
-			error = EACCES;
-			break;
-		}
-#endif
 		write = 1;
 		tmp = data;
 		/* FALLTHROUGH */
 	case PT_READ_I:			/* XXX no separate I and D spaces */
 	case PT_READ_D:
-		/* write = 0 done above. */
-		iov.iov_base = (void *)&tmp;
-		iov.iov_len = sizeof(tmp);
-		uio.uio_iov = &iov;
-		uio.uio_iovcnt = 1;
-		uio.uio_offset = (off_t)(unsigned long)addr;
-		uio.uio_resid = sizeof(tmp);
-		uio.uio_rw = write ? UIO_WRITE : UIO_READ;
-		UIO_SETUP_SYSSPACE(&uio);
-
-		error = process_domem(l, lt, &uio);
-
+		piod.piod_addr = &tmp;
+		piod.piod_len = sizeof(tmp);
+		piod.piod_offs = addr;
+		piod.piod_op = write ? PIOD_WRITE_D : PIOD_READ_D;
+		if ((error = ptrace_doio(l, t, lt, &piod, addr, true)) != 0)
+			break;
 		if (!write)
 			*retval = tmp;
 		break;
@@ -1067,10 +1053,9 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 	case PT_IO:
 		if ((error = ptm->ptm_copyin_piod(&piod, addr, data)) != 0)
 			break;
-		if ((error = ptrace_doio(l, t, lt, &piod, addr, &vm)) != 0)
+		if ((error = ptrace_doio(l, t, lt, &piod, addr, false)) != 0)
 			break;
 		(void) ptm->ptm_copyout_piod(&piod, addr, data);
-		uvmspace_free(vm);
 		break;
 
 	case PT_DUMPCORE:
