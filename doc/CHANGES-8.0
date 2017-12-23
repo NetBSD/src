@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.95 2017/12/22 06:06:21 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.96 2017/12/23 19:56:01 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -8664,4 +8664,10 @@ sys/dev/usb/xhci.c				1.78, 1.83
 	the upstream HS hub and Multi-TT needs to reflect the
 	capabilities of a HS hub itself or the same upstream HS hub.
 	[skrll, ticket #459]
+
+sys/dev/pad/pad.c				1.44
+
+	Rework so that module infrastructure is provided even when the
+	module is built-in to the kernel.
+	[pgoyette, ticket #450]
 
