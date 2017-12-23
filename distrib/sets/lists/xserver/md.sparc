@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc,v 1.67 2017/01/05 02:22:19 christos Exp $
+# $NetBSD: md.sparc,v 1.68 2017/12/23 10:07:07 nakayama Exp $
 ./usr/X11R7/bin/X					-unknown-	xorg
 ./usr/X11R7/bin/Xorg					-unknown-	xorg
 ./usr/X11R7/bin/cvt					-unknown-	xorg
@@ -29,10 +29,8 @@
 ./usr/X11R7/lib/modules/drivers/ag10e_drv.so.0		-unknown-	xorg,xorg_server_ver=110
 ./usr/X11R7/lib/modules/drivers/ati_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/ati_drv.so.6		-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/glint_drv.so		-unknown-	xorg,xorg_server_ver=110
-./usr/X11R7/lib/modules/drivers/glint_drv.so		-unknown-	xorg,xorg_server_ver=118,obsolete
-./usr/X11R7/lib/modules/drivers/glint_drv.so.1		-unknown-	xorg,xorg_server_ver=110
-./usr/X11R7/lib/modules/drivers/glint_drv.so.1		-unknown-	xorg,xorg_server_ver=118,obsolete
+./usr/X11R7/lib/modules/drivers/glint_drv.so		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/glint_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/kbd_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/kbd_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/mach64_drv.so		-unknown-	xorg
@@ -190,8 +188,7 @@
 ./usr/X11R7/man/cat4/ag10e.0				-unknown-	.cat,xorg,xorg_server_ver=110
 ./usr/X11R7/man/cat4/ati.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/exa.0				-unknown-	.cat,xorg
-./usr/X11R7/man/cat4/glint.0				-unknown-	.cat,xorg,xorg_server_ver=110
-./usr/X11R7/man/cat4/glint.0				-unknown-	.cat,xorg,xorg_server_ver=118,obsolete
+./usr/X11R7/man/cat4/glint.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/kbd.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/mga.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/mousedrv.0				-unknown-	.cat,xorg
@@ -217,8 +214,7 @@
 ./usr/X11R7/man/html4/ag10e.html			-unknown-	html,xorg,xorg_server_ver=110
 ./usr/X11R7/man/html4/ati.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/exa.html				-unknown-	html,xorg
-./usr/X11R7/man/html4/glint.html			-unknown-	html,xorg,xorg_server_ver=110
-./usr/X11R7/man/html4/glint.html			-unknown-	html,xorg,xorg_server_ver=118,obsolete
+./usr/X11R7/man/html4/glint.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/kbd.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/mga.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/mousedrv.html			-unknown-	html,xorg
@@ -244,8 +240,7 @@
 ./usr/X11R7/man/man4/ag10e.4				-unknown-	.man,xorg,xorg_server_ver=110
 ./usr/X11R7/man/man4/ati.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/exa.4				-unknown-	.man,xorg
-./usr/X11R7/man/man4/glint.4				-unknown-	.man,xorg,xorg_server_ver=110
-./usr/X11R7/man/man4/glint.4				-unknown-	.man,xorg,xorg_server_ver=118,obsolete
+./usr/X11R7/man/man4/glint.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/kbd.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/mga.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/mousedrv.4				-unknown-	.man,xorg
