@@ -1,4 +1,4 @@
-/*	$NetBSD: rgephy.c,v 1.40 2015/08/21 12:22:22 jmcneill Exp $	*/
+/*	$NetBSD: rgephy.c,v 1.41 2017/12/23 12:49:54 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.40 2015/08/21 12:22:22 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.41 2017/12/23 12:49:54 jmcneill Exp $");
 
 
 /*
@@ -633,6 +633,18 @@ rgephy_reset(struct mii_softc *sc)
 		if ((ssr & RGEPHY_SSR_ALDPS) != 0) {
 			ssr &= ~RGEPHY_SSR_ALDPS;
 			PHY_WRITE(sc, RGEPHY_MII_SSR, ssr);
+		}
+	} else if (sc->mii_mpd_rev == 5) {
+		/* RTL8211E */
+		prop_dictionary_t prop = device_properties(sc->mii_dev);
+		bool no_rx_delay = false;
+		prop_dictionary_get_bool(prop, "no-rx-delay", &no_rx_delay);
+		if (no_rx_delay) {
+			/* Disable RX internal delay (undocumented) */
+			PHY_WRITE(sc, 0x1f, 0x0007);
+			PHY_WRITE(sc, 0x1e, 0x00a4);
+			PHY_WRITE(sc, 0x1c, 0xb591);
+			PHY_WRITE(sc, 0x1f, 0x0000);
 		}
 	} else if (sc->mii_mpd_rev == 6) {
 		/* RTL8211F */
