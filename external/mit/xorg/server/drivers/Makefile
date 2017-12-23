@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.94 2017/08/07 06:51:13 mrg Exp $
+#	$NetBSD: Makefile,v 1.95 2017/12/23 10:15:52 nakayama Exp $
 
 .include <bsd.own.mk>
 
@@ -307,19 +307,14 @@ SUBDIR+= \
 .if ${XORG_SERVER_SUBDIR} == "xorg-server.old"
 SUBDIR+= \
 	xf86-video-ag10e \
-	xf86-video-glint \
 	xf86-video-sunleo
 .endif	# ${XORG_SERVER_SUBDIR} == "xorg-server.old"
 
 .if ${MACHINE} == "sparc"
-.if ${XORG_SERVER_SUBDIR} == "xorg-server.old"
-SUBDIR+= \
-	xf86-video-pnozz
-.endif  # ${XORG_SERVER_SUBDIR} == "xorg-server.old"
-
 SUBDIR+= \
 	xf86-video-suncg14 \
 	xf86-video-suntcx
+
 .if ${XORG_SERVER_SUBDIR} == "xorg-server.old"
 SUBDIR+= \
 	xf86-video-pnozz
