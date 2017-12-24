@@ -1,4 +1,4 @@
-# 	$NetBSD: RAMDISK,v 1.21 2017/09/14 07:58:40 mrg Exp $
+# 	$NetBSD: RAMDISK,v 1.22 2017/12/24 16:16:30 christos Exp $
 #
 # kernel config file with memory disk for installation
 #
@@ -20,6 +20,7 @@ options 	FFS_NO_SNAPSHOT
 options 	NO_DEV_PTM
 
 # disable some options to shrink kernel
+no options	DDB
 no options 	INCLUDE_CONFIG_FILE
 no options 	NTP
 no options 	KTRACE
@@ -87,6 +88,5 @@ no pseudo-device	agr
 no pseudo-device	accf_data
 no pseudo-device	accf_http
 no pseudo-device	clockctl
-# GENERIC has DDB, needs ksyms
-#no pseudo-device	ksyms
+no pseudo-device	ksyms
 no pseudo-device	wsmux
