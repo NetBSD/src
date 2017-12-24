@@ -1,4 +1,4 @@
-/* $NetBSD: t_sched.c,v 1.5 2012/03/25 04:11:42 christos Exp $ */
+/* $NetBSD: t_sched.c,v 1.6 2017/12/24 17:37:23 christos Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,8 +29,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_sched.c,v 1.5 2012/03/25 04:11:42 christos Exp $");
+__RCSID("$NetBSD: t_sched.c,v 1.6 2017/12/24 17:37:23 christos Exp $");
 
+#include <sys/param.h>	/* PRI_NONE */
 #include <sched.h>
 #include <limits.h>
 #include <unistd.h>
@@ -94,10 +95,14 @@ ATF_TC_BODY(sched_priority, tc)
 
 		pmax = sched_get_priority_max(pol[i]);
 		pmin = sched_get_priority_min(pol[i]);
-
-		ATF_REQUIRE(pmax != -1);
-		ATF_REQUIRE(pmin != -1);
-		ATF_REQUIRE(pmax > pmin);
+		if (pol[i] == SCHED_OTHER) {
+			ATF_REQUIRE(pmax == PRI_NONE);
+			ATF_REQUIRE(pmin == PRI_NONE);
+		} else {
+			ATF_REQUIRE(pmax != -1);
+			ATF_REQUIRE(pmin != -1);
+			ATF_REQUIRE(pmax > pmin);
+		}
 	}
 }
 
