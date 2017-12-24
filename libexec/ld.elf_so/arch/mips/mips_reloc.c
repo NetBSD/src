@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.69 2017/08/10 19:03:26 joerg Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.70 2017/12/24 01:22:16 maya Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mips_reloc.c,v 1.69 2017/08/10 19:03:26 joerg Exp $");
+__RCSID("$NetBSD: mips_reloc.c,v 1.70 2017/12/24 01:22:16 maya Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -413,7 +413,7 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 
 			store_ptr(where, val, ELFSIZE / 8);
 			rdbg(("DTPMOD %s in %s --> %p in %s",
-			    obj->strtab + obj->symtab[r_symndx].st_name,
+			    obj->strtab + obj->symtab[ELF_R_SYM(rel->r_info)].st_name,
 			    obj->path, (void *)old, defobj->path));
 			break;
 		}
@@ -434,7 +434,7 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			store_ptr(where, val, ELFSIZE / 8);
 
 			rdbg(("DTPREL %s in %s --> %p in %s",
-			    obj->strtab + obj->symtab[r_symndx].st_name,
+			    obj->strtab + obj->symtab[ELF_R_SYM(rel->r_info)].st_name,
 			    obj->path, (void *)old, defobj->path));
 			break;
 		}
@@ -456,7 +456,7 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			store_ptr(where, val, ELFSIZE / 8);
 
 			rdbg(("TPREL %s in %s --> %p in %s",
-			    obj->strtab + obj->symtab[r_symndx].st_name,
+			    obj->strtab + obj->symtab[ELF_R_SYM(rel->r_info)].st_name,
 			    obj->path, where, defobj->path));
 			break;
 		}
@@ -468,7 +468,7 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			    (u_long)ELF_R_TYPE(rel->r_info),
 			    (void *)rel->r_offset,
 			    (void *)load_ptr(where, sizeof(Elf_Sword)),
-			    obj->strtab + obj->symtab[r_symndx].st_name));
+			    obj->strtab + obj->symtab[ELF_R_SYM(rel->r_info)].st_name));
 			_rtld_error("%s: Unsupported relocation type %ld "
 			    "in non-PLT relocations",
 			    obj->path, (u_long) ELF_R_TYPE(rel->r_info));
