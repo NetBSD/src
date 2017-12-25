@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci_pci.c,v 1.9 2017/09/05 08:01:43 skrll Exp $	*/
+/*	$NetBSD: xhci_pci.c,v 1.10 2017/12/25 08:39:38 msaitoh Exp $	*/
 /*	OpenBSD: xhci_pci.c,v 1.4 2014/07/12 17:38:51 yuo Exp	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci_pci.c,v 1.9 2017/09/05 08:01:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci_pci.c,v 1.10 2017/12/25 08:39:38 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_xhci_pci.h"
@@ -123,6 +123,7 @@ xhci_pci_attach(device_t parent, device_t self, void *aux)
 	struct pci_attach_args *const pa = (struct pci_attach_args *)aux;
 	const pci_chipset_tag_t pc = pa->pa_pc;
 	const pcitag_t tag = pa->pa_tag;
+	pci_intr_type_t intr_type;
 	char const *intrstr;
 	pcireg_t csr, memtype;
 	int err;
@@ -185,6 +186,7 @@ xhci_pci_attach(device_t parent, device_t self, void *aux)
 #endif
 	};
 
+alloc_retry:
 	/* Allocate and establish the interrupt. */
 	if (pci_intr_alloc(pa, &psc->sc_pihp, counts, PCI_INTR_TYPE_MSIX)) {
 		aprint_error_dev(self, "can't allocate handler\n");
@@ -195,11 +197,22 @@ xhci_pci_attach(device_t parent, device_t self, void *aux)
 	psc->sc_ih = pci_intr_establish_xname(pc, psc->sc_pihp[0], IPL_USB,
 	    xhci_intr, sc, device_xname(sc->sc_dev));
 	if (psc->sc_ih == NULL) {
-		aprint_error_dev(self, "couldn't establish interrupt");
-		if (intrstr != NULL)
-			aprint_error(" at %s", intrstr);
-		aprint_error("\n");
-		goto fail;
+		intr_type = pci_intr_type(pc, psc->sc_pihp[0]);
+		pci_intr_release(pc, psc->sc_pihp, 1);
+		psc->sc_ih = NULL;
+		switch (intr_type) {
+		case PCI_INTR_TYPE_MSI:
+			/* The next try is for INTx: Disable MSI */
+			counts[PCI_INTR_TYPE_MSI] = 0;
+			goto alloc_retry;
+		case PCI_INTR_TYPE_INTX:
+		default:
+			aprint_error_dev(self, "couldn't establish interrupt");
+			if (intrstr != NULL)
+				aprint_error(" at %s", intrstr);
+			aprint_error("\n");
+			goto fail;
+		}
 	}
 	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 
@@ -238,9 +251,13 @@ xhci_pci_attach(device_t parent, device_t self, void *aux)
 	return;
 
 fail:
-	if (psc->sc_ih) {
-		pci_intr_release(psc->sc_pc, psc->sc_pihp, 1);
+	if (psc->sc_ih != NULL) {
+		pci_intr_disestablish(psc->sc_pc, psc->sc_ih);
 		psc->sc_ih = NULL;
+	}
+	if (psc->sc_pihp != NULL) {
+		pci_intr_release(psc->sc_pc, psc->sc_pihp, 1);
+		psc->sc_pihp = NULL;
 	}
 	if (sc->sc_ios) {
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
@@ -273,8 +290,12 @@ xhci_pci_detach(device_t self, int flags)
 	}
 
 	if (psc->sc_ih != NULL) {
-		pci_intr_release(psc->sc_pc, psc->sc_pihp, 1);
+		pci_intr_disestablish(psc->sc_pc, psc->sc_ih);
 		psc->sc_ih = NULL;
+	}
+	if (psc->sc_pihp != NULL) {
+		pci_intr_release(psc->sc_pc, psc->sc_pihp, 1);
+		psc->sc_pihp = NULL;
 	}
 	if (sc->sc_ios) {
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
