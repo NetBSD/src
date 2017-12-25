@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.237 2017/12/19 18:43:42 kamil Exp $
+#	$NetBSD: Makefile.inc,v 1.238 2017/12/25 11:03:30 kamil Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -7,9 +7,9 @@
 # other sources shared with the kernel, used in syscalls
 SRCS+=	cpuset.c
 # glue to offer userland wrappers for some syscalls
-SRCS+=	posix_fadvise.c posix_madvise.c sched.c sigqueue.c sigtimedwait.c \
-	sigwait.c sigwaitinfo.c statvfs.c swapon.c semctl.c \
-	clock_getcpuclockid.c accept4.c
+SRCS+=	accept4.c clock_getcpuclockid.c posix_fadvise.c posix_madvise.c \
+	sched.c sigqueue.c sigtimedwait.c sigwait.c sigwaitinfo.c statvfs.c \
+	swapon.c semctl.c vadvise.c
 
 .if ${RUMPRUN} != "yes"
 # modules with non-default implementations on at least one architecture:
