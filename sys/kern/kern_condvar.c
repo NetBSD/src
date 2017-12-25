@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_condvar.c,v 1.39 2017/11/12 20:04:51 riastradh Exp $	*/
+/*	$NetBSD: kern_condvar.c,v 1.40 2017/12/25 09:13:40 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.39 2017/11/12 20:04:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.40 2017/12/25 09:13:40 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,9 +79,9 @@ static syncobj_t cv_syncobj = {
 };
 
 lockops_t cv_lockops = {
-	"Condition variable",
-	LOCKOPS_CV,
-	NULL
+	.lo_name = "Condition variable",
+	.lo_type = LOCKOPS_CV,
+	.lo_dump = NULL,
 };
 
 static const char deadcv[] = "deadcv";

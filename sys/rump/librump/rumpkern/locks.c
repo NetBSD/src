@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.75 2017/09/17 05:47:19 kre Exp $	*/
+/*	$NetBSD: locks.c,v 1.76 2017/12/25 09:13:40 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.75 2017/09/17 05:47:19 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.76 2017/12/25 09:13:40 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -51,14 +51,14 @@ const int rump_lockdebug = 0;
 #include <sys/lockdebug.h>
 
 static lockops_t mutex_lockops = {
-	"mutex",
-	LOCKOPS_SLEEP,
-	NULL
+	.lo_name = "mutex",
+	.lo_type = LOCKOPS_SLEEP,
+	.lo_dump = NULL,
 };
 static lockops_t rw_lockops = {
-	"rwlock",
-	LOCKOPS_SLEEP,
-	NULL
+	.lo_name = "rwlock",
+	.lo_type = LOCKOPS_SLEEP,
+	.lo_dump = NULL,
 };
 
 #define ALLOCK(lock, ops)				\

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.47 2017/09/16 23:55:33 christos Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.48 2017/12/25 09:13:40 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.47 2017/09/16 23:55:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.48 2017/12/25 09:13:40 ozaki-r Exp $");
 
 #define	__RWLOCK_PRIVATE
 
@@ -148,9 +148,9 @@ __strong_alias(rw_tryenter,rw_vector_tryenter);
 #endif
 
 lockops_t rwlock_lockops = {
-	"Reader / writer lock",
-	LOCKOPS_SLEEP,
-	rw_dump
+	.lo_name = "Reader / writer lock",
+	.lo_type = LOCKOPS_SLEEP,
+	.lo_dump = rw_dump,
 };
 
 syncobj_t rw_syncobj = {
