@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.70 2017/12/24 01:22:16 maya Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.71 2017/12/25 05:29:27 maya Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mips_reloc.c,v 1.70 2017/12/24 01:22:16 maya Exp $");
+__RCSID("$NetBSD: mips_reloc.c,v 1.71 2017/12/25 05:29:27 maya Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -61,7 +61,7 @@ caddr_t _rtld_bind(Elf_Word, Elf_Addr, Elf_Addr, Elf_Addr);
  * ELF64 MIPS encodes the relocs uniquely.  The first 32-bits of info contain
  * the symbol index.  The top 32-bits contain three relocation types encoded
  * in big-endian integer with first relocation in LSB.  This means for little
- * endian we have to byte swap that interger (r_type).
+ * endian we have to byte swap that integer (r_type).
  */
 #define	Elf_Sxword			Elf64_Sxword
 #define	ELF_R_NXTTYPE_64_P(r_type)	((((r_type) >> 8) & 0xff) == R_TYPE(64))
