@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.66 2017/11/06 21:16:04 joerg Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.67 2017/12/25 17:00:15 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo Horvath.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.66 2017/11/06 21:16:04 joerg Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.67 2017/12/25 17:00:15 joerg Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -533,7 +533,8 @@ _rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
 
 	result = 0;	/* XXX gcc */
 
-	if (ELF_R_TYPE(obj->pltrela->r_info) == R_TYPE(JMP_SLOT)) {
+	if (ELF_R_TYPE(obj->pltrela->r_info) == R_TYPE(JMP_SLOT) ||
+	    ELF_R_TYPE(obj->pltrela->r_info) == R_TYPE(JMP_IREL)) {
 		/*
 		 * XXXX
 		 *
@@ -546,8 +547,9 @@ _rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
 		 * 
 		 * So, to provide binary compatibility, we will check the first
 		 * entry, if it is reserved it should not be of the type
-		 * JMP_SLOT.  If it is JMP_SLOT, then the 4 reserved entries
-		 * were not generated and our index is 4 entries too far.
+		 * JMP_SLOT or JMP_REL.  If it is either of those, then
+		 * the 4 reserved entries were not generated and our index
+		 * is 4 entries too far.
 		 */
 		rela -= 4;
 	}
@@ -572,7 +574,8 @@ _rtld_relocate_plt_objects(const Obj_Entry *obj)
 	 * Check for first four reserved entries - and skip them.
 	 * See above for details.
 	 */
-	if (ELF_R_TYPE(obj->pltrela->r_info) != R_TYPE(JMP_SLOT))
+	if (ELF_R_TYPE(obj->pltrela->r_info) != R_TYPE(JMP_SLOT) &&
+	    ELF_R_TYPE(obj->pltrela->r_info) != R_TYPE(JMP_IREL))
 		rela += 4;
 
 	for (; rela < obj->pltrelalim; rela++)
