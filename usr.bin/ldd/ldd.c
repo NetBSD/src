@@ -1,4 +1,4 @@
-/*	$NetBSD: ldd.c,v 1.22 2014/03/02 03:55:19 matt Exp $	*/
+/*	$NetBSD: ldd.c,v 1.23 2017/12/25 05:08:49 maya Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ldd.c,v 1.22 2014/03/02 03:55:19 matt Exp $");
+__RCSID("$NetBSD: ldd.c,v 1.23 2017/12/25 05:08:49 maya Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -122,7 +122,7 @@ int
 main(int argc, char **argv)
 {
 	const char *fmt1 = NULL, *fmt2 = NULL;
-	int c;
+	int c, exit_status = EXIT_SUCCESS;
 
 #ifdef DEBUG
 	debug = 1;
@@ -160,6 +160,7 @@ main(int argc, char **argv)
 
 		fd = open(*argv, O_RDONLY);
 		if (fd == -1) {
+			exit_status = EXIT_FAILURE;
 			warn("%s", *argv);
 			continue;
 		}
@@ -171,12 +172,14 @@ main(int argc, char **argv)
 		    && elf32_ldd_compat(fd, *argv, fmt1, fmt2) == -1
 #endif
 #endif
-		    )
+		    ) {
+			exit_status = EXIT_FAILURE;
 			warnx("%s", error_message);
+		}
 		close(fd);
 	}
 
-	return 0;
+	return exit_status;
 }
 
 /*
