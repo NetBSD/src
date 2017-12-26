@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_pipe.c,v 1.67 2014/11/09 17:48:08 maxv Exp $	*/
+/*	$NetBSD: linux_pipe.c,v 1.68 2017/12/26 08:30:57 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_pipe.c,v 1.67 2014/11/09 17:48:08 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_pipe.c,v 1.68 2017/12/26 08:30:57 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,31 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_pipe.c,v 1.67 2014/11/09 17:48:08 maxv Exp $")
 /* Not used on: alpha, mips, sparc, sparc64 */
 /* Alpha, mips, sparc and sparc64 pass one of the fds in a register */
 
-/*
- * NetBSD passes fd[0] in retval[0], and fd[1] in retval[1].
- * Linux directly passes the pointer.
- */
-static int
-linux_pipe_return(struct lwp *l, int *pfds, register_t *retval)
-{
-	int error;
-
-	if (sizeof(*retval) != sizeof(*pfds)) {
-		/* On amd64, sizeof(register_t) != sizeof(int) */
-		int rpfds[2];
-		rpfds[0] = (int)retval[0];
-		rpfds[1] = (int)retval[1];
-
-		if ((error = copyout(rpfds, pfds, sizeof(rpfds))))
-			return error;
-	} else {
-		if ((error = copyout(retval, pfds, 2 * sizeof(*pfds))))
-			return error;
-	}
-	retval[0] = 0;
-	return 0;
-}
-
 int
 linux_sys_pipe(struct lwp *l, const struct linux_sys_pipe_args *uap,
     register_t *retval)
@@ -89,12 +64,15 @@ linux_sys_pipe(struct lwp *l, const struct linux_sys_pipe_args *uap,
 	/* {
 		syscallarg(int *) pfds;
 	} */
-	int error;
+	int fd[2], error;
 
-	if ((error = pipe1(l, retval, 0)))
+	if ((error = pipe1(l, fd, 0)))
 		return error;
 
-	return linux_pipe_return(l, SCARG(uap, pfds), retval);
+	if ((error = copyout(fd, SCARG(uap, pfds), sizeof(fd))) != 0)
+		return error;
+	retval[0] = 0;
+	return 0;
 }
 
 int
@@ -105,14 +83,17 @@ linux_sys_pipe2(struct lwp *l, const struct linux_sys_pipe2_args *uap,
 		syscallarg(int *) pfds;
 		syscallarg(int) flags;
 	} */
-	int error, flags;
+	int fd[2], error, flags;
 
 	flags = linux_to_bsd_ioflags(SCARG(uap, flags));
 	if ((flags & ~(O_CLOEXEC|O_NONBLOCK)) != 0)
 		return EINVAL;
 
-	if ((error = pipe1(l, retval, flags)))
+	if ((error = pipe1(l, fd, flags)))
 		return error;
 
-	return linux_pipe_return(l, SCARG(uap, pfds), retval);
+	if ((error = copyout(fd, SCARG(uap, pfds), sizeof(fd))) != 0)
+		return error;
+	retval[0] = 0;
+	return 0;
 }

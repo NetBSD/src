@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_pipe.c,v 1.17 2014/11/09 17:48:07 maxv Exp $	*/
+/*	$NetBSD: linux_pipe.c,v 1.18 2017/12/26 08:30:57 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_pipe.c,v 1.17 2014/11/09 17:48:07 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_pipe.c,v 1.18 2017/12/26 08:30:57 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,12 +62,13 @@ __KERNEL_RCSID(0, "$NetBSD: linux_pipe.c,v 1.17 2014/11/09 17:48:07 maxv Exp $")
 int
 linux_sys_pipe(struct lwp *l, const void *v, register_t *retval)
 {
-	int error;
+	int fd[2], error;
 
-	if ((error = pipe1(l, retval, 0)))
+	if ((error = pipe1(l, fd, 0)))
 		return error;
 
-	(l->l_md.md_tf)->tf_regs[FRAME_A4] = retval[1];
+	retval[0] = fd[0];
+	(l->l_md.md_tf)->tf_regs[FRAME_A4] = fd[1];
 	return 0;
 }
 
@@ -79,16 +80,17 @@ linux_sys_pipe2(struct lwp *l, const struct linux_sys_pipe2_args *uap,
 		syscallarg(int *) pfds;
 		syscallarg(int) flags;
 	} */
-	int error, flags;
+	int fd[2], error, flags;
 
 	flags = linux_to_bsd_ioflags(SCARG(uap, flags));
 	if ((flags & ~(O_CLOEXEC|O_NONBLOCK)) != 0)
 		return EINVAL;
 
-	if ((error = pipe1(l, retval, flags)))
+	if ((error = pipe1(l, fd, flags)))
 		return error;
 
-	(l->l_md.md_tf)->tf_regs[FRAME_A4] = retval[1];
+	retval[0] = fd[0];
+	(l->l_md.md_tf)->tf_regs[FRAME_A4] = fd[1];
 
 	return 0;
 }
