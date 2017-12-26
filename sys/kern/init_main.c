@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.493 2017/12/15 16:05:51 chs Exp $	*/
+/*	$NetBSD: init_main.c,v 1.494 2017/12/26 03:58:03 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.493 2017/12/15 16:05:51 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.494 2017/12/26 03:58:03 msaitoh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -233,7 +233,7 @@ struct	proc *initproc;
 
 struct	vnode *rootvp, *swapdev_vp;
 int	boothowto;
-int	cold = 1;			/* still working on startup */
+int	cold __read_mostly = 1;		/* still working on startup */
 struct timespec boottime;	        /* time at system startup - will only follow settime deltas */
 
 int	start_init_exec;		/* semaphore for start_init() */
