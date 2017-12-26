@@ -1,4 +1,4 @@
-/* $NetBSD: chk.c,v 1.22 2011/10/17 16:31:14 mbalmer Exp $ */
+/* $NetBSD: chk.c,v 1.23 2017/12/26 17:02:19 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: chk.c,v 1.22 2011/10/17 16:31:14 mbalmer Exp $");
+__RCSID("$NetBSD: chk.c,v 1.23 2017/12/26 17:02:19 christos Exp $");
 #endif
 
 #include <ctype.h>
@@ -210,6 +210,8 @@ chkmd(hte_t *hte)
 		 * only one compilation unit.
 		 */
 		if (sym->s_def != DEF && (!sflag || sym->s_def != TDEF))
+			continue;
+		if (sym->s_inline)
 			continue;
 		if (def1 == NULL) {
 			def1 = sym;
