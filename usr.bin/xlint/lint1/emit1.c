@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.19 2008/09/26 22:52:24 matt Exp $ */
+/* $NetBSD: emit1.c,v 1.20 2017/12/26 17:02:19 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: emit1.c,v 1.19 2008/09/26 22:52:24 matt Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.20 2017/12/26 17:02:19 christos Exp $");
 #endif
 
 #include <ctype.h>
@@ -366,6 +366,9 @@ outfdef(sym_t *fsym, pos_t *posp, int rval, int osdef, sym_t *args)
 	if (osdef)
 		/* old style function definition */
 		outchar('o');
+
+	if (fsym->s_inline)
+		outchar('i');
 
 	if (fsym->s_scl == STATIC)
 		outchar('s');
