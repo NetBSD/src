@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.222 2017/12/08 14:46:18 khorben Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.223 2017/12/26 18:44:52 khorben Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.222 2017/12/08 14:46:18 khorben Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.223 2017/12/26 18:44:52 khorben Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1695,7 +1695,7 @@ usb_free_device(struct usbd_device *dev)
  * driver is dying and then wakes any sleepers.  It then sleeps on the
  * softc.  Each place that can sleep must maintain the reference
  * count.  When the reference count drops to -1 (0 is the normal value
- * of the reference count) the a wakeup on the softc is performed
+ * of the reference count) then a wakeup on the softc is performed
  * signaling to the detach waiter that all references are gone.
  */
 
