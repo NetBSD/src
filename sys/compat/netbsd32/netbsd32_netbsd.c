@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.211 2017/12/19 19:40:03 kamil Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.212 2017/12/26 08:30:58 kamil Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.211 2017/12/19 19:40:03 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.212 2017/12/26 08:30:58 kamil Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -2687,12 +2687,9 @@ netbsd32_pipe2(struct lwp *l, const struct netbsd32_pipe2_args *uap,
 	} */
 	int fd[2], error;
 
-	error = pipe1(l, retval, SCARG(uap, flags));
+	error = pipe1(l, fd, SCARG(uap, flags));
 	if (error != 0)
 		return error;
-
-	fd[0] = retval[0];
-	fd[1] = retval[1];
 
 	error = copyout(fd, SCARG_P32(uap, fildes), sizeof(fd));
 	if (error != 0)
