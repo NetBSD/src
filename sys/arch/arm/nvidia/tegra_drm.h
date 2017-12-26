@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_drm.h,v 1.7 2016/12/17 12:11:38 maya Exp $ */
+/* $NetBSD: tegra_drm.h,v 1.8 2017/12/26 14:54:52 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,6 +30,7 @@
 #define _ARM_TEGRA_DRM_H
 
 #include <drm/drm_fb_helper.h>
+#include <drm/drm_gem_cma_helper.h>
 
 #define DRIVER_AUTHOR		"Jared McNeill"
 
@@ -42,8 +43,6 @@
 #define DRIVER_PATCHLEVEL	0
 
 struct tegra_framebuffer;
-
-struct tegra_gem_object;
 
 struct tegra_drm_softc {
 	device_t		sc_dev;
@@ -93,7 +92,7 @@ struct tegra_crtc {
 	bool			enabled;
 	struct clk		*clk_parent;
 
-	struct tegra_gem_object	*cursor_obj;
+	struct drm_gem_cma_object	*cursor_obj;
 	int			cursor_x;
 	int			cursor_y;
 };
@@ -115,18 +114,9 @@ struct tegra_connector {
 	bool			has_audio;
 };
 
-struct tegra_gem_object {
-	struct drm_gem_object	base;
-	bus_dma_tag_t		dmat;
-	bus_dma_segment_t	dmasegs[1];
-	bus_size_t		dmasize;
-	bus_dmamap_t		dmamap;
-	void			*dmap;
-};
-
 struct tegra_framebuffer {
 	struct drm_framebuffer	base;
-	struct tegra_gem_object *obj;
+	struct drm_gem_cma_object *obj;
 };
 
 struct tegra_fbdev {
@@ -155,7 +145,6 @@ struct tegra_fbdev {
 #define to_tegra_connector(x)	container_of(x, struct tegra_connector, base)
 #define to_tegra_framebuffer(x)	container_of(x, struct tegra_framebuffer, base)
 #define to_tegra_fbdev(x)	container_of(x, struct tegra_fbdev, helper)
-#define to_tegra_gem_obj(x)	container_of(x, struct tegra_gem_object, base)
 
 int	tegra_drm_mode_init(struct drm_device *);
 int	tegra_drm_fb_init(struct drm_device *);
@@ -164,12 +153,5 @@ int	tegra_drm_enable_vblank(struct drm_device *, int);
 void	tegra_drm_disable_vblank(struct drm_device *, int);
 int	tegra_drm_framebuffer_init(struct drm_device *,
 	    struct tegra_framebuffer *);
-
-struct tegra_gem_object *tegra_drm_obj_alloc(struct drm_device *, size_t);
-void	tegra_drm_obj_free(struct tegra_gem_object *);
-
-int	tegra_drm_gem_fault(struct uvm_faultinfo *, vaddr_t, struct vm_page **,
-	    int, int, vm_prot_t, int);
-void	tegra_drm_gem_free_object(struct drm_gem_object *);
 
 #endif /* _ARM_TEGRA_DRM_H */
