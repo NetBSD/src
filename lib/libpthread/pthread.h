@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.h,v 1.38 2016/10/30 23:26:33 kamil Exp $	*/
+/*	$NetBSD: pthread.h,v 1.39 2017/12/26 17:00:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -94,8 +94,10 @@ int	pthread_mutex_destroy(pthread_mutex_t *);
 int	pthread_mutex_lock(pthread_mutex_t *);
 int	pthread_mutex_trylock(pthread_mutex_t *);
 int	pthread_mutex_unlock(pthread_mutex_t *);
+#ifndef __LIBC12_SOURCE__
 int	pthread_mutex_timedlock(pthread_mutex_t * __restrict,
 	    const struct timespec * __restrict);
+#endif
 int	pthread_mutex_getprioceiling(const pthread_mutex_t * __restrict,
 	    int * __restrict);
 int	pthread_mutex_setprioceiling(pthread_mutex_t * __restrict, int,
