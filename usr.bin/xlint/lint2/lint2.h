@@ -1,4 +1,4 @@
-/* $NetBSD: lint2.h,v 1.7 2005/04/07 16:28:40 christos Exp $ */
+/* $NetBSD: lint2.h,v 1.8 2017/12/26 17:02:19 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -119,6 +119,7 @@ typedef	struct sym {
 		def_t	s_def;
 #endif
 		u_int	s_rval : 1;	/* function has return value */
+		u_int	s_inline : 1;	/* function is inline */
 		u_int	s_osdef : 1;	/* old style function definition */
 		u_int	s_static : 1;	/* symbol is static */
 		u_int	s_va : 1;	/* check only first s_nva arguments */
@@ -135,6 +136,7 @@ typedef	struct sym {
 #define s_pos		s_s.s_pos
 #define s_rval		s_s.s_rval
 #define s_osdef		s_s.s_osdef
+#define s_inline	s_s.s_inline
 #define s_static	s_s.s_static
 #define s_def		s_s.s_def
 #define s_va		s_s.s_va
