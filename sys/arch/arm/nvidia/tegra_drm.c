@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_drm.c,v 1.7 2017/04/16 12:28:21 jmcneill Exp $ */
+/* $NetBSD: tegra_drm.c,v 1.8 2017/12/26 14:54:52 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_drm.c,v 1.7 2017/04/16 12:28:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_drm.c,v 1.8 2017/12/26 14:54:52 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -57,29 +57,18 @@ static int	tegra_drm_set_busid(struct drm_device *, struct drm_master *);
 static int	tegra_drm_load(struct drm_device *, unsigned long);
 static int	tegra_drm_unload(struct drm_device *);
 
-static int	tegra_drm_dumb_create(struct drm_file *, struct drm_device *,
-		    struct drm_mode_create_dumb *);
-static int	tegra_drm_dumb_map_offset(struct drm_file *,
-		    struct drm_device *, uint32_t, uint64_t *);
-
-static const struct uvm_pagerops tegra_drm_gem_uvm_ops = {
-	.pgo_reference = drm_gem_pager_reference,
-	.pgo_detach = drm_gem_pager_detach,
-	.pgo_fault = tegra_drm_gem_fault,
-};
-
 static struct drm_driver tegra_drm_driver = {
 	.driver_features = DRIVER_MODESET | DRIVER_GEM,
 	.dev_priv_size = 0,
 	.load = tegra_drm_load,
 	.unload = tegra_drm_unload,
 
-	.gem_free_object = tegra_drm_gem_free_object,
+	.gem_free_object = drm_gem_cma_free_object,
 	.mmap_object = drm_gem_or_legacy_mmap_object,
-	.gem_uvm_ops = &tegra_drm_gem_uvm_ops,
+	.gem_uvm_ops = &drm_gem_cma_uvm_ops,
 
-	.dumb_create = tegra_drm_dumb_create,
-	.dumb_map_offset = tegra_drm_dumb_map_offset,
+	.dumb_create = drm_gem_cma_dumb_create,
+	.dumb_map_offset = drm_gem_cma_dumb_map_offset,
 	.dumb_destroy = drm_gem_dumb_destroy,
 
 	.get_vblank_counter = tegra_drm_get_vblank_counter,
@@ -282,63 +271,4 @@ tegra_drm_unload(struct drm_device *ddev)
 	drm_mode_config_cleanup(ddev);
 
 	return 0;
-}
-
-static int
-tegra_drm_dumb_create(struct drm_file *file_priv, struct drm_device *ddev,
-    struct drm_mode_create_dumb *args)
-{
-	struct tegra_gem_object *obj;
-	uint32_t handle;
-	int error;
-
-	args->pitch = args->width * ((args->bpp + 7) / 8);
-	args->size = args->pitch * args->height;
-	args->size = roundup(args->size, PAGE_SIZE);
-	args->handle = 0;
-
-	obj = tegra_drm_obj_alloc(ddev, args->size);
-	if (obj == NULL)
-		return -ENOMEM;
-
-	error = drm_gem_handle_create(file_priv, &obj->base, &handle);
-	drm_gem_object_unreference_unlocked(&obj->base);
-	if (error) {
-		tegra_drm_obj_free(obj);
-		return error;
-	}
-
-	args->handle = handle;
-
-	return 0;
-}
-
-static int
-tegra_drm_dumb_map_offset(struct drm_file *file_priv,
-    struct drm_device *ddev, uint32_t handle, uint64_t *offset)
-{
-	struct drm_gem_object *gem_obj;
-	struct tegra_gem_object *obj;
-	int error;
-
-	gem_obj = drm_gem_object_lookup(ddev, file_priv, handle);
-	if (gem_obj == NULL)
-		return -ENOENT;
-
-	obj = to_tegra_gem_obj(gem_obj);
-
-	if (drm_vma_node_has_offset(&obj->base.vma_node) == 0) {
-		error = drm_gem_create_mmap_offset(&obj->base);
-		if (error)
-			goto done;
-	} else {
-		error = 0;
-	}
-
-	*offset = drm_vma_node_offset_addr(&obj->base.vma_node);
-
-done:
-	drm_gem_object_unreference_unlocked(&obj->base);
-
-	return error;
 }

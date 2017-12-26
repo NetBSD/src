@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_fb.c,v 1.3 2016/12/17 12:11:38 maya Exp $ */
+/* $NetBSD: tegra_fb.c,v 1.4 2017/12/26 14:54:52 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_fb.c,v 1.3 2016/12/17 12:11:38 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_fb.c,v 1.4 2017/12/26 14:54:52 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -92,7 +92,7 @@ tegra_fb_attach(device_t parent, device_t self, void *aux)
 		.da_dev = self,
 		.da_fb_helper = tfa->tfa_fb_helper,
 		.da_fb_sizes = &tfa->tfa_fb_sizes,
-		.da_fb_vaddr = sc->sc_fb->obj->dmap,
+		.da_fb_vaddr = sc->sc_fb->obj->vaddr,
 		.da_fb_linebytes = tfa->tfa_fb_linebytes,
 		.da_params = &tegrafb_drmfb_params,
 	};
@@ -118,7 +118,7 @@ static paddr_t
 tegra_fb_mmapfb(struct drmfb_softc *sc, off_t off, int prot)
 {
 	struct tegra_fb_softc * const tfb_sc = (struct tegra_fb_softc *)sc;
-	struct tegra_gem_object *obj = tfb_sc->sc_fb->obj;
+	struct drm_gem_cma_object *obj = tfb_sc->sc_fb->obj;
 
 	KASSERT(off >= 0);
 	KASSERT(off < obj->dmasize);

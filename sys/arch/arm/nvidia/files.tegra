@@ -1,4 +1,4 @@
-#	$NetBSD: files.tegra,v 1.45 2017/09/26 16:12:45 jmcneill Exp $
+#	$NetBSD: files.tegra,v 1.46 2017/12/26 14:54:52 jmcneill Exp $
 #
 # Configuration info for NVIDIA Tegra ARM Peripherals
 #
@@ -157,7 +157,6 @@ attach	tegradrm at fdt with tegra_drm
 file	arch/arm/nvidia/tegra_drm.c		tegra_drm
 file	arch/arm/nvidia/tegra_drm_mode.c	tegra_drm
 file	arch/arm/nvidia/tegra_drm_fb.c		tegra_drm
-file	arch/arm/nvidia/tegra_drm_gem.c		tegra_drm
 
 # Framebuffer console
 device	tegrafb: tegrafbbus, drmfb, wsemuldisplaydev
