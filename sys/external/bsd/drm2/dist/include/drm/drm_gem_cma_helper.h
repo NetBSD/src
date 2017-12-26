@@ -5,8 +5,15 @@
 
 struct drm_gem_cma_object {
 	struct drm_gem_object base;
+#ifdef __NetBSD__
+	bus_dma_tag_t dmat;
+	bus_dma_segment_t dmasegs[1];
+	bus_size_t dmasize;
+	bus_dmamap_t dmamap;
+#else
 	dma_addr_t paddr;
 	struct sg_table *sgt;
+#endif
 
 	/* For objects with DMA memory allocated by GEM CMA */
 	void *vaddr;
@@ -36,7 +43,11 @@ int drm_gem_cma_mmap(struct file *filp, struct vm_area_struct *vma);
 struct drm_gem_cma_object *drm_gem_cma_create(struct drm_device *drm,
 		unsigned int size);
 
+#ifdef __NetBSD__
+extern const struct uvm_pagerops drm_gem_cma_uvm_ops;
+#else
 extern const struct vm_operations_struct drm_gem_cma_vm_ops;
+#endif
 
 #ifdef CONFIG_DEBUG_FS
 void drm_gem_cma_describe(struct drm_gem_cma_object *obj, struct seq_file *m);
