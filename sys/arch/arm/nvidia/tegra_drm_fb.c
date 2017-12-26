@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_drm_fb.c,v 1.5 2017/06/01 02:45:05 chs Exp $ */
+/* $NetBSD: tegra_drm_fb.c,v 1.6 2017/12/26 14:54:52 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_drm_fb.c,v 1.5 2017/06/01 02:45:05 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_drm_fb.c,v 1.6 2017/12/26 14:54:52 jmcneill Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_crtc.h>
@@ -125,7 +125,7 @@ tegra_fb_init(struct drm_device *ddev, struct drm_framebuffer *fb,
 
 	const size_t size = roundup(height * pitch, PAGE_SIZE);
 
-	tegra_fb->obj = tegra_drm_obj_alloc(ddev, size);
+	tegra_fb->obj = drm_gem_cma_create(ddev, size);
 	if (tegra_fb->obj == NULL)
 		return -ENOMEM;
 
