@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.139 2017/11/17 07:37:12 ozaki-r Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.140 2017/12/26 02:26:45 ozaki-r Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.139 2017/11/17 07:37:12 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.140 2017/12/26 02:26:45 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1097,7 +1097,11 @@ nd6_dad_stoptimer(struct dadq *dp)
 #ifdef NET_MPSAFE
 	callout_halt(&dp->dad_timer_ch, NULL);
 #else
-	callout_halt(&dp->dad_timer_ch, softnet_lock);
+	/* XXX still need the trick for softnet_lock */
+	if (mutex_owned(softnet_lock))
+		callout_halt(&dp->dad_timer_ch, softnet_lock);
+	else
+		callout_halt(&dp->dad_timer_ch, NULL);
 #endif
 }
 
