@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_drm_mode.c,v 1.15 2017/06/01 02:45:05 chs Exp $ */
+/* $NetBSD: tegra_drm_mode.c,v 1.16 2017/12/26 14:54:52 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_drm_mode.c,v 1.15 2017/06/01 02:45:05 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_drm_mode.c,v 1.16 2017/12/26 14:54:52 jmcneill Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_crtc.h>
@@ -233,7 +233,7 @@ tegra_fb_create(struct drm_device *ddev, struct drm_file *file,
 		return NULL;
 
 	fb = kmem_zalloc(sizeof(*fb), KM_SLEEP);
-	fb->obj = to_tegra_gem_obj(gem_obj);
+	fb->obj = to_drm_gem_cma_obj(gem_obj);
 	fb->base.pitches[0] = cmd->pitches[0];
 	fb->base.offsets[0] = cmd->offsets[0];
 	fb->base.width = cmd->width;
@@ -323,7 +323,7 @@ tegra_crtc_init(struct drm_device *ddev, int index)
 		DRM_ERROR("failed to establish interrupt for crtc %d\n", index);
 	}
 	const size_t cursor_size = 256 * 256 * 4;
-	crtc->cursor_obj = tegra_drm_obj_alloc(ddev, cursor_size);
+	crtc->cursor_obj = drm_gem_cma_create(ddev, cursor_size);
 	if (crtc->cursor_obj == NULL) {
 		kmem_free(crtc, sizeof(*crtc));
 		return -ENOMEM;
@@ -372,7 +372,7 @@ tegra_crtc_cursor_set(struct drm_crtc *crtc, struct drm_file *file_priv,
 {
 	struct tegra_crtc *tegra_crtc = to_tegra_crtc(crtc);
 	struct drm_gem_object *gem_obj = NULL;
-	struct tegra_gem_object *obj;
+	struct drm_gem_cma_object *obj;
 	uint32_t cfg, opt;
 	int error;
 
@@ -410,7 +410,7 @@ tegra_crtc_cursor_set(struct drm_crtc *crtc, struct drm_file *file_priv,
 		error = -ENOENT;
 		goto done;
 	}
-	obj = to_tegra_gem_obj(gem_obj);
+	obj = to_drm_gem_cma_obj(gem_obj);
 
 	if (obj->base.size < width * height * 4) {
 		DRM_ERROR("Cursor buffer is too small\n");
@@ -440,8 +440,8 @@ tegra_crtc_cursor_set(struct drm_crtc *crtc, struct drm_file *file_priv,
 	}
 
 	/* copy cursor (argb -> rgba) */
-	struct tegra_gem_object *cursor_obj = tegra_crtc->cursor_obj;
-	uint32_t off, *cp = obj->dmap, *crtc_cp = cursor_obj->dmap;
+	struct drm_gem_cma_object *cursor_obj = tegra_crtc->cursor_obj;
+	uint32_t off, *cp = obj->vaddr, *crtc_cp = cursor_obj->vaddr;
 	for (off = 0; off < width * height; off++) {
 		crtc_cp[off] = (cp[off] << 8) | (cp[off] >> 24);
 	}
@@ -538,7 +538,7 @@ tegra_crtc_destroy(struct drm_crtc *crtc)
 	if (tegra_crtc->ih) {
 		intr_disestablish(tegra_crtc->ih);
 	}
-	tegra_drm_obj_free(tegra_crtc->cursor_obj);
+	drm_gem_cma_free_object(&tegra_crtc->cursor_obj->base);
 	bus_space_unmap(tegra_crtc->bst, tegra_crtc->bsh, tegra_crtc->size);
 	kmem_free(tegra_crtc, sizeof(*tegra_crtc));
 }
