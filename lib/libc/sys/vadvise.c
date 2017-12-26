@@ -1,4 +1,4 @@
-/*	$NetBSD: vadvise.c,v 1.2 2017/12/26 05:45:50 maya Exp $	*/
+/*	$NetBSD: vadvise.c,v 1.3 2017/12/26 17:09:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: vadvise.c,v 1.2 2017/12/26 05:45:50 maya Exp $");
+__RCSID("$NetBSD: vadvise.c,v 1.3 2017/12/26 17:09:20 christos Exp $");
 #endif
 
 #include <errno.h>
@@ -37,7 +37,7 @@ int vadvise(int va);
 int
 vadvise(int va)
 {
-	(void)va;
+	__USE(va);
 
 	errno = EINVAL;
 	return -1;
