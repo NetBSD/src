@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.133 2017/07/15 13:46:02 christos Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.134 2017/12/26 17:03:10 christos Exp $	*/
 
 /* * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -369,7 +369,7 @@
 #define	__c99inline	extern __attribute__((__gnu_inline__)) __inline
 #elif defined(__GNUC__)
 #define	__c99inline	extern __inline
-#elif defined(__STDC_VERSION__)
+#elif defined(__STDC_VERSION__) || defined(__lint__)
 #define	__c99inline	__inline
 #endif
 
