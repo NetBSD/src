@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.142 2017/11/30 20:25:55 christos Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.143 2017/12/26 08:30:58 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.142 2017/11/30 20:25:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.143 2017/12/26 08:30:58 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -245,7 +245,7 @@ pipe_dtor(void *arg, void *obj)
  * The pipe system call for the DTYPE_PIPE type of pipes
  */
 int
-pipe1(struct lwp *l, register_t *retval, int flags)
+pipe1(struct lwp *l, int *fildes, int flags)
 {
 	struct pipe *rpipe, *wpipe;
 	file_t *rf, *wf;
@@ -267,33 +267,33 @@ pipe1(struct lwp *l, register_t *retval, int flags)
 	error = fd_allocfile(&rf, &fd);
 	if (error)
 		goto free2;
-	retval[0] = fd;
+	fildes[0] = fd;
 
 	error = fd_allocfile(&wf, &fd);
 	if (error)
 		goto free3;
-	retval[1] = fd;
+	fildes[1] = fd;
 
 	rf->f_flag = FREAD | flags;
 	rf->f_type = DTYPE_PIPE;
 	rf->f_pipe = rpipe;
 	rf->f_ops = &pipeops;
-	fd_set_exclose(l, (int)retval[0], (flags & O_CLOEXEC) != 0);
+	fd_set_exclose(l, fildes[0], (flags & O_CLOEXEC) != 0);
 
 	wf->f_flag = FWRITE | flags;
 	wf->f_type = DTYPE_PIPE;
 	wf->f_pipe = wpipe;
 	wf->f_ops = &pipeops;
-	fd_set_exclose(l, (int)retval[1], (flags & O_CLOEXEC) != 0);
+	fd_set_exclose(l, fildes[1], (flags & O_CLOEXEC) != 0);
 
 	rpipe->pipe_peer = wpipe;
 	wpipe->pipe_peer = rpipe;
 
-	fd_affix(p, rf, (int)retval[0]);
-	fd_affix(p, wf, (int)retval[1]);
+	fd_affix(p, rf, fildes[0]);
+	fd_affix(p, wf, fildes[1]);
 	return (0);
 free3:
-	fd_abort(p, rf, (int)retval[0]);
+	fd_abort(p, rf, fildes[0]);
 free2:
 	pipeclose(wpipe);
 	pipeclose(rpipe);

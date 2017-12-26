@@ -1,4 +1,4 @@
-/*	$NetBSD: filedesc.h,v 1.63 2012/02/11 23:16:18 martin Exp $	*/
+/*	$NetBSD: filedesc.h,v 1.64 2017/12/26 08:30:58 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -209,7 +209,7 @@ int	fd_dup(file_t *, int, int *, bool);
 int	fd_dup2(file_t *, unsigned, int);
 int	fd_clone(file_t *, unsigned, int, const struct fileops *, void *);
 void	fd_set_exclose(struct lwp *, int, bool);
-int	pipe1(struct lwp *, register_t *, int);
+int	pipe1(struct lwp *, int *, int);
 int	dodup(struct lwp *, int, int, int, register_t *);
 
 void	cwd_sys_init(void);
