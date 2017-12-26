@@ -1,4 +1,4 @@
-#	$NetBSD: files.drmkms,v 1.13 2016/02/24 22:04:15 skrll Exp $
+#	$NetBSD: files.drmkms,v 1.14 2017/12/26 14:53:12 jmcneill Exp $
 
 include "external/bsd/drm2/linux/files.drmkms_linux"
 
@@ -68,6 +68,7 @@ file	external/bsd/drm2/drm/drm_vm.c			drmkms
 file	external/bsd/drm2/drm/drm_vma_manager.c		drmkms
 
 file	external/bsd/drm2/drm/drm_gem_vm.c		drmkms
+file	external/bsd/drm2/drm/drm_gem_cma_helper.c	drmkms
 file	external/bsd/drm2/drm/drm_module.c		drmkms
 file	external/bsd/drm2/drm/drm_sysctl.c		drmkms
 
@@ -75,4 +76,4 @@ file	external/bsd/drm2/drm/drm_sysctl.c		drmkms
 define	drmfb: genfb
 file	external/bsd/drm2/drm/drmfb.c			drmfb
 
-include "external/bsd/drm2/ttm/files.ttm"
+include "external/bsd/drm2/ttm/files.ttm"	
