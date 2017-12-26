@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_descrip.c,v 1.30 2014/09/05 09:20:59 matt Exp $	*/
+/*	$NetBSD: sys_descrip.c,v 1.31 2017/12/26 08:30:58 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.30 2014/09/05 09:20:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.31 2017/12/26 08:30:58 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -764,7 +764,15 @@ sys___posix_fadvise50(struct lwp *l,
 int
 sys_pipe(struct lwp *l, const void *v, register_t *retval)
 {
-	return pipe1(l, retval, 0);
+	int fd[2], error;
+
+	if ((error = pipe1(l, fd, 0)) != 0)
+		return error;
+
+	retval[0] = fd[0];
+	retval[1] = fd[1];
+
+	return 0;
 }
 
 int
@@ -776,10 +784,9 @@ sys_pipe2(struct lwp *l, const struct sys_pipe2_args *uap, register_t *retval)
 	} */
 	int fd[2], error;
 
-	if ((error = pipe1(l, retval, SCARG(uap, flags))) != 0)
+	if ((error = pipe1(l, fd, SCARG(uap, flags))) != 0)
 		return error;
-	fd[0] = retval[0];
-	fd[1] = retval[1];
+
 	if ((error = copyout(fd, SCARG(uap, fildes), sizeof(fd))) != 0)
 		return error;
 	retval[0] = 0;
