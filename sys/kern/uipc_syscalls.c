@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.187 2017/06/20 20:34:49 christos Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.188 2017/12/26 08:30:58 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.187 2017/06/20 20:34:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.188 2017/12/26 08:30:58 kamil Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pipe.h"
@@ -1265,7 +1265,7 @@ sys_getsockopt(struct lwp *l, const struct sys_getsockopt_args *uap,
 #ifdef PIPE_SOCKETPAIR
 
 int
-pipe1(struct lwp *l, register_t *retval, int flags)
+pipe1(struct lwp *l, int *fildes, int flags)
 {
 	file_t		*rf, *wf;
 	struct socket	*rso, *wso;
@@ -1284,7 +1284,7 @@ pipe1(struct lwp *l, register_t *retval, int flags)
 	rso->so_state |= SS_ISAPIPE;
 	if ((error = fd_allocfile(&rf, &fd)) != 0)
 		goto free2;
-	retval[0] = fd;
+	fildes[0] = fd;
 	rf->f_flag = FREAD | flags;
 	rf->f_type = DTYPE_SOCKET;
 	rf->f_ops = &socketops;
@@ -1295,19 +1295,19 @@ pipe1(struct lwp *l, register_t *retval, int flags)
 	wf->f_type = DTYPE_SOCKET;
 	wf->f_ops = &socketops;
 	wf->f_socket = wso;
-	retval[1] = fd;
+	fildes[1] = fd;
 	solock(wso);
 	error = unp_connect2(wso, rso);
 	sounlock(wso);
 	if (error != 0)
 		goto free4;
-	fd_affix(p, wf, (int)retval[1]);
-	fd_affix(p, rf, (int)retval[0]);
+	fd_affix(p, wf, fildes[1]);
+	fd_affix(p, rf, fildes[0]);
 	return (0);
  free4:
-	fd_abort(p, wf, (int)retval[1]);
+	fd_abort(p, wf, fildes[1]);
  free3:
-	fd_abort(p, rf, (int)retval[0]);
+	fd_abort(p, rf, fildes[0]);
  free2:
 	(void)soclose(wso);
  free1:
