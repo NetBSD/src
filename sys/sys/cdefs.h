@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.134 2017/12/26 17:03:10 christos Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.135 2017/12/26 17:08:56 christos Exp $	*/
 
 /* * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -609,7 +609,7 @@
 #define __CASTV(__dt, __st)	__CAST(__dt, __CAST(void *, __st))
 #define __CASTCV(__dt, __st)	__CAST(__dt, __CAST(const void *, __st))
 
-#define __USE(a) ((void)(a))
+#define __USE(a) (/*LINTED*/(void)(a))
 
 #define __type_mask(t) (/*LINTED*/sizeof(t) < sizeof(intmax_t) ? \
     (~((1ULL << (sizeof(t) * NBBY)) - 1)) : 0ULL)
