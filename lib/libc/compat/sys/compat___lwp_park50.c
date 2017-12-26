@@ -1,4 +1,4 @@
-/*	$NetBSD: compat___lwp_park50.c,v 1.2 2014/01/31 20:45:49 christos Exp $	*/
+/*	$NetBSD: compat___lwp_park50.c,v 1.3 2017/12/26 17:01:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat___lwp_park50.c,v 1.2 2014/01/31 20:45:49 christos Exp $");
+__RCSID("$NetBSD: compat___lwp_park50.c,v 1.3 2017/12/26 17:01:25 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define __LIBC12_SOURCE__
@@ -53,6 +53,11 @@ int
 ___lwp_park50(const struct timespec *ts, lwpid_t unpark, const void *hint,
 	const void *unparkhint)
 {
-	return ___lwp_park60(CLOCK_REALTIME, TIMER_ABSTIME, ts,  unpark,
+	struct timespec ts1, *tsp = &ts1;
+	if (ts)
+		ts1 = *ts;
+	else
+		tsp = NULL;
+	return ___lwp_park60(CLOCK_REALTIME, TIMER_ABSTIME, tsp, unpark,
 	    hint, unparkhint);
 }
