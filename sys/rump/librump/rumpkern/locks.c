@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.76 2017/12/25 09:13:40 ozaki-r Exp $	*/
+/*	$NetBSD: locks.c,v 1.77 2017/12/27 08:45:45 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.76 2017/12/25 09:13:40 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.77 2017/12/27 08:45:45 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -62,28 +62,28 @@ static lockops_t rw_lockops = {
 };
 
 #define ALLOCK(lock, ops)				\
-    lockdebug_alloc(__func__, __LINE__, lock, ops,	\
-    (uintptr_t)__builtin_return_address(0))
-#define FREELOCK(lock)			\
-    lockdebug_free(__func__, __LINE__, lock)
+	lockdebug_alloc(__func__, __LINE__, lock, ops,	\
+	    (uintptr_t)__builtin_return_address(0))
+#define FREELOCK(lock)					\
+	lockdebug_free(__func__, __LINE__, lock)
 #define WANTLOCK(lock, shar)				\
-    lockdebug_wantlock(__func__, __LINE__, lock,	\
-    (uintptr_t)__builtin_return_address(0), shar)
+	lockdebug_wantlock(__func__, __LINE__, lock,	\
+	    (uintptr_t)__builtin_return_address(0), shar)
 #define LOCKED(lock, shar)				\
-    lockdebug_locked(__func__, __LINE__, lock, NULL,	\
-    (uintptr_t)__builtin_return_address(0), shar)
-#define UNLOCKED(lock, shar)		\
-    lockdebug_unlocked(__func__, __LINE__, lock,	\
-    (uintptr_t)__builtin_return_address(0), shar)
-#define BARRIER(lock, slp)		\
-    lockdebug_barrier(__func__, __LINE__, lock, slp)
+	lockdebug_locked(__func__, __LINE__, lock, NULL,\
+	    (uintptr_t)__builtin_return_address(0), shar)
+#define UNLOCKED(lock, shar)				\
+	lockdebug_unlocked(__func__, __LINE__, lock,	\
+	    (uintptr_t)__builtin_return_address(0), shar)
+#define BARRIER(lock, slp)				\
+	lockdebug_barrier(__func__, __LINE__, lock, slp)
 #else
-#define ALLOCK(a, b)
-#define FREELOCK(a)
-#define WANTLOCK(a, b)
-#define LOCKED(a, b)
-#define UNLOCKED(a, b)
-#define BARRIER(a, b)
+#define ALLOCK(a, b)	do {} while (0)
+#define FREELOCK(a)	do {} while (0)
+#define WANTLOCK(a, b)	do {} while (0)
+#define LOCKED(a, b)	do {} while (0)
+#define UNLOCKED(a, b)	do {} while (0)
+#define BARRIER(a, b)	do {} while (0)
 #endif
 
 /*
