@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfiber.c,v 1.12 2015/02/15 00:54:32 justin Exp $	*/
+/*	$NetBSD: rumpfiber.c,v 1.13 2017/12/27 09:01:53 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2007-2013 Antti Kantee.  All Rights Reserved.
@@ -68,7 +68,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpfiber.c,v 1.12 2015/02/15 00:54:32 justin Exp $");
+__RCSID("$NetBSD: rumpfiber.c,v 1.13 2017/12/27 09:01:53 ozaki-r Exp $");
 #endif /* !lint */
 
 #include <sys/mman.h>
@@ -691,6 +691,13 @@ rumpuser_mutex_init(struct rumpuser_mtx **mtxp, int flags)
 	mtx->flags = flags;
 	TAILQ_INIT(&mtx->waiters);
 	*mtxp = mtx;
+}
+
+int
+rumpuser_mutex_spin_p(struct rumpuser_mtx *mtx)
+{
+
+	return (mtx->flags & RUMPUSER_MTX_SPIN) != 0;
 }
 
 void
