@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.11 2017/04/12 18:17:59 kamil Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.12 2017/12/27 19:35:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank Lancaster
@@ -64,7 +64,12 @@
 #define PTRACE_REG_SP(_r)		(_r)->r_sp
 #define PTRACE_REG_INTRV(_r)		(_r)->r[0]
 
-#define PTRACE_BREAKPOINT	((const uint8_t[]) { 0xe7, 0xff, 0xff, 0xfe })
-#define PTRACE_BREAKPOINT_INSN	0xe7fffffe
+#ifdef __ARMEB__
+#define PTRACE_BREAKPOINT	((const uint8_t[]) { 0xfe, 0xde, 0xff, 0xe7 })
+#define PTRACE_BREAKPOINT_INSN	0xfedeffe7
+#else
+#define PTRACE_BREAKPOINT	((const uint8_t[]) { 0xe7, 0xff, 0xde, 0xfe })
+#define PTRACE_BREAKPOINT_INSN	0xe7ffdefe
+#endif
 #define PTRACE_BREAKPOINT_ASM	__asm __volatile (".word " ___STRING(PTRACE_BREAKPOINT_INSN) )
 #define PTRACE_BREAKPOINT_SIZE	4
