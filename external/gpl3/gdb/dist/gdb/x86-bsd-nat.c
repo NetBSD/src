@@ -69,7 +69,7 @@ x86bsd_dr_get (ptid_t ptid, int regnum)
   struct dbreg dbregs;
 
   if (ptrace (PT_GETDBREGS, get_ptrace_pid (inferior_ptid),
-	      (PTRACE_TYPE_ARG3) &dbregs, 0) == -1)
+	      (PTRACE_TYPE_ARG3) &dbregs, ptid_get_lwp (inferior_ptid)) == -1)
     perror_with_name (_("Couldn't read debug registers"));
 
   return DBREG_DRX ((&dbregs), regnum);
