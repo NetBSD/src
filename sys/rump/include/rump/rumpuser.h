@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.114 2015/01/03 17:24:20 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.115 2017/12/27 09:01:53 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2007-2013 Antti Kantee.  All Rights Reserved.
@@ -194,6 +194,7 @@ int  rumpuser_mutex_tryenter(struct rumpuser_mtx *);
 void rumpuser_mutex_exit(struct rumpuser_mtx *);
 void rumpuser_mutex_destroy(struct rumpuser_mtx *);
 void rumpuser_mutex_owner(struct rumpuser_mtx *, struct lwp **);
+int  rumpuser_mutex_spin_p(struct rumpuser_mtx *);
 
 struct rumpuser_rw;
 enum rumprwlock { RUMPUSER_RW_READER, RUMPUSER_RW_WRITER };

@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.77 2017/12/27 08:45:45 ozaki-r Exp $	*/
+/*	$NetBSD: locks.c,v 1.78 2017/12/27 09:01:53 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.77 2017/12/27 08:45:45 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.78 2017/12/27 09:01:53 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -50,7 +50,12 @@ const int rump_lockdebug = 0;
 #ifdef LOCKDEBUG
 #include <sys/lockdebug.h>
 
-static lockops_t mutex_lockops = {
+static lockops_t mutex_spin_lockops = {
+	.lo_name = "mutex",
+	.lo_type = LOCKOPS_SPIN,
+	.lo_dump = NULL,
+};
+static lockops_t mutex_adaptive_lockops = {
 	.lo_name = "mutex",
 	.lo_type = LOCKOPS_SLEEP,
 	.lo_dump = NULL,
@@ -129,7 +134,10 @@ mutex_init(kmutex_t *mtx, kmutex_type_t type, int ipl)
 	if (isspin)
 		ruflags |= RUMPUSER_MTX_SPIN;
 	rumpuser_mutex_init((struct rumpuser_mtx **)mtx, ruflags);
-	ALLOCK(mtx, &mutex_lockops);
+	if (isspin)
+		ALLOCK(mtx, &mutex_spin_lockops);
+	else
+		ALLOCK(mtx, &mutex_adaptive_lockops);
 }
 
 void
@@ -145,7 +153,8 @@ mutex_enter(kmutex_t *mtx)
 {
 
 	WANTLOCK(mtx, 0);
-	BARRIER(mtx, 1);
+	if (!rumpuser_mutex_spin_p(RUMPMTX(mtx)))
+		BARRIER(mtx, 1);
 	rumpuser_mutex_enter(RUMPMTX(mtx));
 	LOCKED(mtx, false);
 }
@@ -154,8 +163,8 @@ void
 mutex_spin_enter(kmutex_t *mtx)
 {
 
+	KASSERT(rumpuser_mutex_spin_p(RUMPMTX(mtx)));
 	WANTLOCK(mtx, 0);
-	BARRIER(mtx, 1);
 	rumpuser_mutex_enter_nowrap(RUMPMTX(mtx));
 	LOCKED(mtx, false);
 }

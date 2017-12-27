@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.45 2015/09/18 10:56:25 pooka Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.46 2017/12/27 09:01:53 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth.c,v 1.45 2015/09/18 10:56:25 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_pth.c,v 1.46 2017/12/27 09:01:53 ozaki-r Exp $");
 #endif /* !lint */
 
 #include <sys/queue.h>
@@ -157,6 +157,13 @@ rumpuser_mutex_init(struct rumpuser_mtx **mtxp, int flags)
 	mtx->flags = flags;
 
 	*mtxp = mtx;
+}
+
+int
+rumpuser_mutex_spin_p(struct rumpuser_mtx *mtx)
+{
+
+	return (mtx->flags & RUMPUSER_MTX_SPIN) != 0;
 }
 
 static void
