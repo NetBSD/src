@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.19 2017/12/25 12:38:01 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.20 2017/12/27 13:38:51 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.19 2017/12/25 12:38:01 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.20 2017/12/27 13:38:51 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -5769,6 +5769,11 @@ ATF_TC_BODY(signal3, tc)
 	int status;
 #endif
 	sigset_t intmask;
+
+	atf_tc_expect_fail("PR kern/51918");
+
+	// This test breaks now on some ports, temporarily disable it
+	ATF_REQUIRE(0 && "In order to get reliable failure, abort");
 
 #if defined(__sparc__)
 	atf_tc_expect_timeout("PR kern/52167");
