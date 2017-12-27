@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.191 2017/06/07 10:38:33 skrll Exp $
+#	$NetBSD: Makefile,v 1.192 2017/12/27 21:34:11 christos Exp $
 
 .include <bsd.own.mk>
 .include <bsd.endian.mk>
@@ -53,9 +53,7 @@ TOOLCHAIN_BITS+= pcc
 . endif
 .endif
 
-.if ${TOOLCHAIN_MISSING} == "no"
-# XXX Eventually, we want to be able to build dbsym and mdsetimage
-# XXX if EXTERNAL_TOOLCHAIN is set.
+.if ${TOOLCHAIN_MISSING} == "no" || defined(EXTERNAL_TOOLCHAIN)
 TOOLCHAIN_BITS+= dbsym mdsetimage
 .endif
 
