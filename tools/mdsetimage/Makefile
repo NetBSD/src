@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2017/01/06 20:27:19 christos Exp $
+#	$NetBSD: Makefile,v 1.14 2017/12/27 21:34:12 christos Exp $
 
 NOMAN=	# defined
 
@@ -9,8 +9,8 @@ HOSTPROGNAME=	${MACHINE_GNU_PLATFORM}-mdsetimage
 HOST_SRCDIR=	external/gpl3/binutils/usr.sbin/mdsetimage
 
 TOOLCHAINOBJ!=	cd ${.CURDIR}/../binutils && ${PRINTOBJDIR}
-BFDDIR=		${TOOLCHAINOBJ}/build/bfd
-IBERTYDIR=	${TOOLCHAINOBJ}/build/libiberty
+BFDDIR?=	${TOOLCHAINOBJ}/build/bfd
+IBERTYDIR?=	${TOOLCHAINOBJ}/build/libiberty
 
 .include "${.CURDIR}/../Makefile.host"
 
