@@ -1,4 +1,4 @@
-/*	$NetBSD: db_variables.h,v 1.15 2007/02/22 04:38:06 matt Exp $	*/
+/*	$NetBSD: db_variables.h,v 1.16 2017/12/28 17:51:19 christos Exp $	*/
 
 /*
  * Mach Operating System
@@ -37,7 +37,7 @@
  */
 struct db_variable {
 	const char *name;	/* Name of variable */
-	long	*valuep;	/* value of variable */
+	void 	*valuep;	/* value of variable */
 				/* function to call when reading/writing */
 	int	(*fcn)(const struct db_variable *, db_expr_t *, int);
 	const char	*modif;
