@@ -1,4 +1,4 @@
-/*	$NetBSD: workqueue.c,v 1.3 2017/12/28 04:38:02 ozaki-r Exp $	*/
+/*	$NetBSD: workqueue.c,v 1.4 2017/12/28 07:09:31 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: workqueue.c,v 1.3 2017/12/28 04:38:02 ozaki-r Exp $");
+__RCSID("$NetBSD: workqueue.c,v 1.4 2017/12/28 07:09:31 ozaki-r Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -61,25 +61,40 @@ rump_work1(struct work *wk, void *arg)
 	mutex_exit(&sc->mtx);
 }
 
-void
-rumptest_workqueue1()
+static struct test_softc *
+create_sc(void)
 {
-
 	int rv;
-
 	struct test_softc *sc;
 
 	sc = kmem_zalloc(sizeof(*sc), KM_SLEEP);
-
 	mutex_init(&sc->mtx, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&sc->cv, "rumpwqcv");
-
 	rv = workqueue_create(&sc->wq, "rumpwq",
 	    rump_work1, sc, PRI_SOFTNET, IPL_SOFTNET, 0);
 	if (rv)
 		panic("workqueue creation failed: %d", rv);
 
 	sc->counter = 0;
+
+	return sc;
+}
+
+static void
+destroy_sc(struct test_softc *sc)
+{
+
+	cv_destroy(&sc->cv);
+	mutex_destroy(&sc->mtx);
+	workqueue_destroy(sc->wq);
+}
+
+void
+rumptest_workqueue1()
+{
+	struct test_softc *sc;
+
+	sc = create_sc();
 
 #define ITERATIONS 12435
 	for (size_t i = 0; i < ITERATIONS; ++i) {
@@ -94,8 +109,6 @@ rumptest_workqueue1()
 
 	KASSERT(sc->counter == ITERATIONS);
 
-	cv_destroy(&sc->cv);
-	mutex_destroy(&sc->mtx);
-	workqueue_destroy(sc->wq);
+	destroy_sc(sc);
+#undef ITERATIONS
 }
-
