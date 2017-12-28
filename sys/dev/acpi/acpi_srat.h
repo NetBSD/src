@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_srat.h,v 1.3 2010/03/05 08:30:48 jruoho Exp $ */
+/* $NetBSD: acpi_srat.h,v 1.4 2017/12/28 08:49:28 maxv Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -40,7 +40,8 @@ struct acpisrat_cpu {
 	uint32_t sapiceid;
 	uint32_t flags;
 
-	/* clockdomain has a meaningful value when the ACPI MADT table has
+	/*
+	 * clockdomain has a meaningful value when the ACPI MADT table has
 	 * ACPI_MADT_TYPE_LOCAL_X2APIC and/or ACPI_MADT_TYPE_LOCAL_X2APIC_NMI
 	 * entries or ACPI CPU device have a _CDM.
 	 */
@@ -54,45 +55,24 @@ struct acpisrat_mem {
 	uint32_t flags;
 };
 
-/* Returns true if ACPI SRAT table is available.
- *
- * If table does not exist, all functions below
- * have undefined behaviour.
- */
+struct acpisrat_node {
+	acpisrat_nodeid_t nodeid; /* Proximity domain */
+	uint32_t ncpus; /* Number of cpus in this node */
+	struct acpisrat_cpu **cpu; /* Array of cpus */
+	uint32_t nmems; /* Number of memory ranges in this node */
+	struct acpisrat_mem **mem; /* Array of memory ranges */
+};
+
 bool acpisrat_exist(void);
-
-/* Initializes parser. Must be the first function
- * being called when table is available.
- */
 int acpisrat_init(void);
-
-/* Re-parse ACPI SRAT table. Useful after
- * hotplugging cpu or RAM.
- */
 int acpisrat_refresh(void);
-
-/* Free allocated memory. Should be called
- * when acpisrat is no longer of any use.
- */
 int acpisrat_exit(void);
-
 void acpisrat_dump(void);
-
-/* Get number of NUMA nodes */
 uint32_t acpisrat_nodes(void);
-
-/* Get number of cpus in the node.
- * 0 means, this is a cpu-less node.
- */
 uint32_t acpisrat_node_cpus(acpisrat_nodeid_t);
-
-/* Get number of memory ranges in the node
- * 0 means, this node has no RAM.
- */
 uint32_t acpisrat_node_memoryranges(acpisrat_nodeid_t);
-
-/* Retrieve cpu and memory info. */
-void acpisrat_cpu(acpisrat_nodeid_t, uint32_t cpunum, struct acpisrat_cpu *);
-void acpisrat_mem(acpisrat_nodeid_t, uint32_t memrange, struct acpisrat_mem *);
+void acpisrat_cpu(acpisrat_nodeid_t, uint32_t, struct acpisrat_cpu *);
+void acpisrat_mem(acpisrat_nodeid_t, uint32_t, struct acpisrat_mem *);
+struct acpisrat_node *acpisrat_get_node(uint32_t);
 
 #endif	/* !_SYS_DEV_ACPI_ACPI_SRAT_H */
