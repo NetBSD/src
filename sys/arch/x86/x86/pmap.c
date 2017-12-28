@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.268 2017/12/28 13:46:10 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.269 2017/12/28 14:03:13 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.268 2017/12/28 13:46:10 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.269 2017/12/28 14:03:13 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1418,6 +1418,15 @@ pmap_init_lapic(void)
 #endif
 
 #ifdef __HAVE_DIRECT_MAP
+static size_t
+pmap_dmap_nentries_range(vaddr_t startva, vaddr_t endva, size_t pgsz)
+{
+	size_t npages;
+	npages = (roundup(endva, pgsz) / pgsz) -
+	    (rounddown(startva, pgsz) / pgsz);
+	return npages;
+}
+
 /*
  * Create the amd64 direct map. Called only once at boot time. We map all of
  * the physical memory contiguously using 2MB large pages, with RW permissions.
@@ -1434,6 +1443,7 @@ pmap_init_directmap(struct pmap *kpm)
 	size_t L4e_idx, L3e_idx, L2e_idx;
 	size_t spahole, epahole;
 	paddr_t lastpa, pa;
+	vaddr_t endva;
 	vaddr_t tmpva;
 	pt_entry_t *pte;
 	phys_ram_seg_t *mc;
@@ -1460,6 +1470,7 @@ pmap_init_directmap(struct pmap *kpm)
 	if (lastpa > MAXPHYSMEM) {
 		panic("pmap_init_directmap: lastpa incorrect");
 	}
+	endva = startva + lastpa;
 
 	/* We will use this temporary va. */
 	tmpva = bootspace.spareva;
@@ -1467,7 +1478,7 @@ pmap_init_directmap(struct pmap *kpm)
 
 	/* Build L4 */
 	L4e_idx = pl4_i(startva);
-	nL4e = (lastpa + NBPD_L4 - 1) >> L4_SHIFT;
+	nL4e = pmap_dmap_nentries_range(startva, endva, NBPD_L4);
 	KASSERT(nL4e <= NL4_SLOT_DIRECT);
 	for (i = 0; i < nL4e; i++) {
 		KASSERT(L4_BASE[L4e_idx+i] == 0);
@@ -1482,7 +1493,7 @@ pmap_init_directmap(struct pmap *kpm)
 
 	/* Build L3 */
 	L3e_idx = pl3_i(startva);
-	nL3e = (lastpa + NBPD_L3 - 1) >> L3_SHIFT;
+	nL3e = pmap_dmap_nentries_range(startva, endva, NBPD_L3);
 	for (i = 0; i < nL3e; i++) {
 		KASSERT(L3_BASE[L3e_idx+i] == 0);
 
@@ -1496,7 +1507,7 @@ pmap_init_directmap(struct pmap *kpm)
 
 	/* Build L2 */
 	L2e_idx = pl2_i(startva);
-	nL2e = (lastpa + NBPD_L2 - 1) >> L2_SHIFT;
+	nL2e = pmap_dmap_nentries_range(startva, endva, NBPD_L2);
 	for (i = 0; i < nL2e; i++) {
 		KASSERT(L2_BASE[L2e_idx+i] == 0);
 
