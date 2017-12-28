@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.267 2017/11/22 21:26:01 christos Exp $	*/
+/*	$NetBSD: pmap.c,v 1.268 2017/12/28 13:46:10 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.267 2017/11/22 21:26:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.268 2017/12/28 13:46:10 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1419,7 +1419,9 @@ pmap_init_lapic(void)
 
 #ifdef __HAVE_DIRECT_MAP
 /*
- * Create the amd64 direct map. Called only once at boot time.
+ * Create the amd64 direct map. Called only once at boot time. We map all of
+ * the physical memory contiguously using 2MB large pages, with RW permissions.
+ * However there is a hole: the kernel is mapped with RO permissions.
  */
 static void
 pmap_init_directmap(struct pmap *kpm)
@@ -1427,18 +1429,23 @@ pmap_init_directmap(struct pmap *kpm)
 	extern phys_ram_seg_t mem_clusters[];
 	extern int mem_cluster_cnt;
 
-	paddr_t lastpa, L2page_pa, L3page_pa, pdp;
+	const vaddr_t startva = PMAP_DIRECT_BASE;
+	size_t nL4e, nL3e, nL2e;
+	size_t L4e_idx, L3e_idx, L2e_idx;
+	size_t spahole, epahole;
+	paddr_t lastpa, pa;
 	vaddr_t tmpva;
 	pt_entry_t *pte;
-	pd_entry_t *pde;
 	phys_ram_seg_t *mc;
-	size_t nL4e, nL3e, nL2e;
-	size_t pn, npd;
-	int i, n;
+	int i;
 
 	const pd_entry_t pteflags = PG_V | PG_KW | pmap_pg_nx;
+	const pd_entry_t holepteflags = PG_V | pmap_pg_nx;
 
 	CTASSERT(NL4_SLOT_DIRECT * NBPD_L4 == MAXPHYSMEM);
+
+	spahole = roundup(bootspace.head.pa, NBPD_L2);
+	epahole = rounddown(bootspace.boot.pa, NBPD_L2);
 
 	/* Get the last physical address available */
 	lastpa = 0;
@@ -1458,85 +1465,48 @@ pmap_init_directmap(struct pmap *kpm)
 	tmpva = bootspace.spareva;
 	pte = PTE_BASE + pl1_i(tmpva);
 
-	/* Number of L4 entries. */
+	/* Build L4 */
+	L4e_idx = pl4_i(startva);
 	nL4e = (lastpa + NBPD_L4 - 1) >> L4_SHIFT;
 	KASSERT(nL4e <= NL4_SLOT_DIRECT);
-
-	/* Allocate L3, and zero it out. */
-	L3page_pa = pmap_bootstrap_palloc(nL4e);
 	for (i = 0; i < nL4e; i++) {
-		pdp = L3page_pa + i * PAGE_SIZE;
-		*pte = (pdp & PG_FRAME) | pteflags;
+		KASSERT(L4_BASE[L4e_idx+i] == 0);
+
+		pa = pmap_bootstrap_palloc(1);
+		*pte = (pa & PG_FRAME) | pteflags;
 		pmap_update_pg(tmpva);
 		memset((void *)tmpva, 0, PAGE_SIZE);
+
+		L4_BASE[L4e_idx+i] = pa | pteflags | PG_U;
 	}
 
-	/* Number of L3 entries. */
+	/* Build L3 */
+	L3e_idx = pl3_i(startva);
 	nL3e = (lastpa + NBPD_L3 - 1) >> L3_SHIFT;
+	for (i = 0; i < nL3e; i++) {
+		KASSERT(L3_BASE[L3e_idx+i] == 0);
 
-	/*
-	 * Map the direct map RW. Use super pages (1GB) or large pages (2MB) if
-	 * they are supported. Note: PG_G is not allowed on non-leaf PTPs.
-	 */
-	if (cpu_feature[2] & CPUID_P1GB) {
-		/* Super pages are supported. Just create L3. */
-		for (i = 0; i < nL3e; i++) {
-			pdp = (paddr_t)&(((pd_entry_t *)L3page_pa)[i]);
-			*pte = (pdp & PG_FRAME) | pteflags;
-			pmap_update_pg(tmpva);
+		pa = pmap_bootstrap_palloc(1);
+		*pte = (pa & PG_FRAME) | pteflags;
+		pmap_update_pg(tmpva);
+		memset((void *)tmpva, 0, PAGE_SIZE);
 
-			pde = (pd_entry_t *)(tmpva + (pdp & ~PG_FRAME));
-			*pde = ((paddr_t)i << L3_SHIFT) | pteflags | PG_U |
-			    PG_PS | PG_G;
-		}
-	} else {
-		/* Allocate L2. */
-		L2page_pa = pmap_bootstrap_palloc(nL3e);
-
-		/* Number of L2 entries. */
-		nL2e = (lastpa + NBPD_L2 - 1) >> L2_SHIFT;
-
-		KASSERT(pmap_largepages != 0);
-
-		/* Large pages are supported. Just create L2. */
-		for (i = 0; i < nL3e; i++) {
-			pdp = L2page_pa + i * PAGE_SIZE;
-			*pte = (pdp & PG_FRAME) | pteflags;
-			pmap_update_pg(tmpva);
-
-			memset((void *)tmpva, 0, PAGE_SIZE);
-
-			pde = (pd_entry_t *)tmpva;
-			npd = ((i == nL3e - 1) && (nL2e % NPDPG != 0)) ?
-			    (nL2e % NPDPG) : NPDPG;
-			for (n = 0; n < npd; n++) {
-				pn = (i * NPDPG) + n;
-				pde[n] = ((paddr_t)pn << L2_SHIFT) | pteflags |
-					PG_U | PG_PS | PG_G;
-			}
-		}
-
-		/* Fill in the L3 entries, linked to L2. */
-		for (i = 0; i < nL4e; i++) {
-			pdp = L3page_pa + i * PAGE_SIZE;
-			*pte = (pdp & PG_FRAME) | pteflags;
-			pmap_update_pg(tmpva);
-
-			pde = (pd_entry_t *)tmpva;
-			npd = ((i == nL4e - 1) && (nL3e % NPDPG != 0)) ?
-			    (nL3e % NPDPG) : NPDPG;
-			for (n = 0; n < npd; n++) {
-				pn = (i * NPDPG) + n;
-				pde[n] = (L2page_pa + (pn << PAGE_SHIFT)) |
-				    pteflags | PG_U;
-			}
-		}
+		L3_BASE[L3e_idx+i] = pa | pteflags | PG_U;
 	}
 
-	/* Fill in the L4 entries, linked to L3. */
-	for (i = 0; i < nL4e; i++) {
-		kpm->pm_pdir[PDIR_SLOT_DIRECT + i] =
-		    (L3page_pa + (i << PAGE_SHIFT)) | pteflags | PG_U;
+	/* Build L2 */
+	L2e_idx = pl2_i(startva);
+	nL2e = (lastpa + NBPD_L2 - 1) >> L2_SHIFT;
+	for (i = 0; i < nL2e; i++) {
+		KASSERT(L2_BASE[L2e_idx+i] == 0);
+
+		pa = (paddr_t)(i * NBPD_L2);
+
+		if (spahole <= pa && pa < epahole) {
+			L2_BASE[L2e_idx+i] = pa | holepteflags | PG_U | PG_PS;
+		} else {
+			L2_BASE[L2e_idx+i] = pa | pteflags | PG_U | PG_PS;
+		}
 	}
 
 	*pte = 0;
