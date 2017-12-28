@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.476 2017/12/28 17:51:49 christos Exp $
+.\"	$NetBSD: options.4,v 1.477 2017/12/28 23:14:49 wiz Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1062,7 +1062,7 @@ routines, (a.k.a. the
 .Fn namei
 cache, though called by many other names in the kernel source).
 By default, this cache has
-.Dv (NPROC + NTEXT + 100)
+.Dv ( NPROC + NTEXT + 100 )
 entries (NPROC set as 20 + 16 * MAXUSERS and NTEXT as 80 + NPROC / 8).
 A reasonable way to derive a value of
 .Dv NVNODE ,
