@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.549 2017/12/08 05:22:23 ozaki-r Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.550 2017/12/28 06:13:50 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.549 2017/12/08 05:22:23 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.550 2017/12/28 06:13:50 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1850,16 +1850,25 @@ wm_attach(device_t parent, device_t self, void *aux)
 	}
 
 	wm_adjust_qnum(sc, pci_msix_count(pa->pa_pc, pa->pa_tag));
+	/*
+	 *  Don't use MSI-X if we can use only one queue to save interrupt
+	 * resource.
+	 */
+	if (sc->sc_nqueues > 1) {
+		max_type = PCI_INTR_TYPE_MSIX;
+		/*
+		 *  82583 has a MSI-X capability in the PCI configuration space
+		 * but it doesn't support it. At least the document doesn't
+		 * say anything about MSI-X.
+		 */
+		counts[PCI_INTR_TYPE_MSIX]
+		    = (sc->sc_type == WM_T_82583) ? 0 : sc->sc_nqueues + 1;
+	} else {
+		max_type = PCI_INTR_TYPE_MSI;
+		counts[PCI_INTR_TYPE_MSIX] = 0;
+	}
 
 	/* Allocation settings */
-	max_type = PCI_INTR_TYPE_MSIX;
-	/*
-	 * 82583 has a MSI-X capability in the PCI configuration space but
-	 * it doesn't support it. At least the document doesn't say anything
-	 * about MSI-X.
-	 */
-	counts[PCI_INTR_TYPE_MSIX]
-	    = (sc->sc_type == WM_T_82583) ? 0 : sc->sc_nqueues + 1;
 	counts[PCI_INTR_TYPE_MSI] = 1;
 	counts[PCI_INTR_TYPE_INTX] = 1;
 	/* overridden by disable flags */
