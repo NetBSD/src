@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.167 2017/07/03 21:30:58 wiz Exp $
+.\"	$NetBSD: ddb.4,v 1.168 2017/12/28 17:51:49 christos Exp $
 .\"
 .\" Copyright (c) 1997 - 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,7 +56,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd January 12, 2017
+.Dd December 28, 2017
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -1292,6 +1292,13 @@ This option is more generic than the /l command modifier possible for
 selected commands as discussed above to log the output.
 Mixing both /l
 and this setting can give double loggings.
+.It Va panicstackframes
+Number of stack frames to display on panic.
+Useful to avoid scrolling way the interesting frames on a glass tty.
+Default value is
+.Dv 65535
+(all frames), useful value around
+.Dv 10 .
 .\" .It Va work Ns Sy xx
 .\" Temporary work variable.
 .\" .Sq Sy xx
