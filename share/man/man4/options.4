@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.475 2017/09/14 08:52:41 wiz Exp $
+.\"	$NetBSD: options.4,v 1.476 2017/12/28 17:51:49 christos Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd September 13, 2017
+.Dd December 28, 2017
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -586,6 +586,13 @@ This is currently only supported by the com driver.
 This option adds more verbose descriptions to the
 .Em help
 command.
+.It Cd options DDB_PANICSTACKFRAMES=integer
+Number of stack frames to display on panic.
+Useful to avoid scrolling way the interesting frames on a glass tty.
+Default value is
+.Dv 65535
+(all frames), useful value around
+.Dv 10 .
 .It Cd options KGDB
 Compiles in a remote kernel debugger stub for diagnosing kernel problems
 using the

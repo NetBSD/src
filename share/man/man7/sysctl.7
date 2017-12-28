@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.117 2017/07/30 16:07:06 maxv Exp $
+.\"	$NetBSD: sysctl.7,v 1.118 2017/12/28 17:51:49 christos Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd July 30, 2017
+.Dd December 28, 2017
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -2465,6 +2465,7 @@ privilege may change the value.
 .It ddb.fromconsole	integer	yes
 .It ddb.tee_msgbuf	integer	yes
 .It ddb.commandonenter	string	yes
+.It ddb.panicstackframes	integer	yes
 .El
 .Bl -tag -width "123456"
 .It Li ddb.radix ( Dv DDBCTL_RADIX )
@@ -2492,9 +2493,13 @@ If not zero, DDB will output also to the kernel message buffer.
 .It Li ddb.commandonenter
 If not empty, a command to be executed on each enter to the
 .Tn DDB .
-.\"
-.\" XXX: (a) ddb.commandonenter is missing in ddb(4);
-.\"	 (b) No DDBCTL definitions for tee_msgbuf and commandonenter.
+.It Li ddb.panicstackframes
+Number of stack frames to display on panic.
+Useful to avoid scrolling way the interesting frames on a glass tty.
+Default value is
+.Dv 65535
+(all frames), useful value around
+.Dv 10 .
 .El
 .Pp
 Some of these
