@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.168 2017/12/28 17:51:49 christos Exp $
+.\"	$NetBSD: ddb.4,v 1.169 2017/12/28 23:14:42 wiz Exp $
 .\"
 .\" Copyright (c) 1997 - 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -144,29 +144,21 @@ Some models:
 .It mvme68k
 Abort switch on CPU card.
 .It pmax
-<Do> on
-.Tn LK-201
-rcons console.
+<Do> on LK-201 rcons console.
 .It ""
 <Break> on serial console.
 .It sandpoint
 <Break> on serial console.
 .It sparc
-<L1>-A, or <Stop>-A on a
-.Tn Sun
-keyboard.
+<L1>-A, or <Stop>-A on a Sun keyboard.
 .It ""
 <Break> on serial console.
 .It sparc64
-<L1>-A, or <Stop>-A on a
-.Tn Sun
-keyboard.
+<L1>-A, or <Stop>-A on a Sun keyboard.
 .It ""
 <Break> on serial console.
 .It sun3
-<L1>-A, or <Stop>-A on a
-.Tn Sun
-keyboard.
+<L1>-A, or <Stop>-A on a Sun keyboard.
 .It ""
 <Break> on serial console.
 .It vax
@@ -784,14 +776,11 @@ text segment symbols display
 .Sy * ,
 data segment symbols display
 .Sy + ,
-.Tn BSS
-segment symbols display
+BSS segment symbols display
 .Sy - ,
 and filename symbols display
 .Sy / .
-For
-.Tn ELF Ns -format
-symbol tables,
+For ELF-format symbol tables,
 object symbols display
 .Sy + ,
 function symbols display
