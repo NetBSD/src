@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.21 2017/12/28 09:47:52 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.22 2017/12/28 18:41:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.21 2017/12/28 09:47:52 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.22 2017/12/28 18:41:33 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -4311,17 +4311,6 @@ ATF_TC_BODY(fpregs1, tc)
 #endif
 	struct fpreg r;
 
-	/* pmax kernel 8.99.9 panics */
-	char *machine;
-	size_t mlen;
-	machine = asysctlbyname("hw.machine", &mlen);
-	ATF_REQUIRE(machine);
-	if (strcmp(machine, "pmax") == 0) {
-		atf_tc_expect_fail("PR port-pmax/52871");
-		ATF_REQUIRE(0 && "In order to get reliable failure, abort");
-	}
-	free(machine);
-
 	DPRINTF("Before forking process PID=%d\n", getpid());
 	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
@@ -4376,17 +4365,6 @@ ATF_TC_BODY(fpregs2, tc)
 	int status;
 #endif
 	struct fpreg r;
-
-	/* pmax kernel 8.99.9 panics */
-	char *machine;
-	size_t mlen;
-	machine = asysctlbyname("hw.machine", &mlen);
-	ATF_REQUIRE(machine);
-	if (strcmp(machine, "pmax") == 0) {
-		atf_tc_expect_fail("PR port-pmax/52871");
-		ATF_REQUIRE(0 && "In order to get reliable failure, abort");
-	}
-	free(machine);
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
 	SYSCALL_REQUIRE((child = fork()) != -1);
