@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.269 2017/12/28 14:03:13 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.270 2017/12/28 14:34:39 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.269 2017/12/28 14:03:13 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.270 2017/12/28 14:34:39 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -494,6 +494,13 @@ static struct pool_cache pmap_cache;
  * pv_entry cache
  */
 static struct pool_cache pmap_pv_cache;
+
+#ifdef __HAVE_DIRECT_MAP
+vaddr_t pmap_direct_base __read_mostly;
+vaddr_t pmap_direct_end __read_mostly;
+size_t pmap_direct_pdpe __read_mostly;
+size_t pmap_direct_npdp __read_mostly;
+#endif
 
 #ifndef __HAVE_DIRECT_MAP
 /*
@@ -1438,7 +1445,7 @@ pmap_init_directmap(struct pmap *kpm)
 	extern phys_ram_seg_t mem_clusters[];
 	extern int mem_cluster_cnt;
 
-	const vaddr_t startva = PMAP_DIRECT_BASE;
+	const vaddr_t startva = PMAP_DIRECT_DEFAULT_BASE;
 	size_t nL4e, nL3e, nL2e;
 	size_t L4e_idx, L3e_idx, L2e_idx;
 	size_t spahole, epahole;
@@ -1522,6 +1529,11 @@ pmap_init_directmap(struct pmap *kpm)
 
 	*pte = 0;
 	pmap_update_pg(tmpva);
+
+	pmap_direct_base = startva;
+	pmap_direct_end = endva;
+	pmap_direct_pdpe = L4e_idx;
+	pmap_direct_npdp = nL4e;
 
 	tlbflush();
 }
@@ -2213,8 +2225,8 @@ pmap_pdp_ctor(void *arg, void *v, int flags)
 	}
 
 #ifdef __HAVE_DIRECT_MAP
-	memcpy(&pdir[PDIR_SLOT_DIRECT], &PDP_BASE[PDIR_SLOT_DIRECT],
-	    NL4_SLOT_DIRECT * sizeof(pd_entry_t));
+	memcpy(&pdir[pmap_direct_pdpe], &PDP_BASE[pmap_direct_pdpe],
+	    pmap_direct_npdp * sizeof(pd_entry_t));
 #endif
 #endif /* XEN  && __x86_64__*/
 
