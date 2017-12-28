@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.31 2017/12/23 22:12:19 christos Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.32 2017/12/28 18:29:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.31 2017/12/23 22:12:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.32 2017/12/28 18:29:45 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -1330,36 +1330,39 @@ out:
 	return error;
 }
 
-typedef int (*regfunc_t)(struct lwp *, void *);
+typedef int (*regrfunc_t)(struct lwp *, void *, size_t *);
+typedef int (*regwfunc_t)(struct lwp *, void *, size_t);
 
 #ifdef PT_REGISTERS
 static int
-proc_regio(struct lwp *l, struct uio *uio, size_t kl, regfunc_t r, regfunc_t w)
+proc_regio(struct lwp *l, struct uio *uio, size_t ks, regrfunc_t r,
+    regwfunc_t w)
 {
 	char buf[1024];
 	int error;
 	char *kv;
+	size_t kl;
 
-	if (kl > sizeof(buf))
+	if (ks > sizeof(buf))
 		return E2BIG;
 
-	if (uio->uio_offset < 0 || uio->uio_offset > (off_t)kl)
+	if (uio->uio_offset < 0 || uio->uio_offset > (off_t)ks)
 		return EINVAL;
 
 	kv = buf + uio->uio_offset;
-	kl -= uio->uio_offset;
+	kl = ks - uio->uio_offset;
 
 	if (kl > uio->uio_resid)
 		kl = uio->uio_resid;
 
-	error = (*r)(l, buf);
+	error = (*r)(l, buf, &ks);
 	if (error == 0)
 		error = uiomove(kv, kl, uio);
 	if (error == 0 && uio->uio_rw == UIO_WRITE) {
 		if (l->l_stat != LSSTOP)
 			error = EBUSY;
 		else
-			error = (*w)(l, buf);
+			error = (*w)(l, buf, ks);
 	}
 
 	uio->uio_offset = 0;
@@ -1374,21 +1377,22 @@ process_doregs(struct lwp *curl /*tracer*/,
 {
 #if defined(PT_GETREGS) || defined(PT_SETREGS)
 	size_t s;
-	regfunc_t r, w;
+	regrfunc_t r;
+	regwfunc_t w;
 
 #ifdef COMPAT_NETBSD32
 	const bool pk32 = (l->l_proc->p_flag & PK_32) != 0;
 
 	if (__predict_false(pk32)) {
 		s = sizeof(process_reg32);
-		r = (regfunc_t)process_read_regs32;
-		w = (regfunc_t)process_write_regs32;
+		r = (regrfunc_t)process_read_regs32;
+		w = (regwfunc_t)process_write_regs32;
 	} else
 #endif
 	{
 		s = sizeof(struct reg);
-		r = (regfunc_t)process_read_regs;
-		w = (regfunc_t)process_write_regs;
+		r = (regrfunc_t)process_read_regs;
+		w = (regwfunc_t)process_write_regs;
 	}
 	return proc_regio(l, uio, s, r, w);
 #else
@@ -1414,21 +1418,22 @@ process_dofpregs(struct lwp *curl /*tracer*/,
 {
 #if defined(PT_GETFPREGS) || defined(PT_SETFPREGS)
 	size_t s;
-	regfunc_t r, w;
+	regrfunc_t r;
+	regwfunc_t w;
 
 #ifdef COMPAT_NETBSD32
 	const bool pk32 = (l->l_proc->p_flag & PK_32) != 0;
 
 	if (__predict_false(pk32)) {
 		s = sizeof(process_fpreg32);
-		r = (regfunc_t)process_read_fpregs32;
-		w = (regfunc_t)process_write_fpregs32;
+		r = (regrfunc_t)process_read_fpregs32;
+		w = (regwfunc_t)process_write_fpregs32;
 	} else
 #endif
 	{
 		s = sizeof(struct fpreg);
-		r = (regfunc_t)process_read_fpregs;
-		w = (regfunc_t)process_write_fpregs;
+		r = (regrfunc_t)process_read_fpregs;
+		w = (regwfunc_t)process_write_fpregs;
 	}
 	return proc_regio(l, uio, s, r, w);
 #else
@@ -1454,21 +1459,22 @@ process_dodbregs(struct lwp *curl /*tracer*/,
 {
 #if defined(PT_GETDBREGS) || defined(PT_SETDBREGS)
 	size_t s;
-	regfunc_t r, w;
+	regrfunc_t r;
+	regwfunc_t w;
 
 #ifdef COMPAT_NETBSD32
 	const bool pk32 = (l->l_proc->p_flag & PK_32) != 0;
 
 	if (__predict_false(pk32)) {
 		s = sizeof(process_dbreg32);
-		r = (regfunc_t)process_read_dbregs32;
-		w = (regfunc_t)process_write_dbregs32;
+		r = (regrfunc_t)process_read_dbregs32;
+		w = (regwfunc_t)process_write_dbregs32;
 	} else
 #endif
 	{
 		s = sizeof(struct dbreg);
-		r = (regfunc_t)process_read_dbregs;
-		w = (regfunc_t)process_write_dbregs;
+		r = (regrfunc_t)process_read_dbregs;
+		w = (regwfunc_t)process_write_dbregs;
 	}
 	return proc_regio(l, uio, s, r, w);
 #else
