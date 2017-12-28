@@ -1,6 +1,6 @@
-/*	$NetBSD: cpu.h,v 1.83 2017/12/02 21:04:59 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.84 2017/12/28 08:30:36 maxv Exp $	*/
 
-/*-
+/*
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -101,7 +101,7 @@ struct cpu_info {
 	struct lwp *ci_fpcurlwp;	/* current owner of the FPU */
 	cpuid_t ci_cpuid;		/* our CPU ID */
 	uint32_t ci_acpiid;		/* our ACPI/MADT ID */
-	uint32_t ci_initapicid;		/* our intitial APIC ID */
+	uint32_t ci_initapicid;		/* our initial APIC ID */
 
 	/*
 	 * Private members.
@@ -264,7 +264,7 @@ struct cpu_info {
 /*
  * Processor flag notes: The "primary" CPU has certain MI-defined
  * roles (mostly relating to hardclock handling); we distinguish
- * betwen the processor which booted us, and the processor currently
+ * between the processor which booted us, and the processor currently
  * holding the "primary" role just to give us the flexibility later to
  * change primaries should we be sufficiently twisted.
  */
@@ -504,7 +504,7 @@ void x86_bus_space_mallocok(void);
 					 * 3: maximum frequency
 					 */
 #define	CPU_TMLR_FREQUENCY	12	/* int: current frequency */
-#define	CPU_TMLR_VOLTAGE	13	/* int: curret voltage */
+#define	CPU_TMLR_VOLTAGE	13	/* int: current voltage */
 #define	CPU_TMLR_PERCENTAGE	14	/* int: current clock percentage */
 #define	CPU_FPU_SAVE		15	/* int: FPU Instructions layout
 					 * to use this, CPU_OSFXSR must be true
