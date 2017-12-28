@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1567 2017/12/19 01:49:18 christos Exp $
+# $NetBSD: mi,v 1.1568 2017/12/28 23:31:07 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -790,6 +790,7 @@
 ./usr/share/man/cat4/alpha/ttwopci.0		man-sys-catman		.cat
 ./usr/share/man/cat4/altmem.0			man-sys-catman		.cat
 ./usr/share/man/cat4/altq.0			man-sys-catman		.cat
+./usr/share/man/cat4/am2315temp.0		man-sys-catman		.cat
 ./usr/share/man/cat4/amdpm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/amdtemp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/amhphy.0			man-sys-catman		.cat
@@ -1671,6 +1672,7 @@
 ./usr/share/man/cat4/shmif.0			man-sys-catman		.cat
 ./usr/share/man/cat4/shpcic.0			man-sys-catman		.cat
 ./usr/share/man/cat4/si.0			man-sys-catman		.cat
+./usr/share/man/cat4/si70xxtemp.0		man-sys-catman		.cat
 ./usr/share/man/cat4/siisata.0			man-sys-catman		.cat
 ./usr/share/man/cat4/siop.0			man-sys-catman		.cat
 ./usr/share/man/cat4/sip.0			man-sys-catman		.cat
@@ -2806,10 +2808,10 @@
 ./usr/share/man/cat8/npfctl.0			man-npf-catman		.cat,npf
 ./usr/share/man/cat8/npfd.0			man-npf-catman		.cat,npf
 ./usr/share/man/cat8/nqmgr.0			man-obsolete		obsolete
-./usr/share/man/cat8/nsd.0 			man-nsd-catman		.cat,nsd
 ./usr/share/man/cat8/nsd-checkconf.0		man-nsd-catman		.cat,nsd
 ./usr/share/man/cat8/nsd-checkzone.0		man-nsd-catman		.cat,nsd
 ./usr/share/man/cat8/nsd-control.0		man-nsd-catman		.cat,nsd
+./usr/share/man/cat8/nsd.0 			man-nsd-catman		.cat,nsd
 ./usr/share/man/cat8/nsec3hash.0		man-bind-catman		.cat
 ./usr/share/man/cat8/nslookup.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/nsupdate.0			man-obsolete		obsolete
@@ -3953,6 +3955,7 @@
 ./usr/share/man/html4/alpha/ttwopci.html	man-sys-htmlman		html
 ./usr/share/man/html4/altmem.html		man-sys-htmlman		html
 ./usr/share/man/html4/altq.html			man-sys-htmlman		html
+./usr/share/man/html4/am2315temp.html		man-sys-htmlman		html
 ./usr/share/man/html4/amdpm.html		man-sys-htmlman		html
 ./usr/share/man/html4/amdtemp.html		man-sys-htmlman		html
 ./usr/share/man/html4/amhphy.html		man-sys-htmlman		html
@@ -4728,6 +4731,7 @@
 ./usr/share/man/html4/shmif.html		man-sys-htmlman		html
 ./usr/share/man/html4/shpcic.html		man-sys-htmlman		html
 ./usr/share/man/html4/si.html			man-sys-htmlman		html
+./usr/share/man/html4/si70xxtemp.html		man-sys-htmlman		html
 ./usr/share/man/html4/siisata.html		man-sys-htmlman		html
 ./usr/share/man/html4/siop.html			man-sys-htmlman		html
 ./usr/share/man/html4/sip.html			man-sys-htmlman		html
@@ -5704,10 +5708,10 @@
 ./usr/share/man/html8/npf.conf.html		man-obsolete		obsolete
 ./usr/share/man/html8/npfctl.html		man-npf-htmlman		html,npf
 ./usr/share/man/html8/npfd.html			man-npf-htmlman		html,npf
-./usr/share/man/html8/nsd.html			man-nsd-htmlman		html,nsd
 ./usr/share/man/html8/nsd-checkconf.html	man-nsd-htmlman		html,nsd
 ./usr/share/man/html8/nsd-checkzone.html	man-nsd-htmlman		html,nsd
 ./usr/share/man/html8/nsd-control.html		man-nsd-htmlman		html,nsd
+./usr/share/man/html8/nsd.html			man-nsd-htmlman		html,nsd
 ./usr/share/man/html8/nsec3hash.html		man-bind-htmlman	html
 ./usr/share/man/html8/nslookup.html		man-netutil-htmlman	html
 ./usr/share/man/html8/nsupdate.html		man-obsolete		obsolete
@@ -6810,6 +6814,7 @@
 ./usr/share/man/man4/alpha/ttwopci.4		man-sys-man		.man
 ./usr/share/man/man4/altmem.4			man-sys-man		.man
 ./usr/share/man/man4/altq.4			man-sys-man		.man
+./usr/share/man/man4/am2315temp.4		man-sys-man		.man
 ./usr/share/man/man4/amdpm.4			man-sys-man		.man
 ./usr/share/man/man4/amdtemp.4			man-sys-man		.man
 ./usr/share/man/man4/amhphy.4			man-sys-man		.man
@@ -7691,6 +7696,7 @@
 ./usr/share/man/man4/shmif.4			man-sys-man		.man
 ./usr/share/man/man4/shpcic.4			man-sys-man		.man
 ./usr/share/man/man4/si.4			man-sys-man		.man
+./usr/share/man/man4/si70xxtemp.4		man-sys-man		.man
 ./usr/share/man/man4/siisata.4			man-sys-man		.man
 ./usr/share/man/man4/siop.4			man-sys-man		.man
 ./usr/share/man/man4/sip.4			man-sys-man		.man
@@ -8052,8 +8058,8 @@
 ./usr/share/man/man4/xc5k.4			man-sys-man		.man
 ./usr/share/man/man4/xenbus.4			man-sys-man		.man
 ./usr/share/man/man4/xennet.4			man-sys-man		.man
-./usr/share/man/man4/xhci.4			man-sys-man		.man
 ./usr/share/man/man4/xge.4			man-sys-man		.man
+./usr/share/man/man4/xhci.4			man-sys-man		.man
 ./usr/share/man/man4/xi.4			man-sys-man		.man
 ./usr/share/man/man4/xirc.4			man-sys-man		.man
 ./usr/share/man/man4/xpci.4			man-sys-man		.man
@@ -8826,10 +8832,10 @@
 ./usr/share/man/man8/npfctl.8			man-npf-man		.man,npf
 ./usr/share/man/man8/npfd.8			man-npf-man		.man,npf
 ./usr/share/man/man8/nqmgr.8			man-obsolete		obsolete
-./usr/share/man/man8/nsd.8 			man-nsd-man		.man,nsd
 ./usr/share/man/man8/nsd-checkconf.8		man-nsd-man		.man,nsd
 ./usr/share/man/man8/nsd-checkzone.8		man-nsd-man		.man,nsd
 ./usr/share/man/man8/nsd-control.8		man-nsd-man		.man,nsd
+./usr/share/man/man8/nsd.8 			man-nsd-man		.man,nsd
 ./usr/share/man/man8/nsec3hash.8		man-bind-man		.man
 ./usr/share/man/man8/nslookup.8			man-netutil-man		.man
 ./usr/share/man/man8/nsupdate.8			man-obsolete		obsolete
