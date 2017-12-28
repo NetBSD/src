@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_drm.c,v 1.8 2017/12/26 14:54:52 jmcneill Exp $ */
+/* $NetBSD: tegra_drm.c,v 1.9 2017/12/28 14:02:08 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_drm.c,v 1.8 2017/12/26 14:54:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_drm.c,v 1.9 2017/12/28 14:02:08 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -199,6 +199,10 @@ tegra_drm_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	sc->sc_ddev->dev_private = sc;
+	sc->sc_ddev->bst = sc->sc_bst;
+	sc->sc_ddev->bus_dmat = sc->sc_dmat;
+	sc->sc_ddev->dmat = sc->sc_ddev->bus_dmat;
+	sc->sc_ddev->dmat_subregion_p = false;
 
 	error = -drm_dev_register(sc->sc_ddev, 0);
 	if (error) {
