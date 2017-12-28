@@ -1,11 +1,11 @@
-#	$NetBSD: files.ddb,v 1.10 2014/11/16 05:46:27 uebayasi Exp $
+#	$NetBSD: files.ddb,v 1.11 2017/12/28 17:51:19 christos Exp $
 
 #
 # DDB options
 #
 defflag opt_ddb.h		DDB DDB_VERBOSE_HELP
 defparam opt_ddbparam.h		DDB_FROMCONSOLE DDB_ONPANIC DDB_HISTORY_SIZE
-				DDB_BREAK_CHAR DDB_KEYCODE
+				DDB_BREAK_CHAR DDB_KEYCODE DDB_PANICSTACKFRAMES
 				DDB_COMMANDONENTER DB_MAX_LINE
 
 define	ddb
