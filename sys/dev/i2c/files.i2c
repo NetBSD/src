@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.79 2017/12/10 17:05:54 bouyer Exp $
+#	$NetBSD: files.i2c,v 1.80 2017/12/28 23:23:47 christos Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -279,6 +279,16 @@ file	dev/i2c/max77620.c			max77620pmic
 device	tcagpio
 attach	tcagpio at iic
 file	dev/i2c/tcagpio.c			tcagpio
+
+# Silicon Lab SI7013/SI7020/SI7021 Temperature and Humidity sensor
+device si70xxtemp
+attach si70xxtemp at iic
+file dev/i2c/si70xx.c				si70xxtemp
+
+# Aosong AM2315 Temperature and Humidity sensor
+device am2315temp
+attach am2315temp at iic
+file dev/i2c/am2315.c				am2315temp
 
 # Silergy SY8106A regulator
 device	sy8106a
