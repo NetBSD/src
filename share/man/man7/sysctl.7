@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.118 2017/12/28 17:51:49 christos Exp $
+.\"	$NetBSD: sysctl.7,v 1.119 2017/12/28 23:15:45 wiz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -372,9 +372,8 @@ privilege may change the value.
 .El
 .Bl -tag -width "123456"
 .It Li kern.aio_listio_max
-The maximum number of asynchronous
-.Tn I/O
-operations in a single list I/O call.
+The maximum number of asynchronous I/O operations in a single list
+I/O call.
 Like with all variables related to
 .Xr aio 3 ,
 the variable may be created and removed dynamically
@@ -384,7 +383,7 @@ The maximum number of asynchronous I/O operations.
 .It Li kern.arandom
 This variable picks a random number each time it is queried.
 The used random number generator
-.Pf ( Tn RNG )
+.Pf ( RNG )
 is based on
 .Xr arc4random 3 .
 .It Li kern.argmax ( Dv KERN_ARGMAX )
@@ -811,9 +810,7 @@ Returns the standard version the implementation of the
 Monotonic Clock Option conforms to,
 otherwise\ 0.
 .It Li kern.mqueue
-Settings related to
-.Tn POSIX
-message queues; see
+Settings related to POSIX message queues; see
 .Xr mqueue 3 .
 This node is created dynamically when
 the corresponding kernel module is loaded.
@@ -2017,10 +2014,7 @@ Default UDP receive buffer size.
 Default UDP send buffer size.
 .El
 .Pp
-We reuse net.*.tcp for
-.Tn TCP
-over
-.Tn IPv6 ,
+We reuse net.*.tcp for TCP over IPv6,
 and therefore we do not have variables net.*.tcp6.
 Variables net.inet6.udp6 have identical meaning to net.inet.udp.
 Please refer to
@@ -2491,8 +2485,7 @@ console or by a special key sequence on a graphics console.
 .It Li ddb.tee_msgbuf
 If not zero, DDB will output also to the kernel message buffer.
 .It Li ddb.commandonenter
-If not empty, a command to be executed on each enter to the
-.Tn DDB .
+If not empty, a command to be executed on each enter to the DDB.
 .It Li ddb.panicstackframes
 Number of stack frames to display on panic.
 Useful to avoid scrolling way the interesting frames on a glass tty.
@@ -2502,8 +2495,7 @@ Default value is
 .Dv 10 .
 .El
 .Pp
-Some of these
-.Tn MIB
+Some of these MIB
 nodes are also available as variables from within the debugger.
 See
 .Xr ddb 4
@@ -2524,8 +2516,7 @@ The available second level names are:
 Available settings are detailed below.
 .Bl -tag -width "123456"
 .It Li security.curtain
-If non-zero, will filter return objects according to the user
-.Tn ID
+If non-zero, will filter return objects according to the user ID
 requesting information about them, preventing users from
 accessing any objects they do not own.
 .Pp
