@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_bsc.c,v 1.8 2017/12/10 21:38:26 skrll Exp $	*/
+/*	$NetBSD: bcm2835_bsc.c,v 1.9 2017/12/28 22:42:36 christos Exp $	*/
 
 /*
  * Copyright (c) 2012 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_bsc.c,v 1.8 2017/12/10 21:38:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_bsc.c,v 1.9 2017/12/28 22:42:36 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_kernhist.h"
@@ -331,7 +331,9 @@ only_read:
 	dlen = datalen;
 
 	dlen = __SHIFTIN(dlen, BSC_DLEN_DLEN);
+#if 0
 	KASSERT(dlen >= 1);
+#endif
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BSC_DLEN, dlen);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BSC_A, a);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BSC_C, c | BSC_C_ST);
