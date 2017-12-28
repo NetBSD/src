@@ -1,4 +1,4 @@
-/*	$NetBSD: workqueue.c,v 1.1 2017/09/29 12:42:36 maya Exp $	*/
+/*	$NetBSD: workqueue.c,v 1.2 2017/12/28 04:36:15 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: workqueue.c,v 1.1 2017/09/29 12:42:36 maya Exp $");
+__RCSID("$NetBSD: workqueue.c,v 1.2 2017/12/28 04:36:15 ozaki-r Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -83,9 +83,12 @@ rumptest_workqueue1()
 
 #define ITERATIONS 12435
 	for (size_t i = 0; i < ITERATIONS; ++i) {
+		int e;
 		workqueue_enqueue(sc->wq, &sc->wk, NULL);
 		mutex_enter(&sc->mtx);
-		cv_timedwait(&sc->cv, &sc->mtx, 2);
+		e = cv_timedwait(&sc->cv, &sc->mtx, hz * 2);
+		if (e != 0)
+			panic("cv_timedwait timed out (i=%lu)", i);
 		mutex_exit(&sc->mtx);
 	}
 
