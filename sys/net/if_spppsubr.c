@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.177 2017/12/11 03:29:20 ozaki-r Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.178 2017/12/28 07:06:36 ozaki-r Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.177 2017/12/11 03:29:20 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.178 2017/12/28 07:06:36 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1073,6 +1073,7 @@ sppp_detach(struct ifnet *ifp)
 
 	/* to avoid workqueue enqueued */
 	atomic_swap_uint(&sp->ipcp.update_addrs_enqueued, 1);
+	workqueue_wait(sp->ipcp.update_addrs_wq, &sp->ipcp.update_addrs_wk);
 	workqueue_destroy(sp->ipcp.update_addrs_wq);
 	pcq_destroy(sp->ipcp.update_addrs_q);
 
