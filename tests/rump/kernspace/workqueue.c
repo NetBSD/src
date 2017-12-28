@@ -1,4 +1,4 @@
-/*	$NetBSD: workqueue.c,v 1.4 2017/12/28 07:09:31 ozaki-r Exp $	*/
+/*	$NetBSD: workqueue.c,v 1.5 2017/12/28 07:10:25 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: workqueue.c,v 1.4 2017/12/28 07:09:31 ozaki-r Exp $");
+__RCSID("$NetBSD: workqueue.c,v 1.5 2017/12/28 07:10:25 ozaki-r Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -108,6 +108,31 @@ rumptest_workqueue1()
 	}
 
 	KASSERT(sc->counter == ITERATIONS);
+
+	destroy_sc(sc);
+#undef ITERATIONS
+}
+
+void
+rumptest_workqueue_wait(void)
+{
+	struct test_softc *sc;
+	struct work dummy;
+
+	sc = create_sc();
+
+#define ITERATIONS 12435
+	for (size_t i = 0; i < ITERATIONS; ++i) {
+		KASSERT(sc->counter == i);
+		workqueue_enqueue(sc->wq, &sc->wk, NULL);
+		workqueue_wait(sc->wq, &sc->wk);
+		KASSERT(sc->counter == (i + 1));
+	}
+
+	KASSERT(sc->counter == ITERATIONS);
+
+	/* Wait for a work that is not enqueued. Just return immediately. */
+	workqueue_wait(sc->wq, &dummy);
 
 	destroy_sc(sc);
 #undef ITERATIONS

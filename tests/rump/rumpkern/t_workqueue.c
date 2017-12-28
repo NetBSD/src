@@ -1,4 +1,4 @@
-/*	$NetBSD: t_workqueue.c,v 1.1 2017/09/29 12:42:37 maya Exp $	*/
+/*	$NetBSD: t_workqueue.c,v 1.2 2017/12/28 07:10:26 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -55,9 +55,27 @@ ATF_TC_BODY(workqueue1, tc)
 	rump_unschedule();
 }
 
+ATF_TC(workqueue_wait);
+ATF_TC_HEAD(workqueue_wait, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "Checks workqueue_wait");
+}
+
+ATF_TC_BODY(workqueue_wait, tc)
+{
+
+	rump_init();
+
+	rump_schedule();
+	rumptest_workqueue_wait(); /* panics if fails */
+	rump_unschedule();
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, workqueue1);
+	ATF_TP_ADD_TC(tp, workqueue_wait);
 
 	return atf_no_error();
 }
