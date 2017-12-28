@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.116 2017/09/29 00:04:33 christos Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.117 2017/12/28 15:12:15 christos Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.116 2017/09/29 00:04:33 christos Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.117 2017/12/28 15:12:15 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifndef RUMP_ACTION
@@ -1322,8 +1322,15 @@ explore_numeric(const struct addrinfo *pai, const char *hostname,
 		* check for errors. inet_pton() only accepts addresses
 		* in the dotted quad format and only in base 10, so we
 		* need to treat AF_INET specially.
+		*
+		* We also check for trailing characters and fail if there
+		* are any. This matches the inet_pton6(), but not the
+		* inet_pton4() behavior. We choose to make the protocol
+		* behavior consistent.
 		*/
-		if (inet_aton(hostname, (void *)pton) == 1) {
+		if (inet_aton(hostname, (void *)pton) == 1 &&
+		    hostname[strspn(hostname, "0123456789.xabcdefXABCDEF")]
+		    == '\0') {
 			if (pai->ai_family == afd->a_af ||
 			    pai->ai_family == PF_UNSPEC /*?*/) {
 				GET_AI(cur->ai_next, afd, pton);
