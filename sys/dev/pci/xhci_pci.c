@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci_pci.c,v 1.10 2017/12/25 08:39:38 msaitoh Exp $	*/
+/*	$NetBSD: xhci_pci.c,v 1.11 2017/12/28 05:43:42 msaitoh Exp $	*/
 /*	OpenBSD: xhci_pci.c,v 1.4 2014/07/12 17:38:51 yuo Exp	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci_pci.c,v 1.10 2017/12/25 08:39:38 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci_pci.c,v 1.11 2017/12/28 05:43:42 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_xhci_pci.h"
@@ -204,6 +204,7 @@ alloc_retry:
 		case PCI_INTR_TYPE_MSI:
 			/* The next try is for INTx: Disable MSI */
 			counts[PCI_INTR_TYPE_MSI] = 0;
+			counts[PCI_INTR_TYPE_INTX] = 1;
 			goto alloc_retry;
 		case PCI_INTR_TYPE_INTX:
 		default:
@@ -273,15 +274,15 @@ xhci_pci_detach(device_t self, int flags)
 	struct xhci_softc * const sc = &psc->sc_xhci;
 	int rv;
 
-	rv = xhci_detach(sc, flags);
-	if (rv)
-		return rv;
+	if (sc->sc_ios != 0) {
+		rv = xhci_detach(sc, flags);
+		if (rv)
+			return rv;
 
-	pmf_device_deregister(self);
+		pmf_device_deregister(self);
 
-	xhci_shutdown(self, flags);
+		xhci_shutdown(self, flags);
 
-	if (sc->sc_ios) {
 #if 0
 		/* Disable interrupts, so we don't get any spurious ones. */
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
