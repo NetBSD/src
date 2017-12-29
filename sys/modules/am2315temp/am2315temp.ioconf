@@ -1,0 +1,7 @@
+ioconf am2315temp
+
+include "conf/files"
+
+pseudo-root iic*
+
+am2315temp* at iic? addr 0x5c
