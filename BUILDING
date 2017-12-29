@@ -340,7 +340,8 @@ CONFIGURATION
                  build.  If set to "no", the entire built system will be
                  statically linked.
 
-                 Default: "yes"
+                 Default: Platform dependent.  As of this writing, all
+                 platforms except m68000 default to "yes".
 
      MKPICINSTALL
                  Can be set to "yes" or "no".  Indicates whether the ar(1)
