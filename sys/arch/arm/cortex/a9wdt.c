@@ -1,4 +1,4 @@
-/*	$NetBSD: a9wdt.c,v 1.6 2017/12/29 11:06:26 skrll Exp $	*/
+/*	$NetBSD: a9wdt.c,v 1.7 2017/12/29 11:07:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a9wdt.c,v 1.6 2017/12/29 11:06:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a9wdt.c,v 1.7 2017/12/29 11:07:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -191,7 +191,7 @@ a9wdt_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_memt = mpcaa->mpcaa_memt;
 
-	bus_space_subregion(sc->sc_memt, mpcaa->mpcaa_memh, 
+	bus_space_subregion(sc->sc_memt, mpcaa->mpcaa_memh,
 	    TMR_WDOG_BASE, TMR_WDOG_SIZE, &sc->sc_wdog_memh);
 
 	/*
@@ -203,7 +203,7 @@ a9wdt_attach(device_t parent, device_t self, void *aux)
 	sc->sc_wdog_ctl = a9wdt_wdog_read(sc, TMR_CTL);
 	sc->sc_wdog_armed = (sc->sc_wdog_ctl & TMR_CTL_WDOG_MODE) != 0;
 	if (sc->sc_wdog_armed) {
-		sc->sc_wdog_prescaler = 
+		sc->sc_wdog_prescaler =
 		    __SHIFTOUT(sc->sc_wdog_ctl, TMR_CTL_PRESCALER) + 1;
 		sc->sc_freq /= sc->sc_wdog_prescaler;
 		sc->sc_wdog_load = a9wdt_wdog_read(sc, TMR_LOAD);
