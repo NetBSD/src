@@ -1,0 +1,29 @@
+#!/bin/sh
+#
+# $NetBSD: dhcpd6,v 1.1 2017/12/29 18:15:49 is Exp $
+#
+
+# PROVIDE: dhcpd6
+# REQUIRE: DAEMON
+# BEFORE:  LOGIN
+
+$_rc_subr_loaded . /etc/rc.subr
+
+name="dhcpd6"
+rcvar=$name
+command="/usr/sbin/dhcpd"
+start_precmd="dhcpd6_precmd"
+pidfile="/var/run/${name}.pid"
+required_files="/etc/${name}.conf"
+
+dhcpd6_precmd()
+{
+        if [ ! -e "/var/db/${name}.leases" ]; then
+                echo "Creating /var/db/${name}.leases"
+                touch /var/db/${name}.leases
+        fi
+}
+
+load_rc_config $name
+dhcpd6_flags="-6 $dhcpd6_flags"
+run_rc_command "$1"
