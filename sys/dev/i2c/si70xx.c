@@ -1,4 +1,4 @@
-/*	$NetBSD: si70xx.c,v 1.1 2017/12/28 23:23:47 christos Exp $	*/
+/*	$NetBSD: si70xx.c,v 1.2 2017/12/29 02:19:45 christos Exp $	*/
 
 /*
  * Copyright (c) 2017 Brad Spencer <brad@anduin.eldar.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si70xx.c,v 1.1 2017/12/28 23:23:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si70xx.c,v 1.2 2017/12/29 02:19:45 christos Exp $");
 
 /*
   Driver for the Silicon Labs SI7013/SI7020/SI7021
@@ -999,7 +999,7 @@ si70xxtemp_modcmd(modcmd_t cmd, void *opaque)
 #endif
 	case MODULE_CMD_FINI:
 #ifdef _MODULE
-		error = config_fini_component(cfdriver_ioconf_si70xxtemp,
+		return config_fini_component(cfdriver_ioconf_si70xxtemp,
 		      cfattach_ioconf_si70xxtemp, cfdata_ioconf_si70xxtemp);
 #else
 		return 0;
