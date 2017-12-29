@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.99 2017/11/03 15:31:48 skrll Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.100 2017/12/29 08:56:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "opt_arm_bus_space.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.99 2017/11/03 15:31:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.100 2017/12/29 08:56:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,10 +143,10 @@ _bus_dma_paddr_inrange(struct arm32_dma_range *ranges, int nranges,
 	for (i = 0, dr = ranges; i < nranges; i++, dr++) {
 		if (curaddr >= dr->dr_sysbase &&
 		    curaddr < (dr->dr_sysbase + dr->dr_len))
-			return (dr);
+			return dr;
 	}
 
-	return (NULL);
+	return NULL;
 }
 
 /*
@@ -199,7 +199,7 @@ _bus_dmamap_load_paddr(bus_dma_tag_t t, bus_dmamap_t map,
 		const struct arm32_dma_range * const dr =
 		    _bus_dma_paddr_inrange(t->_ranges, t->_nranges, paddr);
 		if (dr == NULL)
-			return (EINVAL);
+			return EINVAL;
 
 		/*
 		 * If this region is coherent, mark the segment as coherent.
@@ -242,7 +242,7 @@ _bus_dmamap_load_paddr(bus_dma_tag_t t, bus_dmamap_t map,
 	     	/* coalesce */
 		segs[nseg-1].ds_len += sgsize;
 	} else if (nseg >= map->_dm_segcnt) {
-		return (EFBIG);
+		return EFBIG;
 	} else {
 		/* new segment */
 		segs[nseg].ds_addr = curaddr;
@@ -260,7 +260,7 @@ _bus_dmamap_load_paddr(bus_dma_tag_t t, bus_dmamap_t map,
 
 	map->_dm_flags &= (_ds_flags & _BUS_DMAMAP_COHERENT);
 	map->dm_nsegs = nseg;
-	return (0);
+	return 0;
 }
 
 #ifdef _ARM32_NEED_BUS_DMA_BOUNCE
@@ -287,7 +287,7 @@ _bus_dma_load_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	if ((cookie->id_flags & _BUS_DMA_HAS_BOUNCE) == 0) {
 		error = _bus_dma_alloc_bouncebuf(t, map, buflen, flags);
 		if (error)
-			return (error);
+			return error;
 	}
 
 	/*
@@ -299,7 +299,7 @@ _bus_dma_load_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	error = _bus_dmamap_load_buffer(t, map, cookie->id_bouncebuf,
 	    buflen, vm, flags);
 	if (error)
-		return (error);
+		return error;
 
 	STAT_INCR(bounced_loads);
 	map->dm_mapsize = buflen;
@@ -345,7 +345,7 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	    (sizeof(bus_dma_segment_t) * (nsegments - 1));
 	const int zallocflags = (flags & BUS_DMA_NOWAIT) ? KM_NOSLEEP : KM_SLEEP;
 	if ((mapstore = kmem_intr_zalloc(mapsize, zallocflags)) == NULL)
-		return (ENOMEM);
+		return ENOMEM;
 
 	map = (struct arm32_bus_dmamap *)mapstore;
 	map->_dm_size = size;
@@ -412,7 +412,7 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 #ifdef DEBUG_DMA
 	printf("dmamap_create:map=%p\n", map);
 #endif	/* DEBUG_DMA */
-	return (0);
+	return 0;
 }
 
 /*
@@ -496,7 +496,7 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	    map->dm_maxsegsz, map->_dm_maxmaxsegsz);
 
 	if (buflen > map->_dm_size)
-		return (EINVAL);
+		return EINVAL;
 
 	if (p != NULL) {
 		vm = p->p_vmspace;
@@ -527,7 +527,7 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		    _BUS_DMA_BUFTYPE_LINEAR, flags);
 	}
 #endif
-	return (error);
+	return error;
 }
 
 /*
@@ -572,7 +572,7 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 	KASSERT(m0->m_flags & M_PKTHDR);
 
 	if (m0->m_pkthdr.len > map->_dm_size)
-		return (EINVAL);
+		return EINVAL;
 
 	/* _bus_dmamap_load_paddr() clears this if we're not... */
 	map->_dm_flags |= _BUS_DMAMAP_COHERENT;
@@ -671,7 +671,7 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 		    _BUS_DMA_BUFTYPE_MBUF, flags);
 	}
 #endif
-	return (error);
+	return error;
 }
 
 /*
@@ -726,7 +726,7 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 			STAT_INCR(loads);
 		}
 	}
-	return (error);
+	return error;
 }
 
 /*
@@ -1280,7 +1280,7 @@ _bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 	printf("dmamem_alloc: =%d\n", error);
 #endif
 
-	return(error);
+	return error;
 }
 
 /*
@@ -1404,7 +1404,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	}
 
 	if (va == 0)
-		return (ENOMEM);
+		return ENOMEM;
 
 	*kvap = (void *)va;
 
@@ -1438,7 +1438,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 #ifdef DEBUG_DMA
 	printf("dmamem_map: =%p\n", *kvap);
 #endif	/* DEBUG_DMA */
-	return (0);
+	return 0;
 }
 
 /*
@@ -1503,12 +1503,12 @@ _bus_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 		if (flags & BUS_DMA_PREFETCHABLE)
 			map_flags |= ARM32_MMAP_WRITECOMBINE;
 
-		return (arm_btop((u_long)segs[i].ds_addr + off) | map_flags);
+		return arm_btop((u_long)segs[i].ds_addr + off) | map_flags;
 
 	}
 
 	/* Page not found. */
-	return (-1);
+	return -1;
 }
 
 /**********************************************************************
@@ -1594,13 +1594,13 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		error = _bus_dmamap_load_paddr(t, map, curaddr, sgsize,
 		    coherent);
 		if (error)
-			return (error);
+			return error;
 
 		vaddr += sgsize;
 		buflen -= sgsize;
 	}
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -1648,7 +1648,7 @@ _bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 	error = uvm_pglistalloc(size, low, high, alignment, uboundary,
 	    &mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
 	if (error)
-		return (error);
+		return error;
 
 	/*
 	 * Compute the location, size, and number of segments actually
@@ -1688,7 +1688,7 @@ _bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 
 	*rsegs = curseg + 1;
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -1703,7 +1703,7 @@ arm32_dma_range_intersect(struct arm32_dma_range *ranges, int nranges,
 	int i;
 
 	if (ranges == NULL)
-		return (0);
+		return 0;
 
 	for (i = 0, dr = ranges; i < nranges; i++, dr++) {
 		if (dr->dr_sysbase <= pa &&
@@ -1714,7 +1714,7 @@ arm32_dma_range_intersect(struct arm32_dma_range *ranges, int nranges,
 			*pap = trunc_page(pa);
 			*sizep = round_page(min(pa + size,
 			    dr->dr_sysbase + dr->dr_len) - pa);
-			return (1);
+			return 1;
 		}
 		if (pa < dr->dr_sysbase && dr->dr_sysbase < (pa + size)) {
 			/*
@@ -1723,12 +1723,12 @@ arm32_dma_range_intersect(struct arm32_dma_range *ranges, int nranges,
 			*pap = trunc_page(dr->dr_sysbase);
 			*sizep = round_page(min((pa + size) - dr->dr_sysbase,
 			    dr->dr_len));
-			return (1);
+			return 1;
 		}
 	}
 
 	/* No intersection found. */
-	return (0);
+	return 0;
 }
 
 #ifdef _ARM32_NEED_BUS_DMA_BOUNCE
@@ -1762,7 +1762,7 @@ _bus_dma_alloc_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map,
 		cookie->id_nbouncesegs = 0;
 	}
 
-	return (error);
+	return error;
 }
 
 static void
@@ -1815,11 +1815,11 @@ _bus_dma_uiomove(void *buf, struct uio *uio, size_t n, int direction)
 			error = copyin_vmspace(vm, iov->iov_base, cp, cnt);
 		}
 		if (error)
-			return (error);
+			return error;
 		cp += cnt;
 		resid -= cnt;
 	}
-	return (0);
+	return 0;
 }
 #endif /* _ARM32_NEED_BUS_DMA_BOUNCE */
 
