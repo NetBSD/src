@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.122 2017/10/21 22:03:01 sevan Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.123 2017/12/29 03:04:56 sevan Exp $
 .\"
 .\" Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -612,7 +612,12 @@ installed during a build.
 If set to
 .Dq no ,
 the entire built system will be statically linked.
-.DFLTy
+.DFLT
+Platform dependent.
+As of this writing, all platforms except
+.Sy m68000
+default to
+.Dq yes .
 .
 .It Sy MKPICINSTALL
 .YorN
