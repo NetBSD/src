@@ -1,0 +1,7 @@
+ioconf si70xxtemp
+
+include "conf/files"
+
+pseudo-root iic*
+
+si70xxtemp* at iic? addr 0x40
