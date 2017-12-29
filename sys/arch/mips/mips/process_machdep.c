@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.38 2017/03/16 16:13:20 chs Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.39 2017/12/29 09:27:01 maya Exp $	*/
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.38 2017/03/16 16:13:20 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.39 2017/12/29 09:27:01 maya Exp $");
 
 /*
  * This file may seem a bit stylized, but that so that it's easier to port.
@@ -159,11 +159,11 @@ process_write_fpregs(struct lwp *l, const struct fpreg *regs, size_t regslen)
 	fpu_discard(l);
 #endif /* !NOFPU */
 
-#if defined(__mips_n32) || defined(__mips_n64)
-	KASSERT((_MIPS_SIM_NEWABI_P(l->l_proc->p_md.md_abi) ? sizeof(struct fpreg) : sizeof(struct fpreg_oabi)) == regslen);
-#else
-	KASSERT(regslen == sizeof(struct fpreg));
-#endif
+	if (_MIPS_SIM_NEWABI_P(l->l_proc->p_md.md_abi))
+		KASSERT(regslen == sizeof(struct fpreg));
+	else
+		KASSERT(regslen == sizeof(struct fpreg_oabi));
+
 	memcpy(&pcb->pcb_fpregs, regs, regslen);
 	return 0;
 }

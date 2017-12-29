@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.17 2017/12/09 03:22:33 christos Exp $	*/
+/*	$NetBSD: reg.h,v 1.18 2017/12/29 09:27:01 maya Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -78,10 +78,8 @@ struct dspreg64 {
 	__register64_t	r_regs[8];
 };
 
-#if defined(__mips_n32) || defined(__mips_n64)
 struct fpreg_oabi {
 	int32_t		r_regs[33];
 };
-#endif
 
 #endif /*_MIPS_REG_H_*/
