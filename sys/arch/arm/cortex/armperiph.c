@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: armperiph.c,v 1.11 2017/05/26 21:17:46 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: armperiph.c,v 1.12 2017/12/29 11:06:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -237,4 +237,5 @@ armperiph_attach(device_t parent, device_t self, void *aux)
 
 		config_found(self, &mpcaa, NULL);
 	}
+	attached = true;
 }
