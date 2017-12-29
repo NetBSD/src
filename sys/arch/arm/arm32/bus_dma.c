@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.100 2017/12/29 08:56:49 skrll Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.101 2017/12/29 08:58:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "opt_arm_bus_space.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.100 2017/12/29 08:56:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.101 2017/12/29 08:58:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,7 +186,7 @@ _bus_dmamap_load_paddr(bus_dma_tag_t t, bus_dmamap_t map,
 	uint32_t _ds_flags = coherent ? _BUS_DMAMAP_COHERENT : 0;
 
 	if (nseg > 0)
-		lastaddr = segs[nseg-1].ds_addr + segs[nseg-1].ds_len;
+		lastaddr = segs[nseg - 1].ds_addr + segs[nseg - 1].ds_len;
 	else
 		lastaddr = 0xdead;
 
@@ -235,12 +235,12 @@ _bus_dmamap_load_paddr(bus_dma_tag_t t, bus_dmamap_t map,
 	 * previous segment if possible.
 	 */
 	if (nseg > 0 && curaddr == lastaddr &&
-	    segs[nseg-1].ds_len + sgsize <= map->dm_maxsegsz &&
-	    ((segs[nseg-1]._ds_flags ^ _ds_flags) & _BUS_DMAMAP_COHERENT) == 0 &&
+	    segs[nseg - 1].ds_len + sgsize <= map->dm_maxsegsz &&
+	    ((segs[nseg - 1]._ds_flags ^ _ds_flags) & _BUS_DMAMAP_COHERENT) == 0 &&
 	    (map->_dm_boundary == 0 ||
-	     (segs[nseg-1].ds_addr & bmask) == (curaddr & bmask))) {
+	     (segs[nseg - 1].ds_addr & bmask) == (curaddr & bmask))) {
 	     	/* coalesce */
-		segs[nseg-1].ds_len += sgsize;
+		segs[nseg - 1].ds_len += sgsize;
 	} else if (nseg >= map->_dm_segcnt) {
 		return EFBIG;
 	} else {
@@ -1617,7 +1617,7 @@ _bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 	struct pglist mlist;
 	int curseg, error;
 
-	KASSERTMSG(boundary == 0 || (boundary & (boundary-1)) == 0,
+	KASSERTMSG(boundary == 0 || (boundary & (boundary - 1)) == 0,
 	    "invalid boundary %#lx", boundary);
 
 #ifdef DEBUG_DMA
