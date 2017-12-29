@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.160 2017/02/20 13:45:43 christos Exp $
+#	$NetBSD: special,v 1.161 2017/12/29 18:15:49 is Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # This file may be overwritten on upgrades.
@@ -62,6 +62,7 @@
 ./etc/dhcpcd.duid		type=file mode=0644 optional
 ./etc/dhcpcd.hook		type=file mode=0644 optional
 ./etc/dhcpd.conf		type=file mode=0644 optional
+./etc/dhcpd6.conf		type=file mode=0644 optional
 ./etc/disktab			type=file mode=0644
 ./etc/dm.conf			type=file mode=0644
 ./etc/dumpdates			type=file mode=0664 gname=operator optional tags=exclude
@@ -202,6 +203,7 @@
 ./etc/rc.d/dhclient		type=file mode=0555
 ./etc/rc.d/dhcpcd		type=file mode=0555
 ./etc/rc.d/dhcpd		type=file mode=0555
+./etc/rc.d/dhcpd6		type=file mode=0555
 ./etc/rc.d/dhcrelay		type=file mode=0555
 ./etc/rc.d/dmesg		type=file mode=0555
 ./etc/rc.d/downinterfaces	type=file mode=0555
