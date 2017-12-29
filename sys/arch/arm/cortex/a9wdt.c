@@ -1,4 +1,4 @@
-/*	$NetBSD: a9wdt.c,v 1.5 2016/10/04 15:12:29 kiyohara Exp $	*/
+/*	$NetBSD: a9wdt.c,v 1.6 2017/12/29 11:06:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a9wdt.c,v 1.5 2016/10/04 15:12:29 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a9wdt.c,v 1.6 2017/12/29 11:06:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -257,4 +257,6 @@ a9wdt_attach(device_t parent, device_t self, void *aux)
 	if (sysmon_wdog_register(&sc->sc_smw) != 0)
 		aprint_error("%s: unable to register with sysmon\n",
 		    device_xname(sc->sc_dev));
+
+	attached = true;
 }
