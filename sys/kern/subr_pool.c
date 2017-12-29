@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.219 2017/12/16 03:13:29 mrg Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.220 2017/12/29 16:13:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.219 2017/12/16 03:13:29 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.220 2017/12/29 16:13:26 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1088,10 +1088,11 @@ pool_grow(struct pool *pp, int flags)
 		}
 	}
 	pp->pr_flags |= PR_GROWING;
-	if ((flags & PR_WAITOK) == 0)
+	if (flags & PR_WAITOK)
+		mutex_exit(&pp->pr_lock);
+	else
 		pp->pr_flags |= PR_GROWINGNOWAIT;
 
-	mutex_exit(&pp->pr_lock);
 	char *cp = pool_allocator_alloc(pp, flags);
 	if (__predict_false(cp == NULL))
 		goto out;
@@ -1102,7 +1103,8 @@ pool_grow(struct pool *pp, int flags)
 		goto out;
 	}
 
-	mutex_enter(&pp->pr_lock);
+	if (flags & PR_WAITOK)
+		mutex_enter(&pp->pr_lock);
 	pool_prime_page(pp, cp, ph);
 	pp->pr_npagealloc++;
 	KASSERT(pp->pr_flags & PR_GROWING);
@@ -1114,9 +1116,10 @@ pool_grow(struct pool *pp, int flags)
 	cv_broadcast(&pp->pr_cv);
 	return 0;
 out:
+	if (flags & PR_WAITOK)
+		mutex_enter(&pp->pr_lock);
 	KASSERT(pp->pr_flags & PR_GROWING);
 	pp->pr_flags &= ~(PR_GROWING|PR_GROWINGNOWAIT);
-	mutex_enter(&pp->pr_lock);
 	return ENOMEM;
 }
 
