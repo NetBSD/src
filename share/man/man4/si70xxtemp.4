@@ -1,4 +1,4 @@
-.\" $NetBSD: si70xxtemp.4,v 1.1 2017/12/28 23:28:00 christos Exp $
+.\" $NetBSD: si70xxtemp.4,v 1.2 2017/12/29 14:47:09 wiz Exp $
 .\"
 .\" Copyright (c) 2017 Brad Spencer <brad@anduin.eldar.org>
 .\"
@@ -55,19 +55,21 @@ If 1, the chip is getting enough power.
 .It hw.si70xxtemp0.heateron
 Turn the heater on and off.
 .It hw.si70xxtemp0.heaterstrength
-From 1 to 6, the amount of energy put into the heater.  The higher the
-number, the more power used.
+From 1 to 6, the amount of energy put into the heater.
+The higher the number, the more power used.
 .It hw.si70xxtemp0.debug
-If the driver is compiled with SI70XX_DEBUG, this node will appear and
-can be used to set the debugging level.
+If the driver is compiled with
+.Dv SI70XX_DEBUG ,
+this node will appear and can be used to set the debugging level.
 .It hw.si70xxtemp0.readattempts
 To read %RH or temperature the driver uses a No Hold Master command.
 This command needs to be sent to the device, a wait must then occur
 and then another read command is sent to read back the values.
 Depending on the resolution, and other factors, the wait time varies.
 The driver will attempt to read back the values readattempts number of
-times.  The default is 15 which should be more than enough for most
-purposes.  There is an intial wait of 10,500 microseconds followed by
+times.
+The default is 15 which should be more than enough for most purposes.
+There is an intial wait of 10,500 microseconds followed by
 a additional 1,000 microseconds per read attempt.
 .El
 .Sh SEE ALSO
