@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.112 2017/12/09 08:03:06 pgoyette Exp $
+# $NetBSD: mi,v 1.113 2017/12/29 02:18:34 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -20,6 +20,8 @@
 ./@MODULEDIR@/adosfs/adosfs.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/aio				base-kernel-modules	kmod
 ./@MODULEDIR@/aio/aio.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/am2315temp			base-kernel-modules	kmod
+./@MODULEDIR@/am2315temp/am2315temp.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/amr				base-obsolete		obsolete
 ./@MODULEDIR@/amr/amr.kmod			base-obsolete		obsolete
 ./@MODULEDIR@/ataraid				base-obsolete		obsolete
@@ -228,10 +230,10 @@
 ./@MODULEDIR@/luasystm/luasystm.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/mfs				base-kernel-modules	kmod
 ./@MODULEDIR@/mfs/mfs.kmod			base-kernel-modules	kmod
-./@MODULEDIR@/miiverbose			base-kernel-modules	kmod
-./@MODULEDIR@/miiverbose/miiverbose.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/midi				base-kernel-modules	kmod
 ./@MODULEDIR@/midi/midi.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/miiverbose			base-kernel-modules	kmod
+./@MODULEDIR@/miiverbose/miiverbose.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/miniroot				base-kernel-modules	kmod
 ./@MODULEDIR@/miniroot/miniroot.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/mlx				base-obsolete		obsolete
@@ -316,6 +318,8 @@
 ./@MODULEDIR@/securelevel/securelevel.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/sequencer				base-kernel-modules	kmod
 ./@MODULEDIR@/sequencer/sequencer.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/si70xxtemp			base-kernel-modules	kmod
+./@MODULEDIR@/si70xxtemp/si70xxtemp.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/skipjack				base-kernel-modules	kmod
 ./@MODULEDIR@/skipjack/skipjack.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/slcompress			base-kernel-modules     kmod
@@ -364,10 +368,10 @@
 ./@MODULEDIR@/twa/twa.kmod			base-obsolete		obsolete
 ./@MODULEDIR@/twe				base-obsolete		obsolete
 ./@MODULEDIR@/twe/twe.kmod			base-obsolete		obsolete
-./@MODULEDIR@/uatp				base-kernel-modules	kmod
-./@MODULEDIR@/uatp/uatp.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/ualea				base-kernel-modules	kmod
 ./@MODULEDIR@/ualea/ualea.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/uatp				base-kernel-modules	kmod
+./@MODULEDIR@/uatp/uatp.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/udf				base-kernel-modules	kmod
 ./@MODULEDIR@/udf/udf.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/umap				base-kernel-modules	kmod
