@@ -1,3 +1,5 @@
+/*	$NetBSD: am2315reg.h,v 1.2 2017/12/29 02:20:47 christos Exp $	*/
+
 /*
  * Copyright (c) 2017 Brad Spencer <brad@anduin.eldar.org>
  *
