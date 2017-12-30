@@ -1,4 +1,4 @@
-.\" $NetBSD: si70xxtemp.4,v 1.2 2017/12/29 14:47:09 wiz Exp $
+.\" $NetBSD: si70xxtemp.4,v 1.3 2017/12/30 03:19:23 christos Exp $
 .\"
 .\" Copyright (c) 2017 Brad Spencer <brad@anduin.eldar.org>
 .\"
@@ -68,7 +68,7 @@ and then another read command is sent to read back the values.
 Depending on the resolution, and other factors, the wait time varies.
 The driver will attempt to read back the values readattempts number of
 times.
-The default is 15 which should be more than enough for most purposes.
+The default is 25 which should be more than enough for most purposes.
 There is an intial wait of 10,500 microseconds followed by
 a additional 1,000 microseconds per read attempt.
 .El
