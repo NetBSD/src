@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.97 2017/12/30 20:42:28 christos Exp $	*/
+/*	$NetBSD: jobs.c,v 1.98 2017/12/30 23:24:19 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.97 2017/12/30 20:42:28 christos Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.98 2017/12/30 23:24:19 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -465,9 +465,11 @@ showjob(struct output *out, struct job *jp, int mode)
 			fmtstr(s, 16, "[%ld] %c ",
 				(long)(jp - jobtab + 1),
 #if JOBS
-				jp == jobtab + curjob ? '+' :
-				curjob != -1 && jp == jobtab +
-					    jobtab[curjob].prev_job ? '-' :
+				jp - jobtab == curjob ?
+									  '+' :
+				curjob != -1 &&
+				    jp - jobtab == jobtab[curjob].prev_job ?
+									  '-' :
 #endif
 				' ');
 		else
