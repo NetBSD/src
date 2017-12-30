@@ -1,4 +1,4 @@
-/* $NetBSD: t_timeleft.c,v 1.1 2017/12/08 01:19:29 christos Exp $ */
+/* $NetBSD: t_timeleft.c,v 1.2 2017/12/30 17:06:27 martin Exp $ */
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_timeleft.c,v 1.1 2017/12/08 01:19:29 christos Exp $");
+__RCSID("$NetBSD: t_timeleft.c,v 1.2 2017/12/30 17:06:27 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/select.h>
@@ -84,7 +84,7 @@ static void
 tester(void (*fun)(struct timespec *))
 {
 	const struct timespec ts = { 5, 0 };
-	const struct timespec sts = { 0, 1000000 };
+	const struct timespec sts = { 0, 2000000 };
 	struct info i = { fun, ts };
 	pthread_t thr;
 
