@@ -1,4 +1,4 @@
-/*	$NetBSD: fenv.c,v 1.2 2017/03/22 23:11:08 chs Exp $	*/
+/*	$NetBSD: fenv.c,v 1.3 2017/12/30 17:59:24 martin Exp $	*/
 
 /*-
  * Copyright (c) 2004-2005 David Schultz <das@FreeBSD.ORG>
@@ -28,7 +28,7 @@
  * $FreeBSD: src/lib/msun/alpha/fenv.c,v 1.2 2005/03/16 19:03:44 das Exp $
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fenv.c,v 1.2 2017/03/22 23:11:08 chs Exp $");
+__RCSID("$NetBSD: fenv.c,v 1.3 2017/12/30 17:59:24 martin Exp $");
 
 #include "namespace.h"
 
@@ -63,7 +63,7 @@ fegetenv(fenv_t *envp)
 	 * only need to issue an excb after the mf_fpcr to ensure that
 	 * the read is executed before any subsequent FP ops.
 	 */
-	sysarch(ALPHA_FPGETMASK, (char *)&p);
+	p.mask = sysarch(ALPHA_FPGETMASK, 0);
 	__mf_fpcr(&r.__d);
 	*envp = r.__bits | p.mask;
 	__excb();
@@ -76,7 +76,7 @@ feholdexcept(fenv_t *envp)
 	struct alpha_fp_except_args p;
 	union __fpcr r;
 
-	sysarch(ALPHA_FPGETMASK, (char *)&p);
+	p.mask = sysarch(ALPHA_FPGETMASK, 0);
 	__mf_fpcr(&r.__d);
 	*envp = r.__bits | p.mask;
 	r.__bits &= ~((fenv_t)FE_ALL_EXCEPT << _FPUSW_SHIFT);
@@ -124,7 +124,7 @@ feenableexcept(int mask)
 {
 	struct alpha_fp_except_args p;
 
-	sysarch(ALPHA_FPGETMASK, &p);
+	p.mask = sysarch(ALPHA_FPGETMASK, 0);
 	p.mask |= (mask & FE_ALL_EXCEPT);
 	sysarch(ALPHA_FPSETMASK, &p);
 	return p.mask;
@@ -135,7 +135,7 @@ fedisableexcept(int mask)
 {
 	struct alpha_fp_except_args p;
 
-	sysarch(ALPHA_FPGETMASK, &p);
+	p.mask = sysarch(ALPHA_FPGETMASK, 0);
 	p.mask &= ~(mask & FE_ALL_EXCEPT);
 	sysarch(ALPHA_FPSETMASK, &p);
 	return p.mask;
@@ -144,8 +144,6 @@ fedisableexcept(int mask)
 int
 fegetexcept(void)
 {
-	struct alpha_fp_except_args p;
 
-	sysarch(ALPHA_FPGETMASK, &p);
-	return p.mask;
+	return sysarch(ALPHA_FPGETMASK, 0);
 }
