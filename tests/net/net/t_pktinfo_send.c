@@ -1,4 +1,4 @@
-/*	$NetBSD: t_pktinfo_send.c,v 1.2 2017/12/11 05:47:18 ryo Exp $	*/
+/*	$NetBSD: t_pktinfo_send.c,v 1.3 2017/12/30 22:02:34 gson Exp $	*/
 
 /*-
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_pktinfo_send.c,v 1.2 2017/12/11 05:47:18 ryo Exp $");
+__RCSID("$NetBSD: t_pktinfo_send.c,v 1.3 2017/12/30 22:02:34 gson Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -223,7 +223,6 @@ ATF_TC(pktinfo_send_unbound);
 ATF_TC_HEAD(pktinfo_send_unbound, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "sendmsg with IP_PKTINFO");
-	atf_tc_set_md_var(tc, "timeout", "5");
 }
 ATF_TC_BODY(pktinfo_send_unbound, tc)
 {
@@ -247,7 +246,6 @@ ATF_TC_HEAD(pktinfo_send_bindany, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "sendmsg with IP_PKTINFO on bind(INADDR_ANY) socket");
-	atf_tc_set_md_var(tc, "timeout", "5");
 }
 ATF_TC_BODY(pktinfo_send_bindany, tc)
 {
@@ -272,7 +270,6 @@ ATF_TC_HEAD(pktinfo_send_bindaddr, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "sendmsg with IP_PKTINFO on bind(addr:0) socket");
-	atf_tc_set_md_var(tc, "timeout", "5");
 }
 ATF_TC_BODY(pktinfo_send_bindaddr, tc)
 {
@@ -297,7 +294,6 @@ ATF_TC_HEAD(pktinfo_send_bindport, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "sendmsg with IP_PKTINFO on bind(INADDR_ANY:12345) socket");
-	atf_tc_set_md_var(tc, "timeout", "5");
 }
 ATF_TC_BODY(pktinfo_send_bindport, tc)
 {
@@ -322,7 +318,6 @@ ATF_TC_HEAD(pktinfo_send_bindaddrport, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "sendmsg with IP_PKTINFO on bind(addr:12345) socket");
-	atf_tc_set_md_var(tc, "timeout", "5");
 }
 ATF_TC_BODY(pktinfo_send_bindaddrport, tc)
 {
@@ -347,7 +342,6 @@ ATF_TC_HEAD(pktinfo_send_bindother, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "sendmsg with IP_PKTINFO from address bound by other socket");
-	atf_tc_set_md_var(tc, "timeout", "5");
 }
 ATF_TC_BODY(pktinfo_send_bindother, tc)
 {
@@ -374,7 +368,6 @@ ATF_TC_HEAD(pktinfo_send_connected, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "sendmsg with IP_PKTINFO on connected socket");
-	atf_tc_set_md_var(tc, "timeout", "5");
 }
 ATF_TC_BODY(pktinfo_send_connected, tc)
 {
@@ -412,7 +405,6 @@ ATF_TC_HEAD(pktinfo_send_notown, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "sendmsg with IP_PKTINFO from no-own address");
-	atf_tc_set_md_var(tc, "timeout", "5");
 }
 ATF_TC_BODY(pktinfo_send_notown, tc)
 {
@@ -445,7 +437,6 @@ ATF_TC_HEAD(pktinfo_send_notown_bind, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "sendmsg with IP_PKTINFO from no-own address on bind socket");
-	atf_tc_set_md_var(tc, "timeout", "5");
 }
 ATF_TC_BODY(pktinfo_send_notown_bind, tc)
 {
@@ -493,7 +484,6 @@ ATF_TC_HEAD(pktinfo_send_rawip, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "sendmsg raw-ip with IP_PKTINFO");
-	atf_tc_set_md_var(tc, "timeout", "5");
 }
 ATF_TC_BODY(pktinfo_send_rawip, tc)
 {
@@ -526,7 +516,6 @@ ATF_TC_HEAD(pktinfo_send_rawip_notown, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "sendmsg raw-ip with IP_PKTINFO from no-own address");
-	atf_tc_set_md_var(tc, "timeout", "5");
 }
 ATF_TC_BODY(pktinfo_send_rawip_notown, tc)
 {
@@ -564,7 +553,6 @@ ATF_TC_HEAD(pktinfo_send_invalidarg, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "sendmsg IP_PKTINFO with invalid argument");
-	atf_tc_set_md_var(tc, "timeout", "5");
 }
 ATF_TC_BODY(pktinfo_send_invalidarg, tc)
 {
@@ -603,7 +591,6 @@ ATF_TC_HEAD(pktinfo_send_ifindex, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "sendmsg with IP_PKTINFO to specified interface");
-	atf_tc_set_md_var(tc, "timeout", "5");
 }
 ATF_TC_BODY(pktinfo_send_ifindex, tc)
 {
@@ -700,7 +687,6 @@ ATF_TC_HEAD(pktinfo_send_multicast, tc)
 	atf_tc_set_md_var(tc, "descr",
 	    "sendmsg with IP_PKTINFO to multicast address"
 	    " and specified interface");
-	atf_tc_set_md_var(tc, "timeout", "5");
 }
 ATF_TC_BODY(pktinfo_send_multicast, tc)
 {
