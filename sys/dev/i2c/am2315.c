@@ -1,4 +1,4 @@
-/*	$NetBSD: am2315.c,v 1.1 2017/12/28 23:23:47 christos Exp $	*/
+/*	$NetBSD: am2315.c,v 1.2 2017/12/30 03:18:26 christos Exp $	*/
 
 /*
  * Copyright (c) 2017 Brad Spencer <brad@anduin.eldar.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am2315.c,v 1.1 2017/12/28 23:23:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am2315.c,v 1.2 2017/12/30 03:18:26 christos Exp $");
 
 /*
  * Driver for the Aosong AM2315
@@ -153,16 +153,16 @@ am2315_poke_m(i2c_tag_t tag, i2c_addr_t addr, const char *name, bool debug)
 	if (debug)
 		printf("%s: poke 1: %d\n", name, error);
 
-	if (error != 0)
+	if (error)
 		delay(2800);
 
 	error = am2315_cmd(tag, addr, AM2315_READ_REGISTERS,
 	    AM2315_REGISTER_STATUS, 1, buf, __arraycount(buf));
 	if (debug)
-	    printf("%s: poke 2: %d %02x %02x %02x %02x%02x\n", name, error,
-		buf[0], buf[1], buf[2], buf[3], buf[4]);
+		printf("%s: poke 2: %d %02x %02x %02x %02x%02x\n", name, error,
+		    buf[0], buf[1], buf[2], buf[3], buf[4]);
 
-	if (error != 0)
+	if (error)
 		delay(2800);
 	return error;
 }
@@ -204,6 +204,7 @@ am2315_match(device_t parent, cfdata_t match, void *aux)
 		return 0;
 	}
 
+	iic_release_bus(ia->ia_tag, 0);
 	return 1;
 }
 
@@ -299,7 +300,7 @@ am2315_attach(device_t parent, device_t self, void *aux)
 	    && crc == readcrc;
 
 	error = am2315_read_regs(sc, AM2315_REGISTER_VERSION, 1, buf, 5);
-	if (error != 0)
+	if (error)
 		aprint_error_dev(self, "read chipver: %d\n", error);
 	readcrc = buf[4] << 8 | buf[3];
 	crc = am2315_crc(buf, 3);
@@ -309,7 +310,7 @@ am2315_attach(device_t parent, device_t self, void *aux)
 	    && crc == readcrc;
 
 	error = am2315_read_regs(sc, AM2315_REGISTER_ID_PT_24_31, 2, buf, 6);
-	if (error != 0)
+	if (error)
 		aprint_error_dev(self, "read id 1: %d\n", error);
 	readcrc = buf[5] << 8 | buf[4];
 	crc = am2315_crc(buf, 4);
@@ -319,7 +320,7 @@ am2315_attach(device_t parent, device_t self, void *aux)
 	    && crc == readcrc;
 
 	error = am2315_read_regs(sc, AM2315_REGISTER_ID_PT_8_15, 2, buf, 6);
-	if (error != 0)
+	if (error)
 		aprint_error_dev(self, "read id 2: %d\n", error);
 	readcrc = buf[5] << 8 | buf[4];
 	crc = am2315_crc(buf, 4);
@@ -392,7 +393,7 @@ am2315_refresh(struct sysmon_envsys * sme, envsys_data_t * edata)
 
 	mutex_enter(&sc->sc_mutex);
 	error = iic_acquire_bus(sc->sc_tag, 0);
-	if (error == 0) {
+	if (error) {
 		DPRINTF(sc, 2, ("%s: Could not acquire i2c bus: %d\n",
 		    device_xname(sc->sc_dev), error));
 		goto out;
@@ -415,8 +416,8 @@ am2315_refresh(struct sysmon_envsys * sme, envsys_data_t * edata)
 		am2315_poke(sc);
 
 		if ((error = am2315_read_regs(sc, thecommand, 2, buf, 6)) != 0)
-			aprint_error_dev(sc->sc_dev,
-			    "Read sensor %d error: %d\n", edata->sensor, error);
+			  DPRINTF(sc, 2, ("%s: Read sensor %d error: %d\n",
+			      device_xname(sc->sc_dev),edata->sensor, error));
 
 		readcrc = buf[5] << 8 | buf[4];
 		crc = am2315_crc(buf, 4);
