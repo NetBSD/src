@@ -1,4 +1,4 @@
-/*	$NetBSD: si70xx.c,v 1.2 2017/12/29 02:19:45 christos Exp $	*/
+/*	$NetBSD: si70xx.c,v 1.3 2017/12/30 03:18:26 christos Exp $	*/
 
 /*
  * Copyright (c) 2017 Brad Spencer <brad@anduin.eldar.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si70xx.c,v 1.2 2017/12/29 02:19:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si70xx.c,v 1.3 2017/12/30 03:18:26 christos Exp $");
 
 /*
   Driver for the Silicon Labs SI7013/SI7020/SI7021
@@ -202,12 +202,10 @@ si70xx_verify_sysctl_heatervalue(SYSCTLFN_ARGS)
 	return error;
 }
 
-static int
-si70xx_cmd(i2c_tag_t tag, i2c_addr_t addr, uint8_t *cmd,
-    uint8_t clen, uint8_t *buf, size_t blen)
+static uint8_t
+si70xx_dir(uint8_t cmd, size_t len)
 {
-	uint8_t dir;
-	switch (cmd[0]) {
+	switch (cmd) {
 	case SI70XX_READ_USER_REG_1:
 	case SI70XX_READ_HEATER_REG:
 	case SI70XX_READ_ID_PT1A:
@@ -216,22 +214,33 @@ si70xx_cmd(i2c_tag_t tag, i2c_addr_t addr, uint8_t *cmd,
 	case SI70XX_READ_ID_PT2B:
 	case SI70XX_READ_FW_VERA:
 	case SI70XX_READ_FW_VERB:
-	    dir = I2C_OP_READ_WITH_STOP;
-	    break;
+		return I2C_OP_READ_WITH_STOP;
 	case SI70XX_WRITE_USER_REG_1:
 	case SI70XX_WRITE_HEATER_REG:
 	case SI70XX_RESET:
-	    dir = I2C_OP_WRITE_WITH_STOP;
-	    break;
+		return I2C_OP_WRITE_WITH_STOP;
 	case SI70XX_MEASURE_RH_NOHOLD:
 	case SI70XX_MEASURE_TEMP_NOHOLD:
-	    dir = blen == 0 ? I2C_OP_READ : I2C_OP_READ_WITH_STOP;
-	    break;
+		return len == 0 ? I2C_OP_READ : I2C_OP_READ_WITH_STOP;
 	default:
-	    panic("%s: bad command %#x\n", __func__, cmd[0]);
+		panic("%s: bad command %#x\n", __func__, cmd);
+		return 0;
 	}
+}
 
-	memset(buf, 0, blen);
+static int
+si70xx_cmd(i2c_tag_t tag, i2c_addr_t addr, uint8_t *cmd,
+    uint8_t clen, uint8_t *buf, size_t blen)
+{
+	uint8_t dir;
+	if (clen == 0)
+		dir = blen == 0 ? I2C_OP_READ : I2C_OP_READ_WITH_STOP;
+	else
+		dir = si70xx_dir(cmd[0], blen);
+
+	if (dir == I2C_OP_READ || dir == I2C_OP_READ_WITH_STOP)
+		memset(buf, 0, blen);
+
 	return iic_exec(tag, dir, addr, cmd, clen, buf, blen, 0);
 }
 
@@ -359,7 +368,7 @@ si70xx_set_heatervalue(struct si70xx_sc * sc, size_t index)
 	DPRINTF(sc, 2, ("%s:%s: heater values after: %#x\n",
 	    device_xname(sc->sc_dev), __func__, heaterregister));
 
-	error = si70xx_cmd1(sc, SI70XX_WRITE_USER_REG_1, &heaterregister, 1);
+	error = si70xx_cmd1(sc, SI70XX_WRITE_HEATER_REG, &heaterregister, 1);
 	if (error) {
 		DPRINTF(sc, 2, ("%s: Failed to write heater register: %d\n",
 		    device_xname(sc->sc_dev), error));
@@ -610,7 +619,7 @@ si70xx_attach(device_t parent, device_t self, void *aux)
 #ifdef HAVE_I2C_EXECV
 	sc->sc_clockstretch = 2048;
 #endif
-	sc->sc_readattempts = 15;
+	sc->sc_readattempts = 25;
 	sc->sc_ignorecrc = false;
 	sc->sc_sme = NULL;
 
@@ -877,9 +886,7 @@ si70xx_exec(struct si70xx_sc *sc, uint8_t cmd, envsys_data_t *edata)
 			break;
 		DPRINTF(sc, 2, ("%s: Failed to read NO HOLD RH"
 		    " %d %d\n", device_xname(sc->sc_dev), 2, error));
-		if (aint < 10) {
-			delay(1000);
-		}
+		delay(1000);
 	}
 #endif
 
@@ -933,11 +940,11 @@ si70xx_refresh(struct sysmon_envsys * sme, envsys_data_t * edata)
 	}
 	switch (edata->sensor) {
 	case SI70XX_HUMIDITY_SENSOR:
-		error = si70xx_exec(sc, SI70XX_MEASURE_RH_HOLD, edata);
+		error = si70xx_exec(sc, SI70XX_MEASURE_RH_NOHOLD, edata);
 		break;
 
 	case SI70XX_TEMP_SENSOR:
-		error = si70xx_exec(sc, SI70XX_MEASURE_TEMP_HOLD, edata);
+		error = si70xx_exec(sc, SI70XX_MEASURE_TEMP_NOHOLD, edata);
 		break;
 	default:
 		error = EINVAL;
