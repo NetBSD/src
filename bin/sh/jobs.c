@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.96 2017/12/30 01:21:25 christos Exp $	*/
+/*	$NetBSD: jobs.c,v 1.97 2017/12/30 20:42:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.96 2017/12/30 01:21:25 christos Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.97 2017/12/30 20:42:28 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1053,8 +1053,10 @@ makejob(union node *node, int nprocs)
 				jobtab = jp;
 			}
 			jp = jobtab + njobs;
-			for (i = 4 ; --i >= 0 ; )
-				memset(&jobtab[njobs++], 0, sizeof(*jobtab));
+			for (i = 4 ; --i >= 0 ; njobs++) {
+				jobtab[njobs].used = 0;
+				jobtab[njobs].prev_job = -1;
+			}
 			INTON;
 			break;
 		}
