@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ifunc.c,v 1.5 2017/11/06 21:16:03 joerg Exp $	*/
+/*	$NetBSD: t_ifunc.c,v 1.6 2017/12/30 16:53:34 martin Exp $	*/
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -35,6 +35,13 @@
 
 #include "h_macros.h"
 
+#if !defined( __arm__) && !defined(__i386__) && !defined(__x86_64__) && !defined(__powerpc__) && !defined(__sparc__)
+#define	LINKER_SUPPORT()	\
+	atf_tc_skip("Missing linker support for ifunc relocations")
+#else
+#define	LINKER_SUPPORT()	/* yes */
+#endif
+
 ATF_TC(rtld_ifunc);
 
 ATF_TC_HEAD(rtld_ifunc, tc)
@@ -56,9 +63,7 @@ ATF_TC_BODY(rtld_ifunc, tc)
 	const char *error;
 	size_t i;
 
-#if !defined( __arm__) && !defined(__i386__) && !defined(__x86_64__) && !defined(__powerpc__) && !defined(__sparc__)
-	atf_tc_expect_fail("Missing linker support for hidden ifunc relocations");
-#endif
+	LINKER_SUPPORT();
 
 	for (i = 0; i < __arraycount(envstr); ++i) {
 		setenv("USE_IFUNC2", envstr[i], 1);
@@ -110,6 +115,8 @@ ATF_TC_BODY(rtld_hidden_ifunc, tc)
 	int result;
 	const char *error;
 	size_t i;
+
+	LINKER_SUPPORT();
 
 	for (i = 0; i < __arraycount(envstr); ++i) {
 		setenv("USE_IFUNC2", envstr[i], 1);
@@ -172,6 +179,7 @@ unsigned int ifunc(void);
 
 ATF_TC_BODY(rtld_main_ifunc, tc)
 {
+	LINKER_SUPPORT();
 	ATF_CHECK(ifunc() == 0xdeadbeef);
 }
 
