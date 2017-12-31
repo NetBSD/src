@@ -1,4 +1,4 @@
-.\"	$NetBSD: printf.3,v 1.67 2017/07/03 21:32:49 wiz Exp $
+.\"	$NetBSD: printf.3,v 1.68 2017/12/31 07:22:55 dholland Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -370,7 +370,7 @@ The following length modifiers are valid for the
 .Cm d , i , n , o , u , x ,
 or
 .Cm X
-conversion:
+conversions:
 .Bl -column ".Cm q Em (deprecated)" ".Vt signed char" ".Vt unsigned long long" ".Vt long long *"
 .It Sy Modifier Ta Cm d , i Ta Cm o , u , x , X Ta Cm n
 .It Cm hh Ta Vt "signed char" Ta Vt "unsigned char" Ta Vt "signed char *"
@@ -416,7 +416,7 @@ macros are used when possible.
 These are further described in
 .Xr inttypes 3 .
 .Pp
-The following length modifier is valid for the
+The following length modifiers are valid for the
 .Cm a ,
 .Cm A ,
 .Cm e ,
@@ -426,7 +426,7 @@ The following length modifier is valid for the
 .Cm g ,
 or
 .Cm G
-conversion:
+conversions:
 .Bl -column ".Sy Modifier" ".Cm a , A , e , E , f , F , g , G"
 .It Sy Modifier Ta Cm a , A , e , E , f , F , g , G
 .It Cm l No (ell) Ta Vt double
@@ -438,7 +438,7 @@ The following length modifier is valid for the
 .Cm c
 or
 .Cm s
-conversion:
+conversions:
 .Bl -column ".Sy Modifier" ".Vt wint_t" ".Vt wchar_t *"
 .It Sy Modifier Ta Cm c Ta Cm s
 .It Cm l No (ell) Ta Vt wint_t Ta Vt "wchar_t *"
