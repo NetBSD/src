@@ -1536,6 +1536,12 @@ die_base_from_dwarf(dwarf_t *dw, Dwarf_Die base, Dwarf_Off off, size_t sz)
 		intr->intr_signed = 1;
 		intr->intr_fformat = die_base_type2enc(dw, off, enc, sz);
 		break;
+	case DW_ATE_UTF:
+		// XXX: c++ char16_t/char32_t; we don't deal with it.
+		intr->intr_type = INTR_INT;
+		intr->intr_signed = 1;
+		intr->intr_iformat = 'v';
+		break;
 	default:
 		terminate("die %ju: unknown base type encoding 0x%jx\n",
 		    (uintmax_t)off, (uintmax_t)enc);
