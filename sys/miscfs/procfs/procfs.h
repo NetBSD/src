@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs.h,v 1.72 2017/08/28 00:46:07 kamil Exp $	*/
+/*	$NetBSD: procfs.h,v 1.73 2017/12/31 03:02:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -94,6 +94,7 @@ typedef enum {
 	PFSnotepg,	/* process group notifier */
 	PFSmap,		/* memory map */
 	PFScmdline,	/* process command line args */
+	PFSenviron,	/* process environment */
 	PFSmeminfo,	/* system memory info (if -o linux) */
 	PFScpuinfo,	/* CPU info (if -o linux) */
 	PFSmaps,	/* memory map, Linux style (if -o linux) */
@@ -208,7 +209,7 @@ int procfs_dostatus(struct lwp *, struct lwp *, struct pfsnode *,
 int procfs_domap(struct lwp *, struct proc *, struct pfsnode *,
     struct uio *, int);
 int procfs_docmdline(struct lwp *, struct proc *, struct pfsnode *,
-    struct uio *);
+    struct uio *, int);
 int procfs_domeminfo(struct lwp *, struct proc *, struct pfsnode *,
     struct uio *);
 int procfs_dodevices(struct lwp *, struct proc *, struct pfsnode *,
