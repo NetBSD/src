@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.279 2017/12/01 21:22:45 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.280 2017/12/31 08:29:38 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.279 2017/12/01 21:22:45 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.280 2017/12/31 08:29:38 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -479,7 +479,7 @@ x86_64_proc0_pcb_ldt_init(void)
 	pcb->pcb_fs = 0;
 	pcb->pcb_gs = 0;
 	pcb->pcb_rsp0 = (uvm_lwp_getuarea(l) + USPACE - 16) & ~0xf;
-	pcb->pcb_iopl = SEL_KPL;
+	pcb->pcb_iopl = IOPL_KPL;
 	pcb->pcb_dbregs = NULL;
 	pcb->pcb_cr0 = rcr0() & ~CR0_TS;
 	l->l_md.md_regs = (struct trapframe *)pcb->pcb_rsp0 - 1;
