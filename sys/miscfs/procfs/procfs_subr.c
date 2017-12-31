@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.109 2017/08/28 00:46:07 kamil Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.110 2017/12/31 03:02:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.109 2017/08/28 00:46:07 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.110 2017/12/31 03:02:23 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,6 +114,7 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.109 2017/08/28 00:46:07 kamil Exp 
 #include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/kauth.h>
+#include <sys/sysctl.h>
 
 #include <miscfs/procfs/procfs.h>
 
@@ -221,7 +222,11 @@ procfs_rw(void *v)
 		break;
 
 	case PFScmdline:
-		error = procfs_docmdline(curl, p, pfs, uio);
+		error = procfs_docmdline(curl, p, pfs, uio, KERN_PROC_ARGV);
+		break;
+
+	case PFSenviron:
+		error = procfs_docmdline(curl, p, pfs, uio, KERN_PROC_ENV);
 		break;
 
 	case PFSmeminfo:

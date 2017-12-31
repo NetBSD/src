@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.201 2017/12/01 19:01:34 christos Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.202 2017/12/31 03:02:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.201 2017/12/01 19:01:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.202 2017/12/31 03:02:23 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,6 +171,7 @@ static const struct proc_target {
 	{ DT_REG, N("map"),	PFSmap,		procfs_validmap },
 	{ DT_REG, N("maps"),	PFSmaps,	procfs_validmap },
 	{ DT_REG, N("cmdline"), PFScmdline,	NULL },
+	{ DT_REG, N("environ"), PFSenviron,	NULL },
 	{ DT_REG, N("exe"),	PFSexe,		procfs_validfile },
 	{ DT_LNK, N("cwd"),	PFScwd,		NULL },
 	{ DT_LNK, N("root"),	PFSchroot,	NULL },
@@ -728,6 +729,7 @@ procfs_getattr(void *v)
 	case PFSnote:
 	case PFSnotepg:
 	case PFScmdline:
+	case PFSenviron:
 	case PFSemul:
 	case PFSstatm:
 
@@ -860,6 +862,7 @@ procfs_getattr(void *v)
 	case PFSnote:
 	case PFSnotepg:
 	case PFScmdline:
+	case PFSenviron:
 	case PFSmeminfo:
 	case PFSdevices:
 	case PFScpuinfo:
