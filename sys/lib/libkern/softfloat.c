@@ -1,4 +1,4 @@
-/* $NetBSD: softfloat.c,v 1.5 2013/11/03 00:01:43 christos Exp $ */
+/* $NetBSD: softfloat.c,v 1.6 2017/12/31 11:43:42 martin Exp $ */
 
 /*
  * This version hacked for use with gcc -msoft-float by bjh21.
@@ -49,7 +49,7 @@ this code that are retained.
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: softfloat.c,v 1.5 2013/11/03 00:01:43 christos Exp $");
+__RCSID("$NetBSD: softfloat.c,v 1.6 2017/12/31 11:43:42 martin Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef SOFTFLOAT_FOR_GCC
@@ -207,6 +207,38 @@ static int64 roundAndPackInt64( flag zSign, bits64 absZ0, bits64 absZ1 )
               zSign ? (sbits64) LIT64( 0x8000000000000000 )
             : LIT64( 0x7FFFFFFFFFFFFFFF );
     }
+    if ( absZ1 ) float_set_inexact();
+    return z;
+
+}
+
+/* same as above, but for unsigned values */
+static uint64 roundAndPackUInt64( bits64 absZ0, bits64 absZ1 )
+{
+    int8 roundingMode;
+    flag roundNearestEven, increment;
+    uint64 z;
+
+    roundingMode = float_rounding_mode();
+    roundNearestEven = ( roundingMode == float_round_nearest_even );
+    increment = ( (sbits64) absZ1 < 0 );
+    if ( ! roundNearestEven ) {
+        if ( roundingMode == float_round_to_zero ) {
+            increment = 0;
+        }
+        else {
+            increment = ( roundingMode == float_round_up ) && absZ1;
+        }
+    }
+    if ( increment ) {
+        ++absZ0;
+        if ( absZ0 == 0 ) {
+            float_raise( float_flag_invalid );
+            return LIT64( 0x7FFFFFFFFFFFFFFF );
+	}
+        absZ0 &= ~ ( ( (bits64) ( absZ1<<1 ) == 0 ) & roundNearestEven );
+    }
+    z = absZ0;
     if ( absZ1 ) float_set_inexact();
     return z;
 
@@ -2396,6 +2428,44 @@ int64 float64_to_int64( float64 a )
         shift64ExtraRightJamming( aSig, 0, shiftCount, &aSig, &aSigExtra );
     }
     return roundAndPackInt64( aSign, aSig, aSigExtra );
+
+}
+
+/* like above, but result is unsigned */
+uint64 float64_to_uint64( float64 a )
+{
+    flag aSign;
+    int16 aExp, shiftCount;
+    bits64 aSig, aSigExtra;
+
+    aSig = extractFloat64Frac( a );
+    aExp = extractFloat64Exp( a );
+    aSign = extractFloat64Sign( a );
+
+    if (aSign) {
+	return float64_to_int64(a);
+    }
+
+    if ( aExp ) aSig |= LIT64( 0x0010000000000000 );
+    shiftCount = 0x433 - aExp;
+    if ( shiftCount <= 0 ) {
+        if ( 0x43E < aExp ) {
+            float_raise( float_flag_invalid );
+            if (    ! aSign
+                 || (    ( aExp == 0x7FF )
+                      && ( aSig != LIT64( 0x0010000000000000 ) ) )
+               ) {
+                return LIT64( 0x7FFFFFFFFFFFFFFF );
+            }
+            return (sbits64) LIT64( 0x8000000000000000 );
+        }
+        aSigExtra = 0;
+        aSig <<= - shiftCount;
+    }
+    else {
+        shift64ExtraRightJamming( aSig, 0, shiftCount, &aSig, &aSigExtra );
+    }
+    return roundAndPackUInt64( aSig, aSigExtra );
 
 }
 

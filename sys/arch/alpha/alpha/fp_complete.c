@@ -1,4 +1,4 @@
-/* $NetBSD: fp_complete.c,v 1.21 2014/05/19 07:09:10 matt Exp $ */
+/* $NetBSD: fp_complete.c,v 1.22 2017/12/31 11:43:42 martin Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.21 2014/05/19 07:09:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.22 2017/12/31 11:43:42 martin Exp $");
 
 #include "opt_compat_osf1.h"
 
@@ -334,7 +334,7 @@ cvt_tq_gq(uint32_t inst_bits, struct lwp *l)
 
 	inst.bits = inst_bits;
 	stt(inst.float_detail.fb, &tfb, l);
-	tfc.i = float64_to_int64(tfb.i);
+	tfc.i = tfb.sign ? float64_to_int64(tfb.i) : float64_to_uint64(tfb.i);
 	alpha_ldt(inst.float_detail.fc, &tfc);	/* yes, ldt */
 }
 
