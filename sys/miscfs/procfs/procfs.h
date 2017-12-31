@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs.h,v 1.73 2017/12/31 03:02:23 christos Exp $	*/
+/*	$NetBSD: procfs.h,v 1.74 2017/12/31 03:29:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -208,7 +208,7 @@ int procfs_dostatus(struct lwp *, struct lwp *, struct pfsnode *,
     struct uio *);
 int procfs_domap(struct lwp *, struct proc *, struct pfsnode *,
     struct uio *, int);
-int procfs_docmdline(struct lwp *, struct proc *, struct pfsnode *,
+int procfs_doprocargs(struct lwp *, struct proc *, struct pfsnode *,
     struct uio *, int);
 int procfs_domeminfo(struct lwp *, struct proc *, struct pfsnode *,
     struct uio *);
