@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_cmdline.c,v 1.28 2011/03/04 22:25:32 joerg Exp $	*/
+/*	$NetBSD: procfs_cmdline.c,v 1.29 2017/12/31 03:02:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 Jaromir Dolecek <dolecek@ics.muni.cz>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_cmdline.c,v 1.28 2011/03/04 22:25:32 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_cmdline.c,v 1.29 2017/12/31 03:02:23 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,8 @@ procfs_docmdline(
     struct lwp *curl,
     struct proc *p,
     struct pfsnode *pfs,
-    struct uio *uio
+    struct uio *uio,
+    int oid
 )
 {
 	size_t len, start;
@@ -104,7 +105,7 @@ procfs_docmdline(
 
 	len = uio->uio_offset + uio->uio_resid;
 
-	error = copy_procargs(p, KERN_PROC_ARGV, &len,
+	error = copy_procargs(p, oid, &len,
 	    procfs_docmdline_helper, uio);
 	return error;
 }
