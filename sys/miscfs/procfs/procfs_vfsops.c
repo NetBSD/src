@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.99 2017/12/31 03:02:23 christos Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.100 2017/12/31 03:29:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.99 2017/12/31 03:02:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.100 2017/12/31 03:29:18 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -395,7 +395,7 @@ procfs_loadvnode(struct mount *mp, struct vnode *vp,
 	case PFSstatus:		/* /proc/N/status = -r--r--r-- */
 	case PFSstat:		/* /proc/N/stat = -r--r--r-- */
 	case PFScmdline:	/* /proc/N/cmdline = -r--r--r-- */
-	case PFSenviron:	/* /proc/N/cmdline = -r--r--r-- */
+	case PFSenviron:	/* /proc/N/environ = -r--r--r-- */
 	case PFSemul:		/* /proc/N/emul = -r--r--r-- */
 	case PFSmeminfo:	/* /proc/meminfo = -r--r--r-- */
 	case PFScpustat:	/* /proc/stat = -r--r--r-- */
