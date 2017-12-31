@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.270 2017/12/28 14:34:39 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.271 2017/12/31 15:41:05 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.270 2017/12/28 14:34:39 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.271 2017/12/31 15:41:05 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1601,10 +1601,13 @@ pmap_remap_largepages(void)
 			continue;
 		}
 		kva = roundup(bootspace.segs[i].va, NBPD_L2);
+		if (kva < bootspace.segs[i].va) {
+			continue;
+		}
 		kva_end = rounddown(bootspace.segs[i].va +
-			bootspace.segs[i].sz, NBPD_L1);
+			bootspace.segs[i].sz, NBPD_L2);
 		pa = roundup(bootspace.segs[i].pa, NBPD_L2);
-		for (/* */; kva + NBPD_L2 <= kva_end; kva += NBPD_L2, pa += NBPD_L2) {
+		for (/* */; kva < kva_end; kva += NBPD_L2, pa += NBPD_L2) {
 			pde = &L2_BASE[pl2_i(kva)];
 			*pde = pa | pmap_pg_g | PG_PS | PG_KR | PG_V;
 			tlbflushg();
@@ -1617,10 +1620,13 @@ pmap_remap_largepages(void)
 			continue;
 		}
 		kva = roundup(bootspace.segs[i].va, NBPD_L2);
+		if (kva < bootspace.segs[i].va) {
+			continue;
+		}
 		kva_end = rounddown(bootspace.segs[i].va +
-			bootspace.segs[i].sz, NBPD_L1);
+			bootspace.segs[i].sz, NBPD_L2);
 		pa = roundup(bootspace.segs[i].pa, NBPD_L2);
-		for (/* */; kva + NBPD_L2 <= kva_end; kva += NBPD_L2, pa += NBPD_L2) {
+		for (/* */; kva < kva_end; kva += NBPD_L2, pa += NBPD_L2) {
 			pde = &L2_BASE[pl2_i(kva)];
 			*pde = pa | pmap_pg_g | PG_PS | pmap_pg_nx | PG_KR | PG_V;
 			tlbflushg();
@@ -1633,10 +1639,13 @@ pmap_remap_largepages(void)
 			continue;
 		}
 		kva = roundup(bootspace.segs[i].va, NBPD_L2);
+		if (kva < bootspace.segs[i].va) {
+			continue;
+		}
 		kva_end = rounddown(bootspace.segs[i].va +
-			bootspace.segs[i].sz, NBPD_L1);
+			bootspace.segs[i].sz, NBPD_L2);
 		pa = roundup(bootspace.segs[i].pa, NBPD_L2);
-		for (/* */; kva + NBPD_L2 <= kva_end; kva += NBPD_L2, pa += NBPD_L2) {
+		for (/* */; kva < kva_end; kva += NBPD_L2, pa += NBPD_L2) {
 			pde = &L2_BASE[pl2_i(kva)];
 			*pde = pa | pmap_pg_g | PG_PS | pmap_pg_nx | PG_KW | PG_V;
 			tlbflushg();
