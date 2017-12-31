@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.33 2017/11/04 08:50:47 cherry Exp $	*/
+/*	$NetBSD: segments.h,v 1.34 2017/12/31 08:29:38 maxv Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -106,6 +106,12 @@
 #define SEL_RPL		3		/* requester's privilege level mask */
 #define ISLDT(s)	((s) & SEL_LDT)	/* is it local or global */
 #define SEL_LDT		4		/* local descriptor table */
+
+#ifdef XEN
+#define IOPL_KPL	1
+#else
+#define IOPL_KPL	SEL_KPL
+#endif
 
 /* Dynamically allocated TSSs and LDTs start (byte offset) */
 #define SYSSEL_START	(NGDT_MEM << 3)

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.799 2017/11/11 12:51:06 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.800 2017/12/31 08:29:38 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009, 2017
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.799 2017/11/11 12:51:06 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.800 2017/12/31 08:29:38 maxv Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_freebsd.h"
@@ -472,7 +472,7 @@ i386_proc0_pcb_ldt_init(void)
 
 	pcb->pcb_cr0 = rcr0() & ~CR0_TS;
 	pcb->pcb_esp0 = uvm_lwp_getuarea(l) + USPACE - 16;
-	pcb->pcb_iopl = SEL_KPL;
+	pcb->pcb_iopl = IOPL_KPL;
 	l->l_md.md_regs = (struct trapframe *)pcb->pcb_esp0 - 1;
 	memcpy(&pcb->pcb_fsd, &gdtstore[GUDATA_SEL], sizeof(pcb->pcb_fsd));
 	memcpy(&pcb->pcb_gsd, &gdtstore[GUDATA_SEL], sizeof(pcb->pcb_gsd));
