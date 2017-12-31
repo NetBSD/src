@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_cmdline.c,v 1.29 2017/12/31 03:02:23 christos Exp $	*/
+/*	$NetBSD: procfs_cmdline.c,v 1.30 2017/12/31 03:29:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 Jaromir Dolecek <dolecek@ics.muni.cz>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_cmdline.c,v 1.29 2017/12/31 03:02:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_cmdline.c,v 1.30 2017/12/31 03:29:18 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_cmdline.c,v 1.29 2017/12/31 03:02:23 christos
 #include <uvm/uvm_extern.h>
 
 static int
-procfs_docmdline_helper(void *cookie, const void *src, size_t off, size_t len)
+procfs_doprocargs_helper(void *cookie, const void *src, size_t off, size_t len)
 {
 	struct uio *uio = cookie;
 	char *buf = __UNCONST(src);
@@ -58,10 +58,10 @@ procfs_docmdline_helper(void *cookie, const void *src, size_t off, size_t len)
 }
 
 /*
- * code for returning process's command line arguments
+ * code for returning process's command line arguments/environment
  */
 int
-procfs_docmdline(
+procfs_doprocargs(
     struct lwp *curl,
     struct proc *p,
     struct pfsnode *pfs,
@@ -74,7 +74,7 @@ procfs_docmdline(
 
 	/* Don't allow writing. */
 	if (uio->uio_rw != UIO_READ)
-		return (EOPNOTSUPP);
+		return EOPNOTSUPP;
 
 	/*
 	 * Zombies don't have a stack, so we can't read their psstrings.
@@ -87,25 +87,22 @@ procfs_docmdline(
 		if (0 == uio->uio_offset) {
 			error = uiomove(msg, 1, uio);
 			if (error)
-				return (error);
+				return error;
 		}
 		len = strlen(p->p_comm);
 		if (len >= uio->uio_offset) {
 			start = uio->uio_offset - 1;
 			error = uiomove(p->p_comm + start, len - start, uio);
 			if (error)
-				return (error);
+				return error;
 		}
 		if (len + 2 >= uio->uio_offset) {
 			start = uio->uio_offset - 1 - len;
 			error = uiomove(msg + 1 + start, 2 - start, uio);
 		}
-		return (error);
+		return error;
 	}
 
 	len = uio->uio_offset + uio->uio_resid;
-
-	error = copy_procargs(p, oid, &len,
-	    procfs_docmdline_helper, uio);
-	return error;
+	return copy_procargs(p, oid, &len, procfs_doprocargs_helper, uio);
 }
