@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.173 2017/11/09 22:21:27 christos Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.174 2017/12/31 06:57:12 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.173 2017/11/09 22:21:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.174 2017/12/31 06:57:12 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -1932,26 +1932,15 @@ m_claim(struct mbuf *m, struct mowner *mo)
 		MBUFFREE(f, l, m);					\
 	}								\
 
-#ifdef DEBUG
 #define MBUFFREE(f, l, m)						\
 	do {								\
-		if ((m)->m_type == MT_FREE)				\
-			panic("mbuf was already freed at %s,%d", 	\
-			    m->m_data, m->m_len);			\
+		if (__predict_false((m)->m_type == MT_FREE)) {		\
+			panic("mbuf %p already freed", m);		\
+		}							\
 		(m)->m_type = MT_FREE;					\
-		(m)->m_data = __UNCONST(f);				\
-		(m)->m_len = l;						\
+		(m)->m_data = NULL;					\
 		pool_cache_put(mb_cache, (m));				\
 	} while (/*CONSTCOND*/0)
-
-#else
-#define MBUFFREE(f, l, m)						\
-	do {								\
-		KASSERT((m)->m_type != MT_FREE);			\
-		(m)->m_type = MT_FREE;					\
-		pool_cache_put(mb_cache, (m));				\
-	} while (/*CONSTCOND*/0)
-#endif
 
 struct mbuf *
 m__free(const char *f, int l, struct mbuf *m)
