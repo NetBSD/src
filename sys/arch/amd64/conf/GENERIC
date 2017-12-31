@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.475 2017/12/10 17:19:48 bouyer Exp $
+# $NetBSD: GENERIC,v 1.476 2017/12/31 03:38:06 christos Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.475 $"
+#ident		"GENERIC-$Revision: 1.476 $"
 
 maxusers	64		# estimated number of users
 
@@ -115,11 +115,14 @@ makeoptions	DEBUG="-g"	# compile full symbol table for CTF
 options 	KDTRACE_HOOKS	# kernel DTrace hooks
 
 # Compatibility options
+# x86_64 never shipped with a.out binaries; the two options below are
+# only relevant to 32-bit i386 binaries
 #options 	EXEC_AOUT	# required by binaries from before 1.5
+#options	COMPAT_NOMID	# NetBSD 0.8, 386BSD, and BSDI
 
 # NetBSD backward compatibility. Support goes from COMPAT_15 up until
 # the latest release. Note that really old compat (< COMPAT_16) is only
-# useful for 32-bit binaries.
+# useful for 32-bit i386 binaries.
 include 	"conf/compat_netbsd15.config"
 
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
