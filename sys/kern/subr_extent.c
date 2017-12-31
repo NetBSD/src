@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.86 2017/11/09 21:57:06 christos Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.87 2017/12/31 09:25:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.86 2017/11/09 21:57:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.87 2017/12/31 09:25:19 skrll Exp $");
 
 #ifdef _KERNEL
 #ifdef _KERNEL_OPT
@@ -1168,7 +1168,8 @@ extent_print(struct extent *ex)
 	if (ex == NULL)
 		panic("extent_print: NULL extent");
 
-	mutex_enter(&ex->ex_lock);
+	if (!(ex->ex_flags & EXF_EARLY))
+		mutex_enter(&ex->ex_lock);
 
 	printf("extent `%s' (0x%lx - 0x%lx), flags = 0x%x\n", ex->ex_name,
 	    ex->ex_start, ex->ex_end, ex->ex_flags);
@@ -1176,5 +1177,6 @@ extent_print(struct extent *ex)
 	LIST_FOREACH(rp, &ex->ex_regions, er_link)
 		printf("     0x%lx - 0x%lx\n", rp->er_start, rp->er_end);
 
-	mutex_exit(&ex->ex_lock);
+	if (!(ex->ex_flags & EXF_EARLY))
+		mutex_exit(&ex->ex_lock);
 }
