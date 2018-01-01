@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.257 2017/10/25 08:12:39 maya Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.258 2018/01/01 00:45:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.257 2017/10/25 08:12:39 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.258 2018/01/01 00:45:12 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -2109,7 +2109,9 @@ sockopt_set(struct sockopt *sopt, const void *buf, size_t len)
 			return error;
 	}
 
-	KASSERT(sopt->sopt_size == len);
+	if (sopt->sopt_size < len)
+		return EINVAL;
+	
 	memcpy(sopt->sopt_data, buf, len);
 	return 0;
 }
@@ -2169,7 +2171,9 @@ sockopt_setmbuf(struct sockopt *sopt, struct mbuf *m)
 			return error;
 	}
 
-	KASSERT(sopt->sopt_size == len);
+	if (sopt->sopt_size < len)
+		return EINVAL;
+	
 	m_copydata(m, 0, len, sopt->sopt_data);
 	m_freem(m);
 
