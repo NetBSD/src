@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.145 2017/12/08 16:56:23 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.146 2018/01/01 22:32:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.145 2017/12/08 16:56:23 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.146 2018/01/01 22:32:46 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -388,7 +388,7 @@ rl_initialize(void)
 	_resize_fun(e, &rl_line_buffer);
 	_rl_update_pos();
 
-	tty_end(e);
+	tty_end(e, TCSADRAIN);
 
 	return 0;
 }
@@ -460,7 +460,7 @@ readline(const char *p)
 	history_length = ev.num;
 
 out:
-	tty_end(e);
+	tty_end(e, TCSADRAIN);
 	return buf;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.66 2017/09/05 18:07:59 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.67 2018/01/01 22:32:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tty.c,v 1.66 2017/09/05 18:07:59 christos Exp $");
+__RCSID("$NetBSD: tty.c,v 1.67 2018/01/01 22:32:46 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -586,7 +586,7 @@ tty_init(EditLine *el)
  */
 libedit_private void
 /*ARGSUSED*/
-tty_end(EditLine *el)
+tty_end(EditLine *el, int how)
 {
 	if (el->el_flags & EDIT_DISABLED)
 		return;
@@ -594,7 +594,8 @@ tty_end(EditLine *el)
 	if (!el->el_tty.t_initialized)
 		return;
 
-	if (tty_setty(el, TCSAFLUSH, &el->el_tty.t_or) == -1) {
+	if (tty_setty(el, how, &el->el_tty.t_or) == -1)
+	{
 #ifdef DEBUG_TTY
 		(void) fprintf(el->el_errfile,
 		    "%s: tty_setty: %s\n", __func__, strerror(errno));
