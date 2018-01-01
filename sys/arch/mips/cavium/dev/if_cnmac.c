@@ -1,8 +1,8 @@
-/*	$NetBSD: if_cnmac.c,v 1.7 2017/11/26 18:41:14 jmcneill Exp $	*/
+/*	$NetBSD: if_cnmac.c,v 1.8 2018/01/01 13:25:22 jmcneill Exp $	*/
 
 #include <sys/cdefs.h>
 #if 0
-__KERNEL_RCSID(0, "$NetBSD: if_cnmac.c,v 1.7 2017/11/26 18:41:14 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnmac.c,v 1.8 2018/01/01 13:25:22 jmcneill Exp $");
 #endif
 
 #include "opt_octeon.h"
@@ -144,7 +144,7 @@ static void	octeon_eth_stop(struct ifnet *, int);
 static void	octeon_eth_start(struct ifnet *);
 
 static inline int	octeon_eth_send_cmd(struct octeon_eth_softc *, uint64_t,
-			    uint64_t);
+			    uint64_t, int *);
 static inline uint64_t	octeon_eth_send_makecmd_w1(int, paddr_t);
 static inline uint64_t 	octeon_eth_send_makecmd_w0(uint64_t, uint64_t, size_t,
 			    int);
@@ -153,9 +153,9 @@ static inline int	octeon_eth_send_makecmd_gbuf(struct octeon_eth_softc *,
 static inline int	octeon_eth_send_makecmd(struct octeon_eth_softc *,
 			    struct mbuf *, uint64_t *, uint64_t *, uint64_t *);
 static inline int	octeon_eth_send_buf(struct octeon_eth_softc *,
-			    struct mbuf *, uint64_t *);
+			    struct mbuf *, uint64_t *, int *);
 static inline int	octeon_eth_send(struct octeon_eth_softc *,
-			    struct mbuf *);
+			    struct mbuf *, int *);
 
 static int	octeon_eth_reset(struct octeon_eth_softc *);
 static int	octeon_eth_configure(struct octeon_eth_softc *);
@@ -615,6 +615,7 @@ octeon_eth_send_queue_flush_fetch(struct octeon_eth_softc *sc)
 static inline void
 octeon_eth_send_queue_flush(struct octeon_eth_softc *sc)
 {
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	const int64_t sent_count = sc->sc_hard_done_cnt;
 	int i;
 
@@ -631,6 +632,8 @@ octeon_eth_send_queue_flush(struct octeon_eth_softc *sc)
 		OCTEON_EVCNT_INC(sc, txbufgbput);
 
 		m_freem(m);
+
+		CLR(ifp->if_flags, IFF_OACTIVE);
 	}
 
 	octeon_fau_op_inc_fetch_8(&sc->sc_fau_done, i);
@@ -972,7 +975,7 @@ done:
 
 static inline int
 octeon_eth_send_cmd(struct octeon_eth_softc *sc, uint64_t pko_cmd_w0,
-    uint64_t pko_cmd_w1)
+    uint64_t pko_cmd_w1, int *pwdc)
 {
 	uint64_t *cmdptr;
 	int result = 0;
@@ -1011,7 +1014,7 @@ octeon_eth_send_cmd(struct octeon_eth_softc *sc, uint64_t pko_cmd_w0,
 		sc->sc_cmdptr.cmdptr_idx += 2;
 	}
 
-	octeon_pko_op_doorbell_write(sc->sc_port, sc->sc_port, 2);
+	*pwdc += 2;
 
 done:
 	return result;
@@ -1019,7 +1022,7 @@ done:
 
 static inline int
 octeon_eth_send_buf(struct octeon_eth_softc *sc, struct mbuf *m,
-    uint64_t *gbuf)
+    uint64_t *gbuf, int *pwdc)
 {
 	int result = 0, error;
 	uint64_t pko_cmd_w0, pko_cmd_w1;
@@ -1032,7 +1035,7 @@ octeon_eth_send_buf(struct octeon_eth_softc *sc, struct mbuf *m,
 		goto done;
 	}
 
-	error = octeon_eth_send_cmd(sc, pko_cmd_w0, pko_cmd_w1);
+	error = octeon_eth_send_cmd(sc, pko_cmd_w0, pko_cmd_w1, pwdc);
 	if (error != 0) {
 		/* already logging */
 		OCTEON_EVCNT_INC(sc, txerrcmd);
@@ -1044,7 +1047,7 @@ done:
 }
 
 static inline int
-octeon_eth_send(struct octeon_eth_softc *sc, struct mbuf *m)
+octeon_eth_send(struct octeon_eth_softc *sc, struct mbuf *m, int *pwdc)
 {
 	paddr_t gaddr = 0;
 	uint64_t *gbuf = NULL;
@@ -1072,7 +1075,7 @@ octeon_eth_send(struct octeon_eth_softc *sc, struct mbuf *m)
 
 	OCTEON_ETH_KASSERT(gbuf != NULL);
 
-	error = octeon_eth_send_buf(sc, m, gbuf);
+	error = octeon_eth_send_buf(sc, m, gbuf, pwdc);
 	if (error != 0) {
 		/* already logging */
 		octeon_fpa_buf_put_paddr(octeon_eth_fb_sg, gaddr);
@@ -1092,6 +1095,7 @@ octeon_eth_start(struct ifnet *ifp)
 {
 	struct octeon_eth_softc *sc = ifp->if_softc;
 	struct mbuf *m;
+	int wdc = 0;
 
 	/*
 	 * performance tuning
@@ -1130,6 +1134,10 @@ octeon_eth_start(struct ifnet *ifp)
 		 * and bail out.
 		 */
 		if (octeon_eth_send_queue_is_full(sc)) {
+			SET(ifp->if_flags, IFF_OACTIVE);
+			if (wdc > 0)
+				octeon_pko_op_doorbell_write(sc->sc_port,
+				    sc->sc_port, wdc);
 			return;
 		}
 		/* XXX XXX XXX */
@@ -1141,7 +1149,7 @@ octeon_eth_start(struct ifnet *ifp)
 		/* XXX XXX XXX */
 		if (sc->sc_soft_req_cnt > sc->sc_soft_req_thresh)
 			octeon_eth_send_queue_flush(sc);
-		if (octeon_eth_send(sc, m)) {
+		if (octeon_eth_send(sc, m, &wdc)) {
 			IF_DROP(&ifp->if_snd);
 			m_freem(m);
 			log(LOG_WARNING,
@@ -1160,6 +1168,9 @@ octeon_eth_start(struct ifnet *ifp)
 		 */
 		octeon_eth_send_queue_flush_prefetch(sc);
 	}
+
+	if (wdc > 0)
+		octeon_pko_op_doorbell_write(sc->sc_port, sc->sc_port, wdc);
 
 /*
  * Don't schedule send-buffer-free callout every time - those buffers are freed
@@ -1528,7 +1539,7 @@ octeon_eth_recv_redir(struct ifnet *ifp, struct mbuf *m)
 {
 	struct octeon_eth_softc *rsc = ifp->if_softc;
 	struct octeon_eth_softc *sc = NULL;
-	int i;
+	int i, wdc = 0;
 
 	for (i = 0; i < 3 /* XXX */; i++) {
 		if (rsc->sc_redir & (1 << i))
@@ -1550,10 +1561,11 @@ octeon_eth_recv_redir(struct ifnet *ifp, struct mbuf *m)
 	if (sc->sc_soft_req_cnt > sc->sc_soft_req_thresh)
 		octeon_eth_send_queue_flush(sc);
 
-	if (octeon_eth_send(sc, m)) {
+	if (octeon_eth_send(sc, m, &wdc)) {
 		IF_DROP(&ifp->if_snd);
 		m_freem(m);
 	} else {
+		octeon_pko_op_doorbell_write(sc->sc_port, sc->sc_port, wdc);
 		sc->sc_soft_req_cnt++;
 	}
 
