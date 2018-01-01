@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.175 2018/01/01 12:09:56 maxv Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.176 2018/01/01 12:22:59 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.175 2018/01/01 12:09:56 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.176 2018/01/01 12:22:59 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -1687,6 +1687,10 @@ m_ext_free(struct mbuf *m)
 	KASSERT((m->m_flags & M_EXT_CLUSTER) ==
 	    (m->m_ext_ref->m_flags & M_EXT_CLUSTER));
 
+	if (__predict_false(m->m_type == MT_FREE)) {
+		panic("mbuf %p already freed", m);
+	}
+
 	if (__predict_true(m->m_ext.ext_refcnt == 1)) {
 		refcnt = m->m_ext.ext_refcnt = 0;
 	} else {
@@ -1727,6 +1731,7 @@ m_ext_free(struct mbuf *m)
 	}
 	if (dofree) {
 		m->m_type = MT_FREE;
+		m->m_data = NULL;
 		pool_cache_put(mb_cache, m);
 	}
 }
