@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.550 2017/12/28 06:13:50 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.551 2018/01/01 08:33:28 jnemeth Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.550 2017/12/28 06:13:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.551 2018/01/01 08:33:28 jnemeth Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -7870,7 +7870,7 @@ wm_nq_send_common_locked(struct ifnet *ifp, struct wm_txqueue *txq,
 		lasttx = nexttx;
 		nexttx = WM_NEXTTX(txq, nexttx);
 		/*
-		 * fill in the next descriptors. legacy or adcanced format
+		 * fill in the next descriptors. legacy or advanced format
 		 * is the same here
 		 */
 		for (seg = 1; seg < dmamap->dm_nsegs;
