@@ -1,4 +1,4 @@
-.\"	$NetBSD: mbuf.9,v 1.52 2018/01/01 12:36:26 maxv Exp $
+.\"	$NetBSD: mbuf.9,v 1.53 2018/01/01 12:46:49 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -66,7 +66,7 @@
 .Nm M_LEADINGSPACE ,
 .Nm M_TRAILINGSPACE ,
 .Nm M_PREPEND ,
-.Nm MCHTYPE ,
+.Nm MCHTYPE
 .Nd "functions and macros for managing memory used by networking code"
 .Sh SYNOPSIS
 .In sys/mbuf.h
@@ -303,7 +303,7 @@ from caller.
 .It Fn m_copypacket "struct mbuf *m" "int how"
 Copies an entire packet, including header (which must be present).
 This function is an optimization of the common case
-.Li m_copym(m, 0, Dv M_COPYALL, Fa how ) .
+.Li m_copym ( m , 0 , Dv M_COPYALL , Fa how ) .
 .It Fn m_copydata "struct mbuf *m" "int off" "int len" "void *cp"
 Copies
 .Fa len
