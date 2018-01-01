@@ -1,6 +1,6 @@
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2017 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2018 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -218,14 +218,14 @@ arraytostr(const char *const *argv, char **s)
 	return (ssize_t)len;
 }
 
-#define	PROTO_NONE	0
+#define	PROTO_LINK	0
 #define	PROTO_DHCP	1
 #define	PROTO_IPV4LL	2
 #define	PROTO_RA	3
 #define	PROTO_DHCP6	4
 #define	PROTO_STATIC6	5
 static const char *protocols[] = {
-	NULL,
+	"link",
 	"dhcp",
 	"ipv4ll",
 	"ra",
@@ -295,7 +295,7 @@ make_env(const struct interface *ifp, const char *reason, char ***argv)
 	    strcmp(reason, "UNKNOWN") == 0 ||
 	    strcmp(reason, "DEPARTED") == 0 ||
 	    strcmp(reason, "STOPPED") == 0)
-		protocol = PROTO_NONE;
+		protocol = PROTO_LINK;
 #ifdef INET
 #ifdef IPV4LL
 	else if (strcmp(reason, "IPV4LL") == 0)
