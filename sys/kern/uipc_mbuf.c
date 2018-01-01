@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.174 2017/12/31 06:57:12 maxv Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.175 2018/01/01 12:09:56 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.174 2017/12/31 06:57:12 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.175 2018/01/01 12:09:56 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -1916,66 +1916,42 @@ m_claim(struct mbuf *m, struct mowner *mo)
 #endif /* defined(MBUFTRACE) */
 
 /*
- * MFREE(struct mbuf *m, struct mbuf *n)
- * Free a single mbuf and associated external storage.
- * Place the successor, if any, in n.
+ * Free a single mbuf and associated external storage. Return the
+ * successor, if any.
  */
-#define	MFREE(f, l, m, n)						\
-	mowner_revoke((m), 1, (m)->m_flags);				\
-	mbstat_type_add((m)->m_type, -1);				\
-	if ((m)->m_flags & M_PKTHDR)					\
-		m_tag_delete_chain((m), NULL);				\
-	(n) = (m)->m_next;						\
-	if ((m)->m_flags & M_EXT) {					\
-		m_ext_free((m));					\
-	} else {							\
-		MBUFFREE(f, l, m);					\
-	}								\
-
-#define MBUFFREE(f, l, m)						\
-	do {								\
-		if (__predict_false((m)->m_type == MT_FREE)) {		\
-			panic("mbuf %p already freed", m);		\
-		}							\
-		(m)->m_type = MT_FREE;					\
-		(m)->m_data = NULL;					\
-		pool_cache_put(mb_cache, (m));				\
-	} while (/*CONSTCOND*/0)
-
-struct mbuf *
-m__free(const char *f, int l, struct mbuf *m)
-{
-	struct mbuf *n;
-
-	MFREE(f, l, m, n);
-	return (n);
-}
-
-void
-m__freem(const char *f, int l, struct mbuf *m)
-{
-	struct mbuf *n;
-
-	if (m == NULL)
-		return;
-	do {
-		MFREE(f, l, m, n);
-		m = n;
-	} while (m);
-}
-
-#undef m_free
-struct mbuf *m_free(struct mbuf *);
 struct mbuf *
 m_free(struct mbuf *m)
 {
-	return m__free(__func__, __LINE__, m);
+	struct mbuf *n;
+
+	mowner_revoke(m, 1, m->m_flags);
+	mbstat_type_add(m->m_type, -1);
+
+	if (m->m_flags & M_PKTHDR)
+		m_tag_delete_chain(m, NULL);
+
+	n = m->m_next;
+
+	if (m->m_flags & M_EXT) {
+		m_ext_free(m);
+	} else {
+		if (__predict_false(m->m_type == MT_FREE)) {
+			panic("mbuf %p already freed", m);
+		}
+		m->m_type = MT_FREE;
+		m->m_data = NULL;
+		pool_cache_put(mb_cache, m);
+	}
+
+	return n;
 }
 
-#undef m_freem
-void m_freem(struct mbuf *);
 void
 m_freem(struct mbuf *m)
 {
-	m__freem(__func__, __LINE__, m);
+	if (m == NULL)
+		return;
+	do {
+		m = m_free(m);
+	} while (m);
 }
