@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.289 2018/01/01 00:51:36 christos Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.290 2018/01/01 16:14:30 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.289 2018/01/01 00:51:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.290 2018/01/01 16:14:30 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1331,8 +1331,6 @@ ip_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 			break;
 
 		case IP_PKTINFO:
-			/* XXX these tests fail until size gets propagated */
-			/* It needs to be passed through from the caller */
 			switch (sopt->sopt_size) {
 			case sizeof(int):
 				/* Linux compatibility */
