@@ -1,4 +1,4 @@
-/*	$NetBSD: vcprop_subr.c,v 1.4 2017/12/10 21:38:27 skrll Exp $	*/
+/*	$NetBSD: vcprop_subr.c,v 1.5 2018/01/01 17:03:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 2014 Michael Lorenz
@@ -34,8 +34,6 @@
 #include <sys/bus.h>
 
 #include <uvm/uvm_extern.h>
-
-#include <arm/arm32/machdep.h>
 
 #include <arm/broadcom/bcm2835reg.h>
 #include <arm/broadcom/bcm2835var.h>
