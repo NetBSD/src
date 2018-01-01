@@ -1,4 +1,4 @@
-.\"	$NetBSD: mbuf.9,v 1.51 2013/06/17 09:58:21 ryo Exp $
+.\"	$NetBSD: mbuf.9,v 1.52 2018/01/01 12:36:26 maxv Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 17, 2013
+.Dd January 1, 2018
 .Dt MBUF 9
 .Os
 .Sh NAME
@@ -67,7 +67,6 @@
 .Nm M_TRAILINGSPACE ,
 .Nm M_PREPEND ,
 .Nm MCHTYPE ,
-.Nm MFREE
 .Nd "functions and macros for managing memory used by networking code"
 .Sh SYNOPSIS
 .In sys/mbuf.h
@@ -141,8 +140,6 @@
 .Fn M_PREPEND "struct mbuf *m" "int plen" "int how"
 .Ft void
 .Fn MCHTYPE "struct mbuf *m" "int type"
-.Ft void
-.Fn MFREE "struct mbuf *m" "struct mbuf *n"
 .Sh DESCRIPTION
 The
 .Nm
@@ -729,12 +726,6 @@ Change mbuf
 .Fa m
 to new type
 .Fa type .
-Implemented as a macro.
-.It Fn MFREE "struct mbuf *m" "struct mbuf *n"
-Frees a single mbuf
-.Fa m
-and places the successor, if any, in mbuf
-.Fa n .
 Implemented as a macro.
 .El
 .Sh CODE REFERENCES
