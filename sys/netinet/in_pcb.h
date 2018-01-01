@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.h,v 1.64 2017/08/10 04:31:58 ryo Exp $	*/
+/*	$NetBSD: in_pcb.h,v 1.65 2018/01/01 00:51:36 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -95,6 +95,7 @@ struct inpcb {
 	int	  inp_errormtu;		/* MTU of last xmit status = EMSGSIZE */
 	uint8_t	  inp_ip_minttl;
 	bool      inp_bindportonsend;
+	struct    in_addr inp_prefsrcip; /* preferred src IP when wild  */
 };
 
 #define	inp_faddr	inp_ip.ip_dst
@@ -121,11 +122,9 @@ struct inpcb {
 					 * Cancels INP_HDRINCL.
 					 */
 #define	INP_RECVTTL		0x0800	/* receive incoming IP TTL */
-#define	INP_PKTINFO		0x1000	/* receive dst packet info */
-#define	INP_RECVPKTINFO		0x2000	/* receive dst packet info */
+#define	INP_RECVPKTINFO		0x1000	/* receive IP dst if/addr */
 #define	INP_CONTROLOPTS		(INP_RECVOPTS|INP_RECVRETOPTS|INP_RECVDSTADDR|\
-				INP_RECVIF|INP_RECVTTL|INP_RECVPKTINFO|\
-				INP_PKTINFO)
+				INP_RECVIF|INP_RECVTTL|INP_RECVPKTINFO)
 
 #define	sotoinpcb(so)		((struct inpcb *)(so)->so_pcb)
 #define	inp_lock(inp)		solock((inp)->inp_socket)
