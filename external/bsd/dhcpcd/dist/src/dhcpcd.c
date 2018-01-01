@@ -1,6 +1,6 @@
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2017 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2018 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  */
 
-const char dhcpcd_copyright[] = "Copyright (c) 2006-2017 Roy Marples";
+const char dhcpcd_copyright[] = "Copyright (c) 2006-2018 Roy Marples";
 
 #include <sys/file.h>
 #include <sys/socket.h>
@@ -438,7 +438,7 @@ configure_interface1(struct interface *ifp)
 		    ~(DHCPCD_IPV6RS | DHCPCD_DHCP6 | DHCPCD_WAITIP6);
 
 	/* We want to disable kernel interface RA as early as possible. */
-	if (ifo->options & DHCPCD_IPV6RS &&
+	if (ifp->active == IF_ACTIVE_USER &&
 	    !(ifp->ctx->options & DHCPCD_DUMPLEASE))
 	{
 		int ra_global, ra_iface;
@@ -975,6 +975,7 @@ int
 dhcpcd_handleinterface(void *arg, int action, const char *ifname)
 {
 	struct dhcpcd_ctx *ctx;
+	struct ifaddrs *ifaddrs;
 	struct if_head *ifs;
 	struct interface *ifp, *iff, *ifn;
 	const char * const argv[] = { ifname };
@@ -998,7 +999,7 @@ dhcpcd_handleinterface(void *arg, int action, const char *ifname)
 	}
 
 	i = -1;
-	ifs = if_discover(ctx, -1, UNCONST(argv));
+	ifs = if_discover(ctx, &ifaddrs, -1, UNCONST(argv));
 	if (ifs == NULL) {
 		logerr(__func__);
 		return -1;
@@ -1039,6 +1040,17 @@ dhcpcd_handleinterface(void *arg, int action, const char *ifname)
 			run_preinit(ifp);
 			iff = ifp;
 		}
+		if (action > 0 && iff->active)
+			dhcpcd_prestartinterface(iff);
+	}
+
+	if_learnaddrs(ctx, ifs, &ifaddrs);
+
+	/* Now we have learned addresses, start the interface */
+	TAILQ_FOREACH_SAFE(ifp, ifs, next, ifn) {
+		if (strcmp(ifp->name, ifname) != 0)
+			continue;
+		iff = if_find(ctx->ifaces, ifp->name);
 		if (action > 0 && iff->active)
 			dhcpcd_prestartinterface(iff);
 	}
@@ -1403,6 +1415,7 @@ int
 main(int argc, char **argv)
 {
 	struct dhcpcd_ctx ctx;
+	struct ifaddrs *ifaddrs = NULL;
 	struct if_options *ifo;
 	struct interface *ifp;
 	uint16_t family = 0;
@@ -1678,7 +1691,7 @@ printpidfile:
 		if (optind != argc) {
 			/* We need to try and find the interface so we can load
 			 * the hardware address to compare automated IAID */
-			ctx.ifaces = if_discover(&ctx,
+			ctx.ifaces = if_discover(&ctx, &ifaddrs,
 			    argc - optind, argv + optind);
 		} else {
 			if ((ctx.ifaces = malloc(sizeof(*ctx.ifaces))) != NULL)
@@ -1842,7 +1855,7 @@ printpidfile:
 	    (DHCPCD_MASTER | DHCPCD_DEV))
 		dev_start(&ctx);
 
-	ctx.ifaces = if_discover(&ctx, ctx.ifc, ctx.ifv);
+	ctx.ifaces = if_discover(&ctx, &ifaddrs, ctx.ifc, ctx.ifv);
 	if (ctx.ifaces == NULL) {
 		logerr("%s: if_discover", __func__);
 		goto exit_failure;
@@ -1878,6 +1891,7 @@ printpidfile:
 		if (ifp->active)
 			dhcpcd_initstate1(ifp, argc, argv, 0);
 	}
+	if_learnaddrs(&ctx, ctx.ifaces, &ifaddrs);
 
 	if (ctx.options & DHCPCD_BACKGROUND && dhcpcd_daemonise(&ctx))
 		goto exit_success;
@@ -1948,6 +1962,8 @@ exit_failure:
 	i = EXIT_FAILURE;
 
 exit1:
+	if (ifaddrs != NULL)
+		freeifaddrs(ifaddrs);
 	if (control_stop(&ctx) == -1)
 		logerr("%s: control_stop", __func__);
 	/* Free memory and close fd's */
