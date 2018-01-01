@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_start.S,v 1.15 2017/12/10 21:38:27 skrll Exp $	*/
+/*	$NetBSD: rpi_start.S,v 1.16 2018/01/01 11:28:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -95,7 +95,7 @@
 #include <arm/armreg.h>
 #include "assym.h"
 
-RCSID("$NetBSD: rpi_start.S,v 1.15 2017/12/10 21:38:27 skrll Exp $")
+RCSID("$NetBSD: rpi_start.S,v 1.16 2018/01/01 11:28:33 skrll Exp $")
 
 
 #if defined(VERBOSE_INIT_ARM)
@@ -353,10 +353,10 @@ Lctl_ID_dis:
 
 mmu_init_table:
 	/*
-	 * Map 256MB of VA==PA at 0x00000000 so we can keep the kernel going
+	 * Map 512MB of VA==PA at 0x00000000 so we can keep the kernel going
 	 * and get access to the FDT the firmware loads
 	 */
-	MMU_INIT(0x0, 0x0, 0x10000000, L1_S_PROTO | L1_S_APv6_KRW)
+	MMU_INIT(0x0, 0x0, (512 * 1024 * 1204), L1_S_PROTO | L1_S_APv6_KRW)
 
 	MMU_INIT(KERNEL_BASE, 0x0,
 	    (_end - KERNEL_BASE + 2 * L1_S_SIZE - 1),
