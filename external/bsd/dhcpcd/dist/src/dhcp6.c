@@ -1,6 +1,6 @@
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2017 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2018 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -1099,7 +1099,7 @@ dhcp6_sendmessage(struct interface *ifp, void (*callback)(void *))
 	memset(&dst, 0, sizeof(dst));
 	dst.sin6_family = AF_INET6;
 	dst.sin6_port = htons(DHCP6_SERVER_PORT);
-#ifdef SIN6_LEN
+#ifdef HAVE_SA_LEN
 	dst.sin6_len = sizeof(dst);
 #endif
 
@@ -2051,7 +2051,7 @@ dhcp6_findpd(struct interface *ifp, const uint8_t *iaid,
 			a->flags &= ~(IPV6_AF_STALE |
 			              IPV6_AF_EXTENDED |
 			              IPV6_AF_REQUEST);
-			if (a->prefix_vltime != ntohl(pdp.vltime))
+			if (a->prefix_vltime != pdp.vltime)
 				a->flags |= IPV6_AF_NEW;
 		}
 
@@ -2405,6 +2405,7 @@ dhcp6_readlease(struct interface *ifp, int validate)
 		return -1;
 	retval = -1;
 	lease = NULL;
+	free(state->new);
 	state->new_len = dhcp_read_lease_fd(fd, (void **)&lease);
 	state->new = lease;
 	if (fd_opened)
@@ -3676,8 +3677,6 @@ dhcp6_start(struct interface *ifp, enum DH6S init_state)
 	if (state != NULL) {
 		switch (init_state) {
 		case DH6S_INIT:
-			/* This should only happen on OS's where we keep state
-			 * on carrier down, such as NetBSD-8. */
 			goto gogogo;
 		case DH6S_INFORM:
 			if (state->state == DH6S_INFORMED)
@@ -3695,8 +3694,6 @@ dhcp6_start(struct interface *ifp, enum DH6S init_state)
 			}
 			break;
 		case DH6S_CONFIRM:
-			/* This should only happen on OS's where we keep state
-			 * on carrier down, such as NetBSD-8. */
 			init_state = DH6S_INIT;
 			goto gogogo;
 		default:
@@ -3879,16 +3876,18 @@ void
 dhcp6_handleifa(int cmd, struct ipv6_addr *ia)
 {
 	struct dhcp6_state *state;
+	struct interface *ifp = ia->iface;
 
 	/* If not running in master mode, listen to this address */
 	if (cmd == RTM_NEWADDR &&
 	    !(ia->addr_flags & IN6_IFF_NOTUSEABLE) &&
-	    ia->iface->active == IF_ACTIVE_USER &&
-	    !(ia->iface->ctx->options & DHCPCD_MASTER) &&
+	    ifp->active == IF_ACTIVE_USER &&
+	    !(ifp->ctx->options & DHCPCD_MASTER) &&
+	    ifp->options->options & DHCPCD_DHCP6 &&
 	    ia->dhcp6_fd == -1)
 		dhcp6_listen(ia->iface->ctx, ia);
 
-	if ((state = D6_STATE(ia->iface)) != NULL)
+	if ((state = D6_STATE(ifp)) != NULL)
 		ipv6_handleifa_addrs(cmd, &state->addrs, ia);
 }
 
