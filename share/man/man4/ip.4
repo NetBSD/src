@@ -1,4 +1,4 @@
-.\"	$NetBSD: ip.4,v 1.41 2018/01/01 00:51:36 christos Exp $
+.\"	$NetBSD: ip.4,v 1.42 2018/01/01 01:02:11 christos Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -123,11 +123,12 @@ message to the control part of the message on a
 .Dv SOCK_DGRAM
 or
 .Dv SOCK_RAW
-socket.  Setting ipi_ifindex will cause the primary address of that
-interface to be used; setting ipi_addr will directly choose that address.
-The IP_PKTINFO cmsghdr structure from a received message may be used
-unchanged, in which case the outgoing message will be sent from the
-address the incoming message was received on.
+socket.
+Setting ipi_ifindex will cause the primary address of that interface
+to be used; setting ipi_addr will directly choose that address.
+The IP_PKTINFO cmsghdr structure from a received message may be
+used unchanged, in which case the outgoing message will be sent
+from the address the incoming message was received on.
 .Pp
 Setting the
 .Dv IP_PKTINFO
@@ -196,8 +197,9 @@ to the control part of the message on a
 .Dv SOCK_DGRAM
 or
 .Dv SOCK_RAW
-socket.  The IP_RECVDSTADDR cmsghdr structure from a received message
-may be used unchanged, in which case the outgoing message will be sent
+socket.
+The IP_RECVDSTADDR cmsghdr structure from a received message may
+be used unchanged, in which case the outgoing message will be sent
 from the address the incoming message was received on.
 .Pp
 If the
@@ -480,13 +482,14 @@ address for outgoing packets on a
 .Dv SOCK_DGRAM
 or
 .Dv SOCK_RAW
-socket.  For compatibility with Linux, however, if you attempt to set the
+socket.
+For compatibility with Linux, however, if you attempt to set the
 .Dv IP_PKTINFO
 option, using an integer parameter as a boolean value, this will
 transparently manipulate the
 .Dv IP_RECVPKTINFO
-option instead.  Source code compatbility with both environments is thus
-maintained.
+option instead.
+Source code compatbility with both environments is thus maintained.
 .Sh SEE ALSO
 .Xr getsockopt 2 ,
 .Xr recv 2 ,
