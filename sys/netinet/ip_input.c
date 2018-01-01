@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.363 2017/11/24 14:03:25 roy Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.364 2018/01/01 00:51:36 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.363 2017/11/24 14:03:25 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.364 2018/01/01 00:51:36 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1532,15 +1532,6 @@ ip_savecontrol(struct inpcb *inp, struct mbuf **mp, struct ip *ip,
 	}
 
 	if (inpflags & INP_RECVPKTINFO) {
-		struct in_pktinfo ipi;
-		ipi.ipi_addr = ip->ip_src;
-		ipi.ipi_ifindex = ifp->if_index;
-		*mp = sbcreatecontrol(&ipi,
-		    sizeof(ipi), IP_RECVPKTINFO, IPPROTO_IP);
-		if (*mp)
-			mp = &(*mp)->m_next;
-	}
-	if (inpflags & INP_PKTINFO) {
 		struct in_pktinfo ipi;
 		ipi.ipi_addr = ip->ip_dst;
 		ipi.ipi_ifindex = ifp->if_index;

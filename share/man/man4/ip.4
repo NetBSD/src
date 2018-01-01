@@ -1,4 +1,4 @@
-.\"	$NetBSD: ip.4,v 1.40 2017/08/13 18:19:44 wiz Exp $
+.\"	$NetBSD: ip.4,v 1.41 2018/01/01 00:51:36 christos Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)ip.4	8.2 (Berkeley) 11/30/93
 .\"
-.Dd August 10, 2017
+.Dd December 31, 2017
 .Dt IP 4
 .Os
 .Sh NAME
@@ -96,8 +96,8 @@ setsockopt(s, IPPROTO_IP, IP_IPSEC_POLICY, buf, ipsec_get_policylen(buf));
 .Ed
 .Pp
 The
-.Dv IP_PKTINFO
-option can be used to turn on receiving of information about the source
+.Dv IP_RECVPKTINFO
+option can be used to turn on receiving of information about the destination
 address of the packet, and the interface index.
 The information is passed in a
 .Vt struct in_pktinfo
@@ -117,13 +117,24 @@ cmsg_type = IP_PKTINFO
 .Pp
 For
 .Xr sendmsg 2 ,
-the source address or output interface can be specified by adding
+the source address or output interface can be specified by adding an
 .Dv IP_PKTINFO
-to the control part of the message on a
+message to the control part of the message on a
 .Dv SOCK_DGRAM
 or
 .Dv SOCK_RAW
-socket.
+socket.  Setting ipi_ifindex will cause the primary address of that
+interface to be used; setting ipi_addr will directly choose that address.
+The IP_PKTINFO cmsghdr structure from a received message may be used
+unchanged, in which case the outgoing message will be sent from the
+address the incoming message was received on.
+.Pp
+Setting the
+.Dv IP_PKTINFO
+option on a socket, with the same
+.Vt struct in_pktinfo
+structure, will set the default source address to be used until set
+again, unless explicitly overridden on a per-packet basis, as above.
 .Pp
 The
 .Dv IP_PORTALGO
@@ -177,6 +188,18 @@ cmsg_level = IPPROTO_IP
 cmsg_type = IP_RECVDSTADDR
 .Ed
 .Pp
+For
+.Xr sendmsg 2 ,
+the source address can be specified by adding
+.Dv IP_SENDSRCADDR
+to the control part of the message on a
+.Dv SOCK_DGRAM
+or
+.Dv SOCK_RAW
+socket.  The IP_RECVDSTADDR cmsghdr structure from a received message
+may be used unchanged, in which case the outgoing message will be sent
+from the address the incoming message was received on.
+.Pp
 If the
 .Dv IP_RECVIF
 option is enabled on a
@@ -196,12 +219,6 @@ cmsg_len = CMSG_LEN(sizeof(struct sockaddr_dl))
 cmsg_level = IPPROTO_IP
 cmsg_type = IP_RECVIF
 .Ed
-.Pp
-The
-.Dv IP_RECVPKTINFO
-option is similar to the
-.Dv IP_PKTINFO
-one, only in this case the inbound information is returned.
 .Pp
 If the
 .Dv IP_RECVTTL
@@ -452,6 +469,24 @@ An unknown socket option name was given; or
 the IP option field was improperly formed; an option field was
 shorter than the minimum value or longer than the option buffer provided.
 .El
+.Sh COMPATIBILITY
+The
+.Dv IP_RECVPKTINFO
+option is used because it is directly compatible with Solaris, AIX, etc.,
+and the
+.Dv IP_PKTINFO
+option is intended to be used in their manner, to set the default source
+address for outgoing packets on a
+.Dv SOCK_DGRAM
+or
+.Dv SOCK_RAW
+socket.  For compatibility with Linux, however, if you attempt to set the
+.Dv IP_PKTINFO
+option, using an integer parameter as a boolean value, this will
+transparently manipulate the
+.Dv IP_RECVPKTINFO
+option instead.  Source code compatbility with both environments is thus
+maintained.
 .Sh SEE ALSO
 .Xr getsockopt 2 ,
 .Xr recv 2 ,
