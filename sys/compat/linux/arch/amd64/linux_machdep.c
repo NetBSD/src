@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.55 2017/10/21 07:24:26 maxv Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.56 2018/01/01 08:03:43 maxv Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.55 2017/10/21 07:24:26 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.56 2018/01/01 08:03:43 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -205,9 +205,9 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	sigframe.uc.luc_mcontext.rsp = tf->tf_rsp;
 	sigframe.uc.luc_mcontext.rip = tf->tf_rip;
 	sigframe.uc.luc_mcontext.eflags = tf->tf_rflags;
-	sigframe.uc.luc_mcontext.cs = tf->tf_cs;
-	sigframe.uc.luc_mcontext.gs = tf->tf_gs;
-	sigframe.uc.luc_mcontext.fs = tf->tf_fs;
+	sigframe.uc.luc_mcontext.cs = GSEL(GUCODE_SEL, SEL_UPL);
+	sigframe.uc.luc_mcontext.gs = tf->tf_gs & 0xFFFF;
+	sigframe.uc.luc_mcontext.fs = tf->tf_fs & 0xFFFF;
 	sigframe.uc.luc_mcontext.err = tf->tf_err;
 	sigframe.uc.luc_mcontext.trapno = tf->tf_trapno;
 	native_to_linux_sigset(&lmask, mask);
