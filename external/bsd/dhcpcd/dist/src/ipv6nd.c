@@ -1,6 +1,6 @@
 /*
  * dhcpcd - IPv6 ND handling
- * Copyright (c) 2006-2017 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2018 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -286,7 +286,7 @@ ipv6nd_sendrsprobe(void *arg)
 
 	memset(&dst, 0, sizeof(dst));
 	dst.sin6_family = AF_INET6;
-#ifdef SIN6_LEN
+#ifdef HAVE_SA_LEN
 	dst.sin6_len = sizeof(dst);
 #endif
 	dst.sin6_scope_id = ifp->index;

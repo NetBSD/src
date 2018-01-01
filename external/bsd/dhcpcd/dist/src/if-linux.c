@@ -1,6 +1,6 @@
 /*
  * Linux interface driver for dhcpcd
- * Copyright (c) 2006-2017 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2018 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -1455,6 +1455,9 @@ if_address(unsigned char cmd, const struct ipv4_addr *addr)
 {
 	struct nlma nlm;
 	int retval = 0;
+#if defined(IFA_F_NOPREFIXROUTE)
+	uint32_t flags = 0;
+#endif
 
 	memset(&nlm, 0, sizeof(nlm));
 	nlm.hdr.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifaddrmsg));
@@ -1476,6 +1479,13 @@ if_address(unsigned char cmd, const struct ipv4_addr *addr)
 	if (cmd == RTM_NEWADDR)
 		add_attr_l(&nlm.hdr, sizeof(nlm), IFA_BROADCAST,
 		    &addr->brd.s_addr, sizeof(addr->brd.s_addr));
+
+#ifdef IFA_F_NOPREFIXROUTE
+	if (nlm.ifa.ifa_prefixlen < 32)
+		flags |= IFA_F_NOPREFIXROUTE;
+	if (flags)
+		add_attr_32(&nlm.hdr, sizeof(nlm), IFA_FLAGS, flags);
+#endif
 
 	if (send_netlink(addr->iface->ctx, NULL,
 	    NETLINK_ROUTE, &nlm.hdr, NULL) == -1)
