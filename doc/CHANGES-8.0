@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.96 2017/12/23 19:56:01 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.97 2018/01/01 19:11:07 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -8670,4 +8670,18 @@ sys/dev/pad/pad.c				1.44
 	Rework so that module infrastructure is provided even when the
 	module is built-in to the kernel.
 	[pgoyette, ticket #450]
+
+sys/kern/kern_proc.c				1.209
+
+	Fix an easily triggerable kmem_alloc(0).
+	[maxv, ticket #465]
+
+sys/arch/amd64/amd64/machdep.c			1.280
+sys/arch/amd64/include/segments.h		1.34
+sys/arch/i386/i386/machdep.c			1.800
+sys/arch/i386/include/segments.h		1.64 via patch
+sys/arch/x86/x86/vm_machdep.c			1.30
+
+	Xen: Prevent userland from having access to the CPU ports.
+	[maxv, ticket #477]
 
