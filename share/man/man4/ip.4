@@ -1,4 +1,4 @@
-.\"	$NetBSD: ip.4,v 1.42 2018/01/01 01:02:11 christos Exp $
+.\"	$NetBSD: ip.4,v 1.43 2018/01/01 12:45:07 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -126,7 +126,9 @@ or
 socket.
 Setting ipi_ifindex will cause the primary address of that interface
 to be used; setting ipi_addr will directly choose that address.
-The IP_PKTINFO cmsghdr structure from a received message may be
+The
+.Dv IP_PKTINFO
+cmsghdr structure from a received message may be
 used unchanged, in which case the outgoing message will be sent
 from the address the incoming message was received on.
 .Pp
@@ -198,7 +200,9 @@ to the control part of the message on a
 or
 .Dv SOCK_RAW
 socket.
-The IP_RECVDSTADDR cmsghdr structure from a received message may
+The
+.Dv IP_RECVDSTADDR
+cmsghdr structure from a received message may
 be used unchanged, in which case the outgoing message will be sent
 from the address the incoming message was received on.
 .Pp
