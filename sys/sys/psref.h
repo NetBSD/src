@@ -1,4 +1,4 @@
-/*	$NetBSD: psref.h,v 1.2 2016/12/16 20:12:11 christos Exp $	*/
+/*	$NetBSD: psref.h,v 1.2.8.1 2018/01/02 10:36:12 snj Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -69,7 +69,9 @@ struct psref_target {
  *	written only on the local CPU.
  */
 struct psref {
-	LIST_ENTRY(psref)		psref_entry;
+	SLIST_ENTRY(psref)		psref_entry;
+	/* To keep ABI with LIST_ENTRY(psref) version. */
+	void				*psref_unused0;
 	const struct psref_target	*psref_target;
 	struct lwp			*psref_lwp;
 	struct cpu_info			*psref_cpu;
