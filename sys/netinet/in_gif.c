@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.c,v 1.87.8.2 2017/12/10 09:41:31 snj Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.87.8.3 2018/01/02 10:48:51 snj Exp $	*/
 /*	$KAME: in_gif.c,v 1.66 2001/07/29 04:46:09 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.87.8.2 2017/12/10 09:41:31 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.87.8.3 2018/01/02 10:48:51 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -67,7 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.87.8.2 2017/12/10 09:41:31 snj Exp $");
 
 #include <net/net_osdep.h>
 
-static int gif_validate4(const struct ip *, struct gif_softc *,
+static int gif_validate4(const struct ip *, struct gif_variant *,
 	struct ifnet *);
 
 int ip_gif_ttl = GIF_TTL;
@@ -79,18 +79,25 @@ static const struct encapsw in_gif_encapsw = {
 	}
 };
 
-int
-in_gif_output(struct ifnet *ifp, int family, struct mbuf *m)
+static int
+in_gif_output(struct gif_variant *var, int family, struct mbuf *m)
 {
 	struct rtentry *rt;
 	struct route *ro;
 	struct gif_ro *gro;
-	struct gif_softc *sc = ifp->if_softc;
-	struct sockaddr_in *sin_src = satosin(sc->gif_psrc);
-	struct sockaddr_in *sin_dst = satosin(sc->gif_pdst);
+	struct gif_softc *sc;
+	struct sockaddr_in *sin_src;
+	struct sockaddr_in *sin_dst;
+	struct ifnet *ifp;
 	struct ip iphdr;	/* capsule IP header, host byte ordered */
 	int proto, error;
 	u_int8_t tos;
+
+	KASSERT(gif_heldref_variant(var));
+
+	sin_src = satosin(var->gv_psrc);
+	sin_dst = satosin(var->gv_pdst);
+	ifp = &var->gv_softc->gif_if;
 
 	if (sin_src == NULL || sin_dst == NULL ||
 	    sin_src->sin_family != AF_INET ||
@@ -167,10 +174,11 @@ in_gif_output(struct ifnet *ifp, int family, struct mbuf *m)
 		return ENOBUFS;
 	bcopy(&iphdr, mtod(m, struct ip *), sizeof(struct ip));
 
+	sc = var->gv_softc;
 	gro = percpu_getref(sc->gif_ro_percpu);
 	mutex_enter(&gro->gr_lock);
 	ro = &gro->gr_ro;
-	if ((rt = rtcache_lookup(ro, sc->gif_pdst)) == NULL) {
+	if ((rt = rtcache_lookup(ro, var->gv_pdst)) == NULL) {
 		mutex_exit(&gro->gr_lock);
 		percpu_putref(sc->gif_ro_percpu);
 		m_freem(m);
@@ -197,39 +205,45 @@ in_gif_output(struct ifnet *ifp, int family, struct mbuf *m)
 void
 in_gif_input(struct mbuf *m, int off, int proto, void *eparg)
 {
-	struct ifnet *gifp = eparg;
+	struct gif_softc *sc = eparg;
+	struct ifnet *gifp = &sc->gif_if;
 	const struct ip *ip;
 	int af;
 	u_int8_t otos;
 
-	KASSERT(gifp != NULL);
+	KASSERT(sc != NULL);
 
 	ip = mtod(m, const struct ip *);
 
-	if ((gifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING)) {
+	gifp = &sc->gif_if;
+	if ((gifp->if_flags & IFF_UP) == 0) {
 		m_freem(m);
 		ip_statinc(IP_STAT_NOGIF);
 		return;
 	}
 #ifndef GIF_ENCAPCHECK
-	struct gif_softc *sc = (struct gif_softc *)gifp->if_softc;
+	struct psref psref_var;
+	struct gif_variant *var = gif_getref_variant(sc, &psref_var);
 	/* other CPU do delete_tunnel */
-	if (sc->gif_psrc == NULL || sc->gif_pdst == NULL) {
+	if (var->gv_psrc == NULL || var->gv_pdst == NULL) {
+		gif_putref_variant(var, &psref_var);
 		m_freem(m);
 		ip_statinc(IP_STAT_NOGIF);
 		return;
 	}
 
 	struct ifnet *rcvif;
-	struct psref psref;
-	rcvif = m_get_rcvif_psref(m, &psref);
-	if (!gif_validate4(ip, sc, rcvif)) {
-		m_put_rcvif_psref(rcvif, &psref);
+	struct psref psref_rcvif;
+	rcvif = m_get_rcvif_psref(m, &psref_rcvif);
+	if (!gif_validate4(ip, var, rcvif)) {
+		m_put_rcvif_psref(rcvif, &psref_rcvif);
+		gif_putref_variant(var, &psref_var);
 		m_freem(m);
 		ip_statinc(IP_STAT_NOGIF);
 		return;
 	}
-	m_put_rcvif_psref(rcvif, &psref);
+	m_put_rcvif_psref(rcvif, &psref_rcvif);
+	gif_putref_variant(var, &psref_var);
 #endif
 	otos = ip->ip_tos;
 	m_adj(m, off);
@@ -286,14 +300,14 @@ in_gif_input(struct mbuf *m, int off, int proto, void *eparg)
  * validate outer address.
  */
 static int
-gif_validate4(const struct ip *ip, struct gif_softc *sc, struct ifnet *ifp)
+gif_validate4(const struct ip *ip, struct gif_variant *var, struct ifnet *ifp)
 {
 	struct sockaddr_in *src, *dst;
 	struct in_ifaddr *ia4;
 	int s;
 
-	src = satosin(sc->gif_psrc);
-	dst = satosin(sc->gif_pdst);
+	src = satosin(var->gv_psrc);
+	dst = satosin(var->gv_pdst);
 
 	/* check for address match */
 	if (src->sin_addr.s_addr != ip->ip_dst.s_addr ||
@@ -320,7 +334,7 @@ gif_validate4(const struct ip *ip, struct gif_softc *sc, struct ifnet *ifp)
 	pserialize_read_exit(s);
 
 	/* ingress filters on outer source */
-	if ((sc->gif_if.if_flags & IFF_LINK2) == 0 && ifp) {
+	if ((var->gv_softc->gif_if.if_flags & IFF_LINK2) == 0 && ifp) {
 		union {
 			struct sockaddr sa;
 			struct sockaddr_in sin;
@@ -332,7 +346,8 @@ gif_validate4(const struct ip *ip, struct gif_softc *sc, struct ifnet *ifp)
 		if (rt == NULL || rt->rt_ifp != ifp) {
 #if 0
 			log(LOG_WARNING, "%s: packet from 0x%x dropped "
-			    "due to ingress filter\n", if_name(&sc->gif_if),
+			    "due to ingress filter\n",
+			    if_name(&var->gv_softc->gif_if),
 			    (u_int32_t)ntohl(u.sin.sin_addr.s_addr));
 #endif
 			if (rt != NULL)
@@ -351,22 +366,19 @@ gif_validate4(const struct ip *ip, struct gif_softc *sc, struct ifnet *ifp)
  * matched the physical addr family.  see gif_encapcheck().
  */
 int
-gif_encapcheck4(struct mbuf *m, int off, int proto, void *arg)
+gif_encapcheck4(struct mbuf *m, int off, int proto, struct gif_variant *var)
 {
 	struct ip ip;
-	struct gif_softc *sc;
+
 	struct ifnet *ifp = NULL;
 	int r;
 	struct psref psref;
-
-	/* sanity check done in caller */
-	sc = arg;
 
 	m_copydata(m, 0, sizeof(ip), &ip);
 	if ((m->m_flags & M_PKTHDR) != 0)
 		ifp = m_get_rcvif_psref(m, &psref);
 
-	r = gif_validate4(&ip, sc, ifp);
+	r = gif_validate4(&ip, var, ifp);
 
 	m_put_rcvif_psref(ifp, &psref);
 	return r;
@@ -374,7 +386,7 @@ gif_encapcheck4(struct mbuf *m, int off, int proto, void *arg)
 #endif
 
 int
-in_gif_attach(struct gif_softc *sc)
+in_gif_attach(struct gif_variant *var)
 {
 #ifndef GIF_ENCAPCHECK
 	struct sockaddr_in mask4;
@@ -383,40 +395,33 @@ in_gif_attach(struct gif_softc *sc)
 	mask4.sin_len = sizeof(struct sockaddr_in);
 	mask4.sin_addr.s_addr = ~0;
 
-	if (!sc->gif_psrc || !sc->gif_pdst)
+	if (!var->gv_psrc || !var->gv_pdst)
 		return EINVAL;
-	sc->encap_cookie4 = encap_attach(AF_INET, -1, sc->gif_psrc,
-	    (struct sockaddr *)&mask4, sc->gif_pdst, (struct sockaddr *)&mask4,
-	    &in_gif_encapsw, sc);
+	var->gv_encap_cookie4 = encap_attach(AF_INET, -1, var->gv_psrc,
+	    (struct sockaddr *)&mask4, var->gv_pdst, (struct sockaddr *)&mask4,
+	    &in_gif_encapsw, var->gv_softc);
 #else
-	sc->encap_cookie4 = encap_attach_func(AF_INET, -1, gif_encapcheck,
-	    &in_gif_encapsw, sc);
+	var->gv_encap_cookie4 = encap_attach_func(AF_INET, -1, gif_encapcheck,
+	    &in_gif_encapsw, var->gv_softc);
 #endif
-	if (sc->encap_cookie4 == NULL)
+	if (var->gv_encap_cookie4 == NULL)
 		return EEXIST;
+
+	var->gv_output = in_gif_output;
 	return 0;
 }
 
 int
-in_gif_detach(struct gif_softc *sc)
+in_gif_detach(struct gif_variant *var)
 {
 	int error;
+	struct gif_softc *sc = var->gv_softc;
 
-	error = in_gif_pause(sc);
+	error = encap_detach(var->gv_encap_cookie4);
+	if (error == 0)
+		var->gv_encap_cookie4 = NULL;
 
 	percpu_foreach(sc->gif_ro_percpu, gif_rtcache_free_pc, NULL);
-
-	return error;
-}
-
-int
-in_gif_pause(struct gif_softc *sc)
-{
-	int error;
-
-	error = encap_detach(sc->encap_cookie4);
-	if (error == 0)
-		sc->encap_cookie4 = NULL;
 
 	return error;
 }
