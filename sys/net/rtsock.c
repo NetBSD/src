@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.213.2.4 2018/01/02 10:20:33 snj Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.213.2.5 2018/01/02 10:30:10 snj Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.213.2.4 2018/01/02 10:20:33 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.213.2.5 2018/01/02 10:30:10 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -608,7 +608,7 @@ route_output_report(struct rtentry *rt, struct rt_addrinfo *info,
 
 static struct ifaddr *
 route_output_get_ifa(const struct rt_addrinfo info, const struct rtentry *rt,
-    struct ifnet **ifp, struct psref *psref)
+    struct ifnet **ifp, struct psref *psref_ifp, struct psref *psref)
 {
 	struct ifaddr *ifa = NULL;
 
@@ -618,9 +618,11 @@ route_output_get_ifa(const struct rt_addrinfo info, const struct rtentry *rt,
 		if (ifa == NULL)
 			goto next;
 		*ifp = ifa->ifa_ifp;
+		if_acquire(*ifp, psref_ifp);
 		if (info.rti_info[RTAX_IFA] == NULL &&
 		    info.rti_info[RTAX_GATEWAY] == NULL)
 			goto next;
+		ifa_release(ifa, psref);
 		if (info.rti_info[RTAX_IFA] == NULL) {
 			/* route change <dst> <gw> -ifp <if> */
 			ifa = ifaof_ifpforaddr_psref(info.rti_info[RTAX_GATEWAY],
@@ -648,8 +650,14 @@ next:
 		    info.rti_info[RTAX_GATEWAY], psref);
 	}
 out:
-	if (ifa != NULL && *ifp == NULL)
+	if (ifa != NULL && *ifp == NULL) {
 		*ifp = ifa->ifa_ifp;
+		if_acquire(*ifp, psref_ifp);
+	}
+	if (ifa == NULL && *ifp != NULL) {
+		if_put(*ifp, psref_ifp);
+		*ifp = NULL;
+	}
 	return ifa;
 }
 
@@ -658,9 +666,9 @@ route_output_change(struct rtentry *rt, struct rt_addrinfo *info,
     struct rt_xmsghdr *rtm)
 {
 	int error = 0;
-	struct ifnet *ifp = NULL, *new_ifp;
+	struct ifnet *ifp = NULL, *new_ifp = NULL;
 	struct ifaddr *ifa = NULL, *new_ifa;
-	struct psref psref_ifa, psref_new_ifa, psref_ifp;
+	struct psref psref_ifa, psref_new_ifa, psref_ifp, psref_new_ifp;
 	bool newgw, ifp_changed = false;
 
 	/*
@@ -674,6 +682,7 @@ route_output_change(struct rtentry *rt, struct rt_addrinfo *info,
 	if (newgw || info->rti_info[RTAX_IFP] != NULL ||
 	    info->rti_info[RTAX_IFA] != NULL) {
 		ifp = rt_getifp(info, &psref_ifp);
+		/* info refers ifp so we need to keep a reference */
 		ifa = rt_getifa(info, &psref_ifa);
 		if (ifa == NULL) {
 			error = ENETUNREACH;
@@ -698,7 +707,8 @@ route_output_change(struct rtentry *rt, struct rt_addrinfo *info,
 	 * flags may also be different; ifp may be specified
 	 * by ll sockaddr when protocol address is ambiguous
 	 */
-	new_ifa = route_output_get_ifa(*info, rt, &new_ifp, &psref_new_ifa);
+	new_ifa = route_output_get_ifa(*info, rt, &new_ifp, &psref_new_ifp,
+	    &psref_new_ifa);
 	if (new_ifa != NULL) {
 		ifa_release(ifa, &psref_ifa);
 		ifa = new_ifa;
@@ -736,6 +746,7 @@ route_output_change(struct rtentry *rt, struct rt_addrinfo *info,
 	(void)ifp_changed; /* XXX gcc */
 #endif
 out:
+	if_put(new_ifp, &psref_new_ifp);
 	if_put(ifp, &psref_ifp);
 
 	return error;
