@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.355.2.2 2017/12/10 09:24:30 snj Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.355.2.3 2018/01/02 10:20:34 snj Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.355.2.2 2017/12/10 09:24:30 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.355.2.3 2018/01/02 10:20:34 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -438,15 +438,11 @@ ipintr(void *arg __unused)
 
 	KASSERT(cpu_softintr_p());
 
-#ifndef NET_MPSAFE
-	mutex_enter(softnet_lock);
-#endif
+	SOFTNET_LOCK_UNLESS_NET_MPSAFE();
 	while ((m = pktq_dequeue(ip_pktq)) != NULL) {
 		ip_input(m);
 	}
-#ifndef NET_MPSAFE
-	mutex_exit(softnet_lock);
-#endif
+	SOFTNET_UNLOCK_UNLESS_NET_MPSAFE();
 }
 
 /*
@@ -854,17 +850,11 @@ void
 ip_slowtimo(void)
 {
 
-#ifndef NET_MPSAFE
-	mutex_enter(softnet_lock);
-	KERNEL_LOCK(1, NULL);
-#endif
+	SOFTNET_KERNEL_LOCK_UNLESS_NET_MPSAFE();
 
 	ip_reass_slowtimo();
 
-#ifndef NET_MPSAFE
-	KERNEL_UNLOCK_ONE(NULL);
-	mutex_exit(softnet_lock);
-#endif
+	SOFTNET_KERNEL_UNLOCK_UNLESS_NET_MPSAFE();
 }
 
 /*

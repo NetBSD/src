@@ -1,4 +1,4 @@
-/*	$NetBSD: if_canloop.c,v 1.2 2017/05/27 21:02:56 bouyer Exp $	*/
+/*	$NetBSD: if_canloop.c,v 1.2.2.1 2018/01/02 10:20:34 snj Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_canloop.c,v 1.2 2017/05/27 21:02:56 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_canloop.c,v 1.2.2.1 2018/01/02 10:20:34 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_can.h"
@@ -111,8 +111,10 @@ canloop_clone_create(struct if_clone *ifc, int unit)
 
 	if_initname(ifp, ifc->ifc_name, unit);
 
-	ifp->if_flags = IFF_LOOPBACK | IFF_RUNNING;
-	ifp->if_extflags = IFEF_OUTPUT_MPSAFE;
+	ifp->if_flags = IFF_LOOPBACK;
+#ifdef NET_MPSAFE
+	ifp->if_extflags = IFEF_MPSAFE;
+#endif
 	ifp->if_ioctl = canloop_ioctl;
 	ifp->if_start = canloop_ifstart;
 	can_ifattach(ifp);
@@ -124,6 +126,7 @@ canloop_clone_create(struct if_clone *ifc, int unit)
 	MOWNER_ATTACH(ifp->if_mowner);
 #endif
 	canloop_count++;
+	ifp->if_flags |= IFF_RUNNING;
 
 	return (0);
 }
@@ -131,6 +134,8 @@ canloop_clone_create(struct if_clone *ifc, int unit)
 static int
 canloop_clone_destroy(struct ifnet *ifp)
 {
+
+	ifp->if_flags &= ~IFF_RUNNING;
 
 #ifdef MBUFTRACE
 	MOWNER_DETACH(ifp->if_mowner);

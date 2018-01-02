@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.279.2.2 2017/12/21 21:08:13 snj Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.279.2.3 2018/01/02 10:20:34 snj Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.279.2.2 2017/12/21 21:08:13 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.279.2.3 2018/01/02 10:20:34 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1771,7 +1771,10 @@ ip_add_membership(struct ip_moptions *imo, const struct sockopt *sopt)
 	 * Everything looks good; add a new record to the multicast
 	 * address list for the given interface.
 	 */
-	if ((imo->imo_membership[i] = in_addmulti(&ia, ifp)) == NULL) {
+	IFNET_LOCK(ifp);
+	imo->imo_membership[i] = in_addmulti(&ia, ifp);
+	IFNET_UNLOCK(ifp);
+	if (imo->imo_membership[i] == NULL) {
 		error = ENOBUFS;
 		goto out;
 	}
@@ -1830,7 +1833,9 @@ ip_drop_membership(struct ip_moptions *imo, const struct sockopt *sopt)
 	 * Give up the multicast address record to which the
 	 * membership points.
 	 */
+	IFNET_LOCK(ifp);
 	in_delmulti(imo->imo_membership[i]);
+	IFNET_UNLOCK(ifp);
 
 	/*
 	 * Remove the gap in the membership array.
@@ -1950,7 +1955,7 @@ ip_setmoptions(struct ip_moptions **pimo, const struct sockopt *sopt)
 	    imo->imo_multicast_ttl == IP_DEFAULT_MULTICAST_TTL &&
 	    imo->imo_multicast_loop == IP_DEFAULT_MULTICAST_LOOP &&
 	    imo->imo_num_memberships == 0) {
-		kmem_free(imo, sizeof(*imo));
+		kmem_intr_free(imo, sizeof(*imo));
 		*pimo = NULL;
 	}
 
@@ -2023,9 +2028,16 @@ ip_freemoptions(struct ip_moptions *imo)
 	/* The owner of imo (inp) should be protected by solock */
 
 	if (imo != NULL) {
-		for (i = 0; i < imo->imo_num_memberships; ++i)
-			in_delmulti(imo->imo_membership[i]);
-		kmem_free(imo, sizeof(*imo));
+		for (i = 0; i < imo->imo_num_memberships; ++i) {
+			struct in_multi *inm = imo->imo_membership[i];
+			struct ifnet *ifp = inm->inm_ifp;
+			IFNET_LOCK(ifp);
+			in_delmulti(inm);
+			/* ifp should not leave thanks to solock */
+			IFNET_UNLOCK(ifp);
+		}
+
+		kmem_intr_free(imo, sizeof(*imo));
 	}
 }
 
@@ -2061,13 +2073,9 @@ ip_mloopback(struct ifnet *ifp, struct mbuf *m, const struct sockaddr_in *dst)
 
 	ip->ip_sum = 0;
 	ip->ip_sum = in_cksum(copym, ip->ip_hl << 2);
-#ifndef NET_MPSAFE
-	KERNEL_LOCK(1, NULL);
-#endif
+	KERNEL_LOCK_UNLESS_NET_MPSAFE();
 	(void)looutput(ifp, copym, sintocsa(dst), NULL);
-#ifndef NET_MPSAFE
-	KERNEL_UNLOCK_ONE(NULL);
-#endif
+	KERNEL_UNLOCK_UNLESS_NET_MPSAFE();
 }
 
 /*

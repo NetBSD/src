@@ -1,4 +1,4 @@
-/*      $NetBSD: if_etherip.c,v 1.38.10.1 2017/12/10 10:10:25 snj Exp $        */
+/*      $NetBSD: if_etherip.c,v 1.38.10.2 2018/01/02 10:20:33 snj Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.38.10.1 2017/12/10 10:10:25 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.38.10.2 2018/01/02 10:20:33 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -549,12 +549,11 @@ etherip_set_tunnel(struct ifnet *ifp,
 	if (odst)
 		sockaddr_free(odst);
 
-	ifp->if_flags |= IFF_RUNNING;
-
 	sc->sc_si = softint_establish(SOFTINT_NET, etheripintr, sc);
 	if (sc->sc_si == NULL)
 		error = ENOMEM;
 
+	ifp->if_flags |= IFF_RUNNING;
 out:
 	splx(s);
 
@@ -568,6 +567,8 @@ etherip_delete_tunnel(struct ifnet *ifp)
 	int s;
 
 	s = splsoftnet();
+
+	ifp->if_flags &= ~IFF_RUNNING;
 
 	if (sc->sc_si) {
 		softint_disestablish(sc->sc_si);
@@ -583,7 +584,6 @@ etherip_delete_tunnel(struct ifnet *ifp)
 		sc->sc_dst = NULL;
 	}
 
-	ifp->if_flags &= ~IFF_RUNNING;
 	splx(s);
 }
 

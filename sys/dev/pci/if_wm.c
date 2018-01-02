@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.508.4.10 2017/12/10 10:16:09 snj Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.508.4.11 2018/01/02 10:20:33 snj Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.508.4.10 2017/12/10 10:16:09 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.508.4.11 2018/01/02 10:20:33 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2636,7 +2636,7 @@ alloc_retry:
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 #ifdef WM_MPSAFE
-	ifp->if_extflags = IFEF_START_MPSAFE;
+	ifp->if_extflags = IFEF_MPSAFE;
 #endif
 	ifp->if_ioctl = wm_ioctl;
 	if ((sc->sc_flags & WM_F_NEWQUEUE) != 0) {
@@ -7001,7 +7001,7 @@ wm_start(struct ifnet *ifp)
 	struct wm_txqueue *txq = &sc->sc_queue[0].wmq_txq;
 
 #ifdef WM_MPSAFE
-	KASSERT(ifp->if_extflags & IFEF_START_MPSAFE);
+	KASSERT(if_is_mpsafe(ifp));
 #endif
 	/*
 	 * ifp->if_obytes and ifp->if_omcasts are added in if_transmit()@if.c.
@@ -7594,7 +7594,7 @@ wm_nq_start(struct ifnet *ifp)
 	struct wm_txqueue *txq = &sc->sc_queue[0].wmq_txq;
 
 #ifdef WM_MPSAFE
-	KASSERT(ifp->if_extflags & IFEF_START_MPSAFE);
+	KASSERT(if_is_mpsafe(ifp));
 #endif
 	/*
 	 * ifp->if_obytes and ifp->if_omcasts are added in if_transmit()@if.c.

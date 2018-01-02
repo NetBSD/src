@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.203.2.3 2017/12/21 21:08:13 snj Exp $	*/
+/*	$NetBSD: in.c,v 1.203.2.4 2018/01/02 10:20:34 snj Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.203.2.3 2017/12/21 21:08:13 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.203.2.4 2018/01/02 10:20:34 snj Exp $");
 
 #include "arp.h"
 
@@ -751,13 +751,9 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 {
 	int error;
 
-#ifndef NET_MPSAFE
-	mutex_enter(softnet_lock);
-#endif
+	SOFTNET_LOCK_UNLESS_NET_MPSAFE();
 	error = in_control0(so, cmd, data, ifp);
-#ifndef NET_MPSAFE
-	mutex_exit(softnet_lock);
-#endif
+	SOFTNET_UNLOCK_UNLESS_NET_MPSAFE();
 
 	return error;
 }
@@ -916,11 +912,14 @@ in_addrhash_remove(struct in_ifaddr *ia)
 void
 in_purgeif(struct ifnet *ifp)		/* MUST be called at splsoftnet() */
 {
+
+	IFNET_LOCK(ifp);
 	if_purgeaddrs(ifp, AF_INET, in_purgeaddr);
 	igmp_purgeif(ifp);		/* manipulates pools */
 #ifdef MROUTING
 	ip_mrouter_detach(ifp);
 #endif
+	IFNET_UNLOCK(ifp);
 }
 
 /*

@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.125.6.4 2017/12/10 10:10:25 snj Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.125.6.5 2018/01/02 10:20:33 snj Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.125.6.4 2017/12/10 10:10:25 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.125.6.5 2018/01/02 10:20:33 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -301,7 +301,7 @@ pppoe_clone_create(struct if_clone *ifc, int unit)
 	sc->sc_sppp.pp_if.if_mtu = PPPOE_MAXMTU;
 	sc->sc_sppp.pp_if.if_flags = IFF_SIMPLEX|IFF_POINTOPOINT|IFF_MULTICAST;
 #ifdef PPPOE_MPSAFE
-	sc->sc_sppp.pp_if.if_extflags = IFEF_OUTPUT_MPSAFE;
+	sc->sc_sppp.pp_if.if_extflags = IFEF_MPSAFE;
 #endif
 	sc->sc_sppp.pp_if.if_type = IFT_PPP;
 	sc->sc_sppp.pp_if.if_hdrlen = sizeof(struct ether_header) + PPPOE_HEADERLEN;
@@ -475,9 +475,7 @@ pppoeintr(void)
 	struct mbuf *m;
 	int disc_done, data_done;
 
-#ifndef PPPOE_MPSAFE
-		mutex_enter(softnet_lock);
-#endif
+	SOFTNET_LOCK_UNLESS_NET_MPSAFE();
 
 	do {
 		disc_done = 0;
@@ -500,9 +498,8 @@ pppoeintr(void)
 			pppoe_data_input(m);
 		}
 	} while (disc_done || data_done);
-#ifndef PPPOE_MPSAFE
-		mutex_exit(softnet_lock);
-#endif
+
+	SOFTNET_UNLOCK_UNLESS_NET_MPSAFE();
 }
 
 /* analyze and handle a single received packet while not in session state */
