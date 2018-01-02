@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.161.4.1 2018/01/02 10:20:34 snj Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.161.4.2 2018/01/02 10:56:58 snj Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.161.4.1 2018/01/02 10:20:34 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.161.4.2 2018/01/02 10:56:58 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -512,6 +512,7 @@ in6_pcbconnect(void *v, struct sockaddr_in6 *sin6, struct lwp *l)
 		if (ia4 == NULL) {
 			if (error == 0)
 				error = EADDRNOTAVAIL;
+			curlwp_bindx(bound);
 			return (error);
 		}
 		memset(&mapped, 0, sizeof(mapped));
@@ -521,6 +522,7 @@ in6_pcbconnect(void *v, struct sockaddr_in6 *sin6, struct lwp *l)
 		ia4_release(ia4, &_psref);
 		in6a = &mapped;
 #else
+		curlwp_bindx(bound);
 		return EADDRNOTAVAIL;
 #endif
 	} else {

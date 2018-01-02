@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.203.2.4 2018/01/02 10:20:34 snj Exp $	*/
+/*	$NetBSD: in.c,v 1.203.2.5 2018/01/02 10:56:58 snj Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.203.2.4 2018/01/02 10:20:34 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.203.2.5 2018/01/02 10:56:58 snj Exp $");
 
 #include "arp.h"
 
@@ -845,7 +845,7 @@ in_purgeaddr(struct ifaddr *ifa)
 	struct in_ifaddr *ia = (void *) ifa;
 	struct ifnet *ifp = ifa->ifa_ifp;
 
-	KASSERT(!ifa_held(ifa));
+	/* KASSERT(!ifa_held(ifa)); XXX need ifa_not_held (psref_not_held) */
 
 	ifa->ifa_flags |= IFA_DESTROYING;
 	in_scrubaddr(ia);

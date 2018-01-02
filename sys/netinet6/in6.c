@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.245.2.4 2018/01/02 10:20:34 snj Exp $	*/
+/*	$NetBSD: in6.c,v 1.245.2.5 2018/01/02 10:56:58 snj Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.245.2.4 2018/01/02 10:20:34 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.245.2.5 2018/01/02 10:56:58 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1384,7 +1384,7 @@ in6_purgeaddr(struct ifaddr *ifa)
 	struct in6_ifaddr *ia = (struct in6_ifaddr *) ifa;
 	struct in6_multi_mship *imm;
 
-	KASSERT(!ifa_held(ifa));
+	/* KASSERT(!ifa_held(ifa)); XXX need ifa_not_held (psref_not_held) */
 	KASSERT(IFNET_LOCKED(ifp));
 
 	ifa->ifa_flags |= IFA_DESTROYING;
