@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.97 2018/01/01 19:11:07 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.98 2018/01/02 11:21:28 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -8684,4 +8684,112 @@ sys/arch/x86/x86/vm_machdep.c			1.30
 
 	Xen: Prevent userland from having access to the CPU ports.
 	[maxv, ticket #477]
+
+sys/arch/arm/sunxi/sunxi_emac.c			1.9
+sys/dev/ic/dwc_gmac.c				1.43-1.44
+sys/dev/pci/if_iwm.c				1.75
+sys/dev/pci/if_wm.c				1.543
+sys/dev/pci/ixgbe/ixgbe.c			1.112
+sys/dev/pci/ixgbe/ixv.c				1.74
+sys/kern/sys_socket.c				1.75
+sys/net/agr/if_agr.c				1.43
+sys/net/bpf.c					1.219
+sys/net/if.c					1.397, 1.399, 1.401-1.403, 1.406-1.410, 1.412-1.416
+sys/net/if.h					1.242-1.247, 1.250, 1.252-1.257
+sys/net/if_bridge.c				1.140 via patch, 1.142-1.146
+sys/net/if_etherip.c				1.40
+sys/net/if_ethersubr.c				1.243, 1.246
+sys/net/if_faith.c				1.57
+sys/net/if_gif.c				1.132
+sys/net/if_l2tp.c				1.15, 1.17
+sys/net/if_loop.c				1.98-1.101
+sys/net/if_media.c				1.35
+sys/net/if_pppoe.c				1.131-1.132
+sys/net/if_spppsubr.c				1.176-1.177
+sys/net/if_tun.c				1.142
+sys/net/if_vlan.c				1.107, 1.109, 1.114-1.121
+sys/net/npf/npf_ifaddr.c			1.3
+sys/net/npf/npf_os.c				1.8-1.9
+sys/net/rtsock.c				1.230
+sys/netcan/if_canloop.c				1.3-1.5
+sys/netinet/if_arp.c				1.255
+sys/netinet/igmp.c				1.65
+sys/netinet/in.c				1.210-1.211
+sys/netinet/in_pcb.c				1.180
+sys/netinet/ip_carp.c				1.92, 1.94
+sys/netinet/ip_flow.c				1.81
+sys/netinet/ip_input.c				1.362
+sys/netinet/ip_mroute.c				1.147
+sys/netinet/ip_output.c				1.283, 1.285, 1.287
+sys/netinet6/frag6.c				1.61
+sys/netinet6/in6.c				1.251, 1.255
+sys/netinet6/in6_pcb.c				1.162
+sys/netinet6/ip6_flow.c				1.35
+sys/netinet6/ip6_input.c			1.183
+sys/netinet6/ip6_output.c			1.196
+sys/netinet6/mld6.c				1.90
+sys/netinet6/nd6.c				1.239-1.240
+sys/netinet6/nd6_nbr.c				1.139
+sys/netinet6/nd6_rtr.c				1.136
+sys/netipsec/ipsec_output.c			1.65
+sys/rump/net/lib/libnetinet/netinet_component.c	1.9-1.10
+
+	- Protect ifnet#if_flags with IFNET_LOCK surely
+	- Protect ifnet#if_link_queue
+	- Unify IFEF_*_MPSAFE flags into IFEF_MPSAFE
+	- Don't hold KERNEL_LOCK on if_ioctl if IFEF_MPSAFE
+	- Enable IFEF_MPSAFE only if NET_MPSAFE
+	[ozaki-r, ticket #456]
+
+sys/net/rtsock.c				1.233-1.234, 1.236
+
+	- Protect ifp returned from route_output_get_ifa surely
+	- Fix a bug that tries to psref_acquire ifa with a psref used before
+	- Fix compile error (may be used uninitialized)
+	[ozaki-r, ticket #457]
+
+sys/kern/subr_psref.c				1.8-1.9
+sys/sys/psref.h					1.3
+
+	- Fix psref(9) part of PR kern/52515.
+	- Improve debugging functions.
+	[ozaki-r, ticket #458]
+
+sys/opencrypto/crypto.c				1.101
+
+	fix opencrypto(9) part of PR kern/52515
+	percpu data use pointers to TAILQ instead of TAILQ itself.
+	[knakahara, ticket #460]
+
+sys/netinet/in_l2tp.c				1.9
+sys/netinet6/in6_l2tp.c				1.12
+
+	fix mbuf leaks.
+	[knakahara, ticket #461]
+
+sys/net/if_gif.c				1.133, 1.134, 1.137
+sys/net/if_gif.h				1.28-1.29
+sys/netinet/in_gif.c				1.90-1.91
+sys/netinet/in_gif.h				1.18
+sys/netinet6/in6_gif.c				1.88-1.89
+sys/netinet6/in6_gif.h				1.17
+
+	- preserve gif(4) configs by psref(9) like vlan(4) and l2tp(4).
+	- update gif(4) locking notes.
+	- IFF_RUNNING checking in Rx and Tx processing is unnecessary now.
+	- remove duplicated null ckeck
+	[knakahara, ticket #462]
+
+sys/netinet/in.c				1.212
+sys/netinet/ip_output.c				1.288
+sys/netinet6/in6.c				1.256
+sys/netinet6/in6_pcb.c				1.163
+sys/sys/lwp.h					1.176
+
+	- Add missing curlwp_bindx
+	- Check LP_BOUND is surely set in curlwp_bindx
+	  This may find an extra call of curlwp_bindx.
+	- Fix usage of curlwp_bind in ip_output
+	- Fix wrong usage of psref_held
+	[ozaki-r, ticket #463]
 
