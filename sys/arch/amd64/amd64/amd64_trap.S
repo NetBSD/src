@@ -1,4 +1,4 @@
-/*	$NetBSD: amd64_trap.S,v 1.13 2017/11/26 14:54:43 maxv Exp $	*/
+/*	$NetBSD: amd64_trap.S,v 1.14 2018/01/02 18:41:14 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2017 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #if 0
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: amd64_trap.S,v 1.13 2017/11/26 14:54:43 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amd64_trap.S,v 1.14 2018/01/02 18:41:14 maxv Exp $");
 #endif
 
 /*
@@ -118,8 +118,7 @@ IDTVEC(trap02)
 #if defined(XEN)
 	ZTRAP(T_NMI)
 #else
-	pushq	$0
-	pushq	$T_NMI
+	ZTRAP_NJ(T_NMI)
 	subq	$TF_REGSIZE,%rsp
 	INTR_SAVE_GPRS
 	cld
@@ -230,9 +229,9 @@ IDTVEC(trap09)
 	ZTRAP(T_FPOPFLT)
 IDTVEC_END(trap09)
 
-IDTVEC(trap0a)
+IDTVEC(trap10)
 	TRAP(T_TSSFLT)
-IDTVEC_END(trap0a)
+IDTVEC_END(trap10)
 
 #ifdef XEN
 /*
@@ -243,37 +242,35 @@ IDTVEC_END(trap0a)
 #define check_swapgs alltraps
 #endif
 
-IDTVEC(trap0b)		/* #NP() Segment not present */
+IDTVEC(trap11)		/* #NP() Segment not present */
 	TRAP_NJ(T_SEGNPFLT)
 	jmp	check_swapgs
-IDTVEC_END(trap0b)
+IDTVEC_END(trap11)
 
-IDTVEC(trap0c)		/* #SS() Stack exception */
+IDTVEC(trap12)		/* #SS() Stack exception */
 	TRAP_NJ(T_STKFLT)
 	jmp	check_swapgs
-IDTVEC_END(trap0c)
+IDTVEC_END(trap12)
 
-IDTVEC(trap0d)		/* #GP() General protection */
+IDTVEC(trap13)		/* #GP() General protection */
 	TRAP_NJ(T_PROTFLT)
 	jmp	check_swapgs
-IDTVEC_END(trap0d)
+IDTVEC_END(trap13)
 
-IDTVEC(trap0e)
+IDTVEC(trap14)
 	TRAP(T_PAGEFLT)
-IDTVEC_END(trap0e)
+IDTVEC_END(trap14)
 
-IDTVEC(intrspurious)
-IDTVEC(trap0f)
+IDTVEC(trap15)
 	ZTRAP_NJ(T_ASTFLT)
 	INTRENTRY
 #ifdef DIAGNOSTIC
 	movl	CPUVAR(ILEVEL),%ebx
 #endif
 	jmp	.Lalltraps_checkusr
-IDTVEC_END(trap0f)
-IDTVEC_END(intrspurious)
+IDTVEC_END(trap15)
 
-IDTVEC(trap10)
+IDTVEC(trap16)
 	ZTRAP_NJ(T_ARITHTRAP)
 .Ldo_fputrap:
 	INTRENTRY
@@ -283,47 +280,47 @@ IDTVEC(trap10)
 	movq	%rsp,%rdi
 	call	_C_LABEL(fputrap)
 	jmp	.Lalltraps_checkusr
-IDTVEC_END(trap10)
+IDTVEC_END(trap16)
 
-IDTVEC(trap11)
+IDTVEC(trap17)
 	TRAP(T_ALIGNFLT)
-IDTVEC_END(trap11)
+IDTVEC_END(trap17)
 
-IDTVEC(trap12)
+IDTVEC(trap18)
 	ZTRAP(T_MCA)
-IDTVEC_END(trap12)
+IDTVEC_END(trap18)
 
-IDTVEC(trap13)
+IDTVEC(trap19)
 	ZTRAP_NJ(T_XMM)
 	jmp	.Ldo_fputrap
-IDTVEC_END(trap13)
+IDTVEC_END(trap19)
 
-IDTVEC(trap14)
-IDTVEC(trap15)
-IDTVEC(trap16)
-IDTVEC(trap17)
-IDTVEC(trap18)
-IDTVEC(trap19)
-IDTVEC(trap1a)
-IDTVEC(trap1b)
-IDTVEC(trap1c)
-IDTVEC(trap1d)
-IDTVEC(trap1e)
-IDTVEC(trap1f)
+IDTVEC(trap20)
+IDTVEC(trap21)
+IDTVEC(trap22)
+IDTVEC(trap23)
+IDTVEC(trap24)
+IDTVEC(trap25)
+IDTVEC(trap26)
+IDTVEC(trap27)
+IDTVEC(trap28)
+IDTVEC(trap29)
+IDTVEC(trap30)
+IDTVEC(trap31)
 	/* 20 - 31 reserved for future exp */
 	ZTRAP(T_RESERVED)
-IDTVEC_END(trap1f)
-IDTVEC_END(trap1e)
-IDTVEC_END(trap1d)
-IDTVEC_END(trap1c)
-IDTVEC_END(trap1b)
-IDTVEC_END(trap1a)
-IDTVEC_END(trap19)
-IDTVEC_END(trap18)
-IDTVEC_END(trap17)
-IDTVEC_END(trap16)
-IDTVEC_END(trap15)
-IDTVEC_END(trap14)
+IDTVEC_END(trap20)
+IDTVEC_END(trap21)
+IDTVEC_END(trap22)
+IDTVEC_END(trap23)
+IDTVEC_END(trap24)
+IDTVEC_END(trap25)
+IDTVEC_END(trap26)
+IDTVEC_END(trap27)
+IDTVEC_END(trap28)
+IDTVEC_END(trap29)
+IDTVEC_END(trap30)
+IDTVEC_END(trap31)
 
 IDTVEC(exceptions)
 	.quad	_C_LABEL(Xtrap00), _C_LABEL(Xtrap01)
@@ -331,18 +328,27 @@ IDTVEC(exceptions)
 	.quad	_C_LABEL(Xtrap04), _C_LABEL(Xtrap05)
 	.quad	_C_LABEL(Xtrap06), _C_LABEL(Xtrap07)
 	.quad	_C_LABEL(Xtrap08), _C_LABEL(Xtrap09)
-	.quad	_C_LABEL(Xtrap0a), _C_LABEL(Xtrap0b)
-	.quad	_C_LABEL(Xtrap0c), _C_LABEL(Xtrap0d)
-	.quad	_C_LABEL(Xtrap0e), _C_LABEL(Xtrap0f)
 	.quad	_C_LABEL(Xtrap10), _C_LABEL(Xtrap11)
 	.quad	_C_LABEL(Xtrap12), _C_LABEL(Xtrap13)
 	.quad	_C_LABEL(Xtrap14), _C_LABEL(Xtrap15)
 	.quad	_C_LABEL(Xtrap16), _C_LABEL(Xtrap17)
 	.quad	_C_LABEL(Xtrap18), _C_LABEL(Xtrap19)
-	.quad	_C_LABEL(Xtrap1a), _C_LABEL(Xtrap1b)
-	.quad	_C_LABEL(Xtrap1c), _C_LABEL(Xtrap1d)
-	.quad	_C_LABEL(Xtrap1e), _C_LABEL(Xtrap1f)
+	.quad	_C_LABEL(Xtrap20), _C_LABEL(Xtrap21)
+	.quad	_C_LABEL(Xtrap22), _C_LABEL(Xtrap23)
+	.quad	_C_LABEL(Xtrap24), _C_LABEL(Xtrap25)
+	.quad	_C_LABEL(Xtrap26), _C_LABEL(Xtrap27)
+	.quad	_C_LABEL(Xtrap28), _C_LABEL(Xtrap29)
+	.quad	_C_LABEL(Xtrap30), _C_LABEL(Xtrap31)
 IDTVEC_END(exceptions)
+
+IDTVEC(intrspurious)
+	ZTRAP_NJ(T_ASTFLT)
+	INTRENTRY
+#ifdef DIAGNOSTIC
+	movl	CPUVAR(ILEVEL),%ebx
+#endif
+	jmp	.Lalltraps_checkusr
+IDTVEC_END(intrspurious)
 
 /*
  * trap() calls here when it detects a fault in INTRFASTEXIT (loading the
