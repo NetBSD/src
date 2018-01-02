@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.78.2.3 2017/08/05 03:59:21 snj Exp $ */
+/*	$NetBSD: crypto.c,v 1.78.2.4 2018/01/02 10:38:36 snj Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.78.2.3 2017/08/05 03:59:21 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.78.2.4 2018/01/02 10:38:36 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -105,8 +105,8 @@ static	void *crypto_ret_si;
 TAILQ_HEAD(crypto_crp_q, cryptop);
 TAILQ_HEAD(crypto_crp_kq, cryptkop);
 struct crypto_crp_qs {
-	struct crypto_crp_q crp_q;
-	struct crypto_crp_kq crp_kq;
+	struct crypto_crp_q *crp_q;
+	struct crypto_crp_kq *crp_kq;
 };
 static percpu_t *crypto_crp_qs_percpu;
 
@@ -136,7 +136,7 @@ crypto_crp_q_is_busy_pc(void *p, void *arg, struct cpu_info *ci __unused)
 	struct crypto_crp_qs *qs_pc = p;
 	bool *isempty = arg;
 
-	if (!TAILQ_EMPTY(&qs_pc->crp_q) || !TAILQ_EMPTY(&qs_pc->crp_kq))
+	if (!TAILQ_EMPTY(qs_pc->crp_q) || !TAILQ_EMPTY(qs_pc->crp_kq))
 		*isempty = true;
 }
 
@@ -145,8 +145,11 @@ crypto_crp_qs_init_pc(void *p, void *arg __unused, struct cpu_info *ci __unused)
 {
 	struct crypto_crp_qs *qs = p;
 
-	TAILQ_INIT(&qs->crp_q);
-	TAILQ_INIT(&qs->crp_kq);
+	qs->crp_q = kmem_alloc(sizeof(struct crypto_crp_q), KM_SLEEP);
+	qs->crp_kq = kmem_alloc(sizeof(struct crypto_crp_kq), KM_SLEEP);
+
+	TAILQ_INIT(qs->crp_q);
+	TAILQ_INIT(qs->crp_kq);
 }
 
 /*
@@ -1310,7 +1313,7 @@ crypto_dispatch(struct cryptop *crp)
 		 * don't care list order in batch job.
 		 */
 		crp_qs = crypto_get_crp_qs(&s);
-		crp_q = &crp_qs->crp_q;
+		crp_q = crp_qs->crp_q;
 		wasempty  = TAILQ_EMPTY(crp_q);
 		TAILQ_INSERT_TAIL(crp_q, crp, crp_next);
 		crypto_put_crp_qs(&s);
@@ -1325,7 +1328,7 @@ crypto_dispatch(struct cryptop *crp)
 	}
 
 	crp_qs = crypto_get_crp_qs(&s);
-	crp_q = &crp_qs->crp_q;
+	crp_q = crp_qs->crp_q;
 	cap = crypto_checkdriver_lock(CRYPTO_SESID2HID(crp->crp_sid));
 	/*
 	 * TODO:
@@ -1402,7 +1405,7 @@ crypto_kdispatch(struct cryptkop *krp)
 	cryptostats.cs_kops++;
 
 	crp_qs = crypto_get_crp_qs(&s);
-	crp_kq = &crp_qs->crp_kq;
+	crp_kq = crp_qs->crp_kq;
 	cap = crypto_checkdriver_lock(krp->krp_hid);
 	/*
 	 * TODO:
@@ -1908,8 +1911,8 @@ cryptointr(void *arg __unused)
 
 	cryptostats.cs_intrs++;
 	crp_qs = crypto_get_crp_qs(&s);
-	crp_q = &crp_qs->crp_q;
-	crp_kq = &crp_qs->crp_kq;
+	crp_q = crp_qs->crp_q;
+	crp_kq = crp_qs->crp_kq;
 	do {
 		/*
 		 * Find the first element in the queue that can be
