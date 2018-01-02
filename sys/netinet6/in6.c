@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.245.2.3 2017/11/30 15:57:37 martin Exp $	*/
+/*	$NetBSD: in6.c,v 1.245.2.4 2018/01/02 10:20:34 snj Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.245.2.3 2017/11/30 15:57:37 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.245.2.4 2018/01/02 10:20:34 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -767,13 +767,9 @@ in6_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 	}
 
 	s = splsoftnet();
-#ifndef NET_MPSAFE
-	mutex_enter(softnet_lock);
-#endif
+	SOFTNET_LOCK_UNLESS_NET_MPSAFE();
 	error = in6_control1(so , cmd, data, ifp);
-#ifndef NET_MPSAFE
-	mutex_exit(softnet_lock);
-#endif
+	SOFTNET_UNLOCK_UNLESS_NET_MPSAFE();
 	splx(s);
 	return error;
 }
@@ -1389,6 +1385,7 @@ in6_purgeaddr(struct ifaddr *ifa)
 	struct in6_multi_mship *imm;
 
 	KASSERT(!ifa_held(ifa));
+	KASSERT(IFNET_LOCKED(ifp));
 
 	ifa->ifa_flags |= IFA_DESTROYING;
 
@@ -1404,12 +1401,14 @@ in6_purgeaddr(struct ifaddr *ifa)
 	/*
 	 * leave from multicast groups we have joined for the interface
 	 */
+    again:
 	mutex_enter(&in6_ifaddr_lock);
 	while ((imm = LIST_FIRST(&ia->ia6_memberships)) != NULL) {
 		LIST_REMOVE(imm, i6mm_chain);
 		mutex_exit(&in6_ifaddr_lock);
+		KASSERT(imm->i6mm_maddr->in6m_ifp == ifp);
 		in6_leavegroup(imm);
-		mutex_enter(&in6_ifaddr_lock);
+		goto again;
 	}
 	mutex_exit(&in6_ifaddr_lock);
 
@@ -1460,7 +1459,9 @@ void
 in6_purgeif(struct ifnet *ifp)
 {
 
+	IFNET_LOCK(ifp);
 	in6_ifdetach(ifp);
+	IFNET_UNLOCK(ifp);
 }
 
 void
@@ -2716,13 +2717,9 @@ in6_domifdetach(struct ifnet *ifp, void *aux)
 
 	lltable_free(ext->lltable);
 	ext->lltable = NULL;
-#ifndef NET_MPSAFE
-	mutex_enter(softnet_lock);
-#endif
+	SOFTNET_LOCK_UNLESS_NET_MPSAFE();
 	nd6_ifdetach(ifp, ext);
-#ifndef NET_MPSAFE
-	mutex_exit(softnet_lock);
-#endif
+	SOFTNET_UNLOCK_UNLESS_NET_MPSAFE();
 	free(ext->in6_ifstat, M_IFADDR);
 	free(ext->icmp6_ifstat, M_IFADDR);
 	scope6_ifdetach(ext->scope6_id);

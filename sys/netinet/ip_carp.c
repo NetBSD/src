@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.90.2.2 2017/12/10 10:10:25 snj Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.90.2.3 2018/01/02 10:20:34 snj Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.90.2.2 2017/12/10 10:10:25 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.90.2.3 2018/01/02 10:20:34 snj Exp $");
 
 /*
  * TODO:
@@ -895,7 +895,6 @@ carp_clone_create(struct if_clone *ifc, int unit)
 	/* Overwrite ethernet defaults */
 	ifp->if_type = IFT_CARP;
 	ifp->if_output = carp_output;
-	ifp->if_extflags &= ~IFEF_OUTPUT_MPSAFE;
 	if_register(ifp);
 
 	return (0);
@@ -2236,7 +2235,13 @@ carp_set_state(struct carp_softc *sc, int state)
 		link_state = LINK_STATE_UNKNOWN;
 		break;
 	}
+	/*
+	 * The lock is needed to serialize a call of
+	 * if_link_state_change_softint from here and a call from softint.
+	 */
+	KERNEL_LOCK(1, NULL);
 	if_link_state_change_softint(&sc->sc_if, link_state);
+	KERNEL_UNLOCK_ONE(NULL);
 }
 
 void

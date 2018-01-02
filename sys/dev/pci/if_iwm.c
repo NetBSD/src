@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.73.2.2 2017/12/10 10:10:24 snj Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.73.2.3 2018/01/02 10:20:33 snj Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.148 2016/11/19 21:07:08 stsp Exp	*/
 #define IEEE80211_NO_HT
 /*
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.73.2.2 2017/12/10 10:10:24 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.73.2.3 2018/01/02 10:20:33 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -6321,7 +6321,7 @@ iwm_newstate_cb(struct work *wk, void *v)
 	int arg = iwmns->ns_arg;
 	int s;
 
-	kmem_free(iwmns, sizeof(*iwmns));
+	kmem_intr_free(iwmns, sizeof(*iwmns));
 
 	s = splnet();
 

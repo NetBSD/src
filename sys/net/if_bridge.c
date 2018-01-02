@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.134.6.4 2017/12/10 10:10:24 snj Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.134.6.5 2018/01/02 10:20:33 snj Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.134.6.4 2017/12/10 10:10:24 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.134.6.5 2018/01/02 10:20:33 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -424,7 +424,10 @@ bridge_clone_create(struct if_clone *ifc, int unit)
 
 	if_initname(ifp, ifc->ifc_name, unit);
 	ifp->if_softc = sc;
-	ifp->if_extflags = IFEF_OUTPUT_MPSAFE | IFEF_NO_LINK_STATE_CHANGE;
+	ifp->if_extflags = IFEF_NO_LINK_STATE_CHANGE;
+#ifdef NET_MPSAFE
+	ifp->if_extflags |= IFEF_MPSAFE;
+#endif
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_ioctl = bridge_ioctl;
 	ifp->if_output = bridge_output;
@@ -777,7 +780,10 @@ bridge_ioctl_add(struct bridge_softc *sc, void *arg)
 		}
 		/* FALLTHROUGH */
 	case IFT_L2TP:
-		if ((error = ether_enable_vlan_mtu(ifs)) > 0)
+		IFNET_LOCK(ifs);
+		error = ether_enable_vlan_mtu(ifs);
+		IFNET_UNLOCK(ifs);
+		if (error > 0)
 			goto out;
 		/*
 		 * Place the interface into promiscuous mode.
@@ -858,7 +864,9 @@ bridge_ioctl_del(struct bridge_softc *sc, void *arg)
 		 * Don't call it with holding a spin lock.
 		 */
 		(void) ifpromisc(ifs, 0);
+		IFNET_LOCK(ifs);
 		(void) ether_disable_vlan_mtu(ifs);
+		IFNET_UNLOCK(ifs);
 		break;
 	default:
 #ifdef DIAGNOSTIC
@@ -1332,14 +1340,13 @@ bridge_init(struct ifnet *ifp)
 {
 	struct bridge_softc *sc = ifp->if_softc;
 
-	if (ifp->if_flags & IFF_RUNNING)
-		return 0;
+	KASSERT((ifp->if_flags & IFF_RUNNING) == 0);
 
 	callout_reset(&sc->sc_brcallout, bridge_rtable_prune_period * hz,
 	    bridge_timer, sc);
+	bstp_initialization(sc);
 
 	ifp->if_flags |= IFF_RUNNING;
-	bstp_initialization(sc);
 	return 0;
 }
 
@@ -1353,15 +1360,12 @@ bridge_stop(struct ifnet *ifp, int disable)
 {
 	struct bridge_softc *sc = ifp->if_softc;
 
-	if ((ifp->if_flags & IFF_RUNNING) == 0)
-		return;
+	KASSERT((ifp->if_flags & IFF_RUNNING) != 0);
+	ifp->if_flags &= ~IFF_RUNNING;
 
 	callout_stop(&sc->sc_brcallout);
 	bstp_stop(sc);
-
 	bridge_rtflush(sc, IFBF_FLUSHDYN);
-
-	ifp->if_flags &= ~IFF_RUNNING;
 }
 
 /*
@@ -1445,7 +1449,7 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
 	/*
 	 * bridge_output() is called from ether_output(), furthermore
 	 * ifp argument doesn't point to bridge(4). So, don't assert
-	 * IFEF_OUTPUT_MPSAFE here.
+	 * IFEF_MPSAFE here.
 	 */
 
 	if (m->m_len < ETHER_HDR_LEN) {

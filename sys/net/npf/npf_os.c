@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_os.c,v 1.6.8.1 2017/07/25 02:17:16 snj Exp $	*/
+/*	$NetBSD: npf_os.c,v 1.6.8.2 2018/01/02 10:20:33 snj Exp $	*/
 
 /*-
  * Copyright (c) 2009-2016 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_os.c,v 1.6.8.1 2017/07/25 02:17:16 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_os.c,v 1.6.8.2 2018/01/02 10:20:33 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pf.h"
@@ -313,11 +313,11 @@ npf_ifop_flush(void *arg)
 	ifnet_t *ifp;
 
 	KERNEL_LOCK(1, NULL);
-	IFNET_LOCK();
+	IFNET_GLOBAL_LOCK();
 	IFNET_WRITER_FOREACH(ifp) {
 		ifp->if_pf_kif = arg;
 	}
-	IFNET_UNLOCK();
+	IFNET_GLOBAL_UNLOCK();
 	KERNEL_UNLOCK_ONE(NULL);
 }
 
@@ -397,10 +397,7 @@ npf_pfil_register(bool init)
 	npf_t *npf = npf_getkernctx();
 	int error = 0;
 
-#ifndef NET_MPSAFE
-	mutex_enter(softnet_lock);
-	KERNEL_LOCK(1, NULL);
-#endif
+	SOFTNET_KERNEL_LOCK_UNLESS_NET_MPSAFE();
 
 	/* Init: interface re-config and attach/detach hook. */
 	if (!npf_ph_if) {
@@ -455,10 +452,7 @@ npf_pfil_register(bool init)
 	npf_ifaddr_syncall(npf);
 	pfil_registered = true;
 out:
-#ifndef NET_MPSAFE
-	KERNEL_UNLOCK_ONE(NULL);
-	mutex_exit(softnet_lock);
-#endif
+	SOFTNET_KERNEL_UNLOCK_UNLESS_NET_MPSAFE();
 
 	return error;
 }
@@ -471,10 +465,7 @@ npf_pfil_unregister(bool fini)
 {
 	npf_t *npf = npf_getkernctx();
 
-#ifndef NET_MPSAFE
-	mutex_enter(softnet_lock);
-	KERNEL_LOCK(1, NULL);
-#endif
+	SOFTNET_KERNEL_LOCK_UNLESS_NET_MPSAFE();
 
 	if (fini && npf_ph_if) {
 		(void)pfil_remove_ihook(npf_ifhook, NULL,
@@ -492,10 +483,7 @@ npf_pfil_unregister(bool fini)
 	}
 	pfil_registered = false;
 
-#ifndef NET_MPSAFE
-	KERNEL_UNLOCK_ONE(NULL);
-	mutex_exit(softnet_lock);
-#endif
+	SOFTNET_KERNEL_UNLOCK_UNLESS_NET_MPSAFE();
 }
 
 bool

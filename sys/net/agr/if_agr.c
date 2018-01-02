@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agr.c,v 1.41 2017/01/28 22:56:09 maya Exp $	*/
+/*	$NetBSD: if_agr.c,v 1.41.6.1 2018/01/02 10:20:33 snj Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.41 2017/01/28 22:56:09 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.41.6.1 2018/01/02 10:20:33 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -703,8 +703,6 @@ agr_addport(struct ifnet *ifp, struct ifnet *ifp_port)
 		goto cleanup;
 	}
 
-	ifp->if_flags |= IFF_RUNNING;
-
 	agrport_config_promisc(port, (ifp->if_flags & IFF_PROMISC) != 0);
 	error = (*sc->sc_iftop->iftop_configmulti_port)(sc, port, true);
 	if (error) {
@@ -719,6 +717,8 @@ out:
 	if (error && port) {
 		free(port, M_DEVBUF);
 	}
+	if (error == 0)
+		ifp->if_flags |= IFF_RUNNING;
 	return error;
 
 cleanup:

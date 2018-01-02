@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.250.2.3 2017/11/17 20:24:05 snj Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.250.2.4 2018/01/02 10:20:34 snj Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.250.2.3 2017/11/17 20:24:05 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.250.2.4 2018/01/02 10:20:34 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -920,10 +920,7 @@ arpintr(void)
 	int s;
 	int arplen;
 
-#ifndef NET_MPSAFE
-	mutex_enter(softnet_lock);
-	KERNEL_LOCK(1, NULL);
-#endif
+	SOFTNET_KERNEL_LOCK_UNLESS_NET_MPSAFE();
 	for (;;) {
 		struct ifnet *rcvif;
 
@@ -980,12 +977,8 @@ free:
 		m_freem(m);
 	}
 out:
-#ifndef NET_MPSAFE
-	KERNEL_UNLOCK_ONE(NULL);
-	mutex_exit(softnet_lock);
-#else
+	SOFTNET_KERNEL_UNLOCK_UNLESS_NET_MPSAFE();
 	return; /* XXX gcc */
-#endif
 }
 
 /*
@@ -1689,10 +1682,7 @@ arp_dad_timer(struct ifaddr *ifa)
 	char ipbuf[INET_ADDRSTRLEN];
 	bool need_free = false;
 
-#ifndef NET_MPSAFE
-	mutex_enter(softnet_lock);
-	KERNEL_LOCK(1, NULL);
-#endif
+	SOFTNET_KERNEL_LOCK_UNLESS_NET_MPSAFE();
 	mutex_enter(&arp_dad_lock);
 
 	/* Sanity check */
@@ -1783,10 +1773,7 @@ done:
 		ifafree(ifa);
 	}
 
-#ifndef NET_MPSAFE
-	KERNEL_UNLOCK_ONE(NULL);
-	mutex_exit(softnet_lock);
-#endif
+	SOFTNET_KERNEL_UNLOCK_UNLESS_NET_MPSAFE();
 }
 
 static void

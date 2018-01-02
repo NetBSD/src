@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.89 2017/05/13 20:13:26 kardel Exp $	*/
+/*	$NetBSD: mld6.c,v 1.89.2.1 2018/01/02 10:20:34 snj Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.89 2017/05/13 20:13:26 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.89.2.1 2018/01/02 10:20:34 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -242,10 +242,7 @@ mld_timeo(void *arg)
 
 	KASSERT(in6m->in6m_refcount > 0);
 
-#ifndef NET_MPSAFE
-	mutex_enter(softnet_lock);
-	KERNEL_LOCK(1, NULL);
-#endif
+	SOFTNET_KERNEL_LOCK_UNLESS_NET_MPSAFE();
 	rw_enter(&in6_multilock, RW_WRITER);
 	if (in6m->in6m_timer == IN6M_TIMER_UNDEF)
 		goto out;
@@ -263,12 +260,7 @@ mld_timeo(void *arg)
 
 out:
 	rw_exit(&in6_multilock);
-#ifndef NET_MPSAFE
-	KERNEL_UNLOCK_ONE(NULL);
-	mutex_exit(softnet_lock);
-#else
-	return;
-#endif
+	SOFTNET_KERNEL_UNLOCK_UNLESS_NET_MPSAFE();
 }
 
 static u_long

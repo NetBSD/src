@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_socket.c,v 1.74 2016/07/07 06:55:43 msaitoh Exp $	*/
+/*	$NetBSD: sys_socket.c,v 1.74.10.1 2018/01/02 10:20:33 snj Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.74 2016/07/07 06:55:43 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.74.10.1 2018/01/02 10:20:33 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -197,14 +197,18 @@ soo_ioctl(file_t *fp, u_long cmd, void *data)
 		 * interface and routing ioctls should have a
 		 * different entry since a socket's unnecessary
 		 */
-		KERNEL_LOCK(1, NULL);
 		if (IOCGROUP(cmd) == 'i')
+			/*
+			 * KERNEL_LOCK will be held later if if_ioctl() of the
+			 * interface isn't MP-safe.
+			 */
 			error = ifioctl(so, cmd, data, curlwp);
 		else {
+			KERNEL_LOCK(1, NULL);
 			error = (*so->so_proto->pr_usrreqs->pr_ioctl)(so,
 			    cmd, data, NULL);
+			KERNEL_UNLOCK_ONE(NULL);
 		}
-		KERNEL_UNLOCK_ONE(NULL);
 		break;
 	}
 

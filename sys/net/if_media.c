@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.c,v 1.32.6.1 2017/11/22 14:36:55 martin Exp $	*/
+/*	$NetBSD: if_media.c,v 1.32.6.2 2018/01/02 10:20:33 snj Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.32.6.1 2017/11/22 14:36:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.32.6.2 2018/01/02 10:20:33 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -225,8 +225,8 @@ ifmedia_set(struct ifmedia *ifm, int target)
 /*
  * Device-independent media ioctl support function.
  */
-int
-ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
+static int
+_ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
     u_long cmd)
 {
 	struct ifmedia_entry *match;
@@ -358,6 +358,22 @@ ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
 	}
 
 	return error;
+}
+
+int
+ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
+    u_long cmd)
+{
+	int e;
+
+	/*
+	 * If if_is_mpsafe(ifp), KERNEL_LOCK isn't held here, but _ifmedia_ioctl
+	 * isn't MP-safe yet, so we must hold the lock.
+	 */
+	KERNEL_LOCK_IF_IFP_MPSAFE(ifp);
+	e = _ifmedia_ioctl(ifp, ifr, ifm, cmd);
+	KERNEL_UNLOCK_IF_IFP_MPSAFE(ifp);
+	return e;
 }
 
 /*

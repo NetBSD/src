@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.242.6.1 2017/10/24 08:38:59 snj Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.242.6.2 2018/01/02 10:20:33 snj Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.242.6.1 2017/10/24 08:38:59 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.242.6.2 2018/01/02 10:20:33 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -203,13 +203,6 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 #ifdef NETATALK
 	struct at_ifaddr *aa;
 #endif /* NETATALK */
-
-	/*
-	 * some paths such as carp_output() call ethr_output() with "ifp"
-	 * argument as other than ether ifnet.
-	 */
-	KASSERT(ifp->if_output != ether_output
-	    || ifp->if_extflags & IFEF_OUTPUT_MPSAFE);
 
 #ifdef MBUFTRACE
 	m_claimm(m, ifp->if_mowner);
@@ -951,7 +944,6 @@ ether_ifattach(struct ifnet *ifp, const uint8_t *lla)
 {
 	struct ethercom *ec = (struct ethercom *)ifp;
 
-	ifp->if_extflags |= IFEF_OUTPUT_MPSAFE;
 	ifp->if_type = IFT_ETHER;
 	ifp->if_hdrlen = ETHER_HDR_LEN;
 	ifp->if_dlt = DLT_EN10MB;
@@ -1013,7 +1005,7 @@ ether_ifdetach(struct ifnet *ifp)
 	mutex_enter(ec->ec_lock);
 	while ((enm = LIST_FIRST(&ec->ec_multiaddrs)) != NULL) {
 		LIST_REMOVE(enm, enm_list);
-		kmem_free(enm, sizeof(*enm));
+		kmem_intr_free(enm, sizeof(*enm));
 		ec->ec_multicnt--;
 	}
 	mutex_exit(ec->ec_lock);
@@ -1277,7 +1269,7 @@ ether_addmulti(const struct sockaddr *sa, struct ethercom *ec)
 out:
 	mutex_exit(ec->ec_lock);
 	if (enm != NULL)
-		kmem_free(enm, sizeof(*enm));
+		kmem_intr_free(enm, sizeof(*enm));
 	return error;
 }
 
@@ -1319,7 +1311,7 @@ ether_delmulti(const struct sockaddr *sa, struct ethercom *ec)
 	ec->ec_multicnt--;
 	mutex_exit(ec->ec_lock);
 
-	kmem_free(enm, sizeof(*enm));
+	kmem_intr_free(enm, sizeof(*enm));
 	/*
 	 * Return ENETRESET to inform the driver that the list has changed
 	 * and its reception filter should be adjusted accordingly.
