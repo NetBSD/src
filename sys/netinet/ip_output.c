@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.279.2.3 2018/01/02 10:20:34 snj Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.279.2.4 2018/01/02 10:56:58 snj Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.279.2.3 2018/01/02 10:20:34 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.279.2.4 2018/01/02 10:56:58 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -303,6 +303,10 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 	    !in_hosteq(dst->sin_addr, ip->ip_dst)))
 		rtcache_free(ro);
 
+	/* XXX must be before rtcache operations */
+	bound = curlwp_bind();
+	bind_need_restore = true;
+
 	if ((rt = rtcache_validate(ro)) == NULL &&
 	    (rt = rtcache_update(ro, 1)) == NULL) {
 		dst = &udst.sin;
@@ -311,8 +315,6 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 			goto bad;
 	}
 
-	bound = curlwp_bind();
-	bind_need_restore = true;
 	/*
 	 * If routing to interface only, short circuit routing lookup.
 	 */
