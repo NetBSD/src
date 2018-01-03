@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.71 2017/12/12 09:15:39 snj Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.72 2018/01/03 21:53:50 snj Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -5121,4 +5121,58 @@ sys/arch/x86/x86/fpu.c				1.19 via patch
 
 	Properly mask mxcsr to prevent faults.
 	[maxv, ticket #1540]
+
+sys/external/bsd/ipf/netinet/ip_state.c		1.9-1.10
+
+	Stop a kernel panic when altering the ipf state table size at
+	runtime due to unallocated memory.
+	[sborrill, ticket #1525]
+
+sys/arch/amd64/include/i82093reg.h		1.9
+sys/arch/i386/include/i82093reg.h		1.11
+sys/arch/x86/x86/ioapic.c			1.54
+
+	Don't write a 1 to the read only RIRR bit in the IOAPIC
+	redirection register to fix "tlp0: filter setup and transmit
+	timeout" observed on Hyper-V VMs with the Legacy Network Adapter.
+
+	From OpenBSD via PR kern/49323:
+ 	https://marc.info/?l=openbsd-cvs&m=146718035432599&w=2
+	[nakayama, ticket #1527]
+
+sys/arch/sparc/sparc/locore.s			1.269
+
+	Avoid an instruction requiring a higher alignment than we
+	are guaranteed.  Fixes PR port-sparc/52721: ddb errors on
+	ps command
+	[maya, ticket #1530]
+
+sys/arch/x86/x86/pmap.c				patch
+
+	amd64: Make the direct map non executable.
+	[maxv, ticket #1531]
+
+libexec/httpd/cgi-bozo.c			1.39
+
+	bozohttpd fails to exec scripts via the -C mechanism
+	sometimes with EFAULT due to not NULL terminated environment.
+	PR bin/52194
+	[martin, ticket #1533]
+
+sys/external/bsd/drm2/drm/drm_drv.c		1.20
+
+	drm_stat: fix device minor calculation.  Fixes bug where
+	libdrm couldn't find any devices beyond the first one.
+	[jmcneill, ticket #1536]
+
+etc/MAKEDEV.tmpl				1.188
+
+	make a few more drm nodes
+	[jmcneill, ticket #1537]
+
+sys/kern/subr_kobj.c				1.52
+
+	Compare names of duplicate symbols properly, so we correctly
+	return an error status.  PR kern/45125
+	[pgoyette, ticket #1539]
 
