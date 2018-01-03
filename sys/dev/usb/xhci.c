@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.23.2.5 2017/04/05 19:54:21 snj Exp $	*/
+/*	$NetBSD: xhci.c,v 1.23.2.6 2018/01/03 19:48:45 snj Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.23.2.5 2017/04/05 19:54:21 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.23.2.6 2018/01/03 19:48:45 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -689,10 +689,14 @@ xhci_hc_reset(struct xhci_softc * const sc)
 	usbcmd = XHCI_CMD_HCRST;
 	xhci_op_write_4(sc, XHCI_USBCMD, usbcmd);
 	for (i = 0; i < XHCI_WAIT_HCRST; i++) {
+		/*
+		 * Wait 1ms first. Existing Intel xHCI requies 1ms delay to
+		 * prevent system hang (Errata).
+		 */
+		usb_delay_ms(&sc->sc_bus, 1);
 		usbcmd = xhci_op_read_4(sc, XHCI_USBCMD);
 		if ((usbcmd & XHCI_CMD_HCRST) == 0)
 			break;
-		usb_delay_ms(&sc->sc_bus, 1);
 	}
 	if (i >= XHCI_WAIT_HCRST) {
 		aprint_error_dev(sc->sc_dev, "host controller reset timeout\n");
