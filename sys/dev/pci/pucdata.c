@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.93.4.2 2016/12/08 08:03:59 snj Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.93.4.3 2018/01/03 21:37:36 snj Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.93.4.2 2016/12/08 08:03:59 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.93.4.3 2018/01/03 21:37:36 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -876,6 +876,15 @@ const struct puc_device_description puc_devices[] = {
 	    {	0xffff,	0xffff,	0xffff,	0xffff	},
 	    {
 		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x00, COM_FREQ },
+	    },
+	},
+
+	/* NetMos PCI NM9865 : 1P */
+	{   "NetMos NM9865 Single LPT",
+	    {	PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9865, 0xa000, 0x2000 },
+	    {	0xffff,	0xffff,	0xffff,	0xffff	},
+	    {
+		{ PUC_PORT_TYPE_LPT, PCI_BAR0, 0x00, 0x00 },
 	    },
 	},
 
@@ -1919,6 +1928,15 @@ const struct puc_device_description puc_devices[] = {
 	    },
 	},
 
+	/* Intel 200 Series KT */
+	{   "Intel 200 Series KT",
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_2HS_KT, 0, 0 },
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x00, COM_FREQ },
+	    },
+	},
+	
 	/* Intel C600/X79 Series KT */
 	{   "Intel C600/X79 Series KT",
 	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C600_KT, 0, 0 },

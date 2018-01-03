@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1199.2.10 2017/07/25 19:43:03 snj Exp $
+$NetBSD: pcidevs,v 1.1199.2.11 2018/01/03 21:37:36 snj Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -3567,10 +3567,10 @@ product INTEL 82801HO_LPC 	0x2814	82801HO LPC Interface Bridge
 product INTEL 82801HBM_LPC      0x2815  82801HBM LPC Interface Bridge
 product INTEL 82801H_SATA_1	0x2820	82801H SATA Controller
 product INTEL 82801H_SATA_AHCI6	0x2821	82801H AHCI SATA Controller w/ 6 ports
-product INTEL 82801H_SATA_RAID	0x2822	82801H/C61x/X99/Z170 RAID SATA Controller
+product INTEL 82801H_SATA_RAID	0x2822	82801H/C61x/X99/Z170/[ZQH]270 RAID SATA Controller
 product INTEL 82801H_SATA_AHCI4	0x2824	82801H AHCI SATA Controller w/ 4 ports
 product INTEL 82801H_SATA_2	0x2825	82801H SATA Controller
-product INTEL C610_SATA_RAID_3	0x2826	C61x/X99 SATA Controller (RAID)
+product INTEL C610_SATA_RAID_3	0x2826	C61x/X99/[ZQH]270 SATA Controller (RAID)
 product INTEL C610_SSATA_RAID_2	0x2827	C61x/X99 sSATA Controller (RAID)
 product INTEL 82801HEM_SATA	0x2828	82801HEM SATA Controller
 product INTEL 82801HBM_SATA_AHCI 0x2829  82801HBM AHCI SATA Controller
@@ -4531,6 +4531,62 @@ product INTEL 100SERIES_PCIE_18	0xa168	100 Series PCIE
 product INTEL 100SERIES_PCIE_19	0xa169	100 Series PCIE
 product INTEL 100SERIES_PCIE_20	0xa16a	100 Series PCIE
 product INTEL 100SERIES_HDA	0xa170	100 Series HD Audio
+product INTEL 2HS_AHCI		0xa282	200 Series SATA (AHCI)
+product INTEL 2HS_RAID		0xa286	200 Series SATA (RAID)
+product INTEL 2HS_RAID_RST_OPTANE 0xa28e 200 Series SATA (Acceleration with Optane)
+product INTEL 2HS_PCIE_1	0xa290	200 Series PCIE
+product INTEL 2HS_PCIE_2	0xa291	200 Series PCIE
+product INTEL 2HS_PCIE_3	0xa292	200 Series PCIE
+product INTEL 2HS_PCIE_4	0xa293	200 Series PCIE
+product INTEL 2HS_PCIE_5	0xa294	200 Series PCIE
+product INTEL 2HS_PCIE_6	0xa295	200 Series PCIE
+product INTEL 2HS_PCIE_7	0xa296	200 Series PCIE
+product INTEL 2HS_PCIE_8	0xa297	200 Series PCIE
+product INTEL 2HS_PCIE_9	0xa298	200 Series PCIE
+product INTEL 2HS_PCIE_10	0xa299	200 Series PCIE
+product INTEL 2HS_PCIE_11	0xa29a	200 Series PCIE
+product INTEL 2HS_PCIE_12	0xa29b	200 Series PCIE
+product INTEL 2HS_PCIE_13	0xa29c	200 Series PCIE
+product INTEL 2HS_PCIE_14	0xa29d	200 Series PCIE
+product INTEL 2HS_PCIE_15	0xa29e	200 Series PCIE
+product INTEL 2HS_PCIE_16	0xa29f	200 Series PCIE
+product INTEL 2HS_P2SB		0xa2a0	200 Series P2SB
+product INTEL 2HS_PMC		0xa2a1	200 Series PMC
+product INTEL 2HS_SMB		0xa2a3	200 Series SMBus
+product INTEL 2HS_SPI		0xa2a4	200 Series SPI
+product INTEL 2HS_TRACE		0xa2a6	200 Series Trace Hub
+product INTEL 2HS_UART_0	0xa2a7	200 Series UART 0
+product INTEL 2HS_UART_1	0xa2a8	200 Series UART 1
+product INTEL 2HS_GSPI_0	0xa2a9	200 Series GSPI 0
+product INTEL 2HS_GSPI_1	0xa2aa	200 Series GSPI 1
+product INTEL 2HS_XHCI		0xa2af	200 Series xHCI
+product INTEL 2HS_USBOTG	0xa2b0	200 Series USB (OTG)
+product INTEL 2HS_THERM		0xa2b1	200 Series Thermal
+product INTEL 2HS_ISH		0xa2b5	200 Series ISH
+product INTEL 2HS_MEI_1		0xa2ba	200 Series MEI
+product INTEL 2HS_MEI_2		0xa2bb	200 Series MEI
+product INTEL 2HS_IDER		0xa2bc	200 Series IDER
+product INTEL 2HS_KT		0xa2bd	200 Series KT
+product INTEL 2HS_MEI_3		0xa2be	200 Series MEI
+product INTEL 2HS_LPC_H27	0xa2c4	H270 LPC
+product INTEL 2HS_LPC_Z27	0xa2c5	Z270 LPC
+product INTEL 2HS_LPC_Q27	0xa2c6	Q270 LPC
+product INTEL 2HS_LPC_Q25	0xa2c7	Q250 LPC
+product INTEL 2HS_LPC_B25	0xa2c8	B250 LPC
+product INTEL 2HS_I2C_0		0xa2e0	200 Series I2C 0
+product INTEL 2HS_I2C_1		0xa2e1	200 Series I2C 1
+product INTEL 2HS_I2C_2		0xa2e2	200 Series I2C 2
+product INTEL 2HS_I2C_3		0xa2e3	200 Series I2C 3
+product INTEL 2HS_UART_2	0xa2e6	200 Series UART 2
+product INTEL 2HS_PCIE_17	0xa2e7	200 Series PCIE
+product INTEL 2HS_PCIE_18	0xa2e8	200 Series PCIE
+product INTEL 2HS_PCIE_19	0xa2e9	200 Series PCIE
+product INTEL 2HS_PCIE_20	0xa2ea	200 Series PCIE
+product INTEL 2HS_PCIE_21	0xa2eb	200 Series PCIE
+product INTEL 2HS_PCIE_22	0xa2ec	200 Series PCIE
+product INTEL 2HS_PCIE_23	0xa2ed	200 Series PCIE
+product INTEL 2HS_PCIE_24	0xa2ee	200 Series PCIE
+product INTEL 2HS_HDA		0xa2f0	200 Series HD Audio
 product INTEL 21152		0xb152	S21152BB PCI-PCI Bridge
 product INTEL 21154		0xb154	S21152BA,S21154AE/BE PCI-PCI Bridge
 product INTEL 21555		0xb555	21555 Non-Transparent PCI-PCI Bridge
