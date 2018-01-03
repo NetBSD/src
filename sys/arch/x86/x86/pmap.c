@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.272 2018/01/03 09:38:23 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.273 2018/01/03 09:46:41 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.272 2018/01/03 09:38:23 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.273 2018/01/03 09:46:41 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -773,13 +773,14 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
 	pmap->pm_ncsw = l->l_ncsw;
 	*pmap2 = curpmap;
 	*ptepp = PTE_BASE;
+
 #if defined(XEN) && defined(__x86_64__)
 	KASSERT(ci->ci_normal_pdes[PTP_LEVELS - 2] == L4_BASE);
 	ci->ci_normal_pdes[PTP_LEVELS - 2] = pmap->pm_pdir;
 	*pdeppp = ci->ci_normal_pdes;
-#else /* XEN && __x86_64__ */
+#else
 	*pdeppp = normal_pdes;
-#endif /* XEN && __x86_64__ */
+#endif
 }
 
 /*
@@ -800,11 +801,12 @@ pmap_unmap_ptes(struct pmap *pmap, struct pmap *pmap2)
 	}
 
 	ci = curcpu();
+
 #if defined(XEN) && defined(__x86_64__)
-	/* Reset per-cpu normal_pdes */
 	KASSERT(ci->ci_normal_pdes[PTP_LEVELS - 2] != L4_BASE);
 	ci->ci_normal_pdes[PTP_LEVELS - 2] = L4_BASE;
-#endif /* XEN && __x86_64__ */
+#endif
+
 	/*
 	 * We cannot tolerate context switches while mapped in.
 	 * If it is our own pmap all we have to do is unlock.
