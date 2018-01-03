@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.183.2.2.2.3 2017/03/06 03:32:45 snj Exp $	*/
+/*	$NetBSD: pmap.c,v 1.183.2.2.2.4 2018/01/03 20:17:36 snj Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.183.2.2.2.3 2017/03/06 03:32:45 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.183.2.2.2.4 2018/01/03 20:17:36 snj Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1517,7 +1517,7 @@ pmap_bootstrap(vaddr_t kva_start)
 		}
 	}
 
-	kpm->pm_pdir[PDIR_SLOT_DIRECT] = dmpdp | PG_KW | PG_V | PG_U;
+	kpm->pm_pdir[PDIR_SLOT_DIRECT] = dmpdp | PG_KW | PG_V | PG_U | pg_nx;
 
 	tlbflush();
 
