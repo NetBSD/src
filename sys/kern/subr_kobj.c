@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.50 2014/07/16 13:26:33 maxv Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.50.10.1 2018/01/03 21:11:38 snj Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.50 2014/07/16 13:26:33 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.50.10.1 2018/01/03 21:11:38 snj Exp $");
 
 #include "opt_modular.h"
 
@@ -904,7 +904,7 @@ kobj_checksyms(kobj_t ko, bool undefined)
 		    strcmp(name, "__end") == 0 ||
 		    strcmp(name, "__end__") == 0 ||
 		    strncmp(name, "__start_link_set_", 17) == 0 ||
-		    strncmp(name, "__stop_link_set_", 16)) {
+		    strncmp(name, "__stop_link_set_", 16) == 0) {
 		    	continue;
 		}
 		kobj_error(ko, "global symbol `%s' redefined",
