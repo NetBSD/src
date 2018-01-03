@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.31.2.2 2017/04/05 19:54:22 snj Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.31.2.3 2018/01/03 20:02:37 snj Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.31.2.2 2017/04/05 19:54:22 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.31.2.3 2018/01/03 20:02:37 snj Exp $");
 
 #include "opt_usb.h"
 
@@ -207,7 +207,7 @@ dwc2_allocx(struct usbd_bus *bus, unsigned int nframes)
 	DPRINTFN(10, "\n");
 
 	DWC2_EVCNT_INCR(sc->sc_ev_xferpoolget);
-	dxfer = pool_cache_get(sc->sc_xferpool, PR_NOWAIT);
+	dxfer = pool_cache_get(sc->sc_xferpool, PR_WAITOK);
 	if (dxfer != NULL) {
 		memset(dxfer, 0, sizeof(*dxfer));
 
