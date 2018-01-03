@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.196.4.3 2017/04/05 19:54:20 snj Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.196.4.4 2018/01/03 21:18:03 snj Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.196.4.3 2017/04/05 19:54:20 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.196.4.4 2018/01/03 21:18:03 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -644,6 +644,10 @@ usbd_set_config_index(struct usbd_device *dev, int index, int msg)
 		return err;
 	}
 	len = UGETW(cd.wTotalLength);
+	if (len == 0) {
+		DPRINTF("empty short descriptor", 0, 0, 0, 0);
+		return USBD_INVAL;
+	}
 	cdp = kmem_alloc(len, KM_SLEEP);
 	if (cdp == NULL)
 		return USBD_NOMEM;
@@ -672,6 +676,11 @@ usbd_set_config_index(struct usbd_device *dev, int index, int msg)
 		err = usbd_get_bos_desc(dev, index, &bd);
 		if (!err) {
 			int blen = UGETW(bd.wTotalLength);
+			if (blen == 0) {
+				DPRINTF("empty bos descriptor", 0, 0, 0, 0);
+				err = USBD_INVAL;
+				goto bad;
+			}
 			bdp = kmem_alloc(blen, KM_SLEEP);
 			if (bdp == NULL) {
 				err = USBD_NOMEM;
@@ -765,6 +774,11 @@ usbd_set_config_index(struct usbd_device *dev, int index, int msg)
 
 	/* Allocate and fill interface data. */
 	nifc = cdp->bNumInterface;
+	if (nifc == 0) {
+		DPRINTF("no interfaces", 0, 0, 0, 0);
+		err = USBD_INVAL;
+		goto bad;
+	}
 	dev->ud_ifaces = kmem_alloc(nifc * sizeof(struct usbd_interface),
 	    KM_SLEEP);
 	if (dev->ud_ifaces == NULL) {
