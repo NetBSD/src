@@ -1,4 +1,4 @@
-/*	$NetBSD: getdate.c,v 1.3 2014/09/18 13:58:20 christos Exp $	*/
+/*	$NetBSD: getdate.c,v 1.4 2018/01/04 20:57:29 kamil Exp $	*/
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -27,6 +27,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "namespace.h"
 
 #include <sys/stat.h>
 
