@@ -1,4 +1,4 @@
-/* $NetBSD: signalnumber.c,v 1.1 2017/05/09 11:14:16 kre Exp $ */
+/* $NetBSD: signalnumber.c,v 1.2 2018/01/04 20:57:29 kamil Exp $ */
 
 /*
  * Software available to all and sundry without limitations
@@ -16,6 +16,8 @@
  *
  * This licence must be retained with the software.
  */
+
+#include "namespace.h"
 
 #include <signal.h>
 #include <string.h>

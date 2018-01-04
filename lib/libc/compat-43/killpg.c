@@ -1,4 +1,4 @@
-/*	$NetBSD: killpg.c,v 1.8 2003/08/07 16:42:39 agc Exp $	*/
+/*	$NetBSD: killpg.c,v 1.9 2018/01/04 20:57:28 kamil Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,9 +34,11 @@
 #if 0
 static char sccsid[] = "@(#)killpg.c	8.1 (Berkeley) 6/2/93";
 #else
-__RCSID("$NetBSD: killpg.c,v 1.8 2003/08/07 16:42:39 agc Exp $");
+__RCSID("$NetBSD: killpg.c,v 1.9 2018/01/04 20:57:28 kamil Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
+
+#include "namespace.h"
 
 #include <sys/types.h>
 #include <signal.h>

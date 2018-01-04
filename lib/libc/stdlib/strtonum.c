@@ -1,4 +1,4 @@
-/*	$NetBSD: strtonum.c,v 1.4 2015/03/10 12:57:56 christos Exp $	*/
+/*	$NetBSD: strtonum.c,v 1.5 2018/01/04 20:57:29 kamil Exp $	*/
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,9 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: strtonum.c,v 1.4 2015/03/10 12:57:56 christos Exp $");
+__RCSID("$NetBSD: strtonum.c,v 1.5 2018/01/04 20:57:29 kamil Exp $");
+
+#include "namespace.h"
 
 #define _OPENBSD_SOURCE
 #include <stdio.h>

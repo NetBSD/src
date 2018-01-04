@@ -1,4 +1,4 @@
-/* $NetBSD: generic_lc_all.c,v 1.5 2013/04/14 23:30:16 joerg Exp $ */
+/* $NetBSD: generic_lc_all.c,v 1.6 2018/01/04 20:57:29 kamil Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,9 +28,10 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: generic_lc_all.c,v 1.5 2013/04/14 23:30:16 joerg Exp $");
+__RCSID("$NetBSD: generic_lc_all.c,v 1.6 2018/01/04 20:57:29 kamil Exp $");
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <assert.h>
 #include <langinfo.h>
@@ -114,4 +115,3 @@ _generic_LC_ALL_setlocale(const char * __restrict name,
 		return NULL;
 	return (const char *)&locale->query[0];
 }
-
