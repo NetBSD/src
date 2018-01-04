@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.45 2018/01/04 13:36:30 maxv Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.46 2018/01/04 14:02:23 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2009, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.45 2018/01/04 13:36:30 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.46 2018/01/04 14:02:23 maxv Exp $");
 
 #include "opt_mtrr.h"
 #include "opt_pmc.h"
@@ -480,11 +480,13 @@ x86_set_ioperm(struct lwp *l, void *args, register_t *retval)
 		kmem_free(old, IOMAPSIZE);
 	}
 
+	CTASSERT(offsetof(struct cpu_tss, iomap) -
+	    offsetof(struct cpu_tss, tss) == IOMAP_VALIDOFF);
+
 	kpreempt_disable();
 	ci = curcpu();
 	memcpy(ci->ci_tss->iomap, pcb->pcb_iomap, IOMAPSIZE);
-	ci->ci_tss->tss.tss_iobase =
-	    ((uintptr_t)&ci->ci_tss->iomap - (uintptr_t)&ci->ci_tss->tss) << 16;
+	ci->ci_tss->tss.tss_iobase = IOMAP_VALIDOFF << 16;
 	kpreempt_enable();
 
 	return error;

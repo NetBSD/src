@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.106 2018/01/04 13:36:30 maxv Exp $
+#	$NetBSD: genassym.cf,v 1.107 2018/01/04 14:02:23 maxv Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -256,6 +256,7 @@ define	CPU_INFO_IDLELWP	offsetof(struct cpu_info, ci_data.cpu_idlelwp)
 define	CPU_INFO_PMAP		offsetof(struct cpu_info, ci_pmap)
 define	CPU_INFO_TSS		offsetof(struct cpu_info, ci_tss)
 define	IOMAP_INVALOFF		IOMAP_INVALOFF
+define	IOMAP_VALIDOFF		IOMAP_VALIDOFF
 define	CPU_INFO_NSYSCALL	offsetof(struct cpu_info, ci_data.cpu_nsyscall)
 define	CPU_INFO_NTRAP		offsetof(struct cpu_info, ci_data.cpu_ntrap)
 define	CPU_INFO_NINTR		offsetof(struct cpu_info, ci_data.cpu_nintr)

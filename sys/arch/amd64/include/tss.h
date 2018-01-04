@@ -1,4 +1,4 @@
-/*	$NetBSD: tss.h,v 1.6 2017/07/12 17:52:18 maxv Exp $	*/
+/*	$NetBSD: tss.h,v 1.7 2018/01/04 14:02:23 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -64,6 +64,11 @@ struct x86_64_tss {
  * (i.e. any I/O attempt generates an exception.)
  */
 #define	IOMAP_INVALOFF	0xffff
+
+/*
+ * If we have an I/O bitmap, there is only one valid offset.
+ */
+#define	IOMAP_VALIDOFF	sizeof(struct x86_64_tss)
 
 #else	/*	__x86_64__	*/
 
