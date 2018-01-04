@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.43 2017/10/21 08:27:19 maxv Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.44 2018/01/04 12:34:15 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2009, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.43 2017/10/21 08:27:19 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.44 2018/01/04 12:34:15 maxv Exp $");
 
 #include "opt_mtrr.h"
 #include "opt_pmc.h"
@@ -482,9 +482,9 @@ x86_set_ioperm(struct lwp *l, void *args, register_t *retval)
 
 	kpreempt_disable();
 	ci = curcpu();
-	memcpy(ci->ci_iomap, pcb->pcb_iomap, sizeof(ci->ci_iomap));
-	ci->ci_tss.tss_iobase =
-	    ((uintptr_t)ci->ci_iomap - (uintptr_t)&ci->ci_tss) << 16;
+	memcpy(ci->ci_tss.iomap, pcb->pcb_iomap, sizeof(ci->ci_tss.iomap));
+	ci->ci_tss.tss.tss_iobase =
+	    ((uintptr_t)&ci->ci_tss.iomap - (uintptr_t)&ci->ci_tss.tss) << 16;
 	kpreempt_enable();
 
 	return error;
