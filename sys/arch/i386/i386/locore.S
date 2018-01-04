@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.155 2018/01/04 13:36:30 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.156 2018/01/04 14:02:23 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.155 2018/01/04 13:36:30 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.156 2018/01/04 14:02:23 maxv Exp $");
 
 #include "opt_copy_symtab.h"
 #include "opt_ddb.h"
@@ -1209,7 +1209,7 @@ switch_return:
 	popl	%edi
 	popl	%esi
 	movl	CPUVAR(TSS),%eax
-	movl	$((TSS_IOMAP - TSS_TSS) << 16),TSS_IOBASE(%eax)
+	movl	$(IOMAP_VALIDOFF << 16),TSS_IOBASE(%eax)
 	jmp	.Liobitmap_done
 END(cpu_switchto)
 
