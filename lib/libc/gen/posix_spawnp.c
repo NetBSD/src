@@ -1,4 +1,4 @@
-/*	$NetBSD: posix_spawnp.c,v 1.2 2012/02/22 17:51:01 martin Exp $	*/
+/*	$NetBSD: posix_spawnp.c,v 1.3 2018/01/04 20:57:29 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -31,8 +31,10 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: posix_spawnp.c,v 1.2 2012/02/22 17:51:01 martin Exp $");
+__RCSID("$NetBSD: posix_spawnp.c,v 1.3 2018/01/04 20:57:29 kamil Exp $");
 #endif /* LIBC_SCCS and not lint */
+
+#include "namespace.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -78,4 +80,3 @@ int posix_spawnp(pid_t * __restrict pid, const char * __restrict file,
 	 */
 	return posix_spawn(pid, fpath, fa, sa, cav, env);
 }
-

@@ -1,4 +1,4 @@
-/*	$NetBSD: dbfile.c,v 1.1 2013/12/01 00:22:48 christos Exp $	*/
+/*	$NetBSD: dbfile.c,v 1.2 2018/01/04 20:57:29 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,7 +31,9 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dbfile.c,v 1.1 2013/12/01 00:22:48 christos Exp $");
+__RCSID("$NetBSD: dbfile.c,v 1.2 2018/01/04 20:57:29 kamil Exp $");
+
+#include "namespace.h"
 
 #include <sys/stat.h>
 #include <stdio.h>
