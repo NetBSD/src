@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.189 2017/12/31 19:39:57 christos Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.190 2018/01/04 01:42:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.189 2017/12/31 19:39:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.190 2018/01/04 01:42:25 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pipe.h"
@@ -1249,7 +1249,7 @@ sys_getsockopt(struct lwp *l, const struct sys_getsockopt_args *uap,
 		goto out;
 
 	if (valsize > 0) {
-		len = min(valsize, sopt.sopt_size);
+		len = min(valsize, sopt.sopt_retsize);
 		error = copyout(sopt.sopt_data, SCARG(uap, val), len);
 		if (error)
 			goto out;

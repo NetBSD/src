@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.145 2017/07/06 17:08:57 christos Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.146 2018/01/04 01:42:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -224,6 +224,7 @@ struct sockopt {
 	int		sopt_level;		/* option level */
 	int		sopt_name;		/* option name */
 	size_t		sopt_size;		/* data length */
+	size_t		sopt_retsize;		/* returned data length */
 	void *		sopt_data;		/* data pointer */
 	uint8_t		sopt_buf[sizeof(int)];	/* internal storage */
 };
