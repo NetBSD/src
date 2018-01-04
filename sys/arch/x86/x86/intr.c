@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.115 2018/01/04 12:34:15 maxv Exp $	*/
+/*	$NetBSD: intr.c,v 1.116 2018/01/04 13:36:30 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.115 2018/01/04 12:34:15 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.116 2018/01/04 13:36:30 maxv Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -1529,7 +1529,7 @@ cpu_intr_init(struct cpu_info *ci)
 	ci->ci_intrstack = (char *)istack + redzone_const_or_zero(PAGE_SIZE) +
 	    INTRSTACKSIZE - 33 * sizeof(register_t);
 #if defined(__x86_64__)
-	ci->ci_tss.tss.tss_ist[0] = (uintptr_t)ci->ci_intrstack & ~0xf;
+	ci->ci_tss->tss.tss_ist[0] = (uintptr_t)ci->ci_intrstack & ~0xf;
 #endif /* defined(__x86_64__) */
 #endif /* defined(INTRSTACKSIZE) */
 	ci->ci_idepth = -1;
