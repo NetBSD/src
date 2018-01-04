@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.c,v 1.5 2017/12/16 18:31:36 christos Exp $	*/
+/*	$NetBSD: sched.c,v 1.6 2018/01/04 20:57:29 kamil Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -27,8 +27,9 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sched.c,v 1.5 2017/12/16 18:31:36 christos Exp $");
+__RCSID("$NetBSD: sched.c,v 1.6 2018/01/04 20:57:29 kamil Exp $");
 
+#include "namespace.h"
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>

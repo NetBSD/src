@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuset.c,v 1.18 2012/03/09 15:41:16 christos Exp $	*/
+/*	$NetBSD: cpuset.c,v 1.19 2018/01/04 20:57:28 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -32,8 +32,12 @@
 #ifndef _STANDALONE
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: cpuset.c,v 1.18 2012/03/09 15:41:16 christos Exp $");
+__RCSID("$NetBSD: cpuset.c,v 1.19 2018/01/04 20:57:28 kamil Exp $");
 #endif /* LIBC_SCCS and not lint */
+
+#ifdef _LIBC
+#include "namespace.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/sched.h>
