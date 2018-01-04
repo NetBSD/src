@@ -1,4 +1,4 @@
-/* $NetBSD: hdafg.c,v 1.13 2017/08/04 00:25:23 mrg Exp $ */
+/* $NetBSD: hdafg.c,v 1.14 2018/01/04 00:09:12 khorben Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.13 2017/08/04 00:25:23 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.14 2018/01/04 00:09:12 khorben Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -4058,7 +4058,7 @@ hdafg_getdev(void *opaque, struct audio_device *audiodev)
 	    sc->sc_vendor);
 	hdaudio_findproduct(audiodev->version, sizeof(audiodev->version),
 	    sc->sc_vendor, sc->sc_product);
-	snprintf(audiodev->config, sizeof(audiodev->config) - 1,
+	snprintf(audiodev->config, sizeof(audiodev->config),
 	    "%02Xh", sc->sc_nid);
 
 	return 0;
