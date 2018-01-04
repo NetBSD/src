@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.43 2017/09/10 10:51:13 maxv Exp $	*/
+/*	$NetBSD: gdt.c,v 1.44 2018/01/04 20:38:30 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 2009 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.43 2017/09/10 10:51:13 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.44 2018/01/04 20:38:30 maxv Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -66,8 +66,15 @@ typedef struct {
 	size_t nslots;
 } gdt_bitmap_t;
 
-size_t gdt_size;			/* size of GDT in bytes */
-static gdt_bitmap_t gdt_bitmap;		/* bitmap of busy slots */
+/* size of GDT in bytes */
+#ifdef XEN
+const size_t gdt_size = FIRST_RESERVED_GDT_BYTE;
+#else
+const size_t gdt_size = MAXGDTSIZ;
+#endif
+
+/* bitmap of busy slots */
+static gdt_bitmap_t gdt_bitmap;
 
 #if defined(USER_LDT) || !defined(XEN)
 static void set_sys_gdt(int, void *, size_t, int, int, int);
@@ -130,11 +137,6 @@ gdt_init(void)
 	struct cpu_info *ci = &cpu_info_primary;
 
 	/* Initialize the global values */
-#ifdef XEN
-	gdt_size = FIRST_RESERVED_GDT_BYTE;
-#else
-	gdt_size = MAXGDTSIZ;
-#endif
 	memset(&gdt_bitmap.busy, 0, sizeof(gdt_bitmap.busy));
 	gdt_bitmap.nslots = NSLOTS(gdt_size);
 
