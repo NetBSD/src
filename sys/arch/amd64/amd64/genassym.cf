@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.62 2017/10/28 20:57:17 bouyer Exp $
+#	$NetBSD: genassym.cf,v 1.63 2018/01/04 12:34:15 maxv Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -233,7 +233,7 @@ define	CPU_INFO_CURLWP		offsetof(struct cpu_info, ci_curlwp)
 define	CPU_INFO_CURLDT		offsetof(struct cpu_info, ci_curldt)
 define	CPU_INFO_IDLELWP	offsetof(struct cpu_info, ci_data.cpu_idlelwp)
 define	CPU_INFO_PMAP		offsetof(struct cpu_info, ci_pmap)
-define	CPU_INFO_RSP0		offsetof(struct cpu_info, ci_tss.tss_rsp0)
+define	CPU_INFO_RSP0		offsetof(struct cpu_info, ci_tss.tss.tss_rsp0)
 define	CPU_INFO_NSYSCALL	offsetof(struct cpu_info, ci_data.cpu_nsyscall)
 define	CPU_INFO_NTRAP		offsetof(struct cpu_info, ci_data.cpu_ntrap)
 define	CPU_INFO_NINTR		offsetof(struct cpu_info, ci_data.cpu_nintr)

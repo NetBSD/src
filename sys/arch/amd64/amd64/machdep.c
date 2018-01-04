@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.281 2018/01/02 18:54:26 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.282 2018/01/04 12:34:15 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.281 2018/01/02 18:54:26 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.282 2018/01/04 12:34:15 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -502,7 +502,7 @@ x86_64_proc0_pcb_ldt_init(void)
 void
 cpu_init_tss(struct cpu_info *ci)
 {
-	struct x86_64_tss *tss = &ci->ci_tss;
+	struct x86_64_tss *tss = &ci->ci_tss.tss;
 	uintptr_t p;
 
 	tss->tss_iobase = IOMAP_INVALOFF << 16;

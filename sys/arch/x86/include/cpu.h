@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.84 2017/12/28 08:30:36 maxv Exp $	*/
+/*	$NetBSD: cpu.h,v 1.85 2018/01/04 12:34:15 maxv Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -82,6 +82,15 @@ struct pmap;
 
 #define	NIOPORTS	1024		/* # of ports we allow to be mapped */
 #define	IOMAPSIZE	(NIOPORTS / 8)	/* I/O bitmap size in bytes */
+
+struct cpu_tss {
+#ifdef i386
+	struct i386tss dblflt_tss;
+	struct i386tss ddbipi_tss;
+#endif
+	struct i386tss tss;
+	uint8_t iomap[IOMAPSIZE];
+} __packed;
 
 /*
  * a bunch of this belongs in cpuvar.h; move it later..
@@ -173,13 +182,6 @@ struct cpu_info {
 	u_int ci_cflush_lsize;	/* CLFLUSH insn line size */
 	struct x86_cache_info ci_cinfo[CAI_COUNT];
 
-	union descriptor *ci_gdt;
-
-#ifdef i386
-	struct i386tss	ci_doubleflt_tss;
-	struct i386tss	ci_ddbipi_tss;
-#endif
-
 #ifdef PAE
 	uint32_t	ci_pae_l3_pdirpa; /* PA of L3 PD */
 	pd_entry_t *	ci_pae_l3_pdir; /* VA pointer to L3 PD */
@@ -213,8 +215,11 @@ struct cpu_info {
 	device_t	ci_temperature;	/* Intel coretemp(4) or equivalent */
 	device_t	ci_vm;		/* Virtual machine guest driver */
 
-	struct i386tss	ci_tss;		/* Per-cpu TSS; shared among LWPs */
-	char		ci_iomap[IOMAPSIZE]; /* I/O Bitmap */
+	/*
+	 * Segmentation-related data.
+	 */
+	union descriptor *ci_gdt;
+	struct cpu_tss	ci_tss;		/* Per-cpu TSSes; shared among LWPs */
 	int ci_tss_sel;			/* TSS selector of this cpu */
 
 	/*
