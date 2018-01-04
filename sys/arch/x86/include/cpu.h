@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.85 2018/01/04 12:34:15 maxv Exp $	*/
+/*	$NetBSD: cpu.h,v 1.86 2018/01/04 13:36:30 maxv Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -219,7 +219,7 @@ struct cpu_info {
 	 * Segmentation-related data.
 	 */
 	union descriptor *ci_gdt;
-	struct cpu_tss	ci_tss;		/* Per-cpu TSSes; shared among LWPs */
+	struct cpu_tss	*ci_tss;	/* Per-cpu TSSes; shared among LWPs */
 	int ci_tss_sel;			/* TSS selector of this cpu */
 
 	/*
