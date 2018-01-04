@@ -1,4 +1,4 @@
-/*	$NetBSD: tss.h,v 1.10 2008/01/05 21:45:00 yamt Exp $	*/
+/*	$NetBSD: tss.h,v 1.11 2018/01/04 14:02:23 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -75,5 +75,10 @@ struct i386tss {
  * (i.e. any I/O attempt generates an exception.)
  */
 #define	IOMAP_INVALOFF	0xffff
+
+/*
+ * If we have an I/O bitmap, there is only one valid offset.
+ */
+#define	IOMAP_VALIDOFF	sizeof(struct i386tss)
 
 #endif /* #ifndef _I386_TSS_H_ */
