@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.105 2018/01/04 12:34:15 maxv Exp $
+#	$NetBSD: genassym.cf,v 1.106 2018/01/04 13:36:30 maxv Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -239,6 +239,11 @@ define	IH_ARG			offsetof(struct intrhand, ih_arg)
 define	IH_LEVEL		offsetof(struct intrhand, ih_level)
 define	IH_NEXT			offsetof(struct intrhand, ih_next)
 
+define	TSS_TSS			offsetof(struct cpu_tss, tss)
+define	TSS_ESP0		offsetof(struct cpu_tss, tss.tss_esp0)
+define	TSS_IOBASE		offsetof(struct cpu_tss, tss.tss_iobase)
+define	TSS_IOMAP		offsetof(struct cpu_tss, iomap)
+
 define	CPU_INFO_SELF		offsetof(struct cpu_info, ci_self)
 define	CPU_INFO_RESCHED	offsetof(struct cpu_info, ci_want_resched)
 define	CPU_INFO_WANT_PMAPLOAD	offsetof(struct cpu_info, ci_want_pmapload)
@@ -249,11 +254,7 @@ define	CPU_INFO_FPCURLWP	offsetof(struct cpu_info, ci_fpcurlwp)
 define	CPU_INFO_CURLDT		offsetof(struct cpu_info, ci_curldt)
 define	CPU_INFO_IDLELWP	offsetof(struct cpu_info, ci_data.cpu_idlelwp)
 define	CPU_INFO_PMAP		offsetof(struct cpu_info, ci_pmap)
-define	CPU_INFO_TSS		offsetof(struct cpu_info, ci_tss.tss)
-define	CPU_INFO_TSS_SEL	offsetof(struct cpu_info, ci_tss_sel)
-define	CPU_INFO_ESP0		offsetof(struct cpu_info, ci_tss.tss.tss_esp0)
-define	CPU_INFO_IOBASE		offsetof(struct cpu_info, ci_tss.tss.tss_iobase)
-define	CPU_INFO_IOMAP		offsetof(struct cpu_info, ci_tss.iomap)
+define	CPU_INFO_TSS		offsetof(struct cpu_info, ci_tss)
 define	IOMAP_INVALOFF		IOMAP_INVALOFF
 define	CPU_INFO_NSYSCALL	offsetof(struct cpu_info, ci_data.cpu_nsyscall)
 define	CPU_INFO_NTRAP		offsetof(struct cpu_info, ci_data.cpu_ntrap)
