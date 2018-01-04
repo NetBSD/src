@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.143 2017/11/26 15:00:16 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.144 2018/01/04 13:36:30 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1107,7 +1107,8 @@ ENTRY(cpu_switchto)
 	/* Switch ring0 stack */
 #ifndef XEN
 	movq	PCB_RSP0(%r14),%rax
-	movq	%rax,CPUVAR(RSP0)
+	movq	CPUVAR(TSS),%rdi
+	movq	%rax,TSS_RSP0(%rdi)
 #else
 	movq	%r14,%rdi
 	callq	_C_LABEL(x86_64_switch_context);

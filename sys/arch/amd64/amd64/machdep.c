@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.282 2018/01/04 12:34:15 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.283 2018/01/04 13:36:30 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.282 2018/01/04 12:34:15 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.283 2018/01/04 13:36:30 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -502,21 +502,25 @@ x86_64_proc0_pcb_ldt_init(void)
 void
 cpu_init_tss(struct cpu_info *ci)
 {
-	struct x86_64_tss *tss = &ci->ci_tss.tss;
+	struct cpu_tss *cputss;
 	uintptr_t p;
 
-	tss->tss_iobase = IOMAP_INVALOFF << 16;
-	/* tss->tss_ist[0] is filled by cpu_intr_init */
+	cputss = (struct cpu_tss *)uvm_km_alloc(kernel_map,
+	    sizeof(struct cpu_tss), 0, UVM_KMF_WIRED|UVM_KMF_ZERO);
+
+	cputss->tss.tss_iobase = IOMAP_INVALOFF << 16;
+	/* cputss->tss.tss_ist[0] is filled by cpu_intr_init */
 
 	/* double fault */
 	p = uvm_km_alloc(kernel_map, PAGE_SIZE, 0, UVM_KMF_WIRED);
-	tss->tss_ist[1] = p + PAGE_SIZE - 16;
+	cputss->tss.tss_ist[1] = p + PAGE_SIZE - 16;
 
 	/* NMI */
 	p = uvm_km_alloc(kernel_map, PAGE_SIZE, 0, UVM_KMF_WIRED);
-	tss->tss_ist[2] = p + PAGE_SIZE - 16;
+	cputss->tss.tss_ist[2] = p + PAGE_SIZE - 16;
 
-	ci->ci_tss_sel = tss_alloc(tss);
+	ci->ci_tss = cputss;
+	ci->ci_tss_sel = tss_alloc(&cputss->tss);
 }
 
 void
