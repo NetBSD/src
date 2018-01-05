@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.72 2017/12/28 14:34:39 maxv Exp $	*/
+/*	$NetBSD: pmap.h,v 1.73 2018/01/05 08:04:21 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -152,6 +152,25 @@ struct bootspace {
 	/* End of the area dedicated to kernel modules (amd64 only). */
 	vaddr_t emodule;
 };
+
+#ifndef MAXGDTSIZ
+#define MAXGDTSIZ 65536 /* XXX */
+#endif
+
+struct pcpu_entry {
+	uint8_t gdt[MAXGDTSIZ];
+	uint8_t tss[PAGE_SIZE];
+	uint8_t ist1[PAGE_SIZE];
+	uint8_t ist2[PAGE_SIZE];
+} __packed;
+
+struct pcpu_area {
+	uint8_t idt[PAGE_SIZE];
+	uint8_t ldt[PAGE_SIZE];
+	struct pcpu_entry ent[MAXCPUS];
+} __packed;
+
+extern struct pcpu_area *pcpuarea;
 
 /*
  * pmap data structures: see pmap.c for details of locking.
@@ -525,6 +544,12 @@ void	pmap_free_ptps(struct vm_page *);
  * Hooks for the pool allocator.
  */
 #define	POOL_VTOPHYS(va)	vtophys((vaddr_t) (va))
+
+#ifdef __HAVE_PCPU_AREA
+extern struct pcpu_area *pcpuarea;
+#define PDIR_SLOT_PCPU		384
+#define PMAP_PCPU_BASE		(VA_SIGN_NEG((PDIR_SLOT_PCPU * NBPD_L4)))
+#endif
 
 #ifdef __HAVE_DIRECT_MAP
 
