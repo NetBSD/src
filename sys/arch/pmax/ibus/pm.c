@@ -1,4 +1,4 @@
-/*	$NetBSD: pm.c,v 1.13 2017/06/13 19:13:55 spz Exp $	*/
+/*	$NetBSD: pm.c,v 1.14 2018/01/05 13:11:32 flxd Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.13 2017/06/13 19:13:55 spz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.14 2018/01/05 13:11:32 flxd Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -90,6 +90,7 @@ struct pm_softc {
 
 int	pm_match(device_t, cfdata_t, void *);
 void	pm_attach(device_t, device_t, void *);
+int	pm_check_vfb(void);
 int	pm_ioctl(void *, void *, u_long, void *, int, struct lwp *);
 paddr_t	pm_mmap(void *, void *, off_t, int);
 int	pm_alloc_screen(void *, const struct wsscreen_descr *,
@@ -174,6 +175,9 @@ pm_attach(device_t parent, device_t self, void *aux)
 	if (console) {
 		sc->sc_nscreens = 1;
 		ri->ri_flg &= ~RI_NO_AUTO;
+	} else if (!pm_check_vfb()) {
+		printf(": VFB01/VFB02 frame buffer option not found\n");
+		return;
 	} else
 		pm_common_init();
 
@@ -190,6 +194,27 @@ pm_attach(device_t parent, device_t self, void *aux)
 	waa.accesscookie = sc;
 
 	config_found(self, &waa, wsemuldisplaydevprint);
+}
+
+int
+pm_check_vfb(void)
+{
+	int *mem;
+	const int magic = 0xcafebabe;
+
+	mem = (void *)MIPS_PHYS_TO_KSEG1(KN01_PHYS_FBUF_START);
+
+	*mem = magic;
+	wbflush();
+	if (*mem != magic)
+		return 0;
+
+	*mem = ~magic;
+	wbflush();
+	if (*mem != ~magic)
+		return 0;
+
+	return 1;
 }
 
 void
