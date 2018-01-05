@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.201 2017/09/25 04:15:33 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.202 2018/01/05 01:53:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.201 2017/09/25 04:15:33 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.202 2018/01/05 01:53:15 christos Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -686,15 +686,13 @@ _rt_free(struct rtentry *rt)
 static void
 rt_free_work(struct work *wk, void *arg)
 {
-	int i;
-	struct rtentry *rt;
 
 restart:
 	mutex_enter(&rt_free_global.lock);
-	for (i = 0; i < sizeof(rt_free_global.queue); i++) {
+	for (size_t i = 0; i < __arraycount(rt_free_global.queue); i++) {
 		if (rt_free_global.queue[i] == NULL)
 			continue;
-		rt = rt_free_global.queue[i];
+		struct rtentry *rt = rt_free_global.queue[i];
 		rt_free_global.queue[i] = NULL;
 		mutex_exit(&rt_free_global.lock);
 
@@ -710,23 +708,24 @@ rt_free(struct rtentry *rt)
 {
 
 	KASSERT(rt->rt_refcnt > 0);
-	if (!rt_wait_ok()) {
-		int i;
-		mutex_enter(&rt_free_global.lock);
-		for (i = 0; i < sizeof(rt_free_global.queue); i++) {
-			if (rt_free_global.queue[i] == NULL) {
-				rt_free_global.queue[i] = rt;
-				break;
-			}
-		}
-		KASSERT(i < sizeof(rt_free_global.queue));
-		rt_ref(rt);
-		mutex_exit(&rt_free_global.lock);
-		workqueue_enqueue(rt_free_global.wq, &rt_free_global.wk, NULL);
-	} else {
+	if (rt_wait_ok()) {
 		atomic_dec_uint(&rt->rt_refcnt);
 		_rt_free(rt);
+		return;
 	}
+
+	size_t i;
+	mutex_enter(&rt_free_global.lock);
+	for (i = 0; i < __arraycount(rt_free_global.queue); i++) {
+		if (rt_free_global.queue[i] == NULL)
+			break;
+	}
+
+	KASSERT(i < __arraycount(rt_free_global.queue));
+	rt_free_global.queue[i] = rt;
+	rt_ref(rt);
+	mutex_exit(&rt_free_global.lock);
+	workqueue_enqueue(rt_free_global.wq, &rt_free_global.wk, NULL);
 }
 
 #ifdef NET_MPSAFE
