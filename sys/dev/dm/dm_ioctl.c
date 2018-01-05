@@ -1,4 +1,4 @@
-/* $NetBSD: dm_ioctl.c,v 1.31 2017/06/01 02:45:09 chs Exp $      */
+/* $NetBSD: dm_ioctl.c,v 1.32 2018/01/05 14:22:05 christos Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -28,6 +28,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dm_ioctl.c,v 1.32 2018/01/05 14:22:05 christos Exp $");
 
 /*
  * Locking is used to synchronise between ioctl calls and between dm_table's
@@ -158,6 +160,7 @@ dm_dbg_print_flags(int flags)
 
 	return 0;
 }
+
 /*
  * Get version ioctl call I do it as default therefore this
  * function is unused now.
@@ -168,6 +171,7 @@ dm_get_version_ioctl(prop_dictionary_t dm_dict)
 
 	return 0;
 }
+
 /*
  * Get list of all available targets from global
  * target list and sent them back to libdevmapper.
@@ -190,6 +194,7 @@ dm_list_versions_ioctl(prop_dictionary_t dm_dict)
 
 	return 0;
 }
+
 /*
  * Create in-kernel entry for device. Device attributes such as name, uuid are
  * taken from proplib dictionary.
@@ -271,6 +276,7 @@ dm_dev_create_ioctl(prop_dictionary_t dm_dict)
 
 	return r;
 }
+
 /*
  * Get list of created device-mapper devices fromglobal list and
  * send it to kernel.
@@ -309,6 +315,7 @@ dm_dev_list_ioctl(prop_dictionary_t dm_dict)
 
 	return 0;
 }
+
 /*
  * Rename selected devices old name is in struct dm_ioctl.
  * newname is taken from dictionary
@@ -366,6 +373,7 @@ dm_dev_rename_ioctl(prop_dictionary_t dm_dict)
 
 	return 0;
 }
+
 /*
  * Remove device from global list I have to remove active
  * and inactive tables first.
@@ -408,6 +416,7 @@ dm_dev_remove_ioctl(prop_dictionary_t dm_dict)
 	 */
 	return config_detach(devt, DETACH_QUIET);
 }
+
 /*
  * Return actual state of device to libdevmapper.
  */
@@ -461,6 +470,7 @@ dm_dev_status_ioctl(prop_dictionary_t dm_dict)
 
 	return 0;
 }
+
 /*
  * Set only flag to suggest that device is suspended. This call is
  * not supported in NetBSD.
@@ -501,6 +511,7 @@ dm_dev_suspend_ioctl(prop_dictionary_t dm_dict)
 
 	return 0;
 }
+
 /*
  * Simulate Linux behaviour better and switch tables here and not in
  * dm_table_load_ioctl.
@@ -551,6 +562,7 @@ dm_dev_resume_ioctl(prop_dictionary_t dm_dict)
 
 	return 0;
 }
+
 /*
  * Table management routines
  * lvm2tools doens't send name/uuid to kernel with table
@@ -596,6 +608,7 @@ dm_table_clear_ioctl(prop_dictionary_t dm_dict)
 
 	return 0;
 }
+
 /*
  * Get list of physical devices for active table.
  * Get dev_t from pdev vnode and insert it into cmd_array.
@@ -661,6 +674,7 @@ dm_table_deps_ioctl(prop_dictionary_t dm_dict)
 
 	return 0;
 }
+
 /*
  * Load new table/tables to device.
  * Call apropriate target init routine open all physical pdev's and
@@ -788,7 +802,6 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 			free(str, M_TEMP);
 
 			dm_dev_unbusy(dmv);
-			dm_target_unbusy(target);
 			prop_object_iterator_release(iter);
 			return ret;
 		}
@@ -804,6 +817,7 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 	dm_dev_unbusy(dmv);
 	return 0;
 }
+
 /*
  * Get description of all tables loaded to device from kernel
  * and send it to libdevmapper.
@@ -934,7 +948,6 @@ dm_table_status_ioctl(prop_dictionary_t dm_dict)
 
 	return 0;
 }
-
 
 /*
  * For every call I have to set kernel driver version.

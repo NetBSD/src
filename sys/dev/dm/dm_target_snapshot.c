@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_snapshot.c,v 1.18 2017/06/04 08:54:38 mbalmer Exp $      */
+/*        $NetBSD: dm_target_snapshot.c,v 1.19 2018/01/05 14:22:05 christos Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -28,6 +28,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dm_target_snapshot.c,v 1.19 2018/01/05 14:22:05 christos Exp $");
 
 /*
  * 1. Suspend my_data to temporarily stop any I/O while the snapshot is being
@@ -248,6 +250,7 @@ dm_target_snapshot_init(dm_dev_t * dmv, void **target_config, char *params)
 
 	return 0;
 }
+
 /*
  * Status routine is called to get params string, which is target
  * specific. When dm_table_status_ioctl is called with flag
@@ -296,6 +299,7 @@ dm_target_snapshot_status(void *target_config)
 
 	return params;
 }
+
 /* Strategy routine called from dm_strategy. */
 int
 dm_target_snapshot_strategy(dm_table_entry_t * table_en, struct buf * bp)
@@ -310,39 +314,37 @@ dm_target_snapshot_strategy(dm_table_entry_t * table_en, struct buf * bp)
 
 	return 0;
 }
+
 /* Doesn't do anything here. */
 int
 dm_target_snapshot_destroy(dm_table_entry_t * table_en)
 {
-	dm_target_snapshot_config_t *tsc;
 
 	/*
 	 * Destroy function is called for every target even if it
 	 * doesn't have target_config.
 	 */
-
 	if (table_en->target_config == NULL)
-		return 0;
+		goto out;
 
 	printf("Snapshot target destroy function called\n");
 
-	tsc = table_en->target_config;
+	dm_target_snapshot_config_t *tsc = table_en->target_config;
+	table_en->target_config = NULL;
 
 	/* Decrement pdev ref counter if 0 remove it */
 	dm_pdev_decr(tsc->tsc_snap_dev);
-
 	if (tsc->tsc_persistent_dev)
 		dm_pdev_decr(tsc->tsc_cow_dev);
 
+	kmem_free(tsc, sizeof(*tsc));
+out:
 	/* Unbusy target so we can unload it */
 	dm_target_unbusy(table_en->target);
 
-	kmem_free(table_en->target_config, sizeof(dm_target_snapshot_config_t));
-
-	table_en->target_config = NULL;
-
 	return 0;
 }
+
 /* Add this target dependencies to prop_array_t */
 int
 dm_target_snapshot_deps(dm_table_entry_t * table_en,
@@ -365,6 +367,7 @@ dm_target_snapshot_deps(dm_table_entry_t * table_en,
 	}
 	return 0;
 }
+
 /* Upcall is used to inform other depended devices about IO. */
 int
 dm_target_snapshot_upcall(dm_table_entry_t * table_en, struct buf * bp)
@@ -377,6 +380,7 @@ dm_target_snapshot_upcall(dm_table_entry_t * table_en, struct buf * bp)
 
 	return 0;
 }
+
 /*
  * dm target snapshot origin routines.
  *
@@ -419,6 +423,7 @@ dm_target_snapshot_orig_init(dm_dev_t * dmv, void **target_config, char *params)
 
 	return 0;
 }
+
 /*
  * Status routine is called to get params string, which is target
  * specific. When dm_table_status_ioctl is called with flag
@@ -452,6 +457,7 @@ dm_target_snapshot_orig_status(void *target_config)
 
 	return params;
 }
+
 /* Strategy routine called from dm_strategy. */
 int
 dm_target_snapshot_orig_strategy(dm_table_entry_t * table_en, struct buf * bp)
@@ -466,6 +472,7 @@ dm_target_snapshot_orig_strategy(dm_table_entry_t * table_en, struct buf * bp)
 
 	return 0;
 }
+
 /*
  * Sync underlying disk caches.
  */
@@ -479,13 +486,14 @@ dm_target_snapshot_orig_sync(dm_table_entry_t * table_en)
 
 	cmd = 1;
 
-	return VOP_IOCTL(tsoc->tsoc_real_dev->pdev_vnode,  DIOCCACHESYNC, &cmd, FREAD|FWRITE, kauth_cred_get());
+	return VOP_IOCTL(tsoc->tsoc_real_dev->pdev_vnode,  DIOCCACHESYNC,
+	    &cmd, FREAD|FWRITE, kauth_cred_get());
 }
+
 /* Decrement pdev and free allocated space. */
 int
 dm_target_snapshot_orig_destroy(dm_table_entry_t * table_en)
 {
-	dm_target_snapshot_origin_config_t *tsoc;
 
 	/*
 	 * Destroy function is called for every target even if it
@@ -493,22 +501,22 @@ dm_target_snapshot_orig_destroy(dm_table_entry_t * table_en)
 	 */
 
 	if (table_en->target_config == NULL)
-		return 0;
+		goto out;
 
-	tsoc = table_en->target_config;
+	dm_target_snapshot_origin_config_t *tsoc = table_en->target_config;
+	table_en->target_config = NULL;
 
 	/* Decrement pdev ref counter if 0 remove it */
 	dm_pdev_decr(tsoc->tsoc_real_dev);
 
+	kmem_free(tsoc, sizeof(*tsoc));
+out:
 	/* Unbusy target so we can unload it */
 	dm_target_unbusy(table_en->target);
 
-	kmem_free(table_en->target_config, sizeof(dm_target_snapshot_origin_config_t));
-
-	table_en->target_config = NULL;
-
 	return 0;
 }
+
 /*
  * Get target deps and add them to prop_array_t.
  */
@@ -537,6 +545,7 @@ dm_target_snapshot_orig_deps(dm_table_entry_t * table_en,
 
 	return 0;
 }
+
 /* Unsupported for this target. */
 int
 dm_target_snapshot_orig_upcall(dm_table_entry_t * table_en, struct buf * bp)
