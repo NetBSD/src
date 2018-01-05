@@ -1,4 +1,4 @@
-/*	$NetBSD: asctime.c,v 1.22 2017/10/24 17:38:17 christos Exp $	*/
+/*	$NetBSD: asctime.c,v 1.23 2018/01/05 20:01:31 kamil Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -16,7 +16,7 @@
 #if 0
 static char	elsieid[] = "@(#)asctime.c	8.5";
 #else
-__RCSID("$NetBSD: asctime.c,v 1.22 2017/10/24 17:38:17 christos Exp $");
+__RCSID("$NetBSD: asctime.c,v 1.23 2018/01/05 20:01:31 kamil Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -27,6 +27,7 @@ __RCSID("$NetBSD: asctime.c,v 1.22 2017/10/24 17:38:17 christos Exp $");
 #include <stdio.h>
 
 #ifdef __weak_alias
+__weak_alias(asctime,_asctime)
 __weak_alias(asctime_r,_asctime_r)
 #endif
 
