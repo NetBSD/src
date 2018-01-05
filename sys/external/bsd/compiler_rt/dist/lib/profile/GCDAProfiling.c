@@ -20,6 +20,10 @@
 |*
 \*===----------------------------------------------------------------------===*/
 
+#ifdef _LIBC
+#include "namespace.h"
+#endif
+
 #include "InstrProfilingUtil.h"
 
 #include <errno.h>
