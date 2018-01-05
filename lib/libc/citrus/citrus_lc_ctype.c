@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_lc_ctype.c,v 1.15 2013/09/13 13:13:32 joerg Exp $ */
+/* $NetBSD: citrus_lc_ctype.c,v 1.16 2018/01/05 17:52:06 kamil Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,9 +28,10 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_lc_ctype.c,v 1.15 2013/09/13 13:13:32 joerg Exp $");
+__RCSID("$NetBSD: citrus_lc_ctype.c,v 1.16 2018/01/05 17:52:06 kamil Exp $");
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include "reentrant.h"
 #include <sys/types.h>
 #include <sys/ctype_bits.h>
