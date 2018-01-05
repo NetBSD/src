@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2164 2017/12/20 00:07:55 kamil Exp $
+#	$NetBSD: mi,v 1.2165 2018/01/05 20:51:13 snj Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -9416,6 +9416,7 @@
 ./usr/share/man/cat3/strerror_r.0		comp-c-catman		.cat
 ./usr/share/man/cat3/stresep.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strfmon.0			comp-c-catman		.cat
+./usr/share/man/cat3/strfmon_l.0		comp-c-catman		.cat
 ./usr/share/man/cat3/strftime.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strftime_z.0		comp-c-catman		.cat
 ./usr/share/man/cat3/string.0			comp-c-catman		.cat
@@ -16946,6 +16947,7 @@
 ./usr/share/man/html3/strerror_r.html		comp-c-htmlman		html
 ./usr/share/man/html3/stresep.html		comp-c-htmlman		html
 ./usr/share/man/html3/strfmon.html		comp-c-htmlman		html
+./usr/share/man/html3/strfmon_l.html		comp-c-htmlman		html
 ./usr/share/man/html3/strftime.html		comp-c-htmlman		html
 ./usr/share/man/html3/strftime_z.html		comp-c-htmlman		html
 ./usr/share/man/html3/string.html		comp-c-htmlman		html
@@ -24507,6 +24509,7 @@
 ./usr/share/man/man3/strerror_r.3		comp-c-man		.man
 ./usr/share/man/man3/stresep.3			comp-c-man		.man
 ./usr/share/man/man3/strfmon.3			comp-c-man		.man
+./usr/share/man/man3/strfmon_l.3		comp-c-man		.man
 ./usr/share/man/man3/strftime.3			comp-c-man		.man
 ./usr/share/man/man3/strftime_z.3		comp-c-man		.man
 ./usr/share/man/man3/string.3			comp-c-man		.man
