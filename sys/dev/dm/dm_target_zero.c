@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_zero.c,v 1.12 2011/12/11 22:53:26 agc Exp $      */
+/*        $NetBSD: dm_target_zero.c,v 1.13 2018/01/05 14:22:26 christos Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -28,7 +28,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dm_target_zero.c,v 1.13 2018/01/05 14:22:26 christos Exp $");
 
 /*
  * This file implements initial version of device-mapper zero target.
@@ -124,6 +125,7 @@ dm_target_zero_init(dm_dev_t * dmv, void **target_config, char *argv)
 
 	return 0;
 }
+
 /* Status routine called to get params string. */
 char *
 dm_target_zero_status(void *target_config)
@@ -149,6 +151,7 @@ dm_target_zero_strategy(dm_table_entry_t * table_en, struct buf * bp)
 
 	return 0;
 }
+
 /* Sync underlying disk caches. */
 int
 dm_target_zero_sync(dm_table_entry_t * table_en)
@@ -156,6 +159,7 @@ dm_target_zero_sync(dm_table_entry_t * table_en)
 
 	return 0;
 }
+
 /* Does not need to do anything here. */
 int
 dm_target_zero_destroy(dm_table_entry_t * table_en)
@@ -167,12 +171,14 @@ dm_target_zero_destroy(dm_table_entry_t * table_en)
 
 	return 0;
 }
+
 /* Does not need to do anything here. */
 int
 dm_target_zero_deps(dm_table_entry_t * table_en, prop_array_t prop_array)
 {
 	return 0;
 }
+
 /* Unsuported for this target. */
 int
 dm_target_zero_upcall(dm_table_entry_t * table_en, struct buf * bp)

@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target.c,v 1.19 2014/10/18 08:33:27 snj Exp $      */
+/*        $NetBSD: dm_target.c,v 1.20 2018/01/05 14:22:26 christos Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -28,6 +28,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dm_target.c,v 1.20 2018/01/05 14:22:26 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -56,6 +58,7 @@ dm_target_busy(dm_target_t * target)
 {
 	atomic_inc_32(&target->ref_cnt);
 }
+
 /*
  * Release reference counter on target.
  */
@@ -65,6 +68,7 @@ dm_target_unbusy(dm_target_t * target)
 	KASSERT(target->ref_cnt > 0);
 	atomic_dec_32(&target->ref_cnt);
 }
+
 /*
  * Try to autoload target module if it was not found in current
  * target list.
@@ -94,6 +98,7 @@ dm_target_autoload(const char *dm_target_name)
 
 	return dmt;
 }
+
 /*
  * Lookup for target in global target list.
  */
@@ -117,6 +122,7 @@ dm_target_lookup(const char *dm_target_name)
 
 	return dmt;
 }
+
 /*
  * Search for name in TAIL and return apropriate pointer.
  */
@@ -124,8 +130,8 @@ static dm_target_t *
 dm_target_lookup_name(const char *dm_target_name)
 {
 	dm_target_t *dm_target;
-	int dlen;
-	int slen;
+	size_t dlen;
+	size_t slen;
 
 	slen = strlen(dm_target_name) + 1;
 
@@ -140,6 +146,7 @@ dm_target_lookup_name(const char *dm_target_name)
 
 	return NULL;
 }
+
 /*
  * Insert new target struct into the TAIL.
  * dm_target
@@ -174,7 +181,6 @@ dm_target_insert(dm_target_t * dm_target)
 	return 0;
 }
 
-
 /*
  * Remove target from TAIL, target is selected with its name.
  */
@@ -205,6 +211,7 @@ dm_target_rem(char *dm_target_name)
 
 	return 0;
 }
+
 /*
  * Destroy all targets and remove them from queue.
  * This routine is called from dm_detach, before module
@@ -231,6 +238,7 @@ dm_target_destroy(void)
 
 	return 0;
 }
+
 /*
  * Allocate new target entry.
  */
@@ -239,6 +247,7 @@ dm_target_alloc(const char *name)
 {
 	return kmem_zalloc(sizeof(dm_target_t), KM_SLEEP);
 }
+
 /*
  * Return prop_array of dm_target dictionaries.
  */
@@ -276,6 +285,7 @@ dm_target_prop_list(void)
 
 	return target_array;
 }
+
 /* Initialize dm_target subsystem. */
 int
 dm_target_init(void)
