@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.192 2018/01/05 20:01:31 kamil Exp $	*/
+/*	$NetBSD: namespace.h,v 1.193 2018/01/05 20:30:51 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -217,6 +217,7 @@
 #define asprintf_l		_asprintf_l
 #define asysctl			_asysctl
 #define asysctlbyname		_asysctlbyname
+#define atoi			_atoi
 #define atoll			_atoll
 #define authnone_create		_authnone_create
 #define authunix_create		_authunix_create
