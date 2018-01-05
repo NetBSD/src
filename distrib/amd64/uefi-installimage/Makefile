@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.3 2017/09/18 14:42:16 joerg Exp $
+#	$NetBSD: Makefile,v 1.4 2018/01/05 01:33:11 pgoyette Exp $
 
 .include <bsd.own.mk>
 
 INSTIMGBASE=	NetBSD-${DISTRIBVER}-amd64-uefi-install	# gives ${IMGBASE}.img
 
 BOOTDISK=	dk1			# unused (use GUID)
-INSTIMAGEMB?=	1450			# for all installation binaries
+INSTIMAGEMB?=	1500			# for all installation binaries
 
 PRIMARY_BOOT=		bootxx_ffsv1
 SECONDARY_BOOT=		boot
