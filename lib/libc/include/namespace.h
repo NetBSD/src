@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.189 2017/11/30 05:47:24 riastradh Exp $	*/
+/*	$NetBSD: namespace.h,v 1.190 2018/01/05 18:57:06 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -45,6 +45,7 @@
 #define err		_err
 #define errc		_errc
 #define errx		_errx
+#define fcntl		_fcntl
 #ifdef _REENTRANT
 #define fileno		_fileno
 #endif /* _REENTRANT */
@@ -274,6 +275,7 @@
 #define clock_gettime		_clock_gettime
 #define clock_getres		_clock_getres
 #define clock_settime		_clock_settime
+#define close			_close
 #define closedir		_closedir
 #define closelog		_closelog
 #define closelog_r		_closelog_r
@@ -318,6 +320,7 @@
 #define execlp			_execlp
 #define execlpe			_execlpe
 #define execv			_execv
+#define execve			_execve
 #define execvp			_execvp
 #define execvpe			_execvpe
 #define explicit_memset		_explicit_memset
@@ -617,6 +620,7 @@
 #define seekdir			_seekdir
 #define select			_select
 #define send			_send
+#define setcontext		_setcontext
 #define setdomainname		_setdomainname
 #define setenv			_setenv
 #define setfsent		_setfsent
@@ -794,6 +798,7 @@
 #define wait			_wait
 #define wait3			_wait3
 #define wait4			_wait4
+#define wait6			_wait6
 #define waitid			_waitid
 #define waitpid			_waitpid
 #define wcscasecmp		_wcscasecmp
@@ -811,6 +816,8 @@
 #define wcwidth			_wcwidth
 #define wcwidth_l		_wcwidth_l
 #define wprintf_l		_wprintf_l
+#define write			_write
+#define writev			_writev
 #define wscanf_l		_wscanf_l
 #define xdr_accepted_reply	_xdr_accepted_reply
 #define xdr_array		_xdr_array
