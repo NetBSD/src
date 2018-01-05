@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.453 2017/11/13 22:01:45 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.454 2018/01/05 01:51:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.453 2017/11/13 22:01:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.454 2018/01/05 01:51:36 christos Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -760,7 +760,7 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 
 	/* see if we can run it. */
 	if ((error = check_exec(l, epp, data->ed_pathbuf)) != 0) {
-		if (error != ENOENT && error != EACCES) {
+		if (error != ENOENT && error != EACCES && error != ENOEXEC) {
 			DPRINTF(("%s: check exec failed for %s, error %d\n",
 			    __func__, epp->ep_kname, error));
 		}
