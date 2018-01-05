@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_table.c,v 1.7 2011/08/27 17:10:05 ahoka Exp $      */
+/*        $NetBSD: dm_table.c,v 1.8 2018/01/05 14:22:26 christos Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -28,6 +28,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dm_table.c,v 1.8 2018/01/05 14:22:26 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -79,6 +81,7 @@ dm_table_busy(dm_table_head_t * head, uint8_t table_id)
 	mutex_exit(&head->table_mtx);
 	return id;
 }
+
 /*
  * Function release table lock and eventually wakeup all waiters.
  */
@@ -94,6 +97,7 @@ dm_table_unbusy(dm_table_head_t * head)
 
 	mutex_exit(&head->table_mtx);
 }
+
 /*
  * Return current active table to caller, increment io_cnt reference counter.
  */
@@ -114,6 +118,7 @@ dm_table_release(dm_table_head_t * head, uint8_t table_id)
 {
 	dm_table_unbusy(head);
 }
+
 /*
  * Switch table from inactive to active mode. Have to wait until io_cnt is 0.
  */
@@ -129,6 +134,7 @@ dm_table_switch_tables(dm_table_head_t * head)
 
 	mutex_exit(&head->table_mtx);
 }
+
 /*
  * Destroy all table data. This function can run when there are no
  * readers on table lists.
@@ -173,6 +179,7 @@ dm_table_destroy(dm_table_head_t * head, uint8_t table_id)
 
 	return 0;
 }
+
 /*
  * Return length of active table in device.
  */
@@ -256,6 +263,7 @@ dm_table_disksize(dm_table_head_t * head, uint64_t *numsecp, unsigned *secsizep)
 
 	dm_table_unbusy(head);
 }
+
 /*
  * Return > 0 if table is at least one table entry (returns number of entries)
  * and return 0 if there is not. Target count returned from this function
@@ -302,6 +310,7 @@ dm_table_head_init(dm_table_head_t * head)
 	mutex_init(&head->table_mtx, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&head->table_cv, "dm_io");
 }
+
 /*
  * Destroy all variables in table_head
  */
