@@ -1,4 +1,4 @@
-/*	$NetBSD: dlfcn_elf.c,v 1.14 2017/07/11 15:21:35 joerg Exp $	*/
+/*	$NetBSD: dlfcn_elf.c,v 1.15 2018/01/05 19:29:44 kamil Exp $	*/
 
 /*
  * Copyright (c) 2000 Takuya SHIOZAKI
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: dlfcn_elf.c,v 1.14 2017/07/11 15:21:35 joerg Exp $");
+__RCSID("$NetBSD: dlfcn_elf.c,v 1.15 2018/01/05 19:29:44 kamil Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -38,6 +38,7 @@ __RCSID("$NetBSD: dlfcn_elf.c,v 1.14 2017/07/11 15:21:35 joerg Exp $");
 #include <string.h>
 #include <stdbool.h>
 
+#undef dl_iterate_phdr
 #undef dlopen
 #undef dlclose
 #undef dlsym
