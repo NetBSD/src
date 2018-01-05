@@ -1,4 +1,4 @@
-/*$NetBSD: dm_target_stripe.c,v 1.22 2017/06/01 02:45:09 chs Exp $*/
+/*$NetBSD: dm_target_stripe.c,v 1.23 2018/01/05 14:22:26 christos Exp $*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,6 +28,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dm_target_stripe.c,v 1.23 2018/01/05 14:22:26 christos Exp $");
 
 /*
  * This file implements initial version of device-mapper stripe target.
@@ -190,6 +192,7 @@ dm_target_stripe_init(dm_dev_t * dmv, void **target_config, char *params)
 
 	return 0;
 }
+
 /* Status routine called to get params string. */
 char *
 dm_target_stripe_status(void *target_config)
@@ -216,6 +219,7 @@ dm_target_stripe_status(void *target_config)
 
 	return params;
 }
+
 /* Strategy routine called from dm_strategy. */
 int
 dm_target_stripe_strategy(dm_table_entry_t * table_en, struct buf * bp)
@@ -281,6 +285,7 @@ dm_target_stripe_strategy(dm_table_entry_t * table_en, struct buf * bp)
 
 	return 0;
 }
+
 /* Sync underlying disk caches. */
 int
 dm_target_stripe_sync(dm_table_entry_t * table_en)
@@ -303,18 +308,20 @@ dm_target_stripe_sync(dm_table_entry_t * table_en)
 	return err;
 
 }
+
 /* Destroy target specific data. */
 int
 dm_target_stripe_destroy(dm_table_entry_t * table_en)
 {
 	dm_target_stripe_fini(table_en->target_config);
+	table_en->target_config = NULL;
 
 	/* Unbusy target so we can unload it */
 	dm_target_unbusy(table_en->target);
 
-	table_en->target_config = NULL;
 	return 0;
 }
+
 /* Doesn't not need to do anything here. */
 int
 dm_target_stripe_deps(dm_table_entry_t * table_en, prop_array_t prop_array)
@@ -334,12 +341,14 @@ dm_target_stripe_deps(dm_table_entry_t * table_en, prop_array_t prop_array)
 
 	return 0;
 }
+
 /* Unsupported for this target. */
 int
 dm_target_stripe_upcall(dm_table_entry_t * table_en, struct buf * bp)
 {
 	return 0;
 }
+
 /*
  * Compute physical block size
  * For a stripe target we chose the maximum sector size of all
