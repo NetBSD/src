@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_dev.c,v 1.10 2017/06/01 02:45:09 chs Exp $      */
+/*        $NetBSD: dm_dev.c,v 1.11 2018/01/05 14:22:26 christos Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -28,6 +28,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dm_dev.c,v 1.11 2018/01/05 14:22:26 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -61,6 +63,7 @@ disable_dev(dm_dev_t * dmv)
 		cv_wait(&dmv->dev_cv, &dmv->dev_mtx);
 	mutex_exit(&dmv->dev_mtx);
 }
+
 /*
  * Generic function used to lookup dm_dev_t. Calling with dm_dev_name
  * and dm_dev_uuid NULL is allowed.
@@ -98,7 +101,6 @@ dm_dev_lookup(const char *dm_dev_name, const char *dm_dev_uuid,
 	return NULL;
 }
 
-
 /*
  * Lookup device with its minor number.
  */
@@ -114,6 +116,7 @@ dm_dev_lookup_minor(int dm_dev_minor)
 
 	return NULL;
 }
+
 /*
  * Lookup device with its device name.
  */
@@ -121,8 +124,8 @@ static dm_dev_t *
 dm_dev_lookup_name(const char *dm_dev_name)
 {
 	dm_dev_t *dmv;
-	int dlen;
-	int slen;
+	size_t dlen;
+	size_t slen;
 
 	slen = strlen(dm_dev_name);
 
@@ -142,6 +145,7 @@ dm_dev_lookup_name(const char *dm_dev_name)
 
 	return NULL;
 }
+
 /*
  * Lookup device with its device uuid. Used mostly by LVM2tools.
  */
@@ -168,6 +172,7 @@ dm_dev_lookup_uuid(const char *dm_dev_uuid)
 
 	return NULL;
 }
+
 /*
  * Insert new device to the global list of devices.
  */
@@ -194,6 +199,7 @@ dm_dev_insert(dm_dev_t * dev)
 	mutex_exit(&dm_dev_mutex);
 	return r;
 }
+
 #ifdef notyet
 /*
  * Lookup device with its minor number.
@@ -238,6 +244,7 @@ dm_dev_detach(device_t devt)
 
 	return NULL;
 }
+
 /*
  * Remove device selected with dm_dev from global list of devices.
  */
@@ -269,6 +276,7 @@ dm_dev_rem(const char *dm_dev_name, const char *dm_dev_uuid,
 
 	return NULL;
 }
+
 /*
  * Destroy all devices created in device-mapper. Remove all tables
  * free all allocated memmory.
@@ -310,6 +318,7 @@ dm_dev_destroy(void)
 	mutex_destroy(&dm_dev_mutex);
 	return 0;
 }
+
 /*
  * Allocate new device entry.
  */
@@ -322,6 +331,7 @@ dm_dev_alloc(void)
 	dmv->diskp = kmem_zalloc(sizeof(struct disk), KM_SLEEP);
 	return dmv;
 }
+
 /*
  * Freed device entry.
  */
@@ -360,6 +370,7 @@ dm_dev_unbusy(dm_dev_t * dmv)
 		cv_broadcast(&dmv->dev_cv);
 	mutex_exit(&dmv->dev_mtx);
 }
+
 /*
  * Return prop_array of dm_targer_list dictionaries.
  */
@@ -387,6 +398,7 @@ dm_dev_prop_list(void)
 	mutex_exit(&dm_dev_mutex);
 	return dev_array;
 }
+
 /*
  * Initialize global device mutex.
  */

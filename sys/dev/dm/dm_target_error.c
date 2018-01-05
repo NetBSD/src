@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_error.c,v 1.11 2010/05/18 15:10:38 haad Exp $      */
+/*        $NetBSD: dm_target_error.c,v 1.12 2018/01/05 14:22:26 christos Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -28,6 +28,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dm_target_error.c,v 1.12 2018/01/05 14:22:26 christos Exp $");
 
 /*
  * This file implements initial version of device-mapper error target.
@@ -120,12 +122,14 @@ dm_target_error_init(dm_dev_t * dmv, void **target_config, char *argv)
 
 	return 0;
 }
+
 /* Status routine called to get params string. */
 char *
 dm_target_error_status(void *target_config)
 {
 	return NULL;
 }
+
 /* Strategy routine called from dm_strategy. */
 int
 dm_target_error_strategy(dm_table_entry_t * table_en, struct buf * bp)
@@ -140,6 +144,7 @@ dm_target_error_strategy(dm_table_entry_t * table_en, struct buf * bp)
 
 	return 0;
 }
+
 /* Sync underlying disk caches. */
 int
 dm_target_error_sync(dm_table_entry_t * table_en)
@@ -147,6 +152,7 @@ dm_target_error_sync(dm_table_entry_t * table_en)
 
 	return 0;
 }
+
 /* Doesn't do anything here. */
 int
 dm_target_error_destroy(dm_table_entry_t * table_en)
@@ -158,12 +164,14 @@ dm_target_error_destroy(dm_table_entry_t * table_en)
 
 	return 0;
 }
+
 /* Doesn't not need to do anything here. */
 int
 dm_target_error_deps(dm_table_entry_t * table_en, prop_array_t prop_array)
 {
 	return 0;
 }
+
 /* Unsupported for this target. */
 int
 dm_target_error_upcall(dm_table_entry_t * table_en, struct buf * bp)
