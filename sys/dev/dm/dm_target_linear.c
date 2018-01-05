@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_linear.c,v 1.16 2017/06/04 08:54:38 mbalmer Exp $      */
+/*        $NetBSD: dm_target_linear.c,v 1.17 2018/01/05 14:22:05 christos Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -28,7 +28,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dm_target_linear.c,v 1.17 2018/01/05 14:22:05 christos Exp $");
 
 /*
  * This file implements initial version of device-mapper dklinear target.
@@ -95,6 +96,7 @@ dm_target_linear_init(dm_dev_t * dmv, void **target_config, char *params)
 
 	return 0;
 }
+
 /*
  * Status routine is called to get params string, which is target
  * specific. When dm_table_status_ioctl is called with flag
@@ -118,6 +120,7 @@ dm_target_linear_status(void *target_config)
 
 	return params;
 }
+
 /*
  * Do IO operation, called from dmstrategy routine.
  */
@@ -138,6 +141,7 @@ dm_target_linear_strategy(dm_table_entry_t * table_en, struct buf * bp)
 	return 0;
 
 }
+
 /*
  * Sync underlying disk caches.
  */
@@ -154,36 +158,35 @@ dm_target_linear_sync(dm_table_entry_t * table_en)
 	return VOP_IOCTL(tlc->pdev->pdev_vnode,  DIOCCACHESYNC, &cmd,
 	    FREAD|FWRITE, kauth_cred_get());	
 }
+
 /*
  * Destroy target specific data. Decrement table pdevs.
  */
 int
 dm_target_linear_destroy(dm_table_entry_t * table_en)
 {
-	dm_target_linear_config_t *tlc;
 
 	/*
 	 * Destroy function is called for every target even if it
 	 * doesn't have target_config.
 	 */
-
 	if (table_en->target_config == NULL)
-		return 0;
+		goto out;
 
-	tlc = table_en->target_config;
+	dm_target_linear_config_t *tlc = table_en->target_config;
+	table_en->target_config = NULL;
 
 	/* Decrement pdev ref counter if 0 remove it */
 	dm_pdev_decr(tlc->pdev);
 
+	kmem_free(tlc, sizeof(*tlc));
+
+out:
 	/* Unbusy target so we can unload it */
 	dm_target_unbusy(table_en->target);
-
-	kmem_free(table_en->target_config, sizeof(dm_target_linear_config_t));
-
-	table_en->target_config = NULL;
-
 	return 0;
 }
+
 /* Add this target pdev dependencies to prop_array_t */
 int
 dm_target_linear_deps(dm_table_entry_t * table_en, prop_array_t prop_array)
@@ -200,6 +203,7 @@ dm_target_linear_deps(dm_table_entry_t * table_en, prop_array_t prop_array)
 
 	return 0;
 }
+
 /*
  * Register upcall device.
  * Linear target doesn't need any upcall devices but other targets like
@@ -210,6 +214,7 @@ dm_target_linear_upcall(dm_table_entry_t * table_en, struct buf * bp)
 {
 	return 0;
 }
+
 /*
  * Query physical block size of this target
  * For a linear target this is just the sector size of the underlying device
@@ -230,6 +235,7 @@ dm_target_linear_secsize(dm_table_entry_t * table_en, unsigned *secsizep)
 
 	return 0;
 }
+
 /*
  * Transform char s to uint64_t offset number.
  */
