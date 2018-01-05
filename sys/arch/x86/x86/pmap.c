@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.276 2018/01/05 08:04:21 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.277 2018/01/05 09:13:48 martin Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.276 2018/01/05 08:04:21 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.277 2018/01/05 09:13:48 martin Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1460,7 +1460,7 @@ pmap_init_pcpu(void)
 {
 	const vaddr_t startva = PMAP_PCPU_BASE;
 	size_t nL4e, nL3e, nL2e, nL1e;
-	size_t L4e_idx, L3e_idx, L2e_idx, L1e_idx;
+	size_t L4e_idx, L3e_idx, L2e_idx, L1e_idx __diagused;
 	paddr_t pa;
 	vaddr_t endva;
 	vaddr_t tmpva;
