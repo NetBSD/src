@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2165 2018/01/05 20:51:13 snj Exp $
+#	$NetBSD: mi,v 1.2166 2018/01/06 09:31:03 snj Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -7862,7 +7862,7 @@
 ./usr/share/man/cat3/libperfuse.0		comp-perfuse-catman	.cat
 ./usr/share/man/cat3/libquota.0			comp-c-catman		.cat
 ./usr/share/man/cat3/libradius.0		comp-c-catman		.cat
-./usr/share/man/cat3/librtld_db.0		comp-c-catman		.cat
+./usr/share/man/cat3/librtld_db.0		comp-c-catman		dtrace,.cat
 ./usr/share/man/cat3/libsaslc.0			comp-c-catman		.cat
 ./usr/share/man/cat3/libusb.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/libusbhid.0		comp-c-catman		.cat
