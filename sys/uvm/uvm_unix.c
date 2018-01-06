@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_unix.c,v 1.49 2017/12/19 19:40:03 kamil Exp $	*/
+/*	$NetBSD: uvm_unix.c,v 1.50 2018/01/06 16:41:24 kamil Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_unix.c,v 1.49 2017/12/19 19:40:03 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_unix.c,v 1.50 2018/01/06 16:41:24 kamil Exp $");
 
 #include "opt_pax.h"
 
@@ -168,4 +168,21 @@ uvm_grow(struct proc *p, vaddr_t sp)
 		return (0);
 	vm->vm_ssize = nss;
 	return (1);
+}
+
+/*
+ * sys_oadvise: old advice system call
+ */
+
+/* ARGSUSED */
+int
+sys_ovadvise(struct lwp *l, const struct sys_ovadvise_args *uap, register_t *retval)
+{
+#if 0
+	/* {
+		syscallarg(int) anom;
+	} */
+#endif
+
+	return (EINVAL);
 }
