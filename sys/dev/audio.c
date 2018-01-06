@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.445 2017/12/16 16:04:20 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.446 2018/01/06 21:16:36 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.445 2017/12/16 16:04:20 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.446 2018/01/06 21:16:36 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -4794,7 +4794,7 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai, bool reset,
 	vc->sc_lastinfovalid = true;
 
 cleanup:
-	if (error == 0 && (cleared || pausechange|| reset)) {
+	if (error == 0 && (cleared || pausechange || reset)) {
 		int init_error;
 
 		init_error = (pausechange == 1 && reset == 0) ? 0 :
