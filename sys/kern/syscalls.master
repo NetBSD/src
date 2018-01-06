@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.290 2017/12/19 19:40:03 kamil Exp $
+	$NetBSD: syscalls.master,v 1.291 2018/01/06 16:41:23 kamil Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -180,7 +180,7 @@
 71	COMPAT_43 MODULAR compat	\
 		{ int|sys||mmap(void *addr, size_t len, int prot, \
 			    int flags, int fd, long pos); } ommap
-72	OBSOL		vadvise
+72	STD 		{ int|sys||ovadvise(int anom); } vadvise
 73	STD 		{ int|sys||munmap(void *addr, size_t len); }
 74	STD 		{ int|sys||mprotect(void *addr, size_t len, \
 			    int prot); }
