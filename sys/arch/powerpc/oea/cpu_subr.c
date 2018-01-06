@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.86 2017/09/30 03:34:04 macallan Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.87 2018/01/06 09:46:22 snj Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.86 2017/09/30 03:34:04 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.87 2018/01/06 09:46:22 snj Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_ppccache.h"
@@ -84,7 +84,7 @@ struct fmttab {
 
 /*
  * This should be one per CPU but since we only support it on 750 variants it
- * doesn't realy matter since none of them supports SMP
+ * doesn't really matter since none of them support SMP
  */
 envsys_data_t sensor;
 
@@ -631,7 +631,7 @@ cpu_setup(device_t self, struct cpu_info *ci)
 	}
 
 #if defined(_ARCH_PPC64)
-	/* ppc970 needs extre goop around writes to HID0 */
+	/* ppc970 needs extra goop around writes to HID0 */
 	__asm volatile( "sync;" \
 			"mtspr %0,%1;" \
 			"mfspr %1,%0;" \
