@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.4,v 1.82 2017/10/30 15:53:51 wiz Exp $
+.\"	$NetBSD: audio.4,v 1.83 2018/01/06 16:54:09 uwe Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -106,25 +106,31 @@ Virtual channels are converted to a common format, signed linear encoding,
 frequency channels and precision.
 These can be modified to taste by the following
 .Xr sysctl 8
-variables.
-.Bl -tag -width -compact
-.It hw.driverN.precision
-.It hw.driverN.frequency
-.It hw.driverN.channels
-.It hw.driverN.latency
-.It hw.driverN.multiuser
+variables:
+.Bl -tag -width "hw.driverN.precision" -compact -offset indent
+.It Li hw.driverN.precision
+.It Li hw.driverN.frequency
+.It Li hw.driverN.channels
+.It Li hw.driverN.latency
+.It Li hw.driverN.multiuser
 .El
 .Pp
 Where
 .Em driverN
 corresponds to the underlying audio device driver and device number.
-e.g In the case of an hdafg supported device the variables would be:
-hw.hdafg0.channels, hw.hdafg0.precision, hw.hdafg0.frequency.
+E.g. in the case of an
+.\" XXX: there's no hdafg(4) to xref to
+.Xr hdaudio 4
+supported device the variables would be:
+.Li hw.hdafg0.channels ,
+.Li hw.hdafg0.precision ,
+.Li hw.hdafg0.frequency .
 .Pp
 For best results, values close to the underlying hardware should be chosen.
 These variables may only be changed when the sampling device is not in use.
 .Pp
-The hw.driverN.latency
+The
+.Li hw.driverN.latency
 .Xr sysctl 8
 variable controls the latency of the in-kernel mixer by varying the hardware
 blocksize.
@@ -140,9 +146,12 @@ the audio device, this will be the latency these applications have.
 For audio applications that
 .Xr mmap 2
 the audio device for play back the resultant latency is a third (1/3) of the value
-of the hw.driverN.latency variable.
+of the
+.Li hw.driverN.latency
+variable.
 .Pp
-The hw.driverN.multiuser
+The
+.Li hw.driverN.multiuser
 .Xr sysctl 8
 variable determines if multiple users are allowed to access the sampling
 device.
@@ -157,14 +166,21 @@ denied.
 If set to true, all users may access the sampling device at any time.
 .Pp
 Each virtual channel has a corresponding mixer:
-.Bl -tag -width -compact
-.It vchan.dacN  Output volume
-.It vchan.micN  Recording volume
+.Bl -tag -width "vchan.dacN" -compact -offset indent
+.It Li vchan.dacN
+Output volume
+.It Li vchan.micN
+Recording volume
 .El
 .Pp
-Where N is the virtual channel number.
-e.g vchan.dac0 controlling playback volume and vchan.mic0 controlling
-recording volume for the first virtual channel.
+Where
+.Em N
+is the virtual channel number.
+E.g.\&
+.Li vchan.dac0
+controlling playback volume and
+.Li vchan.mic0
+controlling recording volume for the first virtual channel.
 .Pp
 On a half-duplex device, writes while recording is in progress will be
 immediately discarded.
@@ -232,7 +248,7 @@ Only encodings that are not emulated (i.e. where
 is not set) work properly for a mapped device.
 .Pp
 The audio device, like most devices, can be used in
-.Va select ,
+.Xr select 2 ,
 can be set in non-blocking mode and can be set (with a
 .Dv FIOASYNC
 ioctl) to send a
@@ -267,7 +283,8 @@ This command suspends the calling process until all queued playback
 samples have been played by the hardware.
 .It Dv AUDIO_GETDEV (audio_device_t)
 This command fetches the current hardware device information into the
-audio_device_t argument.
+.Vt audio_device_t
+argument.
 .Bd -literal
 typedef struct audio_device {
         char name[MAX_AUDIO_DEV_LEN];
@@ -279,7 +296,7 @@ typedef struct audio_device {
 The command returns the current setting of the full duplex mode.
 .It Dv AUDIO_GETENC (audio_encoding_t)
 This command is used iteratively to fetch sample encoding names and
-format_ids into the input/output audio_encoding_t argument.
+format ids into the input/output audio_encoding_t argument.
 .Bd -literal
 typedef struct audio_encoding {
 	int index;      /* input: nth encoding */
@@ -329,7 +346,9 @@ It mostly useful when the device
 buffer is available in user space via the
 .Xr mmap 2
 call.
-The information is returned in the audio_offset structure.
+The information is returned in the
+.Vt audio_offset_t
+structure.
 .Bd -literal
 typedef struct audio_offset {
 	u_int	samples;   /* Total number of bytes transferred */
@@ -361,7 +380,7 @@ typedef struct audio_info {
 When setting the current state with
 .Dv AUDIO_SETINFO ,
 the audio_info structure should first be initialized with
-.Dv AUDIO_INITINFO Po &info Pc
+.Li AUDIO_INITINFO(&info)
 and then the particular values to be changed should be set.
 This allows the audio driver to only set those things that you wish
 to change and eliminates the need to query the device with
@@ -395,7 +414,7 @@ The default for
 .Va hiwat
 is the maximum value and for
 .Va lowat
-75 % of
+75% of
 .Va hiwat .
 .Pp
 .Va blocksize
@@ -411,7 +430,7 @@ Normally the
 is calculated to correspond to 50ms of sound and it is recalculated
 when the encoding parameter changes, but if the
 .Va blocksize
-is set explicitly this value becomes sticky, i.e., it remains
+is set explicitly this value becomes sticky, i.e. it remains
 even when the encoding is changed.
 The stickiness can be cleared by reopening the device or setting the
 .Va blocksize
@@ -458,7 +477,8 @@ A-law encoding, 8 bits/sample
 .It Dv AUDIO_ENCODING_SLINEAR
 two's complement signed linear encoding with the platform byte order
 .It Dv AUDIO_ENCODING_ULINEAR
-unsigned linear encoding with the platform byte order
+unsigned linear encoding
+with the platform byte order
 .It Dv AUDIO_ENCODING_ADPCM
 ADPCM encoding, 8 bits/sample
 .It Dv AUDIO_ENCODING_SLINEAR_LE
@@ -569,7 +589,7 @@ the specified device
 .Va dev .
 .Va type
 identifies which type of value is supplied in the
-.Va mixer_ctrl_t
+.Vt mixer_ctrl_t
 argument.
 .Bd -literal
 #define AUDIO_MIXER_CLASS  0
@@ -618,7 +638,9 @@ or
 .Dv AUDIO_MIXER_WRITE .
 .It Dv AUDIO_MIXER_DEVINFO (mixer_devinfo_t)
 This command is used iteratively to fetch audio mixer device information
-into the input/output mixer_devinfo_t argument.
+into the input/output
+.Vt mixer_devinfo_t
+argument.
 To query all the supported devices, start with an index field of
 0 and continue with successive devices (1, 2, ...) until the
 command returns an error.
