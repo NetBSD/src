@@ -10,6 +10,15 @@ if test "${soc}" = "tegra" ; then
 	setenv mmcpart 1:1
 	setenv use_fdt 1
 fi
+if test "${soc}" = "tegra210" ; then
+	setenv kernel netbsd-TEGRA.ub
+	setenv bootargs root=ld0a
+	setenv mmcpart 1:1
+	setenv use_fdt 1
+	setenv fdtfile ${soc}-${board}.dtb
+	# enable PCIe
+	pci enum
+fi
 if test "${board}" = "am335x" ; then
 	setenv kernel netbsd-BEAGLEBONE.ub
 	setenv mmcpart 0:1
