@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.121 2016/02/29 16:16:42 riastradh Exp $
+#	$NetBSD: security,v 1.122 2018/01/06 23:44:06 mlelstv Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -909,13 +909,13 @@ if checkyesno check_disklabels; then
 	    egrep -v '\.(backup|current)(,v)?$' > $LABELS
 	xargs rm < $LABELS
 
-	disks="$(iostat -x | cut -f 1 -d ' ' )"
+	disks="$(/sbin/sysctl -n hw.iostatnames)"
 
 		# generate disklabels of all disks excluding:	cd fd md dk st
 		# nfs and "device" (the header of iostat)
 	for i in $disks; do
 		case $i in
-		[cfm]d[0-9]*|dk[0-9]*|st[0-9]*|nfs[0-9]*|device)
+		[cfm]d[0-9]*|dk[0-9]*|st[0-9]*|nfs[0-9]*)
 			;;
 		*)
 			if disklabel $i > /dev/null 2>&1; then
@@ -943,7 +943,8 @@ if checkyesno check_disklabels; then
 		for i in $disks; do
 			case $i in
 			[elsw]d[0-9]*|cgd[0-9]*|ofdisk[0-9]*|r[al][0-9]*|raid[0-9]*)
-				if /sbin/dkctl $i listwedges -qe; then
+				if /sbin/dkctl $i listwedges |
+				     grep -qe '[0-9] wedges:'; then
 					/sbin/dkctl $i listwedges \
 					    > "$work_dir/wedges.$i" 2>/dev/null
 				fi
