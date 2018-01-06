@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.446 2018/01/06 21:16:36 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.447 2018/01/06 23:15:36 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.446 2018/01/06 21:16:36 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.447 2018/01/06 23:15:36 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -4762,14 +4762,18 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai, bool reset,
 	}
 
 	if (SPECIFIED_CH(p->pause)) {
-		vc->sc_mpr.pause = p->pause;
 		pbus = !p->pause;
-		pausechange = true;
+		if (pbus != !vc->sc_mpr.pause) {
+			vc->sc_mpr.pause = p->pause;
+			pausechange = true;
+		}
 	}
 	if (SPECIFIED_CH(r->pause)) {
-		vc->sc_mrr.pause = r->pause;
 		rbus = !r->pause;
-		pausechange = true;
+		if (rbus != !vc->sc_mrr.pause) {
+			vc->sc_mrr.pause = r->pause;
+			pausechange = true;
+		}
 	}
 
 	if (SPECIFIED(ai->mode)) {
