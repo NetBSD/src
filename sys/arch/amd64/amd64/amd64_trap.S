@@ -1,4 +1,4 @@
-/*	$NetBSD: amd64_trap.S,v 1.14 2018/01/02 18:41:14 maxv Exp $	*/
+/*	$NetBSD: amd64_trap.S,v 1.15 2018/01/06 08:44:01 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2017 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #if 0
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: amd64_trap.S,v 1.14 2018/01/02 18:41:14 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amd64_trap.S,v 1.15 2018/01/06 08:44:01 maxv Exp $");
 #endif
 
 /*
@@ -143,7 +143,7 @@ IDTVEC(trap02)
 .Lnoswapgs:
 	movq	%rsp,%rdi
 	incq	CPUVAR(NTRAP)
-	call	_C_LABEL(trap)
+	call	_C_LABEL(nmitrap)
 
 .Lnmileave:
 	movw	TF_ES(%rsp),%es
