@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.25 2018/01/07 11:24:45 maxv Exp $	*/
+/*	$NetBSD: patch.c,v 1.26 2018/01/07 12:42:46 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.25 2018/01/07 11:24:45 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.26 2018/01/07 12:42:46 maxv Exp $");
 
 #include "opt_lockdebug.h"
 #ifdef i386
@@ -47,9 +47,16 @@ __KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.25 2018/01/07 11:24:45 maxv Exp $");
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
 #include <machine/specialreg.h>
+#include <machine/frameasm.h>
 
 #include <x86/cpuvar.h>
 #include <x86/cputypes.h>
+
+struct hotpatch {
+	uint8_t name;
+	uint8_t size;
+	void *addr;
+} __packed;
 
 void	spllower(int);
 void	spllower_end(void);
@@ -77,8 +84,6 @@ void	_atomic_cas_cx8(void);
 void	_atomic_cas_cx8_end(void);
 
 extern void	*x86_lockpatch[];
-extern void	*x86_clacpatch[];
-extern void	*x86_stacpatch[];
 extern void	*x86_retpatch[];
 extern void	*atomic_lockpatch[];
 
@@ -137,6 +142,27 @@ patchbytes(void *addr, const uint8_t *bytes, size_t size)
 
 	for (i = 0; i < size; i++) {
 		ptr[i] = bytes[i];
+	}
+}
+
+static void
+x86_hotpatch(uint32_t name, const uint8_t *bytes, size_t size)
+{
+	extern char __rodata_hotpatch_start;
+	extern char __rodata_hotpatch_end;
+	struct hotpatch *hps, *hpe, *hp;
+
+	hps = (struct hotpatch *)&__rodata_hotpatch_start;
+	hpe = (struct hotpatch *)&__rodata_hotpatch_end;
+
+	for (hp = hps; hp < hpe; hp++) {
+		if (hp->name != name) {
+			continue;
+		}
+		if (hp->size != size) {
+			panic("x86_hotpatch: incorrect size");
+		}
+		patchbytes(hp->addr, bytes, size);
 	}
 }
 
@@ -268,16 +294,11 @@ x86_patch(bool early)
 			0x0F, 0x01, 0xCB /* stac */
 		};
 
-		for (i = 0; x86_clacpatch[i] != NULL; i++) {
-			/* ret,int3,int3 -> clac */
-			patchbytes(x86_clacpatch[i], clac_bytes,
-			    sizeof(clac_bytes));
-		}
-		for (i = 0; x86_stacpatch[i] != NULL; i++) {
-			/* ret,int3,int3 -> stac */
-			patchbytes(x86_stacpatch[i], stac_bytes,
-			    sizeof(stac_bytes));
-		}
+		/* nop,nop,nop -> clac */
+		x86_hotpatch(HP_NAME_CLAC, clac_bytes, sizeof(clac_bytes));
+
+		/* nop,nop,nop -> stac */
+		x86_hotpatch(HP_NAME_STAC, stac_bytes, sizeof(stac_bytes));
 	}
 #endif
 
