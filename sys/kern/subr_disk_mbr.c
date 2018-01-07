@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_mbr.c,v 1.47 2017/02/19 07:43:42 rin Exp $	*/
+/*	$NetBSD: subr_disk_mbr.c,v 1.48 2018/01/07 03:35:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.47 2017/02/19 07:43:42 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.48 2018/01/07 03:35:43 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -604,7 +604,7 @@ validate_label(mbr_args_t *a, uint label_sector)
 	 */
 	dlp = (void *)a->bp->b_data;
 	dlp_lim = (char *)a->bp->b_data + a->bp->b_bcount - sizeof *dlp;
-	for (;; dlp = (void *)((char *)dlp + sizeof(long))) {
+	for (;; dlp = (void *)((char *)dlp + sizeof(uint32_t))) {
 		if ((char *)dlp > dlp_lim) {
 			if (a->action != WRITE_LABEL)
 				return SCAN_CONTINUE;
