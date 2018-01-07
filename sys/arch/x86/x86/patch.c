@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.26 2018/01/07 12:42:46 maxv Exp $	*/
+/*	$NetBSD: patch.c,v 1.27 2018/01/07 13:15:24 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.26 2018/01/07 12:42:46 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.27 2018/01/07 13:15:24 maxv Exp $");
 
 #include "opt_lockdebug.h"
 #ifdef i386
@@ -83,7 +83,6 @@ void	_atomic_cas_64_end(void);
 void	_atomic_cas_cx8(void);
 void	_atomic_cas_cx8_end(void);
 
-extern void	*x86_lockpatch[];
 extern void	*x86_retpatch[];
 extern void	*atomic_lockpatch[];
 
@@ -195,17 +194,18 @@ x86_patch(bool early)
 #if !defined(GPROF)
 	if (!early && ncpu == 1) {
 #ifndef LOCKDEBUG
+		/*
+		 * Uniprocessor: kill LOCK prefixes.
+		 */
 		const uint8_t bytes[] = {
 			X86_NOP
 		};
 
-		/* Uniprocessor: kill LOCK prefixes. */
-		for (i = 0; x86_lockpatch[i] != 0; i++)
-			patchbytes(x86_lockpatch[i], bytes, sizeof(bytes));
-		for (i = 0; atomic_lockpatch[i] != 0; i++)
-			patchbytes(atomic_lockpatch[i], bytes, sizeof(bytes));
-#endif	/* !LOCKDEBUG */
+		/* lock -> nop */
+		x86_hotpatch(HP_NAME_NOLOCK, bytes, sizeof(bytes));
+#endif
 	}
+
 	if (!early && (cpu_feature[0] & CPUID_SSE2) != 0) {
 		/*
 		 * Faster memory barriers.  We do not need to patch
