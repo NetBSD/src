@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1025 2017/12/01 22:48:00 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.1026 2018/01/07 20:59:25 jmcneill Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1111,7 +1111,7 @@ _MKVARS.no= \
 	MKPCC MKPIGZGZIP \
 	MKRADEONFIRMWARE MKREPRO \
 	MKSLJIT MKSOFTFLOAT MKSTRIPIDENT \
-	MKTPM \
+	MKTEGRAFIRMWARE MKTPM \
 	MKUNPRIVED MKUPDATE \
 	MKX11 MKX11MOTIF MKXORG_SERVER \
 	MKZFS
@@ -1164,6 +1164,11 @@ MKXORG_SERVER=yes
 # Only install the radeon firmware on DRM-happy systems.
 .if ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "i386"
 MKRADEONFIRMWARE=		yes
+.endif
+
+# Only install the tegra firmware on evbarm and evbarm64.
+.if ${MACHINE} == "evbarm" || ${MACHINE} == "evbarm64"
+MKTEGRAFIRMWARE=		yes
 .endif
 
 #
