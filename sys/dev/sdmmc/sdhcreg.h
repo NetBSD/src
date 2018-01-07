@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhcreg.h,v 1.18 2015/12/31 11:53:19 ryo Exp $	*/
+/*	$NetBSD: sdhcreg.h,v 1.18.10.1 2018/01/07 09:24:59 snj Exp $	*/
 /*	$OpenBSD: sdhcreg.h,v 1.4 2006/07/30 17:20:40 fgsch Exp $	*/
 
 /*
@@ -246,6 +246,7 @@
 #define SDHC_SPEC_VERS_200		0x01
 #define SDHC_SPEC_VERS_300		0x02
 #define SDHC_SPEC_VERS_400		0x03
+#define SDHC_SPEC_NOVERS		0xff	/* dummy */
 
 /* SDHC_CAPABILITIES decoding */
 #define SDHC_BASE_V3_FREQ_KHZ(cap)					\
