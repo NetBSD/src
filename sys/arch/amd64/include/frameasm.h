@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.25 2018/01/07 13:15:23 maxv Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.26 2018/01/07 13:43:23 maxv Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
 #define _AMD64_MACHINE_FRAMEASM_H
@@ -35,9 +35,10 @@
 #define STI(temp_reg) sti
 #endif	/* XEN */
 
-#define HP_NAME_CLAC	1
-#define HP_NAME_STAC	2
-#define HP_NAME_NOLOCK	3
+#define HP_NAME_CLAC		1
+#define HP_NAME_STAC		2
+#define HP_NAME_NOLOCK		3
+#define HP_NAME_RETFENCE	4
 
 #define HOTPATCH(name, size) \
 123:						; \

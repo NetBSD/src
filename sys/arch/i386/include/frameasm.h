@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.20 2018/01/07 13:15:24 maxv Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.21 2018/01/07 13:43:24 maxv Exp $	*/
 
 #ifndef _I386_FRAMEASM_H_
 #define _I386_FRAMEASM_H_
@@ -27,9 +27,10 @@
 			testb	$0xff,EVTCHN_UPCALL_PENDING(reg)
 #endif
 
-#define HP_NAME_CLAC	1
-#define HP_NAME_STAC	2
-#define HP_NAME_NOLOCK	3
+#define HP_NAME_CLAC		1
+#define HP_NAME_STAC		2
+#define HP_NAME_NOLOCK		3
+#define HP_NAME_RETFENCE	4
 
 #define HOTPATCH(name, size) \
 123:						; \
