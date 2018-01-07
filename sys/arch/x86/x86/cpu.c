@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.143 2018/01/07 10:16:13 maxv Exp $	*/
+/*	$NetBSD: cpu.c,v 1.144 2018/01/07 16:10:16 maxv Exp $	*/
 
 /*
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,12 +62,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.143 2018/01/07 10:16:13 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.144 2018/01/07 16:10:16 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
 #include "opt_mtrr.h"
 #include "opt_multiprocessor.h"
+#include "opt_svs.h"
 
 #include "lapic.h"
 #include "ioapic.h"
@@ -378,6 +379,10 @@ cpu_attach(device_t parent, device_t self, void *aux)
 
 	/* Must be before mi_cpu_attach(). */
 	cpu_vm_init(ci);
+
+#ifdef SVS
+	cpu_svs_init(ci);
+#endif
 
 	if (caa->cpu_role == CPU_ROLE_AP) {
 		int error;
@@ -1248,6 +1253,10 @@ x86_cpu_idle_halt(void)
 void
 cpu_load_pmap(struct pmap *pmap, struct pmap *oldpmap)
 {
+#ifdef SVS
+	svs_pdir_switch(pmap);
+#endif
+
 #ifdef PAE
 	struct cpu_info *ci = curcpu();
 	bool interrupts_enabled;
