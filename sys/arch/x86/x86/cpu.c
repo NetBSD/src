@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.142 2018/01/05 08:04:21 maxv Exp $	*/
+/*	$NetBSD: cpu.c,v 1.143 2018/01/07 10:16:13 maxv Exp $	*/
 
 /*
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.142 2018/01/05 08:04:21 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.143 2018/01/07 10:16:13 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -76,7 +76,6 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.142 2018/01/05 08:04:21 maxv Exp $");
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/kmem.h>
 #include <sys/cpu.h>
 #include <sys/cpufreq.h>
 #include <sys/idle.h>
@@ -342,8 +341,9 @@ cpu_attach(device_t parent, device_t self, void *aux)
 			return;
 		}
 		aprint_naive(": Application Processor\n");
-		ptr = (uintptr_t)kmem_zalloc(sizeof(*ci) + CACHE_LINE_SIZE - 1,
-		    KM_SLEEP);
+		ptr = (uintptr_t)uvm_km_alloc(kernel_map,
+		    sizeof(*ci) + CACHE_LINE_SIZE - 1, 0,
+		    UVM_KMF_WIRED|UVM_KMF_ZERO);
 		ci = (struct cpu_info *)roundup2(ptr, CACHE_LINE_SIZE);
 		ci->ci_curldt = -1;
 	} else {
