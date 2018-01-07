@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_signal.c,v 1.18 2015/03/08 17:10:44 christos Exp $ */
+/*	$NetBSD: linux32_signal.c,v 1.19 2018/01/07 21:16:00 christos Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_signal.c,v 1.18 2015/03/08 17:10:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_signal.c,v 1.19 2018/01/07 21:16:00 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/ucred.h>
@@ -299,6 +299,15 @@ linux32_sys_rt_sigaction(struct lwp *l, const struct linux32_sys_rt_sigaction_ar
 	}
 
 	sig = SCARG(uap, signum);
+	/*
+	 * XXX: Linux has 33 realtime signals, the go binary wants to
+	 * reset all of them; nothing else uses the last RT signal, so for
+	 * now ignore it.
+	 */
+	if (sig == LINUX__NSIG) {
+		uprintf("%s: setting signal %d ignored\n", __func__, sig);
+		sig--;	/* back to 63 which is ignored */
+	}
 	if (sig < 0 || sig >= LINUX32__NSIG) {
 		DPRINTF(("rt_sigaction: Bad signal number %d %d\n", 
 		    sig, LINUX32__NSIG));
