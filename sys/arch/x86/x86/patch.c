@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.28 2018/01/07 13:37:39 maxv Exp $	*/
+/*	$NetBSD: patch.c,v 1.29 2018/01/07 13:43:24 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.28 2018/01/07 13:37:39 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.29 2018/01/07 13:43:24 maxv Exp $");
 
 #include "opt_lockdebug.h"
 #ifdef i386
@@ -83,7 +83,6 @@ void	_atomic_cas_64_end(void);
 void	_atomic_cas_cx8(void);
 void	_atomic_cas_cx8_end(void);
 
-extern void	*x86_retpatch[];
 extern void	*atomic_lockpatch[];
 
 #define	X86_NOP		0x90
@@ -273,10 +272,8 @@ x86_patch(bool early)
 			0x0F, 0xAE, 0xE8 /* lfence */
 		};
 
-		for (i = 0; x86_retpatch[i] != 0; i++) {
-			/* ret,nop,nop,ret -> lfence,ret */
-			patchbytes(x86_retpatch[i], bytes, sizeof(bytes));
-		}
+		/* ret,nop,nop -> lfence */
+		x86_hotpatch(HP_NAME_RETFENCE, bytes, sizeof(bytes));
 	}
 
 #ifdef amd64
