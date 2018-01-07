@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sigaction.c,v 1.34 2008/10/17 20:21:34 njoly Exp $	*/
+/*	$NetBSD: linux_sigaction.c,v 1.35 2018/01/07 21:14:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sigaction.c,v 1.34 2008/10/17 20:21:34 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sigaction.c,v 1.35 2018/01/07 21:14:38 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,6 +84,15 @@ linux_sys_sigaction(struct lwp *l, const struct linux_sys_sigaction_args *uap, r
 		linux_old_to_native_sigaction(&nbsa, &nlsa);
 	}
 	sig = SCARG(uap, signum);
+	/*
+	 * XXX: Linux has 33 realtime signals, the go binary wants to
+	 * reset all of them; nothing else uses the last RT signal, so for
+	 * now ignore it.
+	 */
+	if (sig == LINUX__NSIG) {
+		uprintf("%s: setting signal %d ignored\n", __func__, sig);
+		sig--;	/* back to 63 which is ignored */
+	}
 	if (sig < 0 || sig >= LINUX__NSIG)
 		return (EINVAL);
 	if (sig > 0 && !linux_to_native_signo[sig]) {
