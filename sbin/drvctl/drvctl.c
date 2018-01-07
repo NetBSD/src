@@ -1,4 +1,4 @@
-/* $NetBSD: drvctl.c,v 1.18 2015/12/07 03:34:00 pgoyette Exp $ */
+/* $NetBSD: drvctl.c,v 1.19 2018/01/07 15:26:43 christos Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -37,7 +37,6 @@
 #include <sys/ioctl.h>
 #include <sys/drvctlio.h>
 
-#define OPTS "QRSa:dlnprt"
 
 #define	OPEN_MODE(mode)							\
 	(((mode) == 'd' || (mode) == 'r') ? O_RDWR			\
@@ -51,6 +50,7 @@ static void list_children(int, char *, bool, bool, int);
 static void
 usage(void)
 {
+	const char *p = getprogname();
 
 	fprintf(stderr, "Usage: %s -r [-a attribute] busdevice [locator ...]\n"
 	    "       %s -d device\n"
@@ -58,10 +58,8 @@ usage(void)
 	    "       %s [-n] -p device [property]\n"
 	    "       %s -Q device\n"
 	    "       %s -R device\n"
-	    "       %s -S device\n",
-	    getprogname(), getprogname(), getprogname(), getprogname(),
-	    getprogname(), getprogname(), getprogname());
-	exit(1);
+	    "       %s -S device\n", p, p, p, p, p, p, p);
+	exit(EXIT_FAILURE);
 }
 
 int
@@ -73,33 +71,32 @@ main(int argc, char **argv)
 	extern char *optarg;
 	extern int optind;
 	int fd, res;
-	struct devpmargs paa = {.devname = "", .flags = 0};
+	struct devpmargs paa = { .devname = "", .flags = 0 };
 	struct devdetachargs daa;
 	struct devrescanargs raa;
 	int *locs, i;
-	prop_dictionary_t command_dict, args_dict, results_dict,
-			  data_dict;
+	prop_dictionary_t command_dict, args_dict, results_dict, data_dict;
 	prop_string_t string;
 	prop_number_t number;
 	char *xml;
 
 	mode = 0;
-	while ((c = getopt(argc, argv, OPTS)) != -1) {
+	while ((c = getopt(argc, argv, "QRSa:dlnprt")) != -1) {
 		switch (c) {
 		case 'Q':
 		case 'R':
 		case 'S':
+		case 'a':
+			attr = optarg;
+			break;
 		case 'd':
+		case 'n':
+			nflag = true;
+			break;
 		case 'l':
 		case 'p':
 		case 'r':
 			mode = c;
-			break;
-		case 'a':
-			attr = optarg;
-			break;
-		case 'n':
-			nflag = true;
 			break;
 		case 't':
 			tflag = nflag = true;
@@ -117,8 +114,8 @@ main(int argc, char **argv)
 		usage();
 
 	fd = open(DRVCTLDEV, OPEN_MODE(mode), 0);
-	if (fd < 0)
-		err(2, "open %s", DRVCTLDEV);
+	if (fd == -1)
+		err(EXIT_FAILURE, "open %s", DRVCTLDEV);
 
 	switch (mode) {
 	case 'Q':
@@ -128,19 +125,19 @@ main(int argc, char **argv)
 		strlcpy(paa.devname, argv[0], sizeof(paa.devname));
 
 		if (ioctl(fd, DRVRESUMEDEV, &paa) == -1)
-			err(3, "DRVRESUMEDEV");
+			err(EXIT_FAILURE, "DRVRESUMEDEV");
 		break;
 	case 'S':
 		strlcpy(paa.devname, argv[0], sizeof(paa.devname));
 
 		if (ioctl(fd, DRVSUSPENDDEV, &paa) == -1)
-			err(3, "DRVSUSPENDDEV");
+			err(EXIT_FAILURE, "DRVSUSPENDDEV");
 		break;
 	case 'd':
 		strlcpy(daa.devname, argv[0], sizeof(daa.devname));
 
 		if (ioctl(fd, DRVDETACHDEV, &daa) == -1)
-			err(3, "DRVDETACHDEV");
+			err(EXIT_FAILURE, "DRVDETACHDEV");
 		break;
 	case 'l':
 		list_children(fd, argc ? argv[0] : NULL, nflag, tflag, 0);
@@ -153,7 +150,7 @@ main(int argc, char **argv)
 		if (argc > 1) {
 			locs = malloc((argc - 1) * sizeof(int));
 			if (!locs)
-				err(5, "malloc int[%d]", argc - 1);
+				err(EXIT_FAILURE, "malloc int[%d]", argc - 1);
 			for (i = 0; i < argc - 1; i++)
 				locs[i] = atoi(argv[i + 1]);
 			raa.numlocators = argc - 1;
@@ -161,10 +158,9 @@ main(int argc, char **argv)
 		}
 
 		if (ioctl(fd, DRVRESCANBUS, &raa) == -1)
-			err(3, "DRVRESCANBUS");
+			err(EXIT_FAILURE, "DRVRESCANBUS");
 		break;
 	case 'p':
-
 		command_dict = prop_dictionary_create();
 		args_dict = prop_dictionary_create();
 
@@ -177,26 +173,27 @@ main(int argc, char **argv)
 		prop_object_release(string);
 
 		prop_dictionary_set(command_dict, "drvctl-arguments",
-				    args_dict);
+		    args_dict);
 		prop_object_release(args_dict);
 
 		res = prop_dictionary_sendrecv_ioctl(command_dict, fd,
-						     DRVCTLCOMMAND,
-						     &results_dict);
+		    DRVCTLCOMMAND, &results_dict);
 		prop_object_release(command_dict);
 		if (res)
-			errx(3, "DRVCTLCOMMAND: %s", strerror(res));
+			errc(EXIT_FAILURE, res, "DRVCTLCOMMAND");
 
 		number = prop_dictionary_get(results_dict, "drvctl-error");
 		if (prop_number_integer_value(number) != 0) {
-			errx(3, "get-properties: %s",
-			    strerror((int)prop_number_integer_value(number)));
+			errc(EXIT_FAILURE,
+			    (int)prop_number_integer_value(number),
+			    "get-properties");
 		}
 
 		data_dict = prop_dictionary_get(results_dict,
-						"drvctl-result-data");
+		    "drvctl-result-data");
 		if (data_dict == NULL) {
-			errx(3, "get-properties: failed to return result data");
+			errx(EXIT_FAILURE,
+			    "get-properties: failed to return result data");
 		}
 
 		if (argc == 1) {
@@ -215,10 +212,10 @@ main(int argc, char **argv)
 		prop_object_release(results_dict);
 		break;
 	default:
-		errx(4, "unknown command");
+		errx(EXIT_FAILURE, "unknown command `%c'", mode);
 	}
 
-	return (0);
+	return EXIT_SUCCESS;
 }
 
 static void
@@ -249,8 +246,8 @@ extract_property(prop_dictionary_t dict, const char *prop, bool nflag)
 				exit(EXIT_FAILURE);
 			break;
 		default:
-			fprintf(stderr, "select neither dict nor array with '%s'\n", cur);
-			exit(EXIT_FAILURE);
+			errx(EXIT_FAILURE, "Select neither dict nor array with"
+			" `%s'", cur);
 		}
 	}
 
@@ -292,16 +289,16 @@ display_object(prop_object_t obj, bool nflag)
 			display_object(next_obj, nflag);
 		break;
 	default:
-		fprintf(stderr, "unhandled type %d\n", prop_object_type(obj));
-		exit(EXIT_FAILURE);
+		errx(EXIT_FAILURE, "Unhandled type %d", prop_object_type(obj));
 	}
 }
 
 static void
 list_children(int fd, char *dvname, bool nflag, bool tflag, int depth)
 {
-	struct devlistargs laa = {.l_devname = "", .l_childname = NULL,
-				  .l_children = 0};
+	struct devlistargs laa = {
+	    .l_devname = "", .l_childname = NULL, .l_children = 0
+	};
 	size_t children;
 	int i, n;
 
@@ -314,17 +311,17 @@ list_children(int fd, char *dvname, bool nflag, bool tflag, int depth)
 	}
 
 	if (ioctl(fd, DRVLISTDEV, &laa) == -1)
-		err(3, "DRVLISTDEV");
+		err(EXIT_FAILURE, "DRVLISTDEV");
 
 	children = laa.l_children;
 
 	laa.l_childname = malloc(children * sizeof(laa.l_childname[0]));
 	if (laa.l_childname == NULL)
-		err(5, "DRVLISTDEV");
+		err(EXIT_FAILURE, "DRVLISTDEV");
 	if (ioctl(fd, DRVLISTDEV, &laa) == -1)
-		err(3, "DRVLISTDEV");
+		err(EXIT_FAILURE, "DRVLISTDEV");
 	if (laa.l_children > children)
-		err(6, "DRVLISTDEV: number of children grew");
+		err(EXIT_FAILURE, "DRVLISTDEV: number of children grew");
 
 	for (i = 0; i < (int)laa.l_children; i++) {
 		for (n = 0; n < depth; n++)
