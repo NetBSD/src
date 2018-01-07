@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.7 2016/04/28 11:45:02 christos Exp $	*/
+/*	$NetBSD: time.h,v 1.8 2018/01/07 20:02:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
@@ -80,11 +80,12 @@ static __inline hrtime_t gethrtime(void) {
 #ifdef CLOCK_REALTIME
 	struct timespec ts;
 	clock_gettime(CLOCK_REALTIME,&ts);
-	return (((u_int64_t) ts.tv_sec) * NANOSEC + ts.tv_nsec);
+	return (hrtime_t)(((int64_t) ts.tv_sec) * NANOSEC + ts.tv_nsec);
 #else
 	struct timeval tv;
 	gettimeofday(&tv, NULL);
-	return (((u_int64_t) tv.tv_sec) * MICROSEC + tv.tv_usec) * 1000;
+	return (hrtime_t)
+	    ((((int64_t) tv.tv_sec) * MICROSEC + tv.tv_usec) * 1000);
 #endif
 }
 
