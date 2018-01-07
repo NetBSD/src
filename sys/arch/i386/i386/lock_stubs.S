@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.26 2014/01/12 20:31:50 joerg Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.27 2018/01/07 13:15:24 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -35,17 +35,20 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: lock_stubs.S,v 1.26 2014/01/12 20:31:50 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lock_stubs.S,v 1.27 2018/01/07 13:15:24 maxv Exp $");
 
 #include "opt_lockdebug.h"
 
 #include <machine/cputypes.h>
+#include <machine/frameasm.h>
 
 #include "assym.h"
 
 #define	ALIGN64		.align	64
 #define	ALIGN32		.align	32
-#define	LOCK(num)	.Lpatch ## num:	lock
+#define	LOCK(num)	\
+	HOTPATCH(HP_NAME_NOLOCK, 1)	; \
+	lock
 #define	RET(num)	.Lret ## num: ret; nop; nop; ret
 #define	ENDLABEL(name,a) .align	a; LABEL(name)
 
@@ -360,14 +363,6 @@ END(__cpu_simple_lock_try)
  * Patchpoints to replace with NOP when ncpu == 1.
  */
 	.data
-
-#ifndef LOCKDEBUG
-LABEL(x86_lockpatch)
-	.long	.Lpatch1, .Lpatch2, .Lpatch3, .Lpatch4
-	.long	.Lpatch5, .Lpatch6, .Lpatch7, .Lpatch12
-	.long	.Lpatch13
-	.long	0
-#endif
 
 LABEL(x86_retpatch)
 #ifndef LOCKDEBUG
