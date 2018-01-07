@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1165 2017/12/10 20:38:13 bouyer Exp $
+# $NetBSD: mi,v 1.1166 2018/01/07 20:59:24 jmcneill Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -247,6 +247,13 @@
 ./libdata/firmware/if_wpi/README.iwlwifi-3945-ucode	base-firmware-root
 ./libdata/firmware/if_wpi/ipw3945.ucode		base-obsolete	obsolete
 ./libdata/firmware/if_wpi/iwlwifi-3945.ucode		base-firmware-root
+./libdata/firmware/nvidia			base-firmware-root
+./libdata/firmware/nvidia/tegra124		base-firmware-root
+./libdata/firmware/nvidia/tegra124/LICENCE.nvidia	base-firmware-root	tegrafirmware
+./libdata/firmware/nvidia/tegra124/xusb.bin	base-firmware-root	tegrafirmware
+./libdata/firmware/nvidia/tegra210		base-firmware-root
+./libdata/firmware/nvidia/tegra210/LICENCE.nvidia	base-firmware-root	tegrafirmware
+./libdata/firmware/nvidia/tegra210/xusb.bin	base-firmware-root	tegrafirmware
 ./libdata/firmware/radeon			base-firmware-usr
 ./libdata/firmware/radeon/ARUBA_me.bin		base-firmware-usr	radeonfirmware
 ./libdata/firmware/radeon/ARUBA_pfp.bin		base-firmware-usr	radeonfirmware
