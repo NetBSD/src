@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.194 2018/01/07 15:28:33 kamil Exp $	*/
+/*	$NetBSD: namespace.h,v 1.195 2018/01/07 21:19:35 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -211,7 +211,6 @@
 #define arc4random_buf		_arc4random_buf
 #define arc4random_stir		_arc4random_stir
 #define arc4random_uniform	_arc4random_uniform
-#define asctime			_asctime
 #define asctime_r		_asctime_r
 #define asprintf		_asprintf
 #define asprintf_l		_asprintf_l
