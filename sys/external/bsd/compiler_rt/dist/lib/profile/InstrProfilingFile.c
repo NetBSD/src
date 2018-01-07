@@ -7,10 +7,6 @@
 |*
 \*===----------------------------------------------------------------------===*/
 
-#ifdef _LIBC
-#include "namespace.h"
-#endif
-
 #include "InstrProfiling.h"
 #include "InstrProfilingInternal.h"
 #include "InstrProfilingUtil.h"
