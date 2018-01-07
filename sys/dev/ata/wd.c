@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.437 2017/12/13 10:24:31 pgoyette Exp $ */
+/*	$NetBSD: wd.c,v 1.438 2018/01/07 11:37:30 mlelstv Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.437 2017/12/13 10:24:31 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.438 2018/01/07 11:37:30 mlelstv Exp $");
 
 #include "opt_ata.h"
 #include "opt_wd.h"
@@ -585,9 +585,18 @@ wdstrategy(struct buf *bp)
 	 * up failing again.
 	 */
 	if (__predict_false(!SLIST_EMPTY(&wd->sc_bslist))) {
+		struct disklabel *lp = dksc->sc_dkdev.dk_label;
 		struct disk_badsectors *dbs;
-		daddr_t maxblk = bp->b_rawblkno +
-		    (bp->b_bcount / wd->sc_blksize) - 1;
+		daddr_t blkno, maxblk;
+
+		/* convert the block number to absolute */
+		if (lp->d_secsize >= DEV_BSIZE)
+			blkno = bp->b_blkno / (lp->d_secsize / DEV_BSIZE);
+		else
+			blkno = bp->b_blkno * (DEV_BSIZE / lp->d_secsize);
+		if (WDPART(bp->b_dev) != RAW_PART)
+			blkno += lp->d_partitions[WDPART(bp->b_dev)].p_offset;
+		maxblk = blkno + (bp->b_bcount / wd->sc_blksize) - 1;
 
 		mutex_enter(&wd->sc_lock);
 		SLIST_FOREACH(dbs, &wd->sc_bslist, dbs_next)
