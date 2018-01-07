@@ -1,4 +1,4 @@
-/*	$NetBSD: dkctl.c,v 1.25 2017/04/05 20:27:09 jdolecek Exp $	*/
+/*	$NetBSD: dkctl.c,v 1.26 2018/01/07 12:29:25 kre Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: dkctl.c,v 1.25 2017/04/05 20:27:09 jdolecek Exp $");
+__RCSID("$NetBSD: dkctl.c,v 1.26 2018/01/07 12:29:25 kre Exp $");
 #endif
 
 #include <sys/param.h>
@@ -683,6 +683,9 @@ disk_listwedges(int argc, char *argv[])
 			exit(EXIT_FAILURE);
 		return;
 	}
+
+	if (quiet)
+		return;
 
 	qsort(dkw, dkwl.dkwl_nwedges, sizeof(*dkw), dkw_sort);
 
