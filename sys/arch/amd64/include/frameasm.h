@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.23 2017/10/17 07:33:44 maxv Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.24 2018/01/07 12:42:46 maxv Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
 #define _AMD64_MACHINE_FRAMEASM_H
@@ -34,6 +34,25 @@
 #define CLI(temp_reg) cli
 #define STI(temp_reg) sti
 #endif	/* XEN */
+
+#define HP_NAME_CLAC	1
+#define HP_NAME_STAC	2
+
+#define HOTPATCH(name, size) \
+123:						; \
+	.section	.rodata.hotpatch, "a"	; \
+	.byte		name			; \
+	.byte		size			; \
+	.quad		123b			; \
+	.previous
+
+#define SMAP_ENABLE \
+	HOTPATCH(HP_NAME_CLAC, 3)		; \
+	.byte 0x0F, 0x1F, 0x00			; \
+
+#define SMAP_DISABLE \
+	HOTPATCH(HP_NAME_STAC, 3)		; \
+	.byte 0x0F, 0x1F, 0x00			; \
 
 #define	SWAPGS	NOT_XEN(swapgs)
 
@@ -78,7 +97,7 @@
 	subq	$TF_REGSIZE,%rsp	; \
 	INTR_SAVE_GPRS			; \
 	cld				; \
-	callq	smap_enable		; \
+	SMAP_ENABLE			; \
 	testb	$SEL_UPL,TF_CS(%rsp)	; \
 	je	kernel_trap		; \
 usertrap				; \

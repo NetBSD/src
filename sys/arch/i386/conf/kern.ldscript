@@ -1,4 +1,4 @@
-/*	$NetBSD: kern.ldscript,v 1.20 2017/08/18 10:28:53 maxv Exp $	*/
+/*	$NetBSD: kern.ldscript,v 1.21 2018/01/07 12:42:47 maxv Exp $	*/
 
 #include "assym.h"
 
@@ -20,6 +20,14 @@ SECTIONS
 	. = ALIGN(__PAGE_SIZE);
 
 	__rodata_start = . ;
+
+	.rodata.hotpatch :
+	{
+		__rodata_hotpatch_start = . ;
+		*(.rodata.hotpatch)
+		__rodata_hotpatch_end = . ;
+	}
+
 	.rodata :
 	{
 		*(.rodata)
