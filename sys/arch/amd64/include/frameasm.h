@@ -1,10 +1,11 @@
-/*	$NetBSD: frameasm.h,v 1.26 2018/01/07 13:43:23 maxv Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.27 2018/01/07 16:10:16 maxv Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
 #define _AMD64_MACHINE_FRAMEASM_H
 
 #ifdef _KERNEL_OPT
 #include "opt_xen.h"
+#include "opt_svs.h"
 #endif
 
 /*
@@ -95,6 +96,22 @@
 	movq	TF_RBX(%rsp),%rbx	; \
 	movq	TF_RAX(%rsp),%rax
 
+#ifdef SVS
+#define SVS_ENTER \
+	pushq	%rax			; \
+	movq	CPUVAR(KPDIRPA),%rax	; \
+	movq	%rax,%cr3		; \
+	popq	%rax
+#define SVS_LEAVE \
+	pushq	%rax			; \
+	movq	CPUVAR(UPDIRPA),%rax	; \
+	movq	%rax,%cr3		; \
+	popq	%rax
+#else
+#define SVS_ENTER	/* nothing */
+#define SVS_LEAVE	/* nothing */
+#endif
+
 #define	INTRENTRY_L(kernel_trap, usertrap) \
 	subq	$TF_REGSIZE,%rsp	; \
 	INTR_SAVE_GPRS			; \
@@ -104,6 +121,7 @@
 	je	kernel_trap		; \
 usertrap				; \
 	SWAPGS				; \
+	SVS_ENTER			; \
 	movw	%gs,TF_GS(%rsp)		; \
 	movw	%fs,TF_FS(%rsp)		; \
 	movw	%es,TF_ES(%rsp)		; \

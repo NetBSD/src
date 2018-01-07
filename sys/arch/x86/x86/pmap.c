@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.277 2018/01/05 09:13:48 martin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.278 2018/01/07 16:10:16 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -170,12 +170,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.277 2018/01/05 09:13:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.278 2018/01/07 16:10:16 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
+#include "opt_svs.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -558,9 +559,11 @@ static void pmap_init_pcpu(void);
 #ifdef __HAVE_DIRECT_MAP
 static void pmap_init_directmap(struct pmap *);
 #endif
+#if !defined(XEN) && !defined(SVS)
+static void pmap_remap_global(void);
+#endif
 #ifndef XEN
 static void pmap_init_lapic(void);
-static void pmap_remap_global(void);
 static void pmap_remap_largepages(void);
 #endif
 
@@ -1286,7 +1289,7 @@ pmap_bootstrap(vaddr_t kva_start)
 	 * operation of the system.
 	 */
 
-#ifndef XEN
+#if !defined(XEN) && !defined(SVS)
 	/*
 	 * Begin to enable global TLB entries if they are supported.
 	 * The G bit has no effect until the CR4_PGE bit is set in CR4,
@@ -1299,7 +1302,9 @@ pmap_bootstrap(vaddr_t kva_start)
 		/* add PG_G attribute to already mapped kernel pages */
 		pmap_remap_global();
 	}
+#endif
 
+#ifndef XEN
 	/*
 	 * Enable large pages if they are supported.
 	 */
@@ -1648,7 +1653,7 @@ pmap_init_directmap(struct pmap *kpm)
 }
 #endif /* __HAVE_DIRECT_MAP */
 
-#ifndef XEN
+#if !defined(XEN) && !defined(SVS)
 /*
  * Remap all of the virtual pages created so far with the PG_G bit.
  */
@@ -1691,7 +1696,9 @@ pmap_remap_global(void)
 			PTE_BASE[p1i] |= PG_G;
 	}
 }
+#endif
 
+#ifndef XEN
 /*
  * Remap several kernel segments with large pages. We cover as many pages as we
  * can. Called only once at boot time, if the CPU supports large pages.
@@ -2113,12 +2120,16 @@ pmap_free_ptp(struct pmap *pmap, struct vm_page *ptp, vaddr_t va,
 		opde = pmap_pte_testset(&pdes[level - 1][index], 0);
 
 		/*
-		 * On Xen-amd64, we need to sync the top level page
+		 * On Xen-amd64 or SVS, we need to sync the top level page
 		 * directory on each CPU.
 		 */
 #if defined(XEN) && defined(__x86_64__)
 		if (level == PTP_LEVELS - 1) {
 			xen_kpm_sync(pmap, index);
+		}
+#elif defined(SVS)
+		if (level == PTP_LEVELS - 1) {
+			svs_pmap_sync(pmap, index);
 		}
 #endif
 
@@ -2214,12 +2225,16 @@ pmap_get_ptp(struct pmap *pmap, vaddr_t va, pd_entry_t * const *pdes, int flags)
 		    (pmap_pa2pte(pa) | PG_u | PG_RW | PG_V));
 
 		/*
-		 * On Xen-amd64, we need to sync the top level page
+		 * On Xen-amd64 or SVS, we need to sync the top level page
 		 * directory on each CPU.
 		 */
 #if defined(XEN) && defined(__x86_64__)
 		if (i == PTP_LEVELS) {
 			xen_kpm_sync(pmap, index);
+		}
+#elif defined(SVS)
+		if (i == PTP_LEVELS) {
+			svs_pmap_sync(pmap, index);
 		}
 #endif
 
