@@ -1,4 +1,4 @@
-/*	$NetBSD: uio.h,v 1.9 2015/09/26 03:32:17 christos Exp $	*/
+/*	$NetBSD: uio.h,v 1.10 2018/01/07 20:02:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@ zfs_uiocopy(void *cp, size_t n, enum uio_rw dir, uio_t *uio, size_t *cbytes)
 	if ((err = uiomove(cp, n, &uio2)) != 0)
 		return err;
 
-	*cbytes = uio->uio_resid - uio2.uio_resid;
+	*cbytes = (size_t)(uio->uio_resid - uio2.uio_resid);
 
 	return (0);
 }
@@ -139,9 +139,9 @@ zfs_uioskip(uio_t *uiop, size_t n)
 			continue;
 		}
 		iovp->iov_base = (char *)iovp->iov_base + niovb;
-		uiop->uio_offset += niovb;
+		uiop->uio_offset += (off_t)niovb;
 		iovp->iov_len -= niovb;
-		uiop->uio_resid -= niovb;
+		uiop->uio_resid -= (int)niovb;
 		n -= niovb;
 	}
 	
