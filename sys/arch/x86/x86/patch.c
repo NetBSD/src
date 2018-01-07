@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.27 2018/01/07 13:15:24 maxv Exp $	*/
+/*	$NetBSD: patch.c,v 1.28 2018/01/07 13:37:39 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.27 2018/01/07 13:15:24 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.28 2018/01/07 13:37:39 maxv Exp $");
 
 #include "opt_lockdebug.h"
 #ifdef i386
@@ -203,6 +203,8 @@ x86_patch(bool early)
 
 		/* lock -> nop */
 		x86_hotpatch(HP_NAME_NOLOCK, bytes, sizeof(bytes));
+		for (i = 0; atomic_lockpatch[i] != 0; i++)
+			patchbytes(atomic_lockpatch[i], bytes, sizeof(bytes));
 #endif
 	}
 
