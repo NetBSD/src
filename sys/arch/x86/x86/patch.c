@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.24 2017/10/27 23:22:01 riastradh Exp $	*/
+/*	$NetBSD: patch.c,v 1.25 2018/01/07 11:24:45 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.24 2017/10/27 23:22:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.25 2018/01/07 11:24:45 maxv Exp $");
 
 #include "opt_lockdebug.h"
 #ifdef i386
@@ -130,14 +130,14 @@ patchfunc(void *from_s, void *from_e, void *to_s, void *to_e,
 }
 
 static inline void __unused
-patchbytes(void *addr, const int byte1, const int byte2, const int byte3)
+patchbytes(void *addr, const uint8_t *bytes, size_t size)
 {
+	uint8_t *ptr = (uint8_t *)addr;
+	size_t i;
 
-	((uint8_t *)addr)[0] = (uint8_t)byte1;
-	if (byte2 != -1)
-		((uint8_t *)addr)[1] = (uint8_t)byte2;
-	if (byte3 != -1)
-		((uint8_t *)addr)[2] = (uint8_t)byte3;
+	for (i = 0; i < size; i++) {
+		ptr[i] = bytes[i];
+	}
 }
 
 void
@@ -169,11 +169,15 @@ x86_patch(bool early)
 #if !defined(GPROF)
 	if (!early && ncpu == 1) {
 #ifndef LOCKDEBUG
+		const uint8_t bytes[] = {
+			X86_NOP
+		};
+
 		/* Uniprocessor: kill LOCK prefixes. */
 		for (i = 0; x86_lockpatch[i] != 0; i++)
-			patchbytes(x86_lockpatch[i], X86_NOP, -1, -1);
+			patchbytes(x86_lockpatch[i], bytes, sizeof(bytes));
 		for (i = 0; atomic_lockpatch[i] != 0; i++)
-			patchbytes(atomic_lockpatch[i], X86_NOP, -1, -1);
+			patchbytes(atomic_lockpatch[i], bytes, sizeof(bytes));
 #endif	/* !LOCKDEBUG */
 	}
 	if (!early && (cpu_feature[0] & CPUID_SSE2) != 0) {
@@ -237,9 +241,13 @@ x86_patch(bool early)
 	    (CPUID_TO_FAMILY(cpu_info_primary.ci_signature) == 0xe ||
 	    (CPUID_TO_FAMILY(cpu_info_primary.ci_signature) == 0xf &&
 	    CPUID_TO_EXTMODEL(cpu_info_primary.ci_signature) < 0x4))) {
+		const uint8_t bytes[] = {
+			0x0F, 0xAE, 0xE8 /* lfence */
+		};
+
 		for (i = 0; x86_retpatch[i] != 0; i++) {
 			/* ret,nop,nop,ret -> lfence,ret */
-			patchbytes(x86_retpatch[i], 0x0f, 0xae, 0xe8);
+			patchbytes(x86_retpatch[i], bytes, sizeof(bytes));
 		}
 	}
 
@@ -253,15 +261,22 @@ x86_patch(bool early)
 	 */
 	if (!early && cpu_feature[5] & CPUID_SEF_SMAP) {
 		KASSERT(rcr4() & CR4_SMAP);
+		const uint8_t clac_bytes[] = {
+			0x0F, 0x01, 0xCA /* clac */
+		};
+		const uint8_t stac_bytes[] = {
+			0x0F, 0x01, 0xCB /* stac */
+		};
+
 		for (i = 0; x86_clacpatch[i] != NULL; i++) {
 			/* ret,int3,int3 -> clac */
-			patchbytes(x86_clacpatch[i],
-			    0x0f, 0x01, 0xca);
+			patchbytes(x86_clacpatch[i], clac_bytes,
+			    sizeof(clac_bytes));
 		}
 		for (i = 0; x86_stacpatch[i] != NULL; i++) {
 			/* ret,int3,int3 -> stac */
-			patchbytes(x86_stacpatch[i],
-			    0x0f, 0x01, 0xcb);
+			patchbytes(x86_stacpatch[i], stac_bytes,
+			    sizeof(stac_bytes));
 		}
 	}
 #endif
