@@ -1,4 +1,4 @@
-/*	$NetBSD: lua.c,v 1.23 2017/05/20 09:46:17 mbalmer Exp $ */
+/*	$NetBSD: lua.c,v 1.23.2.1 2018/01/07 09:27:32 snj Exp $ */
 
 /*
  * Copyright (c) 2011 - 2017 by Marc Balmer <mbalmer@NetBSD.org>.
@@ -288,6 +288,7 @@ luaioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	struct pathbuf *pb;
 	struct vattr va;
 	struct lua_loadstate ls;
+	struct lua_state_info *states;
 	int error, n;
 	klua_State *K;
 
@@ -307,14 +308,25 @@ luaioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			LIST_FOREACH(s, &lua_states, lua_next) {
 				if (n > info->num_states)
 					break;
-				copyoutstr(s->lua_name, info->states[n].name,
-				    MAX_LUA_NAME, NULL);
-				copyoutstr(s->lua_desc, info->states[n].desc,
-				    MAX_LUA_DESC, NULL);
-				info->states[n].user = s->K->ks_user;
 				n++;
 			}
 			info->num_states = n;
+			states = kmem_alloc(sizeof(*states) * n, KM_SLEEP);
+			if (copyin(info->states, states, sizeof(*states) * n)
+			    == 0) {
+				n = 0;
+				LIST_FOREACH(s, &lua_states, lua_next) {
+					if (n > info->num_states)
+						break;
+					strcpy(states[n].name, s->lua_name);
+					strcpy(states[n].desc, s->lua_desc);
+					states[n].user = s->K->ks_user;
+					n++;
+				}
+				copyout(states, info->states,
+				    sizeof(*states) * n);
+				kmem_free(states, sizeof(*states) * n);
+			}
 		}
 		break;
 	case LUACREATE:
