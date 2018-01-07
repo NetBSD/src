@@ -1,4 +1,4 @@
-/*	$NetBSD: atoi.c,v 1.13 2018/01/05 20:30:51 kamil Exp $	*/
+/*	$NetBSD: atoi.c,v 1.14 2018/01/07 15:28:33 kamil Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -34,18 +34,12 @@
 #if 0
 static char sccsid[] = "@(#)atoi.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: atoi.c,v 1.13 2018/01/05 20:30:51 kamil Exp $");
+__RCSID("$NetBSD: atoi.c,v 1.14 2018/01/07 15:28:33 kamil Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
-#include "namespace.h"
-
 #include <assert.h>
 #include <stdlib.h>
-
-#ifdef __weak_alias
-__weak_alias(atoi,_atoi)
-#endif
 
 int
 atoi(const char *str)
