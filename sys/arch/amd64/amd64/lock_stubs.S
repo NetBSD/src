@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.27 2018/01/07 13:15:23 maxv Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.28 2018/01/07 13:43:23 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -50,7 +50,10 @@
 #define	LOCK(num)	\
 	HOTPATCH(HP_NAME_NOLOCK, 1)	; \
 	lock
-#define	RET(num)	.Lret ## num: ret; nop; nop; ret
+#define	RET(num)	\
+	HOTPATCH(HP_NAME_RETFENCE, 3)	; \
+	ret; nop; nop			; \
+	ret
 
 #ifndef LOCKDEBUG
 
@@ -335,11 +338,3 @@ ENTRY(__cpu_simple_lock_try)
 	RET(8)
 END(__cpu_simple_lock_try)
 
-	.type	_C_LABEL(x86_retpatch), @object
-LABEL(x86_retpatch)
-#ifndef LOCKDEBUG
-	.quad	.Lret1, .Lret2, .Lret3, .Lret4, .Lret5, .Lret6
-#endif
-	.quad	.Lret7, .Lret8
-	.quad	0
-END(x86_retpatch)
