@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.98 2018/01/02 11:21:28 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.99 2018/01/07 09:32:36 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -8792,4 +8792,41 @@ sys/sys/lwp.h					1.176
 	- Fix usage of curlwp_bind in ip_output
 	- Fix wrong usage of psref_held
 	[ozaki-r, ticket #463]
+
+sys/arch/arm/sunxi/sun8i_h3_codec.c		1.3
+
+	Fix error in reset register of the Sunxi H3 analog codec.
+	[nat, ticket #466]
+
+sys/arch/amd64/conf/INSTALL			1.92
+sys/arch/i386/conf/INSTALL			1.332-1.333
+
+	- Enable vga@isa and pcdisplay for INSTALL. Otherwise, install
+	  media does not boot on pre-PCI machines. PR install/52845
+	- Disable nouveau for INSTALL as in a similar manner to other
+	  DRMKMS drivers.
+	[rin, ticket #467]
+
+sys/dev/sdmmc/sdhc.c				1.101
+sys/dev/sdmmc/sdhcreg.h				1.19
+
+	On ESDHC/USDHC, even if the iosize is less than
+	SDHC_HOST_CTL_VERSION, specver must be an appropriate value.
+	sdhc now works on iMX6 and iMX7.
+	[ryo, ticket #468]
+
+sys/modules/lua/lua.c				1.24
+
+	Fix cargo cult ioctl implementation for LUAINFO: the name and
+	desc fields are arrays, not pointers, so don't use copyoutstr
+	on them, but instead copyin/copyout the whole array of
+	structures.  PR 52864.
+	[sevan, ticket #469]
+
+sys/arch/macppc/conf/GENERIC			1.337
+
+	Without RADEONFB_ALWAYS_ACCEL_PUTCHAR, there are display
+	issues on the PowerBook5,2 (G4 FW-800) Radeon 9600, where
+	console is garbled.  PR port-macppc/52712
+	[sevan, ticket #470]
 
