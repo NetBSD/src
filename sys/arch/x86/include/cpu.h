@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.87 2018/01/05 08:04:21 maxv Exp $	*/
+/*	$NetBSD: cpu.h,v 1.88 2018/01/07 16:10:16 maxv Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -47,6 +47,7 @@
 #if defined(_KERNEL) || defined(_KMEMUSER)
 #if defined(_KERNEL_OPT)
 #include "opt_xen.h"
+#include "opt_svs.h"
 #ifdef i386
 #include "opt_user_ldt.h"
 #endif
@@ -185,6 +186,13 @@ struct cpu_info {
 #ifdef PAE
 	uint32_t	ci_pae_l3_pdirpa; /* PA of L3 PD */
 	pd_entry_t *	ci_pae_l3_pdir; /* VA pointer to L3 PD */
+#endif
+
+#ifdef SVS
+	pd_entry_t *	ci_svs_updir;
+	paddr_t		ci_svs_updirpa;
+	paddr_t		ci_svs_kpdirpa;
+	kmutex_t	ci_svs_mtx;
 #endif
 
 #if defined(XEN) && (defined(PAE) || defined(__x86_64__))
@@ -333,6 +341,7 @@ void cpu_broadcast_halt(void);
 void cpu_kick(struct cpu_info *);
 
 void cpu_pcpuarea_init(struct cpu_info *);
+void cpu_svs_init(struct cpu_info *);
 
 #define	curcpu()		x86_curcpu()
 #define	curlwp			x86_curlwp()

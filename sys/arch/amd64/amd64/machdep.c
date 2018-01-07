@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.284 2018/01/05 08:04:20 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.285 2018/01/07 16:10:16 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.284 2018/01/05 08:04:20 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.285 2018/01/07 16:10:16 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -123,6 +123,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.284 2018/01/05 08:04:20 maxv Exp $");
 #include "opt_realmem.h"
 #include "opt_xen.h"
 #include "opt_kaslr.h"
+#include "opt_svs.h"
 #ifndef XEN
 #include "opt_physmem.h"
 #endif
@@ -2228,3 +2229,138 @@ mm_md_direct_mapped_phys(paddr_t paddr, vaddr_t *vaddr)
 	return true;
 }
 #endif
+
+/* -------------------------------------------------------------------------- */
+
+#ifdef SVS
+/*
+ * Separate Virtual Space
+ *
+ * A per-cpu L4 page is maintained in ci_svs_updirpa. During each context
+ * switch to a user pmap, updirpa is populated with the entries of the new
+ * pmap, minus what we don't want to have mapped in userland.
+ *
+ * Note on locking/synchronization here:
+ *
+ * (a) Touching ci_svs_updir without holding ci_svs_mtx first is *not*
+ *     allowed.
+ *
+ * (b) pm_kernel_cpus contains the set of CPUs that have the pmap loaded
+ *     in their CR3 register. It must *not* be replaced by pm_cpus.
+ *
+ * (c) When a context switch on the current CPU is made from a user LWP
+ *     towards a kernel LWP, CR3 is not updated. Therefore, the pmap's
+ *     pm_kernel_cpus still contains the current CPU. It implies that the
+ *     remote CPUs that execute other threads of the user process we just
+ *     left will keep synchronizing us against their changes.
+ *
+ * TODO: for now, only PMAP_SLOT_PTE is unmapped.
+ */
+
+void
+cpu_svs_init(struct cpu_info *ci)
+{
+	struct vm_page *pg;
+
+	KASSERT(ci != NULL);
+
+	pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_ZERO);
+	if (pg == 0)
+		panic("%s: failed to allocate L4 PA for CPU %d\n",
+			__func__, cpu_index(ci));
+	ci->ci_svs_updirpa = VM_PAGE_TO_PHYS(pg);
+
+	ci->ci_svs_updir = (pt_entry_t *)uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
+		UVM_KMF_VAONLY | UVM_KMF_NOWAIT);
+	if (ci->ci_svs_updir == NULL)
+		panic("%s: failed to allocate L4 VA for CPU %d\n",
+			__func__, cpu_index(ci));
+
+	pmap_kenter_pa((vaddr_t)ci->ci_svs_updir, ci->ci_svs_updirpa,
+		VM_PROT_READ | VM_PROT_WRITE, 0);
+
+	pmap_update(pmap_kernel());
+
+	ci->ci_svs_kpdirpa = pmap_pdirpa(pmap_kernel(), 0);
+
+	mutex_init(&ci->ci_svs_mtx, MUTEX_DEFAULT, IPL_VM);
+}
+
+void
+svs_pmap_sync(struct pmap *pmap, int index)
+{
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+	cpuid_t cid;
+
+	KASSERT(pmap != NULL);
+	KASSERT(pmap != pmap_kernel());
+	KASSERT(mutex_owned(pmap->pm_lock));
+	KASSERT(kpreempt_disabled());
+	KASSERT(index <= 255);
+
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		cid = cpu_index(ci);
+
+		if (!kcpuset_isset(pmap->pm_kernel_cpus, cid)) {
+			continue;
+		}
+
+		/* take the lock and check again */
+		mutex_enter(&ci->ci_svs_mtx);
+		if (kcpuset_isset(pmap->pm_kernel_cpus, cid)) {
+			ci->ci_svs_updir[index] = pmap->pm_pdir[index];
+		}
+		mutex_exit(&ci->ci_svs_mtx);
+	}
+}
+
+void
+svs_lwp_switch(struct lwp *oldlwp, struct lwp *newlwp)
+{
+	/* Switch rsp0 */
+}
+
+static inline pt_entry_t
+svs_pte_atomic_read(struct pmap *pmap, size_t idx)
+{
+	/*
+	 * XXX: We don't have a basic atomic_fetch_64 function?
+	 */
+	return atomic_cas_64(&pmap->pm_pdir[idx], 666, 666);
+}
+
+/*
+ * We may come here with the pmap unlocked. So read its PTEs atomically. If
+ * a remote CPU is updating them at the same time, it's not that bad: the
+ * remote CPU will call svs_pmap_sync afterwards, and our updirpa will be
+ * synchronized properly.
+ */
+void
+svs_pdir_switch(struct pmap *pmap)
+{
+	struct cpu_info *ci = curcpu();
+	pt_entry_t pte;
+	size_t i;
+
+	KASSERT(kpreempt_disabled());
+	KASSERT(pmap != pmap_kernel());
+
+	ci->ci_svs_kpdirpa = pmap_pdirpa(pmap, 0);
+
+	mutex_enter(&ci->ci_svs_mtx);
+
+	for (i = 0; i < 512; i++) {
+		if (i == PDIR_SLOT_PTE) {
+			/* We don't want to have this mapped. */
+			ci->ci_svs_updir[i] = 0;
+		} else {
+			pte = svs_pte_atomic_read(pmap, i);
+			ci->ci_svs_updir[i] = pte;
+		}
+	}
+
+	mutex_exit(&ci->ci_svs_mtx);
+}
+#endif
+

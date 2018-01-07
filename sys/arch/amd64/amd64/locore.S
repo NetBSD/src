@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.144 2018/01/04 13:36:30 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.145 2018/01/07 16:10:16 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -159,6 +159,7 @@
 #include "opt_compat_netbsd.h"
 #include "opt_compat_netbsd32.h"
 #include "opt_xen.h"
+#include "opt_svs.h"
 
 #include "assym.h"
 #include "lapic.h"
@@ -1088,6 +1089,12 @@ ENTRY(cpu_switchto)
 	movq	%rbp,PCB_RBP(%rax)
 .Lskip_save:
 
+#ifdef SVS
+	pushq	%rdx
+	callq	_C_LABEL(svs_lwp_switch)
+	popq	%rdx
+#endif
+
 	/* Switch to newlwp's stack. */
 	movq	L_PCB(%r12),%r14
 	movq	PCB_RSP(%r14),%rsp
@@ -1288,6 +1295,7 @@ IDTVEC(syscall)
 	subq	$TF_REGSIZE,%rsp
 	cld
 #endif
+	SVS_ENTER
 	INTR_SAVE_GPRS
 	movw	$GSEL(GUDATA_SEL, SEL_UPL),TF_DS(%rsp)
 	movw	$GSEL(GUDATA_SEL, SEL_UPL),TF_ES(%rsp)
@@ -1332,6 +1340,7 @@ IDTVEC(syscall)
 	jnz	intrfastexit
 
 	INTR_RESTORE_GPRS
+	SVS_LEAVE
 	SWAPGS
 #ifndef XEN
 	movq	TF_RIP(%rsp),%rcx	/* %rip for sysret */
@@ -1494,6 +1503,7 @@ do_mov_ds:
 	movw	TF_DS(%rsp),%ds
 do_mov_fs:
 	movw	TF_FS(%rsp),%fs
+	SVS_LEAVE
 	SWAPGS
 #ifndef XEN
 do_mov_gs:
@@ -1503,6 +1513,7 @@ do_mov_gs:
 
 .Luexit64:
 	NOT_XEN(cli;)
+	SVS_LEAVE
 	SWAPGS
 
 .Lkexit:
