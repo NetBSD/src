@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.164 2017/12/10 20:38:14 bouyer Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.165 2018/01/07 20:59:25 jmcneill Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -78,6 +78,9 @@
 ./libdata/firmware/if_rtwn
 ./libdata/firmware/if_urtwn
 ./libdata/firmware/if_wpi
+./libdata/firmware/nvidia
+./libdata/firmware/nvidia/tegra124
+./libdata/firmware/nvidia/tegra210
 ./libdata/firmware/radeon
 ./libdata/firmware/ral
 ./libdata/firmware/rum

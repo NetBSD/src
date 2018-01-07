@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.365 2017/11/25 23:22:41 jmcneill Exp $
+#	$NetBSD: bsd.README,v 1.366 2018/01/07 20:59:25 jmcneill Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -414,6 +414,10 @@ MKSTRIPSYM	If "yes", strip all local symbols from shared libraries;
 		userland libraries and getting a backtrace from a rump kernel
 		loading shared libraries.
 		Default: yes
+
+MKTEGRAFIRMWARE	If "no", install the /libdata/firmware/nvidia directory,
+		which is necessary for the NVIDIA Tegra XHCI driver.
+		Default: yes on evbarm and evbarm64, no elsewhere.
 
 MKTOOLSDEBUG	If "yes" build the tools with debugging symbols.
 		Default: no
