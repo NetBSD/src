@@ -72,8 +72,7 @@ alpha*-*-linux*)
 alpha*-*-netbsd* | alpha*-*-knetbsd*-gnu)
 	# Target: NetBSD/alpha
 	gdb_target_obs="alpha-tdep.o alpha-mdebug-tdep.o alpha-bsd-tdep.o \
-			alpha-nbsd-tdep.o alpha-nbsd-nat.o nbsd-tdep.o \
-			solib-svr4.o"
+			alpha-nbsd-tdep.o nbsd-tdep.o solib-svr4.o"
 	;;
 alpha*-*-openbsd*)
 	# Target: OpenBSD/alpha
