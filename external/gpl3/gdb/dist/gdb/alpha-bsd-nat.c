@@ -186,6 +186,22 @@ alphabsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
   return 1;
 }
 
+struct target_ops *
+alphabsd_target (void)
+{
+  struct target_ops *t;
+
+  t = inf_ptrace_target ();
+  t->to_fetch_registers = alphabsd_fetch_inferior_registers;
+  t->to_store_registers = alphabsd_store_inferior_registers;
+
+  /* Support debugging kernel virtual memory images.  */
+  bsd_kvm_add_target (alphabsd_supply_pcb);
+
+  return t;
+}
+
+
 
 /* Provide a prototype to silence -Wmissing-prototypes.  */
 void _initialize_alphabsd_nat (void);
@@ -195,11 +211,6 @@ _initialize_alphabsd_nat (void)
 {
   struct target_ops *t;
 
-  t = inf_ptrace_target ();
-  t->to_fetch_registers = alphabsd_fetch_inferior_registers;
-  t->to_store_registers = alphabsd_store_inferior_registers;
+  t = alphabsd_target ();
   add_target (t);
-
-  /* Support debugging kernel virtual memory images.  */
-  bsd_kvm_add_target (alphabsd_supply_pcb);
 }
