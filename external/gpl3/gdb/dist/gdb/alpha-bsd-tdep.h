@@ -37,6 +37,4 @@ void alphanbsd_iterate_over_regset_sections (struct gdbarch *gdbarch,
 					     void *cb_data,
 					     const struct regcache *regcache);
 
-struct target_ops *alphabsd_target (void);
-
 #endif /* alpha-bsd-tdep.h */
