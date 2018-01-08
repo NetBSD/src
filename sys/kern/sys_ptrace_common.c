@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.33 2018/01/08 04:45:53 christos Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.34 2018/01/08 06:10:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.33 2018/01/08 04:45:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.34 2018/01/08 06:10:30 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -772,7 +772,7 @@ ptrace_regs(struct lwp *l, struct lwp **lt, int rq, struct ptrace_methods *ptm,
     void *addr, size_t data)
 {
 	int error;
-	struct proc *t = l->l_proc;
+	struct proc *t = (*lt)->l_proc;
 	struct vmspace *vm;
 
 	if ((error = ptrace_update_lwp(t, lt, data)) != 0)
@@ -814,7 +814,7 @@ ptrace_regs(struct lwp *l, struct lwp **lt, int rq, struct ptrace_methods *ptm,
 		return EINVAL;
 	}
 
-	error = proc_vmspace_getref(t, &vm);
+	error = proc_vmspace_getref(l->l_proc, &vm);
 	if (error)
 		return error;
 
