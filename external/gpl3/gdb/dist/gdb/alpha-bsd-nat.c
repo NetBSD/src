@@ -209,8 +209,10 @@ void _initialize_alphabsd_nat (void);
 void
 _initialize_alphabsd_nat (void)
 {
+#ifndef __NetBSD__
   struct target_ops *t;
 
   t = alphabsd_target ();
   add_target (t);
+#endif
 }
