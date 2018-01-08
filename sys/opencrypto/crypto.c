@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.104 2018/01/08 23:33:40 knakahara Exp $ */
+/*	$NetBSD: crypto.c,v 1.105 2018/01/08 23:34:56 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.104 2018/01/08 23:33:40 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.105 2018/01/08 23:34:56 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -360,7 +360,7 @@ sysctl_opencrypto_kq_maxlen(SYSCTLFN_ARGS)
 }
 
 /*
- * Crypto op and desciptor data structures are allocated
+ * Crypto op and descriptor data structures are allocated
  * from separate private zones(FreeBSD)/pools(netBSD/OpenBSD) .
  */
 static pool_cache_t cryptop_cache;
