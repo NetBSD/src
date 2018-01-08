@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.32 2017/12/28 18:29:45 christos Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.33 2018/01/08 04:45:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.32 2017/12/28 18:29:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.33 2018/01/08 04:45:53 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -1055,7 +1055,7 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 			break;
 		if ((error = ptrace_doio(l, t, lt, &piod, addr, false)) != 0)
 			break;
-		(void) ptm->ptm_copyout_piod(&piod, addr, data);
+		error = ptm->ptm_copyout_piod(&piod, addr, data);
 		break;
 
 	case PT_DUMPCORE:
