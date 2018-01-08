@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.99 2018/01/08 06:29:19 martin Exp $
+#	$NetBSD: files.amd64,v 1.100 2018/01/08 09:33:53 maxv Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -27,7 +27,6 @@ defparam opt_physmem.h	PHYSMEM_MAX_ADDR PHYSMEM_MAX_SIZE
 defflag			PMC
 defflag			USER_LDT
 defflag			KASLR
-# defflag			SVS	# already defined in files.x86
 defflag eisa.h EISA
 
 # Start code
