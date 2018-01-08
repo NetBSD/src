@@ -25,6 +25,10 @@
 #include "alpha-bsd-tdep.h"
 #include "inf-ptrace.h"
 
+#ifdef __NetBSD__
+#include "nbsd-nat.h"
+#endif
+
 #include <sys/types.h>
 #include <sys/ptrace.h>
 #include <machine/reg.h>
@@ -195,9 +199,6 @@ alphabsd_target (void)
   t->to_fetch_registers = alphabsd_fetch_inferior_registers;
   t->to_store_registers = alphabsd_store_inferior_registers;
 
-  /* Support debugging kernel virtual memory images.  */
-  bsd_kvm_add_target (alphabsd_supply_pcb);
-
   return t;
 }
 
@@ -209,10 +210,15 @@ void _initialize_alphabsd_nat (void);
 void
 _initialize_alphabsd_nat (void)
 {
-#ifndef __NetBSD__
   struct target_ops *t;
 
   t = alphabsd_target ();
+#ifndef __NetBSD__
   add_target (t);
+#else
+   nbsd_nat_add_target (t);
 #endif
+
+  /* Support debugging kernel virtual memory images.  */
+  bsd_kvm_add_target (alphabsd_supply_pcb);
 }
