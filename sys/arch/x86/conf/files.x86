@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.90 2017/08/15 08:51:38 maxv Exp $
+#	$NetBSD: files.x86,v 1.91 2018/01/08 01:41:34 christos Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI
@@ -15,6 +15,8 @@ defflag opt_pcifixup.h	PCI_ADDR_FIXUP PCI_BUS_FIXUP
 
 # To be able to test for NetBSD/xen in shared files
 defflag	opt_xen.h		DO_NOT_DEFINE
+
+defflag	SVS
 
 define  cpubus { [apid = -1] }
 define	cpufeaturebus {}
