@@ -9,6 +9,7 @@ extern void initialize_all_files(void);
 extern initialize_file_ftype _initialize_gdbtypes;
 extern initialize_file_ftype _initialize_alpha_tdep;
 extern initialize_file_ftype _initialize_alphanbsd_tdep;
+extern initialize_file_ftype _initialize_alphanbsd_nat;
 extern initialize_file_ftype _initialize_svr4_solib;
 extern initialize_file_ftype _initialize_ser_hardwire;
 extern initialize_file_ftype _initialize_ser_pipe;
@@ -166,6 +167,7 @@ initialize_all_files (void)
   _initialize_gdbtypes ();
   _initialize_alpha_tdep ();
   _initialize_alphanbsd_tdep ();
+  _initialize_alphanbsd_nat ();
   _initialize_svr4_solib ();
   _initialize_ser_hardwire ();
   _initialize_ser_pipe ();
