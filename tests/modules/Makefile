@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.12 2016/01/23 21:22:49 christos Exp $
+# $NetBSD: Makefile,v 1.13 2018/01/08 14:17:15 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -17,6 +17,7 @@ LDADD+=		-lrumpfs_kernfs -lrumpvfs -lrump -lrumpuser -lrump -lpthread
 
 TESTS_SH=	t_abi_uvm
 TESTS_SH+=	t_modload
+TESTS_SH+= 	t_klua_pr_52864
 
 SUBDIR=		k_helper
 SUBDIR+=	k_helper2
