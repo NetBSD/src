@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_flow.c,v 1.36 2017/12/10 09:06:46 maxv Exp $	*/
+/*	$NetBSD: ip6_flow.c,v 1.37 2018/01/08 23:23:25 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.36 2017/12/10 09:06:46 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.37 2018/01/08 23:23:25 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -560,6 +560,8 @@ ip6flow_create(struct route *ro, struct mbuf *m)
 	struct ip6flow *ip6f;
 	size_t hash;
 
+	printf("XXXX %s: enter\n", __func__);
+
 	ip6 = mtod(m, const struct ip6_hdr *);
 
 	KERNEL_LOCK_UNLESS_NET_MPSAFE();
@@ -571,8 +573,12 @@ ip6flow_create(struct route *ro, struct mbuf *m)
 	 *
 	 * Don't create a flow for ICMPv6 messages.
 	 */
-	if (ip6_maxflows == 0 || ip6->ip6_nxt == IPPROTO_IPV6_ICMP)
+	if (ip6_maxflows == 0 || ip6->ip6_nxt == IPPROTO_IPV6_ICMP) {
+		printf("XXXX %s: icmp skip\n", __func__);
 		goto out;
+	}
+
+	printf("XXXX %s: ip6->ip6_nxt=%d\n", __func__, ip6->ip6_nxt);
 
 	/*
 	 * See if an existing flow exists.  If so:
