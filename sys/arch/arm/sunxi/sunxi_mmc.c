@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_mmc.c,v 1.18 2017/12/30 00:14:19 jmcneill Exp $ */
+/* $NetBSD: sunxi_mmc.c,v 1.19 2018/01/08 14:40:18 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_sunximmc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.18 2017/12/30 00:14:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.19 2018/01/08 14:40:18 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -246,7 +246,7 @@ static const struct sunxi_mmc_config sun50i_a64_mmc_config = {
 };
 
 static const struct sunxi_mmc_config sun50i_a64_emmc_config = {
-	.idma_xferlen = 0x10000,
+	.idma_xferlen = 0x2000,
 	.dma_ftrglevel = 0x20070008,
 	.delays = NULL,
 	.flags = SUNXI_MMC_FLAG_CALIB_REG,
