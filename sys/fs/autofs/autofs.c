@@ -1,4 +1,4 @@
-/*	$NetBSD: autofs.c,v 1.2 2018/01/09 13:56:00 martin Exp $	*/
+/*	$NetBSD: autofs.c,v 1.3 2018/01/09 16:19:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -68,23 +68,33 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autofs.c,v 1.2 2018/01/09 13:56:00 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autofs.c,v 1.3 2018/01/09 16:19:39 christos Exp $");
 
 #include "autofs.h"
+
+#include "ioconf.h"
 
 #include <sys/atomic.h>
 #include <sys/queue.h>
 #include <sys/signalvar.h>
 
-static int	autofs_open(dev_t dev, int flags, int mode, struct lwp *l);
-static int	autofs_close(dev_t dev, int flags, int mode, struct lwp *l);
-static int	autofs_ioctl(dev_t dev, const u_long cmd, void *data, int flag,
-    struct lwp *l);
+dev_type_open(autofs_open);
+dev_type_close(autofs_close);
+dev_type_ioctl(autofs_ioctl);
 
-struct cdevsw autofs_ops = {
-	.d_open		= autofs_open,
-	.d_close	= autofs_close,
-	.d_ioctl	= autofs_ioctl,
+const struct cdevsw autofs_cdevsw = {
+	.d_open = autofs_open,
+	.d_close = autofs_close,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = autofs_ioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_OTHER,
 };
 
 /*
@@ -110,6 +120,11 @@ int autofs_cache = 600;
 int autofs_retry_attempts = 3;
 int autofs_retry_delay = 1;
 int autofs_interruptible = 1;
+
+void
+autofsattach(int n)
+{
+}
 
 static int
 autofs_node_cmp(const struct autofs_node *a, const struct autofs_node *b)
@@ -504,7 +519,7 @@ autofs_ioctl_done(struct autofs_daemon_done *add)
 	return 0;
 }
 
-static int
+int
 autofs_open(dev_t dev, int flags, int mode, struct lwp *l)
 {
 
@@ -528,7 +543,7 @@ autofs_open(dev_t dev, int flags, int mode, struct lwp *l)
 	return 0;
 }
 
-static int
+int
 autofs_close(dev_t dev, int flags, int mode, struct lwp *l)
 {
 
@@ -540,7 +555,7 @@ autofs_close(dev_t dev, int flags, int mode, struct lwp *l)
 	return 0;
 }
 
-static int
+int
 autofs_ioctl(dev_t dev, const u_long cmd, void *data, int flag, struct lwp *l)
 {
 

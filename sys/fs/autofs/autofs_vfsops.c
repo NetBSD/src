@@ -33,7 +33,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autofs_vfsops.c,v 1.1 2018/01/09 03:31:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autofs_vfsops.c,v 1.2 2018/01/09 16:19:39 christos Exp $");
 
 
 #include "autofs.h"
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: autofs_vfsops.c,v 1.1 2018/01/09 03:31:14 christos E
 MODULE(MODULE_CLASS_VFS, autofs, NULL);
 
 static int	autofs_statvfs(struct mount *, struct statvfs *);
+static int	autofs_sysctl_create(void);
 
 static void
 autofs_init(void)
@@ -64,6 +65,10 @@ autofs_init(void)
 	cv_init(&autofs_softc->sc_cv, "autofscv");
 	mutex_init(&autofs_softc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 	autofs_softc->sc_dev_opened = false;
+
+	autofs_sysctl_create();
+	workqueue_create(&autofs_tmo_wq, "autofstmo",
+	    autofs_timeout_wq, NULL, 0, 0, WQ_MPSAFE);
 }
 
 static void
@@ -71,6 +76,8 @@ autofs_done(void)
 {
 	KASSERT(autofs_softc);
 	KASSERT(!autofs_softc->sc_dev_opened);
+
+	workqueue_destroy(autofs_tmo_wq);
 
 	struct autofs_softc *sc = autofs_softc;
 	autofs_softc = NULL;
@@ -437,6 +444,8 @@ fail:
 	return error;
 }
 
+extern const struct cdevsw autofs_cdevsw;
+
 static int
 autofs_modcmd(modcmd_t cmd, void *arg)
 {
@@ -451,30 +460,16 @@ autofs_modcmd(modcmd_t cmd, void *arg)
 		if (error)
 			break;
 #ifdef _MODULE
-		error = devsw_attach("autofs", NULL, &bmajor, &autofs_ops,
+		error = devsw_attach("autofs", NULL, &bmajor, &autofs_cdevsw,
 		    &cmajor);
 		if (error) {
 			vfs_detach(&autofs_vfsops);
 			break;
 		}
 #endif
-		error = workqueue_create(&autofs_tmo_wq, "autofstmo",
-		    autofs_timeout_wq, NULL, 0, 0, WQ_MPSAFE);
-		if (error) {
-			devsw_detach(NULL, &autofs_ops);
-			vfs_detach(&autofs_vfsops);
-			break;
-		}
-
-		error = autofs_sysctl_create();
-		if (error) {
-			workqueue_destroy(autofs_tmo_wq);
-			devsw_detach(NULL, &autofs_ops);
-			vfs_detach(&autofs_vfsops);
-			break;
-		}
 		break;
 	case MODULE_CMD_FINI:
+#ifdef _MODULE
 		KASSERT(autofs_softc);
 		mutex_enter(&autofs_softc->sc_lock);
 		if (autofs_softc->sc_dev_opened) {
@@ -484,9 +479,7 @@ autofs_modcmd(modcmd_t cmd, void *arg)
 		}
 		mutex_exit(&autofs_softc->sc_lock);
 
-		workqueue_destroy(autofs_tmo_wq);
-#ifdef _MODULE
-		error = devsw_detach(NULL, &autofs_ops);
+		error = devsw_detach(NULL, &autofs_cdevsw);
 		if (error)
 			break;
 #endif
