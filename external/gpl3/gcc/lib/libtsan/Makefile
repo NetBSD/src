@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2016/06/05 20:08:26 christos Exp $
+# $NetBSD: Makefile,v 1.6 2018/01/09 01:51:20 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -25,6 +25,7 @@ tsan_platform_linux.o \
 tsan_platform_mac.o \
 tsan_platform_windows.o \
 tsan_report.o \
+tsan_rtl_amd64.o \
 tsan_rtl.o \
 tsan_rtl_mutex.o \
 tsan_rtl_report.o \
