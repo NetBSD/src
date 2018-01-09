@@ -1,4 +1,4 @@
-.\"	$NetBSD: kqueue.2,v 1.46 2017/07/03 21:32:50 wiz Exp $
+.\"	$NetBSD: kqueue.2,v 1.47 2018/01/09 03:31:12 christos Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" $FreeBSD: src/lib/libc/sys/kqueue.2,v 1.22 2001/06/27 19:55:57 dd Exp $
 .\"
-.Dd June 6, 2017
+.Dd January 8, 2018
 .Dt KQUEUE 2
 .Os
 .Sh NAME
@@ -484,6 +484,9 @@ On return,
 contains the number of times the timeout has expired since the last call to
 .Fn kevent .
 This filter automatically sets the EV_CLEAR flag internally.
+.It Dv EVFILT_FS
+Establishes a file system monitor.
+Currently it only monitors file system mount and unmount actions.
 .El
 .Sh RETURN VALUES
 .Fn kqueue
