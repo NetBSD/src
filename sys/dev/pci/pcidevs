@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1303 2018/01/09 08:17:27 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1304 2018/01/09 09:19:05 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -4356,6 +4356,45 @@ product INTEL CORE7G_S_Q_HOST_DRAM 0x591f Core 7G (S, Quad) Host Bridge, DRAM
 product INTEL CORE7G_U_GT3	0x5923	HD Graphics (GT3)
 product INTEL CORE7G_U_GT3E_15W	0x5926	Iris Plus Graphics 640 (GT3e, 15W)
 product INTEL CORE7G_U_GT3E_28W	0x5927	Iris Plus Graphics 650 (GT3e, 28W)
+product INTEL APL_IGD_1		0x5a84	Apollo Lake Graphics (18EU)
+product INTEL APL_IGD_2		0x5a85	Apollo Lake Graphics (12EU)
+product INTEL APL_IU		0x5a88	Apollo Lake Imaging Control Uint
+product INTEL APL_DPTF		0x5a8c	Apollo Lake DPTF
+product INTEL APL_P2SB		0x5a92	Apollo Lake Primary to SideBand Bridge
+product INTEL APL_PMC		0x5a94	Apollo Lake PMC
+product INTEL APL_FASTSPI	0x5a96	Apollo Lake Fast SPI
+product INTEL APL_HDA		0x5a98	Apollo Lake HD Audio
+product INTEL APL_ISH		0x5aa2	Apollo Lake Integrated Sensor Hub
+product INTEL APL_XHCI		0x5aa8	Apollo Lake USB Host (xHCI)
+product INTEL APL_XDCI		0x5aaa	Apollo Lake USB Device (xDCI)
+product INTEL APL_I2C_0		0x5aac	Apollo Lake I2C 0
+product INTEL APL_I2C_1		0x5aae	Apollo Lake I2C 1
+product INTEL APL_I2C_2		0x5ab0	Apollo Lake I2C 2
+product INTEL APL_I2C_3		0x5ab2	Apollo Lake I2C 3
+product INTEL APL_I2C_4		0x5ab4	Apollo Lake I2C 4
+product INTEL APL_I2C_5		0x5ab6	Apollo Lake I2C 5
+product INTEL APL_I2C_6		0x5ab8	Apollo Lake I2C 6
+product INTEL APL_I2C_7		0x5aba	Apollo Lake I2C 7
+product INTEL APL_UART_0	0x5abc	Apollo Lake UART 0
+product INTEL APL_UART_1	0x5abe	Apollo Lake UART 1
+product INTEL APL_UART_2	0x5ac0	Apollo Lake UART 2
+product INTEL APL_SPI_0		0x5ac2	Apollo Lake SPI 0
+product INTEL APL_SPI_1		0x5ac4	Apollo Lake SPI 1
+product INTEL APL_SPI_2		0x5ac6	Apollo Lake SPI 2
+product INTEL APL_SD		0x5aca	Apollo Lake SD Card
+product INTEL APL_EMMC		0x5acc	Apollo Lake eMMC
+product INTEL APL_SMB		0x5ad4	Apollo Lake SMBus
+product INTEL APL_PCIE_B0	0x5ad6	Apollo Lake PCIe B0
+product INTEL APL_PCIE_B1	0x5ad7	Apollo Lake PCIe B1
+product INTEL APL_PCIE_A0	0x5ad8	Apollo Lake PCIe A0
+product INTEL APL_PCIE_A1	0x5ad9	Apollo Lake PCIe A1
+product INTEL APL_PCIE_A2	0x5ada	Apollo Lake PCIe A2
+product INTEL APL_PCIE_A3	0x5adb	Apollo Lake PCIe A3
+product INTEL APL_SATA		0x5ae0	Apollo Lake SATA
+product INTEL APL_LPC		0x5ae8	Apollo Lake LPC
+product INTEL APL_SSRAM		0x5aec	Apollo Lake Shared SRAM
+product INTEL APL_UART_3	0x5aee	Apollo Lake UART 3
+product INTEL APL_HB		0x5af0	Apollo Lake Host Bridge
 product INTEL XEOND_HB_DMI2	0x6f00	Core i7-6xxxK/Xeon-D Host Bridge (DMI2)
 product INTEL XEOND_HB_PCIE	0x6f01	Xeon-D Host Bridge (PCIe)
 product INTEL XEOND_PCIE_1	0x6f02	Xeon-D PCIe Root Port (x8 or x4 max)
