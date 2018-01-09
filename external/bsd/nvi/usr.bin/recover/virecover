@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: virecover,v 1.1.22.1 2017/11/06 09:37:24 snj Exp $
+#	$NetBSD: virecover,v 1.1.22.2 2018/01/09 19:27:41 snj Exp $
 #
 #	@(#)recover.in	8.8 (Berkeley) 10/10/96
 #
@@ -17,13 +17,13 @@ for i in $RECDIR/vi.*; do
 	esac
 
 	# Only test files that are readable.
-	if ! [ -f "$i" ] || ! [ -r "$i" ]; then
+	if [ ! -f "$i" ] || [ ! -r "$i" ]; then
 		continue
 	fi
 
 	# Unmodified nvi editor backup files either have the
 	# execute bit set or are zero length.  Delete them.
-	if [ -x "$i" ] || ! [ -s "$i" ]; then
+	if [ -x "$i" ] || [ ! -s "$i" ]; then
 		rm -f "$i"
 	fi
 done
@@ -36,8 +36,8 @@ for i in $RECDIR/recover.*; do
 	$RECDIR/recover.\*) continue;;
 	esac
 
-	# Only test files that are readable.
-	if ! [ -r "$i" ]; then
+	# Only test plain files that are readable.
+	if [ ! -f "$i" ] || [ ! -r "$i" ]; then
 		continue
 	fi
 
