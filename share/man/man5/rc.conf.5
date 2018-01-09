@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.167 2018/01/09 03:31:12 christos Exp $
+.\"	$NetBSD: rc.conf.5,v 1.168 2018/01/09 09:17:52 wiz Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -240,8 +240,7 @@ If empty or not set, then the contents of
 (if it exists) are used.
 .It Sy domainname
 A string.
-.Tn NIS
-(YP) domain of host.
+NIS (YP) domain of host.
 If empty or not set, then the contents of
 .Pa /etc/defaultdomain
 (if it exists) are used.
@@ -1022,8 +1021,7 @@ The
 daemon is required for any
 .Xr rpc 3
 services.
-These include NFS,
-.Tn NIS ,
+These include NFS, NIS,
 .Xr rpc.bootparamd 8 ,
 .Xr rpc.rstatd 8 ,
 .Xr rpc.rusersd 8 ,
@@ -1226,9 +1224,7 @@ the boot parameter server, with
 as options.
 Used to boot
 .Nx
-and
-.Tn "SunOS 4.x"
-systems.
+and SunOS 4.x systems.
 .It Sy dhcpd
 Boolean value.
 Runs
@@ -1247,13 +1243,7 @@ Passes
 Boolean value.
 Runs
 .Xr mopd 8 ,
-the
-.Tn DEC
-.Tn MOP
-protocol daemon; used for booting
-.Tn VAX
-and other
-.Tn DEC
+the DEC MOP protocol daemon; used for booting VAX and other DEC
 machines.
 Passes
 .Sy mopd_flags .
@@ -1277,11 +1267,7 @@ Passes
 Boolean value.
 Runs
 .Xr rbootd 8 ,
-the
-.Tn HP
-boot protocol daemon; used for booting
-.Tn HP
-workstations.
+the HP boot protocol daemon; used for booting HP workstations.
 Passes
 .Sy rbootd_flags .
 .It Sy rtadvd
@@ -1319,29 +1305,22 @@ X11 font server, which supplies local X font files to X terminals.
 Boolean value.
 Runs
 .Xr ypbind 8 ,
-which lets
-.Tn NIS
-(YP) clients use information from a
-.Tn NIS
-server.
+which lets NIS (YP) clients use information from a NIS server.
 Passes
 .Sy ypbind_flags .
 .It Sy yppasswdd
 Boolean value.
 Runs
 .Xr yppasswdd 8 ,
-which allows remote
-.Tn NIS
-users to update password on master server.
+which allows remote NIS users to update password on master server.
 Passes
 .Sy yppasswdd_flags .
 .It Sy ypserv
 Boolean value.
 Runs
 .Xr ypserv 8 ,
-the
-.Tn NIS
-(YP) server for distributing information from certain files in
+the NIS (YP) server for distributing information from certain files
+in
 .Pa /etc .
 Passes
 .Sy ypserv_flags .
