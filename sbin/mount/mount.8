@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount.8,v 1.85 2017/11/20 21:59:30 wiz Exp $
+.\"	$NetBSD: mount.8,v 1.86 2018/01/09 03:31:12 christos Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)mount.8	8.8 (Berkeley) 6/16/94
 .\"
-.Dd November 20, 2017
+.Dd January 8, 2018
 .Dt MOUNT 8
 .Os
 .Sh NAME
@@ -200,6 +200,11 @@ recovery mechanism, or are willing to recreate the file system from scratch.
 Clear
 .Cm async
 mode.
+.It Cm automounted
+This flag indicates that the file system was mounted by
+.Xr automountd 8 .
+Automounted file systems are automatically unmounted by
+.Xr autounmountd 8 .
 .It Cm discard
 Use DISCARD/TRIM commands if disk and driver support it.
 .Pp
@@ -571,7 +576,10 @@ mount -t cd9660 -o nodev,nosuid /dev/cd0a /mnt
 .Xr rump_sysvbfs 8 ,
 .Xr rump_tmpfs 8 ,
 .Xr rump_udf 8 ,
-.Xr umount 8
+.Xr umount 8 ,
+.Xr automount 8 ,
+.Xr automountd 8 ,
+.Xr autounmountd 8
 .Sh HISTORY
 A
 .Nm

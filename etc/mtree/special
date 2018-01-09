@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.161 2017/12/29 18:15:49 is Exp $
+#	$NetBSD: special,v 1.162 2018/01/09 03:31:14 christos Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # This file may be overwritten on upgrades.
@@ -29,6 +29,14 @@
 ./etc/Distfile			type=file mode=0644 optional
 ./etc/amd			type=dir  mode=0755 optional
 ./etc/apm			type=dir  mode=0755 optional
+./etc/auto_master		type=file mode=0644
+./etc/autofs			type=dir  mode=0755
+./etc/autofs/include_ldap	type=file mode=0755
+./etc/autofs/include_nis	type=file mode=0755
+./etc/autofs/special_hosts	type=file mode=0755
+./etc/autofs/special_media	type=file mode=0755
+./etc/autofs/special_noauto	type=file mode=0755
+./etc/autofs/special_null	type=file mode=0755
 ./etc/blacklistd.conf		type=file mode=0644 optional
 ./etc/bluetooth			type=dir  mode=0755
 ./etc/bluetooth/btattach.conf	type=file mode=0644

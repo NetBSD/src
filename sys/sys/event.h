@@ -1,4 +1,4 @@
-/*	$NetBSD: event.h,v 1.31 2017/09/16 23:54:32 christos Exp $	*/
+/*	$NetBSD: event.h,v 1.32 2018/01/09 03:31:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -43,7 +43,8 @@
 #define	EVFILT_PROC		4U	/* attached to struct proc */
 #define	EVFILT_SIGNAL		5U	/* attached to struct proc */
 #define	EVFILT_TIMER		6U	/* arbitrary timer (in ms) */
-#define	EVFILT_SYSCOUNT		7U	/* number of filters */
+#define	EVFILT_FS		7U	/* filesystem events */
+#define	EVFILT_SYSCOUNT		8U	/* number of filters */
 
 struct kevent {
 	uintptr_t	ident;		/* identifier for this event */
@@ -255,6 +256,8 @@ int	kfilter_unregister(const char *);
 
 int	filt_seltrue(struct knote *, long);
 extern const struct filterops seltrue_filtops;
+
+extern struct klist fs_klist;	/* EVFILT_FS */
 
 #else 	/* !_KERNEL */
 

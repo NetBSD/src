@@ -1,4 +1,4 @@
-.\"	$NetBSD: showmount.8,v 1.12 2004/01/15 03:33:20 grant Exp $
+.\"	$NetBSD: showmount.8,v 1.13 2018/01/09 03:31:15 christos Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)showmount.8	8.3 (Berkeley) 3/29/95
 .\"
-.Dd March 29, 1995
+.Dd January 8, 2018
 .Dt SHOWMOUNT 8
 .Os
 .Sh NAME
@@ -40,7 +40,7 @@
 .Nd show remote NFS mounts on host
 .Sh SYNOPSIS
 .Nm
-.Op Fl ade3
+.Op Fl adEe3
 .Op Ar host
 .Sh DESCRIPTION
 .Nm
@@ -67,6 +67,12 @@ List all mount points in the form:
 .Ed
 .It Fl d
 List directory paths of mount points instead of hosts
+.It Fl E
+Show the
+.Ar host Ns 's
+exports list in a script-friendly format.
+Client addresses and the header are not shown, and special
+characters are escaped.
 .It Fl e
 Show the
 .Ar host Ns 's
