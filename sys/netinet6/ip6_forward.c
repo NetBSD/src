@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.87.2.1 2017/10/21 19:43:54 snj Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.87.2.2 2018/01/09 19:30:45 snj Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.109 2002/09/11 08:10:17 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.87.2.1 2017/10/21 19:43:54 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.87.2.2 2018/01/09 19:30:45 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -415,8 +415,8 @@ ip6_forward(struct mbuf *m, int srcrt)
 			/* Need to release rt here */
 			rtcache_unref(rt, ro);
 			rt = NULL;
-			if (m->m_flags & M_CANFASTFWD)
-				ip6flow_create(ro, m);
+			if (mcopy->m_flags & M_CANFASTFWD)
+				ip6flow_create(ro, mcopy);
 #endif
 			if (mcopy)
 				goto freecopy;
