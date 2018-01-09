@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.99 2018/01/07 09:32:36 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.100 2018/01/09 19:39:51 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -8829,4 +8829,52 @@ sys/arch/macppc/conf/GENERIC			1.337
 	issues on the PowerBook5,2 (G4 FW-800) Radeon 9600, where
 	console is garbled.  PR port-macppc/52712
 	[sevan, ticket #470]
+
+sys/netatalk/aarp.c				1.40
+
+	Pull up the mbuf, not to read past its end.
+	[maxv, ticket #479]
+
+sys/net/if_ethersubr.c				1.249
+
+	Make sure the packet can contain an LLC structure.
+	[maxv, ticket #480]
+
+sys/netinet6/ip6_flow.c				1.36
+
+	Fix a use-after-free in the IPv6 forwarding code.
+	[maxv, ticket #481]
+
+external/bsd/nvi/usr.bin/recover/virecover	1.4
+
+	Don't get stuck reading named pipes; only try to read plain
+	files in order to send mail.
+	[christos, ticket #482]
+
+etc/etc.i386/MAKEDEV.conf			1.26
+
+	Create NVMe devices on i386.
+	[msaitoh, ticket #483]
+
+sys/netinet6/ip6_forward.c			1.89-1.90
+
+	Fix two uses-after-free of mbuf by ip6flow_create.
+	[ozaki-r, ticket #484]
+
+sys/dev/auconv.c				1.32-1.35
+sys/dev/auconv.h				1.20-1.21
+sys/dev/mulaw.c					1.33
+sys/dev/mulaw.h					1.25
+
+	- Improve LINEAR_LINEARN macro - inparticular BE/LE conversions.
+	  PR kern/52586.
+	- Allow maxused to be an odd number of bytes.  This makes single
+	  byte conversions work.  PR kern/52586.
+	- Remove 24 bit in a 32 bit container filters.
+	- Replace LINEARN_TO_LINEARN macro with individual optimized
+	  functions for 8, 16, 24 and 32 bits linear to linear conversions.
+	  PR kern/52586.
+	- mulaw/alaw_to_linearN macros replaced with individual faster
+	  filters.  NFC.
+	[nat, ticket #485]
 
