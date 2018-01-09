@@ -1,3 +1,5 @@
+.\" $NetBSD: automountd.8,v 1.2 2018/01/09 09:39:07 wiz Exp $
+.\"
 .\" Copyright (c) 2017 The NetBSD Foundation, Inc.
 .\" Copyright (c) 2016 The DragonFly Project
 .\" Copyright (c) 2014 The FreeBSD Foundation
@@ -40,31 +42,31 @@
 .Nd daemon handling autofs mount requests
 .Sh SYNOPSIS
 .Nm
+.Op Fl div
 .Op Fl D Ar name=value
-.Op Fl i
 .Op Fl m Ar maxproc
 .Op Fl o Ar options
-.Op Fl d
-.Op Fl v
 .Sh DESCRIPTION
 The
 .Nm
 daemon is responsible for handling
 .Xr autofs 5
 mount requests, parsing maps,
-and mounting filesystems they specify.
+and mounting file systems they specify.
 On startup,
 .Nm
 forks into background and waits for kernel requests.
 When a request is received,
 .Nm
 forks a child process.
-The child process parses the appropriate map and mounts filesystems accordingly.
+The child process parses the appropriate map and mounts file systems accordingly.
 Then it signals the kernel to release blocked processes that were waiting
 for the mount.
 .Bl -tag -width ".Fl v"
 .It Fl D
 Define a variable.
+.It Fl d
+Debug mode: increase verbosity and do not daemonize.
 .It Fl i
 For indirect mounts, only create subdirectories if there are no wildcard
 entries.
@@ -79,8 +81,6 @@ Limit the number of forked
 .Nm
 processes, and thus the number of mount requests being handled in parallel.
 The default is 30.
-.It Fl d
-Debug mode: increase verbosity and do not daemonize.
 .It Fl o Ar options
 Specify mount options.
 Options specified here will be overridden by options entered in maps or
@@ -91,9 +91,8 @@ Increase verbosity.
 .Sh EXIT STATUS
 .Ex -std
 .Sh SEE ALSO
-.Xr autofs 5 ,
 .Xr auto_master 5 ,
-.Xr hammer 5 ,
+.Xr autofs 5 ,
 .Xr automount 8 ,
 .Xr autounmountd 8
 .Sh HISTORY
@@ -114,9 +113,10 @@ The
 .Nm
 was developed by
 .An Edward Tomasz Napierala Aq Mt trasz@FreeBSD.org
-under sponsorship from the FreeBSD Foundation.
+under sponsorship from the
+.Fx
+Foundation.
 .Pp
-The
 .Nm
 was ported to
 .Dx

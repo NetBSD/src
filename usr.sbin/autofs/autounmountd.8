@@ -1,3 +1,5 @@
+.\" $NetBSD: autounmountd.8,v 1.2 2018/01/09 09:39:07 wiz Exp $
+.\"
 .\" Copyright (c) 2017 The NetBSD Foundation, Inc.
 .\" Copyright (c) 2016 The DragonFly Project
 .\" Copyright (c) 2014 The FreeBSD Foundation
@@ -37,38 +39,37 @@
 .Os
 .Sh NAME
 .Nm autounmountd
-.Nd daemon unmounting automounted filesystems
+.Nd daemon unmounting automounted file systems
 .Sh SYNOPSIS
 .Nm
-.Op Fl d
 .Op Fl r Ar time
 .Op Fl t Ar time
-.Op Fl v
+.Op Fl dv
 .Sh DESCRIPTION
 The
 .Nm
-daemon is responsible for unmounting filesystems mounted by
+daemon is responsible for unmounting file systems mounted by
 .Xr automountd 8 .
 On startup,
 .Nm
-retrieves a list of filesystems that have the
+retrieves a list of file systems that have the
 .Li automounted
 mount option set.
-The list is updated every time a filesystem is mounted or unmounted.
+The list is updated every time a file system is mounted or unmounted.
 After a specified time passes,
 .Nm
-attempts to unmount a filesystem, retrying after some time if necessary.
+attempts to unmount a file system, retrying after some time if necessary.
 .Pp
 These options are available:
 .Bl -tag -width ".Fl v"
 .It Fl d
 Debug mode: increase verbosity and do not daemonize.
 .It Fl r
-Number of seconds to wait before trying to unmount an expired filesystem
-after a previous attempt failed, possibly due to filesystem being busy.
+Number of seconds to wait before trying to unmount an expired file system
+after a previous attempt failed, possibly due to file system being busy.
 The default value is 600, or ten minutes.
 .It Fl t
-Number of seconds to wait before trying to unmount a filesystem.
+Number of seconds to wait before trying to unmount a file system.
 The default value is 600, or ten minutes.
 .It Fl v
 Increase verbosity.
@@ -76,8 +77,8 @@ Increase verbosity.
 .Sh EXIT STATUS
 .Ex -std
 .Sh SEE ALSO
-.Xr autofs 5 ,
 .Xr auto_master 5 ,
+.Xr autofs 5 ,
 .Xr automount 8 ,
 .Xr automountd 8
 .Sh HISTORY
@@ -98,9 +99,10 @@ The
 .Nm
 was developed by
 .An Edward Tomasz Napierala Aq Mt trasz@FreeBSD.org
-under sponsorship from the FreeBSD Foundation.
+under sponsorship from the
+.Fx
+Foundation.
 .Pp
-The
 .Nm
 was ported to
 .Dx
