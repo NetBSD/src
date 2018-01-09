@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_kthread.c,v 1.42 2017/04/21 15:10:34 christos Exp $	*/
+/*	$NetBSD: kern_kthread.c,v 1.43 2018/01/09 22:58:45 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.42 2017/04/21 15:10:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.43 2018/01/09 22:58:45 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -194,6 +194,7 @@ kthread_join(lwp_t *l)
 {
 
 	KASSERT((l->l_flag & LW_SYSTEM) != 0);
+	KASSERT((l->l_pflag & LP_MUSTJOIN) != 0);
 
 	/*
 	 * - Wait if some other thread has occupied the target.
