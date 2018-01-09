@@ -1,4 +1,4 @@
-.\"	$NetBSD: showmount.8,v 1.13 2018/01/09 03:31:15 christos Exp $
+.\"	$NetBSD: showmount.8,v 1.14 2018/01/09 09:24:22 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -44,14 +44,11 @@
 .Op Ar host
 .Sh DESCRIPTION
 .Nm
-shows status information about the
-.Tn NFS
-server on
+shows status information about the NFS server on
 .Ar host .
-By default it prints the names of all hosts that have
-.Tn NFS
-file systems mounted
-on the host. See
+By default it prints the names of all hosts that have NFS file
+systems mounted on the host.
+See
 .%T "NFS: Network File System Protocol Specification" ,
 RFC 1094,
 Appendix A,
@@ -90,9 +87,7 @@ utility first appeared in
 .Bx 4.4 .
 .Sh BUGS
 The mount daemon running on the server only has an idea of the actual mounts,
-since the
-.Tn NFS
-server is stateless.
+since the NFS server is stateless.
 .Nm
 will only display the information
 as accurately as the mount daemon reports it.
