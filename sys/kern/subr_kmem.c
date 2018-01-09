@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.65 2017/11/09 23:20:12 riastradh Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.66 2018/01/09 01:53:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009-2015 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.65 2017/11/09 23:20:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.66 2018/01/09 01:53:55 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kmem.h"
@@ -541,6 +541,23 @@ kmem_strdupsize(const char *str, size_t *lenp, km_flag_t flags)
 	if (lenp)
 		*lenp = len;
 	memcpy(ptr, str, len);
+	return ptr;
+}
+
+char *
+kmem_strndup(const char *str, size_t maxlen, km_flag_t flags)
+{
+	KASSERT(str != NULL);
+	KASSERT(maxlen != 0);
+
+	size_t len = strnlen(str, maxlen);
+	char *ptr = kmem_alloc(len + 1, flags);
+	if (ptr == NULL)
+		return NULL;
+
+	memcpy(ptr, str, len);
+	ptr[len] = '\0';
+
 	return ptr;
 }
 
