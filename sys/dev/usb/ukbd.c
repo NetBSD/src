@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.140 2017/12/18 18:58:00 jmcneill Exp $        */
+/*      $NetBSD: ukbd.c,v 1.141 2018/01/09 17:58:09 christos Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.140 2017/12/18 18:58:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.141 2018/01/09 17:58:09 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -457,7 +457,7 @@ ukbd_attach(device_t parent, device_t self, void *aux)
 	}
 
 	if (sc->sc_console_keyboard) {
-		DPRINTF(("ukbd_attach: console keyboard sc=%p\n", sc));
+		DPRINTF(("%s: console keyboard sc=%p\n", __func__, sc));
 		wskbd_cnattach(&ukbd_consops, sc, &ukbd_keymapdata);
 		ukbd_enable(sc, 1);
 	}
@@ -499,13 +499,12 @@ ukbd_enable(void *v, int on)
 	/* Should only be called to change state */
 	if ((sc->sc_flags & FLAG_ENABLED) != 0 && on != 0) {
 #ifdef DIAGNOSTIC
-		printf("ukbd_enable: %s: bad call on=%d\n",
-		       device_xname(sc->sc_hdev.sc_dev), on);
+		aprint_error_dev(sc->sc_hdev.sc_dev, "bad call on=%d\n", on);
 #endif
 		return EBUSY;
 	}
 
-	DPRINTF(("ukbd_enable: sc=%p on=%d\n", sc, on));
+	DPRINTF(("%s: sc=%p on=%d\n", __func__, sc, on));
 	if (on) {
 		sc->sc_flags |= FLAG_ENABLED;
 		return uhidev_open(&sc->sc_hdev);
@@ -546,7 +545,7 @@ ukbd_detach(device_t self, int flags)
 	struct ukbd_softc *sc = device_private(self);
 	int rv = 0;
 
-	DPRINTF(("ukbd_detach: sc=%p flags=%d\n", sc, flags));
+	DPRINTF(("%s: sc=%p flags=%d\n", __func__, sc, flags));
 
 	pmf_device_deregister(self);
 
@@ -756,7 +755,7 @@ ukbd_decode(struct ukbd_softc *sc, struct ukbd_data *ud)
 #endif
 
 	if (isset(ud->keys, KEY_ERROR)) {
-		DPRINTF(("ukbd_intr: KEY_ERROR\n"));
+		DPRINTF(("%s: KEY_ERROR\n", __func__));
 		return;		/* ignore  */
 	}
 
@@ -784,7 +783,7 @@ ukbd_decode(struct ukbd_softc *sc, struct ukbd_data *ud)
 		return;
 
 	if (sc->sc_flags & FLAG_POLLING) {
-		DPRINTFN(1,("ukbd_intr: pollchar = 0x%03x\n", ibuf[0]));
+		DPRINTFN(1,("%s: pollchar = 0x%03x\n", __func__, ibuf[0]));
 		memcpy(sc->sc_pollchars, ibuf, nkeys * sizeof(uint16_t));
 		sc->sc_npollchar = nkeys;
 		return;
@@ -823,7 +822,7 @@ ukbd_decode(struct ukbd_softc *sc, struct ukbd_data *ud)
 				sc->sc_rep[npress++] = c & 0x7f;
 			}
 #endif
-			DPRINTFN(1,("ukbd_intr: raw = %s0x%02x\n",
+			DPRINTFN(1,("%s: raw = %s0x%02x\n", __func__,
 				    c & 0x80 ? "0xe0 " : "",
 				    cbuf[j]));
 			j++;
@@ -859,7 +858,7 @@ ukbd_set_leds(void *v, int leds)
 	struct ukbd_softc *sc = v;
 	struct usbd_device *udev = sc->sc_hdev.sc_parent->sc_udev;
 
-	DPRINTF(("ukbd_set_leds: sc=%p leds=%d, sc_leds=%d\n",
+	DPRINTF(("%s: sc=%p leds=%d, sc_leds=%d\n", __func__,
 		 sc, leds, sc->sc_leds));
 
 	if (sc->sc_dying)
@@ -925,7 +924,7 @@ ukbd_ioctl(void *v, u_long cmd, void *data, int flag,
 		return 0;
 #if defined(WSDISPLAY_COMPAT_RAWKBD)
 	case WSKBDIO_SETMODE:
-		DPRINTF(("ukbd_ioctl: set raw = %d\n", *(int *)data));
+		DPRINTF(("%s: set raw = %d\n", __func__, *(int *)data));
 		sc->sc_rawkbd = *(int *)data == WSKBD_RAW;
 #if defined(UKBD_REPEAT)
 		callout_stop(&sc->sc_rawrepeat_ch);
@@ -962,7 +961,7 @@ ukbd_cngetc(void *v, u_int *type, int *data)
 	} else
 		broken = 0;
 
-	DPRINTFN(0,("ukbd_cngetc: enter\n"));
+	DPRINTFN(0,("%s: enter\n", __func__));
 	sc->sc_flags |= FLAG_POLLING;
 	if (sc->sc_npollchar <= 0)
 		usbd_dopoll(sc->sc_hdev.sc_parent->sc_iface);
@@ -974,11 +973,11 @@ ukbd_cngetc(void *v, u_int *type, int *data)
 		       sc->sc_npollchar * sizeof(uint16_t));
 		*type = c & RELEASE ? WSCONS_EVENT_KEY_UP : WSCONS_EVENT_KEY_DOWN;
 		*data = c & CODEMASK;
+		DPRINTFN(0,("%s: return 0x%02x\n", __func__, c));
 	} else {
 		*type = 0;
 		*data = 0;
 	}
-	DPRINTFN(0,("ukbd_cngetc: return 0x%02x\n", c));
 	if (broken)
 		ukbd_cnpollc(v, 0);
 }
@@ -989,7 +988,7 @@ ukbd_cnpollc(void *v, int on)
 	struct ukbd_softc *sc = v;
 	struct usbd_device *dev;
 
-	DPRINTFN(2,("ukbd_cnpollc: sc=%p on=%d\n", v, on));
+	DPRINTFN(2,("%s: sc=%p on=%d\n", __func__, v, on));
 
 	usbd_interface2device_handle(sc->sc_hdev.sc_parent->sc_iface, &dev);
 	if (on) {
@@ -1044,9 +1043,9 @@ ukbd_parse_desc(struct ukbd_softc *sc)
 		    HID_GET_USAGE_PAGE(h.usage) != HUP_KEYBOARD ||
 		    h.report_ID != sc->sc_hdev.sc_report_id)
 			continue;
-		DPRINTF(("ukbd: ikey=%d usage=0x%x flags=0x%x pos=%d size=%d "
-			 "cnt=%d\n", ikey,
-			 h.usage, h.flags, h.loc.pos, h.loc.size, h.loc.count));
+		DPRINTF(("%s: ikey=%d usage=0x%x flags=0x%x pos=%d size=%d "
+		    "cnt=%d\n", __func__, ikey, h.usage, h.flags, h.loc.pos,
+		    h.loc.size, h.loc.count));
 		if (h.flags & HIO_VARIABLE) {
 			if (h.loc.size != 1) {
 				hid_end_parse(d);
