@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.75 2017/12/10 17:19:48 bouyer Exp $
+# $NetBSD: ALL,v 1.76 2018/01/09 03:31:12 christos Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"ALL-$Revision: 1.75 $"
+#ident		"ALL-$Revision: 1.76 $"
 
 maxusers	64		# estimated number of users
 
@@ -178,6 +178,7 @@ file-system	ADOSFS		# AmigaDOS file system
 file-system	NILFS		# experimental - NTT's NiLFS(2)
 file-system	V7FS		# 7th Edition(V7) File System
 file-system	CHFS		# Chip File System
+file-system	AUTOFS		# Automounter Filesystem
 
 # File system options
 options 	QUOTA		# legacy UFS quotas

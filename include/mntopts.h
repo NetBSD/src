@@ -1,4 +1,4 @@
-/*	$NetBSD: mntopts.h,v 1.17 2016/02/21 22:45:25 christos Exp $	*/
+/*	$NetBSD: mntopts.h,v 1.18 2018/01/09 03:31:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -62,6 +62,7 @@ struct mntopt {
 #define MOPT_IGNORE		{ "hidden",	0, MNT_IGNORE, 0 }
 #define MOPT_EXTATTR		{ "extattr",	0, MNT_EXTATTR, 0 }
 #define MOPT_DISCARD		{ "discard",	0, MNT_DISCARD, 0 }
+#define MOPT_AUTOMOUNTED	{ "automounted",0, MNT_AUTOMOUNTED, 0 }
 
 /* Control flags. */
 #define MOPT_FORCE		{ "force",	0, MNT_FORCE, 0 }
@@ -96,7 +97,8 @@ struct mntopt {
 	MOPT_UNION,							\
 	MOPT_IGNORE,							\
 	MOPT_SYMPERM,							\
-	MOPT_RUMP
+	MOPT_RUMP,							\
+	MOPT_AUTOMOUNTED
 
 __BEGIN_DECLS
 typedef struct mntoptparse *mntoptparse_t;

@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.71 2015/03/21 19:10:43 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.72 2018/01/09 03:31:12 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 # missing: dump.5 plot.5
 
-MAN=	a.out.5 acct.5 ar.5 boot.cfg.5 \
+MAN=	a.out.5 acct.5 ar.5 autofs.5 boot.cfg.5 \
 	capfile.5 core.5 daily.5 disktab.5 elf.5 \
 	ethers.5 floppytab.5 forward.5 \
 	fs.5 fstab.5 genassym.cf.5 gpio.conf.5 group.5 hesiod.conf.5 \
