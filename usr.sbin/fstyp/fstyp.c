@@ -1,4 +1,4 @@
-/*	$NetBSD: fstyp.c,v 1.1 2018/01/09 03:31:15 christos Exp $	*/
+/*	$NetBSD: fstyp.c,v 1.2 2018/01/09 10:47:57 martin Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  *
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fstyp.c,v 1.1 2018/01/09 03:31:15 christos Exp $");
+__RCSID("$NetBSD: fstyp.c,v 1.2 2018/01/09 10:47:57 martin Exp $");
 
 #include <sys/disklabel.h>
 #include <sys/dkio.h>
@@ -89,7 +89,7 @@ read_buf(FILE *fp, off_t off, size_t len)
 	size_t nread;
 	void *buf;
 
-	error = fseek(fp, off, SEEK_SET);
+	error = fseeko(fp, off, SEEK_SET);
 	if (error != 0) {
 		warn("cannot seek to %jd", (uintmax_t)off);
 		return NULL;
