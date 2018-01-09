@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.448 2018/01/09 04:10:27 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.449 2018/01/09 04:14:21 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.448 2018/01/09 04:10:27 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.449 2018/01/09 04:14:21 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -894,7 +894,7 @@ audiodetach(device_t self, int flags)
 	DPRINTF(("audio_detach: sc=%p flags=%d\n", sc, flags));
 
 	/* Start draining existing accessors of the device. */
-	if ((rc = config_detach_children(self, flags)) != 0)
+	if ((rc = config_detach_children(self, flags | DETACH_FORCE)) != 0)
 		return rc;
 	mutex_enter(sc->sc_lock);
 	sc->sc_dying = true;
