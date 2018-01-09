@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.242.6.2 2018/01/02 10:20:33 snj Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.242.6.3 2018/01/09 19:23:04 snj Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.242.6.2 2018/01/02 10:20:33 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.242.6.3 2018/01/09 19:23:04 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -833,6 +833,9 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 		}
 	} else {
 #if defined (LLC) || defined (NETATALK)
+		if (m->m_len < ehlen + sizeof(struct llc)) {
+			goto dropanyway;
+		}
 		l = (struct llc *)(eh+1);
 		switch (l->llc_dsap) {
 #ifdef NETATALK
@@ -869,8 +872,8 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 				goto dropanyway;
 			}
 			break;
-		dropanyway:
 #endif
+		dropanyway:
 		default:
 			m_freem(m);
 			return;
