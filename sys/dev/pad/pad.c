@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.49 2017/12/17 21:57:11 pgoyette Exp $ */
+/* $NetBSD: pad.c,v 1.50 2018/01/09 04:23:59 nat Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.49 2017/12/17 21:57:11 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.50 2018/01/09 04:23:59 nat Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -67,6 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.49 2017/12/17 21:57:11 pgoyette Exp $");
 #define PADENC		AUDIO_ENCODING_SLINEAR_LE
 
 extern struct cfdriver pad_cd;
+kmutex_t padconfig;
 
 typedef struct pad_block {
 	uint8_t		*pb_ptr;
@@ -200,6 +201,7 @@ padattach(int n)
 		config_cfdriver_detach(&pad_cd);
 		return;
 	}
+	mutex_init(&padconfig, MUTEX_DEFAULT, IPL_NONE);
 
 	return;
 }
@@ -286,34 +288,13 @@ static int
 pad_detach(device_t self, int flags)
 {
 	pad_softc_t *sc;
-	int cmaj, mn, rc;
+	int cmaj, mn;
 
 	sc = device_private(self);
-	config_deactivate(sc->sc_audiodev);
-	
-	/* Start draining existing accessors of the device. */
-	if ((rc = config_detach_children(self, flags)) != 0)
-		return rc;
-
-	mutex_enter(&sc->sc_lock);
-	sc->sc_dying = true;
-	cv_broadcast(&sc->sc_condvar);
-	mutex_exit(&sc->sc_lock);
-
-	KASSERT(sc->sc_open > 0);
-	sc->sc_open = 0;
-
 	cmaj = cdevsw_lookup_major(&pad_cdevsw);
 	mn = device_unit(sc->sc_dev);
-	vdevgone(cmaj, mn, mn, VCHR);
-
-	pmf_device_deregister(sc->sc_dev);
-
-	mutex_destroy(&sc->sc_lock);
-	mutex_destroy(&sc->sc_intr_lock);
-	cv_destroy(&sc->sc_condvar);
-
-	auconv_delete_encodings(sc->sc_encodings);
+	if (!sc->sc_dying)
+		vdevgone(cmaj, mn, mn, VCHR);
 
 	return 0;
 }
@@ -327,16 +308,17 @@ pad_open(dev_t dev, int flags, int fmt, struct lwp *l)
 	cfdata_t cf;
 	int error, fd, i;
 
+	mutex_enter(&padconfig);
 	if (PADUNIT(dev) == PADCLONER) {
 		for (i = 0; i < MAXDEVS; i++) {
 			if (device_lookup(&pad_cd, i) == NULL)
 				break;
 		}
 		if (i == MAXDEVS)
-			return ENXIO;
+			goto bad;
 	} else {
 		if (PADUNIT(dev) >= MAXDEVS)
-			return ENXIO;
+			goto bad;
 		i = PADUNIT(dev);
 	}
 
@@ -346,18 +328,23 @@ pad_open(dev_t dev, int flags, int fmt, struct lwp *l)
 	cf->cf_unit = i;
 	cf->cf_fstate = FSTATE_STAR;
 
+	bool existing = false;
 	paddev = device_lookup(&pad_cd, minor(dev));
 	if (paddev == NULL)
 		paddev = config_attach_pseudo(cf);
+	else
+		existing = true;
 	if (paddev == NULL)
-		return ENXIO;
+		goto bad;
 
 	sc = device_private(paddev);
 	if (sc == NULL)
-		return ENXIO;
+		goto bad;
 
-	if (sc->sc_open == 1)
+	if (sc->sc_open == 1) {
+		mutex_exit(&padconfig);
 		return EBUSY;
+	}
 
 	sc->sc_dev = paddev;
 	sc->sc_dying = false;
@@ -365,7 +352,9 @@ pad_open(dev_t dev, int flags, int fmt, struct lwp *l)
 	if (PADUNIT(dev) == PADCLONER) {
 		error = fd_allocfile(&fp, &fd);
 		if (error) {
-			config_detach(sc->sc_dev, 0);
+			if (existing == false)
+				config_detach(sc->sc_dev, 0);
+			mutex_exit(&padconfig);
 			return error;
 		}
 	}
@@ -373,7 +362,9 @@ pad_open(dev_t dev, int flags, int fmt, struct lwp *l)
 	if (auconv_create_encodings(pad_formats, PAD_NFORMATS,
 	    &sc->sc_encodings) != 0) {
 		aprint_error_dev(sc->sc_dev, "couldn't create encodings\n");
-		config_detach(sc->sc_dev, 0);
+		if (existing == false)
+			config_detach(sc->sc_dev, 0);
+		mutex_exit(&padconfig);
 		return EINVAL;
 	}
 
@@ -394,17 +385,52 @@ pad_open(dev_t dev, int flags, int fmt, struct lwp *l)
 		KASSERT(error == EMOVEFD);
 	}	
 	sc->sc_open = 1;
+	mutex_exit(&padconfig);
 
 	return error;
+bad:
+	mutex_exit(&padconfig);
+	return ENXIO;
 }
 
 static int
 pad_close(struct pad_softc *sc)
 {
+	int rc;
+
 	if (sc == NULL)
 		return ENXIO;
 
-	return config_detach(sc->sc_dev, DETACH_FORCE);
+	mutex_enter(&padconfig);
+	config_deactivate(sc->sc_audiodev);
+	
+	/* Start draining existing accessors of the device. */
+	if ((rc = config_detach_children(sc->sc_dev,
+	    DETACH_SHUTDOWN|DETACH_FORCE)) != 0) {
+		mutex_exit(&padconfig);
+		return rc;
+	}
+
+	mutex_enter(&sc->sc_lock);
+	sc->sc_dying = true;
+	cv_broadcast(&sc->sc_condvar);
+	mutex_exit(&sc->sc_lock);
+
+	KASSERT(sc->sc_open > 0);
+	sc->sc_open = 0;
+
+	pmf_device_deregister(sc->sc_dev);
+
+	mutex_destroy(&sc->sc_lock);
+	mutex_destroy(&sc->sc_intr_lock);
+	cv_destroy(&sc->sc_condvar);
+
+	auconv_delete_encodings(sc->sc_encodings);
+
+	rc = config_detach(sc->sc_dev, 0);
+	mutex_exit(&padconfig);
+
+	return rc;
 }
 
 static int
@@ -942,6 +968,7 @@ pad_modcmd(modcmd_t cmd, void *arg)
 			    pad_cfattach, cfdata_ioconf_pad);
 			break;
 		}
+		mutex_init(&padconfig, MUTEX_DEFAULT, IPL_NONE);
 
 #endif
 		break;
@@ -959,6 +986,7 @@ pad_modcmd(modcmd_t cmd, void *arg)
 			    &pad_cdevsw, &cmajor);
 			break;
 		}
+		mutex_destroy(&padconfig);
 #endif
 		break;
 
