@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_flow.c,v 1.34.8.1 2018/01/02 10:20:34 snj Exp $	*/
+/*	$NetBSD: ip6_flow.c,v 1.34.8.2 2018/01/09 19:24:44 snj Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.34.8.1 2018/01/02 10:20:34 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.34.8.2 2018/01/09 19:24:44 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -285,12 +285,8 @@ ip6flow_fastforward(struct mbuf **mp)
 
 	if (IP6_HDR_ALIGNED_P(mtod(m, const void *)) == 0) {
 		if ((m = m_copyup(m, sizeof(struct ip6_hdr),
-				(max_linkhdr + 3) & ~3)) == NULL) {
-			goto out;
-		}
-		*mp = m;
-	} else if (__predict_false(m->m_len < sizeof(struct ip6_hdr))) {
-		if ((m = m_pullup(m, sizeof(struct ip6_hdr))) == NULL) {
+		    (max_linkhdr + 3) & ~3)) == NULL) {
+			ret = 1;
 			goto out;
 		}
 		*mp = m;
