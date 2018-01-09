@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.447 2018/01/06 23:15:36 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.448 2018/01/09 04:10:27 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.447 2018/01/06 23:15:36 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.448 2018/01/09 04:10:27 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -5858,22 +5858,24 @@ audio_play_thread(void *v)
 	sc = (struct audio_softc *)v;
 
 	for (;;) {
-		mutex_enter(sc->sc_intr_lock);
-		cv_wait_sig(&sc->sc_condvar, sc->sc_intr_lock);
+		mutex_enter(sc->sc_lock);
 		if (sc->sc_dying) {
-			mutex_exit(sc->sc_intr_lock);
+			mutex_exit(sc->sc_lock);
 			kthread_exit(0);
 		}
+		if (!sc->sc_trigger_started)
+			goto play_wait;
 
-		while (sc->sc_usemixer &&
+		while (!sc->sc_dying && sc->sc_usemixer &&
 		    audio_stream_get_used(&sc->sc_mixring.sc_mpr.s) <
-						sc->sc_mixring.sc_mpr.blksize) {
-			mutex_exit(sc->sc_intr_lock);
-			mutex_enter(sc->sc_lock);
+						sc->sc_mixring.sc_mpr.blksize)
 			audio_mix(sc);
-			mutex_exit(sc->sc_lock);
-			mutex_enter(sc->sc_intr_lock);
-		}
+
+play_wait:
+		mutex_exit(sc->sc_lock);
+
+		mutex_enter(sc->sc_intr_lock);
+		cv_wait_sig(&sc->sc_condvar, sc->sc_intr_lock);
 		mutex_exit(sc->sc_intr_lock);
 	}
 }
@@ -5886,17 +5888,21 @@ audio_rec_thread(void *v)
 	sc = (struct audio_softc *)v;
 
 	for (;;) {
-		mutex_enter(sc->sc_intr_lock);
-		cv_wait_sig(&sc->sc_rcondvar, sc->sc_intr_lock);
+		mutex_enter(sc->sc_lock);
 		if (sc->sc_dying) {
-			mutex_exit(sc->sc_intr_lock);
+			mutex_exit(sc->sc_lock);
 			kthread_exit(0);
 		}
-		mutex_exit(sc->sc_intr_lock);
+		if (!sc->sc_rec_started)
+			goto rec_wait;
 
-		mutex_enter(sc->sc_lock);
 		audio_upmix(sc);
+rec_wait:
 		mutex_exit(sc->sc_lock);
+
+		mutex_enter(sc->sc_intr_lock);
+		cv_wait_sig(&sc->sc_rcondvar, sc->sc_intr_lock);
+		mutex_exit(sc->sc_intr_lock);
 	}
 
 }
