@@ -1,4 +1,4 @@
-.\"	$NetBSD: auto_master.5,v 1.2 2018/01/09 09:27:41 wiz Exp $
+.\"	$NetBSD: auto_master.5,v 1.3 2018/01/09 09:33:00 wiz Exp $
 .\" Copyright (c) 2017 The NetBSD Foundation, Inc.
 .\" Copyright (c) 2016 The DragonFly Project
 .\" Copyright (c) 2014 The FreeBSD Foundation
@@ -56,7 +56,7 @@ daemon.
 The
 .Nm
 file consists of lines with two or three entries separated by whitespace
-and terminated by newline character:
+and terminated by a newline character:
 .Bd -literal -offset indent
 .Pa mountpoint Pa map_name Op Ar -options
 .Ed
@@ -92,7 +92,7 @@ is not a fully specified path
 .Pq it does not start with Li / ,
 .Xr automountd 8
 will search for that name in
-.Li /etc .
+.Pa /etc .
 Otherwise it will use the path as given.
 If the file indicated by
 .Pa map_name
@@ -109,8 +109,10 @@ is an optional field that starts with
 .Li -
 and can contain generic file system mount options.
 .Pp
-The following example specifies that the /etc/auto_example indirect map
-will be mounted on /example.
+The following example specifies that the
+.Pa /etc/auto_example
+indirect map will be mounted on
+.Pa /example .
 .Bd -literal -offset indent
 /example auto_example
 .Ed
@@ -135,8 +137,7 @@ A wildcard
 .Pq Ql *
 can be used for the key.
 It matches every directory that does not match other keys.
-Those directories will not be visible to the user
-until accessed.
+Those directories will not be visible to the user until accessed.
 .Pp
 The
 .Ar options
@@ -162,8 +163,7 @@ and executable maps.
 .Pp
 The optional
 .Pa mountpoint
-field is used to specify multiple mount points
-for a single key.
+field is used to specify multiple mount points for a single key.
 .Pp
 The
 .Ar location
@@ -193,7 +193,8 @@ Defined variables are:
 Expands to the output of
 .Li "uname -p" .
 .It Li CPU
-Same as ARCH.
+Same as
+.Li ARCH .
 .It Li HOST
 Expands to the output of
 .Li "uname -n" .
@@ -260,7 +261,7 @@ Query the remote NFS server and map exported shares.
 This map is traditionally mounted on
 .Pa /net .
 Access to files on a remote NFS server is provided through the
-.Pf /net/ Ar nfs-server-ip Ns / Ns Ar share-name Ns/
+.Pf /net/ Ar nfs-server-ip Ns / Ns Ar share-name Ns /
 directory without any additional configuration.
 Directories for individual NFS servers are not present until the first access,
 when they are automatically created.
@@ -320,8 +321,8 @@ The example above could be rewritten using direct map, by placing this in
 .Li /- auto_example
 .Ed
 .Pp
-and this in
-.Li /etc/auto_example
+and this in the
+.Pa /etc/auto_example
 map file:
 .Bd -literal -offset indent
 .Li /example/x -intr,nfsv4 192.168.1.1:/share/example/x
@@ -391,5 +392,7 @@ and
 by
 .An Tomohiro Kusumi Aq Mt kusumi.tomohiro@gmail.com .
 .Sh BUGS
-The -media special map is currently unsupported on
+The
+.Li -media
+special map is currently unsupported on
 .Nx .
