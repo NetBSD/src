@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.454 2018/01/05 01:51:36 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.455 2018/01/09 20:55:43 maya Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.454 2018/01/05 01:51:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.455 2018/01/09 20:55:43 maya Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -232,7 +232,6 @@ struct emul emul_netbsd = {
 	.e_syscall =		syscall,
 #endif
 	.e_sysctlovly =		NULL,
-	.e_fault =		NULL,
 	.e_vm_default_addr =	uvm_default_mapaddr,
 	.e_usertrap =		NULL,
 	.e_ucsize =		sizeof(ucontext_t),
