@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.113 2017/12/29 02:18:34 christos Exp $
+# $NetBSD: mi,v 1.114 2018/01/09 03:31:14 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -28,6 +28,8 @@
 ./@MODULEDIR@/ataraid/ataraid.kmod		base-obsolete		obsolete
 ./@MODULEDIR@/audio				base-kernel-modules	kmod
 ./@MODULEDIR@/audio/audio.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/autofs				base-kernel-modules	kmod
+./@MODULEDIR@/autofs/autofs.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/blowfish				base-kernel-modules	kmod
 ./@MODULEDIR@/blowfish/blowfish.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/bpf				base-kernel-modules	kmod

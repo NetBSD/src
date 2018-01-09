@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.129 2015/12/23 16:19:49 christos Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.130 2018/01/09 03:31:13 christos Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.129 2015/12/23 16:19:49 christos Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.130 2018/01/09 03:31:13 christos Exp $");
 #endif
 #endif				/* not lint */
 
@@ -964,6 +964,10 @@ parse_directory(const char *line, size_t lineno, struct grouplist *tgrp,
 		return 0;
 	}
 
+	if ((fsp->f_flag & MNT_AUTOMOUNTED) != 0)
+		syslog(LOG_ERR, "\"%s\", line %ld: Warning: exporting of "
+		    "automounted fs %s not supported",
+		    line, (unsigned long)lineno, cp);
 	if (got_nondir) {
 		syslog(LOG_ERR,
 		    "\"%s\", line %ld: Directories must precede files",

@@ -1,4 +1,4 @@
-/*	$NetBSD: showmount.c,v 1.22 2016/01/26 16:23:27 christos Exp $	*/
+/*	$NetBSD: showmount.c,v 1.23 2018/01/09 03:31:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1995\
 #if 0
 static char sccsid[] = "@(#)showmount.c	8.3 (Berkeley) 3/29/95";
 #endif
-__RCSID("$NetBSD: showmount.c,v 1.22 2016/01/26 16:23:27 christos Exp $");
+__RCSID("$NetBSD: showmount.c,v 1.23 2018/01/09 03:31:15 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -59,6 +59,8 @@ __RCSID("$NetBSD: showmount.c,v 1.22 2016/01/26 16:23:27 christos Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <err.h>
+#include <vis.h>
 
 /* Constant defs */
 #define	ALL	1
@@ -66,6 +68,7 @@ __RCSID("$NetBSD: showmount.c,v 1.22 2016/01/26 16:23:27 christos Exp $");
 
 #define	DODUMP		0x1
 #define	DOEXPORTS	0x2
+#define	DOPARSABLEEXPORTS	0x4
 
 struct mountlist {
 	struct mountlist *ml_left;
@@ -112,8 +115,10 @@ main(int argc, char **argv)
 	const char *host;
 	int ch;
 	int len;
+	int nbytes;
+	char strvised[1024 * 4 + 1];
 
-	while ((ch = getopt(argc, argv, "ade3")) != -1)
+	while ((ch = getopt(argc, argv, "adEe3")) != -1)
 		switch((char)ch) {
 		case 'a':
 			if (type == 0) {
@@ -129,6 +134,9 @@ main(int argc, char **argv)
 			} else
 				usage();
 			break;
+		case 'E':
+			rpcs |= DOPARSABLEEXPORTS;
+			break;
 		case 'e':
 			rpcs |= DOEXPORTS;
 			break;
@@ -141,6 +149,13 @@ main(int argc, char **argv)
 		}
 	argc -= optind;
 	argv += optind;
+
+	if ((rpcs & DOPARSABLEEXPORTS) != 0) {
+		if ((rpcs & DOEXPORTS) != 0)
+			errx(1, "-E cannot be used with -e");
+		if ((rpcs & DODUMP) != 0)
+			errx(1, "-E cannot be used with -a or -d");
+	}
 
 	if (argc > 0)
 		host = *argv;
@@ -158,7 +173,7 @@ main(int argc, char **argv)
 			clnt_perrno(estat);
 			exit(1);
 		}
-	if (rpcs & DOEXPORTS)
+	if (rpcs & (DOEXPORTS | DOPARSABLEEXPORTS))
 		if ((estat = tcp_callrpc(host, RPCPROG_MNT, mntvers,
 			 RPCMNT_EXPORT, (xdrproc_t)xdr_void, NULL,
 			 (xdrproc_t)xdr_exports, (char *)&exports)) != 0) {
@@ -202,7 +217,17 @@ main(int argc, char **argv)
 			exp = exp->ex_next;
 		}
 	}
-
+	if (rpcs & DOPARSABLEEXPORTS) {
+		exp = exports;
+		while (exp) {
+			nbytes = strnvis(strvised, sizeof(strvised),
+			    exp->ex_dirp, VIS_GLOB | VIS_NL);
+			if (nbytes == -1)
+				err(1, "strsnvis");
+			printf("%s\n", strvised);
+			exp = exp->ex_next;
+		}
+	}
 	exit(0);
 }
 

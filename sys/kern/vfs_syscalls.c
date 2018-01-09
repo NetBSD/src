@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.517 2017/11/07 15:57:38 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.518 2018/01/09 03:31:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.517 2017/11/07 15:57:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.518 2018/01/09 03:31:13 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -107,6 +107,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.517 2017/11/07 15:57:38 christos 
 #include <sys/atomic.h>
 #include <sys/module.h>
 #include <sys/buf.h>
+#include <sys/event.h>
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
@@ -543,6 +544,8 @@ do_sys_mount(struct lwp *l, const char *type, enum uio_seg type_seg,
 		    &data_len);
 		vfsopsrele = false;
 	}
+	if (!error)
+		KNOTE(&fs_klist, VQ_MOUNT);
 
     done:
 	if (vfsopsrele)
@@ -621,6 +624,8 @@ sys_unmount(struct lwp *l, const struct sys_unmount_args *uap, register_t *retva
 	vrele(vp);
 	error = dounmount(mp, SCARG(uap, flags), l);
 	vfs_rele(mp);
+	if (!error)
+		KNOTE(&fs_klist, VQ_UNMOUNT);
 	return error;
 }
 

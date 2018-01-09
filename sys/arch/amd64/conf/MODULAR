@@ -1,4 +1,4 @@
-# $NetBSD: MODULAR,v 1.9 2017/09/14 07:58:39 mrg Exp $
+# $NetBSD: MODULAR,v 1.10 2018/01/09 03:31:12 christos Exp $
 #
 # Try to exclude all the drivers in GENERIC that have been modularized
 # XXX: incomplete
@@ -59,6 +59,7 @@ options 	MODULAR_DEFAULT_AUTOLOAD
 -no file-system UNION		# union file system
 -no file-system CODA		# Coda File System; also needs vcoda (below)
 -no file-system PTYFS		# /dev/ptm support
+-no file-system AUTOFS		# Automounter Filesystem
 
 -no options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 -no options 	PPP_DEFLATE	# Deflate compression support for PPP

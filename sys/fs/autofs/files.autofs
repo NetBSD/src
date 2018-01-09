@@ -1,0 +1,9 @@
+#	$NetBSD: files.autofs,v 1.1 2018/01/09 03:31:14 christos Exp $
+
+deffs	AUTOFS
+defpseudo	autofs
+
+define	autofs: vfs
+file	fs/autofs/autofs.c		autofs
+file	fs/autofs/autofs_vfsops.c	autofs
+file	fs/autofs/autofs_vnops.c	autofs

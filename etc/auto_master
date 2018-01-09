@@ -1,0 +1,9 @@
+# $NetBSD: auto_master,v 1.1 2018/01/09 03:31:14 christos Exp $
+#
+# Automounter master map, see auto_master(5) for details.
+#
+/net		-hosts		-nobrowse,nosuid,intr
+# When using the -media special map, make sure to edit devd.conf(5)
+# to move the call to "automount -c" out of the comments section.
+#/media		-media		-nosuid,noatime
+#/-		-noauto

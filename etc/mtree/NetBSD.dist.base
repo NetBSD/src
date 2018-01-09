@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.165 2018/01/07 20:59:25 jmcneill Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.166 2018/01/09 03:31:14 christos Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -29,6 +29,7 @@
 ./etc/X11/xserver
 ./etc/X11/xsm
 ./etc/atf
+./etc/autofs
 ./etc/bluetooth
 ./etc/cgd			mode=0700
 ./etc/defaults
@@ -142,6 +143,7 @@
 ./usr/include/event2
 ./usr/include/filecorefs
 ./usr/include/fs
+./usr/include/fs/autofs
 ./usr/include/fs/efs
 ./usr/include/fs/hfs
 ./usr/include/fs/nilfs

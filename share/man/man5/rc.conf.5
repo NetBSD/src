@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.166 2016/12/17 07:44:59 maya Exp $
+.\"	$NetBSD: rc.conf.5,v 1.167 2018/01/09 03:31:12 christos Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -55,7 +55,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd December 17, 2016
+.Dd January 8, 2018
 .Dt RC.CONF 5
 .Os
 .Sh NAME
@@ -1502,6 +1502,47 @@ to support the
 and
 .Xr ruptime 1
 commands.
+.It Sy autofs
+Boolean value.
+If set to
+.Dq Li YES ,
+start the
+.Xr automount 8
+utility and the
+.Xr automountd 8
+and
+.Xr autounmountd 8
+daemons at boot time.
+.It Sy automount_flags
+A string.
+If
+.Sy autofs
+is set to
+.Dq Li YES ,
+these are the flags to pass to the
+.Xr automount 8
+program.
+By default no flags are passed.
+.It Sy automountd_flags
+A string.
+If
+.Sy autofs
+is set to
+.Dq Li YES ,
+these are the flags to pass to the
+.Xr automountd 8
+daemon.
+By default no flags are passed.
+.It Sy autounmountd_flags
+A string.
+If
+.Sy autofs
+is set to
+.Dq Li YES ,
+these are the flags to pass to the
+.Xr autounmountd 8
+daemon.
+By default no flags are passed.
 .El
 .Ss Hardware daemons
 .Bl -tag -width net_interfaces

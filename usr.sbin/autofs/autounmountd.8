@@ -1,0 +1,110 @@
+.\" Copyright (c) 2017 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2016 The DragonFly Project
+.\" Copyright (c) 2014 The FreeBSD Foundation
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Tomohiro Kusumi.
+.\"
+.\" This software was developed by Edward Tomasz Napierala under sponsorship
+.\" from the FreeBSD Foundation.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHORS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHORS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\" $FreeBSD$
+.\"
+.Dd November 25, 2017
+.Dt AUTOUNMOUNTD 8
+.Os
+.Sh NAME
+.Nm autounmountd
+.Nd daemon unmounting automounted filesystems
+.Sh SYNOPSIS
+.Nm
+.Op Fl d
+.Op Fl r Ar time
+.Op Fl t Ar time
+.Op Fl v
+.Sh DESCRIPTION
+The
+.Nm
+daemon is responsible for unmounting filesystems mounted by
+.Xr automountd 8 .
+On startup,
+.Nm
+retrieves a list of filesystems that have the
+.Li automounted
+mount option set.
+The list is updated every time a filesystem is mounted or unmounted.
+After a specified time passes,
+.Nm
+attempts to unmount a filesystem, retrying after some time if necessary.
+.Pp
+These options are available:
+.Bl -tag -width ".Fl v"
+.It Fl d
+Debug mode: increase verbosity and do not daemonize.
+.It Fl r
+Number of seconds to wait before trying to unmount an expired filesystem
+after a previous attempt failed, possibly due to filesystem being busy.
+The default value is 600, or ten minutes.
+.It Fl t
+Number of seconds to wait before trying to unmount a filesystem.
+The default value is 600, or ten minutes.
+.It Fl v
+Increase verbosity.
+.El
+.Sh EXIT STATUS
+.Ex -std
+.Sh SEE ALSO
+.Xr autofs 5 ,
+.Xr auto_master 5 ,
+.Xr automount 8 ,
+.Xr automountd 8
+.Sh HISTORY
+The
+.Nm
+daemon appeared in
+.Fx 10.1 .
+The
+.Nm
+daemon appeared in
+.Dx 4.5 .
+The
+.Nm
+command appeared in
+.Nx 9.0 .
+.Sh AUTHORS
+The
+.Nm
+was developed by
+.An Edward Tomasz Napierala Aq Mt trasz@FreeBSD.org
+under sponsorship from the FreeBSD Foundation.
+.Pp
+The
+.Nm
+was ported to
+.Dx
+and
+.Nx
+by
+.An Tomohiro Kusumi Aq Mt kusumi.tomohiro@gmail.com .

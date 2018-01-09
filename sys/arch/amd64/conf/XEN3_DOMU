@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.80 2017/11/06 02:57:18 rin Exp $
+# $NetBSD: XEN3_DOMU,v 1.81 2018/01/09 03:31:12 christos Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -10,7 +10,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 #options 	UVMHIST_PRINT
 #options 	SYSCALL_DEBUG
 
-#ident		"XEN3_DOMU-$Revision: 1.80 $"
+#ident		"XEN3_DOMU-$Revision: 1.81 $"
 
 maxusers	32		# estimated number of users
 
@@ -94,6 +94,7 @@ file-system	CODA		# Coda File System; also needs vcoda (below)
 file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
 file-system	PTYFS		# /dev/pts/N support
 file-system	TMPFS		# Efficient memory file-system
+#file-system	AUTOFS		# Automounter Filesystem
 
 # File system options
 options 	QUOTA		# legacy UFS quotas

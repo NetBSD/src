@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.478 2018/01/07 16:10:52 maxv Exp $
+# $NetBSD: GENERIC,v 1.479 2018/01/09 03:31:12 christos Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.478 $"
+#ident		"GENERIC-$Revision: 1.479 $"
 
 maxusers	64		# estimated number of users
 
@@ -166,6 +166,7 @@ file-system	PTYFS		# /dev/ptm support
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 #file-system	HFS		# experimental - Apple HFS+ (read-only)
 #file-system	NILFS		# experimental - NTT's NiLFS(2)
+#file-system	AUTOFS		# experimental - Automounter Filesystem
 
 # File system options
 # ffs

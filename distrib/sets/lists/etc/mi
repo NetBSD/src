@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.249 2017/06/18 20:24:59 christos Exp $
+# $NetBSD: mi,v 1.250 2018/01/09 03:31:14 christos Exp $
 #
 # Note: end-user configuration files that are moved to another location
 #	should not be marked "obsolete"; they should just be removed from
@@ -17,6 +17,14 @@
 ./etc/atf/atf-run.hooks				etc-atf-etc		atf
 ./etc/atf/common.conf				etc-atf-etc		atf
 ./etc/audit-packages.conf			etc-obsolete		obsolete
+./etc/auto_master				etc-sys-etc
+./etc/autofs/include_ldap			etc-sys-etc
+./etc/autofs/include_nis			etc-sys-etc
+./etc/autofs/include_nis_nullfs			etc-sys-etc
+./etc/autofs/special_hosts			etc-sys-etc
+./etc/autofs/special_media			etc-sys-etc
+./etc/autofs/special_noauto			etc-sys-etc
+./etc/autofs/special_null			etc-sys-etc
 ./etc/bluetooth					etc-sys-etc
 ./etc/bluetooth/bluetooth.conf			etc-obsolete		obsolete
 ./etc/bluetooth/btattach.conf			etc-sys-etc
@@ -176,6 +184,9 @@
 ./etc/rc.d/altqd				etc-router-rc
 ./etc/rc.d/amd					etc-amd-rc
 ./etc/rc.d/apmd					etc-sys-rc
+./etc/rc.d/automount				etc-sys-rc
+./etc/rc.d/automountd				etc-sys-rc
+./etc/rc.d/autounmountd				etc-sys-rc
 ./etc/rc.d/blacklistd				etc-sys-rc
 ./etc/rc.d/bluetooth				etc-sys-rc
 ./etc/rc.d/bootconf.sh				etc-sys-rc

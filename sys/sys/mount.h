@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.229 2017/06/09 00:13:29 chs Exp $	*/
+/*	$NetBSD: mount.h,v 1.230 2018/01/09 03:31:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -97,7 +97,8 @@
 #define MOUNT_ZFS	"zfs"		/* Sun ZFS */
 #define MOUNT_NILFS	"nilfs"		/* NTT's NiLFS(2) logging file system */
 #define MOUNT_RUMPFS	"rumpfs"	/* rump virtual file system */
-#define	MOUNT_V7FS	"v7fs"		/* 7th Edition of Unix Filesystem */
+#define MOUNT_V7FS	"v7fs"		/* 7th Edition of Unix Filesystem */
+#define MOUNT_AUTOFS	"autofs"	/* Automounter Filesystem */
 
 /*
  * Sysctl CTL_VFS definitions.
@@ -115,6 +116,10 @@
 #define VFS_USERMOUNT	3		/* enable/disable fs mnt by non-root */
 #define	VFS_MAGICLINKS  4		/* expand 'magic' symlinks */
 #define	VFSGEN_MAXID	5		/* number of valid vfs.generic ids */
+
+/* vfsquery flags for kqueue(2) */
+#define VQ_MOUNT	0x0001	/* new filesystem arrived */
+#define VQ_UNMOUNT	0x0002	/* filesystem has left */
 
 #ifndef _STANDALONE
 
