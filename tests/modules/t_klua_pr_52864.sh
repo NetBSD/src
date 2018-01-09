@@ -1,5 +1,5 @@
 #! /usr/bin/atf-sh
-# $NetBSD: t_klua_pr_52864.sh,v 1.1 2018/01/08 14:17:15 martin Exp $
+# $NetBSD: t_klua_pr_52864.sh,v 1.2 2018/01/09 15:16:02 martin Exp $
 #
 # Copyright (c) 2018 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -38,9 +38,13 @@ luastate_head() {
 }
 
 luastate_body() {
+	err=$( modstat -e 2>&1 )
+	if [ $? -gt 0 ]; then
+		atf_skip "${err##modstat:}"
+	fi
 	sysctl -q kern.lua.verbose
 	if [ $? -eq 1 ]; then
-	atf_check -s eq:0 modload lua
+		atf_check -s eq:0 modload lua
 	fi
 	atf_check -s eq:0 luactl -q create atfluastate
 	atf_check -s eq:0 -o ignore luactl
