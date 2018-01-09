@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.188 2017/12/05 19:17:11 jmcneill Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.189 2018/01/09 03:31:14 christos Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -842,6 +842,7 @@ all)
 	makedev hdmicec0
 	makedev dtrace
 	makedev veriexec
+	makedev autofs
 	makedev local # do this last
 	;;
 
@@ -2225,6 +2226,10 @@ nvme[0-9]*ns[0-9]*)
 nvme[0-9]*)
 	unit=${i#nvme}
 	mkdev nvme$unit c %nvme_chr% $(($unit * 65536))
+	;;
+
+autofs)
+	mkdev autofs c %autofs_chr% 0 600
 	;;
 
 midevend)
