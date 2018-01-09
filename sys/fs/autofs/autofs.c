@@ -1,4 +1,4 @@
-/*	$NetBSD: autofs.c,v 1.1 2018/01/09 03:31:14 christos Exp $	*/
+/*	$NetBSD: autofs.c,v 1.2 2018/01/09 13:56:00 martin Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -68,10 +68,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autofs.c,v 1.1 2018/01/09 03:31:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autofs.c,v 1.2 2018/01/09 13:56:00 martin Exp $");
 
 #include "autofs.h"
 
+#include <sys/atomic.h>
 #include <sys/queue.h>
 #include <sys/signalvar.h>
 
