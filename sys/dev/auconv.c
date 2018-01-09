@@ -1,4 +1,4 @@
-/*	$NetBSD: auconv.c,v 1.26.2.3 2017/08/01 23:23:00 snj Exp $	*/
+/*	$NetBSD: auconv.c,v 1.26.2.4 2018/01/09 19:35:03 snj Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auconv.c,v 1.26.2.3 2017/08/01 23:23:00 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auconv.c,v 1.26.2.4 2018/01/09 19:35:03 snj Exp $");
 
 #include <sys/types.h>
 #include <sys/audioio.h>
@@ -113,6 +113,7 @@ struct conv_table {
 	stream_filter_factory_t *play_conv;
 	stream_filter_factory_t *rec_conv;
 };
+
 #define TABLE_LIST(prec, valid, target) 				\
 	{AUDIO_ENCODING_SLINEAR_LE, prec, valid,			\
 	 linear##target##_##target##_to_linear##prec,			\
@@ -141,7 +142,6 @@ struct conv_table {
  */
 static const struct conv_table s8_table[] = {
 	TABLE_LIST(32, 32, 8)
-	TABLE_LIST(24, 32, 8)
 	TABLE_LIST(24, 24, 8)
 	TABLE_LIST(16, 16, 8)
 	TABLE_LIST(8, 8, 8)
@@ -151,7 +151,6 @@ static const struct conv_table s8_table[] = {
 	{0, 0, 0, NULL, NULL}};
 static const struct conv_table u8_table[] = {
 	TABLE_LIST(32, 32, 8)
-	TABLE_LIST(24, 32, 8)
 	TABLE_LIST(24, 24, 8)
 	TABLE_LIST(16, 16, 8)
 	TABLE_LIST(8, 8, 8)
@@ -161,7 +160,6 @@ static const struct conv_table u8_table[] = {
 	{0, 0, 0, NULL, NULL}};
 static const struct conv_table s16le_table[] = {
 	TABLE_LIST(32, 32, 16)
-	TABLE_LIST(24, 32, 16)
 	TABLE_LIST(24, 24, 16)
 	TABLE_LIST(16, 16, 16)
 	TABLE_LIST(8, 8, 16)
@@ -171,7 +169,6 @@ static const struct conv_table s16le_table[] = {
 	{0, 0, 0, NULL, NULL}};
 static const struct conv_table s16be_table[] = {
 	TABLE_LIST(32, 32, 16)
-	TABLE_LIST(24, 32, 16)
 	TABLE_LIST(24, 24, 16)
 	TABLE_LIST(16, 16, 16)
 	TABLE_LIST(8, 8, 16)
@@ -181,7 +178,6 @@ static const struct conv_table s16be_table[] = {
 	{0, 0, 0, NULL, NULL}};
 static const struct conv_table u16le_table[] = {
 	TABLE_LIST(32, 32, 16)
-	TABLE_LIST(24, 32, 16)
 	TABLE_LIST(24, 24, 16)
 	TABLE_LIST(16, 16, 16)
 	TABLE_LIST(8, 8, 16)
@@ -191,7 +187,6 @@ static const struct conv_table u16le_table[] = {
 	{0, 0, 0, NULL, NULL}};
 static const struct conv_table u16be_table[] = {
 	TABLE_LIST(32, 32, 16)
-	TABLE_LIST(24, 32, 16)
 	TABLE_LIST(24, 24, 16)
 	TABLE_LIST(16, 16, 16)
 	TABLE_LIST(8, 8, 16)
@@ -202,7 +197,6 @@ static const struct conv_table u16be_table[] = {
 #ifdef notdef
 static const struct conv_table s24le_table[] = {
 	TABLE_LIST(32, 32, 24)
-	TABLE_LIST(24, 32, 24)
 	TABLE_LIST(24, 24, 24)
 	TABLE_LIST(16, 16, 24)
 	TABLE_LIST(8, 8, 24)
@@ -212,7 +206,6 @@ static const struct conv_table s24le_table[] = {
 	{0, 0, 0, NULL, NULL}};
 static const struct conv_table s24be_table[] = {
 	TABLE_LIST(32, 32, 24)
-	TABLE_LIST(24, 32, 24)
 	TABLE_LIST(24, 24, 24)
 	TABLE_LIST(16, 16, 24)
 	TABLE_LIST(8, 8, 24)
@@ -222,7 +215,6 @@ static const struct conv_table s24be_table[] = {
 	{0, 0, 0, NULL, NULL}};
 static const struct conv_table u24le_table[] = {
 	TABLE_LIST(32, 32, 24)
-	TABLE_LIST(24, 32, 24)
 	TABLE_LIST(24, 24, 24)
 	TABLE_LIST(16, 16, 24)
 	TABLE_LIST(8, 8, 24)
@@ -232,7 +224,6 @@ static const struct conv_table u24le_table[] = {
 	{0, 0, 0, NULL, NULL}};
 static const struct conv_table u24be_table[] = {
 	TABLE_LIST(32, 32, 24)
-	TABLE_LIST(24, 32, 24)
 	TABLE_LIST(24, 24, 24)
 	TABLE_LIST(16, 16, 24)
 	TABLE_LIST(8, 8, 24)
@@ -243,7 +234,6 @@ static const struct conv_table u24be_table[] = {
 #endif
 static const struct conv_table s32le_table[] = {
 	TABLE_LIST(32, 32, 32)
-	TABLE_LIST(24, 32, 32)
 	TABLE_LIST(24, 24, 32)
 	TABLE_LIST(16, 16, 32)
 	TABLE_LIST(8, 8, 32)
@@ -253,7 +243,6 @@ static const struct conv_table s32le_table[] = {
 	{0, 0, 0, NULL, NULL}};
 static const struct conv_table s32be_table[] = {
 	TABLE_LIST(32, 32, 32)
-	TABLE_LIST(24, 32, 32)
 	TABLE_LIST(24, 24, 32)
 	TABLE_LIST(16, 16, 32)
 	TABLE_LIST(8, 8, 32)
@@ -263,7 +252,6 @@ static const struct conv_table s32be_table[] = {
 	{0, 0, 0, NULL, NULL}};
 static const struct conv_table u32le_table[] = {
 	TABLE_LIST(32, 32, 32)
-	TABLE_LIST(24, 32, 32)
 	TABLE_LIST(24, 24, 32)
 	TABLE_LIST(16, 16, 32)
 	TABLE_LIST(8, 8, 32)
@@ -273,7 +261,6 @@ static const struct conv_table u32le_table[] = {
 	{0, 0, 0, NULL, NULL}};
 static const struct conv_table u32be_table[] = {
 	TABLE_LIST(32, 32, 32)
-	TABLE_LIST(24, 32, 32)
 	TABLE_LIST(24, 24, 32)
 	TABLE_LIST(16, 16, 32)
 	TABLE_LIST(8, 8, 32)
@@ -312,7 +299,6 @@ static const struct conv_table u32be_table[] = {
 
 static const struct conv_table mulaw_table[] = {
 	MULAW_LIST(32, 32, 32)
-	MULAW_LIST(24, 32, 24)
 	MULAW_LIST(24, 24, 24)
 	MULAW_LIST(16, 16, 16)
 	{AUDIO_ENCODING_SLINEAR_LE, 8, 8,
@@ -322,7 +308,6 @@ static const struct conv_table mulaw_table[] = {
 	{0, 0, 0, NULL, NULL}};
 static const struct conv_table alaw_table[] = {
 	ALAW_LIST(32, 32, 32)
-	ALAW_LIST(24, 32, 24)
 	ALAW_LIST(24, 24, 24)
 	ALAW_LIST(16, 16, 16)
 	{AUDIO_ENCODING_SLINEAR_LE, 8, 8,
@@ -501,193 +486,1395 @@ DEFINE_FILTER(swap_bytes_change_sign16)
 	return 0;
 }
 
-#define LINEARN_LINEAR(n_prec, n_validbits, t_prec)			\
-	DEFINE_FILTER(linear##n_prec##_##n_validbits##_to_linear##t_prec)\
-{									\
-	stream_filter_t *this;						\
-	int m, err, enc_dst, enc_src;					\
-	int target, valid, hw, i, j;					\
-									\
-	hw = n_prec / NBBY;						\
-	valid = n_validbits / NBBY;					\
-	target = t_prec / NBBY;						\
-	this = (stream_filter_t *)self;					\
-	max_used = ((max_used / hw) * hw) & ~1;				\
-									\
-	if ((err = this->prev->fetch_to(sc, this->prev, this->src,	\
-			max_used)))					\
-		return err;						\
-	m = (((dst->end - dst->start) / target) * target) & ~1;		\
-	m = min(m, max_used * hw / target);				\
-	enc_dst = dst->param.encoding;					\
-	enc_src = this->src->param.encoding;				\
-	if ((enc_src == AUDIO_ENCODING_SLINEAR_LE			\
-	     && enc_dst == AUDIO_ENCODING_SLINEAR_LE)			\
-	    || (enc_src == AUDIO_ENCODING_ULINEAR_LE			\
-		&& enc_dst == AUDIO_ENCODING_ULINEAR_LE)) {		\
-		/*							\
-		 * slinearNle -> slinearNle				\
-		 * ulinearNle -> ulinearNle				\
-		 */							\
-		FILTER_LOOP_PROLOGUE(this->src, hw, dst, target, m) {	\
-			i = valid;					\
-			j = target;					\
-			if (j < i) {					\
-				while (j > 0)				\
-					d[--j] = s[--i];		\
-			} else {					\
-				while (i > 0)				\
-					d[--j] = s[--i];		\
-				while (j > 0)				\
-					d[--j] = 0;			\
-			}						\
-		} FILTER_LOOP_EPILOGUE(this->src, dst);			\
-	} else if ((enc_src == AUDIO_ENCODING_SLINEAR_LE		\
-		    && enc_dst == AUDIO_ENCODING_SLINEAR_BE)		\
-		   || (enc_src == AUDIO_ENCODING_ULINEAR_LE		\
-		       && enc_dst == AUDIO_ENCODING_ULINEAR_BE)) {	\
-		/*							\
-		 * slinearNle -> slinearNbe				\
-		 * ulinearNle -> ulinearNbe				\
-		 */							\
-		FILTER_LOOP_PROLOGUE(this->src, hw, dst, target, m) {	\
-			i = valid;					\
-			j = target;					\
-			if (j < i) {					\
-				while (j > 0) {				\
-					d[--j] = s[target - i];		\
-					i--;				\
-				}					\
-			} else {					\
-				while (j > i)				\
-					d[--j] = 0;			\
-				while (j > 0) {				\
-					d[--j] = s[target - i];		\
-					i--;				\
-				}					\
-			}						\
-		} FILTER_LOOP_EPILOGUE(this->src, dst);			\
-	} else if ((enc_src == AUDIO_ENCODING_ULINEAR_BE		\
-		    && enc_dst == AUDIO_ENCODING_SLINEAR_LE)		\
-		   || (enc_src == AUDIO_ENCODING_SLINEAR_BE		\
-		       && enc_dst == AUDIO_ENCODING_ULINEAR_LE)) {	\
-		/*							\
-		 * ulinearNbe -> slinearNle				\
-		 * slinearNbe -> ulinearNle				\
-		 */							\
-		FILTER_LOOP_PROLOGUE(this->src, hw, dst, target, m) {	\
-			i = valid;					\
-			j = target;					\
-			if (j < i) {					\
-				while (j > 0) {				\
-					d[--j] = s[valid - i];		\
-					i--;				\
-				}					\
-			} else {					\
-				while (j > 0) {				\
-					d[--j] = s[valid - i];		\
-					i--;				\
-				}					\
-				while (j > 0)				\
-					d[--j] = 0;			\
-			}						\
-			d[target - 1] ^= 0x80;				\
-		} FILTER_LOOP_EPILOGUE(this->src, dst);			\
-	} else if ((enc_src == AUDIO_ENCODING_SLINEAR_BE		\
-		    && enc_dst == AUDIO_ENCODING_SLINEAR_LE)		\
-		   || (enc_src == AUDIO_ENCODING_ULINEAR_BE		\
-		       && enc_dst == AUDIO_ENCODING_ULINEAR_LE)) {	\
-		/*							\
-		 * slinearNbe -> slinearNle				\
-		 * ulinearNbe -> ulinearNle				\
-		 */							\
-		FILTER_LOOP_PROLOGUE(this->src, hw, dst, target, m) {	\
-			i = valid;					\
-			j = target;					\
-			if (j < i) {					\
-				while (j > 0) {				\
-					d[--j] = s[valid - i];		\
-					i--;				\
-				}					\
-			} else {					\
-				while (j > 0) {				\
-					d[--j] = s[valid - i];		\
-					i--;				\
-				}					\
-				while (j > 0)				\
-					d[--j] = 0;			\
-			}						\
-		} FILTER_LOOP_EPILOGUE(this->src, dst);			\
-	} else if ((enc_src == AUDIO_ENCODING_SLINEAR_BE		\
-		    && enc_dst == AUDIO_ENCODING_ULINEAR_BE)		\
-		   || (enc_src == AUDIO_ENCODING_ULINEAR_BE		\
-		       && enc_dst == AUDIO_ENCODING_SLINEAR_BE)) {	\
-		/*							\
-		 * slinearNbe -> ulinearNbe				\
-		 * ulinearNbe -> slinearNbe				\
-		 */							\
-		FILTER_LOOP_PROLOGUE(this->src, hw, dst, target, m) {	\
-			i = valid;					\
-			j = target;					\
-			if (j < i) {					\
-				while (j > 0) {				\
-					d[target - j] = s[target - j];	\
-					j--;				\
-				}					\
-			} else {					\
-				while (i > 0) {				\
-					d[target - j] = s[target - j];	\
-					j--;				\
-					i--;				\
-				}					\
-				while (j > 0)				\
-					d[target - j] = 0;		\
-			}						\
-			d[0] ^= 0x80;					\
-		} FILTER_LOOP_EPILOGUE(this->src, dst);			\
-	} else {							\
-		/*							\
-		 * slinearNle -> ulinearNle				\
-		 * ulinearNle -> slinearNle				\
-		 */							\
-		FILTER_LOOP_PROLOGUE(this->src, hw, dst, target, m) {	\
-			i = valid;					\
-			j = target;					\
-			if (j < i) {					\
-				while (j > 0)				\
-					d[--j] = s[--i];		\
-			} else {					\
-				while (i > 0)				\
-					d[--j] = s[--i];		\
-				while (j > 0)				\
-					d[--j] = 0;			\
-			}						\
-			d[target - 1] ^= 0x80;				\
-		} FILTER_LOOP_EPILOGUE(this->src, dst);			\
-	}								\
-	return 0;							\
+DEFINE_FILTER(linear8_8_to_linear32)
+{
+	stream_filter_t *this;
+	int m, err, enc_dst, enc_src;
+
+	this = (stream_filter_t *)self;
+
+	if ((err = this->prev->fetch_to(sc, this->prev, this->src, max_used)))
+		return err;
+	m = (dst->end - dst->start) & ~3;
+	m = min(m, max_used / 4);
+	enc_dst = dst->param.encoding;
+	enc_src = this->src->param.encoding;
+	if ((enc_src == AUDIO_ENCODING_SLINEAR_LE
+		&& enc_dst == AUDIO_ENCODING_SLINEAR_LE)
+	    || (enc_src == AUDIO_ENCODING_ULINEAR_LE
+		&& enc_dst == AUDIO_ENCODING_ULINEAR_LE)
+	    || (enc_src == AUDIO_ENCODING_SLINEAR_BE
+		&& enc_dst == AUDIO_ENCODING_SLINEAR_LE)
+	    || (enc_src == AUDIO_ENCODING_ULINEAR_BE
+		&& enc_dst == AUDIO_ENCODING_ULINEAR_LE)) {
+		/*
+		 * slinear8be -> slinear32le
+		 * ulinear8be -> ulinear32le
+		 *
+		 * slinear8le -> slinear32le
+		 * ulinear8le -> ulinear32le
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 1, dst, 4, m) {
+			d[3] = s[0];
+			d[2] = 0;
+			d[1] = 0;
+			d[0] = 0;
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else if ((enc_src == AUDIO_ENCODING_SLINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_BE)
+		   || (enc_src == AUDIO_ENCODING_ULINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_BE)
+	    	   || (enc_src == AUDIO_ENCODING_SLINEAR_LE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_BE)
+		   || (enc_src == AUDIO_ENCODING_ULINEAR_LE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_BE)) {
+		/*
+		 * slinear8le -> slinear32be
+		 * ulinear8le -> ulinear32be
+		 *
+		 * slinear8be -> slinear32be
+		 * ulinear8be -> ulinear32be
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 1, dst, 4, m) {
+			d[3] = 0;
+			d[2] = 0;
+			d[1] = 0;
+			d[0] = s[0];
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else if ((enc_src == AUDIO_ENCODING_SLINEAR_LE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_BE)
+		   || (enc_src == AUDIO_ENCODING_ULINEAR_LE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_BE)
+		   || (enc_src == AUDIO_ENCODING_SLINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_BE)
+		   || (enc_src == AUDIO_ENCODING_ULINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_BE)) {
+		/*
+		 * slinear8be -> ulinear32be
+		 * ulinear8be -> slinear32be
+		 *
+		 * slinear8le -> ulinear32be
+		 * ulinear8le -> slinear32be
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 1, dst, 4, m) {
+			d[3] = 0;
+			d[2] = 0;
+			d[1] = 0;
+			d[0] = s[0] ^ 0x80;
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else {
+		/*
+		 * slinear8le -> ulinear32le
+		 * ulinear8le -> slinear32le
+		 *
+		 * ulinear8be -> slinear32le
+		 * slinear8be -> ulinear32le
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 1, dst, 4, m) {
+			d[3] = s[0] ^ 0x80;
+			d[2] = 0;
+			d[1] = 0;
+			d[0] = 0;
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	}
+	return 0;
 }
 
-LINEARN_LINEAR(32, 32, 32);
-LINEARN_LINEAR(32, 32, 24);
-LINEARN_LINEAR(32, 32, 16);
-LINEARN_LINEAR(32, 32, 8);
-LINEARN_LINEAR(24, 32, 32);
-LINEARN_LINEAR(24, 32, 24);
-LINEARN_LINEAR(24, 32, 16);
-LINEARN_LINEAR(24, 32, 8);
-LINEARN_LINEAR(24, 24, 32);
-LINEARN_LINEAR(24, 24, 24);
-LINEARN_LINEAR(24, 24, 16);
-LINEARN_LINEAR(24, 24, 8);
-LINEARN_LINEAR(16, 16, 32);
-LINEARN_LINEAR(16, 16, 24);
-LINEARN_LINEAR(16, 16, 16);
-LINEARN_LINEAR(16, 16, 8);
-LINEARN_LINEAR(8, 8, 32);
-LINEARN_LINEAR(8, 8, 24);
-LINEARN_LINEAR(8, 8, 16);
-LINEARN_LINEAR(8, 8, 8);
+DEFINE_FILTER(linear8_8_to_linear24)
+{
+	stream_filter_t *this;
+	int m, err, enc_dst, enc_src;
+
+	this = (stream_filter_t *)self;
+
+	if ((err = this->prev->fetch_to(sc, this->prev, this->src, max_used)))
+		return err;
+	m = (((dst->end - dst->start) / 3) * 3) & ~1;
+	m = min(m, max_used / 3);
+	enc_dst = dst->param.encoding;
+	enc_src = this->src->param.encoding;
+	if ((enc_src == AUDIO_ENCODING_SLINEAR_LE
+		&& enc_dst == AUDIO_ENCODING_SLINEAR_LE)
+	    || (enc_src == AUDIO_ENCODING_ULINEAR_LE
+		&& enc_dst == AUDIO_ENCODING_ULINEAR_LE)
+	    || (enc_src == AUDIO_ENCODING_SLINEAR_BE
+		&& enc_dst == AUDIO_ENCODING_SLINEAR_LE)
+	    || (enc_src == AUDIO_ENCODING_ULINEAR_BE
+		&& enc_dst == AUDIO_ENCODING_ULINEAR_LE)) {
+		/*
+		 * slinear8be -> slinear24le
+		 * ulinear8be -> ulinear24le
+		 *
+		 * slinear8le -> slinear24le
+		 * ulinear8le -> ulinear24le
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 1, dst, 3, m) {
+			d[2] = s[0];
+			d[1] = 0;
+			d[0] = 0;
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else if ((enc_src == AUDIO_ENCODING_SLINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_BE)
+		   || (enc_src == AUDIO_ENCODING_ULINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_BE)
+		   || (enc_src == AUDIO_ENCODING_SLINEAR_LE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_BE)
+		   || (enc_src == AUDIO_ENCODING_ULINEAR_LE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_BE)) {
+		/*
+		 * slinear8le -> slinear24be
+		 * ulinear8le -> ulinear24be
+		 *
+		 * slinear8be -> slinear24be
+		 * ulinear8be -> ulinear24be
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 1, dst, 3, m) {
+			d[2] = 0;
+			d[1] = 0;
+			d[0] = s[0];
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else if ((enc_src == AUDIO_ENCODING_SLINEAR_LE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_BE)
+		   || (enc_src == AUDIO_ENCODING_ULINEAR_LE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_BE)
+		   || (enc_src == AUDIO_ENCODING_SLINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_BE)
+		   || (enc_src == AUDIO_ENCODING_ULINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_BE)) {
+		/*
+		 * slinear8be -> ulinear24be
+		 * ulinear8be -> slinear24be
+		 *
+		 * slinear8le -> ulinear24be
+		 * ulinear8le -> slinear24be
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 1, dst, 3, m) {
+			d[2] = 0;
+			d[1] = 0;
+			d[0] = s[0] ^ 0x80;
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else {
+		/*
+		 * slinear8le -> ulinear24le
+		 * ulinear8le -> slinear24le
+		 *
+		 * ulinear8be -> slinear24le
+		 * slinear8be -> ulinear24le
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 1, dst, 3, m) {
+			d[2] = s[0] ^ 0x80;
+			d[1] = 0;
+			d[0] = 0;
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	}
+	return 0;
+}
+
+DEFINE_FILTER(linear8_8_to_linear16)
+{
+	stream_filter_t *this;
+	int m, err, enc_dst, enc_src;
+
+	this = (stream_filter_t *)self;
+
+	if ((err = this->prev->fetch_to(sc, this->prev, this->src, max_used)))
+		return err;
+	m = (dst->end - dst->start) & ~1;
+	m = min(m, max_used / 2);
+	enc_dst = dst->param.encoding;
+	enc_src = this->src->param.encoding;
+	if ((enc_src == AUDIO_ENCODING_SLINEAR_LE
+		&& enc_dst == AUDIO_ENCODING_SLINEAR_LE)
+	    || (enc_src == AUDIO_ENCODING_ULINEAR_LE
+		&& enc_dst == AUDIO_ENCODING_ULINEAR_LE)
+	    || (enc_src == AUDIO_ENCODING_SLINEAR_BE
+		&& enc_dst == AUDIO_ENCODING_SLINEAR_LE)
+	    || (enc_src == AUDIO_ENCODING_ULINEAR_BE
+		&& enc_dst == AUDIO_ENCODING_ULINEAR_LE)) {
+		/*
+		 * slinear8be -> slinear16le
+		 * ulinear8be -> ulinear16le
+		 *
+		 * slinear8le -> slinear16le
+		 * ulinear8le -> ulinear16le
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 1, dst, 2, m) {
+			d[1] = s[0];
+			d[0] = 0;
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else if ((enc_src == AUDIO_ENCODING_SLINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_BE)
+		   || (enc_src == AUDIO_ENCODING_ULINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_BE)
+		   || (enc_src == AUDIO_ENCODING_SLINEAR_LE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_BE)
+		   || (enc_src == AUDIO_ENCODING_ULINEAR_LE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_BE)) {
+		/*
+		 * slinear8le -> slinear16be
+		 * ulinear8le -> ulinear16be
+		 *
+		 * slinear8be -> slinear16be
+		 * ulinear8be -> ulinear16be
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 1, dst, 2, m) {
+			d[1] = 0;
+			d[0] = s[0];
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else if ((enc_src == AUDIO_ENCODING_SLINEAR_LE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_BE)
+		   || (enc_src == AUDIO_ENCODING_ULINEAR_LE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_BE)
+		   || (enc_src == AUDIO_ENCODING_SLINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_BE)
+		   || (enc_src == AUDIO_ENCODING_ULINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_BE)) {
+		/*
+		 * slinear8be -> ulinear16be
+		 * ulinear8be -> slinear16be
+		 *
+		 * slinear8le -> ulinear16be
+		 * ulinear8le -> slinear16be
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 1, dst, 2, m) {
+			d[1] = 0;
+			d[0] = s[0] ^ 0x80;
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else {
+		/*
+		 * slinear8le -> ulinear16le
+		 * ulinear8le -> slinear16le
+		 *
+		 * ulinear8be -> slinear16le
+		 * slinear8be -> ulinear16le
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 1, dst, 2, m) {
+			d[1] = s[0] ^ 0x80;
+			d[0] = 0;
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	}
+	return 0;
+}
+
+DEFINE_FILTER(linearN_to_linear8)
+{
+	stream_filter_t *this;
+	int m, err, enc_dst, enc_src;
+	int valid, hw;
+
+	this = (stream_filter_t *)self;
+	hw = this->src->param.precision / NBBY;
+	valid = this->src->param.validbits / NBBY;
+
+	if ((err = this->prev->fetch_to(sc, this->prev, this->src, max_used)))
+		return err;
+	m = (dst->end - dst->start);
+	m = min(m, max_used * hw);
+	enc_dst = dst->param.encoding;
+	enc_src = this->src->param.encoding;
+	if ((enc_src == AUDIO_ENCODING_SLINEAR_LE
+		&& enc_dst == AUDIO_ENCODING_SLINEAR_LE)
+	    || (enc_src == AUDIO_ENCODING_ULINEAR_LE
+		&& enc_dst == AUDIO_ENCODING_ULINEAR_LE)
+	    || (enc_src == AUDIO_ENCODING_SLINEAR_LE
+		&& enc_dst == AUDIO_ENCODING_SLINEAR_BE)
+	    || (enc_src == AUDIO_ENCODING_ULINEAR_LE
+		&& enc_dst == AUDIO_ENCODING_ULINEAR_BE)) {
+		/*
+		 * slinearNle -> slinear8le
+		 * ulinearNle -> ulinear8le
+		 *
+		 * slinearNle -> slinear8be
+		 * ulinearNle -> ulinear8be
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, hw, dst, 1, m) {
+			d[0] = s[valid - 1];
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else if ((enc_src == AUDIO_ENCODING_SLINEAR_BE
+	     	       && enc_dst == AUDIO_ENCODING_SLINEAR_BE)
+		   || (enc_src == AUDIO_ENCODING_ULINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_BE)
+	           || (enc_src == AUDIO_ENCODING_ULINEAR_BE
+	               && enc_dst == AUDIO_ENCODING_ULINEAR_LE)
+	           || (enc_src == AUDIO_ENCODING_SLINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_LE)) {
+		/*
+		 * slinearNbe -> slinear8le
+		 * ulinearNbe -> ulinear8le
+		 *
+		 * slinearNbe -> slinear8be
+		 * ulinearNbe -> ulinear8be
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, hw, dst, 1, m) {
+			d[0] = s[0];
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else if ((enc_src == AUDIO_ENCODING_SLINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_LE)
+		   || (enc_src == AUDIO_ENCODING_ULINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_LE)
+		   || (enc_src == AUDIO_ENCODING_SLINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_BE)
+		   || (enc_src == AUDIO_ENCODING_ULINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_BE)) {
+		/*
+		 * ulinearNbe -> slinear8le
+		 * slinearNbe -> ulinear8le
+		 *
+		 * slinearNbe -> ulinear8be
+		 * ulinearNbe -> slinear8be
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, hw, dst, 1, m) {
+			d[0] = s[0] ^ 0x80;
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else {
+		/*
+		 * slinearNle -> ulinear8le
+		 * ulinearNle -> slinear8le
+		 *
+		 * slinearNle -> ulinear8be
+		 * ulinearNle -> slinear8be
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, hw, dst, 1, m) {
+			d[0] = s[valid - 1] ^ 0x80;
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	}
+	return 0;
+}
+
+DEFINE_FILTER(linear16_16_to_linear32)
+{
+	stream_filter_t *this;
+	int m, err, enc_dst, enc_src;
+
+	this = (stream_filter_t *)self;
+	max_used = (max_used / 2) * 2;
+
+	if ((err = this->prev->fetch_to(sc, this->prev, this->src, max_used)))
+		return err;
+	m = (dst->end - dst->start) & ~3;
+	m = min(m, max_used / 2);
+	enc_dst = dst->param.encoding;
+	enc_src = this->src->param.encoding;
+	if ((enc_src == AUDIO_ENCODING_SLINEAR_LE
+		&& enc_dst == AUDIO_ENCODING_SLINEAR_LE)
+	    || (enc_src == AUDIO_ENCODING_ULINEAR_LE
+		&& enc_dst == AUDIO_ENCODING_ULINEAR_LE)) {
+		/*
+		 * slinear16le -> slinear32le
+		 * ulinear16le -> ulinear32le
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 2, dst, 4, m) {
+			d[3] = s[1];
+			d[2] = s[0];
+			d[1] = 0;
+			d[0] = 0;
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else if ((enc_src == AUDIO_ENCODING_SLINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_BE)
+		   || (enc_src == AUDIO_ENCODING_ULINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_BE)) {
+		/*
+		 * slinear16be -> slinear32be
+		 * ulinear16be -> ulinear32be
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 2, dst, 4, m) {
+			d[3] = 0;
+			d[2] = 0;
+			d[1] = s[1];
+			d[0] = s[0];
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else if ((enc_src == AUDIO_ENCODING_SLINEAR_LE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_BE)
+		   || (enc_src == AUDIO_ENCODING_ULINEAR_LE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_BE)) {
+		/*
+		 * slinear16le -> slinear32be
+		 * ulinear16le -> ulinear32be
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 2, dst, 4, m) {
+			d[3] = 0;
+			d[2] = 0;
+			d[1] = s[0];
+			d[0] = s[1];
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else if ((enc_src == AUDIO_ENCODING_ULINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_LE)
+		   || (enc_src == AUDIO_ENCODING_SLINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_LE)) {
+		/*
+		 * ulinear16be -> slinear32le
+		 * slinear16be -> ulinear32le
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 2, dst, 4, m) {
+			d[3] = s[0] ^ 0x80;
+			d[2] = s[1];
+			d[1] = 0;
+			d[0] = 0;
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else if ((enc_src == AUDIO_ENCODING_SLINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_LE)
+		   || (enc_src == AUDIO_ENCODING_ULINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_LE)) {
+		/*
+		 * slinear16be -> slinear32le
+		 * ulinear16be -> ulinear32le
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 2, dst, 4, m) {
+			d[3] = s[0];
+			d[2] = s[1];
+			d[1] = 0;
+			d[0] = 0;
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else if ((enc_src == AUDIO_ENCODING_SLINEAR_LE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_BE)
+		   || (enc_src == AUDIO_ENCODING_ULINEAR_LE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_BE)) {
+		/*
+		 * slinear16le -> ulinear32be
+		 * ulinear16le -> slinear32be
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 2, dst, 4, m) {
+			d[3] = 0;
+			d[2] = 0;
+			d[1] = s[0];
+			d[0] = s[1] ^ 0x80;
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else if ((enc_src == AUDIO_ENCODING_SLINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_BE)
+		   || (enc_src == AUDIO_ENCODING_ULINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_BE)) {
+		/*
+		 * slinear16be -> ulinear32be
+		 * ulinear16be -> slinear32be
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 2, dst, 4, m) {
+			d[3] = 0;
+			d[2] = 0;
+			d[1] = s[1];
+			d[0] = s[0] ^ 0x80;
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else {
+		/*
+		 * slinear16le -> ulinear32le
+		 * ulinear16le -> slinear32le
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 2, dst, 4, m) {
+			d[3] = s[1] ^ 0x80;
+			d[2] = s[0];
+			d[1] = 0;
+			d[0] = 0;
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	}
+	return 0;
+}
+
+DEFINE_FILTER(linear16_16_to_linear24)
+{
+	stream_filter_t *this;
+	int m, err, enc_dst, enc_src;
+
+	this = (stream_filter_t *)self;
+	max_used = (max_used / 2) * 2;
+
+	if ((err = this->prev->fetch_to(sc, this->prev, this->src, max_used)))
+		return err;
+	m = ((dst->end - dst->start) / 3) * 3;
+	m = min(m, max_used * 2 / 3);
+	enc_dst = dst->param.encoding;
+	enc_src = this->src->param.encoding;
+	if ((enc_src == AUDIO_ENCODING_SLINEAR_LE
+		&& enc_dst == AUDIO_ENCODING_SLINEAR_LE)
+	    || (enc_src == AUDIO_ENCODING_ULINEAR_LE
+		&& enc_dst == AUDIO_ENCODING_ULINEAR_LE)) {
+		/*
+		 * slinear16le -> slinear24le
+		 * ulinear16le -> ulinear24le
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 2, dst, 3, m) {
+			d[2] = s[1];
+			d[1] = s[0];
+			d[0] = 0;
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else if ((enc_src == AUDIO_ENCODING_SLINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_BE)
+		   || (enc_src == AUDIO_ENCODING_ULINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_BE)) {
+		/*
+		 * slinear16be -> slinear24be
+		 * ulinear16be -> ulinear24be
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 2, dst, 3, m) {
+			d[2] = 0;
+			d[1] = s[1];
+			d[0] = s[0];
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else if ((enc_src == AUDIO_ENCODING_SLINEAR_LE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_BE)
+		   || (enc_src == AUDIO_ENCODING_ULINEAR_LE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_BE)) {
+		/*
+		 * slinear16le -> slinear24be
+		 * ulinear16le -> ulinear24be
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 2, dst, 3, m) {
+			d[2] = 0;
+			d[1] = s[0];
+			d[0] = s[1];
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else if ((enc_src == AUDIO_ENCODING_ULINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_LE)
+		   || (enc_src == AUDIO_ENCODING_SLINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_LE)) {
+		/*
+		 * ulinear16be -> slinear24le
+		 * slinear16be -> ulinear24le
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 2, dst, 3, m) {
+			d[2] = s[0] ^ 0x80;
+			d[1] = s[1];
+			d[0] = 0;
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else if ((enc_src == AUDIO_ENCODING_SLINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_LE)
+		   || (enc_src == AUDIO_ENCODING_ULINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_LE)) {
+		/*
+		 * slinear16be -> slinear24le
+		 * ulinear16be -> ulinear24le
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 2, dst, 3, m) {
+			d[2] = s[0];
+			d[1] = s[1];
+			d[0] = 0;
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else if ((enc_src == AUDIO_ENCODING_SLINEAR_LE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_BE)
+		   || (enc_src == AUDIO_ENCODING_ULINEAR_LE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_BE)) {
+		/*
+		 * slinear16le -> ulinear24be
+		 * ulinear16le -> slinear24be
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 2, dst, 3, m) {
+			d[2] = 0;
+			d[1] = s[0];
+			d[0] = s[1] ^ 0x80;
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else if ((enc_src == AUDIO_ENCODING_SLINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_BE)
+		   || (enc_src == AUDIO_ENCODING_ULINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_BE)) {
+		/*
+		 * slinear16be -> ulinear24be
+		 * ulinear16be -> slinear24be
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 2, dst, 3, m) {
+			d[2] = 0;
+			d[1] = s[1];
+			d[0] = s[0] ^ 0x80;
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else {
+		/*
+		 * slinear16le -> ulinear24le
+		 * ulinear16le -> slinear24le
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 2, dst, 3, m) {
+			d[2] = s[1] ^ 0x80;
+			d[1] = s[0];
+			d[0] = 0;
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	}
+	return 0;
+}
+
+DEFINE_FILTER(linear16_16_to_linear16)
+{
+	stream_filter_t *this;
+	int m, err, enc_dst, enc_src;
+
+	this = (stream_filter_t *)self;
+	max_used = (max_used / 2) * 2;
+
+	if ((err = this->prev->fetch_to(sc, this->prev, this->src, max_used)))
+		return err;
+	m = (dst->end - dst->start) & ~1;
+	m = min(m, max_used);
+	enc_dst = dst->param.encoding;
+	enc_src = this->src->param.encoding;
+	if ((enc_src == AUDIO_ENCODING_SLINEAR_LE
+		&& enc_dst == AUDIO_ENCODING_SLINEAR_BE)
+	    || (enc_src == AUDIO_ENCODING_ULINEAR_LE
+		&& enc_dst == AUDIO_ENCODING_ULINEAR_BE)
+	    || (enc_src == AUDIO_ENCODING_SLINEAR_BE
+		&& enc_dst == AUDIO_ENCODING_SLINEAR_LE)
+	    || (enc_src == AUDIO_ENCODING_ULINEAR_BE
+		&& enc_dst == AUDIO_ENCODING_ULINEAR_LE)) {
+		/*
+		 * slinear16be -> slinear16le
+		 * ulinear16be -> ulinear16le
+		 *
+		 * slinear16le -> slinear16be
+		 * ulinear16le -> ulinear16be
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 2, dst, 2, m) {
+			d[1] = s[0];
+			d[0] = s[1];
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else if ((enc_src == AUDIO_ENCODING_SLINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_BE)
+		   || (enc_src == AUDIO_ENCODING_SLINEAR_LE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_LE)
+		   || (enc_src == AUDIO_ENCODING_ULINEAR_LE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_LE)
+		   || (enc_src == AUDIO_ENCODING_ULINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_BE)) {
+		/*
+		 * slinear16be -> slinear16be
+		 * slinear16le -> slinear16le
+		 *
+		 * ulinear16be -> ulinear16be
+		 * ulinear16le -> ulinear16le
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 2, dst, 2, m) {
+			d[1] = s[1];
+			d[0] = s[0];
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else if ((enc_src == AUDIO_ENCODING_ULINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_LE)
+		   || (enc_src == AUDIO_ENCODING_SLINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_LE)) {
+		/*
+		 * ulinear16be -> slinear16le
+		 * slinear16be -> ulinear16le
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 2, dst, 2, m) {
+			d[1] = s[0] ^ 0x80;
+			d[0] = s[1];
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else if ((enc_src == AUDIO_ENCODING_SLINEAR_LE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_BE)
+		   || (enc_src == AUDIO_ENCODING_ULINEAR_LE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_BE)) {
+		/*
+		 * slinear16le -> ulinear16be
+		 * ulinear16le -> slinear16be
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 2, dst, 2, m) {
+			d[1] = s[0];
+			d[0] = s[1] ^ 0x80;
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else if ((enc_src == AUDIO_ENCODING_SLINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_BE)
+		   || (enc_src == AUDIO_ENCODING_ULINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_BE)) {
+		/*
+		 * slinear16be -> ulinear16be
+		 * ulinear16be -> slinear16be
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 2, dst, 2, m) {
+			d[1] = s[1];
+			d[0] = s[0] ^ 0x80;
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else {
+		/*
+		 * slinear16le -> ulinear16le
+		 * ulinear16le -> slinear16le
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 2, dst, 2, m) {
+			d[1] = s[1] ^ 0x80;
+			d[0] = s[0];
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	}
+	return 0;
+}
+
+DEFINE_FILTER(linear24_24_to_linear32)
+{
+	stream_filter_t *this;
+	int m, err, enc_dst, enc_src;
+
+	this = (stream_filter_t *)self;
+	max_used = (max_used / 3) * 3;
+
+	if ((err = this->prev->fetch_to(sc, this->prev, this->src, max_used)))
+		return err;
+	m = (dst->end - dst->start) & ~3;
+	m = min(m, max_used * 3 / 4);
+	enc_dst = dst->param.encoding;
+	enc_src = this->src->param.encoding;
+	if ((enc_src == AUDIO_ENCODING_SLINEAR_LE
+		&& enc_dst == AUDIO_ENCODING_SLINEAR_LE)
+	    || (enc_src == AUDIO_ENCODING_ULINEAR_LE
+		&& enc_dst == AUDIO_ENCODING_ULINEAR_LE)) {
+		/*
+		 * slinear24le -> slinear32le
+		 * ulinear24le -> ulinear32le
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 3, dst, 4, m) {
+			d[3] = s[2];
+			d[2] = s[1];
+			d[1] = s[0];
+			d[0] = 0;
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else if ((enc_src == AUDIO_ENCODING_SLINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_BE)
+		    || (enc_src == AUDIO_ENCODING_ULINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_BE)) {
+		/*
+		 * slinear24be -> slinear32be
+		 * ulinear24be -> ulinear32be
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 3, dst, 4, m) {
+			d[3] = 0;
+			d[2] = s[2];
+			d[1] = s[1];
+			d[0] = s[0];
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else if ((enc_src == AUDIO_ENCODING_SLINEAR_LE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_BE)
+		   || (enc_src == AUDIO_ENCODING_ULINEAR_LE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_BE)) {
+		/*
+		 * slinear24le -> slinear32be
+		 * ulinear24le -> ulinear32be
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 3, dst, 4, m) {
+			d[3] = 0;
+			d[2] = s[0];
+			d[1] = s[1];
+			d[0] = s[2];
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else if ((enc_src == AUDIO_ENCODING_ULINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_LE)
+		   || (enc_src == AUDIO_ENCODING_SLINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_LE)) {
+		/*
+		 * ulinear24be -> slinear32le
+		 * slinear24be -> ulinear32le
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 3, dst, 4, m) {
+			d[3] = s[0] ^ 0x80;
+			d[2] = s[1];
+			d[1] = s[2];
+			d[0] = 0;
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else if ((enc_src == AUDIO_ENCODING_SLINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_LE)
+		   || (enc_src == AUDIO_ENCODING_ULINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_LE)) {
+		/*
+		 * slinear24be -> slinear32le
+		 * ulinear24be -> ulinear32le
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 3, dst, 4, m) {
+			d[3] = s[0];
+			d[2] = s[1];
+			d[1] = s[2];
+			d[0] = 0;
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else if ((enc_src == AUDIO_ENCODING_SLINEAR_LE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_BE)
+		   || (enc_src == AUDIO_ENCODING_ULINEAR_LE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_BE)) {
+		/*
+		 * slinear24le -> ulinear32be
+		 * ulinear24le -> slinear32be
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 3, dst, 4, m) {
+			d[3] = 0;
+			d[2] = s[0];
+			d[1] = s[1];
+			d[0] = s[2] ^ 0x80;
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else if ((enc_src == AUDIO_ENCODING_SLINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_BE)
+		   || (enc_src == AUDIO_ENCODING_ULINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_BE)) {
+		/*
+		 * slinear24be -> ulinear32be
+		 * ulinear24be -> slinear32be
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 3, dst, 4, m) {
+			d[3] = 0;
+			d[2] = s[2];
+			d[1] = s[1];
+			d[0] = s[0] ^ 0x80;
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else {
+		/*
+		 * slinear24le -> ulinear32le
+		 * ulinear24le -> slinear32le
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 3, dst, 4, m) {
+			d[3] = s[2] ^ 0x80;
+			d[2] = s[1];
+			d[1] = s[0];
+			d[0] = 0;
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	}
+	return 0;
+}
+
+DEFINE_FILTER(linear24_24_to_linear24)
+{
+	stream_filter_t *this;
+	int m, err, enc_dst, enc_src;
+
+	this = (stream_filter_t *)self;
+	max_used = (max_used / 3) * 3;
+
+	if ((err = this->prev->fetch_to(sc, this->prev, this->src, max_used)))
+		return err;
+	m = (dst->end - dst->start) / 3 * 3;
+	m = min(m, max_used);
+	enc_dst = dst->param.encoding;
+	enc_src = this->src->param.encoding;
+	if ((enc_src == AUDIO_ENCODING_SLINEAR_LE
+		&& enc_dst == AUDIO_ENCODING_SLINEAR_BE)
+	    || (enc_src == AUDIO_ENCODING_ULINEAR_LE
+		&& enc_dst == AUDIO_ENCODING_ULINEAR_BE)
+	    || (enc_src == AUDIO_ENCODING_SLINEAR_BE
+		&& enc_dst == AUDIO_ENCODING_SLINEAR_LE)
+	    || (enc_src == AUDIO_ENCODING_ULINEAR_BE
+		&& enc_dst == AUDIO_ENCODING_ULINEAR_LE)) {
+		/*
+		 * slinear24be -> slinear24le
+		 * ulinear24be -> ulinear24le
+		 *
+		 * slinear24le -> slinear24be
+		 * ulinear24le -> ulinear24be
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 3, dst, 3, m) {
+			d[2] = s[0];
+			d[1] = s[1];
+			d[0] = s[2];
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else if ((enc_src == AUDIO_ENCODING_SLINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_BE)
+		   || (enc_src == AUDIO_ENCODING_SLINEAR_LE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_LE)
+		   || (enc_src == AUDIO_ENCODING_ULINEAR_LE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_LE)
+		   || (enc_src == AUDIO_ENCODING_ULINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_BE)) {
+		/*
+		 * slinear24be -> slinear24be
+		 * slinear24le -> slinear24le
+		 *
+		 * ulinear24be -> ulinear24be
+		 * ulinear24le -> ulinear24le
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 3, dst, 3, m) {
+			d[2] = s[2];
+			d[1] = s[1];
+			d[0] = s[0];
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else if ((enc_src == AUDIO_ENCODING_ULINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_LE)
+		   || (enc_src == AUDIO_ENCODING_SLINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_LE)) {
+		/*
+		 * ulinear24be -> slinear24le
+		 * slinear24be -> ulinear24le
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 3, dst, 3, m) {
+			d[2] = s[0] ^ 0x80;
+			d[1] = s[1];
+			d[0] = s[2];
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else if ((enc_src == AUDIO_ENCODING_SLINEAR_LE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_BE)
+		   || (enc_src == AUDIO_ENCODING_ULINEAR_LE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_BE)) {
+		/*
+		 * slinear24le -> ulinear24be
+		 * ulinear24le -> slinear24be
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 3, dst, 3, m) {
+			d[2] = s[0];
+			d[1] = s[1];
+			d[0] = s[2] ^ 0x80;
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else if ((enc_src == AUDIO_ENCODING_SLINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_BE)
+		   || (enc_src == AUDIO_ENCODING_ULINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_BE)) {
+		/*
+		 * slinear24be -> ulinear24be
+		 * ulinear24be -> slinear24be
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 3, dst, 3, m) {
+			d[2] = s[2];
+			d[1] = s[1];
+			d[0] = s[0] ^ 0x80;
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else {
+		/*
+		 * slinear24le -> ulinear24le
+		 * ulinear24le -> slinear24le
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 3, dst, 3, m) {
+			d[2] = s[2] ^ 0x80;
+			d[1] = s[1];
+			d[0] = s[0];
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	}
+	return 0;
+}
+
+DEFINE_FILTER(linear24_24_to_linear16)
+{
+	stream_filter_t *this;
+	int m, err, enc_dst, enc_src;
+
+	this = (stream_filter_t *)self;
+	max_used = (max_used / 2) * 2;
+
+	if ((err = this->prev->fetch_to(sc, this->prev, this->src, max_used)))
+		return err;
+	m = (dst->end - dst->start) & ~1;
+	m = min(m, max_used * 3 / 2);
+	enc_dst = dst->param.encoding;
+	enc_src = this->src->param.encoding;
+	if ((enc_src == AUDIO_ENCODING_SLINEAR_LE
+		&& enc_dst == AUDIO_ENCODING_SLINEAR_LE)
+	    || (enc_src == AUDIO_ENCODING_ULINEAR_LE
+		&& enc_dst == AUDIO_ENCODING_ULINEAR_LE)) {
+		/*
+		 * slinear24le -> slinear16le
+		 * ulinear24le -> ulinear16le
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 3, dst, 2, m) {
+			d[1] = s[2];
+			d[0] = s[1];
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else if ((enc_src == AUDIO_ENCODING_SLINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_BE)
+		   || (enc_src == AUDIO_ENCODING_ULINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_BE)) {
+		/*
+		 * slinear24be -> slinear16be
+		 * ulinear24be -> ulinear16be
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 3, dst, 2, m) {
+			d[1] = s[1];
+			d[0] = s[0];
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else if ((enc_src == AUDIO_ENCODING_SLINEAR_LE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_BE)
+		   || (enc_src == AUDIO_ENCODING_ULINEAR_LE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_BE)) {
+		/*
+		 * slinear24le -> slinear16be
+		 * ulinear24le -> ulinear16be
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 3, dst, 2, m) {
+			d[1] = s[1];
+			d[0] = s[2];
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else if ((enc_src == AUDIO_ENCODING_ULINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_LE)
+		   || (enc_src == AUDIO_ENCODING_SLINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_LE)) {
+		/*
+		 * ulinear24be -> slinear16le
+		 * slinear24be -> ulinear16le
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 3, dst, 2, m) {
+			d[1] = s[0] ^ 0x80;
+			d[0] = s[1];
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else if ((enc_src == AUDIO_ENCODING_SLINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_LE)
+		   || (enc_src == AUDIO_ENCODING_ULINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_LE)) {
+		/*
+		 * slinear24be -> slinear16le
+		 * ulinear24be -> ulinear16le
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 3, dst, 2, m) {
+			d[1] = s[0];
+			d[0] = s[1];
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else if ((enc_src == AUDIO_ENCODING_SLINEAR_LE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_BE)
+		   || (enc_src == AUDIO_ENCODING_ULINEAR_LE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_BE)) {
+		/*
+		 * slinear24le -> ulinear16be
+		 * ulinear24le -> slinear16be
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 3, dst, 2, m) {
+			d[1] = s[1];
+			d[0] = s[2] ^ 0x80;
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else if ((enc_src == AUDIO_ENCODING_SLINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_BE)
+		   || (enc_src == AUDIO_ENCODING_ULINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_BE)) {
+		/*
+		 * slinear24be -> ulinear16be
+		 * ulinear24be -> slinear16be
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 3, dst, 2, m) {
+			d[1] = s[1];
+			d[0] = s[0] ^ 0x80;
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else {
+		/*
+		 * slinear24le -> ulinear16le
+		 * ulinear24le -> slinear16le
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 3, dst, 2, m) {
+			d[1] = s[2] ^ 0x80;
+			d[0] = s[1];
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	}
+	return 0;
+}
+
+DEFINE_FILTER(linear32_32_to_linear32)
+{
+	stream_filter_t *this;
+	int m, err, enc_dst, enc_src;
+
+	this = (stream_filter_t *)self;
+	max_used = (max_used / 4) * 4;
+
+	if ((err = this->prev->fetch_to(sc, this->prev, this->src, max_used)))
+		return err;
+	m = (dst->end - dst->start) & ~3;
+	m = min(m, max_used);
+	enc_dst = dst->param.encoding;
+	enc_src = this->src->param.encoding;
+	if ((enc_src == AUDIO_ENCODING_SLINEAR_LE
+		&& enc_dst == AUDIO_ENCODING_SLINEAR_BE)
+	    || (enc_src == AUDIO_ENCODING_ULINEAR_LE
+	 	&& enc_dst == AUDIO_ENCODING_ULINEAR_BE)
+	    || (enc_src == AUDIO_ENCODING_SLINEAR_BE
+		&& enc_dst == AUDIO_ENCODING_SLINEAR_LE)
+	    || (enc_src == AUDIO_ENCODING_ULINEAR_BE
+		&& enc_dst == AUDIO_ENCODING_ULINEAR_LE)) {
+		/*
+		 * slinear32be -> slinear32le
+		 * ulinear32be -> ulinear32le
+		 *
+		 * slinear32le -> slinear32be
+		 * ulinear32le -> ulinear32be
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 4, dst, 4, m) {
+			d[3] = s[0];
+			d[2] = s[1];
+			d[1] = s[2];
+			d[0] = s[3];
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else if ((enc_src == AUDIO_ENCODING_SLINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_BE)
+		   || (enc_src == AUDIO_ENCODING_SLINEAR_LE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_LE)
+		   || (enc_src == AUDIO_ENCODING_ULINEAR_LE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_LE)
+		   || (enc_src == AUDIO_ENCODING_ULINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_BE)) {
+		/*
+		 * slinear32be -> slinear32be
+		 * slinear32le -> slinear32le
+		 *
+		 * ulinear32be -> ulinear32be
+		 * ulinear32le -> ulinear32le
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 4, dst, 4, m) {
+			d[3] = s[3];
+			d[2] = s[2];
+			d[1] = s[1];
+			d[0] = s[0];
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else if ((enc_src == AUDIO_ENCODING_ULINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_LE)
+		   || (enc_src == AUDIO_ENCODING_SLINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_LE)) {
+		/*
+		 * ulinear32be -> slinear32le
+		 * slinear32be -> ulinear32le
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 4, dst, 4, m) {
+			d[3] = s[0] ^ 0x80;
+			d[2] = s[1];
+			d[1] = s[2];
+			d[0] = s[3];
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else if ((enc_src == AUDIO_ENCODING_SLINEAR_LE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_BE)
+		   || (enc_src == AUDIO_ENCODING_ULINEAR_LE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_BE)) {
+		/*
+		 * slinear32le -> ulinear32be
+		 * ulinear32le -> slinear32be
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 4, dst, 4, m) {
+			d[3] = s[0];
+			d[2] = s[1];
+			d[1] = s[2];
+			d[0] = s[3] ^ 0x80;
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else if ((enc_src == AUDIO_ENCODING_SLINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_BE)
+		   || (enc_src == AUDIO_ENCODING_ULINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_BE)) {
+		/*
+		 * slinear32be -> ulinear32be
+		 * ulinear32be -> slinear32be
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 4, dst, 4, m) {
+			d[3] = s[3];
+			d[2] = s[2];
+			d[1] = s[1];
+			d[0] = s[0] ^ 0x80;
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else {
+		/*
+		 * slinear32le -> ulinear32le
+		 * ulinear32le -> slinear32le
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 4, dst, 4, m) {
+			d[3] = s[3] ^ 0x80;
+			d[2] = s[2];
+			d[1] = s[1];
+			d[0] = s[0];
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	}
+	return 0;
+}
+
+DEFINE_FILTER(linear32_32_to_linear24)
+{
+	stream_filter_t *this;
+	int m, err, enc_dst, enc_src;
+
+	this = (stream_filter_t *)self;
+	max_used = (max_used / 3) * 3;
+
+	if ((err = this->prev->fetch_to(sc, this->prev, this->src, max_used)))
+		return err;
+	m = ((dst->end - dst->start) / 3) * 3;
+	m = min(m, max_used * 4 / 3);
+	enc_dst = dst->param.encoding;
+	enc_src = this->src->param.encoding;
+	if ((enc_src == AUDIO_ENCODING_SLINEAR_LE
+		&& enc_dst == AUDIO_ENCODING_SLINEAR_LE)
+	    || (enc_src == AUDIO_ENCODING_ULINEAR_LE
+		&& enc_dst == AUDIO_ENCODING_ULINEAR_LE)) {
+		/*
+		 * slinear32le -> slinear24le
+		 * ulinear32le -> ulinear24le
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 4, dst, 3, m) {
+			d[2] = s[3];
+			d[1] = s[2];
+			d[0] = s[1];
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else if ((enc_src == AUDIO_ENCODING_SLINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_BE)
+		   || (enc_src == AUDIO_ENCODING_ULINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_BE)) {
+		/*
+		 * slinear32be -> slinear24be
+		 * ulinear32be -> ulinear24be
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 4, dst, 3, m) {
+			d[2] = s[2];
+			d[1] = s[1];
+			d[0] = s[0];
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else if ((enc_src == AUDIO_ENCODING_SLINEAR_LE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_BE)
+		   || (enc_src == AUDIO_ENCODING_ULINEAR_LE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_BE)) {
+		/*
+		 * slinear32le -> slinear24be
+		 * ulinear32le -> ulinear24be
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 4, dst, 3, m) {
+			d[2] = s[1];
+			d[1] = s[2];
+			d[0] = s[3];
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else if ((enc_src == AUDIO_ENCODING_ULINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_LE)
+		   || (enc_src == AUDIO_ENCODING_SLINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_LE)) {
+		/*
+		 * ulinear32be -> slinear24le
+		 * slinear32be -> ulinear24le
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 4, dst, 3, m) {
+			d[2] = s[0] ^ 0x80;
+			d[1] = s[1];
+			d[0] = s[2];
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else if ((enc_src == AUDIO_ENCODING_SLINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_LE)
+		   || (enc_src == AUDIO_ENCODING_ULINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_LE)) {
+		/*
+		 * slinear32be -> slinear24le
+		 * ulinear32be -> ulinear24le
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 4, dst, 3, m) {
+			d[2] = s[0];
+			d[1] = s[1];
+			d[0] = s[2];
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else if ((enc_src == AUDIO_ENCODING_SLINEAR_LE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_BE)
+		   || (enc_src == AUDIO_ENCODING_ULINEAR_LE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_BE)) {
+		/*
+		 * slinear32le -> ulinear24be
+		 * ulinear32le -> slinear24be
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 4, dst, 3, m) {
+			d[2] = s[1];
+			d[1] = s[2];
+			d[0] = s[3] ^ 0x80;
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else if ((enc_src == AUDIO_ENCODING_SLINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_BE)
+		   || (enc_src == AUDIO_ENCODING_ULINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_BE)) {
+		/*
+		 * slinear32be -> ulinear24be
+		 * ulinear32be -> slinear24be
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 4, dst, 3, m) {
+			d[2] = s[2];
+			d[1] = s[1];
+			d[0] = s[0] ^ 0x80;
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else {
+		/*
+		 * slinear32le -> ulinear24le
+		 * ulinear32le -> slinear24le
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 4, dst, 3, m) {
+			d[2] = s[3] ^ 0x80;
+			d[1] = s[2];
+			d[0] = s[1];
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	}
+	return 0;
+}
+
+DEFINE_FILTER(linear32_32_to_linear16)
+{
+	stream_filter_t *this;
+	int m, err, enc_dst, enc_src;
+
+	this = (stream_filter_t *)self;
+	max_used = (max_used / 2) * 2;
+
+	if ((err = this->prev->fetch_to(sc, this->prev, this->src, max_used)))
+		return err;
+	m = (dst->end - dst->start) & ~1;
+	m = min(m, max_used * 2);
+	enc_dst = dst->param.encoding;
+	enc_src = this->src->param.encoding;
+	if ((enc_src == AUDIO_ENCODING_SLINEAR_LE
+		&& enc_dst == AUDIO_ENCODING_SLINEAR_LE)
+	    || (enc_src == AUDIO_ENCODING_ULINEAR_LE
+		&& enc_dst == AUDIO_ENCODING_ULINEAR_LE)) {
+		/*
+		 * slinear32le -> slinear16le
+		 * ulinear32le -> ulinear16le
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 4, dst, 2, m) {
+			d[1] = s[3];
+			d[0] = s[2];
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else if ((enc_src == AUDIO_ENCODING_SLINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_BE)
+		   || (enc_src == AUDIO_ENCODING_ULINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_BE)) {
+		/*
+		 * slinear32be -> slinear16be
+		 * ulinear32be -> ulinear16be
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 4, dst, 2, m) {
+			d[1] = s[1];
+			d[0] = s[0];
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else if ((enc_src == AUDIO_ENCODING_SLINEAR_LE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_BE)
+		   || (enc_src == AUDIO_ENCODING_ULINEAR_LE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_BE)) {
+		/*
+		 * slinear32le -> slinear16be
+		 * ulinear32le -> ulinear16be
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 4, dst, 2, m) {
+			d[1] = s[2];
+			d[0] = s[3];
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else if ((enc_src == AUDIO_ENCODING_ULINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_LE)
+		   || (enc_src == AUDIO_ENCODING_SLINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_LE)) {
+		/*
+		 * ulinear32be -> slinear16le
+		 * slinear32be -> ulinear16le
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 4, dst, 2, m) {
+			d[1] = s[0] ^ 0x80;
+			d[0] = s[1];
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else if ((enc_src == AUDIO_ENCODING_SLINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_LE)
+		   || (enc_src == AUDIO_ENCODING_ULINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_LE)) {
+		/*
+		 * slinear32be -> slinear16le
+		 * ulinear32be -> ulinear16le
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 4, dst, 2, m) {
+			d[1] = s[0];
+			d[0] = s[1];
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else if ((enc_src == AUDIO_ENCODING_SLINEAR_LE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_BE)
+		   || (enc_src == AUDIO_ENCODING_ULINEAR_LE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_BE)) {
+		/*
+		 * slinear32le -> ulinear16be
+		 * ulinear32le -> slinear16be
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 4, dst, 2, m) {
+			d[1] = s[2];
+			d[0] = s[3] ^ 0x80;
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else if ((enc_src == AUDIO_ENCODING_SLINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_ULINEAR_BE)
+		   || (enc_src == AUDIO_ENCODING_ULINEAR_BE
+		       && enc_dst == AUDIO_ENCODING_SLINEAR_BE)) {
+		/*
+		 * slinear32be -> ulinear16be
+		 * ulinear32be -> slinear16be
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 4, dst, 2, m) {
+			d[1] = s[1];
+			d[0] = s[0] ^ 0x80;
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	} else {
+		/*
+		 * slinear32le -> ulinear16le
+		 * ulinear32le -> slinear16le
+		 */
+		FILTER_LOOP_PROLOGUE(this->src, 4, dst, 2, m) {
+			d[1] = s[3] ^ 0x80;
+			d[0] = s[2];
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	}
+	return 0;
+}
 
 /**
  * Set appropriate parameters in `param,' and return the index in
