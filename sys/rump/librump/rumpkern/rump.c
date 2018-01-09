@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.330 2017/11/21 08:49:14 ozaki-r Exp $	*/
+/*	$NetBSD: rump.c,v 1.331 2018/01/09 04:55:43 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.330 2017/11/21 08:49:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.331 2018/01/09 04:55:43 msaitoh Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -391,6 +391,8 @@ rump_init(void)
 
 	/* Once all CPUs are detected, initialize the per-CPU cprng_fast.  */
 	cprng_fast_init();
+
+	mp_online = true;
 
 	/* CPUs are up.  allow kernel threads to run */
 	rump_thread_allow(NULL);
