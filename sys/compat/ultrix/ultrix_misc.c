@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.122 2012/02/19 21:06:45 rmind Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.123 2018/01/09 20:55:43 maya Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.122 2012/02/19 21:06:45 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.123 2018/01/09 20:55:43 maya Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -195,7 +195,6 @@ struct emul emul_ultrix = {
 	.e_syscall_intern =	syscall,
 #endif
 	.e_sysctlovly =		NULL,
-	.e_fault =		NULL,
 	.e_vm_default_addr =	uvm_default_mapaddr,
 	.e_usertrap =		NULL,
 	.e_ucsize =		0,
