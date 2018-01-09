@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1166 2018/01/07 20:59:24 jmcneill Exp $
+# $NetBSD: mi,v 1.1167 2018/01/09 03:31:13 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -91,6 +91,7 @@
 ./etc/X11/xserver				base-x11-root
 ./etc/X11/xsm					base-x11-root
 ./etc/atf					base-atf-bin
+./etc/autofs					base-sys-root
 ./etc/cgd					base-sys-root
 ./etc/defaults					base-sys-root
 ./etc/disklabels				base-obsolete		obsolete
@@ -1111,6 +1112,7 @@
 ./usr/include/event2				base-c-usr
 ./usr/include/filecorefs			base-c-usr
 ./usr/include/fs				base-c-usr
+./usr/include/fs/autofs				base-c-usr
 ./usr/include/fs/efs				base-c-usr
 ./usr/include/fs/hfs				base-c-usr
 ./usr/include/fs/hfsp				base-obsolete		obsolete
@@ -1620,6 +1622,9 @@
 ./usr/sbin/arp					base-netutil-bin
 ./usr/sbin/audit-packages			base-pkgutil-bin
 ./usr/sbin/authpf				base-pf-bin		pf
+./usr/sbin/automount				base-sysutil-root
+./usr/sbin/automountd				base-sysutil-root
+./usr/sbin/autounmountd				base-sysutil-root
 ./usr/sbin/bootpd				base-bootserver-bin
 ./usr/sbin/bootpef				base-bootserver-bin
 ./usr/sbin/bootpgw				base-bootserver-bin
@@ -1681,6 +1686,7 @@
 ./usr/sbin/flush				base-obsolete		obsolete
 ./usr/sbin/fsinfo				base-sysutil-bin
 ./usr/sbin/fssconfig				base-sysutil-bin
+./usr/sbin/fstyp				base-sysutil-bin
 ./usr/sbin/ftp-proxy				base-pf-bin		pf
 ./usr/sbin/fusermount				base-refuse-bin
 ./usr/sbin/fwctl				base-sysutil-bin

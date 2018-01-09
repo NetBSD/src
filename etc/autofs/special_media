@@ -1,0 +1,130 @@
+#!/bin/sh
+#
+# $NetBSD: special_media,v 1.1 2018/01/09 03:31:14 christos Exp $
+#
+
+# Print newline-separated list of devices available for mounting.
+# If there is a filesystem label - use it, otherwise use device name.
+print_available() {
+	local _fstype _fstype_and_label _label _p
+
+	for _p in ${DEVICES}; do
+		_fstype_and_label="$(fstyp -l "/dev/${_p}" 2> /dev/null)"
+		if [ $? -ne 0 ]; then
+			# Ignore devices for which we were unable
+			# to determine filesystem type.
+			continue
+		fi
+
+		_fstype="${_fstype_and_label%% *}"
+		if [ "${_fstype}" != "${_fstype_and_label}" ]; then
+			_label="${_fstype_and_label#* }"
+			# Replace plus signs and slashes with minuses;
+			# leading plus signs have special meaning in maps,
+			# and multi-component keys are just not supported.
+			_label="$(echo ${_label} | sed 's,[+/],-,g')"
+			echo "${_label}"
+			continue
+		fi
+
+		echo "${_p}"
+	done
+}
+
+# Print a single map entry.
+print_map_entry() {
+	local _fstype _p
+
+	_fstype="$1"
+	_p="$2"
+
+	case "${_fstype}" in
+	"exfat")
+		if [ -f "/usr/local/sbin/mount.exfat" ]; then
+			echo "-mountprog=/usr/local/sbin/mount.exfat,fstype=${_fstype},nosuid	:/dev/${_p}"
+		else
+			/usr/bin/logger -p info -t "special_media[$$]" \
+			    "Cannot mount ${_fstype} formatted device /dev/${_p}: Install sysutils/fusefs-exfat first"
+			exit 1
+		fi
+		;;
+	"ntfs")
+		if [ -f "/usr/local/bin/ntfs-3g" ]; then
+			echo "-mountprog=/usr/local/bin/ntfs-3g,fstype=${_fstype},nosuid	:/dev/${_p}"
+		else
+			/usr/bin/logger -p info -t "special_media[$$]" \
+			    "Cannot mount ${_fstype} formatted device /dev/${_p}: Install sysutils/fusefs-ntfs first"
+			exit 1
+		fi
+		;;
+	"ext2fs" | "msdosfs")
+		echo "-fstype=${_fstype},nosuid,async	:/dev/${_p}"
+		;;
+	*)
+		echo "-fstype=${_fstype},nosuid	:/dev/${_p}"
+		;;
+	esac
+}
+
+# Determine map entry contents for the given key and print out the entry.
+print_one() {
+	local _fstype _fstype_and_label _label _key _p
+
+	_key="$1"
+
+	_fstype="$(fstyp "/dev/${_key}" 2> /dev/null)"
+	if [ $? -eq 0 ]; then
+		print_map_entry "${_fstype}" "${_key}"
+		return
+	fi
+
+	for _p in ${DEVICES}; do
+		_fstype_and_label="$(fstyp -l "/dev/${_p}" 2> /dev/null)"
+		if [ $? -ne 0 ]; then
+			# Ignore devices for which we were unable
+			# to determine filesystem type.
+			continue
+		fi
+
+		_fstype="${_fstype_and_label%% *}"
+		if [ "${_fstype}" = "${_fstype_and_label}" ]; then
+			# No label, try another device.
+			continue
+		fi
+
+		_label="${_fstype_and_label#* }"
+		# Replace plus signs and slashes with minuses;
+		# leading plus signs have special meaning in maps,
+		# and multi-component keys are just not supported.
+		_label="$(echo ${_label} | sed 's,[+/],-,g')"
+		if [ "${_label}" != "${_key}" ]; then
+			# Labels don't match, try another device.
+			continue
+		fi
+
+		print_map_entry "${_fstype}" "${_p}"
+	done
+
+	# No matching device - don't print anything, autofs will handle it.
+}
+
+# XXX: -media map is unusable at the moment.
+# This script needs to be able to get the list of devices/partitions. FreeBSD can do this via GEOM sysctl.
+#HW_DISKNAMES=$(sysctl hw.disknames)
+#if [ $? -ne 0 ]; then
+#	exit 1
+#fi
+# Cut "hw.disknames =" and ignore the next " " before names start.
+#DEVICES=$(echo ${HW_DISKNAMES} | awk '{$1=$2=""; print substr($0,3)}' | awk '{gsub(" ", "\n"); print}' | sort)
+
+# ${DEVICES} should contain one device/partition for each line.
+DEVICES=""
+
+if [ $# -eq 0 ]; then
+	print_available
+	exit 0
+fi
+
+print_one "$1"
+exit 0
+

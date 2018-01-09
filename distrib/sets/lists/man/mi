@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1568 2017/12/28 23:31:07 christos Exp $
+# $NetBSD: mi,v 1.1569 2018/01/09 03:31:14 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2057,6 +2057,8 @@
 ./usr/share/man/cat5/ar.0			man-sys-catman		.cat
 ./usr/share/man/cat5/atf-formats.0		man-atf-catman		.cat,atf
 ./usr/share/man/cat5/audit-packages.conf.0	man-obsolete		obsolete
+./usr/share/man/cat5/auto_master.0		man-sysutil-catman	.cat
+./usr/share/man/cat5/autofs.0			man-sysutil-catman	.cat
 ./usr/share/man/cat5/blacklistd.conf.0		man-sysutil-catman	.cat
 ./usr/share/man/cat5/bluetooth.conf.0		man-obsolete		obsolete
 ./usr/share/man/cat5/body_checks.0		man-postfix-catman	postfix,.cat
@@ -2368,6 +2370,9 @@
 ./usr/share/man/cat8/atari/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/atrun.0			man-cron-catman		.cat
 ./usr/share/man/cat8/authpf.0			man-pf-catman		pf,.cat
+./usr/share/man/cat8/automount.0		man-sysutil-catman	.cat
+./usr/share/man/cat8/automountd.0		man-sysutil-catman	.cat
+./usr/share/man/cat8/autounmountd.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/bad144.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/badsect.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/bebox/MAKEDEV.0		man-obsolete		obsolete
@@ -2515,6 +2520,7 @@
 ./usr/share/man/cat8/fsinfo.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/fsirand.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/fssconfig.0		man-sysutil-catman	.cat
+./usr/share/man/cat8/fstyp.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/ftp-proxy.0		man-pf-catman		pf,.cat
 ./usr/share/man/cat8/ftpd.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/fusermount.0		man-refuse-catman	.cat
@@ -5103,6 +5109,8 @@
 ./usr/share/man/html5/ar.html			man-sys-htmlman		html
 ./usr/share/man/html5/atf-formats.html		man-atf-htmlman		html,atf
 ./usr/share/man/html5/audit-packages.conf.html	man-obsolete		obsolete
+./usr/share/man/html5/auto_master.html		man-sysutil-htmlman	html
+./usr/share/man/html5/autofs.html		man-sysutil-htmlman	html
 ./usr/share/man/html5/blacklistd.conf.html	man-sysutil-htmlman	html
 ./usr/share/man/html5/body_checks.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html5/boot.cfg.html		man-sys-htmlman		html
@@ -5365,6 +5373,9 @@
 ./usr/share/man/html8/atari/installboot.html	man-sysutil-htmlman	html
 ./usr/share/man/html8/atrun.html		man-cron-htmlman	html
 ./usr/share/man/html8/authpf.html		man-pf-htmlman		pf,html
+./usr/share/man/html8/automount.html		man-sysutil-htmlman	html
+./usr/share/man/html8/automountd.html		man-sysutil-htmlman	html
+./usr/share/man/html8/autounmountd.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/bad144.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/badsect.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/bioctl.html		man-sysutil-htmlman	html
@@ -5482,6 +5493,7 @@
 ./usr/share/man/html8/fsinfo.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/fsirand.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/fssconfig.html		man-sysutil-htmlman	html
+./usr/share/man/html8/fstyp.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/ftp-proxy.html		man-pf-htmlman		pf,html
 ./usr/share/man/html8/ftpd.html			man-netutil-htmlman	html
 ./usr/share/man/html8/fusermount.html		man-refuse-htmlman	html
@@ -8081,6 +8093,8 @@
 ./usr/share/man/man5/ar.5			man-sys-man		.man
 ./usr/share/man/man5/atf-formats.5		man-atf-man		.man,atf
 ./usr/share/man/man5/audit-packages.conf.5	man-obsolete		obsolete
+./usr/share/man/man5/auto_master.5		man-sysutil-man		.man
+./usr/share/man/man5/autofs.5			man-sysutil-man		.man
 ./usr/share/man/man5/blacklistd.conf.5		man-sysutil-man		.man
 ./usr/share/man/man5/bluetooth.conf.5		man-obsolete		obsolete
 ./usr/share/man/man5/body_checks.5		man-postfix-man		postfix,.man
@@ -8391,6 +8405,9 @@
 ./usr/share/man/man8/atari/makedev.8		man-obsolete		obsolete
 ./usr/share/man/man8/atrun.8			man-cron-man		.man
 ./usr/share/man/man8/authpf.8			man-pf-man		pf,.man
+./usr/share/man/man8/automount.8		man-sysutil-man		.man
+./usr/share/man/man8/automountd.8		man-sysutil-man		.man
+./usr/share/man/man8/autounmountd.8		man-sysutil-man		.man
 ./usr/share/man/man8/bad144.8			man-sysutil-man		.man
 ./usr/share/man/man8/badsect.8			man-sysutil-man		.man
 ./usr/share/man/man8/bebox/MAKEDEV.8		man-obsolete		obsolete
@@ -8538,6 +8555,7 @@
 ./usr/share/man/man8/fsinfo.8			man-sysutil-man		.man
 ./usr/share/man/man8/fsirand.8			man-sysutil-man		.man
 ./usr/share/man/man8/fssconfig.8		man-sysutil-man		.man
+./usr/share/man/man8/fstyp.8			man-sysutil-man		.man
 ./usr/share/man/man8/ftp-proxy.8		man-pf-man		pf,.man
 ./usr/share/man/man8/ftpd.8			man-netutil-man		.man
 ./usr/share/man/man8/fusermount.8		man-refuse-man		.man
