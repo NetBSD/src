@@ -1,4 +1,4 @@
-.\"	$NetBSD: automount.8,v 1.1 2018/01/09 03:31:15 christos Exp $
+.\"	$NetBSD: automount.8,v 1.2 2018/01/09 09:39:07 wiz Exp $
 .\" Copyright (c) 2017 The NetBSD Foundation, Inc.
 .\" Copyright (c) 2016 The DragonFly Project
 .\" Copyright (c) 2014 The FreeBSD Foundation
@@ -41,13 +41,9 @@
 .Nd update autofs mounts
 .Sh SYNOPSIS
 .Nm
+.Op Fl cfLuv
 .Op Fl D Ar name=value
-.Op Fl L
-.Op Fl c
-.Op Fl f
 .Op Fl o Ar options
-.Op Fl v
-.Op Fl u
 .Sh DESCRIPTION
 When called without options, the
 .Nm
@@ -56,13 +52,19 @@ command parses the
 configuration file and any direct maps that it references, and mounts
 or unmounts
 .Xr autofs 5
-filesystems to match.
+file systems to match.
 These options are available:
 .Bl -tag -width ".Fl v"
+.It Fl c
+Flush caches, discarding possibly stale information obtained from maps
+and directory services.
 .It Fl D
 Define a variable.
 It is only useful with
 .Fl L .
+.It Fl f
+Force unmount, to be used with
+.Fl u .
 .It Fl L
 Do not mount or unmount anything.
 Instead parse
@@ -71,23 +73,17 @@ and any direct maps, then print them to standard output.
 When specified more than once, all the maps, including indirect ones,
 will be parsed and shown.
 This is useful when debugging configuration problems.
-.It Fl c
-Flush caches, discarding possibly stale information obtained from maps
-and directory services.
-.It Fl f
-Force unmount, to be used with
-.Fl u .
 .It Fl o
 Specify mount options to be used along with the ones specified in the maps.
 It is only useful with
 .Fl L .
 .It Fl u
-Try to unmount filesystems mounted by
+Try to unmount file systems mounted by
 .Xr automountd 8 .
 .Xr autofs 5
 mounts are not unmounted.
 To unmount all
-.Xr autofs
+.Xr autofs 5
 mounts, use
 .Cm "umount -At autofs".
 .It Fl v
@@ -96,12 +92,12 @@ Increase verbosity.
 .Sh EXIT STATUS
 .Ex -std
 .Sh EXAMPLES
-Unmount all filesystems mounted by
+Unmount all file systems mounted by
 .Xr automountd 8 :
 .Dl Nm Fl u
 .Sh SEE ALSO
-.Xr autofs 5 ,
 .Xr auto_master 5 ,
+.Xr autofs 5 ,
 .Xr automountd 8 ,
 .Xr autounmountd 8
 .Sh HISTORY
@@ -122,7 +118,9 @@ The
 .Nm
 was developed by
 .An Edward Tomasz Napierala Aq Mt trasz@FreeBSD.org
-under sponsorship from the FreeBSD Foundation.
+under sponsorship from the
+.Fx
+Foundation.
 .Pp
 The
 .Nm
