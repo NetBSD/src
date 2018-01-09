@@ -1,4 +1,4 @@
-.\"	$NetBSD: auto_master.5,v 1.1 2018/01/09 03:31:15 christos Exp $
+.\"	$NetBSD: auto_master.5,v 1.2 2018/01/09 09:27:41 wiz Exp $
 .\" Copyright (c) 2017 The NetBSD Foundation, Inc.
 .\" Copyright (c) 2016 The DragonFly Project
 .\" Copyright (c) 2014 The FreeBSD Foundation
@@ -42,7 +42,7 @@
 .Sh DESCRIPTION
 The automounter configuration consists of the
 .Nm
-configuration file, which assigns filesystem paths to map names,
+configuration file, which assigns file system paths to map names,
 and maps, which contain actual mount information.
 The
 .Nm
@@ -107,7 +107,7 @@ Otherwise, the file is opened and the contents parsed.
 .Pa -options
 is an optional field that starts with
 .Li -
-and can contain generic filesystem mount options.
+and can contain generic file system mount options.
 .Pp
 The following example specifies that the /etc/auto_example indirect map
 will be mounted on /example.
@@ -142,12 +142,12 @@ The
 .Ar options
 field, if present, must begin with
 .Li - .
-When mounting the filesystem, options supplied to
+When mounting the file system, options supplied to
 .Nm
 and options specified in the map entry are concatenated together.
 The special option
 .Li fstype
-is used to specify filesystem type.
+is used to specify file system type.
 It is not passed to the mount program as an option.
 Instead, it is passed as an argument to
 .Cm "mount -t".
@@ -167,7 +167,7 @@ for a single key.
 .Pp
 The
 .Ar location
-field specifies the filesystem to be mounted.
+field specifies the file system to be mounted.
 Ampersands
 .Pq Ql &
 in the
@@ -265,10 +265,10 @@ directory without any additional configuration.
 Directories for individual NFS servers are not present until the first access,
 when they are automatically created.
 .It Li -media
-Query devices that are not yet mounted, but contain valid filesystems.
+Query devices that are not yet mounted, but contain valid file systems.
 Generally used to access files on removable media.
 .It Li -noauto
-Mount filesystems configured in
+Mount file systems configured in
 .Xr fstab 5
 as "noauto".
 This needs to be set up as a direct map.
@@ -378,7 +378,9 @@ The
 .Nm
 configuration file functionality was developed by
 .An Edward Tomasz Napierala Aq Mt trasz@FreeBSD.org
-under sponsorship from the FreeBSD Foundation.
+under sponsorship from the
+.Fx
+Foundation.
 .Pp
 The
 .Nm
