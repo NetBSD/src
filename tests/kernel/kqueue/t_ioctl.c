@@ -1,4 +1,4 @@
-/* $NetBSD: t_ioctl.c,v 1.3 2017/01/13 21:30:41 christos Exp $ */
+/* $NetBSD: t_ioctl.c,v 1.4 2018/01/09 17:35:29 martin Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_ioctl.c,v 1.3 2017/01/13 21:30:41 christos Exp $");
+__RCSID("$NetBSD: t_ioctl.c,v 1.4 2018/01/09 17:35:29 martin Exp $");
 
 #include <sys/event.h>
 #include <sys/ioctl.h>
@@ -61,13 +61,13 @@ ATF_TC_BODY(kfilter_byfilter, tc)
 	km.name = buf;
 	km.len = sizeof(buf) - 1;
 
-	for (i = 0; i < 7; ++i) {
+	for (i = 0; i < 8; ++i) {
 		km.filter = i;
 		RL(ioctl(kq, KFILTER_BYFILTER, &km));
 		(void)printf("  map %d -> %s\n", km.filter, km.name);
 	}
 
-	km.filter = 7;
+	km.filter = 8;
 	ATF_REQUIRE_EQ(ioctl(kq, KFILTER_BYFILTER, &km), -1);
 }
 
@@ -86,6 +86,7 @@ ATF_TC_BODY(kfilter_byname, tc)
 		"EVFILT_PROC",
 		"EVFILT_SIGNAL",
 		"EVFILT_TIMER",
+		"EVFILT_FS",
 		NULL
 	};
 	char buf[32];
