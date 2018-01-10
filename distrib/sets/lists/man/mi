@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1569 2018/01/09 03:31:14 christos Exp $
+# $NetBSD: mi,v 1.1570 2018/01/10 11:08:55 knakahara Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1329,6 +1329,7 @@
 ./usr/share/man/cat4/ipnat.0			man-ipf-catman		ipfilter,.cat
 ./usr/share/man/cat4/ippp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ipsec.0			man-sys-catman		.cat
+./usr/share/man/cat4/ipsecif.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ipw.0			man-sys-catman		.cat
 ./usr/share/man/cat4/irda.0			man-sys-catman		.cat
 ./usr/share/man/cat4/irframe.0			man-sys-catman		.cat
@@ -4428,6 +4429,7 @@
 ./usr/share/man/html4/ipnat.html		man-ipf-htmlman		ipfilter,html
 ./usr/share/man/html4/ippp.html			man-sys-htmlman		html
 ./usr/share/man/html4/ipsec.html		man-sys-htmlman		html
+./usr/share/man/html4/ipsecif.html		man-sys-htmlman		html
 ./usr/share/man/html4/ipw.html			man-sys-htmlman		html
 ./usr/share/man/html4/irda.html			man-sys-htmlman		html
 ./usr/share/man/html4/irframe.html		man-sys-htmlman		html
@@ -7365,6 +7367,7 @@
 ./usr/share/man/man4/ipnat.4			man-sys-man		ipfilter,.man
 ./usr/share/man/man4/ippp.4			man-sys-man		.man
 ./usr/share/man/man4/ipsec.4			man-sys-man		.man
+./usr/share/man/man4/ipsecif.4			man-sys-man		.man
 ./usr/share/man/man4/ipw.4			man-sys-man		.man
 ./usr/share/man/man4/irda.4			man-sys-man		.man
 ./usr/share/man/man4/irframe.4			man-sys-man		.man
