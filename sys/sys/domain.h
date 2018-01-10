@@ -1,4 +1,4 @@
-/*	$NetBSD: domain.h,v 1.33 2017/09/21 07:15:35 ozaki-r Exp $	*/
+/*	$NetBSD: domain.h,v 1.34 2018/01/10 02:50:26 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -103,6 +103,7 @@ STAILQ_HEAD(domainhead,domain);
 extern struct domainhead domains;
 void domain_attach(struct domain *);
 void domaininit(bool);
+void domaininit_post(void);
 #endif
 
 #endif /* !_SYS_DOMAIN_H_ */
