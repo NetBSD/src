@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.246 2017/12/01 06:34:14 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.247 2018/01/10 10:56:30 knakahara Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.246 2017/12/01 06:34:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.247 2018/01/10 10:56:30 knakahara Exp $");
 
 /*
  * This code is referred to RFC 2367
@@ -196,6 +196,10 @@ static u_int32_t acq_seq = 0;
  *     however, a socket can be destroyed in softint so we cannot destroy
  *     it directly instead we just mark it DEAD and delay the destruction
  *     until GC by the timer
+ * - SP origin
+ *   - SPs can be created by both userland programs and kernel components.
+ *     The SPs created in kernel must not be removed by userland programs,
+ *     although the SPs can be read by userland programs.
  */
 /*
  * Locking notes on SAD:
@@ -584,13 +588,6 @@ struct _keystat {
 	u_long getspi_count; /* the avarage of count to try to get new SPI */
 } keystat;
 
-struct sadb_msghdr {
-	struct sadb_msg *msg;
-	void *ext[SADB_EXT_MAX + 1];
-	int extoff[SADB_EXT_MAX + 1];
-	int extlen[SADB_EXT_MAX + 1];
-};
-
 static void
 key_init_spidx_bymsghdr(struct secpolicyindex *, const struct sadb_msghdr *);
 
@@ -621,10 +618,9 @@ static void key_freesp_so(struct secpolicy **);
 #endif
 static struct secpolicy *key_getsp (const struct secpolicyindex *);
 static struct secpolicy *key_getspbyid (u_int32_t);
-static struct secpolicy *key_lookup_and_remove_sp(const struct secpolicyindex *);
-static struct secpolicy *key_lookupbyid_and_remove_sp(u_int32_t);
+static struct secpolicy *key_lookup_and_remove_sp(const struct secpolicyindex *, bool);
+static struct secpolicy *key_lookupbyid_and_remove_sp(u_int32_t, bool);
 static void key_destroy_sp(struct secpolicy *);
-static u_int16_t key_newreqid (void);
 static struct mbuf *key_gather_mbuf (struct mbuf *,
 	const struct sadb_msghdr *, int, int, ...);
 static int key_api_spdadd(struct socket *, struct mbuf *,
@@ -1642,14 +1638,19 @@ key_getsp(const struct secpolicyindex *spidx)
  *	others	: found, pointer to a SP.
  */
 static struct secpolicy *
-key_lookup_and_remove_sp(const struct secpolicyindex *spidx)
+key_lookup_and_remove_sp(const struct secpolicyindex *spidx, bool from_kernel)
 {
 	struct secpolicy *sp = NULL;
 
 	mutex_enter(&key_spd.lock);
 	SPLIST_WRITER_FOREACH(sp, spidx->dir) {
 		KASSERT(sp->state != IPSEC_SPSTATE_DEAD);
-
+		/*
+		 * SPs created in kernel(e.g. ipsec(4) I/F) must not be
+		 * removed by userland programs.
+		 */
+		if (!from_kernel && sp->origin == IPSEC_SPORIGIN_KERNEL)
+			continue;
 		if (key_spidx_match_exactly(spidx, &sp->spidx)) {
 			key_unlink_sp(sp);
 			goto out;
@@ -1702,19 +1703,31 @@ out:
  *	others	: found, pointer to a SP.
  */
 static struct secpolicy *
-key_lookupbyid_and_remove_sp(u_int32_t id)
+key_lookupbyid_and_remove_sp(u_int32_t id, bool from_kernel)
 {
 	struct secpolicy *sp;
 
 	mutex_enter(&key_spd.lock);
 	SPLIST_READER_FOREACH(sp, IPSEC_DIR_INBOUND) {
 		KASSERT(sp->state != IPSEC_SPSTATE_DEAD);
+		/*
+		 * SPs created in kernel(e.g. ipsec(4) I/F) must not be
+		 * removed by userland programs.
+		 */
+		if (!from_kernel && sp->origin == IPSEC_SPORIGIN_KERNEL)
+			continue;
 		if (sp->id == id)
 			goto out;
 	}
 
 	SPLIST_READER_FOREACH(sp, IPSEC_DIR_OUTBOUND) {
 		KASSERT(sp->state != IPSEC_SPSTATE_DEAD);
+		/*
+		 * SPs created in kernel(e.g. ipsec(4) I/F) must not be
+		 * removed by userland programs.
+		 */
+		if (!from_kernel && sp->origin == IPSEC_SPORIGIN_KERNEL)
+			continue;
 		if (sp->id == id)
 			goto out;
 	}
@@ -1742,8 +1755,9 @@ key_newsp(const char* where, int tag)
  * NOTE: `state', `secpolicyindex' in secpolicy structure are not set,
  * so must be set properly later.
  */
-struct secpolicy *
-key_msg2sp(const struct sadb_x_policy *xpl0, size_t len, int *error)
+static struct secpolicy *
+_key_msg2sp(const struct sadb_x_policy *xpl0, size_t len, int *error,
+    bool from_kernel)
 {
 	struct secpolicy *newsp;
 
@@ -1852,10 +1866,21 @@ key_msg2sp(const struct sadb_x_policy *xpl0, size_t len, int *error)
 			xisr_reqid = xisr->sadb_x_ipsecrequest_reqid;
 			/* validity check */
 			/*
+			 * case 1) from_kernel == false
+			 * That means the request comes from userland.
 			 * If range violation of reqid, kernel will
 			 * update it, don't refuse it.
+			 *
+			 * case 2) from_kernel == true
+			 * That means the request comes from kernel
+			 * (e.g. ipsec(4) I/F).
+			 * Use thre requested reqid to avoid inconsistency
+			 * between kernel's reqid and the reqid in pf_key
+			 * message sent to userland. The pf_key message is
+			 * built by diverting request mbuf.
 			 */
-			if (xisr_reqid > IPSEC_MANUAL_REQID_MAX) {
+			if (!from_kernel &&
+			    xisr_reqid > IPSEC_MANUAL_REQID_MAX) {
 				IPSECLOG(LOG_DEBUG,
 				    "reqid=%d range "
 				    "violation, updated by kernel.\n",
@@ -1939,7 +1964,14 @@ free_exit:
 	return NULL;
 }
 
-static u_int16_t
+struct secpolicy *
+key_msg2sp(const struct sadb_x_policy *xpl0, size_t len, int *error)
+{
+
+	return _key_msg2sp(xpl0, len, error, false);
+}
+
+u_int16_t
 key_newreqid(void)
 {
 	static u_int16_t auto_reqid = IPSEC_MANUAL_REQID_MAX + 1;
@@ -2086,24 +2118,13 @@ key_gather_mbuf(struct mbuf *m, const struct sadb_msghdr *mhp,
 }
 
 /*
- * SADB_X_SPDADD, SADB_X_SPDSETIDX or SADB_X_SPDUPDATE processing
- * add an entry to SP database, when received
- *   <base, address(SD), (lifetime(H),) policy>
- * from the user(?).
- * Adding to SP database,
- * and send
- *   <base, address(SD), (lifetime(H),) policy>
- * to the socket which was send.
- *
- * SPDADD set a unique policy entry.
- * SPDSETIDX like SPDADD without a part of policy requests.
- * SPDUPDATE replace a unique policy entry.
- *
- * m will always be freed.
+ * The argument _sp must not overwrite until SP is created and registered
+ * successfully.
  */
 static int
-key_api_spdadd(struct socket *so, struct mbuf *m,
-	   const struct sadb_msghdr *mhp)
+key_spdadd(struct socket *so, struct mbuf *m,
+	   const struct sadb_msghdr *mhp, struct secpolicy **_sp,
+	   bool from_kernel)
 {
 	const struct sockaddr *src, *dst;
 	const struct sadb_x_policy *xpl0;
@@ -2184,7 +2205,7 @@ key_api_spdadd(struct socket *so, struct mbuf *m,
 	struct secpolicy *sp;
 
 	if (mhp->msg->sadb_msg_type == SADB_X_SPDUPDATE) {
-		sp = key_lookup_and_remove_sp(&spidx);
+		sp = key_lookup_and_remove_sp(&spidx, from_kernel);
 		if (sp != NULL)
 			key_destroy_sp(sp);
 	} else {
@@ -2198,7 +2219,7 @@ key_api_spdadd(struct socket *so, struct mbuf *m,
     }
 
 	/* allocation new SP entry */
-	newsp = key_msg2sp(xpl0, PFKEY_EXTLEN(xpl0), &error);
+	newsp = _key_msg2sp(xpl0, PFKEY_EXTLEN(xpl0), &error, from_kernel);
 	if (newsp == NULL) {
 		return key_senderror(so, m, error);
 	}
@@ -2214,10 +2235,19 @@ key_api_spdadd(struct socket *so, struct mbuf *m,
 	newsp->lastused = newsp->created;
 	newsp->lifetime = lft ? lft->sadb_lifetime_addtime : 0;
 	newsp->validtime = lft ? lft->sadb_lifetime_usetime : 0;
+	if (from_kernel)
+		newsp->origin = IPSEC_SPORIGIN_KERNEL;
+	else
+		newsp->origin = IPSEC_SPORIGIN_USER;
 
 	key_init_sp(newsp);
+	if (from_kernel)
+		KEY_SP_REF(newsp);
 
 	sadb_x_policy_id = newsp->id;
+
+	if (_sp != NULL)
+		*_sp = newsp;
 
 	mutex_enter(&key_spd.lock);
 	SPLIST_WRITER_INSERT_TAIL(newsp->spidx.dir, newsp);
@@ -2275,18 +2305,73 @@ key_api_spdadd(struct socket *so, struct mbuf *m,
 	    sizeof(*xpl), &off);
 	if (mpolicy == NULL) {
 		/* n is already freed */
+		/*
+		 * valid sp has been created, so we does not overwrite _sp
+		 * NULL here. let caller decide to use the sp or not.
+		 */
 		return key_senderror(so, m, ENOBUFS);
 	}
 	xpl = (struct sadb_x_policy *)(mtod(mpolicy, char *) + off);
 	if (xpl->sadb_x_policy_exttype != SADB_X_EXT_POLICY) {
 		m_freem(n);
+		/* ditto */
 		return key_senderror(so, m, EINVAL);
 	}
+
 	xpl->sadb_x_policy_id = sadb_x_policy_id;
 
 	m_freem(m);
 	return key_sendup_mbuf(so, n, KEY_SENDUP_ALL);
     }
+}
+
+/*
+ * SADB_X_SPDADD, SADB_X_SPDSETIDX or SADB_X_SPDUPDATE processing
+ * add an entry to SP database, when received
+ *   <base, address(SD), (lifetime(H),) policy>
+ * from the user(?).
+ * Adding to SP database,
+ * and send
+ *   <base, address(SD), (lifetime(H),) policy>
+ * to the socket which was send.
+ *
+ * SPDADD set a unique policy entry.
+ * SPDSETIDX like SPDADD without a part of policy requests.
+ * SPDUPDATE replace a unique policy entry.
+ *
+ * m will always be freed.
+ */
+static int
+key_api_spdadd(struct socket *so, struct mbuf *m,
+	       const struct sadb_msghdr *mhp)
+{
+
+	return key_spdadd(so, m, mhp, NULL, false);
+}
+
+struct secpolicy *
+key_kpi_spdadd(struct mbuf *m)
+{
+	struct sadb_msghdr mh;
+	int error;
+	struct secpolicy *sp = NULL;
+
+	error = key_align(m, &mh);
+	if (error)
+		return NULL;
+
+	error = key_spdadd(NULL, m, &mh, &sp, true);
+	if (error) {
+		/*
+		 * Currently, when key_spdadd() cannot send a PFKEY message
+		 * which means SP has been created, key_spdadd() returns error
+		 * although SP is created successfully.
+		 * Kernel components would not care PFKEY messages, so return
+		 * the "sp" regardless of error code. key_spdadd() overwrites
+		 * the argument only if SP  is created successfully.
+		 */
+	}
+	return sp;
 }
 
 /*
@@ -2370,7 +2455,7 @@ key_api_spddelete(struct socket *so, struct mbuf *m,
 	key_init_spidx_bymsghdr(&spidx, mhp);
 
 	/* Is there SP in SPD ? */
-	sp = key_lookup_and_remove_sp(&spidx);
+	sp = key_lookup_and_remove_sp(&spidx, false);
 	if (sp == NULL) {
 		IPSECLOG(LOG_DEBUG, "no SP found.\n");
 		return key_senderror(so, m, EINVAL);
@@ -2426,8 +2511,8 @@ key_alloc_mbuf_simple(int len, int mflag)
  * m will always be freed.
  */
 static int
-key_api_spddelete2(struct socket *so, struct mbuf *m,
-	       const struct sadb_msghdr *mhp)
+key_spddelete2(struct socket *so, struct mbuf *m,
+	       const struct sadb_msghdr *mhp, bool from_kernel)
 {
 	u_int32_t id;
 	struct secpolicy *sp;
@@ -2443,7 +2528,7 @@ key_api_spddelete2(struct socket *so, struct mbuf *m,
 	id = xpl->sadb_x_policy_id;
 
 	/* Is there SP in SPD ? */
-	sp = key_lookupbyid_and_remove_sp(id);
+	sp = key_lookupbyid_and_remove_sp(id, from_kernel);
 	if (sp == NULL) {
 		IPSECLOG(LOG_DEBUG, "no SP found id:%u.\n", id);
 		return key_senderror(so, m, EINVAL);
@@ -2483,6 +2568,39 @@ key_api_spddelete2(struct socket *so, struct mbuf *m,
 	m_freem(m);
 	return key_sendup_mbuf(so, n, KEY_SENDUP_ALL);
     }
+}
+
+/*
+ * SADB_SPDDELETE2 processing
+ * receive
+ *   <base, policy(*)>
+ * from the user(?), and set SADB_SASTATE_DEAD,
+ * and send,
+ *   <base, policy(*)>
+ * to the ikmpd.
+ * policy(*) including direction of policy.
+ *
+ * m will always be freed.
+ */
+static int
+key_api_spddelete2(struct socket *so, struct mbuf *m,
+	       const struct sadb_msghdr *mhp)
+{
+
+	return key_spddelete2(so, m, mhp, false);
+}
+
+int
+key_kpi_spddelete2(struct mbuf *m)
+{
+	struct sadb_msghdr mh;
+	int error;
+
+	error = key_align(m, &mh);
+	if (error)
+		return EINVAL;
+
+	return key_spddelete2(NULL, m, &mh, true);
 }
 
 /*
@@ -2630,10 +2748,17 @@ key_api_spdflush(struct socket *so, struct mbuf *m,
 		mutex_enter(&key_spd.lock);
 		SPLIST_WRITER_FOREACH(sp, dir) {
 			KASSERT(sp->state != IPSEC_SPSTATE_DEAD);
-			key_unlink_sp(sp);
-			mutex_exit(&key_spd.lock);
-			key_destroy_sp(sp);
-			goto retry;
+			/*
+			 * Userlang programs can remove SPs created by userland
+			 * probrams only, that is, they cannot remove SPs
+			 * created in kernel(e.g. ipsec(4) I/F).
+			 */
+			if (sp->origin == IPSEC_SPORIGIN_USER) {
+				key_unlink_sp(sp);
+				mutex_exit(&key_spd.lock);
+				key_destroy_sp(sp);
+				goto retry;
+			}
 		}
 		mutex_exit(&key_spd.lock);
 	}
@@ -7695,6 +7820,16 @@ key_senderror(struct socket *so, struct mbuf *m, int code)
 	struct sadb_msg *msg;
 
 	KASSERT(m->m_len >= sizeof(struct sadb_msg));
+
+	if (so == NULL) {
+		/*
+		 * This means the request comes from kernel.
+		 * As the request comes from kernel, it is unnecessary to
+		 * send message to userland. Just return errcode directly.
+		 */
+		m_freem(m);
+		return code;
+	}
 
 	msg = mtod(m, struct sadb_msg *);
 	msg->sadb_msg_errno = code;
