@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.290 2018/01/01 16:14:30 christos Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.291 2018/01/10 17:36:06 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.290 2018/01/01 16:14:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.291 2018/01/10 17:36:06 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1876,13 +1876,14 @@ ip_drop_membership(struct ip_moptions *imo, const struct sockopt *sopt)
 	bound = curlwp_bind();
 	if (sopt->sopt_size == sizeof(struct ip_mreq))
 		error = ip_get_membership(sopt, &ifp, &psref, &ia, false);
-	else
+	else {
 #ifdef INET6
 		error = ip6_get_membership(sopt, &ifp, &psref, &ia, sizeof(ia));
 #else
 		error = EINVAL;
 		goto out;
 #endif
+	}
 
 	if (error)
 		goto out;
@@ -1905,9 +1906,11 @@ ip_drop_membership(struct ip_moptions *imo, const struct sockopt *sopt)
 	 * Give up the multicast address record to which the
 	 * membership points.
 	 */
-	IFNET_LOCK(ifp);
+	if (ifp)
+		IFNET_LOCK(ifp);
 	in_delmulti(imo->imo_membership[i]);
-	IFNET_UNLOCK(ifp);
+	if (ifp)
+		IFNET_UNLOCK(ifp);
 
 	/*
 	 * Remove the gap in the membership array.
