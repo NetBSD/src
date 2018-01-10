@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.109 2017/12/09 00:52:41 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.110 2018/01/10 20:51:11 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2017 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.109 2017/12/09 00:52:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.110 2018/01/10 20:51:11 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -562,13 +562,11 @@ trap(struct trapframe *frame)
 			}
 		}
 
-		if (cr2 < VM_MAXUSER_ADDRESS) {
+		if ((frame->tf_err & PGEX_P) &&
+		    cr2 < VM_MAXUSER_ADDRESS) {
 			/* SMAP might have brought us here */
 			if (onfault_handler(pcb, frame) == NULL) {
-				panic("prevented %s %p (SMAP)",
-				    (cr2 < PAGE_SIZE
-					? "null pointer dereference at"
-					: "access to"),
+				panic("prevented access to %p (SMAP)",
 				    (void *)cr2);
 			}
 		}
