@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.common,v 1.24 2017/11/28 07:24:32 skrll Exp $
+#	$NetBSD: GENERIC.common,v 1.25 2018/01/10 11:33:48 jmcneill Exp $
 #
 #	GENERIC evbarm kernel config (template)
 #
@@ -141,6 +141,7 @@ pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	tun			# network tunneling over tty
 pseudo-device	tap			# virtual Ethernet
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC 1933)
+pseudo-device	ipsecif			# interface for routing-based ipsec
 pseudo-device	gre			# generic L3 over IP tunnel
 pseudo-device	npf			# NPF packet filter
 
