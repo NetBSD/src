@@ -1,4 +1,4 @@
-/* $NetBSD: led.c,v 1.2 2017/07/08 19:25:37 jmcneill Exp $ */
+/* $NetBSD: led.c,v 1.3 2018/01/10 15:58:40 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: led.c,v 1.2 2017/07/08 19:25:37 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: led.c,v 1.3 2018/01/10 15:58:40 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,8 @@ led_sysctl_handler(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node;
 	struct led_device *led;
-	int error, state;
+	int error;
+	bool state;
 
 	mutex_enter(&led_lock);
 
@@ -112,11 +113,6 @@ led_sysctl_handler(SYSCTLFN_ARGS)
 	if (error || newp == NULL) {
 		mutex_exit(&led_lock);
 		return error;
-	}
-
-	if (state < LED_STATE_OFF || state > LED_STATE_ON) {
-		mutex_exit(&led_lock);
-		return EINVAL;
 	}
 
 	led->setstate(led->priv, state);
