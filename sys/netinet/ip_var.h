@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.121 2017/12/11 05:47:18 ryo Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.122 2018/01/10 10:56:30 knakahara Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -164,8 +164,9 @@ struct ip_pktopts {
 #define	IP_STAT_NOGIF		28	/* no match gif found */
 #define	IP_STAT_BADADDR		29	/* invalid address on header */
 #define	IP_STAT_NOL2TP		30	/* no match l2tp found */
+#define	IP_STAT_NOIPSEC		31	/* no match ipsec(4) found */
 
-#define	IP_NSTATS		31
+#define	IP_NSTATS		32
 
 #ifdef _KERNEL
 
