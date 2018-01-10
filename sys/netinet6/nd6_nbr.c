@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.140 2017/12/26 02:26:45 ozaki-r Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.141 2018/01/10 07:11:38 ozaki-r Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.140 2017/12/26 02:26:45 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.141 2018/01/10 07:11:38 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1356,9 +1356,6 @@ nd6_dad_duplicated(struct ifaddr *ifa)
 	ia->ia6_flags &= ~IN6_IFF_TENTATIVE;
 	ia->ia6_flags |= IN6_IFF_DUPLICATED;
 
-	/* We are done with DAD, with duplicated address found. (failure) */
-	nd6_dad_stoptimer(dp);
-
 	log(LOG_ERR, "%s: DAD complete for %s - duplicate found\n",
 	    if_name(ifp), IN6_PRINT(ip6buf, &ia->ia_addr.sin6_addr));
 	log(LOG_ERR, "%s: manual intervention required\n",
@@ -1403,6 +1400,9 @@ nd6_dad_duplicated(struct ifaddr *ifa)
 
 	TAILQ_REMOVE(&dadq, dp, dad_list);
 	mutex_exit(&nd6_dad_lock);
+
+	/* We are done with DAD, with duplicated address found. (failure) */
+	nd6_dad_stoptimer(dp);
 
 	kmem_intr_free(dp, sizeof(*dp));
 	ifafree(ifa);
