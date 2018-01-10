@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.478 2017/12/28 23:16:15 wiz Exp $
+.\"	$NetBSD: options.4,v 1.479 2018/01/10 18:13:29 maxv Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd December 28, 2017
+.Dd January 10, 2018
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -2399,6 +2399,17 @@ Sets the initial value of the flag which controls whether user programs
 can map virtual address 0.
 The flag can be changed at runtime by
 .Xr sysctl 3 .
+.It Cd options KASLR
+Enables Kernel ASLR.
+This randomizes the location of the kernel image in memory.
+.Em NOTE :
+not available on all architectures.
+.It Cd options SVS
+Enables Separate Virtual Space.
+On architectures that are designed to function with a shared address
+space, this option explicitly isolates the kernel and user spaces.
+.Em NOTE :
+not available on all architectures.
 .El
 .Ss amiga-specific Options
 .Bl -ohang
