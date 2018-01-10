@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipsec.4,v 1.41 2017/05/21 09:13:46 wiz Exp $
+.\"	$NetBSD: ipsec.4,v 1.42 2018/01/10 11:08:55 knakahara Exp $
 .\"	$KAME: ipsec.4,v 1.17 2001/06/27 15:25:10 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -35,6 +35,10 @@
 .Nm ipsec
 .Nd IP security protocol
 .Sh DESCRIPTION
+This manual pages describes the IPSEC.
+For the network device driver please see
+.Xr ipsecif 4 .
+.Pp
 .Nm
 is a security protocol in the Internet Protocol (IP) layer.
 .Nm
@@ -281,6 +285,7 @@ routines from looking into IP payload.
 .Xr ipsec_set_policy 3 ,
 .Xr fast_ipsec 4 ,
 .Xr icmp6 4 ,
+.Xr ipsecif 4 ,
 .Xr intro 4 ,
 .Xr ip6 4 ,
 .Xr racoon 8 ,
