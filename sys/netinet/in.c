@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.213 2017/12/27 08:35:20 ozaki-r Exp $	*/
+/*	$NetBSD: in.c,v 1.214 2018/01/10 10:56:30 knakahara Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.213 2017/12/27 08:35:20 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.214 2018/01/10 10:56:30 knakahara Exp $");
 
 #include "arp.h"
 
@@ -1875,6 +1875,44 @@ in_selectsrc(struct sockaddr_in *sin, struct route *ro,
 out:
 	rtcache_unref(rt, ro);
 	return ia;
+}
+
+int
+in_tunnel_validate(const struct ip *ip, struct in_addr src, struct in_addr dst)
+{
+	struct in_ifaddr *ia4;
+	int s;
+
+	/* check for address match */
+	if (src.s_addr != ip->ip_dst.s_addr ||
+	    dst.s_addr != ip->ip_src.s_addr)
+		return 0;
+
+	/* martian filters on outer source - NOT done in ip_input! */
+	if (IN_MULTICAST(ip->ip_src.s_addr))
+		return 0;
+	switch ((ntohl(ip->ip_src.s_addr) & 0xff000000) >> 24) {
+	case 0:
+	case 127:
+	case 255:
+		return 0;
+	}
+	/* reject packets with broadcast on source */
+	s = pserialize_read_enter();
+	IN_ADDRLIST_READER_FOREACH(ia4) {
+		if ((ia4->ia_ifa.ifa_ifp->if_flags & IFF_BROADCAST) == 0)
+			continue;
+		if (ip->ip_src.s_addr == ia4->ia_broadaddr.sin_addr.s_addr) {
+			pserialize_read_exit(s);
+			return 0;
+		}
+	}
+	pserialize_read_exit(s);
+
+	/* NOTE: packet may dropped by uRPF */
+
+	/* return valid bytes length */
+	return sizeof(src) + sizeof(dst);
 }
 
 #if NARP > 0

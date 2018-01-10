@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.33 2017/02/16 08:12:44 knakahara Exp $
+#	$NetBSD: Makefile,v 1.34 2018/01/10 10:56:30 knakahara Exp $
 
 INCSDIR= /usr/include/net
 
 INCS=	bpf.h bpfjit.h bpfdesc.h dlt.h ethertypes.h if.h if_arc.h if_arp.h \
 	if_atm.h if_bridgevar.h if_dl.h if_ether.h if_etherip.h if_fddi.h if_gif.h \
-	if_gre.h if_hippi.h if_ieee1394.h if_llc.h if_media.h if_mpls.h \
+	if_gre.h if_hippi.h if_ieee1394.h if_ipsec.h if_llc.h if_media.h if_mpls.h \
 	if_pflog.h if_ppp.h if_pppoe.h if_l2tp.h if_sppp.h if_srt.h if_stf.h \
 	if_tap.h if_token.h if_tun.h if_types.h if_vlanvar.h net_stats.h \
 	netisr.h pfil.h pfkeyv2.h pfvar.h ppp-comp.h ppp_defs.h radix.h \

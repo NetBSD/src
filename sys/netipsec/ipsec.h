@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.61 2017/10/03 08:56:52 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.62 2018/01/10 10:56:30 knakahara Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -83,6 +83,10 @@ struct secpolicy {
 	u_int state;			/* 0: dead, others: alive */
 #define IPSEC_SPSTATE_DEAD	0
 #define IPSEC_SPSTATE_ALIVE	1
+
+	u_int origin;			/* who generate this SP. */
+#define IPSEC_SPORIGIN_USER	0
+#define IPSEC_SPORIGIN_KERNEL	1
 
 	u_int policy;		/* DISCARD, NONE or IPSEC, see keyv2.h */
 	struct ipsecrequest *req;

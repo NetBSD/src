@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.102 2018/01/01 00:51:36 christos Exp $	*/
+/*	$NetBSD: in.h,v 1.103 2018/01/10 10:56:30 knakahara Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -586,6 +586,9 @@ struct ip_moptions;
 
 struct in_ifaddr *in_selectsrc(struct sockaddr_in *,
 	struct route *, int, struct ip_moptions *, int *, struct psref *);
+
+struct ip;
+int in_tunnel_validate(const struct ip *, struct in_addr, struct in_addr);
 
 #define	in_hosteq(s,t)	((s).s_addr == (t).s_addr)
 #define	in_nullhost(x)	((x).s_addr == INADDR_ANY)

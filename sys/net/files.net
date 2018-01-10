@@ -1,4 +1,4 @@
-#	$NetBSD: files.net,v 1.13 2017/02/16 08:12:44 knakahara Exp $
+#	$NetBSD: files.net,v 1.14 2018/01/10 10:56:30 knakahara Exp $
 
 # XXX CLEANUP
 define	net
@@ -22,6 +22,7 @@ file	net/if_gif.c			gif			needs-flag
 file	net/if_gre.c			gre			needs-flag
 file	net/if_hippisubr.c		hippi			needs-flag
 file	net/if_ieee1394subr.c		ieee1394
+file	net/if_ipsec.c			ipsec & ipsecif
 file	net/if_llatbl.c			inet | inet6
 file	net/if_l2tp.c			l2tp			needs-flag
 file	net/if_loop.c			loop
