@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.417 2017/12/26 02:01:35 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.418 2018/01/10 01:22:26 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.417 2017/12/26 02:01:35 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.418 2018/01/10 01:22:26 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1793,12 +1793,13 @@ ifa_insert(struct ifnet *ifp, struct ifaddr *ifa)
 	ifa->ifa_ifp = ifp;
 
 	/*
+	 * Check MP-safety for IFEF_MPSAFE drivers.
 	 * Check !IFF_RUNNING for initialization routines that normally don't
 	 * take IFNET_LOCK but it's safe because there is no competitor.
 	 * XXX there are false positive cases because IFF_RUNNING can be off on
 	 * if_stop.
 	 */
-	KASSERT(!ISSET(ifp->if_flags, IFF_RUNNING) ||
+	KASSERT(!if_is_mpsafe(ifp) || !ISSET(ifp->if_flags, IFF_RUNNING) ||
 	    IFNET_LOCKED(ifp));
 
 	TAILQ_INSERT_TAIL(&ifp->if_addrlist, ifa, ifa_list);
@@ -1814,10 +1815,11 @@ ifa_remove(struct ifnet *ifp, struct ifaddr *ifa)
 
 	KASSERT(ifa->ifa_ifp == ifp);
 	/*
+	 * Check MP-safety for IFEF_MPSAFE drivers.
 	 * if_is_deactivated indicates ifa_remove is called form if_detach
 	 * where is safe even if IFNET_LOCK isn't held.
 	 */
-	KASSERT(if_is_deactivated(ifp) || IFNET_LOCKED(ifp));
+	KASSERT(!if_is_mpsafe(ifp) || if_is_deactivated(ifp) || IFNET_LOCKED(ifp));
 
 	TAILQ_REMOVE(&ifp->if_addrlist, ifa, ifa_list);
 	IFADDR_WRITER_REMOVE(ifa);
