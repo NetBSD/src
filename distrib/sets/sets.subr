@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.181 2017/11/22 23:14:01 kre Exp $
+#	$NetBSD: sets.subr,v 1.182 2018/01/10 18:15:18 uwe Exp $
 #
 
 #
@@ -179,7 +179,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.181 2017/11/22 23:14:01 kre Exp $
+# 	# $NetBSD: sets.subr,v 1.182 2018/01/10 18:15:18 uwe Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -605,11 +605,10 @@ print_set_lists()
 #
 arch_to_cpu()
 {
-	MAKEFLAGS= MAKEVERBOSE= MACHINE_ARCH=${1} ${MAKE} -B -f- all <<EOMAKE
-.include <bsd.own.mk>
-all:
-	@echo \${MACHINE_CPU}
-EOMAKE
+	MACHINE_ARCH=${1} MAKEFLAGS= \
+	${MAKE} -m ${NETBSDSRCDIR}/share/mk \
+		-f ${NETBSDSRCDIR}/share/mk/bsd.own.mk \
+		-V '${MACHINE_CPU}'
 }
 
 # arch_to_endian mach
@@ -619,11 +618,10 @@ EOMAKE
 #
 arch_to_endian()
 {
-	MAKEFLAGS= MAKEVERBOSE= MACHINE_ARCH=${1} ${MAKE} -B -f- all <<EOMAKE
-.include <bsd.endian.mk>
-all:
-	@echo \${TARGET_ENDIANNESS}
-EOMAKE
+	MACHINE_ARCH=${1} MAKEFLAGS= \
+	${MAKE} -m ${NETBSDSRCDIR}/share/mk \
+		-f ${NETBSDSRCDIR}/share/mk/bsd.endian.mk \
+		-V '${TARGET_ENDIANNESS}'
 }
 
 #####
