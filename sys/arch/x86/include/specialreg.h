@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.105 2017/10/19 06:29:16 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.106 2018/01/10 04:45:24 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -325,37 +325,37 @@
  */
 
 /* %ebx */
-#define CPUID_SEF_FSGSBASE	__BIT(0)
-#define CPUID_SEF_TSC_ADJUST	__BIT(1)
-#define CPUID_SEF_SGX		__BIT(2)
-#define CPUID_SEF_BMI1		__BIT(3)
-#define CPUID_SEF_HLE		__BIT(4)
-#define CPUID_SEF_AVX2		__BIT(5)
-#define CPUID_SEF_FDPEXONLY	__BIT(6)
-#define CPUID_SEF_SMEP		__BIT(7)
-#define CPUID_SEF_BMI2		__BIT(8)
-#define CPUID_SEF_ERMS		__BIT(9)
-#define CPUID_SEF_INVPCID	__BIT(10)
-#define CPUID_SEF_RTM		__BIT(11)
-#define CPUID_SEF_QM		__BIT(12)
-#define CPUID_SEF_FPUCSDS	__BIT(13)
-#define CPUID_SEF_MPX		__BIT(14)
-#define CPUID_SEF_PQE		__BIT(15)
-#define CPUID_SEF_AVX512F	__BIT(16)
-#define CPUID_SEF_AVX512DQ	__BIT(17)
-#define CPUID_SEF_RDSEED	__BIT(18)
-#define CPUID_SEF_ADX		__BIT(19)
-#define CPUID_SEF_SMAP		__BIT(20)
-#define CPUID_SEF_AVX512_IFMA	__BIT(21)
-#define CPUID_SEF_CLFLUSHOPT	__BIT(23)
-#define CPUID_SEF_CLWB		__BIT(24)
-#define CPUID_SEF_PT		__BIT(25)
-#define CPUID_SEF_AVX512PF	__BIT(26)
-#define CPUID_SEF_AVX512ER	__BIT(27)
-#define CPUID_SEF_AVX512CD	__BIT(28)
-#define CPUID_SEF_SHA		__BIT(29)
-#define CPUID_SEF_AVX512BW	__BIT(30)
-#define CPUID_SEF_AVX512VL	__BIT(31)
+#define CPUID_SEF_FSGSBASE	__BIT(0)  /* {RD,WR}{FS,GS}BASE */
+#define CPUID_SEF_TSC_ADJUST	__BIT(1)  /* IA32_TSC_ADJUST MSR support */
+#define CPUID_SEF_SGX		__BIT(2)  /* Software Guard Extentions */
+#define CPUID_SEF_BMI1		__BIT(3)  /* advanced bit manipulation ext. 1st grp */
+#define CPUID_SEF_HLE		__BIT(4)  /* Hardware Lock Elision */
+#define CPUID_SEF_AVX2		__BIT(5)  /* Advanced Vector Extensions 2 */
+#define CPUID_SEF_FDPEXONLY	__BIT(6)  /* x87FPU Data ptr updated only on x87exp */
+#define CPUID_SEF_SMEP		__BIT(7)  /* Supervisor-Mode Excecution Prevention */
+#define CPUID_SEF_BMI2		__BIT(8)  /* advanced bit manipulation ext. 2nd grp */
+#define CPUID_SEF_ERMS		__BIT(9)  /* Enhanced REP MOVSB/STOSB */
+#define CPUID_SEF_INVPCID	__BIT(10) /* INVPCID instruction */
+#define CPUID_SEF_RTM		__BIT(11) /* Restricted Transactional Memory */
+#define CPUID_SEF_QM		__BIT(12) /* Resource Director Technology Monitoring */
+#define CPUID_SEF_FPUCSDS	__BIT(13) /* Deprecate FPU CS and FPU DS values */
+#define CPUID_SEF_MPX		__BIT(14) /* Memory Protection Extensions */
+#define CPUID_SEF_PQE		__BIT(15) /* Resource Director Technology Allocation */
+#define CPUID_SEF_AVX512F	__BIT(16) /* AVX-512 Foundation */
+#define CPUID_SEF_AVX512DQ	__BIT(17) /* AVX-512 Double/Quadword */
+#define CPUID_SEF_RDSEED	__BIT(18) /* RDSEED instruction */
+#define CPUID_SEF_ADX		__BIT(19) /* ADCX/ADOX instructions */
+#define CPUID_SEF_SMAP		__BIT(20) /* Supervisor-Mode Access Prevention */
+#define CPUID_SEF_AVX512_IFMA	__BIT(21) /* AVX-512 Integer Fused Multiply Add */
+#define CPUID_SEF_CLFLUSHOPT	__BIT(23) /* Cache Line FLUSH OPTimized */
+#define CPUID_SEF_CLWB		__BIT(24) /* Cache Line Write Back */
+#define CPUID_SEF_PT		__BIT(25) /* Processor Trace */
+#define CPUID_SEF_AVX512PF	__BIT(26) /* AVX-512 PreFetch */
+#define CPUID_SEF_AVX512ER	__BIT(27) /* AVX-512 Exponential and Reciprocal */
+#define CPUID_SEF_AVX512CD	__BIT(28) /* AVX-512 Conflict Detection */
+#define CPUID_SEF_SHA		__BIT(29) /* SHA Extensions */
+#define CPUID_SEF_AVX512BW	__BIT(30) /* AVX-512 Byte and Word */
+#define CPUID_SEF_AVX512VL	__BIT(31) /* AVX-512 Vector Length */
 
 #define CPUID_SEF_FLAGS	"\20" \
 	"\1" "FSGSBASE"	"\2" "TSCADJUST" "\3" "SGX"	"\4" "BMI1"	\
@@ -368,20 +368,20 @@
 	"\35" "AVX512CD""\36" "SHA"	"\37" "AVX512BW" "\40" "AVX512VL"
 
 /* %ecx */
-#define CPUID_SEF_PREFETCHWT1	__BIT(0)
-#define CPUID_SEF_AVX512_VBMI	__BIT(1)
-#define CPUID_SEF_UMIP		__BIT(2)
-#define CPUID_SEF_PKU		__BIT(3)
-#define CPUID_SEF_OSPKE		__BIT(4)
-#define CPUID_SEF_AVX512_VBMI2	__BIT(6)
+#define CPUID_SEF_PREFETCHWT1	__BIT(0)  /* PREFETCHWT1 instruction */
+#define CPUID_SEF_AVX512_VBMI	__BIT(1)  /* AVX-512 Vector Byte Manipulation */
+#define CPUID_SEF_UMIP		__BIT(2)  /* User-Mode Instruction prevention */
+#define CPUID_SEF_PKU		__BIT(3)  /* Protection Keys for User-mode pages */
+#define CPUID_SEF_OSPKE		__BIT(4)  /* OS has set CR4.PKE to ena. protec. keys */
+#define CPUID_SEF_AVX512_VBMI2	__BIT(6)  /* AVX-512 Vector Byte Manipulation 2 */
 #define CPUID_SEF_GFNI		__BIT(8)
 #define CPUID_SEF_VAES		__BIT(9)
 #define CPUID_SEF_VPCLMULQDQ	__BIT(10)
-#define CPUID_SEF_AVX512_VNNI	__BIT(11)
+#define CPUID_SEF_AVX512_VNNI	__BIT(11) /* Vector neural Network Instruction */
 #define CPUID_SEF_AVX512_BITALG	__BIT(12)
 #define CPUID_SEF_AVX512_VPOPCNTDQ __BIT(14)
-#define CPUID_SEF_RDPID		__BIT(22)
-#define CPUID_SEF_SGXLC		__BIT(30)
+#define CPUID_SEF_RDPID		__BIT(22) /* ReaD Processor ID */
+#define CPUID_SEF_SGXLC		__BIT(30) /* SGX Launch Configuration */
 
 #define CPUID_SEF_FLAGS1	"\20" \
 	"\1" "PREFETCHWT1" "\2" "AVX512_VBMI" "\3" "UMIP" "\4" "PKU"	\
