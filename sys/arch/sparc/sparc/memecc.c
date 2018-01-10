@@ -1,4 +1,4 @@
-/*	$NetBSD: memecc.c,v 1.16 2013/10/19 19:40:23 mrg Exp $	*/
+/*	$NetBSD: memecc.c,v 1.17 2018/01/10 01:49:05 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: memecc.c,v 1.16 2013/10/19 19:40:23 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memecc.c,v 1.17 2018/01/10 01:49:05 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,7 @@ memecc_attach(device_t parent, device_t self, void *aux)
 }
 
 /*
- * Called if the MEMORY ERROR bit is set after a level 25 interrupt.
+ * Called if the MEMORY ERROR bit is set after a level 15 interrupt.
  */
 int
 memecc_error(void)
