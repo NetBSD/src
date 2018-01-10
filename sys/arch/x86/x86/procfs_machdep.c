@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_machdep.c,v 1.20 2017/10/10 03:05:29 msaitoh Exp $ */
+/*	$NetBSD: procfs_machdep.c,v 1.21 2018/01/10 11:46:02 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.20 2017/10/10 03:05:29 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.21 2018/01/10 11:46:02 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +113,7 @@ static const char * const x86_features[][32] = {
 	{ /* (7) Linux mapping */
 	NULL, NULL, "cpb", "ebp", NULL, "pln", "pts", "dtherm",
 	"hw_pstate", "proc_feedback", "sme", NULL,
-	NULL, NULL, NULL, "intel_pt",
+	NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
 
@@ -130,7 +130,7 @@ static const char * const x86_features[][32] = {
 	"bmi2", "erms", "invpcid", "rtm", "cqm", NULL, "mpx", "rdt_a",
 	"avx512f", "avx512dq", "rdseed", "adx",
 	"smap", NULL, NULL, "clflushopt",
-	"clwb", NULL, "avx512pf", "avx512er",
+	"clwb", "intel_pt", "avx512pf", "avx512er",
 	"avx512cd", "sha_ni", "avx512bw", "avx512vl"},
 
 	{ /* (10) 0x0000000d:1 eax */
