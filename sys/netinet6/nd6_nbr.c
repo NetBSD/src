@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.141 2018/01/10 07:11:38 ozaki-r Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.142 2018/01/10 07:34:31 ozaki-r Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.141 2018/01/10 07:11:38 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.142 2018/01/10 07:34:31 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1383,9 +1383,7 @@ nd6_dad_duplicated(struct ifaddr *ifa)
 		case IFT_FDDI:
 		case IFT_ATM:
 		case IFT_IEEE1394:
-#ifdef IFT_IEEE80211
 		case IFT_IEEE80211:
-#endif
 			in6 = ia->ia_addr.sin6_addr;
 			if (in6_get_hw_ifid(ifp, &in6) == 0 &&
 			    IN6_ARE_ADDR_EQUAL(&ia->ia_addr.sin6_addr, &in6)) {
