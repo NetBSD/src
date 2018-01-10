@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.common,v 1.26 2018/01/10 19:51:04 jakllsch Exp $
+#	$NetBSD: GENERIC.common,v 1.27 2018/01/10 19:56:47 jakllsch Exp $
 #
 #	GENERIC evbarm kernel config (template)
 #
@@ -66,7 +66,6 @@ options 	NFS_BOOT_RWSIZE=1024
 # Compatibility options
 
 include 	"conf/compat_netbsd60.config"
-include 	"conf/compat_netbsd70.config"
 options 	COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 
 # Shared memory options
