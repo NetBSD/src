@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.187 2017/12/22 02:36:46 ginsbach Exp $
+$NetBSD: acronyms.comp,v 1.188 2018/01/10 08:47:30 pgoyette Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1255,6 +1255,7 @@ SVGA	Super Video Graphics Array
 SVM	secure virtual machine
 SVM	support vector machine
 SVR	System V Release
+SVS	Separate Virtual Space
 SWF	Shockwave Flash
 SWIG	simplified wrapper [and] interface generator
 SYR	symbol timing recovery
