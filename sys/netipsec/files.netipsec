@@ -1,8 +1,9 @@
-#	$Id: files.netipsec,v 1.12 2013/06/05 19:01:26 christos Exp $
+#	$Id: files.netipsec,v 1.13 2018/01/10 10:56:30 knakahara Exp $
 #
 #
 defflag opt_ipsec.h	IPSEC:	opencrypto
 defflag opt_ipsec.h	IPSEC_DEBUG
+defflag opt_ipsec.h	IPSEC_TX_TOS_CLEAR
 
 file	netipsec/ipsec.c		ipsec	needs-flag
 file	netipsec/ipsec_input.c		ipsec
@@ -19,3 +20,5 @@ file	netipsec/key_debug.c		ipsec
 file	netipsec/keysock.c		ipsec
 
 file	netipsec/xform_tcp.c		ipsec & tcp_signature
+
+file	netipsec/ipsecif.c		ipsec & ipsecif
