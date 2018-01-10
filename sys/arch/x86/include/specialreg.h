@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.106 2018/01/10 04:45:24 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.107 2018/01/10 07:04:54 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -394,9 +394,12 @@
 /* %edx */
 #define CPUID_SEF_AVX512_4VNNIW	__BIT(2)
 #define CPUID_SEF_AVX512_4FMAPS	__BIT(3)
+#define CPUID_SEF_IBRS		__BIT(26) /* IBRS / IBPB Speculation Control */
+#define CPUID_SEF_STIBP		__BIT(27) /* STIBP Speculation Control */
 
 #define CPUID_SEF_FLAGS2	"\20" \
-				"\3" "AVX512_4VNNIW" "\4" "AVX512_4FMAPS"
+				"\3" "AVX512_4VNNIW" "\4" "AVX512_4FMAPS" \
+					"\33" "IBRS"	"\34" "STIBP"
 
 /*
  * CPUID Processor extended state Enumeration Fn0000000d
