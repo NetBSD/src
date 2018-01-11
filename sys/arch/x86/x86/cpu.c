@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.144 2018/01/07 16:10:16 maxv Exp $	*/
+/*	$NetBSD: cpu.c,v 1.145 2018/01/11 09:18:16 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.144 2018/01/07 16:10:16 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.145 2018/01/11 09:18:16 msaitoh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -621,6 +621,19 @@ cpu_init(struct cpu_info *ci)
 	if (cr4) {
 		cr4 |= rcr4();
 		lcr4(cr4);
+	}
+
+	/*
+	 * Changing CR4 register may change cpuid values. For example, setting
+	 * CR4_OSXSAVE sets CPUID2_OSXSAVE. The CPUID2_OSXSAVE is in
+	 * ci_feat_val[1], so update it.
+	 * XXX Other than ci_feat_val[1] might be changed.
+	 */
+	if (cpuid_level >= 1) {
+		u_int descs[4];
+
+		x86_cpuid(1, descs);
+		ci->ci_feat_val[1] = descs[2];
 	}
 
 	if (x86_fpu_save >= FPU_SAVE_FXSAVE) {
