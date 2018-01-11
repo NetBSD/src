@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.120 2017/12/28 23:16:57 wiz Exp $
+.\"	$NetBSD: sysctl.7,v 1.121 2018/01/11 09:53:55 pgoyette Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -786,7 +786,7 @@ The third level names for the settings are described below.
 .It Sy Third level name Ta Sy Type Ta Sy Changeable
 .It kern.module.autoload	integer	yes
 .It kern.module.autotime	integer	yes
-.It kern.module.verbose	integer	yes
+.It kern.module.verbose	boolean	yes
 .El
 .Pp
 The variables are as follows:
