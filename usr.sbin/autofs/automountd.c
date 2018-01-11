@@ -1,4 +1,4 @@
-/*	$NetBSD: automountd.c,v 1.1 2018/01/09 03:31:15 christos Exp $	*/
+/*	$NetBSD: automountd.c,v 1.2 2018/01/11 13:44:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  *
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: automountd.c,v 1.1 2018/01/09 03:31:15 christos Exp $");
+__RCSID("$NetBSD: automountd.c,v 1.2 2018/01/11 13:44:26 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -163,7 +163,7 @@ exit_callback(void)
 	done(EIO, true);
 }
 
-static void
+__dead static void
 handle_request(const struct autofs_daemon_request *adr, char *cmdline_options,
     bool incomplete_hierarchy)
 {
@@ -262,7 +262,7 @@ handle_request(const struct autofs_daemon_request *adr, char *cmdline_options,
 			/*
 			 * Exit without calling exit_callback().
 			 */
-			quick_exit(0);
+			quick_exit(EXIT_SUCCESS);
 		}
 
 		/*
@@ -288,7 +288,7 @@ handle_request(const struct autofs_daemon_request *adr, char *cmdline_options,
 		/*
 		 * Exit without calling exit_callback().
 		 */
-		quick_exit(0);
+		quick_exit(EXIT_SUCCESS);
 	}
 
 	log_debugx("found node defined at %s:%d; it is a mountpoint",
@@ -362,7 +362,7 @@ handle_request(const struct autofs_daemon_request *adr, char *cmdline_options,
 	/*
 	 * Exit without calling exit_callback().
 	 */
-	quick_exit(0);
+	quick_exit(EXIT_SUCCESS);
 }
 
 static void
@@ -424,13 +424,13 @@ wait_for_children(bool block)
 	return num;
 }
 
-static void
+__dead static void
 usage_automountd(void)
 {
 
-	fprintf(stderr, "usage: automountd [-D name=value][-m maxproc]"
-	    "[-o opts][-Tidv]\n");
-	exit(1);
+	fprintf(stderr, "Usage: %s [-D name=value][-m maxproc]"
+	    "[-o opts][-Tidv]\n", getprogname());
+	exit(EXIT_FAILURE);
 }
 
 static int
@@ -531,7 +531,7 @@ main_automountd(int argc, char **argv)
 		if (daemon(0, 0) == -1) {
 			log_warn("cannot daemonize");
 			pidfile_clean();
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 	} else {
 		lesser_daemon();
@@ -597,5 +597,5 @@ main_automountd(int argc, char **argv)
 
 	pidfile_clean();
 
-	return 0;
+	return EXIT_SUCCESS;
 }
