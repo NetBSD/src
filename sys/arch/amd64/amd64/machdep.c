@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.287 2018/01/11 10:30:26 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.288 2018/01/11 10:38:13 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.287 2018/01/11 10:30:26 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.288 2018/01/11 10:38:13 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -522,7 +522,11 @@ cpu_init_tss(struct cpu_info *ci)
 	cputss->tss.tss_iobase = IOMAP_INVALOFF << 16;
 
 	/* DDB stack */
+#ifdef __HAVE_PCPU_AREA
+	p = (vaddr_t)&pcpuarea->ent[cid].ist0;
+#else
 	p = uvm_km_alloc(kernel_map, PAGE_SIZE, 0, UVM_KMF_WIRED|UVM_KMF_ZERO);
+#endif
 	cputss->tss.tss_ist[0] = p + PAGE_SIZE - 16;
 
 	/* double fault */
