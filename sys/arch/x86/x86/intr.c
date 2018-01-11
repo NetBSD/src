@@ -1,6 +1,6 @@
-/*	$NetBSD: intr.c,v 1.116 2018/01/04 13:36:30 maxv Exp $	*/
+/*	$NetBSD: intr.c,v 1.117 2018/01/11 10:30:26 maxv Exp $	*/
 
-/*-
+/*
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.116 2018/01/04 13:36:30 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.117 2018/01/11 10:30:26 maxv Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -168,7 +168,7 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.116 2018/01/04 13:36:30 maxv Exp $");
 #include "acpica.h"
 
 #if NIOAPIC > 0 || NACPICA > 0
-#include <machine/i82093var.h> 
+#include <machine/i82093var.h>
 #include <machine/mpbiosvar.h>
 #include <machine/mpacpi.h>
 #endif
@@ -372,7 +372,7 @@ intr_calculatemasks(struct cpu_info *ci)
 
 /*
  * List to keep track of PCI buses that are probed but not known
- * to the firmware. Used to 
+ * to the firmware. Used to
  *
  * XXX should maintain one list, not an array and a linked list.
  */
@@ -791,7 +791,7 @@ intr_allocate_slot(struct pic *pic, int pin, int level,
 	}
 	KASSERT(ci != NULL);
 
-	/* 
+	/*
 	 * Now allocate an IDT vector.
 	 * For the 8259 these are reserved up front.
 	 */
@@ -1034,7 +1034,7 @@ intr_establish_xname(int legacy_irq, struct pic *pic, int pin, int type,
 		/* NOTREACHED */
 	}
 
-        /*
+	/*
 	 * If the establishing interrupt uses shared IRQ, the interrupt uses
 	 * "ci->ci_isources[slot]" instead of allocated by the establishing
 	 * device's pci_intr_alloc() or this function.
@@ -1149,7 +1149,7 @@ intr_disestablish_xcall(void *arg1, void *arg2)
 	source = ci->ci_isources[ih->ih_slot];
 	idtvec = source->is_idtvec;
 
-	(*pic->pic_hwmask)(pic, ih->ih_pin);	
+	(*pic->pic_hwmask)(pic, ih->ih_pin);
 	atomic_and_32(&ci->ci_ipending, ~(1 << ih->ih_slot));
 
 	/*
@@ -1457,9 +1457,6 @@ cpu_intr_init(struct cpu_info *ci)
 	int i;
 	static int first = 1;
 #endif
-#ifdef INTRSTACKSIZE
-	vaddr_t istack;
-#endif
 
 #if NLAPIC > 0
 	isp = kmem_zalloc(sizeof(*isp), KM_SLEEP);
@@ -1504,34 +1501,36 @@ cpu_intr_init(struct cpu_info *ci)
 #else /* XEN */
 	int i; /* XXX: duplicate */
 	vaddr_t istack; /* XXX: duplicate */
-		ci->ci_iunmask[0] = 0xfffffffe;
+	ci->ci_iunmask[0] = 0xfffffffe;
 	for (i = 1; i < NIPL; i++)
 		ci->ci_iunmask[i] = ci->ci_iunmask[i - 1] & ~(1 << i);
 #endif /* XEN */
 
 #if defined(INTRSTACKSIZE)
+	vaddr_t istack;
+
 	/*
 	 * If the red zone is activated, protect both the top and
 	 * the bottom of the stack with an unmapped page.
 	 */
 	istack = uvm_km_alloc(kernel_map,
 	    INTRSTACKSIZE + redzone_const_or_zero(2 * PAGE_SIZE), 0,
-	    UVM_KMF_WIRED);
+	    UVM_KMF_WIRED|UVM_KMF_ZERO);
 	if (redzone_const_or_false(true)) {
 		pmap_kremove(istack, PAGE_SIZE);
 		pmap_kremove(istack + INTRSTACKSIZE + PAGE_SIZE, PAGE_SIZE);
 		pmap_update(pmap_kernel());
 	}
-	/* 33 used to be 1.  Arbitrarily reserve 32 more register_t's
+
+	/*
+	 * 33 used to be 1.  Arbitrarily reserve 32 more register_t's
 	 * of space for ddb(4) to examine some subroutine arguments
 	 * and to hunt for the next stack frame.
 	 */
 	ci->ci_intrstack = (char *)istack + redzone_const_or_zero(PAGE_SIZE) +
 	    INTRSTACKSIZE - 33 * sizeof(register_t);
-#if defined(__x86_64__)
-	ci->ci_tss->tss.tss_ist[0] = (uintptr_t)ci->ci_intrstack & ~0xf;
-#endif /* defined(__x86_64__) */
-#endif /* defined(INTRSTACKSIZE) */
+#endif
+
 	ci->ci_idepth = -1;
 }
 
@@ -1826,7 +1825,7 @@ intr_redistribute(struct cpu_info *oci)
 	where = xc_unicast(0, intr_redistribute_xc_t, isp,
 	    (void *)(intptr_t)nslot, nci);
 	xc_wait(where);
-	
+
 	/*
 	 * We're ready to go on the target CPU.  Run a cross call to
 	 * reroute the interrupt away from the source CPU.
