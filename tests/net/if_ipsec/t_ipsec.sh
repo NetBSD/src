@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec.sh,v 1.1 2018/01/10 11:06:06 knakahara Exp $
+#	$NetBSD: t_ipsec.sh,v 1.2 2018/01/11 07:58:22 ozaki-r Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -881,7 +881,7 @@ add_test()
 	local algo=$6
 	local _algo=$(echo $algo | sed 's/-//g')
 
-	name="ipsec_${category}_${inner}over${outer}_${proto}_${_algo}"
+	name="ipsecif_${category}_${inner}over${outer}_${proto}_${_algo}"
 	fulldesc="Does ${inner} over ${outer} if_ipsec ${desc}"
 
 	atf_test_case ${name} cleanup
