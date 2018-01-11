@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipsecif.4,v 1.3 2018/01/11 06:38:05 knakahara Exp $
+.\"	$NetBSD: ipsecif.4,v 1.4 2018/01/11 08:59:27 wiz Exp $
 .\"
 .\" Copyright (C) 2017 Internet Initiative Japan Inc.
 .\" All rights reserved.
@@ -38,8 +38,9 @@
 .Sh DESCRIPTION
 The
 .Nm
-interface is targeted for route-based VPNs. It can tunnel IPv4 and
-IPv6 traffic over either IPv4 or IPv6 and secure it with ESP.
+interface is targeted for route-based VPNs.
+It can tunnel IPv4 and IPv6 traffic over either IPv4 or IPv6 and
+secure it with ESP.
 .Pp
 .Nm
 interfaces are dynamically created and destroyed with the
@@ -47,12 +48,12 @@ interfaces are dynamically created and destroyed with the
 .Cm create
 and
 .Cm destroy
-subcommands. The administrator must configure
+subcommands.
+The administrator must configure
 .Nm
-.Cm
-tunnel
-endpoint addresses. These addresses will be used for the outer IP
-header of ESP packets. The administrator also configures the protocol
+tunnel endpoint addresses.
+These addresses will be used for the outer IP header of ESP packets.
+The administrator also configures the protocol
 and addresses for the inner IP header with
 .Xr ifconfig 8
 .Cm inet
@@ -72,7 +73,8 @@ transport mode, however their security policy managements are different.
 over
 .Xr ipsec 4
 transport mode expects for userland programs to managed its
-security policies. In contrast,
+security policies.
+In contrast,
 .Nm
 manages its security policies by itself, that is, when the administrator
 sets up a
