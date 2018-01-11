@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.73 2018/01/05 08:04:21 maxv Exp $	*/
+/*	$NetBSD: pmap.h,v 1.74 2018/01/11 10:38:13 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -160,6 +160,7 @@ struct bootspace {
 struct pcpu_entry {
 	uint8_t gdt[MAXGDTSIZ];
 	uint8_t tss[PAGE_SIZE];
+	uint8_t ist0[PAGE_SIZE];
 	uint8_t ist1[PAGE_SIZE];
 	uint8_t ist2[PAGE_SIZE];
 } __packed;
