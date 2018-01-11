@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.30 2017/12/31 08:29:38 maxv Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.31 2018/01/11 11:15:34 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.30 2017/12/31 08:29:38 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.31 2018/01/11 11:15:34 maxv Exp $");
 
 #include "opt_mtrr.h"
 
@@ -178,9 +178,10 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	 * returns normally.
 	 */
 	uv = uvm_lwp_getuarea(l2);
+	KASSERT(uv % PAGE_SIZE == 0);
 
 #ifdef __x86_64__
-	pcb2->pcb_rsp0 = (uv + USPACE - 16) & ~0xf;
+	pcb2->pcb_rsp0 = (uv + USPACE - 16);
 	tf = (struct trapframe *)pcb2->pcb_rsp0 - 1;
 #else
 	pcb2->pcb_esp0 = (uv + USPACE - 16);
