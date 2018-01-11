@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.145 2018/01/07 16:10:16 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.146 2018/01/11 09:00:04 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1268,6 +1268,7 @@ IDTVEC(syscall)
 	 * is ignored as well.
 	 */
 	swapgs
+	SVS_ENTER_NOSTACK
 	movq	%r15,CPUVAR(SCRATCH)
 	movq	CPUVAR(CURLWP),%r15
 	movq	L_PCB(%r15),%r15
@@ -1295,7 +1296,6 @@ IDTVEC(syscall)
 	subq	$TF_REGSIZE,%rsp
 	cld
 #endif
-	SVS_ENTER
 	INTR_SAVE_GPRS
 	movw	$GSEL(GUDATA_SEL, SEL_UPL),TF_DS(%rsp)
 	movw	$GSEL(GUDATA_SEL, SEL_UPL),TF_ES(%rsp)

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.285 2018/01/07 16:10:16 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.286 2018/01/11 09:00:04 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.285 2018/01/07 16:10:16 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.286 2018/01/11 09:00:04 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -2339,6 +2339,8 @@ svs_pte_atomic_read(struct pmap *pmap, size_t idx)
 void
 svs_pdir_switch(struct pmap *pmap)
 {
+	extern size_t pmap_direct_pdpe;
+	extern size_t pmap_direct_npdp;
 	struct cpu_info *ci = curcpu();
 	pt_entry_t pte;
 	size_t i;
@@ -2351,8 +2353,14 @@ svs_pdir_switch(struct pmap *pmap)
 	mutex_enter(&ci->ci_svs_mtx);
 
 	for (i = 0; i < 512; i++) {
-		if (i == PDIR_SLOT_PTE) {
-			/* We don't want to have this mapped. */
+		/*
+		 * This is where we decide what to unmap from the user page
+		 * tables.
+		 */
+		if (pmap_direct_pdpe <= i &&
+		    i < pmap_direct_pdpe + pmap_direct_npdp) {
+			ci->ci_svs_updir[i] = 0;
+		} else if (i == PDIR_SLOT_PTE) {
 			ci->ci_svs_updir[i] = 0;
 		} else {
 			pte = svs_pte_atomic_read(pmap, i);

@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.27 2018/01/07 16:10:16 maxv Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.28 2018/01/11 09:00:04 maxv Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
 #define _AMD64_MACHINE_FRAMEASM_H
@@ -107,9 +107,21 @@
 	movq	CPUVAR(UPDIRPA),%rax	; \
 	movq	%rax,%cr3		; \
 	popq	%rax
+#define SVS_ENTER_NOSTACK \
+	movq	%rax,CPUVAR(SCRATCH)	; \
+	movq	CPUVAR(KPDIRPA),%rax	; \
+	movq	%rax,%cr3		; \
+	movq	CPUVAR(SCRATCH),%rax
+#define SVS_LEAVE_NOSTACK \
+	movq	%rax,CPUVAR(SCRATCH)	; \
+	movq	CPUVAR(UPDIRPA),%rax	; \
+	movq	%rax,%cr3		; \
+	movq	CPUVAR(SCRATCH),%rax
 #else
 #define SVS_ENTER	/* nothing */
 #define SVS_LEAVE	/* nothing */
+#define SVS_ENTER_NOSTACK	/* nothing */
+#define SVS_LEAVE_NOSTACK	/* nothing */
 #endif
 
 #define	INTRENTRY_L(kernel_trap, usertrap) \
