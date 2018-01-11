@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.288 2018/01/11 10:38:13 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.289 2018/01/11 13:35:15 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.288 2018/01/11 10:38:13 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.289 2018/01/11 13:35:15 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -2264,9 +2264,76 @@ mm_md_direct_mapped_phys(paddr_t paddr, vaddr_t *vaddr)
  * TODO: for now, only PMAP_SLOT_PTE is unmapped.
  */
 
+static void
+svs_page_add(struct cpu_info *ci, vaddr_t va)
+{
+	extern pd_entry_t * const normal_pdes[];
+	extern const vaddr_t ptp_masks[];
+	extern const int ptp_shifts[];
+	extern const long nbpd[];
+	pd_entry_t *srcpde, *dstpde;
+	size_t i, idx, pidx, mod;
+	struct vm_page *pg;
+	paddr_t pa;
+
+	KASSERT(va % PAGE_SIZE == 0);
+
+	dstpde = ci->ci_svs_updir;
+	mod = (size_t)-1;
+
+	for (i = PTP_LEVELS; i > 1; i--) {
+		idx = pl_i(va, i);
+		srcpde = normal_pdes[i - 2];
+
+		if (!pmap_valid_entry(srcpde[idx])) {
+			panic("%s: page not mapped", __func__);
+		}
+		pidx = pl_i(va % mod, i);
+
+		if (!pmap_valid_entry(dstpde[pidx])) {
+			pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_ZERO);
+			if (pg == 0)
+				panic("%s: failed to allocate PA for CPU %d\n",
+					__func__, cpu_index(ci));
+			pa = VM_PAGE_TO_PHYS(pg);
+
+			dstpde[pidx] = PG_V | PG_RW | pa;
+		}
+
+		pa = (paddr_t)(dstpde[pidx] & PG_FRAME);
+		dstpde = (pd_entry_t *)PMAP_DIRECT_MAP(pa);
+		mod = nbpd[i-1];
+	}
+
+	/* Do the last level manually */
+	idx = pl_i(va, 1);
+	srcpde = L1_BASE;
+	if (!pmap_valid_entry(srcpde[idx])) {
+		panic("%s: L1 page not mapped", __func__);
+	}
+	pidx = pl_i(va % mod, 1);
+	if (pmap_valid_entry(dstpde[pidx])) {
+		panic("%s: L1 page already mapped", __func__);
+	}
+	dstpde[pidx] = srcpde[idx];
+}
+
+static void
+svs_range_add(struct cpu_info *ci, vaddr_t va, size_t size)
+{
+	size_t i, n;
+
+	KASSERT(size % PAGE_SIZE == 0);
+	n = size / PAGE_SIZE;
+	for (i = 0; i < n; i++) {
+		svs_page_add(ci, va + i * PAGE_SIZE);
+	}
+}
+
 void
 cpu_svs_init(struct cpu_info *ci)
 {
+	const cpuid_t cid = cpu_index(ci);
 	struct vm_page *pg;
 
 	KASSERT(ci != NULL);
@@ -2291,6 +2358,11 @@ cpu_svs_init(struct cpu_info *ci)
 	ci->ci_svs_kpdirpa = pmap_pdirpa(pmap_kernel(), 0);
 
 	mutex_init(&ci->ci_svs_mtx, MUTEX_DEFAULT, IPL_VM);
+
+	svs_page_add(ci, (vaddr_t)&pcpuarea->idt);
+	svs_page_add(ci, (vaddr_t)&pcpuarea->ldt);
+	svs_range_add(ci, (vaddr_t)&pcpuarea->ent[cid],
+	    sizeof(struct pcpu_entry));
 }
 
 void
@@ -2364,7 +2436,9 @@ svs_pdir_switch(struct pmap *pmap)
 		 * This is where we decide what to unmap from the user page
 		 * tables.
 		 */
-		if (pmap_direct_pdpe <= i &&
+		if (i == PDIR_SLOT_PCPU) {
+			/* keep the one created at boot time */
+		} else if (pmap_direct_pdpe <= i &&
 		    i < pmap_direct_pdpe + pmap_direct_npdp) {
 			ci->ci_svs_updir[i] = 0;
 		} else if (i == PDIR_SLOT_PTE) {
