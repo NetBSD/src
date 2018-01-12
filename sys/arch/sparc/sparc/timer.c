@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.33 2018/01/12 06:01:33 mrg Exp $ */
+/*	$NetBSD: timer.c,v 1.34 2018/01/12 09:47:44 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer.c,v 1.33 2018/01/12 06:01:33 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer.c,v 1.34 2018/01/12 09:47:44 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -162,17 +162,11 @@ timer_get_timecount(struct timecounter *tc)
 
 	/*
 	 * This handles early-boot cases where the counter resets twice
-	 * before the offset is updated.
+	 * before the offset is updated, and we have a stupid check to
+	 * ensure overflow hasn't happened.
 	 */
-	if (res < cntr.lastres) {
-		if (fixup == 0)
-			fixup = cntr.limit;
-		while (res < cntr.lastres) {
-			if (res > UINT_MAX - fixup)
-				break;
-			res += fixup;
-		}
-	}
+	if (res < cntr.lastres && res > (TMR_MASK+1) << 3)
+		res = cntr.lastres + 1;
 
 	cntr.lastres = res;
 
