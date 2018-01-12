@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.220 2017/12/29 16:13:26 christos Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.221 2018/01/12 18:54:37 para Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.220 2017/12/29 16:13:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.221 2018/01/12 18:54:37 para Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -71,7 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.220 2017/12/29 16:13:26 christos Exp
  * an internal pool of page headers (`phpool').
  */
 
-/* List of all pools. Non static as needed by 'vmstat -i' */
+/* List of all pools. Non static as needed by 'vmstat -m' */
 TAILQ_HEAD(, pool) pool_head = TAILQ_HEAD_INITIALIZER(pool_head);
 
 /* Private pool for page header structures */
