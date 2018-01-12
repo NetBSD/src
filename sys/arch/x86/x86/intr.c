@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.117 2018/01/11 10:30:26 maxv Exp $	*/
+/*	$NetBSD: intr.c,v 1.118 2018/01/12 06:24:43 maxv Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.117 2018/01/11 10:30:26 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.118 2018/01/12 06:24:43 maxv Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -1500,7 +1500,6 @@ cpu_intr_init(struct cpu_info *ci)
 
 #else /* XEN */
 	int i; /* XXX: duplicate */
-	vaddr_t istack; /* XXX: duplicate */
 	ci->ci_iunmask[0] = 0xfffffffe;
 	for (i = 1; i < NIPL; i++)
 		ci->ci_iunmask[i] = ci->ci_iunmask[i - 1] & ~(1 << i);
