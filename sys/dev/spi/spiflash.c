@@ -1,4 +1,4 @@
-/* $NetBSD: spiflash.c,v 1.19 2016/08/19 03:23:39 jakllsch Exp $ */
+/* $NetBSD: spiflash.c,v 1.20 2018/01/12 19:38:52 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spiflash.c,v 1.19 2016/08/19 03:23:39 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spiflash.c,v 1.20 2018/01/12 19:38:52 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -310,10 +310,11 @@ spiflash_strategy(struct buf *bp)
 	spiflash_handle_t sc;
 	int	s;
 
+	bp->b_resid = bp->b_bcount;
+
 	sc = device_lookup_private(&spiflash_cd, DISKUNIT(bp->b_dev));
 	if (sc == NULL) {
 		bp->b_error = ENXIO;
-		bp->b_resid = bp->b_bcount;
 		biodone(bp);
 		return;
 	}
@@ -321,7 +322,6 @@ spiflash_strategy(struct buf *bp)
 	if (((bp->b_bcount % sc->sc_write_size) != 0) ||
 	    (bp->b_blkno < 0)) {
 		bp->b_error = EINVAL;
-		bp->b_resid = bp->b_bcount;
 		biodone(bp);
 		return;
 	}
@@ -337,8 +337,6 @@ spiflash_strategy(struct buf *bp)
 		biodone(bp);
 		return;
 	}
-
-	bp->b_resid = bp->b_bcount;
 
 	/* all ready, hand off to thread for async processing */
 	s = splbio();
