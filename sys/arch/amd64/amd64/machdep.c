@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.289 2018/01/11 13:35:15 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.290 2018/01/12 09:12:01 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.289 2018/01/11 13:35:15 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.290 2018/01/12 09:12:01 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -2261,11 +2261,16 @@ mm_md_direct_mapped_phys(paddr_t paddr, vaddr_t *vaddr)
  *     remote CPUs that execute other threads of the user process we just
  *     left will keep synchronizing us against their changes.
  *
- * TODO: for now, only PMAP_SLOT_PTE is unmapped.
+ * List of areas that are removed from userland:
+ *     PTE Space         [OK]
+ *     Direct Map        [OK]
+ *     Remote PCPU Areas [OK]
+ *     Kernel Heap       [TODO]
+ *     Kernel Image      [TODO]
  */
 
-static void
-svs_page_add(struct cpu_info *ci, vaddr_t va)
+static pd_entry_t *
+svs_tree_add(struct cpu_info *ci, vaddr_t va)
 {
 	extern pd_entry_t * const normal_pdes[];
 	extern const vaddr_t ptp_masks[];
@@ -2275,8 +2280,6 @@ svs_page_add(struct cpu_info *ci, vaddr_t va)
 	size_t i, idx, pidx, mod;
 	struct vm_page *pg;
 	paddr_t pa;
-
-	KASSERT(va % PAGE_SIZE == 0);
 
 	dstpde = ci->ci_svs_updir;
 	mod = (size_t)-1;
@@ -2305,13 +2308,25 @@ svs_page_add(struct cpu_info *ci, vaddr_t va)
 		mod = nbpd[i-1];
 	}
 
-	/* Do the last level manually */
-	idx = pl_i(va, 1);
+	return dstpde;
+}
+
+static void
+svs_page_add(struct cpu_info *ci, vaddr_t va)
+{
+	pd_entry_t *srcpde, *dstpde;
+	size_t idx, pidx;
+
+	/* Create levels L4, L3 and L2. */
+	dstpde = svs_tree_add(ci, va);
+
+	/* Enter L1. */
+	idx = pl1_i(va);
 	srcpde = L1_BASE;
 	if (!pmap_valid_entry(srcpde[idx])) {
 		panic("%s: L1 page not mapped", __func__);
 	}
-	pidx = pl_i(va % mod, 1);
+	pidx = pl1_i(va % NBPD_L2);
 	if (pmap_valid_entry(dstpde[pidx])) {
 		panic("%s: L1 page already mapped", __func__);
 	}
