@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.449 2018/01/09 04:14:21 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.450 2018/01/12 04:10:10 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.449 2018/01/09 04:14:21 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.450 2018/01/12 04:10:10 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -2175,6 +2175,9 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 		vc = sc->sc_hwvc;
 	chan->vc = vc;
 
+	if (!sc->sc_usemixer && AUDIODEV(dev) == AUDIOCTL_DEVICE)
+		goto audioctl_dev;
+
 	if (sc->sc_usemixer) {
 		vc->sc_open = 0;
 		vc->sc_mode = 0;
@@ -2292,9 +2295,12 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	/* audio_close() decreases sc_mpr[n].usedlow, recalculate here */
 	audio_calcwater(sc, vc);
 
+audioctl_dev:
 	error = fd_allocfile(&fp, &fd);
 	if (error)
 		goto bad;
+	if (!sc->sc_usemixer && AUDIODEV(dev) == AUDIOCTL_DEVICE)
+		goto setup_chan;
 
 	DPRINTF(("audio_open: done sc_mode = 0x%x\n", vc->sc_mode));
 
@@ -2304,6 +2310,8 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 		sc->sc_recopens++;
 	if (flags & FWRITE)
 		sc->sc_opens++;
+
+setup_chan:
 	chan->dev = dev;
 	chan->chan = n;
 	chan->deschan = n;
@@ -2480,6 +2488,9 @@ audio_close(struct audio_softc *sc, int flags, struct audio_chan *chan)
 
 	KASSERT(mutex_owned(sc->sc_lock));
 	
+	if (!sc->sc_usemixer && AUDIODEV(chan->dev) == AUDIOCTL_DEVICE)
+		return 0;
+
 	if (sc->sc_opens == 0 && sc->sc_recopens == 0)
 		return ENXIO;
 
