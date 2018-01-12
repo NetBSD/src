@@ -1,4 +1,4 @@
-/* $NetBSD: sun8i_h3_ccu.c,v 1.14 2017/10/11 10:52:54 jmcneill Exp $ */
+/* $NetBSD: sun8i_h3_ccu.c,v 1.15 2018/01/12 18:22:35 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun8i_h3_ccu.c,v 1.14 2017/10/11 10:52:54 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun8i_h3_ccu.c,v 1.15 2018/01/12 18:22:35 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -57,6 +57,8 @@ __KERNEL_RCSID(1, "$NetBSD: sun8i_h3_ccu.c,v 1.14 2017/10/11 10:52:54 jmcneill E
 #define	SDMMC0_CLK_REG		0x088
 #define	SDMMC1_CLK_REG		0x08c
 #define	SDMMC2_CLK_REG		0x090
+#define	SPI0_CLK_REG		0x0a0
+#define	SPI1_CLK_REG		0x0a4
 #define	USBPHY_CFG_REG		0x0cc
 #define	MBUS_RST_REG		0x0fc
 #define	AC_DIG_CLK_REG		0x140
@@ -318,6 +320,21 @@ static struct sunxi_ccu_clk sun8i_h3_ccu_clks[] = {
 	SUNXI_CCU_PHASE(H3_CLK_MMC2_OUTPUT, "mmc2_output", "mmc2",
 	    SDMMC2_CLK_REG, __BITS(10,8)),
 
+	SUNXI_CCU_NM(H3_CLK_SPI0, "spi0", mod_parents,
+	    SPI0_CLK_REG,	/* reg */
+	    __BITS(17,16),	/* n */
+	    __BITS(3,0),	/* m */
+	    __BITS(25,24),	/* sel */
+	    __BIT(31),		/* enable */
+	    SUNXI_CCU_NM_ROUND_DOWN),
+	SUNXI_CCU_NM(H3_CLK_SPI1, "spi1", mod_parents,
+	    SPI1_CLK_REG,	/* reg */
+	    __BITS(17,16),	/* n */
+	    __BITS(3,0),	/* m */
+	    __BITS(25,24),	/* sel */
+	    __BIT(31),		/* enable */
+	    SUNXI_CCU_NM_ROUND_DOWN),
+
 	SUNXI_CCU_GATE(H3_CLK_AC_DIG, "ac_dig", "pll_audio",
 	    AC_DIG_CLK_REG, 31),
 
@@ -331,6 +348,10 @@ static struct sunxi_ccu_clk sun8i_h3_ccu_clks[] = {
 	    BUS_CLK_GATING_REG0, 10),
 	SUNXI_CCU_GATE(H3_CLK_BUS_EMAC, "bus-emac", "ahb2",
 	    BUS_CLK_GATING_REG0, 17),
+	SUNXI_CCU_GATE(H3_CLK_BUS_SPI0, "bus-spi0", "ahb1",
+	    BUS_CLK_GATING_REG0, 20),
+	SUNXI_CCU_GATE(H3_CLK_BUS_SPI1, "bus-spi1", "ahb1",
+	    BUS_CLK_GATING_REG0, 21),
 	SUNXI_CCU_GATE(H3_CLK_BUS_OTG, "bus-otg", "ahb1",
 	    BUS_CLK_GATING_REG0, 23),
 	SUNXI_CCU_GATE(H3_CLK_BUS_EHCI0, "bus-ehci0", "ahb1",
