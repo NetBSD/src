@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.83 2018/01/06 07:26:54 macallan Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.84 2018/01/12 23:38:24 macallan Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -724,7 +724,8 @@ cg14_setup_wsdisplay(struct cgfourteen_softc *sc, int is_cons)
 		0, 0,
 		NULL,
 		8, 16,
-		WSSCREEN_WSCOLORS | WSSCREEN_HILIT | WSSCREEN_UNDERLINE,
+		WSSCREEN_WSCOLORS | WSSCREEN_HILIT | WSSCREEN_UNDERLINE |
+		WSSCREEN_RESIZE,
 		NULL
 	};
 	cg14_set_depth(sc, 8);
@@ -734,6 +735,8 @@ cg14_setup_wsdisplay(struct cgfourteen_softc *sc, int is_cons)
 	vcons_init(&sc->sc_vd, sc, &sc->sc_defaultscreen_descr,
 	    &cg14_accessops);
 	sc->sc_vd.init_screen = cg14_init_screen;
+	sc->sc_vd.show_screen_cookie = &sc->sc_gc;
+	sc->sc_vd.show_screen_cb = glyphcache_adapt;
 
 	ri = &sc->sc_console_screen.scr_ri;
 
@@ -1009,6 +1012,8 @@ cg14_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_flg = RI_CENTER | RI_FULLCLEAR;
 
 	ri->ri_bits = (char *)sc->sc_fb.fb_pixels;
+
+	scr->scr_flags |= VCONS_LOADFONT;
 #if NSX > 0
 	ri->ri_flg |= RI_8BIT_IS_RGB | RI_ENABLE_ALPHA | RI_PREFER_ALPHA;
 
@@ -1020,14 +1025,15 @@ cg14_init_screen(void *cookie, struct vcons_screen *scr,
 		scr->scr_flags |= VCONS_NO_COPYCOLS;
 	} else
 #endif
-	scr->scr_flags |= VCONS_DONT_READ;
+		scr->scr_flags |= VCONS_DONT_READ;
 
 	if (existing) {
 		ri->ri_flg |= RI_CLEAR;
 	}
 
 	rasops_init(ri, 0, 0);
-	ri->ri_caps = WSSCREEN_WSCOLORS | WSSCREEN_HILIT | WSSCREEN_UNDERLINE;
+	ri->ri_caps = WSSCREEN_WSCOLORS | WSSCREEN_HILIT | WSSCREEN_UNDERLINE |
+		      WSSCREEN_RESIZE;
 
 	rasops_reconfig(ri,
 	    sc->sc_fb.fb_type.fb_height / ri->ri_font->fontheight,
