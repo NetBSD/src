@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.1 2018/01/09 03:31:15 christos Exp $	*/
+/*	$NetBSD: log.c,v 1.2 2018/01/12 17:54:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  *
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: log.c,v 1.1 2018/01/09 03:31:15 christos Exp $");
+__RCSID("$NetBSD: log.c,v 1.2 2018/01/12 17:54:36 christos Exp $");
 
 #include <errno.h>
 #include <stdarg.h>
@@ -89,7 +89,7 @@ log_set_peer_addr(const char *addr)
 	peer_addr = checked_strdup(addr);
 }
 
-static void
+static __printflike(3, 0) void
 log_common(int priority, int log_errno, const char *fmt, va_list ap)
 {
 	static char msgbuf[MSGBUF_LEN];
