@@ -1,6 +1,6 @@
 .\" -*- nroff -*-
 .\"
-.\"	$NetBSD: bpf.4,v 1.56 2017/07/03 21:30:58 wiz Exp $
+.\"	$NetBSD: bpf.4,v 1.57 2018/01/13 12:06:48 uwe Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -597,7 +597,7 @@ opcode uses the 32 bit
 .Va k
 field as the offset, allowing arbitrarily distant destinations.
 All conditionals use unsigned comparison conventions.
-.Bl -column "BPF_JMP+BPF_JGE+BPF_K" "pc += (A \*[Ge] k) ? jt : jf" -offset indent
+.Bl -column "BPF_JMP+BPF_JSET+BPF_K" "pc += (A \*[Ge] k) ? jt : jf" -offset indent
 .It Sy BPF_JMP+BPF_JA Ta pc += k
 .It Sy BPF_JMP+BPF_JGT+BPF_K Ta "pc += (A > k) ? jt : jf"
 .It Sy BPF_JMP+BPF_JGE+BPF_K Ta "pc += (A \*[Ge] k) ? jt : jf"
@@ -634,7 +634,7 @@ that copy the index register to the accumulator or vice versa.
 Also, two instructions to call a "coprocessor" if initialized by the kernel
 component.
 There is no coprocessor by default.
-.Bl -column "BPF_MISC+BPF_COP" "A <- funcs[X](...)" -offset indent
+.Bl -column "BPF_MISC+BPF_COPX" "A <- funcs[X](...)" -offset indent
 .It Sy BPF_MISC+BPF_COP Ta A <- funcs[k](..)
 .It Sy BPF_MISC+BPF_COPX Ta A <- funcs[X](..)
 .El
