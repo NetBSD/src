@@ -1,4 +1,4 @@
-/*	$NetBSD: dbrivar.h,v 1.13 2011/11/23 23:07:36 jmcneill Exp $	*/
+/*	$NetBSD: dbrivar.h,v 1.13.42.1 2018/01/13 05:40:25 snj Exp $	*/
 
 /*
  * Copyright (C) 1997 Rudolf Koenig (rfkoenig@immd4.informatik.uni-erlangen.de)
@@ -153,6 +153,7 @@ struct dbri_softc {
 	int		sc_linp, sc_rinp;	/* input volume */
 	int		sc_monitor;		/* monitor volume */
 	int		sc_input;		/* 0 - line, 1 - mic */
+	int		sc_whack_codec;	 /* 1 - codec needs control mode */
 
 	int		sc_ctl_mode;
 	
