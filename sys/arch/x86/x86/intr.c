@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.118 2018/01/12 06:24:43 maxv Exp $	*/
+/*	$NetBSD: intr.c,v 1.119 2018/01/13 20:36:06 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.118 2018/01/12 06:24:43 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.119 2018/01/13 20:36:06 bouyer Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -1248,8 +1248,8 @@ intr_establish_xname(int legacy_irq, struct pic *pic, int pin,
 		 * et. al. and unify with x86/intr.c
 		 */
 		rih->ih_pin = pin; /* port */
-		rih->ih_fun = handler;
-		rih->ih_arg = arg;
+		rih->ih_fun = rih->ih_realfun = handler;
+		rih->ih_arg = rih->ih_realarg = arg;
 		rih->pic_type = pic->pic_type;
 		return rih;
 	} 	/* Else we assume pintr */
