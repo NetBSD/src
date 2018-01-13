@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.394.2.5 2018/01/13 05:41:38 snj Exp $	*/
+/*	$NetBSD: if.c,v 1.394.2.6 2018/01/13 05:43:44 snj Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,16 +90,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.394.2.5 2018/01/13 05:41:38 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.394.2.6 2018/01/13 05:43:44 snj Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
 #include "opt_ipsec.h"
-
 #include "opt_atalk.h"
 #include "opt_natm.h"
 #include "opt_wlan.h"
 #include "opt_net_mpsafe.h"
+#include "opt_mrouting.h"
 #endif
 
 #include <sys/param.h>
@@ -3561,8 +3561,8 @@ if_mcast_op(ifnet_t *ifp, const unsigned long cmd, const struct sockaddr *sa)
 	int rc;
 	struct ifreq ifr;
 
-	/* CARP still doesn't deal with the lock yet */
-#if !defined(NCARP) || (NCARP == 0)
+	/* CARP and MROUTING still don't deal with the lock yet */
+#if (!defined(NCARP) || (NCARP == 0)) && !defined(MROUTING)
 	KASSERT(IFNET_LOCKED(ifp));
 #endif
 	if (ifp->if_mcastop != NULL)
