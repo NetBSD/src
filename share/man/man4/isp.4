@@ -1,4 +1,4 @@
-.\"	$NetBSD: isp.4,v 1.12 2009/06/25 23:45:52 mjacob Exp $
+.\"	$NetBSD: isp.4,v 1.13 2018/01/13 18:57:48 uwe Exp $
 .\"
 .\" Copyright (c) 1998, 1999
 .\" 	Matthew Jacob, for NASA/Ames Research Center
@@ -56,18 +56,18 @@ Command tagging is supported for all (in fact,
 requires tagging).
 .Sh CONFIGURATION
 An optional
-.Tn flags 0x80
+.Cd flags 0x80
 appended to the above
-.Tn isp*
+.Nm
 declarations will disable the download of driver firmware, which means you
 use whatever firmware is running on the card.
 If no firmware is running on the card,
 the driver cannot operate the card.
 .Pp
 An optional
-.Tn flags 0x40
+.Cd flags 0x40
 appended to the above
-.Tn isp*
+.Nm
 declarations (can be OR'd in with the other config flags option)
 will keep the driver from looking at device or bus NVRAM settings (this
 is in case NVRAM is just wrong and you have the card in a platform where
