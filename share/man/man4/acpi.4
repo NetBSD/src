@@ -1,4 +1,4 @@
-.\" $NetBSD: acpi.4,v 1.83 2018/01/13 17:35:33 uwe Exp $
+.\" $NetBSD: acpi.4,v 1.84 2018/01/13 23:43:46 wiz Exp $
 .\"
 .\" Copyright (c) 2002, 2004, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,32 +43,16 @@
 .Sh DESCRIPTION
 .Nx
 provides machine-independent bus support for
-Advanced Configuration and Power Interface
-.Pq Tn ACPI
-devices and includes several
-.Tn ACPI
-device drivers.
+Advanced Configuration and Power Interface (ACPI)
+devices and includes several ACPI device drivers.
 .Pp
 The
 .Nx
-implementation of
-.Tn ACPI
-integrates Intel's ACPI Component Architecture
-.Pq Tn ACPI-CA
-for the OS-independent part.
-The
-.Tn ACPI-CA
-provides OS-neutral
-.Tn ACPI
-functionalities such as
-.Tn ACPI
-.Tn BIOS
+implementation of ACPI integrates Intel's ACPI Component Architecture
+(ACPI-CA) for the OS-independent part.
+The ACPI-CA provides OS-neutral ACPI functionalities such as ACPI BIOS
 table support,
-an
-.Tn ACPI
-event framework and an ACPI Machine Language
-.Pq Tn AML
-interpreter.
+an ACPI event framework and an ACPI Machine Language (AML) interpreter.
 .Pp
 Options:
 .Bl -tag -width ACPI_DSDT_FILE__filename_XX -offset 3n
@@ -77,19 +61,14 @@ Enable various debug facilities.
 .It Dv ACPIVERBOSE
 Enable verbose debug messages.
 .It Dv ACPI_ACTIVATE_DEV
-Determine if the
-.Tn ACPI
-driver should attempt to activate inactive devices.
+Determine if the ACPI driver should attempt to activate inactive devices.
 The default is off.
 .It Dv ACPI_DSDT_OVERRIDE
-Force a given Differentiated System Description Table
-.Pq Tn DSDT
-instead of the version supplied by the
-.Tn BIOS .
+Force a given Differentiated System Description Table (DSDT)
+instead of the version supplied by the BIOS.
 Use
 .Dv ACPI_DSDT_FILE
-to specify a
-.Tn DSDT .
+to specify a DSDT.
 .It Dv ACPI_DSDT_FILE="filename"
 If
 .Dv ACPI_DSDT_FILE
@@ -109,13 +88,10 @@ having it fail gracefully.
 .Sh SYSCTL SUPPORT
 Few
 .Xr sysctl 8
-variables are directly relevant for
-.Tn ACPI .
+variables are directly relevant for ACPI.
 .Bl -tag -width "123456" -offset indent
 .It Ic hw.acpi.root
-The address of the
-.Tn ACPI
-root pointer in system memory.
+The address of the ACPI root pointer in system memory.
 .It Ic hw.acpi.sleep.state
 The system sleep state.
 .It Ic hw.acpi.sleep.states
@@ -138,8 +114,7 @@ suspend-to-disk (not supported on
 power off
 .El
 .It Ic hw.acpi.sleep.beep
-A boolean variable that controls whether the
-.Tn PC
+A boolean variable that controls whether the PC
 speaker beeps upon resume.
 Only available on i386 and amd64 architectures.
 .It Ic hw.acpi.sleep.vbios
@@ -147,14 +122,9 @@ Defines the handling of the graphics card on i386 and amd64 architectures.
 The supported values are:
 .Bl -tag -width '2' -offset 2n
 .It 0
-No attempt to reset the
-.Tn VGA
-controller will be made.
+No attempt to reset the VGA controller will be made.
 .It 1
-Call the
-.Tn VGA
-.Tn BIOS
-when still in real mode.
+Call the VGA BIOS when still in real mode.
 This can result in direct reboots.
 In that case, use
 .Sq 2
@@ -164,50 +134,32 @@ from the
 .Pa pkgsrc/sysutils/vbetool
 package.
 .It 2
-Call the
-.Tn VGA
-.Tn BIOS
-using the in-kernel x86 emulator.
+Call the VGA BIOS using the in-kernel x86 emulator.
 .El
 .Pp
-If the system has problems in resuming from the
-.Tn S3
+If the system has problems in resuming from the S3
 state, experimenting with different values may provide a solution.
 .It Ic hw.acpi.stat.gpe
-The number of dispatched General Purpose Events
-.Pq Tn GPEs .
+The number of dispatched General Purpose Events (GPEs).
 .It Ic hw.acpi.stat.sci
-The number of System Control Interrupts
-.Pq Tn SCIs .
+The number of System Control Interrupts (SCIs).
 See
 .Xr acpiec 4
-for a brief description of both
-.Tn GPEs
-and
-.Tn SCIs .
+for a brief description of both GPEs and SCIs.
 .It Ic hw.acpi.stat.fixed
 The number of
 .Dq fixed events .
 .It Ic hw.acpi.stat.method
-The number of
-.Tn AML
-methods executed by the interpreter.
+The number of AML methods executed by the interpreter.
 .It Ic hw.acpi.power
-This read-only node describes the
-.Tn ACPI
-power state of devices.
-The values range from
-.Tn D0
+This read-only node describes the ACPI power state of devices.
+The values range from D0
 .Pq Dq on
-to
-.Tn D3
+to D3
 .Pq Dq off .
 .It Ic hw.acpi.wake
-This node represents devices that can wake the system from the
-.Tn S3
-or
-.Tn S4
-sleep state.
+This node represents devices that can wake the system from the S3 or
+S4 sleep state.
 By default,
 .Xr acpibut 4 ,
 .Xr acpilid 4 ,
@@ -218,60 +170,40 @@ the firmware supports wake-up capabilities for the devices.
 .El
 .Sh SUPPORTED DEVICES
 .Nx
-.Tn ACPI
-supports several machine-dependent and machine-independent devices,
-some specific to
-.Tn ACPI
-and some configured via it.
+ACPI supports several machine-dependent and machine-independent devices,
+some specific to ACPI and some configured via it.
 .Ss Machine-independent devices
 .Bl -tag -width "thinkpad(4) " -offset indent -compact
 .It Xr acpiacad 4
-.Tn ACPI
-AC adapters.
+ACPI AC adapters.
 .It Xr acpibat 4
-.Tn ACPI
-batteries.
+ACPI batteries.
 .It Xr acpibut 4
-.Tn ACPI
-power and sleep buttons.
+ACPI power and sleep buttons.
 .It Xr acpicpu 4
-.Tn ACPI
-processors.
+ACPI processors.
 .It Xr acpidalb 4
-.Tn ACPI
-direction application launch buttons.
+ACPI direction application launch buttons.
 .It Xr acpiec 4
-.Tn ACPI
-embedded controllers.
+ACPI embedded controllers.
 .It Xr acpiecdt 4
-.Tn ACPI
-Embedded Controller Boot Resource Table
-.Pq Tn ECDT .
+ACPI Embedded Controller Boot Resource Table (ECDT).
 .It Xr acpifan 4
-.Tn ACPI
-fans.
+ACPI fans.
 .It Xr acpilid 4
-.Tn ACPI
-lid switches.
+ACPI lid switches.
 .It Xr acpipmtr 4
-.Tn ACPI
-power meters.
+ACPI power meters.
 .It Xr acpismbus 4
-.Tn ACPI
-SMBus via control method interface
-.Pq Tn CMI .
+ACPI SMBus via control method interface (CMI).
 .It Xr acpitz 4
-.Tn ACPI
-thermal zones.
+ACPI thermal zones.
 .It Xr acpivga 4
-.Tn ACPI
-display adapter and output devices.
+ACPI display adapter and output devices.
 .It Xr acpiwmi 4
-.Tn ACPI
-support for Windows Management Instrumentation.
+ACPI support for Windows Management Instrumentation.
 .It Xr acpiwdrt 4
-.Tn ACPI
-watchdogs.
+ACPI watchdogs.
 .It Xr aibs 4
 ASUSTeK voltage, temperature and fan sensors.
 .It Xr asus 4
@@ -289,8 +221,7 @@ Fujitsu hotkeys.
 .It Xr hpacel 4
 HP 3D DriveGuard accelerometer.
 .It Xr hpet 4
-High Precision Event Timer
-.Pq Tn HPET .
+High Precision Event Timer (HPET).
 .It Xr hpqlb 4
 HP Quick Launch Buttons.
 .It Xr joy 4
@@ -329,16 +260,13 @@ Sony programmable I/O controller.
 .El
 .Sh DEBUGGING
 Although the situation has become better over the years,
-.Tn ACPI
-is typically prone to various errors,
+ACPI is typically prone to various errors,
 ranging from blatant flaws in the firmware to bugs in the implementation.
-Before anything else, it is a good practice to upgrade the
-.Tn BIOS
+Before anything else, it is a good practice to upgrade the BIOS
 to the latest version available from the vendor.
 .Pp
 To ease the task of diagnosing and fixing different problems, the
-.Tn ACPICA
-reference implementation provides a rich
+ACPICA reference implementation provides a rich
 facility of different debugging methods.
 In
 .Nx
@@ -364,34 +292,19 @@ the
 module using the option
 .Fl b Cm dump=true .
 .Ss Custom DSDT
-.Tn ACPI
-interprets bytecode known as
-.Tn ACPI
-Machine Language
-.Pq Tn AML ,
-provided by the
-.Tn BIOS
-as a memory image during the system bootstrap.
-Most of the
-.Tn AML
-relevant to
+ACPI interprets bytecode known as ACPI Machine Language (AML),
+provided by the BIOS as a memory image during the system bootstrap.
+Most of the AML relevant to
 .Nm
 is implemented in the so-called
-Differentiated System Descriptor Table
-.Pq Tn DSDT .
+Differentiated System Descriptor Table (DSDT).
 .Nx
-provides support for overriding the default
-.Tn DSDT
-supplied by the
-.Tn BIOS .
+provides support for overriding the default DSDT supplied by the BIOS.
 .Pp
-The following steps can be used to override the
-.Tn DSDT :
+The following steps can be used to override the DSDT:
 .Bl -enum -offset indent
 .It
-Dump the raw
-.Tn DSDT
-with
+Dump the raw DSDT with
 .Xr acpidump 8 .
 .It
 Disassemble the table with
@@ -423,9 +336,7 @@ Define
 in the kernel configuration file and rebuild.
 .El
 .Ss Debugger
-The
-.Tn ACPICA
-interpreter provides its own debugger for low-level debugging.
+The ACPICA interpreter provides its own debugger for low-level debugging.
 It can be used to display internal data structures and namespace objects,
 and to debug the execution of control methods.
 Single step and breakpoint functionality are available.
@@ -433,9 +344,7 @@ In
 .Nx
 this is integrated to the in-kernel
 .Xr ddb 4 .
-In order to enter the
-.Tn ACPICA
-debugger from
+In order to enter the ACPICA debugger from
 .Xr ddb 4 ,
 use the command
 .Ic call
@@ -448,9 +357,7 @@ provides three
 variables that control the debug output at runtime.
 The
 .Ic hw.acpi.debug.layer
-variable limits the output to a specific
-.Tn ACPI
-layer and the
+variable limits the output to a specific ACPI layer and the
 .Ic hw.acpi.debug.level
 variable controls the debug level.
 Both
@@ -459,8 +366,7 @@ variables are string literals.
 The third variable is
 .Ic hw.acpi.debug.object .
 This is a boolean that controls whether debug messages internal to the
-.Tn AML
-are enabled.
+AML are enabled.
 .Pp
 For the first two variables, the possible values are:
 .Bl -column -offset indent \
@@ -510,19 +416,15 @@ For the first two variables, the possible values are:
 .Pp
 In addition, there is
 .Dv ACPI_DEBUG_DEFAULT
-that is used by
-.Tn ACPICA
-as the default debug level.
+that is used by ACPICA as the default debug level.
 It includes
 .Dv ACPI_LV_INIT
 and
 .Dv ACPI_LV_DEBUG_OBJECT .
 .Pp
 The debug layer can be divided into two groups:
-the first one is specific to the
-.Tn ACPICA
-interpreter and the second one contains the internal
-.Tn ACPI
+the first one is specific to the ACPICA
+interpreter and the second one contains the internal ACPI
 components of
 .Nx .
 The constant
@@ -531,9 +433,7 @@ includes all
 .Nx
 specific parts.
 .Pp
-The
-.Tn ACPICA
-interpreter uses several debug levels internally,
+The ACPICA interpreter uses several debug levels internally,
 but the
 .Nx
 specific parts are typically limited to
@@ -568,9 +468,7 @@ or a compound constant including it, and
 is
 .Dv ACPI_LV_INFO
 or some constant that includes it.
-Finally, it can be noted that the
-.Tn ACPI
-implementation uses the prefix
+Finally, it can be noted that the ACPI implementation uses the prefix
 .Dv ACPI_DB ,
 whereas the debug level
 .Xr sysctl 8
@@ -579,9 +477,7 @@ variable is always specified with the prefix
 .Pp
 Another example can be mentioned for the use of
 .Ic hw.acpi.debug.object .
-The following could appear in an
-.Tn ASL
-code:
+The following could appear in an ASL code:
 .Bd -literal -offset indent
 Method(_Q19, 0, NotSerialized)
 {
@@ -665,9 +561,7 @@ and
 .An Jukka Ruohonen ,
 among others.
 .Sh BUGS
-Most of the
-.Tn ACPI
-power management functionalities are not implemented.
+Most of the ACPI power management functionalities are not implemented.
 .Pp
 The
 .Dv ACPI__DIS_IS_BROKEN
