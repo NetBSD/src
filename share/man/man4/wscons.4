@@ -1,4 +1,4 @@
-.\" $NetBSD: wscons.4,v 1.34 2018/01/13 14:11:40 uwe Exp $
+.\" $NetBSD: wscons.4,v 1.35 2018/01/13 14:34:00 uwe Exp $
 .\"
 .\" Copyright (c) 1999, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -230,11 +230,10 @@ find the
 .Nm
 driver entry points, symlinks are a helpful measure.)
 .Ss Other options
-.Bl -tag -width xxxxxxxx
-.It Cd options WS_DEFAULT_FG=WSCOL_XXX ,
-.It Cd options WS_DEFAULT_BG=WSCOL_XXX ,
+.Bl -tag -width xxxxxxxx -compact
+.It Cd options WS_DEFAULT_FG=WSCOL_XXX
+.It Cd options WS_DEFAULT_BG=WSCOL_XXX
 .It Cd options WS_DEFAULT_COLATTR=\*q(WSATTR_XXX\ |\ WSATTR_YYY)\*q
-and
 .It Cd options WS_DEFAULT_MONOATTR=\*q(WSATTR_XXX\ |\ WSATTR_YYY)\*q
 allow to make default console output appear in specific colors and
 attributes.
@@ -257,10 +256,10 @@ are supported or not depends on the actually used graphics adapter.
 These options are ignored by the
 .Dq dumb
 terminal emulation.
-.It Cd options WS_KERNEL_FG=WSCOL_XXX ,
-.It Cd options WS_KERNEL_BG=WSCOL_XXX ,
+.Pp
+.It Cd options WS_KERNEL_FG=WSCOL_XXX
+.It Cd options WS_KERNEL_BG=WSCOL_XXX
 .It Cd options WS_KERNEL_COLATTR=\*q(WSATTR_XXX\ |\ WSATTR_YYY)\*q
-and
 .It Cd options WS_KERNEL_MONOATTR=\*q(WSATTR_XXX\ |\ WSATTR_YYY)\*q
 allow to make console output originating from the kernel appear differently
 than output from user level programs (via
@@ -271,6 +270,7 @@ device like
 Their meaning is the same as their
 .Sq WS_DEFAULT_*
 counterparts.
+.Pp
 .It Cd options WSCOMPAT_USL_SYNCTIMEOUT=nnn
 The virtual screen switching protocol enabled by
 .Dq WSDISPLAY_COMPAT_USL
@@ -281,9 +281,11 @@ application from locking the whole console system,
 a screen switch will be rolled
 back after a 5 second timeout if the application does not respond.
 This option can be used to specify in seconds a different timeout value.
+.Pp
 .It Cd options WSKBD_EVENT_AUTOREPEAT
 If set, this option enables auto repeat even in event mode.
 The auto repeat will generate key down events while the key is pressed.
+.Pp
 .It Cd options WSKBD_USONLY
 In order to strip down the space usage of wscons,
 all keymaps except the US english one can be removed from the kernel
