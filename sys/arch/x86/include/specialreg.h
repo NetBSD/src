@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.107 2018/01/10 07:04:54 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.108 2018/01/13 17:55:57 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -764,8 +764,8 @@
 
 #define MSR_EFER	0xc0000080		/* Extended feature enable */
 #define 	EFER_SCE	0x00000001	/* SYSCALL extension */
-#define 	EFER_LME	0x00000100	/* Long Mode Active */
-#define 	EFER_LMA	0x00000400	/* Long Mode Enabled */
+#define 	EFER_LME	0x00000100	/* Long Mode Enable */
+#define 	EFER_LMA	0x00000400	/* Long Mode Active */
 #define 	EFER_NXE	0x00000800	/* No-Execute Enabled */
 #define 	EFER_SVME	0x00001000	/* Secure Virtual Machine En. */
 #define 	EFER_LMSLE	0x00002000	/* Long Mode Segment Limit E. */
