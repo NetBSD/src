@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth_dummy.c,v 1.17 2014/06/17 06:43:21 alnsn Exp $	*/
+/*	$NetBSD: rumpuser_pth_dummy.c,v 1.17.16.1 2018/01/13 21:57:11 snj Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth_dummy.c,v 1.17 2014/06/17 06:43:21 alnsn Exp $");
+__RCSID("$NetBSD: rumpuser_pth_dummy.c,v 1.17.16.1 2018/01/13 21:57:11 snj Exp $");
 #endif /* !lint */
 
 #include <sys/time.h>
@@ -96,6 +96,13 @@ rumpuser_mutex_init(struct rumpuser_mtx **mtx, int flgas)
 {
 
 	*mtx = calloc(1, sizeof(struct rumpuser_mtx));
+}
+
+int
+rumpuser_mutex_spin_p(struct rumpuser_mtx *mtx)
+{
+
+	return false; /* XXX */
 }
 
 void

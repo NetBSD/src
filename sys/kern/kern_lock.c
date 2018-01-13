@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.158.6.1 2017/11/30 14:40:46 martin Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.158.6.2 2018/01/13 21:57:11 snj Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.158.6.1 2017/11/30 14:40:46 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.158.6.2 2018/01/13 21:57:11 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -120,9 +120,9 @@ do {									\
 void	_kernel_lock_dump(volatile void *);
 
 lockops_t _kernel_lock_ops = {
-	"Kernel lock",
-	LOCKOPS_SPIN,
-	_kernel_lock_dump
+	.lo_name = "Kernel lock",
+	.lo_type = LOCKOPS_SPIN,
+	.lo_dump = _kernel_lock_dump,
 };
 
 /*
