@@ -1,4 +1,4 @@
-.\" $NetBSD: acpi.4,v 1.82 2017/02/20 03:29:04 ryoon Exp $
+.\" $NetBSD: acpi.4,v 1.83 2018/01/13 17:35:33 uwe Exp $
 .\"
 .\" Copyright (c) 2002, 2004, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -343,26 +343,26 @@ facility of different debugging methods.
 In
 .Nx
 these are generally only available if the kernel has been compiled with the
-.Tn ACPI_DEBUG
+.Dv ACPI_DEBUG
 option.
 .Ss Verbose messages
 The
-.Tn ACPIVERBOSE
+.Dv ACPIVERBOSE
 compile time option enables some verbose
 debug messages printed during the system startup.
 In a
-.Tn MODULAR
+.Dv MODULAR
 (see
 .Xr options 4 )
 system, the information can be printed also at runtime,
 regardless of the presence of
-.Tn ACPIVERBOSE .
+.Dv ACPIVERBOSE .
 To print the messages,
 .Xr modload 8
 the
 .Ic acpiverbose
 module using the option
-.Ar -b dump=true .
+.Fl b Cm dump=true .
 .Ss Custom DSDT
 .Tn ACPI
 interprets bytecode known as
@@ -402,7 +402,7 @@ Modify the disassembled table.
 Compile the table with
 .Xr iasl 8
 using the option
-.Ar \-tc .
+.Fl tc .
 .It
 Either copy the
 .Pq Pa *.hex
@@ -419,7 +419,7 @@ ACPI_DSDT_FILE="/some/directory/custom_dsdt.hex"
 in the kernel configuration file.
 .It
 Define
-.Tn ACPI_DSDT_OVERRIDE
+.Dv ACPI_DSDT_OVERRIDE
 in the kernel configuration file and rebuild.
 .El
 .Ss Debugger
@@ -466,46 +466,46 @@ For the first two variables, the possible values are:
 .Bl -column -offset indent \
 "ACPI_RESOURCE_COMPONENT     " "ACPI_RESOURCE_COMPONENT     "
 .It Sy LAYER Ta Sy LEVEL
-.It Li ACPI_DEBUG_NONE Ta ACPI_DEBUG_NONE
+.It Dv ACPI_DEBUG_NONE Ta Dv ACPI_DEBUG_NONE
 .It Ta
-.It Li ACPI_UTILITIES Ta ACPI_LV_INIT
-.It Li ACPI_HARDWARE Ta ACPI_LV_DEBUG_OBJECT
-.It Li ACPI_EVENTS Ta ACPI_LV_INFO
-.It Li ACPI_TABLES Ta ACPI_LV_ALL_EXCEPTIONS *
-.It Li ACPI_NAMESPACE Ta
-.It Li ACPI_PARSER Ta ACPI_LV_INIT_NAMES
-.It Li ACPI_DISPATCHER Ta ACPI_LV_PARSE
-.It Li ACPI_EXECUTER Ta ACPI_LV_LOAD
-.It Li ACPI_RESOURCES Ta ACPI_LV_DISPATCH
-.It Li ACPI_CA_DEBUGGER Ta ACPI_LV_EXEC
-.It Li ACPI_OS_SERVICES Ta ACPI_LV_NAMES
-.It Li ACPI_CA_DISASSEMBLER Ta ACPI_LV_OPREGION
-.It Li ACPI_COMPILER Ta ACPI_LV_BFIELD
-.It Li ACPI_TOOLS Ta ACPI_LV_TABLES
-.It Li ACPI_EXAMPLE Ta ACPI_LV_VALUES
-.It Li ACPI_DRIVER Ta ACPI_LV_OBJECTS
-.It Li ACPI_ALL_COMPONENTS * Ta ACPI_LV_RESOURCES
-.It Ta ACPI_LV_USER_REQUESTS
-.It Li ACPI_BUS_COMPONENT Ta ACPI_LV_PACKAGE
-.It Li ACPI_ACAD_COMPONENT Ta ACPI_LV_VERBOSITY1 *
-.It Li ACPI_BAT_COMPONENT Ta
-.It Li ACPI_BUTTON_COMPONENT Ta ACPI_LV_ALLOCATIONS
-.It Li APCI_EC_COMPONENT Ta ACPI_LV_FUNCTIONS
-.It Li ACPI_LID_COMPONENT Ta ACPI_LV_OPTIMIZATIONS
-.It Li ACPI_RESOURCE_COMPONENT Ta ACPI_LV_VERBOSITY2 *
-.It Li ACPI_TZ_COMPONENT Ta
-.It Li ACPI_DISPLAY_COMPONENT Ta
-.It Li ACPI_ALL_DRIVERS * Ta ACPI_LV_MUTEX
-.It Ta ACPI_LV_THREADS
-.It Ta ACPI_LV_IO
-.It Ta ACPI_LV_AML_INTERRUPTS
-.It Li "* This is a compound" Ta ACPI_LV_VERBOSITY3 *
-.It Li "  constant, including" Ta
-.It Li "  all previous elements." Ta ACPI_LV_AML_DISASSEMBLE
-.It Ta ACPI_LV_VERBOSE_INFO
-.It Ta ACPI_LV_FULL_TABLES
-.It Ta ACPI_LV_EVENTS
-.It Ta ACPI_LV_VERBOSE *
+.It Dv ACPI_UTILITIES Ta Dv ACPI_LV_INIT
+.It Dv ACPI_HARDWARE Ta Dv ACPI_LV_DEBUG_OBJECT
+.It Dv ACPI_EVENTS Ta Dv ACPI_LV_INFO
+.It Dv ACPI_TABLES Ta Dv ACPI_LV_ALL_EXCEPTIONS No *
+.It Dv ACPI_NAMESPACE Ta
+.It Dv ACPI_PARSER Ta Dv ACPI_LV_INIT_NAMES
+.It Dv ACPI_DISPATCHER Ta Dv ACPI_LV_PARSE
+.It Dv ACPI_EXECUTER Ta Dv ACPI_LV_LOAD
+.It Dv ACPI_RESOURCES Ta Dv ACPI_LV_DISPATCH
+.It Dv ACPI_CA_DEBUGGER Ta Dv ACPI_LV_EXEC
+.It Dv ACPI_OS_SERVICES Ta Dv ACPI_LV_NAMES
+.It Dv ACPI_CA_DISASSEMBLER Ta Dv ACPI_LV_OPREGION
+.It Dv ACPI_COMPILER Ta Dv ACPI_LV_BFIELD
+.It Dv ACPI_TOOLS Ta Dv ACPI_LV_TABLES
+.It Dv ACPI_EXAMPLE Ta Dv ACPI_LV_VALUES
+.It Dv ACPI_DRIVER Ta Dv ACPI_LV_OBJECTS
+.It Dv ACPI_ALL_COMPONENTS No * Ta Dv ACPI_LV_RESOURCES
+.It Ta Dv ACPI_LV_USER_REQUESTS
+.It Dv ACPI_BUS_COMPONENT Ta Dv ACPI_LV_PACKAGE
+.It Dv ACPI_ACAD_COMPONENT Ta Dv ACPI_LV_VERBOSITY1 No *
+.It Dv ACPI_BAT_COMPONENT Ta
+.It Dv ACPI_BUTTON_COMPONENT Ta Dv ACPI_LV_ALLOCATIONS
+.It Dv APCI_EC_COMPONENT Ta Dv ACPI_LV_FUNCTIONS
+.It Dv ACPI_LID_COMPONENT Ta Dv ACPI_LV_OPTIMIZATIONS
+.It Dv ACPI_RESOURCE_COMPONENT Ta Dv ACPI_LV_VERBOSITY2 No *
+.It Dv ACPI_TZ_COMPONENT Ta
+.It Dv ACPI_DISPLAY_COMPONENT Ta
+.It Dv ACPI_ALL_DRIVERS No * Ta Dv ACPI_LV_MUTEX
+.It Ta Dv ACPI_LV_THREADS
+.It Ta Dv ACPI_LV_IO
+.It Ta Dv ACPI_LV_AML_INTERRUPTS
+.It "* This is a compound" Ta Dv ACPI_LV_VERBOSITY3 No *
+.It "  constant, including" Ta
+.It "  all previous elements." Ta Dv ACPI_LV_AML_DISASSEMBLE
+.It Ta Dv ACPI_LV_VERBOSE_INFO
+.It Ta Dv ACPI_LV_FULL_TABLES
+.It Ta Dv ACPI_LV_EVENTS
+.It Ta Dv ACPI_LV_VERBOSE No *
 .El
 .Pp
 In addition, there is
