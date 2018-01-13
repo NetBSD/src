@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.480 2018/01/10 11:11:20 knakahara Exp $
+# $NetBSD: GENERIC,v 1.481 2018/01/13 12:38:16 christos Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.480 $"
+#ident		"GENERIC-$Revision: 1.481 $"
 
 maxusers	64		# estimated number of users
 
@@ -1324,6 +1324,9 @@ pseudo-device	vcoda			# coda minicache <-> venus comm.
 
 # a pseudo device needed for SMBFS
 pseudo-device	nsmb			# experimental - SMB requester
+
+# a pseudo device needed for AUTOFS
+#pseudo-device	autofs			# experimental - AUTOFS
 
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor
