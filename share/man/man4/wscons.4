@@ -1,4 +1,4 @@
-.\" $NetBSD: wscons.4,v 1.33 2018/01/13 13:49:10 uwe Exp $
+.\" $NetBSD: wscons.4,v 1.34 2018/01/13 14:11:40 uwe Exp $
 .\"
 .\" Copyright (c) 1999, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -40,16 +40,16 @@
 .Cd options WSEMUL_SUN
 .Cd options WSEMUL_VT100
 .Cd options WSEMUL_NO_DUMB
-.Cd options WSEMUL_DEFAULT=\&"xxx\&"
+.Cd options WSEMUL_DEFAULT=\*qxxx\*q
 .Pp
 .Cd options WS_DEFAULT_FG=WSCOL_XXX
 .Cd options WS_DEFAULT_BG=WSCOL_XXX
-.Cd options WS_DEFAULT_COLATTR=\&"(WSATTR_XXX | WSATTR_YYY)"
-.Cd options WS_DEFAULT_MONOATTR=\&"(WSATTR_XXX | WSATTR_YYY)"
+.Cd options WS_DEFAULT_COLATTR=\*q(WSATTR_XXX\ |\ WSATTR_YYY)\*q
+.Cd options WS_DEFAULT_MONOATTR=\*q(WSATTR_XXX\ |\ WSATTR_YYY)\*q
 .Cd options WS_KERNEL_FG=WSCOL_XXX
 .Cd options WS_KERNEL_BG=WSCOL_XXX
-.Cd options WS_KERNEL_COLATTR=\&"(WSATTR_XXX | WSATTR_YYY)"
-.Cd options WS_KERNEL_MONOATTR=\&"(WSATTR_XXX | WSATTR_YYY)"
+.Cd options WS_KERNEL_COLATTR=\*q(WSATTR_XXX\ |\ WSATTR_YYY)\*q
+.Cd options WS_KERNEL_MONOATTR=\*q(WSATTR_XXX\ |\ WSATTR_YYY)\*q
 .Pp
 .Cd options WSDISPLAY_COMPAT_PCVT
 .Cd options WSDISPLAY_COMPAT_SYSCONS
@@ -233,9 +233,9 @@ driver entry points, symlinks are a helpful measure.)
 .Bl -tag -width xxxxxxxx
 .It Cd options WS_DEFAULT_FG=WSCOL_XXX ,
 .It Cd options WS_DEFAULT_BG=WSCOL_XXX ,
-.It Cd options \&WS_DEFAULT_COLATTR="(WSATTR_XXX | WSATTR_YYY)"
+.It Cd options WS_DEFAULT_COLATTR=\*q(WSATTR_XXX\ |\ WSATTR_YYY)\*q
 and
-.It Cd options \&WS_DEFAULT_MONOATTR="(WSATTR_XXX | WSATTR_YYY)"
+.It Cd options WS_DEFAULT_MONOATTR=\*q(WSATTR_XXX\ |\ WSATTR_YYY)\*q
 allow to make default console output appear in specific colors and
 attributes.
 .Dq WS_DEFAULT_FG
@@ -259,9 +259,9 @@ These options are ignored by the
 terminal emulation.
 .It Cd options WS_KERNEL_FG=WSCOL_XXX ,
 .It Cd options WS_KERNEL_BG=WSCOL_XXX ,
-.It Cd options \&WS_KERNEL_COLATTR="(WSATTR_XXX | WSATTR_YYY)"
+.It Cd options WS_KERNEL_COLATTR=\*q(WSATTR_XXX\ |\ WSATTR_YYY)\*q
 and
-.It Cd options \&WS_KERNEL_MONOATTR="(WSATTR_XXX | WSATTR_YYY)"
+.It Cd options WS_KERNEL_MONOATTR=\*q(WSATTR_XXX\ |\ WSATTR_YYY)\*q
 allow to make console output originating from the kernel appear differently
 than output from user level programs (via
 .Pa /dev/console
