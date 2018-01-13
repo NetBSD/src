@@ -1,6 +1,6 @@
 .\" -*- nroff -*-
 .\"
-.\"	$NetBSD: bpf.4,v 1.58 2018/01/13 12:14:26 uwe Exp $
+.\"	$NetBSD: bpf.4,v 1.59 2018/01/13 12:20:49 uwe Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -538,7 +538,7 @@ Note that the addressing modes are more restricted than those of
 the accumulator loads, but they include
 .Sy BPF_MSH ,
 a hack for efficiently loading the IP header length.
-.Bl -column "BPF_LDX_BPF_W_BPF_IMM" "X <- k" -offset indent
+.Bl -column "BPF_LDX_BPF_W_BPF_MEM" "X <- k" -offset indent
 .It Sy BPF_LDX+BPF_W+BPF_IMM Ta X <- k
 .It Sy BPF_LDX+BPF_W+BPF_MEM Ta X <- M[k]
 .It Sy BPF_LDX+BPF_W+BPF_LEN Ta X <- len
