@@ -1,4 +1,4 @@
-/* $NetBSD: ld_thunkbus.c,v 1.31 2018/01/13 10:08:35 reinoud Exp $ */
+/* $NetBSD: ld_thunkbus.c,v 1.32 2018/01/13 10:27:58 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,13 +27,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_thunkbus.c,v 1.31 2018/01/13 10:08:35 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_thunkbus.c,v 1.32 2018/01/13 10:27:58 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/buf.h>
+#include <sys/bufq.h>
 #include <sys/disk.h>
 #include <sys/kmem.h>
 
@@ -48,7 +49,7 @@ static void	ld_thunkbus_attach(device_t, device_t, void *);
 
 static int	ld_thunkbus_ldstart(struct ld_softc *, struct buf *);
 static int	ld_thunkbus_lddump(struct ld_softc *, void *, int, int);
-static int	ld_thunkbus_ldflush(struct ld_softc *, int);
+static int	ld_thunkbus_ioctl(struct ld_softc *, u_long, void *, int32_t, bool);
 
 //#define LD_USE_AIO
 
@@ -122,7 +123,7 @@ ld_thunkbus_attach(device_t parent, device_t self, void *opaque)
 	ld->sc_maxqueuecnt = 1;
 	ld->sc_start = ld_thunkbus_ldstart;
 	ld->sc_dump = ld_thunkbus_lddump;
-	ld->sc_flush = ld_thunkbus_ldflush;
+	ld->sc_ioctl = ld_thunkbus_ioctl;
 
 	sc->sc_ih = softint_establish(SOFTINT_BIO,
 	    ld_thunkbus_complete, ld);
@@ -315,13 +316,19 @@ ld_thunkbus_lddump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
 	return 0;
 }
 
+
 static int
-ld_thunkbus_ldflush(struct ld_softc *ld, int flags)
+ld_thunkbus_ioctl(struct ld_softc *ld, u_long cmd, void *addr, int32_t flag,
+    bool poll)
 {
 	struct ld_thunkbus_softc *sc = (struct ld_thunkbus_softc *)ld;
 
-	if (thunk_fsync(sc->sc_fd) == -1)
-		return thunk_geterrno();
-
-	return 0;
+	switch (cmd) {
+	case DIOCCACHESYNC:
+		if (thunk_fsync(sc->sc_fd) == -1)
+			return thunk_geterrno();
+		return 0;
+	default:
+		return EPASSTHROUGH;
+	}
 }
