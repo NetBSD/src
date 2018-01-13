@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.4,v 1.83 2018/01/06 16:54:09 uwe Exp $
+.\"	$NetBSD: audio.4,v 1.84 2018/01/13 19:57:35 uwe Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -108,15 +108,15 @@ These can be modified to taste by the following
 .Xr sysctl 8
 variables:
 .Bl -tag -width "hw.driverN.precision" -compact -offset indent
-.It Li hw.driverN.precision
-.It Li hw.driverN.frequency
-.It Li hw.driverN.channels
-.It Li hw.driverN.latency
-.It Li hw.driverN.multiuser
+.It Li hw. Ns Ar driverN Ns Li .precision
+.It Li hw. Ns Ar driverN Ns Li .frequency
+.It Li hw. Ns Ar driverN Ns Li .channels
+.It Li hw. Ns Ar driverN Ns Li .latency
+.It Li hw. Ns Ar driverN Ns Li .multiuser
 .El
 .Pp
 Where
-.Em driverN
+.Ar driverN
 corresponds to the underlying audio device driver and device number.
 E.g. in the case of an
 .\" XXX: there's no hdafg(4) to xref to
@@ -130,7 +130,7 @@ For best results, values close to the underlying hardware should be chosen.
 These variables may only be changed when the sampling device is not in use.
 .Pp
 The
-.Li hw.driverN.latency
+.Li hw. Ns Ar driverN Ns Li .latency
 .Xr sysctl 8
 variable controls the latency of the in-kernel mixer by varying the hardware
 blocksize.
@@ -147,11 +147,11 @@ For audio applications that
 .Xr mmap 2
 the audio device for play back the resultant latency is a third (1/3) of the value
 of the
-.Li hw.driverN.latency
+.Li hw. Ns Ar driverN Ns Li .latency
 variable.
 .Pp
 The
-.Li hw.driverN.multiuser
+.Li hw. Ns Ar driverN Ns Li .multiuser
 .Xr sysctl 8
 variable determines if multiple users are allowed to access the sampling
 device.
@@ -167,14 +167,14 @@ If set to true, all users may access the sampling device at any time.
 .Pp
 Each virtual channel has a corresponding mixer:
 .Bl -tag -width "vchan.dacN" -compact -offset indent
-.It Li vchan.dacN
+.It Li vchan.dac Ns Ar N
 Output volume
-.It Li vchan.micN
+.It Li vchan.mic Ns Ar N
 Recording volume
 .El
 .Pp
 Where
-.Em N
+.Ar N
 is the virtual channel number.
 E.g.\&
 .Li vchan.dac0
