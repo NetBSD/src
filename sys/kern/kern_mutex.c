@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.65 2017/05/01 21:35:25 pgoyette Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.65.2.1 2018/01/13 21:57:11 snj Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.65 2017/05/01 21:35:25 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.65.2.1 2018/01/13 21:57:11 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -268,15 +268,15 @@ static void	mutex_abort(const char *, size_t, kmutex_t *, const char *);
 static void	mutex_dump(volatile void *);
 
 lockops_t mutex_spin_lockops = {
-	"Mutex",
-	LOCKOPS_SPIN,
-	mutex_dump
+	.lo_name = "Mutex",
+	.lo_type = LOCKOPS_SPIN,
+	.lo_dump = mutex_dump,
 };
 
 lockops_t mutex_adaptive_lockops = {
-	"Mutex",
-	LOCKOPS_SLEEP,
-	mutex_dump
+	.lo_name = "Mutex",
+	.lo_type = LOCKOPS_SLEEP,
+	.lo_dump = mutex_dump,
 };
 
 syncobj_t mutex_syncobj = {

@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.74 2017/05/01 21:35:26 pgoyette Exp $	*/
+/*	$NetBSD: locks.c,v 1.74.2.1 2018/01/13 21:57:11 snj Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.74 2017/05/01 21:35:26 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.74.2.1 2018/01/13 21:57:11 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -50,40 +50,45 @@ const int rump_lockdebug = 0;
 #ifdef LOCKDEBUG
 #include <sys/lockdebug.h>
 
-static lockops_t mutex_lockops = {
-	"mutex",
-	LOCKOPS_SLEEP,
-	NULL
+static lockops_t mutex_spin_lockops = {
+	.lo_name = "mutex",
+	.lo_type = LOCKOPS_SPIN,
+	.lo_dump = NULL,
+};
+static lockops_t mutex_adaptive_lockops = {
+	.lo_name = "mutex",
+	.lo_type = LOCKOPS_SLEEP,
+	.lo_dump = NULL,
 };
 static lockops_t rw_lockops = {
-	"rwlock",
-	LOCKOPS_SLEEP,
-	NULL
+	.lo_name = "rwlock",
+	.lo_type = LOCKOPS_SLEEP,
+	.lo_dump = NULL,
 };
 
 #define ALLOCK(lock, ops)				\
-    lockdebug_alloc(__func__, __LINE__, lock, ops,	\
-    (uintptr_t)__builtin_return_address(0))
-#define FREELOCK(lock)			\
-    lockdebug_free(__func__, __LINE__, lock)
+	lockdebug_alloc(__func__, __LINE__, lock, ops,	\
+	    (uintptr_t)__builtin_return_address(0))
+#define FREELOCK(lock)					\
+	lockdebug_free(__func__, __LINE__, lock)
 #define WANTLOCK(lock, shar)				\
-    lockdebug_wantlock(__func__, __LINE__, lock,	\
-    (uintptr_t)__builtin_return_address(0), shar)
+	lockdebug_wantlock(__func__, __LINE__, lock,	\
+	    (uintptr_t)__builtin_return_address(0), shar)
 #define LOCKED(lock, shar)				\
-    lockdebug_locked(__func__, __LINE__, lock, NULL,	\
-    (uintptr_t)__builtin_return_address(0), shar)
-#define UNLOCKED(lock, shar)		\
-    lockdebug_unlocked(__func__, __LINE__, lock,	\
-    (uintptr_t)__builtin_return_address(0), shar)
-#define BARRIER(lock, slp)		\
-    lockdebug_barrier(__func__, __LINE__, lock, slp)
+	lockdebug_locked(__func__, __LINE__, lock, NULL,\
+	    (uintptr_t)__builtin_return_address(0), shar)
+#define UNLOCKED(lock, shar)				\
+	lockdebug_unlocked(__func__, __LINE__, lock,	\
+	    (uintptr_t)__builtin_return_address(0), shar)
+#define BARRIER(lock, slp)				\
+	lockdebug_barrier(__func__, __LINE__, lock, slp)
 #else
-#define ALLOCK(a, b)
-#define FREELOCK(a)
-#define WANTLOCK(a, b)
-#define LOCKED(a, b)
-#define UNLOCKED(a, b)
-#define BARRIER(a, b)
+#define ALLOCK(a, b)	do {} while (0)
+#define FREELOCK(a)	do {} while (0)
+#define WANTLOCK(a, b)	do {} while (0)
+#define LOCKED(a, b)	do {} while (0)
+#define UNLOCKED(a, b)	do {} while (0)
+#define BARRIER(a, b)	do {} while (0)
 #endif
 
 /*
@@ -129,7 +134,10 @@ mutex_init(kmutex_t *mtx, kmutex_type_t type, int ipl)
 	if (isspin)
 		ruflags |= RUMPUSER_MTX_SPIN;
 	rumpuser_mutex_init((struct rumpuser_mtx **)mtx, ruflags);
-	ALLOCK(mtx, &mutex_lockops);
+	if (isspin)
+		ALLOCK(mtx, &mutex_spin_lockops);
+	else
+		ALLOCK(mtx, &mutex_adaptive_lockops);
 }
 
 void
@@ -145,7 +153,8 @@ mutex_enter(kmutex_t *mtx)
 {
 
 	WANTLOCK(mtx, 0);
-	BARRIER(mtx, 1);
+	if (!rumpuser_mutex_spin_p(RUMPMTX(mtx)))
+		BARRIER(mtx, 1);
 	rumpuser_mutex_enter(RUMPMTX(mtx));
 	LOCKED(mtx, false);
 }
@@ -154,8 +163,8 @@ void
 mutex_spin_enter(kmutex_t *mtx)
 {
 
+	KASSERT(rumpuser_mutex_spin_p(RUMPMTX(mtx)));
 	WANTLOCK(mtx, 0);
-	BARRIER(mtx, 1);
 	rumpuser_mutex_enter_nowrap(RUMPMTX(mtx));
 	LOCKED(mtx, false);
 }
@@ -177,6 +186,9 @@ void
 mutex_exit(kmutex_t *mtx)
 {
 
+#ifndef LOCKDEBUG
+	KASSERT(mutex_owned(mtx));
+#endif
 	UNLOCKED(mtx, false);
 	rumpuser_mutex_exit(RUMPMTX(mtx));
 }
