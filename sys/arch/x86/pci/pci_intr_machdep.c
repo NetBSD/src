@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_machdep.c,v 1.40 2017/06/01 02:45:08 chs Exp $	*/
+/*	$NetBSD: pci_intr_machdep.c,v 1.40.2.1 2018/01/13 21:50:31 snj Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2009 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.40 2017/06/01 02:45:08 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.40.2.1 2018/01/13 21:50:31 snj Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -274,15 +274,42 @@ pci_intr_setattr(pci_chipset_tag_t pc, pci_intr_handle_t *ih,
 	}
 }
 
+static int
+pci_intr_find_intx_irq(pci_intr_handle_t ih, int *irq, struct pic **pic,
+    int *pin)
+{
+
+	KASSERT(irq != NULL);
+	KASSERT(pic != NULL);
+	KASSERT(pin != NULL);
+
+	*pic = &i8259_pic;
+	*pin = *irq = APIC_IRQ_LEGACY_IRQ(ih);
+
+#if NIOAPIC > 0
+	if (ih & APIC_INT_VIA_APIC) {
+		struct ioapic_softc *ioapic;
+
+		ioapic = ioapic_find(APIC_IRQ_APIC(ih));
+		if (ioapic == NULL)
+			return ENOENT;
+		*pic = &ioapic->sc_pic;
+		*pin = APIC_IRQ_PIN(ih);
+		*irq = APIC_IRQ_LEGACY_IRQ(ih);
+		if (*irq < 0 || *irq >= NUM_LEGACY_IRQS)
+			*irq = -1;
+	}
+#endif
+
+	return 0;
+}
+
 static void *
 pci_intr_establish_xname_internal(pci_chipset_tag_t pc, pci_intr_handle_t ih,
     int level, int (*func)(void *), void *arg, const char *xname)
 {
 	int pin, irq;
 	struct pic *pic;
-#if NIOAPIC > 0
-	struct ioapic_softc *ioapic;
-#endif
 	bool mpsafe;
 	pci_chipset_tag_t ipc;
 
@@ -302,25 +329,13 @@ pci_intr_establish_xname_internal(pci_chipset_tag_t pc, pci_intr_handle_t ih,
 			    xname);
 	}
 
-	pic = &i8259_pic;
-	pin = irq = APIC_IRQ_LEGACY_IRQ(ih);
-	mpsafe = ((ih & MPSAFE_MASK) != 0);
-
-#if NIOAPIC > 0
-	if (ih & APIC_INT_VIA_APIC) {
-		ioapic = ioapic_find(APIC_IRQ_APIC(ih));
-		if (ioapic == NULL) {
-			aprint_normal("pci_intr_establish: bad ioapic %d\n",
-			    APIC_IRQ_APIC(ih));
-			return NULL;
-		}
-		pic = &ioapic->sc_pic;
-		pin = APIC_IRQ_PIN(ih);
-		irq = APIC_IRQ_LEGACY_IRQ(ih);
-		if (irq < 0 || irq >= NUM_LEGACY_IRQS)
-			irq = -1;
+	if (pci_intr_find_intx_irq(ih, &irq, &pic, &pin)) {
+		aprint_normal("%s: bad pic %d\n", __func__,
+		    APIC_IRQ_APIC(ih));
+		return NULL;
 	}
-#endif
+
+	mpsafe = ((ih & MPSAFE_MASK) != 0);
 
 	return intr_establish_xname(irq, pic, pin, IST_LEVEL, level, func, arg,
 	    mpsafe, xname);
@@ -377,6 +392,31 @@ pci_intr_type(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 	}
 }
 
+static const char *
+x86_pci_intx_create_intrid(pci_chipset_tag_t pc, pci_intr_handle_t ih, char *buf,
+    size_t len)
+{
+#if !defined(XEN)
+	int pin, irq;
+	struct pic *pic;
+
+	KASSERT(!INT_VIA_MSI(ih));
+
+	pic = &i8259_pic;
+	pin = irq = APIC_IRQ_LEGACY_IRQ(ih);
+
+	if (pci_intr_find_intx_irq(ih, &irq, &pic, &pin)) {
+		aprint_normal("%s: bad pic %d\n", __func__,
+		    APIC_IRQ_APIC(ih));
+		return NULL;
+	}
+
+	return intr_create_intrid(irq, pic, pin, buf, len);
+#else
+	return pci_intr_string(pc, ih, buf, len);
+#endif /* !XEN */
+}
+
 static void
 x86_pci_intx_release(pci_chipset_tag_t pc, pci_intr_handle_t *pih)
 {
@@ -407,8 +447,11 @@ pci_intx_alloc(const struct pci_attach_args *pa, pci_intr_handle_t **pih)
 		goto error;
 	}
 
-	intrstr = pci_intr_string(pa->pa_pc, *handle,
-	    intrstr_buf, sizeof(intrstr_buf));
+	/*
+	 * must be the same intrstr as intr_establish_xname()
+	 */
+	intrstr = x86_pci_intx_create_intrid(pa->pa_pc, *handle, intrstr_buf,
+	    sizeof(intrstr_buf));
 	mutex_enter(&cpu_lock);
 	isp = intr_allocate_io_intrsource(intrstr);
 	mutex_exit(&cpu_lock);
