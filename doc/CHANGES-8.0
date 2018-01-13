@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.100 2018/01/09 19:39:51 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.101 2018/01/13 04:44:51 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -8686,7 +8686,7 @@ sys/arch/x86/x86/vm_machdep.c			1.30
 	[maxv, ticket #477]
 
 sys/arch/arm/sunxi/sunxi_emac.c			1.9
-sys/dev/ic/dwc_gmac.c				1.43-1.44
+sys/dev/ic/dwc_gmac.c				1.43-1.45
 sys/dev/pci/if_iwm.c				1.75
 sys/dev/pci/if_wm.c				1.543
 sys/dev/pci/ixgbe/ixgbe.c			1.112
@@ -8739,7 +8739,7 @@ sys/rump/net/lib/libnetinet/netinet_component.c	1.9-1.10
 	- Unify IFEF_*_MPSAFE flags into IFEF_MPSAFE
 	- Don't hold KERNEL_LOCK on if_ioctl if IFEF_MPSAFE
 	- Enable IFEF_MPSAFE only if NET_MPSAFE
-	[ozaki-r, ticket #456]
+	[ozaki-r/martin, ticket #456]
 
 sys/net/rtsock.c				1.233-1.234, 1.236
 
