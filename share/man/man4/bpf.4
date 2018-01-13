@@ -1,6 +1,6 @@
 .\" -*- nroff -*-
 .\"
-.\"	$NetBSD: bpf.4,v 1.57 2018/01/13 12:06:48 uwe Exp $
+.\"	$NetBSD: bpf.4,v 1.58 2018/01/13 12:14:26 uwe Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -646,8 +646,8 @@ instructions will abort the program and return zero.
 The BPF interface provides the following macros to facilitate
 array initializers:
 .Bd -unfilled -offset indent
-.Sy BPF_STMT No (opcode, operand)
-.Sy BPF_JUMP No (opcode, operand, true_offset, false_offset)
+.Fn BPF_STMT opcode operand
+.Fn BPF_JUMP opcode operand true_offset false_offset
 .Ed
 .Sh SYSCTLS
 The following sysctls are available when
