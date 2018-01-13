@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_interrupt.c,v 1.2 2017/06/01 02:45:13 chs Exp $	*/
+/*	$NetBSD: subr_interrupt.c,v 1.3 2018/01/13 13:53:36 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_interrupt.c,v 1.2 2017/06/01 02:45:13 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_interrupt.c,v 1.3 2018/01/13 13:53:36 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,7 +126,7 @@ interrupt_avert_intr(u_int cpu_idx)
 	kcpuset_t *cpuset;
 	struct intrids_handler *ii_handler;
 	intrid_t *ids;
-	int error, i, nids;
+	int error = 0, i, nids;
 
 	kcpuset_create(&cpuset, true);
 	kcpuset_set(cpuset, cpu_idx);
