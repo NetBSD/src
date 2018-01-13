@@ -1,4 +1,4 @@
-/*	$NetBSD: dbrivar.h,v 1.13.42.1 2018/01/13 05:40:25 snj Exp $	*/
+/*	$NetBSD: dbrivar.h,v 1.13.42.2 2018/01/13 22:15:30 snj Exp $	*/
 
 /*
  * Copyright (C) 1997 Rudolf Koenig (rfkoenig@immd4.informatik.uni-erlangen.de)
@@ -170,6 +170,9 @@ struct dbri_softc {
 
 	kmutex_t	sc_lock;
 	kmutex_t	sc_intr_lock;
+#ifndef DBRI_SPIN
+	kcondvar_t	sc_cv;
+#endif
 };
 
 #define dbri_dma_off(member, elem)	\
