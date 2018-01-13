@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.116 2017/11/11 11:00:47 maxv Exp $	*/
+/*	$NetBSD: cpu.c,v 1.117 2018/01/13 14:48:13 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.116 2017/11/11 11:00:47 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.117 2018/01/13 14:48:13 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -379,6 +379,7 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 		    KM_SLEEP);
 		ci = (struct cpu_info *)roundup2(ptr, CACHE_LINE_SIZE);
 		memset(ci, 0, sizeof(*ci));
+		cpu_init_tss(ci);
 	} else {
 		aprint_naive(": %s Processor\n",
 		    caa->cpu_role == CPU_ROLE_SP ? "Single" : "Boot");
