@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.264 2017/12/02 01:36:38 ginsbach Exp $
+$NetBSD: acronyms,v 1.265 2018/01/13 03:35:40 pgoyette Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -69,6 +69,7 @@ BIAF	back in a few
 BIALW	back in a little while
 BIAS	back in a second
 BIAW	back in a while
+BIDI	boy, I did it
 BNYA	burned now you are
 BOC	but of course
 BOFH	bastard operator from hell
