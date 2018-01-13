@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.40.6.2 2018/01/02 10:20:32 snj Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.40.6.3 2018/01/13 04:44:29 snj Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.40.6.2 2018/01/02 10:20:32 snj Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.40.6.3 2018/01/13 04:44:29 snj Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -838,7 +838,9 @@ static void
 dwc_gmac_start(struct ifnet *ifp)
 {
 	struct dwc_gmac_softc *sc = ifp->if_softc;
+#ifdef DWCGMAC_MPSAFE
 	KASSERT(if_is_mpsafe(ifp));
+#endif
 
 	mutex_enter(sc->sc_lock);
 	if (!sc->sc_stopping) {
