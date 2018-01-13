@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.56.2.4 2018/01/02 10:20:33 snj Exp $*/
+/*$NetBSD: ixv.c,v 1.56.2.5 2018/01/13 21:40:01 snj Exp $*/
 
 /******************************************************************************
 
@@ -503,16 +503,16 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 	/* hw.ix defaults init */
 	adapter->enable_aim = ixv_enable_aim;
 
+	error = ixv_allocate_msix(adapter, pa);
+	if (error) {
+		device_printf(dev, "ixv_allocate_msix() failed!\n");
+		goto err_late;
+	}
+
 	/* Setup OS specific network interface */
 	error = ixv_setup_interface(dev, adapter);
 	if (error != 0) {
 		aprint_error_dev(dev, "ixv_setup_interface() failed!\n");
-		goto err_late;
-	}
-
-	error = ixv_allocate_msix(adapter, pa);
-	if (error) {
-		device_printf(dev, "ixv_allocate_msix() failed!\n");
 		goto err_late;
 	}
 
@@ -2692,6 +2692,7 @@ ixv_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 	/* and Mailbox */
 	cpu_id++;
 	snprintf(intr_xname, sizeof(intr_xname), "%s link", device_xname(dev));
+	adapter->vector = vector;
 	intrstr = pci_intr_string(pc, adapter->osdep.intrs[vector], intrbuf,
 	    sizeof(intrbuf));
 #ifdef IXGBE_MPSAFE
@@ -2720,7 +2721,6 @@ ixv_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 	else
 		aprint_normal("\n");
 
-	adapter->vector = vector;
 	/* Tasklets for Mailbox */
 	adapter->link_si = softint_establish(SOFTINT_NET |IXGBE_SOFTINFT_FLAGS,
 	    ixv_handle_link, adapter);
