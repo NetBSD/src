@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.143 2018/01/09 03:31:12 christos Exp $
+# $NetBSD: XEN3_DOM0,v 1.144 2018/01/13 12:38:16 christos Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -10,7 +10,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 #options 	UVMHIST_PRINT
 #options 	SYSCALL_DEBUG
 
-#ident		"XEN3_DOM0-$Revision: 1.143 $"
+#ident		"XEN3_DOM0-$Revision: 1.144 $"
 
 maxusers	32		# estimated number of users
 
@@ -887,6 +887,9 @@ pseudo-device	vcoda			# coda minicache <-> venus comm.
 
 # a pseudo device needed for SMBFS
 pseudo-device	nsmb			# experimental - SMB requester
+
+# a pseudo device needed for AUTOFS
+#pseudo-device	autofs			# experimental - AUTOFS
 
 # iSCSI initiator
 #pseudo-device	iscsi
