@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.101 2018/01/13 04:44:51 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.102 2018/01/13 05:50:47 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -8877,4 +8877,48 @@ sys/dev/mulaw.h					1.25
 	- mulaw/alaw_to_linearN macros replaced with individual faster
 	  filters.  NFC.
 	[nat, ticket #485]
+
+sys/dev/pci/pucdata.c				1.100
+
+	Add support for Manhattan 158220 card.  PR/52868
+	[maya, ticket #472]
+
+sys/dev/fss.c					1.101-1.103
+usr.sbin/fssconfig/fssconfig.c			1.13
+
+	fss(4):
+	- Bounds check against media size for non-persistent snapshots.
+	- Treat partial read from backing store as I/O error.
+	- Pass residual back to b_resid for persistent snapshots.
+
+	fssconfig(8): Use stat() information to decide if the backing
+	store is a directory.  Depending on open() returning EISDIR
+	fails for mount points.
+	[hannken, ticket #475]
+
+sys/dev/ic/cs4215reg.h				1.5
+sys/dev/sbus/dbri.c				1.37
+sys/dev/sbus/dbrivar.h				1.15
+
+	Overhaul the dbri driver and make it work again.  PR 52786
+	[macallan, ticket #476]
+
+sys/net/if.c					1.418
+
+	Check MP-safety in ifa_insert and ifa_remove only for
+	IFEF_MPSAFE drivers. Eventually the assertions should pass
+	for all drivers, however, at this point it's too eager.
+	PR kern/52895
+	[ozaki-r, ticket #486]
+
+sys/net/if.c					1.417
+
+	Suppress the assertion of IFNET_LOCK in if_mcast_op if
+	MROUTING.  MROUTING doesn't deal with IFNET_LOCK yet.
+	[ozaki-r, ticket #487]
+
+sys/netinet/in.c				1.213
+
+	Don't pass rwlock to callout_halt
+	[ozaki-r, ticket #488]
 
