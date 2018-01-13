@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.99 2017/01/15 04:45:39 msaitoh Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.99.8.1 2018/01/13 05:36:03 snj Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.99 2017/01/15 04:45:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.99.8.1 2018/01/13 05:36:03 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -876,6 +876,15 @@ const struct puc_device_description puc_devices[] = {
 	    {	0xffff,	0xffff,	0xffff,	0xffff	},
 	    {
 		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x00, COM_FREQ },
+	    },
+	},
+
+	/* NetMos PCI NM9865 : 1P */
+	{   "NetMos NM9865 Single LPT",
+	    {	PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9865, 0xa000, 0x2000 },
+	    {	0xffff,	0xffff,	0xffff,	0xffff	},
+	    {
+		{ PUC_PORT_TYPE_LPT, PCI_BAR0, 0x00, 0x00 },
 	    },
 	},
 
