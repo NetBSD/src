@@ -1,6 +1,6 @@
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2017 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2018 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -37,10 +37,13 @@
 
 #include "config.h"
 #include "auth.h"
-#include "crypt/crypt.h"
 #include "dhcp.h"
 #include "dhcp6.h"
 #include "dhcpcd.h"
+
+#ifdef HAVE_HMAC_H
+#include <hmac.h>
+#endif
 
 #ifdef __sun
 #define htonll
@@ -50,7 +53,7 @@
 #ifndef htonll
 #if (BYTE_ORDER == LITTLE_ENDIAN)
 #define	htonll(x)	((uint64_t)htonl((uint32_t)((x) >> 32)) | \
-			 (uint64_t)htonl((uint32_t)((x) & 0xffffffff)) << 32)
+			 (uint64_t)htonl((uint32_t)((x) & 0x00000000ffffffffULL)) << 32)
 #else	/* (BYTE_ORDER == LITTLE_ENDIAN) */
 #define	htonll(x)	(x)
 #endif
@@ -59,7 +62,7 @@
 #ifndef ntohll
 #if (BYTE_ORDER == LITTLE_ENDIAN)
 #define	ntohll(x)	((uint64_t)ntohl((uint32_t)((x) >> 32)) | \
-			 (uint64_t)ntohl((uint32_t)((x) & 0xffffffff)) << 32)
+			 (uint64_t)ntohl((uint32_t)((x) & 0x00000000ffffffffULL)) << 32)
 #else	/* (BYTE_ORDER == LITTLE_ENDIAN) */
 #define	ntohll(x)	(x)
 #endif
@@ -105,7 +108,7 @@ dhcp_auth_validate(struct authstate *state, const struct auth *auth,
 	size_t realm_len;
 	const struct token *t;
 	time_t now;
-	uint8_t hmac[HMAC_LENGTH];
+	uint8_t hmac_code[HMAC_LENGTH];
 
 	if (dlen < 3 + sizeof(replay)) {
 		errno = EINVAL;
@@ -174,7 +177,7 @@ dhcp_auth_validate(struct authstate *state, const struct auth *auth,
 		secretid = 0;
 		break;
 	case AUTH_PROTO_DELAYED:
-		if (dlen < sizeof(secretid) + sizeof(hmac)) {
+		if (dlen < sizeof(secretid) + sizeof(hmac_code)) {
 			errno = EINVAL;
 			return NULL;
 		}
@@ -183,11 +186,11 @@ dhcp_auth_validate(struct authstate *state, const struct auth *auth,
 		dlen -= sizeof(secretid);
 		break;
 	case AUTH_PROTO_DELAYEDREALM:
-		if (dlen < sizeof(secretid) + sizeof(hmac)) {
+		if (dlen < sizeof(secretid) + sizeof(hmac_code)) {
 			errno = EINVAL;
 			return NULL;
 		}
-		realm_len = dlen - (sizeof(secretid) + sizeof(hmac));
+		realm_len = dlen - (sizeof(secretid) + sizeof(hmac_code));
 		if (realm_len) {
 			realm = d;
 			d += realm_len;
@@ -320,10 +323,11 @@ gottoken:
 		memset(mm + offsetof(struct bootp, giaddr), 0, 4);
 	}
 
-	memset(hmac, 0, sizeof(hmac));
+	memset(hmac_code, 0, sizeof(hmac_code));
 	switch (algorithm) {
 	case AUTH_ALG_HMAC_MD5:
-		hmac_md5(mm, mlen, t->key, t->key_len, hmac);
+		hmac("md5", t->key, t->key_len, mm, mlen,
+		     hmac_code, sizeof(hmac_code));
 		break;
 	default:
 		errno = ENOSYS;
@@ -332,7 +336,7 @@ gottoken:
 	}
 
 	free(mm);
-	if (memcmp(d, &hmac, dlen)) {
+	if (memcmp(d, &hmac_code, dlen)) {
 		errno = EPERM;
 		return NULL;
 	}
@@ -472,7 +476,7 @@ dhcp_auth_encode(struct auth *auth, const struct token *t,
     void *vdata, size_t dlen)
 {
 	uint64_t rdm;
-	uint8_t hmac[HMAC_LENGTH];
+	uint8_t hmac_code[HMAC_LENGTH];
 	time_t now;
 	uint8_t hops, *p, info, *m, *data;
 	uint32_t giaddr, secretid;
@@ -546,7 +550,7 @@ dhcp_auth_encode(struct auth *auth, const struct token *t,
 			/* FALLTHROUGH */
 		case AUTH_PROTO_DELAYED:
 			if (info && t)
-				dlen += sizeof(t->secretid) + sizeof(hmac);
+				dlen += sizeof(t->secretid) + sizeof(hmac_code);
 			break;
 		}
 		return (ssize_t)dlen;
@@ -651,8 +655,9 @@ dhcp_auth_encode(struct auth *auth, const struct token *t,
 	/* Create our hash and write it out */
 	switch(auth->algorithm) {
 	case AUTH_ALG_HMAC_MD5:
-		hmac_md5(m, mlen, t->key, t->key_len, hmac);
-		memcpy(data, hmac, sizeof(hmac));
+		hmac("md5", t->key, t->key_len, m, mlen,
+		     hmac_code, sizeof(hmac_code));
+		memcpy(data, hmac_code, sizeof(hmac_code));
 		break;
 	}
 
@@ -665,5 +670,5 @@ dhcp_auth_encode(struct auth *auth, const struct token *t,
 	}
 
 	/* Done! */
-	return (int)(dlen - sizeof(hmac)); /* should be zero */
+	return (int)(dlen - sizeof(hmac_code)); /* should be zero */
 }

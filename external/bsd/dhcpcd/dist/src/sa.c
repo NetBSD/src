@@ -1,6 +1,6 @@
 /*
  * Socket Address handling for dhcpcd
- * Copyright (c) 2015-2017 Roy Marples <roy@marples.name>
+ * Copyright (c) 2015-2018 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -197,18 +197,18 @@ sa_toprefix(const struct sockaddr *sa)
 	case AF_INET:
 	{
 		const struct sockaddr_in *sin;
-		int mask;
+		uint32_t mask;
 
 		sin = satocsin(sa);
 		if (sin->sin_addr.s_addr == INADDR_ANY) {
 			prefix = 0;
 			break;
 		}
-		mask = (int)ntohl(sin->sin_addr.s_addr);
-		prefix = 33 - ffs(mask);	/* 33 - (1 .. 32) -> 32 .. 1 */
+		mask = ntohl(sin->sin_addr.s_addr);
+		prefix = 33 - ffs((int)mask);	/* 33 - (1 .. 32) -> 32 .. 1 */
 		if (prefix < 32) {		/* more than 1 bit in mask */
 			/* check for non-contig netmask */
-			if ((mask ^ (((1 << prefix)-1) << (32 - prefix))) != 0){
+			if ((mask^(((1U << prefix)-1) << (32 - prefix))) != 0) {
 				errno = EINVAL;
 				return -1;	/* noncontig, no pfxlen */
 			}

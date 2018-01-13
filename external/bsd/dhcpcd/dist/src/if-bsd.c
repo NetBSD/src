@@ -1,6 +1,6 @@
 /*
  * BSD interface driver for dhcpcd
- * Copyright (c) 2006-2017 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2018 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -437,7 +437,7 @@ if_copysa(struct sockaddr *dst, const struct sockaddr *src)
 	assert(src != NULL);
 
 	memcpy(dst, src, src->sa_len);
-#ifdef __KAME__
+#if defined(INET6) && defined(__KAME__)
 	if (dst->sa_family == AF_INET6) {
 		struct in6_addr *in6;
 
@@ -461,9 +461,6 @@ if_route(unsigned char cmd, const struct rt *rt)
 	char *bp = rtmsg.buffer;
 	struct sockaddr_dl sdl;
 	bool gateway_unspec;
-#ifdef RTA_LABEL
-	struct sockaddr_rtlabel label;
-#endif
 
 	assert(rt != NULL);
 	ctx = rt->rt_ifp->ctx;
@@ -505,8 +502,7 @@ if_route(unsigned char cmd, const struct rt *rt)
 		if (!(rtm->rtm_flags & RTF_REJECT) &&
 		    !sa_is_loopback(&rt->rt_gateway))
 		{
-			if (!gateway_unspec)
-				rtm->rtm_addrs |= RTA_IFP;
+			rtm->rtm_addrs |= RTA_IFP;
 			if (!sa_is_unspecified(&rt->rt_ifa))
 				rtm->rtm_addrs |= RTA_IFA;
 		}
@@ -585,23 +581,6 @@ if_route(unsigned char cmd, const struct rt *rt)
 
 	if (rtm->rtm_addrs & RTA_IFA)
 		ADDSA(&rt->rt_ifa);
-
-#ifdef RTA_LABEL
-	if (rtm->rtm_addrs & RTA_LABEL) {
-		int len;
-
-		memset(&label, 0, sizeof(label));
-		label.sr_family = AF_UNSPEC;
-		label.sr_len = sizeof(label);
-		len = snprintf(label.sr_label, sizeof(label.sr_label),
-		    PACKAGE " %d", getpid());
-		/* Don't add the label if we failed to create it. */
-		if (len == -1 || (size_t)len > sizeof(label.sr_label))
-			rtm->rtm_addrs &= ~RTA_LABEL;
-		else
-			ADDSA((struct sockaddr *)&label);
-	}
-#endif
 
 #undef ADDSA
 
@@ -770,7 +749,7 @@ ifa_scope(struct sockaddr_in6 *sin, unsigned int ifindex)
 
 #ifdef __KAME__
 	/* KAME based systems want to store the scope inside the sin6_addr
-	 * for link local addreses */
+	 * for link local addresses */
 	if (IN6_IS_ADDR_LINKLOCAL(&sin->sin6_addr)) {
 		uint16_t scope = htons((uint16_t)ifindex);
 		memcpy(&sin->sin6_addr.s6_addr[2], &scope,
@@ -1185,6 +1164,12 @@ if_ifa(struct dhcpcd_ctx *ctx, const struct ifa_msghdr *ifam)
 		}
 #endif
 
+#ifdef __KAME__
+		if (IN6_IS_ADDR_LINKLOCAL(&addr6))
+			/* Remove the scope from the address */
+			addr6.s6_addr[2] = addr6.s6_addr[3] = '\0';
+#endif
+
 		ipv6_handleifa(ctx, ifam->ifam_type, NULL,
 		    ifp->name, &addr6, ipv6_prefixlen(&mask6), addrflags);
 		break;
@@ -1347,18 +1332,6 @@ ip6_temp_valid_lifetime(__unused const char *ifname)
 }
 #endif
 
-static int
-if_raflush(int s)
-{
-	char dummy[IFNAMSIZ + 8];
-
-	strlcpy(dummy, "lo0", sizeof(dummy));
-	if (ioctl(s, SIOCSRTRFLUSH_IN6, (void *)&dummy) == -1 ||
-	    ioctl(s, SIOCSPFXFLUSH_IN6, (void *)&dummy) == -1)
-		return -1;
-	return 0;
-}
-
 #ifdef SIOCIFAFATTACH
 static int
 af_attach(int s, const struct interface *ifp, int af)
@@ -1398,6 +1371,16 @@ set_ifxflags(int s, const struct interface *ifp)
 }
 #endif
 
+/* OpenBSD removed ND6 flags entirely, so we need to check for their
+ * existnance. */
+#if defined(ND6_IFF_AUTO_LINKLOCAL) || \
+    defined(ND6_IFF_PERFORMNUD) || \
+    defined(ND6_IFF_ACCEPT_RTADV) || \
+    defined(ND6_IFF_OVERRIDE_RTADV) || \
+    defined(ND6_IFF_IFDISABLED)
+#define	ND6_NDI_FLAGS
+#endif
+
 int
 if_checkipv6(struct dhcpcd_ctx *ctx, const struct interface *ifp)
 {
@@ -1408,6 +1391,7 @@ if_checkipv6(struct dhcpcd_ctx *ctx, const struct interface *ifp)
 	s = priv->pf_inet6_fd;
 
 	if (ifp) {
+#ifdef ND6_NDI_FLAGS
 		struct in6_ndireq nd;
 		int flags;
 
@@ -1416,6 +1400,7 @@ if_checkipv6(struct dhcpcd_ctx *ctx, const struct interface *ifp)
 		if (ioctl(s, SIOCGIFINFO_IN6, &nd) == -1)
 			return -1;
 		flags = (int)nd.ndi.flags;
+#endif
 
 #ifdef ND6_IFF_AUTO_LINKLOCAL
 		if (!(ctx->options & DHCPCD_TEST) &&
@@ -1454,6 +1439,7 @@ if_checkipv6(struct dhcpcd_ctx *ctx, const struct interface *ifp)
 		flags &= ~ND6_IFF_IFDISABLED;
 #endif
 
+#ifdef ND6_NDI_FLAGS
 		if (nd.ndi.flags != (uint32_t)flags) {
 			if (ctx->options & DHCPCD_TEST) {
 				logwarnx("%s: interface not IPv6 enabled",
@@ -1466,6 +1452,7 @@ if_checkipv6(struct dhcpcd_ctx *ctx, const struct interface *ifp)
 				return -1;
 			}
 		}
+#endif
 
 		/* Enabling IPv6 by whatever means must be the
 		 * last action undertaken to ensure kernel RS and
@@ -1520,11 +1507,18 @@ if_checkipv6(struct dhcpcd_ctx *ctx, const struct interface *ifp)
 	ra = 0;
 	if (!(ctx->options & DHCPCD_TEST)) {
 #endif
+#if defined(IPV6CTL_ACCEPT_RTADV) || defined(ND6_IFF_ACCEPT_RTADV)
 		/* Flush the kernel knowledge of advertised routers
 		 * and prefixes so the kernel does not expire prefixes
 		 * and default routes we are trying to own. */
-		if (if_raflush(s) == -1)
-			logwarn("if_raflush");
+		char dummy[IFNAMSIZ + 8];
+
+		strlcpy(dummy, "lo0", sizeof(dummy));
+		if (ioctl(s, SIOCSRTRFLUSH_IN6, (void *)&dummy) == -1)
+			logwarn("SIOCSRTRFLUSH_IN6");
+		if (ioctl(s, SIOCSPFXFLUSH_IN6, (void *)&dummy) == -1)
+			logwarn("SIOCSPFXFLUSH_IN6");
+#endif
 	}
 
 	ctx->ra_global = ra;

@@ -1,6 +1,6 @@
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2017 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2018 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -80,7 +80,7 @@ int eloop_event_add_w(struct eloop *, int,
     eloop_event_delete_write((eloop), (fd), 0)
 #define eloop_event_remove_writecb(eloop, fd) \
     eloop_event_delete_write((eloop), (fd), 1)
-void eloop_event_delete_write(struct eloop *, int, int);
+int eloop_event_delete_write(struct eloop *, int, int);
 
 #define eloop_timeout_add_tv(eloop, tv, cb, ctx) \
     eloop_q_timeout_add_tv((eloop), ELOOP_QUEUE, (tv), (cb), (ctx))
@@ -96,7 +96,7 @@ int eloop_q_timeout_add_sec(struct eloop *, int,
     time_t, void (*)(void *), void *);
 int eloop_q_timeout_add_msec(struct eloop *, int,
     long, void (*)(void *), void *);
-void eloop_q_timeout_delete(struct eloop *, int, void (*)(void *), void *);
+int eloop_q_timeout_delete(struct eloop *, int, void (*)(void *), void *);
 
 int eloop_signal_set_cb(struct eloop *, const int *, size_t,
     void (*)(int, void *), void *);

@@ -1,6 +1,6 @@
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2017 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2018 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -190,8 +190,9 @@ if_hasconf(struct dhcpcd_ctx *ctx, const char *ifname)
 	return 0;
 }
 
-static void if_learnaddrs(struct dhcpcd_ctx *ctx, struct if_head *ifs,
-    struct ifaddrs *ifaddrs)
+void
+if_learnaddrs(struct dhcpcd_ctx *ctx, struct if_head *ifs,
+    struct ifaddrs **ifaddrs)
 {
 	struct ifaddrs *ifa;
 	struct interface *ifp;
@@ -203,7 +204,7 @@ static void if_learnaddrs(struct dhcpcd_ctx *ctx, struct if_head *ifs,
 #endif
 	int addrflags;
 
-	for (ifa = ifaddrs; ifa; ifa = ifa->ifa_next) {
+	for (ifa = *ifaddrs; ifa; ifa = ifa->ifa_next) {
 		if (ifa->ifa_addr == NULL)
 			continue;
 		if ((ifp = if_find(ifs, ifa->ifa_name)) == NULL)
@@ -262,12 +263,34 @@ static void if_learnaddrs(struct dhcpcd_ctx *ctx, struct if_head *ifs,
 #endif
 		}
 	}
+
+	freeifaddrs(*ifaddrs);
+	*ifaddrs = NULL;
+}
+
+bool
+if_valid_hwaddr(const uint8_t *hwaddr, size_t hwlen)
+{
+	size_t i;
+	bool all_zeros, all_ones;
+
+	all_zeros = all_ones = true;
+	for (i = 0; i < hwlen; i++) {
+		if (hwaddr[i] != 0x00)
+			all_zeros = false;
+		if (hwaddr[i] != 0xff)
+			all_ones = false;
+		if (!all_zeros && !all_ones)
+			return true;
+	}
+	return false;
 }
 
 struct if_head *
-if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
+if_discover(struct dhcpcd_ctx *ctx, struct ifaddrs **ifaddrs,
+    int argc, char * const *argv)
 {
-	struct ifaddrs *ifaddrs, *ifa;
+	struct ifaddrs *ifa;
 	int i;
 	unsigned int active;
 	struct if_head *ifs;
@@ -289,14 +312,17 @@ if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 	const struct sockaddr_ll *sll;
 #endif
 
-	if (getifaddrs(&ifaddrs) == -1)
+	if ((ifs = malloc(sizeof(*ifs))) == NULL) {
+		logerr(__func__);
 		return NULL;
-
-	if ((ifs = malloc(sizeof(*ifs))) == NULL)
-		goto failed;
+	}
 	TAILQ_INIT(ifs);
+	if (getifaddrs(ifaddrs) == -1) {
+		logerr(__func__);
+		goto out;
+	}
 
-	for (ifa = ifaddrs; ifa; ifa = ifa->ifa_next) {
+	for (ifa = *ifaddrs; ifa; ifa = ifa->ifa_next) {
 		if (ifa->ifa_addr != NULL) {
 #ifdef AF_LINK
 			if (ifa->ifa_addr->sa_family != AF_LINK)
@@ -469,6 +495,10 @@ if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 			ifp->index = if_nametoindex(ifp->name);
 #endif
 
+		/* Ensure hardware address is valid. */
+		if (!if_valid_hwaddr(ifp->hwaddr, ifp->hwlen))
+			ifp->hwlen = 0;
+
 		/* We only work on ethernet by default */
 		if (ifp->family != ARPHRD_ETHER) {
 			if ((argc == 0 || argc == -1) &&
@@ -543,9 +573,7 @@ if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 		TAILQ_INSERT_TAIL(ifs, ifp, next);
 	}
 
-	if_learnaddrs(ctx, ifs, ifaddrs);
-failed:
-	freeifaddrs(ifaddrs);
+out:
 	return ifs;
 }
 

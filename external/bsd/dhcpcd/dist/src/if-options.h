@@ -1,6 +1,6 @@
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2017 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2018 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -143,9 +143,11 @@ struct if_ia {
 	uint8_t iaid_set;
 	struct in6_addr addr;
 	uint8_t prefix_len;
+#ifndef SMALL
 	uint32_t sla_max;
 	size_t sla_len;
 	struct if_sla *sla;
+#endif
 #endif
 };
 

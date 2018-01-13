@@ -1,4 +1,4 @@
-.\" Copyright (c) 2006-2017 Roy Marples
+.\" Copyright (c) 2006-2018 Roy Marples
 .\" All rights reserved
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd May 9, 2017
+.Dd October 7, 2017
 .Dt DHCPCD 8
 .Os
 .Sh NAME
@@ -434,7 +434,7 @@ Sometimes, this isn't desirable if, for example, you have root mounted over
 NFS or SSH clients connect to this host and they need to be notified of
 the host shutting down.
 You can use this option to stop this from happening.
-.It Fl r , Fl Fl request Op Ar address
+.It Fl r , Fl Fl request Ar address
 Request the
 .Ar address
 in the DHCP DISCOVER message.
@@ -444,7 +444,7 @@ If no
 is given then the first address currently assigned to the
 .Ar interface
 is used.
-.It Fl s , Fl Fl inform Op Ar address Ns Op Ar /cidr
+.It Fl s , Fl Fl inform Ar address Ns Op Ar /cidr
 Behaves like
 .Fl r , Fl Fl request
 as above, but sends a DHCP INFORM instead of DISCOVER/REQUEST.
@@ -584,6 +584,15 @@ will try to do as much as it can by default.
 However, there are sometimes situations where you don't want the things to be
 configured exactly how the the DHCP server wants.
 Here are some options that deal with turning these bits off.
+.Pp
+Note that when
+.Nm
+is restricted to a single interface then the interface also needs to be
+specified when asking
+.Nm
+to exit using the commandline.
+If the protocol is restricted as well then the protocol needs to be included
+with the exit instruction.
 .Bl -tag -width indent
 .It Fl 1 , Fl Fl oneshot
 Exit after configuring an interface.

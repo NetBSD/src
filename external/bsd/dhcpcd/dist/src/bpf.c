@@ -1,6 +1,6 @@
 /*
  * dhcpcd: BPF arp and bootp filtering
- * Copyright (c) 2006-2017 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2018 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -166,7 +166,9 @@ bpf_open(struct interface *ifp, int (*filter)(struct interface *, int))
 	if (ioctl(fd, BIOCGBLEN, &ibuf_len) == -1)
 		goto eexit;
 	buf_len = (size_t)ibuf_len;
-	state = IPV4_STATE(ifp);
+	state = ipv4_getstate(ifp);
+	if (state == NULL)
+		goto eexit;
 	if (state->buffer_size != buf_len) {
 		void *nb;
 
@@ -192,7 +194,8 @@ eexit:
 /* BPF requires that we read the entire buffer.
  * So we pass the buffer in the API so we can loop on >1 packet. */
 ssize_t
-bpf_read(struct interface *ifp, int fd, void *data, size_t len, int *flags)
+bpf_read(struct interface *ifp, int fd, void *data, size_t len,
+    unsigned int *flags)
 {
 	ssize_t fl = (ssize_t)bpf_frame_header_len(ifp);
 	ssize_t bytes;
@@ -201,7 +204,7 @@ bpf_read(struct interface *ifp, int fd, void *data, size_t len, int *flags)
 	struct bpf_hdr packet;
 	const char *payload;
 
-	*flags = 0;
+	*flags &= ~BPF_EOF;
 	for (;;) {
 		if (state->buffer_len == 0) {
 			bytes = read(fd, state->buffer, state->buffer_size);
@@ -241,7 +244,7 @@ next:
 			return bytes;
 	}
 
-	return bytes;
+	/* NOTREACHED */
 }
 
 int
@@ -295,6 +298,9 @@ bpf_close(struct interface *ifp, int fd)
 	return close(fd);
 }
 
+/* Normally this is needed by bootp.
+ * Once that uses this again, the ARP guard here can be removed. */
+#ifdef ARP
 static unsigned int
 bpf_cmp_hwaddr(struct bpf_insn *bpf, size_t bpf_len, size_t off,
     bool equal, uint8_t *hwaddr, size_t hwaddr_len)
@@ -378,6 +384,7 @@ bpf_cmp_hwaddr(struct bpf_insn *bpf, size_t bpf_len, size_t off,
 
 	return (unsigned int)(bp - bpf);
 }
+#endif
 
 #ifdef ARP
 
@@ -589,6 +596,7 @@ static const struct bpf_insn bpf_bootp_filter[] = {
 	BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, BOOTREPLY, 1, 0),
 	BPF_STMT(BPF_RET + BPF_K, 0),
 };
+
 #define BPF_BOOTP_FILTER_LEN	__arraycount(bpf_bootp_filter)
 #define BPF_BOOTP_CHADDR_LEN	((BOOTP_CHADDR_LEN / 4) * 3)
 #define	BPF_BOOTP_XID_LEN	4 /* BOUND check is 4 instructions */
@@ -599,7 +607,9 @@ static const struct bpf_insn bpf_bootp_filter[] = {
 int
 bpf_bootp(struct interface *ifp, int fd)
 {
+#if 0
 	const struct dhcp_state *state = D_CSTATE(ifp);
+#endif
 	struct bpf_insn bpf[BPF_BOOTP_LEN];
 	struct bpf_insn *bp;
 
@@ -622,6 +632,8 @@ bpf_bootp(struct interface *ifp, int fd)
 	memcpy(bp, bpf_bootp_filter, sizeof(bpf_bootp_filter));
 	bp += BPF_BOOTP_FILTER_LEN;
 
+	/* These checks won't work when same IP exists on other interfaces. */
+#if 0
 	if (ifp->hwlen <= sizeof(((struct bootp *)0)->chaddr))
 		bp += bpf_cmp_hwaddr(bp, BPF_BOOTP_CHADDR_LEN,
 		                     offsetof(struct bootp, chaddr),
@@ -654,6 +666,7 @@ bpf_bootp(struct interface *ifp, int fd)
 		BPF_SET_STMT(bp, BPF_RET + BPF_K, 0);
 		bp++;
 	}
+#endif
 
 	/* All passed, return the packet
 	 * (Frame length in M0, IP length in M2). */

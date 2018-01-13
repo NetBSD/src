@@ -1,6 +1,6 @@
 /*
  * eloop - portable event based main loop.
- * Copyright (c) 2006-2017 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2018 Roy Marples <roy@marples.name>
  * All rights reserved.
 
  * Redistribution and use in source and binary forms, with or without
@@ -436,7 +436,7 @@ eloop_event_add_w(struct eloop *eloop, int fd,
 	return eloop_event_add_rw(eloop, fd, NULL,NULL, write_cb, write_cb_arg);
 }
 
-void
+int
 eloop_event_delete_write(struct eloop *eloop, int fd, int write_only)
 {
 	struct eloop_event *e;
@@ -450,11 +450,14 @@ eloop_event_delete_write(struct eloop *eloop, int fd, int write_only)
 
 	if (fd > eloop->events_maxfd ||
 	    (e = eloop->event_fds[fd]) == NULL)
-		return;
+	{
+		errno = ENOENT;
+		return -1;
+	}
 
 	if (write_only) {
 		if (e->write_cb == NULL)
-			return;
+			return 0;
 		if (e->read_cb == NULL)
 			goto remove;
 		e->write_cb = NULL;
@@ -471,7 +474,7 @@ eloop_event_delete_write(struct eloop *eloop, int fd, int write_only)
 		epoll_ctl(eloop->poll_fd, EPOLL_CTL_MOD, fd, &epe);
 #endif
 		eloop_event_setup_fds(eloop);
-		return;
+		return 1;
 	}
 
 remove:
@@ -495,6 +498,7 @@ remove:
 #endif
 
 	eloop_event_setup_fds(eloop);
+	return 1;
 }
 
 int
@@ -586,14 +590,16 @@ eloop_timeout_add_now(struct eloop *eloop,
 }
 #endif
 
-void
+int
 eloop_q_timeout_delete(struct eloop *eloop, int queue,
     void (*callback)(void *), void *arg)
 {
 	struct eloop_timeout *t, *tt;
+	int n;
 
 	assert(eloop != NULL);
 
+	n = 0;
 	TAILQ_FOREACH_SAFE(t, &eloop->timeouts, next, tt) {
 		if ((queue == 0 || t->queue == queue) &&
 		    t->arg == arg &&
@@ -601,8 +607,10 @@ eloop_q_timeout_delete(struct eloop *eloop, int queue,
 		{
 			TAILQ_REMOVE(&eloop->timeouts, t, next);
 			TAILQ_INSERT_TAIL(&eloop->free_timeouts, t, next);
+			n++;
 		}
 	}
+	return n;
 }
 
 void
@@ -777,6 +785,8 @@ eloop_signal_mask(struct eloop *eloop, sigset_t *oldset)
 		return -1;
 
 #ifndef HAVE_KQUEUE
+	_eloop = eloop;
+
 	memset(&sa, 0, sizeof(sa));
 	sa.sa_sigaction = eloop_signal3;
 	sa.sa_flags = SA_SIGINFO;
@@ -868,8 +878,6 @@ eloop_start(struct eloop *eloop, sigset_t *signals)
 #endif
 #ifndef HAVE_KQUEUE
 	int timeout;
-
-	_eloop = eloop;
 #endif
 
 	assert(eloop != NULL);

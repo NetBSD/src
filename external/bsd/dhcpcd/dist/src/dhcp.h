@@ -1,6 +1,6 @@
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2017 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2018 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -183,6 +183,7 @@ struct dhcp_lease {
 };
 
 enum DHS {
+	DHS_NONE,
 	DHS_INIT,
 	DHS_DISCOVER,
 	DHS_REQUEST,
@@ -214,6 +215,7 @@ struct dhcp_state {
 	int socket;
 
 	int bpf_fd;
+	unsigned int bpf_flags;
 	struct ipv4_addr *addr;
 	uint8_t added;
 

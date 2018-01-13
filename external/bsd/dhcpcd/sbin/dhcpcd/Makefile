@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.40 2017/04/14 10:00:06 roy Exp $
+# $NetBSD: Makefile,v 1.40.4.1 2018/01/13 21:35:30 snj Exp $
 #
 
 WARNS?=		6
@@ -26,14 +26,14 @@ DHCPCD_DEFS=	dhcpcd-definitions-small.conf
 .else
 DHCPCD_DEFS=	dhcpcd-definitions.conf
 CPPFLAGS+=	-DAUTH
-SRCS+=		auth.c hmac_md5.c
+SRCS+=		auth.c
 .endif
 
 .if (${USE_INET} != "no")
 CPPFLAGS+=	-DARP -DINET
 SRCS+=		arp.c bpf.c dhcp.c ipv4.c
 .if !defined(SMALLPROG)
-CPPFLAGS+=	-DIPV4LL
+CPPFLAGS+=	-DIPV4LL -DARPING
 SRCS+=		ipv4ll.c
 .endif
 .endif
