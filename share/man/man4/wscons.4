@@ -1,4 +1,4 @@
-.\" $NetBSD: wscons.4,v 1.32 2016/08/27 23:59:56 dholland Exp $
+.\" $NetBSD: wscons.4,v 1.33 2018/01/13 13:49:10 uwe Exp $
 .\"
 .\" Copyright (c) 1999, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -31,10 +31,17 @@
 .Nm wscons
 .Nd workstation console access
 .Sh SYNOPSIS
+.Cd "wsdisplay* at ..."
+.Cd "wskbd*     at ... mux N"
+.Cd "wsmouse*   at ... mux N"
+.Pp
+.Cd pseudo-device wsmux
+.Pp
 .Cd options WSEMUL_SUN
 .Cd options WSEMUL_VT100
 .Cd options WSEMUL_NO_DUMB
 .Cd options WSEMUL_DEFAULT=\&"xxx\&"
+.Pp
 .Cd options WS_DEFAULT_FG=WSCOL_XXX
 .Cd options WS_DEFAULT_BG=WSCOL_XXX
 .Cd options WS_DEFAULT_COLATTR=\&"(WSATTR_XXX | WSATTR_YYY)"
@@ -43,19 +50,15 @@
 .Cd options WS_KERNEL_BG=WSCOL_XXX
 .Cd options WS_KERNEL_COLATTR=\&"(WSATTR_XXX | WSATTR_YYY)"
 .Cd options WS_KERNEL_MONOATTR=\&"(WSATTR_XXX | WSATTR_YYY)"
-.Cd options WSCOMPAT_USL_SYNCTIMEOUT=nnn
+.Pp
 .Cd options WSDISPLAY_COMPAT_PCVT
 .Cd options WSDISPLAY_COMPAT_SYSCONS
 .Cd options WSDISPLAY_COMPAT_USL
+.Cd options WSCOMPAT_USL_SYNCTIMEOUT=nnn
 .Cd options WSDISPLAY_COMPAT_RAWKBD
+.Pp
 .Cd options WSKBD_EVENT_AUTOREPEAT
 .Cd options WSKBD_USONLY
-.Pp
-.Cd "wsdisplay* at ..."
-.Cd "wskbd*     at ... mux N"
-.Cd "wsmouse*   at ... mux N"
-.Pp
-.Cd pseudo-device  wsmux    N
 .Sh DESCRIPTION
 The
 .Nm
