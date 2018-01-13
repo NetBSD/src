@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.508.4.11 2018/01/02 10:20:33 snj Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.508.4.12 2018/01/13 21:42:45 snj Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.508.4.11 2018/01/02 10:20:33 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.508.4.12 2018/01/13 21:42:45 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -921,6 +921,7 @@ static void	wm_ulp_disable(struct wm_softc *);
 static void	wm_enable_phy_wakeup(struct wm_softc *);
 static void	wm_igp3_phy_powerdown_workaround_ich8lan(struct wm_softc *);
 static void	wm_enable_wakeup(struct wm_softc *);
+static void	wm_disable_aspm(struct wm_softc *);
 /* LPLU (Low Power Link Up) */
 static void	wm_lplu_d0_disable(struct wm_softc *);
 /* EEE */
@@ -1850,16 +1851,25 @@ wm_attach(device_t parent, device_t self, void *aux)
 	}
 
 	wm_adjust_qnum(sc, pci_msix_count(pa->pa_pc, pa->pa_tag));
+	/*
+	 *  Don't use MSI-X if we can use only one queue to save interrupt
+	 * resource.
+	 */
+	if (sc->sc_nqueues > 1) {
+		max_type = PCI_INTR_TYPE_MSIX;
+		/*
+		 *  82583 has a MSI-X capability in the PCI configuration space
+		 * but it doesn't support it. At least the document doesn't
+		 * say anything about MSI-X.
+		 */
+		counts[PCI_INTR_TYPE_MSIX]
+		    = (sc->sc_type == WM_T_82583) ? 0 : sc->sc_nqueues + 1;
+	} else {
+		max_type = PCI_INTR_TYPE_MSI;
+		counts[PCI_INTR_TYPE_MSIX] = 0;
+	}
 
 	/* Allocation settings */
-	max_type = PCI_INTR_TYPE_MSIX;
-	/*
-	 * 82583 has a MSI-X capability in the PCI configuration space but
-	 * it doesn't support it. At least the document doesn't say anything
-	 * about MSI-X.
-	 */
-	counts[PCI_INTR_TYPE_MSIX]
-	    = (sc->sc_type == WM_T_82583) ? 0 : sc->sc_nqueues + 1;
 	counts[PCI_INTR_TYPE_MSI] = 1;
 	counts[PCI_INTR_TYPE_INTX] = 1;
 	/* overridden by disable flags */
@@ -2038,6 +2048,9 @@ alloc_retry:
 		    (sc->sc_flags & WM_F_BUS64) ? 64 : 32, sc->sc_bus_speed,
 		    (sc->sc_flags & WM_F_PCIX) ? "PCIX" : "PCI");
 	}
+
+	/* Disable ASPM L0s and/or L1 for workaround */
+	wm_disable_aspm(sc);
 
 	/* clear interesting stat counters */
 	CSR_READ(sc, WMREG_COLC);
@@ -2902,6 +2915,8 @@ wm_resume(device_t self, const pmf_qual_t *qual)
 {
 	struct wm_softc *sc = device_private(self);
 
+	/* Disable ASPM L0s and/or L1 for workaround */
+	wm_disable_aspm(sc);
 	wm_init_manageability(sc);
 
 	return true;
@@ -13795,6 +13810,66 @@ wm_enable_wakeup(struct wm_softc *sc)
 	pmode |= PCI_PMCSR_PME_STS | PCI_PMCSR_PME_EN;
 #endif
 	pci_conf_write(sc->sc_pc, sc->sc_pcitag, pmreg + PCI_PMCSR, pmode);
+}
+
+/* Disable ASPM L0s and/or L1 for workaround */
+static void
+wm_disable_aspm(struct wm_softc *sc)
+{
+	pcireg_t reg, mask = 0;
+	unsigned const char *str = "";
+
+	/*
+	 *  Only for PCIe device which has PCIe capability in the PCI config
+	 * space.
+	 */
+	if (((sc->sc_flags & WM_F_PCIE) == 0) || (sc->sc_pcixe_capoff == 0))
+		return;
+
+	switch (sc->sc_type) {
+	case WM_T_82571:
+	case WM_T_82572:
+		/*
+		 * 8257[12] Errata 13: Device Does Not Support PCIe Active
+		 * State Power management L1 State (ASPM L1).
+		 */
+		mask = PCIE_LCSR_ASPM_L1;
+		str = "L1 is";
+		break;
+	case WM_T_82573:
+	case WM_T_82574:
+	case WM_T_82583:
+		/*
+		 * The 82573 disappears when PCIe ASPM L0s is enabled.
+		 *
+		 * The 82574 and 82583 does not support PCIe ASPM L0s with
+		 * some chipset.  The document of 82574 and 82583 says that
+		 * disabling L0s with some specific chipset is sufficient,
+		 * but we follow as of the Intel em driver does.
+		 *
+		 * References:
+		 * Errata 8 of the Specification Update of i82573.
+		 * Errata 20 of the Specification Update of i82574.
+		 * Errata 9 of the Specification Update of i82583.
+		 */
+		mask = PCIE_LCSR_ASPM_L1 | PCIE_LCSR_ASPM_L0S;
+		str = "L0s and L1 are";
+		break;
+	default:
+		return;
+	}
+
+	reg = pci_conf_read(sc->sc_pc, sc->sc_pcitag,
+	    sc->sc_pcixe_capoff + PCIE_LCSR);
+	reg &= ~mask;
+	pci_conf_write(sc->sc_pc, sc->sc_pcitag,
+	    sc->sc_pcixe_capoff + PCIE_LCSR, reg);
+
+	/* Print only in wm_attach() */
+	if ((sc->sc_flags & WM_F_ATTACHED) == 0)
+		aprint_verbose_dev(sc->sc_dev,
+		    "ASPM %s disabled to workaround the errata.\n",
+			str);
 }
 
 /* LPLU */
