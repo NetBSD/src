@@ -1,4 +1,4 @@
-/* $NetBSD: reg.h,v 1.2 2009/10/21 16:06:59 snj Exp $ */
+/* $NetBSD: reg.h,v 1.3 2018/01/13 14:39:15 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,6 +33,10 @@ struct reg {
 };
 
 struct fpreg {
+};
+
+/* x86_64 only */
+struct dbreg {
 };
 
 #endif /* !_ARCH_USERMODE_INCLUDE_REG_H */
