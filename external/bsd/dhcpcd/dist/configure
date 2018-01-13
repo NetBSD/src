@@ -87,6 +87,7 @@ for x do
 	--without-md5) MD5=no;;
 	--without-sha2) SHA2=no;;
 	--without-sha256) SHA2=no;;
+	--without-hmac) HMAC=no;;
 	--without-dev) DEV=no;;
 	--without-udev) UDEV=no;;
 	--with-poll) POLL="$var";;
@@ -487,7 +488,9 @@ if [ -z "$AUTH" -o "$AUTH" = yes ]; then
 	echo "Enabling Authentication"
 	echo "CPPFLAGS+=	-DAUTH" >>$CONFIG_MK
 	echo "SRCS+=		auth.c" >>$CONFIG_MK
-	echo "CRYPT_SRCS+=	crypt/hmac_md5.c" >>$CONFIG_MK
+	echo "CRYPT_SRCS+=	\${HMAC_SRC}" >>$CONFIG_MK
+fi
+if [ -z "$INET6" -o "$INET6" = yes -o -z "$AUTH" -o "$AUTH" = yes ]; then
 	echo "CRYPT_SRCS+=	\${MD5_SRC} \${SHA256_SRC}" >>$CONFIG_MK
 fi
 
@@ -750,8 +753,8 @@ EOF
 	rm -f _strlcpy.c _strlcpy
 fi
 if [ "$STRLCPY" = no ]; then
-	echo "#define strlcpy(dst, src, size)" \
-		" (size_t)snprintf((dst), (size), \"%s\", (src))" >>$CONFIG_H
+	echo "COMPAT_SRCS+=	compat/strlcpy.c" >>$CONFIG_MK
+	echo "#include		\"compat/strlcpy.h\"" >>$CONFIG_H
 fi
 
 if [ -z "$PIDFILE_LOCK" ]; then
@@ -1219,6 +1222,47 @@ else
 		echo "#define SHA256_Final	SHA256Final" >>$CONFIG_H
 	fi
 	[ -n "$SHA2_LIB" ] && echo "LDADD+=		$SHA2_LIB" >>$CONFIG_MK
+fi
+
+if [ -z "$HMAC" ]; then
+	HMAC_LIB=
+	printf "Testing for hmac ... "
+	cat <<EOF >_hmac.c
+#include <stdlib.h>
+#include <hmac.h>
+int main(void) {
+	hmac(NULL, NULL, 0, NULL, 0, NULL, 0);
+	return 0;
+}
+EOF
+	if $XCC _hmac.c $MD5_LIB -o _hmac 2>&3; then
+		HMAC=yes
+		echo "#define HAVE_HMAC_H" >>$CONFIG_H
+	else
+		# Remove this test if NetBSD-8 ships with
+		# hmac in it's own header and not stdlib.h
+		cat <<EOF >_hmac.c
+#include <stdlib.h>
+int main(void) {
+	hmac(NULL, NULL, 0, NULL, 0, NULL, 0);
+	return 0;
+}
+EOF
+		if $XCC _hmac.c $MD5_LIB -o _hmac 2>&3; then
+			HMAC=yes
+		else
+			HMAC=no
+		fi
+	fi
+	echo "$HMAC"
+	rm -f _hmac.c _hmac
+fi
+if [ "$HMAC" = no ]; then
+	echo "#include		\"compat/crypt/hmac.h\"" >>$CONFIG_H
+	echo "HMAC_SRC=		compat/crypt/hmac.c" >>$CONFIG_MK
+else
+	# echo "#define HAVE_HMAC_H" >>$CONFIG_H
+	echo "HMAC_SRC=" >>$CONFIG_MK
 fi
 
 if [ "$DEV" != no -a "$UDEV" != no ]; then

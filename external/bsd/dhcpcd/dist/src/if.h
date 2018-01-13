@@ -1,6 +1,6 @@
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2017 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2018 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -34,6 +34,8 @@
 #ifdef BSD
 #include <netinet/in_var.h>	/* for IN_IFF_TENTATIVE et all */
 #endif
+
+#include <ifaddrs.h>
 
 /* Some systems have in-built IPv4 DAD.
  * However, we need them to do DAD at carrier up as well. */
@@ -111,7 +113,10 @@ int if_getifaddrs(struct ifaddrs **);
 
 int if_setflag(struct interface *ifp, short flag);
 #define if_up(ifp) if_setflag((ifp), (IFF_UP | IFF_RUNNING))
-struct if_head *if_discover(struct dhcpcd_ctx *, int, char * const *);
+bool if_valid_hwaddr(const uint8_t *, size_t);
+struct if_head *if_discover(struct dhcpcd_ctx *, struct ifaddrs **,
+    int, char * const *);
+void if_learnaddrs(struct dhcpcd_ctx *, struct if_head *, struct ifaddrs **);
 struct interface *if_find(struct if_head *, const char *);
 struct interface *if_findindex(struct if_head *, unsigned int);
 struct interface *if_loopback(struct dhcpcd_ctx *);

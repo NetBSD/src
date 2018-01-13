@@ -1,6 +1,6 @@
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2017 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2018 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -179,7 +179,6 @@ read_hwaddr_aton(uint8_t **data, const char *path)
 	FILE *fp;
 	char *buf;
 	size_t buf_len, len;
-	ssize_t llen;
 
 	if ((fp = fopen(path, "r")) == NULL)
 		return 0;
@@ -187,7 +186,7 @@ read_hwaddr_aton(uint8_t **data, const char *path)
 	buf = NULL;
 	buf_len = len = 0;
 	*data = NULL;
-	while ((llen = getline(&buf, &buf_len, fp)) != -1) {
+	while (getline(&buf, &buf_len, fp) != -1) {
 		if ((len = hwaddr_aton(NULL, buf)) != 0) {
 			if (buf_len >= len)
 				*data = (uint8_t *)buf;

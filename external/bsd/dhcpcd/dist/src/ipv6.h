@@ -1,6 +1,6 @@
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2017 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2018 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -94,48 +94,6 @@
 #  undef IPV6_POLLADDRFLAG
 #endif
 
-/*
- * If dhcpcd handles RA processing instead of the kernel, the kernel needs
- * to either allow userland to set temporary addresses or mark an address
- * for the kernel to manage temporary addresses from.
- * If the kernel allows the former, a global #define is needed, otherwise
- * the address marking will be handled in the platform specific address handler.
- *
- * Some BSDs do not allow userland to set temporary addresses.
- * Linux-3.18 allows the marking of addresses from which to manage temp addrs.
- */
-#if defined(BSD) && defined(IN6_IFF_TEMPORARY)
-#define IPV6_MANAGETEMPADDR
-#endif
-
-/*
- * You could enable IPV6_MANAGETEMPADDR anyway and disable the platform
- * specific address marking to test dhcpcd's temporary address handling as well,
- * but this will not affect source address selection so is of very limited use.
- */
-#if 0
-/* Pretend we have an old Linux kernel. */
-#undef IFA_F_MANAGETEMPADDR
-/* Enable dhcpcd handling temporary addresses. */
-#define IPV6_MANAGETEMPADDR
-#endif
-
-#ifdef __linux__
-   /* Match Linux defines to BSD */
-#  define IN6_IFF_TEMPORARY IFA_F_TEMPORARY
-#  ifdef IFA_F_OPTIMISTIC
-#    define IN6_IFF_TENTATIVE	(IFA_F_TENTATIVE | IFA_F_OPTIMISTIC)
-#  else
-#    define IN6_IFF_TENTATIVE   (IFA_F_TENTATIVE | 0x04)
-#  endif
-#  ifdef IF_F_DADFAILED
-#    define IN6_IFF_DUPLICATED	IFA_F_DADFAILED
-#  else
-#    define IN6_IFF_DUPLICATED	0x08
-#  endif
-#  define IN6_IFF_DETACHED	0
-#endif
-
 #ifdef __sun
    /* Solaris lacks these defines.
     * While it supports DaD, to seems to only expose IFF_DUPLICATE
@@ -149,6 +107,38 @@
 #define IN6_IFF_NOTUSEABLE \
 	(IN6_IFF_TENTATIVE | IN6_IFF_DUPLICATED | IN6_IFF_DETACHED)
 
+/*
+ * If dhcpcd handles RA processing instead of the kernel, the kernel needs
+ * to either allow userland to set temporary addresses or mark an address
+ * for the kernel to manage temporary addresses from.
+ * If the kernel allows the former, a global #define is needed, otherwise
+ * the address marking will be handled in the platform specific address handler.
+ *
+ * Some BSDs do not allow userland to set temporary addresses.
+ * Linux-3.18 allows the marking of addresses from which to manage temp addrs.
+ */
+#if defined(IN6_IFF_TEMPORARY) && !defined(__linux__)
+#define	IPV6_MANAGETEMPADDR
+#endif
+
+#ifdef __linux__
+   /* Match Linux defines to BSD */
+#  ifdef IFA_F_TEMPORARY
+#    define IN6_IFF_TEMPORARY	IFA_F_TEMPORARY
+#  endif
+#  ifdef IFA_F_OPTIMISTIC
+#    define IN6_IFF_TENTATIVE	(IFA_F_TENTATIVE | IFA_F_OPTIMISTIC)
+#  else
+#    define IN6_IFF_TENTATIVE   (IFA_F_TENTATIVE | 0x04)
+#  endif
+#  ifdef IF_F_DADFAILED
+#    define IN6_IFF_DUPLICATED	IFA_F_DADFAILED
+#  else
+#    define IN6_IFF_DUPLICATED	0x08
+#  endif
+#  define IN6_IFF_DETACHED	0
+#endif
+
 TAILQ_HEAD(ipv6_addrhead, ipv6_addr);
 struct ipv6_addr {
 	TAILQ_ENTRY(ipv6_addr) next;
@@ -161,10 +151,11 @@ struct ipv6_addr {
 	struct timespec acquired;
 	struct in6_addr addr;
 	int addr_flags;
-	short flags;
+	unsigned int flags;
 	char saddr[INET6_ADDRSTRLEN];
 	uint8_t iaid[4];
 	uint16_t ia_type;
+	int dhcp6_fd;
 
 #ifndef SMALL
 	struct ipv6_addr *delegating_prefix;
@@ -177,30 +168,29 @@ struct ipv6_addr {
 
 	void (*dadcallback)(void *);
 	int dadcounter;
-	uint8_t *ns;
-	size_t nslen;
-	int nsprobes;
 
 #ifdef ALIAS_ADDR
 	char alias[IF_NAMESIZE];
 #endif
 };
 
-#define	IPV6_AF_ONLINK		0x0001
-#define	IPV6_AF_NEW		0x0002
-#define	IPV6_AF_STALE		0x0004
-#define	IPV6_AF_ADDED		0x0008
-#define	IPV6_AF_AUTOCONF	0x0010
-#define	IPV6_AF_DUPLICATED	0x0020
-#define	IPV6_AF_DADCOMPLETED	0x0040
-#define	IPV6_AF_DELEGATED	0x0080
-#define	IPV6_AF_DELEGATEDPFX	0x0100
-#define	IPV6_AF_NOREJECT	0x0200
-#define	IPV6_AF_REQUEST		0x0400
-#define	IPV6_AF_STATIC		0x0800
-#define IPV6_AF_DELEGATEDLOG	0x1000
+#define	IPV6_AF_ONLINK		(1U << 0)
+#define	IPV6_AF_NEW		(1U << 1)
+#define	IPV6_AF_STALE		(1U << 2)
+#define	IPV6_AF_ADDED		(1U << 3)
+#define	IPV6_AF_AUTOCONF	(1U << 4)
+#define	IPV6_AF_DUPLICATED	(1U << 5)
+#define	IPV6_AF_DADCOMPLETED	(1U << 6)
+#define	IPV6_AF_DELEGATED	(1U << 7)
+#define	IPV6_AF_DELEGATEDPFX	(1U << 8)
+#define	IPV6_AF_NOREJECT	(1U << 9)
+#define	IPV6_AF_REQUEST		(1U << 10)
+#define	IPV6_AF_STATIC		(1U << 11)
+#define	IPV6_AF_DELEGATEDLOG	(1U << 12)
+#define	IPV6_AF_RAPFX		(1U << 13)
+#define	IPV6_AF_EXTENDED	(1U << 14)
 #ifdef IPV6_MANAGETEMPADDR
-#define	IPV6_AF_TEMPORARY	0X2000
+#define	IPV6_AF_TEMPORARY	(1U << 15)
 #endif
 
 struct ll_callback {
@@ -236,7 +226,6 @@ int ipv6_makestableprivate(struct in6_addr *addr,
     const struct interface *ifp, int *dad_counter);
 int ipv6_makeaddr(struct in6_addr *, struct interface *,
     const struct in6_addr *, int);
-int ipv6_makeprefix(struct in6_addr *, const struct in6_addr *, int);
 int ipv6_mask(struct in6_addr *, int);
 uint8_t ipv6_prefixlen(const struct in6_addr *);
 int ipv6_userprefix( const struct in6_addr *, short prefix_len,
@@ -244,6 +233,7 @@ int ipv6_userprefix( const struct in6_addr *, short prefix_len,
 void ipv6_checkaddrflags(void *);
 int ipv6_addaddr(struct ipv6_addr *, const struct timespec *);
 ssize_t ipv6_addaddrs(struct ipv6_addrhead *addrs);
+void ipv6_deleteaddr(struct ipv6_addr *);
 void ipv6_freedrop_addrs(struct ipv6_addrhead *, int,
     const struct interface *);
 void ipv6_handleifa(struct dhcpcd_ctx *ctx, int, struct if_head *,
@@ -253,13 +243,15 @@ struct ipv6_addr *ipv6_iffindaddr(struct interface *,
     const struct in6_addr *, int);
 int ipv6_hasaddr(const struct interface *);
 int ipv6_findaddrmatch(const struct ipv6_addr *, const struct in6_addr *,
-    short);
+    unsigned int);
 struct ipv6_addr *ipv6_findaddr(struct dhcpcd_ctx *,
-    const struct in6_addr *, short);
+    const struct in6_addr *, unsigned int);
 struct ipv6_addr *ipv6_findmaskaddr(struct dhcpcd_ctx *,
     const struct in6_addr *);
 #define ipv6_linklocal(ifp) ipv6_iffindaddr((ifp), NULL, IN6_IFF_NOTUSEABLE)
 int ipv6_addlinklocalcallback(struct interface *, void (*)(void *), void *);
+struct ipv6_addr *ipv6_newaddr(struct interface *, const struct in6_addr *, uint8_t,
+    unsigned int);
 void ipv6_freeaddr(struct ipv6_addr *);
 void ipv6_freedrop(struct interface *, int);
 #define ipv6_free(ifp) ipv6_freedrop((ifp), 0)
@@ -285,7 +277,6 @@ void ipv6_ctxfree(struct dhcpcd_ctx *);
 bool inet6_getroutes(struct dhcpcd_ctx *, struct rt_head *);
 
 #else
-#define ipv6_init(a) (NULL)
 #define ipv6_start(a) (-1)
 #define ipv6_startstatic(a)
 #define ipv6_staticdadcompleted(a) (0)

@@ -1,6 +1,6 @@
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2017 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2018 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -108,30 +108,40 @@
 #define D6_STATUS_NOTONLINK	4
 #define D6_STATUS_USEMULTICAST	5
 
-#define SOL_MAX_DELAY		1
-#define SOL_TIMEOUT		1
-#define SOL_MAX_RT		3600 /* RFC7083 */
-#define REQ_TIMEOUT		1
-#define REQ_MAX_RT		30
-#define REQ_MAX_RC		10
-#define CNF_MAX_DELAY		1
-#define CNF_TIMEOUT		1
-#define CNF_MAX_RT		4
-#define CNF_MAX_RD		10
-#define REN_TIMEOUT		10
-#define REN_MAX_RT		600
-#define REB_TIMEOUT		10
-#define REB_MAX_RT		600
-#define INF_MAX_DELAY		1
-#define INF_TIMEOUT		1
-#define INF_MAX_RT		3600 /* RFC7083 */
-#define REL_TIMEOUT		1
-#define REL_MAX_RC		5
-#define DEC_TIMEOUT		1
-#define DEC_MAX_RC		5
-#define REC_TIMEOUT		2
-#define REC_MAX_RC		8
-#define HOP_COUNT_LIMIT		32
+#define	SOL_MAX_DELAY		1
+#define	SOL_TIMEOUT		1
+#define	SOL_MAX_RT		3600 /* RFC7083 */
+#define	SOL_MAX_RC		0
+#define	REQ_MAX_DELAY		0
+#define	REQ_TIMEOUT		1
+#define	REQ_MAX_RT		30
+#define	REQ_MAX_RC		10
+#define	CNF_MAX_DELAY		1
+#define	CNF_TIMEOUT		1
+#define	CNF_MAX_RT		4
+#define	CNF_MAX_RC		0
+#define	CNF_MAX_RD		10
+#define	REN_MAX_DELAY		0
+#define	REN_TIMEOUT		10
+#define	REN_MAX_RT		600
+#define	REB_MAX_DELAY		0
+#define	REB_TIMEOUT		10
+#define	REB_MAX_RT		600
+#define	INF_MAX_DELAY		1
+#define	INF_TIMEOUT		1
+#define	INF_MAX_RD		CNF_MAX_RD /* NOT RFC defined */
+#define	INF_MAX_RT		3600 /* RFC7083 */
+#define	REL_MAX_DELAY		0
+#define	REL_TIMEOUT		1
+#define	REL_MAX_RT		0
+#define	REL_MAX_RC		5
+#define	DEC_MAX_DELAY		0
+#define	DEC_TIMEOUT		1
+#define	DEC_MAX_RC		5
+#define	REC_MAX_DELAY		0
+#define	REC_TIMEOUT		2
+#define	REC_MAX_RC		8
+#define	HOP_COUNT_LIMIT		32
 
 /* RFC4242 3.1 */
 #define IRT_DEFAULT		86400
@@ -153,6 +163,8 @@ enum DH6S {
 	DH6S_RENEW_REQUESTED,
 	DH6S_PROBE,
 	DH6S_DELEGATED,
+	DH6S_TIMEDOUT,
+	DH6S_ITIMEDOUT,
 	DH6S_RELEASE,
 	DH6S_RELEASED
 };
@@ -181,6 +193,7 @@ struct dhcp6_state {
 	struct dhcp6_message *old;
 	size_t old_len;
 
+	struct timespec acquired;
 	uint32_t renew;
 	uint32_t rebind;
 	uint32_t expire;
@@ -206,9 +219,9 @@ struct dhcp6_state {
 void dhcp6_printoptions(const struct dhcpcd_ctx *,
     const struct dhcp_opt *, size_t);
 const struct ipv6_addr *dhcp6_iffindaddr(const struct interface *ifp,
-    const struct in6_addr *addr, short flags);
+    const struct in6_addr *addr, unsigned int flags);
 struct ipv6_addr *dhcp6_findaddr(struct dhcpcd_ctx *, const struct in6_addr *,
-    short);
+    unsigned int);
 size_t dhcp6_find_delegates(struct interface *);
 int dhcp6_start(struct interface *, enum DH6S);
 void dhcp6_reboot(struct interface *);

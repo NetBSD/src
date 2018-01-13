@@ -24,5 +24,8 @@ hooks/50-ypbind
 # Ignore distribution
 dhcpcd*.xz*
 
+# Ignore swap files
+*.swp
+
 # Ignore Coverity
 cov-int

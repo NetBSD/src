@@ -1,6 +1,6 @@
 /*
  * dhcpcd - IPv6 ND handling
- * Copyright (c) 2006-2017 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2018 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -55,18 +55,20 @@ struct ra {
 TAILQ_HEAD(ra_head, ra);
 
 struct rs_state {
-	unsigned char *rs;
+	struct nd_router_solicit *rs;
 	size_t rslen;
 	int rsprobes;
 };
 
-#define RS_STATE(a) ((struct rs_state *)(ifp)->if_data[IF_DATA_IPV6ND])
-#define RS_STATE_RUNNING(a) (ipv6nd_hasra((a)) && ipv6nd_dadcompleted((a)))
+#define	RS_STATE(a) ((struct rs_state *)(ifp)->if_data[IF_DATA_IPV6ND])
+#define	RS_STATE_RUNNING(a) (ipv6nd_hasra((a)) && ipv6nd_dadcompleted((a)))
 
-#define MAX_RTR_SOLICITATION_DELAY	1	/* seconds */
-#define MAX_UNICAST_SOLICIT		3	/* 3 transmissions */
-#define RTR_SOLICITATION_INTERVAL	4	/* seconds */
-#define MAX_RTR_SOLICITATIONS		3	/* times */
+#ifndef MAX_RTR_SOLICITATION_DELAY
+#define	MAX_RTR_SOLICITATION_DELAY	1	/* seconds */
+#define	MAX_UNICAST_SOLICIT		3	/* 3 transmissions */
+#define	RTR_SOLICITATION_INTERVAL	4	/* seconds */
+#define	MAX_RTR_SOLICITATIONS		3	/* times */
+#endif
 
 /* On carrier up, expire known routers after RTR_CARRIER_EXPIRE seconds. */
 #define RTR_CARRIER_EXPIRE		\
@@ -74,13 +76,13 @@ struct rs_state {
     (MAX_RTR_SOLICITATIONS + 1) *	\
     RTR_SOLICITATION_INTERVAL)
 
-#define MAX_REACHABLE_TIME		3600000	/* milliseconds */
-#define REACHABLE_TIME			30000	/* milliseconds */
-#define RETRANS_TIMER			1000	/* milliseconds */
-#define DELAY_FIRST_PROBE_TIME		5	/* seconds */
+#define	MAX_REACHABLE_TIME		3600000	/* milliseconds */
+#define	REACHABLE_TIME			30000	/* milliseconds */
+#define	RETRANS_TIMER			1000	/* milliseconds */
+#define	DELAY_FIRST_PROBE_TIME		5	/* seconds */
 
-#define IPV6ND_REACHABLE		(1 << 0)
-#define IPV6ND_ROUTER			(1 << 1)
+#define	IPV6ND_REACHABLE		(1 << 0)
+#define	IPV6ND_ROUTER			(1 << 1)
 
 #ifdef INET6
 void ipv6nd_printoptions(const struct dhcpcd_ctx *,
@@ -88,12 +90,9 @@ void ipv6nd_printoptions(const struct dhcpcd_ctx *,
 void ipv6nd_startrs(struct interface *);
 ssize_t ipv6nd_env(char **, const char *, const struct interface *);
 const struct ipv6_addr *ipv6nd_iffindaddr(const struct interface *ifp,
-    const struct in6_addr *addr, short flags);
+    const struct in6_addr *addr, unsigned int flags);
 struct ipv6_addr *ipv6nd_findaddr(struct dhcpcd_ctx *,
-    const struct in6_addr *, short);
-void ipv6nd_freedrop_ra(struct ra *, int);
-#define ipv6nd_free_ra(ra) ipv6nd_freedrop_ra((ra),  0)
-#define ipv6nd_drop_ra(ra) ipv6nd_freedrop_ra((ra),  1)
+    const struct in6_addr *, unsigned int);
 ssize_t ipv6nd_free(struct interface *);
 void ipv6nd_expirera(void *arg);
 int ipv6nd_hasra(const struct interface *);

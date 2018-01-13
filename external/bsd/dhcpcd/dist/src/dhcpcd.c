@@ -1,6 +1,6 @@
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2017 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2018 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  */
 
-const char dhcpcd_copyright[] = "Copyright (c) 2006-2017 Roy Marples";
+const char dhcpcd_copyright[] = "Copyright (c) 2006-2018 Roy Marples";
 
 #include <sys/file.h>
 #include <sys/socket.h>
@@ -368,7 +368,9 @@ dhcpcd_drop(struct interface *ifp, int stop)
 	ipv6_drop(ifp);
 	ipv4ll_drop(ifp);
 	dhcp_drop(ifp, stop ? "STOP" : "EXPIRE");
+#ifdef ARP
 	arp_drop(ifp);
+#endif
 }
 
 static void
@@ -436,7 +438,7 @@ configure_interface1(struct interface *ifp)
 		    ~(DHCPCD_IPV6RS | DHCPCD_DHCP6 | DHCPCD_WAITIP6);
 
 	/* We want to disable kernel interface RA as early as possible. */
-	if (ifo->options & DHCPCD_IPV6RS &&
+	if (ifp->active == IF_ACTIVE_USER &&
 	    !(ifp->ctx->options & DHCPCD_DUMPLEASE))
 	{
 		int ra_global, ra_iface;
@@ -532,8 +534,10 @@ configure_interface1(struct interface *ifp)
 			ifo->ia->ia_type = D6_OPTION_IA_NA;
 			memcpy(ifo->ia->iaid, ifo->iaid, sizeof(ifo->iaid));
 			memset(&ifo->ia->addr, 0, sizeof(ifo->ia->addr));
+#ifndef SMALL
 			ifo->ia->sla = NULL;
 			ifo->ia->sla_len = 0;
+#endif
 		}
 	} else {
 		size_t i;
@@ -647,10 +651,12 @@ dhcpcd_initstate2(struct interface *ifp, unsigned long long options)
 	} else
 		ifo = ifp->options;
 
+#ifdef INET6
 	if (ifo->options & DHCPCD_IPV6 && ipv6_init(ifp->ctx) == -1) {
 		logerr(__func__);
 		ifo->options &= ~DHCPCD_IPV6;
 	}
+#endif
 }
 
 static void
@@ -715,10 +721,10 @@ dhcpcd_handlecarrier(struct dhcpcd_ctx *ctx, int carrier, unsigned int flags,
 			ifp->carrier = LINK_DOWN;
 			script_runreason(ifp, "NOCARRIER");
 #ifdef NOCARRIER_PRESERVE_IP
+#ifdef ARP
 			arp_drop(ifp);
+#endif
 			dhcp_abort(ifp);
-			if_sortinterfaces(ctx);
-			ipv4_preferanother(ifp);
 			ipv6nd_expire(ifp, 0);
 #else
 			dhcpcd_drop(ifp, 0);
@@ -858,46 +864,34 @@ dhcpcd_startinterface(void *arg)
 		ifo->options &= ~DHCPCD_IPV6;
 	}
 	if (ifo->options & DHCPCD_IPV6) {
-		ipv6_startstatic(ifp);
+		if (ifp->active == IF_ACTIVE_USER) {
+			ipv6_startstatic(ifp);
 
-		if (ifo->options & DHCPCD_IPV6RS)
-			ipv6nd_startrs(ifp);
+			if (ifo->options & DHCPCD_IPV6RS)
+				ipv6nd_startrs(ifp);
+		}
 
-		if (ifo->options & DHCPCD_DHCP6)
+
+		if (ifo->options & DHCPCD_DHCP6) {
 			dhcp6_find_delegates(ifp);
 
-		if (!(ifo->options & DHCPCD_IPV6RS) ||
-		    ifo->options & (DHCPCD_IA_FORCED | DHCPCD_INFORM6))
-		{
-			ssize_t nolease;
+			if (ifp->active == IF_ACTIVE_USER) {
+				enum DH6S d6_state;
 
-			if (ifo->options & DHCPCD_IA_FORCED)
-				nolease = dhcp6_start(ifp, DH6S_INIT);
-			else if (ifo->options & DHCPCD_INFORM6)
-				nolease = dhcp6_start(ifp, DH6S_INFORM);
-			else {
-				nolease = 0;
-				/* Enabling the below doesn't really make
-				 * sense as there is currently no standard
-				 * to push routes via DHCPv6.
-				 * (There is an expired working draft,
-				 * maybe abandoned?)
-				 * You can also get it to work by forcing
-				 * an IA as shown above. */
-#if 0
-				/* With no RS or delegates we might
-				 * as well try and solicit a DHCPv6 address */
-				if (nolease == 0)
-					nolease = dhcp6_start(ifp, DH6S_INIT);
-#endif
+				if (ifo->options & DHCPCD_IA_FORCED)
+					d6_state = DH6S_INIT;
+				else if (ifo->options & DHCPCD_INFORM6)
+					d6_state = DH6S_INFORM;
+				else
+					d6_state = DH6S_CONFIRM;
+				if (dhcp6_start(ifp, d6_state) == -1)
+					logerr("%s: dhcp6_start", ifp->name);
 			}
-			if (nolease == -1)
-			        logerr("%s: dhcp6_start", ifp->name);
 		}
 	}
 
 #ifdef INET
-	if (ifo->options & DHCPCD_IPV4) {
+	if (ifo->options & DHCPCD_IPV4 && ifp->active == IF_ACTIVE_USER) {
 		/* Ensure we have an IPv4 state before starting DHCP */
 		if (ipv4_getstate(ifp) != NULL)
 			dhcp_start(ifp);
@@ -981,6 +975,7 @@ int
 dhcpcd_handleinterface(void *arg, int action, const char *ifname)
 {
 	struct dhcpcd_ctx *ctx;
+	struct ifaddrs *ifaddrs;
 	struct if_head *ifs;
 	struct interface *ifp, *iff, *ifn;
 	const char * const argv[] = { ifname };
@@ -1004,7 +999,7 @@ dhcpcd_handleinterface(void *arg, int action, const char *ifname)
 	}
 
 	i = -1;
-	ifs = if_discover(ctx, -1, UNCONST(argv));
+	ifs = if_discover(ctx, &ifaddrs, -1, UNCONST(argv));
 	if (ifs == NULL) {
 		logerr(__func__);
 		return -1;
@@ -1049,6 +1044,17 @@ dhcpcd_handleinterface(void *arg, int action, const char *ifname)
 			dhcpcd_prestartinterface(iff);
 	}
 
+	if_learnaddrs(ctx, ifs, &ifaddrs);
+
+	/* Now we have learned addresses, start the interface */
+	TAILQ_FOREACH_SAFE(ifp, ifs, next, ifn) {
+		if (strcmp(ifp->name, ifname) != 0)
+			continue;
+		iff = if_find(ctx->ifaces, ifp->name);
+		if (action > 0 && iff->active)
+			dhcpcd_prestartinterface(iff);
+	}
+
 	/* Free our discovered list */
 	while ((ifp = TAILQ_FIRST(ifs))) {
 		TAILQ_REMOVE(ifs, ifp, next);
@@ -1071,6 +1077,9 @@ dhcpcd_handlehwaddr(struct dhcpcd_ctx *ctx, const char *ifname,
 	ifp = if_find(ctx->ifaces, ifname);
 	if (ifp == NULL)
 		return;
+
+	if (!if_valid_hwaddr(hwaddr, hwlen))
+		hwlen = 0;
 
 	if (hwlen > sizeof(ifp->hwaddr)) {
 		errno = ENOBUFS;
@@ -1131,7 +1140,7 @@ reconf_reboot(struct dhcpcd_ctx *ctx, int action, int argc, char **argv, int oi)
 		}
 		if (oi != argc && i == argc)
 			continue;
-		if (ifp->active) {
+		if (ifp->active == IF_ACTIVE_USER) {
 			if (action)
 				if_reboot(ifp, argc, argv);
 			else
@@ -1406,6 +1415,7 @@ int
 main(int argc, char **argv)
 {
 	struct dhcpcd_ctx ctx;
+	struct ifaddrs *ifaddrs = NULL;
 	struct if_options *ifo;
 	struct interface *ifp;
 	uint16_t family = 0;
@@ -1656,6 +1666,20 @@ printpidfile:
 		logerr("%s: eloop_init", __func__);
 		goto exit_failure;
 	}
+#ifdef USE_SIGNALS
+	/* Save signal mask, block and redirect signals to our handler */
+	if (eloop_signal_set_cb(ctx.eloop,
+	    dhcpcd_signals, dhcpcd_signals_len,
+	    signal_cb, &ctx) == -1)
+	{
+		logerr("%s: eloop_signal_set_cb", __func__);
+		goto exit_failure;
+	}
+	if (eloop_signal_mask(ctx.eloop, &ctx.sigset) == -1) {
+		logerr("%s: eloop_signal_mask", __func__);
+		goto exit_failure;
+	}
+#endif
 
 	if (ctx.options & DHCPCD_DUMPLEASE) {
 		/* Open sockets so we can dump something about
@@ -1667,7 +1691,7 @@ printpidfile:
 		if (optind != argc) {
 			/* We need to try and find the interface so we can load
 			 * the hardware address to compare automated IAID */
-			ctx.ifaces = if_discover(&ctx,
+			ctx.ifaces = if_discover(&ctx, &ifaddrs,
 			    argc - optind, argv + optind);
 		} else {
 			if ((ctx.ifaces = malloc(sizeof(*ctx.ifaces))) != NULL)
@@ -1816,27 +1840,12 @@ printpidfile:
 		goto exit_failure;
 	}
 
-#ifdef USE_SIGNALS
-	if (eloop_signal_set_cb(ctx.eloop,
-	    dhcpcd_signals, dhcpcd_signals_len,
-	    signal_cb, &ctx) == -1)
-	{
-		logerr("%s: eloop_signal_set_cb", __func__);
-		goto exit_failure;
-	}
-	/* Save signal mask, block and redirect signals to our handler */
-	if (eloop_signal_mask(ctx.eloop, &ctx.sigset) == -1) {
-		logerr("%s: eloop_signal_mask", __func__);
-		goto exit_failure;
-	}
-#endif
-
 	/* When running dhcpcd against a single interface, we need to retain
 	 * the old behaviour of waiting for an IP address */
 	if (ctx.ifc == 1 && !(ctx.options & DHCPCD_BACKGROUND))
 		ctx.options |= DHCPCD_WAITIP;
 
-	/* Start handling kernel messages for interfaces, addreses and
+	/* Start handling kernel messages for interfaces, addresses and
 	 * routes. */
 	eloop_event_add(ctx.eloop, ctx.link_fd, dhcpcd_handlelink, &ctx);
 
@@ -1846,7 +1855,7 @@ printpidfile:
 	    (DHCPCD_MASTER | DHCPCD_DEV))
 		dev_start(&ctx);
 
-	ctx.ifaces = if_discover(&ctx, ctx.ifc, ctx.ifv);
+	ctx.ifaces = if_discover(&ctx, &ifaddrs, ctx.ifc, ctx.ifv);
 	if (ctx.ifaces == NULL) {
 		logerr("%s: if_discover", __func__);
 		goto exit_failure;
@@ -1882,6 +1891,7 @@ printpidfile:
 		if (ifp->active)
 			dhcpcd_initstate1(ifp, argc, argv, 0);
 	}
+	if_learnaddrs(&ctx, ctx.ifaces, &ifaddrs);
 
 	if (ctx.options & DHCPCD_BACKGROUND && dhcpcd_daemonise(&ctx))
 		goto exit_success;
@@ -1952,6 +1962,8 @@ exit_failure:
 	i = EXIT_FAILURE;
 
 exit1:
+	if (ifaddrs != NULL)
+		freeifaddrs(ifaddrs);
 	if (control_stop(&ctx) == -1)
 		logerr("%s: control_stop", __func__);
 	/* Free memory and close fd's */

@@ -1,6 +1,6 @@
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2017 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2018 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -673,7 +673,9 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 	size_t sl;
 	struct if_ia *ia;
 	uint8_t iaid[4];
+#ifndef SMALL
 	struct if_sla *sla, *slap;
+#endif
 #endif
 
 	dop = NULL;
@@ -1317,12 +1319,17 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		/* FALLTHROUGH */
 	case O_IA_PD:
 		if (i == 0) {
+#ifdef SMALL
+			logwarnx("%s: IA_PD not compiled in", ifname);
+			return -1;
+#else
 			if (ifname == NULL) {
 				logerr("IA PD must belong in an "
 				    "interface block");
 				return -1;
 			}
 			i = D6_OPTION_IA_PD;
+#endif
 		}
 		if (ifname == NULL && arg) {
 			logerrx("IA with IAID must belong in an "
@@ -1405,12 +1412,15 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 					}
 				}
 			}
+#ifndef SMALL
 			ia->sla_max = 0;
 			ia->sla_len = 0;
 			ia->sla = NULL;
+#endif
 		}
 		if (ia->ia_type != D6_OPTION_IA_PD)
 			break;
+#ifndef SMALL
 		for (p = fp; p; p = fp) {
 			fp = strwhite(p);
 			if (fp) {
@@ -1530,6 +1540,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 err_sla:
 		ia->sla_len--;
 		return -1;
+#endif
 #endif
 	case O_HOSTNAME_SHORT:
 		ifo->options |= DHCPCD_HOSTNAME | DHCPCD_HOSTNAME_SHORT;
@@ -2615,7 +2626,7 @@ free_options(struct if_options *ifo)
 			free_dhcp_opt_embenc(opt);
 		free(ifo->vivso_override);
 
-#ifdef INET6
+#if defined(INET6) && !defined(SMALL)
 		for (; ifo->ia_len > 0; ifo->ia_len--)
 			free(ifo->ia[ifo->ia_len - 1].sla);
 #endif

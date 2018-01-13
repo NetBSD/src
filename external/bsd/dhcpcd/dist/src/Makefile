@@ -71,6 +71,9 @@ depend: .depend
 ${PROG}: ${DEPEND} ${OBJS}
 	${CC} ${LDFLAGS} -o $@ ${OBJS} ${LDADD}
 
+lint:
+	${LINT} -Suz ${CPPFLAGS} ${SRCS} ${PCRYPT_SRCS} ${PCOMPAT_SRCS}
+
 _embeddedinstall: ${DHCPCD_DEFS}
 	${INSTALL} -d ${DESTDIR}${LIBEXECDIR}
 	${INSTALL} -m ${CONFMODE} ${DHCPCD_DEFS} ${DESTDIR}${LIBEXECDIR}

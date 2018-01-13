@@ -1,6 +1,6 @@
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2017 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2018 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -119,7 +119,6 @@ bool inet_getroutes(struct dhcpcd_ctx *, struct rt_head *);
 #define STATE_FAKE		0x02
 
 int ipv4_deladdr(struct ipv4_addr *, int);
-int ipv4_preferanother(struct interface *);
 struct ipv4_addr *ipv4_addaddr(struct interface *,
     const struct in_addr *, const struct in_addr *, const struct in_addr *);
 void ipv4_applyaddr(void *);
@@ -140,7 +139,6 @@ void ipv4_free(struct interface *);
 #define ipv4_applyaddr(a) {}
 #define ipv4_free(a) {}
 #define ipv4_hasaddr(a) (0)
-#define ipv4_preferanother(a) {}
 #endif
 
 #endif
