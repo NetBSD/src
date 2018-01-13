@@ -1,4 +1,4 @@
-/* $NetBSD: ld_thunkbus.c,v 1.30 2012/01/21 22:09:57 reinoud Exp $ */
+/* $NetBSD: ld_thunkbus.c,v 1.31 2018/01/13 10:08:35 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_thunkbus.c,v 1.30 2012/01/21 22:09:57 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_thunkbus.c,v 1.31 2018/01/13 10:08:35 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -135,7 +135,7 @@ ld_thunkbus_attach(device_t parent, device_t self, void *opaque)
 
 	sc->busy = false;
 
-	ldattach(ld);
+	ldattach(ld, BUFQ_DISK_DEFAULT_STRAT);
 }
 
 #ifdef LD_USE_AIO
@@ -260,7 +260,7 @@ ld_thunkbus_complete(void *arg)
 	struct ld_thunkbus_softc *sc = (struct ld_thunkbus_softc *)ld;
 	struct ld_thunkbus_transfer *tt = &sc->sc_tt;
 	struct buf *bp = tt->tt_bp;
-	off_t offset = bp->b_rawblkno * ld->sc_secsize;
+	off_t offset = (off_t) bp->b_rawblkno * ld->sc_secsize;
 	int64_t ret;
 
 	if (!sc->busy)
