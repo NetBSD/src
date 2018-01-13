@@ -1,4 +1,4 @@
-.\" $NetBSD: wsdisplay.4,v 1.45 2018/01/13 19:50:52 uwe Exp $
+.\" $NetBSD: wsdisplay.4,v 1.46 2018/01/13 23:43:46 wiz Exp $
 .\"
 .\" Copyright (c) 1999 Matthias Drochner.
 .\" Copyright (c) 2002 Ben Harris.
@@ -107,8 +107,7 @@ If the underlying device driver supports it, multiple screens can
 be used on one display.
 (As of this writing, only the
 .Xr vga 4
-and the
-.Tn VAX
+and the VAX
 .Dq smg
 display drivers provide this ability.)
 Screens have different minor device numbers and separate tty instances.
@@ -449,12 +448,10 @@ The display is in mapped (graphics) mode.
 .It Dv WSDISPLAYIO_MODE_DUMBFB
 The display is in mapped (frame buffer) mode.
 .El
-.Pp
 .It Dv WSDISPLAYIO_SMODE Pq Li u_int
 Set the current mode of the display.
 For possible arguments, see
 .Dv WSDISPLAYIO_GMODE .
-.Pp
 .It Dv WSDISPLAYIO_LINEBYTES Pq Li u_int
 Get the number of bytes per row, which may be the same as the number of pixels.
 .It Dv WSDISPLAYIO_GMSGATTRS Pq Li struct wsdisplay_msgattrs

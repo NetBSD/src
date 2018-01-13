@@ -1,6 +1,6 @@
 .\" -*- nroff -*-
 .\"
-.\"	$NetBSD: bpf.4,v 1.59 2018/01/13 12:20:49 uwe Exp $
+.\"	$NetBSD: bpf.4,v 1.60 2018/01/13 23:43:46 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -100,11 +100,11 @@ The (third) argument to the
 .Xr ioctl 2
 should be a pointer to the type indicated.
 .Bl -tag -width indent -offset indent
-.It Dv "BIOCGBLEN (u_int)"
+.It Dv BIOCGBLEN ( u_int )
 Returns the required buffer length for reads on
 .Nm
 files.
-.It Dv "BIOCSBLEN (u_int)"
+.It Dv BIOCSBLEN ( u_int )
 Sets the buffer length for reads on
 .Nm
 files.
@@ -115,7 +115,7 @@ allowable size will be set and returned in the argument.
 A read call will result in
 .Er EINVAL
 if it is passed a buffer that is not this size.
-.It Dv BIOCGDLT (u_int)
+.It Dv BIOCGDLT ( u_int )
 Returns the type of the data link layer underlying the attached interface.
 .Er EINVAL
 is returned if no interface has been specified.
@@ -123,7 +123,7 @@ The device types, prefixed with
 .Dq DLT_ ,
 are defined in
 .In net/bpf.h .
-.It Dv BIOCGDLTLIST (struct bpf_dltlist)
+.It Dv BIOCGDLTLIST ( struct bpf_dltlist )
 Returns an array of the available types of the data link layer
 underlying the attached interface:
 .Bd -literal -offset indent
@@ -153,7 +153,7 @@ is
 the
 .Va bfl_len
 field is set to indicate the required length of an array in u_int.
-.It Dv BIOCSDLT (u_int)
+.It Dv BIOCSDLT ( u_int )
 Changes the type of the data link layer underlying the attached interface.
 .Er EINVAL
 is returned if no interface has been specified or the specified
@@ -172,12 +172,12 @@ promiscuously are closed.
 Flushes the buffer of incoming packets,
 and resets the statistics that are returned by
 .Dv BIOCGSTATS .
-.It Dv BIOCGETIF (struct ifreq)
+.It Dv BIOCGETIF ( struct ifreq )
 Returns the name of the hardware interface that the file is listening on.
 The name is returned in the ifr_name field of
 .Fa ifr .
 All other fields are undefined.
-.It Dv BIOCSETIF (struct ifreq)
+.It Dv BIOCSETIF ( struct ifreq )
 Sets the hardware interface associated with the file.
 This command must be performed before any packets can be read.
 The device is indicated by name using the
@@ -186,7 +186,7 @@ field of the
 .Fa ifreq .
 Additionally, performs the actions of
 .Dv BIOCFLUSH .
-.It Dv BIOCSRTIMEOUT, BIOCGRTIMEOUT (struct timeval)
+.It Dv BIOCSRTIMEOUT , BIOCGRTIMEOUT ( struct timeval )
 Sets or gets the read timeout parameter.
 The
 .Fa timeval
@@ -195,7 +195,7 @@ out on a read request.
 This parameter is initialized to zero by
 .Xr open 2 ,
 indicating no timeout.
-.It Dv BIOCGSTATS (struct bpf_stat)
+.It Dv BIOCGSTATS ( struct bpf_stat )
 Returns the following structure of packet statistics:
 .Bd -literal -offset indent
 struct bpf_stat {
@@ -219,7 +219,7 @@ traffic); and
 .It Va bs_capt
 the number of packets accepted by the filter.
 .El
-.It Dv BIOCIMMEDIATE (u_int)
+.It Dv BIOCIMMEDIATE ( u_int )
 Enables or disables
 .Dq immediate mode ,
 based on the truth value of the argument.
@@ -231,7 +231,7 @@ This is useful for programs like
 .Xr rarpd 8 ,
 which must respond to messages in real time.
 The default for a new file is off.
-.It Dv BIOCSETF (struct bpf_program)
+.It Dv BIOCSETF ( struct bpf_program )
 Sets the filter program used by the kernel to discard uninteresting
 packets.
 An array of instructions and its length are passed in using the following structure:
@@ -256,7 +256,7 @@ are performed.
 See section
 .Sy FILTER MACHINE
 for an explanation of the filter language.
-.It Dv BIOCVERSION (struct bpf_version)
+.It Dv BIOCVERSION ( struct bpf_version )
 Returns the major and minor version numbers of the filter language currently
 recognized by the kernel.
 Before installing a filter, applications must check
@@ -281,13 +281,13 @@ An incompatible filter
 may result in undefined behavior (most likely, an error returned by
 .Xr ioctl 2
 or haphazard packet matching).
-.It Dv BIOCSRSIG BIOCGRSIG (u_int)
+.It Dv BIOCSRSIG , BIOCGRSIG ( u_int )
 Sets or gets the receive signal.
 This signal will be sent to the process or process group specified by
 .Dv FIOSETOWN .
 It defaults to
 .Dv SIGIO .
-.It Dv BIOCGHDRCMPLT BIOCSHDRCMPLT (u_int)
+.It Dv BIOCGHDRCMPLT , BIOCSHDRCMPLT ( u_int )
 Sets or gets the status of the
 .Dq header complete
 flag.
@@ -296,7 +296,7 @@ automatically by the interface output routine.
 Set to one if the link level source address will be written,
 as provided, to the wire.
 This flag is initialized to zero by default.
-.It Dv BIOCGSEESENT BIOCSSEESENT (u_int)
+.It Dv BIOCGSEESENT , BIOCSSEESENT ( u_int )
 Enable/disable or get the
 .Dq see sent
 flag status.
@@ -304,7 +304,7 @@ If enabled, packets sent by the host (not from
 .Nm )
 will be passed to the filter.
 By default, the flag is enabled (value is 1).
-.It Dv BIOCFEEDBACK BIOCSFEEDBACK BIOCGFEEDBACK (u_int)
+.It Dv BIOCFEEDBACK , BIOCSFEEDBACK , BIOCGFEEDBACK ( u_int )
 Set (or get)
 .Dq packet feedback mode .
 This allows injected packets to be fed back as input to the interface when
@@ -328,9 +328,9 @@ which allow the user to do async and/or non-blocking I/O to an open
 .Nm bpf
 file descriptor.
 .Bl -tag -width indent -offset indent
-.It Dv FIONREAD (int)
+.It Dv FIONREAD ( int )
 Returns the number of bytes that are immediately available for reading.
-.It Dv FIONBIO (int)
+.It Dv FIONBIO ( int )
 Set or clear non-blocking I/O.
 If arg is non-zero, then doing a
 .Xr read 2
@@ -342,7 +342,7 @@ If arg is zero, non-blocking I/O is disabled.
 Note: setting this
 overrides the timeout set by
 .Dv BIOCSRTIMEOUT .
-.It Dv FIOASYNC (int)
+.It Dv FIOASYNC ( int )
 Enable or disable async I/O.
 When enabled (arg is non-zero), the process or process group specified by
 .Dv FIOSETOWN
@@ -354,7 +354,7 @@ in order for this to take effect, as
 the system will not default this for you.
 The signal may be changed via
 .Dv BIOCSRSIG .
-.It Dv FIOSETOWN FIOGETOWN (int)
+.It Dv FIOSETOWN , FIOGETOWN ( int )
 Set or get the process or process group (if negative) that should receive SIGIO
 when packets are available.
 The signal may be changed using
@@ -653,7 +653,6 @@ array initializers:
 The following sysctls are available when
 .Nm
 is enabled:
-.Pp
 .Bl -tag -width "XnetXbpfXmaxbufsizeXX"
 .It Li net.bpf.maxbufsize
 Sets the maximum buffer size available for
@@ -678,7 +677,6 @@ utility.
 On architectures with
 .Xr bpfjit 4
 support, the additional sysctl is available:
-.Pp
 .Bl -tag -width "XnetXbpfXjitXX"
 .It Li net.bpf.jit
 Toggle

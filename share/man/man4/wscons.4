@@ -1,4 +1,4 @@
-.\" $NetBSD: wscons.4,v 1.36 2018/01/13 14:47:58 uwe Exp $
+.\" $NetBSD: wscons.4,v 1.37 2018/01/13 23:43:46 wiz Exp $
 .\"
 .\" Copyright (c) 1999, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -109,28 +109,21 @@ The
 console emulation is available if
 .Cd options WSEMUL_SUN
 was specified at kernel build time.
-It supports the control sequences of
-.Tn SUN
+It supports the control sequences of SUN
 machine consoles and delivers its keyboard codes for function and
 keypad keys in use.
 This emulation is sufficient for full-screen applications.
 .It vt100
 is available with the kernel compile option
 .Cd options WSEMUL_VT100 .
-It provides the most commonly used functions of
-.Tn DEC VT100
-terminals with some extensions introduced by the
-.Tn DEC VT220
-and
-.Tn DEC VT320
-models.
-The features of the original
-.Tn VT100
+It provides the most commonly used functions of DEC VT100
+terminals with some extensions introduced by the DEC VT220
+and DEC VT320 models.
+The features of the original VT100
 which are not or not completely implemented are:
 .Bl -bullet
 .It
-.Tn VT52
-support, 132-column-mode, smooth scroll, light background, keyboard
+VT52 support, 132-column-mode, smooth scroll, light background, keyboard
 autorepeat control, external printer support, keyboard locking,
 newline/linefeed switching: Escape sequences related
 to these features are ignored or answered with standard replies.
@@ -155,24 +148,18 @@ substituted by more or less fitting replacements.
 Depending on the keyboard used, not all function keys might be available.
 .El
 .Pp
-In addition to the plain
-.Tn VT100
-functions are supported:
+In addition to the plain VT100 functions are supported:
 .Bl -bullet
 .It
 ANSI colors.
 .It
-Some
-.Tn VT220
--like presentation state settings and -reports (DECRSPS), especially
+Some VT220-like presentation state settings and -reports (DECRSPS), especially
 tabulator settings.
 .El
 .Pp
 In most applications,
 .Nm
-will work sufficiently as a
-.Tn VT220
-emulator.
+will work sufficiently as a VT220 emulator.
 .El
 .Pp
 The
