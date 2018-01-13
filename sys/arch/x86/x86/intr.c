@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.101 2017/06/01 02:45:08 chs Exp $	*/
+/*	$NetBSD: intr.c,v 1.101.2.1 2018/01/13 21:50:31 snj Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.101 2017/06/01 02:45:08 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.101.2.1 2018/01/13 21:50:31 snj Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -240,8 +240,6 @@ static void intr_redistribute_xc_t(void *, void *);
 static void intr_redistribute_xc_s1(void *, void *);
 static void intr_redistribute_xc_s2(void *, void *);
 static bool intr_redistribute(struct cpu_info *);
-
-static const char *create_intrid(int, struct pic *, int, char *, size_t);
 
 static struct intrsource *intr_get_io_intrsource(const char *);
 static void intr_free_io_intrsource_direct(struct intrsource *);
@@ -479,8 +477,8 @@ intr_scan_bus(int bus, int pin, intr_handle_t *handle)
  * Create an interrupt id such as "ioapic0 pin 9". This interrupt id is used
  * by MI code and intrctl(8).
  */
-static const char *
-create_intrid(int legacy_irq, struct pic *pic, int pin, char *buf, size_t len)
+const char *
+intr_create_intrid(int legacy_irq, struct pic *pic, int pin, char *buf, size_t len)
 {
 	int ih;
 
@@ -924,7 +922,7 @@ intr_establish_xname(int legacy_irq, struct pic *pic, int pin, int type,
 	    "non-legacy IRQ on i8259");
 
 	ih = kmem_alloc(sizeof(*ih), KM_SLEEP);
-	intrstr = create_intrid(legacy_irq, pic, pin, intrstr_buf,
+	intrstr = intr_create_intrid(legacy_irq, pic, pin, intrstr_buf,
 	    sizeof(intrstr_buf));
 	KASSERT(intrstr != NULL);
 
