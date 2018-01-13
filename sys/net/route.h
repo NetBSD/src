@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.112.4.2 2017/10/24 08:55:55 snj Exp $	*/
+/*	$NetBSD: route.h,v 1.112.4.3 2018/01/13 22:10:55 snj Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -124,7 +124,8 @@ struct rtentry {
 	struct	sockaddr *rt_tag;	/* route tagging info */
 #ifdef _KERNEL
 	kcondvar_t rt_cv;
-	struct psref_target	rt_psref;
+	struct psref_target rt_psref;
+	SLIST_ENTRY(rtentry) rt_free;	/* queue of deferred frees */
 #endif
 };
 
