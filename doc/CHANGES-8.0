@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.102 2018/01/13 05:50:47 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.103 2018/01/13 22:33:12 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -8921,4 +8921,171 @@ sys/netinet/in.c				1.213
 
 	Don't pass rwlock to callout_halt
 	[ozaki-r, ticket #488]
+
+sys/sys/cdefs.h					1.133-1.135
+
+	- Ignore __thread for lint for now
+	- lint knows about all inline variant syntax...
+	- add linited to __USE()
+	[christos, ticket #473]
+
+doc/3RDPARTY					1.1472, 1.1474, 1.1489, 1.1492
+external/bsd/dhcpcd/dist/.gitignore		up to 1.4
+external/bsd/dhcpcd/dist/LICENSE		up to 1.1.1.2
+external/bsd/dhcpcd/dist/Makefile.inc		up to 1.1.1.2
+external/bsd/dhcpcd/dist/README.md		up to 1.1.1.3
+external/bsd/dhcpcd/dist/compat/crypt/hmac.c	up to 1.1.1.1
+external/bsd/dhcpcd/dist/compat/crypt/hmac.h	up to 1.1.1.1
+external/bsd/dhcpcd/dist/compat/crypt/md5.h	up to 1.1.1.2
+external/bsd/dhcpcd/dist/compat/strlcpy.c	up to 1.1.1.1
+external/bsd/dhcpcd/dist/compat/strlcpy.h	up to 1.1.1.1
+external/bsd/dhcpcd/dist/configure		up to 1.1.1.4
+external/bsd/dhcpcd/dist/hooks/01-test		up to 1.1.1.2
+external/bsd/dhcpcd/dist/hooks/dhcpcd-run-hooks.8.in up to 1.1.1.3
+external/bsd/dhcpcd/dist/hooks/dhcpcd-run-hooks.in up to 1.1.1.3
+external/bsd/dhcpcd/dist/src/Makefile		up to 1.1.1.4
+external/bsd/dhcpcd/dist/src/arp.c		up to 1.1.1.5
+external/bsd/dhcpcd/dist/src/arp.h		up to 1.1.1.4
+external/bsd/dhcpcd/dist/src/auth.c		up to 1.1.1.4
+external/bsd/dhcpcd/dist/src/auth.h		up to 1.1.1.2
+external/bsd/dhcpcd/dist/src/bpf.c		up to 1.6
+external/bsd/dhcpcd/dist/src/bpf.h		up to 1.1.1.4
+external/bsd/dhcpcd/dist/src/common.c		up to 1.1.1.4
+external/bsd/dhcpcd/dist/src/common.h		up to 1.1.1.2
+external/bsd/dhcpcd/dist/src/control.c		up to 1.1.1.3
+external/bsd/dhcpcd/dist/src/control.h		up to 1.1.1.2
+external/bsd/dhcpcd/dist/src/crypt/crypt.h	delete
+external/bsd/dhcpcd/dist/src/crypt/hmac_md5.c	delete
+external/bsd/dhcpcd/dist/src/defs.h		up to 1.1.1.8
+external/bsd/dhcpcd/dist/src/dev.c		up to 1.1.1.3
+external/bsd/dhcpcd/dist/src/dev.h		up to 1.1.1.2
+external/bsd/dhcpcd/dist/src/dhcp-common.c	up to 1.1.1.4
+external/bsd/dhcpcd/dist/src/dhcp-common.h	up to 1.1.1.2
+external/bsd/dhcpcd/dist/src/dhcp.c		up to 1.7
+external/bsd/dhcpcd/dist/src/dhcp.h		up to 1.1.1.4
+external/bsd/dhcpcd/dist/src/dhcp6.c		up to 1.1.1.8
+external/bsd/dhcpcd/dist/src/dhcp6.h		up to 1.1.1.3
+external/bsd/dhcpcd/dist/src/dhcpcd-embedded.c.in up to 1.1.1.2
+external/bsd/dhcpcd/dist/src/dhcpcd-embedded.h.in up to 1.1.1.2
+external/bsd/dhcpcd/dist/src/dhcpcd.8.in	up to 1.1.1.7
+external/bsd/dhcpcd/dist/src/dhcpcd.c		up to 1.7
+external/bsd/dhcpcd/dist/src/dhcpcd.conf	up to 1.1.1.2
+external/bsd/dhcpcd/dist/src/dhcpcd.conf.5.in	up to 1.1.1.5
+external/bsd/dhcpcd/dist/src/dhcpcd.h		up to 1.1.1.4
+external/bsd/dhcpcd/dist/src/eloop.c		up to 1.1.1.5
+external/bsd/dhcpcd/dist/src/eloop.h		up to 1.1.1.3
+external/bsd/dhcpcd/dist/src/if-bsd.c		up to 1.1.1.6
+external/bsd/dhcpcd/dist/src/if-linux-wext.c	up to 1.1.1.2
+external/bsd/dhcpcd/dist/src/if-linux.c		up to 1.1.1.7
+external/bsd/dhcpcd/dist/src/if-options.c	up to 1.6
+external/bsd/dhcpcd/dist/src/if-options.h	up to 1.1.1.5
+external/bsd/dhcpcd/dist/src/if-sun.c		up to 1.1.1.3
+external/bsd/dhcpcd/dist/src/if.c		up to 1.1.1.5
+external/bsd/dhcpcd/dist/src/if.h		up to 1.1.1.4
+external/bsd/dhcpcd/dist/src/ipv4.c		up to 1.1.1.7
+external/bsd/dhcpcd/dist/src/ipv4.h		up to 1.1.1.3
+external/bsd/dhcpcd/dist/src/ipv4ll.c		up to 1.1.1.4
+external/bsd/dhcpcd/dist/src/ipv4ll.h		up to 1.1.1.3
+external/bsd/dhcpcd/dist/src/ipv6.c		up to 1.1.1.7
+external/bsd/dhcpcd/dist/src/ipv6.h		up to 1.1.1.5
+external/bsd/dhcpcd/dist/src/ipv6nd.c		up to 1.1.1.6
+external/bsd/dhcpcd/dist/src/ipv6nd.h		up to 1.1.1.4
+external/bsd/dhcpcd/dist/src/logerr.c		up to 1.1.1.2
+external/bsd/dhcpcd/dist/src/logerr.h		up to 1.1.1.2
+external/bsd/dhcpcd/dist/src/route.c		up to 1.1.1.5
+external/bsd/dhcpcd/dist/src/route.h		up to 1.1.1.3
+external/bsd/dhcpcd/dist/src/sa.c		up to 1.1.1.3
+external/bsd/dhcpcd/dist/src/sa.h		up to 1.1.1.2
+external/bsd/dhcpcd/dist/src/script.c		up to 1.1.1.4
+external/bsd/dhcpcd/dist/src/script.h		up to 1.1.1.2
+external/bsd/dhcpcd/dist/tests/crypt/Makefile	up to 1.1.1.2
+external/bsd/dhcpcd/dist/tests/crypt/run-test.c	up to 1.1.1.2
+external/bsd/dhcpcd/dist/tests/crypt/test.h	up to 1.1.1.2
+external/bsd/dhcpcd/dist/tests/crypt/test_hmac_md5.c up to 1.1.1.3
+external/bsd/dhcpcd/dist/tests/eloop-bench/Makefile up to 1.1.1.2
+external/bsd/dhcpcd/dist/tests/eloop-bench/eloop-bench.c up to 1.1.1.2
+external/bsd/dhcpcd/include/config.h		up to 1.2
+external/bsd/dhcpcd/sbin/Makefile.inc		up to 1.5
+external/bsd/dhcpcd/sbin/dhcpcd/Makefile	up to 1.42
+
+	Update dhcpcd to 7.0.0.
+	[roy, ticket #478]
+
+sys/dev/pci/ixgbe/ixgbe.c			1.116-1.119
+sys/dev/pci/ixgbe/ixv.c				1.76-1.77
+
+	- Don't panic when resource shortage occured. PR#52820
+	- ixg(4): IF MSI-X setup failed, fallback to MSI. If MSI setup
+	  failed, fallback to INTx.
+	- ixg(4): Use single vector MSI instead of MSI-X when number
+	  of CPU is 1 to save interrupt slot.
+	[msaitoh, ticket #490]
+
+sys/dev/pci/if_wm.c				1.550, 1.552
+
+	- Don't use MSI-X if we can use only one queue to save interrupt
+	  resource.
+	- Add ASPM workaround for 8257[1234] and 82583 to prevent device
+	  timeout or hangup. Fixes PR#52818.
+	[msaitoh, ticket #491]
+
+sys/arch/x86/x86/procfs_machdep.c		1.21
+
+	Print intel_pt in /proc/cpuinfo.
+	[msaitoh, ticket #492]
+
+sys/arch/x86/include/intr.h			1.53
+sys/arch/x86/pci/pci_intr_machdep.c		1.42
+sys/arch/x86/x86/intr.c				1.114 via patch
+
+	fix "intrctl list" panic when ACPI is disabled.
+	[knakahara, ticket #493]
+
+sys/netinet/ip_output.c				1.291-1.292
+
+	Fix NULL pointer dereference in ip_setmoptions.
+	[ozaki-r, ticket #494]
+
+lib/librumpuser/rumpfiber.c			1.13
+lib/librumpuser/rumpuser_pth.c			1.46
+lib/librumpuser/rumpuser_pth_dummy.c		1.18
+sys/kern/kern_condvar.c				1.40
+sys/kern/kern_lock.c				1.161
+sys/kern/kern_mutex.c				1.68
+sys/kern/kern_rwlock.c				1.48
+sys/rump/include/rump/rumpuser.h		1.115
+sys/rump/librump/rumpkern/locks.c		1.76
+sys/rump/librump/rumpkern/locks.c		1.77
+sys/rump/librump/rumpkern/locks.c		1.78
+sys/rump/librump/rumpkern/locks.c		1.79
+
+	- Apply C99-style struct initialization to lockops_t
+	- Tweak LOCKDEBUG macros (NFC)
+	- Distinguish spin mutex and adaptive mutex on rump kernels
+	  for LOCKDEBUG
+	- rump: check if the mutex is surely owned by the caller in
+	  mutex_exit
+	[ozaki-r, ticket #495]
+
+sys/net/route.c					1.202-1.203
+sys/net/route.h					1.117
+
+	- Use a queue of deferred entries to delete routes instead
+	  of a fixed stack of 10. Otherwise we can overflow in route
+	  deletions from the rexmit timer.
+	- Don't stomp past end of array
+	[christos, ticket #496]
+
+sys/dev/sbus/dbri.c				up to 1.38
+sys/dev/sbus/dbrivar.h				up to 1.15
+
+	Make dbri really work.
+	[mrg, ticket #503]
+
+sys/arch/sparc/sparc/timer.c			1.33-1.34
+sys/arch/sparc/sparc/timer_sun4m.c		1.31
+sys/arch/sparc/sparc/timerreg.h			1.10
+
+	fix time goes backwards problems on sparc.
+	[mrg, ticket #504]
 
