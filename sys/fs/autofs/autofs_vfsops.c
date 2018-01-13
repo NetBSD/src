@@ -33,7 +33,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autofs_vfsops.c,v 1.2 2018/01/09 16:19:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autofs_vfsops.c,v 1.3 2018/01/13 22:06:21 christos Exp $");
 
 
 #include "autofs.h"
@@ -219,6 +219,13 @@ autofs_unmount(struct mount *mp, int mntflags)
 	while (!RB_EMPTY(&amp->am_root->an_children)) {
 		struct autofs_node *anp;
 		anp = RB_MIN(autofs_node_tree, &amp->am_root->an_children);
+		if (!RB_EMPTY(&anp->an_children)) {
+			AUTOFS_DEBUG("%s: %s has children", __func__,
+			    anp->an_name);
+			mutex_exit(&amp->am_lock);
+			return EBUSY;
+		}
+			
 		autofs_node_delete(anp);
 	}
 	autofs_node_delete(amp->am_root);
