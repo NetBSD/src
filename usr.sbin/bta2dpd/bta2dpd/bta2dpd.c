@@ -1,4 +1,4 @@
-/* $NetBSD: bta2dpd.c,v 1.4 2017/08/27 10:39:18 nat Exp $ */
+/* $NetBSD: bta2dpd.c,v 1.5 2018/01/13 10:20:45 nat Exp $ */
 
 /*-
  * Copyright (c) 2015 - 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -784,13 +784,12 @@ opened_connection:
 		state = 7;
 	}
 
+	mtusize = sizeof(uint16_t);
 	getsockopt(sc, BTPROTO_L2CAP, SO_L2CAP_OMTU, &mtu, &mtusize);
 	if (userset_mtu != 0 && userset_mtu > 100 && userset_mtu < mtu)
 		mtu = userset_mtu;
 	else if (userset_mtu == 0 && mtu >= 500)
 		mtu /= 2;
-
-	mtusize = sizeof(uint16_t);
 }
 
 static void
