@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.2 2018/01/12 17:54:36 christos Exp $	*/
+/*	$NetBSD: log.c,v 1.3 2018/01/13 12:36:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  *
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: log.c,v 1.2 2018/01/12 17:54:36 christos Exp $");
+__RCSID("$NetBSD: log.c,v 1.3 2018/01/13 12:36:35 christos Exp $");
 
 #include <errno.h>
 #include <stdarg.h>
@@ -101,14 +101,14 @@ log_common(int priority, int log_errno, const char *fmt, va_list ap)
 	if (ret < 0) {
 		fprintf(stderr, "%s: snprintf failed", getprogname());
 		syslog(LOG_CRIT, "snprintf failed");
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	ret = strnvis(msgbuf_strvised, sizeof(msgbuf_strvised), msgbuf, VIS_NL);
 	if (ret < 0) {
 		fprintf(stderr, "%s: strnvis failed", getprogname());
 		syslog(LOG_CRIT, "strnvis failed");
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	if (log_errno == -1) {
@@ -150,7 +150,7 @@ log_common(int priority, int log_errno, const char *fmt, va_list ap)
 	}
 }
 
-void
+__dead void
 log_err(int eval, const char *fmt, ...)
 {
 	va_list ap;
@@ -162,7 +162,7 @@ log_err(int eval, const char *fmt, ...)
 	exit(eval);
 }
 
-void
+__dead void
 log_errx(int eval, const char *fmt, ...)
 {
 	va_list ap;
