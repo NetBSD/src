@@ -1,4 +1,4 @@
-/*	$NetBSD: fssconfig.c,v 1.12 2016/07/31 02:13:26 pgoyette Exp $	*/
+/*	$NetBSD: fssconfig.c,v 1.12.6.1 2018/01/13 05:38:54 snj Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -130,16 +130,19 @@ config(int argc, char **argv)
 	    prog_stat(argv[1], &sbuf) != 0)
 		err(1, "stat %s", argv[1]);
 	mountdev = sbuf.st_dev;
-	if (stat(argv[2], &sbuf) == 0 &&
-	    S_ISREG(sbuf.st_mode) &&
-	    sbuf.st_dev == mountdev) {
-		if ((sbuf.st_flags & SF_SNAPSHOT) == 0)
-			errx(1, "%s: exists and is not a snapshot", argv[2]);
-		if (argc != 3)
-			usage();
-		isreg = ispersistent = 1;
+	if (stat(argv[2], &sbuf) == 0) {
+		if (S_ISREG(sbuf.st_mode) && sbuf.st_dev == mountdev) {
+			if ((sbuf.st_flags & SF_SNAPSHOT) == 0)
+				errx(1, "%s: exists and is not a snapshot",
+				    argv[2]);
+			if (argc != 3)
+				usage();
+			isreg = ispersistent = 1;
 
-		goto configure;
+			goto configure;
+		} else if (S_ISDIR(sbuf.st_mode)) {
+			istmp = 1;
+		}
 	}
 
 	if (argc > 5)
@@ -155,18 +158,17 @@ config(int argc, char **argv)
 		bssize = (off_t)fsbuf.f_blocks*fsbuf.f_frsize;
 
 	/*
-	 * Create the backing store. If it is a directory, create a temporary
-	 * file and set the unlink flag.
+	 * Create the backing store.
 	 */
-	fd = prog_open(fss.fss_bstore, O_CREAT|O_TRUNC|O_WRONLY, 0600);
-	if (fd < 0) {
-		if (errno != EISDIR)
-			err(1, "create: %s", fss.fss_bstore);
-		snprintf(path, sizeof(path), "%s/XXXXXXXXXX", fss.fss_bstore);
-		if ((fd = mkstemp(path)) < 0)
-			err(1, "mkstemp: %s", path);
+	if (istmp) {
+		snprintf(path, sizeof(path), "%s/XXXXXXXXXX", argv[2]);
 		fss.fss_bstore = path;
-		istmp = 1;
+		fd = mkstemp(fss.fss_bstore);
+	} else {
+		fd = prog_open(fss.fss_bstore, O_CREAT|O_TRUNC|O_WRONLY, 0600);
+	}
+	if (fd < 0) {
+		err(1, "create: %s", fss.fss_bstore);
 	}
 	if (prog_fstat(fd, &sbuf) < 0)
 		err(1, "stat: %s", fss.fss_bstore);
