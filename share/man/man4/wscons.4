@@ -1,4 +1,4 @@
-.\" $NetBSD: wscons.4,v 1.35 2018/01/13 14:34:00 uwe Exp $
+.\" $NetBSD: wscons.4,v 1.36 2018/01/13 14:47:58 uwe Exp $
 .\"
 .\" Copyright (c) 1999, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -176,19 +176,19 @@ emulator.
 .El
 .Pp
 The
-.Va WSEMUL_DEFAULT
+.Dv WSEMUL_DEFAULT
 kernel option is used to select one of the described terminal options
 as the default choice.
 The default takes effect at kernel startup, i.e. for the operating
 system console or additional screens allocated through the
-.Va WSDISPLAY_DEFAULTSCREENS
+.Dv WSDISPLAY_DEFAULTSCREENS
 option (see
 .Xr wsdisplay 4 ) ,
 or if no emulation type was passed to the
 .Xr wsconscfg 8
 utility.
 .Ss Compatibility options
-these options allow X servers and other programs using low-level
+These options allow X servers and other programs using low-level
 console driver functions usually written specifically for other
 console drivers to run on
 .Nx
@@ -235,45 +235,47 @@ driver entry points, symlinks are a helpful measure.)
 .It Cd options WS_DEFAULT_BG=WSCOL_XXX
 .It Cd options WS_DEFAULT_COLATTR=\*q(WSATTR_XXX\ |\ WSATTR_YYY)\*q
 .It Cd options WS_DEFAULT_MONOATTR=\*q(WSATTR_XXX\ |\ WSATTR_YYY)\*q
-allow to make default console output appear in specific colors and
-attributes.
-.Dq WS_DEFAULT_FG
+Make default console output appear in specific colors and attributes.
+.Dv WS_DEFAULT_FG
 and
-.Dq WS_DEFAULT_BG
-set the foreground / background used on color displays.
-The
-.Dq WSCOL_XXX
-arguments are colors as defined in
-.Pa src/sys/dev/wscons/wsdisplayvar.h .
-.Dq WS_DEFAULT_COLATTR
+.Dv WS_DEFAULT_BG
+set the foreground and background used on color displays.
+.Dv WS_DEFAULT_COLATTR
 and
-.Dq WS_DEFAULT_MONOATTR
+.Dv WS_DEFAULT_MONOATTR
 are additional attribute flags used on color or monochrome displays,
 respectively.
-The arguments are defined in the same header file.
 Whether the attributes
 are supported or not depends on the actually used graphics adapter.
 These options are ignored by the
 .Dq dumb
 terminal emulation.
 .Pp
+See
+.Pa src/sys/dev/wscons/wsdisplayvar.h
+for available
+.Dv WSCOL_XXX
+and
+.Dv WSATTR_XXX
+values.
+.Pp
 .It Cd options WS_KERNEL_FG=WSCOL_XXX
 .It Cd options WS_KERNEL_BG=WSCOL_XXX
 .It Cd options WS_KERNEL_COLATTR=\*q(WSATTR_XXX\ |\ WSATTR_YYY)\*q
 .It Cd options WS_KERNEL_MONOATTR=\*q(WSATTR_XXX\ |\ WSATTR_YYY)\*q
-allow to make console output originating from the kernel appear differently
+Make console output originating from the kernel appear differently
 than output from user level programs (via
 .Pa /dev/console
 or the specific tty
 device like
 .Pa /dev/ttyE0 ) .
 Their meaning is the same as their
-.Sq WS_DEFAULT_*
+.Dv WS_DEFAULT_*
 counterparts.
 .Pp
 .It Cd options WSCOMPAT_USL_SYNCTIMEOUT=nnn
 The virtual screen switching protocol enabled by
-.Dq WSDISPLAY_COMPAT_USL
+.Dv WSDISPLAY_COMPAT_USL
 uses a somewhat complex handshake protocol to pass control to user programs
 such as X servers controlling a virtual screen.
 In order to prevent a non-responsive
