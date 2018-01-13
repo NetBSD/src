@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.802 2018/01/04 13:36:30 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.803 2018/01/13 14:12:57 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009, 2017
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.802 2018/01/04 13:36:30 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.803 2018/01/13 14:12:57 bouyer Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_freebsd.h"
@@ -453,8 +453,8 @@ cpu_startup(void)
 	gdt_init();
 	i386_proc0_pcb_ldt_init();
 
-#ifndef XEN
 	cpu_init_tss(&cpu_info_primary);
+#ifndef XEN
 	ltr(cpu_info_primary.ci_tss_sel);
 #endif
 
@@ -613,6 +613,7 @@ cpu_set_tss_gates(struct cpu_info *ci)
 	    GSEL(GIPITSS_SEL, SEL_KPL));
 #endif
 }
+#endif /* XEN */
 
 /*
  * Set up TSS and I/O bitmap.
@@ -626,14 +627,17 @@ cpu_init_tss(struct cpu_info *ci)
 	    sizeof(struct cpu_tss), 0, UVM_KMF_WIRED|UVM_KMF_ZERO);
 
 	cputss->tss.tss_iobase = IOMAP_INVALOFF << 16;
+#ifndef XEN
 	cputss->tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
 	cputss->tss.tss_ldt = GSEL(GLDT_SEL, SEL_KPL);
 	cputss->tss.tss_cr3 = rcr3();
+#endif
 
 	ci->ci_tss = cputss;
+#ifndef XEN
 	ci->ci_tss_sel = tss_alloc(&cputss->tss);
+#endif
 }
-#endif /* XEN */
 
 void *
 getframe(struct lwp *l, int sig, int *onstack)
