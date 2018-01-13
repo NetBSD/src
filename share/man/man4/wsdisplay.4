@@ -1,4 +1,4 @@
-.\" $NetBSD: wsdisplay.4,v 1.44 2015/10/25 23:00:00 wiz Exp $
+.\" $NetBSD: wsdisplay.4,v 1.45 2018/01/13 19:50:52 uwe Exp $
 .\"
 .\" Copyright (c) 1999 Matthias Drochner.
 .\" Copyright (c) 2002 Ben Harris.
@@ -78,7 +78,7 @@ In contrary, non-emulating displays can only be used by special programs
 like X servers.
 .Pp
 The
-.Em console
+.Cd console
 locator in the configuration line refers to the device's use as the output
 part of the operating system console.
 A device specification containing a positive value here will only match if
@@ -91,7 +91,7 @@ instance.
 display devices are usable as console.)
 .Pp
 The
-.Em kbdmux
+.Cd kbdmux
 locator in the configuration line refers to the
 .Xr wsmux 4
 that will be used to get keyboard events.
@@ -99,8 +99,8 @@ If this locator is -1 no mux will be used.
 .Pp
 The logical unit of an independent contents displayed on a display
 (sometimes referred to as
-.Dq virtual terminal
-) is called a
+.Dq virtual terminal )
+is called a
 .Dq screen
 here.
 If the underlying device driver supports it, multiple screens can
@@ -119,8 +119,11 @@ the keyboard input.
 (In some cases \- if no screen is set up or if a screen
 was just deleted \- it is possible that no focus is present at all.)
 The focus can be switched by either special keyboard input (typically
-.Tn CTRL-ALT-F Ns Ar n, STOP-F Ns Ar n on Sun hardware, Command-F Ns Ar n
-on ADB keyboards )
+.Ao "Ctrl" Ac Ns \| Ns Ao "Alt" Ac Ns \| Ns Ao "F" Ns Ar "n" Ac ,
+.Ao "Stop" Ac Ns \| Ns Ao "F" Ns Ar "n" Ac
+on Sun hardware,
+.Ao "Command" Ac Ns \| Ns Ao "F" Ns Ar "n" Ac
+on ADB keyboards)
 or an ioctl command issued by a user program.
 Screens are created and deleted through the
 .Pa /dev/ttyEcfg
@@ -143,7 +146,7 @@ Sets the border color at boot time.
 Possible values are defined in
 .Pa src/sys/dev/wscons/wsdisplayvar.h .
 Defaults to
-.Sq WSCOL_BLACK .
+.Dv WSCOL_BLACK .
 .It Cd options WSDISPLAY_CUSTOM_BORDER
 Enables the
 .Dv WSDISPLAYIO_GBORDER
@@ -170,9 +173,9 @@ utility is not wanted.
 .It Cd options WSDISPLAY_SCROLLSUPPORT
 Enables scrolling support.
 The key combinations are
-.Ic LEFT SHIFT + PAGE UP
+.Ao "Left\ Shift" Ac Ns \| Ns Ao "Page\ Up" Ac
 and
-.Ic LEFT SHIFT + PAGE DOWN
+.Ao "Left\ Shift" Ac Ns \| Ns Ao "Page\ Down" Ac
 by default.
 Please note that this function may not work under the system console and
 is available depending on the framebuffer you are using.
@@ -242,7 +245,7 @@ and
 .Va blue
 members should each point to an array of
 .Va count
-.Li u_char Ns s .
+.Vt u_char Ns No \^s .
 On return, these will be filled in with the appropriate entries from the
 color map.
 On all displays that support this call, values range from 0 for minimum
@@ -364,7 +367,7 @@ This means that
 and
 .Va cmap . Ns Va blue
 must each point to at least enough space to hold two
-.Li u_char Ns s .
+.Vt u_char Ns No \^s .
 .It Dv WSDISPLAY_CURSOR_DOSHAPE
 Get
 .Va size , image ,
@@ -470,7 +473,7 @@ The
 and
 .Va kernel_attrs
 variables are a combination of
-.Va WSATTR_*
+.Dv WSATTR_ Ns Ar *
 bits, and specify the attributes used to draw messages.
 The
 .Va default_bg ,
@@ -483,7 +486,7 @@ variables specify the colors used to print messages, being
 for the background and
 .Sq _fg
 for the foreground; their values are one of all the
-.Va WSCOL_*
+.Dv WSCOL_ Ns Ar *
 macros available.
 .It Dv WSDISPLAYIO_SMSGATTRS Pq Li struct wsdisplay_msgattrs
 Set the attributes (colors and flags) used to print console messages, including
@@ -523,9 +526,9 @@ and
 are its colors and
 .Va flags
 is a combination of
-.Sq WSDISPLAY_CHAR_BRIGHT
+.Dv WSDISPLAY_CHAR_BRIGHT
 and/or
-.Sq WSDISPLAY_CHAR_BLINK .
+.Dv WSDISPLAY_CHAR_BLINK .
 .It Dv WSDISPLAYIO_PUTWSCHAR Pq Li struct wsdisplay_char
 Puts a character on the screen.
 The structure has the same meaning as described in
@@ -570,18 +573,15 @@ if (ioctl(fd, WSDISPLAYIO_SETVERSION, &ver) == -1)
 .Ed
 .El
 .Sh FILES
-.Bl -item
-.It
-.Pa /dev/ttyE*
+.Bl -tag -width "/dev/ttyEstat" -compact
+.It Pa /dev/ttyE*
 Terminal devices (per screen).
-.It
-.Pa /dev/ttyEcfg
+.It Pa /dev/ttyEcfg
 Control device.
-.It
-.Pa /dev/ttyEstat
+.It Pa /dev/ttyEstat
 Status device.
-.It
-.Pa /usr/include/dev/wscons/wsconsio.h
+.Pp
+.It Pa /usr/include/dev/wscons/wsconsio.h
 .El
 .Sh SEE ALSO
 .Xr ioctl 2 ,
