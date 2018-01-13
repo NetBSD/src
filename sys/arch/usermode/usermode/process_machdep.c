@@ -1,4 +1,4 @@
-/* $NetBSD: process_machdep.c,v 1.3 2014/01/04 00:10:03 dsl Exp $ */
+/* $NetBSD: process_machdep.c,v 1.4 2018/01/13 15:15:03 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.3 2014/01/04 00:10:03 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.4 2018/01/13 15:15:03 reinoud Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -68,3 +68,16 @@ process_set_pc(struct lwp *l, void *addr)
 {
 	return 0;
 }
+
+int
+process_write_dbregs(struct lwp *l, const struct dbreg *regs, size_t sz)
+{
+	return 0;
+}
+
+int
+process_read_dbregs(struct lwp *l, struct dbreg *regs, size_t *sz)
+{
+	return 0;
+}
+
