@@ -1,4 +1,4 @@
-.\"	$NetBSD: njata.4,v 1.7 2011/02/21 02:31:57 itohy Exp $
+.\"	$NetBSD: njata.4,v 1.8 2018/01/13 19:01:59 uwe Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -66,12 +66,12 @@ The optional flags parameter is the
 .Dq wait
 value for ATA transfers.
 Some combinations of host and device may fail without flags parameter or
-.Tn flags 0x00 .
+.Cd flags 0x00 .
 In this case try adding wait values like
-.Tn flags 0x01
+.Cd flags 0x01
 or
-.Tn flags 0x11
-(the wait parameter is composed of two 4bit values).
+.Cd flags 0x11
+(the wait parameter is composed of two 4-bit values).
 Smaller wait values should be faster.
 Too long waits may cause transfer errors.
 .Sh SEE ALSO
