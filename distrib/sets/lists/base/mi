@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1167 2018/01/09 03:31:13 christos Exp $
+# $NetBSD: mi,v 1.1168 2018/01/14 22:46:09 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -520,6 +520,7 @@
 ./sbin/modunload				base-sysutil-root
 ./sbin/mount					base-sysutil-root
 ./sbin/mount_ados				base-adosfs-root
+./sbin/mount_autofs				base-sysutil-root
 ./sbin/mount_cd9660				base-sysutil-root
 ./sbin/mount_chfs				base-sysutil-root
 ./sbin/mount_efs				base-efs-root
