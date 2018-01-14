@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2009/09/29 23:56:34 tsarna Exp $
+#	$NetBSD: Makefile,v 1.2 2018/01/14 20:16:04 christos Exp $
 
 PROG=	dns-sd
 
@@ -7,6 +7,7 @@ PROG=	dns-sd
 .PATH:	${DIST}/Clients ${DIST}/mDNSShared
 
 SRCS=	dns-sd.c ClientCommon.c
+CPPFLAGS+=-I${DIST}/mDNSShared
 LDADD+= -ldns_sd
 DPADD+= ${LIBDNS_SD}
 
