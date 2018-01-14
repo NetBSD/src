@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,7 +22,7 @@
 #include <sys/time.h>
 
 #ifdef  __cplusplus
-    extern "C" {
+extern "C" {
 #endif
 
 // PosixNetworkInterface is a record extension of the core NetworkInterfaceInfo
@@ -34,32 +34,33 @@
 typedef struct PosixNetworkInterface PosixNetworkInterface;
 
 struct PosixNetworkInterface
-	{
-	NetworkInterfaceInfo    coreIntf;
-	const char *            intfName;
-	PosixNetworkInterface * aliasIntf;
-	int                     index;
-	int                     multicastSocket4;
+{
+    NetworkInterfaceInfo coreIntf;		// MUST be the first element in this structure
+    mDNSs32 LastSeen;
+    const char *            intfName;
+    PosixNetworkInterface * aliasIntf;
+    int index;
+    int multicastSocket4;
 #if HAVE_IPV6
-	int                     multicastSocket6;
+    int multicastSocket6;
 #endif
-	};
+};
 
 // This is a global because debugf_() needs to be able to check its value
 extern int gMDNSPlatformPosixVerboseLevel;
 
 struct mDNS_PlatformSupport_struct
-	{
-	int unicastSocket4;
+{
+    int unicastSocket4;
 #if HAVE_IPV6
-	int unicastSocket6;
+    int unicastSocket6;
 #endif
-	};
+};
 
 #define uDNS_SERVERS_FILE "/etc/resolv.conf"
 extern int ParseDNSServers(mDNS *m, const char *filePath);
 extern mStatus mDNSPlatformPosixRefreshInterfaceList(mDNS *const m);
-    // See comment in implementation.
+// See comment in implementation.
 
 // Call mDNSPosixGetFDSet before calling select(), to update the parameters
 // as may be necessary to meet the needs of the mDNSCore code.
@@ -70,7 +71,7 @@ extern mStatus mDNSPlatformPosixRefreshInterfaceList(mDNS *const m);
 extern void mDNSPosixGetFDSet(mDNS *m, int *nfds, fd_set *readfds, struct timeval *timeout);
 extern void mDNSPosixProcessFDSet(mDNS *const m, fd_set *readfds);
 
-typedef	void (*mDNSPosixEventCallback)(int fd, short filter, void *context);
+typedef void (*mDNSPosixEventCallback)(int fd, short filter, void *context);
 
 extern mStatus mDNSPosixAddFDToEventLoop( int fd, mDNSPosixEventCallback callback, void *context);
 extern mStatus mDNSPosixRemoveFDFromEventLoop( int fd);
@@ -79,7 +80,7 @@ extern mStatus mDNSPosixIgnoreSignalInEventLoop( int signum);
 extern mStatus mDNSPosixRunEventLoopOnce( mDNS *m, const struct timeval *pTimeout, sigset_t *pSignalsReceived, mDNSBool *pDataDispatched);
 
 #ifdef  __cplusplus
-    }
+}
 #endif
 
 #endif
