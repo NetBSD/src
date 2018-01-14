@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,8 +20,8 @@
 
 #include "mDNSEmbeddedAPI.h"
 
-#ifdef	__cplusplus
-	extern "C" {
+#ifdef  __cplusplus
+extern "C" {
 #endif
 
 //*************************************************************************************************************
@@ -30,7 +30,7 @@
 // Note: The C preprocessor stringify operator ('#') makes a string from its argument, without macro expansion
 // e.g. If "version" is #define'd to be "4", then STRINGIFY_AWE(version) will return the string "version", not "4"
 // To expand "version" to its value before making the string, use STRINGIFY(version) instead
-#define STRINGIFY_ARGUMENT_WITHOUT_EXPANSION(s) #s
+#define STRINGIFY_ARGUMENT_WITHOUT_EXPANSION(s) # s
 #define STRINGIFY(s) STRINGIFY_ARGUMENT_WITHOUT_EXPANSION(s)
 
 // ***************************************************************************
@@ -39,50 +39,50 @@
 #endif
 
 typedef enum
-	{
-	kDNSFlag0_QR_Mask     = 0x80,		// Query or response?
-	kDNSFlag0_QR_Query    = 0x00,
-	kDNSFlag0_QR_Response = 0x80,
+{
+    kDNSFlag0_QR_Mask     = 0x80,       // Query or response?
+    kDNSFlag0_QR_Query    = 0x00,
+    kDNSFlag0_QR_Response = 0x80,
 
-	kDNSFlag0_OP_Mask     = 0x78,		// Operation type
-	kDNSFlag0_OP_StdQuery = 0x00,
-	kDNSFlag0_OP_Iquery   = 0x08,
-	kDNSFlag0_OP_Status   = 0x10,
-	kDNSFlag0_OP_Unused3  = 0x18,
-	kDNSFlag0_OP_Notify   = 0x20,
-	kDNSFlag0_OP_Update   = 0x28,
+    kDNSFlag0_OP_Mask     = 0x78,       // Operation type
+    kDNSFlag0_OP_StdQuery = 0x00,
+    kDNSFlag0_OP_Iquery   = 0x08,
+    kDNSFlag0_OP_Status   = 0x10,
+    kDNSFlag0_OP_Unused3  = 0x18,
+    kDNSFlag0_OP_Notify   = 0x20,
+    kDNSFlag0_OP_Update   = 0x28,
 
-	kDNSFlag0_QROP_Mask   = kDNSFlag0_QR_Mask | kDNSFlag0_OP_Mask,
+    kDNSFlag0_QROP_Mask   = kDNSFlag0_QR_Mask | kDNSFlag0_OP_Mask,
 
-	kDNSFlag0_AA          = 0x04,		// Authoritative Answer?
-	kDNSFlag0_TC          = 0x02,		// Truncated?
-	kDNSFlag0_RD          = 0x01,		// Recursion Desired?
-	kDNSFlag1_RA          = 0x80,		// Recursion Available?
+    kDNSFlag0_AA          = 0x04,       // Authoritative Answer?
+    kDNSFlag0_TC          = 0x02,       // Truncated?
+    kDNSFlag0_RD          = 0x01,       // Recursion Desired?
+    kDNSFlag1_RA          = 0x80,       // Recursion Available?
 
-	kDNSFlag1_Zero        = 0x40,		// Reserved; must be zero
-	kDNSFlag1_AD          = 0x20,		// Authentic Data [RFC 2535]
-	kDNSFlag1_CD          = 0x10,		// Checking Disabled [RFC 2535]
+    kDNSFlag1_Zero        = 0x40,       // Reserved; must be zero
+    kDNSFlag1_AD          = 0x20,       // Authentic Data [RFC 2535]
+    kDNSFlag1_CD          = 0x10,       // Checking Disabled [RFC 2535]
 
-	kDNSFlag1_RC_Mask     = 0x0F,		// Response code
-	kDNSFlag1_RC_NoErr    = 0x00,
-	kDNSFlag1_RC_FormErr  = 0x01,
-	kDNSFlag1_RC_ServFail = 0x02,
-	kDNSFlag1_RC_NXDomain = 0x03,
-	kDNSFlag1_RC_NotImpl  = 0x04,
-	kDNSFlag1_RC_Refused  = 0x05,
-	kDNSFlag1_RC_YXDomain = 0x06,
-	kDNSFlag1_RC_YXRRSet  = 0x07,
-	kDNSFlag1_RC_NXRRSet  = 0x08,
-	kDNSFlag1_RC_NotAuth  = 0x09,
-	kDNSFlag1_RC_NotZone  = 0x0A
-	} DNS_Flags;
+    kDNSFlag1_RC_Mask     = 0x0F,       // Response code
+    kDNSFlag1_RC_NoErr    = 0x00,
+    kDNSFlag1_RC_FormErr  = 0x01,
+    kDNSFlag1_RC_ServFail = 0x02,
+    kDNSFlag1_RC_NXDomain = 0x03,
+    kDNSFlag1_RC_NotImpl  = 0x04,
+    kDNSFlag1_RC_Refused  = 0x05,
+    kDNSFlag1_RC_YXDomain = 0x06,
+    kDNSFlag1_RC_YXRRSet  = 0x07,
+    kDNSFlag1_RC_NXRRSet  = 0x08,
+    kDNSFlag1_RC_NotAuth  = 0x09,
+    kDNSFlag1_RC_NotZone  = 0x0A
+} DNS_Flags;
 
 typedef enum
-	{
-	TSIG_ErrBadSig  = 16,
-	TSIG_ErrBadKey  = 17,
-	TSIG_ErrBadTime = 18
-	} TSIG_ErrorCode;
+{
+    TSIG_ErrBadSig  = 16,
+    TSIG_ErrBadKey  = 17,
+    TSIG_ErrBadTime = 18
+} TSIG_ErrorCode;
 
 // ***************************************************************************
 #if COMPILER_LIKES_PRAGMA_MARK
@@ -93,13 +93,15 @@ typedef enum
 extern NetworkInterfaceInfo *GetFirstActiveInterface(NetworkInterfaceInfo *intf);
 extern mDNSInterfaceID GetNextActiveInterfaceID(const NetworkInterfaceInfo *intf);
 
-extern mDNSu32 mDNSRandom(mDNSu32 max);		// Returns pseudo-random result from zero to max inclusive
+extern mDNSu32 mDNSRandom(mDNSu32 max);     // Returns pseudo-random result from zero to max inclusive
 
 // ***************************************************************************
 #if COMPILER_LIKES_PRAGMA_MARK
 #pragma mark -
 #pragma mark - Domain Name Utility Functions
 #endif
+
+#define mDNSSubTypeLabel   "\x04_sub"
 
 #define mDNSIsDigit(X)     ((X) >= '0' && (X) <= '9')
 #define mDNSIsUpperCase(X) ((X) >= 'A' && (X) <= 'Z')
@@ -139,25 +141,26 @@ extern void AppendLabelSuffix(domainlabel *const name, mDNSu32 val, const mDNSBo
 // (99% of the time) and then bail out before we waste time on the expensive SameDomainName() check.
 
 #define IdenticalResourceRecord(r1,r2) ( \
-	(r1)->rrtype    == (r2)->rrtype      && \
-	(r1)->rrclass   == (r2)->rrclass     && \
-	(r1)->namehash  == (r2)->namehash    && \
-	(r1)->rdlength  == (r2)->rdlength    && \
-	(r1)->rdatahash == (r2)->rdatahash   && \
-	SameRDataBody((r1), &(r2)->rdata->u, SameDomainName) && \
-	SameDomainName((r1)->name, (r2)->name))
+        (r1)->rrtype    == (r2)->rrtype      && \
+        (r1)->rrclass   == (r2)->rrclass     && \
+        (r1)->namehash  == (r2)->namehash    && \
+        (r1)->rdlength  == (r2)->rdlength    && \
+        (r1)->rdatahash == (r2)->rdatahash   && \
+        SameRDataBody((r1), &(r2)->rdata->u, SameDomainName) && \
+        SameDomainName((r1)->name, (r2)->name))
 
 #define IdenticalSameNameRecord(r1,r2) ( \
-	(r1)->rrtype    == (r2)->rrtype      && \
-	(r1)->rrclass   == (r2)->rrclass     && \
-	(r1)->rdlength  == (r2)->rdlength    && \
-	(r1)->rdatahash == (r2)->rdatahash   && \
-	SameRDataBody((r1), &(r2)->rdata->u, SameDomainName))
+        (r1)->rrtype    == (r2)->rrtype      && \
+        (r1)->rrclass   == (r2)->rrclass     && \
+        (r1)->rdlength  == (r2)->rdlength    && \
+        (r1)->rdatahash == (r2)->rdatahash   && \
+        SameRDataBody((r1), &(r2)->rdata->u, SameDomainName))
 
 // A given RRType answers a QuestionType if RRType is CNAME, or types match, or QuestionType is ANY,
 // or the RRType is NSEC and positively asserts the nonexistence of the type being requested
 #define RRTypeAnswersQuestionType(R,Q) ((R)->rrtype == kDNSType_CNAME || (R)->rrtype == (Q) || (Q) == kDNSQType_ANY || RRAssertsNonexistence((R),(Q)))
-#define RRAssertsNonexistence(R,T) ((R)->rrtype == kDNSType_NSEC && (T) < kDNSQType_ANY && !((R)->rdata->u.nsec.bitmap[(T)>>3] & (128 >> ((T)&7))))
+// Unicast NSEC records have the NSEC bit set whereas the multicast NSEC ones don't
+#define UNICAST_NSEC(rr) ((rr)->rrtype == kDNSType_NSEC && RRAssertsExistence((rr), kDNSType_NSEC))
 
 extern mDNSu32 RDataHashValue(const ResourceRecord *const rr);
 extern mDNSBool SameRDataBody(const ResourceRecord *const r1, const RDataBody *const r2, DomainNameComparisonFn *samename);
@@ -168,11 +171,12 @@ extern mDNSBool ResourceRecordAnswersUnicastResponse(const ResourceRecord *const
 extern mDNSBool LocalOnlyRecordAnswersQuestion(AuthRecord *const rr, const DNSQuestion *const q);
 extern mDNSu16 GetRDLength(const ResourceRecord *const rr, mDNSBool estimate);
 extern mDNSBool ValidateRData(const mDNSu16 rrtype, const mDNSu16 rdlength, const RData *const rd);
+extern mStatus DNSNameToLowerCase(domainname *d, domainname *result);
 
 #define GetRRDomainNameTarget(RR) (                                                                          \
-	((RR)->rrtype == kDNSType_NS || (RR)->rrtype == kDNSType_CNAME || (RR)->rrtype == kDNSType_PTR || (RR)->rrtype == kDNSType_DNAME) ? &(RR)->rdata->u.name        : \
-	((RR)->rrtype == kDNSType_MX || (RR)->rrtype == kDNSType_AFSDB || (RR)->rrtype == kDNSType_RT  || (RR)->rrtype == kDNSType_KX   ) ? &(RR)->rdata->u.mx.exchange : \
-	((RR)->rrtype == kDNSType_SRV                                  ) ? &(RR)->rdata->u.srv.target : mDNSNULL )
+        ((RR)->rrtype == kDNSType_NS || (RR)->rrtype == kDNSType_CNAME || (RR)->rrtype == kDNSType_PTR || (RR)->rrtype == kDNSType_DNAME) ? &(RR)->rdata->u.name        : \
+        ((RR)->rrtype == kDNSType_MX || (RR)->rrtype == kDNSType_AFSDB || (RR)->rrtype == kDNSType_RT  || (RR)->rrtype == kDNSType_KX   ) ? &(RR)->rdata->u.mx.exchange : \
+        ((RR)->rrtype == kDNSType_SRV                                  ) ? &(RR)->rdata->u.srv.target : mDNSNULL )
 
 #define LocalRecordReady(X) ((X)->resrec.RecordType != kDNSRecordTypeUnique)
 
@@ -195,17 +199,17 @@ extern mDNSu8 *putRData(const DNSMessage *const msg, mDNSu8 *ptr, const mDNSu8 *
 extern mDNSu8 *PutResourceRecordTTLWithLimit(DNSMessage *const msg, mDNSu8 *ptr, mDNSu16 *count, ResourceRecord *rr, mDNSu32 ttl, const mDNSu8 *limit);
 
 #define PutResourceRecordTTL(msg, ptr, count, rr, ttl) \
-	PutResourceRecordTTLWithLimit((msg), (ptr), (count), (rr), (ttl), (msg)->data + AllowedRRSpace(msg))
+    PutResourceRecordTTLWithLimit((msg), (ptr), (count), (rr), (ttl), (msg)->data + AllowedRRSpace(msg))
 
 #define PutResourceRecordTTLJumbo(msg, ptr, count, rr, ttl) \
-	PutResourceRecordTTLWithLimit((msg), (ptr), (count), (rr), (ttl), (msg)->data + AbsoluteMaxDNSMessageData)
+    PutResourceRecordTTLWithLimit((msg), (ptr), (count), (rr), (ttl), (msg)->data + AbsoluteMaxDNSMessageData)
 
 #define PutResourceRecord(MSG, P, C, RR) PutResourceRecordTTL((MSG), (P), (C), (RR), (RR)->rroriginalttl)
 
 // The PutRR_OS variants assume a local variable 'm', put build the packet at m->omsg,
-// and assume a local variable 'OwnerRecordSpace' indicating how many bytes (if any) to reserve to add an OWNER option at the end
+// and assume local variables 'OwnerRecordSpace' & 'TraceRecordSpace' indicating how many bytes (if any) to reserve to add an OWNER/TRACER option at the end
 #define PutRR_OS_TTL(ptr, count, rr, ttl) \
-	PutResourceRecordTTLWithLimit(&m->omsg, (ptr), (count), (rr), (ttl), m->omsg.data + AllowedRRSpace(&m->omsg) - OwnerRecordSpace)
+    PutResourceRecordTTLWithLimit(&m->omsg, (ptr), (count), (rr), (ttl), m->omsg.data + AllowedRRSpace(&m->omsg) - OwnerRecordSpace - TraceRecordSpace)
 
 #define PutRR_OS(P, C, RR) PutRR_OS_TTL((P), (C), (RR), (RR)->rroriginalttl)
 
@@ -220,6 +224,12 @@ extern mDNSu8 *putUpdateLease(DNSMessage *msg, mDNSu8 *end, mDNSu32 lease);
 extern mDNSu8 *putUpdateLeaseWithLimit(DNSMessage *msg, mDNSu8 *ptr, mDNSu32 lease, mDNSu8 *limit);
 
 extern mDNSu8 *putHINFO(const mDNS *const m, DNSMessage *const msg, mDNSu8 *ptr, DomainAuthInfo *authInfo, mDNSu8 *limit);
+extern mDNSu8 *putDNSSECOption(DNSMessage *msg, mDNSu8 *end, mDNSu8 *limit);
+extern int baseEncode(char *buffer, int blen, const mDNSu8 *data, int len, int encAlg);
+extern void NSEC3Parse(const ResourceRecord *const rr, mDNSu8 **salt, int *hashLength, mDNSu8 **nxtName, int *bitmaplen, mDNSu8 **bitmap);
+
+extern const mDNSu8 *NSEC3HashName(const domainname *name, rdataNSEC3 *nsec3, const mDNSu8 *AnonData, int AnonDataLen,
+    const mDNSu8 hash[NSEC3_MAX_HASH_LEN], int *dlen);
 
 // ***************************************************************************
 #if COMPILER_LIKES_PRAGMA_MARK
@@ -233,13 +243,15 @@ extern mDNSu32 DomainNameHashValue(const domainname *const name);
 extern void SetNewRData(ResourceRecord *const rr, RData *NewRData, mDNSu16 rdlength);
 extern const mDNSu8 *skipDomainName(const DNSMessage *const msg, const mDNSu8 *ptr, const mDNSu8 *const end);
 extern const mDNSu8 *getDomainName(const DNSMessage *const msg, const mDNSu8 *ptr, const mDNSu8 *const end,
-	domainname *const name);
+                                   domainname *const name);
 extern const mDNSu8 *skipResourceRecord(const DNSMessage *msg, const mDNSu8 *ptr, const mDNSu8 *end);
 extern const mDNSu8 *GetLargeResourceRecord(mDNS *const m, const DNSMessage * const msg, const mDNSu8 *ptr,
-    const mDNSu8 * end, const mDNSInterfaceID InterfaceID, mDNSu8 RecordType, LargeCacheRecord *const largecr);
+                                            const mDNSu8 * end, const mDNSInterfaceID InterfaceID, mDNSu8 RecordType, LargeCacheRecord *const largecr);
+extern mDNSBool SetRData(const DNSMessage *const msg, const mDNSu8 *ptr, const mDNSu8 *end,
+    LargeCacheRecord *const largecr, mDNSu16 rdlength);
 extern const mDNSu8 *skipQuestion(const DNSMessage *msg, const mDNSu8 *ptr, const mDNSu8 *end);
 extern const mDNSu8 *getQuestion(const DNSMessage *msg, const mDNSu8 *ptr, const mDNSu8 *end, const mDNSInterfaceID InterfaceID,
-	DNSQuestion *question);
+                                 DNSQuestion *question);
 extern const mDNSu8 *LocateAnswers(const DNSMessage *const msg, const mDNSu8 *const end);
 extern const mDNSu8 *LocateAuthorities(const DNSMessage *const msg, const mDNSu8 *const end);
 extern const mDNSu8 *LocateAdditionals(const DNSMessage *const msg, const mDNSu8 *const end);
@@ -247,8 +259,14 @@ extern const mDNSu8 *LocateOptRR(const DNSMessage *const msg, const mDNSu8 *cons
 extern const rdataOPT *GetLLQOptData(mDNS *const m, const DNSMessage *const msg, const mDNSu8 *const end);
 extern mDNSu32 GetPktLease(mDNS *m, DNSMessage *msg, const mDNSu8 *end);
 extern void DumpPacket(mDNS *const m, mStatus status, mDNSBool sent, char *transport,
-	const mDNSAddr *srcaddr, mDNSIPPort srcport,
-	const mDNSAddr *dstaddr, mDNSIPPort dstport, const DNSMessage *const msg, const mDNSu8 *const end);
+                       const mDNSAddr *srcaddr, mDNSIPPort srcport,
+                       const mDNSAddr *dstaddr, mDNSIPPort dstport, const DNSMessage *const msg, const mDNSu8 *const end);
+extern mDNSBool RRAssertsNonexistence(const ResourceRecord *const rr, mDNSu16 type);
+extern mDNSBool RRAssertsExistence(const ResourceRecord *const rr, mDNSu16 type);
+extern mDNSBool BitmapTypeCheck(mDNSu8 *bmap, int bitmaplen, mDNSu16 type);
+
+extern mDNSu16 swap16(mDNSu16 x);
+extern mDNSu32 swap32(mDNSu32 x);
 
 // ***************************************************************************
 #if COMPILER_LIKES_PRAGMA_MARK
@@ -257,7 +275,9 @@ extern void DumpPacket(mDNS *const m, mStatus status, mDNSBool sent, char *trans
 #endif
 
 extern mStatus mDNSSendDNSMessage(mDNS *const m, DNSMessage *const msg, mDNSu8 *end,
-	mDNSInterfaceID InterfaceID, UDPSocket *src, const mDNSAddr *dst, mDNSIPPort dstport, TCPSocket *sock, DomainAuthInfo *authInfo);
+                                  mDNSInterfaceID InterfaceID, UDPSocket *src, const mDNSAddr *dst, 
+                                  mDNSIPPort dstport, TCPSocket *sock, DomainAuthInfo *authInfo,
+                                  mDNSBool useBackgroundTrafficClass);
 
 // ***************************************************************************
 #if COMPILER_LIKES_PRAGMA_MARK
@@ -277,16 +297,19 @@ extern void mDNS_Unlock_(mDNS *const m, const char * const functionname);
 
 #define mDNS_Unlock(X) mDNS_Unlock_((X), __func__)
 
+#define mDNS_CheckLock(X) { if ((X)->mDNS_busy != (X)->mDNS_reentrancy+1) \
+                            LogMsg("%s: Lock not held! mDNS_busy (%ld) mDNS_reentrancy (%ld)", __func__, (X)->mDNS_busy, (X)->mDNS_reentrancy); }
+
 #define mDNS_DropLockBeforeCallback() do { m->mDNS_reentrancy++; \
-	if (m->mDNS_busy != m->mDNS_reentrancy) LogMsg("%s: Locking Failure! mDNS_busy (%ld) != mDNS_reentrancy (%ld)", __func__, m->mDNS_busy, m->mDNS_reentrancy); \
-	} while (0)
+                                           if (m->mDNS_busy != m->mDNS_reentrancy) LogMsg("%s: Locking Failure! mDNS_busy (%ld) != mDNS_reentrancy (%ld)", __func__, m->mDNS_busy, m->mDNS_reentrancy);                                                                                                                                                                  \
+} while (0)
 
 #define mDNS_ReclaimLockAfterCallback() do { \
-	if (m->mDNS_busy != m->mDNS_reentrancy) LogMsg("%s: Unlocking Failure! mDNS_busy (%ld) != mDNS_reentrancy (%ld)", __func__, m->mDNS_busy, m->mDNS_reentrancy); \
-	m->mDNS_reentrancy--; } while (0)
+        if (m->mDNS_busy != m->mDNS_reentrancy) LogMsg("%s: Unlocking Failure! mDNS_busy (%ld) != mDNS_reentrancy (%ld)", __func__, m->mDNS_busy, m->mDNS_reentrancy);                                                                                                                                                                    \
+        m->mDNS_reentrancy--; } while (0)
 
-#ifdef	__cplusplus
-	}
+#ifdef  __cplusplus
+}
 #endif
 
 #endif // __DNSCOMMON_H_

@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 4 -*-
  *
- * Copyright (c) 2004 Apple Computer, Inc. All rights reserved.
+ * Copyright (c) 2011 Apple Computer, Inc. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,4 +15,14 @@
  * limitations under the License.
  */
 
-extern void ReadDDNSSettingsFromConfFile(mDNS *const m, const char *const filename, domainname *const hostname, domainname *const domain, mDNSBool *DomainDiscoveryDisabled);
+#ifndef __NSEC3_H
+#define __NSEC3_H
+
+#include "dnssec.h"
+
+extern mDNSBool NSEC3WildcardAnswerProof(mDNS *const m, CacheRecord *ncr, DNSSECVerifier *dv);
+extern void NSEC3NameErrorProof(mDNS *const m, DNSSECVerifier *dv, CacheRecord *ncr);
+extern void NSEC3NoDataProof(mDNS *const m, DNSSECVerifier *dv, CacheRecord *ncr);
+extern CacheRecord *NSEC3RecordIsDelegation(mDNS *const m, domainname *name, mDNSu16 qtype);
+
+#endif // __NSEC3_H
