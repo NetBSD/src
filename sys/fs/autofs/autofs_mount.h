@@ -1,4 +1,4 @@
-/*	$NetBSD: autofs_mount.h,v 1.1 2018/01/09 03:31:14 christos Exp $	*/
+/*	$NetBSD: autofs_mount.h,v 1.2 2018/01/14 22:43:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -39,9 +39,9 @@
  * This structure should only be used by automount(8).
  */
 struct autofs_args {
-	const char	*from;
-	const char	*master_options;
-	const char	*master_prefix;
+	char	*from;
+	char	*master_options;
+	char	*master_prefix;
 };
 
 #endif /* !_SYS_FS_AUTOFS_AUTOFS_MOUNT_H_ */
