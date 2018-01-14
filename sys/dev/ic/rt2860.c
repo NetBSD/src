@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2860.c,v 1.29 2017/10/23 09:31:17 msaitoh Exp $	*/
+/*	$NetBSD: rt2860.c,v 1.30 2018/01/14 18:23:03 maxv Exp $	*/
 /*	$OpenBSD: rt2860.c,v 1.90 2016/04/13 10:49:26 mpi Exp $	*/
 /*	$FreeBSD: head/sys/dev/ral/rt2860.c 306591 2016-10-02 20:35:55Z avos $ */
 
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2860.c,v 1.29 2017/10/23 09:31:17 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2860.c,v 1.30 2018/01/14 18:23:03 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -113,7 +113,7 @@ static void	rt2860_tx_intr(struct rt2860_softc *, int);
 static void	rt2860_rx_intr(struct rt2860_softc *);
 static void	rt2860_tbtt_intr(struct rt2860_softc *);
 static void	rt2860_gp_intr(struct rt2860_softc *);
-static int	rt2860_tx(struct rt2860_softc *, struct mbuf *,
+static int	rt2860_tx(struct rt2860_softc *, struct mbuf **,
 		    struct ieee80211_node *);
 static void	rt2860_start(struct ifnet *);
 static void	rt2860_watchdog(struct ifnet *);
@@ -1639,7 +1639,7 @@ out:
 }
 
 static int
-rt2860_tx(struct rt2860_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
+rt2860_tx(struct rt2860_softc *sc, struct mbuf **m0, struct ieee80211_node *ni)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct rt2860_node *rn = (void *)ni;
@@ -1648,6 +1648,7 @@ rt2860_tx(struct rt2860_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	struct rt2860_txd *txd;
 	struct rt2860_txwi *txwi;
 	struct ieee80211_frame *wh;
+	struct mbuf *m = *m0;
 	bus_dma_segment_t *seg;
 	u_int hdrlen;
 	uint16_t qos, dur;
@@ -1663,6 +1664,7 @@ rt2860_tx(struct rt2860_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 		struct ieee80211_key *k = ieee80211_crypto_encap(ic, ni, m);
 		if (k == NULL) {
 			m_freem(m);
+			*m0 = NULL;
 			return ENOBUFS;
 		}
 
@@ -1779,8 +1781,14 @@ rt2860_tx(struct rt2860_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 
 	KASSERT (ring->queued <= RT2860_TX_RING_ONEMORE); /* <1> */
 	if (bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m, BUS_DMA_NOWAIT)) {
-		if (m_defrag(m, M_DONTWAIT))
+		struct mbuf *m_new = m_defrag(m, M_DONTWAIT);
+		if (m_new != NULL) {
+			/* m got freed */
+			m = m_new;
+			*m0 = m_new;
+		} else {
 			return (ENOBUFS);
+		}
 		if (bus_dmamap_load_mbuf(sc->sc_dmat,
 		    data->map, m, BUS_DMA_NOWAIT))
 			return (EFBIG);
@@ -1923,7 +1931,7 @@ rt2860_start(struct ifnet *ifp)
 sendit:
 		bpf_mtap3(ic->ic_rawbpf, m);
 
-		if (rt2860_tx(sc, m, ni) != 0) {
+		if (rt2860_tx(sc, &m, ni) != 0) {
 			DPRINTF(("%s: can't tx\n", __func__));
 			m_freem(m);
 			ieee80211_free_node(ni);
