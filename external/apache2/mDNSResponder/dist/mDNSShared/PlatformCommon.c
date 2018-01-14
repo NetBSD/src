@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 4 -*-
  *
- * Copyright (c) 2004 Apple Computer, Inc. All rights reserved.
+ * Copyright (c) 2004-2015 Apple Inc. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,10 @@
 #include <sys/socket.h>         // Needed for socket() etc.
 #include <netinet/in.h>         // Needed for sockaddr_in
 #include <syslog.h>
+
+#if APPLE_OSX_mDNSResponder
+#include <os/log.h>
+#endif 
 
 #include "mDNSEmbeddedAPI.h"    // Defines the interface provided to the client layer above
 #include "DNSCommon.h"
@@ -174,6 +178,14 @@ mDNSexport void mDNSPlatformWriteLogMsg(const char *ident, const char *buffer, m
         int syslog_level = LOG_ERR;
         switch (loglevel)
         {
+#if APPLE_OSX_mDNSResponder
+        case MDNS_LOG_MSG:       syslog_level = OS_LOG_TYPE_DEFAULT;     break;
+        case MDNS_LOG_OPERATION: syslog_level = OS_LOG_TYPE_INFO;        break;
+        case MDNS_LOG_SPS:       syslog_level = OS_LOG_TYPE_INFO;        break;
+        case MDNS_LOG_INFO:      syslog_level = OS_LOG_TYPE_INFO;        break;
+        case MDNS_LOG_DEBUG:     syslog_level = OS_LOG_TYPE_DEBUG;       break;
+        default:                 syslog_level = OS_LOG_TYPE_DEFAULT;     break;
+#else
         case MDNS_LOG_MSG:       syslog_level = LOG_ERR;     break;
         case MDNS_LOG_OPERATION: syslog_level = LOG_WARNING; break;
         case MDNS_LOG_SPS:       syslog_level = LOG_NOTICE;  break;
@@ -182,6 +194,7 @@ mDNSexport void mDNSPlatformWriteLogMsg(const char *ident, const char *buffer, m
         default:
             fprintf(stderr, "Unknown loglevel %d, assuming LOG_ERR\n", loglevel);
             fflush(stderr);
+#endif
         }
 
         if (!log_inited) { openlog(ident, LOG_CONS, LOG_DAEMON); log_inited++; }
@@ -190,10 +203,13 @@ mDNSexport void mDNSPlatformWriteLogMsg(const char *ident, const char *buffer, m
         if (ident && ident[0] && mDNSPlatformClockDivisor)
             syslog(syslog_level, "%8d.%03d: %s", (int)(t/1000), ms, buffer);
         else
-#elif APPLE_OSX_mDNSResponder
-        mDNSPlatformLogToFile(syslog_level, buffer);
-#else
-        syslog(syslog_level, "%s", buffer);
 #endif
+        {
+#if APPLE_OSX_mDNSResponder
+            mDNSPlatformLogToFile(syslog_level, buffer);
+#else
+            syslog(syslog_level, "%s", buffer);
+#endif
+        }
     }
 }
