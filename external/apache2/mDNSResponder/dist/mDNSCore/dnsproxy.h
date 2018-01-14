@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 4 -*-
  *
- * Copyright (c) 2011 Apple Computer, Inc. All rights reserved.
+ * Copyright (c) 2011-2013 Apple Inc. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #ifndef __DNS_PROXY_H
 #define __DNS_PROXY_H
 
 #include "mDNSEmbeddedAPI.h"
 #include "DNSCommon.h"
 
-extern void ProxyUDPCallback(mDNS *const m, void *socket, void *const pkt, const mDNSu8 *const end, const mDNSAddr *const srcaddr,
+extern void ProxyUDPCallback(void *socket, DNSMessage *const msg, const mDNSu8 *const end, const mDNSAddr *const srcaddr,
                              const mDNSIPPort srcport, const mDNSAddr *dstaddr, const mDNSIPPort dstport, const mDNSInterfaceID InterfaceID, void *context);
-extern void ProxyTCPCallback(mDNS *const m, void *socket, void *const pkt, const mDNSu8 *const end, const mDNSAddr *const srcaddr,
+extern void ProxyTCPCallback(void *socket, DNSMessage *const msg, const mDNSu8 *const end, const mDNSAddr *const srcaddr,
                              const mDNSIPPort srcport, const mDNSAddr *dstaddr, const mDNSIPPort dstport, const mDNSInterfaceID InterfaceID, void *context);                          
-extern void DNSProxyInit(mDNS *const m, mDNSu32 IpIfArr[MaxIp], mDNSu32 OpIf);
-extern void DNSProxyTerminate(mDNS *const m);
+extern void DNSProxyInit(mDNSu32 IpIfArr[MaxIp], mDNSu32 OpIf);
+extern void DNSProxyTerminate(void);
 
 #endif // __DNS_PROXY_H

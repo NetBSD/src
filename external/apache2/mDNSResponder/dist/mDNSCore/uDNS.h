@@ -47,9 +47,8 @@ extern "C" {
 #define QuestionIntervalStep3 (QuestionIntervalStep*QuestionIntervalStep*QuestionIntervalStep)
 #define InitialQuestionInterval ((mDNSPlatformOneSecond + QuestionIntervalStep-1) / QuestionIntervalStep)
 #define MaxQuestionInterval         (3600 * mDNSPlatformOneSecond)
-
-// just move to MaxQuestionInterval once over this threshold
-#define QuestionIntervalThreshold   (QuestionIntervalStep3 * mDNSPlatformOneSecond)
+#define UDNSBackOffMultiplier 2 
+#define MinQuestionInterval (1 * mDNSPlatformOneSecond)
 
 // For Unicast record registrations, we initialize the interval to 1 second. When we send any query for
 // the record registration e.g., GetZoneData, we always back off by QuestionIntervalStep
@@ -81,6 +80,11 @@ extern "C" {
 extern void LLQGotZoneData(mDNS *const m, mStatus err, const ZoneData *zoneInfo);
 extern void startLLQHandshake(mDNS *m, DNSQuestion *q);
 extern void sendLLQRefresh(mDNS *m, DNSQuestion *q);
+
+extern void DNSPushNotificationGotZoneData(mDNS *const m, mStatus err, const ZoneData *zoneInfo);
+extern void DiscoverDNSPushNotificationServer(mDNS *m, DNSQuestion *q);
+extern void SubscribeToDNSPushNotificationServer(mDNS *m, DNSQuestion *q);
+extern void UnSubscribeToDNSPushNotificationServer(mDNS *m, DNSQuestion *q);
 
 extern void SleepRecordRegistrations(mDNS *m);
 
@@ -124,7 +128,7 @@ extern mStatus         uDNS_SetupDNSConfig(mDNS *const m);
 extern void uDNS_SetupWABQueries(mDNS *const m);
 extern void uDNS_StartWABQueries(mDNS *const m, int queryType);
 extern void uDNS_StopWABQueries(mDNS *const m, int queryType);
-extern domainname      *uDNS_GetNextSearchDomain(mDNS *const m, mDNSInterfaceID InterfaceID, mDNSs8 *searchIndex, mDNSBool ignoreDotLocal);
+extern domainname      *uDNS_GetNextSearchDomain(mDNSInterfaceID InterfaceID, mDNSs8 *searchIndex, mDNSBool ignoreDotLocal);
 
 typedef enum
 {
@@ -144,6 +148,10 @@ extern void uDNS_ReceiveNATPacket(mDNS *m, const mDNSInterfaceID InterfaceID, mD
 extern void natTraversalHandleAddressReply(mDNS *const m, mDNSu16 err, mDNSv4Addr ExtAddr);
 extern void natTraversalHandlePortMapReply(mDNS *const m, NATTraversalInfo *n, const mDNSInterfaceID InterfaceID, mDNSu16 err, mDNSIPPort extport, mDNSu32 lease, NATTProtocol protocol);
 
+// DNS Push Notification
+extern void SubscribeToDNSPushNotification(mDNS *m, DNSQuestion *q);
+    
+    
 #ifdef  __cplusplus
 }
 #endif
