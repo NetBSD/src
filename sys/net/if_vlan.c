@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.121 2017/12/19 03:32:35 ozaki-r Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.122 2018/01/14 16:50:37 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.121 2017/12/19 03:32:35 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.122 2018/01/14 16:50:37 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -804,6 +804,7 @@ vlan_ifdetach(struct ifnet *p)
 	int i, cnt = 0;
 
 	bound = curlwp_bind();
+
 	mutex_enter(&ifv_list.lock);
 	LIST_FOREACH(ifv, &ifv_list.list, ifv_list) {
 		mib = vlan_getref_linkmib(ifv, &psref);
@@ -817,13 +818,18 @@ vlan_ifdetach(struct ifnet *p)
 	}
 	mutex_exit(&ifv_list.lock);
 
+	if (cnt == 0) {
+		curlwp_bindx(bound);
+		return;
+	}
+
 	/*
 	 * The value of "cnt" does not increase while ifv_list.lock
 	 * and ifv->ifv_lock are released here, because the parent
 	 * interface is detaching.
 	 */
 	nmibs = kmem_alloc(sizeof(*nmibs) * cnt, KM_SLEEP);
-	for (i=0; i < cnt; i++) {
+	for (i = 0; i < cnt; i++) {
 		nmibs[i] = kmem_alloc(sizeof(*nmibs[i]), KM_SLEEP);
 	}
 
@@ -851,9 +857,10 @@ vlan_ifdetach(struct ifnet *p)
 	}
 
 	mutex_exit(&ifv_list.lock);
+
 	curlwp_bindx(bound);
 
-	for (i=0; i < cnt; i++) {
+	for (i = 0; i < cnt; i++) {
 		if (nmibs[i])
 			kmem_free(nmibs[i], sizeof(*nmibs[i]));
 	}
