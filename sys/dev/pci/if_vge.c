@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.61 2017/09/26 07:42:06 knakahara Exp $ */
+/* $NetBSD: if_vge.c,v 1.62 2018/01/14 17:43:55 maxv Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.61 2017/09/26 07:42:06 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.62 2018/01/14 17:43:55 maxv Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -355,64 +355,6 @@ vge_set_rxaddr(struct vge_rxdesc *rxd, bus_addr_t daddr)
 		rxd->rd_addrhi = htole16(((uint64_t)daddr >> 32) & 0xFFFF);
 	else
 		rxd->rd_addrhi = 0;
-}
-
-/*
- * Defragment mbuf chain contents to be as linear as possible.
- * Returns new mbuf chain on success, NULL on failure. Old mbuf
- * chain is always freed.
- * XXX temporary until there would be generic function doing this.
- */
-#define m_defrag	vge_m_defrag
-struct mbuf * vge_m_defrag(struct mbuf *, int);
-
-struct mbuf *
-vge_m_defrag(struct mbuf *mold, int flags)
-{
-	struct mbuf *m0, *mn, *n;
-	size_t sz = mold->m_pkthdr.len;
-
-#ifdef DIAGNOSTIC
-	if ((mold->m_flags & M_PKTHDR) == 0)
-		panic("m_defrag: not a mbuf chain header");
-#endif
-
-	MGETHDR(m0, flags, MT_DATA);
-	if (m0 == NULL)
-		return NULL;
-	m0->m_pkthdr.len = mold->m_pkthdr.len;
-	mn = m0;
-
-	do {
-		if (sz > MHLEN) {
-			MCLGET(mn, M_DONTWAIT);
-			if ((mn->m_flags & M_EXT) == 0) {
-				m_freem(m0);
-				return NULL;
-			}
-		}
-
-		mn->m_len = MIN(sz, MCLBYTES);
-
-		m_copydata(mold, mold->m_pkthdr.len - sz, mn->m_len,
-		     mtod(mn, void *));
-
-		sz -= mn->m_len;
-
-		if (sz > 0) {
-			/* need more mbufs */
-			MGET(n, M_NOWAIT, MT_DATA);
-			if (n == NULL) {
-				m_freem(m0);
-				return NULL;
-			}
-
-			mn->m_next = n;
-			mn = n;
-		}
-	} while (sz > 0);
-
-	return m0;
 }
 
 /*
