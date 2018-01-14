@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 4 -*-
  *
- * Copyright (c) 2012 Apple Computer, Inc. All rights reserved.
+ * Copyright (c) 2012-2013 Apple Inc. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,14 @@
 #ifndef ANONYMOUS_DISABLED
 
 #define ANON_NSEC3_ITERATIONS        1 
+
+struct AnonInfoResourceRecord_struct
+{
+    ResourceRecord resrec;
+    RData          rdatastorage;
+};
+
+typedef struct AnonInfoResourceRecord_struct AnonInfoResourceRecord;
 
 mDNSlocal mDNSBool InitializeNSEC3Record(ResourceRecord *rr, const mDNSu8 *AnonData, int len, mDNSu32 salt)
 {
@@ -63,7 +71,7 @@ mDNSlocal mDNSBool InitializeNSEC3Record(ResourceRecord *rr, const mDNSu8 *AnonD
     // Hash the base service name + salt + AnonData
     if (!NSEC3HashName(rr->name, nsec3, AnonData, len, hashName, &hlen))
     {
-        LogMsg("InitializeNSEC3Record: NSEC3HashName failed for ##s", rr->name->c);
+        LogMsg("InitializeNSEC3Record: NSEC3HashName failed for %##s", rr->name->c);
         return mDNSfalse;
     }
     if (hlen != SHA1_HASH_LENGTH)
@@ -118,9 +126,10 @@ mDNSlocal ResourceRecord *ConstructNSEC3Record(const domainname *service, const 
 
 mDNSlocal ResourceRecord *CopyNSEC3ResourceRecord(AnonymousInfo *si, const ResourceRecord *rr)
 {
-    int len;
+    AnonInfoResourceRecord *anonRR;
     domainname *name;
-    ResourceRecord *nsec3rr;
+    mDNSu32 neededLen;
+    mDNSu32 extraLen;
 
     if (rr->rdlength < MCAST_NSEC3_RDLENGTH)
     {
@@ -128,22 +137,26 @@ mDNSlocal ResourceRecord *CopyNSEC3ResourceRecord(AnonymousInfo *si, const Resou
         return mDNSNULL;
     }
     // Allocate space for the name and the rdata along with the ResourceRecord
-    len = DomainNameLength(rr->name);
-    nsec3rr = mDNSPlatformMemAllocate(sizeof(ResourceRecord) + len + sizeof(RData));
-    if (!nsec3rr)
+    neededLen = rr->rdlength + DomainNameLength(rr->name);
+    extraLen = (neededLen > sizeof(RDataBody)) ? (neededLen - sizeof(RDataBody)) : 0;
+    anonRR = (AnonInfoResourceRecord *)mDNSPlatformMemAllocate(sizeof(AnonInfoResourceRecord) + extraLen);
+    if (!anonRR)
         return mDNSNULL;
 
-    *nsec3rr = *rr;
-    name = (domainname *)((mDNSu8 *)nsec3rr + sizeof(ResourceRecord));
-    nsec3rr->name = (const domainname *)name;
+    anonRR->resrec = *rr;
+
+    anonRR->rdatastorage.MaxRDLength = rr->rdlength;
+    mDNSPlatformMemCopy(anonRR->rdatastorage.u.data, rr->rdata->u.data, rr->rdlength);
+
+    name = (domainname *)(anonRR->rdatastorage.u.data + rr->rdlength);
     AssignDomainName(name, rr->name);
 
-    nsec3rr->rdata = (RData *)((mDNSu8 *)nsec3rr->name + len);
-    mDNSPlatformMemCopy(nsec3rr->rdata->u.data, rr->rdata->u.data, rr->rdlength);
+    anonRR->resrec.name = name;
+    anonRR->resrec.rdata = &anonRR->rdatastorage;
 
-    si->nsec3RR = nsec3rr;
+    si->nsec3RR = (ResourceRecord *)anonRR;
 
-    return nsec3rr;
+    return si->nsec3RR;
 }
 
 // When a service is started or a browse is started with the Anonymous data, we allocate a new random
@@ -227,6 +240,12 @@ mDNSexport void SetAnonData(DNSQuestion *q, ResourceRecord *rr, mDNSBool ForQues
     debugf("SetAnonData: question %##s(%p), rr %##s(%p)", q->qname.c, q->AnonInfo, rr->name->c, rr->AnonInfo);
     if (ForQuestion)
     {
+        if (q->AnonInfo->AnonDataLen < rr->AnonInfo->AnonDataLen)
+        {
+            mDNSPlatformMemFree(q->AnonInfo->AnonData);
+            q->AnonInfo->AnonData = mDNSNULL;
+        }
+
         if (!q->AnonInfo->AnonData)
         {
             q->AnonInfo->AnonData = mDNSPlatformMemAllocate(rr->AnonInfo->AnonDataLen);
@@ -238,6 +257,12 @@ mDNSexport void SetAnonData(DNSQuestion *q, ResourceRecord *rr, mDNSBool ForQues
     }
     else
     {
+        if (rr->AnonInfo->AnonDataLen < q->AnonInfo->AnonDataLen)
+        {
+            mDNSPlatformMemFree(rr->AnonInfo->AnonData);
+            rr->AnonInfo->AnonData = mDNSNULL;
+        }
+
         if (!rr->AnonInfo->AnonData)
         {
             rr->AnonInfo->AnonData = mDNSPlatformMemAllocate(q->AnonInfo->AnonDataLen);
@@ -262,9 +287,10 @@ mDNSexport int AnonInfoAnswersQuestion(const ResourceRecord *const rr, const DNS
     int AnonDataLen;
     rdataNSEC3 *nsec3;
     int hlen;
-    const mDNSu8 hashName[NSEC3_MAX_HASH_LEN];
     int nxtLength;
     mDNSu8 *nxtName;
+    mDNSu8 hashName[NSEC3_MAX_HASH_LEN];
+    mDNSPlatformMemZero(hashName, sizeof(hashName));
 
     debugf("AnonInfoAnswersQuestion: question qname %##s", q->qname.c);
 
@@ -385,7 +411,7 @@ mDNSexport int AnonInfoAnswersQuestion(const ResourceRecord *const rr, const DNS
 
     if (!NSEC3HashName(nsec3RR->name, nsec3, AnonData, AnonDataLen, hashName, &hlen))
     {
-        LogMsg("AnonInfoAnswersQuestion: NSEC3HashName failed for ##s", nsec3RR->name->c);
+        LogMsg("AnonInfoAnswersQuestion: NSEC3HashName failed for %##s", nsec3RR->name->c);
         return mDNSfalse;
     }
     if (hlen != SHA1_HASH_LENGTH)
