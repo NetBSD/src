@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2344 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2345 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -97,3 +97,4 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	sbrk: Remove the "data section size change" syscall [kamil 20171219]
 	ovadvise: Remove the old vadvise syscall header [kamil 20171219]
 	dhcpcd(8): Import dhcpcd-7.0.0 [roy 20180101]
+	mdnsd(8), dns-sd(1), libdns_sd: import mDNSResponder 878.1
