@@ -1,6 +1,6 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.176 2018/01/01 12:22:59 maxv Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.177 2018/01/14 16:59:37 maxv Exp $	*/
 
-/*-
+/*
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.176 2018/01/01 12:22:59 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.177 2018/01/14 16:59:37 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -1648,22 +1648,22 @@ m_getptr(struct mbuf *m, int loc, int *off)
 	while (loc >= 0) {
 		/* Normal end of search */
 		if (m->m_len > loc) {
-	    		*off = loc;
-	    		return (m);
+			*off = loc;
+			return (m);
 		} else {
-	    		loc -= m->m_len;
+			loc -= m->m_len;
 
-	    		if (m->m_next == NULL) {
+			if (m->m_next == NULL) {
 				if (loc == 0) {
- 					/* Point at the end of valid data */
-		    			*off = m->m_len;
-		    			return (m);
+					/* Point at the end of valid data */
+					*off = m->m_len;
+					return (m);
 				} else
-		  			return (NULL);
-	    		} else
-	      			m = m->m_next;
+					return (NULL);
+			} else
+				m = m->m_next;
 		}
-    	}
+	}
 
 	return (NULL);
 }
