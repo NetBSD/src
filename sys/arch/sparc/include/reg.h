@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.9 2016/12/30 17:54:43 christos Exp $ */
+/*	$NetBSD: reg.h,v 1.10 2018/01/14 11:55:33 martin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -106,7 +106,11 @@ struct fp_qentry {
 struct fpreg {
 	u_int	fr_regs[32];		/* our view is 32 32-bit registers */
 	int	fr_fsr;			/* %fsr */
-};
+}
+#ifdef _KERNEL
+ __aligned(8)				/* asm code uses std instructions */
+#endif
+;
 struct fpstate {
 	struct fpreg fs_reg;
 #define fs_regs fs_reg.fr_regs
