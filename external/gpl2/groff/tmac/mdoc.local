@@ -1,4 +1,4 @@
-.\" $NetBSD: mdoc.local,v 1.3 2017/06/04 07:16:34 snj Exp $
+.\" $NetBSD: mdoc.local,v 1.4 2018/01/14 03:33:10 uwe Exp $
 .\"
 .\" Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -76,6 +76,66 @@
 .ds doc-operating-system-FreeBSD-7.2   7.2
 .ds doc-operating-system-FreeBSD-8.0   8.0
 .ds doc-operating-system-FreeBSD-9.0   9.0
+.ds doc-operating-system-FreeBSD-10.0   10.0
+.ds doc-operating-system-FreeBSD-10.1   10.1
+.
+.
+.nr Dx 1
+.\" NS Dx user macro
+.\" NS   print DragonFly
+.\" NS
+.\" NS modifies:
+.\" NS   doc-arg-ptr
+.\" NS   doc-curr-font
+.\" NS   doc-curr-size
+.\" NS   doc-macro-name
+.\" NS
+.\" NS local variable:
+.\" NS   doc-str-Dx
+.\" NS   doc-str-Dx1
+.\" NS
+.\" NS width register `Dx' defined above
+.
+.eo
+.de Dx
+.\"backtrace
+.  nr doc-curr-font \n[.f]
+.  nr doc-curr-size \n[.ps]
+.  ds doc-str-Dx \f[\n[doc-curr-font]]\s[\n[doc-curr-size]u]
+.
+.  \" default value if no argument
+.  ds doc-str-Dx1 \*[doc-Tn-font-size]\%DragonFly\*[doc-str-Dx]
+.
+.  if !\n[doc-arg-limit] \
+.    if \n[.$] \{\
+.      ds doc-macro-name Dx
+.      doc-parse-args \$@
+.    \}
+.
+.  if (\n[doc-arg-limit] > \n[doc-arg-ptr]) \{\
+.    nr doc-arg-ptr +1
+.    ie (\n[doc-type\n[doc-arg-ptr]] == 2) \
+.      as doc-str-Dx1 \~\*[doc-arg\n[doc-arg-ptr]]
+.    el \
+.      nr doc-arg-ptr -1
+.  \}
+.
+.  \" replace current argument with result
+.  ds doc-arg\n[doc-arg-ptr] "\*[doc-str-Dx1]
+.  nr doc-type\n[doc-arg-ptr] 2
+.  ds doc-space\n[doc-arg-ptr] "\*[doc-space]
+.
+.  \" recompute space vector for remaining arguments
+.  nr doc-num-args (\n[doc-arg-limit] - \n[doc-arg-ptr])
+.  nr doc-arg-limit \n[doc-arg-ptr]
+.  if \n[doc-num-args] \
+.    doc-parse-space-vector
+.
+.  doc-print-recursive
+..
+.ec
+.
+.
 .\" Platforms not yet in groff distribution
 .ds doc-volume-as-amigappc              amigappc
 .ds doc-volume-as-ews4800mips           ews4800mips
