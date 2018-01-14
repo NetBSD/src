@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 4 -*-
  *
- * Copyright (c) 2011 Apple Computer, Inc. All rights reserved.
+ * Copyright (c) 2011-2013 Apple Inc. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -238,7 +238,7 @@ mDNSlocal mDNSBool NSEC3Find(mDNS *const m, NSEC3FindValues val, CacheRecord *nc
         name = SkipLeadingLabels(origName, i);
         if (!NSEC3HashName(name, nsec3, mDNSNULL, 0, hashName, &hlen))
         {
-            LogMsg("NSEC3Find: NSEC3HashName failed for ##s", name->c);
+            LogMsg("NSEC3Find: NSEC3HashName failed for %##s", name->c);
             continue;
         }
 
@@ -332,7 +332,7 @@ mDNSlocal mDNSBool NSEC3Find(mDNS *const m, NSEC3FindValues val, CacheRecord *nc
                 }
             }
 
-            if ((val == NSEC3Covers || val == NSEC3CEProof) && !(*closerEncloser))
+            if ((val == NSEC3Covers || val == NSEC3CEProof) && (!closerEncloser || !(*closerEncloser)))
             {
                 if (NSEC3CoversName(m, cr, hashName, hlen, b32Name, b32len))
                 {
@@ -349,23 +349,22 @@ mDNSlocal mDNSBool NSEC3Find(mDNS *const m, NSEC3FindValues val, CacheRecord *nc
         // 2.3) If there is a matching NSEC3 RR in the response and the flag
         // was set, then the proof is complete, and SNAME is the closest
         // encloser.
-        if (val == NSEC3CEProof)
+        if (val == NSEC3CEProof && closestEncloser && *closestEncloser)
         {
-            if (*closestEncloser && *closerEncloser)
+            if (closerEncloser && *closerEncloser)
             {
                 LogDNSSEC("NSEC3Find: Found closest and closer encloser");
                 return mDNStrue;
             }
-
-            // 2.4) If there is a matching NSEC3 RR in the response, but the flag
-            // is not set, then the response is bogus.
-            //
-            // Note: We don't have to wait till we finish trying all the names. If the matchName
-            // happens, we found the closest encloser which means we should have found the closer
-            // encloser before.
-
-            if (*closestEncloser && !(*closerEncloser))
+            else
             {
+                // 2.4) If there is a matching NSEC3 RR in the response, but the flag
+                // is not set, then the response is bogus.
+                //
+                // Note: We don't have to wait till we finish trying all the names. If the matchName
+                // happens, we found the closest encloser which means we should have found the closer
+                // encloser before.
+
                 LogDNSSEC("NSEC3Find: Found closest, but not closer encloser");
                 return mDNSfalse;
             }
@@ -388,8 +387,7 @@ mDNSlocal mDNSBool NSEC3ClosestEncloserProof(mDNS *const m, CacheRecord *ncr, do
     // Note: It is possible that closestEncloser and closerEncloser are the same.
     if (!closestEncloser || !closerEncloser || !ce)
     {
-        LogMsg("NSEC3ClosestEncloserProof: ClosestEncloser %p or CloserEncloser %p ce %p, something is NULL", *closestEncloser,
-            *closerEncloser, *ce);
+        LogMsg("NSEC3ClosestEncloserProof: ClosestEncloser %p or CloserEncloser %p ce %p, something is NULL", closestEncloser, closerEncloser, ce);
         return mDNSfalse;
     }
 
@@ -677,12 +675,11 @@ mDNSexport CacheRecord *NSEC3RecordIsDelegation(mDNS *const m, domainname *name,
     CacheGroup *cg;
     CacheRecord *cr;
     CacheRecord *ncr;
-    mDNSu32 slot, namehash;
+    mDNSu32 namehash;
 
-    slot = HashSlot(name);
     namehash = DomainNameHashValue(name);
 
-    cg = CacheGroupForName(m, (const mDNSu32)slot, namehash, name);
+    cg = CacheGroupForName(m, namehash, name);
     if (!cg)
     {
         LogDNSSEC("NSEC3RecordForName: cg NULL for %##s", name);
@@ -710,7 +707,7 @@ mDNSexport CacheRecord *NSEC3RecordIsDelegation(mDNS *const m, domainname *name,
 
             if (!NSEC3HashName(name, nsec3, mDNSNULL, 0, hashName, &hlen))
             {
-                LogMsg("NSEC3RecordIsDelegation: NSEC3HashName failed for ##s", name->c);
+                LogMsg("NSEC3RecordIsDelegation: NSEC3HashName failed for %##s", name->c);
                 return mDNSNULL;
             }
 
