@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.10 2016/11/21 20:15:16 christos Exp $
+# $NetBSD: Makefile,v 1.11 2018/01/14 03:05:06 christos Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -47,6 +47,8 @@ wpa_ctrl.c
 # drivers
 SRCS+= \
 driver_bsd.c \
+driver_none.c \
+driver_wired.c \
 driver_common.c \
 drivers.c
 
@@ -117,6 +119,9 @@ CPPFLAGS+= -DRADIUS_SERVER
 CPPFLAGS+= -DCONFIG_CTRL_IFACE
 CPPFLAGS+= -DCONFIG_CTRL_IFACE_UNIX
 CPPFLAGS+= -DCONFIG_DRIVER_BSD
+CPPFLAGS+= -DCONFIG_DRIVER_NONE
+CPPFLAGS+= -DCONFIG_DRIVER_WIRED
+CPPFLAGS+= -DCONFIG_DRIVER_WPA
 .if ${MKINET6} != "no"
 CPPFLAGS+= -DCONFIG_IPV6
 .endif
