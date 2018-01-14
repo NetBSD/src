@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipip.c,v 1.55 2017/11/15 10:42:41 knakahara Exp $	*/
+/*	$NetBSD: xform_ipip.c,v 1.56 2018/01/14 16:36:04 maxv Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipip.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipip.c,v 1.25 2002/06/10 18:04:55 itojun Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.55 2017/11/15 10:42:41 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.56 2018/01/14 16:36:04 maxv Exp $");
 
 /*
  * IP-inside-IP processing
@@ -301,7 +301,8 @@ _ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 #endif /* INET */
 #ifdef INET6
     	case 6:
-                ip6 = (struct ip6_hdr *) ipo;
+		ipo = mtod(m, struct ip *);
+		ip6 = (struct ip6_hdr *)ipo;
 		itos = (ntohl(ip6->ip6_flow) >> 20) & 0xff;
 		ip_ecn_egress(ip6_ipsec_ecn, &otos, &itos);
 		ip6->ip6_flow &= ~htonl(0xff << 20);
