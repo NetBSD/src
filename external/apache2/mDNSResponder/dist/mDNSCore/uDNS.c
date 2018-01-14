@@ -4794,8 +4794,10 @@ mDNSexport void uDNS_CheckCurrentQuestion(mDNS *const m)
                     if (!q->LocalSocket)
                     {
                         q->LocalSocket = mDNSPlatformUDPSocket(m, zeroIPPort);
+#ifdef notyet
                         if (q->LocalSocket)
                             mDNSPlatformSetuDNSSocktOpt(q->LocalSocket, &q->qDNSServer->addr, q);
+#endif
                     }
                     if (!q->LocalSocket) err = mStatus_NoMemoryErr; // If failed to make socket (should be very rare), we'll try again next time
                     else err = mDNSSendDNSMessage(m, &m->omsg, end, q->qDNSServer->interface, q->LocalSocket, &q->qDNSServer->addr, q->qDNSServer->port, mDNSNULL, mDNSNULL, q->UseBackgroundTrafficClass);
