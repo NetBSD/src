@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 4 -*-
  *
- * Copyright (c) 2003-2013 Apple Computer, Inc. All rights reserved.
+ * Copyright (c) 2003-2015 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -10,7 +10,7 @@
  * 2.  Redistributions in binary form must reproduce the above copyright notice,
  *     this list of conditions and the following disclaimer in the documentation
  *     and/or other materials provided with the distribution.
- * 3.  Neither the name of Apple Computer, Inc. ("Apple") nor the names of its
+ * 3.  Neither the name of Apple Inc. ("Apple") nor the names of its
  *     contributors may be used to endorse or promote products derived from this
  *     software without specific prior written permission.
  *
@@ -66,7 +66,7 @@
  */
 
 #ifndef _DNS_SD_H
-#define _DNS_SD_H 5763004
+#define _DNS_SD_H 8780101
 
 #ifdef  __cplusplus
 extern "C" {
@@ -86,6 +86,13 @@ extern "C" {
 #define DNSSD_API __stdcall
 #else
 #define DNSSD_API
+#endif
+
+#if defined(_WIN32)
+#include <winsock2.h>
+typedef SOCKET dnssd_sock_t;
+#else
+typedef int dnssd_sock_t;
 #endif
 
 /* stdint.h does not exist on FreeBSD 4.x; its types are defined in sys/types.h instead */
@@ -179,6 +186,15 @@ enum
      * available right now at this instant. If more answers become available
      * in the future they will be delivered as usual.
      */
+
+    kDNSServiceFlagsAutoTrigger        = 0x1,
+    /* Valid for browses using kDNSServiceInterfaceIndexAny.
+     * Will auto trigger the browse over AWDL as well once the service is discoveryed
+     * over BLE.
+     * This flag is an input value to DNSServiceBrowse(), which is why we can
+     * use the same value as kDNSServiceFlagsMoreComing, which is an output flag
+     * for various client callbacks.
+    */
 
     kDNSServiceFlagsAdd                 = 0x2,
     kDNSServiceFlagsDefault             = 0x4,
@@ -330,10 +346,21 @@ enum
      *
      * 5. Thread Safety
      * The dns_sd.h API does not presuppose any particular threading model, and consequently
-     * does no locking of its own (which would require linking some specific threading library).
-     * If client code calls API routines on the same DNSServiceRef concurrently
-     * from multiple threads, it is the client's responsibility to use a mutext
-     * lock or take similar appropriate precautions to serialize those calls.
+     * does no locking internally (which would require linking with a specific threading library).
+     * If the client concurrently, from multiple threads (or contexts), calls API routines using 
+     * the same DNSServiceRef, it is the client's responsibility to provide mutual exclusion for 
+     * that DNSServiceRef.
+
+     * For example, use of DNSServiceRefDeallocate requires caution. A common mistake is as follows:
+     * Thread B calls DNSServiceRefDeallocate to deallocate sdRef while Thread A is processing events
+     * using sdRef. Doing this will lead to intermittent crashes on thread A if the sdRef is used after
+     * it was deallocated.
+
+     * A telltale sign of this crash type is to see DNSServiceProcessResult on the stack preceding the
+     * actual crash location.
+
+     * To state this more explicitly, mDNSResponder does not queue DNSServiceRefDeallocate so
+     * that it occurs discretely before or after an event is handled.
      */
 
     kDNSServiceFlagsSuppressUnusable    = 0x8000,
@@ -405,7 +432,7 @@ enum
 
     kDNSServiceFlagsSecure                 = 0x200010,
    /*
-    * The response has been validated by verifying all the signaures in the response and was able to
+    * The response has been validated by verifying all the signatures in the response and was able to
     * build a successful authentication chain starting from a known trust anchor.   
     */
 
@@ -484,23 +511,24 @@ enum
      * is only set in the callbacks and kDNSServiceFlagsThresholdOne is only set on
      * input to a DNSServiceBrowse call.
      */
-     kDNSServiceFlagsDenyCellular           = 0x8000000,
+     kDNSServiceFlagsPrivateOne          = 0x8000000,
     /*
-     * This flag is meaningful only for Unicast DNS queries. When set, the kernel will restrict
-     * DNS resolutions on the cellular interface for that request.
+     * This flag is private and should not be used.
      */
 
-     kDNSServiceFlagsServiceIndex           = 0x10000000,
+     kDNSServiceFlagsPrivateTwo           = 0x10000000,
     /*
-     * This flag is meaningful only for DNSServiceGetAddrInfo() for Unicast DNS queries.
-     * When set, DNSServiceGetAddrInfo() will interpret the "interfaceIndex" argument of the call
-     * as the "serviceIndex".
+     * This flag is private and should not be used.
      */
 
-     kDNSServiceFlagsDenyExpensive          = 0x20000000
+     kDNSServiceFlagsPrivateThree         = 0x20000000,
     /*
-     * This flag is meaningful only for Unicast DNS queries. When set, the kernel will restrict
-     * DNS resolutions on interfaces defined as expensive for that request.
+     * This flag is private and should not be used.
+     */
+
+     kDNSServiceFlagsPrivateFour       = 0x40000000
+    /*
+     * This flag is private and should not be used.
      */
 
 };
@@ -667,24 +695,49 @@ enum
  *   -- or --
  * "Why is kDNSServiceMaxDomainName 1009, when the maximum legal domain name is 256 bytes?"
  *
- * All strings used in the DNS-SD APIs are UTF-8 strings. Apart from the exceptions noted below,
- * the APIs expect the strings to be properly escaped, using the conventional DNS escaping rules:
+ * All strings used in the DNS-SD APIs are UTF-8 strings.
+ * Apart from the exceptions noted below, the APIs expect the strings to be properly escaped, using the
+ * conventional DNS escaping rules, as used by the traditional DNS res_query() API, as described below:
  *
- *   '\\' represents a single literal '\' in the name
- *   '\.' represents a single literal '.' in the name
+ * Generally all UTF-8 characters (which includes all US ASCII characters) represent themselves,
+ * with two exceptions, the dot ('.') character, which is the label separator,
+ * and the backslash ('\') character, which is the escape character.
+ * The escape character ('\') is interpreted as described below:
+ * 
  *   '\ddd', where ddd is a three-digit decimal value from 000 to 255,
- *        represents a single literal byte with that value.
- *   A bare unescaped '.' is a label separator, marking a boundary between domain and subdomain.
+ *        represents a single literal byte with that value. Any byte value may be
+ *        represented in '\ddd' format, even characters that don't strictly need to be escaped.
+ *        For example, the ASCII code for 'w' is 119, and therefore '\119' is equivalent to 'w'.
+ *        Thus the command "ping '\119\119\119.apple.com'" is the equivalent to the command "ping 'www.apple.com'".
+ *        Nonprinting ASCII characters in the range 0-31 are often represented this way.
+ *        In particular, the ASCII NUL character (0) cannot appear in a C string because C uses it as the
+ *        string terminator character, so ASCII NUL in a domain name has to be represented in a C string as '\000'.
+ *        Other characters like space (ASCII code 32) are sometimes represented as '\032'
+ *        in contexts where having an actual space character in a C string would be inconvenient.
+ *        
+ *   Otherwise, for all cases where a '\' is followed by anything other than a three-digit decimal value
+ *        from 000 to 255, the character sequence '\x' represents a single literal occurrence of character 'x'.
+ *        This is legal for any character, so, for example, '\w' is equivalent to 'w'.
+ *        Thus the command "ping '\w\w\w.apple.com'" is the equivalent to the command "ping 'www.apple.com'".
+ *        However, this encoding is most useful when representing the characters '.' and '\',
+ *        which otherwise would have special meaning in DNS name strings.
+ *        This means that the following encodings are particularly common:
+ *        '\\' represents a single literal '\' in the name
+ *        '\.' represents a single literal '.' in the name
+ *
+ *   A lone escape character ('\') appearing at the end of a string is not allowed, since it is
+ *        followed by neither a three-digit decimal value from 000 to 255 nor a single character.
+ *        If a lone escape character ('\') does appear as the last character of a string, it is silently ignored.
  *
  * The exceptions, that do not use escaping, are the routines where the full
  * DNS name of a resource is broken, for convenience, into servicename/regtype/domain.
  * In these routines, the "servicename" is NOT escaped. It does not need to be, since
  * it is, by definition, just a single literal string. Any characters in that string
  * represent exactly what they are. The "regtype" portion is, technically speaking,
- * escaped, but since legal regtypes are only allowed to contain letters, digits,
- * and hyphens, there is nothing to escape, so the issue is moot. The "domain"
- * portion is also escaped, though most domains in use on the public Internet
- * today, like regtypes, don't contain any characters that need to be escaped.
+ * escaped, but since legal regtypes are only allowed to contain US ASCII letters,
+ * digits, and hyphens, there is nothing to escape, so the issue is moot.
+ * The "domain" portion is also escaped, though most domains in use on the public
+ * Internet today, like regtypes, don't contain any characters that need to be escaped.
  * As DNS-SD becomes more popular, rich-text domains for service discovery will
  * become common, so software should be written to cope with domains with escaping.
  *
@@ -704,7 +757,7 @@ enum
  * full DNS name, the helper function DNSServiceConstructFullName() is provided.
  *
  * The following (highly contrived) example illustrates the escaping process.
- * Suppose you have an service called "Dr. Smith\Dr. Johnson", of type "_ftp._tcp"
+ * Suppose you have a service called "Dr. Smith\Dr. Johnson", of type "_ftp._tcp"
  * in subdomain "4th. Floor" of subdomain "Building 2" of domain "apple.com."
  * The full (escaped) DNS name of this service's SRV record would be:
  * Dr\.\032Smith\\Dr\.\032Johnson._ftp._tcp.4th\.\032Floor.Building\0322.apple.com.
@@ -724,9 +777,8 @@ enum
  * DNS server." Normally, most clients will use 0 for interface index to
  * automatically get the default sensible behaviour.
  *
- * If the client passes a positive interface index, then for multicast names that
- * indicates to do the operation only on that one interface. For unicast names the
- * interface index is ignored unless kDNSServiceFlagsForceMulticast is also set.
+ * If the client passes a positive interface index, then that indicates to do the
+ * operation only on that one specified interface.
  *
  * If the client passes kDNSServiceInterfaceIndexLocalOnly when registering
  * a service, then that service will be found *only* by other local clients
@@ -737,12 +789,29 @@ enum
  * in a way such that it does not inadvertently appear in service lists on
  * all the other machines on the network.
  *
- * If the client passes kDNSServiceInterfaceIndexLocalOnly when browsing
- * then it will find *all* records registered on that same local machine.
- * Clients explicitly wishing to discover *only* LocalOnly services can
- * accomplish this by inspecting the interfaceIndex of each service reported
- * to their DNSServiceBrowseReply() callback function, and discarding those
- * where the interface index is not kDNSServiceInterfaceIndexLocalOnly.
+ * If the client passes kDNSServiceInterfaceIndexLocalOnly when querying or
+ * browsing, then the LocalOnly authoritative records and /etc/hosts caches
+ * are searched and will find *all* records registered or configured on that
+ * same local machine.
+ *
+ * If interested in getting negative answers to local questions while querying
+ * or browsing, then set both the kDNSServiceInterfaceIndexLocalOnly and the
+ * kDNSServiceFlagsReturnIntermediates flags. If no local answers exist at this
+ * moment in time, then the reply will return an immediate negative answer. If
+ * local records are subsequently created that answer the question, then those
+ * answers will be delivered, for as long as the question is still active.
+ *
+ * If the kDNSServiceFlagsTimeout and kDNSServiceInterfaceIndexLocalOnly flags
+ * are set simultaneously when either DNSServiceQueryRecord or DNSServiceGetAddrInfo
+ * is called then both flags take effect. However, if DNSServiceQueryRecord is called
+ * with both the kDNSServiceFlagsSuppressUnusable and kDNSServiceInterfaceIndexLocalOnly
+ * flags set, then the kDNSServiceFlagsSuppressUnusable flag is ignored.
+ *
+ * Clients explicitly wishing to discover *only* LocalOnly services during a
+ * browse may do this, without flags, by inspecting the interfaceIndex of each
+ * service reported to a DNSServiceBrowseReply() callback function, and
+ * discarding those answers where the interface index is not set to
+ * kDNSServiceInterfaceIndexLocalOnly.
  *
  * kDNSServiceInterfaceIndexP2P is meaningful only in Browse, QueryRecord, Register,
  * and Resolve operations. It should not be used in other DNSService APIs.
@@ -771,6 +840,7 @@ enum
 #define kDNSServiceInterfaceIndexLocalOnly ((uint32_t)-1)
 #define kDNSServiceInterfaceIndexUnicast   ((uint32_t)-2)
 #define kDNSServiceInterfaceIndexP2P       ((uint32_t)-3)
+#define kDNSServiceInterfaceIndexBLE       ((uint32_t)-4)
 
 typedef uint32_t DNSServiceFlags;
 typedef uint32_t DNSServiceProtocol;
@@ -828,29 +898,6 @@ DNSServiceErrorType DNSSD_API DNSServiceGetProperty
 
 #define kDNSServiceProperty_DaemonVersion "DaemonVersion"
 
-
-// Map the source port of the local UDP socket that was opened for sending the DNS query
-// to the process ID of the application that triggered the DNS resolution.
-//
-/* DNSServiceGetPID() Parameters:
- *
- * srcport:         Source port (in network byte order) of the UDP socket that was created by
- *                  the daemon to send the DNS query on the wire.
- *
- * pid:             Process ID of the application that started the name resolution which triggered
- *                  the daemon to send the query on the wire. The value can be -1 if the srcport
- *                  cannot be mapped.
- *
- * return value:    Returns kDNSServiceErr_NoError on success, or kDNSServiceErr_ServiceNotRunning
- *                  if the daemon is not running. The value of the pid is undefined if the return
- *                  value has error.
- */
-DNSServiceErrorType DNSSD_API DNSServiceGetPID
-(
-    uint16_t srcport,
-    int32_t *pid
-);
-
 /*********************************************************************************************
 *
 * Unix Domain Socket access, DNSServiceRef deallocation, and data processing functions
@@ -871,8 +918,8 @@ DNSServiceErrorType DNSSD_API DNSServiceGetPID
  * a client can choose to fork a thread and have it loop calling "DNSServiceProcessResult(ref);"
  * If DNSServiceProcessResult() is called when no data is available for reading on the socket, it
  * will block until data does become available, and then process the data and return to the caller.
- * The application is reponsible for checking the return value of DNSServiceProcessResult() to determine
- * if the socket is valid and if it should continue to process data on the socket.
+ * The application is responsible for checking the return value of DNSServiceProcessResult()
+ * to determine if the socket is valid and if it should continue to process data on the socket.
  * When data arrives on the socket, the client is responsible for calling DNSServiceProcessResult(ref)
  * in a timely fashion -- if the client allows a large backlog of data to build up the daemon
  * may terminate the connection.
@@ -883,7 +930,7 @@ DNSServiceErrorType DNSSD_API DNSServiceGetPID
  *                  error.
  */
 
-int DNSSD_API DNSServiceRefSockFD(DNSServiceRef sdRef);
+dnssd_sock_t DNSSD_API DNSServiceRefSockFD(DNSServiceRef sdRef);
 
 
 /* DNSServiceProcessResult()
@@ -1085,13 +1132,13 @@ typedef void (DNSSD_API *DNSServiceRegisterReply)
  *                  and the registration will remain active indefinitely until the client
  *                  terminates it by passing this DNSServiceRef to DNSServiceRefDeallocate().
  *
+ * flags:           Indicates the renaming behavior on name conflict (most applications
+ *                  will pass 0). See flag definitions above for details.
+ *
  * interfaceIndex:  If non-zero, specifies the interface on which to register the service
  *                  (the index for a given interface is determined via the if_nametoindex()
  *                  family of calls.) Most applications will pass 0 to register on all
  *                  available interfaces. See "Constants for specifying an interface index" for more details.
- *
- * flags:           Indicates the renaming behavior on name conflict (most applications
- *                  will pass 0). See flag definitions above for details.
  *
  * name:            If non-NULL, specifies the service name to be registered.
  *                  Most applications will not specify a name, in which case the computer
@@ -1232,7 +1279,7 @@ DNSServiceErrorType DNSSD_API DNSServiceRegister
  * Note that the DNSServiceAddRecord/UpdateRecord/RemoveRecord are *NOT* thread-safe
  * with respect to a single DNSServiceRef. If you plan to have multiple threads
  * in your program simultaneously add, update, or remove records from the same
- * DNSServiceRef, then it's the caller's responsibility to use a mutext lock
+ * DNSServiceRef, then it's the caller's responsibility to use a mutex lock
  * or take similar appropriate precautions to serialize those calls.
  *
  * Parameters;
@@ -1315,7 +1362,7 @@ DNSServiceErrorType DNSSD_API DNSServiceUpdateRecord
 /* DNSServiceRemoveRecord
  *
  * Remove a record previously added to a service record set via DNSServiceAddRecord(), or deregister
- * an record registered individually via DNSServiceRegisterRecord().
+ * a record registered individually via DNSServiceRegisterRecord().
  *
  * Parameters:
  *
@@ -1623,7 +1670,9 @@ DNSServiceErrorType DNSSD_API DNSServiceResolve
  *                  only applies to clients that cancel the asynchronous operation when
  *                  they get a result. Clients that leave the asynchronous operation
  *                  running can safely assume that the data remains valid until they
- *                  get another callback telling them otherwise.
+ *                  get another callback telling them otherwise. The ttl value is not
+ *                  updated when the daemon answers from the cache, hence relying on
+ *                  the accuracy of the ttl value is not recommended.
  *
  * context:         The context pointer that was passed to the callout.
  *
@@ -1729,7 +1778,9 @@ DNSServiceErrorType DNSSD_API DNSServiceQueryRecord
  *                  only applies to clients that cancel the asynchronous operation when
  *                  they get a result. Clients that leave the asynchronous operation
  *                  running can safely assume that the data remains valid until they
- *                  get another callback telling them otherwise.
+ *                  get another callback telling them otherwise. The ttl value is not
+ *                  updated when the daemon answers from the cache, hence relying on
+ *                  the accuracy of the ttl value is not recommended.
  *
  * context:         The context pointer that was passed to the callout.
  *
@@ -2242,8 +2293,8 @@ typedef union _TXTRecordRef_t { char PrivateData[16]; char *ForceNaturalAlignmen
  * For most applications, DNS-SD TXT records are generally
  * less than 100 bytes, so in most cases a simple fixed-sized
  * 256-byte buffer will be more than sufficient.
- * Recommended size limits for DNS-SD TXT Records are discussed in
- * <http://files.dns-sd.org/draft-cheshire-dnsext-dns-sd.txt>
+ * Recommended size limits for DNS-SD TXT Records are discussed in RFC 6763
+ * <https://tools.ietf.org/html/rfc6763#section-6.2>
  *
  * Note: When passing parameters to and from these TXT record APIs,
  * the key name does not include the '=' character. The '=' character
@@ -2293,8 +2344,8 @@ void DNSSD_API TXTRecordDeallocate
  *  - Present with no value ("key" appears alone)
  *  - Present with empty value ("key=" appears in TXT record)
  *  - Present with non-empty value ("key=value" appears in TXT record)
- * For more details refer to "Data Syntax for DNS-SD TXT Records" in
- * <http://files.dns-sd.org/draft-cheshire-dnsext-dns-sd.txt>
+ * For more details refer to "Data Syntax for DNS-SD TXT Records" in RFC 6763
+ * <https://tools.ietf.org/html/rfc6763#section-6>
  *
  * txtRecord:       A TXTRecordRef initialized by calling TXTRecordCreate().
  *
@@ -2605,41 +2656,6 @@ DNSServiceErrorType DNSSD_API DNSServiceSleepKeepalive
     void                                *context
 );
 #endif
-
-#ifdef APPLE_OSX_mDNSResponder
-/* DNSServiceCreateDelegateConnection()
- *
- * Create a delegate connection to the daemon allowing efficient registration of
- * multiple individual records.
- *
- * Parameters:
- *
- * sdRef:           A pointer to an uninitialized DNSServiceRef. Deallocating
- *                  the reference (via DNSServiceRefDeallocate()) severs the
- *                  connection and deregisters all records registered on this connection.
- *
- * pid :            Process ID of the delegate
- *
- * uuid:            UUID of the delegate
- *
- *                  Note that only one of the two arguments (pid or uuid) can be specified. If pid
- *                  is zero, uuid will be assumed to be a valid value; otherwise pid will be used.
- *
- * return value:    Returns kDNSServiceErr_NoError on success, otherwise returns
- *                  an error code indicating the specific failure that occurred (in which
- *                  case the DNSServiceRef is not initialized). kDNSServiceErr_NotAuth is
- *                  returned to indicate that the calling process does not have entitlements
- *                  to use this API.
- */
-DNSServiceErrorType DNSSD_API DNSServiceCreateDelegateConnection(DNSServiceRef *sdRef, int32_t pid, uuid_t uuid);
-#endif
-
-#ifdef __APPLE_API_PRIVATE
-
-#define kDNSServiceCompPrivateDNS   "PrivateDNS"
-#define kDNSServiceCompMulticastDNS "MulticastDNS"
-
-#endif //__APPLE_API_PRIVATE
 
 /* Some C compiler cleverness. We can make the compiler check certain things for us,
  * and report errors at compile-time if anything is wrong. The usual way to do this would
