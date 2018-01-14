@@ -65,7 +65,7 @@ extern mStatus mDNSPlatformPosixRefreshInterfaceList(mDNS *const m);
 // Call mDNSPosixGetFDSet before calling select(), to update the parameters
 // as may be necessary to meet the needs of the mDNSCore code.
 // The timeout pointer MUST NOT be NULL.
-// Set timeout->tv_sec to 0x3FFFFFFF if you want to have effectively no timeout
+// Set timeout->tv_sec to FutureTime if you want to have effectively no timeout
 // After calling mDNSPosixGetFDSet(), call select(nfds, &readfds, NULL, NULL, &timeout); as usual
 // After select() returns, call mDNSPosixProcessFDSet() to let mDNSCore do its work
 extern void mDNSPosixGetFDSet(mDNS *m, int *nfds, fd_set *readfds, struct timeval *timeout);

@@ -834,6 +834,12 @@ typedef unsigned long int uintptr_t;
     #endif
 #endif
 
+// Limits
+
+#if( !defined( UINT32_MAX ) )
+    #define UINT32_MAX      UINT32_C( 4294967295 )
+#endif
+
 #if 0
 #pragma mark == bool ==
 #endif

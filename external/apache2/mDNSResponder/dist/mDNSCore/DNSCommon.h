@@ -40,17 +40,19 @@ extern "C" {
 
 typedef enum
 {
-    kDNSFlag0_QR_Mask     = 0x80,       // Query or response?
-    kDNSFlag0_QR_Query    = 0x00,
-    kDNSFlag0_QR_Response = 0x80,
+    kDNSFlag0_QR_Mask        = 0x80,    // Query or response?
+    kDNSFlag0_QR_Query       = 0x00,
+    kDNSFlag0_QR_Response    = 0x80,
 
-    kDNSFlag0_OP_Mask     = 0x78,       // Operation type
-    kDNSFlag0_OP_StdQuery = 0x00,
-    kDNSFlag0_OP_Iquery   = 0x08,
-    kDNSFlag0_OP_Status   = 0x10,
-    kDNSFlag0_OP_Unused3  = 0x18,
-    kDNSFlag0_OP_Notify   = 0x20,
-    kDNSFlag0_OP_Update   = 0x28,
+    kDNSFlag0_OP_Mask        = 0x78,    // Operation type
+    kDNSFlag0_OP_StdQuery    = 0x00,
+    kDNSFlag0_OP_Subscribe   = 0x06,
+    kDNSFlag0_OP_UnSubscribe = 0x07,
+    kDNSFlag0_OP_Iquery      = 0x08,
+    kDNSFlag0_OP_Status      = 0x10,
+    kDNSFlag0_OP_Unused3     = 0x18,
+    kDNSFlag0_OP_Notify      = 0x20,
+    kDNSFlag0_OP_Update      = 0x28,
 
     kDNSFlag0_QROP_Mask   = kDNSFlag0_QR_Mask | kDNSFlag0_OP_Mask,
 
@@ -83,6 +85,7 @@ typedef enum
     TSIG_ErrBadKey  = 17,
     TSIG_ErrBadTime = 18
 } TSIG_ErrorCode;
+
 
 // ***************************************************************************
 #if COMPILER_LIKES_PRAGMA_MARK
@@ -220,7 +223,7 @@ extern mDNSu8 *putDeletionRecord(DNSMessage *msg, mDNSu8 *ptr, ResourceRecord *r
 extern mDNSu8 *putDeletionRecordWithLimit(DNSMessage *msg, mDNSu8 *ptr, ResourceRecord *rr, mDNSu8 *limit);
 extern mDNSu8 *putDeleteRRSetWithLimit(DNSMessage *msg, mDNSu8 *ptr, const domainname *name, mDNSu16 rrtype, mDNSu8 *limit);
 extern mDNSu8 *putDeleteAllRRSets(DNSMessage *msg, mDNSu8 *ptr, const domainname *name);
-extern mDNSu8 *putUpdateLease(DNSMessage *msg, mDNSu8 *end, mDNSu32 lease);
+extern mDNSu8 *putUpdateLease(DNSMessage *msg, mDNSu8 *ptr, mDNSu32 lease);
 extern mDNSu8 *putUpdateLeaseWithLimit(DNSMessage *msg, mDNSu8 *ptr, mDNSu32 lease, mDNSu8 *limit);
 
 extern mDNSu8 *putHINFO(const mDNS *const m, DNSMessage *const msg, mDNSu8 *ptr, DomainAuthInfo *authInfo, mDNSu8 *limit);
@@ -237,8 +240,7 @@ extern const mDNSu8 *NSEC3HashName(const domainname *name, rdataNSEC3 *nsec3, co
 #pragma mark - DNS Message Parsing Functions
 #endif
 
-#define AuthHashSlot(X) (DomainNameHashValue(X) % AUTH_HASH_SLOTS)
-#define HashSlot(X) (DomainNameHashValue(X) % CACHE_HASH_SLOTS)
+#define HashSlotFromNameHash(X) ((X) % CACHE_HASH_SLOTS)
 extern mDNSu32 DomainNameHashValue(const domainname *const name);
 extern void SetNewRData(ResourceRecord *const rr, RData *NewRData, mDNSu16 rdlength);
 extern const mDNSu8 *skipDomainName(const DNSMessage *const msg, const mDNSu8 *ptr, const mDNSu8 *const end);
@@ -257,7 +259,7 @@ extern const mDNSu8 *LocateAuthorities(const DNSMessage *const msg, const mDNSu8
 extern const mDNSu8 *LocateAdditionals(const DNSMessage *const msg, const mDNSu8 *const end);
 extern const mDNSu8 *LocateOptRR(const DNSMessage *const msg, const mDNSu8 *const end, int minsize);
 extern const rdataOPT *GetLLQOptData(mDNS *const m, const DNSMessage *const msg, const mDNSu8 *const end);
-extern mDNSu32 GetPktLease(mDNS *m, DNSMessage *msg, const mDNSu8 *end);
+extern mDNSBool GetPktLease(mDNS *const m, const DNSMessage *const msg, const mDNSu8 *const end, mDNSu32 *const lease);
 extern void DumpPacket(mDNS *const m, mStatus status, mDNSBool sent, char *transport,
                        const mDNSAddr *srcaddr, mDNSIPPort srcport,
                        const mDNSAddr *dstaddr, mDNSIPPort dstport, const DNSMessage *const msg, const mDNSu8 *const end);
@@ -297,16 +299,16 @@ extern void mDNS_Unlock_(mDNS *const m, const char * const functionname);
 
 #define mDNS_Unlock(X) mDNS_Unlock_((X), __func__)
 
-#define mDNS_CheckLock(X) { if ((X)->mDNS_busy != (X)->mDNS_reentrancy+1) \
-                            LogMsg("%s: Lock not held! mDNS_busy (%ld) mDNS_reentrancy (%ld)", __func__, (X)->mDNS_busy, (X)->mDNS_reentrancy); }
+#define mDNS_CheckLock(X) \
+    if ((X)->mDNS_busy != (X)->mDNS_reentrancy+1) LogMsg("%s: Lock not held! mDNS_busy (%ld) mDNS_reentrancy (%ld)", __func__, (X)->mDNS_busy, (X)->mDNS_reentrancy)
 
 #define mDNS_DropLockBeforeCallback() do { m->mDNS_reentrancy++; \
-                                           if (m->mDNS_busy != m->mDNS_reentrancy) LogMsg("%s: Locking Failure! mDNS_busy (%ld) != mDNS_reentrancy (%ld)", __func__, m->mDNS_busy, m->mDNS_reentrancy);                                                                                                                                                                  \
-} while (0)
+    if (m->mDNS_busy != m->mDNS_reentrancy) LogMsg("%s: Locking Failure! mDNS_busy (%ld) != mDNS_reentrancy (%ld)", __func__, m->mDNS_busy, m->mDNS_reentrancy); \
+    } while (0)
 
 #define mDNS_ReclaimLockAfterCallback() do { \
-        if (m->mDNS_busy != m->mDNS_reentrancy) LogMsg("%s: Unlocking Failure! mDNS_busy (%ld) != mDNS_reentrancy (%ld)", __func__, m->mDNS_busy, m->mDNS_reentrancy);                                                                                                                                                                    \
-        m->mDNS_reentrancy--; } while (0)
+    if (m->mDNS_busy != m->mDNS_reentrancy) LogMsg("%s: Unlocking Failure! mDNS_busy (%ld) != mDNS_reentrancy (%ld)", __func__, m->mDNS_busy, m->mDNS_reentrancy); \
+    m->mDNS_reentrancy--; } while (0)
 
 #ifdef  __cplusplus
 }
