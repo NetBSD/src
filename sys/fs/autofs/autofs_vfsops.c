@@ -33,7 +33,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autofs_vfsops.c,v 1.3 2018/01/13 22:06:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autofs_vfsops.c,v 1.4 2018/01/14 22:43:18 christos Exp $");
 
 
 #include "autofs.h"
@@ -95,25 +95,38 @@ static int
 autofs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 {
 	struct autofs_args *args = data;
-	struct autofs_mount *amp;
+	struct autofs_mount *amp = VFSTOAUTOFS(mp);
 	struct statvfs *sbp = &mp->mnt_stat;
 	int error;
+
+	if (mp->mnt_flag & MNT_UPDATE) {
+		if (amp == NULL)
+			return EIO;
+		autofs_flush(amp);
+		return 0;
+	}
 
 	if (!args)
 		return EINVAL;
 
-	/*
-	 * MNT_GETARGS is unsupported.  Autofs is mounted via automount(8) by
-	 * parsing /etc/auto_master instead of regular mount(8) variants with
-	 * -o getargs support, thus not really needed either.
-	 */
-	if (mp->mnt_flag & MNT_GETARGS)
-		return EOPNOTSUPP;
-
-	if (mp->mnt_flag & MNT_UPDATE) {
-		autofs_flush(VFSTOAUTOFS(mp));
-		return 0;
+	if (mp->mnt_flag & MNT_GETARGS) {
+		if (amp == NULL)
+			return EIO;
+		error = copyoutstr(amp->am_from, args->from,
+		    sizeof(amp->am_from), NULL);
+		if (error)
+			return error;
+		error = copyoutstr(amp->am_options, args->master_options,
+		    sizeof(amp->am_options), NULL);
+		if (error)
+			return error;
+		error = copyoutstr(amp->am_prefix, args->master_prefix,
+		    sizeof(amp->am_prefix), NULL);
+		return error;
 	}
+
+	if (amp != NULL)
+		return EBUSY;
 
 	/*
 	 * Allocate the autofs mount.
@@ -146,11 +159,9 @@ autofs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 
 	mutex_enter(&amp->am_lock);
 	error = autofs_node_new(NULL, amp, ".", -1, &amp->am_root);
-	if (error) {
-		mutex_exit(&amp->am_lock);
-		goto fail;
-	}
 	mutex_exit(&amp->am_lock);
+	if (error)
+		goto fail1;
 	KASSERT(amp->am_root->an_ino == AUTOFS_ROOTINO);
 
 	autofs_statvfs(mp, sbp);
@@ -159,13 +170,16 @@ autofs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	error = set_statvfs_info(path, UIO_USERSPACE, args->from, UIO_USERSPACE,
 	    mp->mnt_op->vfs_name, mp, curlwp);
 	if (error)
-		goto fail;
+		goto fail1;
 	strlcpy(amp->am_from, sbp->f_mntfromname, sizeof(amp->am_from));
 	strlcpy(amp->am_on, sbp->f_mntonname, sizeof(amp->am_on));
 
 	return 0;
 
+fail1:
+	mutex_destroy(&amp->am_lock);
 fail:
+	mp->mnt_data = NULL;
 	kmem_free(amp, sizeof(*amp));
 	return error;
 }
