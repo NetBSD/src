@@ -1,6 +1,6 @@
-/*	$NetBSD: lwp.h,v 1.176 2017/12/22 10:24:49 ozaki-r Exp $	*/
+/*	$NetBSD: lwp.h,v 1.177 2018/01/14 16:43:03 maxv Exp $	*/
 
-/*-
+/*
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010
  *    The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -69,7 +69,7 @@ static inline struct cpu_info *lwp_getcpu(struct lwp *);
  * (:	unlocked, stable
  * !:	unlocked, may only be reliably accessed by the LWP itself
  *
- * Fields are clustered together by usage (to increase the likelyhood
+ * Fields are clustered together by usage (to increase the likelihood
  * of cache hits) and by size (to reduce dead space in the structure).
  */
 
@@ -525,7 +525,7 @@ KPREEMPT_ENABLE(lwp_t *l)
 #define	DOPREEMPT_COUNTED	0x02
 
 /*
- * Prevent curlwp from migrating between CPUs beteen curlwp_bind and
+ * Prevent curlwp from migrating between CPUs between curlwp_bind and
  * curlwp_bindx. One use case is psref(9) that has a contract that
  * forbids migrations.
  */
