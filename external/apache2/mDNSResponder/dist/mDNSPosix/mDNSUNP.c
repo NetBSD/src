@@ -85,14 +85,12 @@ void plen_to_mask(int plen, char *addr) {
 struct ifi_info *get_ifi_info_linuxv6(int family, int doaliases)
 {
     struct ifi_info *ifi, *ifihead, **ifipnext, *ifipold, **ifiptr;
-    FILE *fp;
+    FILE *fp = NULL;
     char addr[8][5];
     int flags, myflags, index, plen, scope;
     char ifname[9], lastname[IFNAMSIZ];
     char addr6[32+7+1]; /* don't forget the seven ':' */
     struct addrinfo hints, *res0;
-    struct sockaddr_in6 *sin6;
-    struct in6_addr *addrptr;
     int err;
     int sockfd = -1;
     struct ifreq ifr;
@@ -152,18 +150,13 @@ struct ifi_info *get_ifi_info_linuxv6(int family, int doaliases)
             char ipv6addr[INET6_ADDRSTRLEN];
             plen_to_mask(plen, ipv6addr);
             ifi->ifi_netmask = calloc(1, sizeof(struct sockaddr_in6));
-            if (ifi->ifi_addr == NULL) {
+            if (ifi->ifi_netmask == NULL) {
                 goto gotError;
             }
-            sin6=calloc(1, sizeof(struct sockaddr_in6));
-            addrptr=calloc(1, sizeof(struct in6_addr));
-            inet_pton(family, ipv6addr, addrptr);
-            sin6->sin6_family=family;
-            sin6->sin6_addr=*addrptr;
-            sin6->sin6_scope_id=scope;
-            memcpy(ifi->ifi_netmask, sin6, sizeof(struct sockaddr_in6));
-            free(sin6);
 
+            ((struct sockaddr_in6 *)ifi->ifi_netmask)->sin6_family=family;
+            ((struct sockaddr_in6 *)ifi->ifi_netmask)->sin6_scope_id=scope;
+            inet_pton(family, ipv6addr, &((struct sockaddr_in6 *)ifi->ifi_netmask)->sin6_addr);
 
             /* Add interface name */
             memcpy(ifi->ifi_name, ifname, IFI_NAME);
@@ -181,6 +174,7 @@ struct ifi_info *get_ifi_info_linuxv6(int family, int doaliases)
                      * EADDRNOTAVAIL for the main interface
                      */
                     free(ifi->ifi_addr);
+                    free(ifi->ifi_netmask);
                     free(ifi);
                     ifipnext  = ifiptr;
                     *ifipnext = ifipold;
@@ -207,7 +201,12 @@ gotError:
     }
 done:
     if (sockfd != -1) {
-        assert(close(sockfd) == 0);
+        int rv;
+        rv = close(sockfd);
+        assert(rv == 0);
+    }
+    if (fp != NULL) {
+        fclose(fp);
     }
     return(ifihead);    /* pointer to first structure in linked list */
 }
@@ -247,7 +246,7 @@ struct ifi_info *get_ifi_info(int family, int doaliases)
     lastlen = 0;
     len = 100 * sizeof(struct ifreq);   /* initial buffer size guess */
     for ( ; ; ) {
-        buf = calloc(len, 1);
+        buf = (char*)malloc(len);
         if (buf == NULL) {
             goto gotError;
         }
@@ -303,35 +302,6 @@ struct ifi_info *get_ifi_info(int family, int doaliases)
         flags = ifrcopy.ifr_flags;
         if ((flags & IFF_UP) == 0)
             continue;   /* ignore if interface not up */
-	if ((flags & IFF_LOOPBACK))
-	    continue;	/* ignore loopback interfaces */
-
-	/* Skip addresses we can't use */
-#ifdef SIOCGIFAFLAG_IN
-	if (ifr->ifr_addr.sa_family == AF_INET) {
-		ifrcopy = *ifr;
-		if (ioctl(sockfd, SIOCGIFAFLAG_IN, &ifrcopy) < 0)
-			goto gotError;
-		if (ifrcopy.ifr_addrflags & (IN_IFF_NOTREADY | IN_IFF_DETACHED))
-			continue;
-	}
-#endif
-#ifdef SIOCGIFAFLAG_IN6
-        if (ifr->ifr_addr.sa_family == AF_INET6) {
-		struct in6_ifreq ifr6;
-
-		if (sockf6 == -1)
-			sockf6 = socket(AF_INET6, SOCK_DGRAM, 0);
-		memset(&ifr6, 0, sizeof(ifr6));
-		memcpy(&ifr6.ifr_name, &ifr->ifr_name, sizeof(ifr6.ifr_name));
-		memcpy(&ifr6.ifr_addr, &ifr->ifr_addr, sizeof(ifr6.ifr_addr));
-		if (ioctl(sockf6, SIOCGIFAFLAG_IN6, &ifr6) < 0)
-			goto gotError;
-		if (ifr6.ifr_ifru.ifru_flags6 &
-		    (IN6_IFF_NOTREADY | IN6_IFF_DETACHED))
-			continue;
-	}
-#endif
 
         ifi = (struct ifi_info*)calloc(1, sizeof(struct ifi_info));
         if (ifi == NULL) {
