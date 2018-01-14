@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 4 -*-
  *
- * Copyright (c) 2006 Apple Computer, Inc. All rights reserved.
+ * Copyright (c) 2006-2010 Apple Inc. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,6 +76,7 @@ typedef struct ZoneSpec
 
 
 static StringListElem	*	g_stringList = NULL;
+static StringListElem	*	g_addrList = NULL;
 static KeySpec			*	g_keys;
 static ZoneSpec			*	g_zones;
 static ZoneSpec				g_zoneSpec;
@@ -173,6 +174,22 @@ optionsstatement:
 		|
 		LISTEN_ON PORT NUMBER addresscontent
 		{
+			mDNSIPPort listen_port = mDNSOpaque16fromIntVal( $3 );
+			DaemonInfo* d = ( DaemonInfo* ) context;
+			d->addr.sin_port = ( listen_port.NotAnInteger) ? listen_port.NotAnInteger : UnicastDNSPort.NotAnInteger;
+			StringListElem* addr = g_addrList;
+			while (addr != NULL)
+			{
+				StringListElem* next;
+				// The first ipv4 address in {,} is used; the rest are ignored.
+				if (inet_pton( AF_INET, addr->string, &d->addr.sin_addr ) == 0) {
+					inet_pton( AF_INET, "127.0.0.1", &d->ns_addr.sin_addr );
+					LogMsg("LISTEN_ON: An invalid ipv4 address, %s, detected.", addr->string);
+				}
+				next = addr->next;
+				free(addr);
+				addr = next;
+			}
 		}
 		|
 		NAMESERVER ADDRESS networkaddress
@@ -308,6 +325,20 @@ addressstatements:
 addressstatement:
 		DOTTED_DECIMAL_ADDRESS
 		{
+			StringListElem * elem;
+
+			elem = ( StringListElem* ) malloc( sizeof( StringListElem ) );
+
+			if ( !elem )
+			{
+				LogMsg("ERROR: memory allocation failure");
+				YYABORT;
+			}
+
+			elem->string = $1;
+
+			elem->next		= g_addrList;
+			g_addrList		= elem;
 		}
 		;
 
