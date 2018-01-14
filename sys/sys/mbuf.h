@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.173 2018/01/01 12:09:56 maxv Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.174 2018/01/14 17:16:58 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -492,7 +492,7 @@ do {									\
 
 #define	MCLINITREFERENCE(m)						\
 do {									\
-	KDASSERT(((m)->m_flags & M_EXT) == 0);				\
+	KASSERT(((m)->m_flags & M_EXT) == 0);				\
 	(m)->m_ext_ref = (m);						\
 	(m)->m_ext.ext_refcnt = 1;					\
 	MCLREFDEBUGO((m), __FILE__, __LINE__);				\
