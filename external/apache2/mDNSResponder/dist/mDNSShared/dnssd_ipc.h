@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 4 -*-
  *
- * Copyright (c) 2003-2004, Apple Computer, Inc. All rights reserved.
+ * Copyright (c) 2003-2015 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -10,7 +10,7 @@
  * 2.  Redistributions in binary form must reproduce the above copyright notice,
  *     this list of conditions and the following disclaimer in the documentation
  *     and/or other materials provided with the distribution.
- * 3.  Neither the name of Apple Computer, Inc. ("Apple") nor the names of its
+ * 3.  Neither the name of Apple Inc. ("Apple") nor the names of its
  *     contributors may be used to endorse or promote products derived from this
  *     software without specific prior written permission.
  *
@@ -41,7 +41,6 @@
 #   define dnssd_EWOULDBLOCK    WSAEWOULDBLOCK
 #   define dnssd_EINTR          WSAEINTR
 #   define dnssd_ECONNRESET     WSAECONNRESET
-#   define dnssd_sock_t         SOCKET
 #   define dnssd_socklen_t      int
 #   define dnssd_close(sock)    closesocket(sock)
 #   define dnssd_errno          WSAGetLastError()
@@ -67,7 +66,6 @@ extern char *win32_strerror(int inErrorCode);
 #   define dnssd_EINTR          EINTR
 #   define dnssd_ECONNRESET     ECONNRESET
 #   define dnssd_EPIPE          EPIPE
-#   define dnssd_sock_t         int
 #   define dnssd_socklen_t      unsigned int
 #   define dnssd_close(sock)    close(sock)
 #   define dnssd_errno          errno
@@ -88,7 +86,7 @@ extern char *win32_strerror(int inErrorCode);
 #   define MDNS_UDS_SERVERPATH_ENVVAR "DNSSD_UDS_PATH"
 #   define LISTENQ              100
 // longest legal control path length
-#   define MAX_CTLPATH          256
+#   define MAX_CTLPATH          (sizeof(((struct sockaddr_un*)0)->sun_path))
 #   define dnssd_sockaddr_t     struct sockaddr_un
 #endif
 
