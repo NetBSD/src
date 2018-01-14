@@ -5,18 +5,18 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
 
-	File:		daemon.c
+    File:		daemon.c
 
-	Contains:	main & associated Application layer for mDNSResponder on Linux.
+    Contains:	main & associated Application layer for mDNSResponder on Linux.
 
  */
 
@@ -45,14 +45,9 @@ extern int daemon(int, int);
 
 #include "mDNSEmbeddedAPI.h"
 #include "mDNSPosix.h"
-#include "mDNSUNP.h"		// For daemon()
+#include "mDNSUNP.h"        // For daemon()
 #include "uds_daemon.h"
-#include "DNSCommon.h"
 #include "PlatformCommon.h"
-
-#ifndef MDNSD_USER
-#define MDNSD_USER "nobody"
-#endif
 
 #define CONFIG_FILE "/etc/mdnsd.conf"
 static domainname DynDNSZone;                // Default wide-area zone for service registration
@@ -63,265 +58,201 @@ static CacheEntity gRRCache[RR_CACHE_SIZE];
 static mDNS_PlatformSupport PlatformStorage;
 
 mDNSlocal void mDNS_StatusCallback(mDNS *const m, mStatus result)
-	{
-	(void)m; // Unused
-	if (result == mStatus_NoError)
-		{
-		// On successful registration of dot-local mDNS host name, daemon may want to check if
-		// any name conflict and automatic renaming took place, and if so, record the newly negotiated
-		// name in persistent storage for next time. It should also inform the user of the name change.
-		// On Mac OS X we store the current dot-local mDNS host name in the SCPreferences store,
-		// and notify the user with a CFUserNotification.
-		}
-	else if (result == mStatus_ConfigChanged)
-		{
-		udsserver_handle_configchange(m);
-		}
-	else if (result == mStatus_GrowCache)
-		{
-		// Allocate another chunk of cache storage
-		CacheEntity *storage = malloc(sizeof(CacheEntity) * RR_CACHE_SIZE);
-		if (storage) mDNS_GrowCache(m, storage, RR_CACHE_SIZE);
-		}
-	}
+{
+    (void)m; // Unused
+    if (result == mStatus_NoError)
+    {
+        // On successful registration of dot-local mDNS host name, daemon may want to check if
+        // any name conflict and automatic renaming took place, and if so, record the newly negotiated
+        // name in persistent storage for next time. It should also inform the user of the name change.
+        // On Mac OS X we store the current dot-local mDNS host name in the SCPreferences store,
+        // and notify the user with a CFUserNotification.
+    }
+    else if (result == mStatus_ConfigChanged)
+    {
+        udsserver_handle_configchange(m);
+    }
+    else if (result == mStatus_GrowCache)
+    {
+        // Allocate another chunk of cache storage
+        CacheEntity *storage = malloc(sizeof(CacheEntity) * RR_CACHE_SIZE);
+        if (storage) mDNS_GrowCache(m, storage, RR_CACHE_SIZE);
+    }
+}
 
 // %%% Reconfigure() probably belongs in the platform support layer (mDNSPosix.c), not the daemon cde
 // -- all client layers running on top of mDNSPosix.c need to handle network configuration changes,
 // not only the Unix Domain Socket Daemon
 
 static void Reconfigure(mDNS *m)
-	{
-	mDNSAddr DynDNSIP;
-	// Use a random address from TEST-NET-2	in RFC5737
-	const mDNSAddr dummy = { mDNSAddrType_IPv4, { { { 198, 51, 100, 42 } } } };;
-	mDNS_SetPrimaryInterfaceInfo(m, NULL, NULL, NULL);
-        mDNS_Lock(m);
-	if (ParseDNSServers(m, uDNS_SERVERS_FILE) < 0)
-		LogMsg("Unable to parse DNS server list. Unicast DNS-SD unavailable");
-        mDNS_Unlock(m);
-	ReadDDNSSettingsFromConfFile(m, CONFIG_FILE, &DynDNSHostname, &DynDNSZone, NULL);
-	mDNSPlatformSourceAddrForDest(&DynDNSIP, &dummy);
-	if (DynDNSHostname.c[0]) mDNS_AddDynDNSHostName(m, &DynDNSHostname, NULL, NULL);
-	if (DynDNSIP.type)       mDNS_SetPrimaryInterfaceInfo(m, &DynDNSIP, NULL, NULL);
-	mDNS_ConfigChanged(m);
-	}
+{
+    mDNSAddr DynDNSIP;
+    const mDNSAddr dummy = { mDNSAddrType_IPv4, { { { 1, 1, 1, 1 } } } };;
+    mDNS_SetPrimaryInterfaceInfo(m, NULL, NULL, NULL);
+    if (ParseDNSServers(m, uDNS_SERVERS_FILE) < 0)
+        LogMsg("Unable to parse DNS server list. Unicast DNS-SD unavailable");
+    ReadDDNSSettingsFromConfFile(m, CONFIG_FILE, &DynDNSHostname, &DynDNSZone, NULL);
+    mDNSPlatformSourceAddrForDest(&DynDNSIP, &dummy);
+    if (DynDNSHostname.c[0]) mDNS_AddDynDNSHostName(m, &DynDNSHostname, NULL, NULL);
+    if (DynDNSIP.type) mDNS_SetPrimaryInterfaceInfo(m, &DynDNSIP, NULL, NULL);
+    mDNS_ConfigChanged(m);
+}
 
 // Do appropriate things at startup with command line arguments. Calls exit() if unhappy.
 mDNSlocal void ParseCmdLinArgs(int argc, char **argv)
-	{
-	if (argc > 1)
-		{
-		if (0 == strcmp(argv[1], "-debug")) mDNS_DebugMode = mDNStrue;
-		else printf("Usage: %s [-debug]\n", argv[0]);
-		}
+{
+    if (argc > 1)
+    {
+        if (0 == strcmp(argv[1], "-debug")) mDNS_DebugMode = mDNStrue;
+        else printf("Usage: %s [-debug]\n", argv[0]);
+    }
 
-	if (!mDNS_DebugMode)
-		{
-		int result = daemon(0, 0);
-		if (result != 0) { LogMsg("Could not run as daemon - exiting"); exit(result); }
+    if (!mDNS_DebugMode)
+    {
+        int result = daemon(0, 0);
+        if (result != 0) { LogMsg("Could not run as daemon - exiting"); exit(result); }
 #if __APPLE__
-		LogMsg("The POSIX mdnsd should only be used on OS X for testing - exiting");
-		exit(-1);
+        LogMsg("The POSIX mdnsd should only be used on OS X for testing - exiting");
+        exit(-1);
 #endif
-		}
-	}
+    }
+}
 
 mDNSlocal void DumpStateLog(mDNS *const m)
 // Dump a little log of what we've been up to.
-	{
-	DNSServer *s;
-        PosixNetworkInterface *i;
-
-	LogMsg("---- BEGIN STATE LOG ----");
-	udsserver_info(m);
-
-        LogMsgNoIdent("----- Network Interfaces -------");
-        for (i = (PosixNetworkInterface*)(m->HostInterfaces);
-        i; i = (PosixNetworkInterface *)(i->coreIntf.next)) {
-            LogMsg("%p %p %d %s%s%s%s%s %-8s %#a", i,
-            (void *)(i->coreIntf.InterfaceID), i->index,
-            i->coreIntf.InterfaceActive ? "-" : "D",
-            i->coreIntf.IPv4Available ? "4" : "-",
-            i->coreIntf.IPv6Available ? "6" : "-",
-            i->coreIntf.Advertise ? "A" : "-",
-            i->coreIntf.McastTxRx ? "M" : "-",
-            i->intfName, &(i->coreIntf.ip));
-        }
-        
-        LogMsgNoIdent("--------- DNS Servers ----------");
-        if (!mDNSStorage.DNSServers) LogMsgNoIdent("<None>");
-        else
-                {               
-                for (s = m->DNSServers; s; s = s->next)
-                        {
-                        LogMsgNoIdent("DNS Server %##s %#a:%d %s",
-                                s->domain.c, &s->addr, mDNSVal16(s->port),
-                                s->teststate == DNSServer_Untested ? "(Untested)" :
-                                s->teststate == DNSServer_Passed   ? ""           :
-                                s->teststate == DNSServer_Failed   ? "(Failed)"   :
-                                s->teststate == DNSServer_Disabled ? "(Disabled)" : "(Unknown state)");
-                        }
-                }               
-
-	LogMsg("----  END STATE LOG  ----");
-	}
+{
+    LogMsg("---- BEGIN STATE LOG ----");
+    udsserver_info(m);
+    LogMsg("----  END STATE LOG  ----");
+}
 
 mDNSlocal mStatus MainLoop(mDNS *m) // Loop until we quit.
-	{
-	sigset_t	signals;
-	mDNSBool	gotData = mDNSfalse;
+{
+    sigset_t signals;
+    mDNSBool gotData = mDNSfalse;
 
-	mDNSPosixListenForSignalInEventLoop(SIGINT);
-	mDNSPosixListenForSignalInEventLoop(SIGTERM);
-	mDNSPosixListenForSignalInEventLoop(SIGUSR1);
-#ifdef HAVE_SIGINFO
-	mDNSPosixListenForSignalInEventLoop(SIGUSR2);
-	mDNSPosixListenForSignalInEventLoop(SIGINFO);
-#endif
-	mDNSPosixListenForSignalInEventLoop(SIGPIPE);
-	mDNSPosixListenForSignalInEventLoop(SIGHUP) ;
+    mDNSPosixListenForSignalInEventLoop(SIGINT);
+    mDNSPosixListenForSignalInEventLoop(SIGTERM);
+    mDNSPosixListenForSignalInEventLoop(SIGUSR1);
+    mDNSPosixListenForSignalInEventLoop(SIGPIPE);
+    mDNSPosixListenForSignalInEventLoop(SIGHUP) ;
 
-	for (; ;)
-		{
-		// Work out how long we expect to sleep before the next scheduled task
-		struct timeval	timeout;
-		mDNSs32			ticks;
+    for (; ;)
+    {
+        // Work out how long we expect to sleep before the next scheduled task
+        struct timeval timeout;
+        mDNSs32 ticks;
 
-		// Only idle if we didn't find any data the last time around
-		if (!gotData)
-			{
-			mDNSs32			nextTimerEvent = mDNS_Execute(m);
-			nextTimerEvent = udsserver_idle(nextTimerEvent);
-			ticks = nextTimerEvent - mDNS_TimeNow(m);
-			if (ticks < 1) ticks = 1;
-			}
-		else	// otherwise call EventLoop again with 0 timemout
-			ticks = 0;
+        // Only idle if we didn't find any data the last time around
+        if (!gotData)
+        {
+            mDNSs32 nextTimerEvent = mDNS_Execute(m);
+            nextTimerEvent = udsserver_idle(nextTimerEvent);
+            ticks = nextTimerEvent - mDNS_TimeNow(m);
+            if (ticks < 1) ticks = 1;
+        }
+        else    // otherwise call EventLoop again with 0 timemout
+            ticks = 0;
 
-		timeout.tv_sec = ticks / mDNSPlatformOneSecond;
-		timeout.tv_usec = (ticks % mDNSPlatformOneSecond) * 1000000 / mDNSPlatformOneSecond;
+        timeout.tv_sec = ticks / mDNSPlatformOneSecond;
+        timeout.tv_usec = (ticks % mDNSPlatformOneSecond) * 1000000 / mDNSPlatformOneSecond;
 
-		(void) mDNSPosixRunEventLoopOnce(m, &timeout, &signals, &gotData);
+        (void) mDNSPosixRunEventLoopOnce(m, &timeout, &signals, &gotData);
 
-		if (sigismember(&signals, SIGHUP )) Reconfigure(m);
-#ifdef HAVE_SIGINFO
-                /* use OSX-compatible signals since we can, and gain enhanced debugging */
-		if (sigismember(&signals, SIGINFO)) DumpStateLog(m);
-		if (sigismember(&signals, SIGUSR1))
-			{
-		        mDNS_LoggingEnabled = mDNS_LoggingEnabled ? 0 : 1;
-		        LogMsg("SIGUSR1: Logging %s", mDNS_LoggingEnabled ? "Enabled" : "Disabled");
-			}
-		if (sigismember(&signals, SIGUSR2))
-			{
-			mDNS_PacketLoggingEnabled = mDNS_PacketLoggingEnabled ? 0 : 1;
-			LogMsg("SIGUSR2: Packet Logging %s", mDNS_PacketLoggingEnabled ? "Enabled" : "Disabled");
-			}
-#else
-		if (sigismember(&signals, SIGUSR1)) DumpStateLog(m);
-#endif
-		// SIGPIPE happens when we try to write to a dead client; death should be detected soon in request_callback() and cleaned up.
-		if (sigismember(&signals, SIGPIPE)) LogMsg("Received SIGPIPE - ignoring");
-		if (sigismember(&signals, SIGINT) || sigismember(&signals, SIGTERM)) break;
-		}
-	return EINTR;
-	}
+        if (sigismember(&signals, SIGHUP )) Reconfigure(m);
+        if (sigismember(&signals, SIGUSR1)) DumpStateLog(m);
+        // SIGPIPE happens when we try to write to a dead client; death should be detected soon in request_callback() and cleaned up.
+        if (sigismember(&signals, SIGPIPE)) LogMsg("Received SIGPIPE - ignoring");
+        if (sigismember(&signals, SIGINT) || sigismember(&signals, SIGTERM)) break;
+    }
+    return EINTR;
+}
 
 int main(int argc, char **argv)
-	{
-	mStatus					err;
+{
+    mStatus err;
 
-	ParseCmdLinArgs(argc, argv);
+    ParseCmdLinArgs(argc, argv);
 
-	LogInfo("%s starting", mDNSResponderVersionString);
+    LogMsg("%s starting", mDNSResponderVersionString);
 
-	err = mDNS_Init(&mDNSStorage, &PlatformStorage, gRRCache, RR_CACHE_SIZE, mDNS_Init_AdvertiseLocalAddresses, 
-					mDNS_StatusCallback, mDNS_Init_NoInitCallbackContext); 
+    err = mDNS_Init(&mDNSStorage, &PlatformStorage, gRRCache, RR_CACHE_SIZE, mDNS_Init_AdvertiseLocalAddresses,
+                    mDNS_StatusCallback, mDNS_Init_NoInitCallbackContext);
 
-	if (mStatus_NoError == err)
-		err = udsserver_init(mDNSNULL, 0);
-		
-	Reconfigure(&mDNSStorage);
+    if (mStatus_NoError == err)
+        err = udsserver_init(mDNSNULL, 0);
 
-	// Now that we're finished with anything privileged, switch over to running as "nobody"
-	if (mStatus_NoError == err)
-		{
-		const struct passwd *pw = getpwnam(MDNSD_USER);
-		if (pw != NULL)
-		        {
-			setgid(pw->pw_gid);
-			setuid(pw->pw_uid);
-		        }
-		else
-#ifdef MDNSD_NOROOT
-                        {
-    			LogMsg("WARNING: mdnsd exiting because user \""MDNSD_USER"\" does not exist");
-                        err = mStatus_Invalid;
-                        }
-#else
-    			LogMsg("WARNING: mdnsd continuing as root because user \""MDNSD_USER"\" does not exist");
-#endif
-		}
+    Reconfigure(&mDNSStorage);
 
-	if (mStatus_NoError == err)
-		err = MainLoop(&mDNSStorage);
- 
-	LogInfo("%s stopping", mDNSResponderVersionString);
+    // Now that we're finished with anything privileged, switch over to running as "nobody"
+    if (mStatus_NoError == err)
+    {
+        const struct passwd *pw = getpwnam("nobody");
+        if (pw != NULL)
+            setuid(pw->pw_uid);
+        else
+            LogMsg("WARNING: mdnsd continuing as root because user \"nobody\" does not exist");
+    }
 
-	mDNS_Close(&mDNSStorage);
+    if (mStatus_NoError == err)
+        err = MainLoop(&mDNSStorage);
 
-	if (udsserver_exit() < 0)
-		LogMsg("ExitCallback: udsserver_exit failed");
- 
+    LogMsg("%s stopping", mDNSResponderVersionString);
+
+    mDNS_Close(&mDNSStorage);
+
+    if (udsserver_exit() < 0)
+        LogMsg("ExitCallback: udsserver_exit failed");
+
  #if MDNS_DEBUGMSGS > 0
-	printf("mDNSResponder exiting normally with %ld\n", err);
+    printf("mDNSResponder exiting normally with %ld\n", err);
  #endif
- 
-	return err;
-	}
+
+    return err;
+}
 
 //		uds_daemon support		////////////////////////////////////////////////////////////
 
 mStatus udsSupportAddFDToEventLoop(int fd, udsEventCallback callback, void *context, void **platform_data)
 /* Support routine for uds_daemon.c */
-	{
-	// Depends on the fact that udsEventCallback == mDNSPosixEventCallback
-	(void) platform_data;
-	return mDNSPosixAddFDToEventLoop(fd, callback, context);
-	}
+{
+    // Depends on the fact that udsEventCallback == mDNSPosixEventCallback
+    (void) platform_data;
+    return mDNSPosixAddFDToEventLoop(fd, callback, context);
+}
 
 int udsSupportReadFD(dnssd_sock_t fd, char *buf, int len, int flags, void *platform_data)
-	{
-	(void) platform_data;
-	return recv(fd, buf, len, flags);
-	}
+{
+    (void) platform_data;
+    return recv(fd, buf, len, flags);
+}
 
-mStatus udsSupportRemoveFDFromEventLoop(int fd, void *platform_data)		// Note: This also CLOSES the file descriptor
-	{
-	mStatus err = mDNSPosixRemoveFDFromEventLoop(fd);
-	(void) platform_data;
-	close(fd);
-	return err;
-	}
+mStatus udsSupportRemoveFDFromEventLoop(int fd, void *platform_data)        // Note: This also CLOSES the file descriptor
+{
+    mStatus err = mDNSPosixRemoveFDFromEventLoop(fd);
+    (void) platform_data;
+    close(fd);
+    return err;
+}
 
 mDNSexport void RecordUpdatedNiceLabel(mDNS *const m, mDNSs32 delay)
-	{
-	(void)m;
-	(void)delay;
-	// No-op, for now
-	}
+{
+    (void)m;
+    (void)delay;
+    // No-op, for now
+}
 
 #if _BUILDING_XCODE_PROJECT_
 // If the process crashes, then this string will be magically included in the automatically-generated crash log
 const char *__crashreporter_info__ = mDNSResponderVersionString_SCCS + 5;
-asm(".desc ___crashreporter_info__, 0x10");
+asm (".desc ___crashreporter_info__, 0x10");
 #endif
 
 // For convenience when using the "strings" command, this is the last thing in the file
 #if mDNSResponderVersion > 1
-mDNSexport const char mDNSResponderVersionString_SCCS[] = "@(#) mDNSResponder-" STRINGIFY(mDNSResponderVersion);
+mDNSexport const char mDNSResponderVersionString_SCCS[] = "@(#) mDNSResponder-" STRINGIFY(mDNSResponderVersion) " (" __DATE__ " " __TIME__ ")";
 #elif MDNS_VERSIONSTR_NODTS
 mDNSexport const char mDNSResponderVersionString_SCCS[] = "@(#) mDNSResponder (Engineering Build)";
 #else
-mDNSexport const char mDNSResponderVersionString_SCCS[] = "@(#) mDNSResponder (Engineering Build)";
+mDNSexport const char mDNSResponderVersionString_SCCS[] = "@(#) mDNSResponder (Engineering Build) (" __DATE__ " " __TIME__ ")";
 #endif
