@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.51 2016/08/19 10:19:45 christos Exp $	*/
+/*	$NetBSD: err.c,v 1.52 2018/01/15 22:14:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.51 2016/08/19 10:19:45 christos Exp $");
+__RCSID("$NetBSD: err.c,v 1.52 2018/01/15 22:14:24 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -163,11 +163,11 @@ const	char *msgs[] = {
 	"undefined struct/union member: %s",			      /* 101 */
 	"illegal member use: %s",				      /* 102 */
 	"left operand of '.' must be struct/union object",	      /* 103 */
-	"left operand of '->' must be pointer to struct/union and is %s",	/* 104 */
+	"left operand of '->' must be pointer to struct/union not %s",/* 104 */
 	"non-unique member requires struct/union %s",		      /* 105 */
 	"left operand of '->' must be pointer",			      /* 106 */
-	"operands of '%s' have incompatible types (%s != %s)",		      /* 107 */
-	"operand of '%s' has incompatible type (%s != %s)",		      /* 108 */
+	"operands of '%s' have incompatible types (%s != %s)",	      /* 107 */
+	"operand of '%s' has incompatible type (%s != %s)",	      /* 108 */
 	"void type illegal in expression",			      /* 109 */
 	"pointer to function is not allowed here",		      /* 110 */
 	"unacceptable operand of '%s'",				      /* 111 */
