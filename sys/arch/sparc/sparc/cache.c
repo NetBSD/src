@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.98 2017/12/01 22:57:07 mrg Exp $ */
+/*	$NetBSD: cache.c,v 1.99 2018/01/15 21:25:25 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.98 2017/12/01 22:57:07 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.99 2018/01/15 21:25:25 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
@@ -78,19 +78,19 @@ __KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.98 2017/12/01 22:57:07 mrg Exp $");
 #include <sparc/sparc/cpuvar.h>
 
 struct evcnt vcache_flush_pg =
-	EVCNT_INITIALIZER(EVCNT_TYPE_INTR,0,"vcfl","pg");
+	EVCNT_INITIALIZER(EVCNT_TYPE_MISC,0,"vcfl","pg");
 EVCNT_ATTACH_STATIC(vcache_flush_pg);
 struct evcnt vcache_flush_seg =
-	EVCNT_INITIALIZER(EVCNT_TYPE_INTR,0,"vcfl","seg");
+	EVCNT_INITIALIZER(EVCNT_TYPE_MISC,0,"vcfl","seg");
 EVCNT_ATTACH_STATIC(vcache_flush_seg);
 struct evcnt vcache_flush_reg =
-	EVCNT_INITIALIZER(EVCNT_TYPE_INTR,0,"vcfl","reg");
+	EVCNT_INITIALIZER(EVCNT_TYPE_MISC,0,"vcfl","reg");
 EVCNT_ATTACH_STATIC(vcache_flush_reg);
 struct evcnt vcache_flush_ctx =
-	EVCNT_INITIALIZER(EVCNT_TYPE_INTR,0,"vcfl","ctx");
+	EVCNT_INITIALIZER(EVCNT_TYPE_MISC,0,"vcfl","ctx");
 EVCNT_ATTACH_STATIC(vcache_flush_ctx);
 struct evcnt vcache_flush_range =
-	EVCNT_INITIALIZER(EVCNT_TYPE_INTR,0,"vcfl","rng");
+	EVCNT_INITIALIZER(EVCNT_TYPE_MISC,0,"vcfl","rng");
 EVCNT_ATTACH_STATIC(vcache_flush_range);
 
 int cache_alias_dist;		/* Cache anti-aliasing constants */
