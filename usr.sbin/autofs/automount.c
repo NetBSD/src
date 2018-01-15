@@ -1,4 +1,4 @@
-/*	$NetBSD: automount.c,v 1.2 2018/01/15 00:46:16 christos Exp $	*/
+/*	$NetBSD: automount.c,v 1.3 2018/01/15 14:38:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: automount.c,v 1.2 2018/01/15 00:46:16 christos Exp $");
+__RCSID("$NetBSD: automount.c,v 1.3 2018/01/15 14:38:06 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -155,6 +155,7 @@ mount_unmount(struct node *root)
 	struct statvfs *mntbuf;
 	struct node *n, *n2;
 	int i, nitems;
+	static char rootdir[] = "/";
 
 	nitems = getmntinfo(&mntbuf, MNT_WAIT);
 	if (nitems <= 0)
@@ -192,7 +193,7 @@ mount_unmount(struct node *root)
 
 		TAILQ_FOREACH(n2, &n->n_children, n_next) {
 			mount_if_not_already(n2, n->n_map, n->n_options,
-			    "/", mntbuf, nitems);
+			    rootdir, mntbuf, nitems);
 		}
 	}
 }
