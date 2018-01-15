@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.257 2017/12/18 08:24:29 ozaki-r Exp $	*/
+/*	$NetBSD: if.h,v 1.258 2018/01/15 13:05:40 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -986,6 +986,7 @@ do {									\
 
 #define	IFQ_CLASSIFY(ifq, m, af)					\
 do {									\
+	KASSERT((m->m_flags & M_PKTHDR) != 0);				\
 	mutex_enter((ifq)->ifq_lock);					\
 	if (ALTQ_IS_ENABLED((ifq))) {					\
 		if (ALTQ_NEEDS_CLASSIFY((ifq)))				\
