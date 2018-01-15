@@ -1,4 +1,4 @@
-/*	$NetBSD: automount.c,v 1.1 2018/01/09 03:31:15 christos Exp $	*/
+/*	$NetBSD: automount.c,v 1.2 2018/01/15 00:46:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: automount.c,v 1.1 2018/01/09 03:31:15 christos Exp $");
+__RCSID("$NetBSD: automount.c,v 1.2 2018/01/15 00:46:16 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -100,9 +100,9 @@ mount_autofs(const char *from, const char *fspath, const char *options,
 	    from, fspath, prefix, options);
 
 	memset(&args, 0, sizeof(args));
-	args.from = from;
-	args.master_options = options;
-	args.master_prefix = prefix;
+	args.from = __UNCONST(from);
+	args.master_options = __UNCONST(options);
+	args.master_prefix = __UNCONST(prefix);
 
 	error = mount("autofs", fspath, 0, &args, sizeof(args));
 	if (error != 0)
