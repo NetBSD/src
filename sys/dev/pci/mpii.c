@@ -1,4 +1,4 @@
-/* $NetBSD: mpii.c,v 1.10 2017/10/09 23:24:22 maya Exp $ */
+/* $NetBSD: mpii.c,v 1.11 2018/01/15 12:58:06 maya Exp $ */
 /*	OpenBSD: mpii.c,v 1.51 2012/04/11 13:29:14 naddy Exp 	*/
 /*
  * Copyright (c) 2010 Mike Belopuhov <mkb@crypt.org.ru>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpii.c,v 1.10 2017/10/09 23:24:22 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpii.c,v 1.11 2018/01/15 12:58:06 maya Exp $");
 
 #include "bio.h"
 
@@ -4043,7 +4043,7 @@ mpii_dmamem_alloc(struct mpii_softc *sc, size_t size)
 
 	mdm = malloc(sizeof(*mdm), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (mdm == NULL)
-	return (NULL);
+		return (NULL);
 
 	mdm->mdm_size = size;
 
