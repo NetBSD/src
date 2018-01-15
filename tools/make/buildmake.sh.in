@@ -1,5 +1,5 @@
 #! /bin/sh
-#	$NetBSD: buildmake.sh.in,v 1.9 2018/01/15 19:52:54 uwe Exp $
+#	$NetBSD: buildmake.sh.in,v 1.10 2018/01/15 19:57:49 uwe Exp $
 #
 # buildmake.sh.in - Autoconf-processed shell script for building make(1).
 #
@@ -9,7 +9,6 @@
 : ${HOST_CC="@CC@"}
 : ${HOST_CFLAGS="@CPPFLAGS@ @CFLAGS@"}
 : ${HOST_LDFLAGS="@LDFLAGS@ @LIBS@"}
-: ${runcmd=""}
 
 docmd () {
 	echo "$1"
