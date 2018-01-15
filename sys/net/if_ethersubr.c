@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.252 2018/01/15 10:27:51 maxv Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.253 2018/01/15 11:57:27 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.252 2018/01/15 10:27:51 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.253 2018/01/15 11:57:27 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -566,6 +566,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 #endif
 
 	KASSERT(!cpu_intr_p());
+	KASSERT((m->m_flags & M_PKTHDR) != 0);
 
 	if ((ifp->if_flags & IFF_UP) == 0) {
 		m_freem(m);
@@ -639,7 +640,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 		    (uint8_t *)&eh->ether_dhost, eh->ether_type) == 0)
 			return;
 	}
-#endif /* NCARP > 0 */
+#endif
 
 	if ((m->m_flags & (M_BCAST | M_MCAST | M_PROMISC)) == 0 &&
 	    (ifp->if_flags & IFF_PROMISC) != 0 &&
@@ -656,7 +657,6 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 
 		eh = mtod(m, struct ether_header *);
 		etype = ntohs(eh->ether_type);
-		ehlen = sizeof(*eh);
 	}
 
 #if NAGR > 0
@@ -666,7 +666,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 		agr_input(ifp, m);
 		return;
 	}
-#endif /* NAGR > 0 */
+#endif
 
 	/*
 	 * If VLANs are configured on the interface, check to
@@ -693,48 +693,52 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	switch (etype) {
 	case ETHERTYPE_VLAN: {
 		struct ether_vlan_header *evl = (void *)eh;
+
 		/*
 		 * If there is a tag of 0, then the VLAN header was probably
 		 * just being used to store the priority.  Extract the ether
 		 * type, and if IP or IPV6, let them deal with it.
 		 */
-		if (m->m_len <= sizeof(*evl)
-		    && EVL_VLANOFTAG(evl->evl_tag) == 0) {
+		if (m->m_len <= sizeof(*evl) &&
+		    EVL_VLANOFTAG(evl->evl_tag) == 0) {
 			etype = ntohs(evl->evl_proto);
 			ehlen = sizeof(*evl);
-			if ((m->m_flags & M_PROMISC) == 0
-			    && (etype == ETHERTYPE_IP
-				|| etype == ETHERTYPE_IPV6))
+			if ((m->m_flags & M_PROMISC) == 0 &&
+			    (etype == ETHERTYPE_IP ||
+			     etype == ETHERTYPE_IPV6))
 				break;
 		}
+
 #if NVLAN > 0
 		/*
 		 * vlan_input() will either recursively call ether_input()
 		 * or drop the packet.
 		 */
-		if (((struct ethercom *)ifp)->ec_nvlans != 0)
+		if (ec->ec_nvlans != 0)
 			vlan_input(ifp, m);
 		else
-#endif /* NVLAN > 0 */
+#endif
 			m_freem(m);
+
 		return;
 	}
+
 #if NPPPOE > 0
 	case ETHERTYPE_PPPOEDISC:
 		pppoedisc_input(ifp, m);
 		return;
+
 	case ETHERTYPE_PPPOE:
 		pppoe_input(ifp, m);
 		return;
-#endif /* NPPPOE > 0 */
+#endif
+
 	case ETHERTYPE_SLOWPROTOCOLS: {
 		uint8_t subtype;
 
-#if defined(DIAGNOSTIC)
-		if (m->m_pkthdr.len < sizeof(*eh) + sizeof(subtype)) {
-			panic("ether_input: too short slow protocol packet");
-		}
-#endif
+		KASSERTMSG((m->m_pkthdr.len < sizeof(*eh) + sizeof(subtype)),
+			"too short slow protocol packet");
+
 		m_copydata(m, sizeof(*eh), sizeof(subtype), &subtype);
 		switch (subtype) {
 #if NAGR > 0
@@ -752,6 +756,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 			}
 			break;
 #endif /* NAGR > 0 */
+
 		default:
 			if (subtype == 0 || subtype > 10) {
 				/* illegal value */
@@ -763,6 +768,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 		}
 		/* FALLTHROUGH */
 	}
+
 	default:
 		if (m->m_flags & M_PROMISC) {
 			m_freem(m);
@@ -776,7 +782,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 		m->m_flags &= ~M_HASFCS;
 	}
 
-	if (etype > ETHERMTU + sizeof (struct ether_header)) {
+	if (etype > ETHERMTU + sizeof(struct ether_header)) {
 		/* Strip off the Ethernet header. */
 		m_adj(m, ehlen);
 
@@ -799,6 +805,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 			revarpinput(m);	/* XXX queue? */
 			return;
 #endif
+
 #ifdef INET6
 		case ETHERTYPE_IPV6:
 			if (__predict_false(!in6_present)) {
@@ -812,22 +819,25 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 			pktq = ip6_pktq;
 			break;
 #endif
+
 #ifdef NETATALK
 		case ETHERTYPE_ATALK:
 			isr = NETISR_ATALK;
 			inq = &atintrq1;
 			break;
+
 		case ETHERTYPE_AARP:
-			/* probably this should be done with a NETISR as well */
-			aarpinput(ifp, m); /* XXX */
+			aarpinput(ifp, m); /* XXX queue? */
 			return;
-#endif /* NETATALK */
+#endif
+
 #ifdef MPLS
 		case ETHERTYPE_MPLS:
 			isr = NETISR_MPLS;
 			inq = &mplsintrq;
 			break;
 #endif
+
 		default:
 			m_freem(m);
 			return;
@@ -1013,6 +1023,7 @@ ether_ifdetach(struct ifnet *ifp)
 	ETHER_UNLOCK(ec);
 
 	mutex_obj_free(ec->ec_lock);
+	ec->ec_lock = NULL;
 
 	ifp->if_mowner = NULL;
 	MOWNER_DETACH(&ec->ec_rx_mowner);
