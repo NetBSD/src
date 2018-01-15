@@ -1,4 +1,4 @@
-.\" $NetBSD: gpt.8,v 1.56 2017/10/03 06:55:04 mlelstv Exp $
+.\" $NetBSD: gpt.8,v 1.57 2018/01/15 12:20:47 sborrill Exp $
 .\"
 .\" Copyright (c) 2002 Marcel Moolenaar
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/sbin/gpt/gpt.8,v 1.17 2006/06/22 22:22:32 marcel Exp $
 .\"
-.Dd August 3, 2017
+.Dd January 15, 2018
 .Dt GPT 8
 .Os
 .Sh NAME
@@ -154,6 +154,15 @@ or
 .Sq S
 then size is in sectors, otherwise size is in bytes which must be
 a multiple of the device's sector size.
+Accepted suffix units are
+.Sq b
+to denote bytes,
+.Sq k
+to denote kilobytes,
+.Sq m
+to denote megabytes and
+.Sq g
+to denote gigabytes.
 The minimum size is 1 sector.
 .Pp
 The
@@ -465,6 +474,15 @@ or
 .Sq S
 then size is in sectors, otherwise size is in bytes which must be
 a multiple of the device's sector size.
+Accepted suffix units are
+.Sq b
+to denote bytes,
+.Sq k
+to denote kilobytes,
+.Sq m
+to denote megabytes and
+.Sq g
+to denote gigabytes.
 The minimum size is 1 sector.
 If the
 .Fl a
@@ -494,6 +512,15 @@ or
 .Sq S
 then size is in sectors, otherwise size is in bytes which must be
 a multiple of the device's sector size.
+Accepted suffix units are
+.Sq b
+to denote bytes,
+.Sq k
+to denote kilobytes,
+.Sq m
+to denote megabytes and
+.Sq g
+to denote gigabytes.
 Using the
 .Fl s
 option allows you to move the backup copy prior to resizing the medium.
