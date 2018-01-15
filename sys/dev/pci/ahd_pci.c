@@ -1,4 +1,4 @@
-/*	$NetBSD: ahd_pci.c,v 1.35 2014/03/29 19:28:24 christos Exp $	*/
+/*	$NetBSD: ahd_pci.c,v 1.36 2018/01/15 12:43:42 maya Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahd_pci.c,v 1.35 2014/03/29 19:28:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahd_pci.c,v 1.36 2018/01/15 12:43:42 maya Exp $");
 
 #define AHD_PCI_IOADDR	PCI_MAPREG_START	/* I/O Address */
 #define AHD_PCI_MEMADDR	(PCI_MAPREG_START + 4)	/* Mem I/O Address */
@@ -337,13 +337,12 @@ ahd_pci_attach(device_t parent, device_t self, void *aux)
 		return;
 
 	/* Keep information about the PCI bus */
-	bd = malloc(sizeof (struct ahd_pci_busdata), M_DEVBUF, M_NOWAIT);
+	bd = malloc(sizeof (struct ahd_pci_busdata), M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (bd == NULL) {
 		aprint_error("%s: unable to allocate bus-specific data\n",
 		    ahd_name(ahd));
 		return;
 	}
-	memset(bd, 0, sizeof(struct ahd_pci_busdata));
 
 	bd->pc = pa->pa_pc;
 	bd->tag = pa->pa_tag;
@@ -355,12 +354,11 @@ ahd_pci_attach(device_t parent, device_t self, void *aux)
 	ahd->description = entry->name;
 
 	ahd->seep_config = malloc(sizeof(*ahd->seep_config),
-				  M_DEVBUF, M_NOWAIT);
+				  M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (ahd->seep_config == NULL) {
 		aprint_error("%s: cannot malloc seep_config!\n", ahd_name(ahd));
 		return;
 	}
-	memset(ahd->seep_config, 0, sizeof(*ahd->seep_config));
 
 	LIST_INIT(&ahd->pending_scbs);
 	ahd_timer_init(&ahd->reset_timer);
