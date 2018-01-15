@@ -1,4 +1,4 @@
-/*	$NetBSD: prekern.h,v 1.18 2017/11/26 11:01:09 maxv Exp $	*/
+/*	$NetBSD: prekern.h,v 1.19 2018/01/15 22:38:01 christos Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -38,9 +38,6 @@
 #include "redef.h"
 
 #define ASSERT(a) if (!(a)) fatal("ASSERT");
-typedef uint64_t paddr_t;
-typedef uint64_t vaddr_t;
-typedef uint64_t pt_entry_t;
 typedef uint64_t pte_prot_t;
 #define WHITE_ON_BLACK 0x07
 #define RED_ON_BLACK 0x04
