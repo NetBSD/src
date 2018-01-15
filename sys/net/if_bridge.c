@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.147 2017/12/28 07:06:36 ozaki-r Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.148 2018/01/15 09:49:16 maxv Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.147 2017/12/28 07:06:36 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.148 2018/01/15 09:49:16 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -469,7 +469,8 @@ bridge_clone_destroy(struct ifnet *ifp)
 	struct bridge_softc *sc = ifp->if_softc;
 	struct bridge_iflist *bif;
 
-	bridge_stop(ifp, 1);
+	if ((ifp->if_flags & IFF_RUNNING) != 0)
+		bridge_stop(ifp, 1);
 
 	BRIDGE_LOCK(sc);
 	for (;;) {
