@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.251 2018/01/15 07:59:48 maxv Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.252 2018/01/15 10:27:51 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.251 2018/01/15 07:59:48 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.252 2018/01/15 10:27:51 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -998,9 +998,7 @@ ether_ifdetach(struct ifnet *ifp)
 	if (ifp->if_bridge)
 		bridge_ifdetach(ifp);
 #endif
-
 	bpf_detach(ifp);
-
 #if NVLAN > 0
 	if (ec->ec_nvlans)
 		vlan_ifdetach(ifp);
@@ -1014,7 +1012,7 @@ ether_ifdetach(struct ifnet *ifp)
 	}
 	ETHER_UNLOCK(ec);
 
-	mutex_destroy(ec->ec_lock);
+	mutex_obj_free(ec->ec_lock);
 
 	ifp->if_mowner = NULL;
 	MOWNER_DETACH(&ec->ec_rx_mowner);
@@ -1127,17 +1125,18 @@ ether_aton_r(u_char *dest, size_t len, const char *str)
 	while (*cp) {
 		if (!isxdigit(*cp))
 			return EINVAL;
+
 		*dest = atox(*cp);
 		cp++;
 		if (isxdigit(*cp)) {
 			*dest = (*dest << 4) | atox(*cp);
-			dest++;
 			cp++;
-		} else {
-			dest++;
 		}
+		dest++;
+
 		if (dest == ep)
-			return *cp == '\0' ? 0 : ENAMETOOLONG;
+			return (*cp == '\0') ? 0 : ENAMETOOLONG;
+
 		switch (*cp) {
 		case ':':
 		case '-':
@@ -1183,8 +1182,7 @@ ether_multiaddr(const struct sockaddr *sa, uint8_t addrlo[ETHER_ADDR_LEN],
 			 */
 			memcpy(addrlo, ether_ipmulticast_min, ETHER_ADDR_LEN);
 			memcpy(addrhi, ether_ipmulticast_max, ETHER_ADDR_LEN);
-		}
-		else {
+		} else {
 			ETHER_MAP_IP_MULTICAST(&sin->sin_addr, addrlo);
 			memcpy(addrhi, addrlo, ETHER_ADDR_LEN);
 		}
@@ -1229,8 +1227,6 @@ ether_addmulti(const struct sockaddr *sa, struct ethercom *ec)
 
 	/* Allocate out of lock */
 	enm = kmem_alloc(sizeof(*enm), KM_SLEEP);
-	if (enm == NULL)
-		return ENOBUFS;
 
 	ETHER_LOCK(ec);
 	error = ether_multiaddr(sa, addrlo, addrhi);
@@ -1244,6 +1240,7 @@ ether_addmulti(const struct sockaddr *sa, struct ethercom *ec)
 		error = EINVAL;
 		goto out;
 	}
+
 	/*
 	 * See if the address range is already in the list.
 	 */
@@ -1256,20 +1253,23 @@ ether_addmulti(const struct sockaddr *sa, struct ethercom *ec)
 		error = 0;
 		goto out;
 	}
+
 	/*
 	 * Link a new multicast record into the interface's multicast list.
 	 */
-	memcpy(enm->enm_addrlo, addrlo, 6);
-	memcpy(enm->enm_addrhi, addrhi, 6);
+	memcpy(enm->enm_addrlo, addrlo, ETHER_ADDR_LEN);
+	memcpy(enm->enm_addrhi, addrhi, ETHER_ADDR_LEN);
 	enm->enm_refcount = 1;
 	LIST_INSERT_HEAD(&ec->ec_multiaddrs, enm, enm_list);
 	ec->ec_multicnt++;
+
 	/*
 	 * Return ENETRESET to inform the driver that the list has changed
 	 * and its reception filter should be adjusted accordingly.
 	 */
 	error = ENETRESET;
 	enm = NULL;
+
 out:
 	ETHER_UNLOCK(ec);
 	if (enm != NULL)
@@ -1294,7 +1294,7 @@ ether_delmulti(const struct sockaddr *sa, struct ethercom *ec)
 		goto error;
 
 	/*
-	 * Look ur the address in our list.
+	 * Look up the address in our list.
 	 */
 	ETHER_LOOKUP_MULTI(addrlo, addrhi, ec, enm);
 	if (enm == NULL) {
@@ -1308,19 +1308,21 @@ ether_delmulti(const struct sockaddr *sa, struct ethercom *ec)
 		error = 0;
 		goto error;
 	}
+
 	/*
 	 * No remaining claims to this record; unlink and free it.
 	 */
 	LIST_REMOVE(enm, enm_list);
 	ec->ec_multicnt--;
 	ETHER_UNLOCK(ec);
-
 	kmem_free(enm, sizeof(*enm));
+
 	/*
 	 * Return ENETRESET to inform the driver that the list has changed
 	 * and its reception filter should be adjusted accordingly.
 	 */
 	return ENETRESET;
+
 error:
 	ETHER_UNLOCK(ec);
 	return error;
@@ -1361,7 +1363,7 @@ ether_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 #ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(ifp, ifa);
-#endif /* INET */
+#endif
 		return 0;
 	    }
 
@@ -1565,7 +1567,7 @@ retry:
 		goto out;
 	}
 
-	addrs = kmem_alloc(sizeof(*addrs) * multicnt, KM_SLEEP);
+	addrs = kmem_zalloc(sizeof(*addrs) * multicnt, KM_SLEEP);
 
 	ETHER_LOCK(ec);
 	if (multicnt != ec->ec_multicnt) {
