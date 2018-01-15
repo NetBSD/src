@@ -1,6 +1,6 @@
-/*	$NetBSD: if_vlanvar.h,v 1.12 2017/11/22 03:45:15 msaitoh Exp $	*/
+/*	$NetBSD: if_vlanvar.h,v 1.13 2018/01/15 16:36:51 maxv Exp $	*/
 
-/*-
+/*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
