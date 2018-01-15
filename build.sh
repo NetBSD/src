@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.321 2017/10/08 01:05:13 kre Exp $
+#	$NetBSD: build.sh,v 1.322 2018/01/15 19:52:54 uwe Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1664,7 +1664,7 @@ rebuildmake()
 	${runcmd} env \
 \
 CC="${HOST_CC-cc}" \
-CPPFLAGS="${HOST_CPPFLAGS} -D_PATH_DEFSYSPATH="'\"'${NETBSDSRCDIR}/share/mk'\"' \
+CPPFLAGS="${HOST_CPPFLAGS}" \
 CFLAGS="${HOST_CFLAGS--O}" \
 LDFLAGS="${HOST_LDFLAGS}" \
 \
@@ -1938,7 +1938,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.321 2017/10/08 01:05:13 kre Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.322 2018/01/15 19:52:54 uwe Exp $
 # with these arguments: ${_args}
 #
 
