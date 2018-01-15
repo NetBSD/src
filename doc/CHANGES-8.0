@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.103 2018/01/13 22:33:12 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.104 2018/01/15 00:21:49 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -9088,4 +9088,17 @@ sys/arch/sparc/sparc/timerreg.h			1.10
 
 	fix time goes backwards problems on sparc.
 	[mrg, ticket #504]
+
+share/man/man4/audio.4				1.81-1.82
+sys/dev/audio.c					1.376 via patch, 1.407-1.413, 1.415-1.440, 1.441 via patch, 1.443-1.450
+sys/dev/audiovar.h				1.59 via patch, 1.65-1.68
+
+	audio(4):
+	- Many bug fixes and code cleanups
+	- Add latency sysctl to adjust hw blocksize and hence latency
+	  of the mixer.
+          example: sysctl -w hw.hdafg0.latency="value in milliseconds"
+	- Add sysctl to disable the in kernel mixer.
+	  example: sysctl -w hw.hdafg0.usemixer=0
+	[nat, ticket #489]
 
