@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.174 2017/11/19 03:23:01 kre Exp $
+.\"	$NetBSD: sh.1,v 1.175 2018/01/15 11:27:39 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -3808,14 +3808,16 @@ integer value. and can be expanded using any of the forms
 mentioned above which can be used for any other variable.
 .Pp
 .Ev LINENO
-can be exported,
-made readonly (which prevents attempts to assign to it,
-and to unset it, but which does not change the value,
-that is the current line number, from being obtained when
+can be exported, made readonly, or unset, as with any other
+variable, with similar effects.
+Note that while being readonly prevents later attempts to
+set, or unset,
+.Ev LINENO ,
+it does not prevent its value changing.
+References to
 .Ev LINENO
-is referenced,)
-and can be unset.
-All of those act as they would with any other variable.
+.Pq "when not unset"
+always obtain the current line number.
 However,
 .Ev LINENO
 should normally not ever be set or unset.
