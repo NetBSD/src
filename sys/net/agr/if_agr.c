@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agr.c,v 1.43 2017/12/06 07:40:16 ozaki-r Exp $	*/
+/*	$NetBSD: if_agr.c,v 1.44 2018/01/15 11:16:04 maxv Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,11 +27,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.43 2017/12/06 07:40:16 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.44 2018/01/15 11:16:04 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #endif
+
+#include "vlan.h"
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -53,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.43 2017/12/06 07:40:16 ozaki-r Exp $");
 #include <net/if_dl.h>
 #include <net/if_types.h>
 #include <net/if_ether.h>
+#include <net/if_vlanvar.h>
 
 #if defined(INET)
 #include <netinet/in.h>
@@ -146,11 +149,9 @@ agrdetach(void)
 void
 agr_input(struct ifnet *ifp_port, struct mbuf *m)
 {
+	struct ethercom *ec = (struct ethercom *)ifp_port;
 	struct agr_port *port;
 	struct ifnet *ifp;
-#if NVLAN > 0
-	struct m_tag *mtag;
-#endif
 
 	port = ifp_port->if_agrprivate;
 	KASSERT(port);
@@ -163,26 +164,19 @@ agr_input(struct ifnet *ifp_port, struct mbuf *m)
 
 	m_set_rcvif(m, ifp);
 
-#define DNH_DEBUG
+	/*
+	 * If VLANs are configured on the interface, check to
+	 * see if the device performed the decapsulation and
+	 * provided us with the tag.
+	 */
+	if (ec->ec_nvlans && vlan_has_tag(m)) {
 #if NVLAN > 0
-	/* got a vlan packet? */
-	if ((mtag = m_tag_find(m, PACKET_TAG_VLAN, NULL)) != NULL) {
-#ifdef DNH_DEBUG 
-		printf("%s: vlan tag %d attached\n",
-			ifp->if_xname,
-			htole16((*(u_int *)(mtag + 1)) & 0xffff));
-		printf("%s: vlan input\n", ifp->if_xname);
-#endif
 		vlan_input(ifp, m);
+#else
+		m_freem(m);
+#endif
 		return;
-#ifdef DNH_DEBUG 
-	} else {
-		struct ethercom *ec = (void *)ifp;
-		printf("%s: no vlan tag attached, ec_nvlans=%d\n",
-			ifp->if_xname, ec->ec_nvlans);
-#endif
 	}
-#endif
 
 	if_percpuq_enqueue(ifp->if_percpuq, m);
 }
