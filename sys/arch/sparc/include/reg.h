@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.10 2018/01/14 11:55:33 martin Exp $ */
+/*	$NetBSD: reg.h,v 1.11 2018/01/15 10:06:49 martin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -106,18 +106,19 @@ struct fp_qentry {
 struct fpreg {
 	u_int	fr_regs[32];		/* our view is 32 32-bit registers */
 	int	fr_fsr;			/* %fsr */
-}
-#ifdef _KERNEL
- __aligned(8)				/* asm code uses std instructions */
-#endif
-;
+};
+
 struct fpstate {
 	struct fpreg fs_reg;
 #define fs_regs fs_reg.fr_regs
 #define fs_fsr	fs_reg.fr_fsr
 	int	fs_qsize;		/* actual queue depth */
 	struct	fp_qentry fs_queue[FP_QSIZE];	/* queue contents */
-};
+}
+#ifdef _KERNEL
+ __aligned(8)				/* asm code uses std instructions */
+#endif
+;
 
 /*
  * The actual FP registers are made accessible (c.f. ptrace(2)) through
