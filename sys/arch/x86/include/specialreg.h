@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.108 2018/01/13 17:55:57 jdolecek Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.109 2018/01/15 06:08:40 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -322,6 +322,7 @@
  *	%eax: The Maximum input value for supported subleaf.
  *	%ebx: Feature bits.
  *	%ecx: Feature bits.
+ *	%edx: Feature bits.
  */
 
 /* %ebx */
@@ -396,10 +397,12 @@
 #define CPUID_SEF_AVX512_4FMAPS	__BIT(3)
 #define CPUID_SEF_IBRS		__BIT(26) /* IBRS / IBPB Speculation Control */
 #define CPUID_SEF_STIBP		__BIT(27) /* STIBP Speculation Control */
+#define CPUID_SEF_ARCH_CAP	__BIT(29) /* IA32_ARCH_CAPABILITIES */
 
 #define CPUID_SEF_FLAGS2	"\20" \
 				"\3" "AVX512_4VNNIW" "\4" "AVX512_4FMAPS" \
-					"\33" "IBRS"	"\34" "STIBP"
+					"\33" "IBRS"	"\34" "STIBP"	\
+			"\36" "ARCH_CAP"
 
 /*
  * CPUID Processor extended state Enumeration Fn0000000d
