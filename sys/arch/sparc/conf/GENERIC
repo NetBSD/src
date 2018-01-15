@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.256 2017/09/14 07:58:43 mrg Exp $
+# $NetBSD: GENERIC,v 1.257 2018/01/15 09:48:28 martin Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.256 $"
+#ident 		"GENERIC-$Revision: 1.257 $"
 
 maxusers	32
 
@@ -125,7 +125,7 @@ options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 ## Adds code to the kernel that does internal consistency checks, and will
 ## cause the kernel to panic if corruption of internal data structures
 ## is detected.
-#options 	DIAGNOSTIC	# extra kernel sanity checking
+options 	DIAGNOSTIC	# extra kernel sanity checking
 
 ## Enable (possibly expensive) debugging code that may also display messages
 ## on the system console
