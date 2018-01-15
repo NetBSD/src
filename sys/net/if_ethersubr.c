@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.255 2018/01/15 13:14:18 maxv Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.256 2018/01/15 14:00:34 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.255 2018/01/15 13:14:18 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.256 2018/01/15 14:00:34 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -187,12 +187,11 @@ static	int ether_output(struct ifnet *, struct mbuf *,
  */
 static int
 ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
-	const struct sockaddr * const dst,
-	const struct rtentry *rt)
+    const struct sockaddr * const dst, const struct rtentry *rt)
 {
+	uint8_t esrc[ETHER_ADDR_LEN], edst[ETHER_ADDR_LEN];
 	uint16_t etype = 0;
 	int error = 0, hdrcmplt = 0;
-	uint8_t esrc[6], edst[6];
 	struct mbuf *m = m0;
 	struct mbuf *mcopy = NULL;
 	struct ether_header *eh;
@@ -240,7 +239,7 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 #ifdef INET
 	case AF_INET:
 		if (m->m_flags & M_BCAST)
-			(void)memcpy(edst, etherbroadcastaddr, sizeof(edst));
+			memcpy(edst, etherbroadcastaddr, sizeof(edst));
 		else if (m->m_flags & M_MCAST)
 			ETHER_MAP_IP_MULTICAST(&satocsin(dst)->sin_addr, edst);
 		else if ((error = arpresolve(ifp, rt, m, dst, edst,
@@ -249,14 +248,14 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 		}
 		/* If broadcasting on a simplex interface, loopback a copy */
 		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
-			mcopy = m_copy(m, 0, (int)M_COPYALL);
+			mcopy = m_copy(m, 0, M_COPYALL);
 		etype = htons(ETHERTYPE_IP);
 		break;
 
 	case AF_ARP:
 		ah = mtod(m, struct arphdr *);
 		if (m->m_flags & M_BCAST)
-			(void)memcpy(edst, etherbroadcastaddr, sizeof(edst));
+			memcpy(edst, etherbroadcastaddr, sizeof(edst));
 		else {
 			void *tha = ar_tha(ah);
 
@@ -281,13 +280,13 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 		default:
 			etype = htons(ETHERTYPE_ARP);
 		}
-
 		break;
 #endif
+
 #ifdef INET6
 	case AF_INET6:
 		if (m->m_flags & M_BCAST)
-			(void)memcpy(edst, etherbroadcastaddr, sizeof(edst));
+			memcpy(edst, etherbroadcastaddr, sizeof(edst));
 		else if (m->m_flags & M_MCAST) {
 			ETHER_MAP_IPV6_MULTICAST(&satocsin6(dst)->sin6_addr,
 			    edst);
@@ -300,19 +299,22 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 		etype = htons(ETHERTYPE_IPV6);
 		break;
 #endif
+
 #ifdef NETATALK
 	case AF_APPLETALK: {
 		struct ifaddr *ifa;
 		int s;
 
 		KERNEL_LOCK(1, NULL);
+
 		if (!aarpresolve(ifp, m, (const struct sockaddr_at *)dst, edst)) {
 #ifdef NETATALKDEBUG
 			printf("aarpresolv failed\n");
-#endif /* NETATALKDEBUG */
+#endif
 			KERNEL_UNLOCK_ONE(NULL);
 			return (0);
 		}
+
 		/*
 		 * ifaddr is the first thing in at_ifaddr
 		 */
@@ -321,6 +323,7 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 		if (ifa == NULL) {
 			pserialize_read_exit(s);
 			KERNEL_UNLOCK_ONE(NULL);
+			/* XXX error? */
 			goto bad;
 		}
 		aa = (struct at_ifaddr *)ifa;
@@ -335,6 +338,11 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 			struct llc llc;
 
 			M_PREPEND(m, sizeof(struct llc), M_DONTWAIT);
+			if (m == NULL) {
+				KERNEL_UNLOCK_ONE(NULL);
+				senderr(ENOBUFS);
+			}
+
 			llc.llc_dsap = llc.llc_ssap = LLC_SNAP_LSAP;
 			llc.llc_control = LLC_UI;
 			memcpy(llc.llc_snap_org_code, at_org_code,
@@ -349,6 +357,7 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 		break;
 	}
 #endif /* NETATALK */
+
 	case pseudo_AF_HDRCMPLT:
 		hdrcmplt = 1;
 		memcpy(esrc,
@@ -387,20 +396,24 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 	if (mcopy)
 		(void)looutput(ifp, mcopy, dst, rt);
 
-	/* If no ether type is set, this must be a 802.2 formatted packet.
+	KASSERT((m->m_flags & M_PKTHDR) != 0);
+
+	/*
+	 * If no ether type is set, this must be a 802.2 formatted packet.
 	 */
 	if (etype == 0)
 		etype = htons(m->m_pkthdr.len);
+
 	/*
-	 * Add local net header.  If no space in first mbuf,
-	 * allocate another.
+	 * Add local net header. If no space in first mbuf, allocate another.
 	 */
-	M_PREPEND(m, sizeof (struct ether_header), M_DONTWAIT);
-	if (m == 0)
+	M_PREPEND(m, sizeof(struct ether_header), M_DONTWAIT);
+	if (m == NULL)
 		senderr(ENOBUFS);
+
 	eh = mtod(m, struct ether_header *);
 	/* Note: etype is already in network byte order. */
-	(void)memcpy(&eh->ether_type, &etype, sizeof(eh->ether_type));
+	memcpy(&eh->ether_type, &etype, sizeof(eh->ether_type));
 	memcpy(eh->ether_dhost, edst, sizeof(edst));
 	if (hdrcmplt)
 		memcpy(eh->ether_shost, esrc, sizeof(eh->ether_shost));
@@ -413,7 +426,7 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 	 	memcpy(eh->ether_shost, CLLADDR(ifp0->if_sadl),
 		    sizeof(eh->ether_shost));
 	}
-#endif /* NCARP > 0 */
+#endif
 
 	if ((error = pfil_run_hooks(ifp->if_pfil, &m, ifp, PFIL_OUT)) != 0)
 		return (error);
@@ -425,13 +438,13 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 	 * Bridges require special output handling.
 	 */
 	if (ifp->if_bridge)
-		return (bridge_output(ifp, m, NULL, NULL));
+		return bridge_output(ifp, m, NULL, NULL);
 #endif
 
 #if NCARP > 0
 	if (ifp != ifp0)
 		ifp0->if_obytes += m->m_pkthdr.len + ETHER_HDR_LEN;
-#endif /* NCARP > 0 */
+#endif
 
 #ifdef ALTQ
 	KERNEL_LOCK(1, NULL);
