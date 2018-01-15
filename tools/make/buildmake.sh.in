@@ -1,5 +1,5 @@
 #! /bin/sh
-#	$NetBSD: buildmake.sh.in,v 1.10 2018/01/15 19:57:49 uwe Exp $
+#	$NetBSD: buildmake.sh.in,v 1.11 2018/01/15 20:14:49 uwe Exp $
 #
 # buildmake.sh.in - Autoconf-processed shell script for building make(1).
 #
@@ -22,4 +22,4 @@ for f in $MKSRCDIR/*.c $MKSRCDIR/lst.lib/*.c; do
 	docmd "${HOST_CC} ${HOST_CFLAGS} @DEFS@ -c $f"
 done
 
-docmd "${HOST_CC} ${HOST_CFLAGS} -o ${_TOOL_PREFIX:-nb}make *.o ${HOST_LDFLAGS}"
+docmd "${HOST_CC} -o ${_TOOL_PREFIX:-nb}make *.o ${HOST_LDFLAGS}"
