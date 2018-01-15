@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipsec.c,v 1.1 2018/01/10 10:56:30 knakahara Exp $  */
+/*	$NetBSD: if_ipsec.c,v 1.2 2018/01/15 02:39:53 knakahara Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.1 2018/01/10 10:56:30 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.2 2018/01/15 02:39:53 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1214,7 +1214,7 @@ if_ipsec_share_sp(struct ipsec_variant *var)
 	struct psref psref;
 
 	KASSERT(encap_lock_held());
-	KASSERT(var->iv_pdst != NULL && var->iv_pdst != NULL);
+	KASSERT(var->iv_psrc != NULL && var->iv_pdst != NULL);
 
 	mutex_enter(&ipsec_softcs.lock);
 	LIST_FOREACH(sc2, &ipsec_softcs.list, ipsec_list) {
