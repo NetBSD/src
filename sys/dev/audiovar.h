@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.55.2.4 2017/09/23 17:39:34 snj Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.55.2.5 2018/01/15 00:08:55 snj Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -126,7 +126,6 @@ struct virtual_channel {
 	u_char			sc_mode;	/* bitmask for RECORD/PLAY */
 
 	uint8_t			*sc_sil_start;	/* start of silence in buffer */
-	int			sc_sil_count;	/* # of silence bytes */
 	bool			sc_pbus;	/* output DMA in progress */
 	audio_params_t		sc_pparams;	/* play encoding parameters */
 	audio_stream_t		*sc_pustream;	/* the first buffer */
@@ -182,6 +181,7 @@ struct audio_softc {
 	device_t	sc_dev;		/* Hardware device struct */
 	struct chan_queue sc_audiochan; /* queue of open audio chans */
 	struct virtual_channel *sc_hwvc;
+	struct virtual_channel	sc_mixring;	/* Play/rec ring to mix into */
 
 	struct audio_encoding_set *sc_encodings;
 	struct	selinfo sc_wsel; /* write selector */
@@ -203,7 +203,9 @@ struct audio_softc {
 	bool		sc_trigger_started;
 	bool		sc_rec_started;
 	bool		sc_writeme;
+	bool		sc_usemixer;
 	bool		sc_ready;	/* audio hw configured properly */
+	unsigned int	sc_latency;
 	int		sc_opens;
 	int		sc_recopens;
 	bool		sc_dying;
@@ -221,7 +223,7 @@ struct audio_softc {
 	 * (vchans mixed into sc_pr)
 	 *
 	 * play_thread
-	 *    sc_pr
+	 *    sc_mixring.sc_mpr
 	 *      |
 	 *  sc_hwvc->sc_pustream
 	 *      |
@@ -229,8 +231,6 @@ struct audio_softc {
 	 *      |
 	 *  hardware
 	 */
-
-	struct audio_ringbuffer	sc_pr;	/* Play ring to mix into */
 
 	/**
 	 *  hardware
@@ -240,7 +240,7 @@ struct audio_softc {
 	 *      :		 vc to IF
 	 * sc_hwvc->sc_rustream	Audio now in intermediate format (IF)
 	 *      |	mix_read();
-	 *    sc_rr
+	 *    sc_mixring.sc_mrr
 	 *      |	audio_upmix	vc = sc->sc_vchan[n]
 	 * vc->sc_mrr		<list_t::filters[0].param>
 	 *      |  vc->sc_rfilters[0]
@@ -253,7 +253,6 @@ struct audio_softc {
 	 *      |  uiomove(9) & read(2)
 	 *  userland
 	 */
-	struct audio_ringbuffer	sc_rr;		/* Record ring */
 	ulong		sc_last_drops;		/* Drops from mix ring */
 
 	int		sc_eof;		/* EOF, i.e. zero sized write, counter */
@@ -287,9 +286,6 @@ struct audio_softc {
 	
 	/* These are chanable by sysctl to set the vchan common format */
 	struct sysctllog	*sc_log;	/* sysctl log */
-	int		sc_channels;
-	int		sc_precision;
-	int		sc_frequency;
 	struct audio_info 	sc_ai;		/* Recent info for  dev sound */
 	bool			sc_aivalid;
 #define VAUDIO_NFORMATS	1
