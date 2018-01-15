@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.552 2018/01/04 09:43:27 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.553 2018/01/15 04:09:58 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.552 2018/01/04 09:43:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.553 2018/01/15 04:09:58 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2981,11 +2981,22 @@ wm_watchdog_txq(struct ifnet *ifp, struct wm_txqueue *txq)
 			i, txs->txs_firstdesc, txs->txs_lastdesc);
 		    for (j = txs->txs_firstdesc; ;
 			j = WM_NEXTTX(txq, j)) {
-			printf("\tdesc %d: 0x%" PRIx64 "\n", j,
-			    txq->txq_nq_descs[j].nqtx_data.nqtxd_addr);
-			printf("\t %#08x%08x\n",
-			    txq->txq_nq_descs[j].nqtx_data.nqtxd_fields,
-			    txq->txq_nq_descs[j].nqtx_data.nqtxd_cmdlen);
+			    if ((sc->sc_flags & WM_F_NEWQUEUE) != 0) {
+				    printf("\tdesc %d: 0x%" PRIx64 "\n", j,
+					txq->txq_nq_descs[j].nqtx_data.nqtxd_addr);
+				    printf("\t %#08x%08x\n",
+					txq->txq_nq_descs[j].nqtx_data.nqtxd_fields,
+					txq->txq_nq_descs[j].nqtx_data.nqtxd_cmdlen);
+			    } else {
+				    printf("\tdesc %d: 0x%" PRIx64 "\n", j,
+					(uint64_t)txq->txq_descs[j].wtx_addr.wa_high << 32 |
+					txq->txq_descs[j].wtx_addr.wa_low);
+				    printf("\t %#04x%02x%02x%08x\n",
+					txq->txq_descs[j].wtx_fields.wtxu_vlan,
+					txq->txq_descs[j].wtx_fields.wtxu_options,
+					txq->txq_descs[j].wtx_fields.wtxu_status,
+					txq->txq_descs[j].wtx_cmdlen);
+			    }
 			if (j == txs->txs_lastdesc)
 				break;
 			}
