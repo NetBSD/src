@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.553 2018/01/15 04:09:58 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.554 2018/01/15 04:25:48 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.553 2018/01/15 04:09:58 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.554 2018/01/15 04:25:48 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -4210,6 +4210,10 @@ wm_reset_phy(struct wm_softc *sc)
 	wm_phy_post_reset(sc);
 }
 
+/*
+ * Only used by WM_T_PCH_SPT which does not use multiqueue,
+ * so it is enough to check sc->sc_queue[0] only.
+ */
 static void
 wm_flush_desc_rings(struct wm_softc *sc)
 {
