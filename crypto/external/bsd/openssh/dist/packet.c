@@ -1,4 +1,4 @@
-/*	$NetBSD: packet.c,v 1.29 2017/10/09 12:07:03 christos Exp $	*/
+/*	$NetBSD: packet.c,v 1.30 2018/01/15 05:04:58 maya Exp $	*/
 /* $OpenBSD: packet.c,v 1.264 2017/09/12 06:32:07 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -39,7 +39,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: packet.c,v 1.29 2017/10/09 12:07:03 christos Exp $");
+__RCSID("$NetBSD: packet.c,v 1.30 2018/01/15 05:04:58 maya Exp $");
 
 #include <sys/param.h>	/* MIN roundup */
 #include <sys/types.h>
@@ -1117,7 +1117,7 @@ ssh_packet_send2_wrapped(struct ssh *ssh)
 	    len, padlen, aadlen));
 
 	/* compute MAC over seqnr and packet(length fields, payload, padding) */
-debug("mac %p, %d %d", mac, mac? mac->enabled : -1, mac ? mac->etm : -1);
+debug2("mac %p, %d %d", mac, mac? mac->enabled : -1, mac ? mac->etm : -1);
 	if (mac && mac->enabled && !mac->etm) {
 		if ((r = mac_compute(mac, state->p_send.seqnr,
 		    sshbuf_ptr(state->outgoing_packet), len,
