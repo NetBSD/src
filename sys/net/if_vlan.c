@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.122 2018/01/14 16:50:37 maxv Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.123 2018/01/15 08:45:19 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.122 2018/01/14 16:50:37 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.123 2018/01/15 08:45:19 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -191,9 +191,9 @@ static int	vlan_ether_delmulti(struct ifvlan *, struct ifreq *);
 static void	vlan_ether_purgemulti(struct ifvlan *);
 
 const struct vlan_multisw vlan_ether_multisw = {
-	vlan_ether_addmulti,
-	vlan_ether_delmulti,
-	vlan_ether_purgemulti,
+	.vmsw_addmulti = vlan_ether_addmulti,
+	.vmsw_delmulti = vlan_ether_delmulti,
+	.vmsw_purgemulti = vlan_ether_purgemulti,
 };
 
 static int	vlan_clone_create(struct if_clone *, int);
@@ -1160,11 +1160,15 @@ vlan_ether_addmulti(struct ifvlan *ifv, struct ifreq *ifr)
 	}
 
 	/*
-	 * As ether_addmulti() returns ENETRESET, following two
-	 * statement shouldn't fail.
+	 * Since ether_addmulti() returns ENETRESET, the following two
+	 * statements shouldn't fail. Here ifv_ec is implicitly protected
+	 * by the ifv_lock lock.
 	 */
-	(void)ether_multiaddr(sa, addrlo, addrhi);
+	error = ether_multiaddr(sa, addrlo, addrhi);
+	KASSERT(error == 0);
 	ETHER_LOOKUP_MULTI(addrlo, addrhi, &ifv->ifv_ec, mc->mc_enm);
+	KASSERT(mc->mc_enm != NULL);
+
 	memcpy(&mc->mc_addr, sa, sa->sa_len);
 	LIST_INSERT_HEAD(&ifv->ifv_mc_listhead, mc, mc_entries);
 
