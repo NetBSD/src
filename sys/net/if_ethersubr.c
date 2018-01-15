@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.250 2017/12/09 10:51:30 maxv Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.251 2018/01/15 07:59:48 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.250 2017/12/09 10:51:30 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.251 2018/01/15 07:59:48 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1553,16 +1553,23 @@ ether_multicast_sysctl(SYSCTLFN_ARGS)
 
 	/*
 	 * ec->ec_lock is a spin mutex so we cannot call sysctl_copyout, which
-	 * is sleepable, with holding it. Copy data to a local buffer first
-	 * with holding it and then call sysctl_copyout without holding it.
+	 * is sleepable, while holding it. Copy data to a local buffer first
+	 * with the lock taken and then call sysctl_copyout without holding it.
 	 */
 retry:
 	multicnt = ec->ec_multicnt;
+
+	if (multicnt == 0) {
+		if_put(ifp, &psref);
+		*oldlenp = 0;
+		goto out;
+	}
+
 	addrs = kmem_alloc(sizeof(*addrs) * multicnt, KM_SLEEP);
 
 	ETHER_LOCK(ec);
-	if (multicnt < ec->ec_multicnt) {
-		/* The number of multicast addresses have increased */
+	if (multicnt != ec->ec_multicnt) {
+		/* The number of multicast addresses has changed */
 		ETHER_UNLOCK(ec);
 		kmem_free(addrs, sizeof(*addrs) * multicnt);
 		goto retry;
