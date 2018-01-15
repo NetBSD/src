@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.137 2017/12/21 09:35:38 knakahara Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.138 2018/01/15 09:26:21 maxv Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.137 2017/12/21 09:35:38 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.138 2018/01/15 09:26:21 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1126,6 +1126,9 @@ gif_delete_tunnel(struct ifnet *ifp)
 		mutex_exit(&sc->gif_lock);
 		encap_lock_exit();
 		kmem_free(nvar, sizeof(*nvar));
+#ifndef GIF_MPSAFE
+		splx(s);
+#endif
 		return;
 	}
 
