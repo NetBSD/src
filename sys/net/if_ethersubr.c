@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.254 2018/01/15 12:17:05 maxv Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.255 2018/01/15 13:14:18 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.254 2018/01/15 12:17:05 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.255 2018/01/15 13:14:18 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -463,9 +463,12 @@ void
 altq_etherclassify(struct ifaltq *ifq, struct mbuf *m)
 {
 	struct ether_header *eh;
+	struct mbuf *mtop = m;
 	uint16_t ether_type;
 	int hlen, af, hdrsize;
 	void *hdr;
+
+	KASSERT((mtop->m_flags & M_PKTHDR) != 0);
 
 	hlen = ETHER_HDR_LEN;
 	eh = mtod(m, struct ether_header *);
@@ -508,7 +511,10 @@ altq_etherclassify(struct ifaltq *ifq, struct mbuf *m)
 	while (m->m_len <= hlen) {
 		hlen -= m->m_len;
 		m = m->m_next;
+		if (m == NULL)
+			goto bad;
 	}
+
 	if (m->m_len < (hlen + hdrsize)) {
 		/*
 		 * protocol header not in a single mbuf.
@@ -527,11 +533,12 @@ altq_etherclassify(struct ifaltq *ifq, struct mbuf *m)
 
 	hdr = mtod(m, void *);
 
-	if (ALTQ_NEEDS_CLASSIFY(ifq))
-		m->m_pkthdr.pattr_class =
+	if (ALTQ_NEEDS_CLASSIFY(ifq)) {
+		mtop->m_pkthdr.pattr_class =
 		    (*ifq->altq_classify)(ifq->altq_clfier, m, af);
-	m->m_pkthdr.pattr_af = af;
-	m->m_pkthdr.pattr_hdr = hdr;
+	}
+	mtop->m_pkthdr.pattr_af = af;
+	mtop->m_pkthdr.pattr_hdr = hdr;
 
 	m->m_data -= hlen;
 	m->m_len += hlen;
@@ -539,9 +546,9 @@ altq_etherclassify(struct ifaltq *ifq, struct mbuf *m)
 	return;
 
 bad:
-	m->m_pkthdr.pattr_class = NULL;
-	m->m_pkthdr.pattr_hdr = NULL;
-	m->m_pkthdr.pattr_af = AF_UNSPEC;
+	mtop->m_pkthdr.pattr_class = NULL;
+	mtop->m_pkthdr.pattr_hdr = NULL;
+	mtop->m_pkthdr.pattr_af = AF_UNSPEC;
 }
 #endif /* ALTQ */
 
