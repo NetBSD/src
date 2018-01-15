@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.357.2.9 2017/09/23 17:39:34 snj Exp $	*/
+/*	$NetBSD: audio.c,v 1.357.2.10 2018/01/15 00:08:55 snj Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.357.2.9 2017/09/23 17:39:34 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.357.2.10 2018/01/15 00:08:55 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -195,6 +195,8 @@ __KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.357.2.9 2017/09/23 17:39:34 snj Exp $");
 
 #include <uvm/uvm.h>
 
+#include "ioconf.h"
+
 /* #define AUDIO_DEBUG	1 */
 #ifdef AUDIO_DEBUG
 #define DPRINTF(x)	if (audiodebug) printf x
@@ -205,6 +207,7 @@ int	audiodebug = AUDIO_DEBUG;
 #define DPRINTFN(n,x)
 #endif
 
+#define PREFILL_BLOCKS	3	/* no. audioblocks required to start stream */
 #define ROUNDSIZE(x)	(x) &= -16	/* round to nice boundary */
 #define SPECIFIED(x)	((x) != ~0)
 #define SPECIFIED_CH(x)	((x) != (u_char)~0)
@@ -275,6 +278,9 @@ int	mix_write(void *);
 int	mix_read(void *);
 int	audio_check_params(struct audio_params *);
 
+static void	audio_calc_latency(struct audio_softc *);
+static void	audio_setblksize(struct audio_softc *,
+				 struct virtual_channel *, int, int);
 int	audio_calc_blksize(struct audio_softc *, const audio_params_t *);
 void	audio_fill_silence(struct audio_params *, uint8_t *, int);
 int	audio_silence_copyout(struct audio_softc *, int, struct uio *);
@@ -288,9 +294,6 @@ int	audio_drain(struct audio_softc *, struct virtual_channel *);
 void	audio_clear(struct audio_softc *, struct virtual_channel *);
 void	audio_clear_intr_unlocked(struct audio_softc *sc,
 				  struct virtual_channel *);
-static inline void
-	audio_pint_silence(struct audio_softc *, struct audio_ringbuffer *,
-			   uint8_t *, int, struct virtual_channel *);
 int	audio_alloc_ring(struct audio_softc *, struct audio_ringbuffer *, int,
 			 size_t);
 void	audio_free_ring(struct audio_softc *, struct audio_ringbuffer *);
@@ -313,6 +316,8 @@ int	audio_set_defaults(struct audio_softc *, u_int,
 static int audio_sysctl_frequency(SYSCTLFN_PROTO);
 static int audio_sysctl_precision(SYSCTLFN_PROTO);
 static int audio_sysctl_channels(SYSCTLFN_PROTO);
+static int audio_sysctl_latency(SYSCTLFN_PROTO);
+static int audio_sysctl_usemixer(SYSCTLFN_PROTO);
 
 static int	audiomatch(device_t, cfdata_t, void *);
 static void	audioattach(device_t, device_t, void *);
@@ -394,8 +399,7 @@ static int audio_set_params (struct audio_softc *, int, int,
 		 struct virtual_channel *);
 static int
 audio_query_encoding(struct audio_softc *, struct audio_encoding *);
-static int audio_set_vchan_defaults
-	(struct audio_softc *, u_int, const struct audio_format *);
+static int audio_set_vchan_defaults(struct audio_softc *, u_int);
 static int vchan_autoconfig(struct audio_softc *);
 int	au_get_lr_value(struct audio_softc *, mixer_ctrl_t *, int *, int *);
 int	au_set_lr_value(struct audio_softc *, mixer_ctrl_t *, int, int);
@@ -463,8 +467,6 @@ CFATTACH_DECL3_NEW(audio, sizeof(struct audio_softc),
     audiomatch, audioattach, audiodetach, audioactivate, audiorescan,
     audiochilddet, DVF_DETACH_SHUTDOWN);
 
-extern struct cfdriver audio_cd;
-
 static int
 audiomatch(device_t parent, cfdata_t match, void *aux)
 {
@@ -499,6 +501,7 @@ audioattach(device_t parent, device_t self, void *aux)
 	sc->sc_recopens = 0;
 	sc->sc_aivalid = false;
  	sc->sc_ready = true;
+	sc->sc_latency = audio_blk_ms * PREFILL_BLOCKS;
 
  	sc->sc_format[0].mode = AUMODE_PLAY | AUMODE_RECORD;
  	sc->sc_format[0].encoding =
@@ -513,16 +516,6 @@ audioattach(device_t parent, device_t self, void *aux)
  	sc->sc_format[0].channel_mask = AUFMT_STEREO;
  	sc->sc_format[0].frequency_type = 1;
  	sc->sc_format[0].frequency[0] = 44100;
-
-	sc->sc_vchan_params.sample_rate = 44100;
-#if BYTE_ORDER == LITTLE_ENDIAN
-	sc->sc_vchan_params.encoding = AUDIO_ENCODING_SLINEAR_LE;
-#else
-	sc->sc_vchan_params.encoding = AUDIO_ENCODING_SLINEAR_BE;
-#endif
-	sc->sc_vchan_params.precision = 16;
-	sc->sc_vchan_params.validbits = 16;
-	sc->sc_vchan_params.channels = 2;
 
 	sc->sc_trigger_started = false;
 	sc->sc_rec_started = false;
@@ -539,9 +532,6 @@ audioattach(device_t parent, device_t self, void *aux)
 	vc->sc_lastinfovalid = false;
 	vc->sc_swvol = 255;
 	vc->sc_recswvol = 255;
-	sc->sc_frequency = 44100;
-	sc->sc_precision = 16;
-	sc->sc_channels = 2;
 
 	if (auconv_create_encodings(sc->sc_format, VAUDIO_NFORMATS,
 	    &sc->sc_encodings) != 0) {
@@ -615,6 +605,7 @@ audioattach(device_t parent, device_t self, void *aux)
 
 	sc->sc_lastgain = 128;
 	sc->sc_multiuser = false;
+	sc->sc_usemixer = true;
 
 	error = vchan_autoconfig(sc);
 	if (error != 0) {
@@ -806,10 +797,28 @@ audioattach(device_t parent, device_t self, void *aux)
 
 		sysctl_createv(&sc->sc_log, 0, NULL, NULL,
 			CTLFLAG_READWRITE,
+			CTLTYPE_INT, "latency",
+			SYSCTL_DESCR("latency"),
+			audio_sysctl_latency, 0,
+			(void *)sc, 0,
+			CTL_HW, node->sysctl_num,
+			CTL_CREATE, CTL_EOL);
+
+		sysctl_createv(&sc->sc_log, 0, NULL, NULL,
+			CTLFLAG_READWRITE,
 			CTLTYPE_BOOL, "multiuser",
 			SYSCTL_DESCR("allow multiple user acess"),
 			NULL, 0,
 			&sc->sc_multiuser, 0,
+			CTL_HW, node->sysctl_num,
+			CTL_CREATE, CTL_EOL);
+
+		sysctl_createv(&sc->sc_log, 0, NULL, NULL,
+			CTLFLAG_READWRITE,
+			CTLTYPE_BOOL, "usemixer",
+			SYSCTL_DESCR("allow in-kernel mixing"),
+			audio_sysctl_usemixer, 0,
+			(void *)sc, 0,
 			CTL_HW, node->sysctl_num,
 			CTL_CREATE, CTL_EOL);
 	}
@@ -879,7 +888,7 @@ audiodetach(device_t self, int flags)
 	DPRINTF(("audio_detach: sc=%p flags=%d\n", sc, flags));
 
 	/* Start draining existing accessors of the device. */
-	if ((rc = config_detach_children(self, flags)) != 0)
+	if ((rc = config_detach_children(self, flags | DETACH_FORCE)) != 0)
 		return rc;
 	mutex_enter(sc->sc_lock);
 	sc->sc_dying = true;
@@ -939,8 +948,8 @@ audiodetach(device_t self, int flags)
 	}
 	audio_free_ring(sc, &sc->sc_hwvc->sc_mpr);
 	audio_free_ring(sc, &sc->sc_hwvc->sc_mrr);
-	audio_free_ring(sc, &sc->sc_pr);
-	audio_free_ring(sc, &sc->sc_rr);
+	audio_free_ring(sc, &sc->sc_mixring.sc_mpr);
+	audio_free_ring(sc, &sc->sc_mixring.sc_mrr);
 	SIMPLEQ_FOREACH(chan, &sc->sc_audiochan, entries) {
 		audio_destroy_pfilters(chan->vc);
 		audio_destroy_rfilters(chan->vc);
@@ -1120,13 +1129,13 @@ audio_allocbufs(struct audio_softc *sc, struct virtual_channel *vc)
 {
 	int error;
 
-	sc->sc_pr.s.start = NULL;
+	sc->sc_mixring.sc_mpr.s.start = NULL;
 	vc->sc_mpr.s.start = NULL;
-	sc->sc_rr.s.start = NULL;
+	sc->sc_mixring.sc_mrr.s.start = NULL;
 	vc->sc_mrr.s.start = NULL;
 
 	if (audio_can_playback(sc)) {
-		error = audio_alloc_ring(sc, &sc->sc_pr,
+		error = audio_alloc_ring(sc, &sc->sc_mixring.sc_mpr,
 		    AUMODE_PLAY, AU_RING_SIZE);
 		if (error)
 			goto bad_play1;
@@ -1137,7 +1146,7 @@ audio_allocbufs(struct audio_softc *sc, struct virtual_channel *vc)
 			goto bad_play2;
 	}
 	if (audio_can_capture(sc)) {
-		error = audio_alloc_ring(sc, &sc->sc_rr,
+		error = audio_alloc_ring(sc, &sc->sc_mixring.sc_mrr,
 		    AUMODE_RECORD, AU_RING_SIZE);
 		if (error)
 			goto bad_rec1;
@@ -1150,14 +1159,14 @@ audio_allocbufs(struct audio_softc *sc, struct virtual_channel *vc)
 	return 0;
 
 bad_rec2:
-	if (sc->sc_rr.s.start != NULL)
-		audio_free_ring(sc, &sc->sc_rr);
+	if (sc->sc_mixring.sc_mrr.s.start != NULL)
+		audio_free_ring(sc, &sc->sc_mixring.sc_mrr);
 bad_rec1:
 	if (vc->sc_mpr.s.start != NULL)
 		audio_free_ring(sc, &vc->sc_mpr);
 bad_play2:
-	if (sc->sc_pr.s.start != NULL)
-		audio_free_ring(sc, &sc->sc_pr);
+	if (sc->sc_mixring.sc_mpr.s.start != NULL)
+		audio_free_ring(sc, &sc->sc_mixring.sc_mpr);
 bad_play1:
 	return error;
 }
@@ -1585,6 +1594,9 @@ audio_waitio(struct audio_softc *sc, kcondvar_t *chan, struct virtual_channel *v
 	/* Wait for pending I/O to complete. */
 	error = cv_wait_sig(chan, sc->sc_lock);
 
+	if (!sc->sc_usemixer || vc == sc->sc_hwvc)
+		return error;
+
 	found = false;
 	SIMPLEQ_FOREACH(vchan, &sc->sc_audiochan, entries) {
 		if (vchan->vc == vc) {
@@ -1873,18 +1885,18 @@ audiopoll(struct file *fp, int events)
 	dev_t dev;
 
 	if (fp->f_audioctx == NULL)
-		return EIO;
+		return POLLERR;
 
 	dev = fp->f_audioctx->dev;
 
 	/* Don't bother with device level lock here. */
 	sc = device_lookup_private(&audio_cd, AUDIOUNIT(dev));
 	if (sc == NULL)
-		return ENXIO;
+		return POLLERR;
 	mutex_enter(sc->sc_lock);
 	if (sc->sc_dying) {
 		mutex_exit(sc->sc_lock);
-		return EIO;
+		return POLLERR;
 	}
 
 	switch (AUDIODEV(dev)) {
@@ -1910,8 +1922,8 @@ static int
 audiokqfilter(struct file *fp, struct knote *kn)
 {
 	struct audio_softc *sc;
-	int rv;
 	struct audio_chan *chan;
+	int error;
 	dev_t dev;
 
 	chan = fp->f_audioctx;
@@ -1929,18 +1941,19 @@ audiokqfilter(struct file *fp, struct knote *kn)
 	switch (AUDIODEV(dev)) {
 	case SOUND_DEVICE:
 	case AUDIO_DEVICE:
-		rv = audio_kqfilter(chan, kn);
+		error = audio_kqfilter(chan, kn);
 		break;
 	case AUDIOCTL_DEVICE:
 	case MIXER_DEVICE:
-		rv = 1;
+		error = ENODEV;
 		break;
 	default:
-		rv = 1;
+		error = ENXIO;
+		break;
 	}
 	mutex_exit(sc->sc_lock);
 
-	return rv;
+	return error;
 }
 
 static int
@@ -1959,7 +1972,7 @@ audio_fop_mmap(struct file *fp, off_t *offp, size_t len, int prot, int *flagsp,
 	error = 0;
 
 	if ((error = audio_enter(dev, RW_READER, &sc)) != 0)
-		return 1;
+		return error;
 	device_active(sc->dev, DVA_SYSTEM); /* XXXJDM */
 
 	switch (AUDIODEV(dev)) {
@@ -1996,9 +2009,23 @@ audio_init_ringbuffer(struct audio_softc *sc, struct audio_ringbuffer *rp,
 		blksize = rp->s.bufsize / AUMINNOBLK;
 	ROUNDSIZE(blksize);
 	DPRINTF(("audio_init_ringbuffer: MI blksize=%d\n", blksize));
-	if (sc->hw_if->round_blocksize)
+
+	struct virtual_channel *hwvc = sc->sc_hwvc;
+
+	int tmpblksize = 1; 	 
+	/* round blocksize to a power of 2 */ 	 
+	while (tmpblksize < blksize)
+		tmpblksize <<= 1; 	 
+
+	blksize = tmpblksize;
+
+	if (sc->hw_if->round_blocksize &&
+	    (rp == &hwvc->sc_mpr || rp == &hwvc->sc_mrr || rp ==
+	    &sc->sc_mixring.sc_mpr || rp == &sc->sc_mixring.sc_mrr)) {
 		blksize = sc->hw_if->round_blocksize(sc->hw_hdl, blksize,
-						     mode, &rp->s.param);
+		    mode, &rp->s.param);
+	}
+
 	if (blksize <= 0)
 		panic("audio_init_ringbuffer: blksize=%d", blksize);
 	nblks = rp->s.bufsize / blksize;
@@ -2034,12 +2061,14 @@ audio_initbufs(struct audio_softc *sc, struct virtual_channel *vc)
 		((vc->sc_open & AUOPEN_READ) || vc == sc->sc_hwvc)) {
 		audio_init_ringbuffer(sc, &vc->sc_mrr,
 		    AUMODE_RECORD);
-		if (sc->sc_opens == 0 && hw->init_input &&
-		    (vc->sc_mode & AUMODE_RECORD)) {
-			error = hw->init_input(sc->hw_hdl, vc->sc_mrr.s.start,
-				       vc->sc_mrr.s.end - vc->sc_mrr.s.start);
-			if (error)
-				return error;
+		if (sc->sc_recopens == 0 && (vc->sc_open & AUOPEN_READ)) {
+			if (hw->init_input) {
+				error = hw->init_input(sc->hw_hdl,
+				    vc->sc_mrr.s.start,
+				    vc->sc_mrr.s.end - vc->sc_mrr.s.start);
+				if (error)
+					return error;
+			}
 		}
 	}
 
@@ -2047,13 +2076,14 @@ audio_initbufs(struct audio_softc *sc, struct virtual_channel *vc)
 		((vc->sc_open & AUOPEN_WRITE) || vc == sc->sc_hwvc)) {
 		audio_init_ringbuffer(sc, &vc->sc_mpr,
 		    AUMODE_PLAY);
-		vc->sc_sil_count = 0;
-		if (sc->sc_opens == 0 && hw->init_output &&
-		    (vc->sc_mode & AUMODE_PLAY)) {
-			error = hw->init_output(sc->hw_hdl, vc->sc_mpr.s.start,
-					vc->sc_mpr.s.end - vc->sc_mpr.s.start);
-			if (error)
-				return error;
+		if (sc->sc_opens == 0 && (vc->sc_open & AUOPEN_WRITE)) {
+			if (hw->init_output) {
+				error = hw->init_output(sc->hw_hdl,
+				    vc->sc_mpr.s.start,
+				    vc->sc_mpr.s.end - vc->sc_mpr.s.start);
+				if (error)
+					return error;
+			}
 		}
 	}
 
@@ -2118,7 +2148,7 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 
 	KASSERT(mutex_owned(sc->sc_lock));
 
-	if (sc->sc_ready == false)
+	if (sc->sc_usemixer && !sc->sc_ready)
 		return ENXIO;
 
 	hw = sc->hw_if;
@@ -2132,36 +2162,52 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 		return ENOMEM;
 
 	chan = kmem_zalloc(sizeof(struct audio_chan), KM_SLEEP);
-	vc = kmem_zalloc(sizeof(struct virtual_channel), KM_SLEEP);
+	if (sc->sc_usemixer)
+		vc = kmem_zalloc(sizeof(struct virtual_channel), KM_SLEEP);
+	else
+		vc = sc->sc_hwvc;
 	chan->vc = vc;
 
-	vc->sc_open = 0;
-	vc->sc_mode = 0;
-	vc->sc_sil_count = 0;
-	vc->sc_nrfilters = 0;
-	memset(vc->sc_rfilters, 0,
-	    sizeof(vc->sc_rfilters));
-	vc->sc_rbus = false;
-	vc->sc_npfilters = 0;
-	memset(vc->sc_pfilters, 0,
-	    sizeof(vc->sc_pfilters));
-	vc->sc_draining = false;
-	vc->sc_pbus = false;
-	vc->sc_lastinfovalid = false;
-	vc->sc_swvol = 255;
-	vc->sc_recswvol = 255;
+	if (!sc->sc_usemixer && AUDIODEV(dev) == AUDIOCTL_DEVICE)
+		goto audioctl_dev;
+
+	if (sc->sc_usemixer) {
+		vc->sc_open = 0;
+		vc->sc_mode = 0;
+		vc->sc_nrfilters = 0;
+		memset(vc->sc_rfilters, 0,
+		    sizeof(vc->sc_rfilters));
+		vc->sc_rbus = false;
+		vc->sc_npfilters = 0;
+		memset(vc->sc_pfilters, 0,
+		    sizeof(vc->sc_pfilters));
+		vc->sc_draining = false;
+		vc->sc_pbus = false;
+		vc->sc_lastinfovalid = false;
+		vc->sc_swvol = 255;
+		vc->sc_recswvol = 255;
+	} else {
+		if (sc->sc_opens > 0 || sc->sc_recopens > 0 ) {
+			kmem_free(chan, sizeof(struct audio_chan));
+			return EBUSY;
+		}
+	}
 
 	DPRINTF(("audio_open: flags=0x%x sc=%p hdl=%p\n",
 		 flags, sc, sc->hw_hdl));
 
-	error = audio_alloc_ring(sc, &vc->sc_mpr, AUMODE_PLAY, AU_RING_SIZE);
-	if (error)
-		goto bad;
-	error = audio_alloc_ring(sc, &vc->sc_mrr, AUMODE_RECORD, AU_RING_SIZE);
-	if (error)
-		goto bad;
+	if (sc->sc_usemixer) {
+		error = audio_alloc_ring(sc, &vc->sc_mpr, AUMODE_PLAY,
+		    AU_RING_SIZE);
+		if (error)
+			goto bad;
+		error = audio_alloc_ring(sc, &vc->sc_mrr, AUMODE_RECORD,
+		    AU_RING_SIZE);
+		if (error)
+			goto bad;
+	}
 
-	if (sc->sc_opens == 0) {
+	if (!sc->sc_usemixer || sc->sc_opens + sc->sc_recopens == 0) {
 		sc->sc_credentials = kauth_cred_get();
 		kauth_cred_hold(sc->sc_credentials);
 		if (hw->open != NULL) {
@@ -2173,10 +2219,12 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 			}
 		}
 		audio_initbufs(sc, NULL);
-		if (audio_can_playback(sc))
-			audio_init_ringbuffer(sc, &sc->sc_pr, AUMODE_PLAY);
-		if (audio_can_capture(sc))
-			audio_init_ringbuffer(sc, &sc->sc_rr, AUMODE_RECORD);
+		if (sc->sc_usemixer && audio_can_playback(sc))
+			audio_init_ringbuffer(sc, &sc->sc_mixring.sc_mpr,
+			    AUMODE_PLAY);
+		if (sc->sc_usemixer && audio_can_capture(sc))
+			audio_init_ringbuffer(sc, &sc->sc_mixring.sc_mrr,
+			    AUMODE_RECORD);
 		sc->schedule_wih = false;
 		sc->schedule_rih = false;
 		sc->sc_last_drops = 0;
@@ -2210,21 +2258,18 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 		mode |= AUMODE_PLAY | AUMODE_PLAY_ALL;
 	}
 
-	vc->sc_mpr.blksize = sc->sc_pr.blksize;
-	vc->sc_mrr.blksize = sc->sc_rr.blksize;
-
 	/*
 	 * Multiplex device: /dev/audio (MU-Law) and /dev/sound (linear)
 	 * The /dev/audio is always (re)set to 8-bit MU-Law mono
 	 * For the other devices, you get what they were last set to.
 	 */
-	error = audio_set_defaults(sc, mode, vc);
-	if (!error && ISDEVSOUND(dev) && sc->sc_aivalid == true) {
+	if (ISDEVSOUND(dev) && sc->sc_aivalid == true) {
 		sc->sc_ai.mode = mode;
 		sc->sc_ai.play.port = ~0;
 		sc->sc_ai.record.port = ~0;
 		error = audiosetinfo(sc, &sc->sc_ai, true, vc);
-	}
+	} else
+		error = audio_set_defaults(sc, mode, vc);
 	if (error)
 		goto bad;
 
@@ -2243,20 +2288,28 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	/* audio_close() decreases sc_mpr[n].usedlow, recalculate here */
 	audio_calcwater(sc, vc);
 
+audioctl_dev:
 	error = fd_allocfile(&fp, &fd);
 	if (error)
 		goto bad;
+	if (!sc->sc_usemixer && AUDIODEV(dev) == AUDIOCTL_DEVICE)
+		goto setup_chan;
 
 	DPRINTF(("audio_open: done sc_mode = 0x%x\n", vc->sc_mode));
 
-	grow_mixer_states(sc, 2);
+	if (sc->sc_usemixer)
+		grow_mixer_states(sc, 2);
 	if (flags & FREAD)
 		sc->sc_recopens++;
-	sc->sc_opens++;
+	if (flags & FWRITE)
+		sc->sc_opens++;
+
+setup_chan:
 	chan->dev = dev;
 	chan->chan = n;
 	chan->deschan = n;
-	SIMPLEQ_INSERT_TAIL(&sc->sc_audiochan, chan, entries);
+	if (sc->sc_usemixer)
+		SIMPLEQ_INSERT_TAIL(&sc->sc_audiochan, chan, entries);
 
 	error = fd_clone(fp, fd, flags, &audio_fileops, chan);
 	KASSERT(error == EMOVEFD);
@@ -2267,13 +2320,17 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 bad:
 	audio_destroy_pfilters(vc);
 	audio_destroy_rfilters(vc);
-	if (hw->close != NULL && sc->sc_opens == 0)
+	if (hw->close != NULL && sc->sc_opens == 0 && sc->sc_recopens == 0)
 		hw->close(sc->hw_hdl);
 	mutex_exit(sc->sc_lock);
-	audio_free_ring(sc, &vc->sc_mpr);
-	audio_free_ring(sc, &vc->sc_mrr);
-	mutex_enter(sc->sc_lock);
-	kmem_free(vc, sizeof(struct virtual_channel));
+	if (sc->sc_usemixer) {
+		audio_free_ring(sc, &vc->sc_mpr);
+		audio_free_ring(sc, &vc->sc_mrr);
+		mutex_enter(sc->sc_lock);
+		kmem_free(vc, sizeof(struct virtual_channel));
+	} else
+		mutex_enter(sc->sc_lock);
+
 	kmem_free(chan, sizeof(struct audio_chan));
 	return error;
 }
@@ -2287,7 +2344,7 @@ audio_init_record(struct audio_softc *sc, struct virtual_channel *vc)
 
 	KASSERT(mutex_owned(sc->sc_lock));
 	
-	if (sc->sc_opens != 0)
+	if (sc->sc_recopens != 0)
 		return;
 
 	mutex_enter(sc->sc_intr_lock);
@@ -2334,13 +2391,13 @@ audio_drain(struct audio_softc *sc, struct virtual_channel *vc)
 		return 0;
 
 	used = audio_stream_get_used(&cb->s);
-	if (vc == sc->sc_hwvc) {
+	if (vc == sc->sc_hwvc && sc->sc_usemixer) {
 		hw = true;
-		used += audio_stream_get_used(&sc->sc_pr.s);
+		used += audio_stream_get_used(&sc->sc_mixring.sc_mpr.s);
 	}
 	for (i = 0; i < vc->sc_npfilters; i++)
 		used += audio_stream_get_used(&vc->sc_pstreams[i]);
-	if (used <= 0 || (hw == true && sc->hw_if->trigger_output == NULL))
+	if (used <= 0)
 		return 0;
 
 	if (hw == false && !vc->sc_pbus) {
@@ -2348,8 +2405,9 @@ audio_drain(struct audio_softc *sc, struct virtual_channel *vc)
 		 * block was too short.  Pad it and start now.
 		 */
 		uint8_t *inp = cb->s.inp;
+		int blksize = sc->sc_mixring.sc_mpr.blksize;
 
-		cc = cb->blksize - (inp - cb->s.start) % cb->blksize;
+		cc = blksize - (inp - cb->s.start) % blksize;
 		audio_fill_silence(&cb->s.param, inp, cc);
 		cb->s.inp = audio_stream_add_inp(&cb->s, inp, cc);
 		mutex_exit(sc->sc_intr_lock);
@@ -2358,15 +2416,18 @@ audio_drain(struct audio_softc *sc, struct virtual_channel *vc)
 		if (error)
 			return error;
 	} else if (hw == true) {
-		used = cb->blksize - (sc->sc_pr.s.inp - sc->sc_pr.s.start)
-		    % cb->blksize;
+		used = cb->blksize - (sc->sc_mixring.sc_mpr.s.inp -
+		    sc->sc_mixring.sc_mpr.s.start) % cb->blksize;
 		while (used > 0) {
-			cc = sc->sc_pr.s.end - sc->sc_pr.s.inp;
+			cc = sc->sc_mixring.sc_mpr.s.end -
+			    sc->sc_mixring.sc_mpr.s.inp;
 			if (cc > used)
 				cc = used;
-			audio_fill_silence(&cb->s.param, sc->sc_pr.s.inp, cc);
-			sc->sc_pr.s.inp = audio_stream_add_inp(&sc->sc_pr.s,
-			    sc->sc_pr.s.inp, cc);
+			audio_fill_silence(&cb->s.param,
+			    sc->sc_mixring.sc_mpr.s.inp, cc);
+			sc->sc_mixring.sc_mpr.s.inp =
+			    audio_stream_add_inp(&sc->sc_mixring.sc_mpr.s,
+				sc->sc_mixring.sc_mpr.s.inp, cc);
 			used -= cc;
 		}
 		mix_write(sc);
@@ -2386,8 +2447,13 @@ audio_drain(struct audio_softc *sc, struct virtual_channel *vc)
 	vc->sc_draining = true;
 
 	drops = cb->drops;
+	if (vc == sc->sc_hwvc)
+		drops += cb->blksize;
+	else if (sc->sc_usemixer)
+		drops += sc->sc_mixring.sc_mpr.blksize * PREFILL_BLOCKS;
+
 	error = 0;
-	while (cb->drops == drops && !error) {
+	while (cb->drops <= drops && !error) {
 		DPRINTF(("audio_drain: vc=%p used=%d, drops=%ld\n",
 			vc,
 			audio_stream_get_used(&vc->sc_mpr.s),
@@ -2415,7 +2481,10 @@ audio_close(struct audio_softc *sc, int flags, struct audio_chan *chan)
 
 	KASSERT(mutex_owned(sc->sc_lock));
 	
-	if (sc->sc_opens == 0)
+	if (!sc->sc_usemixer && AUDIODEV(chan->dev) == AUDIOCTL_DEVICE)
+		return 0;
+
+	if (sc->sc_opens == 0 && sc->sc_recopens == 0)
 		return ENXIO;
 
 	vc = chan->vc;
@@ -2449,7 +2518,7 @@ audio_close(struct audio_softc *sc, int flags, struct audio_chan *chan)
 			audio_drain(sc, chan->vc);
 		vc->sc_pbus = false;
 	}
-	if (sc->sc_opens == 1) {
+	if ((flags & FWRITE) && (sc->sc_opens == 1)) {
 		if (vc->sc_mpr.mmapped == false)
 			audio_drain(sc, sc->sc_hwvc);
 		if (hw->drain)
@@ -2460,11 +2529,11 @@ audio_close(struct audio_softc *sc, int flags, struct audio_chan *chan)
 	if ((flags & FREAD) && (sc->sc_recopens == 1))
 		sc->sc_rec_started = false;
 
-	if (sc->sc_opens == 1 && hw->close != NULL)
+	if (sc->sc_opens + sc->sc_recopens == 1 && hw->close != NULL)
 		hw->close(sc->hw_hdl);
 	mutex_exit(sc->sc_intr_lock);
 
-	if (sc->sc_opens == 1) {
+	if (sc->sc_opens + sc->sc_recopens == 1) {
 		sc->sc_async_audio = 0;
 		kauth_cred_free(sc->sc_credentials);
 	}
@@ -2478,14 +2547,17 @@ audio_close(struct audio_softc *sc, int flags, struct audio_chan *chan)
 
 	if (flags & FREAD)
 		sc->sc_recopens--;
-	sc->sc_opens--;
-	shrink_mixer_states(sc, 2);
-	SIMPLEQ_REMOVE(&sc->sc_audiochan, chan, audio_chan, entries);
-	mutex_exit(sc->sc_lock);
-	audio_free_ring(sc, &vc->sc_mpr);
-	audio_free_ring(sc, &vc->sc_mrr);
-	mutex_enter(sc->sc_lock);
-	kmem_free(vc, sizeof(struct virtual_channel));
+	if (flags & FWRITE)
+		sc->sc_opens--;
+	if (sc->sc_usemixer) {
+		shrink_mixer_states(sc, 2);
+		SIMPLEQ_REMOVE(&sc->sc_audiochan, chan, audio_chan, entries);
+		mutex_exit(sc->sc_lock);
+		audio_free_ring(sc, &vc->sc_mpr);
+		audio_free_ring(sc, &vc->sc_mrr);
+		mutex_enter(sc->sc_lock);
+		kmem_free(vc, sizeof(struct virtual_channel));
+	}
 
 	return 0;
 }
@@ -2624,13 +2696,56 @@ audio_clear_intr_unlocked(struct audio_softc *sc, struct virtual_channel *vc)
 	mutex_exit(sc->sc_intr_lock);
 }
 
+static void
+audio_calc_latency(struct audio_softc *sc)
+{
+	const struct audio_params *ap = &sc->sc_vchan_params;
+
+	if (ap->sample_rate == 0 || ap->channels == 0 || ap->precision == 0)
+		return;
+
+	sc->sc_latency = sc->sc_hwvc->sc_mpr.blksize * 1000 * PREFILL_BLOCKS
+	    * NBBY / ap->sample_rate / ap->channels / ap->precision;
+}
+
+static void
+audio_setblksize(struct audio_softc *sc, struct virtual_channel *vc,
+    int blksize, int mode)
+{
+	struct audio_ringbuffer *mixcb, *cb;
+	audio_params_t *parm;
+	audio_stream_t *stream;
+
+	if (mode == AUMODE_RECORD) {
+		mixcb = &sc->sc_mixring.sc_mrr;
+		cb = &vc->sc_mrr;
+		parm = &vc->sc_rparams;
+		stream = vc->sc_rustream;
+	} else {
+		mixcb = &sc->sc_mixring.sc_mpr;
+		cb = &vc->sc_mpr;
+		parm = &vc->sc_pparams;
+		stream = vc->sc_pustream;
+	}
+
+	if (sc->sc_usemixer && vc == sc->sc_hwvc) {
+		mixcb->blksize = audio_calc_blksize(sc, parm);
+		cb->blksize = audio_calc_blksize(sc, &cb->s.param);
+	} else {
+		cb->blksize = audio_calc_blksize(sc, &stream->param);
+		if ((!sc->sc_usemixer && SPECIFIED(blksize)) ||
+		    (SPECIFIED(blksize) && blksize > cb->blksize))
+			cb->blksize = blksize;
+	}
+}
+
 int
 audio_calc_blksize(struct audio_softc *sc, const audio_params_t *parm)
 {
 	int blksize;
 
-	blksize = parm->sample_rate * audio_blk_ms / 1000 *
-	     parm->channels * parm->precision / NBBY;
+	blksize = parm->sample_rate * sc->sc_latency * parm->channels /
+	    1000 * parm->precision / NBBY / PREFILL_BLOCKS;
 	return blksize;
 }
 
@@ -2882,7 +2997,10 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag,
 			filter = vc->sc_pfilters[0];
 			filter->set_fetcher(filter, &ufetcher.base);
 			fetcher = &vc->sc_pfilters[vc->sc_npfilters - 1]->base;
-			cc = cb->blksize * 2;
+			if (sc->sc_usemixer)
+				cc = sc->sc_mixring.sc_mpr.blksize * 2;
+			else
+				cc = vc->sc_mpr.blksize * 2;
 			error = fetcher->fetch_to(sc, fetcher, &stream, cc);
 			if (error != 0) {
 				fetcher = &ufetcher.base;
@@ -2903,12 +3021,6 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag,
 		cb->s.used += stream.used - used;
 		cb->s.inp = stream.inp;
 		einp = cb->s.inp;
-
-		/*
-		 * This is a very suboptimal way of keeping track of
-		 * silence in the buffer, but it is simple.
-		 */
-		vc->sc_sil_count = 0;
 
 		/*
 		 * If the interrupt routine wants the last block filled AND
@@ -2956,12 +3068,15 @@ audio_ioctl(dev_t dev, struct audio_softc *sc, u_long cmd, void *addr, int flag,
 
 	KASSERT(mutex_owned(sc->sc_lock));
 
-	SIMPLEQ_FOREACH(pchan, &sc->sc_audiochan, entries) {
-		if (pchan->chan == chan->deschan)
-			break;
-	}
-	if (pchan == NULL)
-		return ENXIO;
+	if (sc->sc_usemixer) {
+		SIMPLEQ_FOREACH(pchan, &sc->sc_audiochan, entries) {
+			if (pchan->chan == chan->deschan)
+				break;
+		}
+		if (pchan == NULL)
+			return ENXIO;
+	} else
+		pchan = chan;
 
 	vc = pchan->vc;
 
@@ -3396,7 +3511,7 @@ audio_mmap(struct audio_softc *sc, off_t *offp, size_t len, int prot,
 				(void)audiostartp(sc, vc);
 		} else if (cb == &vc->sc_mrr) {
 			vc->sc_rustream = &cb->s;
-			if (!vc->sc_rbus && !sc->sc_rr.pause)
+			if (!vc->sc_rbus && !sc->sc_mixring.sc_mrr.pause)
 				(void)audiostartr(sc, vc);
 		}
 	}
@@ -3425,14 +3540,15 @@ audiostartr(struct audio_softc *sc, struct virtual_channel *vc)
 
 	if (!audio_can_capture(sc))
 		return EINVAL;
-	if (vc == sc->sc_hwvc)
+	if (vc == sc->sc_hwvc && sc->sc_usemixer)
 		return 0;
 
 	error = 0;
 	if (sc->sc_rec_started == false) {
 		mutex_enter(sc->sc_intr_lock);
 		error = mix_read(sc);
-		cv_broadcast(&sc->sc_rcondvar);
+		if (sc->sc_usemixer)
+			cv_broadcast(&sc->sc_rcondvar);
 		mutex_exit(sc->sc_intr_lock);
 	}
 	vc->sc_rbus = true;
@@ -3455,10 +3571,16 @@ audiostartp(struct audio_softc *sc, struct virtual_channel *vc)
 
 	if (!audio_can_playback(sc))
 		return EINVAL;
-	if (vc == sc->sc_hwvc)
+	if (vc == sc->sc_hwvc && sc->sc_usemixer)
 		return 0;
 
-	if (!vc->sc_mpr.mmapped && used < vc->sc_mpr.blksize) {
+	int blksize;
+	if (sc->sc_usemixer)
+		blksize = sc->sc_mixring.sc_mpr.blksize;
+	else
+		blksize = vc->sc_mpr.blksize;
+
+	if (!vc->sc_mpr.mmapped && used < blksize) {
 		cv_broadcast(&sc->sc_wchan);
 		DPRINTF(("%s: wakeup and return\n", __func__));
 		return 0;
@@ -3466,77 +3588,28 @@ audiostartp(struct audio_softc *sc, struct virtual_channel *vc)
 	
 	vc->sc_pbus = true;
 	if (sc->sc_trigger_started == false) {
-		audio_mix(sc);
-		audio_mix(sc);
+		if (sc->sc_usemixer) {
+			audio_mix(sc);
+			audio_mix(sc);
+			audio_mix(sc);
+		}
 		mutex_enter(sc->sc_intr_lock);
 		error = mix_write(sc);
 		if (error)
 			goto done;
-		vc = sc->sc_hwvc;
-		vc->sc_mpr.s.outp =
-		    audio_stream_add_outp(&vc->sc_mpr.s,
-		      vc->sc_mpr.s.outp, vc->sc_mpr.blksize);
-		error = mix_write(sc);
-		cv_broadcast(&sc->sc_condvar);
+		if (sc->sc_usemixer) {
+			vc = sc->sc_hwvc;
+			vc->sc_mpr.s.outp =
+			    audio_stream_add_outp(&vc->sc_mpr.s,
+			      vc->sc_mpr.s.outp, vc->sc_mpr.blksize);
+			error = mix_write(sc);
+			cv_broadcast(&sc->sc_condvar);
+		}
 done:
 		mutex_exit(sc->sc_intr_lock);
 	}
 
 	return error;
-}
-
-/*
- * When the play interrupt routine finds that the write isn't keeping
- * the buffer filled it will insert silence in the buffer to make up
- * for this.  The part of the buffer that is filled with silence
- * is kept track of in a very approximate way: it starts at sc_sil_start
- * and extends sc_sil_count bytes.  If there is already silence in
- * the requested area nothing is done; so when the whole buffer is
- * silent nothing happens.  When the writer starts again sc_sil_count
- * is set to 0.
- *
- * XXX
- * Putting silence into the output buffer should not really be done
- * from the device interrupt handler.  Consider deferring to the soft
- * interrupt.
- */
-static inline void
-audio_pint_silence(struct audio_softc *sc, struct audio_ringbuffer *cb,
-		   uint8_t *inp, int cc, struct virtual_channel *vc)
-{
-	uint8_t *s, *e, *p, *q;
-
-	KASSERT(mutex_owned(sc->sc_lock));
-
-	if (vc->sc_sil_count > 0) {
-		s = vc->sc_sil_start; /* start of silence */
-		e = s + vc->sc_sil_count; /* end of sil., may be beyond end */
-		p = inp;	/* adjusted pointer to area to fill */
-		if (p < s)
-			p += cb->s.end - cb->s.start;
-		q = p + cc;
-		/* Check if there is already silence. */
-		if (!(s <= p && p <  e &&
-		      s <= q && q <= e)) {
-			if (s <= p)
-				vc->sc_sil_count = max(vc->sc_sil_count, q-s);
-			DPRINTFN(5,("audio_pint_silence: fill cc=%d inp=%p, "
-				    "count=%d size=%d\n",
-				    cc, inp, vc->sc_sil_count,
-				    (int)(cb->s.end - cb->s.start)));
-			audio_fill_silence(&cb->s.param, inp, cc);
-		} else {
-			DPRINTFN(5,("audio_pint_silence: already silent "
-				    "cc=%d inp=%p\n", cc, inp));
-
-		}
-	} else {
-		vc->sc_sil_start = inp;
-		vc->sc_sil_count = cc;
-		DPRINTFN(5, ("audio_pint_silence: start fill %p %d\n",
-			     inp, cc));
-		audio_fill_silence(&cb->s.param, inp, cc);
-	}
 }
 
 static void
@@ -3589,6 +3662,7 @@ void
 audio_pint(void *v)
 {
 	struct audio_softc *sc;
+	struct audio_ringbuffer *cb;
 	struct virtual_channel *vc;
 	int blksize, cc, used;
 
@@ -3599,33 +3673,42 @@ audio_pint(void *v)
 	if (sc->sc_dying == true || sc->sc_trigger_started == false)
 		return;
 
-	if (vc->sc_draining == true && sc->sc_pr.drops !=
-						sc->sc_last_drops) {
+	if (sc->sc_usemixer)
+		cb = &sc->sc_mixring.sc_mpr;
+	else
+		cb = &vc->sc_mpr;
+
+	if (vc->sc_draining && cb->drops != sc->sc_last_drops) {
 		vc->sc_mpr.drops += blksize;
 		cv_broadcast(&sc->sc_wchan);
 	}
-	sc->sc_last_drops = sc->sc_pr.drops;
+
+	sc->sc_last_drops = cb->drops;
 
 	vc->sc_mpr.s.outp = audio_stream_add_outp(&vc->sc_mpr.s,
 	    vc->sc_mpr.s.outp, blksize);
 
-	if (audio_stream_get_used(&sc->sc_pr.s) < blksize) {
+	if (audio_stream_get_used(&cb->s) < blksize) {
 		DPRINTFN(3, ("HW RING - INSERT SILENCE\n"));
 		used = blksize;
 		while (used > 0) {
-			cc = sc->sc_pr.s.end - sc->sc_pr.s.inp;
+			cc = cb->s.end - cb->s.inp;
 			if (cc > used)
 				cc = used;
-			audio_fill_silence(&vc->sc_pustream->param, sc->sc_pr.s.inp, cc);
-			sc->sc_pr.s.inp = audio_stream_add_inp(&sc->sc_pr.s,
-			    sc->sc_pr.s.inp, cc);
+			audio_fill_silence(&cb->s.param, cb->s.inp, cc);
+			cb->s.inp =
+			    audio_stream_add_inp(&cb->s, cb->s.inp, cc);
 			used -= cc;
 		}
+		vc->sc_mpr.drops += blksize;
 	}
 
 	mix_write(sc);
 
-	cv_broadcast(&sc->sc_condvar);
+	if (sc->sc_usemixer)
+		cv_broadcast(&sc->sc_condvar);
+	else
+		cv_broadcast(&sc->sc_wchan);
 }
 
 void
@@ -3650,7 +3733,7 @@ audio_mix(void *v)
 	if (sc->sc_dying == true)
 		return;
 
-	blksize = sc->sc_pr.blksize;
+	blksize = sc->sc_mixring.sc_mpr.blksize;
 	SIMPLEQ_FOREACH(chan, &sc->sc_audiochan, entries) {
 		if (!sc->sc_opens)
 			break;		/* ignore interrupt if not open */
@@ -3669,8 +3752,9 @@ audio_mix(void *v)
 		inp = cb->s.inp;
 		cb->stamp += blksize;
 		if (cb->mmapped) {
-			DPRINTF(("audio_pint: mmapped outp=%p cc=%d inp=%p\n",
-				     cb->s.outp, blksize, cb->s.inp));
+			DPRINTF(("audio_pint: vc=%p mmapped outp=%p cc=%d "
+				 "inp=%p\n", vc, cb->s.outp, blksize,
+				  cb->s.inp));
 			mutex_enter(sc->sc_intr_lock);
 			mix_func(sc, cb, vc);
 			cb->s.outp = audio_stream_add_outp(&cb->s, cb->s.outp,
@@ -3721,7 +3805,7 @@ audio_mix(void *v)
 		 * at accurate timing.  If used < blksize, uaudio(4) already
 		 * request transfer of garbage data.
 		 */
-		if (used <= cb->usedlow && !cb->copying &&
+		if (used <= sc->sc_hwvc->sc_mpr.usedlow && !cb->copying &&
 		    vc->sc_npfilters > 0) {
 			/* we might have data in filter pipeline */
 			null_fetcher.fetch_to = null_fetcher_fetch_to;
@@ -3745,6 +3829,9 @@ audio_mix(void *v)
 				DPRINTFN(1, ("audio_pint: copying in "
 					 "progress\n"));
 			} else {
+				DPRINTF(("audio_pint: used < blksize vc=%p "
+					  "used=%d blksize=%d\n", vc, used,
+					  blksize));
 				inp = cb->s.inp;
 				cc = blksize - (inp - cb->s.start) % blksize;
 				if (cb->pause)
@@ -3754,33 +3841,32 @@ audio_mix(void *v)
 					vc->sc_playdrop += cc;
 				}
 
-				audio_pint_silence(sc, cb, inp, cc, vc);
+				audio_fill_silence(&cb->s.param, inp, cc);
 				cb->s.inp = audio_stream_add_inp(&cb->s, inp,
 				    cc);
 
 				/* Clear next block to keep ahead of the DMA. */
 				used = audio_stream_get_used(&cb->s);
 				if (used + blksize < cb->s.end - cb->s.start) {
-					audio_pint_silence(sc, cb, cb->s.inp,
-					    blksize, vc);
+					audio_fill_silence(&cb->s.param, cb->s.inp,
+					    blksize);
 				}
 			}
 		}
 
-		DPRINTFN(5, ("audio_pint: outp=%p cc=%d\n", cb->s.outp,
-			 blksize));
+		DPRINTFN(5, ("audio_pint: vc=%p outp=%p used=%d cc=%d\n", vc,
+			 cb->s.outp, used, blksize));
 		mutex_enter(sc->sc_intr_lock);
 		mix_func(sc, cb, vc);
 		mutex_exit(sc->sc_intr_lock);
 		cb->s.outp = audio_stream_add_outp(&cb->s, cb->s.outp, blksize);
 
-		DPRINTFN(2, ("audio_pint: mode=%d pause=%d used=%d lowat=%d\n",
-			     vc->sc_mode, cb->pause,
-			     audio_stream_get_used(vc->sc_pustream),
-			     cb->usedlow));
+		DPRINTFN(2, ("audio_pint: vc=%p mode=%d pause=%d used=%d "
+			     "lowat=%d\n", vc, vc->sc_mode, cb->pause,
+			     audio_stream_get_used(&cb->s), cb->usedlow));
 
 		if ((vc->sc_mode & AUMODE_PLAY) && !cb->pause) {
-			if (audio_stream_get_used(&cb->s) <= cb->usedlow)
+			if (audio_stream_get_used(vc->sc_pustream) <= cb->usedlow)
 				sc->schedule_wih = true;
 		}
 		/* Possible to return one or more "phantom blocks" now. */
@@ -3790,24 +3876,27 @@ audio_mix(void *v)
 	mutex_enter(sc->sc_intr_lock);
 
 	vc = sc->sc_hwvc;
-	cb = &sc->sc_pr;
+	cb = &sc->sc_mixring.sc_mpr;
 	inp = cb->s.inp;
 	cc = blksize - (inp - cb->s.start) % blksize;
 	if (sc->sc_writeme == false) {
 		DPRINTFN(3, ("MIX RING EMPTY - INSERT SILENCE\n"));
 		audio_fill_silence(&vc->sc_pustream->param, inp, cc);
-		sc->sc_pr.drops += cc;
+		sc->sc_mixring.sc_mpr.drops += cc;
 	} else
 		cc = blksize;
 	cb->s.inp = audio_stream_add_inp(&cb->s, cb->s.inp, cc);
 	cc = blksize;
-	cc1 = sc->sc_pr.s.end - sc->sc_pr.s.inp;
+	cc1 = sc->sc_mixring.sc_mpr.s.end - sc->sc_mixring.sc_mpr.s.inp;
 	if (cc1 < cc) {
-		audio_fill_silence(&vc->sc_pustream->param, sc->sc_pr.s.inp, cc1);
+		audio_fill_silence(&vc->sc_pustream->param,
+		    sc->sc_mixring.sc_mpr.s.inp, cc1);
 		cc -= cc1;
-		audio_fill_silence(&vc->sc_pustream->param, sc->sc_pr.s.start, cc);
+		audio_fill_silence(&vc->sc_pustream->param,
+		    sc->sc_mixring.sc_mpr.s.start, cc);
 	} else
-		audio_fill_silence(&vc->sc_pustream->param, sc->sc_pr.s.inp, cc);
+		audio_fill_silence(&vc->sc_pustream->param,
+		    sc->sc_mixring.sc_mpr.s.inp, cc);
 	mutex_exit(sc->sc_intr_lock);
 
 	kpreempt_disable();
@@ -3837,12 +3926,16 @@ audio_rint(void *v)
 	if (sc->sc_dying == true || sc->sc_rec_started == false)
 		return;
 
-	blksize = audio_stream_get_used(&sc->sc_rr.s);
-	sc->sc_rr.s.outp = audio_stream_add_outp(&sc->sc_rr.s,
-	    sc->sc_rr.s.outp, blksize);
+	blksize = audio_stream_get_used(&sc->sc_mixring.sc_mrr.s);
+	sc->sc_mixring.sc_mrr.s.outp =
+	    audio_stream_add_outp(&sc->sc_mixring.sc_mrr.s,
+		sc->sc_mixring.sc_mrr.s.outp, blksize);
 	mix_read(sc);
 
-	cv_broadcast(&sc->sc_rcondvar);
+	if (sc->sc_usemixer)
+		cv_broadcast(&sc->sc_rcondvar);
+	else
+		cv_broadcast(&sc->sc_rchan);
 }
 
 void
@@ -3857,7 +3950,7 @@ audio_upmix(void *v)
 	int cc, used, blksize, cc1;
 
 	sc = v;
-	blksize = sc->sc_rr.blksize;
+	blksize = sc->sc_mixring.sc_mrr.blksize;
 
 	SIMPLEQ_FOREACH(chan, &sc->sc_audiochan, entries) {
 		if (!sc->sc_opens)
@@ -3872,11 +3965,11 @@ audio_upmix(void *v)
 
 		cb = &vc->sc_mrr;
 
-		blksize = audio_stream_get_used(&sc->sc_rr.s);
+		blksize = audio_stream_get_used(&sc->sc_mixring.sc_mrr.s);
 		if (audio_stream_get_space(&cb->s) < blksize) {
 			cb->drops += blksize;
 			cb->s.outp = audio_stream_add_outp(&cb->s, cb->s.outp,
-			    sc->sc_rr.blksize);
+			    sc->sc_mixring.sc_mrr.blksize);
 			continue;
 		}
 
@@ -3884,11 +3977,12 @@ audio_upmix(void *v)
 		if (cb->s.inp + blksize > cb->s.end)
 			cc = cb->s.end - cb->s.inp;
 		mutex_enter(sc->sc_intr_lock);
-		memcpy(cb->s.inp, sc->sc_rr.s.start, cc);
+		memcpy(cb->s.inp, sc->sc_mixring.sc_mrr.s.start, cc);
 		if (cc < blksize && cc != 0) {
 			cc1 = cc;
 			cc = blksize - cc;
-			memcpy(cb->s.start, sc->sc_rr.s.start + cc1, cc);
+			memcpy(cb->s.start,
+			    sc->sc_mixring.sc_mrr.s.start + cc1, cc);
 		}
 		mutex_exit(sc->sc_intr_lock);
 
@@ -4047,9 +4141,11 @@ audio_check_params(struct audio_params *p)
 	return 0;
 }
 
+/*
+ * set some parameters from sc->sc_vchan_params.
+ */
 static int
-audio_set_vchan_defaults(struct audio_softc *sc, u_int mode,
-     const struct audio_format *format)
+audio_set_vchan_defaults(struct audio_softc *sc, u_int mode)
 {
 	struct virtual_channel *vc;
 	struct audio_info ai;
@@ -4059,44 +4155,36 @@ audio_set_vchan_defaults(struct audio_softc *sc, u_int mode,
 
 	vc = sc->sc_hwvc;
 
-	sc->sc_vchan_params.sample_rate = sc->sc_frequency;
-#if BYTE_ORDER == LITTLE_ENDIAN
-	sc->sc_vchan_params.encoding = AUDIO_ENCODING_SLINEAR_LE;
-#else
-	sc->sc_vchan_params.encoding = AUDIO_ENCODING_SLINEAR_BE;
-#endif
-	sc->sc_vchan_params.precision = sc->sc_precision;
-	sc->sc_vchan_params.validbits = sc->sc_precision;
-	sc->sc_vchan_params.channels = sc->sc_channels;
-
 	/* default parameters */
 	vc->sc_rparams = sc->sc_vchan_params;
 	vc->sc_pparams = sc->sc_vchan_params;
 
 	AUDIO_INITINFO(&ai);
-	ai.record.sample_rate = sc->sc_frequency;
-	ai.record.encoding    = format->encoding;
-	ai.record.channels    = sc->sc_channels;
-	ai.record.precision   = sc->sc_precision;
+	ai.record.sample_rate = sc->sc_vchan_params.sample_rate;
+	ai.record.encoding    = sc->sc_vchan_params.encoding;
+	ai.record.channels    = sc->sc_vchan_params.channels;
+	ai.record.precision   = sc->sc_vchan_params.precision;
 	ai.record.pause	      = false;
-	ai.play.sample_rate   = sc->sc_frequency;
-	ai.play.encoding      = format->encoding;
-	ai.play.channels      = sc->sc_channels;
-	ai.play.precision     = sc->sc_precision;
+	ai.play.sample_rate   = sc->sc_vchan_params.sample_rate;
+	ai.play.encoding      = sc->sc_vchan_params.encoding;
+	ai.play.channels      = sc->sc_vchan_params.channels;
+	ai.play.precision     = sc->sc_vchan_params.precision;
 	ai.play.pause         = false;
 	ai.mode		      = mode;
 
-	sc->sc_format->channels = sc->sc_channels;
-	sc->sc_format->precision = sc->sc_precision;
-	sc->sc_format->validbits = sc->sc_precision;
-	sc->sc_format->frequency[0] = sc->sc_frequency;
+	sc->sc_format->encoding = sc->sc_vchan_params.encoding;
+	sc->sc_format->channels = sc->sc_vchan_params.channels;
+	sc->sc_format->precision = sc->sc_vchan_params.precision;
+	sc->sc_format->validbits = sc->sc_vchan_params.precision;
+	sc->sc_format->frequency_type = 1;
+	sc->sc_format->frequency[0] = sc->sc_vchan_params.sample_rate;
 
 	auconv_delete_encodings(sc->sc_encodings);
 	error = auconv_create_encodings(sc->sc_format, VAUDIO_NFORMATS,
 	    &sc->sc_encodings);
 
 	if (error == 0)
-		error = audiosetinfo(sc, &ai, false, vc);
+		error = audiosetinfo(sc, &ai, true, vc);
 
 	return error;
 }
@@ -4675,14 +4763,18 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai, bool reset,
 	}
 
 	if (SPECIFIED_CH(p->pause)) {
-		vc->sc_mpr.pause = p->pause;
 		pbus = !p->pause;
-		pausechange = true;
+		if (pbus != !vc->sc_mpr.pause) {
+			vc->sc_mpr.pause = p->pause;
+			pausechange = true;
+		}
 	}
 	if (SPECIFIED_CH(r->pause)) {
-		vc->sc_mrr.pause = r->pause;
 		rbus = !r->pause;
-		pausechange = true;
+		if (rbus != !vc->sc_mrr.pause) {
+			vc->sc_mrr.pause = r->pause;
+			pausechange = true;
+		}
 	}
 
 	if (SPECIFIED(ai->mode)) {
@@ -4692,26 +4784,12 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai, bool reset,
 			audio_init_record(sc, vc);
 	}
 
-	if (vc == sc->sc_hwvc) {
-		if (!cleared) {
-			audio_clear_intr_unlocked(sc, vc);
-			cleared = true;
-		}
-		if (nr > 0) {
-			sc->sc_rr.blksize = audio_calc_blksize(sc,
-			    &vc->sc_rparams);
-			vc->sc_mrr.blksize = audio_calc_blksize(sc,
-			    &vc->sc_mrr.s.param);
-		}
-		if (np > 0) {
-			sc->sc_pr.blksize = audio_calc_blksize(sc,
-			    &vc->sc_pparams);
-			vc->sc_mpr.blksize = audio_calc_blksize(sc,
-			    &vc->sc_mpr.s.param);
-		}
-	}
+	if (nr > 0)
+		audio_setblksize(sc, vc, ai->blocksize, AUMODE_RECORD);
+	if (np > 0)
+		audio_setblksize(sc, vc, ai->blocksize, AUMODE_PLAY);
 
-	if (hw->commit_settings && sc->sc_opens == 0) {
+	if (hw->commit_settings && sc->sc_opens + sc->sc_recopens == 0) {
 		error = hw->commit_settings(sc->hw_hdl);
 		if (error)
 			goto cleanup;
@@ -4721,7 +4799,7 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai, bool reset,
 	vc->sc_lastinfovalid = true;
 
 cleanup:
-	if (error == 0 && (cleared || pausechange|| reset)) {
+	if (error == 0 && (cleared || pausechange || reset)) {
 		int init_error;
 
 		init_error = (pausechange == 1 && reset == 0) ? 0 :
@@ -4747,14 +4825,16 @@ cleanup:
 		blks = ai->hiwat;
 		if (blks > vc->sc_mpr.maxblks)
 			blks = vc->sc_mpr.maxblks;
-		if (blks < 2)
-			blks = 2;
+		if (blks < PREFILL_BLOCKS + 1)
+			blks = PREFILL_BLOCKS + 1;
 		vc->sc_mpr.usedhigh = blks * vc->sc_mpr.blksize;
 	}
 	if (SPECIFIED(ai->lowat)) {
 		blks = ai->lowat;
 		if (blks > vc->sc_mpr.maxblks - 1)
 			blks = vc->sc_mpr.maxblks - 1;
+		if (blks < PREFILL_BLOCKS)
+			blks = PREFILL_BLOCKS;
 		vc->sc_mpr.usedlow = blks * vc->sc_mpr.blksize;
 	}
 	if (SPECIFIED(ai->hiwat) || SPECIFIED(ai->lowat)) {
@@ -5227,8 +5307,8 @@ audio_resume(device_t dv, const pmf_qual_t *qual)
 	sc->sc_trigger_started = false;
 	sc->sc_rec_started = false;
 
-	audio_set_vchan_defaults(sc, AUMODE_PLAY | AUMODE_PLAY_ALL |
-	    AUMODE_RECORD, &sc->sc_format[0]);
+	audio_set_vchan_defaults(sc,
+	    AUMODE_PLAY | AUMODE_PLAY_ALL | AUMODE_RECORD);
 
 	audio_mixer_restore(sc);
 	SIMPLEQ_FOREACH(chan, &sc->sc_audiochan, entries) {
@@ -5398,13 +5478,14 @@ mix_read(void *arg)
 	cc1 = blksize;
 	if (vc->sc_rustream->outp + blksize > vc->sc_rustream->end)
 		cc1 = vc->sc_rustream->end - vc->sc_rustream->outp;
-	memcpy(sc->sc_rr.s.start, vc->sc_rustream->outp, cc1);
+	memcpy(sc->sc_mixring.sc_mrr.s.start, vc->sc_rustream->outp, cc1);
 	if (cc1 < blksize) {
-		memcpy(sc->sc_rr.s.start + cc1, vc->sc_rustream->start,
-		    blksize - cc1);
+		memcpy(sc->sc_mixring.sc_mrr.s.start + cc1,
+		    vc->sc_rustream->start, blksize - cc1);
 	}
-	sc->sc_rr.s.inp = audio_stream_add_inp(&sc->sc_rr.s, sc->sc_rr.s.inp,
-	    blksize);
+	sc->sc_mixring.sc_mrr.s.inp =
+	    audio_stream_add_inp(&sc->sc_mixring.sc_mrr.s,
+		sc->sc_mixring.sc_mrr.s.inp, blksize);
 	vc->sc_rustream->outp = audio_stream_add_outp(vc->sc_rustream,
 	    vc->sc_rustream->outp, blksize);
 	
@@ -5426,14 +5507,17 @@ mix_write(void *arg)
 	vc = sc->sc_hwvc;
 	error = 0;
 
-	if (audio_stream_get_used(vc->sc_pustream) <= sc->sc_pr.blksize) {
+	if (sc->sc_usemixer &&
+	    audio_stream_get_used(vc->sc_pustream) <=
+				sc->sc_mixring.sc_mpr.blksize) {
 		tocopy = vc->sc_pustream->inp;
-		orig = sc->sc_pr.s.outp;
-		used = sc->sc_pr.blksize;
+		orig = sc->sc_mixring.sc_mpr.s.outp;
+		used = sc->sc_mixring.sc_mpr.blksize;
+
 		while (used > 0) {
 			cc = used;
 			cc1 = vc->sc_pustream->end - tocopy;
-			cc2 = sc->sc_pr.s.end - orig;
+			cc2 = sc->sc_mixring.sc_mpr.s.end - orig;
 			if (cc > cc1)
 				cc = cc1;
 			if (cc > cc2)
@@ -5444,25 +5528,29 @@ mix_write(void *arg)
 
 			if (tocopy >= vc->sc_pustream->end)
 				tocopy = vc->sc_pustream->start;
-			if (orig >= sc->sc_pr.s.end)
-				orig = sc->sc_pr.s.start;
+			if (orig >= sc->sc_mixring.sc_mpr.s.end)
+				orig = sc->sc_mixring.sc_mpr.s.start;
 
 			used -= cc;
 		}
 
 		vc->sc_pustream->inp = audio_stream_add_inp(vc->sc_pustream,
-		    vc->sc_pustream->inp, sc->sc_pr.blksize);
+		    vc->sc_pustream->inp, sc->sc_mixring.sc_mpr.blksize);
 
-		sc->sc_pr.s.outp = audio_stream_add_outp(&sc->sc_pr.s,
-		    sc->sc_pr.s.outp, sc->sc_pr.blksize);
+		sc->sc_mixring.sc_mpr.s.outp =
+		    audio_stream_add_outp(&sc->sc_mixring.sc_mpr.s,
+		    	sc->sc_mixring.sc_mpr.s.outp,
+			sc->sc_mixring.sc_mpr.blksize);
 	}
 
-	if (vc->sc_npfilters > 0) {
+	if (vc->sc_npfilters > 0 &&
+	    (sc->sc_usemixer || sc->sc_trigger_started)) {
 		null_fetcher.fetch_to = null_fetcher_fetch_to;
 		filter = vc->sc_pfilters[0];
 		filter->set_fetcher(filter, &null_fetcher);
 		fetcher = &vc->sc_pfilters[vc->sc_npfilters - 1]->base;
-		fetcher->fetch_to(sc, fetcher, &vc->sc_mpr.s, vc->sc_mpr.blksize);
+		fetcher->fetch_to(sc, fetcher, &vc->sc_mpr.s,
+		    vc->sc_mpr.blksize * 2);
  	}
 
 	if (sc->hw_if->trigger_output && sc->sc_trigger_started == false) {
@@ -5499,15 +5587,16 @@ mix_write(void *arg)
 		bigger_type result;					\
 		type *orig, *tomix;					\
 									\
-		blksize = sc->sc_pr.blksize;				\
+		blksize = sc->sc_mixring.sc_mpr.blksize;		\
 		resid = blksize;					\
 									\
 		tomix = __UNCONST(cb->s.outp);				\
-		orig = (type *)(sc->sc_pr.s.inp);			\
+		orig = (type *)(sc->sc_mixring.sc_mpr.s.inp);		\
 									\
 		while (resid > 0) {					\
 			cc = resid;					\
-			cc1 = sc->sc_pr.s.end - (uint8_t *)orig;	\
+			cc1 = sc->sc_mixring.sc_mpr.s.end -		\
+			    (uint8_t *)orig;				\
 			cc2 = cb->s.end - (uint8_t *)tomix;		\
 			if (cc > cc1)					\
 				cc = cc1;				\
@@ -5515,19 +5604,27 @@ mix_write(void *arg)
 				cc = cc2;				\
 									\
 			for (m = 0; m < (cc / (name / NBBY)); m++) {	\
+				if (vc->sc_swvol == 255)		\
+					goto vol_done;			\
 				tomix[m] = (bigger_type)tomix[m] *	\
 				    (bigger_type)(vc->sc_swvol) / 255;	\
+vol_done:								\
 				result = (bigger_type)orig[m] + tomix[m]; \
+				if (sc->sc_opens == 1)			\
+					goto adj_done;			\
 				product = (bigger_type)orig[m] * tomix[m]; \
 				if (orig[m] > 0 && tomix[m] > 0)	\
 					result -= product / MAXVAL;	\
 				else if (orig[m] < 0 && tomix[m] < 0)	\
 					result -= product / MINVAL;	\
+adj_done:								\
 				orig[m] = result;			\
 			}						\
 									\
-			if (&orig[m] >= (type *)sc->sc_pr.s.end)	\
-				orig = (type *)sc->sc_pr.s.start;	\
+			if (&orig[m] >=					\
+			    (type *)sc->sc_mixring.sc_mpr.s.end)	\
+				orig =					\
+				 (type *)sc->sc_mixring.sc_mpr.s.start;	\
 			if (&tomix[m] >= (type *)cb->s.end)		\
 				tomix = (type *)cb->s.start;		\
 									\
@@ -5543,7 +5640,7 @@ void
 mix_func(struct audio_softc *sc, struct audio_ringbuffer *cb,
 	 struct virtual_channel *vc)
 {
-	switch (sc->sc_precision) {
+	switch (sc->sc_vchan_params.precision) {
 	case 8:
 		mix_func8(sc, cb, vc);
 		break;
@@ -5595,7 +5692,7 @@ void
 recswvol_func(struct audio_softc *sc, struct audio_ringbuffer *cb,
     size_t blksize, struct virtual_channel *vc)
 {
-	switch (sc->sc_precision) {
+	switch (sc->sc_vchan_params.precision) {
 	case 8:
 		recswvol_func8(sc, cb, blksize, vc);
 		break;
@@ -5722,7 +5819,7 @@ audio_set_params(struct audio_softc *sc, int setmode, int usemode,
 
 	if (vc == sc->sc_hwvc && sc->hw_if->set_params != NULL) {
 		sc->sc_ready = true;
-		if (sc->sc_precision == 8)
+		if (sc->sc_usemixer && sc->sc_vchan_params.precision == 8)
 			play->encoding = rec->encoding = AUDIO_ENCODING_SLINEAR;
 		error = sc->hw_if->set_params(sc->hw_hdl, setmode, usemode,
  		    play, rec, pfil, rfil);
@@ -5759,20 +5856,24 @@ audio_play_thread(void *v)
 	sc = (struct audio_softc *)v;
 
 	for (;;) {
-		mutex_enter(sc->sc_intr_lock);
-		cv_wait_sig(&sc->sc_condvar, sc->sc_intr_lock);
+		mutex_enter(sc->sc_lock);
 		if (sc->sc_dying) {
-			mutex_exit(sc->sc_intr_lock);
+			mutex_exit(sc->sc_lock);
 			kthread_exit(0);
 		}
+		if (!sc->sc_trigger_started)
+			goto play_wait;
 
-		while (audio_stream_get_used(&sc->sc_pr.s) < sc->sc_pr.blksize) {
-			mutex_exit(sc->sc_intr_lock);
-			mutex_enter(sc->sc_lock);
+		while (!sc->sc_dying && sc->sc_usemixer &&
+		    audio_stream_get_used(&sc->sc_mixring.sc_mpr.s) <
+						sc->sc_mixring.sc_mpr.blksize)
 			audio_mix(sc);
-			mutex_exit(sc->sc_lock);
-			mutex_enter(sc->sc_intr_lock);
-		}
+
+play_wait:
+		mutex_exit(sc->sc_lock);
+
+		mutex_enter(sc->sc_intr_lock);
+		cv_wait_sig(&sc->sc_condvar, sc->sc_intr_lock);
 		mutex_exit(sc->sc_intr_lock);
 	}
 }
@@ -5785,17 +5886,21 @@ audio_rec_thread(void *v)
 	sc = (struct audio_softc *)v;
 
 	for (;;) {
-		mutex_enter(sc->sc_intr_lock);
-		cv_wait_sig(&sc->sc_rcondvar, sc->sc_intr_lock);
+		mutex_enter(sc->sc_lock);
 		if (sc->sc_dying) {
-			mutex_exit(sc->sc_intr_lock);
+			mutex_exit(sc->sc_lock);
 			kthread_exit(0);
 		}
-		mutex_exit(sc->sc_intr_lock);
+		if (!sc->sc_rec_started)
+			goto rec_wait;
 
-		mutex_enter(sc->sc_lock);
 		audio_upmix(sc);
+rec_wait:
 		mutex_exit(sc->sc_lock);
+
+		mutex_enter(sc->sc_intr_lock);
+		cv_wait_sig(&sc->sc_rcondvar, sc->sc_intr_lock);
+		mutex_exit(sc->sc_intr_lock);
 	}
 
 }
@@ -5811,7 +5916,7 @@ audio_sysctl_frequency(SYSCTLFN_ARGS)
 	node = *rnode;
 	sc = node.sysctl_data;
 
-	t = sc->sc_frequency;
+	t = sc->sc_vchan_params.sample_rate;
 	node.sysctl_data = &t;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
@@ -5820,7 +5925,7 @@ audio_sysctl_frequency(SYSCTLFN_ARGS)
 	mutex_enter(sc->sc_lock);
 
 	/* This may not change when a virtual channel is open */
-	if (sc->sc_opens) {
+	if (sc->sc_opens || sc->sc_recopens) {
 		mutex_exit(sc->sc_lock);
 		return EBUSY;
 	}
@@ -5830,12 +5935,14 @@ audio_sysctl_frequency(SYSCTLFN_ARGS)
 		return EINVAL;
 	}
 
-	sc->sc_frequency = t;
-	error = audio_set_vchan_defaults(sc, AUMODE_PLAY | AUMODE_PLAY_ALL
-	    | AUMODE_RECORD, &sc->sc_format[0]);
+	sc->sc_vchan_params.sample_rate = t;
+	error = audio_set_vchan_defaults(sc,
+	    AUMODE_PLAY | AUMODE_PLAY_ALL | AUMODE_RECORD);
 	if (error)
 		aprint_error_dev(sc->sc_dev, "Error setting frequency, "
 				 "please check hardware capabilities\n");
+	if (error == 0)
+		audio_calc_latency(sc);
 	mutex_exit(sc->sc_lock);
 
 	return error;
@@ -5852,7 +5959,62 @@ audio_sysctl_precision(SYSCTLFN_ARGS)
 	node = *rnode;
 	sc = node.sysctl_data;
 
-	t = sc->sc_precision;
+	t = sc->sc_vchan_params.precision;
+	node.sysctl_data = &t;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+
+	mutex_enter(sc->sc_lock);
+
+	/* This may not change when a virtual channel is open */
+	if (sc->sc_opens || sc->sc_recopens) {
+		mutex_exit(sc->sc_lock);
+		return EBUSY;
+	}
+
+	if (t == 0 || (t != 8 && t != 16 && t != 24 && t != 32)) {
+		mutex_exit(sc->sc_lock);
+		return EINVAL;
+	}
+
+	sc->sc_vchan_params.precision = t;
+
+	if (sc->sc_vchan_params.precision != 8) {
+		sc->sc_vchan_params.encoding =
+#if BYTE_ORDER == LITTLE_ENDIAN
+			 AUDIO_ENCODING_SLINEAR_LE;
+#else
+			 AUDIO_ENCODING_SLINEAR_BE;
+#endif
+	} else
+		sc->sc_vchan_params.encoding = AUDIO_ENCODING_SLINEAR_LE;
+
+	error = audio_set_vchan_defaults(sc,
+	    AUMODE_PLAY | AUMODE_PLAY_ALL | AUMODE_RECORD);
+	if (error)
+		aprint_error_dev(sc->sc_dev, "Error setting precision, "
+				 "please check hardware capabilities\n");
+	if (error == 0)
+		audio_calc_latency(sc);
+	mutex_exit(sc->sc_lock);
+
+	return error;
+}
+
+/* sysctl helper to enable/disable channel mixing */
+static int
+audio_sysctl_usemixer(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	struct audio_softc *sc;
+	bool t;
+	int error;
+
+	node = *rnode;
+	sc = node.sysctl_data;
+
+	t = sc->sc_usemixer;
 	node.sysctl_data = &t;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
@@ -5866,28 +6028,23 @@ audio_sysctl_precision(SYSCTLFN_ARGS)
 		return EBUSY;
 	}
 
-	if (t == 0 || (t != 8 && t != 16 && t != 24 && t != 32)) {
-		mutex_exit(sc->sc_lock);
-		return EINVAL;
+	sc->sc_usemixer = t;
+	audio_destroy_pfilters(sc->sc_hwvc);
+	audio_destroy_rfilters(sc->sc_hwvc);
+	if (t) {
+		error = audio_set_vchan_defaults(sc,
+		    AUMODE_PLAY | AUMODE_PLAY_ALL | AUMODE_RECORD);
+		if (error)
+			aprint_error_dev(sc->sc_dev, "Error setting precision, "
+					 "please check hardware capabilities\n");
 	}
 
-	sc->sc_precision = t;
-
-	if (sc->sc_precision != 8) {
- 		sc->sc_format[0].encoding =
-#if BYTE_ORDER == LITTLE_ENDIAN
-			 AUDIO_ENCODING_SLINEAR_LE;
-#else
-			 AUDIO_ENCODING_SLINEAR_BE;
-#endif
+	if (sc->sc_usemixer) {
+		if (error == 0)
+			audio_calc_latency(sc);
 	} else
- 		sc->sc_format[0].encoding = AUDIO_ENCODING_SLINEAR_LE;
-
-	error = audio_set_vchan_defaults(sc, AUMODE_PLAY | AUMODE_PLAY_ALL
-	    | AUMODE_RECORD, &sc->sc_format[0]);
-	if (error)
-		aprint_error_dev(sc->sc_dev, "Error setting precision, "
-				 "please check hardware capabilities\n");
+		sc->sc_latency = audio_blk_ms * PREFILL_BLOCKS;
+		
 	mutex_exit(sc->sc_lock);
 
 	return error;
@@ -5904,7 +6061,7 @@ audio_sysctl_channels(SYSCTLFN_ARGS)
 	node = *rnode;
 	sc = node.sysctl_data;
 
-	t = sc->sc_channels;
+	t = sc->sc_vchan_params.channels;
 	node.sysctl_data = &t;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
@@ -5913,7 +6070,7 @@ audio_sysctl_channels(SYSCTLFN_ARGS)
 	mutex_enter(sc->sc_lock);
 
 	/* This may not change when a virtual channel is open */
-	if (sc->sc_opens) {
+	if (sc->sc_opens || sc->sc_recopens) {
 		mutex_exit(sc->sc_lock);
 		return EBUSY;
 	}
@@ -5923,12 +6080,65 @@ audio_sysctl_channels(SYSCTLFN_ARGS)
 		return EINVAL;
 	}
 
-	sc->sc_channels = t;
-	error = audio_set_vchan_defaults(sc, AUMODE_PLAY | AUMODE_PLAY_ALL
-	    | AUMODE_RECORD, &sc->sc_format[0]);
+	sc->sc_vchan_params.channels = t;
+	error = audio_set_vchan_defaults(sc,
+	    AUMODE_PLAY | AUMODE_PLAY_ALL | AUMODE_RECORD);
 	if (error)
 		aprint_error_dev(sc->sc_dev, "Error setting channels, "
 				 "please check hardware capabilities\n");
+	if (error == 0)
+		audio_calc_latency(sc);
+	mutex_exit(sc->sc_lock);
+
+	return error;
+}
+
+/* sysctl helper to set audio latency */
+static int
+audio_sysctl_latency(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	struct audio_softc *sc;
+	int t, error;
+
+	node = *rnode;
+	sc = node.sysctl_data;
+
+	t = sc->sc_latency;
+	node.sysctl_data = &t;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+
+	mutex_enter(sc->sc_lock);
+
+	/* This may not change when a virtual channel is open */
+	if (sc->sc_opens || sc->sc_recopens) {
+		mutex_exit(sc->sc_lock);
+		return EBUSY;
+	}
+
+	if (t < 0 || t > 4000) {
+		mutex_exit(sc->sc_lock);
+		return EINVAL;
+	}
+
+	if (t == 0)
+		sc->sc_latency = audio_blk_ms * PREFILL_BLOCKS;
+	else
+		sc->sc_latency = (unsigned int)t;
+
+	error = audio_set_vchan_defaults(sc,
+	    AUMODE_PLAY | AUMODE_PLAY_ALL | AUMODE_RECORD);
+	if (error) {
+		aprint_error_dev(sc->sc_dev, "Error setting latency, "
+				 "latency restored to default\n");
+		sc->sc_latency = audio_blk_ms * PREFILL_BLOCKS;
+		error = audio_set_vchan_defaults(sc,
+	    	    AUMODE_PLAY | AUMODE_PLAY_ALL | AUMODE_RECORD);
+	}
+
+	audio_calc_latency(sc);
 	mutex_exit(sc->sc_lock);
 
 	return error;
@@ -5945,42 +6155,57 @@ vchan_autoconfig(struct audio_softc *sc)
 
 	mutex_enter(sc->sc_lock);
 
-	for (i = 0; i < __arraycount(auto_config_precision); i++) {
-		sc->sc_precision = auto_config_precision[i];
-		for (j = 0; j < __arraycount(auto_config_channels); j++) {
-			sc->sc_channels = auto_config_channels[j];
-			for (k = 0; k < __arraycount(auto_config_freq); k++) {
-				sc->sc_frequency = auto_config_freq[k];
-				error = audio_set_vchan_defaults(sc,
-				    AUMODE_PLAY | AUMODE_PLAY_ALL |
-				    AUMODE_RECORD, &sc->sc_format[0]);
-				if (vc->sc_npfilters > 0 &&
-				    (vc->sc_mpr.s.param.
-					sample_rate != sc->sc_frequency ||
-				    vc->sc_mpr.s.param.
-					 channels != sc->sc_channels))
-					error = EINVAL;
+#if BYTE_ORDER == LITTLE_ENDIAN
+	sc->sc_vchan_params.encoding = AUDIO_ENCODING_SLINEAR_LE;
+#else
+	sc->sc_vchan_params.encoding = AUDIO_ENCODING_SLINEAR_BE;
+#endif
 
-				if (error == 0) {
+ 	for (i = 0; i < __arraycount(auto_config_precision); i++) {
+		sc->sc_vchan_params.precision = auto_config_precision[i];
+		sc->sc_vchan_params.validbits = auto_config_precision[i];
+ 		for (j = 0; j < __arraycount(auto_config_channels); j++) {
+			sc->sc_vchan_params.channels = auto_config_channels[j];
+ 			for (k = 0; k < __arraycount(auto_config_freq); k++) {
+				sc->sc_vchan_params.sample_rate =
+				    auto_config_freq[k];
+ 				error = audio_set_vchan_defaults(sc,
+ 				    AUMODE_PLAY | AUMODE_PLAY_ALL |
+				    AUMODE_RECORD);
+ 				if (vc->sc_npfilters > 0 &&
+				    (vc->sc_mpr.s.param.sample_rate !=
+				     sc->sc_vchan_params.sample_rate ||
+				    vc->sc_mpr.s.param.channels !=
+				     sc->sc_vchan_params.channels))
+ 					error = EINVAL;
+ 
+ 				if (error == 0) {
 					aprint_normal_dev(sc->sc_dev,
 					    "Virtual format configured - "
 					    "Format SLINEAR, precision %d, "
 					    "channels %d, frequency %d\n",
-					    sc->sc_precision, sc->sc_channels,
-					    sc->sc_frequency);
-					mutex_exit(sc->sc_lock);
+						sc->sc_vchan_params.precision,
+						sc->sc_vchan_params.channels,
+						sc->sc_vchan_params.sample_rate);
 
-					return 0;
+					goto found;
 				}
 			}
 		}
 	}
 
-	aprint_error_dev(sc->sc_dev, "Virtual format auto config failed!\n"
-		     "Please check hardware capabilities\n");
+found:
+	if (error == 0) {
+		audio_calc_latency(sc);
+		aprint_normal_dev(sc->sc_dev, "Latency: %d milliseconds\n",
+		    sc->sc_latency);
+	} else {
+		aprint_error_dev(sc->sc_dev, "Virtual format auto config failed!\n");
+		aprint_error_dev(sc->sc_dev, "Please check hardware capabilities\n");
+	}
 	mutex_exit(sc->sc_lock);
 
-	return EINVAL;
+	return error;
 }
 
 static void
@@ -6017,7 +6242,6 @@ shrink_mixer_states(struct audio_softc *sc, int count)
 
 #ifdef _MODULE
 
-extern struct cfdriver audio_cd;
 devmajor_t audio_bmajor = -1, audio_cmajor = -1;
 
 #include "ioconf.c"

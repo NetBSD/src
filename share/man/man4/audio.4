@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.4,v 1.79 2017/05/07 08:19:39 nat Exp $
+.\"	$NetBSD: audio.4,v 1.79.2.1 2018/01/15 00:08:55 snj Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 11, 2016
+.Dd October 27, 2017
 .Dt AUDIO 4
 .Os
 .Sh NAME
@@ -107,11 +107,11 @@ frequency channels and precision.
 These can be modified to taste by the following
 .Xr sysctl 8
 variables.
-.Pp
 .Bl -tag -width -compact
 .It hw.driverN.precision
 .It hw.driverN.frequency
 .It hw.driverN.channels
+.It hw.driverN.latency
 .It hw.driverN.multiuser
 .El
 .Pp
@@ -124,10 +124,28 @@ hw.hdafg0.channels, hw.hdafg0.precision, hw.hdafg0.frequency.
 For best results, values close to the underlying hardware should be chosen.
 These variables may only be changed when the sampling device is not in use.
 .Pp
-An additional
+The hw.driverN.latency
+.Xr sysctl 8
+variable controls the latency of the in-kernel mixer by varying the hardware
+blocksize.
+It accepts a value in milliseconds(ms), fractional values are not allowed.
+A value of zero will default to 150ms.
+.Pp
+If a static blocksize is enforced by the underlying hardware driver this value
+cannot be changed.
+.Pp
+For audio applications that do not specify a preferred blocksize when configuring
+the audio device, this will be the latency these applications have.
+.Pp
+For audio applications that
+.Xr mmap 2
+the audio device for play back the resultant latency is a third (1/3) of the value
+of the hw.driverN.latency variable.
+.Pp
+The hw.driverN.multiuser
 .Xr sysctl 8
 variable determines if multiple users are allowed to access the sampling
-device, hw.driverN.multiuser.
+device.
 .Pp
 By default it is set to false.
 This means that the sampling device may be only used by
@@ -227,7 +245,6 @@ whenever a mixer value is changed.
 The following
 .Xr ioctl 2
 commands are supported on the sample devices:
-.Pp
 .Bl -tag -width indent
 .It Dv AUDIO_GETCHAN (int)
 This command will return the audio channel in use.
