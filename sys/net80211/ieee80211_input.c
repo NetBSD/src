@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.92 2018/01/16 07:53:02 maxv Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.93 2018/01/16 08:39:29 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 Atsushi Onoe
@@ -37,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.81 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.92 2018/01/16 07:53:02 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.93 2018/01/16 08:39:29 maxv Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -148,6 +148,359 @@ static void ieee80211_update_adhoc_node(struct ieee80211com *,
     struct ieee80211_node *, struct ieee80211_frame *,
     struct ieee80211_scanparams *, int, u_int32_t);
 
+/* -------------------------------------------------------------------------- */
+
+/*
+ * Input code for a DATA frame.
+ */
+static int
+ieee80211_input_data(struct ieee80211com *ic, struct mbuf **mp,
+    struct ieee80211_node *ni)
+{
+	struct ifnet *ifp = ic->ic_ifp;
+	struct ieee80211_key *key;
+	struct ieee80211_frame *wh;
+	u_int8_t dir, subtype;
+	struct ether_header *eh;
+	struct mbuf *m = *mp;
+	int hdrspace;
+
+	wh = mtod(m, struct ieee80211_frame *);
+	dir = wh->i_fc[1] & IEEE80211_FC1_DIR_MASK;
+	subtype = wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK;
+
+	hdrspace = ieee80211_hdrspace(ic, wh);
+
+	if (m->m_len < hdrspace &&
+	    (m = m_pullup(m, hdrspace)) == NULL) {
+		IEEE80211_DISCARD_MAC(ic, IEEE80211_MSG_ANY,
+		    ni->ni_macaddr, NULL,
+		    "data too short: expecting %u", hdrspace);
+		ic->ic_stats.is_rx_tooshort++;
+		goto out;		/* XXX */
+	}
+	wh = mtod(m, struct ieee80211_frame *);
+
+	switch (ic->ic_opmode) {
+	case IEEE80211_M_STA:
+		if (dir != IEEE80211_FC1_DIR_FROMDS) {
+			IEEE80211_DISCARD(ic, IEEE80211_MSG_INPUT,
+			    wh, "data", "%s", "unknown dir 0x%x", dir);
+			ic->ic_stats.is_rx_wrongdir++;
+			goto out;
+		}
+		if ((ifp->if_flags & IFF_SIMPLEX) &&
+		    IEEE80211_IS_MULTICAST(wh->i_addr1) &&
+		    IEEE80211_ADDR_EQ(wh->i_addr3, ic->ic_myaddr)) {
+			/*
+			 * In IEEE802.11 network, multicast packet
+			 * sent from me is broadcast from AP.
+			 * It should be silently discarded for
+			 * SIMPLEX interface.
+			 */
+			IEEE80211_DISCARD(ic, IEEE80211_MSG_INPUT,
+			    wh, NULL, "%s", "multicast echo");
+			ic->ic_stats.is_rx_mcastecho++;
+			goto out;
+		}
+		break;
+
+	case IEEE80211_M_IBSS:
+	case IEEE80211_M_AHDEMO:
+		if (dir != IEEE80211_FC1_DIR_NODS) {
+			IEEE80211_DISCARD(ic, IEEE80211_MSG_INPUT,
+			    wh, "data", "%s", "unknown dir 0x%x", dir);
+			ic->ic_stats.is_rx_wrongdir++;
+			goto out;
+		}
+		/* XXX no power-save support */
+		break;
+
+	case IEEE80211_M_HOSTAP:
+#ifndef IEEE80211_NO_HOSTAP
+		if (dir != IEEE80211_FC1_DIR_TODS) {
+			IEEE80211_DISCARD(ic, IEEE80211_MSG_INPUT,
+			    wh, "data", "%s", "unknown dir 0x%x", dir);
+			ic->ic_stats.is_rx_wrongdir++;
+			goto out;
+		}
+		/* check if source STA is associated */
+		if (ni == ic->ic_bss) {
+			IEEE80211_DISCARD(ic, IEEE80211_MSG_INPUT,
+			    wh, "data", "%s", "unknown src");
+			ieee80211_send_error(ic, ni, wh->i_addr2,
+			    IEEE80211_FC0_SUBTYPE_DEAUTH,
+			    IEEE80211_REASON_NOT_AUTHED);
+			ic->ic_stats.is_rx_notassoc++;
+			goto err;
+		}
+		if (ni->ni_associd == 0) {
+			IEEE80211_DISCARD(ic, IEEE80211_MSG_INPUT,
+			    wh, "data", "%s", "unassoc src");
+			IEEE80211_SEND_MGMT(ic, ni,
+			    IEEE80211_FC0_SUBTYPE_DISASSOC,
+			    IEEE80211_REASON_NOT_ASSOCED);
+			ic->ic_stats.is_rx_notassoc++;
+			goto err;
+		}
+
+		/*
+		 * Check for power save state change.
+		 */
+		if (((wh->i_fc[1] & IEEE80211_FC1_PWR_MGT) ^
+		    (ni->ni_flags & IEEE80211_NODE_PWR_MGT)))
+			ieee80211_node_pwrsave(ni,
+				wh->i_fc[1] & IEEE80211_FC1_PWR_MGT);
+#endif /* !IEEE80211_NO_HOSTAP */
+		break;
+
+	default:
+		/* XXX here to keep compiler happy */
+		goto out;
+	}
+
+	/*
+	 * Handle privacy requirements.  Note that we
+	 * must not be preempted from here until after
+	 * we (potentially) call ieee80211_crypto_demic;
+	 * otherwise we may violate assumptions in the
+	 * crypto cipher modules used to do delayed update
+	 * of replay sequence numbers.
+	 */
+	if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
+		if ((ic->ic_flags & IEEE80211_F_PRIVACY) == 0) {
+			/*
+			 * Discard encrypted frames when privacy is off.
+			 */
+			IEEE80211_DISCARD(ic, IEEE80211_MSG_INPUT,
+			    wh, "WEP", "%s", "PRIVACY off");
+			ic->ic_stats.is_rx_noprivacy++;
+			IEEE80211_NODE_STAT(ni, rx_noprivacy);
+			goto out;
+		}
+		key = ieee80211_crypto_decap(ic, ni, &m, hdrspace);
+		if (key == NULL) {
+			/* NB: stats+msgs handled in crypto_decap */
+			IEEE80211_NODE_STAT(ni, rx_wepfail);
+			goto out;
+		}
+		wh = mtod(m, struct ieee80211_frame *);
+		wh->i_fc[1] &= ~IEEE80211_FC1_WEP;
+	} else {
+		key = NULL;
+	}
+
+	/*
+	 * Next up, any fragmentation.
+	 */
+	if (!IEEE80211_IS_MULTICAST(wh->i_addr1)) {
+		m = ieee80211_defrag(ic, ni, m, hdrspace);
+		if (m == NULL) {
+			/* Fragment dropped or frame not complete yet */
+			goto out;
+		}
+	}
+	wh = NULL;		/* no longer valid, catch any uses */
+
+	/*
+	 * Next strip any MSDU crypto bits.
+	 */
+	if (key != NULL && !ieee80211_crypto_demic(ic, key, m, 0)) {
+		IEEE80211_DISCARD_MAC(ic, IEEE80211_MSG_INPUT,
+		    ni->ni_macaddr, "data", "%s", "demic error");
+		IEEE80211_NODE_STAT(ni, rx_demicfail);
+		goto out;
+	}
+
+	/* copy to listener after decrypt */
+	bpf_mtap3(ic->ic_rawbpf, m);
+
+	/*
+	 * Finally, strip the 802.11 header.
+	 */
+	m = ieee80211_decap(ic, m, hdrspace);
+	if (m == NULL) {
+		/* don't count Null data frames as errors */
+		if (subtype == IEEE80211_FC0_SUBTYPE_NODATA)
+			goto out;
+		IEEE80211_DISCARD_MAC(ic, IEEE80211_MSG_INPUT,
+		    ni->ni_macaddr, "data", "%s", "decap error");
+		ic->ic_stats.is_rx_decap++;
+		IEEE80211_NODE_STAT(ni, rx_decap);
+		goto err;
+	}
+
+	eh = mtod(m, struct ether_header *);
+	if (!ieee80211_node_is_authorized(ni)) {
+		/*
+		 * Deny any non-PAE frames received prior to
+		 * authorization.  For open/shared-key
+		 * authentication the port is mark authorized
+		 * after authentication completes.  For 802.1x
+		 * the port is not marked authorized by the
+		 * authenticator until the handshake has completed.
+		 */
+		if (eh->ether_type != htons(ETHERTYPE_PAE)) {
+			IEEE80211_DISCARD_MAC(ic, IEEE80211_MSG_INPUT,
+			    eh->ether_shost, "data",
+			    "unauthorized port: ether type 0x%x len %u",
+			    eh->ether_type, m->m_pkthdr.len);
+			ic->ic_stats.is_rx_unauth++;
+			IEEE80211_NODE_STAT(ni, rx_unauth);
+			goto err;
+		}
+	} else {
+		/*
+		 * When denying unencrypted frames, discard
+		 * any non-PAE frames received without encryption.
+		 */
+		if ((ic->ic_flags & IEEE80211_F_DROPUNENC) &&
+		    key == NULL &&
+		    eh->ether_type != htons(ETHERTYPE_PAE)) {
+			/*
+			 * Drop unencrypted frames.
+			 */
+			ic->ic_stats.is_rx_unencrypted++;
+			IEEE80211_NODE_STAT(ni, rx_unencrypted);
+			goto out;
+		}
+	}
+
+	ifp->if_ipackets++;
+	IEEE80211_NODE_STAT(ni, rx_data);
+	IEEE80211_NODE_STAT_ADD(ni, rx_bytes, m->m_pkthdr.len);
+
+	ieee80211_deliver_data(ic, ni, m);
+
+	*mp = NULL;
+	return 0;
+
+err:
+	ifp->if_ierrors++;
+out:
+	*mp = m;
+	return -1;
+}
+
+/*
+ * Input code for a MANAGEMENT frame.
+ */
+static int
+ieee80211_input_management(struct ieee80211com *ic, struct mbuf **mp,
+    struct ieee80211_node *ni, int rssi, u_int32_t rstamp)
+{
+	IEEE80211_DEBUGVAR(char ebuf[3 * ETHER_ADDR_LEN]);
+	struct ifnet *ifp = ic->ic_ifp;
+	struct ieee80211_key *key;
+	struct ieee80211_frame *wh;
+	u_int8_t dir, subtype;
+	struct mbuf *m = *mp;
+	int hdrspace;
+
+	wh = mtod(m, struct ieee80211_frame *);
+	dir = wh->i_fc[1] & IEEE80211_FC1_DIR_MASK;
+	subtype = wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK;
+
+	IEEE80211_NODE_STAT(ni, rx_mgmt);
+	if (dir != IEEE80211_FC1_DIR_NODS) {
+		IEEE80211_DISCARD(ic, IEEE80211_MSG_INPUT,
+		    wh, "data", "%s", "unknown dir 0x%x", dir);
+		ic->ic_stats.is_rx_wrongdir++;
+		goto err;
+	}
+	if (m->m_pkthdr.len < sizeof(struct ieee80211_frame)) {
+		IEEE80211_DISCARD_MAC(ic, IEEE80211_MSG_ANY,
+		    ni->ni_macaddr, "mgt", "too short: len %u",
+		    m->m_pkthdr.len);
+		ic->ic_stats.is_rx_tooshort++;
+		goto out;
+	}
+#ifdef IEEE80211_DEBUG
+	if ((ieee80211_msg_debug(ic) && doprint(ic, subtype)) ||
+	    ieee80211_msg_dumppkts(ic)) {
+		if_printf(ic->ic_ifp, "received %s from %s rssi %d\n",
+		    ieee80211_mgt_subtype_name[subtype >>
+			IEEE80211_FC0_SUBTYPE_SHIFT],
+		    ether_snprintf(ebuf, sizeof(ebuf), wh->i_addr2),
+		    rssi);
+	}
+#endif
+
+	if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
+		if (subtype != IEEE80211_FC0_SUBTYPE_AUTH) {
+			/*
+			 * Only shared key auth frames with a challenge
+			 * should be encrypted, discard all others.
+			 */
+			IEEE80211_DISCARD(ic, IEEE80211_MSG_INPUT,
+			    wh, ieee80211_mgt_subtype_name[subtype >>
+				IEEE80211_FC0_SUBTYPE_SHIFT],
+			    "%s", "WEP set but not permitted");
+			ic->ic_stats.is_rx_mgtdiscard++; /* XXX */
+			goto out;
+		}
+		if ((ic->ic_flags & IEEE80211_F_PRIVACY) == 0) {
+			/*
+			 * Discard encrypted frames when privacy is off.
+			 */
+			IEEE80211_DISCARD(ic, IEEE80211_MSG_INPUT,
+			    wh, "mgt", "%s", "WEP set but PRIVACY off");
+			ic->ic_stats.is_rx_noprivacy++;
+			goto out;
+		}
+		hdrspace = ieee80211_hdrspace(ic, wh);
+		key = ieee80211_crypto_decap(ic, ni, &m, hdrspace);
+		if (key == NULL) {
+			/* NB: stats+msgs handled in crypto_decap */
+			goto out;
+		}
+		wh = mtod(m, struct ieee80211_frame *);
+		wh->i_fc[1] &= ~IEEE80211_FC1_WEP;
+	}
+
+	bpf_mtap3(ic->ic_rawbpf, m);
+	(*ic->ic_recv_mgmt)(ic, m, ni, subtype, rssi, rstamp);
+	m_freem(m);
+
+	*mp = NULL;
+	return 0;
+
+err:
+	ifp->if_ierrors++;
+out:
+	*mp = m;
+	return -1;
+}
+
+/*
+ * Input code for a CONTROL frame.
+ */
+static void
+ieee80211_input_control(struct ieee80211com *ic, struct mbuf *m,
+    struct ieee80211_node *ni)
+{
+	IEEE80211_NODE_STAT(ni, rx_ctrl);
+	ic->ic_stats.is_rx_ctl++;
+
+#ifndef IEEE80211_NO_HOSTAP
+	if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
+		struct ieee80211_frame *wh;
+		u_int8_t subtype;
+
+		wh = mtod(m, struct ieee80211_frame *);
+		subtype = wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK;
+
+		switch (subtype) {
+		case IEEE80211_FC0_SUBTYPE_PS_POLL:
+			ieee80211_recv_pspoll(ic, ni, m);
+			break;
+		}
+	}
+#endif
+}
+
+/* -------------------------------------------------------------------------- */
+
 /*
  * Process a received frame.  The node associated with the sender
  * should be supplied.  If nothing was found in the node table then
@@ -166,12 +519,10 @@ ieee80211_input(struct ieee80211com *ic, struct mbuf *m,
 #define	HAS_SEQ(type)	((type & 0x4) == 0)
 	struct ifnet *ifp = ic->ic_ifp;
 	struct ieee80211_frame *wh;
-	struct ieee80211_key *key;
-	struct ether_header *eh;
-	int hdrspace;
-	u_int8_t dir, type, subtype;
+	u_int8_t dir, type;
 	u_int16_t rxseq;
 	IEEE80211_DEBUGVAR(char ebuf[3 * ETHER_ADDR_LEN]);
+	int ret;
 
 	KASSERT(!cpu_intr_p());
 
@@ -218,7 +569,6 @@ ieee80211_input(struct ieee80211com *ic, struct mbuf *m,
 
 	dir = wh->i_fc[1] & IEEE80211_FC1_DIR_MASK;
 	type = wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK;
-	subtype = wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK;
 
 	if ((ic->ic_flags & IEEE80211_F_SCAN) == 0) {
 		u_int8_t *bssid;
@@ -366,284 +716,23 @@ ieee80211_input(struct ieee80211com *ic, struct mbuf *m,
 
 	switch (type) {
 	case IEEE80211_FC0_TYPE_DATA:
-		hdrspace = ieee80211_hdrspace(ic, wh);
-		if (m->m_len < hdrspace &&
-		    (m = m_pullup(m, hdrspace)) == NULL) {
-			IEEE80211_DISCARD_MAC(ic, IEEE80211_MSG_ANY,
-			    ni->ni_macaddr, NULL,
-			    "data too short: expecting %u", hdrspace);
-			ic->ic_stats.is_rx_tooshort++;
-			goto out;		/* XXX */
-		}
-		wh = mtod(m, struct ieee80211_frame *);
-
-		switch (ic->ic_opmode) {
-		case IEEE80211_M_STA:
-			if (dir != IEEE80211_FC1_DIR_FROMDS) {
-				IEEE80211_DISCARD(ic, IEEE80211_MSG_INPUT,
-				    wh, "data", "%s", "unknown dir 0x%x", dir);
-				ic->ic_stats.is_rx_wrongdir++;
-				goto out;
-			}
-			if ((ifp->if_flags & IFF_SIMPLEX) &&
-			    IEEE80211_IS_MULTICAST(wh->i_addr1) &&
-			    IEEE80211_ADDR_EQ(wh->i_addr3, ic->ic_myaddr)) {
-				/*
-				 * In IEEE802.11 network, multicast packet
-				 * sent from me is broadcast from AP.
-				 * It should be silently discarded for
-				 * SIMPLEX interface.
-				 */
-				IEEE80211_DISCARD(ic, IEEE80211_MSG_INPUT,
-				    wh, NULL, "%s", "multicast echo");
-				ic->ic_stats.is_rx_mcastecho++;
-				goto out;
-			}
-			break;
-
-		case IEEE80211_M_IBSS:
-		case IEEE80211_M_AHDEMO:
-			if (dir != IEEE80211_FC1_DIR_NODS) {
-				IEEE80211_DISCARD(ic, IEEE80211_MSG_INPUT,
-				    wh, "data", "%s", "unknown dir 0x%x", dir);
-				ic->ic_stats.is_rx_wrongdir++;
-				goto out;
-			}
-			/* XXX no power-save support */
-			break;
-
-		case IEEE80211_M_HOSTAP:
-#ifndef IEEE80211_NO_HOSTAP
-			if (dir != IEEE80211_FC1_DIR_TODS) {
-				IEEE80211_DISCARD(ic, IEEE80211_MSG_INPUT,
-				    wh, "data", "%s", "unknown dir 0x%x", dir);
-				ic->ic_stats.is_rx_wrongdir++;
-				goto out;
-			}
-			/* check if source STA is associated */
-			if (ni == ic->ic_bss) {
-				IEEE80211_DISCARD(ic, IEEE80211_MSG_INPUT,
-				    wh, "data", "%s", "unknown src");
-				ieee80211_send_error(ic, ni, wh->i_addr2,
-				    IEEE80211_FC0_SUBTYPE_DEAUTH,
-				    IEEE80211_REASON_NOT_AUTHED);
-				ic->ic_stats.is_rx_notassoc++;
-				goto err;
-			}
-			if (ni->ni_associd == 0) {
-				IEEE80211_DISCARD(ic, IEEE80211_MSG_INPUT,
-				    wh, "data", "%s", "unassoc src");
-				IEEE80211_SEND_MGMT(ic, ni,
-				    IEEE80211_FC0_SUBTYPE_DISASSOC,
-				    IEEE80211_REASON_NOT_ASSOCED);
-				ic->ic_stats.is_rx_notassoc++;
-				goto err;
-			}
-
-			/*
-			 * Check for power save state change.
-			 */
-			if (((wh->i_fc[1] & IEEE80211_FC1_PWR_MGT) ^
-			    (ni->ni_flags & IEEE80211_NODE_PWR_MGT)))
-				ieee80211_node_pwrsave(ni,
-					wh->i_fc[1] & IEEE80211_FC1_PWR_MGT);
-#endif /* !IEEE80211_NO_HOSTAP */
-			break;
-
-		default:
-			/* XXX here to keep compiler happy */
+		ret = ieee80211_input_data(ic, &m, ni);
+		if (ret == -1) {
 			goto out;
 		}
-
-		/*
-		 * Handle privacy requirements.  Note that we
-		 * must not be preempted from here until after
-		 * we (potentially) call ieee80211_crypto_demic;
-		 * otherwise we may violate assumptions in the
-		 * crypto cipher modules used to do delayed update
-		 * of replay sequence numbers.
-		 */
-		if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
-			if ((ic->ic_flags & IEEE80211_F_PRIVACY) == 0) {
-				/*
-				 * Discard encrypted frames when privacy is off.
-				 */
-				IEEE80211_DISCARD(ic, IEEE80211_MSG_INPUT,
-				    wh, "WEP", "%s", "PRIVACY off");
-				ic->ic_stats.is_rx_noprivacy++;
-				IEEE80211_NODE_STAT(ni, rx_noprivacy);
-				goto out;
-			}
-			key = ieee80211_crypto_decap(ic, ni, &m, hdrspace);
-			if (key == NULL) {
-				/* NB: stats+msgs handled in crypto_decap */
-				IEEE80211_NODE_STAT(ni, rx_wepfail);
-				goto out;
-			}
-			wh = mtod(m, struct ieee80211_frame *);
-			wh->i_fc[1] &= ~IEEE80211_FC1_WEP;
-		} else {
-			key = NULL;
-		}
-
-		/*
-		 * Next up, any fragmentation.
-		 */
-		if (!IEEE80211_IS_MULTICAST(wh->i_addr1)) {
-			m = ieee80211_defrag(ic, ni, m, hdrspace);
-			if (m == NULL) {
-				/* Fragment dropped or frame not complete yet */
-				goto out;
-			}
-		}
-		wh = NULL;		/* no longer valid, catch any uses */
-
-		/*
-		 * Next strip any MSDU crypto bits.
-		 */
-		if (key != NULL && !ieee80211_crypto_demic(ic, key, m, 0)) {
-			IEEE80211_DISCARD_MAC(ic, IEEE80211_MSG_INPUT,
-			    ni->ni_macaddr, "data", "%s", "demic error");
-			IEEE80211_NODE_STAT(ni, rx_demicfail);
-			goto out;
-		}
-
-		/* copy to listener after decrypt */
-		bpf_mtap3(ic->ic_rawbpf, m);
-
-		/*
-		 * Finally, strip the 802.11 header.
-		 */
-		m = ieee80211_decap(ic, m, hdrspace);
-		if (m == NULL) {
-			/* don't count Null data frames as errors */
-			if (subtype == IEEE80211_FC0_SUBTYPE_NODATA)
-				goto out;
-			IEEE80211_DISCARD_MAC(ic, IEEE80211_MSG_INPUT,
-			    ni->ni_macaddr, "data", "%s", "decap error");
-			ic->ic_stats.is_rx_decap++;
-			IEEE80211_NODE_STAT(ni, rx_decap);
-			goto err;
-		}
-
-		eh = mtod(m, struct ether_header *);
-		if (!ieee80211_node_is_authorized(ni)) {
-			/*
-			 * Deny any non-PAE frames received prior to
-			 * authorization.  For open/shared-key
-			 * authentication the port is mark authorized
-			 * after authentication completes.  For 802.1x
-			 * the port is not marked authorized by the
-			 * authenticator until the handshake has completed.
-			 */
-			if (eh->ether_type != htons(ETHERTYPE_PAE)) {
-				IEEE80211_DISCARD_MAC(ic, IEEE80211_MSG_INPUT,
-				    eh->ether_shost, "data",
-				    "unauthorized port: ether type 0x%x len %u",
-				    eh->ether_type, m->m_pkthdr.len);
-				ic->ic_stats.is_rx_unauth++;
-				IEEE80211_NODE_STAT(ni, rx_unauth);
-				goto err;
-			}
-		} else {
-			/*
-			 * When denying unencrypted frames, discard
-			 * any non-PAE frames received without encryption.
-			 */
-			if ((ic->ic_flags & IEEE80211_F_DROPUNENC) &&
-			    key == NULL &&
-			    eh->ether_type != htons(ETHERTYPE_PAE)) {
-				/*
-				 * Drop unencrypted frames.
-				 */
-				ic->ic_stats.is_rx_unencrypted++;
-				IEEE80211_NODE_STAT(ni, rx_unencrypted);
-				goto out;
-			}
-		}
-
-		ifp->if_ipackets++;
-		IEEE80211_NODE_STAT(ni, rx_data);
-		IEEE80211_NODE_STAT_ADD(ni, rx_bytes, m->m_pkthdr.len);
-
-		ieee80211_deliver_data(ic, ni, m);
 		return IEEE80211_FC0_TYPE_DATA;
 
 	case IEEE80211_FC0_TYPE_MGT:
-		IEEE80211_NODE_STAT(ni, rx_mgmt);
-		if (dir != IEEE80211_FC1_DIR_NODS) {
-			IEEE80211_DISCARD(ic, IEEE80211_MSG_INPUT,
-			    wh, "data", "%s", "unknown dir 0x%x", dir);
-			ic->ic_stats.is_rx_wrongdir++;
-			goto err;
-		}
-		if (m->m_pkthdr.len < sizeof(struct ieee80211_frame)) {
-			IEEE80211_DISCARD_MAC(ic, IEEE80211_MSG_ANY,
-			    ni->ni_macaddr, "mgt", "too short: len %u",
-			    m->m_pkthdr.len);
-			ic->ic_stats.is_rx_tooshort++;
+		ret = ieee80211_input_management(ic, &m, ni, rssi, rstamp);
+		if (ret == -1) {
 			goto out;
 		}
-#ifdef IEEE80211_DEBUG
-		if ((ieee80211_msg_debug(ic) && doprint(ic, subtype)) ||
-		    ieee80211_msg_dumppkts(ic)) {
-			if_printf(ic->ic_ifp, "received %s from %s rssi %d\n",
-			    ieee80211_mgt_subtype_name[subtype >>
-				IEEE80211_FC0_SUBTYPE_SHIFT],
-			    ether_snprintf(ebuf, sizeof(ebuf), wh->i_addr2),
-			    rssi);
-		}
-#endif
-		if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
-			if (subtype != IEEE80211_FC0_SUBTYPE_AUTH) {
-				/*
-				 * Only shared key auth frames with a challenge
-				 * should be encrypted, discard all others.
-				 */
-				IEEE80211_DISCARD(ic, IEEE80211_MSG_INPUT,
-				    wh, ieee80211_mgt_subtype_name[subtype >>
-					IEEE80211_FC0_SUBTYPE_SHIFT],
-				    "%s", "WEP set but not permitted");
-				ic->ic_stats.is_rx_mgtdiscard++; /* XXX */
-				goto out;
-			}
-			if ((ic->ic_flags & IEEE80211_F_PRIVACY) == 0) {
-				/*
-				 * Discard encrypted frames when privacy is off.
-				 */
-				IEEE80211_DISCARD(ic, IEEE80211_MSG_INPUT,
-				    wh, "mgt", "%s", "WEP set but PRIVACY off");
-				ic->ic_stats.is_rx_noprivacy++;
-				goto out;
-			}
-			hdrspace = ieee80211_hdrspace(ic, wh);
-			key = ieee80211_crypto_decap(ic, ni, &m, hdrspace);
-			if (key == NULL) {
-				/* NB: stats+msgs handled in crypto_decap */
-				goto out;
-			}
-			wh = mtod(m, struct ieee80211_frame *);
-			wh->i_fc[1] &= ~IEEE80211_FC1_WEP;
-		}
-
-		bpf_mtap3(ic->ic_rawbpf, m);
-		(*ic->ic_recv_mgmt)(ic, m, ni, subtype, rssi, rstamp);
-		m_freem(m);
-		return type;
+		return IEEE80211_FC0_TYPE_MGT;
 
 	case IEEE80211_FC0_TYPE_CTL:
-		IEEE80211_NODE_STAT(ni, rx_ctrl);
-		ic->ic_stats.is_rx_ctl++;
-#ifndef IEEE80211_NO_HOSTAP
-		if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
-			switch (subtype) {
-			case IEEE80211_FC0_SUBTYPE_PS_POLL:
-				ieee80211_recv_pspoll(ic, ni, m);
-				break;
-			}
-		}
-#endif /* !IEEE80211_NO_HOSTAP */
+		ieee80211_input_control(ic, m, ni);
 		goto out;
+
 	default:
 		IEEE80211_DISCARD(ic, IEEE80211_MSG_ANY,
 		    wh, NULL, "bad frame type 0x%x", type);
