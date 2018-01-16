@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.132 2017/09/11 19:25:07 palle Exp $ */
+/*	$NetBSD: cpu.c,v 1.133 2018/01/16 08:23:18 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.132 2017/09/11 19:25:07 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.133 2018/01/16 08:23:18 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -62,6 +62,8 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.132 2017/09/11 19:25:07 palle Exp $");
 #include <sys/kernel.h>
 #include <sys/reboot.h>
 #include <sys/cpu.h>
+#include <sys/sysctl.h>
+#include <sys/kmem.h>
 
 #include <uvm/uvm.h>
 
@@ -412,6 +414,61 @@ cpu_reset_fpustate(void)
 	savefpstate(fpstate);
 }
 
+/* setup the hw.cpuN.* nodes for this cpu */
+static void
+cpu_setup_sysctl(struct cpu_info *ci, device_t dev)
+{
+	const struct sysctlnode *cpunode = NULL;
+
+	sysctl_createv(NULL, 0, NULL, &cpunode,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, device_xname(dev), NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_HW,
+		       CTL_CREATE, CTL_EOL);
+
+	if (cpunode == NULL)
+		return;
+
+#define SETUPS(name, member)					\
+	sysctl_createv(NULL, 0, &cpunode, NULL,			\
+		       CTLFLAG_PERMANENT,			\
+		       CTLTYPE_STRING, name, NULL,		\
+		       NULL, 0, member, 0,			\
+		       CTL_CREATE, CTL_EOL);
+
+	SETUPS("name", __UNCONST(ci->ci_name))
+#undef SETUPS
+
+#define SETUPI(name, member)					\
+	sysctl_createv(NULL, 0, &cpunode, NULL,			\
+		       CTLFLAG_PERMANENT,			\
+		       CTLTYPE_INT, name, NULL,			\
+		       NULL, 0, member, 0,			\
+		       CTL_CREATE, CTL_EOL);
+
+	SETUPI("id", &ci->ci_cpuid);
+#undef SETUPI
+
+#define SETUPQ(name, member)					\
+	sysctl_createv(NULL, 0, &cpunode, NULL,			\
+		       CTLFLAG_PERMANENT,			\
+		       CTLTYPE_QUAD, name, NULL,			\
+		       NULL, 0, member, 0,			\
+		       CTL_CREATE, CTL_EOL);
+
+	SETUPQ("clock_frequency", &ci->ci_cpu_clockrate[0])
+	SETUPQ("ver", &ci->ci_ver)
+#undef SETUPI
+
+        sysctl_createv(NULL, 0, &cpunode, NULL, 
+                       CTLFLAG_PERMANENT,
+                       CTLTYPE_STRUCT, "cacheinfo", NULL,
+                       NULL, 0, &ci->ci_cacheinfo, sizeof(ci->ci_cacheinfo),
+		       CTL_CREATE, CTL_EOL);
+
+}
+
 /*
  * Attach the CPU.
  * Discover interesting goop about the virtual address cache
@@ -485,12 +542,14 @@ cpu_attach(device_t parent, device_t dev, void *aux)
 	ci->ci_system_clockrate[0] = sclk;
 	ci->ci_system_clockrate[1] = sclk / 1000000;
 
-	snprintf(buf, sizeof buf, "%s @ %s MHz",
-		prom_getpropstring(node, "name"), clockfreq(clk));
+	ci->ci_name = kmem_strdupsize(prom_getpropstring(node, "name"), NULL,
+				      KM_NOSLEEP);
+	snprintf(buf, sizeof buf, "%s @ %s MHz", ci->ci_name, clockfreq(clk));
 	cpu_setmodel("%s (%s)", machine_model, buf);
 
 	aprint_normal(": %s, CPU id %d\n", buf, ci->ci_cpuid);
 	aprint_naive("\n");
+	ci->ci_ver = getver();
 	if (CPU_ISSUN4U || CPU_ISSUN4US) {
 		aprint_normal_dev(dev, "manuf %x, impl %x, mask %x\n",
 		    (u_int)GETVER_CPU_MANUF(),
@@ -532,6 +591,8 @@ cpu_attach(device_t parent, device_t dev, void *aux)
 		       (long)linesize);
 		sep = ", ";
 	}
+	ci->ci_cacheinfo.c_itotalsize = totalsize;
+	ci->ci_cacheinfo.c_ilinesize = linesize;
 
 	dcachesize = cpu_dcache_size(node);
 	if (dcachesize > dcache_size)
@@ -559,6 +620,8 @@ cpu_attach(device_t parent, device_t dev, void *aux)
 		       (long)linesize);
 		sep = ", ";
 	}
+	ci->ci_cacheinfo.c_dtotalsize = totalsize;
+	ci->ci_cacheinfo.c_dlinesize = linesize;
 
 	linesize = l = cpu_ecache_line_size(node);
 	for (i = 0; (1 << i) < l && l; i++)
@@ -580,10 +643,14 @@ cpu_attach(device_t parent, device_t dev, void *aux)
 		       (long)linesize);
 	}
 	aprint_normal("\n");
+	ci->ci_cacheinfo.c_etotalsize = totalsize;
+	ci->ci_cacheinfo.c_elinesize = linesize;
 
 	if (ecache_min_line_size == 0 ||
 	    linesize < ecache_min_line_size)
 		ecache_min_line_size = linesize;
+
+	cpu_setup_sysctl(ci, dev);
 
 	/*
 	 * Now that we know the size of the largest cache on this CPU,

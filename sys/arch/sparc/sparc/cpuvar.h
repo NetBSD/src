@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.94 2016/12/10 10:41:07 mrg Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.95 2018/01/16 08:23:17 mrg Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -154,12 +154,6 @@ struct module_info {
 /*
  * CPU flags
  */
-#define CPUFLG_CACHEPAGETABLES	0x1	/* caching pagetables OK on Sun4m */
-#define CPUFLG_CACHEIOMMUTABLES	0x2	/* caching IOMMU translations OK */
-#define CPUFLG_CACHEDVMA	0x4	/* DVMA goes through cache */
-#define CPUFLG_SUN4CACHEBUG	0x8	/* trap page can't be cached */
-#define CPUFLG_CACHE_MANDATORY	0x10	/* if cache is on, don't use
-					   uncached access */
 #define CPUFLG_HATCHED		0x1000	/* CPU is alive */
 #define CPUFLG_PAUSED		0x2000	/* CPU is paused */
 #define CPUFLG_GOTMSG		0x4000	/* CPU got an lev13 IPI */
