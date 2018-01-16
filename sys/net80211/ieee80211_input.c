@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.94 2018/01/16 09:42:11 maxv Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.95 2018/01/16 14:01:13 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 Atsushi Onoe
@@ -37,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.81 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.94 2018/01/16 09:42:11 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.95 2018/01/16 14:01:13 maxv Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -891,6 +891,7 @@ ieee80211_deliver_data(struct ieee80211com *ic,
 				ieee80211_free_node(sta);
 			}
 		}
+
 		if (m1 != NULL) {
 			int len;
 #ifdef ALTQ
@@ -902,13 +903,14 @@ ieee80211_deliver_data(struct ieee80211com *ic,
 			IFQ_ENQUEUE(&ifp->if_snd, m1, error);
 			if (error) {
 				ifp->if_oerrors++;
+				m_freem(m);
 				m = NULL;
 			}
 			ifp->if_obytes += len;
 		}
 	}
-	if (m != NULL) {
 
+	if (m != NULL) {
 		if (ni->ni_vlan != 0)
 			vlan_set_tag(m, ni->ni_vlan);
 
@@ -919,6 +921,7 @@ ieee80211_deliver_data(struct ieee80211com *ic,
 		KASSERT(ifp->if_percpuq);
 		if_percpuq_enqueue(ifp->if_percpuq, m);
 	}
+
 	return;
 }
 
