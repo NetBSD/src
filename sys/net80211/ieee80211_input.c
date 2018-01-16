@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.107 2018/01/16 18:42:43 maxv Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.108 2018/01/16 18:53:32 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 Atsushi Onoe
@@ -37,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.81 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.107 2018/01/16 18:42:43 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.108 2018/01/16 18:53:32 maxv Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -1038,22 +1038,28 @@ ieee80211_decap(struct ieee80211com *ic, struct mbuf *m, int hdrlen)
  * Install received rate set information in the node's state block.
  */
 int
-ieee80211_setup_rates(struct ieee80211_node *ni,
-	const u_int8_t *rates, const u_int8_t *xrates, int flags)
+ieee80211_setup_rates(struct ieee80211_node *ni, const u_int8_t *rates,
+    const u_int8_t *xrates, int flags)
 {
 	struct ieee80211com *ic = ni->ni_ic;
 	struct ieee80211_rateset *rs = &ni->ni_rates;
 
 	memset(rs, 0, sizeof(*rs));
+
 	rs->rs_nrates = rates[1];
 	memcpy(rs->rs_rates, rates + 2, rs->rs_nrates);
+
 	if (xrates != NULL) {
 		u_int8_t nxrates;
+		size_t totalrate;
+
 		/*
 		 * Tack on 11g extended supported rate element.
 		 */
 		nxrates = xrates[1];
-		if (rs->rs_nrates + nxrates > IEEE80211_RATE_MAXSIZE) {
+		totalrate = (size_t)rs->rs_nrates + (size_t)nxrates;
+
+		if (totalrate > IEEE80211_RATE_MAXSIZE) {
 			IEEE80211_DEBUGVAR(char ebuf[3 * ETHER_ADDR_LEN]);
 			nxrates = IEEE80211_RATE_MAXSIZE - rs->rs_nrates;
 			IEEE80211_DPRINTF(ic, IEEE80211_MSG_XRATE,
@@ -1063,9 +1069,11 @@ ieee80211_setup_rates(struct ieee80211_node *ni,
 			     nxrates, xrates[1]);
 			ic->ic_stats.is_rx_rstoobig++;
 		}
+
 		memcpy(rs->rs_rates + rs->rs_nrates, xrates+2, nxrates);
 		rs->rs_nrates += nxrates;
 	}
+
 	return ieee80211_fix_rate(ni, flags);
 }
 
@@ -1869,11 +1877,14 @@ ieee80211_parse_wmeparams(struct ieee80211com *ic, u_int8_t *frm,
 		    wh, "WME", "too short, len %u", len);
 		return -1;
 	}
+
 	qosinfo = frm[offsetof(struct ieee80211_wme_param, param_qosInfo)];
 	qosinfo &= WME_QOSINFO_COUNT;
+
 	/* XXX do proper check for wraparound */
 	if (qosinfo == wme->wme_wmeChanParams.cap_info)
 		return 0;
+
 	frm += offsetof(struct ieee80211_wme_param, params_acParams);
 	for (i = 0; i < WME_NUM_AC; i++) {
 		struct wmeParams *wmep =
@@ -1886,6 +1897,7 @@ ieee80211_parse_wmeparams(struct ieee80211com *ic, u_int8_t *frm,
 		wmep->wmep_txopLimit = LE_READ_2(frm+2);
 		frm += 4;
 	}
+
 	wme->wme_wmeChanParams.cap_info = qosinfo;
 	return 1;
 #undef MS
@@ -2191,7 +2203,7 @@ ieee80211_recv_mgmt_beacon(struct ieee80211com *ic, struct mbuf *m0,
 	 * Count frame now that we know it's to be processed.
 	 */
 	if (subtype == IEEE80211_FC0_SUBTYPE_BEACON) {
-		ic->ic_stats.is_rx_beacon++;		/* XXX remove */
+		ic->ic_stats.is_rx_beacon++;
 		IEEE80211_NODE_STAT(ni, rx_beacons);
 	} else {
 		IEEE80211_NODE_STAT(ni, rx_proberesp);
@@ -2219,7 +2231,6 @@ ieee80211_recv_mgmt_beacon(struct ieee80211com *ic, struct mbuf *m0,
 			else
 				ic->ic_flags &= ~IEEE80211_F_USEPROT;
 			ni->ni_erp = scan.sp_erp;
-			/* XXX statistic */
 		}
 
 		if ((ni->ni_capinfo ^ scan.sp_capinfo) & IEEE80211_CAPINFO_SHORT_SLOTTIME) {
@@ -2237,7 +2248,6 @@ ieee80211_recv_mgmt_beacon(struct ieee80211com *ic, struct mbuf *m0,
 			    ic->ic_curmode == IEEE80211_MODE_11A ||
 			    (ni->ni_capinfo & IEEE80211_CAPINFO_SHORT_SLOTTIME));
 			ni->ni_capinfo = scan.sp_capinfo;
-			/* XXX statistic */
 		}
 
 		if (scan.sp_wme != NULL && (ni->ni_flags & IEEE80211_NODE_QOS) &&
