@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.96.10.1 2017/07/25 01:55:21 snj Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.96.10.2 2018/01/16 13:04:33 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.96.10.1 2017/07/25 01:55:21 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.96.10.2 2018/01/16 13:04:33 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -84,6 +84,17 @@ static void sysctl_net_setup(void);
 static struct domain domain_dummy;
 __link_set_add_rodata(domains,domain_dummy);
 
+static void
+domain_init_timers(void)
+{
+
+	callout_init(&pffasttimo_ch, CALLOUT_MPSAFE);
+	callout_init(&pfslowtimo_ch, CALLOUT_MPSAFE);
+
+	callout_reset(&pffasttimo_ch, 1, pffasttimo, NULL);
+	callout_reset(&pfslowtimo_ch, 1, pfslowtimo, NULL);
+}
+
 void
 domaininit(bool attach)
 {
@@ -108,13 +119,20 @@ domaininit(bool attach)
 		}
 		if (rt_domain)
 			domain_attach(rt_domain);
+
+		domain_init_timers();
 	}
+}
 
-	callout_init(&pffasttimo_ch, CALLOUT_MPSAFE);
-	callout_init(&pfslowtimo_ch, CALLOUT_MPSAFE);
+/*
+ * Must be called only if domaininit has been called with false and
+ * after all domains have been attached.
+ */
+void
+domaininit_post(void)
+{
 
-	callout_reset(&pffasttimo_ch, 1, pffasttimo, NULL);
-	callout_reset(&pfslowtimo_ch, 1, pfslowtimo, NULL);
+	domain_init_timers();
 }
 
 void
