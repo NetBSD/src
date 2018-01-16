@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.97 2018/01/16 15:18:37 maxv Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.98 2018/01/16 15:42:52 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 Atsushi Onoe
@@ -37,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.81 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.97 2018/01/16 15:18:37 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.98 2018/01/16 15:42:52 maxv Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -2001,16 +2001,387 @@ ieee80211_update_adhoc_node(struct ieee80211com *ic, struct ieee80211_node *ni,
 	}
 }
 
+/* -------------------------------------------------------------------------- */
+
+static void
+ieee80211_recv_mgmt_beacon(struct ieee80211com *ic, struct mbuf *m0,
+    struct ieee80211_node *ni, int subtype, int rssi, u_int32_t rstamp)
+{
+	struct ieee80211_frame *wh;
+	u_int8_t *frm, *efrm;
+	IEEE80211_DEBUGVAR(char ebuf[3 * ETHER_ADDR_LEN]);
+	struct ieee80211_scanparams scan;
+
+	wh = mtod(m0, struct ieee80211_frame *);
+	frm = (u_int8_t *)(wh + 1);
+	efrm = mtod(m0, u_int8_t *) + m0->m_len;
+
+	/*
+	 * We process beacon/probe response frames:
+	 *    o when scanning, or
+	 *    o station mode when associated (to collect state
+	 *      updates such as 802.11g slot time), or
+	 *    o adhoc mode (to discover neighbors)
+	 * Frames otherwise received are discarded.
+	 */
+	if (!((ic->ic_flags & IEEE80211_F_SCAN) ||
+	      (ic->ic_opmode == IEEE80211_M_STA && ni->ni_associd) ||
+	       ic->ic_opmode == IEEE80211_M_IBSS)) {
+		ic->ic_stats.is_rx_mgtdiscard++;
+		return;
+	}
+
+	/*
+	 * beacon/probe response frame format
+	 *	[8] time stamp
+	 *	[2] beacon interval
+	 *	[2] capability information
+	 *	[tlv] ssid
+	 *	[tlv] supported rates
+	 *	[tlv] country information
+	 *	[tlv] parameter set (FH/DS)
+	 *	[tlv] erp information
+	 *	[tlv] extended supported rates
+	 *	[tlv] WME
+	 *	[tlv] WPA or RSN
+	 */
+	IEEE80211_VERIFY_LENGTH(efrm - frm, 12);
+	memset(&scan, 0, sizeof(scan));
+	scan.tstamp  = frm;				frm += 8;
+	scan.bintval = le16toh(*(u_int16_t *)frm);	frm += 2;
+	scan.capinfo = le16toh(*(u_int16_t *)frm);	frm += 2;
+	scan.bchan = ieee80211_chan2ieee(ic, ic->ic_curchan);
+	scan.chan = scan.bchan;
+
+	while (frm + 1 < efrm) {
+		IEEE80211_VERIFY_LENGTH(efrm - frm, frm[1] + 2);
+
+		switch (*frm) {
+		case IEEE80211_ELEMID_SSID:
+			scan.ssid = frm;
+			break;
+		case IEEE80211_ELEMID_RATES:
+			scan.rates = frm;
+			break;
+		case IEEE80211_ELEMID_COUNTRY:
+			scan.country = frm;
+			break;
+		case IEEE80211_ELEMID_FHPARMS:
+			IEEE80211_VERIFY_LENGTH(frm[1], 5);
+			if (ic->ic_phytype == IEEE80211_T_FH) {
+				scan.fhdwell = LE_READ_2(&frm[2]);
+				scan.chan = IEEE80211_FH_CHAN(frm[4], frm[5]);
+				scan.fhindex = frm[6];
+			}
+			break;
+		case IEEE80211_ELEMID_DSPARMS:
+			/*
+			 * XXX hack this since depending on phytype
+			 * is problematic for multi-mode devices.
+			 */
+			IEEE80211_VERIFY_LENGTH(frm[1], 1);
+			if (ic->ic_phytype != IEEE80211_T_FH)
+				scan.chan = frm[2];
+			break;
+		case IEEE80211_ELEMID_TIM:
+			/* XXX ATIM? */
+			IEEE80211_VERIFY_LENGTH(frm[1], 5);
+			scan.tim = frm;
+			scan.timoff = frm - mtod(m0, u_int8_t *);
+			break;
+		case IEEE80211_ELEMID_IBSSPARMS:
+			break;
+		case IEEE80211_ELEMID_XRATES:
+			scan.xrates = frm;
+			break;
+		case IEEE80211_ELEMID_ERP:
+			if (frm[1] != 1) {
+				IEEE80211_DISCARD_IE(ic,
+				    IEEE80211_MSG_ELEMID, wh, "ERP",
+				    "bad len %u", frm[1]);
+				ic->ic_stats.is_rx_elem_toobig++;
+				break;
+			}
+			scan.erp = frm[2];
+			break;
+		case IEEE80211_ELEMID_RSN:
+			scan.wpa = frm;
+			break;
+		case IEEE80211_ELEMID_VENDOR:
+			if (iswpaoui(frm))
+				scan.wpa = frm;
+			else if (iswmeparam(frm) || iswmeinfo(frm))
+				scan.wme = frm;
+			/* XXX Atheros OUI support */
+			break;
+		default:
+			IEEE80211_DISCARD_IE(ic, IEEE80211_MSG_ELEMID,
+			    wh, "unhandled",
+			    "id %u, len %u", *frm, frm[1]);
+			ic->ic_stats.is_rx_elem_unknown++;
+			break;
+		}
+
+		frm += frm[1] + 2;
+	}
+
+	IEEE80211_VERIFY_ELEMENT(scan.rates, IEEE80211_RATE_MAXSIZE);
+	IEEE80211_VERIFY_ELEMENT(scan.ssid, IEEE80211_NWID_LEN);
+
+	if (
+#if IEEE80211_CHAN_MAX < 255
+	    scan.chan > IEEE80211_CHAN_MAX ||
+#endif
+	    isclr(ic->ic_chan_active, scan.chan)) {
+		IEEE80211_DISCARD(ic,
+		    IEEE80211_MSG_ELEMID | IEEE80211_MSG_INPUT,
+		    wh, ieee80211_mgt_subtype_name[subtype >>
+			IEEE80211_FC0_SUBTYPE_SHIFT],
+		    "invalid channel %u", scan.chan);
+		ic->ic_stats.is_rx_badchan++;
+		return;
+	}
+	if (scan.chan != scan.bchan &&
+	    ic->ic_phytype != IEEE80211_T_FH) {
+		/*
+		 * Frame was received on a channel different from the
+		 * one indicated in the DS params element id;
+		 * silently discard it.
+		 *
+		 * NB: this can happen due to signal leakage.
+		 *     But we should take it for FH phy because
+		 *     the rssi value should be correct even for
+		 *     different hop pattern in FH.
+		 */
+		IEEE80211_DISCARD(ic,
+		    IEEE80211_MSG_ELEMID | IEEE80211_MSG_INPUT,
+		    wh, ieee80211_mgt_subtype_name[subtype >>
+			IEEE80211_FC0_SUBTYPE_SHIFT],
+		    "for off-channel %u", scan.chan);
+		ic->ic_stats.is_rx_chanmismatch++;
+		return;
+	}
+	if (!(IEEE80211_BINTVAL_MIN <= scan.bintval &&
+	      scan.bintval <= IEEE80211_BINTVAL_MAX)) {
+		IEEE80211_DISCARD(ic,
+		    IEEE80211_MSG_ELEMID | IEEE80211_MSG_INPUT,
+		    wh, ieee80211_mgt_subtype_name[subtype >>
+			IEEE80211_FC0_SUBTYPE_SHIFT],
+		    "bogus beacon interval", scan.bintval);
+		ic->ic_stats.is_rx_badbintval++;
+		return;
+	}
+
+	if (ni != ic->ic_bss) {
+		ni = ieee80211_refine_node_for_beacon(ic, ni,
+		    &ic->ic_channels[scan.chan], scan.ssid);
+	}
+	/*
+	 * Count frame now that we know it's to be processed.
+	 */
+	if (subtype == IEEE80211_FC0_SUBTYPE_BEACON) {
+		ic->ic_stats.is_rx_beacon++;		/* XXX remove */
+		IEEE80211_NODE_STAT(ni, rx_beacons);
+	} else
+		IEEE80211_NODE_STAT(ni, rx_proberesp);
+
+	/*
+	 * When operating in station mode, check for state updates.
+	 * Be careful to ignore beacons received while doing a
+	 * background scan.  We consider only 11g/WMM stuff right now.
+	 */
+	if (ic->ic_opmode == IEEE80211_M_STA &&
+	    ni->ni_associd != 0 &&
+	    ((ic->ic_flags & IEEE80211_F_SCAN) == 0 ||
+	     IEEE80211_ADDR_EQ(wh->i_addr2, ni->ni_bssid))) {
+		/* record tsf of last beacon */
+		memcpy(ni->ni_tstamp.data, scan.tstamp,
+			sizeof(ni->ni_tstamp));
+		if (ni->ni_erp != scan.erp) {
+			IEEE80211_DPRINTF(ic, IEEE80211_MSG_ASSOC,
+			    "[%s] erp change: was 0x%x, now 0x%x\n",
+			    ether_snprintf(ebuf, sizeof(ebuf),
+			    wh->i_addr2), ni->ni_erp, scan.erp);
+			if (ic->ic_curmode == IEEE80211_MODE_11G &&
+			    (ni->ni_erp & IEEE80211_ERP_USE_PROTECTION))
+				ic->ic_flags |= IEEE80211_F_USEPROT;
+			else
+				ic->ic_flags &= ~IEEE80211_F_USEPROT;
+			ni->ni_erp = scan.erp;
+			/* XXX statistic */
+		}
+		if ((ni->ni_capinfo ^ scan.capinfo) & IEEE80211_CAPINFO_SHORT_SLOTTIME) {
+			IEEE80211_DPRINTF(ic, IEEE80211_MSG_ASSOC,
+			    "[%s] capabilities change: before 0x%x,"
+			     " now 0x%x\n",
+			     ether_snprintf(ebuf, sizeof(ebuf),
+			     wh->i_addr2),
+			     ni->ni_capinfo, scan.capinfo);
+			/*
+			 * NB: we assume short preamble doesn't
+			 *     change dynamically
+			 */
+			ieee80211_set_shortslottime(ic,
+				ic->ic_curmode == IEEE80211_MODE_11A ||
+				(ni->ni_capinfo & IEEE80211_CAPINFO_SHORT_SLOTTIME));
+			ni->ni_capinfo = scan.capinfo;
+			/* XXX statistic */
+		}
+		if (scan.wme != NULL &&
+		    (ni->ni_flags & IEEE80211_NODE_QOS) &&
+		    ieee80211_parse_wmeparams(ic, scan.wme, wh) > 0)
+			ieee80211_wme_updateparams(ic);
+		if (scan.tim != NULL) {
+			struct ieee80211_tim_ie *ie =
+			    (struct ieee80211_tim_ie *) scan.tim;
+
+			ni->ni_dtim_count = ie->tim_count;
+			ni->ni_dtim_period = ie->tim_period;
+		}
+		if (ic->ic_flags & IEEE80211_F_SCAN)
+			ieee80211_add_scan(ic, &scan, wh,
+				subtype, rssi, rstamp);
+		ic->ic_bmiss_count = 0;
+		return;
+	}
+
+	/*
+	 * If scanning, just pass information to the scan module.
+	 */
+	if (ic->ic_flags & IEEE80211_F_SCAN) {
+		if (ic->ic_flags_ext & IEEE80211_FEXT_PROBECHAN) {
+			/*
+			 * Actively scanning a channel marked passive;
+			 * send a probe request now that we know there
+			 * is 802.11 traffic present.
+			 *
+			 * XXX check if the beacon we recv'd gives
+			 * us what we need and suppress the probe req
+			 */
+			ieee80211_probe_curchan(ic, 1);
+			ic->ic_flags_ext &= ~IEEE80211_FEXT_PROBECHAN;
+		}
+		ieee80211_add_scan(ic, &scan, wh,
+			subtype, rssi, rstamp);
+		return;
+	}
+	if (scan.capinfo & IEEE80211_CAPINFO_IBSS)
+		ieee80211_update_adhoc_node(ic, ni, wh, &scan, rssi, rstamp);
+}
+
+static void
+ieee80211_recv_mgmt_probe_req(struct ieee80211com *ic, struct mbuf *m0,
+    struct ieee80211_node *ni, int subtype, int rssi, u_int32_t rstamp)
+{
+	struct ieee80211_frame *wh;
+	u_int8_t *frm, *efrm;
+	u_int8_t *ssid, *rates, *xrates;
+	int allocbs;
+	u_int8_t rate;
+	IEEE80211_DEBUGVAR(char ebuf[3 * ETHER_ADDR_LEN]);
+
+	wh = mtod(m0, struct ieee80211_frame *);
+	frm = (u_int8_t *)(wh + 1);
+	efrm = mtod(m0, u_int8_t *) + m0->m_len;
+
+	if (ic->ic_opmode == IEEE80211_M_STA ||
+	    ic->ic_state != IEEE80211_S_RUN) {
+		ic->ic_stats.is_rx_mgtdiscard++;
+		return;
+	}
+	if (IEEE80211_IS_MULTICAST(wh->i_addr2)) {
+		/* frame must be directed */
+		ic->ic_stats.is_rx_mgtdiscard++;	/* XXX stat */
+		return;
+	}
+
+	/*
+	 * prreq frame format
+	 *	[tlv] ssid
+	 *	[tlv] supported rates
+	 *	[tlv] extended supported rates
+	 */
+	ssid = rates = xrates = NULL;
+	while (frm < efrm) {
+		switch (*frm) {
+		case IEEE80211_ELEMID_SSID:
+			ssid = frm;
+			break;
+		case IEEE80211_ELEMID_RATES:
+			rates = frm;
+			break;
+		case IEEE80211_ELEMID_XRATES:
+			xrates = frm;
+			break;
+		}
+		frm += frm[1] + 2;
+	}
+	IEEE80211_VERIFY_ELEMENT(rates, IEEE80211_RATE_MAXSIZE);
+	IEEE80211_VERIFY_ELEMENT(ssid, IEEE80211_NWID_LEN);
+	IEEE80211_VERIFY_SSID(ic->ic_bss, ssid);
+	if ((ic->ic_flags & IEEE80211_F_HIDESSID) && ssid[1] == 0) {
+		IEEE80211_DISCARD(ic, IEEE80211_MSG_INPUT,
+		    wh, ieee80211_mgt_subtype_name[subtype >>
+			IEEE80211_FC0_SUBTYPE_SHIFT],
+		    "%s", "no ssid with ssid suppression enabled");
+		ic->ic_stats.is_rx_ssidmismatch++; /*XXX*/
+		return;
+	}
+
+	if (ni == ic->ic_bss) {
+		if (ic->ic_opmode != IEEE80211_M_IBSS)
+			ni = ieee80211_tmp_node(ic, wh->i_addr2);
+		else if (IEEE80211_ADDR_EQ(wh->i_addr2, ni->ni_macaddr))
+			;
+		else {
+			/*
+			 * XXX Cannot tell if the sender is operating
+			 * in ibss mode.  But we need a new node to
+			 * send the response so blindly add them to the
+			 * neighbor table.
+			 */
+			ni = ieee80211_fakeup_adhoc_node(&ic->ic_sta,
+				wh->i_addr2);
+		}
+		if (ni == NULL)
+			return;
+		allocbs = 1;
+	} else
+		allocbs = 0;
+	IEEE80211_DPRINTF(ic, IEEE80211_MSG_ASSOC,
+	    "[%s] recv probe req\n", ether_snprintf(
+	    ebuf, sizeof(ebuf), wh->i_addr2));
+	ni->ni_rssi = rssi;
+	ni->ni_rstamp = rstamp;
+	rate = ieee80211_setup_rates(ni, rates, xrates,
+		  IEEE80211_R_DOSORT | IEEE80211_R_DOFRATE
+		| IEEE80211_R_DONEGO | IEEE80211_R_DODEL);
+	if (rate & IEEE80211_RATE_BASIC) {
+		IEEE80211_DISCARD(ic, IEEE80211_MSG_XRATE,
+		    wh, ieee80211_mgt_subtype_name[subtype >>
+			IEEE80211_FC0_SUBTYPE_SHIFT],
+		    "%s", "recv'd rate set invalid");
+	} else {
+		IEEE80211_SEND_MGMT(ic, ni,
+			IEEE80211_FC0_SUBTYPE_PROBE_RESP, 0);
+	}
+	if (allocbs && ic->ic_opmode != IEEE80211_M_IBSS) {
+		/* reclaim immediately */
+		ieee80211_free_node(ni);
+	}
+}
+
+/* -------------------------------------------------------------------------- */
+
 void
 ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
     struct ieee80211_node *ni, int subtype, int rssi, u_int32_t rstamp)
 {
-#define	ISPROBE(_st)	((_st) == IEEE80211_FC0_SUBTYPE_PROBE_RESP)
 #define	ISREASSOC(_st)	((_st) == IEEE80211_FC0_SUBTYPE_REASSOC_RESP)
 	struct ieee80211_frame *wh;
 	u_int8_t *frm, *efrm;
 	u_int8_t *ssid, *rates, *xrates, *wpa, *wme;
-	int reassoc, resp, allocbs;
+	int reassoc, resp;
 	u_int8_t rate;
 	IEEE80211_DEBUGVAR(char ebuf[3 * ETHER_ADDR_LEN]);
 
@@ -2020,350 +2391,13 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 
 	switch (subtype) {
 	case IEEE80211_FC0_SUBTYPE_PROBE_RESP:
-	case IEEE80211_FC0_SUBTYPE_BEACON: {
-		struct ieee80211_scanparams scan;
-
-		/*
-		 * We process beacon/probe response frames:
-		 *    o when scanning, or
-		 *    o station mode when associated (to collect state
-		 *      updates such as 802.11g slot time), or
-		 *    o adhoc mode (to discover neighbors)
-		 * Frames otherwise received are discarded.
-		 */
-		if (!((ic->ic_flags & IEEE80211_F_SCAN) ||
-		      (ic->ic_opmode == IEEE80211_M_STA && ni->ni_associd) ||
-		       ic->ic_opmode == IEEE80211_M_IBSS)) {
-			ic->ic_stats.is_rx_mgtdiscard++;
-			return;
-		}
-
-		/*
-		 * beacon/probe response frame format
-		 *	[8] time stamp
-		 *	[2] beacon interval
-		 *	[2] capability information
-		 *	[tlv] ssid
-		 *	[tlv] supported rates
-		 *	[tlv] country information
-		 *	[tlv] parameter set (FH/DS)
-		 *	[tlv] erp information
-		 *	[tlv] extended supported rates
-		 *	[tlv] WME
-		 *	[tlv] WPA or RSN
-		 */
-		IEEE80211_VERIFY_LENGTH(efrm - frm, 12);
-		memset(&scan, 0, sizeof(scan));
-		scan.tstamp  = frm;				frm += 8;
-		scan.bintval = le16toh(*(u_int16_t *)frm);	frm += 2;
-		scan.capinfo = le16toh(*(u_int16_t *)frm);	frm += 2;
-		scan.bchan = ieee80211_chan2ieee(ic, ic->ic_curchan);
-		scan.chan = scan.bchan;
-
-		while (frm + 1 < efrm) {
-			IEEE80211_VERIFY_LENGTH(efrm - frm, frm[1] + 2);
-
-			switch (*frm) {
-			case IEEE80211_ELEMID_SSID:
-				scan.ssid = frm;
-				break;
-			case IEEE80211_ELEMID_RATES:
-				scan.rates = frm;
-				break;
-			case IEEE80211_ELEMID_COUNTRY:
-				scan.country = frm;
-				break;
-			case IEEE80211_ELEMID_FHPARMS:
-				IEEE80211_VERIFY_LENGTH(frm[1], 5);
-				if (ic->ic_phytype == IEEE80211_T_FH) {
-					scan.fhdwell = LE_READ_2(&frm[2]);
-					scan.chan = IEEE80211_FH_CHAN(frm[4], frm[5]);
-					scan.fhindex = frm[6];
-				}
-				break;
-			case IEEE80211_ELEMID_DSPARMS:
-				/*
-				 * XXX hack this since depending on phytype
-				 * is problematic for multi-mode devices.
-				 */
-				IEEE80211_VERIFY_LENGTH(frm[1], 1);
-				if (ic->ic_phytype != IEEE80211_T_FH)
-					scan.chan = frm[2];
-				break;
-			case IEEE80211_ELEMID_TIM:
-				/* XXX ATIM? */
-				IEEE80211_VERIFY_LENGTH(frm[1], 5);
-				scan.tim = frm;
-				scan.timoff = frm - mtod(m0, u_int8_t *);
-				break;
-			case IEEE80211_ELEMID_IBSSPARMS:
-				break;
-			case IEEE80211_ELEMID_XRATES:
-				scan.xrates = frm;
-				break;
-			case IEEE80211_ELEMID_ERP:
-				if (frm[1] != 1) {
-					IEEE80211_DISCARD_IE(ic,
-					    IEEE80211_MSG_ELEMID, wh, "ERP",
-					    "bad len %u", frm[1]);
-					ic->ic_stats.is_rx_elem_toobig++;
-					break;
-				}
-				scan.erp = frm[2];
-				break;
-			case IEEE80211_ELEMID_RSN:
-				scan.wpa = frm;
-				break;
-			case IEEE80211_ELEMID_VENDOR:
-				if (iswpaoui(frm))
-					scan.wpa = frm;
-				else if (iswmeparam(frm) || iswmeinfo(frm))
-					scan.wme = frm;
-				/* XXX Atheros OUI support */
-				break;
-			default:
-				IEEE80211_DISCARD_IE(ic, IEEE80211_MSG_ELEMID,
-				    wh, "unhandled",
-				    "id %u, len %u", *frm, frm[1]);
-				ic->ic_stats.is_rx_elem_unknown++;
-				break;
-			}
-
-			frm += frm[1] + 2;
-		}
-
-		IEEE80211_VERIFY_ELEMENT(scan.rates, IEEE80211_RATE_MAXSIZE);
-		IEEE80211_VERIFY_ELEMENT(scan.ssid, IEEE80211_NWID_LEN);
-
-		if (
-#if IEEE80211_CHAN_MAX < 255
-		    scan.chan > IEEE80211_CHAN_MAX ||
-#endif
-		    isclr(ic->ic_chan_active, scan.chan)) {
-			IEEE80211_DISCARD(ic,
-			    IEEE80211_MSG_ELEMID | IEEE80211_MSG_INPUT,
-			    wh, ieee80211_mgt_subtype_name[subtype >>
-				IEEE80211_FC0_SUBTYPE_SHIFT],
-			    "invalid channel %u", scan.chan);
-			ic->ic_stats.is_rx_badchan++;
-			return;
-		}
-		if (scan.chan != scan.bchan &&
-		    ic->ic_phytype != IEEE80211_T_FH) {
-			/*
-			 * Frame was received on a channel different from the
-			 * one indicated in the DS params element id;
-			 * silently discard it.
-			 *
-			 * NB: this can happen due to signal leakage.
-			 *     But we should take it for FH phy because
-			 *     the rssi value should be correct even for
-			 *     different hop pattern in FH.
-			 */
-			IEEE80211_DISCARD(ic,
-			    IEEE80211_MSG_ELEMID | IEEE80211_MSG_INPUT,
-			    wh, ieee80211_mgt_subtype_name[subtype >>
-				IEEE80211_FC0_SUBTYPE_SHIFT],
-			    "for off-channel %u", scan.chan);
-			ic->ic_stats.is_rx_chanmismatch++;
-			return;
-		}
-		if (!(IEEE80211_BINTVAL_MIN <= scan.bintval &&
-		      scan.bintval <= IEEE80211_BINTVAL_MAX)) {
-			IEEE80211_DISCARD(ic,
-			    IEEE80211_MSG_ELEMID | IEEE80211_MSG_INPUT,
-			    wh, ieee80211_mgt_subtype_name[subtype >>
-				IEEE80211_FC0_SUBTYPE_SHIFT],
-			    "bogus beacon interval", scan.bintval);
-			ic->ic_stats.is_rx_badbintval++;
-			return;
-		}
-
-		if (ni != ic->ic_bss) {
-			ni = ieee80211_refine_node_for_beacon(ic, ni,
-			    &ic->ic_channels[scan.chan], scan.ssid);
-		}
-		/*
-		 * Count frame now that we know it's to be processed.
-		 */
-		if (subtype == IEEE80211_FC0_SUBTYPE_BEACON) {
-			ic->ic_stats.is_rx_beacon++;		/* XXX remove */
-			IEEE80211_NODE_STAT(ni, rx_beacons);
-		} else
-			IEEE80211_NODE_STAT(ni, rx_proberesp);
-
-		/*
-		 * When operating in station mode, check for state updates.
-		 * Be careful to ignore beacons received while doing a
-		 * background scan.  We consider only 11g/WMM stuff right now.
-		 */
-		if (ic->ic_opmode == IEEE80211_M_STA &&
-		    ni->ni_associd != 0 &&
-		    ((ic->ic_flags & IEEE80211_F_SCAN) == 0 ||
-		     IEEE80211_ADDR_EQ(wh->i_addr2, ni->ni_bssid))) {
-			/* record tsf of last beacon */
-			memcpy(ni->ni_tstamp.data, scan.tstamp,
-				sizeof(ni->ni_tstamp));
-			if (ni->ni_erp != scan.erp) {
-				IEEE80211_DPRINTF(ic, IEEE80211_MSG_ASSOC,
-				    "[%s] erp change: was 0x%x, now 0x%x\n",
-				    ether_snprintf(ebuf, sizeof(ebuf),
-				    wh->i_addr2), ni->ni_erp, scan.erp);
-				if (ic->ic_curmode == IEEE80211_MODE_11G &&
-				    (ni->ni_erp & IEEE80211_ERP_USE_PROTECTION))
-					ic->ic_flags |= IEEE80211_F_USEPROT;
-				else
-					ic->ic_flags &= ~IEEE80211_F_USEPROT;
-				ni->ni_erp = scan.erp;
-				/* XXX statistic */
-			}
-			if ((ni->ni_capinfo ^ scan.capinfo) & IEEE80211_CAPINFO_SHORT_SLOTTIME) {
-				IEEE80211_DPRINTF(ic, IEEE80211_MSG_ASSOC,
-				    "[%s] capabilities change: before 0x%x,"
-				     " now 0x%x\n",
-				     ether_snprintf(ebuf, sizeof(ebuf),
-				     wh->i_addr2),
-				     ni->ni_capinfo, scan.capinfo);
-				/*
-				 * NB: we assume short preamble doesn't
-				 *     change dynamically
-				 */
-				ieee80211_set_shortslottime(ic,
-					ic->ic_curmode == IEEE80211_MODE_11A ||
-					(ni->ni_capinfo & IEEE80211_CAPINFO_SHORT_SLOTTIME));
-				ni->ni_capinfo = scan.capinfo;
-				/* XXX statistic */
-			}
-			if (scan.wme != NULL &&
-			    (ni->ni_flags & IEEE80211_NODE_QOS) &&
-			    ieee80211_parse_wmeparams(ic, scan.wme, wh) > 0)
-				ieee80211_wme_updateparams(ic);
-			if (scan.tim != NULL) {
-				struct ieee80211_tim_ie *ie =
-				    (struct ieee80211_tim_ie *) scan.tim;
-
-				ni->ni_dtim_count = ie->tim_count;
-				ni->ni_dtim_period = ie->tim_period;
-			}
-			if (ic->ic_flags & IEEE80211_F_SCAN)
-				ieee80211_add_scan(ic, &scan, wh,
-					subtype, rssi, rstamp);
-			ic->ic_bmiss_count = 0;
-			return;
-		}
-		/*
-		 * If scanning, just pass information to the scan module.
-		 */
-		if (ic->ic_flags & IEEE80211_F_SCAN) {
-			if (ic->ic_flags_ext & IEEE80211_FEXT_PROBECHAN) {
-				/*
-				 * Actively scanning a channel marked passive;
-				 * send a probe request now that we know there
-				 * is 802.11 traffic present.
-				 *
-				 * XXX check if the beacon we recv'd gives
-				 * us what we need and suppress the probe req
-				 */
-				ieee80211_probe_curchan(ic, 1);
-				ic->ic_flags_ext &= ~IEEE80211_FEXT_PROBECHAN;
-			}
-			ieee80211_add_scan(ic, &scan, wh,
-				subtype, rssi, rstamp);
-			return;
-		}
-		if (scan.capinfo & IEEE80211_CAPINFO_IBSS)
-			ieee80211_update_adhoc_node(ic, ni, wh, &scan, rssi,
-			    rstamp);
-		break;
-	}
+	case IEEE80211_FC0_SUBTYPE_BEACON:
+		ieee80211_recv_mgmt_beacon(ic, m0, ni, subtype, rssi, rstamp);
+		return;
 
 	case IEEE80211_FC0_SUBTYPE_PROBE_REQ:
-		if (ic->ic_opmode == IEEE80211_M_STA ||
-		    ic->ic_state != IEEE80211_S_RUN) {
-			ic->ic_stats.is_rx_mgtdiscard++;
-			return;
-		}
-		if (IEEE80211_IS_MULTICAST(wh->i_addr2)) {
-			/* frame must be directed */
-			ic->ic_stats.is_rx_mgtdiscard++;	/* XXX stat */
-			return;
-		}
-
-		/*
-		 * prreq frame format
-		 *	[tlv] ssid
-		 *	[tlv] supported rates
-		 *	[tlv] extended supported rates
-		 */
-		ssid = rates = xrates = NULL;
-		while (frm < efrm) {
-			switch (*frm) {
-			case IEEE80211_ELEMID_SSID:
-				ssid = frm;
-				break;
-			case IEEE80211_ELEMID_RATES:
-				rates = frm;
-				break;
-			case IEEE80211_ELEMID_XRATES:
-				xrates = frm;
-				break;
-			}
-			frm += frm[1] + 2;
-		}
-		IEEE80211_VERIFY_ELEMENT(rates, IEEE80211_RATE_MAXSIZE);
-		IEEE80211_VERIFY_ELEMENT(ssid, IEEE80211_NWID_LEN);
-		IEEE80211_VERIFY_SSID(ic->ic_bss, ssid);
-		if ((ic->ic_flags & IEEE80211_F_HIDESSID) && ssid[1] == 0) {
-			IEEE80211_DISCARD(ic, IEEE80211_MSG_INPUT,
-			    wh, ieee80211_mgt_subtype_name[subtype >>
-				IEEE80211_FC0_SUBTYPE_SHIFT],
-			    "%s", "no ssid with ssid suppression enabled");
-			ic->ic_stats.is_rx_ssidmismatch++; /*XXX*/
-			return;
-		}
-
-		if (ni == ic->ic_bss) {
-			if (ic->ic_opmode != IEEE80211_M_IBSS)
-				ni = ieee80211_tmp_node(ic, wh->i_addr2);
-			else if (IEEE80211_ADDR_EQ(wh->i_addr2, ni->ni_macaddr))
-				;
-			else {
-				/*
-				 * XXX Cannot tell if the sender is operating
-				 * in ibss mode.  But we need a new node to
-				 * send the response so blindly add them to the
-				 * neighbor table.
-				 */
-				ni = ieee80211_fakeup_adhoc_node(&ic->ic_sta,
-					wh->i_addr2);
-			}
-			if (ni == NULL)
-				return;
-			allocbs = 1;
-		} else
-			allocbs = 0;
-		IEEE80211_DPRINTF(ic, IEEE80211_MSG_ASSOC,
-		    "[%s] recv probe req\n", ether_snprintf(
-		    ebuf, sizeof(ebuf), wh->i_addr2));
-		ni->ni_rssi = rssi;
-		ni->ni_rstamp = rstamp;
-		rate = ieee80211_setup_rates(ni, rates, xrates,
-			  IEEE80211_R_DOSORT | IEEE80211_R_DOFRATE
-			| IEEE80211_R_DONEGO | IEEE80211_R_DODEL);
-		if (rate & IEEE80211_RATE_BASIC) {
-			IEEE80211_DISCARD(ic, IEEE80211_MSG_XRATE,
-			    wh, ieee80211_mgt_subtype_name[subtype >>
-				IEEE80211_FC0_SUBTYPE_SHIFT],
-			    "%s", "recv'd rate set invalid");
-		} else {
-			IEEE80211_SEND_MGMT(ic, ni,
-				IEEE80211_FC0_SUBTYPE_PROBE_RESP, 0);
-		}
-		if (allocbs && ic->ic_opmode != IEEE80211_M_IBSS) {
-			/* reclaim immediately */
-			ieee80211_free_node(ni);
-		}
-		break;
+		ieee80211_recv_mgmt_probe_req(ic, m0, ni, subtype, rssi, rstamp);
+		return;
 
 	case IEEE80211_FC0_SUBTYPE_AUTH: {
 		u_int16_t algo, seq, status;
@@ -2855,7 +2889,6 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		break;
 	}
 #undef ISREASSOC
-#undef ISPROBE
 }
 #undef IEEE80211_VERIFY_LENGTH
 #undef IEEE80211_VERIFY_ELEMENT
