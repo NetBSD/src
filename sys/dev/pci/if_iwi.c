@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.104 2017/10/23 09:28:13 msaitoh Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.105 2018/01/16 07:05:24 maxv Exp $  */
 /*	$OpenBSD: if_iwi.c,v 1.111 2010/11/15 19:11:57 damien Exp $	*/
 
 /*-
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.104 2017/10/23 09:28:13 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.105 2018/01/16 07:05:24 maxv Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -1126,12 +1126,13 @@ iwi_fix_channel(struct ieee80211com *ic, struct mbuf *m)
 	efrm = mtod(m, uint8_t *) + m->m_len;
 
 	frm += 12;	/* skip tstamp, bintval and capinfo fields */
-	while (frm < efrm) {
-		if (*frm == IEEE80211_ELEMID_DSPARMS)
+	while (frm + 2 < efrm) {
+		if (*frm == IEEE80211_ELEMID_DSPARMS) {
 #if IEEE80211_CHAN_MAX < 255
-		if (frm[2] <= IEEE80211_CHAN_MAX)
+			if (frm[2] <= IEEE80211_CHAN_MAX)
 #endif
-			ic->ic_curchan = &ic->ic_channels[frm[2]];
+				ic->ic_curchan = &ic->ic_channels[frm[2]];
+		}
 
 		frm += frm[1] + 2;
 	}
