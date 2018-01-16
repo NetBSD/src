@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.105 2018/01/16 16:31:37 maxv Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.106 2018/01/16 16:54:54 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 Atsushi Onoe
@@ -37,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.81 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.105 2018/01/16 16:31:37 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.106 2018/01/16 16:54:54 maxv Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -2057,12 +2057,15 @@ ieee80211_recv_mgmt_beacon(struct ieee80211com *ic, struct mbuf *m0,
 
 		switch (*frm) {
 		case IEEE80211_ELEMID_SSID:
+			/* no length check needed */
 			scan.ssid = frm;
 			break;
 		case IEEE80211_ELEMID_RATES:
+			/* no length check needed */
 			scan.rates = frm;
 			break;
 		case IEEE80211_ELEMID_COUNTRY:
+			/* XXX: we don't do anything with this? */
 			scan.country = frm;
 			break;
 		case IEEE80211_ELEMID_FHPARMS:
@@ -2091,6 +2094,12 @@ ieee80211_recv_mgmt_beacon(struct ieee80211com *ic, struct mbuf *m0,
 		case IEEE80211_ELEMID_IBSSPARMS:
 			break;
 		case IEEE80211_ELEMID_XRATES:
+			if (frm[1] > IEEE80211_RATE_MAXSIZE) {
+				IEEE80211_DISCARD_IE(ic, IEEE80211_MSG_ELEMID,
+				    wh, "XRATE", "bad len %u", frm[1]);
+				ic->ic_stats.is_rx_elem_toobig++;
+				break;
+			}
 			scan.xrates = frm;
 			break;
 		case IEEE80211_ELEMID_ERP:
@@ -2103,9 +2112,11 @@ ieee80211_recv_mgmt_beacon(struct ieee80211com *ic, struct mbuf *m0,
 			scan.erp = frm[2];
 			break;
 		case IEEE80211_ELEMID_RSN:
+			/* no length check needed */
 			scan.wpa = frm;
 			break;
 		case IEEE80211_ELEMID_VENDOR:
+			/* no length check needed */
 			if (iswpaoui(frm))
 				scan.wpa = frm;
 			else if (iswmeparam(frm) || iswmeinfo(frm))
