@@ -1,4 +1,4 @@
-.\"	$NetBSD: workqueue.9,v 1.11 2015/10/13 04:22:24 riastradh Exp $
+.\"	$NetBSD: workqueue.9,v 1.11.8.1 2018/01/16 13:01:10 martin Exp $
 .\"
 .\" Copyright (c)2005 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\" ------------------------------------------------------------
-.Dd October 24, 2011
+.Dd December 28, 2017
 .Dt WORKQUEUE 9
 .Os
 .\" ------------------------------------------------------------
@@ -45,6 +45,10 @@
 .Ft void
 .Fn workqueue_enqueue \
 "struct workqueue *wq" "struct work *wk" "struct cpu_info *ci"
+.\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+.Ft void
+.Fn workqueue_wait \
+"struct workqueue *wq" "struct work *wk"
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .Ft void
 .Fn workqueue_destroy \
@@ -116,6 +120,19 @@ A work must not be enqueued again until the callback is called by
 the
 .Nm
 framework.
+.Pp
+.\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+.Fn workqueue_wait
+waits for a specified work
+.Fa wk
+on the workqueue
+.Fa wq
+to finish.
+The caller must ensure that no new work will be enqueued to the workqueue
+beforehand.
+Note that if the workqueue is
+.Dv WQ_PERCPU ,
+the caller can enqueue a new work to another queue other than the waiting queue.
 .Pp
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .Fn workqueue_destroy

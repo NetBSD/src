@@ -1,7 +1,7 @@
-/*	$NetBSD: kernspace.h,v 1.4.38.1 2018/01/16 13:01:10 martin Exp $	*/
+/*	$NetBSD: t_workqueue.c,v 1.2.2.2 2018/01/16 13:01:10 martin Exp $	*/
 
 /*-
- * Copyright (c) 2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2017 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,23 +27,55 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _TESTS_RUMP_KERNSPACE_KERNSPACE_H_
-#define _TESTS_RUMP_KERNSPACE_KERNSPACE_H_
+#include <sys/types.h>
+#include <sys/mount.h>
+#include <sys/sysctl.h>
 
-enum locktest { LOCKME_MTX, LOCKME_RWDOUBLEX, LOCKME_RWRX, LOCKME_RWXR,
-	LOCKME_DESTROYHELD, LOCKME_DOUBLEINIT, LOCKME_DOUBLEFREE,
-	LOCKME_MEMFREE };
+#include <rump/rump.h>
 
-void rumptest_busypage(void);
-void rumptest_threadjoin(void);
-void rumptest_thread(void);
-void rumptest_tsleep(void);
-void rumptest_alloc(size_t);
-void rumptest_lockme(enum locktest);
-void rumptest_workqueue1(void);
-void rumptest_workqueue_wait(void);
+#include <atf-c.h>
 
-void rumptest_sendsig(char *);
-void rumptest_localsig(int);
+#include "h_macros.h"
+#include "../kernspace/kernspace.h"
 
-#endif /* _TESTS_RUMP_KERNSPACE_KERNSPACE_H_ */
+ATF_TC(workqueue1);
+ATF_TC_HEAD(workqueue1, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "Checks workqueue basics");
+}
+
+ATF_TC_BODY(workqueue1, tc)
+{
+
+	rump_init();
+
+	rump_schedule();
+	rumptest_workqueue1(); /* panics if fails */
+	rump_unschedule();
+}
+
+ATF_TC(workqueue_wait);
+ATF_TC_HEAD(workqueue_wait, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "Checks workqueue_wait");
+}
+
+ATF_TC_BODY(workqueue_wait, tc)
+{
+
+	rump_init();
+
+	rump_schedule();
+	rumptest_workqueue_wait(); /* panics if fails */
+	rump_unschedule();
+}
+
+ATF_TP_ADD_TCS(tp)
+{
+	ATF_TP_ADD_TC(tp, workqueue1);
+	ATF_TP_ADD_TC(tp, workqueue_wait);
+
+	return atf_no_error();
+}
