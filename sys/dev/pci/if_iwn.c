@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.86 2017/10/23 09:31:18 msaitoh Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.87 2018/01/16 07:05:24 maxv Exp $	*/
 /*	$OpenBSD: if_iwn.c,v 1.135 2014/09/10 07:22:09 dcoppa Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  * adapters.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.86 2017/10/23 09:31:18 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.87 2018/01/16 07:05:24 maxv Exp $");
 
 #define IWN_USE_RBUF	/* Use local storage for RX */
 #undef IWN_HWCRYPTO	/* XXX does not even compile yet */
@@ -6607,12 +6607,13 @@ iwn_fix_channel(struct ieee80211com *ic, struct mbuf *m,
 	efrm = mtod(m, uint8_t *) + m->m_len;
 
 	frm += 12;      /* skip tstamp, bintval and capinfo fields */
-	while (frm < efrm) {
-		if (*frm == IEEE80211_ELEMID_DSPARMS)
+	while (frm + 2 < efrm) {
+		if (*frm == IEEE80211_ELEMID_DSPARMS) {
 #if IEEE80211_CHAN_MAX < 255
-		if (frm[2] <= IEEE80211_CHAN_MAX)
+			if (frm[2] <= IEEE80211_CHAN_MAX)
 #endif
-			ic->ic_curchan = &ic->ic_channels[frm[2]];
+				ic->ic_curchan = &ic->ic_channels[frm[2]];
+		}
 
 		frm += frm[1] + 2;
 	}
