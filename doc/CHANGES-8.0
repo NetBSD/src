@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.104 2018/01/15 00:21:49 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.105 2018/01/16 14:08:56 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -9101,4 +9101,50 @@ sys/dev/audiovar.h				1.59 via patch, 1.65-1.68
 	- Add sysctl to disable the in kernel mixer.
 	  example: sysctl -w hw.hdafg0.usemixer=0
 	[nat, ticket #489]
+
+lib/libc/locale/wcstod.c			1.16
+lib/libc/locale/wcstof.c			1.5
+lib/libc/locale/wcstold.c			1.5
+
+	Add missing weak aliases for wcsto{f,d,ld}_l
+	[kamil, ticket #474]
+
+distrib/sets/lists/debug/mi			1.225
+distrib/sets/lists/tests/mi			1.763
+share/man/man9/workqueue.9			1.12
+sys/kern/subr_workqueue.c			1.34
+sys/net/if_bridge.c				1.147
+sys/net/if_spppsubr.c				1.178
+sys/sys/workqueue.h				1.10
+tests/rump/kernspace/Makefile			1.6
+tests/rump/kernspace/kernspace.h		1.5-1.6
+tests/rump/kernspace/workqueue.c		1.1-1.6
+tests/rump/rumpkern/Makefile			1.16
+tests/rump/rumpkern/t_workqueue.c		1.1-1.2
+
+	Add simple test for workqueue(9)
+	Tweak use of cv_timedwait
+	Fix a race condition on taking the mutex
+	Add workqueue_wait that waits for a specific work to finish
+	Ensure the timer isn't running by using workqueue_wait
+	[ozaki-r, ticket #497]
+
+sys/kern/uipc_domain.c				1.101
+sys/rump/librump/rumpnet/rump_net.c		1.21
+sys/sys/domain.h				1.34
+
+	Don't start callouts for domains before attaching domains
+	on rump kernels.
+	[ozaki-r, ticket #498]
+
+usr.sbin/bta2dpd/bta2dpd/bta2dpd.c		1.5
+
+	Set size of mtusize before calling getsockopt to obtain mtu size.
+	[nat, ticket #500]
+
+
+sys/kern/kern_event.c				1.103
+
+	Set EV_ONESHOT to prevent rescheduling
+	[christos, ticket #501]
 
