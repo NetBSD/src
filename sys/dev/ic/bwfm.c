@@ -1,4 +1,4 @@
-/* $NetBSD: bwfm.c,v 1.8 2018/01/16 13:48:21 maxv Exp $ */
+/* $NetBSD: bwfm.c,v 1.9 2018/01/16 14:23:15 maxv Exp $ */
 /* $OpenBSD: bwfm.c,v 1.5 2017/10/16 22:27:16 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -1729,6 +1729,8 @@ bwfm_scan_node(struct bwfm_softc *sc, struct bwfm_bss_info *bss, size_t len)
 				scan.wpa = frm;
 			break;
 		}
+		if (frm + 1 >= efrm)
+			break;
 	}
 
 	if (ic->ic_flags & IEEE80211_F_SCAN)
