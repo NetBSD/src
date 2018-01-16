@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_var.h,v 1.31 2016/09/27 20:20:06 christos Exp $	*/
+/*	$NetBSD: ieee80211_var.h,v 1.32 2018/01/16 07:53:02 maxv Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -359,6 +359,7 @@ ieee80211_anyhdrspace(struct ieee80211com *ic, const void *data)
 	return size;
 }
 
+/* Flags set in ic_debug, used to print debug messages */
 #define	IEEE80211_MSG_DEBUG	0x40000000	/* IFF_DEBUG equivalent */
 #define	IEEE80211_MSG_DUMPPKTS	0x20000000	/* IFF_LINK2 equivalant */
 #define	IEEE80211_MSG_CRYPTO	0x10000000	/* crypto work */
@@ -384,7 +385,6 @@ ieee80211_anyhdrspace(struct ieee80211com *ic, const void *data)
 #define	IEEE80211_MSG_DOTH	0x00000100	/* 802.11h support */
 #define	IEEE80211_MSG_INACT	0x00000080	/* inactivity handling */
 #define	IEEE80211_MSG_ROAM	0x00000040	/* sta-mode roaming */
-
 #define	IEEE80211_MSG_ANY	0xffffffff	/* anything */
 
 #ifdef IEEE80211_DEBUG
