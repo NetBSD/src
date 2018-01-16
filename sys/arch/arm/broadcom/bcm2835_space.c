@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_space.c,v 1.10 2016/02/02 13:55:50 skrll Exp $	*/
+/*	$NetBSD: bcm2835_space.c,v 1.10.10.1 2018/01/16 14:21:10 martin Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_space.c,v 1.10 2016/02/02 13:55:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_space.c,v 1.10.10.1 2018/01/16 14:21:10 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,6 +50,12 @@ bs_protos(generic);
 bs_protos(generic_armv4);
 bs_protos(a4x);
 bs_protos(bs_notimpl);
+
+#if __ARMEB__
+#define NSWAP(n)	n ## _swap
+#else
+#define NSWAP(n)	n
+#endif
 
 struct bus_space bcm2835_bs_tag = {
 	/* cookie */
@@ -75,38 +81,38 @@ struct bus_space bcm2835_bs_tag = {
 
 	/* read (single) */
 	generic_bs_r_1,
-	generic_armv4_bs_r_2,
-	generic_bs_r_4,
+	NSWAP(generic_armv4_bs_r_2),
+	NSWAP(generic_bs_r_4),
 	bs_notimpl_bs_r_8,
 
 	/* read multiple */
 	generic_bs_rm_1,
-	generic_armv4_bs_rm_2,
-	generic_bs_rm_4,
+	NSWAP(generic_armv4_bs_rm_2),
+	NSWAP(generic_bs_rm_4),
 	bs_notimpl_bs_rm_8,
 
 	/* read region */
 	generic_bs_rr_1,
-	generic_armv4_bs_rr_2,
-	generic_bs_rr_4,
+	NSWAP(generic_armv4_bs_rr_2),
+	NSWAP(generic_bs_rr_4),
 	bs_notimpl_bs_rr_8,
 
 	/* write (single) */
 	generic_bs_w_1,
-	generic_armv4_bs_w_2,
-	generic_bs_w_4,
+	NSWAP(generic_armv4_bs_w_2),
+	NSWAP(generic_bs_w_4),
 	bs_notimpl_bs_w_8,
 
 	/* write multiple */
 	generic_bs_wm_1,
-	generic_armv4_bs_wm_2,
-	generic_bs_wm_4,
+	NSWAP(generic_armv4_bs_wm_2),
+	NSWAP(generic_bs_wm_4),
 	bs_notimpl_bs_wm_8,
 
 	/* write region */
 	generic_bs_wr_1,
-	generic_armv4_bs_wr_2,
-	generic_bs_wr_4,
+	NSWAP(generic_armv4_bs_wr_2),
+	NSWAP(generic_bs_wr_4),
 	bs_notimpl_bs_wr_8,
 
 	/* set multiple */
@@ -117,8 +123,8 @@ struct bus_space bcm2835_bs_tag = {
 
 	/* set region */
 	generic_bs_sr_1,
-	generic_armv4_bs_sr_2,
-	bs_notimpl_bs_sr_4,
+	NSWAP(generic_armv4_bs_sr_2),
+	NSWAP(generic_bs_sr_4),
 	bs_notimpl_bs_sr_8,
 
 	/* copy */
@@ -130,38 +136,38 @@ struct bus_space bcm2835_bs_tag = {
 #ifdef __BUS_SPACE_HAS_STREAM_METHODS
 	/* read (single) */
 	generic_bs_r_1,
-	generic_armv4_bs_r_2,
-	generic_bs_r_4,
+	NSWAP(generic_armv4_bs_r_2),
+	NSWAP(generic_bs_r_4),
 	bs_notimpl_bs_r_8,
 
 	/* read multiple */
 	generic_bs_rm_1,
-	generic_armv4_bs_rm_2,
-	generic_bs_rm_4,
+	NSWAP(generic_armv4_bs_rm_2),
+	NSWAP(generic_bs_rm_4),
 	bs_notimpl_bs_rm_8,
 
 	/* read region */
 	generic_bs_rr_1,
-	generic_armv4_bs_rr_2,
-	generic_bs_rr_4,
+	NSWAP(generic_armv4_bs_rr_2),
+	NSWAP(generic_bs_rr_4),
 	bs_notimpl_bs_rr_8,
 
 	/* write (single) */
 	generic_bs_w_1,
-	generic_armv4_bs_w_2,
-	generic_bs_w_4,
+	NSWAP(generic_armv4_bs_w_2),
+	NSWAP(generic_bs_w_4),
 	bs_notimpl_bs_w_8,
 
 	/* write multiple */
 	generic_bs_wm_1,
-	generic_armv4_bs_wm_2,
-	generic_bs_wm_4,
+	NSWAP(generic_armv4_bs_wm_2),
+	NSWAP(generic_bs_wm_4),
 	bs_notimpl_bs_wm_8,
 
 	/* write region */
 	generic_bs_wr_1,
-	generic_armv4_bs_wr_2,
-	generic_bs_wr_4,
+	NSWAP(generic_armv4_bs_wr_2),
+	NSWAP(generic_bs_wr_4),
 	bs_notimpl_bs_wr_8,
 #endif
 };
@@ -173,7 +179,7 @@ struct bus_space bcm2835_a4x_bs_tag = {
 	/* mapping/unmapping */
 	bcm2835_bs_map,
 	bcm2835_bs_unmap,
-	bcm2835_bs_subregion,
+	bcm2835_a4x_bs_subregion,
 
 	/* allocation/deallocation */
 	bcm2835_bs_alloc,	/* not implemented */
@@ -183,21 +189,21 @@ struct bus_space bcm2835_a4x_bs_tag = {
 	bcm2835_bs_vaddr,
 
 	/* mmap */
-	bs_notimpl_bs_mmap,
+	bcm2835_a4x_bs_mmap,
 
 	/* barrier */
 	bcm2835_bs_barrier,
 
 	/* read (single) */
 	a4x_bs_r_1,
-	a4x_bs_r_2,
-	a4x_bs_r_4,
+	NSWAP(a4x_bs_r_2),
+	NSWAP(a4x_bs_r_4),
 	bs_notimpl_bs_r_8,
 
 	/* read multiple */
 	a4x_bs_rm_1,
-	a4x_bs_rm_2,
-	a4x_bs_rm_4,
+	NSWAP(a4x_bs_rm_2),
+	NSWAP(a4x_bs_rm_4),
 	bs_notimpl_bs_rm_8,
 
 	/* read region */
@@ -208,15 +214,16 @@ struct bus_space bcm2835_a4x_bs_tag = {
 
 	/* write (single) */
 	a4x_bs_w_1,
-	a4x_bs_w_2,
-	a4x_bs_w_4,
+	NSWAP(a4x_bs_w_2),
+	NSWAP(a4x_bs_w_4),
 	bs_notimpl_bs_w_8,
 
 	/* write multiple */
 	a4x_bs_wm_1,
-	a4x_bs_wm_2,
-	a4x_bs_wm_4,
+	NSWAP(a4x_bs_wm_2),
+	NSWAP(a4x_bs_wm_4),
 	bs_notimpl_bs_wm_8,
+
 	/* write region */
 	bs_notimpl_bs_wr_1,
 	bs_notimpl_bs_wr_2,
@@ -243,39 +250,39 @@ struct bus_space bcm2835_a4x_bs_tag = {
 
 #ifdef __BUS_SPACE_HAS_STREAM_METHODS
 	/* read (single) */
-	generic_bs_r_1,
-	generic_armv4_bs_r_2,
-	generic_bs_r_4,
+	a4x_bs_r_1,
+	NSWAP(a4x_bs_r_2),
+	NSWAP(a4x_bs_r_4),
 	bs_notimpl_bs_r_8,
 
 	/* read multiple */
-	generic_bs_rm_1,
-	generic_armv4_bs_rm_2,
-	generic_bs_rm_4,
+	a4x_bs_rm_1,
+	NSWAP(a4x_bs_rm_2),
+	NSWAP(a4x_bs_rm_4),
 	bs_notimpl_bs_rm_8,
 
 	/* read region */
-	generic_bs_rr_1,
-	generic_armv4_bs_rr_2,
-	generic_bs_rr_4,
+	bs_notimpl_bs_rr_1,
+	bs_notimpl_bs_rr_2,
+	bs_notimpl_bs_rr_4,
 	bs_notimpl_bs_rr_8,
 
 	/* write (single) */
-	generic_bs_w_1,
-	generic_armv4_bs_w_2,
-	generic_bs_w_4,
+	a4x_bs_w_1,
+	NSWAP(a4x_bs_w_2),
+	NSWAP(a4x_bs_w_4),
 	bs_notimpl_bs_w_8,
 
 	/* write multiple */
-	generic_bs_wm_1,
-	generic_armv4_bs_wm_2,
-	generic_bs_wm_4,
+	a4x_bs_wm_1,
+	NSWAP(a4x_bs_wm_2),
+	NSWAP(a4x_bs_wm_4),
 	bs_notimpl_bs_wm_8,
 
 	/* write region */
-	generic_bs_wr_1,
-	generic_armv4_bs_wr_2,
-	generic_bs_wr_4,
+	bs_notimpl_bs_wr_1,
+	bs_notimpl_bs_wr_2,
+	bs_notimpl_bs_wr_4,
 	bs_notimpl_bs_wr_8,
 #endif
 
@@ -289,7 +296,6 @@ bcm2835_bs_map(void *t, bus_addr_t ba, bus_size_t size, int flag,
 	u_long startpa, endpa, pa;
 	vaddr_t va;
 	const struct pmap_devmap *pd;
-	int pmap_flags;
 	bool match = false;
 
 	/* Attempt to find the PA device mapping */
@@ -322,16 +328,18 @@ bcm2835_bs_map(void *t, bus_addr_t ba, bus_size_t size, int flag,
 	/* XXX use extent manager to check duplicate mapping */
 
 	va = uvm_km_alloc(kernel_map, endpa - startpa, 0,
-	    UVM_KMF_VAONLY | UVM_KMF_NOWAIT);
+	    UVM_KMF_VAONLY | UVM_KMF_NOWAIT | UVM_KMF_COLORMATCH);
 	if (!va)
 		return ENOMEM;
 
 	*bshp = (bus_space_handle_t)(va + (pa - startpa));
 
-	pmap_flags = (flag & BUS_SPACE_MAP_CACHEABLE) ? 0 : PMAP_NOCACHE;
+	const int pmapflags =
+	    (flag & (BUS_SPACE_MAP_CACHEABLE|BUS_SPACE_MAP_PREFETCHABLE))
+		? 0
+		: PMAP_NOCACHE;
 	for (pa = startpa; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
-		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE,
-		    pmap_flags);
+		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE, pmapflags);
 	}
 	pmap_update(pmap_kernel());
 
@@ -364,7 +372,16 @@ bcm2835_bs_subregion(void *t, bus_space_handle_t bsh, bus_size_t offset,
 {
 
 	*nbshp = bsh + offset;
-	return (0);
+	return 0;
+}
+
+int
+bcm2835_a4x_bs_subregion(void *t, bus_space_handle_t bsh, bus_size_t offset,
+    bus_size_t size, bus_space_handle_t *nbshp)
+{
+
+	*nbshp = bsh + 4 * offset;
+	return 0;
 }
 
 void
@@ -385,15 +402,27 @@ bcm2835_bs_vaddr(void *t, bus_space_handle_t bsh)
 }
 
 paddr_t
-bcm2835_bs_mmap(void *t, bus_addr_t ba, off_t offset, int prot, int flags)
+bcm2835_bs_mmap(void *t, bus_addr_t bpa, off_t offset, int prot, int flags)
 {
-	paddr_t pa = ba & ~BCM2835_BUSADDR_CACHE_MASK;
+	paddr_t pa = bpa & ~BCM2835_BUSADDR_CACHE_MASK;
 	paddr_t bus_flags = 0;
 
 	if (flags & BUS_SPACE_MAP_PREFETCHABLE)
 		bus_flags |= ARM32_MMAP_WRITECOMBINE;
 
-	return (arm_btop(pa + offset) | bus_flags);
+	return arm_btop(pa + offset) | bus_flags;
+}
+
+paddr_t
+bcm2835_a4x_bs_mmap(void *t, bus_addr_t bpa, off_t offset, int prot, int flags)
+{
+	paddr_t pa = bpa & ~BCM2835_BUSADDR_CACHE_MASK;
+	paddr_t bus_flags = 0;
+
+	if (flags & BUS_SPACE_MAP_PREFETCHABLE)
+		bus_flags |= ARM32_MMAP_WRITECOMBINE;
+
+	return arm_btop(pa + 4 * offset) | bus_flags;
 }
 
 int
