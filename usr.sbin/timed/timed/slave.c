@@ -1,4 +1,4 @@
-/*	$NetBSD: slave.c,v 1.18 2007/01/26 16:12:41 christos Exp $	*/
+/*	$NetBSD: slave.c,v 1.19 2018/01/16 07:57:58 maya Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)slave.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: slave.c,v 1.18 2007/01/26 16:12:41 christos Exp $");
+__RCSID("$NetBSD: slave.c,v 1.19 2018/01/16 07:57:58 maya Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,7 +56,7 @@ static void schgdate(struct tsp *, char *);
 static void setmaster(struct tsp *);
 static void answerdelay(void);
 
-int
+void
 slave(void)
 {
 	int tries;
