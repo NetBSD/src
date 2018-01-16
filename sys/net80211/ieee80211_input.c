@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.102 2018/01/16 16:04:16 maxv Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.103 2018/01/16 16:09:30 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 Atsushi Onoe
@@ -37,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.81 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.102 2018/01/16 16:04:16 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.103 2018/01/16 16:09:30 maxv Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -2855,10 +2855,8 @@ ieee80211_recv_mgmt_deauth(struct ieee80211com *ic, struct mbuf *m0,
 	}
 }
 
-/* -------------------------------------------------------------------------- */
-
-void
-ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
+static void
+ieee80211_recv_mgmt_disassoc(struct ieee80211com *ic, struct mbuf *m0,
     struct ieee80211_node *ni, int subtype, int rssi, u_int32_t rstamp)
 {
 	struct ieee80211_frame *wh;
@@ -2868,6 +2866,59 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 	wh = mtod(m0, struct ieee80211_frame *);
 	frm = (u_int8_t *)(wh + 1);
 	efrm = mtod(m0, u_int8_t *) + m0->m_len;
+
+	u_int16_t reason;
+
+	if (ic->ic_state != IEEE80211_S_RUN &&
+	    ic->ic_state != IEEE80211_S_ASSOC &&
+	    ic->ic_state != IEEE80211_S_AUTH) {
+		ic->ic_stats.is_rx_mgtdiscard++;
+		return;
+	}
+	/*
+	 * disassoc frame format
+	 *	[2] reason
+	 */
+	IEEE80211_VERIFY_LENGTH(efrm - frm, 2);
+	reason = le16toh(*(u_int16_t *)frm);
+	__USE(reason);
+	ic->ic_stats.is_rx_disassoc++;
+	IEEE80211_NODE_STAT(ni, rx_disassoc);
+
+	if (!IEEE80211_ADDR_EQ(wh->i_addr1, ic->ic_myaddr)) {
+		/* Not intended for this station. */
+		ic->ic_stats.is_rx_mgtdiscard++;
+		return;
+	}
+	IEEE80211_DPRINTF(ic, IEEE80211_MSG_ASSOC,
+	    "[%s] recv disassociate (reason %d)\n",
+	    ether_snprintf(ebuf, sizeof(ebuf), ni->ni_macaddr), reason);
+	switch (ic->ic_opmode) {
+	case IEEE80211_M_STA:
+		ieee80211_new_state(ic, IEEE80211_S_ASSOC,
+		    wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK);
+		break;
+	case IEEE80211_M_HOSTAP:
+#ifndef IEEE80211_NO_HOSTAP
+		if (ni != ic->ic_bss)
+			ieee80211_node_leave(ic, ni);
+#endif /* !IEEE80211_NO_HOSTAP */
+		break;
+	default:
+		ic->ic_stats.is_rx_mgtdiscard++;
+		break;
+	}
+}
+
+/* -------------------------------------------------------------------------- */
+
+void
+ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
+    struct ieee80211_node *ni, int subtype, int rssi, u_int32_t rstamp)
+{
+	struct ieee80211_frame *wh;
+
+	wh = mtod(m0, struct ieee80211_frame *);
 
 	switch (subtype) {
 	case IEEE80211_FC0_SUBTYPE_PROBE_RESP:
@@ -2897,58 +2948,19 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		ieee80211_recv_mgmt_deauth(ic, m0, ni, subtype, rssi, rstamp);
 		return;
 
-	case IEEE80211_FC0_SUBTYPE_DISASSOC: {
-		u_int16_t reason;
+	case IEEE80211_FC0_SUBTYPE_DISASSOC:
+		ieee80211_recv_mgmt_disassoc(ic, m0, ni, subtype, rssi, rstamp);
+		return;
 
-		if (ic->ic_state != IEEE80211_S_RUN &&
-		    ic->ic_state != IEEE80211_S_ASSOC &&
-		    ic->ic_state != IEEE80211_S_AUTH) {
-			ic->ic_stats.is_rx_mgtdiscard++;
-			return;
-		}
-		/*
-		 * disassoc frame format
-		 *	[2] reason
-		 */
-		IEEE80211_VERIFY_LENGTH(efrm - frm, 2);
-		reason = le16toh(*(u_int16_t *)frm);
-		__USE(reason);
-		ic->ic_stats.is_rx_disassoc++;
-		IEEE80211_NODE_STAT(ni, rx_disassoc);
-
-		if (!IEEE80211_ADDR_EQ(wh->i_addr1, ic->ic_myaddr)) {
-			/* Not intended for this station. */
-			ic->ic_stats.is_rx_mgtdiscard++;
-			break;
-		}
-		IEEE80211_DPRINTF(ic, IEEE80211_MSG_ASSOC,
-		    "[%s] recv disassociate (reason %d)\n",
-		    ether_snprintf(ebuf, sizeof(ebuf), ni->ni_macaddr), reason);
-		switch (ic->ic_opmode) {
-		case IEEE80211_M_STA:
-			ieee80211_new_state(ic, IEEE80211_S_ASSOC,
-			    wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK);
-			break;
-		case IEEE80211_M_HOSTAP:
-#ifndef IEEE80211_NO_HOSTAP
-			if (ni != ic->ic_bss)
-				ieee80211_node_leave(ic, ni);
-#endif /* !IEEE80211_NO_HOSTAP */
-			break;
-		default:
-			ic->ic_stats.is_rx_mgtdiscard++;
-			break;
-		}
-		break;
-	}
 	default:
 		IEEE80211_DISCARD(ic, IEEE80211_MSG_ANY,
 		     wh, "mgt", "subtype 0x%x not handled", subtype);
 		ic->ic_stats.is_rx_badsubtype++;
 		break;
 	}
-#undef ISREASSOC
 }
+
+#undef ISREASSOC
 #undef IEEE80211_VERIFY_LENGTH
 #undef IEEE80211_VERIFY_ELEMENT
 
