@@ -1,5 +1,6 @@
-/*	$NetBSD: ieee80211_input.c,v 1.91 2017/12/10 08:56:23 maxv Exp $	*/
-/*-
+/*	$NetBSD: ieee80211_input.c,v 1.92 2018/01/16 07:53:02 maxv Exp $	*/
+
+/*
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -36,15 +37,12 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.81 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.91 2017/12/10 08:56:23 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.92 2018/01/16 07:53:02 maxv Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #endif
-
-#ifdef __NetBSD__
-#endif /* __NetBSD__ */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,7 +136,7 @@ static struct mbuf *ieee80211_defrag(struct ieee80211com *,
 	struct ieee80211_node *, struct mbuf *, int);
 static struct mbuf *ieee80211_decap(struct ieee80211com *, struct mbuf *, int);
 static void ieee80211_send_error(struct ieee80211com *, struct ieee80211_node *,
-		const u_int8_t *mac, int subtype, int arg);
+	const u_int8_t *mac, int subtype, int arg);
 static void ieee80211_deliver_data(struct ieee80211com *,
 	struct ieee80211_node *, struct mbuf *);
 #ifndef IEEE80211_NO_HOSTAP
@@ -172,7 +170,6 @@ ieee80211_input(struct ieee80211com *ic, struct mbuf *m,
 	struct ether_header *eh;
 	int hdrspace;
 	u_int8_t dir, type, subtype;
-	u_int8_t *bssid;
 	u_int16_t rxseq;
 	IEEE80211_DEBUGVAR(char ebuf[3 * ETHER_ADDR_LEN]);
 
@@ -187,6 +184,7 @@ ieee80211_input(struct ieee80211com *ic, struct mbuf *m,
 		m->m_flags &= ~M_HASFCS;
 	}
 	type = -1;			/* undefined */
+
 	/*
 	 * In monitor mode, send everything directly to bpf.
 	 * XXX may want to include the CRC
@@ -201,6 +199,7 @@ ieee80211_input(struct ieee80211com *ic, struct mbuf *m,
 		ic->ic_stats.is_rx_tooshort++;
 		goto out;
 	}
+
 	/*
 	 * Bit of a cheat here, we use a pointer for a 3-address
 	 * frame format but don't reference fields past outside
@@ -220,7 +219,10 @@ ieee80211_input(struct ieee80211com *ic, struct mbuf *m,
 	dir = wh->i_fc[1] & IEEE80211_FC1_DIR_MASK;
 	type = wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK;
 	subtype = wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK;
+
 	if ((ic->ic_flags & IEEE80211_F_SCAN) == 0) {
+		u_int8_t *bssid;
+
 		switch (ic->ic_opmode) {
 		case IEEE80211_M_STA:
 			bssid = wh->i_addr2;
@@ -234,11 +236,12 @@ ieee80211_input(struct ieee80211com *ic, struct mbuf *m,
 				goto out;
 			}
 
-			/* Filter out packets not directed to us in case the
-			 * device is in promiscous mode
+			/*
+			 * Filter out packets not directed to us in case the
+			 * device is in promiscuous mode
 			 */
-			if ((! IEEE80211_IS_MULTICAST(wh->i_addr1))
-			    && (! IEEE80211_ADDR_EQ(wh->i_addr1, ic->ic_myaddr))) {
+			if (!IEEE80211_IS_MULTICAST(wh->i_addr1) &&
+			    !IEEE80211_ADDR_EQ(wh->i_addr1, ic->ic_myaddr)) {
 				IEEE80211_DISCARD_MAC(ic, IEEE80211_MSG_INPUT,
 				    bssid, NULL, "not to cur sta: lladdr=%6D, addr1=%6D",
 				    ic->ic_myaddr, ":", wh->i_addr1, ":");
@@ -246,6 +249,7 @@ ieee80211_input(struct ieee80211com *ic, struct mbuf *m,
 				goto out;
 			}
 			break;
+
 		case IEEE80211_M_IBSS:
 		case IEEE80211_M_AHDEMO:
 		case IEEE80211_M_HOSTAP:
@@ -266,6 +270,7 @@ ieee80211_input(struct ieee80211com *ic, struct mbuf *m,
 			}
 			if (type != IEEE80211_FC0_TYPE_DATA)
 				break;
+
 			/*
 			 * Data frame, validate the bssid.
 			 */
@@ -283,9 +288,11 @@ ieee80211_input(struct ieee80211com *ic, struct mbuf *m,
 				ic->ic_stats.is_rx_wrongbss++;
 				goto out;
 			}
+
 			/*
 			 * For adhoc mode we cons up a node when it doesn't
-			 * exist. This should probably done after an ACL check.
+			 * exist. This should probably be done after an ACL
+			 * check.
 			 */
 			if (ni == ic->ic_bss &&
 			    ic->ic_opmode != IEEE80211_M_HOSTAP &&
@@ -295,35 +302,45 @@ ieee80211_input(struct ieee80211com *ic, struct mbuf *m,
 				 * discovered member of the IBSS.
 				 */
 				ni = ieee80211_fakeup_adhoc_node(&ic->ic_sta,
-						    wh->i_addr2);
+				    wh->i_addr2);
 				if (ni == NULL) {
 					/* NB: stat kept for alloc failure */
 					goto err;
 				}
 			}
 			break;
+
 		default:
 			goto out;
 		}
+
 		ni->ni_rssi = rssi;
 		ni->ni_rstamp = rstamp;
+
 		if (HAS_SEQ(type) && (ic->ic_opmode != IEEE80211_M_STA ||
 		    !IEEE80211_IS_MULTICAST(wh->i_addr1))) {
 			u_int8_t tid, retry;
 			u_int16_t rxno, orxno;
 
 			if (ieee80211_has_qos(wh)) {
-				tid = ((struct ieee80211_qosframe *)wh)->
-					i_qos[0] & IEEE80211_QOS_TID;
+				struct ieee80211_qosframe *qosf;
+
+				/* XXX mbuf length check */
+				qosf = mtod(m, struct ieee80211_qosframe *);
+
+				tid = qosf->i_qos[0] & IEEE80211_QOS_TID;
 				if (TID_TO_WME_AC(tid) >= WME_AC_VI)
 					ic->ic_wme.wme_hipri_traffic++;
 				tid++;
-			} else
+			} else {
 				tid = 0;
+			}
+
 			rxseq = le16toh(*(u_int16_t *)wh->i_seq);
 			retry = wh->i_fc[1] & IEEE80211_FC1_RETRY;
 			rxno = rxseq >> IEEE80211_SEQ_SEQ_SHIFT;
 			orxno = ni->ni_rxseqs[tid] >> IEEE80211_SEQ_SEQ_SHIFT;
+
 			if (retry && (
 			    (orxno == 4095 && rxno == orxno) ||
 			    (orxno != 4095 &&
@@ -373,7 +390,7 @@ ieee80211_input(struct ieee80211com *ic, struct mbuf *m,
 			    IEEE80211_ADDR_EQ(wh->i_addr3, ic->ic_myaddr)) {
 				/*
 				 * In IEEE802.11 network, multicast packet
-				 * sent from me is broadcasted from AP.
+				 * sent from me is broadcast from AP.
 				 * It should be silently discarded for
 				 * SIMPLEX interface.
 				 */
@@ -383,6 +400,7 @@ ieee80211_input(struct ieee80211com *ic, struct mbuf *m,
 				goto out;
 			}
 			break;
+
 		case IEEE80211_M_IBSS:
 		case IEEE80211_M_AHDEMO:
 			if (dir != IEEE80211_FC1_DIR_NODS) {
@@ -393,6 +411,7 @@ ieee80211_input(struct ieee80211com *ic, struct mbuf *m,
 			}
 			/* XXX no power-save support */
 			break;
+
 		case IEEE80211_M_HOSTAP:
 #ifndef IEEE80211_NO_HOSTAP
 			if (dir != IEEE80211_FC1_DIR_TODS) {
@@ -430,6 +449,7 @@ ieee80211_input(struct ieee80211com *ic, struct mbuf *m,
 					wh->i_fc[1] & IEEE80211_FC1_PWR_MGT);
 #endif /* !IEEE80211_NO_HOSTAP */
 			break;
+
 		default:
 			/* XXX here to keep compiler happy */
 			goto out;
@@ -505,6 +525,7 @@ ieee80211_input(struct ieee80211com *ic, struct mbuf *m,
 			IEEE80211_NODE_STAT(ni, rx_decap);
 			goto err;
 		}
+
 		eh = mtod(m, struct ether_header *);
 		if (!ieee80211_node_is_authorized(ni)) {
 			/*
@@ -540,6 +561,7 @@ ieee80211_input(struct ieee80211com *ic, struct mbuf *m,
 				goto out;
 			}
 		}
+
 		ifp->if_ipackets++;
 		IEEE80211_NODE_STAT(ni, rx_data);
 		IEEE80211_NODE_STAT_ADD(ni, rx_bytes, m->m_pkthdr.len);
@@ -603,6 +625,7 @@ ieee80211_input(struct ieee80211com *ic, struct mbuf *m,
 			wh = mtod(m, struct ieee80211_frame *);
 			wh->i_fc[1] &= ~IEEE80211_FC1_WEP;
 		}
+
 		bpf_mtap3(ic->ic_rawbpf, m);
 		(*ic->ic_recv_mgmt)(ic, m, ni, subtype, rssi, rstamp);
 		m_freem(m);
@@ -627,8 +650,10 @@ ieee80211_input(struct ieee80211com *ic, struct mbuf *m,
 		/* should not come here */
 		break;
 	}
+
 err:
 	ifp->if_ierrors++;
+
 out:
 	if (m != NULL) {
 		bpf_mtap3(ic->ic_rawbpf, m);
@@ -639,7 +664,7 @@ out:
 }
 
 /*
- * This function reassemble fragments.
+ * This function reassembles fragments.
  */
 static struct mbuf *
 ieee80211_defrag(struct ieee80211com *ic, struct ieee80211_node *ni,
