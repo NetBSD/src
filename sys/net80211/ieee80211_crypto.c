@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_crypto.c,v 1.18 2017/12/10 08:56:23 maxv Exp $	*/
+/*	$NetBSD: ieee80211_crypto.c,v 1.19 2018/01/16 09:04:30 maxv Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto.c,v 1.12 2005/08/08 18:46:35 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto.c,v 1.18 2017/12/10 08:56:23 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto.c,v 1.19 2018/01/16 09:04:30 maxv Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -559,6 +559,11 @@ ieee80211_crypto_encap(struct ieee80211com *ic,
 	return (cip->ic_encap(k, m, keyid<<6) ? k : NULL);
 }
 
+#define	IEEE80211_WEP_HDRLEN	(IEEE80211_WEP_IVLEN + IEEE80211_WEP_KIDLEN)
+#define	IEEE80211_WEP_MINLEN \
+	(sizeof(struct ieee80211_frame) + \
+	IEEE80211_WEP_HDRLEN + IEEE80211_WEP_CRCLEN)
+
 /*
  * Validate and strip privacy headers (and trailer) for a
  * received frame that has the WEP/Privacy bit set.
@@ -567,13 +572,9 @@ struct ieee80211_key *
 ieee80211_crypto_decap(struct ieee80211com *ic,
 	struct ieee80211_node *ni, struct mbuf **mp, int hdrlen)
 {
-#define	IEEE80211_WEP_HDRLEN	(IEEE80211_WEP_IVLEN + IEEE80211_WEP_KIDLEN)
-#define	IEEE80211_WEP_MINLEN \
-	(sizeof(struct ieee80211_frame) + \
-	IEEE80211_WEP_HDRLEN + IEEE80211_WEP_CRCLEN)
+	const struct ieee80211_cipher *cip;
 	struct ieee80211_key *k;
 	struct ieee80211_frame *wh;
-	const struct ieee80211_cipher *cip;
 	struct mbuf *m = *mp;
 	u_int8_t keyid;
 
@@ -582,7 +583,7 @@ ieee80211_crypto_decap(struct ieee80211com *ic,
 		IEEE80211_DPRINTF(ic, IEEE80211_MSG_ANY,
 			"%s: WEP data frame too short, len %u\n",
 			__func__, m->m_pkthdr.len);
-		ic->ic_stats.is_rx_tooshort++;	/* XXX need unique stat? */
+		ic->ic_stats.is_rx_tooshort++;
 		return NULL;
 	}
 
@@ -595,18 +596,22 @@ ieee80211_crypto_decap(struct ieee80211com *ic,
 	wh = mtod(m, struct ieee80211_frame *);
 	m_copydata(m, hdrlen + IEEE80211_WEP_IVLEN, sizeof(keyid), &keyid);
 	if (IEEE80211_IS_MULTICAST(wh->i_addr1) ||
-	    ni->ni_ucastkey.wk_cipher == &ieee80211_cipher_none)
+	    ni->ni_ucastkey.wk_cipher == &ieee80211_cipher_none) {
 		k = &ic->ic_nw_keys[keyid >> 6];
-	else
+	} else {
 		k = &ni->ni_ucastkey;
+	}
 
 	/*
 	 * Insure crypto header is contiguous for all decap work.
 	 */
 	cip = k->wk_cipher;
-	if (m->m_len < hdrlen + cip->ic_header &&
-	    (m = m_pullup(m, hdrlen + cip->ic_header)) == NULL) {
-		*mp = NULL;
+	if (m->m_len < hdrlen + cip->ic_header) {
+		m = m_pullup(m, hdrlen + cip->ic_header);
+		*mp = m;
+	}
+
+	if (m == NULL) {
 		IEEE80211_DPRINTF(ic, IEEE80211_MSG_CRYPTO,
 		    "[%s] unable to pullup %s header\n",
 		    ether_sprintf(wh->i_addr2), cip->ic_name);
@@ -615,6 +620,4 @@ ieee80211_crypto_decap(struct ieee80211com *ic,
 	}
 
 	return (cip->ic_decap(k, m, hdrlen) ? k : NULL);
-#undef IEEE80211_WEP_MINLEN
-#undef IEEE80211_WEP_HDRLEN
 }
