@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.91.2.1 2017/07/05 20:04:40 snj Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.91.2.2 2018/01/16 13:26:12 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.91.2.1 2017/07/05 20:04:40 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.91.2.2 2018/01/16 13:26:12 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -662,6 +662,12 @@ static void
 filt_timerdetach(struct knote *kn)
 {
 	callout_t *calloutp;
+	struct kqueue *kq = kn->kn_kq;
+
+	mutex_spin_enter(&kq->kq_lock);
+	/* prevent rescheduling when we expire */
+	kn->kn_flags |= EV_ONESHOT;
+	mutex_spin_exit(&kq->kq_lock);
 
 	calloutp = (callout_t *)kn->kn_hook;
 	callout_halt(calloutp, NULL);
