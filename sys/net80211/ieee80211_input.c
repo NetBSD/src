@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.104 2018/01/16 16:20:57 maxv Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.105 2018/01/16 16:31:37 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 Atsushi Onoe
@@ -37,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.81 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.104 2018/01/16 16:20:57 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.105 2018/01/16 16:31:37 maxv Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -1446,37 +1446,6 @@ bad:
 #endif /* !IEEE80211_NO_HOSTAP */
 }
 
-/* Verify the existence and length of __elem or get out. */
-#define IEEE80211_VERIFY_ELEMENT(__elem, __maxlen) do {			\
-	if ((__elem) == NULL) {						\
-		IEEE80211_DISCARD(ic, IEEE80211_MSG_ELEMID,		\
-		    wh, ieee80211_mgt_subtype_name[subtype >>		\
-			IEEE80211_FC0_SUBTYPE_SHIFT],			\
-		    "%s", "no " #__elem );				\
-		ic->ic_stats.is_rx_elem_missing++;			\
-		return;							\
-	}								\
-	if ((__elem)[1] > (__maxlen)) {					\
-		IEEE80211_DISCARD(ic, IEEE80211_MSG_ELEMID,		\
-		    wh, ieee80211_mgt_subtype_name[subtype >>		\
-			IEEE80211_FC0_SUBTYPE_SHIFT],			\
-		    "bad " #__elem " len %d", (__elem)[1]);		\
-		ic->ic_stats.is_rx_elem_toobig++;			\
-		return;							\
-	}								\
-} while (0)
-
-#define	IEEE80211_VERIFY_LENGTH(_len, _minlen) do {			\
-	if ((_len) < (_minlen)) {					\
-		IEEE80211_DISCARD(ic, IEEE80211_MSG_ELEMID,		\
-		    wh, ieee80211_mgt_subtype_name[subtype >>		\
-			IEEE80211_FC0_SUBTYPE_SHIFT],			\
-		    "%s", "ie too short");				\
-		ic->ic_stats.is_rx_elem_toosmall++;			\
-		return;							\
-	}								\
-} while (0)
-
 #ifdef IEEE80211_DEBUG
 static void
 ieee80211_ssid_mismatch(struct ieee80211com *ic, const char *tag,
@@ -2002,6 +1971,36 @@ ieee80211_update_adhoc_node(struct ieee80211com *ic, struct ieee80211_node *ni,
 }
 
 /* -------------------------------------------------------------------------- */
+
+#define IEEE80211_VERIFY_ELEMENT(__elem, __maxlen) do {			\
+	if ((__elem) == NULL) {						\
+		IEEE80211_DISCARD(ic, IEEE80211_MSG_ELEMID,		\
+		    wh, ieee80211_mgt_subtype_name[subtype >>		\
+			IEEE80211_FC0_SUBTYPE_SHIFT],			\
+		    "%s", "no " #__elem );				\
+		ic->ic_stats.is_rx_elem_missing++;			\
+		return;							\
+	}								\
+	if ((__elem)[1] > (__maxlen)) {					\
+		IEEE80211_DISCARD(ic, IEEE80211_MSG_ELEMID,		\
+		    wh, ieee80211_mgt_subtype_name[subtype >>		\
+			IEEE80211_FC0_SUBTYPE_SHIFT],			\
+		    "bad " #__elem " len %d", (__elem)[1]);		\
+		ic->ic_stats.is_rx_elem_toobig++;			\
+		return;							\
+	}								\
+} while (0)
+
+#define	IEEE80211_VERIFY_LENGTH(_len, _minlen) do {			\
+	if ((_len) < (_minlen)) {					\
+		IEEE80211_DISCARD(ic, IEEE80211_MSG_ELEMID,		\
+		    wh, ieee80211_mgt_subtype_name[subtype >>		\
+			IEEE80211_FC0_SUBTYPE_SHIFT],			\
+		    "%s", "ie too short");				\
+		ic->ic_stats.is_rx_elem_toosmall++;			\
+		return;							\
+	}								\
+} while (0)
 
 static void
 ieee80211_recv_mgmt_beacon(struct ieee80211com *ic, struct mbuf *m0,
@@ -2948,6 +2947,10 @@ ieee80211_recv_mgmt_disassoc(struct ieee80211com *ic, struct mbuf *m0,
 	}
 }
 
+#undef ISREASSOC
+#undef IEEE80211_VERIFY_LENGTH
+#undef IEEE80211_VERIFY_ELEMENT
+
 /* -------------------------------------------------------------------------- */
 
 void
@@ -2997,10 +3000,6 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		break;
 	}
 }
-
-#undef ISREASSOC
-#undef IEEE80211_VERIFY_LENGTH
-#undef IEEE80211_VERIFY_ELEMENT
 
 #ifndef IEEE80211_NO_HOSTAP
 /*
