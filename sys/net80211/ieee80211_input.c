@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.100 2018/01/16 15:55:14 maxv Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.101 2018/01/16 16:00:17 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 Atsushi Onoe
@@ -37,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.81 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.100 2018/01/16 15:55:14 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.101 2018/01/16 16:00:17 maxv Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -2668,17 +2668,148 @@ ieee80211_recv_mgmt_assoc_req(struct ieee80211com *ic, struct mbuf *m0,
 	ieee80211_node_join(ic, ni, resp);
 }
 
+#define	ISREASSOC(_st)	((_st) == IEEE80211_FC0_SUBTYPE_REASSOC_RESP)
+
+static void
+ieee80211_recv_mgmt_assoc_resp(struct ieee80211com *ic, struct mbuf *m0,
+    struct ieee80211_node *ni, int subtype, int rssi, u_int32_t rstamp)
+{
+	struct ieee80211_frame *wh;
+	u_int8_t *frm, *efrm;
+	u_int8_t *rates, *xrates, *wpa, *wme;
+	u_int8_t rate;
+	IEEE80211_DEBUGVAR(char ebuf[3 * ETHER_ADDR_LEN]);
+
+	wh = mtod(m0, struct ieee80211_frame *);
+	frm = (u_int8_t *)(wh + 1);
+	efrm = mtod(m0, u_int8_t *) + m0->m_len;
+
+	u_int16_t capinfo, associd;
+	u_int16_t status;
+
+	if (ic->ic_opmode != IEEE80211_M_STA ||
+	    ic->ic_state != IEEE80211_S_ASSOC) {
+		ic->ic_stats.is_rx_mgtdiscard++;
+		return;
+	}
+
+	/*
+	 * asresp frame format
+	 *	[2] capability information
+	 *	[2] status
+	 *	[2] association ID
+	 *	[tlv] supported rates
+	 *	[tlv] extended supported rates
+	 *	[tlv] WME
+	 */
+	IEEE80211_VERIFY_LENGTH(efrm - frm, 6);
+	ni = ic->ic_bss;
+	capinfo = le16toh(*(u_int16_t *)frm);
+	frm += 2;
+	status = le16toh(*(u_int16_t *)frm);
+	frm += 2;
+	if (status != 0) {
+		IEEE80211_DPRINTF(ic, IEEE80211_MSG_ASSOC,
+		    "[%s] %sassoc failed (reason %d)\n",
+		    ether_snprintf(ebuf, sizeof(ebuf), wh->i_addr2),
+		    ISREASSOC(subtype) ?  "re" : "", status);
+		if (ni != ic->ic_bss)	/* XXX never true? */
+			ni->ni_fails++;
+		ic->ic_stats.is_rx_auth_fail++;	/* XXX */
+		return;
+	}
+	associd = le16toh(*(u_int16_t *)frm);
+	frm += 2;
+
+	rates = xrates = wpa = wme = NULL;
+	while (frm < efrm) {
+		switch (*frm) {
+		case IEEE80211_ELEMID_RATES:
+			rates = frm;
+			break;
+		case IEEE80211_ELEMID_XRATES:
+			xrates = frm;
+			break;
+		case IEEE80211_ELEMID_VENDOR:
+			if (iswmeoui(frm))
+				wme = frm;
+			/* XXX Atheros OUI support */
+			break;
+		}
+		frm += frm[1] + 2;
+	}
+
+	IEEE80211_VERIFY_ELEMENT(rates, IEEE80211_RATE_MAXSIZE);
+	rate = ieee80211_setup_rates(ni, rates, xrates,
+			IEEE80211_R_DOSORT | IEEE80211_R_DOFRATE |
+			IEEE80211_R_DONEGO | IEEE80211_R_DODEL);
+	if (rate & IEEE80211_RATE_BASIC) {
+		IEEE80211_DPRINTF(ic, IEEE80211_MSG_ASSOC,
+		    "[%s] %sassoc failed (rate set mismatch)\n",
+		    ether_snprintf(ebuf, sizeof(ebuf), wh->i_addr2),
+		    ISREASSOC(subtype) ?  "re" : "");
+		if (ni != ic->ic_bss)	/* XXX never true? */
+			ni->ni_fails++;
+		ic->ic_stats.is_rx_assoc_norate++;
+		ieee80211_new_state(ic, IEEE80211_S_SCAN, 0);
+		return;
+	}
+
+	ni->ni_capinfo = capinfo;
+	ni->ni_associd = associd;
+	if (wme != NULL &&
+	    ieee80211_parse_wmeparams(ic, wme, wh) >= 0) {
+		ni->ni_flags |= IEEE80211_NODE_QOS;
+		ieee80211_wme_updateparams(ic);
+	} else
+		ni->ni_flags &= ~IEEE80211_NODE_QOS;
+	/*
+	 * Configure state now that we are associated.
+	 *
+	 * XXX may need different/additional driver callbacks?
+	 */
+	if (ic->ic_curmode == IEEE80211_MODE_11A ||
+	    (ni->ni_capinfo & IEEE80211_CAPINFO_SHORT_PREAMBLE)) {
+		ic->ic_flags |= IEEE80211_F_SHPREAMBLE;
+		ic->ic_flags &= ~IEEE80211_F_USEBARKER;
+	} else {
+		ic->ic_flags &= ~IEEE80211_F_SHPREAMBLE;
+		ic->ic_flags |= IEEE80211_F_USEBARKER;
+	}
+	ieee80211_set_shortslottime(ic,
+		ic->ic_curmode == IEEE80211_MODE_11A ||
+		(ni->ni_capinfo & IEEE80211_CAPINFO_SHORT_SLOTTIME));
+	/*
+	 * Honor ERP protection.
+	 *
+	 * NB: ni_erp should zero for non-11g operation.
+	 * XXX check ic_curmode anyway?
+	 */
+	if (ic->ic_curmode == IEEE80211_MODE_11G &&
+	    (ni->ni_erp & IEEE80211_ERP_USE_PROTECTION))
+		ic->ic_flags |= IEEE80211_F_USEPROT;
+	else
+		ic->ic_flags &= ~IEEE80211_F_USEPROT;
+	IEEE80211_DPRINTF(ic, IEEE80211_MSG_ASSOC,
+	    "[%s] %sassoc success: %s preamble, %s slot time%s%s\n",
+	    ether_snprintf(ebuf, sizeof(ebuf), wh->i_addr2),
+	    ISREASSOC(subtype) ? "re" : "",
+	    ic->ic_flags&IEEE80211_F_SHPREAMBLE ? "short" : "long",
+	    ic->ic_flags&IEEE80211_F_SHSLOT ? "short" : "long",
+	    ic->ic_flags&IEEE80211_F_USEPROT ? ", protection" : "",
+	    ni->ni_flags & IEEE80211_NODE_QOS ? ", QoS" : ""
+	);
+	ieee80211_new_state(ic, IEEE80211_S_RUN, subtype);
+}
+
 /* -------------------------------------------------------------------------- */
 
 void
 ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
     struct ieee80211_node *ni, int subtype, int rssi, u_int32_t rstamp)
 {
-#define	ISREASSOC(_st)	((_st) == IEEE80211_FC0_SUBTYPE_REASSOC_RESP)
 	struct ieee80211_frame *wh;
 	u_int8_t *frm, *efrm;
-	u_int8_t *rates, *xrates, *wpa, *wme;
-	u_int8_t rate;
 	IEEE80211_DEBUGVAR(char ebuf[3 * ETHER_ADDR_LEN]);
 
 	wh = mtod(m0, struct ieee80211_frame *);
@@ -2705,125 +2836,9 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		return;
 
 	case IEEE80211_FC0_SUBTYPE_ASSOC_RESP:
-	case IEEE80211_FC0_SUBTYPE_REASSOC_RESP: {
-		u_int16_t capinfo, associd;
-		u_int16_t status;
-
-		if (ic->ic_opmode != IEEE80211_M_STA ||
-		    ic->ic_state != IEEE80211_S_ASSOC) {
-			ic->ic_stats.is_rx_mgtdiscard++;
-			return;
-		}
-
-		/*
-		 * asresp frame format
-		 *	[2] capability information
-		 *	[2] status
-		 *	[2] association ID
-		 *	[tlv] supported rates
-		 *	[tlv] extended supported rates
-		 *	[tlv] WME
-		 */
-		IEEE80211_VERIFY_LENGTH(efrm - frm, 6);
-		ni = ic->ic_bss;
-		capinfo = le16toh(*(u_int16_t *)frm);
-		frm += 2;
-		status = le16toh(*(u_int16_t *)frm);
-		frm += 2;
-		if (status != 0) {
-			IEEE80211_DPRINTF(ic, IEEE80211_MSG_ASSOC,
-			    "[%s] %sassoc failed (reason %d)\n",
-			    ether_snprintf(ebuf, sizeof(ebuf), wh->i_addr2),
-			    ISREASSOC(subtype) ?  "re" : "", status);
-			if (ni != ic->ic_bss)	/* XXX never true? */
-				ni->ni_fails++;
-			ic->ic_stats.is_rx_auth_fail++;	/* XXX */
-			return;
-		}
-		associd = le16toh(*(u_int16_t *)frm);
-		frm += 2;
-
-		rates = xrates = wpa = wme = NULL;
-		while (frm < efrm) {
-			switch (*frm) {
-			case IEEE80211_ELEMID_RATES:
-				rates = frm;
-				break;
-			case IEEE80211_ELEMID_XRATES:
-				xrates = frm;
-				break;
-			case IEEE80211_ELEMID_VENDOR:
-				if (iswmeoui(frm))
-					wme = frm;
-				/* XXX Atheros OUI support */
-				break;
-			}
-			frm += frm[1] + 2;
-		}
-
-		IEEE80211_VERIFY_ELEMENT(rates, IEEE80211_RATE_MAXSIZE);
-		rate = ieee80211_setup_rates(ni, rates, xrates,
-				IEEE80211_R_DOSORT | IEEE80211_R_DOFRATE |
-				IEEE80211_R_DONEGO | IEEE80211_R_DODEL);
-		if (rate & IEEE80211_RATE_BASIC) {
-			IEEE80211_DPRINTF(ic, IEEE80211_MSG_ASSOC,
-			    "[%s] %sassoc failed (rate set mismatch)\n",
-			    ether_snprintf(ebuf, sizeof(ebuf), wh->i_addr2),
-			    ISREASSOC(subtype) ?  "re" : "");
-			if (ni != ic->ic_bss)	/* XXX never true? */
-				ni->ni_fails++;
-			ic->ic_stats.is_rx_assoc_norate++;
-			ieee80211_new_state(ic, IEEE80211_S_SCAN, 0);
-			return;
-		}
-
-		ni->ni_capinfo = capinfo;
-		ni->ni_associd = associd;
-		if (wme != NULL &&
-		    ieee80211_parse_wmeparams(ic, wme, wh) >= 0) {
-			ni->ni_flags |= IEEE80211_NODE_QOS;
-			ieee80211_wme_updateparams(ic);
-		} else
-			ni->ni_flags &= ~IEEE80211_NODE_QOS;
-		/*
-		 * Configure state now that we are associated.
-		 *
-		 * XXX may need different/additional driver callbacks?
-		 */
-		if (ic->ic_curmode == IEEE80211_MODE_11A ||
-		    (ni->ni_capinfo & IEEE80211_CAPINFO_SHORT_PREAMBLE)) {
-			ic->ic_flags |= IEEE80211_F_SHPREAMBLE;
-			ic->ic_flags &= ~IEEE80211_F_USEBARKER;
-		} else {
-			ic->ic_flags &= ~IEEE80211_F_SHPREAMBLE;
-			ic->ic_flags |= IEEE80211_F_USEBARKER;
-		}
-		ieee80211_set_shortslottime(ic,
-			ic->ic_curmode == IEEE80211_MODE_11A ||
-			(ni->ni_capinfo & IEEE80211_CAPINFO_SHORT_SLOTTIME));
-		/*
-		 * Honor ERP protection.
-		 *
-		 * NB: ni_erp should zero for non-11g operation.
-		 * XXX check ic_curmode anyway?
-		 */
-		if (ic->ic_curmode == IEEE80211_MODE_11G &&
-		    (ni->ni_erp & IEEE80211_ERP_USE_PROTECTION))
-			ic->ic_flags |= IEEE80211_F_USEPROT;
-		else
-			ic->ic_flags &= ~IEEE80211_F_USEPROT;
-		IEEE80211_DPRINTF(ic, IEEE80211_MSG_ASSOC,
-		    "[%s] %sassoc success: %s preamble, %s slot time%s%s\n",
-		    ether_snprintf(ebuf, sizeof(ebuf), wh->i_addr2),
-		    ISREASSOC(subtype) ? "re" : "",
-		    ic->ic_flags&IEEE80211_F_SHPREAMBLE ? "short" : "long",
-		    ic->ic_flags&IEEE80211_F_SHSLOT ? "short" : "long",
-		    ic->ic_flags&IEEE80211_F_USEPROT ? ", protection" : "",
-		    ni->ni_flags & IEEE80211_NODE_QOS ? ", QoS" : ""
-		);
-		ieee80211_new_state(ic, IEEE80211_S_RUN, subtype);
-		break;
-	}
+	case IEEE80211_FC0_SUBTYPE_REASSOC_RESP:
+		ieee80211_recv_mgmt_assoc_resp(ic, m0, ni, subtype, rssi, rstamp);
+		return;
 
 	case IEEE80211_FC0_SUBTYPE_DEAUTH: {
 		u_int16_t reason;
