@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.106 2018/01/16 16:54:54 maxv Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.107 2018/01/16 18:42:43 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 Atsushi Onoe
@@ -37,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.81 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.106 2018/01/16 16:54:54 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.107 2018/01/16 18:42:43 maxv Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -1931,7 +1931,7 @@ ieee80211_update_adhoc_node(struct ieee80211com *ic, struct ieee80211_node *ni,
 		ieee80211_init_neighbor(ic, ni, wh, scan, 0);
 	} else {
 		/* Record TSF for potential resync. */
-		memcpy(ni->ni_tstamp.data, scan->tstamp, sizeof(ni->ni_tstamp));
+		memcpy(ni->ni_tstamp.data, scan->sp_tstamp, sizeof(ni->ni_tstamp));
 	}
 
 	ni->ni_rssi = rssi;
@@ -2046,11 +2046,11 @@ ieee80211_recv_mgmt_beacon(struct ieee80211com *ic, struct mbuf *m0,
 	 */
 	IEEE80211_VERIFY_LENGTH(efrm - frm, 12);
 	memset(&scan, 0, sizeof(scan));
-	scan.tstamp  = frm;				frm += 8;
-	scan.bintval = le16toh(*(u_int16_t *)frm);	frm += 2;
-	scan.capinfo = le16toh(*(u_int16_t *)frm);	frm += 2;
-	scan.bchan = ieee80211_chan2ieee(ic, ic->ic_curchan);
-	scan.chan = scan.bchan;
+	scan.sp_tstamp  = frm;				frm += 8;
+	scan.sp_bintval = le16toh(*(u_int16_t *)frm);	frm += 2;
+	scan.sp_capinfo = le16toh(*(u_int16_t *)frm);	frm += 2;
+	scan.sp_bchan = ieee80211_chan2ieee(ic, ic->ic_curchan);
+	scan.sp_chan = scan.sp_bchan;
 
 	while (frm + 1 < efrm) {
 		IEEE80211_VERIFY_LENGTH(efrm - frm, frm[1] + 2);
@@ -2058,22 +2058,22 @@ ieee80211_recv_mgmt_beacon(struct ieee80211com *ic, struct mbuf *m0,
 		switch (*frm) {
 		case IEEE80211_ELEMID_SSID:
 			/* no length check needed */
-			scan.ssid = frm;
+			scan.sp_ssid = frm;
 			break;
 		case IEEE80211_ELEMID_RATES:
 			/* no length check needed */
-			scan.rates = frm;
+			scan.sp_rates = frm;
 			break;
 		case IEEE80211_ELEMID_COUNTRY:
 			/* XXX: we don't do anything with this? */
-			scan.country = frm;
+			scan.sp_country = frm;
 			break;
 		case IEEE80211_ELEMID_FHPARMS:
 			IEEE80211_VERIFY_LENGTH(frm[1], 5);
 			if (ic->ic_phytype == IEEE80211_T_FH) {
-				scan.fhdwell = LE_READ_2(&frm[2]);
-				scan.chan = IEEE80211_FH_CHAN(frm[4], frm[5]);
-				scan.fhindex = frm[6];
+				scan.sp_fhdwell = LE_READ_2(&frm[2]);
+				scan.sp_chan = IEEE80211_FH_CHAN(frm[4], frm[5]);
+				scan.sp_fhindex = frm[6];
 			}
 			break;
 		case IEEE80211_ELEMID_DSPARMS:
@@ -2083,13 +2083,13 @@ ieee80211_recv_mgmt_beacon(struct ieee80211com *ic, struct mbuf *m0,
 			 */
 			IEEE80211_VERIFY_LENGTH(frm[1], 1);
 			if (ic->ic_phytype != IEEE80211_T_FH)
-				scan.chan = frm[2];
+				scan.sp_chan = frm[2];
 			break;
 		case IEEE80211_ELEMID_TIM:
 			/* XXX ATIM? */
 			IEEE80211_VERIFY_LENGTH(frm[1], 5);
-			scan.tim = frm;
-			scan.timoff = frm - mtod(m0, u_int8_t *);
+			scan.sp_tim = frm;
+			scan.sp_timoff = frm - mtod(m0, u_int8_t *);
 			break;
 		case IEEE80211_ELEMID_IBSSPARMS:
 			break;
@@ -2100,7 +2100,7 @@ ieee80211_recv_mgmt_beacon(struct ieee80211com *ic, struct mbuf *m0,
 				ic->ic_stats.is_rx_elem_toobig++;
 				break;
 			}
-			scan.xrates = frm;
+			scan.sp_xrates = frm;
 			break;
 		case IEEE80211_ELEMID_ERP:
 			if (frm[1] != 1) {
@@ -2109,18 +2109,18 @@ ieee80211_recv_mgmt_beacon(struct ieee80211com *ic, struct mbuf *m0,
 				ic->ic_stats.is_rx_elem_toobig++;
 				break;
 			}
-			scan.erp = frm[2];
+			scan.sp_erp = frm[2];
 			break;
 		case IEEE80211_ELEMID_RSN:
 			/* no length check needed */
-			scan.wpa = frm;
+			scan.sp_wpa = frm;
 			break;
 		case IEEE80211_ELEMID_VENDOR:
 			/* no length check needed */
 			if (iswpaoui(frm))
-				scan.wpa = frm;
+				scan.sp_wpa = frm;
 			else if (iswmeparam(frm) || iswmeinfo(frm))
-				scan.wme = frm;
+				scan.sp_wme = frm;
 			/* XXX Atheros OUI support */
 			break;
 		default:
@@ -2133,24 +2133,24 @@ ieee80211_recv_mgmt_beacon(struct ieee80211com *ic, struct mbuf *m0,
 		frm += frm[1] + 2;
 	}
 
-	IEEE80211_VERIFY_ELEMENT(scan.rates, IEEE80211_RATE_MAXSIZE);
-	IEEE80211_VERIFY_ELEMENT(scan.ssid, IEEE80211_NWID_LEN);
+	IEEE80211_VERIFY_ELEMENT(scan.sp_rates, IEEE80211_RATE_MAXSIZE);
+	IEEE80211_VERIFY_ELEMENT(scan.sp_ssid, IEEE80211_NWID_LEN);
 
 	if (
 #if IEEE80211_CHAN_MAX < 255
-	    scan.chan > IEEE80211_CHAN_MAX ||
+	    scan.sp_chan > IEEE80211_CHAN_MAX ||
 #endif
-	    isclr(ic->ic_chan_active, scan.chan)) {
+	    isclr(ic->ic_chan_active, scan.sp_chan)) {
 		IEEE80211_DISCARD(ic,
 		    IEEE80211_MSG_ELEMID | IEEE80211_MSG_INPUT,
 		    wh, ieee80211_mgt_subtype_name[subtype >>
 			IEEE80211_FC0_SUBTYPE_SHIFT],
-		    "invalid channel %u", scan.chan);
+		    "invalid channel %u", scan.sp_chan);
 		ic->ic_stats.is_rx_badchan++;
 		return;
 	}
 
-	if (scan.chan != scan.bchan &&
+	if (scan.sp_chan != scan.sp_bchan &&
 	    ic->ic_phytype != IEEE80211_T_FH) {
 		/*
 		 * Frame was received on a channel different from the
@@ -2166,25 +2166,25 @@ ieee80211_recv_mgmt_beacon(struct ieee80211com *ic, struct mbuf *m0,
 		    IEEE80211_MSG_ELEMID | IEEE80211_MSG_INPUT,
 		    wh, ieee80211_mgt_subtype_name[subtype >>
 			IEEE80211_FC0_SUBTYPE_SHIFT],
-		    "for off-channel %u", scan.chan);
+		    "for off-channel %u", scan.sp_chan);
 		ic->ic_stats.is_rx_chanmismatch++;
 		return;
 	}
 
-	if (!(IEEE80211_BINTVAL_MIN <= scan.bintval &&
-	      scan.bintval <= IEEE80211_BINTVAL_MAX)) {
+	if (!(IEEE80211_BINTVAL_MIN <= scan.sp_bintval &&
+	      scan.sp_bintval <= IEEE80211_BINTVAL_MAX)) {
 		IEEE80211_DISCARD(ic,
 		    IEEE80211_MSG_ELEMID | IEEE80211_MSG_INPUT,
 		    wh, ieee80211_mgt_subtype_name[subtype >>
 			IEEE80211_FC0_SUBTYPE_SHIFT],
-		    "bogus beacon interval", scan.bintval);
+		    "bogus beacon interval", scan.sp_bintval);
 		ic->ic_stats.is_rx_badbintval++;
 		return;
 	}
 
 	if (ni != ic->ic_bss) {
 		ni = ieee80211_refine_node_for_beacon(ic, ni,
-		    &ic->ic_channels[scan.chan], scan.ssid);
+		    &ic->ic_channels[scan.sp_chan], scan.sp_ssid);
 	}
 
 	/*
@@ -2206,29 +2206,29 @@ ieee80211_recv_mgmt_beacon(struct ieee80211com *ic, struct mbuf *m0,
 	    ((ic->ic_flags & IEEE80211_F_SCAN) == 0 ||
 	     IEEE80211_ADDR_EQ(wh->i_addr2, ni->ni_bssid))) {
 		/* record tsf of last beacon */
-		memcpy(ni->ni_tstamp.data, scan.tstamp, sizeof(ni->ni_tstamp));
+		memcpy(ni->ni_tstamp.data, scan.sp_tstamp, sizeof(ni->ni_tstamp));
 
-		if (ni->ni_erp != scan.erp) {
+		if (ni->ni_erp != scan.sp_erp) {
 			IEEE80211_DPRINTF(ic, IEEE80211_MSG_ASSOC,
 			    "[%s] erp change: was 0x%x, now 0x%x\n",
 			    ether_snprintf(ebuf, sizeof(ebuf),
-			    wh->i_addr2), ni->ni_erp, scan.erp);
+			    wh->i_addr2), ni->ni_erp, scan.sp_erp);
 			if (ic->ic_curmode == IEEE80211_MODE_11G &&
 			    (ni->ni_erp & IEEE80211_ERP_USE_PROTECTION))
 				ic->ic_flags |= IEEE80211_F_USEPROT;
 			else
 				ic->ic_flags &= ~IEEE80211_F_USEPROT;
-			ni->ni_erp = scan.erp;
+			ni->ni_erp = scan.sp_erp;
 			/* XXX statistic */
 		}
 
-		if ((ni->ni_capinfo ^ scan.capinfo) & IEEE80211_CAPINFO_SHORT_SLOTTIME) {
+		if ((ni->ni_capinfo ^ scan.sp_capinfo) & IEEE80211_CAPINFO_SHORT_SLOTTIME) {
 			IEEE80211_DPRINTF(ic, IEEE80211_MSG_ASSOC,
 			    "[%s] capabilities change: before 0x%x,"
 			     " now 0x%x\n",
 			     ether_snprintf(ebuf, sizeof(ebuf),
 			     wh->i_addr2),
-			     ni->ni_capinfo, scan.capinfo);
+			     ni->ni_capinfo, scan.sp_capinfo);
 			/*
 			 * NB: we assume short preamble doesn't
 			 *     change dynamically
@@ -2236,18 +2236,18 @@ ieee80211_recv_mgmt_beacon(struct ieee80211com *ic, struct mbuf *m0,
 			ieee80211_set_shortslottime(ic,
 			    ic->ic_curmode == IEEE80211_MODE_11A ||
 			    (ni->ni_capinfo & IEEE80211_CAPINFO_SHORT_SLOTTIME));
-			ni->ni_capinfo = scan.capinfo;
+			ni->ni_capinfo = scan.sp_capinfo;
 			/* XXX statistic */
 		}
 
-		if (scan.wme != NULL && (ni->ni_flags & IEEE80211_NODE_QOS) &&
-		    ieee80211_parse_wmeparams(ic, scan.wme, wh) > 0) {
+		if (scan.sp_wme != NULL && (ni->ni_flags & IEEE80211_NODE_QOS) &&
+		    ieee80211_parse_wmeparams(ic, scan.sp_wme, wh) > 0) {
 			ieee80211_wme_updateparams(ic);
 		}
 
-		if (scan.tim != NULL) {
+		if (scan.sp_tim != NULL) {
 			struct ieee80211_tim_ie *ie =
-			    (struct ieee80211_tim_ie *)scan.tim;
+			    (struct ieee80211_tim_ie *)scan.sp_tim;
 
 			ni->ni_dtim_count = ie->tim_count;
 			ni->ni_dtim_period = ie->tim_period;
@@ -2282,7 +2282,7 @@ ieee80211_recv_mgmt_beacon(struct ieee80211com *ic, struct mbuf *m0,
 		return;
 	}
 
-	if (scan.capinfo & IEEE80211_CAPINFO_IBSS) {
+	if (scan.sp_capinfo & IEEE80211_CAPINFO_IBSS) {
 		ieee80211_update_adhoc_node(ic, ni, wh, &scan, rssi, rstamp);
 	}
 }
