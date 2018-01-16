@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.73 2018/01/16 18:42:43 maxv Exp $	*/
+/*	$NetBSD: ieee80211_node.c,v 1.74 2018/01/16 18:53:32 maxv Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.65 2005/08/13 17:50:21 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.73 2018/01/16 18:42:43 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.74 2018/01/16 18:53:32 maxv Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -1235,9 +1235,8 @@ saveie(u_int8_t **iep, const u_int8_t *ie)
  */
 void
 ieee80211_add_scan(struct ieee80211com *ic,
-	const struct ieee80211_scanparams *sp,
-	const struct ieee80211_frame *wh,
-	int subtype, int rssi, int rstamp)
+    const struct ieee80211_scanparams *sp, const struct ieee80211_frame *wh,
+    int subtype, int rssi, int rstamp)
 {
 #define	ISPROBE(_st)	((_st) == IEEE80211_FC0_SUBTYPE_PROBE_RESP)
 	struct ieee80211_node_table *nt = &ic->ic_scan;
@@ -1255,6 +1254,7 @@ ieee80211_add_scan(struct ieee80211com *ic,
 			return;
 		}
 		ieee80211_setup_node(nt, ni, wh->i_addr2);
+
 		/*
 		 * XXX inherit from ic_bss.
 		 */
@@ -1265,17 +1265,19 @@ ieee80211_add_scan(struct ieee80211com *ic,
 		ni->ni_rsn = ic->ic_bss->ni_rsn;
 		newnode = 1;
 	}
+
 #ifdef IEEE80211_DEBUG
 	if (ieee80211_msg_scan(ic) && (ic->ic_flags & IEEE80211_F_SCAN))
 		dump_probe_beacon(subtype, newnode, wh->i_addr2, sp);
 #endif
+
 	/* XXX ap beaconing multiple ssid w/ same bssid */
-	if (sp->sp_ssid[1] != 0 &&
-	    (ISPROBE(subtype) || ni->ni_esslen == 0)) {
+	if (sp->sp_ssid[1] != 0 && (ISPROBE(subtype) || ni->ni_esslen == 0)) {
 		ni->ni_esslen = sp->sp_ssid[1];
 		memset(ni->ni_essid, 0, sizeof(ni->ni_essid));
 		memcpy(ni->ni_essid, sp->sp_ssid + 2, sp->sp_ssid[1]);
 	}
+
 	ni->ni_scangen = ic->ic_scan.nt_scangen;
 	IEEE80211_ADDR_COPY(ni->ni_bssid, wh->i_addr3);
 	ni->ni_rssi = rssi;
@@ -1287,6 +1289,7 @@ ieee80211_add_scan(struct ieee80211com *ic,
 	ni->ni_fhdwell = sp->sp_fhdwell;
 	ni->ni_fhindex = sp->sp_fhindex;
 	ni->ni_erp = sp->sp_erp;
+
 	if (sp->sp_tim != NULL) {
 		struct ieee80211_tim_ie *ie =
 		    (struct ieee80211_tim_ie *)sp->sp_tim;
@@ -1294,6 +1297,7 @@ ieee80211_add_scan(struct ieee80211com *ic,
 		ni->ni_dtim_count = ie->tim_count;
 		ni->ni_dtim_period = ie->tim_period;
 	}
+
 	/*
 	 * Record the byte offset from the mac header to
 	 * the start of the TIM information element for
@@ -1301,6 +1305,7 @@ ieee80211_add_scan(struct ieee80211com *ic,
 	 * processing of beacon frames.
 	 */
 	ni->ni_timoff = sp->sp_timoff;
+
 	/*
 	 * Record optional information elements that might be
 	 * used by applications or drivers.
