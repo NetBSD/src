@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.79 2018/01/10 07:08:35 msaitoh Exp $	*/
+/*	$NetBSD: i386.c,v 1.80 2018/01/16 08:23:18 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.79 2018/01/10 07:08:35 msaitoh Exp $");
+__RCSID("$NetBSD: i386.c,v 1.80 2018/01/16 08:23:18 mrg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -2233,6 +2233,13 @@ powernow_probe(struct cpu_info *ci)
 	snprintb(buf, sizeof(buf), CPUID_APM_FLAGS, regs[3]);
 	aprint_normal_dev(ci->ci_dev, "AMD Power Management features: %s\n",
 	    buf);
+}
+
+bool
+identifycpu_bind(void)
+{
+
+	return true;
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.99 2017/12/02 00:48:04 macallan Exp $ */
+/*	$NetBSD: cpu.h,v 1.100 2018/01/16 08:23:17 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,6 +56,67 @@
  * Exported definitions unique to SPARC cpu support.
  */
 
+/*
+ * Sun-4 and Sun-4c virtual address cache.
+ *
+ * Sun-4 virtual caches come in two flavors, write-through (Sun-4c)
+ * and write-back (Sun-4).  The write-back caches are much faster
+ * but require a bit more care.
+ *
+ * This is exported via sysctl so be careful changing it.
+ */
+enum vactype { VAC_UNKNOWN, VAC_NONE, VAC_WRITETHROUGH, VAC_WRITEBACK };
+
+/*
+ * Cache control information.
+ *
+ * This is exported via sysctl so be careful changing it.
+ */
+
+struct cacheinfo {
+	int	c_totalsize;		/* total size, in bytes */
+					/* if split, MAX(icache,dcache) */
+	int	c_enabled;		/* true => cache is enabled */
+	int	c_hwflush;		/* true => have hardware flush */
+	int	c_linesize;		/* line size, in bytes */
+					/* if split, MIN(icache,dcache) */
+	int	c_l2linesize;		/* log2(linesize) */
+	int	c_nlines;		/* precomputed # of lines to flush */
+	int	c_physical;		/* true => cache has physical
+						   address tags */
+	int 	c_associativity;	/* # of "buckets" in cache line */
+	int 	c_split;		/* true => cache is split */
+
+	int 	ic_totalsize;		/* instruction cache */
+	int 	ic_enabled;
+	int 	ic_linesize;
+	int 	ic_l2linesize;
+	int 	ic_nlines;
+	int 	ic_associativity;
+
+	int 	dc_totalsize;		/* data cache */
+	int 	dc_enabled;
+	int 	dc_linesize;
+	int 	dc_l2linesize;
+	int 	dc_nlines;
+	int 	dc_associativity;
+
+	int	ec_totalsize;		/* external cache info */
+	int 	ec_enabled;
+	int	ec_linesize;
+	int	ec_l2linesize;
+	int 	ec_nlines;
+	int 	ec_associativity;
+
+	enum vactype	c_vactype;
+
+	int	c_flags;
+#define CACHE_PAGETABLES	0x1	/* caching pagetables OK on (sun4m) */
+#define CACHE_TRAPPAGEBUG	0x2	/* trap page can't be cached (sun4) */
+#define CACHE_MANDATORY		0x4	/* if cache is on, don't use
+					   uncached access */
+};
+
 /* Things needed by crash or the kernel */
 #if defined(_KERNEL) || defined(_KMEMUSER)
 
@@ -74,9 +135,6 @@
 #if defined(_KERNEL)
 #include <sparc/sparc/cpuvar.h>
 #include <sparc/sparc/intreg.h>
-#else
-#include <arch/sparc/sparc/vaddrs.h>
-#include <arch/sparc/sparc/cache.h>
 #endif
 
 struct trapframe;
@@ -123,9 +181,9 @@ struct cpu_info {
 	/*
 	 * Primary Inter-processor message area.  Keep this aligned
 	 * to a cache line boundary if possible, as the structure
-	 * itself is one (normal 32 byte) cache-line.
+	 * itself is one or less (32/64 byte) cache-line.
 	 */
-	struct xpmsg	msg __aligned(32);
+	struct xpmsg	msg __aligned(64);
 
 	/* Scheduler flags */
 	int	ci_want_ast;
@@ -149,7 +207,7 @@ struct cpu_info {
 	paddr_t		ctx_tbl_pa;	/* [4m] ctx table physical address */
 
 	/* Cache information */
-	struct cacheinfo	cacheinfo;	/* see cache.h */
+	struct cacheinfo	cacheinfo;	/* see above */
 
 	/* various flags to workaround anomalies in chips */
 	volatile int	flags;		/* see CPUFLG_xxx, below */

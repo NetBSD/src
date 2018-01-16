@@ -1,4 +1,4 @@
-/*	$NetBSD: noarch.c,v 1.5 2012/10/17 20:22:15 drochner Exp $	*/
+/*	$NetBSD: noarch.c,v 1.6 2018/01/16 08:23:18 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: noarch.c,v 1.5 2012/10/17 20:22:15 drochner Exp $");
+__RCSID("$NetBSD: noarch.c,v 1.6 2018/01/16 08:23:18 mrg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -43,6 +43,13 @@ identifycpu(int fd, const char *cpuname)
 {
 
 	printf("CPU identification not implemented for this architecture.\n");
+}
+
+bool
+identifycpu_bind(void)
+{
+
+	return false;
 }
 
 int

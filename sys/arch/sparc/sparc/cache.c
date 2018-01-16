@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.99 2018/01/15 21:25:25 mrg Exp $ */
+/*	$NetBSD: cache.c,v 1.100 2018/01/16 08:23:17 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.99 2018/01/15 21:25:25 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.100 2018/01/16 08:23:17 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
@@ -166,7 +166,7 @@ ms1_cache_enable(void)
 	 * MS1 cache is write-through and not write-allocate, so we can
 	 * use cacheable access while not displacing cache lines.
 	 */
-	cpuinfo.flags |= CPUFLG_CACHE_MANDATORY;
+	CACHEINFO.c_flags |= CACHE_MANDATORY;
 }
 
 void
@@ -197,7 +197,7 @@ viking_cache_enable(void)
 		/* Set external cache enable bit in MXCC control register */
 		stda(MXCC_CTRLREG, ASI_CONTROL,
 		     ldda(MXCC_CTRLREG, ASI_CONTROL) | MXCC_CTRLREG_CE);
-		cpuinfo.flags |= CPUFLG_CACHEPAGETABLES; /* Ok to cache PTEs */
+		CACHEINFO.c_flags |= CACHE_PAGETABLES; /* Ok to cache PTEs */
 		CACHEINFO.ec_enabled = 1;
 	}
 }
