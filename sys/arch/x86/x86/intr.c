@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.119 2018/01/13 20:36:06 bouyer Exp $	*/
+/*	$NetBSD: intr.c,v 1.120 2018/01/16 11:52:09 roy Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.119 2018/01/13 20:36:06 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.120 2018/01/16 11:52:09 roy Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -243,10 +243,10 @@ static const char *legacy_intr_string(int, char *, size_t, struct pic *);
 #if defined(XEN) /* XXX: nuke conditional after integration */
 static const char *xen_intr_string(int, char *, size_t, struct pic *);
 #endif /* XXX: XEN */
-#endif
 
 static inline bool redzone_const_or_false(bool);
 static inline int redzone_const_or_zero(int);
+#endif
 
 static void intr_redistribute_xc_t(void *, void *);
 static void intr_redistribute_xc_s1(void *, void *);
@@ -1428,6 +1428,7 @@ struct intrhand fake_preempt_intrhand;
 static const char *x86_ipi_names[X86_NIPI] = X86_IPI_NAMES;
 #endif
 
+#if !defined(XEN)
 static inline bool
 redzone_const_or_false(bool x)
 {
@@ -1443,6 +1444,7 @@ redzone_const_or_zero(int x)
 {
 	return redzone_const_or_false(true) ? x : 0;
 }
+#endif
 
 /*
  * Initialize all handlers that aren't dynamically allocated, and exist
