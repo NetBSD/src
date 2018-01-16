@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.752.2.7 2017/12/21 21:08:13 snj Exp $
+# $NetBSD: mi,v 1.752.2.8 2018/01/16 13:01:10 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3417,6 +3417,7 @@
 ./usr/tests/rump/rumpkern/t_sp			tests-rump-tests	atf,rump
 ./usr/tests/rump/rumpkern/t_threads		tests-rump-tests	atf,rump
 ./usr/tests/rump/rumpkern/t_tsleep		tests-rump-tests	atf,rump
+./usr/tests/rump/rumpkern/t_workqueue		tests-rump-tests	atf,rump
 ./usr/tests/rump/rumpkern/t_vm			tests-rump-tests	atf,rump
 ./usr/tests/rump/rumpnet			tests-rump-tests	compattestfile,atf
 ./usr/tests/rump/rumpnet/Atffile		tests-rump-tests	atf,rump

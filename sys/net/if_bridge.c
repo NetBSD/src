@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.134.6.5 2018/01/02 10:20:33 snj Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.134.6.6 2018/01/16 13:01:10 martin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.134.6.5 2018/01/02 10:20:33 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.134.6.6 2018/01/16 13:01:10 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -1363,7 +1363,8 @@ bridge_stop(struct ifnet *ifp, int disable)
 	KASSERT((ifp->if_flags & IFF_RUNNING) != 0);
 	ifp->if_flags &= ~IFF_RUNNING;
 
-	callout_stop(&sc->sc_brcallout);
+	callout_halt(&sc->sc_brcallout, NULL);
+	workqueue_wait(sc->sc_rtage_wq, &sc->sc_rtage_wk);
 	bstp_stop(sc);
 	bridge_rtflush(sc, IFBF_FLUSHDYN);
 }
