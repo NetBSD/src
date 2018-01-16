@@ -1,4 +1,4 @@
-/* $NetBSD: bwfm.c,v 1.7 2017/12/18 13:56:14 jmcneill Exp $ */
+/* $NetBSD: bwfm.c,v 1.8 2018/01/16 13:48:21 maxv Exp $ */
 /* $OpenBSD: bwfm.c,v 1.5 2017/10/16 22:27:16 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -1687,14 +1687,19 @@ bwfm_scan_node(struct bwfm_softc *sc, struct bwfm_bss_info *bss, size_t len)
 			break;
 		case IEEE80211_ELEMID_FHPARMS:
 			if (ic->ic_phytype == IEEE80211_T_FH) {
+				if (frm + 6 >= efrm)
+					break;
 				scan.fhdwell = le16dec(&frm[2]);
 				scan.chan = IEEE80211_FH_CHAN(frm[4], frm[5]);
 				scan.fhindex = frm[6];
 			}
 			break;
 		case IEEE80211_ELEMID_DSPARMS:
-			if (ic->ic_phytype != IEEE80211_T_FH)
+			if (ic->ic_phytype != IEEE80211_T_FH) {
+				if (frm + 2 >= efrm)
+					break;
 				scan.chan = frm[2];
+			}
 			break;
 		case IEEE80211_ELEMID_TIM:
 			scan.tim = frm;
@@ -1704,6 +1709,8 @@ bwfm_scan_node(struct bwfm_softc *sc, struct bwfm_bss_info *bss, size_t len)
 			scan.xrates = frm;
 			break;
 		case IEEE80211_ELEMID_ERP:
+			if (frm + 1 >= efrm)
+				break;
 			if (frm[1] != 1) {
 				ic->ic_stats.is_rx_elem_toobig++;
 				break;
@@ -1714,6 +1721,10 @@ bwfm_scan_node(struct bwfm_softc *sc, struct bwfm_bss_info *bss, size_t len)
 			scan.wpa = frm;
 			break;
 		case IEEE80211_ELEMID_VENDOR:
+			if (frm + 1 >= efrm)
+				break;
+			if (frm + frm[1] + 2 >= efrm)
+				break;
 			if (bwfm_iswpaoui(frm))
 				scan.wpa = frm;
 			break;
