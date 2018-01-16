@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.250 2017/12/02 00:48:05 macallan Exp $ */
+/*	$NetBSD: cpu.c,v 1.251 2018/01/16 08:23:17 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.250 2017/12/02 00:48:05 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.251 2018/01/16 08:23:17 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -68,6 +68,8 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.250 2017/12/02 00:48:05 macallan Exp $");
 #include <sys/xcall.h>
 #include <sys/ipi.h>
 #include <sys/cpu.h>
+#include <sys/sysctl.h>
+#include <sys/kmem.h>
 
 #include <uvm/uvm.h>
 
@@ -89,6 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.250 2017/12/02 00:48:05 macallan Exp $");
 #include <sparc/sparc/asm.h>
 #include <sparc/sparc/cpuvar.h>
 #include <sparc/sparc/memreg.h>
+#include <sparc/sparc/cache_print.h>
 #if defined(SUN4D)
 #include <sparc/sparc/cpuunitvar.h>
 #endif
@@ -131,11 +134,12 @@ CFATTACH_DECL_NEW(cpu_cpuunit, sizeof(struct cpu_softc),
     cpu_cpuunit_match, cpu_cpuunit_attach, NULL, NULL);
 #endif /* SUN4D */
 
-static void cpu_init_evcnt(struct cpu_info *cpi);
+static void cpu_setup_sysctl(struct cpu_softc *);
+static void cpu_init_evcnt(struct cpu_info *);
 static void cpu_attach(struct cpu_softc *, int, int);
 
 static const char *fsrtoname(int, int, int);
-void cache_print(struct cpu_softc *);
+static void cache_print(struct cpu_softc *);
 void cpu_setup(void);
 void fpu_init(struct cpu_info *);
 
@@ -383,6 +387,58 @@ cpu_init_evcnt(struct cpu_info *cpi)
 	}
 }
 
+/* setup the hw.cpuN.* nodes for this cpu */
+static void
+cpu_setup_sysctl(struct cpu_softc *sc)
+{
+	struct cpu_info	*ci = sc->sc_cpuinfo;
+	const struct sysctlnode *cpunode = NULL;
+
+	sysctl_createv(NULL, 0, NULL, &cpunode,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, device_xname(sc->sc_dev), NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_HW,
+		       CTL_CREATE, CTL_EOL);
+
+	if (cpunode == NULL)
+		return;
+
+#define SETUPS(name, member)					\
+	sysctl_createv(NULL, 0, &cpunode, NULL,			\
+		       CTLFLAG_PERMANENT,			\
+		       CTLTYPE_STRING, name, NULL,		\
+		       NULL, 0, member, 0,			\
+		       CTL_CREATE, CTL_EOL);
+
+	SETUPS("name", __UNCONST(ci->cpu_longname))
+	SETUPS("fpuname", __UNCONST(ci->fpu_name))
+#undef SETUPS
+
+#define SETUPI(name, member)					\
+	sysctl_createv(NULL, 0, &cpunode, NULL,			\
+		       CTLFLAG_PERMANENT,			\
+		       CTLTYPE_INT, name, NULL,			\
+		       NULL, 0, member, 0,			\
+		       CTL_CREATE, CTL_EOL);
+
+	SETUPI("mid", &ci->mid)
+	SETUPI("clock_frequency", &ci->hz)
+	SETUPI("psr_implementation", &ci->cpu_impl)
+	SETUPI("psr_version", &ci->cpu_vers)
+	SETUPI("mmu_implementation", &ci->mmu_impl)
+	SETUPI("mmu_version", &ci->mmu_vers)
+	SETUPI("mmu_nctx", &ci->mmu_ncontext)
+#undef SETUPI
+
+        sysctl_createv(NULL, 0, &cpunode, NULL, 
+                       CTLFLAG_PERMANENT,
+                       CTLTYPE_STRUCT, "cacheinfo", NULL,
+                       NULL, 0, &ci->cacheinfo, sizeof(ci->cacheinfo),
+		       CTL_CREATE, CTL_EOL);
+
+}
+
 /*
  * Attach the CPU.
  * Discover interesting goop about the virtual address cache
@@ -432,6 +488,7 @@ cpu_attach(struct cpu_softc *sc, int node, int mid)
 	if (cpu_attach_count > 1) {
 		cpu_attach_non_boot(sc, cpi, node);
 		cpu_init_evcnt(cpi);
+		cpu_setup_sysctl(sc);
 		return;
 	}
 #endif /* MULTIPROCESSOR */
@@ -445,6 +502,7 @@ cpu_attach(struct cpu_softc *sc, int node, int mid)
 	cpu_setmodel("%s (%s)", machine_model, buf);
 	printf(": %s\n", buf);
 	cache_print(sc);
+	cpu_setup_sysctl(sc);
 
 	cpi->master = 1;
 	cpi->eintstack = eintstack;
@@ -989,58 +1047,13 @@ fpu_init(struct cpu_info *sc)
 	}
 }
 
-void
+static void
 cache_print(struct cpu_softc *sc)
 {
 	struct cacheinfo *ci = &sc->sc_cpuinfo->cacheinfo;
 
-	if (sc->sc_cpuinfo->flags & CPUFLG_SUN4CACHEBUG)
-		printf("%s: cache chip bug; trap page uncached\n",
-		    device_xname(sc->sc_dev));
-
-	printf("%s: ", device_xname(sc->sc_dev));
-
-	if (ci->c_totalsize == 0) {
-		printf("no cache\n");
-		return;
-	}
-
-	if (ci->c_split) {
-		const char *sep = "";
-
-		printf("%s", (ci->c_physical ? "physical " : ""));
-		if (ci->ic_totalsize > 0) {
-			printf("%s%dK instruction (%d b/l)", sep,
-			    ci->ic_totalsize/1024, ci->ic_linesize);
-			sep = ", ";
-		}
-		if (ci->dc_totalsize > 0) {
-			printf("%s%dK data (%d b/l)", sep,
-			    ci->dc_totalsize/1024, ci->dc_linesize);
-		}
-	} else if (ci->c_physical) {
-		/* combined, physical */
-		printf("physical %dK combined cache (%d bytes/line)",
-		    ci->c_totalsize/1024, ci->c_linesize);
-	} else {
-		/* combined, virtual */
-		printf("%dK byte write-%s, %d bytes/line, %cw flush",
-		    ci->c_totalsize/1024,
-		    (ci->c_vactype == VAC_WRITETHROUGH) ? "through" : "back",
-		    ci->c_linesize,
-		    ci->c_hwflush ? 'h' : 's');
-	}
-
-	if (ci->ec_totalsize > 0) {
-		printf(", %dK external (%d b/l)",
-		    ci->ec_totalsize/1024, ci->ec_linesize);
-	}
-	printf(": ");
-	if (ci->c_enabled)
-		printf("cache enabled");
-	printf("\n");
+	cache_printf_backend(ci, device_xname(sc->sc_dev));
 }
-
 
 /*------------*/
 
@@ -1316,7 +1329,7 @@ void
 sun4_hotfix(struct cpu_info *sc)
 {
 
-	if ((sc->flags & CPUFLG_SUN4CACHEBUG) != 0)
+	if ((sc->cacheinfo.c_flags & CACHE_TRAPPAGEBUG) != 0)
 		kvm_uncache((char *)trapbase, 1);
 
 	/* Use the hardware-assisted page flush routine, if present */
@@ -1783,7 +1796,7 @@ static	int mxcc = -1;
 	/* Test if we're directly on the MBus */
 	if ((pcr & VIKING_PCR_MB) == 0) {
 		sc->mxcc = 1;
-		sc->flags |= CPUFLG_CACHE_MANDATORY;
+		sc->cacheinfo.c_flags |= CACHE_MANDATORY;
 		sc->zero_page = pmap_zero_page_viking_mxcc;
 		sc->copy_page = pmap_copy_page_viking_mxcc;
 #if !defined(MSIIEP)
@@ -1797,7 +1810,7 @@ static	int mxcc = -1;
 		if ((pcr & VIKING_PCR_TC) == 0)
 			printf("[viking: PCR_TC is off]");
 		else
-			sc->flags |= CPUFLG_CACHEPAGETABLES;
+			sc->cacheinfo.c_flags |= CACHE_PAGETABLES;
 	} else {
 #ifdef MULTIPROCESSOR
 		if (sparc_ncpus > 1 && sc->cacheinfo.ec_totalsize == 0)
@@ -1829,7 +1842,7 @@ viking_mmu_enable(void)
 			printf("[viking: turn on PCR_TC]");
 		}
 		pcr |= VIKING_PCR_TC;
-		cpuinfo.flags |= CPUFLG_CACHEPAGETABLES;
+		CACHEINFO.c_flags |= CACHE_PAGETABLES;
 	} else
 		pcr &= ~VIKING_PCR_TC;
 	sta(SRMMU_PCR, ASI_SRMMU, pcr);
@@ -2072,6 +2085,17 @@ getcpuinfo(struct cpu_info *sc, int node)
 		/* Get MMU version/implementation from ROM always */
 		mmu_impl = prom_getpropint(node, "implementation", -1);
 		mmu_vers = prom_getpropint(node, "version", -1);
+	}
+
+	if (node != 0) {
+		char *cpu_name;
+		char namebuf[64];
+
+		cpu_name = prom_getpropstringA(node, "name", namebuf,
+					       sizeof namebuf);
+		if (cpu_name && cpu_name[0])
+			sc->cpu_longname = kmem_strdupsize(cpu_name, NULL,
+							   KM_NOSLEEP);
 	}
 
 	for (mp = cpu_conf; ; mp++) {

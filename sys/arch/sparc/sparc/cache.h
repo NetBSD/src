@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.35 2007/03/04 06:00:45 christos Exp $ */
+/*	$NetBSD: cache.h,v 1.36 2018/01/16 08:23:17 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,16 +49,6 @@
 #if defined(_KERNEL_OPT)
 #include "opt_sparc_arch.h"
 #endif
-
-/*
- * Sun-4 and Sun-4c virtual address cache.
- *
- * Sun-4 virtual caches come in two flavors, write-through (Sun-4c)
- * and write-back (Sun-4).  The write-back caches are much faster
- * but require a bit more care.
- *
- */
-enum vactype { VAC_UNKNOWN, VAC_NONE, VAC_WRITETHROUGH, VAC_WRITEBACK };
 
 /*
  * Cache tags can be written in control space, and must be set to 0
@@ -233,47 +223,6 @@ void	smp_vcache_flush_page(int va,int);	/* flush page in cur ctx */
 #define cache_flush(va,len)		cpuinfo.cache_flush(va,len)
 
 #define pcache_flush_page(pa,flag)	cpuinfo.pcache_flush_page(pa,flag)
-
-/*
- * Cache control information.
- */
-struct cacheinfo {
-	int	c_totalsize;		/* total size, in bytes */
-					/* if split, MAX(icache,dcache) */
-	int	c_enabled;		/* true => cache is enabled */
-	int	c_hwflush;		/* true => have hardware flush */
-	int	c_linesize;		/* line size, in bytes */
-					/* if split, MIN(icache,dcache) */
-	int	c_l2linesize;		/* log2(linesize) */
-	int	c_nlines;		/* precomputed # of lines to flush */
-	int	c_physical;		/* true => cache has physical
-						   address tags */
-	int 	c_associativity;	/* # of "buckets" in cache line */
-	int 	c_split;		/* true => cache is split */
-
-	int 	ic_totalsize;		/* instruction cache */
-	int 	ic_enabled;
-	int 	ic_linesize;
-	int 	ic_l2linesize;
-	int 	ic_nlines;
-	int 	ic_associativity;
-
-	int 	dc_totalsize;		/* data cache */
-	int 	dc_enabled;
-	int 	dc_linesize;
-	int 	dc_l2linesize;
-	int 	dc_nlines;
-	int 	dc_associativity;
-
-	int	ec_totalsize;		/* external cache info */
-	int 	ec_enabled;
-	int	ec_linesize;
-	int	ec_l2linesize;
-	int 	ec_nlines;
-	int 	ec_associativity;
-
-	enum vactype	c_vactype;
-};
 
 #define CACHEINFO cpuinfo.cacheinfo
 
