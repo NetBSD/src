@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.171 2016/10/02 14:17:07 christos Exp $ */
+/*	$NetBSD: if_gre.c,v 1.172 2018/01/16 06:38:42 maxv Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.171 2016/10/02 14:17:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.172 2018/01/16 06:38:42 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_atalk.h"
@@ -155,8 +155,7 @@ static int gre_clone_destroy(struct ifnet *);
 static struct if_clone gre_cloner =
     IF_CLONE_INITIALIZER("gre", gre_clone_create, gre_clone_destroy);
 
-static int gre_input(struct gre_softc *, struct mbuf *, int,
-    const struct gre_h *);
+static int gre_input(struct gre_softc *, struct mbuf *, const struct gre_h *);
 static bool gre_is_nullconf(const struct gre_soparm *);
 static int gre_output(struct ifnet *, struct mbuf *,
 			   const struct sockaddr *, const struct rtentry *);
@@ -327,11 +326,14 @@ gre_clone_create(struct if_clone *ifc, int unit)
 	atomic_inc_uint(&gre_count);
 	return 0;
 
-fail1:	cv_destroy(&sc->sc_fp_condvar);
+fail1:
+	cv_destroy(&sc->sc_fp_condvar);
 	cv_destroy(&sc->sc_condvar);
 	mutex_destroy(&sc->sc_mtx);
 	free(sc, M_DEVBUF);
-fail0:	return -1;
+
+fail0:
+	return -1;
 }
 
 static int
@@ -403,7 +405,7 @@ gre_receive(struct socket *so, void *arg, int events, int waitflag)
 	}
 	gh = mtod(m, const struct gre_h *);
 
-	if (gre_input(sc, m, 0, gh) == 0) {
+	if (gre_input(sc, m, gh) == 0) {
 		sc->sc_unsupp_ev.ev_count++;
 		GRE_DPRINTF(sc, "dropping unsupported\n");
 		m_freem(m);
@@ -783,19 +785,19 @@ shutdown:
 }
 
 static int
-gre_input(struct gre_softc *sc, struct mbuf *m, int hlen,
-    const struct gre_h *gh)
+gre_input(struct gre_softc *sc, struct mbuf *m, const struct gre_h *gh)
 {
 	pktqueue_t *pktq = NULL;
 	struct ifqueue *ifq = NULL;
 	uint16_t flags;
 	uint32_t af;		/* af passed to BPF tap */
 	int isr = 0, s;
+	int hlen;
 
 	sc->sc_if.if_ipackets++;
 	sc->sc_if.if_ibytes += m->m_pkthdr.len;
 
-	hlen += sizeof(struct gre_h);
+	hlen = sizeof(struct gre_h);
 
 	/* process GRE flags as packet can be of variable len */
 	flags = ntohs(gh->flags);
@@ -850,7 +852,7 @@ gre_input(struct gre_softc *sc, struct mbuf *m, int hlen,
 	if (hlen > m->m_pkthdr.len) {
 		m_freem(m);
 		sc->sc_if.if_ierrors++;
-		return EINVAL;
+		return 1;
 	}
 	m_adj(m, hlen);
 
@@ -885,12 +887,14 @@ gre_input(struct gre_softc *sc, struct mbuf *m, int hlen,
  */
 static int
 gre_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
-	   const struct rtentry *rt)
+    const struct rtentry *rt)
 {
 	int error = 0;
 	struct gre_softc *sc = ifp->if_softc;
 	struct gre_h *gh;
 	uint16_t etype = 0;
+
+	KASSERT((m->m_flags & M_PKTHDR) != 0);
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING)) {
 		m_freem(m);
@@ -906,7 +910,8 @@ gre_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	switch (dst->sa_family) {
 #ifdef INET
 	case AF_INET:
-		/* TBD Extract the IP ToS field and set the
+		/*
+		 * TBD Extract the IP ToS field and set the
 		 * encapsulating protocol's ToS to suit.
 		 */
 		etype = htons(ETHERTYPE_IP);
@@ -930,12 +935,12 @@ gre_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	}
 
 #ifdef MPLS
-		if (rt != NULL && rt_gettag(rt) != NULL) {
-			union mpls_shim msh;
-			msh.s_addr = MPLS_GETSADDR(rt);
-			if (msh.shim.label != MPLS_LABEL_IMPLNULL)
-				etype = htons(ETHERTYPE_MPLS);
-		}
+	if (rt != NULL && rt_gettag(rt) != NULL) {
+		union mpls_shim msh;
+		msh.s_addr = MPLS_GETSADDR(rt);
+		if (msh.shim.label != MPLS_LABEL_IMPLNULL)
+			etype = htons(ETHERTYPE_MPLS);
+	}
 #endif
 
 	M_PREPEND(m, sizeof(*gh), M_DONTWAIT);
@@ -964,7 +969,8 @@ gre_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 		m_freem(m);
 	} else
 		softint_schedule(sc->sc_si);
-  end:
+
+end:
 	if (error)
 		ifp->if_oerrors++;
 	return error;
@@ -1444,7 +1450,7 @@ greattach(int count)
 
 	/*
 	 * Nothing to do here, initialization is handled by the
-	 * module initialization code in greinit() below).
+	 * module initialization code in greinit() below.
 	 */
 }
 
