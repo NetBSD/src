@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agr.c,v 1.44 2018/01/15 11:16:04 maxv Exp $	*/
+/*	$NetBSD: if_agr.c,v 1.45 2018/01/16 07:34:12 knakahara Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,13 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.44 2018/01/15 11:16:04 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.45 2018/01/16 07:34:12 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
-#endif
-
 #include "vlan.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -1168,4 +1167,4 @@ agrport_config_promisc(struct agr_port *port, bool promisc)
  */
 #include <net/if_module.h>
 
-IF_MODULE(MODULE_CLASS_DRIVER, agr, "")
+IF_MODULE(MODULE_CLASS_DRIVER, agr, "if_vlan")
