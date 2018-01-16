@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.554 2018/01/15 04:25:48 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.555 2018/01/16 07:23:13 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.554 2018/01/15 04:25:48 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.555 2018/01/16 07:23:13 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -671,6 +671,7 @@ static bool	wm_suspend(device_t, const pmf_qual_t *);
 static bool	wm_resume(device_t, const pmf_qual_t *);
 static void	wm_watchdog(struct ifnet *);
 static void	wm_watchdog_txq(struct ifnet *, struct wm_txqueue *);
+static void	wm_watchdog_txq_locked(struct ifnet *, struct wm_txqueue *);
 static void	wm_tick(void *);
 static int	wm_ifflags_cb(struct ethercom *);
 static int	wm_ioctl(struct ifnet *, u_long, void *);
@@ -2953,15 +2954,24 @@ wm_watchdog(struct ifnet *ifp)
 static void
 wm_watchdog_txq(struct ifnet *ifp, struct wm_txqueue *txq)
 {
+
+	mutex_enter(txq->txq_lock);
+	wm_watchdog_txq_locked(ifp, txq);
+	mutex_exit(txq->txq_lock);
+}
+
+static void
+wm_watchdog_txq_locked(struct ifnet *ifp, struct wm_txqueue *txq)
+{
 	struct wm_softc *sc = ifp->if_softc;
+
+	KASSERT(mutex_owned(txq->txq_lock));
 
 	/*
 	 * Since we're using delayed interrupts, sweep up
 	 * before we report an error.
 	 */
-	mutex_enter(txq->txq_lock);
 	wm_txeof(sc, txq);
-	mutex_exit(txq->txq_lock);
 
 	if (txq->txq_free != WM_NTXDESC(txq)) {
 #ifdef WM_DEBUG
