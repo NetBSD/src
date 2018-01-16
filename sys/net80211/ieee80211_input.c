@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.98 2018/01/16 15:42:52 maxv Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.99 2018/01/16 15:48:32 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 Atsushi Onoe
@@ -37,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.81 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.98 2018/01/16 15:42:52 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.99 2018/01/16 15:48:32 maxv Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -2371,6 +2371,84 @@ ieee80211_recv_mgmt_probe_req(struct ieee80211com *ic, struct mbuf *m0,
 	}
 }
 
+static void
+ieee80211_recv_mgmt_auth(struct ieee80211com *ic, struct mbuf *m0,
+    struct ieee80211_node *ni, int subtype, int rssi, u_int32_t rstamp)
+{
+	struct ieee80211_frame *wh;
+	u_int8_t *frm, *efrm;
+	IEEE80211_DEBUGVAR(char ebuf[3 * ETHER_ADDR_LEN]);
+
+	wh = mtod(m0, struct ieee80211_frame *);
+	frm = (u_int8_t *)(wh + 1);
+	efrm = mtod(m0, u_int8_t *) + m0->m_len;
+
+	u_int16_t algo, seq, status;
+	/*
+	 * auth frame format
+	 *	[2] algorithm
+	 *	[2] sequence
+	 *	[2] status
+	 *	[tlv*] challenge
+	 */
+	IEEE80211_VERIFY_LENGTH(efrm - frm, 6);
+	algo   = le16toh(*(u_int16_t *)frm);
+	seq    = le16toh(*(u_int16_t *)(frm + 2));
+	status = le16toh(*(u_int16_t *)(frm + 4));
+	IEEE80211_DPRINTF(ic, IEEE80211_MSG_AUTH,
+	    "[%s] recv auth frame with algorithm %d seq %d\n",
+	    ether_snprintf(ebuf, sizeof(ebuf), wh->i_addr2), algo, seq);
+	/*
+	 * Consult the ACL policy module if setup.
+	 */
+	if (ic->ic_acl != NULL &&
+	    !ic->ic_acl->iac_check(ic, wh->i_addr2)) {
+		IEEE80211_DISCARD(ic, IEEE80211_MSG_ACL,
+		    wh, "auth", "%s", "disallowed by ACL");
+		ic->ic_stats.is_rx_acl++;
+		if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
+			IEEE80211_SEND_MGMT(ic, ni,
+			    IEEE80211_FC0_SUBTYPE_AUTH,
+			    (seq+1) | (IEEE80211_STATUS_UNSPECIFIED<<16));
+		}
+		return;
+	}
+	if (ic->ic_flags & IEEE80211_F_COUNTERM) {
+		IEEE80211_DISCARD(ic,
+		    IEEE80211_MSG_AUTH | IEEE80211_MSG_CRYPTO,
+		    wh, "auth", "%s", "TKIP countermeasures enabled");
+		ic->ic_stats.is_rx_auth_countermeasures++;
+#ifndef IEEE80211_NO_HOSTAP
+		if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
+			IEEE80211_SEND_MGMT(ic, ni,
+				IEEE80211_FC0_SUBTYPE_AUTH,
+				IEEE80211_REASON_MIC_FAILURE);
+		}
+#endif /* !IEEE80211_NO_HOSTAP */
+		return;
+	}
+	if (algo == IEEE80211_AUTH_ALG_SHARED)
+		ieee80211_auth_shared(ic, wh, frm + 6, efrm, ni, rssi,
+		    rstamp, seq, status);
+	else if (algo == IEEE80211_AUTH_ALG_OPEN)
+		ieee80211_auth_open(ic, wh, ni, rssi, rstamp, seq,
+		    status);
+	else {
+		IEEE80211_DISCARD(ic, IEEE80211_MSG_ANY,
+		    wh, "auth", "unsupported alg %d", algo);
+		ic->ic_stats.is_rx_auth_unsupported++;
+#ifndef IEEE80211_NO_HOSTAP
+		if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
+			/* XXX not right */
+			IEEE80211_SEND_MGMT(ic, ni,
+				IEEE80211_FC0_SUBTYPE_AUTH,
+				(seq+1) | (IEEE80211_STATUS_ALG<<16));
+		}
+#endif /* !IEEE80211_NO_HOSTAP */
+		return;
+	}
+}
+
 /* -------------------------------------------------------------------------- */
 
 void
@@ -2399,73 +2477,9 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		ieee80211_recv_mgmt_probe_req(ic, m0, ni, subtype, rssi, rstamp);
 		return;
 
-	case IEEE80211_FC0_SUBTYPE_AUTH: {
-		u_int16_t algo, seq, status;
-		/*
-		 * auth frame format
-		 *	[2] algorithm
-		 *	[2] sequence
-		 *	[2] status
-		 *	[tlv*] challenge
-		 */
-		IEEE80211_VERIFY_LENGTH(efrm - frm, 6);
-		algo   = le16toh(*(u_int16_t *)frm);
-		seq    = le16toh(*(u_int16_t *)(frm + 2));
-		status = le16toh(*(u_int16_t *)(frm + 4));
-		IEEE80211_DPRINTF(ic, IEEE80211_MSG_AUTH,
-		    "[%s] recv auth frame with algorithm %d seq %d\n",
-		    ether_snprintf(ebuf, sizeof(ebuf), wh->i_addr2), algo, seq);
-		/*
-		 * Consult the ACL policy module if setup.
-		 */
-		if (ic->ic_acl != NULL &&
-		    !ic->ic_acl->iac_check(ic, wh->i_addr2)) {
-			IEEE80211_DISCARD(ic, IEEE80211_MSG_ACL,
-			    wh, "auth", "%s", "disallowed by ACL");
-			ic->ic_stats.is_rx_acl++;
-			if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
-				IEEE80211_SEND_MGMT(ic, ni,
-				    IEEE80211_FC0_SUBTYPE_AUTH,
-				    (seq+1) | (IEEE80211_STATUS_UNSPECIFIED<<16));
-			}
-			return;
-		}
-		if (ic->ic_flags & IEEE80211_F_COUNTERM) {
-			IEEE80211_DISCARD(ic,
-			    IEEE80211_MSG_AUTH | IEEE80211_MSG_CRYPTO,
-			    wh, "auth", "%s", "TKIP countermeasures enabled");
-			ic->ic_stats.is_rx_auth_countermeasures++;
-#ifndef IEEE80211_NO_HOSTAP
-			if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
-				IEEE80211_SEND_MGMT(ic, ni,
-					IEEE80211_FC0_SUBTYPE_AUTH,
-					IEEE80211_REASON_MIC_FAILURE);
-			}
-#endif /* !IEEE80211_NO_HOSTAP */
-			return;
-		}
-		if (algo == IEEE80211_AUTH_ALG_SHARED)
-			ieee80211_auth_shared(ic, wh, frm + 6, efrm, ni, rssi,
-			    rstamp, seq, status);
-		else if (algo == IEEE80211_AUTH_ALG_OPEN)
-			ieee80211_auth_open(ic, wh, ni, rssi, rstamp, seq,
-			    status);
-		else {
-			IEEE80211_DISCARD(ic, IEEE80211_MSG_ANY,
-			    wh, "auth", "unsupported alg %d", algo);
-			ic->ic_stats.is_rx_auth_unsupported++;
-#ifndef IEEE80211_NO_HOSTAP
-			if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
-				/* XXX not right */
-				IEEE80211_SEND_MGMT(ic, ni,
-					IEEE80211_FC0_SUBTYPE_AUTH,
-					(seq+1) | (IEEE80211_STATUS_ALG<<16));
-			}
-#endif /* !IEEE80211_NO_HOSTAP */
-			return;
-		}
-		break;
-	}
+	case IEEE80211_FC0_SUBTYPE_AUTH:
+		ieee80211_recv_mgmt_auth(ic, m0, ni, subtype, rssi, rstamp);
+		return;
 
 	case IEEE80211_FC0_SUBTYPE_ASSOC_REQ:
 	case IEEE80211_FC0_SUBTYPE_REASSOC_REQ: {
