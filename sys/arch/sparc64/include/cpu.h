@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.123 2017/02/10 23:26:23 palle Exp $ */
+/*	$NetBSD: cpu.h,v 1.124 2018/01/16 08:23:17 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,6 +52,18 @@
 #define	CPU_ARCH		4	/* integer: cpu architecture version */
 #define CPU_VIS			5	/* 0 - no VIS, 1 - VIS 1.0, etc. */
 #define	CPU_MAXID		6	/* number of valid machdep ids */
+
+/*
+ * This is exported via sysctl for cpuctl(8).
+ */
+struct cacheinfo {
+	int 	c_itotalsize;
+	int 	c_ilinesize;
+	int 	c_dtotalsize;
+	int 	c_dlinesize;
+	int 	c_etotalsize;
+	int 	c_elinesize;
+};
 
 #if defined(_KERNEL) || defined(_KMEMUSER)
 /*
@@ -128,8 +140,14 @@ struct cpu_info {
 
 	int			ci_cpuid;
 
+	uint64_t		ci_ver;
+
 	/* CPU PROM information. */
 	u_int			ci_node;
+	const char		*ci_name;
+
+	/* This is for sysctl. */
+	struct cacheinfo	ci_cacheinfo;
 
 	/* %tick and cpu frequency information */
 	u_long			ci_tick_increment;

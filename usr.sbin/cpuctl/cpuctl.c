@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuctl.c,v 1.28 2015/11/16 03:34:50 mrg Exp $	*/
+/*	$NetBSD: cpuctl.c,v 1.29 2018/01/16 08:23:18 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2012, 2015 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cpuctl.c,v 1.28 2015/11/16 03:34:50 mrg Exp $");
+__RCSID("$NetBSD: cpuctl.c,v 1.29 2018/01/16 08:23:18 mrg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -254,7 +254,6 @@ cpu_ucode(char **argv)
 	}
 }
 
-
 static void
 cpu_identify(char **argv)
 {
@@ -267,7 +266,7 @@ cpu_identify(char **argv)
 		id = getcpuid(*argv);
 		snprintf(name, sizeof(name), "cpu%u", id);
 
-		if (np != 1) {
+		if (identifycpu_bind() && np != 1) {
 			cpuset = cpuset_create();
 			if (cpuset == NULL)
 				err(EXIT_FAILURE, "cpuset_create");
