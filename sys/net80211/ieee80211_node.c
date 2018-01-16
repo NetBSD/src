@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.72 2016/09/27 20:20:06 christos Exp $	*/
+/*	$NetBSD: ieee80211_node.c,v 1.73 2018/01/16 18:42:43 maxv Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.65 2005/08/13 17:50:21 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.72 2016/09/27 20:20:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.73 2018/01/16 18:42:43 maxv Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -1196,22 +1196,23 @@ dump_probe_beacon(u_int8_t subtype, int isnew,
 	printf("[%s] %s%s on chan %u (bss chan %u) ",
 	    ether_sprintf(mac), isnew ? "new " : "",
 	    ieee80211_mgt_subtype_name[subtype >> IEEE80211_FC0_SUBTYPE_SHIFT],
-	    sp->chan, sp->bchan);
-	ieee80211_print_essid(sp->ssid + 2, sp->ssid[1]);
+	    sp->sp_chan, sp->sp_bchan);
+	ieee80211_print_essid(sp->sp_ssid + 2, sp->sp_ssid[1]);
 	printf("\n");
 
 	if (isnew) {
 		printf("[%s] caps 0x%x bintval %u erp 0x%x",
-			ether_sprintf(mac), sp->capinfo, sp->bintval, sp->erp);
-		if (sp->country != NULL) {
+		    ether_sprintf(mac), sp->sp_capinfo, sp->sp_bintval,
+		    sp->sp_erp);
+		if (sp->sp_country != NULL) {
 #ifdef __FreeBSD__
 			printf(" country info %*D",
-				sp->country[1], sp->country+2, " ");
+				sp->sp_country[1], sp->sp_country+2, " ");
 #else
 			int i;
 			printf(" country info");
-			for (i = 0; i < sp->country[1]; i++)
-				printf(" %02x", sp->country[i+2]);
+			for (i = 0; i < sp->sp_country[1]; i++)
+				printf(" %02x", sp->sp_country[i+2]);
 #endif
 		}
 		printf("\n");
@@ -1269,26 +1270,26 @@ ieee80211_add_scan(struct ieee80211com *ic,
 		dump_probe_beacon(subtype, newnode, wh->i_addr2, sp);
 #endif
 	/* XXX ap beaconing multiple ssid w/ same bssid */
-	if (sp->ssid[1] != 0 &&
+	if (sp->sp_ssid[1] != 0 &&
 	    (ISPROBE(subtype) || ni->ni_esslen == 0)) {
-		ni->ni_esslen = sp->ssid[1];
+		ni->ni_esslen = sp->sp_ssid[1];
 		memset(ni->ni_essid, 0, sizeof(ni->ni_essid));
-		memcpy(ni->ni_essid, sp->ssid + 2, sp->ssid[1]);
+		memcpy(ni->ni_essid, sp->sp_ssid + 2, sp->sp_ssid[1]);
 	}
 	ni->ni_scangen = ic->ic_scan.nt_scangen;
 	IEEE80211_ADDR_COPY(ni->ni_bssid, wh->i_addr3);
 	ni->ni_rssi = rssi;
 	ni->ni_rstamp = rstamp;
-	memcpy(ni->ni_tstamp.data, sp->tstamp, sizeof(ni->ni_tstamp));
-	ni->ni_intval = sp->bintval;
-	ni->ni_capinfo = sp->capinfo;
-	ni->ni_chan = &ic->ic_channels[sp->chan];
-	ni->ni_fhdwell = sp->fhdwell;
-	ni->ni_fhindex = sp->fhindex;
-	ni->ni_erp = sp->erp;
-	if (sp->tim != NULL) {
+	memcpy(ni->ni_tstamp.data, sp->sp_tstamp, sizeof(ni->ni_tstamp));
+	ni->ni_intval = sp->sp_bintval;
+	ni->ni_capinfo = sp->sp_capinfo;
+	ni->ni_chan = &ic->ic_channels[sp->sp_chan];
+	ni->ni_fhdwell = sp->sp_fhdwell;
+	ni->ni_fhindex = sp->sp_fhindex;
+	ni->ni_erp = sp->sp_erp;
+	if (sp->sp_tim != NULL) {
 		struct ieee80211_tim_ie *ie =
-		    (struct ieee80211_tim_ie *) sp->tim;
+		    (struct ieee80211_tim_ie *)sp->sp_tim;
 
 		ni->ni_dtim_count = ie->tim_count;
 		ni->ni_dtim_period = ie->tim_period;
@@ -1299,16 +1300,17 @@ ieee80211_add_scan(struct ieee80211com *ic,
 	 * use by hardware and/or to speedup software
 	 * processing of beacon frames.
 	 */
-	ni->ni_timoff = sp->timoff;
+	ni->ni_timoff = sp->sp_timoff;
 	/*
 	 * Record optional information elements that might be
 	 * used by applications or drivers.
 	 */
-	saveie(&ni->ni_wme_ie, sp->wme);
-	saveie(&ni->ni_wpa_ie, sp->wpa);
+	saveie(&ni->ni_wme_ie, sp->sp_wme);
+	saveie(&ni->ni_wpa_ie, sp->sp_wpa);
 
 	/* NB: must be after ni_chan is setup */
-	ieee80211_setup_rates(ni, sp->rates, sp->xrates, IEEE80211_R_DOSORT);
+	ieee80211_setup_rates(ni, sp->sp_rates, sp->sp_xrates,
+	    IEEE80211_R_DOSORT);
 
 	if (!newnode)
 		ieee80211_free_node(ni);
@@ -1320,24 +1322,24 @@ ieee80211_init_neighbor(struct ieee80211com *ic, struct ieee80211_node *ni,
     const struct ieee80211_frame *wh, const struct ieee80211_scanparams *sp,
     int isnew)
 {
-	ni->ni_esslen = sp->ssid[1];
-	memcpy(ni->ni_essid, sp->ssid + 2, sp->ssid[1]);
+	ni->ni_esslen = sp->sp_ssid[1];
+	memcpy(ni->ni_essid, sp->sp_ssid + 2, sp->sp_ssid[1]);
 	IEEE80211_ADDR_COPY(ni->ni_bssid, wh->i_addr3);
-	memcpy(ni->ni_tstamp.data, sp->tstamp, sizeof(ni->ni_tstamp));
-	ni->ni_intval = sp->bintval;
-	ni->ni_capinfo = sp->capinfo;
+	memcpy(ni->ni_tstamp.data, sp->sp_tstamp, sizeof(ni->ni_tstamp));
+	ni->ni_intval = sp->sp_bintval;
+	ni->ni_capinfo = sp->sp_capinfo;
 	ni->ni_chan = ic->ic_bss->ni_chan;
-	ni->ni_fhdwell = sp->fhdwell;
-	ni->ni_fhindex = sp->fhindex;
-	ni->ni_erp = sp->erp;
-	ni->ni_timoff = sp->timoff;
-	if (sp->wme != NULL)
-		ieee80211_saveie(&ni->ni_wme_ie, sp->wme);
-	if (sp->wpa != NULL)
-		ieee80211_saveie(&ni->ni_wpa_ie, sp->wpa);
+	ni->ni_fhdwell = sp->sp_fhdwell;
+	ni->ni_fhindex = sp->sp_fhindex;
+	ni->ni_erp = sp->sp_erp;
+	ni->ni_timoff = sp->sp_timoff;
+	if (sp->sp_wme != NULL)
+		ieee80211_saveie(&ni->ni_wme_ie, sp->sp_wme);
+	if (sp->sp_wpa != NULL)
+		ieee80211_saveie(&ni->ni_wpa_ie, sp->sp_wpa);
 
 	/* NB: must be after ni_chan is setup */
-	ieee80211_setup_rates(ni, sp->rates, sp->xrates,
+	ieee80211_setup_rates(ni, sp->sp_rates, sp->sp_xrates,
 	    IEEE80211_R_DODEL | IEEE80211_R_DONEGO | IEEE80211_R_DOSORT);
 
 	if (ic->ic_newassoc != NULL)
