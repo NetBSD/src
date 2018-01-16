@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.93 2018/01/16 08:39:29 maxv Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.94 2018/01/16 09:42:11 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 Atsushi Onoe
@@ -37,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.81 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.93 2018/01/16 08:39:29 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.94 2018/01/16 09:42:11 maxv Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -177,7 +177,7 @@ ieee80211_input_data(struct ieee80211com *ic, struct mbuf **mp,
 		    ni->ni_macaddr, NULL,
 		    "data too short: expecting %u", hdrspace);
 		ic->ic_stats.is_rx_tooshort++;
-		goto out;		/* XXX */
+		goto out;
 	}
 	wh = mtod(m, struct ieee80211_frame *);
 
@@ -300,10 +300,9 @@ ieee80211_input_data(struct ieee80211com *ic, struct mbuf **mp,
 			goto out;
 		}
 	}
-	wh = NULL;		/* no longer valid, catch any uses */
 
 	/*
-	 * Next strip any MSDU crypto bits.
+	 * Next, strip any MSDU crypto bits.
 	 */
 	if (key != NULL && !ieee80211_crypto_demic(ic, key, m, 0)) {
 		IEEE80211_DISCARD_MAC(ic, IEEE80211_MSG_INPUT,
@@ -763,7 +762,7 @@ ieee80211_defrag(struct ieee80211com *ic, struct ieee80211_node *ni,
 	struct ieee80211_frame *lwh;
 	u_int16_t rxseq;
 	u_int8_t fragno;
-	u_int8_t more_frag = wh->i_fc[1] & IEEE80211_FC1_MORE_FRAG;
+	const u_int8_t more_frag = wh->i_fc[1] & IEEE80211_FC1_MORE_FRAG;
 	struct mbuf *mfrag;
 
 	IASSERT(!IEEE80211_IS_MULTICAST(wh->i_addr1), ("multicast fragm?"));
@@ -818,27 +817,33 @@ ieee80211_defrag(struct ieee80211com *ic, struct ieee80211_node *ni,
 		}
 	}
 
- 	if (mfrag == NULL) {
+	if (mfrag == NULL) {
 		if (fragno != 0) {		/* !first fragment, discard */
 			IEEE80211_NODE_STAT(ni, rx_defrag);
 			m_freem(m);
 			return NULL;
 		}
 		mfrag = m;
-	} else {				/* concatenate */
-		m_adj(m, hdrspace);		/* strip header */
+	} else {
+		/* Strip header and concatenate */
+		m_adj(m, hdrspace);
 		m_cat(mfrag, m);
+
 		/* NB: m_cat doesn't update the packet header */
 		mfrag->m_pkthdr.len += m->m_pkthdr.len;
+
 		/* track last seqnum and fragno */
 		lwh = mtod(mfrag, struct ieee80211_frame *);
-		*(u_int16_t *) lwh->i_seq = *(u_int16_t *) wh->i_seq;
+		*(u_int16_t *)lwh->i_seq = *(u_int16_t *)wh->i_seq;
 	}
-	if (more_frag) {			/* more to come, save */
+
+	if (more_frag) {
+		/* more to come, save */
 		ni->ni_rxfragstamp = ticks;
 		ni->ni_rxfrag[0] = mfrag;
 		mfrag = NULL;
 	}
+
 	return mfrag;
 }
 
@@ -920,26 +925,33 @@ ieee80211_deliver_data(struct ieee80211com *ic,
 static struct mbuf *
 ieee80211_decap(struct ieee80211com *ic, struct mbuf *m, int hdrlen)
 {
-	struct ieee80211_qosframe_addr4 wh;	/* Max size address frames */
+	struct ieee80211_qosframe_addr4 wh; /* Max size address frames */
 	struct ether_header *eh;
 	struct llc *llc;
 
 	if (m->m_len < hdrlen + sizeof(*llc) &&
 	    (m = m_pullup(m, hdrlen + sizeof(*llc))) == NULL) {
-		/* XXX stat, msg */
 		return NULL;
 	}
+
 	memcpy(&wh, mtod(m, void *), hdrlen);
+
 	llc = (struct llc *)(mtod(m, char *) + hdrlen);
-	if (llc->llc_dsap == LLC_SNAP_LSAP && llc->llc_ssap == LLC_SNAP_LSAP &&
-	    llc->llc_control == LLC_UI && llc->llc_snap.org_code[0] == 0 &&
-	    llc->llc_snap.org_code[1] == 0 && llc->llc_snap.org_code[2] == 0) {
+	if (llc->llc_dsap == LLC_SNAP_LSAP &&
+	    llc->llc_ssap == LLC_SNAP_LSAP &&
+	    llc->llc_control == LLC_UI &&
+	    llc->llc_snap.org_code[0] == 0 &&
+	    llc->llc_snap.org_code[1] == 0 &&
+	    llc->llc_snap.org_code[2] == 0) {
 		m_adj(m, hdrlen + sizeof(struct llc) - sizeof(*eh));
 		llc = NULL;
 	} else {
+		/* Keep the LLC after the Ethernet header. */
 		m_adj(m, hdrlen - sizeof(*eh));
 	}
+
 	eh = mtod(m, struct ether_header *);
+
 	switch (wh.i_fc[1] & IEEE80211_FC1_DIR_MASK) {
 	case IEEE80211_FC1_DIR_NODS:
 		IEEE80211_ADDR_COPY(eh->ether_dhost, wh.i_addr1);
@@ -958,6 +970,7 @@ ieee80211_decap(struct ieee80211com *ic, struct mbuf *m, int hdrlen)
 		IEEE80211_ADDR_COPY(eh->ether_shost, wh.i_addr4);
 		break;
 	}
+
 #ifdef ALIGNED_POINTER
 	if (!ALIGNED_POINTER(mtod(m, char *) + sizeof(*eh), u_int32_t)) {
 		struct mbuf *n, *n0, **np;
@@ -1009,10 +1022,12 @@ ieee80211_decap(struct ieee80211com *ic, struct mbuf *m, int hdrlen)
 		m = n0;
 	}
 #endif /* ALIGNED_POINTER */
+
 	if (llc != NULL) {
 		eh = mtod(m, struct ether_header *);
 		eh->ether_type = htons(m->m_pkthdr.len - sizeof(*eh));
 	}
+
 	return m;
 }
 
