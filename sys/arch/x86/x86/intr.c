@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.120 2018/01/16 11:52:09 roy Exp $	*/
+/*	$NetBSD: intr.c,v 1.121 2018/01/16 16:24:23 kre Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.120 2018/01/16 11:52:09 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.121 2018/01/16 16:24:23 kre Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -246,6 +246,9 @@ static const char *xen_intr_string(int, char *, size_t, struct pic *);
 
 static inline bool redzone_const_or_false(bool);
 static inline int redzone_const_or_zero(int);
+#else
+#define	redzone_const_or_false(x)	(/*CONSTCOND*/0)
+#define	redzone_const_or_zero(x)	(0)
 #endif
 
 static void intr_redistribute_xc_t(void *, void *);
