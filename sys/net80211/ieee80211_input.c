@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.99 2018/01/16 15:48:32 maxv Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.100 2018/01/16 15:55:14 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 Atsushi Onoe
@@ -37,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.81 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.99 2018/01/16 15:48:32 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.100 2018/01/16 15:55:14 maxv Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -2449,6 +2449,225 @@ ieee80211_recv_mgmt_auth(struct ieee80211com *ic, struct mbuf *m0,
 	}
 }
 
+static void
+ieee80211_recv_mgmt_assoc_req(struct ieee80211com *ic, struct mbuf *m0,
+    struct ieee80211_node *ni, int subtype, int rssi, u_int32_t rstamp)
+{
+	struct ieee80211_frame *wh;
+	u_int8_t *frm, *efrm;
+	u_int8_t *ssid, *rates, *xrates, *wpa, *wme;
+	int reassoc, resp;
+	u_int8_t rate;
+	IEEE80211_DEBUGVAR(char ebuf[3 * ETHER_ADDR_LEN]);
+
+	wh = mtod(m0, struct ieee80211_frame *);
+	frm = (u_int8_t *)(wh + 1);
+	efrm = mtod(m0, u_int8_t *) + m0->m_len;
+
+	u_int16_t capinfo, lintval;
+	struct ieee80211_rsnparms rsn;
+	u_int8_t reason;
+
+	if (ic->ic_opmode != IEEE80211_M_HOSTAP ||
+	    ic->ic_state != IEEE80211_S_RUN) {
+		ic->ic_stats.is_rx_mgtdiscard++;
+		return;
+	}
+
+	if (subtype == IEEE80211_FC0_SUBTYPE_REASSOC_REQ) {
+		reassoc = 1;
+		resp = IEEE80211_FC0_SUBTYPE_REASSOC_RESP;
+	} else {
+		reassoc = 0;
+		resp = IEEE80211_FC0_SUBTYPE_ASSOC_RESP;
+	}
+	/*
+	 * asreq frame format
+	 *	[2] capability information
+	 *	[2] listen interval
+	 *	[6*] current AP address (reassoc only)
+	 *	[tlv] ssid
+	 *	[tlv] supported rates
+	 *	[tlv] extended supported rates
+	 *	[tlv] WPA or RSN
+	 */
+	IEEE80211_VERIFY_LENGTH(efrm - frm, (reassoc ? 10 : 4));
+	if (!IEEE80211_ADDR_EQ(wh->i_addr3, ic->ic_bss->ni_bssid)) {
+		IEEE80211_DISCARD(ic, IEEE80211_MSG_ANY,
+		    wh, ieee80211_mgt_subtype_name[subtype >>
+			IEEE80211_FC0_SUBTYPE_SHIFT],
+		    "%s", "wrong bssid");
+		ic->ic_stats.is_rx_assoc_bss++;
+		return;
+	}
+	capinfo = le16toh(*(u_int16_t *)frm);	frm += 2;
+	lintval = le16toh(*(u_int16_t *)frm);	frm += 2;
+	if (reassoc)
+		frm += 6;	/* ignore current AP info */
+	ssid = rates = xrates = wpa = wme = NULL;
+	while (frm < efrm) {
+		switch (*frm) {
+		case IEEE80211_ELEMID_SSID:
+			ssid = frm;
+			break;
+		case IEEE80211_ELEMID_RATES:
+			rates = frm;
+			break;
+		case IEEE80211_ELEMID_XRATES:
+			xrates = frm;
+			break;
+		/* XXX verify only one of RSN and WPA ie's? */
+		case IEEE80211_ELEMID_RSN:
+			wpa = frm;
+			break;
+		case IEEE80211_ELEMID_VENDOR:
+			if (iswpaoui(frm))
+				wpa = frm;
+			else if (iswmeinfo(frm))
+				wme = frm;
+			/* XXX Atheros OUI support */
+			break;
+		}
+		frm += frm[1] + 2;
+	}
+	IEEE80211_VERIFY_ELEMENT(rates, IEEE80211_RATE_MAXSIZE);
+	IEEE80211_VERIFY_ELEMENT(ssid, IEEE80211_NWID_LEN);
+	IEEE80211_VERIFY_SSID(ic->ic_bss, ssid);
+
+	if (ni == ic->ic_bss) {
+		IEEE80211_DPRINTF(ic, IEEE80211_MSG_ANY,
+		    "[%s] deny %s request, sta not authenticated\n",
+		    ether_snprintf(ebuf, sizeof(ebuf), wh->i_addr2),
+		    reassoc ? "reassoc" : "assoc");
+		ieee80211_send_error(ic, ni, wh->i_addr2,
+		    IEEE80211_FC0_SUBTYPE_DEAUTH,
+		    IEEE80211_REASON_ASSOC_NOT_AUTHED);
+		ic->ic_stats.is_rx_assoc_notauth++;
+		return;
+	}
+	/* assert right associstion security credentials */
+	if (wpa == NULL && (ic->ic_flags & IEEE80211_F_WPA)) {
+		IEEE80211_DPRINTF(ic,
+		    IEEE80211_MSG_ASSOC | IEEE80211_MSG_WPA,
+		    "[%s] no WPA/RSN IE in association request\n",
+		    ether_snprintf(ebuf, sizeof(ebuf), wh->i_addr2));
+		IEEE80211_SEND_MGMT(ic, ni,
+		    IEEE80211_FC0_SUBTYPE_DEAUTH,
+		    IEEE80211_REASON_RSN_REQUIRED);
+		ieee80211_node_leave(ic, ni);
+		/* XXX distinguish WPA/RSN? */
+		ic->ic_stats.is_rx_assoc_badwpaie++;
+		return;
+	}
+	if (wpa != NULL) {
+		/*
+		 * Parse WPA information element.  Note that
+		 * we initialize the param block from the node
+		 * state so that information in the IE overrides
+		 * our defaults.  The resulting parameters are
+		 * installed below after the association is assured.
+		 */
+		rsn = ni->ni_rsn;
+		if (wpa[0] != IEEE80211_ELEMID_RSN)
+			reason = ieee80211_parse_wpa(ic, wpa, &rsn, wh);
+		else
+			reason = ieee80211_parse_rsn(ic, wpa, &rsn, wh);
+		if (reason != 0) {
+			IEEE80211_SEND_MGMT(ic, ni,
+			    IEEE80211_FC0_SUBTYPE_DEAUTH, reason);
+			ieee80211_node_leave(ic, ni);
+			/* XXX distinguish WPA/RSN? */
+			ic->ic_stats.is_rx_assoc_badwpaie++;
+			return;
+		}
+		IEEE80211_DPRINTF(ic,
+		    IEEE80211_MSG_ASSOC | IEEE80211_MSG_WPA,
+		    "[%s] %s ie: mc %u/%u uc %u/%u key %u caps 0x%x\n",
+		    ether_snprintf(ebuf, sizeof(ebuf), wh->i_addr2),
+		    wpa[0] != IEEE80211_ELEMID_RSN ?  "WPA" : "RSN",
+		    rsn.rsn_mcastcipher, rsn.rsn_mcastkeylen,
+		    rsn.rsn_ucastcipher, rsn.rsn_ucastkeylen,
+		    rsn.rsn_keymgmt, rsn.rsn_caps);
+	}
+	/* discard challenge after association */
+	if (ni->ni_challenge != NULL) {
+		free(ni->ni_challenge, M_DEVBUF);
+		ni->ni_challenge = NULL;
+	}
+	/* NB: 802.11 spec says to ignore station's privacy bit */
+	if ((capinfo & IEEE80211_CAPINFO_ESS) == 0) {
+		IEEE80211_DPRINTF(ic, IEEE80211_MSG_ANY,
+		    "[%s] deny %s request, capability mismatch 0x%x\n",
+		    ether_snprintf(ebuf, sizeof(ebuf), wh->i_addr2),
+		    reassoc ? "reassoc" : "assoc", capinfo);
+		IEEE80211_SEND_MGMT(ic, ni, resp,
+			IEEE80211_STATUS_CAPINFO);
+		ieee80211_node_leave(ic, ni);
+		ic->ic_stats.is_rx_assoc_capmismatch++;
+		return;
+	}
+	rate = ieee80211_setup_rates(ni, rates, xrates,
+			IEEE80211_R_DOSORT | IEEE80211_R_DOFRATE |
+			IEEE80211_R_DONEGO | IEEE80211_R_DODEL);
+	/*
+	 * If constrained to 11g-only stations reject an
+	 * 11b-only station.  We cheat a bit here by looking
+	 * at the max negotiated xmit rate and assuming anyone
+	 * with a best rate <24Mb/s is an 11b station.
+	 */
+	if ((rate & IEEE80211_RATE_BASIC) ||
+	    ((ic->ic_flags & IEEE80211_F_PUREG) && rate < 48)) {
+		IEEE80211_DPRINTF(ic, IEEE80211_MSG_ANY,
+		    "[%s] deny %s request, rate set mismatch\n",
+		    ether_snprintf(ebuf, sizeof(ebuf), wh->i_addr2),
+		    reassoc ? "reassoc" : "assoc");
+		IEEE80211_SEND_MGMT(ic, ni, resp,
+			IEEE80211_STATUS_BASIC_RATE);
+		ieee80211_node_leave(ic, ni);
+		ic->ic_stats.is_rx_assoc_norate++;
+		return;
+	}
+	ni->ni_rssi = rssi;
+	ni->ni_rstamp = rstamp;
+	ni->ni_intval = lintval;
+	ni->ni_capinfo = capinfo;
+	ni->ni_chan = ic->ic_bss->ni_chan;
+	ni->ni_fhdwell = ic->ic_bss->ni_fhdwell;
+	ni->ni_fhindex = ic->ic_bss->ni_fhindex;
+	if (wpa != NULL) {
+		/*
+		 * Record WPA/RSN parameters for station, mark
+		 * node as using WPA and record information element
+		 * for applications that require it.
+		 */
+		ni->ni_rsn = rsn;
+		ieee80211_saveie(&ni->ni_wpa_ie, wpa);
+	} else if (ni->ni_wpa_ie != NULL) {
+		/*
+		 * Flush any state from a previous association.
+		 */
+		free(ni->ni_wpa_ie, M_DEVBUF);
+		ni->ni_wpa_ie = NULL;
+	}
+	if (wme != NULL) {
+		/*
+		 * Record WME parameters for station, mark node
+		 * as capable of QoS and record information
+		 * element for applications that require it.
+		 */
+		ieee80211_saveie(&ni->ni_wme_ie, wme);
+		ni->ni_flags |= IEEE80211_NODE_QOS;
+	} else if (ni->ni_wme_ie != NULL) {
+		/*
+		 * Flush any state from a previous association.
+		 */
+		free(ni->ni_wme_ie, M_DEVBUF);
+		ni->ni_wme_ie = NULL;
+		ni->ni_flags &= ~IEEE80211_NODE_QOS;
+	}
+	ieee80211_node_join(ic, ni, resp);
+}
+
 /* -------------------------------------------------------------------------- */
 
 void
@@ -2458,8 +2677,7 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 #define	ISREASSOC(_st)	((_st) == IEEE80211_FC0_SUBTYPE_REASSOC_RESP)
 	struct ieee80211_frame *wh;
 	u_int8_t *frm, *efrm;
-	u_int8_t *ssid, *rates, *xrates, *wpa, *wme;
-	int reassoc, resp;
+	u_int8_t *rates, *xrates, *wpa, *wme;
 	u_int8_t rate;
 	IEEE80211_DEBUGVAR(char ebuf[3 * ETHER_ADDR_LEN]);
 
@@ -2482,211 +2700,9 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		return;
 
 	case IEEE80211_FC0_SUBTYPE_ASSOC_REQ:
-	case IEEE80211_FC0_SUBTYPE_REASSOC_REQ: {
-		u_int16_t capinfo, lintval;
-		struct ieee80211_rsnparms rsn;
-		u_int8_t reason;
-
-		if (ic->ic_opmode != IEEE80211_M_HOSTAP ||
-		    ic->ic_state != IEEE80211_S_RUN) {
-			ic->ic_stats.is_rx_mgtdiscard++;
-			return;
-		}
-
-		if (subtype == IEEE80211_FC0_SUBTYPE_REASSOC_REQ) {
-			reassoc = 1;
-			resp = IEEE80211_FC0_SUBTYPE_REASSOC_RESP;
-		} else {
-			reassoc = 0;
-			resp = IEEE80211_FC0_SUBTYPE_ASSOC_RESP;
-		}
-		/*
-		 * asreq frame format
-		 *	[2] capability information
-		 *	[2] listen interval
-		 *	[6*] current AP address (reassoc only)
-		 *	[tlv] ssid
-		 *	[tlv] supported rates
-		 *	[tlv] extended supported rates
-		 *	[tlv] WPA or RSN
-		 */
-		IEEE80211_VERIFY_LENGTH(efrm - frm, (reassoc ? 10 : 4));
-		if (!IEEE80211_ADDR_EQ(wh->i_addr3, ic->ic_bss->ni_bssid)) {
-			IEEE80211_DISCARD(ic, IEEE80211_MSG_ANY,
-			    wh, ieee80211_mgt_subtype_name[subtype >>
-				IEEE80211_FC0_SUBTYPE_SHIFT],
-			    "%s", "wrong bssid");
-			ic->ic_stats.is_rx_assoc_bss++;
-			return;
-		}
-		capinfo = le16toh(*(u_int16_t *)frm);	frm += 2;
-		lintval = le16toh(*(u_int16_t *)frm);	frm += 2;
-		if (reassoc)
-			frm += 6;	/* ignore current AP info */
-		ssid = rates = xrates = wpa = wme = NULL;
-		while (frm < efrm) {
-			switch (*frm) {
-			case IEEE80211_ELEMID_SSID:
-				ssid = frm;
-				break;
-			case IEEE80211_ELEMID_RATES:
-				rates = frm;
-				break;
-			case IEEE80211_ELEMID_XRATES:
-				xrates = frm;
-				break;
-			/* XXX verify only one of RSN and WPA ie's? */
-			case IEEE80211_ELEMID_RSN:
-				wpa = frm;
-				break;
-			case IEEE80211_ELEMID_VENDOR:
-				if (iswpaoui(frm))
-					wpa = frm;
-				else if (iswmeinfo(frm))
-					wme = frm;
-				/* XXX Atheros OUI support */
-				break;
-			}
-			frm += frm[1] + 2;
-		}
-		IEEE80211_VERIFY_ELEMENT(rates, IEEE80211_RATE_MAXSIZE);
-		IEEE80211_VERIFY_ELEMENT(ssid, IEEE80211_NWID_LEN);
-		IEEE80211_VERIFY_SSID(ic->ic_bss, ssid);
-
-		if (ni == ic->ic_bss) {
-			IEEE80211_DPRINTF(ic, IEEE80211_MSG_ANY,
-			    "[%s] deny %s request, sta not authenticated\n",
-			    ether_snprintf(ebuf, sizeof(ebuf), wh->i_addr2),
-			    reassoc ? "reassoc" : "assoc");
-			ieee80211_send_error(ic, ni, wh->i_addr2,
-			    IEEE80211_FC0_SUBTYPE_DEAUTH,
-			    IEEE80211_REASON_ASSOC_NOT_AUTHED);
-			ic->ic_stats.is_rx_assoc_notauth++;
-			return;
-		}
-		/* assert right associstion security credentials */
-		if (wpa == NULL && (ic->ic_flags & IEEE80211_F_WPA)) {
-			IEEE80211_DPRINTF(ic,
-			    IEEE80211_MSG_ASSOC | IEEE80211_MSG_WPA,
-			    "[%s] no WPA/RSN IE in association request\n",
-			    ether_snprintf(ebuf, sizeof(ebuf), wh->i_addr2));
-			IEEE80211_SEND_MGMT(ic, ni,
-			    IEEE80211_FC0_SUBTYPE_DEAUTH,
-			    IEEE80211_REASON_RSN_REQUIRED);
-			ieee80211_node_leave(ic, ni);
-			/* XXX distinguish WPA/RSN? */
-			ic->ic_stats.is_rx_assoc_badwpaie++;
-			return;
-		}
-		if (wpa != NULL) {
-			/*
-			 * Parse WPA information element.  Note that
-			 * we initialize the param block from the node
-			 * state so that information in the IE overrides
-			 * our defaults.  The resulting parameters are
-			 * installed below after the association is assured.
-			 */
-			rsn = ni->ni_rsn;
-			if (wpa[0] != IEEE80211_ELEMID_RSN)
-				reason = ieee80211_parse_wpa(ic, wpa, &rsn, wh);
-			else
-				reason = ieee80211_parse_rsn(ic, wpa, &rsn, wh);
-			if (reason != 0) {
-				IEEE80211_SEND_MGMT(ic, ni,
-				    IEEE80211_FC0_SUBTYPE_DEAUTH, reason);
-				ieee80211_node_leave(ic, ni);
-				/* XXX distinguish WPA/RSN? */
-				ic->ic_stats.is_rx_assoc_badwpaie++;
-				return;
-			}
-			IEEE80211_DPRINTF(ic,
-			    IEEE80211_MSG_ASSOC | IEEE80211_MSG_WPA,
-			    "[%s] %s ie: mc %u/%u uc %u/%u key %u caps 0x%x\n",
-			    ether_snprintf(ebuf, sizeof(ebuf), wh->i_addr2),
-			    wpa[0] != IEEE80211_ELEMID_RSN ?  "WPA" : "RSN",
-			    rsn.rsn_mcastcipher, rsn.rsn_mcastkeylen,
-			    rsn.rsn_ucastcipher, rsn.rsn_ucastkeylen,
-			    rsn.rsn_keymgmt, rsn.rsn_caps);
-		}
-		/* discard challenge after association */
-		if (ni->ni_challenge != NULL) {
-			free(ni->ni_challenge, M_DEVBUF);
-			ni->ni_challenge = NULL;
-		}
-		/* NB: 802.11 spec says to ignore station's privacy bit */
-		if ((capinfo & IEEE80211_CAPINFO_ESS) == 0) {
-			IEEE80211_DPRINTF(ic, IEEE80211_MSG_ANY,
-			    "[%s] deny %s request, capability mismatch 0x%x\n",
-			    ether_snprintf(ebuf, sizeof(ebuf), wh->i_addr2),
-			    reassoc ? "reassoc" : "assoc", capinfo);
-			IEEE80211_SEND_MGMT(ic, ni, resp,
-				IEEE80211_STATUS_CAPINFO);
-			ieee80211_node_leave(ic, ni);
-			ic->ic_stats.is_rx_assoc_capmismatch++;
-			return;
-		}
-		rate = ieee80211_setup_rates(ni, rates, xrates,
-				IEEE80211_R_DOSORT | IEEE80211_R_DOFRATE |
-				IEEE80211_R_DONEGO | IEEE80211_R_DODEL);
-		/*
-		 * If constrained to 11g-only stations reject an
-		 * 11b-only station.  We cheat a bit here by looking
-		 * at the max negotiated xmit rate and assuming anyone
-		 * with a best rate <24Mb/s is an 11b station.
-		 */
-		if ((rate & IEEE80211_RATE_BASIC) ||
-		    ((ic->ic_flags & IEEE80211_F_PUREG) && rate < 48)) {
-			IEEE80211_DPRINTF(ic, IEEE80211_MSG_ANY,
-			    "[%s] deny %s request, rate set mismatch\n",
-			    ether_snprintf(ebuf, sizeof(ebuf), wh->i_addr2),
-			    reassoc ? "reassoc" : "assoc");
-			IEEE80211_SEND_MGMT(ic, ni, resp,
-				IEEE80211_STATUS_BASIC_RATE);
-			ieee80211_node_leave(ic, ni);
-			ic->ic_stats.is_rx_assoc_norate++;
-			return;
-		}
-		ni->ni_rssi = rssi;
-		ni->ni_rstamp = rstamp;
-		ni->ni_intval = lintval;
-		ni->ni_capinfo = capinfo;
-		ni->ni_chan = ic->ic_bss->ni_chan;
-		ni->ni_fhdwell = ic->ic_bss->ni_fhdwell;
-		ni->ni_fhindex = ic->ic_bss->ni_fhindex;
-		if (wpa != NULL) {
-			/*
-			 * Record WPA/RSN parameters for station, mark
-			 * node as using WPA and record information element
-			 * for applications that require it.
-			 */
-			ni->ni_rsn = rsn;
-			ieee80211_saveie(&ni->ni_wpa_ie, wpa);
-		} else if (ni->ni_wpa_ie != NULL) {
-			/*
-			 * Flush any state from a previous association.
-			 */
-			free(ni->ni_wpa_ie, M_DEVBUF);
-			ni->ni_wpa_ie = NULL;
-		}
-		if (wme != NULL) {
-			/*
-			 * Record WME parameters for station, mark node
-			 * as capable of QoS and record information
-			 * element for applications that require it.
-			 */
-			ieee80211_saveie(&ni->ni_wme_ie, wme);
-			ni->ni_flags |= IEEE80211_NODE_QOS;
-		} else if (ni->ni_wme_ie != NULL) {
-			/*
-			 * Flush any state from a previous association.
-			 */
-			free(ni->ni_wme_ie, M_DEVBUF);
-			ni->ni_wme_ie = NULL;
-			ni->ni_flags &= ~IEEE80211_NODE_QOS;
-		}
-		ieee80211_node_join(ic, ni, resp);
-		break;
-	}
+	case IEEE80211_FC0_SUBTYPE_REASSOC_REQ:
+		ieee80211_recv_mgmt_assoc_req(ic, m0, ni, subtype, rssi, rstamp);
+		return;
 
 	case IEEE80211_FC0_SUBTYPE_ASSOC_RESP:
 	case IEEE80211_FC0_SUBTYPE_REASSOC_RESP: {
