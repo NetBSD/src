@@ -1,4 +1,4 @@
-/*	$NetBSD: arm.c,v 1.1 2013/01/31 23:40:48 matt Exp $	*/
+/*	$NetBSD: arm.c,v 1.2 2018/01/16 08:23:18 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: arm.c,v 1.1 2013/01/31 23:40:48 matt Exp $");
+__RCSID("$NetBSD: arm.c,v 1.2 2018/01/16 08:23:18 mrg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -208,6 +208,13 @@ print_features(const char *cpuname, const char *setname,
 	if (len > 0) {
 		printf("%s\n", buf);
 	}
+}
+
+bool
+identifycpu_bind(void)
+{
+
+	return false;
 }
 
 void
