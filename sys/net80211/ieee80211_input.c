@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.96 2018/01/16 14:37:24 maxv Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.97 2018/01/16 15:18:37 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 Atsushi Onoe
@@ -37,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.81 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.96 2018/01/16 14:37:24 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.97 2018/01/16 15:18:37 maxv Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -2074,6 +2074,7 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 				scan.country = frm;
 				break;
 			case IEEE80211_ELEMID_FHPARMS:
+				IEEE80211_VERIFY_LENGTH(frm[1], 5);
 				if (ic->ic_phytype == IEEE80211_T_FH) {
 					scan.fhdwell = LE_READ_2(&frm[2]);
 					scan.chan = IEEE80211_FH_CHAN(frm[4], frm[5]);
@@ -2085,11 +2086,13 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 				 * XXX hack this since depending on phytype
 				 * is problematic for multi-mode devices.
 				 */
+				IEEE80211_VERIFY_LENGTH(frm[1], 1);
 				if (ic->ic_phytype != IEEE80211_T_FH)
 					scan.chan = frm[2];
 				break;
 			case IEEE80211_ELEMID_TIM:
 				/* XXX ATIM? */
+				IEEE80211_VERIFY_LENGTH(frm[1], 5);
 				scan.tim = frm;
 				scan.timoff = frm - mtod(m0, u_int8_t *);
 				break;
