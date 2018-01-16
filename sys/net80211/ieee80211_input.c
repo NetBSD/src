@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.95 2018/01/16 14:01:13 maxv Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.96 2018/01/16 14:37:24 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 Atsushi Onoe
@@ -37,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.81 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.95 2018/01/16 14:01:13 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.96 2018/01/16 14:37:24 maxv Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -2003,8 +2003,7 @@ ieee80211_update_adhoc_node(struct ieee80211com *ic, struct ieee80211_node *ni,
 
 void
 ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
-	struct ieee80211_node *ni,
-	int subtype, int rssi, u_int32_t rstamp)
+    struct ieee80211_node *ni, int subtype, int rssi, u_int32_t rstamp)
 {
 #define	ISPROBE(_st)	((_st) == IEEE80211_FC0_SUBTYPE_PROBE_RESP)
 #define	ISREASSOC(_st)	((_st) == IEEE80211_FC0_SUBTYPE_REASSOC_RESP)
@@ -2016,8 +2015,9 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 	IEEE80211_DEBUGVAR(char ebuf[3 * ETHER_ADDR_LEN]);
 
 	wh = mtod(m0, struct ieee80211_frame *);
-	frm = (u_int8_t *)&wh[1];
+	frm = (u_int8_t *)(wh + 1);
 	efrm = mtod(m0, u_int8_t *) + m0->m_len;
+
 	switch (subtype) {
 	case IEEE80211_FC0_SUBTYPE_PROBE_RESP:
 	case IEEE80211_FC0_SUBTYPE_BEACON: {
@@ -2037,6 +2037,7 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 			ic->ic_stats.is_rx_mgtdiscard++;
 			return;
 		}
+
 		/*
 		 * beacon/probe response frame format
 		 *	[8] time stamp
@@ -2059,7 +2060,9 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		scan.bchan = ieee80211_chan2ieee(ic, ic->ic_curchan);
 		scan.chan = scan.bchan;
 
-		while (frm < efrm) {
+		while (frm + 1 < efrm) {
+			IEEE80211_VERIFY_LENGTH(efrm - frm, frm[1] + 2);
+
 			switch (*frm) {
 			case IEEE80211_ELEMID_SSID:
 				scan.ssid = frm;
@@ -2122,10 +2125,13 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 				ic->ic_stats.is_rx_elem_unknown++;
 				break;
 			}
+
 			frm += frm[1] + 2;
 		}
+
 		IEEE80211_VERIFY_ELEMENT(scan.rates, IEEE80211_RATE_MAXSIZE);
 		IEEE80211_VERIFY_ELEMENT(scan.ssid, IEEE80211_NWID_LEN);
+
 		if (
 #if IEEE80211_CHAN_MAX < 255
 		    scan.chan > IEEE80211_CHAN_MAX ||
@@ -2172,7 +2178,7 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 
 		if (ni != ic->ic_bss) {
 			ni = ieee80211_refine_node_for_beacon(ic, ni,
-					&ic->ic_channels[scan.chan], scan.ssid);
+			    &ic->ic_channels[scan.chan], scan.ssid);
 		}
 		/*
 		 * Count frame now that we know it's to be processed.
