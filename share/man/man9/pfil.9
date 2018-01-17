@@ -1,4 +1,4 @@
-.\"	$NetBSD: pfil.9,v 1.36 2018/01/17 02:45:38 maya Exp $
+.\"	$NetBSD: pfil.9,v 1.37 2018/01/17 04:31:59 pgoyette Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -115,8 +115,8 @@ When a filter is invoked, the packet appears just as if it
 That is, all protocol fields are in network byte order.
 The filter is called with its specified argument, the pointer to the
 pointer to the mbuf containing the packet, the pointer to the network
-interface that the packet is traversing, and the direction
-.Dv ( PFIL_IN
+interface that the packet is traversing, and the direction (either
+.Dv PFIL_IN
 or
 .Dv PFIL_OUT ,
 see also below) that the packet is traveling.
@@ -150,7 +150,8 @@ and
 .Fn pfil_remove_ihook
 functions, respectively.
 The event handler is called with its specified argument, the event id
-.Dv ( PFIL_IFNET_ATTACH
+(either
+.Dv PFIL_IFNET_ATTACH
 or
 .Dv PFIL_IFNET_DETACH ,
 see also below) or ioctl number, and the pointer
