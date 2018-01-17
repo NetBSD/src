@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2169 2018/01/10 11:02:41 knakahara Exp $
+#	$NetBSD: mi,v 1.2170 2018/01/17 02:45:38 maya Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -11011,13 +11011,17 @@
 ./usr/share/man/cat9/percpu_putref.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/pfil.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/pfil_add_hook.0		comp-sys-catman		.cat
+./usr/share/man/cat9/pfil_add_ihook.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/pfil_get_head.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/pfil_head_get.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/pfil_head_register.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/pfil_head_unregister.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/pfil_hook_get.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/pfil_remove_hook.0		comp-sys-catman		.cat
+./usr/share/man/cat9/pfil_remove_ihook.0	comp-sys-catman		.cat
+./usr/share/man/cat9/pfil_run_addrhooks.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/pfil_run_hooks.0		comp-sys-catman		.cat
+./usr/share/man/cat9/pfil_run_ifhooks.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/pfind.0			comp-obsolete		obsolete
 ./usr/share/man/cat9/pg_find.0			comp-obsolete		obsolete
 ./usr/share/man/cat9/pgfind.0			comp-obsolete		obsolete
@@ -18477,12 +18481,16 @@
 ./usr/share/man/html9/percpu_putref.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pfil.html			comp-sys-htmlman	html
 ./usr/share/man/html9/pfil_add_hook.html	comp-sys-htmlman	html
+./usr/share/man/html9/pfil_add_ihook.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pfil_head_get.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pfil_head_register.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pfil_head_unregister.html comp-sys-htmlman	html
 ./usr/share/man/html9/pfil_hook_get.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pfil_remove_hook.html	comp-sys-htmlman	html
+./usr/share/man/html9/pfil_remove_ihook.html	comp-sys-htmlman	html
+./usr/share/man/html9/pfil_run_addrhooks.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pfil_run_hooks.html	comp-sys-htmlman	html
+./usr/share/man/html9/pfil_run_ifhooks.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pfind.html		comp-obsolete		obsolete
 ./usr/share/man/html9/pg_find.html		comp-obsolete		obsolete
 ./usr/share/man/html9/pgfind.html		comp-obsolete		obsolete
@@ -26103,13 +26111,17 @@
 ./usr/share/man/man9/percpu_putref.9		comp-sys-man		.man
 ./usr/share/man/man9/pfil.9			comp-sys-man		.man
 ./usr/share/man/man9/pfil_add_hook.9		comp-sys-man		.man
+./usr/share/man/man9/pfil_add_ihook.9		comp-sys-man		.man
 ./usr/share/man/man9/pfil_get_head.9		comp-obsolete		obsolete
 ./usr/share/man/man9/pfil_head_get.9		comp-sys-man		.man
 ./usr/share/man/man9/pfil_head_register.9	comp-sys-man		.man
 ./usr/share/man/man9/pfil_head_unregister.9	comp-sys-man		.man
 ./usr/share/man/man9/pfil_hook_get.9		comp-sys-man		.man
 ./usr/share/man/man9/pfil_remove_hook.9		comp-sys-man		.man
+./usr/share/man/man9/pfil_remove_ihook.9	comp-sys-man		.man
+./usr/share/man/man9/pfil_run_addrhooks.9	comp-sys-man		.man
 ./usr/share/man/man9/pfil_run_hooks.9		comp-sys-man		.man
+./usr/share/man/man9/pfil_run_ifhooks.9		comp-sys-man		.man
 ./usr/share/man/man9/pfind.9			comp-obsolete		obsolete
 ./usr/share/man/man9/pg_find.9			comp-obsolete		obsolete
 ./usr/share/man/man9/pgfind.9			comp-obsolete		obsolete
