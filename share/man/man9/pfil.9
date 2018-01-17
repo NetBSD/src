@@ -1,4 +1,4 @@
-.\"	$NetBSD: pfil.9,v 1.37 2018/01/17 04:31:59 pgoyette Exp $
+.\"	$NetBSD: pfil.9,v 1.38 2018/01/17 08:34:15 uwe Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -82,16 +82,20 @@ transformations.
 .Pp
 Packet filtering points are registered with
 .Fn pfil_head_register .
-Filtering points are identified by a key (void *) and a data link type
-(int) in the
-.Em pfil_head
+Filtering points are identified by a key
+.Vt ( void * )
+and a data link type
+.Vt ( int )
+in the
+.Vt pfil_head
 structure.
 Packet filters use the key and data link type to look up the filtering
 point with which they register themselves.
 The key is unique to the filtering point.
 The data link type is a
 .Xr bpf 4
-DLT constant indicating what kind of header is present on the packet
+.Dv DLT_ Ns Ar type
+constant indicating what kind of header is present on the packet
 at the filtering point.
 Filtering points may be unregistered with the
 .Fn pfil_head_unregister
@@ -120,26 +124,29 @@ interface that the packet is traversing, and the direction (either
 or
 .Dv PFIL_OUT ,
 see also below) that the packet is traveling.
-The filter may change which mbuf the mbuf ** argument references.
+The filter may change which mbuf the
+.Vt "mbuf **"
+argument references.
 The filter returns an errno if the packet processing is to stop, or 0
 if the processing is to continue.
 If the packet processing is to stop, it is the responsibility of the
 filter to free the packet.
 .Pp
 The
-.Em flags
+.Fa flags
 parameter, used in the
 .Fn pfil_add_hook
 and
 .Fn pfil_remove_hook
 functions, indicates when the filter should be called.
 The flags are:
-.Bl -tag -offset indent -width PFIL_ALL -compact
-.It PFIL_IN
+.Pp
+.Bl -tag -offset indent -width ".Dv PFIL_ALL" -compact
+.It Dv PFIL_IN
 call me on incoming packets
-.It PFIL_OUT
+.It Dv PFIL_OUT
 call me on outgoing packets
-.It PFIL_ALL
+.It Dv PFIL_ALL
 call me on all of the above
 .El
 .Pp
@@ -158,18 +165,23 @@ see also below) or ioctl number, and the pointer
 to the network interface or the pointer to the ifaddr.
 .Pp
 The
-.Em flags
+.Fa flags
 parameter, used in the
 .Fn pfil_add_ihook
 and
 .Fn pfil_remove_ihook
 functions, indicates when the filter should be called.
 The flags are:
-.Bl -tag -offset indent -width PFIL_IFADDR -compact
-.It PFIL_IFADDR
-call me on interface reconfig (cmd is ioctl #)
-.It PFIL_IFNET
-call me on interface attach/detach (cmd is either
+.Pp
+.Bl -tag -offset indent -width ".Dv PFIL_IFADDR" -compact
+.It Dv PFIL_IFADDR
+call me on interface reconfig
+.Fa ( cmd
+is ioctl #)
+.It Dv PFIL_IFNET
+call me on interface attach/detach
+.Fa ( cmd
+is either
 .Dv PFIL_IFNET_ATTACH
 or
 .Dv PFIL_IFNET_DETACH )
@@ -212,7 +224,8 @@ as well as be less IP-centric.
 .Fn pfil_add_ihook
 and
 .Fn pfil_remove_ihook
-were added in 8.0.
+were added in
+.Nx 8.0 .
 .Sh AUTHORS
 .An -nosplit
 The
