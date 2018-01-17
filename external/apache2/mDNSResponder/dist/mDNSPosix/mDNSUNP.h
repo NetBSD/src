@@ -101,7 +101,7 @@ struct ifi_info {
 extern struct ifi_info  *get_ifi_info_linuxv6(int family, int doaliases);
 #endif
 
-#if defined(AF_INET6) && HAVE_IPV6
+#if defined(AF_INET6) && HAVE_IPV6 && !defined(INET6_ADDRSTRLEN)
 #define INET6_ADDRSTRLEN 46 /*Maximum length of IPv6 address */
 #endif
 

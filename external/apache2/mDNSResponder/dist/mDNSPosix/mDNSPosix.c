@@ -1455,7 +1455,7 @@ mDNSexport int mDNSPlatformMemCmp(const void *dst, const void *src, mDNSu32 len)
 
 mDNSexport void mDNSPlatformQsort(void *base, int nel, int width, int (*compar)(const void *, const void *))
 {
-    return (qsort(base, nel, width, compar));
+    qsort(base, nel, width, compar);
 }
 
 // DNSSEC stub functions
