@@ -1,4 +1,4 @@
-/*	$NetBSD: h_tools.c,v 1.4 2011/06/11 18:03:17 christos Exp $	*/
+/*	$NetBSD: h_tools.c,v 1.5 2018/01/17 00:22:29 maya Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -45,6 +45,7 @@
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -230,12 +231,13 @@ sockets_main(int argc, char **argv)
 		return EXIT_FAILURE;
 	}
 
+	memset(&addr, 0, sizeof(addr));
 	(void)strlcpy(addr.sun_path, argv[1], sizeof(addr.sun_path));
 	addr.sun_family = PF_UNIX;
-
-	error = bind(fd, (struct sockaddr *)&addr, sizeof(addr));
+	error = bind(fd, (struct sockaddr *)&addr, SUN_LEN(&addr));
 	if (error == -1) {
 		warn("connect");
+		(void)close(fd);
 		return EXIT_FAILURE;
 	}
 
