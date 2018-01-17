@@ -1,4 +1,4 @@
-/* $NetBSD: t_siginfo.c,v 1.31 2017/03/05 16:07:38 chs Exp $ */
+/* $NetBSD: t_siginfo.c,v 1.32 2018/01/17 00:16:43 maya Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -28,7 +28,6 @@
 
 #include <atf-c.h>
 
-#include <sys/inttypes.h>
 #include <sys/resource.h>
 #include <sys/sysctl.h>
 #include <sys/time.h>
@@ -36,13 +35,14 @@
 #include <sys/wait.h>
 
 #include <assert.h>
+#include <float.h>
+#include <inttypes.h>
+#include <setjmp.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <setjmp.h>
-#include <float.h>
 
 #include <fenv.h>
 #ifdef __HAVE_FENV
