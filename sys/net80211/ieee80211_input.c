@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.108 2018/01/16 18:53:32 maxv Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.109 2018/01/17 16:03:16 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 Atsushi Onoe
@@ -37,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.81 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.108 2018/01/16 18:53:32 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.109 2018/01/17 16:03:16 maxv Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -354,8 +354,7 @@ ieee80211_input_data(struct ieee80211com *ic, struct mbuf **mp,
 		 * any non-PAE frames received without encryption.
 		 */
 		if ((ic->ic_flags & IEEE80211_F_DROPUNENC) &&
-		    key == NULL &&
-		    eh->ether_type != htons(ETHERTYPE_PAE)) {
+		    key == NULL && eh->ether_type != htons(ETHERTYPE_PAE)) {
 			/*
 			 * Drop unencrypted frames.
 			 */
@@ -407,10 +406,9 @@ ieee80211_input_management(struct ieee80211com *ic, struct mbuf **mp,
 		ic->ic_stats.is_rx_wrongdir++;
 		goto err;
 	}
-	if (m->m_pkthdr.len < sizeof(struct ieee80211_frame)) {
-		IEEE80211_DISCARD_MAC(ic, IEEE80211_MSG_ANY,
-		    ni->ni_macaddr, "mgt", "too short: len %u",
-		    m->m_pkthdr.len);
+	if (m->m_len < sizeof(struct ieee80211_frame)) {
+		IEEE80211_DISCARD_MAC(ic, IEEE80211_MSG_ANY, ni->ni_macaddr,
+		    "mgt", "too short: len %u", m->m_len);
 		ic->ic_stats.is_rx_tooshort++;
 		goto out;
 	}
@@ -542,10 +540,10 @@ ieee80211_input(struct ieee80211com *ic, struct mbuf *m,
 	if (ic->ic_opmode == IEEE80211_M_MONITOR)
 		goto out;
 
-	if (m->m_pkthdr.len < sizeof(struct ieee80211_frame_min)) {
+	if (m->m_len < sizeof(struct ieee80211_frame_min)) {
 		IEEE80211_DISCARD_MAC(ic, IEEE80211_MSG_ANY,
 		    ni->ni_macaddr, NULL,
-		    "too short (1): len %u", m->m_pkthdr.len);
+		    "too short (1): len %u", m->m_len);
 		ic->ic_stats.is_rx_tooshort++;
 		goto out;
 	}
@@ -607,11 +605,11 @@ ieee80211_input(struct ieee80211com *ic, struct mbuf *m,
 			else if (type == IEEE80211_FC0_TYPE_CTL)
 				bssid = wh->i_addr1;
 			else {
-				if (m->m_pkthdr.len < sizeof(struct ieee80211_frame)) {
+				if (m->m_len < sizeof(struct ieee80211_frame)) {
 					IEEE80211_DISCARD_MAC(ic,
 					    IEEE80211_MSG_ANY, ni->ni_macaddr,
 					    NULL, "too short (2): len %u",
-					    m->m_pkthdr.len);
+					    m->m_len);
 					ic->ic_stats.is_rx_tooshort++;
 					goto out;
 				}
@@ -674,7 +672,14 @@ ieee80211_input(struct ieee80211com *ic, struct mbuf *m,
 			if (ieee80211_has_qos(wh)) {
 				struct ieee80211_qosframe *qosf;
 
-				/* XXX mbuf length check */
+				if (m->m_len < sizeof(struct ieee80211_qosframe)) {
+					IEEE80211_DISCARD_MAC(ic,
+					    IEEE80211_MSG_ANY,
+					    ni->ni_macaddr, NULL,
+					    "too short (1): len %u", m->m_len);
+					ic->ic_stats.is_rx_tooshort++;
+					goto out;
+				}
 				qosf = mtod(m, struct ieee80211_qosframe *);
 
 				tid = qosf->i_qos[0] & IEEE80211_QOS_TID;
@@ -1089,6 +1094,7 @@ ieee80211_auth_open(struct ieee80211com *ic, struct ieee80211_frame *wh,
 		    ni->ni_macaddr, "open auth",
 		    "bad sta auth mode %u", ni->ni_authmode);
 		ic->ic_stats.is_rx_bad_auth++;	/* XXX */
+
 		if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
 			/* XXX hack to workaround calling convention */
 			ieee80211_send_error(ic, ni, wh->i_addr2,
@@ -1097,6 +1103,7 @@ ieee80211_auth_open(struct ieee80211com *ic, struct ieee80211_frame *wh,
 		}
 		return;
 	}
+
 	switch (ic->ic_opmode) {
 	case IEEE80211_M_IBSS:
 	case IEEE80211_M_AHDEMO:
@@ -1114,13 +1121,16 @@ ieee80211_auth_open(struct ieee80211com *ic, struct ieee80211_frame *wh,
 			ic->ic_stats.is_rx_bad_auth++;
 			return;
 		}
+
 		/* always accept open authentication requests */
 		if (ni == ic->ic_bss) {
 			ni = ieee80211_dup_bss(&ic->ic_sta, wh->i_addr2);
 			if (ni == NULL)
 				return;
-		} else if ((ni->ni_flags & IEEE80211_NODE_AREF) == 0)
-			(void) ieee80211_ref_node(ni);
+		} else if ((ni->ni_flags & IEEE80211_NODE_AREF) == 0) {
+			(void)ieee80211_ref_node(ni);
+		}
+
 		/*
 		 * Mark the node as referenced to reflect that its
 		 * reference count has been bumped to insure it remains
@@ -1128,11 +1138,12 @@ ieee80211_auth_open(struct ieee80211com *ic, struct ieee80211_frame *wh,
 		 */
 		ni->ni_flags |= IEEE80211_NODE_AREF;
 
-		IEEE80211_SEND_MGMT(ic, ni,
-			IEEE80211_FC0_SUBTYPE_AUTH, seq + 1);
+		IEEE80211_SEND_MGMT(ic, ni, IEEE80211_FC0_SUBTYPE_AUTH,
+		    seq + 1);
 		IEEE80211_DPRINTF(ic, IEEE80211_MSG_DEBUG | IEEE80211_MSG_AUTH,
 		    "[%s] station authenticated (open)\n",
 		    ether_snprintf(ebuf, sizeof(ebuf), ni->ni_macaddr));
+
 		/*
 		 * When 802.1x is not in use mark the port
 		 * authorized at this point so traffic can flow.
@@ -1149,20 +1160,22 @@ ieee80211_auth_open(struct ieee80211com *ic, struct ieee80211_frame *wh,
 			return;
 		}
 		if (status != 0) {
-
 			IEEE80211_DPRINTF(ic,
 			    IEEE80211_MSG_DEBUG | IEEE80211_MSG_AUTH,
 			    "[%s] open auth failed (reason %d)\n",
 			    ether_snprintf(ebuf, sizeof(ebuf), ni->ni_macaddr),
 			    status);
+
 			/* XXX can this happen? */
 			if (ni != ic->ic_bss)
 				ni->ni_fails++;
+
 			ic->ic_stats.is_rx_auth_fail++;
 			ieee80211_new_state(ic, IEEE80211_S_SCAN, 0);
-		} else
+		} else {
 			ieee80211_new_state(ic, IEEE80211_S_ASSOC,
 			    wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK);
+		}
 		break;
 	}
 }
@@ -1176,9 +1189,9 @@ ieee80211_auth_open(struct ieee80211com *ic, struct ieee80211_frame *wh,
  */
 static void
 ieee80211_send_error(struct ieee80211com *ic, struct ieee80211_node *ni,
-	const u_int8_t *mac, int subtype, int arg)
+    const u_int8_t *mac, int subtype, int arg)
 {
-	int istmp;
+	bool istmp;
 
 	if (ni == ic->ic_bss) {
 		ni = ieee80211_tmp_node(ic, mac);
@@ -1186,9 +1199,11 @@ ieee80211_send_error(struct ieee80211com *ic, struct ieee80211_node *ni,
 			/* XXX msg */
 			return;
 		}
-		istmp = 1;
-	} else
-		istmp = 0;
+		istmp = true;
+	} else {
+		istmp = false;
+	}
+
 	IEEE80211_SEND_MGMT(ic, ni, subtype, arg);
 	if (istmp)
 		ieee80211_free_node(ni);
@@ -1197,11 +1212,12 @@ ieee80211_send_error(struct ieee80211com *ic, struct ieee80211_node *ni,
 static int
 alloc_challenge(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
-	if (ni->ni_challenge == NULL)
+	if (ni->ni_challenge == NULL) {
 		ni->ni_challenge = malloc(IEEE80211_CHALLENGE_LEN,
 		    M_DEVBUF, M_NOWAIT);
+	}
 	if (ni->ni_challenge == NULL) {
-		 IEEE80211_DEBUGVAR(char ebuf[3 * ETHER_ADDR_LEN]);
+		IEEE80211_DEBUGVAR(char ebuf[3 * ETHER_ADDR_LEN]);
 
 		IEEE80211_DPRINTF(ic, IEEE80211_MSG_DEBUG | IEEE80211_MSG_AUTH,
 		    "[%s] shared key challenge alloc failed\n",
@@ -1236,6 +1252,7 @@ ieee80211_auth_shared(struct ieee80211com *ic, struct ieee80211_frame *wh,
 		estatus = IEEE80211_STATUS_ALG;
 		goto bad;
 	}
+
 	/*
 	 * Pre-shared key authentication is evil; accept
 	 * it only if explicitly configured (it is supported
@@ -1266,6 +1283,7 @@ ieee80211_auth_shared(struct ieee80211com *ic, struct ieee80211_frame *wh,
 			challenge = frm;
 		frm += frm[1] + 2;
 	}
+
 	switch (seq) {
 	case IEEE80211_AUTH_SHARED_CHALLENGE:
 	case IEEE80211_AUTH_SHARED_RESPONSE:
@@ -1288,6 +1306,7 @@ ieee80211_auth_shared(struct ieee80211com *ic, struct ieee80211_frame *wh,
 	default:
 		break;
 	}
+
 	switch (ic->ic_opmode) {
 	case IEEE80211_M_MONITOR:
 	case IEEE80211_M_AHDEMO:
@@ -1296,6 +1315,7 @@ ieee80211_auth_shared(struct ieee80211com *ic, struct ieee80211_frame *wh,
 		    ni->ni_macaddr, "shared key auth",
 		    "bad operating mode %u", ic->ic_opmode);
 		return;
+
 	case IEEE80211_M_HOSTAP:
 #ifndef IEEE80211_NO_HOSTAP
 	{
@@ -1318,10 +1338,11 @@ ieee80211_auth_shared(struct ieee80211com *ic, struct ieee80211_frame *wh,
 				allocbs = 1;
 			} else {
 				if ((ni->ni_flags & IEEE80211_NODE_AREF) == 0)
-					(void) ieee80211_ref_node(ni);
+					(void)ieee80211_ref_node(ni);
 				allocbs = 0;
 			}
 			__USE(allocbs);
+
 			/*
 			 * Mark the node as referenced to reflect that its
 			 * reference count has been bumped to insure it remains
@@ -1334,8 +1355,10 @@ ieee80211_auth_shared(struct ieee80211com *ic, struct ieee80211_frame *wh,
 				/* NB: don't return error so they rexmit */
 				return;
 			}
+
 			get_random_bytes(ni->ni_challenge,
 				IEEE80211_CHALLENGE_LEN);
+
 			IEEE80211_DPRINTF(ic,
 				IEEE80211_MSG_DEBUG | IEEE80211_MSG_AUTH,
 				"[%s] shared key %sauth request\n",
@@ -1343,6 +1366,7 @@ ieee80211_auth_shared(struct ieee80211com *ic, struct ieee80211_frame *wh,
 				ni->ni_macaddr),
 				allocbs ? "" : "re");
 			break;
+
 		case IEEE80211_AUTH_SHARED_RESPONSE:
 			if (ni == ic->ic_bss) {
 				IEEE80211_DISCARD_MAC(ic, IEEE80211_MSG_AUTH,
@@ -1351,6 +1375,7 @@ ieee80211_auth_shared(struct ieee80211com *ic, struct ieee80211_frame *wh,
 				/* NB: don't send a response */
 				return;
 			}
+
 			if (ni->ni_challenge == NULL) {
 				IEEE80211_DISCARD_MAC(ic, IEEE80211_MSG_AUTH,
 				    ni->ni_macaddr, "shared key response",
@@ -1359,8 +1384,9 @@ ieee80211_auth_shared(struct ieee80211com *ic, struct ieee80211_frame *wh,
 				estatus = IEEE80211_STATUS_CHALLENGE;
 				goto bad;
 			}
+
 			if (memcmp(ni->ni_challenge, &challenge[2],
-			           challenge[1]) != 0) {
+			    challenge[1]) != 0) {
 				IEEE80211_DISCARD_MAC(ic, IEEE80211_MSG_AUTH,
 				    ni->ni_macaddr, "shared key response",
 				    "%s", "challenge mismatch");
@@ -1368,12 +1394,15 @@ ieee80211_auth_shared(struct ieee80211com *ic, struct ieee80211_frame *wh,
 				estatus = IEEE80211_STATUS_CHALLENGE;
 				goto bad;
 			}
+
 			IEEE80211_DPRINTF(ic,
 			    IEEE80211_MSG_DEBUG | IEEE80211_MSG_AUTH,
 			    "[%s] station authenticated (shared key)\n",
 			    ether_snprintf(ebuf, sizeof(ebuf), ni->ni_macaddr));
+
 			ieee80211_node_authorize(ni);
 			break;
+
 		default:
 			IEEE80211_DISCARD_MAC(ic, IEEE80211_MSG_AUTH,
 			    ni->ni_macaddr, "shared key auth",
@@ -1382,8 +1411,9 @@ ieee80211_auth_shared(struct ieee80211com *ic, struct ieee80211_frame *wh,
 			estatus = IEEE80211_STATUS_SEQUENCE;
 			goto bad;
 		}
-		IEEE80211_SEND_MGMT(ic, ni,
-			IEEE80211_FC0_SUBTYPE_AUTH, seq + 1);
+
+		IEEE80211_SEND_MGMT(ic, ni, IEEE80211_FC0_SUBTYPE_AUTH,
+		    seq + 1);
 	}
 #endif /* !IEEE80211_NO_HOSTAP */
 		break;
@@ -1404,23 +1434,29 @@ ieee80211_auth_shared(struct ieee80211com *ic, struct ieee80211_frame *wh,
 				    ether_snprintf(ebuf, sizeof(ebuf),
 				    ieee80211_getbssid(ic, wh)),
 				    status);
+
 				/* XXX can this happen? */
 				if (ni != ic->ic_bss)
 					ni->ni_fails++;
+
 				ic->ic_stats.is_rx_auth_fail++;
 				return;
 			}
+
 			ieee80211_new_state(ic, IEEE80211_S_ASSOC,
 			    wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK);
 			break;
+
 		case IEEE80211_AUTH_SHARED_CHALLENGE:
 			if (!alloc_challenge(ic, ni))
 				return;
 			/* XXX could optimize by passing recvd challenge */
 			memcpy(ni->ni_challenge, &challenge[2], challenge[1]);
-			IEEE80211_SEND_MGMT(ic, ni,
-				IEEE80211_FC0_SUBTYPE_AUTH, seq + 1);
+
+			IEEE80211_SEND_MGMT(ic, ni, IEEE80211_FC0_SUBTYPE_AUTH,
+			    seq + 1);
 			break;
+
 		default:
 			IEEE80211_DISCARD(ic, IEEE80211_MSG_AUTH,
 			    wh, "shared key auth", "bad seq %d", seq);
@@ -1430,6 +1466,7 @@ ieee80211_auth_shared(struct ieee80211com *ic, struct ieee80211_frame *wh,
 		break;
 	}
 	return;
+
 bad:
 #ifndef IEEE80211_NO_HOSTAP
 	/*
@@ -1589,30 +1626,34 @@ wpa_keymgmt(u_int8_t *sel)
  */
 static int
 ieee80211_parse_wpa(struct ieee80211com *ic, u_int8_t *frm,
-	struct ieee80211_rsnparms *rsn, const struct ieee80211_frame *wh)
+    struct ieee80211_rsnparms *rsn, const struct ieee80211_frame *wh)
 {
 	u_int8_t len = frm[1];
 	u_int32_t w;
 	int n;
 
-	/*
-	 * Check the length once for fixed parts: OUI, type,
-	 * version, mcast cipher, and 2 selector counts.
-	 * Other, variable-length data, must be checked separately.
-	 */
 	if ((ic->ic_flags & IEEE80211_F_WPA1) == 0) {
 		IEEE80211_DISCARD_IE(ic,
 		    IEEE80211_MSG_ELEMID | IEEE80211_MSG_WPA,
 		    wh, "WPA", "not WPA, flags 0x%x", ic->ic_flags);
 		return IEEE80211_REASON_IE_INVALID;
 	}
+
+	/*
+	 * Check the length once for fixed parts: OUI, type,
+	 * version, mcast cipher, and 2 selector counts.
+	 * Other, variable-length data, must be checked separately.
+	 */
 	if (len < 14) {
 		IEEE80211_DISCARD_IE(ic,
 		    IEEE80211_MSG_ELEMID | IEEE80211_MSG_WPA,
 		    wh, "WPA", "too short, len %u", len);
 		return IEEE80211_REASON_IE_INVALID;
 	}
-	frm += 6, len -= 4;		/* NB: len is payload only */
+
+	frm += 2; /* beginning of payload */
+	frm += 4, len -= 4;
+
 	/* NB: iswapoui already validated the OUI and type */
 	w = LE_READ_2(frm);
 	if (w != WPA_VERSION) {
@@ -1646,7 +1687,7 @@ ieee80211_parse_wpa(struct ieee80211com *ic, u_int8_t *frm,
 	}
 	w = 0;
 	for (; n > 0; n--) {
-		w |= 1<<wpa_cipher(frm, &rsn->rsn_ucastkeylen);
+		w |= 1 << wpa_cipher(frm, &rsn->rsn_ucastkeylen);
 		frm += 4, len -= 4;
 	}
 	w &= rsn->rsn_ucastcipherset;
@@ -1656,7 +1697,7 @@ ieee80211_parse_wpa(struct ieee80211com *ic, u_int8_t *frm,
 		    wh, "WPA", "%s", "ucast cipher set empty");
 		return IEEE80211_REASON_IE_INVALID;
 	}
-	if (w & (1<<IEEE80211_CIPHER_TKIP))
+	if (w & (1 << IEEE80211_CIPHER_TKIP))
 		rsn->rsn_ucastcipher = IEEE80211_CIPHER_TKIP;
 	else
 		rsn->rsn_ucastcipher = IEEE80211_CIPHER_AES_CCM;
@@ -1756,30 +1797,32 @@ rsn_keymgmt(u_int8_t *sel)
  */
 static int
 ieee80211_parse_rsn(struct ieee80211com *ic, u_int8_t *frm,
-	struct ieee80211_rsnparms *rsn, const struct ieee80211_frame *wh)
+    struct ieee80211_rsnparms *rsn, const struct ieee80211_frame *wh)
 {
 	u_int8_t len = frm[1];
 	u_int32_t w;
 	int n;
 
-	/*
-	 * Check the length once for fixed parts:
-	 * version, mcast cipher, and 2 selector counts.
-	 * Other, variable-length data, must be checked separately.
-	 */
 	if ((ic->ic_flags & IEEE80211_F_WPA2) == 0) {
 		IEEE80211_DISCARD_IE(ic,
 		    IEEE80211_MSG_ELEMID | IEEE80211_MSG_WPA,
 		    wh, "WPA", "not RSN, flags 0x%x", ic->ic_flags);
 		return IEEE80211_REASON_IE_INVALID;
 	}
+
+	/*
+	 * Check the length once for fixed parts:
+	 * version, mcast cipher, and 2 selector counts.
+	 * Other, variable-length data, must be checked separately.
+	 */
 	if (len < 10) {
 		IEEE80211_DISCARD_IE(ic,
 		    IEEE80211_MSG_ELEMID | IEEE80211_MSG_WPA,
 		    wh, "RSN", "too short, len %u", len);
 		return IEEE80211_REASON_IE_INVALID;
 	}
-	frm += 2;
+
+	frm += 2; /* beginning of payload */
 	w = LE_READ_2(frm);
 	if (w != RSN_VERSION) {
 		IEEE80211_DISCARD_IE(ic,
@@ -1812,7 +1855,7 @@ ieee80211_parse_rsn(struct ieee80211com *ic, u_int8_t *frm,
 	}
 	w = 0;
 	for (; n > 0; n--) {
-		w |= 1<<rsn_cipher(frm, &rsn->rsn_ucastkeylen);
+		w |= 1 << rsn_cipher(frm, &rsn->rsn_ucastkeylen);
 		frm += 4, len -= 4;
 	}
 	w &= rsn->rsn_ucastcipherset;
@@ -1822,7 +1865,7 @@ ieee80211_parse_rsn(struct ieee80211com *ic, u_int8_t *frm,
 		    wh, "RSN", "%s", "ucast cipher set empty");
 		return IEEE80211_REASON_IE_INVALID;
 	}
-	if (w & (1<<IEEE80211_CIPHER_TKIP))
+	if (w & (1 << IEEE80211_CIPHER_TKIP))
 		rsn->rsn_ucastcipher = IEEE80211_CIPHER_TKIP;
 	else
 		rsn->rsn_ucastcipher = IEEE80211_CIPHER_AES_CCM;
@@ -1864,7 +1907,7 @@ ieee80211_parse_rsn(struct ieee80211com *ic, u_int8_t *frm,
 
 static int
 ieee80211_parse_wmeparams(struct ieee80211com *ic, u_int8_t *frm,
-	const struct ieee80211_frame *wh)
+    const struct ieee80211_frame *wh)
 {
 #define	MS(_v, _f)	(((_v) & _f) >> _f##_S)
 	struct ieee80211_wme_state *wme = &ic->ic_wme;
@@ -1907,9 +1950,8 @@ void
 ieee80211_saveie(u_int8_t **iep, const u_int8_t *ie)
 {
 	u_int ielen = ie[1]+2;
-	/*
-	 * Record information element for later use.
-	 */
+
+	/* Record information element for later use. */
 	if (*iep == NULL || (*iep)[1] != ie[1]) {
 		if (*iep != NULL)
 			free(*iep, M_DEVBUF);
@@ -2004,7 +2046,7 @@ ieee80211_update_adhoc_node(struct ieee80211com *ic, struct ieee80211_node *ni,
 } while (0)
 
 #define	IEEE80211_VERIFY_LENGTH(_len, _minlen) do {			\
-	if ((_len) < (_minlen)) {					\
+	if ((size_t)(_len) < (size_t)(_minlen)) {			\
 		IEEE80211_DISCARD(ic, IEEE80211_MSG_ELEMID,		\
 		    wh, ieee80211_mgt_subtype_name[subtype >>		\
 			IEEE80211_FC0_SUBTYPE_SHIFT],			\
@@ -2106,12 +2148,6 @@ ieee80211_recv_mgmt_beacon(struct ieee80211com *ic, struct mbuf *m0,
 		case IEEE80211_ELEMID_IBSSPARMS:
 			break;
 		case IEEE80211_ELEMID_XRATES:
-			if (frm[1] > IEEE80211_RATE_MAXSIZE) {
-				IEEE80211_DISCARD_IE(ic, IEEE80211_MSG_ELEMID,
-				    wh, "XRATE", "bad len %u", frm[1]);
-				ic->ic_stats.is_rx_elem_toobig++;
-				break;
-			}
 			scan.sp_xrates = frm;
 			break;
 		case IEEE80211_ELEMID_ERP:
@@ -2225,11 +2261,13 @@ ieee80211_recv_mgmt_beacon(struct ieee80211com *ic, struct mbuf *m0,
 			    "[%s] erp change: was 0x%x, now 0x%x\n",
 			    ether_snprintf(ebuf, sizeof(ebuf),
 			    wh->i_addr2), ni->ni_erp, scan.sp_erp);
+
 			if (ic->ic_curmode == IEEE80211_MODE_11G &&
-			    (ni->ni_erp & IEEE80211_ERP_USE_PROTECTION))
+			    (ni->ni_erp & IEEE80211_ERP_USE_PROTECTION)) {
 				ic->ic_flags |= IEEE80211_F_USEPROT;
-			else
+			} else {
 				ic->ic_flags &= ~IEEE80211_F_USEPROT;
+			}
 			ni->ni_erp = scan.sp_erp;
 		}
 
@@ -2304,7 +2342,7 @@ ieee80211_recv_mgmt_probe_req(struct ieee80211com *ic, struct mbuf *m0,
 	struct ieee80211_frame *wh;
 	u_int8_t *frm, *efrm;
 	u_int8_t *ssid, *rates, *xrates;
-	int allocbs;
+	bool need_free = false;
 	u_int8_t rate;
 	IEEE80211_DEBUGVAR(char ebuf[3 * ETHER_ADDR_LEN]);
 
@@ -2319,7 +2357,7 @@ ieee80211_recv_mgmt_probe_req(struct ieee80211com *ic, struct mbuf *m0,
 	}
 	if (IEEE80211_IS_MULTICAST(wh->i_addr2)) {
 		/* frame must be directed */
-		ic->ic_stats.is_rx_mgtdiscard++;	/* XXX stat */
+		ic->ic_stats.is_rx_mgtdiscard++;
 		return;
 	}
 
@@ -2330,7 +2368,9 @@ ieee80211_recv_mgmt_probe_req(struct ieee80211com *ic, struct mbuf *m0,
 	 *	[tlv] extended supported rates
 	 */
 	ssid = rates = xrates = NULL;
-	while (frm < efrm) {
+	while (frm + 1 < efrm) {
+		IEEE80211_VERIFY_LENGTH(efrm - frm, frm[1] + 2);
+
 		switch (*frm) {
 		case IEEE80211_ELEMID_SSID:
 			ssid = frm;
@@ -2342,6 +2382,7 @@ ieee80211_recv_mgmt_probe_req(struct ieee80211com *ic, struct mbuf *m0,
 			xrates = frm;
 			break;
 		}
+
 		frm += frm[1] + 2;
 	}
 
@@ -2361,6 +2402,7 @@ ieee80211_recv_mgmt_probe_req(struct ieee80211com *ic, struct mbuf *m0,
 	if (ni == ic->ic_bss) {
 		if (ic->ic_opmode != IEEE80211_M_IBSS) {
 			ni = ieee80211_tmp_node(ic, wh->i_addr2);
+			need_free = true;
 		} else if (IEEE80211_ADDR_EQ(wh->i_addr2, ni->ni_macaddr)) {
 			;
 		} else {
@@ -2375,9 +2417,6 @@ ieee80211_recv_mgmt_probe_req(struct ieee80211com *ic, struct mbuf *m0,
 		}
 		if (ni == NULL)
 			return;
-		allocbs = 1;
-	} else {
-		allocbs = 0;
 	}
 
 	IEEE80211_DPRINTF(ic, IEEE80211_MSG_ASSOC, "[%s] recv probe req\n",
@@ -2386,8 +2425,8 @@ ieee80211_recv_mgmt_probe_req(struct ieee80211com *ic, struct mbuf *m0,
 	ni->ni_rssi = rssi;
 	ni->ni_rstamp = rstamp;
 	rate = ieee80211_setup_rates(ni, rates, xrates,
-		  IEEE80211_R_DOSORT | IEEE80211_R_DOFRATE
-		| IEEE80211_R_DONEGO | IEEE80211_R_DODEL);
+	    IEEE80211_R_DOSORT | IEEE80211_R_DOFRATE |
+	    IEEE80211_R_DONEGO | IEEE80211_R_DODEL);
 
 	if (rate & IEEE80211_RATE_BASIC) {
 		IEEE80211_DISCARD(ic, IEEE80211_MSG_XRATE,
@@ -2399,7 +2438,7 @@ ieee80211_recv_mgmt_probe_req(struct ieee80211com *ic, struct mbuf *m0,
 		    IEEE80211_FC0_SUBTYPE_PROBE_RESP, 0);
 	}
 
-	if (allocbs && ic->ic_opmode != IEEE80211_M_IBSS) {
+	if (need_free) {
 		/* reclaim immediately */
 		ieee80211_free_node(ni);
 	}
@@ -2464,13 +2503,12 @@ ieee80211_recv_mgmt_auth(struct ieee80211com *ic, struct mbuf *m0,
 		return;
 	}
 
-	if (algo == IEEE80211_AUTH_ALG_SHARED)
+	if (algo == IEEE80211_AUTH_ALG_SHARED) {
 		ieee80211_auth_shared(ic, wh, frm + 6, efrm, ni, rssi,
 		    rstamp, seq, status);
-	else if (algo == IEEE80211_AUTH_ALG_OPEN)
-		ieee80211_auth_open(ic, wh, ni, rssi, rstamp, seq,
-		    status);
-	else {
+	} else if (algo == IEEE80211_AUTH_ALG_OPEN) {
+		ieee80211_auth_open(ic, wh, ni, rssi, rstamp, seq, status);
+	} else {
 		IEEE80211_DISCARD(ic, IEEE80211_MSG_ANY,
 		    wh, "auth", "unsupported alg %d", algo);
 		ic->ic_stats.is_rx_auth_unsupported++;
@@ -2482,7 +2520,6 @@ ieee80211_recv_mgmt_auth(struct ieee80211com *ic, struct mbuf *m0,
 				(seq+1) | (IEEE80211_STATUS_ALG<<16));
 		}
 #endif
-		return;
 	}
 }
 
@@ -2529,6 +2566,7 @@ ieee80211_recv_mgmt_assoc_req(struct ieee80211com *ic, struct mbuf *m0,
 	 *	[tlv] WPA or RSN
 	 */
 	IEEE80211_VERIFY_LENGTH(efrm - frm, (reassoc ? 10 : 4));
+
 	if (!IEEE80211_ADDR_EQ(wh->i_addr3, ic->ic_bss->ni_bssid)) {
 		IEEE80211_DISCARD(ic, IEEE80211_MSG_ANY,
 		    wh, ieee80211_mgt_subtype_name[subtype >>
@@ -2544,7 +2582,9 @@ ieee80211_recv_mgmt_assoc_req(struct ieee80211com *ic, struct mbuf *m0,
 		frm += 6;	/* ignore current AP info */
 
 	ssid = rates = xrates = wpa = wme = NULL;
-	while (frm < efrm) {
+	while (frm + 1 < efrm) {
+		IEEE80211_VERIFY_LENGTH(efrm - frm, frm[1] + 2);
+
 		switch (*frm) {
 		case IEEE80211_ELEMID_SSID:
 			ssid = frm;
@@ -2567,6 +2607,7 @@ ieee80211_recv_mgmt_assoc_req(struct ieee80211com *ic, struct mbuf *m0,
 			/* XXX Atheros OUI support */
 			break;
 		}
+
 		frm += frm[1] + 2;
 	}
 
@@ -2586,16 +2627,18 @@ ieee80211_recv_mgmt_assoc_req(struct ieee80211com *ic, struct mbuf *m0,
 		return;
 	}
 
-	/* assert right associstion security credentials */
+	/* assert right association security credentials */
 	if (wpa == NULL && (ic->ic_flags & IEEE80211_F_WPA)) {
 		IEEE80211_DPRINTF(ic,
 		    IEEE80211_MSG_ASSOC | IEEE80211_MSG_WPA,
 		    "[%s] no WPA/RSN IE in association request\n",
 		    ether_snprintf(ebuf, sizeof(ebuf), wh->i_addr2));
+
 		IEEE80211_SEND_MGMT(ic, ni,
 		    IEEE80211_FC0_SUBTYPE_DEAUTH,
 		    IEEE80211_REASON_RSN_REQUIRED);
 		ieee80211_node_leave(ic, ni);
+
 		/* XXX distinguish WPA/RSN? */
 		ic->ic_stats.is_rx_assoc_badwpaie++;
 		return;
@@ -2614,14 +2657,17 @@ ieee80211_recv_mgmt_assoc_req(struct ieee80211com *ic, struct mbuf *m0,
 			reason = ieee80211_parse_wpa(ic, wpa, &rsn, wh);
 		else
 			reason = ieee80211_parse_rsn(ic, wpa, &rsn, wh);
+
 		if (reason != 0) {
 			IEEE80211_SEND_MGMT(ic, ni,
 			    IEEE80211_FC0_SUBTYPE_DEAUTH, reason);
 			ieee80211_node_leave(ic, ni);
+
 			/* XXX distinguish WPA/RSN? */
 			ic->ic_stats.is_rx_assoc_badwpaie++;
 			return;
 		}
+
 		IEEE80211_DPRINTF(ic,
 		    IEEE80211_MSG_ASSOC | IEEE80211_MSG_WPA,
 		    "[%s] %s ie: mc %u/%u uc %u/%u key %u caps 0x%x\n",
@@ -2726,7 +2772,7 @@ ieee80211_recv_mgmt_assoc_resp(struct ieee80211com *ic, struct mbuf *m0,
 {
 	struct ieee80211_frame *wh;
 	u_int8_t *frm, *efrm;
-	u_int8_t *rates, *xrates, *wpa, *wme;
+	u_int8_t *rates, *xrates, *wme;
 	u_int8_t rate;
 	IEEE80211_DEBUGVAR(char ebuf[3 * ETHER_ADDR_LEN]);
 	u_int16_t capinfo, associd;
@@ -2770,8 +2816,10 @@ ieee80211_recv_mgmt_assoc_resp(struct ieee80211com *ic, struct mbuf *m0,
 	associd = le16toh(*(u_int16_t *)frm);
 	frm += 2;
 
-	rates = xrates = wpa = wme = NULL;
-	while (frm < efrm) {
+	rates = xrates = wme = NULL;
+	while (frm + 1 < efrm) {
+		IEEE80211_VERIFY_LENGTH(efrm - frm, frm[1] + 2);
+
 		switch (*frm) {
 		case IEEE80211_ELEMID_RATES:
 			rates = frm;
@@ -2785,13 +2833,16 @@ ieee80211_recv_mgmt_assoc_resp(struct ieee80211com *ic, struct mbuf *m0,
 			/* XXX Atheros OUI support */
 			break;
 		}
+
 		frm += frm[1] + 2;
 	}
 
 	IEEE80211_VERIFY_ELEMENT(rates, IEEE80211_RATE_MAXSIZE);
+
 	rate = ieee80211_setup_rates(ni, rates, xrates,
-			IEEE80211_R_DOSORT | IEEE80211_R_DOFRATE |
-			IEEE80211_R_DONEGO | IEEE80211_R_DODEL);
+	    IEEE80211_R_DOSORT | IEEE80211_R_DOFRATE |
+	    IEEE80211_R_DONEGO | IEEE80211_R_DODEL);
+
 	if (rate & IEEE80211_RATE_BASIC) {
 		IEEE80211_DPRINTF(ic, IEEE80211_MSG_ASSOC,
 		    "[%s] %sassoc failed (rate set mismatch)\n",
@@ -2806,8 +2857,7 @@ ieee80211_recv_mgmt_assoc_resp(struct ieee80211com *ic, struct mbuf *m0,
 
 	ni->ni_capinfo = capinfo;
 	ni->ni_associd = associd;
-	if (wme != NULL &&
-	    ieee80211_parse_wmeparams(ic, wme, wh) >= 0) {
+	if (wme != NULL && ieee80211_parse_wmeparams(ic, wme, wh) >= 0) {
 		ni->ni_flags |= IEEE80211_NODE_QOS;
 		ieee80211_wme_updateparams(ic);
 	} else {
@@ -2838,10 +2888,11 @@ ieee80211_recv_mgmt_assoc_resp(struct ieee80211com *ic, struct mbuf *m0,
 	 * XXX check ic_curmode anyway?
 	 */
 	if (ic->ic_curmode == IEEE80211_MODE_11G &&
-	    (ni->ni_erp & IEEE80211_ERP_USE_PROTECTION))
+	    (ni->ni_erp & IEEE80211_ERP_USE_PROTECTION)) {
 		ic->ic_flags |= IEEE80211_F_USEPROT;
-	else
+	} else {
 		ic->ic_flags &= ~IEEE80211_F_USEPROT;
+	}
 
 	IEEE80211_DPRINTF(ic, IEEE80211_MSG_ASSOC,
 	    "[%s] %sassoc success: %s preamble, %s slot time%s%s\n",
@@ -3060,16 +3111,19 @@ ieee80211_node_pwrsave(struct ieee80211_node *ni, int enable)
 			ic->ic_set_tim(ni, 0);		/* just in case */
 		return;
 	}
+
 	IEEE80211_DPRINTF(ic, IEEE80211_MSG_POWER,
 	    "[%s] flush ps queue, %u packets queued\n",
 	    ether_snprintf(ebuf, sizeof(ebuf), ni->ni_macaddr),
 	    IEEE80211_NODE_SAVEQ_QLEN(ni));
+
 	for (;;) {
 		int qlen;
 
 		IEEE80211_NODE_SAVEQ_DEQUEUE(ni, m, qlen);
 		if (m == NULL)
 			break;
+
 		/*
 		 * If this is the last packet, turn off the TIM bit.
 		 * If there are more packets, set the more packets bit
@@ -3078,10 +3132,12 @@ ieee80211_node_pwrsave(struct ieee80211_node *ni, int enable)
 		 */
 		if (qlen != 0)
 			m->m_flags |= M_MORE_DATA;
+
 		/* XXX need different driver interface */
 		/* XXX bypasses q max */
 		IF_ENQUEUE(&ic->ic_ifp->if_snd, m);
 	}
+
 	if (ic->ic_set_tim != NULL)
 		ic->ic_set_tim(ni, 0);
 }
@@ -3090,8 +3146,8 @@ ieee80211_node_pwrsave(struct ieee80211_node *ni, int enable)
  * Process a received ps-poll frame.
  */
 static void
-ieee80211_recv_pspoll(struct ieee80211com *ic,
-	struct ieee80211_node *ni, struct mbuf *m0)
+ieee80211_recv_pspoll(struct ieee80211com *ic, struct ieee80211_node *ni,
+    struct mbuf *m0)
 {
 	struct ieee80211_frame_min *wh;
 	struct mbuf *m;
@@ -3102,7 +3158,7 @@ ieee80211_recv_pspoll(struct ieee80211com *ic,
 	wh = mtod(m0, struct ieee80211_frame_min *);
 	if (ni->ni_associd == 0) {
 		IEEE80211_DISCARD(ic, IEEE80211_MSG_POWER | IEEE80211_MSG_DEBUG,
-		    (struct ieee80211_frame *) wh, "ps-poll",
+		    (struct ieee80211_frame *)wh, "ps-poll",
 		    "%s", "unassociated station");
 		ic->ic_stats.is_ps_unassoc++;
 		IEEE80211_SEND_MGMT(ic, ni, IEEE80211_FC0_SUBTYPE_DEAUTH,
@@ -3113,7 +3169,7 @@ ieee80211_recv_pspoll(struct ieee80211com *ic,
 	aid = le16toh(*(u_int16_t *)wh->i_dur);
 	if (aid != ni->ni_associd) {
 		IEEE80211_DISCARD(ic, IEEE80211_MSG_POWER | IEEE80211_MSG_DEBUG,
-		    (struct ieee80211_frame *) wh, "ps-poll",
+		    (struct ieee80211_frame *)wh, "ps-poll",
 		    "aid mismatch: sta aid 0x%x poll aid 0x%x",
 		    ni->ni_associd, aid);
 		ic->ic_stats.is_ps_badaid++;
@@ -3134,6 +3190,7 @@ ieee80211_recv_pspoll(struct ieee80211com *ic,
 			ic->ic_set_tim(ni, 0);	/* just in case */
 		return;
 	}
+
 	/*
 	 * If there are more packets, set the more packets bit
 	 * in the packet dispatched to the station; otherwise
@@ -3151,6 +3208,7 @@ ieee80211_recv_pspoll(struct ieee80211com *ic,
 		if (ic->ic_set_tim != NULL)
 			ic->ic_set_tim(ni, 0);
 	}
+
 	m->m_flags |= M_PWR_SAV;		/* bypass PS handling */
 	IF_ENQUEUE(&ic->ic_ifp->if_snd, m);
 }
