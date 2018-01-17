@@ -1,4 +1,4 @@
-#	$NetBSD: std.integrator,v 1.18 2012/12/16 23:47:56 matt Exp $
+#	$NetBSD: std.integrator,v 1.19 2018/01/17 20:30:16 skrll Exp $
 #
 # standard NetBSD/integrator options
 
@@ -11,8 +11,6 @@ include		"arch/evbarm/conf/files.integrator"
 options 	EXEC_AOUT
 
 options 	_ARM32_NEED_BUS_DMA_BOUNCE
-
-#options 	ARM32_NEW_VM_LAYOUT	# Not yet ready for prime-time
 
 makeoptions	BOARDTYPE="integrator"
 makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.integrator"
