@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_xscale.S,v 1.23 2014/03/30 01:15:03 matt Exp $	*/
+/*	$NetBSD: cpufunc_asm_xscale.S,v 1.24 2018/01/17 02:37:32 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -78,7 +78,7 @@
 /*
  * Size of the XScale core D-cache.
  */
-#define	DCACHE_SIZE		0x00008000
+#define	XSCALE_DCACHE_SIZE		0x00008000
 
 .Lblock_userspace_access:
 	.word	_C_LABEL(block_userspace_access)
@@ -255,7 +255,7 @@ _C_LABEL(xscale_cache_clean_addr):
 
 	.global	_C_LABEL(xscale_cache_clean_size)
 _C_LABEL(xscale_cache_clean_size):
-	.word	DCACHE_SIZE
+	.word	XSCALE_DCACHE_SIZE
 
 	.global	_C_LABEL(xscale_minidata_clean_addr)
 _C_LABEL(xscale_minidata_clean_addr):
@@ -311,7 +311,7 @@ _C_LABEL(xscale_minidata_clean_size):
 	 * alternate between them whenever this is done.  No one knows	\
 	 * why the work-around works (mmm!).				\
 	 */								\
-	eor	r0, r0, #(DCACHE_SIZE)				;	\
+	eor	r0, r0, #(XSCALE_DCACHE_SIZE)			;	\
 	str	r0, [r2]					;	\
 	add	r0, r0, r1
 
