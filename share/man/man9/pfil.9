@@ -1,4 +1,4 @@
-.\"	$NetBSD: pfil.9,v 1.35 2016/06/01 08:17:47 wiz Exp $
+.\"	$NetBSD: pfil.9,v 1.36 2018/01/17 02:45:38 maya Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd June 1, 2016
+.Dd January 17, 2018
 .Dt PFIL 9
 .Os
 .Sh NAME
@@ -35,7 +35,11 @@
 .Nm pfil_hook_get ,
 .Nm pfil_add_hook ,
 .Nm pfil_remove_hook ,
-.Nm pfil_run_hooks
+.Nm pfil_run_hooks ,
+.Nm pfil_add_ihook ,
+.Nm pfil_remove_ihook ,
+.Nm pfil_run_addrhooks ,
+.Nm pfil_run_ifhooks
 .Nd packet filter interface
 .Sh SYNOPSIS
 .In sys/param.h
@@ -58,6 +62,16 @@
 .Fn (*func) "void *arg" "struct mbuf **mp" "struct ifnet *" "int dir"
 .Ft int
 .Fn pfil_run_hooks "struct pfil_head *ph" "struct mbuf **mp" "struct ifnet *ifp" "int dir"
+.Ft int
+.Fn pfil_add_ihook "void (*ifunc)()" "void *arg" "int flags" "struct pfil_head *ph"
+.Ft int
+.Fn pfil_remove_ihook "void (*ifunc)()" "void *arg" "int flags" "struct pfil_head *ph"
+.Ft void
+.Fn (*ifunc) "void *arg" "unsigned long cmd" "void *ptr"
+.Ft void
+.Fn pfil_run_addrhooks "struct pfil_head *ph" "unsigned long" "struct ifaddr *ifa"
+.Ft void
+.Fn pfil_run_ifhooks "struct pfil_head *ph" "unsigned long" "struct ifnet *ifp"
 .Sh DESCRIPTION
 The
 .Nm
@@ -120,22 +134,44 @@ and
 .Fn pfil_remove_hook
 functions, indicates when the filter should be called.
 The flags are:
-.Bl -tag -offset indent -width PFIL_WAITOK -compact
+.Bl -tag -offset indent -width PFIL_ALL -compact
 .It PFIL_IN
 call me on incoming packets
 .It PFIL_OUT
 call me on outgoing packets
 .It PFIL_ALL
 call me on all of the above
+.El
+.Pp
+By the same token, event handlers register/unregister themselves
+with the
+.Fn pfil_add_ihook
+and
+.Fn pfil_remove_ihook
+functions, respectively.
+The event handler is called with its specified argument, the event id
+.Dv ( PFIL_IFNET_ATTACH
+or
+.Dv PFIL_IFNET_DETACH ,
+see also below) or ioctl number, and the pointer
+to the network interface or the pointer to the ifaddr.
+.Pp
+The
+.Em flags
+parameter, used in the
+.Fn pfil_add_ihook
+and
+.Fn pfil_remove_ihook
+functions, indicates when the filter should be called.
+The flags are:
+.Bl -tag -offset indent -width PFIL_IFADDR -compact
 .It PFIL_IFADDR
-call me on interface reconfig (mbuf ** is ioctl #)
+call me on interface reconfig (cmd is ioctl #)
 .It PFIL_IFNET
-call me on interface attach/detach (mbuf ** is either
+call me on interface attach/detach (cmd is either
 .Dv PFIL_IFNET_ATTACH
 or
 .Dv PFIL_IFNET_DETACH )
-.It PFIL_WAITOK
-OK to call malloc with M_WAITOK.
 .El
 .Sh SEE ALSO
 .Xr bpf 4
@@ -171,6 +207,11 @@ In 1.5K, the
 .Nm
 framework was changed to work with an arbitrary number of filtering points,
 as well as be less IP-centric.
+.Pp
+.Fn pfil_add_ihook
+and
+.Fn pfil_remove_ihook
+were added in 8.0.
 .Sh AUTHORS
 .An -nosplit
 The
