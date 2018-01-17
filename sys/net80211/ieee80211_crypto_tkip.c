@@ -34,7 +34,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto_tkip.c,v 1.10 2005/08/08 18:46:35 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_tkip.c,v 1.12 2014/10/18 08:33:29 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_tkip.c,v 1.13 2018/01/17 17:41:38 maxv Exp $");
 #endif
 
 /*
@@ -175,17 +175,9 @@ tkip_encap(struct ieee80211_key *k, struct mbuf *m, u_int8_t keyid)
 		ic->ic_stats.is_crypto_tkipcm++;
 		return 0;
 	}
-	hdrlen = ieee80211_hdrspace(ic, mtod(m, void *));
 
-	/*
-	 * Copy down 802.11 header and add the IV, KeyID, and ExtIV.
-	 */
-	M_PREPEND(m, tkip.ic_header, M_NOWAIT);
-	if (m == NULL)
-		return 0;
-	ivp = mtod(m, u_int8_t *);
-	memmove(ivp, ivp + tkip.ic_header, hdrlen);
-	ivp += hdrlen;
+	hdrlen = ieee80211_hdrspace(ic, mtod(m, void *));
+	ivp = mtod(m, u_int8_t *) + hdrlen;
 
 	ivp[0] = k->wk_keytsc >> 8;		/* TSC1 */
 	ivp[1] = (ivp[0] | 0x20) & 0x7f;	/* WEP seed */
