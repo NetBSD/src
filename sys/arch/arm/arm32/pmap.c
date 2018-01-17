@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.361 2017/11/01 21:13:26 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.362 2018/01/17 20:30:16 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -217,7 +217,7 @@
 
 #include <arm/locore.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.361 2017/11/01 21:13:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.362 2018/01/17 20:30:16 skrll Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -6573,15 +6573,6 @@ pmap_postinit(void)
  * Note that the following routines are used by board-specific initialisation
  * code to configure the initial kernel page tables.
  *
- * If ARM32_NEW_VM_LAYOUT is *not* defined, they operate on the assumption that
- * L2 page-table pages are 4KB in size and use 4 L1 slots. This mimics the
- * behaviour of the old pmap, and provides an easy migration path for
- * initial bring-up of the new pmap on existing ports. Fortunately,
- * pmap_bootstrap() compensates for this hackery. This is only a stop-gap and
- * will be deprecated.
- *
- * If ARM32_NEW_VM_LAYOUT *is* defined, these functions deal with 1KB L2 page
- * tables.
  */
 
 /*
