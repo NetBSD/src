@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.555 2018/01/16 07:23:13 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.556 2018/01/17 02:16:07 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.555 2018/01/16 07:23:13 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.556 2018/01/17 02:16:07 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -417,6 +417,7 @@ struct wm_rxqueue {
 	uint32_t rxq_bytes;		/* for AIM */
 #ifdef WM_EVENT_COUNTERS
 	WM_Q_EVCNT_DEFINE(rxq, rxintr);		/* Rx interrupts */
+	WM_Q_EVCNT_DEFINE(rxq, rxdefer);	/* Rx deferred processing */
 
 	WM_Q_EVCNT_DEFINE(rxq, rxipsum);	/* IP checksums checked in-bound */
 	WM_Q_EVCNT_DEFINE(rxq, rxtusum);	/* TCP/UDP cksums checked in-bound */
@@ -6456,6 +6457,7 @@ wm_alloc_txrx_queues(struct wm_softc *sc)
 		xname = device_xname(sc->sc_dev);
 
 		WM_Q_INTR_EVCNT_ATTACH(rxq, rxintr, rxq, i, xname);
+		WM_Q_INTR_EVCNT_ATTACH(rxq, rxdefer, rxq, i, xname);
 
 		WM_Q_INTR_EVCNT_ATTACH(rxq, rxipsum, rxq, i, xname);
 		WM_Q_INTR_EVCNT_ATTACH(rxq, rxtusum, rxq, i, xname);
@@ -6506,6 +6508,7 @@ wm_free_txrx_queues(struct wm_softc *sc)
 
 #ifdef WM_EVENT_COUNTERS
 		WM_Q_EVCNT_DETACH(rxq, rxintr, rxq, i);
+		WM_Q_EVCNT_DETACH(rxq, rxdefer, rxq, i);
 		WM_Q_EVCNT_DETACH(rxq, rxipsum, rxq, i);
 		WM_Q_EVCNT_DETACH(rxq, rxtusum, rxq, i);
 #endif /* WM_EVENT_COUNTERS */
@@ -9021,7 +9024,7 @@ wm_handle_queue(void *arg)
 		mutex_exit(rxq->rxq_lock);
 		return;
 	}
-	WM_Q_EVCNT_INCR(rxq, rxintr);
+	WM_Q_EVCNT_INCR(rxq, rxdefer);
 	wm_rxeof(rxq, limit);
 	mutex_exit(rxq->rxq_lock);
 
