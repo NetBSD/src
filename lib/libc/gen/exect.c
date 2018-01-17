@@ -1,4 +1,4 @@
-/*	$NetBSD: exect.c,v 1.2 2018/01/05 19:01:36 kamil Exp $	*/
+/*	$NetBSD: exect.c,v 1.3 2018/01/17 01:24:29 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -28,10 +28,9 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: exect.c,v 1.2 2018/01/05 19:01:36 kamil Exp $");
+__RCSID("$NetBSD: exect.c,v 1.3 2018/01/17 01:24:29 kamil Exp $");
 #endif
 
-#include "namespace.h"
 #include <unistd.h>
 
 __warn_references(exect,
