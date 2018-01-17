@@ -1,4 +1,4 @@
-.\" $NetBSD: veriexec.8,v 1.7 2017/09/13 22:24:42 sevan Exp $
+.\" $NetBSD: veriexec.8,v 1.8 2018/01/17 12:49:06 sevan Exp $
 .\"
 .\" Copyright (c) 2008 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -65,8 +65,11 @@ below), this list can be loaded manually using
 .Ed
 .Ss Kernel Configuration
 .Em Veriexec
-requires a pseudo-device to run:
+requires a kernel with
+.Xr fileassoc 9
+support and a pseudo-device to run:
 .Bd -literal -offset indent
+options FILEASSOC
 pseudo-device veriexec
 .Ed
 .Pp
