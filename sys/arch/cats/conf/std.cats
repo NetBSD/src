@@ -1,4 +1,4 @@
-#	$NetBSD: std.cats,v 1.9 2012/09/21 14:22:37 matt Exp $
+#	$NetBSD: std.cats,v 1.10 2018/01/17 20:30:16 skrll Exp $
 #
 # standard NetBSD/cats options
 
@@ -13,7 +13,5 @@ options 	EXEC_ELF32
 # To support easy transit to ../arch/arm/arm32
 options 	ARM32
 options 	_ARM32_NEED_BUS_DMA_BOUNCE
-
-#options 	ARM32_NEW_VM_LAYOUT	# Not yet supported
 
 options 	ARM_INTR_IMPL="<arm/footbridge/footbridge_intr.h>"
