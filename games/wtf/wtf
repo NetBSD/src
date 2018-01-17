@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: wtf,v 1.21 2015/04/21 23:56:30 christos Exp $
+#	$NetBSD: wtf,v 1.22 2018/01/17 03:03:59 pgoyette Exp $
 #
 # Public domain
 #
@@ -30,7 +30,9 @@ done
 shift "$(expr "$OPTIND" - 1)"
 
 if [ "$1" = "is" ]; then
-	shift
+	if [ $# -gt 1 ] ; then
+		shift
+	fi
 fi
 
 if [ -z "$1" ]; then
