@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.251 2018/01/16 08:23:17 mrg Exp $ */
+/*	$NetBSD: cpu.c,v 1.252 2018/01/17 07:38:20 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.251 2018/01/16 08:23:17 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.252 2018/01/17 07:38:20 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -1187,7 +1187,7 @@ getcacheinfo_sun4(struct cpu_info *sc, int node)
 		ci->c_l2linesize = 4;
 		ci->c_split = 0;
 		ci->c_nlines = ci->c_totalsize >> ci->c_l2linesize;
-		sc->flags |= CPUFLG_SUN4CACHEBUG;
+		sc->cacheinfo.c_flags |= CACHE_TRAPPAGEBUG;
 		break;
 	case CPUTYP_4_400:
 		ci->c_vactype = VAC_WRITEBACK;
@@ -1321,7 +1321,7 @@ getcacheinfo_sun4c(struct cpu_info *sc, int node)
 	 * mysterious buserr-type variable....)
 	 */
 	if (prom_getpropint(node, "buserr-type", 0) == 1)
-		sc->flags |= CPUFLG_SUN4CACHEBUG;
+		sc->cacheinfo.c_flags |= CACHE_TRAPPAGEBUG;
 }
 #endif /* SUN4C */
 
