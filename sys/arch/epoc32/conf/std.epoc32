@@ -1,4 +1,4 @@
-#	$NetBSD: std.epoc32,v 1.1 2013/04/28 12:11:25 kiyohara Exp $
+#	$NetBSD: std.epoc32,v 1.2 2018/01/17 20:30:16 skrll Exp $
 #
 # standard NetBSD/epoc32 options
 
@@ -15,7 +15,5 @@ options 	ARM32
 
 makeoptions	KERNEL_BASE_PHYS="0xc0030000"
 makeoptions	LOADADDRESS="0xc0030000"
-
-#options 	ARM32_NEW_VM_LAYOUT     # Not yet ready for prime-time
 
 options 	ARM_INTR_IMPL="<machine/intr.h>"
