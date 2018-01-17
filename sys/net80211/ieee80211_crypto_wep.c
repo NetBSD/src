@@ -34,7 +34,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto_wep.c,v 1.7 2005/06/10 16:11:24 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_wep.c,v 1.9 2016/10/09 14:50:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_wep.c,v 1.10 2018/01/17 17:41:38 maxv Exp $");
 #endif
 
 /*
@@ -132,16 +132,7 @@ wep_encap(struct ieee80211_key *k, struct mbuf *m, u_int8_t keyid)
 	int hdrlen;
 
 	hdrlen = ieee80211_hdrspace(ic, mtod(m, void *));
-
-	/*
-	 * Copy down 802.11 header and add the IV + KeyID.
-	 */
-	M_PREPEND(m, wep.ic_header, M_NOWAIT);
-	if (m == NULL)
-		return 0;
-	ivp = mtod(m, u_int8_t *);
-	ovbcopy(ivp + wep.ic_header, ivp, hdrlen);
-	ivp += hdrlen;
+	ivp = mtod(m, u_int8_t *) + hdrlen;
 
 	/*
 	 * XXX
