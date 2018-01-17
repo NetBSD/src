@@ -1,4 +1,4 @@
-# $NetBSD: t_statvfs.sh,v 1.4 2010/11/07 17:51:18 jmmv Exp $
+# $NetBSD: t_statvfs.sh,v 1.5 2018/01/17 00:23:17 maya Exp $
 #
 # Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -38,7 +38,7 @@ values_head() {
 values_body() {
 	test_mount -o -s10M
 
-	pagesize=$(sysctl hw.pagesize | cut -d ' ' -f 3)
+	pagesize=$(sysctl -n hw.pagesize)
 	eval $($(atf_get_srcdir)/h_tools statvfs .)
 	[ ${pagesize} -eq ${f_bsize} ] || \
 	    atf_fail "Invalid bsize"

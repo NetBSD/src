@@ -1,4 +1,4 @@
-# $NetBSD: t_vnode_leak.sh,v 1.6 2010/11/07 17:51:18 jmmv Exp $
+# $NetBSD: t_vnode_leak.sh,v 1.7 2018/01/17 00:23:17 maya Exp $
 #
 # Copyright (c) 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -36,7 +36,7 @@ main_head() {
 }
 main_body() {
 	echo "Lowering kern.maxvnodes to 2000"
-	sysctl kern.maxvnodes | awk '{ print $3; }' >oldvnodes
+	sysctl -n kern.maxvnodes >oldvnodes
 	atf_check -s eq:0 -o ignore -e empty sysctl -w kern.maxvnodes=2000
 
 	test_mount -o -s$(((4000 + 2) * 4096))
