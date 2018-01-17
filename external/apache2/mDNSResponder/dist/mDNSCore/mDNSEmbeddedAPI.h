@@ -2602,7 +2602,7 @@ extern mDNSu8 NumUnreachableDNSServers;
 
 #if (defined(_MSC_VER))
     #define mDNSinline static __inline
-#elif ((__GNUC__ > 2) || ((__GNUC__ == 2) && (__GNUC_MINOR__ >= 9)))
+#elif ((__GNUC__ > 2) || ((__GNUC__ == 2) && (__GNUC_MINOR__ >= 9))) || defined(__lint__)
     #define mDNSinline static inline
 #endif
 
@@ -3562,6 +3562,7 @@ extern int MD5_Final(unsigned char *md, MD5_CTX *c);
 
 struct CompileTimeAssertionChecks_mDNS
 {
+#ifndef __lint__
     // Check that the compiler generated our on-the-wire packet format structure definitions
     // properly packed, without adding padding bytes to align fields on 32-bit or 64-bit boundaries.
     char assert0[(sizeof(rdataSRV)         == 262                          ) ? 1 : -1];
@@ -3612,6 +3613,7 @@ struct CompileTimeAssertionChecks_mDNS
     char sizecheck_DomainAuthInfo      [(sizeof(DomainAuthInfo)       <=  7888) ? 1 : -1];
 #if APPLE_OSX_mDNSResponder
     char sizecheck_ClientTunnel        [(sizeof(ClientTunnel)         <=  1256) ? 1 : -1];
+#endif
 #endif
 };
 
