@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.417 2017/11/07 18:36:27 christos Exp $
+#       $NetBSD: Makefile,v 1.418 2018/01/17 02:45:38 maya Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -663,10 +663,14 @@ MLINKS+=percpu.9 percpu_alloc.9 \
 MLINKS+=pfil.9 pfil_hook_get.9 \
 	pfil.9 pfil_add_hook.9 \
 	pfil.9 pfil_remove_hook.9 \
+	pfil.9 pfil_add_ihook.9 \
+	pfil.9 pfil_remove_ihook.9 \
 	pfil.9 pfil_head_register.9 \
 	pfil.9 pfil_head_unregister.9 \
 	pfil.9 pfil_head_get.9 \
-	pfil.9 pfil_run_hooks.9
+	pfil.9 pfil_run_hooks.9 \
+	pfil.9 pfil_run_addrhooks.9 \
+	pfil.9 pfil_run_ifhooks.9
 MLINKS+=pmap.9 pmap_init.9 \
 	pmap.9 pmap_virtual_space.9 \
 	pmap.9 pmap_steal_memory.9 \
