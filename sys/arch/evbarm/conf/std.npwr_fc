@@ -1,4 +1,4 @@
-#	$NetBSD: std.npwr_fc,v 1.6 2012/12/16 23:47:56 matt Exp $
+#	$NetBSD: std.npwr_fc,v 1.7 2018/01/17 20:30:16 skrll Exp $
 #
 # standard NetBSD/evbarm for IQ80321 options
 
@@ -9,8 +9,6 @@ include 	"arch/evbarm/conf/std.evbarm"
 include		"arch/evbarm/conf/files.npwr_fc"
 
 options 	EXEC_AOUT
-
-#options 	ARM32_NEW_VM_LAYOUT	# Not yet ready for prime-time
 
 options         KERNEL_BASE_EXT=0xc0000000
 makeoptions	BOARDTYPE="iq80321"

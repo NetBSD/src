@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.56 2017/06/30 08:10:50 skrll Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.57 2018/01/17 20:30:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott K. Stevens
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.56 2017/06/30 08:10:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.57 2018/01/17 20:30:16 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -203,11 +203,7 @@ db_validate_address(vaddr_t addr)
 	struct pmap *pmap;
 
 	if (!p || !p->p_vmspace || !p->p_vmspace->vm_map.pmap ||
-#ifndef ARM32_NEW_VM_LAYOUT
-	    addr >= VM_MAXUSER_ADDRESS
-#else
 	    addr >= VM_MIN_KERNEL_ADDRESS
-#endif
 	   )
 		pmap = pmap_kernel();
 	else
