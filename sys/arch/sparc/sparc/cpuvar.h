@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.96 2018/01/17 02:39:16 christos Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.97 2018/01/17 07:38:20 mrg Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -157,7 +157,6 @@ struct module_info {
 #define CPUFLG_HATCHED		0x1000	/* CPU is alive */
 #define CPUFLG_PAUSED		0x2000	/* CPU is paused */
 #define CPUFLG_GOTMSG		0x4000	/* CPU got an lev13 IPI */
-#define CPUFLG_SUN4CACHEBUG	0x8000	/* CPU has the sun4 cache bug */
 
 
 /*
