@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1493 2018/01/14 20:07:02 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1494 2018/01/17 17:22:14 mlelstv Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1726,3 +1726,329 @@ Mailing List:	mailto:devicetree@vger.kernel.org
 Responsible:	jmcneill
 License:	GPLv2 and dual GPLv2/X11 license
 Location:	sys/external/gpl2/dts
+
+Package:	iscsi
+Version:	4.12.4
+Current Vers:	4.12.4
+Maintainer:	Intel Corporation
+Archive Site:
+Home Page:
+Mailing List:
+Responsible:
+License:	BSD-like (4-clause)
+Location:	external/bsd/iscsi
+Notes:
+
+Package:	rpi-firmware
+Version:	
+Current Vers:	
+Maintainer:	
+Archive Site:
+Home Page:
+Mailing List:
+License:	Broadcom, Raspberry Pi (Trading) Ltd
+Responsible:	
+Location:	external/broadcom/rpi-firmware
+Notes:
+
+Package:	rtwn
+Version:	
+Current Vers:	
+Maintainer:	
+Archive Site:
+Home Page:
+Mailing List:
+License:	Realtek Semiconductor Corporation
+Responsible:	
+Location:	external/realtek/rtwn
+Notes:
+
+Package:	urtwn
+Version:	
+Current Vers:	
+Maintainer:	
+Archive Site:
+Home Page:
+Mailing List:
+License:	Realtek Semiconductor Corporation
+Responsible:	
+Location:	external/realtek/urtwn/
+Notes:
+
+Package:	repulse
+Version:	
+Current Vers:	
+Maintainer:	
+Archive Site:
+Home Page:
+Mailing List:
+License:	ALiENDESiGN GbR
+Responsible:	
+Location:	sys/arch/amiga/dev/repulse_firmware.h
+Notes:
+
+Package:	cxgb
+Version:	
+Current Vers:	
+Maintainer:	
+Archive Site:
+Home Page:
+Mailing List:
+License:	Chelsio Inc.
+Responsible:	
+Location:	sys/dev/pci/cxgb/cxgb_firmware_exports.h
+Notes:
+
+Package:	athn
+Version:	
+Current Vers:	
+Maintainer:	
+Archive Site:
+Home Page:
+Mailing List:
+License:	Atheros Communicatios, Inc.
+Responsible:	
+Location:	external/atheros/athn
+Notes:
+
+Package:	otus
+Version:	
+Current Vers:	
+Maintainer:	
+Archive Site:
+Home Page:
+Mailing List:
+License:	Atheros Communicatios, Inc.
+Responsible:	
+Location:	external/atheros/otus
+Notes:
+
+Package:	intel-fw-eula
+Version:	
+Current Vers:	
+Maintainer:	
+Archive Site:
+Home Page:
+Mailing List:
+License:	Intel Corporation
+Responsible:	
+Location:	external/intel-fw-eula
+Notes:
+
+Package:	intel-fw-public
+Version:	
+Current Vers:	
+Maintainer:
+Archive Site:
+Home Page:
+Mailing List:
+License:	Intel Corporation
+Responsible:	
+Location:	external/intel-fw-public
+Notes:
+
+Package:	aic7xxx
+Version:	
+Current Vers:	
+Maintainer:	Justin T. Gibbs
+Archive Site:
+Home Page:
+Mailing List:
+License:	Adaptec Inc or LGPL2
+Responsible:	
+Location:	sys/dev/microcode/aic7xxx
+Notes:
+
+Package:	atmel
+Version:	
+Current Vers:	
+Maintainer:	
+Archive Site:
+Home Page:
+Mailing List:
+License:	Atmel Corporation
+Responsible:	
+Location:	sys/dev/microcode/atmel
+Notes:
+
+Package:	bge
+Version:	
+Current Vers:	
+Maintainer:	
+Archive Site:
+Home Page:
+Mailing List:
+License:	Broadcom Corporation
+Responsible:	
+Location:	sys/dev/microcode/bge
+Notes:
+
+Package:	bnx
+Version:	
+Current Vers:	
+Maintainer:	David Christensen <davidch@broadcom.com>
+Archive Site:
+Home Page:
+Mailing List:
+License:	Broadcom Corporation
+Responsible:	
+Location:	sys/dev/microcode/bnx
+Notes:
+
+Package:	cylades-z
+Version:	
+Current Vers:	
+Maintainer:	Cyclades Corp
+Archive Site:
+Home Page:
+Mailing List:
+License:	unknown
+Responsible:	
+Location:	sys/dev/microcode/cyclades-z
+Notes:
+
+Package:	i8255x
+Version:	3.28
+Current Vers:	
+Maintainer:	Patrick J Luhmann (PJL)
+Archive Site:
+Home Page:
+Mailing List:
+License:	Intel Corporation
+Responsible:	
+Location:	sys/dev/microcode/i8255x
+Notes:
+
+Package:	isp
+Version:	
+Current Vers:	
+Maintainer:	
+Archive Site:
+Home Page:
+Mailing List:
+License:	QLogic, Inc.
+Responsible:	
+Location:	sys/dev/microcode/isp
+Notes:
+
+Package:	radeon
+Version:	
+Current Vers:	
+Maintainer:	
+Archive Site:
+Home Page:
+Mailing List:
+License:	Advanced Micro Devices, Inc.
+Responsible:	
+Location:	sys/dev/microcode/radeon
+Notes:
+
+Package:	ral
+Version:	
+Current Vers:	
+Maintainer:
+Archive Site:	http://git.kernel.org/?p=linux/kernel/git/firmware/linux-firmware.git
+Home Page:
+Mailing List:
+License:	Ralink Technology Corp
+Responsible:	
+Location:	external/realtek/ral
+Notes:
+
+Package:	rum
+Version:	
+Current Vers:	
+Maintainer:	Paul Lin <paul_lin@ralinktech.com.tw>
+Archive Site:
+Home Page:
+Mailing List:
+License:	Ralink Technology Corp
+Responsible:	
+Location:	external/realtek/rum
+Notes:
+
+Package:	run
+Version:	
+Current Vers:	
+Maintainer:	Paul Lin <paul_lin@ralinktech.com.tw>
+Archive Site:
+Home Page:
+Mailing List:
+License:	Ralink Technology Corp
+Responsible:	
+Location:	sys/dev/microcode/run
+Notes:
+
+Package:	siop
+Version:	
+Current Vers:	
+Maintainer:	Manuel Bouyer, Shuichiro URATA, Michael L. Hitch
+Archive Site:
+Home Page:
+Mailing List:
+License:	BSD-like (2-clause, 3-clause)
+Responsible:	
+Location:	sys/dev/microcode/siop
+Notes:
+
+Package:	tigon
+Version:	12.4.11
+Current Vers:
+Maintainer:	wpaul@brak.osd.bsdi.com
+Archive Site:
+Home Page:
+Mailing List:
+License:	unknown
+Responsible:	
+Location:	sys/dev/microcode/tigon
+Notes:
+Is also distributed by FreeBSD.
+
+Package:	typhoon
+Version:	
+Current Vers:	
+Maintainer:	3Com Corporation
+Archive Site:
+Home Page:
+Mailing List:
+License:	BSD-like (3-clause)
+Responsible:	
+Location:	sys/dev/microcode/typhoon
+Notes:
+
+Package:	wi
+Version:	
+Current Vers:	
+Maintainer:	Symbol Technologies Inc.
+Archive Site:
+Home Page:	http://www.symbol.com
+Mailing List:
+License:	BSD-like (3-clause)
+Responsible:	
+Location:	sys/dev/microcode/wi
+Notes:
+
+Package:	yds
+Version:	
+Current Vers:	
+Maintainer:	Yamaha Corporation
+Archive Site:
+Home Page:
+Mailing List:
+License:	unknown
+Responsible:	
+Location:	sys/dev/microcode/yds
+Notes:
+
+Package:	zyd
+Version:	
+Current Vers:	
+Maintainer:	ZyDAS Technology Corporation
+Archive Site:
+Home Page:
+Mailing List:
+License:	BSD-like (3-clause)
+Responsible:	
+Location:	sys/dev/microcode/zyd
+Notes:
+
