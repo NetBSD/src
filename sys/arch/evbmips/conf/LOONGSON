@@ -1,4 +1,4 @@
-# $NetBSD: LOONGSON,v 1.35 2017/09/14 07:58:40 mrg Exp $
+# $NetBSD: LOONGSON,v 1.36 2018/01/18 23:17:09 maya Exp $
 #
 # LOONGSON machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/evbmips/conf/std.loongson"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"LOONGSON-$Revision: 1.35 $"
+#ident 		"LOONGSON-$Revision: 1.36 $"
 
 maxusers	16
 
@@ -176,10 +176,20 @@ stvii*		at iic? addr 0x40		# GDIUM's onboard microcontroller
 lynxfb0		at pci0 dev ? function ?	# SM712 on Yeeloong Notebook
 #genfb0		at pci0 dev ? function ?
 wsdisplay*	at wsemuldisplaydev?
+
 ehci*		at pci0 dev ? function ?
 #options 	EHCI_DEBUG
 ohci*		at pci0 dev ? function ?
 #options 	OHCI_DEBUG, USB_DEBUG, UHUB_DEBUG
+
+# USB
+usb*	at ehci?
+usb*	at ohci?
+
+include "dev/usb/usbdevices.config"
+midi*		at midibus?
+
+options		GDIUM_KEYBOARD_HACK	# support Fn key on Gdium
 
 gcscpcib*	at pci? dev ? function ?	# AMD CS5535/CS5536 PCI-ISA w/
 gpio*		at gcscpcib?			# timecounter, watchdog and GPIO
@@ -245,62 +255,6 @@ re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
 rgephy*	at mii? phy ?			# Realtek 8169S/8110S internal PHYs
 rlphy*	at mii? phy ?			# Realtek 8139/8201L PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
-
-# USB Hubs
-usb*	at ehci?
-usb*	at ohci?
-uhub*	at usb?
-uhub*	at uhub? port ?
-
-# USB HID device
-uhidev*	at uhub? port ? configuration ? interface ?
-
-# USB Mice
-ums*		at uhidev? reportid ?
-wsmouse*	at ums? mux 0
-
-# USB Keyboards
-ukbd*	at uhidev? reportid ?
-wskbd*	at ukbd? console ? mux 1
-options	GDIUM_KEYBOARD_HACK	# support Fn key on Gdium
-
-# USB Generic HID devices
-uhid*	at uhidev? reportid ?
-
-# USB serial adapter
-uftdi*	at uhub? port ? configuration ?
-
-# USB Printer
-ulpt*	at uhub? port ? configuration ? interface ?
-
-# USB Modem
-umodem*	at uhub? port ? configuration ?
-ucom*	at umodem?
-
-# Option N.V. Wireless WAN modems
-uhso*	at uhub? port ? configuration ?
-
-# USB Mass Storage
-umass*	at uhub? port ? configuration ? interface ?
-scsibus*	at umass? channel ?
-sd*		at scsibus? target ? lun ?	# SCSI disk drives
-cd*		at scsibus? target ? lun ?	# SCSI CD-ROM drives
-
-# FTDI FT8U100AX serial adapter
-uftdi*	at uhub? port ?
-ucom*	at uftdi? portno ?
-
-uplcom*	at uhub? port ?		# I/O DATA USB-RSAQ2 serial adapter
-ucom*	at uplcom? portno ?
-
-umct*	at uhub? port ?		# MCT USB-RS232 serial adapter
-ucom*	at umct? portno ?
-
-# Realtek RTL8187/RTL8187B 802.11b/g USB wireless adapter
-urtw*	at uhub? port ?
-
-# USB Generic driver
-ugen*	at uhub? port ?
 
 #
 # accept filters
