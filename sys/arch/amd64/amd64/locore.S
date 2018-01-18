@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.146 2018/01/11 09:00:04 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.147 2018/01/18 07:25:34 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1112,7 +1112,11 @@ ENTRY(cpu_switchto)
 	jnz	.Lswitch_return
 
 	/* Switch ring0 stack */
-#ifndef XEN
+#ifdef SVS
+	movq	CPUVAR(RSP0),%rax
+	movq	CPUVAR(TSS),%rdi
+	movq	%rax,TSS_RSP0(%rdi)
+#elif !defined(XEN)
 	movq	PCB_RSP0(%r14),%rax
 	movq	CPUVAR(TSS),%rdi
 	movq	%rax,TSS_RSP0(%rdi)
@@ -1268,14 +1272,20 @@ IDTVEC(syscall)
 	 * is ignored as well.
 	 */
 	swapgs
-	SVS_ENTER_NOSTACK
+
+#ifdef SVS
+	movq	%rax,SVS_UTLS+UTLS_SCRATCH
+	movq	SVS_UTLS+UTLS_RSP0,%rax
+#define SP(x)	(x)-(TF_SS+8)(%rax)
+#else
 	movq	%r15,CPUVAR(SCRATCH)
 	movq	CPUVAR(CURLWP),%r15
 	movq	L_PCB(%r15),%r15
 	movq	PCB_RSP0(%r15),%r15	/* LWP's kernel stack pointer */
+#define SP(x)	(x)-(TF_SS+8)(%r15)
+#endif
 
 	/* Make stack look like an 'int nn' frame */
-#define SP(x)	(x)-(TF_SS+8)(%r15)
 	movq	$(LSEL(LUDATA_SEL, SEL_UPL)),SP(TF_SS)	/* user %ss */
 	movq	%rsp,SP(TF_RSP)				/* user %rsp */
 	movq	%r11,SP(TF_RFLAGS)			/* user %rflags */
@@ -1283,8 +1293,11 @@ IDTVEC(syscall)
 	movq	%rcx,SP(TF_RIP)				/* user %rip */
 
 	leaq	SP(0),%rsp		/* %rsp now valid after frame */
+#ifdef SVS
+	movq	SVS_UTLS+UTLS_SCRATCH,%rax
+#else
 	movq	CPUVAR(SCRATCH),%r15
-#undef SP
+#endif
 
 	movq	$2,TF_ERR(%rsp)		/* syscall instruction size */
 	movq	$T_ASTFLT,TF_TRAPNO(%rsp)
@@ -1301,6 +1314,7 @@ IDTVEC(syscall)
 	movw	$GSEL(GUDATA_SEL, SEL_UPL),TF_ES(%rsp)
 	movw	$0,TF_FS(%rsp)
 	movw	$0,TF_GS(%rsp)
+	SVS_ENTER
 	STI(si)
 
 .Ldo_syscall:
@@ -1339,8 +1353,8 @@ IDTVEC(syscall)
 	testl	$(MDL_IRET|MDL_COMPAT32),L_MD_FLAGS(%r14)
 	jnz	intrfastexit
 
-	INTR_RESTORE_GPRS
 	SVS_LEAVE
+	INTR_RESTORE_GPRS
 	SWAPGS
 #ifndef XEN
 	movq	TF_RIP(%rsp),%rcx	/* %rip for sysret */
@@ -1483,6 +1497,8 @@ ENTRY(pagezero)
 END(pagezero)
 
 ENTRY(intrfastexit)
+	NOT_XEN(cli;)
+	SVS_LEAVE
 	INTR_RESTORE_GPRS
 	testw	$SEL_UPL,TF_CS(%rsp)	/* interrupted %cs */
 	jz	.Lkexit
@@ -1513,7 +1529,6 @@ do_mov_gs:
 
 .Luexit64:
 	NOT_XEN(cli;)
-	SVS_LEAVE
 	SWAPGS
 
 .Lkexit:
