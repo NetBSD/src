@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.62 2017/07/02 16:16:44 skrll Exp $	*/
+/*	$NetBSD: syscall.c,v 1.63 2018/01/18 14:18:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.62 2017/07/02 16:16:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.63 2018/01/18 14:18:23 skrll Exp $");
 
 #include <sys/cpu.h>
 #include <sys/device.h>
@@ -214,8 +214,9 @@ syscall(struct trapframe *tf, lwp_t *l, uint32_t insn)
 	/* test new official and old unofficial NetBSD ranges */
 	if (__predict_false(os_mask != SWI_OS_NETBSD)
 	    && __predict_false(os_mask != 0)) {
-		if (os_mask == SWI_OS_ARM
-		    && (code == SWI_IMB || code == SWI_IMBrange)) {
+
+		const uint32_t swi = __SHIFTOUT(insn, __BITS(23,0));
+		if (swi == SWI_IMB || swi == SWI_IMBrange) {
 			userret(l);
 			return;
 		}
