@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_compat50.c,v 1.2 2009/05/02 21:11:26 oster Exp $	*/
+/*	$NetBSD: rf_compat50.c,v 1.3 2018/01/18 00:32:49 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@ rf_disk_to_disk50(RF_RaidDisk50_t *d50, const RF_RaidDisk_t *d)
 {
         memcpy(d50->devname, d->devname, sizeof(d50->devname));
         d50->status = d->status;
-        d50->spareRow = d->spareRow;
+        d50->spareRow = 0;
         d50->spareCol = d->spareCol;
         d50->numBlocks = d->numBlocks;
         d50->blockSize = d->blockSize;
@@ -134,7 +134,6 @@ rf_config50(RF_Raid_t *raidPtr, int unit, void *data, RF_Config_t **k_cfgp)
 		return ENOMEM;
 	}
 
-	k_cfg->numRow = k50_cfg->numRow;
 	k_cfg->numCol = k50_cfg->numCol;
 	k_cfg->numSpare = k50_cfg->numSpare;
 
@@ -191,12 +190,16 @@ rf_get_info50(RF_Raid_t *raidPtr, void *data)
 	d_cfg->rows = 1; /* there is only 1 row now */
 	d_cfg->cols = raidPtr->numCol;
 	d_cfg->ndevs = raidPtr->numCol;
-	if (d_cfg->ndevs >= RF_MAX_DISKS)
-		goto nomem;
+	if (d_cfg->ndevs >= RF_MAX_DISKS) {
+		error = ENOMEM;
+		goto out;
+	}
 
 	d_cfg->nspares = raidPtr->numSpare;
-	if (d_cfg->nspares >= RF_MAX_DISKS)
-		goto nomem;
+	if (d_cfg->nspares >= RF_MAX_DISKS) {
+		error = ENOMEM;
+		goto out;
+	}
 
 	d_cfg->maxqdepth = raidPtr->maxQueueDepth;
 	for (j = 0; j < d_cfg->cols; j++)
@@ -206,10 +209,8 @@ rf_get_info50(RF_Raid_t *raidPtr, void *data)
 		rf_disk_to_disk50(&d_cfg->spares[i], &raidPtr->Disks[j]);
 
 	error = copyout(d_cfg, *ucfgp, sizeof(RF_DeviceConfig50_t));
-	RF_Free(d_cfg, sizeof(RF_DeviceConfig50_t));
 
+out:
+	RF_Free(d_cfg, sizeof(RF_DeviceConfig50_t));
 	return error;
-nomem:
-	RF_Free(d_cfg, sizeof(RF_DeviceConfig_t));
-	return ENOMEM;
 }
