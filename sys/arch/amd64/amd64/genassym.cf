@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.66 2018/01/07 16:47:22 christos Exp $
+#	$NetBSD: genassym.cf,v 1.67 2018/01/18 07:25:34 maxv Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -239,6 +239,9 @@ define	CPU_INFO_TSS		offsetof(struct cpu_info, ci_tss)
 ifdef SVS
 define	CPU_INFO_UPDIRPA	offsetof(struct cpu_info, ci_svs_updirpa)
 define	CPU_INFO_KPDIRPA	offsetof(struct cpu_info, ci_svs_kpdirpa)
+define	CPU_INFO_RSP0		offsetof(struct cpu_info, ci_svs_rsp0)
+define	CPU_INFO_URSP0		offsetof(struct cpu_info, ci_svs_ursp0)
+define	CPU_INFO_KRSP0		offsetof(struct cpu_info, ci_svs_krsp0)
 endif
 define	CPU_INFO_NSYSCALL	offsetof(struct cpu_info, ci_data.cpu_nsyscall)
 define	CPU_INFO_NTRAP		offsetof(struct cpu_info, ci_data.cpu_ntrap)

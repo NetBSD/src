@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.290 2018/01/12 09:12:01 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.291 2018/01/18 07:25:34 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.290 2018/01/12 09:12:01 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.291 2018/01/18 07:25:34 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -2265,9 +2265,15 @@ mm_md_direct_mapped_phys(paddr_t paddr, vaddr_t *vaddr)
  *     PTE Space         [OK]
  *     Direct Map        [OK]
  *     Remote PCPU Areas [OK]
- *     Kernel Heap       [TODO]
+ *     Kernel Heap       [OK]
  *     Kernel Image      [TODO]
  */
+
+struct svs_utls {
+	paddr_t kpdirpa;
+	uint64_t scratch;
+	vaddr_t rsp0;
+};
 
 static pd_entry_t *
 svs_tree_add(struct cpu_info *ci, vaddr_t va)
@@ -2334,6 +2340,84 @@ svs_page_add(struct cpu_info *ci, vaddr_t va)
 }
 
 static void
+svs_rsp0_init(struct cpu_info *ci)
+{
+	const cpuid_t cid = cpu_index(ci);
+	vaddr_t va, rsp0;
+	pd_entry_t *pd;
+	size_t pidx;
+
+	rsp0 = (vaddr_t)&pcpuarea->ent[cid].rsp0;
+
+	/* The first page is a redzone. */
+	va = rsp0 + PAGE_SIZE;
+
+	/* Create levels L4, L3 and L2. */
+	pd = svs_tree_add(ci, va);
+
+	/* Get the info for L1. */
+	pidx = pl1_i(va % NBPD_L2);
+	if (pmap_valid_entry(pd[pidx])) {
+		panic("%s: rsp0 page already mapped", __func__);
+	}
+
+	ci->ci_svs_rsp0_pte = (pt_entry_t *)&pd[pidx];
+	ci->ci_svs_rsp0 = rsp0 + PAGE_SIZE + sizeof(struct trapframe);
+	ci->ci_svs_ursp0 = ci->ci_svs_rsp0 - sizeof(struct trapframe);
+	ci->ci_svs_krsp0 = 0;
+}
+
+static void
+svs_utls_init(struct cpu_info *ci)
+{
+	const vaddr_t utlsva = (vaddr_t)&pcpuarea->utls;
+	struct svs_utls *utls;
+	struct vm_page *pg;
+	pd_entry_t *pd;
+	size_t pidx;
+	paddr_t pa;
+	vaddr_t va;
+
+	/* Create levels L4, L3 and L2. */
+	pd = svs_tree_add(ci, utlsva);
+
+	/* Allocate L1. */
+	pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_ZERO);
+	if (pg == 0)
+		panic("%s: failed to allocate PA for CPU %d\n", __func__,
+		    cpu_index(ci));
+	pa = VM_PAGE_TO_PHYS(pg);
+
+	/* Enter L1. */
+	if (pmap_valid_entry(L1_BASE[pl1_i(utlsva)])) {
+		panic("%s: local page already mapped", __func__);
+	}
+	pidx = pl1_i(utlsva % NBPD_L2);
+	if (pmap_valid_entry(pd[pidx])) {
+		panic("%s: L1 page already mapped", __func__);
+	}
+	pd[pidx] = PG_V | PG_RW | pmap_pg_nx | pa;
+
+	/*
+	 * Now, allocate a VA in the kernel map, that points to the UTLS
+	 * page.
+	 */
+	va = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
+	    UVM_KMF_VAONLY|UVM_KMF_NOWAIT);
+	if (va == 0) {
+		panic("%s: unable to allocate VA\n", __func__);
+	}
+	pmap_kenter_pa(va, pa, VM_PROT_READ|VM_PROT_WRITE, 0);
+	pmap_update(pmap_kernel());
+
+	ci->ci_svs_utls = va;
+
+	/* Initialize the constant fields of the UTLS page */
+	utls = (struct svs_utls *)ci->ci_svs_utls;
+	utls->rsp0 = ci->ci_svs_rsp0;
+}
+
+static void
 svs_range_add(struct cpu_info *ci, vaddr_t va, size_t size)
 {
 	size_t i, n;
@@ -2377,7 +2461,10 @@ cpu_svs_init(struct cpu_info *ci)
 	svs_page_add(ci, (vaddr_t)&pcpuarea->idt);
 	svs_page_add(ci, (vaddr_t)&pcpuarea->ldt);
 	svs_range_add(ci, (vaddr_t)&pcpuarea->ent[cid],
-	    sizeof(struct pcpu_entry));
+	    offsetof(struct pcpu_entry, rsp0));
+
+	svs_rsp0_init(ci);
+	svs_utls_init(ci);
 }
 
 void
@@ -2412,7 +2499,43 @@ svs_pmap_sync(struct pmap *pmap, int index)
 void
 svs_lwp_switch(struct lwp *oldlwp, struct lwp *newlwp)
 {
-	/* Switch rsp0 */
+	struct cpu_info *ci = curcpu();
+	struct pcb *pcb;
+	pt_entry_t *pte;
+	uintptr_t rsp0;
+	vaddr_t va;
+
+	if (newlwp->l_flag & LW_SYSTEM) {
+		return;
+	}
+
+#ifdef DIAGNOSTIC
+	if (oldlwp != NULL && !(oldlwp->l_flag & LW_SYSTEM)) {
+		pcb = lwp_getpcb(oldlwp);
+		rsp0 = pcb->pcb_rsp0;
+		va = rounddown(rsp0, PAGE_SIZE);
+		KASSERT(ci->ci_svs_krsp0 == rsp0 - sizeof(struct trapframe));
+		pte = ci->ci_svs_rsp0_pte;
+		KASSERT(*pte == L1_BASE[pl1_i(va)]);
+	}
+#endif
+
+	pcb = lwp_getpcb(newlwp);
+	rsp0 = pcb->pcb_rsp0;
+	va = rounddown(rsp0, PAGE_SIZE);
+
+	/* Update the kernel rsp0 in cpu_info */
+	ci->ci_svs_krsp0 = rsp0 - sizeof(struct trapframe);
+	KASSERT((ci->ci_svs_krsp0 % PAGE_SIZE) ==
+	    (ci->ci_svs_ursp0 % PAGE_SIZE));
+
+	/*
+	 * Enter the user rsp0. We don't need to flush the TLB here, it will
+	 * be implicitly flushed when we reload CR3 next time we return to
+	 * userland.
+	 */
+	pte = ci->ci_svs_rsp0_pte;
+	*pte = L1_BASE[pl1_i(va)];
 }
 
 static inline pt_entry_t
@@ -2433,9 +2556,8 @@ svs_pte_atomic_read(struct pmap *pmap, size_t idx)
 void
 svs_pdir_switch(struct pmap *pmap)
 {
-	extern size_t pmap_direct_pdpe;
-	extern size_t pmap_direct_npdp;
 	struct cpu_info *ci = curcpu();
+	struct svs_utls *utls;
 	pt_entry_t pte;
 	size_t i;
 
@@ -2444,25 +2566,21 @@ svs_pdir_switch(struct pmap *pmap)
 
 	ci->ci_svs_kpdirpa = pmap_pdirpa(pmap, 0);
 
+	/* Update the info in the UTLS page */
+	utls = (struct svs_utls *)ci->ci_svs_utls;
+	utls->kpdirpa = ci->ci_svs_kpdirpa;
+
 	mutex_enter(&ci->ci_svs_mtx);
 
-	for (i = 0; i < 512; i++) {
-		/*
-		 * This is where we decide what to unmap from the user page
-		 * tables.
-		 */
-		if (i == PDIR_SLOT_PCPU) {
-			/* keep the one created at boot time */
-		} else if (pmap_direct_pdpe <= i &&
-		    i < pmap_direct_pdpe + pmap_direct_npdp) {
-			ci->ci_svs_updir[i] = 0;
-		} else if (i == PDIR_SLOT_PTE) {
-			ci->ci_svs_updir[i] = 0;
-		} else {
-			pte = svs_pte_atomic_read(pmap, i);
-			ci->ci_svs_updir[i] = pte;
-		}
+	/* User slots. */
+	for (i = 0; i < 255; i++) {
+		pte = svs_pte_atomic_read(pmap, i);
+		ci->ci_svs_updir[i] = pte;
 	}
+
+	/* Kernel image. */
+	pte = svs_pte_atomic_read(pmap, 511);
+	ci->ci_svs_updir[511] = pte;
 
 	mutex_exit(&ci->ci_svs_mtx);
 }

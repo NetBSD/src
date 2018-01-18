@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.88 2018/01/07 16:10:16 maxv Exp $	*/
+/*	$NetBSD: cpu.h,v 1.89 2018/01/18 07:25:34 maxv Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -193,6 +193,11 @@ struct cpu_info {
 	paddr_t		ci_svs_updirpa;
 	paddr_t		ci_svs_kpdirpa;
 	kmutex_t	ci_svs_mtx;
+	pd_entry_t *	ci_svs_rsp0_pte;
+	vaddr_t		ci_svs_rsp0;
+	vaddr_t		ci_svs_ursp0;
+	vaddr_t		ci_svs_krsp0;
+	vaddr_t		ci_svs_utls;
 #endif
 
 #if defined(XEN) && (defined(PAE) || defined(__x86_64__))

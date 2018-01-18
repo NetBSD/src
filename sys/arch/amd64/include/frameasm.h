@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.28 2018/01/11 09:00:04 maxv Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.29 2018/01/18 07:25:34 maxv Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
 #define _AMD64_MACHINE_FRAMEASM_H
@@ -97,31 +97,44 @@
 	movq	TF_RAX(%rsp),%rax
 
 #ifdef SVS
+
+/* XXX: put this somewhere else */
+#define SVS_UTLS		0xffffc00000000000 /* PMAP_PCPU_BASE */
+#define UTLS_KPDIRPA		0
+#define UTLS_SCRATCH		8
+#define UTLS_RSP0		16
+
 #define SVS_ENTER \
-	pushq	%rax			; \
-	movq	CPUVAR(KPDIRPA),%rax	; \
-	movq	%rax,%cr3		; \
-	popq	%rax
+	movq	SVS_UTLS+UTLS_KPDIRPA,%rax	; \
+	movq	%rax,%cr3			; \
+	movq	CPUVAR(KRSP0),%rsp
+
 #define SVS_LEAVE \
-	pushq	%rax			; \
-	movq	CPUVAR(UPDIRPA),%rax	; \
-	movq	%rax,%cr3		; \
-	popq	%rax
-#define SVS_ENTER_NOSTACK \
-	movq	%rax,CPUVAR(SCRATCH)	; \
-	movq	CPUVAR(KPDIRPA),%rax	; \
-	movq	%rax,%cr3		; \
-	movq	CPUVAR(SCRATCH),%rax
-#define SVS_LEAVE_NOSTACK \
-	movq	%rax,CPUVAR(SCRATCH)	; \
-	movq	CPUVAR(UPDIRPA),%rax	; \
-	movq	%rax,%cr3		; \
-	movq	CPUVAR(SCRATCH),%rax
+	testb	$SEL_UPL,TF_CS(%rsp)		; \
+	jz	1234f				; \
+	movq	CPUVAR(URSP0),%rsp		; \
+	movq	CPUVAR(UPDIRPA),%rax		; \
+	movq	%rax,%cr3			; \
+1234:
+
+#define SVS_ENTER_ALTSTACK \
+	testb	$SEL_UPL,TF_CS(%rsp)		; \
+	jz	1234f				; \
+	movq	SVS_UTLS+UTLS_KPDIRPA,%rax	; \
+	movq	%rax,%cr3			; \
+1234:
+
+#define SVS_LEAVE_ALTSTACK \
+	testb	$SEL_UPL,TF_CS(%rsp)		; \
+	jz	1234f				; \
+	movq	CPUVAR(UPDIRPA),%rax		; \
+	movq	%rax,%cr3			; \
+1234:
 #else
 #define SVS_ENTER	/* nothing */
 #define SVS_LEAVE	/* nothing */
-#define SVS_ENTER_NOSTACK	/* nothing */
-#define SVS_LEAVE_NOSTACK	/* nothing */
+#define SVS_ENTER_ALTSTACK	/* nothing */
+#define SVS_LEAVE_ALTSTACK	/* nothing */
 #endif
 
 #define	INTRENTRY_L(kernel_trap, usertrap) \

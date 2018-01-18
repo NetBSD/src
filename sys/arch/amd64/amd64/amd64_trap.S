@@ -1,4 +1,4 @@
-/*	$NetBSD: amd64_trap.S,v 1.17 2018/01/07 16:10:16 maxv Exp $	*/
+/*	$NetBSD: amd64_trap.S,v 1.18 2018/01/18 07:25:34 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2017 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #if 0
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: amd64_trap.S,v 1.17 2018/01/07 16:10:16 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amd64_trap.S,v 1.18 2018/01/18 07:25:34 maxv Exp $");
 #endif
 
 /*
@@ -120,8 +120,8 @@ IDTVEC(trap02)
 #else
 	ZTRAP_NJ(T_NMI)
 	subq	$TF_REGSIZE,%rsp
-	SVS_ENTER
 	INTR_SAVE_GPRS
+	SVS_ENTER_ALTSTACK
 	cld
 	SMAP_ENABLE
 	movw	%gs,TF_GS(%rsp)
@@ -138,7 +138,7 @@ IDTVEC(trap02)
 	movq	%rsp,%rdi
 	incq	CPUVAR(NTRAP)
 	call	_C_LABEL(nmitrap)
-	SVS_LEAVE
+	SVS_LEAVE_ALTSTACK
 	swapgs
 	jmp	.Lnmileave
 
