@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1191 2018/01/10 10:56:30 knakahara Exp $
+#	$NetBSD: files,v 1.1192 2018/01/18 00:32:48 mrg Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -132,7 +132,8 @@ defflag opt_todr.h		TODR_DEBUG
 # compatibility options
 #
 defflag opt_compat_netbsd.h	COMPAT_NETBSD
-defflag	opt_compat_netbsd.h	COMPAT_70: COMPAT_NETBSD
+defflag	opt_compat_netbsd.h	COMPAT_80: COMPAT_NETBSD
+defflag	opt_compat_netbsd.h	COMPAT_70: COMPAT_80, COMPAT_NETBSD
 defflag	opt_compat_netbsd.h	COMPAT_60: COMPAT_70, COMPAT_NETBSD
 defflag	opt_compat_netbsd.h	COMPAT_50: COMPAT_60, COMPAT_NETBSD
 defflag	opt_compat_netbsd.h	COMPAT_40: COMPAT_50, COMPAT_NETBSD

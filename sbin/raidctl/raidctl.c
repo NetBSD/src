@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.65 2016/01/06 22:57:44 wiz Exp $   */
+/*      $NetBSD: raidctl.c,v 1.66 2018/01/18 00:32:49 mrg Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: raidctl.c,v 1.65 2016/01/06 22:57:44 wiz Exp $");
+__RCSID("$NetBSD: raidctl.c,v 1.66 2018/01/18 00:32:49 mrg Exp $");
 #endif
 
 
@@ -615,9 +615,13 @@ rf_output_configuration(int fd, const char *name)
 	printf("\n");
 	do_ioctl(fd, RAIDFRAME_GET_INFO, &cfg_ptr, "RAIDFRAME_GET_INFO");
 
+	/*
+	 * After NetBSD 9, convert this to not output the numRow's value,
+	 * which is no longer required or ever used.
+	 */
 	printf("START array\n");
 	printf("# numRow numCol numSpare\n");
-	printf("%d %d %d\n", device_config.rows, device_config.cols,
+	printf("%d %d %d\n", 1, device_config.cols,
 	    device_config.nspares);
 	printf("\n");
 
@@ -719,7 +723,6 @@ rf_fail_disk(int fd, char *component_to_fail, int do_recon)
 
 	get_component_number(fd, component_to_fail, &component_num, &num_cols);
 
-	recon_request.row = component_num / num_cols;
 	recon_request.col = component_num % num_cols;
 	if (do_recon) {
 		recon_request.flags = RF_FDFLAGS_RECON;

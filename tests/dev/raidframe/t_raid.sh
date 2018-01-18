@@ -1,5 +1,5 @@
 #! /usr/bin/atf-sh
-#	$NetBSD: t_raid.sh,v 1.12 2013/02/19 21:08:24 joerg Exp $
+#	$NetBSD: t_raid.sh,v 1.13 2018/01/18 00:32:49 mrg Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -35,6 +35,22 @@ makecfg()
 	level=${1}
 	ncol=${2}
 
+	printf "START array\n${ncol} 0\nSTART disks\n" > raid.conf
+	diskn=0
+	while [ ${ncol} -gt ${diskn} ] ; do
+		echo "/disk${diskn}" >> raid.conf
+		diskn=$((diskn+1))
+	done
+
+	printf "START layout\n32 1 1 ${level}\nSTART queue\nfifo 100\n" \
+	    >> raid.conf
+}
+
+makecfg_old()
+{
+	level=${1}
+	ncol=${2}
+
 	printf "START array\n1 ${ncol} 0\nSTART disks\n" > raid.conf
 	diskn=0
 	while [ ${ncol} -gt ${diskn} ] ; do
@@ -54,9 +70,8 @@ smalldisk_head()
 	atf_set "require.progs" "rump_server"
 }
 
-smalldisk_body()
+smalldisk_body_backend()
 {
-	makecfg 1 2
 	export RUMP_SERVER=unix://sock
 	atf_check -s exit:0 ${raidserver}			\
 	    -d key=/disk0,hostpath=disk0.img,size=1m		\
@@ -66,12 +81,37 @@ smalldisk_body()
 	atf_check -s exit:0 rump.raidctl -C raid.conf raid0
 }
 
+smalldisk_body()
+{
+	makecfg 1 2
+	smalldisk_body_backend
+}
+
 smalldisk_cleanup()
 {
 	export RUMP_SERVER=unix://sock
 	rump.halt
 }
 
+# The old configuration test case uses the smalldisk backend
+atf_test_case old_numrows_config cleanup
+old_numrows_config_head()
+{
+	atf_set "descr" "Checks the old numRows configuration works"
+	atf_set "require.progs" "rump_server"
+}
+
+old_numrows_config_body()
+{
+	makecfg_old 1 2
+	smalldisk_body_backend
+}
+
+old_numrows_config_cleanup()
+{
+	export RUMP_SERVER=unix://sock
+	rump.halt
+}
 
 # make this smaller once 44239 is fixed
 export RAID_MEDIASIZE=32m
@@ -315,6 +355,7 @@ raid5_normal_cleanup()
 atf_init_test_cases()
 {
 	atf_add_test_case smalldisk
+	atf_add_test_case old_numrows_config
 	atf_add_test_case raid1_normal
 	atf_add_test_case raid1_comp0fail
 	atf_add_test_case raid1_compfail

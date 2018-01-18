@@ -1,4 +1,4 @@
-.\"     $NetBSD: raidctl.8,v 1.73 2017/11/20 18:37:56 kardel Exp $
+.\"     $NetBSD: raidctl.8,v 1.74 2018/01/18 00:32:49 mrg Exp $
 .\"
 .\" Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -364,17 +364,21 @@ and the configuration parameters associated with that section.
 The first section is the
 .Sq array
 section, and it specifies
-the number of rows, columns, and spare disks in the RAID set.
+the number of columns, and spare disks in the RAID set.
 For example:
+.Bd -literal -offset indent
+START array
+3 0
+.Ed
+.Pp
+indicates an array with 3 columns, and 0 spare disks.
+Old configurations specified a 3rd value in front of the
+number of columns and spare disks.
+This old value, if provided, must be specified as 1:
 .Bd -literal -offset indent
 START array
 1 3 0
 .Ed
-.Pp
-indicates an array with 1 row, 3 columns, and 0 spare disks.
-Note that although multi-dimensional arrays may be specified, they are
-.Em NOT
-supported in the driver.
 .Pp
 The second section, the
 .Sq disks
@@ -551,7 +555,7 @@ each component will be given a
 A
 .Sq component label
 contains important information about the component, including a
-user-specified serial number, the row and column of that component in
+user-specified serial number, the column of that component in
 the RAID set, the redundancy level of the RAID set, a
 .Sq modification counter ,
 and whether the parity information (if any) on that
@@ -567,7 +571,7 @@ particular component label must be in agreement with the other
 component labels in the set.
 For example, the serial number,
 .Sq modification counter ,
-number of rows and number of columns must all be in agreement.
+and number of columns must all be in agreement.
 If any of these are different, then the component is
 not considered to be part of the set.
 See
@@ -583,8 +587,8 @@ device.
 To configure the device, a configuration file which looks something like:
 .Bd -literal -offset indent
 START array
-# numRow numCol numSpare
-1 3 1
+# numCol numSpare
+3 1
 
 START disks
 /dev/sd1e
@@ -617,8 +621,8 @@ in case one of the three main drives should fail.
 A RAID 0 set would be specified in a similar way:
 .Bd -literal -offset indent
 START array
-# numRow numCol numSpare
-1 4 0
+# numCol numSpare
+4 0
 
 START disks
 /dev/sd10e
@@ -647,8 +651,8 @@ since there is no way to recover data if any of the components fail.
 For a RAID 1 (mirror) set, the following configuration might be used:
 .Bd -literal -offset indent
 START array
-# numRow numCol numSpare
-1 2 0
+# numCol numSpare
+2 0
 
 START disks
 /dev/sd20e
@@ -774,8 +778,8 @@ to indicate that a particular component is not present.
 In the following:
 .Bd -literal -offset indent
 START array
-# numRow numCol numSpare
-1 2 0
+# numCol numSpare
+2 0
 
 START disks
 absent
@@ -1021,7 +1025,7 @@ in the configuration file.
 For example, the configuration file (in part) might now look like:
 .Bd -literal -offset indent
 START array
-1 3 0
+3 0
 
 START disks
 /dev/sd1e
@@ -1172,7 +1176,7 @@ and
 fail (in that order) in a RAID set of the following configuration:
 .Bd -literal -offset indent
 START array
-1 4 0
+4 0
 
 START disks
 /dev/sd1e
@@ -1192,7 +1196,7 @@ fifo 100
 then the following configuration (say "recover_raid0.conf")
 .Bd -literal -offset indent
 START array
-1 4 0
+4 0
 
 START disks
 absent
@@ -1232,8 +1236,8 @@ A RAID 0 set, for example, could be constructed from four RAID 5 sets.
 The following configuration file shows such a setup:
 .Bd -literal -offset indent
 START array
-# numRow numCol numSpare
-1 4 0
+# numCol numSpare
+4 0
 
 START disks
 /dev/raid1e
