@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_decluster.h,v 1.7 2006/04/26 17:08:48 oster Exp $	*/
+/*	$NetBSD: rf_decluster.h,v 1.8 2018/01/18 00:32:49 mrg Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -112,7 +112,7 @@ void
 rf_MapSIDToPSIDDeclustered(RF_RaidLayout_t * layoutPtr,
     RF_StripeNum_t stripeID, RF_StripeNum_t * psID,
     RF_ReconUnitNum_t * which_ru);
-int     rf_InstallSpareTable(RF_Raid_t * raidPtr, RF_RowCol_t frow, RF_RowCol_t fcol);
+int     rf_InstallSpareTable(RF_Raid_t * raidPtr, RF_RowCol_t fcol);
 void    rf_FreeSpareTable(RF_Raid_t * raidPtr);
 
 RF_HeadSepLimit_t rf_GetDefaultHeadSepLimitDeclustered(RF_Raid_t * raidPtr);
