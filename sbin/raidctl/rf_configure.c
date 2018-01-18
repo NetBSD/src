@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_configure.c,v 1.32 2017/11/22 00:31:31 kre Exp $ */
+/*	$NetBSD: rf_configure.c,v 1.33 2018/01/18 00:32:49 mrg Exp $ */
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -49,7 +49,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: rf_configure.c,v 1.32 2017/11/22 00:31:31 kre Exp $");
+__RCSID("$NetBSD: rf_configure.c,v 1.33 2018/01/18 00:32:49 mrg Exp $");
 #endif
 
 
@@ -140,7 +140,7 @@ rf_GetLayout(RF_ParityConfig_t parityConfig)
 int
 rf_MakeConfig(char *configname, RF_Config_t *cfgPtr)
 {
-	int numscanned, val, r, c, retcode, aa, bb, cc;
+	int numscanned, val, c, retcode, aa, bb, cc;
 	char buf[BUFSIZ], buf1[BUFSIZ], *cp;
 	const RF_LayoutSW_t *lp;
 	FILE *fp;
@@ -167,14 +167,22 @@ rf_MakeConfig(char *configname, RF_Config_t *cfgPtr)
 	 * wackiness with aa, bb, cc to get around size problems on
 	 * different platforms
 	 */
+
+	/*
+	 * Allow both "numCol numSpare" as well as old-style
+	 * "numRow numCol numSpare".
+	 * Note that numRow has always been ignored.
+	 */
 	numscanned = sscanf(buf, "%d %d %d", &aa, &bb, &cc);
 	if (numscanned != 3) {
-		warnx("Config file error (\"array\" section): unable to get "
-		    "numRow, numCol, numSpare");
-		retcode = -1;
-		goto out;
+		numscanned = sscanf(buf, "%d %d", &bb, &cc);
+		if (numscanned != 2) {
+			warnx("Config file error (\"array\" section): unable "
+			    "to get numCol, numSpare");
+			retcode = -1;
+			goto out;
+		}
 	}
-	cfgPtr->numRow = (RF_RowCol_t) aa;
 	cfgPtr->numCol = (RF_RowCol_t) bb;
 	cfgPtr->numSpare = (RF_RowCol_t) cc;
 
@@ -236,30 +244,28 @@ rf_MakeConfig(char *configname, RF_Config_t *cfgPtr)
 		retcode = -1;
 		goto out;
 	}
-	for (r = 0; r < cfgPtr->numRow; r++) {
-		for (c = 0; c < cfgPtr->numCol; c++) {
-			char b1[MAXPATHLEN];
-			const char *b;
+	for (c = 0; c < cfgPtr->numCol; c++) {
+		char b1[MAXPATHLEN];
+		const char *b;
 
-			if (rf_get_next_nonblank_line(
-			    buf, sizeof(buf), fp, NULL)) {
-				warnx("Config file error: unable to get device "
-				    "file for disk at row %d col %d", r, c);
-				retcode = -1;
-				goto out;
-			}
-
-			b = getfsspecname(b1, sizeof(b1), buf);
-			if (b == NULL) {
-				warnx("Config file error: warning: unable to "
-				    "get device file for disk at row %d col "
-				    "%d: %s", r, c, b1);
-				b = buf;
-			}
-
-			strlcpy(cfgPtr->devnames[r][c], b,
-			    sizeof(cfgPtr->devnames[r][c]));
+		if (rf_get_next_nonblank_line(
+		    buf, sizeof(buf), fp, NULL)) {
+			warnx("Config file error: unable to get device "
+			    "file for disk at row %d col %d", 0, c);
+			retcode = -1;
+			goto out;
 		}
+
+		b = getfsspecname(b1, sizeof(b1), buf);
+		if (b == NULL) {
+			warnx("Config file error: warning: unable to "
+			    "get device file for disk at row %d col "
+			    "%d: %s", 0, c, b1);
+			b = buf;
+		}
+
+		strlcpy(cfgPtr->devnames[0][c], b,
+		    sizeof(cfgPtr->devnames[0][c]));
 	}
 
 	/* "spare" section is optional */
@@ -284,8 +290,8 @@ rf_MakeConfig(char *configname, RF_Config_t *cfgPtr)
 			b = buf;
 		}
 
-	        strlcpy(cfgPtr->spare_names[r], b,
-		    sizeof(cfgPtr->spare_names[r]));
+	        strlcpy(cfgPtr->spare_names[c], b,
+		    sizeof(cfgPtr->spare_names[c]));
 	}
 
 	/* scan the file for the block related to layout */
