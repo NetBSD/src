@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.68 2017/12/25 09:13:40 ozaki-r Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.69 2018/01/18 08:40:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.68 2017/12/25 09:13:40 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.69 2018/01/18 08:40:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -570,7 +570,7 @@ mutex_vector_enter(kmutex_t *mtx)
 
 		/*
 		 * Once we have the turnstile chain interlock, mark the
-		 * mutex has having waiters.  If that fails, spin again:
+		 * mutex as having waiters.  If that fails, spin again:
 		 * chances are that the mutex has been released.
 		 */
 		if (!MUTEX_SET_WAITERS(mtx, owner)) {
