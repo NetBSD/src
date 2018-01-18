@@ -1,5 +1,6 @@
-/*	$NetBSD: ieee80211_output.c,v 1.59 2017/09/26 07:42:06 knakahara Exp $	*/
-/*-
+/*	$NetBSD: ieee80211_output.c,v 1.60 2018/01/18 13:24:01 maxv Exp $	*/
+
+/*
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -36,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_output.c,v 1.34 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.59 2017/09/26 07:42:06 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.60 2018/01/18 13:24:01 maxv Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -115,6 +116,7 @@ ieee80211_send_setup(struct ieee80211com *ic,
 #define	WH4(wh)	((struct ieee80211_frame_addr4 *)wh)
 
 	wh->i_fc[0] = IEEE80211_FC0_VERSION_0 | type;
+
 	if ((type & IEEE80211_FC0_TYPE_MASK) == IEEE80211_FC0_TYPE_DATA) {
 		switch (ic->ic_opmode) {
 		case IEEE80211_M_STA:
@@ -123,6 +125,7 @@ ieee80211_send_setup(struct ieee80211com *ic,
 			IEEE80211_ADDR_COPY(wh->i_addr2, sa);
 			IEEE80211_ADDR_COPY(wh->i_addr3, da);
 			break;
+
 		case IEEE80211_M_IBSS:
 		case IEEE80211_M_AHDEMO:
 			wh->i_fc[1] = IEEE80211_FC1_DIR_NODS;
@@ -130,12 +133,14 @@ ieee80211_send_setup(struct ieee80211com *ic,
 			IEEE80211_ADDR_COPY(wh->i_addr2, sa);
 			IEEE80211_ADDR_COPY(wh->i_addr3, bssid);
 			break;
+
 		case IEEE80211_M_HOSTAP:
 			wh->i_fc[1] = IEEE80211_FC1_DIR_FROMDS;
 			IEEE80211_ADDR_COPY(wh->i_addr1, da);
 			IEEE80211_ADDR_COPY(wh->i_addr2, bssid);
 			IEEE80211_ADDR_COPY(wh->i_addr3, sa);
 			break;
+
 		case IEEE80211_M_MONITOR:	/* NB: to quiet compiler */
 			break;
 		}
@@ -145,6 +150,7 @@ ieee80211_send_setup(struct ieee80211com *ic,
 		IEEE80211_ADDR_COPY(wh->i_addr2, sa);
 		IEEE80211_ADDR_COPY(wh->i_addr3, bssid);
 	}
+
 	*(u_int16_t *)&wh->i_dur[0] = 0;
 	/* NB: use non-QoS tid */
 	*(u_int16_t *)&wh->i_seq[0] =
@@ -187,9 +193,9 @@ ieee80211_mgmt_output(struct ieee80211com *ic, struct ieee80211_node *ni,
 	M_SETCTX(m, ni);
 
 	wh = mtod(m, struct ieee80211_frame *);
-	ieee80211_send_setup(ic, ni, wh, 
-		IEEE80211_FC0_TYPE_MGT | type,
-		ic->ic_myaddr, ni->ni_macaddr, ni->ni_bssid);
+	ieee80211_send_setup(ic, ni, wh, IEEE80211_FC0_TYPE_MGT | type,
+	    ic->ic_myaddr, ni->ni_macaddr, ni->ni_bssid);
+
 	if ((m->m_flags & M_LINK0) != 0 && ni->ni_challenge != NULL) {
 		m->m_flags &= ~M_LINK0;
 		IEEE80211_DPRINTF(ic, IEEE80211_MSG_AUTH,
@@ -197,6 +203,7 @@ ieee80211_mgmt_output(struct ieee80211com *ic, struct ieee80211_node *ni,
 			ether_sprintf(wh->i_addr1), __func__);
 		wh->i_fc[1] |= IEEE80211_FC1_WEP;
 	}
+
 #ifdef IEEE80211_DEBUG
 	/* avoid printing too many frames */
 	if ((ieee80211_msg_debug(ic) && doprint(ic, type)) ||
@@ -209,6 +216,7 @@ ieee80211_mgmt_output(struct ieee80211com *ic, struct ieee80211_node *ni,
 		    ieee80211_chan2ieee(ic, ic->ic_curchan));
 	}
 #endif
+
 	IEEE80211_NODE_STAT(ni, tx_mgmt);
 	IF_ENQUEUE(&ic->ic_mgtq, m);
 	if (timer) {
@@ -247,13 +255,17 @@ ieee80211_send_nulldata(struct ieee80211_node *ni)
 	M_SETCTX(m, ni);
 
 	wh = mtod(m, struct ieee80211_frame *);
+
 	ieee80211_send_setup(ic, ni, wh,
-		IEEE80211_FC0_TYPE_DATA | IEEE80211_FC0_SUBTYPE_NODATA,
-		ic->ic_myaddr, ni->ni_macaddr, ni->ni_bssid);
+	    IEEE80211_FC0_TYPE_DATA | IEEE80211_FC0_SUBTYPE_NODATA,
+	    ic->ic_myaddr, ni->ni_macaddr, ni->ni_bssid);
+
 	/* NB: power management bit is never sent by an AP */
 	if ((ni->ni_flags & IEEE80211_NODE_PWR_MGT) &&
-	    ic->ic_opmode != IEEE80211_M_HOSTAP)
+	    ic->ic_opmode != IEEE80211_M_HOSTAP) {
 		wh->i_fc[1] |= IEEE80211_FC1_PWR_MGT;
+	}
+
 	m->m_len = m->m_pkthdr.len = sizeof(struct ieee80211_frame);
 
 	IEEE80211_NODE_STAT(ni, tx_data);
@@ -277,7 +289,8 @@ ieee80211_send_nulldata(struct ieee80211_node *ni)
  * applied.
  */
 int
-ieee80211_classify(struct ieee80211com *ic, struct mbuf *m, struct ieee80211_node *ni)
+ieee80211_classify(struct ieee80211com *ic, struct mbuf *m,
+    struct ieee80211_node *ni)
 {
 	int v_wme_ac, d_wme_ac, ac;
 #ifdef INET
@@ -405,6 +418,7 @@ ieee80211_mbuf_adjust(struct ieee80211com *ic, int hdrsize,
 		needed_space += key->wk_cipher->ic_header;
 		/* XXX frags */
 	}
+
 	/*
 	 * We know we are called just before stripping an Ethernet
 	 * header and prepending an LLC header.  This means we know
@@ -423,8 +437,10 @@ ieee80211_mbuf_adjust(struct ieee80211com *ic, int hdrsize,
 			m_freem(m);
 			return NULL;
 		}
+
 		IASSERT(needed_space <= MHLEN,
 		    ("not enough room, need %u got %zu\n", needed_space, MHLEN));
+
 		/*
 		 * Setup new mbuf to have leading space to prepend the
 		 * 802.11 header and any crypto header bits that are
@@ -451,7 +467,8 @@ ieee80211_mbuf_adjust(struct ieee80211com *ic, int hdrsize,
 		n->m_next = m;
 		m = n;
 	} else {
-                /* We will overwrite the ethernet header in the
+                /*
+		 * We will overwrite the ethernet header in the
                  * 802.11 encapsulation stage.  Make sure that it
                  * is writable.
 		 */
@@ -539,10 +556,11 @@ ieee80211_encap(struct ieee80211com *ic, struct mbuf *m,
 	 */
 	if (ic->ic_flags & IEEE80211_F_PRIVACY) {
 		if (ic->ic_opmode == IEEE80211_M_STA ||
-		    !IEEE80211_IS_MULTICAST(eh.ether_dhost))
+		    !IEEE80211_IS_MULTICAST(eh.ether_dhost)) {
 			key = ieee80211_crypto_getucastkey(ic, ni);
-		else
+		} else {
 			key = ieee80211_crypto_getmcastkey(ic, ni);
+		}
 		if (key == NULL && eh.ether_type != htons(ETHERTYPE_PAE)) {
 			IEEE80211_DPRINTF(ic, IEEE80211_MSG_CRYPTO,
 			    "[%s] no default transmit key (%s) deftxkey %u\n",
@@ -550,10 +568,13 @@ ieee80211_encap(struct ieee80211com *ic, struct mbuf *m,
 			    ic->ic_def_txkey);
 			ic->ic_stats.is_tx_nodefkey++;
 		}
-	} else
+	} else {
 		key = NULL;
-	/* XXX 4-address format */
+	}
+
 	/*
+	 * XXX 4-address format.
+	 *
 	 * XXX Some ap's don't handle QoS-encapsulated EAPOL
 	 * frames so suppress use.  This may be an issue if other
 	 * ap's require all data frames to be QoS-encapsulated
@@ -561,13 +582,14 @@ ieee80211_encap(struct ieee80211com *ic, struct mbuf *m,
 	 * configurable.
 	 */
 	addqos = (ni->ni_flags & IEEE80211_NODE_QOS) &&
-		 eh.ether_type != htons(ETHERTYPE_PAE);
+	    eh.ether_type != htons(ETHERTYPE_PAE);
 	if (addqos)
 		hdrsize = sizeof(struct ieee80211_qosframe);
 	else
 		hdrsize = sizeof(struct ieee80211_frame);
 	if (ic->ic_flags & IEEE80211_F_DATAPAD)
 		hdrsize = roundup(hdrsize, sizeof(u_int32_t));
+
 	m = ieee80211_mbuf_adjust(ic, hdrsize, key, m);
 	if (m == NULL) {
 		/* NB: ieee80211_mbuf_adjust handles msgs+statistics */
@@ -590,9 +612,11 @@ ieee80211_encap(struct ieee80211com *ic, struct mbuf *m,
 		ic->ic_stats.is_tx_nobuf++;
 		goto bad;
 	}
+
 	wh = mtod(m, struct ieee80211_frame *);
 	wh->i_fc[0] = IEEE80211_FC0_VERSION_0 | IEEE80211_FC0_TYPE_DATA;
 	*(u_int16_t *)wh->i_dur = 0;
+
 	switch (ic->ic_opmode) {
 	case IEEE80211_M_STA:
 		wh->i_fc[1] = IEEE80211_FC1_DIR_TODS;
@@ -600,6 +624,7 @@ ieee80211_encap(struct ieee80211com *ic, struct mbuf *m,
 		IEEE80211_ADDR_COPY(wh->i_addr2, eh.ether_shost);
 		IEEE80211_ADDR_COPY(wh->i_addr3, eh.ether_dhost);
 		break;
+
 	case IEEE80211_M_IBSS:
 	case IEEE80211_M_AHDEMO:
 		wh->i_fc[1] = IEEE80211_FC1_DIR_NODS;
@@ -611,22 +636,26 @@ ieee80211_encap(struct ieee80211com *ic, struct mbuf *m,
 		 */
 		IEEE80211_ADDR_COPY(wh->i_addr3, ic->ic_bss->ni_bssid);
 		break;
+
 	case IEEE80211_M_HOSTAP:
 #ifndef IEEE80211_NO_HOSTAP
 		wh->i_fc[1] = IEEE80211_FC1_DIR_FROMDS;
 		IEEE80211_ADDR_COPY(wh->i_addr1, eh.ether_dhost);
 		IEEE80211_ADDR_COPY(wh->i_addr2, ni->ni_bssid);
 		IEEE80211_ADDR_COPY(wh->i_addr3, eh.ether_shost);
-#endif /* !IEEE80211_NO_HOSTAP */
+#endif
 		break;
+
 	case IEEE80211_M_MONITOR:
 		goto bad;
 	}
+
 	if (m->m_flags & M_MORE_DATA)
 		wh->i_fc[1] |= IEEE80211_FC1_MORE_DATA;
+
 	if (addqos) {
 		struct ieee80211_qosframe *qwh =
-			(struct ieee80211_qosframe *) wh;
+			(struct ieee80211_qosframe *)wh;
 		int ac, tid;
 
 		ac = M_WME_GETAC(m);
@@ -646,10 +675,12 @@ ieee80211_encap(struct ieee80211com *ic, struct mbuf *m,
 		    htole16(ni->ni_txseqs[0] << IEEE80211_SEQ_SEQ_SHIFT);
 		ni->ni_txseqs[0]++;
 	}
+
 	/* check if xmit fragmentation is required */
 	txfrag = (m->m_pkthdr.len > ic->ic_fragthreshold &&
 	    !IEEE80211_IS_MULTICAST(wh->i_addr1) &&
 	    (m->m_flags & M_FF) == 0);          /* NB: don't fragment ff's */
+
 	if (key != NULL) {
 		/*
 		 * IEEE 802.1X: send EAPOL frames always in the clear.
@@ -670,6 +701,7 @@ ieee80211_encap(struct ieee80211com *ic, struct mbuf *m,
 			}
 		}
 	}
+
 	if (txfrag && !ieee80211_fragment(ic, m, hdrsize,
 	    key != NULL ? key->wk_cipher->ic_header : 0, ic->ic_fragthreshold))
 		goto bad;
@@ -678,6 +710,7 @@ ieee80211_encap(struct ieee80211com *ic, struct mbuf *m,
 	IEEE80211_NODE_STAT_ADD(ni, tx_bytes, datalen);
 
 	return m;
+
 bad:
 	if (m != NULL)
 		m_freem(m);
@@ -1338,14 +1371,17 @@ ieee80211_send_probereq(struct ieee80211_node *ni,
 	m->m_pkthdr.len = m->m_len = frm - mtod(m, u_int8_t *);
 
 	M_PREPEND(m, sizeof(struct ieee80211_frame), M_DONTWAIT);
-	if (m == NULL)
+	if (m == NULL) {
+		ic->ic_stats.is_tx_nobuf++;
+		ieee80211_free_node(ni);
 		return ENOMEM;
+	}
 	M_SETCTX(m, ni);
 
 	wh = mtod(m, struct ieee80211_frame *);
 	ieee80211_send_setup(ic, ni, wh,
-		IEEE80211_FC0_TYPE_MGT | IEEE80211_FC0_SUBTYPE_PROBE_REQ,
-		sa, da, bssid);
+	    IEEE80211_FC0_TYPE_MGT | IEEE80211_FC0_SUBTYPE_PROBE_REQ,
+	    sa, da, bssid);
 	/* XXX power management? */
 
 	IEEE80211_NODE_STAT(ni, tx_probereq);
@@ -1374,7 +1410,7 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 	struct mbuf *m;
 	u_int8_t *frm;
 	u_int16_t capinfo;
-	int has_challenge, is_shared_key, ret, timer, status;
+	int ret, timer, status;
 
 	IASSERT(ni != NULL, ("null node"));
 
@@ -1392,7 +1428,9 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 
 	timer = 0;
 	switch (type) {
-	case IEEE80211_FC0_SUBTYPE_PROBE_RESP:
+	case IEEE80211_FC0_SUBTYPE_PROBE_RESP: {
+		const bool has_wpa = (ic->ic_flags & IEEE80211_F_WPA) != 0;
+
 		/*
 		 * probe response frame format
 		 *	[8] time stamp
@@ -1408,27 +1446,31 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 		 *	[tlv] WME (optional)
 		 */
 		m = ieee80211_getmgtframe(&frm,
-			 8
-		       + sizeof(u_int16_t)
-		       + sizeof(u_int16_t)
-		       + 2 + IEEE80211_NWID_LEN
-		       + 2 + IEEE80211_RATE_SIZE
-		       + 7	/* max(7,3) */
-		       + 6
-		       + 3
+			 8 /* timestamp */
+		       + sizeof(u_int16_t) /* interval */
+		       + sizeof(u_int16_t) /* capinfo */
+		       + 2 + IEEE80211_NWID_LEN /* ssid */
+		       + 2 + IEEE80211_RATE_SIZE /* rates */
+		       + 7 /* max(7,3) */
+		       + 6 /* ibss (XXX could be 4?) */
+		       + 3 /* erp */
 		       + 2 + (IEEE80211_RATE_MAXSIZE - IEEE80211_RATE_SIZE)
 		       /* XXX !WPA1+WPA2 fits w/o a cluster */
-		       + (ic->ic_flags & IEEE80211_F_WPA ?
-				2*sizeof(struct ieee80211_ie_wpa) : 0)
+		       + (has_wpa ? (2 * sizeof(struct ieee80211_ie_wpa)) : 0)
 		       + sizeof(struct ieee80211_wme_param)
 		);
 		if (m == NULL)
 			senderr(ENOMEM, is_tx_nobuf);
 
-		memset(frm, 0, 8);	/* timestamp should be filled later */
+		/* timestamp (should be filled later) */
+		memset(frm, 0, 8);
 		frm += 8;
+
+		/* interval */
 		*(u_int16_t *)frm = htole16(ic->ic_bss->ni_intval);
 		frm += 2;
+
+		/* capinfo */
 		if (ic->ic_opmode == IEEE80211_M_IBSS)
 			capinfo = IEEE80211_CAPINFO_IBSS;
 		else
@@ -1443,10 +1485,14 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 		*(u_int16_t *)frm = htole16(capinfo);
 		frm += 2;
 
+		/* ssid */
 		frm = ieee80211_add_ssid(frm, ic->ic_bss->ni_essid,
-				ic->ic_bss->ni_esslen);
+		    ic->ic_bss->ni_esslen);
+
+		/* rates */
 		frm = ieee80211_add_rates(frm, &ni->ni_rates);
 
+		/* variable */
 		if (ic->ic_phytype == IEEE80211_T_FH) {
                         *frm++ = IEEE80211_ELEMID_FHPARMS;
                         *frm++ = 5;
@@ -1463,27 +1509,39 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 			*frm++ = ieee80211_chan2ieee(ic, ic->ic_curchan);
 		}
 
+		/* ibss */
 		if (ic->ic_opmode == IEEE80211_M_IBSS) {
 			*frm++ = IEEE80211_ELEMID_IBSSPARMS;
 			*frm++ = 2;
-			*frm++ = 0; *frm++ = 0;		/* TODO: ATIM window */
+			*frm++ = 0; *frm++ = 0;	/* TODO: ATIM window */
 		}
-		if (ic->ic_flags & IEEE80211_F_WPA)
+
+		/* wpa */
+		if (has_wpa)
 			frm = ieee80211_add_wpa(frm, ic);
+
+		/* erp */
 		if (ic->ic_curmode == IEEE80211_MODE_11G)
 			frm = ieee80211_add_erp(frm, ic);
+
+		/* xrates */
 		frm = ieee80211_add_xrates(frm, &ni->ni_rates);
+
+		/* wme */
 		if (ic->ic_flags & IEEE80211_F_WME)
 			frm = ieee80211_add_wme_param(frm, &ic->ic_wme);
+
 		m->m_pkthdr.len = m->m_len = frm - mtod(m, u_int8_t *);
 		break;
+	}
 
-	case IEEE80211_FC0_SUBTYPE_AUTH:
+	case IEEE80211_FC0_SUBTYPE_AUTH: {
 		status = arg >> 16;
 		arg &= 0xffff;
-		has_challenge = ((arg == IEEE80211_AUTH_SHARED_CHALLENGE ||
-		    arg == IEEE80211_AUTH_SHARED_RESPONSE) &&
-		    ni->ni_challenge != NULL);
+		const bool has_challenge =
+		    (arg == IEEE80211_AUTH_SHARED_CHALLENGE ||
+		     arg == IEEE80211_AUTH_SHARED_RESPONSE) &&
+		    ni->ni_challenge != NULL;
 
 		/*
 		 * Deduce whether we're doing open authentication or
@@ -1492,41 +1550,44 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 		 * handshake or if we're initiating an authentication
 		 * request and configured to use shared key.
 		 */
-		is_shared_key = has_challenge ||
-		     arg >= IEEE80211_AUTH_SHARED_RESPONSE ||
-		     (arg == IEEE80211_AUTH_SHARED_REQUEST &&
-		      ic->ic_bss->ni_authmode == IEEE80211_AUTH_SHARED);
+		const bool is_shared_key = has_challenge ||
+		    (arg >= IEEE80211_AUTH_SHARED_RESPONSE) ||
+		    (arg == IEEE80211_AUTH_SHARED_REQUEST &&
+		     ic->ic_bss->ni_authmode == IEEE80211_AUTH_SHARED);
 
-		m = ieee80211_getmgtframe(&frm,
-			  3 * sizeof(u_int16_t)
-			+ (has_challenge && status == IEEE80211_STATUS_SUCCESS ?
-				sizeof(u_int16_t)+IEEE80211_CHALLENGE_LEN : 0)
-		);
+		const bool need_challenge =
+		    has_challenge && (status == IEEE80211_STATUS_SUCCESS);
+
+		const int frm_size = 3 * sizeof(u_int16_t)
+			+ (need_challenge ?
+				sizeof(u_int16_t)+IEEE80211_CHALLENGE_LEN : 0);
+
+		m = ieee80211_getmgtframe(&frm, frm_size);
 		if (m == NULL)
 			senderr(ENOMEM, is_tx_nobuf);
 
 		((u_int16_t *)frm)[0] =
-		    (is_shared_key) ? htole16(IEEE80211_AUTH_ALG_SHARED)
+		      is_shared_key ? htole16(IEEE80211_AUTH_ALG_SHARED)
 		                    : htole16(IEEE80211_AUTH_ALG_OPEN);
 		((u_int16_t *)frm)[1] = htole16(arg);	/* sequence number */
 		((u_int16_t *)frm)[2] = htole16(status);/* status */
 
-		if (has_challenge && status == IEEE80211_STATUS_SUCCESS) {
+		if (need_challenge) {
 			((u_int16_t *)frm)[3] =
 			    htole16((IEEE80211_CHALLENGE_LEN << 8) |
 			    IEEE80211_ELEMID_CHALLENGE);
 			memcpy(&((u_int16_t *)frm)[4], ni->ni_challenge,
 			    IEEE80211_CHALLENGE_LEN);
-			m->m_pkthdr.len = m->m_len =
-				4 * sizeof(u_int16_t) + IEEE80211_CHALLENGE_LEN;
+
 			if (arg == IEEE80211_AUTH_SHARED_RESPONSE) {
 				IEEE80211_DPRINTF(ic, IEEE80211_MSG_AUTH,
 				    "[%s] request encrypt frame (%s)\n",
 				    ether_sprintf(ni->ni_macaddr), __func__);
 				m->m_flags |= M_LINK0; /* WEP-encrypt, please */
 			}
-		} else
-			m->m_pkthdr.len = m->m_len = 3 * sizeof(u_int16_t);
+		}
+
+		m->m_pkthdr.len = m->m_len = frm_size;
 
 		/* XXX not right for shared key */
 		if (status == IEEE80211_STATUS_SUCCESS)
@@ -1537,6 +1598,7 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 		if (ic->ic_opmode == IEEE80211_M_STA)
 			timer = IEEE80211_TRANS_WAIT;
 		break;
+	}
 
 	case IEEE80211_FC0_SUBTYPE_DEAUTH:
 		IEEE80211_DPRINTF(ic, IEEE80211_MSG_AUTH,
@@ -1583,7 +1645,7 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 		capinfo = 0;
 		if (ic->ic_opmode == IEEE80211_M_IBSS)
 			capinfo |= IEEE80211_CAPINFO_IBSS;
-		else		/* IEEE80211_M_STA */
+		else /* IEEE80211_M_STA */
 			capinfo |= IEEE80211_CAPINFO_ESS;
 		if (ic->ic_flags & IEEE80211_F_PRIVACY)
 			capinfo |= IEEE80211_CAPINFO_PRIVACY;
@@ -1661,8 +1723,10 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 		if (arg == IEEE80211_STATUS_SUCCESS) {
 			*(u_int16_t *)frm = htole16(ni->ni_associd);
 			IEEE80211_NODE_STAT(ni, tx_assoc);
-		} else
+		} else {
+			*(u_int16_t *)frm = 0;
 			IEEE80211_NODE_STAT(ni, tx_assoc_fail);
+		}
 		frm += 2;
 
 		frm = ieee80211_add_rates(frm, &ni->ni_rates);
