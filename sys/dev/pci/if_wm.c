@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.556 2018/01/17 02:16:07 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.557 2018/01/18 09:36:26 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.556 2018/01/17 02:16:07 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.557 2018/01/18 09:36:26 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -212,6 +212,13 @@ int wm_disable_msix = WM_DISABLE_MSIX;
 #define	WM_MAXTXDMA		 (2 * round_page(IP_MAXPACKET)) /* for TSO */
 
 #define	WM_TXINTERQSIZE		256
+
+#ifndef WM_TX_PROCESS_LIMIT_DEFAULT
+#define	WM_TX_PROCESS_LIMIT_DEFAULT		100U
+#endif
+#ifndef WM_TX_INTR_PROCESS_LIMIT_DEFAULT
+#define	WM_TX_INTR_PROCESS_LIMIT_DEFAULT	0U
+#endif
 
 /*
  * Receive descriptor list size.  We have one Rx buffer for normal
@@ -519,6 +526,8 @@ struct wm_softc {
 
 	int sc_nqueues;
 	struct wm_queue *sc_queue;
+	u_int sc_tx_process_limit;	/* Tx processing repeat limit in softint */
+	u_int sc_tx_intr_process_limit;	/* Tx processing repeat limit in H/W intr */
 	u_int sc_rx_process_limit;	/* Rx processing repeat limit in softint */
 	u_int sc_rx_intr_process_limit;	/* Rx processing repeat limit in H/W intr */
 
@@ -758,7 +767,7 @@ static void	wm_nq_send_common_locked(struct ifnet *, struct wm_txqueue *, bool);
 static void	wm_deferred_start_locked(struct wm_txqueue *);
 static void	wm_handle_queue(void *);
 /* Interrupt */
-static int	wm_txeof(struct wm_softc *, struct wm_txqueue *);
+static int	wm_txeof(struct wm_txqueue *, u_int);
 static void	wm_rxeof(struct wm_rxqueue *, u_int);
 static void	wm_linkintr_gmii(struct wm_softc *, uint32_t);
 static void	wm_linkintr_tbi(struct wm_softc *, uint32_t);
@@ -2764,6 +2773,8 @@ alloc_retry:
 		ifp->if_capabilities |= IFCAP_TSOv6;
 	}
 
+	sc->sc_tx_process_limit = WM_TX_PROCESS_LIMIT_DEFAULT;
+	sc->sc_tx_intr_process_limit = WM_TX_INTR_PROCESS_LIMIT_DEFAULT;
 	sc->sc_rx_process_limit = WM_RX_PROCESS_LIMIT_DEFAULT;
 	sc->sc_rx_intr_process_limit = WM_RX_INTR_PROCESS_LIMIT_DEFAULT;
 
@@ -2972,7 +2983,9 @@ wm_watchdog_txq_locked(struct ifnet *ifp, struct wm_txqueue *txq)
 	 * Since we're using delayed interrupts, sweep up
 	 * before we report an error.
 	 */
-	wm_txeof(sc, txq);
+	mutex_enter(txq->txq_lock);
+	wm_txeof(txq, UINT_MAX);
+	mutex_exit(txq->txq_lock);
 
 	if (txq->txq_free != WM_NTXDESC(txq)) {
 #ifdef WM_DEBUG
@@ -7140,7 +7153,7 @@ wm_send_common_locked(struct ifnet *ifp, struct wm_txqueue *txq,
 
 		/* Get a work queue entry. */
 		if (txq->txq_sfree < WM_TXQUEUE_GC(txq)) {
-			wm_txeof(sc, txq);
+			wm_txeof(txq, UINT_MAX);
 			if (txq->txq_sfree == 0) {
 				DPRINTF(WM_DEBUG_TX,
 				    ("%s: TX: no free job descriptors\n",
@@ -7739,7 +7752,7 @@ wm_nq_send_common_locked(struct ifnet *ifp, struct wm_txqueue *txq,
 
 		/* Get a work queue entry. */
 		if (txq->txq_sfree < WM_TXQUEUE_GC(txq)) {
-			wm_txeof(sc, txq);
+			wm_txeof(txq, UINT_MAX);
 			if (txq->txq_sfree == 0) {
 				DPRINTF(WM_DEBUG_TX,
 				    ("%s: TX: no free job descriptors\n",
@@ -8028,8 +8041,9 @@ wm_deferred_start_locked(struct wm_txqueue *txq)
  *	Helper; handle transmit interrupts.
  */
 static int
-wm_txeof(struct wm_softc *sc, struct wm_txqueue *txq)
+wm_txeof(struct wm_txqueue *txq, u_int limit)
 {
+	struct wm_softc *sc = txq->txq_sc;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct wm_txsoft *txs;
 	bool processed = false;
@@ -8054,6 +8068,9 @@ wm_txeof(struct wm_softc *sc, struct wm_txqueue *txq)
 	 */
 	for (i = txq->txq_sdirty; txq->txq_sfree != WM_TXQUEUELEN(txq);
 	     i = WM_NEXTTXS(txq, i), txq->txq_sfree++) {
+		if (limit-- == 0)
+			break;
+
 		txs = &txq->txq_soft[i];
 
 		DPRINTF(WM_DEBUG_TX, ("%s: TX: checking job %d\n",
@@ -8890,7 +8907,7 @@ wm_intr_legacy(void *arg)
 			WM_Q_EVCNT_INCR(txq, txdw);
 		}
 #endif
-		wm_txeof(sc, txq);
+		wm_txeof(txq, UINT_MAX);
 
 		mutex_exit(txq->txq_lock);
 		WM_CORE_LOCK(sc);
@@ -8960,7 +8977,8 @@ wm_txrxintr_msix(void *arg)
 	struct wm_txqueue *txq = &wmq->wmq_txq;
 	struct wm_rxqueue *rxq = &wmq->wmq_rxq;
 	struct wm_softc *sc = txq->txq_sc;
-	u_int limit = sc->sc_rx_intr_process_limit;
+	u_int txlimit = sc->sc_tx_intr_process_limit;
+	u_int rxlimit = sc->sc_rx_intr_process_limit;
 
 	KASSERT(wmq->wmq_intr_idx == wmq->wmq_id);
 
@@ -8977,7 +8995,7 @@ wm_txrxintr_msix(void *arg)
 	}
 
 	WM_Q_EVCNT_INCR(txq, txdw);
-	wm_txeof(sc, txq);
+	wm_txeof(txq, txlimit);
 	/* wm_deferred start() is done in wm_handle_queue(). */
 	mutex_exit(txq->txq_lock);
 
@@ -8991,7 +9009,7 @@ wm_txrxintr_msix(void *arg)
 	}
 
 	WM_Q_EVCNT_INCR(rxq, rxintr);
-	wm_rxeof(rxq, limit);
+	wm_rxeof(rxq, rxlimit);
 	mutex_exit(rxq->rxq_lock);
 
 	wm_itrs_writereg(sc, wmq);
@@ -9008,14 +9026,15 @@ wm_handle_queue(void *arg)
 	struct wm_txqueue *txq = &wmq->wmq_txq;
 	struct wm_rxqueue *rxq = &wmq->wmq_rxq;
 	struct wm_softc *sc = txq->txq_sc;
-	u_int limit = sc->sc_rx_process_limit;
+	u_int txlimit = sc->sc_tx_process_limit;
+	u_int rxlimit = sc->sc_rx_process_limit;
 
 	mutex_enter(txq->txq_lock);
 	if (txq->txq_stopping) {
 		mutex_exit(txq->txq_lock);
 		return;
 	}
-	wm_txeof(sc, txq);
+	wm_txeof(txq, txlimit);
 	wm_deferred_start_locked(txq);
 	mutex_exit(txq->txq_lock);
 
@@ -9025,7 +9044,7 @@ wm_handle_queue(void *arg)
 		return;
 	}
 	WM_Q_EVCNT_INCR(rxq, rxdefer);
-	wm_rxeof(rxq, limit);
+	wm_rxeof(rxq, rxlimit);
 	mutex_exit(rxq->rxq_lock);
 
 	wm_txrxintr_enable(wmq);
