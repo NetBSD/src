@@ -1,4 +1,4 @@
-.\"	$NetBSD: wm.4,v 1.37 2018/01/18 09:38:15 knakahara Exp $
+.\"	$NetBSD: wm.4,v 1.38 2018/01/18 09:54:52 wiz Exp $
 .\"
 .\" Copyright 2002, 2003 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -183,7 +183,8 @@ The default value is 100.
 When you increase this value, both the receive latency and
 the receive throughput will increase.
 .It Dv WM_TX_PROCESS_LIMIT_DEFAULT
-Transmit side of WM_RX_PROCESS_LIMIT_DEFAULT.
+Transmit side of
+.Dv WM_RX_PROCESS_LIMIT_DEFAULT .
 .It Dv WM_RX_INTR_PROCESS_LIMIT_DEFAULT
 The maximum number of received packets processed in each
 hardware interrupt context.
@@ -194,7 +195,8 @@ The default value is 0.
 When you increase this value, both the receive latency and
 the receive throughput will decrease.
 .It Dv WM_TX_INTR_PROCESS_LIMIT_DEFAULT
-Transmit side of WM_RX_INTR_PROCESS_LIMIT_DEFAULT.
+Transmit side of
+.Dv WM_RX_INTR_PROCESS_LIMIT_DEFAULT .
 .It Dv WM_EVENT_COUNTERS
 Enable many event counters such as each Tx drop counter and Rx interrupt
 counter.
