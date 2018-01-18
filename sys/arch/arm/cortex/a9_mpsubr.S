@@ -1,4 +1,4 @@
-/*	$NetBSD: a9_mpsubr.S,v 1.54 2017/12/10 21:38:26 skrll Exp $	*/
+/*	$NetBSD: a9_mpsubr.S,v 1.55 2018/01/18 12:49:09 skrll Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -506,7 +506,7 @@ cortex_init:
 	// turning on SMP.
 	//
 	mov	r0, #0
-	mcr	p15, 0, r1, c8, c7, 0	// TLBIALL (just this core)
+	mcr	p15, 0, r0, c8, c7, 0	// TLBIALL (just this core)
 #endif
 
 	// For the A7, SMP must be on ldrex/strex to work.
