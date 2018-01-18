@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.74 2018/01/11 10:38:13 maxv Exp $	*/
+/*	$NetBSD: pmap.h,v 1.75 2018/01/18 07:25:34 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -163,9 +163,13 @@ struct pcpu_entry {
 	uint8_t ist0[PAGE_SIZE];
 	uint8_t ist1[PAGE_SIZE];
 	uint8_t ist2[PAGE_SIZE];
+	uint8_t rsp0[2 * PAGE_SIZE];
 } __packed;
 
 struct pcpu_area {
+#ifdef SVS
+	uint8_t utls[PAGE_SIZE];
+#endif
 	uint8_t idt[PAGE_SIZE];
 	uint8_t ldt[PAGE_SIZE];
 	struct pcpu_entry ent[MAXCPUS];
