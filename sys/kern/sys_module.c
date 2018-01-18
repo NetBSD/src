@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_module.c,v 1.22 2017/06/01 02:45:13 chs Exp $	*/
+/*	$NetBSD: sys_module.c,v 1.23 2018/01/18 13:31:20 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.22 2017/06/01 02:45:13 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.23 2018/01/18 13:31:20 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
@@ -120,6 +120,12 @@ handle_modctl_stat(struct iovec *iov, void *arg)
 	size_t size;
 	size_t mslen;
 	int error;
+	bool stataddr;
+
+	/* If not privileged, don't expose kernel addresses. */
+	error = kauth_authorize_system(kauth_cred_get(), KAUTH_SYSTEM_MODULE,
+	    0, (void *)(uintptr_t)MODCTL_STAT, NULL, NULL);
+	stataddr = (error == 0);
 
 	kernconfig_lock();
 	mslen = (module_count+module_builtinlist+1) * sizeof(modstat_t);
@@ -132,7 +138,7 @@ handle_modctl_stat(struct iovec *iov, void *arg)
 			strlcpy(ms->ms_required, mi->mi_required,
 			    sizeof(ms->ms_required));
 		}
-		if (mod->mod_kobj != NULL) {
+		if (mod->mod_kobj != NULL && stataddr) {
 			kobj_stat(mod->mod_kobj, &addr, &size);
 			ms->ms_addr = addr;
 			ms->ms_size = size;
@@ -150,7 +156,7 @@ handle_modctl_stat(struct iovec *iov, void *arg)
 			strlcpy(ms->ms_required, mi->mi_required,
 			    sizeof(ms->ms_required));
 		}
-		if (mod->mod_kobj != NULL) {
+		if (mod->mod_kobj != NULL && stataddr) {
 			kobj_stat(mod->mod_kobj, &addr, &size);
 			ms->ms_addr = addr;
 			ms->ms_size = size;
