@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.62 2014/10/18 08:33:27 snj Exp $	*/
+/*	$NetBSD: ebus.c,v 1.63 2018/01/18 00:31:22 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.62 2014/10/18 08:33:27 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.63 2018/01/18 00:31:22 mrg Exp $");
 
 #include "opt_ddb.h"
 
@@ -148,11 +148,10 @@ ebus_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 
-	aprint_normal("\n");
 	aprint_naive("\n");
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	aprint_normal_dev(self, "%s, revision 0x%02x\n", devinfo,
+	aprint_normal(": %s, revision 0x%02x\n", devinfo,
 	    PCI_REVISION(pa->pa_class));
 
 	sc->sc_memtag = pa->pa_memt;
