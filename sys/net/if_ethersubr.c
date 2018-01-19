@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.256 2018/01/15 14:00:34 maxv Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.257 2018/01/19 12:31:27 nakayama Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.256 2018/01/15 14:00:34 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.257 2018/01/19 12:31:27 nakayama Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -756,7 +756,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	case ETHERTYPE_SLOWPROTOCOLS: {
 		uint8_t subtype;
 
-		KASSERTMSG((m->m_pkthdr.len < sizeof(*eh) + sizeof(subtype)),
+		KASSERTMSG((m->m_pkthdr.len >= sizeof(*eh) + sizeof(subtype)),
 			"too short slow protocol packet");
 
 		m_copydata(m, sizeof(*eh), sizeof(subtype), &subtype);
