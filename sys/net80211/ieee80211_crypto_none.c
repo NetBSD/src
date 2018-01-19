@@ -1,4 +1,6 @@
-/*-
+/*	$NetBSD: ieee80211_crypto_none.c,v 1.8 2018/01/19 07:53:46 maxv Exp $	*/
+
+/*
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
  * All rights reserved.
  *
@@ -34,15 +36,15 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto_none.c,v 1.5 2005/06/10 16:11:24 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_none.c,v 1.7 2006/11/16 01:33:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_none.c,v 1.8 2018/01/19 07:53:46 maxv Exp $");
 #endif
 
 /*
  * IEEE 802.11 NULL crypto support.
  */
 #include <sys/param.h>
-#include <sys/systm.h> 
-#include <sys/mbuf.h>   
+#include <sys/systm.h>
+#include <sys/mbuf.h>
 
 #include <sys/socket.h>
 

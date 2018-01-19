@@ -1,4 +1,6 @@
-/*-
+/*	$NetBSD: ieee80211_crypto_ccmp.c,v 1.13 2018/01/19 07:54:34 maxv Exp $	*/
+
+/*
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
  * All rights reserved.
  *
@@ -34,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto_ccmp.c,v 1.7 2005/07/11 03:06:23 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_ccmp.c,v 1.12 2018/01/17 17:41:38 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_ccmp.c,v 1.13 2018/01/19 07:54:34 maxv Exp $");
 #endif
 
 /*
@@ -46,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_ccmp.c,v 1.12 2018/01/17 17:41:38 m
  */
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/mbuf.h> 
+#include <sys/mbuf.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 
@@ -64,7 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_ccmp.c,v 1.12 2018/01/17 17:41:38 m
 
 struct ccmp_ctx {
 	struct ieee80211com *cc_ic;	/* for diagnostics */
-	rijndael_ctx	     cc_aes;
+	rijndael_ctx cc_aes;
 };
 
 static	void *ccmp_attach(struct ieee80211com *, struct ieee80211_key *);
@@ -102,8 +104,7 @@ ccmp_attach(struct ieee80211com *ic, struct ieee80211_key *k)
 {
 	struct ccmp_ctx *ctx;
 
-	ctx = malloc(sizeof(struct ccmp_ctx),
-		M_DEVBUF, M_NOWAIT | M_ZERO);
+	ctx = malloc(sizeof(struct ccmp_ctx), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (ctx == NULL) {
 		ic->ic_stats.is_crypto_nomem++;
 		return NULL;
@@ -258,8 +259,7 @@ ccmp_decap(struct ieee80211_key *k, struct mbuf *m, int hdrlen)
  * Verify and strip MIC from the frame.
  */
 static int
-ccmp_demic(struct ieee80211_key *k, struct mbuf *m,
-    int force)
+ccmp_demic(struct ieee80211_key *k, struct mbuf *m, int force)
 {
 	return 1;
 }
@@ -419,6 +419,7 @@ ccmp_encrypt(struct ieee80211_key *key, struct mbuf *m0, int hdrlen)
 	for (;;) {
 		if (space > data_len)
 			space = data_len;
+
 		/*
 		 * Do full blocks.
 		 */
@@ -430,6 +431,7 @@ ccmp_encrypt(struct ieee80211_key *key, struct mbuf *m0, int hdrlen)
 		}
 		if (data_len <= 0)		/* no more data */
 			break;
+
 		m = m->m_next;
 		if (m == NULL) {		/* last buffer */
 			if (space != 0) {
@@ -472,7 +474,7 @@ ccmp_encrypt(struct ieee80211_key *key, struct mbuf *m0, int hdrlen)
 				}
 				/*
 				 * This mbuf's contents are insufficient,
-				 * take 'em all and prepare to advance to
+				 * take them all and prepare to advance to
 				 * the next mbuf.
 				 */
 				xor_block(b+sp, pos_next, n->m_len);
@@ -501,6 +503,7 @@ ccmp_encrypt(struct ieee80211_key *key, struct mbuf *m0, int hdrlen)
 				if (m == NULL)
 					goto done;
 			}
+
 			/*
 			 * Do bookkeeping.  m now points to the last mbuf
 			 * we grabbed data from.  We know we consumed a
@@ -521,6 +524,7 @@ ccmp_encrypt(struct ieee80211_key *key, struct mbuf *m0, int hdrlen)
 			space = m->m_len;
 		}
 	}
+
 done:
 	/* tack on MIC */
 	xor_block(b, s0, ccmp.ic_trailer);
@@ -540,7 +544,8 @@ done:
 } while (0)
 
 static int
-ccmp_decrypt(struct ieee80211_key *key, u_int64_t pn, struct mbuf *m, int hdrlen)
+ccmp_decrypt(struct ieee80211_key *key, u_int64_t pn, struct mbuf *m,
+    int hdrlen)
 {
 	struct ccmp_ctx *ctx = key->wk_private;
 	struct ieee80211_frame *wh;
@@ -574,12 +579,14 @@ ccmp_decrypt(struct ieee80211_key *key, u_int64_t pn, struct mbuf *m, int hdrlen
 		}
 		if (data_len <= 0)		/* no more data */
 			break;
+
 		m = m->m_next;
 		if (m == NULL) {		/* last buffer */
 			if (space != 0)		/* short last block */
 				CCMP_DECRYPT(i, b, b0, pos, a, space);
 			break;
 		}
+
 		if (space != 0) {
 			uint8_t *pos_next;
 			u_int space_next;
@@ -614,6 +621,7 @@ ccmp_decrypt(struct ieee80211_key *key, u_int64_t pn, struct mbuf *m, int hdrlen
 			space = m->m_len;
 		}
 	}
+
 	if (memcmp(mic, a, ccmp.ic_trailer) != 0) {
 		IEEE80211_DPRINTF(ctx->cc_ic, IEEE80211_MSG_CRYPTO,
 			"[%s] AES-CCM decrypt failed; MIC mismatch\n",
@@ -621,6 +629,7 @@ ccmp_decrypt(struct ieee80211_key *key, u_int64_t pn, struct mbuf *m, int hdrlen
 		ctx->cc_ic->ic_stats.is_rx_ccmpmic++;
 		return 0;
 	}
+
 	return 1;
 }
 #undef CCMP_DECRYPT
