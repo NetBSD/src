@@ -1,4 +1,6 @@
-/*-
+/*	$NetBSD: ieee80211_crypto_wep.c,v 1.11 2018/01/19 07:58:25 maxv Exp $	*/
+
+/*
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
  * All rights reserved.
  *
@@ -34,15 +36,15 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto_wep.c,v 1.7 2005/06/10 16:11:24 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_wep.c,v 1.10 2018/01/17 17:41:38 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_wep.c,v 1.11 2018/01/19 07:58:25 maxv Exp $");
 #endif
 
 /*
  * IEEE 802.11 WEP crypto support.
  */
 #include <sys/param.h>
-#include <sys/systm.h> 
-#include <sys/mbuf.h>   
+#include <sys/systm.h>
+#include <sys/mbuf.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/endian.h>
@@ -93,8 +95,7 @@ wep_attach(struct ieee80211com *ic, struct ieee80211_key *k)
 {
 	struct wep_ctx *ctx;
 
-	ctx = malloc(sizeof(struct wep_ctx),
-		M_DEVBUF, M_NOWAIT | M_ZERO);
+	ctx = malloc(sizeof(struct wep_ctx), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (ctx == NULL) {
 		ic->ic_stats.is_crypto_nomem++;
 		return NULL;
@@ -190,8 +191,7 @@ wep_encap(struct ieee80211_key *k, struct mbuf *m, u_int8_t keyid)
  * Add MIC to the frame as needed.
  */
 static int
-wep_enmic(struct ieee80211_key *k, struct mbuf *m,
-    int force)
+wep_enmic(struct ieee80211_key *k, struct mbuf *m, int force)
 {
 
 	return 1;
@@ -315,7 +315,10 @@ wep_encrypt(struct ieee80211_key *key, struct mbuf *m0, int hdrlen)
 
 	ctx->wc_ic->ic_stats.is_crypto_wep++;
 
-	/* NB: this assumes the header was pulled up */
+	/*
+	 * NB: this assumes the header was pulled up; it was done in
+	 * ieee80211_crypto_encap().
+	 */
 	memcpy(rc4key, mtod(m, u_int8_t *) + hdrlen, IEEE80211_WEP_IVLEN);
 	memcpy(rc4key + IEEE80211_WEP_IVLEN, key->wk_key, key->wk_keylen);
 
@@ -449,8 +452,10 @@ wep_decrypt(struct ieee80211_key *key, struct mbuf *m0, int hdrlen)
 	}
 	crc = ~crc;
 
-	/* Encrypt little-endian CRC32 and verify that it matches with
-	 * received ICV */
+	/*
+	 * Encrypt little-endian CRC32 and verify that it matches with
+	 * received ICV
+	 */
 	icv[0] = crc;
 	icv[1] = crc >> 8;
 	icv[2] = crc >> 16;
