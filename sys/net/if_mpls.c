@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mpls.c,v 1.32 2017/12/09 10:30:30 maxv Exp $ */
+/*	$NetBSD: if_mpls.c,v 1.33 2018/01/19 15:04:29 maxv Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.32 2017/12/09 10:30:30 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.33 2018/01/19 15:04:29 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -74,21 +74,11 @@ __KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.32 2017/12/09 10:30:30 maxv Exp $");
 
 #include "ioconf.h"
 
-#define TRIM_LABEL do { \
-	m_adj(m, sizeof(union mpls_shim)); \
-	if (m->m_len < sizeof(union mpls_shim) && \
-	    (m = m_pullup(m, sizeof(union mpls_shim))) == NULL) \
-		goto done; \
-	dst.smpls_addr.s_addr = ntohl(mtod(m, union mpls_shim *)->s_addr); \
-	} while (/* CONSTCOND */ 0)
-
-
 static int mpls_clone_create(struct if_clone *, int);
 static int mpls_clone_destroy(struct ifnet *);
 
 static struct if_clone mpls_if_cloner =
 	IF_CLONE_INITIALIZER("mpls", mpls_clone_create, mpls_clone_destroy);
-
 
 static void mpls_input(struct ifnet *, struct mbuf *);
 static int mpls_output(struct ifnet *, struct mbuf *, const struct sockaddr *,
@@ -303,7 +293,7 @@ mpls_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	ifp->if_opackets++;
 	ifp->if_obytes += m->m_pkthdr.len;
 
-	if ((rt1=rtalloc1(rt->rt_gateway, 1)) == NULL) {
+	if ((rt1 = rtalloc1(rt->rt_gateway, 1)) == NULL) {
 		m_freem(m);
 		return EHOSTUNREACH;
 	}
@@ -347,6 +337,20 @@ mpls_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	return error;
 }
 
+static inline struct mbuf *
+mpls_trim_label(struct mbuf *m, union mpls_shim *sh)
+{
+	m_adj(m, sizeof(union mpls_shim));
+
+	if (m->m_len < sizeof(union mpls_shim) &&
+	    (m = m_pullup(m, sizeof(union mpls_shim))) == NULL)
+		return NULL;
+
+	sh->s_addr = ntohl(mtod(m, union mpls_shim *)->s_addr);
+
+	return m;
+}
+
 /*
  * MPLS Label Switch Engine
  */
@@ -384,14 +388,21 @@ mpls_lse(struct mbuf *m)
 	if (mpls_rfc4182 != 0) {
 		while ((dst.smpls_addr.shim.label == MPLS_LABEL_IPV4NULL ||
 		    dst.smpls_addr.shim.label == MPLS_LABEL_IPV6NULL) &&
-		    __predict_false(dst.smpls_addr.shim.bos == 0))
-			TRIM_LABEL;
+		    __predict_false(dst.smpls_addr.shim.bos == 0)) {
+			m = mpls_trim_label(m, &dst.smpls_addr);
+			if (m == NULL) {
+				goto done;
+			}
+		}
 	}
 
 	/* RFC 3032 Section 2.1 Page 4 */
 	if (__predict_false(dst.smpls_addr.shim.label == MPLS_LABEL_RTALERT) &&
 	    dst.smpls_addr.shim.bos == 0) {
-		TRIM_LABEL;
+		m = mpls_trim_label(m, &dst.smpls_addr);
+		if (m == NULL) {
+			goto done;
+		}
 		push_back_alert = true;
 	}
 
@@ -428,9 +439,9 @@ mpls_lse(struct mbuf *m)
 		goto done;
 
 	/* Get a route to dst */
-	dst.smpls_addr.shim.ttl =
-	    dst.smpls_addr.shim.bos =
-	    dst.smpls_addr.shim.exp = 0;
+	dst.smpls_addr.shim.ttl = 0;
+	dst.smpls_addr.shim.bos = 0;
+	dst.smpls_addr.shim.exp = 0;
 	dst.smpls_addr.s_addr = htonl(dst.smpls_addr.s_addr);
 	if ((rt = rtalloc1((const struct sockaddr*)&dst, 1)) == NULL)
 		goto done;
@@ -537,13 +548,12 @@ static struct mbuf *
 mpls_unlabel_inet(struct mbuf *m, int *error)
 {
 	struct ip *iph;
-	union mpls_shim *ms;
+	union mpls_shim ms;
 	int iphlen;
 
 	if (mpls_mapttl_inet || mpls_mapprec_inet) {
 		/* get shim info */
-		ms = mtod(m, union mpls_shim *);
-		ms->s_addr = ntohl(ms->s_addr);
+		ms.s_addr = ntohl(mtod(m, union mpls_shim *)->s_addr);
 
 		/* and get rid of it */
 		m_adj(m, sizeof(union mpls_shim));
@@ -576,12 +586,12 @@ mpls_unlabel_inet(struct mbuf *m, int *error)
 
 		/* set IP ttl from MPLS ttl */
 		if (mpls_mapttl_inet)
-			iph->ip_ttl = ms->shim.ttl;
+			iph->ip_ttl = ms.shim.ttl;
 
 		/* set IP Precedence from MPLS Exp */
 		if (mpls_mapprec_inet) {
 			iph->ip_tos = (iph->ip_tos << 3) >> 3;
-			iph->ip_tos |= ms->shim.exp << 5;
+			iph->ip_tos |= ms.shim.exp << 5;
 		}
 
 		/* reset ipsum because we modified TTL and TOS */
@@ -611,9 +621,11 @@ mpls_label_inet(struct mbuf *m, union mpls_shim *ms, uint offset)
 	struct ip iphdr;
 
 	if (mpls_mapttl_inet || mpls_mapprec_inet) {
-		if ((m->m_len < sizeof(struct ip)) &&
+		/* XXX Maybe just check m->m_pkthdr.len instead? */
+		if ((m->m_len < offset + sizeof(struct ip)) &&
 		    (m = m_pullup(m, offset + sizeof(struct ip))) == 0)
-			return NULL; /* XXX */
+			return NULL;
+
 		m_copydata(m, offset, sizeof(struct ip), &iphdr);
 
 		/* Map TTL */
@@ -674,9 +686,11 @@ mpls_label_inet6(struct mbuf *m, union mpls_shim *ms, uint offset)
 	struct ip6_hdr ip6h;
 
 	if (mpls_mapttl_inet6 || mpls_mapclass_inet6) {
-		if (m->m_len < sizeof(struct ip6_hdr) &&
+		/* XXX Maybe just check m->m_pkthdr.len instead? */
+		if ((m->m_len < offset + sizeof(struct ip6_hdr)) &&
 		    (m = m_pullup(m, offset + sizeof(struct ip6_hdr))) == 0)
 			return NULL;
+
 		m_copydata(m, offset, sizeof(struct ip6_hdr), &ip6h);
 
 		if (mpls_mapttl_inet6)
