@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.71 2017/12/25 05:29:27 maya Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.72 2018/01/19 23:17:41 christos Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mips_reloc.c,v 1.71 2017/12/25 05:29:27 maya Exp $");
+__RCSID("$NetBSD: mips_reloc.c,v 1.72 2018/01/19 23:17:41 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -319,7 +319,7 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 
 		where = obj->relocbase + rel->r_offset;
 
-		switch (ELF_R_TYPE(rel->r_info)) {
+		switch (ELF_R_TYPE(rel->r_info) & 0xff) {
 #if ELFSIZE == 64
 		case R_TYPE(TLS_DTPMOD64):
 		case R_TYPE(TLS_DTPREL64):
@@ -342,7 +342,7 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			break;
 		}
 
-		switch (ELF_R_TYPE(rel->r_info)) {
+		switch (ELF_R_TYPE(rel->r_info) & 0xff) {
 		case R_TYPE(NONE):
 			break;
 
