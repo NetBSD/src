@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_crypto.c,v 1.20 2018/01/17 17:41:38 maxv Exp $	*/
+/*	$NetBSD: ieee80211_crypto.c,v 1.21 2018/01/19 07:52:37 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 Atsushi Onoe
@@ -37,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto.c,v 1.12 2005/08/08 18:46:35 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto.c,v 1.20 2018/01/17 17:41:38 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto.c,v 1.21 2018/01/19 07:52:37 maxv Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto.c,v 1.20 2018/01/17 17:41:38 maxv E
  * IEEE 802.11 generic crypto support.
  */
 #include <sys/param.h>
-#include <sys/mbuf.h>   
+#include <sys/mbuf.h>
 
 #include <sys/socket.h>
 #include <sys/sockio.h>
@@ -72,7 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto.c,v 1.20 2018/01/17 17:41:38 maxv E
 static const struct ieee80211_cipher *ciphers[IEEE80211_CIPHER_MAX];
 
 #ifdef INET
-#include <netinet/in.h> 
+#include <netinet/in.h>
 #include <net/if_ether.h>
 #endif
 
@@ -136,7 +136,7 @@ cipher_detach(struct ieee80211_key *key)
 	key->wk_cipher->ic_detach(key);
 }
 
-/* 
+/*
  * Wrappers for driver key management methods.
  */
 static __inline int
@@ -605,7 +605,12 @@ ieee80211_crypto_decap(struct ieee80211com *ic,
 	struct mbuf *m = *mp;
 	u_int8_t keyid;
 
-	/* NB: this minimum size data frame could be bigger */
+	KASSERT((m->m_flags & M_PKTHDR) != 0);
+
+	/*
+	 * This minimum size data frame could be bigger. It is re-checked
+	 * below.
+	 */
 	if (m->m_pkthdr.len < IEEE80211_WEP_MINLEN) {
 		IEEE80211_DPRINTF(ic, IEEE80211_MSG_ANY,
 			"%s: WEP data frame too short, len %u\n",
@@ -643,6 +648,17 @@ ieee80211_crypto_decap(struct ieee80211com *ic,
 		    "[%s] unable to pullup %s header\n",
 		    ether_sprintf(wh->i_addr2), cip->ic_name);
 		ic->ic_stats.is_rx_wepfail++;	/* XXX */
+		return NULL;
+	}
+
+	/*
+	 * Ensure there is a header+trailer included.
+	 */
+	if (m->m_pkthdr.len < hdrlen + cip->ic_header + cip->ic_trailer) {
+		IEEE80211_DPRINTF(ic, IEEE80211_MSG_ANY,
+			"%s: WEP data frame too short, len %u\n",
+			__func__, m->m_pkthdr.len);
+		ic->ic_stats.is_rx_tooshort++;
 		return NULL;
 	}
 
