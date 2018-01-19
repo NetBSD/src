@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.236 2017/12/18 05:35:36 ozaki-r Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.237 2018/01/19 05:19:29 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.236 2017/12/18 05:35:36 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.237 2018/01/19 05:19:29 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -82,6 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.236 2017/12/18 05:35:36 ozaki-r Exp $")
 #include <sys/kauth.h>
 #include <sys/kmem.h>
 #include <sys/intr.h>
+#include <sys/condvar.h>
 
 #include <net/if.h>
 #include <net/if_llatbl.h>
@@ -187,6 +188,9 @@ struct routecb {
 static struct rawcbhead rt_rawcb;
 #ifdef NET_MPSAFE
 static kmutex_t *rt_so_mtx;
+
+static bool rt_updating = false;
+static kcondvar_t rt_update_cv;
 #endif
 
 static void
@@ -1007,11 +1011,27 @@ COMPATNAME(route_output)(struct mbuf *m, struct socket *so)
 
 		case RTM_CHANGE:
 #ifdef NET_MPSAFE
+			/*
+			 * Release rt_so_mtx to avoid a deadlock with route_intr
+			 * and also serialize updating routes to avoid another.
+			 */
+			while (rt_updating) {
+				error = cv_wait_sig(&rt_update_cv, rt_so_mtx);
+				if (error != 0)
+					goto flush;
+			}
+			rt_updating = true;
+			mutex_exit(rt_so_mtx);
+
 			error = rt_update_prepare(rt);
 			if (error == 0) {
 				error = route_output_change(rt, &info, rtm);
 				rt_update_finish(rt);
 			}
+
+			mutex_enter(rt_so_mtx);
+			rt_updating = false;
+			cv_broadcast(&rt_update_cv);
 #else
 			error = route_output_change(rt, &info, rtm);
 #endif
@@ -2110,6 +2130,8 @@ COMPATNAME(route_init)(void)
 #endif
 #ifdef NET_MPSAFE
 	rt_so_mtx = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
+
+	cv_init(&rt_update_cv, "rtsock_cv");
 #endif
 
 	sysctl_net_route_setup(NULL);
