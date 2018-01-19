@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.h,v 1.36 2018/01/19 10:21:24 maxv Exp $	*/
+/*	$NetBSD: ip_icmp.h,v 1.37 2018/01/19 10:54:31 maxv Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -58,6 +58,13 @@ struct icmp {
 
 	union {
 		int32_t ih_void;
+
+		/* Extended Header (RFC4884) */
+		struct ih_exthdr {
+			u_int8_t iex_void1;
+			u_int8_t iex_length;
+			u_int16_t iex_void2;
+		} ih_exthdr __packed;
 
 		/* ICMP_PARAMPROB */
 		u_int8_t ih_pptr;
@@ -126,6 +133,33 @@ struct icmp {
 #define icmp_mask	icmp_dun.id_mask
 #define icmp_data	icmp_dun.id_data
 };
+
+#define ICMP_EXT_VERSION	2
+#define ICMP_EXT_OFFSET		128
+
+/*
+ * ICMP Extension Structure Header (RFC4884).
+ */
+struct icmp_ext_hdr {
+#if BYTE_ORDER == BIG_ENDIAN
+	u_int8_t version:4;
+	u_int8_t rsvd1:4;
+#else
+	u_int8_t rsvd1:4;
+	u_int8_t version:4;
+#endif
+	u_int8_t rsvd2;
+	u_int16_t checksum;
+} __packed;
+
+/*
+ * ICMP Extension Object Header (RFC4884).
+ */
+struct icmp_ext_obj_hdr {
+	u_int16_t length;
+	u_int8_t class_num;
+	u_int8_t c_type;
+} __packed;
 
 /*
  * Lower bounds on packet lengths for various types.
