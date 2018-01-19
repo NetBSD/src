@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.353 2018/01/18 00:32:49 mrg Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.354 2018/01/19 09:04:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.353 2018/01/18 00:32:49 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.354 2018/01/19 09:04:23 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1115,7 +1115,9 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	case RAIDFRAME_GET_COMPONENT_LABEL80:
 #endif
 #ifdef COMPAT_NETBSD32
+#ifdef _LP64
 	case RAIDFRAME_GET_INFO32:
+#endif
 #endif
 		if ((rs->sc_flags & RAIDF_INITED) == 0)
 			return (ENXIO);
@@ -1152,7 +1154,9 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		/* configure the system */
 	case RAIDFRAME_CONFIGURE:
 #ifdef COMPAT_NETBSD32
+#ifdef _LP64
 	case RAIDFRAME_CONFIGURE32:
+#endif
 #endif
 
 		if (raidPtr->valid) {
@@ -1169,10 +1173,12 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			return (ENOMEM);
 		}
 #ifdef COMPAT_NETBSD32
+#ifdef _LP64
 		if (cmd == RAIDFRAME_CONFIGURE32 &&
 		    (l->l_proc->p_flag & PK_32) != 0)
 			retcode = rf_config_netbsd32(data, k_cfg);
 		else
+#endif
 #endif
 		{
 			u_cfg = *((RF_Config_t **) data);
@@ -1476,7 +1482,9 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 	case RAIDFRAME_GET_INFO:
 #ifdef COMPAT_NETBSD32
+#ifdef _LP64
 	case RAIDFRAME_GET_INFO32:
+#endif
 #endif
 		RF_Malloc(d_cfg, sizeof(RF_DeviceConfig_t),
 			  (RF_DeviceConfig_t *));
@@ -1485,9 +1493,11 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		retcode = rf_get_info(raidPtr, d_cfg);
 		if (retcode == 0) {
 #ifdef COMPAT_NETBSD32
+#ifdef _LP64
 			if (cmd == RAIDFRAME_GET_INFO32)
 				ucfgp = NETBSD32PTR64(*(netbsd32_pointer_t *)data);
 			else
+#endif
 #endif
 				ucfgp = *(RF_DeviceConfig_t **)data;
 			retcode = copyout(d_cfg, ucfgp, sizeof(RF_DeviceConfig_t));
