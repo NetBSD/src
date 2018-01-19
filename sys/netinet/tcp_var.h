@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.181 2017/11/15 09:55:22 ozaki-r Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.182 2018/01/19 07:53:01 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -928,8 +928,6 @@ void	 tcp_setpersist(struct tcpcb *);
 int	 tcp_signature_compute(struct mbuf *, struct tcphdr *, int, int,
 	    int, u_char *, u_int);
 #endif
-void	 tcp_slowtimo(void *);
-extern callout_t tcp_slowtimo_ch;
 void	 tcp_fasttimo(void);
 struct mbuf *
 	 tcp_template(struct tcpcb *);
