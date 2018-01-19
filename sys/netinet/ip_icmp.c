@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.162 2018/01/19 12:50:27 maxv Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.163 2018/01/19 13:17:29 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.162 2018/01/19 12:50:27 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.163 2018/01/19 13:17:29 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -260,7 +260,8 @@ icmp_error(struct mbuf *n, int type, int code, n_long dest, int destmtu)
 	struct icmp *icp;
 	struct mbuf *m;
 	struct m_tag *mtag;
-	unsigned datalen, mblen, totlen;
+	unsigned datalen, mblen;
+	int totlen;
 
 #ifdef ICMPPRINTFS
 	if (icmpprintfs)
@@ -315,10 +316,12 @@ icmp_error(struct mbuf *n, int type, int code, n_long dest, int destmtu)
 	 * Compute the total length of the new packet. Truncate it if it's
 	 * bigger than the size of a cluster.
 	 */
-	CTASSERT(ICMP_MINLEN <= MCLBYTES);
-	if (datalen + ICMP_MINLEN > MCLBYTES)
-		datalen = MCLBYTES - ICMP_MINLEN;
-	totlen = datalen + ICMP_MINLEN;
+	CTASSERT(ICMP_MINLEN + sizeof(struct ip) <= MCLBYTES);
+	totlen = sizeof(struct ip) + ICMP_MINLEN + datalen;
+	if (totlen > MCLBYTES) {
+		datalen = MCLBYTES - ICMP_MINLEN - sizeof(struct ip);
+		totlen = MCLBYTES;
+	}
 
 	/*
 	 * Allocate the mbuf for the new packet.
@@ -335,26 +338,23 @@ icmp_error(struct mbuf *n, int type, int code, n_long dest, int destmtu)
 		goto freeit;
 	MCLAIM(m, n->m_owner);
 	m->m_len = totlen;
-
-	/*
-	 * Advance to the ICMP header.
-	 */
-	if ((m->m_flags & M_EXT) == 0) {
-		MH_ALIGN(m, m->m_len);
-	} else {
-		m->m_data += sizeof(struct ip);
-		m->m_len -= sizeof(struct ip);
-	}
+	m->m_pkthdr.len = m->m_len;
+	m_copy_rcvif(m, n);
 
 	if ((u_int)type > ICMP_MAXTYPE)
 		panic("icmp_error");
 	ICMP_STATINC(ICMP_STAT_OUTHIST + type);
 
 	/*
+	 * Get pointers on the IP header and the ICMP header.
+	 */
+	nip = mtod(m, struct ip *);
+	icp = (struct icmp *)(nip + 1);
+
+	/*
 	 * Fill in the fields of the ICMP header: icmp_type, icmp_code
 	 * and icmp_ip. icmp_cksum gets filled later.
 	 */
-	icp = mtod(m, struct icmp *);
 	icp->icmp_type = type;
 	if (type == ICMP_REDIRECT) {
 		icp->icmp_gwaddr.s_addr = dest;
@@ -375,21 +375,9 @@ icmp_error(struct mbuf *n, int type, int code, n_long dest, int destmtu)
 	m_copydata(n, 0, datalen, (void *)&icp->icmp_ip);
 
 	/*
-	 * Come back to the IP header.
-	 */
-	if ((m->m_flags & M_EXT) == 0 &&
-	    m->m_data - sizeof(struct ip) < m->m_pktdat)
-		panic("icmp len");
-	m->m_data -= sizeof(struct ip);
-	m->m_len += sizeof(struct ip);
-	m->m_pkthdr.len = m->m_len;
-	m_copy_rcvif(m, n);
-
-	/*
 	 * Now, copy the old IP header (without options) in front of the
 	 * ICMP message. The src/dst fields will be swapped in icmp_reflect.
 	 */
-	nip = mtod(m, struct ip *);
 	/* ip_v set in ip_output */
 	nip->ip_hl = sizeof(struct ip) >> 2;
 	nip->ip_tos = 0;
