@@ -1,4 +1,4 @@
-/*	$NetBSD: voyagerfb.c,v 1.28 2016/01/13 15:56:05 macallan Exp $	*/
+/*	$NetBSD: voyagerfb.c,v 1.29 2018/01/19 23:37:36 macallan Exp $	*/
 
 /*
  * Copyright (c) 2009, 2011 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.28 2016/01/13 15:56:05 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.29 2018/01/19 23:37:36 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -287,7 +287,8 @@ voyagerfb_attach(device_t parent, device_t self, void *aux)
 		0, 0,
 		NULL,
 		8, 16,
-		WSSCREEN_WSCOLORS | WSSCREEN_HILIT,
+		WSSCREEN_WSCOLORS | WSSCREEN_HILIT | WSSCREEN_UNDERLINE |
+		WSSCREEN_RESIZE,
 		NULL
 	};
 	sc->sc_screens[0] = &sc->sc_defaultscreen_descr;
@@ -298,6 +299,8 @@ voyagerfb_attach(device_t parent, device_t self, void *aux)
 	vcons_init(&sc->vd, sc, &sc->sc_defaultscreen_descr,
 	    &voyagerfb_accessops);
 	sc->vd.init_screen = voyagerfb_init_screen;
+	sc->vd.show_screen_cookie = &sc->sc_gc;
+	sc->vd.show_screen_cb = glyphcache_adapt;
 
 	/* backlight control */
 	voyagerfb_setup_backlight(sc);
@@ -586,7 +589,7 @@ voyagerfb_init_screen(void *cookie, struct vcons_screen *scr,
 	if (sc->sc_depth == 8) {
 		ri->ri_flg |= RI_8BIT_IS_RGB;
 #ifdef VOYAGERFB_ANTIALIAS
-		ri->ri_flg |= RI_ENABLE_ALPHA;
+		ri->ri_flg |= RI_ENABLE_ALPHA | RI_PREFER_ALPHA;
 #endif
 	}
 	if (sc->sc_depth == 32) {
@@ -602,8 +605,11 @@ voyagerfb_init_screen(void *cookie, struct vcons_screen *scr,
 		ri->ri_bpos = 0;
 	}
 
+	scr->scr_flags |= VCONS_LOADFONT;
+
 	rasops_init(ri, 0, 0);
-	ri->ri_caps = WSSCREEN_WSCOLORS;
+	ri->ri_caps = WSSCREEN_WSCOLORS | WSSCREEN_HILIT | WSSCREEN_UNDERLINE |
+		      WSSCREEN_RESIZE;
 
 	rasops_reconfig(ri, sc->sc_height / ri->ri_font->fontheight,
 		    sc->sc_width / ri->ri_font->fontwidth);
