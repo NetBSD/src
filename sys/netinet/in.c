@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.215 2018/01/15 08:17:34 ozaki-r Exp $	*/
+/*	$NetBSD: in.c,v 1.216 2018/01/19 08:01:05 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.215 2018/01/15 08:17:34 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.216 2018/01/19 08:01:05 ozaki-r Exp $");
 
 #include "arp.h"
 
@@ -2155,7 +2155,7 @@ in_lltable_delete(struct lltable *llt, u_int flags,
 
 	lle = in_lltable_find_dst(llt, sin->sin_addr);
 	if (lle == NULL) {
-#ifdef DEBUG
+#ifdef LLTABLE_DEBUG
 		char buf[64];
 		sockaddr_format(l3addr, buf, sizeof(buf));
 		log(LOG_INFO, "%s: cache for %s is not found\n",
@@ -2166,7 +2166,7 @@ in_lltable_delete(struct lltable *llt, u_int flags,
 
 	LLE_WLOCK(lle);
 	lle->la_flags |= LLE_DELETED;
-#ifdef DEBUG
+#ifdef LLTABLE_DEBUG
 	{
 		char buf[64];
 		sockaddr_format(l3addr, buf, sizeof(buf));
