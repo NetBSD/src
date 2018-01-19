@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.h,v 1.35 2017/02/17 04:32:10 ozaki-r Exp $	*/
+/*	$NetBSD: ip_icmp.h,v 1.36 2018/01/19 10:21:24 maxv Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -55,57 +55,76 @@ struct icmp {
 	u_int8_t  icmp_type;		/* type of message, see below */
 	u_int8_t  icmp_code;		/* type sub code */
 	u_int16_t icmp_cksum;		/* ones complement cksum of struct */
-	union {
-		u_int8_t  ih_pptr;		/* ICMP_PARAMPROB */
-		struct in_addr ih_gwaddr;	/* ICMP_REDIRECT */
-		struct ih_idseq {
-			  n_short icd_id;
-			  n_short icd_seq;
-		} ih_idseq __packed;
-		int32_t	  ih_void;
 
-		/* ICMP_UNREACH_NEEDFRAG -- Path MTU Discovery (RFC1191) */
+	union {
+		int32_t ih_void;
+
+		/* ICMP_PARAMPROB */
+		u_int8_t ih_pptr;
+
+		/* ICMP_REDIRECT */
+		struct in_addr ih_gwaddr;
+
+		/* ICMP_ECHO and friends */
+		struct ih_idseq {
+			n_short icd_id;
+			n_short icd_seq;
+		} ih_idseq __packed;
+
+		/* ICMP_UNREACH_NEEDFRAG (Path MTU Discovery, RFC1191) */
 		struct ih_pmtu {
-			  n_short ipm_void;
-			  n_short ipm_nextmtu;
+			n_short ipm_void;
+			n_short ipm_nextmtu;
 		} ih_pmtu __packed;
+
+		/* ICMP_ROUTERADVERT */
 		struct ih_rtradv {
 			u_int8_t irt_num_addrs;
 			u_int8_t irt_wpa;
 			u_int16_t irt_lifetime;
 		} ih_rtradv __packed;
 	} icmp_hun /* XXX __packed ??? */;
-#define icmp_pptr	  icmp_hun.ih_pptr
-#define icmp_gwaddr	  icmp_hun.ih_gwaddr
-#define icmp_id		  icmp_hun.ih_idseq.icd_id
-#define icmp_seq	  icmp_hun.ih_idseq.icd_seq
-#define icmp_void	  icmp_hun.ih_void
-#define icmp_pmvoid	  icmp_hun.ih_pmtu.ipm_void
-#define icmp_nextmtu	  icmp_hun.ih_pmtu.ipm_nextmtu
-#define icmp_num_addrs	  icmp_hun.ih_rtradv.irt_num_addrs
-#define icmp_wpa	  icmp_hun.ih_rtradv.irt_wpa
-#define icmp_lifetime	  icmp_hun.ih_rtradv.irt_lifetime
+
+#define icmp_pptr	icmp_hun.ih_pptr
+#define icmp_gwaddr	icmp_hun.ih_gwaddr
+#define icmp_id		icmp_hun.ih_idseq.icd_id
+#define icmp_seq	icmp_hun.ih_idseq.icd_seq
+#define icmp_void	icmp_hun.ih_void
+#define icmp_pmvoid	icmp_hun.ih_pmtu.ipm_void
+#define icmp_nextmtu	icmp_hun.ih_pmtu.ipm_nextmtu
+#define icmp_num_addrs	icmp_hun.ih_rtradv.irt_num_addrs
+#define icmp_wpa	icmp_hun.ih_rtradv.irt_wpa
+#define icmp_lifetime	icmp_hun.ih_rtradv.irt_lifetime
+
 	union {
+		/* ICMP_TSTAMP and friends */
 		struct id_ts {
-			  n_time its_otime;
-			  n_time its_rtime;
-			  n_time its_ttime;
+			n_time its_otime;
+			n_time its_rtime;
+			n_time its_ttime;
 		} id_ts __packed;
-		struct id_ip  {
-			  struct ip idi_ip;
-			  /* options and then 64 bits of data */
+
+		struct id_ip {
+			struct ip idi_ip;
+			/* options and then 64 bits of data */
 		} id_ip /* XXX: __packed ??? */;
+
+		/* ICMP_ROUTERADVERT */
 		struct icmp_ra_addr id_radv;
+
+		/* ICMP_MASKREQ and friends */
 		u_int32_t id_mask;
-		int8_t	  id_data[1];
+
+		int8_t id_data[1];
 	} icmp_dun /* XXX __packed ??? */;
-#define icmp_otime	  icmp_dun.id_ts.its_otime
-#define icmp_rtime	  icmp_dun.id_ts.its_rtime
-#define icmp_ttime	  icmp_dun.id_ts.its_ttime
-#define icmp_ip		  icmp_dun.id_ip.idi_ip
-#define icmp_radv	  icmp_dun.id_mask
-#define icmp_mask	  icmp_dun.id_mask
-#define icmp_data	  icmp_dun.id_data
+
+#define icmp_otime	icmp_dun.id_ts.its_otime
+#define icmp_rtime	icmp_dun.id_ts.its_rtime
+#define icmp_ttime	icmp_dun.id_ts.its_ttime
+#define icmp_ip		icmp_dun.id_ip.idi_ip
+#define icmp_radv	icmp_dun.id_radv
+#define icmp_mask	icmp_dun.id_mask
+#define icmp_data	icmp_dun.id_data
 };
 
 /*
