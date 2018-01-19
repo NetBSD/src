@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.57 2017/11/26 17:46:13 jmcneill Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.58 2018/01/19 23:38:56 macallan Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -178,6 +178,21 @@ struct netbsd32_wsdisplay_cursor {
 /* Cursor control: get/set cursor attributes/shape */
 #define	WSDISPLAYIO_GCURSOR32	_IOWR('W', 73, struct netbsd32_wsdisplay_cursor)
 #define	WSDISPLAYIO_SCURSOR32	_IOW('W', 74, struct netbsd32_wsdisplay_cursor)
+
+struct netbsd32_wsdisplay_font {
+	netbsd32_charp name;
+	int firstchar, numchars;
+	int encoding;
+	u_int fontwidth, fontheight, stride;
+	int bitorder, byteorder;
+	netbsd32_charp data;
+};
+#define	WSDISPLAYIO_LDFONT32	_IOW('W', 77, struct netbsd32_wsdisplay_font)
+
+struct netbsd32_wsdisplay_usefontdata {
+	netbsd32_charp name;
+};
+#define	WSDISPLAYIO_SFONT32	_IOW('W', 80, struct netbsd32_wsdisplay_usefontdata)
 
 /* can wait! */
 #if 0
