@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.133 2018/01/16 08:23:18 mrg Exp $ */
+/*	$NetBSD: cpu.c,v 1.134 2018/01/19 12:47:41 nakayama Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.133 2018/01/16 08:23:18 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.134 2018/01/19 12:47:41 nakayama Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -549,8 +549,8 @@ cpu_attach(device_t parent, device_t dev, void *aux)
 
 	aprint_normal(": %s, CPU id %d\n", buf, ci->ci_cpuid);
 	aprint_naive("\n");
-	ci->ci_ver = getver();
 	if (CPU_ISSUN4U || CPU_ISSUN4US) {
+		ci->ci_ver = getver();
 		aprint_normal_dev(dev, "manuf %x, impl %x, mask %x\n",
 		    (u_int)GETVER_CPU_MANUF(),
 		    (u_int)GETVER_CPU_IMPL(),
