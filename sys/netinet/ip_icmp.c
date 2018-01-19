@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.161 2017/03/31 06:49:44 ozaki-r Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.162 2018/01/19 12:50:27 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.161 2017/03/31 06:49:44 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.162 2018/01/19 12:50:27 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -242,45 +242,55 @@ icmp_mtudisc_callback_register(void (*func)(struct in_addr))
 }
 
 /*
- * Generate an error packet of type error
- * in response to bad packet ip.
+ * Generate an error packet of type error in response to a bad IP packet. 'n'
+ * contains this packet. We create 'm' and send it.
+ * 
+ * As we are not required to return everything we have, we return whatever
+ * we can return at ease.
+ *
+ * Note that ICMP datagrams longer than 576 octets are out of spec according
+ * to RFC1812; the limit on icmpreturndatabytes will keep things below that
+ * limit.
  */
 void
-icmp_error(struct mbuf *n, int type, int code, n_long dest,
-    int destmtu)
+icmp_error(struct mbuf *n, int type, int code, n_long dest, int destmtu)
 {
 	struct ip *oip = mtod(n, struct ip *), *nip;
-	unsigned oiplen = oip->ip_hl << 2;
+	const unsigned oiphlen = oip->ip_hl << 2;
 	struct icmp *icp;
 	struct mbuf *m;
 	struct m_tag *mtag;
-	unsigned icmplen, mblen;
+	unsigned datalen, mblen, totlen;
 
 #ifdef ICMPPRINTFS
 	if (icmpprintfs)
 		printf("icmp_error(%p, type:%d, code:%d)\n", oip, type, code);
 #endif
+
 	if (type != ICMP_REDIRECT)
 		ICMP_STATINC(ICMP_STAT_ERROR);
+
 	/*
-	 * Don't send error if the original packet was encrypted.
-	 * Don't send error if not the first fragment of message.
-	 * Don't error if the old packet protocol was ICMP
-	 * error message, only known informational types.
+	 * Don't send error if:
+	 *  - The original packet was encrypted.
+	 *  - The packet is multicast or broadcast.
+	 *  - The packet is not the first fragment of the message.
+	 *  - The packet is an ICMP message with an unknown type.
 	 */
 	if (n->m_flags & M_DECRYPTED)
+		goto freeit;
+	if (n->m_flags & (M_BCAST|M_MCAST))
 		goto freeit;
 	if (oip->ip_off &~ htons(IP_MF|IP_DF))
 		goto freeit;
 	if (oip->ip_p == IPPROTO_ICMP && type != ICMP_REDIRECT &&
-	  n->m_len >= oiplen + ICMP_MINLEN &&
-	  !ICMP_INFOTYPE(((struct icmp *)((char *)oip + oiplen))->icmp_type)) {
-		ICMP_STATINC(ICMP_STAT_OLDICMP);
-		goto freeit;
+	    n->m_len >= oiphlen + ICMP_MINLEN) {
+		struct icmp *oicp = (struct icmp *)((char *)oip + oiphlen);
+		if (!ICMP_INFOTYPE(oicp->icmp_type)) {
+			ICMP_STATINC(ICMP_STAT_OLDICMP);
+			goto freeit;
+		}
 	}
-	/* Don't send error in response to a multicast or broadcast packet */
-	if (n->m_flags & (M_BCAST|M_MCAST))
-		goto freeit;
 
 	/*
 	 * First, do a rate limitation check.
@@ -291,34 +301,30 @@ icmp_error(struct mbuf *n, int type, int code, n_long dest,
 	}
 
 	/*
-	 * Now, formulate icmp message
+	 * Compute the number of bytes we will put in 'icmp_ip'. Truncate
+	 * it to the size of the mbuf, if it's too big.
 	 */
-	icmplen = oiplen + min(icmpreturndatabytes,
-	    ntohs(oip->ip_len) - oiplen);
-	/*
-	 * Defend against mbuf chains shorter than oip->ip_len - oiplen:
-	 */
+	datalen = oiphlen + min(icmpreturndatabytes,
+	    ntohs(oip->ip_len) - oiphlen);
 	mblen = 0;
-	for (m = n; m && (mblen < icmplen); m = m->m_next)
+	for (m = n; m && (mblen < datalen); m = m->m_next)
 		mblen += m->m_len;
-	icmplen = min(mblen, icmplen);
+	datalen = min(mblen, datalen);
 
 	/*
-	 * As we are not required to return everything we have,
-	 * we return whatever we can return at ease.
-	 *
-	 * Note that ICMP datagrams longer than 576 octets are out of spec
-	 * according to RFC1812; the limit on icmpreturndatabytes below in
-	 * icmp_sysctl will keep things below that limit.
+	 * Compute the total length of the new packet. Truncate it if it's
+	 * bigger than the size of a cluster.
 	 */
+	CTASSERT(ICMP_MINLEN <= MCLBYTES);
+	if (datalen + ICMP_MINLEN > MCLBYTES)
+		datalen = MCLBYTES - ICMP_MINLEN;
+	totlen = datalen + ICMP_MINLEN;
 
-	KASSERT(ICMP_MINLEN <= MCLBYTES);
-
-	if (icmplen + ICMP_MINLEN > MCLBYTES)
-		icmplen = MCLBYTES - ICMP_MINLEN;
-
+	/*
+	 * Allocate the mbuf for the new packet.
+	 */
 	m = m_gethdr(M_DONTWAIT, MT_HEADER);
-	if (m && (icmplen + ICMP_MINLEN > MHLEN)) {
+	if (m && (totlen > MHLEN)) {
 		MCLGET(m, M_DONTWAIT);
 		if ((m->m_flags & M_EXT) == 0) {
 			m_freem(m);
@@ -328,21 +334,31 @@ icmp_error(struct mbuf *n, int type, int code, n_long dest,
 	if (m == NULL)
 		goto freeit;
 	MCLAIM(m, n->m_owner);
-	m->m_len = icmplen + ICMP_MINLEN;
-	if ((m->m_flags & M_EXT) == 0)
+	m->m_len = totlen;
+
+	/*
+	 * Advance to the ICMP header.
+	 */
+	if ((m->m_flags & M_EXT) == 0) {
 		MH_ALIGN(m, m->m_len);
-	else {
+	} else {
 		m->m_data += sizeof(struct ip);
 		m->m_len -= sizeof(struct ip);
 	}
-	icp = mtod(m, struct icmp *);
+
 	if ((u_int)type > ICMP_MAXTYPE)
 		panic("icmp_error");
 	ICMP_STATINC(ICMP_STAT_OUTHIST + type);
+
+	/*
+	 * Fill in the fields of the ICMP header: icmp_type, icmp_code
+	 * and icmp_ip. icmp_cksum gets filled later.
+	 */
+	icp = mtod(m, struct icmp *);
 	icp->icmp_type = type;
-	if (type == ICMP_REDIRECT)
+	if (type == ICMP_REDIRECT) {
 		icp->icmp_gwaddr.s_addr = dest;
-	else {
+	} else {
 		icp->icmp_void = 0;
 		/*
 		 * The following assignments assume an overlay with the
@@ -355,13 +371,11 @@ icmp_error(struct mbuf *n, int type, int code, n_long dest,
 		    code == ICMP_UNREACH_NEEDFRAG && destmtu)
 			icp->icmp_nextmtu = htons(destmtu);
 	}
-
 	icp->icmp_code = code;
-	m_copydata(n, 0, icmplen, (void *)&icp->icmp_ip);
+	m_copydata(n, 0, datalen, (void *)&icp->icmp_ip);
 
 	/*
-	 * Now, copy old ip header (without options)
-	 * in front of icmp message.
+	 * Come back to the IP header.
 	 */
 	if ((m->m_flags & M_EXT) == 0 &&
 	    m->m_data - sizeof(struct ip) < m->m_pktdat)
@@ -370,6 +384,11 @@ icmp_error(struct mbuf *n, int type, int code, n_long dest,
 	m->m_len += sizeof(struct ip);
 	m->m_pkthdr.len = m->m_len;
 	m_copy_rcvif(m, n);
+
+	/*
+	 * Now, copy the old IP header (without options) in front of the
+	 * ICMP message. The src/dst fields will be swapped in icmp_reflect.
+	 */
 	nip = mtod(m, struct ip *);
 	/* ip_v set in ip_output */
 	nip->ip_hl = sizeof(struct ip) >> 2;
@@ -387,6 +406,7 @@ icmp_error(struct mbuf *n, int type, int code, n_long dest,
 		m_tag_unlink(n, mtag);
 		m_tag_prepend(m, mtag);
 	}
+
 	icmp_reflect(m);
 
 freeit:
