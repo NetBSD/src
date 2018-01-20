@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_milan.c,v 1.15 2018/01/20 18:33:09 tsutsui Exp $	*/
+/*	$NetBSD: isa_milan.c,v 1.16 2018/01/20 19:36:47 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_milan.c,v 1.15 2018/01/20 18:33:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_milan.c,v 1.16 2018/01/20 19:36:47 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -122,9 +122,11 @@ isa_callback(int vector)
 
 	s = splx(iinfo_p->ipl);
 	(void) (iinfo_p->ifunc)(iinfo_p->iarg);
-	if (vector > 7)
+	if (vector > 7) {
 		WICU(AD_8259_SLAVE, 0x60 | (vector & 7));
-	else WICU(AD_8259_MASTER, 0x60 | (vector & 7));
+		vector = IRQ_SLAVE;
+	}
+	WICU(AD_8259_MASTER, 0x60 | (vector & 7));
 	splx(s);
 }
 
@@ -139,10 +141,6 @@ milan_isa_intr(int vector, int sr)
 		printf("milan_isa_intr: Bogus vector %d\n", vector);
 		return;
 	}
-
-	/* Ack cascade 0x60 == Specific EOI		*/
-	if (vector > 7)
-		WICU(AD_8259_MASTER, 0x60|IRQ_SLAVE);
 
 	iinfo_p = &milan_isa_iinfo[vector];
 	if (iinfo_p->ifunc == NULL) {
@@ -159,9 +157,11 @@ milan_isa_intr(int vector, int sr)
 	else {
 		s = splx(iinfo_p->ipl);
 		(void) (iinfo_p->ifunc)(iinfo_p->iarg);
-		if (vector > 7)
+		if (vector > 7) {
 			WICU(AD_8259_SLAVE, 0x60 | (vector & 7));
-		else WICU(AD_8259_MASTER, 0x60 | (vector & 7));
+			vector = IRQ_SLAVE;
+		}
+		WICU(AD_8259_MASTER, 0x60 | (vector & 7));
 		splx(s);
 	}
 }
