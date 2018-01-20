@@ -1,4 +1,4 @@
-/*	$NetBSD: raidframeio.h,v 1.8 2018/01/18 00:32:49 mrg Exp $ */
+/*	$NetBSD: raidframeio.h,v 1.9 2018/01/20 01:32:45 mrg Exp $ */
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -123,7 +123,7 @@
 #define RAIDFRAME_CHECK_RECON_STATUS_EXT _IOWR('r',  32, RF_ProgressInfo_t)
 #define RAIDFRAME_CHECK_PARITYREWRITE_STATUS_EXT _IOWR ('r', 33, RF_ProgressInfo_t)
 #define RAIDFRAME_CHECK_COPYBACK_STATUS_EXT _IOWR ('r', 34, RF_ProgressInfo_t)
-#define RAIDFRAME_CONFIGURE         _IOW ('r',  35, void *)	/* configure the driver */
+/* 35 was RAIDFRAME_CONFIGURE */
 /* 36 was RAIDFRAME_GET_INFO */
 
 #define RAIDFRAME_PARITYMAP_STATUS  _IOR('r', 37, struct rf_pmstat)
@@ -132,5 +132,6 @@
 #define RAIDFRAME_PARITYMAP_SET_PARAMS _IOW('r', 40, struct rf_pmparams)
 #define RAIDFRAME_SET_LAST_UNIT _IOW('r', 41, int)
 #define RAIDFRAME_GET_INFO          _IOWR('r', 42, RF_DeviceConfig_t *)	/* get configuration */
+#define RAIDFRAME_CONFIGURE         _IOW ('r',  43, void *)	/* configure the driver */
 
 #endif				/* !_RF_RAIDFRAMEIO_H_ */
