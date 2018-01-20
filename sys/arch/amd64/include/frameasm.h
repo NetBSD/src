@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.29 2018/01/18 07:25:34 maxv Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.30 2018/01/20 14:39:21 maxv Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
 #define _AMD64_MACHINE_FRAMEASM_H
@@ -43,11 +43,11 @@
 
 #define HOTPATCH(name, size) \
 123:						; \
-	.section	.rodata.hotpatch, "a"	; \
+	.pushsection	.rodata.hotpatch, "a"	; \
 	.byte		name			; \
 	.byte		size			; \
 	.quad		123b			; \
-	.previous
+	.popsection
 
 #define SMAP_ENABLE \
 	HOTPATCH(HP_NAME_CLAC, 3)		; \
