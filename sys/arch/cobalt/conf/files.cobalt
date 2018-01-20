@@ -1,4 +1,4 @@
-#	$NetBSD: files.cobalt,v 1.38 2014/07/29 21:21:44 skrll Exp $
+#	$NetBSD: files.cobalt,v 1.39 2018/01/20 13:56:09 skrll Exp $
 
 maxpartitions 16
 
@@ -38,6 +38,8 @@ file arch/cobalt/dev/panel.c		panel
 device gt: pcibus
 attach gt at mainbus
 file arch/cobalt/dev/gt.c		gt
+file arch/cobalt/dev/gt_io_space.c	gt
+file arch/cobalt/dev/gt_mem_space.c	gt
 
 file arch/cobalt/cobalt/autoconf.c
 file arch/cobalt/cobalt/bus.c

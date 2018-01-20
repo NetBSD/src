@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.19 2014/07/29 21:21:43 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.20 2018/01/20 13:56:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.19 2014/07/29 21:21:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.20 2018/01/20 13:56:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,6 +46,8 @@ int		mainbus_print(void *, const char *);
 
 CFATTACH_DECL_NEW(mainbus, 0,
     mainbus_match, mainbus_attach, NULL, NULL);
+
+extern struct mips_bus_space cobalt_bs;
 
 static int
 mainbus_match(device_t parent, cfdata_t cf, void *aux)
@@ -71,7 +73,7 @@ mainbus_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 
 	do {
 		ma->ma_addr = cf->cf_loc[MAINBUSCF_ADDR];
-		ma->ma_iot = 0;
+		ma->ma_iot = &cobalt_bs;
 		ma->ma_level = cf->cf_loc[MAINBUSCF_LEVEL];
 		ma->ma_irq = cf->cf_loc[MAINBUSCF_IRQ];
 		if (config_match(parent, cf, ma) > 0)

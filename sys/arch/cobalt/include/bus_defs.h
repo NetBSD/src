@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_defs.h,v 1.2 2014/07/29 21:21:44 skrll Exp $	*/
+/*	$NetBSD: bus_defs.h,v 1.3 2018/01/20 13:56:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -43,24 +43,8 @@ typedef psize_t bus_size_t;
 
 #include <mips/locore.h>
 
-/*
- * Access methods for bus resources and address space.
- */
-typedef int	bus_space_tag_t;
-typedef u_long	bus_space_handle_t;
-
-#define	BUS_SPACE_MAP_CACHEABLE		0x01
-#define	BUS_SPACE_MAP_LINEAR		0x02
-#define BUS_SPACE_MAP_PREFETCHABLE	0x04
-
-#define __BUS_SPACE_HAS_STREAM_METHODS
-
-#define	BUS_SPACE_BARRIER_READ	0x01		/* force read barrier */
-#define	BUS_SPACE_BARRIER_WRITE	0x02		/* force write barrier */
-
-#define BUS_SPACE_ALIGNED_POINTER(p, t) ALIGNED_POINTER(p, t)
-
 #define _MIPS_NEED_BUS_DMA_BOUNCE
+#include <mips/bus_space_defs.h>
 #include <mips/bus_dma_defs.h>
 
 #endif /* _COBALT_BUS_DEFS_H_ */
