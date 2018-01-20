@@ -1,12 +1,12 @@
 #
-# $NetBSD: HADES,v 1.111 2017/09/14 07:58:39 mrg Exp $
+# $NetBSD: HADES,v 1.112 2018/01/20 16:30:57 tsutsui Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
 #		NetBSD: HADES.in,v 1.15 2016/12/13 20:42:16 christos Exp $
-#		NetBSD: GENERIC.in,v 1.113 2017/07/29 18:08:56 maxv Exp $
+#		NetBSD: GENERIC.in,v 1.114 2017/09/14 07:58:39 mrg Exp $
 include "arch/atari/conf/std.hades"
 options INCLUDE_CONFIG_FILE # embed config file in kernel binary
 makeoptions COPTS="-O2 -fno-reorder-blocks" # see share/mk/sys.mk
