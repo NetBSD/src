@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.54 2018/01/20 14:08:08 maxv Exp $	*/
+/*	$NetBSD: vector.S,v 1.55 2018/01/20 14:27:15 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -84,8 +84,6 @@
 #include "ioapic.h"
 #include "lapic.h"
 #include "assym.h"
-
-#include "amd64_trap.S"
 
 	.text
 
