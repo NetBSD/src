@@ -91,7 +91,6 @@ typedef struct collate_info {
 	int32_t subst_count[COLL_WEIGHTS_MAX];
 	int32_t undef_pri[COLL_WEIGHTS_MAX];
 	int32_t rchain_count;
-	int32_t dchain_count;
 } collate_info_t;
 
 typedef struct collate_char {
@@ -99,8 +98,8 @@ typedef struct collate_char {
 } collate_char_t;
 
 typedef struct collate_chain {
-	wchar_t str[COLLATE_STR_LEN];
-	weight_t pri[COLL_WEIGHTS_MAX];
+	int32_t str[COLLATE_STR_LEN];
+	int32_t key;
 } collate_chain_t;
 
 typedef struct collate_large {
@@ -112,11 +111,6 @@ typedef struct collate_rchain {
 	int32_t val;
 	weight_t pri[COLLATE_STR_LEN][COLL_WEIGHTS_MAX];
 } collate_rchain_t;
-
-typedef struct collate_dchain {
-	wchar_t str[COLLATE_STR_LEN];
-	weight_t pri[COLLATE_STR_LEN][COLL_WEIGHTS_MAX];
-} collate_dchain_t;
 
 typedef struct collate_subst {
 	int32_t key;
@@ -134,7 +128,6 @@ struct xlocale_collate {
 	const collate_large_t	*large_pri_table;
 	const collate_chain_t	*chain_pri_table;
 	const collate_rchain_t	*rchain_pri_table;
-	const collate_dchain_t	*dchain_pri_table;
 	const collate_subst_t	*subst_table[COLL_WEIGHTS_MAX];
 };
 

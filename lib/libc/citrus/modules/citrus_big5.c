@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_big5.c,v 1.15.18.3 2017/07/31 04:23:35 perseant Exp $	*/
+/*	$NetBSD: citrus_big5.c,v 1.15.18.4 2018/01/20 19:36:29 perseant Exp $	*/
 
 /*-
  * Copyright (c)2002, 2006 Citrus Project,
@@ -60,7 +60,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_big5.c,v 1.15.18.3 2017/07/31 04:23:35 perseant Exp $");
+__RCSID("$NetBSD: citrus_big5.c,v 1.15.18.4 2018/01/20 19:36:29 perseant Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/queue.h>
@@ -135,14 +135,14 @@ typedef struct {
 #define _STATE_NEEDS_EXPLICIT_INIT(_ps_)	0
 
 #ifdef __STDC_ISO_10646__
-#include "citrus_big5_data.h"
+#include "citrus_big5_k2u.h"
+#include "citrus_big5_u2k.h"
 
 static __inline int
 /*ARGSUSED*/
 _FUNCNAME(ucs2kt)(_ENCODING_INFO * __restrict ei,
 		  wchar_kuten_t * __restrict ktp, wchar_ucs4_t wc)
 {
-	struct unicode2kuten_lookup *uk;
 
 	_DIAGASSERT(ktp != NULL);
 
@@ -152,13 +152,7 @@ _FUNCNAME(ucs2kt)(_ENCODING_INFO * __restrict ei,
 		return 0;
 	}
 
-	uk = _citrus_uk_bsearch(wc, __big5_table__unicode2kuten_lookup, _BIG5_TABLE__U2K_LIST_LENGTH);
-
-	if (uk == NULL)
-		*ktp = WEOF;
-	else
-		*ktp = uk->value;
-
+	*ktp = citrus_trie_lookup(&__big5_u2k_header, wc);
 	return 0;
 }
 
@@ -167,26 +161,15 @@ static __inline int
 _FUNCNAME(kt2ucs)(_ENCODING_INFO * __restrict ei,
 		  wchar_ucs4_t * __restrict up, wchar_kuten_t kt)
 {
-	_csid_t csid;
-	_index_t idx;
-	struct unicode2kuten_lookup *uk, *table;
-
 	_DIAGASSERT(up != NULL);
 
-	table = NULL;
-
+	/* ASCII values are not in the table */
 	if (kt < 0x80) {
 		*up = kt;
 		return 0;
 	}
 
-	uk = _citrus_uk_bsearch(kt, __big5_table__kuten2unicode_lookup, _BIG5_TABLE__K2U_LIST_LENGTH);
-
-	if (uk == NULL)
-		*up = WEOF;
-	else
-		*up = uk->value;
-
+	*up = citrus_trie_lookup(&__big5_k2u_header, kt);
 	return 0;
 }
 #else

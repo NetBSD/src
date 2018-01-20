@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.191 2017/06/07 10:38:33 skrll Exp $
+#	$NetBSD: Makefile,v 1.191.2.1 2018/01/20 19:36:29 perseant Exp $
 
 .include <bsd.own.mk>
 .include <bsd.endian.mk>
@@ -113,7 +113,7 @@ SUBDIR += .WAIT texinfo \
 		asn1_compile cksum compile_et db \
 		file lint1 slc \
 		makefs sortinfo \
-		.WAIT menuc mkcsmapper mkesdb mklocale mknod msgc \
+		.WAIT localedef menuc mkcsmapper mkesdb mklocale mknod msgc \
 		.WAIT disklabel gpt \
 		.WAIT paxctl \
 		.WAIT fdisk \

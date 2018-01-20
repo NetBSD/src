@@ -1,4 +1,4 @@
-/*	$NetBSD: wchar.h,v 1.42.8.1 2017/07/14 15:53:07 perseant Exp $	*/
+/*	$NetBSD: wchar.h,v 1.42.8.2 2018/01/20 19:36:29 perseant Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -67,7 +67,7 @@
 #include <stdio.h> /* for FILE* */
 
 /* We use ISO10646 for our wchar represenation */
-#define __STDC_ISO_10646__
+/* #define __STDC_ISO_10646__ */
 
 #if defined(_BSD_WCHAR_T_) && !defined(__cplusplus)
 typedef	_BSD_WCHAR_T_	wchar_t;

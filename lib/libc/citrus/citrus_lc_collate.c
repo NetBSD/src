@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_lc_collate.c,v 1.1.2.2 2017/07/31 04:29:50 perseant Exp $ */
+/* $NetBSD: citrus_lc_collate.c,v 1.1.2.3 2018/01/20 19:36:29 perseant Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_lc_collate.c,v 1.1.2.2 2017/07/31 04:29:50 perseant Exp $");
+__RCSID("$NetBSD: citrus_lc_collate.c,v 1.1.2.3 2018/01/20 19:36:29 perseant Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "reentrant.h"
@@ -84,6 +84,8 @@ _citrus_LC_COLLATE_create_impl(const char * __restrict root,
 	snprintf(path, sizeof(path),
 	    "%s/%s/LC_COLLATE", root, name);
 	ret = _citrus_map_file(&r, path);
+	if (ret) 
+		perror(path);
 	if (!ret) {
 		ret = _collate_load((const char *)r.r_head, r.r_size, pdata);
 		_citrus_unmap_file(&r);

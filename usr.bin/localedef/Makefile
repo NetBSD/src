@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1.2.1 2017/08/04 21:43:11 perseant Exp $
+# $NetBSD: Makefile,v 1.1.2.2 2018/01/20 19:36:29 perseant Exp $
 # $FreeBSD: head/usr.bin/localedef/Makefile 290562 2015-11-08 22:23:21Z bapt $
 
 .ifndef HOSTPROG
@@ -19,7 +19,7 @@ SRCS+=	parser.y \
 	scanner.c \
 	time.c \
 	wide.c
-SRCS+=	iso2022.c mklocaledb.c citrus_db_factory.c
+SRCS+=	iso2022.c mklocaledb.c citrus_db_factory.c citrus_trie.c
 
 WARNS=	3
 YHEADER=1
