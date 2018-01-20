@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_iso2022.c,v 1.23.22.3 2017/07/31 04:23:35 perseant Exp $	*/
+/*	$NetBSD: citrus_iso2022.c,v 1.23.22.4 2018/01/20 19:36:29 perseant Exp $	*/
 
 /*-
  * Copyright (c)1999, 2002 Citrus Project,
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_iso2022.c,v 1.23.22.3 2017/07/31 04:23:35 perseant Exp $");
+__RCSID("$NetBSD: citrus_iso2022.c,v 1.23.22.4 2018/01/20 19:36:29 perseant Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: citrus_iso2022.c,v 1.23.22.3 2017/07/31 04:23:35 perseant Exp 
 #include "citrus_module.h"
 #include "citrus_ctype.h"
 #include "citrus_stdenc.h"
+#include "citrus_trie.h"
 #include "citrus_iso2022.h"
 
 
@@ -165,7 +166,8 @@ static __inline int isinterm(__uint8_t x) { return (0x20 <= x && x <= 0x2f); }
 static __inline int isthree(__uint8_t x) { return (0x60 <= x && x <= 0x6f); }
 
 #ifdef __STDC_ISO_10646__
-#include "citrus_iso2022_data.h"
+#include "citrus_iso2022_k2u.h"
+#include "citrus_iso2022_u2k.h"
 
 static __inline int
 /*ARGSUSED*/
@@ -180,13 +182,7 @@ _FUNCNAME(ucs2kt)(_ENCODING_INFO * __restrict ei,
 		return 0;
 	}
 
-	struct unicode2kuten_lookup *uk = _citrus_uk_bsearch(wc, &__unicode2kuten_lookup[0], U2K_LIST_LENGTH);
-
-	if (uk == NULL)
-		*ktp = WEOF;
-	else
-		*ktp = uk->value;
-
+	*ktp = citrus_trie_lookup(&__iso2022_u2k_header, wc);
 	return 0;
 }
 
@@ -203,13 +199,7 @@ _FUNCNAME(kt2ucs)(_ENCODING_INFO * __restrict ei,
 		return 0;
 	}
 
-	struct unicode2kuten_lookup *uk = _citrus_uk_bsearch(kt, &__kuten2unicode_lookup[0], K2U_LIST_LENGTH);
-
-	if (uk == NULL)
-		*up = WEOF;
-	else
-		*up = uk->value;
-
+	*up = citrus_trie_lookup(&__iso2022_k2u_header, kt);
 	return 0;
 }
 #else

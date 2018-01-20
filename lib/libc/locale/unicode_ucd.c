@@ -219,7 +219,7 @@ ucd_get_collation_element(wchar_t *wcp, const struct xlocale_collate *xc, struct
 {
 	struct collation_element sc;
 	wchar_t *wcccp, tmp, u;
-	size_t i, j, sclen, best = 0;
+	size_t i, sclen, best = 0;
 	uint8_t ccc, this_ccc;
 	int m, l, r;
 
@@ -236,7 +236,7 @@ ucd_get_collation_element(wchar_t *wcp, const struct xlocale_collate *xc, struct
 			u = xc->chain_pri_table[m].str[0];
 			if (u == wcp[0]) {
 				break;
-		}
+			}
 			if (u < wcp[0])
 				l = m + 1;
 			else
@@ -258,61 +258,34 @@ ucd_get_collation_element(wchar_t *wcp, const struct xlocale_collate *xc, struct
 				for (i = 0; pm[i]; i++) {
 					if (wcp[i] != pm[i])
 						break;
-	}
+				}
 				if (pm[i] == 0) {
 					/* It matches */
-					if (i > best) {
-						out->pri = xc->chain_pri_table[m].pri;
-						best = i;
-		}
-	}
-				++m;
-			}
-}
-
-		/* Check double chains. */
-		if (best == 0) {
-			l = 0;
-			r = xc->info->dchain_count - 1;
-			while (l <= r) {
-				m = (l + r) / 2;
-				u = xc->dchain_pri_table[m].str[0];
-				if (u == wcp[0]) {
-					break;
-		}
-				if (u < wcp[0])
-					l = m + 1;
-				else
-					r = m - 1;
-	}
-			/* Find the first element that begins with wcp[0] */
-			while (wcp[0] == xc->dchain_pri_table[m].str[0])
-				--m;
-			++m;
-
-			if (wcp[0] == xc->dchain_pri_table[m].str[0]) {
-				const wchar_t * pm = xc->dchain_pri_table[m].str;
-				/* There is at least one matching chain. */
-				/* Walk through all the possibilities. */
-				while (wcp[0] == pm[0]) {
-					pm = xc->dchain_pri_table[m].str;
-					/* Check that this element matches */
-					for (i = 0; pm[i]; i++) {
-						if (wcp[i] != pm[i])
-			break;
-		}
-					if (pm[i] == 0) {
-						/* It matches */
-						if (i > best) {
-							out->pri = (weight_t *)xc->dchain_pri_table[m].pri;
-							for (j = 0; j < COLLATE_STR_LEN && xc->dchain_pri_table[m].pri[j][0] != (weight_t)0xFFFFFFFF; ++j)
-								;
-							out->len = j;
-							best = i;
+					const wchar_t key = xc->chain_pri_table[m].key;
+					if (key < 0x80) {
+						out->pri = xc->char_pri_table[key].pri;
+						best = 1;
+					} else {
+						/* Now look at large matches */
+						l = 0;
+						r = xc->info->large_count;
+						while (l <= r) {
+							m = (l + r) / 2;
+							u = xc->large_pri_table[m].val;
+							if (u == key) {
+								out->pri = xc->large_pri_table[m].pri;
+								best = 1;
+								break;
+							}
+							if (u < wcp[0])
+								l = m + 1;
+							else
+								r = m - 1;
 						}
 					}
-					++m;
+					best = i;
 				}
+				++m;
 			}
 		}
 
@@ -331,13 +304,13 @@ ucd_get_collation_element(wchar_t *wcp, const struct xlocale_collate *xc, struct
 					if (u == wcp[0]) {
 						out->pri = xc->large_pri_table[m].pri;
 						best = 1;
-					break;
-				}
+						break;
+					}
 					if (u < wcp[0])
 						l = m + 1;
 					else
 						r = m - 1;
-			}
+				}
 			}
 		}
 
@@ -360,11 +333,11 @@ ucd_get_collation_element(wchar_t *wcp, const struct xlocale_collate *xc, struct
 					l = m + 1;
 				else
 					r = m - 1;
+			}
 		}
-	}
 
 		if (best > 0 && do_ccc) {
-		/*
+			/*
 			 * We have found the longest string S that matches in
 			 * the table.  Now let the set of unblocked
 			 * non-starters immediately following S be called CC.
@@ -372,29 +345,29 @@ ucd_get_collation_element(wchar_t *wcp, const struct xlocale_collate *xc, struct
 			 * replace S with S+C and remove C from CC.  Repeat as
 			 * long as we are expanding S.  Then copy the
 			 * collation weights.
-		 */
-		ccc = 0xff;
+			 */
+			ccc = 0xff;
 			for (wcccp = wcp + best; *wcccp; ++wcccp) {
-			this_ccc = unicode_get_ccc(*wcccp);
+				this_ccc = unicode_get_ccc(*wcccp);
 				if (this_ccc == 0)
-				break;
+					break;
 				if (this_ccc == ccc)
 					continue;
 				ccc = this_ccc;
 
 				/* Swap this and wcp + best, and look for a match */
-			tmp = *wcccp;
+				tmp = *wcccp;
 				*wcccp = *(wcp + best);
 				*(wcp + best) = tmp;
 				sclen = ucd_get_collation_element(wcp, xc, &sc, 0);
 				if (sclen > best) {
 					*out = sc; /* Structure copy */
 					best = sclen;
-				/* Back up and start over */
+					/* Back up and start over */
 					wcccp = wcp + best;
-			} else {
+				} else {
 					/* swap back */
-				tmp = *wcccp;
+					tmp = *wcccp;
 					*wcccp = *(wcp + best);
 					*(wcp + best) = tmp;
 				}

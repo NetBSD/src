@@ -1,4 +1,4 @@
-/*	$NetBSD: collate_locale.c,v 1.1.2.2 2017/07/31 04:29:50 perseant Exp $	*/
+/*	$NetBSD: collate_locale.c,v 1.1.2.3 2018/01/20 19:36:29 perseant Exp $	*/
 /*-
  * Copyright (c)2010 Citrus Project,
  * All rights reserved.
@@ -41,7 +41,17 @@
 
 #include "setlocale_local.h"
 #include "collate_local.h"
-#include "ducet_collation_data.h"
+#ifdef DUCET_IS_DEFAULT
+# include "ducet_collation_data.h"
+#else
+# define DUCET_COLLATE_CHAINS_LENGTH 0
+# define DUCET_COLLATE_LARGE_LENGTH  0
+# define DUCET_COLLATE_RCHAINS_LENGTH  0
+collate_char_t ducet_collate_chars[0] = { };
+collate_large_t ducet_collate_large[0] = { };
+collate_chain_t ducet_collate_chains[0] = { };
+collate_rchain_t ducet_collate_rchains[0] = { };
+#endif
 
 #ifndef COLLATION_TEST
 #include "citrus_module.h"
@@ -57,7 +67,6 @@ const struct collate_info _DefaultCollateInfo = {
 	{ 0 }, /* int32_t subst_count[COLL_WEIGHTS_MAX]; */
 	{ 0 }, /* int32_t undef_pri[COLL_WEIGHTS_MAX];   */
 	DUCET_COLLATE_RCHAINS_LENGTH, /* int32_t rchain_count;       */
-	DUCET_COLLATE_DCHAINS_LENGTH, /* int32_t rchain_count;       */
 };
 
 const struct xlocale_collate _DefaultCollateLocale = {
@@ -70,7 +79,6 @@ const struct xlocale_collate _DefaultCollateLocale = {
 	ducet_collate_large, /* collate_large_t	*large_pri_table; */
 	ducet_collate_chains, /* collate_chain_t	*chain_pri_table; */
 	ducet_collate_rchains, /* collate_rchain_t	*rchain_pri_table; */
-	ducet_collate_dchains, /* collate_dchain_t	*dchain_pri_table; */
 	NULL, /* collate_subst_t	*subst_table[COLL_WEIGHTS_MAX]; */
 };
 
@@ -154,14 +162,6 @@ _collate_read_file(const char * __restrict var, size_t lenvar,
 	/* Characters that have more than one associated weight (reverse chains) */
 	clp->rchain_pri_table = (const collate_rchain_t *)ci;
 	section_length = clp->info->rchain_count * sizeof(collate_rchain_t);
-	if (lenvar < section_length)
-		goto errout;
-	ci += section_length;
-	lenvar -= section_length;
-
-	/* Double chains (>1 char to >1 weight mapping) */
-	clp->dchain_pri_table = (const collate_dchain_t *)ci;
-	section_length = clp->info->dchain_count * sizeof(collate_dchain_t);
 	if (lenvar < section_length)
 		goto errout;
 	ci += section_length;

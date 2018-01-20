@@ -1252,9 +1252,7 @@ dump_collate(void)
 	n = 0;
 	RB_FOREACH(ce, elem_by_expand, &elem_by_expand) {
 		(void) wsncpy(chain[n].str, ce->expand, COLLATE_STR_LEN);
-		for (i = 0; i < NUM_WT; i++) {
-			chain[n].pri[i] = get_weight(ce->ref[i], i);
-		}
+		chain[n].key = get_weight(ce->ref[0], 0); /* XXX */
 		n++;
 	}
 	if (n != collinfo.chain_count)
