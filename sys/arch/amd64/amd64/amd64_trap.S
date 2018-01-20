@@ -1,4 +1,4 @@
-/*	$NetBSD: amd64_trap.S,v 1.19 2018/01/20 08:30:53 maxv Exp $	*/
+/*	$NetBSD: amd64_trap.S,v 1.20 2018/01/20 13:42:07 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2017 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #if 0
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: amd64_trap.S,v 1.19 2018/01/20 08:30:53 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amd64_trap.S,v 1.20 2018/01/20 13:42:07 maxv Exp $");
 #endif
 
 /*
@@ -360,25 +360,6 @@ IDTVEC_END(trap29)
 IDTVEC_END(trap30)
 IDTVEC_END(trap31)
 
-IDTVEC(exceptions)
-	.quad	_C_LABEL(Xtrap00), _C_LABEL(Xtrap01)
-	.quad	_C_LABEL(Xtrap02), _C_LABEL(Xtrap03)
-	.quad	_C_LABEL(Xtrap04), _C_LABEL(Xtrap05)
-	.quad	_C_LABEL(Xtrap06), _C_LABEL(Xtrap07)
-	.quad	_C_LABEL(Xtrap08), _C_LABEL(Xtrap09)
-	.quad	_C_LABEL(Xtrap10), _C_LABEL(Xtrap11)
-	.quad	_C_LABEL(Xtrap12), _C_LABEL(Xtrap13)
-	.quad	_C_LABEL(Xtrap14), _C_LABEL(Xtrap15)
-	.quad	_C_LABEL(Xtrap16), _C_LABEL(Xtrap17)
-	.quad	_C_LABEL(Xtrap18), _C_LABEL(Xtrap19)
-	.quad	_C_LABEL(Xtrap20), _C_LABEL(Xtrap21)
-	.quad	_C_LABEL(Xtrap22), _C_LABEL(Xtrap23)
-	.quad	_C_LABEL(Xtrap24), _C_LABEL(Xtrap25)
-	.quad	_C_LABEL(Xtrap26), _C_LABEL(Xtrap27)
-	.quad	_C_LABEL(Xtrap28), _C_LABEL(Xtrap29)
-	.quad	_C_LABEL(Xtrap30), _C_LABEL(Xtrap31)
-IDTVEC_END(exceptions)
-
 IDTVEC(intrspurious)
 	ZTRAP_NJ(T_ASTFLT)
 	INTRENTRY
@@ -511,4 +492,25 @@ calltrap:
 4:	.asciz	"WARNING: SPL NOT LOWERED ON TRAP EXIT %x %x\n"
 #endif
 END(alltraps)
+
+	.section .rodata
+
+LABEL(x86_exceptions)
+	.quad	_C_LABEL(Xtrap00), _C_LABEL(Xtrap01)
+	.quad	_C_LABEL(Xtrap02), _C_LABEL(Xtrap03)
+	.quad	_C_LABEL(Xtrap04), _C_LABEL(Xtrap05)
+	.quad	_C_LABEL(Xtrap06), _C_LABEL(Xtrap07)
+	.quad	_C_LABEL(Xtrap08), _C_LABEL(Xtrap09)
+	.quad	_C_LABEL(Xtrap10), _C_LABEL(Xtrap11)
+	.quad	_C_LABEL(Xtrap12), _C_LABEL(Xtrap13)
+	.quad	_C_LABEL(Xtrap14), _C_LABEL(Xtrap15)
+	.quad	_C_LABEL(Xtrap16), _C_LABEL(Xtrap17)
+	.quad	_C_LABEL(Xtrap18), _C_LABEL(Xtrap19)
+	.quad	_C_LABEL(Xtrap20), _C_LABEL(Xtrap21)
+	.quad	_C_LABEL(Xtrap22), _C_LABEL(Xtrap23)
+	.quad	_C_LABEL(Xtrap24), _C_LABEL(Xtrap25)
+	.quad	_C_LABEL(Xtrap26), _C_LABEL(Xtrap27)
+	.quad	_C_LABEL(Xtrap28), _C_LABEL(Xtrap29)
+	.quad	_C_LABEL(Xtrap30), _C_LABEL(Xtrap31)
+END(x86_exceptions)
 
