@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.53 2017/11/08 18:29:04 maxv Exp $	*/
+/*	$NetBSD: vector.S,v 1.54 2018/01/20 14:08:08 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -87,9 +87,9 @@
 
 #include "amd64_trap.S"
 
-/*****************************************************************************/
+	.text
 
-#define __HAVE_GENERIC_SOFT_INTERRUPTS	/* XXX */
+/*****************************************************************************/
 
 /*
  * Macros for interrupt entry, call to handler, and exit.
