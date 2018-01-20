@@ -1,4 +1,4 @@
-/*	$NetBSD: gt.c,v 1.28 2012/01/27 18:52:52 para Exp $	*/
+/*	$NetBSD: gt.c,v 1.29 2018/01/20 13:56:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.28 2012/01/27 18:52:52 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.29 2018/01/20 13:56:09 skrll Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.28 2012/01/27 18:52:52 para Exp $");
 #include <dev/pci/pciconf.h>
 #endif
 
+#include <cobalt/dev/gtvar.h>
 #include <cobalt/dev/gtreg.h>
 
 struct gt_softc {
@@ -76,6 +77,9 @@ static void	gt_timer_init(struct gt_softc *sc);
 static void	gt_timer0_init(void *);
 static long	gt_timer0_read(void *);
 #endif
+
+struct mips_bus_space gt_iot;
+struct mips_bus_space gt_memt;
 
 CFATTACH_DECL_NEW(gt, sizeof(struct gt_softc),
     gt_match, gt_attach, NULL, NULL);
@@ -119,6 +123,9 @@ gt_attach(device_t parent, device_t self, void *aux)
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, GT_PCI_TIMEOUT_RETRY,
 	    0x00 << PCI_RETRYCTR_SHIFT | 0xff << PCI_TIMEOUT1_SHIFT | 0xff);
 
+	gt_bus_mem_init(&gt_memt, NULL);
+	gt_bus_io_init(&gt_iot, NULL);
+
 #if NPCI > 0
 	pc = &sc->sc_pc;
 	pc->pc_bst = sc->sc_bst;
@@ -132,6 +139,9 @@ gt_attach(device_t parent, device_t self, void *aux)
 	pci_configure_bus(pc, pc->pc_ioext, pc->pc_memext, NULL, 0,
 	    mips_cache_info.mci_dcache_align);
 #endif
+	memset(&pba, 0, sizeof(pba));
+	pba.pba_memt = &gt_memt;
+	pba.pba_iot = &gt_iot;
 	pba.pba_dmat = &pci_bus_dma_tag;
 	pba.pba_dmat64 = NULL;
 	pba.pba_bus = 0;

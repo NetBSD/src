@@ -1,12 +1,11 @@
-/*	$NetBSD: bus_funcs.h,v 1.3 2018/01/20 13:56:09 skrll Exp $	*/
+/*	$NetBSD: gt_io_space.c,v 1.1 2018/01/20 13:56:09 skrll Exp $	*/
 
 /*
- * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2016 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
- * NASA Ames Research Center.
+ * by Nick Hudson.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,10 +29,29 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _COBALT_BUS_FUNCS_H_
-#define _COBALT_BUS_FUNCS_H_
+/*
+ * Little Endian bus_space(9) support for PCI IO access
+ * on cobalt machines
+ */
 
-#include <mips/bus_space_funcs.h>
-#include <mips/bus_dma_funcs.h> 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: gt_io_space.c,v 1.1 2018/01/20 13:56:09 skrll Exp $");
 
-#endif /* _COBALT_BUS_FUNCS_H_ */
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/bus.h>
+
+#include <cobalt/dev/gtvar.h>
+
+#define	CHIP			gt
+#define	CHIP_IO			/* defined */
+
+/* IO region 1 */
+#define	CHIP_W1_BUS_START(v)	0x00000000UL
+#define	CHIP_W1_BUS_END(v)	0x02000000UL
+#define	CHIP_W1_SYS_START(v)	0x10000000UL
+#define	CHIP_W1_SYS_END(v)	0x12000000UL
+
+void mainbus_bus_mem_init(bus_space_tag_t, void *);
+
+#include <mips/mips/bus_space_alignstride_chipdep.c>
