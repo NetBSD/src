@@ -1,4 +1,4 @@
-/*	$NetBSD: amd64_trap.S,v 1.18 2018/01/18 07:25:34 maxv Exp $	*/
+/*	$NetBSD: amd64_trap.S,v 1.19 2018/01/20 08:30:53 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2017 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #if 0
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: amd64_trap.S,v 1.18 2018/01/18 07:25:34 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amd64_trap.S,v 1.19 2018/01/20 08:30:53 maxv Exp $");
 #endif
 
 /*
@@ -146,7 +146,7 @@ IDTVEC(trap02)
 	movq	%rsp,%rdi
 	incq	CPUVAR(NTRAP)
 	call	_C_LABEL(nmitrap)
-	SVS_LEAVE
+	SVS_LEAVE_ALTSTACK
 
 .Lnmileave:
 	movw	TF_ES(%rsp),%es
@@ -224,8 +224,43 @@ IDTVEC(trap07)
 	jmp	.Lalltraps_checkusr
 IDTVEC_END(trap07)
 
+/*
+ * Double faults execute on a particular stack, and we must not jump out
+ * of it. So don't enable interrupts.
+ */
 IDTVEC(trap08)
+#if defined(XEN)
 	TRAP(T_DOUBLEFLT)
+#else
+	TRAP_NJ(T_DOUBLEFLT)
+	subq	$TF_REGSIZE,%rsp
+	INTR_SAVE_GPRS
+	SVS_ENTER_ALTSTACK
+	testb	$SEL_UPL,TF_CS(%rsp)
+	jz	1f
+	swapgs
+1:
+	cld
+	SMAP_ENABLE
+	movw	%gs,TF_GS(%rsp)
+	movw	%fs,TF_FS(%rsp)
+	movw	%es,TF_ES(%rsp)
+	movw	%ds,TF_DS(%rsp)
+
+	movq	%rsp,%rdi
+	incq	CPUVAR(NTRAP)
+	call	_C_LABEL(doubletrap)
+
+	SVS_LEAVE_ALTSTACK
+	INTR_RESTORE_GPRS
+
+	testb	$SEL_UPL,TF_CS(%rsp)
+	jz	1f
+	swapgs
+1:
+	addq	$TF_REGSIZE+16,%rsp
+	iretq
+#endif
 IDTVEC_END(trap08)
 
 IDTVEC(trap09)
