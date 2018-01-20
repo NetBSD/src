@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_compat80.c,v 1.1 2018/01/18 00:32:49 mrg Exp $	*/
+/*	$NetBSD: rf_compat80.c,v 1.2 2018/01/20 01:32:45 mrg Exp $	*/
 
 /*
  * Copyright (c) 2017 Matthew R. Green
@@ -112,7 +112,7 @@ rf_get_info80(RF_Raid_t *raidPtr, void *data)
 			rf_copy_raiddisk80(&config->spares[i],
 					   &config80->spares[i]);
 		}
-		rv = copyout(&config, *configPtr80, sizeof *config80);
+		rv = copyout(config80, *configPtr80, sizeof *config80);
 	}
 	RF_Free(config, sizeof(RF_DeviceConfig_t));
 	RF_Free(config80, sizeof(RF_DeviceConfig_t80));
@@ -145,4 +145,75 @@ rf_get_component_label80(RF_Raid_t *raidPtr, void *data)
 	RF_Free(clabel, sizeof(*clabel));
 
 	return retcode;
+}
+
+int
+rf_config80(RF_Raid_t *raidPtr, int unit, void *data, RF_Config_t **k_cfgp)
+{
+	RF_Config_t80 *u80_cfg, *k80_cfg;
+	RF_Config_t *k_cfg;
+	size_t i, j;
+	int error;
+
+	if (raidPtr->valid) {
+		/* There is a valid RAID set running on this unit! */
+		printf("raid%d: Device already configured!\n", unit);
+		return EINVAL;
+	}
+
+	/* copy-in the configuration information */
+	/* data points to a pointer to the configuration structure */
+
+	u80_cfg = *((RF_Config_t80 **) data);
+	RF_Malloc(k80_cfg, sizeof(RF_Config_t80), (RF_Config_t80 *));
+	if (k80_cfg == NULL)
+		return ENOMEM;
+
+	error = copyin(u80_cfg, k80_cfg, sizeof(RF_Config_t80));
+	if (error) {
+		RF_Free(k80_cfg, sizeof(RF_Config_t80));
+		return error;
+	}
+	RF_Malloc(k_cfg, sizeof(RF_Config_t), (RF_Config_t *));
+	if (k_cfg == NULL) {
+		RF_Free(k80_cfg, sizeof(RF_Config_t80));
+		return ENOMEM;
+	}
+
+	k_cfg->numCol = k80_cfg->numCol;
+	k_cfg->numSpare = k80_cfg->numSpare;
+
+	for (i = 0; i < RF_MAXROW; i++)
+		for (j = 0; j < RF_MAXCOL; j++)
+			k_cfg->devs[i][j] = k80_cfg->devs[i][j];
+
+	memcpy(k_cfg->devnames, k80_cfg->devnames,
+	    sizeof(k_cfg->devnames));
+
+	for (i = 0; i < RF_MAXSPARE; i++)
+		k_cfg->spare_devs[i] = k80_cfg->spare_devs[i];
+
+	memcpy(k_cfg->spare_names, k80_cfg->spare_names,
+	    sizeof(k_cfg->spare_names));
+
+	k_cfg->sectPerSU = k80_cfg->sectPerSU;
+	k_cfg->SUsPerPU = k80_cfg->SUsPerPU;
+	k_cfg->SUsPerRU = k80_cfg->SUsPerRU;
+	k_cfg->parityConfig = k80_cfg->parityConfig;
+
+	memcpy(k_cfg->diskQueueType, k80_cfg->diskQueueType,
+	    sizeof(k_cfg->diskQueueType));
+
+	k_cfg->maxOutstandingDiskReqs = k80_cfg->maxOutstandingDiskReqs;
+
+	memcpy(k_cfg->debugVars, k80_cfg->debugVars,
+	    sizeof(k_cfg->debugVars));
+
+	k_cfg->layoutSpecificSize = k80_cfg->layoutSpecificSize;
+	k_cfg->layoutSpecific = k80_cfg->layoutSpecific;
+	k_cfg->force = k80_cfg->force;
+
+	RF_Free(k80_cfg, sizeof(RF_Config_t80));
+	*k_cfgp = k_cfg;
+	return 0;
 }
