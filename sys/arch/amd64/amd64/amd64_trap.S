@@ -1,4 +1,4 @@
-/*	$NetBSD: amd64_trap.S,v 1.20 2018/01/20 13:42:07 maxv Exp $	*/
+/*	$NetBSD: amd64_trap.S,v 1.21 2018/01/20 13:45:15 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2017 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #if 0
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: amd64_trap.S,v 1.20 2018/01/20 13:42:07 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amd64_trap.S,v 1.21 2018/01/20 13:45:15 maxv Exp $");
 #endif
 
 /*
@@ -183,21 +183,6 @@ IDTVEC(trap03)
 	/* Jump to the code hooked in by DTrace. */
 	movq	dtrace_invop_jump_addr, %rax
 	jmpq	*dtrace_invop_jump_addr
-
-	.bss
-	.globl	dtrace_invop_jump_addr
-	.align	8
-	.type	dtrace_invop_jump_addr, @object
-	.size	dtrace_invop_jump_addr, 8
-dtrace_invop_jump_addr:
-	.zero	8
-	.globl	dtrace_invop_calltrap_addr
-	.align	8
-	.type	dtrace_invop_calltrap_addr, @object
-	.size	dtrace_invop_calltrap_addr, 8
-dtrace_invop_calltrap_addr:
-	.zero	8
-	.text
 #endif
 IDTVEC_END(trap03)
 
@@ -492,6 +477,22 @@ calltrap:
 4:	.asciz	"WARNING: SPL NOT LOWERED ON TRAP EXIT %x %x\n"
 #endif
 END(alltraps)
+
+#ifdef KDTRACE_HOOKS
+	.bss
+	.globl	dtrace_invop_jump_addr
+	.align	8
+	.type	dtrace_invop_jump_addr, @object
+	.size	dtrace_invop_jump_addr, 8
+dtrace_invop_jump_addr:
+	.zero	8
+	.globl	dtrace_invop_calltrap_addr
+	.align	8
+	.type	dtrace_invop_calltrap_addr, @object
+	.size	dtrace_invop_calltrap_addr, 8
+dtrace_invop_calltrap_addr:
+	.zero	8
+#endif
 
 	.section .rodata
 
