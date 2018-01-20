@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_compat80.h,v 1.1 2018/01/18 00:32:49 mrg Exp $	*/
+/*	$NetBSD: rf_compat80.h,v 1.2 2018/01/20 01:32:45 mrg Exp $	*/
 
 /*
  * Copyright (c) 2017 Matthew R. Green
@@ -71,6 +71,39 @@ typedef struct RF_DeviceConfig_s80 {
 	RF_RaidDisk_t80 spares[RF_MAX_DISKS];
 } RF_DeviceConfig_t80;
 
+typedef struct RF_Config_s80 {
+	RF_RowCol_t numRow, numCol, numSpare;	/* number of rows, columns,
+						 * and spare disks */
+	dev_t   devs[RF_MAXROW][RF_MAXCOL];	/* device numbers for disks
+						 * comprising array */
+	char    devnames[RF_MAXROW][RF_MAXCOL][50];	/* device names */
+	dev_t   spare_devs[RF_MAXSPARE];	/* device numbers for spare
+						 * disks */
+	char    spare_names[RF_MAXSPARE][50];	/* device names */
+	RF_SectorNum_t sectPerSU;	/* sectors per stripe unit */
+	RF_StripeNum_t SUsPerPU;/* stripe units per parity unit */
+	RF_StripeNum_t SUsPerRU;/* stripe units per reconstruction unit */
+	RF_ParityConfig_t parityConfig;	/* identifies the RAID architecture to
+					 * be used */
+	RF_DiskQueueType_t diskQueueType;	/* 'f' = fifo, 'c' = cvscan,
+						 * not used in kernel */
+	char    maxOutstandingDiskReqs;	/* # concurrent reqs to be sent to a
+					 * disk.  not used in kernel. */
+	char    debugVars[RF_MAXDBGV][50];	/* space for specifying debug
+						 * variables & their values */
+	unsigned int layoutSpecificSize;	/* size in bytes of
+						 * layout-specific info */
+	void   *layoutSpecific;	/* a pointer to a layout-specific structure to
+				 * be copied in */
+	int     force;                          /* if !0, ignore many fatal
+						   configuration conditions */
+	/*
+	   "force" is used to override cases where the component labels would
+	   indicate that configuration should not proceed without user
+	   intervention
+	 */
+} RF_Config_t80;
+
 /*
  * These ioctls were versioned after NetBSD 8.x.
  *
@@ -90,11 +123,13 @@ typedef struct RF_DeviceConfig_s80 {
 #define RAIDFRAME_CHECK_PARITYREWRITE_STATUS_EXT80	_IOWR('r', 33, RF_ProgressInfo_t *)
 #define RAIDFRAME_CHECK_COPYBACK_STATUS_EXT80		_IOWR('r', 34, RF_ProgressInfo_t *)
 #define RAIDFRAME_GET_INFO80				_IOWR('r', 36, RF_DeviceConfig_t80 *)
+#define RAIDFRAME_CONFIGURE80				_IOW ('r', 35, void *)
 
 int rf_check_recon_status_ext80(RF_Raid_t *, void *);
 int rf_check_parityrewrite_status_ext80(RF_Raid_t *, void *);
 int rf_check_copyback_status_ext80(RF_Raid_t *, void *);
 int rf_get_info80(RF_Raid_t *, void *);
 int rf_get_component_label80(RF_Raid_t *, void *);
+int rf_config80(RF_Raid_t *, int, void *, RF_Config_t **);
 
 #endif /* _RF_COMPAT80_H_ */

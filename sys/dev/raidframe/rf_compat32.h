@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_compat32.h,v 1.1 2018/01/18 00:32:49 mrg Exp $	*/
+/*	$NetBSD: rf_compat32.h,v 1.2 2018/01/20 01:32:45 mrg Exp $	*/
 
 /*
  * Copyright (c) 2017 Matthew R. Green
@@ -33,7 +33,7 @@
 
 #include <compat/netbsd32/netbsd32.h>
 
-#define RAIDFRAME_CONFIGURE32         _IOW ('r',  35, netbsd32_pointer_t)	/* configure the driver */
+#define RAIDFRAME_CONFIGURE32         _IOW ('r',  43, netbsd32_pointer_t)	/* configure the driver */
 #define RAIDFRAME_GET_INFO32          _IOWR('r', 42, netbsd32_pointer_t)	/* get configuration */
 
 int rf_config_netbsd32(void *data, RF_Config_t *k_cfg);
