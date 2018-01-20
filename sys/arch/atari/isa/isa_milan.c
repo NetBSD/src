@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_milan.c,v 1.14 2009/03/18 10:22:25 cegger Exp $	*/
+/*	$NetBSD: isa_milan.c,v 1.15 2018/01/20 18:33:09 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_milan.c,v 1.14 2009/03/18 10:22:25 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_milan.c,v 1.15 2018/01/20 18:33:09 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -209,7 +209,7 @@ isa_intr_establish(isa_chipset_tag_t ic, int irq, int type, int level, int (*ih_
 
 	iinfo_p->slot  = 0;	/* Unused on Milan */
 	iinfo_p->ihand = NULL;	/* Unused on Milan */
-	iinfo_p->ipl   = level;
+	iinfo_p->ipl   = ipl2psl_table[level];
 	iinfo_p->ifunc = ih_fun;
 	iinfo_p->iarg  = ih_arg;
 
