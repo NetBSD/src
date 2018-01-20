@@ -1,4 +1,4 @@
-/*	$NetBSD: amd64_trap.S,v 1.21 2018/01/20 13:45:15 maxv Exp $	*/
+/*	$NetBSD: amd64_trap.S,v 1.22 2018/01/20 14:27:15 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2017 The NetBSD Foundation, Inc.
@@ -64,10 +64,19 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if 0
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: amd64_trap.S,v 1.21 2018/01/20 13:45:15 maxv Exp $");
-#endif
+
+#include "opt_xen.h"
+#include "opt_dtrace.h"
+
+#define ALIGN_TEXT	.align 16,0x90
+
+#include <machine/frameasm.h>
+#include <machine/segments.h>
+#include <machine/trap.h>
+#include <machine/specialreg.h>
+
+#include "assym.h"
 
 /*
  * Trap and fault vector routines
@@ -79,8 +88,6 @@ __KERNEL_RCSID(0, "$NetBSD: amd64_trap.S,v 1.21 2018/01/20 13:45:15 maxv Exp $")
  * and only enable them again on the final `iret' or before calling the AST
  * handler.
  */
-
-/*****************************************************************************/
 
 #ifdef	XEN
 #define	PRE_TRAP	movq (%rsp),%rcx ; movq 8(%rsp),%r11 ; addq $0x10,%rsp
