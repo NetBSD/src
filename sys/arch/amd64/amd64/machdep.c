@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.291 2018/01/18 07:25:34 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.292 2018/01/20 07:43:28 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.291 2018/01/18 07:25:34 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.292 2018/01/20 07:43:28 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -2478,7 +2478,7 @@ svs_pmap_sync(struct pmap *pmap, int index)
 	KASSERT(pmap != pmap_kernel());
 	KASSERT(mutex_owned(pmap->pm_lock));
 	KASSERT(kpreempt_disabled());
-	KASSERT(index <= 255);
+	KASSERT(index < 255);
 
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		cid = cpu_index(ci);
@@ -2530,9 +2530,8 @@ svs_lwp_switch(struct lwp *oldlwp, struct lwp *newlwp)
 	    (ci->ci_svs_ursp0 % PAGE_SIZE));
 
 	/*
-	 * Enter the user rsp0. We don't need to flush the TLB here, it will
-	 * be implicitly flushed when we reload CR3 next time we return to
-	 * userland.
+	 * Enter the user rsp0. We don't need to flush the TLB here, since
+	 * the user page tables are not loaded.
 	 */
 	pte = ci->ci_svs_rsp0_pte;
 	*pte = L1_BASE[pl1_i(va)];
@@ -2549,7 +2548,7 @@ svs_pte_atomic_read(struct pmap *pmap, size_t idx)
 
 /*
  * We may come here with the pmap unlocked. So read its PTEs atomically. If
- * a remote CPU is updating them at the same time, it's not that bad: the
+ * a remote CPU is updating them at the same time, it's not a problem: the
  * remote CPU will call svs_pmap_sync afterwards, and our updirpa will be
  * synchronized properly.
  */
