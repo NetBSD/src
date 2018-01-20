@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.7 2011/07/01 20:36:42 dyoung Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.8 2018/01/20 13:56:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 Izumi Tsutsui.  All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.7 2011/07/01 20:36:42 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.8 2018/01/20 13:56:08 skrll Exp $");
 
 #define __INTR_PRIVATE
 
@@ -169,10 +169,12 @@ intr_init(void)
 		    EVCNT_TYPE_INTR, NULL, "mips", cpu_intrtab[i].intr_evname);
 	}
 
+	extern struct mips_bus_space cobalt_bs;
+
 	/*
 	 * Initialize ICU interrupts.
 	 */
-	icu_bst = 0;	/* XXX unused on cobalt */
+	icu_bst = &cobalt_bs;;
 	bus_space_map(icu_bst, PCIB_BASE + IO_ICU1, IO_ICUSIZE, 0, &icu1_bsh);
 	bus_space_map(icu_bst, PCIB_BASE + IO_ICU2, IO_ICUSIZE, 0, &icu2_bsh);
 	bus_space_map(icu_bst, PCIB_BASE + IO_ELCR, IO_ELCRSIZE, 0, &elcr_bsh);

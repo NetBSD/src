@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mainbus.c,v 1.20 2015/06/09 22:47:59 matt Exp $	*/
+/*	$NetBSD: com_mainbus.c,v 1.21 2018/01/20 13:56:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_mainbus.c,v 1.20 2015/06/09 22:47:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_mainbus.c,v 1.21 2018/01/20 13:56:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -105,10 +105,12 @@ com_mainbus_cnprobe(struct consdev *cn)
 	    ? CN_NORMAL : CN_DEAD;
 }
 
+extern struct mips_bus_space cobalt_bs;
+
 void
 com_mainbus_cninit(struct consdev *cn)
 {
 
-	comcnattach(0, COM_BASE, 115200, COM_MAINBUS_FREQ, COM_TYPE_NORMAL,
+	comcnattach(&cobalt_bs, COM_BASE, 115200, COM_MAINBUS_FREQ, COM_TYPE_NORMAL,
 	    CONMODE);
 }
