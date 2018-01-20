@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.354 2018/01/19 09:04:23 skrll Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.355 2018/01/20 01:32:45 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.354 2018/01/19 09:04:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.355 2018/01/20 01:32:45 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1149,6 +1149,11 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 	case RAIDFRAME_GET_COMPONENT_LABEL80:
 		return rf_get_component_label80(raidPtr, data);
+
+	case RAIDFRAME_CONFIGURE80:
+		if ((retcode = rf_config80(raidPtr, unit, data, &k_cfg)) != 0)
+			return retcode;
+		goto config;
 #endif
 
 		/* configure the system */
