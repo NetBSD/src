@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.110 2018/01/10 20:51:11 maxv Exp $	*/
+/*	$NetBSD: trap.c,v 1.111 2018/01/20 08:30:53 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2017 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.110 2018/01/10 20:51:11 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.111 2018/01/20 08:30:53 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -121,6 +121,7 @@ dtrace_doubletrap_func_t	dtrace_doubletrap_func = NULL;
 #endif
 
 void nmitrap(struct trapframe *);
+void doubletrap(struct trapframe *);
 void trap(struct trapframe *);
 void trap_return_fault_return(struct trapframe *) __dead;
 
@@ -226,6 +227,22 @@ nmitrap(struct trapframe *frame)
 	/* machine/parity/power fail/"kitchen sink" faults */
 
 	x86_nmi();
+}
+
+void
+doubletrap(struct trapframe *frame)
+{
+	const int type = T_DOUBLEFLT;
+	struct lwp *l = curlwp;
+
+	trap_print(frame, l);
+
+	if (kdb_trap(type, 0, frame))
+		return;
+	if (kgdb_trap(type, frame))
+		return;
+
+	panic("double fault");
 }
 
 /*
