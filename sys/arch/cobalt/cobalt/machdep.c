@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.120 2017/11/06 03:47:46 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.121 2018/01/20 13:56:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 Izumi Tsutsui.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.120 2017/11/06 03:47:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.121 2018/01/20 13:56:08 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -59,15 +59,16 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.120 2017/11/06 03:47:46 christos Exp $
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/proc.h>
-#include <sys/reboot.h>
-#include <sys/mount.h>
-#include <sys/kcore.h>
 #include <sys/boot_flag.h>
-#include <sys/ksyms.h>
+#include <sys/bus.h>
 #include <sys/cpu.h>
 #include <sys/device.h>
+#include <sys/kernel.h>
+#include <sys/kcore.h>
+#include <sys/ksyms.h>
+#include <sys/mount.h>
+#include <sys/proc.h>
+#include <sys/reboot.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -105,6 +106,16 @@ char	*root_bstr = NULL;
 int	bootunit = -1;
 int	bootpart = -1;
 
+#if 0
+struct extent *cobalt_io_ex = NULL;
+struct extent *cobalt_mem_ex = NULL;
+struct mips_bus_space bonito_iot;
+struct mips_bus_space bonito_memt;
+struct mips_bus_dma_tag bonito_dmat;
+struct mips_pci_chipset bonito_pc;
+#endif
+
+
 int cpuspeed;
 
 u_int cobalt_id;
@@ -126,6 +137,10 @@ static char *strtok_light(char *, const char);
 static u_int read_board_id(void);
 
 extern char *esym;
+
+struct mips_bus_space cobalt_bs;
+void mainbus_bus_mem_init(bus_space_tag_t, void *);
+
 
 /*
  * Do all the stuff that locore normally does before calling main().
@@ -180,6 +195,8 @@ mach_init(int32_t memsize32, u_int bim, int32_t bip32)
 	 * Clear out the I and D caches.
 	 */
 	mips_vector_init(NULL, false);
+
+	mainbus_bus_mem_init(&cobalt_bs, NULL);
 
 	/* Check for valid bootinfo passed from bootstrap */
 	if (bim == BOOTINFO_MAGIC) {
