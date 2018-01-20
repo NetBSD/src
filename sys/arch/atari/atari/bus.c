@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.58 2014/10/18 08:33:24 snj Exp $	*/
+/*	$NetBSD: bus.c,v 1.59 2018/01/20 17:37:15 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.58 2014/10/18 08:33:24 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.59 2018/01/20 17:37:15 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -251,7 +251,7 @@ bus_mem_add_mapping(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size,
 		u_int	*ptep, npte;
 
 		pmap_enter(pmap_kernel(), (vaddr_t)va, pa,
-		    VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
+		    VM_PROT_READ|VM_PROT_WRITE, VM_PROT_READ|VM_PROT_WRITE);
 
 		ptep = kvtopte(va);
 		npte = *ptep & ~PG_CMASK;
@@ -667,7 +667,7 @@ bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 				panic("_bus_dmamem_map: size botch");
 			pmap_enter(pmap_kernel(), va, addr - offset,
 			    VM_PROT_READ | VM_PROT_WRITE,
-			    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
+			    VM_PROT_READ | VM_PROT_WRITE);
 		}
 	}
 	pmap_update(pmap_kernel());
