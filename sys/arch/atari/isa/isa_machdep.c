@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.40 2012/10/13 17:58:54 jdc Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.41 2018/01/20 18:01:53 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997 Leo Weppelman.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.40 2012/10/13 17:58:54 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.41 2018/01/20 18:01:53 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -111,17 +111,14 @@ isabusmatch(device_t parent, cfdata_t cf, void *aux)
 void
 isabusattach(device_t parent, device_t self, void *aux)
 {
-	struct isabus_softc *sc = device_private(self);
+	struct isabus_softc *sc;
 	struct isabus_attach_args	iba;
 	extern struct atari_bus_dma_tag isa_bus_dma_tag;
 	extern void isa_bus_init(void);
 
-	sc->sc_dev = self;
-
 	iba.iba_dmat	= &isa_bus_dma_tag;
 	iba.iba_iot     = leb_alloc_bus_space_tag(&bs_storage[0]);
 	iba.iba_memt    = leb_alloc_bus_space_tag(&bs_storage[1]);
-	iba.iba_ic	= &sc->sc_chipset;
 	if ((iba.iba_iot == NULL) || (iba.iba_memt == NULL)) {
 		printf("leb_alloc_bus_space_tag failed!\n");
 		return;
@@ -138,6 +135,10 @@ isabusattach(device_t parent, device_t self, void *aux)
 #endif
 		return;
 	}
+
+	sc = device_private(self);
+	sc->sc_dev = self;
+	iba.iba_ic = &sc->sc_chipset;
 
 	printf("\n");
 	config_found_ia(self, "isabus", &iba, atariisabusprint);
