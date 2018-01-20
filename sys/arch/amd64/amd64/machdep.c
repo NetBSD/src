@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.292 2018/01/20 07:43:28 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.293 2018/01/20 13:42:07 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.292 2018/01/20 07:43:28 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.293 2018/01/20 13:42:07 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1488,7 +1488,7 @@ typedef void (vector)(void);
 extern vector IDTVEC(syscall);
 extern vector IDTVEC(syscall32);
 extern vector IDTVEC(osyscall);
-extern vector *IDTVEC(exceptions)[];
+extern vector *x86_exceptions[];
 
 static void
 init_x86_64_ksyms(void)
@@ -1777,7 +1777,7 @@ init_x86_64(paddr_t first_avail)
 			ist = 0;
 			break;
 		}
-		setgate(&idt[x], IDTVEC(exceptions)[x], ist, SDT_SYS386IGT,
+		setgate(&idt[x], x86_exceptions[x], ist, SDT_SYS386IGT,
 		    (x == 3 || x == 4) ? SEL_UPL : SEL_KPL,
 		    GSEL(GCODE_SEL, SEL_KPL));
 #else /* XEN */
@@ -1801,7 +1801,7 @@ init_x86_64(paddr_t first_avail)
 
 		xen_idt[xen_idt_idx].cs = GSEL(GCODE_SEL, SEL_KPL);
 		xen_idt[xen_idt_idx].address =
-		    (unsigned long)IDTVEC(exceptions)[x];
+		    (unsigned long)x86_exceptions[x];
 		xen_idt_idx++;
 #endif /* XEN */
 	}
