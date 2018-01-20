@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.278 2018/01/07 16:10:16 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.279 2018/01/20 08:45:28 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.278 2018/01/07 16:10:16 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.279 2018/01/20 08:45:28 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1635,9 +1635,11 @@ pmap_init_directmap(struct pmap *kpm)
 		pa = (paddr_t)(i * NBPD_L2);
 
 		if (spahole <= pa && pa < epahole) {
-			L2_BASE[L2e_idx+i] = pa | holepteflags | PG_U | PG_PS;
+			L2_BASE[L2e_idx+i] = pa | holepteflags | PG_U |
+			    PG_PS | pmap_pg_g;
 		} else {
-			L2_BASE[L2e_idx+i] = pa | pteflags | PG_U | PG_PS;
+			L2_BASE[L2e_idx+i] = pa | pteflags | PG_U |
+			    PG_PS | pmap_pg_g;
 		}
 	}
 
