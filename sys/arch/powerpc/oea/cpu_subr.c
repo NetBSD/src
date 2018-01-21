@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.87 2018/01/06 09:46:22 snj Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.88 2018/01/21 08:46:48 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.87 2018/01/06 09:46:22 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.88 2018/01/21 08:46:48 mrg Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_ppccache.h"
@@ -498,11 +498,10 @@ cpu_setup(device_t self, struct cpu_info *ci)
 #if defined(PPC_OEA64_BRIDGE) || defined(_ARCH_PPC64)
 	char hidbuf_u[128];
 	const char *bitmasku = NULL;
+	volatile uint64_t hid64_0, hid64_0_save;
 #endif
-#if defined(PPC_OEA64_BRIDGE)
-	volatile uint64_t hid0;
-#else
-	register_t hid0;
+#if !defined(_ARCH_PPC64)
+	register_t hid0 = 0, hid0_save = 0;
 #endif
 
 	pvr = mfpvr();
@@ -516,10 +515,17 @@ cpu_setup(device_t self, struct cpu_info *ci)
 	/* set the cpu number */
 	ci->ci_cpuid = cpu_number();
 #if defined(_ARCH_PPC64)
-	__asm volatile("mfspr %0,%1" : "=r"(hid0) : "K"(SPR_HID0));
+	__asm volatile("mfspr %0,%1" : "=r"(hid64_0) : "K"(SPR_HID0));
+	hid64_0_save = hid64_0;
 #else
-	hid0 = mfspr(SPR_HID0);
+#if defined(PPC_OEA64_BRIDGE)
+	if ((oeacpufeat & OEACPU_64_BRIDGE) != 0)
+		hid64_0_save = hid64_0 = mfspr(SPR_HID0);
+	else
 #endif
+		hid0_save = hid0 = mfspr(SPR_HID0);
+#endif
+
 
 	cpu_probe_cache();
 
@@ -581,9 +587,12 @@ cpu_setup(device_t self, struct cpu_info *ci)
 	case IBM970FX:
 	case IBM970MP:
 #if defined(_ARCH_PPC64) || defined (PPC_OEA64_BRIDGE)
-		hid0 &= ~(HID0_64_DOZE | HID0_64_NAP | HID0_64_DEEPNAP);
-		hid0 |= HID0_64_DOZE | HID0_64_DPM | HID0_64_EX_TBEN |
-			HID0_64_TB_CTRL | HID0_64_EN_MCHK;
+#if !defined(_ARCH_PPC64)
+		KASSERT((oeacpufeat & OEACPU_64_BRIDGE) != 0);
+#endif
+		hid64_0 &= ~(HID0_64_DOZE | HID0_64_NAP | HID0_64_DEEPNAP);
+		hid64_0 |= HID0_64_DOZE | HID0_64_DPM | HID0_64_EX_TBEN |
+			   HID0_64_TB_CTRL | HID0_64_EN_MCHK;
 		powersave = 1;
 		break;
 #endif
@@ -630,23 +639,37 @@ cpu_setup(device_t self, struct cpu_info *ci)
 		hid0 |= HID0_ABE;
 	}
 
-#if defined(_ARCH_PPC64)
-	/* ppc970 needs extra goop around writes to HID0 */
-	__asm volatile( "sync;" \
-			"mtspr %0,%1;" \
-			"mfspr %1,%0;" \
-			"mfspr %1,%0;" \
-			"mfspr %1,%0;" \
-			"mfspr %1,%0;" \
-			"mfspr %1,%0;" \
-			"mfspr %1,%0;" \
-			 : : "K"(SPR_HID0), "r"(hid0));
-#else
-	mtspr(SPR_HID0, hid0);
+#if defined(_ARCH_PPC64) || defined(PPC_OEA64_BRIDGE)
+#if defined(PPC_OEA64_BRIDGE)
+	if ((oeacpufeat & OEACPU_64_BRIDGE) != 0) {
 #endif
-	__asm volatile("sync;isync");
-	
+		if (hid64_0 != hid64_0_save) {
+			/* ppc970 needs extra goop around writes to HID0 */
+			__asm volatile( "sync;" \
+					"mtspr %0,%1;" \
+					"mfspr %1,%0;" \
+					"mfspr %1,%0;" \
+					"mfspr %1,%0;" \
+					"mfspr %1,%0;" \
+					"mfspr %1,%0;" \
+					"mfspr %1,%0;" \
+					 : : "K"(SPR_HID0), "r"(hid64_0));
+			__asm volatile("sync;isync");
+		}
+#if defined(PPC_OEA64_BRIDGE)
+	} else {
+#endif
+#endif
 
+#if !defined(_ARCH_PPC64)
+		if (hid0 != hid0_save) {
+			mtspr(SPR_HID0, hid0);
+			__asm volatile("sync;isync");
+		}
+#endif
+#if defined(PPC_OEA64_BRIDGE)
+	}
+#endif
 
 	switch (vers) {
 	case MPC601:
@@ -674,8 +697,8 @@ cpu_setup(device_t self, struct cpu_info *ci)
 	
 #if defined(PPC_OEA64_BRIDGE) || defined(_ARCH_PPC64)
 	if (bitmasku != NULL) {
-		snprintb(hidbuf, sizeof hidbuf, bitmask, hid0 & 0xffffffff);
-		snprintb(hidbuf_u, sizeof hidbuf_u, bitmasku, hid0 >> 32);
+		snprintb(hidbuf, sizeof hidbuf, bitmask, hid64_0 & 0xffffffff);
+		snprintb(hidbuf_u, sizeof hidbuf_u, bitmasku, hid64_0 >> 32);
 		aprint_normal_dev(self, "HID0 %s %s, powersave: %d\n",
 		    hidbuf_u, hidbuf, powersave);
 	} else
