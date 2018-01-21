@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.81 2017/10/25 08:12:39 maya Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.82 2018/01/21 13:57:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.81 2017/10/25 08:12:39 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.82 2018/01/21 13:57:12 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -414,7 +414,7 @@ uscanneropen(dev_t dev, int flag, int mode, struct lwp *l)
 	}
 
 	int error = usbd_create_xfer(sc->sc_bulkin_pipe, USCANNER_BUFFERSIZE,
-	    USBD_SHORT_XFER_OK, 0, &sc->sc_bulkin_xfer);
+	    0, 0, &sc->sc_bulkin_xfer);
 	if (error) {
 		uscanner_do_close(sc);
 		return error;
