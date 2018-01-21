@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.557 2018/01/18 09:36:26 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.558 2018/01/21 04:07:49 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.557 2018/01/18 09:36:26 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.558 2018/01/21 04:07:49 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -12589,7 +12589,7 @@ wm_nvm_version(struct wm_softc *sc)
 	case WM_T_82575:
 	case WM_T_82576:
 	case WM_T_82580:
-		if ((uid1 & NVM_MAJOR_MASK) != NVM_UID_VALID)
+		if (have_uid && (uid1 & NVM_MAJOR_MASK) != NVM_UID_VALID)
 			check_version = true;
 		break;
 	case WM_T_I211:
