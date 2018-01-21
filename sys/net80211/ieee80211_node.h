@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.h,v 1.28 2018/01/16 18:42:43 maxv Exp $	*/
+/*	$NetBSD: ieee80211_node.h,v 1.29 2018/01/21 14:18:21 maxv Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -303,7 +303,7 @@ struct ieee80211_scanparams {
 	u_int8_t	sp_fhindex;
 	u_int8_t	sp_erp;
 	u_int16_t	sp_bintval;
-	u_int8_t	sp_timoff;
+	u_int16_t	sp_timoff;
 	u_int8_t	*sp_tim;
 	u_int8_t	*sp_tstamp;
 	u_int8_t	*sp_country;
