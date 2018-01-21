@@ -1,10 +1,18 @@
-/*	$NetBSD: kern.ldscript.kaslr,v 1.4 2018/01/07 12:42:46 maxv Exp $	*/
+/*	$NetBSD: kern.ldscript.kaslr,v 1.5 2018/01/21 11:21:40 maxv Exp $	*/
 
 #include "assym.h"
 
 ENTRY(_start)
 SECTIONS
 {
+	.text.user : SUBALIGN(PAGE_SIZE)
+	{
+		__text_user_start = . ;
+		*(.text.user)
+		. = ALIGN(PAGE_SIZE);
+		__text_user_end = . ;
+	} =0xCC
+
 	.text :
 	{
 		*(.text)
