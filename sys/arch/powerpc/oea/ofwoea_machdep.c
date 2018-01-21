@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.41 2017/09/22 04:45:56 macallan Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.42 2018/01/21 08:46:48 mrg Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.41 2017/09/22 04:45:56 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.42 2018/01/21 08:46:48 mrg Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -318,8 +318,9 @@ set_timebase(void)
 	}
 
 	node = OF_finddevice("/cpus/@0");
-	if (OF_getprop(node, "timebase-frequency",
-			&ticks_per_sec, sizeof ticks_per_sec) > 0) {
+	if (node != -1 &&
+	    OF_getprop(node, "timebase-frequency", &ticks_per_sec,
+		       sizeof ticks_per_sec) > 0) {
 		goto found;
 	}
 
