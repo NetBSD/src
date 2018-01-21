@@ -1,4 +1,4 @@
-/*	$NetBSD: core_elf32.c,v 1.55 2017/05/04 11:12:23 kamil Exp $	*/
+/*	$NetBSD: core_elf32.c,v 1.56 2018/01/21 17:22:55 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.55 2017/05/04 11:12:23 kamil Exp $");
+__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.56 2018/01/21 17:22:55 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_coredump.h"
@@ -505,12 +505,12 @@ save_note_bytes(struct note_state *ns, const void *data, size_t len)
 	 * All but the last buffer is full.
 	 */
 	for (;;) {
-		copylen = min(len, sizeof nb->nb_data - ns->ns_offset);
+		copylen = min(len, sizeof(nb->nb_data) - ns->ns_offset);
 		wp = nb->nb_data + ns->ns_offset;
 		memcpy(wp, data, copylen);
 		if (copylen == len)
 			break;
-		nb->nb_next = kmem_alloc(sizeof *nb->nb_next, KM_SLEEP);
+		nb->nb_next = kmem_alloc(sizeof(*nb->nb_next), KM_SLEEP);
 		nb = nb->nb_next;
 		ns->ns_last = nb;
 		ns->ns_count++;
@@ -519,8 +519,9 @@ save_note_bytes(struct note_state *ns, const void *data, size_t len)
 		data = (const unsigned char *)data + copylen;
 	}
 
-	while (copylen & (ELFROUNDSIZE - 1))
-	    wp[copylen++] = 0;
+	while ((copylen & (ELFROUNDSIZE - 1)) && 
+	    wp + copylen < nb->nb_data + sizeof(nb->nb_data))
+		wp[copylen++] = 0;
 
 	ns->ns_offset += copylen;
 }
