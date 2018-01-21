@@ -1,4 +1,4 @@
-/*	$NetBSD: if_athn_usb.c,v 1.24 2017/10/18 16:01:58 jmcneill Exp $	*/
+/*	$NetBSD: if_athn_usb.c,v 1.25 2018/01/21 13:57:11 skrll Exp $	*/
 /*	$OpenBSD: if_athn_usb.c,v 1.12 2013/01/14 09:50:31 jsing Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.24 2017/10/18 16:01:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.25 2018/01/21 13:57:11 skrll Exp $");
 
 #ifdef	_KERNEL_OPT
 #include "opt_inet.h"
@@ -671,7 +671,7 @@ athn_usb_alloc_rx_list(struct athn_usb_softc *usc)
 		data->sc = usc;	/* Backpointer for callbacks. */
 
 		error = usbd_create_xfer(usc->usc_rx_data_pipe,
-		    ATHN_USB_RXBUFSZ, USBD_SHORT_XFER_OK, 0, &data->xfer);
+		    ATHN_USB_RXBUFSZ, 0, 0, &data->xfer);
 		if (error) {
 			aprint_error_dev(usc->usc_dev,
 			    "could not allocate xfer\n");
@@ -718,7 +718,7 @@ athn_usb_alloc_tx_list(struct athn_usb_softc *usc)
 		data->sc = usc;	/* Backpointer for callbacks. */
 
 		error = usbd_create_xfer(usc->usc_tx_data_pipe,
-		    ATHN_USB_TXBUFSZ, USBD_SHORT_XFER_OK, 0, &data->xfer);
+		    ATHN_USB_TXBUFSZ, USBD_FORCE_SHORT_XFER, 0, &data->xfer);
 		if (error) {
 			aprint_error_dev(usc->usc_dev,
 			    "could not create xfer on TX pipe\n");

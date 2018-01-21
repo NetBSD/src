@@ -1,4 +1,4 @@
-/*	$NetBSD: ualea.c,v 1.8 2017/07/18 23:11:01 christos Exp $	*/
+/*	$NetBSD: ualea.c,v 1.9 2018/01/21 13:57:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ualea.c,v 1.8 2017/07/18 23:11:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ualea.c,v 1.9 2018/01/21 13:57:12 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -135,9 +135,9 @@ ualea_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	/* Create an xfer of maximum packet size, short OK, on the pipe.  */
+	/* Create an xfer of maximum packet size on the pipe.  */
 	status = usbd_create_xfer(sc->sc_pipe, sc->sc_maxpktsize,
-	    USBD_SHORT_XFER_OK, 0, &sc->sc_xfer);
+	    0, 0, &sc->sc_xfer);
 	if (status) {
 		aprint_error_dev(sc->sc_dev, "failed to create xfer: %d\n",
 		    status);

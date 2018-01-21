@@ -1,4 +1,4 @@
-/* $NetBSD: if_bwfm_usb.c,v 1.3 2017/10/21 20:36:12 jmcneill Exp $ */
+/* $NetBSD: if_bwfm_usb.c,v 1.4 2018/01/21 13:57:11 skrll Exp $ */
 /* $OpenBSD: if_bwfm_usb.c,v 1.2 2017/10/15 14:55:13 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -492,7 +492,7 @@ bwfm_usb_alloc_rx_list(struct bwfm_usb_softc *sc)
 		data->sc = sc; /* Backpointer for callbacks. */
 
 		if (usbd_create_xfer(sc->sc_rx_pipeh, BWFM_RXBUFSZ,
-		    USBD_SHORT_XFER_OK, 0, &data->xfer) != 0) {
+		    0, 0, &data->xfer) != 0) {
 			printf("%s: could not create xfer\n",
 			    DEVNAME(sc));
 			error = ENOMEM;
