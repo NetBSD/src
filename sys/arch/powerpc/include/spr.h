@@ -1,4 +1,4 @@
-/*	$NetBSD: spr.h,v 1.49 2018/01/21 08:46:48 mrg Exp $	*/
+/*	$NetBSD: spr.h,v 1.50 2018/01/21 09:25:45 mrg Exp $	*/
 
 /*
  * Copyright (c) 2001, The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 #ifndef _POWERPC_SPR_H_
 #define	_POWERPC_SPR_H_
 
-#ifndef _LOCORE
+#if !defined(_LOCORE) && defined(_KERNEL)
 
 #include <powerpc/oea/cpufeat.h>
 
@@ -88,7 +88,7 @@ mtspr32(int reg, uint32_t val)
 static inline uint64_t
 mfspr(int reg)
 {
-	if ((oeacpufeat & OEACPU_64_BRIDGE) != 0)
+	if ((oeacpufeat & (OEACPU_64_BRIDGE|OEACPU_64)) != 0)
 		return mfspr64(reg);
 	return mfspr32(reg);
 }
@@ -96,24 +96,24 @@ mfspr(int reg)
 /* This as an inline breaks as 'reg' ends up not being an immediate */
 #define mtspr(reg, val)						\
 ( {								\
-	if ((oeacpufeat & OEACPU_64_BRIDGE) != 0)		\
+	if ((oeacpufeat & (OEACPU_64_BRIDGE|OEACPU_64)) != 0)	\
 		mtspr64(reg, (uint64_t)val);			\
 	else							\
 		mtspr32(reg, val);				\
 } )
 #else /* PPC_OEA + PPC_OEA64 + PPC_OEA64_BRIDGE != 1 */
 
-#if defined (PPC_OEA) || defined (PPC_OEA64_BRIDGE)
-#define mfspr(r) mfspr32(r)
-#define mtspr(r,v) mtspr32(r,v)
-#else
+#if defined(PPC_OEA64) || defined(PPC_OEA64_BRIDGE)
 #define mfspr(r) mfspr64(r)
 #define mtspr(r,v) mtspr64(r,v)
+#else
+#define mfspr(r) mfspr32(r)
+#define mtspr(r,v) mtspr32(r,v)
 #endif
 
 #endif /* PPC_OEA + PPC_OEA64 + PPC_OEA64_BRIDGE > 1 */
 
-#endif /* _LOCORE */
+#endif /* !_LOCORE && _KERNEL */
 
 /*
  * Special Purpose Register declarations.
