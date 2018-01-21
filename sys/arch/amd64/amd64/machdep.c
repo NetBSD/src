@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.293 2018/01/20 13:42:07 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.294 2018/01/21 08:20:30 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.293 2018/01/20 13:42:07 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.294 2018/01/21 08:20:30 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -2278,12 +2278,11 @@ struct svs_utls {
 static pd_entry_t *
 svs_tree_add(struct cpu_info *ci, vaddr_t va)
 {
-	extern pd_entry_t * const normal_pdes[];
 	extern const vaddr_t ptp_masks[];
 	extern const int ptp_shifts[];
 	extern const long nbpd[];
-	pd_entry_t *srcpde, *dstpde;
-	size_t i, idx, pidx, mod;
+	pd_entry_t *dstpde;
+	size_t i, pidx, mod;
 	struct vm_page *pg;
 	paddr_t pa;
 
@@ -2291,12 +2290,6 @@ svs_tree_add(struct cpu_info *ci, vaddr_t va)
 	mod = (size_t)-1;
 
 	for (i = PTP_LEVELS; i > 1; i--) {
-		idx = pl_i(va, i);
-		srcpde = normal_pdes[i - 2];
-
-		if (!pmap_valid_entry(srcpde[idx])) {
-			panic("%s: page not mapped", __func__);
-		}
 		pidx = pl_i(va % mod, i);
 
 		if (!pmap_valid_entry(dstpde[pidx])) {
@@ -2320,19 +2313,44 @@ svs_tree_add(struct cpu_info *ci, vaddr_t va)
 static void
 svs_page_add(struct cpu_info *ci, vaddr_t va)
 {
-	pd_entry_t *srcpde, *dstpde;
+	pd_entry_t *srcpde, *dstpde, pde;
 	size_t idx, pidx;
+	paddr_t pa;
 
 	/* Create levels L4, L3 and L2. */
 	dstpde = svs_tree_add(ci, va);
 
-	/* Enter L1. */
+	pidx = pl1_i(va % NBPD_L2);
+
+	/*
+	 * If 'va' is in a large page, we need to compute its physical
+	 * address manually.
+	 */
+	idx = pl2_i(va);
+	srcpde = L2_BASE;
+	if (!pmap_valid_entry(srcpde[idx])) {
+		panic("%s: L2 page not mapped", __func__);
+	}
+	if (srcpde[idx] & PG_PS) {
+		pa = srcpde[idx] & PG_2MFRAME;
+		pa += (paddr_t)(va % NBPD_L2);
+		pde = (srcpde[idx] & ~(PG_PS|PG_2MFRAME)) | pa;
+
+		if (pmap_valid_entry(dstpde[pidx])) {
+			panic("%s: L1 page already mapped", __func__);
+		}
+		dstpde[pidx] = pde;
+		return;
+	}
+
+	/*
+	 * Normal page, just copy the PDE.
+	 */
 	idx = pl1_i(va);
 	srcpde = L1_BASE;
 	if (!pmap_valid_entry(srcpde[idx])) {
 		panic("%s: L1 page not mapped", __func__);
 	}
-	pidx = pl1_i(va % NBPD_L2);
 	if (pmap_valid_entry(dstpde[pidx])) {
 		panic("%s: L1 page already mapped", __func__);
 	}
