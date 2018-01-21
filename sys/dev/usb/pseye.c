@@ -1,4 +1,4 @@
-/* $NetBSD: pseye.c,v 1.23 2016/07/07 06:55:42 msaitoh Exp $ */
+/* $NetBSD: pseye.c,v 1.24 2018/01/21 13:57:12 skrll Exp $ */
 
 /*-
  * Copyright (c) 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.23 2016/07/07 06:55:42 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.24 2018/01/21 13:57:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -245,7 +245,7 @@ pseye_attach(device_t parent, device_t self, void *opaque)
 	}
 
 	error = usbd_create_xfer(sc->sc_bulkin_pipe, sc->sc_bulkin_bufferlen,
-	    USBD_SHORT_XFER_OK, 0, &sc->sc_bulkin_xfer);
+	    0, 0, &sc->sc_bulkin_xfer);
 	if (error) {
 		aprint_error_dev(self, "couldn't create transfer\n");
 		pseye_close_pipes(sc);

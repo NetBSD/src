@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zyd.c,v 1.52 2007/02/11 00:08:04 jsg Exp $	*/
-/*	$NetBSD: if_zyd.c,v 1.44 2017/06/01 02:45:12 chs Exp $	*/
+/*	$NetBSD: if_zyd.c,v 1.45 2018/01/21 13:57:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.44 2017/06/01 02:45:12 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.45 2018/01/21 13:57:12 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -630,7 +630,7 @@ zyd_alloc_rx_list(struct zyd_softc *sc)
 		data->sc = sc;	/* backpointer for callbacks */
 
 		error = usbd_create_xfer(sc->zyd_ep[ZYD_ENDPT_BIN],
-		    ZYX_MAX_RXBUFSZ, USBD_SHORT_XFER_OK, 0, &data->xfer);
+		    ZYX_MAX_RXBUFSZ, 0, 0, &data->xfer);
 		if (error) {
 			printf("%s: could not allocate rx xfer\n",
 			    device_xname(sc->sc_dev));

@@ -1,4 +1,4 @@
-/*	$NetBSD: utoppy.c,v 1.29 2017/06/01 02:45:12 chs Exp $	*/
+/*	$NetBSD: utoppy.c,v 1.30 2018/01/21 13:57:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.29 2017/06/01 02:45:12 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.30 2018/01/21 13:57:12 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -319,7 +319,7 @@ utoppy_attach(device_t parent, device_t self, void *aux)
 	}
 
 	error = usbd_create_xfer(sc->sc_in_pipe, UTOPPY_FRAG_SIZE,
-	    USBD_SHORT_XFER_OK, 0, &sc->sc_in_xfer);
+	    0, 0, &sc->sc_in_xfer);
 	if (error) {
 		aprint_error_dev(self, "could not allocate bulk in xfer\n");
 		goto fail1;
