@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xen,v 1.44 2017/12/12 08:27:32 pgoyette Exp $
+#	$NetBSD: Makefile.xen,v 1.45 2018/01/21 08:33:46 maxv Exp $
 #	NetBSD: Makefile.i386,v 1.132 2003/07/05 16:56:10 simonb Exp 
 
 # Makefile for NetBSD
@@ -66,12 +66,19 @@ KERN_AS=	obj
 ## (4) local objects, compile rules, and dependencies
 ##
 MD_OBJS=	locore.o spl.o copy.o vector.o
+.if ${XEN_BUILD} == amd64
+MD_OBJS+=	amd64_trap.o
+.endif
 MD_CFILES=
 
 MD_SFILES=	$S/arch/${XEN_BUILD}/${XEN_BUILD}/locore.S \
 		$S/arch/${XEN_BUILD}/${XEN_BUILD}/spl.S \
 		$S/arch/${XEN_BUILD}/${XEN_BUILD}/vector.S \
 		$S/arch/${XEN_BUILD}/${XEN_BUILD}/copy.S
+
+.if ${XEN_BUILD} == amd64
+MD_SFILES+=	$S/arch/${XEN_BUILD}/${XEN_BUILD}/amd64_trap.S
+.endif
 
 copy.o: $S/arch/${XEN_BUILD}/${XEN_BUILD}/copy.S assym.h
 	${NORMAL_S}
@@ -84,6 +91,12 @@ spl.o: $S/arch/${XEN_BUILD}/${XEN_BUILD}/spl.S assym.h
 
 vector.o: $S/arch/${XEN_BUILD}/${XEN_BUILD}/vector.S assym.h
 	${NORMAL_S}
+
+.if ${XEN_BUILD} == amd64
+amd64_trap.o: $S/arch/${XEN_BUILD}/${XEN_BUILD}/amd64_trap.S assym.h
+	${NORMAL_S}
+.endif
+
 .ifndef noBEGIN
 .if !make(obj) && !make(clean) && !make(cleandir)
 .BEGIN::
