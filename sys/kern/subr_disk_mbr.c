@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_mbr.c,v 1.48 2018/01/07 03:35:43 christos Exp $	*/
+/*	$NetBSD: subr_disk_mbr.c,v 1.49 2018/01/21 16:55:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.48 2018/01/07 03:35:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.49 2018/01/21 16:55:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -724,7 +724,7 @@ setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_long openmask,
 	while (openmask != 0) {
 		i = ffs(openmask) - 1;
 		openmask &= ~(1 << i);
-		if (i > nlp->d_npartitions)
+		if (i >= nlp->d_npartitions)
 			return (EBUSY);
 		opp = &olp->d_partitions[i];
 		npp = &nlp->d_partitions[i];
