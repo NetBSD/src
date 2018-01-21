@@ -1,4 +1,4 @@
-/*	$NetBSD: pdir.h,v 1.3 2017/11/17 07:07:52 maxv Exp $	*/
+/*	$NetBSD: pdir.h,v 1.4 2018/01/21 10:59:21 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
@@ -46,7 +46,7 @@
 
 #define NKL4_KIMG_ENTRIES	1
 #define NKL3_KIMG_ENTRIES	1
-#define NKL2_KIMG_ENTRIES	32
+#define NKL2_KIMG_ENTRIES	48
 
 /*
  * Now we define various constants for playing with virtual addresses.
