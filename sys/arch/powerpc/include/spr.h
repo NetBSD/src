@@ -1,4 +1,4 @@
-/*	$NetBSD: spr.h,v 1.48 2018/01/20 03:50:28 simonb Exp $	*/
+/*	$NetBSD: spr.h,v 1.49 2018/01/21 08:46:48 mrg Exp $	*/
 
 /*
  * Copyright (c) 2001, The NetBSD Foundation, Inc.
@@ -29,50 +29,90 @@
 #define	_POWERPC_SPR_H_
 
 #ifndef _LOCORE
-#ifdef PPC_OEA64_BRIDGE
 
+#include <powerpc/oea/cpufeat.h>
+
+#if defined(PPC_OEA64_BRIDGE) || defined (_ARCH_PPC64)
 static inline uint64_t
-mfspr(int reg)
+mfspr64(int reg)
 {
 	uint64_t ret;
 	register_t h, l;
-	__asm volatile( "mfspr %0,%2;" \
-			"srdi %1,%0,32;" \
+
+	__asm volatile( "mfspr %0,%2;"
+			"srdi %1,%0,32;"
 			 : "=r"(l), "=r"(h) : "K"(reg));
 	ret = ((uint64_t)h << 32) | l;
 	return ret;
 }
 
-#define mtspr(reg, v) \
-( {						\
-	volatile register_t h, l;		\
-	uint64_t val = v;			\
-	h = (val >> 32);			\
-	l = val & 0xffffffff;			\
-	__asm volatile( \
-			"sldi %2,%2,32;" \
-			"or %2,%2,%1;" \
-			"sync;" \
-			"mtspr %0,%2;" \
-			"mfspr %1,%0;" \
-			"mfspr %1,%0;" \
-			"mfspr %1,%0;" \
-			"mfspr %1,%0;" \
-			"mfspr %1,%0;" \
-			"mfspr %1,%0;" \
-			 : : "K"(reg), "r"(l), "r"(h)); \
+/* This as an inline breaks as 'reg' ends up not being an immediate */
+#define mtspr64(reg, v)						\
+( {								\
+	volatile register_t h, l;				\
+								\
+	uint64_t val = v;					\
+	h = (val >> 32);					\
+	l = val & 0xffffffff;					\
+	__asm volatile(	"sldi %2,%2,32;"			\
+			"or %2,%2,%1;"				\
+			"sync;"					\
+			"mtspr %0,%2;"				\
+			"mfspr %2,%0;"				\
+			"mfspr %2,%0;"				\
+			"mfspr %2,%0;"				\
+			"mfspr %2,%0;"				\
+			"mfspr %2,%0;"				\
+			"mfspr %2,%0;"				\
+			 : : "K"(reg), "r"(l), "r"(h));		\
 } )
+#endif /* PPC_OEA64_BRIDGE || _ARCH_PPC64 */
 
+static inline uint64_t
+mfspr32(int reg)
+{
+	register_t val;
+
+	__asm volatile("mfspr %0,%1" : "=r"(val) : "K"(reg));
+	return val;
+}
+
+static inline void
+mtspr32(int reg, uint32_t val)
+{
+
+	__asm volatile("mtspr %0,%1" : : "K"(reg), "r"(val));
+}
+
+#if (defined(PPC_OEA) + defined(PPC_OEA64) + defined(PPC_OEA64_BRIDGE)) > 1
+static inline uint64_t
+mfspr(int reg)
+{
+	if ((oeacpufeat & OEACPU_64_BRIDGE) != 0)
+		return mfspr64(reg);
+	return mfspr32(reg);
+}
+
+/* This as an inline breaks as 'reg' ends up not being an immediate */
+#define mtspr(reg, val)						\
+( {								\
+	if ((oeacpufeat & OEACPU_64_BRIDGE) != 0)		\
+		mtspr64(reg, (uint64_t)val);			\
+	else							\
+		mtspr32(reg, val);				\
+} )
+#else /* PPC_OEA + PPC_OEA64 + PPC_OEA64_BRIDGE != 1 */
+
+#if defined (PPC_OEA) || defined (PPC_OEA64_BRIDGE)
+#define mfspr(r) mfspr32(r)
+#define mtspr(r,v) mtspr32(r,v)
 #else
-#define	mtspr(reg, val)							\
-	__asm volatile("mtspr %0,%1" : : "K"(reg), "r"(val))
-#ifdef __GNUC__
-#define	mfspr(reg)							\
-	( { register_t val;						\
-	  __asm volatile("mfspr %0,%1" : "=r"(val) : "K"(reg));	\
-	  val; } )
+#define mfspr(r) mfspr64(r)
+#define mtspr(r,v) mtspr64(r,v)
 #endif
-#endif /* PPC_OEA64_BRIDGE */
+
+#endif /* PPC_OEA + PPC_OEA64 + PPC_OEA64_BRIDGE > 1 */
+
 #endif /* _LOCORE */
 
 /*
