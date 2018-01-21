@@ -1,4 +1,4 @@
-/*	$NetBSD: if_run.c,v 1.24 2017/11/17 13:08:48 skrll Exp $	*/
+/*	$NetBSD: if_run.c,v 1.25 2018/01/21 13:57:12 skrll Exp $	*/
 /*	$OpenBSD: if_run.c,v 1.90 2012/03/24 15:11:04 jsg Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.24 2017/11/17 13:08:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.25 2018/01/21 13:57:12 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -811,7 +811,7 @@ run_alloc_rx_ring(struct run_softc *sc)
 		data->sc = sc;	/* backpointer for callbacks */
 
 		error = usbd_create_xfer(sc->rxq.pipeh, RUN_MAX_RXSZ,
-		    USBD_SHORT_XFER_OK, 0, &data->xfer);
+		    0, 0, &data->xfer);
 		if (error)
 			goto fail;
 
