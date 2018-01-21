@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.141 2017/01/12 18:26:08 maya Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.142 2018/01/21 13:57:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.141 2017/01/12 18:26:08 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.142 2018/01/21 13:57:11 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1014,7 +1014,7 @@ aue_rx_list_init(struct aue_softc *sc)
 			return ENOBUFS;
 		if (c->aue_xfer == NULL) {
 			int err = usbd_create_xfer(sc->aue_ep[AUE_ENDPT_RX],
-			    AUE_BUFSZ, USBD_SHORT_XFER_OK, 0, &c->aue_xfer);
+			    AUE_BUFSZ, 0, 0, &c->aue_xfer);
 			if (err) {
 				return err;
 			}

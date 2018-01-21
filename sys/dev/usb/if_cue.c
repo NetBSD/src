@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.76 2017/01/12 18:26:08 maya Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.77 2018/01/21 13:57:12 skrll Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.76 2017/01/12 18:26:08 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.77 2018/01/21 13:57:12 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -679,7 +679,7 @@ cue_rx_list_init(struct cue_softc *sc)
 			return ENOBUFS;
 		if (c->cue_xfer == NULL) {
 			int error = usbd_create_xfer(sc->cue_ep[CUE_ENDPT_RX],
-			    CUE_BUFSZ, USBD_SHORT_XFER_OK, 0, &c->cue_xfer);
+			    CUE_BUFSZ, 0, 0, &c->cue_xfer);
 			if (error)
 				return error;
 			c->cue_buf = usbd_get_buffer(c->cue_xfer);

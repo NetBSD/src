@@ -1,4 +1,4 @@
-/*	$NetBSD: if_otus.c,v 1.31 2017/06/01 02:45:11 chs Exp $	*/
+/*	$NetBSD: if_otus.c,v 1.32 2018/01/21 13:57:12 skrll Exp $	*/
 /*	$OpenBSD: if_otus.c,v 1.18 2010/08/27 17:08:00 jsg Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.31 2017/06/01 02:45:11 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.32 2018/01/21 13:57:12 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1181,7 +1181,7 @@ otus_alloc_rx_data_list(struct otus_softc *sc)
 		data->sc = sc;	/* Backpointer for callbacks. */
 
 		error = usbd_create_xfer(sc->sc_data_rx_pipe, OTUS_RXBUFSZ,
-		    USBD_SHORT_XFER_OK, 0, &data->xfer);
+		   0, 0, &data->xfer);
 
 		if (error) {
 			aprint_error_dev(sc->sc_dev,
