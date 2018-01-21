@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.30 2018/01/20 14:39:21 maxv Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.31 2018/01/21 11:21:40 maxv Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
 #define _AMD64_MACHINE_FRAMEASM_H
@@ -95,6 +95,9 @@
 	movq	TF_RBP(%rsp),%rbp	; \
 	movq	TF_RBX(%rsp),%rbx	; \
 	movq	TF_RAX(%rsp),%rax
+
+#define TEXT_USER_BEGIN	.pushsection	.text.user, "ax"
+#define TEXT_USER_END	.popsection
 
 #ifdef SVS
 
