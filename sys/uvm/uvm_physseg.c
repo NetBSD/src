@@ -1,4 +1,4 @@
-/* $NetBSD: uvm_physseg.c,v 1.8 2017/03/19 23:30:39 riastradh Exp $ */
+/* $NetBSD: uvm_physseg.c,v 1.9 2018/01/21 17:58:43 christos Exp $ */
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -1147,9 +1147,9 @@ uvm_physseg_seg_alloc_from_slab(uvm_physseg_t upm, size_t pages)
 	struct uvm_physseg *seg;
 	struct vm_page *pgs = NULL;
 
-	seg = HANDLE_TO_PHYSSEG_NODE(upm);
-
 	KASSERT(pages > 0);
+
+	seg = HANDLE_TO_PHYSSEG_NODE(upm);
 
 	if (__predict_false(seg->ext == NULL)) {
 		/*
@@ -1161,7 +1161,10 @@ uvm_physseg_seg_alloc_from_slab(uvm_physseg_t upm, size_t pages)
 		 */
 		KASSERT(uvm.page_init_done != true);
 
-		seg->ext = HANDLE_TO_PHYSSEG_NODE(uvm_physseg_get_prev(upm))->ext;
+		uvm_physseg_t upmp = uvm_physseg_get_prev(upm);
+		KASSERT(upmp != UVM_PHYSSEG_TYPE_INVALID);
+
+		seg->ext = HANDLE_TO_PHYSSEG_NODE(upmp)->ext;
 
 		KASSERT(seg->ext != NULL);
 	}
