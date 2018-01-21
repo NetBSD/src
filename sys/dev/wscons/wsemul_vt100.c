@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100.c,v 1.43 2018/01/21 01:18:48 christos Exp $ */
+/* $NetBSD: wsemul_vt100.c,v 1.44 2018/01/21 10:30:51 martin Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100.c,v 1.43 2018/01/21 01:18:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100.c,v 1.44 2018/01/21 10:30:51 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_wsmsgattrs.h"
@@ -805,7 +805,6 @@ wsemul_vt100_output_dcs(struct wsemul_vt100_emuldata *edp, u_char c)
 #endif
 			vd->nargs = VT100_EMUL_NARGS;
 		}
-		newstate = VT100_EMUL_STATE_STRING;
 		switch (c) {
 		case '$':
 			return VT100_EMUL_STATE_DCS_DOLLAR;
@@ -823,6 +822,7 @@ wsemul_vt100_output_dcs(struct wsemul_vt100_emuldata *edp, u_char c)
 #endif
 			break;
 		}
+		return VT100_EMUL_STATE_STRING;
 	}
 
 	return VT100_EMUL_STATE_DCS;
