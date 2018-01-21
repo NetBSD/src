@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.294 2018/01/21 08:20:30 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.295 2018/01/21 11:21:40 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.294 2018/01/21 08:20:30 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.295 2018/01/21 11:21:40 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -2266,7 +2266,7 @@ mm_md_direct_mapped_phys(paddr_t paddr, vaddr_t *vaddr)
  *     Direct Map        [OK]
  *     Remote PCPU Areas [OK]
  *     Kernel Heap       [OK]
- *     Kernel Image      [TODO]
+ *     Kernel Image      [OK]
  */
 
 struct svs_utls {
@@ -2450,6 +2450,8 @@ svs_range_add(struct cpu_info *ci, vaddr_t va, size_t size)
 void
 cpu_svs_init(struct cpu_info *ci)
 {
+	extern char __text_user_start;
+	extern char __text_user_end;
 	const cpuid_t cid = cpu_index(ci);
 	struct vm_page *pg;
 
@@ -2480,6 +2482,8 @@ cpu_svs_init(struct cpu_info *ci)
 	svs_page_add(ci, (vaddr_t)&pcpuarea->ldt);
 	svs_range_add(ci, (vaddr_t)&pcpuarea->ent[cid],
 	    offsetof(struct pcpu_entry, rsp0));
+	svs_range_add(ci, (vaddr_t)&__text_user_start,
+	    (vaddr_t)&__text_user_end - (vaddr_t)&__text_user_start);
 
 	svs_rsp0_init(ci);
 	svs_utls_init(ci);
@@ -2594,10 +2598,6 @@ svs_pdir_switch(struct pmap *pmap)
 		pte = svs_pte_atomic_read(pmap, i);
 		ci->ci_svs_updir[i] = pte;
 	}
-
-	/* Kernel image. */
-	pte = svs_pte_atomic_read(pmap, 511);
-	ci->ci_svs_updir[511] = pte;
 
 	mutex_exit(&ci->ci_svs_mtx);
 }

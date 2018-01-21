@@ -1,4 +1,4 @@
-/*	$NetBSD: amd64_trap.S,v 1.22 2018/01/20 14:27:15 maxv Exp $	*/
+/*	$NetBSD: amd64_trap.S,v 1.23 2018/01/21 11:21:40 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2017 The NetBSD Foundation, Inc.
@@ -95,12 +95,18 @@
 #define	PRE_TRAP
 #endif
 
+#define TRAPENTRY			\
+	INTRENTRY			; \
+	jmp	.Lalltraps_noentry
+
 #define	TRAP_NJ(a)	PRE_TRAP ; pushq $(a)
 #define	ZTRAP_NJ(a)	PRE_TRAP ; pushq $0 ; pushq $(a)
-#define	TRAP(a)		TRAP_NJ(a) ; jmp _C_LABEL(alltraps)
-#define	ZTRAP(a)	ZTRAP_NJ(a) ; jmp _C_LABEL(alltraps)
+#define	TRAP(a)		TRAP_NJ(a) ; TRAPENTRY
+#define	ZTRAP(a)	ZTRAP_NJ(a) ; TRAPENTRY
 
 	.text
+
+	TEXT_USER_BEGIN
 
 IDTVEC(trap00)
 	ZTRAP(T_DIVIDE)
@@ -361,24 +367,6 @@ IDTVEC(intrspurious)
 	jmp	.Lalltraps_checkusr
 IDTVEC_END(intrspurious)
 
-/*
- * trap() calls here when it detects a fault in INTRFASTEXIT (loading the
- * segment registers or during the iret itself). The address of the (possibly
- * reconstructed) user trap frame is passed as an argument.
- *
- * Typically the code will have raised a SIGSEGV which will be actioned
- * by the code below.
- */
-	.type	_C_LABEL(trap_return_fault_return), @function
-LABEL(trap_return_fault_return)
-	mov	%rdi,%rsp		/* frame for user return */
-#ifdef DIAGNOSTIC
-	/* We can't recover the saved %rbx, so suppress warning */
-	movl	CPUVAR(ILEVEL),%ebx
-#endif
-	jmp	.Lalltraps_checkusr
-END(trap_return_fault_return)
-
 #ifndef check_swapgs
 /*
  * We need to worry about traps in kernel mode while the kernel %gs isn't
@@ -423,12 +411,33 @@ NENTRY(check_swapgs)
 END(check_swapgs)
 #endif
 
+	TEXT_USER_END
+
+/*
+ * trap() calls here when it detects a fault in INTRFASTEXIT (loading the
+ * segment registers or during the iret itself). The address of the (possibly
+ * reconstructed) user trap frame is passed as an argument.
+ *
+ * Typically the code will have raised a SIGSEGV which will be actioned
+ * by the code below.
+ */
+	.type	_C_LABEL(trap_return_fault_return), @function
+LABEL(trap_return_fault_return)
+	mov	%rdi,%rsp		/* frame for user return */
+#ifdef DIAGNOSTIC
+	/* We can't recover the saved %rbx, so suppress warning */
+	movl	CPUVAR(ILEVEL),%ebx
+#endif
+	jmp	.Lalltraps_checkusr
+END(trap_return_fault_return)
+
 /*
  * All traps go through here. Call the generic trap handler, and
  * check for ASTs afterwards.
  */
 NENTRY(alltraps)
 	INTRENTRY
+.Lalltraps_noentry:
 	STI(si)
 
 calltrap:

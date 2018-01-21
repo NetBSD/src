@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.147 2018/01/18 07:25:34 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.148 2018/01/21 11:21:40 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1248,15 +1248,103 @@ ENTRY(savectx)
 	ret
 END(savectx)
 
-IDTVEC(syscall32)
-	sysret		/* go away please */
-IDTVEC_END(syscall32)
+/*
+ * Syscall handler.
+ */
+NENTRY(handle_syscall)
+	STI(si)
+
+	movq	CPUVAR(CURLWP),%r14
+	incq	CPUVAR(NSYSCALL)	/* count it atomically */
+	movq	%rsp,L_MD_REGS(%r14)	/* save pointer to frame */
+	movq	L_PROC(%r14),%r15
+	andl	$~MDL_IRET,L_MD_FLAGS(%r14)   /* Allow sysret return */
+	movq	%rsp,%rdi		/* Pass frame as arg0 */
+	call	*P_MD_SYSCALL(%r15)
+.Lsyscall_checkast:
+	/*
+	 * Disable interrupts to avoid new ASTs (etc) being added and
+	 * to ensure we don't take an interrupt with some of the user
+	 * registers loaded.
+	 */
+	CLI(si)
+	/* Check for ASTs on exit to user mode. */
+	movl	L_MD_ASTPENDING(%r14),%eax
+	orl	CPUVAR(WANT_PMAPLOAD),%eax
+	jnz	9f
+
+#ifdef DIAGNOSTIC
+	cmpl	$IPL_NONE,CPUVAR(ILEVEL)
+	jne	.Lspl_error
+#endif
+
+	/*
+	 * Decide if we need to take a slow path. That's the case when we
+	 * want to reload %cs and %ss on a 64bit LWP (MDL_IRET set), or when
+	 * we're returning to a 32bit LWP (MDL_COMPAT32 set).
+	 *
+	 * In either case, we jump into intrfastexit and return to userland
+	 * with the iret instruction.
+	 */
+	testl	$(MDL_IRET|MDL_COMPAT32),L_MD_FLAGS(%r14)
+	jnz	intrfastexit
+
+	jmp	syscall_sysret
+
+#ifdef DIAGNOSTIC
+	/* Report SPL error */
+.Lspl_error:
+	movabsq	$4f,%rdi
+	movl	TF_RAX(%rsp),%esi
+	movl	TF_RDI(%rsp),%edx
+	movl	%ebx,%ecx
+	movl	CPUVAR(ILEVEL),%r8d
+	xorq	%rax,%rax
+	call	_C_LABEL(printf)
+	movl	$IPL_NONE,%edi
+	call	_C_LABEL(spllower)
+	jmp	.Lsyscall_checkast
+4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL %d %d EXIT %x %x\n"
+#endif
+
+/* AST pending or pmap load needed */
+9:
+	cmpl	$0,CPUVAR(WANT_PMAPLOAD)
+	jz	10f
+	STI(si)
+	call	_C_LABEL(do_pmap_load)
+	jmp	.Lsyscall_checkast	/* re-check ASTs */
+10:
+	CLEAR_ASTPENDING(%r14)
+	STI(si)
+	/* Pushed T_ASTFLT into tf_trapno on entry. */
+	movq	%rsp,%rdi
+	call	_C_LABEL(trap)
+	jmp	.Lsyscall_checkast	/* re-check ASTs */
+END(handle_syscall)
 
 /*
- * syscall()
+ * void lwp_trampoline(void);
  *
- * syscall insn entry.
+ * This is a trampoline function pushed run by newly created LWPs
+ * in order to do additional setup in their context.
  */
+NENTRY(lwp_trampoline)
+	movq	%rbp,%rsi
+	movq	%rbp,%r14	/* for .Lsyscall_checkast */
+	movq	%rax,%rdi
+	xorq	%rbp,%rbp
+	call	_C_LABEL(lwp_startup)
+	movq	%r13,%rdi
+	call	*%r12
+	jmp	.Lsyscall_checkast
+END(lwp_trampoline)
+
+/*
+ * Entry points of the 'syscall' instruction, 64bit and 32bit mode.
+ */
+	TEXT_USER_BEGIN
+
 IDTVEC(syscall)
 #ifndef XEN
 	/*
@@ -1315,44 +1403,40 @@ IDTVEC(syscall)
 	movw	$0,TF_FS(%rsp)
 	movw	$0,TF_GS(%rsp)
 	SVS_ENTER
-	STI(si)
+	jmp	handle_syscall
+IDTVEC_END(syscall)
 
-.Ldo_syscall:
-	movq	CPUVAR(CURLWP),%r14
-	incq	CPUVAR(NSYSCALL)	/* count it atomically */
-	movq	%rsp,L_MD_REGS(%r14)	/* save pointer to frame */
-	movq	L_PROC(%r14),%r15
-	andl	$~MDL_IRET,L_MD_FLAGS(%r14)   /* Allow sysret return */
-	movq	%rsp,%rdi		/* Pass frame as arg0 */
-	call	*P_MD_SYSCALL(%r15)
-.Lsyscall_checkast:
-	/*
-	 * Disable interrupts to avoid new ASTs (etc) being added and
-	 * to ensure we don't take an interrupt with some of the user
-	 * registers loaded.
-	 */
-	CLI(si)
-	/* Check for ASTs on exit to user mode. */
-	movl	L_MD_ASTPENDING(%r14),%eax
-	orl	CPUVAR(WANT_PMAPLOAD),%eax
-	jnz	9f
+IDTVEC(syscall32)
+	sysret		/* go away please */
+IDTVEC_END(syscall32)
 
-#ifdef DIAGNOSTIC
-	cmpl	$IPL_NONE,CPUVAR(ILEVEL)
-	jne	.Lspl_error
+	TEXT_USER_END
+
+/*
+ * osyscall()
+ *
+ * Trap gate entry for int $80 syscall, also used by sigreturn.
+ */
+	TEXT_USER_BEGIN
+IDTVEC(osyscall)
+#ifdef XEN
+	movq (%rsp),%rcx
+	movq 8(%rsp),%r11
+	addq $0x10,%rsp
 #endif
+	pushq	$2		/* size of instruction for restart */
+	pushq	$T_ASTFLT	/* trap # for doing ASTs */
+	INTRENTRY
+	jmp	handle_syscall
+IDTVEC_END(osyscall)
+	TEXT_USER_END
 
-	/*
-	 * Decide if we need to take a slow path. That's the case when we
-	 * want to reload %cs and %ss on a 64bit LWP (MDL_IRET set), or when
-	 * we're returning to a 32bit LWP (MDL_COMPAT32 set).
-	 *
-	 * In either case, we jump into intrfastexit and return to userland
-	 * with the iret instruction.
-	 */
-	testl	$(MDL_IRET|MDL_COMPAT32),L_MD_FLAGS(%r14)
-	jnz	intrfastexit
-
+/*
+ * Return to userland via 'sysret'.
+ */
+	TEXT_USER_BEGIN
+	_ALIGN_TEXT
+LABEL(syscall_sysret)
 	SVS_LEAVE
 	INTR_RESTORE_GPRS
 	SWAPGS
@@ -1367,73 +1451,8 @@ do_sysret:
 	pushq	$256	/* VGCF_IN_SYSCALL */
 	jmp	HYPERVISOR_iret
 #endif
-
-#ifdef DIAGNOSTIC
-	/* Report SPL error */
-.Lspl_error:
-	movabsq	$4f,%rdi
-	movl	TF_RAX(%rsp),%esi
-	movl	TF_RDI(%rsp),%edx
-	movl	%ebx,%ecx
-	movl	CPUVAR(ILEVEL),%r8d
-	xorq	%rax,%rax
-	call	_C_LABEL(printf)
-	movl	$IPL_NONE,%edi
-	call	_C_LABEL(spllower)
-	jmp	.Lsyscall_checkast
-4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL %d %d EXIT %x %x\n"
-#endif
-
-/* AST pending or pmap load needed */
-9:
-	cmpl	$0,CPUVAR(WANT_PMAPLOAD)
-	jz	10f
-	STI(si)
-	call	_C_LABEL(do_pmap_load)
-	jmp	.Lsyscall_checkast	/* re-check ASTs */
-10:
-	CLEAR_ASTPENDING(%r14)
-	STI(si)
-	/* Pushed T_ASTFLT into tf_trapno on entry. */
-	movq	%rsp,%rdi
-	call	_C_LABEL(trap)
-	jmp	.Lsyscall_checkast	/* re-check ASTs */
-IDTVEC_END(syscall)
-
-/*
- * void lwp_trampoline(void);
- *
- * This is a trampoline function pushed run by newly created LWPs
- * in order to do additional setup in their context.
- */
-NENTRY(lwp_trampoline)
-	movq	%rbp,%rsi
-	movq	%rbp,%r14	/* for .Lsyscall_checkast */
-	movq	%rax,%rdi
-	xorq	%rbp,%rbp
-	call	_C_LABEL(lwp_startup)
-	movq	%r13,%rdi
-	call	*%r12
-	jmp	.Lsyscall_checkast
-END(lwp_trampoline)
-
-/*
- * osyscall()
- *
- * Trap gate entry for int $80 syscall, also used by sigreturn.
- */
-IDTVEC(osyscall)
-#ifdef XEN
-	movq (%rsp),%rcx
-	movq 8(%rsp),%r11
-	addq $0x10,%rsp
-#endif
-	pushq	$2		/* size of instruction for restart */
-	pushq	$T_ASTFLT	/* trap # for doing ASTs */
-	INTRENTRY
-	STI(si)
-	jmp	.Ldo_syscall
-IDTVEC_END(osyscall)
+END(syscall_sysret)
+	TEXT_USER_END
 
 /*
  * bool sse2_idlezero_page(void *pg)
@@ -1496,7 +1515,10 @@ ENTRY(pagezero)
 	ret
 END(pagezero)
 
-ENTRY(intrfastexit)
+	TEXT_USER_BEGIN
+
+	_ALIGN_TEXT
+LABEL(intrfastexit)
 	NOT_XEN(cli;)
 	SVS_LEAVE
 	INTR_RESTORE_GPRS
