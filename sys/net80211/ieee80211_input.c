@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.109 2018/01/17 16:03:16 maxv Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.110 2018/01/21 14:13:49 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 Atsushi Onoe
@@ -37,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.81 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.109 2018/01/17 16:03:16 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.110 2018/01/21 14:13:49 maxv Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -2141,7 +2141,7 @@ ieee80211_recv_mgmt_beacon(struct ieee80211com *ic, struct mbuf *m0,
 			break;
 		case IEEE80211_ELEMID_TIM:
 			/* XXX ATIM? */
-			IEEE80211_VERIFY_LENGTH(frm[1], 5);
+			IEEE80211_VERIFY_LENGTH(frm[1], 4);
 			scan.sp_tim = frm;
 			scan.sp_timoff = frm - mtod(m0, u_int8_t *);
 			break;
