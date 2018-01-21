@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.23 2016/03/25 10:14:43 shm Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.24 2018/01/21 16:51:14 christos Exp $	*/
 
 /* 
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.23 2016/03/25 10:14:43 shm Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.24 2018/01/21 16:51:14 christos Exp $");
 
 #ifndef _KERNEL
 #include <sys/types.h>
@@ -1376,20 +1376,33 @@ db_disasm(db_addr_t loc, bool altfmt)
 
 		switch (i_mode & 0xFF) {
 		case E:
-			db_print_address(seg, rex, size, &address);
-			break;
 		case Eind:
-			db_printf("*");
-			db_print_address(seg, rex, size, &address);
-			break;
 		case Ed:
-			db_print_address(seg, rex, LONG, &address);
-			break;
 		case Ew:
-			db_print_address(seg, rex, WORD, &address);
-			break;
 		case Eb:
-			db_print_address(seg, rex, BYTE, &address);
+			if (!ip->i_has_modrm) {
+				db_printf("Bad address mode %#x without modrm",
+				    i_mode);
+				break;
+			}
+			switch (i_mode & 0xFF) {
+			case E:
+				db_print_address(seg, rex, size, &address);
+				break;
+			case Eind:
+				db_printf("*");
+				db_print_address(seg, rex, size, &address);
+				break;
+			case Ed:
+				db_print_address(seg, rex, LONG, &address);
+				break;
+			case Ew:
+				db_print_address(seg, rex, WORD, &address);
+				break;
+			case Eb:
+				db_print_address(seg, rex, BYTE, &address);
+				break;
+			}
 			break;
 		case R: {
 			int ext = ((rex & REX_R) != 0);
