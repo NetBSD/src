@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.188 2018/01/10 08:47:30 pgoyette Exp $
+$NetBSD: acronyms.comp,v 1.189 2018/01/21 14:01:55 alnsn Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -650,6 +650,7 @@ JIT	just in time
 JPEG	Joint Photographic Experts Group
 JRE	Java Runtime Environment
 JTAG	joint test action group
+KASLR	kernel address space layout randomization
 KB	keyboard
 KB	kilobyte
 KBD	keyboard
