@@ -1,4 +1,4 @@
-/*	$NetBSD: in_l2tp.c,v 1.9 2017/12/18 03:21:44 knakahara Exp $	*/
+/*	$NetBSD: in_l2tp.c,v 1.10 2018/01/22 09:51:06 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_l2tp.c,v 1.9 2017/12/18 03:21:44 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_l2tp.c,v 1.10 2018/01/22 09:51:06 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_l2tp.h"
@@ -196,11 +196,14 @@ in_l2tp_output(struct l2tp_variant *var, struct mbuf *m)
 
 	/* prepend new IP header */
 	M_PREPEND(m, sizeof(struct ip), M_DONTWAIT);
+	if (m == NULL) {
+		error = ENOBUFS;
+		goto out;
+	}
 	if (IP_HDR_ALIGNED_P(mtod(m, void *)) == 0) {
-		if (m)
-			m = m_copyup(m, sizeof(struct ip), 0);
+		m = m_copyup(m, sizeof(struct ip), 0);
 	} else {
-		if (m && m->m_len < sizeof(struct ip))
+		if (m->m_len < sizeof(struct ip))
 			m = m_pullup(m, sizeof(struct ip));
 	}
 	if (m == NULL) {
