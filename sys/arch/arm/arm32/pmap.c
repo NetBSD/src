@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.362 2018/01/17 20:30:16 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.363 2018/01/22 13:21:35 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -217,7 +217,7 @@
 
 #include <arm/locore.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.362 2018/01/17 20:30:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.363 2018/01/22 13:21:35 skrll Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -4304,7 +4304,7 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 	    (uintptr_t)pm, va, ftype, user);
 #ifdef ARM_MMU_EXTENDED
 	UVMHIST_LOG(maphist, " ti=%#jx pai=%#jx asid=%#jx",
-	    (uintptr_t)cpu_tlb_info(curcpu()), 
+	    (uintptr_t)cpu_tlb_info(curcpu()),
 	    (uintptr_t)PMAP_PAI(pm, cpu_tlb_info(curcpu())),
 	    (uintptr_t)PMAP_PAI(pm, cpu_tlb_info(curcpu()))->pai_asid, 0);
 #endif
