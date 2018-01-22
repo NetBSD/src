@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_space.c,v 1.14 2017/12/10 21:38:26 skrll Exp $	*/
+/*	$NetBSD: bcm2835_space.c,v 1.15 2018/01/22 13:23:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_space.c,v 1.14 2017/12/10 21:38:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_space.c,v 1.15 2018/01/22 13:23:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -533,6 +533,7 @@ bcm283x_bs_map(void *t, bus_addr_t ba, bus_size_t size, int flag,
     bus_space_handle_t *bshp)
 {
 	u_long startpa, endpa, pa;
+	int pmapflags;
 	vaddr_t va;
 
 	/* Convert BA to PA */
@@ -550,10 +551,13 @@ bcm283x_bs_map(void *t, bus_addr_t ba, bus_size_t size, int flag,
 
 	*bshp = (bus_space_handle_t)(va + (pa - startpa));
 
-	const int pmapflags =
-	    (flag & (BUS_SPACE_MAP_CACHEABLE|BUS_SPACE_MAP_PREFETCHABLE))
-		? 0
-		: PMAP_NOCACHE;
+	if (flag & BUS_SPACE_MAP_PREFETCHABLE)
+		pmapflags = PMAP_WRITE_COMBINE;
+	else if (flag & BUS_SPACE_MAP_CACHEABLE)
+		pmapflags = 0;
+	else
+		pmapflags = PMAP_NOCACHE;
+
 	for (pa = startpa; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
 		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE, pmapflags);
 	}
