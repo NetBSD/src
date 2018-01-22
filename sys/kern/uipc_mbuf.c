@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.177 2018/01/14 16:59:37 maxv Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.178 2018/01/22 07:22:52 maxv Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.177 2018/01/14 16:59:37 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.178 2018/01/22 07:22:52 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -666,6 +666,7 @@ m_prepend(struct mbuf *m, int len, int how)
 		m_freem(m);
 		return (NULL);
 	}
+
 	if (m->m_flags & M_PKTHDR) {
 		M_MOVE_PKTHDR(mn, m);
 	} else {
@@ -673,8 +674,15 @@ m_prepend(struct mbuf *m, int len, int how)
 	}
 	mn->m_next = m;
 	m = mn;
-	if (len < MHLEN)
-		MH_ALIGN(m, len);
+
+	if (m->m_flags & M_PKTHDR) {
+		if (len < MHLEN)
+			MH_ALIGN(m, len);
+	} else {
+		if (len < MLEN)
+			M_ALIGN(m, len);
+	}
+
 	m->m_len = len;
 	return (m);
 }
