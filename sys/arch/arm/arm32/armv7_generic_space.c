@@ -1,4 +1,4 @@
-/*	$NetBSD: armv7_generic_space.c,v 1.5 2018/01/22 13:28:00 skrll Exp $	*/
+/*	$NetBSD: armv7_generic_space.c,v 1.6 2018/01/22 13:29:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armv7_generic_space.c,v 1.5 2018/01/22 13:28:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armv7_generic_space.c,v 1.6 2018/01/22 13:29:28 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -290,6 +290,7 @@ armv7_generic_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flag,
 {
 	u_long startpa, endpa, pa;
 	const struct pmap_devmap *pd;
+	int pmapflags;
 	vaddr_t va;
 
 	if ((pd = pmap_devmap_find_pa(bpa, size)) != NULL) {
@@ -310,10 +311,13 @@ armv7_generic_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flag,
 
 	*bshp = (bus_space_handle_t)(va + (bpa - startpa));
 
-	const int pmapflags =
-	    (flag & (BUS_SPACE_MAP_CACHEABLE|BUS_SPACE_MAP_PREFETCHABLE))
-		? 0
-		: PMAP_NOCACHE;
+	if (flag & BUS_SPACE_MAP_PREFETCHABLE)
+		pmapflags = PMAP_WRITE_COMBINE;
+	else if (flag & BUS_SPACE_MAP_CACHEABLE)
+		pmapflags = 0;
+	else
+		pmapflags = PMAP_NOCACHE;
+
 	for (pa = startpa; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
 		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE, pmapflags);
 	}
