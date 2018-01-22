@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.179 2018/01/22 09:06:40 maxv Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.180 2018/01/22 10:26:38 maxv Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.179 2018/01/22 09:06:40 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.180 2018/01/22 10:26:38 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -660,6 +660,10 @@ struct mbuf *
 m_prepend(struct mbuf *m, int len, int how)
 {
 	struct mbuf *mn;
+
+	if (__predict_false(len > MHLEN)) {
+		panic("%s: len > MHLEN", __func__);
+	}
 
 	KASSERT(len != M_COPYALL);
 	mn = m_get(how, m->m_type);
