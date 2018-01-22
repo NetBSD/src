@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.178 2018/01/22 07:22:52 maxv Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.179 2018/01/22 09:06:40 maxv Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.178 2018/01/22 07:22:52 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.179 2018/01/22 09:06:40 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -102,7 +102,7 @@ static void	sysctl_kern_mbuf_setup(void);
 
 static struct sysctllog *mbuf_sysctllog;
 
-static struct mbuf *m_copym0(struct mbuf *, int, int, int, int);
+static struct mbuf *m_copym0(struct mbuf *, int, int, int, bool);
 static struct mbuf *m_split0(struct mbuf *, int, int, int);
 static int m_copyback0(struct mbuf **, int, int, const void *, int, int);
 
@@ -459,7 +459,8 @@ mb_ctor(void *arg, void *object, int flags)
  * Add mbuf to the end of a chain
  */
 struct mbuf *
-m_add(struct mbuf *c, struct mbuf *m) {
+m_add(struct mbuf *c, struct mbuf *m)
+{
 	struct mbuf *n;
 
 	if (c == NULL)
@@ -620,10 +621,10 @@ m_getclr(int nowait, int type)
 	struct mbuf *m;
 
 	m = m_get(nowait, type);
-	if (m == 0)
-		return (NULL);
+	if (m == NULL)
+		return NULL;
 	memset(mtod(m, void *), 0, MLEN);
-	return (m);
+	return m;
 }
 
 void
@@ -664,7 +665,7 @@ m_prepend(struct mbuf *m, int len, int how)
 	mn = m_get(how, m->m_type);
 	if (mn == NULL) {
 		m_freem(m);
-		return (NULL);
+		return NULL;
 	}
 
 	if (m->m_flags & M_PKTHDR) {
@@ -684,7 +685,7 @@ m_prepend(struct mbuf *m, int len, int how)
 	}
 
 	m->m_len = len;
-	return (m);
+	return m;
 }
 
 /*
@@ -698,23 +699,24 @@ struct mbuf *
 m_copym(struct mbuf *m, int off0, int len, int wait)
 {
 
-	return m_copym0(m, off0, len, wait, 0);	/* shallow copy on M_EXT */
+	return m_copym0(m, off0, len, wait, false); /* shallow copy on M_EXT */
 }
 
 struct mbuf *
 m_dup(struct mbuf *m, int off0, int len, int wait)
 {
 
-	return m_copym0(m, off0, len, wait, 1);	/* deep copy */
+	return m_copym0(m, off0, len, wait, true); /* deep copy */
 }
 
 static inline int
-m_copylen(int len, int copylen) {
-    return len == M_COPYALL ? copylen : min(len, copylen);
+m_copylen(int len, int copylen)
+{
+	return (len == M_COPYALL) ? copylen : min(len, copylen);
 }
 
 static struct mbuf *
-m_copym0(struct mbuf *m, int off0, int len, int wait, int deep)
+m_copym0(struct mbuf *m, int off0, int len, int wait, bool deep)
 {
 	struct mbuf *n, **np;
 	int off = off0;
@@ -726,27 +728,30 @@ m_copym0(struct mbuf *m, int off0, int len, int wait, int deep)
 	if (off == 0 && m->m_flags & M_PKTHDR)
 		copyhdr = 1;
 	while (off > 0) {
-		if (m == 0)
+		if (m == NULL)
 			panic("m_copym: m == 0, off %d", off);
 		if (off < m->m_len)
 			break;
 		off -= m->m_len;
 		m = m->m_next;
 	}
+
 	np = &top;
-	top = 0;
+	top = NULL;
 	while (len == M_COPYALL || len > 0) {
-		if (m == 0) {
+		if (m == NULL) {
 			if (len != M_COPYALL)
 				panic("m_copym: m == 0, len %d [!COPYALL]",
 				    len);
 			break;
 		}
+
 		n = m_get(wait, m->m_type);
 		*np = n;
-		if (n == 0)
+		if (n == NULL)
 			goto nospace;
 		MCLAIM(n, m->m_owner);
+
 		if (copyhdr) {
 			M_COPY_PKTHDR(n, m);
 			if (len == M_COPYALL)
@@ -756,6 +761,7 @@ m_copym0(struct mbuf *m, int off0, int len, int wait, int deep)
 			copyhdr = 0;
 		}
 		n->m_len = m_copylen(len, m->m_len - off);
+
 		if (m->m_flags & M_EXT) {
 			if (!deep) {
 				n->m_data = m->m_data + off;
@@ -777,9 +783,11 @@ m_copym0(struct mbuf *m, int off0, int len, int wait, int deep)
 				memcpy(mtod(n, void *), mtod(m, char *) + off,
 				    (unsigned)n->m_len);
 			}
-		} else
+		} else {
 			memcpy(mtod(n, void *), mtod(m, char *) + off,
 			    (unsigned)n->m_len);
+		}
+
 		if (len != M_COPYALL)
 			len -= n->m_len;
 		off += n->m_len;
@@ -793,13 +801,16 @@ m_copym0(struct mbuf *m, int off0, int len, int wait, int deep)
 		}
 		np = &n->m_next;
 	}
-	if (top == 0)
+
+	if (top == NULL)
 		MCFail++;
-	return (top);
+
+	return top;
+
 nospace:
 	m_freem(top);
 	MCFail++;
-	return (NULL);
+	return NULL;
 }
 
 /*
@@ -860,12 +871,12 @@ nospace:
 void
 m_copydata(struct mbuf *m, int off, int len, void *vp)
 {
-	unsigned	count;
-	void *		cp = vp;
-	struct mbuf	*m0 = m;
-	int		len0 = len;
-	int		off0 = off;
-	void		*vp0 = vp;
+	unsigned count;
+	void *cp = vp;
+	struct mbuf *m0 = m;
+	int len0 = len;
+	int off0 = off;
+	void *vp0 = vp;
 
 	KASSERT(len != M_COPYALL);
 	if (off < 0 || len < 0)
