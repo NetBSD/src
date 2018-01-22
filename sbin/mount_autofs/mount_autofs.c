@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_autofs.c,v 1.1 2018/01/14 22:44:04 christos Exp $	*/
+/*	$NetBSD: mount_autofs.c,v 1.2 2018/01/22 10:41:18 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_autofs.c,v 1.1 2018/01/14 22:44:04 christos Exp $");
+__RCSID("$NetBSD: mount_autofs.c,v 1.2 2018/01/22 10:41:18 wiz Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -140,7 +140,7 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "Usage: %s [-o options] [-O autofs_options] [-p <prefix>] "
-		"[-f <from>] autofs mount_point\n", getprogname());
+	    "Usage: %s [-f from] [-O autofs_options] [-o options] [-p prefix] "
+		"autofs mount_point\n", getprogname());
 	exit(EXIT_FAILURE);
 }
