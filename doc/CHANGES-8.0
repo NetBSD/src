@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.105 2018/01/16 14:08:56 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.106 2018/01/22 12:36:02 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -9147,4 +9147,31 @@ sys/kern/kern_event.c				1.103
 
 	Set EV_ONESHOT to prevent rescheduling
 	[christos, ticket #501]
+
+bin/ksh/history.c				1.18
+
+	Use 0600 as the mode for histfile here too.
+	[maya, ticket #505]
+
+sys/kern/kern_softint.c				1.45
+sys/kern/subr_pserialize.c			1.10
+sys/kern/subr_psref.c				1.10
+sys/rump/librump/rumpkern/rump.c		1.331
+
+	Prevent panic or hangup in softint_disestablish(),
+	pserialize_perform() or psref_target_destroy() while
+	mp_online == false.
+	Set mp_online = true in rump kernels.
+	[jdolecek, ticket #506]
+
+sys/arch/arm/arm/cpufunc_asm_arm11x6.S		1.10
+
+	Apply the erratum fix that was applied to wbinv_range
+	to isync_range.
+	[skrll, ticket #507]
+
+sys/fs/msdosfs/msdosfs_vfsops.c			1.129
+
+	Relax sanity check. It's ok to have more FAT sectors than needed.
+	[mlelstv, ticket #508]
 
