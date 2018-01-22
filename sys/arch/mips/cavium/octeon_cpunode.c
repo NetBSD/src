@@ -29,7 +29,7 @@
 #define __INTR_PRIVATE
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD");
+__KERNEL_RCSID(0, "$NetBSD: octeon_cpunode.c,v 1.11 2018/01/22 21:56:46 maya Exp $");
 
 #include "locators.h"
 #include "cpunode.h"
