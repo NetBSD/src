@@ -1,4 +1,4 @@
-/*	$NetBSD: if_malo_pcmcia.c,v 1.15 2017/10/23 09:24:34 msaitoh Exp $	*/
+/*	$NetBSD: if_malo_pcmcia.c,v 1.16 2018/01/22 14:40:53 maxv Exp $	*/
 /*      $OpenBSD: if_malo.c,v 1.65 2009/03/29 21:53:53 sthen Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_malo_pcmcia.c,v 1.15 2017/10/23 09:24:34 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_malo_pcmcia.c,v 1.16 2018/01/22 14:40:53 maxv Exp $");
 
 #ifdef _MODULE
 #include <sys/module.h>
@@ -1053,8 +1053,12 @@ cmalo_rx(struct malo_softc *sc)
 	}
 
 	/* push the frame up to the network stack if not in monitor mode */
-	if (ic->ic_opmode != IEEE80211_M_MONITOR)
+	if (ic->ic_opmode != IEEE80211_M_MONITOR) {
 		if_percpuq_enqueue(ifp->if_percpuq, m);
+	} else {
+		/* XXX: we don't do anything with it? */
+		m_freem(m);
+	}
 }
 
 static int
