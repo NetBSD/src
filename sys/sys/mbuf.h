@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.174 2018/01/14 17:16:58 maxv Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.175 2018/01/22 07:11:45 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -604,6 +604,8 @@ do {									\
  */
 #define	M_ALIGN(m, len)							\
 do {									\
+	KASSERT(((m)->m_flags & (M_PKTHDR|M_EXT)) == 0);		\
+	KASSERT(M_LEADINGSPACE(m) == 0);				\
 	(m)->m_data += (MLEN - (len)) &~ (sizeof(long) - 1);		\
 } while (/* CONSTCOND */ 0)
 
@@ -613,6 +615,9 @@ do {									\
  */
 #define	MH_ALIGN(m, len)						\
 do {									\
+	KASSERT(((m)->m_flags & M_PKTHDR) != 0);			\
+	KASSERT(((m)->m_flags & M_EXT) == 0);				\
+	KASSERT(M_LEADINGSPACE(m) == 0);				\
 	(m)->m_data += (MHLEN - (len)) &~ (sizeof(long) - 1);		\
 } while (/* CONSTCOND */ 0)
 
