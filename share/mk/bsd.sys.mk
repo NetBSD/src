@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.272 2017/08/01 21:50:36 mrg Exp $
+#	$NetBSD: bsd.sys.mk,v 1.273 2018/01/22 17:33:01 christos Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -38,9 +38,12 @@ CXXFLAGS+=	${REPROFLAGS}
 .endif
 
 # NetBSD sources use C99 style, with some GCC extensions.
+# Coverity does not like -std=gnu99
+.if !defined(COVERITY_TOP_CONFIG)
 CFLAGS+=	${${ACTIVE_CC} == "clang":? -std=gnu99 :}
 CFLAGS+=	${${ACTIVE_CC} == "gcc":? -std=gnu99 :}
 CFLAGS+=	${${ACTIVE_CC} == "pcc":? -std=gnu99 :}
+.endif
 
 .if defined(WARNS)
 CFLAGS+=	${${ACTIVE_CC} == "clang":? -Wno-sign-compare -Wno-pointer-sign :}
@@ -134,6 +137,7 @@ LINTFLAGS+=	${DESTDIR:D-d ${DESTDIR}/usr/include}
 .if !defined(KERNSRCDIR) && !defined(KERN) # not for kernels nor kern modules
 CPPFLAGS+=	-D_FORTIFY_SOURCE=2
 .endif
+.   if !defined(COVERITY_TOP_CONFIG)
 COPTS+=	-fstack-protector -Wstack-protector 
 
 # GCC 4.8 on m68k erroneously does not protect functions with
@@ -154,6 +158,7 @@ COPTS+=	-Wno-error=stack-protector
 
 COPTS+=	${${ACTIVE_CC} == "clang":? --param ssp-buffer-size=1 :}
 COPTS+=	${${ACTIVE_CC} == "gcc":? --param ssp-buffer-size=1 :}
+.    endif
 .endif
 
 .if ${MKSOFTFLOAT:Uno} != "no"
