@@ -22,12 +22,12 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd January 15, 2018
+.Dd January 22, 2018
 .Dt MOUNT_AUTOFS 8
 .Os
 .Sh NAME
 .Nm mount_autofs
-.Nd mount autofs
+.Nd mount automounter filesystem
 .Sh SYNOPSIS
 .Nm
 .Op Fl f Ar from
@@ -39,8 +39,41 @@
 .Sh DESCRIPTION
 The
 .Nm
-command is ported from
-.Nx .
+command attaches the automounter filesystem on the
+.Ar autofs
+device on to the file system tree at point
+.Ar mount_point .
+Both
+.Ar autofs
+and
+.Ar mount_point
+are converted to absolute paths before use.
+.Pp
+This command is normally executed by
+.Xr mount 8
+at boot time.
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl o
+Options are specified with a
+.Fl o
+flag followed by a comma separated string of options.
+See the
+.Xr mount 8
+man page for possible options and their meanings.
+.It Fl O
+automounter options are specified with a
+.Fl O
+flag.
+.It Fl p
+automounter prefix is specified with a
+.Fl p
+flag.
+.It Fl f
+automounter parameter from is specified with a
+.Fl f
+flag.
+.El
 .Sh SEE ALSO
 .Xr autofs 5 ,
 .Xr fstab 5 ,
