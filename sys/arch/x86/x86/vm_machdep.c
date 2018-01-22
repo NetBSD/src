@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.25.8.1 2016/12/18 07:02:59 snj Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.25.8.2 2018/01/22 19:40:25 snj Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.25.8.1 2016/12/18 07:02:59 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.25.8.2 2018/01/22 19:40:25 snj Exp $");
 
 #include "opt_mtrr.h"
 
@@ -158,7 +158,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	fpu_save_area_fork(pcb2, pcb1);
 
 #if defined(XEN)
-	pcb2->pcb_iopl = SEL_KPL;
+	pcb2->pcb_iopl = IOPL_KPL;
 #endif
 
 	/*
