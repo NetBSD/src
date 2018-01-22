@@ -1,3 +1,5 @@
+.\" $NetBSD: mount_autofs.8,v 1.3 2018/01/22 10:40:22 wiz Exp $
+.\"
 .\" Copyright (c) 2018 The DragonFly Project
 .\" All rights reserved.
 .\"
@@ -31,8 +33,8 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl f Ar from
-.Op Fl o Ar options
 .Op Fl O Ar master_options
+.Op Fl o Ar options
 .Op Fl p Ar master_prefix
 .Ar autofs
 .Ar mount_point
@@ -54,25 +56,19 @@ This command is normally executed by
 at boot time.
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl f
+Set the automount
+.Ar from
+parameter.
 .It Fl o
-Options are specified with a
-.Fl o
-flag followed by a comma separated string of options.
+Set the mount options.
 See the
 .Xr mount 8
 man page for possible options and their meanings.
 .It Fl O
-automounter options are specified with a
-.Fl O
-flag.
+Set the automounter options.
 .It Fl p
-automounter prefix is specified with a
-.Fl p
-flag.
-.It Fl f
-automounter parameter from is specified with a
-.Fl f
-flag.
+Set the automounter prefix.
 .El
 .Sh SEE ALSO
 .Xr autofs 5 ,
