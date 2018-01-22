@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.54 2011/04/26 15:51:23 joerg Exp $	*/
+/*	$NetBSD: segments.h,v 1.54.30.1 2018/01/22 19:41:08 snj Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -104,6 +104,9 @@
 #endif /* XEN */
 #define	ISLDT(s)	((s) & SEL_LDT)	/* is it local or global */
 #define	SEL_LDT		4		/* local descriptor table */
+
+#define IOPL_KPL	SEL_KPL
+
 #define	IDXSEL(s)	(((s) >> 3) & 0x1fff)		/* index of selector */
 #define	IDXSELN(s)	(((s) >> 3))			/* index of selector */
 #define	GSEL(s,r)	(((s) << 3) | r)		/* a global selector */
