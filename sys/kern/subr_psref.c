@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_psref.c,v 1.7.2.1 2018/01/02 10:36:12 snj Exp $	*/
+/*	$NetBSD: subr_psref.c,v 1.7.2.2 2018/01/22 12:30:20 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_psref.c,v 1.7.2.1 2018/01/02 10:36:12 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_psref.c,v 1.7.2.2 2018/01/22 12:30:20 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/condvar.h>
@@ -429,8 +429,14 @@ psreffed_p(struct psref_target *target, struct psref_class *class)
 		.ret = false,
 	};
 
-	/* Ask all CPUs to say whether they hold a psref to the target.  */
-	xc_wait(xc_broadcast(0, &psreffed_p_xc, &P, NULL));
+	if (__predict_true(mp_online)) {
+		/*
+		 * Ask all CPUs to say whether they hold a psref to the
+		 * target.
+		 */
+		xc_wait(xc_broadcast(0, &psreffed_p_xc, &P, NULL));
+	} else
+		psreffed_p_xc(&P, NULL);
 
 	return P.ret;
 }

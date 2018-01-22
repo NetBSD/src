@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.43.10.1 2017/11/23 13:40:22 martin Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.43.10.2 2018/01/22 12:30:20 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -170,13 +170,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.43.10.1 2017/11/23 13:40:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.43.10.2 2018/01/22 12:30:20 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/intr.h>
 #include <sys/ipi.h>
 #include <sys/mutex.h>
+#include <sys/kernel.h>
 #include <sys/kthread.h>
 #include <sys/evcnt.h>
 #include <sys/cpu.h>
@@ -430,8 +431,10 @@ softint_disestablish(void *arg)
 	 * it again.  So, we are only looking for handler records with
 	 * SOFTINT_ACTIVE already set.
 	 */
-	where = xc_broadcast(0, (xcfunc_t)nullop, NULL, NULL);
-	xc_wait(where);
+	if (__predict_true(mp_online)) {
+		where = xc_broadcast(0, (xcfunc_t)nullop, NULL, NULL);
+		xc_wait(where);
+	}
 
 	for (;;) {
 		/* Collect flag values from each CPU. */
