@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.72 2018/01/03 21:53:50 snj Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.73 2018/01/22 19:59:49 snj Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -5175,4 +5175,18 @@ sys/kern/subr_kobj.c				1.52
 	Compare names of duplicate symbols properly, so we correctly
 	return an error status.  PR kern/45125
 	[pgoyette, ticket #1539]
+
+sys/arch/amd64/amd64/machdep.c			1.280 via patch
+sys/arch/amd64/include/segments.h		1.34 via patch
+sys/arch/i386/i386/machdep.c			1.800 via patch
+sys/arch/i386/include/segments.h		1.64 via patch
+sys/arch/x86/x86/vm_machdep.c			1.30 via patch
+
+	Prevent unrestricted userland access to I/O ports in XEN.
+	[maxv, ticket #1550]
+
+bin/ksh/history.c				1.18 via patch
+
+	Create HISTFILE with mode 0600, not 777.  PR bin/52480.
+	[maya, ticket #1554]
 
