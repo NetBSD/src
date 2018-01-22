@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pserialize.c,v 1.8.10.1 2017/11/30 14:40:46 martin Exp $	*/
+/*	$NetBSD: subr_pserialize.c,v 1.8.10.2 2018/01/22 12:30:20 martin Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pserialize.c,v 1.8.10.1 2017/11/30 14:40:46 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pserialize.c,v 1.8.10.2 2018/01/22 12:30:20 martin Exp $");
 
 #include <sys/param.h>
 
@@ -156,6 +156,11 @@ pserialize_perform(pserialize_t psz)
 	}
 	KASSERT(psz->psz_owner == NULL);
 	KASSERT(ncpu > 0);
+
+	if (__predict_false(mp_online == false)) {
+		psz_ev_excl.ev_count++;
+		return;
+	}
 
 	/*
 	 * Set up the object and put it onto the queue.  The lock
