@@ -1,4 +1,4 @@
-/*	$NetBSD: armv7_generic_space.c,v 1.4 2017/11/27 07:44:27 skrll Exp $	*/
+/*	$NetBSD: armv7_generic_space.c,v 1.5 2018/01/22 13:28:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armv7_generic_space.c,v 1.4 2017/11/27 07:44:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armv7_generic_space.c,v 1.5 2018/01/22 13:28:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -365,7 +365,7 @@ armv7_generic_bs_barrier(void *t, bus_space_handle_t bsh, bus_size_t offset,
     bus_size_t len, int flags)
 {
 	flags &= BUS_SPACE_BARRIER_READ|BUS_SPACE_BARRIER_WRITE;
-	
+
 	if (flags)
 		arm_dsb();
 }
