@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.148 2018/01/21 11:21:40 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.149 2018/01/22 08:14:09 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1534,14 +1534,12 @@ LABEL(intrfastexit)
 #endif
 
 .Luexit32:
-	NOT_XEN(cli;)
 do_mov_es:
 	movw	TF_ES(%rsp),%es
 do_mov_ds:
 	movw	TF_DS(%rsp),%ds
 do_mov_fs:
 	movw	TF_FS(%rsp),%fs
-	SVS_LEAVE
 	SWAPGS
 #ifndef XEN
 do_mov_gs:
@@ -1550,7 +1548,6 @@ do_mov_gs:
 	jmp	.Lkexit
 
 .Luexit64:
-	NOT_XEN(cli;)
 	SWAPGS
 
 .Lkexit:
