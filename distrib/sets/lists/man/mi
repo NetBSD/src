@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1570 2018/01/10 11:08:55 knakahara Exp $
+# $NetBSD: mi,v 1.1571 2018/01/22 09:45:32 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2726,6 +2726,7 @@
 ./usr/share/man/cat8/mount.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/mount_9p.0			man-puffs-catman	.cat
 ./usr/share/man/cat8/mount_ados.0		man-adosfs-catman	.cat
+./usr/share/man/cat8/mount_autofs.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/mount_cd9660.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/mount_chfs.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/mount_efs.0		man-efs-catman		.cat
@@ -5655,6 +5656,7 @@
 ./usr/share/man/html8/mount.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/mount_9p.html		man-puffs-htmlman	html
 ./usr/share/man/html8/mount_ados.html		man-adosfs-htmlman	html
+./usr/share/man/html8/mount_autofs.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/mount_cd9660.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/mount_chfs.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/mount_efs.html		man-efs-htmlman		html
@@ -8764,6 +8766,7 @@
 ./usr/share/man/man8/mount.8			man-sysutil-man		.man
 ./usr/share/man/man8/mount_9p.8			man-puffs-man		.man
 ./usr/share/man/man8/mount_ados.8		man-adosfs-man		.man
+./usr/share/man/man8/mount_autofs.8		man-sysutil-man		.man
 ./usr/share/man/man8/mount_cd9660.8		man-sysutil-man		.man
 ./usr/share/man/man8/mount_chfs.8		man-sysutil-man		.man
 ./usr/share/man/man8/mount_efs.8		man-efs-man		.man
