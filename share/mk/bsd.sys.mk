@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.273 2018/01/22 17:33:01 christos Exp $
+#	$NetBSD: bsd.sys.mk,v 1.274 2018/01/22 17:34:01 christos Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -134,9 +134,9 @@ CFLAGS+=	${${_NOWERROR} == "no" :?-Werror:} ${CWARNFLAGS}
 LINTFLAGS+=	${DESTDIR:D-d ${DESTDIR}/usr/include}
 
 .if !defined(NOSSP) && (${USE_SSP:Uno} != "no") && (${BINDIR:Ux} != "/usr/mdec")
-.if !defined(KERNSRCDIR) && !defined(KERN) # not for kernels nor kern modules
+.   if !defined(KERNSRCDIR) && !defined(KERN) # not for kernels / kern modules
 CPPFLAGS+=	-D_FORTIFY_SOURCE=2
-.endif
+.   endif
 .   if !defined(COVERITY_TOP_CONFIG)
 COPTS+=	-fstack-protector -Wstack-protector 
 
@@ -146,7 +146,7 @@ COPTS+=	-fstack-protector -Wstack-protector
 # (the underlying issue for sh and vax may be different, needs more
 # investigation, symptoms are similar but for different sources)
 # also true for GCC 5.3
-.if "${ACTIVE_CC}" == "gcc" && \
+.	if "${ACTIVE_CC}" == "gcc" && \
      ( ${HAVE_GCC} == "48" || \
        ${HAVE_GCC} == "53" ) && \
      ( ${MACHINE_CPU} == "sh3" || \
@@ -154,11 +154,11 @@ COPTS+=	-fstack-protector -Wstack-protector
        ${MACHINE_CPU} == "m68k" || \
        ${MACHINE_CPU} == "or1k" )
 COPTS+=	-Wno-error=stack-protector 
-.endif
+.	endif
 
 COPTS+=	${${ACTIVE_CC} == "clang":? --param ssp-buffer-size=1 :}
 COPTS+=	${${ACTIVE_CC} == "gcc":? --param ssp-buffer-size=1 :}
-.    endif
+.   endif
 .endif
 
 .if ${MKSOFTFLOAT:Uno} != "no"
