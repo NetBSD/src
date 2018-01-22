@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.8 2016/11/13 12:58:40 maxv Exp $	*/
+/*	$NetBSD: x86_tlb.c,v 1.1 2018/01/22 19:37:45 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2008-2012 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.8 2016/11/13 12:58:40 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_tlb.c,v 1.1 2018/01/22 19:37:45 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
