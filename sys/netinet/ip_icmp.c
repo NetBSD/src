@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.163 2018/01/19 13:17:29 maxv Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.164 2018/01/22 06:56:25 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.163 2018/01/19 13:17:29 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.164 2018/01/22 06:56:25 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -344,6 +344,9 @@ icmp_error(struct mbuf *n, int type, int code, n_long dest, int destmtu)
 	if ((u_int)type > ICMP_MAXTYPE)
 		panic("icmp_error");
 	ICMP_STATINC(ICMP_STAT_OUTHIST + type);
+
+	if ((m->m_flags & M_EXT) == 0)
+		MH_ALIGN(m, m->m_len);
 
 	/*
 	 * Get pointers on the IP header and the ICMP header.
