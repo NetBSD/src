@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2018/01/09 03:31:15 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2018/01/22 01:34:42 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -24,5 +24,7 @@ CFLAGS+=	-I${NETBSDSRCDIR}/external/cddl/osnet/dist/uts/common/fs/zfs
 CFLAGS+=	-I${NETBSDSRCDIR}/external/cddl/osnet/dist/lib/libnvpair
 LDADD+=	-lnvpair -lzfs
 .endif
+
+CWARNFLAGS.clang+=	-Wno-unknown-pragmas
 
 .include <bsd.prog.mk>
