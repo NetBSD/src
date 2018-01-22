@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1026 2018/01/07 20:59:25 jmcneill Exp $
+#	$NetBSD: bsd.own.mk,v 1.1027 2018/01/22 17:33:01 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -116,7 +116,9 @@ HAVE_LIBGCC_EH?=	no
 HAVE_LIBGCC_EH?=	yes
 .endif
 
-.if ${MACHINE} == "alpha" || \
+# Coverity does not like SSP
+.if defined(COVERITY_TOP_CONFIG) || \
+    ${MACHINE} == "alpha" || \
     ${MACHINE} == "hppa" || \
     ${MACHINE} == "ia64" || \
     ${MACHINE_CPU} == "mips"
@@ -310,12 +312,17 @@ TOOL_CXX.pcc=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-p++
 #
 DESTDIR?=
 
+# Coverity does not like --sysroot
 .if !defined(HOSTPROG) && !defined(HOSTLIB)
 .  if ${DESTDIR} != ""
+.	if !defined(COVERITY_TOP_CONFIG)
 CPPFLAGS+=	--sysroot=${DESTDIR}
+.	endif
 LDFLAGS+=	--sysroot=${DESTDIR}
 .  else
+.	if !defined(COVERITY_TOP_CONFIG)
 CPPFLAGS+=	--sysroot=/
+.	endif
 LDFLAGS+=	--sysroot=/
 .  endif
 .endif
@@ -995,13 +1002,15 @@ MKCTF?=		yes
 #
 # PIE is enabled on many platforms by default.
 #
-.if ${MACHINE_ARCH} == "i386" || \
+# Coverity does not like PIE
+.if !defined(COVERITY_TOP_CONFIG) && \
+    (${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "x86_64" || \
     ${MACHINE_CPU} == "arm" || \
     ${MACHINE_CPU} == "m68k" || \
     ${MACHINE_CPU} == "mips" || \
     ${MACHINE_CPU} == "sh3" || \
-    ${MACHINE} == "sparc64"
+    ${MACHINE} == "sparc64")
 MKPIE?=		yes
 .else
 MKPIE?=		no
@@ -1070,6 +1079,12 @@ MKKMOD=		no
 
 # Rump doesn't work yet on ia64
 .if ${MACHINE} == "ia64"
+MKRUMP=		no
+.endif
+
+# RUMP uses -nostdinc which coverity does not like
+# It also does not use many new files, so disable it
+.if defined(COVERITY_TOP_CONFIG)
 MKRUMP=		no
 .endif
 
