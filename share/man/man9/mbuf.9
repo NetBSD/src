@@ -1,4 +1,4 @@
-.\"	$NetBSD: mbuf.9,v 1.54 2018/01/22 10:26:38 maxv Exp $
+.\"	$NetBSD: mbuf.9,v 1.55 2018/01/22 10:40:36 maxv Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -516,8 +516,7 @@ which is all but the first
 bytes.
 In case of failure, it returns
 .Dv NULL
-and attempts to
-restore the chain to its original state.
+and restores the chain to its original state.
 .It Fn m_adj "struct mbuf *mp" "int req_len"
 Shaves off
 .Fa req_len
