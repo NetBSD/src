@@ -1,4 +1,4 @@
-/*	$NetBSD: memswitch.c,v 1.12 2011/01/14 13:31:47 minoura Exp $	*/
+
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -58,9 +58,7 @@ int nflag = 0;
 u_int8_t *current_values = 0;
 u_int8_t *modified_values = 0;
 
-int main __P((int, char*[]));
-
-void
+static void
 usage(void)
 {
 	fprintf(stderr, "usage: %s -a\n", progname);
@@ -71,9 +69,7 @@ usage(void)
 }
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ch;
 	enum md {
@@ -155,8 +151,7 @@ main(argc, argv)
 }
 
 void
-show_single(name)
-	const char *name;
+show_single(const char *name)
 {
 	int i;
 	int n = 0;
@@ -198,8 +193,7 @@ show_all(void)
 }
 
 void
-modify_single(expr)
-	const char *expr;
+modify_single(const char *expr)
 {
 	int i, l, n;
 	char *class = NULL, *node = NULL;
@@ -257,8 +251,7 @@ modify_single(expr)
 }
 
 void
-help_single(name)
-	const char *name;
+help_single(const char *name)
 {
 	int i;
 	char fullname[50];
@@ -419,8 +412,7 @@ flush(void)
 }
 
 int
-save(name)
-	const char *name;
+save(const char *name)
 {
 #ifndef DEBUG
 	int fd;
@@ -448,8 +440,7 @@ save(name)
 }
 
 int
-restore(name)
-	const char *name;
+restore(const char *name)
 {
 #ifndef DEBUG
 	int sramfd, fd, i;

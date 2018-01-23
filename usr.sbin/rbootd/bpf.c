@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.20 2011/02/08 20:20:28 rmind Exp $	*/
+/*	$NetBSD: bpf.c,v 1.21 2018/01/23 21:06:25 sevan Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992 The University of Utah and the Center
@@ -47,7 +47,7 @@
 #if 0
 static char sccsid[] = "@(#)bpf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: bpf.c,v 1.20 2011/02/08 20:20:28 rmind Exp $");
+__RCSID("$NetBSD: bpf.c,v 1.21 2018/01/23 21:06:25 sevan Exp $");
 #endif
 #endif /* not lint */
 
@@ -215,8 +215,7 @@ BpfOpen()
 **		None.
 */
 char *
-BpfGetIntfName(errmsg)
-	char **errmsg;
+BpfGetIntfName(char **errmsg)
 {
 	struct ifaddrs *ifap, *ifa, *p;
 	int minunit, n;
@@ -281,9 +280,7 @@ BpfGetIntfName(errmsg)
 **		None.
 */
 int
-BpfRead(rconn, doread)
-	RMPCONN *rconn;
-	int doread;
+BpfRead(RMPCONN *rconn, int doread)
 {
 	int datlen, caplen, hdrlen;
 	static u_int8_t *bp = NULL, *ep = NULL;
@@ -348,8 +345,7 @@ BpfRead(rconn, doread)
 **		None.
 */
 int
-BpfWrite(rconn)
-	RMPCONN *rconn;
+BpfWrite(RMPCONN *rconn)
 {
 	if (write(BpfFd, (char *)&rconn->rmp, rconn->rmplen) < 0) {
 		syslog(LOG_ERR, "write: %s: %m", EnetStr(rconn));

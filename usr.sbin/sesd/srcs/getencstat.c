@@ -1,4 +1,4 @@
-/* $NetBSD: getencstat.c,v 1.3 2000/07/04 20:27:40 matt Exp $ */ 
+/* $NetBSD: getencstat.c,v 1.4 2018/01/23 21:06:26 sevan Exp $ */ 
 /* $FreeBSD: $ */
 /* $OpenBSD: $ */
 /*
@@ -42,14 +42,11 @@
 #include <fcntl.h>
 #include SESINC
 
-extern char *geteltnm __P((int));
-extern char *stat2ascii __P((int, u_char *));
-int main __P((int, char **));
+extern char *geteltnm(int);
+extern char *stat2ascii(int, u_char *);
 
 int
-main(a, v)
-	int a;
-	char **v;
+main(int a, char *v[])
 {
 	ses_object *objp;
 	ses_objstat ob;

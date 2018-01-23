@@ -1,4 +1,4 @@
-/* $NetBSD: kvm_mkdb.c,v 1.20 2008/07/21 13:36:58 lukem Exp $ */
+/* $NetBSD: kvm_mkdb.c,v 1.21 2018/01/23 21:06:25 sevan Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993
@@ -71,7 +71,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\
 #if 0
 static char sccsid[] = "from: @(#)kvm_mkdb.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: kvm_mkdb.c,v 1.20 2008/07/21 13:36:58 lukem Exp $");
+__RCSID("$NetBSD: kvm_mkdb.c,v 1.21 2018/01/23 21:06:25 sevan Exp $");
 #endif
 #endif /* not lint */
 
@@ -90,8 +90,7 @@ __RCSID("$NetBSD: kvm_mkdb.c,v 1.20 2008/07/21 13:36:58 lukem Exp $");
 
 #include "extern.h"
 
-	int	main __P((int, char **));
-static	void	usage __P((void));
+static	void	usage(void) __dead;
 
 HASHINFO openinfo = {
 	4096,		/* bsize */
@@ -107,9 +106,7 @@ static char *dbname = NULL;
 static char dbtemp[MAXPATHLEN];
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ch;
 	char *nlistpath;
@@ -181,8 +178,8 @@ main(argc, argv)
 	exit(0);
 }
 
-void
-usage()
+static void
+usage(void)
 {
 	(void)fprintf(stderr, "usage: kvm_mkdb [-o database] [file]\n");
 	exit(1);
