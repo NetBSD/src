@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_bufq.c,v 1.25 2016/11/18 02:37:33 pgoyette Exp $	*/
+/*	$NetBSD: subr_bufq.c,v 1.26 2018/01/23 22:08:55 pgoyette Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.70 2005/08/20 12:00:01 yamt Exp $	*/
 
 /*-
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_bufq.c,v 1.25 2016/11/18 02:37:33 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_bufq.c,v 1.26 2018/01/23 22:08:55 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,7 +178,7 @@ bufq_alloc(struct bufq_state **bufqp, const char *strategy, int flags)
 		if (strategy == BUFQ_STRAT_ANY || found_exact)
 			break;
 
-		/* Try to autoload device module */
+		/* Try to autoload the bufq strategy module */
 		strlcpy(module_name, "bufq_", sizeof(module_name));
 		strlcat(module_name, strategy, sizeof(module_name));
 		mutex_exit(&bufq_mutex);
