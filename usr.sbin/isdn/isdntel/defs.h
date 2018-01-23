@@ -27,7 +27,7 @@
  *	isdntel - isdn4bsd telephone answering support
  *      ==============================================
  *
- *	$Id: defs.h,v 1.4 2011/08/31 13:30:44 joerg Exp $ 
+ *	$NetBSD: defs.h,v 1.5 2018/01/23 22:12:52 sevan Exp $
  *
  * $FreeBSD$
  *
@@ -147,7 +147,6 @@ extern void init_screen ( void );
 extern void do_menu ( void );
 extern int fill_list( void );
 extern char *get_alias( char *number );
-extern int main ( int argc, char **argv );
 extern void do_quit ( int exitval ) __dead;
 extern void fatal ( const char *fmt, ... ) __dead __printflike(1, 2);
 extern void error ( const char *fmt, ... ) __printflike(1, 2);
