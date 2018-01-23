@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_input.c,v 1.52 2018/01/23 02:18:57 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec_input.c,v 1.53 2018/01/23 02:21:49 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec_input.c,v 1.2.4.2 2003/03/28 20:32:53 sam Exp $	*/
 /*	$OpenBSD: ipsec_input.c,v 1.63 2003/02/20 18:35:43 deraadt Exp $	*/
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.52 2018/01/23 02:18:57 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.53 2018/01/23 02:21:49 ozaki-r Exp $");
 
 /*
  * IPsec input processing.
@@ -133,8 +133,11 @@ ipsec4_fixup_checksum(struct mbuf *m)
 	int poff, off;
 	int plen;
 
-	if (m->m_len < sizeof(*ip))
+	if (m->m_len < sizeof(*ip)) {
 		m = m_pullup(m, sizeof(*ip));
+		if (m == NULL)
+			return NULL;
+	}
 	ip = mtod(m, struct ip *); 
 	poff = ip->ip_hl << 2;
 	plen = ntohs(ip->ip_len) - poff;
