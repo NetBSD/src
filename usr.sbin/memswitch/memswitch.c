@@ -1,4 +1,4 @@
-
+/*	$NetBSD: memswitch.c,v 1.14 2018/01/23 22:40:06 sevan Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
