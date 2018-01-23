@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.121 2018/01/16 16:24:23 kre Exp $	*/
+/*	$NetBSD: intr.c,v 1.122 2018/01/23 13:57:57 roy Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.121 2018/01/16 16:24:23 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.122 2018/01/23 13:57:57 roy Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -243,12 +243,11 @@ static const char *legacy_intr_string(int, char *, size_t, struct pic *);
 #if defined(XEN) /* XXX: nuke conditional after integration */
 static const char *xen_intr_string(int, char *, size_t, struct pic *);
 #endif /* XXX: XEN */
+#endif
 
+#if defined(INTRSTACKSIZE)
 static inline bool redzone_const_or_false(bool);
 static inline int redzone_const_or_zero(int);
-#else
-#define	redzone_const_or_false(x)	(/*CONSTCOND*/0)
-#define	redzone_const_or_zero(x)	(0)
 #endif
 
 static void intr_redistribute_xc_t(void *, void *);
@@ -1431,7 +1430,7 @@ struct intrhand fake_preempt_intrhand;
 static const char *x86_ipi_names[X86_NIPI] = X86_IPI_NAMES;
 #endif
 
-#if !defined(XEN)
+#if defined(INTRSTACKSIZE)
 static inline bool
 redzone_const_or_false(bool x)
 {
