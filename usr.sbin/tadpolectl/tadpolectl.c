@@ -1,4 +1,4 @@
-/* $NetBSD: tadpolectl.c,v 1.9 2015/10/02 20:42:15 joerg Exp $ */
+/* $NetBSD: tadpolectl.c,v 1.10 2018/01/23 19:01:33 sevan Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -46,11 +46,10 @@
 
 int aflag, nflag, wflag, dev;
 
-#define PROTO(x) int x __P((int, int, int));
-static void usage __P((void)) __dead;
-static void parse __P((char *));
-char *dashdot __P((const char *));
-int main __P((int, char *[]));
+#define PROTO(x) int x(int, int, int);
+static void usage(void) __dead;
+static void parse(char *);
+char *dashdot(const char *);
 PROTO(hw_version)
 PROTO(hw_microcontroller_version)
 PROTO(hw_poweroncycles)
@@ -714,8 +713,7 @@ parse(string)
 }
 
 char *
-dashdot(string)
-	const char *string;
+dashdot(const char *string)
 {
 	char *p;
 	char *save;
@@ -733,9 +731,7 @@ dashdot(string)
 }
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ch, j;
 
