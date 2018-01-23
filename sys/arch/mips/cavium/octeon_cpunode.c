@@ -29,7 +29,7 @@
 #define __INTR_PRIVATE
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: octeon_cpunode.c,v 1.11 2018/01/22 21:56:46 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_cpunode.c,v 1.12 2018/01/23 06:57:49 maya Exp $");
 
 #include "locators.h"
 #include "cpunode.h"
@@ -453,10 +453,12 @@ wdog_cpunode_attach(device_t parent, device_t self, void *aux)
 	 * We need one softint per cpu.  It's to tickle the softints on
 	 * other CPUs.
 	 */
+#if 0 /* XXX unused? */
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
 	for (CPU_INFO_FOREACH(cii, ci)) {
 	}
+#endif
 
         aprint_normal(": default period is %u second%s\n",
             sc->sc_wdog_period, sc->sc_wdog_period == 1 ? "" : "s");
