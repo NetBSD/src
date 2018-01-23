@@ -1,4 +1,4 @@
-/*	$NetBSD: mapper.c,v 1.25 2007/12/15 16:32:07 perry Exp $	*/
+/*	$NetBSD: mapper.c,v 1.26 2018/01/23 23:02:40 sevan Exp $	*/
 
 /* Mapper for connections between MRouteD multicast routers.
  * Written by Pavel Curtis <Pavel@PARC.Xerox.Com>
@@ -89,7 +89,6 @@ vifi_t  numvifs;		/* to keep loader happy */
 Node *			find_node(u_int32_t addr, Node **ptr);
 Interface *		find_interface(u_int32_t addr, Node *node);
 Neighbor *		find_neighbor(u_int32_t addr, Node *node);
-int			main(int argc, char *argv[]);
 void			ask(u_int32_t dst);
 void			ask2(u_int32_t dst);
 int			retry_requests(Node *node);
