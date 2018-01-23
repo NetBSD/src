@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3_DOM0,v 1.124 2017/12/10 17:19:48 bouyer Exp $
+#	$NetBSD: XEN3_DOM0,v 1.125 2018/01/23 15:08:12 sevan Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -61,6 +61,8 @@ options 	MODULAR		# new style module(7) framework
 options 	USERCONF	# userconf(4) support
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
+# Alternate buffer queue strategies for better responsiveness under high
+# disk I/O load.
 #options 	BUFQ_READPRIO
 options 	BUFQ_PRIOCSCAN
 
