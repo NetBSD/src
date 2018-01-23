@@ -1,4 +1,4 @@
-# $NetBSD: MMNET_GENERIC,v 1.33 2017/09/14 07:58:40 mrg Exp $
+# $NetBSD: MMNET_GENERIC,v 1.34 2018/01/23 15:08:11 sevan Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/evbarm/conf/std.mmnet"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.33 $"
+#ident 		"GENERIC-$Revision: 1.34 $"
 
 maxusers	32		# estimated number of users
 
@@ -72,8 +72,8 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 #options 	BEEP_ONHALT_PITCH=1500	# Default frequency (in Hz)
 #options 	BEEP_ONHALT_PERIOD=250	# Default duration (in msecs)
 
-# Enable experimental buffer queue strategy for better responsiveness under
-# high disk I/O load. Likely stable but not yet the default.
+# Alternate buffer queue strategies for better responsiveness under high
+# disk I/O load.
 #options 	BUFQ_READPRIO
 #options 	BUFQ_PRIOCSCAN
 
