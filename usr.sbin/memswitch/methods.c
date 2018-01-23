@@ -1,4 +1,4 @@
-/*	$NetBSD: methods.c,v 1.7 2011/01/14 13:31:47 minoura Exp $	*/
+/*	$NetBSD: methods.c,v 1.8 2018/01/23 21:06:25 sevan Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,8 +38,7 @@
 #include "methods.h"
 
 int
-atoi_(p)
-	 const char **p;
+atoi_(const char **p)
 {
 	const char *p1 = *p;
 	int v = 0;
@@ -96,8 +95,7 @@ atoi_(p)
 }
 
 int
-fill_uchar(prop)
-	struct property *prop;
+fill_uchar(struct property *prop)
 {
 	if (current_values == 0)
 		alloc_current_values();
@@ -112,8 +110,7 @@ fill_uchar(prop)
 }
 
 int
-fill_ushort(prop)
-	struct property *prop;
+fill_ushort(struct property *prop)
 {
 	if (current_values == 0)
 		alloc_current_values();
@@ -128,8 +125,7 @@ fill_ushort(prop)
 }
 
 int
-fill_ulong(prop)
-	struct property *prop;
+fill_ulong(struct property *prop)
 {
 	if (current_values == 0)
 		alloc_current_values();
@@ -144,8 +140,7 @@ fill_ulong(prop)
 }
 
 int
-flush_uchar(prop)
-	struct property *prop;
+flush_uchar(struct property *prop)
 {
 	if (!prop->modified)
 		return 0;
@@ -159,8 +154,7 @@ flush_uchar(prop)
 }
 
 int
-flush_ushort(prop)
-	struct property *prop;
+flush_ushort(struct property *prop)
 {
 	if (!prop->modified)
 		return 0;
@@ -175,8 +169,7 @@ flush_ushort(prop)
 }
 
 int
-flush_ulong(prop)
-	struct property *prop;
+flush_ulong(struct property *prop)
 {
 	if (!prop->modified)
 		return 0;
@@ -193,16 +186,13 @@ flush_ulong(prop)
 }
 
 int
-flush_dummy(prop)
-	struct property *prop;
+flush_dummy(struct property *prop)
 {
 	return 0;
 }
 
 int
-parse_dummy(prop, value)
-	struct property *prop;
-	const char *value;
+parse_dummy(struct property *prop, const char *value)
 {
 	warnx("Cannot modify %s.%s", prop->class, prop->node);
 
@@ -210,9 +200,7 @@ parse_dummy(prop, value)
 }
 
 int
-parse_byte(prop, value)
-	struct property *prop;
-	const char *value;
+parse_byte(struct property *prop, const char *value)
 {
 	const char *p = value;
 	int v;
@@ -248,9 +236,7 @@ parse_byte(prop, value)
 }
 
 int
-parse_uchar(prop, value)
-	struct property *prop;
-	const char *value;
+parse_uchar(struct property *prop, const char *value)
 {
 	const char *p = value;
 	int v;
@@ -276,9 +262,7 @@ parse_uchar(prop, value)
 }
 
 int
-parse_ulong(prop, value)
-	struct property *prop;
-	const char *value;
+parse_ulong(struct property *prop, const char *value)
 {
 	const char *p = value;
 	int v;
@@ -304,9 +288,7 @@ parse_ulong(prop, value)
 }
 
 int
-parse_ushort(prop, value)
-	struct property *prop;
-	const char *value;
+parse_ushort(struct property *prop, const char *value)
 {
 	const char *p = value;
 	int v;
@@ -332,9 +314,7 @@ parse_ushort(prop, value)
 }
 
 int
-parse_time(prop, value)
-	struct property *prop;
-	const char *value;
+parse_time(struct property *prop, const char *value)
 {
 	const char *p = value;
 	int v;
@@ -377,9 +357,7 @@ parse_time(prop, value)
 }
 
 int
-parse_bootdev(prop, value)
-	struct property *prop;
-	const char *value;
+parse_bootdev(struct property *prop, const char *value)
 {
 	const char *p = value;
 	int v;
@@ -441,9 +419,7 @@ parse_bootdev(prop, value)
 }
 
 int
-parse_serial(prop, value)
-	struct property *prop;
-	const char *value;
+parse_serial(struct property *prop, const char *value)
 #define NEXTSPEC	while (*p == ' ' || *p == '\t') p++;		\
 			if (*p++ != ',') {				\
 				warnx("%s: Invalid value", value);	\
@@ -543,9 +519,7 @@ parse_serial(prop, value)
 #undef NEXTSPEC
 
 int
-parse_srammode(prop, value)
-	struct property *prop;
-	const char *value;
+parse_srammode(struct property *prop, const char *value)
 {
 	static const char *const sramstrs[] = {"unused", "SRAMDISK", "program"};
 	int i;
@@ -566,9 +540,7 @@ parse_srammode(prop, value)
 }
 
 int
-print_uchar(prop, str)
-	struct property *prop;
-	char *str;
+print_uchar(struct property *prop, char *str)
 {
 	if (prop->modified)
 		snprintf(str, MAXVALUELEN,
@@ -584,9 +556,7 @@ print_uchar(prop, str)
 }
 
 int
-print_ucharh(prop, str)
-	struct property *prop;
-	char *str;
+print_ucharh(struct property *prop, char *str)
 {
 	if (prop->modified)
 		snprintf(str, MAXVALUELEN,
@@ -602,9 +572,7 @@ print_ucharh(prop, str)
 }
 
 int
-print_ushorth(prop, str)
-	struct property *prop;
-	char *str;
+print_ushorth(struct property *prop, char *str)
 {
 	if (prop->modified)
 		snprintf(str, MAXVALUELEN,
@@ -620,9 +588,7 @@ print_ushorth(prop, str)
 }
 
 int
-print_ulong(prop, str)
-	struct property *prop;
-	char *str;
+print_ulong(struct property *prop, char *str)
 {
 	if (prop->modified)
 		snprintf(str, MAXVALUELEN,
@@ -638,9 +604,7 @@ print_ulong(prop, str)
 }
 
 int
-print_ulongh(prop, str)
-	struct property *prop;
-	char *str;
+print_ulongh(struct property *prop, char *str)
 {
 	if (prop->modified)
 		snprintf(str, MAXVALUELEN,
@@ -656,9 +620,7 @@ print_ulongh(prop, str)
 }
 
 int
-print_magic(prop, str)
-	struct property *prop;
-	char *str;
+print_magic(struct property *prop, char *str)
 {
 	if (!prop->value_valid)
 		prop->fill(prop);
@@ -672,9 +634,7 @@ print_magic(prop, str)
 }
 
 int
-print_timesec(prop, str)
-	struct property *prop;
-	char *str;
+print_timesec(struct property *prop, char *str)
 {
 	if (prop->modified)
 		snprintf(str, MAXVALUELEN,
@@ -690,9 +650,7 @@ print_timesec(prop, str)
 }
 
 int
-print_bootdev(prop, str)
-	struct property *prop;
-	char *str;
+print_bootdev(struct property *prop, char *str)
 {
 	unsigned int v;
 
@@ -721,9 +679,7 @@ print_bootdev(prop, str)
 }
 
 int
-print_serial(prop, str)
-	struct property *prop;
-	char *str;
+print_serial(struct property *prop, char *str)
 {
 	unsigned int v;
 	const char *baud, *stop;
@@ -754,9 +710,7 @@ print_serial(prop, str)
 }
 
 int
-print_srammode(prop, str)
-	struct property *prop;
-	char *str;
+print_srammode(struct property *prop, char *str)
 {
 	int v;
 	static const char *const sramstrs[] = {"unused", "SRAMDISK", "program"};

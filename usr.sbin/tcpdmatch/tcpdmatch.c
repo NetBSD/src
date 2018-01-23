@@ -1,4 +1,4 @@
-/*	$NetBSD: tcpdmatch.c,v 1.8 2002/06/07 00:00:19 itojun Exp $	*/
+/*	$NetBSD: tcpdmatch.c,v 1.9 2018/01/23 21:06:26 sevan Exp $	*/
 
  /*
   * tcpdmatch - explain what tcpd would do in a specific case
@@ -20,7 +20,7 @@
 #if 0
 static char sccsid[] = "@(#) tcpdmatch.c 1.5 96/02/11 17:01:36";
 #else
-__RCSID("$NetBSD: tcpdmatch.c,v 1.8 2002/06/07 00:00:19 itojun Exp $");
+__RCSID("$NetBSD: tcpdmatch.c,v 1.9 2018/01/23 21:06:26 sevan Exp $");
 #endif
 #endif
 
@@ -53,16 +53,13 @@ __RCSID("$NetBSD: tcpdmatch.c,v 1.8 2002/06/07 00:00:19 itojun Exp $");
 #include "inetcf.h"
 #include "scaffold.h"
 
-static void usage __P((char *));
-static void expand __P((char *, char *, struct request_info *));
-static void tcpdmatch __P((struct request_info *));
-int main __P((int, char **));
+static void usage(char *);
+static void expand(char *, char *, struct request_info *);
+static void tcpdmatch(struct request_info *);
 
 /* The main program */
 
-int     main(argc, argv)
-int     argc;
-char  **argv;
+int main(int argc, char *argv[])
 {
     struct addrinfo *res, *res0;
     char   *myname = argv[0];
@@ -269,8 +266,7 @@ char  **argv;
 
 /* Explain how to use this program */
 
-static void usage(myname)
-char   *myname;
+static void usage(char *myname)
 {
     fprintf(stderr, "usage: %s [-d] [-i inet_conf] daemon[@host] [user@]host\n",
 	    myname);
@@ -281,10 +277,7 @@ char   *myname;
 
 /* Print interesting expansions */
 
-static void expand(text, pattern, request)
-char   *text;
-char   *pattern;
-struct request_info *request;
+static void expand(char *text, char *pattern, struct request_info *request)
 {
     char    buf[BUFSIZ];
 
@@ -294,8 +287,7 @@ struct request_info *request;
 
 /* Try out a (server,client) pair */
 
-static void tcpdmatch(request)
-struct request_info *request;
+static void tcpdmatch(struct request_info *request)
 {
     int     verdict;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: setobjstat.c,v 1.2 2000/02/22 06:06:10 mjacob Exp $ */ 
+/* $NetBSD: setobjstat.c,v 1.3 2018/01/23 21:06:26 sevan Exp $ */ 
 /* $FreeBSD: $ */
 /* $OpenBSD: $ */
 /*
@@ -41,12 +41,8 @@
 #include <sys/ioctl.h>
 #include SESINC
 
-int main __P((int, char **));
-
 int
-main(a, v)
-	int a;
-	char **v;
+main(int a, char *v[])
 {
 	int fd;
 	int i;
