@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_nvme.c,v 1.17 2017/08/09 16:44:40 mlelstv Exp $	*/
+/*	$NetBSD: ld_nvme.c,v 1.18 2018/01/23 22:42:29 pgoyette Exp $	*/
 
 /*-
  * Copyright (C) 2016 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_nvme.c,v 1.17 2017/08/09 16:44:40 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_nvme.c,v 1.18 2018/01/23 22:42:29 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -337,7 +337,7 @@ ld_nvme_ioctl(struct ld_softc *ld, u_long cmd, void *addr, int32_t flag, bool po
 	return error;
 }
 
-MODULE(MODULE_CLASS_DRIVER, ld_nvme, "ld,nvme");
+MODULE(MODULE_CLASS_DRIVER, ld_nvme, "ld,nvme,bufq_fcfs");
 
 #ifdef _MODULE
 /*
