@@ -1,4 +1,4 @@
-# $NetBSD: NULL,v 1.52 2017/09/14 07:58:39 mrg Exp $
+# $NetBSD: NULL,v 1.53 2018/01/23 14:47:53 sevan Exp $
 #
 # NULL machine description file
 # 
@@ -7,7 +7,7 @@ include "arch/amigappc/conf/std.amigappc"
 
 #options 	INCLUDE_CONFIG_FILE     # embed config file in kernel binary
 
-#ident          "GENERIC-$Revision: 1.52 $"
+#ident          "GENERIC-$Revision: 1.53 $"
 
 maxusers	8
 
@@ -40,8 +40,8 @@ options 	SCSIVERBOSE	# human readable SCSI error messages
 #options 	SYSVMSG		# System V-like messages
 #options 	SYSVSEM		# System V-like semaphores
 
-# Enable experimental buffer queue strategy for better responsiveness under 
-# high disk I/O load. Use it with caution - it's not proven to be stable yet.
+# Alternate buffer queue strategies for better responsiveness under high
+# disk I/O load.
 #options 	BUFQ_READPRIO
 #options 	BUFQ_PRIOCSCAN
 
