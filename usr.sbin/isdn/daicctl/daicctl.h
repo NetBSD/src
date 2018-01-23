@@ -1,4 +1,4 @@
-/* $NetBSD: daicctl.h,v 1.7 2008/04/28 20:24:16 martin Exp $ */
+/* $NetBSD: daicctl.h,v 1.8 2018/01/23 21:06:24 sevan Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,10 +31,10 @@
 
 #define PATH_ISDN_DEV	"/dev/isdn"
 
-extern void download __P((int fd, int controller, char *filename));
-extern void simpccard __P((char *controller, int insert));
-extern void xlog __P((int fd, int controller));
-extern void xversion __P((int fd, int controller));
-extern void istat __P((int fd, int controller));
-extern void passthrough __P((int fd, int controller));
+extern void download(int fd, int controller, char *filename);
+extern void simpccard(char *controller, int insert);
+extern void xlog(int fd, int controller);
+extern void xversion(int fd, int controller);
+extern void istat(int fd, int controller);
+extern void passthrough(int fd, int controller);
 

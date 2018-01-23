@@ -1,4 +1,4 @@
-/* $NetBSD: setencstat.c,v 1.3 2009/04/18 13:57:44 lukem Exp $ */ 
+/* $NetBSD: setencstat.c,v 1.4 2018/01/23 21:06:26 sevan Exp $ */ 
 /* $FreeBSD: $ */
 /* $OpenBSD: $ */
 /*
@@ -41,12 +41,8 @@
 #include <sys/ioctl.h>
 #include SESINC
 
-int main __P((int, char **));
-
 int
-main(a, v)
-	int a;
-	char **v;
+main(int a, char *v[])
 {
 	int fd;
 	long val;

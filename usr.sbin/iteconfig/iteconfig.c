@@ -1,4 +1,4 @@
-/*	$NetBSD: iteconfig.c,v 1.9 2009/04/26 19:56:20 mlelstv Exp $	*/
+/*	$NetBSD: iteconfig.c,v 1.10 2018/01/23 21:06:25 sevan Exp $	*/
 /*
  * Copyright (c) 1994 Christian E. Hopps
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: iteconfig.c,v 1.9 2009/04/26 19:56:20 mlelstv Exp $");
+__RCSID("$NetBSD: iteconfig.c,v 1.10 2018/01/23 21:06:25 sevan Exp $");
 #endif
 
 #include <sys/types.h>
@@ -67,19 +67,16 @@ __RCSID("$NetBSD: iteconfig.c,v 1.9 2009/04/26 19:56:20 mlelstv Exp $");
 
 #include "pathnames.h"
 
-int	initialize __P((const char *, struct itewinsize *, struct itebell *,
-			struct itewinsize *, struct itebell *));
-int	main __P((int, char **));
-void	printcmap __P((colormap_t *, int));
-void	xioctl __P((int, int, void *));
-colormap_t *xgetcmap __P((int, int));
-long	xstrtol __P((char *));
-void	usage __P((void));
+int	initialize(const char *, struct itewinsize *, struct itebell *,
+			struct itewinsize *, struct itebell *);
+void	printcmap(colormap_t *, int);
+void	xioctl(int, int, void *);
+colormap_t *xgetcmap(int, int);
+long	xstrtol(char *);
+static void	usage(void) __dead;
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	struct itewinsize is, newis;
 	struct itebell ib, newib;
@@ -194,17 +191,14 @@ main(argc, argv)
 }
 
 void
-xioctl(fd, cmd, addr)
-	int fd, cmd;
-	void *addr;
+xioctl(int fd, int cmd, void *addr)
 {
 	if (ioctl(fd, cmd, addr) == -1) 
 		err(1, "ioctl");
 }
 
 long
-xstrtol(s)
-	char *s;
+xstrtol(char *s)
 {
 	long rv;
 
@@ -216,9 +210,7 @@ xstrtol(s)
 }
 
 colormap_t *
-xgetcmap(fd, ncolors)
-	int fd;
-	int ncolors;
+xgetcmap(int fd, int ncolors)
 {
 	colormap_t *cm;
 
@@ -233,9 +225,7 @@ xgetcmap(fd, ncolors)
 }
 
 void
-printcmap(cm, ncols)
-	colormap_t *cm;
-	int ncols;
+printcmap(colormap_t *cm, int ncols)
 {
 	int i, nel;
 
@@ -283,8 +273,8 @@ initialize(file, is, ib, newis, newib)
 	return(fd);
 }
 
-void
-usage()
+static void
+usage(void)
 {
 	fprintf(stderr, "%s\n\t\t%s\n\t\t%s\n",
 	    "usage: iteconfig [-i] [-f file] [-v volume] [-p pitch] [-t msec]",

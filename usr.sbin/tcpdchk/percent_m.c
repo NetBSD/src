@@ -1,4 +1,4 @@
-/*	$NetBSD: percent_m.c,v 1.4 2000/01/21 17:08:39 mycroft Exp $	*/
+/*	$NetBSD: percent_m.c,v 1.5 2018/01/23 21:06:26 sevan Exp $	*/
 
  /*
   * Replace %m by system error message.
@@ -11,7 +11,7 @@
 #if 0
 static char sccsid[] = "@(#) percent_m.c 1.1 94/12/28 17:42:37";
 #else
-__RCSID("$NetBSD: percent_m.c,v 1.4 2000/01/21 17:08:39 mycroft Exp $");
+__RCSID("$NetBSD: percent_m.c,v 1.5 2018/01/23 21:06:26 sevan Exp $");
 #endif
 #endif
 
@@ -27,9 +27,7 @@ extern int sys_nerr;
 #include "mystdarg.h"
 #include "percent_m.h"
 
-char   *percent_m(obuf, ibuf)
-char   *obuf;
-const char   *ibuf;
+char *percent_m(char *obuf, const char *ibuf)
 {
     char   *bp = obuf;
     const char   *cp = ibuf;

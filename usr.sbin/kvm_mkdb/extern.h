@@ -1,4 +1,4 @@
-/* $NetBSD: extern.h,v 1.19 2003/08/07 11:25:23 agc Exp $ */
+/* $NetBSD: extern.h,v 1.20 2018/01/23 21:06:25 sevan Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993
@@ -97,22 +97,22 @@
 /* #define	NLIST_ELF64 */
 #endif
 
-void	create_knlist __P((const char *, DB *));
-void	punt __P((void));
-int	testdb __P((void));
+void	create_knlist(const char *, DB *);
+void	punt(void);
+int	testdb(void);
 
 #ifdef NLIST_AOUT
-int	create_knlist_aout __P((const char *, DB *));
+int	create_knlist_aout(const char *, DB *);
 #endif
 #ifdef NLIST_COFF
-int	create_knlist_coff __P((const char *, DB *));
+int	create_knlist_coff(const char *, DB *);
 #endif
 #ifdef NLIST_ECOFF
-int	create_knlist_ecoff __P((const char *, DB *));
+int	create_knlist_ecoff(const char *, DB *);
 #endif
 #ifdef NLIST_ELF32
-int	create_knlist_elf32 __P((const char *, DB *));
+int	create_knlist_elf32(const char *, DB *);
 #endif
 #ifdef NLIST_ELF64
-int	create_knlist_elf64 __P((const char *, DB *));
+int	create_knlist_elf64(const char *, DB *);
 #endif

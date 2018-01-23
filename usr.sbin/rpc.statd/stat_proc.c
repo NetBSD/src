@@ -1,4 +1,4 @@
-/*	$NetBSD: stat_proc.c,v 1.8 2009/04/18 13:04:50 lukem Exp $	*/
+/*	$NetBSD: stat_proc.c,v 1.9 2018/01/23 21:06:26 sevan Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: stat_proc.c,v 1.8 2009/04/18 13:04:50 lukem Exp $");
+__RCSID("$NetBSD: stat_proc.c,v 1.9 2018/01/23 21:06:26 sevan Exp $");
 #endif
 
 #include <errno.h>
@@ -58,9 +58,7 @@ __RCSID("$NetBSD: stat_proc.c,v 1.8 2009/04/18 13:04:50 lukem Exp $");
  *		an address.
  */
 struct sm_stat_res *
-sm_stat_1_svc(arg, req)
-	sm_name *arg;
-	struct svc_req *req;
+sm_stat_1_svc(sm_name *arg, struct svc_req *req)
 {
 	static sm_stat_res smres;
 	struct addrinfo *ai;
@@ -92,9 +90,7 @@ sm_stat_1_svc(arg, req)
  *		valid (as judged by gethostbyname())
  */
 struct sm_stat_res *
-sm_mon_1_svc(arg, req)
-	mon *arg;
-	struct svc_req *req;
+sm_mon_1_svc(mon *arg, struct svc_req *req)
 {
 	static sm_stat_res smres;
 	struct addrinfo *ai;
@@ -158,10 +154,7 @@ sm_mon_1_svc(arg, req)
  *		request, all are removed.
  */
 int 
-do_unmon(name, hp, ptr)
-	char *name;
-	HostInfo *hp;
-	void *ptr;
+do_unmon(char *name, HostInfo *hp, void *ptr)
 {
 	my_id *idp = ptr;
 	MonList *lp, *next;
@@ -199,9 +192,7 @@ do_unmon(name, hp, ptr)
  *		earlier call to sm_mon_1
  */
 struct sm_stat *
-sm_unmon_1_svc(arg, req)
-	mon_id *arg;
-	struct svc_req *req;
+sm_unmon_1_svc(mon_id *arg, struct svc_req *req)
 {
 	static sm_stat smres;
 	HostInfo *hp, h;
@@ -241,9 +232,7 @@ sm_unmon_1_svc(arg, req)
  *		host and program number.
  */
 struct sm_stat *
-sm_unmon_all_1_svc(arg, req)
-	my_id *arg;
-	struct svc_req *req;
+sm_unmon_all_1_svc(my_id *arg, struct svc_req *req)
 {
 	static sm_stat smres;
 
@@ -277,9 +266,7 @@ sm_unmon_all_1_svc(arg, req)
  *		and inform all hosts on the monitor list.
  */
 void *
-sm_simu_crash_1_svc(v, req)
-	void *v;
-	struct svc_req *req;
+sm_simu_crash_1_svc(void *v, struct svc_req *req)
 {
 	static char dummy;
 
@@ -310,9 +297,7 @@ sm_simu_crash_1_svc(v, req)
  *		that modify the list.
  */
 void   *
-sm_notify_1_svc(arg, req)
-	stat_chge *arg;
-	struct svc_req *req;
+sm_notify_1_svc(stat_chge *arg, struct svc_req *req)
 {
 	struct timeval timeout = {20, 0};	/* 20 secs timeout */
 	CLIENT *cli;
