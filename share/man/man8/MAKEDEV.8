@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.46 2017/07/10 08:41:35 sevan Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.47 2018/01/23 19:14:09 sevan Exp $
 .\"
 .\" Copyright (c) 2001, 2003, 2007, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -35,7 +35,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July  9, 2017
+.Dd January 23, 2018
 .Dt MAKEDEV 8
 .Os
 .Sh NAME
@@ -429,8 +429,7 @@ SA1110 serial port (hpcarm)
 . It Ar ttyTX?
 TX39 internal serial ports (hpcmips)
 . It Ar ttyB?
-DEC 3000 ZS8530 (``scc'') serial ports (alpha), see
-.Xr \&scc 4
+DEC 3000 ZS8530 (``scc'') serial ports (alpha)
 . It Ar ttyA#
 Mfc serial ports (amiga)
 . It Ar ttyB#
@@ -463,8 +462,7 @@ Onboard serial ports (mvme68k) On the mvme147 these are: ttyZ1, ttyZ2 and ttyZ3.
 . It Ar dc#
 PMAX 4 channel serial interface (kbd, mouse, modem, printer)
 . It Ar scc#
-82530 serial interface (pmax), see
-.Xr \&scc 4
+82530 serial interface (pmax)
 . It Ar ttyZ#
 Zilog 8530 (``zstty'') serial ports, see
 .Xr \&zstty 4
@@ -526,8 +524,7 @@ UNIBUS DZ11 and DZ32, see
 .Xr \&emips/dz 4 ,
 .Xr \&vax/dz 4
 . It Ar scc#
-82530 serial interface, see
-.Xr \&scc 4
+82530 serial interface
 . El
 .It Call units :
 . Bl -tag -width 0123456789 -compact
