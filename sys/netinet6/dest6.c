@@ -1,4 +1,4 @@
-/*	$NetBSD: dest6.c,v 1.20 2017/01/11 13:08:29 ozaki-r Exp $	*/
+/*	$NetBSD: dest6.c,v 1.21 2018/01/23 15:13:56 maxv Exp $	*/
 /*	$KAME: dest6.c,v 1.25 2001/02/22 01:39:16 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dest6.c,v 1.20 2017/01/11 13:08:29 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dest6.c,v 1.21 2018/01/23 15:13:56 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,7 +56,7 @@ int
 dest6_input(struct mbuf **mp, int *offp, int proto)
 {
 	struct mbuf *m = *mp;
-	int off = *offp, dstoptlen, optlen;
+	int off = *offp, erroff, dstoptlen, optlen;
 	struct ip6_dest *dstopts;
 	u_int8_t *opt;
 
@@ -89,8 +89,8 @@ dest6_input(struct mbuf **mp, int *offp, int proto)
 			optlen = *(opt + 1) + 2;
 			break;
 		default:		/* unknown option */
-			optlen = ip6_unknown_opt(opt, m,
-			    opt - mtod(m, u_int8_t *));
+			erroff = *offp + (opt - (u_int8_t *)dstopts);
+			optlen = ip6_unknown_opt(opt, m, erroff);
 			if (optlen == -1)
 				return (IPPROTO_DONE);
 			optlen += 2;
@@ -99,9 +99,9 @@ dest6_input(struct mbuf **mp, int *offp, int proto)
 	}
 
 	*offp = off;
-	return (dstopts->ip6d_nxt);
+	return dstopts->ip6d_nxt;
 
-  bad:
+bad:
 	m_freem(m);
-	return (IPPROTO_DONE);
+	return IPPROTO_DONE;
 }
