@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.98 2017/09/14 07:58:43 mrg Exp $
+# $NetBSD: GENERIC,v 1.99 2018/01/23 14:47:56 sevan Exp $
 #
 # GENERIC machine description file
 # 
@@ -25,7 +25,7 @@ include 	"arch/sun2/conf/std.sun2"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.98 $"
+#ident 		"GENERIC-$Revision: 1.99 $"
 
 makeoptions	COPTS="-Os"	# optimize for size
 
@@ -45,8 +45,8 @@ options 	SYSVSHM		# System V shared memory
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-# Enable experimental buffer queue strategy for better responsiveness under 
-# high disk I/O load. Use it with caution - it's not proven to be stable yet.
+# Alternate buffer queue strategies for better responsiveness under high
+# disk I/O load.
 #options 	BUFQ_READPRIO
 #options 	BUFQ_PRIOCSCAN
 
