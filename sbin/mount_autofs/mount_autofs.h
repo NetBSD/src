@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_autofs.h,v 1.1 2018/01/14 22:44:04 christos Exp $	*/
+/*	$NetBSD: mount_autofs.h,v 1.2 2018/01/23 15:02:03 wiz Exp $	*/
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #ifndef _SBIN_MOUNT_AUTOFS_MOUNT_AUTOFS_H_
 #define _SBIN_MOUNT_AUTOFS_MOUNT_AUTOFS_H_
 
-int	mount_kernfs(int, char **);
+int	mount_autofs(int, char **);
 void	mount_autofs_parseargs(int, char **, void *, int *, char *, char *);
 
 #endif /* _SBIN_MOUNT_AUTOFS_MOUNT_AUTOFS_H_ */
