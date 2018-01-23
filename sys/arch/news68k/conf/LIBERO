@@ -1,4 +1,4 @@
-# 	$NetBSD: LIBERO,v 1.65 2017/09/14 07:58:42 mrg Exp $
+# 	$NetBSD: LIBERO,v 1.66 2018/01/23 14:47:55 sevan Exp $
 
 #	NEWS1750 config file;
 #
@@ -24,8 +24,8 @@ options 	SYSVSHM			# System V shared memory
 #options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-# Enable experimental buffer queue strategy for better responsiveness under 
-# high disk I/O load. Use it with caution - it's not proven to be stable yet.
+# Alternate buffer queue strategies for better responsiveness under high
+# disk I/O load.
 #options 	BUFQ_READPRIO
 #options 	BUFQ_PRIOCSCAN
 
