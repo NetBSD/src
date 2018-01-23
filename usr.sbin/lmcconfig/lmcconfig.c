@@ -1,5 +1,5 @@
 /*-
- * $NetBSD: lmcconfig.c,v 1.11 2009/04/16 06:07:53 lukem Exp $
+ * $NetBSD: lmcconfig.c,v 1.12 2018/01/23 22:12:52 sevan Exp $
  *
  * First author: Michael Graff.
  * Copyright (c) 1997-2000 Lan Media Corp.
@@ -163,7 +163,6 @@ u_int32_t crc32(u_int8_t *, int);
 u_int8_t  crc8(u_int16_t *, int);
 
 void main_cmd(int, char **);
-/* int main(int, char **); */
 
 /* program global variables */
 

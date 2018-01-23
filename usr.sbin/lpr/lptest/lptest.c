@@ -1,4 +1,4 @@
-/*	$NetBSD: lptest.c,v 1.10 2008/07/21 13:36:58 lukem Exp $	*/
+/*	$NetBSD: lptest.c,v 1.11 2018/01/23 22:12:53 sevan Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,14 +37,12 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)lptest.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lptest.c,v 1.10 2008/07/21 13:36:58 lukem Exp $");
+__RCSID("$NetBSD: lptest.c,v 1.11 2018/01/23 22:12:53 sevan Exp $");
 #endif
 #endif /* not lint */
 
 #include <stdlib.h>
 #include <stdio.h>
-
-int main(int, char *[]);
 
 /*
  * lptest -- line printer test program (and other devices).

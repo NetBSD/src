@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.72 2017/07/05 20:00:27 kre Exp $	*/
+/*	$NetBSD: main.c,v 1.73 2018/01/23 22:12:52 sevan Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.7 (Berkeley) 7/19/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.72 2017/07/05 20:00:27 kre Exp $");
+__RCSID("$NetBSD: main.c,v 1.73 2018/01/23 22:12:52 sevan Exp $");
 #endif
 #endif /* not lint */
 
@@ -90,7 +90,6 @@ extern int etext();
 #endif
 
 STATIC void read_profile(const char *);
-int main(int, char **);
 
 /*
  * Main routine.  We initialize things, parse the arguments, execute
