@@ -1,4 +1,4 @@
-.\" $NetBSD: mount_autofs.8,v 1.4 2018/01/22 10:41:18 wiz Exp $
+.\" $NetBSD: mount_autofs.8,v 1.5 2018/01/23 14:58:46 wiz Exp $
 .\"
 .\" Copyright (c) 2018 The DragonFly Project
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd January 22, 2018
+.Dd January 23, 2018
 .Dt MOUNT_AUTOFS 8
 .Os
 .Sh NAME
@@ -41,6 +41,13 @@
 .Sh DESCRIPTION
 The
 .Nm
+command should not usually be called by admins.
+Use
+.Xr automount 8
+instead.
+.Pp
+The
+.Nm
 command attaches the automounter filesystem on the
 .Ar autofs
 device on to the file system tree at point
@@ -52,23 +59,37 @@ and
 are converted to absolute paths before use.
 .Pp
 This command is normally executed by
-.Xr mount 8
-at boot time.
+.Xr automount 8 .
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl f
-Set the automount
+Set the
 .Ar from
-parameter.
+location for
+.Xr autofs 5 .
+This argument is usually read from
+.Pa /etc/auto_master
+by
+.Xr automount 8 .
 .It Fl o
 Set the mount options.
 See the
 .Xr mount 8
 man page for possible options and their meanings.
 .It Fl O
-Set the automounter options.
+Set the
+.Xr autofs 5
+options.
+See the
+.Op Fl options
+in
+.Sx AUTO_MASTER SYNTAX
+of
+.Xr auto_master 5 .
 .It Fl p
-Set the automounter prefix.
+Set the
+.Xr autofs 5
+prefix, below which the file system(s) will be mounted.
 .El
 .Sh SEE ALSO
 .Xr autofs 5 ,
