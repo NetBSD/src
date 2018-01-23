@@ -1,4 +1,4 @@
-/* $NetBSD: nlist_aout.c,v 1.9 2011/01/04 09:36:13 wiz Exp $ */
+/* $NetBSD: nlist_aout.c,v 1.10 2018/01/23 21:06:25 sevan Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993
@@ -66,7 +66,7 @@
 #if 0
 static char sccsid[] = "from: @(#)nlist.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: nlist_aout.c,v 1.9 2011/01/04 09:36:13 wiz Exp $");
+__RCSID("$NetBSD: nlist_aout.c,v 1.10 2018/01/23 21:06:25 sevan Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,15 +98,13 @@ typedef struct nlist NLIST;
 		punt();							\
 	} while (0)
 
-static void	badread __P((int, char *));
-static u_long	get_kerntext __P((const char *kfn));
+static void	badread(int, char *);
+static u_long	get_kerntext(const char *kfn);
 
 static const char *kfile;
 
 int
-create_knlist_aout(name, db)
-	const char *name;
-	DB *db;
+create_knlist_aout(const char *name, DB *db)
 {
 	int nsyms;
 	struct exec ebuf;
@@ -244,9 +242,7 @@ create_knlist_aout(name, db)
 }
 
 static void
-badread(nr, p)
-	int nr;
-	char *p;
+badread(int nr, char *p)
 {
 	if (nr < 0) {
 		warn("%s", kfile);
@@ -262,8 +258,7 @@ badread(nr, p)
  * when the standard symbol name is not found.
  */
 static u_long
-get_kerntext(name)
-	const char *name;
+get_kerntext(const char *name)
 {
 	struct nlist nl[2];
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.1 2000/01/31 14:28:20 itojun Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.2 2018/01/23 21:06:24 sevan Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -29,6 +29,6 @@
  * SUCH DAMAGE.
  */
 
-extern int ipsecsetup __P((int, int, const char *));
-extern int ipsecsetup_test __P((const char *));
-extern int ipsecsetup0 __P((int, int, const char *, int));
+extern int ipsecsetup(int, int, const char *);
+extern int ipsecsetup_test(const char *);
+extern int ipsecsetup0(int, int, const char *, int);

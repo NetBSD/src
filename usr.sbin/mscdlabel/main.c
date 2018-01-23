@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.5 2017/01/10 21:03:36 christos Exp $ */
+/* $NetBSD: main.c,v 1.6 2018/01/23 21:06:25 sevan Exp $ */
 
 /*
  * Copyright (c) 2002, 2005
@@ -53,7 +53,6 @@
 
 static int getcdtoc(int);
 static int getfaketoc(int);
-int main(int, char **);
 
 const char *disk = "cd0";
 int ntracks;
@@ -123,9 +122,7 @@ getfaketoc(int fd)
 }
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	int fd, res, i, j, rawpart;
 	char fullname[MAXPATHLEN];

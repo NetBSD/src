@@ -1,4 +1,4 @@
-/*	$NetBSD: videomode.c,v 1.8 2011/01/04 10:32:34 wiz Exp $	*/
+/*	$NetBSD: videomode.c,v 1.9 2018/01/23 21:06:26 sevan Exp $	*/
 
 /*
  * Copyright (c) 1995 Christian E. Hopps
@@ -45,17 +45,14 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-void	dump_mode __P((int));
-void	dump_vm   __P((struct grfvideo_mode *));
-int	get_grf __P((void));
-int	main __P((int, char **));
-void	set_mode __P((int));
-void	usage __P((void));
+void	dump_mode(int);
+void	dump_vm(struct grfvideo_mode *);
+int	get_grf(void);
+void	set_mode(int);
+void	usage(void) __dead;
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int m;
 	int c;
@@ -112,8 +109,7 @@ get_grf()
 }
 
 void
-dump_mode(m)
-	int m;
+dump_mode(int m)
 {
 	struct grfvideo_mode vm;
 	int num_vm;
@@ -146,8 +142,7 @@ dump_mode(m)
 }
 
 void
-set_mode(m)
-	int m;
+set_mode(int m)
 {
 	int grffd;
 
@@ -157,8 +152,7 @@ set_mode(m)
 }
 
 void
-dump_vm(vm)
-	struct grfvideo_mode *vm;
+dump_vm(struct grfvideo_mode *vm)
 {
 	(void)printf("%d: %s\n", vm->mode_num, vm->mode_descr);
 	(void)printf(

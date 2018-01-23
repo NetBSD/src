@@ -1,4 +1,4 @@
-/* $NetBSD: getobjmap.c,v 1.2 2000/02/22 06:06:07 mjacob Exp $ */ 
+/* $NetBSD: getobjmap.c,v 1.3 2018/01/23 21:06:26 sevan Exp $ */ 
 /* $FreeBSD: $ */
 /* $OpenBSD: $ */
 /*
@@ -41,13 +41,10 @@
 #include <sys/ioctl.h>
 #include SESINC
 
-int main __P((int, char **));
-extern char *geteltnm __P((int));
+extern char *geteltnm(int);
 
 int
-main(a, v)
-	int a;
-	char **v;
+main(int a, char *v[])
 {
 	ses_object *objp;
 	int nobj, fd, i;
