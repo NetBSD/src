@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.174 2017/12/19 03:31:12 pgoyette Exp $	*/
+/*	$NetBSD: ccd.c,v 1.175 2018/01/23 22:42:29 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.174 2017/12/19 03:31:12 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.175 2018/01/23 22:42:29 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -1693,7 +1693,7 @@ printiinfo(struct ccdiinfo *ii)
 }
 #endif
 
-MODULE(MODULE_CLASS_DRIVER, ccd, "dk_subr");
+MODULE(MODULE_CLASS_DRIVER, ccd, "dk_subr,bufq_fcfs");
 
 static int
 ccd_modcmd(modcmd_t cmd, void *arg)

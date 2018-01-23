@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.355 2018/01/20 01:32:45 mrg Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.356 2018/01/23 22:42:29 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.355 2018/01/20 01:32:45 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.356 2018/01/23 22:42:29 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -3857,7 +3857,7 @@ rf_get_component_label(RF_Raid_t *raidPtr, void *data)
  * Module interface
  */
 
-MODULE(MODULE_CLASS_DRIVER, raid, "dk_subr");
+MODULE(MODULE_CLASS_DRIVER, raid, "dk_subr,bufq_fcfs");
 
 #ifdef _MODULE
 CFDRIVER_DECL(raid, DV_DISK, NULL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.103 2017/12/21 15:51:39 hannken Exp $	*/
+/*	$NetBSD: fss.c,v 1.104 2018/01/23 22:42:29 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.103 2017/12/21 15:51:39 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.104 2018/01/23 22:42:29 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1293,7 +1293,7 @@ fss_bs_thread(void *arg)
 
 #include <sys/module.h>
 
-MODULE(MODULE_CLASS_DRIVER, fss, NULL);
+MODULE(MODULE_CLASS_DRIVER, fss, "bufq_fcfs");
 CFDRIVER_DECL(fss, DV_DISK, NULL);
 
 devmajor_t fss_bmajor = -1, fss_cmajor = -1;
