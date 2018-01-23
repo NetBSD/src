@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.158 2017/11/05 07:03:37 ozaki-r Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.159 2018/01/23 09:21:59 maxv Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.158 2017/11/05 07:03:37 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.159 2018/01/23 09:21:59 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -207,7 +207,7 @@ rip6_input(struct mbuf **mp, int *offp, int proto)
 			 */
 			if (!ipsec_used ||
 			    (ipsec_used && !ipsec6_in_reject(m, last)))
-#endif /* IPSEC */
+#endif
 			if ((n = m_copy(m, 0, (int)M_COPYALL)) != NULL) {
 				if (last->in6p_flags & IN6P_CONTROLOPTS)
 					ip6_savecontrol(last, &opts, ip6, n);
@@ -227,20 +227,14 @@ rip6_input(struct mbuf **mp, int *offp, int proto)
 		}
 		last = in6p;
 	}
+
 #ifdef IPSEC
 	if (ipsec_used && last && ipsec6_in_reject(m, last)) {
 		m_freem(m);
-		/*
-		 * XXX ipsec6_in_reject update stat if there is an error
-		 * so we just need to update stats by hand in the case of last is
-		 * NULL
-		 */
-		if (!last)
-			IPSEC6_STATINC(IPSEC_STAT_IN_POLVIO);
-			IP6_STATDEC(IP6_STAT_DELIVERED);
-			/* do not inject data into pcb */
-		} else
-#endif /* IPSEC */
+		IP6_STATDEC(IP6_STAT_DELIVERED);
+		/* do not inject data into pcb */
+	} else
+#endif
 	if (last) {
 		if (last->in6p_flags & IN6P_CONTROLOPTS)
 			ip6_savecontrol(last, &opts, ip6, m);
