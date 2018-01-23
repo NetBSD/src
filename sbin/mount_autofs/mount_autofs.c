@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_autofs.c,v 1.2 2018/01/22 10:41:18 wiz Exp $	*/
+/*	$NetBSD: mount_autofs.c,v 1.3 2018/01/23 15:02:03 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_autofs.c,v 1.2 2018/01/22 10:41:18 wiz Exp $");
+__RCSID("$NetBSD: mount_autofs.c,v 1.3 2018/01/23 15:02:03 wiz Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -127,7 +127,7 @@ mount_autofs(int argc, char *argv[])
 	mount_autofs_parseargs(argc, argv, &am, &mntflags,
 	    canon_dev, canon_dir);
 	if (mount(MOUNT_KERNFS, canon_dir, mntflags, &am, sizeof(am)) == -1)
-		err(EXIT_FAILURE, "kernfs on %s", canon_dir);
+		err(EXIT_FAILURE, "autofs on %s", canon_dir);
         if (mntflags & MNT_GETARGS) {
 		printf("from=%s, master_options=%s, master_prefix=%s\n",
 		    am.from, am.master_options, am.master_prefix);
