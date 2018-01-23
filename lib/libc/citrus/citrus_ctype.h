@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_ctype.h,v 1.3.22.2 2017/07/31 04:23:35 perseant Exp $	*/
+/*	$NetBSD: citrus_ctype.h,v 1.3.22.3 2018/01/23 03:12:11 perseant Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -206,8 +206,8 @@ _citrus_ctype_kt2ucs(_citrus_ctype_t cc,
 }
 #else
 /* Define away the calls to these functions */
-#define _citrus_ctype_ucs2kt(cl, ktp, wc) do {} while (0)
-#define _citrus_ctype_kt2ucs(cl, up, kt) do {} while (0)
+#define _citrus_ctype_ucs2kt(cl, ktp, wc) do { *ktp = wc; } while (0)
+#define _citrus_ctype_kt2ucs(cl, up, kt) do { *up = kt; } while (0)
 #endif
 
 extern _citrus_ctype_rec_t _citrus_ctype_default;

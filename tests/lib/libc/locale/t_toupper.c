@@ -1,4 +1,4 @@
-/* $NetBSD: t_toupper.c,v 1.1 2017/05/30 02:11:03 perseant Exp $ */
+/* $NetBSD: t_toupper.c,v 1.1.4.1 2018/01/23 03:12:11 perseant Exp $ */
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2017\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_toupper.c,v 1.1 2017/05/30 02:11:03 perseant Exp $");
+__RCSID("$NetBSD: t_toupper.c,v 1.1.4.1 2018/01/23 03:12:11 perseant Exp $");
 
 #include <locale.h>
 #include <stdio.h>
@@ -71,6 +71,7 @@ h_swapcase(const struct test *t, int upperp)
 	ATF_REQUIRE_STREQ(setlocale(LC_ALL, "C"), "C");
 	printf("Trying locale %s...\n", t->locale);
 	ATF_REQUIRE(setlocale(LC_CTYPE, t->locale) != NULL);
+	printf("Using locale: %s\n", setlocale(LC_ALL, NULL));
 
 	for (i = 0; i < strlen(t->lower); i++) {
 		printf("Comparing char %d, lower %2.2x, with upper %2.2x\n",

@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_none.c,v 1.22.2.2 2017/07/21 20:22:29 perseant Exp $	*/
+/*	$NetBSD: citrus_none.c,v 1.22.2.3 2018/01/23 03:12:11 perseant Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_none.c,v 1.22.2.2 2017/07/21 20:22:29 perseant Exp $");
+__RCSID("$NetBSD: citrus_none.c,v 1.22.2.3 2018/01/23 03:12:11 perseant Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -493,6 +493,10 @@ _citrus_NONE_ctype_ucs2kt(void * __restrict cl,
 			  wchar_kuten_t * __restrict ktp,
 			  wchar_ucs4_t wc)
 {
+#ifndef __STDC_ISO_10646__
+	*ktp = wc;
+	return 0;
+#else /* __STDC_ISO_10646__ */
 	struct _NONE_Info *nip = (struct _NONE_Info *)cl;
 	struct unicode2kuten_lookup *uk = NULL;
 
@@ -514,6 +518,7 @@ _citrus_NONE_ctype_ucs2kt(void * __restrict cl,
 	else
 		*ktp = WEOF;
 	return 0;
+#endif /* __STDC_ISO_10646__ */
 }
 
 static int
@@ -522,6 +527,10 @@ _citrus_NONE_ctype_kt2ucs(void * __restrict cl,
 			  wchar_ucs4_t * __restrict up,
 			  wchar_kuten_t kt)
 {
+#ifndef __STDC_ISO_10646__
+	*up = kt;
+	return 0;
+#else /* __STDC_ISO_10646__ */
 	if (cl == NULL) {
 		*up = kt;
 		return 0;
@@ -529,6 +538,7 @@ _citrus_NONE_ctype_kt2ucs(void * __restrict cl,
 
 	*up = ((struct _NONE_Info *)cl)->forward[kt];
 	return 0;
+#endif /* __STDC_ISO_10646__ */
 }
 
 /* ---------------------------------------------------------------------- */
