@@ -1,4 +1,4 @@
-/*	$NetBSD: rmt.c,v 1.16 2009/04/18 09:25:50 lukem Exp $	*/
+/*	$NetBSD: rmt.c,v 1.17 2018/01/23 21:06:25 sevan Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)rmt.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: rmt.c,v 1.16 2009/04/18 09:25:50 lukem Exp $");
+__RCSID("$NetBSD: rmt.c,v 1.17 2018/01/23 21:06:25 sevan Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,15 +74,12 @@ FILE	*debug;
 #define	DEBUG1(f,a)	if (debug) fprintf(debug, f, a)
 #define	DEBUG2(f,a1,a2)	if (debug) fprintf(debug, f, a1, a2)
 
-char	*checkbuf __P((char *, int));
-void	 error __P((int));
-int	 main __P((int, char **));
-void	 getstring __P((char *, size_t));
+char	*checkbuf(char *, int);
+void	 error(int);
+void	 getstring(char *, size_t);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	char *record = NULL;
 	int rval;
@@ -209,9 +206,7 @@ ioerror:
 }
 
 void
-getstring(bp, size)
-	char *bp;
-	size_t size;
+getstring(char *bp, size_t size)
 {
 	char *cp = bp;
 	char *ep = bp + size - 1;
@@ -224,9 +219,7 @@ getstring(bp, size)
 }
 
 char *
-checkbuf(record, size)
-	char *record;
-	int size;
+checkbuf(char *record, int size)
 {
 
 	if (size <= maxrecsize)
@@ -246,8 +239,7 @@ checkbuf(record, size)
 }
 
 void
-error(num)
-	int num;
+error(int num)
 {
 
 	DEBUG2("rmtd: E %d (%s)\n", num, strerror(num));

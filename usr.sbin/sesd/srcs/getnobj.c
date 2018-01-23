@@ -1,4 +1,4 @@
-/* $NetBSD: getnobj.c,v 1.3 2007/01/16 17:32:05 hubertf Exp $ */ 
+/* $NetBSD: getnobj.c,v 1.4 2018/01/23 21:06:26 sevan Exp $ */ 
 /* $FreeBSD: $ */
 /* $OpenBSD: $ */
 /*
@@ -41,12 +41,8 @@
 #include <sys/ioctl.h>
 #include SESINC
 
-int main __P((int, char **));
-
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	unsigned int nobj;
 	int fd;

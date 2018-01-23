@@ -1,4 +1,4 @@
-/*	$NetBSD: pcnfsd_v2.c,v 1.13 2014/03/29 18:54:36 apb Exp $	*/
+/*	$NetBSD: pcnfsd_v2.c,v 1.14 2018/01/23 21:06:25 sevan Exp $	*/
 
 /* RE_SID: @(%)/usr/dosnfs/shades_SCCS/unix/pcnfsd/v2/src/SCCS/s.pcnfsd_v2.c 1.2 91/12/18 13:26:13 SMI */
 /*
@@ -63,18 +63,14 @@ static char pcnfsd_version[] = "@(#)pcnfsd_v2.c	1.2 - rpc.pcnfsd V2.0 (c) 1991 S
 
 /*ARGSUSED*/
 void   *
-pcnfsd2_null_2_svc(arg, req)
-	void   *arg;
-	struct svc_req *req;
+pcnfsd2_null_2_svc(void *arg, struct svc_req *req)
 {
 	static char dummy;
 	return ((void *) &dummy);
 }
 
 v2_auth_results *
-pcnfsd2_auth_2_svc(arg, req)
-	v2_auth_args *arg;
-	struct svc_req *req;
+pcnfsd2_auth_2_svc(v2_auth_args *arg, struct svc_req *req)
 {
 	static v2_auth_results r;
 
@@ -168,9 +164,7 @@ pcnfsd2_auth_2_svc(arg, req)
 }
 
 v2_pr_init_results *
-pcnfsd2_pr_init_2_svc(arg, req)
-	v2_pr_init_args *arg;
-	struct svc_req *req;
+pcnfsd2_pr_init_2_svc(v2_pr_init_args *arg, struct svc_req *req)
 {
 	static v2_pr_init_results res;
 
@@ -183,9 +177,7 @@ pcnfsd2_pr_init_2_svc(arg, req)
 }
 
 v2_pr_start_results *
-pcnfsd2_pr_start_2_svc(arg, req)
-	v2_pr_start_args *arg;
-	struct svc_req *req;
+pcnfsd2_pr_start_2_svc(v2_pr_start_args *arg, struct svc_req *req)
 {
 	static v2_pr_start_results res;
 
@@ -198,9 +190,7 @@ pcnfsd2_pr_start_2_svc(arg, req)
 }
 /*ARGSUSED*/
 v2_pr_list_results *
-pcnfsd2_pr_list_2_svc(arg, req)
-	void   *arg;
-	struct svc_req *req;
+pcnfsd2_pr_list_2_svc(void *arg, struct svc_req *req)
 {
 	static v2_pr_list_results res;
 
@@ -213,9 +203,7 @@ pcnfsd2_pr_list_2_svc(arg, req)
 }
 
 v2_pr_queue_results *
-pcnfsd2_pr_queue_2_svc(arg, req)
-	v2_pr_queue_args *arg;
-	struct svc_req *req;
+pcnfsd2_pr_queue_2_svc(v2_pr_queue_args *arg, struct svc_req *req)
 {
 	static v2_pr_queue_results res;
 
@@ -230,9 +218,7 @@ pcnfsd2_pr_queue_2_svc(arg, req)
 }
 
 v2_pr_status_results *
-pcnfsd2_pr_status_2_svc(arg, req)
-	v2_pr_status_args *arg;
-	struct svc_req *req;
+pcnfsd2_pr_status_2_svc(v2_pr_status_args *arg, struct svc_req *req)
 {
 	static v2_pr_status_results res;
 	static char status[128];
@@ -246,9 +232,7 @@ pcnfsd2_pr_status_2_svc(arg, req)
 }
 
 v2_pr_cancel_results *
-pcnfsd2_pr_cancel_2_svc(arg, req)
-	v2_pr_cancel_args *arg;
-	struct svc_req *req;
+pcnfsd2_pr_cancel_2_svc(v2_pr_cancel_args *arg, struct svc_req *req)
 {
 	static v2_pr_cancel_results res;
 
@@ -259,9 +243,7 @@ pcnfsd2_pr_cancel_2_svc(arg, req)
 }
 /*ARGSUSED*/
 v2_pr_requeue_results *
-pcnfsd2_pr_requeue_2_svc(arg, req)
-	v2_pr_requeue_args *arg;
-	struct svc_req *req;
+pcnfsd2_pr_requeue_2_svc(v2_pr_requeue_args *arg, struct svc_req *req)
 {
 	static v2_pr_requeue_results res;
 	res.stat = PC_RES_FAIL;
@@ -271,9 +253,7 @@ pcnfsd2_pr_requeue_2_svc(arg, req)
 }
 /*ARGSUSED*/
 v2_pr_hold_results *
-pcnfsd2_pr_hold_2_svc(arg, req)
-	v2_pr_hold_args *arg;
-	struct svc_req *req;
+pcnfsd2_pr_hold_2_svc(v2_pr_hold_args *arg, struct svc_req *req)
 {
 	static v2_pr_hold_results res;
 
@@ -284,9 +264,7 @@ pcnfsd2_pr_hold_2_svc(arg, req)
 }
 /*ARGSUSED*/
 v2_pr_release_results *
-pcnfsd2_pr_release_2_svc(arg, req)
-	v2_pr_release_args *arg;
-	struct svc_req *req;
+pcnfsd2_pr_release_2_svc(v2_pr_release_args *arg, struct svc_req *req)
 {
 	static v2_pr_release_results res;
 
@@ -297,9 +275,7 @@ pcnfsd2_pr_release_2_svc(arg, req)
 }
 /*ARGSUSED*/
 v2_pr_admin_results *
-pcnfsd2_pr_admin_2_svc(arg, req)
-	v2_pr_admin_args *arg;
-	struct svc_req *req;
+pcnfsd2_pr_admin_2_svc(v2_pr_admin_args *arg, struct svc_req *req)
 {
 	static v2_pr_admin_results res;
 /*
@@ -316,8 +292,7 @@ pcnfsd2_pr_admin_2_svc(arg, req)
 }
 
 void
-free_mapreq_results(p)
-	mapreq_res p;
+free_mapreq_results(mapreq_res p)
 {
 	if (p->mapreq_next)
 		free_mapreq_results(p->mapreq_next);	/* recurse */
@@ -327,11 +302,10 @@ free_mapreq_results(p)
 	return;
 }
 
-static char *my_strdup __P((const char *));
+static char *my_strdup(const char *);
 
 static char *
-my_strdup(s)
-	const char   *s;
+my_strdup(const char *s)
 {
 	size_t len;
 	char   *r;
@@ -342,9 +316,7 @@ my_strdup(s)
 }
 
 v2_mapid_results *
-pcnfsd2_mapid_2_svc(arg, req)
-	v2_mapid_args *arg;
-	struct svc_req *req;
+pcnfsd2_mapid_2_svc(v2_mapid_args *arg, struct svc_req *req)
 {
 	static v2_mapid_results res;
 	struct passwd *p_passwd;
@@ -419,9 +391,7 @@ pcnfsd2_mapid_2_svc(arg, req)
 
 /*ARGSUSED*/
 v2_alert_results *
-pcnfsd2_alert_2_svc(arg, req)
-	v2_alert_args *arg;
-	struct svc_req *req;
+pcnfsd2_alert_2_svc(v2_alert_args *arg, struct svc_req *req)
 {
 	static v2_alert_results res;
 
@@ -432,9 +402,7 @@ pcnfsd2_alert_2_svc(arg, req)
 }
 /*ARGSUSED*/
 v2_info_results *
-pcnfsd2_info_2_svc(arg, req)
-	v2_info_args *arg;
-	struct svc_req *req;
+pcnfsd2_info_2_svc(v2_info_args *arg, struct svc_req *req)
 {
 	static v2_info_results res;
 	static int facilities[FACILITIESMAX];
@@ -474,11 +442,7 @@ pcnfsd2_info_2_svc(arg, req)
 
 
 void
-fillin_extra_groups(uname, main_gid, len, extra_gids)
-	char   *uname;
-	gid_t   main_gid;
-	int    *len;
-	gid_t   extra_gids[EXTRAGIDLEN];
+fillin_extra_groups(char *uname, gid_t main_gid, int *len, gid_t extra_gids[EXTRAGIDLEN])
 {
 	struct group *grp;
 	__aconst char *__aconst *members;
@@ -513,9 +477,7 @@ fillin_extra_groups(uname, main_gid, len, extra_gids)
  * is responsible for free()ing the result string.
  */
 char   *
-find_entry(key, map)
-	const char   *key;
-	const char   *map;
+find_entry(const char *key, const char *map)
 {
 	int     err;
 	char   *val = NULL;

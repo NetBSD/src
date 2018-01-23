@@ -1,4 +1,4 @@
-/*	$NetBSD: statd.h,v 1.2 1997/10/21 20:38:19 christos Exp $	*/
+/*	$NetBSD: statd.h,v 1.3 2018/01/23 21:06:26 sevan Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -97,23 +97,23 @@ extern Header status_info;
 /* Function prototypes */
 
 /* stat_proc.c */
-struct sm_stat_res *sm_stat_1_svc __P((sm_name *, struct svc_req *));
-struct sm_stat_res *sm_mon_1_svc __P((mon *, struct svc_req *));
-struct sm_stat *sm_unmon_1_svc __P((mon_id *, struct svc_req *));
-struct sm_stat *sm_unmon_all_1_svc __P((my_id *, struct svc_req *));
-void *sm_simu_crash_1_svc __P((void *, struct svc_req *));
-void *sm_notify_1_svc __P((stat_chge *, struct svc_req *));
-int	do_unmon __P((char *, HostInfo *, void *));
+struct sm_stat_res *sm_stat_1_svc(sm_name *, struct svc_req *);
+struct sm_stat_res *sm_mon_1_svc(mon *, struct svc_req *);
+struct sm_stat *sm_unmon_1_svc(mon_id *, struct svc_req *);
+struct sm_stat *sm_unmon_all_1_svc(my_id *, struct svc_req *);
+void *sm_simu_crash_1_svc(void *, struct svc_req *);
+void *sm_notify_1_svc(stat_chge *, struct svc_req *);
+int	do_unmon(char *, HostInfo *, void *);
 
 /* statd.c */
-void notify_handler __P((int));
-void sync_file __P((void));
-void unmon_hosts __P((void));
-void change_host __P((char *, HostInfo *));
-HostInfo *find_host __P((char *, HostInfo *));
-void reset_database __P((void));
+void notify_handler(int);
+void sync_file(void);
+void unmon_hosts(void);
+void change_host(char *, HostInfo *);
+HostInfo *find_host(char *, HostInfo *);
+void reset_database(void);
 
-void sm_prog_1 __P((struct svc_req *, SVCXPRT *));
+void sm_prog_1(struct svc_req *, SVCXPRT *);
 
 #define NO_ALARM sa.sa_handler == SIG_DFL ? 0 : (sa.sa_handler = SIG_IGN, sigaction(SIGALRM, &sa, NULL))
 #define ALARM sa.sa_handler == SIG_DFL ? 0 : (sa.sa_handler = notify_handler, sigaction(SIGALRM, &sa, NULL))

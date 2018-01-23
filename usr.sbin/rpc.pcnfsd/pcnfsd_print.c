@@ -1,4 +1,4 @@
-/*	$NetBSD: pcnfsd_print.c,v 1.13 2014/03/29 18:54:36 apb Exp $	*/
+/*	$NetBSD: pcnfsd_print.c,v 1.14 2018/01/23 21:06:25 sevan Exp $	*/
 
 /* RE_SID: @(%)/usr/dosnfs/shades_SCCS/unix/pcnfsd/v2/src/SCCS/s.pcnfsd_print.c 1.7 92/01/24 19:58:58 SMI */
 /*
@@ -75,12 +75,12 @@
 #define SIZECOL 62
 #define FILECOL 24
 
-char   *expand_alias __P((char *, char *, char *, char *));
-pr_list	list_virtual_printers __P((void));
-char   *map_printer_name __P((char *));
-void	substitute __P((char *, const char *, const char *));
-int	suspicious __P((char *));
-int	valid_pr __P((char *));
+char   *expand_alias(char *, char *, char *, char *);
+pr_list	list_virtual_printers(void);
+char   *map_printer_name(char *);
+void	substitute(char *, const char *, const char *);
+int	suspicious(char *);
+int	valid_pr(char *);
 
 /*
 **---------------------------------------------------------------------
@@ -114,8 +114,7 @@ pr_queue queue = NULL;
  */
 
 int
-suspicious(s)
-	char   *s;
+suspicious(char *s)
 {
 	if (strpbrk(s, ";|&<>`'#!?*()[]^/${}\n\r\"\\:") != NULL)
 		return 1;
@@ -124,8 +123,7 @@ suspicious(s)
 
 
 int
-valid_pr(pr)
-	char   *pr;
+valid_pr(char *pr)
 {
 	char   *p;
 	pr_list curr;
@@ -155,10 +153,7 @@ valid_pr(pr)
  * doing a chmod on something that could be a symlink...
  */
 pirstat
-pr_init(sys, pr, sp)
-	char   *sys;
-	char   *pr;
-	char  **sp;
+pr_init(char *sys, char *pr, char **sp)
 {
 	int     dir_mode = 0777;
 	int     rc;
@@ -208,13 +203,7 @@ badspool:
 	return (PI_RES_OK);
 }
 psrstat
-pr_start2(sys, pr, user, fname, opts, id)
-	char   *sys;
-	char   *pr;
-	char   *user;
-	char   *fname;
-	char   *opts;
-	char  **id;
+pr_start2(char *sys, char *pr, char *user, char *fname, char *opts, char **id)
 {
 	char    snum[20];
 	static char req_id[256];
@@ -588,8 +577,7 @@ build_pr_list()
 #endif				/* SVR4 */
 
 void   *
-grab(n)
-	int     n;
+grab(int n)
 {
 	void   *p;
 
@@ -602,8 +590,7 @@ grab(n)
 }
 
 void
-free_pr_list_item(curr)
-	pr_list curr;
+free_pr_list_item(pr_list curr)
 {
 	if (curr->pn)
 		free(curr->pn);
@@ -649,12 +636,7 @@ free_pr_list_item(curr)
 **/
 
 pirstat
-build_pr_queue(pn, user, just_mine, p_qlen, p_qshown)
-	printername pn;
-	username user;
-	int     just_mine;
-	int    *p_qlen;
-	int    *p_qshown;
+build_pr_queue(printername pn, username user, int just_mine, int p_qlen, int p_qshown)
 {
 	pr_queue last = NULL;
 	pr_queue curr = NULL;
@@ -730,12 +712,7 @@ build_pr_queue(pn, user, just_mine, p_qlen, p_qshown)
 #else				/* SVR4 */
 
 pirstat
-build_pr_queue(pn, user, just_mine, p_qlen, p_qshown)
-	printername pn;
-	username user;
-	int     just_mine;
-	int    *p_qlen;
-	int    *p_qshown;
+build_pr_queue(printername pn, username user, int just_mine, int *p_qlen, int *p_qshown)
 {
 	pr_queue last = NULL;
 	pr_queue curr = NULL;
@@ -834,8 +811,7 @@ build_pr_queue(pn, user, just_mine, p_qlen, p_qshown)
 #endif				/* SVR4 */
 
 void
-free_pr_queue_item(curr)
-	pr_queue curr;
+free_pr_queue_item(pr_queue curr)
 {
 	if (curr->id)
 		free(curr->id);
@@ -904,14 +880,7 @@ free_pr_queue_item(curr)
 */
 
 pirstat
-get_pr_status(pn, avail, printing, qlen, needs_operator, status, statuslen)
-	printername pn;
-	bool_t *avail;
-	bool_t *printing;
-	int    *qlen;
-	bool_t *needs_operator;
-	char   *status;
-	size_t statuslen;
+get_pr_status(printername pn, bool_t *avail, bool_t *printing, int *qlen, bool_t *needs_operator, char *status, size_t statuslen)
 {
 	char    buff[256];
 	char    cmd[64];
@@ -969,14 +938,7 @@ get_pr_status(pn, avail, printing, qlen, needs_operator, status, statuslen)
  * BSD way: lpc status
  */
 pirstat
-get_pr_status(pn, avail, printing, qlen, needs_operator, status, statuslen)
-	printername pn;
-	bool_t *avail;
-	bool_t *printing;
-	int    *qlen;
-	bool_t *needs_operator;
-	char   *status;
-	size_t statuslen;
+get_pr_status(printername pn, bool_t *avail, bool_t *printing, int *qlen, bool_t *needs_operator, char *status, size_t statuslen)
 {
 	char    cmd[128];
 	char    buff[256];
@@ -1106,10 +1068,7 @@ get_pr_status(pn, avail, printing, qlen, needs_operator, status, statuslen)
 ** messages are localized..... :-(
 */
 pcrstat 
-pr_cancel(pr, user, id)
-	char   *pr;
-	char   *user;
-	char   *id;
+pr_cancel(char *pr, char *user, char *id)
 {
 	char    cmdbuf[256];
 	char    resbuf[256];
@@ -1154,10 +1113,7 @@ pr_cancel(pr, user, id)
  * BSD way: lprm
  */
 pcrstat 
-pr_cancel(pr, user, id)
-	char   *pr;
-	char   *user;
-	char   *id;
+pr_cancel(char *pr, char *user, char *id)
 {
 	char    cmdbuf[256];
 	char    resbuf[256];
@@ -1246,10 +1202,7 @@ struct {
 }       alias[NPRINTERDEFS];
 
 void
-add_printer_alias(printer, alias_for, command)
-	char   *printer;
-	char   *alias_for;
-	char   *command;
+add_printer_alias(char *printer, char *alias_for, char *command)
 {
 	size_t l;
 
@@ -1305,8 +1258,7 @@ list_virtual_printers()
 
 
 char   *
-map_printer_name(printer)
-	char   *printer;
+map_printer_name(char *printer)
 {
 	int     i;
 	for (i = 0; i < num_aliases; i++) {
@@ -1317,10 +1269,7 @@ map_printer_name(printer)
 }
 
 void
-substitute(string, token, data)
-	char   *string;
-	const char   *token;
-	const char   *data;
+substitute(char *string, const char *token, const char *data)
 {
 	char    temp[512];
 	char   *c;
@@ -1336,11 +1285,7 @@ substitute(string, token, data)
 }
 
 char   *
-expand_alias(printer, file, user, host)
-	char   *printer;
-	char   *file;
-	char   *user;
-	char   *host;
+expand_alias(char *printer, char *file, char *user, char *host)
 {
 	static char expansion[512];
 	int     i;
