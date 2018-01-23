@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.217 2018/01/23 10:32:50 maxv Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.218 2018/01/23 10:46:59 maxv Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.217 2018/01/23 10:32:50 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.218 2018/01/23 10:46:59 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2544,8 +2544,9 @@ icmp6_redirect_output(struct mbuf *m0, struct rtentry *rt)
 	m->m_len = 0;
 	maxlen = M_TRAILINGSPACE(m);
 	maxlen = min(IPV6_MMTU, maxlen);
+
 	/* just for safety */
-	if (maxlen < sizeof(struct ip6_hdr) + sizeof(struct icmp6_hdr) +
+	if (maxlen < sizeof(struct ip6_hdr) + sizeof(struct nd_redirect) +
 	    ((sizeof(struct nd_opt_hdr) + ifp->if_addrlen + 7) & ~7)) {
 		goto fail;
 	}
@@ -2665,6 +2666,10 @@ icmp6_redirect_output(struct mbuf *m0, struct rtentry *rt)
 		 */
 		len = maxlen - (p - (u_char *)ip6);
 		len &= ~7;
+
+		if (len < sizeof(*nd_opt_rh)) {
+			goto noredhdropt;
+		}
 
 		/*
 		 * Redirected header option spec (RFC2461 4.6.3) talks nothing
