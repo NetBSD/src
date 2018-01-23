@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.133 2017/09/14 07:58:42 mrg Exp $
+# $NetBSD: GENERIC,v 1.134 2018/01/23 14:47:55 sevan Exp $
 #
 # GENERIC machine description file
 # 
@@ -31,8 +31,8 @@ maxusers	32
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	NTP		# NTP phase/frequency locked loop
 
-# Enable experimental buffer queue strategy for better responsiveness under 
-# high disk I/O load. Use it with caution - it's not proven to be stable yet.
+# Alternate buffer queue strategies for better responsiveness under high
+# disk I/O load.
 #options 	BUFQ_READPRIO
 #options 	BUFQ_PRIOCSCAN
 

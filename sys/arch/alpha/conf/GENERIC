@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.378 2017/09/14 07:58:38 mrg Exp $
+# $NetBSD: GENERIC,v 1.379 2018/01/23 14:47:53 sevan Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.378 $"
+ident		"GENERIC-$Revision: 1.379 $"
 
 maxusers 32
 
@@ -48,8 +48,8 @@ options 	API_UP1000	# EV6:		Alpha Processor, Inc. UP1000
 options 	KTRACE			# System call tracing support
 options 	NTP			# kernel PLL for NTP
 
-# Enable experimental buffer queue strategy for better responsiveness under
-# high disk I/O load. Use it with caution - it's not proven to be stable yet.
+# Alternate buffer queue strategies for better responsiveness under high
+# disk I/O load.
 #options 	BUFQ_READPRIO
 #options 	BUFQ_PRIOCSCAN
 
