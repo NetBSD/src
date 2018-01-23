@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.96 2017/09/14 07:58:41 mrg Exp $
+#	$NetBSD: GENERIC,v 1.97 2018/01/23 15:08:12 sevan Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/iyonix/conf/std.iyonix"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.96 $"
+#ident 		"GENERIC-$Revision: 1.97 $"
 
 maxusers	32		# estimated number of users
 
@@ -69,8 +69,8 @@ options 	USERCONF	# userconf(4) support
 
 # Development and Debugging options
 
-# Enable experimental buffer queue strategy for better responsiveness under
-# high disk I/O load. Likely stable but not yet the default.
+# Alternate buffer queue strategies for better responsiveness under high
+# disk I/O load.
 #options 	BUFQ_READPRIO
 #options 	BUFQ_PRIOCSCAN
 
