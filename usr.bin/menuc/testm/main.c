@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.6 2004/09/17 18:16:44 wrstuden Exp $	*/
+/*	$NetBSD: main.c,v 1.7 2018/01/23 22:12:52 sevan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -40,8 +40,6 @@
 
 #include "menu_defs.h"
 #include "msg_defs.h"
-
-int main(void);
 
 int main(void)
 {
