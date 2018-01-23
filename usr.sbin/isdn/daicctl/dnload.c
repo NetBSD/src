@@ -1,4 +1,4 @@
-/* $NetBSD: dnload.c,v 1.7 2009/04/16 05:56:32 lukem Exp $ */
+/* $NetBSD: dnload.c,v 1.8 2018/01/23 21:06:24 sevan Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -40,9 +40,7 @@
 #include "daicctl.h"
 
 void
-download(fd, controller, filename)
-	int fd, controller;
-	char *filename;
+download(int fd, int controller, char *filename)
 {
 	int i, num_ports = 1;
 	struct isdn_download_request dr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcpdchk.c,v 1.12 2012/03/21 10:11:34 matt Exp $	*/
+/*	$NetBSD: tcpdchk.c,v 1.13 2018/01/23 21:06:26 sevan Exp $	*/
 
  /*
   * tcpdchk - examine all tcpd access control rules and inetd.conf entries
@@ -21,7 +21,7 @@
 #if 0
 static char sccsid[] = "@(#) tcpdchk.c 1.8 97/02/12 02:13:25";
 #else
-__RCSID("$NetBSD: tcpdchk.c,v 1.12 2012/03/21 10:11:34 matt Exp $");
+__RCSID("$NetBSD: tcpdchk.c,v 1.13 2018/01/23 21:06:26 sevan Exp $");
 #endif
 #endif
 
@@ -90,8 +90,6 @@ static int check_inet_addr(char *);
 #endif
 static int check_host(char *);
 static int reserved_name(char *);
-
-int main(int, char **);
 
 #define PERMIT	1
 #define DENY	0
@@ -281,9 +279,7 @@ parse_table(const char *table, struct request_info *request)
 
 /* print_list - pretty-print a list */
 
-static void print_list(title, list)
-char   *title;
-char   *list;
+static void print_list(char *title, char *list)
 {
     char    buf[BUFLEN];
     char   *cp;
@@ -303,8 +299,7 @@ char   *list;
 
 /* check_daemon_list - criticize daemon list */
 
-static void check_daemon_list(list)
-char   *list;
+static void check_daemon_list(char *list)
 {
     char    buf[BUFLEN];
     char   *cp;
@@ -331,8 +326,7 @@ char   *list;
 
 /* check_client_list - criticize client list */
 
-static void check_client_list(list)
-char   *list;
+static void check_client_list(char *list)
 {
     char    buf[BUFLEN];
     char   *cp;
@@ -370,8 +364,7 @@ char   *list;
 
 /* check_daemon - criticize daemon pattern */
 
-static void check_daemon(pat)
-char   *pat;
+static void check_daemon(char *pat)
 {
     if (pat[0] == '@') {
 	tcpd_warn("%s: daemon name begins with \"@\"", pat);
@@ -402,8 +395,7 @@ char   *pat;
 
 /* check_user - criticize user pattern */
 
-static void check_user(pat)
-char   *pat;
+static void check_user(char *pat)
 {
     if (pat[0] == '@') {			/* @netgroup */
 	tcpd_warn("%s: user name begins with \"@\"", pat);
@@ -423,8 +415,7 @@ char   *pat;
 }
 
 #ifdef INET6
-static int check_inet_addr(pat)
-char	*pat;
+static int check_inet_addr(char *pat)
 {
 	struct addrinfo *res;
 
@@ -438,8 +429,7 @@ char	*pat;
 #endif
 
 /* check_host - criticize host pattern */
-static int check_host(pat)
-char   *pat;
+static int check_host(char *pat)
 {
     char   *mask;
     int     addr_count = 1;
@@ -502,8 +492,7 @@ char   *pat;
 
 /* reserved_name - determine if name is reserved */
 
-static int reserved_name(pat)
-char   *pat;
+static int reserved_name(char *pat)
 {
     return (STR_EQ(pat, unknown)
 	    || STR_EQ(pat, "KNOWN")

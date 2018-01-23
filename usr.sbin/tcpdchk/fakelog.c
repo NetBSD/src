@@ -1,4 +1,4 @@
-/*	$NetBSD: fakelog.c,v 1.6 2011/07/17 20:54:55 joerg Exp $	*/
+/*	$NetBSD: fakelog.c,v 1.7 2018/01/23 21:06:26 sevan Exp $	*/
 
  /*
   * This module intercepts syslog() library calls and redirects their output
@@ -12,7 +12,7 @@
 #if 0
 static char sccsid[] = "@(#) fakelog.c 1.3 94/12/28 17:42:21";
 #else
-__RCSID("$NetBSD: fakelog.c,v 1.6 2011/07/17 20:54:55 joerg Exp $");
+__RCSID("$NetBSD: fakelog.c,v 1.7 2018/01/23 21:06:26 sevan Exp $");
 #endif
 #endif
 
@@ -27,10 +27,7 @@ __RCSID("$NetBSD: fakelog.c,v 1.6 2011/07/17 20:54:55 joerg Exp $");
 /* ARGSUSED */
 
 void
-openlog(name, logopt, facility)
-const char   *name;
-int     logopt;
-int     facility;
+openlog(const char *name, int logopt, int facility)
 {
     /* void */
 }

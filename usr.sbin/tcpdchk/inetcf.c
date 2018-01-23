@@ -1,4 +1,4 @@
-/*	$NetBSD: inetcf.c,v 1.10 2015/10/14 15:50:48 christos Exp $	*/
+/*	$NetBSD: inetcf.c,v 1.11 2018/01/23 21:06:26 sevan Exp $	*/
 
  /*
   * Routines to parse an inetd.conf or tlid.conf file. This would be a great
@@ -12,7 +12,7 @@
 #if 0
 static char sccsid[] = "@(#) inetcf.c 1.7 97/02/12 02:13:23";
 #else
-__RCSID("$NetBSD: inetcf.c,v 1.10 2015/10/14 15:50:48 christos Exp $");
+__RCSID("$NetBSD: inetcf.c,v 1.11 2018/01/23 21:06:26 sevan Exp $");
 #endif
 #endif
 
@@ -28,8 +28,8 @@ __RCSID("$NetBSD: inetcf.c,v 1.10 2015/10/14 15:50:48 christos Exp $");
 #include "percent_m.h"
 #include "scaffold.h"
 
-static void inet_chk __P((char *, char *, char *, char *));
-static char *base_name __P((char *));
+static void inet_chk(char *, char *, char *, char *);
+static char *base_name(char *);
 
  /*
   * Programs that use libwrap directly are not in inetd.conf, and so must
@@ -191,11 +191,7 @@ char   *conf;
 
 /* inet_chk - examine one inetd.conf (tlid.conf?) entry */
 
-static void inet_chk(protocol, path, arg0, arg1)
-char   *protocol;
-char   *path;
-char   *arg0;
-char   *arg1;
+static void inet_chk(char *protocol, char *path, char *arg0, char *arg1)
 {
     char    daemon[BUFSIZ];
     struct stat st;
@@ -306,9 +302,7 @@ char   *arg1;
 
 /* inet_set - remember service status */
 
-void    inet_set(name, type)
-char   *name;
-int     type;
+void inet_set(char *name, int type)
 {
     struct inet_ent *ip =
     (struct inet_ent *) malloc(sizeof(struct inet_ent) + strlen(name));
@@ -325,8 +319,7 @@ int     type;
 
 /* inet_get - look up service status */
 
-int     inet_get(name)
-char   *name;
+int inet_get(char *name)
 {
     struct inet_ent *ip;
 
@@ -342,8 +335,7 @@ char   *name;
 
 /* base_name - compute last pathname component */
 
-static char *base_name(path)
-char   *path;
+static char *base_name(char *path)
 {
     char   *cp;
 

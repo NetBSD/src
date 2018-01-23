@@ -1,4 +1,4 @@
-/*	$NetBSD: mdconfig.c,v 1.5 2009/10/21 23:12:10 snj Exp $	*/
+/*	$NetBSD: mdconfig.c,v 1.6 2018/01/23 21:06:25 sevan Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdconfig.c,v 1.5 2009/10/21 23:12:10 snj Exp $");
+__RCSID("$NetBSD: mdconfig.c,v 1.6 2018/01/23 21:06:25 sevan Exp $");
 #endif
 
 /*
@@ -48,12 +48,8 @@ __RCSID("$NetBSD: mdconfig.c,v 1.5 2009/10/21 23:12:10 snj Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 
-int main __P((int, char **));
-
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	struct md_conf md;
 	size_t nblks;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcnfsd_cache.c,v 1.4 2003/07/16 08:22:01 itojun Exp $	*/
+/*	$NetBSD: pcnfsd_cache.c,v 1.5 2018/01/23 21:06:25 sevan Exp $	*/
 
 /* RE_SID: @(%)/usr/dosnfs/shades_SCCS/unix/pcnfsd/v2/src/SCCS/s.pcnfsd_cache.c 1.1 91/09/03 12:45:14 SMI */
 /*
@@ -52,11 +52,7 @@ struct cache {
 
 
 int
-check_cache(name, pw, p_uid, p_gid)
-	char   *name;
-	char   *pw;
-	int    *p_uid;
-	int    *p_gid;
+check_cache(char *name, char *pw, int *p_uid, int *p_gid)
 {
 	int     i;
 	int     c1, c2;
@@ -80,8 +76,7 @@ check_cache(name, pw, p_uid, p_gid)
 }
 
 void
-add_cache_entry(p)
-	struct passwd *p;
+add_cache_entry(struct passwd *p)
 {
 	int     i;
 

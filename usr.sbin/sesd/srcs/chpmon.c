@@ -1,4 +1,4 @@
-/* $NetBSD: chpmon.c,v 1.2 2000/02/22 06:06:07 mjacob Exp $ */
+/* $NetBSD: chpmon.c,v 1.3 2018/01/23 21:06:26 sevan Exp $ */
 /* $FreeBSD: src/share/examples/ses/chpmon.c,v 1.1 2000/01/15 22:47:16 mjacob Exp $ */
 /*
  * Copyright (c) 2000 by Matthew Jacob
@@ -48,12 +48,8 @@
 #define	BADSTAT	\
 	(SES_ENCSTAT_UNRECOV|SES_ENCSTAT_CRITICAL|SES_ENCSTAT_NONCRITICAL)
 
-int main __P((int, char **));
-
 int
-main(a, v)
-	int a;
-	char **v;
+main(int a, char *v[])
 {
 	int fd, delay, dev;
 	ses_encstat stat, *carray;

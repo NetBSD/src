@@ -1,8 +1,8 @@
-/*	$NetBSD: test.c,v 1.2 1997/10/17 16:03:09 lukem Exp $	*/
+/*	$NetBSD: test.c,v 1.3 2018/01/23 21:06:26 sevan Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: test.c,v 1.2 1997/10/17 16:03:09 lukem Exp $");
+__RCSID("$NetBSD: test.c,v 1.3 2018/01/23 21:06:26 sevan Exp $");
 #endif
 
 #include <stdio.h>
@@ -14,9 +14,7 @@ __RCSID("$NetBSD: test.c,v 1.2 1997/10/17 16:03:09 lukem Exp $");
 static struct timeval TIMEOUT = {25, 0};
 
 struct sm_stat_res *
-sm_stat_1(argp, clnt)
-	struct sm_name *argp;
-	CLIENT *clnt;
+sm_stat_1(struct sm_name *argp, CLIENT *clnt)
 {
 	static struct sm_stat_res res;
 
@@ -29,9 +27,7 @@ sm_stat_1(argp, clnt)
 
 
 struct sm_stat_res *
-sm_mon_1(argp, clnt)
-	struct mon *argp;
-	CLIENT *clnt;
+sm_mon_1(struct mon *argp, CLIENT *clnt)
 {
 	static struct sm_stat_res res;
 
@@ -44,9 +40,7 @@ sm_mon_1(argp, clnt)
 
 
 struct sm_stat *
-sm_unmon_1(argp, clnt)
-	struct mon_id *argp;
-	CLIENT *clnt;
+sm_unmon_1(struct mon_id *argp, CLIENT *clnt)
 {
 	static struct sm_stat res;
 
@@ -59,9 +53,7 @@ sm_unmon_1(argp, clnt)
 
 
 struct sm_stat *
-sm_unmon_all_1(argp, clnt)
-	struct my_id *argp;
-	CLIENT *clnt;
+sm_unmon_all_1(struct my_id *argp, CLIENT *clnt)
 {
 	static struct sm_stat res;
 
@@ -74,9 +66,7 @@ sm_unmon_all_1(argp, clnt)
 
 
 void *
-sm_simu_crash_1(argp, clnt)
-	void   *argp;
-	CLIENT *clnt;
+sm_simu_crash_1(void   *argp, CLIENT *clnt)
 {
 	static char res;
 
@@ -89,9 +79,7 @@ sm_simu_crash_1(argp, clnt)
 
 
 int 
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	CLIENT *cli;
 	char dummy;

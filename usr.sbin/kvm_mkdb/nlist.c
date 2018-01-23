@@ -1,4 +1,4 @@
-/* $NetBSD: nlist.c,v 1.19 2003/08/07 11:25:23 agc Exp $ */
+/* $NetBSD: nlist.c,v 1.20 2018/01/23 21:06:25 sevan Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993
@@ -66,7 +66,7 @@
 #if 0
 static char sccsid[] = "from: @(#)nlist.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: nlist.c,v 1.19 2003/08/07 11:25:23 agc Exp $");
+__RCSID("$NetBSD: nlist.c,v 1.20 2018/01/23 21:06:25 sevan Exp $");
 #endif
 #endif /* not lint */
 
@@ -87,7 +87,7 @@ __RCSID("$NetBSD: nlist.c,v 1.19 2003/08/07 11:25:23 agc Exp $");
 #include "extern.h"
 
 static struct {
-        int     (*knlist) __P((const char *, DB *));
+        int     (*knlist)(const char *, DB *);
 } knlist_fmts[] = {
 #ifdef NLIST_AOUT
         {       create_knlist_aout          },
@@ -107,9 +107,7 @@ static struct {
 };
         
 void
-create_knlist(name, db)
-	const char *name;
-	DB *db;
+create_knlist(const char *name, DB *db)
 {
 	int i;
 

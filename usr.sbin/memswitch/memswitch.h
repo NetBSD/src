@@ -1,4 +1,4 @@
-/*	$NetBSD: memswitch.h,v 1.2 2008/04/28 20:24:17 martin Exp $	*/
+/*	$NetBSD: memswitch.h,v 1.3 2018/01/23 21:06:25 sevan Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -45,10 +45,10 @@
 
 struct property;
 
-typedef int (*parse_t) __P((struct property*, const char*));
-typedef int (*print_t) __P((struct property*, char*));
-typedef int (*fill_t) __P((struct property*));
-typedef int (*flush_t) __P((struct property*));
+typedef int (*parse_t)(struct property*, const char*);
+typedef int (*print_t)(struct property*, char*);
+typedef int (*fill_t)(struct property*);
+typedef int (*flush_t)(struct property*);
 
 struct property {
 	const char *class;
@@ -79,13 +79,13 @@ extern char *progname;
 extern u_int8_t *current_values;
 extern u_int8_t *modified_values;
 
-void usage __P((void)) __attribute__((noreturn));
-void show_single __P((const char*));
-void show_all __P((void));
-void modify_single __P((const char*));
-void help_single __P((const char*));
-void alloc_current_values __P((void));
-void alloc_modified_values __P((void));
-void flush __P((void));
-int save __P((const char*));
-int restore __P((const char*));
+static void usage(void)) __dead;
+void show_single(const char*));
+void show_all(void));
+void modify_single(const char*));
+void help_single(const char*));
+void alloc_current_values(void));
+void alloc_modified_values(void));
+void flush(void));
+int save(const char*));
+int restore(const char*));

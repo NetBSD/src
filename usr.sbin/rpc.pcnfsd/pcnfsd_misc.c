@@ -1,4 +1,4 @@
-/*	$NetBSD: pcnfsd_misc.c,v 1.15 2012/11/04 22:26:04 christos Exp $	*/
+/*	$NetBSD: pcnfsd_misc.c,v 1.16 2018/01/23 21:06:25 sevan Exp $	*/
 
 /* RE_SID: @(%)/usr/dosnfs/shades_SCCS/unix/pcnfsd/v2/src/SCCS/s.pcnfsd_misc.c 1.5 92/01/24 19:59:13 SMI */
 /*
@@ -67,10 +67,10 @@ int     wtmp_enabled = 1;
 
 char    tempstr[256];
 
-char   *mapfont __P((char, char, char));
-void	myhandler __P((int));
-void	start_watchdog __P((int));
-void	stop_watchdog __P((void));
+char   *mapfont(char, char, char);
+void	myhandler(int);
+void	start_watchdog(int);
+void	stop_watchdog(void);
 
 /*
 **=====================================================================
@@ -85,9 +85,7 @@ void	stop_watchdog __P((void));
 
 
 void
-scramble(s1, s2)
-	char   *s1;
-	char   *s2;
+scramble(char *s1, char *s2)
 {
 	while (*s1) {
 		*s2++ = (*s1 ^ zchar) & 0x7f;
@@ -99,8 +97,7 @@ scramble(s1, s2)
 
 
 struct passwd *
-get_password(usrnam)
-	char   *usrnam;
+get_password(char *usrnam)
 {
 	struct passwd *p;
 	static struct passwd localp;
@@ -238,9 +235,7 @@ finis:	return (&fontname[0]);
 /* #define PS630_IS_BROKEN 1 */
 
 void
-run_ps630(f, opts)
-	char   *f;
-	char   *opts;
+run_ps630(char *f, char *opts)
 {
 	char    temp_file[256];
 	char    commbuf[256];
@@ -298,9 +293,7 @@ run_ps630(f, opts)
 
 #ifdef WTMP
 void
-wlogin(name, req)
-	char   *name;
-	struct svc_req *req;
+wlogin(char *name, struct svc_req *req)
 {
 	struct sockaddr_in *who;
 	struct hostent *hp;
@@ -357,8 +350,7 @@ int     interrupted = 0;
 static FILE *pipe_handle;
 
 void
-myhandler(dummy)
-	int     dummy;
+myhandler(int dummy)
 {
 	interrupted = 1;
 	fclose(pipe_handle);
@@ -367,8 +359,7 @@ myhandler(dummy)
 }
 
 void
-start_watchdog(n)
-	int     n;
+start_watchdog(int n)
 {
 /*
  * Setup SIGALRM handler, force interrupt of ongoing syscall
@@ -414,10 +405,7 @@ stop_watchdog()
 }
 
 FILE   *
-su_popen(user, cmd, maxtime)
-	char   *user;
-	char   *cmd;
-	int     maxtime;
+su_popen(char *user, char *cmd, int maxtime)
 {
 	int     p[2];
 	int     parent_fd, child_fd, pid;
@@ -475,8 +463,7 @@ su_popen(user, cmd, maxtime)
 }
 
 int
-su_pclose(ptr)
-	FILE   *ptr;
+su_pclose(FILE *ptr)
 {
 	int     pid, status;
 
@@ -579,9 +566,7 @@ main(int argc, char *argv[])
 */
 
 int
-strembedded(s1, s2)
-	const char   *s1;
-	const char   *s2;
+strembedded(const char *s1, const char *s2)
 {
 	while (*s2) {
 		if (!strcasecmp(s1, s2))

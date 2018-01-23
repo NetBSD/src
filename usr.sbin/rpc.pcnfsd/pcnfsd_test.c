@@ -1,4 +1,4 @@
-/*	$NetBSD: pcnfsd_test.c,v 1.3 2003/07/16 08:22:01 itojun Exp $	*/
+/*	$NetBSD: pcnfsd_test.c,v 1.4 2018/01/23 21:06:25 sevan Exp $	*/
 
 /* RE_SID: @(%)/usr/dosnfs/shades_SCCS/unix/pcnfsd/v2/src/SCCS/s.pcnfsd_test.c 1.2 92/01/27 18:00:39 SMI */
 #include <stdio.h>
@@ -18,10 +18,8 @@ void free_pr_queue_item();
 void good();
 void bad();
 
-
-main(argc, argv)
-int argc;
-char *argv[];
+int
+main(int argc, char *argv[])
 {
 
 char *host_name;
@@ -99,9 +97,7 @@ char *transport = "udp";
 #define zchar           0x5b
 
 void
-scramble(s1, s2)
-char           *s1;
-char           *s2;
+scramble(char *s1, char *s2)
 {
         while (*s1) 
               {
@@ -151,10 +147,7 @@ int             i;
 	return(0);
 }
 
-test_v2_auth(host_name, user_name , pwrd)
-char *host_name;
-char *user_name;
-char *pwrd;
+test_v2_auth(char *host_name, char *user_name , char *pwrd)
 {
 v2_auth_args a;
 v2_auth_results *rp;
@@ -202,9 +195,7 @@ int             i;
 	return(0);
 }
 
-test_v2_init(host_name, printer)
-char *host_name;
-char *printer;
+test_v2_init(char *host_name, char *printer)
 {
 v2_pr_init_args a;
 v2_pr_init_results *rp;
@@ -232,12 +223,7 @@ v2_pr_init_results *rp;
 }
 
 
-test_v2_start(host_name, printer, user_name, tag1, tag2)
-char *host_name;
-char *printer;
-char *user_name;
-char *tag1;
-char *tag2;
+test_v2_start(char *host_name, char *printer, char *user_name, char *tag1, char *tag2)
 {
 v2_pr_start_args a;
 v2_pr_start_results *rp;
@@ -289,11 +275,7 @@ FILE *fp;
 }
 
 
-test_v2_cancel(host_name, printer, user_name, id)
-char *host_name;
-char *printer;
-char *user_name;
-char *id;
+test_v2_cancel(char *host_name, char *printer, char *user_name, char *id)
 {
 v2_pr_cancel_args a;
 v2_pr_cancel_results *rp;
@@ -362,8 +344,7 @@ pr_list curr;
 
 
 void
-free_pr_list_item(curr)
-pr_list curr;
+free_pr_list_item(pr_list curr)
 {
 	if(curr->pn)
 		free(curr->pn);
@@ -380,10 +361,7 @@ pr_list curr;
 
 
 
-test_v2_queue(printer, user_name, private)
-char *printer;
-char *user_name;
-int private;
+test_v2_queue(char *printer, char *user_name, int private)
 {
 struct v2_pr_queue_args a;
 v2_pr_queue_results *rp;
@@ -432,8 +410,7 @@ pr_queue curr;
 
 
 void
-free_pr_queue_item(curr)
-pr_queue curr;
+free_pr_queue_item(pr_queue curr)
 {
 	if(curr->id)
 		free(curr->id);
@@ -456,8 +433,7 @@ pr_queue curr;
 
 
 
-test_v2_stat(printer)
-char *printer;
+test_v2_stat(char *printer)
 {
 v2_pr_status_args a;
 v2_pr_status_results *rp;
@@ -491,11 +467,7 @@ v2_pr_status_results *rp;
 	return(0);
 }
 
-struct mapreq_arg_item * make_mapreq_entry(t, i, n, next)
-mapreq	t;
-int i;
-char *n;
-struct mapreq_arg_item *next;
+struct mapreq_arg_item * make_mapreq_entry(mapreq t, int i, char *n, struct mapreq_arg_item *next)
 {
 struct mapreq_arg_item *x;
 	x = (struct mapreq_arg_item *)malloc(sizeof(struct mapreq_arg_item));
@@ -559,8 +531,7 @@ printf("********************************************************\n");
 }
 
 void
-bad(reason)
-char *reason;
+bad(char *reason)
 {
 printf("\n");
 printf("********************************************************\n");

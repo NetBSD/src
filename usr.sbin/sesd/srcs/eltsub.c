@@ -1,4 +1,4 @@
-/* $NetBSD: eltsub.c,v 1.3 2009/11/17 18:37:45 drochner Exp $ */
+/* $NetBSD: eltsub.c,v 1.4 2018/01/23 21:06:26 sevan Exp $ */
 /* $FreeBSD: $ */
 /* $OpenBSD: $ */
 /*
@@ -40,13 +40,12 @@
 #include <sys/ioctl.h>
 #include SESINC
 
-char *geteltnm __P((int));
-static char *scode2ascii __P((u_char));
-char *stat2ascii __P((int, u_char *));
+char *geteltnm(int);
+static char *scode2ascii(u_char);
+char *stat2ascii(int, u_char *);
 
 char *
-geteltnm(type)
-	int type;
+geteltnm(int type)
 {
 	static char rbuf[132];
 
@@ -159,9 +158,7 @@ scode2ascii(u_char code)
 
 
 char *
-stat2ascii(eletype, cstat)
-	int eletype;
-	u_char *cstat;
+stat2ascii(int eletype, u_char *cstat)
 {
 	static char ebuf[256], *scode;
 

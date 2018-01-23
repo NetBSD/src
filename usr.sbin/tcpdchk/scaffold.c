@@ -1,4 +1,4 @@
-/*	$NetBSD: scaffold.c,v 1.11 2012/03/21 10:11:34 matt Exp $	*/
+/*	$NetBSD: scaffold.c,v 1.12 2018/01/23 21:06:26 sevan Exp $	*/
 
  /*
   * Routines for testing only. Not really industrial strength.
@@ -11,7 +11,7 @@
 #if 0
 static char sccs_id[] = "@(#) scaffold.c 1.6 97/03/21 19:27:24";
 #else
-__RCSID("$NetBSD: scaffold.c,v 1.11 2012/03/21 10:11:34 matt Exp $");
+__RCSID("$NetBSD: scaffold.c,v 1.12 2018/01/23 21:06:26 sevan Exp $");
 #endif
 #endif
 
@@ -47,9 +47,7 @@ extern int rfc931_timeout; /* = RFC931_TIMEOUT; */
 
 /* find_inet_addr - find all addresses for this host, result to free() */
 
-struct addrinfo *find_inet_addr(host, flags)
-char   *host;
-int	flags;
+struct addrinfo *find_inet_addr(char *host, int flags)
 {
     struct addrinfo hints, *res;
     int error;
@@ -72,8 +70,7 @@ int	flags;
 
 /* check_dns - give each address thorough workout, return address count */
 
-int     check_dns(host)
-char   *host;
+int check_dns(char *host)
 {
     struct request_info request;
     struct sockaddr_storage ss;
@@ -112,8 +109,7 @@ char   *host;
 
 /* ARGSUSED */
 
-void    shell_cmd(command)
-char   *command;
+void shell_cmd(char *command)
 {
     if (hosts_access_verbose)
 	printf("command: %s", command);
@@ -123,8 +119,7 @@ char   *command;
 
 /* ARGSUSED */
 
-void    clean_exit(request)
-struct request_info *request;
+void clean_exit(struct request_info *request)
 {
     exit(0);
 }

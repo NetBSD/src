@@ -1,4 +1,4 @@
-/*	$NetBSD: parseconf.c,v 1.11 2011/02/08 20:20:28 rmind Exp $	*/
+/*	$NetBSD: parseconf.c,v 1.12 2018/01/23 21:06:25 sevan Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992 The University of Utah and the Center
@@ -47,7 +47,7 @@
 #if 0
 static char sccsid[] = "@(#)parseconf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: parseconf.c,v 1.11 2011/02/08 20:20:28 rmind Exp $");
+__RCSID("$NetBSD: parseconf.c,v 1.12 2018/01/23 21:06:25 sevan Exp $");
 #endif
 #endif /* not lint */
 
@@ -246,8 +246,7 @@ ParseConfig()
 **		  be copied if it's to be saved.
 */
 u_int8_t *
-ParseAddr(str)
-	char *str;
+ParseAddr(char *str)
 {
 	static u_int8_t addr[RMP_ADDRLEN];
 	char *cp;
