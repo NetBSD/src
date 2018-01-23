@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.144 2018/01/13 12:38:16 christos Exp $
+# $NetBSD: XEN3_DOM0,v 1.145 2018/01/23 14:47:53 sevan Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -10,7 +10,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 #options 	UVMHIST_PRINT
 #options 	SYSCALL_DEBUG
 
-#ident		"XEN3_DOM0-$Revision: 1.144 $"
+#ident		"XEN3_DOM0-$Revision: 1.145 $"
 
 maxusers	32		# estimated number of users
 
@@ -48,6 +48,8 @@ options 	MODULAR		# new style module(7) framework
 options 	USERCONF	# userconf(4) support
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
+# Alternate buffer queue strategies for better responsiveness under high
+# disk I/O load.
 #options 	BUFQ_READPRIO
 options 	BUFQ_PRIOCSCAN
 

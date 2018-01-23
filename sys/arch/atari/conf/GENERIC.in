@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.114 2017/09/14 07:58:39 mrg Exp $
+#	$NetBSD: GENERIC.in,v 1.115 2018/01/23 14:47:54 sevan Exp $
 #
 # Generic atari
 #
@@ -42,8 +42,8 @@ options 	HZ=64		# Set the clock-rate (48/64/96)
 options 	INSECURE	# disable kernel security levels
 #options 	NTP		# NTP phase/frequency locked loop
 
-# Enable experimental buffer queue strategy for better responsiveness under 
-# high disk I/O load. Use it with caution - it's not proven to be stable yet.
+# Alternate buffer queue strategies for better responsiveness under high
+# disk I/O load.
 #options 	BUFQ_READPRIO
 #options 	BUFQ_PRIOCSCAN
 

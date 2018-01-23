@@ -1,4 +1,4 @@
-#	$NetBSD: EXPLORA451,v 1.61 2017/09/14 07:58:40 mrg Exp $
+#	$NetBSD: EXPLORA451,v 1.62 2018/01/23 14:47:54 sevan Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -38,8 +38,8 @@ options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-# Enable experimental buffer queue strategy for better responsiveness under 
-# high disk I/O load. Use it with caution - it's not proven to be stable yet.
+# Alternate buffer queue strategies for better responsiveness under high
+# disk I/O load.
 #options 	BUFQ_READPRIO
 #options 	BUFQ_PRIOCSCAN
 

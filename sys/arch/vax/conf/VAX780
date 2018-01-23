@@ -1,4 +1,4 @@
-# $NetBSD: VAX780,v 1.24 2017/09/14 07:58:44 mrg Exp $
+# $NetBSD: VAX780,v 1.25 2018/01/23 14:47:56 sevan Exp $
 #
 # 11/780,750,730 machine description file
 # 
@@ -129,8 +129,8 @@ options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-# Enable experimental buffer queue strategy for better responsiveness under 
-# high disk I/O load. Use it with caution - it's not proven to be stable yet.
+# Alternate buffer queue strategies for better responsiveness under high
+# disk I/O load.
 #options 	BUFQ_READPRIO
 #options 	BUFQ_PRIOCSCAN
 

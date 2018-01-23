@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.16 2017/09/15 03:06:11 christos Exp $
+# $NetBSD: GENERIC,v 1.17 2018/01/23 14:47:54 sevan Exp $
 #
 # GENERIC machine description file
 #
@@ -23,7 +23,7 @@ include 	"arch/hppa/conf/std.hppa"
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-#ident 		"GENERIC-$Revision: 1.16 $"
+#ident 		"GENERIC-$Revision: 1.17 $"
 
 maxusers	32		# estimated number of users
 
@@ -59,8 +59,8 @@ options 	SYSVSHM		# System V-like memory sharing
 
 options 	USERCONF	# userconf(4) support
 
-# Enable experimental buffer queue strategy for better responsiveness under
-# high disk I/O load. Use it with caution - it's not proven to be stable yet.
+# Alternate buffer queue strategies for better responsiveness under high
+# disk I/O load.
 #options 	BUFQ_READPRIO
 #options 	BUFQ_PRIOCSCAN
 
