@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.h,v 1.37 2018/01/19 10:54:31 maxv Exp $	*/
+/*	$NetBSD: ip_icmp.h,v 1.38 2018/01/23 07:15:04 maxv Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -296,7 +296,6 @@ void	icmp_mtudisc(struct icmp *, struct in_addr);
 void	icmp_input(struct mbuf *, ...);
 void	icmp_init(void);
 void	icmp_reflect(struct mbuf *);
-void	icmp_send(struct mbuf *, struct mbuf *);
 int	icmp_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 
 void	icmp_mtudisc_callback_register(void (*)(struct in_addr));
