@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.165 2018/01/23 07:15:04 maxv Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.166 2018/01/23 07:33:49 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.165 2018/01/23 07:15:04 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.166 2018/01/23 07:33:49 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -403,20 +403,8 @@ freeit:
 }
 
 struct sockaddr_in icmpsrc = {
-	.sin_len = sizeof (struct sockaddr_in),
+	.sin_len = sizeof(struct sockaddr_in),
 	.sin_family = AF_INET,
-};
-static struct sockaddr_in icmpdst = {
-	.sin_len = sizeof (struct sockaddr_in),
-	.sin_family = AF_INET,
-};
-static struct sockaddr_in icmpgw = {
-	.sin_len = sizeof (struct sockaddr_in),
-	.sin_family = AF_INET,
-};
-struct sockaddr_in icmpmask = { 
-	.sin_len = 8,
-	.sin_family = 0,
 };
 
 /*
@@ -433,6 +421,14 @@ _icmp_input(struct mbuf *m, int hlen, int proto)
 	void *(*ctlfunc)(int, const struct sockaddr *, void *);
 	int code;
 	struct rtentry *rt;
+	struct sockaddr_in icmpdst = {
+		.sin_len = sizeof(struct sockaddr_in),
+		.sin_family = AF_INET,
+	};
+	struct sockaddr_in icmpgw = {
+		.sin_len = sizeof(struct sockaddr_in),
+		.sin_family = AF_INET,
+	};
 
 	/*
 	 * Locate icmp structure in mbuf, and check
@@ -798,8 +794,6 @@ icmp_reflect(struct mbuf *m)
 	}
 
 	sin = ia ? &ia->ia_addr : NULL;
-
-	icmpdst.sin_addr = t;
 
 	/*
 	 * if the packet is addressed somewhere else, compute the
