@@ -1,35 +1,6 @@
-/*	$NetBSD: ip_icmp.c,v 1.164 2018/01/22 06:56:25 maxv Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.165 2018/01/23 07:15:04 maxv Exp $	*/
 
 /*
- * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the project nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE PROJECT OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- */
-
-/*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -60,6 +31,35 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the project nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE PROJECT OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  */
 
 /*
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.164 2018/01/22 06:56:25 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.165 2018/01/23 07:15:04 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -130,7 +130,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.164 2018/01/22 06:56:25 maxv Exp $");
 #ifdef IPSEC
 #include <netipsec/ipsec.h>
 #include <netipsec/key.h>
-#endif	/* IPSEC*/
+#endif
 
 /*
  * ICMP routines: error generation, receive packet processing, and
@@ -138,12 +138,12 @@ __KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.164 2018/01/22 06:56:25 maxv Exp $");
  * host table maintenance routines.
  */
 
-int	icmpmaskrepl = 0;
-int	icmpbmcastecho = 0;
+int icmpmaskrepl = 0;
+int icmpbmcastecho = 0;
 #ifdef ICMPPRINTFS
-int	icmpprintfs = 0;
+int icmpprintfs = 0;
 #endif
-int	icmpreturndatabytes = 8;
+int icmpreturndatabytes = 8;
 
 percpu_t *icmpstat_percpu;
 
@@ -158,11 +158,8 @@ struct icmp_mtudisc_callback {
 LIST_HEAD(, icmp_mtudisc_callback) icmp_mtudisc_callbacks =
     LIST_HEAD_INITIALIZER(&icmp_mtudisc_callbacks);
 
-#if 0
-static u_int	ip_next_mtu(u_int, int);
-#else
-/*static*/ u_int	ip_next_mtu(u_int, int);
-#endif
+/* unused... */
+u_int ip_next_mtu(u_int, int);
 
 extern int icmperrppslim;
 static int icmperrpps_count = 0;
@@ -171,9 +168,10 @@ static int icmp_rediraccept = 1;
 static int icmp_redirtimeout = 600;
 static struct rttimer_queue *icmp_redirect_timeout_q = NULL;
 
-/* Protect mtudisc and redirect stuffs */
+/* Protect mtudisc and redirect stuff */
 static kmutex_t icmp_mtx __cacheline_aligned;
 
+static void icmp_send(struct mbuf *, struct mbuf *);
 static void icmp_mtudisc_timeout(struct rtentry *, struct rttimer *);
 static void icmp_redirect_timeout(struct rtentry *, struct rttimer *);
 
@@ -482,8 +480,8 @@ _icmp_input(struct mbuf *m, int hlen, int proto)
 		goto raw;
 	ICMP_STATINC(ICMP_STAT_INHIST + icp->icmp_type);
 	code = icp->icmp_code;
-	switch (icp->icmp_type) {
 
+	switch (icp->icmp_type) {
 	case ICMP_UNREACH:
 		switch (code) {
 		case ICMP_UNREACH_PROTOCOL:
@@ -762,6 +760,7 @@ icmp_reflect(struct mbuf *m)
 	}
 	t = ip->ip_dst;
 	ip->ip_dst = ip->ip_src;
+
 	/*
 	 * If the incoming packet was addressed directly to us, use
 	 * dst as the src for the reply.  Otherwise (broadcast or
@@ -898,56 +897,60 @@ icmp_reflect(struct mbuf *m)
 		 * Retrieve any source routing from the incoming packet;
 		 * add on any record-route or timestamp options.
 		 */
-		cp = (u_char *) (ip + 1);
+		cp = (u_char *)(ip + 1);
 		if ((opts = ip_srcroute(m)) == NULL &&
 		    (opts = m_gethdr(M_DONTWAIT, MT_HEADER))) {
 			MCLAIM(opts, m->m_owner);
 			opts->m_len = sizeof(struct in_addr);
 			*mtod(opts, struct in_addr *) = zeroin_addr;
 		}
+
 		if (opts) {
 #ifdef ICMPPRINTFS
-		    if (icmpprintfs)
-			    printf("icmp_reflect optlen %d rt %d => ",
-				optlen, opts->m_len);
+			if (icmpprintfs)
+				printf("icmp_reflect optlen %d rt %d => ",
+				    optlen, opts->m_len);
 #endif
-		    for (cnt = optlen; cnt > 0; cnt -= len, cp += len) {
-			    opt = cp[IPOPT_OPTVAL];
-			    if (opt == IPOPT_EOL)
-				    break;
-			    if (opt == IPOPT_NOP)
-				    len = 1;
-			    else {
-				    if (cnt < IPOPT_OLEN + sizeof(*cp))
-					    break;
-				    len = cp[IPOPT_OLEN];
-				    if (len < IPOPT_OLEN + sizeof(*cp) ||
-				        len > cnt)
-					    break;
-			    }
-			    /*
-			     * Should check for overflow, but it "can't happen"
-			     */
-			    if (opt == IPOPT_RR || opt == IPOPT_TS ||
-				opt == IPOPT_SECURITY) {
-				    memmove(mtod(opts, char *) + opts->m_len,
-					cp, len);
-				    opts->m_len += len;
-			    }
-		    }
-		    /* Terminate & pad, if necessary */
-		    if ((cnt = opts->m_len % 4) != 0) {
-			    for (; cnt < 4; cnt++) {
-				    *(mtod(opts, char *) + opts->m_len) =
-					IPOPT_EOL;
-				    opts->m_len++;
-			    }
-		    }
+			for (cnt = optlen; cnt > 0; cnt -= len, cp += len) {
+				opt = cp[IPOPT_OPTVAL];
+				if (opt == IPOPT_EOL)
+					break;
+				if (opt == IPOPT_NOP)
+					len = 1;
+				else {
+					if (cnt < IPOPT_OLEN + sizeof(*cp))
+						break;
+					len = cp[IPOPT_OLEN];
+					if (len < IPOPT_OLEN + sizeof(*cp) ||
+					    len > cnt)
+						break;
+				}
+
+				/* Overflows can't happen */
+				KASSERT(opts->m_len + len <= MHLEN);
+
+				if (opt == IPOPT_RR || opt == IPOPT_TS ||
+				    opt == IPOPT_SECURITY) {
+					memmove(mtod(opts, char *) +
+					    opts->m_len, cp, len);
+					opts->m_len += len;
+				}
+			}
+
+			/* Terminate & pad, if necessary */
+			if ((cnt = opts->m_len % 4) != 0) {
+				for (; cnt < 4; cnt++) {
+					*(mtod(opts, char *) + opts->m_len) =
+					    IPOPT_EOL;
+					opts->m_len++;
+				}
+			}
 #ifdef ICMPPRINTFS
-		    if (icmpprintfs)
-			    printf("%d\n", opts->m_len);
+			if (icmpprintfs)
+				printf("%d\n", opts->m_len);
 #endif
 		}
+
 		/*
 		 * Now strip out original options by copying rest of first
 		 * mbuf's data back, and adjust the IP length.
@@ -981,7 +984,7 @@ done:
  * Send an icmp packet back to the ip level,
  * after supplying a checksum.
  */
-void
+static void
 icmp_send(struct mbuf *m, struct mbuf *opts)
 {
 	struct ip *ip = mtod(m, struct ip *);
@@ -1032,13 +1035,13 @@ sysctl_net_inet_icmp_returndatabytes(SYSCTLFN_ARGS)
 	t = icmpreturndatabytes;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
-		return (error);
+		return error;
 
 	if (t < 8 || t > 512)
-		return (EINVAL);
+		return EINVAL;
 	icmpreturndatabytes = t;
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -1176,8 +1179,7 @@ icmp_statinc(u_int stat)
 	ICMP_STATINC(stat);
 }
 
-/* Table of common MTUs: */
-
+/* Table of common MTUs */
 static const u_int mtu_table[] = {
 	65535, 65280, 32000, 17914, 9180, 8166,
 	4352, 2002, 1492, 1006, 508, 296, 68, 0
@@ -1190,14 +1192,13 @@ icmp_mtudisc(struct icmp *icp, struct in_addr faddr)
 	struct sockaddr *dst = sintosa(&icmpsrc);
 	struct rtentry *rt;
 	u_long mtu = ntohs(icp->icmp_nextmtu);  /* Why a long?  IPv6 */
-	int    error;
+	int error;
 
 	rt = rtalloc1(dst, 1);
 	if (rt == NULL)
 		return;
 
 	/* If we didn't get a host route, allocate one */
-
 	if ((rt->rt_flags & RTF_HOST) == 0) {
 		struct rtentry *nrt;
 
@@ -1229,21 +1230,20 @@ icmp_mtudisc(struct icmp *icp, struct in_addr faddr)
 			mtu -= (icp->icmp_ip.ip_hl << 2);
 
 		/* If we still can't guess a value, try the route */
-
 		if (mtu == 0) {
 			mtu = rt->rt_rmx.rmx_mtu;
 
 			/* If no route mtu, default to the interface mtu */
-
 			if (mtu == 0)
 				mtu = rt->rt_ifp->if_mtu;
 		}
 
-		for (i = 0; i < sizeof(mtu_table) / sizeof(mtu_table[0]); i++)
+		for (i = 0; i < sizeof(mtu_table) / sizeof(mtu_table[0]); i++) {
 			if (mtu > mtu_table[i]) {
 				mtu = mtu_table[i];
 				break;
 			}
+		}
 	}
 
 	/*
@@ -1284,7 +1284,7 @@ icmp_mtudisc(struct icmp *icp, struct in_addr faddr)
  * is returned; otherwise, a smaller value is returned.
  */
 u_int
-ip_next_mtu(u_int mtu, int dir)	/* XXX */
+ip_next_mtu(u_int mtu, int dir)	/* XXX unused */
 {
 	int i;
 
