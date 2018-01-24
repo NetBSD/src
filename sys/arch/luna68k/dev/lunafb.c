@@ -1,4 +1,4 @@
-/* $NetBSD: lunafb.c,v 1.36 2014/10/04 16:58:17 tsutsui Exp $ */
+/* $NetBSD: lunafb.c,v 1.37 2018/01/24 05:35:58 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.36 2014/10/04 16:58:17 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.37 2018/01/24 05:35:58 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -345,7 +345,7 @@ omsetcmap(struct omfb_softc *sc, struct wsdisplay_cmap *p)
 	int cmsize, i, error;
 
 	cmsize = sc->sc_dc->dc_cmsize;
-	if (index >= cmsize || (index + count) > cmsize)
+	if (index >= cmsize || count > cmsize - index)
 		return (EINVAL);
 
 	error = copyin(p->red, &cmap.r[index], count);

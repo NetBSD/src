@@ -1,4 +1,4 @@
-/*	$NetBSD: pm.c,v 1.14 2018/01/05 13:11:32 flxd Exp $	*/
+/*	$NetBSD: pm.c,v 1.15 2018/01/24 05:35:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.14 2018/01/05 13:11:32 flxd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.15 2018/01/24 05:35:58 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -742,7 +742,7 @@ pm_set_cursor(struct pm_softc *sc, struct wsdisplay_cursor *p)
 	if ((v & WSDISPLAY_CURSOR_DOCMAP) != 0) {
 		index = p->cmap.index;
 		count = p->cmap.count;
-		if (index >= 2 || (index + count) > 2)
+		if (index >= 2 || count > 2 - index)
 			return (EINVAL);
 
 		rv = copyin(p->cmap.red, &cc->cc_color[index], count);

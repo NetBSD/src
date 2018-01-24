@@ -1,4 +1,4 @@
-/* $NetBSD: bt463.c,v 1.17 2013/06/24 03:57:36 riastradh Exp $ */
+/* $NetBSD: bt463.c,v 1.18 2018/01/24 05:35:58 riastradh Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt463.c,v 1.17 2013/06/24 03:57:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt463.c,v 1.18 2018/01/24 05:35:58 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -416,7 +416,7 @@ bt463_check_curcmap(struct ramdac_cookie *rc, struct wsdisplay_cursor *cursorp)
 	int count, index, error;
 
 	if (cursorp->cmap.index > 2 ||
-	    (cursorp->cmap.index + cursorp->cmap.count) > 2)
+	    cursorp->cmap.count > 2 - cursorp->cmap.index)
 		return (EINVAL);
 	count = cursorp->cmap.count;
 	index = cursorp->cmap.index;
