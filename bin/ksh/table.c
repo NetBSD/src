@@ -1,4 +1,4 @@
-/*	$NetBSD: table.c,v 1.4 2003/06/23 11:39:04 agc Exp $	*/
+/*	$NetBSD: table.c,v 1.5 2018/01/24 09:21:20 kamil Exp $	*/
 
 /*
  * dynamic hashed associative table for commands and variables
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: table.c,v 1.4 2003/06/23 11:39:04 agc Exp $");
+__RCSID("$NetBSD: table.c,v 1.5 2018/01/24 09:21:20 kamil Exp $");
 #endif
 
 
@@ -144,7 +144,7 @@ tenter(tp, n, h)
 }
 
 void
-tdelete(p)
+mytdelete(p)
 	register struct tbl *p;
 {
 	p->flag = 0;
