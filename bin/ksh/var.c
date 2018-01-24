@@ -1,9 +1,9 @@
-/*	$NetBSD: var.c,v 1.22 2018/01/24 09:21:20 kamil Exp $	*/
+/*	$NetBSD: var.c,v 1.23 2018/01/24 09:53:21 kamil Exp $	*/
 
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: var.c,v 1.22 2018/01/24 09:21:20 kamil Exp $");
+__RCSID("$NetBSD: var.c,v 1.23 2018/01/24 09:53:21 kamil Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -231,7 +231,7 @@ global(n)
 		return vp;
 	}
 	for (l = e->loc; ; l = l->next) {
-		vp = tsearch(&l->vars, n, h);
+		vp = mytsearch(&l->vars, n, h);
 		if (vp != NULL) {
 			if (array)
 				return arraysearch(vp, val);
@@ -277,7 +277,7 @@ local(const char *n, bool copy)
 		struct block *ll = l;
 		struct tbl *vq = (struct tbl *) 0;
 
-		while ((ll = ll->next) && !(vq = tsearch(&ll->vars, n, h)))
+		while ((ll = ll->next) && !(vq = mytsearch(&ll->vars, n, h)))
 			;
 		if (vq) {
 			vp->flag |= vq->flag & (EXPORT|INTEGER|RDONLY
@@ -886,7 +886,7 @@ makenv()
 
 				/* unexport any redefined instances */
 				for (l2 = l->next; l2 != NULL; l2 = l2->next) {
-					vp2 = tsearch(&l2->vars, vp->name, h);
+					vp2 = mytsearch(&l2->vars, vp->name, h);
 					if (vp2 != NULL)
 						vp2->flag &= ~EXPORT;
 				}
@@ -926,7 +926,7 @@ special(name)
 {
 	register struct tbl *tp;
 
-	tp = tsearch(&specials, name, hash(name));
+	tp = mytsearch(&specials, name, hash(name));
 	return tp && (tp->flag & ISSET) ? tp->type : V_NONE;
 }
 
@@ -937,7 +937,7 @@ unspecial(name)
 {
 	register struct tbl *tp;
 
-	tp = tsearch(&specials, name, hash(name));
+	tp = mytsearch(&specials, name, hash(name));
 	if (tp)
 		mytdelete(tp);
 }

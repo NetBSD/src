@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.25 2018/01/24 09:21:20 kamil Exp $	*/
+/*	$NetBSD: exec.c,v 1.26 2018/01/24 09:53:21 kamil Exp $	*/
 
 /*
  * execute command tree
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: exec.c,v 1.25 2018/01/24 09:21:20 kamil Exp $");
+__RCSID("$NetBSD: exec.c,v 1.26 2018/01/24 09:53:21 kamil Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -775,7 +775,7 @@ shcomexec(wp)
 {
 	register struct tbl *tp;
 
-	tp = tsearch(&builtins, *wp, hash(*wp));
+	tp = mytsearch(&builtins, *wp, hash(*wp));
 	if (tp == NULL)
 		internal_errorf(1, "shcomexec: %s", *wp);
 	return call_builtin(tp, wp);
@@ -795,7 +795,7 @@ findfunc(name, h, create)
 	struct tbl *tp = (struct tbl *) 0;
 
 	for (l = e->loc; l; l = l->next) {
-		tp = tsearch(&l->funs, name, h);
+		tp = mytsearch(&l->funs, name, h);
 		if (tp)
 			break;
 		if (!l->next && create) {
@@ -906,7 +906,7 @@ findcom(name, flags)
 		flags &= ~FC_FUNC;
 		goto Search;
 	}
-	tbi = (flags & FC_BI) ? tsearch(&builtins, name, h) : NULL;
+	tbi = (flags & FC_BI) ? mytsearch(&builtins, name, h) : NULL;
 	/* POSIX says special builtins first, then functions, then
 	 * POSIX regular builtins, then search path...
 	 */
@@ -936,7 +936,7 @@ findcom(name, flags)
 	if (!tp && (flags & FC_UNREGBI) && tbi)
 		tp = tbi;
 	if (!tp && (flags & FC_PATH) && !(flags & FC_DEFPATH)) {
-		tp = tsearch(&taliases, name, h);
+		tp = mytsearch(&taliases, name, h);
 		if (tp && (tp->flag & ISSET) && eaccess(tp->val.s, X_OK) != 0) {
 			if (tp->flag & ALLOC) {
 				tp->flag &= ~ALLOC;
