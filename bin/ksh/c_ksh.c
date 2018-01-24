@@ -1,4 +1,4 @@
-/*	$NetBSD: c_ksh.c,v 1.26 2017/06/30 04:41:19 kamil Exp $	*/
+/*	$NetBSD: c_ksh.c,v 1.27 2018/01/24 09:53:20 kamil Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: c_ksh.c,v 1.26 2017/06/30 04:41:19 kamil Exp $");
+__RCSID("$NetBSD: c_ksh.c,v 1.27 2018/01/24 09:53:20 kamil Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -470,9 +470,9 @@ c_whence(wp)
 	while ((vflag || ret == 0) && (id = *wp++) != NULL) {
 		tp = NULL;
 		if ((iam_whence || vflag) && !pflag)
-			tp = tsearch(&keywords, id, hash(id));
+			tp = mytsearch(&keywords, id, hash(id));
 		if (!tp && !pflag) {
-			tp = tsearch(&aliases, id, hash(id));
+			tp = mytsearch(&aliases, id, hash(id));
 			if (tp && !(tp->flag & ISSET))
 				tp = NULL;
 		}
@@ -946,7 +946,7 @@ c_alias(wp)
 			alias = str_nsave(alias, val++ - alias, ATEMP);
 		h = hash(alias);
 		if (val == NULL && !tflag && !xflag) {
-			ap = tsearch(t, alias, h);
+			ap = mytsearch(t, alias, h);
 			if (ap != NULL && (ap->flag&ISSET)) {
 				if (pflag)
 					shf_puts("alias ", shl_stdout);
@@ -1017,7 +1017,7 @@ c_unalias(wp)
 	wp += builtin_opt.optind;
 
 	for (; *wp != NULL; wp++) {
-		ap = tsearch(t, *wp, hash(*wp));
+		ap = mytsearch(t, *wp, hash(*wp));
 		if (ap == NULL) {
 			rv = 1;	/* POSIX */
 			continue;
