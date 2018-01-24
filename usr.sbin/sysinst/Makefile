@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2014/07/26 19:56:30 dholland Exp $
+#	$NetBSD: Makefile,v 1.3 2018/01/24 09:04:46 skrll Exp $
 #
 # sysinst is usually built when the crunched install binary is built,
 # but can be built here as a normal program for testing.
@@ -12,7 +12,6 @@ SUBDIR+=arch/dummy
 
 .if ALL_MACHINES
 
-SUBDIR  = arch/acorn26
 SUBDIR += arch/acorn32
 SUBDIR += arch/alpha
 SUBDIR += arch/amd64

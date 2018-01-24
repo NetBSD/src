@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2016/01/31 18:56:49 christos Exp $
+# $NetBSD: Makefile,v 1.2 2018/01/24 09:04:41 skrll Exp $
 # Build a small disklabel (for tiny boot media)
 
 SRCDIR=	${.CURDIR}/../../../sbin/disklabel
@@ -20,7 +20,7 @@ LDADD+= -lutil
 CPPFLAGS+= -DSTRICT_CYLINDER_ALIGNMENT
 .endif
 
-.if (${MACHINE} == "acorn32" || ${MACHINE} == "acorn26")
+.if ${MACHINE} == "acorn32"
 # Support FileCore boot block
 CPPFLAGS+= -DUSE_ACORN
 .endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.52 2017/07/23 13:35:15 skrll Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.53 2018/01/24 09:04:44 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.52 2017/07/23 13:35:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.53 2018/01/24 09:04:44 skrll Exp $");
 
 #include <sys/exec.h>
 #include <sys/proc.h>
@@ -104,19 +104,15 @@ __KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.52 2017/07/23 13:35:15 skrll Exp $
 char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 
-#ifdef __PROG32
 extern const uint32_t undefinedinstruction_bounce[];
-#endif
 
 /* Our exported CPU info; we can have only one. */
 struct cpu_info cpu_info_store = {
 	.ci_cpl = IPL_HIGH,
 	.ci_curlwp = &lwp0,
-#ifdef __PROG32
 	.ci_undefsave[2] = (register_t) undefinedinstruction_bounce,
 #if defined(ARM_MMU_EXTENDED) && KERNEL_PID != 0
 	.ci_pmap_asid_cur = KERNEL_PID,
-#endif
 #endif
 };
 
@@ -182,7 +178,6 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	tf->tf_usr_lr = pack->ep_entry;
 	tf->tf_svc_lr = 0x77777777;		/* Something we can see */
 	tf->tf_pc = pack->ep_entry;
-#ifdef __PROG32
 #if defined(__ARMEB__)
 	/*
 	 * If we are running on ARMv7, we need to set the E bit to force
@@ -197,7 +192,6 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	if (pack->ep_entry & 1)
 		tf->tf_spsr |= PSR_T_bit;
 #endif
-#endif /* __PROG32 */
 
 	l->l_md.md_flags = 0;
 #ifdef EXEC_AOUT

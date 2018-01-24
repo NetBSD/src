@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sys_machdep.c,v 1.14 2010/07/07 01:30:33 chs Exp $	*/
+/*	$NetBSD: linux_sys_machdep.c,v 1.15 2018/01/24 09:04:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_sys_machdep.c,v 1.14 2010/07/07 01:30:33 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sys_machdep.c,v 1.15 2018/01/24 09:04:45 skrll Exp $");
 
 #include <sys/systm.h>
 #include <sys/signalvar.h>
@@ -59,7 +59,6 @@ linux_sys_breakpoint(struct lwp *l, const void *v, register_t *retval)
 int
 linux_sys_cacheflush(struct lwp *l, const struct linux_sys_cacheflush_args *uap, register_t *retval)
 {
-#ifndef acorn26
 	/* {
 		syscallarg(uintptr_t) from;
 		syscallarg(uintptr_t) to;
@@ -68,7 +67,6 @@ linux_sys_cacheflush(struct lwp *l, const struct linux_sys_cacheflush_args *uap,
 
 	cpu_icache_sync_range(SCARG(uap, from),
 	    SCARG(uap, to) - SCARG(uap, from) + 1);
-#endif
 	*retval = 0;
 	return 0;
 }

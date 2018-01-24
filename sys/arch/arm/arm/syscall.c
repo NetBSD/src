@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.63 2018/01/18 14:18:23 skrll Exp $	*/
+/*	$NetBSD: syscall.c,v 1.64 2018/01/24 09:04:44 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.63 2018/01/18 14:18:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.64 2018/01/24 09:04:44 skrll Exp $");
 
 #include <sys/cpu.h>
 #include <sys/device.h>
@@ -90,10 +90,6 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.63 2018/01/18 14:18:23 skrll Exp $");
 #include <arm/swi.h>
 #include <arm/locore.h>
 
-#ifdef acorn26
-#include <machine/machdep.h>
-#endif
-
 void
 swi_handler(trapframe_t *tf)
 {
@@ -105,17 +101,8 @@ swi_handler(trapframe_t *tf)
 	 * Since all syscalls *should* come from user mode it will always
 	 * be safe to enable them, but check anyway.
 	 */
-#ifdef acorn26
-	if ((tf->tf_r15 & R15_IRQ_DISABLE) == 0)
-		int_on();
-#else
 	KASSERT(VALID_R15_PSR(tf->tf_pc, tf->tf_spsr));
 	restore_interrupts(tf->tf_spsr & IF32_bits);
-#endif
-
-#ifdef acorn26
-	tf->tf_pc += INSN_SIZE;
-#endif
 
 #ifndef THUMB_CODE
 	/*
@@ -148,11 +135,7 @@ swi_handler(trapframe_t *tf)
 	else
 #endif
 	{
-#ifdef __PROG32
 		insn = read_insn(tf->tf_pc - INSN_SIZE, true);
-#else
-		insn = read_insn((tf->tf_r15 & R15_PC) - INSN_SIZE, true);
-#endif
 	}
 
 	KASSERTMSG(tf == lwp_trapframe(l), "tf %p vs %p", tf, lwp_trapframe(l));
@@ -258,11 +241,7 @@ syscall(struct trapframe *tf, lwp_t *l, uint32_t insn)
 		tf->tf_r0 = rval[0];
 		tf->tf_r1 = rval[1];
 
-#ifdef __PROG32
 		tf->tf_spsr &= ~PSR_C_bit;	/* carry bit */
-#else
-		tf->tf_r15 &= ~R15_FLAG_C;	/* carry bit */
-#endif
 		break;
 
 	case ERESTART:
@@ -284,11 +263,7 @@ syscall(struct trapframe *tf, lwp_t *l, uint32_t insn)
 	default:
 	bad:
 		tf->tf_r0 = error;
-#ifdef __PROG32
 		tf->tf_spsr |= PSR_C_bit;	/* carry bit */
-#else
-		tf->tf_r15 |= R15_FLAG_C;	/* carry bit */
-#endif
 		break;
 	}
 
@@ -302,11 +277,7 @@ child_return(void *arg)
 	struct trapframe * const tf = lwp_trapframe(l);
 
 	tf->tf_r0 = 0;
-#ifdef __PROG32
 	tf->tf_spsr &= ~PSR_C_bit;	/* carry bit */
-#else
-	tf->tf_r15 &= ~R15_FLAG_C;	/* carry bit */
-#endif
 
 	userret(l);
 	ktrsysret(SYS_fork, 0, 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_cas.S,v 1.11 2013/08/18 06:28:18 matt Exp $	*/
+/*	$NetBSD: lock_cas.S,v 1.12 2018/01/24 09:04:44 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -109,14 +109,8 @@ STRONG_ALIAS(_atomic_cas_ptr_ni,_lock_cas)
 STRONG_ALIAS(atomic_cas_ptr_ni,_lock_cas)
 #endif /* !_ARM_ARCH_6 */
 
-#ifdef __PROG32
 #define SAVE_REGS	push	{r4-r5}
 #define RESTORE_REGS	pop	{r4-r5}
-#else
-/* Need to save R14_svc because it'll get trampled if we take a page fault. */
-#define SAVE_REGS	stmfd	sp!, {r4-r6, r14}
-#define RESTORE_REGS	ldmfd	sp!, {r4-r6, r14}
-#endif
 
 /*
  * int ucas_32(volatile int32_t *uptr, int32_t old, int32_t new, int32_t *ret);
