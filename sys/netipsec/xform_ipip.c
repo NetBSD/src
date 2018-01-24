@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipip.c,v 1.57 2018/01/24 14:37:34 maxv Exp $	*/
+/*	$NetBSD: xform_ipip.c,v 1.58 2018/01/24 14:39:14 maxv Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipip.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipip.c,v 1.25 2002/06/10 18:04:55 itojun Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.57 2018/01/24 14:37:34 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.58 2018/01/24 14:39:14 maxv Exp $");
 
 /*
  * IP-inside-IP processing
@@ -189,16 +189,16 @@ _ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 
 	switch (v >> 4) {
 #ifdef INET
-        case 4:
+	case 4:
 		hlen = sizeof(struct ip);
 		break;
 #endif /* INET */
 #ifdef INET6
-        case 6:
+	case 6:
 		hlen = sizeof(struct ip6_hdr);
 		break;
 #endif
-        default:
+	default:
 		DPRINTF(("%s: bad protocol version 0x%x (%u) "
 		    "for outer header\n", __func__, v, v>>4));
 		IPIP_STATINC(IPIP_STAT_FAMILY);
@@ -256,13 +256,13 @@ _ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 
 	switch (v >> 4) {
 #ifdef INET
-        case 4:
+	case 4:
 		hlen = sizeof(struct ip);
 		break;
 #endif /* INET */
 
 #ifdef INET6
-        case 6:
+	case 6:
 		hlen = sizeof(struct ip6_hdr);
 		break;
 #endif
@@ -294,20 +294,20 @@ _ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 	/* Some sanity checks in the inner IP header */
 	switch (v >> 4) {
 #ifdef INET
-    	case 4:
-                ipo = mtod(m, struct ip *);
+	case 4:
+		ipo = mtod(m, struct ip *);
 		ip_ecn_egress(ip4_ipsec_ecn, &otos, &ipo->ip_tos);
-                break;
+		break;
 #endif /* INET */
 #ifdef INET6
-    	case 6:
+	case 6:
 		ipo = NULL;
 		ip6 = mtod(m, struct ip6_hdr *);
 		itos = (ntohl(ip6->ip6_flow) >> 20) & 0xff;
 		ip_ecn_egress(ip6_ipsec_ecn, &otos, &itos);
 		ip6->ip6_flow &= ~htonl(0xff << 20);
 		ip6->ip6_flow |= htonl((uint32_t) itos << 20);
-                break;
+		break;
 #endif
 	default:
 		panic("%s: unknown ip version %u (inner)", __func__, v>>4);
