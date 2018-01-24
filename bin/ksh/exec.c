@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.24 2017/07/01 23:12:08 joerg Exp $	*/
+/*	$NetBSD: exec.c,v 1.25 2018/01/24 09:21:20 kamil Exp $	*/
 
 /*
  * execute command tree
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: exec.c,v 1.24 2017/07/01 23:12:08 joerg Exp $");
+__RCSID("$NetBSD: exec.c,v 1.25 2018/01/24 09:21:20 kamil Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -843,7 +843,7 @@ define(name, t)
 	}
 
 	if (t == NULL) {		/* undefine */
-		tdelete(tp);
+		mytdelete(tp);
 		return was_set ? 0 : 1;
 	}
 
