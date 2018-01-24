@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2170 2018/01/17 02:45:38 maya Exp $
+#	$NetBSD: mi,v 1.2171 2018/01/24 09:51:26 wiz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -11131,7 +11131,7 @@
 ./usr/share/man/cat9/printf.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/printf_nolog.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/proc_find.0		comp-sys-catman		.cat
-./usr/share/man/cat9/proc_trampoline.0		comp-sys-catman		obsolete
+./usr/share/man/cat9/proc_trampoline.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/profhz.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/prop_array_copyin_ioctl.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/prop_array_copyout_ioctl.0 comp-sys-catman		.cat
@@ -18600,7 +18600,7 @@
 ./usr/share/man/html9/printf.html		comp-sys-htmlman	html
 ./usr/share/man/html9/printf_nolog.html		comp-sys-htmlman	html
 ./usr/share/man/html9/proc_find.html		comp-sys-htmlman	html
-./usr/share/man/html9/proc_trampoline.html	comp-sys-htmlman	obsolete
+./usr/share/man/html9/proc_trampoline.html	comp-obsolete		obsolete
 ./usr/share/man/html9/profhz.html		comp-sys-htmlman	html
 ./usr/share/man/html9/prop_array_copyin_ioctl.html	comp-sys-htmlman	html
 ./usr/share/man/html9/prop_array_copyout_ioctl.html	comp-sys-htmlman	html
@@ -26231,7 +26231,7 @@
 ./usr/share/man/man9/printf.9			comp-sys-man		.man
 ./usr/share/man/man9/printf_nolog.9		comp-sys-man		.man
 ./usr/share/man/man9/proc_find.9		comp-sys-man		.man
-./usr/share/man/man9/proc_trampoline.9		comp-sys-man		obsolete
+./usr/share/man/man9/proc_trampoline.9		comp-obsolete		obsolete
 ./usr/share/man/man9/profhz.9			comp-sys-man		.man
 ./usr/share/man/man9/prop_array_copyin_ioctl.9	comp-sys-man		.man
 ./usr/share/man/man9/prop_array_copyout_ioctl.9 comp-sys-man		.man

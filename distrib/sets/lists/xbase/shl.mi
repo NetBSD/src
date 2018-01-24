@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.78 2017/10/06 20:26:51 christos Exp $
+# $NetBSD: shl.mi,v 1.79 2018/01/24 09:51:26 wiz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -14,9 +14,9 @@
 ./usr/X11R7/lib/X11/locale/lib/common/xlibi18n.so	-unknown-	xorg
 ./usr/X11R7/lib/X11/locale/lib/common/xlibi18n.so.2	-unknown-	xorg
 ./usr/X11R7/lib/X11/locale/lib/common/xlibi18n.so.2.0	-unknown-	xorg
-./usr/X11R7/lib/X11/locale/lib/common/xlocale.so	-unknown-	xorg,obsolete
-./usr/X11R7/lib/X11/locale/lib/common/xlocale.so.2	-unknown-	xorg,obsolete
-./usr/X11R7/lib/X11/locale/lib/common/xlocale.so.2.0	-unknown-	xorg,obsolete
+./usr/X11R7/lib/X11/locale/lib/common/xlocale.so	-unknown-	obsolete
+./usr/X11R7/lib/X11/locale/lib/common/xlocale.so.2	-unknown-	obsolete
+./usr/X11R7/lib/X11/locale/lib/common/xlocale.so.2.0	-unknown-	obsolete
 ./usr/X11R7/lib/X11/locale/lib/common/xomGeneric.so	-unknown-	xorg
 ./usr/X11R7/lib/X11/locale/lib/common/xomGeneric.so.2	-unknown-	xorg
 ./usr/X11R7/lib/X11/locale/lib/common/xomGeneric.so.2.0	-unknown-	xorg
