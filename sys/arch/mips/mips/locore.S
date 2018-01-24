@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.208 2016/11/09 11:50:09 maya Exp $	*/
+/*	$NetBSD: locore.S,v 1.209 2018/01/24 03:11:29 maya Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,7 +63,7 @@
 #include <mips/trap.h>
 #include <mips/locore.h>
 
-RCSID("$NetBSD: locore.S,v 1.208 2016/11/09 11:50:09 maya Exp $")
+RCSID("$NetBSD: locore.S,v 1.209 2018/01/24 03:11:29 maya Exp $")
 
 #include "assym.h"
 
@@ -197,7 +197,8 @@ _C_LABEL(kernel_text):
 	COP0_SYNC
 
 	jal	_C_LABEL(main)			# main(void)
-	nop
+	 nop
+
 	PANIC("main() returned")		# main never returns
 	.set	at
 	.globl _C_LABEL(verylocore)
