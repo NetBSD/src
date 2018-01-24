@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2349 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2350 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -103,3 +103,4 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 		[mrg 20180116]
 	macppc: Enable Veriexec support in the GENERIC kernel [sevan 20180117]
 	raid(4): Add support for 32-bit on 64-bit kernel.  [mrg 20180117]
+	zoneinfo: Import tzdata2018c (skipping 2018a & 2018b). [kre 20180124]
