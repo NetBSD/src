@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.20 2018/01/24 09:04:45 skrll Exp $	*/
+/*	$NetBSD: frame.h,v 1.21 2018/01/24 19:42:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  */
 /*
- * arm/frame.h - Stack frames structures common to arm26 and arm32
+ * arm/frame.h - Stack frames structures
  */
 
 #ifndef _ARM_FRAME_H_
@@ -51,7 +51,7 @@
  */
 
 typedef struct trapframe {
-	register_t tf_spsr; /* Zero on arm26 */
+	register_t tf_spsr;
 	register_t tf_fill; /* fill here so r0 will be dword aligned */
 	register_t tf_r0;
 	register_t tf_r1;
@@ -68,8 +68,8 @@ typedef struct trapframe {
 	register_t tf_r12;
 	register_t tf_usr_sp;
 	register_t tf_usr_lr;
-	register_t tf_svc_sp; /* Not used on arm26 */
-	register_t tf_svc_lr; /* Not used on arm26 */
+	register_t tf_svc_sp;
+	register_t tf_svc_lr;
 	register_t tf_pc;
 } trapframe_t;
 
