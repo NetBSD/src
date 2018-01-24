@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.209 2018/01/24 03:11:29 maya Exp $	*/
+/*	$NetBSD: locore.S,v 1.210 2018/01/24 03:13:36 maya Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,7 +63,7 @@
 #include <mips/trap.h>
 #include <mips/locore.h>
 
-RCSID("$NetBSD: locore.S,v 1.209 2018/01/24 03:11:29 maya Exp $")
+RCSID("$NetBSD: locore.S,v 1.210 2018/01/24 03:13:36 maya Exp $")
 
 #include "assym.h"
 
@@ -176,7 +176,7 @@ _C_LABEL(kernel_text):
 
 	# XXXuvm_lwp_getuarea
 	PTR_L	sp, L_PCB(MIPS_CURLWP)		# switch to lwp0 stack
-	nop
+	NOP_L
 	PTR_ADDU sp, USPACE - TF_SIZ - CALLFRAME_SIZ
 	/*
 	 * Raise to IPLHIGH
