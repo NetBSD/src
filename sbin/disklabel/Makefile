@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.72 2016/01/31 23:11:49 christos Exp $
+#	$NetBSD: Makefile,v 1.73 2018/01/24 09:04:42 skrll Exp $
 #	@(#)Makefile	8.2 (Berkeley) 3/17/94
 
 PROG=	disklabel
@@ -15,7 +15,7 @@ LDADD+= -lutil
 CPPFLAGS+= -DSTRICT_CYLINDER_ALIGNMENT
 .endif
 
-.if (${MACHINE} == "acorn32" || ${MACHINE} == "acorn26")
+.if ${MACHINE} == "acorn32"
 # Support FileCore boot block
 CPPFLAGS+= -DUSE_ACORN
 .endif

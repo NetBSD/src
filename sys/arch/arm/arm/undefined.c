@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.60 2017/07/02 16:16:44 skrll Exp $	*/
+/*	$NetBSD: undefined.c,v 1.61 2018/01/24 09:04:44 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -55,7 +55,7 @@
 #include <sys/kgdb.h>
 #endif
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.60 2017/07/02 16:16:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.61 2018/01/24 09:04:44 skrll Exp $");
 
 #include <sys/kmem.h>
 #include <sys/queue.h>
@@ -83,10 +83,6 @@ __KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.60 2017/07/02 16:16:44 skrll Exp $")
 #ifdef DDB
 #include <ddb/db_output.h>
 #include <machine/db_machdep.h>
-#endif
-
-#ifdef acorn26
-#include <machine/machdep.h>
 #endif
 
 static int gdb_trapper(u_int, u_int, struct trapframe *, int);
@@ -305,14 +301,8 @@ undefinedinstruction(trapframe_t *tf)
 #endif
 
 	/* Enable interrupts if they were enabled before the exception. */
-#ifdef acorn26
-	if ((tf->tf_r15 & R15_IRQ_DISABLE) == 0)
-		int_on();
-#else
 	restore_interrupts(tf->tf_spsr & IF32_bits);
-#endif
 
-#ifndef acorn26
 #ifdef THUMB_CODE
 	if (tf->tf_spsr & PSR_T_bit)
 		tf->tf_pc -= THUMB_INSN_SIZE;
@@ -321,22 +311,13 @@ undefinedinstruction(trapframe_t *tf)
 	{
 		tf->tf_pc -= INSN_SIZE;
 	}
-#endif
 
-#ifdef __PROG26
-	fault_pc = tf->tf_r15 & R15_PC;
-#else
 	fault_pc = tf->tf_pc;
-#endif
 
 	/* Get the current lwp/proc structure or lwp0/proc0 if there is none. */
 	l = curlwp;
 
-#ifdef __PROG26
-	if ((tf->tf_r15 & R15_MODE) == R15_MODE_USR) {
-#else
 	if ((tf->tf_spsr & PSR_MODE) == PSR_USR32_MODE) {
-#endif
 		user = 1;
 		LWP_CACHE_CREDS(l, l->l_proc);
 	} else

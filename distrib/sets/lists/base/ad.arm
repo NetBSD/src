@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.77 2015/07/03 15:11:04 matt Exp $
+# $NetBSD: ad.arm,v 1.78 2018/01/24 09:04:41 skrll Exp $
 ./libexec/ld.elf_so-oabi			base-sysutil-bin	compat,pic
 ./sbin/ldconfig					base-sysutil-root	pic,endian=1234
 ./usr/bin/fdformat				base-util-bin
@@ -13,8 +13,8 @@
 ./usr/libexec/ld.elf_so-oabi			base-sysutil-bin	compat,pic
 ./usr/libexec/ld.so				base-sys-shlib		pic,endian=1234
 ./usr/mdec/BBBB					base-obsolete		obsolete
-./usr/mdec/boot26				base-sysutil-bin	endian=1234,!eabi
-./usr/mdec/boot26,ffa				base-sysutil-bin	endian=1234,!eabi
+./usr/mdec/boot26				base-obsolete		obsolete
+./usr/mdec/boot26,ffa				base-obsolete		obsolete
 ./usr/mdec/boot32				base-sysutil-bin	endian=1234,!eabi
 ./usr/mdec/boot32,ffa				base-sysutil-bin	endian=1234,!eabi
 ./usr/mdec/bootimx23				base-sysutil-bin	endian=1234

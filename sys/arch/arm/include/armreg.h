@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.116 2017/12/20 15:22:14 skrll Exp $	*/
+/*	$NetBSD: armreg.h,v 1.117 2018/01/24 09:04:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -78,10 +78,6 @@
 #define PSR_T_bit (1 << 5)	/* Thumb state */
 
 #define PSR_MODE	0x0000001f	/* mode mask */
-#define PSR_USR26_MODE	0x00000000
-#define PSR_FIQ26_MODE	0x00000001
-#define PSR_IRQ26_MODE	0x00000002
-#define PSR_SVC26_MODE	0x00000003
 #define PSR_USR32_MODE	0x00000010
 #define PSR_FIQ32_MODE	0x00000011
 #define PSR_IRQ32_MODE	0x00000012
@@ -92,22 +88,6 @@
 #define PSR_UND32_MODE	0x0000001b
 #define PSR_SYS32_MODE	0x0000001f
 #define PSR_32_MODE	0x00000010
-
-#define PSR_IN_USR_MODE(psr)	(!((psr) & 3))		/* XXX */
-#define PSR_IN_32_MODE(psr)	((psr) & PSR_32_MODE)
-
-/* In 26-bit modes, the PSR is stuffed into R15 along with the PC. */
-
-#define R15_MODE	0x00000003
-#define R15_MODE_USR	0x00000000
-#define R15_MODE_FIQ	0x00000001
-#define R15_MODE_IRQ	0x00000002
-#define R15_MODE_SVC	0x00000003
-
-#define R15_PC		0x03fffffc
-
-#define R15_FIQ_DISABLE	0x04000000
-#define R15_IRQ_DISABLE	0x08000000
 
 #define R15_FLAGS	0xf0000000
 #define R15_FLAG_N	0x80000000
