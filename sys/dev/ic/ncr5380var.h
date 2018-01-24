@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380var.h,v 1.33 2012/07/28 00:43:23 matt Exp $	*/
+/*	$NetBSD: ncr5380var.h,v 1.34 2018/01/24 09:04:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -38,14 +38,14 @@
  */
 
 /*
- * Currently acorn26, amd64, alpha, i386, mips, news68k, sparc, sun2, and vax
+ * Currently amd64, alpha, i386, mips, news68k, sparc, sun2, and vax
  * use real bus space:
  *	acorn32: csa driver; easy to convert
  *	mac68k: sbc driver; easy to convert
  *	pc532: ncr driver; need bus.h first
  *	sun3: si driver; need bus.h first
  */
-#if defined(acorn26) || \
+#if \
     defined(__alpha__) || \
     defined(__amd64__) || \
     defined(__i386__) || \

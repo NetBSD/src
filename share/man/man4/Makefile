@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.650 2018/01/10 11:08:55 knakahara Exp $
+#	$NetBSD: Makefile,v 1.651 2018/01/24 09:04:42 skrll Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 \
@@ -248,7 +248,7 @@ MLINKS+=zstty.4 zs.4 zstty.4 zsc.4
 # This is a hack
 MLINKS+=edc.4 i386/ed.4
 
-SUBDIR= man4.acorn26 man4.acorn32 man4.alpha man4.amiga man4.arc man4.atari \
+SUBDIR= man4.acorn32 man4.alpha man4.amiga man4.arc man4.atari \
 	man4.cobalt man4.dreamcast man4.emips man4.evbarm man4.evbmips \
 	man4.evbppc \
 	man4.hp300 man4.hpcarm man4.hpcmips man4.hpcsh man4.hppa man4.i386 \

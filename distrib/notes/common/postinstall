@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.81 2015/05/19 19:30:27 snj Exp $
+.\"	$NetBSD: postinstall,v 1.82 2018/01/24 09:04:41 skrll Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -160,7 +160,6 @@ For example:
 .Pp
 .
 .ds IFname le0
-.if \n[acorn26]   .ds IFname ei0
 .if \n[acorn32]   .ds IFname ei0
 .if \n[amd64]     .ds IFname wm0
 .if \n[arc]       .ds IFname sn0

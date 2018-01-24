@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.137 2018/01/17 20:30:16 skrll Exp $
+#	$NetBSD: files.arm,v 1.138 2018/01/24 09:04:44 skrll Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -198,8 +198,6 @@ file	arch/arm/arm/sig_machdep.c
 file	arch/arm/arm/sigcode.S
 file	arch/arm/arm/syscall.c
 file	arch/arm/arm/undefined.c
-# vectors.S gets included manually by Makefile.acorn26, since it needs
-# to be at the start of the text segment on those machines.
 file	arch/arm/arm/vectors.S			arm32
 
 # files common to arm32 implementations

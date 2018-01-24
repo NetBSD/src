@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.19 2017/04/25 09:01:38 skrll Exp $	*/
+/*	$NetBSD: frame.h,v 1.20 2018/01/24 09:04:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -79,11 +79,7 @@ typedef struct trapframe {
 #define tf_r14 tf_usr_lr
 #define tf_r15 tf_pc
 
-#ifdef __PROG32
 #define TRAP_USERMODE(tf)	(((tf)->tf_spsr & PSR_MODE) == PSR_USR32_MODE)
-#elif defined(__PROG26)
-#define TRAP_USERMODE(tf)	(((tf)->tf_r15 & R15_MODE) == R15_MODE_USR)
-#endif
 
 /*
  * Signal frame.  Pushed onto user stack before calling sigcode.

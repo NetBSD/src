@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.539 2017/10/25 18:07:33 utkarsh009 Exp $
+.\"	$NetBSD: main,v 1.540 2018/01/24 09:04:41 skrll Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,7 +41,7 @@
 .
 .nr FOR_RELEASE 1
 .nr DOC_XR 1
-.ds MACHINE_LIST acorn26 acorn32 algor alpha amd64 amiga amigappc arc atari
+.ds MACHINE_LIST acorn32 algor alpha amd64 amiga amigappc arc atari
 .as MACHINE_LIST " bebox cats cesfic cobalt dreamcast emips evbarm evbmips
 .as MACHINE_LIST " evbppc evbsh3 ews4800mips hp300 hppa hpcarm hpcmips hpcsh
 .as MACHINE_LIST " i386 ibmnws iyonix landisk luna68k mac68k macppc mipsco
@@ -751,7 +751,7 @@ section near the beginning of this document for a list.
 .Pp
 In
 .Nx
-7.0, most ARM ports (all but acorn26, acorn32, and epoc32) have switched
+7.0, most ARM ports (all but acorn32, and epoc32) have switched
 to the official standard ABI
 .Pq EABI5
 which is recommended by ARM for ELF binaries.

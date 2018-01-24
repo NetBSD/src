@@ -1,4 +1,4 @@
-/*	$NetBSD: becc_intr.h,v 1.6 2014/02/05 19:03:45 christos Exp $	*/
+/*	$NetBSD: becc_intr.h,v 1.7 2018/01/24 09:04:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -45,7 +45,6 @@
 #include <arm/xscale/beccreg.h>
 #include <arm/xscale/becc_csrvar.h>
 
-#ifdef __PROG32
 static inline void __attribute__((__unused__))
 becc_set_intrmask(void)
 {
@@ -103,7 +102,6 @@ becc_spllower(int ipl)
 	becc_splx(becc_imask[ipl]);
 	return (old);
 }
-#endif /* __PROG32 */
 
 #if !defined(EVBARM_SPL_NOINLINE)
 

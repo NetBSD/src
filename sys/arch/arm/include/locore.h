@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.28 2017/08/24 14:19:36 jmcneill Exp $	*/
+/*	$NetBSD: locore.h,v 1.29 2018/01/24 09:04:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -66,7 +66,7 @@
 #if defined(_ARM_ARCH_6)
 #define IRQdisable	cpsid	i
 #define IRQenable	cpsie	i
-#elif defined(__PROG32)
+#else
 #define IRQdisable \
 	stmfd	sp!, {r0} ; \
 	mrs	r0, cpsr ; \
@@ -80,8 +80,6 @@
 	bic	r0, r0, #(I32_bit) ; \
 	msr	cpsr_c, r0 ; \
 	ldmfd	sp!, {r0}
-#else
-/* Not yet used in 26-bit code */
 #endif
 
 #if defined (TPIDRPRW_IS_CURCPU)
@@ -106,31 +104,20 @@
 
 #include <arm/cpufunc.h>
 
-#ifdef __PROG32
 #define IRQdisable __set_cpsr_c(I32_bit, I32_bit);
 #define IRQenable __set_cpsr_c(I32_bit, 0);
-#else
-#define IRQdisable set_r15(R15_IRQ_DISABLE, R15_IRQ_DISABLE);
-#define IRQenable set_r15(R15_IRQ_DISABLE, 0);
-#endif
 
 /*
  * Validate a PC or PSR for a user process.  Used by various system calls
  * that take a context passed by the user and restore it.
  */
 
-#ifdef __PROG32
 #ifdef __NO_FIQ
 #define VALID_R15_PSR(r15,psr)						\
 	(((psr) & PSR_MODE) == PSR_USR32_MODE && ((psr) & I32_bit) == 0)
 #else
 #define VALID_R15_PSR(r15,psr)						\
 	(((psr) & PSR_MODE) == PSR_USR32_MODE && ((psr) & IF32_bits) == 0)
-#endif
-#else
-#define VALID_R15_PSR(r15,psr)						\
-	(((r15) & R15_MODE) == R15_MODE_USR &&				\
-		((r15) & (R15_IRQ_DISABLE | R15_FIQ_DISABLE)) == 0)
 #endif
 
 /*
@@ -141,7 +128,6 @@
 
 /* The address of the vector page. */
 extern vaddr_t vector_page;
-#ifdef __PROG32
 void	arm32_vector_init(vaddr_t, int);
 
 #define	ARM_VEC_RESET			(1 << 0)
@@ -155,14 +141,11 @@ void	arm32_vector_init(vaddr_t, int);
 
 #define	ARM_NVEC			8
 #define	ARM_VEC_ALL			0xffffffff
-#endif /* __PROG32 */
 
-#ifndef acorn26
 /*
  * cpu device glue (belongs in cpuvar.h)
  */
 void	cpu_attach(device_t, cpuid_t);
-#endif
 
 /* 1 == use cpu_sleep(), 0 == don't */
 extern int cpu_do_powersave;

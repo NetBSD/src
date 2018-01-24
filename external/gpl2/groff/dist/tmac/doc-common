@@ -257,7 +257,6 @@
 .
 .ds doc-volume-as-alpha        alpha
 .als doc-volume-as-Alpha doc-volume-as-alpha
-.ds doc-volume-as-acorn26      acorn26
 .ds doc-volume-as-acorn32      acorn32
 .ds doc-volume-as-algor        algor
 .ds doc-volume-as-amd64        amd64

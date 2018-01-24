@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.170 2017/12/28 23:16:42 wiz Exp $
+.\"	$NetBSD: ddb.4,v 1.171 2018/01/24 09:04:42 skrll Exp $
 .\"
 .\" Copyright (c) 1997 - 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -953,21 +953,6 @@ to indicate that they are part of the machine-specific command
 set (e.g.
 .Ic machine reboot ) .
 Some of these commands are:
-.Ss ACORN26
-.Bl -tag -width "traptrace" -compact
-.It Ic bsw
-Writes one or two bytes to the IObus.
-Takes an address and a value.
-Use the
-.Dq b
-modifier to write a single byte and the
-.Dq h
-modifier to write two bytes.
-.It Ic frame
-Given a trap frame address, print out the trap frame.
-.It Ic irqstat
-Display the IRQ statistics
-.El
 .Ss ALPHA
 .Bl -tag -width "traptrace" -compact
 .It Ic cpu

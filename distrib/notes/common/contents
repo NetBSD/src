@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.171 2015/01/11 04:03:47 snj Exp $
+.\"	$NetBSD: contents,v 1.172 2018/01/24 09:04:41 skrll Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -119,12 +119,6 @@ A gzipped
 kernel containing code only for Open Firmware 1.0.5, 1.1.22, 2.0.x,
 and 2.4 systems (i.e. those that have floppy drives).
 It has a RAM-disk installer.
-.\}
-.
-.if \n[acorn26] \{\
-.			It Pa netbsd-FOURMEG.gz
-A somewhat smaller kernel, intended to be usable on systems with
-four megabytes of RAM.
 .\}
 .
 .if \n[acorn32] \{\
@@ -981,19 +975,6 @@ command from the root directory (
 .
 .\" ---------------------------- MD DISCUSSION
 .
-.
-.if \n[acorn26] \{\
-.Pp
-There is a copy of the
-.Nx Ns /acorn26
-bootloader,
-.Ic boot26 ,
-in the
-.Pa installation/misc
-subdirectory.
-This is a RISC OS relocatable module, and should have its file
-type set to ffa (Module) once it's been copied to a RISC OS system.
-.\}
 .
 .
 .if \n[atari] \{\

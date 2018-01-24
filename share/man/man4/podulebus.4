@@ -1,4 +1,4 @@
-.\" $NetBSD: podulebus.4,v 1.3 2009/03/09 19:24:28 joerg Exp $
+.\" $NetBSD: podulebus.4,v 1.4 2018/01/24 09:04:42 skrll Exp $
 .\"
 .\" Copyright (c) 2000, 2006 Ben Harris
 .\" All rights reserved.
@@ -32,8 +32,6 @@
 .Nm podulebus
 .Nd Acorn Expansion Card bus driver
 .Sh SYNOPSIS
-.Cd podulebus0 at ioc0 bank 4
-.Pq Nx Ns /acorn26
 .Cd podulebus0 at root
 .Pq Nx Ns /acorn32
 .Sh DESCRIPTION
@@ -52,8 +50,6 @@ device.
 .Nx
 includes several machine-independent expansion card device drivers.
 There are also some device drivers which are specific to
-.Nx Ns /acorn26
-or
 .Nx Ns /acorn32 .
 .Sh HARDWARE
 The following devices are supported by

@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.166 2018/01/09 03:31:14 christos Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.167 2018/01/24 09:04:41 skrll Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -872,7 +872,6 @@
 ./usr/share/man/cat3
 ./usr/share/man/cat3lua
 ./usr/share/man/cat4
-./usr/share/man/cat4/acorn26
 ./usr/share/man/cat4/acorn32
 ./usr/share/man/cat4/alpha
 ./usr/share/man/cat4/amiga
@@ -908,7 +907,6 @@
 ./usr/share/man/cat6
 ./usr/share/man/cat7
 ./usr/share/man/cat8
-./usr/share/man/cat8/acorn26
 ./usr/share/man/cat8/acorn32
 ./usr/share/man/cat8/algor
 ./usr/share/man/cat8/alpha
@@ -961,7 +959,6 @@
 ./usr/share/man/cat8/x86
 ./usr/share/man/cat9
 ./usr/share/man/cat9lua
-./usr/share/man/cat9/acorn26
 ./usr/share/man/cat9/alpha
 ./usr/share/man/cat9/amiga
 ./usr/share/man/cat9/atari
@@ -984,7 +981,6 @@
 ./usr/share/man/html3f
 ./usr/share/man/html3lua
 ./usr/share/man/html4
-./usr/share/man/html4/acorn26
 ./usr/share/man/html4/acorn32
 ./usr/share/man/html4/alpha
 ./usr/share/man/html4/amiga
@@ -1020,7 +1016,6 @@
 ./usr/share/man/html6
 ./usr/share/man/html7
 ./usr/share/man/html8
-./usr/share/man/html8/acorn26
 ./usr/share/man/html8/acorn32
 ./usr/share/man/html8/algor
 ./usr/share/man/html8/alpha
@@ -1073,7 +1068,6 @@
 ./usr/share/man/html8/x86
 ./usr/share/man/html9
 ./usr/share/man/html9lua
-./usr/share/man/html9/acorn26
 ./usr/share/man/html9/alpha
 ./usr/share/man/html9/amiga
 ./usr/share/man/html9/atari
@@ -1096,7 +1090,6 @@
 ./usr/share/man/man3f
 ./usr/share/man/man3lua
 ./usr/share/man/man4
-./usr/share/man/man4/acorn26
 ./usr/share/man/man4/acorn32
 ./usr/share/man/man4/alpha
 ./usr/share/man/man4/amiga
@@ -1132,7 +1125,6 @@
 ./usr/share/man/man6
 ./usr/share/man/man7
 ./usr/share/man/man8
-./usr/share/man/man8/acorn26
 ./usr/share/man/man8/acorn32
 ./usr/share/man/man8/algor
 ./usr/share/man/man8/alpha
@@ -1185,7 +1177,6 @@
 ./usr/share/man/man8/x86
 ./usr/share/man/man9
 ./usr/share/man/man9lua
-./usr/share/man/man9/acorn26
 ./usr/share/man/man9/alpha
 ./usr/share/man/man9/amiga
 ./usr/share/man/man9/atari

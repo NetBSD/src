@@ -1,4 +1,4 @@
-/*	$NetBSD: fiq_subr.S,v 1.6 2013/12/02 18:36:10 joerg Exp $	*/
+/*	$NetBSD: fiq_subr.S,v 1.7 2018/01/24 09:04:44 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -51,7 +51,6 @@
 #define	MODE_CHANGE_NOP	/* Data sheet says ARM3 doesn't need it */
 #endif
 
-#ifdef __PROG32
 #ifdef _ARM_ARCH_6
 #define	SWITCH_TO_FIQ_MODE						\
 	cps	#PSR_FIQ32_MODE
@@ -63,15 +62,7 @@
 	orr	r2, r2, #(PSR_FIQ32_MODE)			;	\
 	msr	cpsr_all, r2
 #endif
-#else
-#define	SWITCH_TO_FIQ_MODE					;	\
-	mov	r1, r15						;	\
-	bic	r2, r1, #(R15_MODE)				;	\
-	teqp	r2, #(R15_MODE_FIQ)				;	\
-	MODE_CHANGE_NOP
-#endif /* __PROG32 */
 
-#ifdef __PROG32
 #ifdef _ARM_ARCH_6
 #define	BACK_TO_SVC_MODE						\
 	cps	#PSR_SVC32_MODE
@@ -79,11 +70,6 @@
 #define	BACK_TO_SVC_MODE						\
 	msr	cpsr_all, r3
 #endif
-#else
-#define	BACK_TO_SVC_MODE					;	\
-	teqp	r1, #0						;	\
-	MODE_CHANGE_NOP
-#endif /* __PROG32 */
 
 /*
  * fiq_getregs:

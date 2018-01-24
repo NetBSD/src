@@ -1,4 +1,4 @@
-/*	$NetBSD: copystr.S,v 1.11 2013/08/18 06:28:18 matt Exp $	*/
+/*	$NetBSD: copystr.S,v 1.12 2018/01/24 09:04:44 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -47,7 +47,7 @@
 
 #include <arm/locore.h>
 
-RCSID("$NetBSD: copystr.S,v 1.11 2013/08/18 06:28:18 matt Exp $")
+RCSID("$NetBSD: copystr.S,v 1.12 2018/01/24 09:04:44 skrll Exp $")
 
 #include <sys/errno.h>
 
@@ -86,14 +86,8 @@ ENTRY(copystr)
 	RET
 END(copystr)
 
-#ifdef __PROG32
 #define SAVE_REGS	push	{r3-r6}
 #define RESTORE_REGS	pop	{r3-r6}
-#else
-/* Need to save R14_svc because it'll get trampled if we take a page fault. */
-#define SAVE_REGS	stmfd	sp!, {r4-r6, r14}
-#define RESTORE_REGS	ldmfd	sp!, {r4-r6, r14}
-#endif
 
 /*
  * r0 - user space address

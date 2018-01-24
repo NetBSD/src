@@ -1,4 +1,4 @@
-/*	$NetBSD: boot32.c,v 1.42 2016/06/11 06:25:21 dholland Exp $	*/
+/*	$NetBSD: boot32.c,v 1.43 2018/01/24 09:04:44 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 Reinoud Zandijk
@@ -29,7 +29,6 @@
  * Thanks a bunch for Ben's framework for the bootloader and its suporting
  * libs. This file tries to actually boot NetBSD/acorn32 !
  *
- * XXX eventually to be partly merged back with boot26 ? XXX
  */
 
 #include <lib/libsa/stand.h>

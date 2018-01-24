@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.49 2015/03/24 08:38:29 matt Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.50 2018/01/24 09:04:44 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,7 +44,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.49 2015/03/24 08:38:29 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.50 2018/01/24 09:04:44 skrll Exp $");
 
 #include <sys/mount.h>		/* XXX only needed by syscallargs.h */
 #include <sys/cpu.h>
@@ -58,9 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.49 2015/03/24 08:38:29 matt Exp $"
 #include <arm/locore.h>
 
 #include <machine/pcb.h>
-#ifndef acorn26
 #include <arm/cpufunc.h>
-#endif
 
 void *
 getframe(struct lwp *l, int sig, int *onstack)
@@ -200,10 +198,8 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 	mcp->_mc_tlsbase = (uintptr_t)l->l_private;
 	*flags |= _UC_TLSBASE;
 
-#ifdef __PROG32
 	const struct pcb * const pcb = lwp_getpcb(l);
 	mcp->_mc_user_tpid = pcb->pcb_user_pid_rw;
-#endif
 }
 
 int
@@ -273,10 +269,8 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 	mutex_exit(p->p_lock);
 
-#ifdef __PROG32
 	struct pcb * const pcb = lwp_getpcb(l);
 	pcb->pcb_user_pid_rw = mcp->_mc_user_tpid;
-#endif
 
 	return (0);
 }

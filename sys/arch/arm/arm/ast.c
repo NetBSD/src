@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.29 2017/05/12 05:46:39 skrll Exp $	*/
+/*	$NetBSD: ast.c,v 1.30 2018/01/24 09:04:44 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.29 2017/05/12 05:46:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.30 2018/01/24 09:04:44 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -60,10 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.29 2017/05/12 05:46:39 skrll Exp $");
 
 #include <uvm/uvm_extern.h>
 
-#ifdef acorn26
-#include <machine/machdep.h>
-#endif
-
 /*
  * Prototypes
  */
@@ -72,7 +68,7 @@ void ast(struct trapframe *);
 void
 userret(struct lwp *l)
 {
-#if defined(__PROG32) && defined(ARM_MMU_EXTENDED)
+#if defined(ARM_MMU_EXTENDED)
 	/*
 	 * If our ASID got released, access via TTBR0 will have been disabled.
 	 * So if it is disabled, activate the lwp again to get a new ASID.
@@ -95,10 +91,8 @@ userret(struct lwp *l)
 	/* Invoke MI userret code */
 	mi_userret(l);
 
-#if defined(__PROG32) && defined(DIAGNOSTIC)
 	KASSERT(VALID_R15_PSR(lwp_trapframe(l)->tf_pc,
 	    lwp_trapframe(l)->tf_spsr));
-#endif
 }
 
 
@@ -113,17 +107,9 @@ ast(struct trapframe *tf)
 {
 	struct lwp * const l = curlwp;
 
-#ifdef acorn26
-	/* Enable interrupts if they were enabled before the trap. */
-	if ((tf->tf_r15 & R15_IRQ_DISABLE) == 0)
-		int_on();
-#else
 	/* Interrupts were restored by exception_exit. */
-#endif
 
-#ifdef __PROG32
 	KASSERT(VALID_R15_PSR(tf->tf_pc, tf->tf_spsr));
-#endif
 
 #ifdef __HAVE_PREEMPTION
 	kpreempt_disable();

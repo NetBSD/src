@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.51 2017/02/11 03:07:06 christos Exp $
+# $NetBSD: Makefile,v 1.52 2018/01/24 09:04:40 skrll Exp $
 #
 # Consult "*.conf" for the configuration variables; this Makefile is typically
 # not edited for basic configuration changes.
@@ -144,7 +144,6 @@ EASTER_EGG?=	/dev/null
 
 ##### MACHINE_ARCH for possible shared sets for each (shared) port #####
 
-MACHINE_ARCH.acorn26=	arm
 MACHINE_ARCH.acorn32=	arm
 MACHINE_ARCH.algor=	mipsel
 MACHINE_ARCH.amiga=	m68k

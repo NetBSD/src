@@ -1,5 +1,5 @@
-# $NetBSD: ad.arm,v 1.79 2017/08/01 20:07:43 joerg Exp $
-./usr/include/acorn26				comp-c-include
+# $NetBSD: ad.arm,v 1.80 2018/01/24 09:04:41 skrll Exp $
+./usr/include/acorn26				comp-c-include		obsolete
 ./usr/include/acorn26/ansi.h			comp-obsolete		obsolete
 ./usr/include/acorn26/aout_machdep.h		comp-obsolete		obsolete
 ./usr/include/acorn26/asm.h			comp-obsolete		obsolete
@@ -9,7 +9,7 @@
 ./usr/include/acorn26/cdefs.h			comp-obsolete		obsolete
 ./usr/include/acorn26/cpu.h			comp-obsolete		obsolete
 ./usr/include/acorn26/db_machdep.h		comp-obsolete		obsolete
-./usr/include/acorn26/disklabel.h		comp-c-include
+./usr/include/acorn26/disklabel.h		comp-c-include		obsolete
 ./usr/include/acorn26/elf_machdep.h		comp-obsolete		obsolete
 ./usr/include/acorn26/endian.h			comp-obsolete		obsolete
 ./usr/include/acorn26/endian_machdep.h		comp-obsolete		obsolete
@@ -24,7 +24,7 @@
 ./usr/include/acorn26/int_limits.h		comp-obsolete		obsolete
 ./usr/include/acorn26/int_mwgwtypes.h		comp-obsolete		obsolete
 ./usr/include/acorn26/int_types.h		comp-obsolete		obsolete
-./usr/include/acorn26/intr.h			comp-c-include
+./usr/include/acorn26/intr.h			comp-c-include		obsolete
 ./usr/include/acorn26/ipkdb.h			comp-obsolete		obsolete
 ./usr/include/acorn26/irq.h			comp-obsolete		obsolete
 ./usr/include/acorn26/limits.h			comp-obsolete		obsolete
@@ -48,7 +48,7 @@
 ./usr/include/acorn26/trap.h			comp-obsolete		obsolete
 ./usr/include/acorn26/types.h			comp-obsolete		obsolete
 ./usr/include/acorn26/varargs.h			comp-obsolete		obsolete
-./usr/include/acorn26/vmparam.h			comp-c-include
+./usr/include/acorn26/vmparam.h			comp-c-include		obsolete
 ./usr/include/acorn26/wchar_limits.h		comp-obsolete		obsolete
 ./usr/include/acorn32				comp-c-include
 ./usr/include/acorn32/ansi.h			comp-obsolete		obsolete
@@ -110,8 +110,8 @@
 ./usr/include/arm/ansi.h			comp-c-include
 ./usr/include/arm/aout_machdep.h		comp-c-include
 ./usr/include/arm/apmvar.h			comp-c-include
-./usr/include/arm/arm26				comp-c-include
-./usr/include/arm/arm26/types.h			comp-c-include
+./usr/include/arm/arm26				comp-c-include		obsolete
+./usr/include/arm/arm26/types.h			comp-c-include		obsolete
 ./usr/include/arm/arm32				comp-c-include
 ./usr/include/arm/arm32/bus.h			comp-obsolete		obsolete
 ./usr/include/arm/arm32/frame.h			comp-c-include

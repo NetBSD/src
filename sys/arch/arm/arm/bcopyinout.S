@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopyinout.S,v 1.20 2013/08/18 06:28:18 matt Exp $	*/
+/*	$NetBSD: bcopyinout.S,v 1.21 2018/01/24 09:04:44 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -52,19 +52,13 @@
 #include "bcopyinout_xscale.S"
 #else
 
-RCSID("$NetBSD: bcopyinout.S,v 1.20 2013/08/18 06:28:18 matt Exp $")	
+RCSID("$NetBSD: bcopyinout.S,v 1.21 2018/01/24 09:04:44 skrll Exp $")	
 
 	.text
 	.align	0
 
-#ifdef __PROG32
 #define SAVE_REGS	stmfd	sp!, {r4-r11}
 #define RESTORE_REGS	ldmfd	sp!, {r4-r11}
-#else
-/* Need to save R14_svc because it'll get trampled if we take a page fault. */
-#define SAVE_REGS	stmfd	sp!, {r4-r11, r14}
-#define RESTORE_REGS	ldmfd	sp!, {r4-r11, r14}
-#endif
 		
 #if defined(__XSCALE__) || defined(_ARM_ARCH_6)
 #define HELLOCPP #
@@ -682,7 +676,6 @@ ENTRY(kcopy)
 END(kcopy)
 #endif	/* !__XSCALE__ */
 
-#ifdef __PROG32
 /*
  * int badaddr_read_1(const uint8_t *src, uint8_t *dest)
  *
@@ -754,4 +747,3 @@ ENTRY(badaddr_read_4)
 1:	str	ip, [r2, #PCB_ONFAULT]
 	RET
 END(badaddr_read_4)
-#endif /* __PROG32 */

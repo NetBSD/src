@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.76 2017/07/12 09:49:08 skrll Exp $
+#	$NetBSD: genassym.cf,v 1.77 2018/01/24 09:04:44 skrll Exp $
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -168,15 +168,15 @@ define	LW_SYSTEM		LW_SYSTEM
 
 define	P_RASLIST		offsetof(struct proc, p_raslist)
 
-define	PCB_R8			offsetof(struct pcb, pcb_un.un_32.pcb32_r8)
-define	PCB_R9			offsetof(struct pcb, pcb_un.un_32.pcb32_r9)
-define	PCB_R10			offsetof(struct pcb, pcb_un.un_32.pcb32_r10)
-define	PCB_R11			offsetof(struct pcb, pcb_un.un_32.pcb32_r11)
-define	PCB_R12			offsetof(struct pcb, pcb_un.un_32.pcb32_r12)
-define	PCB_KSP			offsetof(struct pcb, pcb_un.un_32.pcb32_sp)
-define	PCB_LR			offsetof(struct pcb, pcb_un.un_32.pcb32_lr)
-define	PCB_PC			offsetof(struct pcb, pcb_un.un_32.pcb32_pc)
-define	PCB_USER_PID_RW		offsetof(struct pcb, pcb_un.un_32.pcb32_user_pid_rw)
+define	PCB_R8			offsetof(struct pcb, pcb_r8)
+define	PCB_R9			offsetof(struct pcb, pcb_r9)
+define	PCB_R10			offsetof(struct pcb, pcb_r10)
+define	PCB_R11			offsetof(struct pcb, pcb_r11)
+define	PCB_R12			offsetof(struct pcb, pcb_r12)
+define	PCB_KSP			offsetof(struct pcb, pcb_sp)
+define	PCB_LR			offsetof(struct pcb, pcb_lr)
+define	PCB_PC			offsetof(struct pcb, pcb_pc)
+define	PCB_USER_PID_RW		offsetof(struct pcb, pcb_user_pid_rw)
 define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
 define	PCB_VFP_FPEXC		offsetof(struct pcb, pcb_vfp.vfp_fpexc)
 

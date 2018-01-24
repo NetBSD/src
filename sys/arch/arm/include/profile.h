@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.17 2015/01/11 20:52:57 joerg Exp $	*/
+/*	$NetBSD: profile.h,v 1.18 2018/01/24 09:04:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris
@@ -169,12 +169,6 @@
 #endif
 
 #ifdef _KERNEL
-#ifdef __PROG26
-extern int int_off_save(void);
-extern void int_restore(int);
-#define	MCOUNT_ENTER	(s = int_off_save())
-#define	MCOUNT_EXIT	int_restore(s)
-#else
 #include <arm/cpufunc.h>
 /*
  * splhigh() and splx() are heavyweight, and call mcount().  Therefore
@@ -184,5 +178,4 @@ extern void int_restore(int);
  */
 #define	MCOUNT_ENTER	s = __set_cpsr_c(0x0080, 0x0080);	/* kill IRQ */
 #define	MCOUNT_EXIT	__set_cpsr_c(0xffffffff, s);	/* restore old value */
-#endif /* !acorn26 */
 #endif /* _KERNEL */

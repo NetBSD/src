@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_intr.h,v 1.11 2014/02/04 18:51:16 matt Exp $	*/
+/*	$NetBSD: i80321_intr.h,v 1.12 2018/01/24 09:04:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2006 Wasabi Systems, Inc.
@@ -49,7 +49,6 @@
 
 #include <arm/xscale/i80321reg.h>
 
-#ifdef __PROG32
 static inline void __attribute__((__unused__))
 i80321_set_intrmask(void)
 {
@@ -112,7 +111,6 @@ i80321_spllower(int ipl)
 	return(old);
 }
 
-#endif /* __PROG32 */
 
 #if !defined(EVBARM_SPL_NOINLINE)
 

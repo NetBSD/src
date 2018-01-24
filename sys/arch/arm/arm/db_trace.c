@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.32 2017/04/25 09:02:04 skrll Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.33 2018/01/24 09:04:44 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.32 2017/04/25 09:02:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.33 2018/01/24 09:04:44 skrll Exp $");
 
 #include <sys/proc.h>
 #include <arm/armreg.h>
@@ -148,11 +148,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr,
 			    (char *)&pcbb);
 			pcb = &pcbb;
 #endif
-#ifdef acorn26
-			frame = (uint32_t *)(pcb->pcb_sf->sf_r11);
-#else
-			frame = (uint32_t *)(pcb->pcb_un.un_32.pcb32_r11);
-#endif
+			frame = (uint32_t *)(pcb->pcb_r11);
 			(*pr)("at %p\n", frame);
 		} else
 			frame = (uint32_t *)(addr);
@@ -174,11 +170,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr,
 	 * In theory, the SCP isn't guaranteed to be in the function
 	 * that generated the stack frame.  We hope for the best.
 	 */
-#ifdef __PROG26
-	scp = frame[FR_SCP] & R15_PC;
-#else
 	scp = frame[FR_SCP];
-#endif
 	pc = scp;
 
 	while (count--) {
@@ -187,26 +179,15 @@ db_stack_trace_print(db_expr_t addr, bool have_addr,
 		uint32_t	*rp;
 		const char	*sep;
 
-#ifdef __PROG26
-		scp = frame[FR_SCP] & R15_PC;
-#else
 		scp = frame[FR_SCP];
-#endif
 		(*pr)("%p: ", lastframe);
 
 		db_printsym(pc, DB_STGY_PROC, pr);
 		if (trace_full) {
 			(*pr)("\n\t");
-#ifdef __PROG26
-			(*pr)("pc =0x%08x rlv=0x%08x (", pc,
-			     frame[FR_RLV] & R15_PC);
-			db_printsym(frame[FR_RLV] & R15_PC, DB_STGY_PROC, pr);
-			(*pr)(")\n");
-#else
 			(*pr)("pc =0x%08x rlv=0x%08x (", pc, frame[FR_RLV]);
 			db_printsym(frame[FR_RLV], DB_STGY_PROC, pr);
 			(*pr)(")\n");
-#endif
 			(*pr)("\trsp=0x%08x rfp=0x%08x", frame[FR_RSP],
 			     frame[FR_RFP]);
 		}
@@ -242,11 +223,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr,
 		 */
 		if (frame[FR_RFP] == 0)
 			break; /* Top of stack */
-#ifdef __PROG26
-		pc = frame[FR_RLV] & R15_PC;
-#else
 		pc = frame[FR_RLV];
-#endif
 
 		frame = (uint32_t *)(frame[FR_RFP]);
 

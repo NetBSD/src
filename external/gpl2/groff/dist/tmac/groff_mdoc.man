@@ -769,7 +769,7 @@ By default, the following architecture keywords are defined:
 .
 \# we use `No' to avoid hyphenation
 .Bd -ragged -offset indent
-.No alpha , acorn26 , acorn32 , algor , amd64 , amiga , arc , arm26 ,
+.No alpha , acorn32 , algor , amd64 , amiga , arc , arm26 ,
 .No arm32 , atari , bebox , cats , cesfic , cobalt , dreamcast , evbarm ,
 .No evbmips , evbppc , evbsh3 , hp300 , hpcmips , hppa , i386 , luna68k ,
 .No m68k , mac68k , macppc , mips , mmeye , mvme68k , mvmeppc , netwinder ,
