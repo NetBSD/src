@@ -1,9 +1,9 @@
-/*	$NetBSD: var.c,v 1.21 2017/07/01 23:12:08 joerg Exp $	*/
+/*	$NetBSD: var.c,v 1.22 2018/01/24 09:21:20 kamil Exp $	*/
 
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: var.c,v 1.21 2017/07/01 23:12:08 joerg Exp $");
+__RCSID("$NetBSD: var.c,v 1.22 2018/01/24 09:21:20 kamil Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -939,7 +939,7 @@ unspecial(name)
 
 	tp = tsearch(&specials, name, hash(name));
 	if (tp)
-		tdelete(tp);
+		mytdelete(tp);
 }
 
 #ifdef KSH
