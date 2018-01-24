@@ -1,4 +1,4 @@
-/*	$NetBSD: stic.c,v 1.51 2014/07/25 08:10:39 dholland Exp $	*/
+/*	$NetBSD: stic.c,v 1.52 2018/01/24 05:35:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.51 2014/07/25 08:10:39 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.52 2018/01/24 05:35:58 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1305,7 +1305,7 @@ stic_set_cursor(struct stic_info *si, struct wsdisplay_cursor *p)
 	if ((v & WSDISPLAY_CURSOR_DOCMAP) != 0) {
 		index = p->cmap.index;
 		count = p->cmap.count;
-		if (index >= 2 || (index + count) > 2)
+		if (index >= 2 || count > 2 - index)
 			return (EINVAL);
 		error = copyin(p->cmap.red, &r[index], count);
 		if (error)

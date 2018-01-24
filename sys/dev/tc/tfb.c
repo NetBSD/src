@@ -1,4 +1,4 @@
-/* $NetBSD: tfb.c,v 1.61 2012/01/11 21:12:36 macallan Exp $ */
+/* $NetBSD: tfb.c,v 1.62 2018/01/24 05:35:58 riastradh Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tfb.c,v 1.61 2012/01/11 21:12:36 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tfb.c,v 1.62 2018/01/24 05:35:58 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -777,7 +777,7 @@ set_cursor(struct tfb_softc *sc, struct wsdisplay_cursor *p)
 	if (v & WSDISPLAY_CURSOR_DOCMAP) {
 		index = p->cmap.index;
 		count = p->cmap.count;
-		if (index >= 2 || (index + count) > 2)
+		if (index >= 2 || count > 2 - index)
 			return (EINVAL);
 		error = copyin(p->cmap.red, &r[index], count);
 		if (error)
