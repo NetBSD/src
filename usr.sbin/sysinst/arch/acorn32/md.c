@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.2 2014/08/03 16:09:38 martin Exp $ */
+/*	$NetBSD: md.c,v 1.3 2018/01/24 09:04:46 skrll Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -32,7 +32,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* md.c -- arm32 machine specific routines  - also used by acorn26 */
+/* md.c -- arm32 machine specific routines */
 
 #include <stdio.h>
 #include <curses.h>

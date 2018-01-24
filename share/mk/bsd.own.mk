@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1027 2018/01/22 17:33:01 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.1028 2018/01/24 09:04:42 skrll Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -579,7 +579,7 @@ OBJC=		${TOOL_OBJC.${ACTIVE_OBJC}}
 # For each ${MACHINE_CPU}, list the ports that use it.
 MACHINES.aarch64=	evbarm64
 MACHINES.alpha=		alpha
-MACHINES.arm=		acorn26 acorn32 cats epoc32 evbarm hpcarm \
+MACHINES.arm=		acorn32 cats epoc32 evbarm hpcarm \
 			iyonix netwinder shark zaurus
 MACHINES.coldfire=	evbcf
 MACHINES.i386=		i386
@@ -1073,9 +1073,6 @@ MKGCCCMDS?=	${MKGCC}
 #
 # Exceptions to the above:
 #
-.if ${MACHINE} == "acorn26"	# page size is prohibitive
-MKKMOD=		no
-.endif
 
 # Rump doesn't work yet on ia64
 .if ${MACHINE} == "ia64"

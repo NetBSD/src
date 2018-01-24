@@ -1,4 +1,4 @@
-/*	$NetBSD: fiq.c,v 1.7 2013/06/12 21:34:12 matt Exp $	*/
+/*	$NetBSD: fiq.c,v 1.8 2018/01/24 09:04:44 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fiq.c,v 1.7 2013/06/12 21:34:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fiq.c,v 1.8 2018/01/24 09:04:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,9 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: fiq.c,v 1.7 2013/06/12 21:34:12 matt Exp $");
 #include <arm/cpufunc.h>
 #include <arm/fiq.h>
 
-#ifdef __PROG32
 #include <uvm/uvm.h>
-#endif
 
 TAILQ_HEAD(, fiqhandler) fiqhandler_stack =
     TAILQ_HEAD_INITIALIZER(fiqhandler_stack);
@@ -54,13 +52,8 @@ TAILQ_HEAD(, fiqhandler) fiqhandler_stack =
 extern char fiqvector[];
 extern char fiq_nullhandler[], fiq_nullhandler_end[];
 
-#ifdef __PROG32
 #define	IRQ_BIT		I32_bit
 #define	FIQ_BIT		F32_bit
-#else
-#define	IRQ_BIT		R15_IRQ_DISABLE
-#define	FIQ_BIT		R15_FIQ_DISABLE
-#endif /* __PROG32 */
 
 #ifndef ARM_HAS_VBAR
 /*
@@ -76,18 +69,16 @@ extern char fiq_nullhandler[], fiq_nullhandler_end[];
 static void
 fiq_installhandler(void *func, size_t size)
 {
-#if defined(__PROG32) && !defined(__ARM_FIQ_INDIRECT)
+#if !defined(__ARM_FIQ_INDIRECT)
 	vector_page_setprot(VM_PROT_READ|VM_PROT_WRITE);
 #endif
 
 	memcpy(fiqvector, func, size);
 
-#ifdef __PROG32
 #if !defined(__ARM_FIQ_INDIRECT)
 	vector_page_setprot(VM_PROT_READ);
 #endif
 	cpu_icache_sync_range((vaddr_t) fiqvector, size);
-#endif
 }
 
 /*

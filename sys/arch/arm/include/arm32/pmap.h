@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.153 2017/10/22 20:35:32 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.154 2018/01/24 09:04:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -396,8 +396,6 @@ int	pmap_fault_fixup(pmap_t, vaddr_t, vm_prot_t, int);
 int	pmap_prefetchabt_fixup(void *);
 bool	pmap_get_pde_pte(pmap_t, vaddr_t, pd_entry_t **, pt_entry_t **);
 bool	pmap_get_pde(pmap_t, vaddr_t, pd_entry_t **);
-struct pcb;
-void	pmap_set_pcb_pagedir(pmap_t, struct pcb *);
 
 void	pmap_debug(int);
 void	pmap_postinit(void);

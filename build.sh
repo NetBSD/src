@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.323 2018/01/15 20:39:53 uwe Exp $
+#	$NetBSD: build.sh,v 1.324 2018/01/24 09:04:40 skrll Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -614,7 +614,6 @@ level of source directory"
 # and with a blank MACHINE_ARCH.
 #
 valid_MACHINE_ARCH='
-MACHINE=acorn26		MACHINE_ARCH=arm
 MACHINE=acorn32		MACHINE_ARCH=arm
 MACHINE=algor		MACHINE_ARCH=mips64el	ALIAS=algor64
 MACHINE=algor		MACHINE_ARCH=mipsel	DEFAULT
@@ -1933,7 +1932,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.323 2018/01/15 20:39:53 uwe Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.324 2018/01/24 09:04:40 skrll Exp $
 # with these arguments: ${_args}
 #
 

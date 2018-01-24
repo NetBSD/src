@@ -4,7 +4,6 @@ kern
 lib
 misc
 pkg
-port-acorn26
 port-acorn32
 port-algor
 port-alpha
