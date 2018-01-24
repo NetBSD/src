@@ -1,4 +1,4 @@
-/*	$NetBSD: fusu.S,v 1.3 2013/08/18 06:28:18 matt Exp $	*/
+/*	$NetBSD: fusu.S,v 1.4 2018/01/24 09:04:44 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Mark Brinicombe.
@@ -41,17 +41,7 @@
 
 #include <arm/locore.h>
 
-/*
- * On PROG26 systems (i.e. acorn26) taking a page fault corrupts R14_svc.
- * To prevent this causing a problem, we save R14 in R12 in these functions.
- */
-#ifdef __PROG26
-#define SAVE_R14	mov	ip, lr
-#define FUSU_RET	mov	pc, ip
-#else
-#define SAVE_R14	/* do nothing */
 #define FUSU_RET	mov	pc, lr
-#endif
 	
 /*
  * fuword(void *uaddr);
@@ -59,7 +49,6 @@
  */
 
 ENTRY(fuword)
-	SAVE_R14
 	GET_CURPCB(r2)
 
 #ifdef DIAGNOSTIC
@@ -84,7 +73,6 @@ END(fuword)
  */
 
 ENTRY(fusword)
-	SAVE_R14
 	GET_CURPCB(r2)
 
 #ifdef DIAGNOSTIC
@@ -120,7 +108,6 @@ ENTRY(fuswintr)
 	mvnne	r0, #0x00000000
 	movne	pc, lr
 
-	SAVE_R14
 	GET_CURPCB(r2)
 
 #ifdef DIAGNOSTIC
@@ -160,7 +147,6 @@ _C_LABEL(block_userspace_access):
  */
 
 ENTRY(fubyte)
-	SAVE_R14
 	GET_CURPCB(r2)
 
 #ifdef DIAGNOSTIC
@@ -224,7 +210,6 @@ END(fusubailout)
  */
 
 ENTRY(suword)
-	SAVE_R14
 	GET_CURPCB(r2)
 
 #ifdef DIAGNOSTIC
@@ -255,7 +240,6 @@ ENTRY(suswintr)
 	mvnne	r0, #0x00000000
 	movne	pc, lr
 
-	SAVE_R14
 	GET_CURPCB(r2)
 
 #ifdef DIAGNOSTIC
@@ -286,7 +270,6 @@ END(suswintr)
  */
 
 ENTRY(susword)
-	SAVE_R14
 	GET_CURPCB(r2)
 
 #ifdef DIAGNOSTIC
@@ -317,7 +300,6 @@ END(susword)
  */
 
 ENTRY(subyte)
-	SAVE_R14
 	GET_CURPCB(r2)
 
 #ifdef DIAGNOSTIC

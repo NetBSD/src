@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.94 2017/12/16 00:37:51 mrg Exp $	*/
+/*	$NetBSD: cpu.h,v 1.95 2018/01/24 09:04:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -88,17 +88,13 @@ extern int cpu_fpu_present;
  * CLKF_USERMODE: Return TRUE/FALSE (1/0) depending on whether the
  * frame came from USR mode or not.
  */
-#ifdef __PROG32
 #define CLKF_USERMODE(cf) (((cf)->cf_tf.tf_spsr & PSR_MODE) == PSR_USR32_MODE)
-#else
-#define CLKF_USERMODE(cf) (((cf)->cf_if.if_r15 & R15_MODE) == R15_MODE_USR)
-#endif
 
 /*
  * CLKF_INTR: True if we took the interrupt from inside another
  * interrupt handler.
  */
-#if defined(__PROG32) && !defined(__ARM_EABI__)
+#if !defined(__ARM_EABI__)
 /* Hack to treat FPE time as interrupt time so we can measure it */
 #define CLKF_INTR(cf)						\
 	((curcpu()->ci_intr_depth > 1) ||			\
@@ -110,20 +106,12 @@ extern int cpu_fpu_present;
 /*
  * CLKF_PC: Extract the program counter from a clockframe
  */
-#ifdef __PROG32
 #define CLKF_PC(frame)		(frame->cf_tf.tf_pc)
-#else
-#define CLKF_PC(frame)		(frame->cf_if.if_r15 & R15_PC)
-#endif
 
 /*
  * LWP_PC: Find out the program counter for the given lwp.
  */
-#ifdef __PROG32
 #define LWP_PC(l)		(lwp_trapframe(l)->tf_pc)
-#else
-#define LWP_PC(l)		(lwp_trapframe(l)->tf_r15 & R15_PC)
-#endif
 
 /*
  * Per-CPU information.  For now we assume one CPU.
@@ -275,11 +263,7 @@ cpu_dosoftints(void)
 #endif
 }
 
-#ifdef __PROG32
 void	cpu_proc_fork(struct proc *, struct proc *);
-#else
-#define	cpu_proc_fork(p1, p2)
-#endif
 
 /*
  * Scheduling glue
@@ -315,12 +299,10 @@ void	cpu_set_curpri(int);
  */
 vaddr_t cpu_uarea_alloc_idlelwp(struct cpu_info *);
 
-#ifndef acorn26
 /*
  * cpu device glue (belongs in cpuvar.h)
  */
 void	cpu_attach(device_t, cpuid_t);
-#endif
 
 #endif /* !_LOCORE */
 

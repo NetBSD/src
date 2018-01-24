@@ -245,7 +245,6 @@ u_int	cpufunc_faultaddress	(void);
 /*
  * Macros for manipulating CPU interrupts
  */
-#ifdef __PROG32
 static __inline uint32_t __set_cpsr_c(uint32_t bic, uint32_t eor) __attribute__((__unused__));
 static __inline uint32_t disable_interrupts(uint32_t mask) __attribute__((__unused__));
 static __inline uint32_t enable_interrupts(uint32_t mask) __attribute__((__unused__));
@@ -360,28 +359,10 @@ cpsid(register_t psw)
 #endif
 }
 
-#else /* ! __PROG32 */
-#define	disable_interrupts(mask)					\
-	(set_r15((mask) & (R15_IRQ_DISABLE | R15_FIQ_DISABLE),		\
-		 (mask) & (R15_IRQ_DISABLE | R15_FIQ_DISABLE)))
 
-#define	enable_interrupts(mask)						\
-	(set_r15((mask) & (R15_IRQ_DISABLE | R15_FIQ_DISABLE), 0))
-
-#define	restore_interrupts(old_r15)					\
-	(set_r15((R15_IRQ_DISABLE | R15_FIQ_DISABLE),			\
-		 (old_r15) & (R15_IRQ_DISABLE | R15_FIQ_DISABLE)))
-#endif /* __PROG32 */
-
-#ifdef __PROG32
 /* Functions to manipulate the CPSR. */
 u_int	SetCPSR(u_int, u_int);
 u_int	GetCPSR(void);
-#else
-/* Functions to manipulate the processor control bits in r15. */
-u_int	set_r15(u_int, u_int);
-u_int	get_r15(void);
-#endif /* __PROG32 */
 
 
 /*

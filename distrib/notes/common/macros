@@ -1,4 +1,4 @@
-.\"	$NetBSD: macros,v 1.42 2015/05/19 19:45:57 snj Exp $
+.\"	$NetBSD: macros,v 1.43 2018/01/24 09:04:41 skrll Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -369,7 +369,7 @@
 .\" Define registers for MACHINE_ARCHs with multiple or different MACHINEs
 .
 .ds A \*M
-.if \n[acorn26]:\n[acorn32]:\n[cats]:\n[evbarm]:\n[hpcarm]:\n[iyonix]:\n[netwinder]:\n[shark]:\n[zaurus] .ds A arm
+.if \n[acorn32]:\n[cats]:\n[evbarm]:\n[hpcarm]:\n[iyonix]:\n[netwinder]:\n[shark]:\n[zaurus] .ds A arm
 .if \n[sun2] .ds A m68000
 .if \n[amiga]:\n[atari]:\n[cesfic]:\n[hp300]:\n[luna68k]:\n[mac68k]:\n[mvme68k]:\n[news68k]:\n[next68k]:\n[sun3]:\n[x68k] .ds A m68k
 .if \n[emips]:\n[ews4800mips]:\n[mipsco]:\n[newsmips]:\n[sbmips]:\n[sgimips] .ds A mipseb

@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.106 2015/05/19 19:30:27 snj Exp $
+.\"	$NetBSD: sysinst,v 1.107 2018/01/24 09:04:41 skrll Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -52,7 +52,7 @@
 \n[playstation2]:\n[sandpoint]:\n[sbmips]:\n[sgimips]:\n[x86_64] \{\
 .  ds part_max p
 .\}
-.if \n[acorn26]:\n[acorn32]:\n[cats]:\n[evbarm]:\n[evbppc]:\n[ews4800mips]:\
+.if \n[acorn32]:\n[cats]:\n[evbarm]:\n[evbppc]:\n[ews4800mips]:\
 \n[sandpoint]:\n[shark] \{\
 .  ds part_usr e
 .\}
@@ -83,7 +83,7 @@ covers many details for the sake of completeness.
 Do not let this discourage you; the install program is not hard
 to use.
 .
-.if !\n[acorn26]:\n[acorn32]:\n[atari]:\n[ews4800mips]:\n[hppa]:\n[mac68k]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[newsmips]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[sparc64]:\n[x68k] \{\
+.if !\n[acorn32]:\n[atari]:\n[ews4800mips]:\n[hppa]:\n[mac68k]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[newsmips]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[sparc64]:\n[x68k] \{\
 .It
 .To 2 "Possible hardware problems"
 .Em Possible hardware problems
@@ -97,7 +97,7 @@ Non-removable devices can be disabled with
 .Ic boot
 .Fl c
 to enter it).
-.\} \" !\n[acorn26]:\n[acorn32]:\n[atari]:\n[ews4800mips]:\n[hppa]:\n[mac68k]\:[macppc]:\n[mvme68k]:\n[news68k]:\n[newsmips]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[sparc64]:\n[x68k]
+.\} \" !\n[acorn32]:\n[atari]:\n[ews4800mips]:\n[hppa]:\n[mac68k]\:[macppc]:\n[mvme68k]:\n[news68k]:\n[newsmips]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[sparc64]:\n[x68k]
 .if \n[mac68k] \{\
 .It
 .To 2 "Possible hardware-specific issues"
@@ -189,7 +189,7 @@ volume on a netboot server as described above.
 .el \{\
 .ie \n[mac68k] The Mac OS Booter application and an Installation Kernel
 .el \{\
-.ie \n[acorn26]:\n[arc]:\n[cats]:\n[evbppc]:\n[macppc]:\n[sparc] \{\
+.ie \n[arc]:\n[cats]:\n[evbppc]:\n[macppc]:\n[sparc] \{\
 Some form of bootable media, described above.
 .\}
 .el \{\
@@ -210,7 +210,6 @@ An FPU is not required but will be used if present
 .ie !\n[amd64] \{\
 .It
 A minimum of
-.if \n[acorn26] 8 MB
 .if \n[alpha] 32 MB
 .if \n[arc] 16 MB
 .if \n[atari] 4 MB (TT030/Falcon) or 16 MB (Hades/Milan)
@@ -233,7 +232,6 @@ of memory installed.
 An optical drive.
 .It
 A hard drive with at least
-.if \n[acorn26] 500
 .if \n[acorn32] 500
 .if \n[alpha] 700
 .if \n[amd64] 700
@@ -344,7 +342,7 @@ kernels while booting.
 .It
 The Quick Installation
 .(bullet
-.ie \n[acorn26]:\n[atari]:\n[cats]:\n[evbppc]:\n[hppa]:\n[macppc]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[sparc64] \{\
+.ie \n[atari]:\n[cats]:\n[evbppc]:\n[hppa]:\n[macppc]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[sparc64] \{\
 Boot the system as described above.
 You should be at the
 .Ic sysinst
@@ -640,13 +638,13 @@ As an alternative, try using the Traditional
 method of installation described in the next section.
 .\} \" \n[mac68k]
 .el \{\
-.ie \n[acorn26]:\n[cats]:\n[evbppc]:\n[macppc]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[sparc64] \{\
+.ie \n[cats]:\n[evbppc]:\n[macppc]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[sparc64] \{\
 .Pp
 You may want to read the
 boot messages, to notice your disk's name and capacity.
 Its name will be something like
 .Li sd0
-.if \n[acorn26]:\n[cats]:\n[evbppc]:\n[macppc]:\n[sparc64] \{\
+.if \n[cats]:\n[evbppc]:\n[macppc]:\n[sparc64] \{\
 or
 .Li wd0
 .\}
@@ -659,7 +657,7 @@ You will also need to know the name, to tell
 .Ic sysinst
 which disk to use.
 The most important thing to know is that
-.if \n[acorn26]:\n[cats]:\n[evbppc]:\n[macppc]:\n[sparc64] \{\
+.if \n[cats]:\n[evbppc]:\n[macppc]:\n[sparc64] \{\
 .Li wd0
 is
 .Nx Ns 's
@@ -966,7 +964,7 @@ or
 .Li rz1
 .\}
 .el \{\
-.if \n[acorn26]:\n[alpha]:\n[amd64]:\n[cats]:\n[i386]:\n[mac68k]:\n[macppc]:\n[sparc64] \{\
+.if \n[alpha]:\n[amd64]:\n[cats]:\n[i386]:\n[mac68k]:\n[macppc]:\n[sparc64] \{\
 .Li wd0 ,
 .Li wd1 ,
 .\}

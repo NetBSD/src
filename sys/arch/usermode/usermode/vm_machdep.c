@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.4 2011/12/27 14:55:31 reinoud Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.5 2018/01/24 09:04:45 skrll Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.4 2011/12/27 14:55:31 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.5 2018/01/24 09:04:45 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -41,7 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.4 2011/12/27 14:55:31 reinoud Exp $
  * Note: the pages are already locked by uvm_vslock(), so we
  * do not need to pass an access_type to pmap_enter().
  */
-/* This code was originally stolen from the alpha/acorn26 port. */
+/* This code was originally stolen from the alpha port. */
 
 int
 vmapbuf(struct buf *bp, vsize_t len)
