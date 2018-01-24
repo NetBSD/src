@@ -1,4 +1,4 @@
-.\" $NetBSD: podulebus.4,v 1.4 2018/01/24 09:04:42 skrll Exp $
+.\" $NetBSD: podulebus.4,v 1.5 2018/01/24 10:00:03 wiz Exp $
 .\"
 .\" Copyright (c) 2000, 2006 Ben Harris
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 26, 2006
+.Dd January 24, 2018
 .Dt PODULEBUS 4
 .Os
 .Sh NAME
@@ -57,71 +57,41 @@ The following devices are supported by
 .Ss SCSI interfaces
 .Bl -tag -width Nm
 .It Nm asc
-Acorn
-.Tn AKA30 , AKA31 ,
-and
-.Tn AKA32 SCSI
-expansion cards
+Acorn AKA30, AKA31, and AKA32 SCSI expansion cards
 .Pq Nx Ns /acorn32 .
 .It Nm cosc
-.Tn MCS
-Connect32
-.Tn SCSI
-interface
+MCS Connect32 SCSI interface
 .Pq Nx Ns /acorn32 .
 .It Nm csa
-Cumana 8-bit
-.Tn SCSI
-interface
+Cumana 8-bit SCSI interface
 .Pq Nx Ns /acorn32 .
 .It Nm csc
-Cumana 16-bit
-.Tn SCSI
-interface
+Cumana 16-bit SCSI interface
 .Pq Nx Ns /acorn32 .
 .It Nm hcsc
-.Tn HCCS
-8-bit
-.Tn SCSI
-interface.
+HCCS 8-bit SCSI interface.
 .It Nm oak
-Oak
-.Tn SCSI
-interface.
+Oak SCSI interface.
 .It Nm ptsc
-Powertec
-.Tn SCSI
-interface
+Powertec SCSI interface
 .Pq Nx Ns /acorn32 .
 .It Nm sec
-Acorn
-.Tn AKA30 , AKA31 ,
-and
-.Tn AKA32 SCSI
-expansion cards.
+Acorn AKA30, AKA31, and AKA32 SCSI expansion cards.
 .El
 .Ss Disk controllers
 .Bl -tag -width Nm
 .It Nm dtide
-D.T. Software
-.Tn IDE
-controller.
+D.T. Software IDE controller.
 .It Nm hcide
-.Tn HCCS IDE
-controller.
+HCCS IDE controller.
 .It Nm icside
-.Tn ICS IDE
-controller
+ICS IDE controller
 .Pq Nx Ns /acorn32 .
 .It Nm rapide
-Yellowstone Educational Solutions RapIDE
-.Tn IDE
-controller
+Yellowstone Educational Solutions RapIDE IDE controller
 .Pq Nx Ns /acorn32 .
 .It Nm simide
-Simtec
-.Tn IDE
-controller
+Simtec IDE controller
 .Pq Nx Ns /acorn32 .
 .El
 .Ss Network interfaces
@@ -129,36 +99,16 @@ controller
 .It Nm ea
 Atomwide
 .No A-10 Ns Ar xx
-and Acorn
-.Tn AEH54
-Ethernet cards (Ether3).
+and Acorn AEH54 Ethernet cards (Ether3).
 .It Nm eb
-Atomwide and
-.Tn ANT
-network-slot and Acorn
-.Tn AEH61
-Ethernet cards (EtherB).
-.It Nm eh
-i-cubed EtherLan 100-, 200- and 500-series,
-and Acorn
-.Tn AEH75 , AEH77 ,
-and
-.Tn AEH79
-Ethernet cards (EtherH)
-.Pq Nx Ns /acorn26 .
+Atomwide and ANT network-slot and Acorn AEH61 Ethernet cards (EtherB).
 .It Nm ei
-Acorn
-.Tn AKA25
-Ethernet card (Ether1).
+Acorn AKA25 Ethernet card (Ether1).
 .It Nm ie
-Acorn
-.Tn AKA25
-Ethernet card (Ether1)
+Acorn AKA25 Ethernet card (Ether1)
 .Pq Nx Ns /acorn32 .
 .It Nm ne
-Various vaguely
-.Tn NE2000 Ns -compatible
-Ethernet cards
+Various vaguely NE2000-compatible Ethernet cards
 .Pq Nx Ns /acorn32 .
 .El
 .Ss Serial interfaces
@@ -168,7 +118,6 @@ Atomwide multi-port serial interface
 .Pq Nx Ns /acorn32 .
 .El
 .Sh SEE ALSO
-.Xr acorn26/eh 4 ,
 .\" .Xr acorn32/amps 4 ,
 .Xr acorn32/asc 4 ,
 .Xr acorn32/cosc 4 ,
@@ -188,8 +137,3 @@ Atomwide multi-port serial interface
 .Xr ne 4 ,
 .Xr oak 4 ,
 .Xr sec 4
-.Sh BUGS
-Too few drivers are shared between
-.Nx Ns /acorn26
-and
-.Nx Ns /acorn32 .
