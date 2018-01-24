@@ -1,4 +1,4 @@
-/*	$NetBSD: ki2c.c,v 1.23 2017/09/27 22:10:19 macallan Exp $	*/
+/*	$NetBSD: ki2c.c,v 1.24 2018/01/24 17:21:03 macallan Exp $	*/
 /*	Id: ki2c.c,v 1.7 2002/10/05 09:56:05 tsubai Exp	*/
 
 /*-
@@ -151,15 +151,15 @@ ki2c_attach(device_t parent, device_t self, void *aux)
 
 	devs = OF_child(i2cbus);
 	while (devs != 0) {
-		if (OF_getprop(devs, "name", name, 32) == 0)
+		if (OF_getprop(devs, "name", name, 32) <= 0)
 			goto skip;
-		if (OF_getprop(devs, "compatible", compat, 256) == 0) {
+		if (OF_getprop(devs, "compatible", compat, 256) <= 0) {
 			/* some i2c device nodes don't have 'compatible' */
 			memset(compat, 0, 256);
 			strncpy(compat, name, 256);
 		} 
-		if (OF_getprop(devs, "reg", &addr, 4) == 0)
-			if (OF_getprop(devs, "i2c-address", &addr, 4) == 0)
+		if (OF_getprop(devs, "reg", &addr, 4) <= 0)
+			if (OF_getprop(devs, "i2c-address", &addr, 4) <= 0)
 				goto skip;
 		addr = (addr & 0xff) >> 1;
 		DPRINTF("-> %s@%x\n", name, addr);
