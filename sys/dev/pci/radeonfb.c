@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.93 2017/10/11 17:08:32 macallan Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.94 2018/01/24 05:35:58 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.93 2017/10/11 17:08:32 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.94 2018/01/24 05:35:58 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2756,8 +2756,7 @@ radeonfb_putcmap(struct radeonfb_display *dp, struct wsdisplay_cmap *cm)
 #ifdef GENFB_DEBUG
 	aprint_debug("putcmap: %d %d\n",index, count);
 #endif
-	if (cm->index >= 256 || cm->count > 256 ||
-	    (cm->index + cm->count) > 256)
+	if (index >= 256 || count > 256 - index)
 		return EINVAL;
 	error = copyin(cm->red, &rbuf[index], count);
 	if (error)
@@ -2792,7 +2791,7 @@ radeonfb_getcmap(struct radeonfb_display *dp, struct wsdisplay_cmap *cm)
 	u_int count = cm->count;
 	int error;
 
-	if (index >= 255 || count > 256 || index + count > 256)
+	if (index >= 256 || count > 256 - index)
 		return EINVAL;
 
 	error = copyout(&dp->rd_cmap_red[index],   cm->red,   count);
@@ -3605,8 +3604,8 @@ radeonfb_set_cursor(struct radeonfb_display *dp, struct wsdisplay_cursor *wc)
 	if (flags & WSDISPLAY_CURSOR_DOCMAP) {
 		index = wc->cmap.index;
 		count = wc->cmap.count;
-		
-		if (index >= 2 || (index + count) > 2)
+
+		if (index >= 2 || count > 2 - index)
 			return EINVAL;
 
 		err = copyin(wc->cmap.red, &r[index], count);
