@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb.c,v 1.56 2017/01/25 17:31:55 jakllsch Exp $ */
+/*	$NetBSD: igsfb.c,v 1.57 2018/01/24 05:35:58 riastradh Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.56 2017/01/25 17:31:55 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.57 2018/01/24 05:35:58 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -812,9 +812,10 @@ igsfb_update_cmap(struct igsfb_devconfig *dc, u_int index, u_int count)
 	if (index >= IGS_CMAP_SIZE)
 		return;
 
-	last = index + count;
-	if (last > IGS_CMAP_SIZE)
+	if (count > IGS_CMAP_SIZE - index)
 		last = IGS_CMAP_SIZE;
+	else
+		last = index + count;
 
 	t = dc->dc_iot;
 	h = dc->dc_ioh;

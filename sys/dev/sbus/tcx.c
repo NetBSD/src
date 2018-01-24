@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.57 2016/09/23 17:45:25 macallan Exp $ */
+/*	$NetBSD: tcx.c,v 1.58 2018/01/24 05:35:58 riastradh Exp $ */
 
 /*
  *  Copyright (c) 1996, 1998, 2009 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.57 2016/09/23 17:45:25 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.58 2018/01/24 05:35:58 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -474,6 +474,8 @@ tcxioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 
 	case FBIOGETCMAP:
 #define	p ((struct fbcmap *)data)
+		if (p->index > 256 || p->count > 256 - p->index)
+			return EINVAL;
 		if (copyout(&sc->sc_cmap_red[p->index], p->red, p->count) != 0)
 			return EINVAL;
 		if (copyout(&sc->sc_cmap_green[p->index], p->green, p->count)
@@ -486,6 +488,8 @@ tcxioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 
 	case FBIOPUTCMAP:
 		/* copy to software map */
+		if (p->index > 256 || p->count > 256 - p->index)
+			return EINVAL;
 		if (copyin(p->red, &sc->sc_cmap_red[p->index], p->count) != 0)
 			return EINVAL;
 		if (copyin(p->green, &sc->sc_cmap_green[p->index], p->count)

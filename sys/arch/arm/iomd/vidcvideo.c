@@ -1,4 +1,4 @@
-/* $NetBSD: vidcvideo.c,v 1.44 2014/01/21 19:31:57 christos Exp $ */
+/* $NetBSD: vidcvideo.c,v 1.45 2018/01/24 05:35:58 riastradh Exp $ */
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.44 2014/01/21 19:31:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.45 2018/01/24 05:35:58 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -667,7 +667,7 @@ set_cmap(struct vidcvideo_softc *sc, struct wsdisplay_cmap *p)
 	u_int index = p->index, count = p->count;
 	int error;
 
-	if (index >= CMAP_SIZE || (index + count) > CMAP_SIZE)
+	if (index >= CMAP_SIZE || count > CMAP_SIZE - index)
 		return EINVAL;
 
 	error = copyin(p->red, &cmap.r[index], count);
