@@ -1,4 +1,4 @@
-/* $NetBSD: awin_debe.c,v 1.20 2015/11/22 17:50:48 aymeric Exp $ */
+/* $NetBSD: awin_debe.c,v 1.21 2018/01/24 05:35:58 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -38,7 +38,7 @@
 #define AWIN_DEBE_CURMAX	64
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_debe.c,v 1.20 2015/11/22 17:50:48 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_debe.c,v 1.21 2018/01/24 05:35:58 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -393,7 +393,7 @@ awin_debe_set_cursor(struct awin_debe_softc *sc, struct wsdisplay_cursor *cur)
 	if (cur->which & WSDISPLAY_CURSOR_DOCMAP) {
 		index = cur->cmap.index;
 		count = cur->cmap.count;
-		if (index >= 2 || (index + count) > 2)
+		if (index >= 2 || count > 2 - index)
 			return EINVAL;
 		error = copyin(cur->cmap.red, &r[index], count);
 		if (error)
