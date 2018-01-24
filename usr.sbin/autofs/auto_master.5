@@ -1,4 +1,4 @@
-.\"	$NetBSD: auto_master.5,v 1.4 2018/01/14 03:17:28 uwe Exp $
+.\"	$NetBSD: auto_master.5,v 1.5 2018/01/24 12:05:50 uwe Exp $
 .\" Copyright (c) 2017 The NetBSD Foundation, Inc.
 .\" Copyright (c) 2016 The DragonFly Project
 .\" Copyright (c) 2014 The FreeBSD Foundation
@@ -58,28 +58,28 @@ The
 file consists of lines with two or three entries separated by whitespace
 and terminated by a newline character:
 .Bd -literal -offset indent
-.Pa mountpoint Pa map_name Op Ar -options
+.Ar mountpoint Ar map_name Op Fl Ar options
 .Ed
 .Pp
-.Pa mountpoint
+.Ar mountpoint
 is either a fully specified path, or
-.Li /- .
+.Pa /- .
 When
-.Pa mountpoint
+.Ar mountpoint
 is a full path,
-.Pa map_name
+.Ar map_name
 must reference an indirect map.
 Otherwise,
-.Pa map_name
+.Ar map_name
 must reference a direct map.
 See
 .Sx "MAP SYNTAX"
 below.
 .Pp
-.Pa map_name
+.Ar map_name
 specifies map to use.
 If
-.Pa map_name
+.Ar map_name
 begins with
 .Li - ,
 it specifies a special map.
@@ -87,7 +87,7 @@ See
 .Sx "MAP SYNTAX"
 below.
 If
-.Pa map_name
+.Ar map_name
 is not a fully specified path
 .Pq it does not start with Li / ,
 .Xr automountd 8
@@ -95,7 +95,7 @@ will search for that name in
 .Pa /etc .
 Otherwise it will use the path as given.
 If the file indicated by
-.Pa map_name
+.Ar map_name
 is executable,
 .Xr automountd 8
 will assume it is an executable map.
@@ -104,9 +104,9 @@ See
 below.
 Otherwise, the file is opened and the contents parsed.
 .Pp
-.Pa -options
+.Op Fl Ar options
 is an optional field that starts with
-.Li -
+.Fl
 and can contain generic file system mount options.
 .Pp
 The following example specifies that the
@@ -120,15 +120,15 @@ indirect map will be mounted on
 Map files consist of lines with a number of entries separated by whitespace
 and terminated by newline character:
 .Bd -literal -offset indent
-.Pa key Oo Ar -options Oc Oo Ar mountpoint Oo -options Oc Oc Ar location Op ...
+.Ar key Oo Fl Ar options Oc Oo Ar mountpoint Oo Fl Ar options Oc Oc Ar location Op ...
 .Ed
 .Pp
 In most cases, it can be simplified to:
 .Bd -literal -offset indent
-.Pa key Oo Ar -options Oc Ar location
+.Ar key Oo Fl Ar options Oc Ar location
 .Ed
 .Pp
-.Pa key
+.Ar key
 is the path component used by
 .Xr automountd 8
 to find the right map entry to use.
@@ -142,27 +142,27 @@ Those directories will not be visible to the user until accessed.
 The
 .Ar options
 field, if present, must begin with
-.Li - .
+.Fl .
 When mounting the file system, options supplied to
 .Nm
 and options specified in the map entry are concatenated together.
 The special option
-.Li fstype
+.Ic fstype
 is used to specify file system type.
 It is not passed to the mount program as an option.
 Instead, it is passed as an argument to
 .Cm "mount -t".
 The default
-.Li fstype
+.Ic fstype
 is
 .Ql nfs .
 The special option
-.Li nobrowse
+.Ic nobrowse
 is used to disable creation of top-level directories for special
 and executable maps.
 .Pp
 The optional
-.Pa mountpoint
+.Ar mountpoint
 field is used to specify multiple mount points for a single key.
 .Pp
 The
@@ -188,23 +188,23 @@ field may contain references to variables, like:
 .Pp
 Defined variables are:
 .Pp
-.Bl -tag -width "-OSNAME" -compact
-.It Li ARCH
+.Bl -tag -width "Dv OSNAME" -compact
+.It Dv ARCH
 Expands to the output of
 .Li "uname -p" .
-.It Li CPU
+.It Dv CPU
 Same as
-.Li ARCH .
-.It Li HOST
+.Dv ARCH .
+.It Dv HOST
 Expands to the output of
 .Li "uname -n" .
-.It Li OSNAME
+.It Dv OSNAME
 Expands to the output of
 .Li "uname -s" .
-.It Li OSREL
+.It Dv OSREL
 Expands to the output of
 .Li "uname -r" .
-.It Li OSVERS
+.It Dv OSVERS
 Expands to the output of
 .Li "uname -v" .
 .El
@@ -217,7 +217,7 @@ and
 .Xr automountd 8 .
 .Pp
 To pass a location that begins with
-.Li / ,
+.Pa / ,
 prefix it with a colon.
 For example,
 .Li :/dev/cd0 .
@@ -231,9 +231,9 @@ referring to the map as described above, specifies that the NFS share
 will be mounted on
 .Pa /example/x/
 when any process attempts to access that mountpoint, with
-.Li intr
+.Ic intr
 and
-.Li nfsv4
+.Ic nfsv4
 mount options, described in
 .Xr mount_nfs 8 :
 .Bd -literal -offset indent
@@ -255,25 +255,25 @@ Special maps have names beginning with
 .Li - .
 Supported special maps are:
 .Pp
-.Bl -tag -width "-hosts" -compact
-.It Li -hosts
+.Bl -tag -width ".Ic -noauto" -compact
+.It Ic -hosts
 Query the remote NFS server and map exported shares.
 This map is traditionally mounted on
 .Pa /net .
 Access to files on a remote NFS server is provided through the
-.Pf /net/ Ar nfs-server-ip Ns / Ns Ar share-name Ns /
+.Pa /net/ Ns Ar nfs-server-ip Ns / Ns Ar share-name Ns /
 directory without any additional configuration.
 Directories for individual NFS servers are not present until the first access,
 when they are automatically created.
-.It Li -media
+.It Ic -media
 Query devices that are not yet mounted, but contain valid file systems.
 Generally used to access files on removable media.
-.It Li -noauto
+.It Ic -noauto
 Mount file systems configured in
 .Xr fstab 5
 as "noauto".
 This needs to be set up as a direct map.
-.It Li -null
+.It Ic -null
 Prevent
 .Xr automountd 8
 from mounting anything on the mountpoint.
@@ -363,7 +363,7 @@ It can be symlinked to
 .Bl -tag -width ".Pa /etc/auto_master" -compact
 .It Pa /etc/auto_master
 The default location of the
-.Pa auto_master
+.Nm
 file.
 .It Pa /etc/autofs/
 Directory containing shell scripts to implement special maps and directory
