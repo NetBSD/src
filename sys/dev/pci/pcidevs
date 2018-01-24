@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1305 2018/01/21 18:33:56 sevan Exp $
+$NetBSD: pcidevs,v 1.1306 2018/01/24 22:23:51 sevan Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -5602,6 +5602,7 @@ product NVIDIA	GF_FX5600_SE	0x0314	GeForce FX 5600 SE
 product NVIDIA	GF_FX5200U	0x0321	GeForce FX 5200 Ultra
 product NVIDIA	GF_FX5200	0x0322	GeForce FX 5200
 product NVIDIA	GF_FX5200SE	0x0323	GeForce FX 5200SE
+product NVIDIA	GF_FXGO5200	0x0329	GeForce FX Go5200
 product NVIDIA	QUADRO_FX_500	0x032B	Quadro FX 500
 product NVIDIA	GF_FX5900U	0x0330	GeForce FX 5900 Ultra
 product NVIDIA	GF_FX5900	0x0331	GeForce FX 5900
