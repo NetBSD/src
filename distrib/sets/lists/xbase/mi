@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.144 2017/08/29 07:53:54 mrg Exp $
+# $NetBSD: mi,v 1.145 2018/01/24 09:51:26 wiz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1208,7 +1208,7 @@
 ./usr/X11R7/lib/X11/xkb/symbols/xfree68_vndr/ataritt	-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/yu			-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/symbols/za			-unknown-	xorg
-./usr/X11R7/lib/X11/xkb/torture				base-x11-root	obsolete
+./usr/X11R7/lib/X11/xkb/torture				obsolete	obsolete
 ./usr/X11R7/lib/X11/xkb/torture/indicator		-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/torture/indicator1		-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/torture/indicator2		-unknown-	obsolete

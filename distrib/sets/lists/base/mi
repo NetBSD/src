@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1169 2018/01/24 09:04:41 skrll Exp $
+# $NetBSD: mi,v 1.1170 2018/01/24 09:51:25 wiz Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -4360,7 +4360,7 @@
 ./usr/share/man/cat3f				base-obsolete		obsolete
 ./usr/share/man/cat3lua				base-man-share
 ./usr/share/man/cat4				base-man-share
-./usr/share/man/cat4/acorn26			base-man-share		obsolete
+./usr/share/man/cat4/acorn26			base-obsolete		obsolete
 ./usr/share/man/cat4/acorn32			base-man-share
 ./usr/share/man/cat4/alpha			base-man-share
 ./usr/share/man/cat4/amiga			base-man-share
@@ -4402,7 +4402,7 @@
 ./usr/share/man/cat6				base-man-share
 ./usr/share/man/cat7				base-man-share
 ./usr/share/man/cat8				base-man-share
-./usr/share/man/cat8/acorn26			base-man-share		obsolete
+./usr/share/man/cat8/acorn26			base-obsolete		obsolete
 ./usr/share/man/cat8/acorn32			base-man-share
 ./usr/share/man/cat8/algor			base-man-share
 ./usr/share/man/cat8/alpha			base-man-share
@@ -4463,7 +4463,7 @@
 ./usr/share/man/cat8/x86			base-man-share
 ./usr/share/man/cat8/x86_64			base-obsolete		obsolete
 ./usr/share/man/cat9				base-man-share
-./usr/share/man/cat9/acorn26			base-man-share		obsolete
+./usr/share/man/cat9/acorn26			base-obsolete		obsolete
 ./usr/share/man/cat9/alpha			base-man-share
 ./usr/share/man/cat9/amiga			base-man-share
 ./usr/share/man/cat9/arm26			base-obsolete		obsolete
@@ -4490,7 +4490,7 @@
 ./usr/share/man/html3f				base-man-share
 ./usr/share/man/html3lua			base-man-share
 ./usr/share/man/html4				base-man-share
-./usr/share/man/html4/acorn26			base-man-share		obsolete
+./usr/share/man/html4/acorn26			base-obsolete		obsolete
 ./usr/share/man/html4/acorn32			base-man-share
 ./usr/share/man/html4/alpha			base-man-share
 ./usr/share/man/html4/amiga			base-man-share
@@ -4531,7 +4531,7 @@
 ./usr/share/man/html6				base-man-share
 ./usr/share/man/html7				base-man-share
 ./usr/share/man/html8				base-man-share
-./usr/share/man/html8/acorn26			base-man-share		obsolete
+./usr/share/man/html8/acorn26			base-obsolete		obsolete
 ./usr/share/man/html8/acorn32			base-man-share
 ./usr/share/man/html8/algor			base-man-share
 ./usr/share/man/html8/alpha			base-man-share
@@ -4592,7 +4592,7 @@
 ./usr/share/man/html8/x86			base-man-share
 ./usr/share/man/html8/x86_64			base-obsolete		obsolete
 ./usr/share/man/html9				base-man-share
-./usr/share/man/html9/acorn26			base-man-share		obsolete
+./usr/share/man/html9/acorn26			base-obsolete		obsolete
 ./usr/share/man/html9/alpha			base-man-share
 ./usr/share/man/html9/amiga			base-man-share
 ./usr/share/man/html9/arm26			base-obsolete		obsolete
@@ -4621,7 +4621,7 @@
 ./usr/share/man/man3f				base-man-share
 ./usr/share/man/man3lua				base-man-share
 ./usr/share/man/man4				base-man-share
-./usr/share/man/man4/acorn26			base-man-share		obsolete
+./usr/share/man/man4/acorn26			base-obsolete		obsolete
 ./usr/share/man/man4/acorn32			base-man-share
 ./usr/share/man/man4/alpha			base-man-share
 ./usr/share/man/man4/amiga			base-man-share
@@ -4663,7 +4663,7 @@
 ./usr/share/man/man6				base-man-share
 ./usr/share/man/man7				base-man-share
 ./usr/share/man/man8				base-man-share
-./usr/share/man/man8/acorn26			base-man-share		obsolete
+./usr/share/man/man8/acorn26			base-obsolete		obsolete
 ./usr/share/man/man8/acorn32			base-man-share
 ./usr/share/man/man8/algor			base-man-share
 ./usr/share/man/man8/alpha			base-man-share
@@ -4724,7 +4724,7 @@
 ./usr/share/man/man8/x86			base-man-share
 ./usr/share/man/man8/x86_64			base-obsolete		obsolete
 ./usr/share/man/man9				base-man-share
-./usr/share/man/man9/acorn26			base-man-share		obsolete
+./usr/share/man/man9/acorn26			base-obsolete		obsolete
 ./usr/share/man/man9/alpha			base-man-share
 ./usr/share/man/man9/amiga			base-man-share
 ./usr/share/man/man9/arm26			base-obsolete		obsolete
