@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.171 2018/01/24 09:04:42 skrll Exp $
+.\"	$NetBSD: ddb.4,v 1.172 2018/01/24 10:04:28 wiz Exp $
 .\"
 .\" Copyright (c) 1997 - 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -205,9 +205,9 @@ Multiple commands can be separated by a semi-colon.
 .Sh COMMAND SYNTAX
 The general command syntax is:
 .Bd -ragged -offset indent
-.Ic command Ns Op Cm / Ns Ar modifier
+.Ic command Ns Op / Ns Ar modifier
 .Ar address
-.Op Cm , Ns Ar count
+.Op , Ns Ar count
 .Ed
 .Pp
 The current memory location being edited is referred to as
@@ -299,10 +299,10 @@ retrieve next command in history (if any).
 .Nm
 supports the following commands:
 .Bl -tag -width 5n
-.It Ic \&! Ns Ar address Ns Oo Cm ( Ar expression Ns Oo Ar ,... Oc Ns Cm ) Oc
+.It Ic \&! Ns Ar address Ns Oo ( Ar expression Ns Oo Ar ,... Oc ) Oc
 A synonym for
 .Ic call .
-.It Ic break Ns Oo Cm /u Oc Ar address Ns Op Cm , Ns Ar count
+.It Ic break Ns Oo Cm /u Oc Ar address Ns Op , Ns Ar count
 Set a breakpoint at
 .Ar address .
 If
@@ -333,16 +333,16 @@ Warning: if a user text is shadowed by a normal user-space debugger,
 user-space breakpoints may not work correctly.
 Setting a breakpoint at the low-level code paths may also cause
 strange behavior.
-.It Ic bt Ns Oo Cm /ul Oc Oo Ar frame-address Oc Ns Oo Cm , Ns Ar count Oc
+.It Ic bt Ns Oo Cm /ul Oc Oo Ar frame-address Oc Ns Oo , Ns Ar count Oc
 A synonym for
 .Ic trace .
-.It Ic bt/t Ns Oo Cm /ul Oc Oo Ar pid Oc Ns Oo Cm , Ns Ar count Oc
+.It Ic bt/t Ns Oo Cm /ul Oc Oo Ar pid Oc Ns Oo , Ns Ar count Oc
 A synonym for
 .Ic trace/t .
-.It Ic bt/a Ns Oo Cm /ul Oc Oo Ar lwpaddr Oc Ns Oo Cm , Ns Ar count Oc
+.It Ic bt/a Ns Oo Cm /ul Oc Oo Ar lwpaddr Oc Ns Oo , Ns Ar count Oc
 A synonym for
 .Ic trace/a .
-.It Ic call Ar address Ns Oo Cm ( Ns Ar expression Ns Oo Ar ,... Oc Ns Cm ) Oc
+.It Ic call Ar address Ns Oo ( Ns Ar expression Ns Oo Ar ,... Oc ) Oc
 Call the function specified by
 .Ar address
 with the argument(s) listed in parentheses.
@@ -382,7 +382,7 @@ Delete the watchpoint at
 that was previously set with
 .Ic watch
 command.
-.It Ic examine Ns Oo Cm / Ns Ar modifier Oc Ar address Ns Op Cm , Ns Ar count
+.It Ic examine Ns Oo Cm / Ns Ar modifier Oc Ar address Ns Op , Ns Ar count
 Display the address locations according to the format in
 .Ar modifier .
 Multiple modifier formats display multiple locations.
@@ -447,7 +447,7 @@ use Motorola syntax
 don't assume that each external label is a procedure entry mask
 .El
 .El
-.It Ic kill Ar pid Ns Op Cm , Ns Ar signal_number
+.It Ic kill Ar pid Ns Op , Ns Ar signal_number
 Send a signal to the process specified by the
 .Ar pid .
 Note that
@@ -522,7 +522,7 @@ Some of the more useful flags:
 Note: Limitations of the command line interface preclude
 specification of a boot string.
 .It Ic search Ns Oo Cm /bhl Oc Ar address Ar value \
-Oo Ar mask Oc Oo Cm , Ns Ar count Oc
+Oo Ar mask Oc Oo , Ns Ar count Oc
 Search memory from
 .Ar address
 for
@@ -626,7 +626,7 @@ trap counters will be displayed.
 .Pp
 If none of
 .Cm /i ,
-.Cm /m
+.Cm /m ,
 or
 .Cm /t
 are specified, all are shown.
@@ -795,7 +795,7 @@ character with a backslash as:
 .Bd -literal -offset indent
 sifting \\386
 .Ed
-.It Ic step Ns Oo Cm /p Oc Op Cm , Ns Ar count
+.It Ic step Ns Oo Cm /p Oc Op , Ns Ar count
 Single-step
 .Ar count
 times.
@@ -813,7 +813,7 @@ do the wrong thing.
 .It Ic sync
 Sync the disks, force a crash dump, and then reboot.
 .It Ic trace Ns Oo Cm /u Ns Oo Cm l Oc Oc Oo Ar frame-address Oc Ns \
-Oo Cm , Ns Ar count Oc
+Oo , Ns Ar count Oc
 Stack trace from
 .Ar frame-address .
 If
@@ -831,7 +831,7 @@ message buffer.
 .Pp
 Warning: user-space stack trace is valid only if the machine dependent
 code supports it.
-.It Ic trace/t Ns Oo Cm l Oc Oo Ar pid Oc Ns Oo Cm , Ns Ar count Oc
+.It Ic trace/t Ns Oo Cm l Oc Oo Ar pid Oc Ns Oo , Ns Ar count Oc
 Stack trace by
 .Dq thread
 (process, on
@@ -855,7 +855,7 @@ message buffer.
 .Pp
 Warning: trace by pid is valid only if the machine dependent code
 supports it.
-.It Ic trace/a Ns Oo Cm l Oc Oo Ar lwpaddr Oc Ns Oo Cm , Ns Ar count Oc
+.It Ic trace/a Ns Oo Cm l Oc Oo Ar lwpaddr Oc Ns Oo , Ns Ar count Oc
 Stack trace by light weight process (LWP) address
 rather than by stack frame address.
 If
@@ -872,7 +872,7 @@ If
 is specified, print the call nesting depth and the
 cumulative instruction count at each call or return.
 Otherwise, only print when the matching return is hit.
-.It Ic watch Ar address Ns Oo Cm , Ns Ar size Oc
+.It Ic watch Ar address Ns Oo , Ns Ar size Oc
 Set a watchpoint for a region.
 Execution stops when an attempt to modify the region occurs.
 .Ar size
@@ -916,7 +916,7 @@ strange things may occur.
 It's best to enclose each
 .Ar expression
 in parentheses.
-.It Ic x Ns Oo Cm / Ns Ar modifier Oc Ar address Ns Op Cm , Ns Ar count
+.It Ic x Ns Oo Cm / Ns Ar modifier Oc Ar address Ns Op , Ns Ar count
 A synonym for
 .Ic examine .
 .\" XXX - these commands aren't implemented; jhawk 19 May 2000
@@ -1335,7 +1335,7 @@ Radix is determined by the first two characters:
 .Sq 0t
 - decimal,
 otherwise follow current radix.
-.It Cm .
+.It Cm \&.
 .Ar dot
 .It Cm +
 .Ar next
