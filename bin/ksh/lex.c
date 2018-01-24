@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.21 2017/06/30 04:41:19 kamil Exp $	*/
+/*	$NetBSD: lex.c,v 1.22 2018/01/24 09:53:21 kamil Exp $	*/
 
 /*
  * lexical analysis and source input
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: lex.c,v 1.21 2017/06/30 04:41:19 kamil Exp $");
+__RCSID("$NetBSD: lex.c,v 1.22 2018/01/24 09:53:21 kamil Exp $");
 #endif
 
 
@@ -734,13 +734,13 @@ Done:
 		int h = hash(ident);
 
 		/* { */
-		if ((cf & KEYWORD) && (p = tsearch(&keywords, ident, h))
+		if ((cf & KEYWORD) && (p = mytsearch(&keywords, ident, h))
 		    && (!(cf & ESACONLY) || p->val.i == ESAC || p->val.i == '}'))
 		{
 			afree(yylval.cp, ATEMP);
 			return p->val.i;
 		}
-		if ((cf & ALIAS) && (p = tsearch(&aliases, ident, h))
+		if ((cf & ALIAS) && (p = mytsearch(&aliases, ident, h))
 		    && (p->flag & ISSET))
 		{
 			register Source *s;
