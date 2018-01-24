@@ -1,4 +1,4 @@
-.\"	$NetBSD: iic.4,v 1.14 2018/01/24 09:04:42 skrll Exp $
+.\"	$NetBSD: iic.4,v 1.15 2018/01/24 10:00:42 wiz Exp $
 .\"	$OpenBSD: iic.4,v 1.74 2008/09/10 16:13:43 reyk Exp $
 .\"
 .\" Copyright (c) 2004, 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -77,8 +77,7 @@
 .Cd "iic* at voyager0             # evbmips "
 .Cd "iic0 at ziic?                # evbmips zaurus "
 .Sh DESCRIPTION
-.Tn I2C
-is a two-wire bus developed by Philips used for connecting
+I2C is a two-wire bus developed by Philips used for connecting
 integrated circuits.
 It is commonly used for connecting devices such as EEPROMs,
 temperature sensors, fan controllers, real-time clocks, tuners,
@@ -86,22 +85,15 @@ and other types of integrated circuits.
 .Pp
 The
 .Nm
-driver provides a uniform programming interface layer between
-.Tn I2C
-master controllers and various
-.Tn I2C
-slave devices.
-Each
-.Tn I2C
-master controller attaches an
+driver provides a uniform programming interface layer between I2C
+master controllers and various I2C slave devices.
+Each I2C master controller attaches an
 .Nm
 framework; several slave devices can then be attached to the
 .Nm
 bus.
 .Pp
-All
-.Tn I2C
-slave devices are uniquely identified by the address on the bus.
+All I2C slave devices are uniquely identified by the address on the bus.
 The master accesses a particular slave device using its address.
 .\" Devices are found on the bus using a sophisticated scanning routine
 .\" which attempts to identify commonly available devices.
@@ -109,9 +101,7 @@ The master accesses a particular slave device using its address.
 .\" supplies a list of I2C devices, that list is used instead.
 .Pp
 System Management Bus (SMBus) protocol is also supported by emulating
-it with the
-.Tn I2C
-commands.
+it with the I2C commands.
 .Sh SUPPORTED MASTERS
 A wide list of I2C masters are supported, among them are:
 .Pp
@@ -215,9 +205,7 @@ Generic Memory Module Serial Presence Detect
 .Xr i2cscan 8 ,
 .Xr iic 9
 .Sh HISTORY
-The
-.Tn I2C
-framework first appeared in
+The I2C framework first appeared in
 .Nx 2.0 .
 .Ox
 support was added in
@@ -228,9 +216,7 @@ it was ported from
 .Ox .
 .Sh AUTHORS
 .An -nosplit
-The
-.Tn I2C
-framework was written by
+The I2C framework was written by
 .An Steve C. Woodford
 and
 .An Jason R. Thorpe
