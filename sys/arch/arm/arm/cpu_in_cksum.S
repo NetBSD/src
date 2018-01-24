@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_in_cksum.S,v 1.11 2015/02/15 17:21:08 skrll Exp $	*/
+/*	$NetBSD: cpu_in_cksum.S,v 1.12 2018/01/24 09:04:44 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <machine/asm.h>
-RCSID("$NetBSD: cpu_in_cksum.S,v 1.11 2015/02/15 17:21:08 skrll Exp $")
+RCSID("$NetBSD: cpu_in_cksum.S,v 1.12 2018/01/24 09:04:44 skrll Exp $")
 	
 #include "assym.h"
 
@@ -156,9 +156,6 @@ END(cpu_in_cksum)
  */
 /* LINTSTUB: Ignore */
 ASENTRY_NP(arm_cksumdata)
-#ifdef __PROG26
-	str	lr, [sp, #-4]!		/* for SVC26 mode */
-#endif
 #ifdef __XSCALE__
 	pld	[r0]			/* Pre-fetch the start of the buffer */
 #endif
@@ -185,11 +182,7 @@ ASENTRY_NP(arm_cksumdata)
 	rsb	r7, r7, #0x04
 	subs	r1, r1, r7		/* Enough bytes left to make it? */
 	bgt	.Lcksumdata_wordaligned
-#ifdef __PROG26
-	ldreq	pc, [sp], #4		/* done */
-#else
 	RETc(eq)			/* done */
-#endif
 	adds	r1, r1, r7		/* undo sub */
 	subs	r7, r7, r1
 	lsls	r7, r7, #3
@@ -200,11 +193,7 @@ ASENTRY_NP(arm_cksumdata)
 	lsls	r2, r2, r7
 	lsrs	r2, r2, r7
 #endif
-#ifdef __PROG26
-	ldr	pc, [sp], #4		/* done */
-#else
 	RET				/* done */
-#endif
 
 	/* Buffer is now word aligned */
 .Lcksumdata_wordaligned:
@@ -296,11 +285,7 @@ ASENTRY_NP(arm_cksumdata)
 #endif
 
 	adds	r1, r1, #0x40
-#ifdef __PROG26
-	ldreq	pc, [sp], #4
-#else
 	RETc(eq)
-#endif
 	cmp	r1, #0x20
 
 #ifdef __XSCALE__
@@ -333,11 +318,7 @@ ASENTRY_NP(arm_cksumdata)
 #endif
 	adcs	r2, r2, #0x00
 	subs	r1, r1, #0x20
-#ifdef __PROG26
-	ldreq	pc, [sp], #4
-#else
 	RETc(eq)
-#endif
 
 .Lcksumdata_less_than_32:
 	/* There are less than 32 bytes left */
@@ -383,11 +364,7 @@ ASENTRY_NP(arm_cksumdata)
 	/* Deal with < 4 bytes remaining */
 .Lcksumdata_lessthan4:
 	adds	r1, r1, #0x04
-#ifdef __PROG26
-	ldreq	pc, [sp], #4
-#else
 	RETc(eq)
-#endif
 
 	/* Deal with 1 to 3 remaining bytes, possibly misaligned */
 .Lcksumdata_endgame:
@@ -403,9 +380,5 @@ ASENTRY_NP(arm_cksumdata)
 #endif
 	adds	r2, r2, r3
 	adcs	r2, r2, #0x00
-#ifdef __PROG26
-	ldr	pc, [sp], #4
-#else
 	RET
-#endif
 ASEND(arm_cksumdata)

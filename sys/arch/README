@@ -1,6 +1,5 @@
-$NetBSD: README,v 1.62 2014/03/31 11:25:48 martin Exp $
+$NetBSD: README,v 1.63 2018/01/24 09:04:43 skrll Exp $
 
-acorn26	arm	20000509	Acorn ARM2- and ARM3-based machines
 acorn32	arm	20011118	Acorn computers Ltd. ARM 6/7/SA based machines
 algor	mipsel,mips64el	20010528	Algorithmics, Ltd. MIPS evaluation boards
 alpha	alpha	19950213	Compaq (formerly Digital Equipment Corp.) Alpha

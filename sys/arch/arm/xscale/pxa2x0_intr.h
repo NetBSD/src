@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_intr.h,v 1.14 2014/02/04 18:51:16 matt Exp $ */
+/*	$NetBSD: pxa2x0_intr.h,v 1.15 2018/01/24 09:04:45 skrll Exp $ */
 
 /* Derived from i80321_intr.h */
 
@@ -59,7 +59,6 @@ extern vaddr_t pxaic_base;		/* Shared with pxa2x0_irq.S */
 extern volatile int intr_mask;
 extern int pxa2x0_imask[];
 
-#ifdef __PROG32
 
 /*
  * Cotulla's integrated ICU doesn't have IRQ0..7, so
@@ -129,7 +128,6 @@ find_first_bit(uint32_t bits)
 	return 31 - __builtin_clz(bits);
 }
 
-#endif /* __PROG32 */
 
 int	_splraise(int);
 int	_spllower(int);

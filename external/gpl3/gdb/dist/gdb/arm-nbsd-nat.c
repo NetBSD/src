@@ -78,18 +78,18 @@ armnbsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
     return 0;
 
   /* The stack pointer shouldn't be zero.  */
-  if (pcb->pcb_un.un_32.pcb32_sp == 0)
+  if (pcb->pcb_sp == 0)
     return 0;
 
-  read_memory (pcb->pcb_un.un_32.pcb32_sp, (gdb_byte *) &sf, sizeof sf);
+  read_memory (pcb->pcb_sp, (gdb_byte *) &sf, sizeof sf);
 
   regcache_raw_supply (regcache, ARM_PC_REGNUM, &sf.sf_pc);
-  regcache_raw_supply (regcache, ARM_SP_REGNUM, &pcb->pcb_un.un_32.pcb32_sp);
-  regcache_raw_supply (regcache, 12, &pcb->pcb_un.un_32.pcb32_r12);
-  regcache_raw_supply (regcache, 11, &pcb->pcb_un.un_32.pcb32_r11);
-  regcache_raw_supply (regcache, 10, &pcb->pcb_un.un_32.pcb32_r10);
-  regcache_raw_supply (regcache, 9, &pcb->pcb_un.un_32.pcb32_r9);
-  regcache_raw_supply (regcache, 8, &pcb->pcb_un.un_32.pcb32_r8);
+  regcache_raw_supply (regcache, ARM_SP_REGNUM, &pcb->pcb_sp);
+  regcache_raw_supply (regcache, 12, &pcb->pcb_r12);
+  regcache_raw_supply (regcache, 11, &pcb->pcb_r11);
+  regcache_raw_supply (regcache, 10, &pcb->pcb_r10);
+  regcache_raw_supply (regcache, 9, &pcb->pcb_r9);
+  regcache_raw_supply (regcache, 8, &pcb->pcb_r8);
   regcache_raw_supply (regcache, 7, &sf.sf_r7);
   regcache_raw_supply (regcache, 6, &sf.sf_r6);
   regcache_raw_supply (regcache, 5, &sf.sf_r5);
