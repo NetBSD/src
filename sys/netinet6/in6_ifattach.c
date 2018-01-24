@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.113 2017/11/10 07:27:57 ozaki-r Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.114 2018/01/24 03:44:10 ozaki-r Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.113 2017/11/10 07:27:57 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.114 2018/01/24 03:44:10 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -709,6 +709,8 @@ in6_ifattach(struct ifnet *ifp, struct ifnet *altifp)
 	struct in6_ifaddr *ia;
 	struct in6_addr in6;
 
+	KASSERT(IFNET_LOCKED(ifp));
+
 	/* some of the interfaces are inherently not IPv6 capable */
 	switch (ifp->if_type) {
 	case IFT_BRIDGE:
@@ -771,15 +773,12 @@ in6_ifattach(struct ifnet *ifp, struct ifnet *altifp)
 	 * XXX multiple loopback interface case.
 	 */
 	if ((ifp->if_flags & IFF_LOOPBACK) != 0) {
-		int s = pserialize_read_enter();
 		in6 = in6addr_loopback;
+		/* These are safe and atomic thanks to IFNET_LOCK */
 		if (in6ifa_ifpwithaddr(ifp, &in6) == NULL) {
-			if (in6_ifattach_loopback(ifp) != 0) {
-				pserialize_read_exit(s);
+			if (in6_ifattach_loopback(ifp) != 0)
 				return;
-			}
 		}
-		pserialize_read_exit(s);
 	}
 
 	/*
