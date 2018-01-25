@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_var.h,v 1.75 2018/01/10 10:56:30 knakahara Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.76 2018/01/25 15:33:06 maxv Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -66,47 +66,6 @@
 
 #include <sys/socketvar.h>
 #include <net/route.h>
-
-/*
- * IP6 reassembly queue structure.  Each fragment
- * being reassembled is attached to one of these structures.
- */
-struct	ip6q {
-	u_int32_t	ip6q_head;
-	u_int16_t	ip6q_len;
-	u_int8_t	ip6q_nxt;	/* ip6f_nxt in first fragment */
-	u_int8_t	ip6q_hlim;
-	struct ip6asfrag *ip6q_down;
-	struct ip6asfrag *ip6q_up;
-	u_int32_t	ip6q_ident;
-	u_int8_t	ip6q_arrive;
-	u_int8_t	ip6q_ttl;
-	struct in6_addr	ip6q_src, ip6q_dst;
-	struct ip6q	*ip6q_next;
-	struct ip6q	*ip6q_prev;
-	int		ip6q_unfrglen;	/* len of unfragmentable part */
-#ifdef notyet
-	u_char		*ip6q_nxtp;
-#endif
-	int		ip6q_nfrag;	/* # of fragments */
-};
-
-struct	ip6asfrag {
-	u_int32_t	ip6af_head;
-	u_int16_t	ip6af_len;
-	u_int8_t	ip6af_nxt;
-	u_int8_t	ip6af_hlim;
-	/* must not override the above members during reassembling */
-	struct ip6asfrag *ip6af_down;
-	struct ip6asfrag *ip6af_up;
-	struct mbuf	*ip6af_m;
-	int		ip6af_offset;	/* offset in ip6af_m to next header */
-	int		ip6af_frglen;	/* fragmentable part length */
-	int		ip6af_off;	/* fragment offset */
-	u_int16_t	ip6af_mff;	/* more fragment bit in frag off */
-};
-
-#define IP6_REASS_MBUF(ip6af) ((ip6af)->ip6af_m)
 
 struct	ip6_moptions {
 	if_index_t im6o_multicast_if_index; /* I/F for outgoing multicasts */
