@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.73 2017/11/11 21:03:01 riastradh Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.74 2018/01/25 17:41:49 riastradh Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.73 2017/11/11 21:03:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.74 2018/01/25 17:41:49 riastradh Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -956,7 +956,7 @@ again:
 end:
 	if (ifp->if_flags & IFF_OACTIVE) {
 		ifp->if_flags &= ~IFF_OACTIVE;
-		xennet_softstart(sc);
+		softint_schedule(sc->sc_softintr);
 	}
 }
 
