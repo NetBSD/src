@@ -1,4 +1,4 @@
-/*      $NetBSD: amdzentemp.c,v 1.5 2018/01/25 22:37:42 pgoyette Exp $ */
+/*      $NetBSD: amdzentemp.c,v 1.6 2018/01/25 23:37:33 pgoyette Exp $ */
 /*      $OpenBSD: kate.c,v 1.2 2008/03/27 04:52:03 cnst Exp $   */
 
 /*
@@ -50,7 +50,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdzentemp.c,v 1.5 2018/01/25 22:37:42 pgoyette Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: amdzentemp.c,v 1.6 2018/01/25 23:37:33 pgoyette Exp $ ");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -223,7 +223,7 @@ amdzentemp_family17_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	edata->value_cur = ((temp >> 21) * 125000) + 273150000;
 }
 
-MODULE(MODULE_CLASS_DRIVER, amdzentemp, "sysmon_envsys");
+MODULE(MODULE_CLASS_DRIVER, amdzentemp, "sysmon_envsys,amdsmn");
 
 #ifdef _MODULE
 #include "ioconf.c"
