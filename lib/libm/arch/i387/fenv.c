@@ -1,4 +1,4 @@
-/* $NetBSD: fenv.c,v 1.8 2017/03/22 23:11:08 chs Exp $ */
+/* $NetBSD: fenv.c,v 1.9 2018/01/25 03:54:21 christos Exp $ */
 
 /*-
  * Copyright (c) 2004-2005 David Schultz <das@FreeBSD.ORG>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fenv.c,v 1.8 2017/03/22 23:11:08 chs Exp $");
+__RCSID("$NetBSD: fenv.c,v 1.9 2018/01/25 03:54:21 christos Exp $");
 
 #include "namespace.h"
 
@@ -106,19 +106,18 @@ __weak_alias(feupdateenv,_feupdateenv)
  * consumers of FE_DFL_ENV, during runtime.
  */
 fenv_t __fe_dfl_env = {
-	{
-		__NetBSD_NPXCW__,       /* Control word register */
-		0x0,			/* Unused */
-		0x0000,                 /* Status word register */
-		0x0,			/* Unused */
-		0x0000ffff,             /* Tag word register */
-		0x0,			/* Unused */
-		{
-			0x0000, 0x0000,
-			0x0000, 0xffff
+	.x87 = {
+		.control = __NetBSD_NPXCW__,    /* Control word register */
+		.unused1 = 0,			/* Unused */
+		.status = 0,  		     	/* Status word register */
+		.unused2 = 0,			/* Unused */
+		.tag = 0xffff,          	/* Tag word register */
+		.unused3 = 0,			/* Unused */
+		.others = {
+			0, 0, 0, 0x0000ffff,
 		}
 	},
-	__INITIAL_MXCSR__		/* MXCSR register */
+	.mxcsr = __INITIAL_MXCSR__		/* MXCSR register */
 };
 
 /*
