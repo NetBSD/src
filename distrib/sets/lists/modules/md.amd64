@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.72 2016/12/15 12:56:52 kre Exp $
+# $NetBSD: md.amd64,v 1.73 2018/01/25 23:42:06 pgoyette Exp $
 #
 # NOTE that there are two sets of files here:
 # @MODULEDIR@ and amd64-xen
@@ -31,8 +31,12 @@
 ./@MODULEDIR@/acpiwmi/acpiwmi.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/aibs				base-kernel-modules	kmod
 ./@MODULEDIR@/aibs/aibs.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/amdsmn				base-kernel-modules	kmod
+./@MODULEDIR@/amdsmn/amdsmn.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/amdtemp				base-kernel-modules	kmod
 ./@MODULEDIR@/amdtemp/amdtemp.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/amdzentemp			base-kernel-modules	kmod
+./@MODULEDIR@/amdzentemp/amdzentemp.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/aps				base-kernel-modules	kmod
 ./@MODULEDIR@/aps/aps.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/asus				base-kernel-modules	kmod
