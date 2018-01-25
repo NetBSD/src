@@ -1,4 +1,4 @@
-/*	$NetBSD: frag6.c,v 1.62 2018/01/25 15:33:06 maxv Exp $	*/
+/*	$NetBSD: frag6.c,v 1.63 2018/01/25 15:55:57 maxv Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.62 2018/01/25 15:33:06 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.63 2018/01/25 15:55:57 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -396,8 +396,7 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 
 insert:
 	/*
-	 * Stick new segment in its place. Move to front of packet queue, as
-	 * we are the most recently active fragmented packet.
+	 * Stick new segment in its place.
 	 */
 	frag6_enq(ip6af, af6->ip6af_up);
 	frag6_nfrags++;
@@ -550,7 +549,7 @@ frag6_freef(struct ip6q *q6)
 			/* adjust pointer */
 			ip6 = mtod(m, struct ip6_hdr *);
 
-			/* restoure source and destination addresses */
+			/* restore source and destination addresses */
 			ip6->ip6_src = q6->ip6q_src;
 			ip6->ip6_dst = q6->ip6q_dst;
 
