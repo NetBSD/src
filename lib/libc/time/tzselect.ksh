@@ -1,6 +1,6 @@
 #! /bin/bash
 #
-#	$NetBSD: tzselect.ksh,v 1.16 2017/10/24 17:38:17 christos Exp $
+#	$NetBSD: tzselect.ksh,v 1.17 2018/01/25 22:48:42 christos Exp $
 #
 PKGVERSION='(tzcode) '
 TZVERSION=see_Makefile
@@ -344,8 +344,10 @@ while
 		while
 			echo >&2 'Please enter the desired value' \
 				'of the TZ environment variable.'
-			echo >&2 'For example, GST-10 is a zone named GST' \
-				'that is 10 hours ahead (east) of UTC.'
+			echo >&2 'For example, AEST-10 is a zone named AEST' \
+				'that is 10 hours'
+			echo >&2 'ahead (east) of Greenwich,' \
+				'with no daylight saving time.'
 			read TZ
 			$AWK -v TZ="$TZ" 'BEGIN {
 				tzname = "(<[[:alnum:]+-]{3,}>|[[:alpha:]]{3,})"

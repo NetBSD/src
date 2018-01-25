@@ -1,8 +1,8 @@
-.\" $NetBSD: ctime.3,v 1.55 2017/10/24 17:38:17 christos Exp $
+.\" $NetBSD: ctime.3,v 1.56 2018/01/25 22:48:42 christos Exp $
 .\"
 .\" XXX: License missing?
 .\"
-.Dd October 24, 2017
+.Dd January 25, 2018
 .Dt CTIME 3
 .Os
 .Sh NAME
@@ -163,7 +163,7 @@ If
 .Fa zone
 is
 .Dv NULL ,
-UTC is used; otherwise,
+UT is used; otherwise,
 .Fa zone
 should have been allocated by
 .Fn tzalloc
@@ -444,6 +444,8 @@ function returns string containing the name of the timezone given in
 local time zone file
 .It Pa /usr/share/zoneinfo
 time zone information directory
+.\" .It Pa usr/share/zoneinfo/localtime
+.\" local time zone file
 .It Pa /usr/share/zoneinfo/posixrules
 used with POSIX-style TZ's
 .It Pa /usr/share/zoneinfo/GMT

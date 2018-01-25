@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.110 2017/10/27 08:43:11 kre Exp $	*/
+/*	$NetBSD: localtime.c,v 1.111 2018/01/25 22:48:42 christos Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.110 2017/10/27 08:43:11 kre Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.111 2018/01/25 22:48:42 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -2116,7 +2116,7 @@ again:
 			   && ((/*CONSTCOND*/BIGGEST (INT_FAST32_MIN, LONG_MIN)
 				+ yourtm.TM_GMTOFF)
 			       <= mytm.TM_GMTOFF)))) {
-		  /* MYTM matches YOURTM except with the wrong UTC offset.
+		  /* MYTM matches YOURTM except with the wrong UT offset.
 		     YOURTM.TM_GMTOFF is plausible, so try it instead.
 		     It's OK if YOURTM.TM_GMTOFF contains uninitialized data,
 		     since the guess gets checked.  */
