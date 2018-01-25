@@ -1,4 +1,4 @@
-/*	$NetBSD: amdsmn.c,v 1.1 2018/01/25 01:22:21 christos Exp $	*/
+/*	$NetBSD: amdsmn.c,v 1.2 2018/01/25 23:37:33 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2017 Conrad Meyer <cem@FreeBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdsmn.c,v 1.1 2018/01/25 01:22:21 christos Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: amdsmn.c,v 1.2 2018/01/25 23:37:33 pgoyette Exp $ ");
 
 /*
  * Driver for the AMD Family 17h CPU System Management Network.
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: amdsmn.c,v 1.1 2018/01/25 01:22:21 christos Exp $ ")
 #include <sys/mutex.h>
 #include <sys/systm.h>
 #include <sys/cpu.h>
+#include <sys/module.h>
 
 #include <machine/specialreg.h>
 
@@ -49,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: amdsmn.c,v 1.1 2018/01/25 01:22:21 christos Exp $ ")
 #include <dev/pci/pcidevs.h>
 
 #include "amdsmn.h"
+#include "ioconf.h"
 
 #define	SMN_ADDR_REG	0x60
 #define	SMN_DATA_REG	0x64
@@ -63,11 +65,12 @@ struct amdsmn_softc {
 
 static int amdsmn_match(device_t, cfdata_t, void *);
 static void amdsmn_attach(device_t, device_t, void *);
+static int amdsmn_rescan(device_t, const char *, const int *);
 static int amdsmn_detach(device_t, int);
 static int amdsmn_misc_search(device_t, cfdata_t, const int *, void *);
 
-CFATTACH_DECL_NEW(amdsmn, sizeof(struct amdsmn_softc), amdsmn_match,
-    amdsmn_attach, amdsmn_detach, NULL);
+CFATTACH_DECL3_NEW(amdsmn, sizeof(struct amdsmn_softc), amdsmn_match,
+    amdsmn_attach, amdsmn_detach, NULL, amdsmn_rescan, NULL, 0);
     
 static int
 amdsmn_match(device_t parent, cfdata_t match, void *aux) 
@@ -91,13 +94,24 @@ amdsmn_attach(device_t parent, device_t self, void *aux)
 {
 	struct amdsmn_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
+	int flags = 0;
 
 	mutex_init(&sc->smn_lock, MUTEX_DEFAULT, IPL_NONE);
 	sc->pa = *pa;
 	sc->pc = pa->pa_pc;
 	sc->pcitag = pa->pa_tag;
 	aprint_normal(": AMD Family 17h System Management Network\n");
-	config_search_loc(amdsmn_misc_search, self, "amdsmn", NULL, &sc->pa);
+	amdsmn_rescan(self, "amdsmn", &flags);
+}
+
+static int
+amdsmn_rescan(device_t self, const char *ifattr, const int *flags)
+{
+	struct amdsmn_softc *sc = device_private(self);
+
+	config_search_loc(amdsmn_misc_search, self, ifattr, NULL, &sc->pa);
+
+	return 0;
 }
 
 static int
@@ -136,3 +150,34 @@ amdsmn_write(device_t dev, uint32_t addr, uint32_t value)
 
 	return 0;
 }
+
+MODULE(MODULE_CLASS_DRIVER, amdsmn, "pci");
+
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
+
+static int
+amdsmn_modcmd(modcmd_t cmd, void *opaque)
+{
+	int error = 0;
+
+#ifdef _MODULE
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		error = config_init_component(cfdriver_ioconf_amdsmn,
+		    cfattach_ioconf_amdsmn, cfdata_ioconf_amdsmn);
+		break;
+	case MODULE_CMD_FINI:
+		error = config_fini_component(cfdriver_ioconf_amdsmn,
+		    cfattach_ioconf_amdsmn, cfdata_ioconf_amdsmn);
+		break;
+	default:
+		error = ENOTTY;
+		break;
+	}
+#endif
+
+	return error;
+}
+
