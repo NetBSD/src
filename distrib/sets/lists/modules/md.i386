@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.75 2017/08/09 18:45:30 maxv Exp $
+# $NetBSD: md.i386,v 1.76 2018/01/25 23:42:06 pgoyette Exp $
 #
 # NOTE that there are three sets of files here:
 # @MODULEDIR@, i386-xen, and i386pae-xen
@@ -32,8 +32,12 @@
 ./@MODULEDIR@/acpiwmi/acpiwmi.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/aibs				base-kernel-modules	kmod
 ./@MODULEDIR@/aibs/aibs.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/amdsmn				base-kernel-modules	kmod
+./@MODULEDIR@/amdsmn/amdsmn.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/amdtemp				base-kernel-modules	kmod
 ./@MODULEDIR@/amdtemp/amdtemp.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/amdzentemp			base-kernel-modules	kmod
+./@MODULEDIR@/amdzentemp/amdzentemp.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/aps				base-kernel-modules	kmod
 ./@MODULEDIR@/aps/aps.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/asus				base-kernel-modules	kmod
