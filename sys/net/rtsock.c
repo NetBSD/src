@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.237 2018/01/19 05:19:29 ozaki-r Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.238 2018/01/25 03:09:05 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.237 2018/01/19 05:19:29 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.238 2018/01/25 03:09:05 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1015,8 +1015,18 @@ COMPATNAME(route_output)(struct mbuf *m, struct socket *so)
 			 * Release rt_so_mtx to avoid a deadlock with route_intr
 			 * and also serialize updating routes to avoid another.
 			 */
+			if (rt_updating) {
+				/* Release to allow the updater to proceed */
+				rt_unref(rt);
+				rt = NULL;
+			}
 			while (rt_updating) {
 				error = cv_wait_sig(&rt_update_cv, rt_so_mtx);
+				if (error != 0)
+					goto flush;
+			}
+			if (rt == NULL) {
+				error = rtrequest1(RTM_GET, &info, &rt);
 				if (error != 0)
 					goto flush;
 			}
