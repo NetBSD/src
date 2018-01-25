@@ -1,4 +1,4 @@
-.\" $NetBSD: amdtemp.4,v 1.9 2014/03/18 18:20:39 riastradh Exp $
+.\" $NetBSD: amdtemp.4,v 1.10 2018/01/25 18:56:17 uwe Exp $
 .\"-
 .\" Copyright (c) 2008 Christoph Egger
 .\" All rights reserved.
@@ -41,13 +41,13 @@ driver provides support for the on-die digital thermal sensor present
 on AMD K8, AMD Barcelona, AMD Phenom, AMD Griffin, and AMD Fusion CPUs.
 .Pp
 These sensors were officially introduced in AMD K8 Revision F processors,
-and provide 0.5 degC accuracy.
-Precision was improved in Revision
-G chips, which provide two more bits for 0.25 degC steppings.
+and provide 0.5\(deC accuracy.
+Precision was improved in Revision G chips,
+which provide two more bits for 0.25\(deC steppings.
 Each core
 has two temperature sensors, and there are up to two cores per CPU socket.
 .Pp
-AMD Barcelona, AMD Phenom, AMD Griffin, and AMD Fusion provide 0.125 degC
+AMD Barcelona, AMD Phenom, AMD Griffin, and AMD Fusion provide 0.125\(deC
 accuracy and provide one temperature sensor for each CPU socket.
 .Pp
 The
@@ -55,9 +55,9 @@ The
 driver reports temperatures through the
 .Xr envsys 4
 API.
-.Bl -column "Sensor    " "Units" "Typical" -offset indent
-.It Sy "Sensor     " Ta Sy "Units" Ta Sy "Typical Use"
-.It Li "CPUN sensor0" Ta "uK" Ta "cpuN temperature"
+.Bl -column "CPUN sensor0" "Units" "Typical Use" -offset indent
+.It Sy "Sensor" Ta Sy "Units" Ta Sy "Typical Use"
+.It CPU Ns Em N No sensor0 Ta \(*mK Ta cpu Ns Em N No temperature
 .El
 .Sh SEE ALSO
 .Xr envsys 4 ,
