@@ -1,4 +1,4 @@
-.\" $NetBSD: amdzentemp.4,v 1.1 2018/01/25 01:25:39 christos Exp $
+.\" $NetBSD: amdzentemp.4,v 1.2 2018/01/25 08:41:17 pgoyette Exp $
 .\"-
 .\" Copyright (c) 2008 Christoph Egger
 .\" All rights reserved.
@@ -57,6 +57,17 @@ API.
 .Xr envsys 4 ,
 .Xr envstat 8 ,
 .Xr powerd 8
+.Sh BUGS
+The temperature reading provided to
+.Xr envsys 4
+needs to have a CPU-dependant offset applied.
+For Ryzen X processors, the offset is 20C, while for Threadripper
+processors an offset of 27C is needed.
+.Pp
+The sensor has thermal-trip value which should be retrieved and
+provided to
+.Xr envsys 4
+as the sensors critical-maximum value.
 .Sh HISTORY
 The
 .Nm
@@ -65,8 +76,17 @@ driver first appeared in
 named
 .Dq kate .
 It was then ported to
-.Nx 5.0 .
-The driver has been renamed with support for newer AMD CPUs.
+.Nx 5.0
+under the name
+.Dq amdtemp .
+The
+.Fx
+version of the driver was updated with support for newer AMD CPUs.
+For
+.Nx ,
+the support for the newer CPUs was separated into its own
+.Nm
+driver.
 .Sh AUTHORS
 .An -nosplit
 The
@@ -74,3 +94,7 @@ The
 driver was written by
 .An Constantine A. Murenin Aq Mt cnst@openbsd.org
 whilst at the University of Waterloo.
+Porting of support for the newer AMD CPUs from
+.Fx
+was provided by
+.An Ian Clark .
