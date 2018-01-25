@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.21 2017/12/10 17:12:54 bouyer Exp $
+#	$NetBSD: files.pci,v 1.22 2018/01/25 01:22:21 christos Exp $
 
 device 	aapic
 attach 	aapic at pci
@@ -34,6 +34,16 @@ file    arch/x86/pci/amdpcib_hpet.c		amdpcib_hpet
 device	amdnb_misc: amdnb_miscbus
 attach	amdnb_misc at pci
 file	arch/x86/pci/amdnb_misc.c	amdnb_misc
+ 
+# AMD Family 17h system management network
+device	amdsmn {}
+attach	amdsmn at pci
+file arch/x86/pci/amdsmn.c		amdsmn
+
+# AMD Family 17h CPU temp sensor
+device	amdzentemp: sysmon_envsys
+attach	amdzentemp at amdsmn
+file	arch/x86/pci/amdzentemp.c		amdzentemp
 
 device	amdtemp: sysmon_envsys
 attach	amdtemp at amdnb_miscbus
