@@ -1,4 +1,4 @@
-.\" $NetBSD: amdzentemp.4,v 1.4 2018/01/25 10:28:57 pgoyette Exp $
+.\" $NetBSD: amdzentemp.4,v 1.5 2018/01/25 10:48:27 uwe Exp $
 .\"-
 .\" Copyright (c) 2008 Christoph Egger
 .\" All rights reserved.
@@ -40,8 +40,8 @@ The
 driver provides support for the on-die digital thermal sensor present
 on AMD Ryzen CPUs
 .Pp
-These sensors provide 0.125\(deC accuracy. There is one sensor for each
-CPU socket.
+These sensors provide 0.125\(deC accuracy.
+There is one sensor for each CPU socket.
 .Pp
 The
 .Nm
@@ -57,17 +57,6 @@ API.
 .Xr envsys 4 ,
 .Xr envstat 8 ,
 .Xr powerd 8
-.Sh BUGS
-The temperature reading provided to
-.Xr envsys 4
-needs to have a CPU-dependent offset applied.
-For Ryzen X processors, the offset is 20\(deC, while for Threadripper
-processors an offset of 27\(deC is needed.
-.Pp
-The sensor has a thermal-trip value which should be retrieved and
-provided to
-.Xr envsys 4
-as the sensors critical-maximum value.
 .Sh HISTORY
 The
 .Nm
@@ -78,7 +67,7 @@ named
 It was then ported to
 .Nx 5.0
 under the name
-.Dq amdtemp .
+.Xr amdtemp 4 .
 The
 .Fx
 version of the driver was updated with support for newer AMD CPUs.
@@ -98,3 +87,14 @@ Porting of support for the newer AMD CPUs from
 .Fx
 was provided by
 .An Ian Clark .
+.Sh BUGS
+The temperature reading provided to
+.Xr envsys 4
+needs to have a CPU-dependent offset applied.
+For Ryzen X processors, the offset is 20\(deC, while for Threadripper
+processors an offset of 27\(deC is needed.
+.Pp
+The sensor has a thermal-trip value which should be retrieved and
+provided to
+.Xr envsys 4
+as the sensors critical-maximum value.
