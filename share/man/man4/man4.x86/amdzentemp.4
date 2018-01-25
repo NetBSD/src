@@ -1,4 +1,4 @@
-.\" $NetBSD: amdzentemp.4,v 1.3 2018/01/25 10:15:24 uwe Exp $
+.\" $NetBSD: amdzentemp.4,v 1.4 2018/01/25 10:28:57 pgoyette Exp $
 .\"-
 .\" Copyright (c) 2008 Christoph Egger
 .\" All rights reserved.
@@ -64,7 +64,7 @@ needs to have a CPU-dependent offset applied.
 For Ryzen X processors, the offset is 20\(deC, while for Threadripper
 processors an offset of 27\(deC is needed.
 .Pp
-The sensor has thermal-trip value which should be retrieved and
+The sensor has a thermal-trip value which should be retrieved and
 provided to
 .Xr envsys 4
 as the sensors critical-maximum value.
