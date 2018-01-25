@@ -1,4 +1,4 @@
-/*	$NetBSD: frag6.c,v 1.61 2017/11/17 07:37:12 ozaki-r Exp $	*/
+/*	$NetBSD: frag6.c,v 1.62 2018/01/25 15:33:06 maxv Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.61 2017/11/17 07:37:12 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.62 2018/01/25 15:33:06 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -58,6 +58,42 @@ __KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.61 2017/11/17 07:37:12 ozaki-r Exp $");
 
 #include <net/net_osdep.h>
 
+/*
+ * IP6 reassembly queue structure.  Each fragment
+ * being reassembled is attached to one of these structures.
+ */
+struct	ip6q {
+	u_int32_t	ip6q_head;
+	u_int16_t	ip6q_len;
+	u_int8_t	ip6q_nxt;	/* ip6f_nxt in first fragment */
+	u_int8_t	ip6q_hlim;
+	struct ip6asfrag *ip6q_down;
+	struct ip6asfrag *ip6q_up;
+	u_int32_t	ip6q_ident;
+	u_int8_t	ip6q_ttl;
+	struct in6_addr	ip6q_src, ip6q_dst;
+	struct ip6q	*ip6q_next;
+	struct ip6q	*ip6q_prev;
+	int		ip6q_unfrglen;	/* len of unfragmentable part */
+	int		ip6q_nfrag;	/* # of fragments */
+};
+
+struct	ip6asfrag {
+	u_int32_t	ip6af_head;
+	u_int16_t	ip6af_len;
+	u_int8_t	ip6af_nxt;
+	u_int8_t	ip6af_hlim;
+	/* must not override the above members during reassembling */
+	struct ip6asfrag *ip6af_down;
+	struct ip6asfrag *ip6af_up;
+	struct mbuf	*ip6af_m;
+	int		ip6af_offset;	/* offset in ip6af_m to next header */
+	int		ip6af_frglen;	/* fragmentable part length */
+	int		ip6af_off;	/* fragment offset */
+	bool		ip6af_more;	/* more fragment bit in frag off */
+};
+
+
 static void frag6_enq(struct ip6asfrag *, struct ip6asfrag *);
 static void frag6_deq(struct ip6asfrag *);
 static void frag6_insque(struct ip6q *, struct ip6q *);
@@ -68,9 +104,10 @@ static int frag6_drainwanted;
 
 u_int frag6_nfragpackets;
 u_int frag6_nfrags;
-struct	ip6q ip6q;	/* ip6 reassemble queue */
+struct ip6q ip6q;	/* ip6 reassembly queue */
 
-static kmutex_t	frag6_lock;
+/* Protects ip6q */
+static kmutex_t	frag6_lock __cacheline_aligned;
 
 /*
  * Initialise reassembly queue and fragment identifier.
@@ -172,10 +209,10 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 	offset += sizeof(struct ip6_frag);
 
 	/*
-	 * RFC6946:  A host that receives an IPv6 packet which includes 
-	 * a Fragment Header with the "Fragmen Offset" equal to 0 and 
+	 * RFC6946: A host that receives an IPv6 packet which includes
+	 * a Fragment Header with the "Fragment Offset" equal to 0 and
 	 * the "M" bit equal to 0 MUST process such packet in isolation
-	 *  from any other packets/fragments.
+	 * from any other packets/fragments.
 	 */
 	fragoff = ntohs(ip6f->ip6f_offlg & IP6F_OFF_MASK);
 	if (fragoff == 0 && !(ip6f->ip6f_offlg & IP6F_MORE_FRAG)) {
@@ -183,7 +220,7 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 		in6_ifstat_inc(dstifp, ifs6_reass_ok);
 		*offp = offset;
 		rtcache_unref(rt, &ro);
-		return ip6f->ip6f_nxt;		
+		return ip6f->ip6f_nxt;
 	}
 
 	mutex_enter(&frag6_lock);
@@ -231,11 +268,7 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 
 		/* ip6q_nxt will be filled afterwards, from 1st fragment */
 		q6->ip6q_down	= q6->ip6q_up = (struct ip6asfrag *)q6;
-#ifdef notyet
-		q6->ip6q_nxtp	= (u_char *)nxtp;
-#endif
 		q6->ip6q_ident	= ip6f->ip6f_ident;
-		q6->ip6q_arrive = 0; /* Is it used anywhere? */
 		q6->ip6q_ttl 	= IPV6_FRAGTTL;
 		q6->ip6q_src	= ip6->ip6_src;
 		q6->ip6q_dst	= ip6->ip6_dst;
@@ -248,7 +281,6 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 	 * If it's the 1st fragment, record the length of the
 	 * unfragmentable part and the next header of the fragment header.
 	 */
-
 	if (fragoff == 0) {
 		q6->ip6q_unfrglen = offset - sizeof(struct ip6_hdr) -
 		    sizeof(struct ip6_frag);
@@ -257,8 +289,8 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 
 	/*
 	 * Check that the reassembled packet would not exceed 65535 bytes
-	 * in size.
-	 * If it would exceed, discard the fragment and return an ICMP error.
+	 * in size. If it would exceed, discard the fragment and return an
+	 * ICMP error.
 	 */
 	frgpartlen = sizeof(struct ip6_hdr) + ntohs(ip6->ip6_plen) - offset;
 	if (q6->ip6q_unfrglen >= 0) {
@@ -273,10 +305,11 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 	} else if (fragoff + frgpartlen > IPV6_MAXPACKET) {
 		mutex_exit(&frag6_lock);
 		icmp6_error(m, ICMP6_PARAM_PROB, ICMP6_PARAMPROB_HEADER,
-			    offset - sizeof(struct ip6_frag) +
-				offsetof(struct ip6_frag, ip6f_offlg));
+		    offset - sizeof(struct ip6_frag) +
+		    offsetof(struct ip6_frag, ip6f_offlg));
 		goto done;
 	}
+
 	/*
 	 * If it's the first fragment, do the above check for each
 	 * fragment already stored in the reassembly queue.
@@ -288,7 +321,7 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 
 			if (q6->ip6q_unfrglen + af6->ip6af_off + af6->ip6af_frglen >
 			    IPV6_MAXPACKET) {
-				struct mbuf *merr = IP6_REASS_MBUF(af6);
+				struct mbuf *merr = af6->ip6af_m;
 				struct ip6_hdr *ip6err;
 				int erroff = af6->ip6af_offset;
 
@@ -322,11 +355,11 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 	ip6af->ip6af_len = ip6->ip6_plen;
 	ip6af->ip6af_nxt = ip6->ip6_nxt;
 	ip6af->ip6af_hlim = ip6->ip6_hlim;
-	ip6af->ip6af_mff = ip6f->ip6f_offlg & IP6F_MORE_FRAG;
+	ip6af->ip6af_more = (ip6f->ip6f_offlg & IP6F_MORE_FRAG) != 0;
 	ip6af->ip6af_off = fragoff;
 	ip6af->ip6af_frglen = frgpartlen;
 	ip6af->ip6af_offset = offset;
-	IP6_REASS_MBUF(ip6af) = m;
+	ip6af->ip6af_m = m;
 
 	if (first_frag) {
 		af6 = (struct ip6asfrag *)q6;
@@ -362,22 +395,17 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 	}
 
 insert:
-
 	/*
-	 * Stick new segment in its place;
-	 * check for complete reassembly.
-	 * Move to front of packet queue, as we are
-	 * the most recently active fragmented packet.
+	 * Stick new segment in its place. Move to front of packet queue, as
+	 * we are the most recently active fragmented packet.
 	 */
 	frag6_enq(ip6af, af6->ip6af_up);
 	frag6_nfrags++;
 	q6->ip6q_nfrag++;
-#if 0 /* xxx */
-	if (q6 != ip6q.ip6q_next) {
-		frag6_remque(q6);
-		frag6_insque(q6, &ip6q);
-	}
-#endif
+
+	/*
+	 * Check for complete reassembly.
+	 */
 	next = 0;
 	for (af6 = q6->ip6q_down; af6 != (struct ip6asfrag *)q6;
 	     af6 = af6->ip6af_down) {
@@ -387,7 +415,7 @@ insert:
 		}
 		next += af6->ip6af_frglen;
 	}
-	if (af6->ip6af_up->ip6af_mff) {
+	if (af6->ip6af_up->ip6af_more) {
 		mutex_exit(&frag6_lock);
 		goto done;
 	}
@@ -396,7 +424,7 @@ insert:
 	 * Reassembly is complete; concatenate fragments.
 	 */
 	ip6af = q6->ip6q_down;
-	t = m = IP6_REASS_MBUF(ip6af);
+	t = m = ip6af->ip6af_m;
 	af6 = ip6af->ip6af_down;
 	frag6_deq(ip6af);
 	while (af6 != (struct ip6asfrag *)q6) {
@@ -404,7 +432,7 @@ insert:
 		frag6_deq(af6);
 		while (t->m_next)
 			t = t->m_next;
-		t->m_next = IP6_REASS_MBUF(af6);
+		t->m_next = af6->ip6af_m;
 		m_adj(t->m_next, af6->ip6af_offset);
 		kmem_intr_free(af6, sizeof(struct ip6asfrag));
 		af6 = af6dwn;
@@ -418,12 +446,9 @@ insert:
 	ip6->ip6_src = q6->ip6q_src;
 	ip6->ip6_dst = q6->ip6q_dst;
 	nxt = q6->ip6q_nxt;
-#ifdef notyet
-	*q6->ip6q_nxtp = (u_char)(nxt & 0xff);
-#endif
 
 	/*
-	 * Delete frag6 header with as a few cost as possible.
+	 * Delete frag6 header.
 	 */
 	if (m->m_len >= offset + sizeof(struct ip6_frag)) {
 		memmove((char *)ip6 + sizeof(struct ip6_frag), ip6, offset);
@@ -501,7 +526,7 @@ ip6_reass_packet(struct mbuf **mp, int offset)
  * Free a fragment reassembly header and all
  * associated datagrams.
  */
-void
+static void
 frag6_freef(struct ip6q *q6)
 {
 	struct ip6asfrag *af6, *down6;
@@ -510,7 +535,7 @@ frag6_freef(struct ip6q *q6)
 
 	for (af6 = q6->ip6q_down; af6 != (struct ip6asfrag *)q6;
 	     af6 = down6) {
-		struct mbuf *m = IP6_REASS_MBUF(af6);
+		struct mbuf *m = af6->ip6af_m;
 
 		down6 = af6->ip6af_down;
 		frag6_deq(af6);
@@ -536,6 +561,7 @@ frag6_freef(struct ip6q *q6)
 		}
 		kmem_intr_free(af6, sizeof(struct ip6asfrag));
 	}
+
 	frag6_remque(q6);
 	frag6_nfrags -= q6->ip6q_nfrag;
 	kmem_intr_free(q6, sizeof(struct ip6q));
@@ -571,6 +597,9 @@ frag6_deq(struct ip6asfrag *af6)
 	af6->ip6af_down->ip6af_up = af6->ip6af_up;
 }
 
+/*
+ * Insert newq after oldq.
+ */
 void
 frag6_insque(struct ip6q *newq, struct ip6q *oldq)
 {
@@ -579,10 +608,13 @@ frag6_insque(struct ip6q *newq, struct ip6q *oldq)
 
 	newq->ip6q_prev = oldq;
 	newq->ip6q_next = oldq->ip6q_next;
-	oldq->ip6q_next->ip6q_prev= newq;
+	oldq->ip6q_next->ip6q_prev = newq;
 	oldq->ip6q_next = newq;
 }
 
+/*
+ * Unlink p6.
+ */
 void
 frag6_remque(struct ip6q *p6)
 {
