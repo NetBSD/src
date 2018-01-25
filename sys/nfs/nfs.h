@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.76 2018/01/21 20:36:49 christos Exp $	*/
+/*	$NetBSD: nfs.h,v 1.77 2018/01/25 17:14:36 riastradh Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -41,6 +41,7 @@
 #include <sys/fstypes.h>
 #include <sys/mbuf.h>
 #include <sys/mutex.h>
+#include <sys/rbtree.h>
 #endif
 
 /*
@@ -486,7 +487,7 @@ extern int nfssvc_sockhead_flag;
  * One of these structures is allocated for each nfsd.
  */
 struct nfsd {
-	TAILQ_ENTRY(nfsd) nfsd_chain;	/* List of all nfsd's */
+	struct rb_node	nfsd_node;	/* Tree of all nfsd's */
 	SLIST_ENTRY(nfsd) nfsd_idle;	/* List of idle nfsd's */
 	kcondvar_t	nfsd_cv;
 	int		nfsd_flag;	/* NFSD_ flags */
@@ -497,6 +498,7 @@ struct nfsd {
 	u_char		nfsd_verfstr[RPCVERF_MAXSIZ];
 	struct proc	*nfsd_procp;	/* Proc ptr */
 	struct nfsrv_descript *nfsd_nd;	/* Associated nfsrv_descript */
+	uint32_t	nfsd_cookie;	/* Userland cookie, fits 32bit ptr */
 };
 
 /* Bits for "nfsd_flag" */
@@ -557,7 +559,6 @@ struct nfsrv_descript {
 
 extern kmutex_t nfsd_lock;
 extern kcondvar_t nfsd_initcv;
-extern TAILQ_HEAD(nfsdhead, nfsd) nfsd_head;
 extern SLIST_HEAD(nfsdidlehead, nfsd) nfsd_idle_head;
 extern int nfsd_head_flag;
 #define	NFSD_CHECKSLP	0x01
