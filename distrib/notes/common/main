@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.540 2018/01/24 09:04:41 skrll Exp $
+.\"	$NetBSD: main,v 1.541 2018/01/25 04:48:45 yamaguchi Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1442,6 +1442,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Steve Woodford Ta Mt scw@NetBSD.org
 .It Ta YAMAMOTO Takashi Ta Mt yamt@NetBSD.org
 .It Ta Abhinav Upadhyay Ta Mt abhinav@NetBSD.org	
+.It Ta Shoichi Yamaguchi Ta Mt yamaguchi@NetBSD.org
 .It Ta Yuji Yamano Ta Mt yyamano@NetBSD.org
 .It Ta David Young Ta Mt dyoung@NetBSD.org
 .It Ta Arnaud Ysmal Ta Mt stacktic@NetBSD.org
