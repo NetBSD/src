@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.84 2018/01/12 23:38:24 macallan Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.85 2018/01/25 14:45:58 macallan Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1120,7 +1120,11 @@ cg14_do_cursor(struct cgfourteen_softc *sc, struct wsdisplay_cursor *cur)
 	if (cur->which & WSDISPLAY_CURSOR_DOCMAP) {
 		int i;
 		uint32_t val;
-	
+
+		if ((cur->cmap.index > 2) || (cur->cmap.count > 3) ||
+		    (cur->cmap.index + cur->cmap.count > 3))
+			return EINVAL;
+
 		for (i = 0; i < min(cur->cmap.count, 3); i++) {
 			val = (cur->cmap.red[i] ) |
 			      (cur->cmap.green[i] << 8) |
