@@ -1,4 +1,4 @@
-/*      $NetBSD: amdzentemp.c,v 1.2 2018/01/25 15:01:05 prlw1 Exp $ */
+/*      $NetBSD: amdzentemp.c,v 1.3 2018/01/25 21:23:36 pgoyette Exp $ */
 /*      $OpenBSD: kate.c,v 1.2 2008/03/27 04:52:03 cnst Exp $   */
 
 /*
@@ -50,7 +50,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdzentemp.c,v 1.2 2018/01/25 15:01:05 prlw1 Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: amdzentemp.c,v 1.3 2018/01/25 21:23:36 pgoyette Exp $ ");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -98,6 +98,7 @@ CFATTACH_DECL_NEW(amdzentemp, sizeof(struct amdzentemp_softc),
 static int
 amdzentemp_match(device_t parent, cfdata_t match, void *aux)
 {
+
 	KASSERT(PCI_VENDOR(pa->pa_id) == PCI_VENDOR_AMD);
      
 	cfdata_t parent_cfdata = device_cfdata(parent);
