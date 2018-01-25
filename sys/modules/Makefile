@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.198 2018/01/09 03:31:13 christos Exp $
+#	$NetBSD: Makefile,v 1.199 2018/01/25 23:40:06 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -181,7 +181,9 @@ SUBDIR+=	exec_elf64
 
 .if ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "x86_64"
+SUBDIR+=	amdsmn
 SUBDIR+=	amdtemp
+SUBDIR+=	amdzentemp
 SUBDIR+=	coretemp
 SUBDIR+=	est
 SUBDIR+=	hdafg
