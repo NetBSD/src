@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agr.c,v 1.45 2018/01/16 07:34:12 knakahara Exp $	*/
+/*	$NetBSD: if_agr.c,v 1.46 2018/01/25 03:54:57 christos Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.45 2018/01/16 07:34:12 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.46 2018/01/25 03:54:57 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -611,7 +611,9 @@ agr_addport(struct ifnet *ifp, struct ifnet *ifp_port)
 	 * of each port to that of the first port. No need for arps 
 	 * since there are no inet addresses assigned to the ports.
 	 */
+	IFNET_LOCK(ifp_port);
 	error = if_addr_init(ifp_port, ifp->if_dl, true);
+	IFNET_UNLOCK(ifp_port);
 
 	if (error) {
 		printf("%s: if_addr_init error %d\n", __func__, error);

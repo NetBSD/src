@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agrsubr.c,v 1.11 2017/12/06 04:37:00 ozaki-r Exp $	*/
+/*	$NetBSD: if_agrsubr.c,v 1.12 2018/01/25 03:54:57 christos Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agrsubr.c,v 1.11 2017/12/06 04:37:00 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agrsubr.c,v 1.12 2018/01/25 03:54:57 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -294,7 +294,9 @@ agr_vlan_add(struct agr_port *port, void *arg)
 		 */
 		ec_port->ec_capenable |= ETHERCAP_VLAN_MTU;
 		if (p->if_flags & IFF_UP) {
+			IFNET_LOCK(p);
 			error = if_flags_set(p, p->if_flags);
+			IFNET_UNLOCK(p);
 			if (error) {
 				if (ec_port->ec_nvlans-- == 1)
 					ec_port->ec_capenable &=
@@ -321,15 +323,17 @@ agr_vlan_del(struct agr_port *port, void *arg)
 	/* Disable vlan support */
 	if ((*force_zero && ec_port->ec_nvlans > 0) ||
 	    ec_port->ec_nvlans-- == 1) {
+		struct ifnet *p = port->port_ifp;
 		if (*force_zero)
 			ec_port->ec_nvlans = 0;
 		/*
 		 * Disable Tx/Rx of VLAN-sized frames.
 		 */
 		ec_port->ec_capenable &= ~ETHERCAP_VLAN_MTU;
-		if (port->port_ifp->if_flags & IFF_UP) {
-			(void)if_flags_set(port->port_ifp,
-			    port->port_ifp->if_flags);
+		if (p->if_flags & IFF_UP) {
+			IFNET_LOCK(p);
+			(void)if_flags_set(p, p->if_flags);
+			IFNET_UNLOCK(p);
 		}
 	}
 
