@@ -1,5 +1,5 @@
-.\"	$NetBSD: tzset.3,v 1.36 2017/07/03 21:32:50 wiz Exp $
-.Dd October 6, 2016
+.\"	$NetBSD: tzset.3,v 1.37 2018/01/25 22:48:42 christos Exp $
+.Dd January 25, 2018
 .Dt TZSET 3
 .Os
 .Sh NAME
@@ -116,7 +116,7 @@ If the implied call to
 .Fn tzalloc
 fails,
 .Fn tzset
-falls back on UTC.
+falls back on Universal Time (UT).
 If
 .Ev TZ
 is
@@ -131,7 +131,7 @@ is used by
 If
 .Ev TZ
 appears in the environment but its value is the empty string,
-Universal Time (UT) is used, with the abbreviation
+UT is used, with the abbreviation
 .Dq UTC
 and without leap second correction; please see
 .Xr ctime 3 .
@@ -335,19 +335,19 @@ extensions to POSIX.
 .Bl -tag
 .It EST5
 stands for US Eastern Standard
-Time (EST), 5 hours behind UTC, without daylight saving.
+Time (EST), 5 hours behind UT, without daylight saving.
 .It FJT\-12FJST,M11.1.0,M1.3.4/75
 stands for Fiji Time (FJT) and Fiji Summer Time (FJST), 12 hours ahead
-of UTC, springing forward on November's first Sunday at 02:00, and
+of UT, springing forward on November's first Sunday at 02:00, and
 falling back on January's third Thursday at 75:00 (i.e., 03:00 on the
 first Sunday on or after January 18).
 .It IST\-2IDT,M3.4.4/26,M10.5.0
 stands for Israel Standard Time (IST) and Israel Daylight Time (IDT),
-2 hours ahead of UTC, springing forward on March's fourth
+2 hours ahead of UT, springing forward on March's fourth
 Thursday at 26:00 (i.e., 02:00 on the first Friday on or after March
 23), and falling back on October's last Sunday at 02:00.
 .It WART4WARST,J1/0,J365/25
-stands for Western Argentina Summer Time (WARST), 3 hours behind UTC.
+stands for Western Argentina Summer Time (WARST), 3 hours behind UT.
 There is a dummy fall-back transition on December 31 at 25:00 daylight
 saving time (i.e., 24:00 standard time, equivalent to January 1 at
 00:00 standard time), and a simultaneous spring-forward transition on
@@ -357,9 +357,9 @@ all year and the initial
 is a placeholder.
 .It WGT3WGST,M3.5.0/\-2,M10.5.0/\-1
 stands for Western Greenland Time (WGT) and Western Greenland Summer
-Time (WGST), 3 hours behind UTC, where clocks follow the EU rules of
-springing forward on March's last Sunday at 01:00 UTC (\-02:00 local
-time) and falling back on October's last Sunday at 01:00 UTC
+Time (WGST), 3 hours behind UT, where clocks follow the EU rules of
+springing forward on March's last Sunday at 01:00 UT (\-02:00 local
+time) and falling back on October's last Sunday at 01:00 UT
 (\-01:00 local time).
 .El
 .Pp
@@ -373,7 +373,7 @@ format file
 .Pa posixrules
 in
 .Pa /usr/share/zoneinfo
-are used, with the standard and summer time offsets from UTC replaced
+are used, with the standard and summer time offsets from UT replaced
 by those specified by the
 .Cm offset
 values in
@@ -389,6 +389,8 @@ from the rest of the specification.
 local time zone file
 .It Pa /usr/share/zoneinfo
 time zone information directory
+\" .It Pa /usr/share/zoneinfo/localtime
+\" local time zone file
 .It Pa /usr/share/zoneinfo/posixrules
 used with POSIX-style TZ's
 .It Pa /usr/share/zoneinfo/GMT
