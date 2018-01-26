@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.113 2016/07/27 09:32:35 skrll Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.114 2018/01/26 05:29:43 maya Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -92,7 +92,7 @@
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
 
-RCSID("$NetBSD: locore_mips3.S,v 1.113 2016/07/27 09:32:35 skrll Exp $")
+RCSID("$NetBSD: locore_mips3.S,v 1.114 2018/01/26 05:29:43 maya Exp $")
 
 #include "assym.h"
 
@@ -778,9 +778,6 @@ END(mips3_cp0_tlb_page_mask_probe)
 
 #ifdef MULTIPROCESSOR
 /*
- * The presence of this routine here will causes MIPS1 MULTIPROCESSOR kernels
- * to fail, as they should since we won't support such abominations.
- *
  * MD code calls/jumps to this with the pointer to this CPU's cpu_info in a1,
  * sp set to ci->ci_data.cpu_idlelwp->l_md.md_utf.  gp will be overridden so
  * 0 can be supplied if needed.  (This happens to match what CFE wants)
