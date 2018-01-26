@@ -1,4 +1,4 @@
-.\"	$NetBSD: amdsmn.4,v 1.2 2018/01/25 10:52:49 uwe Exp $
+.\"	$NetBSD: amdsmn.4,v 1.3 2018/01/26 15:12:37 wiz Exp $
 .\"
 .\" Copyright (c) 2018 Ian Clark <mrrooster@gmail.com>
 .\" All rights reserved.
@@ -59,25 +59,23 @@
 .Os
 .Sh NAME
 .Nm amdsmn
-.Nd device driver for
-.Tn AMD
-processor System Management Network
+.Nd device driver for AMD processor System Management Network
 .Sh SYNOPSIS
 .Cd "amdsmn* at pci?"
 .Sh DESCRIPTION
 The
 .Nm
 driver provides support for resources on the System Management Network bus
-in
-.Tn AMD
-Family 17h processors.
+in AMD Family 17h processors.
 .Sh SEE ALSO
 .Xr amdzentemp 4
 .Sh HISTORY
 The
 .Nm
 driver first appeared in
-.Fx .
+.Fx
+and
+.Nx 9.0 .
 .Sh AUTHORS
 .An -nosplit
 Based on the
