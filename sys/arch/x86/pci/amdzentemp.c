@@ -1,4 +1,4 @@
-/*      $NetBSD: amdzentemp.c,v 1.6 2018/01/25 23:37:33 pgoyette Exp $ */
+/*      $NetBSD: amdzentemp.c,v 1.7 2018/01/26 23:01:44 pgoyette Exp $ */
 /*      $OpenBSD: kate.c,v 1.2 2008/03/27 04:52:03 cnst Exp $   */
 
 /*
@@ -50,7 +50,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdzentemp.c,v 1.6 2018/01/25 23:37:33 pgoyette Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: amdzentemp.c,v 1.7 2018/01/26 23:01:44 pgoyette Exp $ ");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -167,10 +167,8 @@ bad:
 		sc->sc_sme = NULL;
 	}
 
-	if (sc->sc_sensor != NULL) {
-		kmem_free(sc->sc_sensor, sc->sc_sensor_len);
-		sc->sc_sensor = NULL;
-	}
+	kmem_free(sc->sc_sensor, sc->sc_sensor_len);
+	sc->sc_sensor = NULL;
 }
 
 static int
