@@ -1,4 +1,4 @@
-/*	$NetBSD: memswitch.c,v 1.14 2018/01/23 22:40:06 sevan Exp $	*/
+/*	$NetBSD: memswitch.c,v 1.15 2018/01/26 09:38:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,11 +41,11 @@
 
 #include <sys/ioctl.h>
 
-#ifndef DEBUG
+#ifndef SRAMDEBUG
 #include <machine/sram.h>
 #else
 /*
- * DEBUG -- works on other (faster) platforms;
+ * SRAMDEBUG -- works on other (faster) platforms;
  *   store in a regular file instead of actual non-volatile static RAM.
  */
 #define PATH_RAMFILE "/tmp/sramfile"
@@ -290,7 +290,7 @@ alloc_modified_values(void)
 void
 alloc_current_values(void)
 {
-#ifndef DEBUG
+#ifndef SRAMDEBUG
 	int i;
 	int sramfd = 0;
 	struct sram_io buffer;
@@ -367,7 +367,7 @@ flush(void)
 {
 	int i;
 	int sramfd = 0;
-#ifndef DEBUG
+#ifndef SRAMDEBUG
 	struct sram_io buffer;
 #endif
 
@@ -380,7 +380,7 @@ flush(void)
 		/* Not modified at all. */
 		return;
 
-#ifndef DEBUG
+#ifndef SRAMDEBUG
 	/* Assume SRAM_IO_SIZE = n * 16. */
 	for (i = 0; i < 256; i += SRAM_IO_SIZE) {
 		if (memcmp(&current_values[i], &modified_values[i],
@@ -414,7 +414,7 @@ flush(void)
 int
 save(const char *name)
 {
-#ifndef DEBUG
+#ifndef SRAMDEBUG
 	int fd;
 
 	alloc_current_values();
@@ -442,7 +442,7 @@ save(const char *name)
 int
 restore(const char *name)
 {
-#ifndef DEBUG
+#ifndef SRAMDEBUG
 	int sramfd, fd, i;
 	struct sram_io buffer;
 
