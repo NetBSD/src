@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.137 2018/01/26 06:37:21 ozaki-r Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.138 2018/01/26 06:49:02 ozaki-r Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.137 2018/01/26 06:37:21 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.138 2018/01/26 06:49:02 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -469,7 +469,9 @@ defrouter_addreq(struct nd_defrouter *newdr)
 		struct sockaddr_in6 sin6;
 		struct sockaddr sa;
 	} def, mask, gate;
+#ifndef NET_MPSAFE
 	int s;
+#endif
 	int error;
 
 	memset(&def, 0, sizeof(def));
@@ -484,14 +486,18 @@ defrouter_addreq(struct nd_defrouter *newdr)
 	gate.sin6.sin6_scope_id = 0;	/* XXX */
 #endif
 
+#ifndef NET_MPSAFE
 	s = splsoftnet();
+#endif
 	error = rtrequest_newmsg(RTM_ADD, &def.sa, &gate.sa, &mask.sa,
 	    RTF_GATEWAY);
 	if (error == 0) {
 		nd6_numroutes++;
 		newdr->installed = 1;
 	}
+#ifndef NET_MPSAFE
 	splx(s);
+#endif
 	return;
 }
 
@@ -957,7 +963,7 @@ nd6_prelist_add(struct nd_prefixctl *prc, struct nd_defrouter *dr,
 	struct nd_prefix **newp)
 {
 	struct nd_prefix *newpr = NULL;
-	int i, s;
+	int i;
 	int error;
 	struct in6_ifextra *ext = prc->ndprc_ifp->if_afdata[AF_INET6];
 
@@ -997,10 +1003,8 @@ nd6_prelist_add(struct nd_prefixctl *prc, struct nd_defrouter *dr,
 		    newpr->ndpr_mask.s6_addr32[i];
 	}
 
-	s = splsoftnet();
 	/* link ndpr_entry to nd_prefix list */
 	ND_PREFIX_LIST_INSERT_HEAD(newpr);
-	splx(s);
 
 	/* ND_OPT_PI_FLAG_ONLINK processing */
 	if (newpr->ndpr_raf_onlink) {
@@ -1068,7 +1072,6 @@ void
 nd6_prelist_remove(struct nd_prefix *pr)
 {
 	struct nd_pfxrouter *pfr, *next;
-	int s;
 	struct in6_ifextra *ext = pr->ndpr_ifp->if_afdata[AF_INET6];
 
 	ND6_ASSERT_WLOCK();
@@ -1076,7 +1079,6 @@ nd6_prelist_remove(struct nd_prefix *pr)
 
 	nd6_invalidate_prefix(pr);
 
-	s = splsoftnet();
 	/* unlink ndpr_entry from nd_prefix list */
 	ND_PREFIX_LIST_REMOVE(pr);
 
@@ -1094,7 +1096,6 @@ nd6_prelist_remove(struct nd_prefix *pr)
 			    "%s\n", pr->ndpr_ifp->if_xname);
 		}
 	}
-	splx(s);
 
 	free(pr, M_IP6NDP);
 
@@ -2223,16 +2224,21 @@ in6_init_address_ltimes(struct nd_prefix *newpr,
 void
 nd6_rt_flush(struct in6_addr *gateway, struct ifnet *ifp)
 {
+#ifndef NET_MPSAFE
 	int s = splsoftnet();
+#endif
 
 	/* We'll care only link-local addresses */
-	if (!IN6_IS_ADDR_LINKLOCAL(gateway)) {
-		splx(s);
-		return;
-	}
+	if (!IN6_IS_ADDR_LINKLOCAL(gateway))
+		goto out;
 
 	rt_delete_matched_entries(AF_INET6, rt6_deleteroute_matcher, gateway);
+
+out:
+#ifndef NET_MPSAFE
 	splx(s);
+#endif
+	return; /* XXX gcc */
 }
 
 static int
