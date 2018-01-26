@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.161.8.1 2017/07/05 15:48:02 martin Exp $
+# $NetBSD: GENERIC,v 1.161.8.2 2018/01/26 14:28:15 martin Exp $
 #
 # GENERIC machine description file
 # 
@@ -37,8 +37,8 @@ options 	NTP		# NTP phase/frequency locked loop
 #options	ABLEELF
 #makeoptions	ABLEELF="1"
 
-# Enable experimental buffer queue strategy for better responsiveness under 
-# high disk I/O load. Use it with caution - it's not proven to be stable yet.
+# Alternate buffer queue strategies for better responsiveness under high
+# disk I/O load.
 #options 	BUFQ_READPRIO
 #options 	BUFQ_PRIOCSCAN
 

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.151.8.2 2017/08/29 09:42:19 martin Exp $
+# $NetBSD: GENERIC,v 1.151.8.3 2018/01/26 14:28:14 martin Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.151.8.2 $"
+#ident 		"GENERIC-$Revision: 1.151.8.3 $"
 
 maxusers	32
 
@@ -36,8 +36,8 @@ options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-# Enable experimental buffer queue strategy for better responsiveness under
-# high disk I/O load. Use it with caution - it's not proven to be stable yet.
+# Alternate buffer queue strategies for better responsiveness under high
+# disk I/O load.
 #options 	BUFQ_READPRIO
 #options 	BUFQ_PRIOCSCAN
 

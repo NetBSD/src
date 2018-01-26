@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.190.8.1 2017/07/05 13:58:48 martin Exp $
+# $NetBSD: GENERIC,v 1.190.8.2 2018/01/26 14:28:16 martin Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/pmax/conf/std.pmax"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.190.8.1 $"
+#ident		"GENERIC-$Revision: 1.190.8.2 $"
 
 maxusers	64
 
@@ -60,8 +60,8 @@ options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-# Enable experimental buffer queue strategy for better responsiveness under 
-# high disk I/O load. Use it with caution - it's not proven to be stable yet.
+# Alternate buffer queue strategies for better responsiveness under high
+# disk I/O load.
 #options 	BUFQ_READPRIO
 #options 	BUFQ_PRIOCSCAN
 
