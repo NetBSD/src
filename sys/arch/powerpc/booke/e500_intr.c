@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_intr.c,v 1.35 2017/06/01 02:45:07 chs Exp $	*/
+/*	$NetBSD: e500_intr.c,v 1.36 2018/01/26 09:26:43 christos Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.35 2017/06/01 02:45:07 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.36 2018/01/26 09:26:43 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -1150,7 +1150,7 @@ e500_intr_init(void)
 		break;
 #endif
 	default:
-		panic("%s: don't know how to deal with SVR %#lx",
+		panic("%s: don't know how to deal with SVR %#" PRIxREGISTER,
 		    __func__, mfspr(SPR_SVR));
 	}
 
