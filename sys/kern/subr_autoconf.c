@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.255 2017/10/27 12:25:15 joerg Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.256 2018/01/26 22:58:09 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.255 2017/10/27 12:25:15 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.256 2018/01/26 22:58:09 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1398,6 +1398,7 @@ config_devalloc(const device_t parent, const cfdata_t cf, const int *locs)
 #ifdef DIAGNOSTIC
 		printf("%s has not been converted to device_t\n", cd->cd_name);
 #endif
+		KASSERT(dev != NULL);
 	}
 	dev->dv_class = cd->cd_class;
 	dev->dv_cfdata = cf;
