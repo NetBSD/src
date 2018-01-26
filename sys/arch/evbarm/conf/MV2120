@@ -1,4 +1,4 @@
-#	$NetBSD: MV2120,v 1.31 2017/02/19 07:47:00 rin Exp $
+#	$NetBSD: MV2120,v 1.31.6.1 2018/01/26 14:28:13 martin Exp $
 #
 #  This configuration supports for HP MV2120/MV5140/MV5150.
 
@@ -352,5 +352,7 @@ pseudo-device drvctl
 options 	DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances
 options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
 
+# Alternate buffer queue strategies for better responsiveness under high
+# disk I/O load.
 options BUFQ_READPRIO
 options BUFQ_PRIOCSCAN

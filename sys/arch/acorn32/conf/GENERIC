@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.120 2016/12/13 20:42:15 christos Exp $
+# 	$NetBSD: GENERIC,v 1.120.8.1 2018/01/26 14:28:14 martin Exp $
 #
 #	GENERIC --- NetBSD/acorn32 complete configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.120 $"
+#ident		"GENERIC-$Revision: 1.120.8.1 $"
 
 # estimated number of users
 maxusers	32
@@ -144,8 +144,8 @@ options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-# Enable experimental buffer queue strategy for better responsiveness under 
-# high disk I/O load. Use it with caution - it's not proven to be stable yet.
+# Alternate buffer queue strategies for better responsiveness under high
+# disk I/O load.
 #options 	BUFQ_READPRIO
 #options 	BUFQ_PRIOCSCAN
 

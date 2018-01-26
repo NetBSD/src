@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.75.2.2 2017/08/29 09:42:19 martin Exp $
+# $NetBSD: XEN3_DOMU,v 1.75.2.3 2018/01/26 14:28:15 martin Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -38,6 +38,8 @@ options 	MODULAR		# new style module(7) framework
 options 	USERCONF	# userconf(4) support
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
+# Alternate buffer queue strategies for better responsiveness under high
+# disk I/O load.
 #options 	BUFQ_READPRIO
 options 	BUFQ_PRIOCSCAN
 

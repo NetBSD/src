@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP2x,v 1.108 2016/12/13 20:42:20 christos Exp $
+#	$NetBSD: GENERIC32_IP2x,v 1.108.8.1 2018/01/26 14:28:14 martin Exp $
 #
 # GENERIC32_IP2x machine description file
 # 
@@ -29,7 +29,7 @@ makeoptions	TEXTADDR=0x88069000	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32-IP2x-$Revision: 1.108 $"
+#ident		"GENERIC32-IP2x-$Revision: 1.108.8.1 $"
 
 maxusers	32
 
@@ -59,8 +59,8 @@ options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-# Enable experimental buffer queue strategy for better responsiveness under 
-# high disk I/O load. Use it with caution - it's not proven to be stable yet.
+# Alternate buffer queue strategies for better responsiveness under high
+# disk I/O load.
 #options 	BUFQ_READPRIO
 #options 	BUFQ_PRIOCSCAN
 

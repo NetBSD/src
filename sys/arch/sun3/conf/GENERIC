@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.172 2015/08/12 07:53:58 maxv Exp $
+# $NetBSD: GENERIC,v 1.172.10.1 2018/01/26 14:28:13 martin Exp $
 #
 # GENERIC machine description file
 # 
@@ -25,7 +25,7 @@ include 	"arch/sun3/conf/std.sun3"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.172 $"
+#ident		"GENERIC-$Revision: 1.172.10.1 $"
 
 makeoptions	COPTS="-Os"		# bootloader has size limit (~2MB)
 
@@ -50,8 +50,8 @@ options 	SYSVSHM		# System V shared memory
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-# Enable experimental buffer queue strategy for better responsiveness under 
-# high disk I/O load. Use it with caution - it's not proven to be stable yet.
+# Alternate buffer queue strategies for better responsiveness under high
+# disk I/O load.
 #options 	BUFQ_READPRIO
 #options 	BUFQ_PRIOCSCAN
 
