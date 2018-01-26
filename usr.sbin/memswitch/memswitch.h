@@ -1,4 +1,4 @@
-/*	$NetBSD: memswitch.h,v 1.4 2018/01/24 14:45:44 sevan Exp $	*/
+/*	$NetBSD: memswitch.h,v 1.5 2018/01/26 09:38:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -79,13 +79,12 @@ extern char *progname;
 extern u_int8_t *current_values;
 extern u_int8_t *modified_values;
 
-static void usage(void) __dead;
-void show_single(const char*));
-void show_all(void));
-void modify_single(const char*));
-void help_single(const char*));
-void alloc_current_values(void));
-void alloc_modified_values(void));
-void flush(void));
-int save(const char*));
-int restore(const char*));
+void show_single(const char*);
+void show_all(void);
+void modify_single(const char*);
+void help_single(const char*);
+void alloc_current_values(void);
+void alloc_modified_values(void);
+void flush(void);
+int save(const char*);
+int restore(const char*);
