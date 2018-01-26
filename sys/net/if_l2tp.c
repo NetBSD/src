@@ -1,4 +1,4 @@
-/*	$NetBSD: if_l2tp.c,v 1.19 2018/01/26 07:49:15 maxv Exp $	*/
+/*	$NetBSD: if_l2tp.c,v 1.20 2018/01/26 14:10:15 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.19 2018/01/26 07:49:15 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.20 2018/01/26 14:10:15 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -482,7 +482,6 @@ l2tp_input(struct mbuf *m, struct ifnet *ifp)
 		int copy_length;
 
 #define L2TP_COPY_LENGTH		60
-#define L2TP_LINK_HDR_ROOM	(MHLEN - L2TP_COPY_LENGTH - 4/*round4(2)*/)
 
 		if (m->m_pkthdr.len < L2TP_COPY_LENGTH) {
 			copy_length = m->m_pkthdr.len;
@@ -503,7 +502,7 @@ l2tp_input(struct mbuf *m, struct ifnet *ifp)
 		}
 		M_COPY_PKTHDR(m_head, m);
 
-		m_head->m_data += 2 /* align */ + L2TP_LINK_HDR_ROOM;
+		MH_ALIGN(m_head, L2TP_COPY_LENGTH);
 		memcpy(mtod(m_head, void *), mtod(m, void *), copy_length);
 		m_head->m_len = copy_length;
 		m->m_data += copy_length;
