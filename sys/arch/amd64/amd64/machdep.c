@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.295 2018/01/21 11:21:40 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.296 2018/01/26 14:38:46 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.295 2018/01/21 11:21:40 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.296 2018/01/26 14:38:46 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -2522,6 +2522,7 @@ void
 svs_lwp_switch(struct lwp *oldlwp, struct lwp *newlwp)
 {
 	struct cpu_info *ci = curcpu();
+	struct svs_utls *utls;
 	struct pcb *pcb;
 	pt_entry_t *pte;
 	uintptr_t rsp0;
@@ -2550,6 +2551,9 @@ svs_lwp_switch(struct lwp *oldlwp, struct lwp *newlwp)
 	ci->ci_svs_krsp0 = rsp0 - sizeof(struct trapframe);
 	KASSERT((ci->ci_svs_krsp0 % PAGE_SIZE) ==
 	    (ci->ci_svs_ursp0 % PAGE_SIZE));
+
+	utls = (struct svs_utls *)ci->ci_svs_utls;
+	utls->scratch = 0;
 
 	/*
 	 * Enter the user rsp0. We don't need to flush the TLB here, since
