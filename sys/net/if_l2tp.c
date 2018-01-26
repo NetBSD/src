@@ -1,4 +1,4 @@
-/*	$NetBSD: if_l2tp.c,v 1.18 2018/01/25 10:33:37 maxv Exp $	*/
+/*	$NetBSD: if_l2tp.c,v 1.19 2018/01/26 07:49:15 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.18 2018/01/25 10:33:37 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.19 2018/01/26 07:49:15 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -465,10 +465,18 @@ l2tpintr(struct l2tp_variant *var)
 void
 l2tp_input(struct mbuf *m, struct ifnet *ifp)
 {
+	u_long val;
 
 	KASSERT(ifp != NULL);
 
-	if (0 == (mtod(m, u_long) & 0x03)) {
+	if (m->m_pkthdr.len < sizeof(val)) {
+		m_freem(m);
+		return;
+	}
+
+	m_copydata(m, 0, sizeof(val), &val);
+
+	if ((val & 0x03) == 0) {
 		/* copy and align head of payload */
 		struct mbuf *m_head;
 		int copy_length;
@@ -1373,6 +1381,11 @@ l2tp_tcpmss_clamp(struct ifnet *ifp, struct mbuf *m)
 
 	if (!l2tp_need_tcpmss_clamp(ifp)) {
 		return m;
+	}
+
+	if (m->m_pkthdr.len < sizeof(evh)) {
+		m_freem(m);
+		return NULL;
 	}
 
 	/* save ether header */

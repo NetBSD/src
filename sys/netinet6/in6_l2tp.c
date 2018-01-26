@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_l2tp.c,v 1.13 2018/01/25 10:45:58 maxv Exp $	*/
+/*	$NetBSD: in6_l2tp.c,v 1.14 2018/01/26 07:49:15 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_l2tp.c,v 1.13 2018/01/25 10:45:58 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_l2tp.c,v 1.14 2018/01/26 07:49:15 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_l2tp.h"
@@ -253,14 +253,12 @@ in6_l2tp_input(struct mbuf **mp, int *offp, int proto, void *eparg __unused)
 	uint64_t cookie_64;
 	struct psref psref;
 
-	if (m->m_len < off + sizeof(uint32_t)) {
-		m = m_pullup(m, off + sizeof(uint32_t));
-		if (!m) {
-			/* if payload length < 4 octets */
-			return IPPROTO_DONE;
-		}
-		*mp = m;
-        }
+	KASSERT((m->m_flags & M_PKTHDR) != 0);
+
+	if (m->m_pkthdr.len < off + sizeof(uint32_t)) {
+		m_freem(m);
+		return IPPROTO_DONE;
+	}
 
 	/* get L2TP session ID */
 	m_copydata(m, off, sizeof(uint32_t), (void *)&sess_id);
@@ -312,6 +310,10 @@ in6_l2tp_input(struct mbuf **mp, int *offp, int proto, void *eparg __unused)
 	m_adj(m, off + sizeof(uint32_t));
 
 	if (var->lv_use_cookie == L2TP_COOKIE_ON) {
+		if (m->m_pkthdr.len < var->lv_my_cookie_len) {
+			m_freem(m);
+			goto out;
+		}
 		if (var->lv_my_cookie_len == 4) {
 			m_copydata(m, 0, sizeof(uint32_t), (void *)&cookie_32);
 			NTOHL(cookie_32);
