@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.138.6.1 2018/01/02 10:20:34 snj Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.138.6.2 2018/01/26 15:41:12 martin Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.138.6.1 2018/01/02 10:20:34 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.138.6.2 2018/01/26 15:41:12 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -79,8 +79,8 @@ __KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.138.6.1 2018/01/02 10:20:34 snj Exp $"
 struct dadq;
 static struct dadq *nd6_dad_find(struct ifaddr *);
 static void nd6_dad_starttimer(struct dadq *, int);
-static void nd6_dad_stoptimer(struct dadq *);
-static void nd6_dad_timer(struct ifaddr *);
+static void nd6_dad_destroytimer(struct dadq *);
+static void nd6_dad_timer(struct dadq *);
 static void nd6_dad_ns_output(struct dadq *, struct ifaddr *);
 static void nd6_dad_ns_input(struct ifaddr *);
 static void nd6_dad_na_input(struct ifaddr *);
@@ -1087,18 +1087,18 @@ nd6_dad_starttimer(struct dadq *dp, int ticks)
 {
 
 	callout_reset(&dp->dad_timer_ch, ticks,
-	    (void (*)(void *))nd6_dad_timer, (void *)dp->dad_ifa);
+	    (void (*)(void *))nd6_dad_timer, dp);
 }
 
 static void
-nd6_dad_stoptimer(struct dadq *dp)
+nd6_dad_destroytimer(struct dadq *dp)
 {
 
-#ifdef NET_MPSAFE
-	callout_halt(&dp->dad_timer_ch, NULL);
-#else
-	callout_halt(&dp->dad_timer_ch, softnet_lock);
-#endif
+	TAILQ_REMOVE(&dadq, dp, dad_list);
+	/* Request the timer to destroy dp. */
+	dp->dad_ifa = NULL;
+	callout_reset(&dp->dad_timer_ch, 0,
+	    (void (*)(void *))nd6_dad_timer, dp);
 }
 
 /*
@@ -1210,20 +1210,18 @@ nd6_dad_stop(struct ifaddr *ifa)
 	}
 
 	/* Prevent the timer from running anymore. */
-	TAILQ_REMOVE(&dadq, dp, dad_list);
+	nd6_dad_destroytimer(dp);
+
 	mutex_exit(&nd6_dad_lock);
 
-	nd6_dad_stoptimer(dp);
-
-	kmem_intr_free(dp, sizeof(*dp));
 	ifafree(ifa);
 }
 
 static void
-nd6_dad_timer(struct ifaddr *ifa)
+nd6_dad_timer(struct dadq *dp)
 {
-	struct in6_ifaddr *ia = (struct in6_ifaddr *)ifa;
-	struct dadq *dp;
+	struct ifaddr *ifa;
+	struct in6_ifaddr *ia;
 	int duplicate = 0;
 	char ip6buf[INET6_ADDRSTRLEN];
 	bool need_free = false;
@@ -1231,16 +1229,21 @@ nd6_dad_timer(struct ifaddr *ifa)
 	SOFTNET_KERNEL_LOCK_UNLESS_NET_MPSAFE();
 	mutex_enter(&nd6_dad_lock);
 
-	/* Sanity check */
-	if (ia == NULL) {
-		log(LOG_ERR, "nd6_dad_timer: called with null parameter\n");
+	ifa = dp->dad_ifa;
+	if (ifa == NULL) {
+		/* ifa is being deleted. DAD should be freed too. */
+		if (callout_pending(&dp->dad_timer_ch)) {
+			/*
+			 * The callout is scheduled again, so we cannot destroy
+			 * dp in this run.
+			 */
+			goto done;
+		}
+		need_free = true;
 		goto done;
 	}
-	dp = nd6_dad_find(ifa);
-	if (dp == NULL) {
-		/* DAD seems to be stopping, so do nothing. */
-		goto done;
-	}
+
+	ia = (struct in6_ifaddr *)ifa;
 	if (ia->ia6_flags & IN6_IFF_DUPLICATED) {
 		log(LOG_ERR, "nd6_dad_timer: called with duplicate address "
 			"%s(%s)\n",
@@ -1316,9 +1319,10 @@ done:
 	mutex_exit(&nd6_dad_lock);
 
 	if (need_free) {
+		callout_destroy(&dp->dad_timer_ch);
 		kmem_intr_free(dp, sizeof(*dp));
-		ifafree(ifa);
-		ifa = NULL;
+		if (ifa != NULL)
+			ifafree(ifa);
 	}
 
 	if (duplicate)
@@ -1351,9 +1355,6 @@ nd6_dad_duplicated(struct ifaddr *ifa)
 
 	ia->ia6_flags &= ~IN6_IFF_TENTATIVE;
 	ia->ia6_flags |= IN6_IFF_DUPLICATED;
-
-	/* We are done with DAD, with duplicated address found. (failure) */
-	nd6_dad_stoptimer(dp);
 
 	log(LOG_ERR, "%s: DAD complete for %s - duplicate found\n",
 	    if_name(ifp), IN6_PRINT(ip6buf, &ia->ia_addr.sin6_addr));
@@ -1397,10 +1398,11 @@ nd6_dad_duplicated(struct ifaddr *ifa)
 		}
 	}
 
-	TAILQ_REMOVE(&dadq, dp, dad_list);
+	/* We are done with DAD, with duplicated address found. (failure) */
+	nd6_dad_destroytimer(dp);
+
 	mutex_exit(&nd6_dad_lock);
 
-	kmem_intr_free(dp, sizeof(*dp));
 	ifafree(ifa);
 }
 
