@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ptrace.c,v 1.20 2017/08/28 00:46:07 kamil Exp $	*/
+/*	$NetBSD: linux_ptrace.c,v 1.21 2018/01/26 09:29:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.20 2017/08/28 00:46:07 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.21 2018/01/26 09:29:15 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -206,7 +206,7 @@ linux_sys_ptrace_arch(struct lwp *l, const struct linux_sys_ptrace_args *uap,
 	case LINUX_PTRACE_GET_THREAD_AREA:
 		mutex_exit(t->p_lock);
 		pcb = lwp_getpcb(l);
-		val = (void *)pcb->pcb_un.un_32.pcb32_user_pid_ro;
+		val = (void *)pcb->pcb_user_pid_ro;
 		error = copyout(&val, (void *)SCARG(uap, data), sizeof(val));
 		break;
 #endif
