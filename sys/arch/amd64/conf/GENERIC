@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.482 2018/01/25 01:21:40 christos Exp $
+# $NetBSD: GENERIC,v 1.483 2018/01/26 14:41:22 maxv Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.482 $"
+#ident		"GENERIC-$Revision: 1.483 $"
 
 maxusers	64		# estimated number of users
 
@@ -1299,6 +1299,7 @@ pseudo-device	bridge			# simple inter-network bridging
 #options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 pseudo-device	agr			# IEEE 802.3ad link aggregation
 pseudo-device	l2tp			# L2TPv3 interface
+#pseudo-device	etherip			# Tunnel Ethernet over IP
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
 #pseudo-device	pfsync			# PF sync if
