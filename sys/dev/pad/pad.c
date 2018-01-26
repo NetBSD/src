@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.50 2018/01/09 04:23:59 nat Exp $ */
+/* $NetBSD: pad.c,v 1.51 2018/01/26 22:48:22 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.50 2018/01/09 04:23:59 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.51 2018/01/26 22:48:22 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -307,6 +307,8 @@ pad_open(dev_t dev, int flags, int fmt, struct lwp *l)
 	device_t paddev;
 	cfdata_t cf;
 	int error, fd, i;
+
+	erorr = 0;
 
 	mutex_enter(&padconfig);
 	if (PADUNIT(dev) == PADCLONER) {
