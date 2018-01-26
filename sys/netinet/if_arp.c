@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.250.2.4 2018/01/02 10:20:34 snj Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.250.2.5 2018/01/26 15:41:12 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.250.2.4 2018/01/02 10:20:34 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.250.2.5 2018/01/26 15:41:12 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -173,7 +173,8 @@ static	void revarprequest(struct ifnet *);
 
 static	void arp_drainstub(void);
 
-static void arp_dad_timer(struct ifaddr *);
+struct dadq;
+static void arp_dad_timer(struct dadq *);
 static void arp_dad_start(struct ifaddr *);
 static void arp_dad_stop(struct ifaddr *);
 static void arp_dad_duplicated(struct ifaddr *, const char *);
@@ -1534,18 +1535,18 @@ arp_dad_starttimer(struct dadq *dp, int ticks)
 {
 
 	callout_reset(&dp->dad_timer_ch, ticks,
-	    (void (*)(void *))arp_dad_timer, (void *)dp->dad_ifa);
+	    (void (*)(void *))arp_dad_timer, dp);
 }
 
 static void
-arp_dad_stoptimer(struct dadq *dp)
+arp_dad_destroytimer(struct dadq *dp)
 {
 
-#ifdef NET_MPSAFE
-	callout_halt(&dp->dad_timer_ch, NULL);
-#else
-	callout_halt(&dp->dad_timer_ch, softnet_lock);
-#endif
+	TAILQ_REMOVE(&dadq, dp, dad_list);
+	/* Request the timer to destroy dp. */
+	dp->dad_ifa = NULL;
+	callout_reset(&dp->dad_timer_ch, 0,
+	    (void (*)(void *))arp_dad_timer, dp);
 }
 
 static void
@@ -1665,36 +1666,39 @@ arp_dad_stop(struct ifaddr *ifa)
 	}
 
 	/* Prevent the timer from running anymore. */
-	TAILQ_REMOVE(&dadq, dp, dad_list);
+	arp_dad_destroytimer(dp);
+
 	mutex_exit(&arp_dad_lock);
 
-	arp_dad_stoptimer(dp);
-
-	kmem_intr_free(dp, sizeof(*dp));
 	ifafree(ifa);
 }
 
 static void
-arp_dad_timer(struct ifaddr *ifa)
+arp_dad_timer(struct dadq *dp)
 {
-	struct in_ifaddr *ia = (struct in_ifaddr *)ifa;
-	struct dadq *dp;
+	struct ifaddr *ifa;
+	struct in_ifaddr *ia;
 	char ipbuf[INET_ADDRSTRLEN];
 	bool need_free = false;
 
 	SOFTNET_KERNEL_LOCK_UNLESS_NET_MPSAFE();
 	mutex_enter(&arp_dad_lock);
 
-	/* Sanity check */
-	if (ia == NULL) {
-		log(LOG_ERR, "%s: called with null parameter\n", __func__);
+	ifa = dp->dad_ifa;
+	if (ifa == NULL) {
+		/* ifa is being deleted. DAD should be freed too. */
+		if (callout_pending(&dp->dad_timer_ch)) {
+			/*
+			 * The callout is scheduled again, so we cannot destroy
+			 * dp in this run.
+			 */
+			goto done;
+		}
+		need_free = true;
 		goto done;
 	}
-	dp = arp_dad_find(ifa);
-	if (dp == NULL) {
-		/* DAD seems to be stopping, so do nothing. */
-		goto done;
-	}
+
+	ia = (struct in_ifaddr *)ifa;
 	if (ia->ia4_flags & IN_IFF_DUPLICATED) {
 		log(LOG_ERR, "%s: called with duplicate address %s(%s)\n",
 		    __func__, IN_PRINT(ipbuf, &ia->ia_addr.sin_addr),
@@ -1769,8 +1773,10 @@ done:
 	mutex_exit(&arp_dad_lock);
 
 	if (need_free) {
+		callout_destroy(&dp->dad_timer_ch);
 		kmem_intr_free(dp, sizeof(*dp));
-		ifafree(ifa);
+		if (ifa != NULL)
+			ifafree(ifa);
 	}
 
 	SOFTNET_KERNEL_UNLOCK_UNLESS_NET_MPSAFE();
