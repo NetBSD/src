@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.558 2018/01/21 04:07:49 christos Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.559 2018/01/26 16:25:28 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.558 2018/01/21 04:07:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.559 2018/01/26 16:25:28 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -8962,8 +8962,14 @@ wm_txrxintr_enable(struct wm_queue *wmq)
 
 	wm_itrs_calculate(sc, wmq);
 
+	/*
+	 * ICR_OTHER which is disabled in wm_linkintr_msix() is enabled here.
+	 * There is no need to care about which of RXQ(0) and RXQ(1) enable
+	 * ICR_OTHER in first, because each RXQ/TXQ interrupt is disabled
+	 * while each wm_handle_queue(wmq) is runnig.
+	 */
 	if (sc->sc_type == WM_T_82574)
-		CSR_WRITE(sc, WMREG_IMS, ICR_TXQ(wmq->wmq_id) | ICR_RXQ(wmq->wmq_id));
+		CSR_WRITE(sc, WMREG_IMS, ICR_TXQ(wmq->wmq_id) | ICR_RXQ(wmq->wmq_id) | ICR_OTHER);
 	else if (sc->sc_type == WM_T_82575)
 		CSR_WRITE(sc, WMREG_EIMS, EITR_TX_QUEUE(wmq->wmq_id) | EITR_RX_QUEUE(wmq->wmq_id));
 	else
@@ -9060,24 +9066,59 @@ wm_linkintr_msix(void *arg)
 {
 	struct wm_softc *sc = arg;
 	uint32_t reg;
+	bool has_rxo;
 
 	DPRINTF(WM_DEBUG_LINK,
 	    ("%s: LINK: got link intr\n", device_xname(sc->sc_dev)));
 
 	reg = CSR_READ(sc, WMREG_ICR);
 	WM_CORE_LOCK(sc);
-	if ((sc->sc_core_stopping) || ((reg & ICR_LSC) == 0))
+	if (sc->sc_core_stopping)
 		goto out;
 
-	WM_EVCNT_INCR(&sc->sc_ev_linkintr);
-	wm_linkintr(sc, ICR_LSC);
+	if((reg & ICR_LSC) != 0) {
+		WM_EVCNT_INCR(&sc->sc_ev_linkintr);
+		wm_linkintr(sc, ICR_LSC);
+	}
+
+	/*
+	 * XXX 82574 MSI-X mode workaround
+	 *
+	 * 82574 MSI-X mode causes receive overrun(RXO) interrupt as ICR_OTHER
+	 * MSI-X vector, furthermore it does not cause neigher ICR_RXQ(0) nor
+	 * ICR_RXQ(1) vector. So, we generate ICR_RXQ(0) and ICR_RXQ(1)
+	 * interrupts by writing WMREG_ICS to process receive packets.
+	 */
+	if (sc->sc_type == WM_T_82574 && ((reg & ICR_RXO) != 0)) {
+#if defined(WM_DEBUG)
+		log(LOG_WARNING, "%s: Receive overrun\n",
+		    device_xname(sc->sc_dev));
+#endif /* defined(WM_DEBUG) */
+
+		has_rxo = true;
+		/*
+		 * The RXO interrupt is very high rate when receive traffic is
+		 * high rate. We use polling mode for ICR_OTHER like Tx/Rx
+		 * interrupts. ICR_OTHER will be enabled at the end of
+		 * wm_txrxintr_msix() which is kicked by both ICR_RXQ(0) and
+		 * ICR_RXQ(1) interrupts.
+		 */
+		CSR_WRITE(sc, WMREG_IMC, ICR_OTHER);
+
+		CSR_WRITE(sc, WMREG_ICS, ICR_RXQ(0) | ICR_RXQ(1));
+	}
+
+
 
 out:
 	WM_CORE_UNLOCK(sc);
 	
-	if (sc->sc_type == WM_T_82574)
-		CSR_WRITE(sc, WMREG_IMS, ICR_OTHER | ICR_LSC);
-	else if (sc->sc_type == WM_T_82575)
+	if (sc->sc_type == WM_T_82574) {
+		if (!has_rxo)
+			CSR_WRITE(sc, WMREG_IMS, ICR_OTHER | ICR_LSC);
+		else
+			CSR_WRITE(sc, WMREG_IMS, ICR_LSC);
+	} else if (sc->sc_type == WM_T_82575)
 		CSR_WRITE(sc, WMREG_EIMS, EITR_OTHER);
 	else
 		CSR_WRITE(sc, WMREG_EIMS, 1 << sc->sc_link_intr_idx);
