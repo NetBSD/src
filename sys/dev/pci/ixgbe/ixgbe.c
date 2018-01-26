@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.119 2017/12/28 06:10:01 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.120 2018/01/26 09:07:46 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -2332,8 +2332,8 @@ get_parent_info:
 	}
 	/* ...and read the Link Status Register */
 	link = pci_conf_read(adapter->osdep.pc, adapter->osdep.tag,
-	    offset + PCIE_LCSR);
-	ixgbe_set_pci_config_data_generic(hw, link >> 16);
+	    offset + PCIE_LCSR) >> 16;
+	ixgbe_set_pci_config_data_generic(hw, link);
 
 display:
 	device_printf(dev, "PCI Express Bus: Speed %s Width %s\n",
