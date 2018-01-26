@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.106 2018/01/22 12:36:02 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.107 2018/01/26 19:53:10 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -9174,4 +9174,93 @@ sys/fs/msdosfs/msdosfs_vfsops.c			1.129
 
 	Relax sanity check. It's ok to have more FAT sectors than needed.
 	[mlelstv, ticket #508]
+
+sys/arch/acorn26/conf/GENERIC			1.85
+sys/arch/acorn32/conf/EB7500ATX			1.64
+sys/arch/acorn32/conf/GENERIC			1.124
+sys/arch/alpha/conf/GENERIC			1.379
+sys/arch/amd64/conf/XEN3_DOM0			1.145
+sys/arch/amd64/conf/XEN3_DOMU			1.83
+sys/arch/amiga/conf/DRACO			1.185
+sys/arch/amiga/conf/GENERIC			1.319
+sys/arch/amiga/conf/GENERIC.in			1.137
+sys/arch/amiga/conf/INSTALL			1.129
+sys/arch/amigappc/conf/GENERIC			1.33
+sys/arch/amigappc/conf/NULL			1.53
+sys/arch/arc/conf/GENERIC			1.189
+sys/arch/arc/conf/RPC44				1.54
+sys/arch/atari/conf/GENERIC.in			1.115
+sys/arch/bebox/conf/GENERIC			1.157
+sys/arch/cats/conf/GENERIC			1.166
+sys/arch/cesfic/conf/GENERIC			1.69
+sys/arch/cobalt/conf/GENERIC			1.156
+sys/arch/cobalt/conf/INSTALL			1.65
+sys/arch/emips/conf/GENERIC			1.21
+sys/arch/evbarm/conf/MMNET_GENERIC		1.34
+sys/arch/evbarm/conf/MPCSA_GENERIC		1.55
+sys/arch/evbarm/conf/MV2120			1.35
+sys/arch/evbarm64/conf/A64EMUL			1.11
+sys/arch/evbppc/conf/EXPLORA451			1.62
+sys/arch/ews4800mips/conf/GENERIC		1.56
+sys/arch/hp300/conf/GENERIC			1.198
+sys/arch/hpcsh/conf/GENERIC			1.110
+sys/arch/hppa/conf/GENERIC			1.17
+sys/arch/i386/conf/XEN3_DOM0			1.125
+sys/arch/i386/conf/XEN3_DOMU			1.88
+sys/arch/iyonix/conf/GENERIC			1.97
+sys/arch/landisk/conf/GENERIC			1.58
+sys/arch/luna68k/conf/GENERIC			1.125
+sys/arch/luna68k/conf/INSTALL			1.25
+sys/arch/mac68k/conf/GENERIC			1.225
+sys/arch/macppc/conf/GENERIC			1.339
+sys/arch/macppc/conf/GENERIC_601		1.16
+sys/arch/macppc/conf/MAMBO			1.27
+sys/arch/macppc/conf/POWERMAC_G5		1.29
+sys/arch/mipsco/conf/GENERIC			1.92
+sys/arch/mvme68k/conf/GENERIC			1.98
+sys/arch/netwinder/conf/GENERIC			1.134
+sys/arch/news68k/conf/GENERIC			1.130
+sys/arch/news68k/conf/GENERIC_TINY		1.86
+sys/arch/news68k/conf/LIBERO			1.66
+sys/arch/newsmips/conf/GENERIC			1.133
+sys/arch/next68k/conf/GENERIC			1.145
+sys/arch/pmax/conf/GENERIC			1.196
+sys/arch/pmax/conf/GENERIC64			1.28
+sys/arch/prep/conf/GENERIC			1.185
+sys/arch/rs6000/conf/GENERIC			1.39
+sys/arch/sandpoint/conf/GENERIC			1.97
+sys/arch/sgimips/conf/GENERIC32_IP12		1.33
+sys/arch/sgimips/conf/GENERIC32_IP2x		1.112
+sys/arch/sgimips/conf/GENERIC32_IP3x		1.115
+sys/arch/sparc/conf/GENERIC			1.258
+sys/arch/sparc/conf/MRCOFFEE			1.54
+sys/arch/sparc64/conf/GENERIC			1.203
+sys/arch/sun2/conf/GENERIC			1.99
+sys/arch/sun3/conf/GENERIC			1.176
+sys/arch/sun3/conf/GENERIC3X			1.130
+sys/arch/vax/conf/GENERIC			1.204
+sys/arch/vax/conf/VAX780			1.25
+sys/arch/x68k/conf/GENERIC			1.187
+
+	Alternate buffer queue strategies no longer considered experimental,
+	update description.
+	[sevan, ticket #510]
+
+sys/kern/kern_timeout.c				1.54
+sys/netinet/if_arp.c				1.256
+sys/netinet6/nd6_nbr.c				1.141,1.144
+
+	Fix a deadlock on callout_halt of nd6_dad_timer.
+	Make DAD destructions (MP-)safe with callout_stop.
+	Sanity-check if interlock is held when it's passed.
+	[ozaki-r, ticket #511]
+
+
+sys/netipsec/xform_ah.c				1.75-1.76
+
+	Revert a part of rev 1.49, the pointer given to memcpy
+	was correct.
+	Fix a vulnerability in IPsec-IPv6-AH, that allows an attacker
+	to remotely crash the kernel with a single packet.
+	[maxv, ticket #512]
 
