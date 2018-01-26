@@ -1,4 +1,4 @@
-/*      $NetBSD: if_etherip.c,v 1.40 2017/12/06 07:40:16 ozaki-r Exp $        */
+/*      $NetBSD: if_etherip.c,v 1.41 2018/01/26 11:06:32 maxv Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.40 2017/12/06 07:40:16 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.41 2018/01/26 11:06:32 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -266,14 +266,15 @@ etherip_attach(device_t parent, device_t self, void *aux)
 	 * Those steps are mandatory for an Ethernet driver, the first call
 	 * being common to all network interface drivers.
 	 */
-	error = if_attach(ifp);
+	error = if_initialize(ifp);
 	if (error != 0) {
-		aprint_error_dev(self, "if_attach failed(%d)\n", error);
+		aprint_error_dev(self, "if_initialize failed(%d)\n", error);
 		ifmedia_delete_instance(&sc->sc_im, IFM_INST_ANY);
 		pmf_device_deregister(self);
 		return;
 	}
 	ether_ifattach(ifp, enaddr);
+	if_register(ifp);
 
 	/*
 	 * Add a sysctl node for that interface.
