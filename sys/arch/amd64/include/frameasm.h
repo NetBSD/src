@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.33 2018/01/27 18:17:57 maxv Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.34 2018/01/27 18:27:08 maxv Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
 #define _AMD64_MACHINE_FRAMEASM_H
@@ -168,8 +168,7 @@ usertrap				; \
 	pushq	%r11			; \
 	pushq	%r10			; \
 	pushfq				; \
-	movl	%cs,%r11d		; \
-	pushq	%r11			; \
+	pushq	$GSEL(GCODE_SEL,SEL_KPL); \
 /* XEN: We must fixup CS, as even kernel mode runs at CPL 3 */ \
  	XEN_ONLY2(andb	$0xfc,(%rsp);)	  \
 	pushq	%r13			;
