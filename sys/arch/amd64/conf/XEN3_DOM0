@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.146 2018/01/25 01:21:40 christos Exp $
+# $NetBSD: XEN3_DOM0,v 1.147 2018/01/27 21:46:54 pgoyette Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -10,7 +10,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 #options 	UVMHIST_PRINT
 #options 	SYSCALL_DEBUG
 
-#ident		"XEN3_DOM0-$Revision: 1.146 $"
+#ident		"XEN3_DOM0-$Revision: 1.147 $"
 
 maxusers	32		# estimated number of users
 
@@ -299,7 +299,7 @@ amdnb_misc* at pci?			# AMD NB Misc Configuration
 amdtemp* at amdnb_misc? 		# AMD CPU Temperature sensors
 
 amdsmn* at pci?				# AMD SMN Configuration
-amdzentemp* at amdsmn?			# AMD Ryzen Family 17h CPU temp sensors
+amdzentemp* at amdsmnbus?		# AMD Ryzen Family 17h CPU temp sensors
 
 # AMD 768 and 8111 power/ACPI controllers
 amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
