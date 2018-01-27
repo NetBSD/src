@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.260 2018/01/26 22:54:33 pgoyette Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.261 2018/01/27 00:00:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.260 2018/01/26 22:54:33 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.261 2018/01/27 00:00:26 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_defcorename.h"
@@ -2414,8 +2414,6 @@ sysctl_log_add(struct sysctllog **logp, const struct sysctlnode *node)
 	int name[CTL_MAXNAME], namelen, i;
 	const struct sysctlnode *pnode;
 	struct sysctllog *log;
-
-	KASSERT(namelen < CTL_MAXNAME);
 
 	if (node->sysctl_flags & CTLFLAG_PERMANENT)
 		return (0);
