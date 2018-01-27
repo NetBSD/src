@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.69 2016/12/23 07:15:27 cherry Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.70 2018/01/27 23:07:36 chs Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.69 2016/12/23 07:15:27 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.70 2018/01/27 23:07:36 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -306,7 +306,8 @@ pa_to_pvh(paddr_t pa)
 /*
  * Internal routines
  */
-void	pmap_remove_mapping(pmap_t, vaddr_t, pt_entry_t *, int);
+void	pmap_remove_mapping(pmap_t, vaddr_t, pt_entry_t *, int,
+			    struct pv_entry **);
 bool	pmap_testbit(paddr_t, int);
 bool	pmap_changebit(paddr_t, int, int);
 int	pmap_enter_ptpage(pmap_t, vaddr_t, bool);
@@ -843,7 +844,7 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 				}
 				firstpage = false;
 #endif
-				pmap_remove_mapping(pmap, sva, pte, flags);
+				pmap_remove_mapping(pmap, sva, pte, flags, NULL);
 			}
 			pte++;
 			sva += PAGE_SIZE;
@@ -929,7 +930,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 			panic("pmap_page_protect: bad mapping");
 #endif
 		pmap_remove_mapping(pv->pv_pmap, pv->pv_va,
-		    pte, PRM_TFLUSH|PRM_CFLUSH);
+		    pte, PRM_TFLUSH|PRM_CFLUSH, NULL);
 	}
 	splx(s);
 }
@@ -1048,6 +1049,7 @@ int
 pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
 	pt_entry_t *pte;
+	struct pv_entry *opv = NULL;
 	int npte;
 	paddr_t opa;
 	bool cacheable = true;
@@ -1130,7 +1132,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		PMAP_DPRINTF(PDB_ENTER,
 		    ("enter: removing old mapping %lx\n", va));
 		pmap_remove_mapping(pmap, va, pte,
-		    PRM_TFLUSH|PRM_CFLUSH|PRM_KEEPPTPAGE);
+		    PRM_TFLUSH|PRM_CFLUSH|PRM_KEEPPTPAGE, &opv);
 	}
 
 	/*
@@ -1179,7 +1181,12 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 				if (pmap == npv->pv_pmap && va == npv->pv_va)
 					panic("pmap_enter: already in pv_tab");
 #endif
-			npv = pmap_alloc_pv();
+			if (opv != NULL) {
+				npv = opv;
+				opv = NULL;
+			} else {
+				npv = pmap_alloc_pv();
+			}
 			KASSERT(npv != NULL);
 			npv->pv_va = va;
 			npv->pv_pmap = pmap;
@@ -1345,6 +1352,9 @@ validate:
 	if ((pmapdebug & PDB_WIRING) && pmap != pmap_kernel())
 		pmap_check_wiring("enter", trunc_page((vaddr_t)pte));
 #endif
+
+	if (opv != NULL)
+		pmap_free_pv(opv);
 
 	return 0;
 }
@@ -1659,7 +1669,7 @@ pmap_collect1(pmap_t pmap, paddr_t startpa, paddr_t endpa)
 
 		(void) pmap_extract(pmap, pv->pv_va, &kpa);
 		pmap_remove_mapping(pmap, pv->pv_va, NULL,
-		    PRM_TFLUSH|PRM_CFLUSH);
+		    PRM_TFLUSH|PRM_CFLUSH, NULL);
 
 		/*
 		 * Use the physical address to locate the original
@@ -1970,11 +1980,12 @@ pmap_prefer(vaddr_t foff, vaddr_t *vap)
  */
 /* static */
 void
-pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *pte, int flags)
+pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *pte, int flags,
+    struct pv_entry **opvp)
 {
 	paddr_t pa;
 	struct pv_header *pvh;
-	struct pv_entry *pv, *npv;
+	struct pv_entry *pv, *npv, *opv = NULL;
 	struct pmap *ptpmap;
 	st_entry_t *ste;
 	int s, bits;
@@ -1983,8 +1994,8 @@ pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *pte, int flags)
 #endif
 
 	PMAP_DPRINTF(PDB_FOLLOW|PDB_REMOVE|PDB_PROTECT,
-	    ("pmap_remove_mapping(%p, %lx, %p, %x)\n",
-	    pmap, va, pte, flags));
+	    ("pmap_remove_mapping(%p, %lx, %p, %x, %p)\n",
+	    pmap, va, pte, flags, opvp));
 
 	/*
 	 * PTE not provided, compute it from pmap and va.
@@ -2093,7 +2104,7 @@ pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *pte, int flags)
 				    ptppv->pv_next);
 #endif
 			pmap_remove_mapping(pmap_kernel(), ptpva,
-			    NULL, PRM_TFLUSH|PRM_CFLUSH);
+			    NULL, PRM_TFLUSH|PRM_CFLUSH, NULL);
 			mutex_enter(uvm_kernel_object->vmobjlock);
 			uvm_pagefree(PHYS_TO_VM_PAGE(ptppa));
 			mutex_exit(uvm_kernel_object->vmobjlock);
@@ -2133,7 +2144,7 @@ pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *pte, int flags)
 		npv = pv->pv_next;
 		if (npv) {
 			*pv = *npv;
-			pmap_free_pv(npv);
+			opv = npv;
 		} else
 			pv->pv_pmap = NULL;
 	} else {
@@ -2149,7 +2160,7 @@ pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *pte, int flags)
 		ste = npv->pv_ptste;
 		ptpmap = npv->pv_ptpmap;
 		pv->pv_next = npv->pv_next;
-		pmap_free_pv(npv);
+		opv = npv;
 		pvh = pa_to_pvh(pa);
 		pv = &pvh->pvh_first;
 	}
@@ -2255,6 +2266,11 @@ pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *pte, int flags)
 
 	pvh->pvh_attrs |= bits;
 	splx(s);
+
+	if (opvp != NULL)
+		*opvp = opv;
+	else if (opv != NULL)
+		pmap_free_pv(opv);
 }
 
 /*
