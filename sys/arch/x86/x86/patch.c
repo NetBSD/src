@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.30 2018/01/07 16:08:12 christos Exp $	*/
+/*	$NetBSD: patch.c,v 1.31 2018/01/27 09:33:25 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.30 2018/01/07 16:08:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.31 2018/01/27 09:33:25 maxv Exp $");
 
 #include "opt_lockdebug.h"
 #ifdef i386
@@ -275,7 +275,6 @@ x86_patch(bool early)
 		x86_hotpatch(HP_NAME_RETFENCE, bytes, sizeof(bytes));
 	}
 
-#ifdef amd64
 	/*
 	 * If SMAP is present then patch the prepared holes with clac/stac
 	 * instructions.
@@ -298,7 +297,6 @@ x86_patch(bool early)
 		/* nop,nop,nop -> stac */
 		x86_hotpatch(HP_NAME_STAC, stac_bytes, sizeof(stac_bytes));
 	}
-#endif
 
 	/* Write back and invalidate cache, flush pipelines. */
 	wbinvd();
