@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.26 2014/07/31 12:11:37 joerg Exp $	*/
+/*	$NetBSD: trap.c,v 1.27 2018/01/27 10:07:41 flxd Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.26 2014/07/31 12:11:37 joerg Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.27 2018/01/27 10:07:41 flxd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -734,9 +734,10 @@ trap(enum ppc_booke_exceptions trap_code, struct trapframe *tf)
 
 	if ((VM_MAX_ADDRESS & 0x80000000) == 0
 	    && usertrap && (tf->tf_fixreg[1] & 0x80000000)) {
-		printf("%s(entry): pid %d.%d (%s): %s invalid sp %#lx (sprg1=%#lx)\n",
-		    __func__, p->p_pid, l->l_lid, p->p_comm,
-		    trap_names[trap_code], tf->tf_fixreg[1], mfspr(SPR_SPRG1));
+		printf("%s(entry): pid %d.%d (%s): %s invalid sp %#lx "
+		    "(sprg1=%#jx)\n", __func__, p->p_pid, l->l_lid, p->p_comm,
+		    trap_names[trap_code], tf->tf_fixreg[1],
+		    (uintmax_t)mfspr(SPR_SPRG1));
 		dump_trapframe(tf, NULL);
 		Debugger();
 	}
