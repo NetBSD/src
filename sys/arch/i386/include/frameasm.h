@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.23 2018/01/27 08:12:27 maxv Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.24 2018/01/27 09:33:25 maxv Exp $	*/
 
 #ifndef _I386_FRAMEASM_H_
 #define _I386_FRAMEASM_H_
@@ -40,10 +40,19 @@
 	.long		123b			; \
 	.popsection
 
+#define SMAP_ENABLE \
+	HOTPATCH(HP_NAME_CLAC, 3)		; \
+	.byte 0x0F, 0x1F, 0x00
+
+#define SMAP_DISABLE \
+	HOTPATCH(HP_NAME_STAC, 3)		; \
+	.byte 0x0F, 0x1F, 0x00
+
 /*
  * These are used on interrupt or trap entry or exit.
  */
 #define	INTRENTRY \
+	SMAP_ENABLE			; \
 	subl	$TF_PUSHSIZE,%esp	; \
 	movw	%gs,TF_GS(%esp)		; \
 	movw	%fs,TF_FS(%esp) 	; \

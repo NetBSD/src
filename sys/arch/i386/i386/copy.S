@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.26 2018/01/27 07:45:57 maxv Exp $	*/
+/*	$NetBSD: copy.S,v 1.27 2018/01/27 09:33:25 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2004, 2008 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: copy.S,v 1.26 2018/01/27 07:45:57 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: copy.S,v 1.27 2018/01/27 09:33:25 maxv Exp $");
 
 #include "assym.h"
 
@@ -234,6 +234,7 @@ ENTRY(copyout)
 	cmpl	$VM_MAXUSER_ADDRESS,%edx
 	ja	_C_LABEL(copy_efault)
 
+	SMAP_DISABLE
 .Lcopyout_start:
 	movl	%eax,%ecx
 	shrl	$2,%ecx
@@ -245,6 +246,7 @@ ENTRY(copyout)
 	rep
 	movsb
 .Lcopyout_end:
+	SMAP_ENABLE
 
 	popl	%edi
 	popl	%esi
@@ -272,6 +274,7 @@ ENTRY(copyin)
 	cmpl	$VM_MAXUSER_ADDRESS,%edx
 	ja	_C_LABEL(copy_efault)
 
+	SMAP_DISABLE
 .Lcopyin_start:
 	movl	%eax,%ecx
 	shrl	$2,%ecx
@@ -283,6 +286,7 @@ ENTRY(copyin)
 	rep
 	movsb
 .Lcopyin_end:
+	SMAP_ENABLE
 
 	popl	%edi
 	popl	%esi
@@ -311,6 +315,7 @@ NENTRY(kcopy_fault)
 END(kcopy_fault)
 
 NENTRY(copy_fault)
+	SMAP_ENABLE
 	popl	%edi
 	popl	%esi
 	ret
@@ -350,6 +355,7 @@ ENTRY(copyoutstr)
 	movl	%eax,20(%esp)
 1:	incl	%edx
 
+	SMAP_DISABLE
 .Lcopyoutstr_start:
 1:	decl	%edx
 	jz	2f
@@ -358,6 +364,7 @@ ENTRY(copyoutstr)
 	testb	%al,%al
 	jnz	1b
 .Lcopyoutstr_end:
+	SMAP_ENABLE
 
 	/* Success -- 0 byte reached. */
 	decl	%edx
@@ -365,6 +372,7 @@ ENTRY(copyoutstr)
 	jmp	copystr_return
 
 2:	/* edx is zero -- return EFAULT or ENAMETOOLONG. */
+	SMAP_ENABLE
 	cmpl	$VM_MAXUSER_ADDRESS,%edi
 	jae	_C_LABEL(copystr_efault)
 	movl	$ENAMETOOLONG,%eax
@@ -400,6 +408,7 @@ ENTRY(copyinstr)
 	movl	%eax,20(%esp)
 1:	incl	%edx
 
+	SMAP_DISABLE
 .Lcopyinstr_start:
 1:	decl	%edx
 	jz	2f
@@ -408,6 +417,7 @@ ENTRY(copyinstr)
 	testb	%al,%al
 	jnz	1b
 .Lcopyinstr_end:
+	SMAP_ENABLE
 
 	/* Success -- 0 byte reached. */
 	decl	%edx
@@ -415,6 +425,7 @@ ENTRY(copyinstr)
 	jmp	copystr_return
 
 2:	/* edx is zero -- return EFAULT or ENAMETOOLONG. */
+	SMAP_ENABLE
 	cmpl	$VM_MAXUSER_ADDRESS,%esi
 	jae	_C_LABEL(copystr_efault)
 	movl	$ENAMETOOLONG,%eax
@@ -428,6 +439,7 @@ NENTRY(copystr_efault)
 END(copystr_efault)
 
 NENTRY(copystr_fault)
+	SMAP_ENABLE
 copystr_return:
 	/* Set *lencopied and return %eax. */
 	movl	20(%esp),%ecx
@@ -499,7 +511,9 @@ ENTRY(fuword)
 	GET_CURPCB(%ecx)
 	movl	$_C_LABEL(fusufault),PCB_ONFAULT(%ecx)
 
+	SMAP_DISABLE
 	movl	(%edx),%eax
+	SMAP_ENABLE
 
 	movl	$0,PCB_ONFAULT(%ecx)
 	ret
@@ -522,7 +536,9 @@ ENTRY(fuswintr)
 	movl	L_PCB(%ecx),%ecx
 	movl	$_C_LABEL(fusubail),PCB_ONFAULT(%ecx)
 
+	SMAP_DISABLE
 	movzwl	(%edx),%eax
+	SMAP_ENABLE
 
 	movl	$0,PCB_ONFAULT(%ecx)
 	ret
@@ -541,7 +557,9 @@ ENTRY(fubyte)
 	GET_CURPCB(%ecx)
 	movl	$_C_LABEL(fusufault),PCB_ONFAULT(%ecx)
 
+	SMAP_DISABLE
 	movzbl	(%edx),%eax
+	SMAP_ENABLE
 
 	movl	$0,PCB_ONFAULT(%ecx)
 	ret
@@ -552,6 +570,7 @@ END(fubyte)
  * Handle faults from [fs]u*().  Clean up and return -1.
  */
 NENTRY(fusufault)
+	SMAP_ENABLE
 	movl	$0,PCB_ONFAULT(%ecx)
 	movl	$-1,%eax
 	ret
@@ -563,6 +582,7 @@ END(fusufault)
  * than trying to page fault.
  */
 NENTRY(fusubail)
+	SMAP_ENABLE
 	movl	$0,PCB_ONFAULT(%ecx)
 	movl	$-1,%eax
 	ret
@@ -593,7 +613,9 @@ ENTRY(suswintr)
 	movl	$_C_LABEL(fusubail),PCB_ONFAULT(%ecx)
 	movl	8(%esp),%eax
 
+	SMAP_DISABLE
 	movw	%ax,(%edx)
+	SMAP_ENABLE
 
 	xorl	%eax,%eax
 	movl	%eax,PCB_ONFAULT(%ecx)
@@ -614,7 +636,9 @@ ENTRY(subyte)
 	movl	$_C_LABEL(fusufault),PCB_ONFAULT(%ecx)
 	movb	8(%esp),%al
 
+	SMAP_DISABLE
 	movb	%al,(%edx)
+	SMAP_ENABLE
 
 	xorl	%eax,%eax
 	movl	%eax,PCB_ONFAULT(%ecx)
@@ -636,11 +660,13 @@ ENTRY(ucas_32)
 	cmpl	$VM_MAXUSER_ADDRESS-4,%edx
 	ja	_C_LABEL(ucas_efault)
 
+	SMAP_DISABLE
 .Lucas32_start:
 	/* Perform the CAS */
 	lock
 	cmpxchgl %ecx,(%edx)
 .Lucas32_end:
+	SMAP_ENABLE
 
 	/*
 	 * Note: %eax is "old" value.
@@ -659,6 +685,7 @@ NENTRY(ucas_efault)
 END(ucas_efault)
 
 NENTRY(ucas_fault)
+	SMAP_ENABLE
 	ret
 END(ucas_fault)
 
@@ -693,6 +720,7 @@ ENTRY(x86_copyargs)
 	cmpl	$VM_MAXUSER_ADDRESS,%eax
 	ja	_C_LABEL(x86_copyargs_efault)
 
+	SMAP_DISABLE
 .Lx86_copyargs_start:
 	/* There are a maximum of 8 args + 2 for syscall indirect */
 	cmp	$16,%ecx
@@ -722,6 +750,7 @@ ENTRY(x86_copyargs)
 	movl	%eax,32(%edx)
 	movl	%ecx,36(%edx)
 .Lx86_copyargs_end:
+	SMAP_ENABLE
 
 	popl	%esi
 	xorl	%eax,%eax
@@ -736,6 +765,7 @@ NENTRY(x86_copyargs_efault)
 END(x86_copyargs_efault)
 
 NENTRY(x86_copyargs_fault)
+	SMAP_ENABLE
 	popl	%esi
 	ret
 END(x86_copyargs_fault)
