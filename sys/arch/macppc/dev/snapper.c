@@ -1,4 +1,4 @@
-/*	$NetBSD: snapper.c,v 1.41 2017/03/31 08:38:13 msaitoh Exp $	*/
+/*	$NetBSD: snapper.c,v 1.42 2018/01/27 16:21:47 sevan Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 /*	Id: i2s.c,v 1.12 2005/01/15 14:32:35 tsubai Exp		*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.41 2017/03/31 08:38:13 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.42 2018/01/27 16:21:47 sevan Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -839,10 +839,10 @@ snapper_defer(device_t dev)
 		break;
 	}
 
-	audio_attach_mi(&snapper_hw_if, sc, sc->sc_dev);
-
 	/* ki2c_setmode(sc->sc_i2c, I2C_STDSUBMODE); */
 	snapper_init(sc, sc->sc_node);
+
+	audio_attach_mi(&snapper_hw_if, sc, sc->sc_dev);
 }
 
 static int
