@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.56 2018/01/21 11:21:40 maxv Exp $	*/
+/*	$NetBSD: vector.S,v 1.57 2018/01/27 18:17:57 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -113,7 +113,7 @@ IDTVEC(recurse_lapic_ipi)
 	INTR_RECURSE_HWFRAME
 	pushq	$0
 	pushq	$T_ASTFLT
-	INTRENTRY
+	INTR_RECURSE_ENTRY
 	jmp	1f
 IDTVEC_END(recurse_lapic_ipi)
 NENTRY(handle_x2apic_ipi)
@@ -213,7 +213,7 @@ IDTVEC(recurse_lapic_ltimer)
 	INTR_RECURSE_HWFRAME
 	pushq	$0
 	pushq	$T_ASTFLT
-	INTRENTRY
+	INTR_RECURSE_ENTRY
 	jmp	1f
 IDTVEC_END(recurse_lapic_ltimer)
 NENTRY(handle_x2apic_ltimer)
@@ -316,7 +316,7 @@ IDTVEC(recurse_ ## name ## num)						;\
 	INTR_RECURSE_HWFRAME						;\
 	subq	$8,%rsp							;\
 	pushq	$T_ASTFLT		/* trap # for doing ASTs */	;\
-	INTRENTRY							;\
+	INTR_RECURSE_ENTRY						;\
 	jmp	1f							;\
 IDTVEC_END(recurse_ ## name ## num)					;\
 IDTVEC(resume_ ## name ## num)						\
@@ -881,7 +881,7 @@ IDTVEC(recurse_ ## name ## num)						;\
 	INTR_RECURSE_HWFRAME						;\
 	subq	$8,%rsp							;\
 	pushq	$T_ASTFLT		/* trap # for doing ASTs */	;\
-	INTRENTRY							;\
+	INTR_RECURSE_ENTRY						;\
 IDTVEC(resume_ ## name ## num)						\
 	movq	$IREENT_MAGIC,TF_ERR(%rsp)				;\
 	movl	%ebx,%r13d						;\
