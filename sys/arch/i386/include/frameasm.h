@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.21 2018/01/07 13:43:24 maxv Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.22 2018/01/27 08:05:14 maxv Exp $	*/
 
 #ifndef _I386_FRAMEASM_H_
 #define _I386_FRAMEASM_H_
@@ -34,34 +34,34 @@
 
 #define HOTPATCH(name, size) \
 123:						; \
-	.section	.rodata.hotpatch, "a"	; \
+	.pushsection	.rodata.hotpatch, "a"	; \
 	.byte		name			; \
 	.byte		size			; \
 	.long		123b			; \
-	.previous
+	.popsection
 
 /*
  * These are used on interrupt or trap entry or exit.
  */
 #define	INTRENTRY \
 	subl	$TF_PUSHSIZE,%esp	; \
-	movw	%gs,TF_GS(%esp)	; \
-	movw	%fs,TF_FS(%esp) ; \
+	movw	%gs,TF_GS(%esp)		; \
+	movw	%fs,TF_FS(%esp) 	; \
 	movl	%eax,TF_EAX(%esp)	; \
-	movw	%es,TF_ES(%esp) ; \
-	movw	%ds,TF_DS(%esp) ; \
+	movw	%es,TF_ES(%esp) 	; \
+	movw	%ds,TF_DS(%esp) 	; \
 	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax	; \
 	movl	%edi,TF_EDI(%esp)	; \
 	movl	%esi,TF_ESI(%esp)	; \
-	movw	%ax,%ds	; \
+	movw	%ax,%ds			; \
 	movl	%ebp,TF_EBP(%esp)	; \
-	movw	%ax,%es	; \
+	movw	%ax,%es			; \
 	movl	%ebx,TF_EBX(%esp)	; \
-	movw	%ax,%gs	; \
+	movw	%ax,%gs			; \
 	movl	%edx,TF_EDX(%esp)	; \
 	movl	$GSEL(GCPU_SEL, SEL_KPL),%eax	; \
 	movl	%ecx,TF_ECX(%esp)	; \
-	movl	%eax,%fs	; \
+	movl	%eax,%fs		; \
 	cld
 
 #define	INTRFASTEXIT \
