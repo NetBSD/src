@@ -1,4 +1,4 @@
-/*	$NetBSD: amdsmn.c,v 1.2 2018/01/25 23:37:33 pgoyette Exp $	*/
+/*	$NetBSD: amdsmn.c,v 1.3 2018/01/27 21:24:30 kardel Exp $	*/
 
 /*-
  * Copyright (c) 2017 Conrad Meyer <cem@FreeBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdsmn.c,v 1.2 2018/01/25 23:37:33 pgoyette Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: amdsmn.c,v 1.3 2018/01/27 21:24:30 kardel Exp $ ");
 
 /*
  * Driver for the AMD Family 17h CPU System Management Network.
@@ -101,7 +101,7 @@ amdsmn_attach(device_t parent, device_t self, void *aux)
 	sc->pc = pa->pa_pc;
 	sc->pcitag = pa->pa_tag;
 	aprint_normal(": AMD Family 17h System Management Network\n");
-	amdsmn_rescan(self, "amdsmn", &flags);
+	amdsmn_rescan(self, "amdsmnbus", &flags);
 }
 
 static int
