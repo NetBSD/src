@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.73 2017/08/18 14:52:19 maxv Exp $	*/
+/*	$NetBSD: vector.S,v 1.74 2018/01/27 18:48:59 maxv Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.73 2017/08/18 14:52:19 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.74 2018/01/27 18:48:59 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -149,9 +149,7 @@ dtrace_invop_calltrap_addr:
  * General purpose IPI handler.
  */
 IDTVEC(recurse_lapic_ipi)
-	pushfl
-	pushl	%cs
-	pushl	%esi
+	INTR_RECURSE_HWFRAME
 	pushl	$0
 	pushl	$T_ASTFLT
 	INTRENTRY
@@ -276,9 +274,7 @@ IDTVEC_END(x2apic_intrddbipi)
 	 * Interrupt from the local APIC timer.
 	 */
 IDTVEC(recurse_lapic_ltimer)
-	pushfl
-	pushl	%cs
-	pushl	%esi
+	INTR_RECURSE_HWFRAME
 	pushl	$0
 	pushl	$T_ASTFLT
 	INTRENTRY
@@ -335,9 +331,7 @@ IDTVEC_END(resume_lapic_ltimer)
 
 #define	INTRSTUB(name, num, early_ack, late_ack, mask, unmask, level_mask) \
 IDTVEC(recurse_ ## name ## num)						;\
-	pushfl								;\
-	pushl	%cs							;\
-	pushl	%esi							;\
+	INTR_RECURSE_HWFRAME						;\
 	subl	$4,%esp							;\
 	pushl	$T_ASTFLT		/* trap # for doing ASTs */	;\
 	INTRENTRY							;\
@@ -898,9 +892,7 @@ END(x2apic_level_stubs)
 
 #define	XENINTRSTUB(name, num, early_ack, late_ack, mask, unmask, level_mask) \
 IDTVEC(recurse_ ## name ## num)						;\
-	pushfl								;\
-	pushl	%cs							;\
-	pushl	%esi							;\
+	INTR_RECURSE_HWFRAME						;\
 	subl	$4,%esp							;\
 	pushl	$T_ASTFLT		/* trap # for doing ASTs */	;\
 	INTRENTRY							;\
