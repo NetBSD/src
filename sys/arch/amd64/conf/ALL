@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.79 2018/01/25 01:21:40 christos Exp $
+# $NetBSD: ALL,v 1.80 2018/01/27 21:46:54 pgoyette Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"ALL-$Revision: 1.79 $"
+#ident		"ALL-$Revision: 1.80 $"
 
 maxusers	64		# estimated number of users
 
@@ -423,13 +423,6 @@ options 	PCIBIOS_SHARP_MM20_FIXUP # this code makes the Sharp MM 20
 					# on anything else.
 #options 	PCIINTR_DEBUG		# super-verbose PCI interrupt fixup
 
-# Temperatures
-amdnb_misc* at pci?			# AMD NB Misc Configuration
-amdtemp* at amdnb_misc? 		# AMD CPU Temperature sensors
-
-amdsmn* at pci?				# AMD SMN Configuration
-amdzentemp* at amdsmn?			# AMD Ryzen Family 17h CPU temp sensors
-
 # PCI bridges
 rdcpcib* at pci? dev ? function ?	# RDC Vortex86/PMX-1000 PCI-ISA w/
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
@@ -588,6 +581,10 @@ lpt1	at isa? port 0x278
 lpt2	at isa? port 0x3bc
 
 # Hardware monitors
+
+# Temperatures
+amdsmn* at pci?				# AMD SMN Configuration
+amdzentemp* at amdsmnbus?		# AMD Ryzen Family 17h CPU temp sensors
 
 amdnb_misc* at pci?			# AMD NB Misc Configuration
 amdtemp* at amdnb_misc?  		# AMD CPU Temperature sensors
