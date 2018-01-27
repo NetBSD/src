@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_fat.c,v 1.31 2016/05/07 16:43:02 mlelstv Exp $	*/
+/*	$NetBSD: msdosfs_fat.c,v 1.32 2018/01/27 03:54:01 sevan Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -52,7 +52,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.31 2016/05/07 16:43:02 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.32 2018/01/27 03:54:01 sevan Exp $");
 
 /*
  * kernel include files.
@@ -69,6 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.31 2016/05/07 16:43:02 mlelstv Exp
 #include <sys/buf.h>
 #include <sys/vnode.h>		/* to define vattr structure */
 #else
+#include <strings.h>
 #include <ffs/buf.h>
 #endif
 
