@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.149 2018/01/22 08:14:09 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.150 2018/01/27 17:54:13 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1522,7 +1522,7 @@ LABEL(intrfastexit)
 	NOT_XEN(cli;)
 	SVS_LEAVE
 	INTR_RESTORE_GPRS
-	testw	$SEL_UPL,TF_CS(%rsp)	/* interrupted %cs */
+	testb	$SEL_UPL,TF_CS(%rsp)	/* interrupted %cs */
 	jz	.Lkexit
 	cmpw	$LSEL(LUCODE_SEL, SEL_UPL),TF_CS(%rsp)
 	je	.Luexit64
