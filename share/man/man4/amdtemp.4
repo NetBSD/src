@@ -1,4 +1,4 @@
-.\" $NetBSD: amdtemp.4,v 1.10 2018/01/25 18:56:17 uwe Exp $
+.\" $NetBSD: amdtemp.4,v 1.11 2018/01/27 21:41:50 pgoyette Exp $
 .\"-
 .\" Copyright (c) 2008 Christoph Egger
 .\" All rights reserved.
@@ -26,14 +26,14 @@
 .\"
 .\" $FreeBSD: src/share/man/man4/coretemp.4,v 1.4 2007/10/15 20:00:19 netchild Exp $
 .\"
-.Dd March 2, 2012
+.Dd January 28, 2018
 .Dt AMDTEMP 4
 .Os
 .Sh NAME
 .Nm amdtemp
 .Nd AMD CPU on-die digital thermal sensor
 .Sh SYNOPSIS
-.Cd "amdtemp* at pchb?"
+.Cd "amdtemp* at amdnb_miscbus?"
 .Sh DESCRIPTION
 The
 .Nm
