@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.32 2018/01/27 08:12:27 maxv Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.33 2018/01/27 18:17:57 maxv Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
 #define _AMD64_MACHINE_FRAMEASM_H
@@ -173,6 +173,11 @@ usertrap				; \
 /* XEN: We must fixup CS, as even kernel mode runs at CPL 3 */ \
  	XEN_ONLY2(andb	$0xfc,(%rsp);)	  \
 	pushq	%r13			;
+
+#define INTR_RECURSE_ENTRY \
+	subq	$TF_REGSIZE,%rsp	; \
+	INTR_SAVE_GPRS			; \
+	cld
 
 #define	CHECK_DEFERRED_SWITCH \
 	cmpl	$0, CPUVAR(WANT_PMAPLOAD)
