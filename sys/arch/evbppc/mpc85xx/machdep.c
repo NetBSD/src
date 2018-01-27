@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.42 2016/12/22 14:47:57 cherry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.43 2018/01/27 10:07:41 flxd Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1245,8 +1245,8 @@ initppc(vaddr_t startkernel, vaddr_t endkernel,
 	/*
 	 *
 	 */
-	printf(" hid0=%#lx/%#lx", hid0, mfspr(SPR_HID0));
-	printf(" hid1=%#lx", mfspr(SPR_HID1));
+	printf(" hid0=%#lx/%#jx", hid0, (uintmax_t)mfspr(SPR_HID0));
+	printf(" hid1=%#jx", (uintmax_t)mfspr(SPR_HID1));
 	printf(" pordevsr=%#x", cpu_read_4(GLOBAL_BASE + PORDEVSR));
 	printf(" devdisr=%#x", cpu_read_4(GLOBAL_BASE + DEVDISR));
 
