@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.41 2017/08/12 07:07:53 maxv Exp $	*/
+/*	$NetBSD: spl.S,v 1.42 2018/01/27 18:44:19 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.41 2017/08/12 07:07:53 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.42 2018/01/27 18:44:19 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_spldebug.h"
@@ -61,7 +61,7 @@ ENTRY(splraise)
 	pushl	%eax
 	pushl	%edx
 	call	_C_LABEL(spldebug_raise)
-	addl	$4, %esp
+	addl	$4,%esp
 	popl	%eax
 	popl	%ebp
 #endif /* SPLDEBUG */
@@ -77,23 +77,23 @@ END(splraise)
  */
 ENTRY(spllower)
 #ifdef SPLDEBUG
-	movl	4(%esp), %ecx
+	movl	4(%esp),%ecx
 	pushl	%ebp
 	movl	%esp,%ebp
 	pushl	%ecx
 	call	_C_LABEL(spldebug_lower)
-	addl	$4, %esp
+	addl	$4,%esp
 	popl	%ebp
 #endif /* SPLDEBUG */
-	movl	4(%esp), %ecx
-	cmpl	CPUVAR(ILEVEL), %ecx
+	movl	4(%esp),%ecx
+	cmpl	CPUVAR(ILEVEL),%ecx
 	jae	1f
-	movl	CPUVAR(IUNMASK)(,%ecx,4), %edx
+	movl	CPUVAR(IUNMASK)(,%ecx,4),%edx
 	pushf
 	cli
-	testl	CPUVAR(IPENDING), %edx
+	testl	CPUVAR(IPENDING),%edx
 	jnz	2f
-	movl	%ecx, CPUVAR(ILEVEL)
+	movl	%ecx,CPUVAR(ILEVEL)
 	popf
 1:
 	ret
@@ -114,7 +114,7 @@ END(spllower)
  *
  * For cmpxchg8b, edx/ecx are the high words and eax/ebx the low.
  *
- * edx : eax = old level / old ipending 
+ * edx : eax = old level / old ipending
  * ecx : ebx = new level / old ipending
  */
 ENTRY(cx8_spllower)
@@ -147,7 +147,7 @@ END(cx8_spllower)
 
 /*
  * void Xspllower(int s);
- * 
+ *
  * Process pending interrupts.
  *
  * Important registers:
@@ -173,11 +173,13 @@ IDTVEC(spllower)
 	pushl	%esi
 	pushl	%edi
 	movl	8(%ebp),%ebx
-	movl	$.Lspllower_resume,%esi		# address to resume loop at
+	movl	$.Lspllower_resume,%esi		/* address to resume loop at */
 1:
-# because of the way Xen interrupts works *%esi will in fact be called
-# from Xdoreti via iret. So we have to always disable interrupts here
-# for Xen
+	/*
+	 * Because of the way Xen interrupts work *%esi will in fact be called
+	 * from Xdoreti via iret. So we have to always disable interrupts here
+	 * for Xen.
+	 */
 #ifndef XEN
 	CLI(%eax)
 #endif
@@ -193,14 +195,14 @@ IDTVEC(spllower)
 	jnz	.Lspllower_panic
 #else
 	movl    CPUVAR(VCPU),%eax
-	movb	EVTCHN_UPCALL_MASK(%eax), %al
-	andb	%al, %al
+	movb	EVTCHN_UPCALL_MASK(%eax),%al
+	andb	%al,%al
 	jz	.Lspllower_panic
 #endif /* XEN */
 #endif /* defined(DEBUG) */
-	movl	%ebx,%eax		# get cpl
+	movl	%ebx,%eax			/* get cpl */
 	movl	CPUVAR(IUNMASK)(,%eax,4),%eax
-	andl	CPUVAR(IPENDING),%eax		# any non-masked bits left?
+	andl	CPUVAR(IPENDING),%eax		/* any non-masked bits left? */
 	jz	2f
 	bsrl	%eax,%eax
 	btrl	%eax,CPUVAR(IPENDING)
@@ -217,7 +219,7 @@ IDTVEC(spllower)
 4:
 #else
 	STI(%eax)
-#endif /* XEN */
+#endif
 	popl	%edi
 	popl	%esi
 	popl	%ebx
@@ -228,7 +230,7 @@ IDTVEC(spllower)
 	pushl	$1f
 	call	_C_LABEL(panic)
 1:	.asciz	"SPLLOWER: INTERRUPT ENABLED"
-#endif /* defined(DEBUG) */
+#endif
 IDTVEC_END(spllower)
 
 /*
@@ -244,10 +246,10 @@ IDTVEC_END(spllower)
 IDTVEC(doreti)
 #ifndef XEN
 	IDEPTH_DECR
-	popl	%ebx			# get previous priority
+	popl	%ebx			/* get previous priority */
 #endif
 .Ldoreti_resume_stic:
-	movl	$.Ldoreti_resume,%esi	# address to resume loop at
+	movl	$.Ldoreti_resume,%esi	/* address to resume loop at */
 .Ldoreti_resume:
 #if defined(DEBUG)
 #ifndef XEN
@@ -256,9 +258,9 @@ IDTVEC(doreti)
 	testl	$PSL_I,%eax
 	jnz	.Ldoreti_panic
 #else
-	movl    CPUVAR(VCPU),%eax
-	movb	EVTCHN_UPCALL_MASK(%eax), %al
-	andb	%al, %al
+	movl	CPUVAR(VCPU),%eax
+	movb	EVTCHN_UPCALL_MASK(%eax),%al
+	andb	%al,%al
 	jz	.Ldoreti_panic
 #endif /* XEN */
 #endif /* defined(DEBUG) */
@@ -266,14 +268,14 @@ IDTVEC(doreti)
 	movl	CPUVAR(IUNMASK)(,%eax,4),%eax
 	andl	CPUVAR(IPENDING),%eax
 	jz	2f
-	bsrl    %eax,%eax               # slow, but not worth optimizing
-	btrl    %eax,CPUVAR(IPENDING)
+	bsrl	%eax,%eax		/* slow, but not worth optimizing */
+	btrl	%eax,CPUVAR(IPENDING)
 	movl	CPUVAR(ISOURCES)(,%eax, 4),%eax
 	jmp	*IS_RESUME(%eax)
 2:	/* Check for ASTs on exit to user mode. */
 	movl	%ebx,CPUVAR(ILEVEL)
 5:
-	testb   $CHK_UPL,TF_CS(%esp)
+	testb	$CHK_UPL,TF_CS(%esp)
 	jnz	doreti_checkast
 	jmp	6f
 	.type	_C_LABEL(doreti_checkast), @function
@@ -299,12 +301,12 @@ END(doreti_checkast)
 	STIC(%eax)
 	jz	4f
 	call	_C_LABEL(stipending)
-	testl   %eax,%eax
-	jz 4f
+	testl	%eax,%eax
+	jz	4f
 	CLI(%eax)
 	jmp	.Ldoreti_resume_stic
 4:
-#endif /* XEN */
+#endif
 	INTRFASTEXIT
 9:
 	STI(%eax)
@@ -316,7 +318,7 @@ END(doreti_checkast)
 	pushl	$1f
 	call	_C_LABEL(panic)
 1:	.asciz	"DORETI: INTERRUPT ENABLED"
-#endif /* defined(DEBUG) */
+#endif
 IDTVEC_END(doreti)
 
 #ifndef XEN
@@ -370,7 +372,7 @@ IDTVEC_END(softintr)
  */
 ENTRY(softintr_ret)
 	incl	CPUVAR(MTX_COUNT)	/* re-adjust after mi_switch */
-	movl	$0, L_CTXSWTCH(%eax)	/* %eax from cpu_switchto */
+	movl	$0,L_CTXSWTCH(%eax)	/* %eax from cpu_switchto */
 	cli
 	jmp	*%esi			/* back to splx/doreti */
 END(softintr_ret)
@@ -392,11 +394,11 @@ END(softint_trigger)
  * Handles preemption interrupts via Xspllower().
  */
 IDTVEC(preemptrecurse)
-	movl	$IPL_PREEMPT, CPUVAR(ILEVEL)
+	movl	$IPL_PREEMPT,CPUVAR(ILEVEL)
 	sti
 	pushl	$0
 	call	_C_LABEL(kpreempt)
-	addl	$4, %esp
+	addl	$4,%esp
 	cli
 	jmp	*%esi
 IDTVEC_END(preemptrecurse)
@@ -407,18 +409,18 @@ IDTVEC_END(preemptrecurse)
  * Handles preemption interrupts via Xdoreti().
  */
 IDTVEC(preemptresume)
-	movl	$IPL_PREEMPT, CPUVAR(ILEVEL)
+	movl	$IPL_PREEMPT,CPUVAR(ILEVEL)
 	sti
-	testb   $CHK_UPL, TF_CS(%esp)
+	testb	$CHK_UPL,TF_CS(%esp)
 	jnz	1f
-	movl	TF_EIP(%esp), %eax
+	movl	TF_EIP(%esp),%eax
 	pushl	%eax
-	call	_C_LABEL(kpreempt)		# from kernel
-	addl	$4, %esp
+	call	_C_LABEL(kpreempt)		/* from kernel */
+	addl	$4,%esp
 	cli
 	jmp	*%esi
 1:
-	call	_C_LABEL(preempt)		# from user
+	call	_C_LABEL(preempt)		/* from user */
 	cli
 	jmp	*%esi
 IDTVEC_END(preemptresume)
