@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1028 2018/01/24 09:04:42 skrll Exp $
+#	$NetBSD: bsd.own.mk,v 1.1029 2018/01/27 23:59:17 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -312,15 +312,17 @@ TOOL_CXX.pcc=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-p++
 #
 DESTDIR?=
 
-# Coverity does not like --sysroot
+# Don't append another copy of sysroot (coming from COMPATCPPFLAGS etc.
+# because it confuses Coverity. Still we need to cov-configure specially
+# for each specific sysroot argument.
 .if !defined(HOSTPROG) && !defined(HOSTLIB)
 .  if ${DESTDIR} != ""
-.	if !defined(COVERITY_TOP_CONFIG)
+.	if empty(CPPFLAGS:M*--sysroot=*)
 CPPFLAGS+=	--sysroot=${DESTDIR}
 .	endif
 LDFLAGS+=	--sysroot=${DESTDIR}
 .  else
-.	if !defined(COVERITY_TOP_CONFIG)
+.	if empty(CPPFLAGS:M*--sysroot=*)
 CPPFLAGS+=	--sysroot=/
 .	endif
 LDFLAGS+=	--sysroot=/
