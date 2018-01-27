@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.24 2018/01/27 09:33:25 maxv Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.25 2018/01/27 18:48:59 maxv Exp $	*/
 
 #ifndef _I386_FRAMEASM_H_
 #define _I386_FRAMEASM_H_
@@ -75,6 +75,11 @@
 
 #define	INTRFASTEXIT \
 	jmp	intrfastexit
+
+#define INTR_RECURSE_HWFRAME \
+	pushfl				; \
+	pushl	%cs			; \
+	pushl	%esi			;
 
 #define	CHECK_DEFERRED_SWITCH \
 	cmpl	$0, CPUVAR(WANT_PMAPLOAD)
