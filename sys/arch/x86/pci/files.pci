@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.22 2018/01/25 01:22:21 christos Exp $
+#	$NetBSD: files.pci,v 1.23 2018/01/27 00:21:41 christos Exp $
 
 device 	aapic
 attach 	aapic at pci
@@ -10,6 +10,7 @@ define	agp_x86: agp_ali, agp_amd, agp_amd64, agp_i810, agp_intel, agp_sis, agp_v
 defflag	AGP_X86
 
 define amdnb_miscbus {}
+define amdsmnbus {}
 
 # PCI-Host bridge chipsets
 device	pchb:	pcibus, agpbus, agp_x86
@@ -36,13 +37,13 @@ attach	amdnb_misc at pci
 file	arch/x86/pci/amdnb_misc.c	amdnb_misc
  
 # AMD Family 17h system management network
-device	amdsmn {}
+device	amdsmn: amdsmnbus
 attach	amdsmn at pci
 file arch/x86/pci/amdsmn.c		amdsmn
 
 # AMD Family 17h CPU temp sensor
 device	amdzentemp: sysmon_envsys
-attach	amdzentemp at amdsmn
+attach	amdzentemp at amdsmnbus
 file	arch/x86/pci/amdzentemp.c		amdzentemp
 
 device	amdtemp: sysmon_envsys
