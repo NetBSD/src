@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_platform.c,v 1.18 2017/12/23 12:50:55 jmcneill Exp $ */
+/* $NetBSD: sunxi_platform.c,v 1.19 2018/01/27 14:17:45 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_fdt_arm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.18 2017/12/23 12:50:55 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.19 2018/01/27 14:17:45 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -140,8 +140,12 @@ sunxi_platform_device_register(device_t self, void *aux)
 	prop_dictionary_t prop = device_properties(self);
 
 	if (device_is_a(self, "rgephy")) {
-		/* Pine64+ gigabit ethernet workaround */
-		const char * compat[] = { "pine64,pine64-plus", NULL };
+		/* Pine64+ and NanoPi NEO Plus2 gigabit ethernet workaround */
+		const char * compat[] = {
+			"pine64,pine64-plus",
+			"friendlyarm,nanopi-neo-plus2",
+			NULL
+		};
 		if (of_match_compatible(OF_finddevice("/"), compat)) {
 			prop_dictionary_set_bool(prop, "no-rx-delay", true);
 		}
