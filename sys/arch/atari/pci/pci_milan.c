@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_milan.c,v 1.14 2015/10/02 05:22:50 msaitoh Exp $	*/
+/*	$NetBSD: pci_milan.c,v 1.15 2018/01/28 14:22:23 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_milan.c,v 1.14 2015/10/02 05:22:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_milan.c,v 1.15 2018/01/28 14:22:23 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -120,19 +120,41 @@ pci_intr_disestablish(pci_chipset_tag_t pc, void *cookie)
 
 /*
  * VGA related stuff...
- * XXX: Currently, you can only boot the Milan through loadbsd.ttp, hence the
- *      text mode ;-)
+ *  
  * It looks like the Milan BIOS is initializing the VGA card in a reasonably
  * standard text mode. However, the screen mode is 640*480 instead of 640*400.
  * Since wscons does not handle the right by default, the card is reprogrammed
  * to 640*400 using only 'standard' VGA registers (I hope!). So this ought to
  * work on cards other than the S3Trio card I have tested it on.
  */
-static u_char crt_tab[] = {
-	0x60, 0x53, 0x4f, 0x14, 0x56, 0x05, 0xc1, 0x1f,
-	0x00, 0x4f, 0x00, 0x0f, 0x00, 0x00, 0x00, 0x00,
-	0x98, 0x3d, 0x8f, 0x28, 0x0f, 0x8f, 0xc1, 0xc3,
-	0xff };
+static const uint8_t crt_tab[] = {
+	/* taken from vga_crtc[] in sys/dev/ic/vga_subr.c */
+	0x5f,	/* 00: horizontal total */
+	0x4f,	/* 01: horizontal display-enable end */
+	0x50,	/* 02: start horizontal blanking */
+	0x82,	/* 03: display skew control / end horizontal blanking */
+	0x55,	/* 04: start horizontal retrace pulse */
+	0x81,	/* 05: horizontal retrace delay / end horizontal retrace */
+	0xbf,	/* 06: vertical total */
+	0x1f,	/* 07: overflow register */
+	0x00,	/* 08: preset row scan */
+	0x4f,	/* 09: overflow / maximum scan line */
+	0x0d,	/* 0A: cursor off / cursor start */
+	0x0e,	/* 0B: cursor skew / cursor end */
+	0x00,	/* 0C: start regenerative buffer address high */
+	0x00,	/* 0D: start regenerative buffer address low */
+	0x00,	/* 0E: cursor location high */
+	0x00,	/* 0F: cursor location low */
+	0x9c,	/* 10: vertical retrace start */
+	0x8e,	/* 11: vertical interrupt / vertical retrace end */
+	0x8f,	/* 12: vertical display enable end */
+	0x28,	/* 13: logical line width */
+	0x00,	/* 14: underline location */
+	0x96,	/* 15: start vertical blanking */
+	0xb9,	/* 16: end vertical blanking */
+	0xa3,	/* 17: CRT mode control */
+	0xff	/* 18: line compare */
+};
 
 /*
  * XXX: Why are we repeating this everywhere! (Leo)
