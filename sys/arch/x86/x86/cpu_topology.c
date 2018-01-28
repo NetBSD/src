@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_topology.c,v 1.11 2018/01/28 15:00:42 mlelstv Exp $	*/
+/*	$NetBSD: cpu_topology.c,v 1.12 2018/01/28 16:15:41 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2009 Mindaugas Rasiukevicius <rmind at NetBSD org>,
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_topology.c,v 1.11 2018/01/28 15:00:42 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_topology.c,v 1.12 2018/01/28 16:15:41 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -108,6 +108,7 @@ x86_cpu_topology(struct cpu_info *ci)
 			core_max = lp_max;
 			break;
 		}
+
 		/* Number of Cores (NC) per package (ecx[7:0]). */
 		x86_cpuid(0x80000008, descs);
 		core_max = (descs[2] & 0xff) + 1;
@@ -116,9 +117,9 @@ x86_cpu_topology(struct cpu_info *ci)
 		if (n != 0) {
 			/*
 			 * Extended Method.
-			 * core_bits = 2 ^ n (power of two)
+			 * core_max = 2 ^ n (power of two)
 			 */
-			core_bits = 1 << n;
+			core_bits = n;
 		}
 		break;
 	default:
