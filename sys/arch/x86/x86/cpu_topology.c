@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_topology.c,v 1.10 2017/09/07 06:40:42 msaitoh Exp $	*/
+/*	$NetBSD: cpu_topology.c,v 1.11 2018/01/28 15:00:42 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2009 Mindaugas Rasiukevicius <rmind at NetBSD org>,
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_topology.c,v 1.10 2017/09/07 06:40:42 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_topology.c,v 1.11 2018/01/28 15:00:42 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -151,7 +151,10 @@ x86_cpu_topology(struct cpu_info *ci)
 	}
 
 	if (smt_bits + core_bits) {
-		ci->ci_package_id = apic_id >> (smt_bits + core_bits);
+		if (smt_bits + core_bits < sizeof(apic_id) * NBBY)
+			ci->ci_package_id = apic_id >> (smt_bits + core_bits);
+		else
+			ci->ci_package_id = 0;
 	}
 	if (core_bits) {
 		u_int core_mask = __BITS(smt_bits, smt_bits + core_bits - 1);
