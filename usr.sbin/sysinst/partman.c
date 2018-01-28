@@ -1,4 +1,4 @@
-/*	$NetBSD: partman.c,v 1.15 2017/01/12 17:38:08 christos Exp $ */
+/*	$NetBSD: partman.c,v 1.16 2018/01/28 14:34:26 maya Exp $ */
 
 /*
  * Copyright 2012 Eugene Lozovoy
@@ -2742,7 +2742,7 @@ partman(void)
 
 		if (!have_cgd)
 			remove_cgd_options();
-		else if (!(cgds = calloc(sizeof(*vnds), MAX_CGD)))
+		else if (!(cgds = calloc(sizeof(*cgds), MAX_CGD)))
 			have_cgd = 0;
 
 		if (!have_lvm)
