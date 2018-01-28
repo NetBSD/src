@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_thermal.c,v 1.4 2017/12/13 21:37:10 jmcneill Exp $ */
+/* $NetBSD: sunxi_thermal.c,v 1.5 2018/01/28 18:24:50 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2016-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_thermal.c,v 1.4 2017/12/13 21:37:10 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_thermal.c,v 1.5 2018/01/28 18:24:50 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,6 +108,20 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_thermal.c,v 1.4 2017/12/13 21:37:10 jmcneill E
 #define	H3_INIT_ALARM		90	/* degC */
 #define	H3_INIT_SHUT		105	/* degC */
 
+#define	H5_ADC_ACQUIRE_TIME	0x1df
+#define	H5_FILTER		0x6
+#define	H5_INTC			0x3a070
+#define	H5_TEMP_DIV		20
+#define	H5_TEMP_BASE_L		233832448
+#define	H5_TEMP_MUL_L		124885
+#define	H5_TEMP_BASE_H_0	271581184
+#define	H5_TEMP_MUL_H_0		152253
+#define	H5_TEMP_BASE_H_1	289406976
+#define	H5_TEMP_MUL_H_1		166723
+#define	H5_CLK_RATE		24000000
+#define	H5_INIT_ALARM		105	/* degC */
+#define	H5_INIT_SHUT		120	/* degC */
+
 #define	TEMP_C_TO_K		273150000
 #define	SENSOR_ENABLE_ALL	(SENSOR0_EN|SENSOR1_EN|SENSOR2_EN)
 #define	SHUT_INT_ALL		(SHUT_INT0_STS|SHUT_INT1_STS|SHUT_INT2_STS)
@@ -137,17 +151,14 @@ struct sunxi_thermal_config {
 	int				adc_cali_en;
 	uint32_t			filter;
 	uint32_t			intc;
-	int				(*to_temp)(uint32_t);
-	uint32_t			(*to_reg)(int);
-	int				temp_base;
-	int				temp_mul;
-	int				temp_div;
+	int				(*to_temp)(u_int, uint32_t);
+	uint32_t			(*to_reg)(u_int, int);
 	int				calib0, calib1;
 	uint32_t			calib0_mask, calib1_mask;
 };
 
 static int
-a83t_to_temp(uint32_t val)
+a83t_to_temp(u_int sensor, uint32_t val)
 {
 	return ((A83T_TEMP_BASE - (val * A83T_TEMP_MUL)) / A83T_TEMP_DIV);
 }
@@ -179,7 +190,7 @@ static const struct sunxi_thermal_config a83t_config = {
 };
 
 static int
-a64_to_temp(uint32_t val)
+a64_to_temp(u_int sensor, uint32_t val)
 {
 	return ((A64_TEMP_BASE - (val * A64_TEMP_MUL)) / A64_TEMP_DIV);
 }
@@ -208,13 +219,13 @@ static const struct sunxi_thermal_config a64_config = {
 };
 
 static int
-h3_to_temp(uint32_t val)
+h3_to_temp(u_int sensor, uint32_t val)
 {
 	return (H3_TEMP_BASE - ((val * H3_TEMP_MUL) / H3_TEMP_DIV));
 }
 
 static uint32_t
-h3_to_reg(int val)
+h3_to_reg(u_int sensor, int val)
 {
 	return ((H3_TEMP_MINUS - (val * H3_TEMP_DIV)) / H3_TEMP_MUL);
 }
@@ -238,10 +249,67 @@ static const struct sunxi_thermal_config h3_config = {
 	.calib0_mask = 0xfff,
 };
 
+static int
+h5_to_temp(u_int sensor, uint32_t val)
+{
+	int base, mul;
+
+	if (val >= 0x500) {
+		base = H5_TEMP_BASE_L;
+		mul = H5_TEMP_MUL_L;
+	} else {
+		base = sensor == 0 ? H5_TEMP_BASE_H_0 : H5_TEMP_BASE_H_1;
+		mul = sensor == 0 ? H5_TEMP_MUL_H_1 : H5_TEMP_MUL_H_1;
+	}
+
+	return (base - val * mul) >> H5_TEMP_DIV;
+}
+
+static uint32_t
+h5_to_reg(u_int sensor, int val)
+{
+	int base, mul;
+
+	if (val <= 70) {
+		base = H5_TEMP_BASE_L;
+		mul = H5_TEMP_MUL_L;
+	} else {
+		base = sensor == 0 ? H5_TEMP_BASE_H_0 : H5_TEMP_BASE_H_1;
+		mul = sensor == 0 ? H5_TEMP_MUL_H_1 : H5_TEMP_MUL_H_1;
+	}
+
+	return (base - (val << H5_TEMP_DIV)) / mul;
+}
+
+static const struct sunxi_thermal_config h5_config = {
+	.nsensors = 2,
+	.sensors = {
+		[0] = {
+			.name = "cpu",
+			.desc = "CPU temperature",
+			.init_alarm = H5_INIT_ALARM,
+			.init_shut = H5_INIT_SHUT,
+		},
+		[1] = {
+			.name = "gpu",
+			.desc = "GPU temperature",
+			.init_alarm = H5_INIT_ALARM,
+			.init_shut = H5_INIT_SHUT,
+		},
+	},
+	.clk_rate = H5_CLK_RATE,
+	.adc_acquire_time = H5_ADC_ACQUIRE_TIME,
+	.filter = H5_FILTER,
+	.intc = H5_INTC,
+	.to_temp = h5_to_temp,
+	.to_reg = h5_to_reg,
+};
+
 static struct of_compat_data compat_data[] = {
 	{ "allwinner,sun8i-a83t-ts",	(uintptr_t)&a83t_config },
 	{ "allwinner,sun8i-h3-ts",	(uintptr_t)&h3_config },
 	{ "allwinner,sun50i-a64-ts",	(uintptr_t)&a64_config },
+	{ "allwinner,sun50i-h5-ts",	(uintptr_t)&h5_config },
 	{ NULL,				(uintptr_t)NULL }
 };
 
@@ -311,7 +379,7 @@ sunxi_thermal_gettemp(struct sunxi_thermal_softc *sc, int sensor)
 
 	val = RD4(sc, THS_DATA0 + (sensor * 4));
 
-	return sc->conf->to_temp(val);
+	return sc->conf->to_temp(sensor, val);
 }
 
 static int
@@ -322,7 +390,7 @@ sunxi_thermal_getshut(struct sunxi_thermal_softc *sc, int sensor)
 	val = RD4(sc, THS_SHUTDOWN0_CTRL + (sensor * 4));
 	val = (val >> SHUT_T_HOT_SHIFT) & SHUT_T_HOT_MASK;
 
-	return sc->conf->to_temp(val);
+	return sc->conf->to_temp(sensor, val);
 }
 
 static void
@@ -332,7 +400,7 @@ sunxi_thermal_setshut(struct sunxi_thermal_softc *sc, int sensor, int temp)
 
 	val = RD4(sc, THS_SHUTDOWN0_CTRL + (sensor * 4));
 	val &= ~(SHUT_T_HOT_MASK << SHUT_T_HOT_SHIFT);
-	val |= (sc->conf->to_reg(temp) << SHUT_T_HOT_SHIFT);
+	val |= (sc->conf->to_reg(sensor, temp) << SHUT_T_HOT_SHIFT);
 	WR4(sc, THS_SHUTDOWN0_CTRL + (sensor * 4), val);
 }
 
@@ -344,7 +412,7 @@ sunxi_thermal_gethyst(struct sunxi_thermal_softc *sc, int sensor)
 	val = RD4(sc, THS_ALARM0_CTRL + (sensor * 4));
 	val = (val >> ALARM_T_HYST_SHIFT) & ALARM_T_HYST_MASK;
 
-	return sc->conf->to_temp(val);
+	return sc->conf->to_temp(sensor, val);
 }
 
 static int
@@ -355,7 +423,7 @@ sunxi_thermal_getalarm(struct sunxi_thermal_softc *sc, int sensor)
 	val = RD4(sc, THS_ALARM0_CTRL + (sensor * 4));
 	val = (val >> ALARM_T_HOT_SHIFT) & ALARM_T_HOT_MASK;
 
-	return sc->conf->to_temp(val);
+	return sc->conf->to_temp(sensor, val);
 }
 
 static void
@@ -365,7 +433,7 @@ sunxi_thermal_setalarm(struct sunxi_thermal_softc *sc, int sensor, int temp)
 
 	val = RD4(sc, THS_ALARM0_CTRL + (sensor * 4));
 	val &= ~(ALARM_T_HOT_MASK << ALARM_T_HOT_SHIFT);
-	val |= (sc->conf->to_reg(temp) << ALARM_T_HOT_SHIFT);
+	val |= (sc->conf->to_reg(sensor, temp) << ALARM_T_HOT_SHIFT);
 	WR4(sc, THS_ALARM0_CTRL + (sensor * 4), val);
 }
 
