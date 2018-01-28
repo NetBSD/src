@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.355 2017/11/15 21:21:18 christos Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.356 2018/01/28 10:02:00 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.355 2017/11/15 21:21:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.356 2018/01/28 10:02:00 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -2024,14 +2024,14 @@ ffs_deinit_vnode(struct ufsmount *ump, struct vnode *vp)
 {
 	struct inode *ip = VTOI(vp);
 
+	genfs_node_destroy(vp);
+	vp->v_data = NULL;
+
 	if (ump->um_fstype == UFS1)
 		pool_cache_put(ffs_dinode1_cache, ip->i_din.ffs1_din);
 	else
 		pool_cache_put(ffs_dinode2_cache, ip->i_din.ffs2_din);
 	pool_cache_put(ffs_inode_cache, ip);
-
-	genfs_node_destroy(vp);
-	vp->v_data = NULL;
 }
 
 /*
