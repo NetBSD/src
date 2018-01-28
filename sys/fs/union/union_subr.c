@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.76 2017/07/17 09:22:36 hannken Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.77 2018/01/28 15:48:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.76 2017/07/17 09:22:36 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.77 2018/01/28 15:48:44 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -377,11 +377,6 @@ union_allocvp(
 		lowervp = NULLVP;
 	}
 
-	if (!docache) {
-		un = NULL;
-		goto found;
-	}
-
 	/*
 	 * If both uppervp and lowervp are not NULL we have to
 	 * search union nodes with one vnode as NULL too.
@@ -392,6 +387,11 @@ union_allocvp(
 	} else {
 		hash[1] = UNION_HASH(uppervp, NULLVP);
 		hash[2] = UNION_HASH(NULLVP, lowervp);
+	}
+
+	if (!docache) {
+		un = NULL;
+		goto found;
 	}
 
 loop:
