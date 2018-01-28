@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_cis.c,v 1.4 2012/02/01 22:34:43 matt Exp $	*/
+/*	$NetBSD: sdmmc_cis.c,v 1.5 2018/01/28 14:34:06 jmcneill Exp $	*/
 /*	$OpenBSD: sdmmc_cis.c,v 1.1 2006/06/01 21:53:41 uwe Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Routines to decode the Card Information Structure of SD I/O cards */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_cis.c,v 1.4 2012/02/01 22:34:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_cis.c,v 1.5 2018/01/28 14:34:06 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -260,9 +260,14 @@ sdmmc_read_cis(struct sdmmc_function *sf, struct sdmmc_cis *cis)
 			break;
 
 		default:
-			aprint_error_dev(dev,
-			    "unknown tuple code %#x, length %d\n",
-			    tplcode, tpllen);
+			/*
+			 * Tuple codes between 80h-8Fh are vendor unique.
+			 * Print a warning about all other codes.
+			 */
+			if ((tplcode & 0xf0) != 0x80)
+				aprint_error_dev(dev,
+				    "unknown tuple code %#x, length %d\n",
+				    tplcode, tpllen);
 			reg += tpllen;
 			break;
 		}
