@@ -1,4 +1,4 @@
-/* $NetBSD: sun50i-h5-nanopi-neo-plus2.dts,v 1.1 2017/12/31 00:53:29 jakllsch Exp $ */
+/* $NetBSD: sun50i-h5-nanopi-neo-plus2.dts,v 1.2 2018/01/28 18:31:41 jmcneill Exp $ */
 
 /*
  * &emac and &external_mdio portions lifted from
@@ -49,6 +49,7 @@
  */
 
 #include "../../../external/gpl2/dts/dist/arch/arm64/boot/dts/allwinner/sun50i-h5-nanopi-neo-plus2.dts"
+#include "sun50i-h5.dtsi"
 
 &emac {
 	pinctrl-names = "default";
@@ -63,5 +64,28 @@
 	ext_rgmii_phy: ethernet-phy@7 {
 		compatible = "ethernet-phy-ieee802.3-c22";
 		reg = <7>;
+	};
+};
+
+/ {
+	cpus {
+		cpu@0 {
+			cpu-supply = <&vcc_cpux>;
+			operating-points = <
+				/* kHz	  uV */
+				1152000	1100000
+				1104000	1100000
+				1008000	1100000
+				816000	1100000
+				624000	1100000
+				>;
+		};
+	};
+
+	vcc_cpux: reg_vcc_cpux {
+		compatible = "regulator-fixed";
+		regulator-name = "cpux-1v1";
+		regulator-min-microvolt = <1100000>;
+		regulator-max-microvolt = <1100000>;
 	};
 };
