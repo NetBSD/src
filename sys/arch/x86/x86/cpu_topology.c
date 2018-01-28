@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_topology.c,v 1.12 2018/01/28 16:15:41 mlelstv Exp $	*/
+/*	$NetBSD: cpu_topology.c,v 1.13 2018/01/28 16:32:43 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2009 Mindaugas Rasiukevicius <rmind at NetBSD org>,
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_topology.c,v 1.12 2018/01/28 16:15:41 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_topology.c,v 1.13 2018/01/28 16:32:43 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -149,6 +149,16 @@ x86_cpu_topology(struct cpu_info *ci)
 			    (apic_id >> core_bits) | (node_id << core_bits) :
 			    (apic_id >> 5) | (node_id << 2);
 		}
+	}
+
+	/* Family 0x17 supports SMT */
+	if (cpu_vendor == CPUVENDOR_AMD && cpu_family == 0x17) { /* XXX */
+		x86_cpuid(0x8000001e, descs);
+		const u_int threads = ((descs[1] >> 8) & 0xff) + 1;
+
+		KASSERT(smt_bits == 0 && smt_bits <= core_bits);
+		smt_bits = ilog2(threads);
+		core_bits -= smt_bits;
 	}
 
 	if (smt_bits + core_bits) {
