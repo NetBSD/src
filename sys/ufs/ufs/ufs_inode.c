@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.102 2017/10/28 00:37:13 pgoyette Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.103 2018/01/28 10:01:18 hannken Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.102 2017/10/28 00:37:13 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.103 2018/01/28 10:01:18 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -148,6 +148,15 @@ out:
 	 * so that it can be reused immediately.
 	 */
 	*ap->a_recycle = (ip->i_mode == 0);
+
+	if (ip->i_mode == 0 && (DIP(ip, size) != 0 || DIP(ip, blocks) != 0)) {
+		printf("%s: unlinked ino %" PRId64 " on \"%s\" has"
+		    " non zero size %" PRIx64 " or blocks %" PRIx64
+		    " with allerror %d\n",
+		    __func__, ip->i_number, mp->mnt_stat.f_mntonname,
+		    DIP(ip, size), DIP(ip, blocks), allerror);
+		panic("%s: dirty filesystem?", __func__);
+	}
 
 	return (allerror);
 }
