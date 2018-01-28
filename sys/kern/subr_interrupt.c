@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_interrupt.c,v 1.3 2018/01/13 13:53:36 reinoud Exp $	*/
+/*	$NetBSD: subr_interrupt.c,v 1.4 2018/01/28 22:24:58 christos Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_interrupt.c,v 1.3 2018/01/13 13:53:36 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_interrupt.c,v 1.4 2018/01/28 22:24:58 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,7 +133,7 @@ interrupt_avert_intr(u_int cpu_idx)
 
 	ii_handler = interrupt_construct_intrids(cpuset);
 	if (ii_handler == NULL) {
-		error = ENOMEM;
+		error = EINVAL;
 		goto out;
 	}
 	nids = ii_handler->iih_nids;
@@ -180,25 +180,24 @@ interrupt_intrio_list_line_size(void)
  * Return the size of interrupts list data on success.
  * Reterun 0 on failed.
  */
-static size_t
-interrupt_intrio_list_size(void)
+static int
+interrupt_intrio_list_size(size_t *ilsize)
 {
 	struct intrids_handler *ii_handler;
-	size_t ilsize;
 
-	ilsize = 0;
+	*ilsize = 0;
 
 	/* buffer header */
-	ilsize += sizeof(struct intrio_list);
+	*ilsize += sizeof(struct intrio_list);
 
 	/* il_line body */
 	ii_handler = interrupt_construct_intrids(kcpuset_running);
 	if (ii_handler == NULL)
-		return 0;
-	ilsize += interrupt_intrio_list_line_size() * (ii_handler->iih_nids);
+		return EOPNOTSUPP;
+	*ilsize += interrupt_intrio_list_line_size() * ii_handler->iih_nids;
 
 	interrupt_destruct_intrids(ii_handler);
-	return ilsize;
+	return 0;
 }
 
 /*
@@ -207,28 +206,17 @@ interrupt_intrio_list_size(void)
  * If "data" == NULL, simply return list structure bytes.
  */
 static int
-interrupt_intrio_list(struct intrio_list *il, int length)
+interrupt_intrio_list(struct intrio_list *il, size_t ilsize)
 {
 	struct intrio_list_line *illine;
 	kcpuset_t *assigned, *avail;
 	struct intrids_handler *ii_handler;
 	intrid_t *ids;
-	size_t ilsize;
 	u_int cpu_idx;
-	int nids, intr_idx, ret, line_size;
-
-	ilsize = interrupt_intrio_list_size();
-	if (ilsize == 0)
-		return -ENOMEM;
-
-	if (il == NULL)
-		return ilsize;
-
-	if (length < ilsize)
-		return -ENOMEM;
+	int nids, intr_idx, error, line_size;
 
 	illine = (struct intrio_list_line *)
-		((char *)il + sizeof(struct intrio_list));
+	    ((char *)il + sizeof(struct intrio_list));
 	il->il_lineoffset = (off_t)((uintptr_t)illine - (uintptr_t)il);
 
 	kcpuset_create(&avail, true);
@@ -238,19 +226,19 @@ interrupt_intrio_list(struct intrio_list *il, int length)
 	ii_handler = interrupt_construct_intrids(kcpuset_running);
 	if (ii_handler == NULL) {
 		DPRINTF(("%s: interrupt_construct_intrids() failed\n",
-			__func__));
-		ret = -ENOMEM;
+		    __func__));
+		error = EOPNOTSUPP;
 		goto out;
 	}
 
 	line_size = interrupt_intrio_list_line_size();
-	/* ensure interrupts are not added after interrupt_intrio_list_size(). */
+	/* ensure interrupts are not added after interrupt_intrio_list_size() */
 	nids = ii_handler->iih_nids;
 	ids = ii_handler->iih_intrids;
 	if (ilsize < sizeof(struct intrio_list) + line_size * nids) {
 		DPRINTF(("%s: interrupts are added during execution.\n",
-			__func__));
-		ret = -ENOMEM;
+		    __func__));
+		error = EAGAIN;
 		goto destruct_out;
 	}
 
@@ -264,19 +252,19 @@ interrupt_intrio_list(struct intrio_list *il, int length)
 		interrupt_get_assigned(ids[intr_idx], assigned);
 		for (cpu_idx = 0; cpu_idx < ncpu; cpu_idx++) {
 			struct intrio_list_line_cpu *illcpu =
-				&illine->ill_cpu[cpu_idx];
+			    &illine->ill_cpu[cpu_idx];
 
 			illcpu->illc_assigned =
-				kcpuset_isset(assigned, cpu_idx) ? true : false;
+			    kcpuset_isset(assigned, cpu_idx);
 			illcpu->illc_count =
-				interrupt_get_count(ids[intr_idx], cpu_idx);
+			    interrupt_get_count(ids[intr_idx], cpu_idx);
 		}
 
 		illine = (struct intrio_list_line *)
-			((char *)illine + line_size);
+		    ((char *)illine + line_size);
 	}
 
-	ret = ilsize;
+	error = 0;
 	il->il_version = INTRIO_LIST_VERSION;
 	il->il_ncpus = ncpu;
 	il->il_nintrs = nids;
@@ -289,7 +277,7 @@ interrupt_intrio_list(struct intrio_list *il, int length)
 	kcpuset_destroy(assigned);
 	kcpuset_destroy(avail);
 
-	return ret;
+	return error;
 }
 
 /*
@@ -298,42 +286,39 @@ interrupt_intrio_list(struct intrio_list *il, int length)
 static int
 interrupt_intrio_list_sysctl(SYSCTLFN_ARGS)
 {
-	int ret, error;
+	int error;
 	void *buf;
+	size_t ilsize;
 
 	if (oldlenp == NULL)
 		return EINVAL;
+
+	if ((error = interrupt_intrio_list_size(&ilsize)) != 0)
+		return error;
 
 	/*
 	 * If oldp == NULL, the sysctl(8) caller process want to get the size of
 	 * intrctl list data only.
 	 */
 	if (oldp == NULL) {
-		ret = interrupt_intrio_list(NULL, 0);
-		if (ret < 0)
-			return -ret;
-
-		*oldlenp = ret;
+		*oldlenp = ilsize;
 		return 0;
 	}
 
 	/*
-	 * If oldp != NULL, the sysctl(8) caller process want to get both the size
-	 * and the contents of intrctl list data.
+	 * If oldp != NULL, the sysctl(8) caller process want to get both the
+	 * size and the contents of intrctl list data.
 	 */
-	if (*oldlenp == 0)
+	if (*oldlenp < ilsize)
 		return ENOMEM;
 
-	buf = kmem_zalloc(*oldlenp, KM_SLEEP);
-	ret = interrupt_intrio_list(buf, *oldlenp);
-	if (ret < 0) {
-		error = -ret;
+	buf = kmem_zalloc(ilsize, KM_SLEEP);
+	if ((error = interrupt_intrio_list(buf, ilsize)) != 0)
 		goto out;
-	}
-	error = copyout(buf, oldp, *oldlenp);
 
+	error = copyout(buf, oldp, ilsize);
  out:
-	kmem_free(buf, *oldlenp);
+	kmem_free(buf, ilsize);
 	return error;
 }
 
