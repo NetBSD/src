@@ -1,4 +1,4 @@
-/*	$NetBSD: amidisplaycc.c,v 1.30 2016/02/06 20:20:18 jandberg Exp $ */
+/*	$NetBSD: amidisplaycc.c,v 1.31 2018/01/28 10:00:31 jandberg Exp $ */
 
 /*-
  * Copyright (c) 2000 Jukka Andberg.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.30 2016/02/06 20:20:18 jandberg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.31 2018/01/28 10:00:31 jandberg Exp $");
 
 /*
  * wscons interface to amiga custom chips. Contains the necessary functions
@@ -438,6 +438,7 @@ amidisplaycc_attach(device_t parent, device_t self, void *aux)
 		       aga_enable ? "(AGA)" : "");
 
 		if (amidisplaycc_consolescreen.isconsole) {
+			amidisplaycc_consolescreen.device = adp;
 			adp->currentscreen = &amidisplaycc_consolescreen;
 			printf(" (console)");
 		} else
@@ -1059,11 +1060,6 @@ amidisplaycc_ioctl(void *dp, void *vs, u_long cmd, void *data, int flag,
 					       cmd,
 					       (struct wsdisplay_cmap*)data));
 	}
-
-	dprintf("amidisplaycc: unknown ioctl %lx (grp:'%c' num:%d)\n",
-		(long)cmd,
-		(char)((cmd&0xff00)>>8),
-		(int)(cmd&0xff));
 
 	return (EPASSTHROUGH);
 
@@ -1878,6 +1874,22 @@ amidisplaycc_getbuiltinfont(void)
 void
 amidisplaycc_pollc(void *cookie, int on)
 {
+	if (amidisplaycc_consolescreen.isconsole)
+	{
+		if (on) 
+		{
+			/* About to use console, so make it visible */
+			grf_display_view(amidisplaycc_consolescreen.view);
+		}
+		if (!on && 
+		    amidisplaycc_consolescreen.isconsole && 
+		    amidisplaycc_consolescreen.device != NULL && 
+		    amidisplaycc_consolescreen.device->currentscreen != NULL) 
+		{
+			/* Restore the correct view after done with console use */
+			grf_display_view(amidisplaycc_consolescreen.device->currentscreen->view);
+		}
+	}
 }
 
 /*
