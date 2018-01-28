@@ -1,4 +1,4 @@
-/* $NetBSD: fixedregulator.c,v 1.5 2017/04/24 10:55:26 jmcneill Exp $ */
+/* $NetBSD: fixedregulator.c,v 1.6 2018/01/28 18:21:52 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fixedregulator.c,v 1.5 2017/04/24 10:55:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fixedregulator.c,v 1.6 2018/01/28 18:21:52 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,11 +44,15 @@ static void	fixedregulator_attach(device_t, device_t, void *);
 static int	fixedregulator_acquire(device_t);
 static void 	fixedregulator_release(device_t);
 static int	fixedregulator_enable(device_t, bool);
+static int	fixedregulator_set_voltage(device_t, u_int, u_int);
+static int	fixedregulator_get_voltage(device_t, u_int *);
 
 struct fdtbus_regulator_controller_func fixedregulator_funcs = {
 	.acquire = fixedregulator_acquire,
 	.release = fixedregulator_release,
-	.enable = fixedregulator_enable
+	.enable = fixedregulator_enable,
+	.set_voltage = fixedregulator_set_voltage,
+	.get_voltage = fixedregulator_get_voltage,
 };
 
 struct fixedregulator_softc {
@@ -60,6 +64,8 @@ struct fixedregulator_softc {
 	bool		sc_boot_on;
 	bool		sc_enable_val;
 	uint32_t	sc_delay;
+	uint32_t	sc_min_uvol;
+	uint32_t	sc_max_uvol;
 
 	int		sc_gpioflags;
 	bool		sc_deferred;
@@ -113,6 +119,8 @@ fixedregulator_attach(device_t parent, device_t self, void *aux)
 	sc->sc_enable_val = of_getprop_bool(phandle, "enable-active-high");
 	if (of_getprop_uint32(phandle, "startup-delay-us", &sc->sc_delay) != 0)
 		sc->sc_delay = 0;
+	of_getprop_uint32(phandle, "regulator-min-microvolt", &sc->sc_min_uvol);
+	of_getprop_uint32(phandle, "regulator-max-microvolt", &sc->sc_max_uvol);
 
 	sc->sc_pin = fdtbus_gpio_acquire(phandle, "gpio", sc->sc_gpioflags);
 	if (sc->sc_pin == NULL)
@@ -164,5 +172,26 @@ fixedregulator_enable(device_t dev, bool enable)
 			return EIO;
 		fdtbus_gpio_write_raw(sc->sc_pin, !sc->sc_enable_val);
 	}
+	return 0;
+}
+
+static int
+fixedregulator_set_voltage(device_t dev, u_int min_uvol, u_int max_uvol)
+{
+	struct fixedregulator_softc * const sc = device_private(dev);
+
+	if (sc->sc_min_uvol > max_uvol || sc->sc_max_uvol < min_uvol)
+		return EINVAL;
+
+	return 0;
+}
+
+static int
+fixedregulator_get_voltage(device_t dev, u_int *uvol)
+{
+	struct fixedregulator_softc * const sc = device_private(dev);
+
+	*uvol = sc->sc_min_uvol;
+
 	return 0;
 }
