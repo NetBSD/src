@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.87 2018/01/16 07:05:24 maxv Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.88 2018/01/28 16:12:41 christos Exp $	*/
 /*	$OpenBSD: if_iwn.c,v 1.135 2014/09/10 07:22:09 dcoppa Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  * adapters.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.87 2018/01/16 07:05:24 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.88 2018/01/28 16:12:41 christos Exp $");
 
 #define IWN_USE_RBUF	/* Use local storage for RX */
 #undef IWN_HWCRYPTO	/* XXX does not even compile yet */
@@ -3394,6 +3394,10 @@ iwn_cmd(struct iwn_softc *sc, int code, const void *buf, int size, int async)
 	cmd->flags = 0;
 	cmd->qid = ring->qid;
 	cmd->idx = ring->cur;
+	/*
+	 * Coverity:[OUT_OF_BOUNDS]
+	 * false positive since, allocated in mbuf if it does not fit
+	 */
 	memcpy(cmd->data, buf, size);
 
 	desc->nsegs = 1;
