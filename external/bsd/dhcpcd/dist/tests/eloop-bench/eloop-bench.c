@@ -26,7 +26,9 @@
  */
 
 #include <sys/resource.h>
+
 #include <err.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -59,38 +61,37 @@ static void
 read_cb(void *arg)
 {
 	struct pipe *p = arg;
-	unsigned char c;
-	ssize_t l;
+	unsigned char buf[1];
 
-	l = read(p->fd[0], &c, sizeof(c));
-	if (l == -1)
+	if (read(p->fd[0], buf, 1) != 1) {
+		warn("%s: read", __func__);
 		bad++;
-	else
-		good += (size_t)l;
-	if (writes) {
-		p = (struct pipe *)arg;
-		l = write(p->fd[1], "e", 1);
-		if (l != 1)
+	} else
+		good++;
+
+	if (writes != 0) {
+		writes--;
+		if (write(p->fd[1], "e", 1) != 1) {
+			warn("%s: write", __func__);
 			bad++;
-		else {
-			writes -= (size_t)l;
-			fired += (size_t)l;
-		}
+		} else
+			fired++;
 	}
 
-	if (writes == 0) {
-		if (good == fired)
-			eloop_exit(e, EXIT_SUCCESS);
+	if (writes == 0 && fired == good) {
+		//printf("fired %zu, good %zu, bad %zu\n", fired, good, bad);
+		eloop_exit(e, good == fired && bad == 0 ?
+		    EXIT_SUCCESS : EXIT_FAILURE);
 	}
 }
 
-static struct timespec *
-runone(void)
+static int
+runone(struct timespec *t)
 {
 	size_t i;
 	struct pipe *p;
-	static struct timespec _ts;
 	struct timespec ts, te;
+	int result;
 
 	writes = nwrites;
 	fired = good = 0;
@@ -98,28 +99,27 @@ runone(void)
 	for (i = 0, p = pipes; i < nactive; i++, p++) {
 		if (write(p->fd[1], "e", 1) != 1)
 			err(EXIT_FAILURE, "send");
+		writes--;
+		fired++;
 	}
 
 	if (clock_gettime(CLOCK_MONOTONIC, &ts) == -1)
 		err(EXIT_FAILURE, "clock_gettime");
-	(void) eloop_start(e, NULL);
+	result = eloop_start(e, NULL);
 	if (clock_gettime(CLOCK_MONOTONIC, &te) == -1)
 		err(EXIT_FAILURE, "clock_gettime");
 
-	timespecsub(&te, &ts, &_ts);
-	return &_ts;
+	timespecsub(&te, &ts, t);
+	return result;
 }
 
 int
 main(int argc, char **argv)
 {
-	int c;
+	int c, result, exit_code;
 	size_t i, nruns = 25;
 	struct pipe *p;
-	struct timespec *ts;
-
-	if ((e = eloop_new()) == NULL)
-		err(EXIT_FAILURE, "eloop_init");
+	struct timespec ts, te, t;
 
 	while ((c = getopt(argc, argv, "a:n:r:w:")) != -1) {
 		switch (c) {
@@ -140,27 +140,45 @@ main(int argc, char **argv)
 		}
 	}
 
+	if (clock_gettime(CLOCK_MONOTONIC, &ts) == -1)
+		err(EXIT_FAILURE, "clock_gettime");
+
+	if ((e = eloop_new()) == NULL)
+		err(EXIT_FAILURE, "eloop_init");
+
 	if (nactive > npipes)
 		nactive = npipes;
 
-	pipes = malloc(sizeof(*p) * npipes);
+	pipes = calloc(npipes, sizeof(*p));
 	if (pipes == NULL)
 		err(EXIT_FAILURE, "malloc");
 
 	for (i = 0, p = pipes; i < npipes; i++, p++) {
-		if (pipe(p->fd) == -1)
+		if (pipe2(p->fd, O_CLOEXEC | O_NONBLOCK) == -1)
 			err(EXIT_FAILURE, "pipe");
 		if (eloop_event_add(e, p->fd[0], read_cb, p) == -1)
 			err(EXIT_FAILURE, "eloop_event_add");
 	}
 
+	printf("active = %zu, pipes = %zu, runs = %zu, writes = %zu\n",
+	    nactive, npipes, nruns, nwrites);
+
+	exit_code = EXIT_SUCCESS;
 	for (i = 0; i < nruns; i++) {
-		if ((ts = runone()) == NULL)
-			err(EXIT_FAILURE, "runone");
-		printf("%lld.%.9ld\n", (long long)ts->tv_sec, ts->tv_nsec);
+		result = runone(&t);
+		if (result != EXIT_SUCCESS)
+			exit_code = result;
+		printf("run %zu took %lld.%.9ld seconds, result %d\n",
+		    i + 1, (long long)t.tv_sec, t.tv_nsec, result);
 	}
 
 	eloop_free(e);
 	free(pipes);
-	exit(0);
+
+	if (clock_gettime(CLOCK_MONOTONIC, &te) == -1)
+		err(EXIT_FAILURE, "clock_gettime");
+	timespecsub(&te, &ts, &t);
+	printf("total %lld.%.9ld seconds, result %d\n",
+	    (long long)t.tv_sec, t.tv_nsec, exit_code);
+	exit(exit_code);
 }
