@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.559 2018/01/26 16:25:28 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.560 2018/01/29 03:42:30 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.559 2018/01/26 16:25:28 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.560 2018/01/29 03:42:30 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2983,9 +2983,7 @@ wm_watchdog_txq_locked(struct ifnet *ifp, struct wm_txqueue *txq)
 	 * Since we're using delayed interrupts, sweep up
 	 * before we report an error.
 	 */
-	mutex_enter(txq->txq_lock);
 	wm_txeof(txq, UINT_MAX);
-	mutex_exit(txq->txq_lock);
 
 	if (txq->txq_free != WM_NTXDESC(txq)) {
 #ifdef WM_DEBUG
