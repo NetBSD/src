@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.242 2018/01/29 03:29:26 pgoyette Exp $	*/
+/*	$NetBSD: nd6.c,v 1.243 2018/01/29 03:35:23 pgoyette Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.242 2018/01/29 03:29:26 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.243 2018/01/29 03:35:23 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2516,11 +2516,9 @@ nd6_sysctl(
 
 	case ICMPV6CTL_ND6_MAXQLEN:
 		return 0;
-		break;
 
 	default:
 		return ENOPROTOOPT;
-		break;
 	}
 
 	error = (*fill_func)(p, oldlenp);	/* calc len needed */
