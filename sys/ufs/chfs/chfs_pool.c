@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_pool.c,v 1.2 2012/02/28 02:48:39 christos Exp $	*/
+/*	$NetBSD: chfs_pool.c,v 1.3 2018/01/29 15:48:50 sevan Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -43,7 +43,6 @@
 #include <uvm/uvm.h>
 
 #include "chfs.h"
-//#include </root/xipffs/netbsd.chfs/chfs.h>
 
 /* --------------------------------------------------------------------- */
 
