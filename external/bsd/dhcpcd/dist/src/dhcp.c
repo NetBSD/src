@@ -1462,8 +1462,11 @@ get_lease(struct interface *ifp,
 	if (ifp->options->options & (DHCPCD_STATIC | DHCPCD_INFORM)) {
 		if (ifp->options->req_addr.s_addr != INADDR_ANY) {
 			lease->mask = ifp->options->req_mask;
-			lease->brd.s_addr =
-			    lease->addr.s_addr | ~lease->mask.s_addr;
+			if (ifp->options->req_brd.s_addr != INADDR_ANY)
+				lease->brd = ifp->options->req_brd;
+			else
+				lease->brd.s_addr =
+				    lease->addr.s_addr | ~lease->mask.s_addr;
 		} else {
 			const struct ipv4_addr *ia;
 
@@ -2076,7 +2079,7 @@ dhcp_arp_probed(struct arp_state *astate)
 
 	logdebugx("%s: DAD completed for %s",
 	    ifp->name, inet_ntoa(astate->addr));
-	if (state->state != DHS_INFORM)
+	if (!(ifo->options & DHCPCD_INFORM))
 		dhcp_bind(ifp);
 #ifndef IN_IFF_TENTATIVE
 	else {
