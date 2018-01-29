@@ -1,6 +1,6 @@
-/*	$NetBSD: ip6_flow.c,v 1.38 2018/01/08 23:33:40 knakahara Exp $	*/
+/*	$NetBSD: ip6_flow.c,v 1.39 2018/01/29 08:27:10 maxv Exp $	*/
 
-/*-
+/*
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -31,14 +31,14 @@
  *
  * IPv6 version was developed by Liam J. Foy. Original source existed in IPv4
  * format developed by Matt Thomas. Thanks to Joerg Sonnenberger, Matt
- * Thomas and Christos Zoulas. 
+ * Thomas and Christos Zoulas.
  *
  * Thanks to Liverpool John Moores University, especially Dr. David Llewellyn-Jones
  * for providing resources (to test) and Professor Madjid Merabti.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.38 2018/01/08 23:33:40 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.39 2018/01/29 08:27:10 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -89,7 +89,7 @@ TAILQ_HEAD(ip6flowhead, ip6flow);
  * use our own (possibly for future expansion).
  */
 #define	IP6FLOW_TIMER		(5 * PR_SLOWHZ)
-#define	IP6FLOW_DEFAULT_HASHSIZE	(1 << IP6FLOW_HASHBITS) 
+#define	IP6FLOW_DEFAULT_HASHSIZE	(1 << IP6FLOW_HASHBITS)
 
 /*
  * ip6_flow.c internal lock.
@@ -98,10 +98,10 @@ TAILQ_HEAD(ip6flowhead, ip6flow);
  * This is a tentative workaround.
  * We should make it scalable somehow in the future.
  */
-static kmutex_t ip6flow_lock;
+static kmutex_t ip6flow_lock __cacheline_aligned;
 static struct ip6flowhead *ip6flowtable = NULL;
 static struct ip6flowhead ip6flowlist;
-static int ip6flow_inuse;
+static int ip6flow_inuse __cacheline_aligned;
 
 static void ip6flow_slowtimo_work(struct work *, void *);
 static struct workqueue	*ip6flow_slowtimo_wq;
@@ -140,7 +140,7 @@ int ip6_hashsize = IP6FLOW_DEFAULT_HASHSIZE;
 /*
  * Calculate hash table position.
  */
-static size_t 
+static size_t
 ip6flow_hash(const struct ip6_hdr *ip6)
 {
 	size_t hash;
@@ -177,7 +177,7 @@ ip6flow_lookup(const struct ip6_hdr *ip6)
 		if (IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst, &ip6f->ip6f_dst)
 		    && IN6_ARE_ADDR_EQUAL(&ip6->ip6_src, &ip6f->ip6f_src)
 		    && ip6f->ip6f_flow == ip6->ip6_flow) {
-		    	/* A cached flow has been found. */
+			/* A cached flow has been found. */
 			return ip6f;
 		}
 	}
@@ -248,7 +248,7 @@ ip6flow_init(int table_size)
 
 /*
  * IPv6 Fast Forward routine. Attempt to forward the packet -
- * if any problems are found return to the main IPv6 input 
+ * if any problems are found return to the main IPv6 input
  * routine to deal with.
  */
 int
@@ -301,7 +301,7 @@ ip6flow_fastforward(struct mbuf **mp)
 
 	/*
 	 * If we have a hop-by-hop extension we must process it.
-	 * We just leave this up to ip6_input to deal with. 
+	 * We just leave this up to ip6_input to deal with.
 	 */
 	if (ip6->ip6_nxt == IPPROTO_HOPOPTS)
 		goto out;
@@ -492,7 +492,7 @@ ip6flow_reap_locked(int just_one)
 
 /*
  * Reap one or more flows - ip6flow_reap may remove
- * multiple flows if net.inet6.ip6.maxflows is reduced. 
+ * multiple flows if net.inet6.ip6.maxflows is reduced.
  */
 struct ip6flow *
 ip6flow_reap(int just_one)
@@ -617,7 +617,7 @@ ip6flow_create(struct route *ro, struct mbuf *m)
 	PRT_SLOW_ARM(ip6f->ip6f_timer, IP6FLOW_TIMER);
 
 	/*
-	 * Insert into the approriate bucket of the flow table.
+	 * Insert into the appropriate bucket of the flow table.
 	 */
 	hash = ip6flow_hash(ip6);
 	IP6FLOW_INSERT(hash, ip6f);
@@ -646,7 +646,7 @@ ip6flow_invalidate_all(int new_size)
 		ip6flow_free(ip6f);
 	}
 
-	if (new_size) 
+	if (new_size)
 		error = ip6flow_init_locked(new_size);
 
 	mutex_exit(&ip6flow_lock);
@@ -724,17 +724,17 @@ ip6flow_sysctl_init(struct sysctllog **clog)
 		       CTL_NET, PF_INET6, IPPROTO_IPV6, CTL_EOL);
 
 	sysctl_createv(clog, 0, NULL, NULL,
-			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-			CTLTYPE_INT, "maxflows",
-			SYSCTL_DESCR("Number of flows for fast forwarding (IPv6)"),
-			sysctl_net_inet6_ip6_maxflows, 0, &ip6_maxflows, 0,
-			CTL_NET, PF_INET6, IPPROTO_IPV6,
-			CTL_CREATE, CTL_EOL);
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "maxflows",
+		       SYSCTL_DESCR("Number of flows for fast forwarding (IPv6)"),
+		       sysctl_net_inet6_ip6_maxflows, 0, &ip6_maxflows, 0,
+		       CTL_NET, PF_INET6, IPPROTO_IPV6,
+		       CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
-			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-			CTLTYPE_INT, "hashsize",
-			SYSCTL_DESCR("Size of hash table for fast forwarding (IPv6)"),
-			sysctl_net_inet6_ip6_hashsize, 0, &ip6_hashsize, 0,
-			CTL_NET, PF_INET6, IPPROTO_IPV6,
-			CTL_CREATE, CTL_EOL);
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "hashsize",
+		       SYSCTL_DESCR("Size of hash table for fast forwarding (IPv6)"),
+		       sysctl_net_inet6_ip6_hashsize, 0, &ip6_hashsize, 0,
+		       CTL_NET, PF_INET6, IPPROTO_IPV6,
+		       CTL_CREATE, CTL_EOL);
 }
