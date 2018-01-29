@@ -1,4 +1,4 @@
-/*	$NetBSD: snapper.c,v 1.42 2018/01/27 16:21:47 sevan Exp $	*/
+/*	$NetBSD: snapper.c,v 1.43 2018/01/29 19:33:39 macallan Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 /*	Id: i2s.c,v 1.12 2005/01/15 14:32:35 tsubai Exp		*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.42 2018/01/27 16:21:47 sevan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.43 2018/01/29 19:33:39 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -839,7 +839,6 @@ snapper_defer(device_t dev)
 		break;
 	}
 
-	/* ki2c_setmode(sc->sc_i2c, I2C_STDSUBMODE); */
 	snapper_init(sc, sc->sc_node);
 
 	audio_attach_mi(&snapper_hw_if, sc, sc->sc_dev);
@@ -1890,7 +1889,7 @@ tas3004_write(struct snapper_softc *sc, u_int reg, const void *data)
 	iic_exec(sc->sc_i2c, I2C_OP_WRITE, sc->sc_deqaddr, regblock, size + 1,
 	    NULL, 0, 0);
 	iic_release_bus(sc->sc_i2c, 0);
-	
+
 	return 0;
 }
 
@@ -2125,8 +2124,6 @@ snapper_init(struct snapper_softc *sc, int node)
 		*headphone_detect |= 0x80;
 		__asm volatile ("eieio");
 	}
-
-	/* i2c_set_port(port); */
 
 	if (tas3004_init(sc))
 		return;
