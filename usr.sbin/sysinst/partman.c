@@ -1,4 +1,4 @@
-/*	$NetBSD: partman.c,v 1.16 2018/01/28 14:34:26 maya Exp $ */
+/*	$NetBSD: partman.c,v 1.17 2018/01/29 16:24:23 martin Exp $ */
 
 /*
  * Copyright 2012 Eugene Lozovoy
@@ -2116,7 +2116,7 @@ pm_mountall(void)
 	
 	localfs_dev[0] = '\0';
 	if (mnts == NULL)
-		mnts = calloc(sizeof(*mnts), MAX_MNTS);
+		mnts = calloc(MAX_MNTS, sizeof(*mnts));
 
 	SLIST_FOREACH(pm_i, &pm_head, l) {
 		ok = 0;
@@ -2731,23 +2731,23 @@ partman(void)
 
 		if (!have_raid)
 			remove_raid_options();
-		else if (!(raids = calloc(sizeof(*raids), MAX_RAID)))
+		else if (!(raids = calloc(MAX_RAID, sizeof(*raids))))
 			have_raid = 0;
 			
 #define remove_vnd_options() (void)0
 		if (!have_vnd)
 			remove_vnd_options();
-		else if (!(vnds = calloc(sizeof(*vnds), MAX_VND)))
+		else if (!(vnds = calloc(MAX_VND, sizeof(*vnds))))
 			have_vnd = 0;
 
 		if (!have_cgd)
 			remove_cgd_options();
-		else if (!(cgds = calloc(sizeof(*cgds), MAX_CGD)))
+		else if (!(cgds = calloc(MAX_CGD, sizeof(*cgds))))
 			have_cgd = 0;
 
 		if (!have_lvm)
 			remove_lvm_options();
-		else if (!(lvms = calloc(sizeof(*lvms), MAX_LVM_VG)))
+		else if (!(lvms = calloc(MAX_LVM_VG, sizeof(*lvms))))
 			have_lvm = 0;
 
 		if (!have_gpt)
