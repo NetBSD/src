@@ -34,7 +34,7 @@
 #if __GNUC__ > 2 || defined(__INTEL_COMPILER)
 #define	__printflike(a, b) __attribute__((format(printf, a, b)))
 #else
-#define	__printflike
+#define	__printflike(a, b)
 #endif
 #endif /* !__printflike */
 

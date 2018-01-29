@@ -3,7 +3,6 @@
 lookup_hostname()
 {
 	[ -z "$new_ip_address" ] && return 1
-	local h=
 	# Silly ISC programs love to send error text to stdout
 	if type dig >/dev/null 2>&1; then
 		h=$(dig +short -x $new_ip_address)
