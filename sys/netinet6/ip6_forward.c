@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.91 2018/01/29 08:14:54 maxv Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.92 2018/01/29 08:17:18 maxv Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.109 2002/09/11 08:10:17 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.91 2018/01/29 08:14:54 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.92 2018/01/29 08:17:18 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -117,9 +117,7 @@ ip6_cantforward(const struct ip6_hdr *ip6, const struct ifnet *srcifp,
  * if ipforwarding was zero but some routing protocol was advancing
  * us as a gateway to somewhere.  However, we must let the routing
  * protocol deal with that.
- *
  */
-
 void
 ip6_forward(struct mbuf *m, int srcrt)
 {
@@ -150,9 +148,8 @@ ip6_forward(struct mbuf *m, int srcrt)
 
 	/*
 	 * Do not forward packets to multicast destination (should be handled
-	 * by ip6_mforward().
-	 * Do not forward packets with unspecified source.  It was discussed
-	 * in July 2000, on ipngwg mailing list.
+	 * by ip6_mforward()). Do not forward packets with unspecified source.
+	 * It was discussed in July 2000, on ipngwg mailing list.
 	 */
 	if ((m->m_flags & (M_BCAST|M_MCAST)) != 0 ||
 	    IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst) ||
@@ -186,7 +183,6 @@ ip6_forward(struct mbuf *m, int srcrt)
 #ifdef IPSEC
 	if (ipsec_used) {
 		/* Check the security policy (SP) for the packet */
-
 		sp = ipsec6_check_policy(m, NULL, 0, &needipsec, &error);
 		if (error != 0) {
 			/*
@@ -201,7 +197,7 @@ ip6_forward(struct mbuf *m, int srcrt)
 			goto freecopy;
 		}
 	}
-#endif /* IPSEC */
+#endif
 
 	ro = percpu_getref(ip6_forward_rt_percpu);
 	if (srcrt) {
@@ -252,7 +248,7 @@ ip6_forward(struct mbuf *m, int srcrt)
 	    in6_setscope(&src_in6, rcvif, &inzone) != 0 ||
 	    inzone != outzone) {
 		ip6_cantforward(ip6, rcvif, rt->rt_ifp,
-		    "src[%s] inzone %d outzone %d", 
+		    "src[%s] inzone %d outzone %d",
 		    in6_getscopename(&ip6->ip6_src), inzone, outzone);
 		if (mcopy)
 			icmp6_error(mcopy, ICMP6_DST_UNREACH,
@@ -262,8 +258,8 @@ ip6_forward(struct mbuf *m, int srcrt)
 
 #ifdef IPSEC
 	/*
-	 * If we need to encapsulate the packet, do it here
-	 * ipsec6_proces_packet will send the packet using ip6_output 
+	 * If we need to encapsulate the packet, do it here.
+	 * ipsec6_process_packet will send the packet using ip6_output.
 	 */
 	if (needipsec) {
 		int s = splsoftnet();
@@ -274,7 +270,7 @@ ip6_forward(struct mbuf *m, int srcrt)
 			goto freecopy;
 		goto out;
 	}
-#endif   
+#endif
 
 	/*
 	 * Destination scope check: if a packet is going to break the scope
@@ -349,7 +345,7 @@ ip6_forward(struct mbuf *m, int srcrt)
 
 	/*
 	 * Fake scoped addresses. Note that even link-local source or
-	 * destinaion can appear, if the originating node just sends the
+	 * destination can appear, if the originating node just sends the
 	 * packet to us (without address resolution for the destination).
 	 * Since both icmp6_error and icmp6_redirect_output fill the embedded
 	 * link identifiers, we can do this stuff after making a copy for
@@ -384,9 +380,10 @@ ip6_forward(struct mbuf *m, int srcrt)
 
 		/* we can just use rcvif in forwarding. */
 		origifp = rcvif;
-	}
-	else
+	} else {
 		origifp = rt->rt_ifp;
+	}
+
 	/*
 	 * clear embedded scope identifiers if necessary.
 	 * in6_clearscope will touch the addresses only when necessary.
@@ -426,7 +423,7 @@ ip6_forward(struct mbuf *m, int srcrt)
 		}
 	}
 
- senderr:
+senderr:
 	if (mcopy == NULL)
 		goto out;
 	switch (error) {
@@ -457,12 +454,14 @@ ip6_forward(struct mbuf *m, int srcrt)
 	icmp6_error(mcopy, type, code, 0);
 	goto out;
 
- freecopy:
+freecopy:
 	m_freem(mcopy);
 	goto out;
- drop:
- 	m_freem(m);
- out:
+
+drop:
+	m_freem(m);
+
+out:
 #ifdef IPSEC
 	if (sp != NULL)
 		KEY_SP_UNREF(&sp);
