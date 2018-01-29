@@ -180,6 +180,7 @@ struct if_options {
 
 	struct in_addr req_addr;
 	struct in_addr req_mask;
+	struct in_addr req_brd;
 	struct rt_head routes;
 	struct in6_addr req_addr6;
 	uint8_t req_prefix_len;

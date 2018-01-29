@@ -20,6 +20,7 @@ BUILD=
 HOST=
 HOSTCC=
 TARGET=
+INCLUDEDIR=
 DEBUG=
 FORK=
 STATIC=
@@ -71,6 +72,7 @@ for x do
 	--mandir) MANDIR=$var;;
 	--datadir) DATADIR=$var;;
 	--with-ccopts|CFLAGS) CFLAGS=$var;;
+	-I|--includedir) INCLUDEDIR="$INCLUDEDIR${INCLUDEDIR:+ }-I$var";;
 	CC) CC=$var;;
 	CPPFLAGS) CPPFLAGS=$var;;
 	PKG_CONFIG) PKG_CONFIG=$var;;
@@ -306,6 +308,9 @@ fi
 if [ -n "$CPPFLAGS" ]; then
 	echo "CPPFLAGS=" >>$CONFIG_MK
 	echo "CPPFLAGS+=	$CPPFLAGS" >>$CONFIG_MK
+fi
+if [ -n "$INCLUDEDIR" ]; then
+	echo "CPPFLAGS+=	$INCLUDEDIR" >>$CONFIG_MK
 fi
 if [ -n "$LDFLAGS" ]; then
 	echo "LDFLAGS=" >>$CONFIG_MK

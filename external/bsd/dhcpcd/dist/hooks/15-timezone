@@ -4,10 +4,9 @@
 
 set_zoneinfo()
 {
-	local zoneinfo_dir= zone_file=
-
 	[ -z "$new_tzdb_timezone" ] && return 0
 
+	zoneinfo_dir=
 	for d in \
 		/usr/share/zoneinfo	\
 		/usr/lib/zoneinfo	\
