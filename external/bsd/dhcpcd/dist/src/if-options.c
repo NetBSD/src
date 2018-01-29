@@ -815,8 +815,21 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		break;
 	case 's':
 		if (arg && *arg != '\0') {
-			if (parse_addr(&ifo->req_addr, &ifo->req_mask, arg)
-			    != 0)
+			/* Strip out a broadcast address */
+			p = strchr(arg, '/');
+			if (p != NULL) {
+				p = strchr(p + 1, '/');
+				if (p != NULL)
+					*p = '\0';
+			}
+			i = parse_addr(&ifo->req_addr, &ifo->req_mask, arg);
+			if (p != NULL) {
+				/* Ensure the original string is preserved */
+				*p++ = '/';
+				if (i == 0)
+					i = parse_addr(&ifo->req_brd, NULL, p);
+			}
+			if (i != 0)
 				return -1;
 		} else {
 			ifo->req_addr.s_addr = 0;
@@ -1059,6 +1072,11 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		    strlen("subnet_mask=")) == 0)
 		{
 			if (parse_addr(&ifo->req_mask, NULL, p) != 0)
+				return -1;
+		} else if (strncmp(arg, "broadcast_address=",
+		    strlen("broadcast_address=")) == 0)
+		{
+			if (parse_addr(&ifo->req_brd, NULL, p) != 0)
 				return -1;
 		} else if (strncmp(arg, "routes=", strlen("routes=")) == 0 ||
 		    strncmp(arg, "static_routes=",
