@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.560 2018/01/29 03:42:30 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.561 2018/01/29 04:17:32 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.560 2018/01/29 03:42:30 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.561 2018/01/29 04:17:32 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -8044,7 +8044,6 @@ wm_txeof(struct wm_txqueue *txq, u_int limit)
 	struct wm_softc *sc = txq->txq_sc;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct wm_txsoft *txs;
-	bool processed = false;
 	int count = 0;
 	int i;
 	uint8_t status;
@@ -8085,7 +8084,6 @@ wm_txeof(struct wm_txqueue *txq, u_int limit)
 			break;
 		}
 
-		processed = true;
 		count++;
 		DPRINTF(WM_DEBUG_TX,
 		    ("%s: TX: job %d done: descs %d..%d\n",
@@ -8142,7 +8140,7 @@ wm_txeof(struct wm_txqueue *txq, u_int limit)
 	if (txq->txq_sfree == WM_TXQUEUELEN(txq))
 		ifp->if_timer = 0;
 
-	return processed;
+	return count;
 }
 
 static inline uint32_t
