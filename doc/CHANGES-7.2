@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.2,v 1.1.2.59 2018/01/22 20:09:58 snj Exp $
+# $NetBSD: CHANGES-7.2,v 1.1.2.60 2018/01/29 19:40:17 martin Exp $
 
 A complete list of changes from the NetBSD 7.1 release to the NetBSD 7.2
 release:
@@ -5060,4 +5060,9 @@ bin/ksh/history.c				1.18 via patch
 
 	Create HISTFILE with mode 0600, not 777.  PR bin/52480.
 	[maya, ticket #1554]
+
+sys/netipsec/xform_ah.c				1.76
+
+	Fix a remote DoS vulnerability in IPsec-AH.
+	[maxv, ticket #1557]
 
