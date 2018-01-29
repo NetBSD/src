@@ -361,12 +361,17 @@ if_discover(struct dhcpcd_ctx *ctx, struct ifaddrs **ifaddrs,
 		}
 
 		for (i = 0; i < ctx->ifdc; i++)
-			if (!fnmatch(ctx->ifdv[i], spec.devname, 0))
+			if (fnmatch(ctx->ifdv[i], spec.devname, 0) == 0)
 				break;
 		if (i < ctx->ifdc)
 			active = IF_INACTIVE;
+		for (i = 0; i < ctx->ifc; i++)
+			if (fnmatch(ctx->ifv[i], spec.devname, 0) == 0)
+				break;
+		if (ctx->ifc && i == ctx->ifc)
+			active = IF_INACTIVE;
 		for (i = 0; i < ctx->ifac; i++)
-			if (!fnmatch(ctx->ifav[i], spec.devname, 0))
+			if (fnmatch(ctx->ifav[i], spec.devname, 0) == 0)
 				break;
 		if (ctx->ifac && i == ctx->ifac)
 			active = IF_INACTIVE;
@@ -532,15 +537,6 @@ if_discover(struct dhcpcd_ctx *ctx, struct ifaddrs **ifaddrs,
 			/* Handle any platform init for the interface */
 			if (active != IF_INACTIVE && if_init(ifp) == -1) {
 				logerr("%s: if_init", ifp->name);
-				if_free(ifp);
-				continue;
-			}
-
-			/* Ensure that the MTU is big enough for DHCP */
-			if (if_getmtu(ifp) < MTU_MIN && active &&
-			    if_setmtu(ifp, MTU_MIN) == -1)
-			{
-				logerr("%s: if_setmtu", ifp->name);
 				if_free(ifp);
 				continue;
 			}
