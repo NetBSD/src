@@ -118,21 +118,12 @@
 # ifndef __packed
 #  define __packed __attribute__((__packed__))
 # endif
-# ifndef __sysloglike
-#  ifndef __syslog_attribute_
-#    define __syslog__ __printf__
-#  endif
-#  define __sysloglike(a, b) __attribute__((format(__syslog__, a, b)))
-# endif
 # ifndef __unused
 #  define __unused __attribute__((__unused__))
 # endif
 #else
 # ifndef __packed
 #  define __packed
-# endif
-# ifndef __sysloglike
-#  define __sysloglike
 # endif
 # ifndef __unused
 #  define __unused
