@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.244 2018/01/29 03:42:53 pgoyette Exp $	*/
+/*	$NetBSD: nd6.c,v 1.245 2018/01/29 19:51:15 christos Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.244 2018/01/29 03:42:53 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.245 2018/01/29 19:51:15 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2487,21 +2487,10 @@ nd6_sysctl(
     size_t newlen
 )
 {
-	void *p;
-	size_t ol;
-	int error;
-	size_t bufsize = 0;
 	int (*fill_func)(void *, size_t *);
-
-	error = 0;
 
 	if (newp)
 		return EPERM;
-	if (oldp && !oldlenp)
-		return EINVAL;
-	ol = oldlenp ? *oldlenp : 0;
-
-	p = NULL;
 
 	switch (name) {
 	case ICMPV6CTL_ND6_DRLIST:
@@ -2519,18 +2508,28 @@ nd6_sysctl(
 		return ENOPROTOOPT;
 	}
 
-	error = (*fill_func)(p, oldlenp);	/* calc len needed */
-	if (error == 0 && oldp && *oldlenp > 0 ) {
-		p = kmem_alloc(*oldlenp, KM_SLEEP);
-		bufsize = *oldlenp;
-		error = (*fill_func)(p, oldlenp);
-		if (!error && oldp != NULL)
-			error = copyout(p, oldp, min(ol, *oldlenp));
-		if (*oldlenp > ol)
-			error = ENOMEM;
+	if (oldlenp == NULL)
+		return EINVAL;
+
+	size_t ol;
+	int error = (*fill_func)(NULL, &ol);	/* calc len needed */
+	if (error)
+		return error;
+
+	if (oldp == NULL) {
+		*oldlenp = ol;
+		return 0;
 	}
-	if (p)
-		kmem_free(p, bufsize);
+
+	ol = *oldlenp = min(ol, *oldlenp);
+	if (ol == 0)
+		return 0;
+
+	void *p = kmem_alloc(ol, KM_SLEEP);
+	error = (*fill_func)(p, oldlenp);
+	if (!error)
+		error = copyout(p, oldp, *oldlenp);
+	kmem_free(p, ol);
 
 	return error;
 }
@@ -2575,8 +2574,7 @@ fill_drlist(void *oldp, size_t *oldlenp)
 	}
 	ND6_UNLOCK();
 
-	if (oldlenp)
-		*oldlenp = l;	/* (void *)d - (void *)oldp */
+	*oldlenp = l;	/* (void *)d - (void *)oldp */
 
 	return error;
 }
@@ -2678,8 +2676,7 @@ fill_prlist(void *oldp, size_t *oldlenp)
 	}
 	ND6_UNLOCK();
 
-	if (oldlenp)
-		*oldlenp = l;
+	*oldlenp = l;
 
 	return error;
 }
