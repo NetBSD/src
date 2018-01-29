@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_var.h,v 1.76 2018/01/25 15:33:06 maxv Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.77 2018/01/29 10:57:13 maxv Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -232,7 +232,6 @@ extern int	ip6_defhlim;		/* default hop limit */
 extern int	ip6_defmcasthlim;	/* default multicast hop limit */
 extern int	ip6_forwarding;		/* act as router? */
 extern int	ip6_sendredirect;	/* send ICMPv6 redirect? */
-extern int	ip6_forward_srcrt;	/* forward src-routed? */
 extern int	ip6_use_deprecated;	/* allow deprecated addr as source */
 extern int	ip6_rr_prune;		/* router renumbering prefix
 					 * walk list every 5 sec.    */
@@ -248,8 +247,6 @@ extern struct socket *ip6_mrouter; 	/* multicast routing daemon */
 extern int	ip6_sendredirects;	/* send IP redirects when forwarding? */
 extern int	ip6_maxfragpackets; /* Maximum packets in reassembly queue */
 extern int	ip6_maxfrags;	/* Maximum fragments in reassembly queue */
-extern int	ip6_sourcecheck;	/* Verify source interface */
-extern int	ip6_sourcecheck_interval; /* Interval between log messages */
 extern int	ip6_accept_rtadv;	/* Acts as a host not a router */
 extern int	ip6_rtadv_maxroutes;	/* maximum number of routes via rtadv */
 extern int	ip6_keepfaith;		/* Firewall Aided Internet Translator */
