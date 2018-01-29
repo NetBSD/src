@@ -6,7 +6,7 @@
 
 static void citrus_trie_dump_table_recursive(citrus_trie_node_t, size_t, FILE *, int);
 static void citrus_trie_load_table_recursive(citrus_trie_node_t, size_t, FILE *);
-static void citrus_trie_init_recursive(citrus_trie_node_t *, VALUE_TYPE *, int, int *, int *);
+static void citrus_trie_init_recursive(citrus_trie_node_t, size_t *, VALUE_TYPE *, int, int *, int *);
 
 citrus_trie_header_t
 citrus_trie_create(unsigned int flags, size_t bitwidth,
@@ -31,22 +31,23 @@ citrus_trie_create(unsigned int flags, size_t bitwidth,
 citrus_trie_node_t
 citrus_trie_node_create(citrus_trie_header_t h, size_t level, size_t len)
 {
-	int i;
+	size_t i;
 	citrus_trie_node_t t;
 
 	t = (citrus_trie_node_t)citrus_trie_malloc(h, sizeof(*t));
 	t->tr_len = len;
 	if (len > 0) {
-		t->tr_u = (union citrus_trie_node_union *)citrus_trie_malloc(h, len * sizeof(*t->tr_u));
 		if (level == 0) {
+			t->tr_u.u_value = (VALUE_TYPE *)citrus_trie_malloc(h, len * sizeof(*t->tr_u.u_value));
 			for (i = 0; i < len; i++)
-				t->tr_u[i].u_value = INVALID_VALUE;
+				t->tr_u.u_value[i] = INVALID_VALUE;
 		} else {
+			t->tr_u.u_child = (citrus_trie_node_t *)citrus_trie_malloc(h, len * sizeof(*t->tr_u.u_child));
 			for (i = 0; i < len; i++)
-				t->tr_u[i].u_child = NULL;
+				t->tr_u.u_child[i] = NULL;
 		}
 	} else
-		t->tr_u = NULL;
+		t->tr_u.u_child = 0x0;
 
 	return t;
 }
@@ -64,26 +65,32 @@ citrus_trie_node_insert(citrus_trie_header_t h, citrus_trie_node_t t, size_t lev
 	if (t->tr_len <= idx) {
 		olen = t->tr_len;
 		t->tr_len = idx + 1;
+		if (level == 0) {
 #ifdef DEBUG_TRIE
-		h->th_size += (t->tr_len - olen) * sizeof(*t->tr_u);
+			h->th_size += (t->tr_len - olen) * sizeof(*t->tr_u.u_value);
 #endif
-		t->tr_u = (union citrus_trie_node_union *)realloc(t->tr_u, t->tr_len * sizeof(*t->tr_u));
-		for (i = olen; i < t->tr_len; i++) {
-			if (level == 0)
-				t->tr_u[i].u_value = INVALID_VALUE;
-			else
-				t->tr_u[i].u_child = NULL;
+			t->tr_u.u_value = (VALUE_TYPE *)realloc(t->tr_u.u_value, t->tr_len * sizeof(*t->tr_u.u_value));
+			for (i = olen; i < t->tr_len; i++)
+				t->tr_u.u_value[i] = INVALID_VALUE;
+		} else {
+#ifdef DEBUG_TRIE
+			h->th_size += (t->tr_len - olen) * sizeof(*t->tr_u.u_child);
+#endif
+			t->tr_u.u_child = (citrus_trie_node_t *)realloc(t->tr_u.u_child, t->tr_len * sizeof(*t->tr_u.u_child));
+			for (i = olen; i < t->tr_len; i++)
+				t->tr_u.u_child[i] = NULL;
 		}
 	}
 
 	if (level == 0) {
-		t->tr_u[idx].u_value = value;
+		t->tr_u.u_value[idx] = value;
 		return 0;
 	} else {
-		if (t->tr_u[idx].u_child == NULL)
-			t->tr_u[idx].u_child = citrus_trie_node_create(h, level - 1, 0);
-		return citrus_trie_node_insert(h, t->tr_u[idx].u_child, level - 1,
-					key, value);
+		if (t->tr_u.u_child[idx] == NULL)
+			t->tr_u.u_child[idx] =
+				citrus_trie_node_create(h, level - 1, 0);
+		return citrus_trie_node_insert(h, t->tr_u.u_child[idx],
+					       level - 1, key, value);
 	}
 }
 
@@ -112,10 +119,11 @@ citrus_trie_node_lookup(citrus_trie_header_t h, citrus_trie_node_t t, size_t lev
 	if (idx >= t->tr_len)
 		return INVALID_VALUE;
 
-	if (level == 0) {
-		return t->tr_u[idx].u_value;
-	}
-	return citrus_trie_node_lookup(h, t->tr_u[idx].u_child, level - 1, key);
+	if (level == 0)
+		return t->tr_u.u_value[idx];
+	if (t->tr_u.u_child[idx] == NULL)
+		return INVALID_VALUE;
+	return citrus_trie_node_lookup(h, t->tr_u.u_child[idx], level - 1, key);
 }
 
 VALUE_TYPE
@@ -128,9 +136,9 @@ citrus_trie_lookup(citrus_trie_header_t h, citrus_trie_key_t key)
  * Assume VALUE_TYPE flat[N][2].
  */
 citrus_trie_header_t
-citrus_trie_create_from_flat(VALUE_TYPE *flat, size_t bitwidth, int count) {
+citrus_trie_create_from_flat(VALUE_TYPE *flat, size_t bitwidth, size_t count) {
 	VALUE_TYPE ne_key;
-	int i, j;
+	size_t i, j;
 	unsigned val;
 	citrus_trie_header_t h;
 	size_t bitmask = (1 << bitwidth) - 1;
@@ -170,8 +178,8 @@ citrus_trie_node_destroy(citrus_trie_node_t t, size_t level)
 
 	if (level > 0)
 		for (i = 0; i < t->tr_len; i++)
-			if (t->tr_u[i].u_child != NULL)
-				citrus_trie_node_destroy(t->tr_u[i].u_child, level - 1);
+			if (t->tr_u.u_child[i] != NULL)
+				citrus_trie_node_destroy(t->tr_u.u_child[i], level - 1);
 	free(t);
 }
 
@@ -190,38 +198,36 @@ citrus_trie_dump_table_recursive(citrus_trie_node_t t, size_t level, FILE *fp, i
 	if (mode == 0) {
 		/* Binary */
 		fwrite(t, sizeof(*t), 1, fp);
-		fwrite(t->tr_u, sizeof(*t->tr_u), t->tr_len, fp);
+		fwrite(t->tr_u.u_child, sizeof(*t->tr_u.u_child), t->tr_len, fp);
 	} else if (mode == 1) {
-		/* Header */
-		fprintf(fp, " { %zu, NULL },\n", t->tr_len);
+		/* Table lengths */
+		fprintf(fp, " %zu,\n", t->tr_len);
 	} else {
 		/* Data */
-		if (level == 0) {
-			for (i = 0; i < t->tr_len; i++) {
-				fprintf(fp, " %d,", t->tr_u[i].u_value);
-			}
+		for (i = 0; i < t->tr_len; i++) {
+			fprintf(fp, " 0x%x,\n", ( level ? !!t->tr_u.u_child[i] : t->tr_u.u_value[i] ));
 		}
 	}
 	if (level)
 		for (i = 0; i < t->tr_len; i++)
-			if (t->tr_u[i].u_child != NULL)
-				citrus_trie_dump_table_recursive(t->tr_u[i].u_child, level - 1, fp, mode);
+			if (t->tr_u.u_child[i] != NULL)
+				citrus_trie_dump_table_recursive(t->tr_u.u_child[i], level - 1, fp, mode);
 }
 
 /* Load binary data only */
 static void
 citrus_trie_load_table_recursive(citrus_trie_node_t t, size_t level, FILE *fp)
 {
-	int i;
+	size_t i;
 
 	fread(t, sizeof(*t), 1, fp);
-	t->tr_u = (union citrus_trie_node_union *)malloc(t->tr_len * sizeof(*t->tr_u));
-	fread(t->tr_u, sizeof(*t->tr_u), t->tr_len, fp);
+	t->tr_u.u_child = (citrus_trie_node_t *)malloc(t->tr_len * sizeof(*t->tr_u.u_child));
+	fread(t->tr_u.u_child, sizeof(*t->tr_u.u_child), t->tr_len, fp);
 	if (level) {
 		for (i = 0; i < t->tr_len; i++) {
-			if (t->tr_u[i].u_child != NULL) {
-				t->tr_u[i].u_child = (citrus_trie_node_t)malloc(sizeof(*t));
-				citrus_trie_load_table_recursive(t->tr_u[i].u_child, level - 1, fp);
+			if (t->tr_u.u_child[i] != NULL) {
+				t->tr_u.u_child[i] = (citrus_trie_node_t)malloc(sizeof(*t));
+				citrus_trie_load_table_recursive(t->tr_u.u_child[i], level - 1, fp);
 			}
 		}
 	}
@@ -256,7 +262,7 @@ citrus_trie_dump(citrus_trie_header_t h, char *filename, char *prefix, int mode)
 			prefix,
 			h->th_flags, h->th_bitwidth, h->th_bitmask, h->th_off, h->th_level);
 		/* Dump tree */
-		fprintf(fp, "struct citrus_trie_node %s_nodes[] = {\n", prefix);
+		fprintf(fp, "size_t %s_sizes[] = {\n", prefix);
 		citrus_trie_dump_table_recursive(h->th_root, h->th_level, fp, 1);
 		fprintf(fp, "};\n");
 		/* Dump data */
@@ -269,29 +275,36 @@ citrus_trie_dump(citrus_trie_header_t h, char *filename, char *prefix, int mode)
 
 /* Walk through the list of nodes, assigning tr_u to each. */
 static void
-citrus_trie_init_recursive(citrus_trie_node_t *np, VALUE_TYPE *vp, int level, int *nidx, int *vidx)
+citrus_trie_init_recursive(citrus_trie_node_t t, size_t *sp, VALUE_TYPE *vp, int level, int *sidx, int *vidx)
 {
-	int i;
+	size_t i;
 
-	for (i = 0; i < (*np)->tr_len; i++) {
-		if (level) {
-			(*np)->tr_u->u_child = *np + *nidx++;
-			citrus_trie_init_recursive(np, vp, --level, nidx, vidx);
-		} else {
-			(*np)->tr_u->u_value = vp[*vidx];
-			*vidx += (*np)->tr_len;
+	t->tr_len = sp[(*sidx)++];
+	if (level) {
+		t->tr_u.u_child = (citrus_trie_node_t *)malloc(t->tr_len * sizeof(*t->tr_u.u_child));
+		for (i = 0; i < t->tr_len; i++) {
+			if (vp[(*vidx)++])
+				t->tr_u.u_child[i] = (citrus_trie_node_t)malloc(sizeof(*t->tr_u.u_child[i]));
+			else
+				t->tr_u.u_child[i] = NULL;
 		}
+		for (i = 0; i < t->tr_len; i++)
+			if (t->tr_u.u_child[i] != NULL)
+				citrus_trie_init_recursive(t->tr_u.u_child[i], sp, vp, level - 1, sidx, vidx);
+	} else {
+		t->tr_u.u_value = vp + (*vidx);
+		*vidx += t->tr_len;
 	}
 }
 
 void
-citrus_trie_init(citrus_trie_header_t h, citrus_trie_node_t *np, VALUE_TYPE *vp)
+citrus_trie_init(citrus_trie_header_t h, size_t *sp, VALUE_TYPE *vp)
 {
-	int nidx = 0;
+	int sidx = 0;
 	int vidx = 0;
 
-	h->th_root = *np;
-	citrus_trie_init_recursive(np, vp, h->th_level, &nidx, &vidx);
+	h->th_root = (citrus_trie_node_t)malloc(sizeof(*h->th_root));
+	citrus_trie_init_recursive(h->th_root, sp, vp, h->th_level, &sidx, &vidx);
 }
 
 #ifdef DEBUG_TRIE

@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_euc.c,v 1.17.20.4 2018/01/20 19:36:29 perseant Exp $	*/
+/*	$NetBSD: citrus_euc.c,v 1.17.20.5 2018/01/29 22:08:59 perseant Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -60,7 +60,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_euc.c,v 1.17.20.4 2018/01/20 19:36:29 perseant Exp $");
+__RCSID("$NetBSD: citrus_euc.c,v 1.17.20.5 2018/01/29 22:08:59 perseant Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -466,6 +466,10 @@ _citrus_EUC_encoding_module_init(_EUCEncodingInfo * __restrict ei,
 
 	_DIAGASSERT(ei != NULL);
 
+#ifdef __STDC_ISO_10646__
+	citrus_trie_init(&__euc_u2k_header, __euc_u2k_sizes, __euc_u2k_data);
+	citrus_trie_init(&__euc_k2u_header, __euc_k2u_sizes, __euc_k2u_data);
+#endif
 	return (_citrus_EUC_parse_variable(ei, var, lenvar));
 }
 

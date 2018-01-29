@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_big5.c,v 1.15.18.4 2018/01/20 19:36:29 perseant Exp $	*/
+/*	$NetBSD: citrus_big5.c,v 1.15.18.5 2018/01/29 22:08:59 perseant Exp $	*/
 
 /*-
  * Copyright (c)2002, 2006 Citrus Project,
@@ -60,7 +60,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_big5.c,v 1.15.18.4 2018/01/20 19:36:29 perseant Exp $");
+__RCSID("$NetBSD: citrus_big5.c,v 1.15.18.5 2018/01/29 22:08:59 perseant Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/queue.h>
@@ -312,6 +312,10 @@ _citrus_BIG5_encoding_module_init(_BIG5EncodingInfo * __restrict ei,
 	memset((void *)ei, 0, sizeof(*ei));
 	TAILQ_INIT(&ei->excludes);
 
+#ifdef __STDC_ISO_10646__
+	citrus_trie_init(&__big5_u2k_header, __big5_u2k_sizes, __big5_u2k_data);
+	citrus_trie_init(&__big5_k2u_header, __big5_k2u_sizes, __big5_k2u_data);
+#endif
 	if (lenvar > 0 && var != NULL) {
 		s = _bcs_skip_ws_len((const char *)var, &lenvar);
 		if (lenvar > 0 && *s != '\0') {
