@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.243 2018/01/29 03:35:23 pgoyette Exp $	*/
+/*	$NetBSD: nd6.c,v 1.244 2018/01/29 03:42:53 pgoyette Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.243 2018/01/29 03:35:23 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.244 2018/01/29 03:42:53 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2502,8 +2502,6 @@ nd6_sysctl(
 	ol = oldlenp ? *oldlenp : 0;
 
 	p = NULL;
-
-	fill_func = NULL;
 
 	switch (name) {
 	case ICMPV6CTL_ND6_DRLIST:
