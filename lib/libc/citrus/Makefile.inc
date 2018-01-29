@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8.40.1 2017/07/14 15:53:07 perseant Exp $
+#	$NetBSD: Makefile.inc,v 1.8.40.2 2018/01/29 22:08:59 perseant Exp $
 
 # sources
 .PATH: ${ARCHDIR}/citrus ${.CURDIR}/citrus
@@ -10,7 +10,7 @@ SRCS+=	citrus_bcs.c citrus_bcs_strtol.c citrus_bcs_strtoul.c \
 	citrus_db.c citrus_db_hash.c citrus_esdb.c citrus_hash.c \
 	citrus_iconv.c citrus_lookup.c \
 	citrus_mapper.c citrus_memstream.c citrus_mmap.c citrus_module.c \
-	citrus_none.c citrus_stdenc.c
+	citrus_none.c citrus_stdenc.c citrus_trie.c
 SRCS+=	citrus_lc_ctype.c \
 	citrus_lc_monetary.c \
 	citrus_lc_numeric.c \
