@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.241 2018/01/29 02:02:14 pgoyette Exp $	*/
+/*	$NetBSD: nd6.c,v 1.242 2018/01/29 03:29:26 pgoyette Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.241 2018/01/29 02:02:14 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.242 2018/01/29 03:29:26 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2515,24 +2515,23 @@ nd6_sysctl(
 		break;
 
 	case ICMPV6CTL_ND6_MAXQLEN:
+		return 0;
 		break;
 
 	default:
-		error = ENOPROTOOPT;
+		return ENOPROTOOPT;
 		break;
 	}
 
-	if (fill_func) {
-		error = (*fill_func)(p, oldlenp);	/* calc len needed */
-		if (error == 0 && oldp && *oldlenp > 0 ) {
-			p = kmem_alloc(*oldlenp, KM_SLEEP);
-			bufsize = *oldlenp;
-			error = (*fill_func)(p, oldlenp);
-			if (!error && oldp != NULL)
-				error = copyout(p, oldp, min(ol, *oldlenp));
-			if (*oldlenp > ol)
-				error = ENOMEM;
-		}
+	error = (*fill_func)(p, oldlenp);	/* calc len needed */
+	if (error == 0 && oldp && *oldlenp > 0 ) {
+		p = kmem_alloc(*oldlenp, KM_SLEEP);
+		bufsize = *oldlenp;
+		error = (*fill_func)(p, oldlenp);
+		if (!error && oldp != NULL)
+			error = copyout(p, oldp, min(ol, *oldlenp));
+		if (*oldlenp > ol)
+			error = ENOMEM;
 	}
 	if (p)
 		kmem_free(p, bufsize);
