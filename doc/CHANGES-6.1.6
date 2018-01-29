@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.6,v 1.1.2.119 2018/01/13 22:30:37 snj Exp $
+# $NetBSD: CHANGES-6.1.6,v 1.1.2.120 2018/01/29 19:29:48 martin Exp $
 
 A complete list of changes from the NetBSD 6.1.5 release to the NetBSD 6.1.6
 release:
@@ -14954,4 +14954,9 @@ xsrc/xfree/xc/lib/font/fontfile/fontdir.c	patch
 
 	Fix CVEs 2017-13722, 2017-13720, 2017-16611, and 2017-16612.
 	[mrg, ticket #1514]
+
+sys/netipsec/xform_ah.c				1.76
+
+	Fix a remote DoS vulnerability in IPsec-AH.
+	[maxv, ticket #1521]
 
