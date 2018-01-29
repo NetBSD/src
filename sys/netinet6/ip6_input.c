@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.185 2017/11/25 13:18:02 kre Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.186 2018/01/29 10:57:13 maxv Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.185 2017/11/25 13:18:02 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.186 2018/01/29 10:57:13 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -129,10 +129,6 @@ extern struct domain inet6domain;
 
 u_char ip6_protox[IPPROTO_MAX];
 pktqueue_t *ip6_pktq __read_mostly;
-
-int ip6_forward_srcrt;			/* XXX */
-int ip6_sourcecheck;			/* XXX */
-int ip6_sourcecheck_interval;		/* XXX */
 
 pfil_head_t *inet6_pfil_hook;
 
@@ -206,7 +202,7 @@ static void
 ip6_init2(void)
 {
 
-	/* timer for regeneranation of temporary addresses randomize ID */
+	/* timer for regeneration of temporary addresses randomize ID */
 	callout_init(&in6_tmpaddrtimer_ch, CALLOUT_MPSAFE);
 	callout_reset(&in6_tmpaddrtimer_ch,
 		      (ip6_temp_preferred_lifetime - ip6_desync_factor -
@@ -262,6 +258,8 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 	} u;
 	struct route *ro;
 
+	KASSERT(rcvif != NULL);
+
 	/*
 	 * make sure we don't have onion peering information into m_tag.
 	 */
@@ -300,7 +298,7 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 	 */
 	if (IP6_HDR_ALIGNED_P(mtod(m, void *)) == 0) {
 		if ((m = m_copyup(m, sizeof(struct ip6_hdr),
-				  (max_linkhdr + 3) & ~3)) == NULL) {
+		    (max_linkhdr + 3) & ~3)) == NULL) {
 			/* XXXJRT new stat, please */
 			IP6_STATINC(IP6_STAT_TOOSMALL);
 			in6_ifstat_inc(rcvif, ifs6_in_hdrerr);
@@ -382,6 +380,7 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 		in6_ifstat_inc(rcvif, ifs6_in_addrerr);
 		goto bad;
 	}
+
 	/*
 	 * The following check is not documented in specs.  A malicious
 	 * party may be able to use IPv4 mapped addr to confuse tcp/udp stack
@@ -400,6 +399,7 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 		in6_ifstat_inc(rcvif, ifs6_in_addrerr);
 		goto bad;
 	}
+
 #if 0
 	/*
 	 * Reject packets with IPv4 compatible addresses (auto tunnel).
@@ -424,7 +424,7 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 	 * to the usage conflict.
 	 * in6_setscope() then also checks and rejects the cases where src or
 	 * dst are the loopback address and the receiving interface
-	 * is not loopback. 
+	 * is not loopback.
 	 */
 	if (__predict_false(
 	    m_makewritable(&m, 0, sizeof(struct ip6_hdr), M_DONTWAIT)))
@@ -441,6 +441,7 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 	}
 
 	ro = percpu_getref(ip6_forward_rt_percpu);
+
 	/*
 	 * Multicast check
 	 */
@@ -453,9 +454,9 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 		 * arrival interface.
 		 */
 		ingroup = in6_multi_group(&ip6->ip6_dst, rcvif);
-		if (ingroup)
+		if (ingroup) {
 			ours = 1;
-		else if (!ip6_mrouter) {
+		} else if (!ip6_mrouter) {
 			uint64_t *ip6s = IP6_STAT_GETREF();
 			ip6s[IP6_STAT_NOTMEMBER]++;
 			ip6s[IP6_STAT_CANTFORWARD]++;
@@ -470,7 +471,7 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 	sockaddr_in6_init(&u.dst6, &ip6->ip6_dst, 0, 0, 0);
 
 	/*
-	 *  Unicast check
+	 * Unicast check
 	 */
 	rt = rtcache_lookup2(ro, &u.dst, 1, &hit);
 	if (hit)
@@ -478,12 +479,15 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 	else
 		IP6_STATINC(IP6_STAT_FORWARD_CACHEMISS);
 
-#define rt6_getkey(__rt) satocsin6(rt_getkey(__rt))
-
 	/*
 	 * Accept the packet if the forwarding interface to the destination
-	 * according to the routing table is the loopback interface,
+	 * (according to the routing table) is the loopback interface,
 	 * unless the associated route has a gateway.
+	 *
+	 * We don't explicitly match ip6_dst against an interface here. It
+	 * is already done in rtcache_lookup2: rt->rt_ifp->if_type will be
+	 * IFT_LOOP if the packet is for us.
+	 *
 	 * Note that this approach causes to accept a packet if there is a
 	 * route to the loopback interface for the destination of the packet.
 	 * But we think it's even useful in some situations, e.g. when using
@@ -491,14 +495,6 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 	 */
 	if (rt != NULL &&
 	    (rt->rt_flags & (RTF_HOST|RTF_GATEWAY)) == RTF_HOST &&
-#if 0
-	    /*
-	     * The check below is redundant since the comparison of
-	     * the destination and the key of the rtentry has
-	     * already done through looking up the routing table.
-	     */
-	    IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst, &rt6_getkey(rt)->sin6_addr) &&
-#endif
 	    rt->rt_ifp->if_type == IFT_LOOP) {
 		struct in6_ifaddr *ia6 = (struct in6_ifaddr *)rt->rt_ifa;
 		int addrok;
@@ -559,26 +555,6 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 	}
 #endif
 
-#if 0
-    {
-	/*
-	 * Last resort: check in6_ifaddr for incoming interface.
-	 * The code is here until I update the "goto ours hack" code above
-	 * working right.
-	 */
-	struct ifaddr *ifa;
-	IFADDR_READER_FOREACH(ifa, rcvif) {
-		if (ifa->ifa_addr->sa_family != AF_INET6)
-			continue;
-		if (IN6_ARE_ADDR_EQUAL(IFA_IN6(ifa), &ip6->ip6_dst)) {
-			ours = 1;
-			deliverifp = ifa->ifa_ifp;
-			goto hbhcheck;
-		}
-	}
-    }
-#endif
-
 	/*
 	 * Now there is no reason to process the packet if it's not our own
 	 * and we're not a router.
@@ -589,10 +565,10 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 		goto bad_unref;
 	}
 
-  hbhcheck:
+hbhcheck:
 	/*
-	 * record address information into m_tag, if we don't have one yet.
-	 * note that we are unable to record it, if the address is not listed
+	 * Record address information into m_tag, if we don't have one yet.
+	 * Note that we are unable to record it, if the address is not listed
 	 * as our interface address (e.g. multicast addresses, addresses
 	 * within FAITH prefixes and such).
 	 */
@@ -622,12 +598,11 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 		struct ip6_hbh *hbh;
 
 		if (ip6_hopopts_input(&plen, &rtalert, &m, &off)) {
-#if 0	/*touches NULL pointer*/
+			/* m already freed */
 			in6_ifstat_inc(rcvif, ifs6_in_discard);
-#endif
 			rtcache_unref(rt, ro);
 			percpu_putref(ip6_forward_rt_percpu);
-			return;	/* m have already been freed */
+			return;
 		}
 
 		/* adjust pointer */
@@ -675,10 +650,9 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 		nxt = ip6->ip6_nxt;
 
 	/*
-	 * Check that the amount of data in the buffers
-	 * is as at least much as the IPv6 header would have us expect.
-	 * Trim mbufs if longer than we expect.
-	 * Drop packet if shorter than we expect.
+	 * Check that the amount of data in the buffers is at least much as
+	 * the IPv6 header would have us expect. Trim mbufs if longer than we
+	 * expect. Drop packet if shorter than we expect.
 	 */
 	if (m->m_pkthdr.len - sizeof(struct ip6_hdr) < plen) {
 		IP6_STATINC(IP6_STAT_TOOSHORT);
@@ -746,9 +720,6 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 		goto bad_unref;
 	}
 
-	/*
-	 * Tell launch routine the next header
-	 */
 #ifdef IFA_STATS
 	if (deliverifp != NULL) {
 		struct in6_ifaddr *ia6;
@@ -798,8 +769,8 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 #ifdef IPSEC
 		if (ipsec_used) {
 			/*
-			 * enforce IPsec policy checking if we are seeing last
-			 * header. note that we do not visit this with
+			 * Enforce IPsec policy checking if we are seeing last
+			 * header. Note that we do not visit this with
 			 * protocols with pcb layer code - like udp/tcp/raw ip.
 			 */
 			if ((inet6sw[ip_protox[nxt]].pr_flags
@@ -811,16 +782,16 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 					goto bad;
 			}
 		}
-#endif /* IPSEC */
+#endif
 
 		nxt = (*inet6sw[ip6_protox[nxt]].pr_input)(&m, &off, nxt);
 	}
 	return;
 
- bad_unref:
+bad_unref:
 	rtcache_unref(rt, ro);
 	percpu_putref(ip6_forward_rt_percpu);
- bad:
+bad:
 	m_freem(m);
 	return;
 }
