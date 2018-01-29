@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2352 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2353 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -106,3 +106,4 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	zoneinfo: Import tzdata2018c (skipping 2018a & 2018b). [kre 20180124]
 	libc: Update to tzcode2018c. [christos 20180125]
 	i386: Add support for SMAP. [maxv 20180128]
+	dhcpcd(8): Import dhcpcd-7.0.1 [roy 20180129]
