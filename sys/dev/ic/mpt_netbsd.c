@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_netbsd.c,v 1.33 2016/05/02 19:18:29 christos Exp $	*/
+/*	$NetBSD: mpt_netbsd.c,v 1.34 2018/01/30 20:20:38 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt_netbsd.c,v 1.33 2016/05/02 19:18:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt_netbsd.c,v 1.34 2018/01/30 20:20:38 jakllsch Exp $");
 
 #include "bio.h"
 
@@ -1121,18 +1121,18 @@ mpt_set_xfer_mode(mpt_softc_t *mpt, struct scsipi_xfer_mode *xm)
 {
 	fCONFIG_PAGE_SCSI_DEVICE_1 tmp;
 
-	/*
-	 * Always allow disconnect; we don't have a way to disable
-	 * it right now, in any case.
-	 */
-	mpt->mpt_disc_enable |= (1 << xm->xm_target);
-
 	if (xm->xm_mode & PERIPH_CAP_TQING)
 		mpt->mpt_tag_enable |= (1 << xm->xm_target);
 	else
 		mpt->mpt_tag_enable &= ~(1 << xm->xm_target);
 
 	if (mpt->is_scsi) {
+		/*
+		 * Always allow disconnect; we don't have a way to disable
+		 * it right now, in any case.
+		 */
+		mpt->mpt_disc_enable |= (1 << xm->xm_target);
+
 		/*
 		 * SCSI transport settings only make any sense for
 		 * SCSI
