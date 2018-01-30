@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_input.c,v 1.50 2011/07/17 20:54:53 joerg Exp $	*/
+/*	$NetBSD: esp_input.c,v 1.50.14.1 2018/01/30 22:10:56 martin Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_input.c,v 1.50 2011/07/17 20:54:53 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_input.c,v 1.50.14.1 2018/01/30 22:10:56 martin Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -834,7 +834,8 @@ noreplaycheck:
 		/*
 		 * Set the next header field of the previous header correctly.
 		 */
-		prvnxtp = ip6_get_prevhdr(m, off); /* XXX */
+		const int prvnxt = ip6_get_prevhdr(m, off);
+		prvnxtp = (mtod(m, u_int8_t *) + prvnxt); /* XXX */
 		*prvnxtp = nxt;
 
 		stripsiz = esplen + ivlen;
