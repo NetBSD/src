@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.69 2018/01/18 08:40:56 skrll Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.70 2018/01/30 07:52:22 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.69 2018/01/18 08:40:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.70 2018/01/30 07:52:22 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -281,11 +281,11 @@ lockops_t mutex_adaptive_lockops = {
 };
 
 syncobj_t mutex_syncobj = {
-	SOBJ_SLEEPQ_SORTED,
-	turnstile_unsleep,
-	turnstile_changepri,
-	sleepq_lendpri,
-	(void *)mutex_owner,
+	.sobj_flag	= SOBJ_SLEEPQ_SORTED,
+	.sobj_unsleep	= turnstile_unsleep,
+	.sobj_changepri	= turnstile_changepri,
+	.sobj_lendpri	= sleepq_lendpri,
+	.sobj_owner	= (void *)mutex_owner,
 };
 
 /*
