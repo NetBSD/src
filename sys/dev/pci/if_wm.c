@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.561 2018/01/29 04:17:32 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.562 2018/01/30 08:15:47 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.561 2018/01/29 04:17:32 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.562 2018/01/30 08:15:47 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -182,6 +182,11 @@ int	wm_debug = WM_DEBUG_TX | WM_DEBUG_RX | WM_DEBUG_LINK | WM_DEBUG_GMII
 
 int wm_disable_msi = WM_DISABLE_MSI;
 int wm_disable_msix = WM_DISABLE_MSIX;
+
+#ifndef WM_WATCHDOG_TIMEOUT
+#define WM_WATCHDOG_TIMEOUT 5
+#endif
+static int wm_watchdog_timeout = WM_WATCHDOG_TIMEOUT;
 
 /*
  * Transmit descriptor list size.  Due to errata, we can only have
@@ -362,6 +367,9 @@ struct wm_txqueue {
 #define	WM_TXQ_NO_SPACE	0x1
 
 	bool txq_stopping;
+
+	bool txq_watchdog;
+	time_t txq_lastsent;
 
 	uint32_t txq_packets;		/* for AIM */
 	uint32_t txq_bytes;		/* for AIM */
@@ -680,8 +688,8 @@ static int	wm_detach(device_t, int);
 static bool	wm_suspend(device_t, const pmf_qual_t *);
 static bool	wm_resume(device_t, const pmf_qual_t *);
 static void	wm_watchdog(struct ifnet *);
-static void	wm_watchdog_txq(struct ifnet *, struct wm_txqueue *);
-static void	wm_watchdog_txq_locked(struct ifnet *, struct wm_txqueue *);
+static void	wm_watchdog_txq(struct ifnet *, struct wm_txqueue *, uint16_t *);
+static void	wm_watchdog_txq_locked(struct ifnet *, struct wm_txqueue *, uint16_t *);
 static void	wm_tick(void *);
 static int	wm_ifflags_cb(struct ethercom *);
 static int	wm_ioctl(struct ifnet *, u_long, void *);
@@ -2683,7 +2691,7 @@ alloc_retry:
 		if (wm_is_using_multiqueue(sc))
 			ifp->if_transmit = wm_transmit;
 	}
-	ifp->if_watchdog = wm_watchdog;
+	/* wm(4) doest not use ifp->if_watchdog, use wm_tick as watchdog. */
 	ifp->if_init = wm_init;
 	ifp->if_stop = wm_stop;
 	IFQ_SET_MAXLEN(&ifp->if_snd, max(WM_IFQUEUELEN, IFQ_MAXLEN));
@@ -2945,37 +2953,47 @@ wm_watchdog(struct ifnet *ifp)
 {
 	int qid;
 	struct wm_softc *sc = ifp->if_softc;
+	uint16_t hang_queue = 0; /* Max queue number of wm(4) is 82576's 16. */
 
 	for (qid = 0; qid < sc->sc_nqueues; qid++) {
 		struct wm_txqueue *txq = &sc->sc_queue[qid].wmq_txq;
 
-		wm_watchdog_txq(ifp, txq);
+		wm_watchdog_txq(ifp, txq, &hang_queue);
 	}
 
-	/* Reset the interface. */
-	(void) wm_init(ifp);
-
 	/*
-	 * There are still some upper layer processing which call
-	 * ifp->if_start(). e.g. ALTQ or one CPU system
+	 * IF any of queues hanged up, reset the interface.
 	 */
-	/* Try to get more packets going. */
-	ifp->if_start(ifp);
+	if (hang_queue != 0) {
+		(void) wm_init(ifp);
+
+		/*
+		 * There are still some upper layer processing which call
+		 * ifp->if_start(). e.g. ALTQ or one CPU system
+		 */
+		/* Try to get more packets going. */
+		ifp->if_start(ifp);
+	}
 }
 
+
 static void
-wm_watchdog_txq(struct ifnet *ifp, struct wm_txqueue *txq)
+wm_watchdog_txq(struct ifnet *ifp, struct wm_txqueue *txq, uint16_t *hang)
 {
 
 	mutex_enter(txq->txq_lock);
-	wm_watchdog_txq_locked(ifp, txq);
+	if (txq->txq_watchdog &&
+	    time_uptime - txq->txq_lastsent > wm_watchdog_timeout) {
+		wm_watchdog_txq_locked(ifp, txq, hang);
+	}
 	mutex_exit(txq->txq_lock);
 }
 
 static void
-wm_watchdog_txq_locked(struct ifnet *ifp, struct wm_txqueue *txq)
+wm_watchdog_txq_locked(struct ifnet *ifp, struct wm_txqueue *txq, uint16_t *hang)
 {
 	struct wm_softc *sc = ifp->if_softc;
+	struct wm_queue *wmq = container_of(txq, struct wm_queue, wmq_txq);
 
 	KASSERT(mutex_owned(txq->txq_lock));
 
@@ -2984,6 +3002,8 @@ wm_watchdog_txq_locked(struct ifnet *ifp, struct wm_txqueue *txq)
 	 * before we report an error.
 	 */
 	wm_txeof(txq, UINT_MAX);
+	if (txq->txq_watchdog)
+		*hang |= __BIT(wmq->wmq_id);
 
 	if (txq->txq_free != WM_NTXDESC(txq)) {
 #ifdef WM_DEBUG
@@ -3044,8 +3064,13 @@ wm_tick(void *arg)
 
 	WM_CORE_LOCK(sc);
 
-	if (sc->sc_core_stopping)
-		goto out;
+	if (sc->sc_core_stopping) {
+		WM_CORE_UNLOCK(sc);
+#ifndef WM_MPSAFE
+		splx(s);
+#endif
+		return;
+	}
 
 	if (sc->sc_type >= WM_T_82542_2_1) {
 		WM_EVCNT_ADD(&sc->sc_ev_rx_xon, CSR_READ(sc, WMREG_XONRXC));
@@ -3083,12 +3108,11 @@ wm_tick(void *arg)
 	else
 		wm_tbi_tick(sc);
 
-	callout_reset(&sc->sc_tick_ch, hz, wm_tick, sc);
-out:
 	WM_CORE_UNLOCK(sc);
-#ifndef WM_MPSAFE
-	splx(s);
-#endif
+
+	wm_watchdog(ifp);
+
+	callout_reset(&sc->sc_tick_ch, hz, wm_tick, sc);
 }
 
 static int
@@ -5976,6 +6000,7 @@ wm_stop_locked(struct ifnet *ifp, int disable)
 		struct wm_queue *wmq = &sc->sc_queue[qidx];
 		struct wm_txqueue *txq = &wmq->wmq_txq;
 		mutex_enter(txq->txq_lock);
+		txq->txq_watchdog = false; /* ensure watchdog disabled */
 		for (i = 0; i < WM_TXQUEUELEN(txq); i++) {
 			txs = &txq->txq_soft[i];
 			if (txs->txs_mbuf != NULL) {
@@ -5989,7 +6014,6 @@ wm_stop_locked(struct ifnet *ifp, int disable)
 
 	/* Mark the interface as down and cancel the watchdog timer. */
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
-	ifp->if_timer = 0;
 
 	if (disable) {
 		for (i = 0; i < sc->sc_nqueues; i++) {
@@ -6664,6 +6688,8 @@ wm_init_tx_queue(struct wm_softc *sc, struct wm_queue *wmq,
 	wm_init_tx_descs(sc, txq);
 	wm_init_tx_regs(sc, wmq, txq);
 	wm_init_tx_buffer(sc, txq);
+
+	txq->txq_watchdog = false;
 }
 
 static void
@@ -7427,7 +7453,8 @@ wm_send_common_locked(struct ifnet *ifp, struct wm_txqueue *txq,
 
 	if (txq->txq_free != ofree) {
 		/* Set a watchdog timer in case the chip flakes out. */
-		ifp->if_timer = 5;
+		txq->txq_lastsent = time_uptime;
+		txq->txq_watchdog = true;
 	}
 }
 
@@ -7999,7 +8026,8 @@ wm_nq_send_common_locked(struct ifnet *ifp, struct wm_txqueue *txq,
 
 	if (sent) {
 		/* Set a watchdog timer in case the chip flakes out. */
-		ifp->if_timer = 5;
+		txq->txq_lastsent = time_uptime;
+		txq->txq_watchdog = true;
 	}
 }
 
@@ -8138,7 +8166,7 @@ wm_txeof(struct wm_txqueue *txq, u_int limit)
 	 * timer.
 	 */
 	if (txq->txq_sfree == WM_TXQUEUELEN(txq))
-		ifp->if_timer = 0;
+		txq->txq_watchdog = false;
 
 	return count;
 }
