@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.62 2017/12/08 01:19:29 christos Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.63 2018/01/30 07:52:23 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.62 2017/12/08 01:19:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.63 2018/01/30 07:52:23 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,11 +54,11 @@ __KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.62 2017/12/08 01:19:29 christos Exp $"
 #define	LWP_UNPARK_MAX		1024
 
 static syncobj_t lwp_park_sobj = {
-	SOBJ_SLEEPQ_LIFO,
-	sleepq_unsleep,
-	sleepq_changepri,
-	sleepq_lendpri,
-	syncobj_noowner,
+	.sobj_flag	= SOBJ_SLEEPQ_LIFO,
+	.sobj_unsleep	= sleepq_unsleep,
+	.sobj_changepri	= sleepq_changepri,
+	.sobj_lendpri	= sleepq_lendpri,
+	.sobj_owner	= syncobj_noowner,
 };
 
 static sleeptab_t	lwp_park_tab;

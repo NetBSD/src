@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_select.c,v 1.40 2017/06/01 02:45:13 chs Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.41 2018/01/30 07:52:23 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.40 2017/06/01 02:45:13 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.41 2018/01/30 07:52:23 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,11 +140,11 @@ static const int sel_flag[] = {
 };
 
 static syncobj_t select_sobj = {
-	SOBJ_SLEEPQ_FIFO,
-	sleepq_unsleep,
-	sleepq_changepri,
-	sleepq_lendpri,
-	syncobj_noowner,
+	.sobj_flag	= SOBJ_SLEEPQ_FIFO,
+	.sobj_unsleep	= sleepq_unsleep,
+	.sobj_changepri	= sleepq_changepri,
+	.sobj_lendpri	= sleepq_lendpri,
+	.sobj_owner	= syncobj_noowner,
 };
 
 static selcluster_t	*selcluster[SELCLUSTERS] __read_mostly;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.48 2017/12/25 09:13:40 ozaki-r Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.49 2018/01/30 07:52:22 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.48 2017/12/25 09:13:40 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.49 2018/01/30 07:52:22 ozaki-r Exp $");
 
 #define	__RWLOCK_PRIVATE
 
@@ -154,11 +154,11 @@ lockops_t rwlock_lockops = {
 };
 
 syncobj_t rw_syncobj = {
-	SOBJ_SLEEPQ_SORTED,
-	turnstile_unsleep,
-	turnstile_changepri,
-	sleepq_lendpri,
-	rw_owner,
+	.sobj_flag	= SOBJ_SLEEPQ_SORTED,
+	.sobj_unsleep	= turnstile_unsleep,
+	.sobj_changepri	= turnstile_changepri,
+	.sobj_lendpri	= sleepq_lendpri,
+	.sobj_owner	= rw_owner,
 };
 
 /*
