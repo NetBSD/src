@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.109 2011/12/19 11:59:58 drochner Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.109.6.1 2018/01/30 18:47:35 martin Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.109 2011/12/19 11:59:58 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.109.6.1 2018/01/30 18:47:35 martin Exp $");
 
 #include "opt_ipsec.h"
 
@@ -285,11 +285,11 @@ rip6_input(struct mbuf **mp, int *offp, int proto)
 		if (proto == IPPROTO_NONE)
 			m_freem(m);
 		else {
-			u_int8_t *prvnxtp = ip6_get_prevhdr(m, *offp); /* XXX */
+			const int prvnxt = ip6_get_prevhdr(m, *offp);
 			in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_protounknown);
 			icmp6_error(m, ICMP6_PARAM_PROB,
 			    ICMP6_PARAMPROB_NEXTHEADER,
-			    prvnxtp - mtod(m, u_int8_t *));
+			    prvnxt);
 		}
 		IP6_STATDEC(IP6_STAT_DELIVERED);
 	}
