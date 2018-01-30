@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_var.h,v 1.78 2018/01/30 14:49:25 maxv Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.79 2018/01/30 15:54:02 maxv Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -287,7 +287,6 @@ void	ip6_freepcbopts(struct ip6_pktopts *);
 void	ip6_freemoptions(struct ip6_moptions *);
 int	ip6_unknown_opt(u_int8_t *, struct mbuf *, int);
 int	ip6_get_prevhdr(struct mbuf *, int);
-int	ip6_nexthdr(struct mbuf *, int, int, int *);
 int	ip6_lasthdr(struct mbuf *, int, int, int *);
 
 struct m_tag *ip6_addaux(struct mbuf *);
