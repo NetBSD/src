@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.107 2018/01/26 19:53:10 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.108 2018/01/30 18:22:29 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -9263,4 +9263,12 @@ sys/netipsec/xform_ah.c				1.75-1.76
 	Fix a vulnerability in IPsec-IPv6-AH, that allows an attacker
 	to remotely crash the kernel with a single packet.
 	[maxv, ticket #512]
+
+sys/netinet6/frag6.c				1.65
+sys/netinet6/ip6_input.c			1.187
+sys/netinet6/ip6_var.h				1.78
+sys/netinet6/raw_ip6.c				1.160
+
+	Fix a memory corruption in ip6_get_prevhdr().
+	[maxv, ticket #527]
 
