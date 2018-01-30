@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcomp_input.c,v 1.38 2011/07/17 20:54:53 joerg Exp $	*/
+/*	$NetBSD: ipcomp_input.c,v 1.38.8.1 2018/01/30 22:10:20 martin Exp $	*/
 /*	$KAME: ipcomp_input.c,v 1.29 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipcomp_input.c,v 1.38 2011/07/17 20:54:53 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipcomp_input.c,v 1.38.8.1 2018/01/30 22:10:20 martin Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -352,7 +352,8 @@ ipcomp6_input(struct mbuf **mp, int *offp, int proto)
 	m->m_flags |= M_DECRYPTED;
 
 	/* update next header field */
-	prvnxtp = ip6_get_prevhdr(m, off);
+	const int prvnxt = ip6_get_prevhdr(m, off);
+	prvnxtp = (mtod(m, u_int8_t *) + prvnxt); /* XXX */
 	*prvnxtp = nxt;
 
 	/*
