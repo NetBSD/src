@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.74 2018/01/29 19:44:06 martin Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.75 2018/01/30 18:32:34 martin Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -5194,4 +5194,12 @@ sys/netipsec/xform_ah.c				1.76
 
 	Fix a remote DoS vulnerability in IPsec-AH.
 	[maxv, ticket #1557]
+
+sys/netinet6/frag6.c				1.65
+sys/netinet6/ip6_input.c			1.187
+sys/netinet6/ip6_var.h				1.78
+sys/netinet6/raw_ip6.c				1.160 (via patch)
+
+	Fix a memory corruption in ip6_get_prevhdr().
+	[maxv, ticket #1560]
 
