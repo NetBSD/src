@@ -1,4 +1,4 @@
-/*	$NetBSD: frag6.c,v 1.52.2.2 2012/10/25 17:23:33 riz Exp $	*/
+/*	$NetBSD: frag6.c,v 1.52.2.3 2018/01/30 18:44:22 martin Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.52.2.2 2012/10/25 17:23:33 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.52.2.3 2018/01/30 18:44:22 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -441,14 +441,6 @@ insert:
 		m_cat(m, t);
 	}
 
-	/*
-	 * Store NXT to the original.
-	 */
-	{
-		u_int8_t *prvnxtp = ip6_get_prevhdr(m, offset); /* XXX */
-		*prvnxtp = nxt;
-	}
-
 	frag6_remque(q6);
 	frag6_nfrags -= q6->ip6q_nfrag;
 	kmem_intr_free(q6, sizeof(struct ip6q));
@@ -459,6 +451,21 @@ insert:
 		for (t = m; t; t = t->m_next)
 			plen += t->m_len;
 		m->m_pkthdr.len = plen;
+	}
+
+	/*
+	 * Restore NXT to the original.
+	 */
+	{
+		const int prvnxt = ip6_get_prevhdr(m, offset);
+		uint8_t *prvnxtp;
+
+		IP6_EXTHDR_GET(prvnxtp, uint8_t *, m, prvnxt,
+		    sizeof(*prvnxtp));
+		if (prvnxtp == NULL) {
+			goto dropfrag;
+		}
+		*prvnxtp = nxt;
 	}
 
 	IP6_STATINC(IP6_STAT_REASSEMBLED);
