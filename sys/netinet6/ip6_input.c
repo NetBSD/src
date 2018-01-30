@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.188 2018/01/30 15:35:31 maxv Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.189 2018/01/30 15:54:02 maxv Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.188 2018/01/30 15:35:31 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.189 2018/01/30 15:54:02 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -141,7 +141,7 @@ static void ip6intr(void *);
 static struct m_tag *ip6_setdstifaddr(struct mbuf *, const struct in6_ifaddr *);
 
 static int ip6_process_hopopts(struct mbuf *, u_int8_t *, int, u_int32_t *,
-	u_int32_t *);
+    u_int32_t *);
 static struct mbuf *ip6_pullexthdr(struct mbuf *, size_t, int);
 static void sysctl_net_inet6_ip6_setup(struct sysctllog **);
 
@@ -855,14 +855,14 @@ ip6_hopopts_input(u_int32_t *plenp, u_int32_t *rtalertp,
 
 	/* validation of the length of the header */
 	IP6_EXTHDR_GET(hbh, struct ip6_hbh *, m,
-		sizeof(struct ip6_hdr), sizeof(struct ip6_hbh));
+	    sizeof(struct ip6_hdr), sizeof(struct ip6_hbh));
 	if (hbh == NULL) {
 		IP6_STATINC(IP6_STAT_TOOSHORT);
 		return -1;
 	}
 	hbhlen = (hbh->ip6h_len + 1) << 3;
 	IP6_EXTHDR_GET(hbh, struct ip6_hbh *, m, sizeof(struct ip6_hdr),
-		hbhlen);
+	    hbhlen);
 	if (hbh == NULL) {
 		IP6_STATINC(IP6_STAT_TOOSHORT);
 		return -1;
@@ -872,12 +872,12 @@ ip6_hopopts_input(u_int32_t *plenp, u_int32_t *rtalertp,
 	hbhlen -= sizeof(struct ip6_hbh);
 
 	if (ip6_process_hopopts(m, (u_int8_t *)hbh + sizeof(struct ip6_hbh),
-				hbhlen, rtalertp, plenp) < 0)
-		return (-1);
+	    hbhlen, rtalertp, plenp) < 0)
+		return -1;
 
 	*offp = off;
 	*mp = m;
-	return (0);
+	return 0;
 }
 
 /*
@@ -1402,7 +1402,7 @@ ip6_get_prevhdr(struct mbuf *m, int off)
 /*
  * get next header offset.  m will be retained.
  */
-int
+static int
 ip6_nexthdr(struct mbuf *m, int off, int proto, int *nxtp)
 {
 	struct ip6_hdr ip6;
@@ -1411,7 +1411,7 @@ ip6_nexthdr(struct mbuf *m, int off, int proto, int *nxtp)
 
 	/* just in case */
 	if (m == NULL)
-		panic("ip6_nexthdr: m == NULL");
+		panic("%s: m == NULL", __func__);
 	if ((m->m_flags & M_PKTHDR) == 0 || m->m_pkthdr.len < off)
 		return -1;
 
@@ -1566,11 +1566,6 @@ sysctl_net_inet6_ip6_stats(SYSCTLFN_ARGS)
 static void
 sysctl_net_inet6_ip6_setup(struct sysctllog **clog)
 {
-#ifdef RFC2292
-#define IS2292(x, y)	((in6p->in6p_flags & IN6P_RFC2292) ? (x) : (y))
-#else
-#define IS2292(x, y)	(y)
-#endif
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
@@ -1614,26 +1609,6 @@ sysctl_net_inet6_ip6_setup(struct sysctllog **clog)
 		       CTL_NET, PF_INET6, IPPROTO_IPV6,
 		       IPV6CTL_DEFMTU, CTL_EOL);
 #endif
-#ifdef __no_idea__
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "forwsrcrt", NULL,
-		       NULL, 0, &?, 0,
-		       CTL_NET, PF_INET6, IPPROTO_IPV6,
-		       IPV6CTL_FORWSRCRT, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_STRUCT, "mrtstats", NULL,
-		       NULL, 0, &?, sizeof(?),
-		       CTL_NET, PF_INET6, IPPROTO_IPV6,
-		       IPV6CTL_MRTSTATS, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_?, "mrtproto", NULL,
-		       NULL, 0, &?, sizeof(?),
-		       CTL_NET, PF_INET6, IPPROTO_IPV6,
-		       IPV6CTL_MRTPROTO, CTL_EOL);
-#endif
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "maxfragpackets",
@@ -1642,20 +1617,6 @@ sysctl_net_inet6_ip6_setup(struct sysctllog **clog)
 		       NULL, 0, &ip6_maxfragpackets, 0,
 		       CTL_NET, PF_INET6, IPPROTO_IPV6,
 		       IPV6CTL_MAXFRAGPACKETS, CTL_EOL);
-#ifdef __no_idea__
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "sourcecheck", NULL,
-		       NULL, 0, &?, 0,
-		       CTL_NET, PF_INET6, IPPROTO_IPV6,
-		       IPV6CTL_SOURCECHECK, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "sourcecheck_logint", NULL,
-		       NULL, 0, &?, 0,
-		       CTL_NET, PF_INET6, IPPROTO_IPV6,
-		       IPV6CTL_SOURCECHECK_LOGINT, CTL_EOL);
-#endif
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "accept_rtadv",
@@ -1687,7 +1648,7 @@ sysctl_net_inet6_ip6_setup(struct sysctllog **clog)
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "log_interval",
-		       SYSCTL_DESCR("Minumum interval between logging "
+		       SYSCTL_DESCR("Minimum interval between logging "
 				    "unroutable packets"),
 		       NULL, 0, &ip6_log_interval, 0,
 		       CTL_NET, PF_INET6, IPPROTO_IPV6,
