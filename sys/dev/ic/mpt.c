@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt.c,v 1.17 2014/09/27 16:14:16 jmcneill Exp $	*/
+/*	$NetBSD: mpt.c,v 1.18 2018/01/30 20:15:41 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 by Greg Ansley
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt.c,v 1.17 2014/09/27 16:14:16 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt.c,v 1.18 2018/01/30 20:15:41 jakllsch Exp $");
 
 #include <dev/ic/mpt.h>
 
@@ -940,7 +940,7 @@ mpt_set_initial_config_spi(mpt_softc_t *mpt)
 {
 	int i, pp1val = ((1 << mpt->mpt_ini_id) << 16) | mpt->mpt_ini_id;
 
-	mpt->mpt_disc_enable = 0xff;
+	mpt->mpt_disc_enable = 0xffff;
 	mpt->mpt_tag_enable = 0;
 
 	if (mpt->mpt_port_page1.Configuration != pp1val) {
