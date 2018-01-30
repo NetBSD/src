@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_input.c,v 1.59 2011/07/17 20:54:53 joerg Exp $	*/
+/*	$NetBSD: ah_input.c,v 1.59.8.1 2018/01/30 22:10:20 martin Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.59 2011/07/17 20:54:53 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.59.8.1 2018/01/30 22:10:20 martin Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -858,7 +858,8 @@ ah6_input(struct mbuf **mp, int *offp, int proto)
 		 * next header field of the previous header.
 		 * This is necessary because AH will be stripped off below.
 		 */
-		prvnxtp = ip6_get_prevhdr(m, off); /* XXX */
+		const int prvnxt = ip6_get_prevhdr(m, off);
+		prvnxtp = (mtod(m, u_int8_t *) + prvnxt); /* XXX */
 		*prvnxtp = nxt;
 
 		ip6 = mtod(m, struct ip6_hdr *);
