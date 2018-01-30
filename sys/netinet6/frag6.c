@@ -1,4 +1,4 @@
-/*	$NetBSD: frag6.c,v 1.64 2018/01/25 20:55:15 maxv Exp $	*/
+/*	$NetBSD: frag6.c,v 1.65 2018/01/30 14:49:25 maxv Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.64 2018/01/25 20:55:15 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.65 2018/01/30 14:49:25 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -467,14 +467,6 @@ insert:
 		m_cat(m, t);
 	}
 
-	/*
-	 * Store NXT to the original.
-	 */
-	{
-		u_int8_t *prvnxtp = ip6_get_prevhdr(m, offset); /* XXX */
-		*prvnxtp = nxt;
-	}
-
 	frag6_remque(q6);
 	frag6_nfrags -= q6->ip6q_nfrag;
 	kmem_intr_free(q6, sizeof(struct ip6q));
@@ -482,9 +474,28 @@ insert:
 
 	if (m->m_flags & M_PKTHDR) { /* Isn't it always true? */
 		int plen = 0;
-		for (t = m; t; t = t->m_next)
+		for (t = m; t; t = t->m_next) {
+			/*
+			 * XXX XXX Why don't we remove M_PKTHDR?
+			 */
 			plen += t->m_len;
+		}
 		m->m_pkthdr.len = plen;
+	}
+
+	/*
+	 * Restore NXT to the original.
+	 */
+	{
+		const int prvnxt = ip6_get_prevhdr(m, offset);
+		uint8_t *prvnxtp;
+
+		IP6_EXTHDR_GET(prvnxtp, uint8_t *, m, prvnxt,
+		    sizeof(*prvnxtp));
+		if (prvnxtp == NULL) {
+			goto dropfrag;
+		}
+		*prvnxtp = nxt;
 	}
 
 	IP6_STATINC(IP6_STAT_REASSEMBLED);
