@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.189 2018/01/21 14:01:55 alnsn Exp $
+$NetBSD: acronyms.comp,v 1.190 2018/01/30 22:45:12 ginsbach Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -351,6 +351,7 @@ DPI	dots per inch
 DPL	descriptor privilege level
 DPS	Display PostScript
 DPST	display power savings technology
+DRAAS	disaster recovery as a service
 DRAM	dynamic random access memory
 DRBG	deterministic random bit generator
 DRI	direct rendering infrastructure
@@ -560,6 +561,7 @@ HVM	hardware virtual machine
 HZ	Hertz
 I2O	intelligent input/output
 IA	information assurance
+IAAS	infrastructure as a service
 IANA	Internet Assigned Numbers Authority
 IBC	iterated block cipher
 IBM	International Business Machines
@@ -840,6 +842,7 @@ NFA	nondeterministic finite automaton
 NFC	near-field communication
 NFCI	no functional change intended
 NFS	network file system
+NFV	network function virtualization
 NIA	next instruction address
 NIC	network information center
 NIC	network interface card
@@ -913,6 +916,7 @@ P2P	PCI to PCI
 P2P	peer to peer
 PA	phase accumulator
 PA	physical address
+PAAS	platform as a service
 PAC	phase-amplitude converter
 PAE	physical address extension
 PAL	phase alternating line
@@ -1160,7 +1164,9 @@ SDK	software development kit
 SDL	Simple Declarative Language
 SDL	Simple Direct-media Layer 
 SDLC	{software,system,systems} development life cycle
+SDN	software defined networking
 SDRAM	synchronous dynamic random access memory
+SDS	software defined storage
 SDT	syntax-directed translation
 SEGV	segmentation violation
 SEO	search engine optimization
