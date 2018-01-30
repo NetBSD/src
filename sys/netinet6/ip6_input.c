@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.186 2018/01/29 10:57:13 maxv Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.187 2018/01/30 14:49:25 maxv Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.186 2018/01/29 10:57:13 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.187 2018/01/30 14:49:25 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -1351,50 +1351,44 @@ ip6_pullexthdr(struct mbuf *m, size_t off, int nxt)
 }
 
 /*
- * Get pointer to the previous header followed by the header
+ * Get offset to the previous header followed by the header
  * currently processed.
- * XXX: This function supposes that
- *	M includes all headers,
- *	the next header field and the header length field of each header
- *	are valid, and
- *	the sum of each header length equals to OFF.
- * Because of these assumptions, this function must be called very
- * carefully. Moreover, it will not be used in the near future when
- * we develop `neater' mechanism to process extension headers.
  */
-u_int8_t *
+int
 ip6_get_prevhdr(struct mbuf *m, int off)
 {
 	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
 
-	if (off == sizeof(struct ip6_hdr))
-		return (&ip6->ip6_nxt);
-	else {
-		int len, nxt;
-		struct ip6_ext *ip6e = NULL;
+	if (off == sizeof(struct ip6_hdr)) {
+		return offsetof(struct ip6_hdr, ip6_nxt);
+	} else if (off < sizeof(struct ip6_hdr)) {
+		panic("%s: off < sizeof(struct ip6_hdr)", __func__);
+	} else {
+		int len, nlen, nxt;
+		struct ip6_ext ip6e;
 
 		nxt = ip6->ip6_nxt;
 		len = sizeof(struct ip6_hdr);
+		nlen = 0;
 		while (len < off) {
-			ip6e = (struct ip6_ext *)(mtod(m, char *) + len);
+			m_copydata(m, len, sizeof(ip6e), &ip6e);
 
 			switch (nxt) {
 			case IPPROTO_FRAGMENT:
-				len += sizeof(struct ip6_frag);
+				nlen = sizeof(struct ip6_frag);
 				break;
 			case IPPROTO_AH:
-				len += (ip6e->ip6e_len + 2) << 2;
+				nlen = (ip6e.ip6e_len + 2) << 2;
 				break;
 			default:
-				len += (ip6e->ip6e_len + 1) << 3;
+				nlen = (ip6e.ip6e_len + 1) << 3;
 				break;
 			}
-			nxt = ip6e->ip6e_nxt;
+			len += nlen;
+			nxt = ip6e.ip6e_nxt;
 		}
-		if (ip6e)
-			return (&ip6e->ip6e_nxt);
-		else
-			return NULL;
+
+		return (len - nlen);
 	}
 }
 
