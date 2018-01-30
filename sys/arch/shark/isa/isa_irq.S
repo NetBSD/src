@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_irq.S,v 1.16 2013/12/02 18:36:11 joerg Exp $	*/
+/*	$NetBSD: isa_irq.S,v 1.17 2018/01/30 19:22:28 skrll Exp $	*/
 
 /*
  * Copyright 1997
@@ -134,7 +134,7 @@ ASENTRY_NP(irq_entry)
 	ldr	r0, .Lvam_io_data
 	ldr	r0, [r0]
 	ldrb	r8, [r0, #IO_ICU1]                /* ocw3 = irr */
-	
+
 	/* clear the IRR bits that are currently masked. */
 	ldr	r2, .Li8259_mask
 	ldr	r2, [r2]
@@ -197,7 +197,7 @@ ASENTRY_NP(irq_entry)
 	mvn	r2, r2
 	orr	r0, r0, r2
 
-	str	r0, [r1]	
+	str	r0, [r1]
 
 	ldr	r1, [r4, #CI_CPL]
 	str	r9, [r4, #CI_CPL]
