@@ -1,4 +1,4 @@
-/* $NetBSD: mech_digestmd5.c,v 1.12 2018/01/30 13:11:28 shm Exp $ */
+/* $NetBSD: mech_digestmd5.c,v 1.13 2018/01/30 15:28:39 shm Exp $ */
 
 /* Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mech_digestmd5.c,v 1.12 2018/01/30 13:11:28 shm Exp $");
+__RCSID("$NetBSD: mech_digestmd5.c,v 1.13 2018/01/30 15:28:39 shm Exp $");
 
 #include <sys/param.h>
 
@@ -860,7 +860,7 @@ choose_realm(saslc_sess_t *sess, const char *hostname, list_t *realms)
 {
 	const char *user_realms;
 	list_t *l;
-	char *p;
+	char *p = NULL;
 
 	/*****************************************************************/
 	/* The realm containing the user's account. This directive is	 */
@@ -926,6 +926,7 @@ choose_realm(saslc_sess_t *sess, const char *hostname, list_t *realms)
 			return p;
 	}
  use_1st_realm:
+	free(p);
 	if ((p = strdup(realms->value)) == NULL)
 		goto nomem;
 	return p;
