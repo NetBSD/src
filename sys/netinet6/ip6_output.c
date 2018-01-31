@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.198 2018/01/31 14:10:11 maxv Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.199 2018/01/31 14:16:28 maxv Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.198 2018/01/31 14:10:11 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.199 2018/01/31 14:16:28 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1280,7 +1280,6 @@ ip6_insertfraghdr(struct mbuf *m0, struct mbuf *m, int hlen,
 		*frghdrp = (struct ip6_frag *)(mtod(mlast, char *) +
 		    mlast->m_len);
 		mlast->m_len += sizeof(struct ip6_frag);
-		m->m_pkthdr.len += sizeof(struct ip6_frag);
 	} else {
 		/* allocate a new mbuf for the fragment header */
 		struct mbuf *mfrg;
