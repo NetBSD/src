@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.108 2018/01/30 18:22:29 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.109 2018/01/31 18:03:48 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -9271,4 +9271,50 @@ sys/netinet6/raw_ip6.c				1.160
 
 	Fix a memory corruption in ip6_get_prevhdr().
 	[maxv, ticket #527]
+
+sys/dev/usb/if_athn_usb.c			1.25
+sys/dev/usb/if_atu.c				1.56
+sys/dev/usb/if_aue.c				1.142
+sys/dev/usb/if_axe.c				1.84
+sys/dev/usb/if_axen.c				1.12
+sys/dev/usb/if_cdce.c				1.45
+sys/dev/usb/if_cue.c				1.77
+sys/dev/usb/if_kue.c				1.91
+sys/dev/usb/if_otus.c				1.32
+sys/dev/usb/if_rum.c				1.59
+sys/dev/usb/if_run.c				1.25
+sys/dev/usb/if_smsc.c				1.33
+sys/dev/usb/if_udav.c				1.52
+sys/dev/usb/if_upgt.c				1.18
+sys/dev/usb/if_upl.c				1.61
+sys/dev/usb/if_ural.c				1.53
+sys/dev/usb/if_url.c				1.57
+sys/dev/usb/if_urndis.c				1.17
+sys/dev/usb/if_urtw.c				1.14
+sys/dev/usb/if_urtwn.c				1.56
+sys/dev/usb/if_zyd.c				1.45
+sys/dev/usb/irmce.c				1.4
+sys/dev/usb/pseye.c				1.24
+sys/dev/usb/ualea.c				1.7-1.9
+sys/dev/usb/ubt.c				1.60
+sys/dev/usb/ucom.c				1.120
+sys/dev/usb/udsir.c				1.6
+sys/dev/usb/ugen.c				1.137
+sys/dev/usb/uhso.c				1.27
+sys/dev/usb/uirda.c				1.43
+sys/dev/usb/ulpt.c				1.99
+sys/dev/usb/umass.c				1.163
+sys/dev/usb/umidi.c				1.74
+sys/dev/usb/uscanner.c				1.82
+sys/dev/usb/usscanner.c				1.43
+sys/dev/usb/ustir.c				1.39
+sys/dev/usb/utoppy.c				1.30
+sys/dev/usb/uvideo.c				1.46
+
+	Audit the flags to usbd_create_xfer so that USBD_FORCE_SHORT_XFER is
+	supplied wherever such a transfer is setup. Drop USBD_SHORT_XFER_OK
+	as it has not bearing on the number of transfer descriptors.
+	Tidy up ualea a bit, fulfil requests completely and do not
+	use uninitialized pktsize in error path.
+	[skrll, ticket #509]
 
