@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.55 2016/11/25 12:56:29 skrll Exp $ */
+/*	$NetBSD: if_atu.c,v 1.55.8.1 2018/01/31 18:01:54 martin Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.55 2016/11/25 12:56:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.55.8.1 2018/01/31 18:01:54 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -317,7 +317,7 @@ atu_usb_request(struct atu_softc *sc, uint8_t type,
 	s = splnet();
 
 	struct usbd_pipe *pipe0 = usbd_get_pipe0(sc->atu_udev);
-	int error = usbd_create_xfer(pipe0, length, USBD_SHORT_XFER_OK, 0,
+	int error = usbd_create_xfer(pipe0, length, 0, 0,
 	    &xfer);
 	if (error) {
 		splx(s);
@@ -1560,7 +1560,7 @@ atu_rx_list_init(struct atu_softc *sc)
 		c->atu_idx = i;
 		if (c->atu_xfer == NULL) {
 			int err = usbd_create_xfer(sc->atu_ep[ATU_ENDPT_RX],
-			    ATU_RX_BUFSZ, USBD_SHORT_XFER_OK, 0, &c->atu_xfer);
+			    ATU_RX_BUFSZ, 0, 0, &c->atu_xfer);
 			if (err)
 				return err;
 			c->atu_buf = usbd_get_buffer(c->atu_xfer);

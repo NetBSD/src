@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.59.8.1 2017/12/10 10:10:24 snj Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.59.8.2 2018/01/31 18:01:54 martin Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.59.8.1 2017/12/10 10:10:24 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.59.8.2 2018/01/31 18:01:54 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -442,7 +442,7 @@ upl_rx_list_init(struct upl_softc *sc)
 			return ENOBUFS;
 		if (c->upl_xfer == NULL) {
 			int error = usbd_create_xfer(sc->sc_ep[UPL_ENDPT_RX],
-			    UPL_BUFSZ, USBD_SHORT_XFER_OK, 0, &c->upl_xfer);
+			    UPL_BUFSZ, 0, 0, &c->upl_xfer);
 			if (error)
 				return error;
 			c->upl_buf = usbd_get_buffer(c->upl_xfer);

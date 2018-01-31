@@ -1,4 +1,4 @@
-/*	$NetBSD: udsir.c,v 1.4 2017/06/01 02:45:12 chs Exp $	*/
+/*	$NetBSD: udsir.c,v 1.4.2.1 2018/01/31 18:01:55 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udsir.c,v 1.4 2017/06/01 02:45:12 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udsir.c,v 1.4.2.1 2018/01/31 18:01:55 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -344,7 +344,7 @@ udsir_open(void *h, int flag, int mode, struct lwp *l)
 		goto bad2;
 	}
 	error = usbd_create_xfer(sc->sc_rd_pipe, sc->sc_rd_maxpsz,
-	    USBD_SHORT_XFER_OK, 0, &sc->sc_rd_xfer);
+	    0, 0, &sc->sc_rd_xfer);
 	if (error)
 		 goto bad3;
 

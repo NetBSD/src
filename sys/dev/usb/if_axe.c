@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.82.6.1 2017/11/02 21:29:52 snj Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.82.6.2 2018/01/31 18:01:55 martin Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.82.6.1 2017/11/02 21:29:52 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.82.6.2 2018/01/31 18:01:55 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1159,7 +1159,7 @@ axe_rx_list_init(struct axe_softc *sc)
 		c->axe_idx = i;
 		if (c->axe_xfer == NULL) {
 			int err = usbd_create_xfer(sc->axe_ep[AXE_ENDPT_RX],
-			    sc->axe_bufsz, USBD_SHORT_XFER_OK, 0, &c->axe_xfer);
+			    sc->axe_bufsz, 0, 0, &c->axe_xfer);
 			if (err)
 				return err;
 			c->axe_buf = usbd_get_buffer(c->axe_xfer);
