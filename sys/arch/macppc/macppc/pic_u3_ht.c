@@ -49,6 +49,10 @@
 #define DPRINTF if (0) printf
 #endif
 
+#define HTAPIC_REQUEST_EOI	0x20
+#define HTAPIC_TRIGGER_LEVEL	0x02
+#define HTAPIC_MASK		0x01
+
 struct u3_ht_irqmap {
 	int im_index;
 	int im_level;
@@ -216,7 +220,6 @@ setup_u3_ht(uint32_t addr, uint32_t len, int bigendian)
 	for (irq = 0; irq < 4; irq++) {
 		x = irq;
 		x |= OPENPIC_IMASK;
-		x |= OPENPIC_POLARITY_NEGATIVE;
 		x |= OPENPIC_SENSE_LEVEL;
 		x |= 8 << OPENPIC_PRIORITY_SHIFT;
 		u3_ht_write(u3_ht, OPENPIC_SRC_VECTOR(irq), x);
@@ -225,7 +228,6 @@ setup_u3_ht(uint32_t addr, uint32_t len, int bigendian)
 	for (irq = 4; irq < pic->pic_numintrs; irq++) {
 		x = irq;
 		x |= OPENPIC_IMASK;
-		x |= OPENPIC_POLARITY_NEGATIVE;
 		x |= OPENPIC_SENSE_EDGE;
 		x |= 8 << OPENPIC_PRIORITY_SHIFT;
 		u3_ht_write(u3_ht, OPENPIC_SRC_VECTOR(irq), x);
@@ -308,7 +310,7 @@ setup_u3_ht_workarounds(struct u3_ht_ops *u3_ht)
 			out8rb(base + 0x02, 0x10 + (i << 1));
 			tmp = in32rb(base + 0x04);
 			irq = (tmp >> 16) & 0xff;
-			tmp |= 0x01;
+			tmp |= HTAPIC_MASK;
 			out32rb(base + 0x04, tmp);
 
 			irqmap[irq].im_index = i;
@@ -388,14 +390,8 @@ u3_ht_establish_irq(struct pic_ops *pic, int irq, int type, int pri)
 	x |= OPENPIC_IMASK;
 
 	if (u3_ht_is_ht_irq(u3_ht, irq)) {
-		x |= OPENPIC_POLARITY_POSITIVE |
-		    OPENPIC_SENSE_EDGE;
+		x |= OPENPIC_SENSE_EDGE;
 	} else {
-		if (irq == 0 || type == IST_EDGE_RISING || type == IST_LEVEL_HIGH)
-			x |= OPENPIC_POLARITY_POSITIVE;
-		else
-			x |= OPENPIC_POLARITY_NEGATIVE;
-
 		if (type == IST_EDGE_FALLING || type == IST_EDGE_RISING)
 			x |= OPENPIC_SENSE_EDGE;
 		else
@@ -446,15 +442,15 @@ u3_ht_establish_ht_irq(struct u3_ht_ops *u3_ht, int irq, int type)
 
 	x = in32rb(irqmap->im_base + 0x04);
 	/* mask interrupt */
-	out32rb(irqmap->im_base + 0x04, x | 1);
+	out32rb(irqmap->im_base + 0x04, x | HTAPIC_MASK);
 
 	/* mask out EOI and LEVEL bits */
-	x &= ~0x22;
+	x &= ~(HTAPIC_TRIGGER_LEVEL | HTAPIC_REQUEST_EOI);
 
 	if (type == IST_LEVEL_HIGH || type == IST_LEVEL_LOW) {
 		irqmap->im_level = 1;
 		DPRINTF("level\n");
-		x |= 0x22;
+		x |= HTAPIC_TRIGGER_LEVEL | HTAPIC_REQUEST_EOI;
 	} else {
 		irqmap->im_level = 0;
 	}
@@ -470,7 +466,7 @@ u3_ht_enable_ht_irq(struct u3_ht_ops *u3_ht, int irq)
 
 	out8rb(irqmap->im_base + 0x02, 0x10 + (irqmap->im_index << 1));
 	x = in32rb(irqmap->im_base + 0x04);
-	x &= ~0x01;
+	x &= ~HTAPIC_MASK;
 	out32rb(irqmap->im_base + 0x04, x);
 
 	u3_ht_ack_ht_irq(u3_ht, irq);
@@ -484,7 +480,7 @@ u3_ht_disable_ht_irq(struct u3_ht_ops *u3_ht, int irq)
 
 	out8rb(irqmap->im_base + 0x02, 0x10 + (irqmap->im_index << 1));
 	x = in32rb(irqmap->im_base + 0x04);
-	x |= 0x01;
+	x |= HTAPIC_MASK;
 	out32rb(irqmap->im_base + 0x04, x);
 }
 
