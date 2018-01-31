@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipsec.c,v 1.2 2018/01/15 02:39:53 knakahara Exp $  */
+/*	$NetBSD: if_ipsec.c,v 1.3 2018/01/31 07:33:18 mrg Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.2 2018/01/15 02:39:53 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.3 2018/01/31 07:33:18 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -782,18 +782,30 @@ bad:
 }
 
 struct encap_funcs {
+#ifdef INET
 	int (*ef_inet)(struct ipsec_variant *);
+#endif
+#ifdef INET6
 	int (*ef_inet6)(struct ipsec_variant *);
+#endif
 };
 
 static struct encap_funcs ipsec_encap_attach = {
+#ifdef INET
 	.ef_inet = ipsecif4_attach,
+#endif
+#ifdef INET6
 	.ef_inet6 = &ipsecif6_attach,
+#endif
 };
 
 static struct encap_funcs ipsec_encap_detach = {
+#ifdef INET
 	.ef_inet = ipsecif4_detach,
+#endif
+#ifdef INET6
 	.ef_inet6 = &ipsecif6_detach,
+#endif
 };
 
 static int
