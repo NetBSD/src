@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.30 2016/12/15 09:28:06 ozaki-r Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.30.8.1 2018/01/31 18:01:55 martin Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /* $FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -1513,7 +1513,7 @@ smsc_rx_list_init(struct smsc_softc *sc)
 		c->sc_mbuf = NULL;
 		if (c->sc_xfer == NULL) {
 			int error = usbd_create_xfer(sc->sc_ep[SMSC_ENDPT_RX],
-			    sc->sc_bufsz, USBD_SHORT_XFER_OK, 0, &c->sc_xfer);
+			    sc->sc_bufsz, 0, 0, &c->sc_xfer);
 			if (error)
 				return error;
 			c->sc_buf = usbd_get_buffer(c->sc_xfer);

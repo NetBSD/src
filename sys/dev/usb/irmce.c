@@ -1,4 +1,4 @@
-/* $NetBSD: irmce.c,v 1.3 2017/01/20 12:25:07 maya Exp $ */
+/* $NetBSD: irmce.c,v 1.3.6.1 2018/01/31 18:01:54 martin Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irmce.c,v 1.3 2017/01/20 12:25:07 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irmce.c,v 1.3.6.1 2018/01/31 18:01:54 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -225,7 +225,7 @@ irmce_attach(device_t parent, device_t self, void *opaque)
 
 	int error;
 	error = usbd_create_xfer(sc->sc_bulkin_pipe, sc->sc_bulkin_maxpktsize,
-	    USBD_SHORT_XFER_OK, 0, &sc->sc_bulkin_xfer);
+	    0, 0, &sc->sc_bulkin_xfer);
 	if (error) {
 		goto fail;
 	}

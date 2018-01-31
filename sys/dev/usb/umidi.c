@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.73 2017/06/01 02:45:12 chs Exp $	*/
+/*	$NetBSD: umidi.c,v 1.73.2.1 2018/01/31 18:01:54 martin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012, 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.73 2017/06/01 02:45:12 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.73.2.1 2018/01/31 18:01:54 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -691,7 +691,7 @@ alloc_pipe(struct umidi_endpoint *ep)
 	if (err)
 		goto quit;
 	int error = usbd_create_xfer(ep->pipe, ep->buffer_size,
-	    USBD_SHORT_XFER_OK, 0, &ep->xfer);
+	    0, 0, &ep->xfer);
 	if (error) {
 		usbd_close_pipe(ep->pipe);
 		return USBD_NOMEM;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.11 2016/12/15 09:28:06 ozaki-r Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.11.8.1 2018/01/31 18:01:54 martin Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.11 2016/12/15 09:28:06 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.11.8.1 2018/01/31 18:01:54 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -921,8 +921,7 @@ axen_rx_list_init(struct axen_softc *sc)
 		c->axen_idx = i;
 		if (c->axen_xfer == NULL) {
 			int err = usbd_create_xfer(sc->axen_ep[AXEN_ENDPT_RX],
-			    sc->axen_bufsz, USBD_SHORT_XFER_OK, 0,
-			    &c->axen_xfer);
+			    sc->axen_bufsz, 0, 0, &c->axen_xfer);
 			if (err)
 				return err;
 			c->axen_buf = usbd_get_buffer(c->axen_xfer);

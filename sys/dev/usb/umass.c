@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.158.4.1 2017/11/02 21:29:52 snj Exp $	*/
+/*	$NetBSD: umass.c,v 1.158.4.2 2018/01/31 18:01:54 martin Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.158.4.1 2017/11/02 21:29:52 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.158.4.2 2018/01/31 18:01:54 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -588,27 +588,27 @@ umass_attach(device_t parent, device_t self, void *aux)
 	switch (sc->sc_wire) {
 	case UMASS_WPROTO_BBB:
 		err = usbd_create_xfer(sc->sc_pipe[UMASS_BULKIN],
-		    UMASS_MAX_TRANSFER_SIZE, USBD_SHORT_XFER_OK, 0,
+		    UMASS_MAX_TRANSFER_SIZE, 0, 0,
 		    &sc->transfer_xfer[XFER_BBB_DATAIN]);
 		if (err)
 			goto fail_create;
 		err = usbd_create_xfer(sc->sc_pipe[UMASS_BULKOUT],
-		    UMASS_MAX_TRANSFER_SIZE, USBD_SHORT_XFER_OK, 0,
+		    UMASS_MAX_TRANSFER_SIZE, 0, 0,
 		    &sc->transfer_xfer[XFER_BBB_DATAOUT]);
 		if (err)
 			goto fail_create;
 		err = usbd_create_xfer(sc->sc_pipe[UMASS_BULKOUT],
-		    UMASS_BBB_CBW_SIZE, USBD_SHORT_XFER_OK, 0,
+		    UMASS_BBB_CBW_SIZE, 0, 0,
 		    &sc->transfer_xfer[XFER_BBB_CBW]);
 		if (err)
 			goto fail_create;
 		err = usbd_create_xfer(sc->sc_pipe[UMASS_BULKIN],
-		    UMASS_BBB_CSW_SIZE, USBD_SHORT_XFER_OK, 0,
+		    UMASS_BBB_CSW_SIZE, 0, 0,
 		    &sc->transfer_xfer[XFER_BBB_CSW1]);
 		if (err)
 			goto fail_create;
 		err = usbd_create_xfer(sc->sc_pipe[UMASS_BULKIN],
-		    UMASS_BBB_CSW_SIZE, USBD_SHORT_XFER_OK, 0,
+		    UMASS_BBB_CSW_SIZE, 0, 0,
 		    &sc->transfer_xfer[XFER_BBB_CSW2]);
 		if (err)
 			goto fail_create;
@@ -640,7 +640,7 @@ umass_attach(device_t parent, device_t self, void *aux)
 		if (err)
 			goto fail_create;
 		err = usbd_create_xfer(sc->sc_pipe[UMASS_BULKIN],
-		    UMASS_MAX_TRANSFER_SIZE, USBD_SHORT_XFER_OK, 0,
+		    UMASS_MAX_TRANSFER_SIZE, 0, 0,
 		    &sc->transfer_xfer[XFER_CBI_DATAIN]);
 		if (err)
 			goto fail_create;
