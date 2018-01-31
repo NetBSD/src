@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.197 2018/01/31 13:57:08 maxv Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.198 2018/01/31 14:10:11 maxv Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.197 2018/01/31 13:57:08 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.198 2018/01/31 14:10:11 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1164,7 +1164,7 @@ ip6_insert_jumboopt(struct ip6_exthdrs *exthdrs, u_int32_t plen)
 	 * jumbo payload option, allocate a cluster to store the whole options.
 	 * Otherwise, use it to store the options.
 	 */
-	if (exthdrs->ip6e_hbh == 0) {
+	if (exthdrs->ip6e_hbh == NULL) {
 		MGET(mopt, M_DONTWAIT, MT_DATA);
 		if (mopt == 0)
 			return (ENOBUFS);
@@ -1177,25 +1177,26 @@ ip6_insert_jumboopt(struct ip6_exthdrs *exthdrs, u_int32_t plen)
 
 		mopt = exthdrs->ip6e_hbh;
 		if (M_TRAILINGSPACE(mopt) < JUMBOOPTLEN) {
+			const int oldoptlen = mopt->m_len;
+			struct mbuf *n;
+
 			/*
-			 * XXX assumption:
+			 * Assumptions:
 			 * - exthdrs->ip6e_hbh is not referenced from places
 			 *   other than exthdrs.
 			 * - exthdrs->ip6e_hbh is not an mbuf chain.
 			 */
-			int oldoptlen = mopt->m_len;
-			struct mbuf *n;
+			KASSERT(mopt->m_next == NULL);
 
 			/*
-			 * XXX: give up if the whole (new) hbh header does
-			 * not fit even in an mbuf cluster.
+			 * Give up if the whole (new) hbh header does not fit
+			 * even in an mbuf cluster.
 			 */
 			if (oldoptlen + JUMBOOPTLEN > MCLBYTES)
-				return (ENOBUFS);
+				return ENOBUFS;
 
 			/*
-			 * As a consequence, we must always prepare a cluster
-			 * at this point.
+			 * At this point, we must always prepare a cluster.
 			 */
 			MGET(n, M_DONTWAIT, MT_DATA);
 			if (n) {
@@ -1206,7 +1207,8 @@ ip6_insert_jumboopt(struct ip6_exthdrs *exthdrs, u_int32_t plen)
 				}
 			}
 			if (!n)
-				return (ENOBUFS);
+				return ENOBUFS;
+
 			n->m_len = oldoptlen + JUMBOOPTLEN;
 			bcopy(mtod(mopt, void *), mtod(n, void *),
 			    oldoptlen);
@@ -1237,7 +1239,7 @@ ip6_insert_jumboopt(struct ip6_exthdrs *exthdrs, u_int32_t plen)
 	/* finally, adjust the packet header length */
 	exthdrs->ip6e_ip6->m_pkthdr.len += JUMBOOPTLEN;
 
-	return (0);
+	return 0;
 #undef JUMBOOPTLEN
 }
 
