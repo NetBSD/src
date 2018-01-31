@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1498 2018/01/29 11:14:12 roy Exp $
+#	$NetBSD: 3RDPARTY,v 1.1499 2018/01/31 22:12:21 mlelstv Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1995,14 +1995,15 @@ Package:	tigon
 Version:	12.4.11
 Current Vers:
 Maintainer:	wpaul@brak.osd.bsdi.com
-Archive Site:
-Home Page:
+Archive Site:   https://people.freebsd.org/~wpaul/Alteon/
+Home Page:	http://www.alteon.com/support/openkits (extinct)
 Mailing List:
-License:	unknown
+License:	Alteon WebSystems, Inc.
 Responsible:	
 Location:	sys/dev/microcode/tigon
 Notes:
-Is also distributed by FreeBSD.
+See https://lists.debian.org/debian-legal/2011/10/msg00001.html
+
 
 Package:	typhoon
 Version:	
