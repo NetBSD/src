@@ -1,4 +1,4 @@
-#	$NetBSD: files.sunxi,v 1.38 2017/11/10 00:09:23 jmcneill Exp $
+#	$NetBSD: files.sunxi,v 1.39 2018/01/31 16:24:11 jakllsch Exp $
 #
 # Configuration info for Allwinner sunxi family SoCs
 #
@@ -226,6 +226,11 @@ file	arch/arm/sunxi/sunxi_sramc.c		sunxi_sramc
 device	sunxinand: nandbus
 attach	sunxinand at fdt with sunxi_nand
 file	arch/arm/sunxi/sunxi_nand.c		sunxi_nand
+
+# SPI Controller (sun6i-compatible)
+device	sun6ispi: spibus
+attach	sun6ispi at fdt with sun6i_spi
+file	arch/arm/sunxi/sun6i_spi.c		sun6i_spi
 
 # SOC parameters
 defflag	opt_soc.h			SOC_SUNXI
