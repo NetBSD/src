@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.199 2018/01/31 14:16:28 maxv Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.200 2018/01/31 15:23:08 maxv Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.199 2018/01/31 14:16:28 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.200 2018/01/31 15:23:08 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -762,8 +762,10 @@ ip6_output(
 	 * If the outgoing packet contains a hop-by-hop options header,
 	 * it must be examined and processed even by the source node.
 	 * (RFC 2460, section 4.)
+	 *
+	 * XXX Is this really necessary?
 	 */
-	if (ip6->ip6_nxt == IPV6_HOPOPTS) {
+	if (ip6->ip6_nxt == IPPROTO_HOPOPTS) {
 		u_int32_t dummy1; /* XXX unused */
 		u_int32_t dummy2; /* XXX unused */
 		int hoff = sizeof(struct ip6_hdr);
