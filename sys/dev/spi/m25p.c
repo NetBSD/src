@@ -1,4 +1,4 @@
-/* $NetBSD: m25p.c,v 1.5 2017/08/07 09:24:43 hkenken Exp $ */
+/* $NetBSD: m25p.c,v 1.6 2018/01/31 16:00:03 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m25p.c,v 1.5 2017/08/07 09:24:43 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m25p.c,v 1.6 2018/01/31 16:00:03 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,6 +98,10 @@ static const struct m25p_info {
 	{ 0xc0, 0x20, 0x7117, "STMicro M25PX64", 8192, 64 },	/* 64Mbit */
 	{ 0x00, 0x20, 0xBB18, "Numonyx N25Q128", 16384, 64 },	/* 128Mbit */
 	{ 0x00, 0xBF, 0x2541, "Microchip SST25VF016B", 2048, 64 }, /* 16Mbit */
+	{ 0x13, 0xEF, 0x4014, "Winbond W25Q80.V", 1024, 64 },	/* 8Mbit */
+	{ 0x14, 0xEF, 0x4015, "Winbond W25Q16.V", 2048, 64 },	/* 16Mbit */
+	{ 0x15, 0xEF, 0x4016, "Winbond W25Q32.V", 4096, 64 },	/* 32Mbit */
+	{ 0x15, 0xEF, 0x6016, "Winbond W25Q32.W", 4096, 64 },	/* 32Mbit */
 	{ 0 }
 };
 
