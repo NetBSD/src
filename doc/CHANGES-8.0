@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.109 2018/01/31 18:03:48 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.110 2018/01/31 19:40:52 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -9318,3 +9318,25 @@ sys/dev/usb/uvideo.c				1.46
 	use uninitialized pktsize in error path.
 	[skrll, ticket #509]
 
+external/public-domain/tz/dist/Makefile         up to 1.1.1.19
+external/public-domain/tz/dist/NEWS             up to 1.1.1.20
+external/public-domain/tz/dist/README           up to 1.1.1.6
+external/public-domain/tz/dist/TZDATA_VERSION   up to 1.10
+external/public-domain/tz/dist/africa           up to 1.1.1.13
+external/public-domain/tz/dist/asia             up to 1.1.1.18
+external/public-domain/tz/dist/australasia      up to 1.1.1.13
+external/public-domain/tz/dist/backzone         up to 1.1.1.13
+external/public-domain/tz/dist/europe           up to 1.1.1.19
+external/public-domain/tz/dist/leap-seconds.list up to 1.1.1.9
+external/public-domain/tz/dist/leapseconds      up to 1.1.1.10
+external/public-domain/tz/dist/northamerica     up to 1.1.1.18
+external/public-domain/tz/dist/southamerica     up to 1.1.1.13
+external/public-domain/tz/dist/theory.html      up to 1.1.1.2
+external/public-domain/tz/dist/version          up to 1.1.1.7
+external/public-domain/tz/dist/zishrink.awk     up to 1.1.1.2
+external/public-domain/tz/dist/zone.tab         up to 1.1.1.13
+external/public-domain/tz/dist/zone1970.tab     up to 1.1.1.15
+doc/3RDPARTY					1.1496 (via patch)
+
+	Import tzdata2018c.
+	[kre, ticket #513]
