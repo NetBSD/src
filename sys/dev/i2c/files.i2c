@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.81 2018/01/05 03:07:15 uwe Exp $
+#	$NetBSD: files.i2c,v 1.82 2018/02/01 21:44:17 macallan Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -294,6 +294,11 @@ file dev/i2c/am2315.c				am2315temp
 device	sy8106a
 attach	sy8106a at iic
 file	dev/i2c/sy8106a.c			sy8106a
+
+# Maxim DS1631 High-Precision Digital Thermometer and Thermostat
+device	dstemp: sysmon_envsys
+attach	dstemp at iic
+file	dev/i2c/dstemp.c			dstemp
 
 # EM3027 Real Time Clock and Temperature Sensor
 device	em3027rtc: sysmon_envsys
