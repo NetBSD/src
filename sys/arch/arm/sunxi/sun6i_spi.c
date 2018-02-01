@@ -1,4 +1,4 @@
-/*	$NetBSD: sun6i_spi.c,v 1.1 2018/01/31 16:24:11 jakllsch Exp $	*/
+/*	$NetBSD: sun6i_spi.c,v 1.2 2018/02/01 14:50:36 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2018 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun6i_spi.c,v 1.1 2018/01/31 16:24:11 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun6i_spi.c,v 1.2 2018/02/01 14:50:36 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -169,8 +169,17 @@ sun6ispi_attach(device_t parent, device_t self, void *aux)
 
 	gcr = SPI_GCR_SRST;
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SPI_GCR, gcr);
-	do {
-	} while ((bus_space_read_4(sc->sc_iot, sc->sc_ioh, SPI_GCR) & SPI_GCR_SRST) != 0);
+	for (u_int i = 0; ; i++) {
+		if (i >= 1000000) {
+			aprint_error_dev(self, "reset timeout\n");
+			return;
+		}
+		gcr = bus_space_read_4(sc->sc_iot, sc->sc_ioh, SPI_GCR);
+		if ((gcr & SPI_GCR_SRST) == 0)
+			break;
+		else
+			DELAY(1);
+	}
 	gcr = SPI_GCR_TP_EN | SPI_GCR_MODE | SPI_GCR_EN;
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SPI_GCR, gcr);
 
