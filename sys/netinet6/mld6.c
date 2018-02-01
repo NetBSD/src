@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.90 2017/11/17 07:37:12 ozaki-r Exp $	*/
+/*	$NetBSD: mld6.c,v 1.91 2018/02/01 07:49:19 maxv Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.90 2017/11/17 07:37:12 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.91 2018/02/01 07:49:19 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -153,8 +153,7 @@ static struct ip6_pktopts ip6_opts;
 static void mld_start_listening(struct in6_multi *);
 static void mld_stop_listening(struct in6_multi *);
 
-static struct mld_hdr * mld_allocbuf(struct mbuf **, int, struct in6_multi *,
-	int);
+static struct mld_hdr *mld_allocbuf(struct mbuf **, struct in6_multi *, int);
 static void mld_sendpkt(struct in6_multi *, int, const struct in6_addr *);
 static void mld_starttimer(struct in6_multi *);
 static void mld_stoptimer(struct in6_multi *);
@@ -367,8 +366,9 @@ mld_input(struct mbuf *m, int off)
 		goto out_nodrop;
 	}
 
+	ip6 = mtod(m, struct ip6_hdr *);
+
 	/* source address validation */
-	ip6 = mtod(m, struct ip6_hdr *);/* in case mpullup */
 	if (!IN6_IS_ADDR_LINKLOCAL(&ip6->ip6_src)) {
 		/*
 		 * RFC3590 allows the IPv6 unspecified address as the source
@@ -414,7 +414,7 @@ mld_input(struct mbuf *m, int off)
 	 *
 	 * In Non-Listener state, we simply don't have a membership record.
 	 * In Delaying Listener state, our timer is running (in6m->in6m_timer)
-	 * In Idle Listener state, our timer is not running 
+	 * In Idle Listener state, our timer is not running
 	 * (in6m->in6m_timer==IN6M_TIMER_UNDEF)
 	 *
 	 * The flag is in6m->in6m_state, it is set to MLD_OTHERLISTENER if
@@ -548,8 +548,7 @@ out_nodrop:
  * returning to avoid locking against myself in ip6_output.
  */
 static void
-mld_sendpkt(struct in6_multi *in6m, int type, 
-	const struct in6_addr *dst)
+mld_sendpkt(struct in6_multi *in6m, int type, const struct in6_addr *dst)
 {
 	struct mbuf *mh;
 	struct mld_hdr *mldh;
@@ -582,7 +581,7 @@ mld_sendpkt(struct in6_multi *in6m, int type,
 	}
 
 	/* Allocate two mbufs to store IPv6 header and MLD header */
-	mldh = mld_allocbuf(&mh, sizeof(struct mld_hdr), in6m, type);
+	mldh = mld_allocbuf(&mh, in6m, type);
 	if (mldh == NULL) {
 		ia6_release(ia, &psref);
 		curlwp_bindx(bound);
@@ -590,9 +589,9 @@ mld_sendpkt(struct in6_multi *in6m, int type,
 	}
 
 	/* fill src/dst here */
- 	ip6 = mtod(mh, struct ip6_hdr *);
- 	ip6->ip6_src = ia ? ia->ia_addr.sin6_addr : in6addr_any;
- 	ip6->ip6_dst = dst ? *dst : in6m->in6m_addr;
+	ip6 = mtod(mh, struct ip6_hdr *);
+	ip6->ip6_src = ia ? ia->ia_addr.sin6_addr : in6addr_any;
+	ip6->ip6_dst = dst ? *dst : in6m->in6m_addr;
 	ia6_release(ia, &psref);
 	curlwp_bindx(bound);
 
@@ -612,7 +611,7 @@ mld_sendpkt(struct in6_multi *in6m, int type,
 	 */
 	im6o.im6o_multicast_loop = (ip6_mrouter != NULL);
 
-	/* increment output statictics */
+	/* increment output statistics */
 	ICMP6_STATINC(ICMP6_STAT_OUTHIST + type);
 	icmp6_ifstat_inc(ifp, ifs6_out_msg);
 	switch (type) {
@@ -637,8 +636,7 @@ mld_sendpkt(struct in6_multi *in6m, int type,
 }
 
 static struct mld_hdr *
-mld_allocbuf(struct mbuf **mh, int len, struct in6_multi *in6m,
-    int type)
+mld_allocbuf(struct mbuf **mh, struct in6_multi *in6m, int type)
 {
 	struct mbuf *md;
 	struct mld_hdr *mldh;
@@ -662,7 +660,7 @@ mld_allocbuf(struct mbuf **mh, int len, struct in6_multi *in6m,
 	md->m_next = NULL;
 
 	m_reset_rcvif((*mh));
-	(*mh)->m_pkthdr.len = sizeof(struct ip6_hdr) + len;
+	(*mh)->m_pkthdr.len = sizeof(struct ip6_hdr) + sizeof(struct mld_hdr);
 	(*mh)->m_len = sizeof(struct ip6_hdr);
 	MH_ALIGN(*mh, sizeof(struct ip6_hdr));
 
@@ -678,9 +676,9 @@ mld_allocbuf(struct mbuf **mh, int len, struct in6_multi *in6m,
 	/* ip6_src/dst will be set by mld_sendpkt() or mld_sendbuf() */
 
 	/* fill in the MLD header as much as possible */
-	md->m_len = len;
+	md->m_len = sizeof(struct mld_hdr);
 	mldh = mtod(md, struct mld_hdr *);
-	memset(mldh, 0, len);
+	memset(mldh, 0, sizeof(struct mld_hdr));
 	mldh->mld_type = type;
 	return mldh;
 }
@@ -706,8 +704,8 @@ in6m_unref(struct in6_multi *in6m)
  * Add an address to the list of IP6 multicast addresses for a given interface.
  */
 struct	in6_multi *
-in6_addmulti(struct in6_addr *maddr6, struct ifnet *ifp, 
-	int *errorp, int timer)
+in6_addmulti(struct in6_addr *maddr6, struct ifnet *ifp, int *errorp,
+    int timer)
 {
 	struct	sockaddr_in6 sin6;
 	struct	in6_multi *in6m;
@@ -721,7 +719,7 @@ in6_addmulti(struct in6_addr *maddr6, struct ifnet *ifp,
 	in6m = in6_lookup_multi(maddr6, ifp);
 	if (in6m != NULL) {
 		/*
-		 * Found it; just increment the refrence count.
+		 * Found it; just increment the reference count.
 		 */
 		in6m->in6m_refcount++;
 	} else {
@@ -729,8 +727,7 @@ in6_addmulti(struct in6_addr *maddr6, struct ifnet *ifp,
 		 * New address; allocate a new multicast record
 		 * and link it into the interface's multicast list.
 		 */
-		in6m = (struct in6_multi *)
-			malloc(sizeof(*in6m), M_IPMADDR, M_NOWAIT|M_ZERO);
+		in6m = malloc(sizeof(*in6m), M_IPMADDR, M_NOWAIT|M_ZERO);
 		if (in6m == NULL) {
 			*errorp = ENOBUFS;
 			goto out;
@@ -922,8 +919,7 @@ in6_multi_locked(int op)
 }
 
 struct in6_multi_mship *
-in6_joingroup(struct ifnet *ifp, struct in6_addr *addr, 
-	int *errorp, int timer)
+in6_joingroup(struct ifnet *ifp, struct in6_addr *addr, int *errorp, int timer)
 {
 	struct in6_multi_mship *imm;
 
