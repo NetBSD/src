@@ -1,4 +1,4 @@
-/*	$NetBSD: if_athn_usb.c,v 1.25 2018/01/21 13:57:11 skrll Exp $	*/
+/*	$NetBSD: if_athn_usb.c,v 1.26 2018/02/01 16:49:34 maxv Exp $	*/
 /*	$OpenBSD: if_athn_usb.c,v 1.12 2013/01/14 09:50:31 jsing Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.25 2018/01/21 13:57:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.26 2018/02/01 16:49:34 maxv Exp $");
 
 #ifdef	_KERNEL_OPT
 #include "opt_inet.h"
@@ -2259,7 +2259,7 @@ athn_usb_rx_frame(struct athn_usb_softc *usc, struct mbuf *m)
 	if (!(wh->i_fc[0] & IEEE80211_FC0_TYPE_CTL)) {
 		u_int hdrlen = ieee80211_anyhdrsize(wh);
 		if (hdrlen & 3) {
-			ovbcopy(wh, (uint8_t *)wh + 2, hdrlen);
+			memmove((uint8_t *)wh + 2, wh, hdrlen);
 			m_adj(m, 2);
 		}
 	}

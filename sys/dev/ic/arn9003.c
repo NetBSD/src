@@ -1,4 +1,4 @@
-/*	$NetBSD: arn9003.c,v 1.11 2017/05/23 02:19:14 ozaki-r Exp $	*/
+/*	$NetBSD: arn9003.c,v 1.12 2018/02/01 16:49:34 maxv Exp $	*/
 /*	$OpenBSD: ar9003.c,v 1.25 2012/10/20 09:53:32 stsp Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arn9003.c,v 1.11 2017/05/23 02:19:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arn9003.c,v 1.12 2018/02/01 16:49:34 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -1053,7 +1053,7 @@ ar9003_rx_process(struct athn_softc *sc, int qid)
 	if (!(wh->i_fc[0] & IEEE80211_FC0_TYPE_CTL)) {
 		u_int hdrlen = ieee80211_anyhdrsize(wh);
 		if (hdrlen & 3) {
-			ovbcopy(wh, (uint8_t *)wh + 2, hdrlen);
+			memmove((uint8_t *)wh + 2, wh, hdrlen);
 			m_adj(m, 2);
 		}
 	}
