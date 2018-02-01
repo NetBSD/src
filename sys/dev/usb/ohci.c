@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.276 2017/11/17 08:22:02 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.277 2018/02/01 09:47:47 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.276 2017/11/17 08:22:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.277 2018/02/01 09:47:47 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -377,12 +377,10 @@ ohci_detach(struct ohci_softc *sc, int flags)
 	if (rv != 0)
 		return rv;
 
-	callout_halt(&sc->sc_tmo_rhsc, &sc->sc_lock);
-
-	usb_delay_ms(&sc->sc_bus, 300); /* XXX let stray task complete */
-	callout_destroy(&sc->sc_tmo_rhsc);
-
 	softint_disestablish(sc->sc_rhsc_si);
+
+	callout_halt(&sc->sc_tmo_rhsc, NULL);
+	callout_destroy(&sc->sc_tmo_rhsc);
 
 	cv_destroy(&sc->sc_softwake_cv);
 
@@ -1111,6 +1109,7 @@ ohci_shutdown(device_t self, int flags)
 	OHCIHIST_FUNC(); OHCIHIST_CALLED();
 
 	DPRINTF("stopping the HC", 0, 0, 0, 0);
+	OWRITE4(sc, OHCI_INTERRUPT_DISABLE, OHCI_ALL_INTRS);
 	OWRITE4(sc, OHCI_CONTROL, OHCI_HCFS_RESET);
 	return true;
 }
