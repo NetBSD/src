@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1170 2018/01/24 09:51:25 wiz Exp $
+# $NetBSD: mi,v 1.1171 2018/02/01 20:50:23 kamil Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1168,6 +1168,7 @@
 ./usr/include/gcc-4.5				base-obsolete		obsolete
 ./usr/include/gcc-4.8				base-c-usr
 ./usr/include/gcc-5				base-c-usr
+./usr/include/gcc-5/sanitizer			base-c-usr
 ./usr/include/gssapi				base-c-usr
 ./usr/include/gssapi/rpc			base-obsolete		obsolete
 ./usr/include/isofs				base-c-usr
