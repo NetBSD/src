@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.47 2017/11/17 08:22:02 skrll Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.48 2018/02/01 09:55:37 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.47 2017/11/17 08:22:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.48 2018/02/01 09:55:37 msaitoh Exp $");
 
 #include "opt_usb.h"
 
@@ -641,8 +641,6 @@ dwc2_root_intr_abort(struct usbd_xfer *xfer)
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 	KASSERT(xfer->ux_pipe->up_intrxfer == xfer);
-
-	sc->sc_intrxfer = NULL;
 
 	xfer->ux_status = USBD_CANCELLED;
 	usb_transfer_complete(xfer);
