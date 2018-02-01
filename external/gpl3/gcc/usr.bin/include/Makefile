@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.9 2017/10/08 20:40:06 christos Exp $
+#	$NetBSD: Makefile,v 1.10 2018/02/01 21:10:46 kamil Exp $
 
 .include "../Makefile.inc"
+
+SUBDIR=	sanitizer
 
 .if exists(${.CURDIR}/arch/${GCC_MACHINE_ARCH}.mk)
 .include "${.CURDIR}/arch/${GCC_MACHINE_ARCH}.mk"
@@ -25,6 +27,7 @@ CLEANFILES+=	mm_malloc.h
 
 INCSDIR=	/usr/include/gcc-5
 
+.include <bsd.subdir.mk>
 .include <bsd.prog.mk>
 
 .PATH: ${G_EXTRA_HEADERS:H:O:u}
