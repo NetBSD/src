@@ -1,4 +1,4 @@
-/*	$NetBSD: route6.c,v 1.23 2008/04/15 03:57:04 thorpej Exp $	*/
+/*	$NetBSD: route6.c,v 1.24 2018/02/01 16:17:00 maxv Exp $	*/
 /*	$KAME: route6.c,v 1.22 2000/12/03 00:54:00 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route6.c,v 1.23 2008/04/15 03:57:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route6.c,v 1.24 2018/02/01 16:17:00 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -57,12 +57,10 @@ static int ip6_rthdr0(struct mbuf *, struct ip6_hdr *, struct ip6_rthdr0 *);
 int
 route6_input(struct mbuf **mp, int *offp, int proto)
 {
-	struct ip6_hdr *ip6;
 	struct mbuf *m = *mp;
 	struct ip6_rthdr *rh;
 	int off = *offp, rhlen;
 
-	ip6 = mtod(m, struct ip6_hdr *);
 	IP6_EXTHDR_GET(rh, struct ip6_rthdr *, m, off, sizeof(*rh));
 	if (rh == NULL) {
 		IP6_STATINC(IP6_STAT_TOOSHORT);
@@ -113,7 +111,7 @@ route6_input(struct mbuf **mp, int *offp, int proto)
 		}
 		IP6_STATINC(IP6_STAT_BADOPTIONS);
 		icmp6_error(m, ICMP6_PARAM_PROB, ICMP6_PARAMPROB_HEADER,
-			    (char *)&rh->ip6r_type - (char *)ip6);
+		    off + offsetof(struct ip6_rthdr, ip6r_type));
 		return (IPPROTO_DONE);
 	}
 
