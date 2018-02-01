@@ -1,4 +1,4 @@
-#	$NetBSD: t_tap.sh,v 1.6 2016/11/25 08:51:16 ozaki-r Exp $
+#	$NetBSD: t_tap.sh,v 1.7 2018/02/01 05:22:02 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -51,23 +51,7 @@ tap_create_destroy_body()
 
 	rump_server_start $SOCK_LOCAL netinet6 tap
 
-	export RUMP_SERVER=${SOCK_LOCAL}
-
-	# Create and destroy (no address)
-	atf_check -s exit:0 rump.ifconfig tap0 create
-	atf_check -s exit:0 rump.ifconfig tap0 destroy
-
-	# Create and destroy (with an IPv4 address)
-	atf_check -s exit:0 rump.ifconfig tap0 create
-	atf_check -s exit:0 rump.ifconfig tap0 $IP4_TAP
-	atf_check -s exit:0 rump.ifconfig tap0 up
-	atf_check -s exit:0 rump.ifconfig tap0 destroy
-
-	# Create and destroy (with an IPv6 address)
-	atf_check -s exit:0 rump.ifconfig tap0 create
-	atf_check -s exit:0 rump.ifconfig tap0 inet6 $IP6_TAP
-	atf_check -s exit:0 rump.ifconfig tap0 up
-	atf_check -s exit:0 rump.ifconfig tap0 destroy
+	test_create_destroy_common $SOCK_LOCAL tap0 true
 }
 
 tap_create_destroy_cleanup()

@@ -1,4 +1,4 @@
-#	$NetBSD: net_common.sh,v 1.25 2017/11/24 03:28:49 kre Exp $
+#	$NetBSD: net_common.sh,v 1.26 2018/02/01 05:22:01 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -421,4 +421,46 @@ skip_if_qemu()
 	then
 	    atf_skip "unreliable under qemu, skip until PR kern/43997 fixed"
 	fi
+}
+
+test_create_destroy_common()
+{
+	local sock=$1
+	local ifname=$2
+	local test_address=${3:-false}
+	local ipv4="10.0.0.1/24"
+	local ipv6="fc00::1"
+
+	export RUMP_SERVER=$sock
+
+	atf_check -s exit:0 rump.ifconfig $ifname create
+	atf_check -s exit:0 rump.ifconfig $ifname destroy
+
+	atf_check -s exit:0 rump.ifconfig $ifname create
+	atf_check -s exit:0 rump.ifconfig $ifname up
+	atf_check -s exit:0 rump.ifconfig $ifname down
+	atf_check -s exit:0 rump.ifconfig $ifname destroy
+
+	# Destroy while UP
+	atf_check -s exit:0 rump.ifconfig $ifname create
+	atf_check -s exit:0 rump.ifconfig $ifname up
+	atf_check -s exit:0 rump.ifconfig $ifname destroy
+
+	if ! $test_address; then
+		return
+	fi
+
+	# With an IPv4 address
+	atf_check -s exit:0 rump.ifconfig $ifname create
+	atf_check -s exit:0 rump.ifconfig $ifname inet $ipv4
+	atf_check -s exit:0 rump.ifconfig $ifname up
+	atf_check -s exit:0 rump.ifconfig $ifname destroy
+
+	# With an IPv6 address
+	atf_check -s exit:0 rump.ifconfig $ifname create
+	atf_check -s exit:0 rump.ifconfig $ifname inet6 $ipv6
+	atf_check -s exit:0 rump.ifconfig $ifname up
+	atf_check -s exit:0 rump.ifconfig $ifname destroy
+
+	unset RUMP_SERVER
 }

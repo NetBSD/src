@@ -1,4 +1,4 @@
-#	$NetBSD: t_bridge.sh,v 1.17 2017/03/11 04:24:52 ozaki-r Exp $
+#	$NetBSD: t_bridge.sh,v 1.18 2018/02/01 05:22:01 ozaki-r Exp $
 #
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -40,10 +40,18 @@ IP6BR2=fc00::12
 DEBUG=${DEBUG:-false}
 TIMEOUT=5
 
+atf_test_case bridge_create_destroy cleanup
 atf_test_case bridge_ipv4 cleanup
 atf_test_case bridge_ipv6 cleanup
 atf_test_case bridge_member_ipv4 cleanup
 atf_test_case bridge_member_ipv6 cleanup
+
+bridge_create_destroy_head()
+{
+
+	atf_set "descr" "Test creating/destroying bridge interfaces"
+	atf_set "require.progs" "rump_server"
+}
 
 bridge_ipv4_head()
 {
@@ -312,6 +320,14 @@ test_ping6_member()
 	rump.ifconfig -v shmif0
 }
 
+bridge_create_destroy_body()
+{
+
+	rump_server_start $SOCK1 bridge
+
+	test_create_destroy_common $SOCK1 bridge0
+}
+
 bridge_ipv4_body()
 {
 	setup
@@ -392,6 +408,13 @@ bridge_member_ipv6_body()
 	rump_server_destroy_ifaces
 }
 
+bridge_create_destroy_cleanup()
+{
+
+	$DEBUG && dump
+	cleanup
+}
+
 bridge_ipv4_cleanup()
 {
 
@@ -422,6 +445,8 @@ bridge_member_ipv6_cleanup()
 
 atf_init_test_cases()
 {
+
+	atf_add_test_case bridge_create_destroy
 	atf_add_test_case bridge_ipv4
 	atf_add_test_case bridge_ipv6
 	atf_add_test_case bridge_member_ipv4

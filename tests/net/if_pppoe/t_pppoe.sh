@@ -1,4 +1,4 @@
-#	$NetBSD: t_pppoe.sh,v 1.17 2017/03/28 01:27:46 ozaki-r Exp $
+#	$NetBSD: t_pppoe.sh,v 1.18 2018/02/01 05:22:01 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -38,6 +38,29 @@ BUS=bus0
 TIMEOUT=3
 WAITTIME=10
 DEBUG=${DEBUG:-false}
+
+atf_test_case pppoe_create_destroy cleanup
+pppoe_create_destroy_head()
+{
+
+	atf_set "descr" "Test creating/destroying pppoe interfaces"
+	atf_set "require.progs" "rump_server"
+}
+
+pppoe_create_destroy_body()
+{
+
+	rump_server_start $CLIENT netinet6 pppoe
+
+	test_create_destroy_common $CLIENT pppoe0 true
+}
+
+pppoe_create_destroy_cleanup()
+{
+
+	$DEBUG && dump
+	cleanup
+}
 
 setup()
 {
@@ -403,6 +426,8 @@ pppoe6_chap_cleanup()
 
 atf_init_test_cases()
 {
+
+	atf_add_test_case pppoe_create_destroy
 	atf_add_test_case pppoe_pap
 	atf_add_test_case pppoe_chap
 	atf_add_test_case pppoe6_pap

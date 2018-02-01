@@ -1,4 +1,4 @@
-#	$NetBSD: t_vlan.sh,v 1.7 2017/11/23 04:59:49 kre Exp $
+#	$NetBSD: t_vlan.sh,v 1.8 2018/02/01 05:22:02 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -42,6 +42,9 @@ DEBUG=${DEBUG:-false}
 vlan_create_destroy_body_common()
 {
 	export RUMP_SERVER=${SOCK_LOCAL}
+
+	atf_check -s exit:0 rump.ifconfig vlan0 create
+	atf_check -s exit:0 rump.ifconfig vlan0 destroy
 
 	atf_check -s exit:0 rump.ifconfig vlan0 create
 	atf_check -s exit:0 rump.ifconfig vlan0 up
