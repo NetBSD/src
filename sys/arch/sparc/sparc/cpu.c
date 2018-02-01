@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.252 2018/01/17 07:38:20 mrg Exp $ */
+/*	$NetBSD: cpu.c,v 1.253 2018/02/01 22:58:44 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.252 2018/01/17 07:38:20 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.253 2018/02/01 22:58:44 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -363,7 +363,7 @@ cpu_init_evcnt(struct cpu_info *cpi)
 	 * The "savefp null" counter should go away when the NULL
 	 * struct fpstate * bug is fixed.
 	 */
-	evcnt_attach_dynamic(&cpi->ci_savefpstate, EVCNT_TYPE_MISC,
+	evcnt_attach_dynamic(&cpi->ci_savefpstate, EVCNT_TYPE_INTR,
 			     NULL, cpu_name(cpi), "savefp ipi");
 	evcnt_attach_dynamic(&cpi->ci_savefpstate_null, EVCNT_TYPE_MISC,
 			     NULL, cpu_name(cpi), "savefp null ipi");
