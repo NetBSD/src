@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_mbuf.c,v 1.16 2017/05/19 04:34:09 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec_mbuf.c,v 1.17 2018/02/01 17:16:11 maxv Exp $	*/
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_mbuf.c,v 1.16 2017/05/19 04:34:09 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_mbuf.c,v 1.17 2018/02/01 17:16:11 maxv Exp $");
 
 /*
  * IPsec-specific mbuf routines.
@@ -299,8 +299,8 @@ m_makespace(struct mbuf *m0, int skip, int hlen, int *off)
 		 * so there's space to write the new header.
 		 */
 		/* XXX can this be memcpy? does it handle overlap? */
-		ovbcopy(mtod(m, char *) + skip,
-			mtod(m, char *) + skip + hlen, remain);
+		memmove(mtod(m, char *) + skip + hlen,
+			mtod(m, char *) + skip, remain);
 		m->m_len += hlen;
 		*off = skip;
 	}
@@ -439,8 +439,8 @@ m_striphdr(struct mbuf *m, int skip, int hlen)
 		 * the remainder of the mbuf down over the header.
 		 */
 		IPSEC_STATINC(IPSEC_STAT_INPUT_MIDDLE);
-		ovbcopy(mtod(m1, u_char *) + roff + hlen,
-		      mtod(m1, u_char *) + roff,
+		memmove(mtod(m1, u_char *) + roff,
+		      mtod(m1, u_char *) + roff + hlen,
 		      m1->m_len - (roff + hlen));
 		m1->m_len -= hlen;
 		m->m_pkthdr.len -= hlen;
