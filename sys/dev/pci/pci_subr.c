@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.197 2017/12/18 04:48:28 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.198 2018/02/01 02:50:51 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.197 2017/12/18 04:48:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.198 2018/02/01 02:50:51 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -2856,7 +2856,7 @@ pci_conf_print_pcie_power(uint8_t base, unsigned int scale)
 			s = "275W < x <= 300W";
 			break;
 		default:
-			s = "reserved for above 300W";
+			s = "reserved for greater than 300W";
 			break;
 		}
 		printf("%s\n", s);
