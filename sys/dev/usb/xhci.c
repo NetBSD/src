@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.84 2018/01/30 08:53:39 msaitoh Exp $	*/
+/*	$NetBSD: xhci.c,v 1.85 2018/02/01 09:55:37 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.84 2018/01/30 08:53:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.85 2018/02/01 09:55:37 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -3659,14 +3659,11 @@ static void
 xhci_root_intr_abort(struct usbd_xfer *xfer)
 {
 	struct xhci_softc * const sc = XHCI_XFER2SC(xfer);
-	const size_t bn = XHCI_XFER2BUS(xfer) == &sc->sc_bus ? 0 : 1;
 
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 	KASSERT(xfer->ux_pipe->up_intrxfer == xfer);
-
-	sc->sc_intrxfer[bn] = NULL;
 
 	xfer->ux_status = USBD_CANCELLED;
 	usb_transfer_complete(xfer);
