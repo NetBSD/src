@@ -1,4 +1,4 @@
-#	$NetBSD: t_gif.sh,v 1.11 2017/08/03 03:16:26 ozaki-r Exp $
+#	$NetBSD: t_gif.sh,v 1.12 2018/02/01 05:22:01 ozaki-r Exp $
 #
 # Copyright (c) 2015 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -63,6 +63,29 @@ ROUTER2_GIFIP6_RECURSIVE2=fc00:204::1
 
 DEBUG=${DEBUG:-false}
 TIMEOUT=5
+
+atf_test_case gif_create_destroy cleanup
+gif_create_destroy_head()
+{
+
+	atf_set "descr" "Test creating/destroying gif interfaces"
+	atf_set "require.progs" "rump_server"
+}
+
+gif_create_destroy_body()
+{
+
+	rump_server_start $SOCK1 netinet6 gif
+
+	test_create_destroy_common $SOCK1 gif0 true
+}
+
+gif_create_destroy_cleanup()
+{
+
+	$DEBUG && dump
+	cleanup
+}
 
 setup_router()
 {
@@ -757,6 +780,9 @@ add_test_allproto()
 
 atf_init_test_cases()
 {
+
+	atf_add_test_case gif_create_destroy
+
 	add_test_allproto basic "basic tests"
 	add_test_allproto ioctl "ioctl tests"
 	add_test_allproto recursive "recursive check tests"
