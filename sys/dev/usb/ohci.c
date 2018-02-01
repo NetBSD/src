@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.277 2018/02/01 09:47:47 msaitoh Exp $	*/
+/*	$NetBSD: ohci.c,v 1.278 2018/02/01 09:55:37 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.277 2018/02/01 09:47:47 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.278 2018/02/01 09:55:37 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2590,8 +2590,6 @@ ohci_root_intr_abort(struct usbd_xfer *xfer)
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 	KASSERT(xfer->ux_pipe->up_intrxfer == xfer);
-
-	sc->sc_intrxfer = NULL;
 
 	xfer->ux_status = USBD_CANCELLED;
 	usb_transfer_complete(xfer);
