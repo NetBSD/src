@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.160 2018/01/30 14:49:25 maxv Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.161 2018/02/01 15:53:16 maxv Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.160 2018/01/30 14:49:25 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.161 2018/02/01 15:53:16 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -475,6 +475,7 @@ rip6_output(struct mbuf *m, struct socket * const so,
 
 	if (so->so_proto->pr_protocol == IPPROTO_ICMPV6 ||
 	    in6p->in6p_cksum != -1) {
+		const uint8_t nxt = ip6->ip6_nxt;
 		int off;
 		u_int16_t sum;
 
@@ -496,7 +497,7 @@ rip6_output(struct mbuf *m, struct socket * const so,
 			error = ENOBUFS;
 			goto bad;
 		}
-		sum = in6_cksum(m, ip6->ip6_nxt, sizeof(*ip6), plen);
+		sum = in6_cksum(m, nxt, sizeof(*ip6), plen);
 		m = m_copyback_cow(m, off, sizeof(sum), (void *)&sum,
 		    M_DONTWAIT);
 		if (m == NULL) {
