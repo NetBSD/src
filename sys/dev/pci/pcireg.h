@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.136 2017/12/18 04:48:28 msaitoh Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.137 2018/02/01 09:09:14 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -2041,6 +2041,7 @@ struct pci_rom {
 #define	PCI_L1PM_CAP_ASPM12	__BIT(2)	/* ASPM L1.2 Supported */
 #define	PCI_L1PM_CAP_ASPM11	__BIT(3)	/* ASPM L1.1 Supported */
 #define	PCI_L1PM_CAP_L1PM	__BIT(4)	/* L1 PM Substates Supported */
+#define	PCI_L1PM_CAP_LA	__BIT(5)		/* Link Activation Supported */
 #define	PCI_L1PM_CAP_PCMRT	__BITS(15, 8) /*Port Common Mode Restore Time*/
 #define	PCI_L1PM_CAP_PTPOSCALE	__BITS(17, 16)	/* Port T_POWER_ON Scale */
 #define	PCI_L1PM_CAP_PTPOVAL	__BITS(23, 19)	/* Port T_POWER_ON Value */
@@ -2049,12 +2050,16 @@ struct pci_rom {
 #define	PCI_L1PM_CTL1_PCIPM11_EN __BIT(1)	/* PCI-PM L1.1 Enable */
 #define	PCI_L1PM_CTL1_ASPM12_EN	__BIT(2)	/* ASPM L1.2 Enable */
 #define	PCI_L1PM_CTL1_ASPM11_EN	__BIT(3)	/* ASPM L1.1 Enable */
+#define	PCI_L1PM_CTL1_LAIE	__BIT(4)	/* Link Activation Int. En. */
+#define	PCI_L1PM_CTL1_LA	__BIT(5)	/* Link Activation Control */
 #define	PCI_L1PM_CTL1_CMRT	__BITS(15, 8)	/* Common Mode Restore Time */
 #define	PCI_L1PM_CTL1_LTRTHVAL	__BITS(25, 16)	/* LTR L1.2 THRESHOLD Value */
 #define	PCI_L1PM_CTL1_LTRTHSCALE __BITS(31, 29)	/* LTR L1.2 THRESHOLD Scale */
 #define	PCI_L1PM_CTL2	0x0c	/* Control Register 2 */
 #define	PCI_L1PM_CTL2_TPOSCALE	__BITS(1, 0)	/* T_POWER_ON Scale */
 #define	PCI_L1PM_CTL2_TPOVAL	__BITS(7, 3)	/* T_POWER_ON Value */
+#define	PCI_L1PM_STAT	0x10	/* Status Register */
+#define	PCI_L1PM_STAT_LA	__BIT(0)	/* Link Activation Status */
 
 /*
  * Extended capability ID: 0x001f

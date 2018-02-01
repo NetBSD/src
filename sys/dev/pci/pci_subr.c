@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.199 2018/02/01 08:18:47 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.200 2018/02/01 09:09:14 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.199 2018/02/01 08:18:47 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.200 2018/02/01 09:09:14 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -1769,10 +1769,10 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 	/* Capability Register */
 	reg = regs[o2i(capoff)];
 	printf("    Capability register: 0x%04x\n", reg >> 16);
-	pciever = (unsigned int)((reg & 0x000f0000) >> 16);
+	pciever = (unsigned int)(PCIE_XCAP_VER(reg));
 	printf("      Capability version: %u\n", pciever);
 	printf("      Device type: ");
-	switch ((reg & 0x00f00000) >> 20) {
+	switch (PCIE_XCAP_TYPE(reg)) {
 	case PCIE_XCAP_TYPE_PCIE_DEV:	/* 0x0 */
 		printf("PCI Express Endpoint device\n");
 		check_upstreamport = true;
@@ -3634,7 +3634,7 @@ pci_conf_print_sec_pcie_cap(const pcireg_t *regs, int extcapoff)
 	printf("    Lane Error Status register: 0x%08x\n", reg);
 
 	/* Get Max Link Width */
-	if (pci_conf_find_cap(regs, PCI_CAP_PCIEXPRESS, &pcie_capoff)){
+	if (pci_conf_find_cap(regs, PCI_CAP_PCIEXPRESS, &pcie_capoff)) {
 		reg = regs[o2i(pcie_capoff + PCIE_LCAP)];
 		maxlinkwidth = __SHIFTOUT(reg, PCIE_LCAP_MAX_WIDTH);
 	} else {
@@ -3873,6 +3873,7 @@ pci_conf_print_l1pm_cap(const pcireg_t *regs, int extcapoff)
 {
 	pcireg_t reg;
 	int scale, val;
+	int pcie_capoff;
 
 	printf("\n  L1 PM Substates\n");
 
@@ -3883,6 +3884,14 @@ pci_conf_print_l1pm_cap(const pcireg_t *regs, int extcapoff)
 	onoff("ASPM L1.2 Supported", reg, PCI_L1PM_CAP_ASPM12);
 	onoff("ASPM L1.1 Supported", reg, PCI_L1PM_CAP_ASPM11);
 	onoff("L1 PM Substates Supported", reg, PCI_L1PM_CAP_L1PM);
+	/* The Link Activation Supported bit is only for Downstream Port */
+	if (pci_conf_find_cap(regs, PCI_CAP_PCIEXPRESS, &pcie_capoff)) {
+		uint32_t t = regs[o2i(pcie_capoff)];
+
+		if ((t == PCIE_XCAP_TYPE_ROOT) || (t == PCIE_XCAP_TYPE_DOWN))
+			onoff("Link Activation Supported", reg,
+			    PCI_L1PM_CAP_LA);
+	}
 	printf("      Port Common Mode Restore Time: %uus\n",
 	    (unsigned int)__SHIFTOUT(reg, PCI_L1PM_CAP_PCMRT));
 	scale = pci_conf_l1pm_cap_tposcale(
@@ -3900,6 +3909,8 @@ pci_conf_print_l1pm_cap(const pcireg_t *regs, int extcapoff)
 	onoff("PCI-PM L1.1 Enable", reg, PCI_L1PM_CTL1_PCIPM11_EN);
 	onoff("ASPM L1.2 Enable", reg, PCI_L1PM_CTL1_ASPM12_EN);
 	onoff("ASPM L1.1 Enable", reg, PCI_L1PM_CTL1_ASPM11_EN);
+	onoff("Link Activation Interrupt Enable", reg, PCI_L1PM_CTL1_LAIE);
+	onoff("Link Activation Control", reg, PCI_L1PM_CTL1_LA);
 	printf("      Common Mode Restore Time: %uus\n",
 	    (unsigned int)__SHIFTOUT(reg, PCI_L1PM_CTL1_CMRT));
 	scale = PCI_LTR_SCALETONS(__SHIFTOUT(reg, PCI_L1PM_CTL1_LTRTHSCALE));
@@ -3916,6 +3927,12 @@ pci_conf_print_l1pm_cap(const pcireg_t *regs, int extcapoff)
 		printf("unknown\n");
 	else
 		printf("%dus\n", val * scale);
+
+	if (PCI_EXTCAPLIST_VERSION(regs[o2i(extcapoff)]) >= 2) {
+		reg = regs[o2i(extcapoff + PCI_L1PM_CTL2)];
+		printf("    L1 PM Substates Status register: 0x%08x\n", reg);
+		onoff("Link Activation Status", reg, PCI_L1PM_STAT_LA);
+	}
 }
 
 static void
