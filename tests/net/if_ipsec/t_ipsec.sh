@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec.sh,v 1.2 2018/01/11 07:58:22 ozaki-r Exp $
+#	$NetBSD: t_ipsec.sh,v 1.3 2018/02/01 05:22:01 ozaki-r Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -63,6 +63,29 @@ ROUTER2_IPSECIP6_RECURSIVE2=fc00:204::1
 
 DEBUG=${DEBUG:-false}
 TIMEOUT=7
+
+atf_test_case ipsecif_create_destroy cleanup
+ipsecif_create_destroy_head()
+{
+
+	atf_set "descr" "Test creating/destroying gif interfaces"
+	atf_set "require.progs" "rump_server"
+}
+
+ipsecif_create_destroy_body()
+{
+
+	rump_server_start $SOCK1 ipsec
+
+	test_create_destroy_common $SOCK1 ipsec0
+}
+
+ipsecif_create_destroy_cleanup()
+{
+
+	$DEBUG && dump
+	cleanup
+}
 
 setup_router()
 {
@@ -919,6 +942,9 @@ add_test_allproto()
 
 atf_init_test_cases()
 {
+
+	atf_add_test_case ipsecif_create_destroy
+
 	add_test_allproto basic "basic tests"
 	add_test_allproto ioctl "ioctl tests"
 	add_test_allproto recursive "recursive check tests"
