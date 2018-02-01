@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsport.h,v 1.3 2016/12/13 22:52:46 pgoyette Exp $	*/
+/*	$NetBSD: nfsport.h,v 1.4 2018/02/01 17:22:45 maxv Exp $	*/
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  * FreeBSD: head/sys/fs/nfs/nfsport.h 304026 2016-08-12 22:44:59Z rmacklem 
- * $NetBSD: nfsport.h,v 1.3 2016/12/13 22:52:46 pgoyette Exp $
+ * $NetBSD: nfsport.h,v 1.4 2018/02/01 17:22:45 maxv Exp $
  */
 
 #ifndef _NFS_NFSPORT_H_
@@ -751,12 +751,10 @@ int nfsmsleep(void *, void *, int, const char *, struct timespec *);
 /*
  * Macros for handling memory for different BSDen.
  * NFSBCOPY(src, dst, len) - copies len bytes, non-overlapping
- * NFSOVBCOPY(src, dst, len) - ditto, but data areas might overlap
  * NFSBCMP(cp1, cp2, len) - compare len bytes, return 0 if same
  * NFSBZERO(cp, len) - set len bytes to 0x0
  */
 #define	NFSBCOPY(s, d, l)	bcopy((s), (d), (l))
-#define	NFSOVBCOPY(s, d, l)	ovbcopy((s), (d), (l))
 #define	NFSBCMP(s, d, l)	bcmp((s), (d), (l))
 #define	NFSBZERO(s, l)		bzero((s), (l))
 
