@@ -138,6 +138,7 @@ iic*		at ki2c?
 
 admtemp* 	at iic?
 lmtemp* 	at iic?
+dstemp* 	at iic?
 deq* 		at iic?
 
 # Audio support
