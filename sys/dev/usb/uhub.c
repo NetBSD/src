@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.137 2017/10/28 00:37:12 pgoyette Exp $	*/
+/*	$NetBSD: uhub.c,v 1.138 2018/02/01 09:50:48 msaitoh Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 /*	$OpenBSD: uhub.c,v 1.86 2015/06/29 18:27:40 mpi Exp $ */
 
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.137 2017/10/28 00:37:12 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.138 2018/02/01 09:50:48 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -144,8 +144,9 @@ extern struct cfdriver uhub_cd;
 CFATTACH_DECL3_NEW(uhub, sizeof(struct uhub_softc), uhub_match,
     uhub_attach, uhub_detach, NULL, uhub_rescan, uhub_childdet,
     DVF_DETACH_SHUTDOWN);
-CFATTACH_DECL2_NEW(uroothub, sizeof(struct uhub_softc), uhub_match,
-    uhub_attach, uhub_detach, NULL, uhub_rescan, uhub_childdet);
+CFATTACH_DECL3_NEW(uroothub, sizeof(struct uhub_softc), uhub_match,
+    uhub_attach, uhub_detach, NULL, uhub_rescan, uhub_childdet,
+    DVF_DETACH_SHUTDOWN);
 
 /*
  * Setting this to 1 makes sure than an uhub attaches even at higher
