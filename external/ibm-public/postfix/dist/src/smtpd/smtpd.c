@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd.c,v 1.15 2018/02/01 03:29:41 christos Exp $	*/
+/*	$NetBSD: smtpd.c,v 1.16 2018/02/01 03:32:00 christos Exp $	*/
 
 /*++
 /* NAME
@@ -5050,9 +5050,9 @@ static void smtpd_proto(SMTPD_STATE *state)
 	    if (state->error_count >= var_smtpd_hard_erlim) {
 		state->reason = REASON_ERROR_LIMIT;
 		state->error_mask |= MAIL_ERROR_PROTOCOL;
-		pfilter_notify(1, vstream_fileno(state->client));
 		smtpd_chat_reply(state, "421 4.7.0 %s Error: too many errors",
 				 var_myhostname);
+		pfilter_notify(1, vstream_fileno(state->client));
 		break;
 	    }
 	    watchdog_pat();
