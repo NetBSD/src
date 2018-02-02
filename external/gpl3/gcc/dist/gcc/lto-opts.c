@@ -1,6 +1,6 @@
 /* LTO IL options.
 
-   Copyright (C) 2009-2015 Free Software Foundation, Inc.
+   Copyright (C) 2009-2016 Free Software Foundation, Inc.
    Contributed by Simon Baldwin <simonb@google.com>
 
 This file is part of GCC.
@@ -22,41 +22,13 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "options.h"
-#include "wide-int.h"
-#include "inchash.h"
+#include "backend.h"
+#include "target.h"
 #include "tree.h"
-#include "fold-const.h"
-#include "predict.h"
-#include "tm.h"
-#include "hard-reg-set.h"
-#include "input.h"
-#include "function.h"
-#include "basic-block.h"
-#include "tree-ssa-alias.h"
-#include "internal-fn.h"
-#include "gimple-expr.h"
-#include "is-a.h"
 #include "gimple.h"
-#include "bitmap.h"
-#include "flags.h"
-#include "opts.h"
-#include "options.h"
-#include "common/common-target.h"
-#include "diagnostic.h"
-#include "hash-map.h"
-#include "plugin-api.h"
-#include "ipa-ref.h"
 #include "cgraph.h"
 #include "lto-streamer.h"
-#include "lto-section-names.h"
+#include "opts.h"
 #include "toplev.h"
 
 /* Append the option piece OPT to the COLLECT_GCC_OPTIONS string

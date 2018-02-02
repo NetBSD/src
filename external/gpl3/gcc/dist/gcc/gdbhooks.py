@@ -1,5 +1,5 @@
 # Python hooks for gdb for debugging GCC
-# Copyright (C) 2013-2015 Free Software Foundation, Inc.
+# Copyright (C) 2013-2016 Free Software Foundation, Inc.
 
 # Contributed by David Malcolm <dmalcolm@redhat.com>
 
@@ -132,6 +132,8 @@ Instead (for now) you must access m_vecdata:
 """
 import os.path
 import re
+import sys
+import tempfile
 
 import gdb
 import gdb.printing
@@ -149,6 +151,12 @@ tree_code_class_dict = gdb.types.make_enum_dict(gdb.lookup_type('enum tree_code_
 tcc_type = tree_code_class_dict['tcc_type']
 tcc_declaration = tree_code_class_dict['tcc_declaration']
 
+# Python3 has int() with arbitrary precision (bignum).  Python2 int() is 32-bit
+# on 32-bit hosts but remote targets may have 64-bit pointers there; Python2
+# long() is always 64-bit but Python3 no longer has anything named long.
+def intptr(gdbval):
+    return long(gdbval) if sys.version_info.major == 2 else int(gdbval)
+
 class Tree:
     """
     Wrapper around a gdb.Value for a tree, with various methods
@@ -158,7 +166,7 @@ class Tree:
         self.gdbval = gdbval
 
     def is_nonnull(self):
-        return long(self.gdbval)
+        return intptr(self.gdbval)
 
     def TREE_CODE(self):
         """
@@ -197,7 +205,7 @@ class TreePrinter:
         # like gcc/print-tree.c:print_node_brief
         # #define TREE_CODE(NODE) ((enum tree_code) (NODE)->base.code)
         # tree_code_name[(int) TREE_CODE (node)])
-        if long(self.gdbval) == 0:
+        if intptr(self.gdbval) == 0:
             return '<tree 0x0>'
 
         val_TREE_CODE = self.node.TREE_CODE()
@@ -209,17 +217,17 @@ class TreePrinter:
         val_tclass = val_tree_code_type[val_TREE_CODE]
 
         val_tree_code_name = gdb.parse_and_eval('tree_code_name')
-        val_code_name = val_tree_code_name[long(val_TREE_CODE)]
-        #print val_code_name.string()
+        val_code_name = val_tree_code_name[intptr(val_TREE_CODE)]
+        #print(val_code_name.string())
 
-        result = '<%s 0x%x' % (val_code_name.string(), long(self.gdbval))
-        if long(val_tclass) == tcc_declaration:
+        result = '<%s 0x%x' % (val_code_name.string(), intptr(self.gdbval))
+        if intptr(val_tclass) == tcc_declaration:
             tree_DECL_NAME = self.node.DECL_NAME()
             if tree_DECL_NAME.is_nonnull():
                  result += ' %s' % tree_DECL_NAME.IDENTIFIER_POINTER()
             else:
                 pass # TODO: labels etc
-        elif long(val_tclass) == tcc_type:
+        elif intptr(val_tclass) == tcc_type:
             tree_TYPE_NAME = Tree(self.gdbval['type_common']['name'])
             if tree_TYPE_NAME.is_nonnull():
                 if tree_TYPE_NAME.TREE_CODE() == IDENTIFIER_NODE:
@@ -242,8 +250,8 @@ class CGraphNodePrinter:
         self.gdbval = gdbval
 
     def to_string (self):
-        result = '<cgraph_node* 0x%x' % long(self.gdbval)
-        if long(self.gdbval):
+        result = '<cgraph_node* 0x%x' % intptr(self.gdbval)
+        if intptr(self.gdbval):
             # symtab_node::name calls lang_hooks.decl_printable_name
             # default implementation (lhd_decl_printable_name) is:
             #    return IDENTIFIER_POINTER (DECL_NAME (decl));
@@ -261,12 +269,12 @@ class DWDieRefPrinter:
         self.gdbval = gdbval
 
     def to_string (self):
-        if long(self.gdbval) == 0:
+        if intptr(self.gdbval) == 0:
             return '<dw_die_ref 0x0>'
-        result = '<dw_die_ref 0x%x' % long(self.gdbval)
+        result = '<dw_die_ref 0x%x' % intptr(self.gdbval)
         result += ' %s' % self.gdbval['die_tag']
-        if long(self.gdbval['die_parent']) != 0:
-            result += ' <parent=0x%x %s>' % (long(self.gdbval['die_parent']),
+        if intptr(self.gdbval['die_parent']) != 0:
+            result += ' <parent=0x%x %s>' % (intptr(self.gdbval['die_parent']),
                                              self.gdbval['die_parent']['die_tag'])
                                              
         result += '>'
@@ -279,13 +287,13 @@ class GimplePrinter:
         self.gdbval = gdbval
 
     def to_string (self):
-        if long(self.gdbval) == 0:
+        if intptr(self.gdbval) == 0:
             return '<gimple 0x0>'
         val_gimple_code = self.gdbval['code']
         val_gimple_code_name = gdb.parse_and_eval('gimple_code_name')
-        val_code_name = val_gimple_code_name[long(val_gimple_code)]
+        val_code_name = val_gimple_code_name[intptr(val_gimple_code)]
         result = '<%s 0x%x' % (val_code_name.string(),
-                               long(self.gdbval))
+                               intptr(self.gdbval))
         result += '>'
         return result
 
@@ -306,9 +314,9 @@ class BasicBlockPrinter:
         self.gdbval = gdbval
 
     def to_string (self):
-        result = '<basic_block 0x%x' % long(self.gdbval)
-        if long(self.gdbval):
-            result += ' (%s)' % bb_index_to_str(long(self.gdbval['index']))
+        result = '<basic_block 0x%x' % intptr(self.gdbval)
+        if intptr(self.gdbval):
+            result += ' (%s)' % bb_index_to_str(intptr(self.gdbval['index']))
         result += '>'
         return result
 
@@ -317,10 +325,10 @@ class CfgEdgePrinter:
         self.gdbval = gdbval
 
     def to_string (self):
-        result = '<edge 0x%x' % long(self.gdbval)
-        if long(self.gdbval):
-            src = bb_index_to_str(long(self.gdbval['src']['index']))
-            dest = bb_index_to_str(long(self.gdbval['dest']['index']))
+        result = '<edge 0x%x' % intptr(self.gdbval)
+        if intptr(self.gdbval):
+            src = bb_index_to_str(intptr(self.gdbval['src']['index']))
+            dest = bb_index_to_str(intptr(self.gdbval['dest']['index']))
             result += ' (%s -> %s)' % (src, dest)
         result += '>'
         return result
@@ -336,7 +344,7 @@ class Rtx:
 
 def GET_RTX_LENGTH(code):
     val_rtx_length = gdb.parse_and_eval('rtx_length')
-    return long(val_rtx_length[code])
+    return intptr(val_rtx_length[code])
 
 def GET_RTX_NAME(code):
     val_rtx_name = gdb.parse_and_eval('rtx_name')
@@ -359,17 +367,17 @@ class RtxPrinter:
         """
         # We use print_inline_rtx to avoid a trailing newline
         gdb.execute('call print_inline_rtx (stderr, (const_rtx) %s, 0)'
-                    % long(self.gdbval))
+                    % intptr(self.gdbval))
         return ''
 
         # or by hand; based on gcc/print-rtl.c:print_rtx
         result = ('<rtx_def 0x%x'
-                  % (long(self.gdbval)))
+                  % (intptr(self.gdbval)))
         code = self.rtx.GET_CODE()
         result += ' (%s' % GET_RTX_NAME(code)
         format_ = GET_RTX_FORMAT(code)
         for i in range(GET_RTX_LENGTH(code)):
-            print format_[i]
+            print(format_[i])
         result += ')>'
         return result
 
@@ -380,11 +388,11 @@ class PassPrinter:
         self.gdbval = gdbval
 
     def to_string (self):
-        result = '<opt_pass* 0x%x' % long(self.gdbval)
-        if long(self.gdbval):
+        result = '<opt_pass* 0x%x' % intptr(self.gdbval)
+        if intptr(self.gdbval):
             result += (' "%s"(%i)'
                        % (self.gdbval['name'].string(),
-                          long(self.gdbval['static_pass_number'])))
+                          intptr(self.gdbval['static_pass_number'])))
         result += '>'
         return result
 
@@ -401,10 +409,10 @@ class VecPrinter:
     def to_string (self):
         # A trivial implementation; prettyprinting the contents is done
         # by gdb calling the "children" method below.
-        return '0x%x' % long(self.gdbval)
+        return '0x%x' % intptr(self.gdbval)
 
     def children (self):
-        if long(self.gdbval) == 0:
+        if intptr(self.gdbval) == 0:
             return
         m_vecpfx = self.gdbval['m_vecpfx']
         m_num = m_vecpfx['m_num']
@@ -477,7 +485,7 @@ def build_pretty_printer():
                              'cgraph_node', CGraphNodePrinter)
     pp.add_printer_for_types(['dw_die_ref'],
                              'dw_die_ref', DWDieRefPrinter)
-    pp.add_printer_for_types(['gimple', 'gimple_statement_base *',
+    pp.add_printer_for_types(['gimple', 'gimple *',
 
                               # Keep this in the same order as gimple.def:
                               'gimple_cond', 'const_gimple_cond',
@@ -530,7 +538,7 @@ class PassNames:
         self.names = []
         with open(os.path.join(srcdir, 'passes.def')) as f:
             for line in f:
-                m = re.match('\s*NEXT_PASS \((.+)\);', line)
+                m = re.match('\s*NEXT_PASS \(([^,]+).*\);', line)
                 if m:
                     self.names.append(m.group(1))
 
@@ -581,5 +589,165 @@ class BreakOnPass(gdb.Command):
         breakpoint = gdb.Breakpoint(sym)
 
 BreakOnPass()
+
+class DumpFn(gdb.Command):
+    """
+    A custom command to dump a gimple/rtl function to file.  By default, it
+    dumps the current function using 0 as dump_flags, but the function and flags
+    can also be specified. If /f <file> are passed as the first two arguments,
+    the dump is written to that file.  Otherwise, a temporary file is created
+    and opened in the text editor specified in the EDITOR environment variable.
+
+    Examples of use:
+      (gdb) dump-fn
+      (gdb) dump-fn /f foo.1.txt
+      (gdb) dump-fn cfun->decl
+      (gdb) dump-fn /f foo.1.txt cfun->decl
+      (gdb) dump-fn cfun->decl 0
+      (gdb) dump-fn cfun->decl dump_flags
+    """
+
+    def __init__(self):
+        gdb.Command.__init__(self, 'dump-fn', gdb.COMMAND_USER)
+
+    def invoke(self, arg, from_tty):
+        # Parse args, check number of args
+        args = gdb.string_to_argv(arg)
+        if len(args) >= 1 and args[0] == "/f":
+            if len(args) == 1:
+                print ("Missing file argument")
+                return
+            filename = args[1]
+            editor_mode = False
+            base_arg = 2
+        else:
+            editor = os.getenv("EDITOR", "")
+            if editor == "":
+                print ("EDITOR environment variable not defined")
+                return
+            editor_mode = True
+            base_arg = 0
+        if len(args) - base_arg > 2:
+            print ("Too many arguments")
+            return
+
+        # Set func
+        if len(args) - base_arg >= 1:
+            funcname = args[base_arg]
+            printfuncname = "function %s" % funcname
+        else:
+            funcname = "cfun ? cfun->decl : current_function_decl"
+            printfuncname = "current function"
+        func = gdb.parse_and_eval(funcname)
+        if func == 0:
+            print ("Could not find %s" % printfuncname)
+            return
+        func = "(tree)%u" % func
+
+        # Set flags
+        if len(args) - base_arg >= 2:
+            flags = gdb.parse_and_eval(args[base_arg + 1])
+        else:
+            flags = 0
+
+        # Get tempory file, if necessary
+        if editor_mode:
+            f = tempfile.NamedTemporaryFile(delete=False, suffix=".txt")
+            filename = f.name
+            f.close()
+
+        # Open file
+        fp = gdb.parse_and_eval("fopen (\"%s\", \"w\")" % filename)
+        if fp == 0:
+            print ("Could not open file: %s" % filename)
+            return
+        fp = "(FILE *)%u" % fp
+
+        # Dump function to file
+        _ = gdb.parse_and_eval("dump_function_to_file (%s, %s, %u)" %
+                               (func, fp, flags))
+
+        # Close file
+        ret = gdb.parse_and_eval("fclose (%s)" % fp)
+        if ret != 0:
+            print ("Could not close file: %s" % filename)
+            return
+
+        # Open file in editor, if necessary
+        if editor_mode:
+            os.system("( %s \"%s\"; rm \"%s\" ) &" %
+                      (editor, filename, filename))
+
+DumpFn()
+
+class DotFn(gdb.Command):
+    """
+    A custom command to show a gimple/rtl function control flow graph.
+    By default, it show the current function, but the function can also be
+    specified.
+
+    Examples of use:
+      (gdb) dot-fn
+      (gdb) dot-fn cfun
+      (gdb) dot-fn cfun 0
+      (gdb) dot-fn cfun dump_flags
+    """
+    def __init__(self):
+        gdb.Command.__init__(self, 'dot-fn', gdb.COMMAND_USER)
+
+    def invoke(self, arg, from_tty):
+        # Parse args, check number of args
+        args = gdb.string_to_argv(arg)
+        if len(args) > 2:
+            print("Too many arguments")
+            return
+
+        # Set func
+        if len(args) >= 1:
+            funcname = args[0]
+            printfuncname = "function %s" % funcname
+        else:
+            funcname = "cfun"
+            printfuncname = "current function"
+        func = gdb.parse_and_eval(funcname)
+        if func == 0:
+            print("Could not find %s" % printfuncname)
+            return
+        func = "(struct function *)%s" % func
+
+        # Set flags
+        if len(args) >= 2:
+            flags = gdb.parse_and_eval(args[1])
+        else:
+            flags = 0
+
+        # Get temp file
+        f = tempfile.NamedTemporaryFile(delete=False)
+        filename = f.name
+
+        # Close and reopen temp file to get C FILE*
+        f.close()
+        fp = gdb.parse_and_eval("fopen (\"%s\", \"w\")" % filename)
+        if fp == 0:
+            print("Cannot open temp file")
+            return
+        fp = "(FILE *)%u" % fp
+
+        # Write graph to temp file
+        _ = gdb.parse_and_eval("start_graph_dump (%s, \"<debug>\")" % fp)
+        _ = gdb.parse_and_eval("print_graph_cfg (%s, %s, %u)"
+                               % (fp, func, flags))
+        _ = gdb.parse_and_eval("end_graph_dump (%s)" % fp)
+
+        # Close temp file
+        ret = gdb.parse_and_eval("fclose (%s)" % fp)
+        if ret != 0:
+            print("Could not close temp file: %s" % filename)
+            return
+
+        # Show graph in temp file
+        os.system("( dot -Tx11 \"%s\"; rm \"%s\" ) &" % (filename, filename))
+
+DotFn()
 
 print('Successfully loaded GDB hooks for GCC')

@@ -1,5 +1,5 @@
 ;; Cryptographic instructions added in ISA 2.07
-;; Copyright (C) 2012-2015 Free Software Foundation, Inc.
+;; Copyright (C) 2012-2016 Free Software Foundation, Inc.
 ;; Contributed by Michael Meissner (meissner@linux.vnet.ibm.com)
 
 ;; This file is part of GCC.
@@ -87,7 +87,7 @@
 			UNSPEC_VPERMXOR))]
   "TARGET_P8_VECTOR"
   "vpermxor %0,%1,%2,%3"
-  [(set_attr "type" "crypto")])
+  [(set_attr "type" "vecperm")])
 
 ;; 1 operand crypto instruction
 (define_insn "crypto_vsbox"
@@ -107,4 +107,4 @@
 			UNSPEC_VSHASIGMA))]
   "TARGET_CRYPTO"
   "vshasigma<CR_char> %0,%1,%2,%3"
-  [(set_attr "type" "crypto")])
+  [(set_attr "type" "vecsimple")])

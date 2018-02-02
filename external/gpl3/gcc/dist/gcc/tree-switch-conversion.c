@@ -1,6 +1,6 @@
 /* Lower GIMPLE_SWITCH expressions to something more efficient than
    a jump table.
-   Copyright (C) 2006-2015 Free Software Foundation, Inc.
+   Copyright (C) 2006-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -25,71 +25,32 @@ Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "tm.h"
-#include "line-map.h"
-#include "params.h"
-#include "flags.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "wide-int.h"
-#include "inchash.h"
+#include "backend.h"
+#include "insn-codes.h"
+#include "rtl.h"
 #include "tree.h"
+#include "gimple.h"
+#include "cfghooks.h"
+#include "tree-pass.h"
+#include "ssa.h"
+#include "optabs-tree.h"
+#include "cgraph.h"
+#include "gimple-pretty-print.h"
+#include "params.h"
 #include "fold-const.h"
 #include "varasm.h"
 #include "stor-layout.h"
-#include "predict.h"
-#include "hard-reg-set.h"
-#include "function.h"
-#include "dominance.h"
-#include "cfg.h"
 #include "cfganal.h"
-#include "basic-block.h"
-#include "tree-ssa-alias.h"
-#include "internal-fn.h"
-#include "gimple-expr.h"
-#include "is-a.h"
-#include "gimple.h"
 #include "gimplify.h"
 #include "gimple-iterator.h"
 #include "gimplify-me.h"
-#include "gimple-ssa.h"
-#include "hash-map.h"
-#include "plugin-api.h"
-#include "ipa-ref.h"
-#include "cgraph.h"
 #include "tree-cfg.h"
-#include "tree-phinodes.h"
-#include "stringpool.h"
-#include "tree-ssanames.h"
-#include "tree-pass.h"
-#include "gimple-pretty-print.h"
 #include "cfgloop.h"
 
 /* ??? For lang_hooks.types.type_for_mode, but is there a word_mode
    type in the GIMPLE type system that is language-independent?  */
 #include "langhooks.h"
 
-/* Need to include expr.h and optabs.h for lshift_cheap_p.  */
-#include "hashtab.h"
-#include "rtl.h"
-#include "statistics.h"
-#include "real.h"
-#include "fixed-value.h"
-#include "insn-config.h"
-#include "expmed.h"
-#include "dojump.h"
-#include "explow.h"
-#include "calls.h"
-#include "emit-rtl.h"
-#include "stmt.h"
-#include "expr.h"
-#include "insn-codes.h"
-#include "optabs.h"
 
 /* Maximum number of case bit tests.
    FIXME: This should be derived from PARAM_CASE_VALUES_THRESHOLD and
@@ -391,9 +352,11 @@ emit_case_bit_tests (gswitch *swtch, tree index_expr,
       for (i = 0; i < count; i++)
 	{
 	  rtx r = immed_wide_int_const (test[i].mask, word_mode);
-	  cost_diff += set_src_cost (gen_rtx_AND (word_mode, reg, r), speed_p);
+	  cost_diff += set_src_cost (gen_rtx_AND (word_mode, reg, r),
+				     word_mode, speed_p);
 	  r = immed_wide_int_const (wi::lshift (test[i].mask, m), word_mode);
-	  cost_diff -= set_src_cost (gen_rtx_AND (word_mode, reg, r), speed_p);
+	  cost_diff -= set_src_cost (gen_rtx_AND (word_mode, reg, r),
+				     word_mode, speed_p);
 	}
       if (cost_diff > 0)
 	{
@@ -620,10 +583,10 @@ struct switch_conv_info
 
   /* The first load statement that loads a temporary from a new static array.
    */
-  gimple arr_ref_first;
+  gimple *arr_ref_first;
 
   /* The last load statement that loads a temporary from a new static array.  */
-  gimple arr_ref_last;
+  gimple *arr_ref_last;
 
   /* String reason why the case wasn't a good candidate that is written to the
      dump file, if there is one.  */
@@ -1058,7 +1021,7 @@ build_one_array (gswitch *swtch, int num, tree arr_index_type,
 		 gphi *phi, tree tidx, struct switch_conv_info *info)
 {
   tree name, cst;
-  gimple load;
+  gimple *load;
   gimple_stmt_iterator gsi = gsi_for_stmt (swtch);
   location_t loc = gimple_location (swtch);
 
@@ -1095,8 +1058,10 @@ build_one_array (gswitch *swtch, int num, tree arr_index_type,
 
       DECL_NAME (decl) = create_tmp_var_name ("CSWTCH");
       DECL_ARTIFICIAL (decl) = 1;
+      DECL_IGNORED_P (decl) = 1;
       TREE_CONSTANT (decl) = 1;
       TREE_READONLY (decl) = 1;
+      DECL_IGNORED_P (decl) = 1;
       varpool_node::finalize_decl (decl);
 
       fetch = build4 (ARRAY_REF, value_type, decl, tidx, NULL_TREE,
@@ -1124,7 +1089,7 @@ build_arrays (gswitch *swtch, struct switch_conv_info *info)
 {
   tree arr_index_type;
   tree tidx, sub, utype;
-  gimple stmt;
+  gimple *stmt;
   gimple_stmt_iterator gsi;
   gphi_iterator gpi;
   int i;
@@ -1482,7 +1447,7 @@ pass_convert_switch::execute (function *fun)
   FOR_EACH_BB_FN (bb, fun)
   {
     const char *failure_reason;
-    gimple stmt = last_stmt (bb);
+    gimple *stmt = last_stmt (bb);
     if (stmt && gimple_code (stmt) == GIMPLE_SWITCH)
       {
 	if (dump_file)

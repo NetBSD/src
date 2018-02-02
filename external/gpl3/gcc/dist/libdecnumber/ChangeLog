@@ -1,22 +1,30 @@
-2017-10-10  Release Manager
+2017-07-04  Release Manager
 
-	* GCC 5.5.0 released.
+	* GCC 6.4.0 released.
 
-2016-06-03  Release Manager
+2016-12-21  Release Manager
 
-	* GCC 5.4.0 released.
+	* GCC 6.3.0 released.
 
-2015-12-04  Release Manager
+2016-08-22  Release Manager
 
-	* GCC 5.3.0 released.
+	* GCC 6.2.0 released.
 
-2015-07-16  Release Manager
+2016-04-27  Release Manager
 
-	* GCC 5.2.0 released.
+	* GCC 6.1.0 released.
 
-2015-04-22  Release Manager
+2016-01-04  Jakub Jelinek  <jakub@redhat.com>
 
-	* GCC 5.1.0 released.
+	Update copyright years.
+
+2015-06-30  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* configure: Regenerated.
+
+2015-05-13  Michael Haubenwallner  <michael.haubenwallner@ssi-schaefer.com>
+
+	* aclocal.m4: Regenerated with automake-1.11.6.
 
 2015-01-05  Jakub Jelinek  <jakub@redhat.com>
 
@@ -645,3 +653,9 @@
 	* decNumber.c, decNumber.h, decNumberLocal.h: Likewise.
 	* decDPD.h: Likewise.
 	* decLibrary.c, decRound.c: Likewise.
+
+Copyright (C) 2005-2016 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.

@@ -1,5 +1,5 @@
 /* Subroutines used for code generation on the Renesas M32R cpu.
-   Copyright (C) 1996-2015 Free Software Foundation, Inc.
+   Copyright (C) 1996-2016 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -20,60 +20,30 @@
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "tm.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "wide-int.h"
-#include "inchash.h"
-#include "tree.h"
-#include "stor-layout.h"
-#include "varasm.h"
-#include "stringpool.h"
-#include "calls.h"
+#include "backend.h"
+#include "target.h"
 #include "rtl.h"
-#include "regs.h"
-#include "hard-reg-set.h"
-#include "insn-config.h"
-#include "conditions.h"
-#include "output.h"
-#include "dbxout.h"
-#include "insn-attr.h"
-#include "flags.h"
-#include "hashtab.h"
-#include "function.h"
-#include "statistics.h"
-#include "real.h"
-#include "fixed-value.h"
-#include "expmed.h"
-#include "dojump.h"
-#include "explow.h"
-#include "emit-rtl.h"
-#include "stmt.h"
-#include "expr.h"
-#include "recog.h"
-#include "diagnostic-core.h"
-#include "ggc.h"
-#include "dominance.h"
-#include "cfg.h"
-#include "cfgrtl.h"
-#include "cfganal.h"
-#include "lcm.h"
-#include "cfgbuild.h"
-#include "cfgcleanup.h"
-#include "predict.h"
-#include "basic-block.h"
+#include "tree.h"
 #include "df.h"
 #include "tm_p.h"
-#include "target.h"
-#include "target-def.h"
+#include "stringpool.h"
+#include "insn-config.h"
+#include "emit-rtl.h"
+#include "recog.h"
+#include "diagnostic-core.h"
+#include "alias.h"
+#include "stor-layout.h"
+#include "varasm.h"
+#include "calls.h"
+#include "output.h"
+#include "insn-attr.h"
+#include "explow.h"
+#include "expr.h"
 #include "tm-constrs.h"
-#include "opts.h"
 #include "builtins.h"
+
+/* This file should be included last.  */
+#include "target-def.h"
 
 /* Array of valid operand punctuation characters.  */
 static char m32r_punct_chars[256];
@@ -96,7 +66,7 @@ static rtx   m32r_legitimize_address (rtx, rtx, machine_mode);
 static bool  m32r_mode_dependent_address_p (const_rtx, addr_space_t);
 static tree  m32r_handle_model_attribute (tree *, tree, tree, int, bool *);
 static void  m32r_print_operand (FILE *, rtx, int);
-static void  m32r_print_operand_address (FILE *, rtx);
+static void  m32r_print_operand_address (FILE *, machine_mode, rtx);
 static bool  m32r_print_operand_punct_valid_p (unsigned char code);
 static void  m32r_output_function_prologue (FILE *, HOST_WIDE_INT);
 static void  m32r_output_function_epilogue (FILE *, HOST_WIDE_INT);
@@ -115,7 +85,7 @@ static bool m32r_function_value_regno_p (const unsigned int);
 static void m32r_setup_incoming_varargs (cumulative_args_t, machine_mode,
 					 tree, int *, int);
 static void init_idents (void);
-static bool m32r_rtx_costs (rtx, int, int, int, int *, bool speed);
+static bool m32r_rtx_costs (rtx, machine_mode, int, int, int *, bool speed);
 static int m32r_memory_move_cost (machine_mode, reg_class_t, bool);
 static bool m32r_pass_by_reference (cumulative_args_t, machine_mode,
 				    const_tree, bool);
@@ -129,6 +99,7 @@ static bool m32r_can_eliminate (const int, const int);
 static void m32r_conditional_register_usage (void);
 static void m32r_trampoline_init (rtx, tree, rtx);
 static bool m32r_legitimate_constant_p (machine_mode, rtx);
+static bool m32r_attribute_identifier (const_tree);
 
 /* M32R specific attributes.  */
 
@@ -145,6 +116,8 @@ static const struct attribute_spec m32r_attribute_table[] =
 /* Initialize the GCC target structure.  */
 #undef  TARGET_ATTRIBUTE_TABLE
 #define TARGET_ATTRIBUTE_TABLE m32r_attribute_table
+#undef  TARGET_ATTRIBUTE_TAKES_IDENTIFIER_P
+#define TARGET_ATTRIBUTE_TAKES_IDENTIFIER_P m32r_attribute_identifier
 
 #undef TARGET_LEGITIMATE_ADDRESS_P
 #define TARGET_LEGITIMATE_ADDRESS_P m32r_legitimate_address_p
@@ -420,6 +393,13 @@ m32r_handle_model_attribute (tree *node ATTRIBUTE_UNUSED, tree name,
 
   return NULL_TREE;
 }
+
+static bool
+m32r_attribute_identifier (const_tree name)
+{
+  return strcmp (IDENTIFIER_POINTER (name), "model") == 0
+    ||   strcmp (IDENTIFIER_POINTER (name), "__model__") == 0;
+}
 
 /* Encode section information of DECL, which is either a VAR_DECL,
    FUNCTION_DECL, STRING_CST, CONSTRUCTOR, or ???.
@@ -656,11 +636,9 @@ easy_di_const (rtx op)
 int
 easy_df_const (rtx op)
 {
-  REAL_VALUE_TYPE r;
   long l[2];
 
-  REAL_VALUE_FROM_CONST_DOUBLE (r, op);
-  REAL_VALUE_TO_TARGET_DOUBLE (r, l);
+  REAL_VALUE_TO_TARGET_DOUBLE (*CONST_DOUBLE_REAL_VALUE (op), l);
   if (l[0] == 0 && l[1] == 0)
     return 1;
   if ((l[0] & 0xffff) == 0 && l[1] == 0)
@@ -1081,12 +1059,10 @@ gen_split_move_double (rtx operands[])
 	  /* We normally copy the low-numbered register first.  However, if
 	     the first register operand 0 is the same as the second register of
 	     operand 1, we must copy in the opposite order.  */
-	  emit_insn (gen_rtx_SET (VOIDmode,
-				  operand_subword (dest, reverse, TRUE, mode),
+	  emit_insn (gen_rtx_SET (operand_subword (dest, reverse, TRUE, mode),
 				  operand_subword (src,  reverse, TRUE, mode)));
 
-	  emit_insn (gen_rtx_SET (VOIDmode,
-				  operand_subword (dest, !reverse, TRUE, mode),
+	  emit_insn (gen_rtx_SET (operand_subword (dest, !reverse, TRUE, mode),
 				  operand_subword (src,  !reverse, TRUE, mode)));
 	}
 
@@ -1095,12 +1071,10 @@ gen_split_move_double (rtx operands[])
 	{
 	  rtx words[2];
 	  split_double (src, &words[0], &words[1]);
-	  emit_insn (gen_rtx_SET (VOIDmode,
-				  operand_subword (dest, 0, TRUE, mode),
+	  emit_insn (gen_rtx_SET (operand_subword (dest, 0, TRUE, mode),
 				  words[0]));
 
-	  emit_insn (gen_rtx_SET (VOIDmode,
-				  operand_subword (dest, 1, TRUE, mode),
+	  emit_insn (gen_rtx_SET (operand_subword (dest, 1, TRUE, mode),
 				  words[1]));
 	}
 
@@ -1122,13 +1096,11 @@ gen_split_move_double (rtx operands[])
 		ld r1,r3+; ld r2,r3; addi r3,-4
 
 	     which saves 2 bytes and doesn't force longword alignment.  */
-	  emit_insn (gen_rtx_SET (VOIDmode,
-				  operand_subword (dest, reverse, TRUE, mode),
+	  emit_insn (gen_rtx_SET (operand_subword (dest, reverse, TRUE, mode),
 				  adjust_address (src, SImode,
 						  reverse * UNITS_PER_WORD)));
 
-	  emit_insn (gen_rtx_SET (VOIDmode,
-				  operand_subword (dest, !reverse, TRUE, mode),
+	  emit_insn (gen_rtx_SET (operand_subword (dest, !reverse, TRUE, mode),
 				  adjust_address (src, SImode,
 						  !reverse * UNITS_PER_WORD)));
 	}
@@ -1150,12 +1122,10 @@ gen_split_move_double (rtx operands[])
      which saves 2 bytes and doesn't force longword alignment.  */
   else if (MEM_P (dest) && REG_P (src))
     {
-      emit_insn (gen_rtx_SET (VOIDmode,
-			      adjust_address (dest, SImode, 0),
+      emit_insn (gen_rtx_SET (adjust_address (dest, SImode, 0),
 			      operand_subword (src, 0, TRUE, mode)));
 
-      emit_insn (gen_rtx_SET (VOIDmode,
-			      adjust_address (dest, SImode, UNITS_PER_WORD),
+      emit_insn (gen_rtx_SET (adjust_address (dest, SImode, UNITS_PER_WORD),
 			      operand_subword (src, 1, TRUE, mode)));
     }
 
@@ -1386,10 +1356,13 @@ m32r_memory_move_cost (machine_mode mode,
 }
 
 static bool
-m32r_rtx_costs (rtx x, int code, int outer_code ATTRIBUTE_UNUSED,
+m32r_rtx_costs (rtx x, machine_mode mode ATTRIBUTE_UNUSED,
+		int outer_code ATTRIBUTE_UNUSED,
 		int opno ATTRIBUTE_UNUSED, int *total,
 		bool speed ATTRIBUTE_UNUSED)
 {
+  int code = GET_CODE (x);
+
   switch (code)
     {
       /* Small integers are as cheap as registers.  4 byte values can be
@@ -1684,6 +1657,9 @@ m32r_expand_prologue (void)
 
   if (! current_frame_info.initialized)
     m32r_compute_frame_size (get_frame_size ());
+
+  if (flag_stack_usage_info)
+    current_function_static_stack_size = current_frame_info.total_size;
 
   gmask = current_frame_info.gmask;
 
@@ -2110,6 +2086,8 @@ m32r_print_operand (FILE * file, rtx x, int code)
 	fputs (reg_names[REGNO (x)+1], file);
       else if (MEM_P (x))
 	{
+	  machine_mode mode = GET_MODE (x);
+
 	  fprintf (file, "@(");
 	  /* Handle possible auto-increment.  Since it is pre-increment and
 	     we have already done it, we can just use an offset of four.  */
@@ -2117,9 +2095,10 @@ m32r_print_operand (FILE * file, rtx x, int code)
 	     currently necessary, but keep it around.  */
 	  if (GET_CODE (XEXP (x, 0)) == PRE_INC
 	      || GET_CODE (XEXP (x, 0)) == PRE_DEC)
-	    output_address (plus_constant (Pmode, XEXP (XEXP (x, 0), 0), 4));
+	    output_address (mode, plus_constant (Pmode,
+						 XEXP (XEXP (x, 0), 0), 4));
 	  else
-	    output_address (plus_constant (Pmode, XEXP (x, 0), 4));
+	    output_address (mode, plus_constant (Pmode, XEXP (x, 0), 4));
 	  fputc (')', file);
 	}
       else
@@ -2279,7 +2258,7 @@ m32r_print_operand (FILE * file, rtx x, int code)
       else
 	{
 	  fputs ("@(", file);
-	  output_address (XEXP (x, 0));
+	  output_address (GET_MODE (x), addr);
 	  fputc (')', file);
 	}
       break;
@@ -2288,11 +2267,9 @@ m32r_print_operand (FILE * file, rtx x, int code)
       /* We handle SFmode constants here as output_addr_const doesn't.  */
       if (GET_MODE (x) == SFmode)
 	{
-	  REAL_VALUE_TYPE d;
 	  long l;
 
-	  REAL_VALUE_FROM_CONST_DOUBLE (d, x);
-	  REAL_VALUE_TO_TARGET_SINGLE (d, l);
+	  REAL_VALUE_TO_TARGET_SINGLE (*CONST_DOUBLE_REAL_VALUE (x), l);
 	  fprintf (file, "0x%08lx", l);
 	  break;
 	}
@@ -2308,7 +2285,7 @@ m32r_print_operand (FILE * file, rtx x, int code)
 /* Print a memory address as an operand to reference that memory location.  */
 
 static void
-m32r_print_operand_address (FILE * file, rtx addr)
+m32r_print_operand_address (FILE * file, machine_mode /*mode*/, rtx addr)
 {
   rtx base;
   rtx index = 0;

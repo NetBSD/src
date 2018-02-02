@@ -1,5 +1,5 @@
 /* Generate attribute information (insn-attr.h) from machine description.
-   Copyright (C) 1991-2015 Free Software Foundation, Inc.
+   Copyright (C) 1991-2016 Free Software Foundation, Inc.
    Contributed by Richard Kenner (kenner@vlsi1.ultra.nyu.edu)
 
 This file is part of GCC.
@@ -29,15 +29,14 @@ along with GCC; see the file COPYING3.  If not see
 #include "gensupport.h"
 
 
-static void gen_attr (rtx);
-
 static vec<rtx> const_attrs, reservations;
 
 
 static void
-gen_attr (rtx attr)
+gen_attr (md_rtx_info *info)
 {
   const char *p;
+  rtx attr = info->def;
   int is_const = GET_CODE (XEXP (attr, 2)) == CONST;
 
   if (is_const)
@@ -141,10 +140,8 @@ find_tune_attr (rtx exp)
 int
 main (int argc, char **argv)
 {
-  rtx desc;
-  int have_delay = 0;
-  int have_annul_true = 0;
-  int have_annul_false = 0;
+  bool have_annul_true = false;
+  bool have_annul_false = false;
   int num_insn_reservations = 0;
   int i;
 
@@ -162,52 +159,45 @@ main (int argc, char **argv)
 
   /* Read the machine description.  */
 
-  while (1)
+  md_rtx_info info;
+  while (read_md_rtx (&info))
     {
-      int line_no, insn_code_number;
-
-      desc = read_md_rtx (&line_no, &insn_code_number);
-      if (desc == NULL)
-	break;
-
-      if (GET_CODE (desc) == DEFINE_ATTR
-	  || GET_CODE (desc) == DEFINE_ENUM_ATTR)
-	gen_attr (desc);
-
-      else if (GET_CODE (desc) == DEFINE_DELAY)
-        {
-	  if (! have_delay)
-	    {
-	      printf ("extern int num_delay_slots (rtx_insn *);\n");
-	      printf ("extern int eligible_for_delay (rtx_insn *, int, rtx_insn *, int);\n\n");
-	      printf ("extern int const_num_delay_slots (rtx_insn *);\n\n");
-	      have_delay = 1;
-	    }
-
-	  for (i = 0; i < XVECLEN (desc, 1); i += 3)
-	    {
-	      if (XVECEXP (desc, 1, i + 1) && ! have_annul_true)
-		{
-		  printf ("#define ANNUL_IFTRUE_SLOTS\n");
-		  printf ("extern int eligible_for_annul_true (rtx_insn *, int, rtx_insn *, int);\n");
-		  have_annul_true = 1;
-		}
-
-	      if (XVECEXP (desc, 1, i + 2) && ! have_annul_false)
-		{
-		  printf ("#define ANNUL_IFFALSE_SLOTS\n");
-		  printf ("extern int eligible_for_annul_false (rtx_insn *, int, rtx_insn *, int);\n");
-		  have_annul_false = 1;
-		}
-	    }
-        }
-
-      else if (GET_CODE (desc) == DEFINE_INSN_RESERVATION)
+      rtx def = info.def;
+      switch (GET_CODE (def))
 	{
+	case DEFINE_ATTR:
+	case DEFINE_ENUM_ATTR:
+	  gen_attr (&info);
+	  break;
+
+	case DEFINE_DELAY:
+	  for (i = 0; i < XVECLEN (def, 1); i += 3)
+	    {
+	      if (XVECEXP (def, 1, i + 1))
+		have_annul_true = true;
+
+	      if (XVECEXP (def, 1, i + 2))
+		have_annul_false = true;
+	    }
+	  break;
+
+	case DEFINE_INSN_RESERVATION:
 	  num_insn_reservations++;
-	  reservations.safe_push (desc);
+	  reservations.safe_push (def);
+	  break;
+
+	default:
+	  break;
 	}
     }
+
+  printf ("extern int num_delay_slots (rtx_insn *);\n");
+  printf ("extern int eligible_for_delay (rtx_insn *, int, rtx_insn *, int);\n\n");
+  printf ("extern int const_num_delay_slots (rtx_insn *);\n\n");
+  printf ("#define ANNUL_IFTRUE_SLOTS %d\n", have_annul_true);
+  printf ("extern int eligible_for_annul_true (rtx_insn *, int, rtx_insn *, int);\n");
+  printf ("#define ANNUL_IFFALSE_SLOTS %d\n", have_annul_false);
+  printf ("extern int eligible_for_annul_false (rtx_insn *, int, rtx_insn *, int);\n");
 
   if (num_insn_reservations > 0)
     {

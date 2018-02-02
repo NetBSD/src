@@ -1,5 +1,5 @@
 /* Definitions of Tensilica's Xtensa target machine for GNU compiler.
-   Copyright (C) 2001-2015 Free Software Foundation, Inc.
+   Copyright (C) 2001-2016 Free Software Foundation, Inc.
    Contributed by Bob Wilson (bwilson@tensilica.com) at Tensilica.
 
 This file is part of GCC.
@@ -22,8 +22,6 @@ along with GCC; see the file COPYING3.  If not see
 #include "xtensa-config.h"
 
 /* External variables defined in xtensa.c.  */
-
-extern unsigned xtensa_current_frame_size;
 
 /* Macros used in the machine description to select various Xtensa
    configuration options.  */
@@ -67,6 +65,7 @@ extern unsigned xtensa_current_frame_size;
 #define TARGET_THREADPTR	XCHAL_HAVE_THREADPTR
 #define TARGET_LOOPS	        XCHAL_HAVE_LOOPS
 #define TARGET_WINDOWED_ABI	(XSHAL_ABI == XTHAL_ABI_WINDOWED)
+#define TARGET_DEBUG		XCHAL_HAVE_DEBUG
 
 #define TARGET_DEFAULT \
   ((XCHAL_HAVE_L32R	? 0 : MASK_CONST16) |				\
@@ -196,7 +195,7 @@ extern unsigned xtensa_current_frame_size;
 
 /* Operations between registers always perform the operation
    on the full register even if a narrower mode is specified.  */
-#define WORD_REGISTER_OPERATIONS
+#define WORD_REGISTER_OPERATIONS 1
 
 /* Xtensa loads are zero-extended by default.  */
 #define LOAD_EXTEND_OP(MODE) ZERO_EXTEND
@@ -459,7 +458,7 @@ enum reg_class
 
 /* Stack layout; function entry, exit and calling.  */
 
-#define STACK_GROWS_DOWNWARD
+#define STACK_GROWS_DOWNWARD 1
 
 /* Offset within stack frame to start allocating local variables at.  */
 #define STARTING_FRAME_OFFSET						\
@@ -476,14 +475,14 @@ enum reg_class
 /* Specify the initial difference between the specified pair of registers.  */
 #define INITIAL_ELIMINATION_OFFSET(FROM, TO, OFFSET)			\
   do {									\
-    compute_frame_size (get_frame_size ());				\
+    long frame_size = compute_frame_size (get_frame_size ());		\
     switch (FROM)							\
       {									\
       case FRAME_POINTER_REGNUM:					\
         (OFFSET) = 0;							\
 	break;								\
       case ARG_POINTER_REGNUM:						\
-        (OFFSET) = xtensa_current_frame_size;				\
+        (OFFSET) = frame_size;						\
 	break;								\
       default:								\
 	gcc_unreachable ();						\
