@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.119 2017/03/01 08:54:12 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.120 2018/02/02 06:23:45 maxv Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.119 2017/03/01 08:54:12 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.120 2018/02/02 06:23:45 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1886,7 +1886,7 @@ pim6_input(struct mbuf **mp, int *offp, int proto)
 			    (eip6->ip6_vfc & IPV6_VERSION));
 #endif
 			m_freem(m);
-			return (IPPROTO_NONE);
+			return (IPPROTO_DONE);
 		}
 
 		/* verify the inner packet is destined to a mcast group */
