@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2016/04/20 17:18:52 christos Exp $
+#	$NetBSD: Makefile,v 1.17 2018/02/02 20:57:53 mrg Exp $
 
 # build GCC's libgomp, so that -fopenmp works.
 
@@ -77,7 +77,7 @@ FILES=		libgomp.spec
 FILESDIR=	${LIBDIR}
 
 INCS=		omp.h openacc.h
-INCSDIR=	/usr/include/gcc-5
+INCSDIR=	/usr/include/gcc-6
 .endif
 
 .else			# } else {
