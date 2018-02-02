@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1.2,v 1.1.2.6 2018/02/02 11:02:29 martin Exp $
+# $NetBSD: CHANGES-7.1.2,v 1.1.2.7 2018/02/02 13:05:34 martin Exp $
 
 A complete list of changes from the NetBSD 7.1.1 release to the NetBSD 7.1.2
 release:
@@ -94,4 +94,9 @@ sys/netinet6/raw_ip6.c				1.160 (via patch)
 sys/netinet6/ip6_mroute.c			1.120
 	Fix a use-after-free in the Pim6 entry point.
 	[maxv, ticket #1561]
+
+sys/netinet6/nd6_nbr.c				1.145 (via patch)
+
+	Fix memory leak.
+	[maxv, ticket #1562]
 
