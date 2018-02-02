@@ -143,6 +143,9 @@ cpu_include_dir=cpu/${try_cpu}
 # Set specific CPU overrides for cpu_defines_dir. Most can just use generic.
 # THIS TABLE IS SORTED.  KEEP IT THAT WAY.
 case "${host_cpu}" in
+  arm*)
+    cpu_defines_dir=cpu/arm
+    ;;
   powerpc* | rs6000)
     cpu_defines_dir=cpu/powerpc
     ;;
@@ -153,23 +156,11 @@ esac
 # Most can just use generic.
 # THIS TABLE IS SORTED.  KEEP IT THAT WAY.
 case "${host_cpu}" in
-  aarch64*)
-    atomic_word_dir=cpu/aarch64
-    ;;
-  alpha*)
-    atomic_word_dir=cpu/alpha
-    ;;
   cris*)
     atomic_word_dir=cpu/cris
     ;;
-  ia64)
-    atomic_word_dir=cpu/ia64
-    ;;
   i[4567]86 | x86_64)
     atomic_flags="-march=native"
-    ;;
-  powerpc* | rs6000)
-    atomic_word_dir=cpu/powerpc
     ;;
   sparc* | ultrasparc)
     atomic_word_dir=cpu/sparc
@@ -229,12 +220,10 @@ case "${host_os}" in
     # explicitly duplicate the directory for 4.[<3].
     os_include_dir="os/aix"
     atomicity_dir="os/aix"
-    atomic_word_dir="os/aix"
     ;;
   aix4.*)
     os_include_dir="os/generic"
     atomicity_dir="os/aix"
-    atomic_word_dir="os/aix"
     ;;
   aix*)
     os_include_dir="os/generic"
@@ -276,6 +265,9 @@ case "${host_os}" in
   freebsd*)
     os_include_dir="os/bsd/freebsd"
     ;;
+  linux-musl*)
+    os_include_dir="os/generic"
+    ;;
   gnu* | linux* | kfreebsd*-gnu | knetbsd*-gnu)
     if [ "$uclibc" = "yes" ]; then
       os_include_dir="os/uclibc"
@@ -310,6 +302,10 @@ case "${host_os}" in
   qnx6.[12]*)
     os_include_dir="os/qnx/qnx6.1"
     c_model=c
+    ;;
+  rtems*)
+    # Use libatomic if necessary and avoid libstdc++ specific atomicity support
+    atomicity_dir="cpu/generic/atomicity_builtins"
     ;;
   solaris2)
     # This too-vague configuration does not provide enough information
@@ -378,7 +374,18 @@ case "${host}" in
     port_specific_symbol_files="\$(srcdir)/../config/os/bsd/darwin/ppc-extra.ver"
     ;;
   *-*-solaris2.1[0-9])
-    abi_baseline_pair=solaris2.10
+    # On Solaris 10 with Solaris ld, there's no COMDAT support.  GNU ld always
+    # provides it, as does Solaris ld since Solaris 11, leading to different
+    # baselines.
+    case "${host_os}:${with_gnu_ld}" in
+      # with_gnu_ld may either be unset (default) or no (with --without-gnu-ld).
+      solaris2.10: | solaris2.10:no)
+        abi_baseline_pair=solaris2.10
+	;;
+      *)
+        abi_baseline_pair=solaris2.11
+	;;
+    esac
     abi_baseline_subdir_switch=--print-multi-os-directory
     ;;
 esac
