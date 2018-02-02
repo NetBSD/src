@@ -1,6 +1,6 @@
 /* Gimple decl, type, and expression support functions.
 
-   Copyright (C) 2007-2015 Free Software Foundation, Inc.
+   Copyright (C) 2007-2016 Free Software Foundation, Inc.
    Contributed by Aldy Hernandez <aldyh@redhat.com>
 
 This file is part of GCC.
@@ -22,34 +22,18 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "tm.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "wide-int.h"
-#include "inchash.h"
+#include "backend.h"
 #include "tree.h"
-#include "fold-const.h"
-#include "predict.h"
-#include "hard-reg-set.h"
-#include "input.h"
-#include "function.h"
-#include "basic-block.h"
-#include "tree-ssa-alias.h"
-#include "internal-fn.h"
-#include "tree-eh.h"
-#include "gimple-expr.h"
-#include "is-a.h"
 #include "gimple.h"
 #include "stringpool.h"
+#include "gimple-ssa.h"
+#include "fold-const.h"
+#include "tree-eh.h"
 #include "gimplify.h"
 #include "stor-layout.h"
 #include "demangle.h"
-#include "gimple-ssa.h"
+#include "hash-set.h"
+#include "rtl.h"
 
 /* ----- Type related -----  */
 
@@ -87,6 +71,12 @@ useless_type_conversion_p (tree outer_type, tree inner_type)
       if (TYPE_ADDR_SPACE (TREE_TYPE (outer_type))
 	  != TYPE_ADDR_SPACE (TREE_TYPE (inner_type)))
 	return false;
+      /* Do not lose casts to function pointer types.  */
+      if ((TREE_CODE (TREE_TYPE (outer_type)) == FUNCTION_TYPE
+	   || TREE_CODE (TREE_TYPE (outer_type)) == METHOD_TYPE)
+	  && !(TREE_CODE (TREE_TYPE (inner_type)) == FUNCTION_TYPE
+	       || TREE_CODE (TREE_TYPE (inner_type)) == METHOD_TYPE))
+	return false;
     }
 
   /* From now on qualifiers on value types do not matter.  */
@@ -96,15 +86,9 @@ useless_type_conversion_p (tree outer_type, tree inner_type)
   if (inner_type == outer_type)
     return true;
 
-  /* If we know the canonical types, compare them.  */
-  if (TYPE_CANONICAL (inner_type)
-      && TYPE_CANONICAL (inner_type) == TYPE_CANONICAL (outer_type))
-    return true;
-
-  /* Changes in machine mode are never useless conversions unless we
-     deal with aggregate types in which case we defer to later checks.  */
-  if (TYPE_MODE (inner_type) != TYPE_MODE (outer_type)
-      && !AGGREGATE_TYPE_P (inner_type))
+  /* Changes in machine mode are never useless conversions because the RTL
+     middle-end expects explicit conversions between modes.  */
+  if (TYPE_MODE (inner_type) != TYPE_MODE (outer_type))
     return false;
 
   /* If both the inner and outer types are integral types, then the
@@ -139,19 +123,12 @@ useless_type_conversion_p (tree outer_type, tree inner_type)
   /* Fixed point types with the same mode are compatible.  */
   else if (FIXED_POINT_TYPE_P (inner_type)
 	   && FIXED_POINT_TYPE_P (outer_type))
-    return true;
+    return TYPE_SATURATING (inner_type) == TYPE_SATURATING (outer_type);
 
   /* We need to take special care recursing to pointed-to types.  */
   else if (POINTER_TYPE_P (inner_type)
 	   && POINTER_TYPE_P (outer_type))
     {
-      /* Do not lose casts to function pointer types.  */
-      if ((TREE_CODE (TREE_TYPE (outer_type)) == FUNCTION_TYPE
-	   || TREE_CODE (TREE_TYPE (outer_type)) == METHOD_TYPE)
-	  && !(TREE_CODE (TREE_TYPE (inner_type)) == FUNCTION_TYPE
-	       || TREE_CODE (TREE_TYPE (inner_type)) == METHOD_TYPE))
-	return false;
-
       /* We do not care for const qualification of the pointed-to types
 	 as const qualification has no semantic value to the middle-end.  */
 
@@ -175,14 +152,16 @@ useless_type_conversion_p (tree outer_type, tree inner_type)
   else if (TREE_CODE (inner_type) == ARRAY_TYPE
 	   && TREE_CODE (outer_type) == ARRAY_TYPE)
     {
-      /* Preserve string attributes.  */
+      /* Preserve various attributes.  */
+      if (TYPE_REVERSE_STORAGE_ORDER (inner_type)
+	  != TYPE_REVERSE_STORAGE_ORDER (outer_type))
+	return false;
       if (TYPE_STRING_FLAG (inner_type) != TYPE_STRING_FLAG (outer_type))
 	return false;
 
       /* Conversions from array types with unknown extent to
 	 array types with known extent are not useless.  */
-      if (!TYPE_DOMAIN (inner_type)
-	  && TYPE_DOMAIN (outer_type))
+      if (!TYPE_DOMAIN (inner_type) && TYPE_DOMAIN (outer_type))
 	return false;
 
       /* Nor are conversions from array types with non-constant size to
@@ -291,7 +270,16 @@ useless_type_conversion_p (tree outer_type, tree inner_type)
      compared types.  */
   else if (AGGREGATE_TYPE_P (inner_type)
 	   && TREE_CODE (inner_type) == TREE_CODE (outer_type))
-    return false;
+    return TYPE_CANONICAL (inner_type)
+	   && TYPE_CANONICAL (inner_type) == TYPE_CANONICAL (outer_type);
+
+  else if (TREE_CODE (inner_type) == OFFSET_TYPE
+	   && TREE_CODE (outer_type) == OFFSET_TYPE)
+    return useless_type_conversion_p (TREE_TYPE (outer_type),
+				      TREE_TYPE (inner_type))
+	   && useless_type_conversion_p
+	        (TYPE_OFFSET_BASETYPE (outer_type),
+		 TYPE_OFFSET_BASETYPE (inner_type));
 
   return false;
 }
@@ -394,45 +382,6 @@ copy_var_decl (tree var, tree name, tree type)
     }
 
   return copy;
-}
-
-/* Given SSA_NAMEs NAME1 and NAME2, return true if they are candidates for
-   coalescing together, false otherwise.
-
-   This must stay consistent with var_map_base_init in tree-ssa-live.c.  */
-
-bool
-gimple_can_coalesce_p (tree name1, tree name2)
-{
-  /* First check the SSA_NAME's associated DECL.  We only want to
-     coalesce if they have the same DECL or both have no associated DECL.  */
-  tree var1 = SSA_NAME_VAR (name1);
-  tree var2 = SSA_NAME_VAR (name2);
-  var1 = (var1 && (!VAR_P (var1) || !DECL_IGNORED_P (var1))) ? var1 : NULL_TREE;
-  var2 = (var2 && (!VAR_P (var2) || !DECL_IGNORED_P (var2))) ? var2 : NULL_TREE;
-  if (var1 != var2)
-    return false;
-
-  /* Now check the types.  If the types are the same, then we should
-     try to coalesce V1 and V2.  */
-  tree t1 = TREE_TYPE (name1);
-  tree t2 = TREE_TYPE (name2);
-  if (t1 == t2)
-    return true;
-
-  /* If the types are not the same, check for a canonical type match.  This
-     (for example) allows coalescing when the types are fundamentally the
-     same, but just have different names. 
-
-     Note pointer types with different address spaces may have the same
-     canonical type.  Those are rejected for coalescing by the
-     types_compatible_p check.  */
-  if (TYPE_CANONICAL (t1)
-      && TYPE_CANONICAL (t1) == TYPE_CANONICAL (t2)
-      && types_compatible_p (t1, t2))
-    return true;
-
-  return false;
 }
 
 /* Strip off a legitimate source ending from the input string NAME of
@@ -612,7 +561,7 @@ void
 gimple_cond_get_ops_from_tree (tree cond, enum tree_code *code_p,
                                tree *lhs_p, tree *rhs_p)
 {
-  gcc_assert (TREE_CODE_CLASS (TREE_CODE (cond)) == tcc_comparison
+  gcc_assert (COMPARISON_CLASS_P (cond)
 	      || TREE_CODE (cond) == TRUTH_NOT_EXPR
 	      || is_gimple_min_invariant (cond)
 	      || SSA_VAR_P (cond));
@@ -877,6 +826,57 @@ is_gimple_mem_ref_addr (tree t)
 		  || decl_address_invariant_p (TREE_OPERAND (t, 0)))));
 }
 
+/* Hold trees marked addressable during expand.  */
+
+static hash_set<tree> *mark_addressable_queue;
+
+/* Mark X as addressable or queue it up if called during expand.  We
+   don't want to apply it immediately during expand because decls are
+   made addressable at that point due to RTL-only concerns, such as
+   uses of memcpy for block moves, and TREE_ADDRESSABLE changes
+   is_gimple_reg, which might make it seem like a variable that used
+   to be a gimple_reg shouldn't have been an SSA name.  So we queue up
+   this flag setting and only apply it when we're done with GIMPLE and
+   only RTL issues matter.  */
+
+static void
+mark_addressable_1 (tree x)
+{
+  if (!currently_expanding_to_rtl)
+    {
+      TREE_ADDRESSABLE (x) = 1;
+      return;
+    }
+
+  if (!mark_addressable_queue)
+    mark_addressable_queue = new hash_set<tree>();
+  mark_addressable_queue->add (x);
+}
+
+/* Adaptor for mark_addressable_1 for use in hash_set traversal.  */
+
+bool
+mark_addressable_2 (tree const &x, void * ATTRIBUTE_UNUSED = NULL)
+{
+  mark_addressable_1 (x);
+  return false;
+}
+
+/* Mark all queued trees as addressable, and empty the queue.  To be
+   called right after clearing CURRENTLY_EXPANDING_TO_RTL.  */
+
+void
+flush_mark_addressable_queue ()
+{
+  gcc_assert (!currently_expanding_to_rtl);
+  if (mark_addressable_queue)
+    {
+      mark_addressable_queue->traverse<void*, mark_addressable_2> (NULL);
+      delete mark_addressable_queue;
+      mark_addressable_queue = NULL;
+    }
+}
+
 /* Mark X addressable.  Unlike the langhook we expect X to be in gimple
    form and we don't do any syntax checking.  */
 
@@ -892,7 +892,7 @@ mark_addressable (tree x)
       && TREE_CODE (x) != PARM_DECL
       && TREE_CODE (x) != RESULT_DECL)
     return;
-  TREE_ADDRESSABLE (x) = 1;
+  mark_addressable_1 (x);
 
   /* Also mark the artificial SSA_NAME that points to the partition of X.  */
   if (TREE_CODE (x) == VAR_DECL
@@ -903,7 +903,7 @@ mark_addressable (tree x)
     {
       tree *namep = cfun->gimple_df->decls_to_pointers->get (x);
       if (namep)
-	TREE_ADDRESSABLE (*namep) = 1;
+	mark_addressable_1 (*namep);
     }
 }
 

@@ -33,11 +33,15 @@
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="xml" href="status_cxx2014.xml">
     </xi:include>
 
-    <!-- Section 01.4 : Status C++ TR1 -->
+    <!-- Section 01.4 : Status C++ 2017 -->
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="xml" href="status_cxx2017.xml">
+    </xi:include>
+
+    <!-- Section 01.5 : Status C++ TR1 -->
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="xml" href="status_cxxtr1.xml">
     </xi:include>
 
-    <!-- Section 01.5 : Status C++ TR24733 -->
+    <!-- Section 01.6 : Status C++ TR24733 -->
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="xml" href="status_cxxtr24733.xml">
     </xi:include>
   </section>
@@ -822,6 +826,12 @@ requirements of the license of GCC.
     <listitem><para>Return the end of the filled range.
     </para></listitem></varlistentry>
 
+    <varlistentry><term><link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="../ext/lwg-defects.html#2021">2021</link>:
+       <emphasis>Further incorrect uses of <code>result_of</code></emphasis>
+    </term>
+    <listitem><para>Correctly decay types in signature of <code>std::async</code>.
+    </para></listitem></varlistentry>
+
     <varlistentry><term><link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="../ext/lwg-defects.html#2049">2049</link>:
 	<emphasis><code>is_destructible</code> underspecified</emphasis>
     </term>
@@ -874,6 +884,24 @@ requirements of the license of GCC.
 	<emphasis>move_iterator wrapping iterators returning prvalues</emphasis>
     </term>
     <listitem><para>Change the <code>reference</code> type.
+    </para></listitem></varlistentry>
+
+    <varlistentry><term><link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="../ext/lwg-defects.html#2108">2108</link>:
+	<emphasis>No way to identify allocator types that always compare equal</emphasis>
+    </term>
+    <listitem><para>Define and use <code>is_always_equal</code> even for C++11.
+    </para></listitem></varlistentry>
+
+    <varlistentry><term><link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="../ext/lwg-defects.html#2118">2118</link>:
+	<emphasis><code>unique_ptr</code> for array does not support cv qualification conversion of actual argument</emphasis>
+    </term>
+    <listitem><para>Adjust constraints to allow safe conversions.
+    </para></listitem></varlistentry>
+
+    <varlistentry><term><link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="../ext/lwg-defects.html#2127">2127</link>:
+	<emphasis>Move-construction with <code>raw_storage_iterator</code></emphasis>
+    </term>
+    <listitem><para>Add assignment operator taking an rvalue.
     </para></listitem></varlistentry>
 
     <varlistentry><term><link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="../ext/lwg-defects.html#2132">2132</link>:
@@ -954,6 +982,47 @@ requirements of the license of GCC.
     <listitem><para>Add <code>noexcept</code> to the assignment and comparisons.
     </para></listitem></varlistentry>
 
+    <varlistentry><term><link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="../ext/lwg-defects.html#2407">2407</link>:
+       <emphasis><code>packaged_task(allocator_arg_t, const Allocator&amp;, F&amp;&amp;)</code>
+                 should neither be constrained nor <code>explicit</code>
+       </emphasis>
+    </term>
+    <listitem><para>Remove <code>explicit</code> from the constructor.
+    </para></listitem></varlistentry>
+
+    <varlistentry><term><link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="../ext/lwg-defects.html#2415">2415</link>:
+       <emphasis>Inconsistency between <code>unique_ptr</code> and <code>shared_ptr</code></emphasis>
+    </term>
+    <listitem><para>Create empty an <code>shared_ptr</code> from an empty
+                    <code>unique_ptr</code>.
+    </para></listitem></varlistentry>
+
+    <varlistentry><term><link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="../ext/lwg-defects.html#2418">2418</link>:
+       <emphasis><code>apply</code> does not work with member pointers</emphasis>
+    </term>
+    <listitem><para>Use <code>mem_fn</code> for member pointers.
+    </para></listitem></varlistentry>
+
+    <varlistentry><term><link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="../ext/lwg-defects.html#2440">2440</link>:
+       <emphasis><code>seed_seq::size()</code> should be <code>noexcept</code></emphasis>
+    </term>
+    <listitem><para>Add <code>noexcept</code>.
+    </para></listitem></varlistentry>
+
+    <varlistentry><term><link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="../ext/lwg-defects.html#2442">2442</link>:
+       <emphasis><code>call_once()</code> shouldn't <code>DECAY_COPY()</code></emphasis>
+    </term>
+    <listitem><para>Remove indirection through call wrapper that made copies
+    of arguments and forward arguments straight to <code>std::invoke</code>.
+    </para></listitem></varlistentry>
+
+    <varlistentry><term><link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="../ext/lwg-defects.html#2454">2454</link>:
+       <emphasis>Add <code>raw_storage_iterator::base()</code> member
+       </emphasis>
+    </term>
+    <listitem><para>Add the <code>base()</code> member function.
+    </para></listitem></varlistentry>
+
     <varlistentry><term><link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="../ext/lwg-defects.html#2455">2455</link>:
        <emphasis>Allocator default construction should be allowed to throw
        </emphasis>
@@ -961,6 +1030,27 @@ requirements of the license of GCC.
     <listitem><para>Make <code>noexcept</code> specifications conditional.
     </para></listitem></varlistentry>
 
+    <varlistentry><term><link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="../ext/lwg-defects.html#2459">2459</link>:
+       <emphasis><code>std::polar</code> should require a non-negative rho
+       </emphasis>
+    </term>
+    <listitem><para>Add debug mode assertion.
+    </para></listitem></varlistentry>
+
+    <varlistentry><term><link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="../ext/lwg-defects.html#2466">2466</link>:
+       <emphasis><code>allocator_traits::max_size()</code> default behavior is incorrect
+       </emphasis>
+    </term>
+    <listitem><para>Divide by the object type.
+    </para></listitem></varlistentry>
+
+    <varlistentry><term><link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="../ext/lwg-defects.html#2484">2484</link>:
+       <emphasis><code>rethrow_if_nested()</code>  is doubly unimplementable
+       </emphasis>
+    </term>
+    <listitem><para>Avoid using <code>dynamic_cast</code> when it would be
+    ill-formed.
+    </para></listitem></varlistentry>
 
   </variablelist>
 

@@ -1,22 +1,49 @@
-2017-10-10  Release Manager
+2017-07-04  Release Manager
 
-	* GCC 5.5.0 released.
+	* GCC 6.4.0 released.
 
-2016-06-03  Release Manager
+2016-12-21  Release Manager
 
-	* GCC 5.4.0 released.
+	* GCC 6.3.0 released.
 
-2015-12-04  Release Manager
+2016-08-22  Release Manager
 
-	* GCC 5.3.0 released.
+	* GCC 6.2.0 released.
 
-2015-07-16  Release Manager
+2016-06-13  Jonathan Wakely  <jwakely@redhat.com>
 
-	* GCC 5.2.0 released.
+	* generate_libstdcxx_web_docs: Use realpath to get absolute path.
+	Add comment about LaTeX errors.
 
-2015-04-22  Release Manager
+2016-04-27  Release Manager
 
-	* GCC 5.1.0 released.
+	* GCC 6.1.0 released.
+
+2015-06-23  Richard Biener  <rguenther@suse.de>
+
+	* update_version_svn: Add gcc-4_8-branch to IGNORE_BRANCHES.
+
+2015-06-14  Richard Biener  <rguenther@suse.de>
+
+	* crontab: Disable snapshots from the 4.8 branch.
+
+2015-04-13  Jakub Jelinek  <jakub@redhat.com>
+
+	* update_version_svn: Update DATESTAMP also on
+	branches/gcc-[0-9]+-branch.
+
+	* gcc_release: Fix up thinko in the last commit, improve error
+	message.  Commit all ChangeLog, DEV-PHASE and BASE-VER changes
+	together, rather than doing dozens of separate commits.
+
+2015-04-12  Jakub Jelinek  <jakub@redhat.com>
+
+	* gcc_release: For RELEASE_MAJOR 5+ only use the major
+	number in branch name.  When doing final release of 5+,
+	if BASE-VER doesn't match release, but is *.*.1 for the
+	one smaller minor version, bump BASE-VER.
+
+	* crontab: Enable snapshots from gcc-5-branch.
 
 2015-04-07  Gerald Pfeifer  <gerald@pfeifer.com>
 

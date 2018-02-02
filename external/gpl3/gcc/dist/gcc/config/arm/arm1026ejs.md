@@ -1,5 +1,5 @@
 ;; ARM 1026EJ-S Pipeline Description
-;; Copyright (C) 2003-2015 Free Software Foundation, Inc.
+;; Copyright (C) 2003-2016 Free Software Foundation, Inc.
 ;; Written by CodeSourcery, LLC.
 ;;
 ;; This file is part of GCC.
@@ -58,7 +58,7 @@
 
 ;; ALU instructions require three cycles to execute, and use the ALU
 ;; pipeline in each of the three stages.  The results are available
-;; after the execute stage stage has finished.
+;; after the execute stage has finished.
 ;;
 ;; If the destination register is the PC, the pipelines are stalled
 ;; for several cycles.  That case is not modeled here.

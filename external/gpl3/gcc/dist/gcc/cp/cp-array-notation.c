@@ -1,7 +1,7 @@
 /* This file is part of the Intel(R) Cilk(TM) Plus support
    It contains routines to handle Array Notation expression
    handling routines in the C++ Compiler.
-   Copyright (C) 2013-2015 Free Software Foundation, Inc.
+   Copyright (C) 2013-2016 Free Software Foundation, Inc.
    Contributed by Balaji V. Iyer <balaji.v.iyer@intel.com>,
                   Intel Corporation
 
@@ -53,22 +53,8 @@
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "options.h"
-#include "wide-int.h"
-#include "inchash.h"
-#include "tree.h"
 #include "cp-tree.h"
-#include "c-family/c-common.h"
-#include "diagnostic.h"
 #include "tree-iterator.h"
-#include "vec.h"
 
 /* Creates a FOR_STMT with INIT, COND, INCR and BODY as the initializer,
    condition, increment expression and the loop-body, respectively.  */
@@ -95,7 +81,7 @@ make_triplet_val_inv (tree *value)
 {
   if (TREE_CODE (*value) != INTEGER_CST
       && TREE_CODE (*value) != PARM_DECL
-      && TREE_CODE (*value) != VAR_DECL)
+      && !VAR_P (*value))
     *value = get_temp_regvar (ptrdiff_type_node, *value);
 }
 
@@ -205,7 +191,7 @@ replace_invariant_exprs (tree *node)
 
 /* Replace array notation's built-in function passed in AN_BUILTIN_FN with
    the appropriate loop and computation (all stored in variable LOOP of type
-   tree node).  The output of the function function is always a scalar and that
+   tree node).  The output of the function is always a scalar and that
    result is returned in *NEW_VAR.  *NEW_VAR is NULL_TREE if the function is
    __sec_reduce_mutating.  */
 
@@ -224,7 +210,7 @@ expand_sec_reduce_builtin (tree an_builtin_fn, tree *new_var)
   enum tree_code code = NOP_EXPR;
   location_t location = UNKNOWN_LOCATION;
   vec<vec<an_parts> > an_info = vNULL;
-  vec<an_loop_parts> an_loop_info = vNULL; 
+  auto_vec<an_loop_parts> an_loop_info;
   enum built_in_function an_type =
     is_cilkplus_reduce_builtin (CALL_EXPR_FN (an_builtin_fn));
   vec <tree, va_gc> *func_args;
@@ -353,7 +339,7 @@ expand_sec_reduce_builtin (tree an_builtin_fn, tree *new_var)
     array_ind_value = get_temp_regvar (TREE_TYPE (func_parm), func_parm);
 
   array_op0 = (*array_operand)[0];
-  if (TREE_CODE (array_op0) == INDIRECT_REF)
+  if (INDIRECT_REF_P (array_op0))
     array_op0 = TREE_OPERAND (array_op0, 0);
   switch (an_type)
     {
@@ -508,8 +494,7 @@ expand_sec_reduce_builtin (tree an_builtin_fn, tree *new_var)
     }
   append_to_statement_list (body, &loop_with_init);
 
-  an_info.release ();
-  an_loop_info.release ();
+  release_vec_vec (an_info);
 
   return loop_with_init;
 }
@@ -526,7 +511,7 @@ expand_an_in_modify_expr (location_t location, tree lhs,
   tree array_expr_lhs = NULL_TREE, array_expr_rhs = NULL_TREE;
   tree array_expr = NULL_TREE;
   tree body = NULL_TREE;
-  vec<tree> cond_expr = vNULL;
+  auto_vec<tree> cond_expr;
   vec<tree, va_gc> *lhs_array_operand = NULL, *rhs_array_operand = NULL;
   size_t lhs_rank = 0, rhs_rank = 0, ii = 0;
   vec<tree, va_gc> *rhs_list = NULL, *lhs_list = NULL;
@@ -535,7 +520,8 @@ expand_an_in_modify_expr (location_t location, tree lhs,
   bool found_builtin_fn = false;
   tree an_init, loop_with_init = alloc_stmt_list ();
   vec<vec<an_parts> > lhs_an_info = vNULL, rhs_an_info = vNULL;
-  vec<an_loop_parts> lhs_an_loop_info = vNULL, rhs_an_loop_info = vNULL;
+  auto_vec<an_loop_parts> lhs_an_loop_info, rhs_an_loop_info;
+  tree lhs_len, rhs_len;
 
   if (!find_rank (location, rhs, rhs, false, &rhs_rank))
     return error_mark_node;
@@ -659,11 +645,11 @@ expand_an_in_modify_expr (location_t location, tree lhs,
 						 rhs_an_info)))
     {
       pop_stmt_list (an_init);
-      return error_mark_node;
+      goto error;
     }
-  tree rhs_len = ((rhs_list_size > 0 && rhs_rank > 0) ?
+  rhs_len = ((rhs_list_size > 0 && rhs_rank > 0) ?
     rhs_an_info[0][0].length : NULL_TREE);
-  tree lhs_len = ((lhs_list_size > 0 && lhs_rank > 0) ?
+  lhs_len = ((lhs_list_size > 0 && lhs_rank > 0) ?
     lhs_an_info[0][0].length : NULL_TREE);
   if (lhs_list_size > 0 && rhs_list_size > 0 && lhs_rank > 0 && rhs_rank > 0
       && TREE_CODE (lhs_len) == INTEGER_CST && rhs_len
@@ -672,7 +658,7 @@ expand_an_in_modify_expr (location_t location, tree lhs,
     { 
       error_at (location, "length mismatch between LHS and RHS"); 
       pop_stmt_list (an_init); 
-      return error_mark_node;
+      goto error;
     }
    for (ii = 0; ii < lhs_rank; ii++) 
      {
@@ -690,7 +676,7 @@ expand_an_in_modify_expr (location_t location, tree lhs,
 						  lhs_an_loop_info, lhs_rank,
 						  lhs); 
        if (!rhs_array_operand)
-	 return error_mark_node;
+	 goto error;
      }
   replace_array_notations (&rhs, true, rhs_list, rhs_array_operand);
   rhs_list_size = 0;
@@ -731,7 +717,7 @@ expand_an_in_modify_expr (location_t location, tree lhs,
 						 rhs_an_loop_info, rhs_rank,
 						 rhs);
       if (!rhs_array_operand)
-	return error_mark_node;
+	goto error;
       replace_array_notations (&rhs, true, rhs_list, rhs_array_operand);
     }
 
@@ -782,16 +768,16 @@ expand_an_in_modify_expr (location_t location, tree lhs,
     }
   append_to_statement_list (body, &loop_with_init);
 
-  lhs_an_info.release ();
-  lhs_an_loop_info.release ();
-  if (rhs_rank) 
-    { 
-      rhs_an_info.release (); 
-      rhs_an_loop_info.release ();
-    }
-  cond_expr.release ();
+  release_vec_vec (lhs_an_info);
+  release_vec_vec (rhs_an_info);
 
   return loop_with_init;
+
+error:
+  release_vec_vec (lhs_an_info);
+  release_vec_vec (rhs_an_info);
+
+  return error_mark_node;
 }
 
 /* Helper function for expand_conditonal_array_notations.  Encloses the
@@ -810,7 +796,7 @@ cp_expand_cond_array_notations (tree orig_stmt)
   tree loop_with_init = alloc_stmt_list ();
   location_t location = UNKNOWN_LOCATION;
   vec<vec<an_parts> > an_info = vNULL;
-  vec<an_loop_parts> an_loop_info = vNULL;
+  auto_vec<an_loop_parts> an_loop_info;
 
   if (TREE_CODE (orig_stmt) == COND_EXPR)
     {
@@ -821,8 +807,8 @@ cp_expand_cond_array_notations (tree orig_stmt)
       if (!find_rank (EXPR_LOCATION (cond), cond, cond, true, &cond_rank)
 	  || !find_rank (EXPR_LOCATION (yes_expr), yes_expr, yes_expr, true,
 			 &yes_rank)
-	  || find_rank (EXPR_LOCATION (no_expr), no_expr, no_expr, true,
-			&no_rank))
+	  || !find_rank (EXPR_LOCATION (no_expr), no_expr, no_expr, true,
+			 &no_rank))
 	return error_mark_node;
       /* If the condition has a zero rank, then handle array notations in body
 	 separately.  */
@@ -971,8 +957,7 @@ cp_expand_cond_array_notations (tree orig_stmt)
     }
   append_to_statement_list (body, &loop_with_init);
 
-  an_info.release ();
-  an_loop_info.release ();
+  release_vec_vec (an_info);
   
   return loop_with_init;
 }
@@ -991,7 +976,7 @@ expand_unary_array_notation_exprs (tree orig_stmt)
   location_t location = EXPR_LOCATION (orig_stmt);
   tree an_init, loop_with_init = alloc_stmt_list ();
   vec<vec<an_parts> > an_info = vNULL;
-  vec<an_loop_parts> an_loop_info = vNULL;
+  auto_vec<an_loop_parts> an_loop_info;
   
   if (!find_rank (location, orig_stmt, orig_stmt, true, &rank))
     return error_mark_node;
@@ -1074,8 +1059,7 @@ expand_unary_array_notation_exprs (tree orig_stmt)
     }
   append_to_statement_list (body, &loop_with_init);
 
-  an_info.release ();
-  an_loop_info.release ();
+  release_vec_vec (an_info);
 
   return loop_with_init;
 }
@@ -1394,7 +1378,12 @@ build_array_notation_ref (location_t loc, tree array, tree start, tree length,
     
   if (!stride) 
     stride = build_one_cst (ptrdiff_type_node);
-  
+
+  stride = maybe_constant_value (stride);
+  length = maybe_constant_value (length);
+  if (start)
+    start = maybe_constant_value (start);
+
   /* When dealing with templates, triplet type-checking will be done in pt.c 
      after type substitution.  */
   if (processing_template_decl 

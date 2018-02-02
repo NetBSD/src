@@ -1,5 +1,5 @@
 /* Various declarations for language-independent pretty-print subroutines.
-   Copyright (C) 2002-2015 Free Software Foundation, Inc.
+   Copyright (C) 2002-2016 Free Software Foundation, Inc.
    Contributed by Gabriel Dos Reis <gdr@integrable-solutions.net>
 
 This file is part of GCC.
@@ -22,7 +22,6 @@ along with GCC; see the file COPYING3.  If not see
 #define GCC_PRETTY_PRINT_H
 
 #include "obstack.h"
-#include "input.h"
 #include "wide-int-print.h"
 
 /* Maximum number of format string arguments.  */
@@ -35,8 +34,11 @@ struct text_info
   const char *format_spec;
   va_list *args_ptr;
   int err_no;  /* for %m */
-  location_t *locus;
   void **x_data;
+  rich_location *m_richloc;
+
+  void set_location (unsigned int idx, location_t loc, bool caret_p);
+  location_t get_location (unsigned int index_of_location) const;
 };
 
 /* How often diagnostics are prefixed by their locations:
@@ -121,8 +123,13 @@ output_buffer_formatted_text (output_buffer *buff)
 static inline void
 output_buffer_append_r (output_buffer *buff, const char *start, int length)
 {
+  gcc_checking_assert (start);
   obstack_grow (buff->obstack, start, length);
-  buff->line_length += length;
+  for (int i = 0; i < length; i++)
+    if (start[i] == '\n')
+      buff->line_length = 0;
+    else
+      buff->line_length++;
 }
 
 /*  Return a pointer to the last character emitted in the
@@ -169,7 +176,7 @@ struct pp_wrapping_mode_t
 /* Get or set the wrapping mode as a single entity.  */
 #define pp_wrapping_mode(PP) (PP)->wrapping
 
-/* The type of a hook that formats client-specific data onto a pretty_pinter.
+/* The type of a hook that formats client-specific data onto a pretty_printer.
    A client-supplied formatter returns true if everything goes well,
    otherwise it returns false.  */
 typedef bool (*printer_fn) (pretty_printer *, text_info *, const char *,
