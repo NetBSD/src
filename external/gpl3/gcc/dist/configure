@@ -643,12 +643,14 @@ CXXFLAGS_FOR_TARGET
 CFLAGS_FOR_TARGET
 DEBUG_PREFIX_CFLAGS_FOR_TARGET
 SYSROOT_CFLAGS_FOR_TARGET
+extra_host_zlib_configure_flags
 extra_host_libiberty_configure_flags
 stage1_languages
 extra_linker_plugin_flags
 extra_linker_plugin_configure_flags
 islinc
 isllibs
+islver
 poststage1_ldflags
 poststage1_libs
 stage1_ldflags
@@ -747,10 +749,12 @@ ospace_frag'
 ac_user_opts='
 enable_option_checking
 with_build_libsubdir
+with_system_zlib
 enable_as_accelerator_for
 enable_offload_targets
 enable_gold
 enable_ld
+enable_compressed_debug_sections
 enable_libquadmath
 enable_libquadmath_support
 enable_libada
@@ -770,7 +774,6 @@ with_gmp_dir
 with_gmp
 with_gmp_include
 with_gmp_lib
-with_host_libstdcxx
 with_stage1_libs
 with_stage1_ldflags
 with_boot_libs
@@ -1475,6 +1478,9 @@ Optional Features:
                           offload target compiler during the build
   --enable-gold[=ARG]     build gold [ARG={default,yes,no}]
   --enable-ld[=ARG]       build ld [ARG={default,yes,no}]
+  --enable-compressed-debug-sections={all,gas,gold,ld,none}
+                          Enable compressed debug sections for gas, gold or ld
+                          by default
   --disable-libquadmath   do not build libquadmath directory
   --disable-libquadmath-support
                           disable libquadmath support for Fortran
@@ -1487,7 +1493,7 @@ Optional Features:
                           build static libjava [default=no]
   --enable-bootstrap      enable bootstrapping [yes if native build]
   --disable-isl-version-check
-                          disable check for ISL version
+                          disable check for isl version
   --enable-lto            enable link time optimization support
   --enable-linker-plugin-configure-flags=FLAGS
                           additional flags for configuring linker plugins
@@ -1500,7 +1506,7 @@ Optional Features:
                           Mostly useful for compiler development
   --enable-objc-gc        enable use of Boehm's garbage collector with the GNU
                           Objective-C runtime
-  --enable-vtable-verify    Enable vtable verification feature
+  --enable-vtable-verify  Enable vtable verification feature
   --enable-serial-[{host,target,build}-]configure
                           force sequential configuration of sub-packages for
                           the host, target or build machine, or all
@@ -1518,6 +1524,7 @@ Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --with-build-libsubdir=DIR  Directory where to find libraries for build system
+  --with-system-zlib      use installed libz
   --with-mpc=PATH         specify prefix directory for installed MPC package.
                           Equivalent to --with-mpc-include=PATH/include plus
                           --with-mpc-lib=PATH/lib
@@ -1537,20 +1544,18 @@ Optional Packages:
                           --with-gmp-lib=PATH/lib
   --with-gmp-include=PATH specify directory for installed GMP include files
   --with-gmp-lib=PATH     specify directory for the installed GMP library
-  --with-host-libstdcxx=L use linker arguments L to link with libstdc++ when
-                          linking with PPL
   --with-stage1-libs=LIBS libraries for stage1
   --with-stage1-ldflags=FLAGS
                           linker flags for stage1
   --with-boot-libs=LIBS   libraries for stage2 and later
   --with-boot-ldflags=FLAGS
                           linker flags for stage2 and later
-  --with-isl=PATH         Specify prefix directory for the installed ISL
+  --with-isl=PATH         Specify prefix directory for the installed isl
                           package. Equivalent to
                           --with-isl-include=PATH/include plus
                           --with-isl-lib=PATH/lib
-  --with-isl-include=PATH Specify directory for installed ISL include files
-  --with-isl-lib=PATH     Specify the directory for the installed ISL library
+  --with-isl-include=PATH Specify directory for installed isl include files
+  --with-isl-lib=PATH     Specify the directory for the installed isl library
   --with-build-sysroot=SYSROOT
                           use sysroot as the system root during the build
   --with-debug-prefix-map='A=B C=D ...'
@@ -2854,6 +2859,12 @@ if test x$with_gnu_as = xno ; then
 fi
 
 use_included_zlib=
+
+# Check whether --with-system-zlib was given.
+if test "${with_system_zlib+set}" = set; then :
+  withval=$with_system_zlib;
+fi
+
 # Make sure we don't let ZLIB be added if we didn't want it.
 if test x$with_system_zlib = xyes ; then
   use_included_zlib=no
@@ -2962,7 +2973,7 @@ case "${ENABLE_GOLD}" in
       # Check for target supported by gold.
       case "${target}" in
         i?86-*-* | x86_64-*-* | sparc*-*-* | powerpc*-*-* | arm*-*-* \
-        | aarch64*-*-* | tilegx*-*-*)
+        | aarch64*-*-* | tilegx*-*-* | mips*-*-* | s390*-*-*)
 	  configdirs="$configdirs gold"
 	  if test x${ENABLE_GOLD} = xdefault; then
 	    default_ld=gold
@@ -3006,6 +3017,21 @@ $as_echo "$as_me: WARNING: neither ld nor gold are enabled" >&2;}
     as_fn_error "invalid --enable-ld argument" "$LINENO" 5
     ;;
 esac
+
+# PR gas/19109
+# Decide the default method for compressing debug sections.
+# Provide a configure time option to override our default.
+# Check whether --enable-compressed_debug_sections was given.
+if test "${enable_compressed_debug_sections+set}" = set; then :
+  enableval=$enable_compressed_debug_sections;
+  if test x"$enable_compressed_debug_sections" = xyes; then
+    as_fn_error "no program with compressed debug sections specified" "$LINENO" 5
+  fi
+
+else
+  enable_compressed_debug_sections=
+fi
+
 
 # Configure extra directories which are host specific
 
@@ -3159,9 +3185,8 @@ if test x$enable_static_libjava != xyes ; then
 fi
 
 
-# Disable libgomp on non POSIX hosted systems.
+# Enable libgomp by default on hosted POSIX systems, and a few others.
 if test x$enable_libgomp = x ; then
-    # Enable libgomp by default on hosted POSIX systems.
     case "${target}" in
     *-*-linux* | *-*-gnu* | *-*-k*bsd*-gnu | *-*-kopensolaris*-gnu)
 	;;
@@ -3170,6 +3195,8 @@ if test x$enable_libgomp = x ; then
     *-*-solaris2* | *-*-hpux11*)
 	;;
     *-*-darwin* | *-*-aix*)
+	;;
+    nvptx*-*-*)
 	;;
     *)
 	noconfigdirs="$noconfigdirs target-libgomp"
@@ -3294,7 +3321,7 @@ fi
 
 # Enable libmpx on supported systems by request.
 if test -d ${srcdir}/libmpx; then
-    if test x$enable_libmpx = xyes; then
+    if test x$enable_libmpx = x; then
        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for libmpx support" >&5
 $as_echo_n "checking for libmpx support... " >&6; }
        if (srcdir=${srcdir}/libmpx; \
@@ -3308,8 +3335,6 @@ $as_echo "no" >&6; }
            { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
        fi
-    else
-       noconfigdirs="$noconfigdirs target-libmpx"
     fi
 fi
 
@@ -3361,6 +3386,9 @@ if test "${ENABLE_LIBSTDCXX}" = "default" ; then
       noconfigdirs="$noconfigdirs target-libstdc++-v3"
       ;;
     avr-*-*)
+      noconfigdirs="$noconfigdirs target-libstdc++-v3"
+      ;;
+    ft32-*-*)
       noconfigdirs="$noconfigdirs target-libstdc++-v3"
       ;;
   esac
@@ -3520,6 +3548,9 @@ case "${target}" in
   rs6000-*-aix*)
     noconfigdirs="$noconfigdirs ${libgcj}"
     ;;
+  ft32-*-*)
+    noconfigdirs="$noconfigdirs ${libgcj}"
+    ;;
   *-*-lynxos*)
     noconfigdirs="$noconfigdirs ${libgcj}"
     ;;
@@ -3659,6 +3690,14 @@ esac
 case "${target}" in
   *-*-chorusos)
     ;;
+  aarch64-*-darwin*)
+    noconfigdirs="$noconfigdirs ld gas gdb gprof"
+    noconfigdirs="$noconfigdirs sim target-rda"
+    ;;
+  arm-*-darwin*)
+    noconfigdirs="$noconfigdirs ld gas gdb gprof"
+    noconfigdirs="$noconfigdirs sim target-rda"
+    ;;
   powerpc-*-darwin*)
     noconfigdirs="$noconfigdirs ld gas gdb gprof"
     noconfigdirs="$noconfigdirs sim target-rda"
@@ -3753,8 +3792,11 @@ case "${target}" in
   fr30-*-elf*)
     noconfigdirs="$noconfigdirs gdb"
     ;;
+  ft32-*-*)
+    noconfigdirs="$noconfigdirs target-rda gprof"
+    ;;
   moxie-*-*)
-    noconfigdirs="$noconfigdirs gprof"
+    noconfigdirs="$noconfigdirs"
     ;;
   h8300*-*-*)
     noconfigdirs="$noconfigdirs target-libgloss"
@@ -3764,6 +3806,12 @@ case "${target}" in
     ;;
   hppa1.1-*-osf* | hppa1.1-*-bsd* )
     ;;
+  hppa*64*-*-hpux*)
+    noconfigdirs="$noconfigdirs gdb"
+    ;;
+  hppa*-*-hpux11*)
+    noconfigdirs="$noconfigdirs gdb ld"
+    ;;
   hppa*64*-*-linux*)
     ;;
   hppa*-*-linux*)
@@ -3772,9 +3820,6 @@ case "${target}" in
   hppa*-*-lites* | \
   hppa*-*-openbsd* | \
   hppa*64*-*-*)
-    ;;
-  hppa*-hp-hpux11*)
-    noconfigdirs="$noconfigdirs ld"
     ;;
   hppa*-*-pro*)
     ;;
@@ -3790,7 +3835,7 @@ case "${target}" in
     ;;
   ia64*-**-hpux*)
     # No ld support yet.
-    noconfigdirs="$noconfigdirs libgui itcl ld"
+    noconfigdirs="$noconfigdirs gdb libgui itcl ld"
     ;;
   ia64*-*-*vms*)
     # No ld support yet.
@@ -3899,7 +3944,6 @@ case "${target}" in
     noconfigdirs="$noconfigdirs gdb"
     ;;
   nvptx*-*-*)
-    # nvptx is just a compiler
     noconfigdirs="$noconfigdirs target-libssp target-libstdc++-v3 target-libobjc"
     ;;
   or1k*-*-*)
@@ -5407,6 +5451,12 @@ $as_echo "$as_me: WARNING: trying to bootstrap a cross compiler" >&2;}
     ;;
 esac
 
+# When bootstrapping with GCC, build stage 1 in C++98 mode to ensure that a
+# C++98 compiler can still start the bootstrap.
+if test "$enable_bootstrap:$GXX" = "yes:yes"; then
+  CXX="$CXX -std=gnu++98"
+fi
+
 # Used for setting $lt_cv_objdir
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for objdir" >&5
 $as_echo_n "checking for objdir... " >&6; }
@@ -5825,20 +5875,6 @@ fi
 
 
 
-# Allow host libstdc++ to be specified for static linking with PPL.
-
-# Check whether --with-host-libstdcxx was given.
-if test "${with_host_libstdcxx+set}" = set; then :
-  withval=$with_host_libstdcxx;
-fi
-
-
-case $with_host_libstdcxx in
-  no|yes)
-    as_fn_error "-with-host-libstdcxx needs an argument" "$LINENO" 5
-    ;;
-esac
-
 # Libraries to use for stage1 or when not bootstrapping.
 
 # Check whether --with-stage1-libs was given.
@@ -5849,7 +5885,7 @@ if test "${with_stage1_libs+set}" = set; then :
    stage1_libs=$withval
  fi
 else
-  stage1_libs=$with_host_libstdcxx
+  stage1_libs=
 fi
 
 
@@ -5875,8 +5911,7 @@ fi
 
 
 
-# Libraries to use for stage2 and later builds.  This defaults to the
-# argument passed to --with-host-libstdcxx.
+# Libraries to use for stage2 and later builds.
 
 # Check whether --with-boot-libs was given.
 if test "${with_boot_libs+set}" = set; then :
@@ -5886,7 +5921,7 @@ if test "${with_boot_libs+set}" = set; then :
    poststage1_libs=$withval
  fi
 else
-  poststage1_libs=$with_host_libstdcxx
+  poststage1_libs=
 fi
 
 
@@ -5912,7 +5947,7 @@ fi
 
 
 
-# GCC GRAPHITE dependency ISL.
+# GCC GRAPHITE dependency isl.
 # Basic setup is inlined here, actual checks are in config/isl.m4
 
 
@@ -5925,7 +5960,7 @@ fi
 # Treat --without-isl as a request to disable
 # GRAPHITE support and skip all following checks.
 if test "x$with_isl" != "xno"; then
-  # Check for ISL
+  # Check for isl
 
 
 # Check whether --with-isl-include was given.
@@ -5972,8 +6007,8 @@ fi
     isllibs='-L$$r/$(HOST_SUBDIR)/isl/'"$lt_cv_objdir"' '
     islinc='-I$$r/$(HOST_SUBDIR)/isl/include -I$$s/isl/include'
     ENABLE_ISL_CHECK=no
-    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: using in-tree ISL, disabling version check" >&5
-$as_echo "$as_me: WARNING: using in-tree ISL, disabling version check" >&2;}
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: using in-tree isl, disabling version check" >&5
+$as_echo "$as_me: WARNING: using in-tree isl, disabling version check" >&2;}
   fi
 
   isllibs="${isllibs} -lisl"
@@ -5986,18 +6021,18 @@ $as_echo "$as_me: WARNING: using in-tree ISL, disabling version check" >&2;}
     _isl_saved_LIBS=$LIBS
 
     CFLAGS="${_isl_saved_CFLAGS} ${islinc} ${gmpinc}"
-    LDFLAGS="${_isl_saved_LDFLAGS} ${isllibs}"
-    LIBS="${_isl_saved_LIBS} -lisl"
+    LDFLAGS="${_isl_saved_LDFLAGS} ${isllibs} ${gmplibs}"
+    LIBS="${_isl_saved_LIBS} -lisl -lgmp"
 
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for compatible ISL" >&5
-$as_echo_n "checking for compatible ISL... " >&6; }
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for isl 0.16, 0.15, or deprecated 0.14" >&5
+$as_echo_n "checking for isl 0.16, 0.15, or deprecated 0.14... " >&6; }
     cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-#include <isl/val.h>
+#include <isl/ctx.h>
 int
 main ()
 {
-;
+isl_ctx_get_max_operations (isl_ctx_alloc ());
   ;
   return 0;
 }
@@ -6011,6 +6046,39 @@ rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: $gcc_cv_isl" >&5
 $as_echo "$gcc_cv_isl" >&6; }
+
+    if test "${gcc_cv_isl}" = no ; then
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: recommended isl version is 0.16 or 0.15, the minimum required isl version 0.14 is deprecated" >&5
+$as_echo "recommended isl version is 0.16 or 0.15, the minimum required isl version 0.14 is deprecated" >&6; }
+    fi
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for isl 0.16 or 0.15" >&5
+$as_echo_n "checking for isl 0.16 or 0.15... " >&6; }
+    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <isl/schedule.h>
+int
+main ()
+{
+isl_options_set_schedule_serialize_sccs (NULL, 0);
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_has_isl_options_set_schedule_serialize_sccs=yes
+else
+  ac_has_isl_options_set_schedule_serialize_sccs=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_has_isl_options_set_schedule_serialize_sccs" >&5
+$as_echo "$ac_has_isl_options_set_schedule_serialize_sccs" >&6; }
+
+    if test x"$ac_has_isl_options_set_schedule_serialize_sccs" = x"yes"; then
+      islver="0.15"
+
+    fi
 
     CFLAGS=$_isl_saved_CFLAGS
     LDFLAGS=$_isl_saved_LDFLAGS
@@ -6043,13 +6111,13 @@ $as_echo "$gcc_cv_isl" >&6; }
     && test "x${isllibs}" = x \
     && test "x${islinc}" = x ; then
 
-    as_fn_error "Unable to find a usable ISL.  See config.log for details." "$LINENO" 5
+    as_fn_error "Unable to find a usable isl.  See config.log for details." "$LINENO" 5
   fi
 
 
 fi
 
-# If the ISL check failed, disable builds of in-tree variant of ISL
+# If the isl check failed, disable builds of in-tree variant of isl
 if test "x$with_isl" = xno ||
    test "x$gcc_cv_isl" = xno; then
   noconfigdirs="$noconfigdirs isl"
@@ -6096,7 +6164,7 @@ if test $target_elf = yes; then :
 else
   if test x"$default_enable_lto" = x"yes" ; then
     case $target in
-      *-apple-darwin9* | *-cygwin* | *-mingw*) ;;
+      *-apple-darwin9* | *-cygwin* | *-mingw* | *djgpp*) ;;
       # On other non-ELF platforms, LTO has yet to be validated.
       *) enable_lto=no ;;
     esac
@@ -6107,7 +6175,7 @@ else
   # warn during gcc/ subconfigure; unless you're bootstrapping with
   # -flto it won't be needed until after installation anyway.
     case $target in
-      *-cygwin* | *-mingw* | *-apple-darwin*) ;;
+      *-cygwin* | *-mingw* | *-apple-darwin* | *djgpp*) ;;
       *) if test x"$enable_lto" = x"yes"; then
 	as_fn_error "LTO support is not enabled for this target." "$LINENO" 5
         fi
@@ -6157,7 +6225,7 @@ if test -d ${srcdir}/gcc; then
   if test x"${enable_languages+set}" != xset; then
     if test x"${LANGUAGES+set}" = xset; then
       enable_languages="${LANGUAGES}"
-        echo configure.in: warning: setting LANGUAGES is deprecated, use --enable-languages instead 1>&2
+        echo configure.ac: warning: setting LANGUAGES is deprecated, use --enable-languages instead 1>&2
     else
       enable_languages=all
     fi
@@ -6165,7 +6233,7 @@ if test -d ${srcdir}/gcc; then
     if test x"${enable_languages}" = x ||
        test x"${enable_languages}" = xyes;
        then
-      echo configure.in: --enable-languages needs at least one language argument 1>&2
+      echo configure.ac: --enable-languages needs at least one language argument 1>&2
       exit 1
     fi
   fi
@@ -6175,7 +6243,7 @@ if test -d ${srcdir}/gcc; then
   # and make the substitution.
   case ,${enable_languages}, in
     *,f95,*)
-      echo configure.in: warning: 'f95' as language name is deprecated, use 'fortran' instead 1>&2
+      echo configure.ac: warning: 'f95' as language name is deprecated, use 'fortran' instead 1>&2
       enable_languages=`echo "${enable_languages}" | sed -e 's/f95/fortran/g'`
       ;;
   esac
@@ -6556,6 +6624,15 @@ for i in ${target_configdirs_all} ; do
   fi
 done
 
+# Exclude target-zlib if target-libjava isn't built.
+case ${target_configdirs} in
+*target-libjava*)
+  ;;
+*)
+  target_configdirs="`echo ${target_configdirs} | sed -e 's/target-zlib//'`"
+  ;;
+esac
+
 # libiberty-linker-plugin is special: it doesn't have its own source directory,
 # so we have to add it after the preceding checks.
 if test x"$extra_linker_plugin_flags$extra_linker_plugin_configure_flags" != x
@@ -6573,13 +6650,22 @@ fi
 
 # Sometimes we have special requirements for the host libiberty.
 extra_host_libiberty_configure_flags=
+extra_host_zlib_configure_flags=
 case " $configdirs " in
   *" lto-plugin "* | *" libcc1 "*)
     # When these are to be built as shared libraries, the same applies to
     # libiberty.
     extra_host_libiberty_configure_flags=--enable-shared
     ;;
+  *" bfd "*)
+    # When bfd is to be built as a shared library, the same applies to
+    # zlib.
+    if test "$enable_shared" = "yes"; then
+      extra_host_zlib_configure_flags=--enable-host-shared
+    fi
+    ;;
 esac
+
 
 
 # Produce a warning message for the subdirs we can't configure.
@@ -6779,7 +6865,7 @@ fi
 # have requested that this magic not happen.
 #
 # The command line options always override the explicit settings in
-# configure.in, and the settings in configure.in override this magic.
+# configure.ac, and the settings in configure.ac override this magic.
 #
 # If the default for a toolchain is to use GNU as and ld, and you don't
 # want to do that, then you should use the --without-gnu-as and
@@ -6913,7 +6999,7 @@ case "${enable_target_optspace}:${target}" in
   :d30v-*)
     ospace_frag="config/mt-d30v"
     ;;
-  :m32r-* | :d10v-* | :fr30-*)
+  :m32r-* | :d10v-* | :fr30-* | :i?86*-*-elfiamcu)
     ospace_frag="config/mt-ospace"
     ;;
   no:* | :*)
@@ -7431,7 +7517,7 @@ fi
 # multilib is not explicitly enabled.
 case "$target:$have_compiler:$host:$target:$enable_multilib" in
   x86_64-*linux*:yes:$build:$build:)
-    # Make sure we have a developement environment that handles 32-bit
+    # Make sure we have a development environment that handles 32-bit
     dev64=no
     echo "int main () { return 0; }" > conftest.c
     ${CC} -m32 -o conftest ${CFLAGS} ${CPPFLAGS} ${LDFLAGS} conftest.c
@@ -7442,7 +7528,7 @@ case "$target:$have_compiler:$host:$target:$enable_multilib" in
     fi
     rm -f conftest*
     if test x${dev64} != xyes ; then
-      as_fn_error "I suspect your system does not have 32-bit developement libraries (libc and headers). If you have them, rerun configure with --enable-multilib. If you do not have them, and want to build a 64-bit-only compiler, rerun configure with --disable-multilib." "$LINENO" 5
+      as_fn_error "I suspect your system does not have 32-bit development libraries (libc and headers). If you have them, rerun configure with --enable-multilib. If you do not have them, and want to build a 64-bit-only compiler, rerun configure with --disable-multilib." "$LINENO" 5
     fi
     ;;
 esac
