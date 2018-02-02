@@ -1,4 +1,4 @@
-/* Copyright (C) 2005-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2005-2016 Free Software Foundation, Inc.
    Contributed by Richard Henderson <rth@redhat.com>.
 
    This file is part of the GNU Offloading and Multi Processing Library
@@ -36,6 +36,11 @@
 #ifndef LIBGOMP_H 
 #define LIBGOMP_H 1
 
+#ifndef _LIBGOMP_CHECKING_
+/* Define to 1 to perform internal sanity checks.  */
+#define _LIBGOMP_CHECKING_ 0
+#endif
+
 #include "config.h"
 #include "gstdint.h"
 #include "libgomp-plugin.h"
@@ -44,6 +49,22 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdarg.h>
+
+/* Needed for memset in priority_queue.c.  */
+#if _LIBGOMP_CHECKING_
+# ifdef STRING_WITH_STRINGS
+#  include <string.h>
+#  include <strings.h>
+# else
+#  ifdef HAVE_STRING_H
+#   include <string.h>
+#  else
+#   ifdef HAVE_STRINGS_H
+#    include <strings.h>
+#   endif
+#  endif
+# endif
+#endif
 
 #ifdef HAVE_ATTRIBUTE_VISIBILITY
 # pragma GCC visibility push(hidden)
@@ -60,6 +81,44 @@ enum memmodel
   MEMMODEL_SEQ_CST = 5
 };
 
+/* alloc.c */
+
+extern void *gomp_malloc (size_t) __attribute__((malloc));
+extern void *gomp_malloc_cleared (size_t) __attribute__((malloc));
+extern void *gomp_realloc (void *, size_t);
+
+/* Avoid conflicting prototypes of alloca() in system headers by using
+   GCC's builtin alloca().  */
+#define gomp_alloca(x)  __builtin_alloca(x)
+
+/* error.c */
+
+extern void gomp_vdebug (int, const char *, va_list);
+extern void gomp_debug (int, const char *, ...)
+	__attribute__ ((format (printf, 2, 3)));
+#define gomp_vdebug(KIND, FMT, VALIST) \
+  do { \
+    if (__builtin_expect (gomp_debug_var, 0)) \
+      (gomp_vdebug) ((KIND), (FMT), (VALIST)); \
+  } while (0)
+#define gomp_debug(KIND, ...) \
+  do { \
+    if (__builtin_expect (gomp_debug_var, 0)) \
+      (gomp_debug) ((KIND), __VA_ARGS__); \
+  } while (0)
+extern void gomp_verror (const char *, va_list);
+extern void gomp_error (const char *, ...)
+	__attribute__ ((format (printf, 1, 2)));
+extern void gomp_vfatal (const char *, va_list)
+	__attribute__ ((noreturn));
+extern void gomp_fatal (const char *, ...)
+	__attribute__ ((noreturn, format (printf, 1, 2)));
+
+struct gomp_task;
+struct gomp_taskgroup;
+struct htab;
+
+#include "priority_queue.h"
 #include "sem.h"
 #include "mutex.h"
 #include "bar.h"
@@ -76,6 +135,44 @@ enum gomp_schedule_type
   GFS_DYNAMIC,
   GFS_GUIDED,
   GFS_AUTO
+};
+
+struct gomp_doacross_work_share
+{
+  union {
+    /* chunk_size copy, as ws->chunk_size is multiplied by incr for
+       GFS_DYNAMIC.  */
+    long chunk_size;
+    /* Likewise, but for ull implementation.  */
+    unsigned long long chunk_size_ull;
+    /* For schedule(static,0) this is the number
+       of iterations assigned to the last thread, i.e. number of
+       iterations / number of threads.  */
+    long q;
+    /* Likewise, but for ull implementation.  */
+    unsigned long long q_ull;
+  };
+  /* Size of each array entry (padded to cache line size).  */
+  unsigned long elt_sz;
+  /* Number of dimensions in sink vectors.  */
+  unsigned int ncounts;
+  /* True if the iterations can be flattened.  */
+  bool flattened;
+  /* Actual array (of elt_sz sized units), aligned to cache line size.
+     This is indexed by team_id for GFS_STATIC and outermost iteration
+     / chunk_size for other schedules.  */
+  unsigned char *array;
+  /* These two are only used for schedule(static,0).  */
+  /* This one is number of iterations % number of threads.  */
+  long t;
+  union {
+    /* And this one is cached t * (q + 1).  */
+    long boundary;
+    /* Likewise, but for the ull implementation.  */
+    unsigned long long boundary_ull;
+  };
+  /* Array of shift counts for each dimension if they can be flattened.  */
+  unsigned int shift_counts[];
 };
 
 struct gomp_work_share
@@ -109,13 +206,18 @@ struct gomp_work_share
     };
   };
 
-  /* This is a circular queue that details which threads will be allowed
-     into the ordered region and in which order.  When a thread allocates
-     iterations on which it is going to work, it also registers itself at
-     the end of the array.  When a thread reaches the ordered region, it
-     checks to see if it is the one at the head of the queue.  If not, it
-     blocks on its RELEASE semaphore.  */
-  unsigned *ordered_team_ids;
+  union {
+    /* This is a circular queue that details which threads will be allowed
+       into the ordered region and in which order.  When a thread allocates
+       iterations on which it is going to work, it also registers itself at
+       the end of the array.  When a thread reaches the ordered region, it
+       checks to see if it is the one at the head of the queue.  If not, it
+       blocks on its RELEASE semaphore.  */
+    unsigned *ordered_team_ids;
+
+    /* This is a pointer to DOACROSS work share data.  */
+    struct gomp_doacross_work_share *doacross;
+  };
 
   /* This is the number of threads that have registered themselves in
      the circular queue ordered_team_ids.  */
@@ -234,7 +336,7 @@ struct gomp_task_icv
 {
   unsigned long nthreads_var;
   enum gomp_schedule_type run_sched_var;
-  int run_sched_modifier;
+  int run_sched_chunk_size;
   int default_device_var;
   unsigned int thread_limit_var;
   bool dyn_var;
@@ -250,6 +352,7 @@ extern gomp_mutex_t gomp_managed_threads_lock;
 #endif
 extern unsigned long gomp_max_active_levels_var;
 extern bool gomp_cancel_var;
+extern int gomp_max_task_priority_var;
 extern unsigned long long gomp_spin_count_var, gomp_throttled_spin_count_var;
 extern unsigned long gomp_available_cpus, gomp_managed_threads;
 extern unsigned long *gomp_nthreads_var_list, gomp_nthreads_var_list_len;
@@ -263,22 +366,30 @@ extern char *goacc_device_type;
 
 enum gomp_task_kind
 {
+  /* Implicit task.  */
   GOMP_TASK_IMPLICIT,
-  GOMP_TASK_IFFALSE,
+  /* Undeferred task.  */
+  GOMP_TASK_UNDEFERRED,
+  /* Task created by GOMP_task and waiting to be run.  */
   GOMP_TASK_WAITING,
-  GOMP_TASK_TIED
+  /* Task currently executing or scheduled and about to execute.  */
+  GOMP_TASK_TIED,
+  /* Used for target tasks that have vars mapped and async run started,
+     but not yet completed.  Once that completes, they will be readded
+     into the queues as GOMP_TASK_WAITING in order to perform the var
+     unmapping.  */
+  GOMP_TASK_ASYNC_RUNNING
 };
-
-struct gomp_task;
-struct gomp_taskgroup;
-struct htab;
 
 struct gomp_task_depend_entry
 {
+  /* Address of dependency.  */
   void *addr;
   struct gomp_task_depend_entry *next;
   struct gomp_task_depend_entry *prev;
+  /* Task that provides the dependency in ADDR.  */
   struct gomp_task *task;
+  /* Depend entry is of type "IN".  */
   bool is_in;
   bool redundant;
   bool redundant_out;
@@ -297,8 +408,8 @@ struct gomp_taskwait
 {
   bool in_taskwait;
   bool in_depend_wait;
+  /* Number of tasks we are waiting for.  */
   size_t n_depend;
-  struct gomp_task *last_parent_depends_on;
   gomp_sem_t taskwait_sem;
 };
 
@@ -306,20 +417,31 @@ struct gomp_taskwait
 
 struct gomp_task
 {
+  /* Parent of this task.  */
   struct gomp_task *parent;
-  struct gomp_task *children;
-  struct gomp_task *next_child;
-  struct gomp_task *prev_child;
-  struct gomp_task *next_queue;
-  struct gomp_task *prev_queue;
-  struct gomp_task *next_taskgroup;
-  struct gomp_task *prev_taskgroup;
+  /* Children of this task.  */
+  struct priority_queue children_queue;
+  /* Taskgroup this task belongs in.  */
   struct gomp_taskgroup *taskgroup;
+  /* Tasks that depend on this task.  */
   struct gomp_dependers_vec *dependers;
   struct htab *depend_hash;
   struct gomp_taskwait *taskwait;
+  /* Number of items in DEPEND.  */
   size_t depend_count;
+  /* Number of tasks this task depends on.  Once this counter reaches
+     0, we have no unsatisfied dependencies, and this task can be put
+     into the various queues to be scheduled.  */
   size_t num_dependees;
+
+  /* Priority of this task.  */
+  int priority;
+  /* The priority node for this task in each of the different queues.
+     We put this here to avoid allocating space for each priority
+     node.  Then we play offsetof() games to convert between pnode[]
+     entries and the gomp_task in which they reside.  */
+  struct priority_node pnode[3];
+
   struct gomp_task_icv icv;
   void (*fn) (void *);
   void *fn_data;
@@ -327,18 +449,56 @@ struct gomp_task
   bool in_tied_task;
   bool final_task;
   bool copy_ctors_done;
+  /* Set for undeferred tasks with unsatisfied dependencies which
+     block further execution of their parent until the dependencies
+     are satisfied.  */
   bool parent_depends_on;
+  /* Dependencies provided and/or needed for this task.  DEPEND_COUNT
+     is the number of items available.  */
   struct gomp_task_depend_entry depend[];
 };
+
+/* This structure describes a single #pragma omp taskgroup.  */
 
 struct gomp_taskgroup
 {
   struct gomp_taskgroup *prev;
-  struct gomp_task *children;
+  /* Queue of tasks that belong in this taskgroup.  */
+  struct priority_queue taskgroup_queue;
   bool in_taskgroup_wait;
   bool cancelled;
   gomp_sem_t taskgroup_sem;
   size_t num_children;
+};
+
+/* Various state of OpenMP async offloading tasks.  */
+enum gomp_target_task_state
+{
+  GOMP_TARGET_TASK_DATA,
+  GOMP_TARGET_TASK_BEFORE_MAP,
+  GOMP_TARGET_TASK_FALLBACK,
+  GOMP_TARGET_TASK_READY_TO_RUN,
+  GOMP_TARGET_TASK_RUNNING,
+  GOMP_TARGET_TASK_FINISHED
+};
+
+/* This structure describes a target task.  */
+
+struct gomp_target_task
+{
+  struct gomp_device_descr *devicep;
+  void (*fn) (void *);
+  size_t mapnum;
+  size_t *sizes;
+  unsigned short *kinds;
+  unsigned int flags;
+  enum gomp_target_task_state state;
+  struct target_mem_desc *tgt;
+  struct gomp_task *task;
+  struct gomp_team *team;
+  /* Device-specific target arguments.  */
+  void **args;
+  void *hostaddrs[];
 };
 
 /* This structure describes a "team" of threads.  These are the threads
@@ -403,7 +563,8 @@ struct gomp_team
   struct gomp_work_share work_shares[8];
 
   gomp_mutex_t task_lock;
-  struct gomp_task *task_queue;
+  /* Scheduled tasks.  */
+  struct priority_queue task_queue;
   /* Number of all GOMP_TASK_{WAITING,TIED} tasks in the team.  */
   unsigned int task_count;
   /* Number of GOMP_TASK_WAITING tasks currently waiting to be scheduled.  */
@@ -458,6 +619,9 @@ struct gomp_thread_pool
   struct gomp_thread **threads;
   unsigned threads_size;
   unsigned threads_used;
+  /* The last team is used for non-nested teams to delay their destruction to
+     make sure all the threads in the team move on to the pool's barrier before
+     the team's barrier is destroyed.  */
   struct gomp_team *last_team;
   /* Number of threads running in this contention group.  */
   unsigned long threads_busy;
@@ -510,6 +674,8 @@ static inline struct gomp_task_icv *gomp_icv (bool write)
 /* The attributes to be used during thread creation.  */
 extern pthread_attr_t gomp_thread_attr;
 
+extern pthread_key_t gomp_thread_destructor;
+
 /* Function prototypes.  */
 
 /* affinity.c */
@@ -526,39 +692,7 @@ extern bool gomp_affinity_same_place (void *, void *);
 extern bool gomp_affinity_finalize_place_list (bool);
 extern bool gomp_affinity_init_level (int, unsigned long, bool);
 extern void gomp_affinity_print_place (void *);
-
-/* alloc.c */
-
-extern void *gomp_malloc (size_t) __attribute__((malloc));
-extern void *gomp_malloc_cleared (size_t) __attribute__((malloc));
-extern void *gomp_realloc (void *, size_t);
-
-/* Avoid conflicting prototypes of alloca() in system headers by using
-   GCC's builtin alloca().  */
-#define gomp_alloca(x)  __builtin_alloca(x)
-
-/* error.c */
-
-extern void gomp_vdebug (int, const char *, va_list);
-extern void gomp_debug (int, const char *, ...)
-	__attribute__ ((format (printf, 2, 3)));
-#define gomp_vdebug(KIND, FMT, VALIST) \
-  do { \
-    if (__builtin_expect (gomp_debug_var, 0)) \
-      (gomp_vdebug) ((KIND), (FMT), (VALIST)); \
-  } while (0)
-#define gomp_debug(KIND, ...) \
-  do { \
-    if (__builtin_expect (gomp_debug_var, 0)) \
-      (gomp_debug) ((KIND), __VA_ARGS__); \
-  } while (0)
-extern void gomp_verror (const char *, va_list);
-extern void gomp_error (const char *, ...)
-	__attribute__ ((format (printf, 1, 2)));
-extern void gomp_vfatal (const char *, va_list)
-	__attribute__ ((noreturn));
-extern void gomp_fatal (const char *, ...)
-	__attribute__ ((noreturn, format (printf, 1, 2)));
+extern void gomp_get_place_proc_ids_8 (int, int64_t *);
 
 /* iter.c */
 
@@ -595,6 +729,9 @@ extern void gomp_ordered_next (void);
 extern void gomp_ordered_static_init (void);
 extern void gomp_ordered_static_next (void);
 extern void gomp_ordered_sync (void);
+extern void gomp_doacross_init (unsigned, long *, long);
+extern void gomp_doacross_ull_init (unsigned, unsigned long long *,
+				    unsigned long long);
 
 /* parallel.c */
 
@@ -611,6 +748,12 @@ extern void gomp_init_task (struct gomp_task *, struct gomp_task *,
 			    struct gomp_task_icv *);
 extern void gomp_end_task (void);
 extern void gomp_barrier_handle_tasks (gomp_barrier_state_t);
+extern void gomp_task_maybe_wait_for_dependencies (void **);
+extern bool gomp_create_target_task (struct gomp_device_descr *,
+				     void (*) (void *), size_t, void **,
+				     size_t *, unsigned short *, unsigned int,
+				     void **, void **,
+				     enum gomp_target_task_state);
 
 static void inline
 gomp_finish_task (struct gomp_task *task)
@@ -631,10 +774,25 @@ extern void gomp_free_thread (void *);
 
 extern void gomp_init_targets_once (void);
 extern int gomp_get_num_devices (void);
+extern bool gomp_target_task_fn (void *);
 
+/* Splay tree definitions.  */
 typedef struct splay_tree_node_s *splay_tree_node;
 typedef struct splay_tree_s *splay_tree;
 typedef struct splay_tree_key_s *splay_tree_key;
+
+struct target_var_desc {
+  /* Splay key.  */
+  splay_tree_key key;
+  /* True if data should be copied from device to host at the end.  */
+  bool copy_from;
+  /* True if data always should be copied from device to host at the end.  */
+  bool always_copy_from;
+  /* Relative offset against key host_start.  */
+  uintptr_t offset;
+  /* Actual length.  */
+  uintptr_t length;
+};
 
 struct target_mem_desc {
   /* Reference count.  */
@@ -655,10 +813,16 @@ struct target_mem_desc {
   /* Corresponding target device descriptor.  */
   struct gomp_device_descr *device_descr;
 
-  /* List of splay keys to remove (or decrease refcount)
+  /* List of target items to remove (or decrease refcount)
      at the end of region.  */
-  splay_tree_key list[];
+  struct target_var_desc list[];
 };
+
+/* Special value for refcount - infinity.  */
+#define REFCOUNT_INFINITY (~(uintptr_t) 0)
+/* Special value for refcount - tgt_offset contains target address of the
+   artificial pointer to "omp declare target link" object.  */
+#define REFCOUNT_LINK (~(uintptr_t) 1)
 
 struct splay_tree_key_s {
   /* Address of the host object.  */
@@ -673,9 +837,24 @@ struct splay_tree_key_s {
   uintptr_t refcount;
   /* Asynchronous reference count.  */
   uintptr_t async_refcount;
-  /* True if data should be copied from device to host at the end.  */
-  bool copy_from;
+  /* Pointer to the original mapping of "omp declare target link" object.  */
+  splay_tree_key link_key;
 };
+
+/* The comparison function.  */
+
+static inline int
+splay_compare (splay_tree_key x, splay_tree_key y)
+{
+  if (x->host_start == x->host_end
+      && y->host_start == y->host_end)
+    return 0;
+  if (x->host_end <= y->host_start)
+    return -1;
+  if (x->host_start >= y->host_end)
+    return 1;
+  return 0;
+}
 
 #include "splay-tree.h"
 
@@ -689,8 +868,8 @@ typedef struct acc_dispatch_t
   struct target_mem_desc *data_environ;
 
   /* Execute.  */
-  void (*exec_func) (void (*) (void *), size_t, void **, void **, size_t *,
-		     unsigned short *, int, int, int, int, void *);
+  void (*exec_func) (void (*) (void *), size_t, void **, void **, int,
+		     unsigned *, void *);
 
   /* Async cleanup callback registration.  */
   void (*register_async_cleanup_func) (void *);
@@ -716,6 +895,14 @@ typedef struct acc_dispatch_t
     int (*set_stream_func) (int, void *);
   } cuda;
 } acc_dispatch_t;
+
+/* Various state of the accelerator device.  */
+enum gomp_device_state
+{
+  GOMP_DEVICE_UNINITIALIZED,
+  GOMP_DEVICE_INITIALIZED,
+  GOMP_DEVICE_FINALIZED
+};
 
 /* This structure describes accelerator device.
    It contains name of the corresponding libgomp plugin, function handlers for
@@ -745,13 +932,17 @@ struct gomp_device_descr
   int (*get_num_devices_func) (void);
   void (*init_device_func) (int);
   void (*fini_device_func) (int);
-  int (*load_image_func) (int, void *, struct addr_pair **);
-  void (*unload_image_func) (int, void *);
+  unsigned (*version_func) (void);
+  int (*load_image_func) (int, unsigned, const void *, struct addr_pair **);
+  void (*unload_image_func) (int, unsigned, const void *);
   void *(*alloc_func) (int, size_t);
   void (*free_func) (int, void *);
   void *(*dev2host_func) (int, void *, const void *, size_t);
   void *(*host2dev_func) (int, void *, const void *, size_t);
-  void (*run_func) (int, void *, void *);
+  void *(*dev2dev_func) (int, void *, const void *, size_t);
+  bool (*can_run_func) (void *);
+  void (*run_func) (int, void *, void *, void **);
+  void (*async_run_func) (int, void *, void *, void **, void *);
 
   /* Splay tree containing information about mapped memory regions.  */
   struct splay_tree_s mem_map;
@@ -759,8 +950,10 @@ struct gomp_device_descr
   /* Mutex for the mutable data.  */
   gomp_mutex_t lock;
 
-  /* Set to true when device is initialized.  */
-  bool is_initialized;
+  /* Current state of the device.  OpenACC allows to move from INITIALIZED state
+     back to UNINITIALIZED state.  OpenMP allows only to move from INITIALIZED
+     to FINALIZED state (at program shutdown).  */
+  enum gomp_device_state state;
 
   /* OpenACC-specific data and functions.  */
   /* This is mutable because of its mutable data_environ and target_data
@@ -768,17 +961,27 @@ struct gomp_device_descr
   acc_dispatch_t openacc;
 };
 
+/* Kind of the pragma, for which gomp_map_vars () is called.  */
+enum gomp_map_vars_kind
+{
+  GOMP_MAP_VARS_OPENACC,
+  GOMP_MAP_VARS_TARGET,
+  GOMP_MAP_VARS_DATA,
+  GOMP_MAP_VARS_ENTER_DATA
+};
+
 extern void gomp_acc_insert_pointer (size_t, void **, size_t *, void *);
 extern void gomp_acc_remove_pointer (void *, bool, int, int);
 
 extern struct target_mem_desc *gomp_map_vars (struct gomp_device_descr *,
 					      size_t, void **, void **,
-					      size_t *, void *, bool, bool);
+					      size_t *, void *, bool,
+					      enum gomp_map_vars_kind);
 extern void gomp_copy_from_async (struct target_mem_desc *);
 extern void gomp_unmap_vars (struct target_mem_desc *, bool);
 extern void gomp_init_device (struct gomp_device_descr *);
 extern void gomp_free_memmap (struct splay_tree_s *);
-extern void gomp_fini_device (struct gomp_device_descr *);
+extern void gomp_unload_device (struct gomp_device_descr *);
 
 /* work.c */
 
@@ -880,4 +1083,34 @@ extern int gomp_test_nest_lock_25 (omp_nest_lock_25_t *) __GOMP_NOTHROW;
 # define ialias_call(fn) fn
 #endif
 
+/* Helper function for priority_node_to_task() and
+   task_to_priority_node().
+
+   Return the offset from a task to its priority_node entry.  The
+   priority_node entry is has a type of TYPE.  */
+
+static inline size_t
+priority_queue_offset (enum priority_queue_type type)
+{
+  return offsetof (struct gomp_task, pnode[(int) type]);
+}
+
+/* Return the task associated with a priority NODE of type TYPE.  */
+
+static inline struct gomp_task *
+priority_node_to_task (enum priority_queue_type type,
+		       struct priority_node *node)
+{
+  return (struct gomp_task *) ((char *) node - priority_queue_offset (type));
+}
+
+/* Return the priority node of type TYPE for a given TASK.  */
+
+static inline struct priority_node *
+task_to_priority_node (enum priority_queue_type type,
+		       struct gomp_task *task)
+{
+  return (struct priority_node *) ((char *) task
+				   + priority_queue_offset (type));
+}
 #endif /* LIBGOMP_H */

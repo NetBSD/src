@@ -1,6 +1,6 @@
 // Guarded Allocation -*- C++ -*-
 
-// Copyright (C) 2014-2015 Free Software Foundation, Inc.
+// Copyright (C) 2014-2016 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -50,14 +50,15 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
       /// Take ownership of __ptr
       __allocated_ptr(_Alloc& __a, pointer __ptr) noexcept
-      : _M_alloc(&__a), _M_ptr(__ptr)
+      : _M_alloc(std::__addressof(__a)), _M_ptr(__ptr)
       { }
 
       /// Convert __ptr to allocator's pointer type and take ownership of it
       template<typename _Ptr,
 	       typename _Req = _Require<is_same<_Ptr, value_type*>>>
       __allocated_ptr(_Alloc& __a, _Ptr __ptr)
-      : _M_alloc(&__a), _M_ptr(pointer_traits<pointer>::pointer_to(*__ptr))
+      : _M_alloc(std::__addressof(__a)),
+	_M_ptr(pointer_traits<pointer>::pointer_to(*__ptr))
       { }
 
       /// Transfer ownership of the owned pointer

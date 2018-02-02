@@ -1,5 +1,5 @@
 /* Callgraph handling code.
-   Copyright (C) 2003-2015 Free Software Foundation, Inc.
+   Copyright (C) 2003-2016 Free Software Foundation, Inc.
    Contributed by Jan Hubicka
 
 This file is part of GCC.
@@ -21,6 +21,11 @@ along with GCC; see the file COPYING3.  If not see
 #ifndef GCC_CGRAPH_H
 #define GCC_CGRAPH_H
 
+#include "ipa-ref.h"
+#include "plugin-api.h"
+
+class ipa_opt_pass_d;
+typedef ipa_opt_pass_d *ipa_opt_pass;
 
 /* Symbol table consists of functions and variables.
    TODO: add labels and CONST_DECLs.  */
@@ -34,7 +39,7 @@ enum symtab_type
 /* Section names are stored as reference counted strings in GGC safe hashtable
    (to make them survive through PCH).  */
 
-struct GTY((for_user)) section_hash_entry_d
+struct GTY((for_user)) section_hash_entry
 {
   int ref_count;
   char *name;  /* As long as this datastructure stays in GGC, we can not put
@@ -42,9 +47,7 @@ struct GTY((for_user)) section_hash_entry_d
 		  way  */
 };
 
-typedef struct section_hash_entry_d section_hash_entry;
-
-struct section_name_hasher : ggc_hasher<section_hash_entry *>
+struct section_name_hasher : ggc_ptr_hash<section_hash_entry>
 {
   typedef const char *compare_type;
 
@@ -125,14 +128,14 @@ public:
      REFERED_NODE or REFERED_VARPOOL_NODE. USE_TYPE specify type
      of the use and STMT the statement (if it exists).  */
   ipa_ref *create_reference (symtab_node *referred_node,
-			     enum ipa_ref_use use_type, gimple stmt);
+			     enum ipa_ref_use use_type, gimple *stmt);
 
   /* If VAL is a reference to a function or a variable, add a reference from
      this symtab_node to the corresponding symbol table node.  USE_TYPE specify
      type of the use and STMT the statement (if it exists).  Return the new
      reference or NULL if none was created.  */
   ipa_ref *maybe_create_reference (tree val, enum ipa_ref_use use_type,
-				   gimple stmt);
+				   gimple *stmt);
 
   /* Clone all references from symtab NODE to this symtab_node.  */
   void clone_references (symtab_node *node);
@@ -144,15 +147,15 @@ public:
   void clone_referring (symtab_node *node);
 
   /* Clone reference REF to this symtab_node and set its stmt to STMT.  */
-  ipa_ref *clone_reference (ipa_ref *ref, gimple stmt);
+  ipa_ref *clone_reference (ipa_ref *ref, gimple *stmt);
 
   /* Find the structure describing a reference to REFERRED_NODE
      and associated with statement STMT.  */
-  ipa_ref *find_reference (symtab_node *referred_node, gimple stmt,
+  ipa_ref *find_reference (symtab_node *referred_node, gimple *stmt,
 			   unsigned int lto_stmt_uid);
 
   /* Remove all references that are associated with statement STMT.  */
-  void remove_stmt_references (gimple stmt);
+  void remove_stmt_references (gimple *stmt);
 
   /* Remove all stmt references in non-speculative references.
      Those are not maintained during inlining & clonning.
@@ -246,9 +249,10 @@ public:
   inline symtab_node *next_defined_symbol (void);
 
   /* Add reference recording that symtab node is alias of TARGET.
+     If TRANSPARENT is true make the alias to be transparent alias.
      The function can fail in the case of aliasing cycles; in this case
      it returns false.  */
-  bool resolve_alias (symtab_node *target);
+  bool resolve_alias (symtab_node *target, bool transparent = false);
 
   /* C++ FE sometimes change linkage flags after producing same
      body aliases.  */
@@ -289,6 +293,9 @@ public:
   /* Make DECL local.  */
   void make_decl_local (void);
 
+  /* Copy visibility from N.  */
+  void copy_visibility_from (symtab_node *n);
+
   /* Return desired alignment of the definition.  This is NOT alignment useful
      to access THIS, because THIS may be interposable and DECL_ALIGN should
      be used instead.  It however must be guaranteed when output definition
@@ -314,17 +321,25 @@ public:
   bool needed_p (void);
 
   /* Return true when there are references to the node.  */
-  bool referred_to_p (void);
+  bool referred_to_p (bool include_self = true);
 
-  /* Return true if NODE can be discarded by linker from the binary.  */
+  /* Return true if symbol can be discarded by linker from the binary.
+     Assume that symbol is used (so there is no need to take into account
+     garbage collecting linkers)
+
+     This can happen for comdats, commons and weaks when they are previaled
+     by other definition at static linking time.  */
   inline bool
   can_be_discarded_p (void)
   {
     return (DECL_EXTERNAL (decl)
-	    || (get_comdat_group ()
-		&& resolution != LDPR_PREVAILING_DEF
-		&& resolution != LDPR_PREVAILING_DEF_IRONLY
-		&& resolution != LDPR_PREVAILING_DEF_IRONLY_EXP));
+	    || ((get_comdat_group ()
+		 || DECL_COMMON (decl)
+		 || (DECL_SECTION_NAME (decl) && DECL_WEAK (decl)))
+		&& ((resolution != LDPR_PREVAILING_DEF
+		     && resolution != LDPR_PREVAILING_DEF_IRONLY_EXP)
+		    || flag_incremental_link)
+		&& resolution != LDPR_PREVAILING_DEF_IRONLY));
   }
 
   /* Return true if NODE is local to a particular COMDAT group, and must not
@@ -343,8 +358,13 @@ public:
 
   /* Return 0 if symbol is known to have different address than S2,
      Return 1 if symbol is known to have same address as S2,
-     return 2 otherwise.   */
-  int equal_address_to (symtab_node *s2);
+     return 2 otherwise. 
+
+     If MEMORY_ACCESSED is true, assume that both memory pointer to THIS
+     and S2 is going to be accessed.  This eliminates the situations when
+     either THIS or S2 is NULL and is seful for comparing bases when deciding
+     about memory aliasing.  */
+  int equal_address_to (symtab_node *s2, bool memory_accessed = false);
 
   /* Return true if symbol's address may possibly be compared to other
      symbol's address.  */
@@ -359,7 +379,6 @@ public:
      and NULL otherwise.  */
   static inline symtab_node *get (const_tree decl)
   {
-#ifdef ENABLE_CHECKING
     /* Check that we are called for sane type of object - functions
        and static or external variables.  */
     gcc_checking_assert (TREE_CODE (decl) == FUNCTION_DECL
@@ -371,7 +390,6 @@ public:
        memcpy/memset on the tree nodes.  */
     gcc_checking_assert (!decl->decl_with_vis.symtab_node
 			 || decl->decl_with_vis.symtab_node->decl == decl);
-#endif
     return decl->decl_with_vis.symtab_node;
   }
 
@@ -395,6 +413,9 @@ public:
   /* Verify symbol table for internal consistency.  */
   static DEBUG_FUNCTION void verify_symtab_nodes (void);
 
+  /* Perform internal consistency checks, if they are enabled.  */
+  static inline void checking_verify_symtab_nodes (void);
+
   /* Type of the symbol.  */
   ENUM_BITFIELD (symtab_type) type : 8;
 
@@ -409,6 +430,28 @@ public:
   /* True when symbol is an alias.
      Set by ssemble_alias.  */
   unsigned alias : 1;
+  /* When true the alias is translated into its target symbol either by GCC
+     or assembler (it also may just be a duplicate declaration of the same
+     linker name).
+
+     Currently transparent aliases come in three different flavors
+       - aliases having the same assembler name as their target (aka duplicated
+	 declarations). In this case the assembler names compare via
+	 assembler_names_equal_p and weakref is false
+       - aliases that are renamed at a time being output to final file
+	 by varasm.c. For those DECL_ASSEMBLER_NAME have
+	 IDENTIFIER_TRANSPARENT_ALIAS set and thus also their assembler
+	 name must be unique.
+	 Weakrefs belong to this cateogry when we target assembler without
+	 .weakref directive.
+       - weakrefs that are renamed by assembler via .weakref directive.
+	 In this case the alias may or may not be definition (depending if
+	 target declaration was seen by the compiler), weakref is set.
+	 Unless we are before renaming statics, assembler names are different.
+
+     Given that we now support duplicate declarations, the second option is
+     redundant and will be removed.  */
+  unsigned transparent_alias : 1;
   /* True when alias is a weakref.  */
   unsigned weakref : 1;
   /* C++ frontend produce same body aliases and extra name aliases for
@@ -555,6 +598,13 @@ private:
   symtab_node *ultimate_alias_target_1 (enum availability *avail = NULL);
 };
 
+inline void
+symtab_node::checking_verify_symtab_nodes (void)
+{
+  if (flag_checking)
+    symtab_node::verify_symtab_nodes ();
+}
+
 /* Walk all aliases for NODE.  */
 #define FOR_EACH_ALIAS(node, alias) \
   for (unsigned x_i = 0; node->iterate_direct_aliases (x_i, alias); x_i++)
@@ -585,8 +635,8 @@ struct GTY(()) cgraph_thunk_info {
    Available after function is analyzed.  */
 
 struct GTY(()) cgraph_local_info {
-  /* Set when function function is visible in current compilation unit only
-     and its address is never taken.  */
+  /* Set when function is visible in current compilation unit only and
+     its address is never taken.  */
   unsigned local : 1;
 
   /* False when there is something makes versioning impossible.  */
@@ -611,20 +661,6 @@ struct GTY(()) cgraph_global_info {
   /* For inline clones this points to the function they will be
      inlined into.  */
   cgraph_node *inlined_to;
-};
-
-/* Information about the function that is propagated by the RTL backend.
-   Available only for functions that has been already assembled.  */
-
-struct GTY(()) cgraph_rtl_info {
-   unsigned int preferred_incoming_stack_boundary;
-
-  /* Call unsaved hard registers really used by the corresponding
-     function (including ones used by functions called by the
-     function).  */
-  HARD_REG_SET function_used_regs;
-  /* Set if function_used_regs is valid.  */
-  unsigned function_used_regs_valid: 1;
 };
 
 /* Represent which DECL tree (or reference to such tree)
@@ -654,8 +690,17 @@ enum cgraph_simd_clone_arg_type
 {
   SIMD_CLONE_ARG_TYPE_VECTOR,
   SIMD_CLONE_ARG_TYPE_UNIFORM,
+  /* These are only for integer/pointer arguments passed by value.  */
   SIMD_CLONE_ARG_TYPE_LINEAR_CONSTANT_STEP,
   SIMD_CLONE_ARG_TYPE_LINEAR_VARIABLE_STEP,
+  /* These 6 are only for reference type arguments or arguments passed
+     by reference.  */
+  SIMD_CLONE_ARG_TYPE_LINEAR_REF_CONSTANT_STEP,
+  SIMD_CLONE_ARG_TYPE_LINEAR_REF_VARIABLE_STEP,
+  SIMD_CLONE_ARG_TYPE_LINEAR_UVAL_CONSTANT_STEP,
+  SIMD_CLONE_ARG_TYPE_LINEAR_UVAL_VARIABLE_STEP,
+  SIMD_CLONE_ARG_TYPE_LINEAR_VAL_CONSTANT_STEP,
+  SIMD_CLONE_ARG_TYPE_LINEAR_VAL_VARIABLE_STEP,
   SIMD_CLONE_ARG_TYPE_MASK
 };
 
@@ -695,9 +740,9 @@ struct GTY(()) cgraph_simd_clone_arg {
      variable), uniform, or vector.  */
   enum cgraph_simd_clone_arg_type arg_type;
 
-  /* For arg_type SIMD_CLONE_ARG_TYPE_LINEAR_CONSTANT_STEP this is
+  /* For arg_type SIMD_CLONE_ARG_TYPE_LINEAR_*CONSTANT_STEP this is
      the constant linear step, if arg_type is
-     SIMD_CLONE_ARG_TYPE_LINEAR_VARIABLE_STEP, this is index of
+     SIMD_CLONE_ARG_TYPE_LINEAR_*VARIABLE_STEP, this is index of
      the uniform argument holding the step, otherwise 0.  */
   HOST_WIDE_INT linear_step;
 
@@ -721,7 +766,12 @@ struct GTY(()) cgraph_simd_clone {
   /* Max hardware vector size in bits for floating point vectors.  */
   unsigned int vecsize_float;
 
-  /* The mangling character for a given vector size.  This is is used
+  /* Machine mode of the mask argument(s), if they are to be passed
+     as bitmasks in integer argument(s).  VOIDmode if masks are passed
+     as vectors of characteristic type.  */
+  machine_mode mask_mode;
+
+  /* The mangling character for a given vector size.  This is used
      to determine the ISA mangling bit as specified in the Intel
      Vector ABI.  */
   unsigned char vecsize_mangle;
@@ -783,13 +833,13 @@ enum cgraph_inline_failed_type_t
 
 struct cgraph_edge;
 
-struct cgraph_edge_hasher : ggc_hasher<cgraph_edge *>
+struct cgraph_edge_hasher : ggc_ptr_hash<cgraph_edge>
 {
-  typedef gimple compare_type;
+  typedef gimple *compare_type;
 
   static hashval_t hash (cgraph_edge *);
-  static hashval_t hash (gimple);
-  static bool equal (cgraph_edge *, gimple);
+  static hashval_t hash (gimple *);
+  static bool equal (cgraph_edge *, gimple *);
 };
 
 /* The cgraph data structure.
@@ -805,14 +855,14 @@ public:
 
   /* Record all references from cgraph_node that are taken
      in statement STMT.  */
-  void record_stmt_references (gimple stmt);
+  void record_stmt_references (gimple *stmt);
 
   /* Like cgraph_set_call_stmt but walk the clone tree and update all
      clones sharing the same function body.
      When WHOLE_SPECULATIVE_EDGES is true, all three components of
      speculative edge gets updated.  Otherwise we update only direct
      call.  */
-  void set_call_stmt_including_clones (gimple old_stmt, gcall *new_stmt,
+  void set_call_stmt_including_clones (gimple *old_stmt, gcall *new_stmt,
 				       bool update_speculative = true);
 
   /* Walk the alias chain to return the function cgraph_node is alias of.
@@ -1018,14 +1068,14 @@ public:
    same function body.  If clones already have edge for OLD_STMT; only
    update the edge same way as cgraph_set_call_stmt_including_clones does.  */
   void create_edge_including_clones (cgraph_node *callee,
-				     gimple old_stmt, gcall *stmt,
+				     gimple *old_stmt, gcall *stmt,
 				     gcov_type count,
 				     int freq,
 				     cgraph_inline_failed_t reason);
 
   /* Return the callgraph edge representing the GIMPLE_CALL statement
      CALL_STMT.  */
-  cgraph_edge *get_edge (gimple call_stmt);
+  cgraph_edge *get_edge (gimple *call_stmt);
 
   /* Collect all callers of cgraph_node and its aliases that are known to lead
      to NODE (i.e. are not overwritable) and that are not thunks.  */
@@ -1194,7 +1244,7 @@ public:
   static cgraph_local_info *local_info (tree decl);
 
   /* Return local info for the compiled function.  */
-  static cgraph_rtl_info *rtl_info (tree);
+  static struct cgraph_rtl_info *rtl_info (tree);
 
   /* Return the cgraph node that has ASMNAME for its DECL_ASSEMBLER_NAME.
      Return NULL if there's no such node.  */
@@ -1209,6 +1259,9 @@ public:
 
   /* Verify whole cgraph structure.  */
   static void DEBUG_FUNCTION verify_cgraph_nodes (void);
+
+  /* Verify cgraph, if consistency checking is enabled.  */
+  static inline void checking_verify_cgraph_nodes (void);
 
   /* Worker to bring NODE local.  */
   static bool make_local (cgraph_node *node, void *);
@@ -1263,7 +1316,7 @@ public:
 
   cgraph_local_info local;
   cgraph_global_info global;
-  cgraph_rtl_info rtl;
+  struct cgraph_rtl_info *rtl;
   cgraph_clone_info clone;
   cgraph_thunk_info thunk;
 
@@ -1316,11 +1369,13 @@ public:
      accesses trapping.  */
   unsigned nonfreeing_fn : 1;
   /* True if there was multiple COMDAT bodies merged by lto-symtab.  */
-  unsigned merged : 1;
+  unsigned merged_comdat : 1;
   /* True if function was created to be executed in parallel.  */
   unsigned parallelized_function : 1;
   /* True if function is part split out by ipa-split.  */
   unsigned split_part : 1;
+  /* True if the function appears as possible target of indirect call.  */
+  unsigned indirect_call_target : 1;
 
 private:
   /* Worker for call_for_symbol_and_aliases.  */
@@ -1402,12 +1457,12 @@ public:
   /* Build context for pointer REF contained in FNDECL at statement STMT.
      if INSTANCE is non-NULL, return pointer to the object described by
      the context.  */
-  ipa_polymorphic_call_context (tree fndecl, tree ref, gimple stmt,
+  ipa_polymorphic_call_context (tree fndecl, tree ref, gimple *stmt,
 				tree *instance = NULL);
 
   /* Look for vtable stores or constructor calls to work out dynamic type
      of memory location.  */
-  bool get_dynamic_type (tree, tree, tree, gimple);
+  bool get_dynamic_type (tree, tree, tree, gimple *);
 
   /* Make context non-speculative.  */
   void clear_speculation ();
@@ -1548,7 +1603,7 @@ struct GTY((chain_next ("%h.next_caller"), chain_prev ("%h.prev_caller"),
 
   /* If necessary, change the function declaration in the call statement
      associated with the edge so that it corresponds to the edge callee.  */
-  gimple redirect_call_stmt_to_callee (void);
+  gimple *redirect_call_stmt_to_callee (void);
 
   /* Create clone of edge in the node N represented
      by CALL_EXPR the callgraph.  */
@@ -1868,18 +1923,12 @@ enum symtab_state
   FINISHED
 };
 
-struct asmname_hasher
+struct asmname_hasher : ggc_ptr_hash <symtab_node>
 {
-  typedef symtab_node *value_type;
   typedef const_tree compare_type;
-  typedef int store_values_directly;
 
   static hashval_t hash (symtab_node *n);
   static bool equal (symtab_node *n, const_tree t);
-  static void ggc_mx (symtab_node *n);
-  static void pch_nx (symtab_node *&);
-  static void pch_nx (symtab_node *&, gt_pointer_operator, void *);
-  static void remove (symtab_node *) {}
 };
 
 class GTY((tag ("SYMTAB"))) symbol_table
@@ -1920,7 +1969,7 @@ public:
   /* Once all functions from compilation unit are in memory, produce all clones
      and update all calls.  We might also do this on demand if we don't want to
      bring all functions to memory prior compilation, but current WHOPR
-     implementation does that and it is is bit easier to keep everything right
+     implementation does that and it is bit easier to keep everything right
      in this order.  */
   void materialize_all_clones (void);
 
@@ -2087,6 +2136,10 @@ public:
   /* Set the DECL_ASSEMBLER_NAME and update symtab hashtables.  */
   void change_decl_assembler_name (tree decl, tree name);
 
+  /* Return true if assembler names NAME1 and NAME2 leads to the same symbol
+     name.  */
+  static bool assembler_names_equal_p (const char *name1, const char *name2);
+
   int cgraph_count;
   int cgraph_max_uid;
   int cgraph_max_summary_uid;
@@ -2127,6 +2180,9 @@ public:
   hash_map<symtab_node *, symbol_priority_map> *init_priority_hash;
 
   FILE* GTY ((skip)) dump_file;
+
+  /* Return symbol used to separate symbol name from suffix.  */
+  static char symbol_suffix_separator ();
 
 private:
   /* Allocate new callgraph node.  */
@@ -2189,40 +2245,18 @@ asmname_hasher::equal (symtab_node *n, const_tree t)
   return symbol_table::decl_assembler_name_equal (n->decl, t);
 }
 
-extern void gt_ggc_mx (symtab_node *&);
-
-inline void
-asmname_hasher::ggc_mx (symtab_node *n)
-{
-  gt_ggc_mx (n);
-}
-
-extern void gt_pch_nx (symtab_node *&);
-
-inline void
-asmname_hasher::pch_nx (symtab_node *&n)
-{
-  gt_pch_nx (n);
-}
-
-inline void
-asmname_hasher::pch_nx (symtab_node *&n, gt_pointer_operator op, void *cookie)
-{
-  op (&n, cookie);
-}
-
 /* In cgraph.c  */
 void cgraph_c_finalize (void);
 void release_function_body (tree);
 cgraph_indirect_call_info *cgraph_allocate_init_indirect_info (void);
 
-void cgraph_update_edges_for_call_stmt (gimple, tree, gimple);
+void cgraph_update_edges_for_call_stmt (gimple *, tree, gimple *);
 bool cgraph_function_possibly_inlined_p (tree);
 
 const char* cgraph_inline_failed_string (cgraph_inline_failed_t);
 cgraph_inline_failed_type_t cgraph_inline_failed_type (cgraph_inline_failed_t);
 
-extern bool gimple_check_call_matching_types (gimple, tree, bool);
+extern bool gimple_check_call_matching_types (gimple *, tree, bool);
 
 /* In cgraphunit.c  */
 void cgraphunit_c_finalize (void);
@@ -2263,6 +2297,8 @@ symtab_node::real_symbol_p (void)
   cgraph_node *cnode;
 
   if (DECL_ABSTRACT_P (decl))
+    return false;
+  if (transparent_alias && definition)
     return false;
   if (!is_a <cgraph_node *> (this))
     return true;
@@ -2788,6 +2824,15 @@ cgraph_node::can_remove_if_no_direct_calls_and_refs_p (void)
   return true;
 }
 
+/* Verify cgraph, if consistency checking is enabled.  */
+
+inline void
+cgraph_node::checking_verify_cgraph_nodes (void)
+{
+  if (flag_checking)
+    cgraph_node::verify_cgraph_nodes ();
+}
+
 /* Return true when variable can be removed from variable pool
    if all direct calls are eliminated.  */
 
@@ -2818,7 +2863,7 @@ varpool_node::all_refs_explicit_p ()
 	  && !force_output);
 }
 
-struct tree_descriptor_hasher : ggc_hasher<constant_descriptor_tree *>
+struct tree_descriptor_hasher : ggc_ptr_hash<constant_descriptor_tree>
 {
   static hashval_t hash (constant_descriptor_tree *);
   static bool equal (constant_descriptor_tree *, constant_descriptor_tree *);
@@ -2995,7 +3040,7 @@ symtab_node::get_availability (void)
   if (is_a <cgraph_node *> (this))
     return dyn_cast <cgraph_node *> (this)->get_availability ();
   else
-    return dyn_cast <varpool_node *> (this)->get_availability ();;
+    return dyn_cast <varpool_node *> (this)->get_availability ();
 }
 
 /* Call calback on symtab node and aliases associated to this node.
@@ -3047,29 +3092,6 @@ varpool_node::call_for_symbol_and_aliases (bool (*callback) (varpool_node *,
   if (has_aliases_p ())
     return call_for_symbol_and_aliases_1 (callback, data, include_overwritable);
   return false;
-}
-
-/* Return true if NODE's address can be compared.  */
-
-inline bool
-symtab_node::address_can_be_compared_p ()
-{
-  /* Address of virtual tables and functions is never compared.  */
-  if (DECL_VIRTUAL_P (decl))
-    return false;
-  /* Address of C++ cdtors is never compared.  */
-  if (is_a <cgraph_node *> (this)
-      && (DECL_CXX_CONSTRUCTOR_P (decl)
-	  || DECL_CXX_DESTRUCTOR_P (decl)))
-    return false;
-  /* Constant pool symbols addresses are never compared.
-     flag_merge_constants permits us to assume the same on readonly vars.  */
-  if (is_a <varpool_node *> (this)
-      && (DECL_IN_CONSTANT_POOL (decl)
-	  || (flag_merge_constants >= 2
-	      && TREE_READONLY (decl) && !TREE_THIS_VOLATILE (decl))))
-    return false;
-  return true;
 }
 
 /* Return true if refernece may be used in address compare.  */

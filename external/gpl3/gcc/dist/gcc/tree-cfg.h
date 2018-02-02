@@ -1,5 +1,5 @@
 /* Data and Control Flow Analysis for Trees.
-   Copyright (C) 2001-2015 Free Software Foundation, Inc.
+   Copyright (C) 2001-2016 Free Software Foundation, Inc.
    Contributed by Diego Novillo <dnovillo@redhat.com>
 
 This file is part of GCC.
@@ -31,7 +31,6 @@ extern void gt_pch_nx (edge_def *e, gt_pointer_operator, void *);
 
 extern void init_empty_tree_cfg_for_function (struct function *);
 extern void init_empty_tree_cfg (void);
-extern void fold_cond_expr_cond (void);
 extern void start_recording_case_labels (void);
 extern void end_recording_case_labels (void);
 extern basic_block label_to_block_fn (struct function *, tree);
@@ -50,18 +49,19 @@ extern void gimple_debug_cfg (int);
 extern void gimple_dump_cfg (FILE *, int);
 extern void dump_cfg_stats (FILE *);
 extern void debug_cfg_stats (void);
-extern bool computed_goto_p (gimple);
-extern bool stmt_can_make_abnormal_goto (gimple);
+extern bool computed_goto_p (gimple *);
+extern bool stmt_can_make_abnormal_goto (gimple *);
 extern basic_block get_abnormal_succ_dispatcher (basic_block);
-extern bool is_ctrl_stmt (gimple);
-extern bool is_ctrl_altering_stmt (gimple);
-extern bool simple_goto_p (gimple);
-extern bool stmt_ends_bb_p (gimple);
+extern bool is_ctrl_stmt (gimple *);
+extern bool is_ctrl_altering_stmt (gimple *);
+extern bool simple_goto_p (gimple *);
+extern bool stmt_ends_bb_p (gimple *);
 extern bool assert_unreachable_fallthru_edge_p (edge);
-extern void delete_tree_cfg_annotations (void);
-extern gimple first_stmt (basic_block);
-extern gimple last_stmt (basic_block);
-extern gimple last_and_only_stmt (basic_block);
+extern void delete_tree_cfg_annotations (function *);
+extern gphi *get_virtual_phi (basic_block);
+extern gimple *first_stmt (basic_block);
+extern gimple *last_stmt (basic_block);
+extern gimple *last_and_only_stmt (basic_block);
 extern void verify_gimple_in_seq (gimple_seq);
 extern void verify_gimple_in_cfg (struct function *, bool);
 extern tree gimple_block_label (basic_block);
@@ -75,6 +75,7 @@ extern bool gimple_duplicate_sese_tail (edge, edge, basic_block *, unsigned,
 extern void gather_blocks_in_sese_region (basic_block entry, basic_block exit,
 					  vec<basic_block> *bbs_p);
 extern void verify_sese (basic_block, basic_block, vec<basic_block> *);
+extern bool gather_ssa_name_hash_map_from (tree const &, tree const &, void *);
 extern basic_block move_sese_region_to_fn (struct function *, basic_block,
 				           basic_block, tree);
 extern void dump_function_to_file (tree, FILE *, int);
@@ -102,6 +103,9 @@ extern tree gimplify_build1 (gimple_stmt_iterator *, enum tree_code,
 extern void extract_true_false_edges_from_block (basic_block, edge *, edge *);
 extern unsigned int execute_fixup_cfg (void);
 extern unsigned int split_critical_edges (void);
-extern basic_block insert_cond_bb (basic_block, gimple, gimple);
+extern basic_block insert_cond_bb (basic_block, gimple *, gimple *);
+extern bool gimple_find_sub_bbs (gimple_seq, gimple_stmt_iterator *);
+extern bool extract_true_false_controlled_edges (basic_block, basic_block,
+						 edge *, edge *);
 
 #endif /* _TREE_CFG_H  */
