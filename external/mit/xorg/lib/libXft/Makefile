@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2014/11/21 01:11:50 joerg Exp $
+#	$NetBSD: Makefile,v 1.8 2018/02/02 01:02:40 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -19,11 +19,6 @@ MAN=	Xft.3
 CPPFLAGS+=	${X11FLAGS.THREADLIB}
 CPPFLAGS+=	-DFREETYPE2 -I${DESTDIR}${X11INCDIR}/freetype2 -DXFREE86_FT2
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11/Xft
-
-.if !empty(MACHINE_ARCH:Mearm*) && ${HAVE_GCC:U} == 48
-# Workaround a crash in XftGlyphSpecRender with GCC 4.8.4
-COPTS.xftrender.c+= ${${ACTIVE_CC} == "gcc" :? -O0 :}
-.endif
 
 LIBDPLIBS=	X11		${.CURDIR}/../libX11/dynamic \
 		fontconfig	${.CURDIR}/../fontconfig/src \

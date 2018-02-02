@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.42 2017/10/07 14:11:07 roy Exp $
+# $NetBSD: Makefile,v 1.43 2018/02/02 01:02:39 mrg Exp $
 #
 
 WARNS?=		6
@@ -75,7 +75,7 @@ ${f}:	${f}.in
 .endfor
 
 # XXXGCC5
-.if defined(HAVE_GCC) && ${HAVE_GCC} == 53 && ${ACTIVE_CC} == "gcc"
+.if defined(HAVE_GCC) && ${HAVE_GCC} >= 5 && ${ACTIVE_CC} == "gcc"
 COPTS.if-bsd.c+=  -Wno-error=sign-conversion
 .endif
 
