@@ -1119,11 +1119,11 @@ fdelete-dead-exceptions
 Common Report Var(flag_delete_dead_exceptions) Init(0) Optimization
 Delete dead instructions that may throw exceptions.
 
-fdelete-null-pointer-checks
 ;; netbsd GCC 5 disabled this, GCC 6 has it default to -1 
 ;; figure out what -1 means
-Common Report Var(flag_delete_null_pointer_checks) Init(0) Optimization
-Delete useless null pointer checks
+fdelete-null-pointer-checks
+Common Report Var(flag_delete_null_pointer_checks) Init(-1) Optimization
+Delete useless null pointer checks.
 
 fdevirtualize-at-ltrans
 Common Report Var(flag_ltrans_devirtualize)
