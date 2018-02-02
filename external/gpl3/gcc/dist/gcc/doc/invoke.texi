@@ -476,16 +476,9 @@ Objective-C and Objective-C++ Dialects}.
 
 @item Directory Options
 @xref{Directory Options,,Options for Directory Search}.
-@gccoptlist{-B@var{prefix}  -I@var{dir}  -iquote@var{dir}
--iremap@var{src}:@var{dst}  -L@var{dir}
--specs=@var{file}  -I- --sysroot=@var{dir}}
-
-@item Target Options
-@c I wrote this xref this way to avoid overfull hbox. -- rms
-@xref{Target Options}.
-@gccoptlist{-V @var{version}  -b @var{machine}}
 @gccoptlist{-B@var{prefix} -I@var{dir} -iplugindir=@var{dir} @gol
 -iquote@var{dir} -L@var{dir} -no-canonical-prefixes -I- @gol
+-iremap@var{src}:@var{dst} -cxx-isystem=@var{dir} @gol
 --sysroot=@var{dir} --no-sysroot-suffix}
 
 @item Code Generation Options
@@ -4068,11 +4061,11 @@ Furthermore, the prior value shall be read only to determine the value
 to be stored.''.  If a program breaks these rules, the results on any
 particular implementation are entirely unpredictable.
 
-Examples of code with undefined behavior are @code{a = a++;},
-@code{a[n] = b[n++]} and @code{a[i++] = i;}.  Some more complicated cases
-are not diagnosed by this option, and it may give an occasional false
-positive result, but in general it has been found fairly effective at
-detecting this sort of problem in programs.
+Examples of code with undefined behavior are @code{a = a++;}, @code{a[n]
+= b[n++]} and @code{a[i++] = i;}.  Some more complicated cases are not
+diagnosed by this option, and it may give an occasional false positive
+result, but in general it has been found fairly effective at detecting
+this sort of problem in programs.
 
 The standard is worded confusingly, therefore there is some debate
 over the precise meaning of the sequence point rules in subtle cases.

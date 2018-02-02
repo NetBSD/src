@@ -222,7 +222,6 @@ extern int fprintf_unlocked (FILE *, const char *, ...);
 extern int errno;
 #endif
 
-#ifndef GENERATOR_FILE
 #ifdef __cplusplus
 #if defined (INCLUDE_ALGORITHM) || !defined (HAVE_SWAP_IN_UTILITY)
 # include <algorithm>
@@ -242,7 +241,6 @@ extern int errno;
 # include <cstring>
 # include <new>
 # include <utility>
-#endif
 #endif
 
 /* Some of glibc's string inlines cause warnings.  Plus we'd rather
