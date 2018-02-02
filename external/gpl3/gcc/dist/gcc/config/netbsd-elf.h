@@ -1,5 +1,5 @@
 /* Common configuration file for NetBSD ELF targets.
-   Copyright (C) 2002-2015 Free Software Foundation, Inc.
+   Copyright (C) 2002-2016 Free Software Foundation, Inc.
    Contributed by Wasabi Systems, Inc.
 
 This file is part of GCC.
@@ -70,6 +70,7 @@ along with GCC; see the file COPYING3.  If not see
 #define NETBSD_LINK_SPEC_ELF \
   "%{assert*} %{R*} %{rpath*} \
    %{shared:-shared} \
+   %{symbolic:-Bsymbolic} \
    %{!shared: \
      -dc -dp \
      %{!nostdlib: \

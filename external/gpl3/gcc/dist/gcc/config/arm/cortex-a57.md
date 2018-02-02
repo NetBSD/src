@@ -1,5 +1,5 @@
 ;; ARM Cortex-A57 pipeline description
-;; Copyright (C) 2014-2015 Free Software Foundation, Inc.
+;; Copyright (C) 2014-2016 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 ;;
@@ -202,7 +202,8 @@
 	  (eq_attr "type" "neon_load1_3reg, neon_load1_3reg_q,\
 			   neon_load1_4reg, neon_load1_4reg_q")
 	    (const_string "neon_load_b")
-	  (eq_attr "type" "neon_load1_one_lane, neon_load1_one_lane_q,\
+	  (eq_attr "type" "neon_ldp, neon_ldp_q,\
+			   neon_load1_one_lane, neon_load1_one_lane_q,\
 			   neon_load1_all_lanes, neon_load1_all_lanes_q,\
 			   neon_load2_2reg, neon_load2_2reg_q,\
 			   neon_load2_all_lanes, neon_load2_all_lanes_q")
@@ -224,7 +225,8 @@
 	    (const_string "neon_store_a")
 	  (eq_attr "type" "neon_store1_2reg, neon_store1_1reg_q")
 	    (const_string "neon_store_b")
-	  (eq_attr "type" "neon_store1_3reg, neon_store1_3reg_q,\
+	  (eq_attr "type" "neon_stp, neon_stp_q,\
+			   neon_store1_3reg, neon_store1_3reg_q,\
 			   neon_store3_3reg, neon_store3_3reg_q,\
 			   neon_store2_4reg, neon_store2_4reg_q,\
 			   neon_store4_4reg, neon_store4_4reg_q,\
@@ -296,7 +298,7 @@
 			alu_sreg,alus_sreg,logic_reg,logics_reg,\
 			adc_imm,adcs_imm,adc_reg,adcs_reg,\
 			adr,bfm,clz,rbit,rev,alu_dsp_reg,\
-			shift_imm,shift_reg,\
+			rotate_imm,shift_imm,shift_reg,\
 			mov_imm,mov_reg,\
 			mvn_imm,mvn_reg,\
 			mrs,multiple,no_insn"))
@@ -322,7 +324,7 @@
    "ca57_mx")
 
 ;; All multiplies
-;; TODO: AArch32 and AArch64 have different behaviour
+;; TODO: AArch32 and AArch64 have different behavior
 (define_insn_reservation "cortex_a57_mult32" 3
   (and (eq_attr "tune" "cortexa57")
        (ior (eq_attr "mul32" "yes")
@@ -714,7 +716,7 @@
 
 (define_insn_reservation "cortex_a57_fp_cmp" 7
   (and (eq_attr "tune" "cortexa57")
-       (eq_attr "type" "fcmps,fcmpd"))
+       (eq_attr "type" "fcmps,fcmpd,fccmps,fccmpd"))
   "ca57_cx2")
 
 (define_insn_reservation "cortex_a57_fp_arith" 4
@@ -745,20 +747,20 @@
 			 neon_fp_sqrt_s_q, neon_fp_sqrt_d_q"))
   "ca57_cx2_block*3")
 
-(define_insn_reservation "cortex_a57_crypto_simple" 4
+(define_insn_reservation "cortex_a57_crypto_simple" 3
   (and (eq_attr "tune" "cortexa57")
        (eq_attr "type" "crypto_aese,crypto_aesmc,crypto_sha1_fast,crypto_sha256_fast"))
-  "ca57_cx2")
+  "ca57_cx1")
 
-(define_insn_reservation "cortex_a57_crypto_complex" 7
+(define_insn_reservation "cortex_a57_crypto_complex" 6
   (and (eq_attr "tune" "cortexa57")
        (eq_attr "type" "crypto_sha1_slow,crypto_sha256_slow"))
-  "ca57_cx2+(ca57_cx2_issue,ca57_cx2)")
+  "ca57_cx1*2")
 
-(define_insn_reservation "cortex_a57_crypto_xor" 7
+(define_insn_reservation "cortex_a57_crypto_xor" 6
   (and (eq_attr "tune" "cortexa57")
        (eq_attr "type" "crypto_sha1_xor"))
-  "(ca57_cx1+ca57_cx2)")
+  "(ca57_cx1*2)|(ca57_cx2*2)")
 
 ;; We lie with calls.  They take up all issue slots, but are otherwise
 ;; not harmful.
@@ -794,4 +796,9 @@
 ;; help.
 (define_bypass 1 "cortex_a57_*"
 		 "cortex_a57_call,cortex_a57_branch")
+
+;; AESE+AESMC and AESD+AESIMC pairs forward with zero latency
+(define_bypass 0 "cortex_a57_crypto_simple"
+		 "cortex_a57_crypto_simple"
+		 "aarch_crypto_can_dual_issue")
 

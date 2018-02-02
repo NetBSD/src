@@ -1,5 +1,5 @@
 /* AddressSanitizer, a fast memory error detector.
-   Copyright (C) 2012-2015 Free Software Foundation, Inc.
+   Copyright (C) 2012-2016 Free Software Foundation, Inc.
    Contributed by Kostya Serebryany <kcc@google.com>
 
 This file is part of GCC.
@@ -22,72 +22,41 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "options.h"
-#include "wide-int.h"
-#include "inchash.h"
+#include "backend.h"
+#include "target.h"
+#include "rtl.h"
 #include "tree.h"
-#include "fold-const.h"
-#include "hash-table.h"
-#include "predict.h"
-#include "tm.h"
-#include "hard-reg-set.h"
-#include "function.h"
-#include "dominance.h"
-#include "cfg.h"
-#include "cfganal.h"
-#include "basic-block.h"
-#include "tree-ssa-alias.h"
-#include "internal-fn.h"
-#include "gimple-expr.h"
-#include "is-a.h"
 #include "gimple.h"
+#include "cfghooks.h"
+#include "alloc-pool.h"
+#include "tree-pass.h"
+#include "tm_p.h"
+#include "stringpool.h"
+#include "tree-ssanames.h"
+#include "optabs.h"
+#include "emit-rtl.h"
+#include "cgraph.h"
+#include "gimple-pretty-print.h"
+#include "alias.h"
+#include "fold-const.h"
+#include "cfganal.h"
 #include "gimplify.h"
 #include "gimple-iterator.h"
-#include "calls.h"
 #include "varasm.h"
 #include "stor-layout.h"
 #include "tree-iterator.h"
-#include "hash-map.h"
-#include "plugin-api.h"
-#include "ipa-ref.h"
-#include "cgraph.h"
-#include "stringpool.h"
-#include "tree-ssanames.h"
-#include "tree-pass.h"
 #include "asan.h"
-#include "gimple-pretty-print.h"
-#include "target.h"
-#include "hashtab.h"
-#include "rtl.h"
-#include "flags.h"
-#include "statistics.h"
-#include "real.h"
-#include "fixed-value.h"
-#include "insn-config.h"
-#include "expmed.h"
 #include "dojump.h"
 #include "explow.h"
-#include "emit-rtl.h"
-#include "stmt.h"
 #include "expr.h"
-#include "insn-codes.h"
-#include "optabs.h"
 #include "output.h"
-#include "tm_p.h"
 #include "langhooks.h"
-#include "alloc-pool.h"
 #include "cfgloop.h"
 #include "gimple-builder.h"
 #include "ubsan.h"
 #include "params.h"
 #include "builtins.h"
+#include "fnmatch.h"
 
 /* AddressSanitizer finds out-of-bounds and use-after-free bugs
    with <2x slowdown on average.
@@ -175,7 +144,7 @@ along with GCC; see the file COPYING3.  If not see
 
 	where '(...){n}' means the content inside the parenthesis occurs 'n'
 	times, with 'n' being the number of variables on the stack.
-     
+
      3/ The following 8 bytes contain the PC of the current function which
      will be used by the run-time library to print an error message.
 
@@ -272,6 +241,7 @@ along with GCC; see the file COPYING3.  If not see
 
 static unsigned HOST_WIDE_INT asan_shadow_offset_value;
 static bool asan_shadow_offset_computed;
+static vec<char *> sanitized_sections;
 
 /* Sets shadow offset to value in string VAL.  */
 
@@ -279,7 +249,7 @@ bool
 set_asan_shadow_offset (const char *val)
 {
   char *endp;
-  
+
   errno = 0;
 #ifdef HAVE_LONG_LONG
   asan_shadow_offset_value = strtoull (val, &endp, 0);
@@ -292,6 +262,40 @@ set_asan_shadow_offset (const char *val)
   asan_shadow_offset_computed = true;
 
   return true;
+}
+
+/* Set list of user-defined sections that need to be sanitized.  */
+
+void
+set_sanitized_sections (const char *sections)
+{
+  char *pat;
+  unsigned i;
+  FOR_EACH_VEC_ELT (sanitized_sections, i, pat)
+    free (pat);
+  sanitized_sections.truncate (0);
+
+  for (const char *s = sections; *s; )
+    {
+      const char *end;
+      for (end = s; *end && *end != ','; ++end);
+      size_t len = end - s;
+      sanitized_sections.safe_push (xstrndup (s, len));
+      s = *end ? end + 1 : end;
+    }
+}
+
+/* Checks whether section SEC should be sanitized.  */
+
+static bool
+section_sanitized_p (const char *sec)
+{
+  char *pat;
+  unsigned i;
+  FOR_EACH_VEC_ELT (sanitized_sections, i, pat)
+    if (fnmatch (pat, sec, FNM_PERIOD) == 0)
+      return true;
+  return false;
 }
 
 /* Returns Asan shadow offset.  */
@@ -338,21 +342,7 @@ struct asan_mem_ref
   HOST_WIDE_INT access_size;
 };
 
-static alloc_pool asan_mem_ref_alloc_pool;
-
-/* This creates the alloc pool used to store the instances of
-   asan_mem_ref that are stored in the hash table asan_mem_ref_ht.  */
-
-static alloc_pool
-asan_mem_ref_get_alloc_pool ()
-{
-  if (asan_mem_ref_alloc_pool == NULL)
-    asan_mem_ref_alloc_pool = create_alloc_pool ("asan_mem_ref",
-						 sizeof (asan_mem_ref),
-						 10);
-  return asan_mem_ref_alloc_pool;
-    
-}
+object_allocator <asan_mem_ref> asan_mem_ref_pool ("asan_mem_ref");
 
 /* Initializes an instance of asan_mem_ref.  */
 
@@ -372,8 +362,7 @@ asan_mem_ref_init (asan_mem_ref *ref, tree start, HOST_WIDE_INT access_size)
 static asan_mem_ref*
 asan_mem_ref_new (tree start, HOST_WIDE_INT access_size)
 {
-  asan_mem_ref *ref =
-    (asan_mem_ref *) pool_alloc (asan_mem_ref_get_alloc_pool ());
+  asan_mem_ref *ref = asan_mem_ref_pool.allocate ();
 
   asan_mem_ref_init (ref, start, access_size);
   return ref;
@@ -404,14 +393,10 @@ asan_mem_ref_get_end (const asan_mem_ref *ref, tree len)
   return asan_mem_ref_get_end (ref->start, len);
 }
 
-struct asan_mem_ref_hasher
-  : typed_noop_remove <asan_mem_ref>
+struct asan_mem_ref_hasher : nofree_ptr_hash <asan_mem_ref>
 {
-  typedef asan_mem_ref value_type;
-  typedef asan_mem_ref compare_type;
-
-  static inline hashval_t hash (const value_type *);
-  static inline bool equal (const value_type *, const compare_type *);
+  static inline hashval_t hash (const asan_mem_ref *);
+  static inline bool equal (const asan_mem_ref *, const asan_mem_ref *);
 };
 
 /* Hash a memory reference.  */
@@ -465,11 +450,7 @@ free_mem_ref_resources ()
   delete asan_mem_ref_ht;
   asan_mem_ref_ht = NULL;
 
-  if (asan_mem_ref_alloc_pool)
-    {
-      free_alloc_pool (asan_mem_ref_alloc_pool);
-      asan_mem_ref_alloc_pool = NULL;
-    }
+  asan_mem_ref_pool.release ();
 }
 
 /* Return true iff the memory reference REF has been instrumented.  */
@@ -863,7 +844,7 @@ get_mem_refs_of_builtin_call (const gcall *call,
    contains.  */
 
 static bool
-has_stmt_been_instrumented_p (gimple stmt)
+has_stmt_been_instrumented_p (gimple *stmt)
 {
   if (gimple_assign_single_p (stmt))
     {
@@ -906,6 +887,16 @@ has_stmt_been_instrumented_p (gimple stmt)
 	  return true;
 	}
     }
+  else if (is_gimple_call (stmt) && gimple_store_p (stmt))
+    {
+      asan_mem_ref r;
+      asan_mem_ref_init (&r, NULL, 1);
+
+      r.start = gimple_call_lhs (stmt);
+      r.access_size = int_size_in_bytes (TREE_TYPE (r.start));
+      return has_mem_ref_been_instrumented (&r);
+    }
+
   return false;
 }
 
@@ -1133,12 +1124,16 @@ asan_emit_stack_protection (rtx base, rtx pbase, unsigned int alignb,
       snprintf (buf, sizeof buf, "__asan_stack_malloc_%d",
 		use_after_return_class);
       ret = init_one_libfunc (buf);
-      rtx addr = convert_memory_address (ptr_mode, base);
-      ret = emit_library_call_value (ret, NULL_RTX, LCT_NORMAL, ptr_mode, 2,
+      ret = emit_library_call_value (ret, NULL_RTX, LCT_NORMAL, ptr_mode, 1,
 				     GEN_INT (asan_frame_size
 					      + base_align_bias),
-				     TYPE_MODE (pointer_sized_int_node),
-				     addr, ptr_mode);
+				     TYPE_MODE (pointer_sized_int_node));
+      /* __asan_stack_malloc_[n] returns a pointer to fake stack if succeeded
+	 and NULL otherwise.  Check RET value is NULL here and jump over the
+	 BASE reassignment in this case.  Otherwise, reassign BASE to RET.  */
+      int very_unlikely = REG_BR_PROB_BASE / 2000 - 1;
+      emit_cmp_and_jump_insns (ret, const0_rtx, EQ, NULL_RTX,
+			       VOIDmode, 0, lab, very_unlikely);
       ret = convert_memory_address (Pmode, ret);
       emit_move_insn (base, ret);
       emit_label (lab);
@@ -1364,7 +1359,8 @@ asan_protect_global (tree decl)
 	 to be an array of such vars, putting padding in there
 	 breaks this assumption.  */
       || (DECL_SECTION_NAME (decl) != NULL
-	  && !symtab_node::get (decl)->implicit_section)
+	  && !symtab_node::get (decl)->implicit_section
+	  && !section_sanitized_p (DECL_SECTION_NAME (decl)))
       || DECL_SIZE (decl) == 0
       || ASAN_RED_ZONE_SIZE * BITS_PER_UNIT > MAX_OFILE_ALIGNMENT
       || !valid_constant_size_p (DECL_SIZE_UNIT (decl))
@@ -1591,7 +1587,7 @@ build_shadow_mem_access (gimple_stmt_iterator *gsi, location_t location,
 {
   tree t, uintptr_type = TREE_TYPE (base_addr);
   tree shadow_type = TREE_TYPE (shadow_ptr_type);
-  gimple g;
+  gimple *g;
 
   t = build_int_cst (uintptr_type, ASAN_SHADOW_SHIFT);
   g = gimple_build_assign (make_ssa_name (uintptr_type), RSHIFT_EXPR,
@@ -1627,7 +1623,7 @@ maybe_create_ssa_name (location_t loc, tree base, gimple_stmt_iterator *iter,
 {
   if (TREE_CODE (base) == SSA_NAME)
     return base;
-  gimple g = gimple_build_assign (make_ssa_name (TREE_TYPE (base)),
+  gimple *g = gimple_build_assign (make_ssa_name (TREE_TYPE (base)),
 				  TREE_CODE (base), base);
   gimple_set_location (g, loc);
   if (before_p)
@@ -1646,7 +1642,7 @@ maybe_cast_to_ptrmode (location_t loc, tree len, gimple_stmt_iterator *iter,
 {
   if (ptrofftype_p (len))
     return len;
-  gimple g = gimple_build_assign (make_ssa_name (pointer_sized_int_node),
+  gimple *g = gimple_build_assign (make_ssa_name (pointer_sized_int_node),
 				  NOP_EXPR, len);
   gimple_set_location (g, loc);
   if (before_p)
@@ -1682,7 +1678,7 @@ build_check_stmt (location_t loc, tree base, tree len,
 		  bool is_scalar_access, unsigned int align = 0)
 {
   gimple_stmt_iterator gsi = *iter;
-  gimple g;
+  gimple *g;
 
   gcc_assert (!(size_in_bytes > 0 && !is_non_zero_len));
 
@@ -1760,6 +1756,8 @@ instrument_derefs (gimple_stmt_iterator *iter, tree t,
 
   tree type, base;
   HOST_WIDE_INT size_in_bytes;
+  if (location == UNKNOWN_LOCATION)
+    location = EXPR_LOCATION (t);
 
   type = TREE_TYPE (t);
   switch (TREE_CODE (t))
@@ -1783,9 +1781,9 @@ instrument_derefs (gimple_stmt_iterator *iter, tree t,
   HOST_WIDE_INT bitsize, bitpos;
   tree offset;
   machine_mode mode;
-  int volatilep = 0, unsignedp = 0;
-  tree inner = get_inner_reference (t, &bitsize, &bitpos, &offset,
-				    &mode, &unsignedp, &volatilep, false);
+  int unsignedp, reversep, volatilep = 0;
+  tree inner = get_inner_reference (t, &bitsize, &bitpos, &offset, &mode,
+				    &unsignedp, &reversep, &volatilep, false);
 
   if (TREE_CODE (t) == COMPONENT_REF
       && DECL_BIT_FIELD_REPRESENTATIVE (TREE_OPERAND (t, 1)) != NULL_TREE)
@@ -1800,9 +1798,6 @@ instrument_derefs (gimple_stmt_iterator *iter, tree t,
 
   if (bitpos % BITS_PER_UNIT
       || bitsize != size_in_bytes * BITS_PER_UNIT)
-    return;
-
-  if (TREE_CODE (inner) == VAR_DECL && DECL_HARD_REGISTER (inner))
     return;
 
   if (TREE_CODE (inner) == VAR_DECL
@@ -1976,7 +1971,7 @@ instrument_builtin_call (gimple_stmt_iterator *iter)
 static bool
 maybe_instrument_assignment (gimple_stmt_iterator *iter)
 {
-  gimple s = gsi_stmt (*iter);
+  gimple *s = gsi_stmt (*iter);
 
   gcc_assert (gimple_assign_single_p (s));
 
@@ -1992,7 +1987,7 @@ maybe_instrument_assignment (gimple_stmt_iterator *iter)
 			 is_store);
       is_instrumented = true;
     }
- 
+
   if (gimple_assign_load_p (s))
     {
       ref_expr = gimple_assign_rhs1 (s);
@@ -2020,7 +2015,7 @@ maybe_instrument_assignment (gimple_stmt_iterator *iter)
 static bool
 maybe_instrument_call (gimple_stmt_iterator *iter)
 {
-  gimple stmt = gsi_stmt (*iter);
+  gimple *stmt = gsi_stmt (*iter);
   bool is_builtin = gimple_call_builtin_p (stmt, BUILT_IN_NORMAL);
 
   if (is_builtin && instrument_builtin_call (iter))
@@ -2042,11 +2037,43 @@ maybe_instrument_call (gimple_stmt_iterator *iter)
 	    }
 	}
       tree decl = builtin_decl_implicit (BUILT_IN_ASAN_HANDLE_NO_RETURN);
-      gimple g = gimple_build_call (decl, 0);
+      gimple *g = gimple_build_call (decl, 0);
       gimple_set_location (g, gimple_location (stmt));
       gsi_insert_before (iter, g, GSI_SAME_STMT);
     }
-  return false;
+
+  bool instrumented = false;
+  if (gimple_store_p (stmt))
+    {
+      tree ref_expr = gimple_call_lhs (stmt);
+      instrument_derefs (iter, ref_expr,
+			 gimple_location (stmt),
+			 /*is_store=*/true);
+
+      instrumented = true;
+    }
+
+  /* Walk through gimple_call arguments and check them id needed.  */
+  unsigned args_num = gimple_call_num_args (stmt);
+  for (unsigned i = 0; i < args_num; ++i)
+    {
+      tree arg = gimple_call_arg (stmt, i);
+      /* If ARG is not a non-aggregate register variable, compiler in general
+	 creates temporary for it and pass it as argument to gimple call.
+	 But in some cases, e.g. when we pass by value a small structure that
+	 fits to register, compiler can avoid extra overhead by pulling out
+	 these temporaries.  In this case, we should check the argument.  */
+      if (!is_gimple_reg (arg) && !is_gimple_min_invariant (arg))
+	{
+	  instrument_derefs (iter, arg,
+			     gimple_location (stmt),
+			     /*is_store=*/false);
+	  instrumented = true;
+	}
+    }
+  if (instrumented)
+    gsi_next (iter);
+  return instrumented;
 }
 
 /* Walk each instruction of all basic block and instrument those that
@@ -2084,7 +2111,7 @@ transform_statements (void)
 
       for (i = gsi_start_bb (bb); !gsi_end_p (i);)
 	{
-	  gimple s = gsi_stmt (i);
+	  gimple *s = gsi_stmt (i);
 
 	  if (has_stmt_been_instrumented_p (s))
 	    gsi_next (&i);
@@ -2383,6 +2410,8 @@ initialize_sanitizer_builtins (void)
   /* ECF_COLD missing */ ATTR_CONST_NORETURN_NOTHROW_LEAF_LIST
 #undef ATTR_PURE_NOTHROW_LEAF_LIST
 #define ATTR_PURE_NOTHROW_LEAF_LIST ECF_PURE | ATTR_NOTHROW_LEAF_LIST
+#undef DEF_BUILTIN_STUB
+#define DEF_BUILTIN_STUB(ENUM, NAME)
 #undef DEF_SANITIZER_BUILTIN
 #define DEF_SANITIZER_BUILTIN(ENUM, NAME, TYPE, ATTRS) \
   decl = add_builtin_function ("__builtin_" NAME, TYPE, ENUM,		\
@@ -2402,6 +2431,7 @@ initialize_sanitizer_builtins (void)
 			   ATTR_PURE_NOTHROW_LEAF_LIST)
 
 #undef DEF_SANITIZER_BUILTIN
+#undef DEF_BUILTIN_STUB
 }
 
 /* Called via htab_traverse.  Count number of emitted
@@ -2479,6 +2509,8 @@ asan_finish_file (void)
     {
       tree fn = builtin_decl_implicit (BUILT_IN_ASAN_INIT);
       append_to_statement_list (build_call_expr (fn, 0), &asan_ctor_statements);
+      fn = builtin_decl_implicit (BUILT_IN_ASAN_VERSION_MISMATCH_CHECK);
+      append_to_statement_list (build_call_expr (fn, 0), &asan_ctor_statements);
     }
   FOR_EACH_DEFINED_VARIABLE (vnode)
     if (TREE_ASM_WRITTEN (vnode->decl)
@@ -2542,11 +2574,13 @@ asan_finish_file (void)
 bool
 asan_expand_check_ifn (gimple_stmt_iterator *iter, bool use_calls)
 {
-  gimple g = gsi_stmt (*iter);
+  gimple *g = gsi_stmt (*iter);
   location_t loc = gimple_location (g);
-
-  bool recover_p
-    = (flag_sanitize & flag_sanitize_recover & SANITIZE_KERNEL_ADDRESS) != 0;
+  bool recover_p;
+  if (flag_sanitize & SANITIZE_USER_ADDRESS)
+    recover_p = (flag_sanitize_recover & SANITIZE_USER_ADDRESS) != 0;
+  else
+    recover_p = (flag_sanitize_recover & SANITIZE_KERNEL_ADDRESS) != 0;
 
   HOST_WIDE_INT flags = tree_to_shwi (gimple_call_arg (g, 0));
   gcc_assert (flags < ASAN_CHECK_LAST);
@@ -2564,7 +2598,7 @@ asan_expand_check_ifn (gimple_stmt_iterator *iter, bool use_calls)
   if (use_calls)
     {
       /* Instrument using callbacks.  */
-      gimple g = gimple_build_assign (make_ssa_name (pointer_sized_int_node),
+      gimple *g = gimple_build_assign (make_ssa_name (pointer_sized_int_node),
 				      NOP_EXPR, base);
       gimple_set_location (g, loc);
       gsi_insert_before (iter, g, GSI_SAME_STMT);
@@ -2655,7 +2689,7 @@ asan_expand_check_ifn (gimple_stmt_iterator *iter, bool use_calls)
 	 & ((base_addr & 7) + (real_size_in_bytes - 1)) >= shadow).  */
       tree shadow = build_shadow_mem_access (&gsi, loc, base_addr,
 					     shadow_ptr_type);
-      gimple shadow_test = build_assign (NE_EXPR, shadow, 0);
+      gimple *shadow_test = build_assign (NE_EXPR, shadow, 0);
       gimple_seq seq = NULL;
       gimple_seq_add_stmt (&seq, shadow_test);
       /* Aligned (>= 8 bytes) can test just
@@ -2702,7 +2736,7 @@ asan_expand_check_ifn (gimple_stmt_iterator *iter, bool use_calls)
 
 	  tree shadow = build_shadow_mem_access (&gsi, loc, base_end_addr,
 						 shadow_ptr_type);
-	  gimple shadow_test = build_assign (NE_EXPR, shadow, 0);
+	  gimple *shadow_test = build_assign (NE_EXPR, shadow, 0);
 	  gimple_seq seq = NULL;
 	  gimple_seq_add_stmt (&seq, shadow_test);
 	  gimple_seq_add_stmt (&seq, build_assign (BIT_AND_EXPR,

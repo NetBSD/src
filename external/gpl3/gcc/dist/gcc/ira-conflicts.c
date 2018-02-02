@@ -1,5 +1,5 @@
 /* IRA conflict builder.
-   Copyright (C) 2006-2015 Free Software Foundation, Inc.
+   Copyright (C) 2006-2016 Free Software Foundation, Inc.
    Contributed by Vladimir Makarov <vmakarov@redhat.com>.
 
 This file is part of GCC.
@@ -21,28 +21,17 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "tm.h"
-#include "regs.h"
-#include "rtl.h"
-#include "tm_p.h"
+#include "backend.h"
 #include "target.h"
-#include "flags.h"
-#include "hard-reg-set.h"
+#include "rtl.h"
 #include "predict.h"
-#include "vec.h"
-#include "hashtab.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "input.h"
-#include "function.h"
-#include "basic-block.h"
+#include "tm_p.h"
 #include "insn-config.h"
-#include "recog.h"
-#include "diagnostic-core.h"
-#include "params.h"
-#include "df.h"
-#include "sparseset.h"
+#include "regs.h"
+#include "ira.h"
 #include "ira-int.h"
+#include "params.h"
+#include "sparseset.h"
 #include "addresses.h"
 
 /* This file contains code responsible for allocno conflict creation,

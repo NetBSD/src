@@ -1,5 +1,5 @@
 /* Decompose multiword subregs.
-   Copyright (C) 2007-2015 Free Software Foundation, Inc.
+   Copyright (C) 2007-2016 Free Software Foundation, Inc.
    Contributed by Richard Henderson <rth@redhat.com>
 		  Ian Lance Taylor <iant@google.com>
 
@@ -22,58 +22,23 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "machmode.h"
-#include "tm.h"
-#include "hash-set.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "wide-int.h"
-#include "inchash.h"
-#include "tree.h"
+#include "backend.h"
 #include "rtl.h"
+#include "tree.h"
+#include "cfghooks.h"
+#include "df.h"
 #include "tm_p.h"
-#include "flags.h"
+#include "expmed.h"
 #include "insn-config.h"
-#include "obstack.h"
-#include "predict.h"
-#include "hard-reg-set.h"
-#include "function.h"
-#include "dominance.h"
-#include "cfg.h"
+#include "emit-rtl.h"
+#include "recog.h"
 #include "cfgrtl.h"
 #include "cfgbuild.h"
-#include "basic-block.h"
-#include "recog.h"
-#include "bitmap.h"
 #include "dce.h"
-#include "hashtab.h"
-#include "statistics.h"
-#include "real.h"
-#include "fixed-value.h"
-#include "expmed.h"
-#include "dojump.h"
-#include "explow.h"
-#include "calls.h"
-#include "emit-rtl.h"
-#include "varasm.h"
-#include "stmt.h"
 #include "expr.h"
-#include "except.h"
-#include "regs.h"
 #include "tree-pass.h"
-#include "df.h"
 #include "lower-subreg.h"
 #include "rtl-iter.h"
-
-#ifdef STACK_GROWS_DOWNWARD
-# undef STACK_GROWS_DOWNWARD
-# define STACK_GROWS_DOWNWARD 1
-#else
-# define STACK_GROWS_DOWNWARD 0
-#endif
 
 
 /* Decompose multi-word pseudo-registers into individual
@@ -163,7 +128,7 @@ shift_cost (bool speed_p, struct cost_rtxes *rtxes, enum rtx_code code,
   PUT_MODE (rtxes->shift, mode);
   PUT_MODE (rtxes->source, mode);
   XEXP (rtxes->shift, 1) = GEN_INT (op1);
-  return set_src_cost (rtxes->shift, speed_p);
+  return set_src_cost (rtxes->shift, mode, speed_p);
 }
 
 /* For each X in the range [0, BITS_PER_WORD), set SPLITTING[X]
@@ -267,7 +232,7 @@ compute_costs (bool speed_p, struct cost_rtxes *rtxes)
       /* The only case here to check to see if moving the upper part with a
 	 zero is cheaper than doing the zext itself.  */
       PUT_MODE (rtxes->source, word_mode);
-      zext_cost = set_src_cost (rtxes->zext, speed_p);
+      zext_cost = set_src_cost (rtxes->zext, twice_word_mode, speed_p);
 
       if (LOG_COSTS)
 	fprintf (stderr, "%s %s: original cost %d, split cost %d + %d\n",
@@ -302,9 +267,9 @@ init_lower_subreg (void)
 
   twice_word_mode = GET_MODE_2XWIDER_MODE (word_mode);
 
-  rtxes.target = gen_rtx_REG (word_mode, FIRST_PSEUDO_REGISTER);
-  rtxes.source = gen_rtx_REG (word_mode, FIRST_PSEUDO_REGISTER + 1);
-  rtxes.set = gen_rtx_SET (VOIDmode, rtxes.target, rtxes.source);
+  rtxes.target = gen_rtx_REG (word_mode, LAST_VIRTUAL_REGISTER + 1);
+  rtxes.source = gen_rtx_REG (word_mode, LAST_VIRTUAL_REGISTER + 2);
+  rtxes.set = gen_rtx_SET (rtxes.target, rtxes.source);
   rtxes.zext = gen_rtx_ZERO_EXTEND (twice_word_mode, rtxes.source);
   rtxes.shift = gen_rtx_ASHIFT (twice_word_mode, rtxes.source, const0_rtx);
 
@@ -649,7 +614,8 @@ simplify_subreg_concatn (machine_mode outermode, rtx op,
 
   innermode = GET_MODE (op);
   gcc_assert (byte < GET_MODE_SIZE (innermode));
-  gcc_assert (GET_MODE_SIZE (outermode) <= GET_MODE_SIZE (innermode));
+  if (GET_MODE_SIZE (outermode) > GET_MODE_SIZE (innermode))
+    return NULL_RTX;
 
   inner_size = GET_MODE_SIZE (innermode) / XVECLEN (op, 0);
   part = XVECEXP (op, 0, byte / inner_size);
@@ -966,19 +932,19 @@ resolve_simple_move (rtx set, rtx_insn *insn)
 
       reg = gen_reg_rtx (orig_mode);
 
-#ifdef AUTO_INC_DEC
-      {
-	rtx move = emit_move_insn (reg, src);
-	if (MEM_P (src))
-	  {
-	    rtx note = find_reg_note (insn, REG_INC, NULL_RTX);
-	    if (note)
-	      add_reg_note (move, REG_INC, XEXP (note, 0));
-	  }
-      }
-#else
-      emit_move_insn (reg, src);
-#endif
+      if (AUTO_INC_DEC)
+	{
+	  rtx move = emit_move_insn (reg, src);
+	  if (MEM_P (src))
+	    {
+	      rtx note = find_reg_note (insn, REG_INC, NULL_RTX);
+	      if (note)
+		add_reg_note (move, REG_INC, XEXP (note, 0));
+	    }
+	}
+      else
+	emit_move_insn (reg, src);
+
       src = reg;
     }
 
@@ -1069,15 +1035,13 @@ resolve_simple_move (rtx set, rtx_insn *insn)
 	mdest = simplify_gen_subreg (orig_mode, dest, GET_MODE (dest), 0);
       minsn = emit_move_insn (real_dest, mdest);
 
-#ifdef AUTO_INC_DEC
-  if (MEM_P (real_dest)
+  if (AUTO_INC_DEC && MEM_P (real_dest)
       && !(resolve_reg_p (real_dest) || resolve_subreg_p (real_dest)))
     {
       rtx note = find_reg_note (insn, REG_INC, NULL_RTX);
       if (note)
 	add_reg_note (minsn, REG_INC, XEXP (note, 0));
     }
-#endif
 
       smove = single_set (minsn);
       gcc_assert (smove != NULL_RTX);

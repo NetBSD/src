@@ -1,5 +1,5 @@
 /* Perform doloop optimizations
-   Copyright (C) 2004-2015 Free Software Foundation, Inc.
+   Copyright (C) 2004-2016 Free Software Foundation, Inc.
    Based on code by Michael P. Hayes (m.hayes@elec.canterbury.ac.nz)
 
 This file is part of GCC.
@@ -21,46 +21,21 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "tm.h"
+#include "backend.h"
+#include "target.h"
 #include "rtl.h"
-#include "flags.h"
-#include "symtab.h"
-#include "hashtab.h"
-#include "hash-set.h"
-#include "vec.h"
-#include "machmode.h"
-#include "hard-reg-set.h"
-#include "input.h"
-#include "function.h"
-#include "statistics.h"
-#include "double-int.h"
-#include "real.h"
-#include "fixed-value.h"
-#include "alias.h"
-#include "wide-int.h"
-#include "inchash.h"
 #include "tree.h"
-#include "insn-config.h"
-#include "expmed.h"
-#include "dojump.h"
-#include "explow.h"
-#include "calls.h"
+#include "cfghooks.h"
 #include "emit-rtl.h"
-#include "varasm.h"
-#include "stmt.h"
+#include "dojump.h"
 #include "expr.h"
-#include "diagnostic-core.h"
-#include "tm_p.h"
-#include "predict.h"
-#include "dominance.h"
-#include "cfg.h"
 #include "cfgloop.h"
 #include "cfgrtl.h"
-#include "basic-block.h"
 #include "params.h"
-#include "target.h"
 #include "dumpfile.h"
 #include "loop-unroll.h"
+#include "regs.h"
+#include "df.h"
 
 /* This module is used to modify loops with a determinable number of
    iterations to use special low-overhead looping instructions.
@@ -90,8 +65,6 @@ along with GCC; see the file COPYING3.  If not see
    somehow extremely lower than the cost of compare & jump, or unless the bct
    register cannot be used for anything else but doloop -- ??? detect these
    cases).  */
-
-#ifdef HAVE_doloop_end
 
 /* Return the loop termination condition for PATTERN or zero
    if it is not a decrement and branch jump insn.  */
@@ -141,7 +114,7 @@ doloop_condition_get (rtx doloop_pat)
   if (GET_CODE (pattern) != PARALLEL)
     {
       rtx cond;
-      rtx prev_insn = prev_nondebug_insn (doloop_pat);
+      rtx_insn *prev_insn = prev_nondebug_insn (doloop_pat);
       rtx cmp_arg1, cmp_arg2;
       rtx cmp_orig;
 
@@ -368,7 +341,7 @@ static bool
 add_test (rtx cond, edge *e, basic_block dest)
 {
   rtx_insn *seq, *jump;
-  rtx label;
+  rtx_code_label *label;
   machine_mode mode;
   rtx op0 = XEXP (cond, 0), op1 = XEXP (cond, 1);
   enum rtx_code code = GET_CODE (cond);
@@ -382,8 +355,7 @@ add_test (rtx cond, edge *e, basic_block dest)
   op0 = force_operand (op0, NULL_RTX);
   op1 = force_operand (op1, NULL_RTX);
   label = block_label (dest);
-  do_compare_rtx_and_jump (op0, op1, code, 0, mode, NULL_RTX,
-			   NULL_RTX, label, -1);
+  do_compare_rtx_and_jump (op0, op1, code, 0, mode, NULL_RTX, NULL, label, -1);
 
   jump = get_last_insn ();
   if (!jump || !JUMP_P (jump))
@@ -429,13 +401,13 @@ add_test (rtx cond, edge *e, basic_block dest)
 
 static void
 doloop_modify (struct loop *loop, struct niter_desc *desc,
-	       rtx doloop_seq, rtx condition, rtx count)
+	       rtx_insn *doloop_seq, rtx condition, rtx count)
 {
   rtx counter_reg;
   rtx tmp, noloop = NULL_RTX;
   rtx_insn *sequence;
   rtx_insn *jump_insn;
-  rtx jump_label;
+  rtx_code_label *jump_label;
   int nonneg = 0;
   bool increment_count;
   basic_block loop_end = desc->out_edge->src;
@@ -449,7 +421,7 @@ doloop_modify (struct loop *loop, struct niter_desc *desc,
     {
       fprintf (dump_file, "Doloop: Inserting doloop pattern (");
       if (desc->const_iter)
-	fprintf (dump_file, "%"PRId64, desc->niter);
+	fprintf (dump_file, "%" PRId64, desc->niter);
       else
 	fputs ("runtime", dump_file);
       fputs (" iterations).\n", dump_file);
@@ -577,21 +549,9 @@ doloop_modify (struct loop *loop, struct niter_desc *desc,
 
   /* Some targets (eg, C4x) need to initialize special looping
      registers.  */
-#ifdef HAVE_doloop_begin
-  {
-    rtx init;
-
-    init = gen_doloop_begin (counter_reg, doloop_seq);
-    if (init)
-      {
-	start_sequence ();
-	emit_insn (init);
-	sequence = get_insns ();
-	end_sequence ();
-	emit_insn_after (sequence, BB_END (loop_preheader_edge (loop)->src));
-      }
-  }
-#endif
+  if (targetm.have_doloop_begin ())
+    if (rtx_insn *seq = targetm.gen_doloop_begin (counter_reg, doloop_seq))
+      emit_insn_after (seq, BB_END (loop_preheader_edge (loop)->src));
 
   /* Insert the new low-overhead looping insn.  */
   emit_jump_insn_after (doloop_seq, BB_END (loop_end));
@@ -618,6 +578,27 @@ doloop_modify (struct loop *loop, struct niter_desc *desc,
     }
 }
 
+/* Called through note_stores.  */
+
+static void
+record_reg_sets (rtx x, const_rtx pat ATTRIBUTE_UNUSED, void *data)
+{
+  bitmap mod = (bitmap)data;
+  if (REG_P (x))
+    {
+      unsigned int regno = REGNO (x);
+      if (HARD_REGISTER_P (x))
+	{
+	  unsigned int end_regno = end_hard_regno (GET_MODE (x), regno);
+	  do
+	    bitmap_set_bit (mod, regno);
+	  while (++regno < end_regno);
+	}
+      else
+	bitmap_set_bit (mod, regno);
+    }
+}
+
 /* Process loop described by LOOP validating that the loop is suitable for
    conversion to use a low overhead looping instruction, replacing the jump
    insn where suitable.  Returns true if the loop was successfully
@@ -627,10 +608,10 @@ static bool
 doloop_optimize (struct loop *loop)
 {
   machine_mode mode;
-  rtx doloop_seq, doloop_pat, doloop_reg;
+  rtx doloop_reg;
   rtx count;
   widest_int iterations, iterations_max;
-  rtx start_label;
+  rtx_code_label *start_label;
   rtx condition;
   unsigned level, est_niter;
   int max_cost;
@@ -677,7 +658,7 @@ doloop_optimize (struct loop *loop)
 
   max_cost
     = COSTS_N_INSNS (PARAM_VALUE (PARAM_MAX_ITERATIONS_COMPUTATION_COST));
-  if (set_src_cost (desc->niter_expr, optimize_loop_for_speed_p (loop))
+  if (set_src_cost (desc->niter_expr, mode, optimize_loop_for_speed_p (loop))
       > max_cost)
     {
       if (dump_file)
@@ -710,7 +691,7 @@ doloop_optimize (struct loop *loop)
   count = copy_rtx (desc->niter_expr);
   start_label = block_label (desc->in_edge->dest);
   doloop_reg = gen_reg_rtx (mode);
-  doloop_seq = gen_doloop_end (doloop_reg, start_label);
+  rtx_insn *doloop_seq = targetm.gen_doloop_end (doloop_reg, start_label);
 
   word_mode_size = GET_MODE_PRECISION (word_mode);
   word_mode_max
@@ -728,7 +709,7 @@ doloop_optimize (struct loop *loop)
       else
 	count = lowpart_subreg (word_mode, count, mode);
       PUT_MODE (doloop_reg, word_mode);
-      doloop_seq = gen_doloop_end (doloop_reg, start_label);
+      doloop_seq = targetm.gen_doloop_end (doloop_reg, start_label);
     }
   if (! doloop_seq)
     {
@@ -739,26 +720,37 @@ doloop_optimize (struct loop *loop)
     }
 
   /* If multiple instructions were created, the last must be the
-     jump instruction.  Also, a raw define_insn may yield a plain
-     pattern.  */
-  doloop_pat = doloop_seq;
-  if (INSN_P (doloop_pat))
-    {
-      rtx_insn *doloop_insn = as_a <rtx_insn *> (doloop_pat);
-      while (NEXT_INSN (doloop_insn) != NULL_RTX)
-	doloop_insn = NEXT_INSN (doloop_insn);
-      if (!JUMP_P (doloop_insn))
-	doloop_insn = NULL;
-      doloop_pat = doloop_insn;
-    }
-
-  if (! doloop_pat
-      || ! (condition = doloop_condition_get (doloop_pat)))
+     jump instruction.  */
+  rtx_insn *doloop_insn = doloop_seq;
+  while (NEXT_INSN (doloop_insn) != NULL_RTX)
+    doloop_insn = NEXT_INSN (doloop_insn);
+  if (!JUMP_P (doloop_insn)
+      || !(condition = doloop_condition_get (doloop_insn)))
     {
       if (dump_file)
 	fprintf (dump_file, "Doloop: Unrecognizable doloop pattern!\n");
       return false;
     }
+
+  /* Ensure that the new sequence doesn't clobber a register that
+     is live at the end of the block.  */
+  {
+    bitmap modified = BITMAP_ALLOC (NULL);
+
+    for (rtx_insn *i = doloop_seq; i != NULL; i = NEXT_INSN (i))
+      note_stores (PATTERN (i), record_reg_sets, modified);
+
+    basic_block loop_end = desc->out_edge->src;
+    bool fail = bitmap_intersect_p (df_get_live_out (loop_end), modified);
+    BITMAP_FREE (modified);
+
+    if (fail)
+      {
+	if (dump_file)
+	  fprintf (dump_file, "Doloop: doloop pattern clobbers live out\n");
+	return false;
+      }
+  }
 
   doloop_modify (loop, desc, doloop_seq, condition, count);
   return true;
@@ -771,16 +763,21 @@ doloop_optimize_loops (void)
 {
   struct loop *loop;
 
+  if (optimize == 1)
+    {
+      df_live_add_problem ();
+      df_live_set_all_dirty ();
+    }
+
   FOR_EACH_LOOP (loop, 0)
     {
       doloop_optimize (loop);
     }
 
+  if (optimize == 1)
+    df_remove_problem (df_live);
+
   iv_analysis_done ();
 
-#ifdef ENABLE_CHECKING
-  verify_loop_structure ();
-#endif
+  checking_verify_loop_structure ();
 }
-#endif /* HAVE_doloop_end */
-

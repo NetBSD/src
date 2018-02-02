@@ -1,5 +1,5 @@
 /* Loop invariant motion.
-   Copyright (C) 2003-2015 Free Software Foundation, Inc.
+   Copyright (C) 2003-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -20,56 +20,30 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "tm.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "wide-int.h"
-#include "inchash.h"
+#include "backend.h"
 #include "tree.h"
-#include "fold-const.h"
-#include "tm_p.h"
-#include "predict.h"
-#include "hard-reg-set.h"
-#include "input.h"
-#include "function.h"
-#include "dominance.h"
-#include "cfg.h"
-#include "cfganal.h"
-#include "basic-block.h"
-#include "gimple-pretty-print.h"
-#include "hash-map.h"
-#include "hash-table.h"
-#include "tree-ssa-alias.h"
-#include "internal-fn.h"
-#include "tree-eh.h"
-#include "gimple-expr.h"
-#include "is-a.h"
 #include "gimple.h"
+#include "cfghooks.h"
+#include "tree-pass.h"
+#include "ssa.h"
+#include "gimple-pretty-print.h"
+#include "fold-const.h"
+#include "cfganal.h"
+#include "tree-eh.h"
 #include "gimplify.h"
 #include "gimple-iterator.h"
-#include "gimple-ssa.h"
 #include "tree-cfg.h"
-#include "tree-phinodes.h"
-#include "ssa-iterators.h"
-#include "stringpool.h"
-#include "tree-ssanames.h"
 #include "tree-ssa-loop-manip.h"
 #include "tree-ssa-loop.h"
 #include "tree-into-ssa.h"
 #include "cfgloop.h"
 #include "domwalk.h"
 #include "params.h"
-#include "tree-pass.h"
-#include "flags.h"
 #include "tree-affine.h"
 #include "tree-ssa-propagate.h"
 #include "trans-mem.h"
 #include "gimple-fold.h"
+#include "tree-scalar-evolution.h"
 #include "tree-ssa-loop-niter.h"
 
 /* TODO:  Support for predicated code motion.  I.e.
@@ -112,7 +86,7 @@ struct lim_aux_data
   unsigned cost;		/* Cost of the computation performed by the
 				   statement.  */
 
-  vec<gimple> depends;		/* Vector of statements that must be also
+  vec<gimple *> depends;		/* Vector of statements that must be also
 				   hoisted out of the loop when this statement
 				   is hoisted; i.e. those that define the
 				   operands of the statement and are inside of
@@ -121,20 +95,20 @@ struct lim_aux_data
 
 /* Maps statements to their lim_aux_data.  */
 
-static hash_map<gimple, lim_aux_data *> *lim_aux_data_map;
+static hash_map<gimple *, lim_aux_data *> *lim_aux_data_map;
 
 /* Description of a memory reference location.  */
 
-typedef struct mem_ref_loc
+struct mem_ref_loc
 {
   tree *ref;			/* The reference itself.  */
-  gimple stmt;			/* The statement in that it occurs.  */
-} *mem_ref_loc_p;
+  gimple *stmt;			/* The statement in that it occurs.  */
+};
 
 
 /* Description of a memory reference.  */
 
-typedef struct im_mem_ref
+struct im_mem_ref
 {
   unsigned id;			/* ID assigned to the memory reference
 				   (its index in memory_accesses.refs_list)  */
@@ -161,7 +135,7 @@ typedef struct im_mem_ref
 				   If it is only loaded, then it is independent
 				     on all stores in the loop.  */
   bitmap_head dep_loop;		/* The complement of INDEP_LOOP.  */
-} *mem_ref_p;
+};
 
 /* We use two bits per loop in the ref->{in,}dep_loop bitmaps, the first
    to record (in)dependence against stores in the loop and its subloops, the
@@ -171,18 +145,17 @@ typedef struct im_mem_ref
 
 /* Mem_ref hashtable helpers.  */
 
-struct mem_ref_hasher : typed_noop_remove <im_mem_ref>
+struct mem_ref_hasher : nofree_ptr_hash <im_mem_ref>
 {
-  typedef im_mem_ref value_type;
-  typedef tree_node compare_type;
-  static inline hashval_t hash (const value_type *);
-  static inline bool equal (const value_type *, const compare_type *);
+  typedef tree_node *compare_type;
+  static inline hashval_t hash (const im_mem_ref *);
+  static inline bool equal (const im_mem_ref *, const tree_node *);
 };
 
 /* A hash function for struct im_mem_ref object OBJ.  */
 
 inline hashval_t
-mem_ref_hasher::hash (const value_type *mem)
+mem_ref_hasher::hash (const im_mem_ref *mem)
 {
   return mem->hash;
 }
@@ -191,7 +164,7 @@ mem_ref_hasher::hash (const value_type *mem)
    memory reference OBJ2.  */
 
 inline bool
-mem_ref_hasher::equal (const value_type *mem1, const compare_type *obj2)
+mem_ref_hasher::equal (const im_mem_ref *mem1, const tree_node *obj2)
 {
   return operand_equal_p (mem1->mem.ref, (const_tree) obj2, 0);
 }
@@ -205,7 +178,7 @@ static struct
   hash_table<mem_ref_hasher> *refs;
 
   /* The list of memory references.  */
-  vec<mem_ref_p> refs_list;
+  vec<im_mem_ref *> refs_list;
 
   /* The set of memory references accessed in each loop.  */
   vec<bitmap_head> refs_in_loop;
@@ -224,7 +197,7 @@ static struct
 static bitmap_obstack lim_bitmap_obstack;
 static obstack mem_ref_obstack;
 
-static bool ref_indep_loop_p (struct loop *, mem_ref_p);
+static bool ref_indep_loop_p (struct loop *, im_mem_ref *);
 
 /* Minimum cost of an expensive expression.  */
 #define LIM_EXPENSIVE ((unsigned) PARAM_VALUE (PARAM_LIM_EXPENSIVE))
@@ -241,7 +214,7 @@ static bool ref_indep_loop_p (struct loop *, mem_ref_p);
 #define MEM_ANALYZABLE(REF) ((REF)->id != UNANALYZABLE_MEM_ID)
 
 static struct lim_aux_data *
-init_lim_data (gimple stmt)
+init_lim_data (gimple *stmt)
 {
   lim_aux_data *p = XCNEW (struct lim_aux_data);
   lim_aux_data_map->put (stmt, p);
@@ -250,7 +223,7 @@ init_lim_data (gimple stmt)
 }
 
 static struct lim_aux_data *
-get_lim_data (gimple stmt)
+get_lim_data (gimple *stmt)
 {
   lim_aux_data **p = lim_aux_data_map->get (stmt);
   if (!p)
@@ -269,7 +242,7 @@ free_lim_aux_data (struct lim_aux_data *data)
 }
 
 static void
-clear_lim_data (gimple stmt)
+clear_lim_data (gimple *stmt)
 {
   lim_aux_data **p = lim_aux_data_map->get (stmt);
   if (!p)
@@ -298,7 +271,7 @@ enum move_pos
    Otherwise return MOVE_IMPOSSIBLE.  */
 
 enum move_pos
-movement_possibility (gimple stmt)
+movement_possibility (gimple *stmt)
 {
   tree lhs;
   enum move_pos ret = MOVE_POSSIBLE;
@@ -396,7 +369,7 @@ movement_possibility (gimple stmt)
 static struct loop *
 outermost_invariant_loop (tree def, struct loop *loop)
 {
-  gimple def_stmt;
+  gimple *def_stmt;
   basic_block def_bb;
   struct loop *max_loop;
   struct lim_aux_data *lim_data;
@@ -444,7 +417,7 @@ static bool
 add_dependency (tree def, struct lim_aux_data *data, struct loop *loop,
 		bool add_cost)
 {
-  gimple def_stmt = SSA_NAME_DEF_STMT (def);
+  gimple *def_stmt = SSA_NAME_DEF_STMT (def);
   basic_block def_bb = gimple_bb (def_stmt);
   struct loop *max_loop;
   struct lim_aux_data *def_data;
@@ -480,7 +453,7 @@ add_dependency (tree def, struct lim_aux_data *data, struct loop *loop,
    are just ad-hoc constants, similar to costs for inlining.  */
 
 static unsigned
-stmt_cost (gimple stmt)
+stmt_cost (gimple *stmt)
 {
   /* Always try to create possibilities for unswitching.  */
   if (gimple_code (stmt) == GIMPLE_COND
@@ -561,7 +534,7 @@ stmt_cost (gimple stmt)
    instead.  */
 
 static struct loop *
-outermost_indep_loop (struct loop *outer, struct loop *loop, mem_ref_p ref)
+outermost_indep_loop (struct loop *outer, struct loop *loop, im_mem_ref *ref)
 {
   struct loop *aloop;
 
@@ -586,7 +559,7 @@ outermost_indep_loop (struct loop *outer, struct loop *loop, mem_ref_p ref)
    it is a store or load.  Otherwise, returns NULL.  */
 
 static tree *
-simple_mem_ref_in_stmt (gimple stmt, bool *is_store)
+simple_mem_ref_in_stmt (gimple *stmt, bool *is_store)
 {
   tree *lhs, *rhs;
 
@@ -614,13 +587,13 @@ simple_mem_ref_in_stmt (gimple stmt, bool *is_store)
 
 /* Returns the memory reference contained in STMT.  */
 
-static mem_ref_p
-mem_ref_in_stmt (gimple stmt)
+static im_mem_ref *
+mem_ref_in_stmt (gimple *stmt)
 {
   bool store;
   tree *mem = simple_mem_ref_in_stmt (stmt, &store);
   hashval_t hash;
-  mem_ref_p ref;
+  im_mem_ref *ref;
 
   if (!mem)
     return NULL;
@@ -643,56 +616,15 @@ static bool
 extract_true_false_args_from_phi (basic_block dom, gphi *phi,
 				  tree *true_arg_p, tree *false_arg_p)
 {
-  basic_block bb = gimple_bb (phi);
-  edge true_edge, false_edge, tem;
-  tree arg0 = NULL_TREE, arg1 = NULL_TREE;
-
-  /* We have to verify that one edge into the PHI node is dominated
-     by the true edge of the predicate block and the other edge
-     dominated by the false edge.  This ensures that the PHI argument
-     we are going to take is completely determined by the path we
-     take from the predicate block.
-     We can only use BB dominance checks below if the destination of
-     the true/false edges are dominated by their edge, thus only
-     have a single predecessor.  */
-  extract_true_false_edges_from_block (dom, &true_edge, &false_edge);
-  tem = EDGE_PRED (bb, 0);
-  if (tem == true_edge
-      || (single_pred_p (true_edge->dest)
-	  && (tem->src == true_edge->dest
-	      || dominated_by_p (CDI_DOMINATORS,
-				 tem->src, true_edge->dest))))
-    arg0 = PHI_ARG_DEF (phi, tem->dest_idx);
-  else if (tem == false_edge
-	   || (single_pred_p (false_edge->dest)
-	       && (tem->src == false_edge->dest
-		   || dominated_by_p (CDI_DOMINATORS,
-				      tem->src, false_edge->dest))))
-    arg1 = PHI_ARG_DEF (phi, tem->dest_idx);
-  else
-    return false;
-  tem = EDGE_PRED (bb, 1);
-  if (tem == true_edge
-      || (single_pred_p (true_edge->dest)
-	  && (tem->src == true_edge->dest
-	      || dominated_by_p (CDI_DOMINATORS,
-				 tem->src, true_edge->dest))))
-    arg0 = PHI_ARG_DEF (phi, tem->dest_idx);
-  else if (tem == false_edge
-	   || (single_pred_p (false_edge->dest)
-	       && (tem->src == false_edge->dest
-		   || dominated_by_p (CDI_DOMINATORS,
-				      tem->src, false_edge->dest))))
-    arg1 = PHI_ARG_DEF (phi, tem->dest_idx);
-  else
-    return false;
-  if (!arg0 || !arg1)
+  edge te, fe;
+  if (! extract_true_false_controlled_edges (dom, gimple_bb (phi),
+					     &te, &fe))
     return false;
 
   if (true_arg_p)
-    *true_arg_p = arg0;
+    *true_arg_p = PHI_ARG_DEF (phi, te->dest_idx);
   if (false_arg_p)
-    *false_arg_p = arg1;
+    *false_arg_p = PHI_ARG_DEF (phi, fe->dest_idx);
 
   return true;
 }
@@ -708,7 +640,7 @@ extract_true_false_args_from_phi (basic_block dom, gphi *phi,
    is defined in, and true otherwise.  */
 
 static bool
-determine_max_movement (gimple stmt, bool must_preserve_exec)
+determine_max_movement (gimple *stmt, bool must_preserve_exec)
 {
   basic_block bb = gimple_bb (stmt);
   struct loop *loop = bb->loop_father;
@@ -748,7 +680,7 @@ determine_max_movement (gimple stmt, bool must_preserve_exec)
 	  if (!add_dependency (val, lim_data, loop, false))
 	    return false;
 
-	  gimple def_stmt = SSA_NAME_DEF_STMT (val);
+	  gimple *def_stmt = SSA_NAME_DEF_STMT (val);
 	  if (gimple_bb (def_stmt)
 	      && gimple_bb (def_stmt)->loop_father == loop)
 	    {
@@ -767,7 +699,7 @@ determine_max_movement (gimple stmt, bool must_preserve_exec)
       if (gimple_phi_num_args (phi) > 1)
 	{
 	  basic_block dom = get_immediate_dominator (CDI_DOMINATORS, bb);
-	  gimple cond;
+	  gimple *cond;
 	  if (gsi_end_p (gsi_last_bb (dom)))
 	    return false;
 	  cond = gsi_stmt (gsi_last_bb (dom));
@@ -814,7 +746,7 @@ determine_max_movement (gimple stmt, bool must_preserve_exec)
 
   if (gimple_vuse (stmt))
     {
-      mem_ref_p ref = mem_ref_in_stmt (stmt);
+      im_mem_ref *ref = mem_ref_in_stmt (stmt);
 
       if (ref)
 	{
@@ -844,11 +776,11 @@ determine_max_movement (gimple stmt, bool must_preserve_exec)
    operands) is hoisted at least out of the loop LEVEL.  */
 
 static void
-set_level (gimple stmt, struct loop *orig_loop, struct loop *level)
+set_level (gimple *stmt, struct loop *orig_loop, struct loop *level)
 {
   struct loop *stmt_loop = gimple_bb (stmt)->loop_father;
   struct lim_aux_data *lim_data;
-  gimple dep_stmt;
+  gimple *dep_stmt;
   unsigned i;
 
   stmt_loop = find_common_loop (orig_loop, stmt_loop);
@@ -872,7 +804,7 @@ set_level (gimple stmt, struct loop *orig_loop, struct loop *level)
    information to set it more sanely.  */
 
 static void
-set_profitable_level (gimple stmt)
+set_profitable_level (gimple *stmt)
 {
   set_level (stmt, gimple_bb (stmt)->loop_father, get_lim_data (stmt)->max_loop);
 }
@@ -880,7 +812,7 @@ set_profitable_level (gimple stmt)
 /* Returns true if STMT is a call that has side effects.  */
 
 static bool
-nonpure_call_p (gimple stmt)
+nonpure_call_p (gimple *stmt)
 {
   if (gimple_code (stmt) != GIMPLE_CALL)
     return false;
@@ -890,7 +822,7 @@ nonpure_call_p (gimple stmt)
 
 /* Rewrite a/b to a*(1/b).  Return the invariant stmt to process.  */
 
-static gimple
+static gimple *
 rewrite_reciprocal (gimple_stmt_iterator *bsi)
 {
   gassign *stmt, *stmt1, *stmt2;
@@ -924,13 +856,13 @@ rewrite_reciprocal (gimple_stmt_iterator *bsi)
 /* Check if the pattern at *BSI is a bittest of the form
    (A >> B) & 1 != 0 and in this case rewrite it to A & (1 << B) != 0.  */
 
-static gimple
+static gimple *
 rewrite_bittest (gimple_stmt_iterator *bsi)
 {
   gassign *stmt;
-  gimple stmt1;
+  gimple *stmt1;
   gassign *stmt2;
-  gimple use_stmt;
+  gimple *use_stmt;
   gcond *cond_stmt;
   tree lhs, name, t, a, b;
   use_operand_p use;
@@ -1007,7 +939,9 @@ rewrite_bittest (gimple_stmt_iterator *bsi)
       rsi = *bsi;
       gsi_insert_before (bsi, stmt1, GSI_NEW_STMT);
       gsi_insert_before (&rsi, stmt2, GSI_SAME_STMT);
+      gimple *to_release = gsi_stmt (rsi);
       gsi_remove (&rsi, true);
+      release_defs (to_release);
 
       return stmt1;
     }
@@ -1025,25 +959,25 @@ public:
   invariantness_dom_walker (cdi_direction direction)
     : dom_walker (direction) {}
 
-  virtual void before_dom_children (basic_block);
+  virtual edge before_dom_children (basic_block);
 };
 
 /* Determine the outermost loops in that statements in basic block BB are
    invariant, and record them to the LIM_DATA associated with the statements.
    Callback for dom_walker.  */
 
-void
+edge
 invariantness_dom_walker::before_dom_children (basic_block bb)
 {
   enum move_pos pos;
   gimple_stmt_iterator bsi;
-  gimple stmt;
+  gimple *stmt;
   bool maybe_never = ALWAYS_EXECUTED_IN (bb) == NULL;
   struct loop *outermost = ALWAYS_EXECUTED_IN (bb);
   struct lim_aux_data *lim_data;
 
   if (!loop_outer (bb->loop_father))
-    return;
+    return NULL;
 
   if (dump_file && (dump_flags & TDF_DETAILS))
     fprintf (dump_file, "Basic block %d (loop %d -- depth %d):\n\n",
@@ -1161,6 +1095,7 @@ invariantness_dom_walker::before_dom_children (basic_block bb)
       if (lim_data->cost >= LIM_EXPENSIVE)
 	set_profitable_level (stmt);
     }
+  return NULL;
 }
 
 class move_computations_dom_walker : public dom_walker
@@ -1169,7 +1104,7 @@ public:
   move_computations_dom_walker (cdi_direction direction)
     : dom_walker (direction), todo_ (0) {}
 
-  virtual void before_dom_children (basic_block);
+  virtual edge before_dom_children (basic_block);
 
   unsigned int todo_;
 };
@@ -1178,15 +1113,16 @@ public:
    data stored in LIM_DATA structures associated with each statement.  Callback
    for walk_dominator_tree.  */
 
-void
-move_computations_dom_walker::before_dom_children (basic_block bb)
+unsigned int
+move_computations_worker (basic_block bb)
 {
   struct loop *level;
   unsigned cost = 0;
   struct lim_aux_data *lim_data;
+  unsigned int todo = 0;
 
   if (!loop_outer (bb->loop_father))
-    return;
+    return todo;
 
   for (gphi_iterator bsi = gsi_start_phis (bb); !gsi_end_p (bsi); )
     {
@@ -1227,7 +1163,7 @@ move_computations_dom_walker::before_dom_children (basic_block bb)
       else
 	{
 	  basic_block dom = get_immediate_dominator (CDI_DOMINATORS, bb);
-	  gimple cond = gsi_stmt (gsi_last_bb (dom));
+	  gimple *cond = gsi_stmt (gsi_last_bb (dom));
 	  tree arg0 = NULL_TREE, arg1 = NULL_TREE, t;
 	  /* Get the PHI arguments corresponding to the true and false
 	     edges of COND.  */
@@ -1237,7 +1173,7 @@ move_computations_dom_walker::before_dom_children (basic_block bb)
 		      gimple_cond_lhs (cond), gimple_cond_rhs (cond));
 	  new_stmt = gimple_build_assign (gimple_phi_result (stmt),
 					  COND_EXPR, t, arg0, arg1);
-	  todo_ |= TODO_cleanup_cfg;
+	  todo |= TODO_cleanup_cfg;
 	}
       if (INTEGRAL_TYPE_P (TREE_TYPE (gimple_assign_lhs (new_stmt)))
 	  && (!ALWAYS_EXECUTED_IN (bb)
@@ -1246,7 +1182,6 @@ move_computations_dom_walker::before_dom_children (basic_block bb)
 	{
 	  tree lhs = gimple_assign_lhs (new_stmt);
 	  SSA_NAME_RANGE_INFO (lhs) = NULL;
-	  SSA_NAME_ANTI_RANGE_P (lhs) = 0;
 	}
       gsi_insert_on_edge (loop_preheader_edge (level), new_stmt);
       remove_phi_node (&bsi, false);
@@ -1256,7 +1191,7 @@ move_computations_dom_walker::before_dom_children (basic_block bb)
     {
       edge e;
 
-      gimple stmt = gsi_stmt (bsi);
+      gimple *stmt = gsi_stmt (bsi);
 
       lim_data = get_lim_data (stmt);
       if (lim_data == NULL)
@@ -1316,7 +1251,6 @@ move_computations_dom_walker::before_dom_children (basic_block bb)
 	{
 	  tree lhs = gimple_get_lhs (stmt);
 	  SSA_NAME_RANGE_INFO (lhs) = NULL;
-	  SSA_NAME_ANTI_RANGE_P (lhs) = 0;
 	}
       /* In case this is a stmt that is not unconditionally executed
          when the target loop header is executed and the stmt may
@@ -1334,6 +1268,8 @@ move_computations_dom_walker::before_dom_children (basic_block bb)
       else
 	gsi_insert_on_edge (e, stmt);
     }
+
+  return todo;
 }
 
 /* Hoist the statements out of the loops prescribed by data stored in
@@ -1342,14 +1278,20 @@ move_computations_dom_walker::before_dom_children (basic_block bb)
 static unsigned int
 move_computations (void)
 {
-  move_computations_dom_walker walker (CDI_DOMINATORS);
-  walker.walk (cfun->cfg->x_entry_block_ptr);
+  int *rpo = XNEWVEC (int, last_basic_block_for_fn (cfun));
+  int n = pre_and_rev_post_order_compute_fn (cfun, NULL, rpo, false);
+  unsigned todo = 0;
+
+  for (int i = 0; i < n; ++i)
+    todo |= move_computations_worker (BASIC_BLOCK_FOR_FN (cfun, rpo[i]));
+
+  free (rpo);
 
   gsi_commit_edge_inserts ();
   if (need_ssa_update_p (cfun))
     rewrite_into_loop_closed_ssa (NULL, TODO_update_ssa);
 
-  return walker.todo_;
+  return todo;
 }
 
 /* Checks whether the statement defining variable *INDEX can be hoisted
@@ -1389,7 +1331,7 @@ may_move_till (tree ref, tree *index, void *data)
 static void
 force_move_till_op (tree op, struct loop *orig_loop, struct loop *loop)
 {
-  gimple stmt;
+  gimple *stmt;
 
   if (!op
       || is_gimple_min_invariant (op))
@@ -1444,10 +1386,10 @@ memref_free (struct im_mem_ref *mem)
 /* Allocates and returns a memory reference description for MEM whose hash
    value is HASH and id is ID.  */
 
-static mem_ref_p
+static im_mem_ref *
 mem_ref_alloc (tree mem, unsigned hash, unsigned id)
 {
-  mem_ref_p ref = XOBNEW (&mem_ref_obstack, struct im_mem_ref);
+  im_mem_ref *ref = XOBNEW (&mem_ref_obstack, struct im_mem_ref);
   ao_ref_init (&ref->mem, mem);
   ref->id = id;
   ref->hash = hash;
@@ -1463,7 +1405,7 @@ mem_ref_alloc (tree mem, unsigned hash, unsigned id)
    description REF.  The reference occurs in statement STMT.  */
 
 static void
-record_mem_ref_loc (mem_ref_p ref, gimple stmt, tree *loc)
+record_mem_ref_loc (im_mem_ref *ref, gimple *stmt, tree *loc)
 {
   mem_ref_loc aref;
   aref.stmt = stmt;
@@ -1475,7 +1417,7 @@ record_mem_ref_loc (mem_ref_p ref, gimple stmt, tree *loc)
    necessary.  Return whether a bit was changed.  */
 
 static bool
-set_ref_stored_in_loop (mem_ref_p ref, struct loop *loop)
+set_ref_stored_in_loop (im_mem_ref *ref, struct loop *loop)
 {
   if (!ref->stored)
     ref->stored = BITMAP_ALLOC (&lim_bitmap_obstack);
@@ -1485,7 +1427,7 @@ set_ref_stored_in_loop (mem_ref_p ref, struct loop *loop)
 /* Marks reference REF as stored in LOOP.  */
 
 static void
-mark_ref_stored (mem_ref_p ref, struct loop *loop)
+mark_ref_stored (im_mem_ref *ref, struct loop *loop)
 {
   while (loop != current_loops->tree_root
 	 && set_ref_stored_in_loop (ref, loop))
@@ -1498,12 +1440,12 @@ mark_ref_stored (mem_ref_p ref, struct loop *loop)
    well.  */
 
 static void
-gather_mem_refs_stmt (struct loop *loop, gimple stmt)
+gather_mem_refs_stmt (struct loop *loop, gimple *stmt)
 {
   tree *mem = NULL;
   hashval_t hash;
   im_mem_ref **slot;
-  mem_ref_p ref;
+  im_mem_ref *ref;
   bool is_stored;
   unsigned id;
 
@@ -1529,7 +1471,7 @@ gather_mem_refs_stmt (struct loop *loop, gimple stmt)
       slot = memory_accesses.refs->find_slot_with_hash (*mem, hash, INSERT);
       if (*slot)
 	{
-	  ref = (mem_ref_p) *slot;
+	  ref = *slot;
 	  id = ref->id;
 	}
       else
@@ -1649,7 +1591,7 @@ analyze_memory_references (void)
    tree_to_aff_combination_expand.  */
 
 static bool
-mem_refs_may_alias_p (mem_ref_p mem1, mem_ref_p mem2,
+mem_refs_may_alias_p (im_mem_ref *mem1, im_mem_ref *mem2,
 		      hash_map<tree, name_expansion *> **ttae_cache)
 {
   /* Perform BASE + OFFSET analysis -- if MEM1 and MEM2 are based on the same
@@ -1703,10 +1645,10 @@ find_ref_loc_in_loop_cmp (const void *loop_, const void *loc_)
 
 template <typename FN>
 static bool
-for_all_locs_in_loop (struct loop *loop, mem_ref_p ref, FN fn)
+for_all_locs_in_loop (struct loop *loop, im_mem_ref *ref, FN fn)
 {
   unsigned i;
-  mem_ref_loc_p loc;
+  mem_ref_loc *loc;
 
   /* Search for the cluster of locs in the accesses_in_loop vector
      which is sorted after postorder index of the loop father.  */
@@ -1720,7 +1662,7 @@ for_all_locs_in_loop (struct loop *loop, mem_ref_p ref, FN fn)
   while (i > 0)
     {
       --i;
-      mem_ref_loc_p l = &ref->accesses_in_loop[i];
+      mem_ref_loc *l = &ref->accesses_in_loop[i];
       if (!flow_bb_inside_loop_p (loop, gimple_bb (l->stmt)))
 	break;
       if (fn (l))
@@ -1729,7 +1671,7 @@ for_all_locs_in_loop (struct loop *loop, mem_ref_p ref, FN fn)
   for (i = loc - ref->accesses_in_loop.address ();
        i < ref->accesses_in_loop.length (); ++i)
     {
-      mem_ref_loc_p l = &ref->accesses_in_loop[i];
+      mem_ref_loc *l = &ref->accesses_in_loop[i];
       if (!flow_bb_inside_loop_p (loop, gimple_bb (l->stmt)))
 	break;
       if (fn (l))
@@ -1744,12 +1686,12 @@ for_all_locs_in_loop (struct loop *loop, mem_ref_p ref, FN fn)
 struct rewrite_mem_ref_loc
 {
   rewrite_mem_ref_loc (tree tmp_var_) : tmp_var (tmp_var_) {}
-  bool operator () (mem_ref_loc_p loc);
+  bool operator () (mem_ref_loc *loc);
   tree tmp_var;
 };
 
 bool
-rewrite_mem_ref_loc::operator () (mem_ref_loc_p loc)
+rewrite_mem_ref_loc::operator () (mem_ref_loc *loc)
 {
   *loc->ref = tmp_var;
   update_stmt (loc->stmt);
@@ -1759,7 +1701,7 @@ rewrite_mem_ref_loc::operator () (mem_ref_loc_p loc)
 /* Rewrites all references to REF in LOOP by variable TMP_VAR.  */
 
 static void
-rewrite_mem_refs (struct loop *loop, mem_ref_p ref, tree tmp_var)
+rewrite_mem_refs (struct loop *loop, im_mem_ref *ref, tree tmp_var)
 {
   for_all_locs_in_loop (loop, ref, rewrite_mem_ref_loc (tmp_var));
 }
@@ -1768,13 +1710,13 @@ rewrite_mem_refs (struct loop *loop, mem_ref_p ref, tree tmp_var)
 
 struct first_mem_ref_loc_1
 {
-  first_mem_ref_loc_1 (mem_ref_loc_p *locp_) : locp (locp_) {}
-  bool operator () (mem_ref_loc_p loc);
-  mem_ref_loc_p *locp;
+  first_mem_ref_loc_1 (mem_ref_loc **locp_) : locp (locp_) {}
+  bool operator () (mem_ref_loc *loc);
+  mem_ref_loc **locp;
 };
 
 bool
-first_mem_ref_loc_1::operator () (mem_ref_loc_p loc)
+first_mem_ref_loc_1::operator () (mem_ref_loc *loc)
 {
   *locp = loc;
   return true;
@@ -1782,10 +1724,10 @@ first_mem_ref_loc_1::operator () (mem_ref_loc_p loc)
 
 /* Returns the first reference location to REF in LOOP.  */
 
-static mem_ref_loc_p
-first_mem_ref_loc (struct loop *loop, mem_ref_p ref)
+static mem_ref_loc *
+first_mem_ref_loc (struct loop *loop, im_mem_ref *ref)
 {
-  mem_ref_loc_p locp = NULL;
+  mem_ref_loc *locp = NULL;
   for_all_locs_in_loop (loop, ref, first_mem_ref_loc_1 (&locp));
   return locp;
 }
@@ -1850,7 +1792,7 @@ execute_sm_if_changed (edge ex, tree mem, tree tmp_var, tree flag)
   bool loop_has_only_one_exit;
   edge then_old_edge, orig_ex = ex;
   gimple_stmt_iterator gsi;
-  gimple stmt;
+  gimple *stmt;
   struct prev_flag_edges *prev_edges = (struct prev_flag_edges *) ex->aux;
   bool irr = ex->flags & EDGE_IRREDUCIBLE_LOOP;
 
@@ -1957,19 +1899,19 @@ execute_sm_if_changed (edge ex, tree mem, tree tmp_var, tree flag)
 struct sm_set_flag_if_changed
 {
   sm_set_flag_if_changed (tree flag_) : flag (flag_) {}
-  bool operator () (mem_ref_loc_p loc);
+  bool operator () (mem_ref_loc *loc);
   tree flag;
 };
 
 bool
-sm_set_flag_if_changed::operator () (mem_ref_loc_p loc)
+sm_set_flag_if_changed::operator () (mem_ref_loc *loc)
 {
   /* Only set the flag for writes.  */
   if (is_gimple_assign (loc->stmt)
       && gimple_assign_lhs_ptr (loc->stmt) == loc->ref)
     {
       gimple_stmt_iterator gsi = gsi_for_stmt (loc->stmt);
-      gimple stmt = gimple_build_assign (flag, boolean_true_node);
+      gimple *stmt = gimple_build_assign (flag, boolean_true_node);
       gsi_insert_after (&gsi, stmt, GSI_CONTINUE_LINKING);
     }
   return false;
@@ -1979,7 +1921,7 @@ sm_set_flag_if_changed::operator () (mem_ref_loc_p loc)
    set, set an appropriate flag indicating the store.  */
 
 static tree
-execute_sm_if_changed_flag_set (struct loop *loop, mem_ref_p ref)
+execute_sm_if_changed_flag_set (struct loop *loop, im_mem_ref *ref)
 {
   tree flag;
   char *str = get_lsm_tmp_name (ref->mem.ref, ~0, "_flag");
@@ -1994,7 +1936,7 @@ execute_sm_if_changed_flag_set (struct loop *loop, mem_ref_p ref)
    to the reference from the temporary variable are emitted to exits.  */
 
 static void
-execute_sm (struct loop *loop, vec<edge> exits, mem_ref_p ref)
+execute_sm (struct loop *loop, vec<edge> exits, im_mem_ref *ref)
 {
   tree tmp_var, store_flag = NULL_TREE;
   unsigned i;
@@ -2070,7 +2012,7 @@ static void
 hoist_memory_references (struct loop *loop, bitmap mem_refs,
 			 vec<edge> exits)
 {
-  mem_ref_p ref;
+  im_mem_ref *ref;
   unsigned  i;
   bitmap_iterator bi;
 
@@ -2085,13 +2027,13 @@ struct ref_always_accessed
 {
   ref_always_accessed (struct loop *loop_, bool stored_p_)
       : loop (loop_), stored_p (stored_p_) {}
-  bool operator () (mem_ref_loc_p loc);
+  bool operator () (mem_ref_loc *loc);
   struct loop *loop;
   bool stored_p;
 };
 
 bool
-ref_always_accessed::operator () (mem_ref_loc_p loc)
+ref_always_accessed::operator () (mem_ref_loc *loc)
 {
   struct loop *must_exec;
 
@@ -2123,7 +2065,7 @@ ref_always_accessed::operator () (mem_ref_loc_p loc)
    make sure REF is always stored to in LOOP.  */
 
 static bool
-ref_always_accessed_p (struct loop *loop, mem_ref_p ref, bool stored_p)
+ref_always_accessed_p (struct loop *loop, im_mem_ref *ref, bool stored_p)
 {
   return for_all_locs_in_loop (loop, ref,
 			       ref_always_accessed (loop, stored_p));
@@ -2132,7 +2074,7 @@ ref_always_accessed_p (struct loop *loop, mem_ref_p ref, bool stored_p)
 /* Returns true if REF1 and REF2 are independent.  */
 
 static bool
-refs_independent_p (mem_ref_p ref1, mem_ref_p ref2)
+refs_independent_p (im_mem_ref *ref1, im_mem_ref *ref2)
 {
   if (ref1 == ref2)
     return true;
@@ -2159,7 +2101,7 @@ refs_independent_p (mem_ref_p ref1, mem_ref_p ref2)
    and its super-loops.  */
 
 static void
-record_dep_loop (struct loop *loop, mem_ref_p ref, bool stored_p)
+record_dep_loop (struct loop *loop, im_mem_ref *ref, bool stored_p)
 {
   /* We can propagate dependent-in-loop bits up the loop
      hierarchy to all outer loops.  */
@@ -2172,12 +2114,12 @@ record_dep_loop (struct loop *loop, mem_ref_p ref, bool stored_p)
    LOOP.  */
 
 static bool
-ref_indep_loop_p_1 (struct loop *loop, mem_ref_p ref, bool stored_p)
+ref_indep_loop_p_1 (struct loop *loop, im_mem_ref *ref, bool stored_p)
 {
   bitmap refs_to_check;
   unsigned i;
   bitmap_iterator bi;
-  mem_ref_p aref;
+  im_mem_ref *aref;
 
   if (stored_p)
     refs_to_check = &memory_accesses.refs_in_loop[loop->num];
@@ -2201,7 +2143,7 @@ ref_indep_loop_p_1 (struct loop *loop, mem_ref_p ref, bool stored_p)
    LOOP.  Wrapper over ref_indep_loop_p_1, caching its results.  */
 
 static bool
-ref_indep_loop_p_2 (struct loop *loop, mem_ref_p ref, bool stored_p)
+ref_indep_loop_p_2 (struct loop *loop, im_mem_ref *ref, bool stored_p)
 {
   stored_p |= (ref->stored && bitmap_bit_p (ref->stored, loop->num));
 
@@ -2253,7 +2195,7 @@ ref_indep_loop_p_2 (struct loop *loop, mem_ref_p ref, bool stored_p)
    LOOP.  */
 
 static bool
-ref_indep_loop_p (struct loop *loop, mem_ref_p ref)
+ref_indep_loop_p (struct loop *loop, im_mem_ref *ref)
 {
   gcc_checking_assert (MEM_ANALYZABLE (ref));
 
@@ -2263,7 +2205,7 @@ ref_indep_loop_p (struct loop *loop, mem_ref_p ref)
 /* Returns true if we can perform store motion of REF from LOOP.  */
 
 static bool
-can_sm_ref_p (struct loop *loop, mem_ref_p ref)
+can_sm_ref_p (struct loop *loop, im_mem_ref *ref)
 {
   tree base;
 
@@ -2309,7 +2251,7 @@ find_refs_for_sm (struct loop *loop, bitmap sm_executed, bitmap refs_to_sm)
   bitmap refs = &memory_accesses.all_refs_stored_in_loop[loop->num];
   unsigned i;
   bitmap_iterator bi;
-  mem_ref_p ref;
+  im_mem_ref *ref;
 
   EXECUTE_IF_AND_COMPL_IN_BITMAP (refs, sm_executed, 0, i, bi)
     {
@@ -2496,7 +2438,7 @@ tree_ssa_lim_initialize (void)
 
   bitmap_obstack_initialize (&lim_bitmap_obstack);
   gcc_obstack_init (&mem_ref_obstack);
-  lim_aux_data_map = new hash_map<gimple, lim_aux_data *>;
+  lim_aux_data_map = new hash_map<gimple *, lim_aux_data *>;
 
   if (flag_tm)
     compute_transaction_bits ();
@@ -2543,7 +2485,7 @@ tree_ssa_lim_finalize (void)
 {
   basic_block bb;
   unsigned i;
-  mem_ref_p ref;
+  im_mem_ref *ref;
 
   free_aux_for_edges ();
 
@@ -2574,7 +2516,7 @@ tree_ssa_lim_finalize (void)
 /* Moves invariants from loops.  Only "expensive" invariants are moved out --
    i.e. those that are likely to be win regardless of the register pressure.  */
 
-unsigned int
+static unsigned int
 tree_ssa_lim (void)
 {
   unsigned int todo;
@@ -2638,10 +2580,17 @@ public:
 unsigned int
 pass_lim::execute (function *fun)
 {
+  bool in_loop_pipeline = scev_initialized_p ();
+  if (!in_loop_pipeline)
+    loop_optimizer_init (LOOPS_NORMAL | LOOPS_HAVE_RECORDED_EXITS);
+
   if (number_of_loops (fun) <= 1)
     return 0;
+  unsigned int todo = tree_ssa_lim ();
 
-  return tree_ssa_lim ();
+  if (!in_loop_pipeline)
+    loop_optimizer_finalize ();
+  return todo;
 }
 
 } // anon namespace

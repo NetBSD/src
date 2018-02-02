@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler, for IBM S/390.
-   Copyright (C) 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 2000-2016 Free Software Foundation, Inc.
 
    Contributed by Hartmut Penner (hpenner@de.ibm.com)
 
@@ -31,11 +31,18 @@ extern int s390_float_const_zero_p (rtx value);
 extern bool s390_check_symref_alignment (rtx addr, HOST_WIDE_INT alignment);
 
 
+/* In s390-common.c.  */
+extern bool s390_handle_option (struct gcc_options *opts ATTRIBUTE_UNUSED,
+				struct gcc_options *opts_set ATTRIBUTE_UNUSED,
+				const struct cl_decoded_option *decoded,
+				location_t loc);
+
 /* Declare functions in s390.c.  */
 
 extern HOST_WIDE_INT s390_initial_elimination_offset (int, int);
 extern void s390_emit_prologue (void);
 extern void s390_emit_epilogue (bool);
+extern void s390_expand_split_stack_prologue (void);
 extern bool s390_can_use_simple_return_insn (void);
 extern bool s390_can_use_return_insn (void);
 extern void s390_function_profiler (FILE *, int);
@@ -46,6 +53,19 @@ extern int s390_class_max_nregs (enum reg_class, machine_mode);
 extern int s390_cannot_change_mode_class (machine_mode, machine_mode,
 					  enum reg_class);
 extern bool s390_function_arg_vector (machine_mode, const_tree);
+#if S390_USE_TARGET_ATTRIBUTE
+extern tree s390_valid_target_attribute_tree (tree args,
+					      struct gcc_options *opts,
+					      const struct gcc_options
+					      *opts_set, bool is_pragma);
+extern void s390_activate_target_options (tree new_tree);
+extern void
+s390_asm_output_function_prefix (FILE *asm_out_file,
+				 const char *fnname ATTRIBUTE_UNUSED);
+extern void
+s390_asm_declare_function_size (FILE *asm_out_file,
+				const char *fnname ATTRIBUTE_UNUSED, tree decl);
+#endif
 
 #ifdef RTX_CODE
 extern int s390_extra_constraint_str (rtx, int, const char *);
@@ -119,13 +139,12 @@ extern rtx_insn *s390_load_got (void);
 extern rtx s390_get_thread_pointer (void);
 extern void s390_emit_tpf_eh_return (rtx);
 extern bool s390_legitimate_address_without_index_p (rtx);
-extern bool s390_decompose_shift_count (rtx, rtx *, HOST_WIDE_INT *);
+extern bool s390_decompose_addrstyle_without_index (rtx, rtx *,
+						    HOST_WIDE_INT *);
 extern int s390_branch_condition_mask (rtx);
 extern int s390_compare_and_branch_condition_mask (rtx);
 extern bool s390_extzv_shift_ok (int, int, unsigned HOST_WIDE_INT);
 extern void s390_asm_output_function_label (FILE *, const char *, tree);
-
-extern bool s390_const_vec_duplicate_p (rtx);
 
 #endif /* RTX_CODE */
 

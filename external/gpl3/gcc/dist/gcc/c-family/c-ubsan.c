@@ -1,5 +1,5 @@
 /* UndefinedBehaviorSanitizer, undefined behavior detector.
-   Copyright (C) 2013-2015 Free Software Foundation, Inc.
+   Copyright (C) 2013-2016 Free Software Foundation, Inc.
    Contributed by Marek Polacek <polacek@redhat.com>
 
 This file is part of GCC.
@@ -21,38 +21,11 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "options.h"
-#include "wide-int.h"
-#include "inchash.h"
-#include "tree.h"
-#include "alloc-pool.h"
-#include "hash-map.h"
-#include "is-a.h"
-#include "plugin-api.h"
-#include "vec.h"
-#include "hashtab.h"
-#include "hash-set.h"
-#include "machmode.h"
 #include "tm.h"
-#include "hard-reg-set.h"
-#include "input.h"
-#include "function.h"
-#include "ipa-ref.h"
-#include "cgraph.h"
-#include "output.h"
-#include "toplev.h"
-#include "ubsan.h"
 #include "c-family/c-common.h"
+#include "ubsan.h"
 #include "c-family/c-ubsan.h"
 #include "asan.h"
-#include "internal-fn.h"
 #include "stor-layout.h"
 #include "builtins.h"
 #include "gimplify.h"
@@ -92,7 +65,7 @@ ubsan_instrument_division (location_t loc, tree op0, tree op1)
       && !TYPE_UNSIGNED (type))
     {
       tree x;
-      tt = fold_build2 (EQ_EXPR, boolean_type_node, op1,
+      tt = fold_build2 (EQ_EXPR, boolean_type_node, unshare_expr (op1),
 			build_int_cst (type, -1));
       x = fold_build2 (EQ_EXPR, boolean_type_node, op0,
 		       TYPE_MIN_VALUE (type));
@@ -106,22 +79,9 @@ ubsan_instrument_division (location_t loc, tree op0, tree op1)
     return NULL_TREE;
 
   /* In case we have a SAVE_EXPR in a conditional context, we need to
-     make sure it gets evaluated before the condition.  If the OP0 is
-     an instrumented array reference, mark it as having side effects so
-     it's not folded away.  */
-  if (flag_sanitize & SANITIZE_BOUNDS)
-    {
-      tree xop0 = op0;
-      while (CONVERT_EXPR_P (xop0))
-	xop0 = TREE_OPERAND (xop0, 0);
-      if (TREE_CODE (xop0) == ARRAY_REF)
-	{
-	  TREE_SIDE_EFFECTS (xop0) = 1;
-	  TREE_SIDE_EFFECTS (op0) = 1;
-	}
-    }
-  t = fold_build2 (COMPOUND_EXPR, TREE_TYPE (t), op0, t);
-  t = fold_build2 (COMPOUND_EXPR, TREE_TYPE (t), op1, t);
+     make sure it gets evaluated before the condition.  */
+  t = fold_build2 (COMPOUND_EXPR, TREE_TYPE (t), unshare_expr (op0), t);
+  t = fold_build2 (COMPOUND_EXPR, TREE_TYPE (t), unshare_expr (op1), t);
   if (flag_sanitize_undefined_trap_on_error)
     tt = build_call_expr_loc (loc, builtin_decl_explicit (BUILT_IN_TRAP), 0);
   else
@@ -135,6 +95,8 @@ ubsan_instrument_division (location_t loc, tree op0, tree op1)
 	  ? BUILT_IN_UBSAN_HANDLE_DIVREM_OVERFLOW
 	  : BUILT_IN_UBSAN_HANDLE_DIVREM_OVERFLOW_ABORT;
       tt = builtin_decl_explicit (bcode);
+      op0 = unshare_expr (op0);
+      op1 = unshare_expr (op1);
       tt = build_call_expr_loc (loc, tt, 3, data, ubsan_encode_value (op0),
 				ubsan_encode_value (op1));
     }
@@ -162,15 +124,20 @@ ubsan_instrument_shift (location_t loc, enum tree_code code,
   t = fold_convert_loc (loc, op1_utype, op1);
   t = fold_build2 (GT_EXPR, boolean_type_node, t, uprecm1);
 
+  /* If this is not a signed operation, don't perform overflow checks.
+     Also punt on bit-fields.  */
+  if (!INTEGRAL_TYPE_P (type0)
+      || TYPE_OVERFLOW_WRAPS (type0)
+      || GET_MODE_BITSIZE (TYPE_MODE (type0)) != TYPE_PRECISION (type0))
+    ;
+
   /* For signed x << y, in C99/C11, the following:
      (unsigned) x >> (uprecm1 - y)
      if non-zero, is undefined.  */
-  if (code == LSHIFT_EXPR
-      && !TYPE_UNSIGNED (type0)
-      && flag_isoc99)
+  else if (code == LSHIFT_EXPR && flag_isoc99 && cxx_dialect < cxx11)
     {
       tree x = fold_build2 (MINUS_EXPR, op1_utype, uprecm1,
-			    fold_convert (op1_utype, op1));
+			    fold_convert (op1_utype, unshare_expr (op1)));
       tt = fold_convert_loc (loc, unsigned_type_for (type0), op0);
       tt = fold_build2 (RSHIFT_EXPR, TREE_TYPE (tt), tt, x);
       tt = fold_build2 (NE_EXPR, boolean_type_node, tt,
@@ -180,17 +147,16 @@ ubsan_instrument_shift (location_t loc, enum tree_code code,
   /* For signed x << y, in C++11 and later, the following:
      x < 0 || ((unsigned) x >> (uprecm1 - y))
      if > 1, is undefined.  */
-  if (code == LSHIFT_EXPR
-      && !TYPE_UNSIGNED (TREE_TYPE (op0))
-      && (cxx_dialect >= cxx11))
+  else if (code == LSHIFT_EXPR && cxx_dialect >= cxx11)
     {
       tree x = fold_build2 (MINUS_EXPR, op1_utype, uprecm1,
-			    fold_convert (op1_utype, op1));
-      tt = fold_convert_loc (loc, unsigned_type_for (type0), op0);
+			    fold_convert (op1_utype, unshare_expr (op1)));
+      tt = fold_convert_loc (loc, unsigned_type_for (type0),
+			     unshare_expr (op0));
       tt = fold_build2 (RSHIFT_EXPR, TREE_TYPE (tt), tt, x);
       tt = fold_build2 (GT_EXPR, boolean_type_node, tt,
 			build_int_cst (TREE_TYPE (tt), 1));
-      x = fold_build2 (LT_EXPR, boolean_type_node, op0,
+      x = fold_build2 (LT_EXPR, boolean_type_node, unshare_expr (op0),
 		       build_int_cst (type0, 0));
       tt = fold_build2 (TRUTH_OR_EXPR, boolean_type_node, x, tt);
     }
@@ -201,21 +167,9 @@ ubsan_instrument_shift (location_t loc, enum tree_code code,
     return NULL_TREE;
 
   /* In case we have a SAVE_EXPR in a conditional context, we need to
-     make sure it gets evaluated before the condition.  If the OP0 is
-     an instrumented array reference, mark it as having side effects so
-     it's not folded away.  */
-  if (flag_sanitize & SANITIZE_BOUNDS)
-    {
-      tree xop0 = op0;
-      while (CONVERT_EXPR_P (xop0))
-	xop0 = TREE_OPERAND (xop0, 0);
-      if (TREE_CODE (xop0) == ARRAY_REF)
-	{
-	  TREE_SIDE_EFFECTS (xop0) = 1;
-	  TREE_SIDE_EFFECTS (op0) = 1;
-	}
-    }
-  t = fold_build2 (COMPOUND_EXPR, TREE_TYPE (t), op0, t);
+     make sure it gets evaluated before the condition.  */
+  t = fold_build2 (COMPOUND_EXPR, TREE_TYPE (t), unshare_expr (op0), t);
+  t = fold_build2 (COMPOUND_EXPR, TREE_TYPE (t), unshare_expr (op1), t);
   t = fold_build2 (TRUTH_OR_EXPR, boolean_type_node, t,
 		   tt ? tt : integer_zero_node);
 
@@ -234,6 +188,8 @@ ubsan_instrument_shift (location_t loc, enum tree_code code,
 	  ? BUILT_IN_UBSAN_HANDLE_SHIFT_OUT_OF_BOUNDS
 	  : BUILT_IN_UBSAN_HANDLE_SHIFT_OUT_OF_BOUNDS_ABORT;
       tt = builtin_decl_explicit (bcode);
+      op0 = unshare_expr (op0);
+      op1 = unshare_expr (op1);
       tt = build_call_expr_loc (loc, tt, 3, data, ubsan_encode_value (op0),
 				ubsan_encode_value (op1));
     }
@@ -309,11 +265,12 @@ ubsan_instrument_bounds (location_t loc, tree array, tree *index,
     bound = fold_build2 (PLUS_EXPR, TREE_TYPE (bound), bound,
 			 build_int_cst (TREE_TYPE (bound), 1));
 
-  /* Detect flexible array members and suchlike.  */
+  /* Detect flexible array members and suchlike, unless
+     -fsanitize=bounds-strict.  */
   tree base = get_base_address (array);
-  if (TREE_CODE (array) == COMPONENT_REF
-      && base && (TREE_CODE (base) == INDIRECT_REF
-		  || TREE_CODE (base) == MEM_REF))
+  if ((flag_sanitize & SANITIZE_BOUNDS_STRICT) == 0
+      && TREE_CODE (array) == COMPONENT_REF
+      && base && (INDIRECT_REF_P (base) || TREE_CODE (base) == MEM_REF))
     {
       tree next = NULL_TREE;
       tree cref = array;
@@ -469,17 +426,26 @@ ubsan_maybe_instrument_reference_or_call (location_t loc, tree op, tree ptype,
   return fold_build2 (COMPOUND_EXPR, TREE_TYPE (op), call, op);
 }
 
-/* Instrument a NOP_EXPR to REFERENCE_TYPE if needed.  */
+/* Instrument a NOP_EXPR to REFERENCE_TYPE or INTEGER_CST with REFERENCE_TYPE
+   type if needed.  */
 
 void
-ubsan_maybe_instrument_reference (tree stmt)
+ubsan_maybe_instrument_reference (tree *stmt_p)
 {
-  tree op = TREE_OPERAND (stmt, 0);
+  tree stmt = *stmt_p;
+  tree op = stmt;
+  if (TREE_CODE (stmt) == NOP_EXPR)
+    op = TREE_OPERAND (stmt, 0);
   op = ubsan_maybe_instrument_reference_or_call (EXPR_LOCATION (stmt), op,
 						 TREE_TYPE (stmt),
 						 UBSAN_REF_BINDING);
   if (op)
-    TREE_OPERAND (stmt, 0) = op;
+    {
+      if (TREE_CODE (stmt) == NOP_EXPR) 
+	TREE_OPERAND (stmt, 0) = op;
+      else
+	*stmt_p = op;
+    }
 }
 
 /* Instrument a CALL_EXPR to a method if needed.  */

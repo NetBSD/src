@@ -1,6 +1,6 @@
 // Variable Templates For Type Traits -*- C++ -*-
 
-// Copyright (C) 2014-2015 Free Software Foundation, Inc.
+// Copyright (C) 2014-2016 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -40,7 +40,7 @@
 #else
 
 #include <type_traits>
-#include <experimental/lfts_config.h>
+#include <experimental/bits/lfts_config.h>
 
 namespace std _GLIBCXX_VISIBILITY(default)
 {
@@ -220,6 +220,88 @@ template <typename _From, typename _To>
   // raw_invocation_type_t (still unimplemented)
 _GLIBCXX_END_NAMESPACE_VERSION
 } // namespace fundamentals_v1
+
+inline namespace fundamentals_v2
+{
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
+
+#define __cpp_lib_experimental_detect 201505
+
+// [meta.detect]
+
+template<typename...> using void_t = void;
+
+struct nonesuch
+{
+  nonesuch() = delete;
+  ~nonesuch() = delete;
+  nonesuch(nonesuch const&) = delete;
+  void operator=(nonesuch const&) = delete;
+};
+
+template<template<typename...> class _Op, typename... _Args>
+  using is_detected
+    = typename std::__detector<nonesuch, void, _Op, _Args...>::value_t;
+
+template<template<typename...> class _Op, typename... _Args>
+  constexpr bool is_detected_v = is_detected<_Op, _Args...>::value;
+
+template<template<typename...> class _Op, typename... _Args>
+  using detected_t
+    = typename std::__detector<nonesuch, void, _Op, _Args...>::type;
+
+template<typename _Default, template<typename...> class _Op, typename... _Args>
+  using detected_or = std::__detected_or<_Default, _Op, _Args...>;
+
+template<typename _Default, template<typename...> class _Op, typename... _Args>
+  using detected_or_t = typename detected_or<_Default, _Op, _Args...>::type;
+
+template<typename Expected, template<typename...> class _Op, typename... _Args>
+  using is_detected_exact = is_same<Expected, detected_t<_Op, _Args...>>;
+
+template<typename Expected, template<typename...> class _Op, typename... _Args>
+  constexpr bool is_detected_exact_v
+    = is_detected_exact<Expected, _Op, _Args...>::value;
+
+template<typename _To, template<typename...> class _Op, typename... _Args>
+  using is_detected_convertible
+    = is_convertible<detected_t<_Op, _Args...>, _To>;
+
+template<typename _To, template<typename...> class _Op, typename... _Args>
+  constexpr bool is_detected_convertible_v
+    = is_detected_convertible<_To, _Op, _Args...>::value;
+
+#define __cpp_lib_experimental_logical_traits 201511
+
+template<typename... _Bn>
+  struct conjunction
+  : __and_<_Bn...>
+  { };
+
+template<typename... _Bn>
+  struct disjunction
+  : __or_<_Bn...>
+  { };
+
+template<typename _Pp>
+  struct negation
+  : __not_<_Pp>
+  { };
+
+template<typename... _Bn>
+  constexpr bool conjunction_v
+    = conjunction<_Bn...>::value;
+
+template<typename... _Bn>
+  constexpr bool disjunction_v
+    = disjunction<_Bn...>::value;
+
+template<typename _Pp>
+  constexpr bool negation_v
+    = negation<_Pp>::value;
+
+_GLIBCXX_END_NAMESPACE_VERSION
+} // namespace fundamentals_v2
 } // namespace experimental
 } // namespace std
 
