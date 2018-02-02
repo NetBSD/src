@@ -1,6 +1,6 @@
-# $NetBSD: md.or1k,v 1.3 2016/03/18 03:08:25 mrg Exp $
+# $NetBSD: md.or1k,v 1.4 2018/02/02 01:02:41 mrg Exp $
 ./usr/include/gcc-4.8/tgmath.h		comp-c-include		gcccmds,gcc=48
-./usr/include/gcc-5/tgmath.h		comp-c-include		gcccmds,gcc=53
+./usr/include/gcc-5/tgmath.h		comp-c-include		gcccmds,gcc=5
 ./usr/include/ieeefp.h			comp-c-include
 ./usr/include/or1k			comp-c-include
 ./usr/include/or1k/ansi.h		comp-c-include

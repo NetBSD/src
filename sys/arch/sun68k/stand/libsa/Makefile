@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32 2017/04/09 18:46:55 christos Exp $
+#	$NetBSD: Makefile,v 1.33 2018/02/02 01:02:41 mrg Exp $
 
 # Logically src/sys
 .include <bsd.own.mk>
@@ -14,13 +14,9 @@ CPUFLAGS=	# ignore settings in /etc/mk.conf
 DEFS= -Dsun3 -D_STANDALONE -D__daddr_t=int32_t
 INCL= -I. -I${.CURDIR} -I${S}/lib/libsa -I${S} -I${S}/arch
 AFLAGS= -Wa,-mc68020 -Wa,-mc68851
-.if defined(HAVE_GCC) && ${HAVE_GCC} >= 48
-# gcc 4.8 convers -mc68000 to -mcpu=68000 and that breaks gas
+# gcc 4.8 converts -mc68000 to -mcpu=68000 and that breaks gas
 # which works for -march=68010 but breaks for -mcpu=68010
 CFLAGS= -march=68010
-.else
-CFLAGS= -mc68000 -Wa,-mc68010
-.endif
 CFLAGS+= -Wa,-m68851 -msoft-float
 CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
 COPTS= -Os -fno-defer-pop -ffreestanding -fno-unwind-tables
