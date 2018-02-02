@@ -1,6 +1,6 @@
 /* Operating system specific defines to be used when targeting GCC for
    hosting on Windows32, using GNU tools and the Windows32 API Library.
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -139,7 +139,7 @@ along with GCC; see the file COPYING3.  If not see
 #undef REAL_LIBGCC_SPEC
 #define REAL_LIBGCC_SPEC \
   "%{mthreads:-lmingwthrd} -lmingw32 \
-   "SHARED_LIBGCC_SPEC" \
+   " SHARED_LIBGCC_SPEC " \
    -lmoldname -lmingwex -lmsvcrt"
 
 #undef STARTFILE_SPEC
@@ -207,7 +207,7 @@ do {						         \
 
 /* mingw32 uses the  -mthreads option to enable thread support.  */
 #undef GOMP_SELF_SPECS
-#define GOMP_SELF_SPECS "%{fopenacc|fopenmp|ftree-parallelize-loops=*: " \
+#define GOMP_SELF_SPECS "%{fopenacc|fopenmp|%:gt(%{ftree-parallelize-loops=*:%*} 1): " \
 			"-mthreads -pthread}"
 #undef GTM_SELF_SPECS
 #define GTM_SELF_SPECS "%{fgnu-tm:-mthreads -pthread}"

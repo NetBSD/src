@@ -1,5 +1,5 @@
 /* Tail merging for gimple.
-   Copyright (C) 2011-2015 Free Software Foundation, Inc.
+   Copyright (C) 2011-2016 Free Software Foundation, Inc.
    Contributed by Tom de Vries (tom@codesourcery.com)
 
 This file is part of GCC.
@@ -92,12 +92,12 @@ along with GCC; see the file COPYING3.  If not see
 
      # BLOCK 7 freq:10000
      # PRED: 3 [100.0%]  (fallthru,exec) 5 [100.0%]  (fallthru,exec)
-             6 [100.0%]  (fallthru,exec)
+	     6 [100.0%]  (fallthru,exec)
      # PT = nonlocal null
 
      # ctxD.2601_1 = PHI <0B(3), 0B(5), ctxD.2601_5(D)(6)>
      # .MEMD.3923_11 = PHI <.MEMD.3923_15(3), .MEMD.3923_17(5),
-                            .MEMD.3923_18(6)>
+			    .MEMD.3923_18(6)>
      # VUSE <.MEMD.3923_11>
      return ctxD.2601_1;
      # SUCC: EXIT [100.0%]
@@ -188,55 +188,22 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "tm.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "wide-int.h"
-#include "inchash.h"
-#include "real.h"
+#include "backend.h"
 #include "tree.h"
+#include "gimple.h"
+#include "cfghooks.h"
+#include "tree-pass.h"
+#include "ssa.h"
 #include "fold-const.h"
-#include "stor-layout.h"
 #include "trans-mem.h"
-#include "inchash.h"
-#include "tm_p.h"
-#include "predict.h"
-#include "hard-reg-set.h"
-#include "input.h"
-#include "function.h"
-#include "dominance.h"
-#include "cfg.h"
 #include "cfganal.h"
 #include "cfgcleanup.h"
-#include "basic-block.h"
-#include "flags.h"
-#include "hash-table.h"
-#include "tree-ssa-alias.h"
-#include "internal-fn.h"
-#include "tree-eh.h"
-#include "gimple-expr.h"
-#include "is-a.h"
-#include "gimple.h"
 #include "gimple-iterator.h"
-#include "gimple-ssa.h"
 #include "tree-cfg.h"
-#include "tree-phinodes.h"
-#include "ssa-iterators.h"
 #include "tree-into-ssa.h"
 #include "params.h"
-#include "gimple-pretty-print.h"
 #include "tree-ssa-sccvn.h"
-#include "tree-dump.h"
 #include "cfgloop.h"
-#include "tree-pass.h"
-#include "trans-mem.h"
-#include "stringpool.h"
-#include "tree-ssanames.h"
 #include "tree-eh.h"
 
 /* Describes a group of bbs with the same successors.  The successor bbs are
@@ -246,7 +213,7 @@ along with GCC; see the file COPYING3.  If not see
    Additionally, the hash value for the struct is cached in hashval, and
    in_worklist indicates whether it's currently part of worklist.  */
 
-struct same_succ_def
+struct same_succ : pointer_hash <same_succ>
 {
   /* The bbs that have the same successor bbs.  */
   bitmap bbs;
@@ -263,26 +230,22 @@ struct same_succ_def
   hashval_t hashval;
 
   /* hash_table support.  */
-  typedef same_succ_def value_type;
-  typedef same_succ_def compare_type;
-  static inline hashval_t hash (const value_type *);
-  static int equal (const value_type *, const compare_type *);
-  static void remove (value_type *);
+  static inline hashval_t hash (const same_succ *);
+  static int equal (const same_succ *, const same_succ *);
+  static void remove (same_succ *);
 };
-typedef struct same_succ_def *same_succ;
-typedef const struct same_succ_def *const_same_succ;
 
 /* hash routine for hash_table support, returns hashval of E.  */
 
 inline hashval_t
-same_succ_def::hash (const value_type *e)
+same_succ::hash (const same_succ *e)
 {
   return e->hashval;
 }
 
 /* A group of bbs where 1 bb from bbs can replace the other bbs.  */
 
-struct bb_cluster_def
+struct bb_cluster
 {
   /* The bbs in the cluster.  */
   bitmap bbs;
@@ -293,8 +256,6 @@ struct bb_cluster_def
   /* The bb to replace the cluster with.  */
   basic_block rep_bb;
 };
-typedef struct bb_cluster_def *bb_cluster;
-typedef const struct bb_cluster_def *const_bb_cluster;
 
 /* Per bb-info.  */
 
@@ -303,9 +264,9 @@ struct aux_bb_info
   /* The number of non-debug statements in the bb.  */
   int size;
   /* The same_succ that this bb is a member of.  */
-  same_succ bb_same_succ;
+  same_succ *bb_same_succ;
   /* The cluster that this bb is a member of.  */
-  bb_cluster cluster;
+  bb_cluster *cluster;
   /* The vop state at the exit of a bb.  This is shortlived data, used to
      communicate data between update_block_by and update_vuses.  */
   tree vop_at_exit;
@@ -326,7 +287,7 @@ struct aux_bb_info
    used SSA_NAMEs.  */
 
 static bool
-stmt_local_def (gimple stmt)
+stmt_local_def (gimple *stmt)
 {
   basic_block bb, def_bb;
   imm_use_iterator iter;
@@ -373,7 +334,7 @@ stmt_local_def (gimple stmt)
 static void
 gsi_advance_fw_nondebug_nonlocal (gimple_stmt_iterator *gsi)
 {
-  gimple stmt;
+  gimple *stmt;
 
   while (true)
     {
@@ -382,7 +343,7 @@ gsi_advance_fw_nondebug_nonlocal (gimple_stmt_iterator *gsi)
       stmt = gsi_stmt (*gsi);
       if (!stmt_local_def (stmt))
 	return;
-	gsi_next_nondebug (gsi);
+      gsi_next_nondebug (gsi);
     }
 }
 
@@ -409,7 +370,7 @@ gvn_uses_equal (tree val1, tree val2)
 /* Prints E to FILE.  */
 
 static void
-same_succ_print (FILE *file, const same_succ e)
+same_succ_print (FILE *file, const same_succ *e)
 {
   unsigned int i;
   bitmap_print (file, e->bbs, "bbs:", "\n");
@@ -424,9 +385,9 @@ same_succ_print (FILE *file, const same_succ e)
 /* Prints same_succ VE to VFILE.  */
 
 inline int
-ssa_same_succ_print_traverse (same_succ *pe, FILE *file)
+ssa_same_succ_print_traverse (same_succ **pe, FILE *file)
 {
-  const same_succ e = *pe;
+  const same_succ *e = *pe;
   same_succ_print (file, e);
   return 1;
 }
@@ -459,7 +420,7 @@ update_dep_bb (basic_block use_bb, tree val)
 /* Update BB_DEP_BB, given the dependencies in STMT.  */
 
 static void
-stmt_update_dep_bb (gimple stmt)
+stmt_update_dep_bb (gimple *stmt)
 {
   ssa_op_iter iter;
   use_operand_p use;
@@ -471,7 +432,7 @@ stmt_update_dep_bb (gimple stmt)
 /* Calculates hash value for same_succ VE.  */
 
 static hashval_t
-same_succ_hash (const_same_succ e)
+same_succ_hash (const same_succ *e)
 {
   inchash::hash hstate (bitmap_hash (e->succs));
   int flags;
@@ -479,7 +440,7 @@ same_succ_hash (const_same_succ e)
   unsigned int first = bitmap_first_set_bit (e->bbs);
   basic_block bb = BASIC_BLOCK_FOR_FN (cfun, first);
   int size = 0;
-  gimple stmt;
+  gimple *stmt;
   tree arg;
   unsigned int s;
   bitmap_iterator bs;
@@ -499,7 +460,7 @@ same_succ_hash (const_same_succ e)
       if (!is_gimple_call (stmt))
 	continue;
       if (gimple_call_internal_p (stmt))
-        hstate.add_int (gimple_call_internal_fn (stmt));
+	hstate.add_int (gimple_call_internal_fn (stmt));
       else
 	{
 	  inchash::add_expr (gimple_call_fn (stmt), hstate);
@@ -549,7 +510,7 @@ same_succ_hash (const_same_succ e)
    the other edge flags.  */
 
 static bool
-inverse_flags (const_same_succ e1, const_same_succ e2)
+inverse_flags (const same_succ *e1, const same_succ *e2)
 {
   int f1a, f1b, f2a, f2b;
   int mask = ~(EDGE_TRUE_VALUE | EDGE_FALSE_VALUE);
@@ -571,12 +532,15 @@ inverse_flags (const_same_succ e1, const_same_succ e2)
 /* Compares SAME_SUCCs E1 and E2.  */
 
 int
-same_succ_def::equal (const value_type *e1, const compare_type *e2)
+same_succ::equal (const same_succ *e1, const same_succ *e2)
 {
   unsigned int i, first1, first2;
   gimple_stmt_iterator gsi1, gsi2;
-  gimple s1, s2;
+  gimple *s1, *s2;
   basic_block bb1, bb2;
+
+  if (e1 == e2)
+    return 1;
 
   if (e1->hashval != e2->hashval)
     return 0;
@@ -626,10 +590,10 @@ same_succ_def::equal (const value_type *e1, const compare_type *e2)
 
 /* Alloc and init a new SAME_SUCC.  */
 
-static same_succ
+static same_succ *
 same_succ_alloc (void)
 {
-  same_succ same = XNEW (struct same_succ_def);
+  same_succ *same = XNEW (struct same_succ);
 
   same->bbs = BITMAP_ALLOC (NULL);
   same->succs = BITMAP_ALLOC (NULL);
@@ -643,7 +607,7 @@ same_succ_alloc (void)
 /* Delete same_succ E.  */
 
 void
-same_succ_def::remove (same_succ e)
+same_succ::remove (same_succ *e)
 {
   BITMAP_FREE (e->bbs);
   BITMAP_FREE (e->succs);
@@ -656,7 +620,7 @@ same_succ_def::remove (same_succ e)
 /* Reset same_succ SAME.  */
 
 static void
-same_succ_reset (same_succ same)
+same_succ_reset (same_succ *same)
 {
   bitmap_clear (same->bbs);
   bitmap_clear (same->succs);
@@ -664,7 +628,7 @@ same_succ_reset (same_succ same)
   same->succ_flags.truncate (0);
 }
 
-static hash_table<same_succ_def> *same_succ_htab;
+static hash_table<same_succ> *same_succ_htab;
 
 /* Array that is used to store the edge flags for a successor.  */
 
@@ -691,7 +655,7 @@ debug_same_succ ( void)
 
 /* Vector of bbs to process.  */
 
-static vec<same_succ> worklist;
+static vec<same_succ *> worklist;
 
 /* Prints worklist to FILE.  */
 
@@ -706,7 +670,7 @@ print_worklist (FILE *file)
 /* Adds SAME to worklist.  */
 
 static void
-add_to_worklist (same_succ same)
+add_to_worklist (same_succ *same)
 {
   if (same->in_worklist)
     return;
@@ -721,12 +685,12 @@ add_to_worklist (same_succ same)
 /* Add BB to same_succ_htab.  */
 
 static void
-find_same_succ_bb (basic_block bb, same_succ *same_p)
+find_same_succ_bb (basic_block bb, same_succ **same_p)
 {
   unsigned int j;
   bitmap_iterator bj;
-  same_succ same = *same_p;
-  same_succ *slot;
+  same_succ *same = *same_p;
+  same_succ **slot;
   edge_iterator ei;
   edge e;
 
@@ -776,7 +740,7 @@ find_same_succ_bb (basic_block bb, same_succ *same_p)
 static void
 find_same_succ (void)
 {
-  same_succ same = same_succ_alloc ();
+  same_succ *same = same_succ_alloc ();
   basic_block bb;
 
   FOR_EACH_BB_FN (bb, cfun)
@@ -786,7 +750,7 @@ find_same_succ (void)
 	same = same_succ_alloc ();
     }
 
-  same_succ_def::remove (same);
+  same_succ::remove (same);
 }
 
 /* Initializes worklist administration.  */
@@ -795,7 +759,7 @@ static void
 init_worklist (void)
 {
   alloc_aux_for_blocks (sizeof (struct aux_bb_info));
-  same_succ_htab = new hash_table<same_succ_def> (n_basic_blocks_for_fn (cfun));
+  same_succ_htab = new hash_table<same_succ> (n_basic_blocks_for_fn (cfun));
   same_succ_edge_flags = XCNEWVEC (int, last_basic_block_for_fn (cfun));
   deleted_bbs = BITMAP_ALLOC (NULL);
   deleted_bb_preds = BITMAP_ALLOC (NULL);
@@ -843,10 +807,7 @@ mark_basic_block_deleted (basic_block bb)
 static void
 same_succ_flush_bb (basic_block bb)
 {
-  same_succ same = BB_SAME_SUCC (bb);
-  if (! same)
-    return;
-
+  same_succ *same = BB_SAME_SUCC (bb);
   BB_SAME_SUCC (bb) = NULL;
   if (bitmap_single_bit_set_p (same->bbs))
     same_succ_htab->remove_elt_with_hash (same, same->hashval);
@@ -874,7 +835,7 @@ release_last_vdef (basic_block bb)
   for (gimple_stmt_iterator i = gsi_last_bb (bb); !gsi_end_p (i);
        gsi_prev_nondebug (&i))
     {
-      gimple stmt = gsi_stmt (i);
+      gimple *stmt = gsi_stmt (i);
       if (gimple_vdef (stmt) == NULL_TREE)
 	continue;
 
@@ -894,7 +855,6 @@ release_last_vdef (basic_block bb)
       mark_virtual_phi_result_for_renaming (phi);
       return;
     }
-  
 }
 
 /* For deleted_bb_preds, find bbs with same successors.  */
@@ -905,7 +865,7 @@ update_worklist (void)
   unsigned int i;
   bitmap_iterator bi;
   basic_block bb;
-  same_succ same;
+  same_succ *same;
 
   bitmap_and_compl_into (deleted_bb_preds, deleted_bbs);
   bitmap_clear (deleted_bbs);
@@ -922,14 +882,14 @@ update_worklist (void)
       if (same == NULL)
 	same = same_succ_alloc ();
     }
-  same_succ_def::remove (same);
+  same_succ::remove (same);
   bitmap_clear (deleted_bb_preds);
 }
 
 /* Prints cluster C to FILE.  */
 
 static void
-print_cluster (FILE *file, bb_cluster c)
+print_cluster (FILE *file, bb_cluster *c)
 {
   if (c == NULL)
     return;
@@ -939,9 +899,9 @@ print_cluster (FILE *file, bb_cluster c)
 
 /* Prints cluster C to stderr.  */
 
-extern void debug_cluster (bb_cluster);
+extern void debug_cluster (bb_cluster *);
 DEBUG_FUNCTION void
-debug_cluster (bb_cluster c)
+debug_cluster (bb_cluster *c)
 {
   print_cluster (stderr, c);
 }
@@ -949,7 +909,7 @@ debug_cluster (bb_cluster c)
 /* Update C->rep_bb, given that BB is added to the cluster.  */
 
 static void
-update_rep_bb (bb_cluster c, basic_block bb)
+update_rep_bb (bb_cluster *c, basic_block bb)
 {
   /* Initial.  */
   if (c->rep_bb == NULL)
@@ -983,7 +943,7 @@ update_rep_bb (bb_cluster c, basic_block bb)
 /* Add BB to cluster C.  Sets BB in C->bbs, and preds of BB in C->preds.  */
 
 static void
-add_bb_to_cluster (bb_cluster c, basic_block bb)
+add_bb_to_cluster (bb_cluster *c, basic_block bb)
 {
   edge e;
   edge_iterator ei;
@@ -998,11 +958,11 @@ add_bb_to_cluster (bb_cluster c, basic_block bb)
 
 /* Allocate and init new cluster.  */
 
-static bb_cluster
+static bb_cluster *
 new_cluster (void)
 {
-  bb_cluster c;
-  c = XCNEW (struct bb_cluster_def);
+  bb_cluster *c;
+  c = XCNEW (bb_cluster);
   c->bbs = BITMAP_ALLOC (NULL);
   c->preds = BITMAP_ALLOC (NULL);
   c->rep_bb = NULL;
@@ -1012,7 +972,7 @@ new_cluster (void)
 /* Delete clusters.  */
 
 static void
-delete_cluster (bb_cluster c)
+delete_cluster (bb_cluster *c)
 {
   if (c == NULL)
     return;
@@ -1024,7 +984,7 @@ delete_cluster (bb_cluster c)
 
 /* Array that contains all clusters.  */
 
-static vec<bb_cluster> all_clusters;
+static vec<bb_cluster *> all_clusters;
 
 /* Allocate all cluster vectors.  */
 
@@ -1062,7 +1022,7 @@ delete_cluster_vectors (void)
 /* Merge cluster C2 into C1.  */
 
 static void
-merge_clusters (bb_cluster c1, bb_cluster c2)
+merge_clusters (bb_cluster *c1, bb_cluster *c2)
 {
   bitmap_ior_into (c1->bbs, c2->bbs);
   bitmap_ior_into (c1->preds, c2->preds);
@@ -1075,7 +1035,7 @@ static void
 set_cluster (basic_block bb1, basic_block bb2)
 {
   basic_block merge_bb, other_bb;
-  bb_cluster merge, old, c;
+  bb_cluster *merge, *old, *c;
 
   if (BB_CLUSTER (bb1) == NULL && BB_CLUSTER (bb2) == NULL)
     {
@@ -1125,7 +1085,7 @@ gimple_operand_equal_value_p (tree t1, tree t2)
       || t2 == NULL_TREE)
     return false;
 
-  if (operand_equal_p (t1, t2, 0))
+  if (operand_equal_p (t1, t2, OEP_MATCH_SIDE_EFFECTS))
     return true;
 
   return gvn_uses_equal (t1, t2);
@@ -1135,7 +1095,7 @@ gimple_operand_equal_value_p (tree t1, tree t2)
    gimple_bb (s2) are members of SAME_SUCC.  */
 
 static bool
-gimple_equal_p (same_succ same_succ, gimple s1, gimple s2)
+gimple_equal_p (same_succ *same_succ, gimple *s1, gimple *s2)
 {
   unsigned int i;
   tree lhs1, lhs2;
@@ -1151,7 +1111,7 @@ gimple_equal_p (same_succ same_succ, gimple s1, gimple s2)
     {
     case GIMPLE_CALL:
       if (!gimple_call_same_target_p (s1, s2))
-        return false;
+	return false;
 
       t1 = gimple_call_chain (s1);
       t2 = gimple_call_chain (s2);
@@ -1228,7 +1188,7 @@ static void
 gsi_advance_bw_nondebug_nonlocal (gimple_stmt_iterator *gsi, tree *vuse,
 				  bool *vuse_escaped)
 {
-  gimple stmt;
+  gimple *stmt;
   tree lvuse;
 
   while (true)
@@ -1251,11 +1211,51 @@ gsi_advance_bw_nondebug_nonlocal (gimple_stmt_iterator *gsi, tree *vuse,
     }
 }
 
+/* Return true if equal (in the sense of gimple_equal_p) statements STMT1 and
+   STMT2 are allowed to be merged.  */
+
+static bool
+merge_stmts_p (gimple *stmt1, gimple *stmt2)
+{
+  /* What could be better than this here is to blacklist the bb
+     containing the stmt, when encountering the stmt f.i. in
+     same_succ_hash.  */
+  if (is_tm_ending (stmt1))
+    return false;
+
+  /* Verify EH landing pads.  */
+  if (lookup_stmt_eh_lp_fn (cfun, stmt1) != lookup_stmt_eh_lp_fn (cfun, stmt2))
+    return false;
+
+  if (is_gimple_call (stmt1)
+      && gimple_call_internal_p (stmt1))
+    switch (gimple_call_internal_fn (stmt1))
+      {
+      case IFN_UBSAN_NULL:
+      case IFN_UBSAN_BOUNDS:
+      case IFN_UBSAN_VPTR:
+      case IFN_UBSAN_CHECK_ADD:
+      case IFN_UBSAN_CHECK_SUB:
+      case IFN_UBSAN_CHECK_MUL:
+      case IFN_UBSAN_OBJECT_SIZE:
+      case IFN_ASAN_CHECK:
+	/* For these internal functions, gimple_location is an implicit
+	   parameter, which will be used explicitly after expansion.
+	   Merging these statements may cause confusing line numbers in
+	   sanitizer messages.  */
+	return gimple_location (stmt1) == gimple_location (stmt2);
+      default:
+	break;
+      }
+
+  return true;
+}
+
 /* Determines whether BB1 and BB2 (members of same_succ) are duplicates.  If so,
    clusters them.  */
 
 static void
-find_duplicate (same_succ same_succ, basic_block bb1, basic_block bb2)
+find_duplicate (same_succ *same_succ, basic_block bb1, basic_block bb2)
 {
   gimple_stmt_iterator gsi1 = gsi_last_nondebug_bb (bb1);
   gimple_stmt_iterator gsi2 = gsi_last_nondebug_bb (bb2);
@@ -1267,22 +1267,13 @@ find_duplicate (same_succ same_succ, basic_block bb1, basic_block bb2)
 
   while (!gsi_end_p (gsi1) && !gsi_end_p (gsi2))
     {
-      gimple stmt1 = gsi_stmt (gsi1);
-      gimple stmt2 = gsi_stmt (gsi2);
-
-      /* What could be better than to this this here is to blacklist the bb
-	 containing the stmt, when encountering the stmt f.i. in
-	 same_succ_hash.  */
-      if (is_tm_ending (stmt1)
-	  || is_tm_ending (stmt2))
-	return;
-
-      /* Verify EH landing pads.  */
-      if (lookup_stmt_eh_lp_fn (cfun, stmt1)
-	  != lookup_stmt_eh_lp_fn (cfun, stmt2))
-	return;
+      gimple *stmt1 = gsi_stmt (gsi1);
+      gimple *stmt2 = gsi_stmt (gsi2);
 
       if (!gimple_equal_p (same_succ, stmt1, stmt2))
+	return;
+
+      if (!merge_stmts_p (stmt1, stmt2))
 	return;
 
       gsi_prev_nondebug (&gsi1);
@@ -1328,7 +1319,7 @@ same_phi_alternatives_1 (basic_block dest, edge e1, edge e2)
 	continue;
 
       if (operand_equal_for_phi_arg_p (val1, val2))
-        continue;
+	continue;
       if (gvn_uses_equal (val1, val2))
 	continue;
 
@@ -1342,7 +1333,7 @@ same_phi_alternatives_1 (basic_block dest, edge e1, edge e2)
    phi alternatives for BB1 and BB2 are equal.  */
 
 static bool
-same_phi_alternatives (same_succ same_succ, basic_block bb1, basic_block bb2)
+same_phi_alternatives (same_succ *same_succ, basic_block bb1, basic_block bb2)
 {
   unsigned int s;
   bitmap_iterator bs;
@@ -1373,7 +1364,7 @@ static bool
 bb_has_non_vop_phi (basic_block bb)
 {
   gimple_seq phis = phi_nodes (bb);
-  gimple phi;
+  gimple *phi;
 
   if (phis == NULL)
     return false;
@@ -1427,7 +1418,7 @@ deps_ok_for_redirect (basic_block bb1, basic_block bb2)
 /* Within SAME_SUCC->bbs, find clusters of bbs which can be merged.  */
 
 static void
-find_clusters_1 (same_succ same_succ)
+find_clusters_1 (same_succ *same_succ)
 {
   basic_block bb1, bb2;
   unsigned int i, j;
@@ -1456,7 +1447,7 @@ find_clusters_1 (same_succ same_succ)
 	  if (BB_CLUSTER (bb1) != NULL && BB_CLUSTER (bb1) == BB_CLUSTER (bb2))
 	    continue;
 
-	  /* Limit quadratic behaviour.  */
+	  /* Limit quadratic behavior.  */
 	  nr_comparisons++;
 	  if (nr_comparisons > max_comparisons)
 	    break;
@@ -1470,7 +1461,7 @@ find_clusters_1 (same_succ same_succ)
 	    continue;
 
 	  find_duplicate (same_succ, bb1, bb2);
-        }
+	}
     }
 }
 
@@ -1479,7 +1470,7 @@ find_clusters_1 (same_succ same_succ)
 static void
 find_clusters (void)
 {
-  same_succ same;
+  same_succ *same;
 
   while (!worklist.is_empty ())
     {
@@ -1591,7 +1582,7 @@ static int
 apply_clusters (void)
 {
   basic_block bb1, bb2;
-  bb_cluster c;
+  bb_cluster *c;
   unsigned int i, j;
   bitmap_iterator bj;
   int nr_bbs_removed = 0;
@@ -1623,7 +1614,7 @@ apply_clusters (void)
    defs.  */
 
 static void
-update_debug_stmt (gimple stmt)
+update_debug_stmt (gimple *stmt)
 {
   use_operand_p use_p;
   ssa_op_iter oi;
@@ -1636,7 +1627,7 @@ update_debug_stmt (gimple stmt)
   FOR_EACH_PHI_OR_STMT_USE (use_p, stmt, oi, SSA_OP_USE)
     {
       tree name = USE_FROM_PTR (use_p);
-      gimple def_stmt = SSA_NAME_DEF_STMT (name);
+      gimple *def_stmt = SSA_NAME_DEF_STMT (name);
       basic_block bbdef = gimple_bb (def_stmt);
       if (bbdef == NULL || bbuse == bbdef
 	  || dominated_by_p (CDI_DOMINATORS, bbuse, bbdef))
@@ -1660,7 +1651,7 @@ update_debug_stmts (void)
 
   EXECUTE_IF_SET_IN_BITMAP (update_bbs, 0, i, bi)
     {
-      gimple stmt;
+      gimple *stmt;
       gimple_stmt_iterator gsi;
 
       bb = BASIC_BLOCK_FOR_FN (cfun, i);

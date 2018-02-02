@@ -1,6 +1,6 @@
 // <forward_list.h> -*- C++ -*-
 
-// Copyright (C) 2008-2015 Free Software Foundation, Inc.
+// Copyright (C) 2008-2016 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -305,19 +305,19 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 
       _Node_alloc_type&
       _M_get_Node_allocator() noexcept
-      { return *static_cast<_Node_alloc_type*>(&this->_M_impl); }
+      { return this->_M_impl; }
 
       const _Node_alloc_type&
       _M_get_Node_allocator() const noexcept
-      { return *static_cast<const _Node_alloc_type*>(&this->_M_impl); }
+      { return this->_M_impl; }
 
       _Fwd_list_base()
       : _M_impl() { }
 
-      _Fwd_list_base(const _Node_alloc_type& __a)
-      : _M_impl(__a) { }
+      _Fwd_list_base(_Node_alloc_type&& __a)
+      : _M_impl(std::move(__a)) { }
 
-      _Fwd_list_base(_Fwd_list_base&& __lst, const _Node_alloc_type& __a);
+      _Fwd_list_base(_Fwd_list_base&& __lst, _Node_alloc_type&& __a);
 
       _Fwd_list_base(_Fwd_list_base&& __lst)
       : _M_impl(std::move(__lst._M_get_Node_allocator()))
@@ -435,12 +435,21 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 
       /**
        *  @brief  Creates a %forward_list with no elements.
+       */
+      forward_list()
+      noexcept(is_nothrow_default_constructible<_Node_alloc_type>::value)
+      : _Base()
+      { }
+
+      /**
+       *  @brief  Creates a %forward_list with no elements.
        *  @param  __al  An allocator object.
        */
       explicit
-      forward_list(const _Alloc& __al = _Alloc())
+      forward_list(const _Alloc& __al) noexcept
       : _Base(_Node_alloc_type(__al))
       { }
+
 
       /**
        *  @brief  Copy constructor with allocator argument.
@@ -459,7 +468,13 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
       forward_list(forward_list&& __list, const _Alloc& __al)
       noexcept(_Node_alloc_traits::_S_always_equal())
       : _Base(std::move(__list), _Node_alloc_type(__al))
-      { }
+      {
+	// If __list is not empty it means its allocator is not equal to __a,
+	// so we need to move from each element individually.
+	insert_after(cbefore_begin(),
+		     std::__make_move_if_noexcept_iterator(__list.begin()),
+		     std::__make_move_if_noexcept_iterator(__list.end()));
+      }
 
       /**
        *  @brief  Creates a %forward_list with default constructed elements.
@@ -573,8 +588,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
         constexpr bool __move_storage =
           _Node_alloc_traits::_S_propagate_on_move_assign()
           || _Node_alloc_traits::_S_always_equal();
-        _M_move_assign(std::move(__list),
-                       integral_constant<bool, __move_storage>());
+        _M_move_assign(std::move(__list), __bool_constant<__move_storage>());
 	return *this;
       }
 
@@ -979,8 +993,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
        *  function.
        */
       void
-      swap(forward_list& __list)
-      noexcept(_Node_alloc_traits::_S_nothrow_swap())
+      swap(forward_list& __list) noexcept
       {
         std::swap(this->_M_impl._M_head._M_next,
 		  __list._M_impl._M_head._M_next);
@@ -1043,14 +1056,14 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
        *  Requires this != @a x.
        */
       void
-      splice_after(const_iterator __pos, forward_list&& __list)
+      splice_after(const_iterator __pos, forward_list&& __list) noexcept
       {
 	if (!__list.empty())
 	  _M_splice_after(__pos, __list.before_begin(), __list.end());
       }
 
       void
-      splice_after(const_iterator __pos, forward_list& __list)
+      splice_after(const_iterator __pos, forward_list& __list) noexcept
       { splice_after(__pos, std::move(__list)); }
 
       /**
@@ -1065,11 +1078,11 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
        */
       void
       splice_after(const_iterator __pos, forward_list&& __list,
-                   const_iterator __i);
+                   const_iterator __i) noexcept;
 
       void
       splice_after(const_iterator __pos, forward_list& __list,
-                   const_iterator __i)
+                   const_iterator __i) noexcept
       { splice_after(__pos, std::move(__list), __i); }
 
       /**
@@ -1088,12 +1101,12 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
        */
       void
       splice_after(const_iterator __pos, forward_list&&,
-                   const_iterator __before, const_iterator __last)
+                   const_iterator __before, const_iterator __last) noexcept
       { _M_splice_after(__pos, __before, __last); }
 
       void
       splice_after(const_iterator __pos, forward_list&,
-                   const_iterator __before, const_iterator __last)
+                   const_iterator __before, const_iterator __last) noexcept
       { _M_splice_after(__pos, __before, __last); }
       // @}
 
@@ -1251,8 +1264,8 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
       _M_move_assign(forward_list&& __list, std::true_type) noexcept
       {
         clear();
-        std::swap(this->_M_impl._M_head._M_next,
-                  __list._M_impl._M_head._M_next);
+        this->_M_impl._M_head._M_next = __list._M_impl._M_head._M_next;
+        __list._M_impl._M_head._M_next = nullptr;
         std::__alloc_on_move(this->_M_get_Node_allocator(),
                              __list._M_get_Node_allocator());
       }
@@ -1398,6 +1411,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
     inline void
     swap(forward_list<_Tp, _Alloc>& __lx,
 	 forward_list<_Tp, _Alloc>& __ly)
+    noexcept(noexcept(__lx.swap(__ly)))
     { __lx.swap(__ly); }
 
 _GLIBCXX_END_NAMESPACE_CONTAINER

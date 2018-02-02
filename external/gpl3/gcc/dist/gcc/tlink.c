@@ -1,7 +1,7 @@
 /* Scan linker error messages for missing template instantiations and provide
    them.
 
-   Copyright (C) 1995-2015 Free Software Foundation, Inc.
+   Copyright (C) 1995-2016 Free Software Foundation, Inc.
    Contributed by Jason Merrill (jason@cygnus.com).
 
 This file is part of GCC.
@@ -26,13 +26,11 @@ along with GCC; see the file COPYING3.  If not see
 #include "tm.h"
 #include "intl.h"
 #include "obstack.h"
-#include "hashtab.h"
 #include "demangle.h"
 #include "collect2.h"
 #include "collect-utils.h"
 #include "filenames.h"
 #include "diagnostic-core.h"
-#include "vec.h"
 
 /* TARGET_64BIT may be defined to use driver specific functionality. */
 #undef TARGET_64BIT

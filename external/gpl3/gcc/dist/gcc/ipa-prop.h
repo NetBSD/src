@@ -1,5 +1,5 @@
 /* Interprocedural analyses.
-   Copyright (C) 2005-2015 Free Software Foundation, Inc.
+   Copyright (C) 2005-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -42,7 +42,7 @@ along with GCC; see the file COPYING3.  If not see
    IPA_JF_ANCESTOR is a special pass-through jump function, which means that
    the result is an address of a part of the object pointed to by the formal
    parameter to which the function refers.  It is mainly intended to represent
-   getting addresses of of ancestor fields in C++
+   getting addresses of ancestor fields in C++
    (e.g. &this_1(D)->D.1766.D.1756).  Note that if the original pointer is
    NULL, ancestor jump function must behave like a simple pass-through.
 
@@ -334,6 +334,8 @@ struct ipa_node_params
   unsigned node_within_scc : 1;
   /* Node is calling a private function called only once.  */
   unsigned node_calling_single_call : 1;
+  /* False when there is something makes versioning impossible.  */
+  unsigned versionable : 1;
 };
 
 /* Intermediate information that we get from alias analysis about a particular
@@ -637,7 +639,7 @@ void ipa_analyze_node (struct cgraph_node *);
 tree ipa_find_agg_cst_for_param (struct ipa_agg_jump_function *, HOST_WIDE_INT,
 				 bool);
 bool ipa_load_from_parm_agg (struct ipa_func_body_info *,
-			     vec<ipa_param_descriptor>, gimple, tree, int *,
+			     vec<ipa_param_descriptor>, gimple *, tree, int *,
 			     HOST_WIDE_INT *, HOST_WIDE_INT *, bool *);
 
 /* Debugging interface.  */
@@ -647,10 +649,21 @@ void ipa_print_node_jump_functions (FILE *f, struct cgraph_node *node);
 void ipa_print_all_jump_functions (FILE * f);
 void ipcp_verify_propagated_values (void);
 
-extern alloc_pool ipcp_cst_values_pool;
-extern alloc_pool ipcp_poly_ctx_values_pool;
-extern alloc_pool ipcp_sources_pool;
-extern alloc_pool ipcp_agg_lattice_pool;
+template <typename value>
+class ipcp_value;
+
+extern object_allocator<ipcp_value<tree> > ipcp_cst_values_pool;
+extern object_allocator<ipcp_value<ipa_polymorphic_call_context> >
+  ipcp_poly_ctx_values_pool;
+
+template <typename valtype>
+class ipcp_value_source;
+
+extern object_allocator<ipcp_value_source<tree> > ipcp_sources_pool;
+
+class ipcp_agg_lattice;
+
+extern object_allocator<ipcp_agg_lattice> ipcp_agg_lattice_pool;
 
 /* Operation to be performed for the parameter in ipa_parm_adjustment
    below.  */
@@ -724,6 +737,10 @@ struct ipa_parm_adjustment
      or one about to be removed.  */
   enum ipa_parm_op op;
 
+  /* Storage order of the original parameter (for the cases when the new
+     parameter is a component of an original one).  */
+  unsigned reverse : 1;
+
   /* The parameter is to be passed by reference.  */
   unsigned by_ref : 1;
 };
@@ -758,10 +775,10 @@ bool ipa_modify_expr (tree *, bool, ipa_parm_adjustment_vec);
 ipa_parm_adjustment *ipa_get_adjustment_candidate (tree **, bool *,
 						   ipa_parm_adjustment_vec,
 						   bool);
-
+void ipa_release_body_info (struct ipa_func_body_info *);
 
 /* From tree-sra.c:  */
-tree build_ref_for_offset (location_t, tree, HOST_WIDE_INT, tree,
+tree build_ref_for_offset (location_t, tree, HOST_WIDE_INT, bool, tree,
 			   gimple_stmt_iterator *, bool);
 
 /* In ipa-cp.c  */
