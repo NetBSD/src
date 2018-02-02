@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2017/09/01 14:38:23 christos Exp $
+#	$NetBSD: Makefile,v 1.13 2018/02/02 01:02:40 mrg Exp $
 
 DRIVER=		xf86-video-openchrome
 DRIVER_NAME=	openchrome_drv
@@ -46,9 +46,7 @@ CPPFLAGS+=	-DHAVE_CONFIG_H -I${X11SRCDIR.${DRIVER}}/../include
 # XXX
 COPTS.via_dri.c+= -Wno-error
 COPTS.via_display.c+= -Wno-error=stack-protector
-.if ${HAVE_GCC:U0} > 48
 COPTS.via_driver.c+=	${${ACTIVE_CC} == "gcc":? -Wno-error=discarded-qualifiers :}
 COPTS.via_lvds.c+=	${${ACTIVE_CC} == "gcc":? -Wno-error=discarded-qualifiers :}
-.endif
 
 CWARNFLAGS.clang+=	-Wno-tautological-compare

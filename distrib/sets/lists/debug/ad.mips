@@ -1,7 +1,7 @@
-# $NetBSD: ad.mips,v 1.65 2016/12/14 12:59:51 kre Exp $
+# $NetBSD: ad.mips,v 1.66 2018/02/02 01:02:41 mrg Exp $
 -./usr/lib/64/libgomp_g.a				comp-c-debuglib		debuglib,compatfile,gcc=48
 -./usr/libdata/debug/usr/lib/64/libgomp.so.1.1.debug	comp-c-debug		debug,compatfile,gcc=48
--./usr/libdata/debug/usr/lib/64/libgomp.so.1.2.debug	comp-c-debug		debug,compatfile,gcc=53
+-./usr/libdata/debug/usr/lib/64/libgomp.so.1.2.debug	comp-c-debug		debug,compatfile,gcc=5
 ./usr/lib/64/libc_fp_g.a				comp-c-debuglib		debuglib,softfloat,compat,arch64
 ./usr/lib/libc_fp_g.a					comp-c-debuglib		debuglib,softfloat,arch64
 ./usr/lib/o32/libc_fp_g.a				comp-c-debuglib		debuglib,softfloat,compat,arch64
