@@ -19,7 +19,7 @@
 # define SYS_sigaltstack SYS___sigaltstack14
 # define SYS_sigprocmask SYS___sigprocmask14
 #endif
-#if SANITIZER_FREEBSD || SANITIZER_NETBSD
+#if SANITIZER_FREEBSD || SANITIZER_NETBSD || SANITIZER_MAC
 # define SYSCALL(name) SYS_ ## name
 #else
 # define SYSCALL(name) __NR_ ## name
@@ -38,7 +38,8 @@
 # else
 #  define internal_syscall_ptr	syscall
 # endif
-#elif (SANITIZER_FREEBSD && defined(__x86_64__))
+
+#elif (SANITIZER_FREEBSD || SANITIZER_MAC) && defined(__x86_64__)
 # define internal_syscall __syscall
 # else
 # define internal_syscall syscall
