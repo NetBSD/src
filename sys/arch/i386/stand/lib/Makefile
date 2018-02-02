@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.44 2016/03/22 08:25:22 mrg Exp $
+#	$NetBSD: Makefile,v 1.45 2018/02/02 01:02:41 mrg Exp $
 
 S?=	${.CURDIR}/../../../..
 
@@ -52,8 +52,3 @@ lib${LIB}.o:: ${OBJS:O}
 	@echo building standard ${LIB} library
 	@rm -f lib${LIB}.o
 	@${LD} -r -o lib${LIB}.o `lorder ${OBJS} | tsort`
-
-# XXX
-.if ${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U} == 48
-COPTS.biosdisk_ll.c+=	-O0
-.endif
