@@ -1,5 +1,5 @@
 /* Encoding of types for Objective C.
-   Copyright (C) 1993-2015 Free Software Foundation, Inc.
+   Copyright (C) 1993-2016 Free Software Foundation, Inc.
    Contributed by Kresten Krab Thorup
    Bitfield support by Ovidiu Predescu
 
@@ -29,6 +29,7 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 /* FIXME: This file contains functions that will abort the entire
    program if they fail.  Is that really needed ?  */
 
+#include "config.h"
 #include "objc-private/common.h"
 #include "objc-private/error.h"
 #include "tconfig.h"
@@ -93,11 +94,8 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 /* Some ports (eg ARM) allow the structure size boundary to be
    selected at compile-time.  We override the normal definition with
    one that has a constant value for this compilation.  */
-#ifndef BITS_PER_UNIT
-#define BITS_PER_UNIT 8
-#endif
 #undef  STRUCTURE_SIZE_BOUNDARY
-#define STRUCTURE_SIZE_BOUNDARY (BITS_PER_UNIT * sizeof (struct{char a;}))
+#define STRUCTURE_SIZE_BOUNDARY (__CHAR_BIT__ * sizeof (struct{char a;}))
 
 /* Some ROUND_TYPE_ALIGN macros use TARGET_foo, and consequently
    target_flags.  Define a dummy entry here to so we don't die.
@@ -162,7 +160,7 @@ _darwin_rs6000_special_round_type_align (const char *struc, int comp, int spec)
     {
       case RECORD_TYPE:
       case UNION_TYPE:
-	return MAX (MAX (comp, spec), objc_alignof_type (_stp) * BITS_PER_UNIT);
+	return MAX (MAX (comp, spec), objc_alignof_type (_stp) * __CHAR_BIT__);
 	break;
       case DFmode:
       case _C_LNG_LNG:
@@ -334,8 +332,8 @@ objc_sizeof_type (const char *type)
 	;
       size = atoi (type + 1);
 
-      startByte = position / BITS_PER_UNIT;
-      endByte = (position + size) / BITS_PER_UNIT;
+      startByte = position / __CHAR_BIT__;
+      endByte = (position + size) / __CHAR_BIT__;
       return endByte - startByte;
     }
 
@@ -1098,7 +1096,7 @@ objc_layout_structure (const char *type,
   layout->type = type;
   layout->prev_type = NULL;
   layout->record_size = 0;
-  layout->record_align = BITS_PER_UNIT;
+  layout->record_align = __CHAR_BIT__;
 
   layout->record_align = MAX (layout->record_align, STRUCTURE_SIZE_BOUNDARY);
 }
@@ -1122,10 +1120,10 @@ objc_layout_structure_next_member (struct objc_struct_layout *layout)
       type = objc_skip_type_qualifiers (layout->prev_type);
       if (unionp)
         layout->record_size = MAX (layout->record_size,
-				   objc_sizeof_type (type) * BITS_PER_UNIT);
+				   objc_sizeof_type (type) * __CHAR_BIT__);
 
       else if (*type != _C_BFLD)
-        layout->record_size += objc_sizeof_type (type) * BITS_PER_UNIT;
+	layout->record_size += objc_sizeof_type (type) * __CHAR_BIT__;
       else {
         /* Get the bitfield's type */
         for (bfld_type = type + 1;
@@ -1133,7 +1131,7 @@ objc_layout_structure_next_member (struct objc_struct_layout *layout)
              bfld_type++)
           /* do nothing */;
 
-        bfld_type_align = objc_alignof_type (bfld_type) * BITS_PER_UNIT;
+	bfld_type_align = objc_alignof_type (bfld_type) * __CHAR_BIT__;
         bfld_field_size = atoi (objc_skip_typespec (bfld_type));
         layout->record_size += bfld_field_size;
       }
@@ -1148,7 +1146,7 @@ objc_layout_structure_next_member (struct objc_struct_layout *layout)
   type = objc_skip_type_qualifiers (layout->type);
 
   if (*type != _C_BFLD)
-    desired_align = objc_alignof_type (type) * BITS_PER_UNIT;
+    desired_align = objc_alignof_type (type) * __CHAR_BIT__;
   else
     {
       desired_align = 1;
@@ -1158,7 +1156,7 @@ objc_layout_structure_next_member (struct objc_struct_layout *layout)
            bfld_type++)
         /* do nothing */;
 
-      bfld_type_align = objc_alignof_type (bfld_type) * BITS_PER_UNIT;
+      bfld_type_align = objc_alignof_type (bfld_type) * __CHAR_BIT__;
       bfld_field_size = atoi (objc_skip_typespec (bfld_type));
     }
 
@@ -1173,7 +1171,7 @@ objc_layout_structure_next_member (struct objc_struct_layout *layout)
   /* Record must have at least as much alignment as any field.
      Otherwise, the alignment of the field within the record
      is meaningless.  */
-#ifndef PCC_BITFIELD_TYPE_MATTERS
+#ifndef HAVE_BITFIELD_TYPE_MATTERS
   layout->record_align = MAX (layout->record_align, desired_align);
 #else	/* PCC_BITFIELD_TYPE_MATTERS */
   if (*type == _C_BFLD)
@@ -1185,7 +1183,7 @@ objc_layout_structure_next_member (struct objc_struct_layout *layout)
       if (bfld_field_size)
         layout->record_align = MAX (layout->record_align, desired_align);
       else
-        desired_align = objc_alignof_type (bfld_type) * BITS_PER_UNIT;
+	desired_align = objc_alignof_type (bfld_type) * __CHAR_BIT__;
 
       /* A named bit field of declared type `int'
          forces the entire structure to have `int' alignment.
@@ -1199,7 +1197,7 @@ objc_layout_structure_next_member (struct objc_struct_layout *layout)
         if (maximum_field_alignment != 0)
           type_align = MIN (type_align, maximum_field_alignment);
         else if (DECL_PACKED (field))
-          type_align = MIN (type_align, BITS_PER_UNIT);
+	  type_align = MIN (type_align, __CHAR_BIT__);
 #endif
 
         layout->record_align = MAX (layout->record_align, type_align);
@@ -1250,21 +1248,15 @@ void objc_layout_finish_structure (struct objc_struct_layout *layout,
       layout->record_align = MAX (1, layout->record_align);
 #endif
 
-#ifdef ROUND_TYPE_SIZE
-      layout->record_size = ROUND_TYPE_SIZE (layout->original_type,
-                                             layout->record_size,
-                                             layout->record_align);
-#else
       /* Round the size up to be a multiple of the required alignment */
       layout->record_size = ROUND (layout->record_size, layout->record_align);
-#endif
 
       layout->type = NULL;
     }
   if (size)
-    *size = layout->record_size / BITS_PER_UNIT;
+    *size = layout->record_size / __CHAR_BIT__;
   if (align)
-    *align = layout->record_align / BITS_PER_UNIT;
+    *align = layout->record_align / __CHAR_BIT__;
 }
 
 void objc_layout_structure_get_info (struct objc_struct_layout *layout,
@@ -1273,9 +1265,9 @@ void objc_layout_structure_get_info (struct objc_struct_layout *layout,
                                      const char **type)
 {
   if (offset)
-    *offset = layout->record_size / BITS_PER_UNIT;
+    *offset = layout->record_size / __CHAR_BIT__;
   if (align)
-    *align = layout->record_align / BITS_PER_UNIT;
+    *align = layout->record_align / __CHAR_BIT__;
   if (type)
     *type = layout->prev_type;
 }

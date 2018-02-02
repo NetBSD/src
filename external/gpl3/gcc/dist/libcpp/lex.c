@@ -1,5 +1,5 @@
 /* CPP Library - lexical analysis.
-   Copyright (C) 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 2000-2016 Free Software Foundation, Inc.
    Contributed by Per Bothner, 1994-95.
    Based on CCCP program by Paul Rubin, June 1986
    Adapted to ANSI C, Richard Stallman, Jan 1987
@@ -447,18 +447,36 @@ search_line_sse42 (const uchar *s, const uchar *end)
       /* Advance the pointer to an aligned address.  We will re-scan a
 	 few bytes, but we no longer need care for reading past the
 	 end of a page, since we're guaranteed a match.  */
-      s = (const uchar *)((si + 16) & -16);
+      s = (const uchar *)((si + 15) & -16);
     }
 
-  /* Main loop, processing 16 bytes at a time.  By doing the whole loop
-     in inline assembly, we can make proper use of the flags set.  */
-  __asm (      "sub $16, %1\n"
-	"	.balign 16\n"
+  /* Main loop, processing 16 bytes at a time.  */
+#ifdef __GCC_ASM_FLAG_OUTPUTS__
+  while (1)
+    {
+      char f;
+
+      /* By using inline assembly instead of the builtin,
+	 we can use the result, as well as the flags set.  */
+      __asm ("%vpcmpestri\t$0, %2, %3"
+	     : "=c"(index), "=@ccc"(f)
+	     : "m"(*s), "x"(search), "a"(4), "d"(16));
+      if (f)
+	break;
+      
+      s += 16;
+    }
+#else
+  s -= 16;
+  /* By doing the whole loop in inline assembly,
+     we can make proper use of the flags set.  */
+  __asm (      ".balign 16\n"
 	"0:	add $16, %1\n"
-	"	%vpcmpestri $0, (%1), %2\n"
+	"	%vpcmpestri\t$0, (%1), %2\n"
 	"	jnc 0b"
 	: "=&c"(index), "+r"(s)
 	: "x"(search), "a"(4), "d"(16));
+#endif
 
  found:
   return s + index;
@@ -1226,9 +1244,10 @@ forms_identifier_p (cpp_reader *pfile, int first,
       && *buffer->cur == '\\'
       && (buffer->cur[1] == 'u' || buffer->cur[1] == 'U'))
     {
+      cppchar_t s;
       buffer->cur += 2;
       if (_cpp_valid_ucn (pfile, &buffer->cur, buffer->rlimit, 1 + !first,
-			  state))
+			  state, &s))
 	return true;
       buffer->cur -= 2;
     }
@@ -1840,7 +1859,8 @@ lex_string (cpp_reader *pfile, cpp_token *token, const uchar *base)
   else if (terminator == '\'')
     type = (*base == 'L' ? CPP_WCHAR :
 	    *base == 'U' ? CPP_CHAR32 :
-	    *base == 'u' ? CPP_CHAR16 : CPP_CHAR);
+	    *base == 'u' ? (base[1] == '8' ? CPP_UTF8CHAR : CPP_CHAR16)
+			 : CPP_CHAR);
   else
     terminator = '>', type = CPP_HEADER_NAME;
 
@@ -1905,6 +1925,12 @@ lex_string (cpp_reader *pfile, cpp_token *token, const uchar *base)
 	    ++cur;
 	}
     }
+  else if (CPP_OPTION (pfile, cpp_warn_cxx11_compat)
+	   && is_macro (pfile, cur)
+	   && !pfile->state.skipping)
+    cpp_warning_with_line (pfile, CPP_W_CXX11_COMPAT,
+			   token->src_loc, 0, "C++11 requires a space "
+			   "between string literal and macro");
 
   pfile->buffer->cur = cur;
   create_literal (pfile, token, base, cur - base, type);
@@ -2380,7 +2406,8 @@ _cpp_lex_direct (cpp_reader *pfile)
 		  && CPP_OPTION (pfile, rliterals))
 	      || (*buffer->cur == '8'
 		  && c == 'u'
-		  && (buffer->cur[1] == '"'
+		  && ((buffer->cur[1] == '"' || (buffer->cur[1] == '\''
+				&& CPP_OPTION (pfile, utf8_char_literals)))
 		      || (buffer->cur[1] == 'R' && buffer->cur[2] == '"'
 			  && CPP_OPTION (pfile, rliterals)))))
 	    {
@@ -2696,6 +2723,19 @@ _cpp_lex_direct (cpp_reader *pfile)
       create_literal (pfile, result, buffer->cur - 1, 1, CPP_OTHER);
       break;
     }
+
+  source_range tok_range;
+  tok_range.m_start = result->src_loc;
+  if (result->src_loc >= RESERVED_LOCATION_COUNT)
+    tok_range.m_finish
+      = linemap_position_for_column (pfile->line_table,
+				     CPP_BUF_COLUMN (buffer, buffer->cur));
+  else
+    tok_range.m_finish = tok_range.m_start;
+
+  result->src_loc = COMBINE_LOCATION_DATA (pfile->line_table,
+					   result->src_loc,
+					   tok_range, NULL);
 
   return result;
 }

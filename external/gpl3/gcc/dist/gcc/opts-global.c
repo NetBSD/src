@@ -1,6 +1,6 @@
 /* Command line option handling.  Code involving global state that
    should not be shared with the driver.
-   Copyright (C) 2002-2015 Free Software Foundation, Inc.
+   Copyright (C) 2002-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -21,44 +21,19 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
+#include "backend.h"
+#include "rtl.h"
+#include "tree.h"
+#include "tree-pass.h"
 #include "diagnostic.h"
 #include "opts.h"
 #include "flags.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "wide-int.h"
-#include "inchash.h"
-#include "tree.h" /* Required by langhooks.h.  */
-#include "fold-const.h"
-#include "predict.h"
-#include "tm.h"
-#include "hard-reg-set.h"
-#include "input.h"
-#include "function.h"
-#include "basic-block.h"
-#include "tree-ssa-alias.h"
-#include "internal-fn.h"
-#include "gimple-expr.h"
-#include "is-a.h"
-#include "gimple.h"
 #include "langhooks.h"
-#include "rtl.h"
 #include "dbgcnt.h"
 #include "debug.h"
-#include "hash-map.h"
-#include "plugin-api.h"
-#include "ipa-ref.h"
-#include "cgraph.h"
-#include "lto-streamer.h"
 #include "output.h"
 #include "plugin.h"
 #include "toplev.h"
-#include "tree-pass.h"
 #include "context.h"
 #include "asan.h"
 
@@ -72,7 +47,7 @@ unsigned num_in_fnames;
 
 /* Return a malloced slash-separated list of languages in MASK.  */
 
-static char *
+char *
 write_langs (unsigned int mask)
 {
   unsigned int n = 0, len = 0;
@@ -335,6 +310,10 @@ decode_options (struct gcc_options *opts, struct gcc_options *opts_set,
   finish_options (opts, opts_set, loc);
 }
 
+/* Hold command-line options associated with stack limitation.  */
+const char *opt_fstack_limit_symbol_arg = NULL;
+int opt_fstack_limit_register_no = -1;
+
 /* Process common options that have been deferred until after the
    handlers have been called for all options.  */
 
@@ -446,12 +425,18 @@ handle_common_deferred_options (void)
 	    if (reg < 0)
 	      error ("unrecognized register name %qs", opt->arg);
 	    else
-	      stack_limit_rtx = gen_rtx_REG (Pmode, reg);
+	      {
+		/* Deactivate previous OPT_fstack_limit_symbol_ options.  */
+		opt_fstack_limit_symbol_arg = NULL;
+		opt_fstack_limit_register_no = reg;
+	      }
 	  }
 	  break;
 
 	case OPT_fstack_limit_symbol_:
-	  stack_limit_rtx = gen_rtx_SYMBOL_REF (Pmode, ggc_strdup (opt->arg));
+	  /* Deactivate previous OPT_fstack_limit_register_ options.  */
+	  opt_fstack_limit_register_no = -1;
+	  opt_fstack_limit_symbol_arg = opt->arg;
 	  break;
 
 	case OPT_fasan_shadow_offset_:
@@ -460,6 +445,10 @@ handle_common_deferred_options (void)
 		   "with -fsanitize=kernel-address");
 	  if (!set_asan_shadow_offset (opt->arg))
 	     error ("unrecognized shadow offset %qs", opt->arg);
+	  break;
+
+	case OPT_fsanitize_sections_:
+	  set_sanitized_sections (opt->arg);
 	  break;
 
 	default:

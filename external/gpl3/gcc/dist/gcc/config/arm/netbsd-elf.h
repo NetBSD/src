@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler, NetBSD/arm ELF version.
-   Copyright (C) 2002-2015 Free Software Foundation, Inc.
+   Copyright (C) 2002-2016 Free Software Foundation, Inc.
    Contributed by Wasabi Systems, Inc.
 
    This file is part of GCC.
@@ -67,7 +67,7 @@
 
 #undef SUBTARGET_EXTRA_ASM_SPEC
 #define SUBTARGET_EXTRA_ASM_SPEC	\
-  "-matpcs %{mabi=aapcs*:-meabi=5} %{fpic|fpie:-k} %{fPIC|fPIE:-k}"
+  "-matpcs %{mabi=aapcs*:-meabi=5} %{" FPIE_OR_FPIC_SPEC ":-k}"
 
 /* Default to full VFP if -mfloat-abi=hard is specified.  */
 #undef SUBTARGET_ASM_FLOAT_SPEC
