@@ -1,22 +1,60 @@
-2017-10-10  Release Manager
+2017-07-04  Release Manager
 
-	* GCC 5.5.0 released.
+	* GCC 6.4.0 released.
 
-2016-06-03  Release Manager
+2016-12-21  Release Manager
 
-	* GCC 5.4.0 released.
+	* GCC 6.3.0 released.
 
-2015-12-04  Release Manager
+2016-08-22  Release Manager
 
-	* GCC 5.3.0 released.
+	* GCC 6.2.0 released.
 
-2015-07-16  Release Manager
+2016-04-27  Release Manager
 
-	* GCC 5.2.0 released.
+	* GCC 6.1.0 released.
 
-2015-04-22  Release Manager
+2016-01-04  Jakub Jelinek  <jakub@redhat.com>
 
-	* GCC 5.1.0 released.
+	Update copyright years.
+
+2015-11-13  Jason Merrill  <jason@redhat.com>
+
+	* config-lang.in (gtfiles): Add cp-gimplify.c.
+
+2015-11-11  Andrew MacLeod  <amacleod@redhat.com>
+
+	* objcp-decl.c: Remove unused header files.
+	* objcp-lang.c: Likewise.
+	
+2015-10-29  Andrew MacLeod  <amacleod@redhat.com>
+
+	* objcp-decl.c: Reorder #include's and remove duplicates.
+	* objcp-lang.c: Likewise.
+
+2015-07-07  Andrew MacLeod  <amacleod@redhat.com>
+
+	* objcp-decl.c: Adjust includes.
+	* objcp-lang.c: Likewise.
+
+2015-06-17  Andrew MacLeod  <amacleod@redhat.com>
+
+	* objcp-decl.c: Do not include input.h, line-map.h or is-a.h.
+	* objcp-lang.c: Likewise.
+	
+2015-06-08  Andrew MacLeod  <amacleod@redhat.com>
+
+	* objcp-decl.c : Adjust include files.
+	* objcp-lang.c : Likewise.
+
+2015-06-04  Andrew MacLeod  <amacleod@redhat.com>
+
+	* objcp-decl.c: Adjust includes for restructured coretypes.h.
+	* objcp-lang.c: Likewise.
+
+2015-04-27  Jim Wilson  <jim.wilson@linaro.org>
+
+	* Make-lang.in (obj-c++.mostlyclean): Remove cc1objplus.
 
 2015-01-09  Michael Collison  <michael.collison@linaro.org>
 
@@ -494,7 +532,7 @@
 	* objcp-lang.c: Likewise.
 
 
-Copyright (C) 2005-2015 Free Software Foundation, Inc.
+Copyright (C) 2005-2016 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

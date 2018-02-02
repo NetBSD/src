@@ -1,5 +1,5 @@
 /* FR30 specific functions.
-   Copyright (C) 1998-2015 Free Software Foundation, Inc.
+   Copyright (C) 1998-2016 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions.
 
    This file is part of GCC.
@@ -23,58 +23,20 @@
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "tm.h"
+#include "backend.h"
+#include "target.h"
 #include "rtl.h"
-#include "regs.h"
-#include "hard-reg-set.h"
-#include "insn-config.h"
-#include "conditions.h"
-#include "insn-attr.h"
-#include "flags.h"
-#include "recog.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "wide-int.h"
-#include "inchash.h"
 #include "tree.h"
-#include "fold-const.h"
+#include "df.h"
+#include "emit-rtl.h"
 #include "stor-layout.h"
 #include "varasm.h"
 #include "output.h"
-#include "hashtab.h"
-#include "function.h"
-#include "statistics.h"
-#include "real.h"
-#include "fixed-value.h"
-#include "expmed.h"
-#include "dojump.h"
-#include "explow.h"
-#include "calls.h"
-#include "emit-rtl.h"
-#include "stmt.h"
 #include "expr.h"
-#include "obstack.h"
-#include "except.h"
-#include "dominance.h"
-#include "cfg.h"
-#include "cfgrtl.h"
-#include "cfganal.h"
-#include "lcm.h"
-#include "cfgbuild.h"
-#include "cfgcleanup.h"
-#include "predict.h"
-#include "basic-block.h"
-#include "df.h"
-#include "diagnostic-core.h"
-#include "tm_p.h"
-#include "target.h"
-#include "target-def.h"
 #include "builtins.h"
+
+/* This file should be included last.  */
+#include "target-def.h"
 
 /*}}}*/
 /*{{{  Function Prologues & Epilogues */ 
@@ -700,7 +662,7 @@ fr30_print_operand (FILE *file, rtx x, int code)
 	  break;
 	  
 	case SYMBOL_REF:
-	  output_address (x0);
+	  output_address (VOIDmode, x0);
 	  break;
 	  
 	default:
@@ -715,11 +677,9 @@ fr30_print_operand (FILE *file, rtx x, int code)
       /* We handle SFmode constants here as output_addr_const doesn't.  */
       if (GET_MODE (x) == SFmode)
 	{
-	  REAL_VALUE_TYPE d;
 	  long l;
 
-	  REAL_VALUE_FROM_CONST_DOUBLE (d, x);
-	  REAL_VALUE_TO_TARGET_SINGLE (d, l);
+	  REAL_VALUE_TO_TARGET_SINGLE (*CONST_DOUBLE_REAL_VALUE (x), l);
 	  fprintf (file, "0x%08lx", l);
 	  break;
 	}
@@ -904,14 +864,10 @@ fr30_check_multiple_regs (rtx *operands, int num_operands, int descending)
 int
 fr30_const_double_is_zero (rtx operand)
 {
-  REAL_VALUE_TYPE d;
-
   if (operand == NULL || GET_CODE (operand) != CONST_DOUBLE)
     return 0;
 
-  REAL_VALUE_FROM_CONST_DOUBLE (d, operand);
-
-  return REAL_VALUES_EQUAL (d, dconst0);
+  return real_equal (CONST_DOUBLE_REAL_VALUE (operand), &dconst0);
 }
 
 /*}}}*/
@@ -945,13 +901,12 @@ fr30_move_double (rtx * operands)
 	  /* We normally copy the low-numbered register first.  However, if
 	     the first register of operand 0 is the same as the second register
 	     of operand 1, we must copy in the opposite order.  */
-	  emit_insn (gen_rtx_SET (VOIDmode,
-				  operand_subword (dest, reverse, TRUE, mode),
+	  emit_insn (gen_rtx_SET (operand_subword (dest, reverse, TRUE, mode),
 				  operand_subword (src,  reverse, TRUE, mode)));
 	  
-	  emit_insn (gen_rtx_SET (VOIDmode,
-			      operand_subword (dest, !reverse, TRUE, mode),
-			      operand_subword (src,  !reverse, TRUE, mode)));
+	  emit_insn
+	    (gen_rtx_SET (operand_subword (dest, !reverse, TRUE, mode),
+			  operand_subword (src,  !reverse, TRUE, mode)));
 	}
       else if (src_code == MEM)
 	{
@@ -963,28 +918,24 @@ fr30_move_double (rtx * operands)
 	  gcc_assert (GET_CODE (addr) == REG);
 	  
 	  /* Copy the address before clobbering it.  See PR 34174.  */
-	  emit_insn (gen_rtx_SET (SImode, dest1, addr));
-	  emit_insn (gen_rtx_SET (VOIDmode, dest0,
-				  adjust_address (src, SImode, 0)));
-	  emit_insn (gen_rtx_SET (SImode, dest1,
-				  plus_constant (SImode, dest1,
-						 UNITS_PER_WORD)));
+	  emit_insn (gen_rtx_SET (dest1, addr));
+	  emit_insn (gen_rtx_SET (dest0, adjust_address (src, SImode, 0)));
+	  emit_insn (gen_rtx_SET (dest1, plus_constant (SImode, dest1,
+							UNITS_PER_WORD)));
 
 	  new_mem = gen_rtx_MEM (SImode, dest1);
 	  MEM_COPY_ATTRIBUTES (new_mem, src);
 	      
-	  emit_insn (gen_rtx_SET (VOIDmode, dest1, new_mem));
+	  emit_insn (gen_rtx_SET (dest1, new_mem));
 	}
       else if (src_code == CONST_INT || src_code == CONST_DOUBLE)
 	{
 	  rtx words[2];
 	  split_double (src, &words[0], &words[1]);
-	  emit_insn (gen_rtx_SET (VOIDmode,
-				  operand_subword (dest, 0, TRUE, mode),
+	  emit_insn (gen_rtx_SET (operand_subword (dest, 0, TRUE, mode),
 				  words[0]));
       
-	  emit_insn (gen_rtx_SET (VOIDmode,
-				  operand_subword (dest, 1, TRUE, mode),
+	  emit_insn (gen_rtx_SET (operand_subword (dest, 1, TRUE, mode),
 				  words[1]));
 	}
     }
@@ -1003,8 +954,7 @@ fr30_move_double (rtx * operands)
 
       if (REGNO (addr) == STACK_POINTER_REGNUM
 	  || REGNO (addr) == FRAME_POINTER_REGNUM)
-	emit_insn (gen_rtx_SET (VOIDmode,
-				adjust_address (dest, SImode, UNITS_PER_WORD),
+	emit_insn (gen_rtx_SET (adjust_address (dest, SImode, UNITS_PER_WORD),
 				src1));
       else
 	{

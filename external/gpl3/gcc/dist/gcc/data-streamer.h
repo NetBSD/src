@@ -1,6 +1,6 @@
 /* Generic streaming support for various data types.
 
-   Copyright (C) 2011-2015 Free Software Foundation, Inc.
+   Copyright (C) 2011-2016 Free Software Foundation, Inc.
    Contributed by Diego Novillo <dnovillo@google.com>
 
 This file is part of GCC.
@@ -22,7 +22,6 @@ along with GCC; see the file COPYING3.  If not see
 #ifndef GCC_DATA_STREAMER_H
 #define GCC_DATA_STREAMER_H
 
-#include "vec.h"
 #include "lto-streamer.h"
 
 /* Data structures used to pack values and bitflags into a vector of

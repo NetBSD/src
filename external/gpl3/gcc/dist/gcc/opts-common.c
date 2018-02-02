@@ -1,5 +1,5 @@
 /* Command line option handling.
-   Copyright (C) 2006-2015 Free Software Foundation, Inc.
+   Copyright (C) 2006-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -22,7 +22,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "intl.h"
 #include "coretypes.h"
 #include "opts.h"
-#include "flags.h"
+#include "options.h"
 #include "diagnostic.h"
 
 static void prune_options (struct cl_decoded_option **, unsigned int *);
@@ -364,6 +364,53 @@ static const struct option_map option_map[] =
     { "--", NULL, "-f", true, false },
     { "--no-", NULL, "-f", false, true }
   };
+
+/* Helper function for gcc.c's driver::suggest_option, for populating the
+   vec of suggestions for misspelled options.
+
+   option_map above provides various prefixes for spelling command-line
+   options, which decode_cmdline_option uses to map spellings of options
+   to specific options.  We want to do the reverse: to find all the ways
+   that a user could validly spell an option.
+
+   Given valid OPT_TEXT (with a leading dash) for OPTION, add it and all
+   of its valid variant spellings to CANDIDATES, each without a leading
+   dash.
+
+   For example, given "-Wabi-tag", the following are added to CANDIDATES:
+     "Wabi-tag"
+     "Wno-abi-tag"
+     "-warn-abi-tag"
+     "-warn-no-abi-tag".
+
+   The added strings must be freed using free.  */
+
+void
+add_misspelling_candidates (auto_vec<char *> *candidates,
+			    const struct cl_option *option,
+			    const char *opt_text)
+{
+  gcc_assert (candidates);
+  gcc_assert (option);
+  gcc_assert (opt_text);
+  candidates->safe_push (xstrdup (opt_text + 1));
+  for (unsigned i = 0; i < ARRAY_SIZE (option_map); i++)
+    {
+      const char *opt0 = option_map[i].opt0;
+      const char *new_prefix = option_map[i].new_prefix;
+      size_t new_prefix_len = strlen (new_prefix);
+
+      if (option->cl_reject_negative && option_map[i].negated)
+	continue;
+
+      if (strncmp (opt_text, new_prefix, new_prefix_len) == 0)
+	{
+	  char *alternative = concat (opt0 + 1, opt_text + new_prefix_len,
+				      NULL);
+	  candidates->safe_push (alternative);
+	}
+    }
+}
 
 /* Decode the switch beginning at ARGV for the language indicated by
    LANG_MASK (including CL_COMMON and CL_TARGET if applicable), into
@@ -825,6 +872,7 @@ prune_options (struct cl_decoded_option **decoded_options,
     = XNEWVEC (struct cl_decoded_option, old_decoded_options_count);
   unsigned int i;
   const struct cl_option *option;
+  unsigned int fdiagnostics_color_idx = 0;
 
   /* Remove arguments which are negated by others after them.  */
   new_decoded_options_count = 0;
@@ -843,6 +891,11 @@ prune_options (struct cl_decoded_option **decoded_options,
 	case OPT_SPECIAL_program_name:
 	case OPT_SPECIAL_input_file:
 	  goto keep;
+
+	/* Do not save OPT_fdiagnostics_color_, just remember the last one.  */
+	case OPT_fdiagnostics_color_:
+	  fdiagnostics_color_idx = i;
+	  continue;
 
 	default:
 	  gcc_assert (opt_idx < cl_options_count);
@@ -877,6 +930,17 @@ keep:
 	    }
 	  break;
 	}
+    }
+
+  if (fdiagnostics_color_idx >= 1)
+    {
+      /* We put the last -fdiagnostics-color= at the first position
+	 after argv[0] so it can take effect immediately.  */
+      memmove (new_decoded_options + 2, new_decoded_options + 1,
+	       sizeof (struct cl_decoded_option) 
+	       * (new_decoded_options_count - 1));
+      new_decoded_options[1] = old_decoded_options[fdiagnostics_color_idx];
+      new_decoded_options_count++;
     }
 
   free (old_decoded_options);
@@ -1004,6 +1068,76 @@ generate_option_input_file (const char *file,
   decoded->errors = 0;
 }
 
+/* Perform diagnostics for read_cmdline_option and control_warning_option
+   functions.  Returns true if an error has been diagnosed.
+   LOC and LANG_MASK arguments like in read_cmdline_option.
+   OPTION is the option to report diagnostics for, OPT the name
+   of the option as text, ARG the argument of the option (for joined
+   options), ERRORS is bitmask of CL_ERR_* values.  */
+
+static bool
+cmdline_handle_error (location_t loc, const struct cl_option *option,
+		      const char *opt, const char *arg, int errors,
+		      unsigned int lang_mask)
+{
+  if (errors & CL_ERR_DISABLED)
+    {
+      error_at (loc, "command line option %qs"
+		     " is not supported by this configuration", opt);
+      return true;
+    }
+
+  if (errors & CL_ERR_MISSING_ARG)
+    {
+      if (option->missing_argument_error)
+	error_at (loc, option->missing_argument_error, opt);
+      else
+	error_at (loc, "missing argument to %qs", opt);
+      return true;
+    }
+
+  if (errors & CL_ERR_UINT_ARG)
+    {
+      error_at (loc, "argument to %qs should be a non-negative integer",
+		option->opt_text);
+      return true;
+    }
+
+  if (errors & CL_ERR_ENUM_ARG)
+    {
+      const struct cl_enum *e = &cl_enums[option->var_enum];
+      unsigned int i;
+      size_t len;
+      char *s, *p;
+
+      if (e->unknown_error)
+	error_at (loc, e->unknown_error, arg);
+      else
+	error_at (loc, "unrecognized argument in option %qs", opt);
+
+      len = 0;
+      for (i = 0; e->values[i].arg != NULL; i++)
+	len += strlen (e->values[i].arg) + 1;
+
+      s = XALLOCAVEC (char, len);
+      p = s;
+      for (i = 0; e->values[i].arg != NULL; i++)
+	{
+	  if (!enum_arg_ok_for_language (&e->values[i], lang_mask))
+	    continue;
+	  size_t arglen = strlen (e->values[i].arg);
+	  memcpy (p, e->values[i].arg, arglen);
+	  p[arglen] = ' ';
+	  p += arglen + 1;
+	}
+      p[-1] = 0;
+      inform (loc, "valid arguments to %qs are: %s", option->opt_text, s);
+      return true;
+    }
+
+  return false;
+}
+
 /* Handle the switch DECODED (location LOC) for the language indicated
    by LANG_MASK, using the handlers in *HANDLERS and setting fields in
    OPTS and OPTS_SET and using diagnostic context DC (if not NULL) for
@@ -1036,58 +1170,10 @@ read_cmdline_option (struct gcc_options *opts,
 
   option = &cl_options[decoded->opt_index];
 
-  if (decoded->errors & CL_ERR_DISABLED)
-    {
-      error_at (loc, "command line option %qs"
-		" is not supported by this configuration", opt);
-      return;
-    }
-
-  if (decoded->errors & CL_ERR_MISSING_ARG)
-    {
-      if (option->missing_argument_error)
-	error_at (loc, option->missing_argument_error, opt);
-      else
-	error_at (loc, "missing argument to %qs", opt);
-      return;
-    }
-
-  if (decoded->errors & CL_ERR_UINT_ARG)
-    {
-      error_at (loc, "argument to %qs should be a non-negative integer",
-		option->opt_text);
-      return;
-    }
-
-  if (decoded->errors & CL_ERR_ENUM_ARG)
-    {
-      const struct cl_enum *e = &cl_enums[option->var_enum];
-      unsigned int i;
-      size_t len;
-      char *s, *p;
-
-      if (e->unknown_error)
-	error_at (loc, e->unknown_error, decoded->arg);
-      else
-	error_at (loc, "unrecognized argument in option %qs", opt);
-
-      len = 0;
-      for (i = 0; e->values[i].arg != NULL; i++)
-	len += strlen (e->values[i].arg) + 1;
-
-      s = XALLOCAVEC (char, len);
-      p = s;
-      for (i = 0; e->values[i].arg != NULL; i++)
-	{
-	  size_t arglen = strlen (e->values[i].arg);
-	  memcpy (p, e->values[i].arg, arglen);
-	  p[arglen] = ' ';
-	  p += arglen + 1;
-	}
-      p[-1] = 0;
-      inform (loc, "valid arguments to %qs are: %s", option->opt_text, s);
-      return;
-    }
+  if (decoded->errors
+      && cmdline_handle_error (loc, option, opt, decoded->arg,
+			       decoded->errors, lang_mask))
+    return;
 
   if (decoded->errors & CL_ERR_WRONG_LANG)
     {
@@ -1308,30 +1394,86 @@ get_option_state (struct gcc_options *opts, int option,
 /* Set a warning option OPT_INDEX (language mask LANG_MASK, option
    handlers HANDLERS) to have diagnostic kind KIND for option
    structures OPTS and OPTS_SET and diagnostic context DC (possibly
-   NULL), at location LOC (UNKNOWN_LOCATION for -Werror=).  If IMPLY,
+   NULL), at location LOC (UNKNOWN_LOCATION for -Werror=).  ARG is the
+   argument of the option for joined options, or NULL otherwise.  If IMPLY,
    the warning option in question is implied at this point.  This is
    used by -Werror= and #pragma GCC diagnostic.  */
 
 void
-control_warning_option (unsigned int opt_index, int kind, bool imply,
-			location_t loc, unsigned int lang_mask,
+control_warning_option (unsigned int opt_index, int kind, const char *arg,
+			bool imply, location_t loc, unsigned int lang_mask,
 			const struct cl_option_handlers *handlers,
 			struct gcc_options *opts,
 			struct gcc_options *opts_set,
 			diagnostic_context *dc)
 {
   if (cl_options[opt_index].alias_target != N_OPTS)
-    opt_index = cl_options[opt_index].alias_target;
+    {
+      gcc_assert (!cl_options[opt_index].cl_separate_alias
+		  && !cl_options[opt_index].cl_negative_alias);
+      if (cl_options[opt_index].alias_arg)
+	arg = cl_options[opt_index].alias_arg;
+      opt_index = cl_options[opt_index].alias_target;
+    }
   if (opt_index == OPT_SPECIAL_ignore)
     return;
   if (dc)
     diagnostic_classify_diagnostic (dc, opt_index, (diagnostic_t) kind, loc);
   if (imply)
     {
+      const struct cl_option *option = &cl_options[opt_index];
+
       /* -Werror=foo implies -Wfoo.  */
-      if (cl_options[opt_index].var_type == CLVC_BOOLEAN)
-	handle_generated_option (opts, opts_set,
-				 opt_index, NULL, 1, lang_mask,
-				 kind, loc, handlers, dc);
+      if (option->var_type == CLVC_BOOLEAN || option->var_type == CLVC_ENUM)
+	{
+	  int value = 1;
+
+	  if (arg && *arg == '\0' && !option->cl_missing_ok)
+	    arg = NULL;
+
+	  if ((option->flags & CL_JOINED) && arg == NULL)
+	    {
+	      cmdline_handle_error (loc, option, option->opt_text, arg,
+				    CL_ERR_MISSING_ARG, lang_mask);
+	      return;
+	    }
+
+	  /* If the switch takes an integer, convert it.  */
+	  if (arg && option->cl_uinteger)
+	    {
+	      value = integral_argument (arg);
+	      if (value == -1)
+		{
+		  cmdline_handle_error (loc, option, option->opt_text, arg,
+					CL_ERR_UINT_ARG, lang_mask);
+		  return;
+		}
+	    }
+
+	  /* If the switch takes an enumerated argument, convert it.  */
+	  if (arg && option->var_type == CLVC_ENUM)
+	    {
+	      const struct cl_enum *e = &cl_enums[option->var_enum];
+
+	      if (enum_arg_to_value (e->values, arg, &value, lang_mask))
+		{
+		  const char *carg = NULL;
+
+		  if (enum_value_to_arg (e->values, &carg, value, lang_mask))
+		    arg = carg;
+		  gcc_assert (carg != NULL);
+		}
+	      else
+		{
+		  cmdline_handle_error (loc, option, option->opt_text, arg,
+					CL_ERR_ENUM_ARG, lang_mask);
+		  return;
+		}
+	    }
+
+	  handle_generated_option (opts, opts_set,
+				   opt_index, arg, value, lang_mask,
+				   kind, loc, handlers, dc);
+	}
     }
 }

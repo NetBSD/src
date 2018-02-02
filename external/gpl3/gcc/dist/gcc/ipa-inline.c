@@ -1,5 +1,5 @@
 /* Inlining decision heuristics.
-   Copyright (C) 2003-2015 Free Software Foundation, Inc.
+   Copyright (C) 2003-2016 Free Software Foundation, Inc.
    Contributed by Jan Hubicka
 
 This file is part of GCC.
@@ -92,59 +92,29 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "tm.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "wide-int.h"
-#include "inchash.h"
+#include "backend.h"
+#include "target.h"
+#include "rtl.h"
 #include "tree.h"
-#include "fold-const.h"
+#include "gimple.h"
+#include "alloc-pool.h"
+#include "tree-pass.h"
+#include "gimple-ssa.h"
+#include "cgraph.h"
+#include "lto-streamer.h"
 #include "trans-mem.h"
 #include "calls.h"
 #include "tree-inline.h"
-#include "langhooks.h"
-#include "flags.h"
-#include "diagnostic.h"
-#include "gimple-pretty-print.h"
 #include "params.h"
-#include "intl.h"
-#include "tree-pass.h"
-#include "coverage.h"
-#include "rtl.h"
-#include "bitmap.h"
 #include "profile.h"
-#include "predict.h"
-#include "hard-reg-set.h"
-#include "input.h"
-#include "function.h"
-#include "basic-block.h"
-#include "tree-ssa-alias.h"
-#include "internal-fn.h"
-#include "gimple-expr.h"
-#include "is-a.h"
-#include "gimple.h"
-#include "gimple-ssa.h"
-#include "hash-map.h"
-#include "plugin-api.h"
-#include "ipa-ref.h"
-#include "cgraph.h"
-#include "alloc-pool.h"
 #include "symbol-summary.h"
 #include "ipa-prop.h"
-#include "except.h"
-#include "target.h"
 #include "ipa-inline.h"
 #include "ipa-utils.h"
 #include "sreal.h"
 #include "auto-profile.h"
 #include "builtins.h"
 #include "fibonacci_heap.h"
-#include "lto-streamer.h"
 
 typedef fibonacci_heap <sreal, cgraph_edge> edge_heap_t;
 typedef fibonacci_node <sreal, cgraph_edge> edge_heap_node_t;
@@ -461,12 +431,8 @@ can_inline_edge_p (struct cgraph_edge *e, bool report,
 		 brought into a non-EH function unless we know that the callee
 		 does not throw.
 		 This is tracked by DECL_FUNCTION_PERSONALITY.  */
-	      || (check_match (flag_non_call_exceptions)
-		  /* TODO: We also may allow bringing !flag_non_call_exceptions
-		     to flag_non_call_exceptions function, but that may need
-		     extra work in tree-inline to add the extra EH edges.  */
-		  && (!opt_for_fn (callee->decl, flag_non_call_exceptions)
-		      || DECL_FUNCTION_PERSONALITY (callee->decl)))
+	      || (check_maybe_up (flag_non_call_exceptions)
+		  && DECL_FUNCTION_PERSONALITY (callee->decl))
 	      || (check_maybe_up (flag_exceptions)
 		  && DECL_FUNCTION_PERSONALITY (callee->decl))
 	      /* Strictly speaking only when the callee contains function
@@ -496,7 +462,7 @@ can_inline_edge_p (struct cgraph_edge *e, bool report,
          optimized with the optimization flags of module they are used in.
 	 Also do not care about mixing up size/speed optimization when
 	 DECL_DISREGARD_INLINE_LIMITS is set.  */
-      else if ((callee->merged
+      else if ((callee->merged_comdat
 	        && !lookup_attribute ("optimize",
 				      DECL_ATTRIBUTES (caller->decl)))
 	       || DECL_DISREGARD_INLINE_LIMITS (callee->decl))
@@ -1191,8 +1157,8 @@ edge_badness (struct cgraph_edge *edge, bool dump)
       if (dump)
 	{
 	  fprintf (dump_file,
-		   "      %f: guessed profile. frequency %f, count %"PRId64
-		   " caller count %"PRId64
+		   "      %f: guessed profile. frequency %f, count %" PRId64
+		   " caller count %" PRId64
 		   " time w/o inlining %f, time w inlining %f"
 		   " overall growth %i (current) %i (original)"
 		   " %i (compensated)\n",
@@ -1898,7 +1864,7 @@ inline_small_functions (void)
       if (!edge->inline_failed || !edge->callee->analyzed)
 	continue;
 
-#ifdef ENABLE_CHECKING
+#if CHECKING_P
       /* Be sure that caches are maintained consistent.  */
       sreal cached_badness = edge_badness (edge, false);
  
@@ -1963,18 +1929,18 @@ inline_small_functions (void)
 		   " Estimated badness is %f, frequency %.2f.\n",
 		   edge->caller->name (), edge->caller->order,
 		   edge->call_stmt
-		   && (LOCATION_LOCUS (gimple_location ((const_gimple)
+		   && (LOCATION_LOCUS (gimple_location ((const gimple *)
 							edge->call_stmt))
 		       > BUILTINS_LOCATION)
-		   ? gimple_filename ((const_gimple) edge->call_stmt)
+		   ? gimple_filename ((const gimple *) edge->call_stmt)
 		   : "unknown",
 		   edge->call_stmt
-		   ? gimple_lineno ((const_gimple) edge->call_stmt)
+		   ? gimple_lineno ((const gimple *) edge->call_stmt)
 		   : -1,
 		   badness.to_double (),
 		   edge->frequency / (double)CGRAPH_FREQ_BASE);
 	  if (edge->count)
-	    fprintf (dump_file," Called %"PRId64"x\n",
+	    fprintf (dump_file," Called %" PRId64"x\n",
 		     edge->count);
 	  if (dump_flags & TDF_DETAILS)
 	    edge_badness (edge, true);
@@ -2197,7 +2163,8 @@ flatten_function (struct cgraph_node *node, bool early)
    recursion.  */
 
 static bool
-inline_to_all_callers (struct cgraph_node *node, void *data)
+inline_to_all_callers_1 (struct cgraph_node *node, void *data,
+			 hash_set<cgraph_node *> *callers)
 {
   int *num_calls = (int *)data;
   bool callee_removed = false;
@@ -2227,7 +2194,10 @@ inline_to_all_callers (struct cgraph_node *node, void *data)
 		   inline_summaries->get (node->callers->caller)->size);
 	}
 
-      inline_call (node->callers, true, NULL, NULL, true, &callee_removed);
+      /* Remember which callers we inlined to, delaying updating the
+	 overall summary.  */
+      callers->add (node->callers->caller);
+      inline_call (node->callers, true, NULL, NULL, false, &callee_removed);
       if (dump_file)
 	fprintf (dump_file,
 		 " Inlined into %s which now has %i size\n",
@@ -2243,6 +2213,23 @@ inline_to_all_callers (struct cgraph_node *node, void *data)
 	return true;
     }
   return false;
+}
+
+/* Wrapper around inline_to_all_callers_1 doing delayed overall summary
+   update.  */
+
+static bool
+inline_to_all_callers (struct cgraph_node *node, void *data)
+{
+  hash_set<cgraph_node *> callers;
+  bool res = inline_to_all_callers_1 (node, data, &callers);
+  /* Perform the delayed update of the overall summary of all callers
+     processed.  This avoids quadratic behavior in the cases where
+     we have a lot of calls to the same function.  */
+  for (hash_set<cgraph_node *>::iterator i = callers.begin ();
+       i != callers.end (); ++i)
+    inline_update_overall_summary (*i);
+  return res;
 }
 
 /* Output overall time estimate.  */
@@ -2261,8 +2248,8 @@ dump_overall_stats (void)
 	sum_weighted += time * node->count;
       }
   fprintf (dump_file, "Overall time estimate: "
-	   "%"PRId64" weighted by profile: "
-	   "%"PRId64"\n", sum, sum_weighted);
+	   "%" PRId64" weighted by profile: "
+	   "%" PRId64"\n", sum, sum_weighted);
 }
 
 /* Output some useful stats about inlining.  */
@@ -2340,31 +2327,31 @@ dump_inline_stats (void)
   if (max_count)
     {
       fprintf (dump_file,
-	       "Inlined %"PRId64 " + speculative "
-	       "%"PRId64 " + speculative polymorphic "
-	       "%"PRId64 " + previously indirect "
-	       "%"PRId64 " + virtual "
-	       "%"PRId64 " + virtual and previously indirect "
-	       "%"PRId64 "\n" "Not inlined "
-	       "%"PRId64 " + previously indirect "
-	       "%"PRId64 " + virtual "
-	       "%"PRId64 " + virtual and previously indirect "
-	       "%"PRId64 " + stil indirect "
-	       "%"PRId64 " + still indirect polymorphic "
-	       "%"PRId64 "\n", inlined_cnt,
+	       "Inlined %" PRId64 " + speculative "
+	       "%" PRId64 " + speculative polymorphic "
+	       "%" PRId64 " + previously indirect "
+	       "%" PRId64 " + virtual "
+	       "%" PRId64 " + virtual and previously indirect "
+	       "%" PRId64 "\n" "Not inlined "
+	       "%" PRId64 " + previously indirect "
+	       "%" PRId64 " + virtual "
+	       "%" PRId64 " + virtual and previously indirect "
+	       "%" PRId64 " + stil indirect "
+	       "%" PRId64 " + still indirect polymorphic "
+	       "%" PRId64 "\n", inlined_cnt,
 	       inlined_speculative, inlined_speculative_ply,
 	       inlined_indir_cnt, inlined_virt_cnt, inlined_virt_indir_cnt,
 	       noninlined_cnt, noninlined_indir_cnt, noninlined_virt_cnt,
 	       noninlined_virt_indir_cnt, indirect_cnt, indirect_poly_cnt);
       fprintf (dump_file,
-	       "Removed speculations %"PRId64 "\n",
+	       "Removed speculations %" PRId64 "\n",
 	       spec_rem);
     }
   dump_overall_stats ();
   fprintf (dump_file, "\nWhy inlining failed?\n");
   for (i = 0; i < CIF_N_REASONS; i++)
     if (reason[i][2])
-      fprintf (dump_file, "%-50s: %8i calls, %8i freq, %"PRId64" count\n",
+      fprintf (dump_file, "%-50s: %8i calls, %8i freq, %" PRId64" count\n",
 	       cgraph_inline_failed_string ((cgraph_inline_failed_t) i),
 	       (int) reason[i][2], (int) reason[i][1], reason[i][0]);
 }
@@ -2624,9 +2611,12 @@ early_inline_small_functions (struct cgraph_node *node)
 	fprintf (dump_file, " Inlining %s into %s.\n",
 		 xstrdup_for_dump (callee->name ()),
 		 xstrdup_for_dump (e->caller->name ()));
-      inline_call (e, true, NULL, NULL, true);
+      inline_call (e, true, NULL, NULL, false);
       inlined = true;
     }
+
+  if (inlined)
+    inline_update_overall_summary (node);
 
   return inlined;
 }
@@ -2652,9 +2642,8 @@ early_inliner (function *fun)
   if (ipa_node_params_sum)
     return 0;
 
-#ifdef ENABLE_CHECKING
-  node->verify ();
-#endif
+  if (flag_checking)
+    node->verify ();
   node->remove_all_references ();
 
   /* Rebuild this reference because it dosn't depend on
@@ -2699,7 +2688,7 @@ early_inliner (function *fun)
       /* If some always_inline functions was inlined, apply the changes.
 	 This way we will not account always inline into growth limits and
 	 moreover we will inline calls from always inlines that we skipped
-	 previously becuase of conditional above.  */
+	 previously because of conditional above.  */
       if (inlined)
 	{
 	  timevar_push (TV_INTEGRATION);

@@ -1,5 +1,5 @@
 /* Liveness for SSA trees.
-   Copyright (C) 2003-2015 Free Software Foundation, Inc.
+   Copyright (C) 2003-2016 Free Software Foundation, Inc.
    Contributed by Andrew MacLeod <amacleod@redhat.com>
 
 This file is part of GCC.
@@ -21,70 +21,25 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "hash-table.h"
-#include "tm.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "wide-int.h"
-#include "inchash.h"
-#include "tree.h"
-#include "fold-const.h"
-#include "gimple-pretty-print.h"
-#include "bitmap.h"
-#include "sbitmap.h"
-#include "predict.h"
-#include "hard-reg-set.h"
-#include "function.h"
-#include "dominance.h"
-#include "cfg.h"
-#include "basic-block.h"
-#include "tree-ssa-alias.h"
-#include "internal-fn.h"
-#include "gimple-expr.h"
-#include "is-a.h"
-#include "gimple.h"
-#include "gimple-iterator.h"
-#include "gimple-ssa.h"
-#include "tree-phinodes.h"
-#include "ssa-iterators.h"
-#include "stringpool.h"
-#include "tree-ssanames.h"
-#include "hashtab.h"
+#include "backend.h"
 #include "rtl.h"
-#include "flags.h"
-#include "statistics.h"
-#include "real.h"
-#include "fixed-value.h"
-#include "insn-config.h"
-#include "expmed.h"
-#include "dojump.h"
-#include "explow.h"
-#include "calls.h"
-#include "emit-rtl.h"
-#include "varasm.h"
-#include "stmt.h"
-#include "expr.h"
-#include "tree-dfa.h"
+#include "tree.h"
+#include "gimple.h"
 #include "timevar.h"
+#include "ssa.h"
+#include "cgraph.h"
+#include "gimple-pretty-print.h"
+#include "diagnostic-core.h"
+#include "gimple-iterator.h"
+#include "tree-dfa.h"
 #include "dumpfile.h"
 #include "tree-ssa-live.h"
-#include "diagnostic-core.h"
 #include "debug.h"
 #include "tree-ssa.h"
-#include "lto-streamer.h"
-#include "ipa-ref.h"
-#include "cgraph.h"
 #include "ipa-utils.h"
 #include "cfgloop.h"
 
-#ifdef ENABLE_CHECKING
-static void  verify_live_on_entry (tree_live_info_p);
-#endif
+static void verify_live_on_entry (tree_live_info_p);
 
 
 /* VARMAP maintains a mapping from SSA version number to real variables.
@@ -99,90 +54,6 @@ static void  verify_live_on_entry (tree_live_info_p);
    The var_map data structure is used to manage these partitions.  It allows
    partitions to be combined, and determines which partition belongs to what
    ssa_name or variable, and vice versa.  */
-
-
-/* Hashtable helpers.  */
-
-struct tree_int_map_hasher : typed_noop_remove <tree_int_map>
-{
-  typedef tree_int_map value_type;
-  typedef tree_int_map compare_type;
-  static inline hashval_t hash (const value_type *);
-  static inline bool equal (const value_type *, const compare_type *);
-};
-
-inline hashval_t
-tree_int_map_hasher::hash (const value_type *v)
-{
-  return tree_map_base_hash (v);
-}
-
-inline bool
-tree_int_map_hasher::equal (const value_type *v, const compare_type *c)
-{
-  return tree_int_map_eq (v, c);
-}
-
-
-/* This routine will initialize the basevar fields of MAP.  */
-
-static void
-var_map_base_init (var_map map)
-{
-  int x, num_part;
-  tree var;
-  struct tree_int_map *m, *mapstorage;
-
-  num_part = num_var_partitions (map);
-  hash_table<tree_int_map_hasher> tree_to_index (num_part);
-  /* We can have at most num_part entries in the hash tables, so it's
-     enough to allocate so many map elements once, saving some malloc
-     calls.  */
-  mapstorage = m = XNEWVEC (struct tree_int_map, num_part);
-
-  /* If a base table already exists, clear it, otherwise create it.  */
-  free (map->partition_to_base_index);
-  map->partition_to_base_index = (int *) xmalloc (sizeof (int) * num_part);
-
-  /* Build the base variable list, and point partitions at their bases.  */
-  for (x = 0; x < num_part; x++)
-    {
-      struct tree_int_map **slot;
-      unsigned baseindex;
-      var = partition_to_var (map, x);
-      if (SSA_NAME_VAR (var)
-	  && (!VAR_P (SSA_NAME_VAR (var))
-	      || !DECL_IGNORED_P (SSA_NAME_VAR (var))))
-	m->base.from = SSA_NAME_VAR (var);
-      else
-	/* This restricts what anonymous SSA names we can coalesce
-	   as it restricts the sets we compute conflicts for.
-	   Using TREE_TYPE to generate sets is the easies as
-	   type equivalency also holds for SSA names with the same
-	   underlying decl. 
-
-	   Check gimple_can_coalesce_p when changing this code.  */
-	m->base.from = (TYPE_CANONICAL (TREE_TYPE (var))
-			? TYPE_CANONICAL (TREE_TYPE (var))
-			: TREE_TYPE (var));
-      /* If base variable hasn't been seen, set it up.  */
-      slot = tree_to_index.find_slot (m, INSERT);
-      if (!*slot)
-	{
-	  baseindex = m - mapstorage;
-	  m->to = baseindex;
-	  *slot = m;
-	  m++;
-	}
-      else
-	baseindex = (*slot)->to;
-      map->partition_to_base_index[x] = baseindex;
-    }
-
-  map->num_basevars = m - mapstorage;
-
-  free (mapstorage);
-}
 
 
 /* Remove the base table in MAP.  */
@@ -314,7 +185,9 @@ partition_view_init (var_map map)
       tmp = partition_find (map->var_partition, x);
       if (ssa_name (tmp) != NULL_TREE && !virtual_operand_p (ssa_name (tmp))
 	  && (!has_zero_uses (ssa_name (tmp))
-	      || !SSA_NAME_IS_DEFAULT_DEF (ssa_name (tmp))))
+	      || !SSA_NAME_IS_DEFAULT_DEF (ssa_name (tmp))
+	      || (SSA_NAME_VAR (ssa_name (tmp))
+		  && !VAR_P (SSA_NAME_VAR (ssa_name (tmp))))))
 	bitmap_set_bit (used, tmp);
     }
 
@@ -362,21 +235,17 @@ partition_view_fini (var_map map, bitmap selected)
 }
 
 
-/* Create a partition view which includes all the used partitions in MAP.  If
-   WANT_BASES is true, create the base variable map as well.  */
+/* Create a partition view which includes all the used partitions in MAP.  */
 
 void
-partition_view_normal (var_map map, bool want_bases)
+partition_view_normal (var_map map)
 {
   bitmap used;
 
   used = partition_view_init (map);
   partition_view_fini (map, used);
 
-  if (want_bases)
-    var_map_base_init (map);
-  else
-    var_map_base_fini (map);
+  var_map_base_fini (map);
 }
 
 
@@ -385,7 +254,7 @@ partition_view_normal (var_map map, bool want_bases)
    as well.  */
 
 void
-partition_view_bitmap (var_map map, bitmap only, bool want_bases)
+partition_view_bitmap (var_map map, bitmap only)
 {
   bitmap used;
   bitmap new_partitions = BITMAP_ALLOC (NULL);
@@ -401,10 +270,7 @@ partition_view_bitmap (var_map map, bitmap only, bool want_bases)
     }
   partition_view_fini (map, new_partitions);
 
-  if (want_bases)
-    var_map_base_init (map);
-  else
-    var_map_base_fini (map);
+  var_map_base_fini (map);
 }
 
 
@@ -527,14 +393,16 @@ remove_unused_scope_block_p (tree scope, bool in_ctor_dtor_block)
       in_ctor_dtor_block = true;
       unused = false;
     }
-  /* 2) inside such blocks, the outermost block with BLOCK_ABSTRACT_ORIGIN
+  /* 2) inside such blocks, the outermost block with block_ultimate_origin
      being a FUNCTION_DECL.  */
-  else if (in_ctor_dtor_block
-	   && BLOCK_ABSTRACT_ORIGIN (scope)
-	   && TREE_CODE (BLOCK_ABSTRACT_ORIGIN (scope)) == FUNCTION_DECL)
+  else if (in_ctor_dtor_block)
     {
-      in_ctor_dtor_block = false;
-      unused = false;
+      tree fn = block_ultimate_origin (scope);
+      if (fn && TREE_CODE (fn) == FUNCTION_DECL)
+	{
+	  in_ctor_dtor_block = false;
+	  unused = false;
+	}
     }
 
   for (t = &BLOCK_VARS (scope); *t; t = next)
@@ -728,7 +596,7 @@ clear_unused_block_pointer (void)
       {
 	unsigned i;
 	tree b;
-	gimple stmt = gsi_stmt (gsi);
+	gimple *stmt = gsi_stmt (gsi);
 
 	if (!is_gimple_debug (stmt) && !gimple_clobber_p (stmt))
 	  continue;
@@ -851,7 +719,7 @@ remove_unused_locals (void)
       /* Walk the statements.  */
       for (gsi = gsi_start_bb (bb); !gsi_end_p (gsi); gsi_next (&gsi))
 	{
-	  gimple stmt = gsi_stmt (gsi);
+	  gimple *stmt = gsi_stmt (gsi);
 	  tree b = gimple_block (stmt);
 
 	  if (is_gimple_debug (stmt))
@@ -914,7 +782,7 @@ remove_unused_locals (void)
 
 	for (gsi = gsi_start_bb (bb); !gsi_end_p (gsi);)
 	  {
-	    gimple stmt = gsi_stmt (gsi);
+	    gimple *stmt = gsi_stmt (gsi);
 	    tree b = gimple_block (stmt);
 
 	    if (gimple_clobber_p (stmt))
@@ -989,7 +857,9 @@ remove_unused_locals (void)
       cfun->local_decls->truncate (dstidx);
     }
 
-  remove_unused_scope_block_p (DECL_INITIAL (current_function_decl), false);
+  remove_unused_scope_block_p (DECL_INITIAL (current_function_decl),
+			       polymorphic_ctor_dtor_p (current_function_decl,
+							true) != NULL_TREE);
   clear_unused_block_pointer ();
 
   BITMAP_FREE (usedvars);
@@ -1133,7 +1003,7 @@ static void
 set_var_live_on_entry (tree ssa_name, tree_live_info_p live)
 {
   int p;
-  gimple stmt;
+  gimple *stmt;
   use_operand_p use;
   basic_block def_bb = NULL;
   imm_use_iterator imm_iter;
@@ -1162,7 +1032,7 @@ set_var_live_on_entry (tree ssa_name, tree_live_info_p live)
      add it to the list of live on entry blocks.  */
   FOR_EACH_IMM_USE_FAST (use, imm_iter, ssa_name)
     {
-      gimple use_stmt = USE_STMT (use);
+      gimple *use_stmt = USE_STMT (use);
       basic_block add_block = NULL;
 
       if (gimple_code (use_stmt) == GIMPLE_PHI)
@@ -1272,9 +1142,8 @@ calculate_live_ranges (var_map map, bool want_livein)
 
   live_worklist (live);
 
-#ifdef ENABLE_CHECKING
-  verify_live_on_entry (live);
-#endif
+  if (flag_checking)
+    verify_live_on_entry (live);
 
   calculate_live_on_exit (live);
 
@@ -1411,7 +1280,6 @@ debug (tree_live_info_d *ptr)
 }
 
 
-#ifdef ENABLE_CHECKING
 /* Verify that SSA_VAR is a non-virtual SSA_NAME.  */
 
 void
@@ -1435,7 +1303,7 @@ verify_live_on_entry (tree_live_info_p live)
 {
   unsigned i;
   tree var;
-  gimple stmt;
+  gimple *stmt;
   basic_block bb;
   edge e;
   int num;
@@ -1525,6 +1393,12 @@ verify_live_on_entry (tree_live_info_p live)
 		  }
 		if (ok)
 		  continue;
+		/* Expand adds unused default defs for PARM_DECLs and
+		   RESULT_DECLs.  They're ok.  */
+		if (has_zero_uses (var)
+		    && SSA_NAME_VAR (var)
+		    && !VAR_P (SSA_NAME_VAR (var)))
+		  continue;
 	        num++;
 		print_generic_expr (stderr, var, TDF_SLIM);
 		fprintf (stderr, " is not marked live-on-entry to entry BB%d ",
@@ -1535,4 +1409,3 @@ verify_live_on_entry (tree_live_info_p live)
     }
   gcc_assert (num <= 0);
 }
-#endif

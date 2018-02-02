@@ -1,5 +1,5 @@
 /* params.h - Run-time parameters.
-   Copyright (C) 2001-2015 Free Software Foundation, Inc.
+   Copyright (C) 2001-2016 Free Software Foundation, Inc.
    Written by Mark Mitchell <mark@codesourcery.com>.
 
 This file is part of GCC.
@@ -55,6 +55,9 @@ struct param_info
 
   /* A short description of the option.  */
   const char *const help;
+
+  /* The optional names corresponding to the values.  */
+  const char **value_names;
 };
 
 /* An array containing the compiler parameters and their current
@@ -81,12 +84,12 @@ extern void set_param_value (const char *name, int value,
 
 enum compiler_param
 {
-#define DEFPARAM(enumerator, option, msgid, default, min, max) \
-  enumerator,
-#include "params.def"
-#undef DEFPARAM
+#include "params.list"
   LAST_PARAM
 };
+
+extern bool find_param (const char *, enum compiler_param *);
+extern bool param_string_value_p (enum compiler_param, const char *, int *);
 
 /* The value of the parameter given by ENUM.  Not an lvalue.  */
 #define PARAM_VALUE(ENUM) \

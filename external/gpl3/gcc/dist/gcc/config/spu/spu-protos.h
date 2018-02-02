@@ -1,4 +1,4 @@
-/* Copyright (C) 2006-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2006-2016 Free Software Foundation, Inc.
 
    This file is free software; you can redistribute it and/or modify it under
    the terms of the GNU General Public License as published by the Free
@@ -76,6 +76,8 @@ extern void spu_builtin_promote (rtx ops[]);
 extern void spu_expand_sign_extend (rtx ops[]);
 extern void spu_expand_vector_init (rtx target, rtx vals);
 extern rtx spu_legitimize_reload_address (rtx, machine_mode, int, int);
+extern void spu_expand_atomic_op (enum rtx_code code, rtx mem, rtx val,
+				  rtx orig_before, rtx orig_after);
 #endif /* RTX_CODE  */
 
 extern void spu_init_expanders (void);

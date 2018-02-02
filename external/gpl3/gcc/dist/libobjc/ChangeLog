@@ -1,22 +1,85 @@
-2017-10-10  Release Manager
+2017-07-04  Release Manager
 
-	* GCC 5.5.0 released.
+	* GCC 6.4.0 released.
 
-2016-06-03  Release Manager
+2016-12-21  Release Manager
 
-	* GCC 5.4.0 released.
+	* GCC 6.3.0 released.
 
-2015-12-04  Release Manager
+2016-08-22  Release Manager
 
-	* GCC 5.3.0 released.
+	* GCC 6.2.0 released.
 
-2015-07-16  Release Manager
+2016-04-27  Release Manager
 
-	* GCC 5.2.0 released.
+	* GCC 6.1.0 released.
 
-2015-04-22  Release Manager
+2016-01-04  Jakub Jelinek  <jakub@redhat.com>
 
-	* GCC 5.1.0 released.
+	Update copyright years.
+
+2015-11-07  Trevor Saunders  <tbsaunde+gcc@tbsaunde.org>
+
+	PR libobjc/24775
+	* encoding.c (_darwin_rs6000_special_round_type_align): Use
+	__CHAR_BIT__ instead of BITS_PER_UNIT.
+	(objc_sizeof_type): Likewise.
+	(objc_layout_structure): Likewise.
+	(objc_layout_structure_next_member): Likewise.
+	(objc_layout_finish_structure): Likewise.
+	(objc_layout_structure_get_info): Likewise.
+
+2015-11-03  Trevor Saunders  <tbsaunde+gcc@tbsaunde.org>
+
+	PR libobjc/24775
+	* encoding.c (objc_layout_finish_structure): Remove usage of
+	ROUND_TYPE_SIZE.
+
+2015-09-12  Trevor Saunders  <tbsaunde+gcc@tbsaunde.org>
+
+	PR libobjc/24775
+	* sendmsg.c (tm.h): Remove include.
+
+2015-09-12  Trevor Saunders  <tbsaunde+gcc@tbsaunde.org>
+
+	PR libobjc/24775
+	* sendmsg.c (gen_rtx): Remove macro.
+	(gen_rtx_MEM): Likewise.
+	(gen_rtx_REG): Likewise.
+	(rtx): Likewise.
+
+2015-09-12  Trevor Saunders  <tbsaunde+gcc@tbsaunde.org>
+
+	PR libobjc/24775
+	* sendmsg.c: Remove check of STRUCT_VALUE macro.
+
+2015-05-13  Eric Botcazou  <ebotcazou@adacore.com>
+
+	* configure.ac: Remove manual SJLJ check.
+	* config.h.in: Regenerate.
+	* configure: Likewise.
+	* exception.c: Replace SJLJ_EXCEPTIONS by __USING_SJLJ_EXCEPTIONS__.
+
+2015-05-13  Michael Haubenwallner  <michael.haubenwallner@ssi-schaefer.com>
+
+	* aclocal.m4: Regenerated with automake-1.11.6.
+
+2015-05-04  Trevor Saunders  <tbsaunde+gcc@tbsaunde.org>
+
+	* configure: Regenerate.
+
+2015-05-01  Trevor Saunders  <tbsaunde+gcc@tbsaunde.org>
+
+	* acinclude.m4: Include bitfields.m4.
+	* config.h.in: Regenerate.
+	* configure: Likewise.
+	* configure.ac: Invoke gt_BITFIELD_TYPE_MATTERS.
+	* encoding.c: Check HAVE_BITFIELD_TYPE_MATTERS.
+
+2015-04-29  Trevor Saunders  <tbsaunde+gcc@tbsaunde.org>
+
+	* encoding.c (objc_layout_structure_next_member): Check the value of
+	PCC_BITFIELD_TYPE_MATTERS not if it is defined.
 
 2015-02-05  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
 
@@ -3357,3 +3420,9 @@ Mon Sep 21 23:27:10 1998  Ovidiu Predescu <ovidiu@slip.net>
 1998-09-21  Ben Elliston  <bje@cygnus.com>
 
 	* New directory.  Moved files from ../gcc/objc.
+
+Copyright (C) 1998-2016 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.

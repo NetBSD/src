@@ -1,5 +1,5 @@
 /* Callgraph transformations to handle inlining
-   Copyright (C) 2003-2015 Free Software Foundation, Inc.
+   Copyright (C) 2003-2016 Free Software Foundation, Inc.
    Contributed by Jan Hubicka
 
 This file is part of GCC.
@@ -32,35 +32,16 @@ along with GCC; see the file COPYING3.  If not see
 #include "system.h"
 #include "coretypes.h"
 #include "tm.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "wide-int.h"
-#include "inchash.h"
-#include "tree.h"
-#include "langhooks.h"
-#include "intl.h"
-#include "coverage.h"
-#include "ggc.h"
-#include "tree-cfg.h"
-#include "hash-map.h"
-#include "is-a.h"
-#include "plugin-api.h"
-#include "hard-reg-set.h"
-#include "input.h"
 #include "function.h"
-#include "ipa-ref.h"
-#include "cgraph.h"
+#include "tree.h"
 #include "alloc-pool.h"
+#include "tree-pass.h"
+#include "cgraph.h"
+#include "tree-cfg.h"
 #include "symbol-summary.h"
 #include "ipa-prop.h"
 #include "ipa-inline.h"
 #include "tree-inline.h"
-#include "tree-pass.h"
 
 int ncalls_inlined;
 int nfunctions_inlined;
@@ -320,9 +301,11 @@ inline_call (struct cgraph_edge *e, bool update_original,
   struct cgraph_node *callee = e->callee->ultimate_alias_target ();
   bool new_edges_found = false;
 
+  int estimated_growth = 0;
+  if (! update_overall_summary)
+    estimated_growth = estimate_edge_growth (e);
   /* This is used only for assert bellow.  */
 #if 0
-  int estimated_growth = estimate_edge_growth (e);
   bool predicated = inline_edge_summary (e)->predicate != NULL;
 #endif
 
@@ -353,7 +336,6 @@ inline_call (struct cgraph_edge *e, bool update_original,
       if (dump_file)
 	fprintf (dump_file, "Dropping flag_strict_aliasing on %s:%i\n",
 		 to->name (), to->order);
-      build_optimization_node (&opts);
       DECL_FUNCTION_SPECIFIC_OPTIMIZATION (to->decl)
 	 = build_optimization_node (&opts);
       reload_optimization_node = true;
@@ -398,7 +380,13 @@ inline_call (struct cgraph_edge *e, bool update_original,
     new_edges_found = ipa_propagate_indirect_call_infos (curr, new_edges);
   check_speculations (e->callee);
   if (update_overall_summary)
-   inline_update_overall_summary (to);
+    inline_update_overall_summary (to);
+  else
+    /* Update self size by the estimate so overall function growth limits
+       work for further inlining into this function.  Before inlining
+       the function we inlined to again we expect the caller to update
+       the overall summary.  */
+    inline_summaries->get (to)->size += estimated_growth;
   new_size = inline_summaries->get (to)->size;
 
   if (callee->calls_comdat_local)
@@ -526,10 +514,9 @@ save_inline_function_body (struct cgraph_node *node)
       first_clone->remove_symbol_and_inline_clones ();
       first_clone = NULL;
     }
-#ifdef ENABLE_CHECKING
-  else
+  else if (flag_checking)
     first_clone->verify ();
-#endif
+
   return first_clone;
 }
 

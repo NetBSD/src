@@ -1,5 +1,5 @@
 /* Definitions for Toshiba Media Processor
-   Copyright (C) 2001-2015 Free Software Foundation, Inc.
+   Copyright (C) 2001-2016 Free Software Foundation, Inc.
    Contributed by Red Hat, Inc.
 
 This file is part of GCC.
@@ -499,8 +499,6 @@ typedef struct
 
 #define DEFAULT_PCC_STRUCT_RETURN 0
 
-#define STRUCT_VALUE 0
-
 #define FUNCTION_OK_FOR_SIBCALL(DECL) mep_function_ok_for_sibcall(DECL)
 
 /* Prologue and epilogues are all handled via RTL.  */
@@ -554,7 +552,7 @@ typedef struct
 
 /* Define this macro if it is as good or better to call a constant function
    address than to call an address kept in a register.  */
-#define NO_FUNCTION_CSE 
+#define NO_FUNCTION_CSE 1
 
 
 #define TEXT_SECTION_ASM_OP "\t.text\n\t.core"
@@ -762,10 +760,10 @@ typedef struct
 
 #define CASE_VECTOR_MODE SImode
 
-#define WORD_REGISTER_OPERATIONS
+#define WORD_REGISTER_OPERATIONS 1
 #define LOAD_EXTEND_OP(MODE) SIGN_EXTEND
 
-#define SHORT_IMMEDIATES_SIGN_EXTEND
+#define SHORT_IMMEDIATES_SIGN_EXTEND 1
 
 #define MOVE_MAX 4
 

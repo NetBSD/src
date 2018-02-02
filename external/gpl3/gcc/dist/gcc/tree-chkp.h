@@ -1,5 +1,5 @@
 /* Declaration of interface functions of Pointer Bounds Checker.
-   Copyright (C) 2014-2015 Free Software Foundation, Inc.
+   Copyright (C) 2014-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -49,9 +49,9 @@ extern void chkp_build_bndstx (tree addr, tree ptr, tree bounds,
 extern gcall *chkp_retbnd_call_by_val (tree val);
 extern bool chkp_function_instrumented_p (tree fndecl);
 extern void chkp_function_mark_instrumented (tree fndecl);
-extern void chkp_copy_bounds_for_assign (gimple assign,
+extern void chkp_copy_bounds_for_assign (gimple *assign,
 					 struct cgraph_edge *edge);
-extern bool chkp_gimple_call_builtin_p (gimple call,
+extern bool chkp_gimple_call_builtin_p (gimple *call,
 					enum built_in_function code);
 extern rtx chkp_expand_zero_bounds (void);
 extern void chkp_expand_bounds_reset_for_mem (tree mem, tree ptr);
@@ -59,5 +59,6 @@ extern tree chkp_insert_retbnd_call (tree bndval, tree retval,
 				     gimple_stmt_iterator *gsi);
 extern gcall *chkp_copy_call_skip_bounds (gcall *call);
 extern bool chkp_redirect_edge (cgraph_edge *e);
+extern void chkp_fixup_inlined_call (tree lhs, tree rhs);
 
 #endif /* GCC_TREE_CHKP_H */

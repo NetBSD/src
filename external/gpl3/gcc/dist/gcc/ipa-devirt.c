@@ -1,6 +1,6 @@
 /* Basic IPA utilities for type inheritance graph construction and
    devirtualization.
-   Copyright (C) 2013-2015 Free Software Foundation, Inc.
+   Copyright (C) 2013-2016 Free Software Foundation, Inc.
    Contributed by Jan Hubicka
 
 This file is part of GCC.
@@ -108,76 +108,39 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "tm.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "hash-map.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "wide-int.h"
-#include "inchash.h"
+#include "backend.h"
+#include "rtl.h"
 #include "tree.h"
+#include "gimple.h"
+#include "alloc-pool.h"
+#include "tree-pass.h"
+#include "cgraph.h"
+#include "lto-streamer.h"
 #include "fold-const.h"
 #include "print-tree.h"
 #include "calls.h"
-#include "predict.h"
-#include "basic-block.h"
-#include "is-a.h"
-#include "plugin-api.h"
-#include "hard-reg-set.h"
-#include "function.h"
-#include "ipa-ref.h"
-#include "cgraph.h"
-#include "hashtab.h"
-#include "rtl.h"
-#include "flags.h"
-#include "statistics.h"
-#include "real.h"
-#include "fixed-value.h"
-#include "insn-config.h"
-#include "expmed.h"
-#include "dojump.h"
-#include "explow.h"
-#include "emit-rtl.h"
-#include "varasm.h"
-#include "stmt.h"
-#include "expr.h"
-#include "tree-pass.h"
-#include "target.h"
-#include "hash-table.h"
-#include "tree-pretty-print.h"
 #include "ipa-utils.h"
-#include "tree-ssa-alias.h"
-#include "internal-fn.h"
 #include "gimple-fold.h"
-#include "gimple-expr.h"
-#include "gimple.h"
-#include "alloc-pool.h"
 #include "symbol-summary.h"
 #include "ipa-prop.h"
 #include "ipa-inline.h"
-#include "diagnostic.h"
-#include "tree-dfa.h"
 #include "demangle.h"
 #include "dbgcnt.h"
 #include "gimple-pretty-print.h"
-#include "stor-layout.h"
 #include "intl.h"
-#include "streamer-hooks.h"
-#include "lto-streamer.h"
 
 /* Hash based set of pairs of types.  */
-typedef struct
+struct type_pair
 {
   tree first;
   tree second;
-} type_pair;
+};
 
-struct pair_traits : default_hashset_traits
+template <>
+struct default_hash_traits <type_pair> : typed_noop_remove <type_pair>
 {
+  typedef type_pair value_type;
+  typedef type_pair compare_type;
   static hashval_t
   hash (type_pair p)
   {
@@ -206,7 +169,8 @@ struct pair_traits : default_hashset_traits
 };
 
 static bool odr_types_equivalent_p (tree, tree, bool, bool *,
-				    hash_set<type_pair,pair_traits> *);
+				    hash_set<type_pair> *,
+				    location_t, location_t);
 
 static bool odr_violation_reported = false;
 
@@ -306,13 +270,12 @@ type_possibly_instantiated_p (tree t)
 /* Hash used to unify ODR types based on their mangled name and for anonymous
    namespace types.  */
 
-struct odr_name_hasher
+struct odr_name_hasher : pointer_hash <odr_type_d>
 {
-  typedef odr_type_d value_type;
-  typedef union tree_node compare_type;
-  static inline hashval_t hash (const value_type *);
-  static inline bool equal (const value_type *, const compare_type *);
-  static inline void remove (value_type *);
+  typedef union tree_node *compare_type;
+  static inline hashval_t hash (const odr_type_d *);
+  static inline bool equal (const odr_type_d *, const tree_node *);
+  static inline void remove (odr_type_d *);
 };
 
 /* Has used to unify ODR types based on their associated virtual table.
@@ -321,8 +284,8 @@ struct odr_name_hasher
 
 struct odr_vtable_hasher:odr_name_hasher
 {
-  static inline hashval_t hash (const value_type *);
-  static inline bool equal (const value_type *, const compare_type *);
+  static inline hashval_t hash (const odr_type_d *);
+  static inline bool equal (const odr_type_d *, const tree_node *);
 };
 
 /* Return type that was declared with T's name so that T is an
@@ -341,8 +304,7 @@ main_odr_variant (const_tree t)
 static bool
 can_be_name_hashed_p (tree t)
 {
-  return (!in_lto_p || type_in_anonymous_namespace_p (t)
-	  || (TYPE_NAME (t) && DECL_ASSEMBLER_NAME_SET_P (TYPE_NAME (t))));
+  return (!in_lto_p || odr_type_p (t));
 }
 
 /* Hash type by its ODR name.  */
@@ -358,7 +320,7 @@ hash_odr_name (const_tree t)
     return htab_hash_pointer (t);
 
   /* Anonymous types are unique.  */
-  if (type_in_anonymous_namespace_p (t))
+  if (type_with_linkage_p (t) && type_in_anonymous_namespace_p (t))
     return htab_hash_pointer (t);
 
   gcc_checking_assert (TYPE_NAME (t)
@@ -369,7 +331,7 @@ hash_odr_name (const_tree t)
 /* Return the computed hashcode for ODR_TYPE.  */
 
 inline hashval_t
-odr_name_hasher::hash (const value_type *odr_type)
+odr_name_hasher::hash (const odr_type_d *odr_type)
 {
   return hash_odr_name (odr_type->type);
 }
@@ -381,7 +343,7 @@ can_be_vtable_hashed_p (tree t)
   if (TYPE_MAIN_VARIANT (t) != t)
     return false;
   /* Anonymous namespace types are always handled by name hash.  */
-  if (type_in_anonymous_namespace_p (t))
+  if (type_with_linkage_p (t) && type_in_anonymous_namespace_p (t))
     return false;
   return (TREE_CODE (t) == RECORD_TYPE
 	  && TYPE_BINFO (t) && BINFO_VTABLE (TYPE_BINFO (t)));
@@ -414,7 +376,7 @@ hash_odr_vtable (const_tree t)
 /* Return the computed hashcode for ODR_TYPE.  */
 
 inline hashval_t
-odr_vtable_hasher::hash (const value_type *odr_type)
+odr_vtable_hasher::hash (const odr_type_d *odr_type)
 {
   return hash_odr_vtable (odr_type->type);
 }
@@ -431,7 +393,7 @@ odr_vtable_hasher::hash (const value_type *odr_type)
 
    When STRICT is true, we compare types by their names for purposes of
    ODR violation warnings.  When strict is false, we consider variants
-   equivalent, becuase it is all that matters for devirtualization machinery.
+   equivalent, because it is all that matters for devirtualization machinery.
 */
 
 bool
@@ -455,8 +417,8 @@ types_same_for_odr (const_tree type1, const_tree type2, bool strict)
 
   /* Check for anonymous namespaces. Those have !TREE_PUBLIC
      on the corresponding TYPE_STUB_DECL.  */
-  if (type_in_anonymous_namespace_p (type1)
-      || type_in_anonymous_namespace_p (type2))
+  if ((type_with_linkage_p (type1) && type_in_anonymous_namespace_p (type1))
+      || (type_with_linkage_p (type2) && type_in_anonymous_namespace_p (type2)))
     return false;
 
 
@@ -528,7 +490,8 @@ bool
 types_odr_comparable (tree t1, tree t2, bool strict)
 {
   return (!in_lto_p
-	  || (strict ? main_odr_variant (t1) == main_odr_variant (t2)
+	  || (strict ? (main_odr_variant (t1) == main_odr_variant (t2)
+			&& main_odr_variant (t1))
 	      : TYPE_MAIN_VARIANT (t1) == TYPE_MAIN_VARIANT (t2))
 	  || (odr_type_p (t1) && odr_type_p (t2))
 	  || (TREE_CODE (t1) == RECORD_TYPE && TREE_CODE (t2) == RECORD_TYPE
@@ -549,11 +512,64 @@ types_must_be_same_for_odr (tree t1, tree t2)
     return TYPE_MAIN_VARIANT (t1) == TYPE_MAIN_VARIANT (t2);
 }
 
+/* If T is compound type, return type it is based on.  */
+
+static tree
+compound_type_base (const_tree t)
+{
+  if (TREE_CODE (t) == ARRAY_TYPE
+      || POINTER_TYPE_P (t)
+      || TREE_CODE (t) == COMPLEX_TYPE
+      || VECTOR_TYPE_P (t))
+    return TREE_TYPE (t);
+  if (TREE_CODE (t) == METHOD_TYPE)
+    return TYPE_METHOD_BASETYPE (t);
+  if (TREE_CODE (t) == OFFSET_TYPE)
+    return TYPE_OFFSET_BASETYPE (t);
+  return NULL_TREE;
+}
+
+/* Return true if T is either ODR type or compound type based from it.
+   If the function return true, we know that T is a type originating from C++
+   source even at link-time.  */
+
+bool
+odr_or_derived_type_p (const_tree t)
+{
+  do
+    {
+      if (odr_type_p (t))
+	return true;
+      /* Function type is a tricky one. Basically we can consider it
+	 ODR derived if return type or any of the parameters is.
+	 We need to check all parameters because LTO streaming merges
+	 common types (such as void) and they are not considered ODR then.  */
+      if (TREE_CODE (t) == FUNCTION_TYPE)
+	{
+	  if (TYPE_METHOD_BASETYPE (t))
+	    t = TYPE_METHOD_BASETYPE (t);
+	  else
+	   {
+	     if (TREE_TYPE (t) && odr_or_derived_type_p (TREE_TYPE (t)))
+	       return true;
+	     for (t = TYPE_ARG_TYPES (t); t; t = TREE_CHAIN (t))
+	       if (odr_or_derived_type_p (TREE_VALUE (t)))
+		 return true;
+	     return false;
+	   }
+	}
+      else
+	t = compound_type_base (t);
+    }
+  while (t);
+  return t;
+}
+
 /* Compare types T1 and T2 and return true if they are
    equivalent.  */
 
 inline bool
-odr_name_hasher::equal (const value_type *o1, const compare_type *t2)
+odr_name_hasher::equal (const odr_type_d *o1, const tree_node *t2)
 {
   tree t1 = o1->type;
 
@@ -565,8 +581,8 @@ odr_name_hasher::equal (const value_type *o1, const compare_type *t2)
     return false;
   /* Check for anonymous namespaces. Those have !TREE_PUBLIC
      on the corresponding TYPE_STUB_DECL.  */
-  if (type_in_anonymous_namespace_p (t1)
-      || type_in_anonymous_namespace_p (t2))
+  if ((type_with_linkage_p (t1) && type_in_anonymous_namespace_p (t1))
+      || (type_with_linkage_p (t2) && type_in_anonymous_namespace_p (t2)))
     return false;
   gcc_checking_assert (DECL_ASSEMBLER_NAME (TYPE_NAME (t1)));
   gcc_checking_assert (DECL_ASSEMBLER_NAME (TYPE_NAME (t2)));
@@ -578,7 +594,7 @@ odr_name_hasher::equal (const value_type *o1, const compare_type *t2)
    equivalent.  */
 
 inline bool
-odr_vtable_hasher::equal (const value_type *o1, const compare_type *t2)
+odr_vtable_hasher::equal (const odr_type_d *o1, const tree_node *t2)
 {
   tree t1 = o1->type;
 
@@ -602,7 +618,7 @@ odr_vtable_hasher::equal (const value_type *o1, const compare_type *t2)
 /* Free ODR type V.  */
 
 inline void
-odr_name_hasher::remove (value_type *v)
+odr_name_hasher::remove (odr_type_d *v)
 {
   v->bases.release ();
   v->derived_types.release ();
@@ -640,9 +656,9 @@ set_type_binfo (tree type, tree binfo)
 
 static bool
 odr_subtypes_equivalent_p (tree t1, tree t2,
-			   hash_set<type_pair,pair_traits> *visited)
+			   hash_set<type_pair> *visited,
+			   location_t loc1, location_t loc2)
 {
-  bool an1, an2;
 
   /* This can happen in incomplete types that should be handled earlier.  */
   gcc_assert (t1 && t2);
@@ -653,9 +669,8 @@ odr_subtypes_equivalent_p (tree t1, tree t2,
     return true;
 
   /* Anonymous namespace types must match exactly.  */
-  an1 = type_in_anonymous_namespace_p (t1);
-  an2 = type_in_anonymous_namespace_p (t2);
-  if (an1 != an2 || an1)
+  if ((type_with_linkage_p (t1) && type_in_anonymous_namespace_p (t1))
+      || (type_with_linkage_p (t2) && type_in_anonymous_namespace_p (t2)))
     return false;
 
   /* For ODR types be sure to compare their names.
@@ -667,7 +682,7 @@ odr_subtypes_equivalent_p (tree t1, tree t2,
         return false;
       /* Limit recursion: If subtypes are ODR types and we know
          that they are same, be happy.  */
-      if (!get_odr_type (t1, true)->odr_violated)
+      if (!odr_type_p (t1) || !get_odr_type (t1, true)->odr_violated)
         return true;
     }
 
@@ -675,7 +690,8 @@ odr_subtypes_equivalent_p (tree t1, tree t2,
      have to be compared structurally.  */
   if (TREE_CODE (t1) != TREE_CODE (t2))
     return false;
-  if ((TYPE_NAME (t1) == NULL_TREE) != (TYPE_NAME (t2) == NULL_TREE))
+  if (AGGREGATE_TYPE_P (t1)
+      && (TYPE_NAME (t1) == NULL_TREE) != (TYPE_NAME (t2) == NULL_TREE))
     return false;
 
   type_pair pair={t1,t2};
@@ -686,7 +702,30 @@ odr_subtypes_equivalent_p (tree t1, tree t2,
     }
   if (visited->add (pair))
     return true;
-  return odr_types_equivalent_p (t1, t2, false, NULL, visited);
+  return odr_types_equivalent_p (t1, t2, false, NULL, visited, loc1, loc2);
+}
+
+/* Return true if DECL1 and DECL2 are identical methods.  Consider
+   name equivalent to name.localalias.xyz.  */
+
+static bool
+methods_equal_p (tree decl1, tree decl2)
+{
+  if (DECL_ASSEMBLER_NAME (decl1) == DECL_ASSEMBLER_NAME (decl2))
+    return true;
+  const char sep = symbol_table::symbol_suffix_separator ();
+
+  const char *name1 = IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (decl1));
+  const char *ptr1 = strchr (name1, sep);
+  int len1 = ptr1 ? ptr1 - name1 : strlen (name1);
+
+  const char *name2 = IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (decl2));
+  const char *ptr2 = strchr (name2, sep);
+  int len2 = ptr2 ? ptr2 - name2 : strlen (name2);
+
+  if (len1 != len2)
+    return false;
+  return !strncmp (name1, name2, len1);
 }
 
 /* Compare two virtual tables, PREVAILING and VTABLE and output ODR
@@ -742,8 +781,8 @@ compare_virtual_tables (varpool_node *prevailing, varpool_node *vtable)
 	 accept the other case.  */
       while (!end2
 	     && (end1
-	         || (DECL_ASSEMBLER_NAME (ref1->referred->decl)
-		     != DECL_ASSEMBLER_NAME (ref2->referred->decl)
+	         || (methods_equal_p (ref1->referred->decl,
+				      ref2->referred->decl)
 	             && TREE_CODE (ref1->referred->decl) == FUNCTION_DECL))
 	     && TREE_CODE (ref2->referred->decl) != FUNCTION_DECL)
 	{
@@ -769,8 +808,7 @@ compare_virtual_tables (varpool_node *prevailing, varpool_node *vtable)
 	}
       while (!end1
 	     && (end2
-	         || (DECL_ASSEMBLER_NAME (ref2->referred->decl)
-		     != DECL_ASSEMBLER_NAME (ref1->referred->decl)
+	         || (methods_equal_p (ref2->referred->decl, ref1->referred->decl)
 	             && TREE_CODE (ref2->referred->decl) == FUNCTION_DECL))
 	     && TREE_CODE (ref1->referred->decl) != FUNCTION_DECL)
 	{
@@ -807,8 +845,7 @@ compare_virtual_tables (varpool_node *prevailing, varpool_node *vtable)
 
       if (!end1 && !end2)
 	{
-	  if (DECL_ASSEMBLER_NAME (ref1->referred->decl)
-	      == DECL_ASSEMBLER_NAME (ref2->referred->decl))
+	  if (methods_equal_p (ref1->referred->decl, ref2->referred->decl))
 	    continue;
 
 	  class_type->odr_violated = true;
@@ -882,7 +919,7 @@ compare_virtual_tables (varpool_node *prevailing, varpool_node *vtable)
 		  inform (DECL_SOURCE_LOCATION
 			   (TYPE_NAME (DECL_CONTEXT (prevailing->decl))),
 			  "the conflicting type defined in another translation "
-			  "unit has virtual table table with more entries");
+			  "unit has virtual table with more entries");
 		}
 	    }
 	  return;
@@ -904,17 +941,20 @@ compare_virtual_tables (varpool_node *prevailing, varpool_node *vtable)
 		      "unit");
 	      gcc_assert (TREE_CODE (ref2->referred->decl)
 			  == FUNCTION_DECL);
-	      inform (DECL_SOURCE_LOCATION (ref1->referred->decl),
-		      "virtual method %qD", ref1->referred->decl);
-	      inform (DECL_SOURCE_LOCATION (ref2->referred->decl),
+	      inform (DECL_SOURCE_LOCATION
+			 (ref1->referred->ultimate_alias_target ()->decl),
+		      "virtual method %qD",
+		      ref1->referred->ultimate_alias_target ()->decl);
+	      inform (DECL_SOURCE_LOCATION
+			 (ref2->referred->ultimate_alias_target ()->decl),
 		      "ought to match virtual method %qD but does not",
-		      ref2->referred->decl);
+		      ref2->referred->ultimate_alias_target ()->decl);
 	    }
 	  else
 	    inform (DECL_SOURCE_LOCATION
 		      (TYPE_NAME (DECL_CONTEXT (prevailing->decl))),
 		    "the conflicting type defined in another translation "
-		    "unit has virtual table table with different contents");
+		    "unit has virtual table with different contents");
 	  return;
 	}
     }
@@ -943,7 +983,7 @@ warn_odr (tree t1, tree t2, tree st1, tree st2,
     lto_location_cache::current_cache->apply_location_cache ();
 
   if (!warning_at (DECL_SOURCE_LOCATION (TYPE_NAME (t1)), OPT_Wodr,
-		   "type %qT violates one definition rule",
+		   "type %qT violates the C++ One Definition Rule",
 		   t1))
     return;
   if (!st1 && !st2)
@@ -983,16 +1023,107 @@ warn_odr (tree t1, tree t2, tree st1, tree st2,
     *warned = true;
 }
 
-/* We already warned about ODR mismatch.  T1 and T2 ought to be equivalent
-   because they are used on same place in ODR matching types.
-   They are not; inform the user.  */
+/* Return ture if T1 and T2 are incompatible and we want to recusively
+   dive into them from warn_type_mismatch to give sensible answer.  */
+
+static bool
+type_mismatch_p (tree t1, tree t2)
+{
+  if (odr_or_derived_type_p (t1) && odr_or_derived_type_p (t2)
+      && !odr_types_equivalent_p (t1, t2))
+    return true;
+  return !types_compatible_p (t1, t2);
+}
+
+
+/* Types T1 and T2 was found to be incompatible in a context they can't
+   (either used to declare a symbol of same assembler name or unified by
+   ODR rule).  We already output warning about this, but if possible, output
+   extra information on how the types mismatch.
+
+   This is hard to do in general.  We basically handle the common cases.
+
+   If LOC1 and LOC2 are meaningful locations, use it in the case the types
+   themselves do no thave one.*/
 
 void
-warn_types_mismatch (tree t1, tree t2)
+warn_types_mismatch (tree t1, tree t2, location_t loc1, location_t loc2)
 {
-  /* If types have names and they are different, it is most informative to
-     output those.  */
+  /* Location of type is known only if it has TYPE_NAME and the name is
+     TYPE_DECL.  */
+  location_t loc_t1 = TYPE_NAME (t1) && TREE_CODE (TYPE_NAME (t1)) == TYPE_DECL
+		      ? DECL_SOURCE_LOCATION (TYPE_NAME (t1))
+		      : UNKNOWN_LOCATION;
+  location_t loc_t2 = TYPE_NAME (t2) && TREE_CODE (TYPE_NAME (t2)) == TYPE_DECL
+		      ? DECL_SOURCE_LOCATION (TYPE_NAME (t2))
+		      : UNKNOWN_LOCATION;
+  bool loc_t2_useful = false;
+
+  /* With LTO it is a common case that the location of both types match.
+     See if T2 has a location that is different from T1. If so, we will
+     inform user about the location.
+     Do not consider the location passed to us in LOC1/LOC2 as those are
+     already output.  */
+  if (loc_t2 > BUILTINS_LOCATION && loc_t2 != loc_t1)
+    {
+      if (loc_t1 <= BUILTINS_LOCATION)
+	loc_t2_useful = true;
+      else
+	{
+	  expanded_location xloc1 = expand_location (loc_t1);
+	  expanded_location xloc2 = expand_location (loc_t2);
+
+	  if (strcmp (xloc1.file, xloc2.file)
+	      || xloc1.line != xloc2.line
+	      || xloc1.column != xloc2.column)
+	    loc_t2_useful = true;
+	}
+    }
+
+  if (loc_t1 <= BUILTINS_LOCATION)
+    loc_t1 = loc1;
+  if (loc_t2 <= BUILTINS_LOCATION)
+    loc_t2 = loc2;
+
+  location_t loc = loc_t1 <= BUILTINS_LOCATION ? loc_t2 : loc_t1;
+
+  /* It is a quite common bug to reference anonymous namespace type in
+     non-anonymous namespace class.  */
+  if ((type_with_linkage_p (t1) && type_in_anonymous_namespace_p (t1))
+      || (type_with_linkage_p (t2) && type_in_anonymous_namespace_p (t2)))
+    {
+      if (type_with_linkage_p (t1) && !type_in_anonymous_namespace_p (t1))
+	{
+	  std::swap (t1, t2);
+	  std::swap (loc_t1, loc_t2);
+	}
+      gcc_assert (TYPE_NAME (t1) && TYPE_NAME (t2)
+		  && TREE_CODE (TYPE_NAME (t1)) == TYPE_DECL
+		  && TREE_CODE (TYPE_NAME (t2)) == TYPE_DECL);
+      /* Most of the time, the type names will match, do not be unnecesarily
+         verbose.  */
+      if (IDENTIFIER_POINTER (DECL_NAME (TYPE_NAME (t1)))
+	  != IDENTIFIER_POINTER (DECL_NAME (TYPE_NAME (t2))))
+        inform (loc_t1,
+	        "type %qT defined in anonymous namespace can not match "
+	        "type %qT across the translation unit boundary",
+	        t1, t2);
+      else
+        inform (loc_t1,
+	        "type %qT defined in anonymous namespace can not match "
+	        "across the translation unit boundary",
+	        t1);
+      if (loc_t2_useful)
+        inform (loc_t2,
+	        "the incompatible type defined in another translation unit");
+      return;
+    }
+  /* If types have mangled ODR names and they are different, it is most
+     informative to output those.
+     This also covers types defined in different namespaces.  */
   if (TYPE_NAME (t1) && TYPE_NAME (t2)
+      && TREE_CODE (TYPE_NAME (t1)) == TYPE_DECL
+      && TREE_CODE (TYPE_NAME (t2)) == TYPE_DECL
       && DECL_ASSEMBLER_NAME_SET_P (TYPE_NAME (t1))
       && DECL_ASSEMBLER_NAME_SET_P (TYPE_NAME (t2))
       && DECL_ASSEMBLER_NAME (TYPE_NAME (t1))
@@ -1006,44 +1137,18 @@ warn_types_mismatch (tree t1, tree t2)
 	  DMGL_PARAMS | DMGL_ANSI | DMGL_TYPES);
       if (name1 && name2 && strcmp (name1, name2))
 	{
-	  inform (DECL_SOURCE_LOCATION (TYPE_NAME (t1)),
+	  inform (loc_t1,
 		  "type name %<%s%> should match type name %<%s%>",
 		  name1, name2);
-	  inform (DECL_SOURCE_LOCATION (TYPE_NAME (t2)),
-		  "the incompatible type is defined here");
+	  if (loc_t2_useful)
+	    inform (loc_t2,
+		    "the incompatible type is defined here");
 	  free (name1);
 	  return;
 	}
       free (name1);
     }
-  /* It is a quite common bug to reference anonymous namespace type in
-     non-anonymous namespace class.  */
-  if (type_in_anonymous_namespace_p (t1)
-      || type_in_anonymous_namespace_p (t2))
-    {
-      if (!type_in_anonymous_namespace_p (t1))
-	{
-	  tree tmp = t1;;
-	  t1 = t2;
-	  t2 = tmp;
-	}
-      if (TYPE_NAME (t1) && TYPE_NAME (t2))
-	{
-	  inform (DECL_SOURCE_LOCATION (TYPE_NAME (t1)),
-		  "type %qT defined in anonymous namespace can not match "
-		  "type %qT",
-		  t1, t2);
-	  inform (DECL_SOURCE_LOCATION (TYPE_NAME (t2)),
-		  "the incompatible type defined in anonymous namespace in "
-		  "another translation unit");
-	}
-      else
-	inform (UNKNOWN_LOCATION,
-		"types in anonymous namespace does not match across "
-		"translation unit boundary");
-      return;
-    }
-  /* A tricky case are component types.  Often they appear the same in source
+  /* A tricky case are compound types.  Often they appear the same in source
      code and the mismatch is dragged in by type they are build from.
      Look for those differences in subtypes and try to be informative.  In other
      cases just output nothing because the source code is probably different
@@ -1052,7 +1157,6 @@ warn_types_mismatch (tree t1, tree t2)
     {
       if (TREE_CODE (t1) == TREE_CODE (t2))
 	{
-	  hash_set<type_pair,pair_traits> visited;
 	  if (TREE_CODE (t1) == ARRAY_TYPE
 	      && COMPLETE_TYPE_P (t1) && COMPLETE_TYPE_P (t2))
 	    {
@@ -1065,47 +1169,51 @@ warn_types_mismatch (tree t1, tree t2)
 		  && !operand_equal_p (TYPE_MAX_VALUE (i1),
 				       TYPE_MAX_VALUE (i2), 0))
 		{
-		  inform (UNKNOWN_LOCATION,
+		  inform (loc,
 			  "array types have different bounds");
 		  return;
 		}
 	    }
 	  if ((POINTER_TYPE_P (t1) || TREE_CODE (t1) == ARRAY_TYPE)
-	      && !odr_subtypes_equivalent_p (TREE_TYPE (t1),
-					     TREE_TYPE (t2),
-					     &visited))
-	    warn_types_mismatch (TREE_TYPE (t1), TREE_TYPE (t2));
+	      && type_mismatch_p (TREE_TYPE (t1), TREE_TYPE (t2)))
+	    warn_types_mismatch (TREE_TYPE (t1), TREE_TYPE (t2), loc_t1, loc_t2);
 	  else if (TREE_CODE (t1) == METHOD_TYPE
 		   || TREE_CODE (t1) == FUNCTION_TYPE)
 	    {
-	      tree parms1, parms2;
+	      tree parms1 = NULL, parms2 = NULL;
 	      int count = 1;
 
-	      if (!odr_subtypes_equivalent_p (TREE_TYPE (t1), TREE_TYPE (t2),
-					      &visited))
+	      if (type_mismatch_p (TREE_TYPE (t1), TREE_TYPE (t2)))
 		{
-		  inform (UNKNOWN_LOCATION, "return value type mismatch");
-		  warn_types_mismatch (TREE_TYPE (t1), TREE_TYPE (t2));
+		  inform (loc, "return value type mismatch");
+		  warn_types_mismatch (TREE_TYPE (t1), TREE_TYPE (t2), loc_t1,
+				       loc_t2);
 		  return;
 		}
-	      for (parms1 = TYPE_ARG_TYPES (t1), parms2 = TYPE_ARG_TYPES (t2);
-		   parms1 && parms2;
-		   parms1 = TREE_CHAIN (parms1), parms2 = TREE_CHAIN (parms2),
-		   count++)
-		{
-		  if (!odr_subtypes_equivalent_p
-		      (TREE_VALUE (parms1), TREE_VALUE (parms2), &visited))
-		    {
-		      inform (UNKNOWN_LOCATION,
-			      "type mismatch in parameter %i", count);
-		      warn_types_mismatch (TREE_VALUE (parms1),
-					   TREE_VALUE (parms2));
-		      return;
-		    }
-		}
+	      if (prototype_p (t1) && prototype_p (t2))
+		for (parms1 = TYPE_ARG_TYPES (t1), parms2 = TYPE_ARG_TYPES (t2);
+		     parms1 && parms2;
+		     parms1 = TREE_CHAIN (parms1), parms2 = TREE_CHAIN (parms2),
+		     count++)
+		  {
+		    if (type_mismatch_p (TREE_VALUE (parms1), TREE_VALUE (parms2)))
+		      {
+			if (count == 1 && TREE_CODE (t1) == METHOD_TYPE)
+			  inform (loc,
+				  "implicit this pointer type mismatch");
+			else
+			  inform (loc,
+				  "type mismatch in parameter %i",
+				  count - (TREE_CODE (t1) == METHOD_TYPE));
+			warn_types_mismatch (TREE_VALUE (parms1),
+					     TREE_VALUE (parms2),
+					     loc_t1, loc_t2);
+			return;
+		      }
+		  }
 	      if (parms1 || parms2)
 		{
-		  inform (UNKNOWN_LOCATION,
+		  inform (loc,
 			  "types have different parameter counts");
 		  return;
 		}
@@ -1113,52 +1221,39 @@ warn_types_mismatch (tree t1, tree t2)
 	}
       return;
     }
-  /* This should not happen but if it does, the warning would not be helpful.
-     TODO: turn it into assert next stage1.  */
-  if (TYPE_NAME (t1) == TYPE_NAME (t2))
+
+  if (types_odr_comparable (t1, t2, true)
+      && types_same_for_odr (t1, t2, true))
+    inform (loc_t1,
+	    "type %qT itself violates the C++ One Definition Rule", t1);
+  /* Prevent pointless warnings like "struct aa" should match "struct aa".  */
+  else if (TYPE_NAME (t1) == TYPE_NAME (t2)
+	   && TREE_CODE (t1) == TREE_CODE (t2) && !loc_t2_useful)
     return;
-  /* In Firefox it is a common bug to have same types but in
-     different namespaces.  Be a bit more informative on
-     this.  */
-  if (TYPE_CONTEXT (t1) && TYPE_CONTEXT (t2)
-      && (((TREE_CODE (TYPE_CONTEXT (t1)) == NAMESPACE_DECL)
-	    != (TREE_CODE (TYPE_CONTEXT (t2)) == NAMESPACE_DECL))
-	   || (TREE_CODE (TYPE_CONTEXT (t1)) == NAMESPACE_DECL
-	       && (DECL_NAME (TYPE_CONTEXT (t1)) !=
-		   DECL_NAME (TYPE_CONTEXT (t2))))))
-    inform (DECL_SOURCE_LOCATION (TYPE_NAME (t1)),
-	    "type %qT should match type %qT but is defined "
-	    "in different namespace  ",
-	    t1, t2);
-  else if (types_odr_comparable (t1, t2, true)
-	   && types_same_for_odr (t1, t2, true))
-    inform (DECL_SOURCE_LOCATION (TYPE_NAME (t1)),
-	    "type %qT should match type %qT that itself violate "
-	    "one definition rule",
-	    t1, t2);
   else
-    inform (DECL_SOURCE_LOCATION (TYPE_NAME (t1)),
-	    "type %qT should match type %qT",
+    inform (loc_t1, "type %qT should match type %qT",
 	    t1, t2);
-  if (DECL_SOURCE_LOCATION (TYPE_NAME (t2)) > BUILTINS_LOCATION)
-    inform (DECL_SOURCE_LOCATION (TYPE_NAME (t2)),
-	    "the incompatible type is defined here");
+  if (loc_t2_useful)
+    inform (loc_t2, "the incompatible type is defined here");
 }
 
 /* Compare T1 and T2, report ODR violations if WARN is true and set
    WARNED to true if anything is reported.  Return true if types match.
    If true is returned, the types are also compatible in the sense of
-   gimple_canonical_types_compatible_p.  */
+   gimple_canonical_types_compatible_p.
+   If LOC1 and LOC2 is not UNKNOWN_LOCATION it may be used to output a warning
+   about the type if the type itself do not have location.  */
 
 static bool
 odr_types_equivalent_p (tree t1, tree t2, bool warn, bool *warned,
-			hash_set<type_pair,pair_traits> *visited)
+			hash_set<type_pair> *visited,
+			location_t loc1, location_t loc2)
 {
   /* Check first for the obvious case of pointer identity.  */
   if (t1 == t2)
     return true;
-  gcc_assert (!type_in_anonymous_namespace_p (t1));
-  gcc_assert (!type_in_anonymous_namespace_p (t2));
+  gcc_assert (!type_with_linkage_p (t1) || !type_in_anonymous_namespace_p (t1));
+  gcc_assert (!type_with_linkage_p (t2) || !type_in_anonymous_namespace_p (t2));
 
   /* Can't be the same type if the types don't have the same code.  */
   if (TREE_CODE (t1) != TREE_CODE (t2))
@@ -1176,10 +1271,20 @@ odr_types_equivalent_p (tree t1, tree t2, bool warn, bool *warned,
       return false;
     }
 
+  if ((type_with_linkage_p (t1) && type_in_anonymous_namespace_p (t1))
+      || (type_with_linkage_p (t2) && type_in_anonymous_namespace_p (t2)))
+    {
+      /* We can not trip this when comparing ODR types, only when trying to
+	 match different ODR derivations from different declarations.
+	 So WARN should be always false.  */
+      gcc_assert (!warn);
+      return false;
+    }
+
   if (comp_type_attributes (t1, t2) != 1)
     {
       warn_odr (t1, t2, NULL, NULL, warn, warned,
-	        G_("a type with attributes "
+	        G_("a type with different attributes "
 		   "is defined in another translation unit"));
       return false;
     }
@@ -1266,26 +1371,29 @@ odr_types_equivalent_p (tree t1, tree t2, bool warn, bool *warned,
 	      return false;
 	    }
 
-	  if (!odr_subtypes_equivalent_p (TREE_TYPE (t1), TREE_TYPE (t2), visited))
+	  if (!odr_subtypes_equivalent_p (TREE_TYPE (t1), TREE_TYPE (t2),
+					  visited, loc1, loc2))
 	    {
 	      warn_odr (t1, t2, NULL, NULL, warn, warned,
 			G_("it is defined as a pointer to different type "
 			   "in another translation unit"));
 	      if (warn && warned)
-	        warn_types_mismatch (TREE_TYPE (t1), TREE_TYPE (t2));
+	        warn_types_mismatch (TREE_TYPE (t1), TREE_TYPE (t2),
+				     loc1, loc2);
 	      return false;
 	    }
 	}
 
       if ((TREE_CODE (t1) == VECTOR_TYPE || TREE_CODE (t1) == COMPLEX_TYPE)
-	  && !odr_subtypes_equivalent_p (TREE_TYPE (t1), TREE_TYPE (t2), visited))
+	  && !odr_subtypes_equivalent_p (TREE_TYPE (t1), TREE_TYPE (t2),
+					 visited, loc1, loc2))
 	{
 	  /* Probably specific enough.  */
 	  warn_odr (t1, t2, NULL, NULL, warn, warned,
 		    G_("a different type is defined "
 		       "in another translation unit"));
 	  if (warn && warned)
-	    warn_types_mismatch (TREE_TYPE (t1), TREE_TYPE (t2));
+	    warn_types_mismatch (TREE_TYPE (t1), TREE_TYPE (t2), loc1, loc2);
 	  return false;
 	}
     }
@@ -1296,13 +1404,14 @@ odr_types_equivalent_p (tree t1, tree t2, bool warn, bool *warned,
       {
 	/* Array types are the same if the element types are the same and
 	   the number of elements are the same.  */
-	if (!odr_subtypes_equivalent_p (TREE_TYPE (t1), TREE_TYPE (t2), visited))
+	if (!odr_subtypes_equivalent_p (TREE_TYPE (t1), TREE_TYPE (t2),
+					visited, loc1, loc2))
 	  {
 	    warn_odr (t1, t2, NULL, NULL, warn, warned,
 		      G_("a different type is defined in another "
 			 "translation unit"));
 	    if (warn && warned)
-	      warn_types_mismatch (TREE_TYPE (t1), TREE_TYPE (t2));
+	      warn_types_mismatch (TREE_TYPE (t1), TREE_TYPE (t2), loc1, loc2);
 	  }
 	gcc_assert (TYPE_STRING_FLAG (t1) == TYPE_STRING_FLAG (t2));
 	gcc_assert (TYPE_NONALIASED_COMPONENT (t1)
@@ -1337,17 +1446,19 @@ odr_types_equivalent_p (tree t1, tree t2, bool warn, bool *warned,
     case FUNCTION_TYPE:
       /* Function types are the same if the return type and arguments types
 	 are the same.  */
-      if (!odr_subtypes_equivalent_p (TREE_TYPE (t1), TREE_TYPE (t2), visited))
+      if (!odr_subtypes_equivalent_p (TREE_TYPE (t1), TREE_TYPE (t2),
+				      visited, loc1, loc2))
 	{
 	  warn_odr (t1, t2, NULL, NULL, warn, warned,
 		    G_("has different return value "
 		       "in another translation unit"));
 	  if (warn && warned)
-	    warn_types_mismatch (TREE_TYPE (t1), TREE_TYPE (t2));
+	    warn_types_mismatch (TREE_TYPE (t1), TREE_TYPE (t2), loc1, loc2);
 	  return false;
 	}
 
-      if (TYPE_ARG_TYPES (t1) == TYPE_ARG_TYPES (t2))
+      if (TYPE_ARG_TYPES (t1) == TYPE_ARG_TYPES (t2)
+	  || !prototype_p (t1) || !prototype_p (t2))
 	return true;
       else
 	{
@@ -1358,14 +1469,15 @@ odr_types_equivalent_p (tree t1, tree t2, bool warn, bool *warned,
 	       parms1 = TREE_CHAIN (parms1), parms2 = TREE_CHAIN (parms2))
 	    {
 	      if (!odr_subtypes_equivalent_p
-		     (TREE_VALUE (parms1), TREE_VALUE (parms2), visited))
+		     (TREE_VALUE (parms1), TREE_VALUE (parms2), visited,
+		      loc1, loc2))
 		{
 		  warn_odr (t1, t2, NULL, NULL, warn, warned,
 			    G_("has different parameters in another "
 			       "translation unit"));
 		  if (warn && warned)
 		    warn_types_mismatch (TREE_VALUE (parms1),
-					 TREE_VALUE (parms2));
+					 TREE_VALUE (parms2), loc1, loc2);
 		  return false;
 		}
 	    }
@@ -1438,7 +1550,8 @@ odr_types_equivalent_p (tree t1, tree t2, bool warn, bool *warned,
 		    return false;
 		  }
 		if (!odr_subtypes_equivalent_p (TREE_TYPE (f1),
-						TREE_TYPE (f2), visited))
+						TREE_TYPE (f2), visited,
+						loc1, loc2))
 		  {
 		    /* Do not warn about artificial fields and just go into
  		       generic field mismatch warning.  */
@@ -1449,7 +1562,7 @@ odr_types_equivalent_p (tree t1, tree t2, bool warn, bool *warned,
 			      G_("a field of same name but different type "
 				 "is defined in another translation unit"));
 		    if (warn && warned)
-		      warn_types_mismatch (TREE_TYPE (f1), TREE_TYPE (f2));
+		      warn_types_mismatch (TREE_TYPE (f1), TREE_TYPE (f2), loc1, loc2);
 		    return false;
 		  }
 		if (!gimple_compare_field_offset (f1, f2))
@@ -1488,43 +1601,54 @@ odr_types_equivalent_p (tree t1, tree t2, bool warn, bool *warned,
 		return false;
 	      }
 	    if ((TYPE_MAIN_VARIANT (t1) == t1 || TYPE_MAIN_VARIANT (t2) == t2)
+		&& COMPLETE_TYPE_P (TYPE_MAIN_VARIANT (t1))
+		&& COMPLETE_TYPE_P (TYPE_MAIN_VARIANT (t2))
+		&& odr_type_p (TYPE_MAIN_VARIANT (t1))
+		&& odr_type_p (TYPE_MAIN_VARIANT (t2))
 		&& (TYPE_METHODS (TYPE_MAIN_VARIANT (t1))
 		    != TYPE_METHODS (TYPE_MAIN_VARIANT (t2))))
 	      {
-		for (f1 = TYPE_METHODS (TYPE_MAIN_VARIANT (t1)),
-		     f2 = TYPE_METHODS (TYPE_MAIN_VARIANT (t2));
-		     f1 && f2 ; f1 = DECL_CHAIN (f1), f2 = DECL_CHAIN (f2))
-		  {
-		    if (DECL_ASSEMBLER_NAME (f1) != DECL_ASSEMBLER_NAME (f2))
-		      {
-			warn_odr (t1, t2, f1, f2, warn, warned,
-				  G_("a different method of same type "
-				     "is defined in another translation unit"));
-			return false;
-		      }
-		    if (DECL_VIRTUAL_P (f1) != DECL_VIRTUAL_P (f2))
-		      {
-			warn_odr (t1, t2, f1, f2, warn, warned,
-				  G_("s definition that differs by virtual "
-				     "keyword in another translation unit"));
-			return false;
-		      }
-		    if (DECL_VINDEX (f1) != DECL_VINDEX (f2))
-		      {
-			warn_odr (t1, t2, f1, f2, warn, warned,
-				  G_("virtual table layout differs in another "
-				     "translation unit"));
-			return false;
-		      }
-		    if (odr_subtypes_equivalent_p (TREE_TYPE (f1), TREE_TYPE (f2), visited))
-		      {
-			warn_odr (t1, t2, f1, f2, warn, warned,
-				  G_("method with incompatible type is defined "
-				     "in another translation unit"));
-			return false;
-		      }
-		  }
-		if (f1 || f2)
+		/* Currently free_lang_data sets TYPE_METHODS to error_mark_node
+		   if it is non-NULL so this loop will never realy execute.  */
+		if (TYPE_METHODS (TYPE_MAIN_VARIANT (t1)) != error_mark_node
+		    && TYPE_METHODS (TYPE_MAIN_VARIANT (t2)) != error_mark_node)
+		  for (f1 = TYPE_METHODS (TYPE_MAIN_VARIANT (t1)),
+		       f2 = TYPE_METHODS (TYPE_MAIN_VARIANT (t2));
+		       f1 && f2 ; f1 = DECL_CHAIN (f1), f2 = DECL_CHAIN (f2))
+		    {
+		      if (DECL_ASSEMBLER_NAME (f1) != DECL_ASSEMBLER_NAME (f2))
+			{
+			  warn_odr (t1, t2, f1, f2, warn, warned,
+				    G_("a different method of same type "
+				       "is defined in another "
+				       "translation unit"));
+			  return false;
+			}
+		      if (DECL_VIRTUAL_P (f1) != DECL_VIRTUAL_P (f2))
+			{
+			  warn_odr (t1, t2, f1, f2, warn, warned,
+				    G_("s definition that differs by virtual "
+				       "keyword in another translation unit"));
+			  return false;
+			}
+		      if (DECL_VINDEX (f1) != DECL_VINDEX (f2))
+			{
+			  warn_odr (t1, t2, f1, f2, warn, warned,
+				    G_("virtual table layout differs "
+				       "in another translation unit"));
+			  return false;
+			}
+		      if (odr_subtypes_equivalent_p (TREE_TYPE (f1),
+						     TREE_TYPE (f2), visited,
+						     loc1, loc2))
+			{
+			  warn_odr (t1, t2, f1, f2, warn, warned,
+				    G_("method with incompatible type is "
+				       "defined in another translation unit"));
+			  return false;
+			}
+		    }
+		if ((f1 == NULL) != (f2 == NULL))
 		  {
 		    warn_odr (t1, t2, NULL, NULL, warn, warned,
 			      G_("a type with different number of methods "
@@ -1565,6 +1689,19 @@ odr_types_equivalent_p (tree t1, tree t2, bool warn, bool *warned,
 	      || operand_equal_p (TYPE_SIZE_UNIT (t1),
 				  TYPE_SIZE_UNIT (t2), 0));
   return true;
+}
+
+/* Return true if TYPE1 and TYPE2 are equivalent for One Definition Rule.  */
+
+bool
+odr_types_equivalent_p (tree type1, tree type2)
+{
+  gcc_checking_assert (odr_or_derived_type_p (type1)
+		       && odr_or_derived_type_p (type2));
+
+  hash_set<type_pair> visited;
+  return odr_types_equivalent_p (type1, type2, false, NULL,
+			         &visited, UNKNOWN_LOCATION, UNKNOWN_LOCATION);
 }
 
 /* TYPE is equivalent to VAL by ODR, but its tree representation differs
@@ -1618,12 +1755,7 @@ add_type_duplicate (odr_type val, tree type)
     }
 
   if (prevail)
-    {
-      tree tmp = type;
-
-      type = val->type;
-      val->type = tmp;
-    }
+    std::swap (val->type, type);
 
   val->types_set->add (type);
 
@@ -1638,7 +1770,7 @@ add_type_duplicate (odr_type val, tree type)
   bool base_mismatch = false;
   unsigned int i;
   bool warned = false;
-  hash_set<type_pair,pair_traits> visited;
+  hash_set<type_pair> visited;
 
   gcc_assert (in_lto_p);
   vec_safe_push (val->types, type);
@@ -1691,12 +1823,8 @@ add_type_duplicate (odr_type val, tree type)
 		  base_mismatch = true;
 	      }
 	    else
-	      {
-		hash_set<type_pair,pair_traits> visited;
-		if (!odr_types_equivalent_p (type1, type2, false, NULL,
-					     &visited))
-		  base_mismatch = true;
-	      }
+	      if (!odr_types_equivalent_p (type1, type2))
+		base_mismatch = true;
 	    if (base_mismatch)
 	      {
 		if (!warned && !val->odr_violated)
@@ -1706,7 +1834,8 @@ add_type_duplicate (odr_type val, tree type)
 			      "a type with the same name but different base "
 			      "type is defined in another translation unit");
 		    if (warned)
-		      warn_types_mismatch (type1, type2);
+		      warn_types_mismatch (type1, type2,
+					    UNKNOWN_LOCATION, UNKNOWN_LOCATION);
 		  }
 		break;
 	      }
@@ -1770,25 +1899,18 @@ add_type_duplicate (odr_type val, tree type)
   /* Next compare memory layout.  */
   if (!odr_types_equivalent_p (val->type, type,
 			       !flag_ltrans && !val->odr_violated && !warned,
-			       &warned, &visited))
+			       &warned, &visited,
+			       DECL_SOURCE_LOCATION (TYPE_NAME (val->type)),
+			       DECL_SOURCE_LOCATION (TYPE_NAME (type))))
     {
       merge = false;
       odr_violation_reported = true;
       val->odr_violated = true;
-      if (symtab->dump_file)
-	{
-	  fprintf (symtab->dump_file, "ODR violation\n");
-
-	  print_node (symtab->dump_file, "", val->type, 0);
-	  putc ('\n',symtab->dump_file);
-	  print_node (symtab->dump_file, "", type, 0);
-	  putc ('\n',symtab->dump_file);
-	}
     }
   gcc_assert (val->odr_violated || !odr_must_violate);
   /* Sanity check that all bases will be build same way again.  */
-#ifdef ENABLE_CHECKING
-  if (COMPLETE_TYPE_P (type) && COMPLETE_TYPE_P (val->type)
+  if (flag_checking
+      && COMPLETE_TYPE_P (type) && COMPLETE_TYPE_P (val->type)
       && TREE_CODE (val->type) == RECORD_TYPE
       && TREE_CODE (type) == RECORD_TYPE
       && TYPE_BINFO (val->type) && TYPE_BINFO (type)
@@ -1817,7 +1939,6 @@ add_type_duplicate (odr_type val, tree type)
 	    j++;
 	  }
     }
-#endif
 
 
   /* Regularize things a little.  During LTO same types may come with
@@ -1923,8 +2044,8 @@ get_odr_type (tree type, bool insert)
       if (slot && *slot)
 	{
 	  val = *slot;
-#ifdef ENABLE_CHECKING
-	  if (in_lto_p && can_be_vtable_hashed_p (type))
+	  if (flag_checking
+	      && in_lto_p && can_be_vtable_hashed_p (type))
 	    {
 	      hash = hash_odr_vtable (type);
 	      vtable_slot = odr_vtable_hash->find_slot_with_hash (type, hash,
@@ -1932,7 +2053,6 @@ get_odr_type (tree type, bool insert)
 	      gcc_assert (!vtable_slot || *vtable_slot == *slot);
 	      vtable_slot = NULL;
 	    }
-#endif
 	}
       else if (*vtable_slot)
 	val = *vtable_slot;
@@ -1966,7 +2086,10 @@ get_odr_type (tree type, bool insert)
       val->type = type;
       val->bases = vNULL;
       val->derived_types = vNULL;
-      val->anonymous_namespace = type_in_anonymous_namespace_p (type);
+      if (type_with_linkage_p (type))
+        val->anonymous_namespace = type_in_anonymous_namespace_p (type);
+      else
+	val->anonymous_namespace = 0;
       build_bases = COMPLETE_TYPE_P (val->type);
       insert_to_odr_array = true;
       if (slot)
@@ -1976,6 +2099,7 @@ get_odr_type (tree type, bool insert)
     }
 
   if (build_bases && TREE_CODE (type) == RECORD_TYPE && TYPE_BINFO (type)
+      && type_with_linkage_p (type)
       && type == TYPE_MAIN_VARIANT (type))
     {
       tree binfo = TYPE_BINFO (type);
@@ -2030,17 +2154,22 @@ register_odr_type (tree type)
       if (in_lto_p)
         odr_vtable_hash = new odr_vtable_hash_type (23);
     }
-  /* Arrange things to be nicer and insert main variants first.  */
-  if (odr_type_p (TYPE_MAIN_VARIANT (type)))
+  /* Arrange things to be nicer and insert main variants first.
+     ??? fundamental prerecorded types do not have mangled names; this
+     makes it possible that non-ODR type is main_odr_variant of ODR type.
+     Things may get smoother if LTO FE set mangled name of those types same
+     way as C++ FE does.  */
+  if (odr_type_p (main_odr_variant (TYPE_MAIN_VARIANT (type)))
+      && odr_type_p (TYPE_MAIN_VARIANT (type)))
     get_odr_type (TYPE_MAIN_VARIANT (type), true);
-  if (TYPE_MAIN_VARIANT (type) != type)
+  if (TYPE_MAIN_VARIANT (type) != type && odr_type_p (main_odr_variant (type)))
     get_odr_type (type, true);
 }
 
 /* Return true if type is known to have no derivations.  */
 
 bool
-type_known_to_have_no_deriavations_p (tree t)
+type_known_to_have_no_derivations_p (tree t)
 {
   return (type_all_derivations_known_p (t)
 	  && (TYPE_FINAL_P (t)
@@ -2123,18 +2252,6 @@ dump_type_inheritance_graph (FILE *f)
     }
 }
 
-/* Given method type T, return type of class it belongs to.
-   Look up this pointer and get its type.    */
-
-tree
-method_class_type (const_tree t)
-{
-  tree first_parm_type = TREE_VALUE (TYPE_ARG_TYPES (t));
-  gcc_assert (TREE_CODE (t) == METHOD_TYPE);
-
-  return TREE_TYPE (first_parm_type);
-}
-
 /* Initialize IPA devirt and build inheritance tree graph.  */
 
 void
@@ -2153,13 +2270,12 @@ build_type_inheritance_graph (void)
     odr_vtable_hash = new odr_vtable_hash_type (23);
 
   /* We reconstruct the graph starting of types of all methods seen in the
-     the unit.  */
+     unit.  */
   FOR_EACH_SYMBOL (n)
     if (is_a <cgraph_node *> (n)
 	&& DECL_VIRTUAL_P (n->decl)
 	&& n->real_symbol_p ())
-      get_odr_type (TYPE_MAIN_VARIANT (method_class_type (TREE_TYPE (n->decl))),
-		    true);
+      get_odr_type (TYPE_METHOD_BASETYPE (TREE_TYPE (n->decl)), true);
 
     /* Look also for virtual tables of types that do not define any methods.
  
@@ -2235,6 +2351,17 @@ referenced_from_vtable_p (struct cgraph_node *node)
   return found;
 }
 
+/* Return if TARGET is cxa_pure_virtual.  */
+
+static bool
+is_cxa_pure_virtual_p (tree target)
+{
+  return target && TREE_CODE (TREE_TYPE (target)) != METHOD_TYPE
+	 && DECL_NAME (target)
+	 && !strcmp (IDENTIFIER_POINTER (DECL_NAME (target)),
+		     "__cxa_pure_virtual");
+}
+
 /* If TARGET has associated node, record it in the NODES array.
    CAN_REFER specify if program can refer to the target directly.
    if TARGET is unknown (NULL) or it can not be inserted (for example because
@@ -2249,11 +2376,12 @@ maybe_record_node (vec <cgraph_node *> &nodes,
 {
   struct cgraph_node *target_node, *alias_target;
   enum availability avail;
+  bool pure_virtual = is_cxa_pure_virtual_p (target);
 
-  /* cxa_pure_virtual and __builtin_unreachable do not need to be added into
+  /* __builtin_unreachable do not need to be added into
      list of targets; the runtime effect of calling them is undefined.
      Only "real" virtual methods should be accounted.  */
-  if (target && TREE_CODE (TREE_TYPE (target)) != METHOD_TYPE)
+  if (target && TREE_CODE (TREE_TYPE (target)) != METHOD_TYPE && !pure_virtual)
     return;
 
   if (!can_refer)
@@ -2296,6 +2424,7 @@ maybe_record_node (vec <cgraph_node *> &nodes,
      ??? Maybe it would make sense to be more aggressive for LTO even
      elsewhere.  */
   if (!flag_ltrans
+      && !pure_virtual
       && type_in_anonymous_namespace_p (DECL_CONTEXT (target))
       && (!target_node
           || !referenced_from_vtable_p (target_node)))
@@ -2309,16 +2438,43 @@ maybe_record_node (vec <cgraph_node *> &nodes,
     {
       gcc_assert (!target_node->global.inlined_to);
       gcc_assert (target_node->real_symbol_p ());
+      /* When sanitizing, do not assume that __cxa_pure_virtual is not called
+	 by valid program.  */
+      if (flag_sanitize & SANITIZE_UNREACHABLE)
+	;
+      /* Only add pure virtual if it is the only possible target.  This way
+	 we will preserve the diagnostics about pure virtual called in many
+	 cases without disabling optimization in other.  */
+      else if (pure_virtual)
+	{
+	  if (nodes.length ())
+	    return;
+	}
+      /* If we found a real target, take away cxa_pure_virtual.  */
+      else if (!pure_virtual && nodes.length () == 1
+	       && is_cxa_pure_virtual_p (nodes[0]->decl))
+	nodes.pop ();
+      if (pure_virtual && nodes.length ())
+	return;
       if (!inserted->add (target))
 	{
 	  cached_polymorphic_call_targets->add (target_node);
 	  nodes.safe_push (target_node);
 	}
     }
-  else if (completep
-	   && (!type_in_anonymous_namespace_p
-		 (DECL_CONTEXT (target))
-	       || flag_ltrans))
+  else if (!completep)
+    ;
+  /* We have definition of __cxa_pure_virtual that is not accessible (it is
+     optimized out or partitioned to other unit) so we can not add it.  When
+     not sanitizing, there is nothing to do.
+     Otherwise declare the list incomplete.  */
+  else if (pure_virtual)
+    {
+      if (flag_sanitize & SANITIZE_UNREACHABLE)
+	*completep = false;
+    }
+  else if (flag_ltrans
+	   || !type_in_anonymous_namespace_p (DECL_CONTEXT (target)))
     *completep = false;
 }
 
@@ -2506,19 +2662,19 @@ struct polymorphic_call_target_d
 
 /* Polymorphic call target cache helpers.  */
 
-struct polymorphic_call_target_hasher 
+struct polymorphic_call_target_hasher
+  : pointer_hash <polymorphic_call_target_d>
 {
-  typedef polymorphic_call_target_d value_type;
-  typedef polymorphic_call_target_d compare_type;
-  static inline hashval_t hash (const value_type *);
-  static inline bool equal (const value_type *, const compare_type *);
-  static inline void remove (value_type *);
+  static inline hashval_t hash (const polymorphic_call_target_d *);
+  static inline bool equal (const polymorphic_call_target_d *,
+			    const polymorphic_call_target_d *);
+  static inline void remove (polymorphic_call_target_d *);
 };
 
 /* Return the computed hashcode for ODR_QUERY.  */
 
 inline hashval_t
-polymorphic_call_target_hasher::hash (const value_type *odr_query)
+polymorphic_call_target_hasher::hash (const polymorphic_call_target_d *odr_query)
 {
   inchash::hash hstate (odr_query->otr_token);
 
@@ -2542,8 +2698,8 @@ polymorphic_call_target_hasher::hash (const value_type *odr_query)
 /* Compare cache entries T1 and T2.  */
 
 inline bool
-polymorphic_call_target_hasher::equal (const value_type *t1,
-				       const compare_type *t2)
+polymorphic_call_target_hasher::equal (const polymorphic_call_target_d *t1,
+				       const polymorphic_call_target_d *t2)
 {
   return (t1->type == t2->type && t1->otr_token == t2->otr_token
 	  && t1->speculative == t2->speculative
@@ -2561,7 +2717,7 @@ polymorphic_call_target_hasher::equal (const value_type *t1,
 /* Remove entry in polymorphic call target cache hash.  */
 
 inline void
-polymorphic_call_target_hasher::remove (value_type *v)
+polymorphic_call_target_hasher::remove (polymorphic_call_target_d *v)
 {
   v->targets.release ();
   free (v);
@@ -2799,7 +2955,7 @@ struct decl_warn_count
 struct final_warning_record
 {
   gcov_type dyn_count;
-  vec<odr_type_warn_count> type_warnings;
+  auto_vec<odr_type_warn_count> type_warnings;
   hash_map<tree, decl_warn_count> decl_warnings;
 };
 struct final_warning_record *final_warning_records;
@@ -3058,10 +3214,11 @@ possible_polymorphic_call_targets (tree otr_type,
 
 	  if (!outer_type->all_derivations_known)
 	    {
-	      if (!speculative && final_warning_records)
+	      if (!speculative && final_warning_records
+		  && nodes.length () == 1
+		  && TREE_CODE (TREE_TYPE (nodes[0]->decl)) == METHOD_TYPE)
 		{
 		  if (complete
-		      && nodes.length () == 1
 		      && warn_suggest_final_types
 		      && !outer_type->derived_types.length ())
 		    {
@@ -3077,7 +3234,6 @@ possible_polymorphic_call_targets (tree otr_type,
 		    }
 		  if (complete
 		      && warn_suggest_final_methods
-		      && nodes.length () == 1
 		      && types_same_for_odr (DECL_CONTEXT (nodes[0]->decl),
 					     outer_type->type))
 		    {
@@ -3237,9 +3393,11 @@ possible_polymorphic_call_target_p (tree otr_type,
   bool final;
 
   if (TREE_CODE (TREE_TYPE (n->decl)) == FUNCTION_TYPE
-      && ((fcode = DECL_FUNCTION_CODE (n->decl))
-	  == BUILT_IN_UNREACHABLE
+      && ((fcode = DECL_FUNCTION_CODE (n->decl)) == BUILT_IN_UNREACHABLE
           || fcode == BUILT_IN_TRAP))
+    return true;
+
+  if (is_cxa_pure_virtual_p (n->decl))
     return true;
 
   if (!odr_hash)
@@ -3263,7 +3421,7 @@ possible_polymorphic_call_target_p (tree otr_type,
 
 bool
 possible_polymorphic_call_target_p (tree ref,
-				    gimple stmt,
+				    gimple *stmt,
 				    struct cgraph_node *n)
 {
   ipa_polymorphic_call_context context (current_function_decl, ref, stmt);
@@ -3290,13 +3448,12 @@ update_type_inheritance_graph (void)
   free_polymorphic_call_targets_hash ();
   timevar_push (TV_IPA_INHERITANCE);
   /* We reconstruct the graph starting from types of all methods seen in the
-     the unit.  */
+     unit.  */
   FOR_EACH_FUNCTION (n)
     if (DECL_VIRTUAL_P (n->decl)
 	&& !n->definition
 	&& n->real_symbol_p ())
-      get_odr_type (method_class_type (TYPE_MAIN_VARIANT (TREE_TYPE (n->decl))),
-				       true);
+      get_odr_type (TYPE_METHOD_BASETYPE (TREE_TYPE (n->decl)), true);
   timevar_pop (TV_IPA_INHERITANCE);
 }
 
@@ -3428,7 +3585,6 @@ ipa_devirt (void)
   if (warn_suggest_final_methods || warn_suggest_final_types)
     {
       final_warning_records = new (final_warning_record);
-      final_warning_records->type_warnings = vNULL;
       final_warning_records->type_warnings.safe_grow_cleared (odr_types.length ());
       free_polymorphic_call_targets_hash ();
     }
@@ -3656,7 +3812,7 @@ ipa_devirt (void)
 
       if (warn_suggest_final_methods)
 	{
-	  vec<const decl_warn_count*> decl_warnings_vec = vNULL;
+	  auto_vec<const decl_warn_count*> decl_warnings_vec;
 
 	  final_warning_records->decl_warnings.traverse
 	    <vec<const decl_warn_count *> *, add_decl_warning> (&decl_warnings_vec);
@@ -3706,7 +3862,7 @@ ipa_devirt (void)
 			      decl, count, dyn_count);
 	    }
 	}
-	
+
       delete (final_warning_records);
       final_warning_records = 0;
     }

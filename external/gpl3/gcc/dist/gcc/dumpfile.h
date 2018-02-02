@@ -1,5 +1,5 @@
 /* Definitions for the shared dumpfile.
-   Copyright (C) 2004-2015 Free Software Foundation, Inc.
+   Copyright (C) 2004-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -21,7 +21,6 @@ along with GCC; see the file COPYING3.  If not see
 #ifndef GCC_DUMPFILE_H
 #define GCC_DUMPFILE_H 1
 
-#include "line-map.h"
 
 /* Different tree dump places.  When you add new tree dump places,
    extend the DUMP_FILES array in dumpfile.c.  */
@@ -134,8 +133,8 @@ extern void dump_printf_loc (int, source_location,
 extern void dump_basic_block (int, basic_block, int);
 extern void dump_generic_expr_loc (int, source_location, int, tree);
 extern void dump_generic_expr (int, int, tree);
-extern void dump_gimple_stmt_loc (int, source_location, int, gimple, int);
-extern void dump_gimple_stmt (int, int, gimple, int);
+extern void dump_gimple_stmt_loc (int, source_location, int, gimple *, int);
+extern void dump_gimple_stmt (int, int, gimple *, int);
 extern void print_combine_total_stats (void);
 extern bool enable_rtl_dump_file (void);
 

@@ -1,4 +1,4 @@
-#  Copyright (C) 2003-2015 Free Software Foundation, Inc.
+#  Copyright (C) 2003-2016 Free Software Foundation, Inc.
 #  Contributed by Kelley Cook, June 2004.
 #  Original code from Neil Booth, May 2003.
 #
@@ -308,9 +308,8 @@ print "";
 print "/* Hash optimization from a structure.  */";
 print "extern hashval_t cl_optimization_hash (const struct cl_optimization *);";
 print "";
-print "/* Anything that includes tm.h, does not necessarily need this.  */"
-print "#if !defined(GCC_TM_H)"
-print "#include \"input.h\" /* for location_t */"
+print "/* Generator files may not have access to location_t, and don't need these.  */"
+print "#if defined(UNKNOWN_LOCATION)"
 print "bool                                                                  "
 print "common_handle_option_auto (struct gcc_options *opts,                  "
 print "                           struct gcc_options *opts_set,              "

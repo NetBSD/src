@@ -1,4 +1,4 @@
-.. Copyright (C) 2014-2015 Free Software Foundation, Inc.
+.. Copyright (C) 2014-2016 Free Software Foundation, Inc.
    Originally contributed by David Malcolm <dmalcolm@redhat.com>
 
    This is free software: you can redistribute it and/or modify it
@@ -430,8 +430,7 @@ Boolean options
   .. macro:: GCC_JIT_BOOL_OPTION_DUMP_SUMMARY
 
      If true, :func:`gcc_jit_context_compile` will print information to stderr
-     on the actions it is performing, followed by a profile showing
-     the time taken and memory usage of each phase.
+     on the actions it is performing.
 
   .. macro:: GCC_JIT_BOOL_OPTION_DUMP_EVERYTHING
 
@@ -469,6 +468,26 @@ Boolean options
    .. code-block:: c
 
       #ifdef LIBGCCJIT_HAVE_gcc_jit_context_set_bool_allow_unreachable_blocks
+
+.. function:: void \
+              gcc_jit_context_set_bool_use_external_driver (gcc_jit_context *ctxt, \
+                                                            int bool_value)
+
+   libgccjit internally generates assembler, and uses "driver" code
+   for converting it to other formats (e.g. shared libraries).
+
+   By default, libgccjit will use an embedded copy of the driver
+   code.
+
+   This option can be used to instead invoke an external driver executable
+   as a subprocess.
+
+   This entrypoint was added in :ref:`LIBGCCJIT_ABI_5`; you can test for
+   its presence using
+
+   .. code-block:: c
+
+      #ifdef LIBGCCJIT_HAVE_gcc_jit_context_set_bool_use_external_driver
 
 Integer options
 ***************

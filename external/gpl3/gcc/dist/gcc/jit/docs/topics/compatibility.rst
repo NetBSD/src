@@ -1,4 +1,4 @@
-.. Copyright (C) 2015 Free Software Foundation, Inc.
+.. Copyright (C) 2015-2016 Free Software Foundation, Inc.
    Originally contributed by David Malcolm <dmalcolm@redhat.com>
 
    This is free software: you can redistribute it and/or modify it
@@ -107,3 +107,31 @@ entrypoints:
   * :func:`gcc_jit_case_as_object`
 
   * :func:`gcc_jit_context_new_case`
+
+.. _LIBGCCJIT_ABI_4:
+
+``LIBGCCJIT_ABI_4``
+-------------------
+``LIBGCCJIT_ABI_4`` covers the addition of timers via API
+entrypoints:
+
+  * :func:`gcc_jit_context_get_timer`
+
+  * :func:`gcc_jit_context_set_timer`
+
+  * :func:`gcc_jit_timer_new`
+
+  * :func:`gcc_jit_timer_release`
+
+  * :func:`gcc_jit_timer_push`
+
+  * :func:`gcc_jit_timer_pop`
+
+  * :func:`gcc_jit_timer_print`
+
+.. _LIBGCCJIT_ABI_5:
+
+``LIBGCCJIT_ABI_5``
+-------------------
+``LIBGCCJIT_ABI_5`` covers the addition of
+:func:`gcc_jit_context_set_bool_use_external_driver`

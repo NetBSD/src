@@ -1,5 +1,5 @@
 /* Core data structures for the 'tree' type.
-   Copyright (C) 1989-2015 Free Software Foundation, Inc.
+   Copyright (C) 1989-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -19,6 +19,8 @@ along with GCC; see the file COPYING3.  If not see
 
 #ifndef GCC_TREE_CORE_H
 #define GCC_TREE_CORE_H
+
+#include "symtab.h"
 
 /* This file contains all the data structures that define the 'tree' type.
    There are no accessor macros nor functions in this file. Only the
@@ -157,13 +159,10 @@ enum built_in_function {
 
   BEGIN_CHKP_BUILTINS,
 
-#undef DEF_BUILTIN
 #define DEF_BUILTIN(ENUM, N, C, T, LT, B, F, NA, AT, IM, COND)
-#undef DEF_BUILTIN_CHKP
 #define DEF_BUILTIN_CHKP(ENUM, N, C, T, LT, B, F, NA, AT, IM, COND) \
   ENUM##_CHKP = ENUM + BEGIN_CHKP_BUILTINS + 1,
 #include "builtins.def"
-#undef DEF_BUILTIN_CHKP
 
   END_CHKP_BUILTINS = BEGIN_CHKP_BUILTINS * 2 + 1,
 
@@ -184,7 +183,35 @@ enum built_in_function {
   /* Upper bound on non-language-specific builtins.  */
   END_BUILTINS
 };
-#undef DEF_BUILTIN
+
+/* Internal functions.  */
+enum internal_fn {
+#define DEF_INTERNAL_FN(CODE, FLAGS, FNSPEC) IFN_##CODE,
+#include "internal-fn.def"
+  IFN_LAST
+};
+
+/* An enum that combines target-independent built-in functions with
+   internal functions, so that they can be treated in a similar way.
+   The numbers for built-in functions are the same as for the
+   built_in_function enum.  The numbers for internal functions
+   start at END_BUITLINS.  */
+enum combined_fn {
+#define DEF_BUILTIN(ENUM, N, C, T, LT, B, F, NA, AT, IM, COND) \
+  CFN_##ENUM = int (ENUM),
+#include "builtins.def"
+
+#define DEF_BUILTIN(ENUM, N, C, T, LT, B, F, NA, AT, IM, COND)
+#define DEF_BUILTIN_CHKP(ENUM, N, C, T, LT, B, F, NA, AT, IM, COND) \
+  CFN_##ENUM##_CHKP = int (ENUM##_CHKP),
+#include "builtins.def"
+
+#define DEF_INTERNAL_FN(CODE, FLAGS, FNSPEC) \
+  CFN_##CODE = int (END_BUILTINS) + int (IFN_##CODE),
+#include "internal-fn.def"
+
+  CFN_LAST
+};
 
 /* Tree code classes.  Each tree_code has an associated code class
    represented by a TREE_CODE_CLASS.  */
@@ -230,7 +257,10 @@ enum omp_clause_code {
      Operand 2: OMP_CLAUSE_REDUCTION_MERGE: Stmt-list to merge private var
                 into the shared one.
      Operand 3: OMP_CLAUSE_REDUCTION_PLACEHOLDER: A dummy VAR_DECL
-                placeholder used in OMP_CLAUSE_REDUCTION_{INIT,MERGE}.  */
+                placeholder used in OMP_CLAUSE_REDUCTION_{INIT,MERGE}.
+     Operand 4: OMP_CLAUSE_REDUCTION_DECL_PLACEHOLDER: Another dummy
+		VAR_DECL placeholder, used like the above for C/C++ array
+		reductions.  */
   OMP_CLAUSE_REDUCTION,
 
   /* OpenMP clause: copyin (variable_list).  */
@@ -251,6 +281,13 @@ enum omp_clause_code {
   /* OpenMP clause: uniform (argument-list).  */
   OMP_CLAUSE_UNIFORM,
 
+  /* OpenMP clause: to (extended-list).
+     Only when it appears in declare target.  */
+  OMP_CLAUSE_TO_DECLARE,
+
+  /* OpenMP clause: link (variable-list).  */
+  OMP_CLAUSE_LINK,
+
   /* OpenMP clause: from (variable-list).  */
   OMP_CLAUSE_FROM,
 
@@ -265,15 +302,19 @@ enum omp_clause_code {
      OpenMP clause: map ({alloc:,to:,from:,tofrom:,}variable-list).  */
   OMP_CLAUSE_MAP,
 
+  /* OpenACC clause: use_device (variable_list).
+     OpenMP clause: use_device_ptr (variable-list).  */
+  OMP_CLAUSE_USE_DEVICE_PTR,
+
+  /* OpenMP clause: is_device_ptr (variable-list).  */
+  OMP_CLAUSE_IS_DEVICE_PTR,
+
   /* Internal structure to hold OpenACC cache directive's variable-list.
      #pragma acc cache (variable-list).  */
   OMP_CLAUSE__CACHE_,
 
   /* OpenACC clause: device_resident (variable_list).  */
   OMP_CLAUSE_DEVICE_RESIDENT,
-
-  /* OpenACC clause: use_device (variable_list).  */
-  OMP_CLAUSE_USE_DEVICE,
 
   /* OpenACC clause: gang [(gang-argument-list)].
      Where
@@ -310,7 +351,7 @@ enum omp_clause_code {
   /* OpenMP clause: nowait.  */
   OMP_CLAUSE_NOWAIT,
 
-  /* OpenMP clause: ordered.  */
+  /* OpenMP clause: ordered [(constant-integer-expression)].  */
   OMP_CLAUSE_ORDERED,
 
   /* OpenMP clause: default.  */
@@ -367,6 +408,30 @@ enum omp_clause_code {
   /* OpenMP clause: taskgroup.  */
   OMP_CLAUSE_TASKGROUP,
 
+  /* OpenMP clause: priority (integer-expression).  */
+  OMP_CLAUSE_PRIORITY,
+
+  /* OpenMP clause: grainsize (integer-expression).  */
+  OMP_CLAUSE_GRAINSIZE,
+
+  /* OpenMP clause: num_tasks (integer-expression).  */
+  OMP_CLAUSE_NUM_TASKS,
+
+  /* OpenMP clause: nogroup.  */
+  OMP_CLAUSE_NOGROUP,
+
+  /* OpenMP clause: threads.  */
+  OMP_CLAUSE_THREADS,
+
+  /* OpenMP clause: simd.  */
+  OMP_CLAUSE_SIMD,
+
+  /* OpenMP clause: hint (integer-expression).  */
+  OMP_CLAUSE_HINT,
+
+  /* OpenMP clause: defaultmap (tofrom: scalar).  */
+  OMP_CLAUSE_DEFAULTMAP,
+
   /* Internally used only clause, holding SIMD uid.  */
   OMP_CLAUSE__SIMDUID_,
 
@@ -390,7 +455,14 @@ enum omp_clause_code {
   OMP_CLAUSE_NUM_WORKERS,
 
   /* OpenACC clause: vector_length (integer-expression).  */
-  OMP_CLAUSE_VECTOR_LENGTH
+  OMP_CLAUSE_VECTOR_LENGTH,
+
+  /* OpenACC clause: tile ( size-expr-list ).  */
+  OMP_CLAUSE_TILE,
+
+  /* OpenMP internal-only clause to specify grid dimensions of a gridified
+     kernel.  */
+  OMP_CLAUSE__GRIDDIM_
 };
 
 #undef DEFTREESTRUCT
@@ -408,7 +480,10 @@ enum omp_clause_schedule_kind {
   OMP_CLAUSE_SCHEDULE_AUTO,
   OMP_CLAUSE_SCHEDULE_RUNTIME,
   OMP_CLAUSE_SCHEDULE_CILKFOR,
-  OMP_CLAUSE_SCHEDULE_LAST
+  OMP_CLAUSE_SCHEDULE_MASK = (1 << 3) - 1,
+  OMP_CLAUSE_SCHEDULE_MONOTONIC = (1 << 3),
+  OMP_CLAUSE_SCHEDULE_NONMONOTONIC = (1 << 4),
+  OMP_CLAUSE_SCHEDULE_LAST = 2 * OMP_CLAUSE_SCHEDULE_NONMONOTONIC - 1
 };
 
 enum omp_clause_default_kind {
@@ -430,17 +505,6 @@ enum cv_qualifier {
   TYPE_QUAL_RESTRICT = 0x4,
   TYPE_QUAL_ATOMIC   = 0x8
 };
-
-/* Enumerate visibility settings.  */
-#ifndef SYMBOL_VISIBILITY_DEFINED
-#define SYMBOL_VISIBILITY_DEFINED
-enum symbol_visibility {
-  VISIBILITY_DEFAULT,
-  VISIBILITY_PROTECTED,
-  VISIBILITY_HIDDEN,
-  VISIBILITY_INTERNAL
-};
-#endif  // SYMBOL_VISIBILITY_DEFINED
 
 /* Standard named or nameless data types of the C compiler.  */
 enum tree_index {
@@ -700,7 +764,7 @@ enum size_type_kind {
 enum operand_equal_flag {
   OEP_ONLY_CONST = 1,
   OEP_PURE_SAME = 2,
-  OEP_CONSTANT_ADDRESS_OF = 4,
+  OEP_MATCH_SIDE_EFFECTS = 4,
   OEP_ADDRESS_OF = 8
 };
 
@@ -731,14 +795,6 @@ enum annot_expr_kind {
   annot_expr_no_vector_kind,
   annot_expr_vector_kind,
   annot_expr_kind_last
-};
-
-/* Internal functions.  */
-enum internal_fn {
-#define DEF_INTERNAL_FN(CODE, FLAGS, FNSPEC) IFN_##CODE,
-#include "internal-fn.def"
-#undef DEF_INTERNAL_FN
-  IFN_LAST
 };
 
 /*---------------------------------------------------------------------------
@@ -1097,7 +1153,7 @@ struct GTY(()) tree_base {
        TREE_THIS_NOTRAP in
           INDIRECT_REF, MEM_REF, TARGET_MEM_REF, ARRAY_REF, ARRAY_RANGE_REF
 
-       SSA_NAME_IN_FREELIST in
+       SSA_NAME_IN_FREE_LIST in
           SSA_NAME
 
        DECL_NONALIASED in
@@ -1119,8 +1175,11 @@ struct GTY(()) tree_base {
 
    saturating_flag:
 
+       TYPE_REVERSE_STORAGE_ORDER in
+           RECORD_TYPE, UNION_TYPE, QUAL_UNION_TYPE, ARRAY_TYPE
+
        TYPE_SATURATING in
-           all types
+           other types
 
        VAR_DECL_IS_VIRTUAL_OPERAND in
 	   VAR_DECL
@@ -1136,6 +1195,9 @@ struct GTY(()) tree_base {
 
    default_def_flag:
 
+       TYPE_FINAL_P in
+	   RECORD_TYPE, UNION_TYPE and QUAL_UNION_TYPE
+
        TYPE_VECTOR_OPAQUE in
 	   VECTOR_TYPE
 
@@ -1145,8 +1207,8 @@ struct GTY(()) tree_base {
        DECL_NONLOCAL_FRAME in
 	   VAR_DECL
 
-       TYPE_FINAL_P in
-	   RECORD_TYPE, UNION_TYPE and QUAL_UNION_TYPE
+       REF_REVERSE_STORAGE_ORDER in
+           BIT_FIELD_REF, MEM_REF
 */
 
 struct GTY(()) tree_typed {
@@ -1227,6 +1289,8 @@ enum omp_clause_depend_kind
   OMP_CLAUSE_DEPEND_IN,
   OMP_CLAUSE_DEPEND_OUT,
   OMP_CLAUSE_DEPEND_INOUT,
+  OMP_CLAUSE_DEPEND_SOURCE,
+  OMP_CLAUSE_DEPEND_SINK,
   OMP_CLAUSE_DEPEND_LAST
 };
 
@@ -1239,6 +1303,14 @@ enum omp_clause_proc_bind_kind
   OMP_CLAUSE_PROC_BIND_CLOSE = 3,
   OMP_CLAUSE_PROC_BIND_SPREAD = 4,
   OMP_CLAUSE_PROC_BIND_LAST
+};
+
+enum omp_clause_linear_kind
+{
+  OMP_CLAUSE_LINEAR_DEFAULT,
+  OMP_CLAUSE_LINEAR_REF,
+  OMP_CLAUSE_LINEAR_VAL,
+  OMP_CLAUSE_LINEAR_UVAL
 };
 
 struct GTY(()) tree_exp {
@@ -1259,7 +1331,7 @@ struct GTY(()) ssa_use_operand_t {
      needs to point to the original SSA name.  Since statements and
      SSA names are of different data types, we need this union.  See
      the explanation in struct imm_use_iterator.  */
-  union { gimple stmt; tree ssa_name; } GTY((skip(""))) loc;
+  union { gimple *stmt; tree ssa_name; } GTY((skip(""))) loc;
   tree *GTY((skip(""))) use;
 };
 
@@ -1270,7 +1342,7 @@ struct GTY(()) tree_ssa_name {
   tree var;
 
   /* Statement that defines this SSA name.  */
-  gimple def_stmt;
+  gimple *def_stmt;
 
   /* Value range information.  */
   union ssa_name_info_type {
@@ -1302,9 +1374,14 @@ struct GTY(()) tree_omp_clause {
     enum omp_clause_schedule_kind  schedule_kind;
     enum omp_clause_depend_kind    depend_kind;
     /* See include/gomp-constants.h for enum gomp_map_kind's values.  */
-    unsigned char		   map_kind;
+    unsigned int		   map_kind;
     enum omp_clause_proc_bind_kind proc_bind_kind;
     enum tree_code                 reduction_code;
+    enum omp_clause_linear_kind    linear_kind;
+    enum tree_code                 if_modifier;
+    /* The dimension a OMP_CLAUSE__GRIDDIM_ clause of a gridified target
+       construct describes.  */
+    unsigned int		   dimension;
   } GTY ((skip)) subcode;
 
   /* The gimplification of OMP_CLAUSE_REDUCTION_{INIT,MERGE} for omp-low's
@@ -1334,6 +1411,9 @@ struct GTY(()) tree_block {
   tree abstract_origin;
   tree fragment_origin;
   tree fragment_chain;
+
+  /* Pointer to the DWARF lexical block.  */
+  struct die_struct *die;
 };
 
 struct GTY(()) tree_type_common {
@@ -1649,7 +1729,7 @@ struct GTY(()) tree_optimization_option {
   struct tree_common common;
 
   /* The optimization options used by the user.  */
-  struct cl_optimization opts;
+  struct cl_optimization *opts;
 
   /* Target optabs for this set of optimization options.  This is of
      type `struct target_optabs *'.  */
@@ -1673,7 +1753,7 @@ struct GTY(()) tree_target_option {
   struct target_globals *globals;
 
   /* The optimization options used by the user.  */
-  struct cl_target_option opts;
+  struct cl_target_option *opts;
 };
 
 /* Define the overall contents of a tree node.

@@ -1,5 +1,5 @@
 /* Target Code for moxie
-   Copyright (C) 2008-2015 Free Software Foundation, Inc.
+   Copyright (C) 2008-2016 Free Software Foundation, Inc.
    Contributed by Anthony Green.
 
    This file is part of GCC.
@@ -21,63 +21,23 @@
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "tm.h"
+#include "backend.h"
+#include "target.h"
 #include "rtl.h"
-#include "regs.h"
-#include "hard-reg-set.h"
-#include "insn-config.h"
-#include "conditions.h"
-#include "insn-flags.h"
-#include "output.h"
-#include "insn-attr.h"
-#include "flags.h"
-#include "recog.h"
-#include "reload.h"
-#include "diagnostic-core.h"
-#include "obstack.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "wide-int.h"
-#include "inchash.h"
 #include "tree.h"
+#include "df.h"
+#include "regs.h"
+#include "emit-rtl.h"
+#include "diagnostic-core.h"
+#include "output.h"
 #include "stor-layout.h"
 #include "varasm.h"
 #include "calls.h"
-#include "hashtab.h"
-#include "function.h"
-#include "statistics.h"
-#include "real.h"
-#include "fixed-value.h"
-#include "expmed.h"
-#include "dojump.h"
-#include "explow.h"
-#include "emit-rtl.h"
-#include "stmt.h"
 #include "expr.h"
-#include "insn-codes.h"
-#include "optabs.h"
-#include "except.h"
-#include "ggc.h"
-#include "target.h"
-#include "target-def.h"
-#include "tm_p.h"
-#include "langhooks.h"
-#include "dominance.h"
-#include "cfg.h"
-#include "cfgrtl.h"
-#include "cfganal.h"
-#include "lcm.h"
-#include "cfgbuild.h"
-#include "cfgcleanup.h"
-#include "predict.h"
-#include "basic-block.h"
-#include "df.h"
 #include "builtins.h"
+
+/* This file should be included last.  */
+#include "target-def.h"
 
 #define LOSE_AND_RETURN(msgid, x)		\
   do						\
@@ -145,8 +105,8 @@ moxie_operand_lossage (const char *msgid, rtx op)
 
 /* The PRINT_OPERAND_ADDRESS worker.  */
 
-void
-moxie_print_operand_address (FILE *file, rtx x)
+static void
+moxie_print_operand_address (FILE *file, machine_mode, rtx x)
 {
   switch (GET_CODE (x))
     {
@@ -192,7 +152,7 @@ moxie_print_operand_address (FILE *file, rtx x)
 
 /* The PRINT_OPERAND worker.  */
 
-void
+static void
 moxie_print_operand (FILE *file, rtx x, int code)
 {
   rtx operand = x;
@@ -223,7 +183,7 @@ moxie_print_operand (FILE *file, rtx x, int code)
       return;
 
     case MEM:
-      output_address (XEXP (operand, 0));
+      output_address (GET_MODE (XEXP (operand, 0)), XEXP (operand, 0));
       return;
 
     default:
@@ -605,6 +565,45 @@ moxie_offset_address_p (rtx x)
   return 0;
 }
 
+/* Helper function for `moxie_legitimate_address_p'.  */
+
+static bool
+moxie_reg_ok_for_base_p (const_rtx reg, bool strict_p)
+{
+  int regno = REGNO (reg);
+
+  if (strict_p)
+    return HARD_REGNO_OK_FOR_BASE_P (regno)
+	   || HARD_REGNO_OK_FOR_BASE_P (reg_renumber[regno]);
+  else    
+    return !HARD_REGISTER_NUM_P (regno)
+	   || HARD_REGNO_OK_FOR_BASE_P (regno);
+}
+
+/* Worker function for TARGET_LEGITIMATE_ADDRESS_P.  */
+
+static bool
+moxie_legitimate_address_p (machine_mode mode ATTRIBUTE_UNUSED,
+			    rtx x, bool strict_p,
+			    addr_space_t as)
+{
+  gcc_assert (ADDR_SPACE_GENERIC_P (as));
+
+  if (GET_CODE(x) == PLUS
+      && REG_P (XEXP (x, 0))
+      && moxie_reg_ok_for_base_p (XEXP (x, 0), strict_p)
+      && CONST_INT_P (XEXP (x, 1))
+      && IN_RANGE (INTVAL (XEXP (x, 1)), -32768, 32767))
+    return true;
+  if (REG_P (x) && moxie_reg_ok_for_base_p (x, strict_p))
+    return true;
+  if (GET_CODE (x) == SYMBOL_REF
+      || GET_CODE (x) == LABEL_REF
+      || GET_CODE (x) == CONST)
+    return true;
+  return false;
+}
+
 /* The Global `targetm' Variable.  */
 
 /* Initialize the GCC target structure.  */
@@ -625,6 +624,8 @@ moxie_offset_address_p (rtx x)
 #undef  TARGET_FUNCTION_ARG_ADVANCE
 #define TARGET_FUNCTION_ARG_ADVANCE	moxie_function_arg_advance
 
+#undef  TARGET_ADDR_SPACE_LEGITIMATE_ADDRESS_P
+#define TARGET_ADDR_SPACE_LEGITIMATE_ADDRESS_P	moxie_legitimate_address_p
 
 #undef  TARGET_SETUP_INCOMING_VARARGS
 #define TARGET_SETUP_INCOMING_VARARGS 	moxie_setup_incoming_varargs
@@ -634,7 +635,7 @@ moxie_offset_address_p (rtx x)
 
 /* Define this to return an RTX representing the place where a
    function returns or receives a value of data type RET_TYPE, a tree
-   node node representing a data type.  */
+   node representing a data type.  */
 #undef TARGET_FUNCTION_VALUE
 #define TARGET_FUNCTION_VALUE moxie_function_value
 #undef TARGET_LIBCALL_VALUE
@@ -654,6 +655,11 @@ moxie_offset_address_p (rtx x)
 
 #undef TARGET_OPTION_OVERRIDE
 #define TARGET_OPTION_OVERRIDE moxie_option_override
+
+#undef  TARGET_PRINT_OPERAND
+#define TARGET_PRINT_OPERAND moxie_print_operand
+#undef  TARGET_PRINT_OPERAND_ADDRESS
+#define TARGET_PRINT_OPERAND_ADDRESS moxie_print_operand_address
 
 struct gcc_target targetm = TARGET_INITIALIZER;
 

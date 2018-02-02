@@ -1,6 +1,6 @@
 /* An SH specific RTL pass that tries to combine comparisons and redundant
    condition code register stores across multiple basic blocks.
-   Copyright (C) 2013-2015 Free Software Foundation, Inc.
+   Copyright (C) 2013-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -24,48 +24,15 @@ along with GCC; see the file COPYING3.  If not see
 #define INCLUDE_VECTOR
 #include "system.h"
 #include "coretypes.h"
-#include "machmode.h"
-#include "predict.h"
-#include "vec.h"
-#include "hashtab.h"
-#include "hash-set.h"
-#include "tm.h"
-#include "hard-reg-set.h"
-#include "input.h"
-#include "function.h"
-#include "dominance.h"
-#include "cfg.h"
-#include "cfgrtl.h"
-#include "cfganal.h"
-#include "lcm.h"
-#include "cfgbuild.h"
-#include "cfgcleanup.h"
-#include "basic-block.h"
-#include "df.h"
-#include "rtl.h"
-#include "insn-config.h"
-#include "insn-codes.h"
-#include "emit-rtl.h"
-#include "recog.h"
-#include "tree-pass.h"
+#include "backend.h"
 #include "target.h"
-#include "symtab.h"
-#include "inchash.h"
+#include "rtl.h"
 #include "tree.h"
 #include "optabs.h"
-#include "flags.h"
-#include "statistics.h"
-#include "double-int.h"
-#include "real.h"
-#include "fixed-value.h"
-#include "alias.h"
-#include "wide-int.h"
-#include "expmed.h"
-#include "dojump.h"
-#include "explow.h"
-#include "calls.h"
-#include "varasm.h"
-#include "stmt.h"
+#include "emit-rtl.h"
+#include "recog.h"
+#include "cfgrtl.h"
+#include "tree-pass.h"
 #include "expr.h"
 
 /*
@@ -959,8 +926,8 @@ sh_treg_combine::make_not_reg_insn (rtx dst_reg, rtx src_reg) const
 
   start_sequence ();
 
-  emit_insn (gen_rtx_SET (VOIDmode, m_ccreg,
-			  gen_rtx_fmt_ee (EQ, SImode, src_reg, const0_rtx)));
+  emit_insn (gen_rtx_SET (m_ccreg, gen_rtx_fmt_ee (EQ, SImode,
+						   src_reg, const0_rtx)));
 
   if (GET_MODE (dst_reg) == SImode)
     emit_move_insn (dst_reg, m_ccreg);
@@ -982,7 +949,7 @@ rtx_insn *
 sh_treg_combine::make_inv_ccreg_insn (void) const
 {
   start_sequence ();
-  rtx_insn *i = emit_insn (gen_rtx_SET (VOIDmode, m_ccreg,
+  rtx_insn *i = emit_insn (gen_rtx_SET (m_ccreg,
                                         gen_rtx_fmt_ee (XOR, GET_MODE (m_ccreg),
                                                         m_ccreg, const1_rtx)));
   end_sequence ();
@@ -1616,7 +1583,7 @@ sh_treg_combine::execute (function *fun)
 	log_msg ("trying to split insn:\n");
 	log_insn (*i);
 	log_msg ("\n");
-	try_split (PATTERN (*i), *i, 0);
+	try_split (PATTERN (*i), safe_as_a <rtx_insn *> (*i), 0);
       }
 
   m_touched_insns.clear ();

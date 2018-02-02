@@ -1,6 +1,6 @@
-2017-10-10  Release Manager
+2017-07-04  Release Manager
 
-	* GCC 5.5.0 released.
+	* GCC 6.4.0 released.
 
 2017-01-30  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
 
@@ -15,6 +15,10 @@
 	SOLARIS_GETS_CXX14_CHECK, SOLARIS_STD_GETS_CXX14_CHECK,
 	SOLARIS_STDLIB_NORETURN_CHECK]: New tests.
 
+2016-12-21  Release Manager
+
+	* GCC 6.3.0 released.
+
 2016-12-01  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
 
 	Backport from mainline
@@ -24,6 +28,10 @@
 	(hpux11_fabsf): Replace bypass by *-hp-hpux11* mach selector.
 	* fixincl.x: Regenerate.
 	* tests/base/math.h [SOLARIS_MATH_12_CHECK]: New test.
+
+2016-08-22  Release Manager
+
+	* GCC 6.2.0 released.
 
 2016-06-15  David Edelsohn  <dje.gcc@gmail.com>
 
@@ -40,25 +48,18 @@
 	[AIX_STDLIB_CALLOC]: New test.
 	[AIX_STDLIB_VALLOC]: New test.
 
-2016-06-03  Release Manager
+2016-04-27  Release Manager
 
-	* GCC 5.4.0 released.
+	* GCC 6.1.0 released.
 
-2016-02-01  John David Anglin  <danglin@gcc.gnu.org>
+2016-01-31  John David Anglin  <danglin@gcc.gnu.org>
 
 	PR target/68741
 	* inclhack.def (hpux_vsscanf): New fix.
 	* fixincl.x: Regenerated.
 	* tests/base/stdio.h [HPUX_VSSCANF_CHECK]: New test.
 
-2015-12-04  Release Manager
-
-	* GCC 5.3.0 released.
-
 2015-08-14  David Edelsohn  <dje.gcc@gmail.com>
-
-	Backport from mainline.
-	2015-08-14  David Edelsohn  <dje.gcc@gmail.com>
 
 	* inclhack.def (aix_stdio_inline): New fix.
 	(aix_strtof_const): Limit to *-*-aix*.
@@ -68,14 +69,11 @@
 	* fixincl.x: Regenerated.
 	* test/base/stdio.h [AIX_STDIO_INLINE]: New test.
 
-2015-07-16  Release Manager
+2015-07-28  Eric Gallager  <egall@gwmail.gwu.edu>
 
-	* GCC 5.2.0 released.
+	* check.tpl: Ignore .DS_Store directories.
 
-2015-05-22  David Edelsohn  <dje.gcc@gmail.com>
-
-	Backport from mainline.
-	2015-05-21  David Edelsohn  <dje.gcc@gmail.com>
+2015-05-21  David Edelsohn  <dje.gcc@gmail.com>
 
 	* inclhack.def (aix_externc): New fix.
 	(aix_externcpp[12]): New fix.
@@ -84,9 +82,13 @@
 	* test/base/sys/socket.h [AIX_EXTERNCPP[12]_CHECK]: New test.
 	* test/base/fcntl.h: New file.
 
-2015-04-22  Release Manager
+2015-05-13  Michael Haubenwallner  <michael.haubenwallner@ssi-schaefer.com>
 
-	* GCC 5.1.0 released.
+	* aclocal.m4: Regenerated with automake-1.11.6.
+
+2015-04-22  Gregor Richards  <gregor.richards@uwaterloo.ca>
+
+	* mkfixinc.sh: Add *-musl* with no fixes.
 
 2015-03-28  John David Anglin  <danglin@gcc.gnu.org>
 

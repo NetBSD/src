@@ -1,5 +1,5 @@
 /* Definitions for MIPS systems using GNU userspace.
-   Copyright (C) 1998-2015 Free Software Foundation, Inc.
+   Copyright (C) 1998-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -100,7 +100,7 @@ along with GCC; see the file COPYING3.  If not see
 #ifdef HAVE_AS_NO_SHARED
 /* Default to -mno-shared for non-PIC.  */
 # define NO_SHARED_SPECS \
-  " %{mshared|mno-shared|fpic|fPIC|fpie|fPIE:;:-mno-shared}"
+  " %{mshared|mno-shared:;:%{" NO_FPIE_AND_FPIC_SPEC ":-mno-shared}}"
 #else
 # define NO_SHARED_SPECS ""
 #endif

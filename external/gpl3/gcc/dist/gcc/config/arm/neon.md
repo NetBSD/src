@@ -1,5 +1,5 @@
 ;; ARM NEON coprocessor Machine Description
-;; Copyright (C) 2006-2015 Free Software Foundation, Inc.
+;; Copyright (C) 2006-2016 Free Software Foundation, Inc.
 ;; Written by CodeSourcery.
 ;;
 ;; This file is part of GCC.
@@ -134,6 +134,36 @@
     {
       if (!REG_P (operands[0]))
 	operands[1] = force_reg (<MODE>mode, operands[1]);
+    }
+})
+
+(define_expand "movv4hf"
+  [(set (match_operand:V4HF 0 "s_register_operand")
+	(match_operand:V4HF 1 "s_register_operand"))]
+  "TARGET_NEON && TARGET_FP16"
+{
+  /* We need to use force_reg to avoid CANNOT_CHANGE_MODE_CLASS
+     causing an ICE on big-endian because it cannot extract subregs in
+     this case.  */
+  if (can_create_pseudo_p ())
+    {
+      if (!REG_P (operands[0]))
+	operands[1] = force_reg (V4HFmode, operands[1]);
+    }
+})
+
+(define_expand "movv8hf"
+  [(set (match_operand:V8HF 0 "")
+	(match_operand:V8HF 1 ""))]
+  "TARGET_NEON && TARGET_FP16"
+{ 
+  /* We need to use force_reg to avoid CANNOT_CHANGE_MODE_CLASS
+     causing an ICE on big-endian because it cannot extract subregs in
+     this case.  */
+  if (can_create_pseudo_p ())
+    {
+      if (!REG_P (operands[0]))
+	operands[1] = force_reg (V8HFmode, operands[1]);
     }
 })
 
@@ -299,11 +329,11 @@
   [(set_attr "type" "neon_load1_1reg<q>")])
 
 (define_insn "vec_set<mode>_internal"
-  [(set (match_operand:VD 0 "s_register_operand" "=w,w")
-        (vec_merge:VD
-          (vec_duplicate:VD
+  [(set (match_operand:VD_LANE 0 "s_register_operand" "=w,w")
+        (vec_merge:VD_LANE
+          (vec_duplicate:VD_LANE
             (match_operand:<V_elem> 1 "nonimmediate_operand" "Um,r"))
-          (match_operand:VD 3 "s_register_operand" "0,0")
+          (match_operand:VD_LANE 3 "s_register_operand" "0,0")
           (match_operand:SI 2 "immediate_operand" "i,i")))]
   "TARGET_NEON"
 {
@@ -320,11 +350,11 @@
   [(set_attr "type" "neon_load1_all_lanes<q>,neon_from_gp<q>")])
 
 (define_insn "vec_set<mode>_internal"
-  [(set (match_operand:VQ 0 "s_register_operand" "=w,w")
-        (vec_merge:VQ
-          (vec_duplicate:VQ
+  [(set (match_operand:VQ2 0 "s_register_operand" "=w,w")
+        (vec_merge:VQ2
+          (vec_duplicate:VQ2
             (match_operand:<V_elem> 1 "nonimmediate_operand" "Um,r"))
-          (match_operand:VQ 3 "s_register_operand" "0,0")
+          (match_operand:VQ2 3 "s_register_operand" "0,0")
           (match_operand:SI 2 "immediate_operand" "i,i")))]
   "TARGET_NEON"
 {
@@ -385,7 +415,7 @@
 (define_insn "vec_extract<mode>"
   [(set (match_operand:<V_elem> 0 "nonimmediate_operand" "=Um,r")
         (vec_select:<V_elem>
-          (match_operand:VD 1 "s_register_operand" "w,w")
+          (match_operand:VD_LANE 1 "s_register_operand" "w,w")
           (parallel [(match_operand:SI 2 "immediate_operand" "i,i")])))]
   "TARGET_NEON"
 {
@@ -407,7 +437,7 @@
 (define_insn "vec_extract<mode>"
   [(set (match_operand:<V_elem> 0 "nonimmediate_operand" "=Um,r")
 	(vec_select:<V_elem>
-          (match_operand:VQ 1 "s_register_operand" "w,w")
+          (match_operand:VQ2 1 "s_register_operand" "w,w")
           (parallel [(match_operand:SI 2 "immediate_operand" "i,i")])))]
   "TARGET_NEON"
 {
@@ -1116,7 +1146,7 @@
 ;; lshrdi3_neon
 (define_insn_and_split "<shift>di3_neon"
   [(set (match_operand:DI 0 "s_register_operand"	     "= w, w,?&r,?r,?&r,?w,?w")
-	(rshifts:DI (match_operand:DI 1 "s_register_operand" " 0w, w, 0r, 0,  r,0w, w")
+	(RSHIFTS:DI (match_operand:DI 1 "s_register_operand" " 0w, w, 0r, 0,  r,0w, w")
 		    (match_operand:SI 2 "reg_or_int_operand" "  r, i,  r, i,  i, r, i")))
    (clobber (match_scratch:SI 3				     "=2r, X, &r, X,  X,2r, X"))
    (clobber (match_scratch:SI 4				     "= X, X, &r, X,  X, X, X"))
@@ -1198,71 +1228,6 @@
   [(set_attr "type" "neon_add_widen")]
 )
 
-;; VEXT can be used to synthesize coarse whole-vector shifts with 8-bit
-;; shift-count granularity. That's good enough for the middle-end's current
-;; needs.
-
-;; Note that it's not safe to perform such an operation in big-endian mode,
-;; due to element-ordering issues.
-
-(define_expand "vec_shr_<mode>"
-  [(match_operand:VDQ 0 "s_register_operand" "")
-   (match_operand:VDQ 1 "s_register_operand" "")
-   (match_operand:SI 2 "const_multiple_of_8_operand" "")]
-  "TARGET_NEON && !BYTES_BIG_ENDIAN"
-{
-  rtx zero_reg;
-  HOST_WIDE_INT num_bits = INTVAL (operands[2]);
-  const int width = GET_MODE_BITSIZE (<MODE>mode);
-  const machine_mode bvecmode = (width == 128) ? V16QImode : V8QImode;
-  rtx (*gen_ext) (rtx, rtx, rtx, rtx) =
-    (width == 128) ? gen_neon_vextv16qi : gen_neon_vextv8qi;
-
-  if (num_bits == width)
-    {
-      emit_move_insn (operands[0], operands[1]);
-      DONE;
-    }
-
-  zero_reg = force_reg (bvecmode, CONST0_RTX (bvecmode));
-  operands[0] = gen_lowpart (bvecmode, operands[0]);
-  operands[1] = gen_lowpart (bvecmode, operands[1]);
-
-  emit_insn (gen_ext (operands[0], operands[1], zero_reg,
-		      GEN_INT (num_bits / BITS_PER_UNIT)));
-  DONE;
-})
-
-(define_expand "vec_shl_<mode>"
-  [(match_operand:VDQ 0 "s_register_operand" "")
-   (match_operand:VDQ 1 "s_register_operand" "")
-   (match_operand:SI 2 "const_multiple_of_8_operand" "")]
-  "TARGET_NEON && !BYTES_BIG_ENDIAN"
-{
-  rtx zero_reg;
-  HOST_WIDE_INT num_bits = INTVAL (operands[2]);
-  const int width = GET_MODE_BITSIZE (<MODE>mode);
-  const machine_mode bvecmode = (width == 128) ? V16QImode : V8QImode;
-  rtx (*gen_ext) (rtx, rtx, rtx, rtx) =
-    (width == 128) ? gen_neon_vextv16qi : gen_neon_vextv8qi;
-
-  if (num_bits == 0)
-    {
-      emit_move_insn (operands[0], CONST0_RTX (<MODE>mode));
-      DONE;
-    }
-
-  num_bits = width - num_bits;
-
-  zero_reg = force_reg (bvecmode, CONST0_RTX (bvecmode));
-  operands[0] = gen_lowpart (bvecmode, operands[0]);
-  operands[1] = gen_lowpart (bvecmode, operands[1]);
-
-  emit_insn (gen_ext (operands[0], zero_reg, operands[1],
-		      GEN_INT (num_bits / BITS_PER_UNIT)));
-  DONE;
-})
-
 ;; Helpers for quad-word reduction operations
 
 ; Add (or smin, smax...) the low N/2 elements of the N-element vector
@@ -1271,7 +1236,7 @@
 
 (define_insn "quad_halves_<code>v4si"
   [(set (match_operand:V2SI 0 "s_register_operand" "=w")
-        (vqh_ops:V2SI
+        (VQH_OPS:V2SI
           (vec_select:V2SI (match_operand:V4SI 1 "s_register_operand" "w")
                            (parallel [(const_int 0) (const_int 1)]))
           (vec_select:V2SI (match_dup 1)
@@ -1284,7 +1249,7 @@
 
 (define_insn "quad_halves_<code>v4sf"
   [(set (match_operand:V2SF 0 "s_register_operand" "=w")
-        (vqhs_ops:V2SF
+        (VQHS_OPS:V2SF
           (vec_select:V2SF (match_operand:V4SF 1 "s_register_operand" "w")
                            (parallel [(const_int 0) (const_int 1)]))
           (vec_select:V2SF (match_dup 1)
@@ -1297,7 +1262,7 @@
 
 (define_insn "quad_halves_<code>v8hi"
   [(set (match_operand:V4HI 0 "s_register_operand" "+w")
-        (vqh_ops:V4HI
+        (VQH_OPS:V4HI
           (vec_select:V4HI (match_operand:V8HI 1 "s_register_operand" "w")
                            (parallel [(const_int 0) (const_int 1)
 				      (const_int 2) (const_int 3)]))
@@ -1312,7 +1277,7 @@
 
 (define_insn "quad_halves_<code>v16qi"
   [(set (match_operand:V8QI 0 "s_register_operand" "+w")
-        (vqh_ops:V8QI
+        (VQH_OPS:V8QI
           (vec_select:V8QI (match_operand:V16QI 1 "s_register_operand" "w")
                            (parallel [(const_int 0) (const_int 1)
 				      (const_int 2) (const_int 3)
@@ -1875,7 +1840,7 @@
 ; particular, denormal values are flushed to zero.  This means that GCC cannot
 ; use those instructions for autovectorization, etc. unless
 ; -funsafe-math-optimizations is in effect (in which case flush-to-zero
-; behaviour is permissible).  Intrinsic operations (provided by the arm_neon.h
+; behavior is permissible).  Intrinsic operations (provided by the arm_neon.h
 ; header) must work in either case: if -funsafe-math-optimizations is given,
 ; intrinsics expand to "canonical" RTL where possible, otherwise intrinsics
 ; expand to unspecs (which may potentially limit the extent to which they might
@@ -2083,6 +2048,18 @@
   [(set_attr "type" "neon_sat_mul_<V_elem_ch><q>")]
 )
 
+;; vqrdmlah, vqrdmlsh
+(define_insn "neon_vqrdml<VQRDMLH_AS:neon_rdma_as>h<mode>"
+  [(set (match_operand:VMDQI 0 "s_register_operand" "=w")
+	(unspec:VMDQI [(match_operand:VMDQI 1 "s_register_operand" "0")
+		       (match_operand:VMDQI 2 "s_register_operand" "w")
+		       (match_operand:VMDQI 3 "s_register_operand" "w")]
+		      VQRDMLH_AS))]
+  "TARGET_NEON_RDMA"
+  "vqrdml<VQRDMLH_AS:neon_rdma_as>h.<V_s_elem>\t%<V_reg>0, %<V_reg>2, %<V_reg>3"
+  [(set_attr "type" "neon_sat_mla_<V_elem_ch>_long")]
+)
+
 (define_insn "neon_vqdmlal<mode>"
   [(set (match_operand:<V_widen> 0 "s_register_operand" "=w")
         (unspec:<V_widen> [(match_operand:<V_widen> 1 "s_register_operand" "0")
@@ -2204,134 +2181,140 @@
   [(set_attr "type" "neon_sub_halve_narrow_q")]
 )
 
-(define_insn "neon_vceq<mode>"
+;; These may expand to an UNSPEC pattern when a floating point mode is used
+;; without unsafe math optimizations.
+(define_expand "neon_vc<cmp_op><mode>"
+  [(match_operand:<V_cmp_result> 0 "s_register_operand" "=w,w")
+     (neg:<V_cmp_result>
+       (COMPARISONS:VDQW (match_operand:VDQW 1 "s_register_operand" "w,w")
+                         (match_operand:VDQW 2 "reg_or_zero_operand" "w,Dz")))]
+  "TARGET_NEON"
+  {
+    /* For FP comparisons use UNSPECS unless -funsafe-math-optimizations
+       are enabled.  */
+    if (GET_MODE_CLASS (<MODE>mode) == MODE_VECTOR_FLOAT
+        && !flag_unsafe_math_optimizations)
+      {
+        /* We don't just emit a gen_neon_vc<cmp_op><mode>_insn_unspec because
+           we define gen_neon_vceq<mode>_insn_unspec only for float modes
+           whereas this expander iterates over the integer modes as well,
+           but we will never expand to UNSPECs for the integer comparisons.  */
+        switch (<MODE>mode)
+          {
+            case V2SFmode:
+              emit_insn (gen_neon_vc<cmp_op>v2sf_insn_unspec (operands[0],
+                                                              operands[1],
+                                                              operands[2]));
+              break;
+            case V4SFmode:
+              emit_insn (gen_neon_vc<cmp_op>v4sf_insn_unspec (operands[0],
+                                                              operands[1],
+                                                              operands[2]));
+              break;
+            default:
+              gcc_unreachable ();
+          }
+      }
+    else
+      emit_insn (gen_neon_vc<cmp_op><mode>_insn (operands[0],
+                                                 operands[1],
+                                                 operands[2]));
+    DONE;
+  }
+)
+
+(define_insn "neon_vc<cmp_op><mode>_insn"
+  [(set (match_operand:<V_cmp_result> 0 "s_register_operand" "=w,w")
+        (neg:<V_cmp_result>
+          (COMPARISONS:<V_cmp_result>
+            (match_operand:VDQW 1 "s_register_operand" "w,w")
+            (match_operand:VDQW 2 "reg_or_zero_operand" "w,Dz"))))]
+  "TARGET_NEON && !(GET_MODE_CLASS (<MODE>mode) == MODE_VECTOR_FLOAT
+                    && !flag_unsafe_math_optimizations)"
+  {
+    char pattern[100];
+    sprintf (pattern, "vc<cmp_op>.%s%%#<V_sz_elem>\t%%<V_reg>0,"
+                      " %%<V_reg>1, %s",
+                       GET_MODE_CLASS (<MODE>mode) == MODE_VECTOR_FLOAT
+                         ? "f" : "<cmp_type>",
+                       which_alternative == 0
+                         ? "%<V_reg>2" : "#0");
+    output_asm_insn (pattern, operands);
+    return "";
+  }
+  [(set (attr "type")
+        (if_then_else (match_operand 2 "zero_operand")
+                      (const_string "neon_compare_zero<q>")
+                      (const_string "neon_compare<q>")))]
+)
+
+(define_insn "neon_vc<cmp_op_unsp><mode>_insn_unspec"
   [(set (match_operand:<V_cmp_result> 0 "s_register_operand" "=w,w")
         (unspec:<V_cmp_result>
-	  [(match_operand:VDQW 1 "s_register_operand" "w,w")
-	   (match_operand:VDQW 2 "reg_or_zero_operand" "w,Dz")]
-          UNSPEC_VCEQ))]
+	  [(match_operand:VCVTF 1 "s_register_operand" "w,w")
+	   (match_operand:VCVTF 2 "reg_or_zero_operand" "w,Dz")]
+          NEON_VCMP))]
   "TARGET_NEON"
-  "@
-  vceq.<V_if_elem>\t%<V_reg>0, %<V_reg>1, %<V_reg>2
-  vceq.<V_if_elem>\t%<V_reg>0, %<V_reg>1, #0"
-  [(set (attr "type")
-      (if_then_else (match_test "<Is_float_mode>")
-                    (const_string "neon_fp_compare_s<q>")
-                    (if_then_else (match_operand 2 "zero_operand")
-                      (const_string "neon_compare_zero<q>")
-                      (const_string "neon_compare<q>"))))]
-)
-
-(define_insn "neon_vcge<mode>"
-  [(set (match_operand:<V_cmp_result> 0 "s_register_operand" "=w,w")
-        (unspec:<V_cmp_result>
-	  [(match_operand:VDQW 1 "s_register_operand" "w,w")
-	   (match_operand:VDQW 2 "reg_or_zero_operand" "w,Dz")]
-          UNSPEC_VCGE))]
-  "TARGET_NEON"
-  "@
-  vcge.<V_s_elem>\t%<V_reg>0, %<V_reg>1, %<V_reg>2
-  vcge.<V_s_elem>\t%<V_reg>0, %<V_reg>1, #0"
-  [(set (attr "type")
-     (if_then_else (match_test "<Is_float_mode>")
-                   (const_string "neon_fp_compare_s<q>")
-                    (if_then_else (match_operand 2 "zero_operand")
-                      (const_string "neon_compare_zero<q>")
-                      (const_string "neon_compare<q>"))))]
-)
-
-(define_insn "neon_vcgeu<mode>"
-  [(set (match_operand:<V_cmp_result> 0 "s_register_operand" "=w")
-        (unspec:<V_cmp_result>
-	  [(match_operand:VDQIW 1 "s_register_operand" "w")
-	   (match_operand:VDQIW 2 "s_register_operand" "w")]
-          UNSPEC_VCGEU))]
-  "TARGET_NEON"
-  "vcge.u%#<V_sz_elem>\t%<V_reg>0, %<V_reg>1, %<V_reg>2"
-  [(set_attr "type" "neon_compare<q>")]
-)
-
-(define_insn "neon_vcgt<mode>"
-  [(set (match_operand:<V_cmp_result> 0 "s_register_operand" "=w,w")
-        (unspec:<V_cmp_result>
-	  [(match_operand:VDQW 1 "s_register_operand" "w,w")
-	   (match_operand:VDQW 2 "reg_or_zero_operand" "w,Dz")]
-          UNSPEC_VCGT))]
-  "TARGET_NEON"
-  "@
-  vcgt.<V_s_elem>\t%<V_reg>0, %<V_reg>1, %<V_reg>2
-  vcgt.<V_s_elem>\t%<V_reg>0, %<V_reg>1, #0"
-  [(set (attr "type")
-     (if_then_else (match_test "<Is_float_mode>")
-                   (const_string "neon_fp_compare_s<q>")
-                    (if_then_else (match_operand 2 "zero_operand")
-                      (const_string "neon_compare_zero<q>")
-                      (const_string "neon_compare<q>"))))]
-)
-
-(define_insn "neon_vcgtu<mode>"
-  [(set (match_operand:<V_cmp_result> 0 "s_register_operand" "=w")
-        (unspec:<V_cmp_result>
-	  [(match_operand:VDQIW 1 "s_register_operand" "w")
-	   (match_operand:VDQIW 2 "s_register_operand" "w")]
-          UNSPEC_VCGTU))]
-  "TARGET_NEON"
-  "vcgt.u%#<V_sz_elem>\t%<V_reg>0, %<V_reg>1, %<V_reg>2"
-  [(set_attr "type" "neon_compare<q>")]
-)
-
-;; VCLE and VCLT only support comparisons with immediate zero (register
-;; variants are VCGE and VCGT with operands reversed).
-
-(define_insn "neon_vcle<mode>"
-  [(set (match_operand:<V_cmp_result> 0 "s_register_operand" "=w")
-        (unspec:<V_cmp_result>
-	  [(match_operand:VDQW 1 "s_register_operand" "w")
-	   (match_operand:VDQW 2 "zero_operand" "Dz")]
-          UNSPEC_VCLE))]
-  "TARGET_NEON"
-  "vcle.<V_s_elem>\t%<V_reg>0, %<V_reg>1, #0"
-  [(set (attr "type")
-      (if_then_else (match_test "<Is_float_mode>")
-                    (const_string "neon_fp_compare_s<q>")
-                    (if_then_else (match_operand 2 "zero_operand")
-                      (const_string "neon_compare_zero<q>")
-                      (const_string "neon_compare<q>"))))]
-)
-
-(define_insn "neon_vclt<mode>"
-  [(set (match_operand:<V_cmp_result> 0 "s_register_operand" "=w")
-        (unspec:<V_cmp_result>
-	  [(match_operand:VDQW 1 "s_register_operand" "w")
-	   (match_operand:VDQW 2 "zero_operand" "Dz")]
-          UNSPEC_VCLT))]
-  "TARGET_NEON"
-  "vclt.<V_s_elem>\t%<V_reg>0, %<V_reg>1, #0"
-  [(set (attr "type")
-      (if_then_else (match_test "<Is_float_mode>")
-                    (const_string "neon_fp_compare_s<q>")
-                    (if_then_else (match_operand 2 "zero_operand")
-                      (const_string "neon_compare_zero<q>")
-                      (const_string "neon_compare<q>"))))]
-)
-
-(define_insn "neon_vcage<mode>"
-  [(set (match_operand:<V_cmp_result> 0 "s_register_operand" "=w")
-        (unspec:<V_cmp_result> [(match_operand:VCVTF 1 "s_register_operand" "w")
-		                (match_operand:VCVTF 2 "s_register_operand" "w")]
-                               UNSPEC_VCAGE))]
-  "TARGET_NEON"
-  "vacge.<V_if_elem>\t%<V_reg>0, %<V_reg>1, %<V_reg>2"
+  {
+    char pattern[100];
+    sprintf (pattern, "vc<cmp_op_unsp>.f%%#<V_sz_elem>\t%%<V_reg>0,"
+                       " %%<V_reg>1, %s",
+                       which_alternative == 0
+                         ? "%<V_reg>2" : "#0");
+    output_asm_insn (pattern, operands);
+    return "";
+}
   [(set_attr "type" "neon_fp_compare_s<q>")]
 )
 
-(define_insn "neon_vcagt<mode>"
+(define_insn "neon_vc<cmp_op>u<mode>"
+  [(set (match_operand:<V_cmp_result> 0 "s_register_operand" "=w")
+        (neg:<V_cmp_result>
+          (GTUGEU:<V_cmp_result>
+	    (match_operand:VDQIW 1 "s_register_operand" "w")
+	    (match_operand:VDQIW 2 "s_register_operand" "w"))))]
+  "TARGET_NEON"
+  "vc<cmp_op>.u%#<V_sz_elem>\t%<V_reg>0, %<V_reg>1, %<V_reg>2"
+  [(set_attr "type" "neon_compare<q>")]
+)
+
+(define_expand "neon_vca<cmp_op><mode>"
+  [(set (match_operand:<V_cmp_result> 0 "s_register_operand")
+        (neg:<V_cmp_result>
+          (GTGE:<V_cmp_result>
+            (abs:VCVTF (match_operand:VCVTF 1 "s_register_operand"))
+            (abs:VCVTF (match_operand:VCVTF 2 "s_register_operand")))))]
+  "TARGET_NEON"
+  {
+    if (flag_unsafe_math_optimizations)
+      emit_insn (gen_neon_vca<cmp_op><mode>_insn (operands[0], operands[1],
+                                                  operands[2]));
+    else
+      emit_insn (gen_neon_vca<cmp_op><mode>_insn_unspec (operands[0],
+                                                         operands[1],
+                                                         operands[2]));
+    DONE;
+  }
+)
+
+(define_insn "neon_vca<cmp_op><mode>_insn"
+  [(set (match_operand:<V_cmp_result> 0 "s_register_operand" "=w")
+        (neg:<V_cmp_result>
+          (GTGE:<V_cmp_result>
+            (abs:VCVTF (match_operand:VCVTF 1 "s_register_operand" "w"))
+            (abs:VCVTF (match_operand:VCVTF 2 "s_register_operand" "w")))))]
+  "TARGET_NEON && flag_unsafe_math_optimizations"
+  "vac<cmp_op>.<V_if_elem>\t%<V_reg>0, %<V_reg>1, %<V_reg>2"
+  [(set_attr "type" "neon_fp_compare_s<q>")]
+)
+
+(define_insn "neon_vca<cmp_op_unsp><mode>_insn_unspec"
   [(set (match_operand:<V_cmp_result> 0 "s_register_operand" "=w")
         (unspec:<V_cmp_result> [(match_operand:VCVTF 1 "s_register_operand" "w")
 		                (match_operand:VCVTF 2 "s_register_operand" "w")]
-                               UNSPEC_VCAGT))]
+                               NEON_VACMP))]
   "TARGET_NEON"
-  "vacgt.<V_if_elem>\t%<V_reg>0, %<V_reg>1, %<V_reg>2"
+  "vac<cmp_op_unsp>.<V_if_elem>\t%<V_reg>0, %<V_reg>1, %<V_reg>2"
   [(set_attr "type" "neon_fp_compare_s<q>")]
 )
 
@@ -2414,6 +2397,17 @@
                      VMAXMINF))]
   "TARGET_NEON"
   "v<maxmin>.<V_s_elem>\t%<V_reg>0, %<V_reg>1, %<V_reg>2"
+  [(set_attr "type" "neon_fp_minmax_s<q>")]
+)
+
+;; Vector forms for the IEEE-754 fmax()/fmin() functions
+(define_insn "<fmaxmin><mode>3"
+  [(set (match_operand:VCVTF 0 "s_register_operand" "=w")
+	(unspec:VCVTF [(match_operand:VCVTF 1 "s_register_operand" "w")
+		       (match_operand:VCVTF 2 "s_register_operand" "w")]
+		       VMAXMINFNM))]
+  "TARGET_NEON && TARGET_FPU_ARMV8"
+  "<fmaxmin_op>.<V_s_elem>\t%<V_reg>0, %<V_reg>1, %<V_reg>2"
   [(set_attr "type" "neon_fp_minmax_s<q>")]
 )
 
@@ -2670,7 +2664,7 @@
   [(set (match_operand:SI 0 "s_register_operand" "=r")
 	(sign_extend:SI
 	  (vec_select:<V_elem>
-	    (match_operand:VQ 1 "s_register_operand" "w")
+	    (match_operand:VQ2 1 "s_register_operand" "w")
 	    (parallel [(match_operand:SI 2 "immediate_operand" "i")]))))]
   "TARGET_NEON"
 {
@@ -2697,7 +2691,7 @@
   [(set (match_operand:SI 0 "s_register_operand" "=r")
 	(zero_extend:SI
 	  (vec_select:<V_elem>
-	    (match_operand:VQ 1 "s_register_operand" "w")
+	    (match_operand:VQ2 1 "s_register_operand" "w")
 	    (parallel [(match_operand:SI 2 "immediate_operand" "i")]))))]
   "TARGET_NEON"
 {
@@ -2726,8 +2720,6 @@
    (match_operand:SI 2 "immediate_operand" "")]
   "TARGET_NEON"
 {
-  neon_lane_bounds (operands[2], 0, GET_MODE_NUNITS (<MODE>mode));
-
   if (BYTES_BIG_ENDIAN)
     {
       /* The intrinsics are defined in terms of a model where the
@@ -2737,12 +2729,12 @@
 	 to this model.  */
       unsigned int elt = INTVAL (operands[2]);
       unsigned int reg_nelts
-	= 64 / GET_MODE_BITSIZE (GET_MODE_INNER (<MODE>mode));
+	= 64 / GET_MODE_UNIT_BITSIZE (<MODE>mode);
       elt ^= reg_nelts - 1;
       operands[2] = GEN_INT (elt);
     }
 
-  if (GET_MODE_BITSIZE (GET_MODE_INNER (<MODE>mode)) == 32)
+  if (GET_MODE_UNIT_BITSIZE (<MODE>mode) == 32)
     emit_insn (gen_vec_extract<mode> (operands[0], operands[1], operands[2]));
   else
     emit_insn (gen_neon_vget_lane<mode>_sext_internal (operands[0],
@@ -2757,8 +2749,6 @@
    (match_operand:SI 2 "immediate_operand" "")]
   "TARGET_NEON"
 {
-  neon_lane_bounds (operands[2], 0, GET_MODE_NUNITS (<MODE>mode));
-
   if (BYTES_BIG_ENDIAN)
     {
       /* The intrinsics are defined in terms of a model where the
@@ -2768,12 +2758,12 @@
 	 to this model.  */
       unsigned int elt = INTVAL (operands[2]);
       unsigned int reg_nelts
-	= 64 / GET_MODE_BITSIZE (GET_MODE_INNER (<MODE>mode));
+	= 64 / GET_MODE_UNIT_BITSIZE (<MODE>mode);
       elt ^= reg_nelts - 1;
       operands[2] = GEN_INT (elt);
     }
 
-  if (GET_MODE_BITSIZE (GET_MODE_INNER (<MODE>mode)) == 32)
+  if (GET_MODE_UNIT_BITSIZE (<MODE>mode) == 32)
     emit_insn (gen_vec_extract<mode> (operands[0], operands[1], operands[2]));
   else
     emit_insn (gen_neon_vget_lane<mode>_zext_internal (operands[0],
@@ -2788,7 +2778,6 @@
    (match_operand:SI 2 "immediate_operand" "")]
   "TARGET_NEON"
 {
-  neon_lane_bounds (operands[2], 0, 1);
   emit_move_insn (operands[0], operands[1]);
   DONE;
 })
@@ -2799,18 +2788,26 @@
    (match_operand:SI 2 "immediate_operand" "")]
   "TARGET_NEON"
 {
-  switch (INTVAL (operands[2]))
+  int lane;
+
+if (BYTES_BIG_ENDIAN)
     {
-    case 0:
-      emit_move_insn (operands[0], gen_lowpart (DImode, operands[1]));
-      break;
-    case 1:
-      emit_move_insn (operands[0], gen_highpart (DImode, operands[1]));
-      break;
-    default:
-      neon_lane_bounds (operands[2], 0, 1);
-      FAIL;
+      /* The intrinsics are defined in terms of a model where the
+	 element ordering in memory is vldm order, whereas the generic
+	 RTL is defined in terms of a model where the element ordering
+	 in memory is array order.  Convert the lane number to conform
+	 to this model.  */
+      unsigned int elt = INTVAL (operands[2]);
+      unsigned int reg_nelts = 2;
+      elt ^= reg_nelts - 1;
+      operands[2] = GEN_INT (elt);
     }
+
+  lane = INTVAL (operands[2]);
+  gcc_assert ((lane ==0) || (lane == 1));
+  emit_move_insn (operands[0], lane == 0
+				? gen_lowpart (DImode, operands[1])
+				: gen_highpart (DImode, operands[1]));
   DONE;
 })
 
@@ -2822,12 +2819,11 @@
   "TARGET_NEON"
 {
   unsigned int elt = INTVAL (operands[3]);
-  neon_lane_bounds (operands[3], 0, GET_MODE_NUNITS (<MODE>mode));
 
   if (BYTES_BIG_ENDIAN)
     {
       unsigned int reg_nelts
-	= 64 / GET_MODE_BITSIZE (GET_MODE_INNER (<MODE>mode));
+	= 64 / GET_MODE_UNIT_BITSIZE (<MODE>mode);
       elt ^= reg_nelts - 1;
     }
 
@@ -2845,13 +2841,12 @@
    (match_operand:SI 3 "immediate_operand" "i")]
   "TARGET_NEON"
 {
-  neon_lane_bounds (operands[3], 0, 1);
   emit_move_insn (operands[0], operands[1]);
   DONE;
 })
 
 (define_expand "neon_vcreate<mode>"
-  [(match_operand:VDX 0 "s_register_operand" "")
+  [(match_operand:VD_RE 0 "s_register_operand" "")
    (match_operand:DI 1 "general_operand" "")]
   "TARGET_NEON"
 {
@@ -2866,6 +2861,22 @@
   "TARGET_NEON"
   "vdup.<V_sz_elem>\t%<V_reg>0, %1"
   [(set_attr "type" "neon_from_gp<q>")]
+)
+
+(define_insn "neon_vdup_nv4hf"
+  [(set (match_operand:V4HF 0 "s_register_operand" "=w")
+        (vec_duplicate:V4HF (match_operand:HF 1 "s_register_operand" "r")))]
+  "TARGET_NEON"
+  "vdup.16\t%P0, %1"
+  [(set_attr "type" "neon_from_gp")]
+)
+
+(define_insn "neon_vdup_nv8hf"
+  [(set (match_operand:V8HF 0 "s_register_operand" "=w")
+        (vec_duplicate:V8HF (match_operand:HF 1 "s_register_operand" "r")))]
+  "TARGET_NEON"
+  "vdup.16\t%q0, %1"
+  [(set_attr "type" "neon_from_gp_q")]
 )
 
 (define_insn "neon_vdup_n<mode>"
@@ -2927,12 +2938,11 @@
    (match_operand:SI 2 "immediate_operand" "i")]
   "TARGET_NEON"
 {
-  neon_lane_bounds (operands[2], 0, GET_MODE_NUNITS (<V_double_vector_mode>mode));
   if (BYTES_BIG_ENDIAN)
     {
       unsigned int elt = INTVAL (operands[2]);
       unsigned int reg_nelts
-	= 64 / GET_MODE_BITSIZE (GET_MODE_INNER (<V_double_vector_mode>mode));
+	= 64 / GET_MODE_UNIT_BITSIZE (<V_double_vector_mode>mode);
       elt ^= reg_nelts - 1;
       operands[2] = GEN_INT (elt);
     }
@@ -2948,7 +2958,6 @@
    (match_operand:SI 2 "immediate_operand" "i")]
   "TARGET_NEON"
 {
-  neon_lane_bounds (operands[2], 0, 1);
   emit_move_insn (operands[0], operands[1]);
   DONE;
 })
@@ -2960,7 +2969,6 @@
    (match_operand:SI 2 "immediate_operand" "i")]
   "TARGET_NEON"
 {
-  neon_lane_bounds (operands[2], 0, 1);
   emit_insn (gen_neon_vdup_nv2di (operands[0], operands[1]));
   DONE;
 })
@@ -3160,7 +3168,6 @@
                     UNSPEC_VMUL_LANE))]
   "TARGET_NEON"
 {
-  neon_lane_bounds (operands[3], 0, GET_MODE_NUNITS (<MODE>mode));
   return "vmul.<V_if_elem>\t%P0, %P1, %P2[%c3]";
 }
   [(set (attr "type")
@@ -3178,7 +3185,6 @@
                     UNSPEC_VMUL_LANE))]
   "TARGET_NEON"
 {
-  neon_lane_bounds (operands[3], 0, GET_MODE_NUNITS (<V_HALF>mode));
   return "vmul.<V_if_elem>\t%q0, %q1, %P2[%c3]";
 }
   [(set (attr "type")
@@ -3196,7 +3202,6 @@
                           VMULL_LANE))]
   "TARGET_NEON"
 {
-  neon_lane_bounds (operands[3], 0, GET_MODE_NUNITS (<MODE>mode));
   return "vmull.<sup>%#<V_sz_elem>\t%q0, %P1, %P2[%c3]";
 }
   [(set_attr "type" "neon_mul_<V_elem_ch>_scalar_long")]
@@ -3211,7 +3216,6 @@
                           UNSPEC_VQDMULL_LANE))]
   "TARGET_NEON"
 {
-  neon_lane_bounds (operands[3], 0, GET_MODE_NUNITS (<MODE>mode));
   return "vqdmull.<V_s_elem>\t%q0, %P1, %P2[%c3]";
 }
   [(set_attr "type" "neon_sat_mul_<V_elem_ch>_scalar_long")]
@@ -3226,7 +3230,6 @@
                       VQDMULH_LANE))]
   "TARGET_NEON"
 {
-  neon_lane_bounds (operands[3], 0, GET_MODE_NUNITS (<MODE>mode));
   return "vq<r>dmulh.<V_s_elem>\t%q0, %q1, %P2[%c3]";
 }
   [(set_attr "type" "neon_sat_mul_<V_elem_ch>_scalar_q")]
@@ -3241,10 +3244,42 @@
                       VQDMULH_LANE))]
   "TARGET_NEON"
 {
-  neon_lane_bounds (operands[3], 0, GET_MODE_NUNITS (<MODE>mode));
   return "vq<r>dmulh.<V_s_elem>\t%P0, %P1, %P2[%c3]";
 }
   [(set_attr "type" "neon_sat_mul_<V_elem_ch>_scalar_q")]
+)
+
+;; vqrdmlah_lane, vqrdmlsh_lane
+(define_insn "neon_vqrdml<VQRDMLH_AS:neon_rdma_as>h_lane<mode>"
+  [(set (match_operand:VMQI 0 "s_register_operand" "=w")
+	(unspec:VMQI [(match_operand:VMQI 1 "s_register_operand" "0")
+		      (match_operand:VMQI 2 "s_register_operand" "w")
+		      (match_operand:<V_HALF> 3 "s_register_operand"
+					  "<scalar_mul_constraint>")
+		      (match_operand:SI 4 "immediate_operand" "i")]
+		     VQRDMLH_AS))]
+  "TARGET_NEON_RDMA"
+{
+  return
+   "vqrdml<VQRDMLH_AS:neon_rdma_as>h.<V_s_elem>\t%q0, %q2, %P3[%c4]";
+}
+  [(set_attr "type" "neon_mla_<V_elem_ch>_scalar<q>")]
+)
+
+(define_insn "neon_vqrdml<VQRDMLH_AS:neon_rdma_as>h_lane<mode>"
+  [(set (match_operand:VMDI 0 "s_register_operand" "=w")
+	(unspec:VMDI [(match_operand:VMDI 1 "s_register_operand" "0")
+		      (match_operand:VMDI 2 "s_register_operand" "w")
+		      (match_operand:VMDI 3 "s_register_operand"
+					  "<scalar_mul_constraint>")
+		      (match_operand:SI 4 "immediate_operand" "i")]
+		     VQRDMLH_AS))]
+  "TARGET_NEON_RDMA"
+{
+  return
+   "vqrdml<VQRDMLH_AS:neon_rdma_as>h.<V_s_elem>\t%P0, %P2, %P3[%c4]";
+}
+  [(set_attr "type" "neon_mla_<V_elem_ch>_scalar")]
 )
 
 (define_insn "neon_vmla_lane<mode>"
@@ -3257,7 +3292,6 @@
                      UNSPEC_VMLA_LANE))]
   "TARGET_NEON"
 {
-  neon_lane_bounds (operands[4], 0, GET_MODE_NUNITS (<MODE>mode));
   return "vmla.<V_if_elem>\t%P0, %P2, %P3[%c4]";
 }
   [(set (attr "type")
@@ -3276,7 +3310,6 @@
                      UNSPEC_VMLA_LANE))]
   "TARGET_NEON"
 {
-  neon_lane_bounds (operands[4], 0, GET_MODE_NUNITS (<MODE>mode));
   return "vmla.<V_if_elem>\t%q0, %q2, %P3[%c4]";
 }
   [(set (attr "type")
@@ -3295,7 +3328,6 @@
                           VMLAL_LANE))]
   "TARGET_NEON"
 {
-  neon_lane_bounds (operands[4], 0, GET_MODE_NUNITS (<MODE>mode));
   return "vmlal.<sup>%#<V_sz_elem>\t%q0, %P2, %P3[%c4]";
 }
   [(set_attr "type" "neon_mla_<V_elem_ch>_scalar_long")]
@@ -3311,7 +3343,6 @@
                           UNSPEC_VQDMLAL_LANE))]
   "TARGET_NEON"
 {
-  neon_lane_bounds (operands[4], 0, GET_MODE_NUNITS (<MODE>mode));
   return "vqdmlal.<V_s_elem>\t%q0, %P2, %P3[%c4]";
 }
   [(set_attr "type" "neon_sat_mla_<V_elem_ch>_scalar_long")]
@@ -3327,7 +3358,6 @@
                     UNSPEC_VMLS_LANE))]
   "TARGET_NEON"
 {
-  neon_lane_bounds (operands[4], 0, GET_MODE_NUNITS (<MODE>mode));
   return "vmls.<V_if_elem>\t%P0, %P2, %P3[%c4]";
 }
   [(set (attr "type")
@@ -3346,7 +3376,6 @@
                     UNSPEC_VMLS_LANE))]
   "TARGET_NEON"
 {
-  neon_lane_bounds (operands[4], 0, GET_MODE_NUNITS (<MODE>mode));
   return "vmls.<V_if_elem>\t%q0, %q2, %P3[%c4]";
 }
   [(set (attr "type")
@@ -3365,7 +3394,6 @@
                           VMLSL_LANE))]
   "TARGET_NEON"
 {
-  neon_lane_bounds (operands[4], 0, GET_MODE_NUNITS (<MODE>mode));
   return "vmlsl.<sup>%#<V_sz_elem>\t%q0, %P2, %P3[%c4]";
 }
   [(set_attr "type" "neon_mla_<V_elem_ch>_scalar_long")]
@@ -3381,7 +3409,6 @@
                           UNSPEC_VQDMLSL_LANE))]
   "TARGET_NEON"
 {
-  neon_lane_bounds (operands[4], 0, GET_MODE_NUNITS (<MODE>mode));
   return "vqdmlsl.<V_s_elem>\t%q0, %P2, %P3[%c4]";
 }
   [(set_attr "type" "neon_sat_mla_<V_elem_ch>_scalar_long")]
@@ -4153,11 +4180,11 @@
 
 ;; Note: Different operand numbering to handle tied registers correctly.
 (define_insn "*neon_vtrn<mode>_insn"
-  [(set (match_operand:VDQW 0 "s_register_operand" "=w")
+  [(set (match_operand:VDQW 0 "s_register_operand" "=&w")
         (unspec:VDQW [(match_operand:VDQW 1 "s_register_operand" "0")
                       (match_operand:VDQW 3 "s_register_operand" "2")]
                      UNSPEC_VTRN1))
-   (set (match_operand:VDQW 2 "s_register_operand" "=w")
+   (set (match_operand:VDQW 2 "s_register_operand" "=&w")
          (unspec:VDQW [(match_dup 1) (match_dup 3)]
                      UNSPEC_VTRN2))]
   "TARGET_NEON"
@@ -4179,11 +4206,11 @@
 
 ;; Note: Different operand numbering to handle tied registers correctly.
 (define_insn "*neon_vzip<mode>_insn"
-  [(set (match_operand:VDQW 0 "s_register_operand" "=w")
+  [(set (match_operand:VDQW 0 "s_register_operand" "=&w")
         (unspec:VDQW [(match_operand:VDQW 1 "s_register_operand" "0")
                       (match_operand:VDQW 3 "s_register_operand" "2")]
                      UNSPEC_VZIP1))
-   (set (match_operand:VDQW 2 "s_register_operand" "=w")
+   (set (match_operand:VDQW 2 "s_register_operand" "=&w")
         (unspec:VDQW [(match_dup 1) (match_dup 3)]
                      UNSPEC_VZIP2))]
   "TARGET_NEON"
@@ -4205,117 +4232,17 @@
 
 ;; Note: Different operand numbering to handle tied registers correctly.
 (define_insn "*neon_vuzp<mode>_insn"
-  [(set (match_operand:VDQW 0 "s_register_operand" "=w")
+  [(set (match_operand:VDQW 0 "s_register_operand" "=&w")
         (unspec:VDQW [(match_operand:VDQW 1 "s_register_operand" "0")
                       (match_operand:VDQW 3 "s_register_operand" "2")]
                      UNSPEC_VUZP1))
-   (set (match_operand:VDQW 2 "s_register_operand" "=w")
+   (set (match_operand:VDQW 2 "s_register_operand" "=&w")
         (unspec:VDQW [(match_dup 1) (match_dup 3)]
                      UNSPEC_VUZP2))]
   "TARGET_NEON"
   "vuzp.<V_sz_elem>\t%<V_reg>0, %<V_reg>2"
   [(set_attr "type" "neon_zip<q>")]
 )
-
-(define_expand "neon_vreinterpretv8qi<mode>"
-  [(match_operand:V8QI 0 "s_register_operand" "")
-   (match_operand:VDX 1 "s_register_operand" "")]
-  "TARGET_NEON"
-{
-  neon_reinterpret (operands[0], operands[1]);
-  DONE;
-})
-
-(define_expand "neon_vreinterpretv4hi<mode>"
-  [(match_operand:V4HI 0 "s_register_operand" "")
-   (match_operand:VDX 1 "s_register_operand" "")]
-  "TARGET_NEON"
-{
-  neon_reinterpret (operands[0], operands[1]);
-  DONE;
-})
-
-(define_expand "neon_vreinterpretv2si<mode>"
-  [(match_operand:V2SI 0 "s_register_operand" "")
-   (match_operand:VDX 1 "s_register_operand" "")]
-  "TARGET_NEON"
-{
-  neon_reinterpret (operands[0], operands[1]);
-  DONE;
-})
-
-(define_expand "neon_vreinterpretv2sf<mode>"
-  [(match_operand:V2SF 0 "s_register_operand" "")
-   (match_operand:VDX 1 "s_register_operand" "")]
-  "TARGET_NEON"
-{
-  neon_reinterpret (operands[0], operands[1]);
-  DONE;
-})
-
-(define_expand "neon_vreinterpretdi<mode>"
-  [(match_operand:DI 0 "s_register_operand" "")
-   (match_operand:VDX 1 "s_register_operand" "")]
-  "TARGET_NEON"
-{
-  neon_reinterpret (operands[0], operands[1]);
-  DONE;
-})
-
-(define_expand "neon_vreinterpretti<mode>"
-  [(match_operand:TI 0 "s_register_operand" "")
-   (match_operand:VQXMOV 1 "s_register_operand" "")]
-  "TARGET_NEON"
-{
-  neon_reinterpret (operands[0], operands[1]);
-  DONE;
-})
-
-
-(define_expand "neon_vreinterpretv16qi<mode>"
-  [(match_operand:V16QI 0 "s_register_operand" "")
-   (match_operand:VQXMOV 1 "s_register_operand" "")]
-  "TARGET_NEON"
-{
-  neon_reinterpret (operands[0], operands[1]);
-  DONE;
-})
-
-(define_expand "neon_vreinterpretv8hi<mode>"
-  [(match_operand:V8HI 0 "s_register_operand" "")
-   (match_operand:VQXMOV 1 "s_register_operand" "")]
-  "TARGET_NEON"
-{
-  neon_reinterpret (operands[0], operands[1]);
-  DONE;
-})
-
-(define_expand "neon_vreinterpretv4si<mode>"
-  [(match_operand:V4SI 0 "s_register_operand" "")
-   (match_operand:VQXMOV 1 "s_register_operand" "")]
-  "TARGET_NEON"
-{
-  neon_reinterpret (operands[0], operands[1]);
-  DONE;
-})
-
-(define_expand "neon_vreinterpretv4sf<mode>"
-  [(match_operand:V4SF 0 "s_register_operand" "")
-   (match_operand:VQXMOV 1 "s_register_operand" "")]
-  "TARGET_NEON"
-{
-  neon_reinterpret (operands[0], operands[1]);
-  DONE;
-})
-
-(define_expand "neon_vreinterpretv2di<mode>"
-  [(match_operand:V2DI 0 "s_register_operand" "")
-   (match_operand:VQXMOV 1 "s_register_operand" "")]
-  "TARGET_NEON"
-{
-  neon_reinterpret (operands[0], operands[1]);
-  DONE;
-})
 
 (define_expand "vec_load_lanes<mode><mode>"
   [(set (match_operand:VDQX 0 "s_register_operand")
@@ -4332,6 +4259,9 @@
   [(set_attr "type" "neon_load1_1reg<q>")]
 )
 
+;; The lane numbers in the RTL are in GCC lane order, having been flipped
+;; in arm_expand_neon_args. The lane numbers are restored to architectural
+;; lane order here.
 (define_insn "neon_vld1_lane<mode>"
   [(set (match_operand:VDX 0 "s_register_operand" "=w")
         (unspec:VDX [(match_operand:<V_elem> 1 "neon_struct_operand" "Um")
@@ -4340,10 +4270,9 @@
                     UNSPEC_VLD1_LANE))]
   "TARGET_NEON"
 {
-  HOST_WIDE_INT lane = INTVAL (operands[3]);
+  HOST_WIDE_INT lane = NEON_ENDIAN_LANE_N(<MODE>mode, INTVAL (operands[3]));
   HOST_WIDE_INT max = GET_MODE_NUNITS (<MODE>mode);
-  if (lane < 0 || lane >= max)
-    error ("lane out of range");
+  operands[3] = GEN_INT (lane);
   if (max == 1)
     return "vld1.<V_sz_elem>\t%P0, %A1";
   else
@@ -4352,6 +4281,8 @@
   [(set_attr "type" "neon_load1_one_lane<q>")]
 )
 
+;; see comment on neon_vld1_lane for reason why the lane numbers are reversed
+;; here on big endian targets.
 (define_insn "neon_vld1_lane<mode>"
   [(set (match_operand:VQX 0 "s_register_operand" "=w")
         (unspec:VQX [(match_operand:<V_elem> 1 "neon_struct_operand" "Um")
@@ -4360,12 +4291,11 @@
                     UNSPEC_VLD1_LANE))]
   "TARGET_NEON"
 {
-  HOST_WIDE_INT lane = INTVAL (operands[3]);
+  HOST_WIDE_INT lane = NEON_ENDIAN_LANE_N(<MODE>mode, INTVAL (operands[3]));
   HOST_WIDE_INT max = GET_MODE_NUNITS (<MODE>mode);
+  operands[3] = GEN_INT (lane);
   int regno = REGNO (operands[0]);
-  if (lane < 0 || lane >= max)
-    error ("lane out of range");
-  else if (lane >= max / 2)
+  if (lane >= max / 2)
     {
       lane -= max / 2;
       regno += 2;
@@ -4381,8 +4311,8 @@
 )
 
 (define_insn "neon_vld1_dup<mode>"
-  [(set (match_operand:VD 0 "s_register_operand" "=w")
-        (vec_duplicate:VD (match_operand:<V_elem> 1 "neon_struct_operand" "Um")))]
+  [(set (match_operand:VD_LANE 0 "s_register_operand" "=w")
+        (vec_duplicate:VD_LANE (match_operand:<V_elem> 1 "neon_struct_operand" "Um")))]
   "TARGET_NEON"
   "vld1.<V_sz_elem>\t{%P0[]}, %A1"
   [(set_attr "type" "neon_load1_all_lanes<q>")]
@@ -4398,8 +4328,8 @@
 )
 
 (define_insn "neon_vld1_dup<mode>"
-  [(set (match_operand:VQ 0 "s_register_operand" "=w")
-        (vec_duplicate:VQ (match_operand:<V_elem> 1 "neon_struct_operand" "Um")))]
+  [(set (match_operand:VQ2 0 "s_register_operand" "=w")
+        (vec_duplicate:VQ2 (match_operand:<V_elem> 1 "neon_struct_operand" "Um")))]
   "TARGET_NEON"
 {
   return "vld1.<V_sz_elem>\t{%e0[], %f0[]}, %A1";
@@ -4438,6 +4368,8 @@
   "vst1.<V_sz_elem>\t%h1, %A0"
   [(set_attr "type" "neon_store1_1reg<q>")])
 
+;; see comment on neon_vld1_lane for reason why the lane numbers are reversed
+;; here on big endian targets.
 (define_insn "neon_vst1_lane<mode>"
   [(set (match_operand:<V_elem> 0 "neon_struct_operand" "=Um")
 	(unspec:<V_elem>
@@ -4446,10 +4378,9 @@
 	  UNSPEC_VST1_LANE))]
   "TARGET_NEON"
 {
-  HOST_WIDE_INT lane = INTVAL (operands[2]);
+  HOST_WIDE_INT lane = NEON_ENDIAN_LANE_N(<MODE>mode, INTVAL (operands[2]));
   HOST_WIDE_INT max = GET_MODE_NUNITS (<MODE>mode);
-  if (lane < 0 || lane >= max)
-    error ("lane out of range");
+  operands[2] = GEN_INT (lane);
   if (max == 1)
     return "vst1.<V_sz_elem>\t{%P1}, %A0";
   else
@@ -4458,6 +4389,8 @@
   [(set_attr "type" "neon_store1_one_lane<q>")]
 )
 
+;; see comment on neon_vld1_lane for reason why the lane numbers are reversed
+;; here on big endian targets.
 (define_insn "neon_vst1_lane<mode>"
   [(set (match_operand:<V_elem> 0 "neon_struct_operand" "=Um")
 	(unspec:<V_elem>
@@ -4466,17 +4399,15 @@
 	  UNSPEC_VST1_LANE))]
   "TARGET_NEON"
 {
-  HOST_WIDE_INT lane = INTVAL (operands[2]);
+  HOST_WIDE_INT lane = NEON_ENDIAN_LANE_N(<MODE>mode, INTVAL (operands[2]));
   HOST_WIDE_INT max = GET_MODE_NUNITS (<MODE>mode);
   int regno = REGNO (operands[1]);
-  if (lane < 0 || lane >= max)
-    error ("lane out of range");
-  else if (lane >= max / 2)
+  if (lane >= max / 2)
     {
       lane -= max / 2;
       regno += 2;
-      operands[2] = GEN_INT (lane);
     }
+  operands[2] = GEN_INT (lane);
   operands[1] = gen_rtx_REG (<V_HALF>mode, regno);
   if (max == 2)
     return "vst1.<V_sz_elem>\t{%P1}, %A0";
@@ -4514,60 +4445,59 @@
 (define_expand "vec_load_lanesoi<mode>"
   [(set (match_operand:OI 0 "s_register_operand")
         (unspec:OI [(match_operand:OI 1 "neon_struct_operand")
-                    (unspec:VQ [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
+                    (unspec:VQ2 [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
 		   UNSPEC_VLD2))]
   "TARGET_NEON")
 
 (define_insn "neon_vld2<mode>"
   [(set (match_operand:OI 0 "s_register_operand" "=w")
         (unspec:OI [(match_operand:OI 1 "neon_struct_operand" "Um")
-                    (unspec:VQ [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
+                    (unspec:VQ2 [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
                    UNSPEC_VLD2))]
   "TARGET_NEON"
   "vld2.<V_sz_elem>\t%h0, %A1"
   [(set_attr "type" "neon_load2_2reg_q")])
 
+;; see comment on neon_vld1_lane for reason why the lane numbers are reversed
+;; here on big endian targets.
 (define_insn "neon_vld2_lane<mode>"
   [(set (match_operand:TI 0 "s_register_operand" "=w")
         (unspec:TI [(match_operand:<V_two_elem> 1 "neon_struct_operand" "Um")
                     (match_operand:TI 2 "s_register_operand" "0")
                     (match_operand:SI 3 "immediate_operand" "i")
-                    (unspec:VD [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
+                    (unspec:VD_LANE [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
                    UNSPEC_VLD2_LANE))]
   "TARGET_NEON"
 {
-  HOST_WIDE_INT lane = INTVAL (operands[3]);
-  HOST_WIDE_INT max = GET_MODE_NUNITS (<MODE>mode);
+  HOST_WIDE_INT lane = NEON_ENDIAN_LANE_N(<MODE>mode, INTVAL (operands[3]));
   int regno = REGNO (operands[0]);
   rtx ops[4];
-  if (lane < 0 || lane >= max)
-    error ("lane out of range");
   ops[0] = gen_rtx_REG (DImode, regno);
   ops[1] = gen_rtx_REG (DImode, regno + 2);
   ops[2] = operands[1];
-  ops[3] = operands[3];
+  ops[3] = GEN_INT (lane);
   output_asm_insn ("vld2.<V_sz_elem>\t{%P0[%c3], %P1[%c3]}, %A2", ops);
   return "";
 }
   [(set_attr "type" "neon_load2_one_lane<q>")]
 )
 
+;; see comment on neon_vld1_lane for reason why the lane numbers are reversed
+;; here on big endian targets.
 (define_insn "neon_vld2_lane<mode>"
   [(set (match_operand:OI 0 "s_register_operand" "=w")
         (unspec:OI [(match_operand:<V_two_elem> 1 "neon_struct_operand" "Um")
                     (match_operand:OI 2 "s_register_operand" "0")
                     (match_operand:SI 3 "immediate_operand" "i")
-                    (unspec:VMQ [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
+                    (unspec:VQ_HS [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
                    UNSPEC_VLD2_LANE))]
   "TARGET_NEON"
 {
-  HOST_WIDE_INT lane = INTVAL (operands[3]);
+  HOST_WIDE_INT lane = NEON_ENDIAN_LANE_N(<MODE>mode, INTVAL (operands[3]));
   HOST_WIDE_INT max = GET_MODE_NUNITS (<MODE>mode);
   int regno = REGNO (operands[0]);
   rtx ops[4];
-  if (lane < 0 || lane >= max)
-    error ("lane out of range");
-  else if (lane >= max / 2)
+  if (lane >= max / 2)
     {
       lane -= max / 2;
       regno += 2;
@@ -4628,61 +4558,60 @@
 (define_expand "vec_store_lanesoi<mode>"
   [(set (match_operand:OI 0 "neon_struct_operand")
 	(unspec:OI [(match_operand:OI 1 "s_register_operand")
-                    (unspec:VQ [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
+                    (unspec:VQ2 [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
                    UNSPEC_VST2))]
   "TARGET_NEON")
 
 (define_insn "neon_vst2<mode>"
   [(set (match_operand:OI 0 "neon_struct_operand" "=Um")
 	(unspec:OI [(match_operand:OI 1 "s_register_operand" "w")
-		    (unspec:VQ [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
+		    (unspec:VQ2 [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
 		   UNSPEC_VST2))]
   "TARGET_NEON"
   "vst2.<V_sz_elem>\t%h1, %A0"
   [(set_attr "type" "neon_store2_4reg<q>")]
 )
 
+;; see comment on neon_vld1_lane for reason why the lane numbers are reversed
+;; here on big endian targets.
 (define_insn "neon_vst2_lane<mode>"
   [(set (match_operand:<V_two_elem> 0 "neon_struct_operand" "=Um")
 	(unspec:<V_two_elem>
 	  [(match_operand:TI 1 "s_register_operand" "w")
 	   (match_operand:SI 2 "immediate_operand" "i")
-	   (unspec:VD [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
+	   (unspec:VD_LANE [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
 	  UNSPEC_VST2_LANE))]
   "TARGET_NEON"
 {
-  HOST_WIDE_INT lane = INTVAL (operands[2]);
-  HOST_WIDE_INT max = GET_MODE_NUNITS (<MODE>mode);
+  HOST_WIDE_INT lane = NEON_ENDIAN_LANE_N(<MODE>mode, INTVAL (operands[2]));
   int regno = REGNO (operands[1]);
   rtx ops[4];
-  if (lane < 0 || lane >= max)
-    error ("lane out of range");
   ops[0] = operands[0];
   ops[1] = gen_rtx_REG (DImode, regno);
   ops[2] = gen_rtx_REG (DImode, regno + 2);
-  ops[3] = operands[2];
+  ops[3] = GEN_INT (lane);
   output_asm_insn ("vst2.<V_sz_elem>\t{%P1[%c3], %P2[%c3]}, %A0", ops);
   return "";
 }
   [(set_attr "type" "neon_store2_one_lane<q>")]
 )
 
+;; see comment on neon_vld1_lane for reason why the lane numbers are reversed
+;; here on big endian targets.
 (define_insn "neon_vst2_lane<mode>"
   [(set (match_operand:<V_two_elem> 0 "neon_struct_operand" "=Um")
         (unspec:<V_two_elem>
            [(match_operand:OI 1 "s_register_operand" "w")
             (match_operand:SI 2 "immediate_operand" "i")
-            (unspec:VMQ [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
+            (unspec:VQ_HS [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
            UNSPEC_VST2_LANE))]
   "TARGET_NEON"
 {
-  HOST_WIDE_INT lane = INTVAL (operands[2]);
+  HOST_WIDE_INT lane = NEON_ENDIAN_LANE_N(<MODE>mode, INTVAL (operands[2]));
   HOST_WIDE_INT max = GET_MODE_NUNITS (<MODE>mode);
   int regno = REGNO (operands[1]);
   rtx ops[4];
-  if (lane < 0 || lane >= max)
-    error ("lane out of range");
-  else if (lane >= max / 2)
+  if (lane >= max / 2)
     {
       lane -= max / 2;
       regno += 2;
@@ -4725,7 +4654,7 @@
 (define_expand "vec_load_lanesci<mode>"
   [(match_operand:CI 0 "s_register_operand")
    (match_operand:CI 1 "neon_struct_operand")
-   (unspec:VQ [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
+   (unspec:VQ2 [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
   "TARGET_NEON"
 {
   emit_insn (gen_neon_vld3<mode> (operands[0], operands[1]));
@@ -4735,7 +4664,7 @@
 (define_expand "neon_vld3<mode>"
   [(match_operand:CI 0 "s_register_operand")
    (match_operand:CI 1 "neon_struct_operand")
-   (unspec:VQ [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
+   (unspec:VQ2 [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
   "TARGET_NEON"
 {
   rtx mem;
@@ -4750,7 +4679,7 @@
 (define_insn "neon_vld3qa<mode>"
   [(set (match_operand:CI 0 "s_register_operand" "=w")
         (unspec:CI [(match_operand:EI 1 "neon_struct_operand" "Um")
-                    (unspec:VQ [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
+                    (unspec:VQ2 [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
                    UNSPEC_VLD3A))]
   "TARGET_NEON"
 {
@@ -4770,7 +4699,7 @@
   [(set (match_operand:CI 0 "s_register_operand" "=w")
         (unspec:CI [(match_operand:EI 1 "neon_struct_operand" "Um")
                     (match_operand:CI 2 "s_register_operand" "0")
-                    (unspec:VQ [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
+                    (unspec:VQ2 [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
                    UNSPEC_VLD3B))]
   "TARGET_NEON"
 {
@@ -4786,26 +4715,25 @@
   [(set_attr "type" "neon_load3_3reg<q>")]
 )
 
+;; see comment on neon_vld1_lane for reason why the lane numbers are reversed
+;; here on big endian targets.
 (define_insn "neon_vld3_lane<mode>"
   [(set (match_operand:EI 0 "s_register_operand" "=w")
         (unspec:EI [(match_operand:<V_three_elem> 1 "neon_struct_operand" "Um")
                     (match_operand:EI 2 "s_register_operand" "0")
                     (match_operand:SI 3 "immediate_operand" "i")
-                    (unspec:VD [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
+                    (unspec:VD_LANE [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
                    UNSPEC_VLD3_LANE))]
   "TARGET_NEON"
 {
-  HOST_WIDE_INT lane = INTVAL (operands[3]);
-  HOST_WIDE_INT max = GET_MODE_NUNITS (<MODE>mode);
+  HOST_WIDE_INT lane = NEON_ENDIAN_LANE_N (<MODE>mode, INTVAL (operands[3]));
   int regno = REGNO (operands[0]);
   rtx ops[5];
-  if (lane < 0 || lane >= max)
-    error ("lane out of range");
   ops[0] = gen_rtx_REG (DImode, regno);
   ops[1] = gen_rtx_REG (DImode, regno + 2);
   ops[2] = gen_rtx_REG (DImode, regno + 4);
   ops[3] = operands[1];
-  ops[4] = operands[3];
+  ops[4] = GEN_INT (lane);
   output_asm_insn ("vld3.<V_sz_elem>\t{%P0[%c4], %P1[%c4], %P2[%c4]}, %3",
                    ops);
   return "";
@@ -4813,22 +4741,22 @@
   [(set_attr "type" "neon_load3_one_lane<q>")]
 )
 
+;; see comment on neon_vld1_lane for reason why the lane numbers are reversed
+;; here on big endian targets.
 (define_insn "neon_vld3_lane<mode>"
   [(set (match_operand:CI 0 "s_register_operand" "=w")
         (unspec:CI [(match_operand:<V_three_elem> 1 "neon_struct_operand" "Um")
                     (match_operand:CI 2 "s_register_operand" "0")
                     (match_operand:SI 3 "immediate_operand" "i")
-                    (unspec:VMQ [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
+                    (unspec:VQ_HS [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
                    UNSPEC_VLD3_LANE))]
   "TARGET_NEON"
 {
-  HOST_WIDE_INT lane = INTVAL (operands[3]);
+  HOST_WIDE_INT lane = NEON_ENDIAN_LANE_N(<MODE>mode, INTVAL (operands[3]));
   HOST_WIDE_INT max = GET_MODE_NUNITS (<MODE>mode);
   int regno = REGNO (operands[0]);
   rtx ops[5];
-  if (lane < 0 || lane >= max)
-    error ("lane out of range");
-  else if (lane >= max / 2)
+  if (lane >= max / 2)
     {
       lane -= max / 2;
       regno += 2;
@@ -4898,7 +4826,7 @@
 (define_expand "vec_store_lanesci<mode>"
   [(match_operand:CI 0 "neon_struct_operand")
    (match_operand:CI 1 "s_register_operand")
-   (unspec:VQ [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
+   (unspec:VQ2 [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
   "TARGET_NEON"
 {
   emit_insn (gen_neon_vst3<mode> (operands[0], operands[1]));
@@ -4908,7 +4836,7 @@
 (define_expand "neon_vst3<mode>"
   [(match_operand:CI 0 "neon_struct_operand")
    (match_operand:CI 1 "s_register_operand")
-   (unspec:VQ [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
+   (unspec:VQ2 [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
   "TARGET_NEON"
 {
   rtx mem;
@@ -4923,7 +4851,7 @@
 (define_insn "neon_vst3qa<mode>"
   [(set (match_operand:EI 0 "neon_struct_operand" "=Um")
         (unspec:EI [(match_operand:CI 1 "s_register_operand" "w")
-                    (unspec:VQ [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
+                    (unspec:VQ2 [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
                    UNSPEC_VST3A))]
   "TARGET_NEON"
 {
@@ -4942,7 +4870,7 @@
 (define_insn "neon_vst3qb<mode>"
   [(set (match_operand:EI 0 "neon_struct_operand" "=Um")
         (unspec:EI [(match_operand:CI 1 "s_register_operand" "w")
-                    (unspec:VQ [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
+                    (unspec:VQ2 [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
                    UNSPEC_VST3B))]
   "TARGET_NEON"
 {
@@ -4958,26 +4886,25 @@
   [(set_attr "type" "neon_store3_3reg<q>")]
 )
 
+;; see comment on neon_vld1_lane for reason why the lane numbers are reversed
+;; here on big endian targets.
 (define_insn "neon_vst3_lane<mode>"
   [(set (match_operand:<V_three_elem> 0 "neon_struct_operand" "=Um")
         (unspec:<V_three_elem>
            [(match_operand:EI 1 "s_register_operand" "w")
             (match_operand:SI 2 "immediate_operand" "i")
-            (unspec:VD [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
+            (unspec:VD_LANE [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
            UNSPEC_VST3_LANE))]
   "TARGET_NEON"
 {
-  HOST_WIDE_INT lane = INTVAL (operands[2]);
-  HOST_WIDE_INT max = GET_MODE_NUNITS (<MODE>mode);
+  HOST_WIDE_INT lane = NEON_ENDIAN_LANE_N(<MODE>mode, INTVAL (operands[2]));
   int regno = REGNO (operands[1]);
   rtx ops[5];
-  if (lane < 0 || lane >= max)
-    error ("lane out of range");
   ops[0] = operands[0];
   ops[1] = gen_rtx_REG (DImode, regno);
   ops[2] = gen_rtx_REG (DImode, regno + 2);
   ops[3] = gen_rtx_REG (DImode, regno + 4);
-  ops[4] = operands[2];
+  ops[4] = GEN_INT (lane);
   output_asm_insn ("vst3.<V_sz_elem>\t{%P1[%c4], %P2[%c4], %P3[%c4]}, %0",
                    ops);
   return "";
@@ -4985,22 +4912,22 @@
   [(set_attr "type" "neon_store3_one_lane<q>")]
 )
 
+;; see comment on neon_vld1_lane for reason why the lane numbers are reversed
+;; here on big endian targets.
 (define_insn "neon_vst3_lane<mode>"
   [(set (match_operand:<V_three_elem> 0 "neon_struct_operand" "=Um")
         (unspec:<V_three_elem>
            [(match_operand:CI 1 "s_register_operand" "w")
             (match_operand:SI 2 "immediate_operand" "i")
-            (unspec:VMQ [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
+            (unspec:VQ_HS [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
            UNSPEC_VST3_LANE))]
   "TARGET_NEON"
 {
-  HOST_WIDE_INT lane = INTVAL (operands[2]);
+  HOST_WIDE_INT lane = NEON_ENDIAN_LANE_N(<MODE>mode, INTVAL (operands[2]));
   HOST_WIDE_INT max = GET_MODE_NUNITS (<MODE>mode);
   int regno = REGNO (operands[1]);
   rtx ops[5];
-  if (lane < 0 || lane >= max)
-    error ("lane out of range");
-  else if (lane >= max / 2)
+  if (lane >= max / 2)
     {
       lane -= max / 2;
       regno += 2;
@@ -5045,7 +4972,7 @@
 (define_expand "vec_load_lanesxi<mode>"
   [(match_operand:XI 0 "s_register_operand")
    (match_operand:XI 1 "neon_struct_operand")
-   (unspec:VQ [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
+   (unspec:VQ2 [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
   "TARGET_NEON"
 {
   emit_insn (gen_neon_vld4<mode> (operands[0], operands[1]));
@@ -5055,7 +4982,7 @@
 (define_expand "neon_vld4<mode>"
   [(match_operand:XI 0 "s_register_operand")
    (match_operand:XI 1 "neon_struct_operand")
-   (unspec:VQ [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
+   (unspec:VQ2 [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
   "TARGET_NEON"
 {
   rtx mem;
@@ -5070,7 +4997,7 @@
 (define_insn "neon_vld4qa<mode>"
   [(set (match_operand:XI 0 "s_register_operand" "=w")
         (unspec:XI [(match_operand:OI 1 "neon_struct_operand" "Um")
-                    (unspec:VQ [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
+                    (unspec:VQ2 [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
                    UNSPEC_VLD4A))]
   "TARGET_NEON"
 {
@@ -5091,7 +5018,7 @@
   [(set (match_operand:XI 0 "s_register_operand" "=w")
         (unspec:XI [(match_operand:OI 1 "neon_struct_operand" "Um")
                     (match_operand:XI 2 "s_register_operand" "0")
-                    (unspec:VQ [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
+                    (unspec:VQ2 [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
                    UNSPEC_VLD4B))]
   "TARGET_NEON"
 {
@@ -5108,27 +5035,26 @@
   [(set_attr "type" "neon_load4_4reg<q>")]
 )
 
+;; see comment on neon_vld1_lane for reason why the lane numbers are reversed
+;; here on big endian targets.
 (define_insn "neon_vld4_lane<mode>"
   [(set (match_operand:OI 0 "s_register_operand" "=w")
         (unspec:OI [(match_operand:<V_four_elem> 1 "neon_struct_operand" "Um")
                     (match_operand:OI 2 "s_register_operand" "0")
                     (match_operand:SI 3 "immediate_operand" "i")
-                    (unspec:VD [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
+                    (unspec:VD_LANE [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
                    UNSPEC_VLD4_LANE))]
   "TARGET_NEON"
 {
-  HOST_WIDE_INT lane = INTVAL (operands[3]);
-  HOST_WIDE_INT max = GET_MODE_NUNITS (<MODE>mode);
+  HOST_WIDE_INT lane = NEON_ENDIAN_LANE_N(<MODE>mode, INTVAL (operands[3]));
   int regno = REGNO (operands[0]);
   rtx ops[6];
-  if (lane < 0 || lane >= max)
-    error ("lane out of range");
   ops[0] = gen_rtx_REG (DImode, regno);
   ops[1] = gen_rtx_REG (DImode, regno + 2);
   ops[2] = gen_rtx_REG (DImode, regno + 4);
   ops[3] = gen_rtx_REG (DImode, regno + 6);
   ops[4] = operands[1];
-  ops[5] = operands[3];
+  ops[5] = GEN_INT (lane);
   output_asm_insn ("vld4.<V_sz_elem>\t{%P0[%c5], %P1[%c5], %P2[%c5], %P3[%c5]}, %A4",
                    ops);
   return "";
@@ -5136,22 +5062,22 @@
   [(set_attr "type" "neon_load4_one_lane<q>")]
 )
 
+;; see comment on neon_vld1_lane for reason why the lane numbers are reversed
+;; here on big endian targets.
 (define_insn "neon_vld4_lane<mode>"
   [(set (match_operand:XI 0 "s_register_operand" "=w")
         (unspec:XI [(match_operand:<V_four_elem> 1 "neon_struct_operand" "Um")
                     (match_operand:XI 2 "s_register_operand" "0")
                     (match_operand:SI 3 "immediate_operand" "i")
-                    (unspec:VMQ [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
+                    (unspec:VQ_HS [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
                    UNSPEC_VLD4_LANE))]
   "TARGET_NEON"
 {
-  HOST_WIDE_INT lane = INTVAL (operands[3]);
+  HOST_WIDE_INT lane = NEON_ENDIAN_LANE_N(<MODE>mode, INTVAL (operands[3]));
   HOST_WIDE_INT max = GET_MODE_NUNITS (<MODE>mode);
   int regno = REGNO (operands[0]);
   rtx ops[6];
-  if (lane < 0 || lane >= max)
-    error ("lane out of range");
-  else if (lane >= max / 2)
+  if (lane >= max / 2)
     {
       lane -= max / 2;
       regno += 2;
@@ -5226,7 +5152,7 @@
 (define_expand "vec_store_lanesxi<mode>"
   [(match_operand:XI 0 "neon_struct_operand")
    (match_operand:XI 1 "s_register_operand")
-   (unspec:VQ [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
+   (unspec:VQ2 [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
   "TARGET_NEON"
 {
   emit_insn (gen_neon_vst4<mode> (operands[0], operands[1]));
@@ -5236,7 +5162,7 @@
 (define_expand "neon_vst4<mode>"
   [(match_operand:XI 0 "neon_struct_operand")
    (match_operand:XI 1 "s_register_operand")
-   (unspec:VQ [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
+   (unspec:VQ2 [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
   "TARGET_NEON"
 {
   rtx mem;
@@ -5251,7 +5177,7 @@
 (define_insn "neon_vst4qa<mode>"
   [(set (match_operand:OI 0 "neon_struct_operand" "=Um")
         (unspec:OI [(match_operand:XI 1 "s_register_operand" "w")
-                    (unspec:VQ [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
+                    (unspec:VQ2 [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
                    UNSPEC_VST4A))]
   "TARGET_NEON"
 {
@@ -5271,7 +5197,7 @@
 (define_insn "neon_vst4qb<mode>"
   [(set (match_operand:OI 0 "neon_struct_operand" "=Um")
         (unspec:OI [(match_operand:XI 1 "s_register_operand" "w")
-                    (unspec:VQ [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
+                    (unspec:VQ2 [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
                    UNSPEC_VST4B))]
   "TARGET_NEON"
 {
@@ -5288,27 +5214,26 @@
   [(set_attr "type" "neon_store4_4reg<q>")]
 )
 
+;; see comment on neon_vld1_lane for reason why the lane numbers are reversed
+;; here on big endian targets.
 (define_insn "neon_vst4_lane<mode>"
   [(set (match_operand:<V_four_elem> 0 "neon_struct_operand" "=Um")
         (unspec:<V_four_elem>
            [(match_operand:OI 1 "s_register_operand" "w")
             (match_operand:SI 2 "immediate_operand" "i")
-            (unspec:VD [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
+            (unspec:VD_LANE [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
            UNSPEC_VST4_LANE))]
   "TARGET_NEON"
 {
-  HOST_WIDE_INT lane = INTVAL (operands[2]);
-  HOST_WIDE_INT max = GET_MODE_NUNITS (<MODE>mode);
+  HOST_WIDE_INT lane = NEON_ENDIAN_LANE_N(<MODE>mode, INTVAL (operands[2]));
   int regno = REGNO (operands[1]);
   rtx ops[6];
-  if (lane < 0 || lane >= max)
-    error ("lane out of range");
   ops[0] = operands[0];
   ops[1] = gen_rtx_REG (DImode, regno);
   ops[2] = gen_rtx_REG (DImode, regno + 2);
   ops[3] = gen_rtx_REG (DImode, regno + 4);
   ops[4] = gen_rtx_REG (DImode, regno + 6);
-  ops[5] = operands[2];
+  ops[5] = GEN_INT (lane);
   output_asm_insn ("vst4.<V_sz_elem>\t{%P1[%c5], %P2[%c5], %P3[%c5], %P4[%c5]}, %A0",
                    ops);
   return "";
@@ -5316,22 +5241,22 @@
   [(set_attr "type" "neon_store4_one_lane<q>")]
 )
 
+;; see comment on neon_vld1_lane for reason why the lane numbers are reversed
+;; here on big endian targets.
 (define_insn "neon_vst4_lane<mode>"
   [(set (match_operand:<V_four_elem> 0 "neon_struct_operand" "=Um")
         (unspec:<V_four_elem>
            [(match_operand:XI 1 "s_register_operand" "w")
             (match_operand:SI 2 "immediate_operand" "i")
-            (unspec:VMQ [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
+            (unspec:VQ_HS [(const_int 0)] UNSPEC_VSTRUCTDUMMY)]
            UNSPEC_VST4_LANE))]
   "TARGET_NEON"
 {
-  HOST_WIDE_INT lane = INTVAL (operands[2]);
+  HOST_WIDE_INT lane = NEON_ENDIAN_LANE_N(<MODE>mode, INTVAL (operands[2]));
   HOST_WIDE_INT max = GET_MODE_NUNITS (<MODE>mode);
   int regno = REGNO (operands[1]);
   rtx ops[6];
-  if (lane < 0 || lane >= max)
-    error ("lane out of range");
-  else if (lane >= max / 2)
+  if (lane >= max / 2)
     {
       lane -= max / 2;
       regno += 2;

@@ -1,0 +1,28 @@
+2017-07-04  Release Manager
+
+	* GCC 6.4.0 released.
+
+2016-12-21  Release Manager
+
+	* GCC 6.3.0 released.
+
+2016-08-22  Release Manager
+
+	* GCC 6.2.0 released.
+
+2016-04-27  Release Manager
+
+	* GCC 6.1.0 released.
+
+2015-11-11  Andrew MacLeod  <amacleod@redhat.com>
+
+	* count-headers: Initial file.
+	* gcc-order-headers: Initial file.
+	* graph-header-logs: Initial file.
+	* graph-include-web: Initial file.
+	* headerutils.py: Initial file.
+	* included-by: Initial file.
+	* README: Initial file.
+	* reduce-headers: Initial file.
+	* replace-header: Initial file.
+	* show-headers: Initial file.

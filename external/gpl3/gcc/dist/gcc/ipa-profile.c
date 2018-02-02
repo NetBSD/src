@@ -1,5 +1,5 @@
 /* Basic IPA optimizations based on profile.
-   Copyright (C) 2003-2015 Free Software Foundation, Inc.
+   Copyright (C) 2003-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -42,52 +42,25 @@ along with GCC; see the file COPYING3.  If not see
      of inliner. 
    - Finally we propagate the following flags: unlikely executed, executed
      once, executed at startup and executed at exit.  These flags are used to
-     control code size/performance threshold and and code placement (by producing
+     control code size/performance threshold and code placement (by producing
      .text.unlikely/.text.hot/.text.startup/.text.exit subsections).  */
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "tm.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "wide-int.h"
-#include "inchash.h"
+#include "backend.h"
 #include "tree.h"
-#include "fold-const.h"
-#include "predict.h"
-#include "dominance.h"
-#include "cfg.h"
-#include "basic-block.h"
-#include "hash-map.h"
-#include "is-a.h"
-#include "plugin-api.h"
-#include "hard-reg-set.h"
-#include "input.h"
-#include "function.h"
-#include "ipa-ref.h"
-#include "cgraph.h"
-#include "tree-pass.h"
-#include "tree-ssa-alias.h"
-#include "internal-fn.h"
-#include "gimple-expr.h"
 #include "gimple.h"
+#include "predict.h"
+#include "alloc-pool.h"
+#include "tree-pass.h"
+#include "cgraph.h"
+#include "data-streamer.h"
 #include "gimple-iterator.h"
-#include "flags.h"
-#include "target.h"
-#include "tree-iterator.h"
 #include "ipa-utils.h"
 #include "profile.h"
 #include "params.h"
 #include "value-prof.h"
-#include "alloc-pool.h"
 #include "tree-inline.h"
-#include "lto-streamer.h"
-#include "data-streamer.h"
 #include "symbol-summary.h"
 #include "ipa-prop.h"
 #include "ipa-inline.h"
@@ -107,16 +80,14 @@ struct histogram_entry
    duplicate entries.  */
 
 vec<histogram_entry *> histogram;
-static alloc_pool histogram_pool;
+static object_allocator<histogram_entry> histogram_pool ("IPA histogram");
 
 /* Hashtable support for storing SSA names hashed by their SSA_NAME_VAR.  */
 
-struct histogram_hash : typed_noop_remove <histogram_entry>
+struct histogram_hash : nofree_ptr_hash <histogram_entry>
 {
-  typedef histogram_entry value_type;
-  typedef histogram_entry compare_type;
-  static inline hashval_t hash (const value_type *);
-  static inline int equal (const value_type *, const compare_type *);
+  static inline hashval_t hash (const histogram_entry *);
+  static inline int equal (const histogram_entry *, const histogram_entry *);
 };
 
 inline hashval_t
@@ -144,7 +115,7 @@ account_time_size (hash_table<histogram_hash> *hashtable,
 
   if (!*val)
     {
-      *val = (histogram_entry *) pool_alloc (histogram_pool);
+      *val = histogram_pool.allocate ();
       **val = key;
       histogram.safe_push (*val);
     }
@@ -186,7 +157,7 @@ dump_histogram (FILE *file, vec<histogram_entry *> histogram)
     {
       cumulated_time += histogram[i]->count * histogram[i]->time;
       cumulated_size += histogram[i]->size;
-      fprintf (file, "  %"PRId64": time:%i (%2.2f) size:%i (%2.2f)\n",
+      fprintf (file, "  %" PRId64": time:%i (%2.2f) size:%i (%2.2f)\n",
 	       (int64_t) histogram[i]->count,
 	       histogram[i]->time,
 	       cumulated_time * 100.0 / overall_time,
@@ -205,8 +176,6 @@ ipa_profile_generate_summary (void)
   basic_block bb;
 
   hash_table<histogram_hash> hashtable (10);
-  histogram_pool = create_alloc_pool ("IPA histogram", sizeof (struct histogram_entry),
-				      10);
   
   FOR_EACH_FUNCTION_WITH_GIMPLE_BODY (node)
     FOR_EACH_BB_FN (bb, DECL_STRUCT_FUNCTION (node->decl))
@@ -215,7 +184,7 @@ ipa_profile_generate_summary (void)
 	int size = 0;
         for (gsi = gsi_start_bb (bb); !gsi_end_p (gsi); gsi_next (&gsi))
 	  {
-	    gimple stmt = gsi_stmt (gsi);
+	    gimple *stmt = gsi_stmt (gsi);
 	    if (gimple_code (stmt) == GIMPLE_CALL
 		&& !gimple_call_fndecl (stmt))
 	      {
@@ -287,8 +256,6 @@ ipa_profile_read_summary (void)
   int j = 0;
 
   hash_table<histogram_hash> hashtable (10);
-  histogram_pool = create_alloc_pool ("IPA histogram", sizeof (struct histogram_entry),
-				      10);
 
   while ((file_data = file_data_vec[j++]))
     {
@@ -524,6 +491,7 @@ ipa_profile (void)
   gcov_type overall_time = 0, cutoff = 0, cumulated = 0, overall_size = 0;
   struct cgraph_node *n,*n2;
   int nindirect = 0, ncommon = 0, nunknown = 0, nuseless = 0, nconverted = 0;
+  int nmismatch = 0, nimpossible = 0;
   bool node_map_initialized = false;
 
   if (dump_file)
@@ -542,7 +510,7 @@ ipa_profile (void)
 	{
 	  gcov_type min, cumulated_time = 0, cumulated_size = 0;
 
-	  fprintf (dump_file, "Overall time: %"PRId64"\n",
+	  fprintf (dump_file, "Overall time: %" PRId64"\n",
 		   (int64_t)overall_time);
 	  min = get_hot_bb_threshold ();
           for (i = 0; i < (int)histogram.length () && histogram[i]->count >= min;
@@ -551,7 +519,7 @@ ipa_profile (void)
 	      cumulated_time += histogram[i]->count * histogram[i]->time;
 	      cumulated_size += histogram[i]->size;
 	    }
-	  fprintf (dump_file, "GCOV min count: %"PRId64
+	  fprintf (dump_file, "GCOV min count: %" PRId64
 		   " Time:%3.2f%% Size:%3.2f%%\n", 
 		   (int64_t)min,
 		   cumulated_time * 100.0 / overall_time,
@@ -577,7 +545,7 @@ ipa_profile (void)
 	      cumulated_time += histogram[i]->count * histogram[i]->time;
 	      cumulated_size += histogram[i]->size;
 	    }
-	  fprintf (dump_file, "Determined min count: %"PRId64
+	  fprintf (dump_file, "Determined min count: %" PRId64
 		   " Time:%3.2f%% Size:%3.2f%%\n", 
 		   (int64_t)threshold,
 		   cumulated_time * 100.0 / overall_time,
@@ -592,7 +560,7 @@ ipa_profile (void)
 	}
     }
   histogram.release ();
-  free_alloc_pool (histogram_pool);
+  histogram_pool.release ();
 
   /* Produce speculative calls: we saved common traget from porfiling into
      e->common_target_id.  Now, at link time, we can look up corresponding
@@ -651,6 +619,31 @@ ipa_profile (void)
 				 "Not speculating: target is overwritable "
 				 "and can be discarded.\n");
 		    }
+		  else if (ipa_node_params_sum && ipa_edge_args_vector
+			   && !IPA_NODE_REF (n2)->descriptors.is_empty ()
+			   && ipa_get_param_count (IPA_NODE_REF (n2))
+			      != ipa_get_cs_argument_count (IPA_EDGE_REF (e))
+			    && (ipa_get_param_count (IPA_NODE_REF (n2))
+				>= ipa_get_cs_argument_count (IPA_EDGE_REF (e))
+				|| !stdarg_p (TREE_TYPE (n2->decl))))
+		    {
+		      nmismatch++;
+		      if (dump_file)
+			fprintf (dump_file,
+				 "Not speculating: "
+				 "parameter count mistmatch\n");
+		    }
+		  else if (e->indirect_info->polymorphic
+			   && !opt_for_fn (n->decl, flag_devirtualize)
+			   && !possible_polymorphic_call_target_p (e, n2))
+		    {
+		      nimpossible++;
+		      if (dump_file)
+			fprintf (dump_file,
+				 "Not speculating: "
+				 "function is not in the polymorphic "
+				 "call target list\n");
+		    }
 		  else
 		    {
 		      /* Target may be overwritable, but profile says that
@@ -693,11 +686,15 @@ ipa_profile (void)
 	     "%i indirect calls trained.\n"
 	     "%i (%3.2f%%) have common target.\n"
 	     "%i (%3.2f%%) targets was not found.\n"
+	     "%i (%3.2f%%) targets had parameter count mismatch.\n"
+	     "%i (%3.2f%%) targets was not in polymorphic call target list.\n"
 	     "%i (%3.2f%%) speculations seems useless.\n"
 	     "%i (%3.2f%%) speculations produced.\n",
 	     nindirect,
 	     ncommon, ncommon * 100.0 / nindirect,
 	     nunknown, nunknown * 100.0 / nindirect,
+	     nmismatch, nmismatch * 100.0 / nindirect,
+	     nimpossible, nimpossible * 100.0 / nindirect,
 	     nuseless, nuseless * 100.0 / nindirect,
 	     nconverted, nconverted * 100.0 / nindirect);
 

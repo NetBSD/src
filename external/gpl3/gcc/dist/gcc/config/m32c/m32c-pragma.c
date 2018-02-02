@@ -1,5 +1,5 @@
 /* M32C Pragma support
-   Copyright (C) 2004-2015 Free Software Foundation, Inc.
+   Copyright (C) 2004-2016 Free Software Foundation, Inc.
    Contributed by Red Hat, Inc.
 
    This file is part of GCC.
@@ -22,20 +22,8 @@
 #include "system.h"
 #include "coretypes.h"
 #include "tm.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "wide-int.h"
-#include "inchash.h"
-#include "tree.h"
-#include "c-family/c-pragma.h"
 #include "c-family/c-common.h"
-#include "diagnostic-core.h"
-#include "cpplib.h"
+#include "c-family/c-pragma.h"
 #include "m32c-protos.h"
 
 /* Implements the "GCC memregs" pragma.  This pragma takes only an

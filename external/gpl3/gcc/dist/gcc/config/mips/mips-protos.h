@@ -1,5 +1,5 @@
 /* Prototypes of target machine for GNU compiler.  MIPS version.
-   Copyright (C) 1989-2015 Free Software Foundation, Inc.
+   Copyright (C) 1989-2016 Free Software Foundation, Inc.
    Contributed by A. Lichnewsky (lich@inria.inria.fr).
    Changed by Michael Meissner	(meissner@osf.org).
    64-bit r4000 support by Ian Lance Taylor (ian@cygnus.com) and
@@ -298,11 +298,15 @@ extern const char *mips_output_conditional_branch (rtx_insn *, rtx *,
 						   const char *, const char *);
 extern const char *mips_output_order_conditional_branch (rtx_insn *, rtx *,
 							 bool);
+extern const char *mips_output_equal_conditional_branch (rtx_insn *, rtx *,
+							 bool);
+extern const char *mips_output_jump (rtx *, int, int, bool);
 extern const char *mips_output_sync (void);
 extern const char *mips_output_sync_loop (rtx_insn *, rtx *);
 extern unsigned int mips_sync_loop_insns (rtx_insn *, rtx *);
 extern const char *mips_output_division (const char *, rtx *);
 extern const char *mips_output_probe_stack_range (rtx, rtx);
+extern bool mips_hard_regno_rename_ok (unsigned int, unsigned int);
 extern unsigned int mips_hard_regno_nregs (int, machine_mode);
 extern bool mips_linked_madd_p (rtx_insn *, rtx_insn *);
 extern bool mips_store_data_bypass_p (rtx_insn *, rtx_insn *);
@@ -360,10 +364,13 @@ extern bool mips_epilogue_uses (unsigned int);
 extern void mips_final_prescan_insn (rtx_insn *, rtx *, int);
 extern int mips_trampoline_code_size (void);
 extern void mips_function_profiler (FILE *);
+extern bool mips_load_store_bonding_p (rtx *, machine_mode, bool);
 
 typedef rtx (*mulsidi3_gen_fn) (rtx, rtx, rtx);
 #ifdef RTX_CODE
 extern mulsidi3_gen_fn mips_mulsidi3_gen_fn (enum rtx_code);
 #endif
+
+extern void mips_register_frame_header_opt (void);
 
 #endif /* ! GCC_MIPS_PROTOS_H */

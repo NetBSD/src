@@ -1,5 +1,5 @@
 /* Generic settings for a.out OpenBSD systems.
-   Copyright (C) 2002-2015 Free Software Foundation, Inc.
+   Copyright (C) 2002-2016 Free Software Foundation, Inc.
    Contributed by David E. O'Brien <obrien@FreeBSD.org>.
 
 This file is part of GCC.
@@ -20,3 +20,7 @@ along with GCC; see the file COPYING3.  If not see
 
 
 #define OBSD_OLD_GAS
+
+/* OpenBSD3.0 had no libpthread, pthreads lived in -lc_r */
+#define OBSD_LIB_SPEC "%{!shared:-lc%{pthread:_r}}"
+

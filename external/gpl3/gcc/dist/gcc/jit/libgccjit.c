@@ -1,5 +1,5 @@
 /* Implementation of the C API; all wrappers into the internal C++ API
-   Copyright (C) 2013-2015 Free Software Foundation, Inc.
+   Copyright (C) 2013-2016 Free Software Foundation, Inc.
    Contributed by David Malcolm <dmalcolm@redhat.com>.
 
 This file is part of GCC.
@@ -21,13 +21,10 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "opts.h"
-#include "safe-ctype.h"
+#include "timevar.h"
 #include "typed-splay-tree.h"
 
 #include "libgccjit.h"
-#include "jit-common.h"
-#include "jit-logging.h"
 #include "jit-recording.h"
 #include "jit-result.h"
 
@@ -86,6 +83,10 @@ struct gcc_jit_param : public gcc::jit::recording::param
 };
 
 struct gcc_jit_case : public gcc::jit::recording::case_
+{
+};
+
+struct gcc_jit_timer : public timer
 {
 };
 
@@ -543,6 +544,12 @@ gcc_jit_context_new_field (gcc_jit_context *ctxt,
   /* LOC can be NULL.  */
   RETURN_NULL_IF_FAIL (type, ctxt, loc, "NULL type");
   RETURN_NULL_IF_FAIL (name, ctxt, loc, "NULL name");
+  RETURN_NULL_IF_FAIL_PRINTF2 (
+    type->has_known_size (),
+    ctxt, loc,
+    "unknown size for field \"%s\" (type: %s)",
+    name,
+    type->get_debug_string ());
 
   return (gcc_jit_field *)ctxt->new_field (loc, type, name);
 }
@@ -657,7 +664,12 @@ gcc_jit_struct_set_fields (gcc_jit_struct *struct_type,
     RETURN_IF_FAIL (fields, ctxt, loc, "NULL fields ptr");
   for (int i = 0; i < num_fields; i++)
     {
-      RETURN_IF_FAIL (fields[i], ctxt, loc, "NULL field ptr");
+      RETURN_IF_FAIL_PRINTF2 (
+	fields[i],
+	ctxt, loc,
+	"%s: NULL field ptr at index %i",
+	struct_type->get_debug_string (),
+	i);
       RETURN_IF_FAIL_PRINTF2 (
 	NULL == fields[i]->get_container (),
 	ctxt, loc,
@@ -1033,6 +1045,12 @@ gcc_jit_context_new_global (gcc_jit_context *ctxt,
     kind);
   RETURN_NULL_IF_FAIL (type, ctxt, loc, "NULL type");
   RETURN_NULL_IF_FAIL (name, ctxt, loc, "NULL name");
+  RETURN_NULL_IF_FAIL_PRINTF2 (
+    type->has_known_size (),
+    ctxt, loc,
+    "unknown size for global \"%s\" (type: %s)",
+    name,
+    type->get_debug_string ());
 
   return (gcc_jit_lvalue *)ctxt->new_global (loc, kind, type, name);
 }
@@ -1829,6 +1847,12 @@ gcc_jit_function_new_local (gcc_jit_function *func,
 		       "Cannot add locals to an imported function");
   RETURN_NULL_IF_FAIL (type, ctxt, loc, "NULL type");
   RETURN_NULL_IF_FAIL (name, ctxt, loc, "NULL name");
+  RETURN_NULL_IF_FAIL_PRINTF2 (
+    type->has_known_size (),
+    ctxt, loc,
+    "unknown size for local \"%s\" (type: %s)",
+    name,
+    type->get_debug_string ());
 
   return (gcc_jit_lvalue *)func->new_local (loc, type, name);
 }
@@ -2583,6 +2607,23 @@ gcc_jit_context_set_bool_allow_unreachable_blocks (gcc_jit_context *ctxt,
 /* Public entrypoint.  See description in libgccjit.h.
 
    After error-checking, the real work is done by the
+   gcc::jit::recording::context::set_inner_bool_option method in
+   jit-recording.c.  */
+
+extern void
+gcc_jit_context_set_bool_use_external_driver (gcc_jit_context *ctxt,
+					      int bool_value)
+{
+  RETURN_IF_FAIL (ctxt, NULL, NULL, "NULL context");
+  JIT_LOG_FUNC (ctxt->get_logger ());
+  ctxt->set_inner_bool_option (
+    gcc::jit::INNER_BOOL_OPTION_USE_EXTERNAL_DRIVER,
+    bool_value);
+}
+
+/* Public entrypoint.  See description in libgccjit.h.
+
+   After error-checking, the real work is done by the
    gcc::jit::recording::context::add_command_line_option method in
    jit-recording.c.  */
 
@@ -2804,4 +2845,108 @@ gcc_jit_result_release (gcc_jit_result *result)
   JIT_LOG_FUNC (result->get_logger ());
   result->log ("deleting result: %p", (void *)result);
   delete result;
+}
+
+/**********************************************************************
+ Timing support.
+ **********************************************************************/
+
+/* Create a gcc_jit_timer instance, and start timing.  */
+
+gcc_jit_timer *
+gcc_jit_timer_new (void)
+{
+  gcc_jit_timer *timer = new gcc_jit_timer ();
+  timer->start (TV_TOTAL);
+  timer->push (TV_JIT_CLIENT_CODE);
+  return timer;
+}
+
+/* Release a gcc_jit_timer instance.  */
+
+void
+gcc_jit_timer_release (gcc_jit_timer *timer)
+{
+  RETURN_IF_FAIL (timer, NULL, NULL, "NULL timer");
+
+  delete timer;
+}
+
+/* Associate a gcc_jit_timer instance with a context.  */
+
+void
+gcc_jit_context_set_timer (gcc_jit_context *ctxt,
+			   gcc_jit_timer *timer)
+{
+  RETURN_IF_FAIL (ctxt, NULL, NULL, "NULL ctxt");
+  RETURN_IF_FAIL (timer, ctxt, NULL, "NULL timer");
+
+  ctxt->set_timer (timer);
+}
+
+/* Get the timer associated with a context (if any).  */
+
+gcc_jit_timer *
+gcc_jit_context_get_timer (gcc_jit_context *ctxt)
+{
+  RETURN_NULL_IF_FAIL (ctxt, NULL, NULL, "NULL ctxt");
+
+  return (gcc_jit_timer *)ctxt->get_timer ();
+}
+
+/* Push the given item onto the timing stack.  */
+
+void
+gcc_jit_timer_push (gcc_jit_timer *timer,
+		    const char *item_name)
+{
+  RETURN_IF_FAIL (timer, NULL, NULL, "NULL timer");
+  RETURN_IF_FAIL (item_name, NULL, NULL, "NULL item_name");
+  timer->push_client_item (item_name);
+}
+
+/* Pop the top item from the timing stack.  */
+
+void
+gcc_jit_timer_pop (gcc_jit_timer *timer,
+		   const char *item_name)
+{
+  RETURN_IF_FAIL (timer, NULL, NULL, "NULL timer");
+
+  if (item_name)
+    {
+      const char *top_item_name = timer->get_topmost_item_name ();
+
+      RETURN_IF_FAIL_PRINTF1
+	(top_item_name, NULL, NULL,
+	 "pop of empty timing stack (attempting to pop: \"%s\")",
+	 item_name);
+
+      RETURN_IF_FAIL_PRINTF2
+	(0 == strcmp (item_name, top_item_name), NULL, NULL,
+	 "mismatching item_name:"
+	 " top of timing stack: \"%s\","
+	 " attempting to pop: \"%s\"",
+	 top_item_name,
+	 item_name);
+    }
+
+  timer->pop_client_item ();
+}
+
+/* Print timing information to the given stream about activity since
+   the timer was started.  */
+
+void
+gcc_jit_timer_print (gcc_jit_timer *timer,
+		     FILE *f_out)
+{
+  RETURN_IF_FAIL (timer, NULL, NULL, "NULL timer");
+  RETURN_IF_FAIL (f_out, NULL, NULL, "NULL f_out");
+
+  timer->pop (TV_JIT_CLIENT_CODE);
+  timer->stop (TV_TOTAL);
+  timer->print (f_out);
+  timer->start (TV_TOTAL);
+  timer->push (TV_JIT_CLIENT_CODE);
 }

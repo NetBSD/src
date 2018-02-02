@@ -1,5 +1,5 @@
 ;;- Machine description for HP PA-RISC architecture for GCC compiler
-;;   Copyright (C) 1992-2015 Free Software Foundation, Inc.
+;;   Copyright (C) 1992-2016 Free Software Foundation, Inc.
 ;;   Contributed by the Center for Software Science at the University
 ;;   of Utah.
 
@@ -2143,7 +2143,7 @@
     DONE;
 
   /* We don't want the clobber emitted, so handle this ourselves.  */
-  emit_insn (gen_rtx_SET (VOIDmode, operands[0], operands[1]));
+  emit_insn (gen_rtx_SET (operands[0], operands[1]));
   DONE;
 }")
 
@@ -2160,7 +2160,7 @@
     DONE;
 
   /* We don't want the clobber emitted, so handle this ourselves.  */
-  emit_insn (gen_rtx_SET (VOIDmode, operands[0], operands[1]));
+  emit_insn (gen_rtx_SET (operands[0], operands[1]));
   DONE;
 }")
 
@@ -2177,7 +2177,7 @@
     DONE;
 
   /* We don't want the clobber emitted, so handle this ourselves.  */
-  emit_insn (gen_rtx_SET (VOIDmode, operands[0], operands[1]));
+  emit_insn (gen_rtx_SET (operands[0], operands[1]));
   DONE;
 }")
 
@@ -2250,8 +2250,8 @@
 ; computes the address to be deleted if the register it sets is dead.
 (define_peephole2
   [(set (match_operand:SI 0 "register_operand" "")
-	(plus:SI (mult:SI (match_operand:SI 1 "register_operand" "")
-			  (const_int 4))
+	(plus:SI (ashift:SI (match_operand:SI 1 "register_operand" "")
+			    (const_int 2))
 		 (match_operand:SI 2 "register_operand" "")))
    (set (mem:SI (match_dup 0))
         (match_operand:SI 3 "register_operand" ""))]
@@ -2261,31 +2261,14 @@
    && FP_REGNO_P (REGNO (operands[3]))"
   [(set (mem:SI (plus:SI (mult:SI (match_dup 1) (const_int 4)) (match_dup 2)))
 	(match_dup 3))
-   (set (match_dup 0) (plus:SI (mult:SI (match_dup 1) (const_int 4))
-			       (match_dup 2)))]
-  "")
-
-(define_peephole2
-  [(set (match_operand:SI 0 "register_operand" "")
-	(plus:SI (match_operand:SI 2 "register_operand" "")
-		 (mult:SI (match_operand:SI 1 "register_operand" "")
-			  (const_int 4))))
-   (set (mem:SI (match_dup 0))
-        (match_operand:SI 3 "register_operand" ""))]
-  "!TARGET_SOFT_FLOAT
-   && !TARGET_DISABLE_INDEXING
-   && REG_OK_FOR_BASE_P (operands[2])
-   && FP_REGNO_P (REGNO (operands[3]))"
-  [(set (mem:SI (plus:SI (mult:SI (match_dup 1) (const_int 4)) (match_dup 2)))
-	(match_dup 3))
-   (set (match_dup 0) (plus:SI (mult:SI (match_dup 1) (const_int 4))
+   (set (match_dup 0) (plus:SI (ashift:SI (match_dup 1) (const_int 2))
 			       (match_dup 2)))]
   "")
 
 (define_peephole2
   [(set (match_operand:DI 0 "register_operand" "")
-	(plus:DI (mult:DI (match_operand:DI 1 "register_operand" "")
-			  (const_int 4))
+	(plus:DI (ashift:DI (match_operand:DI 1 "register_operand" "")
+			    (const_int 2))
 		 (match_operand:DI 2 "register_operand" "")))
    (set (mem:SI (match_dup 0))
         (match_operand:SI 3 "register_operand" ""))]
@@ -2296,25 +2279,7 @@
    && FP_REGNO_P (REGNO (operands[3]))"
   [(set (mem:SI (plus:DI (mult:DI (match_dup 1) (const_int 4)) (match_dup 2)))
 	(match_dup 3))
-   (set (match_dup 0) (plus:DI (mult:DI (match_dup 1) (const_int 4))
-			       (match_dup 2)))]
-  "")
-
-(define_peephole2
-  [(set (match_operand:DI 0 "register_operand" "")
-	(plus:DI (match_operand:DI 2 "register_operand" "")
-		 (mult:DI (match_operand:DI 1 "register_operand" "")
-			  (const_int 4))))
-   (set (mem:SI (match_dup 0))
-        (match_operand:SI 3 "register_operand" ""))]
-  "!TARGET_SOFT_FLOAT
-   && !TARGET_DISABLE_INDEXING
-   && TARGET_64BIT
-   && REG_OK_FOR_BASE_P (operands[2])
-   && FP_REGNO_P (REGNO (operands[3]))"
-  [(set (mem:SI (plus:DI (mult:DI (match_dup 1) (const_int 4)) (match_dup 2)))
-	(match_dup 3))
-   (set (match_dup 0) (plus:DI (mult:DI (match_dup 1) (const_int 4))
+   (set (match_dup 0) (plus:DI (ashift:DI (match_dup 1) (const_int 2))
 			       (match_dup 2)))]
   "")
 
@@ -2799,42 +2764,54 @@
 ;; a 2 insn store with some creative RTL rewriting.
 (define_split
   [(set (mem:SI (plus:SI (mult:SI (match_operand:SI 0 "register_operand" "")
-			       (match_operand:SI 1 "shadd_operand" ""))
+			       (match_operand:SI 1 "mem_shadd_operand" ""))
 		   (plus:SI (match_operand:SI 2 "register_operand" "")
 			    (match_operand:SI 3 "const_int_operand" ""))))
 	(match_operand:SI 4 "register_operand" ""))
    (clobber (match_operand:SI 5 "register_operand" ""))]
   ""
-  [(set (match_dup 5) (plus:SI (mult:SI (match_dup 0) (match_dup 1))
+  [(set (match_dup 5) (plus:SI (ashift:SI (match_dup 0) (match_dup 1))
 			       (match_dup 2)))
    (set (mem:SI (plus:SI (match_dup 5) (match_dup 3))) (match_dup 4))]
-  "")
+  "
+{
+  operands[1] = GEN_INT (exact_log2 (INTVAL (operands[1])));
+
+}")
 
 (define_split
   [(set (mem:HI (plus:SI (mult:SI (match_operand:SI 0 "register_operand" "")
-			       (match_operand:SI 1 "shadd_operand" ""))
+			       (match_operand:SI 1 "mem_shadd_operand" ""))
 		   (plus:SI (match_operand:SI 2 "register_operand" "")
 			    (match_operand:SI 3 "const_int_operand" ""))))
 	(match_operand:HI 4 "register_operand" ""))
    (clobber (match_operand:SI 5 "register_operand" ""))]
   ""
-  [(set (match_dup 5) (plus:SI (mult:SI (match_dup 0) (match_dup 1))
+  [(set (match_dup 5) (plus:SI (ashift:SI (match_dup 0) (match_dup 1))
 			       (match_dup 2)))
    (set (mem:HI (plus:SI (match_dup 5) (match_dup 3))) (match_dup 4))]
-  "")
+  "
+{
+  operands[1] = GEN_INT (exact_log2 (INTVAL (operands[1])));
+
+}")
 
 (define_split
   [(set (mem:QI (plus:SI (mult:SI (match_operand:SI 0 "register_operand" "")
-			       (match_operand:SI 1 "shadd_operand" ""))
+			       (match_operand:SI 1 "mem_shadd_operand" ""))
 		   (plus:SI (match_operand:SI 2 "register_operand" "")
 			    (match_operand:SI 3 "const_int_operand" ""))))
 	(match_operand:QI 4 "register_operand" ""))
    (clobber (match_operand:SI 5 "register_operand" ""))]
   ""
-  [(set (match_dup 5) (plus:SI (mult:SI (match_dup 0) (match_dup 1))
+  [(set (match_dup 5) (plus:SI (ashift:SI (match_dup 0) (match_dup 1))
 			       (match_dup 2)))
    (set (mem:QI (plus:SI (match_dup 5) (match_dup 3))) (match_dup 4))]
-  "")
+  "
+{
+  operands[1] = GEN_INT (exact_log2 (INTVAL (operands[1])));
+
+}")
 
 (define_expand "movhi"
   [(set (match_operand:HI 0 "general_operand" "")
@@ -2859,7 +2836,7 @@
     DONE;
 
   /* We don't want the clobber emitted, so handle this ourselves.  */
-  emit_insn (gen_rtx_SET (VOIDmode, operands[0], operands[1]));
+  emit_insn (gen_rtx_SET (operands[0], operands[1]));
   DONE;
 }")
 
@@ -2876,7 +2853,7 @@
     DONE;
 
   /* We don't want the clobber emitted, so handle this ourselves.  */
-  emit_insn (gen_rtx_SET (VOIDmode, operands[0], operands[1]));
+  emit_insn (gen_rtx_SET (operands[0], operands[1]));
   DONE;
 }")
 
@@ -3019,7 +2996,7 @@
     DONE;
 
   /* We don't want the clobber emitted, so handle this ourselves.  */
-  emit_insn (gen_rtx_SET (VOIDmode, operands[0], operands[1]));
+  emit_insn (gen_rtx_SET (operands[0], operands[1]));
   DONE;
 }")
 
@@ -3036,7 +3013,7 @@
     DONE;
 
   /* We don't want the clobber emitted, so handle this ourselves.  */
-  emit_insn (gen_rtx_SET (VOIDmode, operands[0], operands[1]));
+  emit_insn (gen_rtx_SET (operands[0], operands[1]));
   DONE;
 }")
 
@@ -3321,7 +3298,7 @@
     operands[7] = addr;
   else
     {
-      emit_insn (gen_rtx_SET (VOIDmode, operands[7], addr));
+      emit_insn (gen_rtx_SET (operands[7], addr));
       operands[0] = replace_equiv_address (operands[0], operands[7]);
     }
 
@@ -3330,7 +3307,7 @@
     operands[8] = addr;
   else
     {
-      emit_insn (gen_rtx_SET (VOIDmode, operands[8], addr));
+      emit_insn (gen_rtx_SET (operands[8], addr));
       operands[1] = replace_equiv_address (operands[1], operands[8]);
     }
 }")
@@ -3509,7 +3486,7 @@
     operands[7] = addr;
   else
     {
-      emit_insn (gen_rtx_SET (VOIDmode, operands[7], addr));
+      emit_insn (gen_rtx_SET (operands[7], addr));
       operands[0] = replace_equiv_address (operands[0], operands[7]);
     }
 
@@ -3518,7 +3495,7 @@
     operands[8] = addr;
   else
     {
-      emit_insn (gen_rtx_SET (VOIDmode, operands[8], addr));
+      emit_insn (gen_rtx_SET (operands[8], addr));
       operands[1] = replace_equiv_address (operands[1], operands[8]);
     }
 }")
@@ -3635,7 +3612,7 @@
     operands[4] = addr;
   else
     {
-      emit_insn (gen_rtx_SET (VOIDmode, operands[4], addr));
+      emit_insn (gen_rtx_SET (operands[4], addr));
       operands[0] = replace_equiv_address (operands[0], operands[4]);
     }
 }")
@@ -3749,7 +3726,7 @@
     operands[4] = addr;
   else
     {
-      emit_insn (gen_rtx_SET (VOIDmode, operands[4], addr));
+      emit_insn (gen_rtx_SET (operands[4], addr));
       operands[0] = replace_equiv_address (operands[0], operands[4]);
     }
 }")
@@ -3790,7 +3767,7 @@
     DONE;
 
   /* We don't want the clobber emitted, so handle this ourselves.  */
-  emit_insn (gen_rtx_SET (VOIDmode, operands[0], operands[1]));
+  emit_insn (gen_rtx_SET (operands[0], operands[1]));
   DONE;
 }")
 
@@ -3807,7 +3784,7 @@
     DONE;
 
   /* We don't want the clobber emitted, so handle this ourselves.  */
-  emit_insn (gen_rtx_SET (VOIDmode, operands[0], operands[1]));
+  emit_insn (gen_rtx_SET (operands[0], operands[1]));
   DONE;
 }")
 
@@ -3824,7 +3801,7 @@
     DONE;
 
   /* We don't want the clobber emitted, so handle this ourselves.  */
-  emit_insn (gen_rtx_SET (VOIDmode, operands[0], operands[1]));
+  emit_insn (gen_rtx_SET (operands[0], operands[1]));
   DONE;
 }")
 
@@ -3864,8 +3841,8 @@
 
 (define_peephole2
   [(set (match_operand:SI 0 "register_operand" "")
-	(plus:SI (mult:SI (match_operand:SI 1 "register_operand" "")
-			  (const_int 8))
+	(plus:SI (ashift:SI (match_operand:SI 1 "register_operand" "")
+			    (const_int 3))
 		 (match_operand:SI 2 "register_operand" "")))
    (set (mem:DF (match_dup 0))
         (match_operand:DF 3 "register_operand" ""))]
@@ -3875,15 +3852,15 @@
    && FP_REGNO_P (REGNO (operands[3]))"
   [(set (mem:DF (plus:SI (mult:SI (match_dup 1) (const_int 8)) (match_dup 2)))
 	(match_dup 3))
-   (set (match_dup 0) (plus:SI (mult:SI (match_dup 1) (const_int 8))
+   (set (match_dup 0) (plus:SI (ashift:SI (match_dup 1) (const_int 3))
 			       (match_dup 2)))]
   "")
 
 (define_peephole2
   [(set (match_operand:SI 0 "register_operand" "")
 	(plus:SI (match_operand:SI 2 "register_operand" "")
-		 (mult:SI (match_operand:SI 1 "register_operand" "")
-			  (const_int 8))))
+		 (ashift:SI (match_operand:SI 1 "register_operand" "")
+			    (const_int 3))))
    (set (mem:DF (match_dup 0))
         (match_operand:DF 3 "register_operand" ""))]
   "!TARGET_SOFT_FLOAT
@@ -3892,14 +3869,14 @@
    && FP_REGNO_P (REGNO (operands[3]))"
   [(set (mem:DF (plus:SI (mult:SI (match_dup 1) (const_int 8)) (match_dup 2)))
 	(match_dup 3))
-   (set (match_dup 0) (plus:SI (mult:SI (match_dup 1) (const_int 8))
+   (set (match_dup 0) (plus:SI (ashift:SI (match_dup 1) (const_int 3))
 			       (match_dup 2)))]
   "")
 
 (define_peephole2
   [(set (match_operand:DI 0 "register_operand" "")
-	(plus:DI (mult:DI (match_operand:DI 1 "register_operand" "")
-			  (const_int 8))
+	(plus:DI (ashift:DI (match_operand:DI 1 "register_operand" "")
+			    (const_int 3))
 		 (match_operand:DI 2 "register_operand" "")))
    (set (mem:DF (match_dup 0))
         (match_operand:DF 3 "register_operand" ""))]
@@ -3910,15 +3887,15 @@
    && FP_REGNO_P (REGNO (operands[3]))"
   [(set (mem:DF (plus:DI (mult:DI (match_dup 1) (const_int 8)) (match_dup 2)))
 	(match_dup 3))
-   (set (match_dup 0) (plus:DI (mult:DI (match_dup 1) (const_int 8))
+   (set (match_dup 0) (plus:DI (ashift:DI (match_dup 1) (const_int 3))
 			       (match_dup 2)))]
   "")
 
 (define_peephole2
   [(set (match_operand:DI 0 "register_operand" "")
 	(plus:DI (match_operand:DI 2 "register_operand" "")
-		 (mult:DI (match_operand:DI 1 "register_operand" "")
-			  (const_int 8))))
+		 (ashift:DI (match_operand:DI 1 "register_operand" "")
+			    (const_int 3))))
    (set (mem:DF (match_dup 0))
         (match_operand:DF 3 "register_operand" ""))]
   "!TARGET_SOFT_FLOAT
@@ -3928,7 +3905,7 @@
    && FP_REGNO_P (REGNO (operands[3]))"
   [(set (mem:DF (plus:DI (mult:DI (match_dup 1) (const_int 8)) (match_dup 2)))
 	(match_dup 3))
-   (set (match_dup 0) (plus:DI (mult:DI (match_dup 1) (const_int 8))
+   (set (match_dup 0) (plus:DI (ashift:DI (match_dup 1) (const_int 3))
 			       (match_dup 2)))]
   "")
 
@@ -4063,7 +4040,7 @@
     DONE;
 
   /* We don't want the clobber emitted, so handle this ourselves.  */
-  emit_insn (gen_rtx_SET (VOIDmode, operands[0], operands[1]));
+  emit_insn (gen_rtx_SET (operands[0], operands[1]));
   DONE;
 }")
 
@@ -4080,7 +4057,7 @@
     DONE;
 
   /* We don't want the clobber emitted, so handle this ourselves.  */
-  emit_insn (gen_rtx_SET (VOIDmode, operands[0], operands[1]));
+  emit_insn (gen_rtx_SET (operands[0], operands[1]));
   DONE;
 }")
 
@@ -4097,7 +4074,7 @@
     DONE;
 
   /* We don't want the clobber emitted, so handle this ourselves.  */
-  emit_insn (gen_rtx_SET (VOIDmode, operands[0], operands[1]));
+  emit_insn (gen_rtx_SET (operands[0], operands[1]));
   DONE;
 }")
 
@@ -4212,8 +4189,8 @@
 
 (define_peephole2
   [(set (match_operand:DI 0 "register_operand" "")
-	(plus:DI (mult:DI (match_operand:DI 1 "register_operand" "")
-			  (const_int 8))
+	(plus:DI (ashift:DI (match_operand:DI 1 "register_operand" "")
+			    (const_int 3))
 		 (match_operand:DI 2 "register_operand" "")))
    (set (mem:DI (match_dup 0))
         (match_operand:DI 3 "register_operand" ""))]
@@ -4224,25 +4201,7 @@
    && FP_REGNO_P (REGNO (operands[3]))"
   [(set (mem:DI (plus:DI (mult:DI (match_dup 1) (const_int 8)) (match_dup 2)))
 	(match_dup 3))
-   (set (match_dup 0) (plus:DI (mult:DI (match_dup 1) (const_int 8))
-			       (match_dup 2)))]
-  "")
-
-(define_peephole2
-  [(set (match_operand:DI 0 "register_operand" "")
-	(plus:DI (match_operand:DI 2 "register_operand" "")
-		 (mult:DI (match_operand:DI 1 "register_operand" "")
-			  (const_int 8))))
-   (set (mem:DI (match_dup 0))
-        (match_operand:DI 3 "register_operand" ""))]
-  "!TARGET_SOFT_FLOAT
-   && !TARGET_DISABLE_INDEXING
-   && TARGET_64BIT
-   && REG_OK_FOR_BASE_P (operands[2])
-   && FP_REGNO_P (REGNO (operands[3]))"
-  [(set (mem:DI (plus:DI (mult:DI (match_dup 1) (const_int 8)) (match_dup 2)))
-	(match_dup 3))
-   (set (match_dup 0) (plus:DI (mult:DI (match_dup 1) (const_int 8))
+   (set (match_dup 0) (plus:DI (ashift:DI (match_dup 1) (const_int 3))
 			       (match_dup 2)))]
   "")
 
@@ -4341,7 +4300,7 @@
     DONE;
 
   /* We don't want the clobber emitted, so handle this ourselves.  */
-  emit_insn (gen_rtx_SET (VOIDmode, operands[0], operands[1]));
+  emit_insn (gen_rtx_SET (operands[0], operands[1]));
   DONE;
 }")
 
@@ -4358,7 +4317,7 @@
     DONE;
 
   /* We don't want the clobber emitted, so handle this ourselves.  */
-  emit_insn (gen_rtx_SET (VOIDmode, operands[0], operands[1]));
+  emit_insn (gen_rtx_SET (operands[0], operands[1]));
   DONE;
 }")
 
@@ -4375,7 +4334,7 @@
     DONE;
 
   /* We don't want the clobber emitted, so handle this ourselves.  */
-  emit_insn (gen_rtx_SET (VOIDmode, operands[0], operands[1]));
+  emit_insn (gen_rtx_SET (operands[0], operands[1]));
   DONE;
 }")
 
@@ -4434,8 +4393,8 @@
 
 (define_peephole2
   [(set (match_operand:SI 0 "register_operand" "")
-	(plus:SI (mult:SI (match_operand:SI 1 "register_operand" "")
-			  (const_int 4))
+	(plus:SI (ashift:SI (match_operand:SI 1 "register_operand" "")
+			    (const_int 2))
 		 (match_operand:SI 2 "register_operand" "")))
    (set (mem:SF (match_dup 0))
         (match_operand:SF 3 "register_operand" ""))]
@@ -4445,31 +4404,14 @@
    && FP_REGNO_P (REGNO (operands[3]))"
   [(set (mem:SF (plus:SI (mult:SI (match_dup 1) (const_int 4)) (match_dup 2)))
 	(match_dup 3))
-   (set (match_dup 0) (plus:SI (mult:SI (match_dup 1) (const_int 4))
-			       (match_dup 2)))]
-  "")
-
-(define_peephole2
-  [(set (match_operand:SI 0 "register_operand" "")
-	(plus:SI (match_operand:SI 2 "register_operand" "")
-		 (mult:SI (match_operand:SI 1 "register_operand" "")
-			  (const_int 4))))
-   (set (mem:SF (match_dup 0))
-        (match_operand:SF 3 "register_operand" ""))]
-  "!TARGET_SOFT_FLOAT
-   && !TARGET_DISABLE_INDEXING
-   && REG_OK_FOR_BASE_P (operands[2])
-   && FP_REGNO_P (REGNO (operands[3]))"
-  [(set (mem:SF (plus:SI (mult:SI (match_dup 1) (const_int 4)) (match_dup 2)))
-	(match_dup 3))
-   (set (match_dup 0) (plus:SI (mult:SI (match_dup 1) (const_int 4))
+   (set (match_dup 0) (plus:SI (ashift:SI (match_dup 1) (const_int 2))
 			       (match_dup 2)))]
   "")
 
 (define_peephole2
   [(set (match_operand:DI 0 "register_operand" "")
-	(plus:DI (mult:DI (match_operand:DI 1 "register_operand" "")
-			  (const_int 4))
+	(plus:DI (ashift:DI (match_operand:DI 1 "register_operand" "")
+			    (const_int 2))
 		 (match_operand:DI 2 "register_operand" "")))
    (set (mem:SF (match_dup 0))
         (match_operand:SF 3 "register_operand" ""))]
@@ -4480,25 +4422,7 @@
    && FP_REGNO_P (REGNO (operands[3]))"
   [(set (mem:SF (plus:DI (mult:DI (match_dup 1) (const_int 4)) (match_dup 2)))
 	(match_dup 3))
-   (set (match_dup 0) (plus:DI (mult:DI (match_dup 1) (const_int 4))
-			       (match_dup 2)))]
-  "")
-
-(define_peephole2
-  [(set (match_operand:DI 0 "register_operand" "")
-	(plus:DI (match_operand:DI 2 "register_operand" "")
-		 (mult:DI (match_operand:DI 1 "register_operand" "")
-			  (const_int 4))))
-   (set (mem:SF (match_dup 0))
-        (match_operand:SF 3 "register_operand" ""))]
-  "!TARGET_SOFT_FLOAT
-   && !TARGET_DISABLE_INDEXING
-   && TARGET_64BIT
-   && REG_OK_FOR_BASE_P (operands[2])
-   && FP_REGNO_P (REGNO (operands[3]))"
-  [(set (mem:SF (plus:DI (mult:DI (match_dup 1) (const_int 4)) (match_dup 2)))
-	(match_dup 3))
-   (set (match_dup 0) (plus:DI (mult:DI (match_dup 1) (const_int 4))
+   (set (match_dup 0) (plus:DI (ashift:DI (match_dup 1) (const_int 2))
 			       (match_dup 2)))]
   "")
 
@@ -5091,7 +5015,7 @@
 	(plus:SI (match_operand:SI 1 "register_operand" "")
 		 (match_operand:SI 2 "const_int_operand" "")))
    (clobber (match_operand:SI 4 "register_operand" ""))]
-  "! pa_cint_ok_for_move (INTVAL (operands[2]))
+  "! pa_cint_ok_for_move (UINTVAL (operands[2]))
    && VAL_14_BITS_P (INTVAL (operands[2]) >> 1)"
   [(set (match_dup 4) (plus:SI (match_dup 1) (match_dup 2)))
    (set (match_dup 0) (plus:SI (match_dup 4) (match_dup 3)))]
@@ -5110,13 +5034,13 @@
 	(plus:SI (match_operand:SI 1 "register_operand" "")
 		 (match_operand:SI 2 "const_int_operand" "")))
    (clobber (match_operand:SI 4 "register_operand" ""))]
-  "! pa_cint_ok_for_move (INTVAL (operands[2]))"
+  "! pa_cint_ok_for_move (UINTVAL (operands[2]))"
   [(set (match_dup 4) (match_dup 2))
-   (set (match_dup 0) (plus:SI (mult:SI (match_dup 4) (match_dup 3))
+   (set (match_dup 0) (plus:SI (ashift:SI (match_dup 4) (match_dup 3))
 			       (match_dup 1)))]
   "
 {
-  HOST_WIDE_INT intval = INTVAL (operands[2]);
+  unsigned HOST_WIDE_INT intval = UINTVAL (operands[2]);
 
   /* Try dividing the constant by 2, then 4, and finally 8 to see
      if we can get a constant which can be loaded into a register
@@ -5127,21 +5051,21 @@
   if (intval % 2 == 0 && pa_cint_ok_for_move (intval / 2))
     {
       operands[2] = GEN_INT (intval / 2);
-      operands[3] = const2_rtx;
+      operands[3] = const1_rtx;
     }
   else if (intval % 4 == 0 && pa_cint_ok_for_move (intval / 4))
     {
       operands[2] = GEN_INT (intval / 4);
-      operands[3] = GEN_INT (4);
+      operands[3] = const2_rtx;
     }
   else if (intval % 8 == 0 && pa_cint_ok_for_move (intval / 8))
     {
       operands[2] = GEN_INT (intval / 8);
-      operands[3] = GEN_INT (8);
+      operands[3] = GEN_INT (3);
     }
   else if (pa_cint_ok_for_move (-intval))
     {
-      emit_insn (gen_rtx_SET (VOIDmode, operands[4], GEN_INT (-intval)));
+      emit_insn (gen_rtx_SET (operands[4], GEN_INT (-intval)));
       emit_insn (gen_subsi3 (operands[0], operands[1], operands[4]));
       DONE;
     }
@@ -6316,21 +6240,51 @@
 
 (define_insn ""
   [(set (match_operand:SI 0 "register_operand" "=r")
-	(plus:SI (mult:SI (match_operand:SI 2 "register_operand" "r")
-			  (match_operand:SI 3 "shadd_operand" ""))
+	(plus:SI (ashift:SI (match_operand:SI 2 "register_operand" "r")
+			    (match_operand:SI 3 "shadd_operand" ""))
 		 (match_operand:SI 1 "register_operand" "r")))]
   ""
-  "{sh%O3addl %2,%1,%0|shladd,l %2,%O3,%1,%0} "
+  "{sh%o3addl %2,%1,%0|shladd,l %2,%o3,%1,%0} "
+  [(set_attr "type" "binary")
+   (set_attr "length" "4")])
+
+(define_insn ""
+  [(set (match_operand:SI 0 "register_operand" "=r")
+	(plus:SI (mult:SI (match_operand:SI 2 "register_operand" "r")
+			  (match_operand:SI 3 "mem_shadd_operand" ""))
+		 (match_operand:SI 1 "register_operand" "r")))]
+  ""
+  "*
+{
+  int shift_val = exact_log2 (INTVAL (operands[3]));
+  operands[3] = GEN_INT (shift_val);
+  return \"{sh%o3addl %2,%1,%0|shladd,l %2,%o3,%1,%0}\";
+}"
+  [(set_attr "type" "binary")
+   (set_attr "length" "4")])
+
+(define_insn ""
+  [(set (match_operand:DI 0 "register_operand" "=r")
+	(plus:DI (ashift:DI (match_operand:DI 2 "register_operand" "r")
+			    (match_operand:DI 3 "shadd_operand" ""))
+		 (match_operand:DI 1 "register_operand" "r")))]
+  "TARGET_64BIT"
+  "shladd,l %2,%o3,%1,%0"
   [(set_attr "type" "binary")
    (set_attr "length" "4")])
 
 (define_insn ""
   [(set (match_operand:DI 0 "register_operand" "=r")
 	(plus:DI (mult:DI (match_operand:DI 2 "register_operand" "r")
-			  (match_operand:DI 3 "shadd_operand" ""))
+			  (match_operand:DI 3 "mem_shadd_operand" ""))
 		 (match_operand:DI 1 "register_operand" "r")))]
   "TARGET_64BIT"
-  "shladd,l %2,%O3,%1,%0"
+  "*
+{
+  int shift_val = exact_log2 (INTVAL (operands[3]));
+  operands[3] = GEN_INT (shift_val);
+  return \"shladd,l %2,%o3,%1,%0\";
+}"
   [(set_attr "type" "binary")
    (set_attr "length" "4")])
 
@@ -8292,6 +8246,170 @@ add,l %2,%3,%3\;bv,n %%r0(%3)"
 	(cond [(and (const_int 0) (eq (const_int 0) (pc))) (const_int 12)]
 	      (symbol_ref "pa_attr_length_indirect_call (insn)")))])
 
+/* Expand special pc-relative call to _mcount.  */
+
+(define_expand "call_mcount"
+  [(parallel [(call (match_operand:SI 0 "" "")
+		    (match_operand 1 "" ""))
+	      (set (reg:SI 25)
+		   (plus:SI (reg:SI 2)
+			    (minus:SI (match_operand 2 "" "")
+				      (plus:SI (pc) (const_int 4)))))
+	      (clobber (reg:SI 2))])]
+  "!TARGET_PORTABLE_RUNTIME"
+  "
+{
+  rtx op = XEXP (operands[0], 0);
+  rtx nb = operands[1];
+  rtx lab = operands[2];
+
+  if (TARGET_64BIT)
+    {
+      rtx r4 = gen_rtx_REG (word_mode, 4);
+      emit_move_insn (arg_pointer_rtx,
+		      gen_rtx_PLUS (word_mode, virtual_outgoing_args_rtx,
+				    GEN_INT (64)));
+      emit_call_insn (gen_call_mcount_64bit (op, nb, lab, r4));
+    }
+  else
+    {
+      if (flag_pic)
+	{
+	  rtx r4 = gen_rtx_REG (word_mode, 4);
+	  emit_call_insn (gen_call_mcount_pic (op, nb, lab, r4));
+	}
+      else
+	emit_call_insn (gen_call_mcount_nonpic (op, nb, lab));
+    }
+
+  DONE;
+}")
+
+(define_insn "call_mcount_nonpic"
+  [(call (mem:SI (match_operand 0 "call_operand_address" ""))
+	 (match_operand 1 "" "i"))
+   (set (reg:SI 25)
+	(plus:SI (reg:SI 2)
+		 (minus:SI (match_operand 2 "" "")
+			   (plus:SI (pc) (const_int 4)))))
+   (clobber (reg:SI 2))]
+  "!TARGET_PORTABLE_RUNTIME && !TARGET_64BIT"
+  "*
+{
+  pa_output_arg_descriptor (insn);
+  return \"{bl|b,l} %0,%%r2\;ldo %2-.-4(%%r2),%%r25\";
+}"
+  [(set_attr "type" "multi")
+   (set_attr "length" "8")])
+
+(define_insn "call_mcount_pic"
+  [(call (mem:SI (match_operand 0 "call_operand_address" ""))
+	 (match_operand 1 "" "i"))
+   (set (reg:SI 25)
+	(plus:SI (reg:SI 2)
+		 (minus:SI (match_operand 2 "" "")
+			   (plus:SI (pc) (const_int 4)))))
+   (clobber (reg:SI 2))
+   (clobber (match_operand 3))
+   (use (reg:SI 19))]
+  "!TARGET_PORTABLE_RUNTIME && !TARGET_64BIT"
+  "#")
+
+(define_split
+  [(parallel [(call (mem:SI (match_operand 0 "call_operand_address" ""))
+		    (match_operand 1 "" ""))
+	      (set (reg:SI 25)
+		   (plus:SI (reg:SI 2)
+			    (minus:SI (match_operand 2 "" "")
+				      (plus:SI (pc) (const_int 4)))))
+	      (clobber (reg:SI 2))
+	      (clobber (match_operand 3))
+	      (use (reg:SI 19))])]
+  "!TARGET_PORTABLE_RUNTIME && !TARGET_64BIT && reload_completed"
+  [(set (match_dup 3) (reg:SI 19))
+   (parallel [(call (mem:SI (match_dup 0))
+		    (match_dup 1))
+	      (set (reg:SI 25)
+		   (plus:SI (reg:SI 2)
+			    (minus:SI (match_dup 2)
+				      (plus:SI (pc) (const_int 4)))))
+	      (clobber (reg:SI 2))
+	      (use (reg:SI 19))])
+   (set (reg:SI 19) (match_dup 3))]
+  "")
+
+(define_insn "*call_mcount_pic_post_reload"
+  [(call (mem:SI (match_operand 0 "call_operand_address" ""))
+	 (match_operand 1 "" "i"))
+   (set (reg:SI 25)
+	(plus:SI (reg:SI 2)
+		 (minus:SI (match_operand 2 "" "")
+			   (plus:SI (pc) (const_int 4)))))
+   (clobber (reg:SI 2))
+   (use (reg:SI 19))]
+  "!TARGET_PORTABLE_RUNTIME && !TARGET_64BIT"
+  "*
+{
+  pa_output_arg_descriptor (insn);
+  return \"{bl|b,l} %0,%%r2\;ldo %2-.-4(%%r2),%%r25\";
+}"
+  [(set_attr "type" "multi")
+   (set_attr "length" "8")])
+
+(define_insn "call_mcount_64bit"
+  [(call (mem:SI (match_operand 0 "call_operand_address" ""))
+	 (match_operand 1 "" "i"))
+   (set (reg:SI 25)
+	(plus:SI (reg:SI 2)
+		 (minus:SI (match_operand 2 "" "")
+			   (plus:SI (pc) (const_int 4)))))
+   (clobber (reg:DI 2))
+   (clobber (match_operand 3))
+   (use (reg:DI 27))
+   (use (reg:DI 29))]
+  "TARGET_64BIT"
+  "#")
+
+(define_split
+  [(parallel [(call (mem:SI (match_operand 0 "call_operand_address" ""))
+		    (match_operand 1 "" ""))
+	      (set (reg:SI 25)
+		   (plus:SI (reg:SI 2)
+			    (minus:SI (match_operand 2 "" "")
+				      (plus:SI (pc) (const_int 4)))))
+	      (clobber (reg:DI 2))
+	      (clobber (match_operand 3))
+	      (use (reg:DI 27))
+	      (use (reg:DI 29))])]
+  "TARGET_64BIT && reload_completed"
+  [(set (match_dup 3) (reg:DI 27))
+   (parallel [(call (mem:SI (match_dup 0))
+		    (match_dup 1))
+	      (set (reg:SI 25)
+		   (plus:SI (reg:SI 2)
+			    (minus:SI (match_dup 2)
+				      (plus:SI (pc) (const_int 4)))))
+	      (clobber (reg:DI 2))
+	      (use (reg:DI 27))
+	      (use (reg:DI 29))])
+   (set (reg:DI 27) (match_dup 3))]
+  "")
+
+(define_insn "*call_mcount_64bit_post_reload"
+  [(call (mem:SI (match_operand 0 "call_operand_address" ""))
+	 (match_operand 1 "" "i"))
+   (set (reg:SI 25)
+	(plus:SI (reg:SI 2)
+		 (minus:SI (match_operand 2 "" "")
+			   (plus:SI (pc) (const_int 4)))))
+   (clobber (reg:DI 2))
+   (use (reg:DI 27))
+   (use (reg:DI 29))]
+  "TARGET_64BIT"
+  "{bl|b,l} %0,%%r2\;ldo %2-.-4(%%r2),%%r25"
+  [(set_attr "type" "multi")
+   (set_attr "length" "8")])
+
 ;; Call subroutine returning any type.
 
 (define_expand "untyped_call"
@@ -8304,7 +8422,7 @@ add,l %2,%3,%3\;bv,n %%r0(%3)"
 {
   int i;
 
-  emit_call_insn (GEN_CALL (operands[0], const0_rtx, NULL, const0_rtx));
+  emit_call_insn (gen_call (operands[0], const0_rtx));
 
   for (i = 0; i < XVECLEN (operands[2], 0); i++)
     {

@@ -1,4 +1,4 @@
-@c Copyright (C) 1988-2015 Free Software Foundation, Inc.
+@c Copyright (C) 1988-2016 Free Software Foundation, Inc.
 @c This is part of the GCC manual.
 @c For copying conditions, see the file gcc.texi.
 
@@ -237,7 +237,7 @@ both multilib and multiarch.  In that case, multiarch names are encoded
 in @code{MULTILIB_OSDIRNAMES} instead.
 
 More documentation about multiarch can be found at
-@uref{http://wiki.debian.org/Multiarch}.
+@uref{https://wiki.debian.org/Multiarch}.
 
 @findex SPECS
 @item SPECS

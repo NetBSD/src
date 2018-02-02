@@ -1,4 +1,4 @@
-@c Copyright (C) 1988-2015 Free Software Foundation, Inc.
+@c Copyright (C) 1988-2016 Free Software Foundation, Inc.
 @c This is part of the GCC manual.
 @c For copying conditions, see the file gcc.texi.
 
@@ -1465,6 +1465,8 @@ can be described by a series of letters for each operand.  The overall
 constraint for an operand is made from the letters for this operand
 from the first alternative, a comma, the letters for this operand from
 the second alternative, a comma, and so on until the last alternative.
+All operands for a single instruction must have the same number of 
+alternatives.
 @ifset INTERNALS
 Here is how it is done for fullword logical-or on the 68000:
 
@@ -1482,9 +1484,7 @@ operand 1 (meaning it must match operand 0), and @samp{dKs} for operand
 @samp{0} for operand 1, and @samp{dmKs} for operand 2.  The @samp{=} and
 @samp{%} in the constraints apply to all the alternatives; their
 meaning is explained in the next section (@pxref{Class Preferences}).
-@end ifset
 
-@c FIXME Is this ? and ! stuff of use in asm()?  If not, hide unless INTERNAL
 If all the operands fit any one alternative, the instruction is valid.
 Otherwise, for each alternative, the compiler counts how many instructions
 must be added to copy the operands so that that alternative applies.
@@ -1521,7 +1521,6 @@ This constraint is analogous to @samp{!} but it disparages severely
 the alternative only if the operand with the @samp{$} needs a reload.
 @end table
 
-@ifset INTERNALS
 When an insn pattern has multiple alternatives in its constraints, often
 the appearance of the assembler code is determined mostly by which
 alternative was matched.  When this is so, the C code for writing the
@@ -1529,6 +1528,21 @@ assembler code can use the variable @code{which_alternative}, which is
 the ordinal number of the alternative that was actually satisfied (0 for
 the first, 1 for the second alternative, etc.).  @xref{Output Statement}.
 @end ifset
+@ifclear INTERNALS
+
+So the first alternative for the 68000's logical-or could be written as 
+@code{"+m" (output) : "ir" (input)}.  The second could be @code{"+r" 
+(output): "irm" (input)}.  However, the fact that two memory locations 
+cannot be used in a single instruction prevents simply using @code{"+rm" 
+(output) : "irm" (input)}.  Using multi-alternatives, this might be 
+written as @code{"+m,r" (output) : "ir,irm" (input)}.  This describes
+all the available alternatives to the compiler, allowing it to choose 
+the most efficient one for the current conditions.
+
+There is no way within the template to determine which alternative was 
+chosen.  However you may be able to wrap your @code{asm} statements with 
+builtins such as @code{__builtin_constant_p} to achieve the desired results.
+@end ifclear
 
 @ifset INTERNALS
 @node Class Preferences
@@ -1632,7 +1646,9 @@ instruction is defined:
 GCC can only handle one commutative pair in an asm; if you use more,
 the compiler may fail.  Note that you need not use the modifier if
 the two alternatives are strictly identical; this would only waste
-time in the reload pass.  The modifier is not operational after
+time in the reload pass.
+@ifset INTERNALS
+The modifier is not operational after
 register allocation, so the result of @code{define_peephole2}
 and @code{define_split}s performed after reload cannot rely on
 @samp{%} to make the intended insn match.
@@ -1651,7 +1667,6 @@ constraint as a constraint, and no effect on reloading.  For LRA
 @samp{*} additionally disparages slightly the alternative if the
 following character matches the operand.
 
-@ifset INTERNALS
 Here is an example: the 68000 has an instruction to sign-extend a
 halfword in a data register, and can also sign-extend a value by
 copying it into an address register.  While either kind of register is
@@ -2244,6 +2259,49 @@ Constant zero
 @item P
 12-bit signed integer constant that is greater than zero---i.e.@: in the
 range of 1 to 2047.
+
+@end table
+
+@item FT32---@file{config/ft32/constraints.md}
+@table @code
+@item A
+An absolute address
+
+@item B
+An offset address
+
+@item W
+A register indirect memory operand
+
+@item e
+An offset address.
+
+@item f
+An offset address.
+
+@item O
+The constant zero or one
+
+@item I
+A 16-bit signed constant (@minus{}32768 @dots{} 32767)
+
+@item w
+A bitfield mask suitable for bext or bins
+
+@item x
+An inverted bitfield mask suitable for bext or bins
+
+@item L
+A 16-bit unsigned constant, multiple of 4 (0 @dots{} 65532)
+
+@item S
+A 20-bit signed constant (@minus{}524288 @dots{} 524287)
+
+@item b
+A constant for a bitfield width (1 @dots{} 16)
+
+@item KA
+A 10-bit signed constant (@minus{}512 @dots{} 511)
 
 @end table
 
@@ -2948,10 +3006,25 @@ instead of @code{0} in the assembly output.
 Integer that is valid as an immediate operand for
 a custom instruction opcode. Range 0 to 255.
 
+@item P
+An immediate operand for R2 andchi/andci instructions. 
+
 @item S
 Matches immediates which are addresses in the small
 data section and therefore can be added to @code{gp}
 as a 16-bit immediate to re-create their 32-bit value.
+
+@item U
+Matches constants suitable as an operand for the rdprs and
+cache instructions.
+
+@item v
+A memory operand suitable for Nios II R2 load/store
+exclusive instructions.
+
+@item w
+A memory operand suitable for load/store IO and cache
+instructions.
 
 @ifset INTERNALS
 @item T
@@ -3029,12 +3102,13 @@ Any VSX register if the -mvsx option was used or NO_REGS.
 
 When using any of the register constraints (@code{wa}, @code{wd},
 @code{wf}, @code{wg}, @code{wh}, @code{wi}, @code{wj}, @code{wk},
-@code{wl}, @code{wm}, @code{ws}, @code{wt}, @code{wu}, @code{wv},
-@code{ww}, or @code{wy}) that take VSX registers, you must use
-@code{%x<n>} in the template so that the correct register is used.
-Otherwise the register number output in the assembly file will be
-incorrect if an Altivec register is an operand of a VSX instruction
-that expects VSX register numbering.
+@code{wl}, @code{wm}, @code{wo}, @code{wp}, @code{wq}, @code{ws},
+@code{wt}, @code{wu}, @code{wv}, @code{ww}, or @code{wy})
+that take VSX registers, you must use @code{%x<n>} in the template so
+that the correct register is used.  Otherwise the register number
+output in the assembly file will be incorrect if an Altivec register
+is an operand of a VSX instruction that expects VSX register
+numbering.
 
 @smallexample
 asm ("xvadddp %x0,%x1,%x2" : "=wa" (v1) : "wa" (v2), "wa" (v3));
@@ -3048,8 +3122,31 @@ asm ("xvadddp %0,%1,%2" : "=wa" (v1) : "wa" (v2), "wa" (v3));
 
 is not correct.
 
+If an instruction only takes Altivec registers, you do not want to use
+@code{%x<n>}.
+
+@smallexample
+asm ("xsaddqp %0,%1,%2" : "=v" (v1) : "v" (v2), "v" (v3));
+@end smallexample
+
+is correct because the @code{xsaddqp} instruction only takes Altivec
+registers, while:
+
+@smallexample
+asm ("xsaddqp %x0,%x1,%x2" : "=v" (v1) : "v" (v2), "v" (v3));
+@end smallexample
+
+is incorrect.
+
+@item wb
+Altivec register if @option{-mcpu=power9} is used or NO_REGS.
+
 @item wd
 VSX vector register to hold vector double data or NO_REGS.
+
+@item we
+VSX register if the @option{-mcpu=power9} and @option{-m64} options
+were used or NO_REGS.
 
 @item wf
 VSX vector register to hold vector float data or NO_REGS.
@@ -3078,6 +3175,15 @@ VSX register if direct move instructions are enabled, or NO_REGS.
 @item wn
 No register (NO_REGS).
 
+@item wo
+VSX register to use for ISA 3.0 vector instructions, or NO_REGS.
+
+@item wp
+VSX register to use for IEEE 128-bit floating point TFmode, or NO_REGS.
+
+@item wq
+VSX register to use for IEEE 128-bit floating point, or NO_REGS.
+
 @item wr
 General purpose register if 64-bit instructions are enabled or NO_REGS.
 
@@ -3105,18 +3211,40 @@ FP or VSX register to perform ISA 2.07 float ops or NO_REGS.
 @item wz
 Floating point register if the LFIWZX instruction is enabled or NO_REGS.
 
+@item wA
+Address base register if 64-bit instructions are enabled or NO_REGS.
+
 @item wD
 Int constant that is the element number of the 64-bit scalar in a vector.
+
+@item wE
+Vector constant that can be loaded with the XXSPLTIB instruction.
+
+@item wF
+Memory operand suitable for power9 fusion load/stores.
+
+@item wG
+Memory operand suitable for TOC fusion memory references.
+
+@item wL
+Int constant that is the element number that the MFVSRLD instruction.
+targets.
+
+@item wM
+Match vector constant with all 1's if the XXLORC instruction is available.
+
+@item wO
+A memory operand suitable for the ISA 3.0 vector d-form instructions.
 
 @item wQ
 A memory address that will work with the @code{lq} and @code{stq}
 instructions.
 
+@item wS
+Vector constant that can be loaded with XXSPLTIB & sign extension.
+
 @item h
 @samp{MQ}, @samp{CTR}, or @samp{LINK} register
-
-@item q
-@samp{MQ} register
 
 @item c
 @samp{CTR} register
@@ -3210,17 +3338,8 @@ AIX TOC entry
 Address operand that is an indexed or indirect from a register (@samp{p} is
 preferable for @code{asm} statements)
 
-@item S
-Constant suitable as a 64-bit mask operand
-
-@item T
-Constant suitable as a 32-bit mask operand
-
 @item U
 System V Release 4 small data area reference
-
-@item t
-AND masks that can be performed by two rldic@{l, r@} instructions
 
 @item W
 Vector constant that does not require memory
@@ -4320,6 +4439,20 @@ The syntax and semantics are otherwise identical to
 @code{define_constraint}.
 @end deffn
 
+@deffn {MD Expression} define_special_memory_constraint name docstring exp
+Use this expression for constraints that match a subset of all memory
+operands: that is, @code{reload} can not make them match by reloading
+the address as it is described for @code{define_memory_constraint} or
+such address reload is undesirable with the performance point of view.
+
+For example, @code{define_special_memory_constraint} can be useful if
+specifically aligned memory is necessary or desirable for some insn
+operand.
+
+The syntax and semantics are otherwise identical to
+@code{define_constraint}.
+@end deffn
+
 @deffn {MD Expression} define_address_constraint name docstring exp
 Use this expression for constraints that match a subset of all address
 operands: that is, @code{reload} can make the constraint match by
@@ -4652,6 +4785,8 @@ is true.  GCC assumes that, if a target supports this kind of
 instruction for some mode @var{n}, it also supports unaligned
 loads for vectors of mode @var{n}.
 
+This pattern is not allowed to @code{FAIL}.
+
 @cindex @code{vec_store_lanes@var{m}@var{n}} instruction pattern
 @item @samp{vec_store_lanes@var{m}@var{n}}
 Equivalent to @samp{vec_load_lanes@var{m}@var{n}}, with the memory
@@ -4666,6 +4801,8 @@ for (j = 0; j < GET_MODE_NUNITS (@var{n}); j++)
 @end smallexample
 
 for a memory operand 0 and register operand 1.
+
+This pattern is not allowed to @code{FAIL}.
 
 @cindex @code{vec_set@var{m}} instruction pattern
 @item @samp{vec_set@var{m}}
@@ -4682,16 +4819,54 @@ specify field index and operand 0 place to store value into.
 Initialize the vector to given values.  Operand 0 is the vector to initialize
 and operand 1 is parallel containing values for individual fields.
 
+@cindex @code{vec_cmp@var{m}@var{n}} instruction pattern
+@item @samp{vec_cmp@var{m}@var{n}}
+Output a vector comparison.  Operand 0 of mode @var{n} is the destination for
+predicate in operand 1 which is a signed vector comparison with operands of
+mode @var{m} in operands 2 and 3.  Predicate is computed by element-wise
+evaluation of the vector comparison with a truth value of all-ones and a false
+value of all-zeros.
+
+@cindex @code{vec_cmpu@var{m}@var{n}} instruction pattern
+@item @samp{vec_cmpu@var{m}@var{n}}
+Similar to @code{vec_cmp@var{m}@var{n}} but perform unsigned vector comparison.
+
 @cindex @code{vcond@var{m}@var{n}} instruction pattern
 @item @samp{vcond@var{m}@var{n}}
 Output a conditional vector move.  Operand 0 is the destination to
 receive a combination of operand 1 and operand 2, which are of mode @var{m},
-dependent on the outcome of the predicate in operand 3 which is a
+dependent on the outcome of the predicate in operand 3 which is a signed
 vector comparison with operands of mode @var{n} in operands 4 and 5.  The
 modes @var{m} and @var{n} should have the same size.  Operand 0
 will be set to the value @var{op1} & @var{msk} | @var{op2} & ~@var{msk}
 where @var{msk} is computed by element-wise evaluation of the vector
 comparison with a truth value of all-ones and a false value of all-zeros.
+
+@cindex @code{vcondu@var{m}@var{n}} instruction pattern
+@item @samp{vcondu@var{m}@var{n}}
+Similar to @code{vcond@var{m}@var{n}} but performs unsigned vector
+comparison.
+
+@cindex @code{vcond_mask_@var{m}@var{n}} instruction pattern
+@item @samp{vcond_mask_@var{m}@var{n}}
+Similar to @code{vcond@var{m}@var{n}} but operand 3 holds a pre-computed
+result of vector comparison.
+
+@cindex @code{maskload@var{m}@var{n}} instruction pattern
+@item @samp{maskload@var{m}@var{n}}
+Perform a masked load of vector from memory operand 1 of mode @var{m}
+into register operand 0.  Mask is provided in register operand 2 of
+mode @var{n}.
+
+This pattern is not allowed to @code{FAIL}.
+
+@cindex @code{maskstore@var{m}@var{n}} instruction pattern
+@item @samp{maskstore@var{m}@var{n}}
+Perform a masked store of vector from register operand 1 of mode @var{m}
+into memory operand 0.  Mask is provided in register operand 2 of
+mode @var{n}.
+
+This pattern is not allowed to @code{FAIL}.
 
 @cindex @code{vec_perm@var{m}} instruction pattern
 @item @samp{vec_perm@var{m}}
@@ -4782,11 +4957,16 @@ signed integer addition with overflow checking.
 @item @samp{subv@var{m}4}, @samp{mulv@var{m}4}
 Similar, for other signed arithmetic operations.
 
-@cindex @code{umulv@var{m}4} instruction pattern
-@item @samp{umulv@var{m}4}
-Like @code{mulv@var{m}4} but for unsigned multiplication.  That is to
-say, the operation is the same as signed multiplication but the jump
+@cindex @code{uaddv@var{m}4} instruction pattern
+@item @samp{uaddv@var{m}4}
+Like @code{addv@var{m}4} but for unsigned addition.  That is to
+say, the operation is the same as signed addition but the jump
 is taken only on unsigned overflow.
+
+@cindex @code{usubv@var{m}4} instruction pattern
+@cindex @code{umulv@var{m}4} instruction pattern
+@item @samp{usubv@var{m}4}, @samp{umulv@var{m}4}
+Similar, for other unsigned arithmetic operations.
 
 @cindex @code{addptr@var{m}3} instruction pattern
 @item @samp{addptr@var{m}3}
@@ -4844,32 +5024,17 @@ Signed minimum and maximum operations.  When used with floating point,
 if both operands are zeros, or if either operand is @code{NaN}, then
 it is unspecified which of the two operands is returned as the result.
 
-@cindex @code{reduc_smin_@var{m}} instruction pattern
-@cindex @code{reduc_smax_@var{m}} instruction pattern
-@item @samp{reduc_smin_@var{m}}, @samp{reduc_smax_@var{m}}
-Find the signed minimum/maximum of the elements of a vector. The vector is
-operand 1, and the result is stored in the least significant bits of
-operand 0 (also a vector). The output and input vector should have the same
-modes. These are legacy optabs, and platforms should prefer to implement
-@samp{reduc_smin_scal_@var{m}} and @samp{reduc_smax_scal_@var{m}}.
+@cindex @code{fmin@var{m}3} instruction pattern
+@cindex @code{fmax@var{m}3} instruction pattern
+@item @samp{fmin@var{m}3}, @samp{fmax@var{m}3}
+IEEE-conformant minimum and maximum operations.  If one operand is a quiet
+@code{NaN}, then the other operand is returned.  If both operands are quiet
+@code{NaN}, then a quiet @code{NaN} is returned.  In the case when gcc supports
+signalling @code{NaN} (-fsignaling-nans) an invalid floating point exception is
+raised and a quiet @code{NaN} is returned.
 
-@cindex @code{reduc_umin_@var{m}} instruction pattern
-@cindex @code{reduc_umax_@var{m}} instruction pattern
-@item @samp{reduc_umin_@var{m}}, @samp{reduc_umax_@var{m}}
-Find the unsigned minimum/maximum of the elements of a vector. The vector is
-operand 1, and the result is stored in the least significant bits of
-operand 0 (also a vector). The output and input vector should have the same
-modes. These are legacy optabs, and platforms should prefer to implement
-@samp{reduc_umin_scal_@var{m}} and @samp{reduc_umax_scal_@var{m}}.
-
-@cindex @code{reduc_splus_@var{m}} instruction pattern
-@cindex @code{reduc_uplus_@var{m}} instruction pattern
-@item @samp{reduc_splus_@var{m}}, @samp{reduc_uplus_@var{m}}
-Compute the sum of the signed/unsigned elements of a vector. The vector is
-operand 1, and the result is stored in the least significant bits of operand 0
-(also a vector). The output and input vector should have the same modes.
-These are legacy optabs, and platforms should prefer to implement
-@samp{reduc_plus_scal_@var{m}}.
+All operands have mode @var{m}, which is a scalar or vector
+floating-point mode.  These patterns are not allowed to @code{FAIL}.
 
 @cindex @code{reduc_smin_scal_@var{m}} instruction pattern
 @cindex @code{reduc_smax_scal_@var{m}} instruction pattern
@@ -4911,10 +5076,10 @@ is of a wider mode, is computed and added to operand 3. Operand 3 is of a mode
 equal or wider than the mode of the absolute difference. The result is placed
 in operand 0, which is of the same mode as operand 3.
 
-@cindex @code{ssum_widen@var{m3}} instruction pattern
-@item @samp{ssum_widen@var{m3}}
-@cindex @code{usum_widen@var{m3}} instruction pattern
-@itemx @samp{usum_widen@var{m3}}
+@cindex @code{widen_ssum@var{m3}} instruction pattern
+@item @samp{widen_ssum@var{m3}}
+@cindex @code{widen_usum@var{m3}} instruction pattern
+@itemx @samp{widen_usum@var{m3}}
 Operands 0 and 2 are of the same mode, which is wider than the mode of
 operand 1. Add operand 1 to operand 2 and place the widened result in
 operand 0. (This is used express accumulation of elements into an accumulator
@@ -5133,7 +5298,9 @@ Arithmetic-shift operand 1 left by a number of bits specified by operand
 2, and store the result in operand 0.  Here @var{m} is the mode of
 operand 0 and operand 1; operand 2's mode is specified by the
 instruction pattern, and the compiler will convert the operand to that
-mode before generating the instruction.  The meaning of out-of-range shift
+mode before generating the instruction.  The shift or rotate expander
+or instruction pattern should explicitly specify the mode of the operand 2,
+it should never be @code{VOIDmode}.  The meaning of out-of-range shift
 counts can optionally be specified by @code{TARGET_SHIFT_TRUNCATION_MASK}.
 @xref{TARGET_SHIFT_TRUNCATION_MASK}.  Operand 2 is always a scalar type.
 
@@ -5175,60 +5342,80 @@ Store the absolute value of operand 1 into operand 0.
 
 @cindex @code{sqrt@var{m}2} instruction pattern
 @item @samp{sqrt@var{m}2}
-Store the square root of operand 1 into operand 0.
+Store the square root of operand 1 into operand 0.  Both operands have
+mode @var{m}, which is a scalar or vector floating-point mode.
 
-The @code{sqrt} built-in function of C always uses the mode which
-corresponds to the C data type @code{double} and the @code{sqrtf}
-built-in function uses the mode which corresponds to the C data
-type @code{float}.
+This pattern is not allowed to @code{FAIL}.
+
+@cindex @code{rsqrt@var{m}2} instruction pattern
+@item @samp{rsqrt@var{m}2}
+Store the reciprocal of the square root of operand 1 into operand 0.
+Both operands have mode @var{m}, which is a scalar or vector
+floating-point mode.
+
+On most architectures this pattern is only approximate, so either
+its C condition or the @code{TARGET_OPTAB_SUPPORTED_P} hook should
+check for the appropriate math flags.  (Using the C condition is
+more direct, but using @code{TARGET_OPTAB_SUPPORTED_P} can be useful
+if a target-specific built-in also uses the @samp{rsqrt@var{m}2}
+pattern.)
+
+This pattern is not allowed to @code{FAIL}.
 
 @cindex @code{fmod@var{m}3} instruction pattern
 @item @samp{fmod@var{m}3}
 Store the remainder of dividing operand 1 by operand 2 into
-operand 0, rounded towards zero to an integer.
+operand 0, rounded towards zero to an integer.  All operands have
+mode @var{m}, which is a scalar or vector floating-point mode.
 
-The @code{fmod} built-in function of C always uses the mode which
-corresponds to the C data type @code{double} and the @code{fmodf}
-built-in function uses the mode which corresponds to the C data
-type @code{float}.
+This pattern is not allowed to @code{FAIL}.
 
 @cindex @code{remainder@var{m}3} instruction pattern
 @item @samp{remainder@var{m}3}
 Store the remainder of dividing operand 1 by operand 2 into
-operand 0, rounded to the nearest integer.
+operand 0, rounded to the nearest integer.  All operands have
+mode @var{m}, which is a scalar or vector floating-point mode.
 
-The @code{remainder} built-in function of C always uses the mode
-which corresponds to the C data type @code{double} and the
-@code{remainderf} built-in function uses the mode which corresponds
-to the C data type @code{float}.
+This pattern is not allowed to @code{FAIL}.
+
+@cindex @code{scalb@var{m}3} instruction pattern
+@item @samp{scalb@var{m}3}
+Raise @code{FLT_RADIX} to the power of operand 2, multiply it by
+operand 1, and store the result in operand 0.  All operands have
+mode @var{m}, which is a scalar or vector floating-point mode.
+
+This pattern is not allowed to @code{FAIL}.
+
+@cindex @code{ldexp@var{m}3} instruction pattern
+@item @samp{ldexp@var{m}3}
+Raise 2 to the power of operand 2, multiply it by operand 1, and store
+the result in operand 0.  Operands 0 and 1 have mode @var{m}, which is
+a scalar or vector floating-point mode.  Operand 2's mode has
+the same number of elements as @var{m} and each element is wide
+enough to store an @code{int}.  The integers are signed.
+
+This pattern is not allowed to @code{FAIL}.
 
 @cindex @code{cos@var{m}2} instruction pattern
 @item @samp{cos@var{m}2}
-Store the cosine of operand 1 into operand 0.
+Store the cosine of operand 1 into operand 0.  Both operands have
+mode @var{m}, which is a scalar or vector floating-point mode.
 
-The @code{cos} built-in function of C always uses the mode which
-corresponds to the C data type @code{double} and the @code{cosf}
-built-in function uses the mode which corresponds to the C data
-type @code{float}.
+This pattern is not allowed to @code{FAIL}.
 
 @cindex @code{sin@var{m}2} instruction pattern
 @item @samp{sin@var{m}2}
-Store the sine of operand 1 into operand 0.
+Store the sine of operand 1 into operand 0.  Both operands have
+mode @var{m}, which is a scalar or vector floating-point mode.
 
-The @code{sin} built-in function of C always uses the mode which
-corresponds to the C data type @code{double} and the @code{sinf}
-built-in function uses the mode which corresponds to the C data
-type @code{float}.
+This pattern is not allowed to @code{FAIL}.
 
 @cindex @code{sincos@var{m}3} instruction pattern
 @item @samp{sincos@var{m}3}
 Store the cosine of operand 2 into operand 0 and the sine of
-operand 2 into operand 1.
+operand 2 into operand 1.  All operands have mode @var{m},
+which is a scalar or vector floating-point mode.
 
-The @code{sin} and @code{cos} built-in functions of C always use the
-mode which corresponds to the C data type @code{double} and the
-@code{sinf} and @code{cosf} built-in function use the mode which
-corresponds to the C data type @code{float}.
 Targets that can calculate the sine and cosine simultaneously can
 implement this pattern as opposed to implementing individual
 @code{sin@var{m}2} and @code{cos@var{m}2} patterns.  The @code{sin}
@@ -5236,100 +5423,185 @@ and @code{cos} built-in functions will then be expanded to the
 @code{sincos@var{m}3} pattern, with one of the output values
 left unused.
 
+@cindex @code{tan@var{m}2} instruction pattern
+@item @samp{tan@var{m}2}
+Store the tangent of operand 1 into operand 0.  Both operands have
+mode @var{m}, which is a scalar or vector floating-point mode.
+
+This pattern is not allowed to @code{FAIL}.
+
+@cindex @code{asin@var{m}2} instruction pattern
+@item @samp{asin@var{m}2}
+Store the arc sine of operand 1 into operand 0.  Both operands have
+mode @var{m}, which is a scalar or vector floating-point mode.
+
+This pattern is not allowed to @code{FAIL}.
+
+@cindex @code{acos@var{m}2} instruction pattern
+@item @samp{acos@var{m}2}
+Store the arc cosine of operand 1 into operand 0.  Both operands have
+mode @var{m}, which is a scalar or vector floating-point mode.
+
+This pattern is not allowed to @code{FAIL}.
+
+@cindex @code{atan@var{m}2} instruction pattern
+@item @samp{atan@var{m}2}
+Store the arc tangent of operand 1 into operand 0.  Both operands have
+mode @var{m}, which is a scalar or vector floating-point mode.
+
+This pattern is not allowed to @code{FAIL}.
+
 @cindex @code{exp@var{m}2} instruction pattern
 @item @samp{exp@var{m}2}
-Store the exponential of operand 1 into operand 0.
+Raise e (the base of natural logarithms) to the power of operand 1
+and store the result in operand 0.  Both operands have mode @var{m},
+which is a scalar or vector floating-point mode.
 
-The @code{exp} built-in function of C always uses the mode which
-corresponds to the C data type @code{double} and the @code{expf}
-built-in function uses the mode which corresponds to the C data
-type @code{float}.
+This pattern is not allowed to @code{FAIL}.
+
+@cindex @code{expm1@var{m}2} instruction pattern
+@item @samp{expm1@var{m}2}
+Raise e (the base of natural logarithms) to the power of operand 1,
+subtract 1, and store the result in operand 0.  Both operands have
+mode @var{m}, which is a scalar or vector floating-point mode.
+
+For inputs close to zero, the pattern is expected to be more
+accurate than a separate @code{exp@var{m}2} and @code{sub@var{m}3}
+would be.
+
+This pattern is not allowed to @code{FAIL}.
+
+@cindex @code{exp10@var{m}2} instruction pattern
+@item @samp{exp10@var{m}2}
+Raise 10 to the power of operand 1 and store the result in operand 0.
+Both operands have mode @var{m}, which is a scalar or vector
+floating-point mode.
+
+This pattern is not allowed to @code{FAIL}.
+
+@cindex @code{exp2@var{m}2} instruction pattern
+@item @samp{exp2@var{m}2}
+Raise 2 to the power of operand 1 and store the result in operand 0.
+Both operands have mode @var{m}, which is a scalar or vector
+floating-point mode.
+
+This pattern is not allowed to @code{FAIL}.
 
 @cindex @code{log@var{m}2} instruction pattern
 @item @samp{log@var{m}2}
-Store the natural logarithm of operand 1 into operand 0.
+Store the natural logarithm of operand 1 into operand 0.  Both operands
+have mode @var{m}, which is a scalar or vector floating-point mode.
 
-The @code{log} built-in function of C always uses the mode which
-corresponds to the C data type @code{double} and the @code{logf}
-built-in function uses the mode which corresponds to the C data
-type @code{float}.
+This pattern is not allowed to @code{FAIL}.
+
+@cindex @code{log1p@var{m}2} instruction pattern
+@item @samp{log1p@var{m}2}
+Add 1 to operand 1, compute the natural logarithm, and store
+the result in operand 0.  Both operands have mode @var{m}, which is
+a scalar or vector floating-point mode.
+
+For inputs close to zero, the pattern is expected to be more
+accurate than a separate @code{add@var{m}3} and @code{log@var{m}2}
+would be.
+
+This pattern is not allowed to @code{FAIL}.
+
+@cindex @code{log10@var{m}2} instruction pattern
+@item @samp{log10@var{m}2}
+Store the base-10 logarithm of operand 1 into operand 0.  Both operands
+have mode @var{m}, which is a scalar or vector floating-point mode.
+
+This pattern is not allowed to @code{FAIL}.
+
+@cindex @code{log2@var{m}2} instruction pattern
+@item @samp{log2@var{m}2}
+Store the base-2 logarithm of operand 1 into operand 0.  Both operands
+have mode @var{m}, which is a scalar or vector floating-point mode.
+
+This pattern is not allowed to @code{FAIL}.
+
+@cindex @code{logb@var{m}2} instruction pattern
+@item @samp{logb@var{m}2}
+Store the base-@code{FLT_RADIX} logarithm of operand 1 into operand 0.
+Both operands have mode @var{m}, which is a scalar or vector
+floating-point mode.
+
+This pattern is not allowed to @code{FAIL}.
+
+@cindex @code{significand@var{m}2} instruction pattern
+@item @samp{significand@var{m}2}
+Store the significand of floating-point operand 1 in operand 0.
+Both operands have mode @var{m}, which is a scalar or vector
+floating-point mode.
+
+This pattern is not allowed to @code{FAIL}.
 
 @cindex @code{pow@var{m}3} instruction pattern
 @item @samp{pow@var{m}3}
 Store the value of operand 1 raised to the exponent operand 2
-into operand 0.
+into operand 0.  All operands have mode @var{m}, which is a scalar
+or vector floating-point mode.
 
-The @code{pow} built-in function of C always uses the mode which
-corresponds to the C data type @code{double} and the @code{powf}
-built-in function uses the mode which corresponds to the C data
-type @code{float}.
+This pattern is not allowed to @code{FAIL}.
 
 @cindex @code{atan2@var{m}3} instruction pattern
 @item @samp{atan2@var{m}3}
 Store the arc tangent (inverse tangent) of operand 1 divided by
 operand 2 into operand 0, using the signs of both arguments to
-determine the quadrant of the result.
+determine the quadrant of the result.  All operands have mode
+@var{m}, which is a scalar or vector floating-point mode.
 
-The @code{atan2} built-in function of C always uses the mode which
-corresponds to the C data type @code{double} and the @code{atan2f}
-built-in function uses the mode which corresponds to the C data
-type @code{float}.
+This pattern is not allowed to @code{FAIL}.
 
 @cindex @code{floor@var{m}2} instruction pattern
 @item @samp{floor@var{m}2}
-Store the largest integral value not greater than argument.
+Store the largest integral value not greater than operand 1 in operand 0.
+Both operands have mode @var{m}, which is a scalar or vector
+floating-point mode.
 
-The @code{floor} built-in function of C always uses the mode which
-corresponds to the C data type @code{double} and the @code{floorf}
-built-in function uses the mode which corresponds to the C data
-type @code{float}.
+This pattern is not allowed to @code{FAIL}.
 
 @cindex @code{btrunc@var{m}2} instruction pattern
 @item @samp{btrunc@var{m}2}
-Store the argument rounded to integer towards zero.
+Round operand 1 to an integer, towards zero, and store the result in
+operand 0.  Both operands have mode @var{m}, which is a scalar or
+vector floating-point mode.
 
-The @code{trunc} built-in function of C always uses the mode which
-corresponds to the C data type @code{double} and the @code{truncf}
-built-in function uses the mode which corresponds to the C data
-type @code{float}.
+This pattern is not allowed to @code{FAIL}.
 
 @cindex @code{round@var{m}2} instruction pattern
 @item @samp{round@var{m}2}
-Store the argument rounded to integer away from zero.
+Round operand 1 to the nearest integer, rounding away from zero in the
+event of a tie, and store the result in operand 0.  Both operands have
+mode @var{m}, which is a scalar or vector floating-point mode.
 
-The @code{round} built-in function of C always uses the mode which
-corresponds to the C data type @code{double} and the @code{roundf}
-built-in function uses the mode which corresponds to the C data
-type @code{float}.
+This pattern is not allowed to @code{FAIL}.
 
 @cindex @code{ceil@var{m}2} instruction pattern
 @item @samp{ceil@var{m}2}
-Store the argument rounded to integer away from zero.
+Store the smallest integral value not less than operand 1 in operand 0.
+Both operands have mode @var{m}, which is a scalar or vector
+floating-point mode.
 
-The @code{ceil} built-in function of C always uses the mode which
-corresponds to the C data type @code{double} and the @code{ceilf}
-built-in function uses the mode which corresponds to the C data
-type @code{float}.
+This pattern is not allowed to @code{FAIL}.
 
 @cindex @code{nearbyint@var{m}2} instruction pattern
 @item @samp{nearbyint@var{m}2}
-Store the argument rounded according to the default rounding mode
+Round operand 1 to an integer, using the current rounding mode, and
+store the result in operand 0.  Do not raise an inexact condition when
+the result is different from the argument.  Both operands have mode
+@var{m}, which is a scalar or vector floating-point mode.
 
-The @code{nearbyint} built-in function of C always uses the mode which
-corresponds to the C data type @code{double} and the @code{nearbyintf}
-built-in function uses the mode which corresponds to the C data
-type @code{float}.
+This pattern is not allowed to @code{FAIL}.
 
 @cindex @code{rint@var{m}2} instruction pattern
 @item @samp{rint@var{m}2}
-Store the argument rounded according to the default rounding mode and
-raise the inexact exception when the result differs in value from
-the argument
+Round operand 1 to an integer, using the current rounding mode, and
+store the result in operand 0.  Raise an inexact condition when
+the result is different from the argument.  Both operands have mode
+@var{m}, which is a scalar or vector floating-point mode.
 
-The @code{rint} built-in function of C always uses the mode which
-corresponds to the C data type @code{double} and the @code{rintf}
-built-in function uses the mode which corresponds to the C data
-type @code{float}.
+This pattern is not allowed to @code{FAIL}.
 
 @cindex @code{lrint@var{m}@var{n}2}
 @item @samp{lrint@var{m}@var{n}2}
@@ -5358,23 +5630,24 @@ operand 0 (which has mode @var{n}).
 @cindex @code{copysign@var{m}3} instruction pattern
 @item @samp{copysign@var{m}3}
 Store a value with the magnitude of operand 1 and the sign of operand
-2 into operand 0.
+2 into operand 0.  All operands have mode @var{m}, which is a scalar or
+vector floating-point mode.
 
-The @code{copysign} built-in function of C always uses the mode which
-corresponds to the C data type @code{double} and the @code{copysignf}
-built-in function uses the mode which corresponds to the C data
-type @code{float}.
+This pattern is not allowed to @code{FAIL}.
 
 @cindex @code{ffs@var{m}2} instruction pattern
 @item @samp{ffs@var{m}2}
 Store into operand 0 one plus the index of the least significant 1-bit
-of operand 1.  If operand 1 is zero, store zero.  @var{m} is the mode
-of operand 0; operand 1's mode is specified by the instruction
-pattern, and the compiler will convert the operand to that mode before
-generating the instruction.
+of operand 1.  If operand 1 is zero, store zero.
 
-The @code{ffs} built-in function of C always uses the mode which
-corresponds to the C data type @code{int}.
+@var{m} is either a scalar or vector integer mode.  When it is a scalar,
+operand 1 has mode @var{m} but operand 0 can have whatever scalar
+integer mode is suitable for the target.  The compiler will insert
+conversion instructions as necessary (typically to convert the result
+to the same width as @code{int}).  When @var{m} is a vector, both
+operands must have mode @var{m}.
+
+This pattern is not allowed to @code{FAIL}.
 
 @cindex @code{clrsb@var{m}2} instruction pattern
 @item @samp{clrsb@var{m}2}
@@ -5384,15 +5657,30 @@ at the most significant bit position.
 A redundant sign bit is defined as any sign bit after the first. As such,
 this count will be one less than the count of leading sign bits.
 
+@var{m} is either a scalar or vector integer mode.  When it is a scalar,
+operand 1 has mode @var{m} but operand 0 can have whatever scalar
+integer mode is suitable for the target.  The compiler will insert
+conversion instructions as necessary (typically to convert the result
+to the same width as @code{int}).  When @var{m} is a vector, both
+operands must have mode @var{m}.
+
+This pattern is not allowed to @code{FAIL}.
+
 @cindex @code{clz@var{m}2} instruction pattern
 @item @samp{clz@var{m}2}
 Store into operand 0 the number of leading 0-bits in operand 1, starting
 at the most significant bit position.  If operand 1 is 0, the
 @code{CLZ_DEFINED_VALUE_AT_ZERO} (@pxref{Misc}) macro defines if
 the result is undefined or has a useful value.
-@var{m} is the mode of operand 0; operand 1's mode is
-specified by the instruction pattern, and the compiler will convert the
-operand to that mode before generating the instruction.
+
+@var{m} is either a scalar or vector integer mode.  When it is a scalar,
+operand 1 has mode @var{m} but operand 0 can have whatever scalar
+integer mode is suitable for the target.  The compiler will insert
+conversion instructions as necessary (typically to convert the result
+to the same width as @code{int}).  When @var{m} is a vector, both
+operands must have mode @var{m}.
+
+This pattern is not allowed to @code{FAIL}.
 
 @cindex @code{ctz@var{m}2} instruction pattern
 @item @samp{ctz@var{m}2}
@@ -5400,23 +5688,42 @@ Store into operand 0 the number of trailing 0-bits in operand 1, starting
 at the least significant bit position.  If operand 1 is 0, the
 @code{CTZ_DEFINED_VALUE_AT_ZERO} (@pxref{Misc}) macro defines if
 the result is undefined or has a useful value.
-@var{m} is the mode of operand 0; operand 1's mode is
-specified by the instruction pattern, and the compiler will convert the
-operand to that mode before generating the instruction.
+
+@var{m} is either a scalar or vector integer mode.  When it is a scalar,
+operand 1 has mode @var{m} but operand 0 can have whatever scalar
+integer mode is suitable for the target.  The compiler will insert
+conversion instructions as necessary (typically to convert the result
+to the same width as @code{int}).  When @var{m} is a vector, both
+operands must have mode @var{m}.
+
+This pattern is not allowed to @code{FAIL}.
 
 @cindex @code{popcount@var{m}2} instruction pattern
 @item @samp{popcount@var{m}2}
-Store into operand 0 the number of 1-bits in operand 1.  @var{m} is the
-mode of operand 0; operand 1's mode is specified by the instruction
-pattern, and the compiler will convert the operand to that mode before
-generating the instruction.
+Store into operand 0 the number of 1-bits in operand 1.
+
+@var{m} is either a scalar or vector integer mode.  When it is a scalar,
+operand 1 has mode @var{m} but operand 0 can have whatever scalar
+integer mode is suitable for the target.  The compiler will insert
+conversion instructions as necessary (typically to convert the result
+to the same width as @code{int}).  When @var{m} is a vector, both
+operands must have mode @var{m}.
+
+This pattern is not allowed to @code{FAIL}.
 
 @cindex @code{parity@var{m}2} instruction pattern
 @item @samp{parity@var{m}2}
 Store into operand 0 the parity of operand 1, i.e.@: the number of 1-bits
-in operand 1 modulo 2.  @var{m} is the mode of operand 0; operand 1's mode
-is specified by the instruction pattern, and the compiler will convert
-the operand to that mode before generating the instruction.
+in operand 1 modulo 2.
+
+@var{m} is either a scalar or vector integer mode.  When it is a scalar,
+operand 1 has mode @var{m} but operand 0 can have whatever scalar
+integer mode is suitable for the target.  The compiler will insert
+conversion instructions as necessary (typically to convert the result
+to the same width as @code{int}).  When @var{m} is a vector, both
+operands must have mode @var{m}.
+
+This pattern is not allowed to @code{FAIL}.
 
 @cindex @code{one_cmpl@var{m}2} instruction pattern
 @item @samp{one_cmpl@var{m}2}
@@ -5760,6 +6067,21 @@ Similar to @samp{mov@var{mode}cc} but for conditional addition.  Conditionally
 move operand 2 or (operands 2 + operand 3) into operand 0 according to the
 comparison in operand 1.  If the comparison is false, operand 2 is moved into
 operand 0, otherwise (operand 2 + operand 3) is moved.
+
+@cindex @code{neg@var{mode}cc} instruction pattern
+@item @samp{neg@var{mode}cc}
+Similar to @samp{mov@var{mode}cc} but for conditional negation.  Conditionally
+move the negation of operand 2 or the unchanged operand 3 into operand 0
+according to the comparison in operand 1.  If the comparison is true, the negation
+of operand 2 is moved into operand 0, otherwise operand 3 is moved.
+
+@cindex @code{not@var{mode}cc} instruction pattern
+@item @samp{not@var{mode}cc}
+Similar to @samp{neg@var{mode}cc} but for conditional complement.
+Conditionally move the bitwise complement of operand 2 or the unchanged
+operand 3 into operand 0 according to the comparison in operand 1.
+If the comparison is true, the complement of operand 2 is moved into
+operand 0, otherwise operand 3 is moved.
 
 @cindex @code{cstore@var{mode}4} instruction pattern
 @item @samp{cstore@var{mode}4}
@@ -9121,7 +9443,7 @@ nondeterministic treatment means trying all alternatives, some of them
 may be rejected by reservations in the subsequent insns.
 
 @item
-@dfn{collapse-ndfa} modifies the behaviour of the generator when
+@dfn{collapse-ndfa} modifies the behavior of the generator when
 producing an automaton.  An additional state transition to collapse a
 nondeterministic @acronym{NDFA} state to a deterministic @acronym{DFA}
 state is generated.  It can be triggered by passing @code{const0_rtx} to

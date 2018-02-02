@@ -1,4 +1,4 @@
-/* Copyright (C) 2000-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2000-2016 Free Software Foundation, Inc.
    Contributed by Jes Sorensen, <Jes.Sorensen@cern.ch>
 
    This file is part of GCC.
@@ -61,7 +61,7 @@ __dso_handle:
 	.hidden __dso_handle
 
 
-#ifdef HAVE_INITFINI_ARRAY_SUPPORT
+#if HAVE_INITFINI_ARRAY_SUPPORT
 
 .section .fini_array, "a"
 	data8 @fptr(__do_global_dtors_aux)

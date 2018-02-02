@@ -1,5 +1,5 @@
 /* Tree SCC value numbering
-   Copyright (C) 2007-2015 Free Software Foundation, Inc.
+   Copyright (C) 2007-2016 Free Software Foundation, Inc.
    Contributed by Daniel Berlin <dberlin@dberlin.org>
 
    This file is part of GCC.
@@ -67,6 +67,9 @@ typedef struct vn_phi_s
   hashval_t hashcode;
   vec<tree> phiargs;
   basic_block block;
+  /* Controlling condition lhs/rhs.  */
+  tree cclhs;
+  tree ccrhs;
   tree type;
   tree result;
 } *vn_phi_t;
@@ -83,12 +86,16 @@ typedef struct vn_reference_op_struct
   ENUM_BITFIELD(tree_code) opcode : 16;
   /* 1 for instrumented calls.  */
   unsigned with_bounds : 1;
+  /* Dependence info, used for [TARGET_]MEM_REF only.  */
+  unsigned short clique;
+  unsigned short base;
   /* Constant offset this op adds or -1 if it is variable.  */
   HOST_WIDE_INT off;
   tree type;
   tree op0;
   tree op1;
   tree op2;
+  bool reverse;
 } vn_reference_op_s;
 typedef vn_reference_op_s *vn_reference_op_t;
 typedef const vn_reference_op_s *const_vn_reference_op_t;
@@ -123,7 +130,7 @@ typedef struct vn_constant_s
 } *vn_constant_t;
 
 enum vn_kind { VN_NONE, VN_CONSTANT, VN_NARY, VN_REFERENCE, VN_PHI };
-enum vn_kind vn_get_stmt_kind (gimple);
+enum vn_kind vn_get_stmt_kind (gimple *);
 
 /* Hash the type TYPE using bits that distinguishes it in the
    types_compatible_p sense.  */
@@ -162,8 +169,11 @@ typedef struct vn_ssa_aux
 {
   /* Value number. This may be an SSA name or a constant.  */
   tree valnum;
-  /* Representative expression, if not a direct constant. */
-  tree expr;
+  /* Statements to insert if needs_insertion is true.  */
+  gimple_seq expr;
+
+  /* Saved SSA name info.  */
+  tree_ssa_name::ssa_name_info_type info;
 
   /* Unique identifier that all expressions with the same value have. */
   unsigned int value_id;
@@ -174,8 +184,6 @@ typedef struct vn_ssa_aux
   unsigned visited : 1;
   unsigned on_sccstack : 1;
 
-  /* Whether the representative expression contains constants.  */
-  unsigned has_constants : 1;
   /* Whether the SSA_NAME has been value numbered already.  This is
      only saying whether visit_use has been called on it at least
      once.  It cannot be used to avoid visitation for SSA_NAME's
@@ -186,9 +194,12 @@ typedef struct vn_ssa_aux
      insertion of such with EXPR as definition is required before
      a use can be created of it.  */
   unsigned needs_insertion : 1;
+
+  /* Whether range-info is anti-range.  */
+  unsigned range_info_anti_range_p : 1;
 } *vn_ssa_aux_t;
 
-typedef enum { VN_NOWALK, VN_WALK, VN_WALKREWRITE } vn_lookup_kind;
+enum vn_lookup_kind { VN_NOWALK, VN_WALK, VN_WALKREWRITE };
 
 /* Return the value numbering info for an SSA_NAME.  */
 extern vn_ssa_aux_t VN_INFO (tree);
@@ -196,16 +207,14 @@ extern vn_ssa_aux_t VN_INFO_GET (tree);
 tree vn_get_expr_for (tree);
 bool run_scc_vn (vn_lookup_kind);
 void free_scc_vn (void);
+void scc_vn_restore_ssa_info (void);
 tree vn_nary_op_lookup (tree, vn_nary_op_t *);
-tree vn_nary_op_lookup_stmt (gimple, vn_nary_op_t *);
+tree vn_nary_op_lookup_stmt (gimple *, vn_nary_op_t *);
 tree vn_nary_op_lookup_pieces (unsigned int, enum tree_code,
 			       tree, tree *, vn_nary_op_t *);
 vn_nary_op_t vn_nary_op_insert (tree, tree);
-vn_nary_op_t vn_nary_op_insert_stmt (gimple, tree);
 vn_nary_op_t vn_nary_op_insert_pieces (unsigned int, enum tree_code,
 				       tree, tree *, tree, unsigned int);
-void vn_reference_fold_indirect (vec<vn_reference_op_s> *,
-				 unsigned int *);
 bool ao_ref_init_from_vn_reference (ao_ref *, alias_set_type, tree,
 				    vec<vn_reference_op_s> );
 tree vn_reference_lookup_pieces (tree, alias_set_type, tree,
@@ -239,6 +248,44 @@ vn_valueize (tree name)
       return tem == VN_TOP ? name : tem;
     }
   return name;
+}
+
+/* Get at the original range info for NAME.  */
+
+inline range_info_def *
+VN_INFO_RANGE_INFO (tree name)
+{
+  return (VN_INFO (name)->info.range_info
+	  ? VN_INFO (name)->info.range_info
+	  : SSA_NAME_RANGE_INFO (name));
+}
+
+/* Whether the original range info of NAME is an anti-range.  */
+
+inline bool
+VN_INFO_ANTI_RANGE_P (tree name)
+{
+  return (VN_INFO (name)->info.range_info
+	  ? VN_INFO (name)->range_info_anti_range_p
+	  : SSA_NAME_ANTI_RANGE_P (name));
+}
+
+/* Get at the original range info kind for NAME.  */
+
+inline value_range_type
+VN_INFO_RANGE_TYPE (tree name)
+{
+  return VN_INFO_ANTI_RANGE_P (name) ? VR_ANTI_RANGE : VR_RANGE;
+}
+
+/* Get at the original pointer info for NAME.  */
+
+inline ptr_info_def *
+VN_INFO_PTR_INFO (tree name)
+{
+  return (VN_INFO (name)->info.ptr_info
+	  ? VN_INFO (name)->info.ptr_info
+	  : SSA_NAME_PTR_INFO (name));
 }
 
 #endif /* TREE_SSA_SCCVN_H  */

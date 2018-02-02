@@ -1,31 +1,57 @@
-2017-10-10  Release Manager
+2017-07-04  Release Manager
 
-	* GCC 5.5.0 released.
+	* GCC 6.4.0 released.
 
-2017-08-22  Georg-Johann Lay  <avr@gjlay.de>
+2016-12-21  Release Manager
 
-	Backport from 2017-07-26 gcc-7-branch r250562.
+	* GCC 6.3.0 released.
 
-	PR lto/81487
-	* lto-plugin.c (claim_file_handler): Use xasprintf instead of
-	asprintf.
-	[hi!=0]: Swap hi and lo arguments supplied to xasprintf.
+2016-08-22  Release Manager
 
-2016-06-03  Release Manager
+	* GCC 6.2.0 released.
 
-	* GCC 5.4.0 released.
+2016-04-27  Release Manager
 
-2015-12-04  Release Manager
+	* GCC 6.1.0 released.
 
-	* GCC 5.3.0 released.
+2016-02-25  Ilya Verbin  <ilya.verbin@intel.com>
 
-2015-07-16  Release Manager
+	PR driver/68463
+	* lto-plugin.c (struct plugin_offload_file): New.
+	(offload_files): Change type.
+	(offload_files_last, offload_files_last_obj): New.
+	(offload_files_last_lto): New.
+	(free_2): Adjust accordingly.
+	(all_symbols_read_handler): Don't add offload files to lto_arg_ptr.
+	Don't call free_1 for offload_files.  Write names of object files with
+	offloading to the temporary file.  Add new option to lto_arg_ptr.
+	(claim_file_handler): Don't claim file if it contains offload sections
+	without LTO sections.  If it contains offload sections, add to the list.
 
-	* GCC 5.2.0 released.
+2016-01-15  Martin Liska  <mliska@suse.cz>
 
-2015-04-22  Release Manager
+	* lto-plugin.c (all_symbols_read_handler): Assign default
+	value to a string variable.
 
-	* GCC 5.1.0 released.
+2015-11-25  Jan Hubicka  <jh@suse.cz>
+
+	PR lto/67548
+	* lto-plugin.c (linker_output, linker_output_set): New statics.
+	(all_symbols_read_handler): Add -flinker-output option.
+	(onload): Record linker_output info.
+
+2015-07-02  Uros Bizjak  <ubizjak@gmail.com>
+
+	* configure.ac: Add AC_USE_SYSTEM_EXTENSIONS.
+	* configure: Regenerate.
+	* config.h.in: Ditto.
+
+2015-05-13  Michael Haubenwallner  <michael.haubenwallner@ssi-schaefer.com>
+
+	* Makefile.am: Drop 'by automake version' from top-level comment.
+	* Makefile.in: Regenerated with automake-1.11.6.
+	* aclocal.m4: Likewise.
+	* configure: Likewise.
 
 2015-02-06  H.J. Lu  <hongjiu.lu@intel.com>
 

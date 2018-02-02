@@ -1,5 +1,5 @@
 ;; GCC machine description for CRIS cpu cores.
-;; Copyright (C) 1998-2015 Free Software Foundation, Inc.
+;; Copyright (C) 1998-2016 Free Software Foundation, Inc.
 ;; Contributed by Axis Communications.
 
 ;; This file is part of GCC.
@@ -2754,8 +2754,7 @@
 	  reg1 = reg0;
 	}
 
-      emit_insn (gen_rtx_SET (SImode, reg0,
-			  gen_rtx_AND (SImode, reg1, operands[2])));
+      emit_insn (gen_rtx_SET (reg0, gen_rtx_AND (SImode, reg1, operands[2])));
 
       /* Make sure we get the right *final* destination.  */
       if (! REG_P (operands[0]))
@@ -2856,8 +2855,7 @@
 	  reg1 = reg0;
 	}
 
-      emit_insn (gen_rtx_SET (HImode, reg0,
-			  gen_rtx_AND (HImode, reg1, operands[2])));
+      emit_insn (gen_rtx_SET (reg0, gen_rtx_AND (HImode, reg1, operands[2])));
 
       /* Make sure we get the right destination.  */
       if (! REG_P (operands[0]))
@@ -3520,14 +3518,12 @@
 
 (define_expand "prologue"
   [(const_int 0)]
-  "TARGET_PROLOGUE_EPILOGUE"
+  ""
   "cris_expand_prologue (); DONE;")
 
-;; Note that the (return) from the expander itself is always the last
-;; insn in the epilogue.
 (define_expand "epilogue"
   [(const_int 0)]
-  "TARGET_PROLOGUE_EPILOGUE"
+  ""
   "cris_expand_epilogue (); DONE;")
 
 ;; Conditional branches.
@@ -4638,7 +4634,8 @@
    && INTVAL (operands[1]) > 23
    /* Check that the and-operation enables us to use logical-shift.  */
    && (INTVAL (operands[2])
-	  & ((HOST_WIDE_INT) -1 << (32 - INTVAL (operands[1])))) == 0"
+       & ((HOST_WIDE_INT) (HOST_WIDE_INT_M1U
+			   << (32 - INTVAL (operands[1]))))) == 0"
   [(set (match_dup 0) (lshiftrt:SI (match_dup 0) (match_dup 1)))
    (set (match_dup 3) (and:QI (match_dup 3) (match_dup 4)))]
   ;; FIXME: CC0 is valid except for the M bit.
@@ -4659,7 +4656,8 @@
    && INTVAL (operands[1]) > 15
    /* Check that the and-operation enables us to use logical-shift.  */
    && (INTVAL (operands[2])
-       & ((HOST_WIDE_INT) -1 << (32 - INTVAL (operands[1])))) == 0"
+       & ((HOST_WIDE_INT) (HOST_WIDE_INT_M1U
+			   << (32 - INTVAL (operands[1]))))) == 0"
   [(set (match_dup 0) (lshiftrt:SI (match_dup 0) (match_dup 1)))
    (set (match_dup 3) (and:HI (match_dup 3) (match_dup 4)))]
   ;; FIXME: CC0 is valid except for the M bit.

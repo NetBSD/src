@@ -1,6 +1,6 @@
 // <future> -*- C++ -*-
 
-// Copyright (C) 2009-2015 Free Software Foundation, Inc.
+// Copyright (C) 2009-2016 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -168,12 +168,18 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     deferred
   };
 
+  // _GLIBCXX_RESOLVE_LIB_DEFECTS
+  // 2021. Further incorrect usages of result_of
   template<typename _Fn, typename... _Args>
-    future<typename result_of<_Fn(_Args...)>::type>
+    using __async_result_of = typename result_of<
+      typename decay<_Fn>::type(typename decay<_Args>::type...)>::type;
+
+  template<typename _Fn, typename... _Args>
+    future<__async_result_of<_Fn, _Args...>>
     async(launch __policy, _Fn&& __fn, _Args&&... __args);
 
   template<typename _Fn, typename... _Args>
-    future<typename result_of<_Fn(_Args...)>::type>
+    future<__async_result_of<_Fn, _Args...>>
     async(_Fn&& __fn, _Args&&... __args);
 
 #if defined(_GLIBCXX_HAS_GTHREADS) && defined(_GLIBCXX_USE_C99_STDINT_TR1) \
@@ -501,7 +507,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
         static _Setter<_Res, _Arg&&>
         __setter(promise<_Res>* __prom, _Arg&& __arg)
         {
-          return _Setter<_Res, _Arg&&>{ __prom, &__arg };
+          return _Setter<_Res, _Arg&&>{ __prom, std::__addressof(__arg) };
         }
 
       template<typename _Res>
@@ -727,7 +733,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       friend class promise<_Res>;
       template<typename> friend class packaged_task;
       template<typename _Fn, typename... _Args>
-        friend future<typename result_of<_Fn(_Args...)>::type>
+        friend future<__async_result_of<_Fn, _Args...>>
         async(launch, _Fn&&, _Args&&...);
 
       typedef __basic_future<_Res> _Base_type;
@@ -770,7 +776,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       friend class promise<_Res&>;
       template<typename> friend class packaged_task;
       template<typename _Fn, typename... _Args>
-        friend future<typename result_of<_Fn(_Args...)>::type>
+        friend future<__async_result_of<_Fn, _Args...>>
         async(launch, _Fn&&, _Args&&...);
 
       typedef __basic_future<_Res&> _Base_type;
@@ -813,7 +819,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       friend class promise<void>;
       template<typename> friend class packaged_task;
       template<typename _Fn, typename... _Args>
-        friend future<typename result_of<_Fn(_Args...)>::type>
+        friend future<__async_result_of<_Fn, _Args...>>
         async(launch, _Fn&&, _Args&&...);
 
       typedef __basic_future<void> _Base_type;
@@ -1489,9 +1495,9 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
       // _GLIBCXX_RESOLVE_LIB_DEFECTS
       // 2097.  packaged_task constructors should be constrained
+      // 2407. [this constructor should not be] explicit
       template<typename _Fn, typename _Alloc, typename = typename
 	       __constrain_pkgdtask<packaged_task, _Fn>::__type>
-	explicit
 	packaged_task(allocator_arg_t, const _Alloc& __a, _Fn&& __fn)
 	: _M_state(__create_task_state<_Res(_ArgTypes...)>(
 		    std::forward<_Fn>(__fn), __a))
@@ -1635,7 +1641,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     // the shared state, whichever happens first.
     virtual void _M_complete_async() { _M_join(); }
 
-    void _M_join() { std::call_once(_M_once, &thread::join, ref(_M_thread)); }
+    void _M_join() { std::call_once(_M_once, &thread::join, &_M_thread); }
 
     thread _M_thread;
     once_flag _M_once;
@@ -1699,31 +1705,42 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   /// async
   template<typename _Fn, typename... _Args>
-    future<typename result_of<_Fn(_Args...)>::type>
+    future<__async_result_of<_Fn, _Args...>>
     async(launch __policy, _Fn&& __fn, _Args&&... __args)
     {
-      typedef typename result_of<_Fn(_Args...)>::type result_type;
       std::shared_ptr<__future_base::_State_base> __state;
-      if ((__policy & (launch::async|launch::deferred)) == launch::async)
+      if ((__policy & launch::async) == launch::async)
 	{
-	  __state = __future_base::_S_make_async_state(std::__bind_simple(
-              std::forward<_Fn>(__fn), std::forward<_Args>(__args)...));
+	  __try
+	    {
+	      __state = __future_base::_S_make_async_state(std::__bind_simple(
+		  std::forward<_Fn>(__fn), std::forward<_Args>(__args)...));
+	    }
+#if __cpp_exceptions
+	  catch(const system_error& __e)
+	    {
+	      if (__e.code() != errc::resource_unavailable_try_again
+		  || (__policy & launch::deferred) != launch::deferred)
+		throw;
+	    }
+#endif
 	}
-      else
+      if (!__state)
 	{
 	  __state = __future_base::_S_make_deferred_state(std::__bind_simple(
               std::forward<_Fn>(__fn), std::forward<_Args>(__args)...));
 	}
-      return future<result_type>(__state);
+      return future<__async_result_of<_Fn, _Args...>>(__state);
     }
 
   /// async, potential overload
   template<typename _Fn, typename... _Args>
-    inline future<typename result_of<_Fn(_Args...)>::type>
+    inline future<__async_result_of<_Fn, _Args...>>
     async(_Fn&& __fn, _Args&&... __args)
     {
-      return async(launch::async|launch::deferred, std::forward<_Fn>(__fn),
-		   std::forward<_Args>(__args)...);
+      return std::async(launch::async|launch::deferred,
+			std::forward<_Fn>(__fn),
+			std::forward<_Args>(__args)...);
     }
 
 #endif // _GLIBCXX_ASYNC_ABI_COMPAT

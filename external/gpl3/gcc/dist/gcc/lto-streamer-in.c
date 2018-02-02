@@ -1,6 +1,6 @@
 /* Read the GIMPLE representation from a file stream.
 
-   Copyright (C) 2009-2015 Free Software Foundation, Inc.
+   Copyright (C) 2009-2016 Free Software Foundation, Inc.
    Contributed by Kenneth Zadeck <zadeck@naturalbridge.com>
    Re-implemented by Diego Novillo <dnovillo@google.com>
 
@@ -23,68 +23,23 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "tm.h"
-#include "toplev.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "wide-int.h"
-#include "inchash.h"
-#include "tree.h"
-#include "fold-const.h"
-#include "stringpool.h"
-#include "hashtab.h"
-#include "hard-reg-set.h"
-#include "function.h"
+#include "backend.h"
+#include "target.h"
 #include "rtl.h"
-#include "flags.h"
-#include "statistics.h"
-#include "real.h"
-#include "fixed-value.h"
-#include "insn-config.h"
-#include "expmed.h"
-#include "dojump.h"
-#include "explow.h"
-#include "calls.h"
-#include "emit-rtl.h"
-#include "varasm.h"
-#include "stmt.h"
-#include "expr.h"
-#include "params.h"
-#include "predict.h"
-#include "dominance.h"
-#include "cfg.h"
-#include "basic-block.h"
-#include "tree-ssa-alias.h"
-#include "internal-fn.h"
-#include "gimple-expr.h"
-#include "is-a.h"
+#include "tree.h"
 #include "gimple.h"
+#include "cfghooks.h"
+#include "tree-pass.h"
+#include "ssa.h"
+#include "gimple-streamer.h"
+#include "toplev.h"
 #include "gimple-iterator.h"
-#include "gimple-ssa.h"
 #include "tree-cfg.h"
-#include "tree-ssanames.h"
 #include "tree-into-ssa.h"
 #include "tree-dfa.h"
 #include "tree-ssa.h"
-#include "tree-pass.h"
-#include "diagnostic.h"
 #include "except.h"
-#include "debug.h"
-#include "hash-map.h"
-#include "plugin-api.h"
-#include "ipa-ref.h"
 #include "cgraph.h"
-#include "ipa-utils.h"
-#include "data-streamer.h"
-#include "gimple-streamer.h"
-#include "lto-streamer.h"
-#include "tree-streamer.h"
-#include "streamer-hooks.h"
 #include "cfgloop.h"
 
 
@@ -199,6 +154,8 @@ lto_location_cache::cmp_loc (const void *pa, const void *pb)
     }
   if (a->file != b->file)
     return strcmp (a->file, b->file);
+  if (a->sysp != b->sysp)
+    return a->sysp ? 1 : -1;
   if (a->line != b->line)
     return a->line - b->line;
   return a->col - b->col;
@@ -222,7 +179,7 @@ lto_location_cache::apply_location_cache ()
 
       if (current_file != loc.file)
 	linemap_add (line_table, prev_file ? LC_RENAME : LC_ENTER,
-		     false, loc.file, loc.line);
+		     loc.sysp, loc.file, loc.line);
       else if (current_line != loc.line)
 	{
 	  int max = loc.col;
@@ -279,23 +236,28 @@ lto_location_cache::input_location (location_t *loc, struct bitpack_d *bp,
   static const char *stream_file;
   static int stream_line;
   static int stream_col;
+  static bool stream_sysp;
   bool file_change, line_change, column_change;
 
   gcc_assert (current_cache == this);
 
-  if (bp_unpack_value (bp, 1))
-    {
-      *loc = UNKNOWN_LOCATION;
-      return;
-    }
-  *loc = BUILTINS_LOCATION + 1;
+  *loc = bp_unpack_int_in_range (bp, "location", 0, RESERVED_LOCATION_COUNT);
+
+  if (*loc < RESERVED_LOCATION_COUNT)
+    return;
+
+  /* Keep value RESERVED_LOCATION_COUNT in *loc as linemap lookups will
+     ICE on it.  */
 
   file_change = bp_unpack_value (bp, 1);
   line_change = bp_unpack_value (bp, 1);
   column_change = bp_unpack_value (bp, 1);
 
   if (file_change)
-    stream_file = canon_file_name (bp_unpack_string (data_in, bp));
+    {
+      stream_file = canon_file_name (bp_unpack_string (data_in, bp));
+      stream_sysp = bp_unpack_value (bp, 1);
+    }
 
   if (line_change)
     stream_line = bp_unpack_var_len_unsigned (bp);
@@ -307,13 +269,14 @@ lto_location_cache::input_location (location_t *loc, struct bitpack_d *bp,
      streaming.  */
      
   if (current_file == stream_file && current_line == stream_line
-      && current_col == stream_col)
+      && current_col == stream_col && current_sysp == stream_sysp)
     {
       *loc = current_loc;
       return;
     }
 
-  struct cached_location entry = {stream_file, loc, stream_line, stream_col};
+  struct cached_location entry
+    = {stream_file, loc, stream_line, stream_col, stream_sysp};
   loc_cache.safe_push (entry);
 }
 
@@ -932,16 +895,19 @@ input_ssa_names (struct lto_input_block *ib, struct data_in *data_in,
    so they point to STMTS.  */
 
 static void
-fixup_call_stmt_edges_1 (struct cgraph_node *node, gimple *stmts,
+fixup_call_stmt_edges_1 (struct cgraph_node *node, gimple **stmts,
 			 struct function *fn)
 {
+#define STMT_UID_NOT_IN_RANGE(uid) \
+  (gimple_stmt_max_uid (fn) < uid || uid == 0)
+
   struct cgraph_edge *cedge;
   struct ipa_ref *ref = NULL;
   unsigned int i;
 
   for (cedge = node->callees; cedge; cedge = cedge->next_callee)
     {
-      if (gimple_stmt_max_uid (fn) < cedge->lto_stmt_uid)
+      if (STMT_UID_NOT_IN_RANGE (cedge->lto_stmt_uid))
         fatal_error (input_location,
 		     "Cgraph edge statement index out of range");
       cedge->call_stmt = as_a <gcall *> (stmts[cedge->lto_stmt_uid - 1]);
@@ -951,7 +917,7 @@ fixup_call_stmt_edges_1 (struct cgraph_node *node, gimple *stmts,
     }
   for (cedge = node->indirect_calls; cedge; cedge = cedge->next_callee)
     {
-      if (gimple_stmt_max_uid (fn) < cedge->lto_stmt_uid)
+      if (STMT_UID_NOT_IN_RANGE (cedge->lto_stmt_uid))
         fatal_error (input_location,
 		     "Cgraph edge statement index out of range");
       cedge->call_stmt = as_a <gcall *> (stmts[cedge->lto_stmt_uid - 1]);
@@ -961,7 +927,7 @@ fixup_call_stmt_edges_1 (struct cgraph_node *node, gimple *stmts,
   for (i = 0; node->iterate_reference (i, ref); i++)
     if (ref->lto_stmt_uid)
       {
-	if (gimple_stmt_max_uid (fn) < ref->lto_stmt_uid)
+	if (STMT_UID_NOT_IN_RANGE (ref->lto_stmt_uid))
 	  fatal_error (input_location,
 		       "Reference statement index out of range");
 	ref->stmt = stmts[ref->lto_stmt_uid - 1];
@@ -974,7 +940,7 @@ fixup_call_stmt_edges_1 (struct cgraph_node *node, gimple *stmts,
 /* Fixup call_stmt pointers in NODE and all clones.  */
 
 static void
-fixup_call_stmt_edges (struct cgraph_node *orig, gimple *stmts)
+fixup_call_stmt_edges (struct cgraph_node *orig, gimple **stmts)
 {
   struct cgraph_node *node;
   struct function *fn;
@@ -983,7 +949,8 @@ fixup_call_stmt_edges (struct cgraph_node *orig, gimple *stmts)
     orig = orig->clone_of;
   fn = DECL_STRUCT_FUNCTION (orig->decl);
 
-  fixup_call_stmt_edges_1 (orig, stmts, fn);
+  if (!orig->thunk.thunk_p)
+    fixup_call_stmt_edges_1 (orig, stmts, fn);
   if (orig->clones)
     for (node = orig->clones; node != orig;)
       {
@@ -1045,6 +1012,7 @@ input_struct_function_base (struct function *fn, struct data_in *data_in,
   fn->after_inlining = bp_unpack_value (&bp, 1);
   fn->stdarg = bp_unpack_value (&bp, 1);
   fn->has_nonlocal_label = bp_unpack_value (&bp, 1);
+  fn->has_forced_label_in_static = bp_unpack_value (&bp, 1);
   fn->calls_alloca = bp_unpack_value (&bp, 1);
   fn->calls_setjmp = bp_unpack_value (&bp, 1);
   fn->has_force_vectorize_loops = bp_unpack_value (&bp, 1);
@@ -1067,7 +1035,7 @@ input_function (tree fn_decl, struct data_in *data_in,
 {
   struct function *fn;
   enum LTO_tags tag;
-  gimple *stmts;
+  gimple **stmts;
   basic_block bb;
   struct cgraph_node *node;
 
@@ -1124,29 +1092,29 @@ input_function (tree fn_decl, struct data_in *data_in,
       gimple_stmt_iterator gsi;
       for (gsi = gsi_start_phis (bb); !gsi_end_p (gsi); gsi_next (&gsi))
 	{
-	  gimple stmt = gsi_stmt (gsi);
+	  gimple *stmt = gsi_stmt (gsi);
 	  gimple_set_uid (stmt, inc_gimple_stmt_max_uid (cfun));
 	}
       for (gsi = gsi_start_bb (bb); !gsi_end_p (gsi); gsi_next (&gsi))
 	{
-	  gimple stmt = gsi_stmt (gsi);
+	  gimple *stmt = gsi_stmt (gsi);
 	  gimple_set_uid (stmt, inc_gimple_stmt_max_uid (cfun));
 	}
     }
-  stmts = (gimple *) xcalloc (gimple_stmt_max_uid (fn), sizeof (gimple));
+  stmts = (gimple **) xcalloc (gimple_stmt_max_uid (fn), sizeof (gimple *));
   FOR_ALL_BB_FN (bb, cfun)
     {
       gimple_stmt_iterator bsi = gsi_start_phis (bb);
       while (!gsi_end_p (bsi))
 	{
-	  gimple stmt = gsi_stmt (bsi);
+	  gimple *stmt = gsi_stmt (bsi);
 	  gsi_next (&bsi);
 	  stmts[gimple_uid (stmt)] = stmt;
 	}
       bsi = gsi_start_bb (bb);
       while (!gsi_end_p (bsi))
 	{
-	  gimple stmt = gsi_stmt (bsi);
+	  gimple *stmt = gsi_stmt (bsi);
 	  /* If we're recompiling LTO objects with debug stmts but
 	     we're not supposed to have debug stmts, remove them now.
 	     We can't remove them earlier because this would cause uid
@@ -1268,7 +1236,9 @@ lto_read_body_or_constructor (struct lto_file_decl_data *file_data, struct symta
 	      if (TYPE_P (t))
 		{
 		  gcc_assert (TYPE_CANONICAL (t) == NULL_TREE);
-		  TYPE_CANONICAL (t) = TYPE_MAIN_VARIANT (t);
+		  if (type_with_alias_set_p (t)
+		      && canonical_type_used_p (t))
+		    TYPE_CANONICAL (t) = TYPE_MAIN_VARIANT (t);
 		  if (TYPE_MAIN_VARIANT (t) != t)
 		    {
 		      gcc_assert (TYPE_NEXT_VARIANT (t) == NULL_TREE);
@@ -1571,7 +1541,7 @@ lto_input_mode_table (struct lto_file_decl_data *file_data)
 	= bp_unpack_enum (&bp, mode_class, MAX_MODE_CLASS);
       unsigned int size = bp_unpack_value (&bp, 8);
       unsigned int prec = bp_unpack_value (&bp, 16);
-      machine_mode inner = (machine_mode) table[bp_unpack_value (&bp, 8)];
+      machine_mode inner = (machine_mode) bp_unpack_value (&bp, 8);
       unsigned int nunits = bp_unpack_value (&bp, 8);
       unsigned int ibit = 0, fbit = 0;
       unsigned int real_fmt_len = 0;
@@ -1600,12 +1570,14 @@ lto_input_mode_table (struct lto_file_decl_data *file_data)
 	for (machine_mode mr = pass ? VOIDmode
 				    : GET_CLASS_NARROWEST_MODE (mclass);
 	     pass ? mr < MAX_MACHINE_MODE : mr != VOIDmode;
-	     pass ? mr = (machine_mode) (m + 1)
+	     pass ? mr = (machine_mode) (mr + 1)
 		  : mr = GET_MODE_WIDER_MODE (mr))
 	  if (GET_MODE_CLASS (mr) != mclass
 	      || GET_MODE_SIZE (mr) != size
 	      || GET_MODE_PRECISION (mr) != prec
-	      || GET_MODE_INNER (mr) != inner
+	      || (inner == m
+		  ? GET_MODE_INNER (mr) != mr
+		  : GET_MODE_INNER (mr) != table[(int) inner])
 	      || GET_MODE_IBIT (mr) != ibit
 	      || GET_MODE_FBIT (mr) != fbit
 	      || GET_MODE_NUNITS (mr) != nunits)
@@ -1633,7 +1605,7 @@ lto_input_mode_table (struct lto_file_decl_data *file_data)
 	    case MODE_VECTOR_UACCUM:
 	      /* For unsupported vector modes just use BLKmode,
 		 if the scalar mode is supported.  */
-	      if (inner != VOIDmode)
+	      if (table[(int) inner] != VOIDmode)
 		{
 		  table[m] = BLKmode;
 		  break;

@@ -1,27 +1,206 @@
-2017-10-10  Release Manager
+2017-07-04  Release Manager
 
-	* GCC 5.5.0 released.
+	* GCC 6.4.0 released.
 
-2016-06-03  Release Manager
+2016-12-21  Release Manager
 
-	* GCC 5.4.0 released.
+	* GCC 6.3.0 released.
 
-2015-12-04  Release Manager
+2016-08-22  Release Manager
 
-	* GCC 5.3.0 released.
+	* GCC 6.2.0 released.
+
+2016-04-27  Release Manager
+
+	* GCC 6.1.0 released.
+
+2016-02-08  David Malcolm  <dmalcolm@redhat.com>
+
+	* dummy-frontend.c (jit_langhook_init): Remove
+	second argument to build_common_tree_nodes to
+	track r233218.
+
+2016-01-23  Iain Buclaw  <ibuclaw@gdcproject.org>
+
+	* jit-playback.c: Include pthread.h.
+
+2016-01-19  David Malcolm  <dmalcolm@redhat.com>
+
+	PR jit/69144
+	* jit-playback.c (gcc::jit::playback::compile_to_file::postprocess):
+	Potentially add the temporary artifact to the tempdir's list of
+	tempfiles needing additional cleanup.
+	(gcc::jit::playback::context::extract_any_requested_dumps): Likewise
+	for the dumpfile.
+	* jit-tempdir.c (gcc::jit::tempdir::~tempdir): Clean up additional
+	tempfiles.
+	* jit-tempdir.h (gcc::jit::tempdir::add_temp_file): New method.
+	(gcc::jit::tempdir::m_tempfiles): New field.
+	* docs/cp/intro/tutorial04.rst: Update for changes to toyvm.cc.
+	* docs/examples/tut04-toyvm/toyvm.cc (class compilation_result):
+	New.
+	(toyvm_function::compile): Change return type from function ptr
+	to a compilation_result.
+	(toyvm_function::get_function_name): New accessor.
+	(toyvm_function::m_funcname): New field.
+	(get_function_name): Convert to...
+	(toyvm_function::make_function_name): ...this new method.
+	(toyvm_function::parse): Call make_function_name.
+	(toyvm_function::compile): Convert return type from function ptr
+	to a compilation_result.  Use get_function_name.
+	(compilation_state::compile): Convert return type from
+	gcc_jit_result * to a compilation_result.
+	(test_script): Update for above changes, extracting the code from
+	the compilation_result.
+	(main): Likewise.
+	* docs/_build/texinfo/libgccjit.texi: Regenerate.
+
+2016-01-04  Jakub Jelinek  <jakub@redhat.com>
+
+	Update copyright years.
+
+2015-11-11  Andrew MacLeod  <amacleod@redhat.com>
+
+	* dummy-frontend.c: Remove unused header files.
+	* jit-builtins.c: Likewise.
+	* jit-playback.c: Likewise.
+	* jit-recording.c: Likewise.
+	* jit-spec.c: Likewise.
+	* libgccjit.c: Likewise.
+
+2015-11-07  Richard Sandiford  <richard.sandiford@arm.com>
+
+	* jit-builtins.c: Don't undef DEF_BUILTIN.
+
+2015-10-29  Andrew MacLeod  <amacleod@redhat.com>
+
+	* dummy-frontend.c: Reorder #include's and remove duplicates.
+	* jit-builtins.c: Likewise.
+	* jit-playback.c: Likewise.
+	* jit-recording.c: Likewise.
+	* libgccjit.c: Likewise.
+
+2015-10-13  Jakub Jelinek  <jakub@redhat.com>
+
+	* jit-builtins.c (DEF_FUNCTION_TYPE_9, DEF_FUNCTION_TYPE_10,
+	DEF_FUNCTION_TYPE_11): Define.
+	* jit-builtins.h (DEF_FUNCTION_TYPE_9, DEF_FUNCTION_TYPE_10,
+	DEF_FUNCTION_TYPE_11): Define.
+
+2015-09-30  Thomas Schwinge  <thomas@codesourcery.com>
+	    Ulrich Drepper  <drepper@gmail.com>
+
+	* jit-builtins.h: Undefine DEF_FUNCTION_TYPE_VAR_6 after use.
+
+2015-09-30  Matthias Klose  <doko@ubuntu.com>
+
+	* jit-builtins.h Define DEF_FUNCTION_TYPE_VAR_6,
+	remove DEF_FUNCTION_TYPE_VAR_11.
+	* jit-builtins.c (builtins_manager::make_type): Define and handle
+	DEF_FUNCTION_TYPE_VAR_6, remove DEF_FUNCTION_TYPE_VAR_11.
+
+2015-08-25  David Malcolm  <dmalcolm@redhat.com>
+
+	* docs/cp/topics/contexts.rst
+	(gccjit::context::set_bool_use_external_driver): New.
+	* docs/internals/test-hello-world.exe.log.txt: Update.
+	* docs/topics/compatibility.rst (LIBGCCJIT_ABI_5): New.
+	* docs/topics/contexts.rst
+	(gcc_jit_context_set_bool_use_external_driver): New.
+	* jit-common.h (enum inner_bool_option): Add
+	INNER_BOOL_OPTION_USE_EXTERNAL_DRIVER.
+	* jit-playback.c (gcc_driver_name): New global.
+	(gcc:jit::playback::context::invoke_driver): Split out second
+	half into...
+	(gcc::jit::playback::context::invoke_embedded_driver): ...this new
+	function, and...
+	(gcc::jit::playback::context::invoke_external_driver): ...this new
+	function.
+	* jit-playback.h
+	(gcc::jit::playback::context::get_inner_bool_option): New.
+	(gcc::jit::playback::context::invoke_embedded_driver): New.
+	(gcc::jit::playback::context::invoke_external_driver): New.
+	* jit-recording.c (inner_bool_option_reproducer_strings):
+	Add entry for INNER_BOOL_OPTION_USE_EXTERNAL_DRIVER.
+	* libgccjit++.h
+	(gccjit::context::set_bool_use_external_driver): New.
+	* libgccjit.c (gcc_jit_context_set_bool_use_external_driver): New.
+	* libgccjit.h (gcc_jit_context_set_bool_use_external_driver): New.
+	(LIBGCCJIT_HAVE_gcc_jit_context_set_bool_use_external_driver):
+	New.
+	* libgccjit.map (LIBGCCJIT_ABI_5): New.
+	* notes.txt: Show invocation of embedded copy of driver.
+	* docs/internals/test-hello-world.exe.log.txt: Update
 
 2015-08-13  David Malcolm  <dmalcolm@redhat.com>
-
-	Backport from mainline r226882
-	2015-08-13  David Malcolm  <dmalcolm@redhat.com>
 
 	* jit-playback.c (invoke_driver): On OS X, add
 	"-Wl,-undefined,dynamic_lookup" to the driver arguments.
 
-2015-07-23  David Malcolm  <dmalcolm@redhat.com>
+2015-08-03  David Malcolm  <dmalcolm@redhat.com>
 
-	Backport from mainline r226126
-	2015-07-23  David Malcolm  <dmalcolm@redhat.com>
+	* docs/topics/compatibility.rst (LIBGCCJIT_ABI_4): New.
+	* docs/topics/contexts.rst (GCC_JIT_BOOL_OPTION_DUMP_SUMMARY):
+	We no longer show a profile.
+	* docs/topics/index.rst (Topic Reference): Add performance.rst.
+	* docs/topics/performance.rst: New file.
+	* docs/_build/texinfo/libgccjit.texi: Regenerate.
+	* jit-playback.c (gcc::jit::playback::context::compile): Add timer
+	param when constructing the "toplev" instance.
+	(gcc::jit::playback::context::acquire_mutex): Add timer param when
+	constructing auto_timevar instance.
+	(gcc::jit::playback::context::make_fake_args): If we have a timer,
+	add "-ftime-report".
+	(gcc::jit::playback::context::invoke_driver): Add timer param when
+	constructing auto_timevar instance.
+	(gcc::jit::playback::context::dlopen_built_dso): Likewise.
+	* jit-playback.h (gcc::jit::playback::context::get_timer): New accessor.
+	* jit-recording.c: Include timevar.h.
+	(gcc::jit::recording::context::context): Initialize field "m_timer".
+	* jit-recording.h: Add forward declaration of class timer.
+	(gcc::jit::recording::context::set_timer): New method.
+	(gcc::jit::recording::context::get_timer): New method.
+	(gcc::jit::recording::context::m_timer): New field.
+	* libgccjit++.h (gccjit::timer): New class.
+	(gccjit::auto_time): New class.
+	(gccjit::context::set_timer): New method.
+	(gccjit::context::get_timer): New.
+	(gccjit::timer::timer): New.
+	(gccjit::timer::push): New.
+	(gccjit::timer::pop): New.
+	(timer::print): New.
+	(timer::get_inner_timer): New.
+	(timer::release): New.
+	(auto_time::auto_time): New.
+	(auto_time::~auto_time): New.
+	* libgccjit.c: Include timevar.h.
+	(struct gcc_jit_timer): New.
+	(gcc_jit_timer_new): New function.
+	(gcc_jit_timer_release): New function.
+	(gcc_jit_context_set_timer): New function.
+	(gcc_jit_context_get_timer): New function.
+	(gcc_jit_timer_push): New function.
+	(gcc_jit_timer_pop): New function.
+	(gcc_jit_timer_print): New function.
+	* libgccjit.h (LIBGCCJIT_HAVE_TIMING_API): New macro.
+	(gcc_jit_timer): New typedef.
+	(gcc_jit_timer_new): New function.
+	(gcc_jit_timer_release): New function.
+	(gcc_jit_context_set_timer): New function.
+	(gcc_jit_context_get_timer): New function.
+	(gcc_jit_timer_push): New function.
+	(gcc_jit_timer_pop): New function.
+	(gcc_jit_timer_print): New function.
+	* libgccjit.map (LIBGCCJIT_ABI_4): New.
+	(gcc_jit_timer_new): New function.
+	(gcc_jit_timer_release): New function.
+	(gcc_jit_context_set_timer): New function.
+	(gcc_jit_context_get_timer): New function.
+	(gcc_jit_timer_push): New function.
+	(gcc_jit_timer_pop): New function.
+	(gcc_jit_timer_print): New function.
+
+2015-07-23  David Malcolm  <dmalcolm@redhat.com>
 
 	* jit-playback.c (invoke_driver): Convert local "argvec"
 	to an auto_argvec, so that it owns copies of the strings,
@@ -39,14 +218,53 @@
 	* docs/internals/test-hello-world.exe.log.txt: Update.
 	* docs/_build/texinfo/libgccjit.texi: Regenerate.
 
-2015-07-16  Release Manager
+2015-07-16  David Malcolm  <dmalcolm@redhat.com>
 
-	* GCC 5.2.0 released.
+	* docs/internals/index.rst (Overview of code structure): Add note
+	that the implementation is in C++, despite the .c extension.
+	(Submitting patches): New subsection.
+	* docs/_build/texinfo/libgccjit.texi: Regenerate.
+
+2015-07-09  Andrew MacLeod  <amacleod@redhat.com>
+
+	* dummy-frontend.c: Adjust includes for flags.h changes.
+	* jit-common.h: Likewise.
+	* jit-playback.c: Likewise.
+
+2015-07-08  David Malcolm  <dmalcolm@redhat.com>
+
+	PR jit/66783
+	* libgccjit.c (gcc_jit_context_new_field): Show name of field in
+	"unknown size" error message.
+	(gcc_jit_struct_set_fields): Show name of struct in error message.
+	(gcc_jit_context_new_global): Show name of global in
+	"unknown size" error message.
+	(gcc_jit_function_new_local): Likewise for local.
+
+2015-07-07  Andrew MacLeod  <amacleod@redhat.com>
+
+	* dummy-frontend.c: Adjust includes.
+	* jit-common.h: Likewise.
+	* jit-playback.c: Likewise.
+
+2015-07-07  David Malcolm  <dmalcolm@redhat.com>
+
+	PR jit/66783
+	* jit-recording.h: Within namespace gcc:jit::recording...
+	(type::has_known_size): New virtual function.
+	(struct_has_known_size): New function.
+	* libgccjit.c (gcc_jit_context_new_field): Verify that the type
+	has a known size.
+	(gcc_jit_context_new_global): Likewise.
+	(gcc_jit_function_new_local): Likewise.
+
+2015-07-07  David Malcolm  <dmalcolm@redhat.com>
+
+	PR jit/66779
+	* dummy-frontend.c (jit_langhook_type_for_mode): Ensure that we
+	handle modes QI, HI, SI, DI, TI.
 
 2015-07-01  David Malcolm  <dmalcolm@redhat.com>
-
-	Backport from mainline r225248
-	2015-07-01  David Malcolm  <dmalcolm@redhat.com>
 
 	PR jit/66700
 	* jit-playback.c (jit_mark_addressable): New function.
@@ -55,17 +273,11 @@
 
 2015-07-01  David Malcolm  <dmalcolm@redhat.com>
 
-	Backport from mainline r225246
-	2015-07-01  David Malcolm  <dmalcolm@redhat.com>
-
 	* docs/topics/types.rst (gcc_jit_context_new_union_type): Add
 	documentation.
 	* docs/_build/texinfo/libgccjit.texi: Regenerate.
 
 2015-07-01  David Malcolm  <dmalcolm@redhat.com>
-
-	Backport from mainline r225245
-	2015-07-01  David Malcolm  <dmalcolm@redhat.com>
 
 	* docs/topics/contexts.rst (gcc_jit_context_set_bool_option):
 	Clarify lack of lifetime requirements on (const char *) parameter.
@@ -82,10 +294,7 @@
 	(gcc_jit_context_new_struct_type): Likewise.
 	* docs/_build/texinfo/libgccjit.texi: Regenerate.
 
-2015-07-01  David Malcolm  <dmalcolm@redhat.com>
-
-	Backport from mainline r225207
-	2015-06-30  David Malcolm  <dmalcolm@redhat.com>
+2015-06-30  David Malcolm  <dmalcolm@redhat.com>
 
 	* docs/cp/topics/functions.rst (Blocks): Add switch statements to
 	list of ways to terminate a block.
@@ -176,10 +385,7 @@
 	* libgccjit.map: Add gcc_jit_block_end_with_switch,
 	gcc_jit_case_as_object and gcc_jit_context_new_case.
 
-2015-07-01  David Malcolm  <dmalcolm@redhat.com>
-
-	Backport from mainline r225206
-	2015-06-30  David Malcolm  <dmalcolm@redhat.com>
+2015-06-30  David Malcolm  <dmalcolm@redhat.com>
 
 	PR jit/66546
 	* docs/cp/topics/contexts.rst
@@ -220,10 +426,7 @@
 	(gcc_jit_context_set_bool_allow_unreachable_blocks): ...this new
 	entrypoint.
 
-2015-07-01  David Malcolm  <dmalcolm@redhat.com>
-
-	Backport from mainline r225205
-	2015-06-30  David Malcolm  <dmalcolm@redhat.com>
+2015-06-30  David Malcolm  <dmalcolm@redhat.com>
 
 	PR jit/66628
 	* docs/cp/topics/contexts.rst (Additional command-line options):
@@ -258,38 +461,41 @@
 	* libgccjit.map: Put existing symbols within LIBGCCJIT_ABI_0; add
 	LIBGCCJIT_ABI_1 and gcc_jit_context_add_command_line_option.
 
-2015-07-01  David Malcolm  <dmalcolm@redhat.com>
-
-	Backport from mainline r225204
-	2015-06-30  David Malcolm  <dmalcolm@redhat.com>
+2015-06-30  David Malcolm  <dmalcolm@redhat.com>
 
 	* jit-recording.c
 	(gcc::jit::recording::context::dump_reproducer_to_file):
 	Add pragma to generated reproducers to disable -Wunused-variable.
 	Fix handling of NULL string options.
 
-2015-07-01  David Malcolm  <dmalcolm@redhat.com>
-
-	Backport from mainline r225203
-	2015-06-30  David Malcolm  <dmalcolm@redhat.com>
+2015-06-30  David Malcolm  <dmalcolm@redhat.com>
 
 	* docs/cp/topics/expressions.rst: Remove stray semicolon.
 	* docs/cp/topics/functions.rst: Remove stray backslash.
 	* docs/_build/texinfo/libgccjit.texi: Regenerate.
 
-2015-06-29  David Malcolm  <dmalcolm@redhat.com>
+2015-06-25  Andrew MacLeod  <amacleod@redhat.com>
 
-	Backport from mainline r224565
-	2015-06-17  David Malcolm  <dmalcolm@redhat.com>
+	* dummy-frontend.c: Remove ipa-ref.h and plugin-api.h from include list.
+	* jit-playback.c: Likewise.
+
+2015-06-25  Andrew Macleod  <amacleod@redhat.com>
+
+	* jit-common.h: Don't include alias.h.
+
+2015-06-17  David Malcolm  <dmalcolm@redhat.com>
 
 	* libgccjit.c (gcc_jit_lvalue_access_field): Verify that the field
 	is for the correct struct.
 	(gcc_jit_rvalue_access_field): Likewise.
 
-2015-06-29  David Malcolm  <dmalcolm@redhat.com>
+2015-06-17  Andrew MacLeod  <amacleod@redhat.com>
 
-	Backport from mainline r224531
-	2015-06-16  David Malcolm  <dmalcolm@redhat.com>
+	* dummy-frontend.c: Do not include input.h, line-map.h or is-a.h.
+	* jit-common.h: Likewise.
+	* jit-playback.c: Likewise.
+
+2015-06-16  David Malcolm  <dmalcolm@redhat.com>
 
 	PR jit/66539
 	* jit-recording.c: Within namespace gcc::jit::recording::
@@ -339,9 +545,56 @@
 
 	* Make-lang.in (jit.install-common): Install headers using INSTALL_DATA.
 
-2015-04-22  Release Manager
+2015-06-08  Andrew MacLeod  <amacleod@redhat.com>
 
-	* GCC 5.1.0 released.
+	* dummy-frontend.c : Adjust include files.
+	* jit-common.h : Likewise.
+	* jit-playback.c : Likewise.
+
+2015-06-05  David Malcolm  <dmalcolm@redhat.com>
+
+	* dummy-frontend.c
+	(jit_langhook_post_compilation_parsing_cleanups): Remove.
+	(LANG_HOOKS_POST_COMPILATION_PARSING_CLEANUPS): Remove
+	* jit-playback.c (gcc::jit::playback::context::new_global): Add
+	call to varpool_node::finalize_decl.
+	(gcc::jit::playback::context::finalize_global_decls): Remove.
+	* jit-playback.h
+	(gcc::jit::playback::context::finalize_global_decls): Remove.
+
+2015-06-05  David Malcolm  <dmalcolm@redhat.com>
+
+	* dummy-frontend.c (jit_langhook_write_globals): Rename to...
+	(jit_langhook_post_compilation_parsing_cleanups): ...this, and
+	eliminate calls to finalize_compilation_unit and
+	write_global_decls_2.
+	(LANG_HOOKS_WRITE_GLOBALS): Rename to...
+	(LANG_HOOKS_POST_COMPILATION_PARSING_CLEANUPS): ...this and
+	redirect from jit_langhook_write_globals to
+	jit_langhook_post_compilation_parsing_cleanups.
+	* jit-playback.c
+	(gcc::jit::playback::context::write_global_decls_1): Rename to...
+	(gcc::jit::playback::context::finalize_global_decls): ...this.
+	(gcc::jit::playback::context::write_global_decls_1): Delete.
+	* jit-playback.h
+	(gcc::jit::playback::context::write_global_decls_1): Rename to...
+	(gcc::jit::playback::context::finalize_global_decls): ...this.
+	(gcc::jit::playback::context::write_global_decls_1): Delete.
+
+2015-06-04  Andrew MacLeod  <amacleod@redhat.com>
+
+	* dummy-frontend.c: Adjust includes for restructured coretypes.h.
+	* jit-common.h: Likewise.
+	* jit-playback.c: Likewise.
+
+2015-05-12  David Malcolm  <dmalcolm@redhat.com>
+
+	* jit-builtins.c: Include vec.h before target.h.
+
+2015-04-27  Jim Wilson  <jim.wilson@linaro.org>
+
+	* Make-lang.in (jit.mostlyclean): Remove shared libraries and object
+	files.
 
 2015-04-09  David Malcolm  <dmalcolm@redhat.com>
 
@@ -1773,8 +2026,8 @@
 2013-07-26  David Malcolm  <dmalcolm@redhat.com>
 
 	* Initial creation
-
-Copyright (C) 2013-2015 Free Software Foundation, Inc.
+
+Copyright (C) 2013-2016 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright
