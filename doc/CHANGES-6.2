@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.317 2018/01/30 18:45:16 martin Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.318 2018/02/02 11:07:50 martin Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -21028,4 +21028,9 @@ sys/netinet6/ipcomp_input.c			adjust other callers (patch)
 	Fix a memory corruption in ip6_get_prevhdr().
 	[maxv, ticket #1523]
 
+
+sys/netinet6/ip6_mroute.c			1.120
+
+	Fix a use-after-free in the Pim6 entry point.
+	[maxv, ticket #1524]
 
