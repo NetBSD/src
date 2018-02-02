@@ -1,5 +1,5 @@
 /* Partial redundancy elimination / Hoisting for RTL.
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -135,59 +135,27 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "tm.h"
-#include "diagnostic-core.h"
-#include "toplev.h"
-#include "hard-reg-set.h"
+#include "backend.h"
+#include "target.h"
 #include "rtl.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "wide-int.h"
-#include "inchash.h"
 #include "tree.h"
+#include "predict.h"
+#include "df.h"
 #include "tm_p.h"
+#include "insn-config.h"
 #include "regs.h"
 #include "ira.h"
-#include "flags.h"
-#include "insn-config.h"
 #include "recog.h"
-#include "predict.h"
-#include "function.h"
-#include "dominance.h"
-#include "cfg.h"
+#include "diagnostic-core.h"
 #include "cfgrtl.h"
 #include "cfganal.h"
 #include "lcm.h"
 #include "cfgcleanup.h"
-#include "basic-block.h"
-#include "hashtab.h"
-#include "statistics.h"
-#include "real.h"
-#include "fixed-value.h"
-#include "expmed.h"
-#include "dojump.h"
-#include "explow.h"
-#include "calls.h"
-#include "emit-rtl.h"
-#include "varasm.h"
-#include "stmt.h"
 #include "expr.h"
-#include "except.h"
-#include "ggc.h"
 #include "params.h"
-#include "cselib.h"
 #include "intl.h"
-#include "obstack.h"
 #include "tree-pass.h"
-#include "hash-table.h"
-#include "df.h"
 #include "dbgcnt.h"
-#include "target.h"
 #include "gcse.h"
 #include "gcse-common.h"
 
@@ -386,17 +354,16 @@ struct ls_expr
 /* Head of the list of load/store memory refs.  */
 static struct ls_expr * pre_ldst_mems = NULL;
 
-struct pre_ldst_expr_hasher : typed_noop_remove <ls_expr>
+struct pre_ldst_expr_hasher : nofree_ptr_hash <ls_expr>
 {
-  typedef ls_expr value_type;
   typedef value_type compare_type;
-  static inline hashval_t hash (const value_type *);
-  static inline bool equal (const value_type *, const compare_type *);
+  static inline hashval_t hash (const ls_expr *);
+  static inline bool equal (const ls_expr *, const ls_expr *);
 };
 
 /* Hashtable helpers.  */
 inline hashval_t
-pre_ldst_expr_hasher::hash (const value_type *x)
+pre_ldst_expr_hasher::hash (const ls_expr *x)
 {
   int do_not_record_p = 0;
   return
@@ -406,8 +373,8 @@ pre_ldst_expr_hasher::hash (const value_type *x)
 static int expr_equiv_p (const_rtx, const_rtx);
 
 inline bool
-pre_ldst_expr_hasher::equal (const value_type *ptr1,
-			     const compare_type *ptr2)
+pre_ldst_expr_hasher::equal (const ls_expr *ptr1,
+			     const ls_expr *ptr2)
 {
   return expr_equiv_p (ptr1->pattern, ptr2->pattern);
 }
@@ -486,14 +453,13 @@ static void hash_scan_insn (rtx_insn *, struct gcse_hash_table_d *);
 static void hash_scan_set (rtx, rtx_insn *, struct gcse_hash_table_d *);
 static void hash_scan_clobber (rtx, rtx_insn *, struct gcse_hash_table_d *);
 static void hash_scan_call (rtx, rtx_insn *, struct gcse_hash_table_d *);
-static int want_to_gcse_p (rtx, HOST_WIDE_INT *);
 static int oprs_unchanged_p (const_rtx, const rtx_insn *, int);
 static int oprs_anticipatable_p (const_rtx, const rtx_insn *);
 static int oprs_available_p (const_rtx, const rtx_insn *);
 static void insert_expr_in_table (rtx, machine_mode, rtx_insn *, int, int,
 				  HOST_WIDE_INT, struct gcse_hash_table_d *);
 static unsigned int hash_expr (const_rtx, machine_mode, int *, int);
-static void record_last_reg_set_info (rtx, int);
+static void record_last_reg_set_info (rtx_insn *, int);
 static void record_last_mem_set_info (rtx_insn *);
 static void record_last_set_info (rtx, const_rtx, void *);
 static void compute_hash_table (struct gcse_hash_table_d *);
@@ -516,7 +482,7 @@ static void pre_insert_copies (void);
 static int pre_delete (void);
 static int pre_gcse (struct edge_list *);
 static int one_pre_gcse_pass (void);
-static void add_label_notes (rtx, rtx);
+static void add_label_notes (rtx, rtx_insn *);
 static void alloc_code_hoist_mem (int, int);
 static void free_code_hoist_mem (void);
 static void compute_code_hoist_vbeinout (void);
@@ -546,8 +512,6 @@ static void trim_ld_motion_mems (void);
 static void update_ld_motion_stores (struct gcse_expr *);
 static void clear_modify_mem_tables (void);
 static void free_modify_mem_tables (void);
-static rtx gcse_emit_move_after (rtx, rtx, rtx_insn *);
-static bool is_too_expensive (const char *);
 
 #define GNEW(T)			((T *) gmalloc (sizeof (T)))
 #define GCNEW(T)		((T *) gcalloc (1, sizeof (T)))
@@ -575,7 +539,8 @@ compute_can_copy (void)
 {
   int i;
 #ifndef AVOID_CCMODE_COPIES
-  rtx reg, insn;
+  rtx reg;
+ rtx_insn *insn;
 #endif
   memset (can_copy, 0, NUM_MACHINE_MODES);
 
@@ -587,7 +552,7 @@ compute_can_copy (void)
 	can_copy[i] = 0;
 #else
 	reg = gen_rtx_REG ((machine_mode) i, LAST_VIRTUAL_REGISTER + 1);
-	insn = emit_insn (gen_rtx_SET (VOIDmode, reg, reg));
+	insn = emit_insn (gen_rtx_SET (reg, reg));
 	if (recog (PATTERN (insn), insn, NULL) >= 0)
 	  can_copy[i] = 1;
 #endif
@@ -779,7 +744,7 @@ static basic_block current_bb;
    GCSE.  */
 
 static int
-want_to_gcse_p (rtx x, HOST_WIDE_INT *max_distance_ptr)
+want_to_gcse_p (rtx x, machine_mode mode, HOST_WIDE_INT *max_distance_ptr)
 {
 #ifdef STACK_REGS
   /* On register stack architectures, don't GCSE constants from the
@@ -830,7 +795,7 @@ want_to_gcse_p (rtx x, HOST_WIDE_INT *max_distance_ptr)
 
 	  gcc_assert (!optimize_function_for_speed_p (cfun)
 		      && optimize_function_for_size_p (cfun));
-	  cost = set_src_cost (x, 0);
+	  cost = set_src_cost (x, mode, 0);
 
 	  if (cost < COSTS_N_INSNS (GCSE_UNRESTRICTED_COST))
 	    {
@@ -848,7 +813,7 @@ want_to_gcse_p (rtx x, HOST_WIDE_INT *max_distance_ptr)
 	    *max_distance_ptr = max_distance;
 	}
 
-      return can_assign_to_reg_without_clobbers_p (x);
+      return can_assign_to_reg_without_clobbers_p (x, mode);
     }
 }
 
@@ -856,9 +821,9 @@ want_to_gcse_p (rtx x, HOST_WIDE_INT *max_distance_ptr)
 
 static GTY(()) rtx_insn *test_insn;
 
-/* Return true if we can assign X to a pseudo register such that the
-   resulting insn does not result in clobbering a hard register as a
-   side-effect.
+/* Return true if we can assign X to a pseudo register of mode MODE
+   such that the resulting insn does not result in clobbering a hard
+   register as a side-effect.
 
    Additionally, if the target requires it, check that the resulting insn
    can be copied.  If it cannot, this means that X is special and probably
@@ -869,14 +834,14 @@ static GTY(()) rtx_insn *test_insn;
    maybe live hard regs.  */
 
 bool
-can_assign_to_reg_without_clobbers_p (rtx x)
+can_assign_to_reg_without_clobbers_p (rtx x, machine_mode mode)
 {
   int num_clobbers = 0;
   int icode;
   bool can_assign = false;
 
   /* If this is a valid operand, we are OK.  If it's VOIDmode, we aren't.  */
-  if (general_operand (x, GET_MODE (x)))
+  if (general_operand (x, mode))
     return 1;
   else if (GET_MODE (x) == VOIDmode)
     return 0;
@@ -886,8 +851,7 @@ can_assign_to_reg_without_clobbers_p (rtx x)
   if (test_insn == 0)
     {
       test_insn
-	= make_insn_raw (gen_rtx_SET (VOIDmode,
-				      gen_rtx_REG (word_mode,
+	= make_insn_raw (gen_rtx_SET (gen_rtx_REG (word_mode,
 						   FIRST_PSEUDO_REGISTER * 2),
 				      const0_rtx));
       SET_NEXT_INSN (test_insn) = SET_PREV_INSN (test_insn) = 0;
@@ -896,7 +860,7 @@ can_assign_to_reg_without_clobbers_p (rtx x)
 
   /* Now make an insn like the one we would make when GCSE'ing and see if
      valid.  */
-  PUT_MODE (SET_DEST (PATTERN (test_insn)), GET_MODE (x));
+  PUT_MODE (SET_DEST (PATTERN (test_insn)), mode);
   SET_SRC (PATTERN (test_insn)) = x;
 
   icode = recog (PATTERN (test_insn), test_insn, &num_clobbers);
@@ -1290,8 +1254,8 @@ hash_scan_set (rtx set, rtx_insn *insn, struct gcse_hash_table_d *table)
       if (note != 0
 	  && REG_NOTE_KIND (note) == REG_EQUAL
 	  && !REG_P (src)
-	  && want_to_gcse_p (XEXP (note, 0), NULL))
-	src = XEXP (note, 0), set = gen_rtx_SET (VOIDmode, dest, src);
+	  && want_to_gcse_p (XEXP (note, 0), GET_MODE (dest), NULL))
+	src = XEXP (note, 0), set = gen_rtx_SET (dest, src);
 
       /* Only record sets of pseudo-regs in the hash table.  */
       if (regno >= FIRST_PSEUDO_REGISTER
@@ -1304,7 +1268,7 @@ hash_scan_set (rtx set, rtx_insn *insn, struct gcse_hash_table_d *table)
 	     can't do the same thing at the rtl level.  */
 	  && !can_throw_internal (insn)
 	  /* Is SET_SRC something we want to gcse?  */
-	  && want_to_gcse_p (src, &max_distance)
+	  && want_to_gcse_p (src, GET_MODE (dest), &max_distance)
 	  /* Don't CSE a nop.  */
 	  && ! set_noop_p (set)
 	  /* Don't GCSE if it has attached REG_EQUIV note.
@@ -1336,43 +1300,42 @@ hash_scan_set (rtx set, rtx_insn *insn, struct gcse_hash_table_d *table)
      the REG stored in that memory. This makes it possible to remove
      redundant loads from due to stores to the same location.  */
   else if (flag_gcse_las && REG_P (src) && MEM_P (dest))
-      {
-        unsigned int regno = REGNO (src);
-	HOST_WIDE_INT max_distance = 0;
+    {
+      unsigned int regno = REGNO (src);
+      HOST_WIDE_INT max_distance = 0;
 
-	/* Only record sets of pseudo-regs in the hash table.  */
-        if (regno >= FIRST_PSEUDO_REGISTER
-	   /* Don't GCSE something if we can't do a reg/reg copy.  */
-	   && can_copy_p (GET_MODE (src))
-	   /* GCSE commonly inserts instruction after the insn.  We can't
-	      do that easily for EH edges so disable GCSE on these for now.  */
-	   && !can_throw_internal (insn)
-	   /* Is SET_DEST something we want to gcse?  */
-	   && want_to_gcse_p (dest, &max_distance)
-	   /* Don't CSE a nop.  */
-	   && ! set_noop_p (set)
-	   /* Don't GCSE if it has attached REG_EQUIV note.
-	      At this point this only function parameters should have
-	      REG_EQUIV notes and if the argument slot is used somewhere
-	      explicitly, it means address of parameter has been taken,
-	      so we should not extend the lifetime of the pseudo.  */
-	   && ((note = find_reg_note (insn, REG_EQUIV, NULL_RTX)) == 0
-	       || ! MEM_P (XEXP (note, 0))))
-             {
-               /* Stores are never anticipatable.  */
-               int antic_p = 0;
-	       /* An expression is not available if its operands are
-	          subsequently modified, including this insn.  It's also not
-	          available if this is a branch, because we can't insert
-	          a set after the branch.  */
-               int avail_p = oprs_available_p (dest, insn)
-			     && ! JUMP_P (insn);
+      /* Only record sets of pseudo-regs in the hash table.  */
+      if (regno >= FIRST_PSEUDO_REGISTER
+	  /* Don't GCSE something if we can't do a reg/reg copy.  */
+	  && can_copy_p (GET_MODE (src))
+	  /* GCSE commonly inserts instruction after the insn.  We can't
+	     do that easily for EH edges so disable GCSE on these for now.  */
+	  && !can_throw_internal (insn)
+	  /* Is SET_DEST something we want to gcse?  */
+	  && want_to_gcse_p (dest, GET_MODE (dest), &max_distance)
+	  /* Don't CSE a nop.  */
+	  && ! set_noop_p (set)
+	  /* Don't GCSE if it has attached REG_EQUIV note.
+	     At this point this only function parameters should have
+	     REG_EQUIV notes and if the argument slot is used somewhere
+	     explicitly, it means address of parameter has been taken,
+	     so we should not extend the lifetime of the pseudo.  */
+	  && ((note = find_reg_note (insn, REG_EQUIV, NULL_RTX)) == 0
+	      || ! MEM_P (XEXP (note, 0))))
+	{
+	  /* Stores are never anticipatable.  */
+	  int antic_p = 0;
+	  /* An expression is not available if its operands are
+	     subsequently modified, including this insn.  It's also not
+	     available if this is a branch, because we can't insert
+	     a set after the branch.  */
+	  int avail_p = oprs_available_p (dest, insn) && ! JUMP_P (insn);
 
-	       /* Record the memory expression (DEST) in the hash table.  */
-	       insert_expr_in_table (dest, GET_MODE (dest), insn,
-				     antic_p, avail_p, max_distance, table);
-             }
-      }
+	  /* Record the memory expression (DEST) in the hash table.  */
+	  insert_expr_in_table (dest, GET_MODE (dest), insn,
+				antic_p, avail_p, max_distance, table);
+	}
+    }
 }
 
 static void
@@ -1476,7 +1439,7 @@ dump_hash_table (FILE *file, const char *name, struct gcse_hash_table_d *table)
    valid, as a quick test to invalidate them.  */
 
 static void
-record_last_reg_set_info (rtx insn, int regno)
+record_last_reg_set_info (rtx_insn *insn, int regno)
 {
   struct reg_avail_info *info = &reg_avail_info[regno];
   int luid = DF_INSN_LUID (insn);
@@ -2012,7 +1975,7 @@ process_insert_insn (struct gcse_expr *expr)
      insn will be recognized (this also adds any needed CLOBBERs).  */
   else
     {
-      rtx_insn *insn = emit_insn (gen_rtx_SET (VOIDmode, reg, exp));
+      rtx_insn *insn = emit_insn (gen_rtx_SET (reg, exp));
 
       if (insn_invalid_p (insn, false))
 	gcc_unreachable ();
@@ -2053,21 +2016,23 @@ insert_insn_end_basic_block (struct gcse_expr *expr, basic_block bb)
 	  && (!single_succ_p (bb)
 	      || single_succ_edge (bb)->flags & EDGE_ABNORMAL)))
     {
-#ifdef HAVE_cc0
       /* FIXME: 'twould be nice to call prev_cc0_setter here but it aborts
 	 if cc0 isn't set.  */
-      rtx note = find_reg_note (insn, REG_CC_SETTER, NULL_RTX);
-      if (note)
-	insn = safe_as_a <rtx_insn *> (XEXP (note, 0));
-      else
+      if (HAVE_cc0)
 	{
-	  rtx_insn *maybe_cc0_setter = prev_nonnote_insn (insn);
-	  if (maybe_cc0_setter
-	      && INSN_P (maybe_cc0_setter)
-	      && sets_cc0_p (PATTERN (maybe_cc0_setter)))
-	    insn = maybe_cc0_setter;
+	  rtx note = find_reg_note (insn, REG_CC_SETTER, NULL_RTX);
+	  if (note)
+	    insn = safe_as_a <rtx_insn *> (XEXP (note, 0));
+	  else
+	    {
+	      rtx_insn *maybe_cc0_setter = prev_nonnote_insn (insn);
+	      if (maybe_cc0_setter
+		  && INSN_P (maybe_cc0_setter)
+		  && sets_cc0_p (PATTERN (maybe_cc0_setter)))
+		insn = maybe_cc0_setter;
+	    }
 	}
-#endif
+
       /* FIXME: What if something in cc0/jump uses value set in new insn?  */
       new_insn = emit_insn_before_noloc (pat, insn, bb);
     }
@@ -2232,7 +2197,8 @@ pre_insert_copy_insn (struct gcse_expr *expr, rtx_insn *insn)
   int regno = REGNO (reg);
   int indx = expr->bitmap_index;
   rtx pat = PATTERN (insn);
-  rtx set, first_set, new_insn;
+  rtx set, first_set;
+  rtx_insn *new_insn;
   rtx old_reg;
   int i;
 
@@ -2440,7 +2406,7 @@ single_set_gcse (rtx_insn *insn)
 /* Emit move from SRC to DEST noting the equivalence with expression computed
    in INSN.  */
 
-static rtx
+static rtx_insn *
 gcse_emit_move_after (rtx dest, rtx src, rtx_insn *insn)
 {
   rtx_insn *new_rtx;
@@ -2603,7 +2569,7 @@ one_pre_gcse_pass (void)
 
   /* Return if there's nothing to do, or it is too expensive.  */
   if (n_basic_blocks_for_fn (cfun) <= NUM_FIXED_BLOCKS + 1
-      || is_too_expensive (_("PRE disabled")))
+      || gcse_or_cprop_is_too_expensive (_("PRE disabled")))
     return 0;
 
   /* We need alias.  */
@@ -2668,7 +2634,7 @@ one_pre_gcse_pass (void)
    necessary REG_LABEL_OPERAND and REG_LABEL_TARGET notes.  */
 
 static void
-add_label_notes (rtx x, rtx insn)
+add_label_notes (rtx x, rtx_insn *insn)
 {
   enum rtx_code code = GET_CODE (x);
   int i, j;
@@ -3532,7 +3498,7 @@ one_code_hoisting_pass (void)
 
   /* Return if there's nothing to do, or it is too expensive.  */
   if (n_basic_blocks_for_fn (cfun) <= NUM_FIXED_BLOCKS + 1
-      || is_too_expensive (_("GCSE disabled")))
+      || gcse_or_cprop_is_too_expensive (_("GCSE disabled")))
     return 0;
 
   doing_code_hoisting_p = true;
@@ -3867,12 +3833,13 @@ compute_ld_motion_mems (void)
 		  if (MEM_P (dest) && simple_mem (dest))
 		    {
 		      ptr = ldst_entry (dest);
-
+		      machine_mode src_mode = GET_MODE (src);
 		      if (! MEM_P (src)
 			  && GET_CODE (src) != ASM_OPERANDS
 			  /* Check for REG manually since want_to_gcse_p
 			     returns 0 for all REGs.  */
-			  && can_assign_to_reg_without_clobbers_p (src))
+			  && can_assign_to_reg_without_clobbers_p (src,
+								    src_mode))
 			ptr->stores = alloc_INSN_LIST (insn, ptr->stores);
 		      else
 			ptr->invalid = 1;
@@ -3974,7 +3941,6 @@ update_ld_motion_stores (struct gcse_expr * expr)
 	  rtx pat = PATTERN (insn);
 	  rtx src = SET_SRC (pat);
 	  rtx reg = expr->reaching_reg;
-	  rtx copy;
 
 	  /* If we've already copied it, continue.  */
 	  if (expr->reaching_reg == src)
@@ -3989,7 +3955,7 @@ update_ld_motion_stores (struct gcse_expr * expr)
 	      fprintf (dump_file, "\n");
 	    }
 
-	  copy = gen_move_insn (reg, copy_rtx (SET_SRC (pat)));
+	  rtx_insn *copy = gen_move_insn (reg, copy_rtx (SET_SRC (pat)));
 	  emit_insn_before (copy, insn);
 	  SET_SRC (pat) = reg;
 	  df_insn_rescan (insn);
@@ -4004,9 +3970,13 @@ update_ld_motion_stores (struct gcse_expr * expr)
 /* Return true if the graph is too expensive to optimize. PASS is the
    optimization about to be performed.  */
 
-static bool
-is_too_expensive (const char *pass)
+bool
+gcse_or_cprop_is_too_expensive (const char *pass)
 {
+  unsigned int memory_request = (n_basic_blocks_for_fn (cfun)
+				 * SBITMAP_SET_SIZE (max_reg_num ())
+				 * sizeof (SBITMAP_ELT_TYPE));
+  
   /* Trying to perform global optimizations on flow graphs which have
      a high connectivity will take a long time and is unlikely to be
      particularly useful.
@@ -4028,13 +3998,12 @@ is_too_expensive (const char *pass)
 
   /* If allocating memory for the dataflow bitmaps would take up too much
      storage it's better just to disable the optimization.  */
-  if ((n_basic_blocks_for_fn (cfun)
-       * SBITMAP_SET_SIZE (max_reg_num ())
-       * sizeof (SBITMAP_ELT_TYPE)) > MAX_GCSE_MEMORY)
+  if (memory_request > MAX_GCSE_MEMORY)
     {
       warning (OPT_Wdisabled_optimization,
-	       "%s: %d basic blocks and %d registers",
-	       pass, n_basic_blocks_for_fn (cfun), max_reg_num ());
+	       "%s: %d basic blocks and %d registers; increase --param max-gcse-memory above %d",
+	       pass, n_basic_blocks_for_fn (cfun), max_reg_num (),
+	       memory_request);
 
       return true;
     }

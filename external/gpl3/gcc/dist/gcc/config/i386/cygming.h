@@ -1,6 +1,6 @@
 /* Operating system specific defines to be used when targeting GCC for
    hosting on Windows32, using a Unix style C library and tools.
-   Copyright (C) 1995-2015 Free Software Foundation, Inc.
+   Copyright (C) 1995-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -38,6 +38,11 @@ along with GCC; see the file COPYING3.  If not see
    Force the use of different mechanisms to allocate aligned local data.  */
 #undef MAX_STACK_ALIGNMENT
 #define MAX_STACK_ALIGNMENT  (TARGET_SEH ? 128 : MAX_OFILE_ALIGNMENT)
+
+/* 32-bit Windows aligns the stack on a 4-byte boundary but SSE instructions
+   may require 16-byte alignment.  */
+#undef STACK_REALIGN_DEFAULT
+#define STACK_REALIGN_DEFAULT TARGET_SSE
 
 /* Support hooks for SEH.  */
 #undef  TARGET_ASM_UNWIND_EMIT
@@ -198,20 +203,7 @@ along with GCC; see the file COPYING3.  If not see
 #undef  SUBTARGET_OVERRIDE_OPTIONS
 #define SUBTARGET_OVERRIDE_OPTIONS					\
 do {									\
-  if (TARGET_64BIT && flag_pic != 1)					\
-    {									\
-      if (flag_pic > 1)							\
-        warning (0,							\
-	         "-fPIC ignored for target (all code is position independent)"\
-                 );                         				\
-      flag_pic = 1;							\
-    }									\
-  else if (!TARGET_64BIT && flag_pic)					\
-    {									\
-      warning (0, "-f%s ignored for target (all code is position independent)",\
-	       (flag_pic > 1) ? "PIC" : "pic");				\
-      flag_pic = 0;							\
-    }									\
+  flag_pic = TARGET_64BIT ? 1 : 0;                                      \
 } while (0)
 
 /* Define this macro if references to a symbol must be treated
@@ -445,6 +437,7 @@ do {						\
       fputc ('\n', (FILE));           \
     }                                 \
   while (0)
+
 #endif /* HAVE_GAS_WEAK */
 
 /* FIXME: SUPPORTS_WEAK && TARGET_HAVE_NAMED_SECTIONS is true,

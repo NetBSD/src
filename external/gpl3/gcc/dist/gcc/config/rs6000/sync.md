@@ -1,5 +1,5 @@
 ;; Machine description for PowerPC synchronization instructions.
-;; Copyright (C) 2005-2015 Free Software Foundation, Inc.
+;; Copyright (C) 2005-2016 Free Software Foundation, Inc.
 ;; Contributed by Geoffrey Keating.
 
 ;; This file is part of GCC.
@@ -41,21 +41,18 @@
   [(match_operand:SI 0 "const_int_operand" "")]		;; model
   ""
 {
-  enum memmodel model = memmodel_from_int (INTVAL (operands[0]));
+  enum memmodel model = memmodel_base (INTVAL (operands[0]));
   switch (model)
     {
     case MEMMODEL_RELAXED:
       break;
     case MEMMODEL_CONSUME:
     case MEMMODEL_ACQUIRE:
-    case MEMMODEL_SYNC_ACQUIRE:
     case MEMMODEL_RELEASE:
-    case MEMMODEL_SYNC_RELEASE:
     case MEMMODEL_ACQ_REL:
       emit_insn (gen_lwsync ());
       break;
     case MEMMODEL_SEQ_CST:
-    case MEMMODEL_SYNC_SEQ_CST:
       emit_insn (gen_hwsync ());
       break;
     default:
@@ -147,7 +144,7 @@
   if (<MODE>mode == TImode && !TARGET_SYNC_TI)
     FAIL;
 
-  enum memmodel model = memmodel_from_int (INTVAL (operands[2]));
+  enum memmodel model = memmodel_base (INTVAL (operands[2]));
 
   if (is_mm_seq_cst (model))
     emit_insn (gen_hwsync ());
@@ -160,8 +157,7 @@
       rtx op1 = operands[1];
       rtx pti_reg = gen_reg_rtx (PTImode);
 
-      // Can't have indexed address for 'lq'
-      if (indexed_address (XEXP (op1, 0), TImode))
+      if (!quad_address_p (XEXP (op1, 0), TImode, false))
 	{
 	  rtx old_addr = XEXP (op1, 0);
 	  rtx new_addr = force_reg (Pmode, old_addr);
@@ -185,9 +181,7 @@
       break;
     case MEMMODEL_CONSUME:
     case MEMMODEL_ACQUIRE:
-    case MEMMODEL_SYNC_ACQUIRE:
     case MEMMODEL_SEQ_CST:
-    case MEMMODEL_SYNC_SEQ_CST:
       emit_insn (gen_loadsync_<mode> (operands[0]));
       break;
     default:
@@ -214,17 +208,15 @@
   if (<MODE>mode == TImode && !TARGET_SYNC_TI)
     FAIL;
 
-  enum memmodel model = memmodel_from_int (INTVAL (operands[2]));
+  enum memmodel model = memmodel_base (INTVAL (operands[2]));
   switch (model)
     {
     case MEMMODEL_RELAXED:
       break;
     case MEMMODEL_RELEASE:
-    case MEMMODEL_SYNC_RELEASE:
       emit_insn (gen_lwsync ());
       break;
     case MEMMODEL_SEQ_CST:
-    case MEMMODEL_SYNC_SEQ_CST:
       emit_insn (gen_hwsync ());
       break;
     default:
@@ -238,8 +230,7 @@
       rtx op1 = operands[1];
       rtx pti_reg = gen_reg_rtx (PTImode);
 
-      // Can't have indexed address for 'stq'
-      if (indexed_address (XEXP (op0, 0), TImode))
+      if (!quad_address_p (XEXP (op0, 0), TImode, false))
 	{
 	  rtx old_addr = XEXP (op0, 0);
 	  rtx new_addr = force_reg (Pmode, old_addr);

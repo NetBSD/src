@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler, Argonaut EPIPHANY cpu.
-   Copyright (C) 1994-2015 Free Software Foundation, Inc.
+   Copyright (C) 1994-2016 Free Software Foundation, Inc.
    Contributed by Embecosm on behalf of Adapteva, Inc.
 
 This file is part of GCC.
@@ -467,7 +467,7 @@ typedef struct GTY (()) machine_function
 
 /* Define this macro if pushing a word onto the stack moves the stack
    pointer to a smaller address.  */
-#define STACK_GROWS_DOWNWARD
+#define STACK_GROWS_DOWNWARD 1
 
 /* Define this to nonzero if the nominal address of the stack frame
    is at the high-address end of the local variables;
@@ -692,7 +692,7 @@ typedef struct GTY (()) machine_function
 /* Define this macro if it is as good or better to call a constant
    function address than to call an address kept in a register.  */
 /* On the EPIPHANY, calling through registers is slow.  */
-#define NO_FUNCTION_CSE
+#define NO_FUNCTION_CSE 1
 
 /* Section selection.  */
 /* WARNING: These section names also appear in dwarf2out.c.  */
@@ -845,7 +845,7 @@ do \
 
 /* Define if operations between registers always perform the operation
    on the full register even if a narrower mode is specified.  */
-#define WORD_REGISTER_OPERATIONS
+#define WORD_REGISTER_OPERATIONS 1
 
 /* Define if loading in MODE, an integral mode narrower than BITS_PER_WORD
    will either zero-extend or sign-extend.  The value of this macro should

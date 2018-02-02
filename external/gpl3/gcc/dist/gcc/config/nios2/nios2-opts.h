@@ -1,5 +1,5 @@
 /* Definitions for option handling for Nios II.
-   Copyright (C) 2013-2015 Free Software Foundation, Inc.
+   Copyright (C) 2013-2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -75,6 +75,13 @@ enum nios2_ccs_code
   CCS_UNUSED,
   CCS_FPU,
   CCS_BUILTIN_CALL
+};
+
+/* Supported Nios II Architectures.  */
+enum nios2_arch_type
+{
+  ARCH_R1=1,
+  ARCH_R2
 };
 
 #endif

@@ -1,5 +1,5 @@
 /* Internals of libgccjit: classes for recording calls made to the JIT API.
-   Copyright (C) 2013-2015 Free Software Foundation, Inc.
+   Copyright (C) 2013-2016 Free Software Foundation, Inc.
    Contributed by David Malcolm <dmalcolm@redhat.com>.
 
 This file is part of GCC.
@@ -23,14 +23,11 @@ along with GCC; see the file COPYING3.  If not see
 #include "coretypes.h"
 #include "tm.h"
 #include "pretty-print.h"
-#include "hash-map.h"
 #include "toplev.h"
 
 #include <pthread.h>
 
-#include "jit-common.h"
 #include "jit-builtins.h"
-#include "jit-logging.h"
 #include "jit-recording.h"
 #include "jit-playback.h"
 
@@ -461,6 +458,7 @@ recording::context::context (context *parent_ctxt)
   : log_user (NULL),
     m_parent_ctxt (parent_ctxt),
     m_toplevel_ctxt (m_parent_ctxt ? m_parent_ctxt->m_toplevel_ctxt : this),
+    m_timer (NULL),
     m_error_count (0),
     m_first_error_str (NULL),
     m_owns_first_error_str (false),
@@ -850,7 +848,7 @@ recording::context::new_function_ptr_type (recording::location *, /* unused loc 
 			 param_types,
 			 is_variadic);
 
-  /* Return a pointer-type to the the function type.  */
+  /* Return a pointer-type to the function type.  */
   return fn_type->get_pointer ();
 }
 
@@ -1450,7 +1448,8 @@ static const char * const
 
 static const char * const
  inner_bool_option_reproducer_strings[NUM_INNER_BOOL_OPTIONS] = {
-  "gcc_jit_context_set_bool_allow_unreachable_blocks"
+  "gcc_jit_context_set_bool_allow_unreachable_blocks",
+  "gcc_jit_context_set_bool_use_external_driver"
 };
 
 /* Write the current value of all options to the log file (if any).  */

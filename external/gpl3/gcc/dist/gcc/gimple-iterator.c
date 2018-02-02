@@ -1,5 +1,5 @@
 /* Iterator routines for GIMPLE statements.
-   Copyright (C) 2007-2015 Free Software Foundation, Inc.
+   Copyright (C) 2007-2016 Free Software Foundation, Inc.
    Contributed by Aldy Hernandez  <aldy@quesejoda.com>
 
 This file is part of GCC.
@@ -21,40 +21,15 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "tm.h"
-#include "hash-set.h"
-#include "machmode.h"
-#include "vec.h"
-#include "double-int.h"
-#include "input.h"
-#include "alias.h"
-#include "symtab.h"
-#include "wide-int.h"
-#include "inchash.h"
+#include "backend.h"
 #include "tree.h"
-#include "fold-const.h"
-#include "predict.h"
-#include "hard-reg-set.h"
-#include "input.h"
-#include "function.h"
-#include "dominance.h"
-#include "cfg.h"
-#include "basic-block.h"
-#include "tree-ssa-alias.h"
-#include "internal-fn.h"
-#include "tree-eh.h"
-#include "gimple-expr.h"
-#include "is-a.h"
 #include "gimple.h"
-#include "gimple-iterator.h"
-#include "gimple-ssa.h"
-#include "hash-map.h"
-#include "plugin-api.h"
-#include "ipa-ref.h"
+#include "cfghooks.h"
+#include "ssa.h"
 #include "cgraph.h"
+#include "tree-eh.h"
+#include "gimple-iterator.h"
 #include "tree-cfg.h"
-#include "tree-phinodes.h"
-#include "ssa-iterators.h"
 #include "tree-ssa.h"
 #include "value-prof.h"
 
@@ -62,7 +37,7 @@ along with GCC; see the file COPYING3.  If not see
 /* Mark the statement STMT as modified, and update it.  */
 
 static inline void
-update_modified_stmt (gimple stmt)
+update_modified_stmt (gimple *stmt)
 {
   if (!ssa_operands_active (cfun))
     return;
@@ -72,7 +47,7 @@ update_modified_stmt (gimple stmt)
 
 /* Mark the statements in SEQ as modified, and update them.  */
 
-static void
+void
 update_modified_stmts (gimple_seq seq)
 {
   gimple_stmt_iterator gsi;
@@ -391,10 +366,10 @@ gsi_split_seq_after (gimple_stmt_iterator i)
    of gsi_replace.  */
 
 void
-gsi_set_stmt (gimple_stmt_iterator *gsi, gimple stmt)
+gsi_set_stmt (gimple_stmt_iterator *gsi, gimple *stmt)
 {
-  gimple orig_stmt = gsi_stmt (*gsi);
-  gimple prev, next;
+  gimple *orig_stmt = gsi_stmt (*gsi);
+  gimple *prev, *next;
 
   stmt->next = next = orig_stmt->next;
   stmt->prev = prev = orig_stmt->prev;
@@ -452,9 +427,9 @@ gsi_split_seq_before (gimple_stmt_iterator *i, gimple_seq *pnew_seq)
    cleanup is required.  */
 
 bool
-gsi_replace (gimple_stmt_iterator *gsi, gimple stmt, bool update_eh_info)
+gsi_replace (gimple_stmt_iterator *gsi, gimple *stmt, bool update_eh_info)
 {
-  gimple orig_stmt = gsi_stmt (*gsi);
+  gimple *orig_stmt = gsi_stmt (*gsi);
   bool require_eh_edge_purge = false;
 
   if (stmt == orig_stmt)
@@ -497,7 +472,7 @@ gsi_replace_with_seq (gimple_stmt_iterator *gsi, gimple_seq seq,
 		      bool update_eh_info)
 {
   gimple_stmt_iterator seqi;
-  gimple last;
+  gimple *last;
   if (gimple_seq_empty_p (seq))
     {
       gsi_remove (gsi, true);
@@ -521,7 +496,7 @@ gsi_replace_with_seq (gimple_stmt_iterator *gsi, gimple_seq seq,
    should use gsi_insert_before.  */
 
 void
-gsi_insert_before_without_update (gimple_stmt_iterator *i, gimple stmt,
+gsi_insert_before_without_update (gimple_stmt_iterator *i, gimple *stmt,
                                   enum gsi_iterator_update m)
 {
   gsi_insert_seq_nodes_before (i, stmt, stmt, m);
@@ -533,7 +508,7 @@ gsi_insert_before_without_update (gimple_stmt_iterator *i, gimple stmt,
    gsi_iterator_update).  */
 
 void
-gsi_insert_before (gimple_stmt_iterator *i, gimple stmt,
+gsi_insert_before (gimple_stmt_iterator *i, gimple *stmt,
                    enum gsi_iterator_update m)
 {
   update_modified_stmt (stmt);
@@ -551,7 +526,7 @@ gsi_insert_before (gimple_stmt_iterator *i, gimple stmt,
    should use gsi_insert_after.  */
 
 void
-gsi_insert_after_without_update (gimple_stmt_iterator *i, gimple stmt,
+gsi_insert_after_without_update (gimple_stmt_iterator *i, gimple *stmt,
                                  enum gsi_iterator_update m)
 {
   gsi_insert_seq_nodes_after (i, stmt, stmt, m);
@@ -564,7 +539,7 @@ gsi_insert_after_without_update (gimple_stmt_iterator *i, gimple stmt,
    gsi_iterator_update).  */
 
 void
-gsi_insert_after (gimple_stmt_iterator *i, gimple stmt,
+gsi_insert_after (gimple_stmt_iterator *i, gimple *stmt,
 		  enum gsi_iterator_update m)
 {
   update_modified_stmt (stmt);
@@ -585,7 +560,7 @@ bool
 gsi_remove (gimple_stmt_iterator *i, bool remove_permanently)
 {
   gimple_seq_node cur, next, prev;
-  gimple stmt = gsi_stmt (*i);
+  gimple *stmt = gsi_stmt (*i);
   bool require_eh_edge_purge = false;
 
   if (gimple_code (stmt) != GIMPLE_PHI)
@@ -631,7 +606,7 @@ gsi_remove (gimple_stmt_iterator *i, bool remove_permanently)
 /* Finds iterator for STMT.  */
 
 gimple_stmt_iterator
-gsi_for_stmt (gimple stmt)
+gsi_for_stmt (gimple *stmt)
 {
   gimple_stmt_iterator i;
   basic_block bb = gimple_bb (stmt);
@@ -664,7 +639,7 @@ gsi_for_phi (gphi *phi)
 void
 gsi_move_after (gimple_stmt_iterator *from, gimple_stmt_iterator *to)
 {
-  gimple stmt = gsi_stmt (*from);
+  gimple *stmt = gsi_stmt (*from);
   gsi_remove (from, false);
 
   /* We must have GSI_NEW_STMT here, as gsi_move_after is sometimes used to
@@ -679,7 +654,7 @@ gsi_move_after (gimple_stmt_iterator *from, gimple_stmt_iterator *to)
 void
 gsi_move_before (gimple_stmt_iterator *from, gimple_stmt_iterator *to)
 {
-  gimple stmt = gsi_stmt (*from);
+  gimple *stmt = gsi_stmt (*from);
   gsi_remove (from, false);
 
   /* For consistency with gsi_move_after, it might be better to have
@@ -709,7 +684,7 @@ gsi_move_to_bb_end (gimple_stmt_iterator *from, basic_block bb)
    made until a call to gsi_commit_edge_inserts () is made.  */
 
 void
-gsi_insert_on_edge (edge e, gimple stmt)
+gsi_insert_on_edge (edge e, gimple *stmt)
 {
   gimple_seq_add_stmt (&PENDING_STMT (e), stmt);
 }
@@ -749,7 +724,7 @@ gimple_find_edge_insert_loc (edge e, gimple_stmt_iterator *gsi,
 			     basic_block *new_bb)
 {
   basic_block dest, src;
-  gimple tmp;
+  gimple *tmp;
 
   dest = e->dest;
 
@@ -827,7 +802,7 @@ gimple_find_edge_insert_loc (edge e, gimple_stmt_iterator *gsi,
    block has to be created, it is returned.  */
 
 basic_block
-gsi_insert_on_edge_immediate (edge e, gimple stmt)
+gsi_insert_on_edge_immediate (edge e, gimple *stmt)
 {
   gimple_stmt_iterator gsi;
   basic_block new_bb = NULL;

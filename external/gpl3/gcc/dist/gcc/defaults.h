@@ -1,5 +1,5 @@
 /* Definitions of various defaults for tm.h macros.
-   Copyright (C) 1992-2015 Free Software Foundation, Inc.
+   Copyright (C) 1992-2016 Free Software Foundation, Inc.
    Contributed by Ron Guilmette (rfg@monkeys.com)
 
 This file is part of GCC.
@@ -123,7 +123,7 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
     {									\
       fprintf ((FILE), "\t%s\t", TLS_COMMON_ASM_OP);			\
       assemble_name ((FILE), (NAME));					\
-      fprintf ((FILE), ","HOST_WIDE_INT_PRINT_UNSIGNED",%u\n",		\
+      fprintf ((FILE), "," HOST_WIDE_INT_PRINT_UNSIGNED",%u\n",		\
 	       (SIZE), DECL_ALIGN (DECL) / BITS_PER_UNIT);		\
     }									\
   while (0)
@@ -351,7 +351,7 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 /* If we have named sections, and we're using crtstuff to run ctors,
    use them for registering eh frame information.  */
 #if defined (TARGET_ASM_NAMED_SECTION) && DWARF2_UNWIND_INFO \
-    && !defined (EH_FRAME_IN_DATA_SECTION)
+    && !defined (EH_FRAME_THROUGH_COLLECT2)
 #ifndef EH_FRAME_SECTION_NAME
 #define EH_FRAME_SECTION_NAME ".eh_frame"
 #endif
@@ -375,6 +375,21 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 #else
 #define EH_TABLES_CAN_BE_READ_ONLY 0
 #endif
+#endif
+
+/* Provide defaults for stuff that may not be defined when using
+   sjlj exceptions.  */
+#ifndef EH_RETURN_DATA_REGNO
+#define EH_RETURN_DATA_REGNO(N) INVALID_REGNUM
+#endif
+
+/* Offset between the eh handler address and entry in eh tables.  */
+#ifndef RETURN_ADDR_OFFSET
+#define RETURN_ADDR_OFFSET 0
+#endif
+
+#ifndef MASK_RETURN_ADDR
+#define MASK_RETURN_ADDR NULL_RTX
 #endif
 
 /* If we have named section and we support weak symbols, then use the
@@ -899,10 +914,14 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 #define DEFAULT_GDB_EXTENSIONS 1
 #endif
 
+#ifndef SDB_DEBUGGING_INFO
+#define SDB_DEBUGGING_INFO 0
+#endif
+
 /* If more than one debugging type is supported, you must define
    PREFERRED_DEBUGGING_TYPE to choose the default.  */
 
-#if 1 < (defined (DBX_DEBUGGING_INFO) + defined (SDB_DEBUGGING_INFO) \
+#if 1 < (defined (DBX_DEBUGGING_INFO) + (SDB_DEBUGGING_INFO) \
          + defined (DWARF2_DEBUGGING_INFO) + defined (XCOFF_DEBUGGING_INFO) \
          + defined (VMS_DEBUGGING_INFO))
 #ifndef PREFERRED_DEBUGGING_TYPE
@@ -914,10 +933,10 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 #elif defined DBX_DEBUGGING_INFO
 #define PREFERRED_DEBUGGING_TYPE DBX_DEBUG
 
-#elif defined SDB_DEBUGGING_INFO
+#elif SDB_DEBUGGING_INFO
 #define PREFERRED_DEBUGGING_TYPE SDB_DEBUG
 
-#elif defined DWARF2_DEBUGGING_INFO
+#elif defined DWARF2_DEBUGGING_INFO || defined DWARF2_LINENO_DEBUGGING_INFO
 #define PREFERRED_DEBUGGING_TYPE DWARF2_DEBUG
 
 #elif defined VMS_DEBUGGING_INFO
@@ -1186,6 +1205,110 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 #define DEFAULT_PCC_STRUCT_RETURN 1
 #endif
 
+#ifndef PCC_BITFIELD_TYPE_MATTERS
+#define PCC_BITFIELD_TYPE_MATTERS false
+#endif
+
+#ifndef INSN_SETS_ARE_DELAYED
+#define INSN_SETS_ARE_DELAYED(INSN) false
+#endif
+
+#ifndef INSN_REFERENCES_ARE_DELAYED
+#define INSN_REFERENCES_ARE_DELAYED(INSN) false
+#endif
+
+#ifndef NO_FUNCTION_CSE
+#define NO_FUNCTION_CSE false
+#endif
+
+#ifndef HARD_REGNO_RENAME_OK
+#define HARD_REGNO_RENAME_OK(FROM, TO) true
+#endif
+
+#ifndef EPILOGUE_USES
+#define EPILOGUE_USES(REG) false
+#endif
+
+#ifndef ARGS_GROW_DOWNWARD
+#define ARGS_GROW_DOWNWARD 0
+#endif
+
+#ifndef STACK_GROWS_DOWNWARD
+#define STACK_GROWS_DOWNWARD 0
+#endif
+
+#ifndef STACK_PUSH_CODE
+#if STACK_GROWS_DOWNWARD
+#define STACK_PUSH_CODE PRE_DEC
+#else
+#define STACK_PUSH_CODE PRE_INC
+#endif
+#endif
+
+/* Default value for flag_pie when flag_pie is initialized to -1:
+   --enable-default-pie: Default flag_pie to -fPIE.
+   --disable-default-pie: Default flag_pie to 0.
+ */
+#ifdef ENABLE_DEFAULT_PIE
+# ifndef DEFAULT_FLAG_PIE
+#  define DEFAULT_FLAG_PIE 2
+# endif
+#else
+# define DEFAULT_FLAG_PIE 0
+#endif
+
+#ifndef SWITCHABLE_TARGET
+#define SWITCHABLE_TARGET 0
+#endif
+
+/* If the target supports integers that are wider than two
+   HOST_WIDE_INTs on the host compiler, then the target should define
+   TARGET_SUPPORTS_WIDE_INT and make the appropriate fixups.
+   Otherwise the compiler really is not robust.  */
+#ifndef TARGET_SUPPORTS_WIDE_INT
+#define TARGET_SUPPORTS_WIDE_INT 0
+#endif
+
+#ifndef SHORT_IMMEDIATES_SIGN_EXTEND
+#define SHORT_IMMEDIATES_SIGN_EXTEND 0
+#endif
+
+#ifndef WORD_REGISTER_OPERATIONS
+#define WORD_REGISTER_OPERATIONS 0
+#endif
+
+#ifndef CONSTANT_ALIGNMENT
+#define CONSTANT_ALIGNMENT(EXP, ALIGN) ALIGN
+#endif
+
+#ifndef INITIAL_FRAME_ADDRESS_RTX
+#define INITIAL_FRAME_ADDRESS_RTX NULL
+#endif
+
+#ifndef SETUP_FRAME_ADDRESSES
+#define SETUP_FRAME_ADDRESSES() do { } while (0)
+#endif
+
+#ifndef DYNAMIC_CHAIN_ADDRESS
+#define DYNAMIC_CHAIN_ADDRESS(x) (x)
+#endif
+
+#ifndef FRAME_ADDR_RTX
+#define FRAME_ADDR_RTX(x) (x)
+#endif
+
+#ifndef REVERSE_CONDITION
+#define REVERSE_CONDITION(code, mode) reverse_condition (code)
+#endif
+
+#ifndef TARGET_PECOFF
+#define TARGET_PECOFF 0
+#endif
+
+#ifndef EH_RETURN_HANDLER_RTX
+#define EH_RETURN_HANDLER_RTX NULL
+#endif
+
 #ifdef GCC_INSN_FLAGS_H
 /* Dependent default target macro definitions
 
@@ -1272,6 +1395,18 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 #define STACK_SIZE_MODE word_mode
 #endif
 
+/* Default value for flag_stack_protect when flag_stack_protect is initialized to -1:
+   --enable-default-ssp: Default flag_stack_protect to -fstack-protector-strong.
+   --disable-default-ssp: Default flag_stack_protect to 0.
+ */
+#ifdef ENABLE_DEFAULT_SSP
+# ifndef DEFAULT_FLAG_SSP
+#  define DEFAULT_FLAG_SSP 3
+# endif
+#else
+# define DEFAULT_FLAG_SSP 0
+#endif
+
 /* Provide default values for the macros controlling stack checking.  */
 
 /* The default is neither full builtin stack checking...  */
@@ -1303,9 +1438,11 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 #define STACK_OLD_CHECK_PROTECT STACK_CHECK_PROTECT
 #else
 #define STACK_OLD_CHECK_PROTECT						\
- (targetm_common.except_unwind_info (&global_options) == UI_SJLJ	\
+ (!global_options.x_flag_exceptions					\
   ? 75 * UNITS_PER_WORD							\
-  : 8 * 1024)
+  : targetm_common.except_unwind_info (&global_options) == UI_SJLJ	\
+    ? 4 * 1024								\
+    : 8 * 1024)
 #endif
 
 /* Minimum amount of stack required to recover from an anticipated stack
@@ -1313,9 +1450,11 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
    of stack required to propagate an exception.  */
 #ifndef STACK_CHECK_PROTECT
 #define STACK_CHECK_PROTECT						\
- (targetm_common.except_unwind_info (&global_options) == UI_SJLJ	\
-  ? 75 * UNITS_PER_WORD							\
-  : 12 * 1024)
+ (!global_options.x_flag_exceptions					\
+  ? 4 * 1024								\
+  : targetm_common.except_unwind_info (&global_options) == UI_SJLJ	\
+    ? 8 * 1024								\
+    : 12 * 1024)
 #endif
 
 /* Make the maximum frame size be the largest we can and still only need
@@ -1347,18 +1486,10 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 #define TARGET_VTABLE_USES_DESCRIPTORS 0
 #endif
 
-#ifndef SWITCHABLE_TARGET
-#define SWITCHABLE_TARGET 0
-#endif
-
-/* If the target supports integers that are wider than two
-   HOST_WIDE_INTs on the host compiler, then the target should define
-   TARGET_SUPPORTS_WIDE_INT and make the appropriate fixups.
-   Otherwise the compiler really is not robust.  */
-#ifndef TARGET_SUPPORTS_WIDE_INT
-#define TARGET_SUPPORTS_WIDE_INT 0
-#endif
-
 #endif /* GCC_INSN_FLAGS_H  */
+
+#ifndef DWARF_GNAT_ENCODINGS_DEFAULT
+#define DWARF_GNAT_ENCODINGS_DEFAULT DWARF_GNAT_ENCODINGS_GDB
+#endif
 
 #endif  /* ! GCC_DEFAULTS_H */
