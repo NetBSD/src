@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2016/11/22 10:34:57 snj Exp $
+#	$NetBSD: Makefile,v 1.32 2018/02/02 01:02:41 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -113,9 +113,7 @@ CPPFLAGS.xf86AutoConfig.c=	-DPROJECTROOT='"${X11ROOTDIR}"' \
 				-DIDRIVERS='"${IDRIVERS}"'
 
 COPTS.xf86sbusBus.c=		-Wno-error=incompatible-pointer-types
-.if ${HAVE_GCC:U0} > 48
 COPTS.xf86Configure.c=		${${ACTIVE_CC} == "gcc":? -Wno-error=discarded-qualifiers :}
-.endif
 
 COPTS.xf86pciBus.c=		${${ACTIVE_CC} == "clang":? -Wno-error=tautological-constant-out-of-range-compare :}
 

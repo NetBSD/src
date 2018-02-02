@@ -1,10 +1,10 @@
-# $NetBSD: ad.riscv,v 1.7 2016/03/18 03:08:25 mrg Exp $
+# $NetBSD: ad.riscv,v 1.8 2018/02/02 01:02:41 mrg Exp $
 ./usr/include/g++/bits/riscv32			comp-c-include		arch64
 ./usr/include/g++/bits/riscv32/c++config.h	comp-c-include		arch64,gcc
 ./usr/include/g++/bits/riscv64			comp-c-include		arch64
 ./usr/include/g++/bits/riscv64/c++config.h	comp-c-include		arch64,gcc
 ./usr/include/gcc-4.8/tgmath.h			comp-c-include		gcccmds,gcc=48
-./usr/include/gcc-5/tgmath.h			comp-c-include		gcccmds,gcc=53
+./usr/include/gcc-5/tgmath.h			comp-c-include		gcccmds,gcc=5
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/riscv				comp-c-include
 ./usr/include/riscv/ansi.h			comp-c-include

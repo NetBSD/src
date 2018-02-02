@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.274 2018/01/22 17:34:01 christos Exp $
+#	$NetBSD: bsd.sys.mk,v 1.275 2018/02/02 01:02:41 mrg Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -145,10 +145,10 @@ COPTS+=	-fstack-protector -Wstack-protector
 #	http://gcc.gnu.org/bugzilla/show_bug.cgi?id=59674
 # (the underlying issue for sh and vax may be different, needs more
 # investigation, symptoms are similar but for different sources)
-# also true for GCC 5.3
+# also true for GCC 5, assume GCC 6 too.
 .	if "${ACTIVE_CC}" == "gcc" && \
-     ( ${HAVE_GCC} == "48" || \
-       ${HAVE_GCC} == "53" ) && \
+     ( ${HAVE_GCC} == "5" || \
+       ${HAVE_GCC} == "6" ) && \
      ( ${MACHINE_CPU} == "sh3" || \
        ${MACHINE_ARCH} == "vax" || \
        ${MACHINE_CPU} == "m68k" || \
