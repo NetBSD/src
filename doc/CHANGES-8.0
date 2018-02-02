@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.110 2018/01/31 19:40:52 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.111 2018/02/02 10:55:10 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -9340,3 +9340,9 @@ doc/3RDPARTY					1.1496 (via patch)
 
 	Import tzdata2018c.
 	[kre, ticket #513]
+
+sys/netinet6/ip6_mroute.c			1.120
+
+	Fix a use-after-free in the Pim6 entry point.
+	[maxv, ticket #530]
+
