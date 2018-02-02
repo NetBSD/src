@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.138.6.2 2018/01/26 15:41:12 martin Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.138.6.3 2018/02/02 12:55:08 martin Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.138.6.2 2018/01/26 15:41:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.138.6.3 2018/02/02 12:55:08 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -607,8 +607,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 
 	taddr6 = nd_na->nd_na_target;
 	if (in6_setscope(&taddr6, ifp, NULL)) {
-		m_put_rcvif_psref(ifp, &psref);
-		return;		/* XXX: impossible */
+		goto bad;
 	}
 
 	if (IN6_IS_ADDR_MULTICAST(&taddr6)) {
