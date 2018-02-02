@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.6,v 1.1.2.122 2018/02/02 11:09:12 martin Exp $
+# $NetBSD: CHANGES-6.1.6,v 1.1.2.123 2018/02/02 13:12:14 martin Exp $
 
 A complete list of changes from the NetBSD 6.1.5 release to the NetBSD 6.1.6
 release:
@@ -14975,4 +14975,9 @@ sys/netinet6/ip6_mroute.c			1.120
 
 	Fix a use-after-free in the Pim6 entry point.
 	[maxv, ticket #1524]
+
+sys/netinet6/nd6_nbr.c				1.145 (via patch)
+
+	Fix memory leak.
+	[maxv, ticket #1525]
 
