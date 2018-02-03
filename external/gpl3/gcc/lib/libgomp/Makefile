@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2018/02/02 20:57:53 mrg Exp $
+#	$NetBSD: Makefile,v 1.18 2018/02/03 19:27:15 mrg Exp $
 
 # build GCC's libgomp, so that -fopenmp works.
 
@@ -47,7 +47,8 @@ SRCS= \
 	oacc-mem.c \
 	oacc-async.c \
 	oacc-plugin.c \
-	oacc-cuda.c
+	oacc-cuda.c \
+	priority_queue.c
 
 
 GOMP_MACHINE_ARCH?=	${MACHINE_ARCH:S/earmv5/earm/}
