@@ -1,4 +1,4 @@
-/*	$NetBSD: rgephy.c,v 1.41 2017/12/23 12:49:54 jmcneill Exp $	*/
+/*	$NetBSD: rgephy.c,v 1.42 2018/02/03 19:34:01 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.41 2017/12/23 12:49:54 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.42 2018/02/03 19:34:01 jmcneill Exp $");
 
 
 /*
@@ -63,6 +63,7 @@ static void	rgephy_attach(device_t, device_t, void *);
 
 struct rgephy_softc {
 	struct mii_softc mii_sc;
+	bool mii_no_rx_delay;
 };
 
 CFATTACH_DECL_NEW(rgephy, sizeof(struct rgephy_softc),
@@ -109,6 +110,7 @@ static void
 rgephy_attach(device_t parent, device_t self, void *aux)
 {
 	struct rgephy_softc *rsc = device_private(self);
+	prop_dictionary_t prop = device_properties(self);
 	struct mii_softc *sc = &rsc->mii_sc;
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
@@ -135,6 +137,8 @@ rgephy_attach(device_t parent, device_t self, void *aux)
 	sc->mii_anegticks = MII_ANEGTICKS_GIGE;
 
 	sc->mii_funcs = &rgephy_funcs;
+
+	prop_dictionary_get_bool(prop, "no-rx-delay", &rsc->mii_no_rx_delay);
 
 #define	ADD(m, c)	ifmedia_add(&mii->mii_media, (m), (c), NULL)
 #define	PRINT(n)	aprint_normal("%s%s", sep, (n)); sep = ", "
@@ -619,6 +623,7 @@ rgephy_load_dspcode(struct mii_softc *sc)
 static void
 rgephy_reset(struct mii_softc *sc)
 {
+	struct rgephy_softc *rsc = (struct rgephy_softc *)sc;
 	uint16_t ssr, phycr1;
 
 	mii_phy_reset(sc);
@@ -636,10 +641,7 @@ rgephy_reset(struct mii_softc *sc)
 		}
 	} else if (sc->mii_mpd_rev == 5) {
 		/* RTL8211E */
-		prop_dictionary_t prop = device_properties(sc->mii_dev);
-		bool no_rx_delay = false;
-		prop_dictionary_get_bool(prop, "no-rx-delay", &no_rx_delay);
-		if (no_rx_delay) {
+		if (rsc->mii_no_rx_delay) {
 			/* Disable RX internal delay (undocumented) */
 			PHY_WRITE(sc, 0x1f, 0x0007);
 			PHY_WRITE(sc, 0x1e, 0x00a4);
