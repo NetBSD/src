@@ -1,6 +1,6 @@
 /* nbtool_config.h.in.  Generated from configure.ac by autoheader.  */
 
-/*      $NetBSD: nbtool_config.h.in,v 1.40.6.2 2017/12/21 23:06:58 snj Exp $    */
+/*      $NetBSD: nbtool_config.h.in,v 1.40.6.3 2018/02/03 22:02:02 snj Exp $    */
  
 #ifndef __NETBSD_NBTOOL_CONFIG_H__
 #define __NETBSD_NBTOOL_CONFIG_H__
@@ -46,6 +46,10 @@
 
 /* Define to 1 if you have the <ctype.h> header file. */
 #undef HAVE_CTYPE_H
+
+/* Define to 1 if you have the declaration of `asnprintf', and to 0 if you
+   don't. */
+#undef HAVE_DECL_ASNPRINTF
 
 /* Define to 1 if you have the declaration of `asprintf', and to 0 if you
    don't. */
