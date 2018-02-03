@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.270 2017/03/03 07:13:06 ozaki-r Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.270.6.1 2018/02/03 22:07:26 snj Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.270 2017/03/03 07:13:06 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.270.6.1 2018/02/03 22:07:26 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -388,8 +388,6 @@ struct mowner tcp_sock_rx_mowner = MOWNER_INIT("tcp", "sock rx");
 struct mowner tcp_sock_tx_mowner = MOWNER_INIT("tcp", "sock tx");
 #endif
 
-callout_t tcp_slowtimo_ch;
-
 static int
 do_tcpinit(void)
 {
@@ -430,8 +428,7 @@ do_tcpinit(void)
 
 	vtw_earlyinit();
 
-	callout_init(&tcp_slowtimo_ch, CALLOUT_MPSAFE);
-	callout_reset(&tcp_slowtimo_ch, 1, tcp_slowtimo, NULL);
+	tcp_slowtimo_init();
 
 	return 0;
 }
