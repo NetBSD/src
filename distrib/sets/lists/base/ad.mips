@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.75 2018/02/02 01:02:41 mrg Exp $
+# $NetBSD: ad.mips,v 1.76 2018/02/03 21:27:45 mrg Exp $
 ./lib/libc_fp.so				base-sys-shlib		dynamicroot,softfloat,arch64
 ./lib/libc_fp.so.0				base-sys-shlib		dynamicroot,softfloat,arch64
 ./lib/libc_fp.so.0.0				base-sys-shlib		dynamicroot,softfloat,arch64
@@ -15,6 +15,7 @@
 ./usr/lib/o32/libc_fp.so.0.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libgomp.so.1.1			base-compat-shlib	compat,pic,arch64,gcc=48
 ./usr/lib/o32/libgomp.so.1.2			base-compat-shlib	compat,pic,arch64,gcc=5
+./usr/lib/o32/libgomp.so.1.3			base-compat-shlib	compat,pic,arch64,gcc=6
 ./usr/libexec/ld.elf_so-64			base-compat-shlib	compat,pic,arch64
 ./usr/libexec/ld.elf_so-o32			base-sysutil-bin	compat,pic,arch64
 ./usr/lkm/ldscript				base-obsolete		obsolete
