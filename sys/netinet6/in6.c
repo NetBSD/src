@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.245.2.5 2018/01/02 10:56:58 snj Exp $	*/
+/*	$NetBSD: in6.c,v 1.245.2.6 2018/02/03 22:07:26 snj Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.245.2.5 2018/01/02 10:56:58 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.245.2.6 2018/02/03 22:07:26 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1423,6 +1423,7 @@ in6_unlink_ifa(struct in6_ifaddr *ia, struct ifnet *ifp)
 	mutex_enter(&in6_ifaddr_lock);
 	IN6_ADDRLIST_WRITER_REMOVE(ia);
 	ifa_remove(ifp, &ia->ia_ifa);
+	/* Assume ifa_remove called pserialize_perform and psref_destroy */
 	mutex_exit(&in6_ifaddr_lock);
 
 	/*

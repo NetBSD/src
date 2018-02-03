@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.91 2016/07/25 00:10:38 knakahara Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.91.8.1 2018/02/03 22:07:26 snj Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,11 +93,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.91 2016/07/25 00:10:38 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.91.8.1 2018/02/03 22:07:26 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #include "opt_tcp_debug.h"
+#include "opt_net_mpsafe.h"
 #endif
 
 #include <sys/param.h>
@@ -108,6 +109,8 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.91 2016/07/25 00:10:38 knakahara Exp
 #include <sys/protosw.h>
 #include <sys/errno.h>
 #include <sys/kernel.h>
+#include <sys/callout.h>
+#include <sys/workqueue.h>
 
 #include <net/if.h>
 
@@ -148,6 +151,15 @@ u_int	tcp_keepintvl = 0;
 u_int	tcp_keepcnt = 0;		/* max idle probes */
 
 int	tcp_maxpersistidle = 0;		/* max idle time in persist */
+
+static callout_t	tcp_slowtimo_ch;
+#ifdef NET_MPSAFE
+static struct workqueue	*tcp_slowtimo_wq;
+static struct work	tcp_slowtimo_wk;
+#endif
+
+static void tcp_slowtimo_work(struct work *, void *);
+static void tcp_slowtimo(void *);
 
 /*
  * Time to delay the ACK.  This is initialized in tcp_init(), unless
@@ -193,6 +205,21 @@ tcp_timer_init(void)
 		tcp_delack_ticks = TCP_DELACK_TICKS;
 }
 
+void
+tcp_slowtimo_init(void)
+{
+#ifdef NET_MPSAFE
+	int error;
+
+	error = workqueue_create(&tcp_slowtimo_wq, "tcp_slowtimo",
+	    tcp_slowtimo_work, NULL, PRI_SOFTNET, IPL_SOFTNET, WQ_MPSAFE);
+	if (error != 0)
+		panic("%s: workqueue_create failed (%d)\n", __func__, error);
+#endif
+	callout_init(&tcp_slowtimo_ch, CALLOUT_MPSAFE);
+	callout_reset(&tcp_slowtimo_ch, 1, tcp_slowtimo, NULL);
+}
+
 /*
  * Callout to process delayed ACKs for a TCPCB.
  */
@@ -229,8 +256,8 @@ tcp_delack(void *arg)
  * Updates the timers in all active tcb's and
  * causes finite state machine actions if timers expire.
  */
-void
-tcp_slowtimo(void *arg)
+static void
+tcp_slowtimo_work(struct work *wk, void *arg)
 {
 
 	mutex_enter(softnet_lock);
@@ -239,6 +266,17 @@ tcp_slowtimo(void *arg)
 	mutex_exit(softnet_lock);
 
 	callout_schedule(&tcp_slowtimo_ch, hz / PR_SLOWHZ);
+}
+
+static void
+tcp_slowtimo(void *arg)
+{
+
+#ifdef NET_MPSAFE
+	workqueue_enqueue(tcp_slowtimo_wq, &tcp_slowtimo_wk, NULL);
+#else
+	tcp_slowtimo_work(NULL, NULL);
+#endif
 }
 
 /*

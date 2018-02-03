@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.194.6.4 2018/01/13 22:10:55 snj Exp $	*/
+/*	$NetBSD: route.c,v 1.194.6.5 2018/02/03 22:07:26 snj Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.194.6.4 2018/01/13 22:10:55 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.194.6.5 2018/02/03 22:07:26 snj Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -747,7 +747,7 @@ rt_update_prepare(struct rtentry *rt)
 	/* If the entry is being destroyed, don't proceed the update. */
 	if (!ISSET(rt->rt_flags, RTF_UP)) {
 		RT_UNLOCK();
-		return -1;
+		return ESRCH;
 	}
 	rt->rt_flags |= RTF_UPDATING;
 	RT_UNLOCK();

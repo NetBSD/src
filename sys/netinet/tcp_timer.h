@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.h,v 1.28 2011/05/24 18:37:52 gdt Exp $	*/
+/*	$NetBSD: tcp_timer.h,v 1.28.48.1 2018/02/03 22:07:26 snj Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2005 The NetBSD Foundation, Inc.
@@ -190,6 +190,7 @@ extern int tcp_ttl;			/* time to live for TCP segs */
 extern const int tcp_backoff[];
 
 void	tcp_timer_init(void);
+void	tcp_slowtimo_init(void);
 #endif
 
 #endif /* !_NETINET_TCP_TIMER_H_ */
