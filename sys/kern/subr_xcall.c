@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_xcall.c,v 1.21 2018/02/01 03:15:29 ozaki-r Exp $	*/
+/*	$NetBSD: subr_xcall.c,v 1.22 2018/02/03 11:30:01 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.21 2018/02/01 03:15:29 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.22 2018/02/03 11:30:01 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -186,10 +186,14 @@ xc_encode_ipl(int ipl)
 		return __SHIFTIN(XC_IPL_SOFTSERIAL, XC_IPL_MASK);
 	case IPL_SOFTBIO:
 		return __SHIFTIN(XC_IPL_SOFTBIO, XC_IPL_MASK);
+#if IPL_SOFTCLOCK != IPL_SOFTBIO
 	case IPL_SOFTCLOCK:
 		return __SHIFTIN(XC_IPL_SOFTCLOCK, XC_IPL_MASK);
+#endif
+#if IPL_SOFTNET != IPL_SOFTBIO
 	case IPL_SOFTNET:
 		return __SHIFTIN(XC_IPL_SOFTNET, XC_IPL_MASK);
+#endif
 	}
 
 	panic("Invalid IPL: %d", ipl);
