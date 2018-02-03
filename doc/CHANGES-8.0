@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.112 2018/02/02 12:56:22 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.113 2018/02/03 22:17:14 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -9350,4 +9350,46 @@ sys/netinet6/nd6_nbr.c				1.145
 
 	Fix memory leak.
 	[maxv, ticket #531]
+
+tools/compat/configure				1.88 via patch
+tools/compat/configure.ac			1.89 via patch
+tools/compat/nbtool_config.h.in			1.42
+
+	Fix build on Cygwin.  PR toolchain/52797.
+	[sevan, ticket #435]
+
+sys/net/route.c					1.205
+sys/net/rtsock.c				1.237-1.238
+sys/netinet/in.c				1.215
+sys/netinet/tcp_subr.c				1.272
+sys/netinet/tcp_timer.c				1.93
+sys/netinet/tcp_timer.h				1.29
+sys/netinet/tcp_var.h				1.182
+sys/netinet6/in6.c				1.258
+
+	NET_MPSAFE improvements:
+	- Remove extra pserialize_perform from in_purgeaddr
+	- Release rt_so_mtx on updating a rtentry to avoid a
+	  deadlock with route_intr
+	- Run tcp_slowtimo in workqueue if NET_MPSAFE
+	- Fix a return value of rt_update_prepare
+	- Fix another deadlock
+	[ozaki-r, ticket #514]
+
+bin/ps/ps.c					1.89
+
+	Fix an unitialized memory read bug in ps(1)
+	[kamil, ticket #515]
+
+lib/libkvm/kvm_getlwps.3			1.8
+
+	Correct the signature of kvm_getlwps(3) in the man-page.
+	The elemsize argument is of type "size_t", not "int *".
+	[kamil, ticket #516]
+
+lib/libkvm/kvm_getprocs.3			1.17
+
+	Correct the signature of kvm_getproc2(3) in the man-page.
+	The elemsize argument is of type "size_t", not "int".
+	[kamil, ticket #517]
 
