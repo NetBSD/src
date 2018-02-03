@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2017/11/13 07:21:20 mrg Exp $
+#	$NetBSD: Makefile,v 1.29 2018/02/03 19:27:15 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -16,6 +16,20 @@ LIBDPLIBS+=	m ${.CURDIR}/../../../../../lib/libm
 #LDFLAGS+=	-pthread
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 COPTS.random.cc+=	${${ACTIVE_CC} == "clang":? -mrdrnd :}
+.endif
+
+.if ${MKPIC} != "no"
+libstdc++-symbols.ver:
+	cat ${DIST}/libstdc++-v3/config/abi/pre/gnu.ver ${G_port_specific_symbol_files} | \
+	${TOOL_GREP} -E -v '^[     ]*#(#| |$)' | \
+	${CXX} -I${DESTDIR}/usr/include/g++ -E -P -include ${.CURDIR}/arch/${LIBSTDCXX_MACHINE_ARCH}/c++config.h - > \
+	${.TARGET}.tmp && mv ${.TARGET}.tmp ${.TARGET} && rm -f ${.TARGET}.tmp
+
+libstdc++_pic.a:: libstdc++-symbols.ver
+
+LDFLAGS+=	-Wl,-O1 \
+		-Wl,--gc-sections \
+		-Wl,--version-script=libstdc++-symbols.ver
 .endif
 
 CXXFLAGS.clang+=	-stdlib=libstdc++ -std=c++11 -D_GLIBCXX_ABI_TAG_CXX11=
@@ -77,6 +91,7 @@ CPPFLAGS.concept-inst.cc += -D_GLIBCXX_CONCEPT_CHECKS
 CPPFLAGS.parallel_list.cc += -D_GLIBCXX_PARALLEL
 CPPFLAGS.parallel_settings.cc += -D_GLIBCXX_PARALLEL
 CPPFLAGS.compatibility-parallel_list.cc += -D_GLIBCXX_PARALLEL
+CPPFLAGS.compatibility.cc+=	-I${DIST}/libstdc++-v3/config
 
 cp-demangle.d cp-demangle.o: cp-demangle.h
 
@@ -108,7 +123,7 @@ BUILDSYMLINKS+=	\
 	${GLIBCXX_SRCDIR}/${G_CMONEY_CC} monetary_members_cow.cc \
 	${GLIBCXX_SRCDIR}/${G_CNUMERIC_CC} numeric_members_cow.cc
 
-# XXX both c++98 and c++11 have codecvt.cc files.
+# both c++98 and c++11 have codecvt.cc files.
 BUILDSYMLINKS+=	\
 	${GLIBCXX_SRCDIR}/src/c++98/codecvt.cc c98-codecvt.cc
 BUILDSYMLINKS+=	\
@@ -128,17 +143,29 @@ DPSRCS+=       ${_dst}
 .endif
 .endif
 
-# XXX Make this either/or,  not one, and maybe another
+# XXX Make this either/or, not one, and maybe another
+CXX11_ALWAYS=	localename.cc \
+		locale_init.cc \
+		compatibility-c++0x.cc \
+		compatibility-atomic-c++0x.cc \
+		compatibility-thread-c++0x.cc \
+		compatibility-chrono.cc \
+		compatibility-condvar.cc
 .for _s in ${SRCS:M*.cc}
-COPTS.${_s}+= -std=gnu++11
-.endfor
-.for _s in ${G_CPP98_SOURCES:Nlocalename.cc:Nlocale_init.cc:M*.cc}
+. if empty(COPTS.${_s}:M-std=*)
 COPTS.${_s}+= -std=gnu++98
+. endif
+.endfor
+.for _s in ${G_CPP11_SOURCES:M*.cc} ${CXX11_ALWAYS}
+# XXX error: 'template<class> class std::auto_ptr' is deprecated
+COPTS.${_s}+= -std=gnu++11 -Wno-error
 .endfor
 
 COPTS.del_ops.cc += -Wno-c++14-compat
 COPTS.del_opvs.cc += -Wno-c++14-compat
 COPTS.cp-demangle.c += -Wno-unused-function
+
+COPTS.ext-inst.cc+= -Wno-error
 
 .for f in collate_members_cow \
 	  messages_members_cow \
@@ -160,6 +187,7 @@ COPTS.${f}.cc+= -fimplicit-templates ${G_GLIBCXX_ABI_FLAGS}
 	${.CURDIR}/arch/${LIBSTDCXX_MACHINE_ARCH}
 
 ${OBJS}: ${.CURDIR}/arch/${LIBSTDCXX_MACHINE_ARCH}/defs.mk
+
 .else
 .include <bsd.prog.mk> # do nothing
 .endif
