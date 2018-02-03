@@ -1,4 +1,4 @@
-.\"	$NetBSD: kvm_getprocs.3,v 1.15 2009/03/10 23:49:07 joerg Exp $
+.\"	$NetBSD: kvm_getprocs.3,v 1.15.38.1 2018/02/03 22:15:13 snj Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)kvm_getprocs.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd February 10, 2004
+.Dd January 9, 2018
 .Dt KVM_GETPROCS 3
 .Os
 .Sh NAME
@@ -55,7 +55,7 @@
 .Ft char **
 .Fn kvm_getenvv "kvm_t *kd" "const struct kinfo_proc *p" "int nchr"
 .Ft struct kinfo_proc2 *
-.Fn kvm_getproc2 "kvm_t *kd" "int op" "int arg" "int elemsize" "int *cnt"
+.Fn kvm_getproc2 "kvm_t *kd" "int op" "int arg" "size_t elemsize" "int *cnt"
 .Ft char **
 .Fn kvm_getargv2 "kvm_t *kd" "const struct kinfo_proc2 *p" "int nchr"
 .Ft char **
