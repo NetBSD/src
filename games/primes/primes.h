@@ -1,4 +1,4 @@
-/*	$NetBSD: primes.h,v 1.6 2014/10/02 21:36:37 ast Exp $	*/
+/*	$NetBSD: primes.h,v 1.7 2018/02/03 15:40:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -69,6 +69,3 @@ extern const size_t pattern_size;	/* length of pattern array */
 
 /* Test for primality using strong pseudoprime tests. */
 int isprime(uint64_t);
-
-/* Maximum value which the SPSP code can handle. */
-#define	SPSPMAX 3825123056546413050ULL

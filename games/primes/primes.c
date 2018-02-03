@@ -1,4 +1,4 @@
-/*	$NetBSD: primes.c,v 1.21 2014/10/04 13:15:50 wiz Exp $	*/
+/*	$NetBSD: primes.c,v 1.22 2018/02/03 15:40:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)primes.c	8.5 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: primes.c,v 1.21 2014/10/04 13:15:50 wiz Exp $");
+__RCSID("$NetBSD: primes.c,v 1.22 2018/02/03 15:40:29 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -118,7 +118,7 @@ main(int argc, char *argv[])
 	argv += optind;
 
 	start = 0;
-	stop = SPSPMAX;
+	stop = (uint64_t)(-1);
 
 	/*
 	 * Convert low and high args.  Strtoumax(3) sets errno to
@@ -145,9 +145,6 @@ main(int argc, char *argv[])
 			err(1, "%s", argv[1]);
 		if (*p != '\0')
 			errx(1, "%s: illegal numeric format.", argv[1]);
-		if (stop > SPSPMAX)
-			errx(1, "%s: stop value too large (>%" PRIu64 ").",
-				argv[1], (uint64_t) SPSPMAX);
 		break;
 	case 1:
 		/* Start on the command line. */

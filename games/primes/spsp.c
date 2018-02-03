@@ -1,4 +1,4 @@
-/*	$NetBSD: spsp.c,v 1.1 2014/10/02 21:36:37 ast Exp $	*/
+/*	$NetBSD: spsp.c,v 1.2 2018/02/03 15:40:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 Colin Percival
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)primes.c    8.5 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: spsp.c,v 1.1 2014/10/02 21:36:37 ast Exp $");
+__RCSID("$NetBSD: spsp.c,v 1.2 2018/02/03 15:40:29 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -46,23 +46,33 @@ __RCSID("$NetBSD: spsp.c,v 1.1 2014/10/02 21:36:37 ast Exp $");
 
 #include "primes.h"
 
-/* Return a * b % n, where 0 <= a, b < 2^63, 0 < n < 2^63. */
+/* Return a * b % n, where 0 <= n. */
 static uint64_t
 mulmod(uint64_t a, uint64_t b, uint64_t n)
 {
 	uint64_t x = 0;
+	uint64_t an = a % n;
 
 	while (b != 0) {
-		if (b & 1)
-			x = (x + a) % n;
-		a = (a + a) % n;
+		if (b & 1) {
+			x += an;
+			if ((x < an) || (x >= n))
+				x -= n;
+		}
+		if (an + an < an)
+			an = an + an - n;
+		else if (an + an >= n)
+			an = an + an - n;
+		else
+			an = an + an;
+
 		b >>= 1;
 	}
 
 	return (x);
 }
 
-/* Return a^r % n, where 0 <= a < 2^63, 0 < n < 2^63. */
+/* Return a^r % n, where 0 < n. */
 static uint64_t
 powmod(uint64_t a, uint64_t r, uint64_t n)
 {
@@ -186,10 +196,20 @@ isprime(uint64_t _n)
 		return (0);
 	if (n < 3825123056546413051)
 		return (1);
+	/*
+	 * Value from:
+	 * J. Sorenson and J. Webster, Strong pseudoprimes to twelve prime
+	 * bases, Math. Comp. 86(304):985-1003, 2017.
+	 */
 
-	/* We can't handle values larger than this. */
-	assert(n <= SPSPMAX);
+       /* No SPSPs to bases 2..37 less than 318665857834031151167461. */
+       if (!spsp(n, 29))
+               return (0);
+       if (!spsp(n, 31))
+               return (0);
+       if (!spsp(n, 37))
+               return (0);
 
-	/* UNREACHABLE */
-	return (0);
+       /* All 64-bit values are less than 318665857834031151167461. */
+       return (1);
 }
