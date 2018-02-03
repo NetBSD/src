@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.311 2018/02/02 01:02:41 mrg Exp $
+# $NetBSD: shl.mi,v 1.312 2018/02/03 21:27:45 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7,8 +7,7 @@
 ./usr/lib/crtendS.o				comp-c-lib		compatfile
 ./usr/lib/libamu_pic.a				comp-obsolete		obsolete
 ./usr/lib/libarchive_pic.a			comp-c-piclib		compatfile,picinstall
-./usr/lib/libasan_pic.a				comp-c-piclib		compatfile,picinstall,gcc=48
-./usr/lib/libasan_pic.a				comp-c-piclib		compatfile,picinstall,gcc=5
+./usr/lib/libasan_pic.a				comp-c-piclib		compatfile,picinstall,gcc
 ./usr/lib/libasn1_pic.a				comp-c-piclib		compatfile,picinstall,kerberos
 ./usr/lib/libatf-c++_pic.a			comp-atf-piclib		compatfile,picinstall,atf
 ./usr/lib/libatf-c_pic.a			comp-atf-piclib		compatfile,picinstall,atf
@@ -263,7 +262,7 @@
 ./usr/lib/libtpm_unseal_pic.a			comp-tpm-lib		compatfile,picinstall,tpm
 ./usr/lib/libtre_pic.a				comp-c-piclib		compatfile,picinstall
 ./usr/lib/libtspi_pic.a				comp-c-piclib		compatfile,picinstall,tpm
-./usr/lib/libubsan_pic.a			comp-c-piclib		compatfile,picinstall,gcc=5
+./usr/lib/libubsan_pic.a			comp-c-piclib		compatfile,picinstall,gcc
 ./usr/lib/libukfs_pic.a				comp-c-piclib		compatfile,picinstall,rump
 ./usr/lib/libumem_pic.a				comp-zfs-piclib		compatfile,picinstall,zfs
 ./usr/lib/libunbound_pic.a			comp-c-piclib		compatfile,picinstall,unbound
