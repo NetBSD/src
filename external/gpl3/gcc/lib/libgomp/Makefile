@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2018/02/03 19:27:15 mrg Exp $
+#	$NetBSD: Makefile,v 1.19 2018/02/03 21:27:45 mrg Exp $
 
 # build GCC's libgomp, so that -fopenmp works.
 
@@ -67,8 +67,9 @@ CWARNFLAGS.clang+=	-Wno-conversion
 
 # libgomp is 1.0 is in GCC 4.5, and 1.1 in 4.8 since it added more symbols
 # XXXGCC5 -- marking 1.2 for GCC 5.3 for now
+# XXXGCC6 -- marking 1.3 for GCC 6 for now
 SHLIB_MAJOR=	1
-SHLIB_MINOR=	2
+SHLIB_MINOR=	3
 
 LDFLAGS+=	-Wl,--version-script,${DIST}/libgomp/libgomp.map
 

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.238 2018/02/02 01:02:41 mrg Exp $
+# $NetBSD: mi,v 1.239 2018/02/03 21:27:45 mrg Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -26,8 +26,7 @@
 ./usr/lib/i18n/libmapper_zone_g.a		comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libamu_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libarchive_g.a			comp-c-debuglib		debuglib,compatfile
-./usr/lib/libasan_g.a				comp-c-debuglib		debuglib,compatfile,gcc=48
-./usr/lib/libasan_g.a				comp-c-debuglib		debuglib,compatfile,gcc=5
+./usr/lib/libasan_g.a				comp-c-debuglib		debuglib,compatfile,gcc
 ./usr/lib/libasn1_g.a				comp-c-debuglib		debuglib,compatfile,kerberos
 ./usr/lib/libatf-c++_g.a			comp-c-debuglib		debuglib,compatfile,atf
 ./usr/lib/libatf-c_g.a				comp-c-debuglib		debuglib,compatfile,atf
@@ -252,7 +251,7 @@
 ./usr/lib/libtpm_unseal_g.a			comp-c-debuglib		debuglib,compatfile,tpm
 ./usr/lib/libtre_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libtspi_g.a				comp-c-debuglib		debuglib,compatfile,tpm
-./usr/lib/libubsan_g.a				comp-c-debuglib		debuglib,compatfile,gcc=5
+./usr/lib/libubsan_g.a				comp-c-debuglib		debuglib,compatfile,gcc
 ./usr/lib/libukfs_g.a				comp-c-debuglib		debuglib,compatfile,rump
 ./usr/lib/libumem_g.a				comp-c-debuglib		debuglib,compatfile,zfs
 ./usr/lib/libunbound_g.a			comp-c-debuglib		debuglib,compatfile,unbound
