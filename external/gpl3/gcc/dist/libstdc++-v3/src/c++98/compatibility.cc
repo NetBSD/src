@@ -381,11 +381,11 @@ _GLIBCXX_END_NAMESPACE_VERSION
    asm (".symver " #cur "," #old "@@" #version);
 
 #define _GLIBCXX_APPLY_SYMVER _GLIBCXX_3_4_SYMVER
-#include <bits/compatibility.h>
+#include <abi/compatibility.h>
 #undef _GLIBCXX_APPLY_SYMVER
 
 #define _GLIBCXX_APPLY_SYMVER _GLIBCXX_3_4_5_SYMVER
-#include <bits/compatibility.h>
+#include <abi/compatibility.h>
 #undef _GLIBCXX_APPLY_SYMVER
 
 
