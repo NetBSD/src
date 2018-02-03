@@ -1,4 +1,4 @@
-/*	$NetBSD: t_sysv.c,v 1.4 2014/03/02 20:13:12 jmmv Exp $	*/
+/*	$NetBSD: t_sysv.c,v 1.5 2018/02/03 02:57:15 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ void	sharer(void);
 
 #define	MESSAGE_TEXT_LEN	256
 
-struct mymsg {
+struct testmsg {
 	long	mtype;
 	char	mtext[MESSAGE_TEXT_LEN];
 };
@@ -174,7 +174,7 @@ key_t get_ftok(int id)
 
 	/* Create the file, since ftok() requires it to exist! */
 
-	fd = open(token_key, O_RDWR | O_CREAT | O_EXCL);
+	fd = open(token_key, O_RDWR | O_CREAT | O_EXCL, 0600);
 	if (fd == -1) {
 		rmdir(tmpdir);
 		atf_tc_fail("open() of temp file failed: %d", errno);
@@ -183,6 +183,7 @@ key_t get_ftok(int id)
 		close(fd);
 
 	key = ftok(token_key, id);
+	ATF_REQUIRE_MSG(key != (key_t)-1, "ftok() failed");
 
 	ATF_REQUIRE_MSG(unlink(token_key) != -1, "unlink() failed: %d", errno);
 	ATF_REQUIRE_MSG(rmdir(token_dir) != -1, "rmdir() failed: %d", errno);
@@ -202,7 +203,7 @@ ATF_TC_BODY(msg, tc)
 {
 	struct sigaction sa;
 	struct msqid_ds m_ds;
-	struct mymsg m;
+	struct testmsg m;
 	sigset_t sigmask;
 	int sender_msqid;
 	int loop;
@@ -347,9 +348,7 @@ ATF_TC_CLEANUP(msg, tc)
 }
 
 void
-print_msqid_ds(mp, mode)
-	struct msqid_ds *mp;
-	mode_t mode;
+print_msqid_ds(struct msqid_ds *mp, mode_t mode)
 {
 	uid_t uid = geteuid();
 	gid_t gid = getegid();
@@ -381,9 +380,9 @@ print_msqid_ds(mp, mode)
 }
 
 void
-receiver()
+receiver(void)
 {
-	struct mymsg m;
+	struct testmsg m;
 	int msqid, loop;
 
 	if ((msqid = msgget(msgkey, 0)) == -1)
@@ -588,9 +587,7 @@ ATF_TC_CLEANUP(sem, tc)
 }
 
 void
-print_semid_ds(sp, mode)
-	struct semid_ds *sp;
-	mode_t mode;
+print_semid_ds(struct semid_ds *sp, mode_t mode)
 {
 	uid_t uid = geteuid();
 	gid_t gid = getegid();
@@ -620,7 +617,7 @@ print_semid_ds(sp, mode)
 }
 
 void
-waiter()
+waiter(void)
 {
 	struct sembuf s;
 	int semid;
@@ -789,9 +786,7 @@ ATF_TC_CLEANUP(shm, tc)
 }
 
 void
-print_shmid_ds(sp, mode)
-	struct shmid_ds *sp;
-	mode_t mode;
+print_shmid_ds(struct shmid_ds *sp, mode_t mode)
 {
 	uid_t uid = geteuid();
 	gid_t gid = getegid();
@@ -819,11 +814,12 @@ print_shmid_ds(sp, mode)
 	ATF_REQUIRE_MSG(sp->shm_perm.gid == gid && sp->shm_perm.cgid == gid,
 	    "gid mismatch");
 
-	ATF_REQUIRE_MSG((sp->shm_perm.mode & 0777) == mode, "mode mismatch");
+	ATF_REQUIRE_MSG((sp->shm_perm.mode & 0777) == mode,
+	    "mode mismatch %o != %o", sp->shm_perm.mode & 0777, mode);
 }
 
 void
-sharer()
+sharer(void)
 {
 	int shmid;
 	void *shm_buf;
