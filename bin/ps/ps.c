@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.88 2016/12/26 20:52:39 rin Exp $	*/
+/*	$NetBSD: ps.c,v 1.88.6.1 2018/02/03 22:11:36 snj Exp $	*/
 
 /*
  * Copyright (c) 2000-2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.88 2016/12/26 20:52:39 rin Exp $");
+__RCSID("$NetBSD: ps.c,v 1.88.6.1 2018/02/03 22:11:36 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -224,7 +224,7 @@ main(int argc, char *argv[])
 	if (argc > 1)
 		argv[1] = kludge_oldps_options(argv[1]);
 
-	descendancy = fmt = prtheader = wflag = xflg = showlwps = 0;
+	descendancy = fmt = prtheader = wflag = xflg = rawcpu = showlwps = 0;
 	what = KERN_PROC_UID;
 	flag = myuid = getuid();
 	memf = nlistf = swapf = NULL;
