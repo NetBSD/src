@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2173 2018/02/02 01:02:41 mrg Exp $
+#	$NetBSD: mi,v 1.2174 2018/02/03 21:27:45 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -946,12 +946,12 @@
 ./usr/include/g++/bitprims.h			comp-obsolete		obsolete
 ./usr/include/g++/bits/algorithmfwd.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/alloc_traits.h		comp-cxx-include	gcc,cxx,libstdcxx
-./usr/include/g++/bits/allocated_ptr.h		comp-cxx-include	gcc=5,cxx,libstdcxx
+./usr/include/g++/bits/allocated_ptr.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/allocator.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/atomic_0.h		comp-obsolete	obsolete
 ./usr/include/g++/bits/atomic_2.h		comp-obsolete	obsolete
 ./usr/include/g++/bits/atomic_base.h		comp-cxx-include	gcc,cxx,libstdcxx
-./usr/include/g++/bits/atomic_futex.h		comp-cxx-include	gcc=5,cxx,libstdcxx
+./usr/include/g++/bits/atomic_futex.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/atomic_lockfree_defines.h	comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/atomic_word.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/atomicfwd_c.h		comp-obsolete	obsolete
@@ -964,7 +964,7 @@
 ./usr/include/g++/bits/basic_string.tcc		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/boost_concept_check.h	comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/c++0x_warning.h		comp-cxx-include	gcc,cxx,libstdcxx
-./usr/include/g++/bits/c++14_warning.h		comp-cxx-include	gcc=5,cxx,libstdcxx
+./usr/include/g++/bits/c++14_warning.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/c++allocator.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/c++config.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/c++io.h			comp-cxx-include	gcc,cxx,libstdcxx
@@ -983,7 +983,7 @@
 ./usr/include/g++/bits/cxxabi_forced.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/cxxabi_tweaks.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/deque.tcc		comp-cxx-include	gcc,cxx,libstdcxx
-./usr/include/g++/bits/enable_special_members.h	comp-cxx-include	gcc=5,cxx,libstdcxx
+./usr/include/g++/bits/enable_special_members.h	comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/error_constants.h	comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/exception_defines.h	comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/exception_ptr.h		comp-cxx-include	gcc,cxx,libstdcxx
@@ -1010,7 +1010,7 @@
 ./usr/include/g++/bits/list.tcc			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/locale_classes.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/locale_classes.tcc	comp-cxx-include	gcc,cxx,libstdcxx
-./usr/include/g++/bits/locale_conv.h		comp-cxx-include	gcc=5,cxx,libstdcxx
+./usr/include/g++/bits/locale_conv.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/locale_facets.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/locale_facets.tcc	comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/locale_facets_nonio.h	comp-cxx-include	gcc,cxx,libstdcxx
@@ -1025,34 +1025,34 @@
 ./usr/include/g++/bits/os_defines.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/ostream.tcc		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/ostream_insert.h		comp-cxx-include	gcc,cxx,libstdcxx
-./usr/include/g++/bits/parse_numbers.h		comp-cxx-include	gcc=5,cxx,libstdcxx
+./usr/include/g++/bits/parse_numbers.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/postypes.h		comp-cxx-include	gcc,cxx,libstdcxx
-./usr/include/g++/bits/predefined_ops.h		comp-cxx-include	gcc=5,cxx,libstdcxx
+./usr/include/g++/bits/predefined_ops.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/pthread_allocimpl.h	comp-obsolete		obsolete
 ./usr/include/g++/bits/ptr_traits.h		comp-cxx-include	gcc,cxx,libstdcxx
-./usr/include/g++/bits/quoted_string.h		comp-cxx-include	gcc=5,cxx,libstdcxx
+./usr/include/g++/bits/quoted_string.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/random.h			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/random.tcc		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/range_access.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/regex.h			comp-cxx-include	gcc,cxx,libstdcxx
-./usr/include/g++/bits/regex.tcc		comp-cxx-include	gcc=5,cxx,libstdcxx
-./usr/include/g++/bits/regex_automaton.h	comp-cxx-include	gcc=5,cxx,libstdcxx
-./usr/include/g++/bits/regex_automaton.tcc	comp-cxx-include	gcc=5,cxx,libstdcxx
+./usr/include/g++/bits/regex.tcc		comp-cxx-include	gcc,cxx,libstdcxx
+./usr/include/g++/bits/regex_automaton.h	comp-cxx-include	gcc,cxx,libstdcxx
+./usr/include/g++/bits/regex_automaton.tcc	comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/regex_compiler.h		comp-cxx-include	gcc,cxx,libstdcxx
-./usr/include/g++/bits/regex_compiler.tcc	comp-cxx-include	gcc=5,cxx,libstdcxx
+./usr/include/g++/bits/regex_compiler.tcc	comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/regex_constants.h	comp-cxx-include	gcc,cxx,libstdcxx
-./usr/include/g++/bits/regex_cursor.h		comp-cxx-include	gcc=48,cxx,libstdcxx
+./usr/include/g++/bits/regex_cursor.h		comp-cxx-include	obsolete
 ./usr/include/g++/bits/regex_error.h		comp-cxx-include	gcc,cxx,libstdcxx
-./usr/include/g++/bits/regex_executor.h		comp-cxx-include	gcc=5,cxx,libstdcxx
-./usr/include/g++/bits/regex_executor.tcc	comp-cxx-include	gcc=5,cxx,libstdcxx
-./usr/include/g++/bits/regex_grep_matcher.h	comp-cxx-include	gcc=48,cxx,libstdcxx
-./usr/include/g++/bits/regex_grep_matcher.tcc	comp-cxx-include	gcc=48,cxx,libstdcxx
-./usr/include/g++/bits/regex_nfa.h		comp-cxx-include	gcc=48,cxx,libstdcxx
-./usr/include/g++/bits/regex_nfa.tcc		comp-cxx-include	gcc=48,cxx,libstdcxx
-./usr/include/g++/bits/regex_scanner.h		comp-cxx-include	gcc=5,cxx,libstdcxx
-./usr/include/g++/bits/regex_scanner.tcc	comp-cxx-include	gcc=5,cxx,libstdcxx
+./usr/include/g++/bits/regex_executor.h		comp-cxx-include	gcc,cxx,libstdcxx
+./usr/include/g++/bits/regex_executor.tcc	comp-cxx-include	gcc,cxx,libstdcxx
+./usr/include/g++/bits/regex_grep_matcher.h	comp-cxx-include	obsolete
+./usr/include/g++/bits/regex_grep_matcher.tcc	comp-cxx-include	obsolete
+./usr/include/g++/bits/regex_nfa.h		comp-cxx-include	obsolete
+./usr/include/g++/bits/regex_nfa.tcc		comp-cxx-include	obsolete
+./usr/include/g++/bits/regex_scanner.h		comp-cxx-include	gcc,cxx,libstdcxx
+./usr/include/g++/bits/regex_scanner.tcc	comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/shared_ptr.h		comp-cxx-include	gcc,cxx,libstdcxx
-./usr/include/g++/bits/shared_ptr_atomic.h	comp-cxx-include	gcc=5,cxx,libstdcxx
+./usr/include/g++/bits/shared_ptr_atomic.h	comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/shared_ptr_base.h	comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/slice_array.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/sstream.tcc		comp-cxx-include	gcc,cxx,libstdcxx
@@ -1092,7 +1092,7 @@
 ./usr/include/g++/bits/stringfwd.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/time_members.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/type_traits.h		comp-obsolete		obsolete
-./usr/include/g++/bits/uniform_int_dist.h	comp-cxx-include	gcc=5,cxx,libstdcxx
+./usr/include/g++/bits/uniform_int_dist.h	comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/unique_ptr.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/unordered_map.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/unordered_set.h		comp-cxx-include	gcc,cxx,libstdcxx
@@ -1121,7 +1121,7 @@
 ./usr/include/g++/climits			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/clocale			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/cmath				comp-cxx-include	gcc,cxx,libstdcxx
-./usr/include/g++/codecvt			comp-cxx-include	gcc=5,cxx,libstdcxx
+./usr/include/g++/codecvt			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/compare.h			comp-obsolete		obsolete
 ./usr/include/g++/complex			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/complex.h			comp-obsolete		obsolete
@@ -1162,7 +1162,7 @@
 ./usr/include/g++/debug/multimap.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/debug/multiset.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/debug/safe_base.h		comp-cxx-include	gcc,cxx,libstdcxx
-./usr/include/g++/debug/safe_container.h	comp-cxx-include	gcc=5,cxx,libstdcxx
+./usr/include/g++/debug/safe_container.h	comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/debug/safe_iterator.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/debug/safe_iterator.tcc	comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/debug/safe_local_iterator.h	comp-cxx-include	gcc,cxx,libstdcxx
@@ -1188,7 +1188,7 @@
 ./usr/include/g++/exception_defines.h		comp-obsolete		obsolete
 ./usr/include/g++/exception_ptr.h		comp-obsolete		obsolete
 ./usr/include/g++/ext/algorithm			comp-cxx-include	gcc,cxx,libstdcxx
-./usr/include/g++/ext/aligned_buffer.h		comp-cxx-include	gcc=5,cxx,libstdcxx
+./usr/include/g++/ext/aligned_buffer.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/ext/alloc_traits.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/ext/array_allocator.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/ext/atomicity.h		comp-cxx-include	gcc,cxx,libstdcxx
@@ -1752,7 +1752,7 @@
 ./usr/include/g++/profile/map.h			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/profile/multimap.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/profile/multiset.h		comp-cxx-include	gcc,cxx,libstdcxx
-./usr/include/g++/profile/ordered_base.h		comp-cxx-include	gcc=5,cxx,libstdcxx
+./usr/include/g++/profile/ordered_base.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/profile/set			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/profile/set.h			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/profile/unordered_base.h	comp-cxx-include	gcc,cxx,libstdcxx
@@ -1775,7 +1775,7 @@
 ./usr/include/g++/scoped_allocator		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/set				comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/set.h				comp-obsolete		obsolete
-./usr/include/g++/shared_mutex		comp-cxx-include	gcc=5,cxx,libstdcxx
+./usr/include/g++/shared_mutex		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/slist				comp-obsolete		obsolete
 ./usr/include/g++/slist.h			comp-obsolete		obsolete
 ./usr/include/g++/sstream			comp-cxx-include	gcc,cxx,libstdcxx
@@ -1972,7 +1972,7 @@
 ./usr/include/g++/tr2/bool_set			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/tr2/bool_set.tcc		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/tr2/dynamic_bitset		comp-cxx-include	gcc,cxx,libstdcxx
-./usr/include/g++/tr2/dynamic_bitset.tcc		comp-cxx-include	gcc=5,cxx,libstdcxx
+./usr/include/g++/tr2/dynamic_bitset.tcc		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/tr2/ratio			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/tr2/type_traits		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/tree.cc			comp-obsolete		obsolete
@@ -1992,8 +1992,8 @@
 ./usr/include/g++/vector.h			comp-obsolete		obsolete
 ./usr/include/gcc-4.5/mf-runtime.h		comp-obsolete		obsolete
 ./usr/include/gcc-4.5/omp.h			comp-obsolete		obsolete
-./usr/include/gcc-4.8/mf-runtime.h		comp-gcc-include	gcc=48
-./usr/include/gcc-4.8/omp.h			comp-gcc-include	gcc=48
+./usr/include/gcc-4.8/mf-runtime.h		comp-gcc-include	obsolete
+./usr/include/gcc-4.8/omp.h			comp-gcc-include	obsolete
 ./usr/include/gcc-5/omp.h			comp-gcc-include	gcc=5
 ./usr/include/gcc-5/openacc.h			comp-gcc-include	gcc=5
 ./usr/include/gcc-5/stdatomic.h			comp-gcc-include	gcc=5,gcccmds
@@ -2001,6 +2001,13 @@
 ./usr/include/gcc-5/sanitizer/asan_interface.h	comp-gcc-include	gcc=5
 ./usr/include/gcc-5/sanitizer/common_interface_defs.h	comp-gcc-include	gcc=5
 ./usr/include/gcc-5/sanitizer/tsan_interface_atomic.h	comp-gcc-include	gcc=5
+./usr/include/gcc-6/omp.h			comp-gcc-include	gcc=6
+./usr/include/gcc-6/openacc.h			comp-gcc-include	gcc=6
+./usr/include/gcc-6/stdatomic.h			comp-gcc-include	gcc=6,gcccmds
+./usr/include/gcc-6/sanitizer/allocator_interface.h	comp-gcc-include	gcc=6
+./usr/include/gcc-6/sanitizer/asan_interface.h	comp-gcc-include	gcc=6
+./usr/include/gcc-6/sanitizer/common_interface_defs.h	comp-gcc-include	gcc=6
+./usr/include/gcc-6/sanitizer/tsan_interface_atomic.h	comp-gcc-include	gcc=6
 ./usr/include/gelf.h				comp-c-include
 ./usr/include/getopt.h				comp-c-include
 ./usr/include/glob.h				comp-c-include
@@ -3186,10 +3193,8 @@
 ./usr/lib/libamu_p.a				comp-obsolete		obsolete
 ./usr/lib/libarchive.a				comp-c-lib		compatfile
 ./usr/lib/libarchive_p.a			comp-c-proflib		compatfile,profile
-./usr/lib/libasan.a				comp-c-lib		compatfile,gcc=48
-./usr/lib/libasan.a				comp-c-lib		compatfile,gcc=5
-./usr/lib/libasan_p.a				comp-c-proflib		compatfile,profile,gcc=48
-./usr/lib/libasan_p.a				comp-c-proflib		compatfile,profile,gcc=5
+./usr/lib/libasan.a				comp-c-lib		compatfile,gcc
+./usr/lib/libasan_p.a				comp-c-proflib		compatfile,profile,gcc
 ./usr/lib/libasn1.a				comp-krb5-lib		compatfile,kerberos
 ./usr/lib/libasn1_p.a				comp-krb5-proflib	compatfile,kerberos,profile
 ./usr/lib/libatf-c++.a				comp-atf-lib		compatfile,atf
@@ -3662,8 +3667,8 @@
 ./usr/lib/libtre_p.a				comp-c-proflib		compatfile,profile
 ./usr/lib/libtspi.a				comp-c-lib		compatfile,tpm
 ./usr/lib/libtspi_p.a				comp-c-proflib		compatfile,tpm,profile
-./usr/lib/libubsan.a				comp-c-lib		compatfile,gcc=5
-./usr/lib/libubsan_p.a				comp-c-proflib		compatfile,profile,gcc=5
+./usr/lib/libubsan.a				comp-c-lib		compatfile,gcc
+./usr/lib/libubsan_p.a				comp-c-proflib		compatfile,profile,gcc
 ./usr/lib/libukfs.a				comp-c-lib		compatfile,rump
 ./usr/lib/libukfs_p.a				comp-c-proflib		compatfile,rump,profile
 ./usr/lib/libumem.a				comp-zfs-lib		compatfile,zfs

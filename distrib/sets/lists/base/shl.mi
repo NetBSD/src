@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.826 2018/02/02 01:02:41 mrg Exp $
+# $NetBSD: shl.mi,v 1.827 2018/02/03 21:27:45 mrg Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -175,12 +175,13 @@
 ./usr/lib/libarchive.so				base-sys-shlib		compatfile
 ./usr/lib/libarchive.so.4			base-sys-shlib		compatfile
 ./usr/lib/libarchive.so.4.0			base-sys-shlib		compatfile
-./usr/lib/libasan.so				base-sys-shlib		compatfile,gcc=48
-./usr/lib/libasan.so				base-sys-shlib		compatfile,gcc=5
+./usr/lib/libasan.so				base-sys-shlib		compatfile,gcc
 ./usr/lib/libasan.so.0				base-sys-shlib		compatfile,gcc=48
 ./usr/lib/libasan.so.0.0			base-sys-shlib		compatfile,gcc=48
 ./usr/lib/libasan.so.2				base-sys-shlib		compatfile,gcc=5
 ./usr/lib/libasan.so.2.0			base-sys-shlib		compatfile,gcc=5
+./usr/lib/libasan.so.3				base-sys-shlib		compatfile,gcc=6
+./usr/lib/libasan.so.3.0			base-sys-shlib		compatfile,gcc=6
 ./usr/lib/libasn1.so				base-krb5-shlib		compatfile,kerberos
 ./usr/lib/libasn1.so.10				base-krb5-shlib		compatfile,kerberos
 ./usr/lib/libasn1.so.10.0			base-krb5-shlib		compatfile,kerberos
@@ -805,6 +806,7 @@
 ./usr/lib/libstdc++.so.8			base-sys-shlib		compatfile,gcc,cxx,libstdcxx
 ./usr/lib/libstdc++.so.7.3			base-sys-shlib		compatfile,gcc=48,cxx,libstdcxx
 ./usr/lib/libstdc++.so.8.0			base-sys-shlib		compatfile,gcc=5,cxx,libstdcxx
+./usr/lib/libstdc++.so.8.1			base-sys-shlib		compatfile,gcc=6,cxx,libstdcxx
 ./usr/lib/libtelnet.so				base-obsolete		obsolete
 ./usr/lib/libtermcap.so				base-sys-shlib		compatfile
 ./usr/lib/libtermcap.so.0			base-sys-shlib		compatfile
@@ -824,9 +826,11 @@
 ./usr/lib/libtspi.so				base-sys-shlib		compatfile,tpm
 ./usr/lib/libtspi.so.3				base-sys-shlib		compatfile,tpm
 ./usr/lib/libtspi.so.3.0			base-sys-shlib		compatfile,tpm
-./usr/lib/libubsan.so				base-sys-shlib		compatfile,gcc=5
+./usr/lib/libubsan.so				base-sys-shlib		compatfile,gcc
 ./usr/lib/libubsan.so.1				base-sys-shlib		compatfile,gcc=5
 ./usr/lib/libubsan.so.1.0			base-sys-shlib		compatfile,gcc=5
+./usr/lib/libubsan.so.2				base-sys-shlib		compatfile,gcc=6
+./usr/lib/libubsan.so.2.0			base-sys-shlib		compatfile,gcc=6
 ./usr/lib/libukfs.so				base-sys-shlib		compatfile,rump
 ./usr/lib/libukfs.so.1				base-sys-shlib		compatfile,rump
 ./usr/lib/libukfs.so.1.0			base-sys-shlib		compatfile,rump

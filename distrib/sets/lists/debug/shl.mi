@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.189 2018/02/02 01:02:41 mrg Exp $
+# $NetBSD: shl.mi,v 1.190 2018/02/03 21:27:45 mrg Exp $
 ./usr/lib/libbfd_g.a						comp-c-debuglib	debuglib,compatfile,binutils
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libblacklist.so.0.0.debug		comp-sys-debug	debug,dynamicroot
@@ -56,8 +56,8 @@
 ./usr/libdata/debug/usr/lib/i18n/libmapper_zone.so.5.0.debug	comp-i18n-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libamu.so.5.0.debug			comp-amd-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libarchive.so.4.0.debug		comp-sys-debug	debug,compatfile
-./usr/libdata/debug/usr/lib/libasan.so.0.0.debug		comp-sys-debug	debug,compatfile,gcc=48
 ./usr/libdata/debug/usr/lib/libasan.so.2.0.debug		comp-sys-debug	debug,compatfile,gcc=5
+./usr/libdata/debug/usr/lib/libasan.so.3.0.debug		comp-sys-debug	debug,compatfile,gcc=6
 ./usr/libdata/debug/usr/lib/libasn1.so.10.0.debug		comp-krb5-debug	debug,compatfile,kerberos
 ./usr/libdata/debug/usr/lib/libatf-c++.so.2.0.debug		comp-atf-debug	debug,compatfile,atf
 ./usr/libdata/debug/usr/lib/libatf-c.so.0.0.debug		comp-atf-debug	debug,compatfile,atf
@@ -100,8 +100,8 @@
 ./usr/libdata/debug/usr/lib/libgcc_s.so.1.0.debug		comp-sys-debug	debug,compatfile,gcc
 ./usr/libdata/debug/usr/lib/libgmp.so.10.2.debug		comp-obsolete	obsolete
 ./usr/libdata/debug/usr/lib/libgnumalloc.so.1.0.debug		comp-sys-debug	debug,compatfile
-./usr/libdata/debug/usr/lib/libgomp.so.1.1.debug		comp-sys-debug	debug,compatfile,gcc=48
 ./usr/libdata/debug/usr/lib/libgomp.so.1.2.debug		comp-sys-debug	debug,compatfile,gcc=5
+./usr/libdata/debug/usr/lib/libgomp.so.1.3.debug		comp-sys-debug	debug,compatfile,gcc=6
 ./usr/libdata/debug/usr/lib/libgssapi.so.11.0.debug		comp-krb5-debug	debug,compatfile,kerberos
 ./usr/libdata/debug/usr/lib/libhdb.so.15.0.debug		comp-krb5-debug	debug,compatfile,kerberos
 ./usr/libdata/debug/usr/lib/libheimbase.so.2.0.debug		comp-krb5-debug	debug,compatfile,kerberos
@@ -272,13 +272,14 @@
 ./usr/libdata/debug/usr/lib/libsqlite3.so.1.3.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libssh.so.31.0.debug		comp-secsh-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libssl.so.12.0.debug		comp-crypto-debug	debug,compatfile
-./usr/libdata/debug/usr/lib/libstdc++.so.7.3.debug		comp-sys-debug	debug,compatfile,gcc=48,cxx,libstdcxx
 ./usr/libdata/debug/usr/lib/libstdc++.so.8.0.debug		comp-sys-debug	debug,compatfile,gcc=5,cxx,libstdcxx
+./usr/libdata/debug/usr/lib/libstdc++.so.8.1.debug		comp-sys-debug	debug,compatfile,gcc=6,cxx,libstdcxx
 ./usr/libdata/debug/usr/lib/libterminfo.so.1.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libtpm_unseal.so.1.0.debug		comp-tpm-debug	debug,compatfile,tpm
 ./usr/libdata/debug/usr/lib/libtre.so.0.8.debug			comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libtspi.so.3.0.debug		comp-tpm-debug	debug,compatfile,tpm
 ./usr/libdata/debug/usr/lib/libubsan.so.1.0.debug		comp-sys-debug	debug,compatfile,gcc=5
+./usr/libdata/debug/usr/lib/libubsan.so.2.0.debug		comp-sys-debug	debug,compatfile,gcc=6
 ./usr/libdata/debug/usr/lib/libukfs.so.1.0.debug		comp-sys-debug	debug,compatfile,rump
 ./usr/libdata/debug/usr/lib/libumem.so.0.0.debug		comp-zfs-debug	debug,compatfile,zfs
 ./usr/libdata/debug/usr/lib/libunbound.so.6.1.debug 		comp-net-debug	debug,compatfile,unbound
