@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.494 2017/12/26 03:58:03 msaitoh Exp $	*/
+/*	$NetBSD: init_main.c,v 1.495 2018/02/04 17:31:51 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.494 2017/12/26 03:58:03 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.495 2018/02/04 17:31:51 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -116,6 +116,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.494 2017/12/26 03:58:03 msaitoh Exp 
 #include "opt_rnd_printf.h"
 #include "opt_splash.h"
 #include "opt_kernhist.h"
+#include "opt_gprof.h"
 
 #if defined(SPLASHSCREEN) && defined(makeoptions_SPLASHSCREEN_IMAGE)
 extern void *_binary_splash_image_start;

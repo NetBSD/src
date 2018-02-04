@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prof.c,v 1.47 2014/07/10 21:13:52 christos Exp $	*/
+/*	$NetBSD: subr_prof.c,v 1.48 2018/02/04 17:31:51 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.47 2014/07/10 21:13:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.48 2018/02/04 17:31:51 maxv Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_gprof.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
