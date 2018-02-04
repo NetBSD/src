@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.40 2018/02/04 09:22:03 mrg Exp $
+#	$NetBSD: Makefile,v 1.41 2018/02/04 10:16:07 mrg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -554,6 +554,11 @@ COPTS.generic-match.c+=-fno-jump-tables
 COPTS.gimple-match.c+=-fno-jump-tables
 .endif
 
+# Don't fight with decimal128Local.h.
+# The GCC build only ignores the warning?
+COPTS.dfp.c+=	-fno-strict-aliasing
+
+CFLAGS+= -fno-exceptions -fno-rtti -fasynchronous-unwind-tables
 
 .PATH: ${DIST}/gcc ${DIST}/libiberty ${GCCARCH} ${G_out_file:H} ${DIST}/include
 .PATH: ${DIST}/gcc/config
