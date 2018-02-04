@@ -1,4 +1,4 @@
-/*	$NetBSD: pkg_io.c,v 1.2 2017/04/20 13:18:23 joerg Exp $	*/
+/*	$NetBSD: pkg_io.c,v 1.3 2018/02/04 09:00:51 maya Exp $	*/
 /*-
  * Copyright (c) 2008, 2009 Joerg Sonnenberger <joerg@NetBSD.org>.
  * All rights reserved.
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 #endif
 
-__RCSID("$NetBSD: pkg_io.c,v 1.2 2017/04/20 13:18:23 joerg Exp $");
+__RCSID("$NetBSD: pkg_io.c,v 1.3 2018/02/04 09:00:51 maya Exp $");
 
 #include <archive.h>
 #include <archive_entry.h>
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: pkg_io.c,v 1.2 2017/04/20 13:18:23 joerg Exp $");
 #include <stdlib.h>
 
 #ifdef BOOTSTRAP
+#undef IS_URL
 #define IS_URL(x) 0
 #else
 #include <fetch.h>
