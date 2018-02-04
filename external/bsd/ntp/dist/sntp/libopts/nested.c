@@ -1,4 +1,4 @@
-/*	$NetBSD: nested.c,v 1.10 2016/05/01 23:32:01 christos Exp $	*/
+/*	$NetBSD: nested.c,v 1.11 2018/02/04 09:15:45 mrg Exp $	*/
 
 
 /**
@@ -788,7 +788,8 @@ optionLoadNested(char const * text, char const * name, size_t nm_len)
         case NUL: goto scan_done;
         case '<': text = scan_xml(text, res_val);
                   if (text == NULL) goto woops;
-                  if (*text == ',') text++; break;
+                  if (*text == ',') text++;
+		  break;
         case '#': text = strchr(text, NL);  break;
         default:  goto woops;
         }

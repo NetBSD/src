@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.6 2017/01/03 01:56:03 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.7 2018/02/04 09:15:45 mrg Exp $	*/
 
 /* flex - tool to generate fast lexical analyzers */
 
@@ -33,7 +33,7 @@
 /*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR */
 /*  PURPOSE. */
 #include "flexdef.h"
-__RCSID("$NetBSD: main.c,v 1.6 2017/01/03 01:56:03 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.7 2018/02/04 09:15:45 mrg Exp $");
 
 
 #include "version.h"
@@ -313,8 +313,8 @@ void check_options (void)
 		}
 	}
 
-    if (extra_type)
-        buf_m4_define( &m4defs_buf, "M4_EXTRA_TYPE_DEFS", extra_type);
+	if (extra_type)
+		buf_m4_define( &m4defs_buf, "M4_EXTRA_TYPE_DEFS", extra_type);
 
 	if (!use_stdout) {
 		FILE   *prev_stdout;
@@ -497,12 +497,12 @@ void check_options (void)
     if (gen_line_dirs)
         outn("#line 0 \"M4_YY_OUTFILE_NAME\"\n");
 
-	/* Dump the user defined preproc directives. */
-	if (userdef_buf.elts)
-		outn ((char *) (userdef_buf.elts));
+    /* Dump the user defined preproc directives. */
+    if (userdef_buf.elts)
+        outn ((char *) (userdef_buf.elts));
 
-	skelout ();
-	/* %% [1.0] */
+    skelout ();
+    /* %% [1.0] */
 }
 
 /* flexend - terminate flex
