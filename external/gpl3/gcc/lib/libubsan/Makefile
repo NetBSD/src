@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2017/06/29 18:52:23 joerg Exp $
+#	$NetBSD: Makefile,v 1.4 2018/02/04 01:16:33 mrg Exp $
 
 UNSUPPORTED_COMPILER.clang=	# defined
 
@@ -15,10 +15,16 @@ UBSAN_SRCS= \
 	ubsan_handlers.o \
 	ubsan_handlers_cxx.o \
 	ubsan_init.o \
+	ubsan_init_standalone.o \
 	ubsan_type_hash.o \
+	ubsan_type_hash_itanium.o \
+	ubsan_type_hash_win.o \
 	ubsan_value.o
 
-COPTS.ubsan_type_hash.cc+=-frtti
+
+.for _s in ubsan_handlers_cxx ubsan_type_hash ubsan_type_hash_itanium
+COPTS.${_s}.cc+=-frtti
+.endfor
 
 LIB=	ubsan
 SRCS+=	${UBSAN_SRCS}
