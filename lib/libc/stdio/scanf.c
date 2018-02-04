@@ -1,4 +1,4 @@
-/*	$NetBSD: scanf.c,v 1.14 2013/04/19 23:32:17 joerg Exp $	*/
+/*	$NetBSD: scanf.c,v 1.15 2018/02/04 01:13:45 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)scanf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: scanf.c,v 1.14 2013/04/19 23:32:17 joerg Exp $");
+__RCSID("$NetBSD: scanf.c,v 1.15 2018/02/04 01:13:45 mrg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -59,8 +59,6 @@ scanf(char const *fmt, ...)
 	int ret;
 	va_list ap;
 
-	_DIAGASSERT(fmt != NULL);
-
 	va_start(ap, fmt);
 	ret = __svfscanf(stdin, fmt, ap);
 	va_end(ap);
@@ -72,8 +70,6 @@ scanf_l(locale_t loc, char const *fmt, ...)
 {
 	int ret;
 	va_list ap;
-
-	_DIAGASSERT(fmt != NULL);
 
 	va_start(ap, fmt);
 	ret = __svfscanf_l(stdin, loc, fmt, ap);
