@@ -1,4 +1,4 @@
-/*	$NetBSD: ipftest.c,v 1.3 2012/07/22 14:27:51 darrenr Exp $	*/
+/*	$NetBSD: ipftest.c,v 1.4 2018/02/04 08:19:42 mrg Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -11,8 +11,8 @@
 #include <sys/file.h>
 
 #if !defined(lint)
-static const char sccsid[] = "@(#)ipt.c	1.19 6/3/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipftest.c,v 1.1.1.2 2012/07/22 13:44:55 darrenr Exp";
+static __attribute__((__used__)) const char sccsid[] = "@(#)ipt.c	1.19 6/3/96 (C) 1993-2000 Darren Reed";
+static __attribute__((__used__)) const char rcsid[] = "@(#)Id: ipftest.c,v 1.1.1.2 2012/07/22 13:44:55 darrenr Exp";
 #endif
 
 extern	char	*optarg;

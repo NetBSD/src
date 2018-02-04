@@ -1,4 +1,4 @@
-/*	$NetBSD: ipfstat.c,v 1.5 2014/06/16 12:37:58 christos Exp $	*/
+/*	$NetBSD: ipfstat.c,v 1.6 2018/02/04 08:19:42 mrg Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -71,8 +71,8 @@
 #endif
 
 #if !defined(lint)
-static const char sccsid[] = "@(#)fils.c	1.21 4/20/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipfstat.c,v 1.1.1.2 2012/07/22 13:44:55 darrenr";
+static __attribute__((__used__)) const char sccsid[] = "@(#)fils.c	1.21 4/20/96 (C) 1993-2000 Darren Reed";
+static __attribute__((__used__)) const char rcsid[] = "@(#)Id: ipfstat.c,v 1.1.1.2 2012/07/22 13:44:55 darrenr";
 #endif
 
 #ifdef __hpux
