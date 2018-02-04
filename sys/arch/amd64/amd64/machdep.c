@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.296 2018/01/26 14:38:46 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.297 2018/02/04 17:03:21 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.296 2018/01/26 14:38:46 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.297 2018/02/04 17:03:21 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -2267,6 +2267,23 @@ mm_md_direct_mapped_phys(paddr_t paddr, vaddr_t *vaddr)
  *     Remote PCPU Areas [OK]
  *     Kernel Heap       [OK]
  *     Kernel Image      [OK]
+ *
+ * TODO:
+ *
+ * (a) The NMI stack is not double-entered. Therefore if we ever receive
+ *     an NMI and leave it, the content of the stack will be visible to
+ *     userland (via Meltdown). Normally we never leave NMIs, unless a
+ *     privileged user launched PMCs. That's unlikely to happen, our PMC
+ *     support is pretty minimal.
+ *
+ * (b) Enable SVS depending on the CPU model, and add a sysctl to disable
+ *     it dynamically.
+ *
+ * (c) Narrow down the entry points: hide the 'jmp handler' instructions.
+ *     This makes sense on GENERIC_KASLR kernels.
+ *
+ * (d) Right now there is only one global LDT, and that's not compatible
+ *     with USER_LDT.
  */
 
 struct svs_utls {
