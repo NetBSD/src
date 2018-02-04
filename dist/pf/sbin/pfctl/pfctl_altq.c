@@ -1,4 +1,4 @@
-/*	$NetBSD: pfctl_altq.c,v 1.9 2010/03/01 00:14:08 joerg Exp $	*/
+/*	$NetBSD: pfctl_altq.c,v 1.10 2018/02/04 08:44:36 mrg Exp $	*/
 /*	$OpenBSD: pfctl_altq.c,v 1.92 2007/05/27 05:15:17 claudio Exp $	*/
 
 /*
@@ -450,12 +450,13 @@ cbq_compute_idletime(struct pfctl *pf, struct pf_altq *pa)
 		 * this causes integer overflow in kernel!
 		 * (bandwidth < 6Kbps when max_pkt_size=1500)
 		 */
-		if (pa->bandwidth != 0 && (pf->opts & PF_OPT_QUIET) == 0)
+		if (pa->bandwidth != 0 && (pf->opts & PF_OPT_QUIET) == 0) {
 			warnx("queue bandwidth must be larger than %s",
 			    rate2str(ifnsPerByte * (double)opts->maxpktsize /
 			    (double)INT_MAX * (double)pa->ifbandwidth));
 			fprintf(stderr, "cbq: queue %s is too slow!\n",
 			    pa->qname);
+		}
 		nsPerByte = (double)(INT_MAX / opts->maxpktsize);
 	}
 
