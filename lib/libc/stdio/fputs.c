@@ -1,4 +1,4 @@
-/*	$NetBSD: fputs.c,v 1.15 2012/03/13 21:13:46 christos Exp $	*/
+/*	$NetBSD: fputs.c,v 1.16 2018/02/04 01:13:45 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fputs.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fputs.c,v 1.15 2012/03/13 21:13:46 christos Exp $");
+__RCSID("$NetBSD: fputs.c,v 1.16 2018/02/04 01:13:45 mrg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -57,12 +57,11 @@ fputs(const char *s, FILE *fp)
 {
 	struct __suio uio;
 	struct __siov iov;
+	const void *vs = s;
 	int r;
 
-	_DIAGASSERT(s != NULL);
-	_DIAGASSERT(fp != NULL);
-
-	if (s == NULL)
+	/* This avoids -Werror=nonnull-compare. */
+	if (vs == NULL)
 		s = "(null)";
 
 	iov.iov_base = __UNCONST(s);

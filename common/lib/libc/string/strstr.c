@@ -1,4 +1,4 @@
-/*	$NetBSD: strstr.c,v 1.2 2007/06/04 18:19:28 christos Exp $	*/
+/*	$NetBSD: strstr.c,v 1.3 2018/02/04 01:13:45 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)strstr.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strstr.c,v 1.2 2007/06/04 18:19:28 christos Exp $");
+__RCSID("$NetBSD: strstr.c,v 1.3 2018/02/04 01:13:45 mrg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -57,9 +57,6 @@ strstr(const char *s, const char *find)
 {
 	char c, sc;
 	size_t len;
-
-	_DIAGASSERT(s != NULL);
-	_DIAGASSERT(find != NULL);
 
 	if ((c = *find++) != 0) {
 		len = strlen(find);

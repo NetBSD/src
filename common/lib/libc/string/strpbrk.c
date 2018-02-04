@@ -1,4 +1,4 @@
-/*	$NetBSD: strpbrk.c,v 1.1 2014/07/19 18:38:33 lneto Exp $	*/
+/*	$NetBSD: strpbrk.c,v 1.2 2018/02/04 01:13:45 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: strpbrk.c,v 1.1 2014/07/19 18:38:33 lneto Exp $");
+__RCSID("$NetBSD: strpbrk.c,v 1.2 2018/02/04 01:13:45 mrg Exp $");
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <assert.h>
@@ -60,9 +60,6 @@ strpbrk(const char *s, const char *charset)
 
 	(void)memset(set, 0, sizeof(set));
 #endif
-
-	_DIAGASSERT(s != NULL);
-	_DIAGASSERT(charset != NULL);
 
 	if (charset[0] == '\0')
 		return NULL;
