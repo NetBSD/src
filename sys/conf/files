@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1192 2018/01/18 00:32:48 mrg Exp $
+#	$NetBSD: files,v 1.1193 2018/02/04 17:31:51 maxv Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -28,6 +28,7 @@ defflag	opt_modular.h		MODULAR_DEFAULT_AUTOLOAD
 defflag				KEYLOCK
 defparam opt_syslimits.h	CHILD_MAX OPEN_MAX
 defflag opt_diagnostic.h	_DIAGNOSTIC
+defflag				GPROF
 
 defparam opt_copy_symtab.h	makeoptions_COPY_SYMTAB
 
