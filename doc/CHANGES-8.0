@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.113 2018/02/03 22:17:14 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.114 2018/02/04 12:53:51 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -9392,4 +9392,43 @@ lib/libkvm/kvm_getprocs.3			1.17
 	Correct the signature of kvm_getproc2(3) in the man-page.
 	The elemsize argument is of type "size_t", not "int".
 	[kamil, ticket #517]
+
+sys/fs/msdosfs/msdosfs_fat.c			1.32
+usr.sbin/makefs/msdos/msdosfs_vfsops.c		1.11
+
+	Need strings.h for ffs(3). Avoids a warning when building tools.
+	[sevan, ticket #518]
+
+sys/arch/i386/conf/kern.ldscript.4MB		delete
+sys/arch/i386/conf/largepages.inc		delete
+sys/arch/i386/i386/copy.S			1.26
+
+	Sync with NetBSD-current, in order to reduce future pullups.
+	[maxv, ticket #519]
+
+sys/arch/macppc/dev/snapper.c			1.42
+
+	Fix initialization.
+	[sevan, ticket #520]
+
+sys/arch/i386/stand/lib/bootinfo.h		1.12
+
+	Recent changes have increased the number of "things" the bootloader
+	needs to deal with.  Increase the table size so we don't overflow.
+	[pgoyette, ticket #521]
+
+libexec/httpd/bozohttpd.c			1.87
+
+	Use a protocol-agnostic URL (don't degrade HTTPS->HTTP) for
+	error messages.
+	[maya, ticket #522]
+
+sys/ufs/ffs/ffs_vfsops.c			1.356
+sys/ufs/ufs/ufs_inode.c				1.103
+
+	Make sure inode blocks and size are zero when VOP_INACTIVE()
+	finalises a now unlinked inode.
+	Prevent use-after-free where genfs_node_destroy() would destroy
+	a lock residing in the just freed inode data.
+	[christos, ticket #523]
 
