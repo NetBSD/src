@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.135 2017/02/12 18:43:56 maxv Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.136 2018/02/04 17:31:51 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,11 +69,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.135 2017/02/12 18:43:56 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.136 2018/02/04 17:31:51 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dtrace.h"
 #include "opt_perfctrs.h"
+#include "opt_gprof.h"
 #endif
 
 #include <sys/param.h>
