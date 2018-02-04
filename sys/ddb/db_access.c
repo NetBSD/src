@@ -1,4 +1,4 @@
-/*	$NetBSD: db_access.c,v 1.22 2015/06/06 22:06:05 matt Exp $	*/
+/*	$NetBSD: db_access.c,v 1.23 2018/02/04 09:17:54 mrg Exp $	*/
 
 /*
  * Mach Operating System
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_access.c,v 1.22 2015/06/06 22:06:05 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_access.c,v 1.23 2018/02/04 09:17:54 mrg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_kgdb.h"
@@ -74,7 +74,7 @@ db_get_value(db_addr_t addr, size_t size, bool is_signed)
 
 	if (size < sizeof(db_expr_t) && is_signed
 	    && (value & ((db_expr_t)1 << (8*size - 1)))) {
-		value |= ~(db_expr_t)0 << (8*size - 1);
+		value |= (unsigned long)~(db_expr_t)0 << (8*size - 1);
 	}
 	return (value);
 }
