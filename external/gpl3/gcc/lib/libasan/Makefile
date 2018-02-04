@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.18 2017/06/29 18:52:23 joerg Exp $
+# $NetBSD: Makefile,v 1.19 2018/02/04 01:16:33 mrg Exp $
 
 UNSUPPORTED_COMPILER.clang=	# defined
 
@@ -11,8 +11,9 @@ UNSUPPORTED_COMPILER.clang=	# defined
 
 ASAN_SRCS= \
 asan_activation.cc \
-asan_allocator2.cc \
+asan_allocator.cc \
 asan_debugging.cc \
+asan_flags.cc \
 asan_fake_stack.cc \
 asan_globals.cc \
 asan_interceptors.cc \
@@ -28,6 +29,7 @@ asan_report.cc \
 asan_rtl.cc \
 asan_stack.cc \
 asan_stats.cc \
+asan_suppressions.cc \
 asan_thread.cc \
 asan_win.cc \
 asan_win_dll_thunk.cc \
