@@ -1,4 +1,4 @@
-/* $NetBSD: mkubootimage.c,v 1.22 2017/11/05 11:07:32 jmcneill Exp $ */
+/* $NetBSD: mkubootimage.c,v 1.23 2018/02/04 15:44:51 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,15 +30,17 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkubootimage.c,v 1.22 2017/11/05 11:07:32 jmcneill Exp $");
+__RCSID("$NetBSD: mkubootimage.c,v 1.23 2018/02/04 15:44:51 jmcneill Exp $");
 
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/endian.h>
+#include <sys/param.h>
 #include <sys/uio.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <inttypes.h>
 #include <limits.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -48,10 +50,17 @@ __RCSID("$NetBSD: mkubootimage.c,v 1.22 2017/11/05 11:07:32 jmcneill Exp $");
 #include <unistd.h>
 
 #include "uboot.h"
+#include "arm64.h"
 
 #ifndef __arraycount
 #define __arraycount(__x)	(sizeof(__x) / sizeof(__x[0]))
 #endif
+
+enum image_format {
+	FMT_UNKNOWN,
+	FMT_UIMG,	/* Legacy U-Boot image */
+	FMT_ARM64,	/* Linux ARM64 image (booti) */
+};
 
 extern uint32_t crc32(const void *, size_t);
 extern uint32_t crc32v(const struct iovec *, int);
@@ -64,6 +73,41 @@ static uint32_t image_loadaddr = 0;
 static uint32_t image_entrypoint = 0;
 static char *image_name;
 static uint32_t image_magic = IH_MAGIC;
+static enum image_format image_format = FMT_UIMG;
+
+static const struct uboot_image_format {
+	enum image_format format;
+	const char *name;
+} uboot_image_format[] = {
+	{ FMT_UIMG,		"uimg" },
+	{ FMT_ARM64,		"arm64" },
+};
+
+static enum image_format
+get_image_format(const char *name)
+{
+	unsigned int i;
+
+	for (i = 0; i < __arraycount(uboot_image_format); i++) {
+		if (strcmp(uboot_image_format[i].name, name) == 0)
+			return uboot_image_format[i].format;
+	}
+
+	return FMT_UNKNOWN;
+}
+
+static const char *
+get_image_format_name(enum image_format format)
+{
+	unsigned int i;
+
+	for (i = 0; i < __arraycount(uboot_image_format); i++) {
+		if (uboot_image_format[i].format == format)
+			return uboot_image_format[i].name;
+	}
+
+	return "Unknown";
+}
 
 static const struct uboot_os {
 	enum uboot_image_os os;
@@ -225,13 +269,14 @@ usage(void)
 	fprintf(stderr, " -O <openbsd|netbsd|freebsd|linux>");
 	fprintf(stderr, " -T <standalone|kernel|kernel_noload|ramdisk|fs|script>");
 	fprintf(stderr, " -a <addr> [-e <ep>] [-m <magic>] -n <name>");
+	fprintf(stderr, " [-f <uimg|arm64>]");
 	fprintf(stderr, " <srcfile> <dstfile>\n");
 
 	exit(EXIT_FAILURE);
 }
 
 static void
-dump_header(struct uboot_image_header *hdr)
+dump_header_uimg(struct uboot_image_header *hdr)
 {
 	time_t tm = ntohl(hdr->ih_time);
 
@@ -254,7 +299,7 @@ dump_header(struct uboot_image_header *hdr)
 }
 
 static int
-generate_header(struct uboot_image_header *hdr, int kernel_fd)
+generate_header_uimg(struct uboot_image_header *hdr, int kernel_fd)
 {
 	uint8_t *p;
 	struct stat st;
@@ -310,13 +355,56 @@ generate_header(struct uboot_image_header *hdr, int kernel_fd)
 	crc = crc32((void *)hdr, sizeof(*hdr));
 	hdr->ih_hcrc = htonl(crc);
 
-	dump_header(hdr);
+	dump_header_uimg(hdr);
+
+	return 0;
+}
+
+static void
+dump_header_arm64(struct arm64_image_header *hdr)
+{
+	printf(" magic:       0x%" PRIx32 "\n", le32toh(hdr->magic));
+	printf(" text offset: 0x%" PRIx64 "\n", le64toh(hdr->text_offset));
+	printf(" image size:  %" PRIu64 "\n", le64toh(hdr->image_size));
+	printf(" flags:       0x%" PRIx64 "\n", le64toh(hdr->flags));
+}
+
+static int
+generate_header_arm64(struct arm64_image_header *hdr, int kernel_fd)
+{
+	struct stat st;
+	uint32_t flags;
+	int error;
+
+	error = fstat(kernel_fd, &st);
+	if (error == -1) {
+		perror("stat");
+		return errno;
+	}
+
+	flags = 0;
+	
+	flags |= __SHIFTIN(ARM64_FLAGS_PAGE_SIZE_4K,
+			   ARM64_FLAGS_PAGE_SIZE);
+#if 0
+	flags |= __SHIFTIN(ARM64_FLAGS_PHYS_PLACEMENT_ANY,
+			   ARM64_FLAGS_PHYS_PLACEMENT);
+#endif
+
+	memset(hdr, 0, sizeof(*hdr));
+	hdr->code0 = htole32(ARM64_CODE0);
+	hdr->text_offset = htole64(image_entrypoint);
+	hdr->image_size = htole64(st.st_size + sizeof(*hdr));
+	hdr->flags = htole32(flags);
+	hdr->magic = htole32(ARM64_MAGIC);
+
+	dump_header_arm64(hdr);
 
 	return 0;
 }
 
 static int
-write_image(struct uboot_image_header *hdr, int kernel_fd, int image_fd)
+write_image(void *hdr, size_t hdrlen, int kernel_fd, int image_fd)
 {
 	uint8_t buf[4096];
 	ssize_t rlen, wlen;
@@ -330,8 +418,8 @@ write_image(struct uboot_image_header *hdr, int kernel_fd, int image_fd)
 		return errno;
 	}
 
-	wlen = write(image_fd, hdr, sizeof(*hdr));
-	if (wlen != sizeof(*hdr)) {
+	wlen = write(image_fd, hdr, hdrlen);
+	if (wlen != (ssize_t)hdrlen) {
 		perror("short write");
 		return errno;
 	}
@@ -360,14 +448,15 @@ write_image(struct uboot_image_header *hdr, int kernel_fd, int image_fd)
 int
 main(int argc, char *argv[])
 {
-	struct uboot_image_header hdr;
+	struct uboot_image_header hdr_uimg;
+	struct arm64_image_header hdr_arm64;
 	const char *src, *dest;
 	char *ep;
 	int kernel_fd, image_fd;
 	int ch;
 	unsigned long long num;
 
-	while ((ch = getopt(argc, argv, "A:C:E:O:T:a:e:hm:n:")) != -1) {
+	while ((ch = getopt(argc, argv, "A:C:E:O:T:a:e:f:hm:n:")) != -1) {
 		switch (ch) {
 		case 'A':	/* arch */
 			image_arch = get_arch(optarg);
@@ -404,6 +493,9 @@ main(int argc, char *argv[])
 			if (ch == 'E')
 				image_entrypoint = bswap32(image_entrypoint);
 			break;
+		case 'f':	/* image format */
+			image_format = get_image_format(optarg);
+			break;
 		case 'm':	/* magic */
 			errno = 0;
 			num = strtoul(optarg, &ep, 0);
@@ -430,21 +522,38 @@ main(int argc, char *argv[])
 	if (image_entrypoint == 0)
 		image_entrypoint = image_loadaddr;
 
-	if (image_arch == IH_ARCH_UNKNOWN ||
-	    image_type == IH_TYPE_UNKNOWN ||
-	    image_name == NULL)
-		usage();
-
-	switch (image_type) {
-	case IH_TYPE_SCRIPT:
-	case IH_TYPE_RAMDISK:
-	case IH_TYPE_KERNEL_NOLOAD:
-		break;
-	default:
-		if (image_loadaddr == 0)
+	switch (image_format) {
+	case FMT_UIMG:
+		if (image_arch == IH_ARCH_UNKNOWN ||
+		    image_type == IH_TYPE_UNKNOWN ||
+		    image_name == NULL)
 			usage();
 			/* NOTREACHED */
+
+		switch (image_type) {
+		case IH_TYPE_SCRIPT:
+		case IH_TYPE_RAMDISK:
+		case IH_TYPE_KERNEL_NOLOAD:
+			break;
+		default:
+			if (image_loadaddr == 0)
+				usage();
+				/* NOTREACHED */
+			break;
+		}
 		break;
+
+	case FMT_ARM64:
+		if (image_arch != IH_ARCH_UNKNOWN &&
+		    image_arch != IH_ARCH_ARM64)
+			usage();
+			/* NOTREACHED */
+
+		break;
+
+	default:
+		usage();
+		/* NOTREACHED */
 	}
 
 	src = argv[0];
@@ -461,11 +570,30 @@ main(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 
-	if (generate_header(&hdr, kernel_fd) != 0)
-		return EXIT_FAILURE;
+	printf(" image type:  %s\n", get_image_format_name(image_format));
 
-	if (write_image(&hdr, kernel_fd, image_fd) != 0)
-		return EXIT_FAILURE;
+	switch (image_format) {
+	case FMT_UIMG:
+		if (generate_header_uimg(&hdr_uimg, kernel_fd) != 0)
+			return EXIT_FAILURE;
+
+		if (write_image(&hdr_uimg, sizeof(hdr_uimg),
+		    kernel_fd, image_fd) != 0)
+			return EXIT_FAILURE;
+
+		break;
+	case FMT_ARM64:
+		if (generate_header_arm64(&hdr_arm64, kernel_fd) != 0)
+			return EXIT_FAILURE;
+
+		if (write_image(&hdr_arm64, sizeof(hdr_arm64),
+		    kernel_fd, image_fd) != 0)
+			return EXIT_FAILURE;
+
+		break;
+	default:
+		break;
+	}
 
 	close(image_fd);
 	close(kernel_fd);

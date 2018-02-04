@@ -1,4 +1,4 @@
-.\"	$NetBSD: mkubootimage.1,v 1.11 2017/09/29 21:18:28 jmcneill Exp $
+.\"	$NetBSD: mkubootimage.1,v 1.12 2018/02/04 15:44:51 jmcneill Exp $
 .\"
 .\" Copyright (c) 2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 29, 2017
+.Dd February 4, 2018
 .Dt MKUBOOTIMAGE 1
 .Os
 .Sh NAME
@@ -41,6 +41,7 @@
 .Op Fl C Po bz2 Ns | Ns gz Ns | Ns lzma Ns | Ns lzo Ns | Ns none Pc
 .Op Fl E Ar address
 .Op Fl e Ar address
+.Op Fl f Po arm64 Ns | Ns uimg Pc
 .Op Fl m Ar magic
 .Fl n Ar image
 .Op Fl O Po freebsd Ns | Ns linux Ns | Ns netbsd Ns | Ns openbsd Pc
@@ -57,12 +58,16 @@ The arguments are as follows:
 .Bl -tag -width indent
 .It Fl A No ( arm Ns | Ns arm64 Ns | Ns i386 Ns | Ns mips Ns | Ns mips64 Ns | Ns or1k Ns | Ns powerpc Ns | Ns sh )
 Defines the architecture.
-This is required.
+This is required for 
+.Qq uimg
+format images.
 .It Fl a Ar address
 Sets the image load address.
 This is an integer between 0 and
 .Dv UINT32_MAX .
-This is required for all image types except for script, ramdisk, and kernel_noload.
+This is required for all
+.Qq uimg
+image types except for script, ramdisk, and kernel_noload.
 .It Fl C No ( bz2 Ns | Ns gz Ns | Ns lzma Ns | Ns lzo Ns | Ns none )
 Defines the compression.
 The default is
@@ -93,10 +98,16 @@ or
 are not set, the entry point defaults to the
 image load address
 .Pq Fl a .
+.It Fl f No ( arm64 Ns | Ns uimg )
+Defines the output image format type.
+The default is
+.Qq uimg .
 .It Fl h
 Display the usage and exit.
 .It Fl m Ar magic
-Set the magic.
+Set the magic used for
+.Qq uimg
+format images.
 This is an integer between 0 and
 .Dv UINT32_MAX .
 The default is
@@ -110,7 +121,9 @@ The default OS name is
 .Qq netbsd .
 .It Fl T No ( fs Ns | Ns kernel Ns | Ns kernel_noload Ns | Ns ramdisk Ns | Ns standalone Ns | Ns script )
 Defines the image type.
-This is required.
+This is required for
+.Qq uimg
+format images.
 .El
 .Pp
 The required
@@ -161,7 +174,7 @@ command first appeared in
 The
 .Nm
 utility was originally written by
-.An Jared D. McNeill .
+.An Jared McNeill .
 This manual page was written by
 .An Jeremy C. Reed .
 .\" .Sh CAVEATS
