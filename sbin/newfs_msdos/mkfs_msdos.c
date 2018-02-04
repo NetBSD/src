@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs_msdos.c,v 1.13 2017/04/14 15:39:29 christos Exp $	*/
+/*	$NetBSD: mkfs_msdos.c,v 1.14 2018/02/04 09:03:23 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 Robert Nordier
@@ -37,7 +37,7 @@
 static const char rcsid[] =
   "$FreeBSD: src/sbin/newfs_msdos/newfs_msdos.c,v 1.15 2000/10/10 01:49:37 wollman Exp $";
 #else
-__RCSID("$NetBSD: mkfs_msdos.c,v 1.13 2017/04/14 15:39:29 christos Exp $");
+__RCSID("$NetBSD: mkfs_msdos.c,v 1.14 2018/02/04 09:03:23 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -896,10 +896,11 @@ getbpbinfo(int fd, const char *fname, const char *dtype, int iflag,
 	    return -1;
 	bpb->spt = nsectors;
     }
-    if (!bpb->hds)
+    if (!bpb->hds) {
 	if (ckgeom(fname, ntracks, "drive heads") == -1)
 	    return -1;
 	bpb->hds = ntracks;
+    }
     if (!bpb->bsec)
 	bpb->bsec = size;
 
