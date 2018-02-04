@@ -1,4 +1,4 @@
-/* $NetBSD: mkubootimage.c,v 1.23 2018/02/04 15:44:51 jmcneill Exp $ */
+/* $NetBSD: mkubootimage.c,v 1.24 2018/02/04 17:33:34 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkubootimage.c,v 1.23 2018/02/04 15:44:51 jmcneill Exp $");
+__RCSID("$NetBSD: mkubootimage.c,v 1.24 2018/02/04 17:33:34 jmcneill Exp $");
 
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -244,7 +244,7 @@ get_comp(const char *name)
 			return uboot_comp[i].comp;
 	}
 
-	return IH_TYPE_UNKNOWN;
+	return IH_COMP_NONE;
 }
 
 static const char *
@@ -383,12 +383,9 @@ generate_header_arm64(struct arm64_image_header *hdr, int kernel_fd)
 	}
 
 	flags = 0;
-	
-	flags |= __SHIFTIN(ARM64_FLAGS_PAGE_SIZE_4K,
-			   ARM64_FLAGS_PAGE_SIZE);
+	flags |= ARM64_FLAGS_PAGE_SIZE_4K;
 #if 0
-	flags |= __SHIFTIN(ARM64_FLAGS_PHYS_PLACEMENT_ANY,
-			   ARM64_FLAGS_PHYS_PLACEMENT);
+	flags |= ARM64_FLAGS_PHYS_PLACEMENT_ANY;
 #endif
 
 	memset(hdr, 0, sizeof(*hdr));

@@ -1,4 +1,4 @@
-/* $NetBSD: arm64.h,v 1.1 2018/02/04 15:44:51 jmcneill Exp $ */
+/* $NetBSD: arm64.h,v 1.2 2018/02/04 17:33:34 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -48,15 +48,15 @@ struct arm64_image_header {
 };
 
 /* Kernel flags */
-#define	ARM64_FLAGS_ENDIAN_BE		__BIT(0)
-#define	ARM64_FLAGS_PAGE_SIZE		__BITS(2,1)
-#define	 ARM64_FLAGS_PAGE_SIZE_UNSPEC		0
-#define	 ARM64_FLAGS_PAGE_SIZE_4K		1
-#define	 ARM64_FLAGS_PAGE_SIZE_16K		2
-#define	 ARM64_FLAGS_PAGE_SIZE_64K		3
-#define	ARM64_FLAGS_PHYS_PLACEMENT	__BIT(3)
-#define	 ARM64_FLAGS_PHYS_PLACEMENT_DRAM_BASE	0
-#define	 ARM64_FLAGS_PHYS_PLACEMENT_ANY		1
+#define	ARM64_FLAGS_ENDIAN_BE		(1 << 0)
+#define	ARM64_FLAGS_PAGE_SIZE		(3 << 1)
+#define	 ARM64_FLAGS_PAGE_SIZE_UNSPEC		(0 << 1)
+#define	 ARM64_FLAGS_PAGE_SIZE_4K		(1 << 1)
+#define	 ARM64_FLAGS_PAGE_SIZE_16K		(2 << 1)
+#define	 ARM64_FLAGS_PAGE_SIZE_64K		(3 << 1)
+#define	ARM64_FLAGS_PHYS_PLACEMENT	(1 << 3)
+#define	 ARM64_FLAGS_PHYS_PLACEMENT_DRAM_BASE	(0 << 3)
+#define	 ARM64_FLAGS_PHYS_PLACEMENT_ANY		(1 << 3)
 
 /* Magic */
 #define	ARM64_MAGIC	0x644d5241
