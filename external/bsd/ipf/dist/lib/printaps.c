@@ -1,4 +1,4 @@
-/*	$NetBSD: printaps.c,v 1.4 2012/07/22 18:09:16 martin Exp $	*/
+/*	$NetBSD: printaps.c,v 1.5 2018/02/04 08:19:42 mrg Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -13,7 +13,7 @@
 
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: printaps.c,v 1.1.1.2 2012/07/22 13:44:40 darrenr Exp $";
+static __attribute__((__used__)) const char rcsid[] = "@(#)Id: printaps.c,v 1.1.1.2 2012/07/22 13:44:40 darrenr Exp $";
 #endif
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: iptests.c,v 1.4 2017/06/15 23:53:56 kamil Exp $	*/
+/*	$NetBSD: iptests.c,v 1.5 2018/02/04 08:19:42 mrg Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -7,8 +7,8 @@
  *
  */
 #if !defined(lint)
-static const char sccsid[] = "%W% %G% (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: iptests.c,v 1.1.1.2 2012/07/22 13:44:37 darrenr";
+static __attribute__((__used__)) const char sccsid[] = "%W% %G% (C)1995 Darren Reed";
+static __attribute__((__used__)) const char rcsid[] = "@(#)Id: iptests.c,v 1.1.1.2 2012/07/22 13:44:37 darrenr";
 #endif
 #include <sys/param.h>
 #include <sys/types.h>

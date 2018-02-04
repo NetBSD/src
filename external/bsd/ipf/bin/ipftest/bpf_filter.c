@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_filter.c,v 1.1 2012/03/23 21:29:45 christos Exp $	*/
+/*	$NetBSD: bpf_filter.c,v 1.2 2018/02/04 08:19:42 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -41,7 +41,7 @@
  */
 
 #if !(defined(lint) || defined(KERNEL) || defined(_KERNEL))
-static const char rcsid[] =
+static __attribute__((__used__)) const char rcsid[] =
     "@(#) Header: /devel/CVS/IP-Filter/bpf_filter.c,v 2.2.2.3 2006/10/03 11:25:56 darrenr Exp (LBL)";
 #endif
 
