@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.177 2018/02/03 21:27:45 mrg Exp $
+# $NetBSD: md.i386,v 1.178 2018/02/04 11:08:16 mrg Exp $
 ./usr/include/clang-3.4/__wmmintrin_aes.h	comp-obsolete		obsolete
 ./usr/include/clang-3.4/__wmmintrin_pclmul.h	comp-obsolete		obsolete
 ./usr/include/clang-3.4/ammintrin.h		comp-obsolete		obsolete
@@ -409,6 +409,7 @@
 ./usr/include/gcc-6/bmmintrin.h			comp-c-include		gcccmds,gcc=6
 ./usr/include/gcc-6/clflushoptintrin.h		comp-c-include		gcccmds,gcc=6
 ./usr/include/gcc-6/clwbintrin.h		comp-c-include		gcccmds,gcc=6
+./usr/include/gcc-6/clzerointrin.h		comp-c-include		gcccmds,gcc=6
 ./usr/include/gcc-6/cpuid.h			comp-c-include		gcccmds,gcc=6
 ./usr/include/gcc-6/cross-stdarg.h		comp-c-include		gcccmds,gcc=6
 ./usr/include/gcc-6/emmintrin.h			comp-c-include		gcccmds,gcc=6
@@ -425,6 +426,7 @@
 ./usr/include/gcc-6/mmintrin.h			comp-c-include		gcccmds,gcc=6
 ./usr/include/gcc-6/mwaitxintrin.h		comp-c-include		gcccmds,gcc=6
 ./usr/include/gcc-6/nmmintrin.h			comp-c-include		gcccmds,gcc=6
+./usr/include/gcc-6/pkuintrin.h			comp-c-include		gcccmds,gcc=6
 ./usr/include/gcc-6/pmmintrin.h			comp-c-include		gcccmds,gcc=6
 ./usr/include/gcc-6/popcntintrin.h		comp-c-include		gcccmds,gcc=6
 ./usr/include/gcc-6/prfchwintrin.h		comp-c-include		gcccmds,gcc=6
