@@ -441,10 +441,12 @@ impl::child::~child(void)
         ::kill(m_pid, SIGTERM);
         (void)wait();
 
-        if (m_stdout != -1)
-            ::close(m_stdout);
-        if (m_stderr != -1)
-            ::close(m_stderr);
+        if (m_stdout != -1) {
+            ::close(m_stdout); m_stdout = -1;
+        }
+        if (m_stderr != -1) {
+            ::close(m_stderr); m_stderr = -1;
+        }
     }
 }
 
@@ -457,10 +459,12 @@ impl::child::wait(void)
         throw system_error(IMPL_NAME "::child::wait", "Failed waiting for "
                            "process " + text::to_string(m_pid), errno);
 
-    if (m_stdout != -1)
+    if (m_stdout != -1) {
         ::close(m_stdout); m_stdout = -1;
-    if (m_stderr != -1)
+    }
+    if (m_stderr != -1) {
         ::close(m_stderr); m_stderr = -1;
+    }
 
     m_waited = true;
     return status(s);
