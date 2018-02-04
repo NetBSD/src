@@ -616,16 +616,7 @@ namespace __sanitizer {
      unsigned int __bits[4];
   };
 #endif
-#if SANITIZER_NETBSD
-  struct __sanitizer_sigaction {
-    union {
-      void (*sigaction)(int sig, void *siginfo, void *uctx);
-      void (*handler)(int sig);
-    };
-    __sanitizer_sigset_t sa_mask;
-    int sa_flags;
-  };
-#else
+
   // Linux system headers define the 'sa_handler' and 'sa_sigaction' macros.
 #if SANITIZER_ANDROID && (SANITIZER_WORDSIZE == 64)
   struct __sanitizer_sigaction {
@@ -646,6 +637,15 @@ namespace __sanitizer {
     __sanitizer_sigset_t sa_mask;
     uptr sa_flags;
     void (*sa_restorer)();
+  };
+#elif SANITIZER_NETBSD
+  struct __sanitizer_sigaction {
+    union {
+      void (*sigaction)(int sig, void *siginfo, void *uctx);
+      void (*handler)(int sig);
+    };
+    __sanitizer_sigset_t sa_mask;
+    int sa_flags;
   };
 #else // !SANITIZER_ANDROID
   struct __sanitizer_sigaction {
