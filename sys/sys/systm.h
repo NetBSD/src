@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.274 2017/10/27 12:25:15 joerg Exp $	*/
+/*	$NetBSD: systm.h,v 1.275 2018/02/04 17:31:51 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -42,6 +42,7 @@
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
+#include "opt_gprof.h"
 #endif
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <stdbool.h>
