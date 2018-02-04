@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.254 2018/02/03 21:27:45 mrg Exp $
+# $NetBSD: md.amd64,v 1.255 2018/02/04 11:08:16 mrg Exp $
 
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
@@ -485,6 +485,7 @@
 ./usr/include/gcc-6/bmmintrin.h			comp-c-include		gcccmds,gcc=6
 ./usr/include/gcc-6/clflushoptintrin.h		comp-c-include		gcccmds,gcc=6
 ./usr/include/gcc-6/clwbintrin.h		comp-c-include		gcccmds,gcc=6
+./usr/include/gcc-6/clzerointrin.h		comp-c-include		gcccmds,gcc=6
 ./usr/include/gcc-6/cpuid.h			comp-c-include		gcccmds,gcc=6
 ./usr/include/gcc-6/cross-stdarg.h		comp-c-include		gcccmds,gcc=6
 ./usr/include/gcc-6/emmintrin.h			comp-c-include		gcccmds,gcc=6
@@ -501,6 +502,7 @@
 ./usr/include/gcc-6/mmintrin.h			comp-c-include		gcccmds,gcc=6
 ./usr/include/gcc-6/mwaitxintrin.h		comp-c-include		gcccmds,gcc=6
 ./usr/include/gcc-6/nmmintrin.h			comp-c-include		gcccmds,gcc=6
+./usr/include/gcc-6/pkuintrin.h			comp-c-include		gcccmds,gcc=6
 ./usr/include/gcc-6/pmmintrin.h			comp-c-include		gcccmds,gcc=6
 ./usr/include/gcc-6/popcntintrin.h		comp-c-include		gcccmds,gcc=6
 ./usr/include/gcc-6/prfchwintrin.h		comp-c-include		gcccmds,gcc=6
