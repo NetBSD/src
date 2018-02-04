@@ -1,4 +1,4 @@
-/*	$NetBSD: strspn.c,v 1.1 2014/07/19 18:38:33 lneto Exp $	*/
+/*	$NetBSD: strspn.c,v 1.2 2018/02/04 01:13:45 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: strspn.c,v 1.1 2014/07/19 18:38:33 lneto Exp $");
+__RCSID("$NetBSD: strspn.c,v 1.2 2018/02/04 01:13:45 mrg Exp $");
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <assert.h>
@@ -46,9 +46,6 @@ strspn(const char *s, const char *charset)
 	uint8_t set[32];
 	const char *t;
 #define UC(a) ((unsigned int)(unsigned char)(a))
-
-	_DIAGASSERT(s != NULL);
-	_DIAGASSERT(charset != NULL);
 
 	if (charset[0] == '\0')
 		return 0;
