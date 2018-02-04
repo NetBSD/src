@@ -1,4 +1,4 @@
-/*	$NetBSD: timed.c,v 1.25 2015/06/16 23:04:14 christos Exp $	*/
+/*	$NetBSD: timed.c,v 1.26 2018/02/04 09:01:13 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1993\
 #if 0
 static char sccsid[] = "@(#)timed.c	8.2 (Berkeley) 3/26/95";
 #else
-__RCSID("$NetBSD: timed.c,v 1.25 2015/06/16 23:04:14 christos Exp $");
+__RCSID("$NetBSD: timed.c,v 1.26 2018/02/04 09:01:13 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -405,9 +405,10 @@ main(int argc, char *argv[])
 			justquit = 1;
 		}
 		for (ntp = nettab; ntp != NULL; ntp = ntp->next) {
-			if (ntp->status == MASTER)
+			if (ntp->status == MASTER) {
 				rmnetmachs(ntp);
 				ntp->status = NOMASTER;
+			}
 		}
 		checkignorednets();
 		pickslavenet(0);
