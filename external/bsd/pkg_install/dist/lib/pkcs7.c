@@ -1,4 +1,4 @@
-/*	$NetBSD: pkcs7.c,v 1.2 2017/04/20 13:18:23 joerg Exp $	*/
+/*	$NetBSD: pkcs7.c,v 1.3 2018/02/04 09:00:51 maya Exp $	*/
 #if HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -7,7 +7,7 @@
 #include <sys/cdefs.h>
 #endif
 
-__RCSID("$NetBSD: pkcs7.c,v 1.2 2017/04/20 13:18:23 joerg Exp $");
+__RCSID("$NetBSD: pkcs7.c,v 1.3 2018/02/04 09:00:51 maya Exp $");
 
 /*-
  * Copyright (c) 2004, 2008 The NetBSD Foundation, Inc.
@@ -55,25 +55,12 @@ __RCSID("$NetBSD: pkcs7.c,v 1.2 2017/04/20 13:18:23 joerg Exp $");
 #define NS_ANY_CA		(NS_SSL_CA|NS_SMIME_CA|NS_OBJSIGN_CA)
 #endif
 
-static const unsigned int pkg_key_usage = XKU_CODE_SIGN | XKU_SMIME;
+#if !defined(OPENSSL_VERSION_NUMBER) || (OPENSSL_VERSION_NUMBER < 0x10100000L)
+#define X509_get_extended_key_usage(x) x->ex_xkusage
+#define X509_get_extension_flags(x) x->ex_flags
+#endif
 
-static int
-check_ca(X509 *cert)
-{
-	if ((cert->ex_flags & EXFLAG_KUSAGE) != 0 &&
-	    (cert->ex_kusage & KU_KEY_CERT_SIGN) != KU_KEY_CERT_SIGN)
-		return 0;
-	if ((cert->ex_flags & EXFLAG_BCONS) != 0)
-		return (cert->ex_flags & EXFLAG_CA) == EXFLAG_CA;
-	if ((cert->ex_flags & (EXFLAG_V1|EXFLAG_SS)) == (EXFLAG_V1|EXFLAG_SS))
-		return 1;
-	if ((cert->ex_flags & EXFLAG_KUSAGE) != 0)
-		return 1;
-	if ((cert->ex_flags & EXFLAG_NSCERT) != 0 &&
-	    (cert->ex_nscert & NS_ANY_CA) != 0)
-		return 1;
-	return 0;
-}
+static const unsigned int pkg_key_usage = XKU_CODE_SIGN | XKU_SMIME;
 
 static STACK_OF(X509) *
 file_to_certs(const char *file)
@@ -180,18 +167,18 @@ easy_pkcs7_verify(const char *content, size_t len,
 		/* Compute ex_xkusage */
 		X509_check_purpose(sk_X509_value(signers, i), -1, -1);
 
-		if (check_ca(sk_X509_value(signers, i))) {
+		if (X509_check_ca(sk_X509_value(signers, i))) {
 			warnx("CA keys are not valid for signatures");
 			goto cleanup;
 		}
 		if (is_pkg) {
-			if (sk_X509_value(signers, i)->ex_xkusage != pkg_key_usage) {
+			if (X509_get_extended_key_usage(sk_X509_value(signers, i)) != pkg_key_usage) {
 				warnx("Certificate must have CODE SIGNING "
 				    "and EMAIL PROTECTION property");
 				goto cleanup;
 			}
 		} else {
-			if (sk_X509_value(signers, i)->ex_xkusage != 0) {
+			if (X509_get_extension_flags(sk_X509_value(signers, i)) & EXFLAG_XKUSAGE) {
 				warnx("Certificate must not have any property");
 				goto cleanup;
 			}
@@ -271,12 +258,12 @@ easy_pkcs7_sign(const char *content, size_t len,
 	/* Compute ex_kusage */
 	X509_check_purpose(certificate, -1, 0);
 
-	if (check_ca(certificate)) {
+	if (X509_check_ca(certificate)) {
 		warnx("CA keys are not valid for signatures");
 		goto cleanup;
 	}
 
-	if (certificate->ex_xkusage != pkg_key_usage) {
+	if (X509_get_extended_key_usage(certificate) != pkg_key_usage) {
 		warnx("Certificate must have CODE SIGNING "
 		    "and EMAIL PROTECTION property");
 		goto cleanup;
