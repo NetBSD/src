@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.10 2009/07/20 18:01:41 christos Exp $
+# $NetBSD: Makefile,v 1.11 2018/02/04 03:19:53 christos Exp $
 # PAM module for SSH
 # $FreeBSD: src/lib/libpam/modules/pam_ssh/Makefile,v 1.18 2004/08/06 07:27:04 cperciva Exp $
 
@@ -18,6 +18,6 @@ CPPFLAGS+= -I${SSHSRC}
 
 LIBDPLIBS+=	ssh	${NETBSDSRCDIR}/crypto/external/bsd/openssh/lib \
 		crypt	${.CURDIR}/../../../libcrypt \
-		crypto	${NETBSDSRCDIR}/crypto/external/bsd/openssl/lib/libcrypto
+		crypto	${NETBSDSRCDIR}/crypto/external/bsd/${EXTERNAL_OPENSSL_SUBDIR}/lib/libcrypto
 
 .include "${.CURDIR}/../mod.mk"

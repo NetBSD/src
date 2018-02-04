@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2012/07/10 19:38:17 christos Exp $
+#	$NetBSD: Makefile,v 1.3 2018/02/04 03:19:52 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -11,7 +11,7 @@ CPPFLAGS+=	-I${.CURDIR}/../dist/include -I${.CURDIR}/../dist/src/pgp2ssh
 
 LIBDPLIBS+=	mj	${.CURDIR}/../libmj
 LIBDPLIBS+=	netpgp	${.CURDIR}/../lib
-LIBDPLIBS+=	crypto	${NETBSDSRCDIR}/crypto/external/bsd/openssl/lib/libcrypto
+LIBDPLIBS+=	crypto	${NETBSDSRCDIR}/crypto/external/bsd/${EXTERNAL_OPENSSL_SUBDIR}/lib/libcrypto
 LIBDPLIBS+=	z	${NETBSDSRCDIR}/lib/libz
 LIBDPLIBS+=	bz2	${NETBSDSRCDIR}/lib/libbz2
 

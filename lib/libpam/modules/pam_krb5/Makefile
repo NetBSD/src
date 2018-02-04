@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.11 2011/05/26 12:56:30 joerg Exp $
+# $NetBSD: Makefile,v 1.12 2018/02/04 03:19:53 christos Exp $
 # Copyright 2001 FreeBSD, Inc.
 # All rights reserved.
 #
@@ -35,7 +35,7 @@ LIBDPLIBS+= \
 	roken	${NETBSDSRCDIR}/crypto/external/bsd/heimdal/lib/libroken \
 	com_err	${NETBSDSRCDIR}/crypto/external/bsd/heimdal/lib/libcom_err \
 	crypt	${.CURDIR}/../../../libcrypt \
-	crypto	${NETBSDSRCDIR}/crypto/external/bsd/openssl/lib/libcrypto
+	crypto	${NETBSDSRCDIR}/crypto/external/bsd/${EXTERNAL_OPENSSL_SUBDIR}/lib/libcrypto
 
 CWARNFLAGS.clang=	-Wno-format-security
 
