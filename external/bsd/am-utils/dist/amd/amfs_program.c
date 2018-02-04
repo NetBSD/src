@@ -1,4 +1,4 @@
-/*	$NetBSD: amfs_program.c,v 1.1.1.3 2015/01/17 16:34:15 christos Exp $	*/
+/*	$NetBSD: amfs_program.c,v 1.2 2018/02/04 09:15:44 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997-2014 Erez Zadok
@@ -144,10 +144,11 @@ amfs_program_exec(char *info)
    * Put stdout to stderr
    */
   (void) fclose(stdout);
-  if (!logfp)
+  if (!logfp) {
     logfp = stderr;		/* initialize before possible first use */
     if (dup(fileno(logfp)) == -1)
       goto out;
+  }
   if (fileno(logfp) != fileno(stderr)) {
     (void) fclose(stderr);
     if (dup(fileno(logfp)) == -1)

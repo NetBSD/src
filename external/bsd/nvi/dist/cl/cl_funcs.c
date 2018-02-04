@@ -1,4 +1,4 @@
-/*	$NetBSD: cl_funcs.c,v 1.7 2017/11/13 01:51:47 rin Exp $ */
+/*	$NetBSD: cl_funcs.c,v 1.8 2018/02/04 09:15:45 mrg Exp $ */
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -16,7 +16,7 @@
 static const char sccsid[] = "Id: cl_funcs.c,v 10.72 2002/03/02 23:18:33 skimo Exp  (Berkeley) Date: 2002/03/02 23:18:33 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: cl_funcs.c,v 1.7 2017/11/13 01:51:47 rin Exp $");
+__RCSID("$NetBSD: cl_funcs.c,v 1.8 2018/02/04 09:15:45 mrg Exp $");
 #endif
 
 #include <sys/types.h>
@@ -144,22 +144,20 @@ cl_attr(SCR *sp, scr_attr_t attribute, int on)
 	 * do this automatically -- so, this attribute isn't as controlled by
 	 * the higher level screen as closely as one might like.
 	 */
-	if (on) {
-		if (clp->ti_te != TI_SENT) {
-			clp->ti_te = TI_SENT;
-			if (clp->smcup == NULL)
-				(void)cl_getcap(sp, "smcup", &clp->smcup);
-			if (clp->smcup != NULL)
-				(void)tputs(clp->smcup, 1, cl_putchar);
-		}
-	} else
-		if (clp->ti_te != TE_SENT) {
+		if (on) {
+			if (clp->ti_te != TI_SENT) {
+				clp->ti_te = TI_SENT;
+				if (clp->smcup == NULL)
+					(void)cl_getcap(sp, "smcup", &clp->smcup);
+				if (clp->smcup != NULL)
+					(void)tputs(clp->smcup, 1, cl_putchar);
+			}
+		} else if (clp->ti_te != TE_SENT) {
 			clp->ti_te = TE_SENT;
 			if (clp->rmcup == NULL)
 				(void)cl_getcap(sp, "rmcup", &clp->rmcup);
 			if (clp->rmcup != NULL)
 				(void)tputs(clp->rmcup, 1, cl_putchar);
-			(void)fflush(stdout);
 		}
 		(void)fflush(stdout);
 		break;
