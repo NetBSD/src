@@ -1,9 +1,9 @@
-# $NetBSD: Makefile.inc,v 1.3 2014/03/04 21:08:08 joerg Exp $
+# $NetBSD: Makefile.inc,v 1.4 2018/02/04 03:19:51 christos Exp $
 
 HEIMBASE?=	${NETBSDSRCDIR}/crypto/external/bsd/heimdal
 HEIMDIST=	${HEIMBASE}/dist
 
-SSLBASE?=	${NETBSDSRCDIR}/crypto/external/bsd/openssl
+SSLBASE?=	${NETBSDSRCDIR}/crypto/external/bsd/${EXTERNAL_OPENSSL_SUBDIR}
 
 LIBVERSDIR!=	cd ${HEIMBASE}/lib/libvers && ${PRINTOBJDIR}
 LIBVERS=	${LIBVERSDIR}/libvers.a
