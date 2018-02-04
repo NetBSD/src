@@ -4978,7 +4978,7 @@ mDNSlocal void connect_callback(int fd, short filter, void *info)
     dnssd_socklen_t len = (dnssd_socklen_t) sizeof(cliaddr);
     dnssd_sock_t sd = accept(fd, (struct sockaddr*) &cliaddr, &len);
 #if defined(SO_NOSIGPIPE) || defined(_WIN32)
-    unsigned long optval = 1;
+    unsigned int optval = 1;
 #endif
 
     (void)filter; // Unused
