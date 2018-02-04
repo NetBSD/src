@@ -1,4 +1,4 @@
-/*	$NetBSD: strrchr.c,v 1.5 2009/07/17 19:37:57 dsl Exp $	*/
+/*	$NetBSD: strrchr.c,v 1.6 2018/02/04 20:22:17 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rindex.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strrchr.c,v 1.5 2009/07/17 19:37:57 dsl Exp $");
+__RCSID("$NetBSD: strrchr.c,v 1.6 2018/02/04 20:22:17 mrg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,8 +51,6 @@ strrchr(const char *p, int ch)
 {
 	char *save;
 	const char c = ch;
-
-	_DIAGASSERT(p != NULL);
 
 	for (save = NULL;; ++p) {
 		if (*p == c) {
