@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2174 2018/02/03 21:27:45 mrg Exp $
+#	$NetBSD: mi,v 1.2175 2018/02/04 11:08:16 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -1055,7 +1055,9 @@
 ./usr/include/g++/bits/shared_ptr_atomic.h	comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/shared_ptr_base.h	comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/slice_array.h		comp-cxx-include	gcc,cxx,libstdcxx
+./usr/include/g++/bits/specfun.h		comp-cxx-include	gcc=6,cxx,libstdcxx
 ./usr/include/g++/bits/sstream.tcc		comp-cxx-include	gcc,cxx,libstdcxx
+./usr/include/g++/bits/std_mutex.h		comp-cxx-include	gcc=6,cxx,libstdcxx
 ./usr/include/g++/bits/stdc++.h			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/stdtr1c++.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/stl_algo.h		comp-cxx-include	gcc,cxx,libstdcxx
@@ -1138,10 +1140,14 @@
 ./usr/include/g++/cstring			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/ctgmath			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/ctime				comp-cxx-include	gcc,cxx,libstdcxx
+./usr/include/g++/cuchar			comp-cxx-include	gcc=6,cxx,libstdcxx
 ./usr/include/g++/cwchar			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/cwctype			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/cxxabi-forced.h		comp-obsolete 		obsolete
 ./usr/include/g++/cxxabi.h			comp-cxx-include	gcc,cxx,libstdcxx
+./usr/include/g++/debug/assertions.h		comp-cxx-include	gcc=6,cxx,libstdcxx
+./usr/include/g++/debug/helper_functions.h	comp-cxx-include	gcc=6,cxx,libstdcxx
+./usr/include/g++/debug/stl_iterator.h		comp-cxx-include	gcc=6,cxx,libstdcxx
 ./usr/include/g++/debug/array			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/debug/bitset			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/debug/debug.h			comp-cxx-include	gcc,cxx,libstdcxx
