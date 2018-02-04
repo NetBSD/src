@@ -1,4 +1,4 @@
-/* $NetBSD: pipe.S,v 1.1 2014/08/10 05:47:37 matt Exp $	*/
+/* $NetBSD: pipe.S,v 1.2 2018/02/04 18:32:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -39,5 +39,5 @@ ENTRY(_pipe)
 	_INVOKE_CERROR()
 	stp	w0, w1, [x9]
 	mov	w0, wzr
-	RET
+	ret
 END(_pipe)
