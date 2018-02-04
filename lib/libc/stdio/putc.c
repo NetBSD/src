@@ -1,4 +1,4 @@
-/*	$NetBSD: putc.c,v 1.12 2012/03/15 18:22:30 christos Exp $	*/
+/*	$NetBSD: putc.c,v 1.13 2018/02/04 01:13:45 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)putc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: putc.c,v 1.12 2012/03/15 18:22:30 christos Exp $");
+__RCSID("$NetBSD: putc.c,v 1.13 2018/02/04 01:13:45 mrg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -58,8 +58,6 @@ putc(int c, FILE *fp)
 {
 	int r;
 
-	_DIAGASSERT(fp != NULL);
-
 	FLOCKFILE(fp);
 	r = __sputc(c, fp);
 	FUNLOCKFILE(fp);
@@ -69,8 +67,6 @@ putc(int c, FILE *fp)
 int
 putc_unlocked(int c, FILE *fp)
 {
-
-	_DIAGASSERT(fp != NULL);
 
 	return __sputc(c, fp);
 }
