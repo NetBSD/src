@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.86 2017/02/05 01:55:03 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.86.4.1 2018/02/04 12:49:25 martin Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -1990,7 +1990,7 @@ bozo_http_error(bozohttpd_t *httpd, int code, bozo_httpreq_t *request,
 		    "<html><head><title>%s</title></head>\n"
 		    "<body><h1>%s</h1>\n"
 		    "%s%s: <pre>%s</pre>\n"
- 		    "<hr><address><a href=\"http://%s%s/\">%s%s</a></address>\n"
+ 		    "<hr><address><a href=\"//%s%s/\">%s%s</a></address>\n"
 		    "</body></html>\n",
 		    header, header,
 		    user ? user : "", file,
