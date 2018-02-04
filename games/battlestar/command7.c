@@ -1,4 +1,4 @@
-/*	$NetBSD: command7.c,v 1.3 2005/07/01 06:04:54 jmc Exp $	*/
+/*	$NetBSD: command7.c,v 1.4 2018/02/04 08:48:05 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)com7.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: command7.c,v 1.3 2005/07/01 06:04:54 jmc Exp $");
+__RCSID("$NetBSD: command7.c,v 1.4 2018/02/04 08:48:05 mrg Exp $");
 #endif
 #endif				/* not lint */
 
@@ -273,9 +273,10 @@ fighton:
 	}
 	if (lifeline >= strength) {
 		printf("You have killed the %s.\n", objsht[enemy]);
-		if (enemy == ELF || enemy == DARK)
+		if (enemy == ELF || enemy == DARK) {
 			printf("A watery black smoke consumes his body and ");
 			puts("then vanishes with a peal of thunder!");
+		}
 		clearbit(location[position].objects, enemy);
 		power += 2;
 		notes[JINXED]++;
