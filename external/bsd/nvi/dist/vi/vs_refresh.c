@@ -1,4 +1,4 @@
-/*	$NetBSD: vs_refresh.c,v 1.8 2017/11/14 12:20:55 rin Exp $ */
+/*	$NetBSD: vs_refresh.c,v 1.9 2018/02/04 09:15:45 mrg Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -16,7 +16,7 @@
 static const char sccsid[] = "Id: vs_refresh.c,v 10.50 2001/06/25 15:19:37 skimo Exp  (Berkeley) Date: 2001/06/25 15:19:37 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: vs_refresh.c,v 1.8 2017/11/14 12:20:55 rin Exp $");
+__RCSID("$NetBSD: vs_refresh.c,v 1.9 2018/02/04 09:15:45 mrg Exp $");
 #endif
 
 #include <sys/types.h>
@@ -603,7 +603,8 @@ fast:	(void)gp->scr_cursor(sp, &y, &notused);
 	 *
 	 * Walk through the map and find the current line.
 	 */
-slow:	for (smp = HMAP; smp->lno != LNO; ++smp);
+slow:	for (smp = HMAP; smp->lno != LNO; ++smp)
+		;
 
 	/*
 	 * 7e: Leftright scrolling adjustment.
