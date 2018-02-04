@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.2 2017/07/12 12:55:41 christos Exp $
+# $NetBSD: Makefile.inc,v 1.3 2018/02/04 03:19:52 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -15,8 +15,8 @@ CPPFLAGS+=      -DINET6
 .endif
 
 DPLIBS+= event ${NETBSDSRCDIR}/external/bsd/libevent/lib/libevent
-DPLIBS+= ssl ${NETBSDSRCDIR}/crypto/external/bsd/openssl/lib/libssl
-DPLIBS+= crypto ${NETBSDSRCDIR}/crypto/external/bsd/openssl/lib/libcrypto
+DPLIBS+= ssl ${NETBSDSRCDIR}/crypto/external/bsd/${EXTERNAL_OPENSSL_SUBDIR}/lib/libssl
+DPLIBS+= crypto ${NETBSDSRCDIR}/crypto/external/bsd/${EXTERNAL_OPENSSL_SUBDIR}/lib/libcrypto
 DPLIBS+= crypt ${NETBSDSRCDIR}/lib/libcrypt
 DPLIBS+= util ${NETBSDSRCDIR}/lib/libutil
 DPLIBS+= pthread ${NETBSDSRCDIR}/lib/libpthread

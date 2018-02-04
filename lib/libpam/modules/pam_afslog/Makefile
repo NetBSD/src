@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2011/04/15 18:05:45 elric Exp $
+# $NetBSD: Makefile,v 1.7 2018/02/04 03:19:53 christos Exp $
 
 LIB=	pam_afslog
 SRCS=	pam_afslog.c
@@ -11,6 +11,6 @@ LIBDPLIBS+= \
 	roken	${NETBSDSRCDIR}/crypto/external/bsd/heimdal/lib/libroken \
 	com_err	${NETBSDSRCDIR}/crypto/external/bsd/heimdal/lib/libcom_err \
 	crypt	${.CURDIR}/../../../libcrypt \
-	crypto	${NETBSDSRCDIR}/crypto/external/bsd/openssl/lib/libcrypto
+	crypto	${NETBSDSRCDIR}/crypto/external/bsd/${EXTERNAL_OPENSSL_SUBDIR}/lib/libcrypto
 
 .include "${.CURDIR}/../mod.mk"

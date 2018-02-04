@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.3 2017/03/14 21:11:12 roy Exp $
+# $NetBSD: Makefile.inc,v 1.4 2018/02/04 03:19:53 christos Exp $
 
 USE_FORT?= yes  # network client/server
 UNBOUND:=${.PARSEDIR}/dist
@@ -7,8 +7,8 @@ UNBOUND:=${.PARSEDIR}/dist
 
 CPPFLAGS += -D_OPENBSD_SOURCE
 
-DPLIBS+= ssl ${NETBSDSRCDIR}/crypto/external/bsd/openssl/lib/libssl
-DPLIBS+= crypto ${NETBSDSRCDIR}/crypto/external/bsd/openssl/lib/libcrypto
+DPLIBS+= ssl ${NETBSDSRCDIR}/crypto/external/bsd/${EXTERNAL_OPENSSL_SUBDIR}/lib/libssl
+DPLIBS+= crypto ${NETBSDSRCDIR}/crypto/external/bsd/${EXTERNAL_OPENSSL_SUBDIR}/lib/libcrypto
 DPLIBS+= crypt ${NETBSDSRCDIR}/lib/libcrypt
 DPLIBS+= util ${NETBSDSRCDIR}/lib/libutil
 DPLIBS+= pthread ${NETBSDSRCDIR}/lib/libpthread

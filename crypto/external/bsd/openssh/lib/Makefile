@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2017/10/07 21:14:59 christos Exp $
+#	$NetBSD: Makefile,v 1.24 2018/02/04 03:19:52 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -101,7 +101,7 @@ CPPFLAGS+= -DHAVE_BLF_H
 CPPFLAGS+=	-I${SSHDIST}
 .PATH:		${SSHDIST}
 
-LIBDPLIBS+=	crypto	${NETBSDSRCDIR}/crypto/external/bsd/openssl/lib/libcrypto \
+LIBDPLIBS+=	crypto	${NETBSDSRCDIR}/crypto/external/bsd/${EXTERNAL_OPENSSL_SUBDIR}/lib/libcrypto \
 		crypt	${NETBSDSRCDIR}/lib/libcrypt \
 		z	${NETBSDSRCDIR}/lib/libz
 
