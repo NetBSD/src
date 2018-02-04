@@ -30,7 +30,7 @@
 # define SANITIZER_WEAK_ATTRIBUTE  __attribute__((weak))
 #endif
 
-#if (SANITIZER_LINUX || SANITIZER_WINDOWS) && !defined(SANITIZER_GO)
+#if (SANITIZER_LINUX || SANITIZER_WINDOWS || SANITIZER_NETBSD) && !defined(SANITIZER_GO)
 # define SANITIZER_SUPPORTS_WEAK_HOOKS 1
 #else
 # define SANITIZER_SUPPORTS_WEAK_HOOKS 0
@@ -92,7 +92,7 @@ typedef int error_t;
 // _FILE_OFFSET_BITS. This definition of OFF_T matches the ABI of system calls
 // like pread and mmap, as opposed to pread64 and mmap64.
 // FreeBSD, NetBSD, Mac and Linux/x86-64 are special.
-#if SANITIZER_FREEBSD || SANITIZER_MAC || SANITIZER_NETBSD \
+#if SANITIZER_FREEBSD || SANITIZER_MAC || SANITIZER_NETBSD || \
   (SANITIZER_LINUX && defined(__x86_64__))
 typedef u64 OFF_T;
 #else

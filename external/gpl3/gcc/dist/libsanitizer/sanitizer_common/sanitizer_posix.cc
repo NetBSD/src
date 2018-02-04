@@ -170,7 +170,7 @@ bool MprotectNoAccess(uptr addr, uptr size) {
 }
 
 fd_t OpenFile(const char *filename, FileAccessMode mode, error_t *errno_p) {
-  int flags;
+  int flags = 0;
   switch (mode) {
     case RdOnly: flags = O_RDONLY; break;
     case WrOnly: flags = O_WRONLY | O_CREAT; break;
