@@ -1,4 +1,4 @@
-/*	$NetBSD: facpri.c,v 1.2 2012/07/22 14:27:36 darrenr Exp $	*/
+/*	$NetBSD: facpri.c,v 1.3 2018/02/04 08:19:42 mrg Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -22,7 +22,7 @@
 #include "facpri.h"
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: facpri.c,v 1.1.1.2 2012/07/22 13:44:38 darrenr Exp $";
+static  __attribute__((__used__)) const char rcsid[] = "@(#)Id: facpri.c,v 1.1.1.2 2012/07/22 13:44:38 darrenr Exp $";
 #endif
 
 

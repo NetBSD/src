@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmon.c,v 1.7 2012/10/27 20:07:12 nakayama Exp $	*/
+/*	$NetBSD: ipmon.c,v 1.8 2018/02/04 08:19:42 mrg Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -16,8 +16,8 @@
 #include <err.h>
 
 #if !defined(lint)
-static const char sccsid[] = "@(#)ipmon.c	1.21 6/5/96 (C)1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipmon.c,v 1.1.1.2 2012/07/22 13:44:56 darrenr Exp ";
+static __attribute__((__used__)) const char sccsid[] = "@(#)ipmon.c	1.21 6/5/96 (C)1993-2000 Darren Reed";
+static __attribute__((__used__)) const char rcsid[] = "@(#)Id: ipmon.c,v 1.1.1.2 2012/07/22 13:44:56 darrenr Exp ";
 #endif
 
 

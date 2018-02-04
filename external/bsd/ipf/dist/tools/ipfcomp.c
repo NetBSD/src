@@ -1,4 +1,4 @@
-/*	$NetBSD: ipfcomp.c,v 1.4 2013/10/20 03:09:11 christos Exp $	*/
+/*	$NetBSD: ipfcomp.c,v 1.5 2018/02/04 08:19:42 mrg Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -6,8 +6,8 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  */
 #if !defined(lint)
-static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipfcomp.c,v 1.1.1.2 2012/07/22 13:44:53 darrenr";
+static __attribute__((__used__)) const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
+static __attribute__((__used__)) const char rcsid[] = "@(#)Id: ipfcomp.c,v 1.1.1.2 2012/07/22 13:44:53 darrenr";
 #endif
 
 #include "ipf.h"
