@@ -1,4 +1,4 @@
-/*	$NetBSD: license.c,v 1.1.1.13 2017/04/20 13:12:47 joerg Exp $	*/
+/*	$NetBSD: license.c,v 1.1.1.14 2018/02/04 08:20:47 maya Exp $	*/
 
 /*-
  * Copyright (c) 2009 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -92,7 +92,8 @@ const char *default_acceptable_licenses =
     "w3c "
     "x11 "
     "zlib "
-    "zpl-2.0 zpl-2.1";
+    "zpl-2.0 zpl-2.1 "
+    "zsh";
 
 #ifdef DEBUG
 static size_t hash_collisions;
