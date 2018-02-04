@@ -27,7 +27,7 @@
  *	i4b daemon - config file processing
  *	-----------------------------------
  *
- *	$Id: rc_config.c,v 1.26 2012/03/01 22:31:48 joerg Exp $ 
+ *	$Id: rc_config.c,v 1.27 2018/02/04 09:01:12 mrg Exp $ 
  *
  * $FreeBSD$
  *
@@ -1564,20 +1564,19 @@ print_config(void)
 			for (j = 0; j < cep->remote_numbers_count; j++)
 				fprintf(PFILE, "remote-phone-dialout  = %s\t\t# telephone number %d for dialing out to remote\n", cep->remote_numbers[j].number, j+1);
 
-				fprintf(PFILE, "remdial-handling      = ");
+			fprintf(PFILE, "remdial-handling      = ");
 	
-				switch (cep->remote_numbers_handling)
-				{
-				case RNH_NEXT:
-					fprintf(PFILE, "next\t\t# use next number after last successful for new dial\n");
-					break;
-				case RNH_LAST:
-					fprintf(PFILE, "last\t\t# use last successful number for new dial\n");
-					break;
-				case RNH_FIRST:
-					fprintf(PFILE, "first\t\t# always start with first number for new dial\n");
-					break;
-				}
+			switch (cep->remote_numbers_handling)
+			{
+			case RNH_NEXT:
+				fprintf(PFILE, "next\t\t# use next number after last successful for new dial\n");
+				break;
+			case RNH_LAST:
+				fprintf(PFILE, "last\t\t# use last successful number for new dial\n");
+				break;
+			case RNH_FIRST:
+				fprintf(PFILE, "first\t\t# always start with first number for new dial\n");
+				break;
 			}
 
 			if (cep->local_phone_dialout[0])
@@ -1752,6 +1751,7 @@ print_config(void)
 					fprintf(PFILE, "downtime              = %d\t\t# time device is switched off\n", cep->downtime);
 				}
 			}
+		}
 	}
 	fprintf(PFILE, "\n");	
 }

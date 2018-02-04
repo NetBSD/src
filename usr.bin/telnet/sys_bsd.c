@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_bsd.c,v 1.33 2012/01/09 16:08:55 christos Exp $	*/
+/*	$NetBSD: sys_bsd.c,v 1.34 2018/02/04 09:01:12 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 from: static char sccsid[] = "@(#)sys_bsd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: sys_bsd.c,v 1.33 2012/01/09 16:08:55 christos Exp $");
+__RCSID("$NetBSD: sys_bsd.c,v 1.34 2018/02/04 09:01:12 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -468,11 +468,12 @@ TerminalSpeeds(long *ispeed, long *ospeed)
 
     out = cfgetospeed(&old_tc);
     in = cfgetispeed(&old_tc);
-    if (in == 0)
+    if (in == 0) {
 	in = out;
 
 	*ispeed = in;
 	*ospeed = out;
+    }
 }
 
 int
