@@ -1,4 +1,4 @@
-/*	$NetBSD: command3.c,v 1.3 2005/07/01 06:04:54 jmc Exp $	*/
+/*	$NetBSD: command3.c,v 1.4 2018/02/04 08:48:05 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)com3.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: command3.c,v 1.3 2005/07/01 06:04:54 jmc Exp $");
+__RCSID("$NetBSD: command3.c,v 1.4 2018/02/04 08:48:05 mrg Exp $");
 #endif
 #endif				/* not lint */
 
@@ -306,9 +306,10 @@ shoot(void)
 						if (wintime)
 							live();
 						break;
-					} else
+					} else {
 						printf("I don't see any ");
 						puts("goddess around here.");
+					}
 				break;
 
 			case TIMER:
