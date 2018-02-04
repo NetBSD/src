@@ -1,4 +1,4 @@
-/*	$NetBSD: ip.c,v 1.3 2012/07/22 14:27:35 darrenr Exp $	*/
+/*	$NetBSD: ip.c,v 1.4 2018/02/04 08:19:42 mrg Exp $	*/
 
 /*
  * ip.c (C) 1995-1998 Darren Reed
@@ -6,8 +6,8 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  */
 #if !defined(lint)
-static const char sccsid[] = "%W% %G% (C)1995";
-static const char rcsid[] = "@(#)Id: ip.c,v 1.1.1.2 2012/07/22 13:44:36 darrenr";
+static __attribute__((__used__)) const char sccsid[] = "%W% %G% (C)1995";
+static __attribute__((__used__)) const char rcsid[] = "@(#)Id: ip.c,v 1.1.1.2 2012/07/22 13:44:36 darrenr";
 #endif
 #include <sys/param.h>
 #include <sys/types.h>
