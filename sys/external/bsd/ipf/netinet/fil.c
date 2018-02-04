@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.21 2017/09/05 11:12:32 christos Exp $	*/
+/*	$NetBSD: fil.c,v 1.22 2018/02/04 08:19:42 mrg Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -138,7 +138,7 @@ extern struct timeout ipf_slowtimer_ch;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.21 2017/09/05 11:12:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.22 2018/02/04 08:19:42 mrg Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 1.1.1.2 2012/07/22 13:45:07 darrenr Exp $";
@@ -4893,13 +4893,14 @@ frrequest(ipf_main_softc_t *softc, int unit, ioctlcmd_t req, void *data,
 			error = ipf_outobj(softc, data, fp, IPFOBJ_FRENTRY);
 
 			if (error == 0) {
-				if ((f->fr_dsize != 0) && (uptr != NULL))
+				if ((f->fr_dsize != 0) && (uptr != NULL)) {
 					error = COPYOUT(f->fr_data, uptr,
 							f->fr_dsize);
 					if (error != 0) {
 						IPFERROR(28);
 						error = EFAULT;
 					}
+				}
 				if (error == 0) {
 					f->fr_hits = 0;
 					f->fr_bytes = 0;

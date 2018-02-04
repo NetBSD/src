@@ -1,4 +1,4 @@
-/*	$NetBSD: nat_setgroupmap.c,v 1.2 2012/07/22 14:27:36 darrenr Exp $	*/
+/*	$NetBSD: nat_setgroupmap.c,v 1.3 2018/02/04 08:19:42 mrg Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  */
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: nat_setgroupmap.c,v 1.1.1.2 2012/07/22 13:44:39 darrenr Exp $";
+static __attribute__((__used__)) const char rcsid[] = "@(#)Id: nat_setgroupmap.c,v 1.1.1.2 2012/07/22 13:44:39 darrenr Exp $";
 #endif
 
 #include "ipf.h"
