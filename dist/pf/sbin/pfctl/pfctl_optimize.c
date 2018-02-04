@@ -1,4 +1,4 @@
-/*	$NetBSD: pfctl_optimize.c,v 1.7 2016/05/30 17:21:07 dholland Exp $	*/
+/*	$NetBSD: pfctl_optimize.c,v 1.8 2018/02/04 08:44:36 mrg Exp $	*/
 /*	$OpenBSD: pfctl_optimize.c,v 1.13 2006/10/31 14:17:45 mcbride Exp $ */
 
 /*
@@ -1084,7 +1084,7 @@ skip_cmp_dst_addr(struct pf_rule *a, struct pf_rule *b)
 		return (0);
 	case PF_ADDR_DYNIFTL:
 		if (strcmp(a->dst.addr.v.ifname, b->dst.addr.v.ifname) != 0 ||
-		    a->dst.addr.iflags != a->dst.addr.iflags ||
+		    a->dst.addr.iflags != b->dst.addr.iflags ||
 		    memcmp(&a->dst.addr.v.a.mask, &b->dst.addr.v.a.mask,
 		    sizeof(a->dst.addr.v.a.mask)))
 			return (1);
@@ -1156,7 +1156,7 @@ skip_cmp_src_addr(struct pf_rule *a, struct pf_rule *b)
 		return (0);
 	case PF_ADDR_DYNIFTL:
 		if (strcmp(a->src.addr.v.ifname, b->src.addr.v.ifname) != 0 ||
-		    a->src.addr.iflags != a->src.addr.iflags ||
+		    a->src.addr.iflags != b->src.addr.iflags ||
 		    memcmp(&a->src.addr.v.a.mask, &b->src.addr.v.a.mask,
 		    sizeof(a->src.addr.v.a.mask)))
 			return (1);
