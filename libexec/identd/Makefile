@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.15 2016/12/11 15:43:48 christos Exp $
+# $NetBSD: Makefile,v 1.16 2018/02/04 09:03:23 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -25,5 +25,8 @@ CPPFLAGS+=-DWITH_NPF
 LDADD+=-lnpf -lprop
 DPADD+=${LIBNPF} ${LIBPROP}
 .endif
+
+# XXX
+COPTS+=	-fno-strict-aliasing
 
 .include <bsd.prog.mk>

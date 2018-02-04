@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.159 2017/04/13 14:46:32 christos Exp $ */
+/*	$NetBSD: sysctl.c,v 1.160 2018/02/04 09:03:23 mrg Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.159 2017/04/13 14:46:32 christos Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.160 2018/02/04 09:03:23 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -2454,12 +2454,13 @@ kern_cp_id(HANDLER_ARGS)
 			       sizeof(u_int64_t),
 			       DISPLAY_VALUE);
 	else if (Aflag) {
-		for (i = 0; i < n; i++)
+		for (i = 0; i < n; i++) {
 			(void)snprintf(s, sizeof(s), "%s%s%d", sname, sep, i);
 			tname = s;
 			display_number(&node, tname, &cp_id[i],
 				       sizeof(u_int64_t),
 				       DISPLAY_VALUE);
+		}
 	}
 	else {
 		if (xflag || rflag)
