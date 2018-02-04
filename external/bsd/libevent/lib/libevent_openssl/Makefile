@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2013/09/11 23:04:10 joerg Exp $
+#	$NetBSD: Makefile,v 1.3 2018/02/04 03:19:52 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -9,7 +9,7 @@ bufferevent_openssl.c
 
 LIBDPLIBS+= \
 	event	${.CURDIR}/../libevent \
-	crypto	${NETBSDSRCDIR}/crypto/external/bsd/openssl/lib/libcrypto \
-	ssl	${NETBSDSRCDIR}/crypto/external/bsd/openssl/lib/libssl
+	crypto	${NETBSDSRCDIR}/crypto/external/bsd/${EXTERNAL_OPENSSL_SUBDIR}/lib/libcrypto \
+	ssl	${NETBSDSRCDIR}/crypto/external/bsd/${EXTERNAL_OPENSSL_SUBDIR}/lib/libssl
 
 .include <bsd.lib.mk>
