@@ -27,7 +27,7 @@
  *	q931_util.c - utility functions to print Q.931 traces
  *	-----------------------------------------------------
  *
- *	$Id: q931_util.c,v 1.3 2003/10/06 09:43:28 itojun Exp $ 
+ *	$Id: q931_util.c,v 1.4 2018/02/04 09:01:12 mrg Exp $ 
  *
  * $FreeBSD$
  *
@@ -405,38 +405,38 @@ p_q931bc(char *pbuf, unsigned char *buf)
 	if (!len)
 		goto exit;
 
-		switch (buf[i] & 0x7f)
-		{
-			case 0x42:
-				sprintf((pbuf+strlen(pbuf)), "\n          layer2=Q.921/I.441");
-				break;
-			case 0x46:
-				sprintf((pbuf+strlen(pbuf)), "\n          layer2=X.25 link");
-				break;
-			default:
-				sprintf((pbuf+strlen(pbuf)), "\n          layer2=0x%02x",(buf[i] & 0x7f));
-				break;
-		}
-		i++;
-		len--;
+	switch (buf[i] & 0x7f)
+	{
+		case 0x42:
+			sprintf((pbuf+strlen(pbuf)), "\n          layer2=Q.921/I.441");
+			break;
+		case 0x46:
+			sprintf((pbuf+strlen(pbuf)), "\n          layer2=X.25 link");
+			break;
+		default:
+			sprintf((pbuf+strlen(pbuf)), "\n          layer2=0x%02x",(buf[i] & 0x7f));
+			break;
+	}
+	i++;
+	len--;
 
 	if (!len)
 		goto exit;
 	
-		switch (buf[i] & 0x7f)
-		{
-			case 0x62:
-				sprintf((pbuf+strlen(pbuf)), "\n          layer3=Q.921/I.441");
-				break;
-			case 0x66:
-				sprintf((pbuf+strlen(pbuf)), "\n          layer3=X.25 packet");
-				break;
-			default:
-				sprintf((pbuf+strlen(pbuf)), "\n          layer3=0x%02x",(buf[i] & 0x7f));
-				break;
-		}
-		i++;
-		len--;
+	switch (buf[i] & 0x7f)
+	{
+		case 0x62:
+			sprintf((pbuf+strlen(pbuf)), "\n          layer3=Q.921/I.441");
+			break;
+		case 0x66:
+			sprintf((pbuf+strlen(pbuf)), "\n          layer3=X.25 packet");
+			break;
+		default:
+			sprintf((pbuf+strlen(pbuf)), "\n          layer3=0x%02x",(buf[i] & 0x7f));
+			break;
+	}
+	i++;
+	len--;
 
 exit:	
 	sprintf((pbuf+strlen(pbuf)), "]");	
