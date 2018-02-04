@@ -552,7 +552,7 @@ static DNSServiceErrorType ConnectToServer(DNSServiceRef *ref, DNSServiceFlags f
     else
     {
         #ifdef SO_NOSIGPIPE
-        const unsigned long optval = 1;
+        const unsigned int optval = 1;
         #endif
         #ifndef USE_TCP_LOOPBACK
         char* uds_serverpath = getenv(MDNS_UDS_SERVERPATH_ENVVAR);
