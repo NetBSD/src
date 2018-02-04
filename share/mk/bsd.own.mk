@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1030 2018/02/02 01:02:41 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.1031 2018/02/04 03:19:53 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -89,6 +89,23 @@ EXTERNAL_GCC_SUBDIR=?	/does/not/exist
 .endif
 .else
 MKGCCCMDS?=	no
+.endif
+
+#
+# What OpenSSL is used?
+# 
+.if ${MACHINE} == "amd64"
+HAVE_OPENSSL?=  10
+.else
+HAVE_OPENSSL?=  10
+.endif
+
+.if ${HAVE_OPENSSL} == 11
+EXTERNAL_OPENSSL_SUBDIR=openssl
+.elif ${HAVE_OPENSSL} == 10
+EXTERNAL_OPENSSL_SUBDIR=openssl.old
+.else
+EXTERNAL_OPENSSL_SUBDIR=/does/not/exist
 .endif
 
 .if !empty(MACHINE_ARCH:Mearm*)
