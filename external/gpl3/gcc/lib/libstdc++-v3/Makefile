@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2018/02/03 21:27:45 mrg Exp $
+#	$NetBSD: Makefile,v 1.31 2018/02/04 01:16:33 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -170,7 +170,8 @@ COPTS.ext-inst.cc+= -Wno-error
 .for f in collate_members_cow \
 	  messages_members_cow \
           monetary_members_cow \
-	  numeric_members_cow
+	  numeric_members_cow \
+	  c++locale
 COPTS.${f}.cc+= -fimplicit-templates ${G_GLIBCXX_ABI_FLAGS}
 .endfor
 
