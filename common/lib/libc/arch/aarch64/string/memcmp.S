@@ -1,4 +1,4 @@
-/* $NetBSD: memcmp.S,v 1.1 2014/08/10 05:47:35 matt Exp $ */
+/* $NetBSD: memcmp.S,v 1.2 2018/02/04 21:52:16 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: memcmp.S,v 1.1 2014/08/10 05:47:35 matt Exp $")
+RCSID("$NetBSD: memcmp.S,v 1.2 2018/02/04 21:52:16 skrll Exp $")
 
 ENTRY(memcmp)
 	mov	x9, x0
@@ -42,14 +42,14 @@ ENTRY(memcmp)
 	cmp	x2, #6
 	b.eq	.Lmemcmp_6bytes
 #endif
-	cmp	x2, #7
+	cmp	x2, #8
 	b.ls	.Lmemcmp_lessthan8
 
 	ands	x3, x9, #7
 	b.eq	.Lmemcmp_dword_loop
 
 /*
- * The two addresses have identical alignment but are not yet dword aligned.
+ * The src1 address is not dword aligned.
  */
 	add	x2, x2, x3		/* add unalignment to length */
 	sub	x2, x2, #8		/* now subtract a dword */
@@ -68,14 +68,7 @@ ENTRY(memcmp)
 	lsr	x6, x6, x3		/* discard leading bytes from data2 */
 #endif
 	subs	x0, x4, x6		/* compare data */
-#ifdef __AARCH64EL__
 	b.ne	.Lmemcmp_last_compare	/* difference.  find it */
-#else
-	b.eq	.Lmemcmp_dword_loop	/* no difference.  go to loop */
-	rev	x4, x4			/* byte swap data1 */
-	rev	x6, x6			/* byte swap data2 */
-	b	.Lmemcmp_last_compare	/* go find the difference. */
-#endif
 
 .Lmemcmp_dword_loop:
 	subs	x2, x2, #8
@@ -84,10 +77,6 @@ ENTRY(memcmp)
 	ldr	x6, [x10], #8
 	subs	x0, x4, x6
 	b.eq	.Lmemcmp_dword_loop	/* no difference.  go to loop */
-#ifdef __AARCH64EB__
-	rev	x4, x4			/* byte swap data1 */
-	rev	x6, x6			/* byte swap data2 */
-#endif
 	b	.Lmemcmp_last_compare	/* go find the difference. */
 
 .Lmemcmp_finish_dword:
@@ -96,6 +85,8 @@ ENTRY(memcmp)
 	 */
 	tst	x2, #7
 	b.eq	.Lmemcmp_ret
+	mov	x4, xzr
+	mov	x6, xzr
 	/*
 	 *
 	 */
@@ -120,16 +111,18 @@ ENTRY(memcmp)
 #endif
 
 .Lmemcmp_finish_hword:
-#ifdef __AARCH64EB__
-	rev	x4, x4			/* byte swap data1 */
-	rev	x6, x6			/* byte swap data1 */
-#endif
-	tbz	x2, #0, .Lmemcmp_last_compare
+	tbz	x2, #0, .Lmemcmp_last_compare0
+
 	ldrb	w5, [x9]
 	ldrb	w7, [x10]
+#ifdef __AARCH64EB__
+	orr	x4, x4, x5, lsl #8
+	orr	x6, x6, x7, lsl #8
+#else
 	orr	x4, x4, x5, lsl #48
 	orr	x6, x6, x7, lsl #48
-	b	.Lmemcmp_last_compare	/* go find the difference. */
+#endif
+	b	.Lmemcmp_last_compare0	/* go find the difference. */
 
 /*
  * D
@@ -167,7 +160,7 @@ ENTRY(memcmp)
 #endif /* _KERNEL */
 
 /*
- * We have loaded the final bytes in x4 and x6 in LE format.  Now we have
+ * We have loaded the final bytes in x4 and x6 in host-endian.  Now we have
  * to figure what the difference is (if any).  First we subtract.  Any bytes
  * that are the same will be 0. So to find the first non-zero byte we byterev
  * and then use clz to find that byte.
@@ -175,13 +168,25 @@ ENTRY(memcmp)
  * data dwords left to remove the equal part.  Then we shift right to discard
  * the trailing bytes.  Then we subtract and return.
  */
+.Lmemcmp_last_compare0:
 	subs	x0, x4, x6
 	b.eq	.Lmemcmp_ret
 .Lmemcmp_last_compare:
-	rev	x1, x0		/* byte reverse */
+#if __AARCH64EB__
+	clz	x1, x0		/* find first non-zero byte */
+	rev	x0, x0
+#else
+	rev	x1, x0
 	clz	x1, x1		/* find first non-zero byte */
-	bfi	x1, xzr, #0, #3	/* make it byte aligned */
-	lsr	x0, x0, x1	/* shift to LSB */
-	sxtb	w0, w0		/* sign extend */
+#endif
+	bfi	x1, xzr, #0, #3 /* make it byte aligned */
+	lsr	x1, x0, x1	/* shift to LSB */
+#if __AARCH64EL__
+	rev	x4, x4		/* byte reverse */
+	rev	x6, x6		/* byte reverse */
+#endif
+	subs	x0, x4, x6
+	csetm	x0, cc		/* set mask bits as sign */
+	bfm	x0, x1, #0, #7	/* extend with sign bit */
 	ret
 END(memcmp)
