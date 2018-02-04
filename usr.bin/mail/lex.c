@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.44 2017/11/09 20:27:50 christos Exp $	*/
+/*	$NetBSD: lex.c,v 1.45 2018/02/04 09:01:12 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: lex.c,v 1.44 2017/11/09 20:27:50 christos Exp $");
+__RCSID("$NetBSD: lex.c,v 1.45 2018/02/04 09:01:12 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -627,7 +627,7 @@ execute(char linebuf[], enum execute_contxt_e contxt)
 	char *volatile cp;
 	int retval;
 	int c;
-	int e = 1;
+	volatile int e = 1;
 
 	/*
 	 * Strip the white space away from the beginning
