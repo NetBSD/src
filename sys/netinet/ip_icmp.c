@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.166 2018/01/23 07:33:49 maxv Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.167 2018/02/05 08:38:06 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.166 2018/01/23 07:33:49 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.167 2018/02/05 08:38:06 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -161,7 +161,7 @@ LIST_HEAD(, icmp_mtudisc_callback) icmp_mtudisc_callbacks =
 /* unused... */
 u_int ip_next_mtu(u_int, int);
 
-extern int icmperrppslim;
+static int icmperrppslim = 100;			/* 100pps */
 static int icmperrpps_count = 0;
 static struct timeval icmperrppslim_last;
 static int icmp_rediraccept = 1;
