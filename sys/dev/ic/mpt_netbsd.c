@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_netbsd.c,v 1.34 2018/01/30 20:20:38 jakllsch Exp $	*/
+/*	$NetBSD: mpt_netbsd.c,v 1.35 2018/02/05 22:14:26 mrg Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt_netbsd.c,v 1.34 2018/01/30 20:20:38 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt_netbsd.c,v 1.35 2018/02/05 22:14:26 mrg Exp $");
 
 #include "bio.h"
 
@@ -1093,11 +1093,11 @@ mpt_run_xfer(mpt_softc_t *mpt, struct scsipi_xfer *xs)
 	if (mpt->verbose > 1)
 		mpt_print_scsi_io_request(mpt_req);
 
-		if (xs->timeout == 0) {
-			mpt_prt(mpt, "mpt_run_xfer: no timeout specified for request: 0x%x\n",
+	if (xs->timeout == 0) {
+		mpt_prt(mpt, "mpt_run_xfer: no timeout specified for request: 0x%x\n",
 			req->index);
-			xs->timeout = 500;
-		}
+		xs->timeout = 500;
+	}
 
 	s = splbio();
 	if (__predict_true((xs->xs_control & XS_CTL_POLL) == 0))
