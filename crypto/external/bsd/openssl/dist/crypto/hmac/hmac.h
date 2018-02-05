@@ -105,7 +105,7 @@ void HMAC_CTX_set_flags(HMAC_CTX *ctx, unsigned long flags);
 #ifdef OPENSSL_VERSION_NUMBER >= 0x10100000L
 static inline HMAC_CTX *HMAC_CTX_new(void)
 {
-	HMAC_CTX *ctx = malloc(sizeof(*ctx));
+	HMAC_CTX *ctx = calloc(1, sizeof(*ctx));
 	if (ctx == NULL)
 		return NULL;
 	HMAC_CTX_init(ctx);
