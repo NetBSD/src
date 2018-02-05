@@ -660,6 +660,8 @@ void ERR_load_RSA_strings(void);
 
 #include <string.h>
 
+#ifdef OPENSSL_VERSION_NUMBER >= 0x10100000L
+
 static inline RSA_METHOD *RSA_meth_dup(const RSA_METHOD *meth)
 {
 	RSA_METHOD *ret = malloc(sizeof(*meth));
@@ -831,6 +833,8 @@ static inline void RSA_get0_crt_params(const RSA *r, const BIGNUM **dmp1,
 	if (iqmp)
 		*iqmp = r->iqmp;
 }
+
+#endif
 
 
 #ifdef  __cplusplus
