@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_xcall.c,v 1.22 2018/02/03 11:30:01 martin Exp $	*/
+/*	$NetBSD: subr_xcall.c,v 1.23 2018/02/05 02:49:46 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.22 2018/02/03 11:30:01 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.23 2018/02/05 02:49:46 ozaki-r Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -184,15 +184,18 @@ xc_encode_ipl(int ipl)
 	switch (ipl) {
 	case IPL_SOFTSERIAL:
 		return __SHIFTIN(XC_IPL_SOFTSERIAL, XC_IPL_MASK);
+	/* IPL_SOFT* can be the same value (e.g., on sparc or mips). */
+#if IPL_SOFTNET != IPL_SOFTSERIAL
+	case IPL_SOFTNET:
+		return __SHIFTIN(XC_IPL_SOFTNET, XC_IPL_MASK);
+#endif
+#if IPL_SOFTBIO != IPL_SOFTNET
 	case IPL_SOFTBIO:
 		return __SHIFTIN(XC_IPL_SOFTBIO, XC_IPL_MASK);
+#endif
 #if IPL_SOFTCLOCK != IPL_SOFTBIO
 	case IPL_SOFTCLOCK:
 		return __SHIFTIN(XC_IPL_SOFTCLOCK, XC_IPL_MASK);
-#endif
-#if IPL_SOFTNET != IPL_SOFTBIO
-	case IPL_SOFTNET:
-		return __SHIFTIN(XC_IPL_SOFTNET, XC_IPL_MASK);
 #endif
 	}
 
