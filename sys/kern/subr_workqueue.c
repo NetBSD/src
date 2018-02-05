@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_workqueue.c,v 1.33.30.1 2018/01/16 13:01:10 martin Exp $	*/
+/*	$NetBSD: subr_workqueue.c,v 1.33.30.2 2018/02/05 14:55:16 martin Exp $	*/
 
 /*-
  * Copyright (c)2002, 2005, 2006, 2007 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.33.30.1 2018/01/16 13:01:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.33.30.2 2018/02/05 14:55:16 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -354,6 +354,19 @@ workqueue_destroy(struct workqueue *wq)
 	kmem_free(wq->wq_ptr, workqueue_size(wq->wq_flags));
 }
 
+#ifdef DEBUG
+static void
+workqueue_check_duplication(struct workqueue_queue *q, work_impl_t *wk)
+{
+	work_impl_t *_wk;
+
+	SIMPLEQ_FOREACH(_wk, &q->q_queue_pending, wk_entry) {
+		if (_wk == wk)
+			panic("%s: tried to enqueue a queued work", __func__);
+	}
+}
+#endif
+
 void
 workqueue_enqueue(struct workqueue *wq, struct work *wk0, struct cpu_info *ci)
 {
@@ -365,6 +378,9 @@ workqueue_enqueue(struct workqueue *wq, struct work *wk0, struct cpu_info *ci)
 
 	mutex_enter(&q->q_mutex);
 	KASSERT(q->q_waiter == NULL);
+#ifdef DEBUG
+	workqueue_check_duplication(q, wk);
+#endif
 	SIMPLEQ_INSERT_TAIL(&q->q_queue_pending, wk, wk_entry);
 	cv_signal(&q->q_cv);
 	mutex_exit(&q->q_mutex);

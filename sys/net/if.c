@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.394.2.6 2018/01/13 05:43:44 snj Exp $	*/
+/*	$NetBSD: if.c,v 1.394.2.7 2018/02/05 14:55:16 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.394.2.6 2018/01/13 05:43:44 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.394.2.7 2018/02/05 14:55:16 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1336,8 +1336,6 @@ if_detach(struct ifnet *ifp)
 		altq_detach(&ifp->if_snd);
 #endif
 
-	mutex_obj_free(ifp->if_snd.ifq_lock);
-
 #if NCARP > 0
 	/* Remove the interface from any carp group it is a part of.  */
 	if (ifp->if_carp != NULL && ifp->if_type != IFT_CARP)
@@ -1500,6 +1498,7 @@ again:
 
 	mutex_obj_free(ifp->if_ioctl_lock);
 	ifp->if_ioctl_lock = NULL;
+	mutex_obj_free(ifp->if_snd.ifq_lock);
 
 	splx(s);
 

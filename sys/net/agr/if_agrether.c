@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agrether.c,v 1.9 2011/10/19 01:49:50 dyoung Exp $	*/
+/*	$NetBSD: if_agrether.c,v 1.9.46.1 2018/02/05 14:55:15 martin Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agrether.c,v 1.9 2011/10/19 01:49:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agrether.c,v 1.9.46.1 2018/02/05 14:55:15 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -166,23 +166,10 @@ agrether_portinit(struct agr_softc *sc, struct agr_port *port)
 	}
 
 	/* Enable vlan support */
-	if ((ec->ec_nvlans > 0) && 
-	     ec_port->ec_nvlans++ == 0 &&
-	    (ec_port->ec_capabilities & ETHERCAP_VLAN_MTU) != 0) {
-		struct ifnet *p = port->port_ifp;
-		/*
-		 * Enable Tx/Rx of VLAN-sized frames.
-		 */
-		ec_port->ec_capenable |= ETHERCAP_VLAN_MTU;
-		if (p->if_flags & IFF_UP) {
-			error = if_flags_set(p, p->if_flags);
-			if (error) {
-				if (ec_port->ec_nvlans-- == 1)
-					ec_port->ec_capenable &=
-					    ~ETHERCAP_VLAN_MTU;
-				return (error);
-			}
-		}
+	if (ec->ec_nvlans > 0) {
+		error = agr_vlan_add(port, NULL);
+		if (error != 0)
+			return error;
 	}
 	/* XXX ETHERCAP_JUMBO_MTU */
 
@@ -225,16 +212,9 @@ agrether_portfini(struct agr_softc *sc, struct agr_port *port)
 	}
 
 	if (ec_port->ec_nvlans > 0) {
+		bool force = true;
 		/* Disable vlan support */
-		ec_port->ec_nvlans = 0;
-		/*
-		 * Disable Tx/Rx of VLAN-sized frames.
-		 */
-		ec_port->ec_capenable &= ~ETHERCAP_VLAN_MTU;
-		if (port->port_ifp->if_flags & IFF_UP) {
-			(void)if_flags_set(port->port_ifp,
-			    port->port_ifp->if_flags);
-		}
+		agr_vlan_del(port, &force);
 	}
 
 	memset(&ifr, 0, sizeof(ifr));

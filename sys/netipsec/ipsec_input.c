@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_input.c,v 1.43.2.1 2017/10/21 19:43:54 snj Exp $	*/
+/*	$NetBSD: ipsec_input.c,v 1.43.2.2 2018/02/05 14:55:16 martin Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec_input.c,v 1.2.4.2 2003/03/28 20:32:53 sam Exp $	*/
 /*	$OpenBSD: ipsec_input.c,v 1.63 2003/02/20 18:35:43 deraadt Exp $	*/
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.43.2.1 2017/10/21 19:43:54 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.43.2.2 2018/02/05 14:55:16 martin Exp $");
 
 /*
  * IPsec input processing.
@@ -127,49 +127,52 @@ do {									\
 static struct mbuf *
 ipsec4_fixup_checksum(struct mbuf *m)
 {
-       struct ip *ip;
-       struct tcphdr *th;
-       struct udphdr *uh;
-       int poff, off;
-       int plen;
+	struct ip *ip;
+	struct tcphdr *th;
+	struct udphdr *uh;
+	int poff, off;
+	int plen;
 
-       if (m->m_len < sizeof(*ip))
-               m = m_pullup(m, sizeof(*ip));
-       ip = mtod(m, struct ip *); 
-       poff = ip->ip_hl << 2;
-       plen = ntohs(ip->ip_len) - poff;
+	if (m->m_len < sizeof(*ip)) {
+		m = m_pullup(m, sizeof(*ip));
+		if (m == NULL)
+			return NULL;
+	}
+	ip = mtod(m, struct ip *); 
+	poff = ip->ip_hl << 2;
+	plen = ntohs(ip->ip_len) - poff;
 
-       switch (ip->ip_p) {
-       case IPPROTO_TCP:
-               IP6_EXTHDR_GET(th, struct tcphdr *, m, poff, sizeof(*th));
-               if (th == NULL)
-                       return NULL;
-               off = th->th_off << 2;
-               if (off < sizeof(*th) || off > plen) {
-                       m_freem(m);
-                       return NULL;
-               }
-               th->th_sum = 0;
-               th->th_sum = in4_cksum(m, IPPROTO_TCP, poff, plen);
-               break;
-       case IPPROTO_UDP:
-               IP6_EXTHDR_GET(uh, struct udphdr *, m, poff, sizeof(*uh));
-               if (uh == NULL)
-                       return NULL;
-               off = sizeof(*uh); 
-               if (off > plen) {  
-                       m_freem(m);
-                       return NULL;
-               }
-               uh->uh_sum = 0;
-               uh->uh_sum = in4_cksum(m, IPPROTO_UDP, poff, plen);
-               break;
-       default:
-               /* no checksum */  
-               return m;
-       }
+	switch (ip->ip_p) {
+	case IPPROTO_TCP:
+		IP6_EXTHDR_GET(th, struct tcphdr *, m, poff, sizeof(*th));
+		if (th == NULL)
+			return NULL;
+		off = th->th_off << 2;
+		if (off < sizeof(*th) || off > plen) {
+			m_freem(m);
+			return NULL;
+		}
+		th->th_sum = 0;
+		th->th_sum = in4_cksum(m, IPPROTO_TCP, poff, plen);
+		break;
+	case IPPROTO_UDP:
+		IP6_EXTHDR_GET(uh, struct udphdr *, m, poff, sizeof(*uh));
+		if (uh == NULL)
+			return NULL;
+		off = sizeof(*uh); 
+		if (off > plen) {  
+			m_freem(m);
+			return NULL;
+		}
+		uh->uh_sum = 0;
+		uh->uh_sum = in4_cksum(m, IPPROTO_UDP, poff, plen);
+		break;
+	default:
+		/* no checksum */  
+		return m;
+	}
 
-       return m;
+	return m;
 }
 
 /*

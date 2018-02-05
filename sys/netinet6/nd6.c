@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.232.2.5 2018/01/02 10:20:34 snj Exp $	*/
+/*	$NetBSD: nd6.c,v 1.232.2.6 2018/02/05 14:55:16 martin Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.232.2.5 2018/01/02 10:20:34 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.232.2.6 2018/02/05 14:55:16 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -124,8 +124,8 @@ static callout_t nd6_timer_ch;
 static struct workqueue	*nd6_timer_wq;
 static struct work	nd6_timer_wk;
 
-static int fill_drlist(void *, size_t *, size_t);
-static int fill_prlist(void *, size_t *, size_t);
+static int fill_drlist(void *, size_t *);
+static int fill_prlist(void *, size_t *);
 
 static struct ifnet *nd6_defifp;
 static int nd6_defifindex;
@@ -2487,52 +2487,55 @@ nd6_sysctl(
     size_t newlen
 )
 {
-	void *p;
-	size_t ol;
-	int error;
-	size_t bufsize = 0;
-
-	error = 0;
+	int (*fill_func)(void *, size_t *);
 
 	if (newp)
 		return EPERM;
-	if (oldp && !oldlenp)
-		return EINVAL;
-	ol = oldlenp ? *oldlenp : 0;
 
-	if (oldp && *oldlenp > 0) {
-		p = kmem_alloc(*oldlenp, KM_SLEEP);
-		bufsize = *oldlenp;
-	} else
-		p = NULL;
 	switch (name) {
 	case ICMPV6CTL_ND6_DRLIST:
-		error = fill_drlist(p, oldlenp, ol);
-		if (!error && p != NULL && oldp != NULL)
-			error = copyout(p, oldp, *oldlenp);
+		fill_func = fill_drlist;
 		break;
 
 	case ICMPV6CTL_ND6_PRLIST:
-		error = fill_prlist(p, oldlenp, ol);
-		if (!error && p != NULL && oldp != NULL)
-			error = copyout(p, oldp, *oldlenp);
+		fill_func = fill_prlist;
 		break;
 
 	case ICMPV6CTL_ND6_MAXQLEN:
-		break;
+		return 0;
 
 	default:
-		error = ENOPROTOOPT;
-		break;
+		return ENOPROTOOPT;
 	}
-	if (p)
-		kmem_free(p, bufsize);
+
+	if (oldlenp == NULL)
+		return EINVAL;
+
+	size_t ol;
+	int error = (*fill_func)(NULL, &ol);	/* calc len needed */
+	if (error)
+		return error;
+
+	if (oldp == NULL) {
+		*oldlenp = ol;
+		return 0;
+	}
+
+	ol = *oldlenp = min(ol, *oldlenp);
+	if (ol == 0)
+		return 0;
+
+	void *p = kmem_alloc(ol, KM_SLEEP);
+	error = (*fill_func)(p, oldlenp);
+	if (!error)
+		error = copyout(p, oldp, *oldlenp);
+	kmem_free(p, ol);
 
 	return error;
 }
 
 static int
-fill_drlist(void *oldp, size_t *oldlenp, size_t ol)
+fill_drlist(void *oldp, size_t *oldlenp)
 {
 	int error = 0;
 	struct in6_defrouter *d = NULL, *de = NULL;
@@ -2571,18 +2574,13 @@ fill_drlist(void *oldp, size_t *oldlenp, size_t ol)
 	}
 	ND6_UNLOCK();
 
-	if (oldp) {
-		if (l > ol)
-			error = ENOMEM;
-	}
-	if (oldlenp)
-		*oldlenp = l;	/* (void *)d - (void *)oldp */
+	*oldlenp = l;	/* (void *)d - (void *)oldp */
 
 	return error;
 }
 
 static int
-fill_prlist(void *oldp, size_t *oldlenp, size_t ol)
+fill_prlist(void *oldp, size_t *oldlenp)
 {
 	int error = 0;
 	struct nd_prefix *pr;
@@ -2678,12 +2676,7 @@ fill_prlist(void *oldp, size_t *oldlenp, size_t ol)
 	}
 	ND6_UNLOCK();
 
-	if (oldp) {
-		*oldlenp = l;	/* (void *)d - (void *)oldp */
-		if (l > ol)
-			error = ENOMEM;
-	} else
-		*oldlenp = l;
+	*oldlenp = l;
 
 	return error;
 }
