@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.125 2017/09/27 10:05:04 ozaki-r Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.126 2018/02/05 08:38:06 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.125 2017/09/27 10:05:04 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.126 2018/02/05 08:38:06 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mrouting.h"
@@ -525,8 +525,6 @@ struct domain inetdomain = {
 };
 
 u_char	ip_protox[IPPROTO_MAX];
-
-int icmperrppslim = 100;			/* 100pps */
 
 static void
 sockaddr_in_addrlen(const struct sockaddr *sa, socklen_t *slenp)
