@@ -28,7 +28,7 @@
 #include <openssl/evp.h>
 #include <openssl/opensslv.h>
 
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#if OPENSSL_VERSION_NUMBER < 0x100020bfL
 #include <stdlib.h> /* malloc, free */
 #include <string.h> /* memset */
 static inline EVP_MD_CTX *EVP_MD_CTX_new(void)
