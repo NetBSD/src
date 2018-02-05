@@ -326,7 +326,7 @@ void ERR_load_DSA_strings(void);
 # define DSA_R_PARAMETER_ENCODING_ERROR                   105
 # define DSA_R_Q_NOT_PRIME                                113
 
-#ifdef OPENSSL_VERSION_NUMBER >= 0x10100000L
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
 static inline void
 DSA_SIG_get0(const DSA_SIG *sig, const BIGNUM **r, const BIGNUM **s)
 {

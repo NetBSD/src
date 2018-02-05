@@ -660,7 +660,7 @@ void ERR_load_RSA_strings(void);
 
 #include <string.h>
 
-#ifdef OPENSSL_VERSION_NUMBER >= 0x10100000L
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
 
 static inline RSA_METHOD *RSA_meth_dup(const RSA_METHOD *meth)
 {
