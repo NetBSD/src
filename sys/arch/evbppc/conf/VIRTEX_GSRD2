@@ -1,4 +1,4 @@
-#	$NetBSD: VIRTEX_GSRD2,v 1.29 2017/09/14 07:58:40 mrg Exp $
+#	$NetBSD: VIRTEX_GSRD2,v 1.30 2018/02/05 15:18:10 maxv Exp $
 #
 # VIRTEX_GSRD2
 #
@@ -101,7 +101,6 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options        DIRECTED_BROADCAST      # allow broadcasts through routers
 #options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
