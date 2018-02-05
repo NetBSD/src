@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-ecdsa.c,v 1.10 2017/04/18 18:41:46 christos Exp $	*/
+/*	$NetBSD: ssh-ecdsa.c,v 1.11 2018/02/05 00:13:50 christos Exp $	*/
 /* $OpenBSD: ssh-ecdsa.c,v 1.13 2016/04/21 06:08:02 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-ecdsa.c,v 1.10 2017/04/18 18:41:46 christos Exp $");
+__RCSID("$NetBSD: ssh-ecdsa.c,v 1.11 2018/02/05 00:13:50 christos Exp $");
 #include <sys/types.h>
 
 #include <openssl/bn.h>
@@ -79,9 +79,14 @@ ssh_ecdsa_sign(const struct sshkey *key, u_char **sigp, size_t *lenp,
 		ret = SSH_ERR_ALLOC_FAIL;
 		goto out;
 	}
-	if ((ret = sshbuf_put_bignum2(bb, sig->r)) != 0 ||
-	    (ret = sshbuf_put_bignum2(bb, sig->s)) != 0)
+	{
+	const BIGNUM *r, *s;
+	ECDSA_SIG_get0(sig, &r, &s);
+	if ((ret = sshbuf_put_bignum2(bb, r)) != 0 ||
+	    (ret = sshbuf_put_bignum2(bb, s)) != 0) {
 		goto out;
+	}
+	}
 	if ((ret = sshbuf_put_cstring(b, sshkey_ssh_name_plain(key))) != 0 ||
 	    (ret = sshbuf_put_stringb(b, bb)) != 0)
 		goto out;
@@ -150,10 +155,26 @@ ssh_ecdsa_verify(const struct sshkey *key,
 		ret = SSH_ERR_ALLOC_FAIL;
 		goto out;
 	}
-	if (sshbuf_get_bignum2(sigbuf, sig->r) != 0 ||
-	    sshbuf_get_bignum2(sigbuf, sig->s) != 0) {
+	{
+	BIGNUM *r=NULL, *s=NULL;
+	if ((r = BN_new()) == NULL ||
+	    (s = BN_new()) == NULL) {
+		ret = SSH_ERR_ALLOC_FAIL;
+		goto out_rs;
+	}
+	if (sshbuf_get_bignum2(sigbuf, r) != 0 ||
+	    sshbuf_get_bignum2(sigbuf, s) != 0) {
 		ret = SSH_ERR_INVALID_FORMAT;
+		goto out_rs;
+	}
+	if (ECDSA_SIG_set0(sig, r, s) == 0) {
+		ret = SSH_ERR_LIBCRYPTO_ERROR;
+out_rs:
+		BN_free(r);
+		BN_free(s);
 		goto out;
+	}
+	r = s = NULL;
 	}
 	if (sshbuf_len(sigbuf) != 0) {
 		ret = SSH_ERR_UNEXPECTED_TRAILING_DATA;
