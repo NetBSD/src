@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto-evp.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
+/*	$NetBSD: crypto-evp.c,v 1.3 2018/02/05 16:00:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2008 Kungliga Tekniska Högskolan
@@ -43,19 +43,33 @@ _krb5_evp_schedule(krb5_context context,
     struct _krb5_evp_schedule *key = kd->schedule->data;
     const EVP_CIPHER *c = (*kt->evp)();
 
-    EVP_CIPHER_CTX_init(&key->ectx);
-    EVP_CIPHER_CTX_init(&key->dctx);
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+    key->ectx = malloc(sizeof(*key->ectx));
+    key->dctx = malloc(sizeof(*key->dctx));
+    EVP_CIPHER_CTX_init(key->ectx);
+    EVP_CIPHER_CTX_init(key->dctx);
+#else
+    key->ectx = EVP_CIPHER_CTX_new();
+    key->dctx = EVP_CIPHER_CTX_new();
+#endif
 
-    EVP_CipherInit_ex(&key->ectx, c, NULL, kd->key->keyvalue.data, NULL, 1);
-    EVP_CipherInit_ex(&key->dctx, c, NULL, kd->key->keyvalue.data, NULL, 0);
+    EVP_CipherInit_ex(key->ectx, c, NULL, kd->key->keyvalue.data, NULL, 1);
+    EVP_CipherInit_ex(key->dctx, c, NULL, kd->key->keyvalue.data, NULL, 0);
 }
 
 void
 _krb5_evp_cleanup(krb5_context context, struct _krb5_key_data *kd)
 {
     struct _krb5_evp_schedule *key = kd->schedule->data;
-    EVP_CIPHER_CTX_cleanup(&key->ectx);
-    EVP_CIPHER_CTX_cleanup(&key->dctx);
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+    EVP_CIPHER_CTX_cleanup(key->ectx);
+    EVP_CIPHER_CTX_cleanup(key->dctx);
+    free(key->ectx);
+    free(key->dctx);
+#else
+    EVP_CIPHER_CTX_free(key->ectx);
+    EVP_CIPHER_CTX_free(key->dctx);
+#endif
 }
 
 krb5_error_code
@@ -69,7 +83,7 @@ _krb5_evp_encrypt(krb5_context context,
 {
     struct _krb5_evp_schedule *ctx = key->schedule->data;
     EVP_CIPHER_CTX *c;
-    c = encryptp ? &ctx->ectx : &ctx->dctx;
+    c = encryptp ? ctx->ectx : ctx->dctx;
     if (ivec == NULL) {
 	/* alloca ? */
 	size_t len2 = EVP_CIPHER_CTX_iv_length(c);
@@ -102,7 +116,7 @@ _krb5_evp_encrypt_cts(krb5_context context,
     EVP_CIPHER_CTX *c;
     unsigned char *p;
 
-    c = encryptp ? &ctx->ectx : &ctx->dctx;
+    c = encryptp ? ctx->ectx : ctx->dctx;
 
     blocksize = EVP_CIPHER_CTX_block_size(c);
 

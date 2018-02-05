@@ -1,4 +1,4 @@
-/*	$NetBSD: ks_file.c,v 1.2 2017/01/28 21:31:48 christos Exp $	*/
+/*	$NetBSD: ks_file.c,v 1.3 2018/02/05 16:00:52 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 - 2007 Kungliga Tekniska Högskolan
@@ -114,11 +114,21 @@ try_decrypt(hx509_context context,
     clear.length = len;
 
     {
-	EVP_CIPHER_CTX ctx;
-	EVP_CIPHER_CTX_init(&ctx);
-	EVP_CipherInit_ex(&ctx, c, NULL, key, ivdata, 0);
-	EVP_Cipher(&ctx, clear.data, cipher, len);
-	EVP_CIPHER_CTX_cleanup(&ctx);
+	EVP_CIPHER_CTX *ctx;
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+	EVP_CIPHER_CTX ctxst;
+	ctx = &ctxst;
+	EVP_CIPHER_CTX_init(ctx);
+#else
+	ctx = EVP_CIPHER_CTX_new();
+#endif
+	EVP_CipherInit_ex(ctx, c, NULL, key, ivdata, 0);
+	EVP_Cipher(ctx, clear.data, cipher, len);
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+	EVP_CIPHER_CTX_cleanup(ctx);
+#else
+	EVP_CIPHER_CTX_free(ctx);
+#endif
     }
 
     ret = _hx509_collector_private_key_add(context,
