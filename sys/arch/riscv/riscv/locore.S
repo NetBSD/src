@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.6 2016/12/05 07:24:16 kamil Exp $ */
+/* $NetBSD: locore.S,v 1.7 2018/02/05 10:41:12 maya Exp $ */
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -190,7 +190,7 @@ ENTRY_NP(cpu_switchto)
 
 	REG_L	sp, L_MD_KTF(tp)	// # load its kernel stack pointer
 	REG_L	t4, TF_SR(sp)		// # fetch status register
-	csrw	sstatus, t4		// # restore it (and interrutps?)
+	csrw	sstatus, t4		// # restore it (and interrupts?)
 
 	REG_L	s0, TF_S0(sp)		// restore callee saved
 	REG_L	s1, TF_S1(sp)		// restore callee saved
@@ -281,7 +281,7 @@ ENTRY_NP(cpu_fast_switchto)
 	PTR_S	tp, CI_CURLWP(t1)	// update curlwp
 	PTR_L	sp, L_MD_KTF(tp)	// switch to its stack
 #if 0
-	csrw	sstatus, t0		// reeanble interrupts
+	csrw	sstatus, t0		// reenable interrupts
 #endif
 	call	_C_LABEL(softint_dispatch)
 #if 0
