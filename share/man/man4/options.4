@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.481 2018/01/23 17:24:31 sevan Exp $
+.\"	$NetBSD: options.4,v 1.482 2018/02/05 15:02:52 maxv Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd January 23, 2018
+.Dd February 5, 2018
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -1712,9 +1712,6 @@ and
 .Em IPFORWARDING
 is insufficient to stop all routing through a bastion host on a
 firewall -- source routing is controlled independently.
-To turn off source routing, use
-.Em options IPFORWSRCRT=0
-(which see).
 Note that IP forwarding may be turned on and off independently of the
 setting of the
 .Em IPFORWARDING
@@ -1724,28 +1721,6 @@ sysctl variable.
 If
 .Em net.inet.ip.forwarding
 is 1, IP forwarding is on.
-See
-.Xr sysctl 8
-and
-.Xr sysctl 3
-for details.
-.It Cd options IPFORWSRCRT=value
-If
-.Em value
-is set to zero, source routing of IP datagrams is turned off.
-If
-.Em value
-is set to one (the default) or the option is absent, source routed IP
-datagrams are forwarded by the machine.
-Note that source routing of IP packets may be turned on and off
-independently of the setting of the
-.Em IPFORWSRCRT
-option through the use of the
-.Em net.inet.ip.forwsrcrt
-sysctl variable.
-If
-.Em net.inet.ip.forwsrcrt
-is 1, forwarding of source routed IP datagrams is on.
 See
 .Xr sysctl 8
 and
