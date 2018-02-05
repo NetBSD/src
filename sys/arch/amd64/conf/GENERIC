@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.459.2.3 2017/08/29 09:42:19 martin Exp $
+# $NetBSD: GENERIC,v 1.459.2.4 2018/02/05 13:06:55 martin Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.459.2.3 $"
+#ident		"GENERIC-$Revision: 1.459.2.4 $"
 
 maxusers	64		# estimated number of users
 
@@ -471,6 +471,9 @@ lpt1	at isa? port 0x278
 
 amdnb_misc* at pci?			# AMD NB Misc Configuration
 amdtemp* at amdnb_misc?  		# AMD CPU Temperature sensors
+
+amdsmn* at pci?				# AMD SMN Configuration
+amdzentemp* at amdsmnbus?		# AMD Ryzen Family 17h CPU temp sensors
 
 # Winbond LPC Super I/O
 #wbsio*	at isa? port 0x2e

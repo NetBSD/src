@@ -1,4 +1,4 @@
-.\" $NetBSD: amdtemp.4,v 1.9.18.1 2018/02/05 13:06:55 martin Exp $
+.\" $NetBSD: amdzentemp.4,v 1.6.2.2 2018/02/05 13:06:55 martin Exp $
 .\"-
 .\" Copyright (c) 2008 Christoph Egger
 .\" All rights reserved.
@@ -27,39 +27,33 @@
 .\" $FreeBSD: src/share/man/man4/coretemp.4,v 1.4 2007/10/15 20:00:19 netchild Exp $
 .\"
 .Dd January 28, 2018
-.Dt AMDTEMP 4
+.Dt AMDZENTEMP 4 x86
 .Os
 .Sh NAME
-.Nm amdtemp
-.Nd AMD CPU on-die digital thermal sensor
+.Nm amdzentemp
+.Nd AMD Zen CPU family on-die digital thermal sensor
 .Sh SYNOPSIS
-.Cd "amdtemp* at amdnb_miscbus?"
+.Cd "amdzentemp* at amdsmnbus?"
 .Sh DESCRIPTION
 The
 .Nm
 driver provides support for the on-die digital thermal sensor present
-on AMD K8, AMD Barcelona, AMD Phenom, AMD Griffin, and AMD Fusion CPUs.
+on AMD Ryzen CPUs
 .Pp
-These sensors were officially introduced in AMD K8 Revision F processors,
-and provide 0.5 degC accuracy.
-Precision was improved in Revision
-G chips, which provide two more bits for 0.25 degC steppings.
-Each core
-has two temperature sensors, and there are up to two cores per CPU socket.
-.Pp
-AMD Barcelona, AMD Phenom, AMD Griffin, and AMD Fusion provide 0.125 degC
-accuracy and provide one temperature sensor for each CPU socket.
+These sensors provide 0.125\(deC accuracy.
+There is one sensor for each CPU socket.
 .Pp
 The
 .Nm
 driver reports temperatures through the
 .Xr envsys 4
 API.
-.Bl -column "Sensor    " "Units" "Typical" -offset indent
-.It Sy "Sensor     " Ta Sy "Units" Ta Sy "Typical Use"
-.It Li "CPUN sensor0" Ta "uK" Ta "cpuN temperature"
+.Bl -column "CPUN sensor0" "Units" "Typical Use" -offset indent
+.It Sy "Sensor" Ta Sy "Units" Ta Sy "Typical Use"
+.It CPU Ns Em N No sensor0 Ta \(*mK Ta cpu Ns Em N No temperature
 .El
 .Sh SEE ALSO
+.Xr amdtemp 4 ,
 .Xr envsys 4 ,
 .Xr envstat 8 ,
 .Xr powerd 8
@@ -71,8 +65,17 @@ driver first appeared in
 named
 .Dq kate .
 It was then ported to
-.Nx 5.0 .
-The driver has been renamed with support for newer AMD CPUs.
+.Nx 5.0
+under the name
+.Xr amdtemp 4 .
+The
+.Fx
+version of the driver was updated with support for newer AMD CPUs.
+For
+.Nx ,
+the support for the newer CPUs was separated into its own
+.Nm
+driver.
 .Sh AUTHORS
 .An -nosplit
 The
@@ -80,7 +83,18 @@ The
 driver was written by
 .An Constantine A. Murenin Aq Mt cnst@openbsd.org
 whilst at the University of Waterloo.
-It was adapted to
-.Nx
-by
-.An Christoph Egger .
+Porting of support for the newer AMD CPUs from
+.Fx
+was provided by
+.An Ian Clark .
+.Sh BUGS
+The temperature reading provided to
+.Xr envsys 4
+needs to have a CPU-dependent offset applied.
+For Ryzen X processors, the offset is 20\(deC, while for Threadripper
+processors an offset of 27\(deC is needed.
+.Pp
+The sensor has a thermal-trip value which should be retrieved and
+provided to
+.Xr envsys 4
+as the sensors critical-maximum value.
