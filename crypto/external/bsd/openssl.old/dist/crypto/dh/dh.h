@@ -387,7 +387,7 @@ void ERR_load_DH_strings(void);
 # define DH_R_PEER_KEY_ERROR                              113
 # define DH_R_SHARED_INFO_ERROR                           114
 
-#ifdef OPENSSL_VERSION_NUMBER >= 0x10100000L
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
 static inline void
 DH_get0_key(const DH *dh, const BIGNUM **pub_key, const BIGNUM **priv_key)
 {
