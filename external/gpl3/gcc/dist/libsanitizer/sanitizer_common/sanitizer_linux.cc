@@ -1141,9 +1141,15 @@ void internal_join_thread(void *th) {}
 void GetPcSpBp(void *context, uptr *pc, uptr *sp, uptr *bp) {
 #if defined(__arm__)
   ucontext_t *ucontext = (ucontext_t*)context;
+# if SANITIZER_NETBSD
+  *pc = _UC_MACHINE_PC(ucontext);
+  *sp = _UC_MACHINE_SP(ucontext);
+  *bp = ucontext->uc_mcontext.__gregs[_REG_R11];
+# else
   *pc = ucontext->uc_mcontext.arm_pc;
   *bp = ucontext->uc_mcontext.arm_fp;
   *sp = ucontext->uc_mcontext.arm_sp;
+# endif
 #elif defined(__aarch64__)
   ucontext_t *ucontext = (ucontext_t*)context;
   *pc = ucontext->uc_mcontext.pc;
@@ -1191,11 +1197,17 @@ void GetPcSpBp(void *context, uptr *pc, uptr *sp, uptr *bp) {
 # endif
 #elif defined(__powerpc__) || defined(__powerpc64__)
   ucontext_t *ucontext = (ucontext_t*)context;
+# if SANITIZER_NETBSD
+  *pc = _UC_MACHINE_PC(ucontext);
+  *sp = _UC_MACHINE_SP(ucontext);
+  *bp = ucontext->uc_mcontext.__gregs[_REG_R31];
+#  else
   *pc = ucontext->uc_mcontext.regs->nip;
   *sp = ucontext->uc_mcontext.regs->gpr[PT_R1];
   // The powerpc{,64}-linux ABIs do not specify r31 as the frame
   // pointer, but GCC always uses r31 when we need a frame pointer.
   *bp = ucontext->uc_mcontext.regs->gpr[PT_R31];
+#endif
 #elif defined(__sparc__)
   ucontext_t *ucontext = (ucontext_t*)context;
   uptr *stk_ptr;
