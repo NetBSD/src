@@ -1,4 +1,4 @@
-/*	$NetBSD: dh.h,v 1.9 2017/04/18 18:41:46 christos Exp $	*/
+/*	$NetBSD: dh.h,v 1.10 2018/02/05 00:13:50 christos Exp $	*/
 /* $OpenBSD: dh.h,v 1.15 2016/05/02 10:26:04 djm Exp $ */
 
 /*
@@ -43,7 +43,7 @@ DH	*dh_new_group18(void);
 DH	*dh_new_group_fallback(int);
 
 int	 dh_gen_key(DH *, int);
-int	 dh_pub_is_valid(DH *, BIGNUM *);
+int	 dh_pub_is_valid(const DH *, const BIGNUM *);
 
 u_int	 dh_estimate(int);
 
