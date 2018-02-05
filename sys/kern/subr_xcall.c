@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_xcall.c,v 1.24 2018/02/05 02:51:08 ozaki-r Exp $	*/
+/*	$NetBSD: subr_xcall.c,v 1.25 2018/02/05 02:51:41 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.24 2018/02/05 02:51:08 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.25 2018/02/05 02:51:41 ozaki-r Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -129,10 +129,10 @@ static inline uint64_t	xc_lowpri(xcfunc_t, void *, void *, struct cpu_info *);
  * (just XC_HIGHPRI).
  */
 #define XC_IPL_SOFTSERIAL	0
-#define XC_IPL_SOFTBIO		1
-#define XC_IPL_SOFTCLOCK	2
-#define XC_IPL_SOFTNET		3
-#define XC_IPL_MAX		XC_IPL_SOFTNET
+#define XC_IPL_SOFTNET		1
+#define XC_IPL_SOFTBIO		2
+#define XC_IPL_SOFTCLOCK	3
+#define XC_IPL_MAX		XC_IPL_SOFTCLOCK
 
 CTASSERT(XC_IPL_MAX <= __arraycount(xc_sihs));
 
