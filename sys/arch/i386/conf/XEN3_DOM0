@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3_DOM0,v 1.112.4.6 2018/01/26 14:28:14 martin Exp $
+#	$NetBSD: XEN3_DOM0,v 1.112.4.7 2018/02/05 15:14:00 martin Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -553,14 +553,14 @@ wsmouse*	at pms? mux 0
 # USB Controller and Devices
 
 # PCI USB controllers
-# xhci*	at pci? dev ? function ?	# eXtensible Host Controller
+xhci*	at pci? dev ? function ?	# eXtensible Host Controller
 					# xhci is at best experimental
 ehci*	at pci? dev ? function ?	# Enhanced Host Controller
 ohci*	at pci? dev ? function ?	# Open Host Controller
 uhci*	at pci? dev ? function ?	# Universal Host Controller (Intel)
 
 # USB bus support
-# usb*	at xhci?
+usb*	at xhci?
 usb*	at ehci?
 usb*	at ohci?
 usb*	at uhci?
