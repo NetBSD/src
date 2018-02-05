@@ -1,4 +1,4 @@
-/* $NetBSD: radio.c,v 1.28 2017/10/28 03:47:24 riastradh Exp $ */
+/* $NetBSD: radio.c,v 1.29 2018/02/05 22:14:26 mrg Exp $ */
 /* $OpenBSD: radio.c,v 1.2 2001/12/05 10:27:06 mickey Exp $ */
 /* $RuOBSD: radio.c,v 1.7 2001/12/04 06:03:05 tm Exp $ */
 
@@ -30,7 +30,7 @@
 /* This is the /dev/radio driver from OpenBSD */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radio.c,v 1.28 2017/10/28 03:47:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radio.c,v 1.29 2018/02/05 22:14:26 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,7 +148,7 @@ radioioctl(dev_t dev, u_long cmd, void *data, int flags,
 		if (sc->hw_if->get_info)
 			error = (sc->hw_if->get_info)(sc->hw_hdl,
 					(struct radio_info *)data);
-			break;
+		break;
 	case RIOCSINFO:
 		if (sc->hw_if->set_info)
 			error = (sc->hw_if->set_info)(sc->hw_hdl,
