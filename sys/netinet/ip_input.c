@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.368 2018/02/05 13:52:39 maxv Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.369 2018/02/05 14:23:38 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.368 2018/02/05 13:52:39 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.369 2018/02/05 14:23:38 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -873,14 +873,13 @@ ip_dooptions(struct mbuf *m)
 	struct ip_timestamp *ipt;
 	struct in_ifaddr *ia;
 	int opt, optlen, cnt, off, code, type = ICMP_PARAMPROB, forward = 0;
-	int lsrr_present, ssrr_present, rr_present, ts_present;
+	int srr_present, rr_present, ts_present;
 	struct in_addr dst;
 	n_time ntime;
 	struct ifaddr *ifa = NULL;
 	int s;
 
-	lsrr_present = 0;
-	ssrr_present = 0;
+	srr_present = 0;
 	rr_present = 0;
 	ts_present = 0;
 
@@ -931,16 +930,9 @@ ip_dooptions(struct mbuf *m)
 				code = ICMP_UNREACH_NET_PROHIB;
 				goto bad;
 			}
-			if (opt == IPOPT_LSRR) {
-				if (lsrr_present++) {
-					code = &cp[IPOPT_OPTVAL] - (u_char *)ip;
-					goto bad;
-				}
-			} else {
-				if (ssrr_present++) {
-					code = &cp[IPOPT_OPTVAL] - (u_char *)ip;
-					goto bad;
-				}
+			if (srr_present++) {
+				code = &cp[IPOPT_OPTVAL] - (u_char *)ip;
+				goto bad;
 			}
 			if (optlen < IPOPT_OFFSET + sizeof(*cp)) {
 				code = &cp[IPOPT_OLEN] - (u_char *)ip;
