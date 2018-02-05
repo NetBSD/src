@@ -1,4 +1,4 @@
-/* $NetBSD: radlib.c,v 1.11 2009/01/19 09:43:11 jmmv Exp $ */
+/* $NetBSD: radlib.c,v 1.12 2018/02/05 00:43:06 christos Exp $ */
 
 /*-
  * Copyright 1998 Juniper Networks, Inc.
@@ -30,7 +30,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: /repoman/r/ncvs/src/lib/libradius/radlib.c,v 1.12 2004/06/14 20:55:30 stefanf Exp $");
 #else
-__RCSID("$NetBSD: radlib.c,v 1.11 2009/01/19 09:43:11 jmmv Exp $");
+__RCSID("$NetBSD: radlib.c,v 1.12 2018/02/05 00:43:06 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -177,20 +177,19 @@ insert_message_authenticator(struct rad_handle *h, size_t srv)
 	u_char md[EVP_MAX_MD_SIZE];
 	u_int md_len;
 	const struct rad_server *srvp;
-	HMAC_CTX ctx;
+	HMAC_CTX *ctx;
 	srvp = &h->servers[srv];
 
 	if (h->authentic_pos != 0) {
-		HMAC_CTX_init(&ctx);
-		HMAC_Init(&ctx, srvp->secret,
-		    (int)strlen(srvp->secret), EVP_md5());
-		HMAC_Update(&ctx, &h->request[POS_CODE], (size_t)(POS_AUTH - POS_CODE));
-		HMAC_Update(&ctx, &h->request[POS_AUTH], (size_t)LEN_AUTH);
-		HMAC_Update(&ctx, &h->request[POS_ATTRS],
+		ctx = HMAC_CTX_new();
+		HMAC_Init_ex(ctx, srvp->secret,
+		    (int)strlen(srvp->secret), EVP_md5(), NULL);
+		HMAC_Update(ctx, &h->request[POS_CODE], (size_t)(POS_AUTH - POS_CODE));
+		HMAC_Update(ctx, &h->request[POS_AUTH], (size_t)LEN_AUTH);
+		HMAC_Update(ctx, &h->request[POS_ATTRS],
 		    (size_t)(h->req_len - POS_ATTRS));
-		HMAC_Final(&ctx, md, &md_len);
-		HMAC_CTX_cleanup(&ctx);
-		HMAC_cleanup(&ctx);
+		HMAC_Final(ctx, md, &md_len);
+		HMAC_CTX_free(ctx);
 		(void)memcpy(&h->request[h->authentic_pos + 2], md,
 		    (size_t)md_len);
 	}
@@ -210,7 +209,7 @@ is_valid_response(struct rad_handle *h, size_t srv,
 	const struct rad_server *srvp;
 	size_t len;
 #ifdef WITH_SSL
-	HMAC_CTX hctx;
+	HMAC_CTX *hctx;
 	u_char resp[MSGSIZE], md[EVP_MAX_MD_SIZE];
 	size_t pos;
 	u_int md_len;
@@ -263,18 +262,17 @@ is_valid_response(struct rad_handle *h, size_t srv,
 				(void)memset(&resp[pos + 2], 0,
 				    (size_t)MD5_DIGEST_LENGTH);
 
-				HMAC_CTX_init(&hctx);
-				HMAC_Init(&hctx, srvp->secret,
-				    (int)strlen(srvp->secret), EVP_md5());
-				HMAC_Update(&hctx, &h->response[POS_CODE],
+				hctx = HMAC_CTX_new();
+				HMAC_Init_ex(hctx, srvp->secret,
+				    (int)strlen(srvp->secret), EVP_md5(), NULL);
+				HMAC_Update(hctx, &h->response[POS_CODE],
 				    (size_t)(POS_AUTH - POS_CODE));
-				HMAC_Update(&hctx, &h->request[POS_AUTH],
+				HMAC_Update(hctx, &h->request[POS_AUTH],
 				    (size_t)LEN_AUTH);
-				HMAC_Update(&hctx, &resp[POS_ATTRS],
+				HMAC_Update(hctx, &resp[POS_ATTRS],
 				    (size_t)(h->resp_len - POS_ATTRS));
-				HMAC_Final(&hctx, md, &md_len);
-				HMAC_CTX_cleanup(&hctx);
-				HMAC_cleanup(&hctx);
+				HMAC_Final(hctx, md, &md_len);
+				HMAC_CTX_free(hctx);
 				if (memcmp(md, &h->response[pos + 2],
 				    (size_t)MD5_DIGEST_LENGTH) != 0)
 					return 0;
