@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.366 2018/02/05 13:23:11 maxv Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.367 2018/02/05 13:34:20 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.366 2018/02/05 13:23:11 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.367 2018/02/05 13:34:20 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -192,9 +192,6 @@ int	ip_directedbcast = IPDIRECTEDBCAST;
 int	ip_allowsrcrt = IPALLOWSRCRT;
 int	ip_mtudisc = IPMTUDISC;
 int	ip_mtudisc_timeout = IPMTUDISCTIMEOUT;
-#ifdef DIAGNOSTIC
-int	ipprintfs = 0;
-#endif
 
 int	ip_do_randomid = 0;
 
