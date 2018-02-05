@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.255 2018/02/04 11:08:16 mrg Exp $
+# $NetBSD: md.amd64,v 1.256 2018/02/05 05:43:53 mrg Exp $
 
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
@@ -466,7 +466,7 @@
 ./usr/include/gcc-6/adxintrin.h			comp-c-include		gcccmds,gcc=6
 ./usr/include/gcc-6/ammintrin.h			comp-c-include		gcccmds,gcc=6
 ./usr/include/gcc-6/avx2intrin.h		comp-c-include		gcccmds,gcc=6
-./usr/include/gcc-6/avx612bwintrin.h		comp-c-include		gcccmds,gcc=6
+./usr/include/gcc-6/avx512bwintrin.h		comp-c-include		gcccmds,gcc=6
 ./usr/include/gcc-6/avx512cdintrin.h		comp-c-include		gcccmds,gcc=6
 ./usr/include/gcc-6/avx512dqintrin.h		comp-c-include		gcccmds,gcc=6
 ./usr/include/gcc-6/avx512erintrin.h		comp-c-include		gcccmds,gcc=6
