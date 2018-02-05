@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto-des-common.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
+/*	$NetBSD: crypto-des-common.c,v 1.3 2018/02/05 16:00:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2008 Kungliga Tekniska Högskolan
@@ -80,8 +80,16 @@ _krb5_des_checksum(krb5_context context,
     EVP_DigestFinal_ex (m, p + 8, NULL);
     EVP_MD_CTX_destroy(m);
     memset (&ivec, 0, sizeof(ivec));
-    EVP_CipherInit_ex(&ctx->ectx, NULL, NULL, NULL, (void *)&ivec, -1);
-    EVP_Cipher(&ctx->ectx, p, p, 24);
+
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+    ctx->ectx = malloc(sizeof(*ctx->ectx));
+    EVP_CIPHER_CTX_init(ctx->ectx);
+#else
+    ctx->ectx = EVP_CIPHER_CTX_new();
+#endif
+
+    EVP_CipherInit_ex(ctx->ectx, NULL, NULL, NULL, (void *)&ivec, -1);
+    EVP_Cipher(ctx->ectx, p, p, 24);
 
     return 0;
 }
@@ -106,8 +114,14 @@ _krb5_des_verify(krb5_context context,
 	return krb5_enomem(context);
 
     memset(&ivec, 0, sizeof(ivec));
-    EVP_CipherInit_ex(&ctx->dctx, NULL, NULL, NULL, (void *)&ivec, -1);
-    EVP_Cipher(&ctx->dctx, tmp, C->checksum.data, 24);
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+    ctx->dctx = malloc(sizeof(*ctx->dctx));
+    EVP_CIPHER_CTX_init(ctx->dctx);
+#else
+    ctx->dctx = EVP_CIPHER_CTX_new();
+#endif
+    EVP_CipherInit_ex(ctx->dctx, NULL, NULL, NULL, (void *)&ivec, -1);
+    EVP_Cipher(ctx->dctx, tmp, C->checksum.data, 24);
 
     EVP_DigestInit_ex(m, evp_md, NULL);
     EVP_DigestUpdate(m, tmp, 8); /* confounder */

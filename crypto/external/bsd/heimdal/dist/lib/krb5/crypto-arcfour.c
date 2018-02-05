@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto-arcfour.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
+/*	$NetBSD: crypto-arcfour.c,v 1.3 2018/02/05 16:00:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2008 Kungliga Tekniska Högskolan
@@ -129,7 +129,7 @@ ARCFOUR_subencrypt(krb5_context context,
 		   unsigned usage,
 		   void *ivec)
 {
-    EVP_CIPHER_CTX ctx;
+    EVP_CIPHER_CTX *ctx;
     struct _krb5_checksum_type *c = _krb5_find_checksum (CKSUMTYPE_RSA_MD5);
     Checksum k1_c, k2_c, k3_c, cksum;
     struct _krb5_key_data ke;
@@ -176,11 +176,21 @@ ARCFOUR_subencrypt(krb5_context context,
     if (ret)
 	krb5_abortx(context, "hmac failed");
 
-    EVP_CIPHER_CTX_init(&ctx);
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+    EVP_CIPHER_CTX ctxst;
+    ctx = &ctxst;
+    EVP_CIPHER_CTX_init(ctx);
+#else
+    ctx = EVP_CIPHER_CTX_new();
+#endif
 
-    EVP_CipherInit_ex(&ctx, EVP_rc4(), NULL, k3_c.checksum.data, NULL, 1);
-    EVP_Cipher(&ctx, cdata + 16, cdata + 16, len - 16);
-    EVP_CIPHER_CTX_cleanup(&ctx);
+    EVP_CipherInit_ex(ctx, EVP_rc4(), NULL, k3_c.checksum.data, NULL, 1);
+    EVP_Cipher(ctx, cdata + 16, cdata + 16, len - 16);
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+    EVP_CIPHER_CTX_cleanup(ctx);
+#else
+    EVP_CIPHER_CTX_free(ctx);
+#endif
 
     memset (k1_c_data, 0, sizeof(k1_c_data));
     memset (k2_c_data, 0, sizeof(k2_c_data));
@@ -196,7 +206,7 @@ ARCFOUR_subdecrypt(krb5_context context,
 		   unsigned usage,
 		   void *ivec)
 {
-    EVP_CIPHER_CTX ctx;
+    EVP_CIPHER_CTX *ctx;
     struct _krb5_checksum_type *c = _krb5_find_checksum (CKSUMTYPE_RSA_MD5);
     Checksum k1_c, k2_c, k3_c, cksum;
     struct _krb5_key_data ke;
@@ -234,10 +244,20 @@ ARCFOUR_subdecrypt(krb5_context context,
     if (ret)
 	krb5_abortx(context, "hmac failed");
 
-    EVP_CIPHER_CTX_init(&ctx);
-    EVP_CipherInit_ex(&ctx, EVP_rc4(), NULL, k3_c.checksum.data, NULL, 0);
-    EVP_Cipher(&ctx, cdata + 16, cdata + 16, len - 16);
-    EVP_CIPHER_CTX_cleanup(&ctx);
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+    EVP_CIPHER_CTX ctxst;
+    ctx = &ctxst;
+    EVP_CIPHER_CTX_init(ctx);
+#else
+    ctx = EVP_CIPHER_CTX_new();
+#endif
+    EVP_CipherInit_ex(ctx, EVP_rc4(), NULL, k3_c.checksum.data, NULL, 0);
+    EVP_Cipher(ctx, cdata + 16, cdata + 16, len - 16);
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+    EVP_CIPHER_CTX_cleanup(ctx);
+#else
+    EVP_CIPHER_CTX_free(ctx);
+#endif
 
     ke.key = &kb;
     kb.keyvalue = k2_c.checksum;
