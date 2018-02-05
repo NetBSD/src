@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.12 2018/02/04 01:13:45 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.13 2018/02/05 22:12:37 mrg Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/4/93
 
 # gmon sources
@@ -18,7 +18,8 @@ MLINKS+=moncontrol.3 monstartup.3
 COPTS.mcount.c+=${${ACTIVE_CXX} == "gcc":? -Wa,--no-warn :}
 .endif
 
-.if (${MACHINE_CPU} == "i386") && ${HAVE_GCC:U0} >= 6
+.if (${MACHINE_CPU} == "i386" || ${MACHINE_CPU} == "x86_64") && \
+    ${HAVE_GCC:U0} >= 6
 # The usage of __builtin_frame_address(1) should be OK.
 COPTS.mcount.c+=${${ACTIVE_CXX} == "gcc":? -Wno-error=frame-address :}
 .endif
