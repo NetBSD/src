@@ -1,4 +1,4 @@
-/*	$NetBSD: arcfour.c,v 1.2 2017/01/28 21:31:46 christos Exp $	*/
+/*	$NetBSD: arcfour.c,v 1.3 2018/02/05 16:00:52 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 - 2006 Kungliga Tekniska Högskolan
@@ -239,7 +239,7 @@ _gssapi_get_mic_arcfour(OM_uint32 * minor_status,
     int32_t seq_number;
     size_t len, total_len;
     u_char k6_data[16], *p0, *p;
-    EVP_CIPHER_CTX rc4_key;
+    EVP_CIPHER_CTX *rc4_key;
 
     _gsskrb5_encap_length (22, &len, &total_len, GSS_KRB5_MECHANISM);
 
@@ -301,10 +301,20 @@ _gssapi_get_mic_arcfour(OM_uint32 * minor_status,
 
     memset (p + 4, (context_handle->more_flags & LOCAL) ? 0 : 0xff, 4);
 
-    EVP_CIPHER_CTX_init(&rc4_key);
-    EVP_CipherInit_ex(&rc4_key, EVP_rc4(), NULL, k6_data, NULL, 1);
-    EVP_Cipher(&rc4_key, p, p, 8);
-    EVP_CIPHER_CTX_cleanup(&rc4_key);
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+    EVP_CIPHER_CTX rc4_keys;
+    rc4_key = &rc4_keys;
+    EVP_CIPHER_CTX_init(rc4_key);
+#else
+    rc4_key = EVP_CIPHER_CTX_new();
+#endif
+    EVP_CipherInit_ex(rc4_key, EVP_rc4(), NULL, k6_data, NULL, 1);
+    EVP_Cipher(rc4_key, p, p, 8);
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+    EVP_CIPHER_CTX_cleanup(rc4_key);
+#else
+    EVP_CIPHER_CTX_free(rc4_key);
+#endif
 
     memset(k6_data, 0, sizeof(k6_data));
 
@@ -374,12 +384,22 @@ _gssapi_verify_mic_arcfour(OM_uint32 * minor_status,
     }
 
     {
-	EVP_CIPHER_CTX rc4_key;
+	EVP_CIPHER_CTX *rc4_key;
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+	EVP_CIPHER_CTX rc4_keys;
+	rc4_key = &rc4_keys;
+	EVP_CIPHER_CTX_init(rc4_key);
+#else
+	rc4_key = EVP_CIPHER_CTX_new();
+#endif
 
-	EVP_CIPHER_CTX_init(&rc4_key);
-	EVP_CipherInit_ex(&rc4_key, EVP_rc4(), NULL, (void *)k6_data, NULL, 0);
-	EVP_Cipher(&rc4_key, SND_SEQ, p, 8);
-	EVP_CIPHER_CTX_cleanup(&rc4_key);
+	EVP_CipherInit_ex(rc4_key, EVP_rc4(), NULL, (void *)k6_data, NULL, 0);
+	EVP_Cipher(rc4_key, SND_SEQ, p, 8);
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+	EVP_CIPHER_CTX_cleanup(rc4_key);
+#else
+	EVP_CIPHER_CTX_free(rc4_key);
+#endif
 
 	memset(k6_data, 0, sizeof(k6_data));
     }
@@ -527,12 +547,23 @@ _gssapi_wrap_arcfour(OM_uint32 * minor_status,
 
 
     if(conf_req_flag) {
-	EVP_CIPHER_CTX rc4_key;
+	EVP_CIPHER_CTX *rc4_key;
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+	EVP_CIPHER_CTX rc4_keys;
+	rc4_key = &rc4_keys;
+	EVP_CIPHER_CTX_init(rc4_key);
+#else
+	rc4_key = EVP_CIPHER_CTX_new();
+#endif
 
-	EVP_CIPHER_CTX_init(&rc4_key);
-	EVP_CipherInit_ex(&rc4_key, EVP_rc4(), NULL, k6_data, NULL, 1);
-	EVP_Cipher(&rc4_key, p0 + 24, p0 + 24, 8 + datalen);
-	EVP_CIPHER_CTX_cleanup(&rc4_key);
+	EVP_CIPHER_CTX_init(rc4_key);
+	EVP_CipherInit_ex(rc4_key, EVP_rc4(), NULL, k6_data, NULL, 1);
+	EVP_Cipher(rc4_key, p0 + 24, p0 + 24, 8 + datalen);
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+	EVP_CIPHER_CTX_cleanup(rc4_key);
+#else
+	EVP_CIPHER_CTX_free(rc4_key);
+#endif
     }
     memset(k6_data, 0, sizeof(k6_data));
 
@@ -546,12 +577,22 @@ _gssapi_wrap_arcfour(OM_uint32 * minor_status,
     }
 
     {
-	EVP_CIPHER_CTX rc4_key;
+	EVP_CIPHER_CTX *rc4_key;
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+	EVP_CIPHER_CTX rc4_keys;
+	rc4_key = &rc4_keys;
+	EVP_CIPHER_CTX_init(rc4_key);
+#else
+	rc4_key = EVP_CIPHER_CTX_new();
+#endif
 
-	EVP_CIPHER_CTX_init(&rc4_key);
-	EVP_CipherInit_ex(&rc4_key, EVP_rc4(), NULL, k6_data, NULL, 1);
-	EVP_Cipher(&rc4_key, p0 + 8, p0 + 8 /* SND_SEQ */, 8);
-	EVP_CIPHER_CTX_cleanup(&rc4_key);
+	EVP_CipherInit_ex(rc4_key, EVP_rc4(), NULL, k6_data, NULL, 1);
+	EVP_Cipher(rc4_key, p0 + 8, p0 + 8 /* SND_SEQ */, 8);
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+	EVP_CIPHER_CTX_cleanup(rc4_key);
+#else
+	EVP_CIPHER_CTX_free(rc4_key);
+#endif
 	memset(k6_data, 0, sizeof(k6_data));
     }
 
@@ -646,12 +687,22 @@ OM_uint32 _gssapi_unwrap_arcfour(OM_uint32 *minor_status,
     }
 
     {
-	EVP_CIPHER_CTX rc4_key;
+	EVP_CIPHER_CTX *rc4_key;
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+	EVP_CIPHER_CTX rc4_keys;
+	rc4_key = &rc4_keys;
+	EVP_CIPHER_CTX_init(rc4_key);
+#else
+	rc4_key = EVP_CIPHER_CTX_new();
+#endif
 
-	EVP_CIPHER_CTX_init(&rc4_key);
-	EVP_CipherInit_ex(&rc4_key, EVP_rc4(), NULL, k6_data, NULL, 1);
-	EVP_Cipher(&rc4_key, SND_SEQ, p0 + 8, 8);
-	EVP_CIPHER_CTX_cleanup(&rc4_key);
+	EVP_CipherInit_ex(rc4_key, EVP_rc4(), NULL, k6_data, NULL, 1);
+	EVP_Cipher(rc4_key, SND_SEQ, p0 + 8, 8);
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+	EVP_CIPHER_CTX_cleanup(rc4_key);
+#else
+	EVP_CIPHER_CTX_free(rc4_key);
+#endif
 	memset(k6_data, 0, sizeof(k6_data));
     }
 
@@ -694,13 +745,22 @@ OM_uint32 _gssapi_unwrap_arcfour(OM_uint32 *minor_status,
     output_message_buffer->length = datalen;
 
     if(conf_flag) {
-	EVP_CIPHER_CTX rc4_key;
-
-	EVP_CIPHER_CTX_init(&rc4_key);
-	EVP_CipherInit_ex(&rc4_key, EVP_rc4(), NULL, k6_data, NULL, 1);
-	EVP_Cipher(&rc4_key, Confounder, p0 + 24, 8);
-	EVP_Cipher(&rc4_key, output_message_buffer->value, p0 + GSS_ARCFOUR_WRAP_TOKEN_SIZE, datalen);
-	EVP_CIPHER_CTX_cleanup(&rc4_key);
+	EVP_CIPHER_CTX *rc4_key;
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+	EVP_CIPHER_CTX rc4_keys;
+	rc4_key = &rc4_keys;
+	EVP_CIPHER_CTX_init(rc4_key);
+#else
+	rc4_key = EVP_CIPHER_CTX_new();
+#endif
+	EVP_CipherInit_ex(rc4_key, EVP_rc4(), NULL, k6_data, NULL, 1);
+	EVP_Cipher(rc4_key, Confounder, p0 + 24, 8);
+	EVP_Cipher(rc4_key, output_message_buffer->value, p0 + GSS_ARCFOUR_WRAP_TOKEN_SIZE, datalen);
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+	EVP_CIPHER_CTX_cleanup(rc4_key);
+#else
+	EVP_CIPHER_CTX_free(rc4_key);
+#endif
     } else {
 	memcpy(Confounder, p0 + 24, 8); /* Confounder */
 	memcpy(output_message_buffer->value,
@@ -1079,13 +1139,18 @@ _gssapi_wrap_iov_arcfour(OM_uint32 *minor_status,
     }
 
     if (conf_req_flag) {
-	EVP_CIPHER_CTX rc4_key;
-
-	EVP_CIPHER_CTX_init(&rc4_key);
-	EVP_CipherInit_ex(&rc4_key, EVP_rc4(), NULL, k6_data, NULL, 1);
+	EVP_CIPHER_CTX *rc4_key;
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+	EVP_CIPHER_CTX rc4_keys;
+	rc4_key = &rc4_keys;
+	EVP_CIPHER_CTX_init(rc4_key);
+#else
+	rc4_key = EVP_CIPHER_CTX_new();
+#endif
+	EVP_CipherInit_ex(rc4_key, EVP_rc4(), NULL, k6_data, NULL, 1);
 
 	/* Confounder */
-	EVP_Cipher(&rc4_key, p0 + 24, p0 + 24, 8);
+	EVP_Cipher(rc4_key, p0 + 24, p0 + 24, 8);
 
 	/* Seal Data */
 	for (i=0; i < iov_count; i++) {
@@ -1096,17 +1161,21 @@ _gssapi_wrap_iov_arcfour(OM_uint32 *minor_status,
 		continue;
 	    }
 
-	    EVP_Cipher(&rc4_key, iov[i].buffer.value,
+	    EVP_Cipher(rc4_key, iov[i].buffer.value,
 		       iov[i].buffer.value, iov[i].buffer.length);
 	}
 
 	/* Padding */
 	if (padding) {
-	    EVP_Cipher(&rc4_key, padding->buffer.value,
+	    EVP_Cipher(rc4_key, padding->buffer.value,
 		       padding->buffer.value, padding->buffer.length);
 	}
 
-	EVP_CIPHER_CTX_cleanup(&rc4_key);
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+	EVP_CIPHER_CTX_cleanup(rc4_key);
+#else
+	EVP_CIPHER_CTX_free(rc4_key);
+#endif
     }
     memset(k6_data, 0, sizeof(k6_data));
 
@@ -1120,12 +1189,21 @@ _gssapi_wrap_iov_arcfour(OM_uint32 *minor_status,
     }
 
     {
-	EVP_CIPHER_CTX rc4_key;
-
-	EVP_CIPHER_CTX_init(&rc4_key);
-	EVP_CipherInit_ex(&rc4_key, EVP_rc4(), NULL, k6_data, NULL, 1);
-	EVP_Cipher(&rc4_key, p0 + 8, p0 + 8, 8); /* SND_SEQ */
-	EVP_CIPHER_CTX_cleanup(&rc4_key);
+	EVP_CIPHER_CTX *rc4_key;
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+	EVP_CIPHER_CTX rc4_keys;
+	rc4_key = &rc4_keys;
+	EVP_CIPHER_CTX_init(rc4_key);
+#else
+	rc4_key = EVP_CIPHER_CTX_new();
+#endif
+	EVP_CipherInit_ex(rc4_key, EVP_rc4(), NULL, k6_data, NULL, 1);
+	EVP_Cipher(rc4_key, p0 + 8, p0 + 8, 8); /* SND_SEQ */
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+	EVP_CIPHER_CTX_cleanup(rc4_key);
+#else
+	EVP_CIPHER_CTX_free(rc4_key);
+#endif
 
 	memset(k6_data, 0, sizeof(k6_data));
     }
@@ -1256,12 +1334,23 @@ _gssapi_unwrap_iov_arcfour(OM_uint32 *minor_status,
     }
 
     {
-	EVP_CIPHER_CTX rc4_key;
+	EVP_CIPHER_CTX *rc4_key;
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+	EVP_CIPHER_CTX rc4_keys;
+	rc4_key = &rc4_keys;
+	EVP_CIPHER_CTX_init(rc4_key);
+#else
+	rc4_key = EVP_CIPHER_CTX_new();
+#endif
 
-	EVP_CIPHER_CTX_init(&rc4_key);
-	EVP_CipherInit_ex(&rc4_key, EVP_rc4(), NULL, k6_data, NULL, 1);
-	EVP_Cipher(&rc4_key, snd_seq, p0 + 8, 8); /* SND_SEQ */
-	EVP_CIPHER_CTX_cleanup(&rc4_key);
+	EVP_CIPHER_CTX_init(rc4_key);
+	EVP_CipherInit_ex(rc4_key, EVP_rc4(), NULL, k6_data, NULL, 1);
+	EVP_Cipher(rc4_key, snd_seq, p0 + 8, 8); /* SND_SEQ */
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+	EVP_CIPHER_CTX_cleanup(rc4_key);
+#else
+	EVP_CIPHER_CTX_free(rc4_key);
+#endif
 
 	memset(k6_data, 0, sizeof(k6_data));
     }
@@ -1309,13 +1398,19 @@ _gssapi_unwrap_iov_arcfour(OM_uint32 *minor_status,
     }
 
     if (conf_state == 1) {
-	EVP_CIPHER_CTX rc4_key;
+	EVP_CIPHER_CTX *rc4_key;
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+	EVP_CIPHER_CTX rc4_keys;
+	rc4_key = &rc4_keys;
+	EVP_CIPHER_CTX_init(rc4_key);
+#else
+	rc4_key = EVP_CIPHER_CTX_new();
+#endif
 
-	EVP_CIPHER_CTX_init(&rc4_key);
-	EVP_CipherInit_ex(&rc4_key, EVP_rc4(), NULL, k6_data, NULL, 1);
+	EVP_CipherInit_ex(rc4_key, EVP_rc4(), NULL, k6_data, NULL, 1);
 
 	/* Confounder */
-	EVP_Cipher(&rc4_key, Confounder, p0 + 24, 8);
+	EVP_Cipher(rc4_key, Confounder, p0 + 24, 8);
 
 	/* Data */
 	for (i = 0; i < iov_count; i++) {
@@ -1326,17 +1421,21 @@ _gssapi_unwrap_iov_arcfour(OM_uint32 *minor_status,
 		continue;
 	    }
 
-	    EVP_Cipher(&rc4_key, iov[i].buffer.value,
+	    EVP_Cipher(rc4_key, iov[i].buffer.value,
 		       iov[i].buffer.value, iov[i].buffer.length);
 	}
 
 	/* Padding */
 	if (padding) {
-	    EVP_Cipher(&rc4_key, padding->buffer.value,
+	    EVP_Cipher(rc4_key, padding->buffer.value,
 		       padding->buffer.value, padding->buffer.length);
 	}
 
-	EVP_CIPHER_CTX_cleanup(&rc4_key);
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+	EVP_CIPHER_CTX_cleanup(rc4_key);
+#else
+	EVP_CIPHER_CTX_free(rc4_key);
+#endif
     } else {
 	/* Confounder */
 	memcpy(Confounder, p0 + 24, 8);

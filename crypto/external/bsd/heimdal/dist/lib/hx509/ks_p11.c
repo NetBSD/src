@@ -1,4 +1,4 @@
-/*	$NetBSD: ks_p11.c,v 1.2 2017/01/28 21:31:48 christos Exp $	*/
+/*	$NetBSD: ks_p11.c,v 1.3 2018/02/05 16:00:52 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 - 2008 Kungliga Tekniska Högskolan
@@ -216,6 +216,8 @@ p11_rsa_finish(RSA *rsa)
     return 1;
 }
 
+
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL 
 static const RSA_METHOD p11_rsa_pkcs1_method = {
     "hx509 PKCS11 PKCS#1 RSA",
     p11_rsa_public_encrypt,
@@ -232,6 +234,7 @@ static const RSA_METHOD p11_rsa_pkcs1_method = {
     NULL,
     NULL
 };
+#endif
 
 /*
  *
@@ -648,8 +651,14 @@ collect_private_key(hx509_context context,
      * the pkcs11 specification, but some smartcards leaves it out,
      * let ignore any failure to fetch it.
      */
-    rsa->n = getattr_bn(p, slot, session, object, CKA_MODULUS);
-    rsa->e = getattr_bn(p, slot, session, object, CKA_PUBLIC_EXPONENT);
+    BIGNUM *n = getattr_bn(p, slot, session, object, CKA_MODULUS);
+    BIGNUM *e = getattr_bn(p, slot, session, object, CKA_PUBLIC_EXPONENT);
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL 
+    rsa->n = n;
+    rsa->e = e;
+#else
+    RSA_set0_key(rsa, n, e, NULL);
+#endif
 
     p11rsa = calloc(1, sizeof(*p11rsa));
     if (p11rsa == NULL)
@@ -665,7 +674,20 @@ collect_private_key(hx509_context context,
     if (p->ref == UINT_MAX)
 	_hx509_abort("pkcs11 ref == UINT_MAX on alloc");
 
-    RSA_set_method(rsa, &p11_rsa_pkcs1_method);
+    RSA_METHOD *meth;
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL 
+    meth = __UNCONST(&p11_rsa_pkcs1_method);
+#else
+    meth = RSA_meth_dup(RSA_get_default_method());
+    RSA_meth_set1_name(meth, "hx509 PKCS11 PKCS#1 RSA");
+    RSA_meth_set_pub_enc(meth, p11_rsa_public_encrypt);
+    RSA_meth_set_pub_dec(meth, p11_rsa_public_decrypt);
+    RSA_meth_set_priv_enc(meth, p11_rsa_private_encrypt);
+    RSA_meth_set_priv_dec(meth, p11_rsa_private_decrypt);
+    RSA_meth_set_init(meth, p11_rsa_init);
+    RSA_meth_set_finish(meth, p11_rsa_finish);
+#endif
+    RSA_set_method(rsa, meth);
     ret = RSA_set_app_data(rsa, p11rsa);
     if (ret != 1)
 	_hx509_abort("RSA_set_app_data");
