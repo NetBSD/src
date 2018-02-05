@@ -1,4 +1,4 @@
-/*	$NetBSD: cipher.h,v 1.11 2017/10/07 19:39:19 christos Exp $	*/
+/*	$NetBSD: cipher.h,v 1.12 2018/02/05 00:13:50 christos Exp $	*/
 /* $OpenBSD: cipher.h,v 1.52 2017/05/07 23:12:57 djm Exp $ */
 
 /*
@@ -47,7 +47,18 @@
 #define CIPHER_DECRYPT		0
 
 struct sshcipher;
+#if 0
+struct sshcipher_ctx {
+	int	plaintext;
+	int	encrypt;
+	EVP_CIPHER_CTX *evp;
+	struct chachapoly_ctx cp_ctx; /* XXX union with evp? */
+	struct aesctr_ctx ac_ctx; /* XXX union with evp? */
+	const struct sshcipher *cipher;
+};
+#else
 struct sshcipher_ctx;
+#endif
 
 const struct sshcipher *cipher_by_name(const char *);
 const char *cipher_warning_message(const struct sshcipher_ctx *);

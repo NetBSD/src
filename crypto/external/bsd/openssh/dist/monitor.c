@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor.c,v 1.23 2017/10/07 19:39:19 christos Exp $	*/
+/*	$NetBSD: monitor.c,v 1.24 2018/02/05 00:13:50 christos Exp $	*/
 /* $OpenBSD: monitor.c,v 1.174 2017/10/02 19:33:20 djm Exp $ */
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -27,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: monitor.c,v 1.23 2017/10/07 19:39:19 christos Exp $");
+__RCSID("$NetBSD: monitor.c,v 1.24 2018/02/05 00:13:50 christos Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/socket.h>
@@ -552,10 +552,12 @@ mm_answer_moduli(int sock, Buffer *m)
 		buffer_put_char(m, 0);
 		return (0);
 	} else {
+		const BIGNUM *p, *g;
+		DH_get0_pqg(dh, &p, NULL, &g);
 		/* Send first bignum */
 		buffer_put_char(m, 1);
-		buffer_put_bignum2(m, dh->p);
-		buffer_put_bignum2(m, dh->g);
+		buffer_put_bignum2(m, p);
+		buffer_put_bignum2(m, g);
 
 		DH_free(dh);
 	}

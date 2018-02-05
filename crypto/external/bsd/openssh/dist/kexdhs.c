@@ -1,4 +1,4 @@
-/*	$NetBSD: kexdhs.c,v 1.13 2017/10/07 19:39:19 christos Exp $	*/
+/*	$NetBSD: kexdhs.c,v 1.14 2018/02/05 00:13:50 christos Exp $	*/
 /* $OpenBSD: kexdhs.c,v 1.25 2017/05/30 14:23:52 markus Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: kexdhs.c,v 1.13 2017/10/07 19:39:19 christos Exp $");
+__RCSID("$NetBSD: kexdhs.c,v 1.14 2018/02/05 00:13:50 christos Exp $");
 #include <sys/types.h>
 #include <string.h>
 #include <signal.h>
@@ -84,6 +84,10 @@ kexdh_server(struct ssh *ssh)
 	ssh_dispatch_set(ssh, SSH2_MSG_KEXDH_INIT, &input_kex_dh_init);
 	r = 0;
  out:
+	if (r != 0) {
+		if (kex->dh) DH_free(kex->dh);
+		kex->dh = NULL;
+	}
 	return r;
 }
 
@@ -160,6 +164,9 @@ input_kex_dh_init(int type, u_int32_t seq, struct ssh *ssh)
 		goto out;
 	/* calc H */
 	hashlen = sizeof(hash);
+	{
+	const BIGNUM *pub_key;
+	DH_get0_key(kex->dh, &pub_key, NULL);
 	if ((r = kex_dh_hash(
 	    kex->hash_alg,
 	    kex->client_version_string,
@@ -168,10 +175,12 @@ input_kex_dh_init(int type, u_int32_t seq, struct ssh *ssh)
 	    sshbuf_ptr(kex->my), sshbuf_len(kex->my),
 	    server_host_key_blob, sbloblen,
 	    dh_client_pub,
-	    kex->dh->pub_key,
+	    pub_key,
 	    shared_secret,
-	    hash, &hashlen)) != 0)
+	    hash, &hashlen)) != 0) {
 		goto out;
+	}
+	}
 
 	/* save session id := H */
 	if (kex->session_id == NULL) {
@@ -192,12 +201,17 @@ input_kex_dh_init(int type, u_int32_t seq, struct ssh *ssh)
 	/* destroy_sensitive_data(); */
 
 	/* send server hostkey, DH pubkey 'f' and singed H */
+	{
+	const BIGNUM *pub_key;
+	DH_get0_key(kex->dh, &pub_key, NULL);
 	if ((r = sshpkt_start(ssh, SSH2_MSG_KEXDH_REPLY)) != 0 ||
 	    (r = sshpkt_put_string(ssh, server_host_key_blob, sbloblen)) != 0 ||
-	    (r = sshpkt_put_bignum2(ssh, kex->dh->pub_key)) != 0 ||	/* f */
+	    (r = sshpkt_put_bignum2(ssh, pub_key)) != 0 ||	/* f */
 	    (r = sshpkt_put_string(ssh, signature, slen)) != 0 ||
-	    (r = sshpkt_send(ssh)) != 0)
+	    (r = sshpkt_send(ssh)) != 0) {
 		goto out;
+	}
+	}
 
 	if ((r = kex_derive_keys_bn(ssh, hash, hashlen, shared_secret)) == 0)
 		r = kex_send_newkeys(ssh);

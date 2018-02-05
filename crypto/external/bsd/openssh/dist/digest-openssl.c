@@ -15,7 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: digest-openssl.c,v 1.6 2017/10/07 19:39:19 christos Exp $");
+__RCSID("$NetBSD: digest-openssl.c,v 1.7 2018/02/05 00:13:50 christos Exp $");
 
 #include <sys/types.h>
 #include <limits.h>
@@ -30,7 +30,7 @@ __RCSID("$NetBSD: digest-openssl.c,v 1.6 2017/10/07 19:39:19 christos Exp $");
 
 struct ssh_digest_ctx {
 	int alg;
-	EVP_MD_CTX mdctx;
+	EVP_MD_CTX *mdctx;
 };
 
 struct ssh_digest {
@@ -91,20 +91,21 @@ ssh_digest_bytes(int alg)
 size_t
 ssh_digest_blocksize(struct ssh_digest_ctx *ctx)
 {
-	return EVP_MD_CTX_block_size(&ctx->mdctx);
+	return EVP_MD_CTX_block_size(ctx->mdctx);
 }
 
 struct ssh_digest_ctx *
 ssh_digest_start(int alg)
 {
 	const struct ssh_digest *digest = ssh_digest_by_alg(alg);
-	struct ssh_digest_ctx *ret;
+	struct ssh_digest_ctx *ret = NULL;
 
 	if (digest == NULL || ((ret = calloc(1, sizeof(*ret))) == NULL))
 		return NULL;
 	ret->alg = alg;
-	EVP_MD_CTX_init(&ret->mdctx);
-	if (EVP_DigestInit_ex(&ret->mdctx, digest->mdfunc(), NULL) != 1) {
+	if ((ret->mdctx = EVP_MD_CTX_new()) == NULL ||
+	    EVP_DigestInit_ex(ret->mdctx, digest->mdfunc(), NULL) != 1) {
+		EVP_MD_CTX_free(ret->mdctx);
 		free(ret);
 		return NULL;
 	}
@@ -117,7 +118,7 @@ ssh_digest_copy_state(struct ssh_digest_ctx *from, struct ssh_digest_ctx *to)
 	if (from->alg != to->alg)
 		return SSH_ERR_INVALID_ARGUMENT;
 	/* we have bcopy-style order while openssl has memcpy-style */
-	if (!EVP_MD_CTX_copy_ex(&to->mdctx, &from->mdctx))
+	if (!EVP_MD_CTX_copy_ex(to->mdctx, from->mdctx))
 		return SSH_ERR_LIBCRYPTO_ERROR;
 	return 0;
 }
@@ -125,7 +126,7 @@ ssh_digest_copy_state(struct ssh_digest_ctx *from, struct ssh_digest_ctx *to)
 int
 ssh_digest_update(struct ssh_digest_ctx *ctx, const void *m, size_t mlen)
 {
-	if (EVP_DigestUpdate(&ctx->mdctx, m, mlen) != 1)
+	if (EVP_DigestUpdate(ctx->mdctx, m, mlen) != 1)
 		return SSH_ERR_LIBCRYPTO_ERROR;
 	return 0;
 }
@@ -146,7 +147,7 @@ ssh_digest_final(struct ssh_digest_ctx *ctx, u_char *d, size_t dlen)
 		return SSH_ERR_INVALID_ARGUMENT;
 	if (dlen < digest->digest_len) /* No truncation allowed */
 		return SSH_ERR_INVALID_ARGUMENT;
-	if (EVP_DigestFinal_ex(&ctx->mdctx, d, &l) != 1)
+	if (EVP_DigestFinal_ex(ctx->mdctx, d, &l) != 1)
 		return SSH_ERR_LIBCRYPTO_ERROR;
 	if (l != digest->digest_len) /* sanity */
 		return SSH_ERR_INTERNAL_ERROR;
@@ -157,7 +158,7 @@ void
 ssh_digest_free(struct ssh_digest_ctx *ctx)
 {
 	if (ctx != NULL) {
-		EVP_MD_CTX_cleanup(&ctx->mdctx);
+		EVP_MD_CTX_free(ctx->mdctx);
 		explicit_bzero(ctx, sizeof(*ctx));
 		free(ctx);
 	}

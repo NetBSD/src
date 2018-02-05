@@ -1,4 +1,4 @@
-/*	$NetBSD: kexgexc.c,v 1.10 2017/10/07 19:39:19 christos Exp $	*/
+/*	$NetBSD: kexgexc.c,v 1.11 2018/02/05 00:13:50 christos Exp $	*/
 /* $OpenBSD: kexgexc.c,v 1.25 2017/05/30 14:23:52 markus Exp $ */
 /*
  * Copyright (c) 2000 Niels Provos.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: kexgexc.c,v 1.10 2017/10/07 19:39:19 christos Exp $");
+__RCSID("$NetBSD: kexgexc.c,v 1.11 2018/02/05 00:13:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -118,11 +118,17 @@ input_kex_dh_gex_group(int type, u_int32_t seq, struct ssh *ssh)
 	p = g = NULL; /* belong to kex->dh now */
 
 	/* generate and send 'e', client DH public key */
-	if ((r = dh_gen_key(kex->dh, kex->we_need * 8)) != 0 ||
-	    (r = sshpkt_start(ssh, SSH2_MSG_KEX_DH_GEX_INIT)) != 0 ||
-	    (r = sshpkt_put_bignum2(ssh, kex->dh->pub_key)) != 0 ||
-	    (r = sshpkt_send(ssh)) != 0)
+	{
+	const BIGNUM *pub_key;
+	if ((r = dh_gen_key(kex->dh, kex->we_need * 8)) != 0)
 		goto out;
+	DH_get0_key(kex->dh, &pub_key, NULL);
+	if ((r = sshpkt_start(ssh, SSH2_MSG_KEX_DH_GEX_INIT)) != 0 ||
+	    (r = sshpkt_put_bignum2(ssh, pub_key)) != 0 ||
+	    (r = sshpkt_send(ssh)) != 0) {
+		goto out;
+	}
+	}
 	debug("SSH2_MSG_KEX_DH_GEX_INIT sent");
 #ifdef DEBUG_KEXDH
 	DHparams_print_fp(stderr, kex->dh);
@@ -134,10 +140,12 @@ input_kex_dh_gex_group(int type, u_int32_t seq, struct ssh *ssh)
 	ssh_dispatch_set(ssh, SSH2_MSG_KEX_DH_GEX_REPLY, &input_kex_dh_gex_reply);
 	r = 0;
 out:
-	if (p)
+	if (r != 0) {
 		BN_clear_free(p);
-	if (g)
 		BN_clear_free(g);
+		DH_free(kex->dh);
+		kex->dh = NULL;
+	}
 	return r;
 }
 
@@ -214,6 +222,10 @@ input_kex_dh_gex_reply(int type, u_int32_t seq, struct ssh *ssh)
 
 	/* calc and verify H */
 	hashlen = sizeof(hash);
+	{
+	const BIGNUM *p, *g, *pub_key;
+	DH_get0_pqg(kex->dh, &p, NULL, &g);
+	DH_get0_key(kex->dh, &pub_key, NULL);
 	if ((r = kexgex_hash(
 	    kex->hash_alg,
 	    kex->client_version_string,
@@ -222,12 +234,14 @@ input_kex_dh_gex_reply(int type, u_int32_t seq, struct ssh *ssh)
 	    sshbuf_ptr(kex->peer), sshbuf_len(kex->peer),
 	    server_host_key_blob, sbloblen,
 	    kex->min, kex->nbits, kex->max,
-	    kex->dh->p, kex->dh->g,
-	    kex->dh->pub_key,
+	    p, g,
+	    pub_key,
 	    dh_server_pub,
 	    shared_secret,
-	    hash, &hashlen)) != 0)
+	    hash, &hashlen)) != 0) {
 		goto out;
+	}
+	}
 
 	if ((r = sshkey_verify(server_host_key, signature, slen, hash,
 	    hashlen, ssh->compat)) != 0)
