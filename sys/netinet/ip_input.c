@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.369 2018/02/05 14:23:38 maxv Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.370 2018/02/05 14:52:42 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.369 2018/02/05 14:23:38 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.370 2018/02/05 14:52:42 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -153,47 +153,34 @@ __KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.369 2018/02/05 14:23:38 maxv Exp $");
 #ifndef	IPFORWARDING
 #ifdef GATEWAY
 #define	IPFORWARDING	1	/* forward IP packets not for us */
-#else /* GATEWAY */
+#else
 #define	IPFORWARDING	0	/* don't forward IP packets not for us */
-#endif /* GATEWAY */
-#endif /* IPFORWARDING */
+#endif
+#endif
+
 #ifndef	IPSENDREDIRECTS
 #define	IPSENDREDIRECTS	1
 #endif
-#ifndef IPFORWSRCRT
-#define	IPFORWSRCRT	0	/* forward source-routed packets */
-#endif
-#ifndef IPALLOWSRCRT
-#define	IPALLOWSRCRT	0	/* allow source-routed packets */
-#endif
-#ifndef IPMTUDISC
-#define IPMTUDISC	1
-#endif
+
 #ifndef IPMTUDISCTIMEOUT
 #define IPMTUDISCTIMEOUT (10 * 60)	/* as per RFC 1191 */
 #endif
 
-/*
- * Note: DIRECTED_BROADCAST is handled this way so that previous
- * configuration using this option will Just Work.
- */
-#ifndef IPDIRECTEDBCAST
 #ifdef DIRECTED_BROADCAST
 #define IPDIRECTEDBCAST	1
 #else
 #define	IPDIRECTEDBCAST	0
-#endif /* DIRECTED_BROADCAST */
-#endif /* IPDIRECTEDBCAST */
-int	ipforwarding = IPFORWARDING;
-int	ipsendredirects = IPSENDREDIRECTS;
-int	ip_defttl = IPDEFTTL;
-int	ip_forwsrcrt = IPFORWSRCRT;
-int	ip_directedbcast = IPDIRECTEDBCAST;
-int	ip_allowsrcrt = IPALLOWSRCRT;
-int	ip_mtudisc = IPMTUDISC;
-int	ip_mtudisc_timeout = IPMTUDISCTIMEOUT;
+#endif
 
-int	ip_do_randomid = 0;
+int ipforwarding = IPFORWARDING;
+int ipsendredirects = IPSENDREDIRECTS;
+int ip_defttl = IPDEFTTL;
+int ip_forwsrcrt = 0;
+int ip_directedbcast = IPDIRECTEDBCAST;
+int ip_allowsrcrt = 0;
+int ip_mtudisc = 1;
+int ip_mtudisc_timeout = IPMTUDISCTIMEOUT;
+int ip_do_randomid = 0;
 
 /*
  * XXX - Setting ip_checkinterface mostly implements the receive side of
