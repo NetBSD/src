@@ -426,6 +426,13 @@ DH_set_length(DH *dh, long length)
 {
 	dh->length = length;
 }
+
+const char *DH_meth_get0_name(const DH_METHOD *meth)
+{
+	return meth->name;
+}   
+
+
 #endif
 
 #ifdef  __cplusplus
