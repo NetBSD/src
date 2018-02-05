@@ -1,4 +1,4 @@
-#	$NetBSD: P2020DS,v 1.28 2017/09/14 07:58:40 mrg Exp $
+#	$NetBSD: P2020DS,v 1.29 2018/02/05 15:18:10 maxv Exp $
 #
 #	P2020DS -- everything that's currently supported
 #
@@ -8,7 +8,7 @@ include 	"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"P2020DS-$Revision: 1.28 $"
+ident 		"P2020DS-$Revision: 1.29 $"
 
 maxusers	32
 
@@ -103,7 +103,6 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options        DIRECTED_BROADCAST      # allow broadcasts through routers
 #options 	NETATALK	# AppleTalk networking protocols
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP

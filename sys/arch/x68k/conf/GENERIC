@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.187 2018/01/23 14:47:56 sevan Exp $
+# $NetBSD: GENERIC,v 1.188 2018/02/05 15:18:11 maxv Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/x68k/conf/std.x68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.187 $"
+#ident 		"GENERIC-$Revision: 1.188 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
@@ -190,7 +190,6 @@ options 	INET6		# IPV6
 #options 	GATEWAY		# packet forwarding ("router switch")
 #options 	MROUTING	# packet forwarding of multicast packets
 #options 	PIM		# Protocol Independent Multicast
-#options 	DIRECTED_BROADCAST	# allow broadcasts through routers
 #options 	NETATALK	# AppleTalk (over Ethernet) protocol
 #options 	NTP		# Network Time Protocol in-kernel support
 #options 	PPS_SYNC	# Add serial line synchronization for NTP

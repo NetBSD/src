@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS600,v 1.24 2017/09/14 07:58:40 mrg Exp $
+#	$NetBSD: OPENBLOCKS600,v 1.25 2018/02/05 15:18:10 maxv Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include 	"arch/evbppc/conf/std.obs600"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"OPENBLOCKS600-$Revision: 1.24 $"
+#ident 		"OPENBLOCKS600-$Revision: 1.25 $"
 
 maxusers	32
 
@@ -105,7 +105,6 @@ options 	INET6		# IPv6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options        DIRECTED_BROADCAST      # allow broadcasts through routers
 #options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
