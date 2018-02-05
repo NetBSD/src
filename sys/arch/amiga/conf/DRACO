@@ -1,4 +1,4 @@
-# $NetBSD: DRACO,v 1.185 2018/01/23 14:47:53 sevan Exp $
+# $NetBSD: DRACO,v 1.186 2018/02/05 15:18:10 maxv Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
@@ -29,7 +29,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.185 $"
+#ident 		"GENERIC-$Revision: 1.186 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
@@ -54,7 +54,6 @@ options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# Packet forwarding
-#options 	DIRECTED_BROADCAST	# Broadcast across subnets
 
 #options 	MROUTING	# Multicast routing
 #options 	PIM		# Protocol Independent Multicast
