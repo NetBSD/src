@@ -326,6 +326,82 @@ void ERR_load_DSA_strings(void);
 # define DSA_R_PARAMETER_ENCODING_ERROR                   105
 # define DSA_R_Q_NOT_PRIME                                113
 
+static inline void
+DSA_SIG_get0(const DSA_SIG *sig, const BIGNUM **r, const BIGNUM **s)
+{
+	if (r)
+		*r = sig->r;
+	if (s)
+		*s = sig->s;
+}
+
+static inline int
+DSA_SIG_set0(DSA_SIG *sig, BIGNUM *r, BIGNUM *s)
+{
+	if (r) {
+		BN_free(r);
+		sig->r = r;
+	}
+	if (s) {
+		BN_free(s);
+		sig->s = s;
+	}
+	return 1;
+}
+
+static inline void DSA_get0_pqg(const DSA *d, const BIGNUM **p,
+    const BIGNUM **q, const BIGNUM **g)
+{   
+	if (p)
+		*p = d->p;
+	if (q)
+		*q = d->q;
+	if (g)
+		*g = d->g;
+}   
+
+
+static inline int DSA_set0_pqg(DSA *d, BIGNUM *p, BIGNUM *q, BIGNUM *g)
+{           
+	if (p) { 
+		BN_free(d->p);
+		d->p = p;
+	}
+	if (q) {
+		BN_free(d->q);
+		d->q = q;
+	}
+	if (g) {
+		BN_free(d->g);
+		d->g = g;
+	}
+	return 1;
+}
+
+static inline void DSA_get0_key(const DSA *d, const BIGNUM **pub_key,
+     const BIGNUM **priv_key)
+{
+	if (pub_key)
+	    *pub_key = d->pub_key;
+	if (priv_key)  
+	    *priv_key = d->priv_key;
+}
+
+static inline int DSA_set0_key(DSA *d, BIGNUM *pub_key, BIGNUM *priv_key)
+{
+	if (pub_key) {
+		BN_free(d->pub_key);
+		d->pub_key = pub_key;
+	}
+	if (priv_key) {
+		BN_free(d->priv_key);
+		d->priv_key = priv_key;
+	}   
+
+	return 1;
+}
+
+
 #ifdef  __cplusplus
 }
 #endif

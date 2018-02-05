@@ -658,6 +658,181 @@ void ERR_load_RSA_strings(void);
 # define RSA_R_VALUE_MISSING                              147
 # define RSA_R_WRONG_SIGNATURE_LENGTH                     119
 
+#include <string.h>
+
+static inline RSA_METHOD *RSA_meth_dup(const RSA_METHOD *meth)
+{
+	RSA_METHOD *ret = malloc(sizeof(*meth));
+	if (ret == NULL)
+		return NULL;
+	memcpy(ret, meth, sizeof(*meth));
+	ret->name = strdup(meth->name);
+	if (ret->name == NULL) {
+		free(ret);
+		return NULL;
+	}
+	return ret;
+}
+
+static inline int RSA_meth_set1_name(RSA_METHOD *meth, const char *name)
+{
+	char *nname = strdup(name);
+	if (nname == NULL)
+		return 0;
+	free(__UNCONST(meth->name));
+	meth->name = nname;
+	return 1;
+}
+
+static inline int RSA_meth_set_priv_enc(RSA_METHOD *meth,
+    int (*priv_enc) (int flen, const unsigned char *from,
+    unsigned char *to, RSA *rsa, int padding))
+{
+	meth->rsa_priv_enc = priv_enc;
+	return 1;
+}   
+
+static inline int RSA_meth_set_pub_dec(RSA_METHOD *meth,
+    int (*pub_dec) (int flen, const unsigned char *from,
+    unsigned char *to, RSA *rsa, int padding)) 
+{
+	meth->rsa_pub_dec = pub_dec;
+	return 1;
+}
+
+static inline int (*RSA_meth_get_priv_enc(const RSA_METHOD *meth))(
+    int flen, const unsigned char *from, unsigned char *to, RSA *rsa,
+    int padding) 
+{
+    return meth->rsa_priv_enc;
+}
+
+static inline int RSA_meth_set_priv_dec(RSA_METHOD *meth, int (*priv_dec)(
+    int flen, const unsigned char *from, unsigned char *to, RSA *rsa,
+    int padding))
+{
+	meth->rsa_priv_dec = priv_dec;
+	return 1;
+}   
+
+static inline int (*RSA_meth_get_finish(const RSA_METHOD *meth)) (RSA *rsa)
+{   
+	return meth->finish;
+}
+	
+static inline int RSA_meth_set_finish(RSA_METHOD *meth, int (*finish)(RSA *rsa))
+{
+	meth->finish = finish;
+	return 1;
+}
+
+static inline RSA_METHOD *RSA_meth_new(const char *name, int flags)
+{   
+	RSA_METHOD *meth = calloc(1, sizeof(*meth));
+ 
+	if (meth == NULL)
+		return NULL;
+
+        meth->flags = flags;
+        meth->name = OPENSSL_strdup(name);
+        if (meth->name != NULL)
+		return meth;
+	free(meth);
+	return NULL;
+}
+
+static inline int RSA_meth_get_flags(RSA_METHOD *meth)
+{       
+	return meth->flags;
+}
+
+static inline void RSA_get0_key(const RSA *r,
+     const BIGNUM **n, const BIGNUM **e, const BIGNUM **d)
+{
+	if (n)
+		*n = r->n;
+	if (e)
+		*e = r->e;
+	if (d)
+		*d = r->d;
+}
+
+static inline int RSA_set0_key(RSA *r, BIGNUM *n, BIGNUM *e, BIGNUM *d)
+{
+	if (n) {
+		BN_free(r->n);
+		r->n = n;
+	}
+	if (e) {
+		BN_free(r->e);
+		r->e = e;
+	}
+	if (d) {
+		BN_free(r->d);
+		r->d = d;
+	}
+	return 1;
+}
+
+static inline void RSA_get0_factors(const RSA *r, const BIGNUM **p,
+    const BIGNUM **q)
+{
+	if (p)
+		*p = r->p;
+	if (q)
+		*q = r->q;
+}
+
+static inline int RSA_set0_factors(RSA *r, BIGNUM *p, BIGNUM *q)
+{
+	if (p) {
+		BN_free(r->p);
+		r->p = p;
+	}
+	if (q) {
+		BN_free(r->q);
+		r->q = q;
+	}
+
+	return 1;
+}
+
+static inline int RSA_set0_crt_params(RSA *r, BIGNUM *dmp1, BIGNUM *dmq1,
+     BIGNUM *iqmp)
+{   
+	if (dmp1) {
+		BN_free(r->dmp1);
+		r->dmp1 = dmp1;
+	}
+	if (dmq1) {
+		BN_free(r->dmq1);
+		r->dmq1 = dmq1;
+	}
+	if (iqmp) {
+		BN_free(r->iqmp);
+		r->iqmp = iqmp;
+	}
+	return 1;
+}
+
+static inline int RSA_bits(const RSA *r)
+{
+	return BN_num_bits(r->n);
+}
+
+
+static inline void RSA_get0_crt_params(const RSA *r, const BIGNUM **dmp1,
+     const BIGNUM **dmq1, const BIGNUM **iqmp)
+{
+	if (dmp1)
+		*dmp1 = r->dmp1;
+	if (dmq1)
+		*dmq1 = r->dmq1;
+	if (iqmp)
+		*iqmp = r->iqmp;
+}
+
+
 #ifdef  __cplusplus
 }
 #endif
