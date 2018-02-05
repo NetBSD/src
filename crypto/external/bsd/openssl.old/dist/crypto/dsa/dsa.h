@@ -401,6 +401,11 @@ static inline int DSA_set0_key(DSA *d, BIGNUM *pub_key, BIGNUM *priv_key)
 
 	return 1;
 }
+
+static inline int DSA_bits(const DSA *d)
+{
+	return BN_num_bits(d->p);
+}
 #endif
 
 
