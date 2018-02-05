@@ -1,4 +1,4 @@
-/* $NetBSD: vmt.c,v 1.17.2.1 2017/10/25 07:05:55 snj Exp $ */
+/* $NetBSD: vmt.c,v 1.17.2.2 2018/02/05 15:11:54 martin Exp $ */
 /* $OpenBSD: vmt.c,v 1.11 2011/01/27 21:29:25 dtucker Exp $ */
 
 /*
@@ -179,6 +179,7 @@ vmt_attach(device_t parent, device_t self, void *aux)
 	struct vmt_softc *sc = device_private(self);
 
 	aprint_naive("\n");
+	aprint_normal("\n");
 
 	sc->sc_dev = self;
 	sc->sc_log = NULL;
