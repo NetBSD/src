@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex_obj.c,v 1.5 2011/09/27 01:02:38 jym Exp $	*/
+/*	$NetBSD: kern_mutex_obj.c,v 1.6 2018/02/05 04:25:04 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex_obj.c,v 1.5 2011/09/27 01:02:38 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex_obj.c,v 1.6 2018/02/05 04:25:04 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -87,9 +87,11 @@ kmutex_t *
 mutex_obj_alloc(kmutex_type_t type, int ipl)
 {
 	struct kmutexobj *mo;
+	extern void _mutex_init(kmutex_t *, kmutex_type_t, int, uintptr_t);
 
 	mo = pool_cache_get(mutex_obj_cache, PR_WAITOK);
-	mutex_init(&mo->mo_lock, type, ipl);
+	_mutex_init(&mo->mo_lock, type, ipl,
+	    (uintptr_t)__builtin_return_address(0));
 	mo->mo_refcnt = 1;
 
 	return (kmutex_t *)mo;
