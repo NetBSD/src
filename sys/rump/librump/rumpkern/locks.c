@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.79 2017/12/27 09:03:22 ozaki-r Exp $	*/
+/*	$NetBSD: locks.c,v 1.80 2018/02/05 05:00:48 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.79 2017/12/27 09:03:22 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.80 2018/02/05 05:00:48 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -66,9 +66,9 @@ static lockops_t rw_lockops = {
 	.lo_dump = NULL,
 };
 
-#define ALLOCK(lock, ops)				\
+#define ALLOCK(lock, ops, return_address)		\
 	lockdebug_alloc(__func__, __LINE__, lock, ops,	\
-	    (uintptr_t)__builtin_return_address(0))
+	    return_address)
 #define FREELOCK(lock)					\
 	lockdebug_free(__func__, __LINE__, lock)
 #define WANTLOCK(lock, shar)				\
@@ -83,7 +83,7 @@ static lockops_t rw_lockops = {
 #define BARRIER(lock, slp)				\
 	lockdebug_barrier(__func__, __LINE__, lock, slp)
 #else
-#define ALLOCK(a, b)	do {} while (0)
+#define ALLOCK(a, b, c)	do {} while (0)
 #define FREELOCK(a)	do {} while (0)
 #define WANTLOCK(a, b)	do {} while (0)
 #define LOCKED(a, b)	do {} while (0)
@@ -105,8 +105,9 @@ static lockops_t rw_lockops = {
 
 #define RUMPMTX(mtx) (*(struct rumpuser_mtx *const*)(mtx))
 
+void _mutex_init(kmutex_t *, kmutex_type_t, int, uintptr_t);
 void
-mutex_init(kmutex_t *mtx, kmutex_type_t type, int ipl)
+_mutex_init(kmutex_t *mtx, kmutex_type_t type, int ipl, uintptr_t return_address)
 {
 	int ruflags = RUMPUSER_MTX_KMUTEX;
 	int isspin;
@@ -135,9 +136,16 @@ mutex_init(kmutex_t *mtx, kmutex_type_t type, int ipl)
 		ruflags |= RUMPUSER_MTX_SPIN;
 	rumpuser_mutex_init((struct rumpuser_mtx **)mtx, ruflags);
 	if (isspin)
-		ALLOCK(mtx, &mutex_spin_lockops);
+		ALLOCK(mtx, &mutex_spin_lockops, return_address);
 	else
-		ALLOCK(mtx, &mutex_adaptive_lockops);
+		ALLOCK(mtx, &mutex_adaptive_lockops, return_address);
+}
+
+void
+mutex_init(kmutex_t *mtx, kmutex_type_t type, int ipl)
+{
+
+	_mutex_init(mtx, type, ipl, (uintptr_t)__builtin_return_address(0));
 }
 
 void
@@ -238,14 +246,22 @@ krw2rumprw(const krw_t op)
 	}
 }
 
+void _rw_init(krwlock_t *, uintptr_t);
 void
-rw_init(krwlock_t *rw)
+_rw_init(krwlock_t *rw, uintptr_t return_address)
 {
 
 	CTASSERT(sizeof(krwlock_t) >= sizeof(void *));
 
 	rumpuser_rw_init((struct rumpuser_rw **)rw);
-	ALLOCK(rw, &rw_lockops);
+	ALLOCK(rw, &rw_lockops, return_address);
+}
+
+void
+rw_init(krwlock_t *rw)
+{
+
+	_rw_init(rw, (uintptr_t)__builtin_return_address(0));
 }
 
 void
