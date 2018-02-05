@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.135.6.1 2018/01/02 10:20:34 snj Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.135.6.2 2018/02/05 14:55:15 martin Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.135.6.1 2018/01/02 10:20:34 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.135.6.2 2018/02/05 14:55:15 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -469,6 +469,9 @@ defrouter_addreq(struct nd_defrouter *newdr)
 		struct sockaddr_in6 sin6;
 		struct sockaddr sa;
 	} def, mask, gate;
+#ifndef NET_MPSAFE
+	int s;
+#endif
 	int error;
 
 	memset(&def, 0, sizeof(def));
@@ -484,7 +487,7 @@ defrouter_addreq(struct nd_defrouter *newdr)
 #endif
 
 #ifndef NET_MPSAFE
-	KASSERT(mutex_owned(softnet_lock));
+	s = splsoftnet();
 #endif
 	error = rtrequest_newmsg(RTM_ADD, &def.sa, &gate.sa, &mask.sa,
 	    RTF_GATEWAY);
@@ -492,6 +495,9 @@ defrouter_addreq(struct nd_defrouter *newdr)
 		nd6_numroutes++;
 		newdr->installed = 1;
 	}
+#ifndef NET_MPSAFE
+	splx(s);
+#endif
 	return;
 }
 
@@ -2218,16 +2224,21 @@ in6_init_address_ltimes(struct nd_prefix *newpr,
 void
 nd6_rt_flush(struct in6_addr *gateway, struct ifnet *ifp)
 {
-
 #ifndef NET_MPSAFE
-	KASSERT(mutex_owned(softnet_lock));
+	int s = splsoftnet();
 #endif
 
 	/* We'll care only link-local addresses */
 	if (!IN6_IS_ADDR_LINKLOCAL(gateway))
-		return;
+		goto out;
 
 	rt_delete_matched_entries(AF_INET6, rt6_deleteroute_matcher, gateway);
+
+out:
+#ifndef NET_MPSAFE
+	splx(s);
+#endif
+	return; /* XXX gcc */
 }
 
 static int
