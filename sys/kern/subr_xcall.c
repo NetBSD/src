@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_xcall.c,v 1.23 2018/02/05 02:49:46 ozaki-r Exp $	*/
+/*	$NetBSD: subr_xcall.c,v 1.24 2018/02/05 02:51:08 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.23 2018/02/05 02:49:46 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.24 2018/02/05 02:51:08 ozaki-r Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -154,6 +154,7 @@ xc_init(void)
 	mutex_init(&xchi->xc_lock, MUTEX_DEFAULT, IPL_SOFTSERIAL);
 	cv_init(&xchi->xc_busy, "xchicv");
 
+	/* Set up a softint for each IPL_SOFT*. */
 #define SETUP_SOFTINT(xipl, sipl) do {					\
 		xc_sihs[(xipl)] = softint_establish( (sipl) | SOFTINT_MPSAFE,\
 		    xc__highpri_intr, NULL);				\
@@ -161,9 +162,20 @@ xc_init(void)
 	} while (0)
 
 	SETUP_SOFTINT(XC_IPL_SOFTSERIAL, SOFTINT_SERIAL);
-	SETUP_SOFTINT(XC_IPL_SOFTBIO, SOFTINT_BIO);
-	SETUP_SOFTINT(XC_IPL_SOFTCLOCK, SOFTINT_CLOCK);
+	/*
+	 * If a IPL_SOFTXXX have the same value of the previous, we don't use
+	 * the IPL (see xc_encode_ipl).  So we don't need to allocate a softint
+	 * for it.
+	 */
+#if IPL_SOFTNET != IPL_SOFTSERIAL
 	SETUP_SOFTINT(XC_IPL_SOFTNET, SOFTINT_NET);
+#endif
+#if IPL_SOFTBIO != IPL_SOFTNET
+	SETUP_SOFTINT(XC_IPL_SOFTBIO, SOFTINT_BIO);
+#endif
+#if IPL_SOFTCLOCK != IPL_SOFTBIO
+	SETUP_SOFTINT(XC_IPL_SOFTCLOCK, SOFTINT_CLOCK);
+#endif
 
 #undef SETUP_SOFTINT
 
@@ -399,6 +411,7 @@ xc_ipi_handler(void)
 	xc_state_t *xc = & xc_high_pri;
 
 	KASSERT(xc->xc_ipl < __arraycount(xc_sihs));
+	KASSERT(xc_sihs[xc->xc_ipl] != NULL);
 
 	/* Executes xc__highpri_intr() via software interrupt. */
 	softint_schedule(xc_sihs[xc->xc_ipl]);
