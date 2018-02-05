@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto-aes-sha1.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
+/*	$NetBSD: crypto-aes-sha1.c,v 1.3 2018/02/05 16:00:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2008 Kungliga Tekniska Högskolan
@@ -126,13 +126,22 @@ AES_SHA1_PRF(krb5_context context,
 
     {
 	const EVP_CIPHER *c = (*crypto->et->keytype->evp)();
-	EVP_CIPHER_CTX ctx;
-
-	EVP_CIPHER_CTX_init(&ctx); /* ivec all zero */
-	EVP_CipherInit_ex(&ctx, c, NULL, derived->keyvalue.data, NULL, 1);
-	EVP_Cipher(&ctx, out->data, result.checksum.data,
+	EVP_CIPHER_CTX *ctx;
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+	EVP_CIPHER_CTX ctxst;
+	ctx = &ctxst;
+	EVP_CIPHER_CTX_init(ctx); /* ivec all zero */
+#else
+	ctx = EVP_CIPHER_CTX_new(); /* ivec all zero */
+#endif
+	EVP_CipherInit_ex(ctx, c, NULL, derived->keyvalue.data, NULL, 1);
+	EVP_Cipher(ctx, out->data, result.checksum.data,
 		   crypto->et->blocksize);
-	EVP_CIPHER_CTX_cleanup(&ctx);
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+	EVP_CIPHER_CTX_cleanup(ctx);
+#else
+	EVP_CIPHER_CTX_free(ctx);
+#endif
     }
 
     krb5_data_free(&result.checksum);

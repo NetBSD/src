@@ -1,4 +1,4 @@
-/*	$NetBSD: pkinit.c,v 1.2 2017/01/28 21:31:44 christos Exp $	*/
+/*	$NetBSD: pkinit.c,v 1.3 2018/02/05 16:00:52 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 - 2016 Kungliga Tekniska Högskolan
@@ -346,19 +346,29 @@ get_dh_param(krb5_context context,
 	goto out;
     }
     ret = KRB5_BADMSGTYPE;
-    dh->p = integer_to_BN(context, "DH prime", &dhparam.p);
-    if (dh->p == NULL)
+    BIGNUM *p, *q, *g;
+    p = integer_to_BN(context, "DH prime", &dhparam.p);
+    if (p == NULL)
 	goto out;
-    dh->g = integer_to_BN(context, "DH base", &dhparam.g);
-    if (dh->g == NULL)
+    g = integer_to_BN(context, "DH base", &dhparam.g);
+    if (g == NULL)
 	goto out;
 
     if (dhparam.q) {
-	dh->q = integer_to_BN(context, "DH p-1 factor", dhparam.q);
-	if (dh->g == NULL)
+	q = integer_to_BN(context, "DH p-1 factor", dhparam.q);
+	if (q == NULL)
 	    goto out;
-    }
+    } else
+	q = NULL;
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+    dh->p = p;
+    if (q)
+	    dh->q = q;
+    dh->g = g;
+#else
+    DH_set0_pqg(dh, p, q, g);
+#endif
     {
 	heim_integer glue;
 	size_t size;
@@ -1022,7 +1032,13 @@ pk_mk_pa_reply_dh(krb5_context context,
 	DH *kdc_dh = cp->u.dh.key;
 	heim_integer i;
 
-	ret = BN_to_integer(context, kdc_dh->pub_key, &i);
+	const BIGNUM *pub_key;
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+	pub_key = kdc_dh->pub_key;
+#else
+	DH_get0_key(kdc_dh, &pub_key, NULL);
+#endif
+	ret = BN_to_integer(context, __UNCONST(pub_key), &i);
 	if (ret)
 	    return ret;
 
