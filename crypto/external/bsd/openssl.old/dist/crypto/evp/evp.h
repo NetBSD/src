@@ -122,6 +122,9 @@
 extern "C" {
 #endif
 
+#define EVP_CIPHER_CTX_iv_noconst(ctx) ((ctx)->iv)
+#define EVP_CIPHER_CTX_iv(ctx) ((ctx)->iv)
+
 /*
  * Type needs to be a bit field Sub-type needs to be for variations on the
  * method, as in, can it do arbitrary encryption....
@@ -1529,6 +1532,31 @@ void ERR_load_EVP_strings(void);
 # define EVP_R_WRAP_MODE_NOT_ALLOWED                      170
 # define EVP_R_WRONG_FINAL_BLOCK_LENGTH                   109
 # define EVP_R_WRONG_PUBLIC_KEY_TYPE                      110
+
+static inline EVP_MD_CTX *EVP_MD_CTX_new(void)
+{
+	EVP_MD_CTX *ctx = malloc(sizeof(*ctx));
+	if (ctx == NULL)
+		return NULL;
+	EVP_MD_CTX_init(ctx);
+	return ctx;
+}
+
+static inline void EVP_MD_CTX_free(EVP_MD_CTX *ctx)
+{
+	if (ctx == NULL)
+		return;
+	EVP_MD_CTX_cleanup(ctx);
+	free(ctx);
+}
+
+static inline RSA *EVP_PKEY_get0_RSA(EVP_PKEY *pkey)
+{
+	if (pkey->type != EVP_PKEY_RSA)
+	    return NULL;
+	return pkey->pkey.rsa;
+}
+
 
 # ifdef  __cplusplus
 }
