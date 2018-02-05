@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.137 2018/01/23 14:47:53 sevan Exp $
+# $NetBSD: GENERIC.in,v 1.138 2018/02/05 15:18:10 maxv Exp $
 #
 ##
 # GENERIC machine description file
@@ -52,7 +52,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.137 $"
+#ident 		"GENERIC-$Revision: 1.138 $"
 
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 makeoptions	COPTS="-Os"
@@ -99,7 +99,6 @@ options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# Packet forwarding
-#options 	DIRECTED_BROADCAST	# Broadcast across subnets
 
 m4_ifdef(`INSTALL_CONFIGURATION', `', `m4_dnl
 #options 	MROUTING	# Multicast routing

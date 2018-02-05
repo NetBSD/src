@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.370 2018/02/05 14:52:42 maxv Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.371 2018/02/05 15:18:10 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.370 2018/02/05 14:52:42 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.371 2018/02/05 15:18:10 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -166,17 +166,11 @@ __KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.370 2018/02/05 14:52:42 maxv Exp $");
 #define IPMTUDISCTIMEOUT (10 * 60)	/* as per RFC 1191 */
 #endif
 
-#ifdef DIRECTED_BROADCAST
-#define IPDIRECTEDBCAST	1
-#else
-#define	IPDIRECTEDBCAST	0
-#endif
-
 int ipforwarding = IPFORWARDING;
 int ipsendredirects = IPSENDREDIRECTS;
 int ip_defttl = IPDEFTTL;
 int ip_forwsrcrt = 0;
-int ip_directedbcast = IPDIRECTEDBCAST;
+int ip_directedbcast = 0;
 int ip_allowsrcrt = 0;
 int ip_mtudisc = 1;
 int ip_mtudisc_timeout = IPMTUDISCTIMEOUT;

@@ -1,4 +1,4 @@
-# $NetBSD: KRUPS,v 1.75 2017/09/14 07:58:43 mrg Exp $
+# $NetBSD: KRUPS,v 1.76 2018/02/05 15:18:11 maxv Exp $
 # From: NetBSD: GENERIC,v 1.197 2006/12/04 23:43:35 elad Exp
 #
 # Krups (JavaStation-NC) machine description file
@@ -8,7 +8,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"KRUPS-$Revision: 1.75 $"
+#ident 		"KRUPS-$Revision: 1.76 $"
 
 maxusers	32
 
@@ -203,7 +203,6 @@ options 	INET6		# IPV6
 #options 	GATEWAY		# packet forwarding ("router switch")
 #options 	MROUTING	# packet forwarding of multicast packets
 #options 	PIM		# Protocol Independent Multicast
-#options 	DIRECTED_BROADCAST	# allow broadcasts through routers
 #options 	NETATALK	# AppleTalk (over Ethernet) protocol
 options 	NTP		# Network Time Protocol in-kernel support
 #options 	PPS_SYNC	# Add serial line synchronization for NTP

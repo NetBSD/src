@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.98 2017/09/14 07:58:43 mrg Exp $
+#	$NetBSD: INSTALL,v 1.99 2018/02/05 15:18:11 maxv Exp $
 #
 # from: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 #
@@ -171,7 +171,6 @@ options 	INET		# IP (Internet Protocol) v4
 #options 	GATEWAY		# packet forwarding ("router switch")
 #options 	MROUTING	# packet forwarding of multicast packets
 #options 	PIM		# Protocol Independent Multicast
-#options 	DIRECTED_BROADCAST	# allow broadcasts through routers
 #options 	NETATALK	# AppleTalk (over Ethernet) protocol
 #options 	NTP		# Network Time Protocol in-kernel support
 #options 	PPS_SYNC	# Add serial line synchronization for NTP
