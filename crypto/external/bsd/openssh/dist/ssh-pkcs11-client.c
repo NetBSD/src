@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-pkcs11-client.c,v 1.10 2017/10/07 19:39:19 christos Exp $	*/
+/*	$NetBSD: ssh-pkcs11-client.c,v 1.11 2018/02/05 00:13:50 christos Exp $	*/
 /* $OpenBSD: ssh-pkcs11-client.c,v 1.7 2017/05/30 08:52:19 markus Exp $ */
 /*
  * Copyright (c) 2010 Markus Friedl.  All rights reserved.
@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: ssh-pkcs11-client.c,v 1.10 2017/10/07 19:39:19 christos Exp $");
+__RCSID("$NetBSD: ssh-pkcs11-client.c,v 1.11 2018/02/05 00:13:50 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -140,12 +140,13 @@ pkcs11_rsa_private_encrypt(int flen, const u_char *from, u_char *to, RSA *rsa,
 static int
 wrap_key(RSA *rsa)
 {
-	static RSA_METHOD helper_rsa;
+	static RSA_METHOD *helper_rsa;
 
-	memcpy(&helper_rsa, RSA_get_default_method(), sizeof(helper_rsa));
-	helper_rsa.name = "ssh-pkcs11-helper";
-	helper_rsa.rsa_priv_enc = pkcs11_rsa_private_encrypt;
-	RSA_set_method(rsa, &helper_rsa);
+	if ((helper_rsa = RSA_meth_dup(RSA_get_default_method())) == NULL)
+		return (-1); /* XXX but caller isn't checking */
+	RSA_meth_set1_name(helper_rsa, "ssh-pkcs11-helper");
+	RSA_meth_set_priv_enc(helper_rsa, pkcs11_rsa_private_encrypt);
+	RSA_set_method(rsa, helper_rsa);
 	return (0);
 }
 
