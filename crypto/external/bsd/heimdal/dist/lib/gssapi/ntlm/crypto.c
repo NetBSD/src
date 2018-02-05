@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.2 2017/01/28 21:31:46 christos Exp $	*/
+/*	$NetBSD: crypto.c,v 1.3 2018/02/05 16:00:52 christos Exp $	*/
 
 /*
  * Copyright (c) 2006-2016 Kungliga Tekniska Högskolan
@@ -156,16 +156,26 @@ v2_sign_message(gss_buffer_t in,
 {
     unsigned char hmac[16];
     unsigned int hmaclen;
-    HMAC_CTX c;
+    HMAC_CTX *c;
 
-    HMAC_CTX_init(&c);
-    HMAC_Init_ex(&c, signkey, 16, EVP_md5(), NULL);
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+    HMAC_CTX cs;
+    c = &cs;
+    HMAC_CTX_init(c);
+#else
+    c = HMAC_CTX_new();
+#endif
+    HMAC_Init_ex(c, signkey, 16, EVP_md5(), NULL);
 
     encode_le_uint32(seq, hmac);
-    HMAC_Update(&c, hmac, 4);
-    HMAC_Update(&c, in->value, in->length);
-    HMAC_Final(&c, hmac, &hmaclen);
-    HMAC_CTX_cleanup(&c);
+    HMAC_Update(c, hmac, 4);
+    HMAC_Update(c, in->value, in->length);
+    HMAC_Final(c, hmac, &hmaclen);
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+    HMAC_CTX_cleanup(c);
+#else
+    HMAC_CTX_free(c);
+#endif
 
     encode_le_uint32(1, &out[0]);
     if (sealkey)

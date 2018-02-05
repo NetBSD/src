@@ -1,4 +1,4 @@
-/*	$NetBSD: rxkad_kdf.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
+/*	$NetBSD: rxkad_kdf.c,v 1.3 2018/02/05 16:00:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1995-2003 Kungliga Tekniska Högskolan
@@ -85,18 +85,29 @@ rxkad_derive_des_key(const void *in, size_t insize, char out[8])
     unsigned char tmp[64];
     unsigned int mdsize;
     DES_cblock ktmp;
-    HMAC_CTX mctx;
+    HMAC_CTX *mctx;
 
     /* stop when 8 bit counter wraps to 0 */
     for (i = 1; i; i++) {
-	HMAC_CTX_init(&mctx);
-	HMAC_Init_ex(&mctx, in, insize, EVP_md5(), NULL);
-	HMAC_Update(&mctx, &i, 1);
-	HMAC_Update(&mctx, label, sizeof(label));   /* includes label and separator */
-	HMAC_Update(&mctx, Lbuf, 4);
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+	HMAC_CTX mctxs;
+	mctx = &mctxs;
+	HMAC_CTX_init(mctx);
+#else
+	mctx = HMAC_CTX_new();
+#endif
+	HMAC_Init_ex(mctx, in, insize, EVP_md5(), NULL);
+	HMAC_Update(mctx, &i, 1);
+	HMAC_Update(mctx, label, sizeof(label));   /* includes label and separator */
+	HMAC_Update(mctx, Lbuf, 4);
 	mdsize = sizeof(tmp);
-	HMAC_Final(&mctx, tmp, &mdsize);
+	HMAC_Final(mctx, tmp, &mdsize);
 	memcpy(ktmp, tmp, 8);
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+	HMAC_CTX_cleanup(mctx);
+#else
+	HMAC_CTX_free(mctx);
+#endif
 	DES_set_odd_parity(&ktmp);
 	if (!DES_is_weak_key(&ktmp)) {
 	    memcpy(out, ktmp, 8);

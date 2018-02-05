@@ -1,4 +1,4 @@
-/*	$NetBSD: unwrap.c,v 1.2 2017/01/28 21:31:46 christos Exp $	*/
+/*	$NetBSD: unwrap.c,v 1.3 2018/02/05 16:00:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2004 Kungliga Tekniska Högskolan
@@ -52,7 +52,7 @@ unwrap_des
   size_t len;
   EVP_MD_CTX *md5;
   u_char hash[16];
-  EVP_CIPHER_CTX des_ctx;
+  EVP_CIPHER_CTX *des_ctx;
   DES_key_schedule schedule;
   DES_cblock deskey;
   DES_cblock zero;
@@ -106,10 +106,20 @@ unwrap_des
 	  deskey[i] ^= 0xf0;
 
 
-      EVP_CIPHER_CTX_init(&des_ctx);
-      EVP_CipherInit_ex(&des_ctx, EVP_des_cbc(), NULL, deskey, zero, 0);
-      EVP_Cipher(&des_ctx, p, p, input_message_buffer->length - len);
-      EVP_CIPHER_CTX_cleanup(&des_ctx);
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+      EVP_CIPHER_CTX des_ctxs;
+      des_ctx = &des_ctxs;
+      EVP_CIPHER_CTX_init(des_ctx);
+#else
+      des_ctx = EVP_CIPHER_CTX_new();
+#endif
+      EVP_CipherInit_ex(des_ctx, EVP_des_cbc(), NULL, deskey, zero, 0);
+      EVP_Cipher(des_ctx, p, p, input_message_buffer->length - len);
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+      EVP_CIPHER_CTX_cleanup(des_ctx);
+#else
+      EVP_CIPHER_CTX_free(des_ctx);
+#endif
 
       memset (&schedule, 0, sizeof(schedule));
   }
@@ -146,10 +156,20 @@ unwrap_des
 
   p -= 16;
 
-  EVP_CIPHER_CTX_init(&des_ctx);
-  EVP_CipherInit_ex(&des_ctx, EVP_des_cbc(), NULL, key->keyvalue.data, hash, 0);
-  EVP_Cipher(&des_ctx, p, p, 8);
-  EVP_CIPHER_CTX_cleanup(&des_ctx);
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+  EVP_CIPHER_CTX des_ctxs;
+  des_ctx = &des_ctxs;
+  EVP_CIPHER_CTX_init(des_ctx);
+#else
+  des_ctx = EVP_CIPHER_CTX_new();
+#endif
+  EVP_CipherInit_ex(des_ctx, EVP_des_cbc(), NULL, key->keyvalue.data, hash, 0);
+  EVP_Cipher(des_ctx, p, p, 8);
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+  EVP_CIPHER_CTX_cleanup(des_ctx);
+#else
+  EVP_CIPHER_CTX_free(des_ctx);
+#endif
 
   memset (deskey, 0, sizeof(deskey));
   memset (&schedule, 0, sizeof(schedule));

@@ -1,4 +1,4 @@
-/*	$NetBSD: hxtool.c,v 1.2 2017/01/28 21:31:48 christos Exp $	*/
+/*	$NetBSD: hxtool.c,v 1.3 2018/02/05 16:00:52 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 - 2016 Kungliga Tekniska Högskolan
@@ -1427,13 +1427,27 @@ info(void *opt, int argc, char **argv)
 
     {
 	const RSA_METHOD *m = RSA_get_default_method();
-	if (m != NULL)
-	    printf("rsa: %s\n", m->name);
+	if (m != NULL) {
+	    const char *name;
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+	    name = m->name;
+#else
+	    name = RSA_meth_get0_name(m);
+#endif
+	    printf("rsa: %s\n", name);
+	}
     }
     {
 	const DH_METHOD *m = DH_get_default_method();
-	if (m != NULL)
-	    printf("dh: %s\n", m->name);
+	if (m != NULL) {
+	    const char *name;
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+	    name = m->name;
+#else
+	    name = DH_meth_get0_name(m);
+#endif
+	    printf("dh: %s\n", name);
+	}
     }
 #ifdef HAVE_HCRYPTO_W_OPENSSL
     {

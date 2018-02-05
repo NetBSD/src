@@ -1,4 +1,4 @@
-/*	$NetBSD: verify_mic.c,v 1.3 2017/01/28 21:31:46 christos Exp $	*/
+/*	$NetBSD: verify_mic.c,v 1.4 2018/02/05 16:00:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2003 Kungliga Tekniska Högskolan
@@ -53,7 +53,7 @@ verify_mic_des
   EVP_MD_CTX *md5;
   u_char hash[16], *seq;
   DES_key_schedule schedule;
-  EVP_CIPHER_CTX des_ctx;
+  EVP_CIPHER_CTX *des_ctx;
   DES_cblock zero;
   DES_cblock deskey;
   uint32_t seq_number;
@@ -102,10 +102,20 @@ verify_mic_des
 
   p -= 16;
 
-  EVP_CIPHER_CTX_init(&des_ctx);
-  EVP_CipherInit_ex(&des_ctx, EVP_des_cbc(), NULL, key->keyvalue.data, hash, 0);
-  EVP_Cipher(&des_ctx, p, p, 8);
-  EVP_CIPHER_CTX_cleanup(&des_ctx);
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+  EVP_CIPHER_CTX des_ctxs;
+  des_ctx = &des_ctxs;
+  EVP_CIPHER_CTX_init(des_ctx);
+#else
+  des_ctx = EVP_CIPHER_CTX_new();
+#endif
+  EVP_CipherInit_ex(des_ctx, EVP_des_cbc(), NULL, key->keyvalue.data, hash, 0);
+  EVP_Cipher(des_ctx, p, p, 8);
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+  EVP_CIPHER_CTX_cleanup(des_ctx);
+#else
+  EVP_CIPHER_CTX_free(des_ctx);
+#endif
 
   memset (deskey, 0, sizeof(deskey));
   memset (&schedule, 0, sizeof(schedule));
