@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-keygen.c,v 1.28 2017/10/08 20:19:05 joerg Exp $	*/
+/*	$NetBSD: ssh-keygen.c,v 1.29 2018/02/05 00:13:50 christos Exp $	*/
 /* $OpenBSD: ssh-keygen.c,v 1.307 2017/07/07 03:53:12 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-keygen.c,v 1.28 2017/10/08 20:19:05 joerg Exp $");
+__RCSID("$NetBSD: ssh-keygen.c,v 1.29 2018/02/05 00:13:50 christos Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -489,11 +489,33 @@ do_convert_private_ssh2_from_blob(u_char *blob, u_int blen)
 
 	switch (key->type) {
 	case KEY_DSA:
-		buffer_get_bignum_bits(b, key->dsa->p);
-		buffer_get_bignum_bits(b, key->dsa->g);
-		buffer_get_bignum_bits(b, key->dsa->q);
-		buffer_get_bignum_bits(b, key->dsa->pub_key);
-		buffer_get_bignum_bits(b, key->dsa->priv_key);
+		{
+		BIGNUM *p=NULL, *g=NULL, *q=NULL, *pub_key=NULL, *priv_key=NULL;
+		if ((p=BN_new()) == NULL ||
+		    (g=BN_new()) == NULL ||
+		    (q=BN_new()) == NULL ||
+		    (pub_key=BN_new()) == NULL ||
+		    (priv_key=BN_new()) == NULL) {
+			BN_free(p);
+			BN_free(g);
+			BN_free(q);
+			BN_free(pub_key);
+			BN_free(priv_key);
+			return NULL;
+		}
+		buffer_get_bignum_bits(b, p);
+		buffer_get_bignum_bits(b, g);
+		buffer_get_bignum_bits(b, q);
+		buffer_get_bignum_bits(b, pub_key);
+		buffer_get_bignum_bits(b, priv_key);
+		if (DSA_set0_pqg(key->dsa, p, q, g) == 0 ||
+		    DSA_set0_key(key->dsa, pub_key, priv_key) == 0) {
+			fatal("failed to set DSA key");
+			BN_free(p); BN_free(g); BN_free(q);
+			BN_free(pub_key); BN_free(priv_key);
+			return NULL;
+		}
+		}
 		break;
 	case KEY_RSA:
 		if ((r = sshbuf_get_u8(b, &e1)) != 0 ||
@@ -510,16 +532,52 @@ do_convert_private_ssh2_from_blob(u_char *blob, u_int blen)
 			e += e3;
 			debug("e %lx", e);
 		}
-		if (!BN_set_word(key->rsa->e, e)) {
+		{
+		BIGNUM *rsa_e = NULL;
+		BIGNUM *d=NULL, *n=NULL, *iqmp=NULL, *q=NULL, *p=NULL;
+		BIGNUM *dmp1=NULL, *dmq1=NULL; /* dummy input to set in RSA_set0_crt_params */
+		rsa_e = BN_new();
+		if (!rsa_e || !BN_set_word(rsa_e, e)) {
+			if (rsa_e) BN_free(rsa_e);
 			sshbuf_free(b);
 			sshkey_free(key);
 			return NULL;
 		}
-		buffer_get_bignum_bits(b, key->rsa->d);
-		buffer_get_bignum_bits(b, key->rsa->n);
-		buffer_get_bignum_bits(b, key->rsa->iqmp);
-		buffer_get_bignum_bits(b, key->rsa->q);
-		buffer_get_bignum_bits(b, key->rsa->p);
+		if ((d=BN_new()) == NULL ||
+		    (n=BN_new()) == NULL ||
+		    (iqmp=BN_new()) == NULL ||
+		    (q=BN_new()) == NULL ||
+		    (p=BN_new()) == NULL ||
+		    (dmp1=BN_new()) == NULL ||
+		    (dmq1=BN_new()) == NULL) {
+			BN_free(d); BN_free(n); BN_free(iqmp);
+			BN_free(q); BN_free(p);
+			BN_free(dmp1); BN_free(dmq1);
+			return NULL;
+		}
+		BN_clear(dmp1); BN_clear(dmq1);
+		buffer_get_bignum_bits(b, d);
+		buffer_get_bignum_bits(b, n);
+		buffer_get_bignum_bits(b, iqmp);
+		buffer_get_bignum_bits(b, q);
+		buffer_get_bignum_bits(b, p);
+		if (RSA_set0_key(key->rsa, n, rsa_e, d) == 0)
+			goto null;
+		n = d = NULL;
+		if (RSA_set0_factors(key->rsa, p, q) == 0)
+			goto null;
+		p = q = NULL;
+		/* dmp1, dmq1 should not be NULL for initial set0 */
+		if (RSA_set0_crt_params(key->rsa, dmp1, dmq1, iqmp) == 0) {
+ null:
+			fatal("Failed to set RSA parameters");
+			BN_free(d); BN_free(n); BN_free(iqmp);
+			BN_free(q); BN_free(p);
+			BN_free(dmp1); BN_free(dmq1);
+			return NULL;
+		}
+		dmp1 = dmq1 = iqmp = NULL;
+		}
 		if ((r = ssh_rsa_generate_additional_parameters(key)) != 0)
 			fatal("generate RSA parameters failed: %s", ssh_err(r));
 		break;
@@ -629,7 +687,7 @@ do_convert_from_pkcs8(struct sshkey **k, int *private)
 		    identity_file);
 	}
 	fclose(fp);
-	switch (EVP_PKEY_type(pubkey->type)) {
+	switch (EVP_PKEY_type(EVP_PKEY_id(pubkey))) {
 	case EVP_PKEY_RSA:
 		if ((*k = sshkey_new(KEY_UNSPEC)) == NULL)
 			fatal("sshkey_new failed");
@@ -651,7 +709,7 @@ do_convert_from_pkcs8(struct sshkey **k, int *private)
 		break;
 	default:
 		fatal("%s: unsupported pubkey type %d", __func__,
-		    EVP_PKEY_type(pubkey->type));
+		    EVP_PKEY_type(EVP_PKEY_id(pubkey)));
 	}
 	EVP_PKEY_free(pubkey);
 	return;
