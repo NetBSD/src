@@ -1,4 +1,4 @@
-# $NetBSD: NULL,v 1.53 2018/01/23 14:47:53 sevan Exp $
+# $NetBSD: NULL,v 1.54 2018/02/05 15:18:10 maxv Exp $
 #
 # NULL machine description file
 # 
@@ -7,7 +7,7 @@ include "arch/amigappc/conf/std.amigappc"
 
 #options 	INCLUDE_CONFIG_FILE     # embed config file in kernel binary
 
-#ident          "GENERIC-$Revision: 1.53 $"
+#ident          "GENERIC-$Revision: 1.54 $"
 
 maxusers	8
 
@@ -110,7 +110,6 @@ options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# Packet forwarding
-#options 	DIRECTED_BROADCAST	# Broadcast across subnets
 
 #options 	MROUTING	# Multicast routing
 #options 	PIM		# Protocol Independent Multicast

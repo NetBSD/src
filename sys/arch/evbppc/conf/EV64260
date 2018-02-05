@@ -1,4 +1,4 @@
-#	$NetBSD: EV64260,v 1.70 2017/09/15 03:07:55 christos Exp $
+#	$NetBSD: EV64260,v 1.71 2018/02/05 15:18:10 maxv Exp $
 #
 #	MVP -- Motorola's Multiprocessing Verification Platform
 #
@@ -104,7 +104,6 @@ options 	INET		# IP + ICMP + TCP + UDP
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-#options        DIRECTED_BROADCAST      # allow broadcasts through routers
 #options 	NETATALK	# AppleTalk networking protocols
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
