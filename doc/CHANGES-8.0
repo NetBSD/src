@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.114 2018/02/04 12:53:51 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.115 2018/02/05 15:17:15 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -9431,4 +9431,90 @@ sys/ufs/ufs/ufs_inode.c				1.103
 	Prevent use-after-free where genfs_node_destroy() would destroy
 	a lock residing in the just freed inode data.
 	[christos, ticket #523]
+
+distrib/sets/lists/man/mi			1.1574
+distrib/sets/lists/modules/md.amd64		1.73
+distrib/sets/lists/modules/md.i386		1.76
+share/man/man4/amdtemp.4			1.11
+share/man/man4/man4.x86/Makefile		1.17
+share/man/man4/man4.x86/amdsmn.4		1.1-1.3
+share/man/man4/man4.x86/amdzentemp.4		1.1-1.6
+sys/arch/amd64/conf/ALL				1.79,1.80
+sys/arch/amd64/conf/GENERIC			1.482,1.484
+sys/arch/amd64/conf/XEN3_DOM0			1.146,1.147
+sys/arch/x86/pci/amdsmn.c			1.1-1.2
+sys/arch/x86/pci/amdsmn.h			1.1
+sys/arch/x86/pci/amdzentemp.c			1.1-1.7
+sys/arch/x86/pci/files.pci			1.22,1.23
+sys/modules/amdzentemp/amdzentemp.ioconf	1.2
+
+	Provide amdsmn(4) and amdzentemp(4) drivers (and modules)
+	to access on-die temperature sensors on AMD Ryzen CPUs.
+	[pgoyette, ticket #524]
+
+sys/kern/subr_interrupt.c			1.4
+
+	Don't return ENOMEM for errors not related to memory.
+	Don't overload return values (-error/+size).
+	Don't allocate kernel memory from user supplied length.
+	[pgoyette, ticket #525]
+
+sys/net/bpf.c					1.223
+sys/net/bpfdesc.h				1.45
+
+	Abandon unnecessary softint.
+	[ozaki-r, ticket #526]
+
+sys/kern/subr_workqueue.c			1.35
+sys/net/agr/if_agr.c				1.42,1.46
+sys/net/agr/if_agrether.c			1.10-1.12
+sys/net/agr/if_agrsubr.h			1.5
+sys/net/if.c					1.419
+sys/net/route.c					1.206
+sys/netinet6/nd6.c				1.241-1.245
+sys/netinet6/nd6_rtr.c				1.137,1.138
+sys/netipsec/ipsec.c				1.124
+sys/netipsec/ipsec_input.c			1.52,1.53
+
+	Fix late NULL-checking.
+	Replace soft tabs with hard tabs.
+	Add missing NULL-checking for m_pullup.
+	Get rid of unnecessary splsoftnet.
+	Use existing fill_[pd]rlist() functions to calculate size of buffer.
+	Simplify, cleanup.
+	Destroy ifq_lock at the end of if_detach.
+	Prevent rt_free_global.wk from being enqueued to workqueue doubly.
+	Check if a queued work is tried to be enqueued again, which is not
+	allowed.
+	Simplify; share agr_vlan_add and agr_vlan_del.
+	Add locking.
+	[ozaki-r, ticket #528]
+
+share/man/man4/wm.4				1.37,1.38
+sys/dev/pci/if_wm.c				1.551,1.553-1.562
+
+	Fix legacy Tx descriptors printing when WM_DEBUG is enabled.
+	Improve comments.
+	Fix wm_watchdog_txq() lock region.
+	Fix duplicated "rxintr" evcnt counting.
+	wm_txeof() can limit the loop count the same as wm_rxeof() now.
+	Add WM_TX_PROCESS_LIMIT_DEFAULT and WM_TX_INTR_PROCESS_LIMIT_DEFAULT
+	options.
+	Fix uninitialized variables.
+	Fix 82574 MSI-X mode cannot receive packets after 82574 receives
+	high rate traffic.
+	Fix unmatched return type.
+	Make wm(4) watchdog MP-safe.
+	[knakahara, ticket #529]
+
+sys/arch/x86/x86/vmt.c				1.20
+
+	Add line break.
+	[nakayama, ticket #532]
+
+sys/arch/amd64/conf/XEN3_DOM0			1.148
+sys/arch/i386/conf/XEN3_DOM0			1.126
+
+	Follow GENERIC and enable xhci(4) by default.
+	[bouyer, ticket #533]
 
