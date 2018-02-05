@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto-headers.h,v 1.2 2017/01/28 21:31:44 christos Exp $	*/
+/*	$NetBSD: crypto-headers.h,v 1.3 2018/02/05 16:00:52 christos Exp $	*/
 
 #ifndef __crypto_header__
 #define __crypto_header__
@@ -28,9 +28,11 @@
 #include <openssl/ec.h>
 #include <openssl/ecdsa.h>
 #include <openssl/ecdh.h>
-#ifndef BN_is_negative
-#define BN_set_negative(bn, flag) ((bn)->neg=(flag)?1:0)
-#define BN_is_negative(bn) ((bn)->neg != 0)
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+# ifndef BN_is_negative
+#  define BN_set_negative(bn, flag) ((bn)->neg=(flag)?1:0)
+#  define BN_is_negative(bn) ((bn)->neg != 0)
+# endif
 #endif
 
 #else /* !HAVE_HCRYPTO_W_OPENSSL */
