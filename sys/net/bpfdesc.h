@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfdesc.h,v 1.44 2017/02/09 09:30:26 ozaki-r Exp $	*/
+/*	$NetBSD: bpfdesc.h,v 1.44.6.1 2018/02/05 14:18:00 martin Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -113,6 +113,7 @@ struct bpf_d {
 	pid_t		bd_pid;		/* corresponding PID */
 	/* DEPRECATED. Keep it to avoid breaking kvm(3) users */
 	LIST_ENTRY(bpf_d) _bd_list;	/* list of all BPF's */
+	/* DEPRECATED. Keep it to avoid breaking kvm(3) users */
 	void		*bd_sih;	/* soft interrupt handle */
 	struct timespec bd_atime;	/* access time */
 	struct timespec bd_mtime;	/* modification time */
