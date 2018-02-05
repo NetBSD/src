@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1557 2017/05/27 21:02:55 bouyer Exp $
+# $NetBSD: mi,v 1.1557.2.1 2018/02/05 13:06:54 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1994,6 +1994,8 @@
 ./usr/share/man/cat4/x68k/powsw.0		man-sys-catman		.cat
 ./usr/share/man/cat4/x68k/vs.0			man-sys-catman		.cat
 ./usr/share/man/cat4/x86/amdpcib.0		man-sys-catman		.cat
+./usr/share/man/cat4/x86/amdsmn.0		man-sys-catman		.cat
+./usr/share/man/cat4/x86/amdzentemp.0		man-sys-catman		.cat
 ./usr/share/man/cat4/x86/apic.0			man-sys-catman		.cat
 ./usr/share/man/cat4/x86/balloon.0		man-sys-catman		.cat
 ./usr/share/man/cat4/x86/coretemp.0		man-sys-catman		.cat
@@ -5029,6 +5031,8 @@
 ./usr/share/man/html4/x68k/powsw.html		man-sys-htmlman		html
 ./usr/share/man/html4/x68k/vs.html		man-sys-htmlman		html
 ./usr/share/man/html4/x86/amdpcib.html		man-sys-htmlman		html
+./usr/share/man/html4/x86/amdsmn.html		man-sys-htmlman		html
+./usr/share/man/html4/x86/amdzentemp.html	man-sys-htmlman		html
 ./usr/share/man/html4/x86/apic.html		man-sys-htmlman		html
 ./usr/share/man/html4/x86/balloon.html		man-sys-htmlman		html
 ./usr/share/man/html4/x86/coretemp.html		man-sys-htmlman		html
@@ -7996,6 +8000,8 @@
 ./usr/share/man/man4/x68k/powsw.4		man-sys-man		.man
 ./usr/share/man/man4/x68k/vs.4			man-sys-man		.man
 ./usr/share/man/man4/x86/amdpcib.4		man-sys-man		.man
+./usr/share/man/man4/x86/amdsmn.4		man-sys-man		.man
+./usr/share/man/man4/x86/amdzentemp.4		man-sys-man		.man
 ./usr/share/man/man4/x86/apic.4			man-sys-man		.man
 ./usr/share/man/man4/x86/balloon.4		man-sys-man		.man
 ./usr/share/man/man4/x86/coretemp.4		man-sys-man		.man
