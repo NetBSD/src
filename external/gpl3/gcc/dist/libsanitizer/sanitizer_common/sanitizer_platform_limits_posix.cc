@@ -129,13 +129,16 @@
 #if SANITIZER_LINUX || SANITIZER_FREEBSD || SANITIZER_NETBSD
 # include <utime.h>
 # include <sys/ptrace.h>
+# include <semaphore.h>
+#endif
+
+#if SANITIZER_LINUX 
 # if defined(__mips64) || defined(__aarch64__) || defined(__arm__)
 #  include <asm/ptrace.h>
-#  ifdef __arm__
-typedef struct user_fpregs elf_fpregset_t;
-#  endif
 # endif
-# include <semaphore.h>
+# ifdef __arm__
+typedef struct user_fpregs elf_fpregset_t;
+# endif
 #endif
 
 #if !SANITIZER_ANDROID
