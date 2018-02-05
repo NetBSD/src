@@ -1533,6 +1533,8 @@ void ERR_load_EVP_strings(void);
 # define EVP_R_WRONG_FINAL_BLOCK_LENGTH                   109
 # define EVP_R_WRONG_PUBLIC_KEY_TYPE                      110
 
+#ifdef OPENSSL_VERSION_NUMBER >= 0x10100000L
+
 static inline EVP_MD_CTX *EVP_MD_CTX_new(void)
 {
 	EVP_MD_CTX *ctx = malloc(sizeof(*ctx));
@@ -1556,6 +1558,8 @@ static inline RSA *EVP_PKEY_get0_RSA(EVP_PKEY *pkey)
 	    return NULL;
 	return pkey->pkey.rsa;
 }
+
+#endif
 
 
 # ifdef  __cplusplus
