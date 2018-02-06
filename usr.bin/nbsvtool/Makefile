@@ -1,7 +1,8 @@
-# $NetBSD: Makefile,v 1.1 2008/05/11 17:58:09 joerg Exp $
+# $NetBSD: Makefile,v 1.2 2018/02/06 19:51:03 christos Exp $
 
 PROG=	nbsvtool
 LDADD+=	-lcrypto
 DPADD+=	${LIBCRYPTO}
+CPPFLAGS+=-DOPENSSL_VERSION_NUMBER=0x10100000L
 
 .include <bsd.prog.mk>
