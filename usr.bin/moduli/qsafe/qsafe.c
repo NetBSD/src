@@ -1,4 +1,4 @@
-/* $NetBSD: qsafe.c,v 1.3 2011/09/04 20:55:43 joerg Exp $ */
+/* $NetBSD: qsafe.c,v 1.4 2018/02/06 19:32:49 christos Exp $ */
 
 /*-
  * Copyright 1994 Phil Karn <karn@qualcomm.com>
@@ -254,7 +254,7 @@ main(int argc, char *argv[])
 		 * single pass will weed out the vast majority of composite
 		 * q's.
 		 */
-		if (BN_is_prime(q, 1, NULL, ctx, NULL) <= 0) {
+		if (BN_is_prime_ex(q, 1, ctx, NULL) <= 0) {
 #ifdef  DEBUGPRINT
 			(void)fprintf(stderr, "%10lu: q failed first "
 				      "possible prime test\n", count_in);
@@ -269,7 +269,7 @@ main(int argc, char *argv[])
 		 * the first Rabin-Miller iteration so it doesn't hurt to
 		 * specify a high iteration count.
 		 */
-		if (!BN_is_prime(p, trials, NULL, ctx, NULL)) {
+		if (!BN_is_prime_ex(p, trials, ctx, NULL)) {
 #ifdef  DEBUGPRINT
 			(void)fprintf(stderr, "%10lu: p is not prime\n",
 				      count_in);
@@ -283,7 +283,7 @@ main(int argc, char *argv[])
 #endif
 
 		/* recheck q more rigorously */
-		if (!BN_is_prime(q, trials - 1, NULL, ctx, NULL)) {
+		if (!BN_is_prime_ex(q, trials - 1, ctx, NULL)) {
 #ifdef  DEBUGPRINT
 			(void)fprintf(stderr, "%10lu: q is not prime\n",
 				      count_in);
