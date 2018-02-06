@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_workqueue.c,v 1.35 2018/01/30 11:03:06 ozaki-r Exp $	*/
+/*	$NetBSD: subr_workqueue.c,v 1.36 2018/02/06 03:48:39 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c)2002, 2005, 2006, 2007 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.35 2018/01/30 11:03:06 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.36 2018/02/06 03:48:39 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -149,6 +149,7 @@ workqueue_init(struct workqueue *wq, const char *name,
     pri_t prio, int ipl)
 {
 
+	KASSERT(sizeof(wq->wq_name) > strlen(name));
 	strncpy(wq->wq_name, name, sizeof(wq->wq_name));
 
 	wq->wq_prio = prio;
