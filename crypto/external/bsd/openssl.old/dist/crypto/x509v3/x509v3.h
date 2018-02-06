@@ -1049,6 +1049,15 @@ void ERR_load_X509V3_strings(void);
 # define X509V3_R_UNSUPPORTED_TYPE                        167
 # define X509V3_R_USER_TOO_LONG                           132
 
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+static inline uint32_t
+X509_get_extended_key_usage(X509 *x)
+{
+	return x->ex_xkusage;
+}
+
+#endif
+
 #ifdef  __cplusplus
 }
 #endif
