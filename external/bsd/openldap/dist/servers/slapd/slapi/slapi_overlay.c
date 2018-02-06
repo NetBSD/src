@@ -1,10 +1,10 @@
-/*	$NetBSD: slapi_overlay.c,v 1.1.1.6 2017/02/09 01:47:07 christos Exp $	*/
+/*	$NetBSD: slapi_overlay.c,v 1.1.1.7 2018/02/06 01:53:18 christos Exp $	*/
 
 /* slapi_overlay.c - SLAPI overlay */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2016 The OpenLDAP Foundation.
+ * Copyright 2001-2017 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: slapi_overlay.c,v 1.1.1.6 2017/02/09 01:47:07 christos Exp $");
+__RCSID("$NetBSD: slapi_overlay.c,v 1.1.1.7 2018/02/06 01:53:18 christos Exp $");
 
 #include "portable.h"
 
@@ -87,6 +87,7 @@ slapi_op_internal_p( Operation *op, SlapReply *rs, slap_callback *cb )
 		cb->sc_response = slapi_over_response;
 		cb->sc_cleanup = slapi_over_cleanup;
 		cb->sc_private = pb;
+		cb->sc_writewait = 0;
 		cb->sc_next = op->o_callback;
 		op->o_callback = cb;
 	}
@@ -739,6 +740,7 @@ slapi_over_access_allowed(
 
 	cb.sc_response = NULL;
 	cb.sc_cleanup = NULL;
+	cb.sc_writewait = NULL;
 
 	pb = SLAPI_OPERATION_PBLOCK( op );
 
@@ -803,6 +805,7 @@ slapi_over_acl_group(
 
 		cb.sc_response = NULL;
 		cb.sc_cleanup = NULL;
+		cb.sc_writewait = NULL;
 
 		pb = SLAPI_OPERATION_PBLOCK( op );
 

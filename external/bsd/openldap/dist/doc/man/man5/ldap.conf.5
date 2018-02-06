@@ -1,6 +1,6 @@
 .TH LDAP.CONF 5 "RELEASEDATE" "OpenLDAP LDVERSION"
 .\" $OpenLDAP$
-.\" Copyright 1998-2016 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 1998-2017 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
 ldap.conf, .ldaprc \- LDAP configuration file/environment variables
@@ -284,6 +284,9 @@ description).  The default is
 specifies the maximum security layer receive buffer
 size allowed.  0 disables security layers.  The default is 65536.
 .RE
+.TP
+.B SASL_NOCANON <on/true/yes/off/false/no>
+Do not perform reverse DNS lookups to canonicalize SASL host names. The default is off.
 .SH GSSAPI OPTIONS
 If OpenLDAP is built with Generic Security Services Application Programming Interface support,
 there are more options you can specify.
@@ -338,9 +341,9 @@ token name first, followed by a colon:
 .nf
 	TLS_CERT my hardware device:Certificate for Sam Carter
 .fi
-Use certutil -L to list the certificates by name:
+Use certutil \-L to list the certificates by name:
 .nf
-	certutil -d /path/to/certdbdir -L
+	certutil \-d /path/to/certdbdir \-L
 .fi
 .TP
 .B TLS_KEY <filename>
@@ -358,7 +361,7 @@ database.  For example, if TLS_CACERTDIR specifies /home/scarter/.moznss as
 the location of the cert/key database, use modutil to change the password
 to the empty string:
 .nf
-	modutil -dbdir ~/.moznss -changepw 'NSS Certificate DB'
+	modutil \-dbdir ~/.moznss \-changepw 'NSS Certificate DB'
 .fi
 You must have the old password, if any.  Ignore the WARNING about the running
 browser.  Press 'Enter' for the new password.

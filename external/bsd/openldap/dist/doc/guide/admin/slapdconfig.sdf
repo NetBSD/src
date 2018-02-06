@@ -1,5 +1,5 @@
 # $OpenLDAP$
-# Copyright 1999-2016 The OpenLDAP Foundation, All Rights Reserved.
+# Copyright 1999-2017 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: The slapd Configuration File
@@ -229,7 +229,7 @@ from a search operation.
 
 >	sizelimit 500
 
-See the {{SECT:Limits}} section of this guide and slapd.conf(5)
+See the {{SECT:Limits}} section of this guide and {{slapd.conf}}(5)
 for more details.
 
 H4: timelimit <integer>
@@ -243,7 +243,7 @@ exceeded timelimit will be returned.
 
 >	timelimit 3600
 
-See the {{SECT:Limits}} section of this guide and slapd.conf(5)
+See the {{SECT:Limits}} section of this guide and {{slapd.conf}}(5)
 for more details.
 
 
@@ -264,10 +264,11 @@ supported backend types listed in Table 6.2.
 !block table; align=Center; coltags="EX,N"; \
 	title="Table 6.2: Database Backends"
 Types	Description
-bdb	Berkeley DB transactional backend
+bdb	Berkeley DB transactional backend (deprecated)
 dnssrv	DNS SRV backend
-hdb	Hierarchical variant of bdb backend
+hdb	Hierarchical variant of bdb backend (deprecated)
 ldap	Lightweight Directory Access Protocol (Proxy) backend
+mdb	Memory-Mapped DB backend
 meta	Meta Directory backend
 monitor	Monitor backend
 passwd	Provides read-only access to {{passwd}}(5)
@@ -304,11 +305,12 @@ This marks the beginning of a new {{TERM:BDB}} database instance
 declaration.
 
 
-H4: limits <who> <limit> [<limit> [...]]
+H4: limits <selector> <limit> [<limit> [...]]
 
-Specify time and size limits based on who initiated an operation.
+Specify time and size limits based on the operation's initiator or base
+DN.
 
-See the {{SECT:Limits}} section of this guide and slapd.conf(5)
+See the {{SECT:Limits}} section of this guide and {{slapd.conf}}(5)
 for more details.
 
 
@@ -316,7 +318,8 @@ H4: readonly { on | off }
 
 This directive puts the database into "read-only" mode. Any
 attempts to modify the database will return an "unwilling to
-perform" error.
+perform" error.  If set on a consumer, modifications sent by
+syncrepl will still occur.
 
 \Default:
 
@@ -386,17 +389,20 @@ H4: syncrepl
 
 >	syncrepl rid=<replica ID>
 >		provider=ldap[s]://<hostname>[:port]
+>		searchbase=<base DN>
 >		[type=refreshOnly|refreshAndPersist]
 >		[interval=dd:hh:mm:ss]
 >		[retry=[<retry interval> <# of retries>]+]
->		searchbase=<base DN>
 >		[filter=<filter str>]
 >		[scope=sub|one|base]
 >		[attrs=<attr list>]
+>		[exattrs=<attr list>]
 >		[attrsonly]
 >		[sizelimit=<limit>]
 >		[timelimit=<limit>]
 >		[schemachecking=on|off]
+>		[network-timeout=<seconds>]
+>		[timeout=<seconds>]
 >		[bindmethod=simple|sasl]
 >		[binddn=<DN>]
 >		[saslmech=<mech>]
@@ -405,14 +411,17 @@ H4: syncrepl
 >		[credentials=<passwd>]
 >		[realm=<realm>]
 >		[secprops=<properties>]
+>		[keepalive=<idle>:<probes>:<interval>]
 >		[starttls=yes|critical]
 >		[tls_cert=<file>]
 >		[tls_key=<file>]
 >		[tls_cacert=<file>]
 >		[tls_cacertdir=<path>]
 >		[tls_reqcert=never|allow|try|demand]
->		[tls_ciphersuite=<ciphers>]
+>		[tls_cipher_suite=<ciphers>]
 >		[tls_crlcheck=none|peer|all]
+>		[tls_protocol_min=<major>[.<minor>]]
+>		[suffixmassage=<real DN>]
 >		[logbase=<base DN>]
 >		[logfilter=<filter str>]
 >		[syncdata=default|accesslog|changelog]
@@ -450,7 +459,7 @@ The content of the syncrepl replica is defined using a search
 specification as its result set. The consumer slapd will
 send search requests to the provider slapd according to the search
 specification. The search specification includes {{EX:searchbase}},
-{{EX:scope}}, {{EX:filter}}, {{EX:attrs}}, {{EX:attrsonly}},
+{{EX:scope}}, {{EX:filter}}, {{EX:attrs}}, {{EX:exattrs}}, {{EX:attrsonly}},
 {{EX:sizelimit}}, and {{EX:timelimit}} parameters as in the normal
 search specification. The {{EX:searchbase}} parameter has no
 default value and must always be specified. The {{EX:scope}} defaults
@@ -458,7 +467,8 @@ to {{EX:sub}}, the {{EX:filter}} defaults to {{EX:(objectclass=*)}},
 {{EX:attrs}} defaults to {{EX:"*,+"}} to replicate all user and operational
 attributes, and {{EX:attrsonly}} is unset by default. Both {{EX:sizelimit}}
 and {{EX:timelimit}} default to "unlimited", and only positive integers
-or "unlimited" may be specified.
+or "unlimited" may be specified. The {{EX:exattrs}} option may also be used
+to specify attributes that should be omitted from incoming entries.
 
 The {{TERM[expand]LDAP Sync}} protocol has two operation
 types: {{EX:refreshOnly}} and {{EX:refreshAndPersist}}.
@@ -488,6 +498,12 @@ required by the schema definition.
 If it is turned off, entries will be stored without checking
 schema conformance. The default is off.
 
+The {{EX:network-timeout}} parameter sets how long the consumer will
+wait to establish a network connection to the provider.  Once a
+connection is established, the {{EX:timeout}} parameter determines how
+long the consumer will wait for the initial Bind request to complete.  The
+defaults for these parameters come from {{ldap.conf}}(5).
+
 The {{EX:binddn}} parameter gives the DN to bind as for the
 syncrepl searches to the provider slapd. It should be a DN
 which has read access to the replication content in the
@@ -514,12 +530,28 @@ The {{EX:realm}} parameter specifies a realm which a certain
 mechanisms authenticate the identity within. The {{EX:secprops}}
 parameter specifies Cyrus SASL security properties.
 
+The {{EX:keepalive}} parameter sets the values of idle, probes, and interval
+used to check whether a socket is alive;  idle is the number of seconds a
+connection needs to remain idle before TCP starts sending keepalive probes;
+probes is the maximum number of keepalive probes TCP should send before
+dropping the connection; interval is interval in seconds between individual
+keepalive probes.  Only some systems support the customization of these
+values; the keepalive parameter is ignored otherwise, and system-wide
+settings are used. For example, keepalive="240:10:30" will send a keepalive
+probe 10 times, every 30 seconds, after 240 seconds of idle activity.  If
+no response to the probes is received, the connection will be dropped.
+
 The {{EX:starttls}} parameter specifies use of the StartTLS extended
 operation to establish a TLS session before authenticating to the provider.
 If the {{EX:critical}} argument is supplied, the session will be aborted
 if the StartTLS request fails.  Otherwise the syncrepl session continues
 without TLS.  The tls_reqcert setting defaults to {{EX:"demand"}} and the
 other TLS settings default to the same as the main slapd TLS settings.
+
+The {{EX:suffixmassage}} parameter allows the consumer to pull entries
+from a remote directory whose DN suffix differs from the local directory.
+The portion of the remote entries' DNs that matches the searchbase will
+be replaced with the suffixmassage DN.
 
 Rather than replicating whole entries, the consumer can query logs
 of data modifications.  This mode of operation is referred to as

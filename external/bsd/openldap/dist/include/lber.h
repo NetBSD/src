@@ -1,9 +1,9 @@
-/*	$NetBSD: lber.h,v 1.1.1.5 2017/02/09 01:46:42 christos Exp $	*/
+/*	$NetBSD: lber.h,v 1.1.1.6 2018/02/06 01:53:05 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2016 The OpenLDAP Foundation.
+ * Copyright 1998-2017 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -175,7 +175,7 @@ typedef struct sockbuf Sockbuf;
 
 typedef struct sockbuf_io Sockbuf_IO;
 
-/* Structure for LBER IO operarion descriptor */
+/* Structure for LBER IO operation descriptor */
 typedef struct sockbuf_io_desc {
 	int			sbiod_level;
 	Sockbuf			*sbiod_sb;

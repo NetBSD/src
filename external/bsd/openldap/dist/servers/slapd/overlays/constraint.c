@@ -1,4 +1,4 @@
-/*	$NetBSD: constraint.c,v 1.1.1.5 2017/02/09 01:47:02 christos Exp $	*/
+/*	$NetBSD: constraint.c,v 1.1.1.6 2018/02/06 01:53:16 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* constraint.c - Overlay to constrain attributes to certain values */
@@ -20,7 +20,7 @@
  *			Emmannuel Dreyfus <manu@netbsd.org>
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: constraint.c,v 1.1.1.5 2017/02/09 01:47:02 christos Exp $");
+__RCSID("$NetBSD: constraint.c,v 1.1.1.6 2018/02/06 01:53:16 christos Exp $");
 
 #include "portable.h"
 
@@ -606,7 +606,7 @@ constraint_violation( constraint *c, struct berval *bv, Operation *op )
 		case CONSTRAINT_URI: {
 			Operation nop = *op;
 			slap_overinst *on = (slap_overinst *) op->o_bd->bd_info;
-			slap_callback cb;
+			slap_callback cb = { 0 };
 			int i;
 			int found = 0;
 			int rc;
@@ -614,9 +614,7 @@ constraint_violation( constraint *c, struct berval *bv, Operation *op )
 			struct berval filterstr;
 			char *ptr;
 
-			cb.sc_next = NULL;
 			cb.sc_response = constraint_uri_cb;
-			cb.sc_cleanup = NULL;
 			cb.sc_private = &found;
 
 			nop.o_protocol = LDAP_VERSION3;
