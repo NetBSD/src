@@ -64,7 +64,7 @@ struct track_id {
 	/** true if cancelled */
 	int cancel;
 	/** a lock on this structure for thread safety */
-	lock_basic_t lock;
+	lock_basic_type lock;
 };
 
 /**
@@ -164,7 +164,7 @@ struct ext_thr_info {
 	/** thread num for debug */
 	int thread_num;
 	/** thread id */
-	ub_thread_t tid;
+	ub_thread_type tid;
 	/** context */
 	struct ub_ctx* ctx;
 	/** size of array to query */
@@ -470,7 +470,7 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
-	/* perform asyncronous calls */
+	/* perform asynchronous calls */
 	num_wait = argc;
 	for(i=0; i<argc; i++) {
 		lookups[i].name = argv[i];

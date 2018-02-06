@@ -67,10 +67,10 @@ static FILE* logfile = 0;
 /** if key has been created */
 static int key_created = 0;
 /** pthread key for thread ids in logfile */
-static ub_thread_key_t logkey;
+static ub_thread_key_type logkey;
 #ifndef THREADS_DISABLED
 /** pthread mutex to protect FILE* */
-static lock_quick_t log_lock;
+static lock_quick_type log_lock;
 #endif
 /** the identity of this executable/process */
 static const char* ident="unbound";
@@ -103,8 +103,12 @@ log_init(const char* filename, int use_syslog, const char* chrootdir)
 			use_syslog?"syslog":(filename&&filename[0]?filename:"stderr"));
 		lock_quick_lock(&log_lock);
 	}
-	if(logfile && logfile != stderr)
-		fclose(logfile);
+	if(logfile && logfile != stderr) {
+		FILE* cl = logfile;
+		logfile = NULL; /* set to NULL before it is closed, so that
+			other threads have a valid logfile or NULL */
+		fclose(cl);
+	}
 #ifdef HAVE_SYSLOG_H
 	if(logging_to_syslog) {
 		closelog();

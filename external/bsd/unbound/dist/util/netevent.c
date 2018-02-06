@@ -47,6 +47,7 @@
 #include "sldns/pkthdr.h"
 #include "sldns/sbuffer.h"
 #include "dnstap/dnstap.h"
+#include "dnscrypt/dnscrypt.h"
 #ifdef HAVE_OPENSSL_SSL_H
 #include <openssl/ssl.h>
 #endif
@@ -80,8 +81,10 @@
 #  endif
 #endif
 
-/** The TCP reading or writing query timeout in seconds */
-#define TCP_QUERY_TIMEOUT 120 
+/** The TCP reading or writing query timeout in milliseconds */
+#define TCP_QUERY_TIMEOUT 120000
+/** The TCP timeout in msec for fast queries, above half are used */
+#define TCP_QUERY_TIMEOUT_FAST 200
 
 #ifndef NONBLOCKING_IS_BROKEN
 /** number of UDP reads to perform per read indication from select */
@@ -144,7 +147,7 @@ struct internal_signal {
 /** create a tcp handler with a parent */
 static struct comm_point* comm_point_create_tcp_handler(
 	struct comm_base *base, struct comm_point* parent, size_t bufsize,
-        comm_point_callback_t* callback, void* callback_arg);
+        comm_point_callback_type* callback, void* callback_arg);
 
 /* -------- End of local definitions -------- */
 
@@ -652,7 +655,7 @@ comm_point_udp_ancil_callback(int fd, short event, void* arg)
 	(void)fd;
 	(void)event;
 	(void)arg;
-	fatal_exit("recvmsg: No support for IPV6_PKTINFO. "
+	fatal_exit("recvmsg: No support for IPV6_PKTINFO; IP_PKTINFO or IP_RECVDSTADDR. "
 		"Please disable interface-automatic");
 #endif /* AF_INET6 && IPV6_PKTINFO && HAVE_RECVMSG */
 }
@@ -663,6 +666,7 @@ comm_point_udp_callback(int fd, short event, void* arg)
 	struct comm_reply rep;
 	ssize_t rcv;
 	int i;
+	struct sldns_buffer *buffer;
 
 	rep.c = (struct comm_point*)arg;
 	log_assert(rep.c->type == comm_udp);
@@ -699,7 +703,12 @@ comm_point_udp_callback(int fd, short event, void* arg)
 		fptr_ok(fptr_whitelist_comm_point(rep.c->callback));
 		if((*rep.c->callback)(rep.c, rep.c->cb_arg, NETEVENT_NOERROR, &rep)) {
 			/* send back immediate reply */
-			(void)comm_point_send_udp_msg(rep.c, rep.c->buffer,
+#ifdef USE_DNSCRYPT
+			buffer = rep.c->dnscrypt_buffer;
+#else
+			buffer = rep.c->buffer;
+#endif
+			(void)comm_point_send_udp_msg(rep.c, buffer,
 				(struct sockaddr*)&rep.addr, rep.addrlen);
 		}
 		if(rep.c->fd != fd) /* commpoint closed to -1 or reused for
@@ -710,14 +719,24 @@ comm_point_udp_callback(int fd, short event, void* arg)
 
 /** Use a new tcp handler for new query fd, set to read query */
 static void
-setup_tcp_handler(struct comm_point* c, int fd) 
+setup_tcp_handler(struct comm_point* c, int fd, int cur, int max) 
 {
 	log_assert(c->type == comm_tcp);
 	log_assert(c->fd == -1);
 	sldns_buffer_clear(c->buffer);
+#ifdef USE_DNSCRYPT
+	if (c->dnscrypt)
+		sldns_buffer_clear(c->dnscrypt_buffer);
+#endif
 	c->tcp_is_reading = 1;
 	c->tcp_byte_count = 0;
-	comm_point_start_listening(c, fd, TCP_QUERY_TIMEOUT);
+	c->tcp_timeout_msec = TCP_QUERY_TIMEOUT;
+	/* if more than half the tcp handlers are in use, use a shorter
+	 * timeout for this TCP connection, we need to make space for
+	 * other connections to be able to get attention */
+	if(cur > max/2)
+		c->tcp_timeout_msec = TCP_QUERY_TIMEOUT_FAST;
+	comm_point_start_listening(c, fd, c->tcp_timeout_msec);
 }
 
 void comm_base_handle_slow_accept(int ATTR_UNUSED(fd),
@@ -769,7 +788,7 @@ int comm_point_perform_accept(struct comm_point* c,
 				(*b->stop_accept)(b->cb_arg);
 				/* set timeout, no mallocs */
 				tv.tv_sec = NETEVENT_SLOW_ACCEPT_TIME/1000;
-				tv.tv_usec = NETEVENT_SLOW_ACCEPT_TIME%1000;
+				tv.tv_usec = (NETEVENT_SLOW_ACCEPT_TIME%1000)*1000;
 				b->eb->slow_accept = ub_event_new(b->eb->base,
 					-1, UB_EV_TIMEOUT,
 					comm_base_handle_slow_accept, b);
@@ -862,6 +881,7 @@ comm_point_tcp_accept_callback(int fd, short event, void* arg)
 	/* accept incoming connection. */
 	c_hdl = c->tcp_free;
 	log_assert(fd != -1);
+	(void)fd;
 	new_fd = comm_point_perform_accept(c, &c_hdl->repinfo.addr,
 		&c_hdl->repinfo.addrlen);
 	if(new_fd == -1)
@@ -886,7 +906,7 @@ comm_point_tcp_accept_callback(int fd, short event, void* arg)
 		/* stop accepting incoming queries for now. */
 		comm_point_stop_listening(c);
 	}
-	setup_tcp_handler(c_hdl, new_fd);
+	setup_tcp_handler(c_hdl, new_fd, c->cur_tcp_count, c->max_tcp_count);
 }
 
 /** Make tcp handler free for next assignment */
@@ -940,7 +960,7 @@ tcp_callback_reader(struct comm_point* c)
 		comm_point_stop_listening(c);
 	fptr_ok(fptr_whitelist_comm_point(c->callback));
 	if( (*c->callback)(c, c->cb_arg, NETEVENT_NOERROR, &c->repinfo) ) {
-		comm_point_start_listening(c, -1, TCP_QUERY_TIMEOUT);
+		comm_point_start_listening(c, -1, c->tcp_timeout_msec);
 	}
 }
 
@@ -1301,7 +1321,13 @@ static int
 comm_point_tcp_handle_write(int fd, struct comm_point* c)
 {
 	ssize_t r;
+	struct sldns_buffer *buffer;
 	log_assert(c->type == comm_tcp);
+#ifdef USE_DNSCRYPT
+	buffer = c->dnscrypt_buffer;
+#else
+	buffer = c->buffer;
+#endif
 	if(c->tcp_is_reading && !c->ssl)
 		return 0;
 	log_assert(fd != -1);
@@ -1348,14 +1374,89 @@ comm_point_tcp_handle_write(int fd, struct comm_point* c)
 	if(c->ssl)
 		return ssl_handle_it(c);
 
+#ifdef USE_MSG_FASTOPEN
+	/* Only try this on first use of a connection that uses tfo, 
+	   otherwise fall through to normal write */
+	/* Also, TFO support on WINDOWS not implemented at the moment */
+	if(c->tcp_do_fastopen == 1) {
+		/* this form of sendmsg() does both a connect() and send() so need to
+		   look for various flavours of error*/
+		uint16_t len = htons(sldns_buffer_limit(buffer));
+		struct msghdr msg;
+		struct iovec iov[2];
+		c->tcp_do_fastopen = 0;
+		memset(&msg, 0, sizeof(msg));
+		iov[0].iov_base = (uint8_t*)&len + c->tcp_byte_count;
+		iov[0].iov_len = sizeof(uint16_t) - c->tcp_byte_count;
+		iov[1].iov_base = sldns_buffer_begin(buffer);
+		iov[1].iov_len = sldns_buffer_limit(buffer);
+		log_assert(iov[0].iov_len > 0);
+		log_assert(iov[1].iov_len > 0);
+		msg.msg_name = &c->repinfo.addr;
+		msg.msg_namelen = c->repinfo.addrlen;
+		msg.msg_iov = iov;
+		msg.msg_iovlen = 2;
+		r = sendmsg(fd, &msg, MSG_FASTOPEN);
+		if (r == -1) {
+#if defined(EINPROGRESS) && defined(EWOULDBLOCK)
+			/* Handshake is underway, maybe because no TFO cookie available.
+			   Come back to write the message*/
+			if(errno == EINPROGRESS || errno == EWOULDBLOCK)
+				return 1;
+#endif
+			if(errno == EINTR || errno == EAGAIN)
+				return 1;
+			/* Not handling EISCONN here as shouldn't ever hit that case.*/
+			if(errno != EPIPE && errno != 0 && verbosity < 2)
+				return 0; /* silence lots of chatter in the logs */
+			if(errno != EPIPE && errno != 0) {
+				log_err_addr("tcp sendmsg", strerror(errno),
+					&c->repinfo.addr, c->repinfo.addrlen);
+				return 0;
+			}
+			/* fallthrough to nonFASTOPEN
+			 * (MSG_FASTOPEN on Linux 3 produces EPIPE)
+			 * we need to perform connect() */
+			if(connect(fd, (struct sockaddr *)&c->repinfo.addr, c->repinfo.addrlen) == -1) {
+#ifdef EINPROGRESS
+				if(errno == EINPROGRESS)
+					return 1; /* wait until connect done*/
+#endif
+#ifdef USE_WINSOCK
+				if(WSAGetLastError() == WSAEINPROGRESS ||
+					WSAGetLastError() == WSAEWOULDBLOCK)
+					return 1; /* wait until connect done*/
+#endif
+				if(tcp_connect_errno_needs_log(
+					(struct sockaddr *)&c->repinfo.addr, c->repinfo.addrlen)) {
+					log_err_addr("outgoing tcp: connect after EPIPE for fastopen",
+						strerror(errno), &c->repinfo.addr, c->repinfo.addrlen);
+				}
+				return 0;
+			}
+
+		} else {
+			c->tcp_byte_count += r;
+			if(c->tcp_byte_count < sizeof(uint16_t))
+				return 1;
+			sldns_buffer_set_position(buffer, c->tcp_byte_count - 
+				sizeof(uint16_t));
+			if(sldns_buffer_remaining(buffer) == 0) {
+				tcp_callback_writer(c);
+				return 1;
+			}
+		}
+	}
+#endif /* USE_MSG_FASTOPEN */
+
 	if(c->tcp_byte_count < sizeof(uint16_t)) {
-		uint16_t len = htons(sldns_buffer_limit(c->buffer));
+		uint16_t len = htons(sldns_buffer_limit(buffer));
 #ifdef HAVE_WRITEV
 		struct iovec iov[2];
 		iov[0].iov_base = (uint8_t*)&len + c->tcp_byte_count;
 		iov[0].iov_len = sizeof(uint16_t) - c->tcp_byte_count;
-		iov[1].iov_base = sldns_buffer_begin(c->buffer);
-		iov[1].iov_len = sldns_buffer_limit(c->buffer);
+		iov[1].iov_base = sldns_buffer_begin(buffer);
+		iov[1].iov_len = sldns_buffer_limit(buffer);
 		log_assert(iov[0].iov_len > 0);
 		log_assert(iov[1].iov_len > 0);
 		r = writev(fd, iov, 2);
@@ -1397,16 +1498,16 @@ comm_point_tcp_handle_write(int fd, struct comm_point* c)
 		c->tcp_byte_count += r;
 		if(c->tcp_byte_count < sizeof(uint16_t))
 			return 1;
-		sldns_buffer_set_position(c->buffer, c->tcp_byte_count - 
+		sldns_buffer_set_position(buffer, c->tcp_byte_count - 
 			sizeof(uint16_t));
-		if(sldns_buffer_remaining(c->buffer) == 0) {
+		if(sldns_buffer_remaining(buffer) == 0) {
 			tcp_callback_writer(c);
 			return 1;
 		}
 	}
-	log_assert(sldns_buffer_remaining(c->buffer) > 0);
-	r = send(fd, (void*)sldns_buffer_current(c->buffer), 
-		sldns_buffer_remaining(c->buffer), 0);
+	log_assert(sldns_buffer_remaining(buffer) > 0);
+	r = send(fd, (void*)sldns_buffer_current(buffer), 
+		sldns_buffer_remaining(buffer), 0);
 	if(r == -1) {
 #ifndef USE_WINSOCK
 		if(errno == EINTR || errno == EAGAIN)
@@ -1425,9 +1526,9 @@ comm_point_tcp_handle_write(int fd, struct comm_point* c)
 #endif
 		return 0;
 	}
-	sldns_buffer_skip(c->buffer, r);
+	sldns_buffer_skip(buffer, r);
 
-	if(sldns_buffer_remaining(c->buffer) == 0) {
+	if(sldns_buffer_remaining(buffer) == 0) {
 		tcp_callback_writer(c);
 	}
 	
@@ -1440,6 +1541,27 @@ comm_point_tcp_handle_callback(int fd, short event, void* arg)
 	struct comm_point* c = (struct comm_point*)arg;
 	log_assert(c->type == comm_tcp);
 	ub_comm_base_now(c->ev->base);
+
+#ifdef USE_DNSCRYPT
+	/* Initialize if this is a dnscrypt socket */
+	if(c->tcp_parent) {
+		c->dnscrypt = c->tcp_parent->dnscrypt;
+	}
+	if(c->dnscrypt && c->dnscrypt_buffer == c->buffer) {
+		c->dnscrypt_buffer = sldns_buffer_new(sldns_buffer_capacity(c->buffer));
+		if(!c->dnscrypt_buffer) {
+			log_err("Could not allocate dnscrypt buffer");
+			reclaim_tcp_handler(c);
+			if(!c->tcp_do_close) {
+				fptr_ok(fptr_whitelist_comm_point(
+					c->callback));
+				(void)(*c->callback)(c, c->cb_arg, 
+					NETEVENT_CLOSED, NULL);
+			}
+			return;
+		}
+	}
+#endif
 
 	if(event&UB_EV_READ) {
 		if(!comm_point_tcp_handle_read(fd, c, 0)) {
@@ -1511,7 +1633,7 @@ void comm_point_raw_handle_callback(int ATTR_UNUSED(fd),
 
 struct comm_point* 
 comm_point_create_udp(struct comm_base *base, int fd, sldns_buffer* buffer,
-	comm_point_callback_t* callback, void* callback_arg)
+	comm_point_callback_type* callback, void* callback_arg)
 {
 	struct comm_point* c = (struct comm_point*)calloc(1,
 		sizeof(struct comm_point));
@@ -1540,6 +1662,13 @@ comm_point_create_udp(struct comm_base *base, int fd, sldns_buffer* buffer,
 	c->do_not_close = 0;
 	c->tcp_do_toggle_rw = 0;
 	c->tcp_check_nb_connect = 0;
+#ifdef USE_MSG_FASTOPEN
+	c->tcp_do_fastopen = 0;
+#endif
+#ifdef USE_DNSCRYPT
+	c->dnscrypt = 0;
+	c->dnscrypt_buffer = buffer;
+#endif
 	c->inuse = 0;
 	c->callback = callback;
 	c->cb_arg = callback_arg;
@@ -1563,7 +1692,7 @@ comm_point_create_udp(struct comm_base *base, int fd, sldns_buffer* buffer,
 struct comm_point* 
 comm_point_create_udp_ancil(struct comm_base *base, int fd, 
 	sldns_buffer* buffer, 
-	comm_point_callback_t* callback, void* callback_arg)
+	comm_point_callback_type* callback, void* callback_arg)
 {
 	struct comm_point* c = (struct comm_point*)calloc(1,
 		sizeof(struct comm_point));
@@ -1590,9 +1719,16 @@ comm_point_create_udp_ancil(struct comm_base *base, int fd,
 	c->type = comm_udp;
 	c->tcp_do_close = 0;
 	c->do_not_close = 0;
+#ifdef USE_DNSCRYPT
+	c->dnscrypt = 0;
+	c->dnscrypt_buffer = buffer;
+#endif
 	c->inuse = 0;
 	c->tcp_do_toggle_rw = 0;
 	c->tcp_check_nb_connect = 0;
+#ifdef USE_MSG_FASTOPEN
+	c->tcp_do_fastopen = 0;
+#endif
 	c->callback = callback;
 	c->cb_arg = callback_arg;
 	evbits = UB_EV_READ | UB_EV_PERSIST;
@@ -1615,7 +1751,7 @@ comm_point_create_udp_ancil(struct comm_base *base, int fd,
 static struct comm_point* 
 comm_point_create_tcp_handler(struct comm_base *base, 
 	struct comm_point* parent, size_t bufsize,
-        comm_point_callback_t* callback, void* callback_arg)
+        comm_point_callback_type* callback, void* callback_arg)
 {
 	struct comm_point* c = (struct comm_point*)calloc(1,
 		sizeof(struct comm_point));
@@ -1655,6 +1791,15 @@ comm_point_create_tcp_handler(struct comm_base *base,
 	c->do_not_close = 0;
 	c->tcp_do_toggle_rw = 1;
 	c->tcp_check_nb_connect = 0;
+#ifdef USE_MSG_FASTOPEN
+	c->tcp_do_fastopen = 0;
+#endif
+#ifdef USE_DNSCRYPT
+	c->dnscrypt = 0;
+	/* We don't know just yet if this is a dnscrypt channel. Allocation
+	 * will be done when handling the callback. */
+	c->dnscrypt_buffer = c->buffer;
+#endif
 	c->repinfo.c = c;
 	c->callback = callback;
 	c->cb_arg = callback_arg;
@@ -1678,7 +1823,7 @@ comm_point_create_tcp_handler(struct comm_base *base,
 
 struct comm_point* 
 comm_point_create_tcp(struct comm_base *base, int fd, int num, size_t bufsize,
-        comm_point_callback_t* callback, void* callback_arg)
+        comm_point_callback_type* callback, void* callback_arg)
 {
 	struct comm_point* c = (struct comm_point*)calloc(1,
 		sizeof(struct comm_point));
@@ -1715,6 +1860,13 @@ comm_point_create_tcp(struct comm_base *base, int fd, int num, size_t bufsize,
 	c->do_not_close = 0;
 	c->tcp_do_toggle_rw = 0;
 	c->tcp_check_nb_connect = 0;
+#ifdef USE_MSG_FASTOPEN
+	c->tcp_do_fastopen = 0;
+#endif
+#ifdef USE_DNSCRYPT
+	c->dnscrypt = 0;
+	c->dnscrypt_buffer = NULL;
+#endif
 	c->callback = NULL;
 	c->cb_arg = NULL;
 	evbits = UB_EV_READ | UB_EV_PERSIST;
@@ -1746,7 +1898,7 @@ comm_point_create_tcp(struct comm_base *base, int fd, int num, size_t bufsize,
 
 struct comm_point* 
 comm_point_create_tcp_out(struct comm_base *base, size_t bufsize,
-        comm_point_callback_t* callback, void* callback_arg)
+        comm_point_callback_type* callback, void* callback_arg)
 {
 	struct comm_point* c = (struct comm_point*)calloc(1,
 		sizeof(struct comm_point));
@@ -1780,6 +1932,13 @@ comm_point_create_tcp_out(struct comm_base *base, size_t bufsize,
 	c->do_not_close = 0;
 	c->tcp_do_toggle_rw = 1;
 	c->tcp_check_nb_connect = 1;
+#ifdef USE_MSG_FASTOPEN
+	c->tcp_do_fastopen = 1;
+#endif
+#ifdef USE_DNSCRYPT
+	c->dnscrypt = 0;
+	c->dnscrypt_buffer = c->buffer;
+#endif
 	c->repinfo.c = c;
 	c->callback = callback;
 	c->cb_arg = callback_arg;
@@ -1800,7 +1959,7 @@ comm_point_create_tcp_out(struct comm_base *base, size_t bufsize,
 
 struct comm_point* 
 comm_point_create_local(struct comm_base *base, int fd, size_t bufsize,
-        comm_point_callback_t* callback, void* callback_arg)
+        comm_point_callback_type* callback, void* callback_arg)
 {
 	struct comm_point* c = (struct comm_point*)calloc(1,
 		sizeof(struct comm_point));
@@ -1834,6 +1993,13 @@ comm_point_create_local(struct comm_base *base, int fd, size_t bufsize,
 	c->do_not_close = 1;
 	c->tcp_do_toggle_rw = 0;
 	c->tcp_check_nb_connect = 0;
+#ifdef USE_MSG_FASTOPEN
+	c->tcp_do_fastopen = 0;
+#endif
+#ifdef USE_DNSCRYPT
+	c->dnscrypt = 0;
+	c->dnscrypt_buffer = c->buffer;
+#endif
 	c->callback = callback;
 	c->cb_arg = callback_arg;
 	/* ub_event stuff */
@@ -1858,7 +2024,7 @@ comm_point_create_local(struct comm_base *base, int fd, size_t bufsize,
 
 struct comm_point* 
 comm_point_create_raw(struct comm_base* base, int fd, int writing, 
-	comm_point_callback_t* callback, void* callback_arg)
+	comm_point_callback_type* callback, void* callback_arg)
 {
 	struct comm_point* c = (struct comm_point*)calloc(1,
 		sizeof(struct comm_point));
@@ -1887,6 +2053,13 @@ comm_point_create_raw(struct comm_base* base, int fd, int writing,
 	c->do_not_close = 1;
 	c->tcp_do_toggle_rw = 0;
 	c->tcp_check_nb_connect = 0;
+#ifdef USE_MSG_FASTOPEN
+	c->tcp_do_fastopen = 0;
+#endif
+#ifdef USE_DNSCRYPT
+	c->dnscrypt = 0;
+	c->dnscrypt_buffer = c->buffer;
+#endif
 	c->callback = callback;
 	c->cb_arg = callback_arg;
 	/* ub_event stuff */
@@ -1951,8 +2124,14 @@ comm_point_delete(struct comm_point* c)
 		free(c->tcp_handlers);
 	}
 	free(c->timeout);
-	if(c->type == comm_tcp || c->type == comm_local)
+	if(c->type == comm_tcp || c->type == comm_local) {
 		sldns_buffer_free(c->buffer);
+#ifdef USE_DNSCRYPT
+		if(c->dnscrypt && c->dnscrypt_buffer != c->buffer) {
+			sldns_buffer_free(c->dnscrypt_buffer);
+		}
+#endif
+	}
 	ub_event_free(c->ev->ev);
 	free(c->ev);
 	free(c);
@@ -1961,14 +2140,23 @@ comm_point_delete(struct comm_point* c)
 void 
 comm_point_send_reply(struct comm_reply *repinfo)
 {
+	struct sldns_buffer* buffer;
 	log_assert(repinfo && repinfo->c);
+#ifdef USE_DNSCRYPT
+	buffer = repinfo->c->dnscrypt_buffer;
+	if(!dnsc_handle_uncurved_request(repinfo)) {
+		return;
+	}
+#else
+	buffer = repinfo->c->buffer;
+#endif
 	if(repinfo->c->type == comm_udp) {
 		if(repinfo->srctype)
 			comm_point_send_udp_msg_if(repinfo->c, 
-			repinfo->c->buffer, (struct sockaddr*)&repinfo->addr, 
+			buffer, (struct sockaddr*)&repinfo->addr, 
 			repinfo->addrlen, repinfo);
 		else
-			comm_point_send_udp_msg(repinfo->c, repinfo->c->buffer,
+			comm_point_send_udp_msg(repinfo->c, buffer,
 			(struct sockaddr*)&repinfo->addr, repinfo->addrlen);
 #ifdef USE_DNSTAP
 		if(repinfo->c->dtenv != NULL &&
@@ -1983,7 +2171,8 @@ comm_point_send_reply(struct comm_reply *repinfo)
 			dt_msg_send_client_response(repinfo->c->tcp_parent->dtenv,
 			&repinfo->addr, repinfo->c->type, repinfo->c->buffer);
 #endif
-		comm_point_start_listening(repinfo->c, -1, TCP_QUERY_TIMEOUT);
+		comm_point_start_listening(repinfo->c, -1,
+			repinfo->c->tcp_timeout_msec);
 	}
 }
 
@@ -2009,7 +2198,7 @@ comm_point_stop_listening(struct comm_point* c)
 }
 
 void 
-comm_point_start_listening(struct comm_point* c, int newfd, int sec)
+comm_point_start_listening(struct comm_point* c, int newfd, int msec)
 {
 	verbose(VERB_ALGO, "comm point start listening %d", 
 		c->fd==-1?newfd:c->fd);
@@ -2017,7 +2206,7 @@ comm_point_start_listening(struct comm_point* c, int newfd, int sec)
 		/* no use to start listening no free slots. */
 		return;
 	}
-	if(sec != -1 && sec != 0) {
+	if(msec != -1 && msec != 0) {
 		if(!c->timeout) {
 			c->timeout = (struct timeval*)malloc(sizeof(
 				struct timeval));
@@ -2028,8 +2217,8 @@ comm_point_start_listening(struct comm_point* c, int newfd, int sec)
 		}
 		ub_event_add_bits(c->ev->ev, UB_EV_TIMEOUT);
 #ifndef S_SPLINT_S /* splint fails on struct timeval. */
-		c->timeout->tv_sec = sec;
-		c->timeout->tv_usec = 0;
+		c->timeout->tv_sec = msec/1000;
+		c->timeout->tv_usec = (msec%1000)*1000;
 #endif /* S_SPLINT_S */
 	}
 	if(c->type == comm_tcp) {
@@ -2049,7 +2238,7 @@ comm_point_start_listening(struct comm_point* c, int newfd, int sec)
 		c->fd = newfd;
 		ub_event_set_fd(c->ev->ev, c->fd);
 	}
-	if(ub_event_add(c->ev->ev, sec==0?NULL:c->timeout) != 0) {
+	if(ub_event_add(c->ev->ev, msec==0?NULL:c->timeout) != 0) {
 		log_err("event_add failed. in cpsl.");
 	}
 }
@@ -2076,8 +2265,15 @@ size_t comm_point_get_mem(struct comm_point* c)
 	s = sizeof(*c) + sizeof(*c->ev);
 	if(c->timeout) 
 		s += sizeof(*c->timeout);
-	if(c->type == comm_tcp || c->type == comm_local)
+	if(c->type == comm_tcp || c->type == comm_local) {
 		s += sizeof(*c->buffer) + sldns_buffer_capacity(c->buffer);
+#ifdef USE_DNSCRYPT
+		s += sizeof(*c->dnscrypt_buffer);
+		if(c->buffer != c->dnscrypt_buffer) {
+			s += sldns_buffer_capacity(c->dnscrypt_buffer);
+		}
+#endif
+	}
 	if(c->type == comm_tcp_accept) {
 		int i;
 		for(i=0; i<c->max_tcp_count; i++)
