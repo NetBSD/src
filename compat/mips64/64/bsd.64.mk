@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.64.mk,v 1.11 2015/06/22 00:09:39 matt Exp $
+#	$NetBSD: bsd.64.mk,v 1.12 2018/02/06 10:00:00 mrg Exp $
 
 .if ${MACHINE_ARCH} == "mips64eb"
 LD+=		-m elf64btsmip
@@ -8,9 +8,7 @@ LD+=		-m elf64ltsmip
 .ifndef MLIBDIR
 MLIBDIR=	64
 
-# XXX
-# GCC 4.5 libgomp wants a different omp.h installed for the 64 bit
-# version of it, and we don't have a way of doing that yet.
+# GCC 5/6 libgomp for n64 needs files we don't generate yet.
 NO_LIBGOMP=	1
 
 COPTS+=		-mabi=64
