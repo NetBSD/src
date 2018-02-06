@@ -1,4 +1,4 @@
-/*	$NetBSD: nbsvtool.c,v 1.3 2018/02/06 19:51:03 christos Exp $	*/
+/*	$NetBSD: nbsvtool.c,v 1.4 2018/02/06 20:15:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2008 The NetBSD Foundation, Inc.
@@ -309,8 +309,10 @@ main(int argc, char **argv)
     
 	setprogname(argv[0]);
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 	OpenSSL_add_all_algorithms();
 	ERR_load_crypto_strings();
+#endif
 
 	while ((ch = getopt(argc, argv, "a:c:f:hk:u:v")) != -1) {
 		switch (ch) {
