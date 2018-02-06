@@ -617,7 +617,7 @@
 #define PACKAGE_VERSION "1.6.8"
 
 /* default pidfile location */
-#define PIDFILE "/usr/local/etc/unbound/unbound.pid"
+#define PIDFILE "/var/run/unbound.pid"
 
 /* Define to necessary symbol if this constant uses a non-standard name on
    your system. */
@@ -627,19 +627,19 @@
 #define RETSIGTYPE void
 
 /* default rootkey location */
-#define ROOT_ANCHOR_FILE "/usr/local/etc/unbound/root.key"
+#define ROOT_ANCHOR_FILE "/etc/unbound/root.key"
 
 /* default rootcert location */
-#define ROOT_CERT_FILE "/usr/local/etc/unbound/icannbundle.pem"
+#define ROOT_CERT_FILE "/etc/unbound/icannbundle.pem"
 
 /* version number for resource files */
 #define RSRC_PACKAGE_VERSION 1,6,8,0
 
 /* Directory to chdir to */
-#define RUN_DIR "/usr/local/etc/unbound"
+#define RUN_DIR "/etc/unbound"
 
 /* Shared data */
-#define SHARE_DIR "/usr/local/etc/unbound"
+#define SHARE_DIR "/etc/unbound"
 
 /* The size of `time_t', as computed by sizeof. */
 #define SIZEOF_TIME_T 8
@@ -657,7 +657,7 @@
 /* #undef UB_ON_WINDOWS */
 
 /* default username */
-#define UB_USERNAME "unbound"
+#define UB_USERNAME "_unbound"
 
 /* use to enable lightweight alloc assertions, for debug use */
 /* #undef UNBOUND_ALLOC_LITE */
