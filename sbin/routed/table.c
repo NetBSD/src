@@ -1,4 +1,4 @@
-/*	$NetBSD: table.c,v 1.27 2016/12/20 03:35:12 ozaki-r Exp $	*/
+/*	$NetBSD: table.c,v 1.28 2018/02/06 09:33:07 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -36,7 +36,7 @@
 #include "defs.h"
 
 #ifdef __NetBSD__
-__RCSID("$NetBSD: table.c,v 1.27 2016/12/20 03:35:12 ozaki-r Exp $");
+__RCSID("$NetBSD: table.c,v 1.28 2018/02/06 09:33:07 mrg Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
@@ -1292,11 +1292,12 @@ read_rt(void)
 			gate = 0;
 		}
 
-		if (INFO_AUTHOR(&info) != 0)
+		if (INFO_AUTHOR(&info) != 0) {
 			snprintf(strp, str + sizeof(str) - strp,
 			    " by authority of %s",
 			    saddr_ntoa(INFO_AUTHOR(&info)));
 			strp += strlen(strp);
+		}
 
 		switch (m.r.rtm.rtm_type) {
 		case RTM_ADD:
