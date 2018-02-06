@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.14 2018/02/06 21:36:46 christos Exp $	*/
+/*	$NetBSD: tls.c,v 1.15 2018/02/06 22:04:22 maya Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.14 2018/02/06 21:36:46 christos Exp $");
+__RCSID("$NetBSD: tls.c,v 1.15 2018/02/06 22:04:22 maya Exp $");
 
 #ifndef DISABLE_TLS
 #include <sys/stat.h>
@@ -116,8 +116,8 @@ get_dh1024(void)
 		goto out;
 	return dh;
 out:
-		DH_free(dh);
-		return NULL;
+	DH_free(dh);
+	return NULL;
 }
 
 #define ST_CHANGE(x, y) do {					\
