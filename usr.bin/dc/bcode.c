@@ -1,4 +1,4 @@
-/*	$NetBSD: bcode.c,v 1.2 2017/04/10 16:37:48 christos Exp $	*/
+/*	$NetBSD: bcode.c,v 1.3 2018/02/06 17:58:19 christos Exp $	*/
 /*	$OpenBSD: bcode.c,v 1.51 2017/02/26 11:29:55 otto Exp $	*/
 
 /*
@@ -17,7 +17,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bcode.c,v 1.2 2017/04/10 16:37:48 christos Exp $");
+__RCSID("$NetBSD: bcode.c,v 1.3 2018/02/06 17:58:19 christos Exp $");
 
 #include <err.h>
 #include <limits.h>
@@ -32,6 +32,7 @@ __RCSID("$NetBSD: bcode.c,v 1.2 2017/04/10 16:37:48 christos Exp $");
 
 #define MAX_ARRAY_INDEX		2048
 #define READSTACK_SIZE		8
+#define	NO_NUMBER		(~0UL)
 
 #define NO_ELSE			-2	/* -1 is EOF */
 #define REG_ARRAY_SIZE_SMALL	(UCHAR_MAX + 1)
@@ -590,7 +591,7 @@ set_scale(void)
 			warnx("scale must be a nonnegative number");
 		else {
 			scale = get_ulong(n);
-			if (scale != BN_MASK2 && scale <= UINT_MAX)
+			if (scale != NO_NUMBER && scale <= UINT_MAX)
 				bmachine.scale = (u_int)scale;
 			else
 				warnx("scale too large");
@@ -618,7 +619,7 @@ set_obase(void)
 	n = pop_number();
 	if (n != NULL) {
 		base = get_ulong(n);
-		if (base != BN_MASK2 && base > 1 && base <= UINT_MAX)
+		if (base != NO_NUMBER && base > 1 && base <= UINT_MAX)
 			bmachine.obase = (u_int)base;
 		else
 			warnx("output base must be a number greater than 1");
@@ -645,7 +646,7 @@ set_ibase(void)
 	n = pop_number();
 	if (n != NULL) {
 		base = get_ulong(n);
-		if (base != BN_MASK2 && 2 <= base && base <= 16)
+		if (base != NO_NUMBER && 2 <= base && base <= 16)
 			bmachine.ibase = (u_int)base;
 		else
 			warnx("input base must be a number between 2 and 16 "
@@ -884,7 +885,7 @@ load_array(void)
 		idx = get_ulong(inumber);
 		if (BN_is_negative(inumber->number))
 			warnx("negative idx");
-		else if (idx == BN_MASK2 || idx > MAX_ARRAY_INDEX)
+		else if (idx == NO_NUMBER || idx > MAX_ARRAY_INDEX)
 			warnx("idx too big");
 		else {
 			stack = &bmachine.reg[reg];
@@ -924,7 +925,7 @@ store_array(void)
 		if (BN_is_negative(inumber->number)) {
 			warnx("negative idx");
 			stack_free_value(value);
-		} else if (idx == BN_MASK2 || idx > MAX_ARRAY_INDEX) {
+		} else if (idx == NO_NUMBER || idx > MAX_ARRAY_INDEX) {
 			warnx("idx too big");
 			stack_free_value(value);
 		} else {
@@ -1205,7 +1206,7 @@ bexp(void)
 		b = BN_get_word(p->number);
 		m = max(a->scale, bmachine.scale);
 		rscale = a->scale * (u_int)b;
-		if (rscale > m || (a->scale > 0 && (b == BN_MASK2 ||
+		if (rscale > m || (a->scale > 0 && (b == NO_NUMBER ||
 		    b > UINT_MAX)))
 			rscale = m;
 	}
@@ -1566,7 +1567,7 @@ quitN(void)
 		return;
 	i = get_ulong(n);
 	free_number(n);
-	if (i == BN_MASK2 || i == 0)
+	if (i == NO_NUMBER || i == 0)
 		warnx("Q command requires a number >= 1");
 	else if (bmachine.readsp < i)
 		warnx("Q command argument exceeded string execution depth");
@@ -1588,7 +1589,7 @@ skipN(void)
 	if (n == NULL)
 		return;
 	i = get_ulong(n);
-	if (i == BN_MASK2)
+	if (i == NO_NUMBER)
 		warnx("J command requires a number >= 0");
 	else if (i > 0 && bmachine.readsp < i)
 		warnx("J command argument exceeded string execution depth");
