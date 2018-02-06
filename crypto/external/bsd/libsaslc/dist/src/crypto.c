@@ -1,4 +1,4 @@
-/* $NetBSD: crypto.c,v 1.5 2011/02/12 23:21:32 christos Exp $ */
+/* $NetBSD: crypto.c,v 1.6 2018/02/06 04:21:24 christos Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: crypto.c,v 1.5 2011/02/12 23:21:32 christos Exp $");
+__RCSID("$NetBSD: crypto.c,v 1.6 2018/02/06 04:21:24 christos Exp $");
 
 #include <assert.h>
 #include <stdio.h>
@@ -169,7 +169,7 @@ saslc__crypto_nonce(size_t len)
 	if ((n = malloc(len)) == NULL)
 		return NULL;
 
-	if (RAND_pseudo_bytes((unsigned char *)n, (int)len) != 1) {
+	if (RAND_bytes((unsigned char *)n, (int)len) != 1) {
 		free(n);
 		return NULL;
 	}
