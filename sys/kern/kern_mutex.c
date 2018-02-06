@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.71 2018/02/05 04:25:04 ozaki-r Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.72 2018/02/06 07:46:24 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.71 2018/02/05 04:25:04 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.72 2018/02/06 07:46:24 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.71 2018/02/05 04:25:04 ozaki-r Exp 
 #include <sys/intr.h>
 #include <sys/lock.h>
 #include <sys/types.h>
+#include <sys/cpu.h>
 
 #include <dev/lockstat.h>
 
@@ -515,6 +516,7 @@ mutex_vector_enter(kmutex_t *mtx)
 
 	MUTEX_DASSERT(mtx, MUTEX_ADAPTIVE_P(mtx));
 	MUTEX_ASSERT(mtx, curthread != 0);
+	MUTEX_ASSERT(mtx, !cpu_intr_p());
 	MUTEX_WANTLOCK(mtx);
 
 	if (panicstr == NULL) {
