@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2354 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2355 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -108,3 +108,4 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	i386: Add support for SMAP. [maxv 20180128]
 	dhcpcd(8): Import dhcpcd-7.0.1 [roy 20180129]
 	openldap: Import 2.4.45. [christos 20180205]
+	unbound: Import 1.6.8. [christos 20180205]
