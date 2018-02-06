@@ -1,10 +1,10 @@
-/*	$NetBSD: syncprov.c,v 1.1.1.6 2017/02/09 01:47:01 christos Exp $	*/
+/*	$NetBSD: syncprov.c,v 1.1.1.7 2018/02/06 01:53:16 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* syncprov.c - syncrepl provider */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2016 The OpenLDAP Foundation.
+ * Copyright 2004-2017 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: syncprov.c,v 1.1.1.6 2017/02/09 01:47:01 christos Exp $");
+__RCSID("$NetBSD: syncprov.c,v 1.1.1.7 2018/02/06 01:53:16 christos Exp $");
 
 #include "portable.h"
 
@@ -2506,7 +2506,7 @@ syncprov_op_search( Operation *op, SlapReply *rs )
 		syncops so = {0};
 		fbase_cookie fc;
 		opcookie opc;
-		slap_callback sc;
+		slap_callback sc = {0};
 
 		fc.fss = &so;
 		fc.fbase = 0;

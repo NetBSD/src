@@ -1,10 +1,10 @@
-/*	$NetBSD: dynlist.c,v 1.1.1.6 2017/02/09 01:47:03 christos Exp $	*/
+/*	$NetBSD: dynlist.c,v 1.1.1.7 2018/02/06 01:53:16 christos Exp $	*/
 
 /* dynlist.c - dynamic list overlay */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2016 The OpenLDAP Foundation.
+ * Copyright 2003-2017 The OpenLDAP Foundation.
  * Portions Copyright 2004-2005 Pierangelo Masarati.
  * Portions Copyright 2008 Emmanuel Dreyfus.
  * All rights reserved.
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dynlist.c,v 1.1.1.6 2017/02/09 01:47:03 christos Exp $");
+__RCSID("$NetBSD: dynlist.c,v 1.1.1.7 2018/02/06 01:53:16 christos Exp $");
 
 #include "portable.h"
 
@@ -351,7 +351,7 @@ static int
 dynlist_prepare_entry( Operation *op, SlapReply *rs, dynlist_info_t *dli )
 {
 	Attribute	*a, *id = NULL;
-	slap_callback	cb;
+	slap_callback	cb = { 0 };
 	Operation	o = *op;
 	struct berval	*url;
 	Entry		*e;
@@ -409,8 +409,6 @@ dynlist_prepare_entry( Operation *op, SlapReply *rs, dynlist_info_t *dli )
 	dlc.dlc_dli = dli;
 	cb.sc_private = &dlc;
 	cb.sc_response = dynlist_sc_update;
-	cb.sc_cleanup = NULL;
-	cb.sc_next = NULL;
 
 	o.o_callback = &cb;
 	o.ors_deref = LDAP_DEREF_NEVER;

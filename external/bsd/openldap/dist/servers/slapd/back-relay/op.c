@@ -1,10 +1,10 @@
-/*	$NetBSD: op.c,v 1.1.1.5 2017/02/09 01:47:07 christos Exp $	*/
+/*	$NetBSD: op.c,v 1.1.1.6 2018/02/06 01:53:18 christos Exp $	*/
 
 /* op.c - relay backend operations */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2016 The OpenLDAP Foundation.
+ * Copyright 2004-2017 The OpenLDAP Foundation.
  * Portions Copyright 2004 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: op.c,v 1.1.1.5 2017/02/09 01:47:07 christos Exp $");
+__RCSID("$NetBSD: op.c,v 1.1.1.6 2018/02/06 01:53:18 christos Exp $");
 
 #include "portable.h"
 
@@ -102,6 +102,7 @@ relay_back_response_cb( Operation *op, SlapReply *rs )
 		(rcb)->rcb_sc.sc_next = (op)->o_callback;	\
 		(rcb)->rcb_sc.sc_response = relay_back_response_cb; \
 		(rcb)->rcb_sc.sc_cleanup = 0;			\
+		(rcb)->rcb_sc.sc_writewait = 0;			\
 		(rcb)->rcb_sc.sc_private = (op)->o_bd;		\
 		(op)->o_callback = (slap_callback *) (rcb);	\
 }

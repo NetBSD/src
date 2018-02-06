@@ -1,10 +1,10 @@
-/*	$NetBSD: backover.c,v 1.1.1.6 2017/02/09 01:46:58 christos Exp $	*/
+/*	$NetBSD: backover.c,v 1.1.1.7 2018/02/06 01:53:14 christos Exp $	*/
 
 /* backover.c - backend overlay routines */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2016 The OpenLDAP Foundation.
+ * Copyright 2003-2017 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -19,7 +19,7 @@
 /* Functions to overlay other modules over a backend. */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: backover.c,v 1.1.1.6 2017/02/09 01:46:58 christos Exp $");
+__RCSID("$NetBSD: backover.c,v 1.1.1.7 2018/02/06 01:53:14 christos Exp $");
 
 #include "portable.h"
 
@@ -1224,6 +1224,7 @@ overlay_remove( BackendDB *be, slap_overinst *on, Operation *op )
 	rm_cb->sc_cleanup = overlay_remove_cb;
 	rm_cb->sc_response = NULL;
 	rm_cb->sc_private = (void*) rm_ctx;
+	rm_cb->sc_writewait = NULL;
 
 	/* Append callback to the end of the list */
 	if ( !op->o_callback ) {

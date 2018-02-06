@@ -1,4 +1,4 @@
-/*	$NetBSD: asn_to_syn_mr.c,v 1.1.1.2 2010/03/08 02:14:20 lukem Exp $	*/
+/*	$NetBSD: asn_to_syn_mr.c,v 1.1.1.3 2018/02/06 01:53:06 christos Exp $	*/
 
 #include <component.h>
 #include "asn.h"

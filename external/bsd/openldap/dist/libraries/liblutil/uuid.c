@@ -1,10 +1,10 @@
-/*	$NetBSD: uuid.c,v 1.1.1.5 2017/02/09 01:46:46 christos Exp $	*/
+/*	$NetBSD: uuid.c,v 1.1.1.6 2018/02/06 01:53:08 christos Exp $	*/
 
 /* uuid.c -- Universally Unique Identifier routines */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2016 The OpenLDAP Foundation.
+ * Copyright 2000-2017 The OpenLDAP Foundation.
  * Portions Copyright 2000-2003 Kurt D. Zeilenga.
  * All rights reserved.
  *
@@ -33,7 +33,7 @@
  * in string form.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: uuid.c,v 1.1.1.5 2017/02/09 01:46:46 christos Exp $");
+__RCSID("$NetBSD: uuid.c,v 1.1.1.6 2018/02/06 01:53:08 christos Exp $");
 
 #include "portable.h"
 

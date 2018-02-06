@@ -1,10 +1,10 @@
-/*	$NetBSD: auditlog.c,v 1.1.1.5 2017/02/09 01:47:02 christos Exp $	*/
+/*	$NetBSD: auditlog.c,v 1.1.1.6 2018/02/06 01:53:16 christos Exp $	*/
 
 /* auditlog.c - log modifications for audit/history purposes */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2016 The OpenLDAP Foundation.
+ * Copyright 2005-2017 The OpenLDAP Foundation.
  * Portions copyright 2004-2005 Symas Corporation.
  * All rights reserved.
  *
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: auditlog.c,v 1.1.1.5 2017/02/09 01:47:02 christos Exp $");
+__RCSID("$NetBSD: auditlog.c,v 1.1.1.6 2018/02/06 01:53:16 christos Exp $");
 
 #include "portable.h"
 

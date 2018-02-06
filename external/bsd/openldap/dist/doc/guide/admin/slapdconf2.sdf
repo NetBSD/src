@@ -1,5 +1,5 @@
 # $OpenLDAP$
-# Copyright 2005-2016 The OpenLDAP Foundation, All Rights Reserved.
+# Copyright 2005-2017 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: Configuring slapd
@@ -364,12 +364,13 @@ supported backend types listed in Table 5.2.
 !block table; align=Center; coltags="EX,N"; \
 	title="Table 5.2: Database Backends"
 Types	Description
-bdb	Berkeley DB transactional backend
+bdb	Berkeley DB transactional backend (deprecated)
 config	Slapd configuration backend
 dnssrv	DNS SRV backend
-hdb	Hierarchical variant of bdb backend
+hdb	Hierarchical variant of bdb backend (deprecated)
 ldap	Lightweight Directory Access Protocol (Proxy) backend
 ldif	Lightweight Data Interchange Format backend
+mdb	Memory-Mapped DB backend
 meta	Meta Directory backend
 monitor	Monitor backend
 passwd	Provides read-only access to {{passwd}}(5)
@@ -449,7 +450,8 @@ H4: olcReadonly { TRUE | FALSE }
 
 This directive puts the database into "read-only" mode. Any
 attempts to modify the database will return an "unwilling to
-perform" error.
+perform" error.  If set on a consumer, modifications sent by
+syncrepl will still occur.
 
 \Default:
 
@@ -560,7 +562,7 @@ H4: olcSyncrepl
 >		[tls_cacert=<file>]
 >		[tls_cacertdir=<path>]
 >		[tls_reqcert=never|allow|try|demand]
->		[tls_ciphersuite=<ciphers>]
+>		[tls_cipher_suite=<ciphers>]
 >		[tls_crlcheck=none|peer|all]
 >		[logbase=<base DN>]
 >		[logfilter=<filter str>]
@@ -681,8 +683,8 @@ conforms to the obsolete {{changelog}} format. If the {{EX:syncdata}}
 parameter is omitted or set to {{EX:"default"}} then the log
 parameters are ignored.
 
-The {{syncrepl}} replication mechanism is supported by the {{bdb}} and
-{{hdb}} backends.
+The {{syncrepl}} replication mechanism is supported by the {{bdb}},
+{{hdb}}, and {{mdb}} backends.
 
 See the {{SECT:LDAP Sync Replication}} chapter of this guide for
 more information on how to use this directive.
