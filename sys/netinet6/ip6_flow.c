@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_flow.c,v 1.39 2018/01/29 08:27:10 maxv Exp $	*/
+/*	$NetBSD: ip6_flow.c,v 1.40 2018/02/06 03:37:00 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.39 2018/01/29 08:27:10 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.40 2018/02/06 03:37:00 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -231,7 +231,7 @@ ip6flow_init(int table_size)
 {
 	int ret, error;
 
-	error = workqueue_create(&ip6flow_slowtimo_wq, "ip6flow_slowtimo",
+	error = workqueue_create(&ip6flow_slowtimo_wq, "ip6flow",
 	    ip6flow_slowtimo_work, NULL, PRI_SOFTNET, IPL_SOFTNET, WQ_MPSAFE);
 	if (error != 0)
 		panic("%s: workqueue_create failed (%d)\n", __func__, error);
