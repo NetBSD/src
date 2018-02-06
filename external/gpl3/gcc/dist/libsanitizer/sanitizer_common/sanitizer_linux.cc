@@ -27,7 +27,6 @@
 
 #if !SANITIZER_FREEBSD && !SANITIZER_NETBSD
 #include <asm/param.h>
-#endif
 
 // For mips64, syscall(__NR_stat) fills the buffer in the 'struct kernel_stat'
 // format. Struct kernel_stat is defined as 'struct stat' in asm/stat.h. To
@@ -40,6 +39,8 @@
 #include <asm/stat.h>
 #undef stat
 #endif
+
+#endif // !SANITIZER_FREEBSD && !SANITIZER_NETBSD
 
 #include <dlfcn.h>
 #include <errno.h>
@@ -207,7 +208,7 @@ static void stat64_to_stat(struct stat64 *in, struct stat *out) {
 }
 #endif
 
-#if defined(__mips64)
+#if defined(__mips64) && SANITIZER_LINUX
 static void kernel_stat_to_stat(struct kernel_stat *in, struct stat *out) {
   internal_memset(out, 0, sizeof(*out));
   out->st_dev = in->st_dev;
@@ -933,7 +934,7 @@ uptr internal_clone(int (*fn)(void *), void *child_stack, int flags, void *arg,
                        : "rsp", "memory", "r11", "rcx");
   return res;
 }
-#elif defined(__mips__)
+#elif defined(__mips__) && SANITIZER_LINUX
 uptr internal_clone(int (*fn)(void *), void *child_stack, int flags, void *arg,
                     int *parent_tidptr, void *newtls, int *child_tidptr) {
   long long res;
@@ -1233,9 +1234,20 @@ void GetPcSpBp(void *context, uptr *pc, uptr *sp, uptr *bp) {
 # endif
 #elif defined(__mips__)
   ucontext_t *ucontext = (ucontext_t*)context;
+# if SANITIZER_NETBSD
+  *pc = _UC_MACHINE_PC(ucontext);
+  *sp = _UC_MACHINE_SP(ucontext);
+  *bp = ucontext->uc_mcontext.__gregs[_REG_S8];
+# else
   *pc = ucontext->uc_mcontext.pc;
   *bp = ucontext->uc_mcontext.gregs[30];
   *sp = ucontext->uc_mcontext.gregs[29];
+# endif
+#elif defined(__alpha__) && SANITIZER_NETBSD
+  ucontext_t *ucontext = (ucontext_t*)context;
+  *pc = _UC_MACHINE_PC(ucontext);
+  *sp = _UC_MACHINE_SP(ucontext);
+  *bp = ucontext->uc_mcontext.__gregs[_REG_S6];
 #else
 # error "Unsupported arch"
 #endif
