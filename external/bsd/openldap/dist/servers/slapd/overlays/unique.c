@@ -1,10 +1,10 @@
-/*	$NetBSD: unique.c,v 1.1.1.6 2017/02/09 01:47:03 christos Exp $	*/
+/*	$NetBSD: unique.c,v 1.1.1.7 2018/02/06 01:53:16 christos Exp $	*/
 
 /* unique.c - attribute uniqueness module */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2016 The OpenLDAP Foundation.
+ * Copyright 2004-2017 The OpenLDAP Foundation.
  * Portions Copyright 2004,2006-2007 Symas Corporation.
  * All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: unique.c,v 1.1.1.6 2017/02/09 01:47:03 christos Exp $");
+__RCSID("$NetBSD: unique.c,v 1.1.1.7 2018/02/06 01:53:16 christos Exp $");
 
 #include "portable.h"
 
@@ -1175,6 +1175,11 @@ unique_modify(
 	Debug(LDAP_DEBUG_TRACE, "==> unique_modify <%s>\n",
 	      op->o_req_dn.bv_val, 0, 0);
 
+	if ( !op->orm_modlist ) {
+		Debug(LDAP_DEBUG_TRACE, "unique_modify: got empty modify op\n", 0, 0, 0);
+		return rc;
+	}
+
 	/* skip the checks if the operation has manageDsaIt control in it
 	 * (for replication) */
 	if ( op->o_managedsait > SLAP_CONTROL_IGNORED
@@ -1208,22 +1213,14 @@ unique_modify(
 			     && !dnIsSuffix( &op->o_req_ndn, &uri->ndn ))
 				continue;
 
-			if ( !(m = op->orm_modlist) ) {
-				op->o_bd->bd_info = (BackendInfo *) on->on_info;
-				send_ldap_error(op, rs, LDAP_INVALID_SYNTAX,
-						"unique_modify() got null op.orm_modlist");
-				rc = rs->sr_err;
-				break;
-
-			} else
-				for ( ; m; m = m->sml_next)
-					if ( (m->sml_op & LDAP_MOD_OP)
-					     != LDAP_MOD_DELETE )
-						ks += count_filter_len
-							( domain,
-							  uri,
-							  m->sml_desc,
-							  m->sml_values);
+			for ( m = op->orm_modlist; m; m = m->sml_next)
+				if ( (m->sml_op & LDAP_MOD_OP)
+				     != LDAP_MOD_DELETE )
+					ks += count_filter_len
+						( domain,
+						  uri,
+						  m->sml_desc,
+						  m->sml_values);
 
 			/* skip this domain-uri if it isn't involved */
 			if ( !ks ) continue;

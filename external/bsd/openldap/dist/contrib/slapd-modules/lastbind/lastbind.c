@@ -1,4 +1,4 @@
-/*	$NetBSD: lastbind.c,v 1.1.1.2 2017/02/09 01:46:42 christos Exp $	*/
+/*	$NetBSD: lastbind.c,v 1.1.1.3 2018/02/06 01:53:06 christos Exp $	*/
 
 /* lastbind.c - Record timestamp of the last successful bind to entries */
 /* $OpenLDAP$ */
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lastbind.c,v 1.1.1.2 2017/02/09 01:46:42 christos Exp $");
+__RCSID("$NetBSD: lastbind.c,v 1.1.1.3 2018/02/06 01:53:06 christos Exp $");
 
 #include "portable.h"
 

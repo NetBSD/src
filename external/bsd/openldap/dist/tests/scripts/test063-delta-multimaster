@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2016 The OpenLDAP Foundation.
+## Copyright 1998-2017 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -469,6 +469,23 @@ EOF
 RC=$?
 if test $RC != 0 ; then
 	echo "ldapmodify failed for server 2 database ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+$LDAPMODIFY -D "$MANAGERDN" -H $URI1 -w $PASSWD \
+	>> $TESTOUT 2>&1 << EOF
+dn: $THEDN
+changetype: modify
+replace: sn
+sn: Replaced later
+-
+replace: sn
+sn: Surname
+EOF
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapmodify failed for server 1 database ($RC)!"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
 	exit $RC
 fi

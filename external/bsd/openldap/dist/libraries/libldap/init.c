@@ -1,9 +1,9 @@
-/*	$NetBSD: init.c,v 1.1.1.5 2017/02/09 01:46:47 christos Exp $	*/
+/*	$NetBSD: init.c,v 1.1.1.6 2018/02/06 01:53:08 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2016 The OpenLDAP Foundation.
+ * Copyright 1998-2017 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: init.c,v 1.1.1.5 2017/02/09 01:46:47 christos Exp $");
+__RCSID("$NetBSD: init.c,v 1.1.1.6 2018/02/06 01:53:08 christos Exp $");
 
 #include "portable.h"
 
@@ -661,6 +661,12 @@ void ldap_int_initialize( struct ldapoptions *gopts, int *dbglvl )
 
 #ifndef HAVE_POLL
 	if ( ldap_int_tblsize == 0 ) ldap_int_ip_init();
+#endif
+
+#ifdef HAVE_CYRUS_SASL
+	if ( ldap_int_sasl_init() != 0 ) {
+		return;
+	}
 #endif
 
 	ldap_int_initialize_global_options(gopts, dbglvl);

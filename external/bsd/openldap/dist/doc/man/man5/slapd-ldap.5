@@ -1,5 +1,5 @@
 .TH SLAPD-LDAP 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2016 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 1998-2017 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .\" $OpenLDAP$
 .SH NAME
@@ -117,7 +117,7 @@ needs to be created.
 .B [tls_protocol_min=<major>[.<minor>]]
 .B [tls_crlcheck=none|peer|all]
 .RS
-Allows to define the parameters of the authentication method that is 
+Allows one to define the parameters of the authentication method that is
 internally used by the proxy to collect info related to access control,
 and whenever an operation occurs with the identity of the rootdn
 of the LDAP proxy database.
@@ -229,7 +229,7 @@ for details on the syntax of this field.
 .B [tls_protocol_min=<version>]
 .B [tls_crlcheck=none|peer|all]
 .RS
-Allows to define the parameters of the authentication method that is 
+Allows one to define the parameters of the authentication method that is
 internally used by the proxy to authorize connections that are 
 authenticated by other databases.
 Direct binds are always proxied without any idassert handling.
@@ -462,7 +462,7 @@ which corresponds to the empty result set.
 
 .TP
 .B onerr {CONTINUE|stop}
-This directive allows to select the behavior in case an error is returned
+This directive allows one to select the behavior in case an error is returned
 by the remote server during a search.
 The default, \fBcontinue\fP, consists in returning success.
 If the value is set to \fBstop\fP, the error is returned to the client.
@@ -533,7 +533,7 @@ support is detected by reading the remote server's root DSE.
 
 .TP
 .B timeout [<op>=]<val> [...]
-This directive allows to set per-operation timeouts.
+This directive allows one to set per-operation timeouts.
 Operations can be
 
 \fB<op> ::= bind, add, delete, modrdn, modify, compare, search\fP

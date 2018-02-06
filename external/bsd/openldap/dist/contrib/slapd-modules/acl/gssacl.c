@@ -1,4 +1,4 @@
-/*	$NetBSD: gssacl.c,v 1.1.1.1 2014/05/28 09:58:27 tron Exp $	*/
+/*	$NetBSD: gssacl.c,v 1.1.1.2 2018/02/06 01:53:06 christos Exp $	*/
 
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *

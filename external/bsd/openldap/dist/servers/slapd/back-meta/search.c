@@ -1,9 +1,9 @@
-/*	$NetBSD: search.c,v 1.1.1.6 2017/02/09 01:47:05 christos Exp $	*/
+/*	$NetBSD: search.c,v 1.1.1.7 2018/02/06 01:53:17 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2016 The OpenLDAP Foundation.
+ * Copyright 1999-2017 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: search.c,v 1.1.1.6 2017/02/09 01:47:05 christos Exp $");
+__RCSID("$NetBSD: search.c,v 1.1.1.7 2018/02/06 01:53:17 christos Exp $");
 
 #include "portable.h"
 
@@ -1653,8 +1653,9 @@ err_pr:;
 						if ( rs->sr_nentries == op->ors_slimit
 							|| META_BACK_ONERR_STOP( mi ) )
 						{
-							const char *save_text = rs->sr_text;
+							const char *save_text;
 got_err:
+							save_text = rs->sr_text;
 							savepriv = op->o_private;
 							op->o_private = (void *)i;
 							rs->sr_text = candidates[ i ].sr_text;

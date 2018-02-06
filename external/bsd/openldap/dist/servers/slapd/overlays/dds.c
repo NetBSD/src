@@ -1,9 +1,9 @@
-/*	$NetBSD: dds.c,v 1.1.1.5 2017/02/09 01:47:03 christos Exp $	*/
+/*	$NetBSD: dds.c,v 1.1.1.6 2018/02/06 01:53:16 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2016 The OpenLDAP Foundation.
+ * Copyright 2005-2017 The OpenLDAP Foundation.
  * Portions Copyright 2005-2006 SysNet s.n.c.
  * All rights reserved.
  *
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dds.c,v 1.1.1.5 2017/02/09 01:47:03 christos Exp $");
+__RCSID("$NetBSD: dds.c,v 1.1.1.6 2018/02/06 01:53:16 christos Exp $");
 
 #include "portable.h"
 
@@ -447,6 +447,7 @@ dds_op_add( Operation *op, SlapReply *rs )
 			sc->sc_response = dds_counter_cb;
 			sc->sc_private = di;
 			sc->sc_next = op->o_callback;
+			sc->sc_writewait = 0;
 
 			op->o_callback = sc;
 		}
@@ -481,6 +482,7 @@ dds_op_delete( Operation *op, SlapReply *rs )
 			sc->sc_cleanup = dds_freeit_cb;
 			sc->sc_response = dds_counter_cb;
 			sc->sc_private = di;
+			sc->sc_writewait = 0;
 			sc->sc_next = op->o_callback;
 	
 			op->o_callback = sc;

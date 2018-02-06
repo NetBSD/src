@@ -1,9 +1,9 @@
-/*	$NetBSD: pw-pbkdf2.c,v 1.1.1.1 2017/02/09 01:46:42 christos Exp $	*/
+/*	$NetBSD: pw-pbkdf2.c,v 1.1.1.2 2018/02/06 01:53:06 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2009-2016 The OpenLDAP Foundation.
+ * Copyright 2009-2017 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -21,7 +21,7 @@
 #define _GNU_SOURCE
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pw-pbkdf2.c,v 1.1.1.1 2017/02/09 01:46:42 christos Exp $");
+__RCSID("$NetBSD: pw-pbkdf2.c,v 1.1.1.2 2018/02/06 01:53:06 christos Exp $");
 
 #include "portable.h"
 #include <ac/string.h>

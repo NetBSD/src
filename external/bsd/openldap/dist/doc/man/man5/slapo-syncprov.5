@@ -1,5 +1,5 @@
 .TH SLAPO-SYNCPROV 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 2004-2016 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 2004-2017 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .\" $OpenLDAP$
 .SH NAME
@@ -57,11 +57,9 @@ The default is FALSE.
 .TP
 .B syncprov\-reloadhint TRUE | FALSE
 Specify that the overlay should honor the reloadHint flag in the Sync
-Control. In OpenLDAP releases 2.3.11 and earlier the syncrepl consumer did
-not properly set this flag, so the overlay must ignore it. This option
-should be set TRUE when working with newer releases that properly support
-this flag. It must be set TRUE when using the accesslog overlay for
-delta-based syncrepl replication support.  The default is FALSE.
+Control. It must be set TRUE when using the accesslog overlay for
+delta-based syncrepl replication support.
+The default is FALSE.
 .SH FILES
 .TP
 ETCDIR/slapd.conf

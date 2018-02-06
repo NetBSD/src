@@ -1,9 +1,9 @@
-/*	$NetBSD: conn.c,v 1.1.1.5 2017/02/09 01:47:04 christos Exp $	*/
+/*	$NetBSD: conn.c,v 1.1.1.6 2018/02/06 01:53:16 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2016 The OpenLDAP Foundation.
+ * Copyright 1999-2017 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: conn.c,v 1.1.1.5 2017/02/09 01:47:04 christos Exp $");
+__RCSID("$NetBSD: conn.c,v 1.1.1.6 2018/02/06 01:53:16 christos Exp $");
 
 #include "portable.h"
 
@@ -1162,7 +1162,7 @@ retry_lock:;
 			if ( mc != NULL ) {
 				/* move to tail of queue */
 				if ( mc != LDAP_TAILQ_LAST( &mi->mi_conn_priv[ LDAP_BACK_CONN2PRIV( mc ) ].mic_priv,
-					metaconn_t, mc_q ) )
+					mc_conn_priv_q ) )
 				{
 					LDAP_TAILQ_REMOVE( &mi->mi_conn_priv[ LDAP_BACK_CONN2PRIV( mc ) ].mic_priv,
 						mc, mc_q );

@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2016 The OpenLDAP Foundation.
+## Copyright 1998-2017 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -307,6 +307,9 @@ cn: Rosco P. Coltrane
 
 dn: cn=Mark Elliot,ou=Alumni Association,ou=People,dc=example,dc=com
 changetype: modify
+replace: drink
+drink: Red Wine
+-
 replace: drink
 
 dn: cn=All Staff,ou=Groups,dc=example,dc=com

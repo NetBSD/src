@@ -1,8 +1,8 @@
-/*	$NetBSD: api.c,v 1.1.1.5 2017/02/09 01:47:08 christos Exp $	*/
+/*	$NetBSD: api.c,v 1.1.1.6 2018/02/06 01:53:18 christos Exp $	*/
 
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2016 The OpenLDAP Foundation.
+ * Copyright 1999-2017 The OpenLDAP Foundation.
  * Portions Copyright 1999 Dmitry Kovalev.
  * Portions Copyright 2004 Pierangelo Masarati.
  * All rights reserved.
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: api.c,v 1.1.1.5 2017/02/09 01:47:08 christos Exp $");
+__RCSID("$NetBSD: api.c,v 1.1.1.6 2018/02/06 01:53:18 christos Exp $");
 
 #include "portable.h"
 

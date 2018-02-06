@@ -1,5 +1,5 @@
 .TH SLAPD 8C "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2016 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 1998-2017 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .\" $OpenLDAP$
 .SH NAME
@@ -123,7 +123,7 @@ at what debug-level debugging statements should be logged to the
 facility.
 The value \fIsyslog-level\fP can be set to any value or combination
 allowed by the \fB\-d\fP switch.
-Slapd logs all messages selected by \fIsyslog-leveli\fP 
+Slapd logs all messages selected by \fIsyslog-level\fP 
 at the
 .BR syslog (3)
 severity debug-level \fBDEBUG\fP,
@@ -305,7 +305,7 @@ that must be an SLP attribute list definition according to the SLP standard.
 For example, \fB"slp=(tree=production),(server-type=OpenLDAP),(server\-version=2.4.15)"\fP
 registers at SLP DAs with the three SLP attributes tree, server-type and server-version
 that have the values given above.
-This allows to specifically query the SLP DAs for LDAP servers holding the
+This allows one to specifically query the SLP DAs for LDAP servers holding the
 .I production
 tree in case multiple trees are available.
 .RE

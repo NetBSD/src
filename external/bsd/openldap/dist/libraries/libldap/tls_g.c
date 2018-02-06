@@ -1,10 +1,10 @@
-/*	$NetBSD: tls_g.c,v 1.1.1.4 2017/02/09 01:46:47 christos Exp $	*/
+/*	$NetBSD: tls_g.c,v 1.1.1.5 2018/02/06 01:53:08 christos Exp $	*/
 
 /* tls_g.c - Handle tls/ssl using GNUTLS. */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2008-2016 The OpenLDAP Foundation.
+ * Copyright 2008-2017 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls_g.c,v 1.1.1.4 2017/02/09 01:46:47 christos Exp $");
+__RCSID("$NetBSD: tls_g.c,v 1.1.1.5 2018/02/06 01:53:08 christos Exp $");
 
 #include "portable.h"
 
@@ -49,14 +49,12 @@ __RCSID("$NetBSD: tls_g.c,v 1.1.1.4 2017/02/09 01:46:47 christos Exp $");
 #include <gnutls/gnutls.h>
 #include <gnutls/x509.h>
 
-#define DH_BITS	(1024)
-
 typedef struct tlsg_ctx {
-	struct ldapoptions *lo;
 	gnutls_certificate_credentials_t cred;
 	gnutls_dh_params_t dh_params;
 	unsigned long verify_depth;
 	int refcount;
+	int reqcert;
 	gnutls_priority_t prios;
 #ifdef LDAP_R_COMPILE
 	ldap_pvt_thread_mutex_t ref_mutex;
@@ -148,7 +146,6 @@ tlsg_ctx_new ( struct ldapoptions *lo )
 
 	ctx = ber_memcalloc ( 1, sizeof (*ctx) );
 	if ( ctx ) {
-		ctx->lo = lo;
 		if ( gnutls_certificate_allocate_credentials( &ctx->cred )) {
 			ber_memfree( ctx );
 			return NULL;
@@ -186,6 +183,8 @@ tlsg_ctx_free ( tls_ctx *ctx )
 		return;
 	gnutls_priority_deinit( c->prios );
 	gnutls_certificate_free_credentials( c->cred );
+	if ( c->dh_params )
+		gnutls_dh_params_deinit( c->dh_params );
 	ber_memfree ( c );
 }
 
@@ -296,12 +295,6 @@ tlsg_ctx_init( struct ldapoptions *lo, struct ldaptls *lt, int is_server )
 		return -1;
 	}
 
-	if ( lo->ldo_tls_dhfile ) {
-		Debug( LDAP_DEBUG_ANY, 
-		       "TLS: warning: ignoring dhfile\n", 
-		       NULL, NULL, NULL );
-	}
-
 	if ( lo->ldo_tls_crlfile ) {
 		rc = gnutls_certificate_set_x509_crl_file( 
 			ctx->cred,
@@ -311,16 +304,27 @@ tlsg_ctx_init( struct ldapoptions *lo, struct ldaptls *lt, int is_server )
 		rc = 0;
 	}
 
-	/* FIXME: ITS#5992 - this should go be configurable,
+	/* FIXME: ITS#5992 - this should be configurable,
 	 * and V1 CA certs should be phased out ASAP.
 	 */
 	gnutls_certificate_set_verify_flags( ctx->cred,
 		GNUTLS_VERIFY_ALLOW_X509_V1_CA_CRT );
 
-	if ( is_server ) {
-		gnutls_dh_params_init(&ctx->dh_params);
-		gnutls_dh_params_generate2(ctx->dh_params, DH_BITS);
+	if ( is_server && lo->ldo_tls_dhfile ) {
+		gnutls_datum_t buf;
+		rc = tlsg_getfile( lo->ldo_tls_dhfile, &buf );
+		if ( rc ) return -1;
+		rc = gnutls_dh_params_init( &ctx->dh_params );
+		if ( rc == 0 )
+			rc = gnutls_dh_params_import_pkcs3( ctx->dh_params, &buf,
+				GNUTLS_X509_FMT_PEM );
+		LDAP_FREE( buf.data );
+		if ( rc ) return -1;
+		gnutls_certificate_set_dh_params( ctx->cred, ctx->dh_params );
 	}
+
+	ctx->reqcert = lo->ldo_tls_require_cert;
+
 	return 0;
 }
 
@@ -342,10 +346,10 @@ tlsg_session_new ( tls_ctx * ctx, int is_server )
 	
 	if ( is_server ) {
 		int flag = 0;
-		if ( c->lo->ldo_tls_require_cert ) {
+		if ( c->reqcert ) {
 			flag = GNUTLS_CERT_REQUEST;
-			if ( c->lo->ldo_tls_require_cert == LDAP_OPT_X_TLS_DEMAND ||
-				c->lo->ldo_tls_require_cert == LDAP_OPT_X_TLS_HARD )
+			if ( c->reqcert == LDAP_OPT_X_TLS_DEMAND ||
+				c->reqcert == LDAP_OPT_X_TLS_HARD )
 				flag = GNUTLS_CERT_REQUIRE;
 			gnutls_certificate_server_set_request( session->session, flag );
 		}
@@ -360,17 +364,17 @@ tlsg_session_accept( tls_session *session )
 	int rc;
 
 	rc = gnutls_handshake( s->session );
-	if ( rc == 0 && s->ctx->lo->ldo_tls_require_cert != LDAP_OPT_X_TLS_NEVER ) {
+	if ( rc == 0 && s->ctx->reqcert != LDAP_OPT_X_TLS_NEVER ) {
 		const gnutls_datum_t *peer_cert_list;
 		unsigned int list_size;
 
 		peer_cert_list = gnutls_certificate_get_peers( s->session, 
 						&list_size );
-		if ( !peer_cert_list && s->ctx->lo->ldo_tls_require_cert == LDAP_OPT_X_TLS_TRY ) 
+		if ( !peer_cert_list && s->ctx->reqcert == LDAP_OPT_X_TLS_TRY )
 			rc = 0;
 		else {
 			rc = tlsg_cert_verify( s );
-			if ( rc && s->ctx->lo->ldo_tls_require_cert == LDAP_OPT_X_TLS_ALLOW )
+			if ( rc && s->ctx->reqcert == LDAP_OPT_X_TLS_ALLOW )
 				rc = 0;
 		}
 	}

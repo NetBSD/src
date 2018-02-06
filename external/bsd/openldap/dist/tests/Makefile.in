@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2016 The OpenLDAP Foundation.
+## Copyright 1998-2017 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -70,9 +70,32 @@ ldif test-ldif: FORCE
 
 regressions:	FORCE
 	@echo "Testing (available) ITS regressions"
-	@$(RUN) its-all
+	@$(MAKE) bdb-its
+	@$(MAKE) hdb-its
+	@$(MAKE) mdb-its
 
 its: regressions
+
+bdb-its: bdb-its-$(BUILD_BDB)
+bdb-its-no:
+	@echo "run configure with --enable-bdb to run BDB ITS regressions"
+
+bdb-its-yes bdb-its-mod: FORCE
+	@$(RUN) -b bdb its-all
+
+hdb-its: hdb-its-$(BUILD_HDB)
+hdb-its-no:
+	@echo "run configure with --enable-hdb to run HDB ITS regressions"
+
+hdb-its-yes hdb-its-mod: FORCE
+	@$(RUN) -b hdb its-all
+
+mdb-its: mdb-its-$(BUILD_MDB)
+mdb-its-no:
+	@echo "run configure with --enable-mdb to run MDB ITS regressions"
+
+mdb-its-yes mdb-its-mod: FORCE
+	@$(RUN) -b mdb its-all
 
 clean-local:	FORCE
 	-$(RM) -r testrun configpw configpw.conf *leak *gmon *core

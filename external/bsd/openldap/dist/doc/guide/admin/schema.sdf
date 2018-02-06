@@ -1,5 +1,5 @@
 # $OpenLDAP$
-# Copyright 1999-2016 The OpenLDAP Foundation, All Rights Reserved.
+# Copyright 1999-2017 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: Schema Specification
@@ -211,7 +211,7 @@ in {{F:core.schema}} as:
 >		SUBSTR caseIgnoreSubstringsMatch
 >		SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{32768} )
 >	attributeType ( 2.5.4.3 NAME ( 'cn' 'commonName' )
->		DESC 'common name(s) assciated with the object'
+>		DESC 'common name(s) associated with the object'
 >		SUP name )
 
 Notice that each defines the attribute's OID, provides a short name,

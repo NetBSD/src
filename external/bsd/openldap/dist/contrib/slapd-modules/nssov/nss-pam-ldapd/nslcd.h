@@ -1,4 +1,4 @@
-/*	$NetBSD: nslcd.h,v 1.1.1.3 2017/02/09 01:46:42 christos Exp $	*/
+/*	$NetBSD: nslcd.h,v 1.1.1.4 2018/02/06 01:53:06 christos Exp $	*/
 
 /*
    nslcd.h - file describing client/server protocol
@@ -102,7 +102,7 @@
      STRING       group password
      INT32        group id
      STRINGLIST   members (usernames) of the group
-     (not that the BYMEMER call returns an emtpy members list) */
+     (not that the BYMEMER call returns an empty members list) */
 #define NSLCD_ACTION_GROUP_BYNAME      0x00040001
 #define NSLCD_ACTION_GROUP_BYGID       0x00040002
 #define NSLCD_ACTION_GROUP_BYMEMBER    0x00040006

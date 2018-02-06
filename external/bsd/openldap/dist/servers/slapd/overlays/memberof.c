@@ -1,4 +1,4 @@
-/*	$NetBSD: memberof.c,v 1.1.1.6 2017/02/09 01:47:01 christos Exp $	*/
+/*	$NetBSD: memberof.c,v 1.1.1.7 2018/02/06 01:53:16 christos Exp $	*/
 
 /* memberof.c - back-reference for group membership */
 /* $OpenLDAP$ */
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: memberof.c,v 1.1.1.6 2017/02/09 01:47:01 christos Exp $");
+__RCSID("$NetBSD: memberof.c,v 1.1.1.7 2018/02/06 01:53:16 christos Exp $");
 
 #include "portable.h"
 
@@ -742,6 +742,7 @@ memberof_op_add( Operation *op, SlapReply *rs )
 	sc->sc_private = sc+1;
 	sc->sc_response = memberof_res_add;
 	sc->sc_cleanup = memberof_cleanup;
+	sc->sc_writewait = 0;
 	mci = sc->sc_private;
 	mci->on = on;
 	mci->member = NULL;
@@ -776,6 +777,7 @@ memberof_op_delete( Operation *op, SlapReply *rs )
 	sc->sc_private = sc+1;
 	sc->sc_response = memberof_res_delete;
 	sc->sc_cleanup = memberof_cleanup;
+	sc->sc_writewait = 0;
 	mci = sc->sc_private;
 	mci->on = on;
 	mci->member = NULL;
@@ -1194,6 +1196,7 @@ done2:;
 	sc->sc_private = sc+1;
 	sc->sc_response = memberof_res_modify;
 	sc->sc_cleanup = memberof_cleanup;
+	sc->sc_writewait = 0;
 	mci = sc->sc_private;
 	mci->on = on;
 	mci->member = NULL;
@@ -1239,6 +1242,7 @@ memberof_op_modrdn( Operation *op, SlapReply *rs )
 	sc->sc_private = sc+1;
 	sc->sc_response = memberof_res_modrdn;
 	sc->sc_cleanup = memberof_cleanup;
+	sc->sc_writewait = 0;
 	mci = sc->sc_private;
 	mci->on = on;
 	mci->member = NULL;

@@ -115,7 +115,25 @@ if test $WAIT != 0 ; then
 	echo PID $PID
 	read foo
 fi
+KILLPIDS="$PID"
 sleep 1
+
+echo "Using ldapsearch to check that slapd is running..."
+for i in 0 1 2 3 4 5; do
+	$LDAPSEARCH -s base -b "$MONITOR" -h $LOCALHOST -p $PORT1 \
+		'objectclass=*' > /dev/null 2>&1
+	RC=$?
+	if test $RC = 0 ; then
+		break
+	fi
+	echo "Waiting 5 seconds for slapd to start..."
+	sleep 5
+done
+if test $RC != 0 ; then
+	echo "ldapsearch failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
 
 echo "Adding basic structure..."
 $LDAPADD -D "$MANAGERDN" -H $URI1 -w $PASSWD -f $ROOTLDIF &>/dev/null

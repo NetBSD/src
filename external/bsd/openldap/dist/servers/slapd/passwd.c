@@ -1,10 +1,10 @@
-/*	$NetBSD: passwd.c,v 1.1.1.5 2017/02/09 01:47:00 christos Exp $	*/
+/*	$NetBSD: passwd.c,v 1.1.1.6 2018/02/06 01:53:15 christos Exp $	*/
 
 /* passwd.c - password extended operation routines */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2016 The OpenLDAP Foundation.
+ * Copyright 1998-2017 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: passwd.c,v 1.1.1.5 2017/02/09 01:47:00 christos Exp $");
+__RCSID("$NetBSD: passwd.c,v 1.1.1.6 2018/02/06 01:53:15 christos Exp $");
 
 #include "portable.h"
 

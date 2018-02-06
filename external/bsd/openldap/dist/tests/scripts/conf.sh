@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2016 The OpenLDAP Foundation.
+## Copyright 1998-2017 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -76,5 +76,7 @@ sed -e "s/@BACKEND@/${BACKEND}/"			\
 	-e "s;@PORT6@;${PORT6};"			\
 	-e "s/@SASL_MECH@/${SASL_MECH}/"		\
 	-e "s;@TESTDIR@;${TESTDIR};"			\
+	-e "s;@TESTWD@;${TESTWD};"			\
 	-e "s;@DATADIR@;${DATADIR};"			\
-	-e "s;@SCHEMADIR@;${SCHEMADIR};"
+	-e "s;@SCHEMADIR@;${SCHEMADIR};"		\
+	-e "/^#/d"

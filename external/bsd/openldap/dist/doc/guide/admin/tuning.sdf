@@ -1,5 +1,5 @@
 # $OpenLDAP$
-# Copyright 1999-2016 The OpenLDAP Foundation, All Rights Reserved.
+# Copyright 1999-2017 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: Tuning
@@ -110,7 +110,7 @@ indexing is pointless when the target attribute exists on the majority of
 entries in the database. In most LDAP deployments, presence indexing should
 not be done, it's just wasted overhead.
 
-See the {{Logging}} section below on what to watch our for if you have a frequently searched
+See the {{Logging}} section below on what to watch out for if you have a frequently searched
 for attribute that is unindexed.
 
 

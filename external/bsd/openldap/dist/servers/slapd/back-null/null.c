@@ -1,10 +1,10 @@
-/*	$NetBSD: null.c,v 1.1.1.5 2017/02/09 01:47:08 christos Exp $	*/
+/*	$NetBSD: null.c,v 1.1.1.6 2018/02/06 01:53:18 christos Exp $	*/
 
 /* null.c - the null backend */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2002-2016 The OpenLDAP Foundation.
+ * Copyright 2002-2017 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: null.c,v 1.1.1.5 2017/02/09 01:47:08 christos Exp $");
+__RCSID("$NetBSD: null.c,v 1.1.1.6 2018/02/06 01:53:18 christos Exp $");
 
 #include "portable.h"
 

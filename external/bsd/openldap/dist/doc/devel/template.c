@@ -1,4 +1,4 @@
-/*	$NetBSD: template.c,v 1.1.1.3 2014/05/28 09:58:28 tron Exp $	*/
+/*	$NetBSD: template.c,v 1.1.1.4 2018/02/06 01:53:08 christos Exp $	*/
 
 /* template.c -- example OpenLDAP source file */
 /* $OpenLDAP$ */

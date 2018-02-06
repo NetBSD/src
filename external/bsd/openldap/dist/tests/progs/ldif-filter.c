@@ -1,10 +1,10 @@
-/*	$NetBSD: ldif-filter.c,v 1.1.1.3 2017/02/09 01:46:54 christos Exp $	*/
+/*	$NetBSD: ldif-filter.c,v 1.1.1.4 2018/02/06 01:53:12 christos Exp $	*/
 
 /* ldif-filter -- clean up LDIF testdata from stdin */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2009-2016 The OpenLDAP Foundation.
+ * Copyright 2009-2017 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ldif-filter.c,v 1.1.1.3 2017/02/09 01:46:54 christos Exp $");
+__RCSID("$NetBSD: ldif-filter.c,v 1.1.1.4 2018/02/06 01:53:12 christos Exp $");
 
 #include "portable.h"
 

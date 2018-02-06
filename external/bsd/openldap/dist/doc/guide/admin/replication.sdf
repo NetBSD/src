@@ -1,5 +1,5 @@
 # $OpenLDAP$
-# Copyright 1999-2016 The OpenLDAP Foundation, All Rights Reserved.
+# Copyright 1999-2017 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: Replication
@@ -225,7 +225,7 @@ in the replication context.
 
 The syncrepl engine, which is a consumer-side replication engine,
 can work with any backends. The LDAP Sync provider can be configured
-as an overlay on any backend, but works best with the {{back-bdb}}
+as an overlay on any backend, but works best with the {{back-bdb}},
 {{back-hdb}}, or {{back-mdb}} backends.
 
 The LDAP Sync provider maintains a {{EX:contextCSN}} for each
@@ -515,33 +515,54 @@ H4: Set up the provider slapd
 
 The provider is implemented as an overlay, so the overlay itself
 must first be configured in {{slapd.conf}}(5) before it can be
-used. The provider has only two configuration directives, for setting
-checkpoints on the {{EX:contextCSN}} and for configuring the session
-log.  Because the LDAP Sync search is subject to access control,
-proper access control privileges should be set up for the replicated
+used. The provider has two primary configuration directives and
+two secondary directives for when delta-syncrepl is being used.
+Because the LDAP Sync search is subject to access control, proper
+access control privileges should be set up for the replicated
 content.
+
+The two primary options to configure are the checkpoint and
+sessionlog behaviors.
 
 The {{EX:contextCSN}} checkpoint is configured by the
 
 >	syncprov-checkpoint <ops> <minutes>
 
 directive. Checkpoints are only tested after successful write
-operations.  If {{<ops>}} operations or more than {{<minutes>}}
+operations. If {{<ops>}} operations or more than {{<minutes>}}
 time has passed since the last checkpoint, a new checkpoint is
-performed.
+performed. Checkpointing is disabled by default.
 
 The session log is configured by the
 
->	syncprov-sessionlog <size>
+>	syncprov-sessionlog <ops>
 
-directive, where {{<size>}} is the maximum number of session log
-entries the session log can record. When a session log is configured,
-it is automatically used for all LDAP Sync searches within the
-database.
+directive, where {{<ops>}} is the maximum number of session log
+entries the session log can record. All write operations (except Adds)
+are recorded in the log.
 
 Note that using the session log requires searching on the {{entryUUID}}
 attribute. Setting an eq index on this attribute will greatly benefit
 the performance of the session log on the provider.
+
+The reloadhint option is configured by the
+
+>	syncprov-reloadhint <TRUE|FALSE>
+
+directive. It must be set TRUE when using the accesslog overlay for
+delta-based syncrepl replication support. The default is FALSE.
+
+The nonpresent option should only be configured if the overlay is
+being placed on top of a log database, such as when used with
+delta-syncrepl.
+
+The nonpresent option is configured by the
+
+>	syncprov-nopresent <TRUE|FALSE>
+
+directive. This value should only be set TRUE for a syncprov instance
+on top of a log database (such as one managed by the accesslog overlay).
+The default is FALSE.
 
 A more complete example of the {{slapd.conf}}(5) content is thus:
 
@@ -560,7 +581,7 @@ A more complete example of the {{slapd.conf}}(5) content is thus:
 H4: Set up the consumer slapd
 
 The syncrepl replication is specified in the database section of
-{{slapd.conf}}(5) for the replica context.  The syncrepl engine
+{{slapd.conf}}(5) for the replica context. The syncrepl engine
 is backend independent and the directive can be defined with any
 database type.
 
@@ -743,6 +764,8 @@ all of the databases (primary, replica, and the accesslog
 storage database) should also have properly tuned {{DB_CONFIG}} files that meet 
 your needs.
 
+Note: An accesslog database is unique to a given master. It should
+never be replicated.
 
 H3: N-Way Multi-Master
 

@@ -1,10 +1,10 @@
-/*	$NetBSD: smbk5pwd.c,v 1.1.1.6 2017/02/09 01:46:42 christos Exp $	*/
+/*	$NetBSD: smbk5pwd.c,v 1.1.1.7 2018/02/06 01:53:06 christos Exp $	*/
 
 /* smbk5pwd.c - Overlay for managing Samba and Heimdal passwords */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2016 The OpenLDAP Foundation.
+ * Copyright 2004-2017 The OpenLDAP Foundation.
  * Portions Copyright 2004-2005 by Howard Chu, Symas Corp.
  * All rights reserved.
  *
@@ -156,7 +156,7 @@ static void lmPasswd_to_key(
 	k[7] = ((lpw[6]&0x7F)<<1);
 
 #ifdef HAVE_OPENSSL
-	des_set_odd_parity( key );
+	DES_set_odd_parity( key );
 #endif
 }
 
@@ -212,12 +212,12 @@ static void lmhash(
 	des_set_key( &ctx, key );
 	des_encrypt( &ctx, sizeof(key), hbuf[1], StdText );
 #elif defined(HAVE_OPENSSL)
-	des_set_key_unchecked( &key, schedule );
-	des_ecb_encrypt( &StdText, &hbuf[0], schedule , DES_ENCRYPT );
+	DES_set_key_unchecked( &key, &schedule );
+	DES_ecb_encrypt( &StdText, &hbuf[0], &schedule , DES_ENCRYPT );
 
 	lmPasswd_to_key( &UcasePassword[7], &key );
-	des_set_key_unchecked( &key, schedule );
-	des_ecb_encrypt( &StdText, &hbuf[1], schedule , DES_ENCRYPT );
+	DES_set_key_unchecked( &key, &schedule );
+	DES_ecb_encrypt( &StdText, &hbuf[1], &schedule , DES_ENCRYPT );
 #endif
 
 	hexify( (char *)hbuf, hash );

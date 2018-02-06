@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2016 The OpenLDAP Foundation.
+## Copyright 1998-2017 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -2027,7 +2027,7 @@ echo "Checking contextCSN after modify of second backend on site2 master..."
 # starts with an empty database.  Start site2 master first, then site2
 # search and finally central master so that the site2 search's syncrepl
 # connection has been set up when site2 master receives the database:
-echo "Stopping central master and site2 servers to test start with emtpy db..."
+echo "Stopping central master and site2 servers to test start with empty db..."
 kill -HUP  $SMC_PID $SM2_PID $SS2_PID
 for pid in $SMC_PID $SM2_PID $SS2_PID; do wait $pid ; done
 KILLPIDS=`echo "$KILLPIDS " | sed -e "s/ $SMC_PID / /"`;

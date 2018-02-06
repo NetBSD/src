@@ -1,10 +1,10 @@
-/*	$NetBSD: bind.c,v 1.1.1.5 2017/02/09 01:47:06 christos Exp $	*/
+/*	$NetBSD: bind.c,v 1.1.1.6 2018/02/06 01:53:17 christos Exp $	*/
 
 /* bind.c - ldap backend bind function */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2016 The OpenLDAP Foundation.
+ * Copyright 1999-2017 The OpenLDAP Foundation.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bind.c,v 1.1.1.5 2017/02/09 01:47:06 christos Exp $");
+__RCSID("$NetBSD: bind.c,v 1.1.1.6 2018/02/06 01:53:17 christos Exp $");
 
 #include "portable.h"
 
@@ -933,7 +933,7 @@ retry_lock:
 
 			if ( lc != NULL ) {
 				if ( lc != LDAP_TAILQ_LAST( &li->li_conn_priv[ LDAP_BACK_CONN2PRIV( lc ) ].lic_priv,
-					ldapconn_t, lc_q ) )
+					lc_conn_priv_q ) )
 				{
 					LDAP_TAILQ_REMOVE( &li->li_conn_priv[ LDAP_BACK_CONN2PRIV( lc ) ].lic_priv,
 						lc, lc_q );

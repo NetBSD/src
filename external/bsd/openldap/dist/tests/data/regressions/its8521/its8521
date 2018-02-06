@@ -1,0 +1,331 @@
+#! /bin/sh
+# $OpenLDAP$
+## This work is part of OpenLDAP Software <http://www.openldap.org/>.
+##
+## Copyright 1998-2017 The OpenLDAP Foundation.
+## All rights reserved.
+##
+## Redistribution and use in source and binary forms, with or without
+## modification, are permitted only as authorized by the OpenLDAP
+## Public License.
+##
+## A copy of this license is available in the file LICENSE in the
+## top-level directory of the distribution or, alternatively, at
+## <http://www.OpenLDAP.org/license.html>.
+
+echo "running defines.sh"
+. $SRCDIR/scripts/defines.sh
+
+if test $SYNCPROV = syncprovno; then
+	echo "Syncrepl provider overlay not available, test skipped"
+	exit 0
+fi
+
+echo ""
+echo "  This test tracks a case where a consumer fails to replicate from the provider"
+echo "  when the provider is dynamically configured for replication."
+echo "  See http://www.openldap.org/its/index.cgi/?findid=8521 and"
+echo "  See http://www.openldap.org/its/index.cgi/?findid=8281 for more information."
+echo ""
+
+PRODIR=$TESTDIR/pro
+CONDIR=$TESTDIR/con1
+CFPRO=$PRODIR/slapd.d
+CFCON=$CONDIR/slapd.d
+
+mkdir -p $TESTDIR $DBDIR1 $DBDIR2 $PRODIR $CONDIR $CFPRO $CFCON
+
+$SLAPPASSWD -g -n >$CONFIGPWF
+
+ITS=8521
+ITSDIR=$DATADIR/regressions/its$ITS
+
+echo "Starting provider slapd on TCP/IP port $PORT1..."
+. $CONFFILTER $BACKEND $MONITORDB < $ITSDIR/slapd-provider.ldif > $CONFLDIF
+$SLAPADD -F $CFPRO -n 0 -l $CONFLDIF
+$SLAPD -F $CFPRO -h $URI1 -d $LVL $TIMING > $LOG1 2>&1 &
+PID=$!
+if test $WAIT != 0 ; then
+	echo PID $PID
+	read foo
+fi
+KILLPIDS="$PID"
+
+sleep 1
+
+echo "Using ldapsearch to check that provider slapd is running..."
+for i in 0 1 2 3 4 5; do
+	$LDAPSEARCH -s base -b "" -H $URI1 \
+		'objectclass=*' > /dev/null 2>&1
+	RC=$?
+	if test $RC = 0 ; then
+		break
+	fi
+	echo "Waiting 5 seconds for slapd to start..."
+	sleep 5
+done
+
+if test $RC != 0 ; then
+	echo "ldapsearch failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Starting consumer slapd on TCP/IP port $PORT2..."
+. $CONFFILTER $BACKEND $MONITORDB < $ITSDIR/slapd-consumer.ldif > $CONFLDIF
+$SLAPADD -F $CFCON -n 0 -l $CONFLDIF
+$SLAPD -F $CFCON -h $URI2 -d $LVL $TIMING > $LOG2 2>&1 &
+SLAVEPID=$!
+if test $WAIT != 0 ; then
+	echo SLAVEPID $SLAVEPID
+	read foo
+fi
+KILLPIDS="$KILLPIDS $SLAVEPID"
+
+sleep 1
+
+echo "Using ldapsearch to check that consumer slapd is running..."
+for i in 0 1 2 3 4 5; do
+	$LDAPSEARCH -s base -b "" -H $URI2 \
+		'objectclass=*' > /dev/null 2>&1
+	RC=$?
+	if test $RC = 0 ; then
+		break
+	fi
+	echo "Waiting 5 seconds for slapd to start..."
+	sleep 5
+done
+
+if test $RC != 0 ; then
+	echo "ldapsearch failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Setting serverID on provider..."
+$LDAPMODIFY -D cn=config -H $URI1 -y $CONFIGPWF <<EOF >>$TESTOUT 2>&1
+dn: cn=config
+changetype: modify
+add: olcServerId
+olcServerId: 1
+EOF
+RC=$?
+
+if test $RC != 0 ; then
+	echo "ldapmodify failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Populating database on provider..."
+$LDAPADD -D $MANAGERDN -H $URI1 -w $PASSWD << EOMODS >> $TESTOUT 2>&1
+dn: dc=example,dc=com
+changetype: add
+objectClass: domain
+objectClass: top
+dc: example
+
+dn: ou=LDAPRoles,dc=example,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: LDAPRoles
+
+dn: dc=users,dc=example,dc=com
+changetype: add
+dc: users
+objectClass: domain
+objectClass: top
+
+dn: uid=johndoe,dc=users,dc=example,dc=com
+changetype: add
+objectClass: inetOrgPerson
+objectClass: top
+sn: Doe
+cn: Johndoe
+uid: johndoe
+
+dn: cn=replicator,ou=LDAPRoles,dc=example,dc=com
+objectClass: top
+objectClass: simpleSecurityObject
+objectClass: organizationalRole
+userPassword: secret
+cn: replicator
+EOMODS
+
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapadd failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+if [ "$SYNCPROV" = syncprovmod ]; then
+	echo "Configuring syncprov module on the provider..."
+	$LDAPADD -D cn=config -H $URI1 -y $CONFIGPWF <<EOF > $TESTOUT 2>&1
+dn: cn=module,cn=config
+objectClass: olcModuleList
+cn: module
+olcModulePath: $TESTWD/../servers/slapd/overlays
+olcModuleLoad: syncprov.la
+EOF
+	RC=$?
+	if test $RC != 0 ; then
+		echo "ldapadd failed for moduleLoad ($RC)!"
+		test $KILLSERVERS != no && kill -HUP $KILLPIDS
+		exit $RC
+	fi
+fi
+
+echo "Configuring replication on the provider..."
+$LDAPMODIFY -D cn=config -H $URI1 -y $CONFIGPWF <<EOF >>$TESTOUT 2>&1
+dn: olcOverlay=syncprov,olcDatabase={1}$BACKEND,cn=config
+changetype: add
+objectClass: olcOverlayConfig
+objectClass: olcConfig
+objectClass: top
+objectClass: olcSyncprovConfig
+olcOverlay: syncprov
+olcSpSessionLog: 10000
+olcSpCheckpoint: 100 10
+
+dn: olcDatabase={1}$BACKEND,cn=config
+changetype: modify
+add: olcLimits
+olcLimits: dn.exact="cn=replicator,ou=LDAPRoles,dc=example,dc=com"
+  time.soft=unlimited time.hard=unlimited size.soft=unlimited
+  size.hard=unlimited
+
+dn: olcDatabase={1}$BACKEND,cn=config
+changetype: modify
+replace: olcAccess
+olcAccess: {0}to dn.subtree="dc=example,dc=com"  by self write
+  by dn.exact="cn=replicator,ou=LDAPRoles,dc=example,dc=com" read
+  by anonymous auth by * read
+EOF
+
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapmodify failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Configuring replication on the consumer..."
+$LDAPMODIFY -D cn=config -H $URI2 -y $CONFIGPWF <<EOF >>$TESTOUT 2>&1
+dn: olcDatabase={1}$BACKEND,cn=config
+changetype: modify
+add: olcSyncrepl
+olcSyncrepl: rid=100 provider=$URI1 bindmethod=simple
+  binddn="cn=replicator,ou=LDAPRoles,dc=example,dc=com" credentials=secret
+  type=refreshAndPersist searchbase="dc=example,dc=com" filter="(objectclass=*)"
+  scope=sub schemachecking=on interval=5 retry="5 +" sizeLimit=unlimited
+  timelimit=unlimited
+-
+
+EOF
+RC=$?
+if test $RC != 0 ; then
+  echo "ldapmodify failed for olcSyncrepl configuration ($RC)!"
+  test $KILLSERVERS != no && kill -HUP $KILLPIDS
+  exit $RC
+fi
+
+echo "Sleeping 10 seconds to allow replication to initiate..."
+sleep 10
+
+echo "Using ldapsearch to read all the entries from the provider..."
+$LDAPSEARCH -S "" -D $MANAGERDN -w $PASSWD -b "$BASEDN" -H $URI1 \
+        '(objectclass=*)' '*' $OPATTRS > $MASTEROUT 2>&1
+RC=$?
+
+if test $RC != 0 ; then
+        echo "ldapsearch failed at provider ($RC)!"
+        test $KILLSERVERS != no && kill -HUP $KILLPIDS
+        exit $RC
+fi
+
+echo "Using ldapsearch to read all the entries from the consumer..."
+$LDAPSEARCH -S "" -D $MANAGERDN -w $PASSWD -b "$BASEDN" -H $URI2 \
+        '(objectclass=*)' '*' $OPATTRS > $SLAVEOUT 2>&1
+RC=$?
+
+if test $RC != 32 ; then
+        echo "ldapsearch should have failed with error 32.  Got $RC instead!"
+	echo "This is a regression of ITS8281"
+        test $KILLSERVERS != no && kill -HUP $KILLPIDS
+        exit $RC
+fi
+
+
+echo "Filtering provider results..."
+$LDIFFILTER < $MASTEROUT > $MASTERFLT
+echo "Filtering consumer results..."
+$LDIFFILTER < $SLAVEOUT > $SLAVEFLT
+
+echo "Comparing retrieved entries from provider and consumer..."
+$CMP $MASTERFLT $SLAVEFLT > $CMPOUT
+
+if test $? = 0 ; then
+        echo "test failed - provider and consumer databases match"
+	echo "This is a regression of ITS8281"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+        exit 1
+fi
+
+echo "Modifying provider to force generation of a contextCSN"
+$LDAPMODIFY -v -D "$MANAGERDN" -H $URI1 -w $PASSWD > \
+        $TESTOUT 2>&1 << EOMODS
+dn: uid=Johndoe,dc=users,dc=example,dc=com
+changetype: modify
+replace: cn
+cn: John Doe
+EOMODS
+
+echo "Sleeping 30 seconds to allow consumer to reconnect and replicate..."
+sleep 30
+
+echo "Using ldapsearch to read all the entries from the provider..."
+$LDAPSEARCH -S "" -D $MANAGERDN -w $PASSWD -b "$BASEDN" -H $URI1 \
+        '(objectclass=*)' '*' $OPATTRS > $MASTEROUT 2>&1
+RC=$?
+
+if test $RC != 0 ; then
+        echo "ldapsearch failed at provider ($RC)!"
+        test $KILLSERVERS != no && kill -HUP $KILLPIDS
+        exit $RC
+fi
+
+echo "Using ldapsearch to read all the entries from the consumer..."
+$LDAPSEARCH -S "" -D $MANAGERDN -w $PASSWD -b "$BASEDN" -H $URI2 \
+        '(objectclass=*)' '*' $OPATTRS > $SLAVEOUT 2>&1
+RC=$?
+
+if test $RC != 0 ; then
+        echo "ldapsearch failed at consumer ($RC)!"
+        test $KILLSERVERS != no && kill -HUP $KILLPIDS
+        exit $RC
+fi
+
+
+echo "Filtering provider results..."
+$LDIFFILTER < $MASTEROUT > $MASTERFLT
+echo "Filtering consumer results..."
+$LDIFFILTER < $SLAVEOUT > $SLAVEFLT
+
+echo "Comparing retrieved entries from provider and consumer..."
+$CMP $MASTERFLT $SLAVEFLT > $CMPOUT
+
+if test $? != 0 ; then
+        echo "test failed - provider and consumer databases differ"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+        exit 1
+fi
+
+test $KILLSERVERS != no && kill -HUP $KILLPIDS
+
+echo
+echo ">>>>> Test succeeded"
+
+test $KILLSERVERS != no && wait
+
+exit 0

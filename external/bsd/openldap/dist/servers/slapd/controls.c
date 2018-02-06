@@ -1,9 +1,9 @@
-/*	$NetBSD: controls.c,v 1.1.1.5 2017/02/09 01:47:00 christos Exp $	*/
+/*	$NetBSD: controls.c,v 1.1.1.6 2018/02/06 01:53:15 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2016 The OpenLDAP Foundation.
+ * Copyright 1998-2017 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: controls.c,v 1.1.1.5 2017/02/09 01:47:00 christos Exp $");
+__RCSID("$NetBSD: controls.c,v 1.1.1.6 2018/02/06 01:53:15 christos Exp $");
 
 #include "portable.h"
 
@@ -827,7 +827,7 @@ int get_ctrls(
 
 		} else if( c->ldctl_oid == NULL ) {
 			Debug( LDAP_DEBUG_TRACE,
-				"get_ctrls: conn %lu got emtpy OID.\n",
+				"get_ctrls: conn %lu got empty OID.\n",
 				op->o_connid, 0, 0 );
 
 			slap_free_ctrls( op, op->o_ctrls );

@@ -1,4 +1,4 @@
-/*	$NetBSD: lutil_meter.h,v 1.1.1.3 2017/02/09 01:46:42 christos Exp $	*/
+/*	$NetBSD: lutil_meter.h,v 1.1.1.4 2018/02/06 01:53:05 christos Exp $	*/
 
 /* lutil_meter.h - progress meters */
 /* $OpenLDAP$ */
@@ -24,7 +24,7 @@
 #define _LUTIL_METER_H
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lutil_meter.h,v 1.1.1.3 2017/02/09 01:46:42 christos Exp $");
+__RCSID("$NetBSD: lutil_meter.h,v 1.1.1.4 2018/02/06 01:53:05 christos Exp $");
 
 #include "portable.h"
 

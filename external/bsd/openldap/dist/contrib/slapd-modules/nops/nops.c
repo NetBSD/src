@@ -1,10 +1,10 @@
-/*	$NetBSD: nops.c,v 1.1.1.5 2017/02/09 01:46:42 christos Exp $	*/
+/*	$NetBSD: nops.c,v 1.1.1.6 2018/02/06 01:53:06 christos Exp $	*/
 
 /* nops.c - Overlay to filter idempotent operations */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>. 
  *
- * Copyright 2008-2016 The OpenLDAP Foundation.
+ * Copyright 2008-2017 The OpenLDAP Foundation.
  * Copyright 2008 Emmanuel Dreyfus.
  * All rights reserved.
  *
@@ -21,7 +21,7 @@
  * inclusion in OpenLDAP Software.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: nops.c,v 1.1.1.5 2017/02/09 01:46:42 christos Exp $");
+__RCSID("$NetBSD: nops.c,v 1.1.1.6 2018/02/06 01:53:06 christos Exp $");
 
 #include "portable.h"
 

@@ -1,10 +1,10 @@
-/*	$NetBSD: result.c,v 1.1.1.6 2017/02/09 01:46:47 christos Exp $	*/
+/*	$NetBSD: result.c,v 1.1.1.7 2018/02/06 01:53:08 christos Exp $	*/
 
 /* result.c - wait for an ldap result */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2016 The OpenLDAP Foundation.
+ * Copyright 1998-2017 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: result.c,v 1.1.1.6 2017/02/09 01:46:47 christos Exp $");
+__RCSID("$NetBSD: result.c,v 1.1.1.7 2018/02/06 01:53:08 christos Exp $");
 
 #include "portable.h"
 
@@ -117,6 +117,9 @@ ldap_result(
 	assert( result != NULL );
 
 	Debug( LDAP_DEBUG_TRACE, "ldap_result ld %p msgid %d\n", (void *)ld, msgid, 0 );
+
+	if (ld->ld_errno == LDAP_LOCAL_ERROR || ld->ld_errno == LDAP_SERVER_DOWN)
+		return -1;
 
 	LDAP_MUTEX_LOCK( &ld->ld_res_mutex );
 	rc = wait4msg( ld, msgid, all, timeout, result );

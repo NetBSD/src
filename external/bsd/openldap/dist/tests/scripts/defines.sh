@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2016 The OpenLDAP Foundation.
+## Copyright 1998-2017 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -93,7 +93,9 @@ DSRMASTERCONF=$DATADIR/slapd-deltasync-master.conf
 DSRSLAVECONF=$DATADIR/slapd-deltasync-slave.conf
 PPOLICYCONF=$DATADIR/slapd-ppolicy.conf
 PROXYCACHECONF=$DATADIR/slapd-proxycache.conf
+PROXYAUTHZCONF=$DATADIR/slapd-proxyauthz.conf
 CACHEMASTERCONF=$DATADIR/slapd-cache-master.conf
+PROXYAUTHZMASTERCONF=$DATADIR/slapd-cache-master-proxyauthz.conf
 R1SRSLAVECONF=$DATADIR/slapd-syncrepl-slave-refresh1.conf
 R2SRSLAVECONF=$DATADIR/slapd-syncrepl-slave-refresh2.conf
 P1SRSLAVECONF=$DATADIR/slapd-syncrepl-slave-persist1.conf

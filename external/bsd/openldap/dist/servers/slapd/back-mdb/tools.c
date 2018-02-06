@@ -1,10 +1,10 @@
-/*	$NetBSD: tools.c,v 1.1.1.2 2017/02/09 01:47:07 christos Exp $	*/
+/*	$NetBSD: tools.c,v 1.1.1.3 2018/02/06 01:53:17 christos Exp $	*/
 
 /* tools.c - tools for slap tools */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2011-2016 The OpenLDAP Foundation.
+ * Copyright 2011-2017 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tools.c,v 1.1.1.2 2017/02/09 01:47:07 christos Exp $");
+__RCSID("$NetBSD: tools.c,v 1.1.1.3 2018/02/06 01:53:17 christos Exp $");
 
 #include "portable.h"
 
@@ -178,6 +178,14 @@ int mdb_tool_entry_close(
 	if( cursor ) {
 		mdb_cursor_close( cursor );
 		cursor = NULL;
+	}
+	{
+		struct mdb_info *mdb = be->be_private;
+		if ( mdb ) {
+			int i;
+			for (i=0; i<mdb->mi_nattrs; i++)
+				mdb->mi_attrs[i]->ai_cursor = NULL;
+		}
 	}
 	if( mdb_tool_txn ) {
 		int rc;

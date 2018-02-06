@@ -1,6 +1,6 @@
 .TH LBER_ENCODE 3 "RELEASEDATE" "OpenLDAP LDVERSION"
 .\" $OpenLDAP$
-.\" Copyright 1998-2016 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 1998-2017 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
 ber_alloc_t, ber_flush, ber_flush2, ber_printf, ber_put_int, ber_put_enum, ber_put_ostring, ber_put_string, ber_put_null, ber_put_boolean, ber_put_bitstring, ber_start_seq, ber_start_set, ber_put_seq, ber_put_set \- OpenLDAP LBER simplified Basic Encoding Rules library routines for encoding
@@ -64,7 +64,7 @@ applications that need more control than
 .BR ber_printf ()
 provides.  In
 general, these routines return the length of the element encoded, or
--1 if an error occurred.
+\-1 if an error occurred.
 .LP
 The
 .BR ber_alloc_t ()

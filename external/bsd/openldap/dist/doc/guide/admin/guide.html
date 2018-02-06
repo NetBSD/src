@@ -23,7 +23,7 @@
 <DIV CLASS="title">
 <H1 CLASS="doc-title">OpenLDAP Software 2.4 Administrator's Guide</H1>
 <ADDRESS CLASS="doc-author">The OpenLDAP Project &lt;<A HREF="http://www.openldap.org/">http://www.openldap.org/</A>&gt;</ADDRESS>
-<ADDRESS CLASS="doc-modified">5 February 2016</ADDRESS>
+<ADDRESS CLASS="doc-modified">1 June 2017</ADDRESS>
 <BR CLEAR="All">
 </DIV>
 <DIV CLASS="contents">
@@ -1248,13 +1248,13 @@ Details regarding configuring <EM>slapd</EM>(8) can be found in the <EM>slapd-co
 <LI><B>Import the configuration database</B>
 <BR>
 You are now ready to import your configration database for use by <EM>slapd</EM>(8), by running the command:<UL>
-<TT> su root -c /usr/local/sbin/slapadd -F /usr/local/etc/cn=config -l /usr/local/etc/openldap/slapd.ldif</TT></UL>
+<TT> su root -c /usr/local/sbin/slapadd -n 0 -F /usr/local/etc/slapd.d -l /usr/local/etc/openldap/slapd.ldif</TT></UL>
 <BR>
 &nbsp;
 <LI><B>Start SLAPD</B>.
 <BR>
 You are now ready to start the Standalone LDAP Daemon, <EM>slapd</EM>(8), by running the command:<UL>
-<TT>su root -c /usr/local/libexec/slapd -F /usr/local/etc/cn=config</TT></UL>
+<TT>su root -c /usr/local/libexec/slapd -F /usr/local/etc/slapd.d</TT></UL>
 <BR>
 To check to see if the server is running and configured correctly, you can run a search against it with <EM>ldapsearch</EM>(1).  By default, <EM>ldapsearch</EM> is installed as <TT>/usr/local/bin/ldapsearch</TT>:<UL>
 <TT>ldapsearch -x -b '' -s base '(objectclass=*)' namingContexts</TT></UL>
@@ -1880,7 +1880,7 @@ olcObjectClasses: ( 1.1.3 NAME 'testObject'
 <TT>bdb</TT>
 </TD>
 <TD>
-Berkeley DB transactional backend
+Berkeley DB transactional backend (deprecated)
 </TD>
 </TR>
 <TR>
@@ -1904,7 +1904,7 @@ DNS SRV backend
 <TT>hdb</TT>
 </TD>
 <TD>
-Hierarchical variant of bdb backend
+Hierarchical variant of bdb backend (deprecated)
 </TD>
 </TR>
 <TR>
@@ -1921,6 +1921,14 @@ Lightweight Directory Access Protocol (Proxy) backend
 </TD>
 <TD>
 Lightweight Data Interchange Format backend
+</TD>
+</TR>
+<TR>
+<TD>
+<TT>mdb</TT>
+</TD>
+<TD>
+Memory-Mapped DB backend
 </TD>
 </TR>
 <TR>
@@ -2004,7 +2012,7 @@ SQL Programmable backend
 <STRONG>Note: </STRONG>Access controls defined in the frontend are appended to all other databases' controls.
 <HR WIDTH="80%" ALIGN="Left"></P>
 <H4><A NAME="olcReadonly { TRUE | FALSE }">5.2.5.3. olcReadonly { TRUE | FALSE }</A></H4>
-<P>This directive puts the database into &quot;read-only&quot; mode. Any attempts to modify the database will return an &quot;unwilling to perform&quot; error.</P>
+<P>This directive puts the database into &quot;read-only&quot; mode. Any attempts to modify the database will return an &quot;unwilling to perform&quot; error.  If set on a consumer, modifications sent by syncrepl will still occur.</P>
 <P>Default:</P>
 <PRE>
         olcReadonly: FALSE
@@ -2078,7 +2086,7 @@ SQL Programmable backend
                 [tls_cacert=&lt;file&gt;]
                 [tls_cacertdir=&lt;path&gt;]
                 [tls_reqcert=never|allow|try|demand]
-                [tls_ciphersuite=&lt;ciphers&gt;]
+                [tls_cipher_suite=&lt;ciphers&gt;]
                 [tls_crlcheck=none|peer|all]
                 [logbase=&lt;base DN&gt;]
                 [logfilter=&lt;filter str&gt;]
@@ -2098,7 +2106,7 @@ SQL Programmable backend
 <P>The <TT>realm</TT> parameter specifies a realm which a certain mechanisms authenticate the identity within. The <TT>secprops</TT> parameter specifies Cyrus SASL security properties.</P>
 <P>The <TT>starttls</TT> parameter specifies use of the StartTLS extended operation to establish a TLS session before authenticating to the provider. If the <TT>critical</TT> argument is supplied, the session will be aborted if the StartTLS request fails.  Otherwise the syncrepl session continues without TLS.  The tls_reqcert setting defaults to <TT>&quot;demand&quot;</TT> and the other TLS settings default to the same as the main slapd TLS settings.</P>
 <P>Rather than replicating whole entries, the consumer can query logs of data modifications.  This mode of operation is referred to as <EM>delta syncrepl</EM>.  In addition to the above parameters, the <TT>logbase</TT> and <TT>logfilter</TT> parameters must be set appropriately for the log that will be used. The <TT>syncdata</TT> parameter must be set to either <TT>&quot;accesslog&quot;</TT> if the log conforms to the <EM>slapo-accesslog</EM>(5) log format, or <TT>&quot;changelog&quot;</TT> if the log conforms to the obsolete <EM>changelog</EM> format. If the <TT>syncdata</TT> parameter is omitted or set to <TT>&quot;default&quot;</TT> then the log parameters are ignored.</P>
-<P>The <EM>syncrepl</EM> replication mechanism is supported by the <EM>bdb</EM> and <EM>hdb</EM> backends.</P>
+<P>The <EM>syncrepl</EM> replication mechanism is supported by the <EM>bdb</EM>, <EM>hdb</EM>, and <EM>mdb</EM> backends.</P>
 <P>See the <A HREF="#LDAP Sync Replication">LDAP Sync Replication</A> chapter of this guide for more information on how to use this directive.</P>
 <H4><A NAME="olcTimeLimit: &lt;integer&gt;">5.2.5.9. olcTimeLimit: &lt;integer&gt;</A></H4>
 <P>This directive specifies the maximum number of seconds (in real time) slapd will spend answering a search request. If a request is not finished in this time, a result indicating an exceeded timelimit will be returned.</P>
@@ -2625,14 +2633,14 @@ only messages that get logged whatever log level is set
 <PRE>
         sizelimit 500
 </PRE>
-<P>See the <A HREF="#Limits">Limits</A> section of this guide and slapd.conf(5) for more details.</P>
+<P>See the <A HREF="#Limits">Limits</A> section of this guide and <EM>slapd.conf</EM>(5) for more details.</P>
 <H4><A NAME="timelimit &lt;integer&gt;">6.2.1.9. timelimit &lt;integer&gt;</A></H4>
 <P>This directive specifies the maximum number of seconds (in real time) slapd will spend answering a search request. If a request is not finished in this time, a result indicating an exceeded timelimit will be returned.</P>
 <P>Default:</P>
 <PRE>
         timelimit 3600
 </PRE>
-<P>See the <A HREF="#Limits">Limits</A> section of this guide and slapd.conf(5) for more details.</P>
+<P>See the <A HREF="#Limits">Limits</A> section of this guide and <EM>slapd.conf</EM>(5) for more details.</P>
 <H3><A NAME="General Backend Directives">6.2.2. General Backend Directives</A></H3>
 <P>Directives in this section apply only to the backend in which they are defined. They are supported by every type of backend. Backend directives apply to all databases instances of the same type and, depending on the directive, may be overridden by database directives.</P>
 <H4><A NAME="backend &lt;type&gt;">6.2.2.1. backend &lt;type&gt;</A></H4>
@@ -2652,7 +2660,7 @@ only messages that get logged whatever log level is set
 <TT>bdb</TT>
 </TD>
 <TD>
-Berkeley DB transactional backend
+Berkeley DB transactional backend (deprecated)
 </TD>
 </TR>
 <TR>
@@ -2668,7 +2676,7 @@ DNS SRV backend
 <TT>hdb</TT>
 </TD>
 <TD>
-Hierarchical variant of bdb backend
+Hierarchical variant of bdb backend (deprecated)
 </TD>
 </TR>
 <TR>
@@ -2677,6 +2685,14 @@ Hierarchical variant of bdb backend
 </TD>
 <TD>
 Lightweight Directory Access Protocol (Proxy) backend
+</TD>
+</TR>
+<TR>
+<TD>
+<TT>mdb</TT>
+</TD>
+<TD>
+Memory-Mapped DB backend
 </TD>
 </TR>
 <TR>
@@ -2743,11 +2759,11 @@ SQL Programmable backend
         database bdb
 </PRE>
 <P>This marks the beginning of a new <TERM>BDB</TERM> database instance declaration.</P>
-<H4><A NAME="limits &lt;who&gt; &lt;limit&gt; [&lt;limit&gt; [...]]">6.2.3.2. limits &lt;who&gt; &lt;limit&gt; [&lt;limit&gt; [...]]</A></H4>
-<P>Specify time and size limits based on who initiated an operation.</P>
-<P>See the <A HREF="#Limits">Limits</A> section of this guide and slapd.conf(5) for more details.</P>
+<H4><A NAME="limits &lt;selector&gt; &lt;limit&gt; [&lt;limit&gt; [...]]">6.2.3.2. limits &lt;selector&gt; &lt;limit&gt; [&lt;limit&gt; [...]]</A></H4>
+<P>Specify time and size limits based on the operation's initiator or base DN.</P>
+<P>See the <A HREF="#Limits">Limits</A> section of this guide and <EM>slapd.conf</EM>(5) for more details.</P>
 <H4><A NAME="readonly { on | off }">6.2.3.3. readonly { on | off }</A></H4>
-<P>This directive puts the database into &quot;read-only&quot; mode. Any attempts to modify the database will return an &quot;unwilling to perform&quot; error.</P>
+<P>This directive puts the database into &quot;read-only&quot; mode. Any attempts to modify the database will return an &quot;unwilling to perform&quot; error.  If set on a consumer, modifications sent by syncrepl will still occur.</P>
 <P>Default:</P>
 <PRE>
         readonly off
@@ -2789,17 +2805,20 @@ SQL Programmable backend
 <PRE>
         syncrepl rid=&lt;replica ID&gt;
                 provider=ldap[s]://&lt;hostname&gt;[:port]
+                searchbase=&lt;base DN&gt;
                 [type=refreshOnly|refreshAndPersist]
                 [interval=dd:hh:mm:ss]
                 [retry=[&lt;retry interval&gt; &lt;# of retries&gt;]+]
-                searchbase=&lt;base DN&gt;
                 [filter=&lt;filter str&gt;]
                 [scope=sub|one|base]
                 [attrs=&lt;attr list&gt;]
+                [exattrs=&lt;attr list&gt;]
                 [attrsonly]
                 [sizelimit=&lt;limit&gt;]
                 [timelimit=&lt;limit&gt;]
                 [schemachecking=on|off]
+                [network-timeout=&lt;seconds&gt;]
+                [timeout=&lt;seconds&gt;]
                 [bindmethod=simple|sasl]
                 [binddn=&lt;DN&gt;]
                 [saslmech=&lt;mech&gt;]
@@ -2808,14 +2827,17 @@ SQL Programmable backend
                 [credentials=&lt;passwd&gt;]
                 [realm=&lt;realm&gt;]
                 [secprops=&lt;properties&gt;]
+                [keepalive=&lt;idle&gt;:&lt;probes&gt;:&lt;interval&gt;]
                 [starttls=yes|critical]
                 [tls_cert=&lt;file&gt;]
                 [tls_key=&lt;file&gt;]
                 [tls_cacert=&lt;file&gt;]
                 [tls_cacertdir=&lt;path&gt;]
                 [tls_reqcert=never|allow|try|demand]
-                [tls_ciphersuite=&lt;ciphers&gt;]
+                [tls_cipher_suite=&lt;ciphers&gt;]
                 [tls_crlcheck=none|peer|all]
+                [tls_protocol_min=&lt;major&gt;[.&lt;minor&gt;]]
+                [suffixmassage=&lt;real DN&gt;]
                 [logbase=&lt;base DN&gt;]
                 [logfilter=&lt;filter str&gt;]
                 [syncdata=default|accesslog|changelog]
@@ -2823,16 +2845,19 @@ SQL Programmable backend
 <P>This directive specifies the current database as a replica of the master content by establishing the current <EM>slapd</EM>(8) as a replication consumer site running a syncrepl replication engine. The master database is located at the replication provider site specified by the <TT>provider</TT> parameter. The replica database is kept up-to-date with the master content using the LDAP Content Synchronization protocol. See <A HREF="http://www.rfc-editor.org/rfc/rfc4533.txt">RFC4533</A> for more information on the protocol.</P>
 <P>The <TT>rid</TT> parameter is used for identification of the current <TT>syncrepl</TT> directive within the replication consumer server, where <TT>&lt;replica ID&gt;</TT> uniquely identifies the syncrepl specification described by the current <TT>syncrepl</TT> directive. <TT>&lt;replica ID&gt;</TT> is non-negative and is no more than three decimal digits in length.</P>
 <P>The <TT>provider</TT> parameter specifies the replication provider site containing the master content as an LDAP URI. The <TT>provider</TT> parameter specifies a scheme, a host and optionally a port where the provider slapd instance can be found. Either a domain name or IP address may be used for &lt;hostname&gt;. Examples are <TT>ldap://provider.example.com:389</TT> or <TT>ldaps://192.168.1.1:636</TT>. If &lt;port&gt; is not given, the standard LDAP port number (389 or 636) is used. Note that the syncrepl uses a consumer-initiated protocol, and hence its specification is located at the consumer site, whereas the <TT>replica</TT> specification is located at the provider site. <TT>syncrepl</TT> and <TT>replica</TT> directives define two independent replication mechanisms. They do not represent the replication peers of each other.</P>
-<P>The content of the syncrepl replica is defined using a search specification as its result set. The consumer slapd will send search requests to the provider slapd according to the search specification. The search specification includes <TT>searchbase</TT>, <TT>scope</TT>, <TT>filter</TT>, <TT>attrs</TT>, <TT>attrsonly</TT>, <TT>sizelimit</TT>, and <TT>timelimit</TT> parameters as in the normal search specification. The <TT>searchbase</TT> parameter has no default value and must always be specified. The <TT>scope</TT> defaults to <TT>sub</TT>, the <TT>filter</TT> defaults to <TT>(objectclass=*)</TT>, <TT>attrs</TT> defaults to <TT>&quot;*,+&quot;</TT> to replicate all user and operational attributes, and <TT>attrsonly</TT> is unset by default. Both <TT>sizelimit</TT> and <TT>timelimit</TT> default to &quot;unlimited&quot;, and only positive integers or &quot;unlimited&quot; may be specified.</P>
+<P>The content of the syncrepl replica is defined using a search specification as its result set. The consumer slapd will send search requests to the provider slapd according to the search specification. The search specification includes <TT>searchbase</TT>, <TT>scope</TT>, <TT>filter</TT>, <TT>attrs</TT>, <TT>exattrs</TT>, <TT>attrsonly</TT>, <TT>sizelimit</TT>, and <TT>timelimit</TT> parameters as in the normal search specification. The <TT>searchbase</TT> parameter has no default value and must always be specified. The <TT>scope</TT> defaults to <TT>sub</TT>, the <TT>filter</TT> defaults to <TT>(objectclass=*)</TT>, <TT>attrs</TT> defaults to <TT>&quot;*,+&quot;</TT> to replicate all user and operational attributes, and <TT>attrsonly</TT> is unset by default. Both <TT>sizelimit</TT> and <TT>timelimit</TT> default to &quot;unlimited&quot;, and only positive integers or &quot;unlimited&quot; may be specified. The <TT>exattrs</TT> option may also be used to specify attributes that should be omitted from incoming entries.</P>
 <P>The <TERM>LDAP Content Synchronization</TERM> protocol has two operation types: <TT>refreshOnly</TT> and <TT>refreshAndPersist</TT>. The operation type is specified by the <TT>type</TT> parameter. In the <TT>refreshOnly</TT> operation, the next synchronization search operation is periodically rescheduled at an interval time after each synchronization operation finishes. The interval is specified by the <TT>interval</TT> parameter. It is set to one day by default. In the <TT>refreshAndPersist</TT> operation, a synchronization search remains persistent in the provider <EM>slapd</EM> instance. Further updates to the master replica will generate <TT>searchResultEntry</TT> to the consumer slapd as the search responses to the persistent synchronization search.</P>
 <P>If an error occurs during replication, the consumer will attempt to reconnect according to the retry parameter which is a list of the &lt;retry interval&gt; and &lt;# of retries&gt; pairs. For example, retry=&quot;60 10 300 3&quot; lets the consumer retry every 60 seconds for the first 10 times and then retry every 300 seconds for the next three times before stop retrying. + in &lt;#  of retries&gt; means indefinite number of retries until success.</P>
 <P>The schema checking can be enforced at the LDAP Sync consumer site by turning on the <TT>schemachecking</TT> parameter. If it is turned on, every replicated entry will be checked for its schema as the entry is stored into the replica content. Every entry in the replica should contain those attributes required by the schema definition. If it is turned off, entries will be stored without checking schema conformance. The default is off.</P>
+<P>The <TT>network-timeout</TT> parameter sets how long the consumer will wait to establish a network connection to the provider.  Once a connection is established, the <TT>timeout</TT> parameter determines how long the consumer will wait for the initial Bind request to complete.  The defaults for these parameters come from <EM>ldap.conf</EM>(5).</P>
 <P>The <TT>binddn</TT> parameter gives the DN to bind as for the syncrepl searches to the provider slapd. It should be a DN which has read access to the replication content in the master database.</P>
 <P>The <TT>bindmethod</TT> is <TT>simple</TT> or <TT>sasl</TT>, depending on whether simple password-based authentication or <TERM>SASL</TERM> authentication is to be used when connecting to the provider <EM>slapd</EM> instance.</P>
 <P>Simple authentication should not be used unless adequate data integrity and confidentiality protections are in place (e.g. TLS or IPsec). Simple authentication requires specification of <TT>binddn</TT> and <TT>credentials</TT> parameters.</P>
 <P>SASL authentication is generally recommended.  SASL authentication requires specification of a mechanism using the <TT>saslmech</TT> parameter. Depending on the mechanism, an authentication identity and/or credentials can be specified using <TT>authcid</TT> and <TT>credentials</TT>, respectively.  The <TT>authzid</TT> parameter may be used to specify an authorization identity.</P>
 <P>The <TT>realm</TT> parameter specifies a realm which a certain mechanisms authenticate the identity within. The <TT>secprops</TT> parameter specifies Cyrus SASL security properties.</P>
+<P>The <TT>keepalive</TT> parameter sets the values of idle, probes, and interval used to check whether a socket is alive;  idle is the number of seconds a connection needs to remain idle before TCP starts sending keepalive probes; probes is the maximum number of keepalive probes TCP should send before dropping the connection; interval is interval in seconds between individual keepalive probes.  Only some systems support the customization of these values; the keepalive parameter is ignored otherwise, and system-wide settings are used. For example, keepalive=&quot;240:10:30&quot; will send a keepalive probe 10 times, every 30 seconds, after 240 seconds of idle activity.  If no response to the probes is received, the connection will be dropped.</P>
 <P>The <TT>starttls</TT> parameter specifies use of the StartTLS extended operation to establish a TLS session before authenticating to the provider. If the <TT>critical</TT> argument is supplied, the session will be aborted if the StartTLS request fails.  Otherwise the syncrepl session continues without TLS.  The tls_reqcert setting defaults to <TT>&quot;demand&quot;</TT> and the other TLS settings default to the same as the main slapd TLS settings.</P>
+<P>The <TT>suffixmassage</TT> parameter allows the consumer to pull entries from a remote directory whose DN suffix differs from the local directory. The portion of the remote entries' DNs that matches the searchbase will be replaced with the suffixmassage DN.</P>
 <P>Rather than replicating whole entries, the consumer can query logs of data modifications.  This mode of operation is referred to as <EM>delta syncrepl</EM>.  In addition to the above parameters, the <TT>logbase</TT> and <TT>logfilter</TT> parameters must be set appropriately for the log that will be used. The <TT>syncdata</TT> parameter must be set to either <TT>&quot;accesslog&quot;</TT> if the log conforms to the <EM>slapo-accesslog</EM>(5) log format, or <TT>&quot;changelog&quot;</TT> if the log conforms to the obsolete <EM>changelog</EM> format. If the <TT>syncdata</TT> parameter is omitted or set to <TT>&quot;default&quot;</TT> then the log parameters are ignored.</P>
 <P>The <EM>syncrepl</EM> replication mechanism is supported by the <EM>bdb</EM>, <EM>hdb</EM>, and <EM>mdb</EM> backends.</P>
 <P>See the <A HREF="#LDAP Sync Replication">LDAP Sync Replication</A> chapter of this guide for more information on how to use this directive.</P>
@@ -3480,7 +3505,7 @@ needed to manage
         by anonymous auth
         by * read
 </PRE>
-<P>This directive allows the user to modify their entry, allows anonymous to authentication against these entries, and allows all others to read these entries.  Note that only the first <TT>by &lt;who&gt;</TT> clause which matches applies.  Hence, the anonymous users are granted <TT>auth</TT>, not <TT>read</TT>.  The last clause could just as well have been &quot;<TT>by users read</TT>&quot;.</P>
+<P>This directive allows the user to modify their entry, allows anonymous to authenticate against these entries, and allows all others to read these entries.  Note that only the first <TT>by &lt;who&gt;</TT> clause which matches applies.  Hence, the anonymous users are granted <TT>auth</TT>, not <TT>read</TT>.  The last clause could just as well have been &quot;<TT>by users read</TT>&quot;.</P>
 <P>It is often desirable to restrict operations based upon the level of protection in place.  The following shows how security strength factors (SSF) can be used.</P>
 <PRE>
     access to *
@@ -3503,7 +3528,7 @@ needed to manage
     access to dn.subtree=&quot;dc=example,dc=com&quot; attrs=homePhone
         by self write
         by dn.children=&quot;dc=example,dc=com&quot; search
-        by peername.regex=IP:10\..+ read
+        by peername.regex=IP=10\..+ read
     access to dn.subtree=&quot;dc=example,dc=com&quot;
         by self write
         by dn.children=&quot;dc=example,dc=com&quot; search
@@ -3811,7 +3836,7 @@ needed to manage
     olcAccess: to dn.subtree=&quot;dc=example,dc=com&quot; attrs=homePhone
         by self write
         by dn.children=dc=example,dc=com&quot; search
-        by peername.regex=IP:10\..+ read
+        by peername.regex=IP=10\..+ read
     olcAccess: to dn.subtree=&quot;dc=example,dc=com&quot;
         by self write
         by dn.children=&quot;dc=example,dc=com&quot; search
@@ -3878,7 +3903,7 @@ needed to manage
 <H3><A NAME="Basic ACLs">8.4.1. Basic ACLs</A></H3>
 <P>Generally one should start with some basic ACLs such as:</P>
 <PRE>
-    access to attr=userPassword
+    access to attrs=userPassword
         by self =xw
         by anonymous auth
         by * none
@@ -4304,13 +4329,13 @@ needed to manage
 <P>Each database can have its own set of limits that override the global ones. The syntax is more flexible, and it allows different limits to be applied to different entities. Note that an <EM>entity</EM> is different from an <EM>entry</EM>: the term <EM>entity</EM> is used here to indicate the ID of the person or process that has initiated the LDAP operation.</P>
 <P>In a <EM>slapd.conf</EM>(5) configuration the keyword is <TT>limits</TT>. When using the <EM>slapd config</EM> backend, the corresponding attribute is <TT>olcLimits</TT>. The syntax of the values is the same in both cases.</P>
 <PRE>
-   limits &lt;who&gt; &lt;limit&gt; [&lt;limit&gt; [...]]
+   limits &lt;selector&gt; &lt;limit&gt; [&lt;limit&gt; [...]]
 </PRE>
-<P>The <EM>limits</EM> clause can be specified multiple times to apply different limits to different initiators. The server examines each clause in turn until it finds one that matches the ID that requested the operation. If no match is found, the global limits will be used.</P>
+<P>The <EM>limits</EM> clause can be specified multiple times to apply different limits to different initiators. The server examines each clause in turn until it finds one that matches the operation's initiator or base DN. If no match is found, the global limits will be used.</P>
 <H3><A NAME="Specify who the limits apply to">9.4.1. Specify who the limits apply to</A></H3>
-<P>The <TT>&lt;who&gt;</TT> part of the <EM>limits</EM> clause can take any of these values:</P>
+<P>The <TT>&lt;selector&gt;</TT> part of the <EM>limits</EM> clause can take any of these values:</P>
 <TABLE CLASS="columns" BORDER ALIGN='Center'>
-<CAPTION ALIGN=top>Table ZZZ.ZZZ: Entity Specifiers</CAPTION>
+<CAPTION ALIGN=top>Table 9.1: Limits Entity Specifiers</CAPTION>
 <TR CLASS="heading">
 <TD>
 <STRONG>Specifier</STRONG>
@@ -4345,26 +4370,10 @@ Authenticated users
 </TR>
 <TR>
 <TD>
-<TT>self</TT>
+<TT>dn[.&lt;type&gt;][.&lt;style&gt;]=&lt;pattern&gt;]</TT>
 </TD>
 <TD>
-User associated with target entry
-</TD>
-</TR>
-<TR>
-<TD>
-<TT>dn[.&lt;basic-style&gt;]=&lt;regex&gt;</TT>
-</TD>
-<TD>
-Users matching a regular expression
-</TD>
-</TR>
-<TR>
-<TD>
-<TT>dn.&lt;scope-style&gt;=&lt;DN&gt;</TT>
-</TD>
-<TD>
-Users within scope of a DN
+Entry or entries within a scope that match &lt;pattern&gt;
 </TD>
 </TR>
 <TR>
@@ -4377,7 +4386,10 @@ Members of a group
 </TR>
 </TABLE>
 
-<P>The rules for specifying <TT>&lt;who&gt;</TT> are the same as those used in access-control rules.</P>
+<P>Where</P>
+<P><EM>type</EM> can be one of self or this and</P>
+<P><EM>style</EM> can be one of exact, base, onelevel, subtree, children, regex, or anonymous</P>
+<P>More information can be found in the <EM>slapd.conf</EM>(5) or <EM>slapd-config</EM>(5) manual pages.</P>
 <H3><A NAME="Specify time limits">9.4.2. Specify time limits</A></H3>
 <P>The syntax for time limits is</P>
 <PRE>
@@ -5042,6 +5054,9 @@ Members of a group
 <P>This overlay can record accesses to a given backend database on another database.</P>
 <P>This allows all of the activity on a given database to be reviewed using arbitrary LDAP queries, instead of just logging to local flat text files. Configuration options are available for selecting a subset of operation types to log, and to automatically prune older log records from the logging database. Log records are stored with audit schema to assure their readability whether viewed as LDIF or in raw form.</P>
 <P>It is also used for <A HREF="#delta-syncrepl replication">delta-syncrepl replication</A></P>
+<P><HR WIDTH="80%" ALIGN="Left">
+<STRONG>Note: </STRONG>An accesslog database is unique to a given master. It should never be replicated.
+<HR WIDTH="80%" ALIGN="Left"></P>
 <H3><A NAME="Access Logging Configuration">12.1.2. Access Logging Configuration</A></H3>
 <P>The following is a basic example that implements Access Logging:</P>
 <PRE>
@@ -5133,7 +5148,7 @@ Members of a group
 <H3><A NAME="Audit Logging Configuration">12.2.2. Audit Logging Configuration</A></H3>
 <P>If the directory is running vi <TT>slapd.d</TT>, then the following LDIF could be used to add the overlay to the overlay list in <B>cn=config</B> and set what file the <TERM>LDIF</TERM> gets logged to (adjust to suit)</P>
 <PRE>
-       dn: olcOverlay=auditlog,olcDatabase={1}hdb,cn=config
+       dn: olcOverlay=auditlog,olcDatabase={1}mdb,cn=config
        changetype: add
        objectClass: olcOverlayConfig
        objectClass: olcAuditLogConfig
@@ -5256,7 +5271,7 @@ Members of a group
 <P>It would also reject any title attribute whose values were not listed in the title attribute of any <EM>titleCatalog</EM> entries in the given scope.</P>
 <P>An example for use with <EM>cn=config</EM>:</P>
 <PRE>
-       dn: olcOverlay=constraint,olcDatabase={1}hdb,cn=config
+       dn: olcOverlay=constraint,olcDatabase={1}mdb,cn=config
        changetype: add
        objectClass: olcOverlayConfig
        objectClass: olcConstraintConfig
@@ -5518,10 +5533,10 @@ Members of a group
    olcPcacheTemplate: &quot;(&amp;(sn=)(givenName=))&quot; 0 3600 0 0 0
    olcPcacheTemplate: &quot;(&amp;(departmentNumber=)(secretary=))&quot; 0 3600
 
-   dn: olcDatabase={0}hdb,olcOverlay={0}pcache,olcDatabase={2}ldap,cn=config
-   objectClass: olcHdbConfig
+   dn: olcDatabase={0}mdb,olcOverlay={0}pcache,olcDatabase={2}ldap,cn=config
+   objectClass: olcMdbConfig
    objectClass: olcPcacheDatabase
-   olcDatabase: {0}hdb
+   olcDatabase: {0}mdb
    olcDbDirectory: ./testrun/db.2.a
    olcDbCacheSize: 20
    olcDbIndex: objectClass eq
@@ -6153,7 +6168,7 @@ x-my-ObjectClass
                 SUBSTR caseIgnoreSubstringsMatch
                 SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{32768} )
         attributeType ( 2.5.4.3 NAME ( 'cn' 'commonName' )
-                DESC 'common name(s) assciated with the object'
+                DESC 'common name(s) associated with the object'
                 SUP name )
 </PRE>
 <P>Notice that each defines the attribute's OID, provides a short name, and a brief description.  Each name is an alias for the OID. <EM>slapd</EM>(8) returns the first listed name when returning results.</P>
@@ -7074,12 +7089,13 @@ browser.  Press 'Enter' for the new password.</UL>
 <H4><A NAME="TLSRandFile &lt;filename&gt;">16.2.1.6. TLSRandFile &lt;filename&gt;</A></H4>
 <P>This directive specifies the file to obtain random bits from when <TT>/dev/urandom</TT> is not available. If the system provides <TT>/dev/urandom</TT> then this option is not needed, otherwise a source of random data must be configured.  Some systems (e.g. Linux) provide <TT>/dev/urandom</TT> by default, while others (e.g. Solaris) require the installation of a patch to provide it, and others may not support it at all. In the latter case, EGD or PRNGD should be installed, and this directive should specify the name of the EGD/PRNGD socket. The environment variable <TT>RANDFILE</TT> can also be used to specify the filename. Also, in the absence of these options, the <TT>.rnd</TT> file in the slapd user's home directory may be used if it exists. To use the <TT>.rnd</TT> file, just create the file and copy a few hundred bytes of arbitrary data into the file. The file is only used to provide a seed for the pseudo-random number generator, and it doesn't need very much data to work.</P>
 <P>This directive is ignored with GnuTLS and Mozilla NSS.</P>
-<H4><A NAME="TLSEphemeralDHParamFile &lt;filename&gt;">16.2.1.7. TLSEphemeralDHParamFile &lt;filename&gt;</A></H4>
-<P>This directive specifies the file that contains parameters for Diffie-Hellman ephemeral key exchange.  This is required in order to use a DSA certificate on the server side (i.e. <TT>TLSCertificateKeyFile</TT> points to a DSA key).  Multiple sets of parameters can be included in the file; all of them will be processed.  Parameters can be generated using the following command</P>
+<H4><A NAME="TLSDHParamFile &lt;filename&gt;">16.2.1.7. TLSDHParamFile &lt;filename&gt;</A></H4>
+<P>This directive specifies the file that contains parameters for Diffie-Hellman ephemeral key exchange.  This is required in order to use DHE-based cipher suites, including all DSA-based suites (i.e. <TT>TLSCertificateKeyFile</TT> points to a DSA key), and RSA when the 'key encipherment' key usage is not specified in the certificate.  Parameters can be generated using the following command</P>
 <PRE>
-        openssl dhparam [-dsaparam] -out &lt;filename&gt; &lt;numbits&gt;
+        openssl dhparam [-dsaparam] -out &lt;filename&gt; &lt;numbits&gt; or
+        certtool --generate-dh-params --bits &lt;numbits&gt; --outfile &lt;filename&gt;
 </PRE>
-<P>This directive is ignored with GnuTLS and Mozilla NSS.</P>
+<P>This directive is ignored with Mozilla NSS.</P>
 <H4><A NAME="TLSVerifyClient { never | allow | try | demand }">16.2.1.8. TLSVerifyClient { never | allow | try | demand }</A></H4>
 <P>This directive specifies what checks to perform on client certificates in an incoming TLS session, if any. This option is set to <TT>never</TT> by default, in which case the server never asks the client for a certificate. With a setting of <TT>allow</TT> the server will ask for a client certificate; if none is provided the session proceeds normally. If a certificate is provided but the server is unable to verify it, the certificate is ignored and the session proceeds normally, as if no certificate had been provided. With a setting of <TT>try</TT> the certificate is requested, and if none is provided, the session proceeds normally. If a certificate is provided and it cannot be verified, the session is immediately terminated. With a setting of <TT>demand</TT> the certificate is requested and a valid certificate must be provided, otherwise the session is immediately terminated.</P>
 <P><HR WIDTH="80%" ALIGN="Left">
@@ -7195,7 +7211,7 @@ Use <TT>certutil -L</TT> to list the certificates by name:</UL>
 <P>The syncrepl engine utilizes both the <EM>refreshOnly</EM> and the <EM>refreshAndPersist</EM> operations of the LDAP Sync protocol.  If a syncrepl specification is included in a database definition, <EM>slapd</EM>(8) launches a syncrepl engine as a <EM>slapd</EM>(8) thread and schedules its execution. If the <EM>refreshOnly</EM> operation is specified, the syncrepl engine will be rescheduled at the interval time after a synchronization operation is completed.  If the <EM>refreshAndPersist</EM> operation is specified, the engine will remain active and process the persistent synchronization messages from the provider.</P>
 <P>The syncrepl engine utilizes both the present phase and the delete phase of the refresh synchronization. It is possible to configure a session log in the provider which stores the <TT>entryUUID</TT>s of a finite number of entries deleted from a database. Multiple replicas share the same session log. The syncrepl engine uses the delete phase if the session log is present and the state of the consumer server is recent enough that no session log entries are truncated after the last synchronization of the client.  The syncrepl engine uses the present phase if no session log is configured for the replication content or if the consumer replica is too outdated to be covered by the session log.  The current design of the session log store is memory based, so the information contained in the session log is not persistent over multiple provider invocations. It is not currently supported to access the session log store by using LDAP operations. It is also not currently supported to impose access control to the session log.</P>
 <P>As a further optimization, even in the case the synchronization search is not associated with any session log, no entries will be transmitted to the consumer server when there has been no update in the replication context.</P>
-<P>The syncrepl engine, which is a consumer-side replication engine, can work with any backends. The LDAP Sync provider can be configured as an overlay on any backend, but works best with the <EM>back-bdb</EM> <EM>back-hdb</EM>, or <EM>back-mdb</EM> backends.</P>
+<P>The syncrepl engine, which is a consumer-side replication engine, can work with any backends. The LDAP Sync provider can be configured as an overlay on any backend, but works best with the <EM>back-bdb</EM>, <EM>back-hdb</EM>, or <EM>back-mdb</EM> backends.</P>
 <P>The LDAP Sync provider maintains a <TT>contextCSN</TT> for each database as the current synchronization state indicator of the provider content.  It is the largest <TT>entryCSN</TT> in the provider context such that no transactions for an entry having smaller <TT>entryCSN</TT> value remains outstanding.  The <TT>contextCSN</TT> could not just be set to the largest issued <TT>entryCSN</TT> because <TT>entryCSN</TT> is obtained before a transaction starts and transactions are not committed in the issue order.</P>
 <P>The provider stores the <TT>contextCSN</TT> of a context in the <TT>contextCSN</TT> attribute of the context suffix entry. The attribute is not written to the database after every update operation though; instead it is maintained primarily in memory. At database start time the provider reads the last saved <TT>contextCSN</TT> into memory and uses the in-memory copy exclusively thereafter. By default, changes to the <TT>contextCSN</TT> as a result of database updates will not be written to the database until the server is cleanly shut down. A checkpoint facility exists to cause the <TT>contextCSN</TT> to be written out more frequently if desired.</P>
 <P>Note that at startup time, if the provider is unable to read a <TT>contextCSN</TT> from the suffix entry, it will scan the entire database to determine the value, and this scan may take quite a long time on a large database. When a <TT>contextCSN</TT> value is read, the database will still be scanned for any <TT>entryCSN</TT> values greater than it, to make sure the <TT>contextCSN</TT> value truly reflects the greatest committed <TT>entryCSN</TT> in the database. On databases which support inequality indexing, setting an eq index on the <TT>entryCSN</TT> attribute and configuring <EM>contextCSN</EM> checkpoints will greatly speed up this scanning step.</P>
@@ -7287,18 +7303,30 @@ Use <TT>certutil -L</TT> to list the certificates by name:</UL>
 <P>When loading from a backup, it is not required to perform the initial loading from the up-to-date backup of the provider content. The syncrepl engine will automatically synchronize the initial consumer replica to the current provider content. As a result, it is not required to stop the provider server in order to avoid the replica inconsistency caused by the updates to the provider content during the content backup and loading process.</P>
 <P>When replicating a large scale directory, especially in a bandwidth constrained environment, it is advised to load the consumer replica from a backup instead of performing a full initial load using syncrepl.</P>
 <H4><A NAME="Set up the provider slapd">18.3.1.2. Set up the provider slapd</A></H4>
-<P>The provider is implemented as an overlay, so the overlay itself must first be configured in <EM>slapd.conf</EM>(5) before it can be used. The provider has only two configuration directives, for setting checkpoints on the <TT>contextCSN</TT> and for configuring the session log.  Because the LDAP Sync search is subject to access control, proper access control privileges should be set up for the replicated content.</P>
+<P>The provider is implemented as an overlay, so the overlay itself must first be configured in <EM>slapd.conf</EM>(5) before it can be used. The provider has two primary configuration directives and two secondary directives for when delta-syncrepl is being used. Because the LDAP Sync search is subject to access control, proper access control privileges should be set up for the replicated content.</P>
+<P>The two primary options to configure are the checkpoint and sessionlog behaviors.</P>
 <P>The <TT>contextCSN</TT> checkpoint is configured by the</P>
 <PRE>
         syncprov-checkpoint &lt;ops&gt; &lt;minutes&gt;
 </PRE>
-<P>directive. Checkpoints are only tested after successful write operations.  If <EM>&lt;ops&gt;</EM> operations or more than <EM>&lt;minutes&gt;</EM> time has passed since the last checkpoint, a new checkpoint is performed.</P>
+<P>directive. Checkpoints are only tested after successful write operations. If <EM>&lt;ops&gt;</EM> operations or more than <EM>&lt;minutes&gt;</EM> time has passed since the last checkpoint, a new checkpoint is performed. Checkpointing is disabled by default.</P>
 <P>The session log is configured by the</P>
 <PRE>
-        syncprov-sessionlog &lt;size&gt;
+        syncprov-sessionlog &lt;ops&gt;
 </PRE>
-<P>directive, where <EM>&lt;size&gt;</EM> is the maximum number of session log entries the session log can record. When a session log is configured, it is automatically used for all LDAP Sync searches within the database.</P>
+<P>directive, where <EM>&lt;ops&gt;</EM> is the maximum number of session log entries the session log can record. All write operations (except Adds) are recorded in the log.</P>
 <P>Note that using the session log requires searching on the <EM>entryUUID</EM> attribute. Setting an eq index on this attribute will greatly benefit the performance of the session log on the provider.</P>
+<P>The reloadhint option is configured by the</P>
+<PRE>
+        syncprov-reloadhint &lt;TRUE|FALSE&gt;
+</PRE>
+<P>directive. It must be set TRUE when using the accesslog overlay for delta-based syncrepl replication support. The default is FALSE.</P>
+<P>The nonpresent option should only be configured if the overlay is being placed on top of a log database, such as when used with delta-syncrepl.</P>
+<P>The nonpresent option is configured by the</P>
+<PRE>
+        syncprov-nopresent &lt;TRUE|FALSE&gt;
+</PRE>
+<P>directive. This value should only be set TRUE for a syncprov instance on top of a log database (such as one managed by the accesslog overlay). The default is FALSE.</P>
 <P>A more complete example of the <EM>slapd.conf</EM>(5) content is thus:</P>
 <PRE>
         database mdb
@@ -7313,7 +7341,7 @@ Use <TT>certutil -L</TT> to list the certificates by name:</UL>
         syncprov-sessionlog 100
 </PRE>
 <H4><A NAME="Set up the consumer slapd">18.3.1.3. Set up the consumer slapd</A></H4>
-<P>The syncrepl replication is specified in the database section of <EM>slapd.conf</EM>(5) for the replica context.  The syncrepl engine is backend independent and the directive can be defined with any database type.</P>
+<P>The syncrepl replication is specified in the database section of <EM>slapd.conf</EM>(5) for the replica context. The syncrepl engine is backend independent and the directive can be defined with any database type.</P>
 <PRE>
         database mdb
         maxsize 1073741824
@@ -7438,6 +7466,9 @@ Use <TT>certutil -L</TT> to list the certificates by name:</UL>
      updateref               ldap://ldapmaster.symas.com
 </PRE>
 <P>The above configuration assumes that you have a replicator identity defined in your database that can be used to bind to the provider. In addition, all of the databases (primary, replica, and the accesslog storage database) should also have properly tuned <EM>DB_CONFIG</EM> files that meet your needs.</P>
+<P><HR WIDTH="80%" ALIGN="Left">
+<STRONG>Note: </STRONG>An accesslog database is unique to a given master. It should never be replicated.
+<HR WIDTH="80%" ALIGN="Left"></P>
 <H3><A NAME="N-Way Multi-Master">18.3.3. N-Way Multi-Master</A></H3>
 <P>For the following example we will be using 3 Master nodes. Keeping in line with <B>test050-syncrepl-multimaster</B> of the OpenLDAP test suite, we will be configuring <EM>slapd(8)</EM> via <B>cn=config</B></P>
 <P>This sets up the config database:</P>
@@ -7918,7 +7949,7 @@ Use <TT>certutil -L</TT> to list the certificates by name:</UL>
 </PRE>
 <P>Note that unlike general purpose database backends, the database suffix is hardcoded.  It's always <TT>cn=Monitor</TT>.  So no <EM>suffix</EM> directive should be provided.  Also note that general purpose database backends, the monitor backend cannot be instantiated multiple times.  That is, there can only be one (or zero) occurrences of <TT>database monitor</TT> in the server's configuration.</P>
 <H2><A NAME="Accessing Monitoring Information">20.3. Accessing Monitoring Information</A></H2>
-<P>As previously discussed, when enabled, the <EM>monitor</EM> backend dynamically generates and returns objects in response to search requests in the <EM>cn=Monitor</EM> subtree.  Each object contains information about a particular aspect of the server.  The information is held in a combination of user applications and operational attributes.  This information can be access with <EM>ldapsearch(1)</EM>, with any general-purpose LDAP browser, or with specialized monitoring tools.</P>
+<P>As previously discussed, when enabled, the <EM>monitor</EM> backend dynamically generates and returns objects in response to search requests in the <EM>cn=Monitor</EM> subtree.  Each object contains information about a particular aspect of the server.  The information is held in a combination of user applications and operational attributes.  This information can be accessed with <EM>ldapsearch(1)</EM>, with any general-purpose LDAP browser, or with specialized monitoring tools.</P>
 <P>This section provides a provides a brief tutorial on how to use <EM>ldapsearch</EM>(1) to access monitoring information.</P>
 <P>To inspect any particular monitor object, one performs search operation on the object with a baseObject scope and a <TT>(objectClass=*)</TT> filter.  As the monitoring information is contained in a combination of user applications and operational attributes, the return all user applications attributes (e.g., <TT>'*'</TT>) and all operational attributes (e.g., <TT>'+'</TT>) should be requested.   For instance, to read the <TT>cn=Monitor</TT> object itself, the <EM>ldapsearch</EM>(1) command (modified to fit your configuration) can be used:</P>
 <PRE>
@@ -8286,7 +8317,7 @@ Database objects of instances of this backend
 <P>If your client application uses presence filters and if the target attribute exists on the majority of entries in your target scope, then all of those entries are going to be read anyway, because they are valid members of the result set. In a subtree where 100% of the entries are going to contain the same attributes, the presence index does absolutely NOTHING to benefit the search, because 100% of the entries match that presence filter.</P>
 <P>So the resource cost of generating the index is a complete waste of CPU time, disk, and memory. Don't do it unless you know that it will be used, and that the attribute in question occurs very infrequently in the target data.</P>
 <P>Almost no applications use presence filters in their search queries. Presence indexing is pointless when the target attribute exists on the majority of entries in the database. In most LDAP deployments, presence indexing should not be done, it's just wasted overhead.</P>
-<P>See the <EM>Logging</EM> section below on what to watch our for if you have a frequently searched for attribute that is unindexed.</P>
+<P>See the <EM>Logging</EM> section below on what to watch out for if you have a frequently searched for attribute that is unindexed.</P>
 <H2><A NAME="Logging">21.3. Logging</A></H2>
 <H3><A NAME="What log level to use">21.3.1. What log level to use</A></H3>
 <P>The default of <EM>loglevel stats</EM> (256) is really the best bet. There's a corollary to this when problems *do* arise, don't try to trace them using syslog. Use the debug flag instead, and capture slapd's stderr output. syslog is too slow for debug tracing, and it's inherently lossy - it will throw away messages when it can't keep up.</P>
@@ -8462,17 +8493,17 @@ Database objects of instances of this backend
 <H3><A NAME="Better {{B:cn=config}} functionality">A.2.1. Better <B>cn=config</B> functionality</A></H3>
 <P>There is a new slapd-config(5) manpage for the <B>cn=config</B> backend. The original design called for auto-renaming of config entries when you insert or delete entries with ordered names, but that was not implemented in 2.3. It is now in 2.4. This means, e.g., if you have</P>
 <PRE>
-   olcDatabase={1}bdb,cn=config
+   olcDatabase={1}mdb,cn=config
    olcSuffix: dc=example,dc=com
 </PRE>
 <P>and you want to add a new subordinate, now you can ldapadd:</P>
 <PRE>
-   olcDatabase={1}bdb,cn=config
+   olcDatabase={1}mdb,cn=config
    olcSuffix: dc=foo,dc=example,dc=com
 </PRE>
-<P>This will insert a new BDB database in slot 1 and bump all following databases down one, so the original BDB database will now be named:</P>
+<P>This will insert a new back-mdb database in slot 1 and bump all following databases down one, so the original back-mdb database will now be named:</P>
 <PRE>
-   olcDatabase={2}bdb,cn=config
+   olcDatabase={2}mdb,cn=config
    olcSuffix: dc=example,dc=com
 </PRE>
 <H3><A NAME="Better {{B:cn=schema}} functionality">A.2.2. Better <B>cn=schema</B> functionality</A></H3>

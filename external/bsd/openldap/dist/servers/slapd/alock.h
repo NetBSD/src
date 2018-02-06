@@ -1,10 +1,10 @@
-/*	$NetBSD: alock.h,v 1.1.1.5 2017/02/09 01:46:59 christos Exp $	*/
+/*	$NetBSD: alock.h,v 1.1.1.6 2018/02/06 01:53:15 christos Exp $	*/
 
 /* alock.h - access lock header */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2016 The OpenLDAP Foundation.
+ * Copyright 2005-2017 The OpenLDAP Foundation.
  * Portions Copyright 2004-2005 Symas Corporation.
  * All rights reserved.
  *
@@ -25,7 +25,7 @@
 #define _ALOCK_H_
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: alock.h,v 1.1.1.5 2017/02/09 01:46:59 christos Exp $");
+__RCSID("$NetBSD: alock.h,v 1.1.1.6 2018/02/06 01:53:15 christos Exp $");
 
 #include "portable.h"
 #include <ac/time.h>
