@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.116 2018/02/06 09:06:35 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.117 2018/02/06 09:30:08 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -9517,4 +9517,15 @@ sys/arch/i386/conf/XEN3_DOM0			1.126
 
 	Follow GENERIC and enable xhci(4) by default.
 	[bouyer, ticket #533]
+
+distrib/sets/lists/xetc/mi			1.29
+external/mit/xorg/lib/fontconfig/etc/conf.d/Makefile 1.5
+
+	Don't fc-match bitmap fonts by default.
+	[maya, ticket #534]
+
+share/man/man4/vnd.4				1.19
+
+	Remove outdated BUGS entry - vnd does work on sparse files.
+	[maya, ticket #535]
 
