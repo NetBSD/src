@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool.c,v 1.47 2017/09/22 03:04:17 macallan Exp $ */
+/*	$NetBSD: dbcool.c,v 1.48 2018/02/06 10:02:09 mrg Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.47 2017/09/22 03:04:17 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.48 2018/02/06 10:02:09 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1079,9 +1079,10 @@ dbcool_read_volt(struct dbcool_softc *sc, uint8_t reg, int nom_idx, bool extres)
 		if (reg == DBCOOL_IMON) {
 			val = v1;
 			ext >>= 6;
-		} else
+		} else {
 			val = v2;
 			ext >>= 4;
+		}
 		ext &= 0x0f;
 	} else {
 		ext = sc->sc_dc.dc_readreg(&sc->sc_dc, DBCOOL_EXTRES1_REG);
