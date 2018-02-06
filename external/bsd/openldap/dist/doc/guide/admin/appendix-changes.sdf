@@ -1,5 +1,5 @@
 # $OpenLDAP$
-# Copyright 2007-2016 The OpenLDAP Foundation, All Rights Reserved.
+# Copyright 2007-2017 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: Changes Since Previous Release
@@ -45,18 +45,18 @@ original design called for auto-renaming of config entries when you insert or
 delete entries with ordered names, but that was not implemented in 2.3. It is 
 now in 2.4. This means, e.g., if you have
 
->   olcDatabase={1}bdb,cn=config
+>   olcDatabase={1}mdb,cn=config
 >   olcSuffix: dc=example,dc=com
 
 and you want to add a new subordinate, now you can ldapadd:
 
->   olcDatabase={1}bdb,cn=config
+>   olcDatabase={1}mdb,cn=config
 >   olcSuffix: dc=foo,dc=example,dc=com
 
-This will insert a new BDB database in slot 1 and bump all following databases
- down one, so the original BDB database will now be named:
+This will insert a new back-mdb database in slot 1 and bump all following databases
+ down one, so the original back-mdb database will now be named:
 
->   olcDatabase={2}bdb,cn=config
+>   olcDatabase={2}mdb,cn=config
 >   olcSuffix: dc=example,dc=com
 
 H3: Better {{B:cn=schema}} functionality

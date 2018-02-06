@@ -1,5 +1,5 @@
 .TH SLAPD-META 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2016 The OpenLDAP Foundation, All Rights Reserved.
+.\" Copyright 1998-2017 The OpenLDAP Foundation, All Rights Reserved.
 .\" Copying restrictions apply.  See the COPYRIGHT file.
 .\" Copyright 2001, Pierangelo Masarati, All rights reserved. <ando@sys-net.it>
 .\" $OpenLDAP$
@@ -125,7 +125,7 @@ directive.
 
 .TP
 .B onerr {CONTINUE|report|stop}
-This directive allows to select the behavior in case an error is returned
+This directive allows one to select the behavior in case an error is returned
 by one target during a search.
 The default, \fBcontinue\fP, consists in continuing the operation, 
 trying to return as much data as possible.
@@ -313,7 +313,7 @@ overridden by any per-target directive.
 
 .TP
 .B client\-pr {accept-unsolicited|DISABLE|<size>}
-This feature allows to use RFC 2696 Paged Results control when performing
+This feature allows one to use RFC 2696 Paged Results control when performing
 search operations with a specific target,
 irrespective of the client's request.
 When set to a numeric value, Paged Results control is always
@@ -384,7 +384,7 @@ for details on the syntax of this field.
 .B [tls_protocol_min=<major>[.<minor>]]
 .B [tls_crlcheck=none|peer|all]
 .RS
-Allows to define the parameters of the authentication method that is 
+Allows one to define the parameters of the authentication method that is
 internally used by the proxy to authorize connections that are 
 authenticated by other databases.
 The identity defined by this directive, according to the properties
@@ -603,7 +603,7 @@ The rewrite options are described in the "REWRITING" section.
 
 .TP
 .B subtree\-{exclude|include} "<rule>"
-This directive allows to indicate what subtrees are actually served
+This directive allows one to indicate what subtrees are actually served
 by a target.
 The syntax of the supported rules is
 
@@ -680,7 +680,7 @@ overridden by any per-target directive.
 
 .TP
 .B timeout [<op>=]<val> [...]
-This directive allows to set per-operation timeouts.
+This directive allows one to set per-operation timeouts.
 Operations can be
 
 \fB<op> ::= bind, add, delete, modrdn, modify, compare, search\fP
@@ -882,7 +882,7 @@ An incoming string is matched against a set of rules.
 Rules are made of a regex match pattern, a substitution pattern
 and a set of actions, described by a set of flags.
 In case of match a string rewriting is performed according to the
-substitution pattern that allows to refer to substrings matched in the
+substitution pattern that allows one to refer to substrings matched in the
 incoming string.
 The actions, if any, are finally performed.
 The substitution pattern allows map resolution of substrings.
@@ -1102,7 +1102,7 @@ Examples are reported below.
 .SH "Additional configuration syntax:"
 .TP
 .B rewriteMap "<map type>" "<map name>" "[ <map attrs> ]"
-Allows to define a map that transforms substring rewriting into
+Allows one to define a map that transforms substring rewriting into
 something else.
 The map is referenced inside the substitution pattern of a rule.
 .TP

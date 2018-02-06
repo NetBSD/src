@@ -1,10 +1,10 @@
-/*	$NetBSD: host.c,v 1.1.1.5 2017/02/09 01:46:42 christos Exp $	*/
+/*	$NetBSD: host.c,v 1.1.1.6 2018/02/06 01:53:06 christos Exp $	*/
 
 /* host.c - host lookup routines */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>. 
  *
- * Copyright 2008-2016 The OpenLDAP Foundation.
+ * Copyright 2008-2017 The OpenLDAP Foundation.
  * Portions Copyright 2008 by Howard Chu, Symas Corp.
  * All rights reserved.
  *

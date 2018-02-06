@@ -1,10 +1,10 @@
-/*	$NetBSD: sssvlv.c,v 1.1.1.4 2017/02/09 01:47:03 christos Exp $	*/
+/*	$NetBSD: sssvlv.c,v 1.1.1.5 2018/02/06 01:53:16 christos Exp $	*/
 
 /* sssvlv.c - server side sort / virtual list view */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2009-2016 The OpenLDAP Foundation.
+ * Copyright 2009-2017 The OpenLDAP Foundation.
  * Portions copyright 2009 Symas Corporation.
  * All rights reserved.
  *
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sssvlv.c,v 1.1.1.4 2017/02/09 01:47:03 christos Exp $");
+__RCSID("$NetBSD: sssvlv.c,v 1.1.1.5 2018/02/06 01:53:16 christos Exp $");
 
 #include "portable.h"
 
@@ -121,6 +121,7 @@ typedef struct sort_op
 	int so_vlv_target;
 	int so_session;
 	unsigned long so_vcontext;
+	int so_running;
 } sort_op;
 
 /* There is only one conn table for all overlay instances */
@@ -401,30 +402,35 @@ static int find_next_session(
 static void free_sort_op( Connection *conn, sort_op *so )
 {
 	int sess_id;
-	if ( so->so_tree ) {
-		if ( so->so_paged > SLAP_CONTROL_IGNORED ) {
-			Avlnode *cur_node, *next_node;
-			cur_node = so->so_tree;
-			while ( cur_node ) {
-				next_node = tavl_next( cur_node, TAVL_DIR_RIGHT );
-				ch_free( cur_node->avl_data );
-				ber_memfree( cur_node );
-
-				cur_node = next_node;
-			}
-		} else {
-			tavl_free( so->so_tree, ch_free );
-		}
-		so->so_tree = NULL;
-	}
-
+		
 	ldap_pvt_thread_mutex_lock( &sort_conns_mutex );
 	sess_id = find_session_by_so( so->so_info->svi_max_percon, conn->c_conn_idx, so );
-	sort_conns[conn->c_conn_idx][sess_id] = NULL;
-	so->so_info->svi_num--;
+	if ( sess_id > -1 ) {
+	    sort_conns[conn->c_conn_idx][sess_id] = NULL;
+	    so->so_info->svi_num--;
+	}
 	ldap_pvt_thread_mutex_unlock( &sort_conns_mutex );
+	
+	if ( sess_id > -1 ){
+	    if ( so->so_tree ) {
+		    if ( so->so_paged > SLAP_CONTROL_IGNORED ) {
+			    Avlnode *cur_node, *next_node;
+			    cur_node = so->so_tree;
+			    while ( cur_node ) {
+				    next_node = tavl_next( cur_node, TAVL_DIR_RIGHT );
+				    ch_free( cur_node->avl_data );
+				    ber_memfree( cur_node );
 
-	ch_free( so );
+				    cur_node = next_node;
+			    }
+		    } else {
+			    tavl_free( so->so_tree, ch_free );
+		    }
+		    so->so_tree = NULL;
+	    }
+
+	    ch_free( so );
+	}
 }
 
 static void free_sort_ops( Connection *conn, sort_op **sos, int svi_max_percon )
@@ -709,6 +715,8 @@ static void send_result(
 	if ( so->so_tree == NULL ) {
 		/* Search finished, so clean up */
 		free_sort_op( op->o_conn, so );
+	} else {
+	    so->so_running = 0;
 	}
 }
 
@@ -864,26 +872,40 @@ static int sssvlv_op_search(
 	sess_id = find_session_by_context( si->svi_max_percon, op->o_conn->c_conn_idx, vc ? vc->vc_context : NO_VC_CONTEXT, ps ? ps->ps_cookie : NO_PS_COOKIE );
 	if ( sess_id >= 0 ) {
 		so = sort_conns[op->o_conn->c_conn_idx][sess_id];
-		/* Is it a continuation of a VLV search? */
-		if ( !vc || so->so_vlv <= SLAP_CONTROL_IGNORED ||
-			vc->vc_context != so->so_vcontext ) {
-			/* Is it a continuation of a paged search? */
-			if ( !ps || so->so_paged <= SLAP_CONTROL_IGNORED ||
-				op->o_conn->c_pagedresults_state.ps_cookie != ps->ps_cookie ) {
-				ok = 0;
-			} else if ( !ps->ps_size ) {
-			/* Abandoning current request */
-				ok = 0;
-				so->so_nentries = 0;
-				rs->sr_err = LDAP_SUCCESS;
-			}
-		}
-		if (( vc && so->so_paged > SLAP_CONTROL_IGNORED ) ||
-			( ps && so->so_vlv > SLAP_CONTROL_IGNORED )) {
-			/* changed from paged to vlv or vice versa, abandon */
-			ok = 0;
-			so->so_nentries = 0;
-			rs->sr_err = LDAP_UNWILLING_TO_PERFORM;
+		
+		if( so->so_running > 0 ){
+		    /* another thread is handling, response busy to client */
+		    so = NULL;
+		    ok = 0;
+		} else {
+		
+		    /* Is it a continuation of a VLV search? */
+		    if ( !vc || so->so_vlv <= SLAP_CONTROL_IGNORED ||
+			    vc->vc_context != so->so_vcontext ) {
+			    /* Is it a continuation of a paged search? */
+			    if ( !ps || so->so_paged <= SLAP_CONTROL_IGNORED ||
+				    op->o_conn->c_pagedresults_state.ps_cookie != ps->ps_cookie ) {
+				    ok = 0;
+			    } else if ( !ps->ps_size ) {
+			    /* Abandoning current request */
+				    ok = 0;
+				    so->so_nentries = 0;
+				    rs->sr_err = LDAP_SUCCESS;
+			    }
+		    }
+		    if (( vc && so->so_paged > SLAP_CONTROL_IGNORED ) ||
+			    ( ps && so->so_vlv > SLAP_CONTROL_IGNORED )) {
+			    /* changed from paged to vlv or vice versa, abandon */
+			    ok = 0;
+			    so->so_nentries = 0;
+			    rs->sr_err = LDAP_UNWILLING_TO_PERFORM;
+		    }
+
+		    if ( ok ) {
+			/* occupy before mutex unlock */
+			so->so_running = 1;
+		    }
+		
 		}
 	/* Are there too many running overall? */
 	} else if ( si->svi_num >= si->svi_max ) {
@@ -928,6 +950,7 @@ static int sssvlv_op_search(
 			cb->sc_response		= sssvlv_op_response;
 			cb->sc_next			= op->o_callback;
 			cb->sc_private		= so;
+			cb->sc_writewait	= NULL;
 
 			so->so_tree = NULL;
 			so->so_ctrl = sc;
@@ -951,6 +974,7 @@ static int sssvlv_op_search(
 			so->so_vlv = op->o_ctrlflag[vlv_cid];
 			so->so_vcontext = (unsigned long)so;
 			so->so_nentries = 0;
+			so->so_running = 1;
 
 			op->o_callback		= cb;
 		}
