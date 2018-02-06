@@ -1,4 +1,4 @@
-/*	$NetBSD: strlen.c,v 1.2 2007/06/04 18:19:27 christos Exp $	*/
+/*	$NetBSD: strlen.c,v 1.3 2018/02/06 09:28:48 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)strlen.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strlen.c,v 1.2 2007/06/04 18:19:27 christos Exp $");
+__RCSID("$NetBSD: strlen.c,v 1.3 2018/02/06 09:28:48 mrg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,8 +49,6 @@ size_t
 strlen(const char *str)
 {
 	const char *s;
-
-	_DIAGASSERT(str != NULL);
 
 	for (s = str; *s; ++s)
 		continue;
