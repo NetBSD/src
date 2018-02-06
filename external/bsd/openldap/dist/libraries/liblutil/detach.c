@@ -1,10 +1,10 @@
-/*	$NetBSD: detach.c,v 1.4 2017/02/09 01:53:51 christos Exp $	*/
+/*	$NetBSD: detach.c,v 1.5 2018/02/06 01:57:23 christos Exp $	*/
 
 /* detach.c -- routines to daemonize a process */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2016 The OpenLDAP Foundation.
+ * Copyright 1998-2017 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: detach.c,v 1.4 2017/02/09 01:53:51 christos Exp $");
+__RCSID("$NetBSD: detach.c,v 1.5 2018/02/06 01:57:23 christos Exp $");
 
 #include "portable.h"
 
