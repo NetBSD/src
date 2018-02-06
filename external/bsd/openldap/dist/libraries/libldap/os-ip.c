@@ -1,10 +1,10 @@
-/*	$NetBSD: os-ip.c,v 1.7 2017/02/09 01:53:51 christos Exp $	*/
+/*	$NetBSD: os-ip.c,v 1.8 2018/02/06 01:57:23 christos Exp $	*/
 
 /* os-ip.c -- platform-specific TCP & UDP related code */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2016 The OpenLDAP Foundation.
+ * Copyright 1998-2017 The OpenLDAP Foundation.
  * Portions Copyright 1999 Lars Uffmann.
  * All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: os-ip.c,v 1.7 2017/02/09 01:53:51 christos Exp $");
+__RCSID("$NetBSD: os-ip.c,v 1.8 2018/02/06 01:57:23 christos Exp $");
 
 #include "portable.h"
 
