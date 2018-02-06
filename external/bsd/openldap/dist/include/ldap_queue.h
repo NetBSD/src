@@ -1,10 +1,10 @@
-/*	$NetBSD: ldap_queue.h,v 1.4 2017/02/09 01:53:50 christos Exp $	*/
+/*	$NetBSD: ldap_queue.h,v 1.5 2018/02/06 01:57:23 christos Exp $	*/
 
 /* ldap_queue.h -- queue macros */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2016 The OpenLDAP Foundation.
+ * Copyright 2001-2017 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -227,7 +227,7 @@ struct {								\
 } while (0)
 
 #define LDAP_STAILQ_ENTRY_INIT(var, field) {				\
-	(entry)->field.stqe_next = NULL;				\
+	(var)->field.stqe_next = NULL;					\
 }
 
 #define LDAP_STAILQ_FIRST(head)	((head)->stqh_first)
@@ -386,26 +386,20 @@ struct {								\
 #define LDAP_TAILQ_FOREACH(var, head, field)				\
 	for (var = LDAP_TAILQ_FIRST(head); var; var = LDAP_TAILQ_NEXT(var, field))
 
-#define LDAP_TAILQ_FOREACH_REVERSE(var, head, type, field)		\
-	for ((var) = LDAP_TAILQ_LAST((head), type, field);		\
+#define LDAP_TAILQ_FOREACH_REVERSE(var, head, headname, field)		\
+	for ((var) = LDAP_TAILQ_LAST((head), headname);			\
 	     (var);							\
-	     (var) = LDAP_TAILQ_PREV((var), head, type, field))
+	     (var) = LDAP_TAILQ_PREV((var), headname, field))
 
 #define	LDAP_TAILQ_FIRST(head) ((head)->tqh_first)
 
-#define LDAP_TAILQ_LAST(head, type, field)				\
-	(LDAP_TAILQ_EMPTY(head) ?					\
-	 	NULL :							\
-		((struct type *)					\
-		((char *)((head)->tqh_last) - offsetof(struct type, field))))
+#define	LDAP_TAILQ_LAST(head, headname) \
+	(*(((struct headname *)((head)->tqh_last))->tqh_last))
 
 #define	LDAP_TAILQ_NEXT(elm, field) ((elm)->field.tqe_next)
 
-#define LDAP_TAILQ_PREV(elm, head, type, field) 			\
-	((struct type *)((elm)->field.tqe_prev) == LDAP_TAILQ_FIRST(head) ? \
-	NULL :								\
-	((struct type *)						\
-	((char *)((elm)->field.tqe_prev) - offsetof(struct type, field))))
+#define LDAP_TAILQ_PREV(elm, headname, field) \
+	(*(((struct headname *)((elm)->field.tqe_prev))->tqh_last))
 
 #define	LDAP_TAILQ_INIT(head) do {					\
 	(head)->tqh_first = NULL;					\
