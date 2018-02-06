@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_pip.c,v 1.1 2015/04/29 08:32:01 hikaru Exp $	*/
+/*	$NetBSD: octeon_pip.c,v 1.2 2018/02/06 09:33:45 mrg Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_pip.c,v 1.1 2015/04/29 08:32:01 hikaru Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_pip.c,v 1.2 2018/02/06 09:33:45 mrg Exp $");
 
 #include "opt_octeon.h"
 
@@ -88,6 +88,7 @@ static const struct octeon_pip_dump_reg_ octeon_pip_dump_stats_[] = {
 	_ENTRY_0_1_2_32	(PIP_STAT_INB_ERRS),
 };
 
+#ifdef OCTEON_ETH_DEBUG
 static const struct octeon_pip_dump_reg_ octeon_pip_dump_regs_[] = {
 	_ENTRY		(PIP_BIST_STATUS),
 	_ENTRY		(PIP_INT_REG),
@@ -106,6 +107,8 @@ static const struct octeon_pip_dump_reg_ octeon_pip_dump_regs_[] = {
 	_ENTRY_0_1_2_32	(PIP_PRT_CFG),
 	_ENTRY_0_1_2_32	(PIP_PRT_TAG),
 };
+#endif
+
 #undef	_ENTRY
 #undef	_ENTRY_0_3
 #undef	_ENTRY_0_7
