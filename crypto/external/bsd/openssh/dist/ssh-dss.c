@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-dss.c,v 1.12 2018/02/05 00:13:50 christos Exp $	*/
+/*	$NetBSD: ssh-dss.c,v 1.13 2018/02/06 10:56:35 maya Exp $	*/
 /* $OpenBSD: ssh-dss.c,v 1.35 2016/04/21 06:08:02 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-dss.c,v 1.12 2018/02/05 00:13:50 christos Exp $");
+__RCSID("$NetBSD: ssh-dss.c,v 1.13 2018/02/06 10:56:35 maya Exp $");
 #include <sys/types.h>
 
 #include <openssl/bn.h>
@@ -175,7 +175,6 @@ ssh_dss_verify(const struct sshkey *key,
 	}
 
 	/* parse signature */
-	{
 	BIGNUM *r=NULL, *s=NULL;
 	if ((sig = DSA_SIG_new()) == NULL ||
 	    (r = BN_new()) == NULL ||
@@ -194,7 +193,6 @@ ssh_dss_verify(const struct sshkey *key,
 	}
 	DSA_SIG_set0(sig, r, s);
 	r = s = NULL;
-	}
 
 	/* sha1 the data */
 	if ((ret = ssh_digest_memory(SSH_DIGEST_SHA1, data, datalen,
