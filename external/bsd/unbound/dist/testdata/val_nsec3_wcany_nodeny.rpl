@@ -4,13 +4,15 @@ server:
 	trust-anchor: "example.com.    3600    IN      DS      2854 3 1 46e4ffc6e9a4793b488954bd3f0cc6af0dfb201b"
 	val-override-date: "20070916134226"
 	target-fetch-policy: "0 0 0 0 0"
+	fake-sha1: yes
+	trust-anchor-signaling: no
 
 stub-zone:
 	name: "."
 	stub-addr: 193.0.14.129 	# K.ROOT-SERVERS.NET.
 CONFIG_END
 
-SCENARIO_BEGIN Test validator with NSEC3 wilcard qtype ANY without denial.
+SCENARIO_BEGIN Test validator with NSEC3 wildcard qtype ANY without denial.
 
 ; K.ROOT-SERVERS.NET.
 RANGE_BEGIN 0 100
