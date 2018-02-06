@@ -17,7 +17,7 @@
      defined(__APPLE__)) && \
     (defined(__x86_64__) || defined(__i386__) || defined(__arm__) || \
      defined(__aarch64__) || defined(__mips__) || defined(__powerpc__) || \
-     defined(__powerpc64__) || defined(__sparc__))
+     defined(__powerpc64__) || defined(__sparc__) || defined(__alpha__))
 # define CAN_SANITIZE_UB 1
 #elif defined(_WIN32)
 # define CAN_SANITIZE_UB 1
