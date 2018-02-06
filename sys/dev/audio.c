@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.451 2018/01/21 17:34:33 christos Exp $	*/
+/*	$NetBSD: audio.c,v 1.452 2018/02/06 04:39:18 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.451 2018/01/21 17:34:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.452 2018/02/06 04:39:18 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -1233,7 +1233,7 @@ audio_alloc_ring(struct audio_softc *sc, struct audio_ringbuffer *r,
 		    false, 0);
 		if (error) {
 			uvm_unmap(kernel_map, vstart, vstart + vsize);
-			uao_detach(r->uobj);
+			/* uvm_unmap also detach uobj */
 			r->uobj = NULL;		/* paranoia */
 			return error;
 		}
