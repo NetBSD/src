@@ -329,7 +329,7 @@ void ERR_load_ECDSA_strings(void);
 # define ECDSA_R_RANDOM_NUMBER_GENERATION_FAILED          104
 # define ECDSA_R_SIGNATURE_MALLOC_FAILED                  105
 
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+#if OPENSSL_API_COMPAT >= 0x10100000L
 
 static inline void
 ECDSA_SIG_get0(const ECDSA_SIG *sig, const BIGNUM **r, const BIGNUM **s)
