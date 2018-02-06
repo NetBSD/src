@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.91 2018/02/03 19:06:25 mrg Exp $
+#	$NetBSD: mknative-gcc,v 1.92 2018/02/06 07:04:01 mrg Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of gcc.
@@ -306,7 +306,7 @@ get_gcc () {
 			-e 's#build/##g'
 		getvars gcc/Makefile \
 			ALL_CFLAGS ALL_CPPFLAGS C_AND_OBJC_OBJS C_OBJS CCCP_OBJS \
-			GCC_OBJS GCOV_OBJS GXX_OBJS GTM_H PROTO_OBJS ${_extravars1} \
+			GCC_OBJS GCOV_OBJS GCOV_DUMP_OBJS GXX_OBJS GTM_H PROTO_OBJS ${_extravars1} \
 			INCLUDES md_file OBJC_OBJS OBJS out_file version \
 			BUILD_PREFIX RTL_H RTL_BASE_H TREE_H ${_hconfig_h} BASIC_BLOCK_H GCC_H \
 			GGC_H \
