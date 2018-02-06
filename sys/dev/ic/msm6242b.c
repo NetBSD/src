@@ -1,4 +1,4 @@
-/*      $NetBSD: msm6242b.c,v 1.3 2013/12/04 07:48:59 rkujawa Exp $ */
+/*      $NetBSD: msm6242b.c,v 1.4 2018/02/06 13:26:32 rin Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msm6242b.c,v 1.3 2013/12/04 07:48:59 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msm6242b.c,v 1.4 2018/02/06 13:26:32 rin Exp $");
 
 /* 
  * Driver for OKI MSM6242B Real Time Clock. Somewhat based on an ancient, amiga
@@ -123,7 +123,7 @@ msm6242b_gettime_ymdhms(todr_chip_handle_t handle, struct clock_ymdhms *dt)
 		    MSM6242B_PMAM_BIT) == 0 && dt->dt_hour == 12)
 			dt->dt_hour = 0;
 		else if ((msm6242b_read(sc, MSM6242B_10HOUR_PMAM) & 
-		    MSM6242B_PMAM_BIT) && dt->dt_hour != 12);
+		    MSM6242B_PMAM_BIT) && dt->dt_hour != 12)
 			dt->dt_hour += 12;
 	}
 
