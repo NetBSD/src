@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_sbus.c,v 1.53 2014/10/18 08:33:28 snj Exp $	*/
+/*	$NetBSD: esp_sbus.c,v 1.54 2018/02/06 09:21:07 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.53 2014/10/18 08:33:28 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.54 2018/02/06 09:21:07 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -752,12 +752,13 @@ db_esp(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 				    " busy %d used %x\n",
 				    t, (int)li->lun, li->untagged, li->busy,
 				    li->used);
-				for (i = 0; i < 256; i++)
+				for (i = 0; i < 256; i++) {
 					ecb = li->queued[i];
 					if (ecb != NULL) {
 						db_printf("ecb %p tag %x\n",
 						    ecb, i);
 					}
+				}
 			}
 		}
 	}
