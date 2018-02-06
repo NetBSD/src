@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.353 2017/10/28 00:37:13 pgoyette Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.354 2018/02/06 09:20:29 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.353 2017/10/28 00:37:13 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.354 2018/02/06 09:20:29 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -2762,7 +2762,7 @@ uvm_map_extract(struct vm_map *srcmap, vaddr_t start, vsize_t len,
 			if (newentry->object.uvm_obj->pgops->pgo_reference)
 				newentry->object.uvm_obj->pgops->
 				    pgo_reference(newentry->object.uvm_obj);
-				newentry->offset = entry->offset + fudge;
+			newentry->offset = entry->offset + fudge;
 		} else {
 			newentry->offset = 0;
 		}
