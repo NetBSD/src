@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.2 2016/08/25 07:13:39 christos Exp $
+# $NetBSD: Makefile.inc,v 1.3 2018/02/06 03:30:18 christos Exp $
 
 .include "../Makefile.inc"
 
@@ -16,8 +16,9 @@ SRCS+=${PROG}.c
 .else
 MAN+=${PROG}.conf.5
 ${PROG}.conf.5: ${PROG}.conf.5.in __subst
-.PATH: ${UNBOUND}/daemon
+.PATH: ${UNBOUND}/daemon ${UNBOUND}/util/shm_side
 SRCS+= acl_list.c cachedump.c daemon.c remote.c stats.c unbound.c worker.c
+SRCS+= shm_main.c
 .endif
 CLEANFILES+=${PROG}.8
 MAN+=${PROG}.8

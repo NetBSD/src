@@ -1,8 +1,5 @@
-# $NetBSD: Makefile,v 1.2 2018/02/06 03:05:48 christos Exp $
+# $NetBSD: Makefile,v 1.3 2018/02/06 03:30:18 christos Exp $
 
 PROG=unbound
-SRCS=shm_main.c
 
 .include <bsd.prog.mk>
-
-.PATH: ${UNBOUND}/util ${UNBOUND}/util/shm_side
