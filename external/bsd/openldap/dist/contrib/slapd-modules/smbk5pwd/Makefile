@@ -1,7 +1,7 @@
 # $OpenLDAP$
 # This work is part of OpenLDAP Software <http://www.openldap.org/>.
 #
-# Copyright 1998-2016 The OpenLDAP Foundation.
+# Copyright 1998-2017 The OpenLDAP Foundation.
 # Copyright 2004 Howard Chu, Symas Corp. All Rights Reserved.
 #
 # Redistribution and use in source and binary forms, with or without

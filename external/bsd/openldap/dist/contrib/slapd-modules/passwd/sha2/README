@@ -124,7 +124,7 @@ conn=0 fd=12 closed (connection lost)
 
 This work is part of OpenLDAP Software <http://www.openldap.org/>.
 
-Copyright 2009-2016 The OpenLDAP Foundation.
+Copyright 2009-2017 The OpenLDAP Foundation.
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without

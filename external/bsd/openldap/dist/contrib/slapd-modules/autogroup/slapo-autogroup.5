@@ -1,0 +1,102 @@
+.TH SLAPO-AUTOGROUP 5 "RELEASEDATE" "OpenLDAP LDVERSION"
+.\" Copyright 1998-2017 \[u00A9] The OpenLDAP Foundation, All Rights Reserved.
+.\" Portions Copyright \[u00A9] 2007 Michał Szulczyński.
+.\" Copying restrictions apply.  See the COPYRIGHT file.
+.\" $OpenLDAP$
+.SH NAME
+\FCslapo-autogroup\FT \- automatic updates of group memberships which meet the
+requirements of any filter contained in the group definition.
+.SH SYNOPSIS
+In \FCslapd.conf\FT:
+ ...
+ \FCinclude ETCDIR/schema/dyngroup.schema\FT
+ ...
+ \FCmoduleload autogroup.so\FT
+ ...
+ \FCdatabase\FT ...
+ ...
+ \FCoverlay autogroup\FT
+ \FCautogroup-attrset groupOfURLs memberURL member\FT
+.SH DESCRIPTION
+The
+.B autogroup
+overlay to
+.BR slapd (8)
+allows automated updates of group memberships which meet the requirements
+of any filter contained in the group definition. The filters are built from
+LDAP URI-valued attributes. Any time an object is added/deleted/updated, it is
+tested for compliance with the filters, and its membership is accordingly
+updated. For searches and compares, it behaves like a static group.
+If the attribute part of the URI is filled, the group entry is populated by
+the values of this attribute in the entries resulting from the search.
+.SH CONFIGURATION
+Either
+.BR \FCslapd.conf\FT (5)
+or the \FCcn=config\FT methodology of
+.BR \FCslapd-config\FT (5)
+may be used for configuring autogroup.  Both syntaxes are provided
+here for convenience:
+.TP
+.B \FCautogroup-attrset\FT <group-oc> <URL-ad> <member-ad>
+.TP
+.B \FColcAGattrSet:\FT <group-oc> <URL-ad> <member-ad>
+This defines the objectclass-attribute-URI mappings defining the
+automatically managed groups, and may appear multiple times.
+
+The value <group-oc> is the name of the objectClass that represents
+the group.
+
+The value <URL-ad> is the name of the attributeDescription that
+contains the URI that is converted to the filters. If no URI is
+present, there will be no members in that group. It must be a subtype
+of labeledURI.
+
+The value <member-ad> is the name of the attributeDescription that
+specifies the member attribute. User modification of this attribute is
+disabled for consistency.
+.TP
+.B \FCautogroup-memberof-ad\FT <memberof-ad>
+.TP
+.B \FColcAGmemberOfAd\FT <memberof-ad>
+This defines the attribute that is used by the memberOf overlay to
+store the names of groups that an entry is member of; it must be
+DN-valued. It should be set to the same value as
+memberof-memberof-ad. It defaults to 'memberOf'.
+.SH EXAMPLES
+As above in SYNOPSIS, or with memberof:
+
+ ...
+ \FCinclude ETCDIR/schema/dyngroup.schema\FT
+ \FCinclude ETCDIR/schema/memberof.schema\FT
+ ...
+ \FCmoduleload autogroup.so\FT
+ \FCmoduleload memberof.so\FT
+ ...
+ \FCdatabase\FT ...
+ ...
+ \FCoverlay memberof\FT
+ \FCmemberof-memberof-ad\FT foo
+ ...
+ \FCoverlay autogroup\FT
+ \FCautogroup-attrset groupOfURLs memberURL member\FT
+ \FCautogroup-memberof-ad\FT foo
+.SH CAVEATS
+As with static groups, update operations on groups with a large number
+of members may be slow. If the attribute part of the URI is specified,
+modify and delete operations are more difficult to handle. In these
+cases the overlay will try to detect if groups have been modified and
+then simply refresh them. This can cause performance hits if the
+search specified by the URI deals with a significant number of
+entries.
+.SH ACKNOWLEDGEMENTS
+This module was originally written in 2007 by Michał
+Szulczyński.  Further enhancements were contributed by Howard
+Chu, Raphael Ouazana, Norbert Pueschel, and Christian Manal.  Manpage
+updates provided by Emily Backes.
+.SH SEE ALSO
+.BR slapd.conf (5),
+.BR slapd (8).
+.SH Copyrights
+Copyright \[u00A9] 1998-2017 The OpenLDAP Foundation.
+Portions Copyright \[u00A9] 2007 Michał Szulczyński.
+All rights reserved.

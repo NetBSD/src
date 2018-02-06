@@ -1,5 +1,5 @@
 .TH SLAPO_PPOLICY 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 2004-2016 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 2004-2017 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .\" $OpenLDAP$
 .SH NAME
@@ -28,7 +28,8 @@ Note that some of the policies do not take effect when the operation
 is performed with the
 .B rootdn
 identity; all the operations, when performed with any other identity,
-may be subjected to constraints, like access control.
+may be subjected to constraints, like access control.  This overlay
+requires a rootdn to be configured on the database.
 .P
 Note that the IETF Password Policy proposal for LDAP makes sense
 when considering a single-valued password attribute, while 
@@ -104,7 +105,7 @@ object class.  The definition of that class is as follows:
         pwdLockout $ pwdLockoutDuration $
         pwdMaxFailure $ pwdFailureCountInterval $
         pwdMustChange $ pwdAllowUserChange $
-        pwdSafeModify 4 pwdMaxRecordedFailure ) )
+        pwdSafeModify $ pwdMaxRecordedFailure ) )
 .RE
 
 This implementation also provides an additional

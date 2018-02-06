@@ -1,5 +1,5 @@
 # $OpenLDAP$
-# Copyright 1999-2016 The OpenLDAP Foundation, All Rights Reserved.
+# Copyright 1999-2017 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: A Quick-Start Guide
@@ -188,7 +188,7 @@ specified olcDbDirectory must exist prior to starting {{slapd}}(8).
 . You are now ready to import your configration database for use by
 {{slapd}}(8), by running the command:
 
-..{{EX: su root -c /usr/local/sbin/slapadd -F /usr/local/etc/cn=config -l /usr/local/etc/openldap/slapd.ldif}}
+..{{EX: su root -c /usr/local/sbin/slapadd -n 0 -F /usr/local/etc/slapd.d -l /usr/local/etc/openldap/slapd.ldif}}
 
 .{{S: }}
 +{{B:Start SLAPD}}.
@@ -196,7 +196,7 @@ specified olcDbDirectory must exist prior to starting {{slapd}}(8).
 . You are now ready to start the Standalone LDAP Daemon, {{slapd}}(8),
 by running the command:
 
-..{{EX:su root -c /usr/local/libexec/slapd -F /usr/local/etc/cn=config}}
+..{{EX:su root -c /usr/local/libexec/slapd -F /usr/local/etc/slapd.d}}
 
 
 . To check to see if the server is running and configured correctly,

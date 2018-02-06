@@ -1,4 +1,4 @@
-/*	$NetBSD: neoXldap.c,v 1.1.1.3 2014/05/28 09:58:27 tron Exp $	*/
+/*	$NetBSD: neoXldap.c,v 1.1.1.4 2018/02/06 01:53:06 christos Exp $	*/
 
 /*
  * NeoSoft Tcl client extensions to Lightweight Directory Access Protocol.

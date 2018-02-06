@@ -1,5 +1,5 @@
 # Id
-# Copyright 1999-2016 The OpenLDAP Foundation, All Rights Reserved.
+# Copyright 1999-2017 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 # This contribution is derived from OpenLDAP Software.
@@ -97,31 +97,35 @@ When using the {{slapd config}} backend, the corresponding
 attribute is {{EX:olcLimits}}. The syntax of
 the values is the same in both cases.
 
->   limits <who> <limit> [<limit> [...]]
+>   limits <selector> <limit> [<limit> [...]]
 
 The {{limits}} clause can be specified multiple times to apply different
 limits to different initiators. The server examines each clause in turn
-until it finds one that matches the ID that requested the operation.
+until it finds one that matches the operation's initiator or base DN.
 If no match is found, the global limits will be used.
 
 H3: Specify who the limits apply to
 
-The {{EX:<who>}} part of the {{limits}} clause can take any of these values:
+The {{EX:<selector>}} part of the {{limits}} clause can take any of these values:
 
 !block table; align=Center; coltags="EX,N"; \
-    title="Table ZZZ.ZZZ: Entity Specifiers"
+    title="Table 9.1: Limits Entity Specifiers"
 Specifier|Entities
 *|All, including anonymous and authenticated users
 anonymous|Anonymous (non-authenticated) users
 users|Authenticated users
-self|User associated with target entry
-dn[.<basic-style>]=<regex>|Users matching a regular expression
-dn.<scope-style>=<DN>|Users within scope of a DN
+dn[.<type>][.<style>]=<pattern>]|Entry or entries within a scope that match <pattern>
 group[/oc[/at]]=<pattern>|Members of a group
 !endblock
 
-The rules for specifying {{EX:<who>}} are the same as those used in
-access-control rules.
+Where
+
+{{type}} can be one of self or this and
+
+{{style}} can be one of exact, base, onelevel, subtree, children, regex, or anonymous
+
+More information can be found in the {{slapd.conf}}(5) or {{slapd-config}}(5) manual
+pages.
 
 H3: Specify time limits
 

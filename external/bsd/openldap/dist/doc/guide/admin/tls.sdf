@@ -1,5 +1,5 @@
 # $OpenLDAP$
-# Copyright 1999-2016 The OpenLDAP Foundation, All Rights Reserved.
+# Copyright 1999-2017 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: Using TLS
@@ -188,18 +188,20 @@ and it doesn't need very much data to work.
 
 This directive is ignored with GnuTLS and Mozilla NSS.
 
-H4: TLSEphemeralDHParamFile <filename>
+H4: TLSDHParamFile <filename>
 
 This directive specifies the file that contains parameters for
 Diffie-Hellman ephemeral key exchange.  This is required in order
-to use a DSA certificate on the server side (i.e.
-{{EX:TLSCertificateKeyFile}} points to a DSA key).  Multiple sets
-of parameters can be included in the file; all of them will be
-processed.  Parameters can be generated using the following command
+to use DHE-based cipher suites, including all DSA-based suites (i.e.
+{{EX:TLSCertificateKeyFile}} points to a DSA key), and RSA when the 'key
+encipherment' key usage is not specified in the certificate.  Parameters can be
+generated using the following command
 
 >	openssl dhparam [-dsaparam] -out <filename> <numbits>
+or
+>	certtool --generate-dh-params --bits <numbits> --outfile <filename>
 
-This directive is ignored with GnuTLS and Mozilla NSS.
+This directive is ignored with Mozilla NSS.
 
 H4: TLSVerifyClient { never | allow | try | demand }
 

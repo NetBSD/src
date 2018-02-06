@@ -1,10 +1,10 @@
-/*	$NetBSD: lastmod.c,v 1.1.1.5 2017/02/09 01:46:42 christos Exp $	*/
+/*	$NetBSD: lastmod.c,v 1.1.1.6 2018/02/06 01:53:06 christos Exp $	*/
 
 /* lastmod.c - returns last modification info */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2016 The OpenLDAP Foundation.
+ * Copyright 2004-2017 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lastmod.c,v 1.1.1.5 2017/02/09 01:46:42 christos Exp $");
+__RCSID("$NetBSD: lastmod.c,v 1.1.1.6 2018/02/06 01:53:06 christos Exp $");
 
 #include "portable.h"
 
@@ -741,9 +741,7 @@ lastmod_response( Operation *op, SlapReply *rs )
 }
 
 static int
-lastmod_db_init(
-	BackendDB *be
-)
+lastmod_db_init( BackendDB *be, ConfigReply *cr )
 {
 	slap_overinst		*on = (slap_overinst *)be->bd_info;
 	lastmod_info_t		*lmi;
@@ -832,9 +830,7 @@ lastmod_db_config(
 }
 
 static int
-lastmod_db_open(
-	BackendDB *be
-)
+lastmod_db_open( BackendDB *be, ConfigReply *cr )
 {
 	slap_overinst	*on = (slap_overinst *) be->bd_info;
 	lastmod_info_t	*lmi = (lastmod_info_t *)on->on_bi.bi_private;
@@ -909,9 +905,7 @@ lastmod_db_open(
 }
 
 static int
-lastmod_db_destroy(
-	BackendDB *be
-)
+lastmod_db_destroy( BackendDB *be, ConfigReply *cr )
 {
 	slap_overinst	*on = (slap_overinst *)be->bd_info;
 	lastmod_info_t	*lmi = (lastmod_info_t *)on->on_bi.bi_private;
