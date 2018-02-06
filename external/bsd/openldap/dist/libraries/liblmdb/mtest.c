@@ -1,8 +1,8 @@
-/*	$NetBSD: mtest.c,v 1.1.1.2 2017/02/09 01:46:44 christos Exp $	*/
+/*	$NetBSD: mtest.c,v 1.1.1.3 2018/02/06 01:53:08 christos Exp $	*/
 
 /* mtest.c - memory-mapped database tester/toy */
 /*
- * Copyright 2011-2016 Howard Chu, Symas Corp.
+ * Copyright 2011-2017 Howard Chu, Symas Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

@@ -1,10 +1,10 @@
-/*	$NetBSD: slap.h,v 1.1.1.6 2017/02/09 01:46:59 christos Exp $	*/
+/*	$NetBSD: slap.h,v 1.1.1.7 2018/02/06 01:53:15 christos Exp $	*/
 
 /* slap.h - stand alone ldap server include file */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2016 The OpenLDAP Foundation.
+ * Copyright 1998-2017 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -2376,8 +2376,8 @@ typedef struct slap_callback {
 	struct slap_callback *sc_next;
 	slap_response *sc_response;
 	slap_response *sc_cleanup;
-	slap_writewait *sc_writewait;
 	void *sc_private;
+	slap_writewait *sc_writewait;
 } slap_callback;
 
 struct slap_overinfo;

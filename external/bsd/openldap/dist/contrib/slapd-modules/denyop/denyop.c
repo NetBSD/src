@@ -1,10 +1,10 @@
-/*	$NetBSD: denyop.c,v 1.1.1.5 2017/02/09 01:46:42 christos Exp $	*/
+/*	$NetBSD: denyop.c,v 1.1.1.6 2018/02/06 01:53:06 christos Exp $	*/
 
 /* denyop.c - Denies operations */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2016 The OpenLDAP Foundation.
+ * Copyright 2004-2017 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: denyop.c,v 1.1.1.5 2017/02/09 01:46:42 christos Exp $");
+__RCSID("$NetBSD: denyop.c,v 1.1.1.6 2018/02/06 01:53:06 christos Exp $");
 
 #include "portable.h"
 
@@ -114,7 +114,7 @@ denyop_func( Operation *op, SlapReply *rs )
 
 static int
 denyop_over_init(
-	BackendDB *be
+	BackendDB *be, ConfigReply *cr
 )
 {
 	slap_overinst		*on = (slap_overinst *) be->bd_info;
@@ -209,7 +209,7 @@ denyop_config(
 
 static int
 denyop_destroy(
-	BackendDB *be
+	BackendDB *be, ConfigReply *cr
 )
 {
 	slap_overinst	*on = (slap_overinst *) be->bd_info;

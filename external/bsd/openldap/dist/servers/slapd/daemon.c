@@ -1,9 +1,9 @@
-/*	$NetBSD: daemon.c,v 1.1.1.6 2017/02/09 01:46:58 christos Exp $	*/
+/*	$NetBSD: daemon.c,v 1.1.1.7 2018/02/06 01:53:14 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2016 The OpenLDAP Foundation.
+ * Copyright 1998-2017 The OpenLDAP Foundation.
  * Portions Copyright 2007 by Howard Chu, Symas Corporation.
  * All rights reserved.
  *
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: daemon.c,v 1.1.1.6 2017/02/09 01:46:58 christos Exp $");
+__RCSID("$NetBSD: daemon.c,v 1.1.1.7 2018/02/06 01:53:14 christos Exp $");
 
 #include "portable.h"
 
@@ -1296,7 +1296,7 @@ slap_open_listener(
 	LDAPURLDesc *lud;
 	unsigned short port;
 	int err, addrlen = 0;
-	struct sockaddr **sal, **psal;
+	struct sockaddr **sal = NULL, **psal;
 	int socktype = SOCK_STREAM;	/* default to COTS */
 	ber_socket_t s;
 

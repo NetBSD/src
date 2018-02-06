@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.1.1.3 2017/02/09 01:46:42 christos Exp $	*/
+/*	$NetBSD: init.c,v 1.1.1.4 2018/02/06 01:53:06 christos Exp $	*/
 
 /* Copyright 2004 IBM Corporation
  * All rights reserved.
@@ -12,7 +12,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: init.c,v 1.1.1.3 2017/02/09 01:46:42 christos Exp $");
+__RCSID("$NetBSD: init.c,v 1.1.1.4 2018/02/06 01:53:06 christos Exp $");
 
 #include "portable.h"
 #include <ac/string.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: meter.c,v 1.1.1.3 2017/02/09 01:46:46 christos Exp $	*/
+/*	$NetBSD: meter.c,v 1.1.1.4 2018/02/06 01:53:08 christos Exp $	*/
 
 /* meter.c - lutil_meter meters */
 /* $OpenLDAP$ */
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: meter.c,v 1.1.1.3 2017/02/09 01:46:46 christos Exp $");
+__RCSID("$NetBSD: meter.c,v 1.1.1.4 2018/02/06 01:53:08 christos Exp $");
 
 #include "portable.h"
 #include "lutil_meter.h"

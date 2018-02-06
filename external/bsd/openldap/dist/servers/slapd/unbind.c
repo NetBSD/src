@@ -1,10 +1,10 @@
-/*	$NetBSD: unbind.c,v 1.1.1.5 2017/02/09 01:46:57 christos Exp $	*/
+/*	$NetBSD: unbind.c,v 1.1.1.6 2018/02/06 01:53:13 christos Exp $	*/
 
 /* unbind.c - decode an ldap unbind operation and pass it to a backend db */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2016 The OpenLDAP Foundation.
+ * Copyright 1998-2017 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: unbind.c,v 1.1.1.5 2017/02/09 01:46:57 christos Exp $");
+__RCSID("$NetBSD: unbind.c,v 1.1.1.6 2018/02/06 01:53:13 christos Exp $");
 
 #include "portable.h"
 
