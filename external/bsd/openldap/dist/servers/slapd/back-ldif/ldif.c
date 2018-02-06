@@ -1,10 +1,10 @@
-/*	$NetBSD: ldif.c,v 1.1.1.5 2017/02/09 01:47:05 christos Exp $	*/
+/*	$NetBSD: ldif.c,v 1.1.1.6 2018/02/06 01:53:17 christos Exp $	*/
 
 /* ldif.c - the ldif backend */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2016 The OpenLDAP Foundation.
+ * Copyright 2005-2017 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ldif.c,v 1.1.1.5 2017/02/09 01:47:05 christos Exp $");
+__RCSID("$NetBSD: ldif.c,v 1.1.1.6 2018/02/06 01:53:17 christos Exp $");
 
 #include "portable.h"
 #include <stdio.h>

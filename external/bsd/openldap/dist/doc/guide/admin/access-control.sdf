@@ -1,5 +1,5 @@
 # $OpenLDAP$
-# Copyright 1999-2016 The OpenLDAP Foundation, All Rights Reserved.
+# Copyright 1999-2017 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: Access Control
@@ -271,7 +271,7 @@ This access directive grants read access to everyone.
 >        by * read
 
 This directive allows the user to modify their entry, allows anonymous
-to authentication against these entries, and allows all others to
+to authenticate against these entries, and allows all others to
 read these entries.  Note that only the first {{EX:by <who>}} clause
 which matches applies.  Hence, the anonymous users are granted
 {{EX:auth}}, not {{EX:read}}.  The last clause could just as well
@@ -327,7 +327,7 @@ attribute and various {{EX:<who>}} selectors.
 >    access to dn.subtree="dc=example,dc=com" attrs=homePhone
 >        by self write
 >        by dn.children="dc=example,dc=com" search
->        by peername.regex=IP:10\..+ read
+>        by peername.regex=IP=10\..+ read
 >    access to dn.subtree="dc=example,dc=com"
 >        by self write
 >        by dn.children="dc=example,dc=com" search
@@ -665,7 +665,7 @@ attribute and various {{EX:<who>}} selectors.
 >    olcAccess: to dn.subtree="dc=example,dc=com" attrs=homePhone
 >        by self write
 >        by dn.children=dc=example,dc=com" search
->        by peername.regex=IP:10\..+ read
+>        by peername.regex=IP=10\..+ read
 >    olcAccess: to dn.subtree="dc=example,dc=com"
 >        by self write
 >        by dn.children="dc=example,dc=com" search
@@ -781,7 +781,7 @@ H3: Basic ACLs
 
 Generally one should start with some basic ACLs such as:
 
->    access to attr=userPassword
+>    access to attrs=userPassword
 >        by self =xw
 >        by anonymous auth
 >        by * none

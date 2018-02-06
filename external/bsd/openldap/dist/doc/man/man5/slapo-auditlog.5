@@ -1,5 +1,5 @@
 .TH SLAPO-AUDITLOG 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 2005-2016 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 2005-2017 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .\" $OpenLDAP$
 .SH NAME
@@ -38,7 +38,7 @@ The following LDIF could be used to add this overlay to
 .LP
 .RS
 .nf
-dn: olcOverlay=auditlog,olcDatabase={1}hdb,cn=config 
+dn: olcOverlay=auditlog,olcDatabase={1}mdb,cn=config
 changetype: add
 objectClass: olcOverlayConfig
 objectClass: olcAuditLogConfig

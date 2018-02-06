@@ -1,8 +1,8 @@
-/*	$NetBSD: LDAPSaslBindResult.h,v 1.1.1.4 2017/02/09 01:46:43 christos Exp $	*/
+/*	$NetBSD: LDAPSaslBindResult.h,v 1.1.1.5 2018/02/06 01:53:07 christos Exp $	*/
 
 // $OpenLDAP$
 /*
- * Copyright 2007-2016 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 2007-2017 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
