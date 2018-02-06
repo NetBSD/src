@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.13 2017/01/10 21:05:42 christos Exp $	*/
+/*	$NetBSD: tls.c,v 1.14 2018/02/06 21:36:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.13 2017/01/10 21:05:42 christos Exp $");
+__RCSID("$NetBSD: tls.c,v 1.14 2018/02/06 21:36:46 christos Exp $");
 
 #ifndef DISABLE_TLS
 #include <sys/stat.h>
@@ -104,16 +104,20 @@ get_dh1024(void)
 		0x88,0xEC,0xA6,0xBA,0x9F,0x4F,0x85,0x43 };
 	static const unsigned char dh1024_g[]={ 0x02 };
 	DH *dh;
+	BIGNUM *p, *g;
 
-	if ((dh=DH_new()) == NULL)
+	if ((dh = DH_new()) == NULL)
 		return NULL;
-	dh->p = BN_bin2bn(dh1024_p, sizeof(dh1024_p), NULL);
-	dh->g = BN_bin2bn(dh1024_g, sizeof(dh1024_g), NULL);
-	if ((dh->p == NULL) || (dh->g == NULL)) {
+	p = BN_bin2bn(dh1024_p, sizeof(dh1024_p), NULL);
+	g = BN_bin2bn(dh1024_g, sizeof(dh1024_g), NULL);
+	if (p == NULL || g == NULL)
+		goto out;
+	if (!DH_set0_pqg(dh, p, NULL, g))
+		goto out;
+	return dh;
+out:
 		DH_free(dh);
 		return NULL;
-	}
-	return dh;
 }
 
 #define ST_CHANGE(x, y) do {					\
@@ -435,7 +439,6 @@ bool
 match_hostnames(X509 *cert, const char *hostname, const char *subject)
 {
 	int i, len, num;
-	char *buf;
 	unsigned char *ubuf;
 	GENERAL_NAMES *gennames;
 	GENERAL_NAME *gn;
@@ -474,10 +477,11 @@ match_hostnames(X509 *cert, const char *hostname, const char *subject)
 		for (i = 0; i < num; ++i) {
 			gn = sk_GENERAL_NAME_value(gennames, i);
 			if (gn->type == GEN_DNS) {
-				buf = (char *)ASN1_STRING_data(gn->d.ia5);
+				const char *str = (const char *)
+				    ASN1_STRING_get0_data(gn->d.ia5);
 				len = ASN1_STRING_length(gn->d.ia5);
-				if (!strncasecmp(subject, buf, len)
-				    || !strncasecmp(hostname, buf, len))
+				if (!strncasecmp(subject, str, len)
+				    || !strncasecmp(hostname, str, len))
 					return true;
 			}
 		}
@@ -703,8 +707,10 @@ check_peer_cert(int preverify_ok, X509_STORE_CTX *ctx)
 		    X509_verify_cert_error_string(cur_err),
 		    cur_depth, cur_subjectline);
 		if (cur_err == X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT) {
+			X509 *current_cert =
+			    X509_STORE_CTX_get_current_cert(ctx);
 			X509_NAME_oneline(
-			    X509_get_issuer_name(ctx->current_cert),
+			    X509_get_issuer_name(current_cert),
 			    cur_issuerline, sizeof(cur_issuerline));
 			DPRINTF(D_TLS, "openssl verify error:missing "
 			    "cert for issuer=%s\n", cur_issuerline);
@@ -2089,8 +2095,16 @@ mk_x509_cert(X509 **x509p, EVP_PKEY **pkeyp, int bits, int serial, int days)
 		return false;
 	}
 
-	dsa = DSA_generate_parameters(bits, NULL, 0,
-			    NULL, NULL, NULL, NULL);
+	dsa = DSA_new();
+	if (dsa == NULL) {
+		DPRINTF(D_TLS, "DSA_new() failed\n");
+		return false;
+	}
+
+	if (!DSA_generate_parameters_ex(dsa, bits, NULL, 0, NULL, NULL, NULL)) {
+		DPRINTF(D_TLS, "DSA_generate_parameters_ex() failed\n");
+		return false;
+	}
 	if (!DSA_generate_key(dsa)) {
 		DPRINTF(D_TLS, "DSA_generate_key() failed\n");
 		return false;
@@ -2160,7 +2174,7 @@ mk_x509_cert(X509 **x509p, EVP_PKEY **pkeyp, int bits, int serial, int days)
 
 	(void)x509_cert_add_subjectAltName(cert, &ctx);
 
-	if (!X509_sign(cert, pk, EVP_dss1())) {
+	if (!X509_sign(cert, pk, EVP_sha1())) {
 		DPRINTF(D_TLS, "X509_sign() failed\n");
 		return false;
 	}
