@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.362 2018/01/16 08:23:17 mrg Exp $ */
+/*	$NetBSD: pmap.c,v 1.363 2018/02/06 09:22:57 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.362 2018/01/16 08:23:17 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.363 2018/02/06 09:22:57 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -3214,7 +3214,10 @@ pmap_bootstrap4_4c(void *top, int nctx, int nregion, int nsegment)
 	 * above NUREG, we save storage space and can index kernel and
 	 * user regions in the same way.
 	 */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Warray-bounds"
 	kernel_pmap_store.pm_regmap = kernel_regmap_store - NUREG;
+#pragma GCC diagnostic pop
 	for (i = NKREG; --i >= 0;) {
 #if defined(SUN4_MMU3L)
 		kernel_regmap_store[i].rg_smeg = reginval;
@@ -3592,7 +3595,10 @@ pmap_bootstrap4m(void *top)
 	 * above NUREG, we save storage space and can index kernel and
 	 * user regions in the same way.
 	 */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Warray-bounds"
 	kernel_pmap_store.pm_regmap = kernel_regmap_store - NUREG;
+#pragma GCC diagnostic pop
 	memset(kernel_regmap_store, 0, NKREG * sizeof(struct regmap));
 	memset(kernel_segmap_store, 0, NKREG * NSEGRG * sizeof(struct segmap));
 	for (i = NKREG; --i >= 0;) {
