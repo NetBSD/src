@@ -1,4 +1,4 @@
-/*	$NetBSD: inout.c,v 1.2 2017/04/10 16:37:48 christos Exp $	*/
+/*	$NetBSD: inout.c,v 1.3 2018/02/06 17:58:19 christos Exp $	*/
 /*	$OpenBSD: inout.c,v 1.20 2017/02/26 11:29:55 otto Exp $	*/
 
 /*
@@ -17,7 +17,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: inout.c,v 1.2 2017/04/10 16:37:48 christos Exp $");
+__RCSID("$NetBSD: inout.c,v 1.3 2018/02/06 17:58:19 christos Exp $");
 
 #include <ctype.h>
 #include <err.h>
@@ -331,19 +331,21 @@ printnumber(FILE *f, const struct number *b, u_int base)
 	stack_clear(&stack);
 	if (b->scale > 0) {
 		struct number	*num_base;
-		BIGNUM		mult, stop;
+		BIGNUM		*mult, *stop;
 
 		putcharwrap(f, '.');
 		num_base = new_number();
 		bn_check(BN_set_word(num_base->number, base));
-		BN_init(&mult);
-		bn_check(BN_one(&mult));
-		BN_init(&stop);
-		bn_check(BN_one(&stop));
-		scale_number(&stop, (int)b->scale);
+		mult = BN_new();
+		stop = BN_new();
+		if (mult == NULL || stop == NULL)
+			err(1, NULL);
+		bn_check(BN_one(mult));
+		bn_check(BN_one(stop));
+		scale_number(stop, (int)b->scale);
 
 		i = 0;
-		while (BN_cmp(&mult, &stop) < 0) {
+		while (BN_cmp(mult, stop) < 0) {
 			u_long	rem;
 
 			if (i && base > 16)
@@ -361,11 +363,11 @@ printnumber(FILE *f, const struct number *b, u_int base)
 			    int_part->number));
 			printwrap(f, p);
 			free(p);
-			bn_check(BN_mul_word(&mult, base));
+			bn_check(BN_mul_word(mult, base));
 		}
 		free_number(num_base);
-		BN_free(&mult);
-		BN_free(&stop);
+		BN_free(mult);
+		BN_free(stop);
 	}
 	flushwrap(f);
 	free_number(int_part);
