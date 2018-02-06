@@ -1,4 +1,4 @@
-/*	$NetBSD: sign.c,v 1.6 2015/02/10 20:38:15 christos Exp $	*/
+/*	$NetBSD: sign.c,v 1.7 2018/02/06 21:36:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  * 1. check; next draft will be clearer and specify the format as implemented.
  * 2. check; definitely only DSA in this version.
  * 3. remains a problem, so far no statement from authors or WG.
- * 4. check; used EVP_dss1 method implements FIPS.
+ * 4. check; used EVP_sha1 method implements FIPS.
  */
 /*
  * Limitations of this implementation:
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sign.c,v 1.6 2015/02/10 20:38:15 christos Exp $");
+__RCSID("$NetBSD: sign.c,v 1.7 2018/02/06 21:36:46 christos Exp $");
 
 #ifndef DISABLE_SIGN
 #include "syslogd.h"
@@ -99,15 +99,19 @@ sign_global_init(struct filed *Files)
 	EVP_MD_CTX_init(GlobalSign.sigctx);
 
 	/* the signature algorithm depends on the type of key */
-	if (EVP_PKEY_DSA == EVP_PKEY_type(GlobalSign.pubkey->type)) {
-		GlobalSign.sig = EVP_dss1();
+	switch (EVP_PKEY_base_id(GlobalSign.pubkey)) {
+	case EVP_PKEY_DSA:
+		GlobalSign.sig = EVP_sha1();
 		GlobalSign.sig_len_b64 = SIGN_B64SIGLEN_DSS;
-/* this is the place to add non-DSA key types and algorithms
-	} else if (EVP_PKEY_RSA == EVP_PKEY_type(GlobalSign.pubkey->type)) {
+		break;
+#ifdef notyet
+	/* this is the place to add non-DSA key types and algorithms */
+	case EVP_PKEY_RSA:
 		GlobalSign.sig = EVP_sha1();
 		GlobalSign.sig_len_b64 = 28;
-*/
-	} else {
+		break;
+#endif
+	default:
 		logerror("key type not supported for syslog-sign");
 		return false;
 	}
@@ -115,7 +119,6 @@ sign_global_init(struct filed *Files)
 	assert(GlobalSign.keytype == 'C' || GlobalSign.keytype == 'K');
 	assert(GlobalSign.pubkey_b64 && GlobalSign.privkey &&
 	    GlobalSign.pubkey);
-	assert(GlobalSign.privkey->pkey.dsa->priv_key);
 
 	GlobalSign.gbc = 0;
 	STAILQ_INIT(&GlobalSign.SigGroups);
@@ -126,7 +129,7 @@ sign_global_init(struct filed *Files)
 	EVP_MD_CTX_init(GlobalSign.mdctx);
 
 	/* values for SHA-1 */
-	GlobalSign.md = EVP_dss1();
+	GlobalSign.md = EVP_sha1();
 	GlobalSign.md_len_b64 = 28;
 	GlobalSign.ver = "0111";
 
@@ -191,7 +194,7 @@ sign_get_keys(void)
 		 */
 		FREE_SSL(ssl);
 
-		if (EVP_PKEY_DSA != EVP_PKEY_type(pubkey->type)) {
+		if (EVP_PKEY_DSA != EVP_PKEY_base_id(pubkey)) {
 			DPRINTF(D_SIGN, "X.509 cert has no DSA key\n");
 			EVP_PKEY_free(pubkey);
 			privkey = NULL;
@@ -234,8 +237,15 @@ sign_get_keys(void)
 			logerror("EVP_PKEY_new() failed");
 			return false;
 		}
-		dsa = DSA_generate_parameters(SIGN_GENCERT_BITS, NULL, 0,
-			NULL, NULL, NULL, NULL);
+		if ((dsa = DSA_new()) == NULL) {
+			logerror("DSA_new() failed");
+			return false;
+		}
+		if (!DSA_generate_parameters_ex(dsa, SIGN_GENCERT_BITS, NULL, 0,
+			NULL, NULL, NULL)) {
+			logerror("DSA_generate_parameters_ex() failed");
+			return false;
+		}
 		if (!DSA_generate_key(dsa)) {
 			logerror("DSA_generate_key() failed");
 			return false;
