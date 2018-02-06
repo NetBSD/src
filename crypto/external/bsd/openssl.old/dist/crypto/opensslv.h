@@ -30,9 +30,7 @@ extern "C" {
  * (Prior to 0.9.5a beta1, a different scheme was used: MMNNFFRBB for
  *  major minor fix final patch/beta)
  */
-# ifndef OPENSSL_VERSION_NUMBER
 # define OPENSSL_VERSION_NUMBER  0x100020bfL
-# endif
 # ifdef OPENSSL_FIPS
 #  define OPENSSL_VERSION_TEXT    "OpenSSL 1.0.2k-fips  26 Jan 2017"
 # else
