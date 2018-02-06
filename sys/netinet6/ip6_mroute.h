@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.h,v 1.17 2009/03/18 17:06:52 cegger Exp $	*/
+/*	$NetBSD: ip6_mroute.h,v 1.18 2018/02/06 06:32:25 maxv Exp $	*/
 /*	$KAME: ip6_mroute.h,v 1.17 2001/02/10 02:05:52 itojun Exp $	*/
 
 /*
@@ -209,19 +209,12 @@ struct sioc_mif_req6 {
 struct mif6 {
         u_char   	m6_flags;     	/* MIFF_ flags defined above         */
 	u_int      	m6_rate_limit; 	/* max rate			     */
-#ifdef notyet
-	struct tbf      *m6_tbf;      	/* token bucket structure at intf.   */
-#endif
 	struct in6_addr	m6_lcl_addr;   	/* local interface address           */
 	struct ifnet    *m6_ifp;     	/* pointer to interface              */
 	u_quad_t	m6_pkt_in;	/* # pkts in on interface            */
 	u_quad_t	m6_pkt_out;	/* # pkts out on interface           */
 	u_quad_t	m6_bytes_in;	/* # bytes in on interface	     */
 	u_quad_t	m6_bytes_out;	/* # bytes out on interface	     */
-#ifdef notyet
-	u_int		m6_rsvp_on;	/* RSVP listening on this vif */
-	struct socket   *m6_rsvpd;	/* RSVP daemon socket */
-#endif
 };
 
 /*

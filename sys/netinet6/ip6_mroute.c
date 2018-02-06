@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.121 2018/02/02 09:01:17 maxv Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.122 2018/02/06 06:32:25 maxv Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.121 2018/02/02 09:01:17 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.122 2018/02/06 06:32:25 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -550,10 +550,7 @@ ip6_mrouter_done(void)
 			}
 		}
 	}
-#ifdef notyet
-	memset((void *)qtable, 0, sizeof(qtable));
-	memset((void *)tbftable, 0, sizeof(tbftable));
-#endif
+
 	memset((void *)mif6table, 0, sizeof(mif6table));
 	nummifs = 0;
 
@@ -649,9 +646,6 @@ add_m6if(struct mif6ctl *mifcp)
 	struct ifnet *ifp;
 	struct sockaddr_in6 sin6;
 	int error, s;
-#ifdef notyet
-	struct tbf *m_tbf = tbftable + mifcp->mif6c_mifi;
-#endif
 
 	if (mifcp->mif6c_mifi >= MAXMIFS)
 		return EINVAL;
@@ -754,10 +748,6 @@ del_m6if(mifi_t *mifip)
 		}
 	}
 
-#ifdef notyet
-	memset((void *)qtable[*mifip], 0, sizeof(qtable[*mifip]));
-	memset((void *)mifp->m6_tbf, 0, sizeof(*(mifp->m6_tbf)));
-#endif
 	memset((void *)mifp, 0, sizeof (*mifp));
 
 	/* Adjust nummifs down */
