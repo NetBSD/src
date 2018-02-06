@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.h,v 1.39 2017/12/26 17:00:50 christos Exp $	*/
+/*	$NetBSD: pthread.h,v 1.40 2018/02/06 20:22:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,10 @@
 #include <pthread_types.h>
 
 __BEGIN_DECLS
+#ifndef __PTHREAD_ATFORK_DECLARED
+#define __PTHREAD_ATFORK_DECLARED
 int	pthread_atfork(void (*)(void), void (*)(void), void (*)(void));
+#endif
 int	pthread_create(pthread_t * __restrict,
 	    const pthread_attr_t * __restrict, void *(*)(void *),
 	    void * __restrict);
