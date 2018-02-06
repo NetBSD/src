@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.117 2018/02/06 09:30:08 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.118 2018/02/06 20:33:35 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -9446,7 +9446,11 @@ sys/arch/x86/pci/amdsmn.c			1.1-1.3
 sys/arch/x86/pci/amdsmn.h			1.1
 sys/arch/x86/pci/amdzentemp.c			1.1-1.7
 sys/arch/x86/pci/files.pci			1.22,1.23
-sys/modules/amdzentemp/amdzentemp.ioconf	1.2
+sys/modules/Makefile				1.199
+sys/modules/amdsmn/Makefile			1.1
+sys/modules/amdsmn/amdsmn.ioconf		1.1
+sys/modules/amdzentemp/Makefile			1.1
+sys/modules/amdzentemp/amdzentemp.ioconf	1.1-1.2
 
 	Provide amdsmn(4) and amdzentemp(4) drivers (and modules)
 	to access on-die temperature sensors on AMD Ryzen CPUs.
