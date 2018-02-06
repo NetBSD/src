@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.239 2018/02/03 21:27:45 mrg Exp $
+# $NetBSD: mi,v 1.240 2018/02/06 23:12:02 mrg Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -541,6 +541,7 @@
 ./usr/libdata/debug/usr/bin/gcc.debug		comp-c-debug		gcccmds,debug
 ./usr/libdata/debug/usr/bin/gcore.debug		comp-debug-debug	debug
 ./usr/libdata/debug/usr/bin/gcov.debug		comp-debug-debug	gcccmds,debug
+./usr/libdata/debug/usr/bin/gcov-dump.debug	comp-debug-debug	gcccmds,debug,gcc=6
 ./usr/libdata/debug/usr/bin/gdb.debug		comp-debug-debug	gdb,debug
 ./usr/libdata/debug/usr/bin/gdbtui.debug	comp-debug-debug	gdb,debug
 ./usr/libdata/debug/usr/bin/gencat.debug	comp-locale-debug	debug

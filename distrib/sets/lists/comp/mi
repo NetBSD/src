@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2175 2018/02/04 11:08:16 mrg Exp $
+#	$NetBSD: mi,v 1.2176 2018/02/06 23:12:01 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -39,6 +39,7 @@
 ./usr/bin/gcc					comp-c-bin		gcccmds
 ./usr/bin/gcore					comp-debug-bin
 ./usr/bin/gcov					comp-debug-bin		gcccmds
+./usr/bin/gcov-dump				comp-debug-bin		gcccmds,gcc=6
 ./usr/bin/gdb					comp-debug-bin		gdb
 ./usr/bin/gdbtui				comp-debug-bin		gdb
 ./usr/bin/genassym				comp-util-bin
@@ -4013,6 +4014,7 @@
 ./usr/share/man/cat1/gcc.0			comp-c-catman		gcccmds,.cat
 ./usr/share/man/cat1/gcore.0			comp-debug-catman	.cat
 ./usr/share/man/cat1/gcov.0			comp-debug-catman	gcccmds,.cat
+./usr/share/man/cat1/gcov-dump.0		comp-debug-catman	gcccmds,.cat,gcc=6
 ./usr/share/man/cat1/gdb.0			comp-debug-catman	gdb,.cat
 ./usr/share/man/cat1/genassym.0			comp-util-catman	.cat
 ./usr/share/man/cat1/gprof.0			comp-debug-catman	binutils,.cat
@@ -11697,6 +11699,7 @@
 ./usr/share/man/html1/gcc.html			comp-c-htmlman		gcccmds,html
 ./usr/share/man/html1/gcore.html		comp-debug-htmlman	html
 ./usr/share/man/html1/gcov.html			comp-debug-htmlman	gcccmds,html
+./usr/share/man/html1/gcov-dump.html		comp-debug-htmlman	gcccmds,html,gcc=6
 ./usr/share/man/html1/gdb.html			comp-debug-htmlman	gdb,html
 ./usr/share/man/html1/genassym.html		comp-util-htmlman	html
 ./usr/share/man/html1/gprof.html		comp-debug-htmlman	binutils,html
@@ -19121,6 +19124,7 @@
 ./usr/share/man/man1/gcc.1			comp-c-man		gcccmds,.man
 ./usr/share/man/man1/gcore.1			comp-debug-man		.man
 ./usr/share/man/man1/gcov.1			comp-debug-man		gcccmds,.man
+./usr/share/man/man1/gcov-dump.1		comp-debug-man		gcccmds,.man,gcc=6
 ./usr/share/man/man1/gdb.1			comp-debug-man		gdb,.man
 ./usr/share/man/man1/genassym.1			comp-util-man		.man
 ./usr/share/man/man1/gprof.1			comp-debug-man		binutils,.man
