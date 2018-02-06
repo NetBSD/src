@@ -1,4 +1,4 @@
-/*	$NetBSD: factor.c,v 1.28 2017/11/11 23:48:44 rin Exp $	*/
+/*	$NetBSD: factor.c,v 1.29 2018/02/06 16:53:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)factor.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: factor.c,v 1.28 2017/11/11 23:48:44 rin Exp $");
+__RCSID("$NetBSD: factor.c,v 1.29 2018/02/06 16:53:27 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -234,8 +234,8 @@ pr_fact(BIGNUM *val, int hflag)
 			BN_set_word(bnfact, (BN_ULONG)*(fact - 1));
 			BN_sqr(bnfact, bnfact, ctx);
 			if (BN_cmp(bnfact, val) > 0
-			    || BN_is_prime(val, PRIME_CHECKS, NULL, NULL,
-					   NULL) == 1) {
+			    || BN_is_prime_ex(val, PRIME_CHECKS, NULL, NULL)
+			    == 1) {
 				putchar(' ');
 				BN_print_dec_fp(stdout, val);
 			} else
@@ -326,8 +326,8 @@ restart:
 		BN_gcd(tmp, tmp, val, ctx);
 
 		if (!BN_is_one(tmp)) {
-			if (BN_is_prime(tmp, PRIME_CHECKS, NULL, NULL,
-			    NULL) == 1) {
+			if (BN_is_prime_ex(tmp, PRIME_CHECKS, NULL, NULL) == 1)
+			{
 				putchar(' ');
 				BN_print_dec_fp(stdout, tmp);
 			} else {
@@ -346,8 +346,8 @@ restart:
 			BN_div(num, NULL, val, tmp, ctx);
 			if (BN_is_one(num))
 				return;
-			if (BN_is_prime(num, PRIME_CHECKS, NULL, NULL,
-			    NULL) == 1) {
+			if (BN_is_prime_ex(num, PRIME_CHECKS, NULL, NULL) == 1)
+			{
 				putchar(' ');
 				BN_print_dec_fp(stdout, num);
 				fflush(stdout);
