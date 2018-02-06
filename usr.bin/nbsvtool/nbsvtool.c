@@ -1,4 +1,4 @@
-/*	$NetBSD: nbsvtool.c,v 1.2 2008/06/11 16:31:09 joerg Exp $	*/
+/*	$NetBSD: nbsvtool.c,v 1.3 2018/02/06 19:51:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2008 The NetBSD Foundation, Inc.
@@ -148,10 +148,11 @@ verify_file(STACK_OF(X509) *cert_chain, const char *anchor,
 
 	if (key_usage != 0) {
 		for (i = 0; i < sk_X509_num(signers); i++) {
-			if ((sk_X509_value(signers, i)->ex_xkusage & key_usage)
+			X509 *x = sk_X509_value(signers, i);
+			if ((X509_get_extended_key_usage(x) & key_usage)
 			    == key_usage)
 				continue;
-			name = X509_get_subject_name(sk_X509_value(signers, i));
+			name = X509_get_subject_name(x);
 			subject = X509_NAME_oneline(name, NULL, 0);
 			errx(EXIT_FAILURE,
 			    "Certificate doesn't match required key usage: %s",
