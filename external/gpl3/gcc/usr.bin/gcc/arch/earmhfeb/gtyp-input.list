@@ -63,6 +63,7 @@ SRCDIR/gcc/dwarf2cfi.c
 SRCDIR/gcc/dwarf2out.c
 SRCDIR/gcc/tree-vect-generic.c
 SRCDIR/gcc/dojump.c
+SRCDIR/gcc/emit-rtl.h
 SRCDIR/gcc/emit-rtl.c
 SRCDIR/gcc/except.h
 SRCDIR/gcc/explow.c
@@ -73,7 +74,7 @@ SRCDIR/gcc/except.c
 SRCDIR/gcc/gcse.c
 SRCDIR/gcc/godump.c
 SRCDIR/gcc/lists.c
-SRCDIR/gcc/optabs.c
+SRCDIR/gcc/optabs-libfuncs.c
 SRCDIR/gcc/profile.c
 SRCDIR/gcc/mcf.c
 SRCDIR/gcc/reg-stack.c
@@ -118,8 +119,10 @@ SRCDIR/gcc/asan.c
 SRCDIR/gcc/ubsan.c
 SRCDIR/gcc/tsan.c
 SRCDIR/gcc/sanopt.c
+SRCDIR/gcc/sancov.c
 SRCDIR/gcc/ipa-devirt.c
 SRCDIR/gcc/internal-fn.h
+SRCDIR/gcc/hsa.c
 SRCDIR/gcc/config/arm/arm-builtins.c
 [c]
 SRCDIR/gcc/c/c-lang.c
@@ -164,6 +167,7 @@ SRCDIR/gcc/cp/cp-lang.c
 SRCDIR/gcc/cp/except.c
 SRCDIR/gcc/cp/vtable-class-hierarchy.c
 SRCDIR/gcc/cp/constexpr.c
+SRCDIR/gcc/cp/cp-gimplify.c
 [jit]
 SRCDIR/gcc/jit/dummy-frontend.c
 [lto]
@@ -219,6 +223,7 @@ SRCDIR/gcc/cp/cp-objcp-common.c
 SRCDIR/gcc/cp/except.c
 SRCDIR/gcc/cp/vtable-class-hierarchy.c
 SRCDIR/gcc/cp/constexpr.c
+SRCDIR/gcc/cp/cp-gimplify.c
 SRCDIR/gcc/objc/objc-map.h
 SRCDIR/gcc/objc/objc-act.h
 SRCDIR/gcc/objc/objc-act.c
