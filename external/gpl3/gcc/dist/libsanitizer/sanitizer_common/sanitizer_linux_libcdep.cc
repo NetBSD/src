@@ -164,6 +164,7 @@ static uptr g_tls_size;
 # define DL_INTERNAL_FUNCTION
 #endif
 
+#if !SANITIZER_FREEBSD && !SANITIZER_NETBSD && !SANITIZER_ANDROID && !SANITIZER_GO
 #if defined(__mips__) || defined(__powerpc64__)
 // TlsPreTcbSize includes size of struct pthread_descr and size of tcb
 // head structure. It lies before the static tls blocks.
@@ -181,6 +182,7 @@ static uptr TlsPreTcbSize() {
   return kTlsPreTcbSize;
 }
 #endif
+#endif // !SANITIZER_FREEBSD && !SANITIZER_NETBSD && !SANITIZER_ANDROID && !SANITIZER_GO
 
 void InitTlsSize() {
 #if !SANITIZER_FREEBSD && !SANITIZER_ANDROID && !SANITIZER_NETBSD && !SANITIZER_GO
