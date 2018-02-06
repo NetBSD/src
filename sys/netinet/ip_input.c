@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.372 2018/02/05 15:23:14 maxv Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.373 2018/02/06 06:36:40 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.372 2018/02/05 15:23:14 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.373 2018/02/06 06:36:40 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -305,7 +305,7 @@ ip_init(void)
 #ifdef MBUFTRACE
 	MOWNER_ATTACH(&ip_tx_mowner);
 	MOWNER_ATTACH(&ip_rx_mowner);
-#endif /* MBUFTRACE */
+#endif
 
 	ipstat_percpu = percpu_alloc(sizeof(uint64_t) * IP_NSTATS);
 	ipforward_rt_percpu = percpu_alloc(sizeof(struct route));
@@ -592,7 +592,7 @@ ip_input(struct mbuf *m)
 		 * from generating ICMP redirects for packets that have
 		 * been redirected by a hook back out on to the same LAN that
 		 * they came from and is not an indication that the packet
-		 * is being inffluenced by source routing options.  This
+		 * is being influenced by source routing options.  This
 		 * allows things like
 		 * "rdr tlp0 0/0 port 80 -> 1.1.1.200 3128 tcp"
 		 * where tlp0 is both on the 1.1.1.0/24 network and is the
@@ -1473,7 +1473,7 @@ error:
 		/*
 		 * Do not generate ICMP_SOURCEQUENCH as required in RFC 1812,
 		 * Requirements for IP Version 4 Routers.  Source quench can
-		 * big problem under DoS attacks or if the underlying
+		 * be a big problem under DoS attacks or if the underlying
 		 * interface is rate-limited.
 		 */
 		if (mcopy)
