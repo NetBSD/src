@@ -1,4 +1,4 @@
-/*	$NetBSD: prsa_par.y,v 1.6 2011/03/02 14:49:21 vanhu Exp $	*/
+/*	$NetBSD: prsa_par.y,v 1.7 2018/02/07 03:59:03 christos Exp $	*/
 
 /* Id: prsa_par.y,v 1.3 2004/11/08 12:04:23 ludvigm Exp */
 
@@ -174,31 +174,26 @@ statement:
 rsa_statement:
 	TAG_RSA OBRACE params EBRACE
 	{
+		const BIGNUM *n, *e, *d;
+		RSA_get0_key(rsa_cur, &n, &e, &d);
 		if (prsa_cur_type == RSA_TYPE_PUBLIC) {
 			prsawarning("Using private key for public key purpose.\n");
-			if (!rsa_cur->n || !rsa_cur->e) {
+			if (!n || !e) {
 				prsaerror("Incomplete key. Mandatory parameters are missing!\n");
 				YYABORT;
 			}
 		}
 		else {
-			if (!rsa_cur->n || !rsa_cur->e || !rsa_cur->d) {
+			const BIGNUM *p, *q, *dmp1, *dmq1, *iqmp;
+			if (!n || !e || !d) {
 				prsaerror("Incomplete key. Mandatory parameters are missing!\n");
 				YYABORT;
 			}
-			if (!rsa_cur->p || !rsa_cur->q || !rsa_cur->dmp1
-			    || !rsa_cur->dmq1 || !rsa_cur->iqmp) {
-				if (rsa_cur->p) BN_clear_free(rsa_cur->p);
-				if (rsa_cur->q) BN_clear_free(rsa_cur->q);
-				if (rsa_cur->dmp1) BN_clear_free(rsa_cur->dmp1);
-				if (rsa_cur->dmq1) BN_clear_free(rsa_cur->dmq1);
-				if (rsa_cur->iqmp) BN_clear_free(rsa_cur->iqmp);
-
-				rsa_cur->p = NULL;
-				rsa_cur->q = NULL;
-				rsa_cur->dmp1 = NULL;
-				rsa_cur->dmq1 = NULL;
-				rsa_cur->iqmp = NULL;
+			RSA_get0_factors(rsa_cur, &p, &q);
+			RSA_get0_crt_params(rsa_cur, &dmp1, &dmq1, &iqmp);
+			if (!p || !q || !dmp1 || !dmq1 || !iqmp) {
+				RSA_free(rsa_cur);
+				rsa_cur = RSA_new();
 			}
 		}
 		$$ = rsa_cur;
@@ -301,21 +296,93 @@ params:
 
 param:
 	MODULUS COLON HEX 
-	{ if (!rsa_cur->n) rsa_cur->n = $3; else { prsaerror ("Modulus already defined\n"); YYABORT; } }
+	{ 
+	    const BIGNUM *n;
+	    RSA_get0_key(rsa_cur, &n, NULL, NULL);
+	    if (!n)
+		RSA_set0_key(rsa_cur, $3, NULL, NULL);
+	    else {
+		prsaerror("Modulus already defined\n");
+		YYABORT;
+	    }
+	}
 	| PUBLIC_EXPONENT COLON HEX 
-	{ if (!rsa_cur->e) rsa_cur->e = $3; else { prsaerror ("PublicExponent already defined\n"); YYABORT; } }
+	{ 
+	    const BIGNUM *e;
+	    RSA_get0_key(rsa_cur, NULL, &e, NULL);
+	    if (!e)
+		RSA_set0_key(rsa_cur, NULL, $3, NULL);
+	    else {
+		prsaerror("PublicExponent already defined\n");
+		YYABORT;
+	    }
+	}
 	| PRIVATE_EXPONENT COLON HEX 
-	{ if (!rsa_cur->d) rsa_cur->d = $3; else { prsaerror ("PrivateExponent already defined\n"); YYABORT; } }
+	{ 
+	    const BIGNUM *d;
+	    RSA_get0_key(rsa_cur, NULL, NULL, &d);
+	    if (!d)
+		RSA_set0_key(rsa_cur, NULL, NULL, $3);
+	    else {
+		prsaerror("PrivateExponent already defined\n");
+		YYABORT;
+	    }
+	}
 	| PRIME1 COLON HEX 
-	{ if (!rsa_cur->p) rsa_cur->p = $3; else { prsaerror ("Prime1 already defined\n"); YYABORT; } }
+	{ 
+	    const BIGNUM *p;
+	    RSA_get0_factors(rsa_cur, &p, NULL);
+	    if (!p)
+		RSA_set0_factors(rsa_cur, $3, NULL);
+	    else {
+		prsaerror("Prime1 already defined\n");
+		YYABORT;
+	    }
+	}
 	| PRIME2 COLON HEX 
-	{ if (!rsa_cur->q) rsa_cur->q = $3; else { prsaerror ("Prime2 already defined\n"); YYABORT; } }
+	{
+	    const BIGNUM *q;
+	    RSA_get0_factors(rsa_cur, NULL, &q);
+	    if (!q)
+		RSA_set0_factors(rsa_cur, NULL, $3);
+	    else {
+		prsaerror("Prime2 already defined\n");
+		YYABORT;
+	    }
+	}
 	| EXPONENT1 COLON HEX 
-	{ if (!rsa_cur->dmp1) rsa_cur->dmp1 = $3; else { prsaerror ("Exponent1 already defined\n"); YYABORT; } }
+	{
+	    const BIGNUM *dmp1;
+	    RSA_get0_crt_params(rsa_cur, &dmp1, NULL, NULL);
+	    if (!dmp1)
+		RSA_set0_crt_params(rsa_cur, $3, NULL, NULL);
+	    else {
+		prsaerror("Exponent1 already defined\n");
+		YYABORT;
+	    }
+	}
 	| EXPONENT2 COLON HEX 
-	{ if (!rsa_cur->dmq1) rsa_cur->dmq1 = $3; else { prsaerror ("Exponent2 already defined\n"); YYABORT; } }
+	{
+	    const BIGNUM *dmq1;
+	    RSA_get0_crt_params(rsa_cur, NULL, &dmq1, NULL);
+	    if (!dmq1)
+		RSA_set0_crt_params(rsa_cur, NULL, $3, NULL);
+	    else {
+		prsaerror("Exponent2 already defined\n");
+		YYABORT;
+	    }
+	}
 	| COEFFICIENT COLON HEX 
-	{ if (!rsa_cur->iqmp) rsa_cur->iqmp = $3; else { prsaerror ("Coefficient already defined\n"); YYABORT; } }
+	{
+	    const BIGNUM *iqmp;
+	    RSA_get0_crt_params(rsa_cur, NULL, NULL, &iqmp);
+	    if (!iqmp)
+		RSA_set0_crt_params(rsa_cur, NULL, NULL, $3);
+	    else {
+		prsaerror("Coefficient already defined\n");
+		YYABORT;
+	    }
+	}
 	;
 %%
 
