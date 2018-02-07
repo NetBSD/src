@@ -1,4 +1,4 @@
-/*	$NetBSD: frag6.c,v 1.65 2018/01/30 14:49:25 maxv Exp $	*/
+/*	$NetBSD: frag6.c,v 1.66 2018/02/07 09:53:08 maxv Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.65 2018/01/30 14:49:25 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.66 2018/02/07 09:53:08 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -90,7 +90,7 @@ struct	ip6asfrag {
 	int		ip6af_offset;	/* offset in ip6af_m to next header */
 	int		ip6af_frglen;	/* fragmentable part length */
 	int		ip6af_off;	/* fragment offset */
-	bool		ip6af_more;	/* more fragment bit in frag off */
+	bool		ip6af_mff;	/* more fragment bit in frag off */
 };
 
 
@@ -356,7 +356,7 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 	ip6af->ip6af_len = ip6->ip6_plen;
 	ip6af->ip6af_nxt = ip6->ip6_nxt;
 	ip6af->ip6af_hlim = ip6->ip6_hlim;
-	ip6af->ip6af_more = (ip6f->ip6f_offlg & IP6F_MORE_FRAG) != 0;
+	ip6af->ip6af_mff = (ip6f->ip6f_offlg & IP6F_MORE_FRAG) != 0;
 	ip6af->ip6af_off = fragoff;
 	ip6af->ip6af_frglen = frgpartlen;
 	ip6af->ip6af_offset = offset;
@@ -415,7 +415,7 @@ insert:
 		}
 		next += af6->ip6af_frglen;
 	}
-	if (af6->ip6af_up->ip6af_more) {
+	if (af6->ip6af_up->ip6af_mff) {
 		mutex_exit(&frag6_lock);
 		goto done;
 	}
