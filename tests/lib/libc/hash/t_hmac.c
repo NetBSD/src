@@ -1,4 +1,4 @@
-/*	$NetBSD: t_hmac.c,v 1.1 2016/07/02 14:52:09 christos Exp $	*/
+/*	$NetBSD: t_hmac.c,v 1.2 2018/02/07 13:18:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_hmac.c,v 1.1 2016/07/02 14:52:09 christos Exp $");
+__RCSID("$NetBSD: t_hmac.c,v 1.2 2018/02/07 13:18:33 christos Exp $");
 
 #include <atf-c.h>
 #include <string.h>
@@ -49,7 +49,9 @@ test(void)
 	int stop;
 	void *e1;
 	const void *evps[] = {
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 		EVP_md2(),
+#endif
 		EVP_md4(),
 		EVP_md5(),
 		EVP_ripemd160(),
@@ -60,7 +62,9 @@ test(void)
 		EVP_sha512(),
 	};
 	const char *names[] = {
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 		"md2",
+#endif
 		"md4",
 		"md5",
 		"rmd160",
