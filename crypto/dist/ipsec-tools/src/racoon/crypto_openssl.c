@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto_openssl.c,v 1.26 2017/06/11 22:12:56 christos Exp $	*/
+/*	$NetBSD: crypto_openssl.c,v 1.27 2018/02/07 03:59:03 christos Exp $	*/
 
 /* Id: crypto_openssl.c,v 1.47 2006/05/06 20:42:09 manubsd Exp */
 
@@ -109,11 +109,11 @@
  * necessary for SSLeay/OpenSSL portability.  It sucks.
  */
 
-static int cb_check_cert_local __P((int, X509_STORE_CTX *));
-static int cb_check_cert_remote __P((int, X509_STORE_CTX *));
-static X509 *mem2x509 __P((vchar_t *));
+static int cb_check_cert_local(int, X509_STORE_CTX *);
+static int cb_check_cert_remote(int, X509_STORE_CTX *);
+static X509 *mem2x509(vchar_t *);
 
-static caddr_t eay_hmac_init __P((vchar_t *, const EVP_MD *));
+static caddr_t eay_hmac_init(vchar_t *, const EVP_MD *);
 
 /* X509 Certificate */
 /*
@@ -312,13 +312,19 @@ eay_cmp_asn1dn(n1, n2)
 	for(idx = 0; idx < X509_NAME_entry_count(a); idx++) {
 		X509_NAME_ENTRY *ea = X509_NAME_get_entry(a, idx);
 		X509_NAME_ENTRY *eb = X509_NAME_get_entry(b, idx);
+		ASN1_STRING *eda, *edb;
 		if (!eb) {	/* reached end of eb while still entries in ea, can not be equal... */
 			i = idx+1;
 			goto end;
 		}
-		if ((ea->value->length == 1 && ea->value->data[0] == '*') ||
-		    (eb->value->length == 1 && eb->value->data[0] == '*')) {
-	    		if (OBJ_cmp(ea->object,eb->object)) {
+		eda = X509_NAME_ENTRY_get_data(ea);
+		edb = X509_NAME_ENTRY_get_data(eb);
+		if ((eda->length == 1 && eda->data[0] == '*') ||
+		    (edb->length == 1 && edb->data[0] == '*')) {
+			ASN1_OBJECT *eoa, *eob;
+			eoa = X509_NAME_ENTRY_get_object(ea);
+			eob = X509_NAME_ENTRY_get_object(eb);
+	    		if (OBJ_cmp(eoa, eob)) {
 				i = idx+1;
 				goto end;
 	    		}
@@ -426,19 +432,17 @@ cb_check_cert_local(ok, ctx)
 	X509_STORE_CTX *ctx;
 {
 	char buf[256];
-	int log_tag;
+	int log_tag, error;
 
 	if (!ok) {
-		X509_NAME_oneline(
-				X509_get_subject_name(ctx->current_cert),
-				buf,
-				256);
+		X509_NAME_oneline(X509_get_subject_name(
+		    X509_STORE_CTX_get_current_cert(ctx)), buf, 256);
 		/*
 		 * since we are just checking the certificates, it is
 		 * ok if they are self signed. But we should still warn
 		 * the user.
  		 */
-		switch (ctx->error) {
+		switch (error = X509_STORE_CTX_get_error(ctx)) {
 		case X509_V_ERR_CERT_HAS_EXPIRED:
 		case X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT:
 		case X509_V_ERR_INVALID_CA:
@@ -453,9 +457,8 @@ cb_check_cert_local(ok, ctx)
 		}
 		plog(log_tag, LOCATION, NULL,
 			"%s(%d) at depth:%d SubjectName:%s\n",
-			X509_verify_cert_error_string(ctx->error),
-			ctx->error,
-			ctx->error_depth,
+			X509_verify_cert_error_string(error), error,
+			X509_STORE_CTX_get_error_depth(ctx),
 			buf);
 	}
 	ERR_clear_error();
@@ -473,14 +476,12 @@ cb_check_cert_remote(ok, ctx)
 	X509_STORE_CTX *ctx;
 {
 	char buf[256];
-	int log_tag;
+	int log_tag, error;
 
 	if (!ok) {
-		X509_NAME_oneline(
-				X509_get_subject_name(ctx->current_cert),
-				buf,
-				256);
-		switch (ctx->error) {
+		X509_NAME_oneline(X509_get_subject_name(
+		    X509_STORE_CTX_get_current_cert(ctx)), buf, 256);
+		switch (error = X509_STORE_CTX_get_error(ctx)) {
 		case X509_V_ERR_UNABLE_TO_GET_CRL:
 			ok = 1;
 			log_tag = LLV_WARNING;
@@ -490,9 +491,9 @@ cb_check_cert_remote(ok, ctx)
 		}
 		plog(log_tag, LOCATION, NULL,
 			"%s(%d) at depth:%d SubjectName:%s\n",
-			X509_verify_cert_error_string(ctx->error),
-			ctx->error,
-			ctx->error_depth,
+			X509_verify_cert_error_string(error),
+			error,
+			X509_STORE_CTX_get_error_depth(ctx),
 			buf);
 	}
 	ERR_clear_error();
@@ -508,6 +509,7 @@ eay_get_x509asn1subjectname(cert)
 	vchar_t *cert;
 {
 	X509 *x509 = NULL;
+	X509_NAME *xname;
 	u_char *bp;
 	vchar_t *name = NULL;
 	int len;
@@ -517,13 +519,14 @@ eay_get_x509asn1subjectname(cert)
 		goto error;
 
 	/* get the length of the name */
-	len = i2d_X509_NAME(x509->cert_info->subject, NULL);
+	xname = X509_get_subject_name(x509);
+	len = i2d_X509_NAME(xname, NULL);
 	name = vmalloc(len);
 	if (!name)
 		goto error;
 	/* get the name */
 	bp = (unsigned char *) name->v;
-	len = i2d_X509_NAME(x509->cert_info->subject, &bp);
+	len = i2d_X509_NAME(xname, &bp);
 
 	X509_free(x509);
 
@@ -674,6 +677,7 @@ eay_get_x509asn1issuername(cert)
 	vchar_t *cert;
 {
 	X509 *x509 = NULL;
+	X509_NAME *xissuer;
 	u_char *bp;
 	vchar_t *name = NULL;
 	int len;
@@ -683,14 +687,15 @@ eay_get_x509asn1issuername(cert)
 		goto error;
 
 	/* get the length of the name */
-	len = i2d_X509_NAME(x509->cert_info->issuer, NULL);
+	xissuer = X509_get_issuer_name(x509);
+	len = i2d_X509_NAME(xissuer, NULL);
 	name = vmalloc(len);
 	if (name == NULL)
 		goto error;
 
 	/* get the name */
 	bp = (unsigned char *) name->v;
-	len = i2d_X509_NAME(x509->cert_info->issuer, &bp);
+	len = i2d_X509_NAME(xissuer, &bp);
 
 	X509_free(x509);
 
@@ -871,7 +876,7 @@ eay_check_x509sign(source, sig, cert)
 		return -1;
 	}
 
-	res = eay_rsa_verify(source, sig, evp->pkey.rsa);
+	res = eay_rsa_verify(source, sig, EVP_PKEY_get0_RSA(evp));
 
 	EVP_PKEY_free(evp);
 	X509_free(x509);
@@ -1013,7 +1018,7 @@ eay_get_x509sign(src, privkey)
 	if (evp == NULL)
 		return NULL;
 
-	sig = eay_rsa_sign(src, evp->pkey.rsa);
+	sig = eay_rsa_sign(src, EVP_PKEY_get0_RSA(evp));
 
 	EVP_PKEY_free(evp);
 
@@ -1121,7 +1126,7 @@ vchar_t *
 evp_crypt(vchar_t *data, vchar_t *key, vchar_t *iv, const EVP_CIPHER *e, int enc)
 {
 	vchar_t *res;
-	EVP_CIPHER_CTX ctx;
+	EVP_CIPHER_CTX *ctx;
 
 	if (!e)
 		return NULL;
@@ -1132,7 +1137,9 @@ evp_crypt(vchar_t *data, vchar_t *key, vchar_t *iv, const EVP_CIPHER *e, int enc
 	if ((res = vmalloc(data->l)) == NULL)
 		return NULL;
 
-	EVP_CIPHER_CTX_init(&ctx);
+	ctx = EVP_CIPHER_CTX_new();
+	if (ctx == NULL)
+		return NULL;
 
 	switch(EVP_CIPHER_nid(e)){
 	case NID_bf_cbc:
@@ -1146,54 +1153,41 @@ evp_crypt(vchar_t *data, vchar_t *key, vchar_t *iv, const EVP_CIPHER *e, int enc
 		/* XXX: can we do that also for algos with a fixed key size ?
 		 */
 		/* init context without key/iv
-         */
-        if (!EVP_CipherInit(&ctx, e, NULL, NULL, enc))
-        {
-            OpenSSL_BUG();
-            vfree(res);
-            return NULL;
-        }
-		
-        /* update key size
-         */
-        if (!EVP_CIPHER_CTX_set_key_length(&ctx, key->l))
-        {
-            OpenSSL_BUG();
-            vfree(res);
-            return NULL;
-        }
+		 */
+		if (!EVP_CipherInit(ctx, e, NULL, NULL, enc))
+			goto out;
+			
+		/* update key size
+		 */
+		if (!EVP_CIPHER_CTX_set_key_length(ctx, key->l))
+			goto out;
 
-        /* finalize context init with desired key size
-         */
-        if (!EVP_CipherInit(&ctx, NULL, (u_char *) key->v,
-							(u_char *) iv->v, enc))
-        {
-            OpenSSL_BUG();
-            vfree(res);
-            return NULL;
-		}
+		/* finalize context init with desired key size
+		 */
+		if (!EVP_CipherInit(ctx, NULL, (u_char *)key->v,
+		    (u_char *)iv->v, enc))
+			goto out;
 		break;
 	default:
-		if (!EVP_CipherInit(&ctx, e, (u_char *) key->v, 
-							(u_char *) iv->v, enc)) {
-			OpenSSL_BUG();
-			vfree(res);
-			return NULL;
-		}
+		if (!EVP_CipherInit(ctx, e, (u_char *) key->v, 
+		    (u_char *) iv->v, enc))
+		    goto out;
 	}
 
 	/* disable openssl padding */
-	EVP_CIPHER_CTX_set_padding(&ctx, 0); 
+	EVP_CIPHER_CTX_set_padding(ctx, 0); 
 	
-	if (!EVP_Cipher(&ctx, (u_char *) res->v, (u_char *) data->v, data->l)) {
-		OpenSSL_BUG();
-		vfree(res);
-		return NULL;
-	}
+	if (!EVP_Cipher(ctx, (u_char *) res->v, (u_char *) data->v, data->l))
+		goto out;
 
-	EVP_CIPHER_CTX_cleanup(&ctx);
+	EVP_CIPHER_CTX_free(ctx);
 
 	return res;
+out:
+	EVP_CIPHER_CTX_free(ctx);
+	OpenSSL_BUG();
+	vfree(res);
+	return NULL;
 }
 
 int
@@ -1348,7 +1342,7 @@ eay_bf_keylen(len)
 	return len;
 }
 
-#ifdef HAVE_OPENSSL_RC5_H
+#ifdef HAVE_OPENSSL_RC5_H 
 /*
  * RC5-CBC
  */
@@ -1734,9 +1728,9 @@ eay_hmac_init(key, md)
 	vchar_t *key;
 	const EVP_MD *md;
 {
-	HMAC_CTX *c = racoon_malloc(sizeof(*c));
+	HMAC_CTX *c = HMAC_CTX_new();
 
-	HMAC_Init(c, key->v, key->l, md);
+	HMAC_Init_ex(c, key->v, key->l, md, NULL);
 
 	return (caddr_t)c;
 }
@@ -1804,19 +1798,19 @@ eay_hmacsha2_512_update(c, data)
 }
 
 vchar_t *
-eay_hmacsha2_512_final(c)
-	caddr_t c;
+eay_hmacsha2_512_final(cv)
+	caddr_t cv;
 {
 	vchar_t *res;
+	HMAC_CTX *c = (HMAC_CTX *)cv;
 	unsigned int l;
 
 	if ((res = vmalloc(SHA512_DIGEST_LENGTH)) == 0)
 		return NULL;
 
-	HMAC_Final((HMAC_CTX *)c, (unsigned char *) res->v, &l);
+	HMAC_Final(c, (unsigned char *) res->v, &l);
 	res->l = l;
-	HMAC_cleanup((HMAC_CTX *)c);
-	(void)racoon_free(c);
+	HMAC_CTX_free(c);
 
 	if (SHA512_DIGEST_LENGTH != res->l) {
 		plog(LLV_ERROR, LOCATION, NULL,
@@ -1854,19 +1848,19 @@ eay_hmacsha2_384_update(c, data)
 }
 
 vchar_t *
-eay_hmacsha2_384_final(c)
-	caddr_t c;
+eay_hmacsha2_384_final(cv)
+	caddr_t cv;
 {
+	HMAC_CTX *c = (HMAC_CTX *)cv;
 	vchar_t *res;
 	unsigned int l;
 
 	if ((res = vmalloc(SHA384_DIGEST_LENGTH)) == 0)
 		return NULL;
 
-	HMAC_Final((HMAC_CTX *)c, (unsigned char *) res->v, &l);
+	HMAC_Final(c, (unsigned char *) res->v, &l);
 	res->l = l;
-	HMAC_cleanup((HMAC_CTX *)c);
-	(void)racoon_free(c);
+	HMAC_CTX_free(c);
 
 	if (SHA384_DIGEST_LENGTH != res->l) {
 		plog(LLV_ERROR, LOCATION, NULL,
@@ -1904,19 +1898,19 @@ eay_hmacsha2_256_update(c, data)
 }
 
 vchar_t *
-eay_hmacsha2_256_final(c)
-	caddr_t c;
+eay_hmacsha2_256_final(cv)
+	caddr_t cv;
 {
+	HMAC_CTX *c = (HMAC_CTX *)cv;
 	vchar_t *res;
 	unsigned int l;
 
 	if ((res = vmalloc(SHA256_DIGEST_LENGTH)) == 0)
 		return NULL;
 
-	HMAC_Final((HMAC_CTX *)c, (unsigned char *) res->v, &l);
+	HMAC_Final(c, (unsigned char *) res->v, &l);
 	res->l = l;
-	HMAC_cleanup((HMAC_CTX *)c);
-	(void)racoon_free(c);
+	HMAC_CTX_free(c);
 
 	if (SHA256_DIGEST_LENGTH != res->l) {
 		plog(LLV_ERROR, LOCATION, NULL,
@@ -1955,19 +1949,19 @@ eay_hmacsha1_update(c, data)
 }
 
 vchar_t *
-eay_hmacsha1_final(c)
-	caddr_t c;
+eay_hmacsha1_final(cv)
+	caddr_t cv;
 {
+	HMAC_CTX *c = (HMAC_CTX *)cv;
 	vchar_t *res;
 	unsigned int l;
 
 	if ((res = vmalloc(SHA_DIGEST_LENGTH)) == 0)
 		return NULL;
 
-	HMAC_Final((HMAC_CTX *)c, (unsigned char *) res->v, &l);
+	HMAC_Final(c, (unsigned char *) res->v, &l);
 	res->l = l;
-	HMAC_cleanup((HMAC_CTX *)c);
-	(void)racoon_free(c);
+	HMAC_CTX_free(c);
 
 	if (SHA_DIGEST_LENGTH != res->l) {
 		plog(LLV_ERROR, LOCATION, NULL,
@@ -2005,19 +1999,19 @@ eay_hmacmd5_update(c, data)
 }
 
 vchar_t *
-eay_hmacmd5_final(c)
-	caddr_t c;
+eay_hmacmd5_final(cv)
+	caddr_t cv;
 {
+	HMAC_CTX *c = (HMAC_CTX *)cv;
 	vchar_t *res;
 	unsigned int l;
 
 	if ((res = vmalloc(MD5_DIGEST_LENGTH)) == 0)
 		return NULL;
 
-	HMAC_Final((HMAC_CTX *)c, (unsigned char *) res->v, &l);
+	HMAC_Final(c, (unsigned char *) res->v, &l);
 	res->l = l;
-	HMAC_cleanup((HMAC_CTX *)c);
-	(void)racoon_free(c);
+	HMAC_CTX_free(c);
 
 	if (MD5_DIGEST_LENGTH != res->l) {
 		plog(LLV_ERROR, LOCATION, NULL,
@@ -2314,12 +2308,13 @@ end:
 
 /* DH */
 int
-eay_dh_generate(prime, g, publen, pub, priv)
+eay_dh_generate(prime, ig, publen, pub, priv)
 	vchar_t *prime, **pub, **priv;
 	u_int publen;
-	u_int32_t g;
+	u_int32_t ig;
 {
-	BIGNUM *p = NULL;
+	BIGNUM *p = NULL, *g = NULL;
+	const BIGNUM *pub_key, *priv_key;
 	DH *dh = NULL;
 	int error = -1;
 
@@ -2330,25 +2325,26 @@ eay_dh_generate(prime, g, publen, pub, priv)
 
 	if ((dh = DH_new()) == NULL)
 		goto end;
-	dh->p = p;
-	p = NULL;	/* p is now part of dh structure */
-	dh->g = NULL;
-	if ((dh->g = BN_new()) == NULL)
+	if ((g = BN_new()) == NULL)
 		goto end;
-	if (!BN_set_word(dh->g, g))
+	if (!BN_set_word(g, ig))
+		goto end;
+	if (!DH_set0_pqg(dh, p, NULL, g))
 		goto end;
 
 	if (publen != 0)
-		dh->length = publen;
+		DH_set_length(dh, publen);
 
 	/* generate public and private number */
 	if (!DH_generate_key(dh))
 		goto end;
 
+	DH_get0_key(dh, &pub_key, &priv_key);
+
 	/* copy results to buffers */
-	if (eay_bn2v(pub, dh->pub_key) < 0)
+	if (eay_bn2v(pub, __UNCONST(pub_key)) < 0)
 		goto end;
-	if (eay_bn2v(priv, dh->priv_key) < 0) {
+	if (eay_bn2v(priv, __UNCONST(priv_key)) < 0) {
 		vfree(*pub);
 		goto end;
 	}
@@ -2358,17 +2354,18 @@ eay_dh_generate(prime, g, publen, pub, priv)
 end:
 	if (dh != NULL)
 		DH_free(dh);
-	if (p != 0)
-		BN_free(p);
+	BN_free(p);
+	BN_free(g);
 	return(error);
 }
 
 int
-eay_dh_compute(prime, g, pub, priv, pub2, key)
+eay_dh_compute(prime, ig, pub, priv, pub2, key)
 	vchar_t *prime, *pub, *priv, *pub2, **key;
-	u_int32_t g;
+	u_int32_t ig;
 {
 	BIGNUM *dh_pub = NULL;
+	BIGNUM *p = NULL, *g = NULL, *pub_key = NULL, *priv_key = NULL;
 	DH *dh = NULL;
 	int l;
 	unsigned char *v = NULL;
@@ -2381,22 +2378,30 @@ eay_dh_compute(prime, g, pub, priv, pub2, key)
 	/* make DH structure */
 	if ((dh = DH_new()) == NULL)
 		goto end;
-	if (eay_v2bn(&dh->p, prime) < 0)
+	if (eay_v2bn(&p, prime) < 0)
 		goto end;
-	if (eay_v2bn(&dh->pub_key, pub) < 0)
-		goto end;
-	if (eay_v2bn(&dh->priv_key, priv) < 0)
-		goto end;
-	dh->length = pub2->l * 8;
 
-	dh->g = NULL;
-	if ((dh->g = BN_new()) == NULL)
+	if (eay_v2bn(&pub_key, pub) < 0)
 		goto end;
-	if (!BN_set_word(dh->g, g))
+	if (eay_v2bn(&priv_key, priv) < 0)
+		goto end;
+
+	DH_set_length(dh, pub2->l * 8);
+
+	if ((g = BN_new()) == NULL)
+		goto end;
+	if (!BN_set_word(g, ig))
+		goto end;
+
+	if (!DH_set0_pqg(dh, p, NULL, g))
+		goto end;
+
+	if (!DH_set0_key(dh, pub_key, priv_key))
 		goto end;
 
 	if ((v = racoon_calloc(prime->l, sizeof(u_char))) == NULL)
 		goto end;
+
 	if ((l = DH_compute_key(v, dh_pub, dh)) == -1)
 		goto end;
 	memcpy((*key)->v + (prime->l - l), v, l);
@@ -2404,13 +2409,16 @@ eay_dh_compute(prime, g, pub, priv, pub2, key)
 	error = 0;
 
 end:
-	if (dh_pub != NULL)
-		BN_free(dh_pub);
+	BN_free(dh_pub);
+	BN_free(pub_key);
+	BN_free(priv_key);
+	BN_free(p);
+	BN_free(g);
 	if (dh != NULL)
 		DH_free(dh);
 	if (v != NULL)
 		racoon_free(v);
-	return(error);
+	return error;
 }
 
 /*
@@ -2548,21 +2556,18 @@ binbuf_pubkey2rsa(vchar_t *binbuf)
 
 	if (!exp || !mod || !rsa_pub) {
 		plog(LLV_ERROR, LOCATION, NULL, "Plain RSA pubkey parsing error: %s\n", eay_strerror());
-		if (exp)
-			BN_free(exp);
-		if (mod)
-			BN_free(exp);
-		if (rsa_pub)
-			RSA_free(rsa_pub);
-		rsa_pub = NULL;
 		goto out;
 	}
 	
-	rsa_pub->n = mod;
-	rsa_pub->e = exp;
+	if (!RSA_set0_key(rsa_pub, mod, exp, NULL))
+		goto out;
 
-out:
 	return rsa_pub;
+out:
+	BN_free(exp);
+	BN_free(exp);
+	RSA_free(rsa_pub);
+	return NULL;
 }
 
 RSA *
