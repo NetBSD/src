@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.63 2017/09/12 13:43:37 jmcneill Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.64 2018/02/07 14:42:07 bouyer Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.63 2017/09/12 13:43:37 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.64 2018/02/07 14:42:07 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -644,10 +644,14 @@ sdmmc_mem_send_op_cond(struct sdmmc_softc *sc, uint32_t ocr, uint32_t *ocrp)
 		error = ETIMEDOUT;
 		sdmmc_delay(10000);
 	}
-	if (error == 0 &&
-	    ocrp != NULL &&
-	    !ISSET(sc->sc_caps, SMC_CAPS_SPI_MODE))
-		*ocrp = MMC_R3(cmd.c_resp);
+	if (ocrp != NULL) {
+		if (error == 0 &&
+		    !ISSET(sc->sc_caps, SMC_CAPS_SPI_MODE)) {
+			*ocrp = MMC_R3(cmd.c_resp);
+		} else {
+			*ocrp = ocr;
+		}
+	}
 	DPRINTF(("%s: sdmmc_mem_send_op_cond: error=%d, ocr=%#x\n",
 	    SDMMCDEVNAME(sc), error, MMC_R3(cmd.c_resp)));
 	return error;
