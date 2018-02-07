@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.151 2018/02/07 12:09:55 maxv Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.152 2018/02/07 12:15:32 maxv Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.151 2018/02/07 12:09:55 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.152 2018/02/07 12:15:32 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2428,49 +2428,51 @@ bw_meter_prepare_upcall(struct bw_meter *x, struct timeval *nowp)
 static void
 bw_upcalls_send(void)
 {
-    struct mbuf *m;
-    int len = bw_upcalls_n * sizeof(bw_upcalls[0]);
-    struct sockaddr_in k_igmpsrc = {
-	    .sin_len = sizeof(k_igmpsrc),
-	    .sin_family = AF_INET,
-    };
-    static struct igmpmsg igmpmsg = { 0,		/* unused1 */
-				      0,		/* unused2 */
-				      IGMPMSG_BW_UPCALL,/* im_msgtype */
-				      0,		/* im_mbz  */
-				      0,		/* im_vif  */
-				      0,		/* unused3 */
-				      { 0 },		/* im_src  */
-				      { 0 } };		/* im_dst  */
+	struct mbuf *m;
+	int len = bw_upcalls_n * sizeof(bw_upcalls[0]);
+	struct sockaddr_in k_igmpsrc = {
+		.sin_len = sizeof(k_igmpsrc),
+		.sin_family = AF_INET,
+	};
+	static struct igmpmsg igmpmsg = {
+		0,		/* unused1 */
+		0,		/* unused2 */
+		IGMPMSG_BW_UPCALL,/* im_msgtype */
+		0,		/* im_mbz */
+		0,		/* im_vif */
+		0,		/* unused3 */
+		{ 0 },		/* im_src */
+		{ 0 }		/* im_dst */
+	};
 
-    if (bw_upcalls_n == 0)
-	return;			/* No pending upcalls */
+	if (bw_upcalls_n == 0)
+		return;			/* No pending upcalls */
 
-    bw_upcalls_n = 0;
+	bw_upcalls_n = 0;
 
-    /*
-     * Allocate a new mbuf, initialize it with the header and
-     * the payload for the pending calls.
-     */
-    MGETHDR(m, M_DONTWAIT, MT_HEADER);
-    if (m == NULL) {
-	log(LOG_WARNING, "bw_upcalls_send: cannot allocate mbuf\n");
-	return;
-    }
+	/*
+	 * Allocate a new mbuf, initialize it with the header and
+	 * the payload for the pending calls.
+	 */
+	MGETHDR(m, M_DONTWAIT, MT_HEADER);
+	if (m == NULL) {
+		log(LOG_WARNING, "bw_upcalls_send: cannot allocate mbuf\n");
+		return;
+	}
 
-    m->m_len = m->m_pkthdr.len = 0;
-    m_copyback(m, 0, sizeof(struct igmpmsg), (void *)&igmpmsg);
-    m_copyback(m, sizeof(struct igmpmsg), len, (void *)&bw_upcalls[0]);
+	m->m_len = m->m_pkthdr.len = 0;
+	m_copyback(m, 0, sizeof(struct igmpmsg), (void *)&igmpmsg);
+	m_copyback(m, sizeof(struct igmpmsg), len, (void *)&bw_upcalls[0]);
 
-    /*
-     * Send the upcalls
-     * XXX do we need to set the address in k_igmpsrc ?
-     */
-    mrtstat.mrts_upcalls++;
-    if (socket_send(ip_mrouter, m, &k_igmpsrc) < 0) {
-	log(LOG_WARNING, "bw_upcalls_send: ip_mrouter socket queue full\n");
-	++mrtstat.mrts_upq_sockfull;
-    }
+	/*
+	 * Send the upcalls
+	 * XXX do we need to set the address in k_igmpsrc ?
+	 */
+	mrtstat.mrts_upcalls++;
+	if (socket_send(ip_mrouter, m, &k_igmpsrc) < 0) {
+		log(LOG_WARNING, "bw_upcalls_send: ip_mrouter socket queue full\n");
+		++mrtstat.mrts_upq_sockfull;
+	}
 }
 
 /*
@@ -2479,11 +2481,10 @@ bw_upcalls_send(void)
 #define	BW_METER_TIMEHASH(bw_meter, hash)				\
     do {								\
 	struct timeval next_timeval = (bw_meter)->bm_start_time;	\
-									\
-	BW_TIMEVALADD(&next_timeval, &(bw_meter)->bm_threshold.b_time); \
+	BW_TIMEVALADD(&next_timeval, &(bw_meter)->bm_threshold.b_time);	\
 	(hash) = next_timeval.tv_sec;					\
 	if (next_timeval.tv_usec)					\
-	    (hash)++; /* XXX: make sure we don't timeout early */	\
+		(hash)++; /* XXX: make sure we don't timeout early */	\
 	(hash) %= BW_METER_BUCKETS;					\
     } while (/*CONSTCOND*/ 0)
 
@@ -2494,26 +2495,26 @@ bw_upcalls_send(void)
 static void
 schedule_bw_meter(struct bw_meter *x, struct timeval *nowp)
 {
-    int time_hash;
+	int time_hash;
 
-    if (!(x->bm_flags & BW_METER_LEQ))
-	return;		/* XXX: we schedule timers only for "<=" entries */
+	if (!(x->bm_flags & BW_METER_LEQ))
+		return;		/* XXX: we schedule timers only for "<=" entries */
 
-    /*
-     * Reset the bw_meter entry
-     */
-    x->bm_start_time = *nowp;
-    x->bm_measured.b_packets = 0;
-    x->bm_measured.b_bytes = 0;
-    x->bm_flags &= ~BW_METER_UPCALL_DELIVERED;
+	/*
+	 * Reset the bw_meter entry
+	 */
+	x->bm_start_time = *nowp;
+	x->bm_measured.b_packets = 0;
+	x->bm_measured.b_bytes = 0;
+	x->bm_flags &= ~BW_METER_UPCALL_DELIVERED;
 
-    /*
-     * Compute the timeout hash value and insert the entry
-     */
-    BW_METER_TIMEHASH(x, time_hash);
-    x->bm_time_next = bw_meter_timers[time_hash];
-    bw_meter_timers[time_hash] = x;
-    x->bm_time_hash = time_hash;
+	/*
+	 * Compute the timeout hash value and insert the entry
+	 */
+	BW_METER_TIMEHASH(x, time_hash);
+	x->bm_time_next = bw_meter_timers[time_hash];
+	bw_meter_timers[time_hash] = x;
+	x->bm_time_hash = time_hash;
 }
 
 /*
@@ -2523,34 +2524,34 @@ schedule_bw_meter(struct bw_meter *x, struct timeval *nowp)
 static void
 unschedule_bw_meter(struct bw_meter *x)
 {
-    int time_hash;
-    struct bw_meter *prev, *tmp;
+	int time_hash;
+	struct bw_meter *prev, *tmp;
 
-    if (!(x->bm_flags & BW_METER_LEQ))
-	return;		/* XXX: we schedule timers only for "<=" entries */
+	if (!(x->bm_flags & BW_METER_LEQ))
+		return;		/* XXX: we schedule timers only for "<=" entries */
 
-    /*
-     * Compute the timeout hash value and delete the entry
-     */
-    time_hash = x->bm_time_hash;
-    if (time_hash >= BW_METER_BUCKETS)
-	return;		/* Entry was not scheduled */
+	/*
+	 * Compute the timeout hash value and delete the entry
+	 */
+	time_hash = x->bm_time_hash;
+	if (time_hash >= BW_METER_BUCKETS)
+		return;		/* Entry was not scheduled */
 
-    for (prev = NULL, tmp = bw_meter_timers[time_hash];
+	for (prev = NULL, tmp = bw_meter_timers[time_hash];
 	     tmp != NULL; prev = tmp, tmp = tmp->bm_time_next)
-	if (tmp == x)
-	    break;
+		if (tmp == x)
+			break;
 
-    if (tmp == NULL)
-	panic("unschedule_bw_meter: bw_meter entry not found");
+	if (tmp == NULL)
+		panic("unschedule_bw_meter: bw_meter entry not found");
 
-    if (prev != NULL)
-	prev->bm_time_next = x->bm_time_next;
-    else
-	bw_meter_timers[time_hash] = x->bm_time_next;
+	if (prev != NULL)
+		prev->bm_time_next = x->bm_time_next;
+	else
+		bw_meter_timers[time_hash] = x->bm_time_next;
 
-    x->bm_time_next = NULL;
-    x->bm_time_hash = BW_METER_BUCKETS;
+	x->bm_time_next = NULL;
+	x->bm_time_hash = BW_METER_BUCKETS;
 }
 
 /*
