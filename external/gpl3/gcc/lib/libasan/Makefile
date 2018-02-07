@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.19 2018/02/04 01:16:33 mrg Exp $
+# $NetBSD: Makefile,v 1.20 2018/02/07 02:32:39 mrg Exp $
 
 UNSUPPORTED_COMPILER.clang=	# defined
 
@@ -39,8 +39,11 @@ LIB=	asan
 SRCS+=	${ASAN_SRCS}
 
 .if ${MACHINE_ARCH} == "vax"
-COPTS.asan_allocator2.cc += -O1
+COPTS.asan_allocator.cc += -O1
 COPTS.asan_report.cc += -O1
+COPTS.sanitizer_common.cc += -O1
+COPTS.sanitizer_common_libcdep.cc += -O1
+COPTS.sanitizer_posix.cc += -O1
 .endif
 
 .include <bsd.lib.mk>
