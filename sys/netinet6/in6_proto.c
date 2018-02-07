@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.120 2018/02/07 10:21:59 maxv Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.121 2018/02/07 10:52:20 maxv Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.120 2018/02/07 10:21:59 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.121 2018/02/07 10:52:20 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -124,8 +124,7 @@ __KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.120 2018/02/07 10:21:59 maxv Exp $")
 #include <netipsec/ipsec.h>
 #include <netipsec/ipsec6.h>
 #include <netipsec/key.h>
-#endif /* IPSEC */
-
+#endif
 
 #include "carp.h"
 #if NCARP > 0
@@ -553,51 +552,44 @@ sockaddr_in6_cmp(const struct sockaddr *lsa, const struct sockaddr *rsa)
 /*
  * Internet configuration info
  */
-#ifndef	IPV6FORWARDING
 #ifdef GATEWAY6
-#define	IPV6FORWARDING	1	/* forward IP6 packets not for us */
+#define IPV6FORWARDING	1	/* forward IP6 packets not for us */
 #else
-#define	IPV6FORWARDING	0	/* don't forward IP6 packets not for us */
-#endif /* GATEWAY6 */
-#endif /* !IPV6FORWARDING */
+#define IPV6FORWARDING	0	/* don't forward IP6 packets not for us */
+#endif
 
-int	ip6_forwarding = IPV6FORWARDING;	/* act as router? */
-int	ip6_sendredirects = 1;
-int	ip6_defhlim = IPV6_DEFHLIM;
-int	ip6_defmcasthlim = IPV6_DEFAULT_MULTICAST_HOPS;
-int	ip6_accept_rtadv = 0;	/* "IPV6FORWARDING ? 0 : 1" is dangerous */
-int	ip6_maxfragpackets = 200;
-int	ip6_maxfrags = 200;
-int	ip6_log_interval = 5;
-int	ip6_hdrnestlimit = 15;	/* appropriate? */
-int	ip6_dad_count = 1;	/* DupAddrDetectionTransmits */
-int	ip6_auto_flowlabel = 1;
-int	ip6_use_deprecated = 1;	/* allow deprecated addr (RFC2462 5.5.4) */
-int	ip6_rr_prune = 5;	/* router renumbering prefix
-				 * walk list every 5 sec. */
-int	ip6_mcast_pmtu = 0;	/* enable pMTU discovery for multicast? */
-int	ip6_v6only = 1;
-int     ip6_neighborgcthresh = 2048; /* Threshold # of NDP entries for GC */
-int     ip6_maxifprefixes = 16; /* Max acceptable prefixes via RA per IF */
-int     ip6_maxifdefrouters = 16; /* Max acceptable def routers via RA */
-int     ip6_maxdynroutes = 4096; /* Max # of routes created via redirect */
+int ip6_forwarding = IPV6FORWARDING;	/* act as router? */
+int ip6_sendredirects = 1;
+int ip6_defhlim = IPV6_DEFHLIM;
+int ip6_defmcasthlim = IPV6_DEFAULT_MULTICAST_HOPS;
+int ip6_accept_rtadv = 0;
+int ip6_maxfragpackets = 200;
+int ip6_maxfrags = 200;
+int ip6_log_interval = 5;
+int ip6_hdrnestlimit = 15;
+int ip6_dad_count = 1;	/* DupAddrDetectionTransmits */
+int ip6_auto_flowlabel = 1;
+int ip6_use_deprecated = 1;	/* allow deprecated addr (RFC2462 5.5.4) */
+int ip6_rr_prune = 5;	/* router renumbering prefix
+                         * walk list every 5 sec. */
+int ip6_mcast_pmtu = 0;	/* enable pMTU discovery for multicast? */
+int ip6_v6only = 1;
+int ip6_neighborgcthresh = 2048; /* Threshold # of NDP entries for GC */
+int ip6_maxifprefixes = 16; /* Max acceptable prefixes via RA per IF */
+int ip6_maxifdefrouters = 16; /* Max acceptable def routers via RA */
+int ip6_maxdynroutes = 4096; /* Max # of routes created via redirect */
 
-int	ip6_keepfaith = 0;
-time_t	ip6_log_time = 0;
-int	ip6_rtadv_maxroutes = 100; /* (arbitrary) initial maximum number of
-                                    * routes via rtadv expected to be
-                                    * significantly larger than common use.
-                                    * if you need to count: 3 extra initial
-                                    * routes, plus 1 per interface after the
-                                    * first one, then one per non-linklocal
-                                    * prefix */
+int ip6_keepfaith = 0;
+time_t ip6_log_time = 0;
+int ip6_rtadv_maxroutes = 100; /* (arbitrary) initial maximum number of
+                                * routes via rtadv expected to be
+                                * significantly larger than common use.
+                                * if you need to count: 3 extra initial
+                                * routes, plus 1 per interface after the
+                                * first one, then one per non-linklocal
+                                * prefix */
 
 /* icmp6 */
-/*
- * BSDI4 defines these variables in in_proto.c...
- * XXX: what if we don't define INET? Should we define pmtu6_expire
- * or so? (jinmei@kame.net 19990310)
- */
 int pmtu_expire = 60*10;
 
 /* raw IP6 parameters */
