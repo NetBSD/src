@@ -1158,10 +1158,16 @@ void GetPcSpBp(void *context, uptr *pc, uptr *sp, uptr *bp) {
   *sp = ucontext->uc_mcontext.sp;
 #elif defined(__hppa__)
   ucontext_t *ucontext = (ucontext_t*)context;
+# if SANITIZER_NETBSD
+  *pc = _UC_MACHINE_PC(ucontext);
+  *sp = _UC_MACHINE_SP(ucontext);
+  *bp = ucontext->uc_mcontext.__gregs[3]; /* XXX */
+#else
   *pc = ucontext->uc_mcontext.sc_iaoq[0];
   /* GCC uses %r3 whenever a frame pointer is needed.  */
   *bp = ucontext->uc_mcontext.sc_gr[3];
   *sp = ucontext->uc_mcontext.sc_gr[30];
+# endif
 #elif defined(__x86_64__)
 # if SANITIZER_FREEBSD
   ucontext_t *ucontext = (ucontext_t*)context;
@@ -1208,7 +1214,7 @@ void GetPcSpBp(void *context, uptr *pc, uptr *sp, uptr *bp) {
   // The powerpc{,64}-linux ABIs do not specify r31 as the frame
   // pointer, but GCC always uses r31 when we need a frame pointer.
   *bp = ucontext->uc_mcontext.regs->gpr[PT_R31];
-#endif
+# endif
 #elif defined(__sparc__)
   ucontext_t *ucontext = (ucontext_t*)context;
   uptr *stk_ptr;
@@ -1248,6 +1254,21 @@ void GetPcSpBp(void *context, uptr *pc, uptr *sp, uptr *bp) {
   *pc = _UC_MACHINE_PC(ucontext);
   *sp = _UC_MACHINE_SP(ucontext);
   *bp = ucontext->uc_mcontext.__gregs[_REG_S6];
+#elif (defined(__m68k__) || defined(__mc68010__)) && SANITIZER_NETBSD
+  ucontext_t *ucontext = (ucontext_t*)context;
+  *pc = _UC_MACHINE_PC(ucontext);
+  *sp = _UC_MACHINE_SP(ucontext);
+  *bp = ucontext->uc_mcontext.__gregs[_REG_A6];
+#elif defined(__vax__) && SANITIZER_NETBSD
+  ucontext_t *ucontext = (ucontext_t*)context;
+  *pc = _UC_MACHINE_PC(ucontext);
+  *sp = _UC_MACHINE_SP(ucontext);
+  *bp = ucontext->uc_mcontext.__gregs[_REG_FP];
+#elif defined(__sh3__) && SANITIZER_NETBSD
+  ucontext_t *ucontext = (ucontext_t*)context;
+  *pc = _UC_MACHINE_PC(ucontext);
+  *sp = _UC_MACHINE_SP(ucontext);
+  *bp = ucontext->uc_mcontext.__gregs[_REG_R14];
 #else
 # error "Unsupported arch"
 #endif
