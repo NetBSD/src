@@ -1,4 +1,4 @@
-.\"	$NetBSD: resolver.3,v 1.33 2017/10/30 15:46:38 wiz Exp $
+.\"	$NetBSD: resolver.3,v 1.34 2018/02/07 11:16:05 pgoyette Exp $
 .\" Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -33,7 +33,7 @@
 .\"	@(#)resolver.3	6.5 (Berkeley) 6/23/90
 .\"	Id: resolver.man3,v 1.2 2009/01/21 00:12:34 each Exp
 .\"
-.Dd December 18, 2016
+.Dd February 7, 2018
 .Dt RESOLVER 3
 .Os
 .Sh NAME
@@ -200,7 +200,7 @@ The functions
 .Fn res_close
 .\" and
 .\" .Fn herror
-are deprecated and are supplied for compatability with old source
+are deprecated and are supplied for compatibility with old source
 code.
 They use global configuration and state information that is
 kept in the structure
@@ -532,7 +532,7 @@ The function
 .Fn fp_resstat
 prints out the active flag bits in
 .Fa statp->options
-preceeded by the text ";; res options:" on
+preceded by the text ";; res options:" on
 .Fa file .
 .Pp
 The functions
