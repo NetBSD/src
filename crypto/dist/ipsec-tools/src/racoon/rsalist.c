@@ -1,4 +1,4 @@
-/*	$NetBSD: rsalist.c,v 1.6 2011/03/14 15:50:36 vanhu Exp $	*/
+/*	$NetBSD: rsalist.c,v 1.7 2018/02/07 03:59:03 christos Exp $	*/
 
 /* Id: rsalist.c,v 1.3 2004/11/08 12:04:23 ludvigm Exp */
 
@@ -98,7 +98,9 @@ rsa_key_dup(struct rsa_key *key)
 		return NULL;
 
 	if (key->rsa) {
-		new->rsa = key->rsa->d != NULL ? RSAPrivateKey_dup(key->rsa) : RSAPublicKey_dup(key->rsa);
+		const BIGNUM *d;
+		RSA_get0_key(key->rsa, NULL, NULL, &d);
+		new->rsa = d != NULL ? RSAPrivateKey_dup(key->rsa) : RSAPublicKey_dup(key->rsa);
 		if (new->rsa == NULL)
 			goto dup_error;
 	}
