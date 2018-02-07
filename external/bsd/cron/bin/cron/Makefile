@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2017/06/14 17:37:40 christos Exp $
+#	$NetBSD: Makefile,v 1.7 2018/02/07 06:17:07 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -19,5 +19,6 @@ LDADD+=		-lpam ${PAM_STATIC_LDADD}
 .endif
 
 CWARNFLAGS.clang+=	-Wno-string-plus-int
+CWARNFLAGS.gcc+=	-Wno-error=clobbered
 
 .include <bsd.prog.mk>
