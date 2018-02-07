@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.152 2018/02/07 12:15:32 maxv Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.153 2018/02/07 13:22:41 maxv Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.152 2018/02/07 12:15:32 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.153 2018/02/07 13:22:41 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -254,7 +254,7 @@ static struct mbuf *pim_register_prepare(struct ip *, struct mbuf *);
 #define	ENCAP_PROTO	IPPROTO_IPIP
 
 /* prototype IP hdr for encapsulated packets */
-struct ip multicast_encap_iphdr = {
+static const struct ip multicast_encap_iphdr = {
 	.ip_hl = sizeof(struct ip) >> 2,
 	.ip_v = IPVERSION,
 	.ip_len = sizeof(struct ip),
@@ -777,7 +777,7 @@ add_vif(struct vifctl *vifcp)
 		 * local interface (e.g. it could be 127.0.0.2), we don't
 		 * check its address.
 		 */
-	    ifp = NULL;
+		ifp = NULL;
 	} else
 #endif
 	{
@@ -1137,8 +1137,7 @@ add_mfc(struct sockopt *sopt)
 			}
 		}
 		if (rt == NULL) {	/* no upcall, so make a new entry */
-			rt = (struct mfc *)malloc(sizeof(*rt), M_MRTABLE,
-						  M_NOWAIT);
+			rt = malloc(sizeof(*rt), M_MRTABLE, M_NOWAIT);
 			if (rt == NULL) {
 				splx(s);
 				return ENOBUFS;
@@ -1294,8 +1293,7 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp)
 			log(LOG_ERR,
 			    "ip_mforward: received source-routed packet from %x\n",
 			    ntohl(ip->ip_src.s_addr));
-
-		return 1;
+		return EOPNOTSUPP;
 	}
 
 	/*
@@ -1323,19 +1321,18 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp)
 		return ip_mdq(m, ifp, rt);
 	} else {
 		/*
-		 * If we don't have a route for packet's origin,
-		 * Make a copy of the packet & send message to routing daemon
+		 * If we don't have a route for packet's origin, make a copy
+		 * of the packet and send message to routing daemon.
 		 */
 
 		struct mbuf *mb0;
 		struct rtdetq *rte;
 		u_int32_t hash;
-		int hlen = ip->ip_hl << 2;
+		const int hlen = ip->ip_hl << 2;
 #ifdef UPCALL_TIMING
 		struct timeval tp;
-
 		microtime(&tp);
-#endif /* UPCALL_TIMING */
+#endif
 
 		++mrtstat.mrts_mfc_misses;
 
@@ -1350,8 +1347,7 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp)
 		 * just going to fail anyway.  Make sure to pullup the header so
 		 * that other people can't step on it.
 		 */
-		rte = (struct rtdetq *)malloc(sizeof(*rte), M_MRTABLE,
-					      M_NOWAIT);
+		rte = malloc(sizeof(*rte), M_MRTABLE, M_NOWAIT);
 		if (rte == NULL) {
 			splx(s);
 			return ENOBUFS;
@@ -1389,8 +1385,7 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp)
 				goto non_fatal;
 
 			/* no upcall, so make a new entry */
-			rt = (struct mfc *)malloc(sizeof(*rt), M_MRTABLE,
-						  M_NOWAIT);
+			rt = malloc(sizeof(*rt), M_MRTABLE, M_NOWAIT);
 			if (rt == NULL)
 				goto fail;
 
@@ -1481,14 +1476,13 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp)
 		rte->ifp = ifp;
 #ifdef UPCALL_TIMING
 		rte->t = tp;
-#endif /* UPCALL_TIMING */
+#endif
 
 		splx(s);
 
 		return 0;
 	}
 }
-
 
 /*ARGSUSED*/
 static void
@@ -1542,21 +1536,7 @@ expire_upcalls(void *v)
 }
 
 /*
- * Packet forwarding routine once entry in the cache is made
- */
-static int
-ip_mdq(struct mbuf *m, struct ifnet *ifp, struct mfc *rt)
-{
-	struct ip  *ip = mtod(m, struct ip *);
-	vifi_t vifi;
-	struct vif *vifp;
-	struct sockaddr_in sin;
-	int plen = ntohs(ip->ip_len) - (ip->ip_hl << 2);
-
-/*
- * Macro to send packet on vif.  Since RSVP packets don't get counted on
- * input, they shouldn't get counted on output, so statistics keeping is
- * separate.
+ * Macro to send packet on vif.
  */
 #define MC_SEND(ip, vifp, m) do {					\
 	if ((vifp)->v_flags & VIFF_TUNNEL)				\
@@ -1564,6 +1544,18 @@ ip_mdq(struct mbuf *m, struct ifnet *ifp, struct mfc *rt)
 	else								\
 		phyint_send((ip), (vifp), (m));				\
 } while (/*CONSTCOND*/ 0)
+
+/*
+ * Packet forwarding routine once entry in the cache is made
+ */
+static int
+ip_mdq(struct mbuf *m, struct ifnet *ifp, struct mfc *rt)
+{
+	struct ip *ip = mtod(m, struct ip *);
+	vifi_t vifi;
+	struct vif *vifp;
+	struct sockaddr_in sin;
+	const int plen = ntohs(ip->ip_len) - (ip->ip_hl << 2);
 
 	/*
 	 * Don't forward if it didn't arrive from the parent vif for its origin.
@@ -1577,6 +1569,7 @@ ip_mdq(struct mbuf *m, struct ifnet *ifp, struct mfc *rt)
 			    vifi >= numvifs ? 0 : viftable[vifi].v_ifp);
 		++mrtstat.mrts_wrong_if;
 		++rt->mfc_wrong_if;
+
 		/*
 		 * If we are doing PIM assert processing, send a message
 		 * to the routing daemon.
@@ -1616,7 +1609,7 @@ ip_mdq(struct mbuf *m, struct ifnet *ifp, struct mfc *rt)
 
 			if (delta > ASSERT_MSG_TIME) {
 				struct igmpmsg *im;
-				int hlen = ip->ip_hl << 2;
+				const int hlen = ip->ip_hl << 2;
 				struct mbuf *mm =
 				    m_copym(m, 0, hlen, M_DONTWAIT);
 
@@ -1659,10 +1652,10 @@ ip_mdq(struct mbuf *m, struct ifnet *ifp, struct mfc *rt)
 	/*
 	 * For each vif, decide if a copy of the packet should be forwarded.
 	 * Forward if:
-	 *		- the ttl exceeds the vif's threshold
-	 *		- there are group members downstream on interface
+	 *  - the ttl exceeds the vif's threshold
+	 *  - there are group members downstream on interface
 	 */
-	for (vifp = viftable, vifi = 0; vifi < numvifs; vifp++, vifi++)
+	for (vifp = viftable, vifi = 0; vifi < numvifs; vifp++, vifi++) {
 		if ((rt->mfc_ttls[vifi] > 0) &&
 			(ip->ip_ttl > rt->mfc_ttls[vifi])) {
 			vifp->v_pkt_out++;
@@ -1674,6 +1667,7 @@ ip_mdq(struct mbuf *m, struct ifnet *ifp, struct mfc *rt)
 #endif
 			MC_SEND(ip, vifp, m);
 		}
+	}
 
 	/*
 	 * Perform upcall-related bw measuring.
@@ -1694,7 +1688,7 @@ static void
 phyint_send(struct ip *ip, struct vif *vifp, struct mbuf *m)
 {
 	struct mbuf *mb_copy;
-	int hlen = ip->ip_hl << 2;
+	const int hlen = ip->ip_hl << 2;
 
 	/*
 	 * Make a new reference to the packet; make sure that
@@ -1921,7 +1915,6 @@ tbf_queue(struct vif *vifp, struct mbuf *m)
 
 	splx(s);
 }
-
 
 /*
  * processes the queue at the interface
