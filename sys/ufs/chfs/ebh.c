@@ -1,4 +1,4 @@
-/*	$NetBSD: ebh.c,v 1.6 2015/02/07 04:21:11 christos Exp $	*/
+/*	$NetBSD: ebh.c,v 1.7 2018/02/07 08:50:13 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -656,7 +656,6 @@ leb_read_unlock(struct chfs_ebh *ebh, int lnr)
 	if (le->users == 0) {
 		le = RB_REMOVE(ltree_rbtree, &ebh->ltree, le);
 		if (le) {
-			KASSERT(!rw_lock_held(&le->mutex));
 			rw_destroy(&le->mutex);
 
 			kmem_free(le, sizeof(struct chfs_ltree_entry));
@@ -713,7 +712,6 @@ leb_write_unlock(struct chfs_ebh *ebh, int lnr)
 	if (le->users == 0) {
 		RB_REMOVE(ltree_rbtree, &ebh->ltree, le);
 
-		KASSERT(!rw_lock_held(&le->mutex));
 		rw_destroy(&le->mutex);
 
 		kmem_free(le, sizeof(struct chfs_ltree_entry));
