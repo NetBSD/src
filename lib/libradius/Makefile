@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.14 2018/02/05 11:58:13 christos Exp $
+# $NetBSD: Makefile,v 1.15 2018/02/07 22:51:31 christos Exp $
 
 USE_FORT?= yes	# network protocol library
 
@@ -10,7 +10,7 @@ LINTFLAGS+= -Sw
 
 LIB=	radius
 CPPFLAGS+=	-I.
-CPPFLAGS+=	-DOPENSSL_VERSION_NUMBER=0x10100000L
+CPPFLAGS+=	-DOPENSSL_API_COMPAT=0x10100000L
 
 CPPFLAGS+=	-DWITH_SSL
 LIBDPLIBS+=crypto ${.CURDIR}/../../crypto/external/bsd/${EXTERNAL_OPENSSL_SUBDIR}/lib/libcrypto
