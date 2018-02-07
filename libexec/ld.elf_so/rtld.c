@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.188 2017/11/06 21:16:04 joerg Exp $	 */
+/*	$NetBSD: rtld.c,v 1.189 2018/02/07 06:17:45 mrg Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.188 2017/11/06 21:16:04 joerg Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.189 2018/02/07 06:17:45 mrg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1109,7 +1109,10 @@ _rtld_objmain_sym(const char *name)
 static __noinline void *
 hackish_return_address(void)
 {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wframe-address"
 	return __builtin_return_address(1);
+#pragma GCC diagnostic pop
 }
 #endif
 
