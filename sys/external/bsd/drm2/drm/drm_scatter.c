@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_scatter.c,v 1.3 2014/07/16 20:56:25 riastradh Exp $	*/
+/*	$NetBSD: drm_scatter.c,v 1.4 2018/02/07 06:18:46 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_scatter.c,v 1.3 2014/07/16 20:56:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_scatter.c,v 1.4 2018/02/07 06:18:46 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/bus.h>
@@ -50,7 +50,7 @@ drm_sg_alloc(struct drm_device *dev, void *data,
     struct drm_file *file __unused)
 {
 	struct drm_scatter_gather *const request = data;
-	struct drm_sg_mem *sg;
+	struct drm_sg_mem *sg = NULL;
 	int error;
 
 	/*
