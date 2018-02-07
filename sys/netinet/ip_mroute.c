@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.150 2018/02/07 12:04:50 maxv Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.151 2018/02/07 12:09:55 maxv Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.150 2018/02/07 12:04:50 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.151 2018/02/07 12:09:55 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -678,7 +678,7 @@ ip_mrouter_done(void)
 	if (mrtdebug)
 		log(LOG_DEBUG, "ip_mrouter_done\n");
 
-	return (0);
+	return 0;
 }
 
 void
@@ -714,7 +714,7 @@ static int
 set_assert(int i)
 {
 	pim_assert = !!i;
-	return (0);
+	return 0;
 }
 
 /*
@@ -735,18 +735,18 @@ set_api_config(struct sockopt *sopt)
 	 */
 	error = sockopt_get(sopt, &apival, sizeof(apival));
 	if (error)
-		return (error);
+		return error;
 	if (numvifs > 0)
-		return (EPERM);
+		return EPERM;
 	if (pim_assert)
-		return (EPERM);
+		return EPERM;
 	for (i = 0; i < MFCTBLSIZ; i++) {
 		if (LIST_FIRST(&mfchashtbl[i]) != NULL)
-			return (EPERM);
+			return EPERM;
 	}
 
 	mrt_api_config = apival & mrt_api_support;
-	return (0);
+	return 0;
 }
 
 /*
@@ -761,13 +761,13 @@ add_vif(struct vifctl *vifcp)
 	struct sockaddr_in sin;
 
 	if (vifcp->vifc_vifi >= MAXVIFS)
-		return (EINVAL);
+		return EINVAL;
 	if (in_nullhost(vifcp->vifc_lcl_addr))
-		return (EADDRNOTAVAIL);
+		return EADDRNOTAVAIL;
 
 	vifp = &viftable[vifcp->vifc_vifi];
 	if (!in_nullhost(vifp->v_lcl_addr))
-		return (EADDRINUSE);
+		return EADDRINUSE;
 
 	/* Find the interface with an address in AF_INET family. */
 #ifdef PIM
@@ -798,7 +798,7 @@ add_vif(struct vifctl *vifcp)
 	if (vifcp->vifc_flags & VIFF_TUNNEL) {
 		if (vifcp->vifc_flags & VIFF_SRCRT) {
 			log(LOG_ERR, "source routed tunnels not supported\n");
-			return (EOPNOTSUPP);
+			return EOPNOTSUPP;
 		}
 
 		/* attach this vif to decapsulator dispatch table */
@@ -816,7 +816,7 @@ add_vif(struct vifctl *vifcp)
 		    vif_encapcheck, &vif_encapsw, vifp);
 		encap_lock_exit();
 		if (!vifp->v_encap_cookie)
-			return (EINVAL);
+			return EINVAL;
 
 		/* Create a fake encapsulation interface. */
 		ifp = malloc(sizeof(*ifp), M_MRTABLE, M_WAITOK|M_ZERO);
@@ -843,13 +843,13 @@ add_vif(struct vifctl *vifcp)
 	} else {
 		/* Make sure the interface supports multicast. */
 		if ((ifp->if_flags & IFF_MULTICAST) == 0)
-			return (EOPNOTSUPP);
+			return EOPNOTSUPP;
 
 		/* Enable promiscuous reception of all IP multicasts. */
 		sockaddr_in_init(&sin, &zeroin_addr, 0);
 		error = if_mcast_op(ifp, SIOCADDMULTI, sintosa(&sin));
 		if (error)
-			return (error);
+			return error;
 	}
 
 	s = splsoftnet();
@@ -892,7 +892,7 @@ add_vif(struct vifctl *vifcp)
 		    vifcp->vifc_threshold,
 		    vifcp->vifc_rate_limit);
 
-	return (0);
+	return 0;
 }
 
 void
@@ -943,11 +943,11 @@ del_vif(vifi_t *vifip)
 	int s;
 
 	if (*vifip >= numvifs)
-		return (EINVAL);
+		return EINVAL;
 
 	vifp = &viftable[*vifip];
 	if (in_nullhost(vifp->v_lcl_addr))
-		return (EADDRNOTAVAIL);
+		return EADDRNOTAVAIL;
 
 	s = splsoftnet();
 
@@ -964,7 +964,7 @@ del_vif(vifi_t *vifip)
 	if (mrtdebug)
 		log(LOG_DEBUG, "del_vif %d, numvifs %d\n", *vifip, numvifs);
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -1050,7 +1050,7 @@ add_mfc(struct sockopt *sopt)
 		error = sockopt_get(sopt, mfccp, sizeof(struct mfcctl));
 
 	if (error)
-		return (error);
+		return error;
 
 	s = splsoftnet();
 	rt = mfc_find(&mfccp->mfcc_origin, &mfccp->mfcc_mcastgrp);
@@ -1066,7 +1066,7 @@ add_mfc(struct sockopt *sopt)
 		update_mfc_params(rt, mfccp);
 
 		splx(s);
-		return (0);
+		return 0;
 	}
 
 	/*
@@ -1141,7 +1141,7 @@ add_mfc(struct sockopt *sopt)
 						  M_NOWAIT);
 			if (rt == NULL) {
 				splx(s);
-				return (ENOBUFS);
+				return ENOBUFS;
 			}
 
 			init_mfc_params(rt, mfccp);
@@ -1155,7 +1155,7 @@ add_mfc(struct sockopt *sopt)
 	}
 
 	splx(s);
-	return (0);
+	return 0;
 }
 
 #ifdef UPCALL_TIMING
@@ -1208,7 +1208,7 @@ del_mfc(struct sockopt *sopt)
 		/* Try with the size of mfcctl2. */
 		error = sockopt_get(sopt, mfccp, sizeof(struct mfcctl2));
 		if (error)
-			return (error);
+			return error;
 	}
 
 	if (mrtdebug & DEBUG_MFC)
@@ -1221,7 +1221,7 @@ del_mfc(struct sockopt *sopt)
 	rt = mfc_find(&mfccp->mfcc_origin, &mfccp->mfcc_mcastgrp);
 	if (rt == NULL) {
 		splx(s);
-		return (EADDRNOTAVAIL);
+		return EADDRNOTAVAIL;
 	}
 
 	/*
@@ -1234,7 +1234,7 @@ del_mfc(struct sockopt *sopt)
 	free(rt, M_MRTABLE);
 
 	splx(s);
-	return (0);
+	return 0;
 }
 
 static int
@@ -1243,11 +1243,11 @@ socket_send(struct socket *s, struct mbuf *mm, struct sockaddr_in *src)
 	if (s) {
 		if (sbappendaddr(&s->so_rcv, sintosa(src), mm, NULL) != 0) {
 			sorwakeup(s);
-			return (0);
+			return 0;
 		}
 	}
 	m_freem(mm);
-	return (-1);
+	return -1;
 }
 
 /*
@@ -1295,7 +1295,7 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp)
 			    "ip_mforward: received source-routed packet from %x\n",
 			    ntohl(ip->ip_src.s_addr));
 
-		return (1);
+		return 1;
 	}
 
 	/*
@@ -1308,7 +1308,7 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp)
 	 * or a packet destined to a local-only group.
 	 */
 	if (ip->ip_ttl <= 1 || IN_LOCAL_GROUP(ip->ip_dst.s_addr))
-		return (0);
+		return 0;
 
 	/*
 	 * Determine forwarding vifs from the forwarding cache table
@@ -1320,7 +1320,7 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp)
 	/* Entry exists, so forward if necessary */
 	if (rt != NULL) {
 		splx(s);
-		return (ip_mdq(m, ifp, rt));
+		return ip_mdq(m, ifp, rt);
 	} else {
 		/*
 		 * If we don't have a route for packet's origin,
@@ -1354,14 +1354,14 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp)
 					      M_NOWAIT);
 		if (rte == NULL) {
 			splx(s);
-			return (ENOBUFS);
+			return ENOBUFS;
 		}
 		mb0 = m_copypacket(m, M_DONTWAIT);
 		M_PULLUP(mb0, hlen);
 		if (mb0 == NULL) {
 			free(rte, M_MRTABLE);
 			splx(s);
-			return (ENOBUFS);
+			return ENOBUFS;
 		}
 
 		/* is there an upcall waiting for this flow? */
@@ -1426,7 +1426,7 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp)
 				free(rte, M_MRTABLE);
 				m_freem(mb0);
 				splx(s);
-				return (ENOBUFS);
+				return ENOBUFS;
 			}
 
 			/* insert new entry at head of hash chain */
@@ -1469,7 +1469,7 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp)
 					free(rte, M_MRTABLE);
 					m_freem(mb0);
 					splx(s);
-					return (0);
+					return 0;
 				}
 
 			/* Add this entry to the end of the queue */
@@ -1485,7 +1485,7 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp)
 
 		splx(s);
 
-		return (0);
+		return 0;
 	}
 }
 
@@ -1601,13 +1601,13 @@ ip_mdq(struct mbuf *m, struct ifnet *ifp, struct mfc *rt)
 			    ;
 			if (vifi >= numvifs) {
 				/* The iif is not found: ignore the packet. */
-				return (0);
+				return 0;
 			}
 
 			if (rt->mfc_flags[vifi] &
 			    MRT_MFC_FLAGS_DISABLE_WRONGVIF) {
 				/* WRONGVIF disabled: ignore the packet */
-				return (0);
+				return 0;
 			}
 
 			microtime(&now);
@@ -1622,7 +1622,7 @@ ip_mdq(struct mbuf *m, struct ifnet *ifp, struct mfc *rt)
 
 				M_PULLUP(mm, hlen);
 				if (mm == NULL)
-					return (ENOBUFS);
+					return ENOBUFS;
 
 				rt->mfc_last_assert = now;
 
@@ -1638,11 +1638,11 @@ ip_mdq(struct mbuf *m, struct ifnet *ifp, struct mfc *rt)
 					log(LOG_WARNING,
 					    "ip_mforward: ip_mrouter socket queue full\n");
 					++mrtstat.mrts_upq_sockfull;
-					return (ENOBUFS);
+					return ENOBUFS;
 				}
 			}
 		}
-		return (0);
+		return 0;
 	}
 
 	/* If I sourced this packet, it counts as output, else it was input. */
@@ -1687,7 +1687,7 @@ ip_mdq(struct mbuf *m, struct ifnet *ifp, struct mfc *rt)
 			bw_meter_receive_packet(x, plen, &now);
 	}
 
-	return (0);
+	return 0;
 }
 
 static void
@@ -1998,11 +1998,11 @@ tbf_dq_sel(struct vif *vifp, struct ip *ip)
 			m_freem(m);
 			mrtstat.mrts_drop_sel++;
 			splx(s);
-			return (1);
+			return 1;
 		}
 	}
 	splx(s);
-	return (0);
+	return 0;
 }
 
 static void
@@ -2099,7 +2099,7 @@ priority(struct vif *vifp, struct ip *ip)
 			    ntohs(udp->uh_dport), prio);
 	}
 
-	return (prio);
+	return prio;
 }
 
 /*
