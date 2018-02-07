@@ -22,8 +22,6 @@
 #ifdef IN_GCC
 # include "options.h"
 # include "insn-constants.h"
-# include "config/rs6000/secureplt.h"
-# include "config/rs6000/biarch64.h"
 # include "config/rs6000/rs6000.h"
 # include "config/dbxelf.h"
 # include "config/elfos.h"
