@@ -397,6 +397,20 @@ DH_get0_key(const DH *dh, const BIGNUM **pub_key, const BIGNUM **priv_key)
 		*priv_key = dh->priv_key;
 }
 
+static inline int
+DH_set0_key(DH *dh, BIGNUM *pub_key, BIGNUM *priv_key)
+{
+	if (pub_key) {
+		BN_free(dh->pub_key);
+		dh->pub_key = pub_key;
+	}
+	if (priv_key) {
+		BN_free(dh->priv_key);
+		dh->priv_key = priv_key;
+	}
+	return 1;
+}
+
 static inline void
 DH_get0_pqg(const DH *dh, const BIGNUM **p, const BIGNUM **q,
     const BIGNUM **g)
