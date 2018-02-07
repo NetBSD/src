@@ -6,8 +6,6 @@ SRCDIR/gcc/coretypes.h
 auto-host.h
 SRCDIR/gcc/../include/ansidecl.h
 options.h
-SRCDIR/gcc/config/rs6000/secureplt.h
-SRCDIR/gcc/config/rs6000/biarch64.h
 SRCDIR/gcc/config/rs6000/rs6000.h
 SRCDIR/gcc/config/dbxelf.h
 SRCDIR/gcc/config/elfos.h
