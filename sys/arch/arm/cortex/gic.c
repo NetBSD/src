@@ -1,4 +1,4 @@
-/*	$NetBSD: gic.c,v 1.31 2017/07/14 06:33:26 skrll Exp $	*/
+/*	$NetBSD: gic.c,v 1.32 2018/02/07 20:42:17 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.31 2017/07/14 06:33:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.32 2018/02/07 20:42:17 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -259,9 +259,6 @@ armgic_irq_handler(void *tf)
 
 	ci->ci_data.cpu_nintr++;
 
-	KASSERTMSG(old_ipl != IPL_HIGH, "old_ipl %d pmr %#x hppir %#x",
-	    old_ipl, gicc_read(sc, GICC_PMR), gicc_read(sc, GICC_HPPIR));
-
 	for (;;) {
 		uint32_t iar = gicc_read(sc, GICC_IAR);
 		uint32_t irq = __SHIFTOUT(iar, GICC_IAR_IRQ);
@@ -276,6 +273,9 @@ armgic_irq_handler(void *tf)
 				break;
 			}
 		}
+
+		KASSERTMSG(old_ipl != IPL_HIGH, "old_ipl %d pmr %#x hppir %#x",
+		    old_ipl, gicc_read(sc, GICC_PMR), gicc_read(sc, GICC_HPPIR));
 
 		//const uint32_t cpuid = __SHIFTOUT(iar, GICC_IAR_CPUID_MASK);
 		struct intrsource * const is = sc->sc_pic.pic_sources[irq];
@@ -318,7 +318,6 @@ armgic_irq_handler(void *tf)
 	/*
 	 * Now handle any pending ints.
 	 */
-	KASSERT(old_ipl != IPL_HIGH);
 	pic_do_pending_ints(I32_bit, old_ipl, tf);
 	KASSERTMSG(ci->ci_cpl == old_ipl, "ci_cpl %d old_ipl %d", ci->ci_cpl, old_ipl);
 	KASSERT(old_mtx_count == ci->ci_mtx_count);
