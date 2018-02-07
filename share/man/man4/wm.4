@@ -1,4 +1,4 @@
-.\"	$NetBSD: wm.4,v 1.38 2018/01/18 09:54:52 wiz Exp $
+.\"	$NetBSD: wm.4,v 1.39 2018/02/07 03:26:36 knakahara Exp $
 .\"
 .\" Copyright 2002, 2003 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -168,6 +168,15 @@ driver supports these features of the chip.
 See
 .Xr ifconfig 8
 for information on how to enable this feature.
+.Pp
+Many chips supported by the
+.Nm
+driver support jumbo frames, however several chips do not support
+jumbo frames, e.g. i82542, i82081H and 82567V.
+Jumbo frames can be configured via the interface MTU setting.
+Selecting an MTU larger than 1500 bytes with the
+.Xr ifconfig 8
+utility configures the adapter to receive and transmit jumbo frames.
 .\" .Sh DIAGNOSTICS
 .\" XXX to be done.
 .Sh OPTIONS
