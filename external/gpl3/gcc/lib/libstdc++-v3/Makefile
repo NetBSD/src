@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2018/02/04 01:16:33 mrg Exp $
+#	$NetBSD: Makefile,v 1.32 2018/02/07 02:30:39 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -25,7 +25,11 @@ libstdc++-symbols.ver:
 	${CXX} -I${DESTDIR}/usr/include/g++ -E -P -include ${.CURDIR}/arch/${LIBSTDCXX_MACHINE_ARCH}/c++config.h - > \
 	${.TARGET}.tmp && mv ${.TARGET}.tmp ${.TARGET} && rm -f ${.TARGET}.tmp
 
+.if ${MKPICLIB} != "no"
 libstdc++_pic.a:: libstdc++-symbols.ver
+.else
+libstdc++.a:: libstdc++-symbols.ver
+.endif
 
 LDFLAGS+=	-Wl,-O1 \
 		-Wl,--gc-sections \
