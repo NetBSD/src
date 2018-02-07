@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.c,v 1.65 2017/11/17 07:37:12 ozaki-r Exp $	*/
+/*	$NetBSD: igmp.c,v 1.66 2018/02/07 11:42:58 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.65 2017/11/17 07:37:12 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.66 2018/02/07 11:42:58 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mrouting.h"
@@ -632,9 +632,7 @@ igmp_sendpkt(struct in_multi *inm, int type)
 
 	imo.imo_multicast_if_index = if_get_index(inm->inm_ifp);
 	imo.imo_multicast_ttl = 1;
-#ifdef RSVP_ISI
-	imo.imo_multicast_vif = -1;
-#endif
+
 	/*
 	 * Request loopback of the report if we are acting as a multicast
 	 * router, so that the process-level routing demon can hear it.
