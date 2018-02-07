@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.373 2018/02/06 06:36:40 maxv Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.374 2018/02/07 08:12:25 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.373 2018/02/06 06:36:40 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.374 2018/02/07 08:12:25 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -782,7 +782,7 @@ ours:
 	 * Switch out to protocol's input routine.
 	 */
 #if IFA_STATS
-	if (ia && ip) {
+	if (ia) {
 		struct in_ifaddr *_ia;
 		/*
 		 * Keep a reference from ip_match_our_address with psref
