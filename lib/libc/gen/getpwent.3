@@ -1,4 +1,4 @@
-.\"	$NetBSD: getpwent.3,v 1.39 2016/12/26 10:16:43 abhinav Exp $
+.\"	$NetBSD: getpwent.3,v 1.40 2018/02/07 11:16:05 pgoyette Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)getpwent.3	8.2 (Berkeley) 12/11/93
 .\"
-.Dd April 30, 2008
+.Dd February 7, 2018
 .Dt GETPWENT 3
 .Os
 .Sh NAME
@@ -210,8 +210,8 @@ and
 return a valid pointer to a passwd structure on success
 and a
 .Dv NULL
-pointer if the entry was not found or an error occured.
-If an error occured, the global variable
+pointer if the entry was not found or an error occurred.
+If an error occurred, the global variable
 .Dv errno
 is set to indicate the nature of the failure.
 The
