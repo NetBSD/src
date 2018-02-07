@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_xcall.c,v 1.25 2018/02/05 02:51:41 ozaki-r Exp $	*/
+/*	$NetBSD: subr_xcall.c,v 1.26 2018/02/07 04:25:09 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.25 2018/02/05 02:51:41 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.26 2018/02/07 04:25:09 ozaki-r Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -257,6 +257,7 @@ xc_broadcast(unsigned int flags, xcfunc_t func, void *arg1, void *arg2)
 {
 
 	KASSERT(!cpu_intr_p() && !cpu_softintr_p());
+	ASSERT_SLEEPABLE();
 
 	if ((flags & XC_HIGHPRI) != 0) {
 		int ipl = xc_extract_ipl(flags);
@@ -278,6 +279,7 @@ xc_unicast(unsigned int flags, xcfunc_t func, void *arg1, void *arg2,
 
 	KASSERT(ci != NULL);
 	KASSERT(!cpu_intr_p() && !cpu_softintr_p());
+	ASSERT_SLEEPABLE();
 
 	if ((flags & XC_HIGHPRI) != 0) {
 		int ipl = xc_extract_ipl(flags);
@@ -298,6 +300,7 @@ xc_wait(uint64_t where)
 	xc_state_t *xc;
 
 	KASSERT(!cpu_intr_p() && !cpu_softintr_p());
+	ASSERT_SLEEPABLE();
 
 	/* Determine whether it is high or low priority cross-call. */
 	if ((where & XC_PRI_BIT) != 0) {
