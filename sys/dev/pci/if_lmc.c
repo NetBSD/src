@@ -1,4 +1,4 @@
-/* $NetBSD: if_lmc.c,v 1.63 2017/01/24 09:05:28 ozaki-r Exp $ */
+/* $NetBSD: if_lmc.c,v 1.64 2018/02/07 06:18:11 mrg Exp $ */
 
 /*-
  * Copyright (c) 2002-2006 David Boggs. <boggs@boggs.palo-alto.ca.us>
@@ -74,7 +74,7 @@
  */
 
 # include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.63 2017/01/24 09:05:28 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.64 2018/02/07 06:18:11 mrg Exp $");
 # include <sys/param.h>	/* OS version */
 # include "opt_inet.h"	/* INET6, INET */
 # include "opt_altq_enabled.h" /* ALTQ */
@@ -5340,7 +5340,7 @@ print_driver_info(void)
     printf("LMC driver version %d/%d/%d; options",
      VER_YEAR, VER_MONTH, VER_DAY);
     if (ALTQ)           printf(" ALTQ");
-                        printf(" BPF"); /* always defined */
+    if (1)              printf(" BPF"); /* always defined */
     if (NAPI)           printf(" NAPI");
     if (DEVICE_POLLING) printf(" POLL");
     if (P2P)            printf(" P2P");
