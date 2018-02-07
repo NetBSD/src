@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.85 2018/02/01 09:55:37 msaitoh Exp $	*/
+/*	$NetBSD: xhci.c,v 1.86 2018/02/07 15:55:58 prlw1 Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.85 2018/02/01 09:55:37 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.86 2018/02/07 15:55:58 prlw1 Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -3658,7 +3658,7 @@ xhci_root_intr_start(struct usbd_xfer *xfer)
 static void
 xhci_root_intr_abort(struct usbd_xfer *xfer)
 {
-	struct xhci_softc * const sc = XHCI_XFER2SC(xfer);
+	struct xhci_softc * const sc __diagused = XHCI_XFER2SC(xfer);
 
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
 
