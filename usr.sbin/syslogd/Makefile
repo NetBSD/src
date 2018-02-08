@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2017/05/21 15:28:43 riastradh Exp $
+#	$NetBSD: Makefile,v 1.26 2018/02/08 18:28:42 jakllsch Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
 .include <bsd.own.mk>
 
@@ -22,6 +22,7 @@ CPPFLAGS+=-DINET6
 .endif
 
 CPPFLAGS+=-DLIBWRAP
+CPPFLAGS+=-DOPENSSL_API_COMPAT=0x10100000L
 LDADD+=	-lwrap
 DPADD+=	${LIBWRAP}
 
