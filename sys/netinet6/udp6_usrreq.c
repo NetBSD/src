@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.130 2017/07/06 17:08:57 christos Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.131 2018/02/08 11:13:20 maxv Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.130 2017/07/06 17:08:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.131 2018/02/08 11:13:20 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -113,7 +113,7 @@ __KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.130 2017/07/06 17:08:57 christos E
 #ifdef INET6
 #include <netipsec/ipsec6.h>
 #endif
-#endif	/* IPSEC */
+#endif
 
 #include "faith.h"
 #if defined(NFAITH) && NFAITH > 0
@@ -130,12 +130,12 @@ extern struct inpcbtable udbtable;
 percpu_t *udp6stat_percpu;
 
 /* UDP on IP6 parameters */
-static int	udp6_sendspace = 9216;	/* really max datagram size */
-static int	udp6_recvspace = 40 * (1024 + sizeof(struct sockaddr_in6));
+static int udp6_sendspace = 9216;	/* really max datagram size */
+static int udp6_recvspace = 40 * (1024 + sizeof(struct sockaddr_in6));
 					/* 40 1K datagrams */
 
-static	void udp6_notify(struct in6pcb *, int);
-static	void sysctl_net_inet6_udp6_setup(struct sysctllog **);
+static void udp6_notify(struct in6pcb *, int);
+static void sysctl_net_inet6_udp6_setup(struct sysctllog **);
 
 #ifdef UDP_CSUM_COUNTERS
 #include <sys/device.h>
@@ -255,7 +255,7 @@ udp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 			 */
 			if (in6_pcblookup_connect(&udbtable, &sa6->sin6_addr,
 			    uh.uh_dport, (const struct in6_addr *)&sa6_src->sin6_addr,
-						  uh.uh_sport, 0, 0))
+			    uh.uh_sport, 0, 0))
 				valid++;
 #if 0
 			/*
@@ -289,11 +289,11 @@ udp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 			 */
 		}
 
-		(void) in6_pcbnotify(&udbtable, sa, uh.uh_dport,
+		(void)in6_pcbnotify(&udbtable, sa, uh.uh_dport,
 		    sin6tocsa(sa6_src), uh.uh_sport, cmd, cmdarg,
 		    notify);
 	} else {
-		(void) in6_pcbnotify(&udbtable, sa, 0,
+		(void)in6_pcbnotify(&udbtable, sa, 0,
 		    sin6tocsa(sa6_src), 0, cmd, cmdarg, notify);
 	}
 	return NULL;
@@ -339,7 +339,7 @@ end:
 
 static void
 udp6_sendup(struct mbuf *m, int off /* offset of data portion */,
-	struct sockaddr *src, struct socket *so)
+    struct sockaddr *src, struct socket *so)
 {
 	struct mbuf *opts = NULL;
 	struct mbuf *n;
@@ -359,11 +359,11 @@ udp6_sendup(struct mbuf *m, int off /* offset of data portion */,
 			    ICMP6_DST_UNREACH_ADMIN, 0);
 		return;
 	}
-#endif /*IPSEC*/
+#endif
 
 	if ((n = m_copypacket(m, M_DONTWAIT)) != NULL) {
-		if (in6p->in6p_flags & IN6P_CONTROLOPTS
-		    || SOOPT_TIMESTAMP(in6p->in6p_socket->so_options)) {
+		if (in6p->in6p_flags & IN6P_CONTROLOPTS ||
+		    SOOPT_TIMESTAMP(in6p->in6p_socket->so_options)) {
 			struct ip6_hdr *ip6 = mtod(n, struct ip6_hdr *);
 			ip6_savecontrol(in6p, &opts, ip6, n);
 		}
@@ -382,7 +382,7 @@ udp6_sendup(struct mbuf *m, int off /* offset of data portion */,
 
 int
 udp6_realinput(int af, struct sockaddr_in6 *src, struct sockaddr_in6 *dst,
-	struct mbuf *m, int off)
+    struct mbuf *m, int off)
 {
 	u_int16_t sport, dport;
 	int rcvcnt;
@@ -571,28 +571,30 @@ udp6_input(struct mbuf **mp, int *offp, int proto)
 
 	UDP6_STATINC(UDP6_STAT_IPACKETS);
 
-	/* check for jumbogram is done in ip6_input.  we can trust pkthdr.len */
+	/* Check for jumbogram is done in ip6_input. We can trust pkthdr.len. */
 	plen = m->m_pkthdr.len - off;
 	IP6_EXTHDR_GET(uh, struct udphdr *, m, off, sizeof(struct udphdr));
 	if (uh == NULL) {
 		IP6_STATINC(IP6_STAT_TOOSHORT);
 		return IPPROTO_DONE;
 	}
+
 	/*
 	 * Enforce alignment requirements that are violated in
 	 * some cases, see kern/50766 for details.
 	 */
-        if (UDP_HDR_ALIGNED_P(uh) == 0) {
-                m = m_copyup(m, off + sizeof(struct udphdr), 0); 
-                if (m == NULL) {
-                        IP6_STATINC(IP6_STAT_TOOSHORT);
-                        return IPPROTO_DONE;
-                }
+	if (UDP_HDR_ALIGNED_P(uh) == 0) {
+		m = m_copyup(m, off + sizeof(struct udphdr), 0);
+		if (m == NULL) {
+			IP6_STATINC(IP6_STAT_TOOSHORT);
+			return IPPROTO_DONE;
+		}
 		ip6 = mtod(m, struct ip6_hdr *);
-                uh = (struct udphdr *)(mtod(m, char *) + off);
-        }
+		uh = (struct udphdr *)(mtod(m, char *) + off);
+	}
 	KASSERT(UDP_HDR_ALIGNED_P(uh));
 	ulen = ntohs((u_short)uh->uh_ulen);
+
 	/*
 	 * RFC2675 section 4: jumbograms will have 0 in the UDP header field,
 	 * iff payload length > 0xffff.

@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_output.c,v 1.55 2017/03/03 07:13:06 ozaki-r Exp $	*/
+/*	$NetBSD: udp6_output.c,v 1.56 2018/02/08 11:13:20 maxv Exp $	*/
 /*	$KAME: udp6_output.c,v 1.43 2001/10/15 09:19:52 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.55 2017/03/03 07:13:06 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.56 2018/02/08 11:13:20 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -190,13 +190,11 @@ udp6_output(struct in6pcb * const in6p, struct mbuf *m,
 			goto release;
 		}
 
-
 		faddr = &sin6->sin6_addr;
 		fport = sin6->sin6_port; /* allow 0 port */
 
 		if (IN6_IS_ADDR_V4MAPPED(faddr)) {
-			if ((in6p->in6p_flags & IN6P_IPV6_V6ONLY))
-			{
+			if ((in6p->in6p_flags & IN6P_IPV6_V6ONLY)) {
 				/*
 				 * I believe we should explicitly discard the
 				 * packet when mapped addresses are disabled,
@@ -210,8 +208,8 @@ udp6_output(struct in6pcb * const in6p, struct mbuf *m,
 				error = EINVAL;
 				goto release;
 			}
-			if (!IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_laddr)
-			    && !IN6_IS_ADDR_V4MAPPED(&in6p->in6p_laddr)) {
+			if (!IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_laddr) &&
+			    !IN6_IS_ADDR_V4MAPPED(&in6p->in6p_laddr)) {
 				/*
 				 * when remote addr is an IPv4-mapped address,
 				 * local addr should not be an IPv6 address,
@@ -343,7 +341,7 @@ udp6_output(struct in6pcb * const in6p, struct mbuf *m,
 	 * for UDP and IP6 headers.
 	 */
 	M_PREPEND(m, hlen + sizeof(struct udphdr), M_DONTWAIT);
-	if (m == 0) {
+	if (m == NULL) {
 		error = ENOBUFS;
 		goto release;
 	}
@@ -366,7 +364,7 @@ udp6_output(struct in6pcb * const in6p, struct mbuf *m,
 		ip6->ip6_flow	= in6p->in6p_flowinfo & IPV6_FLOWINFO_MASK;
 		ip6->ip6_vfc 	&= ~IPV6_VERSION_MASK;
 		ip6->ip6_vfc 	|= IPV6_VERSION;
-#if 0				/* ip6_plen will be filled in ip6_output. */
+#if 0		/* ip6_plen will be filled in ip6_output. */
 		ip6->ip6_plen	= htons((u_int16_t)plen);
 #endif
 		ip6->ip6_nxt	= IPPROTO_UDP;
