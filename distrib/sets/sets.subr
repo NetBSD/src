@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.182 2018/01/10 18:15:18 uwe Exp $
+#	$NetBSD: sets.subr,v 1.183 2018/02/08 03:27:50 christos Exp $
 #
 
 #
@@ -20,6 +20,7 @@
 #	HAVE_GCC
 #	HAVE_GDB
 #	HAVE_SSP
+#	HAVE_OPENSSL
 #	TOOLCHAIN_MISSING
 #	OBJECT_FMT
 # as well as:
@@ -179,7 +180,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.182 2018/01/10 18:15:18 uwe Exp $
+# 	# $NetBSD: sets.subr,v 1.183 2018/02/08 03:27:50 christos Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -212,6 +213,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 #	binutils=<n>		<n> = value of ${HAVE_BINUTILS}
 #	gcc=<n>			<n> = value of ${HAVE_GCC}
 #	gdb=<n>			<n> = value of ${HAVE_GDB}
+#	openssl=<n>		<n> = value of ${HAVE_OPENSSL}
 #	xorg_server_ver=<n>	<n> = value of ${HAVE_XORG_SERVER_VER}
 #
 #    2. The USE_<name>:
@@ -301,6 +303,9 @@ list_set_files()
 					wanted["gcc=" "'"${HAVE_GCC}"'"] = 1
 				if ("gdb" in wanted)
 					wanted["gdb=" "'"${HAVE_GDB}"'"] = 1
+			}
+			if ("openssl" in wanted) {
+				wanted["openssl=" "'"${HAVE_OPENSSL}"'"] = 1
 			}
 			if ("xorg_server_ver" in wanted) {
 				wanted["xorg_server_ver=" "'"${HAVE_XORG_SERVER_VER}"'"] = 1
