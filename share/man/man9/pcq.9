@@ -1,4 +1,4 @@
-.\"     $NetBSD: pcq.9,v 1.7 2015/04/18 08:04:58 mlelstv Exp $
+.\"     $NetBSD: pcq.9,v 1.8 2018/02/08 09:03:23 dholland Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -99,7 +99,7 @@ Remove the next item to be consumed from the queue and return it.
 If the queue is empty,
 return
 .Dv NULL .
-The caller must prevent concurrent gets from occuring.
+The caller must prevent concurrent gets from occurring.
 .It Fn pcq_maxitems "pcq"
 Return the maximum number of items that the queue can store at
 any one time.
