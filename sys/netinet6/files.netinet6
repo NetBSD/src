@@ -1,4 +1,4 @@
-#	$NetBSD: files.netinet6,v 1.12 2016/08/02 04:50:16 knakahara Exp $
+#	$NetBSD: files.netinet6,v 1.13 2018/02/08 11:34:35 maxv Exp $
 
 defflag	opt_inet6.h	RFC2292	
 
@@ -29,7 +29,6 @@ file	netinet6/raw_ip6.c		inet6
 file	netinet6/route6.c		inet6
 file	netinet6/scope6.c		inet6
 
-file	netinet6/udp6_output.c		inet6
 file	netinet6/udp6_usrreq.c		inet6
 
 file	netinet6/dccp6_usrreq.c		inet6 & dccp
