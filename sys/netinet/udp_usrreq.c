@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.237 2018/02/08 06:50:38 maxv Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.238 2018/02/08 07:11:20 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.237 2018/02/08 06:50:38 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.238 2018/02/08 07:11:20 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -124,44 +124,44 @@ __KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.237 2018/02/08 06:50:38 maxv Exp $"
 #ifdef INET6
 #include <netipsec/ipsec6.h>
 #endif
-#endif	/* IPSEC */
+#endif
 
 #ifdef IPKDB
 #include <ipkdb/ipkdb.h>
 #endif
 
-int	udpcksum = 1;
-int	udp_do_loopback_cksum = 0;
+int udpcksum = 1;
+int udp_do_loopback_cksum = 0;
 
-struct	inpcbtable udbtable;
+struct inpcbtable udbtable;
 
 percpu_t *udpstat_percpu;
 
 #ifdef INET
 #ifdef IPSEC
 static int udp4_espinudp (struct mbuf **, int, struct sockaddr *,
-	struct socket *);
+    struct socket *);
 #endif
 static void udp4_sendup (struct mbuf *, int, struct sockaddr *,
-	struct socket *);
+    struct socket *);
 static int udp4_realinput (struct sockaddr_in *, struct sockaddr_in *,
-	struct mbuf **, int);
+    struct mbuf **, int);
 static int udp4_input_checksum(struct mbuf *, const struct udphdr *, int, int);
 #endif
 #ifdef INET
-static	void udp_notify (struct inpcb *, int);
+static void udp_notify (struct inpcb *, int);
 #endif
 
 #ifndef UDBHASHSIZE
 #define	UDBHASHSIZE	128
 #endif
-int	udbhashsize = UDBHASHSIZE;
+int udbhashsize = UDBHASHSIZE;
 
 /*
  * For send - really max datagram size; for receive - 40 1K datagrams.
  */
-static int	udp_sendspace = 9216;
-static int	udp_recvspace = 40 * (1024 + sizeof(struct sockaddr_in));
+static int udp_sendspace = 9216;
+static int udp_recvspace = 40 * (1024 + sizeof(struct sockaddr_in));
 
 #ifdef MBUFTRACE
 struct mowner udp_mowner = MOWNER_INIT("udp", "");
@@ -229,7 +229,6 @@ udp_init(void)
 /*
  * Checksum extended UDP header and data.
  */
-
 int
 udp_input_checksum(int af, struct mbuf *m, const struct udphdr *uh,
     int iphlen, int len)
@@ -257,7 +256,6 @@ udp_input_checksum(int af, struct mbuf *m, const struct udphdr *uh,
 /*
  * Checksum extended UDP header and data.
  */
-
 static int
 udp4_input_checksum(struct mbuf *m, const struct udphdr *uh,
     int iphlen, int len)
@@ -351,6 +349,7 @@ udp_input(struct mbuf *m, ...)
 		UDP_STATINC(UDP_STAT_HDROPS);
 		return;
 	}
+
 	/*
 	 * Enforce alignment requirements that are violated in
 	 * some cases, see kern/50766 for details.
@@ -441,8 +440,8 @@ udp_input(struct mbuf *m, ...)
 		UDP_STATINC(UDP_STAT_NOPORT);
 #ifdef IPKDB
 		if (checkipkdb(&ip->ip_src, uh->uh_sport, uh->uh_dport,
-				m, iphlen + sizeof(struct udphdr),
-				m->m_pkthdr.len - iphlen - sizeof(struct udphdr))) {
+		    m, iphlen + sizeof(struct udphdr),
+		    m->m_pkthdr.len - iphlen - sizeof(struct udphdr))) {
 			/*
 			 * It was a debugger connect packet,
 			 * just drop it now
@@ -467,7 +466,7 @@ badcsum:
 #ifdef INET
 static void
 udp4_sendup(struct mbuf *m, int off /* offset of data portion */,
-	struct sockaddr *src, struct socket *so)
+    struct sockaddr *src, struct socket *so)
 {
 	struct mbuf *opts = NULL;
 	struct mbuf *n;
@@ -487,18 +486,17 @@ udp4_sendup(struct mbuf *m, int off /* offset of data portion */,
 			    0, 0);
 		return;
 	}
-#endif /*IPSEC*/
+#endif
 
 	if ((n = m_copypacket(m, M_DONTWAIT)) != NULL) {
-		if (inp->inp_flags & INP_CONTROLOPTS
-		    || SOOPT_TIMESTAMP(so->so_options)) {
+		if (inp->inp_flags & INP_CONTROLOPTS ||
+		    SOOPT_TIMESTAMP(so->so_options)) {
 			struct ip *ip = mtod(n, struct ip *);
 			ip_savecontrol(inp, &opts, ip, n);
 		}
 
 		m_adj(n, off);
-		if (sbappendaddr(&so->so_rcv, src, n,
-				opts) == 0) {
+		if (sbappendaddr(&so->so_rcv, src, n, opts) == 0) {
 			m_freem(n);
 			if (opts)
 				m_freem(opts);
@@ -513,7 +511,7 @@ udp4_sendup(struct mbuf *m, int off /* offset of data portion */,
 #ifdef INET
 static int
 udp4_realinput(struct sockaddr_in *src, struct sockaddr_in *dst,
-	struct mbuf **mp, int off /* offset of udphdr */)
+    struct mbuf **mp, int off /* offset of udphdr */)
 {
 	u_int16_t *sport, *dport;
 	int rcvcnt;
@@ -576,7 +574,7 @@ udp4_realinput(struct sockaddr_in *src, struct sockaddr_in *dst,
 			}
 
 			udp4_sendup(m, off, (struct sockaddr *)src,
-				inp->inp_socket);
+			    inp->inp_socket);
 			rcvcnt++;
 
 			/*
@@ -609,21 +607,19 @@ udp4_realinput(struct sockaddr_in *src, struct sockaddr_in *dst,
 		if (inp->inp_flags & INP_ESPINUDP_ALL) {
 			struct sockaddr *sa = (struct sockaddr *)src;
 
-			switch(udp4_espinudp(mp, off, sa, inp->inp_socket)) {
-			case -1: 	/* Error, m was freeed */
+			switch (udp4_espinudp(mp, off, sa, inp->inp_socket)) {
+			case -1: /* Error, m was freed */
 				rcvcnt = -1;
 				goto bad;
-				break;
 
-			case 1:		/* ESP over UDP */
+			case 1: /* ESP over UDP */
 				rcvcnt++;
 				goto bad;
-				break;
 
-			case 0: 	/* plain UDP */
-			default: 	/* Unexpected */
-				/* 
-				 * Normal UDP processing will take place 
+			case 0: /* plain UDP */
+			default: /* Unexpected */
+				/*
+				 * Normal UDP processing will take place,
 				 * m may have changed.
 				 */
 				m = *mp;
@@ -668,8 +664,8 @@ udp_ctlinput(int cmd, const struct sockaddr *sa, void *v)
 	void (*notify)(struct inpcb *, int) = udp_notify;
 	int errno;
 
-	if (sa->sa_family != AF_INET
-	 || sa->sa_len != sizeof(struct sockaddr_in))
+	if (sa->sa_family != AF_INET ||
+	    sa->sa_len != sizeof(struct sockaddr_in))
 		return NULL;
 	if ((unsigned)cmd >= PRC_NCMDS)
 		return NULL;
@@ -756,7 +752,7 @@ udp_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 				break;
 			}
 			break;
-		
+
 		default:
 			error = ENOPROTOOPT;
 			break;
@@ -1245,9 +1241,9 @@ udp_statinc(u_int stat)
 #if defined(INET) && defined(IPSEC)
 /*
  * Returns:
- * 1 if the packet was processed
- * 0 if normal UDP processing should take place
- * -1 if an error occurent and m was freed
+ *     1 if the packet was processed
+ *     0 if normal UDP processing should take place
+ *    -1 if an error occurred and m was freed
  */
 static int
 udp4_espinudp(struct mbuf **mp, int off, struct sockaddr *src,
@@ -1267,7 +1263,7 @@ udp4_espinudp(struct mbuf **mp, int off, struct sockaddr *src,
 
 	/*
 	 * Collapse the mbuf chain if the first mbuf is too short
-	 * The longest case is: UDP + non ESP marker + ESP
+	 * The longest case is: UDP + non ESP marker + ESP.
 	 */
 	minlen = off + sizeof(u_int64_t) + sizeof(struct esp);
 	if (minlen > m->m_pkthdr.len)
@@ -1275,7 +1271,6 @@ udp4_espinudp(struct mbuf **mp, int off, struct sockaddr *src,
 
 	if (m->m_len < minlen) {
 		if ((*mp = m_pullup(m, minlen)) == NULL) {
-			printf("udp4_espinudp: m_pullup failed\n");
 			return -1;
 		}
 		m = *mp;
@@ -1288,7 +1283,7 @@ udp4_espinudp(struct mbuf **mp, int off, struct sockaddr *src,
 	/* Ignore keepalive packets */
 	if ((len == 1) && (*(unsigned char *)data == 0xff)) {
 		m_freem(m);
-		*mp = NULL; /* avoid any further processiong by caller ... */
+		*mp = NULL; /* avoid any further processing by caller ... */
 		return 1;
 	}
 
@@ -1309,15 +1304,15 @@ udp4_espinudp(struct mbuf **mp, int off, struct sockaddr *src,
 	if (inp->inp_flags & INP_ESPINUDP_NON_IKE) {
 		u_int32_t *st = (u_int32_t *)data;
 
-		if ((len <= sizeof(u_int64_t) + sizeof(struct esp))
-		    || ((st[0] | st[1]) != 0))
+		if ((len <= sizeof(u_int64_t) + sizeof(struct esp)) ||
+		    ((st[0] | st[1]) != 0))
 			return 0; /* Normal UDP processing */
 
 		skip = sizeof(struct udphdr) + sizeof(u_int64_t);
 	}
 
 	/*
-	 * Get the UDP ports. They are handled in network 
+	 * Get the UDP ports. They are handled in network
 	 * order everywhere in IPSEC_NAT_T code.
 	 */
 	udphdr = (struct udphdr *)((char *)data - skip);
@@ -1326,7 +1321,7 @@ udp4_espinudp(struct mbuf **mp, int off, struct sockaddr *src,
 
 	/*
 	 * Remove the UDP header (and possibly the non ESP marker)
-	 * IP header lendth is iphdrlen
+	 * IP header length is iphdrlen
 	 * Before:
 	 *   <--- off --->
 	 *   +----+------+-----+
@@ -1349,16 +1344,15 @@ udp4_espinudp(struct mbuf **mp, int off, struct sockaddr *src,
 
 	/*
 	 * We have modified the packet - it is now ESP, so we should not
-	 * return to UDP processing ... 
+	 * return to UDP processing ...
 	 *
 	 * Add a PACKET_TAG_IPSEC_NAT_T_PORT tag to remember
 	 * the source UDP port. This is required if we want
-	 * to select the right SPD for multiple hosts behind 
-	 * same NAT 
+	 * to select the right SPD for multiple hosts behind
+	 * same NAT
 	 */
 	if ((tag = m_tag_get(PACKET_TAG_IPSEC_NAT_T_PORTS,
 	    sizeof(sport) + sizeof(dport), M_DONTWAIT)) == NULL) {
-		printf("udp4_espinudp: m_tag_get failed\n");
 		m_freem(m);
 		return -1;
 	}
