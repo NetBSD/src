@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: gcc2netbsd,v 1.6 2016/03/12 21:51:02 mrg Exp $
+#	$NetBSD: gcc2netbsd,v 1.7 2018/02/08 19:33:26 mrg Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -52,6 +52,8 @@ gcc/go
 gcc/java
 gcc/po
 gcc/testsuite
+gnattools
+gotools
 libada
 libatomic
 libcilkrts
@@ -61,7 +63,7 @@ libgfortran
 libgo
 libgomp/testsuite
 libiberty/testsuite
-libitm/testsuite
+libitm
 libjava
 libmpx
 liboffloadmic
