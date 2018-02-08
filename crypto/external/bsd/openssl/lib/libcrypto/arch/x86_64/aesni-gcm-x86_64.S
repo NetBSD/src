@@ -32,6 +32,23 @@ _aesni_ctr32_ghash_6x:
 	vpxor	%xmm15,%xmm12,%xmm12
 	vmovups	16-128(%rcx),%xmm2
 	vpclmulqdq	$0x01,%xmm3,%xmm7,%xmm6
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	xorq	%r12,%r12
 	cmpq	%r14,%r15
 
@@ -317,6 +334,9 @@ _aesni_ctr32_ghash_6x:
 .align	32
 aesni_gcm_decrypt:
 	xorq	%r10,%r10
+
+
+
 	cmpq	$0x60,%rdx
 	jb	.Lgcm_dec_abort
 
@@ -355,7 +375,15 @@ aesni_gcm_decrypt:
 	vmovdqu	80(%rdi),%xmm7
 	leaq	(%rdi),%r14
 	vmovdqu	64(%rdi),%xmm4
+
+
+
+
+
+
+
 	leaq	-192(%rdi,%rdx,1),%r15
+
 	vmovdqu	48(%rdi),%xmm5
 	shrq	$4,%rdx
 	xorq	%r10,%r10
@@ -494,6 +522,10 @@ _aesni_ctr32_6x:
 .align	32
 aesni_gcm_encrypt:
 	xorq	%r10,%r10
+
+
+
+
 	cmpq	$288,%rdx
 	jb	.Lgcm_enc_abort
 
@@ -527,7 +559,16 @@ aesni_gcm_encrypt:
 .Lenc_no_key_aliasing:
 
 	leaq	(%rsi),%r14
+
+
+
+
+
+
+
+
 	leaq	-192(%rsi,%rdx,1),%r15
+
 	shrq	$4,%rdx
 
 	call	_aesni_ctr32_6x
