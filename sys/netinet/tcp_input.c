@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.372 2018/02/08 20:19:30 maxv Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.373 2018/02/08 20:41:36 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.372 2018/02/08 20:19:30 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.373 2018/02/08 20:41:36 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1294,6 +1294,10 @@ tcp_input(struct mbuf *m, ...)
 		af = AF_INET;
 		iphlen = sizeof(struct ip);
 
+		if (IN_MULTICAST(ip->ip_dst.s_addr) ||
+		    in_broadcast(ip->ip_dst, m_get_rcvif_NOMPSAFE(m)))
+			goto drop;
+
 		/* We do the checksum after PCB lookup... */
 		len = ntohs(ip->ip_len);
 		tlen = len - toff;
@@ -1714,21 +1718,6 @@ nosave:;
 			/*
 			 * Received a SYN.
 			 */
-
-			switch (af) {
-#ifdef INET6
-			case AF_INET6:
-				if (IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst))
-					goto drop;
-				break;
-#endif /* INET6 */
-			case AF_INET:
-				if (IN_MULTICAST(ip->ip_dst.s_addr) ||
-				    in_broadcast(ip->ip_dst,
-				                 m_get_rcvif_NOMPSAFE(m)))
-					goto drop;
-				break;
-			}
 
 #ifdef INET6
 			/*
