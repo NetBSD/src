@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.368 2018/02/08 19:38:21 maxv Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.369 2018/02/08 19:58:05 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.368 2018/02/08 19:38:21 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.369 2018/02/08 19:58:05 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1310,13 +1310,6 @@ tcp_input(struct mbuf *m, ...)
 		if (th == NULL) {
 			TCP_STATINC(TCP_STAT_RCVSHORT);
 			return;
-		}
-
-		/* Be proactive about malicious use of IPv4 mapped address */
-		if (IN6_IS_ADDR_V4MAPPED(&ip6->ip6_src) ||
-		    IN6_IS_ADDR_V4MAPPED(&ip6->ip6_dst)) {
-			/* XXX stat */
-			goto drop;
 		}
 
 		/*
