@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_compat.c,v 1.4 2014/03/20 20:43:12 christos Exp $	*/
+/*	$NetBSD: ip_fil_compat.c,v 1.5 2018/02/08 08:04:45 mrg Exp $	*/
 
 /*
  * Copyright (C) 2002-2012 by Darren Reed.
@@ -2273,7 +2273,6 @@ frentry_4_1_0_to_current(ipf_main_softc_t *softc, frentry_4_1_0_t *old,
 			obj.ipfo_ptr = old->fr_data;
 
 			if ((offset & 7) != 0)
-				offset += 8 - (offset & 7);
 				offset += 8 - (offset & 7);
 			error = ipf_in_compat(softc, &obj,
 					      fr->fr_names + offset, 0);
