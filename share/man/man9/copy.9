@@ -1,4 +1,4 @@
-.\"	$NetBSD: copy.9,v 1.19 2008/09/12 00:35:12 simonb Exp $
+.\"	$NetBSD: copy.9,v 1.20 2018/02/08 09:03:23 dholland Exp $
 .\"
 .\" Copyright (c) 1996, 2002 Jason R. Thorpe.
 .\" All rights reserved.
@@ -145,7 +145,7 @@ except it operates on the address space of the process
 .It Fn ioctl_copyin
 Like
 .Fn copyin ,
-except it operates on kernel adresses when the
+except it operates on kernel addresses when the
 .Dv FKIOCTL
 flag is passed in
 .Fa ioctlflags
@@ -153,7 +153,7 @@ from the ioctl call.
 .It Fn ioctl_copyout
 Like
 .Fn copyout ,
-except it operates on kernel adresses when the
+except it operates on kernel addresses when the
 .Dv FKIOCTL
 flag is passed in
 .Fa ioctlflags
