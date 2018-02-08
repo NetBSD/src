@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.367 2018/02/08 19:25:48 maxv Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.368 2018/02/08 19:38:21 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.367 2018/02/08 19:25:48 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.368 2018/02/08 19:38:21 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1221,7 +1221,7 @@ tcp_input(struct mbuf *m, ...)
 	u_int8_t *optp = NULL;
 	int optlen = 0;
 	int len, tlen, toff, hdroptlen = 0;
-	struct tcpcb *tp = 0;
+	struct tcpcb *tp = NULL;
 	int tiflags;
 	struct socket *so = NULL;
 	int todrop, acked, ourfinisacked, needoutput = 0;
@@ -1288,7 +1288,7 @@ tcp_input(struct mbuf *m, ...)
 		af = AF_INET;
 		iphlen = sizeof(struct ip);
 		IP6_EXTHDR_GET(th, struct tcphdr *, m, toff,
-			sizeof(struct tcphdr));
+		    sizeof(struct tcphdr));
 		if (th == NULL) {
 			TCP_STATINC(TCP_STAT_RCVSHORT);
 			return;
@@ -1306,7 +1306,7 @@ tcp_input(struct mbuf *m, ...)
 		af = AF_INET6;
 		ip6 = mtod(m, struct ip6_hdr *);
 		IP6_EXTHDR_GET(th, struct tcphdr *, m, toff,
-			sizeof(struct tcphdr));
+		    sizeof(struct tcphdr));
 		if (th == NULL) {
 			TCP_STATINC(TCP_STAT_RCVSHORT);
 			return;
@@ -1351,8 +1351,9 @@ tcp_input(struct mbuf *m, ...)
 		m_freem(m);
 		return;
 	}
+
 	/*
-         * Enforce alignment requirements that are violated in
+	 * Enforce alignment requirements that are violated in
 	 * some cases, see kern/50766 for details.
 	 */
 	if (TCP_HDR_ALIGNED_P(th) == 0) {
@@ -1370,33 +1371,22 @@ tcp_input(struct mbuf *m, ...)
 	KASSERT(TCP_HDR_ALIGNED_P(th));
 
 	/*
-	 * Check that TCP offset makes sense,
-	 * pull out TCP options and adjust length.		XXX
+	 * Check that TCP offset makes sense, pull out TCP options and
+	 * adjust length.
 	 */
 	off = th->th_off << 2;
-	if (off < sizeof (struct tcphdr) || off > tlen) {
+	if (off < sizeof(struct tcphdr) || off > tlen) {
 		TCP_STATINC(TCP_STAT_RCVBADOFF);
 		goto drop;
 	}
 	tlen -= off;
 
-	/*
-	 * tcp_input() has been modified to use tlen to mean the TCP data
-	 * length throughout the function.  Other functions can use
-	 * m->m_pkthdr.len as the basis for calculating the TCP data length.
-	 * rja
-	 */
-
-	if (off > sizeof (struct tcphdr)) {
+	if (off > sizeof(struct tcphdr)) {
 		IP6_EXTHDR_GET(th, struct tcphdr *, m, toff, off);
 		if (th == NULL) {
 			TCP_STATINC(TCP_STAT_RCVSHORT);
 			return;
 		}
-		/*
-		 * NOTE: ip/ip6 will not be affected by m_pulldown()
-		 * (as they're before toff) and we don't need to update those.
-		 */
 		KASSERT(TCP_HDR_ALIGNED_P(th));
 		optlen = off - sizeof (struct tcphdr);
 		optp = ((u_int8_t *)th) + sizeof(struct tcphdr);
@@ -1438,11 +1428,11 @@ findpcb:
 #ifdef INET
 	case AF_INET:
 		inp = in_pcblookup_connect(&tcbtable, ip->ip_src, th->th_sport,
-					   ip->ip_dst, th->th_dport,
-					   &vestige);
+		    ip->ip_dst, th->th_dport, &vestige);
 		if (inp == 0 && !vestige.valid) {
 			TCP_STATINC(TCP_STAT_PCBHASHMISS);
-			inp = in_pcblookup_bind(&tcbtable, ip->ip_dst, th->th_dport);
+			inp = in_pcblookup_bind(&tcbtable, ip->ip_dst,
+			    th->th_dport);
 		}
 #ifdef INET6
 		if (inp == 0 && !vestige.valid) {
@@ -1452,8 +1442,7 @@ findpcb:
 			in6_in_2_v4mapin6(&ip->ip_src, &s);
 			in6_in_2_v4mapin6(&ip->ip_dst, &d);
 			in6p = in6_pcblookup_connect(&tcbtable, &s,
-						     th->th_sport, &d, th->th_dport,
-						     0, &vestige);
+			    th->th_sport, &d, th->th_dport, 0, &vestige);
 			if (in6p == 0 && !vestige.valid) {
 				TCP_STATINC(TCP_STAT_PCBHASHMISS);
 				in6p = in6_pcblookup_bind(&tcbtable, &d,
@@ -1506,11 +1495,11 @@ findpcb:
 		faith = 0;
 #endif
 		in6p = in6_pcblookup_connect(&tcbtable, &ip6->ip6_src,
-					     th->th_sport, &ip6->ip6_dst, th->th_dport, faith, &vestige);
+		    th->th_sport, &ip6->ip6_dst, th->th_dport, faith, &vestige);
 		if (!in6p && !vestige.valid) {
 			TCP_STATINC(TCP_STAT_PCBHASHMISS);
 			in6p = in6_pcblookup_bind(&tcbtable, &ip6->ip6_dst,
-				th->th_dport, faith);
+			    th->th_dport, faith);
 		}
 		if (!in6p && !vestige.valid) {
 			TCP_STATINC(TCP_STAT_NOPORT);
@@ -1559,8 +1548,7 @@ findpcb:
 	else if (vestige.valid) {
 		int mc = 0;
 
-		/* We do not support the resurrection of vtw tcpcps.
-		 */
+		/* We do not support the resurrection of vtw tcpcps. */
 		if (tcp_input_checksum(af, m, th, toff, off, tlen))
 			goto badcsum;
 
@@ -1572,19 +1560,18 @@ findpcb:
 #endif
 
 		case AF_INET:
-			mc = (IN_MULTICAST(ip->ip_dst.s_addr)
-			      || in_broadcast(ip->ip_dst,
-			                      m_get_rcvif_NOMPSAFE(m)));
+			mc = (IN_MULTICAST(ip->ip_dst.s_addr) ||
+			    in_broadcast(ip->ip_dst, m_get_rcvif_NOMPSAFE(m)));
 			break;
 		}
 
 		tcp_fields_to_host(th);
 		tcp_vtw_input(th, &vestige, m, tlen, mc);
-		m = 0;
+		m = NULL;
 		goto drop;
 	}
 
-	if (tp == 0) {
+	if (tp == NULL) {
 		tcp_fields_to_host(th);
 		goto dropwithreset_ratelim;
 	}
@@ -1698,30 +1685,27 @@ nosave:;
 				goto badsyn;
 			} else if (tiflags & TH_ACK) {
 				so = syn_cache_get(&src.sa, &dst.sa,
-					th, toff, tlen, so, m);
+				    th, toff, tlen, so, m);
 				if (so == NULL) {
 					/*
-					 * We don't have a SYN for
-					 * this ACK; send an RST.
+					 * We don't have a SYN for this ACK;
+					 * send an RST.
 					 */
 					goto badsyn;
-				} else if (so ==
-				    (struct socket *)(-1)) {
+				} else if (so == (struct socket *)(-1)) {
 					/*
-					 * We were unable to create
-					 * the connection.  If the
-					 * 3-way handshake was
-					 * completed, and RST has
-					 * been sent to the peer.
-					 * Since the mbuf might be
-					 * in use for the reply,
-					 * do not free it.
+					 * We were unable to create the
+					 * connection. If the 3-way handshake
+					 * was completed, and RST has been
+					 * sent to the peer. Since the mbuf
+					 * might be in use for the reply, do
+					 * not free it.
 					 */
 					m = NULL;
 				} else {
 					/*
-					 * We have created a
-					 * full-blown connection.
+					 * We have created a full-blown
+					 * connection.
 					 */
 					tp = NULL;
 					inp = NULL;
@@ -1772,7 +1756,7 @@ nosave:;
 				    in_broadcast(ip->ip_dst,
 				                 m_get_rcvif_NOMPSAFE(m)))
 					goto drop;
-			break;
+				break;
 			}
 
 #ifdef INET6
@@ -1834,16 +1818,15 @@ nosave:;
 #ifdef INET
 				case AF_INET:
 					/*
-					 * inp can be NULL when
-					 * receiving an IPv4 packet on
-					 * an IPv4-mapped IPv6 address.
+					 * inp can be NULL when receiving an
+					 * IPv4 packet on an IPv4-mapped IPv6
+					 * address.
 					 */
 					KASSERT(inp == NULL ||
 					    sotoinpcb(so) == inp);
 					if (!ipsec4_in_reject(m, inp))
 						break;
-					IPSEC_STATINC(
-					    IPSEC_STAT_IN_POLVIO);
+					IPSEC_STATINC(IPSEC_STAT_IN_POLVIO);
 					tp = NULL;
 					goto dropwithreset;
 #endif
@@ -1852,8 +1835,7 @@ nosave:;
 					KASSERT(sotoin6pcb(so) == in6p);
 					if (!ipsec6_in_reject(m, in6p))
 						break;
-					IPSEC6_STATINC(
-					    IPSEC_STAT_IN_POLVIO);
+					IPSEC6_STATINC(IPSEC_STAT_IN_POLVIO);
 					tp = NULL;
 					goto dropwithreset;
 #endif /*INET6*/
@@ -1862,9 +1844,8 @@ nosave:;
 #endif /*IPSEC*/
 
 			/*
-			 * LISTEN socket received a SYN
-			 * from itself?  This can't possibly
-			 * be valid; drop the packet.
+			 * LISTEN socket received a SYN from itself? This
+			 * can't possibly be valid; drop the packet.
 			 */
 			if (th->th_sport == th->th_dport) {
 				int i;
@@ -1877,7 +1858,8 @@ nosave:;
 #endif
 #ifdef INET6
 				case AF_INET6:
-					i = IN6_ARE_ADDR_EQUAL(&ip6->ip6_src, &ip6->ip6_dst);
+					i = IN6_ARE_ADDR_EQUAL(&ip6->ip6_src,
+					    &ip6->ip6_dst);
 					break;
 #endif
 				default:
@@ -1895,7 +1877,7 @@ nosave:;
 			 */
 			if (so->so_qlen <= so->so_qlimit &&
 			    syn_cache_add(&src.sa, &dst.sa, th, tlen,
-					so, m, optp, optlen, &opti))
+			    so, m, optp, optlen, &opti))
 				m = NULL;
 		}
 
@@ -1903,14 +1885,11 @@ nosave:;
 	}
 
 after_listen:
-#ifdef DIAGNOSTIC
 	/*
 	 * Should not happen now that all embryonic connections
 	 * are handled with compressed state.
 	 */
-	if (tp->t_state == TCPS_LISTEN)
-		panic("tcp_input: TCPS_LISTEN");
-#endif
+	KASSERT(tp->t_state != TCPS_LISTEN);
 
 	/*
 	 * Segment received on connection.
