@@ -1,4 +1,4 @@
-/* $NetBSD: udp6_usrreq.c,v 1.133 2018/02/08 11:49:37 maxv Exp $ */
+/* $NetBSD: udp6_usrreq.c,v 1.134 2018/02/08 19:58:05 maxv Exp $ */
 /* $KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $ */
 /* $KAME: udp6_output.c,v 1.43 2001/10/15 09:19:52 itojun Exp $ */
 
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.133 2018/02/08 11:49:37 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.134 2018/02/08 19:58:05 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -611,13 +611,6 @@ udp6_input(struct mbuf **mp, int *offp, int proto)
 	/* destination port of 0 is illegal, based on RFC768. */
 	if (uh->uh_dport == 0)
 		goto bad;
-
-	/* Be proactive about malicious use of IPv4 mapped address */
-	if (IN6_IS_ADDR_V4MAPPED(&ip6->ip6_src) ||
-	    IN6_IS_ADDR_V4MAPPED(&ip6->ip6_dst)) {
-		/* XXX stat */
-		goto bad;
-	}
 
 	/*
 	 * Checksum extended UDP header and data.  Maybe skip checksum
