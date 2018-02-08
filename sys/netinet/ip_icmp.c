@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.167 2018/02/05 08:38:06 maxv Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.168 2018/02/08 09:32:02 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.167 2018/02/05 08:38:06 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.168 2018/02/08 09:32:02 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -546,6 +546,14 @@ _icmp_input(struct mbuf *m, int hlen, int proto)
 			ICMP_STATINC(ICMP_STAT_BADLEN);
 			goto freeit;
 		}
+		if (m->m_len < hlen + ICMP_ADVLEN(icp)) {
+			m = m_pullup(m, hlen + ICMP_ADVLEN(icp));
+			if (m == NULL)
+				goto freeit;
+		}
+		ip = mtod(m, struct ip *);
+		icp = (struct icmp *)(mtod(m, uint8_t *) + hlen);
+
 		if (IN_MULTICAST(icp->icmp_ip.ip_dst.s_addr))
 			goto badcode;
 #ifdef ICMPPRINTFS
