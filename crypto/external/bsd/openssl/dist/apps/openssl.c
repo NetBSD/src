@@ -62,7 +62,7 @@ BIO *bio_in = NULL;
 BIO *bio_out = NULL;
 BIO *bio_err = NULL;
 
-static int apps_startup()
+static int apps_startup(void)
 {
 #ifdef SIGPIPE
     signal(SIGPIPE, SIG_IGN);
@@ -80,14 +80,14 @@ static int apps_startup()
     return 1;
 }
 
-static void apps_shutdown()
+static void apps_shutdown(void)
 {
 #ifndef OPENSSL_NO_UI
     destroy_ui_method();
 #endif
 }
 
-static char *make_config_name()
+static char *make_config_name(void)
 {
     const char *t;
     size_t len;
