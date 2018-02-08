@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.6 2011/06/11 18:03:17 christos Exp $
+# $NetBSD: Makefile.inc,v 1.7 2018/02/08 21:59:10 christos Exp $
 
 .include <bsd.own.mk>
 .include "../Makefile.inc"
@@ -20,9 +20,11 @@ CWARNFLAGS.clang+=	-Wno-format
 
 CPPFLAGS+=	-DOPENSSL_FIPS
 CPPFLAGS+=	-I${OPENSSLSRC} -I${OPENSSLSRC}/crypto
+CPPFLAGS+=	-I${OPENSSLSRC}/include -I${OPENSSLSRC}/../include
+CPPFLAGS+=	-I${OPENSSLSRC}/crypto/include
 CRYPTODIST=	${NETBSDSRCDIR}/crypto
 .include "${NETBSDSRCDIR}/crypto/Makefile.openssl"
-.PATH:	${OPENSSLSRC}/crypto/${HELPER_DIR}
+.PATH:	${OPENSSLSRC}/test ${OPENSSLSRC}/crypto/${HELPER_DIR}
 
 .include <bsd.test.mk>
 .include <bsd.prog.mk>
