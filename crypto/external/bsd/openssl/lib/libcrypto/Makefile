@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2018/02/08 21:57:24 christos Exp $
+#	$NetBSD: Makefile,v 1.14 2018/02/08 22:48:55 christos Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -118,9 +118,11 @@ COPTS.eng_padlock.c = -Wno-stack-protector
 
 INCSDIR=/usr/include/openssl
 
+LDFLAGS+=-Wl,--version-script=${.CURDIR}/crypto.map
+
 PKGCONFIG=libcrypto
 .include "${.CURDIR}/../../pkgconfig.mk"
 
+
 .include <bsd.lib.mk>
-# RC5 warning
-LDFLAGS+=-Wl,--no-fatal-warnings
+
