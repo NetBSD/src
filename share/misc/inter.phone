@@ -1,5 +1,5 @@
 # Country Code : City Code : City : Country
-#	$NetBSD: inter.phone,v 1.29 2014/05/06 14:31:21 zafer Exp $
+#	$NetBSD: inter.phone,v 1.30 2018/02/08 10:05:54 wiz Exp $
 #	@(#)inter.phone	8.1 (Berkeley) 6/9/93
 20:2:Cairo:Egypt, Arab Rep. of
 20:3:Alexandria:Egypt, Arab Rep. of
@@ -382,7 +382,7 @@
 356:::Malta
 357:21:Nicosia:Cyprus
 358:2:Turku & Pori:Finland
-358:3:Häme:Finland
+358:3:HÃ¤me:Finland
 358:5:Kymi:Finland
 358:6:Vaasa:Finland
 358:8:Oulu:Finland
