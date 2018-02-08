@@ -1,4 +1,4 @@
-/*	$NetBSD: net_osdep.h,v 1.18 2009/05/06 22:17:41 elad Exp $	*/
+/*	$NetBSD: net_osdep.h,v 1.19 2018/02/08 21:02:05 maxv Exp $	*/
 /*	$KAME: net_osdep.h,v 1.51 2001/07/06 06:21:43 itojun Exp $	*/
 
 /*
@@ -302,10 +302,6 @@
 #ifdef _KERNEL
 
 #define if_name(ifp)	((ifp)->if_xname)
-
-#if defined(__NetBSD__) && __NetBSD_Version__ >= 104000000
-#define ovbcopy(src, dst, len)	memmove((dst), (src), (len))
-#endif
 
 #endif /*_KERNEL*/
 #endif /* !_NET_NET_OSDEP_H_ */
