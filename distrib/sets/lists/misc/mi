@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.205 2017/05/21 15:28:38 riastradh Exp $
+# $NetBSD: mi,v 1.206 2018/02/08 03:27:51 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1468,7 +1468,7 @@
 ./usr/share/examples/named/named.conf		misc-obsolete		obsolete
 ./usr/share/examples/nsd/nsd.conf		misc-netutil-examples	share,nsd
 ./usr/share/examples/openssl/CA.pl		misc-crypto-examples	share
-./usr/share/examples/openssl/CA.sh		misc-crypto-examples	share
+./usr/share/examples/openssl/CA.sh		misc-crypto-examples	share,openssl=10
 ./usr/share/examples/openssl/der_chop		misc-obsolete		obsolete
 ./usr/share/examples/openssl/openssl.cnf	misc-crypto-examples	share
 ./usr/share/examples/pf/ackpri			misc-pf-examples	pf,share

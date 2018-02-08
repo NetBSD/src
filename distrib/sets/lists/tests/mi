@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.772 2018/01/10 11:06:06 knakahara Exp $
+# $NetBSD: mi,v 1.773 2018/02/08 03:27:51 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1320,7 +1320,7 @@
 ./usr/tests/crypto/libcrypto/h_exptest		tests-crypto-tests	compattestfile,atf
 ./usr/tests/crypto/libcrypto/h_hmactest		tests-crypto-tests	compattestfile,atf
 ./usr/tests/crypto/libcrypto/h_ideatest		tests-crypto-tests	compattestfile,atf
-./usr/tests/crypto/libcrypto/h_lhashtest	tests-crypto-tests	compattestfile,atf
+./usr/tests/crypto/libcrypto/h_lhashtest	tests-crypto-tests	compattestfile,atf,openssl=10
 ./usr/tests/crypto/libcrypto/h_md2test		tests-crypto-tests	compattestfile,atf
 ./usr/tests/crypto/libcrypto/h_md4test		tests-crypto-tests	compattestfile,atf
 ./usr/tests/crypto/libcrypto/h_md5test		tests-crypto-tests	compattestfile,atf
@@ -1332,10 +1332,10 @@
 ./usr/tests/crypto/libcrypto/h_ripemdtest	tests-crypto-tests	compattestfile,atf
 ./usr/tests/crypto/libcrypto/h_rsatest		tests-crypto-tests	compattestfile,atf
 ./usr/tests/crypto/libcrypto/h_sha1test		tests-crypto-tests	compattestfile,atf
-./usr/tests/crypto/libcrypto/h_shatest		tests-crypto-tests	compattestfile,atf
+./usr/tests/crypto/libcrypto/h_shatest		tests-crypto-tests	compattestfile,atf,openssl=10
 ./usr/tests/crypto/libcrypto/h_srptest		tests-crypto-tests	compattestfile,atf
 ./usr/tests/crypto/libcrypto/h_threadstest	tests-crypto-tests	compattestfile,atf
-./usr/tests/crypto/libcrypto/h_x509v3test	tests-crypto-tests	compattestfile,atf
+./usr/tests/crypto/libcrypto/h_x509v3test	tests-crypto-tests	compattestfile,atf,openssl=10
 ./usr/tests/crypto/libcrypto/t_certs		tests-crypto-tests	compattestfile,atf
 ./usr/tests/crypto/libcrypto/t_ciphers		tests-crypto-tests	compattestfile,atf
 ./usr/tests/crypto/libcrypto/t_hashes		tests-crypto-tests	compattestfile,atf

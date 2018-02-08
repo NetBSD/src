@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.240 2018/02/06 23:12:02 mrg Exp $
+# $NetBSD: mi,v 1.241 2018/02/08 03:27:51 christos Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -1577,7 +1577,7 @@
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_exptest.debug		tests-crypto-debug	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_hmactest.debug		tests-crypto-debug	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_ideatest.debug		tests-crypto-debug	debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/crypto/libcrypto/h_lhashtest.debug	tests-crypto-debug	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/crypto/libcrypto/h_lhashtest.debug	tests-crypto-debug	debug,atf,compattestfile,openssl=10
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_md2test.debug		tests-crypto-debug	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_md4test.debug		tests-crypto-debug	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_md5test.debug		tests-crypto-debug	debug,atf,compattestfile
@@ -1589,10 +1589,10 @@
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_ripemdtest.debug	tests-crypto-debug	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_rsatest.debug		tests-crypto-debug	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_sha1test.debug		tests-crypto-debug	debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/crypto/libcrypto/h_shatest.debug		tests-crypto-debug	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/crypto/libcrypto/h_shatest.debug		tests-crypto-debug	debug,atf,compattestfile,openssl=10
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_srptest.debug		tests-crypto-debug	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_threadstest.debug	tests-crypto-debug	debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/crypto/libcrypto/h_x509v3test.debug	tests-crypto-debug	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/crypto/libcrypto/h_x509v3test.debug	tests-crypto-debug	debug,atf,compattestfile,openssl=10
 ./usr/libdata/debug/usr/tests/crypto/opencrypto/h_aescbc.debug		tests-crypto-debug	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/crypto/opencrypto/h_aesctr1.debug		tests-crypto-debug	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/crypto/opencrypto/h_aesctr2.debug		tests-crypto-debug	debug,atf,compattestfile
