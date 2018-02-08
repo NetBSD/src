@@ -1,4 +1,4 @@
-#	$NetBSD: t_ping_opts.sh,v 1.1 2017/03/31 06:41:40 ozaki-r Exp $
+#	$NetBSD: t_ping_opts.sh,v 1.2 2018/02/08 09:56:19 maxv Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -206,6 +206,9 @@ ping_opts_gateway_body()
 	my_macaddr=$(get_macaddr ${SOCKSRC} shmif0)
 	gw_shmif0_macaddr=$(get_macaddr ${SOCKFWD} shmif0)
 
+	atf_check -s exit:0 rump.sysctl -q -w net.inet.ip.allowsrcrt=1
+	atf_check -s exit:0 rump.sysctl -q -w net.inet.ip.forwsrcrt=1
+
 	export RUMP_SERVER=$SOCKSRC
 	atf_check -s exit:0 -o ignore rump.ping $PING_OPTS $IPDST
 	check_echo_request_pkt_with_macaddr \
@@ -234,6 +237,9 @@ ping_opts_gateway_body()
 	    -g $IPSRCGW2 $IPDST
 	check_echo_request_pkt_with_macaddr \
 	    $my_macaddr $gw_shmif2_macaddr $IPSRC $IPSRCGW2
+
+	atf_check -s exit:0 rump.sysctl -q -w net.inet.ip.allowsrcrt=0
+	atf_check -s exit:0 rump.sysctl -q -w net.inet.ip.forwsrcrt=0
 
 	rump_server_destroy_ifaces
 }
