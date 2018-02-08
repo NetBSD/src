@@ -94,7 +94,7 @@ static unsigned char lst[] =
 static const char rnd_seed[] =
     "string to make the random number generator think it has entropy";
 
-static void message(BIO *out, char *m)
+static void message(BIO *out, const char *m)
 {
     fprintf(stderr, "test %s\n", m);
     BIO_puts(out, "print \"test ");
@@ -487,7 +487,7 @@ int test_div(BIO *bp, BN_CTX *ctx)
 static void print_word(BIO *bp, BN_ULONG w)
 {
     int i = sizeof(w) * 8;
-    char *fmt = NULL;
+    const char *fmt = NULL;
     unsigned char byte;
 
     do {
@@ -499,7 +499,7 @@ static void print_word(BIO *bp, BN_ULONG w)
             fmt = "%02X";
 
         if (fmt != NULL)
-            BIO_printf(bp, fmt, byte);
+            BIO_printf(bp, fmtcheck(fmt, "%X"), byte);
     } while (i);
 
     /* If we haven't printed anything, at least print a zero! */

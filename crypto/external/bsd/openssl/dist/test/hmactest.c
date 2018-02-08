@@ -23,28 +23,30 @@
 #  include <openssl/ebcdic.h>
 # endif
 
+#define UC(a) ((const unsigned char *)(a))
+
 # ifndef OPENSSL_NO_MD5
 static struct test_st {
-    unsigned char key[16];
+    const char key[16];
     int key_len;
-    unsigned char data[64];
+    const char data[64];
     int data_len;
-    unsigned char *digest;
+    const char *digest;
 } test[8] = {
     {
         "", 0, "More text test vectors to stuff up EBCDIC machines :-)", 54,
-        (unsigned char *)"e9139d1e6ee064ef8cf514fc7dc83e86",
+        "e9139d1e6ee064ef8cf514fc7dc83e86",
     },
     {
         {
             0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b, 0x0b,
             0x0b, 0x0b, 0x0b, 0x0b, 0x0b,
         }, 16, "Hi There", 8,
-        (unsigned char *)"9294727a3638bb1c13f48ef8158bfc9d",
+        "9294727a3638bb1c13f48ef8158bfc9d",
     },
     {
         "Jefe", 4, "what do ya want for nothing?", 28,
-        (unsigned char *)"750c783e6ab0b503eaa86e310a5db738",
+        "750c783e6ab0b503eaa86e310a5db738",
     },
     {
         {
@@ -56,23 +58,23 @@ static struct test_st {
             0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd,
             0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd,
             0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd
-        }, 50, (unsigned char *)"56be34521d144c88dbb8c733f0e8b3f6",
+        }, 50, "56be34521d144c88dbb8c733f0e8b3f6",
     },
     {
         "", 0, "My test data", 12,
-        (unsigned char *)"61afdecb95429ef494d61fdee15990cabf0826fc"
+        "61afdecb95429ef494d61fdee15990cabf0826fc"
     },
     {
         "", 0, "My test data", 12,
-        (unsigned char *)"2274b195d90ce8e03406f4b526a47e0787a88a65479938f1a5baa3ce0f079776"
+        "2274b195d90ce8e03406f4b526a47e0787a88a65479938f1a5baa3ce0f079776"
     },
     {
         "123456", 6, "My test data", 12,
-        (unsigned char *)"bab53058ae861a7f191abe2d0145cbb123776a6369ee3f9d79ce455667e411dd"
+        "bab53058ae861a7f191abe2d0145cbb123776a6369ee3f9d79ce455667e411dd"
     },
     {
         "12345", 5, "My test data again", 18,
-        (unsigned char *)"a12396ceddd2a85f4c656bc1e0aa50c78cffde3e"
+        "a12396ceddd2a85f4c656bc1e0aa50c78cffde3e"
     }
 };
 # endif
@@ -104,10 +106,10 @@ int main(int argc, char *argv[])
     for (i = 0; i < 4; i++) {
         p = pt(HMAC(EVP_md5(),
                     test[i].key, test[i].key_len,
-                    test[i].data, test[i].data_len, NULL, NULL),
+                    UC(test[i].data), test[i].data_len, NULL, NULL),
                     MD5_DIGEST_LENGTH);
 
-        if (strcmp(p, (char *)test[i].digest) != 0) {
+        if (strcmp(p, (const char *)test[i].digest) != 0) {
             printf("Error calculating HMAC on %d entry'\n", i);
             printf("got %s instead of %s\n", p, test[i].digest);
             err++;
@@ -133,7 +135,7 @@ int main(int argc, char *argv[])
         err++;
         goto test5;
     }
-    if (HMAC_Update(ctx, test[4].data, test[4].data_len)) {
+    if (HMAC_Update(ctx, UC(test[4].data), test[4].data_len)) {
         printf("Should fail HMAC_Update with ctx not set up (test 4)\n");
         err++;
         goto test5;
@@ -143,7 +145,7 @@ int main(int argc, char *argv[])
         err++;
         goto test5;
     }
-    if (HMAC_Update(ctx, test[4].data, test[4].data_len)) {
+    if (HMAC_Update(ctx, UC(test[4].data), test[4].data_len)) {
         printf("Should fail HMAC_Update with ctx not set up (test 4)\n");
         err++;
         goto test5;
@@ -151,9 +153,9 @@ int main(int argc, char *argv[])
     printf("test 4 ok\n");
 test5:
     /* Test 5 has empty key; test that single-shot accepts a NULL key. */
-    p = pt(HMAC(EVP_sha1(), NULL, 0, test[4].data, test[4].data_len,
+    p = pt(HMAC(EVP_sha1(), NULL, 0, UC(test[4].data), test[4].data_len,
                 NULL, NULL), SHA_DIGEST_LENGTH);
-    if (strcmp(p, (char *)test[4].digest) != 0) {
+    if (strcmp(p, (const char *)test[4].digest) != 0) {
         printf("Error calculating HMAC on %d entry'\n", i);
         printf("got %s instead of %s\n", p, test[4].digest);
         err++;
@@ -170,7 +172,7 @@ test5:
         err++;
         goto test6;
     }
-    if (HMAC_Update(ctx, test[4].data, test[4].data_len)) {
+    if (HMAC_Update(ctx, UC(test[4].data), test[4].data_len)) {
         printf("Should fail HMAC_Update with ctx not set up (test 5)\n");
         err++;
         goto test6;
@@ -185,7 +187,7 @@ test5:
         err++;
         goto test6;
     }
-    if (!HMAC_Update(ctx, test[4].data, test[4].data_len)) {
+    if (!HMAC_Update(ctx, UC(test[4].data), test[4].data_len)) {
         printf("Error updating HMAC with data (test 5)\n");
         err++;
         goto test6;
@@ -196,7 +198,7 @@ test5:
         goto test6;
     }
     p = pt(buf, len);
-    if (strcmp(p, (char *)test[4].digest) != 0) {
+    if (strcmp(p, (const char *)test[4].digest) != 0) {
         printf("Error calculating interim HMAC on test 5\n");
         printf("got %s instead of %s\n", p, test[4].digest);
         err++;
@@ -217,7 +219,7 @@ test5:
         err++;
         goto test6;
     }
-    if (!HMAC_Update(ctx, test[5].data, test[5].data_len)) {
+    if (!HMAC_Update(ctx, UC(test[5].data), test[5].data_len)) {
         printf("Error updating HMAC with data (sha256) (test 5)\n");
         err++;
         goto test6;
@@ -228,7 +230,7 @@ test5:
         goto test6;
     }
     p = pt(buf, len);
-    if (strcmp(p, (char *)test[5].digest) != 0) {
+    if (strcmp(p, (const char *)test[5].digest) != 0) {
         printf("Error calculating 2nd interim HMAC on test 5\n");
         printf("got %s instead of %s\n", p, test[5].digest);
         err++;
@@ -239,7 +241,7 @@ test5:
         err++;
         goto test6;
     }
-    if (!HMAC_Update(ctx, test[6].data, test[6].data_len)) {
+    if (!HMAC_Update(ctx, UC(test[6].data), test[6].data_len)) {
         printf("Error updating HMAC with data (new key) (test 5)\n");
         err++;
         goto test6;
@@ -250,7 +252,7 @@ test5:
         goto test6;
     }
     p = pt(buf, len);
-    if (strcmp(p, (char *)test[6].digest) != 0) {
+    if (strcmp(p, (const char *)test[6].digest) != 0) {
         printf("error calculating HMAC on test 5\n");
         printf("got %s instead of %s\n", p, test[6].digest);
         err++;
@@ -270,7 +272,7 @@ test6:
         err++;
         goto end;
     }
-    if (!HMAC_Update(ctx, test[7].data, test[7].data_len)) {
+    if (!HMAC_Update(ctx, UC(test[7].data), test[7].data_len)) {
         printf("Error updating HMAC with data (test 6)\n");
         err++;
         goto end;
@@ -286,7 +288,7 @@ test6:
         goto end;
     }
     p = pt(buf, len);
-    if (strcmp(p, (char *)test[7].digest) != 0) {
+    if (strcmp(p, (const char *)test[7].digest) != 0) {
         printf("Error calculating HMAC on test 6\n");
         printf("got %s instead of %s\n", p, test[7].digest);
         err++;

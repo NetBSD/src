@@ -463,7 +463,7 @@ static void free_key_list(struct key_list *lst)
     }
 }
 
-static int check_unsupported()
+static int check_unsupported(void)
 {
     long err = ERR_peek_error();
     if (ERR_GET_LIB(err) == ERR_LIB_EVP

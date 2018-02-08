@@ -382,8 +382,8 @@ int main(int argc, char *argv[])
         fflush(stdout);
     }
     for (loop = 0; loop < 512; loop++) {
-        OPENSSL_free((void *)ENGINE_get_id(block[loop]));
-        OPENSSL_free((void *)ENGINE_get_name(block[loop]));
+        OPENSSL_free(__UNCONST(ENGINE_get_id(block[loop])));
+        OPENSSL_free(__UNCONST(ENGINE_get_name(block[loop])));
     }
     if (!test_redirect())
         goto end;

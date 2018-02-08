@@ -19,26 +19,27 @@
 # include <openssl/ebcdic.h>
 #endif
 
-static char test[][80] = {
+static const char test[][80] = {
     { "abc" },
     { "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq" }
 };
 
-static char *ret[] = {
+static const char *ret[] = {
     "a9993e364706816aba3e25717850c26c9cd0d89d",
     "84983e441c3bd26ebaae4aa1f95129e5e54670f1",
 };
 
-static char *bigret = "34aa973cd4c4daa4f61eeb2bdbad27316534016f";
+static const char *bigret = "34aa973cd4c4daa4f61eeb2bdbad27316534016f";
 
 static char *pt(unsigned char *md);
 int main(int argc, char *argv[])
 {
     unsigned int i;
     int err = 0;
-    char **R;
+    const char **R;
     static unsigned char buf[1000];
-    char *p, *r;
+    char *p;
+    const char *r;
     EVP_MD_CTX *c;
     unsigned char md[SHA_DIGEST_LENGTH];
 
@@ -55,7 +56,7 @@ int main(int argc, char *argv[])
             goto err;
         }
         p = pt(md);
-        if (strcmp(p, (char *)*R) != 0) {
+        if (strcmp(p, *R) != 0) {
             printf("error calculating SHA1 on '%s'\n", test[i]);
             printf("got %s instead of %s\n", p, *R);
             err++;

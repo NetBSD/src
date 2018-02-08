@@ -100,7 +100,7 @@ int main(int argc, char *argv[])
         printf("ecb idea ok\n");
 
     memcpy(iv, k, 8);
-    IDEA_cbc_encrypt((unsigned char *)text, out, strlen(text) + 1, &key, iv,
+    IDEA_cbc_encrypt((const unsigned char *)text, out, strlen(text) + 1, &key, iv,
                      1);
     memcpy(iv, k, 8);
     IDEA_cbc_encrypt(out, out, 8, &dkey, iv, 0);
@@ -164,7 +164,7 @@ static char *pt(unsigned char *p)
     static int bnum = 0;
     char *ret;
     int i;
-    static char *f = "0123456789ABCDEF";
+    static const char *f = "0123456789ABCDEF";
 
     ret = &(bufs[bnum++][0]);
     bnum %= 10;
