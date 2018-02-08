@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.247 2018/01/10 10:56:30 knakahara Exp $	*/
+/*	$NetBSD: key.c,v 1.248 2018/02/08 20:57:41 maxv Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.247 2018/01/10 10:56:30 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.248 2018/02/08 20:57:41 maxv Exp $");
 
 /*
  * This code is referred to RFC 2367
@@ -111,9 +111,6 @@ __KERNEL_RCSID(0, "$NetBSD: key.c,v 1.247 2018/01/10 10:56:30 knakahara Exp $");
 
 #include <netipsec/xform.h>
 #include <netipsec/ipcomp.h>
-
-
-#include <net/net_osdep.h>
 
 #define FULLMASK	0xff
 #define	_BITS(bytes)	((bytes) << 3)
