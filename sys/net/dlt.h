@@ -1,4 +1,4 @@
-/*	$NetBSD: dlt.h,v 1.17 2017/01/24 22:12:42 christos Exp $	*/
+/*	$NetBSD: dlt.h,v 1.18 2018/02/08 09:05:20 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -575,7 +575,7 @@
  * input packets such as port scans, packets from old lost connections,
  * etc. to force the connection to stay up).
  *
- * The first byte of the PPP header (0xff03) is modified to accomodate
+ * The first byte of the PPP header (0xff03) is modified to accommodate
  * the direction - 0x00 = IN, 0x01 = OUT.
  */
 #define DLT_PPP_PPPD		166

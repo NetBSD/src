@@ -28,7 +28,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cxgb_mc5.c,v 1.1 2010/03/21 21:11:13 jklos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxgb_mc5.c,v 1.2 2018/02/08 09:05:19 dholland Exp $");
 
 #ifdef CONFIG_DEFINED
 #include <common/cxgb_common.h>
@@ -328,7 +328,7 @@ static void mc5_dbgi_mode_disable(const struct mc5 *mc5)
 
 /*
  * Initialization that requires the OS and protocol layers to already
- * be intialized goes here.
+ * be initialized goes here.
  */
 int t3_mc5_init(struct mc5 *mc5, unsigned int nservers, unsigned int nfilters,
         unsigned int nroutes)

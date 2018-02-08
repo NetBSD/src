@@ -32,7 +32,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-static char const n8_id[] = "$Id: RNQueue.c,v 1.1 2008/10/30 12:02:14 darran Exp $";
+static char const n8_id[] = "$Id: RNQueue.c,v 1.2 2018/02/08 09:05:19 dholland Exp $";
 /*****************************************************************************/
 /** @file RNQueue.c
  *  @brief Random Number Queue Manager
@@ -85,7 +85,7 @@ static char const n8_id[] = "$Id: RNQueue.c,v 1.1 2008/10/30 12:02:14 darran Exp
  * 02/18/02 msz   More general QMgrRequest, RNG parameter initialization now
  *                done in this code (with a call out to SAPI), no longer need
  *                some routines (RN_InitParameters, RNG_ValidateRequest)
- * 01/16/02 brr   Removed queue intialization now performed by driver.
+ * 01/16/02 brr   Removed queue initialization now performed by driver.
  * 12/06/01 msz   Disable/enable rnh around updating read_pointer.
  *                Fix for NSP2000 BUG 2.
  * 12/05/01 brr   Removed obsoleted queue allocation.

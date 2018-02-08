@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.102 2017/09/26 07:42:06 knakahara Exp $ */
+/* $NetBSD: if_ti.c,v 1.103 2018/02/08 09:05:19 dholland Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.102 2017/09/26 07:42:06 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.103 2018/02/08 09:05:19 dholland Exp $");
 
 #include "opt_inet.h"
 
@@ -688,7 +688,7 @@ ti_jfree(struct mbuf *m, void *tbuf, size_t size, void *arg)
 
 
 /*
- * Intialize a standard receive ring descriptor.
+ * Initialize a standard receive ring descriptor.
  */
 static int
 ti_newbuf_std(struct ti_softc *sc, int i, struct mbuf *m, bus_dmamap_t dmamap)
@@ -2154,7 +2154,7 @@ ti_intr(void *xsc)
 		return (0);
 #endif
 
-	/* Ack interrupt and stop others from occuring. */
+	/* Ack interrupt and stop others from occurring. */
 	CSR_WRITE_4(sc, TI_MB_HOSTINTR, 1);
 
 	if (ifp->if_flags & IFF_RUNNING) {
