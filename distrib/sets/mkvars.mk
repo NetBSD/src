@@ -1,4 +1,4 @@
-# $NetBSD: mkvars.mk,v 1.33 2017/10/08 15:05:19 christos Exp $
+# $NetBSD: mkvars.mk,v 1.34 2018/02/08 03:27:50 christos Exp $
 
 MKEXTRAVARS= \
 	MACHINE \
@@ -9,6 +9,7 @@ MKEXTRAVARS= \
 	HAVE_XORG_SERVER_VER \
 	HAVE_BINUTILS \
 	HAVE_LIBGCC_EH \
+	HAVE_OPENSSL \
 	HAVE_SSP \
 	OBJECT_FMT \
 	TOOLCHAIN_MISSING \
