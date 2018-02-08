@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.15 2018/02/06 22:04:22 maya Exp $	*/
+/*	$NetBSD: tls.c,v 1.16 2018/02/08 17:45:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.15 2018/02/06 22:04:22 maya Exp $");
+__RCSID("$NetBSD: tls.c,v 1.16 2018/02/08 17:45:29 christos Exp $");
 
 #ifndef DISABLE_TLS
 #include <sys/stat.h>
@@ -84,9 +84,6 @@ static const char *TLS_CONN_STATES[] = {
 
 DH *get_dh1024(void);
 /* DH parameter precomputed with "openssl dhparam -C -2 1024" */
-#ifndef HEADER_DH_H
-#include <openssl/dh.h>
-#endif
 DH *
 get_dh1024(void)
 {
