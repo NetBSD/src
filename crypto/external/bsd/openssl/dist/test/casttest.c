@@ -111,7 +111,7 @@ int main(int argc, char *argv[])
 # ifdef FULL_TEST
     {
         unsigned char out_a[16], out_b[16];
-        static char *hex = "0123456789ABCDEF";
+        static const char *hex = "0123456789ABCDEF";
 
         printf("This test will take some time....");
         fflush(stdout);
