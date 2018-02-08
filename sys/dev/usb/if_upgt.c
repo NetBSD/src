@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upgt.c,v 1.18 2018/01/21 13:57:12 skrll Exp $	*/
+/*	$NetBSD: if_upgt.c,v 1.19 2018/02/08 09:05:20 dholland Exp $	*/
 /*	$OpenBSD: if_upgt.c,v 1.49 2010/04/20 22:05:43 tedu Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.18 2018/01/21 13:57:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.19 2018/02/08 09:05:20 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2405,7 +2405,7 @@ upgt_crc32_le(const void *buf, size_t size)
 
 /*
  * The firmware awaits a checksum for each frame we send to it.
- * The algorithm used therefor is uncommon but somehow similar to CRC32.
+ * The algorithm used is uncommon but somehow similar to CRC32.
  */
 static uint32_t
 upgt_chksum_le(const uint32_t *buf, size_t size)

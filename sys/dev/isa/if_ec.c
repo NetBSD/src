@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ec.c,v 1.34 2011/04/24 18:54:41 plunky Exp $	*/
+/*	$NetBSD: if_ec.c,v 1.35 2018/02/08 09:05:19 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.34 2011/04/24 18:54:41 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.35 2018/02/08 09:05:19 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -471,7 +471,7 @@ ec_attach(device_t parent, device_t self, void *aux)
 	    ELINK2_GACFR_RSEL | ELINK2_GACFR_MBS0);
 
 	/*
-	 * Intialize "Vector Pointer" registers.  These gawd-awful things
+	 * Initialize "Vector Pointer" registers.  These gawd-awful things
 	 * are compared to 20 bits of the address on the ISA, and if they
 	 * match, the shared memory is disabled.  We set them to 0xffff0...
 	 * allegedly the reset vector.

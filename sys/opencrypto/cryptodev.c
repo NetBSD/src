@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.97 2017/11/30 20:25:55 christos Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.98 2018/02/08 09:05:20 dholland Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.97 2017/11/30 20:25:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.98 2018/02/08 09:05:20 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -670,7 +670,7 @@ eagain:
 	mutex_enter(&cryptodev_mtx);
 
 	/* 
-	 * Don't touch crp before returned by any error or recieved
+	 * Don't touch crp before returned by any error or received
 	 * cv_signal(&crp->crp_cv). It is required to restructure locks.
 	 */
 

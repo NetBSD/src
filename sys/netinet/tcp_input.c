@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.363 2017/11/15 09:56:31 ozaki-r Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.364 2018/02/08 09:05:20 dholland Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.363 2017/11/15 09:56:31 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.364 2018/02/08 09:05:20 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -4493,7 +4493,7 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 		sc->sc_flags |= SCF_SACK_PERMIT;
 
 	/*
-	 * ECN setup packet recieved.
+	 * ECN setup packet received.
 	 */
 	if ((th->th_flags & (TH_ECE|TH_CWR)) && tcp_do_ecn)
 		sc->sc_flags |= SCF_ECN_PERMIT;

@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.122 2017/11/05 15:33:15 christos Exp $	*/
+/*	$NetBSD: puffs.c,v 1.123 2018/02/08 09:05:17 dholland Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.122 2017/11/05 15:33:15 christos Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.123 2018/02/08 09:05:17 dholland Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -746,7 +746,7 @@ puffs_exit(struct puffs_usermount *pu, int unused /* strict compat */)
 	return 0;
 }
 
-/* no sigset_t static intializer */
+/* no sigset_t static initializer */
 static int sigs[NSIG] = { 0, };
 static int sigcatch = 0;
 

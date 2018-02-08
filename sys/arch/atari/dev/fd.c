@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.85 2017/10/07 16:05:31 jdolecek Exp $	*/
+/*	$NetBSD: fd.c,v 1.86 2018/02/08 09:05:17 dholland Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.85 2017/10/07 16:05:31 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.86 2018/02/08 09:05:17 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -459,7 +459,7 @@ fdioctl(dev_t dev, u_long cmd, void * addr, int flag, struct lwp *l)
 
 /*
  * Open the device. If this is the first open on both the floppy devices,
- * intialize the controller.
+ * initialize the controller.
  * Note that partition info on the floppy device is used to distinguise
  * between 780Kb and 360Kb floppy's.
  *	partition 0: 360Kb
