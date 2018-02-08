@@ -1,4 +1,4 @@
-#	$NetBSD: sha.inc,v 1.3 2014/04/15 10:02:21 joerg Exp $
+#	$NetBSD: sha.inc,v 1.4 2018/02/08 21:57:24 christos Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -8,7 +8,7 @@
 .PATH:	${OPENSSLSRC}/crypto/sha
 
 
-SHA_SRCS += sha_dgst.c sha1dgst.c sha_one.c sha1_one.c
+SHA_SRCS += sha1dgst.c sha1_one.c
 
 # Replaced OpenSSL version to avoid overlap with libc
 SHA_SRCS+= libc-sha512.c libc-sha256.c
