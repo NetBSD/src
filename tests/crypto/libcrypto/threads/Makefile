@@ -1,8 +1,7 @@
-# $NetBSD: Makefile,v 1.2 2009/02/14 05:07:54 cube Exp $
+# $NetBSD: Makefile,v 1.3 2018/02/08 21:59:11 christos Exp $
 
 HELPER_NAME=	threadstest
 HELPER_DIR=	threads
-HELPER_SRCS=	mttest.c
 
 CPPFLAGS+=	-DPTHREADS
 CFLAGS+=	-pthread
@@ -19,3 +18,9 @@ FILESNAME_client.pem=	d_client.pem
 .include <bsd.init.mk>
 
 .PATH:		${OPENSSLSRC}/apps
+
+.if ${HAVE_OPENSSL} == 10
+HELPER_SRCS=	mttest.c
+.else
+HELPER_SRCS=	threadstest.c
+.endif
