@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.h,v 1.2 2008/11/07 07:36:38 minskim Exp $	*/
+/*	$NetBSD: tls.h,v 1.3 2018/02/08 17:45:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -45,6 +45,7 @@
 #include <openssl/err.h>
 #include <openssl/rand.h>
 #include <openssl/pem.h>
+#include <openssl/dh.h>
 
 /* initial size for TLS inbuf, minimum prefix + linelength
  * guaranteed to be accepted */
