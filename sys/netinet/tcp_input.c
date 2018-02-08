@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.364 2018/02/08 09:05:20 dholland Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.365 2018/02/08 18:55:11 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.364 2018/02/08 09:05:20 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.365 2018/02/08 18:55:11 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1614,7 +1614,41 @@ findpcb:
 	}
 #endif
 
-	if (so->so_options & (SO_DEBUG|SO_ACCEPTCONN)) {
+	if (so->so_options & SO_DEBUG) {
+#ifdef TCP_DEBUG
+		ostate = tp->t_state;
+#endif
+
+		tcp_saveti = NULL;
+		if (iphlen + sizeof(struct tcphdr) > MHLEN)
+			goto nosave;
+
+		if (m->m_len > iphlen && (m->m_flags & M_EXT) == 0) {
+			tcp_saveti = m_copym(m, 0, iphlen, M_DONTWAIT);
+			if (!tcp_saveti)
+				goto nosave;
+		} else {
+			MGETHDR(tcp_saveti, M_DONTWAIT, MT_HEADER);
+			if (!tcp_saveti)
+				goto nosave;
+			MCLAIM(m, &tcp_mowner);
+			tcp_saveti->m_len = iphlen;
+			m_copydata(m, 0, iphlen,
+			    mtod(tcp_saveti, void *));
+		}
+
+		if (M_TRAILINGSPACE(tcp_saveti) < sizeof(struct tcphdr)) {
+			m_freem(tcp_saveti);
+			tcp_saveti = NULL;
+		} else {
+			tcp_saveti->m_len += sizeof(struct tcphdr);
+			memcpy(mtod(tcp_saveti, char *) + iphlen, th,
+			    sizeof(struct tcphdr));
+		}
+nosave:;
+	}
+
+	if (so->so_options & SO_ACCEPTCONN) {
 		union syn_cache_sa src;
 		union syn_cache_sa dst;
 
@@ -1651,39 +1685,6 @@ findpcb:
 			goto badsyn;	/*sanity*/
 		}
 
-		if (so->so_options & SO_DEBUG) {
-#ifdef TCP_DEBUG
-			ostate = tp->t_state;
-#endif
-
-			tcp_saveti = NULL;
-			if (iphlen + sizeof(struct tcphdr) > MHLEN)
-				goto nosave;
-
-			if (m->m_len > iphlen && (m->m_flags & M_EXT) == 0) {
-				tcp_saveti = m_copym(m, 0, iphlen, M_DONTWAIT);
-				if (!tcp_saveti)
-					goto nosave;
-			} else {
-				MGETHDR(tcp_saveti, M_DONTWAIT, MT_HEADER);
-				if (!tcp_saveti)
-					goto nosave;
-				MCLAIM(m, &tcp_mowner);
-				tcp_saveti->m_len = iphlen;
-				m_copydata(m, 0, iphlen,
-				    mtod(tcp_saveti, void *));
-			}
-
-			if (M_TRAILINGSPACE(tcp_saveti) < sizeof(struct tcphdr)) {
-				m_freem(tcp_saveti);
-				tcp_saveti = NULL;
-			} else {
-				tcp_saveti->m_len += sizeof(struct tcphdr);
-				memcpy(mtod(tcp_saveti, char *) + iphlen, th,
-				    sizeof(struct tcphdr));
-			}
-	nosave:;
-		}
 		if (so->so_options & SO_ACCEPTCONN) {
 			if ((tiflags & (TH_RST|TH_ACK|TH_SYN)) != TH_SYN) {
 				if (tiflags & TH_RST) {
