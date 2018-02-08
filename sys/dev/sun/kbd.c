@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.68 2014/07/25 08:10:39 dholland Exp $	*/
+/*	$NetBSD: kbd.c,v 1.69 2018/02/08 10:52:05 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.68 2014/07/25 08:10:39 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.69 2018/02/08 10:52:05 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -948,12 +948,13 @@ kbd_input_wskbd(struct kbd_softc *k, int code)
 #endif
 			case 0x30:
 #if NSYSMON_ENVSYS
-				if (k->k_isconsole)
+				if (k->k_isconsole) {
 					k->k_ev = KEY_UP(code) ?
 					    PSWITCH_EVENT_RELEASED :
 					    PSWITCH_EVENT_PRESSED;
 					sysmon_task_queue_sched(0,
 					    kbd_powerbutton, k);
+				}
 #endif
 				return;
 		}
