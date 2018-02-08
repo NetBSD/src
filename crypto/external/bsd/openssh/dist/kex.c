@@ -1,4 +1,4 @@
-/*	$NetBSD: kex.c,v 1.19 2017/10/07 19:39:19 christos Exp $	*/
+/*	$NetBSD: kex.c,v 1.20 2018/02/08 23:04:13 christos Exp $	*/
 /* $OpenBSD: kex.c,v 1.134 2017/06/13 12:13:59 djm Exp $ */
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: kex.c,v 1.19 2017/10/07 19:39:19 christos Exp $");
+__RCSID("$NetBSD: kex.c,v 1.20 2018/02/08 23:04:13 christos Exp $");
 
 #include <sys/param.h>	/* MAX roundup */
 #include <signal.h>
@@ -35,6 +35,7 @@ __RCSID("$NetBSD: kex.c,v 1.19 2017/10/07 19:39:19 christos Exp $");
 
 #ifdef WITH_OPENSSL
 #include <openssl/crypto.h>
+#include <openssl/dh.h>
 #endif
 
 #include "ssh2.h"
