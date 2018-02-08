@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.365 2018/02/08 18:55:11 maxv Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.366 2018/02/08 18:58:59 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.365 2018/02/08 18:55:11 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.366 2018/02/08 18:58:59 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1685,226 +1685,225 @@ nosave:;
 			goto badsyn;	/*sanity*/
 		}
 
-		if (so->so_options & SO_ACCEPTCONN) {
-			if ((tiflags & (TH_RST|TH_ACK|TH_SYN)) != TH_SYN) {
-				if (tiflags & TH_RST) {
-					syn_cache_reset(&src.sa, &dst.sa, th);
-				} else if ((tiflags & (TH_ACK|TH_SYN)) ==
-				    (TH_ACK|TH_SYN)) {
+		if ((tiflags & (TH_RST|TH_ACK|TH_SYN)) != TH_SYN) {
+			if (tiflags & TH_RST) {
+				syn_cache_reset(&src.sa, &dst.sa, th);
+			} else if ((tiflags & (TH_ACK|TH_SYN)) ==
+			    (TH_ACK|TH_SYN)) {
+				/*
+				 * Received a SYN,ACK.  This should
+				 * never happen while we are in
+				 * LISTEN.  Send an RST.
+				 */
+				goto badsyn;
+			} else if (tiflags & TH_ACK) {
+				so = syn_cache_get(&src.sa, &dst.sa,
+					th, toff, tlen, so, m);
+				if (so == NULL) {
 					/*
-					 * Received a SYN,ACK.  This should
-					 * never happen while we are in
-					 * LISTEN.  Send an RST.
+					 * We don't have a SYN for
+					 * this ACK; send an RST.
 					 */
 					goto badsyn;
-				} else if (tiflags & TH_ACK) {
-					so = syn_cache_get(&src.sa, &dst.sa,
-						th, toff, tlen, so, m);
-					if (so == NULL) {
-						/*
-						 * We don't have a SYN for
-						 * this ACK; send an RST.
-						 */
-						goto badsyn;
-					} else if (so ==
-					    (struct socket *)(-1)) {
-						/*
-						 * We were unable to create
-						 * the connection.  If the
-						 * 3-way handshake was
-						 * completed, and RST has
-						 * been sent to the peer.
-						 * Since the mbuf might be
-						 * in use for the reply,
-						 * do not free it.
-						 */
-						m = NULL;
-					} else {
-						/*
-						 * We have created a
-						 * full-blown connection.
-						 */
-						tp = NULL;
-						inp = NULL;
-#ifdef INET6
-						in6p = NULL;
-#endif
-						switch (so->so_proto->pr_domain->dom_family) {
-#ifdef INET
-						case AF_INET:
-							inp = sotoinpcb(so);
-							tp = intotcpcb(inp);
-							break;
-#endif
-#ifdef INET6
-						case AF_INET6:
-							in6p = sotoin6pcb(so);
-							tp = in6totcpcb(in6p);
-							break;
-#endif
-						}
-						if (tp == NULL)
-							goto badsyn;	/*XXX*/
-						tiwin <<= tp->snd_scale;
-						goto after_listen;
-					}
+				} else if (so ==
+				    (struct socket *)(-1)) {
+					/*
+					 * We were unable to create
+					 * the connection.  If the
+					 * 3-way handshake was
+					 * completed, and RST has
+					 * been sent to the peer.
+					 * Since the mbuf might be
+					 * in use for the reply,
+					 * do not free it.
+					 */
+					m = NULL;
 				} else {
 					/*
-					 * None of RST, SYN or ACK was set.
-					 * This is an invalid packet for a
-					 * TCB in LISTEN state.  Send a RST.
+					 * We have created a
+					 * full-blown connection.
 					 */
-					goto badsyn;
+					tp = NULL;
+					inp = NULL;
+#ifdef INET6
+					in6p = NULL;
+#endif
+					switch (so->so_proto->pr_domain->dom_family) {
+#ifdef INET
+					case AF_INET:
+						inp = sotoinpcb(so);
+						tp = intotcpcb(inp);
+						break;
+#endif
+#ifdef INET6
+					case AF_INET6:
+						in6p = sotoin6pcb(so);
+						tp = in6totcpcb(in6p);
+						break;
+#endif
+					}
+					if (tp == NULL)
+						goto badsyn;	/*XXX*/
+					tiwin <<= tp->snd_scale;
+					goto after_listen;
 				}
 			} else {
 				/*
-				 * Received a SYN.
-				 *
-				 * RFC1122 4.2.3.10, p. 104: discard bcast/mcast SYN
+				 * None of RST, SYN or ACK was set.
+				 * This is an invalid packet for a
+				 * TCB in LISTEN state.  Send a RST.
 				 */
-				if (m->m_flags & (M_BCAST|M_MCAST))
+				goto badsyn;
+			}
+		} else {
+			/*
+			 * Received a SYN.
+			 *
+			 * RFC1122 4.2.3.10, p. 104: discard bcast/mcast SYN
+			 */
+			if (m->m_flags & (M_BCAST|M_MCAST))
+				goto drop;
+
+			switch (af) {
+#ifdef INET6
+			case AF_INET6:
+				if (IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst))
 					goto drop;
-
-				switch (af) {
-#ifdef INET6
-				case AF_INET6:
-					if (IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst))
-						goto drop;
-					break;
-#endif /* INET6 */
-				case AF_INET:
-					if (IN_MULTICAST(ip->ip_dst.s_addr) ||
-					    in_broadcast(ip->ip_dst,
-					                 m_get_rcvif_NOMPSAFE(m)))
-						goto drop;
 				break;
-				}
+#endif /* INET6 */
+			case AF_INET:
+				if (IN_MULTICAST(ip->ip_dst.s_addr) ||
+				    in_broadcast(ip->ip_dst,
+				                 m_get_rcvif_NOMPSAFE(m)))
+					goto drop;
+			break;
+			}
 
 #ifdef INET6
-				/*
-				 * If deprecated address is forbidden, we do
-				 * not accept SYN to deprecated interface
-				 * address to prevent any new inbound
-				 * connection from getting established.
-				 * When we do not accept SYN, we send a TCP
-				 * RST, with deprecated source address (instead
-				 * of dropping it).  We compromise it as it is
-				 * much better for peer to send a RST, and
-				 * RST will be the final packet for the
-				 * exchange.
-				 *
-				 * If we do not forbid deprecated addresses, we
-				 * accept the SYN packet.  RFC2462 does not
-				 * suggest dropping SYN in this case.
-				 * If we decipher RFC2462 5.5.4, it says like
-				 * this:
-				 * 1. use of deprecated addr with existing
-				 *    communication is okay - "SHOULD continue
-				 *    to be used"
-				 * 2. use of it with new communication:
-				 *   (2a) "SHOULD NOT be used if alternate
-				 *        address with sufficient scope is
-				 *        available"
-				 *   (2b) nothing mentioned otherwise.
-				 * Here we fall into (2b) case as we have no
-				 * choice in our source address selection - we
-				 * must obey the peer.
-				 *
-				 * The wording in RFC2462 is confusing, and
-				 * there are multiple description text for
-				 * deprecated address handling - worse, they
-				 * are not exactly the same.  I believe 5.5.4
-				 * is the best one, so we follow 5.5.4.
-				 */
-				if (af == AF_INET6 && !ip6_use_deprecated) {
-					struct in6_ifaddr *ia6;
-					int s;
-					struct ifnet *rcvif = m_get_rcvif(m, &s);
-					if (rcvif == NULL)
-						goto dropwithreset; /* XXX */
-					if ((ia6 = in6ifa_ifpwithaddr(rcvif,
-					    &ip6->ip6_dst)) &&
-					    (ia6->ia6_flags & IN6_IFF_DEPRECATED)) {
-						tp = NULL;
-						m_put_rcvif(rcvif, &s);
-						goto dropwithreset;
-					}
+			/*
+			 * If deprecated address is forbidden, we do
+			 * not accept SYN to deprecated interface
+			 * address to prevent any new inbound
+			 * connection from getting established.
+			 * When we do not accept SYN, we send a TCP
+			 * RST, with deprecated source address (instead
+			 * of dropping it).  We compromise it as it is
+			 * much better for peer to send a RST, and
+			 * RST will be the final packet for the
+			 * exchange.
+			 *
+			 * If we do not forbid deprecated addresses, we
+			 * accept the SYN packet.  RFC2462 does not
+			 * suggest dropping SYN in this case.
+			 * If we decipher RFC2462 5.5.4, it says like
+			 * this:
+			 * 1. use of deprecated addr with existing
+			 *    communication is okay - "SHOULD continue
+			 *    to be used"
+			 * 2. use of it with new communication:
+			 *   (2a) "SHOULD NOT be used if alternate
+			 *        address with sufficient scope is
+			 *        available"
+			 *   (2b) nothing mentioned otherwise.
+			 * Here we fall into (2b) case as we have no
+			 * choice in our source address selection - we
+			 * must obey the peer.
+			 *
+			 * The wording in RFC2462 is confusing, and
+			 * there are multiple description text for
+			 * deprecated address handling - worse, they
+			 * are not exactly the same.  I believe 5.5.4
+			 * is the best one, so we follow 5.5.4.
+			 */
+			if (af == AF_INET6 && !ip6_use_deprecated) {
+				struct in6_ifaddr *ia6;
+				int s;
+				struct ifnet *rcvif = m_get_rcvif(m, &s);
+				if (rcvif == NULL)
+					goto dropwithreset; /* XXX */
+				if ((ia6 = in6ifa_ifpwithaddr(rcvif,
+				    &ip6->ip6_dst)) &&
+				    (ia6->ia6_flags & IN6_IFF_DEPRECATED)) {
+					tp = NULL;
 					m_put_rcvif(rcvif, &s);
+					goto dropwithreset;
 				}
+				m_put_rcvif(rcvif, &s);
+			}
 #endif
 
 #if defined(IPSEC)
-				if (ipsec_used) {
-					switch (af) {
+			if (ipsec_used) {
+				switch (af) {
 #ifdef INET
-					case AF_INET:
-						/*
-						 * inp can be NULL when
-						 * receiving an IPv4 packet on
-						 * an IPv4-mapped IPv6 address.
-						 */
-						KASSERT(inp == NULL ||
-						    sotoinpcb(so) == inp);
-						if (!ipsec4_in_reject(m, inp))
-							break;
-						IPSEC_STATINC(
-						    IPSEC_STAT_IN_POLVIO);
-						tp = NULL;
-						goto dropwithreset;
+				case AF_INET:
+					/*
+					 * inp can be NULL when
+					 * receiving an IPv4 packet on
+					 * an IPv4-mapped IPv6 address.
+					 */
+					KASSERT(inp == NULL ||
+					    sotoinpcb(so) == inp);
+					if (!ipsec4_in_reject(m, inp))
+						break;
+					IPSEC_STATINC(
+					    IPSEC_STAT_IN_POLVIO);
+					tp = NULL;
+					goto dropwithreset;
 #endif
 #ifdef INET6
-					case AF_INET6:
-						KASSERT(sotoin6pcb(so) == in6p);
-						if (!ipsec6_in_reject(m, in6p))
-							break;
-						IPSEC6_STATINC(
-						    IPSEC_STAT_IN_POLVIO);
-						tp = NULL;
-						goto dropwithreset;
+				case AF_INET6:
+					KASSERT(sotoin6pcb(so) == in6p);
+					if (!ipsec6_in_reject(m, in6p))
+						break;
+					IPSEC6_STATINC(
+					    IPSEC_STAT_IN_POLVIO);
+					tp = NULL;
+					goto dropwithreset;
 #endif /*INET6*/
-					}
 				}
+			}
 #endif /*IPSEC*/
 
-				/*
-				 * LISTEN socket received a SYN
-				 * from itself?  This can't possibly
-				 * be valid; drop the packet.
-				 */
-				if (th->th_sport == th->th_dport) {
-					int i;
+			/*
+			 * LISTEN socket received a SYN
+			 * from itself?  This can't possibly
+			 * be valid; drop the packet.
+			 */
+			if (th->th_sport == th->th_dport) {
+				int i;
 
-					switch (af) {
+				switch (af) {
 #ifdef INET
-					case AF_INET:
-						i = in_hosteq(ip->ip_src, ip->ip_dst);
-						break;
+				case AF_INET:
+					i = in_hosteq(ip->ip_src, ip->ip_dst);
+					break;
 #endif
 #ifdef INET6
-					case AF_INET6:
-						i = IN6_ARE_ADDR_EQUAL(&ip6->ip6_src, &ip6->ip6_dst);
-						break;
+				case AF_INET6:
+					i = IN6_ARE_ADDR_EQUAL(&ip6->ip6_src, &ip6->ip6_dst);
+					break;
 #endif
-					default:
-						i = 1;
-					}
-					if (i) {
-						TCP_STATINC(TCP_STAT_BADSYN);
-						goto drop;
-					}
+				default:
+					i = 1;
 				}
-
-				/*
-				 * SYN looks ok; create compressed TCP
-				 * state for it.
-				 */
-				if (so->so_qlen <= so->so_qlimit &&
-				    syn_cache_add(&src.sa, &dst.sa, th, tlen,
-						so, m, optp, optlen, &opti))
-					m = NULL;
+				if (i) {
+					TCP_STATINC(TCP_STAT_BADSYN);
+					goto drop;
+				}
 			}
-			goto drop;
+
+			/*
+			 * SYN looks ok; create compressed TCP
+			 * state for it.
+			 */
+			if (so->so_qlen <= so->so_qlimit &&
+			    syn_cache_add(&src.sa, &dst.sa, th, tlen,
+					so, m, optp, optlen, &opti))
+				m = NULL;
 		}
+
+		goto drop;
 	}
 
 after_listen:
