@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_input.c,v 1.55 2018/01/24 14:28:13 maxv Exp $	*/
+/*	$NetBSD: ipsec_input.c,v 1.56 2018/02/08 20:57:41 maxv Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec_input.c,v 1.2.4.2 2003/03/28 20:32:53 sam Exp $	*/
 /*	$OpenBSD: ipsec_input.c,v 1.63 2003/02/20 18:35:43 deraadt Exp $	*/
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.55 2018/01/24 14:28:13 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.56 2018/02/08 20:57:41 maxv Exp $");
 
 /*
  * IPsec input processing.
@@ -97,8 +97,6 @@ __KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.55 2018/01/24 14:28:13 maxv Exp $"
 
 #include <netipsec/xform.h>
 #include <netinet6/ip6protosw.h>
-
-#include <net/net_osdep.h>
 
 #define	IPSEC_ISTAT(p, x, y, z)						\
 do {									\
