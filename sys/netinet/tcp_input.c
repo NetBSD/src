@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.373 2018/02/08 20:41:36 maxv Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.374 2018/02/08 20:50:00 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.373 2018/02/08 20:41:36 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.374 2018/02/08 20:50:00 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1380,7 +1380,7 @@ tcp_input(struct mbuf *m, ...)
 			return;
 		}
 		KASSERT(TCP_HDR_ALIGNED_P(th));
-		optlen = off - sizeof (struct tcphdr);
+		optlen = off - sizeof(struct tcphdr);
 		optp = ((u_int8_t *)th) + sizeof(struct tcphdr);
 		/*
 		 * Do quick retrieval of timestamp options ("options
@@ -1421,13 +1421,13 @@ findpcb:
 	case AF_INET:
 		inp = in_pcblookup_connect(&tcbtable, ip->ip_src, th->th_sport,
 		    ip->ip_dst, th->th_dport, &vestige);
-		if (inp == 0 && !vestige.valid) {
+		if (inp == NULL && !vestige.valid) {
 			TCP_STATINC(TCP_STAT_PCBHASHMISS);
 			inp = in_pcblookup_bind(&tcbtable, ip->ip_dst,
 			    th->th_dport);
 		}
 #ifdef INET6
-		if (inp == 0 && !vestige.valid) {
+		if (inp == NULL && !vestige.valid) {
 			struct in6_addr s, d;
 
 			/* mapped addr case */
@@ -1443,9 +1443,9 @@ findpcb:
 		}
 #endif
 #ifndef INET6
-		if (inp == 0 && !vestige.valid)
+		if (inp == NULL && !vestige.valid)
 #else
-		if (inp == 0 && in6p == 0 && !vestige.valid)
+		if (inp == NULL && in6p == NULL && !vestige.valid)
 #endif
 		{
 			TCP_STATINC(TCP_STAT_NOPORT);
@@ -1503,9 +1503,9 @@ findpcb:
 			goto dropwithreset_ratelim;
 		}
 #if defined(IPSEC)
-		if (ipsec_used && in6p
-		    && (in6p->in6p_socket->so_options & SO_ACCEPTCONN) == 0
-		    && ipsec6_in_reject(m, in6p)) {
+		if (ipsec_used && in6p &&
+		    (in6p->in6p_socket->so_options & SO_ACCEPTCONN) == 0 &&
+		    ipsec6_in_reject(m, in6p)) {
 			IPSEC6_STATINC(IPSEC_STAT_IN_POLVIO);
 			goto drop;
 		}
@@ -1571,7 +1571,7 @@ findpcb:
 	if (in6p && (in6p->in6p_flags & IN6P_CONTROLOPTS)) {
 		if (in6p->in6p_options) {
 			m_freem(in6p->in6p_options);
-			in6p->in6p_options = 0;
+			in6p->in6p_options = NULL;
 		}
 		KASSERT(ip6 != NULL);
 		ip6_savecontrol(in6p, &in6p->in6p_options, ip6, m);
@@ -1589,11 +1589,11 @@ findpcb:
 
 		if (m->m_len > iphlen && (m->m_flags & M_EXT) == 0) {
 			tcp_saveti = m_copym(m, 0, iphlen, M_DONTWAIT);
-			if (!tcp_saveti)
+			if (tcp_saveti == NULL)
 				goto nosave;
 		} else {
 			MGETHDR(tcp_saveti, M_DONTWAIT, MT_HEADER);
-			if (!tcp_saveti)
+			if (tcp_saveti == NULL)
 				goto nosave;
 			MCLAIM(m, &tcp_mowner);
 			tcp_saveti->m_len = iphlen;
@@ -1653,9 +1653,8 @@ nosave:;
 			} else if ((tiflags & (TH_ACK|TH_SYN)) ==
 			    (TH_ACK|TH_SYN)) {
 				/*
-				 * Received a SYN,ACK.  This should
-				 * never happen while we are in
-				 * LISTEN.  Send an RST.
+				 * Received a SYN,ACK. This should never
+				 * happen while we are in LISTEN. Send an RST.
 				 */
 				goto badsyn;
 			} else if (tiflags & TH_ACK) {
@@ -1808,24 +1807,22 @@ nosave:;
 			 * can't possibly be valid; drop the packet.
 			 */
 			if (th->th_sport == th->th_dport) {
-				int i;
+				int eq = 0;
 
 				switch (af) {
 #ifdef INET
 				case AF_INET:
-					i = in_hosteq(ip->ip_src, ip->ip_dst);
+					eq = in_hosteq(ip->ip_src, ip->ip_dst);
 					break;
 #endif
 #ifdef INET6
 				case AF_INET6:
-					i = IN6_ARE_ADDR_EQUAL(&ip6->ip6_src,
+					eq = IN6_ARE_ADDR_EQUAL(&ip6->ip6_src,
 					    &ip6->ip6_dst);
 					break;
 #endif
-				default:
-					i = 1;
 				}
-				if (i) {
+				if (eq) {
 					TCP_STATINC(TCP_STAT_BADSYN);
 					goto drop;
 				}
