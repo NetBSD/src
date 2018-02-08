@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.371 2018/02/08 20:10:55 maxv Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.372 2018/02/08 20:19:30 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.371 2018/02/08 20:10:55 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.372 2018/02/08 20:19:30 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1006,7 +1006,7 @@ badcsum:
  * nevertheless have to respond to it per the spec.
  */
 static void tcp_vtw_input(struct tcphdr *th, vestigial_inpcb_t *vp,
-			  struct mbuf *m, int tlen, int multicast)
+    struct mbuf *m, int tlen)
 {
 	int		tiflags;
 	int		todrop;
@@ -1534,27 +1534,12 @@ findpcb:
 	}
 #endif
 	else if (vestige.valid) {
-		int mc = 0;
-
 		/* We do not support the resurrection of vtw tcpcps. */
 		if (tcp_input_checksum(af, m, th, toff, off, tlen))
 			goto badcsum;
 
-		switch (af) {
-#ifdef INET6
-		case AF_INET6:
-			mc = IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst);
-			break;
-#endif
-
-		case AF_INET:
-			mc = (IN_MULTICAST(ip->ip_dst.s_addr) ||
-			    in_broadcast(ip->ip_dst, m_get_rcvif_NOMPSAFE(m)));
-			break;
-		}
-
 		tcp_fields_to_host(th);
-		tcp_vtw_input(th, &vestige, m, tlen, mc);
+		tcp_vtw_input(th, &vestige, m, tlen);
 		m = NULL;
 		goto drop;
 	}
