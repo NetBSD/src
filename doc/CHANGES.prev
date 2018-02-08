@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.136 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.137 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -9221,7 +9221,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		disks (even if they are marked as hot-spare, pass-through
 		or unused). [xtraeme 20080102]
 	ofppc: Support intallation and RAID bootable root. [mrg 20080102]
-	mpt(4): Fix perfomance problems for old revisions of the Symbios
+	mpt(4): Fix performance problems for old revisions of the Symbios
 		53c1030. Patch supplied by Patrick Welche in PR kern/30531.
 		[tron 20080103]
 	pmax: Add timecounter(9) and generic todr(9) support. [joerg 20080103]
