@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.369 2018/02/08 19:58:05 maxv Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.370 2018/02/08 20:06:21 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.369 2018/02/08 19:58:05 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.370 2018/02/08 20:06:21 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1274,6 +1274,12 @@ tcp_input(struct mbuf *m, ...)
 	}
 #endif
 
+	IP6_EXTHDR_GET(th, struct tcphdr *, m, toff, sizeof(struct tcphdr));
+	if (th == NULL) {
+		TCP_STATINC(TCP_STAT_RCVSHORT);
+		return;
+	}
+
 	/*
 	 * Get IP and TCP header.
 	 * Note: IP leaves IP header in first mbuf.
@@ -1287,12 +1293,7 @@ tcp_input(struct mbuf *m, ...)
 #endif
 		af = AF_INET;
 		iphlen = sizeof(struct ip);
-		IP6_EXTHDR_GET(th, struct tcphdr *, m, toff,
-		    sizeof(struct tcphdr));
-		if (th == NULL) {
-			TCP_STATINC(TCP_STAT_RCVSHORT);
-			return;
-		}
+
 		/* We do the checksum after PCB lookup... */
 		len = ntohs(ip->ip_len);
 		tlen = len - toff;
@@ -1305,12 +1306,6 @@ tcp_input(struct mbuf *m, ...)
 		iphlen = sizeof(struct ip6_hdr);
 		af = AF_INET6;
 		ip6 = mtod(m, struct ip6_hdr *);
-		IP6_EXTHDR_GET(th, struct tcphdr *, m, toff,
-		    sizeof(struct tcphdr));
-		if (th == NULL) {
-			TCP_STATINC(TCP_STAT_RCVSHORT);
-			return;
-		}
 
 		/*
 		 * Be proactive about unspecified IPv6 address in source.
