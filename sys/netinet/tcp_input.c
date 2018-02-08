@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.366 2018/02/08 18:58:59 maxv Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.367 2018/02/08 19:25:48 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.366 2018/02/08 18:58:59 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.367 2018/02/08 19:25:48 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1758,11 +1758,7 @@ nosave:;
 		} else {
 			/*
 			 * Received a SYN.
-			 *
-			 * RFC1122 4.2.3.10, p. 104: discard bcast/mcast SYN
 			 */
-			if (m->m_flags & (M_BCAST|M_MCAST))
-				goto drop;
 
 			switch (af) {
 #ifdef INET6
