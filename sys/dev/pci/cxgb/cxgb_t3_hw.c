@@ -28,7 +28,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cxgb_t3_hw.c,v 1.1 2010/03/21 21:11:13 jklos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxgb_t3_hw.c,v 1.2 2018/02/08 09:05:19 dholland Exp $");
 
 
 #ifdef CONFIG_DEFINED
@@ -2684,7 +2684,7 @@ static void __devinit init_mtus(unsigned short mtus[])
 {
     /*
      * See draft-mathis-plpmtud-00.txt for the values.  The min is 88 so
-     * it can accomodate max size TCP/IP headers when SACK and timestamps
+     * it can accommodate max size TCP/IP headers when SACK and timestamps
      * are enabled and still have at least 8 bytes of payload.
      */
     mtus[0] = 88;

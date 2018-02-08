@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.38 2017/06/01 02:45:11 chs Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.39 2018/02/08 09:05:19 dholland Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.38 2017/06/01 02:45:11 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.39 2018/02/08 09:05:19 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -299,7 +299,7 @@ vioif_match(device_t parent, cfdata_t match, void *aux)
 /* allocate memory */
 /*
  * dma memory is used for:
- *   sc_rx_hdrs[slot]:	 metadata array for recieved frames (READ)
+ *   sc_rx_hdrs[slot]:	 metadata array for received frames (READ)
  *   sc_tx_hdrs[slot]:	 metadata array for frames to be sent (WRITE)
  *   sc_ctrl_cmd:	 command to be sent via ctrl vq (WRITE)
  *   sc_ctrl_status:	 return value for a command via ctrl vq (READ)
@@ -316,9 +316,9 @@ vioif_match(device_t parent, cfdata_t match, void *aux)
  * dynamically allocated memory is used for:
  *   sc_rxhdr_dmamaps[slot]:	bus_dmamap_t array for sc_rx_hdrs[slot]
  *   sc_txhdr_dmamaps[slot]:	bus_dmamap_t array for sc_tx_hdrs[slot]
- *   sc_rx_dmamaps[slot]:	bus_dmamap_t array for recieved payload
+ *   sc_rx_dmamaps[slot]:	bus_dmamap_t array for received payload
  *   sc_tx_dmamaps[slot]:	bus_dmamap_t array for sent payload
- *   sc_rx_mbufs[slot]:		mbuf pointer array for recieved frames
+ *   sc_rx_mbufs[slot]:		mbuf pointer array for received frames
  *   sc_tx_mbufs[slot]:		mbuf pointer array for sent frames
  */
 static int
@@ -919,9 +919,9 @@ vioif_watchdog(struct ifnet *ifp)
 
 
 /*
- * Recieve implementation
+ * Receive implementation
  */
-/* allocate and initialize a mbuf for recieve */
+/* allocate and initialize a mbuf for receive */
 static int
 vioif_add_rx_mbuf(struct vioif_softc *sc, int i)
 {
@@ -950,7 +950,7 @@ vioif_add_rx_mbuf(struct vioif_softc *sc, int i)
 	return 0;
 }
 
-/* free a mbuf for recieve */
+/* free a mbuf for receive */
 static void
 vioif_free_rx_mbuf(struct vioif_softc *sc, int i)
 {
@@ -959,7 +959,7 @@ vioif_free_rx_mbuf(struct vioif_softc *sc, int i)
 	sc->sc_rx_mbufs[i] = NULL;
 }
 
-/* add mbufs for all the empty recieve slots */
+/* add mbufs for all the empty receive slots */
 static void
 vioif_populate_rx_mbufs(struct vioif_softc *sc)
 {
@@ -1015,7 +1015,7 @@ vioif_populate_rx_mbufs_locked(struct vioif_softc *sc)
 		virtio_enqueue_commit(vsc, vq, -1, true);
 }
 
-/* dequeue recieved packets */
+/* dequeue received packets */
 static int
 vioif_rx_deq(struct vioif_softc *sc)
 {
@@ -1030,7 +1030,7 @@ vioif_rx_deq(struct vioif_softc *sc)
 	return r;
 }
 
-/* dequeue recieved packets */
+/* dequeue received packets */
 static int
 vioif_rx_deq_locked(struct vioif_softc *sc)
 {
@@ -1101,7 +1101,7 @@ out:
 	return r;
 }
 
-/* softint: enqueue recieve requests for new incoming packets */
+/* softint: enqueue receive requests for new incoming packets */
 static void
 vioif_rx_softint(void *arg)
 {

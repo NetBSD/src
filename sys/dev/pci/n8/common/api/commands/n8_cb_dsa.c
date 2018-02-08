@@ -32,7 +32,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-static char const n8_id[] = "$Id: n8_cb_dsa.c,v 1.1 2008/10/30 12:02:15 darran Exp $";
+static char const n8_id[] = "$Id: n8_cb_dsa.c,v 1.2 2018/02/08 09:05:19 dholland Exp $";
 /*****************************************************************************/
 /** @file n8_cb_dsa.c
  *  @brief DSA Command Block Generator
@@ -117,7 +117,7 @@ N8_Status_t cb_computeGRmodX(API_Request_t *req_p,
       CHECK_OBJECT(req_p, ret);
 
       /* Initialize the slot values.  These are to address temporary 
-         storage in the BNC.  The slots accomodate operand sizes up to
+         storage in the BNC.  The slots accommodate operand sizes up to
          the key length */
       slot0 = 0;
       slot1 = modulusDigits;

@@ -1,4 +1,4 @@
-/*	$NetBSD: c_nec_eisa.c,v 1.17 2016/07/11 16:18:55 matt Exp $	*/
+/*	$NetBSD: c_nec_eisa.c,v 1.18 2018/02/08 09:05:17 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2003 Izumi Tsutsui.  All rights reserved.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: c_nec_eisa.c,v 1.17 2016/07/11 16:18:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: c_nec_eisa.c,v 1.18 2018/02/08 09:05:17 dholland Exp $");
 
 #define __INTR_PRIVATE
 #include <sys/param.h>
@@ -235,7 +235,7 @@ c_nec_eisa_cons_init(void)
 
 #if NVGA_ISA > 0 && defined(VGA_RESET)
 
-/* values to intialize cirrus GD54xx specific ext registers */
+/* values to initialize cirrus GD54xx specific ext registers */
 /* XXX these values are taken from PC XXX */
 static const uint8_t vga_ts_gd54xx[] = {
 	0x0f,	/* 05: ??? */

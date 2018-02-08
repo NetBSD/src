@@ -1,4 +1,4 @@
-/*	$NetBSD: glx.c,v 1.5 2015/10/02 05:22:50 msaitoh Exp $	*/
+/*	$NetBSD: glx.c,v 1.6 2018/02/08 09:05:17 dholland Exp $	*/
 /*	$OpenBSD: glx.c,v 1.6 2010/10/14 21:23:04 pirofti Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  * XXX too many hardcoded numbers... need to expand glxreg.h
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: glx.c,v 1.5 2015/10/02 05:22:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: glx.c,v 1.6 2018/02/08 09:05:17 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,7 +127,7 @@ glx_init(pci_chipset_tag_t pc, pcitag_t tag, int dev)
 	pc->pc_conf_write = glx_pci_write_hook;
 
 	/*
-	 * Perform some Geode intialization.
+	 * Perform some Geode initialization.
 	 */
 
 	msr = rdmsr(GCSC_DIVIL_BALL_OPTS);	/* 0x71 */
