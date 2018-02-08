@@ -1,173 +1,455 @@
-#	$NetBSD: man.inc,v 1.6 2016/10/14 16:09:43 spz Exp $
+#	$NetBSD: man.inc,v 1.7 2018/02/08 22:48:55 christos Exp $
 
 .PATH:	${.CURDIR}/man
 
-MAN+=	openssl.1            openssl_errstr.1     openssl_rsautl.1	\
-	openssl_CA.pl.1      openssl_gendsa.1     openssl_s_client.1	\
-	openssl_asn1parse.1  openssl_genpkey.1    openssl_s_server.1	\
-	openssl_c_rehash.1   openssl_genrsa.1     openssl_s_time.1	\
-	openssl_ca.1         openssl_nseq.1       openssl_sess_id.1	\
-	openssl_ciphers.1    openssl_ocsp.1       openssl_smime.1	\
-	openssl_cms.1        openssl_passwd.1     openssl_speed.1	\
-	openssl_crl.1        openssl_pkcs12.1     openssl_spkac.1	\
-	openssl_crl2pkcs7.1  openssl_pkcs7.1      openssl_ts.1		\
-	openssl_dgst.1       openssl_pkcs8.1      openssl_tsget.1	\
-	openssl_dhparam.1    openssl_pkey.1       openssl_verify.1	\
-	openssl_dsa.1        openssl_pkeyparam.1  openssl_version.1	\
-	openssl_dsaparam.1   openssl_pkeyutl.1    openssl_x509.1	\
-	openssl_ec.1         openssl_rand.1       openssl_x509v3_config.1 \
-	openssl_ecparam.1    openssl_req.1        openssl_enc.1		\
-	openssl_rsa.1
-
-MAN+=	ASN1_OBJECT_new.3                RSA_sign_ASN1_OCTET_STRING.3	\
-	ASN1_STRING_length.3             RSA_size.3			\
-	ASN1_STRING_new.3                SMIME_read_CMS.3		\
-	ASN1_STRING_print_ex.3           SMIME_read_PKCS7.3		\
-	ASN1_generate_nconf.3            SMIME_write_CMS.3		\
-	BIO_ctrl.3                       SMIME_write_PKCS7.3		\
-	BIO_f_base64.3                   SSL_CIPHER_get_name.3		\
-	BIO_f_buffer.3                   SSL_COMP_add_compression_method.3 \
-	BIO_f_cipher.3                   SSL_CTX_add_extra_chain_cert.3	\
-	BIO_f_md.3                       SSL_CTX_add_session.3		\
-	BIO_f_null.3                     SSL_CTX_ctrl.3			\
-	BIO_f_ssl.3                      SSL_CTX_flush_sessions.3	\
-	BIO_find_type.3                  SSL_CTX_free.3			\
-	BIO_new.3                        SSL_CTX_get_ex_new_index.3	\
-	BIO_new_CMS.3                    SSL_CTX_get_verify_mode.3	\
-	BIO_push.3                       SSL_CTX_load_verify_locations.3 \
-	BIO_read.3                       SSL_CTX_new.3			\
-	BIO_s_accept.3                   SSL_CTX_sess_number.3		\
-	BIO_s_bio.3                      SSL_CTX_sess_set_cache_size.3	\
-	BIO_s_connect.3                  SSL_CTX_sess_set_get_cb.3	\
-	BIO_s_fd.3                       SSL_CTX_sessions.3		\
-	BIO_s_file.3                     SSL_CTX_set_cert_store.3	\
-	BIO_s_mem.3                      SSL_CTX_set_cert_verify_callback.3 \
-	BIO_s_null.3                     SSL_CTX_set_cipher_list.3	\
-	BIO_s_socket.3                   SSL_CTX_set_client_CA_list.3	\
-	BIO_set_callback.3               SSL_CTX_set_client_cert_cb.3	\
-	BIO_should_retry.3               SSL_CTX_set_default_passwd_cb.3 \
-	BN_BLINDING_new.3                SSL_CTX_set_generate_session_id.3 \
-	BN_CTX_new.3                     SSL_CTX_set_info_callback.3	\
-	BN_CTX_start.3                   SSL_CTX_set_max_cert_list.3	\
-	BN_add.3                         SSL_CTX_set_mode.3		\
-	BN_add_word.3                    SSL_CTX_set_msg_callback.3	\
-	BN_bn2bin.3                      SSL_CTX_set_options.3		\
-	BN_cmp.3                         SSL_CTX_set_psk_client_callback.3 \
-	BN_copy.3                        SSL_CTX_set_quiet_shutdown.3	\
-	BN_generate_prime.3              SSL_CTX_set_read_ahead.3	\
-	BN_mod_inverse.3                 SSL_CTX_set_session_cache_mode.3 \
-	BN_mod_mul_montgomery.3          SSL_CTX_set_session_id_context.3 \
-	BN_mod_mul_reciprocal.3          SSL_CTX_set_ssl_version.3	\
-	BN_new.3                         SSL_CTX_set_timeout.3		\
-	BN_num_bytes.3                   SSL_CTX_set_tlsext_status_cb.3	\
-	BN_rand.3                        SSL_CTX_set_tlsext_ticket_key_cb.3 \
-	BN_set_bit.3                     SSL_CTX_set_tmp_dh_callback.3	\
-	BN_swap.3                        SSL_CTX_set_tmp_rsa_callback.3	\
-	BN_zero.3                        SSL_CTX_set_verify.3		\
-	CMS_add0_cert.3                  SSL_CTX_use_certificate.3	\
-	CMS_add1_recipient_cert.3        SSL_CTX_use_psk_identity_hint.3 \
-	CMS_add1_signer.3                SSL_SESSION_free.3		\
-	CMS_compress.3                   SSL_SESSION_get_ex_new_index.3	\
-	CMS_decrypt.3                    SSL_SESSION_get_time.3		\
-	CMS_encrypt.3                    SSL_accept.3			\
-	CMS_final.3                      SSL_alert_type_string.3	\
-	CMS_get0_RecipientInfos.3        SSL_clear.3			\
-	CMS_get0_SignerInfos.3           SSL_connect.3			\
-	CMS_get0_type.3                  SSL_do_handshake.3		\
-	CMS_get1_ReceiptRequest.3        SSL_free.3			\
-	CMS_sign.3                       SSL_get_SSL_CTX.3		\
-	CMS_sign_receipt.3               SSL_get_ciphers.3		\
-	CMS_uncompress.3                 SSL_get_client_CA_list.3	\
-	CMS_verify.3                     SSL_get_current_cipher.3	\
-	CMS_verify_receipt.3             SSL_get_default_timeout.3	\
-	CONF_modules_free.3              SSL_get_error.3		\
-	CONF_modules_load_file.3         SSL_get_ex_data_X509_STORE_CTX_idx.3 \
-	CRYPTO_set_ex_data.3             SSL_get_ex_new_index.3		\
-	DH_generate_key.3                SSL_get_fd.3			\
-	DH_generate_parameters.3         SSL_get_peer_cert_chain.3	\
-	DH_get_ex_new_index.3            SSL_get_peer_certificate.3	\
-	DH_new.3                         SSL_get_psk_identity.3		\
-	DH_set_method.3                  SSL_get_rbio.3			\
-	DH_size.3                        SSL_get_session.3		\
-	DSA_SIG_new.3                    SSL_get_verify_result.3	\
-	DSA_do_sign.3                    SSL_get_version.3		\
-	DSA_dup_DH.3                     SSL_library_init.3		\
-	DSA_generate_key.3               SSL_load_client_CA_file.3	\
-	DSA_generate_parameters.3        SSL_new.3			\
-	DSA_get_ex_new_index.3           SSL_pending.3			\
-	DSA_new.3                        SSL_read.3			\
-	DSA_set_method.3                 SSL_rstate_string.3		\
-	DSA_sign.3                       SSL_session_reused.3		\
-	DSA_size.3                       SSL_set_bio.3			\
-	ERR_GET_LIB.3                    SSL_set_connect_state.3	\
-	ERR_clear_error.3                SSL_set_fd.3			\
-	ERR_error_string.3               SSL_set_session.3		\
-	ERR_get_error.3                  SSL_set_shutdown.3		\
-	ERR_load_crypto_strings.3        SSL_set_verify_result.3	\
-	ERR_load_strings.3               SSL_shutdown.3			\
-	ERR_print_errors.3               SSL_state_string.3		\
-	ERR_put_error.3                  SSL_want.3			\
-	ERR_remove_state.3               SSL_write.3			\
-	ERR_set_mark.3                   X509_NAME_ENTRY_get_object.3	\
-	EVP_BytesToKey.3                 X509_NAME_add_entry_by_txt.3	\
-	EVP_DigestInit.3                 X509_NAME_get_index_by_NID.3	\
-	EVP_DigestSignInit.3             X509_NAME_print_ex.3		\
-	EVP_DigestVerifyInit.3           X509_STORE_CTX_get_error.3	\
-	EVP_EncodeInit.3                 X509_STORE_CTX_get_ex_new_index.3 \
-	EVP_EncryptInit.3                X509_STORE_CTX_new.3		\
-	EVP_OpenInit.3                   X509_STORE_CTX_set_verify_cb.3	\
-	EVP_PKEY_CTX_ctrl.3              X509_STORE_set_verify_cb_func.3 \
-	EVP_PKEY_CTX_new.3               X509_VERIFY_PARAM_set_flags.3	\
-	EVP_PKEY_cmp.3                   X509_new.3			\
-	EVP_PKEY_decrypt.3               X509_verify_cert.3		\
-	EVP_PKEY_derive.3                crypto.3			\
-	EVP_PKEY_encrypt.3               d2i_ASN1_OBJECT.3		\
-	EVP_PKEY_get_default_digest.3    d2i_CMS_ContentInfo.3		\
-	EVP_PKEY_keygen.3                d2i_DHparams.3			\
-	EVP_PKEY_new.3                   d2i_DSAPublicKey.3		\
-	EVP_PKEY_print_private.3         d2i_ECPrivateKey.3		\
-	EVP_PKEY_set1_RSA.3              d2i_PKCS8PrivateKey.3		\
-	EVP_PKEY_sign.3                  d2i_RSAPublicKey.3		\
-	EVP_PKEY_verify.3                d2i_SSL_SESSION.3		\
-	EVP_PKEY_verify_recover.3        d2i_X509.3			\
-	EVP_SealInit.3                   d2i_X509_ALGOR.3		\
-	EVP_SignInit.3                   d2i_X509_CRL.3			\
-	EVP_VerifyInit.3                 d2i_X509_NAME.3		\
-	OBJ_nid2obj.3                    d2i_X509_REQ.3			\
-	OPENSSL_Applink.3                d2i_X509_SIG.3			\
-	OPENSSL_VERSION_NUMBER.3         i2d_CMS_bio_stream.3		\
-	OPENSSL_config.3                 i2d_PKCS7_bio_stream.3		\
-	OPENSSL_ia32cap.3                lh_stats.3			\
-	OPENSSL_load_builtin_modules.3   openssl_bio.3			\
-	OpenSSL_add_all_algorithms.3     openssl_blowfish.3		\
-	PEM_write_bio_CMS_stream.3       openssl_bn.3			\
-	PEM_write_bio_PKCS7_stream.3     openssl_bn_internal.3		\
-	PKCS12_create.3                  openssl_buffer.3		\
-	PKCS12_parse.3                   openssl_des.3			\
-	PKCS7_decrypt.3                  openssl_dh.3			\
-	PKCS7_encrypt.3                  openssl_dsa.3			\
-	PKCS7_sign.3                     openssl_ecdsa.3		\
-	PKCS7_sign_add_signer.3          openssl_engine.3		\
-	PKCS7_verify.3                   openssl_err.3			\
-	RAND_add.3                       openssl_evp.3			\
-	RAND_bytes.3                     openssl_hmac.3			\
-	RAND_cleanup.3                   openssl_lhash.3		\
-	RAND_egd.3                       openssl_md5.3			\
-	RAND_load_file.3                 openssl_mdc2.3			\
-	RAND_set_rand_method.3           openssl_pem.3			\
-	RSA_blinding_on.3                openssl_rand.3			\
-	RSA_check_key.3                  openssl_rc4.3			\
-	RSA_generate_key.3               openssl_ripemd.3		\
-	RSA_get_ex_new_index.3           openssl_rsa.3			\
-	RSA_new.3                        openssl_sha.3			\
-	RSA_padding_add_PKCS1_type_1.3   openssl_threads.3		\
-	RSA_print.3                      openssl_ui.3			\
-	RSA_private_encrypt.3            openssl_ui_compat.3		\
-	RSA_public_encrypt.3             openssl_x509.3			\
-	RSA_set_method.3                 ssl.3				\
-	RSA_sign.3
-
-
-MAN+=	openssl.cnf.5
-
-#MAN+=	des_modes.7
+MAN += \
+ASN1_INTEGER_get_int64.3 \
+ASN1_OBJECT_new.3 \
+ASN1_STRING_length.3 \
+ASN1_STRING_new.3 \
+ASN1_STRING_print_ex.3 \
+ASN1_TIME_set.3 \
+ASN1_TYPE_get.3 \
+ASN1_generate_nconf.3 \
+ASYNC_WAIT_CTX_new.3 \
+ASYNC_start_job.3 \
+BF_encrypt.3 \
+BIO_ADDR.3 \
+BIO_ADDRINFO.3 \
+BIO_connect.3 \
+BIO_ctrl.3 \
+BIO_f_base64.3 \
+BIO_f_buffer.3 \
+BIO_f_cipher.3 \
+BIO_f_md.3 \
+BIO_f_null.3 \
+BIO_f_ssl.3 \
+BIO_find_type.3 \
+BIO_get_data.3 \
+BIO_get_ex_new_index.3 \
+BIO_meth_new.3 \
+BIO_new.3 \
+BIO_new_CMS.3 \
+BIO_parse_hostserv.3 \
+BIO_printf.3 \
+BIO_push.3 \
+BIO_read.3 \
+BIO_s_accept.3 \
+BIO_s_bio.3 \
+BIO_s_connect.3 \
+BIO_s_fd.3 \
+BIO_s_file.3 \
+BIO_s_mem.3 \
+BIO_s_null.3 \
+BIO_s_socket.3 \
+BIO_set_callback.3 \
+BIO_should_retry.3 \
+BN_BLINDING_new.3 \
+BN_CTX_new.3 \
+BN_CTX_start.3 \
+BN_add.3 \
+BN_add_word.3 \
+BN_bn2bin.3 \
+BN_cmp.3 \
+BN_copy.3 \
+BN_generate_prime.3 \
+BN_mod_inverse.3 \
+BN_mod_mul_montgomery.3 \
+BN_mod_mul_reciprocal.3 \
+BN_new.3 \
+BN_num_bytes.3 \
+BN_rand.3 \
+BN_set_bit.3 \
+BN_swap.3 \
+BN_zero.3 \
+BUF_MEM_new.3 \
+CMS_add0_cert.3 \
+CMS_add1_recipient_cert.3 \
+CMS_add1_signer.3 \
+CMS_compress.3 \
+CMS_decrypt.3 \
+CMS_encrypt.3 \
+CMS_final.3 \
+CMS_get0_RecipientInfos.3 \
+CMS_get0_SignerInfos.3 \
+CMS_get0_type.3 \
+CMS_get1_ReceiptRequest.3 \
+CMS_sign.3 \
+CMS_sign_receipt.3 \
+CMS_uncompress.3 \
+CMS_verify.3 \
+CMS_verify_receipt.3 \
+CONF_modules_free.3 \
+CONF_modules_load_file.3 \
+CRYPTO_THREAD_run_once.3 \
+CRYPTO_get_ex_new_index.3 \
+CTLOG_STORE_get0_log_by_id.3 \
+CTLOG_STORE_new.3 \
+CTLOG_new.3 \
+CT_POLICY_EVAL_CTX_new.3 \
+DEFINE_STACK_OF.3 \
+DES_random_key.3 \
+DH_generate_key.3 \
+DH_generate_parameters.3 \
+DH_get0_pqg.3 \
+DH_get_1024_160.3 \
+DH_meth_new.3 \
+DH_new.3 \
+DH_set_method.3 \
+DH_size.3 \
+DSA_SIG_new.3 \
+DSA_do_sign.3 \
+DSA_dup_DH.3 \
+DSA_generate_key.3 \
+DSA_generate_parameters.3 \
+DSA_get0_pqg.3 \
+DSA_meth_new.3 \
+DSA_new.3 \
+DSA_set_method.3 \
+DSA_sign.3 \
+DSA_size.3 \
+DTLSv1_listen.3 \
+ECDSA_SIG_new.3 \
+ECPKParameters_print.3 \
+EC_GFp_simple_method.3 \
+EC_GROUP_copy.3 \
+EC_GROUP_new.3 \
+EC_KEY_get_enc_flags.3 \
+EC_KEY_new.3 \
+EC_POINT_add.3 \
+EC_POINT_new.3 \
+ENGINE_add.3 \
+ERR_GET_LIB.3 \
+ERR_clear_error.3 \
+ERR_error_string.3 \
+ERR_get_error.3 \
+ERR_load_crypto_strings.3 \
+ERR_load_strings.3 \
+ERR_print_errors.3 \
+ERR_put_error.3 \
+ERR_remove_state.3 \
+ERR_set_mark.3 \
+EVP_BytesToKey.3 \
+EVP_CIPHER_CTX_get_cipher_data.3 \
+EVP_CIPHER_meth_new.3 \
+EVP_DigestInit.3 \
+EVP_DigestSignInit.3 \
+EVP_DigestVerifyInit.3 \
+EVP_EncodeInit.3 \
+EVP_EncryptInit.3 \
+EVP_MD_meth_new.3 \
+EVP_OpenInit.3 \
+EVP_PKEY_ASN1_METHOD.3 \
+EVP_PKEY_CTX_ctrl.3 \
+EVP_PKEY_CTX_new.3 \
+EVP_PKEY_CTX_set_hkdf_md.3 \
+EVP_PKEY_CTX_set_tls1_prf_md.3 \
+EVP_PKEY_asn1_get_count.3 \
+EVP_PKEY_cmp.3 \
+EVP_PKEY_decrypt.3 \
+EVP_PKEY_derive.3 \
+EVP_PKEY_encrypt.3 \
+EVP_PKEY_get_default_digest_nid.3 \
+EVP_PKEY_keygen.3 \
+EVP_PKEY_new.3 \
+EVP_PKEY_print_private.3 \
+EVP_PKEY_set1_RSA.3 \
+EVP_PKEY_sign.3 \
+EVP_PKEY_verify.3 \
+EVP_PKEY_verify_recover.3 \
+EVP_SealInit.3 \
+EVP_SignInit.3 \
+EVP_VerifyInit.3 \
+HMAC.3 \
+MD5.3 \
+MDC2_Init.3 \
+OBJ_nid2obj.3 \
+OCSP_REQUEST_new.3 \
+OCSP_cert_to_id.3 \
+OCSP_request_add1_nonce.3 \
+OCSP_resp_find_status.3 \
+OCSP_response_status.3 \
+OCSP_sendreq_new.3 \
+OPENSSL_Applink.3 \
+OPENSSL_LH_COMPFUNC.3 \
+OPENSSL_LH_stats.3 \
+OPENSSL_VERSION_NUMBER.3 \
+OPENSSL_config.3 \
+OPENSSL_ia32cap.3 \
+OPENSSL_init_crypto.3 \
+OPENSSL_init_ssl.3 \
+OPENSSL_instrument_bus.3 \
+OPENSSL_load_builtin_modules.3 \
+OPENSSL_malloc.3 \
+OPENSSL_secure_malloc.3 \
+OpenSSL_add_all_algorithms.3 \
+PEM_read.3 \
+PEM_read_CMS.3 \
+PEM_read_bio_PrivateKey.3 \
+PEM_write_bio_CMS_stream.3 \
+PEM_write_bio_PKCS7_stream.3 \
+PKCS12_create.3 \
+PKCS12_newpass.3 \
+PKCS12_parse.3 \
+PKCS5_PBKDF2_HMAC.3 \
+PKCS7_decrypt.3 \
+PKCS7_encrypt.3 \
+PKCS7_sign.3 \
+PKCS7_sign_add_signer.3 \
+PKCS7_verify.3 \
+RAND_add.3 \
+RAND_bytes.3 \
+RAND_cleanup.3 \
+RAND_egd.3 \
+RAND_load_file.3 \
+RAND_set_rand_method.3 \
+RC4_set_key.3 \
+RIPEMD160_Init.3 \
+RSA_blinding_on.3 \
+RSA_check_key.3 \
+RSA_generate_key.3 \
+RSA_get0_key.3 \
+RSA_meth_new.3 \
+RSA_new.3 \
+RSA_padding_add_PKCS1_type_1.3 \
+RSA_print.3 \
+RSA_private_encrypt.3 \
+RSA_public_encrypt.3 \
+RSA_set_method.3 \
+RSA_sign.3 \
+RSA_sign_ASN1_OCTET_STRING.3 \
+RSA_size.3 \
+SCT_new.3 \
+SCT_print.3 \
+SCT_validate.3 \
+SHA256_Init.3 \
+SMIME_read_CMS.3 \
+SMIME_read_PKCS7.3 \
+SMIME_write_CMS.3 \
+SMIME_write_PKCS7.3 \
+SSL_CIPHER_get_name.3 \
+SSL_COMP_add_compression_method.3 \
+SSL_CONF_CTX_new.3 \
+SSL_CONF_CTX_set1_prefix.3 \
+SSL_CONF_CTX_set_flags.3 \
+SSL_CONF_CTX_set_ssl_ctx.3 \
+SSL_CONF_cmd.3 \
+SSL_CONF_cmd_argv.3 \
+SSL_CTX_add1_chain_cert.3 \
+SSL_CTX_add_extra_chain_cert.3 \
+SSL_CTX_add_session.3 \
+SSL_CTX_config.3 \
+SSL_CTX_ctrl.3 \
+SSL_CTX_dane_enable.3 \
+SSL_CTX_flush_sessions.3 \
+SSL_CTX_free.3 \
+SSL_CTX_get0_param.3 \
+SSL_CTX_get_verify_mode.3 \
+SSL_CTX_has_client_custom_ext.3 \
+SSL_CTX_load_verify_locations.3 \
+SSL_CTX_new.3 \
+SSL_CTX_sess_number.3 \
+SSL_CTX_sess_set_cache_size.3 \
+SSL_CTX_sess_set_get_cb.3 \
+SSL_CTX_sessions.3 \
+SSL_CTX_set1_curves.3 \
+SSL_CTX_set1_sigalgs.3 \
+SSL_CTX_set1_verify_cert_store.3 \
+SSL_CTX_set_alpn_select_cb.3 \
+SSL_CTX_set_cert_cb.3 \
+SSL_CTX_set_cert_store.3 \
+SSL_CTX_set_cert_verify_callback.3 \
+SSL_CTX_set_cipher_list.3 \
+SSL_CTX_set_client_CA_list.3 \
+SSL_CTX_set_client_cert_cb.3 \
+SSL_CTX_set_ct_validation_callback.3 \
+SSL_CTX_set_ctlog_list_file.3 \
+SSL_CTX_set_default_passwd_cb.3 \
+SSL_CTX_set_ex_data.3 \
+SSL_CTX_set_generate_session_id.3 \
+SSL_CTX_set_info_callback.3 \
+SSL_CTX_set_max_cert_list.3 \
+SSL_CTX_set_min_proto_version.3 \
+SSL_CTX_set_mode.3 \
+SSL_CTX_set_msg_callback.3 \
+SSL_CTX_set_options.3 \
+SSL_CTX_set_psk_client_callback.3 \
+SSL_CTX_set_quiet_shutdown.3 \
+SSL_CTX_set_read_ahead.3 \
+SSL_CTX_set_security_level.3 \
+SSL_CTX_set_session_cache_mode.3 \
+SSL_CTX_set_session_id_context.3 \
+SSL_CTX_set_split_send_fragment.3 \
+SSL_CTX_set_ssl_version.3 \
+SSL_CTX_set_timeout.3 \
+SSL_CTX_set_tlsext_status_cb.3 \
+SSL_CTX_set_tlsext_ticket_key_cb.3 \
+SSL_CTX_set_tlsext_use_srtp.3 \
+SSL_CTX_set_tmp_dh_callback.3 \
+SSL_CTX_set_verify.3 \
+SSL_CTX_use_certificate.3 \
+SSL_CTX_use_psk_identity_hint.3 \
+SSL_CTX_use_serverinfo.3 \
+SSL_SESSION_free.3 \
+SSL_SESSION_get0_cipher.3 \
+SSL_SESSION_get0_hostname.3 \
+SSL_SESSION_get0_id_context.3 \
+SSL_SESSION_get0_peer.3 \
+SSL_SESSION_get_compress_id.3 \
+SSL_SESSION_get_ex_data.3 \
+SSL_SESSION_get_protocol_version.3 \
+SSL_SESSION_get_time.3 \
+SSL_SESSION_has_ticket.3 \
+SSL_SESSION_print.3 \
+SSL_SESSION_set1_id.3 \
+SSL_accept.3 \
+SSL_alert_type_string.3 \
+SSL_check_chain.3 \
+SSL_clear.3 \
+SSL_connect.3 \
+SSL_do_handshake.3 \
+SSL_export_keying_material.3 \
+SSL_extension_supported.3 \
+SSL_free.3 \
+SSL_get0_peer_scts.3 \
+SSL_get_SSL_CTX.3 \
+SSL_get_all_async_fds.3 \
+SSL_get_ciphers.3 \
+SSL_get_client_CA_list.3 \
+SSL_get_client_random.3 \
+SSL_get_current_cipher.3 \
+SSL_get_default_timeout.3 \
+SSL_get_error.3 \
+SSL_get_extms_support.3 \
+SSL_get_fd.3 \
+SSL_get_peer_cert_chain.3 \
+SSL_get_peer_certificate.3 \
+SSL_get_psk_identity.3 \
+SSL_get_rbio.3 \
+SSL_get_session.3 \
+SSL_get_shared_sigalgs.3 \
+SSL_get_verify_result.3 \
+SSL_get_version.3 \
+SSL_library_init.3 \
+SSL_load_client_CA_file.3 \
+SSL_new.3 \
+SSL_pending.3 \
+SSL_read.3 \
+SSL_rstate_string.3 \
+SSL_session_reused.3 \
+SSL_set1_host.3 \
+SSL_set_bio.3 \
+SSL_set_connect_state.3 \
+SSL_set_fd.3 \
+SSL_set_session.3 \
+SSL_set_shutdown.3 \
+SSL_set_verify_result.3 \
+SSL_shutdown.3 \
+SSL_state_string.3 \
+SSL_want.3 \
+SSL_write.3 \
+UI_STRING.3 \
+UI_create_method.3 \
+UI_new.3 \
+X509V3_get_d2i.3 \
+X509_ALGOR_dup.3 \
+X509_CRL_get0_by_serial.3 \
+X509_EXTENSION_set_object.3 \
+X509_LOOKUP_hash_dir.3 \
+X509_NAME_ENTRY_get_object.3 \
+X509_NAME_add_entry_by_txt.3 \
+X509_NAME_get0_der.3 \
+X509_NAME_get_index_by_NID.3 \
+X509_NAME_print_ex.3 \
+X509_PUBKEY_new.3 \
+X509_SIG_get0.3 \
+X509_STORE_CTX_get_error.3 \
+X509_STORE_CTX_new.3 \
+X509_STORE_CTX_set_verify_cb.3 \
+X509_STORE_get0_param.3 \
+X509_STORE_new.3 \
+X509_STORE_set_verify_cb_func.3 \
+X509_VERIFY_PARAM_set_flags.3 \
+X509_check_ca.3 \
+X509_check_host.3 \
+X509_check_issued.3 \
+X509_digest.3 \
+X509_dup.3 \
+X509_get0_notBefore.3 \
+X509_get0_signature.3 \
+X509_get0_uids.3 \
+X509_get_extension_flags.3 \
+X509_get_pubkey.3 \
+X509_get_serialNumber.3 \
+X509_get_subject_name.3 \
+X509_get_version.3 \
+X509_new.3 \
+X509_sign.3 \
+X509_verify_cert.3 \
+X509v3_get_ext_by_NID.3 \
+crypto.3 \
+ct.3 \
+d2i_DHparams.3 \
+d2i_Netscape_RSA.3 \
+d2i_PKCS8PrivateKey_bio.3 \
+d2i_PrivateKey.3 \
+d2i_SSL_SESSION.3 \
+d2i_X509.3 \
+des_modes.7 \
+i2d_CMS_bio_stream.3 \
+i2d_PKCS7_bio_stream.3 \
+i2d_re_X509_tbs.3 \
+o2i_SCT_LIST.3 \
+openssl.1 \
+openssl.cnf.5 \
+openssl_CA.pl.1 \
+openssl_asn1parse.1 \
+openssl_bio.3 \
+openssl_ca.1 \
+openssl_ciphers.1 \
+openssl_cms.1 \
+openssl_crl.1 \
+openssl_crl2pkcs7.1 \
+openssl_dgst.1 \
+openssl_dhparam.1 \
+openssl_dsa.1 \
+openssl_dsaparam.1 \
+openssl_ec.1 \
+openssl_ecparam.1 \
+openssl_enc.1 \
+openssl_engine.1 \
+openssl_errstr.1 \
+openssl_evp.3 \
+openssl_gendsa.1 \
+openssl_genpkey.1 \
+openssl_genrsa.1 \
+openssl_list.1 \
+openssl_nseq.1 \
+openssl_ocsp.1 \
+openssl_passwd.1 \
+openssl_pkcs12.1 \
+openssl_pkcs7.1 \
+openssl_pkcs8.1 \
+openssl_pkey.1 \
+openssl_pkeyparam.1 \
+openssl_pkeyutl.1 \
+openssl_rand.1 \
+openssl_rehash.1 \
+openssl_req.1 \
+openssl_rsa.1 \
+openssl_rsautl.1 \
+openssl_s_client.1 \
+openssl_s_server.1 \
+openssl_s_time.1 \
+openssl_sess_id.1 \
+openssl_smime.1 \
+openssl_speed.1 \
+openssl_spkac.1 \
+openssl_ts.1 \
+openssl_tsget.1 \
+openssl_verify.1 \
+openssl_version.1 \
+openssl_x509.1 \
+openssl_x509.3 \
+openssl_x509v3_config.1 \
+ssl.3
