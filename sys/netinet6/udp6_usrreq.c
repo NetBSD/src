@@ -1,4 +1,4 @@
-/* $NetBSD: udp6_usrreq.c,v 1.132 2018/02/08 11:34:35 maxv Exp $ */
+/* $NetBSD: udp6_usrreq.c,v 1.133 2018/02/08 11:49:37 maxv Exp $ */
 /* $KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $ */
 /* $KAME: udp6_output.c,v 1.43 2001/10/15 09:19:52 itojun Exp $ */
 
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.132 2018/02/08 11:34:35 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.133 2018/02/08 11:49:37 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -708,6 +708,9 @@ udp6_output(struct in6pcb * const in6p, struct mbuf *m,
 	}
 
 	if (control) {
+		if (__predict_false(l == NULL)) {
+			panic("%s: control but no lwp", __func__);
+		}
 		if ((error = ip6_setpktopts(control, &opt,
 		    in6p->in6p_outputopts, l->l_cred, IPPROTO_UDP)) != 0)
 			goto release;
