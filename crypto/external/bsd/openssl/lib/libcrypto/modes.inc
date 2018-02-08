@@ -1,4 +1,4 @@
-#	$NetBSD: modes.inc,v 1.5 2016/10/14 16:09:43 spz Exp $
+#	$NetBSD: modes.inc,v 1.6 2018/02/08 21:57:24 christos Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -7,8 +7,17 @@
 
 .PATH:	${OPENSSLSRC}/crypto/modes
 
-MODES_SRCS += cbc128.c ctr128.c cts128.c cfb128.c ofb128.c gcm128.c \
-    ccm128.c xts128.c wrap128.c
+MODES_SRCS += \
+cbc128.c \
+ccm128.c \
+cfb128.c \
+ctr128.c \
+cts128.c \
+gcm128.c \
+ocb128.c \
+ofb128.c \
+wrap128.c \
+xts128.c
 
 
 SRCS += ${MODES_SRCS}

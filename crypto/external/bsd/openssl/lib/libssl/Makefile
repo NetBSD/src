@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2013/01/18 18:09:56 christos Exp $
+#	$NetBSD: Makefile,v 1.6 2018/02/08 21:57:29 christos Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -26,11 +26,12 @@ CWARNFLAGS.clang+=	-Wno-unused-value
 
 LIB=	ssl
 CPPFLAGS+= -Dlib${LIB} -I${OPENSSLSRC} -I${OPENSSLSRC}/crypto
+CPPFLAGS+= -I${OPENSSLSRC}/include
 
 CRYPTODIST=	${NETBSDSRCDIR}/crypto
 
 .include "${NETBSDSRCDIR}/crypto/Makefile.openssl"
-.PATH: ${OPENSSLSRC} ${OPENSSLSRC}/crypto/pqueue
+.PATH: ${OPENSSLSRC} ${OPENSSLSRC}/crypto/pqueue ${OPENSSLSRC}/include/openssl
 
 .include "srcs.inc"
 
@@ -39,7 +40,7 @@ LIBDPLIBS+=crypto ${.CURDIR}/../libcrypto
 AFLAGS+=-DELF
 
 # This is from the include/openssl directory; see ../libcrypto/Makefile
-INCS=	dtls1.h ssl.h ssl2.h ssl3.h ssl23.h tls1.h kssl.h srtp.h
+INCS=	dtls1.h ssl.h ssl2.h ssl3.h tls1.h srtp.h async.h
 INCSDIR=/usr/include/openssl
 
 # this rebuilds the `srcs.inc' and the .inc files it reads.

@@ -18,9 +18,7 @@
 #include <openssl/sha.h>
 #include <openssl/opensslv.h>
 
-#include "cryptlib.h"
-
-const char SHA256_version[]="SHA-256" OPENSSL_VERSION_PTEXT;
+#include "internal/cryptlib.h"
 
 unsigned char *SHA224(const unsigned char *d, size_t n, unsigned char *md)
 	{

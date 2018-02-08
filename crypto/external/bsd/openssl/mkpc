@@ -1,8 +1,8 @@
 #!/bin/sh
-#	$NetBSD: mkpc,v 1.4 2014/07/07 09:14:43 joerg Exp $
+#	$NetBSD: mkpc,v 1.5 2018/02/08 21:57:23 christos Exp $
 
 getversion() {
-	(echo '#include "opensslv.h"'; echo OPENSSL_VERSION_TEXT) |
+	(echo '#include "openssl/opensslv.h"'; echo OPENSSL_VERSION_TEXT) |
 	    $CPP $CPPFLAGS -I$1 | grep OpenSSL | cut -d ' ' -f 2
 }
 VERSION="$(getversion $1)"
@@ -32,7 +32,7 @@ openssl.pc)
 esac
 
 cat << EOF > "$2"
-# \$NetBSD: mkpc,v 1.4 2014/07/07 09:14:43 joerg Exp $
+# \$NetBSD: mkpc,v 1.5 2018/02/08 21:57:23 christos Exp $
 prefix=/usr
 exec_prefix=/usr
 libdir=/usr/lib

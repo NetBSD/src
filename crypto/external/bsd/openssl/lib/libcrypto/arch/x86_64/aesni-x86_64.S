@@ -2532,6 +2532,816 @@ aesni_xts_decrypt:
 .Lxts_dec_epilogue:
 	.byte	0xf3,0xc3
 .size	aesni_xts_decrypt,.-aesni_xts_decrypt
+.globl	aesni_ocb_encrypt
+.type	aesni_ocb_encrypt,@function
+.align	32
+aesni_ocb_encrypt:
+	leaq	(%rsp),%rax
+	pushq	%rbx
+	pushq	%rbp
+	pushq	%r12
+	pushq	%r13
+	pushq	%r14
+	movq	8(%rax),%rbx
+	movq	8+8(%rax),%rbp
+
+	movl	240(%rcx),%r10d
+	movq	%rcx,%r11
+	shll	$4,%r10d
+	movups	(%rcx),%xmm9
+	movups	16(%rcx,%r10,1),%xmm1
+
+	movdqu	(%r9),%xmm15
+	pxor	%xmm1,%xmm9
+	pxor	%xmm1,%xmm15
+
+	movl	$16+32,%eax
+	leaq	32(%r11,%r10,1),%rcx
+	movups	16(%r11),%xmm1
+	subq	%r10,%rax
+	movq	%rax,%r10
+
+	movdqu	(%rbx),%xmm10
+	movdqu	(%rbp),%xmm8
+
+	testq	$1,%r8
+	jnz	.Locb_enc_odd
+
+	bsfq	%r8,%r12
+	addq	$1,%r8
+	shlq	$4,%r12
+	movdqu	(%rbx,%r12,1),%xmm7
+	movdqu	(%rdi),%xmm2
+	leaq	16(%rdi),%rdi
+
+	call	__ocb_encrypt1
+
+	movdqa	%xmm7,%xmm15
+	movups	%xmm2,(%rsi)
+	leaq	16(%rsi),%rsi
+	subq	$1,%rdx
+	jz	.Locb_enc_done
+
+.Locb_enc_odd:
+	leaq	1(%r8),%r12
+	leaq	3(%r8),%r13
+	leaq	5(%r8),%r14
+	leaq	6(%r8),%r8
+	bsfq	%r12,%r12
+	bsfq	%r13,%r13
+	bsfq	%r14,%r14
+	shlq	$4,%r12
+	shlq	$4,%r13
+	shlq	$4,%r14
+
+	subq	$6,%rdx
+	jc	.Locb_enc_short
+	jmp	.Locb_enc_grandloop
+
+.align	32
+.Locb_enc_grandloop:
+	movdqu	0(%rdi),%xmm2
+	movdqu	16(%rdi),%xmm3
+	movdqu	32(%rdi),%xmm4
+	movdqu	48(%rdi),%xmm5
+	movdqu	64(%rdi),%xmm6
+	movdqu	80(%rdi),%xmm7
+	leaq	96(%rdi),%rdi
+
+	call	__ocb_encrypt6
+
+	movups	%xmm2,0(%rsi)
+	movups	%xmm3,16(%rsi)
+	movups	%xmm4,32(%rsi)
+	movups	%xmm5,48(%rsi)
+	movups	%xmm6,64(%rsi)
+	movups	%xmm7,80(%rsi)
+	leaq	96(%rsi),%rsi
+	subq	$6,%rdx
+	jnc	.Locb_enc_grandloop
+
+.Locb_enc_short:
+	addq	$6,%rdx
+	jz	.Locb_enc_done
+
+	movdqu	0(%rdi),%xmm2
+	cmpq	$2,%rdx
+	jb	.Locb_enc_one
+	movdqu	16(%rdi),%xmm3
+	je	.Locb_enc_two
+
+	movdqu	32(%rdi),%xmm4
+	cmpq	$4,%rdx
+	jb	.Locb_enc_three
+	movdqu	48(%rdi),%xmm5
+	je	.Locb_enc_four
+
+	movdqu	64(%rdi),%xmm6
+	pxor	%xmm7,%xmm7
+
+	call	__ocb_encrypt6
+
+	movdqa	%xmm14,%xmm15
+	movups	%xmm2,0(%rsi)
+	movups	%xmm3,16(%rsi)
+	movups	%xmm4,32(%rsi)
+	movups	%xmm5,48(%rsi)
+	movups	%xmm6,64(%rsi)
+
+	jmp	.Locb_enc_done
+
+.align	16
+.Locb_enc_one:
+	movdqa	%xmm10,%xmm7
+
+	call	__ocb_encrypt1
+
+	movdqa	%xmm7,%xmm15
+	movups	%xmm2,0(%rsi)
+	jmp	.Locb_enc_done
+
+.align	16
+.Locb_enc_two:
+	pxor	%xmm4,%xmm4
+	pxor	%xmm5,%xmm5
+
+	call	__ocb_encrypt4
+
+	movdqa	%xmm11,%xmm15
+	movups	%xmm2,0(%rsi)
+	movups	%xmm3,16(%rsi)
+
+	jmp	.Locb_enc_done
+
+.align	16
+.Locb_enc_three:
+	pxor	%xmm5,%xmm5
+
+	call	__ocb_encrypt4
+
+	movdqa	%xmm12,%xmm15
+	movups	%xmm2,0(%rsi)
+	movups	%xmm3,16(%rsi)
+	movups	%xmm4,32(%rsi)
+
+	jmp	.Locb_enc_done
+
+.align	16
+.Locb_enc_four:
+	call	__ocb_encrypt4
+
+	movdqa	%xmm13,%xmm15
+	movups	%xmm2,0(%rsi)
+	movups	%xmm3,16(%rsi)
+	movups	%xmm4,32(%rsi)
+	movups	%xmm5,48(%rsi)
+
+.Locb_enc_done:
+	pxor	%xmm0,%xmm15
+	movdqu	%xmm8,(%rbp)
+	movdqu	%xmm15,(%r9)
+
+	xorps	%xmm0,%xmm0
+	pxor	%xmm1,%xmm1
+	pxor	%xmm2,%xmm2
+	pxor	%xmm3,%xmm3
+	pxor	%xmm4,%xmm4
+	pxor	%xmm5,%xmm5
+	pxor	%xmm6,%xmm6
+	pxor	%xmm7,%xmm7
+	pxor	%xmm8,%xmm8
+	pxor	%xmm9,%xmm9
+	pxor	%xmm10,%xmm10
+	pxor	%xmm11,%xmm11
+	pxor	%xmm12,%xmm12
+	pxor	%xmm13,%xmm13
+	pxor	%xmm14,%xmm14
+	pxor	%xmm15,%xmm15
+	popq	%r14
+	popq	%r13
+	popq	%r12
+	popq	%rbp
+	popq	%rbx
+.Locb_enc_epilogue:
+	.byte	0xf3,0xc3
+.size	aesni_ocb_encrypt,.-aesni_ocb_encrypt
+
+.type	__ocb_encrypt6,@function
+.align	32
+__ocb_encrypt6:
+	pxor	%xmm9,%xmm15
+	movdqu	(%rbx,%r12,1),%xmm11
+	movdqa	%xmm10,%xmm12
+	movdqu	(%rbx,%r13,1),%xmm13
+	movdqa	%xmm10,%xmm14
+	pxor	%xmm15,%xmm10
+	movdqu	(%rbx,%r14,1),%xmm15
+	pxor	%xmm10,%xmm11
+	pxor	%xmm2,%xmm8
+	pxor	%xmm10,%xmm2
+	pxor	%xmm11,%xmm12
+	pxor	%xmm3,%xmm8
+	pxor	%xmm11,%xmm3
+	pxor	%xmm12,%xmm13
+	pxor	%xmm4,%xmm8
+	pxor	%xmm12,%xmm4
+	pxor	%xmm13,%xmm14
+	pxor	%xmm5,%xmm8
+	pxor	%xmm13,%xmm5
+	pxor	%xmm14,%xmm15
+	pxor	%xmm6,%xmm8
+	pxor	%xmm14,%xmm6
+	pxor	%xmm7,%xmm8
+	pxor	%xmm15,%xmm7
+	movups	32(%r11),%xmm0
+
+	leaq	1(%r8),%r12
+	leaq	3(%r8),%r13
+	leaq	5(%r8),%r14
+	addq	$6,%r8
+	pxor	%xmm9,%xmm10
+	bsfq	%r12,%r12
+	bsfq	%r13,%r13
+	bsfq	%r14,%r14
+
+.byte	102,15,56,220,209
+.byte	102,15,56,220,217
+.byte	102,15,56,220,225
+.byte	102,15,56,220,233
+	pxor	%xmm9,%xmm11
+	pxor	%xmm9,%xmm12
+.byte	102,15,56,220,241
+	pxor	%xmm9,%xmm13
+	pxor	%xmm9,%xmm14
+.byte	102,15,56,220,249
+	movups	48(%r11),%xmm1
+	pxor	%xmm9,%xmm15
+
+.byte	102,15,56,220,208
+.byte	102,15,56,220,216
+.byte	102,15,56,220,224
+.byte	102,15,56,220,232
+.byte	102,15,56,220,240
+.byte	102,15,56,220,248
+	movups	64(%r11),%xmm0
+	shlq	$4,%r12
+	shlq	$4,%r13
+	jmp	.Locb_enc_loop6
+
+.align	32
+.Locb_enc_loop6:
+.byte	102,15,56,220,209
+.byte	102,15,56,220,217
+.byte	102,15,56,220,225
+.byte	102,15,56,220,233
+.byte	102,15,56,220,241
+.byte	102,15,56,220,249
+	movups	(%rcx,%rax,1),%xmm1
+	addq	$32,%rax
+
+.byte	102,15,56,220,208
+.byte	102,15,56,220,216
+.byte	102,15,56,220,224
+.byte	102,15,56,220,232
+.byte	102,15,56,220,240
+.byte	102,15,56,220,248
+	movups	-16(%rcx,%rax,1),%xmm0
+	jnz	.Locb_enc_loop6
+
+.byte	102,15,56,220,209
+.byte	102,15,56,220,217
+.byte	102,15,56,220,225
+.byte	102,15,56,220,233
+.byte	102,15,56,220,241
+.byte	102,15,56,220,249
+	movups	16(%r11),%xmm1
+	shlq	$4,%r14
+
+.byte	102,65,15,56,221,210
+	movdqu	(%rbx),%xmm10
+	movq	%r10,%rax
+.byte	102,65,15,56,221,219
+.byte	102,65,15,56,221,228
+.byte	102,65,15,56,221,237
+.byte	102,65,15,56,221,246
+.byte	102,65,15,56,221,255
+	.byte	0xf3,0xc3
+.size	__ocb_encrypt6,.-__ocb_encrypt6
+
+.type	__ocb_encrypt4,@function
+.align	32
+__ocb_encrypt4:
+	pxor	%xmm9,%xmm15
+	movdqu	(%rbx,%r12,1),%xmm11
+	movdqa	%xmm10,%xmm12
+	movdqu	(%rbx,%r13,1),%xmm13
+	pxor	%xmm15,%xmm10
+	pxor	%xmm10,%xmm11
+	pxor	%xmm2,%xmm8
+	pxor	%xmm10,%xmm2
+	pxor	%xmm11,%xmm12
+	pxor	%xmm3,%xmm8
+	pxor	%xmm11,%xmm3
+	pxor	%xmm12,%xmm13
+	pxor	%xmm4,%xmm8
+	pxor	%xmm12,%xmm4
+	pxor	%xmm5,%xmm8
+	pxor	%xmm13,%xmm5
+	movups	32(%r11),%xmm0
+
+	pxor	%xmm9,%xmm10
+	pxor	%xmm9,%xmm11
+	pxor	%xmm9,%xmm12
+	pxor	%xmm9,%xmm13
+
+.byte	102,15,56,220,209
+.byte	102,15,56,220,217
+.byte	102,15,56,220,225
+.byte	102,15,56,220,233
+	movups	48(%r11),%xmm1
+
+.byte	102,15,56,220,208
+.byte	102,15,56,220,216
+.byte	102,15,56,220,224
+.byte	102,15,56,220,232
+	movups	64(%r11),%xmm0
+	jmp	.Locb_enc_loop4
+
+.align	32
+.Locb_enc_loop4:
+.byte	102,15,56,220,209
+.byte	102,15,56,220,217
+.byte	102,15,56,220,225
+.byte	102,15,56,220,233
+	movups	(%rcx,%rax,1),%xmm1
+	addq	$32,%rax
+
+.byte	102,15,56,220,208
+.byte	102,15,56,220,216
+.byte	102,15,56,220,224
+.byte	102,15,56,220,232
+	movups	-16(%rcx,%rax,1),%xmm0
+	jnz	.Locb_enc_loop4
+
+.byte	102,15,56,220,209
+.byte	102,15,56,220,217
+.byte	102,15,56,220,225
+.byte	102,15,56,220,233
+	movups	16(%r11),%xmm1
+	movq	%r10,%rax
+
+.byte	102,65,15,56,221,210
+.byte	102,65,15,56,221,219
+.byte	102,65,15,56,221,228
+.byte	102,65,15,56,221,237
+	.byte	0xf3,0xc3
+.size	__ocb_encrypt4,.-__ocb_encrypt4
+
+.type	__ocb_encrypt1,@function
+.align	32
+__ocb_encrypt1:
+	pxor	%xmm15,%xmm7
+	pxor	%xmm9,%xmm7
+	pxor	%xmm2,%xmm8
+	pxor	%xmm7,%xmm2
+	movups	32(%r11),%xmm0
+
+.byte	102,15,56,220,209
+	movups	48(%r11),%xmm1
+	pxor	%xmm9,%xmm7
+
+.byte	102,15,56,220,208
+	movups	64(%r11),%xmm0
+	jmp	.Locb_enc_loop1
+
+.align	32
+.Locb_enc_loop1:
+.byte	102,15,56,220,209
+	movups	(%rcx,%rax,1),%xmm1
+	addq	$32,%rax
+
+.byte	102,15,56,220,208
+	movups	-16(%rcx,%rax,1),%xmm0
+	jnz	.Locb_enc_loop1
+
+.byte	102,15,56,220,209
+	movups	16(%r11),%xmm1
+	movq	%r10,%rax
+
+.byte	102,15,56,221,215
+	.byte	0xf3,0xc3
+.size	__ocb_encrypt1,.-__ocb_encrypt1
+
+.globl	aesni_ocb_decrypt
+.type	aesni_ocb_decrypt,@function
+.align	32
+aesni_ocb_decrypt:
+	leaq	(%rsp),%rax
+	pushq	%rbx
+	pushq	%rbp
+	pushq	%r12
+	pushq	%r13
+	pushq	%r14
+	movq	8(%rax),%rbx
+	movq	8+8(%rax),%rbp
+
+	movl	240(%rcx),%r10d
+	movq	%rcx,%r11
+	shll	$4,%r10d
+	movups	(%rcx),%xmm9
+	movups	16(%rcx,%r10,1),%xmm1
+
+	movdqu	(%r9),%xmm15
+	pxor	%xmm1,%xmm9
+	pxor	%xmm1,%xmm15
+
+	movl	$16+32,%eax
+	leaq	32(%r11,%r10,1),%rcx
+	movups	16(%r11),%xmm1
+	subq	%r10,%rax
+	movq	%rax,%r10
+
+	movdqu	(%rbx),%xmm10
+	movdqu	(%rbp),%xmm8
+
+	testq	$1,%r8
+	jnz	.Locb_dec_odd
+
+	bsfq	%r8,%r12
+	addq	$1,%r8
+	shlq	$4,%r12
+	movdqu	(%rbx,%r12,1),%xmm7
+	movdqu	(%rdi),%xmm2
+	leaq	16(%rdi),%rdi
+
+	call	__ocb_decrypt1
+
+	movdqa	%xmm7,%xmm15
+	movups	%xmm2,(%rsi)
+	xorps	%xmm2,%xmm8
+	leaq	16(%rsi),%rsi
+	subq	$1,%rdx
+	jz	.Locb_dec_done
+
+.Locb_dec_odd:
+	leaq	1(%r8),%r12
+	leaq	3(%r8),%r13
+	leaq	5(%r8),%r14
+	leaq	6(%r8),%r8
+	bsfq	%r12,%r12
+	bsfq	%r13,%r13
+	bsfq	%r14,%r14
+	shlq	$4,%r12
+	shlq	$4,%r13
+	shlq	$4,%r14
+
+	subq	$6,%rdx
+	jc	.Locb_dec_short
+	jmp	.Locb_dec_grandloop
+
+.align	32
+.Locb_dec_grandloop:
+	movdqu	0(%rdi),%xmm2
+	movdqu	16(%rdi),%xmm3
+	movdqu	32(%rdi),%xmm4
+	movdqu	48(%rdi),%xmm5
+	movdqu	64(%rdi),%xmm6
+	movdqu	80(%rdi),%xmm7
+	leaq	96(%rdi),%rdi
+
+	call	__ocb_decrypt6
+
+	movups	%xmm2,0(%rsi)
+	pxor	%xmm2,%xmm8
+	movups	%xmm3,16(%rsi)
+	pxor	%xmm3,%xmm8
+	movups	%xmm4,32(%rsi)
+	pxor	%xmm4,%xmm8
+	movups	%xmm5,48(%rsi)
+	pxor	%xmm5,%xmm8
+	movups	%xmm6,64(%rsi)
+	pxor	%xmm6,%xmm8
+	movups	%xmm7,80(%rsi)
+	pxor	%xmm7,%xmm8
+	leaq	96(%rsi),%rsi
+	subq	$6,%rdx
+	jnc	.Locb_dec_grandloop
+
+.Locb_dec_short:
+	addq	$6,%rdx
+	jz	.Locb_dec_done
+
+	movdqu	0(%rdi),%xmm2
+	cmpq	$2,%rdx
+	jb	.Locb_dec_one
+	movdqu	16(%rdi),%xmm3
+	je	.Locb_dec_two
+
+	movdqu	32(%rdi),%xmm4
+	cmpq	$4,%rdx
+	jb	.Locb_dec_three
+	movdqu	48(%rdi),%xmm5
+	je	.Locb_dec_four
+
+	movdqu	64(%rdi),%xmm6
+	pxor	%xmm7,%xmm7
+
+	call	__ocb_decrypt6
+
+	movdqa	%xmm14,%xmm15
+	movups	%xmm2,0(%rsi)
+	pxor	%xmm2,%xmm8
+	movups	%xmm3,16(%rsi)
+	pxor	%xmm3,%xmm8
+	movups	%xmm4,32(%rsi)
+	pxor	%xmm4,%xmm8
+	movups	%xmm5,48(%rsi)
+	pxor	%xmm5,%xmm8
+	movups	%xmm6,64(%rsi)
+	pxor	%xmm6,%xmm8
+
+	jmp	.Locb_dec_done
+
+.align	16
+.Locb_dec_one:
+	movdqa	%xmm10,%xmm7
+
+	call	__ocb_decrypt1
+
+	movdqa	%xmm7,%xmm15
+	movups	%xmm2,0(%rsi)
+	xorps	%xmm2,%xmm8
+	jmp	.Locb_dec_done
+
+.align	16
+.Locb_dec_two:
+	pxor	%xmm4,%xmm4
+	pxor	%xmm5,%xmm5
+
+	call	__ocb_decrypt4
+
+	movdqa	%xmm11,%xmm15
+	movups	%xmm2,0(%rsi)
+	xorps	%xmm2,%xmm8
+	movups	%xmm3,16(%rsi)
+	xorps	%xmm3,%xmm8
+
+	jmp	.Locb_dec_done
+
+.align	16
+.Locb_dec_three:
+	pxor	%xmm5,%xmm5
+
+	call	__ocb_decrypt4
+
+	movdqa	%xmm12,%xmm15
+	movups	%xmm2,0(%rsi)
+	xorps	%xmm2,%xmm8
+	movups	%xmm3,16(%rsi)
+	xorps	%xmm3,%xmm8
+	movups	%xmm4,32(%rsi)
+	xorps	%xmm4,%xmm8
+
+	jmp	.Locb_dec_done
+
+.align	16
+.Locb_dec_four:
+	call	__ocb_decrypt4
+
+	movdqa	%xmm13,%xmm15
+	movups	%xmm2,0(%rsi)
+	pxor	%xmm2,%xmm8
+	movups	%xmm3,16(%rsi)
+	pxor	%xmm3,%xmm8
+	movups	%xmm4,32(%rsi)
+	pxor	%xmm4,%xmm8
+	movups	%xmm5,48(%rsi)
+	pxor	%xmm5,%xmm8
+
+.Locb_dec_done:
+	pxor	%xmm0,%xmm15
+	movdqu	%xmm8,(%rbp)
+	movdqu	%xmm15,(%r9)
+
+	xorps	%xmm0,%xmm0
+	pxor	%xmm1,%xmm1
+	pxor	%xmm2,%xmm2
+	pxor	%xmm3,%xmm3
+	pxor	%xmm4,%xmm4
+	pxor	%xmm5,%xmm5
+	pxor	%xmm6,%xmm6
+	pxor	%xmm7,%xmm7
+	pxor	%xmm8,%xmm8
+	pxor	%xmm9,%xmm9
+	pxor	%xmm10,%xmm10
+	pxor	%xmm11,%xmm11
+	pxor	%xmm12,%xmm12
+	pxor	%xmm13,%xmm13
+	pxor	%xmm14,%xmm14
+	pxor	%xmm15,%xmm15
+	popq	%r14
+	popq	%r13
+	popq	%r12
+	popq	%rbp
+	popq	%rbx
+.Locb_dec_epilogue:
+	.byte	0xf3,0xc3
+.size	aesni_ocb_decrypt,.-aesni_ocb_decrypt
+
+.type	__ocb_decrypt6,@function
+.align	32
+__ocb_decrypt6:
+	pxor	%xmm9,%xmm15
+	movdqu	(%rbx,%r12,1),%xmm11
+	movdqa	%xmm10,%xmm12
+	movdqu	(%rbx,%r13,1),%xmm13
+	movdqa	%xmm10,%xmm14
+	pxor	%xmm15,%xmm10
+	movdqu	(%rbx,%r14,1),%xmm15
+	pxor	%xmm10,%xmm11
+	pxor	%xmm10,%xmm2
+	pxor	%xmm11,%xmm12
+	pxor	%xmm11,%xmm3
+	pxor	%xmm12,%xmm13
+	pxor	%xmm12,%xmm4
+	pxor	%xmm13,%xmm14
+	pxor	%xmm13,%xmm5
+	pxor	%xmm14,%xmm15
+	pxor	%xmm14,%xmm6
+	pxor	%xmm15,%xmm7
+	movups	32(%r11),%xmm0
+
+	leaq	1(%r8),%r12
+	leaq	3(%r8),%r13
+	leaq	5(%r8),%r14
+	addq	$6,%r8
+	pxor	%xmm9,%xmm10
+	bsfq	%r12,%r12
+	bsfq	%r13,%r13
+	bsfq	%r14,%r14
+
+.byte	102,15,56,222,209
+.byte	102,15,56,222,217
+.byte	102,15,56,222,225
+.byte	102,15,56,222,233
+	pxor	%xmm9,%xmm11
+	pxor	%xmm9,%xmm12
+.byte	102,15,56,222,241
+	pxor	%xmm9,%xmm13
+	pxor	%xmm9,%xmm14
+.byte	102,15,56,222,249
+	movups	48(%r11),%xmm1
+	pxor	%xmm9,%xmm15
+
+.byte	102,15,56,222,208
+.byte	102,15,56,222,216
+.byte	102,15,56,222,224
+.byte	102,15,56,222,232
+.byte	102,15,56,222,240
+.byte	102,15,56,222,248
+	movups	64(%r11),%xmm0
+	shlq	$4,%r12
+	shlq	$4,%r13
+	jmp	.Locb_dec_loop6
+
+.align	32
+.Locb_dec_loop6:
+.byte	102,15,56,222,209
+.byte	102,15,56,222,217
+.byte	102,15,56,222,225
+.byte	102,15,56,222,233
+.byte	102,15,56,222,241
+.byte	102,15,56,222,249
+	movups	(%rcx,%rax,1),%xmm1
+	addq	$32,%rax
+
+.byte	102,15,56,222,208
+.byte	102,15,56,222,216
+.byte	102,15,56,222,224
+.byte	102,15,56,222,232
+.byte	102,15,56,222,240
+.byte	102,15,56,222,248
+	movups	-16(%rcx,%rax,1),%xmm0
+	jnz	.Locb_dec_loop6
+
+.byte	102,15,56,222,209
+.byte	102,15,56,222,217
+.byte	102,15,56,222,225
+.byte	102,15,56,222,233
+.byte	102,15,56,222,241
+.byte	102,15,56,222,249
+	movups	16(%r11),%xmm1
+	shlq	$4,%r14
+
+.byte	102,65,15,56,223,210
+	movdqu	(%rbx),%xmm10
+	movq	%r10,%rax
+.byte	102,65,15,56,223,219
+.byte	102,65,15,56,223,228
+.byte	102,65,15,56,223,237
+.byte	102,65,15,56,223,246
+.byte	102,65,15,56,223,255
+	.byte	0xf3,0xc3
+.size	__ocb_decrypt6,.-__ocb_decrypt6
+
+.type	__ocb_decrypt4,@function
+.align	32
+__ocb_decrypt4:
+	pxor	%xmm9,%xmm15
+	movdqu	(%rbx,%r12,1),%xmm11
+	movdqa	%xmm10,%xmm12
+	movdqu	(%rbx,%r13,1),%xmm13
+	pxor	%xmm15,%xmm10
+	pxor	%xmm10,%xmm11
+	pxor	%xmm10,%xmm2
+	pxor	%xmm11,%xmm12
+	pxor	%xmm11,%xmm3
+	pxor	%xmm12,%xmm13
+	pxor	%xmm12,%xmm4
+	pxor	%xmm13,%xmm5
+	movups	32(%r11),%xmm0
+
+	pxor	%xmm9,%xmm10
+	pxor	%xmm9,%xmm11
+	pxor	%xmm9,%xmm12
+	pxor	%xmm9,%xmm13
+
+.byte	102,15,56,222,209
+.byte	102,15,56,222,217
+.byte	102,15,56,222,225
+.byte	102,15,56,222,233
+	movups	48(%r11),%xmm1
+
+.byte	102,15,56,222,208
+.byte	102,15,56,222,216
+.byte	102,15,56,222,224
+.byte	102,15,56,222,232
+	movups	64(%r11),%xmm0
+	jmp	.Locb_dec_loop4
+
+.align	32
+.Locb_dec_loop4:
+.byte	102,15,56,222,209
+.byte	102,15,56,222,217
+.byte	102,15,56,222,225
+.byte	102,15,56,222,233
+	movups	(%rcx,%rax,1),%xmm1
+	addq	$32,%rax
+
+.byte	102,15,56,222,208
+.byte	102,15,56,222,216
+.byte	102,15,56,222,224
+.byte	102,15,56,222,232
+	movups	-16(%rcx,%rax,1),%xmm0
+	jnz	.Locb_dec_loop4
+
+.byte	102,15,56,222,209
+.byte	102,15,56,222,217
+.byte	102,15,56,222,225
+.byte	102,15,56,222,233
+	movups	16(%r11),%xmm1
+	movq	%r10,%rax
+
+.byte	102,65,15,56,223,210
+.byte	102,65,15,56,223,219
+.byte	102,65,15,56,223,228
+.byte	102,65,15,56,223,237
+	.byte	0xf3,0xc3
+.size	__ocb_decrypt4,.-__ocb_decrypt4
+
+.type	__ocb_decrypt1,@function
+.align	32
+__ocb_decrypt1:
+	pxor	%xmm15,%xmm7
+	pxor	%xmm9,%xmm7
+	pxor	%xmm7,%xmm2
+	movups	32(%r11),%xmm0
+
+.byte	102,15,56,222,209
+	movups	48(%r11),%xmm1
+	pxor	%xmm9,%xmm7
+
+.byte	102,15,56,222,208
+	movups	64(%r11),%xmm0
+	jmp	.Locb_dec_loop1
+
+.align	32
+.Locb_dec_loop1:
+.byte	102,15,56,222,209
+	movups	(%rcx,%rax,1),%xmm1
+	addq	$32,%rax
+
+.byte	102,15,56,222,208
+	movups	-16(%rcx,%rax,1),%xmm0
+	jnz	.Locb_dec_loop1
+
+.byte	102,15,56,222,209
+	movups	16(%r11),%xmm1
+	movq	%r10,%rax
+
+.byte	102,15,56,223,215
+	.byte	0xf3,0xc3
+.size	__ocb_decrypt1,.-__ocb_decrypt1
 .globl	aesni_cbc_encrypt
 .type	aesni_cbc_encrypt,@function
 .align	16

@@ -518,10 +518,10 @@ RC4:	orq	%rsi,%rsi
 .Lepilogue:
 	.byte	0xf3,0xc3
 .size	RC4,.-RC4
-.globl	private_RC4_set_key
-.type	private_RC4_set_key,@function
+.globl	RC4_set_key
+.type	RC4_set_key,@function
 .align	16
-private_RC4_set_key:
+RC4_set_key:
 	leaq	8(%rdi),%rdi
 	leaq	(%rdx,%rsi,1),%rdx
 	negq	%rsi
@@ -588,7 +588,7 @@ private_RC4_set_key:
 	movl	%eax,-8(%rdi)
 	movl	%eax,-4(%rdi)
 	.byte	0xf3,0xc3
-.size	private_RC4_set_key,.-private_RC4_set_key
+.size	RC4_set_key,.-RC4_set_key
 
 .globl	RC4_options
 .type	RC4_options,@function
