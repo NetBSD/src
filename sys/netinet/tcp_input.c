@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.370 2018/02/08 20:06:21 maxv Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.371 2018/02/08 20:10:55 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.370 2018/02/08 20:06:21 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.371 2018/02/08 20:10:55 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1656,8 +1656,6 @@ nosave:;
 			dst.sin6.sin6_port = th->th_dport;
 			break;
 #endif /* INET6 */
-		default:
-			goto badsyn;	/*sanity*/
 		}
 
 		if ((tiflags & (TH_RST|TH_ACK|TH_SYN)) != TH_SYN) {
