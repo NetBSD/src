@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.96 2017/05/31 23:53:30 chs Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.97 2018/02/08 09:05:20 dholland Exp $	*/
 
 /*-
  * Copyright (c)2006,2007,2008,2009 YAMAMOTO Takashi,
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.96 2017/05/31 23:53:30 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.97 2018/02/08 09:05:20 dholland Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -171,7 +171,7 @@ static LIST_HEAD(, vmem) vmem_list = LIST_HEAD_INITIALIZER(vmem_list);
 
 /*
  * BT_RESERVE calculation:
- * we allocate memory for boundry tags with vmem, therefor we have
+ * we allocate memory for boundry tags with vmem; therefore we have
  * to keep a reserve of bts used to allocated memory for bts. 
  * This reserve is 4 for each arena involved in allocating vmems memory.
  * BT_MAXFREE: don't cache excessive counts of bts in arenas

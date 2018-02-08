@@ -32,7 +32,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-static char const n8_id[] = "$Id: QMgrInit.c,v 1.1 2008/10/30 12:02:14 darran Exp $";
+static char const n8_id[] = "$Id: QMgrInit.c,v 1.2 2018/02/08 09:05:19 dholland Exp $";
 /*****************************************************************************/
 /** @file QMgrInit.c
  *  @brief This file contains the hardware independent initialization code
@@ -80,7 +80,7 @@ static char const n8_id[] = "$Id: QMgrInit.c,v 1.1 2008/10/30 12:02:14 darran Ex
  * GLOBALS
  *****************************************************************************/
 /** @ingroup QMgr
- * @brief These are the globals used by the open and intialization code in
+ * @brief These are the globals used by the open and initialization code in
  *        the QMgr .
  *
  * Internal Globals are to be used only within this file.

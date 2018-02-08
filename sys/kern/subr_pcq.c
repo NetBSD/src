@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pcq.c,v 1.9 2015/01/08 23:39:57 riastradh Exp $	*/
+/*	$NetBSD: subr_pcq.c,v 1.10 2018/02/08 09:05:20 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pcq.c,v 1.9 2015/01/08 23:39:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pcq.c,v 1.10 2018/02/08 09:05:20 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -148,7 +148,7 @@ pcq_peek(pcq_t *pcq)
 /*
  * pcq_get: remove and return the next item for consumption or NULL if empty.
  *
- * => The caller must prevent concurrent gets from occuring.
+ * => The caller must prevent concurrent gets from occurring.
  */
 void *
 pcq_get(pcq_t *pcq)

@@ -32,7 +32,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-static char const n8_id[] = "$Id: n8_daemon_sks.c,v 1.2 2014/03/25 16:19:14 christos Exp $";
+static char const n8_id[] = "$Id: n8_daemon_sks.c,v 1.3 2018/02/08 09:05:19 dholland Exp $";
 /*****************************************************************************/
 /** @file n8_daemon_sks.c
  *  @brief This file implements the user side of the daemon's SKS
@@ -410,7 +410,7 @@ N8_Status_t n8_daemon_sks_delete(char *keyEntryPath_p)
  *
  * @return 
  *    N8_STATUS_OK indicates that the API has been initialixed, or that all
- *      intialization proceeded without errors.
+ *      initialization proceeded without errors.
  *    N8_FILE_ERROR indicates that either an SKS entry could not be
  *      read, or that the descriptor tables could not be created.
  *

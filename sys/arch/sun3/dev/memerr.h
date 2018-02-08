@@ -1,4 +1,4 @@
-/*	$NetBSD: memerr.h,v 1.3 2005/12/11 12:19:20 christos Exp $ */
+/*	$NetBSD: memerr.h,v 1.4 2018/02/08 09:05:18 dholland Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -86,6 +86,6 @@ struct memerr {
 #define	ME_ECC_WBERR	0x04	/* (ro) write-back error */
 #define ME_ECC_UE		0x02	/* (ro) UE, uncorrectable error  */
 #define ME_ECC_CE		0x01	/* (ro) CE, correctable (single bit) error */
-#define	ME_ECC_EMASK	0x0F	/* (ro) mask for some ECC error occuring */
+#define	ME_ECC_EMASK	0x0F	/* (ro) mask for some ECC error occurring */
 #define ME_ECC_STR	"\20\10IPEND\7IENA\6BUSLK\5CE_ENA\4TMOUT\3WBERR\2UE\1CE"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: isns_pdu.c,v 1.3 2012/03/21 05:33:27 matt Exp $	*/
+/*	$NetBSD: isns_pdu.c,v 1.4 2018/02/08 09:05:17 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2004,2009 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: isns_pdu.c,v 1.3 2012/03/21 05:33:27 matt Exp $");
+__RCSID("$NetBSD: isns_pdu.c,v 1.4 2018/02/08 09:05:17 dholland Exp $");
 
 
 #include <sys/types.h>
@@ -946,7 +946,7 @@ isns_add_pdu_payload_data(struct isns_trans_s *trans_p, const void *data_p,
 
 	/*
 	 * Move data from source to PDU buffer(s), allocated new pdus and
-	 * buffers as necessary to accomodate the data.
+	 * buffers as necessary to accommodate the data.
 	 */
 	while (len--) {
 		/* If at max for one PDU payload, add a new PDU. */

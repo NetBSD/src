@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.15 2016/07/19 16:39:54 maya Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.16 2018/02/08 09:05:18 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.15 2016/07/19 16:39:54 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.16 2018/02/08 09:05:18 dholland Exp $");
 
 #include "debug_playstation2.h"
 #if defined INTR_DEBUG && !defined GSFB_DEBUG_MONITOR
@@ -89,7 +89,7 @@ interrupt_init_bootstrap(void)
 	for (i = 0; i < _IPL_N; i++)
 		__icu_mask[i] = 0xffffffff;
 
-	/* intialize EE embeded device */
+	/* initialize EE embeded device */
 	timer_init();
 
 	/* clear all pending interrupt and disable all */

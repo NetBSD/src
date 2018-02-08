@@ -1,4 +1,4 @@
-/*	$NetBSD: arcemu.c,v 1.22 2014/03/26 16:16:06 christos Exp $	*/
+/*	$NetBSD: arcemu.c,v 1.23 2018/02/08 09:05:18 dholland Exp $	*/
 
 /*
  * Copyright (c) 2004 Steve Rumble 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcemu.c,v 1.22 2014/03/26 16:16:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcemu.c,v 1.23 2018/02/08 09:05:18 dholland Exp $");
 
 #ifndef _LP64
 
@@ -465,7 +465,7 @@ arcemu_GetEnvironmentVariable(const char *var)
 
 	/*
 	 * As far as I can tell, old systems had no analogue of OSLoadOptions.
-	 * So, to allow forcing of single user mode, we accomodate the
+	 * So, to allow forcing of single user mode, we accommodate the
 	 * user setting the ARCBIOSy environment variable "OSLoadOptions" to
 	 * something other than "auto".
 	 */
