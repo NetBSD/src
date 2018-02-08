@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.238 2018/02/08 07:11:20 maxv Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.239 2018/02/08 10:24:46 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.238 2018/02/08 07:11:20 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.239 2018/02/08 10:24:46 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -139,12 +139,12 @@ percpu_t *udpstat_percpu;
 
 #ifdef INET
 #ifdef IPSEC
-static int udp4_espinudp (struct mbuf **, int, struct sockaddr *,
+static int udp4_espinudp(struct mbuf **, int, struct sockaddr *,
     struct socket *);
 #endif
-static void udp4_sendup (struct mbuf *, int, struct sockaddr *,
+static void udp4_sendup(struct mbuf *, int, struct sockaddr *,
     struct socket *);
-static int udp4_realinput (struct sockaddr_in *, struct sockaddr_in *,
+static int udp4_realinput(struct sockaddr_in *, struct sockaddr_in *,
     struct mbuf **, int);
 static int udp4_input_checksum(struct mbuf *, const struct udphdr *, int, int);
 #endif
@@ -669,22 +669,27 @@ udp_ctlinput(int cmd, const struct sockaddr *sa, void *v)
 		return NULL;
 	if ((unsigned)cmd >= PRC_NCMDS)
 		return NULL;
+
 	errno = inetctlerrmap[cmd];
-	if (PRC_IS_REDIRECT(cmd))
-		notify = in_rtchange, ip = 0;
-	else if (cmd == PRC_HOSTDEAD)
-		ip = 0;
-	else if (errno == 0)
+	if (PRC_IS_REDIRECT(cmd)) {
+		notify = in_rtchange;
+		ip = NULL;
+	} else if (cmd == PRC_HOSTDEAD) {
+		ip = NULL;
+	} else if (errno == 0) {
 		return NULL;
+	}
+
 	if (ip) {
 		uh = (struct udphdr *)((char *)ip + (ip->ip_hl << 2));
 		in_pcbnotify(&udbtable, satocsin(sa)->sin_addr, uh->uh_dport,
 		    ip->ip_src, uh->uh_sport, errno, notify);
-
 		/* XXX mapped address case */
-	} else
+	} else {
 		in_pcbnotifyall(&udbtable, satocsin(sa)->sin_addr, errno,
 		    notify);
+	}
+
 	return NULL;
 }
 
@@ -787,7 +792,7 @@ udp_output(struct mbuf *m, struct inpcb *inp, struct mbuf *control,
 	 * for UDP and IP headers.
 	 */
 	M_PREPEND(m, sizeof(struct udpiphdr), M_DONTWAIT);
-	if (m == 0) {
+	if (m == NULL) {
 		error = ENOBUFS;
 		goto release;
 	}
@@ -846,7 +851,8 @@ udp_output(struct mbuf *m, struct inpcb *inp, struct mbuf *control,
 		m->m_pkthdr.csum_data = offsetof(struct udphdr, uh_sum);
 	} else
 		ui->ui_sum = 0;
-	((struct ip *)ui)->ip_len = htons(sizeof (struct udpiphdr) + len);
+
+	((struct ip *)ui)->ip_len = htons(sizeof(struct udpiphdr) + len);
 	((struct ip *)ui)->ip_ttl = inp->inp_ip.ip_ttl;	/* XXX */
 	((struct ip *)ui)->ip_tos = inp->inp_ip.ip_tos;	/* XXX */
 	UDP_STATINC(UDP_STAT_OPACKETS);
