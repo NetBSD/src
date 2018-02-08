@@ -1413,6 +1413,14 @@ void ERR_load_ASN1_strings(void);
 # define ASN1_R_WRONG_TAG                                 168
 # define ASN1_R_WRONG_TYPE                                169
 
+#if OPENSSL_API_COMPAT >= 0x10100000L
+static inline const unsigned char *
+ASN1_STRING_get0_data(const ASN1_STRING *x)
+{
+	return ASN1_STRING_data(__UNCONST(x));
+}
+#endif
+
 #ifdef  __cplusplus
 }
 #endif
