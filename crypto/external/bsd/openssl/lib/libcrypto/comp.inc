@@ -1,4 +1,4 @@
-#	$NetBSD: comp.inc,v 1.1 2009/07/19 23:30:43 christos Exp $
+#	$NetBSD: comp.inc,v 1.2 2018/02/08 21:57:24 christos Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -8,8 +8,7 @@
 .PATH:	${OPENSSLSRC}/crypto/comp
 
 
-COMP_SRCS = comp_lib.c comp_err.c \
-	c_rle.c c_zlib.c
+COMP_SRCS = comp_lib.c comp_err.c c_zlib.c
 SRCS += ${COMP_SRCS}
 
 .for cryptosrc in ${COMP_SRCS}
