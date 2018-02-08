@@ -1,12 +1,16 @@
-# $NetBSD: Makefile,v 1.11 2017/05/21 15:28:42 riastradh Exp $
+# $NetBSD: Makefile,v 1.12 2018/02/08 21:59:10 christos Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR+=bf bn cast conf des dh dsa ec ecdh ecdsa engine evp hmac lhash \
-	md2 md4 md5 rand rc2 rc4 ripemd rsa sha sha1 srp threads x509v3
+SUBDIR+=bf bn cast conf des dh dsa ec ecdh ecdsa engine evp hmac \
+	md2 md4 md5 rand rc2 rc4 ripemd rsa sha1 srp threads
 
 SUBDIR+=idea mdc2
 SUBDIR+=rc5
+
+.if ${HAVE_OPENSSL} == 10
+SUBDIR += lhash sha x509v3
+.endif
 
 TESTSDIR=	${TESTSBASE}/crypto/libcrypto
 
