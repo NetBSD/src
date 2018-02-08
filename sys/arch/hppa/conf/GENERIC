@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.17 2018/01/23 14:47:54 sevan Exp $
+# $NetBSD: GENERIC,v 1.18 2018/02/08 09:05:17 dholland Exp $
 #
 # GENERIC machine description file
 #
@@ -23,7 +23,7 @@ include 	"arch/hppa/conf/std.hppa"
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-#ident 		"GENERIC-$Revision: 1.17 $"
+#ident 		"GENERIC-$Revision: 1.18 $"
 
 maxusers	32		# estimated number of users
 
@@ -210,7 +210,7 @@ mem*	at mainbus0		# /dev/*mem and memory controller
 
 # Coprocessor/SFU Support
 #fpu*	at mainbus0		# HP PA-RISC fpu (iv N/A)
-#pmu*	at mainbus0		# HP PA-RISC perfomance monitor unit (iv 29)
+#pmu*	at mainbus0		# HP PA-RISC performance monitor unit (iv 29)
 
 # Miscellaneous
 pdc0	at mainbus0		# PDC/IODC wrapper for boot console

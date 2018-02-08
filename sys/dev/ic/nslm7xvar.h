@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7xvar.h,v 1.33 2017/08/18 04:07:51 msaitoh Exp $ */
+/*	$NetBSD: nslm7xvar.h,v 1.34 2018/02/08 09:05:19 dholland Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -77,8 +77,8 @@
  *
  * Several models exists.  The W83781D is mostly compatible with the
  * LM78, but has two extra temperatures.  Later models add extra
- * voltage sensors, fans and bigger fan divisors to accomodate slow
- * running fans.  To accomodate the extra sensors some models have
+ * voltage sensors, fans and bigger fan divisors to accommodate slow
+ * running fans.  To accommodate the extra sensors some models have
  * different memory banks.
  */
 

@@ -32,7 +32,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-static char const n8_id[] = "$Id: n8_cb_rsa.c,v 1.1 2008/10/30 12:02:15 darran Exp $";
+static char const n8_id[] = "$Id: n8_cb_rsa.c,v 1.2 2018/02/08 09:05:19 dholland Exp $";
 /*****************************************************************************/
 /** @file n8_cb_rsa.c
  *  @brief RSA Command Block Generator
@@ -393,7 +393,7 @@ N8_Status_t cb_computeCX(const API_Request_t *req_p,
    {
       /*
        * Initialize the offset values.  These are to address temporary
-       * storage in the BNC.  The offsets accomodate operand sizes up to
+       * storage in the BNC.  The offsets accommodate operand sizes up to
        * the key length
        *
        * The BNC layout will look like the following:
@@ -580,7 +580,7 @@ N8_Status_t cb_exponentiate(API_Request_t           *req_p,
 
       /*
        * Initialize the offset values.  These are to address temporary
-       * storage in the BNC.  The offsets accomodate operand sizes up to
+       * storage in the BNC.  The offsets accommodate operand sizes up to
        * the key length
        *
        * The BNC layout will look like the following:
@@ -750,7 +750,7 @@ static N8_Status_t cb_exp_with_precomputes(API_Request_t           *req_p,
 
       /*
        * Initialize the offset values.  These are to address temporary
-       * storage in the BNC.  The offsets accomodate operand sizes up to
+       * storage in the BNC.  The offsets accommodate operand sizes up to
        * the key length
        */
 
@@ -1237,7 +1237,7 @@ N8_Status_t cb_rsaPublicDecrypt(const API_Request_t *req_p,
    {
       /*
        * Initialize the offset values.  These are to address temporary
-       * storage in the BNC.  The offsets accomodate operand sizes up to
+       * storage in the BNC.  The offsets accommodate operand sizes up to
        * the key length
        *
        * The BNC layout will look like the following:
@@ -1258,7 +1258,7 @@ N8_Status_t cb_rsaPublicDecrypt(const API_Request_t *req_p,
 
       /*
        * Initialize the offset values.  These are to address temporary
-       * storage in the BNC.  The offsets accomodate operand sizes up to
+       * storage in the BNC.  The offsets accommodate operand sizes up to
        * the key length
        */
       for (i = 0; i < sizeof(offset)/sizeof(unsigned int); i++)

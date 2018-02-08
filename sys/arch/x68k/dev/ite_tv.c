@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_tv.c,v 1.16 2013/04/28 14:44:46 isaki Exp $	*/
+/*	$NetBSD: ite_tv.c,v 1.17 2018/02/08 09:05:18 dholland Exp $	*/
 
 /*
  * Copyright (c) 1997 Masaru Oki.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_tv.c,v 1.16 2013/04/28 14:44:46 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_tv.c,v 1.17 2018/02/08 09:05:18 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -191,7 +191,7 @@ tv_init(struct ite_softc *ip)
 	ip->isw->ite_scroll = tv_scroll;
 
 	/*
-	 * Intialize colormap
+	 * Initialize colormap
 	 */
 #define RED   (0x1f << 6)
 #define BLUE  (0x1f << 1)

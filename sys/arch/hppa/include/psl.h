@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.8 2012/03/29 21:44:10 skrll Exp $	*/
+/*	$NetBSD: psl.h,v 1.9 2018/02/08 09:05:18 dholland Exp $	*/
 
 /*	$OpenBSD: psl.h,v 1.6 1999/11/25 18:29:01 mickey Exp $	*/
 
@@ -90,7 +90,7 @@
 #define	PSW_CB	(1 << (31-PSW_CB_POS))	/* Carry/Borrow Bits */
 #define	PSW_O	(1 << (31-PSW_O_POS))	/* Force strong ordering (2.0) */
 #define	PSW_G	(1 << (31-PSW_G_POS))	/* Debug Trap Enable */
-#define	PSW_F	(1 << (31-PSW_F_POS))	/* Perfomance Monitor Interrupt Unmask */
+#define	PSW_F	(1 << (31-PSW_F_POS))	/* Performance Monitor Interrupt Unmask */
 #define	PSW_R	(1 << (31-PSW_R_POS))	/* Recover Counter Enable */
 #define	PSW_Q	(1 << (31-PSW_Q_POS))	/* Interrupt State Collection Enable */
 #define	PSW_P	(1 << (31-PSW_P_POS))	/* Protection Identifier Validation Enable */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_obio.c,v 1.6 2012/11/12 18:00:39 skrll Exp $ */
+/*	$NetBSD: if_sm_obio.c,v 1.7 2018/02/08 09:05:17 dholland Exp $ */
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sm_obio.c,v 1.6 2012/11/12 18:00:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sm_obio.c,v 1.7 2018/02/08 09:05:17 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -225,7 +225,7 @@ sm_obio_attach(device_t parent, device_t self, void *aux)
 	/* should always be enabled */
 	sc->sc_flags |= SMC_FLAGS_ENABLED;
 
-	/* Perform generic intialization. */
+	/* Perform generic initialization. */
 	smc91cxx_attach(sc, NULL);
 
 	/* Establish the interrupt handler. */

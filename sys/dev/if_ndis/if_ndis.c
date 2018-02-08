@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ndis.c,v 1.38 2016/12/15 09:28:05 ozaki-r Exp $	*/
+/*	$NetBSD: if_ndis.c,v 1.39 2018/02/08 09:05:19 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2003
@@ -37,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/if_ndis/if_ndis.c,v 1.69.2.6 2005/03/31 04:24:36 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: if_ndis.c,v 1.38 2016/12/15 09:28:05 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ndis.c,v 1.39 2018/02/08 09:05:19 dholland Exp $");
 #endif
 
 
@@ -1482,7 +1482,7 @@ ndis_init(xsc)
 	int			i, error;
 	
 	/*
-	 * Avoid reintializing the link unnecessarily.
+	 * Avoid reinitializing the link unnecessarily.
 	 * This should be dealt with in a better way by
 	 * fixing the upper layer modules so they don't
 	 * call ifp->if_init() quite as often.

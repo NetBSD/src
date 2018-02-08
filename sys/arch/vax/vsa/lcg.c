@@ -1,4 +1,4 @@
-/*	$NetBSD: lcg.c,v 1.2 2014/12/18 22:46:53 jklos Exp $ */
+/*	$NetBSD: lcg.c,v 1.3 2018/02/08 09:05:18 dholland Exp $ */
 /*
  * LCG accelerated framebuffer driver
  * Copyright (c) 2003, 2004 Blaz Antonic
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lcg.c,v 1.2 2014/12/18 22:46:53 jklos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lcg.c,v 1.3 2018/02/08 09:05:18 dholland Exp $");
 
 #define LCG_NO_ACCEL
 
@@ -80,7 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: lcg.c,v 1.2 2014/12/18 22:46:53 jklos Exp $");
 
 /* font rendering defines */
 #define LCG_FONT_ADDR		(LCG_FB_ADDR + lcg_fb_size)
-#define LCG_FONT_STORAGE_SIZE	0x40000	/* 16 KB, enough to accomodate 16x32 font bitmaps */
+#define LCG_FONT_STORAGE_SIZE	0x40000	/* 16 KB, enough to accommodate 16x32 font bitmaps */
 
 /* register space defines */
 #define LCG_REG_ADDR	0x20100000	/* LCG registers */

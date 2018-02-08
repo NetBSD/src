@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.62 2017/09/26 07:42:06 knakahara Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.63 2018/02/08 09:05:19 dholland Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.85 2009/11/09 14:32:41 dlg Exp $ */
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.62 2017/09/26 07:42:06 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.63 2018/02/08 09:05:19 dholland Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -5296,7 +5296,7 @@ bnx_intr(void *xsc)
 	    BNX_PCICFG_MISC_STATUS_INTA_VALUE))
 		return 0;
 
-	/* Ack the interrupt and stop others from occuring. */
+	/* Ack the interrupt and stop others from occurring. */
 	REG_WR(sc, BNX_PCICFG_INT_ACK_CMD,
 	    BNX_PCICFG_INT_ACK_CMD_USE_INT_HC_PARAM |
 	    BNX_PCICFG_INT_ACK_CMD_MASK_INT);

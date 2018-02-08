@@ -22,7 +22,7 @@ SOFTWARE.
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hash.c,v 1.7 2007/05/27 16:31:42 tls Exp $");
+__RCSID("$NetBSD: hash.c,v 1.8 2018/02/08 09:05:21 dholland Exp $");
 #endif
 
 
@@ -65,7 +65,7 @@ PRIVATE void hashi_FreeMembers(hash_member *, hash_freefp);
 /*
  * Hash table initialization routine.
  *
- * This routine creates and intializes a hash table of size "tablesize"
+ * This routine creates and initializes a hash table of size "tablesize"
  * entries.  Successful calls return a pointer to the hash table (which must
  * be passed to other hash routines to identify the hash table).  Failed
  * calls return NULL.
