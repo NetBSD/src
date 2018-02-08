@@ -1,4 +1,4 @@
-/*	$NetBSD: auichreg.h,v 1.12 2009/09/03 14:29:42 sborrill Exp $	*/
+/*	$NetBSD: auichreg.h,v 1.13 2018/02/08 09:05:19 dholland Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -131,7 +131,7 @@
 /*
  * according to the dev/audiovar.h AU_RING_SIZE is 2^16, what fits
  * in our limits perfectly, i.e. setting it to higher value
- * in your kernel config would improve perfomance, still 2^21 is the max
+ * in your kernel config would improve performance, still 2^21 is the max
  */
 #define	ICH_DMALIST_MAX	32
 #define	ICH_DMASEG_MAX	(65536*2)	/* 64k samples, 2x16 bit samples */

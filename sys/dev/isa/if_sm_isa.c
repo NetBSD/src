@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_isa.c,v 1.23 2012/10/27 17:18:24 chs Exp $	*/
+/*	$NetBSD: if_sm_isa.c,v 1.24 2018/02/08 09:05:19 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sm_isa.c,v 1.23 2012/10/27 17:18:24 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sm_isa.c,v 1.24 2018/02/08 09:05:19 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,7 +174,7 @@ sm_isa_attach(device_t parent, device_t self, void *aux)
 
 	/* XXX Should get Ethernet address from EEPROM!! */
 
-	/* Perform generic intialization. */
+	/* Perform generic initialization. */
 	smc91cxx_attach(sc, NULL);
 
 	/* Establish the interrupt handler. */

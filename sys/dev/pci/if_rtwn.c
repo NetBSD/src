@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtwn.c,v 1.13 2017/10/23 09:31:18 msaitoh Exp $	*/
+/*	$NetBSD: if_rtwn.c,v 1.14 2018/02/08 09:05:19 dholland Exp $	*/
 /*	$OpenBSD: if_rtwn.c,v 1.5 2015/06/14 08:02:47 stsp Exp $	*/
 #define	IEEE80211_NO_HT
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtwn.c,v 1.13 2017/10/23 09:31:18 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtwn.c,v 1.14 2018/02/08 09:05:19 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -1538,7 +1538,7 @@ rtwn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		rtwn_write_1(sc, R92C_R2T_SIFS + 1, 10);
 		rtwn_write_1(sc, R92C_T2T_SIFS + 1, 10);
 
-		/* Intialize rate adaptation. */
+		/* Initialize rate adaptation. */
 		rtwn_ra_init(sc);
 
 		/* Turn link LED on. */

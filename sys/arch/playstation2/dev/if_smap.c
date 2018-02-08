@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smap.c,v 1.23 2016/12/15 09:28:04 ozaki-r Exp $	*/
+/*	$NetBSD: if_smap.c,v 1.24 2018/02/08 09:05:18 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.23 2016/12/15 09:28:04 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.24 2018/02/08 09:05:18 dholland Exp $");
 
 #include "debug_playstation2.h"
 
@@ -670,7 +670,7 @@ smap_desc_init(struct smap_softc *sc)
 	sc->tx_done_index = 0;
 	sc->rx_done_index = 0;
 
-	/* intialize entry */
+	/* initialize entry */
 	d = sc->tx_desc;
 	for (i = 0; i < SMAP_DESC_MAX; i++, d++) {
 		d->stat = 0;

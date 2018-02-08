@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_taskq.c,v 1.19 2015/04/28 11:58:49 martin Exp $	*/
+/*	$NetBSD: sysmon_taskq.c,v 1.20 2018/02/08 09:05:20 dholland Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_taskq.c,v 1.19 2015/04/28 11:58:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_taskq.c,v 1.20 2018/02/08 09:05:20 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -80,7 +80,7 @@ MODULE(MODULE_CLASS_MISC, sysmon_taskq, NULL);
  *	the module(9) framework.  However, there are a number of
  *	users of the sysmon_taskq facility that are not modular,
  *	and these can directly call sysmon_task_queue_init()
- *	directly.  To accomodate these non-standard users, we
+ *	directly.  To accommodate these non-standard users, we
  *	make sure that sysmon_task_queue_init() handles multiple
  *	invocations.  And we also ensure that, if any non-module
  *	user exists, we don't allow the module to be unloaded.

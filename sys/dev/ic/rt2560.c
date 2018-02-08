@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2560.c,v 1.31 2017/10/23 09:31:17 msaitoh Exp $	*/
+/*	$NetBSD: rt2560.c,v 1.32 2018/02/08 09:05:19 dholland Exp $	*/
 /*	$OpenBSD: rt2560.c,v 1.15 2006/04/20 20:31:12 miod Exp $  */
 /*	$FreeBSD: rt2560.c,v 1.3 2006/03/21 21:15:43 damien Exp $*/
 
@@ -24,7 +24,7 @@
  * http://www.ralinktech.com/
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2560.c,v 1.31 2017/10/23 09:31:17 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2560.c,v 1.32 2018/02/08 09:05:19 dholland Exp $");
 
 
 #include <sys/param.h>
@@ -968,7 +968,7 @@ rt2560_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 				break;
 		}
 
-		/* turn assocation led on */
+		/* turn association led on */
 		rt2560_update_led(sc, 1, 0);
 
 		if (ic->ic_opmode != IEEE80211_M_MONITOR) {

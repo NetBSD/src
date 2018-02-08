@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: boot.c,v 1.20 2016/05/02 17:33:03 jakllsch Exp $");
+__RCSID("$NetBSD: boot.c,v 1.21 2018/02/08 09:05:17 dholland Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -283,7 +283,7 @@ writefsinfo(int dosfs, struct bootblock *boot)
 	 * support for FAT32) doesn't maintain the FSINFO block
 	 * correctly, it has to be fixed pretty often.
 	 *
-	 * Therefor, we handle the FSINFO block only informally,
+	 * Therefore, we handle the FSINFO block only informally,
 	 * fixing it if necessary, but otherwise ignoring the
 	 * fact that it was incorrect.
 	 */

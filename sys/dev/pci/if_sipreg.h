@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sipreg.h,v 1.19 2008/04/28 20:23:55 martin Exp $	*/
+/*	$NetBSD: if_sipreg.h,v 1.20 2018/02/08 09:05:19 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -502,7 +502,7 @@ struct sip_desc {
 #define	PCR_PS_MCAST	0x40000000 /* pause on multicast */
 #define	PCR_PS_DA	0x20000000 /* pause on DA */
 #define	PCR_PS_ACT	0x10000000 /* pause active */
-#define	PCR_PS_RCVD	0x08000000 /* pause packet recieved */
+#define	PCR_PS_RCVD	0x08000000 /* pause packet received */
 /* #ifdef DP83820 */
 #define	PCR_PS_STHI_8	0x03000000 /* Status FIFO Hi Threshold (8packets) */
 #define	PCR_PS_STHI_4	0x02000000 /* Status FIFO Hi Threshold (4packets) */

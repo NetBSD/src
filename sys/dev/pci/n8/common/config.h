@@ -59,7 +59,7 @@
  * 02/15/02 brr   Modified N8_GetConfig to return all driver information in a 
  *                single call.
  * 12/14/01 brr   Support memory management performance improvements.
- * 11/26/01 mmd   Updated parms for N8_ConfigInit to accomodate new PCIinfo
+ * 11/26/01 mmd   Updated parms for N8_ConfigInit to accommodate new PCIinfo
  *                field of NspInstance_t.
  * 11/13/01 mmd   Implemented N8_AllocateHardwareResources and
  *                N8_ReleaseHardwareResources.

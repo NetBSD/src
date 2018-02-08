@@ -1,4 +1,4 @@
-/* $NetBSD: siisatareg.h,v 1.10 2017/10/07 16:05:32 jdolecek Exp $ */
+/* $NetBSD: siisatareg.h,v 1.11 2018/02/08 09:05:19 dholland Exp $ */
 
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011 Jonathan A. Kollasch.
@@ -161,7 +161,7 @@ struct siisata_prb {
 #define PRX(p,r) (PRO(p) + r)
 #define PRSX(p,s,o) (PRX(p, PR_SLOT_SIZE * s + o))
 
-#define PRSO_RTC	0x04		/* recieved transfer count */
+#define PRSO_RTC	0x04		/* received transfer count */
 #define PRSO_FIS	0x08		/* base of FIS */
 
 #define PRO_PMPSTS(i)	(0x0f80 + i * 8)

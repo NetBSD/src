@@ -1,4 +1,4 @@
-/* $NetBSD: t_uvm_physseg.c,v 1.2 2016/12/22 08:15:20 cherry Exp $ */
+/* $NetBSD: t_uvm_physseg.c,v 1.3 2018/02/08 09:05:20 dholland Exp $ */
 
 /*-
  * Copyright (c) 2015, 2016 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_uvm_physseg.c,v 1.2 2016/12/22 08:15:20 cherry Exp $");
+__RCSID("$NetBSD: t_uvm_physseg.c,v 1.3 2018/02/08 09:05:20 dholland Exp $");
 
 /*
  * If this line is commented out tests related to uvm_physseg_get_pmseg()
@@ -2037,7 +2037,7 @@ ATF_TC_BODY(uvm_page_physunload_none, tc)
 	/*
 	 * Note: start != avail_start and end != avail_end.
 	 *
-	 * This prevents any unload from occuring.
+	 * This prevents any unload from occurring.
 	 */
 	upm = uvm_page_physload(VALID_START_PFN_2, VALID_END_PFN_2,
 	    VALID_AVAIL_START_PFN_2 + 1, VALID_AVAIL_END_PFN_2 - 1,

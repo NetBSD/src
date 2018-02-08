@@ -1,4 +1,4 @@
-/*	$NetBSD: wd33c93.c,v 1.26 2017/01/11 07:16:48 skrll Exp $	*/
+/*	$NetBSD: wd33c93.c,v 1.27 2018/02/08 09:05:19 dholland Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.26 2017/01/11 07:16:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.27 2018/02/08 09:05:19 dholland Exp $");
 
 #include "opt_ddb.h"
 
@@ -1502,7 +1502,7 @@ wd33c93_msgin_phase(struct wd33c93_softc *sc, int reselect)
 		GET_SBIC_csr(sc, csr);
 
 		if (__verify_msg_format(sc->sc_imsg, len))
-			break; /* Complete message recieved */
+			break; /* Complete message received */
 
 		/*
 		 * Clear ACK, and wait for the interrupt

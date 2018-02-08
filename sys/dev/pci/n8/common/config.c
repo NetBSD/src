@@ -32,7 +32,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-static char const n8_id[] = "$Id: config.c,v 1.4 2015/04/13 16:33:25 riastradh Exp $";
+static char const n8_id[] = "$Id: config.c,v 1.5 2018/02/08 09:05:20 dholland Exp $";
 /*****************************************************************************/
 /** @file config.c
  *  @brief NSP2000 Device Driver Configuration Manager.
@@ -134,7 +134,7 @@ static char const n8_id[] = "$Id: config.c,v 1.4 2015/04/13 16:33:25 riastradh E
  * 12/06/01 brr   Added seperate define for RNG queue sizing, moved SKS init
  *                to the driver, and correct context memory detection.
  * 12/05/01 brr   Move queue initialization to the driver.
- * 11/26/01 mmd   Updated parms for N8_ConfigInit to accomodate new PCIinfo
+ * 11/26/01 mmd   Updated parms for N8_ConfigInit to accommodate new PCIinfo
  *                field of NspInstance_t. Generally updated N8_ConfigInit and
  *                N8_GetConfig to ensure full support of both ASIC and FPGA.
  * 11/14/01 mmd   Using global parm defines from n8_driver_parms.h.

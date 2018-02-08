@@ -32,7 +32,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-static char const n8_id[] = "$Id: n8_cb_ea.c,v 1.1 2008/10/30 12:02:15 darran Exp $";
+static char const n8_id[] = "$Id: n8_cb_ea.c,v 1.2 2018/02/08 09:05:19 dholland Exp $";
 /*****************************************************************************/
 /** @file n8_cb_ea.c
  *  @brief Command blocks for EA.
@@ -125,7 +125,7 @@ static char const n8_id[] = "$Id: n8_cb_ea.c,v 1.1 2008/10/30 12:02:15 darran Ex
  *                endian machines.
  * 05/16/01 dws   Modified cb_loadARC4key_to_contextMemory to use the ARC4
  *                i and j masks and shift counts in a more general way. This
- *                was done to accomodate the change in the i and j locations
+ *                was done to accommodate the change in the i and j locations
  *                in the ARC4 context block.
  * 05/11/01 bac   Merge sanity changes.  Naming standardization.
  * 05/09/01 bac   Added support for SSL Encrypt/Authenticate. Converted to use

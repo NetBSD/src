@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_gsc.c,v 1.1 2014/02/24 07:23:43 skrll Exp $	*/
+/*	$NetBSD: if_ie_gsc.c,v 1.2 2018/02/08 09:05:18 dholland Exp $	*/
 
 /*	$OpenBSD: if_ie_gsc.c,v 1.6 2001/01/12 22:57:04 mickey Exp $	*/
 
@@ -30,7 +30,7 @@
 
 /*
  * Referencies:
- * 1. 82596DX and 82596SX High-Perfomance 32-bit Local Area Network Coprocessor
+ * 1. 82596DX and 82596SX High-Performance 32-bit Local Area Network Coprocessor
  *    Intel Corporation, November 1996, Order Number: 290219-006
  *
  * 2. 712 I/O Subsystem ERS Rev 1.0
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_gsc.c,v 1.1 2014/02/24 07:23:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_gsc.c,v 1.2 2018/02/08 09:05:18 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

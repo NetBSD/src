@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_pcmcia.c,v 1.56 2016/07/07 06:55:42 msaitoh Exp $	*/
+/*	$NetBSD: if_sm_pcmcia.c,v 1.57 2018/02/08 09:05:20 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sm_pcmcia.c,v 1.56 2016/07/07 06:55:42 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sm_pcmcia.c,v 1.57 2018/02/08 09:05:20 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,7 +174,7 @@ sm_pcmcia_attach(device_t parent, device_t self, void *aux)
 			    "unable to get Ethernet address\n");
 	}
 
-	/* Perform generic intialization. */
+	/* Perform generic initialization. */
 	smc91cxx_attach(sc, enaddr);
 
 	psc->sc_state = SM_PCMCIA_ATTACHED;

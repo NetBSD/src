@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.46 2014/10/18 08:33:25 snj Exp $	*/
+/*	$NetBSD: kbd.c,v 1.47 2018/02/08 09:05:17 dholland Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.46 2014/10/18 08:33:25 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.47 2018/02/08 09:05:17 dholland Exp $");
 
 #include "mouse.h"
 #include "ite.h"
@@ -197,7 +197,7 @@ kbdattach(device_t parent, device_t self, void *aux)
 	MFP->mf_ierb &= ~IB_AINT;
 
 	/*
-	 * Reset ACIA and intialize to:
+	 * Reset ACIA and initialize to:
 	 *    divide by 16, 8 data, 1 stop, no parity, enable RX interrupts
 	 */
 	KBD->ac_cs = A_RESET;

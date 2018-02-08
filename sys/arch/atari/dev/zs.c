@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.77 2014/07/25 08:10:32 dholland Exp $	*/
+/*	$NetBSD: zs.c,v 1.78 2018/02/08 09:05:17 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.77 2014/07/25 08:10:32 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.78 2018/02/08 09:05:17 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,7 +154,7 @@ static uint8_t zs_init_regs[16] = {
 /*
  * Define the machine dependent clock frequencies
  * If BRgen feeds sender/receiver we always use a
- * divisor 16, therefor the division by 16 can as
+ * divisor 16; therefore the division by 16 can as
  * well be done here.
  */
 static const u_long zs_freqs_tt[] = {

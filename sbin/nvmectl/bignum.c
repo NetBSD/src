@@ -1,4 +1,4 @@
-/*	$NetBSD: bignum.c,v 1.1 2017/02/13 11:16:46 nonaka Exp $	*/
+/*	$NetBSD: bignum.c,v 1.2 2018/02/08 09:05:17 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2012 Alistair Crooks <agc@NetBSD.org>
@@ -1649,7 +1649,7 @@ mp_2expt(mp_int * a, int b)
 	/* zero a as per default */
 	mp_zero(a);
 
-	/* grow a to accomodate the single bit */
+	/* grow a to accommodate the single bit */
 	if ((res = mp_grow(a, b / DIGIT_BIT + 1)) != MP_OKAY) {
 		return res;
 	}
@@ -1683,7 +1683,7 @@ doubled(mp_int * a, mp_int * b)
 {
 	int     x, res, oldused;
 
-	/* grow to accomodate result */
+	/* grow to accommodate result */
 	if (b->alloc < a->used + 1) {
 		if ((res = mp_grow(b, a->used + 1)) != MP_OKAY) {
 			return res;

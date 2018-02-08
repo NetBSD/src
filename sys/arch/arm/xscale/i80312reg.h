@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312reg.h,v 1.11 2008/04/28 20:23:14 martin Exp $	*/
+/*	$NetBSD: i80312reg.h,v 1.12 2018/02/08 09:05:17 dholland Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -173,7 +173,7 @@
  *	---------
  *
  * Setting the specified SISR bit makes the corresponding S_AD line
- * a private sevice.
+ * a private service.
  */
 #define	I80312_PPB_EBCR		0x40	/* Extended Bridge Control */
 #define	I80312_PPB_SISR		0x42	/* Secondary ID Select Register */

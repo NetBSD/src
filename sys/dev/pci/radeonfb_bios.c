@@ -1,4 +1,4 @@
-/* $NetBSD: radeonfb_bios.c,v 1.4 2010/11/03 00:49:02 macallan Exp $ */
+/* $NetBSD: radeonfb_bios.c,v 1.5 2018/02/08 09:05:19 dholland Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb_bios.c,v 1.4 2010/11/03 00:49:02 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb_bios.c,v 1.5 2018/02/08 09:05:19 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: radeonfb_bios.c,v 1.4 2010/11/03 00:49:02 macallan E
 #define	MEM_CONFIG_OFFSET		0x48
 
 /*
- * Values related to generic intialization tables.
+ * Values related to generic initialization tables.
  */
 #define	TABLE_ENTRY_FLAG_MASK		0xe000
 #define	TABLE_ENTRY_INDEX_MASK		0x1fff

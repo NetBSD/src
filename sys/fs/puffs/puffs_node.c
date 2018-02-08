@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_node.c,v 1.37 2016/08/20 12:37:08 hannken Exp $	*/
+/*	$NetBSD: puffs_node.c,v 1.38 2018/02/08 09:05:20 dholland Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_node.c,v 1.37 2016/08/20 12:37:08 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_node.c,v 1.38 2018/02/08 09:05:20 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/hash.h>
@@ -51,7 +51,7 @@ struct pool puffs_pnpool;
 struct pool puffs_vapool;
 
 /*
- * Grab a vnode, intialize all the puffs-dependent stuff.
+ * Grab a vnode, initialize all the puffs-dependent stuff.
  */
 static int
 puffs_getvnode1(struct mount *mp, puffs_cookie_t ck, enum vtype type,

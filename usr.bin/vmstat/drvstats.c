@@ -1,4 +1,4 @@
-/*	$NetBSD: drvstats.c,v 1.11 2017/07/04 21:19:33 mlelstv Exp $	*/
+/*	$NetBSD: drvstats.c,v 1.12 2018/02/08 09:05:21 dholland Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -378,7 +378,7 @@ drvinit(int selected)
 	drv_select = cur.select;
 	dr_name = cur.name;
 
-	/* Read the drive names and set intial selection. */
+	/* Read the drive names and set initial selection. */
 	mib[0] = CTL_HW;		/* Should be still set from */
 	mib[1] = HW_IOSTATS;		/* ... above, but be safe... */
 	mib[2] = sizeof(struct io_sysctl);

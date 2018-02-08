@@ -1,4 +1,4 @@
-.\"     $NetBSD: ukfs.3,v 1.14 2014/02/14 07:27:37 wiz Exp $
+.\"     $NetBSD: ukfs.3,v 1.15 2018/02/08 09:05:17 dholland Exp $
 .\"
 .\" Copyright (c) 2008 Antti Kantee.  All rights reserved.
 .\"
@@ -84,7 +84,7 @@ which should be released after use.
 .El
 .Pp
 .Fn ukfs_init
-intializes the library and must be called once per process using
+initializes the library and must be called once per process using
 .Nm .
 .Pp
 .Fn ukfs_modload
@@ -140,7 +140,7 @@ If there is not enough room in the caller's buffer for all file system
 types, as many as fit will be returned.
 .Pp
 .Fn ukfs_mount
-intializes a file system image.
+initializes a file system image.
 The handle resulting from the operation is passed to all other routines
 and identifies the instance of the mount analoguous to what a pathname
 specifies in a normally mounted file system.

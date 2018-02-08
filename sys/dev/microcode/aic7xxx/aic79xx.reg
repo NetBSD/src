@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.reg,v 1.12 2006/02/25 00:58:35 wiz Exp $	*/
+/*	$NetBSD: aic79xx.reg,v 1.13 2018/02/08 09:05:19 dholland Exp $	*/
 
 /*
  * Aic79xx register and scratch ram definitions.
@@ -652,7 +652,7 @@ register DCHRXMSG0 {
 }
 
 /*
- * CMC Recieve Message 0
+ * CMC Receive Message 0
  */
 register CMCRXMSG0 {
 	address			0x090

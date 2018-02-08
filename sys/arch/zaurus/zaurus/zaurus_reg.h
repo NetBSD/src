@@ -1,4 +1,4 @@
-/*	$NetBSD: zaurus_reg.h,v 1.5 2012/08/12 17:25:32 nonaka Exp $	*/
+/*	$NetBSD: zaurus_reg.h,v 1.6 2018/02/08 09:05:18 dholland Exp $	*/
 /*	$OpenBSD: zaurus_reg.h,v 1.7 2005/12/14 14:39:38 uwe Exp $	*/
 /*	NetBSD: lubbock_reg.h,v 1.1 2003/06/18 10:51:15 bsh Exp */
 
@@ -63,7 +63,7 @@
  * Magic numbers for the C860 (PXA255) and C3000 (PXA27x).
  */
 
-/* physical adresses of companion chips */
+/* physical addresses of companion chips */
 #define C860_SCOOP0_BASE		0x10800000
 #define C3000_SCOOP0_BASE		0x10800000
 #define C3000_SCOOP1_BASE		0x08800040

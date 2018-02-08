@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.28 2016/06/11 06:40:24 dholland Exp $ */
+/* $NetBSD: main.c,v 1.29 2018/02/08 09:05:18 dholland Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -218,7 +218,7 @@ main(int argc, char *argv[], char *bootargs_start, char *bootargs_end)
 		}
 	}
 
-	/* intialize a disk driver */
+	/* initialize a disk driver */
 	for (i = 0, n = 0; i < nata; i++)
 		n += dskdv_init(&lata[i]);
 	if (n == 0)

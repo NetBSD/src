@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.55 2015/02/15 10:48:13 skrll Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.56 2018/02/08 09:05:18 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.55 2015/02/15 10:48:13 skrll Exp $")
+__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.56 2018/02/08 09:05:18 dholland Exp $")
 
 
 /*
@@ -379,7 +379,7 @@ NENTRY(_cpu_spin)
  * cpu_switchto(), so r0 contains previous lwp (the one we are
  * switching from) that we pass to lwp_startup().
  *
- * After that the trampoline should call the function that is indended
+ * After that the trampoline should call the function that is intended
  * to do some additional setup.  When the function returns, the
  * trampoline returns to the user mode.
  */
