@@ -1,4 +1,4 @@
-/*	$NetBSD: nand_bbt.c,v 1.7 2013/10/22 01:01:27 htodd Exp $	*/
+/*	$NetBSD: nand_bbt.c,v 1.8 2018/02/08 07:48:19 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nand_bbt.c,v 1.7 2013/10/22 01:01:27 htodd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nand_bbt.c,v 1.8 2018/02/08 07:48:19 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -208,7 +208,7 @@ nand_bbt_block_mark(device_t self, flash_off_t block, uint8_t marker)
 	__USE(chip);
 	KASSERT(block < chip->nc_size / chip->nc_block_size);
 
-	clean = (~0x03 << ((block % 4) * 2));
+	clean = (0xfc << ((block % 4) * 2));
 	marker = (marker << ((block % 4) * 2));
 
 	/* set byte containing the 2 bit marker for this block */
