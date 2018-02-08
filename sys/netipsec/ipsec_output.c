@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.65 2017/11/17 07:37:12 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.66 2018/02/08 20:57:41 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.65 2017/11/17 07:37:12 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.66 2018/02/08 20:57:41 maxv Exp $");
 
 /*
  * IPsec output processing.
@@ -83,8 +83,6 @@ __KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.65 2017/11/17 07:37:12 ozaki-r Ex
 #include <netipsec/key.h>
 #include <netipsec/keydb.h>
 #include <netipsec/key_debug.h>
-
-#include <net/net_osdep.h>		/* ovbcopy() in ipsec6_encapsulate() */
 
 static percpu_t *ipsec_rtcache_percpu __cacheline_aligned;
 

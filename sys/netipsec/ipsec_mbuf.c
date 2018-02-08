@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_mbuf.c,v 1.17 2018/02/01 17:16:11 maxv Exp $	*/
+/*	$NetBSD: ipsec_mbuf.c,v 1.18 2018/02/08 20:57:41 maxv Exp $	*/
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_mbuf.c,v 1.17 2018/02/01 17:16:11 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_mbuf.c,v 1.18 2018/02/08 20:57:41 maxv Exp $");
 
 /*
  * IPsec-specific mbuf routines.
@@ -45,8 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: ipsec_mbuf.c,v 1.17 2018/02/01 17:16:11 maxv Exp $")
 #include <netipsec/ipsec.h>
 #include <netipsec/ipsec_var.h>
 #include <netipsec/ipsec_private.h>
-
-#include <net/net_osdep.h>
 
 /*
  * Create a writable copy of the mbuf chain.  While doing this
