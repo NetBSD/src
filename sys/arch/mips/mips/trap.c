@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.245 2017/12/22 22:59:25 maya Exp $	*/
+/*	$NetBSD: trap.c,v 1.246 2018/02/08 19:16:24 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.245 2017/12/22 22:59:25 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.246 2018/02/08 19:16:24 bouyer Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -748,23 +748,20 @@ mips_singlestep(struct lwp *l)
 #if defined(DEBUG) || defined(DDB) || defined(KGDB) || defined(geo)
 mips_reg_t kdbrpeek(vaddr_t, size_t);
 
-int
-kdbpeek(vaddr_t addr)
+bool
+kdbpeek(vaddr_t addr, int *valp)
 {
-	int rc;
-
 	if (addr & 3) {
 		printf("kdbpeek: unaligned address %#"PRIxVADDR"\n", addr);
 		/* We might have been called from DDB, so do not go there. */
-		stacktrace();
-		rc = -1 ;
+		return false;
 	} else if (addr == 0) {
 		printf("kdbpeek: NULL\n");
-		rc = 0xdeadfeed;
+		return false;
 	} else {
-		rc = *(int *)addr;
+		*valp = *(int *)addr;
+		return true;
 	}
-	return rc;
 }
 
 mips_reg_t
@@ -909,7 +906,8 @@ loop:
 	sym = db_search_symbol(pc, DB_STGY_ANY, &diff);
 	if (sym != DB_SYM_NULL && diff == 0) {
 		/* check func(foo) __attribute__((__noreturn__)) case */
-		instr = kdbpeek(pc - 2 * sizeof(int));
+		if (!kdbpeek(pc - 2 * sizeof(int), &instr))
+			return;
 		i.word = instr;
 		if (i.JType.op == OP_JAL) {
 			sym = db_search_symbol(pc - sizeof(int),
@@ -937,7 +935,8 @@ loop:
 		va -= sizeof(int);
 		if (va <= (vaddr_t)verylocore)
 			goto finish;
-		instr = kdbpeek(va);
+		if (!kdbpeek(va, &instr))
+			return;
 		if (instr == MIPS_ERET)
 			goto mips3_eret;
 	} while (instr != MIPS_JR_RA && instr != MIPS_JR_K0);
@@ -946,8 +945,12 @@ loop:
 mips3_eret:
 	va += sizeof(int);
 	/* skip over nulls which might separate .o files */
-	while ((instr = kdbpeek(va)) == 0)
+	instr = 0;
+	while (instr == 0) {
+		if (!kdbpeek(va, &instr))
+			return;
 		va += sizeof(int);
+	}
 #endif
 	subr = va;
 
@@ -961,7 +964,8 @@ mips3_eret:
 		/* stop if hit our current position */
 		if (va >= pc)
 			break;
-		instr = kdbpeek(va);
+		if (!kdbpeek(va, &instr))
+			return;
 		i.word = instr;
 		switch (i.JType.op) {
 		case OP_SPECIAL:

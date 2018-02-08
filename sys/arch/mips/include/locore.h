@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.102 2017/03/16 16:13:20 chs Exp $ */
+/* $NetBSD: locore.h,v 1.103 2018/02/08 19:16:24 bouyer Exp $ */
 
 /*
  * This file should not be included by MI code!!!
@@ -723,7 +723,7 @@ int	ustore_uint32_isync(void *, uint32_t);
 
 /* trap.c */
 void	netintr(void);
-int	kdbpeek(vaddr_t);
+bool	kdbpeek(vaddr_t, int *);
 
 /* mips_dsp.c */
 void	dsp_init(void);

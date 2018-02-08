@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.79 2016/07/11 16:15:36 matt Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.80 2018/02/08 19:16:24 bouyer Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.79 2016/07/11 16:15:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.80 2018/02/08 19:16:24 bouyer Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_cputype.h"	/* which mips CPUs do we support? */
@@ -96,13 +96,14 @@ paddr_t kvtophys(vaddr_t);
 CTASSERT(sizeof(ddb_regs) == sizeof(struct reg));
 
 #ifdef DDB_TRACE
-int
-kdbpeek(vaddr_t addr)
+bool
+kdbpeek(vaddr_t addr, int *valp)
 {
 
 	if (addr == 0 || (addr & 3))
-		return 0;
-	return *(int *)addr;
+		return false;
+	*valp = *(int *)addr;
+	return true;
 }
 #endif
 
