@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2178 2018/02/08 20:57:02 jakllsch Exp $
+#	$NetBSD: mi,v 1.2179 2018/02/09 04:20:38 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -4389,6 +4389,7 @@
 ./usr/share/man/cat3/ASN1_STRING_length.0	comp-c-catman		.cat
 ./usr/share/man/cat3/ASN1_STRING_new.0		comp-c-catman		.cat
 ./usr/share/man/cat3/ASN1_STRING_print_ex.0	comp-c-catman		.cat
+./usr/share/man/cat3/ASN1_TIME_set.0			comp-c-catman	.cat,openssl=11
 ./usr/share/man/cat3/ASN1_TYPE_get.0		comp-c-catman		.cat,openssl=11
 ./usr/share/man/cat3/ASN1_generate_nconf.0	comp-c-catman		.cat
 ./usr/share/man/cat3/ASYNC_WAIT_CTX_new.0	comp-c-catman		.cat,openssl=11
@@ -4519,7 +4520,13 @@
 ./usr/share/man/cat3/DTTOIF.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ECDSA_SIG_new.0		comp-c-catman		.cat,openssl=11
 ./usr/share/man/cat3/ECPKParameters_print.0	comp-c-catman		.cat,openssl=11
+./usr/share/man/cat3/EC_GFp_simple_method.0		comp-c-catman	.cat,openssl=11
+./usr/share/man/cat3/EC_GROUP_copy.0			comp-c-catman	.cat,openssl=11
+./usr/share/man/cat3/EC_GROUP_new.0			comp-c-catman	.cat,openssl=11
 ./usr/share/man/cat3/EC_KEY_get_enc_flags.0	comp-c-catman		.cat,openssl=11
+./usr/share/man/cat3/EC_KEY_new.0			comp-c-catman	.cat,openssl=11
+./usr/share/man/cat3/EC_POINT_add.0			comp-c-catman	.cat,openssl=11
+./usr/share/man/cat3/EC_POINT_new.0			comp-c-catman	.cat,openssl=11
 ./usr/share/man/cat3/ENGINE_add.0		comp-c-catman		.cat,openssl=11
 ./usr/share/man/cat3/ERR_GET_LIB.0		comp-c-catman		.cat
 ./usr/share/man/cat3/ERR_clear_error.0		comp-c-catman		.cat
@@ -4675,6 +4682,7 @@
 ./usr/share/man/cat3/OPENSSL_ia32cap.0		comp-c-man		.cat
 ./usr/share/man/cat3/OPENSSL_init_crypto.0	comp-c-catman		.cat,openssl=11
 ./usr/share/man/cat3/OPENSSL_init_ssl.0		comp-c-catman		.cat,openssl=11
+./usr/share/man/cat3/OPENSSL_instrument_bus.0		comp-c-catman	.cat,openssl=11
 ./usr/share/man/cat3/OPENSSL_load_builtin_modules.0	comp-c-man		.cat
 ./usr/share/man/cat3/OPENSSL_malloc.0	comp-c-catman	.cat,openssl=11
 ./usr/share/man/cat3/OPENSSL_secure_malloc.0	comp-c-catman		.cat,openssl=11
@@ -4885,6 +4893,13 @@
 ./usr/share/man/cat3/SQLITE_VTAB_CONSTRAINT_SUPPORT.0	comp-c-catman		.cat
 ./usr/share/man/cat3/SSL_CIPHER_get_name.0	comp-c-catman		.cat
 ./usr/share/man/cat3/SSL_COMP_add_compression_method.0	comp-c-catman		.cat
+./usr/share/man/cat3/SSL_CONF_CTX_new.0			comp-c-catman	.cat,openssl=11
+./usr/share/man/cat3/SSL_CONF_CTX_set1_prefix.0		comp-c-catman	.cat,openssl=11
+./usr/share/man/cat3/SSL_CONF_CTX_set_flags.0		comp-c-catman	.cat,openssl=11
+./usr/share/man/cat3/SSL_CONF_CTX_set_ssl_ctx.0		comp-c-catman	.cat,openssl=11
+./usr/share/man/cat3/SSL_CONF_cmd.0		`	comp-c-catman	.cat,openssl=11
+./usr/share/man/cat3/SSL_CONF_cmd_argv.0		comp-c-catman	.cat,openssl=11
+./usr/share/man/cat3/SSL_CTX_add1_chain_cert.0		comp-c-catman	.cat,openssl=11
 ./usr/share/man/cat3/SSL_CTX_add_extra_chain_cert.0	comp-c-catman		.cat
 ./usr/share/man/cat3/SSL_CTX_add_session.0	comp-c-catman		.cat
 ./usr/share/man/cat3/SSL_CTX_config.0		comp-c-catman		.cat,openssl=11
@@ -4892,6 +4907,7 @@
 ./usr/share/man/cat3/SSL_CTX_dane_enable.0	comp-c-catman		.cat,openssl=11
 ./usr/share/man/cat3/SSL_CTX_flush_sessions.0	comp-c-catman		.cat
 ./usr/share/man/cat3/SSL_CTX_free.0		comp-c-catman		.cat
+./usr/share/man/cat3/SSL_CTX_get0_param.0		comp-c-catman	.cat,openssl=11
 ./usr/share/man/cat3/SSL_CTX_get_ex_new_index.0	comp-c-catman		.cat,openssl=10
 ./usr/share/man/cat3/SSL_CTX_get_verify_mode.0	comp-c-catman		.cat
 ./usr/share/man/cat3/SSL_CTX_has_client_custom_ext.0	comp-c-catman	.cat,openssl=11
@@ -4901,7 +4917,11 @@
 ./usr/share/man/cat3/SSL_CTX_sess_set_cache_size.0	comp-c-catman	.cat
 ./usr/share/man/cat3/SSL_CTX_sess_set_get_cb.0		comp-c-catman	.cat
 ./usr/share/man/cat3/SSL_CTX_sessions.0			comp-c-catman	.cat
+./usr/share/man/cat3/SSL_CTX_set1_curves.0		comp-c-catman	.cat,openssl=11
 ./usr/share/man/cat3/SSL_CTX_set1_sigalgs.0		comp-c-catman	.cat,openssl=11
+./usr/share/man/cat3/SSL_CTX_set1_verify_cert_store.0	comp-c-catman	.cat,openssl=11
+./usr/share/man/cat3/SSL_CTX_set_alpn_select_cb.0	comp-c-catman	.cat,openssl=11
+./usr/share/man/cat3/SSL_CTX_set_cert_cb.0		comp-c-catman	.cat,openssl=11
 ./usr/share/man/cat3/SSL_CTX_set_cert_store.0		comp-c-catman	.cat
 ./usr/share/man/cat3/SSL_CTX_set_cert_verify_callback.0 comp-c-catman	.cat
 ./usr/share/man/cat3/SSL_CTX_set_cipher_list.0	comp-c-catman		.cat
@@ -4909,7 +4929,6 @@
 ./usr/share/man/cat3/SSL_CTX_set_client_cert_cb.0	comp-c-catman	.cat
 ./usr/share/man/cat3/SSL_CTX_set_ct_validation_callback.0	comp-c-catman	.cat,openssl=11
 ./usr/share/man/cat3/SSL_CTX_set_ctlog_list_file.0	comp-c-catman	.cat,openssl=11
-./usr/share/man/cat3/SSL_CTX_set_custom_cli_ext.0	comp-c-catman	.cat,openssl=11
 ./usr/share/man/cat3/SSL_CTX_set_default_passwd_cb.0	comp-c-catman	.cat
 ./usr/share/man/cat3/SSL_CTX_set_ex_data.0		comp-c-catman	.cat,openssl=11
 ./usr/share/man/cat3/SSL_CTX_set_generate_session_id.0	comp-c-catman	.cat
@@ -4936,6 +4955,7 @@
 ./usr/share/man/cat3/SSL_CTX_set_verify.0		comp-c-catman	.cat
 ./usr/share/man/cat3/SSL_CTX_use_certificate.0		comp-c-catman	.cat
 ./usr/share/man/cat3/SSL_CTX_use_psk_identity_hint.0	comp-c-catman	.cat
+./usr/share/man/cat3/SSL_CTX_use_serverinfo.0		comp-c-catman	.cat,openssl=11
 ./usr/share/man/cat3/SSL_SESSION_free.0			comp-c-catman	.cat
 ./usr/share/man/cat3/SSL_SESSION_get0_cipher.0		comp-c-catman	.cat,openssl=11
 ./usr/share/man/cat3/SSL_SESSION_get0_hostname.0	comp-c-catman	.cat,openssl=11
@@ -4951,6 +4971,7 @@
 ./usr/share/man/cat3/SSL_SESSION_set1_id.0		comp-c-catman	.cat,openssl=11
 ./usr/share/man/cat3/SSL_accept.0			comp-c-catman	.cat
 ./usr/share/man/cat3/SSL_alert_type_string.0		comp-c-catman	.cat
+./usr/share/man/cat3/SSL_check_chain.0			comp-c-catman	.cat,openssl=11
 ./usr/share/man/cat3/SSL_clear.0			comp-c-catman	.cat
 ./usr/share/man/cat3/SSL_connect.0			comp-c-catman	.cat
 ./usr/share/man/cat3/SSL_do_handshake.0			comp-c-catman	.cat
@@ -4996,7 +5017,6 @@
 ./usr/share/man/cat3/SSL_state_string.0		comp-c-catman		.cat
 ./usr/share/man/cat3/SSL_want.0			comp-c-catman		.cat
 ./usr/share/man/cat3/SSL_write.0		comp-c-catman		.cat
-./usr/share/man/cat3/SSLeay_version.0		comp-c-catman		.cat,openssl=11
 ./usr/share/man/cat3/STAILQ.0			comp-c-catman		.cat
 ./usr/share/man/cat3/STAILQ_CONCAT.0		comp-c-catman		.cat
 ./usr/share/man/cat3/STAILQ_EMPTY.0		comp-c-catman		.cat
@@ -5149,6 +5169,7 @@
 ./usr/share/man/cat3/X509_STORE_set_verify_cb_func.0	comp-c-catman		.cat
 ./usr/share/man/cat3/X509_VERIFY_PARAM_set_flags.0	comp-c-catman		.cat
 ./usr/share/man/cat3/X509_check_ca.0	comp-c-catman	.cat,openssl=11
+./usr/share/man/cat3/X509_check_host.0			comp-c-catman	.cat,openssl=11
 ./usr/share/man/cat3/X509_check_issued.0	comp-c-catman	.cat,openssl=11
 ./usr/share/man/cat3/X509_digest.0	comp-c-catman	.cat,openssl=11
 ./usr/share/man/cat3/X509_dup.0	comp-c-catman	.cat,openssl=11
@@ -6060,16 +6081,15 @@
 ./usr/share/man/cat3/curses_underscore.0	comp-c-catman		.cat
 ./usr/share/man/cat3/curses_window.0		comp-c-catman		.cat
 ./usr/share/man/cat3/cuserid.0			comp-c-catman		.cat
-./usr/share/man/cat3/d2i_ASN1_OBJECT.0		comp-c-catman		.cat
 ./usr/share/man/cat3/d2i_ASN1_OBJECT.0	comp-c-catman	.cat,openssl=10
 ./usr/share/man/cat3/d2i_CMS_ContentInfo.0	comp-c-catman	.cat,openssl=10
 ./usr/share/man/cat3/d2i_DHparams.0		comp-c-catman		.cat
 ./usr/share/man/cat3/d2i_DSAPublicKey.0	comp-c-catman	.cat,openssl=10
-./usr/share/man/cat3/d2i_ECPKParameters.0	comp-c-catman	.cat,openssl=11
 ./usr/share/man/cat3/d2i_ECPrivateKey.0	comp-c-catman	.cat,openssl=10
 ./usr/share/man/cat3/d2i_Netscape_RSA.0	comp-c-catman	.cat,openssl=11
 ./usr/share/man/cat3/d2i_PKCS8PrivateKey.0	comp-c-catman	.cat,openssl=10
 ./usr/share/man/cat3/d2i_PKCS8PrivateKey_bio.0	comp-c-catman	.cat,openssl=11
+./usr/share/man/cat3/d2i_PrivateKey.0			comp-c-catman	.cat,openssl=11
 ./usr/share/man/cat3/d2i_RSAPublicKey.0	comp-c-catman	.cat,openssl=10
 ./usr/share/man/cat3/d2i_SSL_SESSION.0		comp-c-catman		.cat
 ./usr/share/man/cat3/d2i_X509.0			comp-c-catman		.cat
@@ -6399,7 +6419,6 @@
 ./usr/share/man/cat3/dwarf_whatform_direct.0	comp-c-catman	.cat
 ./usr/share/man/cat3/dynamic_field_info.0	comp-c-catman		.cat
 ./usr/share/man/cat3/easprintf.0		comp-c-catman		.cat
-./usr/share/man/cat3/ec.0	comp-c-catman	.cat,openssl=11
 ./usr/share/man/cat3/ecalloc.0			comp-c-catman		.cat
 ./usr/share/man/cat3/echo.0			comp-c-catman		.cat
 ./usr/share/man/cat3/echochar.0			comp-c-catman		.cat
@@ -12182,6 +12201,7 @@
 ./usr/share/man/html3/ASN1_STRING_length.html	comp-c-htmlman		html
 ./usr/share/man/html3/ASN1_STRING_new.html	comp-c-htmlman		html
 ./usr/share/man/html3/ASN1_STRING_print_ex.html comp-c-htmlman		html
+./usr/share/man/html3/ASN1_TIME_set.html		comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/ASN1_TYPE_get.html	comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/ASN1_generate_nconf.html	comp-c-htmlman		html
 ./usr/share/man/html3/ASYNC_WAIT_CTX_new.html	comp-c-htmlman	html,openssl=11
@@ -12311,7 +12331,13 @@
 ./usr/share/man/html3/DTTOIF.html		comp-c-htmlman	html
 ./usr/share/man/html3/ECDSA_SIG_new.html	comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/ECPKParameters_print.html	comp-c-htmlman	html,openssl=11
+./usr/share/man/html3/EC_GFp_simple_method.html		comp-c-htmlman	html,openssl=11
+./usr/share/man/html3/EC_GROUP_copy.html		comp-c-htmlman	html,openssl=11
+./usr/share/man/html3/EC_GROUP_new.html			comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/EC_KEY_get_enc_flags.html	comp-c-htmlman	html,openssl=11
+./usr/share/man/html3/EC_KEY_new.html			comp-c-htmlman	html,openssl=11
+./usr/share/man/html3/EC_POINT_add.html			comp-c-htmlman	html,openssl=11
+./usr/share/man/html3/EC_POINT_new.html			comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/ENGINE_add.html	comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/ERR_GET_LIB.html		comp-c-htmlman	html
 ./usr/share/man/html3/ERR_clear_error.html	comp-c-htmlman	html
@@ -12466,6 +12492,7 @@
 ./usr/share/man/html3/OPENSSL_ia32cap.html	comp-c-man		html
 ./usr/share/man/html3/OPENSSL_init_crypto.html	comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/OPENSSL_init_ssl.html	comp-c-htmlman	html,openssl=11
+./usr/share/man/html3/OPENSSL_instrument_bus.html	comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/OPENSSL_load_builtin_modules.html comp-c-man		html
 ./usr/share/man/html3/OPENSSL_malloc.html	comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/OPENSSL_secure_malloc.html	comp-c-htmlman	html,openssl=11
@@ -12676,6 +12703,13 @@
 ./usr/share/man/html3/SQLITE_VTAB_CONSTRAINT_SUPPORT.html	comp-c-htmlman		html
 ./usr/share/man/html3/SSL_CIPHER_get_name.html	comp-c-htmlman		html
 ./usr/share/man/html3/SSL_COMP_add_compression_method.html	comp-c-htmlman		html
+./usr/share/man/html3/SSL_CONF_CTX_new.html		comp-c-htmlman	html,openssl=11
+./usr/share/man/html3/SSL_CONF_CTX_set1_prefix.html	comp-c-htmlman	html,openssl=11
+./usr/share/man/html3/SSL_CONF_CTX_set_flags.html	comp-c-htmlman	html,openssl=11
+./usr/share/man/html3/SSL_CONF_CTX_set_ssl_ctx.html	comp-c-htmlman	html,openssl=11
+./usr/share/man/html3/SSL_CONF_cmd.html			comp-c-htmlman	html,openssl=11
+./usr/share/man/html3/SSL_CONF_cmd_argv.html		comp-c-htmlman	html,openssl=11
+./usr/share/man/html3/SSL_CTX_add1_chain_cert.html	comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/SSL_CTX_add_extra_chain_cert.html comp-c-htmlman		html
 ./usr/share/man/html3/SSL_CTX_add_session.html	comp-c-htmlman		html
 ./usr/share/man/html3/SSL_CTX_config.html	comp-c-htmlman	html,openssl=11
@@ -12683,6 +12717,7 @@
 ./usr/share/man/html3/SSL_CTX_dane_enable.html	comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/SSL_CTX_flush_sessions.html	comp-c-htmlman		html
 ./usr/share/man/html3/SSL_CTX_free.html		comp-c-htmlman		html
+./usr/share/man/html3/SSL_CTX_get0_param.html		comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/SSL_CTX_get_ex_new_index.html	comp-c-htmlman	html,openssl=10
 ./usr/share/man/html3/SSL_CTX_get_verify_mode.html	comp-c-htmlman		html
 ./usr/share/man/html3/SSL_CTX_has_client_custom_ext.html	comp-c-htmlman	html,openssl=11
@@ -12692,7 +12727,11 @@
 ./usr/share/man/html3/SSL_CTX_sess_set_cache_size.html	comp-c-htmlman		html
 ./usr/share/man/html3/SSL_CTX_sess_set_get_cb.html	comp-c-htmlman		html
 ./usr/share/man/html3/SSL_CTX_sessions.html	comp-c-htmlman		html
+./usr/share/man/html3/SSL_CTX_set1_curves.html		comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/SSL_CTX_set1_sigalgs.html	comp-c-htmlman	html,openssl=11
+./usr/share/man/html3/SSL_CTX_set1_verify_cert_store.html	comp-c-htmlman	html,openssl=11
+./usr/share/man/html3/SSL_CTX_set_alpn_select_cb.html	comp-c-htmlman	html,openssl=11
+./usr/share/man/html3/SSL_CTX_set_cert_cb.html		comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/SSL_CTX_set_cert_store.html	comp-c-htmlman		html
 ./usr/share/man/html3/SSL_CTX_set_cert_verify_callback.html	comp-c-htmlman		html
 ./usr/share/man/html3/SSL_CTX_set_cipher_list.html	comp-c-htmlman		html
@@ -12700,7 +12739,6 @@
 ./usr/share/man/html3/SSL_CTX_set_client_cert_cb.html	comp-c-htmlman		html
 ./usr/share/man/html3/SSL_CTX_set_ct_validation_callback.html	comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/SSL_CTX_set_ctlog_list_file.html	comp-c-htmlman	html,openssl=11
-./usr/share/man/html3/SSL_CTX_set_custom_cli_ext.html	comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/SSL_CTX_set_default_passwd_cb.html	comp-c-htmlman		html
 ./usr/share/man/html3/SSL_CTX_set_ex_data.html	comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/SSL_CTX_set_generate_session_id.html	comp-c-htmlman		html
@@ -12727,6 +12765,7 @@
 ./usr/share/man/html3/SSL_CTX_set_verify.html	comp-c-htmlman		html
 ./usr/share/man/html3/SSL_CTX_use_certificate.html	comp-c-htmlman		html
 ./usr/share/man/html3/SSL_CTX_use_psk_identity_hint.html	comp-c-htmlman	html
+./usr/share/man/html3/SSL_CTX_use_serverinfo.html	comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/SSL_SESSION_free.html	comp-c-htmlman		html
 ./usr/share/man/html3/SSL_SESSION_get0_cipher.html	comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/SSL_SESSION_get0_hostname.html	comp-c-htmlman	html,openssl=11
@@ -12742,6 +12781,7 @@
 ./usr/share/man/html3/SSL_SESSION_set1_id.html	comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/SSL_accept.html		comp-c-htmlman		html
 ./usr/share/man/html3/SSL_alert_type_string.html	comp-c-htmlman		html
+./usr/share/man/html3/SSL_check_chain.html		comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/SSL_clear.html		comp-c-htmlman		html
 ./usr/share/man/html3/SSL_connect.html		comp-c-htmlman		html
 ./usr/share/man/html3/SSL_do_handshake.html	comp-c-htmlman		html
@@ -12787,7 +12827,6 @@
 ./usr/share/man/html3/SSL_state_string.html	comp-c-htmlman		html
 ./usr/share/man/html3/SSL_want.html		comp-c-htmlman		html
 ./usr/share/man/html3/SSL_write.html		comp-c-htmlman		html
-./usr/share/man/html3/SSLeay_version.html	comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/STAILQ.html		comp-c-htmlman		html
 ./usr/share/man/html3/STAILQ_CONCAT.html	comp-c-htmlman		html
 ./usr/share/man/html3/STAILQ_EMPTY.html		comp-c-htmlman		html
@@ -12940,6 +12979,7 @@
 ./usr/share/man/html3/X509_STORE_set_verify_cb_func.html	comp-c-htmlman		html
 ./usr/share/man/html3/X509_VERIFY_PARAM_set_flags.html		comp-c-htmlman		html
 ./usr/share/man/html3/X509_check_ca.html	comp-c-htmlman	html,openssl=11
+./usr/share/man/html3/X509_check_host.html		comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/X509_check_issued.html	comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/X509_digest.html	comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/X509_dup.html	comp-c-htmlman	html,openssl=11
@@ -13798,16 +13838,15 @@
 ./usr/share/man/html3/curses_underscore.html	comp-c-htmlman		html
 ./usr/share/man/html3/curses_window.html	comp-c-htmlman		html
 ./usr/share/man/html3/cuserid.html		comp-c-htmlman		html
-./usr/share/man/html3/d2i_ASN1_OBJECT.html	comp-c-htmlman		html
 ./usr/share/man/html3/d2i_ASN1_OBJECT.html	comp-c-htmlman	html,openssl=10
 ./usr/share/man/html3/d2i_CMS_ContentInfo.html	comp-c-htmlman	html,openssl=10
 ./usr/share/man/html3/d2i_DHparams.html		comp-c-htmlman		html
 ./usr/share/man/html3/d2i_DSAPublicKey.html	comp-c-htmlman	html,openssl=10
-./usr/share/man/html3/d2i_ECPKParameters.html	comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/d2i_ECPrivateKey.html	comp-c-htmlman	html,openssl=10
 ./usr/share/man/html3/d2i_Netscape_RSA.html	comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/d2i_PKCS8PrivateKey.html	comp-c-htmlman	html,openssl=10
 ./usr/share/man/html3/d2i_PKCS8PrivateKey_bio.html	comp-c-htmlman	html,openssl=11
+./usr/share/man/html3/d2i_PrivateKey.html		comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/d2i_RSAPublicKey.html	comp-c-htmlman	html,openssl=10
 ./usr/share/man/html3/d2i_SSL_SESSION.html	comp-c-htmlman		html
 ./usr/share/man/html3/d2i_X509.html		comp-c-htmlman		html
@@ -14135,7 +14174,6 @@
 ./usr/share/man/html3/dwarf_whatform_direct.html	comp-c-htmlman	html
 ./usr/share/man/html3/dynamic_field_info.html	comp-c-htmlman		html
 ./usr/share/man/html3/easprintf.html		comp-c-htmlman		html
-./usr/share/man/html3/ec.html	comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/ecalloc.html		comp-c-htmlman		html
 ./usr/share/man/html3/echo.html			comp-c-htmlman		html
 ./usr/share/man/html3/echochar.html		comp-c-htmlman		html
@@ -19771,6 +19809,7 @@
 ./usr/share/man/man3/ASN1_STRING_length.3	comp-c-man		.man
 ./usr/share/man/man3/ASN1_STRING_new.3		comp-c-man		.man
 ./usr/share/man/man3/ASN1_STRING_print_ex.3	comp-c-man		.man
+./usr/share/man/man3/ASN1_TIME_set.3			comp-c-man	.man,openssl=11
 ./usr/share/man/man3/ASN1_TYPE_get.3	comp-c-man	.man,openssl=11
 ./usr/share/man/man3/ASN1_generate_nconf.3	comp-c-man		.man
 ./usr/share/man/man3/ASYNC_WAIT_CTX_new.3	comp-c-man	.man,openssl=11
@@ -19901,7 +19940,13 @@
 ./usr/share/man/man3/DTTOIF.3			comp-c-man		.man
 ./usr/share/man/man3/ECDSA_SIG_new.3	comp-c-man	.man,openssl=11
 ./usr/share/man/man3/ECPKParameters_print.3	comp-c-man	.man,openssl=11
+./usr/share/man/man3/EC_GFp_simple_method.3		comp-c-man	.man,openssl=11
+./usr/share/man/man3/EC_GROUP_copy.3			comp-c-man	.man,openssl=11
+./usr/share/man/man3/EC_GROUP_new.3			comp-c-man	.man,openssl=11
 ./usr/share/man/man3/EC_KEY_get_enc_flags.3	comp-c-man	.man,openssl=11
+./usr/share/man/man3/EC_KEY_new.3			comp-c-man	.man,openssl=11
+./usr/share/man/man3/EC_POINT_add.3			comp-c-man	.man,openssl=11
+./usr/share/man/man3/EC_POINT_new.3			comp-c-man	.man,openssl=11
 ./usr/share/man/man3/ENGINE_add.3	comp-c-man	.man,openssl=11
 ./usr/share/man/man3/ERR_GET_LIB.3		comp-c-man		.man
 ./usr/share/man/man3/ERR_clear_error.3		comp-c-man		.man
@@ -20057,6 +20102,7 @@
 ./usr/share/man/man3/OPENSSL_ia32cap.3		comp-c-man		.man
 ./usr/share/man/man3/OPENSSL_init_crypto.3	comp-c-man	.man,openssl=11
 ./usr/share/man/man3/OPENSSL_init_ssl.3	comp-c-man	.man,openssl=11
+./usr/share/man/man3/OPENSSL_instrument_bus.3		comp-c-man	.man,openssl=11
 ./usr/share/man/man3/OPENSSL_load_builtin_modules.3	comp-c-man		.man
 ./usr/share/man/man3/OPENSSL_malloc.3	comp-c-man	.man,openssl=11
 ./usr/share/man/man3/OPENSSL_secure_malloc.3	comp-c-man	.man,openssl=11
@@ -20268,6 +20314,13 @@
 ./usr/share/man/man3/SQLITE_VTAB_CONSTRAINT_SUPPORT.3	comp-c-man		.man
 ./usr/share/man/man3/SSL_CIPHER_get_name.3	comp-c-man		.man
 ./usr/share/man/man3/SSL_COMP_add_compression_method.3	comp-c-man		.man
+./usr/share/man/man3/SSL_CONF_CTX_new.3			comp-c-man	.man,openssl=11
+./usr/share/man/man3/SSL_CONF_CTX_set1_prefix.3		comp-c-man	.man,openssl=11
+./usr/share/man/man3/SSL_CONF_CTX_set_flags.3		comp-c-man	.man,openssl=11
+./usr/share/man/man3/SSL_CONF_CTX_set_ssl_ctx.3		comp-c-man	.man,openssl=11
+./usr/share/man/man3/SSL_CONF_cmd.3			comp-c-man	.man,openssl=11
+./usr/share/man/man3/SSL_CONF_cmd_argv.3		comp-c-man	.man,openssl=11
+./usr/share/man/man3/SSL_CTX_add1_chain_cert.3		comp-c-man	.man,openssl=11
 ./usr/share/man/man3/SSL_CTX_add_extra_chain_cert.3	comp-c-man		.man
 ./usr/share/man/man3/SSL_CTX_add_session.3	comp-c-man		.man
 ./usr/share/man/man3/SSL_CTX_config.3	comp-c-man	.man,openssl=11
@@ -20275,6 +20328,7 @@
 ./usr/share/man/man3/SSL_CTX_dane_enable.3	comp-c-man	.man,openssl=11
 ./usr/share/man/man3/SSL_CTX_flush_sessions.3	comp-c-man		.man
 ./usr/share/man/man3/SSL_CTX_free.3		comp-c-man		.man
+./usr/share/man/man3/SSL_CTX_get0_param.3		comp-c-man	.man,openssl=11
 ./usr/share/man/man3/SSL_CTX_get_ex_new_index.3	comp-c-man	.man,openssl=10
 ./usr/share/man/man3/SSL_CTX_get_verify_mode.3	comp-c-man		.man
 ./usr/share/man/man3/SSL_CTX_has_client_custom_ext.3	comp-c-man	.man,openssl=11
@@ -20284,7 +20338,11 @@
 ./usr/share/man/man3/SSL_CTX_sess_set_cache_size.3	comp-c-man		.man
 ./usr/share/man/man3/SSL_CTX_sess_set_get_cb.3	comp-c-man		.man
 ./usr/share/man/man3/SSL_CTX_sessions.3		comp-c-man		.man
+./usr/share/man/man3/SSL_CTX_set1_curves.3		comp-c-man	.man,openssl=11
 ./usr/share/man/man3/SSL_CTX_set1_sigalgs.3	comp-c-man	.man,openssl=11
+./usr/share/man/man3/SSL_CTX_set1_verify_cert_store.3	comp-c-man	.man,openssl=11
+./usr/share/man/man3/SSL_CTX_set_alpn_select_cb.3	comp-c-man	.man,openssl=11
+./usr/share/man/man3/SSL_CTX_set_cert_cb.3		comp-c-man	.man,openssl=11
 ./usr/share/man/man3/SSL_CTX_set_cert_store.3	comp-c-man		.man
 ./usr/share/man/man3/SSL_CTX_set_cert_verify_callback.3 comp-c-man		.man
 ./usr/share/man/man3/SSL_CTX_set_cipher_list.3	comp-c-man		.man
@@ -20292,7 +20350,6 @@
 ./usr/share/man/man3/SSL_CTX_set_client_cert_cb.3	comp-c-man		.man
 ./usr/share/man/man3/SSL_CTX_set_ct_validation_callback.3	comp-c-man	.man,openssl=11
 ./usr/share/man/man3/SSL_CTX_set_ctlog_list_file.3	comp-c-man	.man,openssl=11
-./usr/share/man/man3/SSL_CTX_set_custom_cli_ext.3	comp-c-man	.man,openssl=11
 ./usr/share/man/man3/SSL_CTX_set_default_passwd_cb.3	comp-c-man		.man
 ./usr/share/man/man3/SSL_CTX_set_ex_data.3	comp-c-man	.man,openssl=11
 ./usr/share/man/man3/SSL_CTX_set_generate_session_id.3	comp-c-man		.man
@@ -20319,6 +20376,7 @@
 ./usr/share/man/man3/SSL_CTX_set_verify.3	comp-c-man		.man
 ./usr/share/man/man3/SSL_CTX_use_certificate.3	comp-c-man		.man
 ./usr/share/man/man3/SSL_CTX_use_psk_identity_hint.3	comp-c-man	.man
+./usr/share/man/man3/SSL_CTX_use_serverinfo.3		comp-c-man	.man,openssl=11
 ./usr/share/man/man3/SSL_SESSION_free.3		comp-c-man		.man
 ./usr/share/man/man3/SSL_SESSION_get0_cipher.3	comp-c-man	.man,openssl=11
 ./usr/share/man/man3/SSL_SESSION_get0_hostname.3	comp-c-man	.man,openssl=11
@@ -20334,6 +20392,7 @@
 ./usr/share/man/man3/SSL_SESSION_set1_id.3	comp-c-man	.man,openssl=11
 ./usr/share/man/man3/SSL_accept.3		comp-c-man		.man
 ./usr/share/man/man3/SSL_alert_type_string.3	comp-c-man		.man
+./usr/share/man/man3/SSL_check_chain.3			comp-c-man	.man,openssl=11
 ./usr/share/man/man3/SSL_clear.3		comp-c-man		.man
 ./usr/share/man/man3/SSL_connect.3		comp-c-man		.man
 ./usr/share/man/man3/SSL_do_handshake.3		comp-c-man		.man
@@ -20379,7 +20438,6 @@
 ./usr/share/man/man3/SSL_state_string.3		comp-c-man		.man
 ./usr/share/man/man3/SSL_want.3			comp-c-man		.man
 ./usr/share/man/man3/SSL_write.3		comp-c-man		.man
-./usr/share/man/man3/SSLeay_version.3	comp-c-man	.man,openssl=11
 ./usr/share/man/man3/STAILQ.3			comp-c-man		.man
 ./usr/share/man/man3/STAILQ_CONCAT.3		comp-c-man		.man
 ./usr/share/man/man3/STAILQ_EMPTY.3		comp-c-man		.man
@@ -20532,6 +20590,7 @@
 ./usr/share/man/man3/X509_STORE_set_verify_cb_func.3	comp-c-man		.man
 ./usr/share/man/man3/X509_VERIFY_PARAM_set_flags.3	comp-c-man		.man
 ./usr/share/man/man3/X509_check_ca.3	comp-c-man	.man,openssl=11
+./usr/share/man/man3/X509_check_host.3			comp-c-man	.man,openssl=11
 ./usr/share/man/man3/X509_check_issued.3	comp-c-man	.man,openssl=11
 ./usr/share/man/man3/X509_digest.3	comp-c-man	.man,openssl=11
 ./usr/share/man/man3/X509_dup.3	comp-c-man	.man,openssl=11
@@ -21443,16 +21502,15 @@
 ./usr/share/man/man3/curses_underscore.3	comp-c-man		.man
 ./usr/share/man/man3/curses_window.3		comp-c-man		.man
 ./usr/share/man/man3/cuserid.3			comp-c-man		.man
-./usr/share/man/man3/d2i_ASN1_OBJECT.3		comp-c-man		.man
 ./usr/share/man/man3/d2i_ASN1_OBJECT.3	comp-c-man	.man,openssl=10
 ./usr/share/man/man3/d2i_CMS_ContentInfo.3	comp-c-man	.man,openssl=10
 ./usr/share/man/man3/d2i_DHparams.3		comp-c-man		.man
 ./usr/share/man/man3/d2i_DSAPublicKey.3	comp-c-man	.man,openssl=10
-./usr/share/man/man3/d2i_ECPKParameters.3	comp-c-man	.man,openssl=11
 ./usr/share/man/man3/d2i_ECPrivateKey.3	comp-c-man	.man,openssl=10
 ./usr/share/man/man3/d2i_Netscape_RSA.3	comp-c-man	.man,openssl=11
 ./usr/share/man/man3/d2i_PKCS8PrivateKey.3	comp-c-man	.man,openssl=10
 ./usr/share/man/man3/d2i_PKCS8PrivateKey_bio.3	comp-c-man	.man,openssl=11
+./usr/share/man/man3/d2i_PrivateKey.3			comp-c-man	.man,openssl=11
 ./usr/share/man/man3/d2i_RSAPublicKey.3	comp-c-man	.man,openssl=10
 ./usr/share/man/man3/d2i_SSL_SESSION.3		comp-c-man		.man
 ./usr/share/man/man3/d2i_X509.3			comp-c-man		.man
@@ -21782,7 +21840,6 @@
 ./usr/share/man/man3/dwarf_whatform_direct.3	comp-c-man	.man
 ./usr/share/man/man3/dynamic_field_info.3	comp-c-man		.man
 ./usr/share/man/man3/easprintf.3		comp-c-man		.man
-./usr/share/man/man3/ec.3	comp-c-man	.man,openssl=11
 ./usr/share/man/man3/ecalloc.3			comp-c-man		.man
 ./usr/share/man/man3/echo.3			comp-c-man		.man
 ./usr/share/man/man3/echochar.3			comp-c-man		.man
