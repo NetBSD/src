@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1502 2018/02/06 03:06:41 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1503 2018/02/09 17:14:26 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -41,7 +41,7 @@
 
 Package:	acpica
 Version:	20171110
-Current Vers:	20170111
+Current Vers:	20180105
 Maintainer:	Intel
 Archive Site:	http://www.acpica.org/downloads/
 Home Page:	http://www.acpica.org/
@@ -146,8 +146,8 @@ Use cleantags to import
 run configure and update config files in include
 
 Package:	nsd 
-Version:	4.1.14
-Current Vers:	4.1.14
+Version:	4.1.19
+Current Vers:	4.1.19
 Maintainer:	Christos Zoulas
 Archive Site:	https://www.nlnetlabs.nl/svn/nsd/
 Home Page:	https://www.nlnetlabs.nl/projects/nsd/
