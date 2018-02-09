@@ -411,10 +411,10 @@ static query_state_type
 answer_notify(struct nsd* nsd, struct query *query)
 {
 	int acl_num, acl_num_xfr;
-	acl_options_t *why;
+	struct acl_options *why;
 	nsd_rc_type rc;
 
-	zone_options_t* zone_opt;
+	struct zone_options* zone_opt;
 	DEBUG(DEBUG_XFRD,1, (LOG_INFO, "got notify %s processing acl",
 		dname_to_string(query->qname, NULL)));
 
@@ -664,7 +664,7 @@ add_additional_rrsets(struct query *query, answer_type *answer,
 			temp->rnode = NULL;
 			temp->dname = additional->dname;
 #else
-			memcpy(&temp->node, &additional->node, sizeof(rbnode_t));
+			memcpy(&temp->node, &additional->node, sizeof(rbnode_type));
 			temp->node.parent = NULL;
 #endif
 			temp->number = additional->number;
@@ -711,6 +711,9 @@ add_rrset(struct query   *query,
 	assert(rrset_rrclass(rrset) == CLASS_IN);
 
 	result = answer_add_rrset(answer, section, owner, rrset);
+	if(minimal_responses && section != AUTHORITY_SECTION &&
+		query->qtype != TYPE_NS)
+		return result;
 	switch (rrset_rrtype(rrset)) {
 	case TYPE_NS:
 #if defined(INET6)
@@ -1007,7 +1010,8 @@ answer_domain(struct nsd* nsd, struct query *q, answer_type *answer,
 		return;
 	}
 
-	if (q->qclass != CLASS_ANY && q->zone->ns_rrset && answer_needs_ns(q)) {
+	if (q->qclass != CLASS_ANY && q->zone->ns_rrset && answer_needs_ns(q)
+		&& !minimal_responses) {
 		add_rrset(q, answer, OPTIONAL_AUTHORITY_SECTION, q->zone->apex,
 			  q->zone->ns_rrset);
 	}
@@ -1113,7 +1117,7 @@ answer_authoritative(struct nsd   *nsd,
 		match->rnode = NULL;
 		match->dname = wildcard_child->dname;
 #else
-		memcpy(&match->node, &wildcard_child->node, sizeof(rbnode_t));
+		memcpy(&match->node, &wildcard_child->node, sizeof(rbnode_type));
 		match->node.parent = NULL;
 #endif
 		match->parent = closest_encloser;
@@ -1237,8 +1241,15 @@ answer_lookup_zone(struct nsd *nsd, struct query *q, answer_type *answer,
 		 * authoritative for the parent zone.
 		 */
 		zone_type *zone = domain_find_parent_zone(nsd->db, q->zone);
-		if (zone)
+		if (zone) {
 			q->zone = zone;
+			if(!q->zone->apex || !q->zone->soa_rrset) {
+				/* zone is configured but not loaded */
+				if(q->cname_count == 0)
+					RCODE_SET(q->packet, RCODE_SERVFAIL);
+				return;
+			}
+		}
 	}
 
 	/* see if the zone has expired (for secondary zones) */
