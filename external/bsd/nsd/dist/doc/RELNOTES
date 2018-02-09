@@ -1,5 +1,86 @@
 NSD RELEASE NOTES
 
+4.1.19
+================
+BUG FIXES:
+	- ignore fallthrough compiler warning in flex EOF rule.
+	- Fix warnings emitted by clang for --enable-packed.  Alignment is not
+	  a problem for x86_64, don't enable packed when the platform
+	  requires aligned access.
+	- Fix spelling error in xfr-inspect.
+	- Fix 3392: Fix regression in 4.1.18 for notify lists with ip4
+	  and ip6 targets.
+	- Add test for support of -Wno-address-of-packed-member for
+	  --enable-packed.
+
+
+4.1.18
+================
+FEATURES:
+	- xfr-inspect, it is not installed, it prints xfr files from /tmp
+	  made with 'make xfr-inspect' in the source dir.
+	- retry timeout between sending notifies dropped from 15 to 3 sec.
+	- NSD sends 16 notifies simultaneously.
+	- configure --enable-packed reduces memory usage, at expense of
+	  unaligned reads.  Saves about 17%.
+	- Save memory by selectively allocate precompiled nsec3 hashes,
+	  saves about 16% memory.
+	- make ip-transparent option work on OpenBSD.
+	- Save about 2% memory by changing usage count size in name tree.
+	- Fix #2871: Increase number of sockets for xfrd transfers.
+BUG FIXES:
+	- Fix gcc 7.1.1 warnings.
+	- Fix writev compile warning on FreeBSD.
+	- Fix #1446: A corrupted zone file "propagates" to good ones.
+	- nsd-control zonestatus prints wait time between attempts, for zones
+	  that are in that waiting time.
+	- Fix collision printout of nsec3 to print name, hash and reverse.
+	- Fix #1567: Change crit to err log level for gettimeofday failure.
+	  Add defines for compile without syslog.
+	- Fix crash for DS query when parent and child zones both configured
+	  in nsd.conf and parent zone has not loaded properly.
+
+
+4.1.17
+================
+FEATURES:
+	- zone parser parses type AVC (it has TXT format).
+	- Fix #1272: use writev to put tcp length field with data for outgoing
+	  zone transfer requests.
+BUG FIXES:
+	- Fix potential null pointer in nsec3 adjustment tree.
+	- Fix text format of deletes for CDS and CDNSKEY, single 0 to represent
+	  empty base64 or hex string.
+
+
+4.1.16
+================
+FEATURES:
+	- zone parser can parse acronyms for algorithms ED25519 and ED448.
+	- Fix 1243: Option to make NSD emit really minimal responses,
+	  minimal-responses: yes in nsd.conf.
+BUG FIXES:
+	- Calculate new udb index after growing the array, fix from
+	  Chaofeng Liu.
+	- Fix missing _t to _type conversion for disable-radix-tree option.
+	- Printout serial error with hint it may be too big.
+	- Fix 1228: OpenSSL include is not guarded with HAVE_SSL
+	- Patch for expire state in multi-master when masters includes
+	  broken master, from Manabu Sonoda.
+	- minor manpage fix.
+
+
+4.1.15
+================
+BUG FIXES:
+	- Fix nsd-control and ipv6 only.
+	- Squelch zone transfer error address family not supported by protocol
+	  at low verbosity levels.
+	- Fix #1195: Fix so that NSD fails on non-compliant values for Serial.
+	- Fix to rename _t typedefs because POSIX reserves them.
+	- Fix that nsec3 hash collisions only reported on verbosity level 3.
+
+
 4.1.14
 ================
 FEATURES:
