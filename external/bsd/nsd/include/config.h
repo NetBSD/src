@@ -138,10 +138,10 @@
 #define HAVE_GRP_H 1
 
 /* Define to 1 if you have the `HMAC_CTX_new' function. */
-/* #undef HAVE_HMAC_CTX_NEW */
+#define HAVE_HMAC_CTX_NEW	1
 
 /* Define to 1 if you have the `HMAC_CTX_reset' function. */
-/* #undef HAVE_HMAC_CTX_RESET */
+#define HAVE_HMAC_CTX_RESET	1
 
 /* Define to 1 if you have the `inet_aton' function. */
 #define HAVE_INET_ATON 1
@@ -432,7 +432,7 @@
 #define PACKAGE_NAME "NSD"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "NSD 4.1.14"
+#define PACKAGE_STRING "NSD 4.1.19"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "nsd"
@@ -441,7 +441,10 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "4.1.14"
+#define PACKAGE_VERSION "4.1.19"
+
+/* Define this to use packed structure alignment. */
+/* #undef PACKED_STRUCTS */
 
 /* Pathname to the NSD pidfile */
 #define PIDFILE CHROOTDIR "/var/run/nsd.pid"
@@ -837,3 +840,8 @@ int memcmp(const void *x, const void *y, size_t n);
 #endif /* !HAVE_STRUCT_TIMESPEC */
 #endif /* !CONFIG_DEFINES */
 
+#ifdef PACKED_STRUCTS
+#define ATTR_PACKED __attribute__((__packed__))
+#else
+#define ATTR_PACKED
+#endif
