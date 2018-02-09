@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1031 2018/02/04 03:19:53 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.1032 2018/02/09 04:38:24 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -94,8 +94,9 @@ MKGCCCMDS?=	no
 #
 # What OpenSSL is used?
 # 
-.if ${MACHINE} == "amd64"
-HAVE_OPENSSL?=  10
+.if ${MACHINE} == "amd64" || \
+    ${MACHINE} == "i386"
+HAVE_OPENSSL?=  11
 .else
 HAVE_OPENSSL?=  10
 .endif
