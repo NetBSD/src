@@ -13,15 +13,11 @@ fcrypt_body:
 
 	xorl	%edi,%edi
 	xorl	%esi,%esi
-	call	.L000PIC_me_up
-.L000PIC_me_up:
-	popl	%edx
-	leal	_GLOBAL_OFFSET_TABLE_+[.-.L000PIC_me_up](%edx),%edx
-	movl	DES_SPtrans@GOT(%edx),%edx
+	leal	DES_SPtrans,%edx
 	pushl	%edx
 	movl	28(%esp),%ebp
 	pushl	$25
-.L001start:
+.L000start:
 
 
 	movl	36(%esp),%eax
@@ -828,7 +824,7 @@ fcrypt_body:
 	movl	%esi,%edi
 	movl	%eax,%esi
 	movl	%ebx,(%esp)
-	jnz	.L001start
+	jnz	.L000start
 
 
 	movl	28(%esp),%edx
