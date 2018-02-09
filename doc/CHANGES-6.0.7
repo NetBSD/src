@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.7,v 1.1.2.126 2018/02/02 13:14:15 martin Exp $
+# $NetBSD: CHANGES-6.0.7,v 1.1.2.127 2018/02/09 14:12:55 martin Exp $
 
 A complete list of changes from the NetBSD 6.0.6 release to the NetBSD 6.0.7
 release:
@@ -15307,4 +15307,9 @@ sys/netinet6/nd6_nbr.c				1.145 (via patch)
 
 	Fix memory leak.
 	[maxv, ticket #1525]
+
+sys/netinet/ip_input.c				1.366
+
+	Disable LSRR/SSRR by default.
+	[maxv, ticket #1526]
 
