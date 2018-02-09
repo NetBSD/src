@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.68 2018/02/07 22:49:32 maya Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.69 2018/02/09 18:45:55 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.68 2018/02/07 22:49:32 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.69 2018/02/09 18:45:55 maxv Exp $");
 
 #include "opt_xen.h"
 
@@ -759,11 +759,12 @@ cpu_probe_fpu(struct cpu_info *ci)
 
 	x86_fpu_save = FPU_SAVE_XSAVE;
 
+#if 0 /* XXX PR 52966 */
 	/* xsaveopt ought to be faster than xsave */
 	x86_cpuid2(0xd, 1, descs);
-	if ((descs[0] & CPUID_PES1_XSAVEOPT) &&
-	    (cpu_vendor == CPUVENDOR_INTEL)) /* XXX PR 52966 */
+	if (descs[0] & CPUID_PES1_XSAVEOPT)
 		x86_fpu_save = FPU_SAVE_XSAVEOPT;
+#endif
 
 	/* Get features and maximum size of the save area */
 	x86_cpuid(0xd, descs);
