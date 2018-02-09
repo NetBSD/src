@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.103 2018/01/10 10:56:30 knakahara Exp $	*/
+/*	$NetBSD: in.h,v 1.104 2018/02/09 18:31:52 maxv Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -450,9 +450,7 @@ struct ip_mreq {
 #define	IPCTL_FORWARDING	1	/* act as router */
 #define	IPCTL_SENDREDIRECTS	2	/* may send redirects when forwarding */
 #define	IPCTL_DEFTTL		3	/* default TTL */
-#ifdef notyet
-#define	IPCTL_DEFMTU		4	/* default MTU */
-#endif
+/* IPCTL_DEFMTU=4, never implemented */
 #define	IPCTL_FORWSRCRT		5	/* forward source-routed packets */
 #define	IPCTL_DIRECTEDBCAST	6	/* default broadcast behavior */
 #define	IPCTL_ALLOWSRCRT	7	/* allow/drop all source-routed pkts */
