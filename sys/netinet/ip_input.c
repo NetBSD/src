@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.298 2012/01/09 14:31:22 liamjfoy Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.298.2.1 2018/02/09 14:09:35 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.298 2012/01/09 14:31:22 liamjfoy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.298.2.1 2018/02/09 14:09:35 martin Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -161,10 +161,10 @@ __KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.298 2012/01/09 14:31:22 liamjfoy Exp 
 #define	IPSENDREDIRECTS	1
 #endif
 #ifndef IPFORWSRCRT
-#define	IPFORWSRCRT	1	/* forward source-routed packets */
+#define	IPFORWSRCRT	0	/* forward source-routed packets */
 #endif
 #ifndef IPALLOWSRCRT
-#define	IPALLOWSRCRT	1	/* allow source-routed packets */
+#define	IPALLOWSRCRT	0	/* allow source-routed packets */
 #endif
 #ifndef IPMTUDISC
 #define IPMTUDISC	1
