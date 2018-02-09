@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.91 2017/10/28 00:37:13 pgoyette Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.92 2018/02/09 09:07:13 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.91 2017/10/28 00:37:13 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.92 2018/02/09 09:07:13 maxv Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -205,7 +205,7 @@ ubc_init(void)
 
 	if (uvm_map(kernel_map, (vaddr_t *)&ubc_object.kva,
 		    ubc_nwins << ubc_winshift, &ubc_object.uobj, 0, (vsize_t)va,
-		    UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_NONE,
+		    UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW, UVM_INH_NONE,
 				UVM_ADV_RANDOM, UVM_FLAG_NOMERGE)) != 0) {
 		panic("ubc_init: failed to map ubc_object");
 	}
