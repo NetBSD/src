@@ -1,4 +1,4 @@
-/*	$NetBSD: sc.c,v 1.16 2017/10/31 15:10:28 christos Exp $	*/
+/*	$NetBSD: sc.c,v 1.17 2018/02/09 22:08:28 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -408,6 +408,7 @@ scabort(struct scsi_softc *hs)
 	    hs->sc_ctlr, hd->scsi_psns, hd->scsi_ssts, hd->scsi_ints);
 
 	if (hd->scsi_ints != 0)
+		/* write register value back to register */
 		hd->scsi_ints = hd->scsi_ints;
 
 	if (hd->scsi_psns == 0 || (hd->scsi_ssts & SSTS_INITIATOR) == 0)
