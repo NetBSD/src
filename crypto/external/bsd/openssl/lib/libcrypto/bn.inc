@@ -1,4 +1,4 @@
-#	$NetBSD: bn.inc,v 1.4 2018/02/08 21:57:24 christos Exp $
+#	$NetBSD: bn.inc,v 1.5 2018/02/09 13:35:45 christos Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -45,5 +45,5 @@ rsaz_exp.c
 SRCS += ${BN_SRCS}
 
 .for cryptosrc in ${BN_SRCS}
-CPPFLAGS.${cryptosrc} = -I${OPENSSLSRC}/crypto/bn
+CPPFLAGS.${cryptosrc} = -I${OPENSSLSRC}/crypto/bn ${BNCPPFLAGS}
 .endfor
