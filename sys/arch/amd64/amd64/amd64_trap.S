@@ -1,4 +1,4 @@
-/*	$NetBSD: amd64_trap.S,v 1.23 2018/01/21 11:21:40 maxv Exp $	*/
+/*	$NetBSD: amd64_trap.S,v 1.24 2018/02/09 08:54:11 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2017 The NetBSD Foundation, Inc.
@@ -162,8 +162,6 @@ IDTVEC(trap02)
 	SVS_LEAVE_ALTSTACK
 
 .Lnmileave:
-	movw	TF_ES(%rsp),%es
-	movw	TF_DS(%rsp),%ds
 	INTR_RESTORE_GPRS
 	addq	$TF_REGSIZE+16,%rsp
 	iretq
