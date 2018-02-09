@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.31 2018/02/07 13:16:50 christos Exp $
+# $NetBSD: Makefile,v 1.32 2018/02/09 02:37:20 christos Exp $
 
 WARNS?=	0	# XXX third-party program, many issues
 NOCLANGERROR=	# defined
@@ -30,7 +30,9 @@ CPPFLAGS+= -I${NETBSDSRCDIR}/lib/libipsec -I.
 CPPFLAGS+= -DIPSEC_DEBUG -DHAVE_CONFIG_H -DENABLE_WILDCARD_MATCH
 CPPFLAGS+= -DADMINPORTDIR=\"/var/run\"
 CPPFLAGS+= -DSYSCONFDIR=\"/etc/racoon\"
+.if ${HAVE_OPENSSL} < 11
 CPPFLAGS+= -DOPENSSL_API_COMPAT=0x10100000L
+.endif
 
 LDADD+= -ll -ly -lipsec -lutil
 DPADD+= ${LIBL} ${LIBY} ${LIBCRYPTO} ${LIBUTIL}
