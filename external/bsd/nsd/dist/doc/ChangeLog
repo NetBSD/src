@@ -1,3 +1,165 @@
+11 December 2017: Wouter
+	- Add test for support of -Wno-address-of-packed-member for
+	  --enable-packed.
+	- tag for release 4.1.19
+
+8 December 2017: Wouter
+	- tag for 4.1.19rc1
+
+7 December 2017: Wouter
+	- Fixup lexer warning for gcc 4.2.
+
+6 December 2017: Wouter
+	- Fix 3392: Fix regression in 4.1.18 for notify lists with ip4
+	  and ip6 targets.
+
+5 December 2017: Wouter
+	- Fix spelling error in xfr-inspect.
+
+1 December 2017: Wouter
+	- Fix warnings emitted by clang for --enable-packed.  Alignment is not
+	  a problem for x86_64, don't enable packed when the platform
+	  requires aligned access.
+
+30 November 2017: Wouter
+	- tag for 4.1.18 release.
+	- trunk has 4.1.19 in development.
+	- ignore fallthrough compiler warning in flex EOF rule.
+
+27 November 2017: Wouter
+	- Fix crash for DS query when parent and child zones both configured
+	  in nsd.conf and parent zone has not loaded properly.
+	- tag for 4.1.18rc2.
+
+16 November 2017: Wouter
+	- tag for 4.1.18rc1.
+
+14 November 2017: Wouter
+	- Fix #2871: Increase number of sockets for xfrd transfers.
+
+6 November 2017: Wouter
+	- Set usage counts in namedb tree to uint32 to save memory.
+	- Fix up debug content from nsec3 collision printout work.
+
+2 November 2016: Wouter
+	- make ip-transparent option work on OpenBSD.
+
+11 October 2016: Wouter
+	- Fix #1567: Change crit to err log level for gettimeofday failure.
+	  Add defines for compile without syslog.
+
+9 October 2016: Wouter
+	- Fix collision printout of nsec3 to print name, hash and reverse.
+
+2 October 2016: Wouter
+	- nsd-control zonestatus prints wait time between attempts, for zones
+	  that are in that waiting time.
+
+19 September 2016: Wouter
+	- merges feature branch branches/alloced_prehashes into trunk.
+
+18 September 2016: Wouter
+	- Fix #1446: A corrupted zone file "propagates" to good ones.
+
+14 September 2016: Wouter
+	- Fix layout in xfrd.c.
+
+6 September 2017: Willem
+	- Save memory by selectively allocate precompiled nsec3 hashes
+
+29 August 2016: Wouter
+	- With --enable-packed save memory, at expense of unaligned reads.
+	- Fix writev compile warning on FreeBSD.
+
+25 July 2016: Wouter
+	- NSD sends up to 16 notifies simultaneously for up to 64 zones,
+	  to increase rate of notification for large master configurations.
+
+24 July 2016: Wouter
+	- Fix gcc 7.1.1 warnings.
+
+17 July 2016: Wouter
+	- Trunk has 4.1.18
+	- xfr-inspect is part of source dir, but not made or installed by
+	  default.
+	- retry timeout between sending notifies dropped from 15 to 3 sec.
+
+13 July 2016: Wouter
+	- tag 4.1.17rc1, and that became the 4.1.17 release on 21 July 2017.
+
+29 June 2016: Wouter
+	- make depend.
+
+26 June 2016: Wouter
+	- Fix text format of deletes for CDS and CDNSKEY, single 0 to represent
+	  empty base64 or hex string.
+
+23 June 2016: Wouter
+	- Fix potential null pointer in nsec3 adjustment tree.
+
+15 June 2016: Wouter
+	- xfr-inspect debug tool prints out xfr contents of files in tmp.
+
+6 June 2016: Wouter
+	- Fix #1272: use writev to put tcp length field with data for outgoing
+	  zone transfer requests.
+
+16 May 2016: Wouter
+	- zone parser parses type AVC (it has TXT format).
+
+25 April 2016: Wouter
+	- 4.1.16 release tag.
+	- trunk contains 4.1.17 in development.
+
+11 April 2016: Wouter
+	- 4.1.16 rc1 tag for release.
+	- minor manpage fix.
+
+5 April 2016: Wouter
+	- Patch for expire state in multi-master when masters includes
+	  broken master.
+
+27 March 2016: Wouter
+	- Fix 1243: Option to make NSD emit really minimal responses,
+	  minimal-responses: yes in nsd.conf.
+	- but they give additional information for priming queries (type NS).
+
+6 March 2016: Wouter
+	- Fix 1228: OpenSSL include is not guarded with HAVE_SSL
+
+28 February 2016: Wouter
+	- Printout serial error with hint it may be too big.
+
+20 February 2016: Wouter
+	- Fix missing _t to _type conversion for disable-radix-tree option.
+
+15 February 2016: Wouter
+	- zone parser can parse acronyms for algorithms ED25519 and ED448.
+
+13 February 2016: Wouter
+	- Calculate new udb index after growing the array, fix from
+	  Chaofeng Liu.
+
+7 February 2016: Wouter
+	- tag for 4.1.15 rc1.  Which became 4.1.15 on 16 Feb.  Trunk 4.1.16.
+
+19 January 2016: Wouter
+	- Fix to rename _t typedefs because POSIX reserves them.
+
+3 January 2016: Wouter
+	- Fix #1195: Fix so that NSD fails on non-compliant values for Serial.
+
+14 December 2016: Wouter
+	- Squelch zone transfer error address family not supported by protocol
+	  at low verbosity levels.
+
+13 December 2016: Wouter
+	- Fix nsd-control and ipv6 only.
+
+8 December 2016: Wouter
+	- tag 4.1.14
+	- trunk contains 4.1.15 in development.
+
 1 December 2016: Wouter
 	- Fix restart of zone transfers when new config becomes available.
 	- tag 4.1.14rc1

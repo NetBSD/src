@@ -478,7 +478,8 @@ nsec3_rrsets_changed_remove_prehash(domain_type* domain, zone_type* zone)
 	/* see if the domain is no longer precompiled */
 	/* it has a hash_node, but no longer fulfills conditions */
 	if(nsec3_domain_part_of_zone(domain, zone) && domain->nsec3 &&
-		domain->nsec3->hash_node.key &&
+		domain->nsec3->hash_wc &&
+		domain->nsec3->hash_wc->hash.node.key &&
 		!nsec3_condition_hash(domain, zone)) {
 		/* remove precompile */
 		domain->nsec3->nsec3_cover = NULL;
@@ -486,12 +487,13 @@ nsec3_rrsets_changed_remove_prehash(domain_type* domain, zone_type* zone)
 		domain->nsec3->nsec3_is_exact = 0;
 		/* remove it from the hash tree */
 		zone_del_domain_in_hash_tree(zone->hashtree,
-			&domain->nsec3->hash_node);
+			&domain->nsec3->hash_wc->hash.node);
 		zone_del_domain_in_hash_tree(zone->wchashtree,
-			&domain->nsec3->wchash_node);
+			&domain->nsec3->hash_wc->wc.node);
 	}
 	if(domain != zone->apex && domain->nsec3 &&
-		domain->nsec3->dshash_node.key &&
+		domain->nsec3->ds_parent_hash &&
+		domain->nsec3->ds_parent_hash->node.key &&
 		(!domain->parent || nsec3_domain_part_of_zone(domain->parent, zone)) &&
 		!nsec3_condition_dshash(domain, zone)) {
 		/* remove precompile */
@@ -499,7 +501,7 @@ nsec3_rrsets_changed_remove_prehash(domain_type* domain, zone_type* zone)
 		domain->nsec3->nsec3_ds_parent_is_exact = 0;
 		/* remove it from the hash tree */
 		zone_del_domain_in_hash_tree(zone->dshashtree,
-			&domain->nsec3->dshash_node);
+			&domain->nsec3->ds_parent_hash->node);
 	}
 }
 
@@ -510,13 +512,15 @@ nsec3_rrsets_changed_add_prehash(namedb_type* db, domain_type* domain,
 {
 	if(!zone->nsec3_param)
 		return;
-	if((!domain->nsec3 || !domain->nsec3->hash_node.key)
+	if((!domain->nsec3 || !domain->nsec3->hash_wc
+	                   || !domain->nsec3->hash_wc->hash.node.key)
 		&& nsec3_condition_hash(domain, zone)) {
 		region_type* tmpregion = region_create(xalloc, free);
 		nsec3_precompile_domain(db, domain, zone, tmpregion);
 		region_destroy(tmpregion);
 	}
-	if((!domain->nsec3 || !domain->nsec3->dshash_node.key)
+	if((!domain->nsec3 || !domain->nsec3->ds_parent_hash
+	                   || !domain->nsec3->ds_parent_hash->node.key)
 		&& nsec3_condition_dshash(domain, zone)) {
 		nsec3_precompile_domain_ds(db, domain, zone);
 	}
@@ -752,7 +756,9 @@ add_RR(namedb_type* db, const dname_type* dname,
 	rr_type *rrs_old;
 	ssize_t rdata_num;
 	int rrnum;
+#ifdef NSEC3
 	int rrset_added = 0;
+#endif
 	domain = domain_table_find(db->domains, dname);
 	if(!domain) {
 		/* create the domain */
@@ -770,7 +776,9 @@ add_RR(namedb_type* db, const dname_type* dname,
 		rrset->rrs = 0;
 		rrset->rr_count = 0;
 		domain_add_rrset(domain, rrset);
+#ifdef NSEC3
 		rrset_added = 1;
+#endif
 	}
 
 	/* dnames in rdata are normalized, conform RFC 4035,
@@ -858,10 +866,10 @@ add_RR(namedb_type* db, const dname_type* dname,
 
 static zone_type*
 find_or_create_zone(namedb_type* db, const dname_type* zone_name,
-	nsd_options_t* opt, const char* zstr, const char* patname)
+	struct nsd_options* opt, const char* zstr, const char* patname)
 {
 	zone_type* zone;
-	zone_options_t* zopt;
+	struct zone_options* zopt;
 	zone = namedb_find_zone(db, zone_name);
 	if(zone) {
 		return zone;
@@ -958,7 +966,7 @@ delete_zone_rrs(namedb_type* db, zone_type* zone)
 /* return value 0: syntaxerror,badIXFR, 1:OK, 2:done_and_skip_it */
 static int
 apply_ixfr(namedb_type* db, FILE *in, const char* zone, uint32_t serialno,
-	nsd_options_t* opt, uint32_t seq_nr, uint32_t seq_total,
+	struct nsd_options* opt, uint32_t seq_nr, uint32_t seq_total,
 	int* is_axfr, int* delete_mode, int* rr_count,
 	udb_ptr* udbz, struct zone** zone_res, const char* patname, int* bytes,
 	int* softfail)
@@ -1256,7 +1264,7 @@ check_for_bad_serial(namedb_type* db, const char* zone_str, uint32_t old_serial)
 
 static int
 apply_ixfr_for_zone(nsd_type* nsd, zone_type* zonedb, FILE* in,
-	nsd_options_t* opt, udb_base* taskudb, udb_ptr* last_task,
+	struct nsd_options* opt, udb_base* taskudb, udb_ptr* last_task,
 	uint32_t xfrfilenr)
 {
 	char zone_buf[3072];
@@ -1617,7 +1625,7 @@ void* task_new_stat_info(udb_base* udb, udb_ptr* last, struct nsdst* stat,
 	udb_ptr e;
 	DEBUG(DEBUG_IPC,1, (LOG_INFO, "add task stat_info"));
 	if(!task_create_new_elem(udb, last, &e, sizeof(struct task_list_d)+
-		sizeof(*stat) + sizeof(stc_t)*child_count, NULL)) {
+		sizeof(*stat) + sizeof(stc_type)*child_count, NULL)) {
 		log_msg(LOG_ERR, "tasklist: out of space, cannot add stati");
 		return NULL;
 	}
@@ -1665,7 +1673,7 @@ task_new_del_zone(udb_base* udb, udb_ptr* last, const dname_type* dname)
 	udb_ptr_unlink(&e, udb);
 }
 
-void task_new_add_key(udb_base* udb, udb_ptr* last, key_options_t* key)
+void task_new_add_key(udb_base* udb, udb_ptr* last, struct key_options* key)
 {
 	char* p;
 	udb_ptr e;
@@ -1703,7 +1711,8 @@ void task_new_del_key(udb_base* udb, udb_ptr* last, const char* name)
 	udb_ptr_unlink(&e, udb);
 }
 
-void task_new_add_pattern(udb_base* udb, udb_ptr* last, pattern_options_t* p)
+void task_new_add_pattern(udb_base* udb, udb_ptr* last,
+	struct pattern_options* p)
 {
 	region_type* temp;
 	buffer_type* buffer;
@@ -1743,7 +1752,7 @@ void task_new_del_pattern(udb_base* udb, udb_ptr* last, const char* name)
 	udb_ptr_unlink(&e, udb);
 }
 
-void task_new_opt_change(udb_base* udb, udb_ptr* last, nsd_options_t* opt)
+void task_new_opt_change(udb_base* udb, udb_ptr* last, struct nsd_options* opt)
 {
 	udb_ptr e;
 	DEBUG(DEBUG_IPC,1, (LOG_INFO, "add task opt_change"));
@@ -1837,7 +1846,7 @@ task_process_checkzones(struct nsd* nsd, udb_base* udb, udb_ptr* last_task,
 	/* on SIGHUP check if zone-text-files changed and if so,
 	 * reread.  When from xfrd-reload, no need to fstat the files */
 	if(task->yesno) {
-		zone_options_t* zo = zone_options_find(nsd->options,
+		struct zone_options* zo = zone_options_find(nsd->options,
 			task->zname);
 		if(zo)
 			namedb_check_zonefile(nsd, udb, last_task, zo);
@@ -1851,7 +1860,7 @@ static void
 task_process_writezones(struct nsd* nsd, struct task_list_d* task)
 {
 	if(task->yesno) {
-		zone_options_t* zo = zone_options_find(nsd->options,
+		struct zone_options* zo = zone_options_find(nsd->options,
 			task->zname);
 		if(zo)
 			namedb_write_zonefile(nsd, zo);
@@ -1893,7 +1902,7 @@ static void
 task_process_del_zone(struct nsd* nsd, struct task_list_d* task)
 {
 	zone_type* zone;
-	zone_options_t* zopt;
+	struct zone_options* zopt;
 	DEBUG(DEBUG_IPC,1, (LOG_INFO, "delzone task %s", dname_to_string(
 		task->zname, NULL)));
 	zone = namedb_find_zone(nsd->db, task->zname);
@@ -1927,7 +1936,7 @@ task_process_del_zone(struct nsd* nsd, struct task_list_d* task)
 static void
 task_process_add_key(struct nsd* nsd, struct task_list_d* task)
 {
-	key_options_t key;
+	struct key_options key;
 	key.name = (char*)task->zname;
 	DEBUG(DEBUG_IPC,1, (LOG_INFO, "addkey task %s", key.name));
 	key.algorithm = key.name + strlen(key.name)+1;
@@ -1950,7 +1959,7 @@ task_process_add_pattern(struct nsd* nsd, struct task_list_d* task)
 {
 	region_type* temp = region_create(xalloc, free);
 	buffer_type buffer;
-	pattern_options_t *pat;
+	struct pattern_options *pat;
 	buffer_create_from(&buffer, task->zname, task->yesno);
 	pat = pattern_options_unmarshal(temp, &buffer);
 	DEBUG(DEBUG_IPC,1, (LOG_INFO, "addpattern task %s", pat->pname));

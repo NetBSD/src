@@ -438,6 +438,9 @@
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
+/* Define this to use packed structure alignment. */
+#undef PACKED_STRUCTS
+
 /* Pathname to the NSD pidfile */
 #undef PIDFILE
 
@@ -831,4 +834,10 @@ int memcmp(const void *x, const void *y, size_t n);
 #endif /* !__timespec_defined */
 #endif /* !HAVE_STRUCT_TIMESPEC */
 #endif /* !CONFIG_DEFINES */
+
+#ifdef PACKED_STRUCTS
+#define ATTR_PACKED __attribute__((packed))
+#else
+#define ATTR_PACKED
+#endif
 

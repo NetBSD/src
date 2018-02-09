@@ -49,7 +49,7 @@
 /* The server handler... */
 struct nsd nsd;
 static char hostname[MAXHOSTNAMELEN];
-extern config_parser_state_t* cfg_parser;
+extern config_parser_state_type* cfg_parser;
 
 static void error(const char *format, ...) ATTR_FORMAT(printf, 1, 2);
 
@@ -579,6 +579,7 @@ main(int argc, char *argv[])
 		case 'v':
 			version();
 			/* version exits */
+			break;
 #ifndef NDEBUG
 		case 'F':
 			sscanf(optarg, "%x", &nsd_debug_facilities);
@@ -630,7 +631,7 @@ main(int argc, char *argv[])
 #endif /* INET6 */
 	if(nsd.options->ip_addresses)
 	{
-		ip_address_option_t* ip = nsd.options->ip_addresses;
+		ip_address_option_type* ip = nsd.options->ip_addresses;
 		while(ip) {
 			add_interface(&nodes, &nsd, ip->address);
 			ip = ip->next;
@@ -980,6 +981,7 @@ main(int argc, char *argv[])
 			break;
 		case -1:
 			error("fork() failed: %s", strerror(errno));
+			break;
 		default:
 			/* Parent is done */
 			server_close_all_sockets(nsd.udp, nsd.ifs);

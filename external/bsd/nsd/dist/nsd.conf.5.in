@@ -1,4 +1,4 @@
-.TH "nsd.conf" "5" "Dec  8, 2016" "NLnet Labs" "nsd 4.1.14"
+.TH "nsd.conf" "5" "Dec 11, 2017" "NLnet Labs" "nsd 4.1.19"
 .\" Copyright (c) 2001\-2008, NLnet Labs. All rights reserved.
 .\" See LICENSE for the license.
 .SH "NAME"
@@ -367,6 +367,14 @@ has a timestamp formatted by syslog.
 .B round\-robin:\fR <yes or no>
 Enable round robin rotation of records in the answer.  This changes the
 order of records in the answer and this may balance load across them.
+The default is no.
+.TP
+.B minimal\-responses:\fR <yes or no>
+Enable minimal responses for smaller answers.  This makes packets smaller.
+Extra data is only added for referrals, when it is really necessary.
+This is different from the \-\-enable-minimal-responses configure time option,
+that reduces packets, but exactly to the fragmentation length, the nsd.conf
+option reduces packets as small as possible.
 The default is no.
 .TP
 .B zonefiles\-check:\fR <yes or no>
