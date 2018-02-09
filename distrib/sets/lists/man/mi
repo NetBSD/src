@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1575 2018/01/25 22:09:56 kamil Exp $
+# $NetBSD: mi,v 1.1576 2018/02/09 04:20:38 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -372,7 +372,6 @@
 ./usr/share/man/cat1/openssl.0			man-crypto-catman	.cat
 ./usr/share/man/cat1/openssl_CA.pl.0		man-crypto-catman	.cat
 ./usr/share/man/cat1/openssl_asn1parse.0	man-crypto-catman	.cat
-./usr/share/man/cat1/openssl_c_rehash.0		man-crypto-catman	.cat
 ./usr/share/man/cat1/openssl_ca.0		man-crypto-catman	.cat
 ./usr/share/man/cat1/openssl_ciphers.0		man-crypto-catman	.cat
 ./usr/share/man/cat1/openssl_cms.0		man-crypto-catman	.cat
@@ -3573,7 +3572,6 @@
 ./usr/share/man/html1/openssl.html		man-crypto-htmlman	html
 ./usr/share/man/html1/openssl_CA.pl.html	man-crypto-htmlman	html
 ./usr/share/man/html1/openssl_asn1parse.html	man-crypto-htmlman	html
-./usr/share/man/html1/openssl_c_rehash.html		man-crypto-htmlman	html
 ./usr/share/man/html1/openssl_ca.html		man-crypto-htmlman	html
 ./usr/share/man/html1/openssl_ciphers.html	man-crypto-htmlman	html
 ./usr/share/man/html1/openssl_cms.html		man-crypto-htmlman	html
@@ -6416,7 +6414,6 @@
 ./usr/share/man/man1/openssl.1			man-crypto-man		.man
 ./usr/share/man/man1/openssl_CA.pl.1		man-crypto-man		.man
 ./usr/share/man/man1/openssl_asn1parse.1	man-crypto-man		.man
-./usr/share/man/man1/openssl_c_rehash.1		man-crypto-man		.man
 ./usr/share/man/man1/openssl_ca.1		man-crypto-man		.man
 ./usr/share/man/man1/openssl_ciphers.1		man-crypto-man		.man
 ./usr/share/man/man1/openssl_cms.1		man-crypto-man		.man
