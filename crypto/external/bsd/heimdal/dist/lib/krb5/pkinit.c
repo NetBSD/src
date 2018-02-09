@@ -1,4 +1,4 @@
-/*	$NetBSD: pkinit.c,v 1.3 2018/02/05 16:00:53 christos Exp $	*/
+/*	$NetBSD: pkinit.c,v 1.4 2018/02/09 23:22:13 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 - 2016 Kungliga Tekniska Högskolan
@@ -82,7 +82,7 @@ _krb5_pk_cert_free(struct krb5_pk_cert *cert)
 }
 
 static krb5_error_code
-BN_to_integer(krb5_context context, BIGNUM *bn, heim_integer *integer)
+BN_to_integer(krb5_context context, const BIGNUM *bn, heim_integer *integer)
 {
     integer->length = BN_num_bytes(bn);
     integer->data = malloc(integer->length);
@@ -481,12 +481,12 @@ build_auth_pack(krb5_context context,
 	    DH_get0_pqg(dh, &p, &q, &g);
 #endif
 
-	    ret = BN_to_integer(context, __UNCONST(p), &dp.p);
+	    ret = BN_to_integer(context, p, &dp.p);
 	    if (ret) {
 		free_DomainParameters(&dp);
 		return ret;
 	    }
-	    ret = BN_to_integer(context, __UNCONST(g), &dp.g);
+	    ret = BN_to_integer(context, g, &dp.g);
 	    if (ret) {
 		free_DomainParameters(&dp);
 		return ret;
@@ -496,7 +496,7 @@ build_auth_pack(krb5_context context,
 		free_DomainParameters(&dp);
 		return ENOMEM;
 	    }
-	    ret = BN_to_integer(context, __UNCONST(q), dp.q);
+	    ret = BN_to_integer(context, q, dp.q);
 	    if (ret) {
 		free_DomainParameters(&dp);
 		return ret;
@@ -527,7 +527,7 @@ build_auth_pack(krb5_context context,
 #else
 	    DH_get0_key(dh, &pub_key, NULL);
 #endif
-	    ret = BN_to_integer(context, __UNCONST(pub_key), &dh_pub_key);
+	    ret = BN_to_integer(context, pub_key, &dh_pub_key);
 	    if (ret)
 		return ret;
 
