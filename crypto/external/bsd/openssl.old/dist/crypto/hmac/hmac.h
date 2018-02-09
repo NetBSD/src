@@ -119,6 +119,12 @@ static inline void HMAC_CTX_free(HMAC_CTX *ctx)
 	HMAC_CTX_cleanup(ctx);
 	free(ctx);
 }
+
+static inline void HMAC_CTX_reset(HMAC_CTX *ctx)
+{
+	HMAC_CTX_cleanup(ctx);
+	HMAC_CTX_init(ctx);
+}
 #endif
 
 
