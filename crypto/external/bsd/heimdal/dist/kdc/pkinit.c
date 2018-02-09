@@ -1,4 +1,4 @@
-/*	$NetBSD: pkinit.c,v 1.3 2018/02/05 16:00:52 christos Exp $	*/
+/*	$NetBSD: pkinit.c,v 1.4 2018/02/09 23:22:12 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 - 2016 Kungliga Tekniska Högskolan
@@ -813,7 +813,7 @@ out:
  */
 
 static krb5_error_code
-BN_to_integer(krb5_context context, BIGNUM *bn, heim_integer *integer)
+BN_to_integer(krb5_context context, const BIGNUM *bn, heim_integer *integer)
 {
     integer->length = BN_num_bytes(bn);
     integer->data = malloc(integer->length);
@@ -1038,7 +1038,7 @@ pk_mk_pa_reply_dh(krb5_context context,
 #else
 	DH_get0_key(kdc_dh, &pub_key, NULL);
 #endif
-	ret = BN_to_integer(context, __UNCONST(pub_key), &i);
+	ret = BN_to_integer(context, pub_key, &i);
 	if (ret)
 	    return ret;
 
