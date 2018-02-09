@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.57 2018/01/27 18:17:57 maxv Exp $	*/
+/*	$NetBSD: vector.S,v 1.58 2018/02/09 08:42:26 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -86,8 +86,6 @@
 #include "assym.h"
 
 	.text
-
-/*****************************************************************************/
 
 /*
  * Macros for interrupt entry, call to handler, and exit.
@@ -599,277 +597,60 @@ LABEL(i8259_stubs)
 END(i8259_stubs)
 
 #if NIOAPIC > 0
-	.type _C_LABEL(ioapic_edge_stubs), @object
-LABEL(ioapic_edge_stubs)
-	.quad _C_LABEL(Xintr_ioapic_edge0), _C_LABEL(Xrecurse_ioapic_edge0)
-	.quad _C_LABEL(Xresume_ioapic_edge0)
-	.quad _C_LABEL(Xintr_ioapic_edge1), _C_LABEL(Xrecurse_ioapic_edge1)
-	.quad _C_LABEL(Xresume_ioapic_edge1)
-	.quad _C_LABEL(Xintr_ioapic_edge2), _C_LABEL(Xrecurse_ioapic_edge2)
-	.quad _C_LABEL(Xresume_ioapic_edge2)
-	.quad _C_LABEL(Xintr_ioapic_edge3), _C_LABEL(Xrecurse_ioapic_edge3)
-	.quad _C_LABEL(Xresume_ioapic_edge3)
-	.quad _C_LABEL(Xintr_ioapic_edge4), _C_LABEL(Xrecurse_ioapic_edge4)
-	.quad _C_LABEL(Xresume_ioapic_edge4)
-	.quad _C_LABEL(Xintr_ioapic_edge5), _C_LABEL(Xrecurse_ioapic_edge5)
-	.quad _C_LABEL(Xresume_ioapic_edge5)
-	.quad _C_LABEL(Xintr_ioapic_edge6), _C_LABEL(Xrecurse_ioapic_edge6)
-	.quad _C_LABEL(Xresume_ioapic_edge6)
-	.quad _C_LABEL(Xintr_ioapic_edge7), _C_LABEL(Xrecurse_ioapic_edge7)
-	.quad _C_LABEL(Xresume_ioapic_edge7)
-	.quad _C_LABEL(Xintr_ioapic_edge8), _C_LABEL(Xrecurse_ioapic_edge8)
-	.quad _C_LABEL(Xresume_ioapic_edge8)
-	.quad _C_LABEL(Xintr_ioapic_edge9), _C_LABEL(Xrecurse_ioapic_edge9)
-	.quad _C_LABEL(Xresume_ioapic_edge9)
-	.quad _C_LABEL(Xintr_ioapic_edge10), _C_LABEL(Xrecurse_ioapic_edge10)
-	.quad _C_LABEL(Xresume_ioapic_edge10)
-	.quad _C_LABEL(Xintr_ioapic_edge11), _C_LABEL(Xrecurse_ioapic_edge11)
-	.quad _C_LABEL(Xresume_ioapic_edge11)
-	.quad _C_LABEL(Xintr_ioapic_edge12), _C_LABEL(Xrecurse_ioapic_edge12)
-	.quad _C_LABEL(Xresume_ioapic_edge12)
-	.quad _C_LABEL(Xintr_ioapic_edge13), _C_LABEL(Xrecurse_ioapic_edge13)
-	.quad _C_LABEL(Xresume_ioapic_edge13)
-	.quad _C_LABEL(Xintr_ioapic_edge14), _C_LABEL(Xrecurse_ioapic_edge14)
-	.quad _C_LABEL(Xresume_ioapic_edge14)
-	.quad _C_LABEL(Xintr_ioapic_edge15), _C_LABEL(Xrecurse_ioapic_edge15)
-	.quad _C_LABEL(Xresume_ioapic_edge15)
-	.quad _C_LABEL(Xintr_ioapic_edge16), _C_LABEL(Xrecurse_ioapic_edge16)
-	.quad _C_LABEL(Xresume_ioapic_edge16)
-	.quad _C_LABEL(Xintr_ioapic_edge17), _C_LABEL(Xrecurse_ioapic_edge17)
-	.quad _C_LABEL(Xresume_ioapic_edge17)
-	.quad _C_LABEL(Xintr_ioapic_edge18), _C_LABEL(Xrecurse_ioapic_edge18)
-	.quad _C_LABEL(Xresume_ioapic_edge18)
-	.quad _C_LABEL(Xintr_ioapic_edge19), _C_LABEL(Xrecurse_ioapic_edge19)
-	.quad _C_LABEL(Xresume_ioapic_edge19)
-	.quad _C_LABEL(Xintr_ioapic_edge20), _C_LABEL(Xrecurse_ioapic_edge20)
-	.quad _C_LABEL(Xresume_ioapic_edge20)
-	.quad _C_LABEL(Xintr_ioapic_edge21), _C_LABEL(Xrecurse_ioapic_edge21)
-	.quad _C_LABEL(Xresume_ioapic_edge21)
-	.quad _C_LABEL(Xintr_ioapic_edge22), _C_LABEL(Xrecurse_ioapic_edge22)
-	.quad _C_LABEL(Xresume_ioapic_edge22)
-	.quad _C_LABEL(Xintr_ioapic_edge23), _C_LABEL(Xrecurse_ioapic_edge23)
-	.quad _C_LABEL(Xresume_ioapic_edge23)
-	.quad _C_LABEL(Xintr_ioapic_edge24), _C_LABEL(Xrecurse_ioapic_edge24)
-	.quad _C_LABEL(Xresume_ioapic_edge24)
-	.quad _C_LABEL(Xintr_ioapic_edge25), _C_LABEL(Xrecurse_ioapic_edge25)
-	.quad _C_LABEL(Xresume_ioapic_edge25)
-	.quad _C_LABEL(Xintr_ioapic_edge26), _C_LABEL(Xrecurse_ioapic_edge26)
-	.quad _C_LABEL(Xresume_ioapic_edge26)
-	.quad _C_LABEL(Xintr_ioapic_edge27), _C_LABEL(Xrecurse_ioapic_edge27)
-	.quad _C_LABEL(Xresume_ioapic_edge27)
-	.quad _C_LABEL(Xintr_ioapic_edge28), _C_LABEL(Xrecurse_ioapic_edge28)
-	.quad _C_LABEL(Xresume_ioapic_edge28)
-	.quad _C_LABEL(Xintr_ioapic_edge29), _C_LABEL(Xrecurse_ioapic_edge29)
-	.quad _C_LABEL(Xresume_ioapic_edge29)
-	.quad _C_LABEL(Xintr_ioapic_edge30), _C_LABEL(Xrecurse_ioapic_edge30)
-	.quad _C_LABEL(Xresume_ioapic_edge30)
-	.quad _C_LABEL(Xintr_ioapic_edge31), _C_LABEL(Xrecurse_ioapic_edge31)
-	.quad _C_LABEL(Xresume_ioapic_edge31)
-END(ioapic_edge_stubs)
 
-	.type _C_LABEL(ioapic_level_stubs), @object
-LABEL(ioapic_level_stubs)
-	.quad _C_LABEL(Xintr_ioapic_level0), _C_LABEL(Xrecurse_ioapic_level0)
-	.quad _C_LABEL(Xresume_ioapic_level0)
-	.quad _C_LABEL(Xintr_ioapic_level1), _C_LABEL(Xrecurse_ioapic_level1)
-	.quad _C_LABEL(Xresume_ioapic_level1)
-	.quad _C_LABEL(Xintr_ioapic_level2), _C_LABEL(Xrecurse_ioapic_level2)
-	.quad _C_LABEL(Xresume_ioapic_level2)
-	.quad _C_LABEL(Xintr_ioapic_level3), _C_LABEL(Xrecurse_ioapic_level3)
-	.quad _C_LABEL(Xresume_ioapic_level3)
-	.quad _C_LABEL(Xintr_ioapic_level4), _C_LABEL(Xrecurse_ioapic_level4)
-	.quad _C_LABEL(Xresume_ioapic_level4)
-	.quad _C_LABEL(Xintr_ioapic_level5), _C_LABEL(Xrecurse_ioapic_level5)
-	.quad _C_LABEL(Xresume_ioapic_level5)
-	.quad _C_LABEL(Xintr_ioapic_level6), _C_LABEL(Xrecurse_ioapic_level6)
-	.quad _C_LABEL(Xresume_ioapic_level6)
-	.quad _C_LABEL(Xintr_ioapic_level7), _C_LABEL(Xrecurse_ioapic_level7)
-	.quad _C_LABEL(Xresume_ioapic_level7)
-	.quad _C_LABEL(Xintr_ioapic_level8), _C_LABEL(Xrecurse_ioapic_level8)
-	.quad _C_LABEL(Xresume_ioapic_level8)
-	.quad _C_LABEL(Xintr_ioapic_level9), _C_LABEL(Xrecurse_ioapic_level9)
-	.quad _C_LABEL(Xresume_ioapic_level9)
-	.quad _C_LABEL(Xintr_ioapic_level10), _C_LABEL(Xrecurse_ioapic_level10)
-	.quad _C_LABEL(Xresume_ioapic_level10)
-	.quad _C_LABEL(Xintr_ioapic_level11), _C_LABEL(Xrecurse_ioapic_level11)
-	.quad _C_LABEL(Xresume_ioapic_level11)
-	.quad _C_LABEL(Xintr_ioapic_level12), _C_LABEL(Xrecurse_ioapic_level12)
-	.quad _C_LABEL(Xresume_ioapic_level12)
-	.quad _C_LABEL(Xintr_ioapic_level13), _C_LABEL(Xrecurse_ioapic_level13)
-	.quad _C_LABEL(Xresume_ioapic_level13)
-	.quad _C_LABEL(Xintr_ioapic_level14), _C_LABEL(Xrecurse_ioapic_level14)
-	.quad _C_LABEL(Xresume_ioapic_level14)
-	.quad _C_LABEL(Xintr_ioapic_level15), _C_LABEL(Xrecurse_ioapic_level15)
-	.quad _C_LABEL(Xresume_ioapic_level15)
-	.quad _C_LABEL(Xintr_ioapic_level16), _C_LABEL(Xrecurse_ioapic_level16)
-	.quad _C_LABEL(Xresume_ioapic_level16)
-	.quad _C_LABEL(Xintr_ioapic_level17), _C_LABEL(Xrecurse_ioapic_level17)
-	.quad _C_LABEL(Xresume_ioapic_level17)
-	.quad _C_LABEL(Xintr_ioapic_level18), _C_LABEL(Xrecurse_ioapic_level18)
-	.quad _C_LABEL(Xresume_ioapic_level18)
-	.quad _C_LABEL(Xintr_ioapic_level19), _C_LABEL(Xrecurse_ioapic_level19)
-	.quad _C_LABEL(Xresume_ioapic_level19)
-	.quad _C_LABEL(Xintr_ioapic_level20), _C_LABEL(Xrecurse_ioapic_level20)
-	.quad _C_LABEL(Xresume_ioapic_level20)
-	.quad _C_LABEL(Xintr_ioapic_level21), _C_LABEL(Xrecurse_ioapic_level21)
-	.quad _C_LABEL(Xresume_ioapic_level21)
-	.quad _C_LABEL(Xintr_ioapic_level22), _C_LABEL(Xrecurse_ioapic_level22)
-	.quad _C_LABEL(Xresume_ioapic_level22)
-	.quad _C_LABEL(Xintr_ioapic_level23), _C_LABEL(Xrecurse_ioapic_level23)
-	.quad _C_LABEL(Xresume_ioapic_level23)
-	.quad _C_LABEL(Xintr_ioapic_level24), _C_LABEL(Xrecurse_ioapic_level24)
-	.quad _C_LABEL(Xresume_ioapic_level24)
-	.quad _C_LABEL(Xintr_ioapic_level25), _C_LABEL(Xrecurse_ioapic_level25)
-	.quad _C_LABEL(Xresume_ioapic_level25)
-	.quad _C_LABEL(Xintr_ioapic_level26), _C_LABEL(Xrecurse_ioapic_level26)
-	.quad _C_LABEL(Xresume_ioapic_level26)
-	.quad _C_LABEL(Xintr_ioapic_level27), _C_LABEL(Xrecurse_ioapic_level27)
-	.quad _C_LABEL(Xresume_ioapic_level27)
-	.quad _C_LABEL(Xintr_ioapic_level28), _C_LABEL(Xrecurse_ioapic_level28)
-	.quad _C_LABEL(Xresume_ioapic_level28)
-	.quad _C_LABEL(Xintr_ioapic_level29), _C_LABEL(Xrecurse_ioapic_level29)
-	.quad _C_LABEL(Xresume_ioapic_level29)
-	.quad _C_LABEL(Xintr_ioapic_level30), _C_LABEL(Xrecurse_ioapic_level30)
-	.quad _C_LABEL(Xresume_ioapic_level30)
-	.quad _C_LABEL(Xintr_ioapic_level31), _C_LABEL(Xrecurse_ioapic_level31)
-	.quad _C_LABEL(Xresume_ioapic_level31)
-END(ioapic_level_stubs)
+/*
+ * Create a struct intrstub.
+ */
+#define INTRSTUB_ENTRY(name) \
+	.quad _C_LABEL(Xintr_ ## name ), _C_LABEL(Xrecurse_ ## name ) ; \
+	.quad _C_LABEL(Xresume_ ## name ) ;
 
-	.type _C_LABEL(x2apic_edge_stubs), @object
-LABEL(x2apic_edge_stubs)
-	.quad _C_LABEL(Xintr_x2apic_edge0), _C_LABEL(Xrecurse_x2apic_edge0)
-	.quad _C_LABEL(Xresume_x2apic_edge0)
-	.quad _C_LABEL(Xintr_x2apic_edge1), _C_LABEL(Xrecurse_x2apic_edge1)
-	.quad _C_LABEL(Xresume_x2apic_edge1)
-	.quad _C_LABEL(Xintr_x2apic_edge2), _C_LABEL(Xrecurse_x2apic_edge2)
-	.quad _C_LABEL(Xresume_x2apic_edge2)
-	.quad _C_LABEL(Xintr_x2apic_edge3), _C_LABEL(Xrecurse_x2apic_edge3)
-	.quad _C_LABEL(Xresume_x2apic_edge3)
-	.quad _C_LABEL(Xintr_x2apic_edge4), _C_LABEL(Xrecurse_x2apic_edge4)
-	.quad _C_LABEL(Xresume_x2apic_edge4)
-	.quad _C_LABEL(Xintr_x2apic_edge5), _C_LABEL(Xrecurse_x2apic_edge5)
-	.quad _C_LABEL(Xresume_x2apic_edge5)
-	.quad _C_LABEL(Xintr_x2apic_edge6), _C_LABEL(Xrecurse_x2apic_edge6)
-	.quad _C_LABEL(Xresume_x2apic_edge6)
-	.quad _C_LABEL(Xintr_x2apic_edge7), _C_LABEL(Xrecurse_x2apic_edge7)
-	.quad _C_LABEL(Xresume_x2apic_edge7)
-	.quad _C_LABEL(Xintr_x2apic_edge8), _C_LABEL(Xrecurse_x2apic_edge8)
-	.quad _C_LABEL(Xresume_x2apic_edge8)
-	.quad _C_LABEL(Xintr_x2apic_edge9), _C_LABEL(Xrecurse_x2apic_edge9)
-	.quad _C_LABEL(Xresume_x2apic_edge9)
-	.quad _C_LABEL(Xintr_x2apic_edge10), _C_LABEL(Xrecurse_x2apic_edge10)
-	.quad _C_LABEL(Xresume_x2apic_edge10)
-	.quad _C_LABEL(Xintr_x2apic_edge11), _C_LABEL(Xrecurse_x2apic_edge11)
-	.quad _C_LABEL(Xresume_x2apic_edge11)
-	.quad _C_LABEL(Xintr_x2apic_edge12), _C_LABEL(Xrecurse_x2apic_edge12)
-	.quad _C_LABEL(Xresume_x2apic_edge12)
-	.quad _C_LABEL(Xintr_x2apic_edge13), _C_LABEL(Xrecurse_x2apic_edge13)
-	.quad _C_LABEL(Xresume_x2apic_edge13)
-	.quad _C_LABEL(Xintr_x2apic_edge14), _C_LABEL(Xrecurse_x2apic_edge14)
-	.quad _C_LABEL(Xresume_x2apic_edge14)
-	.quad _C_LABEL(Xintr_x2apic_edge15), _C_LABEL(Xrecurse_x2apic_edge15)
-	.quad _C_LABEL(Xresume_x2apic_edge15)
-	.quad _C_LABEL(Xintr_x2apic_edge16), _C_LABEL(Xrecurse_x2apic_edge16)
-	.quad _C_LABEL(Xresume_x2apic_edge16)
-	.quad _C_LABEL(Xintr_x2apic_edge17), _C_LABEL(Xrecurse_x2apic_edge17)
-	.quad _C_LABEL(Xresume_x2apic_edge17)
-	.quad _C_LABEL(Xintr_x2apic_edge18), _C_LABEL(Xrecurse_x2apic_edge18)
-	.quad _C_LABEL(Xresume_x2apic_edge18)
-	.quad _C_LABEL(Xintr_x2apic_edge19), _C_LABEL(Xrecurse_x2apic_edge19)
-	.quad _C_LABEL(Xresume_x2apic_edge19)
-	.quad _C_LABEL(Xintr_x2apic_edge20), _C_LABEL(Xrecurse_x2apic_edge20)
-	.quad _C_LABEL(Xresume_x2apic_edge20)
-	.quad _C_LABEL(Xintr_x2apic_edge21), _C_LABEL(Xrecurse_x2apic_edge21)
-	.quad _C_LABEL(Xresume_x2apic_edge21)
-	.quad _C_LABEL(Xintr_x2apic_edge22), _C_LABEL(Xrecurse_x2apic_edge22)
-	.quad _C_LABEL(Xresume_x2apic_edge22)
-	.quad _C_LABEL(Xintr_x2apic_edge23), _C_LABEL(Xrecurse_x2apic_edge23)
-	.quad _C_LABEL(Xresume_x2apic_edge23)
-	.quad _C_LABEL(Xintr_x2apic_edge24), _C_LABEL(Xrecurse_x2apic_edge24)
-	.quad _C_LABEL(Xresume_x2apic_edge24)
-	.quad _C_LABEL(Xintr_x2apic_edge25), _C_LABEL(Xrecurse_x2apic_edge25)
-	.quad _C_LABEL(Xresume_x2apic_edge25)
-	.quad _C_LABEL(Xintr_x2apic_edge26), _C_LABEL(Xrecurse_x2apic_edge26)
-	.quad _C_LABEL(Xresume_x2apic_edge26)
-	.quad _C_LABEL(Xintr_x2apic_edge27), _C_LABEL(Xrecurse_x2apic_edge27)
-	.quad _C_LABEL(Xresume_x2apic_edge27)
-	.quad _C_LABEL(Xintr_x2apic_edge28), _C_LABEL(Xrecurse_x2apic_edge28)
-	.quad _C_LABEL(Xresume_x2apic_edge28)
-	.quad _C_LABEL(Xintr_x2apic_edge29), _C_LABEL(Xrecurse_x2apic_edge29)
-	.quad _C_LABEL(Xresume_x2apic_edge29)
-	.quad _C_LABEL(Xintr_x2apic_edge30), _C_LABEL(Xrecurse_x2apic_edge30)
-	.quad _C_LABEL(Xresume_x2apic_edge30)
-	.quad _C_LABEL(Xintr_x2apic_edge31), _C_LABEL(Xrecurse_x2apic_edge31)
-	.quad _C_LABEL(Xresume_x2apic_edge31)
-END(x2apic_edge_stubs)
+/*
+ * Create an array of structs intrstub.
+ */
+#define INTRSTUB_ARRAY(name) 			; \
+	.type _C_LABEL(name ## _stubs), @object	; \
+LABEL(name ## _stubs)				; \
+	INTRSTUB_ENTRY(name ## 0)		; \
+	INTRSTUB_ENTRY(name ## 1)		; \
+	INTRSTUB_ENTRY(name ## 2)		; \
+	INTRSTUB_ENTRY(name ## 3)		; \
+	INTRSTUB_ENTRY(name ## 4)		; \
+	INTRSTUB_ENTRY(name ## 5)		; \
+	INTRSTUB_ENTRY(name ## 6)		; \
+	INTRSTUB_ENTRY(name ## 7)		; \
+	INTRSTUB_ENTRY(name ## 8)		; \
+	INTRSTUB_ENTRY(name ## 9)		; \
+	INTRSTUB_ENTRY(name ## 10)		; \
+	INTRSTUB_ENTRY(name ## 11)		; \
+	INTRSTUB_ENTRY(name ## 12)		; \
+	INTRSTUB_ENTRY(name ## 13)		; \
+	INTRSTUB_ENTRY(name ## 14)		; \
+	INTRSTUB_ENTRY(name ## 15)		; \
+	INTRSTUB_ENTRY(name ## 16)		; \
+	INTRSTUB_ENTRY(name ## 17)		; \
+	INTRSTUB_ENTRY(name ## 18)		; \
+	INTRSTUB_ENTRY(name ## 19)		; \
+	INTRSTUB_ENTRY(name ## 20)		; \
+	INTRSTUB_ENTRY(name ## 21)		; \
+	INTRSTUB_ENTRY(name ## 22)		; \
+	INTRSTUB_ENTRY(name ## 23)		; \
+	INTRSTUB_ENTRY(name ## 24)		; \
+	INTRSTUB_ENTRY(name ## 25)		; \
+	INTRSTUB_ENTRY(name ## 26)		; \
+	INTRSTUB_ENTRY(name ## 27)		; \
+	INTRSTUB_ENTRY(name ## 28)		; \
+	INTRSTUB_ENTRY(name ## 29)		; \
+	INTRSTUB_ENTRY(name ## 30)		; \
+	INTRSTUB_ENTRY(name ## 31)		; \
+END(name ## _stubs)
 
-	.type _C_LABEL(x2apic_level_stubs), @object
-LABEL(x2apic_level_stubs)
-	.quad _C_LABEL(Xintr_x2apic_level0), _C_LABEL(Xrecurse_x2apic_level0)
-	.quad _C_LABEL(Xresume_x2apic_level0)
-	.quad _C_LABEL(Xintr_x2apic_level1), _C_LABEL(Xrecurse_x2apic_level1)
-	.quad _C_LABEL(Xresume_x2apic_level1)
-	.quad _C_LABEL(Xintr_x2apic_level2), _C_LABEL(Xrecurse_x2apic_level2)
-	.quad _C_LABEL(Xresume_x2apic_level2)
-	.quad _C_LABEL(Xintr_x2apic_level3), _C_LABEL(Xrecurse_x2apic_level3)
-	.quad _C_LABEL(Xresume_x2apic_level3)
-	.quad _C_LABEL(Xintr_x2apic_level4), _C_LABEL(Xrecurse_x2apic_level4)
-	.quad _C_LABEL(Xresume_x2apic_level4)
-	.quad _C_LABEL(Xintr_x2apic_level5), _C_LABEL(Xrecurse_x2apic_level5)
-	.quad _C_LABEL(Xresume_x2apic_level5)
-	.quad _C_LABEL(Xintr_x2apic_level6), _C_LABEL(Xrecurse_x2apic_level6)
-	.quad _C_LABEL(Xresume_x2apic_level6)
-	.quad _C_LABEL(Xintr_x2apic_level7), _C_LABEL(Xrecurse_x2apic_level7)
-	.quad _C_LABEL(Xresume_x2apic_level7)
-	.quad _C_LABEL(Xintr_x2apic_level8), _C_LABEL(Xrecurse_x2apic_level8)
-	.quad _C_LABEL(Xresume_x2apic_level8)
-	.quad _C_LABEL(Xintr_x2apic_level9), _C_LABEL(Xrecurse_x2apic_level9)
-	.quad _C_LABEL(Xresume_x2apic_level9)
-	.quad _C_LABEL(Xintr_x2apic_level10), _C_LABEL(Xrecurse_x2apic_level10)
-	.quad _C_LABEL(Xresume_x2apic_level10)
-	.quad _C_LABEL(Xintr_x2apic_level11), _C_LABEL(Xrecurse_x2apic_level11)
-	.quad _C_LABEL(Xresume_x2apic_level11)
-	.quad _C_LABEL(Xintr_x2apic_level12), _C_LABEL(Xrecurse_x2apic_level12)
-	.quad _C_LABEL(Xresume_x2apic_level12)
-	.quad _C_LABEL(Xintr_x2apic_level13), _C_LABEL(Xrecurse_x2apic_level13)
-	.quad _C_LABEL(Xresume_x2apic_level13)
-	.quad _C_LABEL(Xintr_x2apic_level14), _C_LABEL(Xrecurse_x2apic_level14)
-	.quad _C_LABEL(Xresume_x2apic_level14)
-	.quad _C_LABEL(Xintr_x2apic_level15), _C_LABEL(Xrecurse_x2apic_level15)
-	.quad _C_LABEL(Xresume_x2apic_level15)
-	.quad _C_LABEL(Xintr_x2apic_level16), _C_LABEL(Xrecurse_x2apic_level16)
-	.quad _C_LABEL(Xresume_x2apic_level16)
-	.quad _C_LABEL(Xintr_x2apic_level17), _C_LABEL(Xrecurse_x2apic_level17)
-	.quad _C_LABEL(Xresume_x2apic_level17)
-	.quad _C_LABEL(Xintr_x2apic_level18), _C_LABEL(Xrecurse_x2apic_level18)
-	.quad _C_LABEL(Xresume_x2apic_level18)
-	.quad _C_LABEL(Xintr_x2apic_level19), _C_LABEL(Xrecurse_x2apic_level19)
-	.quad _C_LABEL(Xresume_x2apic_level19)
-	.quad _C_LABEL(Xintr_x2apic_level20), _C_LABEL(Xrecurse_x2apic_level20)
-	.quad _C_LABEL(Xresume_x2apic_level20)
-	.quad _C_LABEL(Xintr_x2apic_level21), _C_LABEL(Xrecurse_x2apic_level21)
-	.quad _C_LABEL(Xresume_x2apic_level21)
-	.quad _C_LABEL(Xintr_x2apic_level22), _C_LABEL(Xrecurse_x2apic_level22)
-	.quad _C_LABEL(Xresume_x2apic_level22)
-	.quad _C_LABEL(Xintr_x2apic_level23), _C_LABEL(Xrecurse_x2apic_level23)
-	.quad _C_LABEL(Xresume_x2apic_level23)
-	.quad _C_LABEL(Xintr_x2apic_level24), _C_LABEL(Xrecurse_x2apic_level24)
-	.quad _C_LABEL(Xresume_x2apic_level24)
-	.quad _C_LABEL(Xintr_x2apic_level25), _C_LABEL(Xrecurse_x2apic_level25)
-	.quad _C_LABEL(Xresume_x2apic_level25)
-	.quad _C_LABEL(Xintr_x2apic_level26), _C_LABEL(Xrecurse_x2apic_level26)
-	.quad _C_LABEL(Xresume_x2apic_level26)
-	.quad _C_LABEL(Xintr_x2apic_level27), _C_LABEL(Xrecurse_x2apic_level27)
-	.quad _C_LABEL(Xresume_x2apic_level27)
-	.quad _C_LABEL(Xintr_x2apic_level28), _C_LABEL(Xrecurse_x2apic_level28)
-	.quad _C_LABEL(Xresume_x2apic_level28)
-	.quad _C_LABEL(Xintr_x2apic_level29), _C_LABEL(Xrecurse_x2apic_level29)
-	.quad _C_LABEL(Xresume_x2apic_level29)
-	.quad _C_LABEL(Xintr_x2apic_level30), _C_LABEL(Xrecurse_x2apic_level30)
-	.quad _C_LABEL(Xresume_x2apic_level30)
-	.quad _C_LABEL(Xintr_x2apic_level31), _C_LABEL(Xrecurse_x2apic_level31)
-	.quad _C_LABEL(Xresume_x2apic_level31)
-END(x2apic_level_stubs)
+INTRSTUB_ARRAY(ioapic_edge)
+INTRSTUB_ARRAY(ioapic_level)
+
+INTRSTUB_ARRAY(x2apic_edge)
+INTRSTUB_ARRAY(x2apic_level)
+
 #endif
 
 #endif /* !defined(XEN) */
