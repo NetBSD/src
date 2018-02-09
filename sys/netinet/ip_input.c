@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.374 2018/02/07 08:12:25 maxv Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.375 2018/02/09 18:31:52 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.374 2018/02/07 08:12:25 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.375 2018/02/09 18:31:52 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1640,15 +1640,6 @@ sysctl_net_inet_ip_setup(struct sysctllog **clog)
 		       NULL, 0, &ip_defttl, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP,
 		       IPCTL_DEFTTL, CTL_EOL);
-#ifdef IPCTL_DEFMTU
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT /* |CTLFLAG_READWRITE? */,
-		       CTLTYPE_INT, "mtu",
-		       SYSCTL_DESCR("Default MTA for an INET route"),
-		       NULL, 0, &ip_mtu, 0,
-		       CTL_NET, PF_INET, IPPROTO_IP,
-		       IPCTL_DEFMTU, CTL_EOL);
-#endif /* IPCTL_DEFMTU */
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "forwsrcrt",
