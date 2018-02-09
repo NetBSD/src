@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.76 2017/09/17 09:41:35 maxv Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.77 2018/02/09 09:36:42 maxv Exp $	*/
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.76 2017/09/17 09:41:35 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.77 2018/02/09 09:36:42 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -254,7 +254,7 @@ kdb_trap(int type, int code, db_regs_t *regs)
 	db_resume_others();
 	}
 #endif
-	ddb_regp = &dbreg;
+	ddb_regp = NULL;
 
 	regs->tf_gs     = ddb_regs.tf_gs;
 	regs->tf_fs     = ddb_regs.tf_fs;
