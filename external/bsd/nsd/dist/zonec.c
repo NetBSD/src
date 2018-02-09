@@ -89,6 +89,10 @@ zparser_conv_hex(region_type *region, const char *hex, size_t len)
 	uint8_t *t;
 	int i;
 
+	if(len == 1 && hex[0] == '0') {
+		/* single 0 represents empty buffer */
+		return alloc_rdata(region, 0);
+	}
 	if (len % 2 != 0) {
 		zc_error_prev_line("number of hex digits must be a multiple of 2");
 	} else if (len > MAX_RDLENGTH * 2) {
@@ -250,7 +254,7 @@ zparser_conv_serial(region_type *region, const char *serialstr)
 
 	serial = strtoserial(serialstr, &t);
 	if (*t != '\0') {
-		zc_error_prev_line("serial is expected");
+		zc_error_prev_line("serial is expected or serial too big");
 	} else {
 		serial = htonl(serial);
 		r = alloc_rdata_init(region, &serial, sizeof(serial));
@@ -639,6 +643,10 @@ zparser_conv_b64(region_type *region, const char *b64)
 	uint16_t *r = NULL;
 	int i;
 
+	if(strcmp(b64, "0") == 0) {
+		/* single 0 represents empty buffer */
+		return alloc_rdata(region, 0);
+	}
 	i = b64_pton(b64, buffer, B64BUFSIZE);
 	if (i == -1) {
 		zc_error_prev_line("invalid base64 data");
@@ -1619,6 +1627,7 @@ zonec_read(const char* name, const char* zonefile, zone_type* zone)
 			parser->current_zone->soa_rrset->rrs[0].owner));
 	}
 
+	parser_flush();
 	fclose(yyin);
 	if(!zone_is_slave(zone->opts))
 		check_dname(zone);
@@ -1711,5 +1720,6 @@ zonec_parse_string(region_type* region, domain_table_type* domains,
 	if(parser->origin != error_domain)
 		domain_table_deldomain(parser->db, parser->origin);
 	zonec_desetup_string_parser();
+	parser_flush();
 	return errors;
 }
