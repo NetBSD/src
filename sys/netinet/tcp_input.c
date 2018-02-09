@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.374 2018/02/08 20:50:00 maxv Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.375 2018/02/09 14:06:17 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.374 2018/02/08 20:50:00 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.375 2018/02/09 14:06:17 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -3224,8 +3224,7 @@ tcp_signature(struct mbuf *m, struct tcphdr *th, int thoff,
  */
 
 static int
-tcp_dooptions(struct tcpcb *tp, const u_char *cp, int cnt,
-    struct tcphdr *th,
+tcp_dooptions(struct tcpcb *tp, const u_char *cp, int cnt, struct tcphdr *th,
     struct mbuf *m, int toff, struct tcp_opt_info *oi)
 {
 	u_int16_t mss;
@@ -4247,7 +4246,6 @@ syn_cache_unreach(const struct sockaddr *src, const struct sockaddr *dst,
  * consume all available buffer space if it were ACKed.  By not ACKing
  * the data, we avoid this DoS scenario.
  */
-
 int
 syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
     unsigned int hlen, struct socket *so, struct mbuf *m, u_char *optp,
@@ -4266,30 +4264,11 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	memset(&opti, 0, sizeof(opti));
 
 	/*
-	 * RFC1122 4.2.3.10, p. 104: discard bcast/mcast SYN
-	 *
-	 * Note this check is performed in tcp_input() very early on.
-	 */
-
-	/*
 	 * Initialize some local state.
 	 */
 	win = sbspace(&so->so_rcv);
 	if (win > TCP_MAXWIN)
 		win = TCP_MAXWIN;
-
-	switch (src->sa_family) {
-#ifdef INET
-	case AF_INET:
-		/*
-		 * Remember the IP options, if any.
-		 */
-		ipopts = ip_srcroute(m);
-		break;
-#endif
-	default:
-		ipopts = NULL;
-	}
 
 #ifdef TCP_SIGNATURE
 	if (optp || (tp->t_flags & TF_SIGNATURE))
@@ -4304,9 +4283,22 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 		tb.t_state = TCPS_LISTEN;
 		if (tcp_dooptions(&tb, optp, optlen, th, m, m->m_pkthdr.len -
 		    sizeof(struct tcphdr) - optlen - hlen, oi) < 0)
-			return (0);
+			return 0;
 	} else
 		tb.t_flags = 0;
+
+	switch (src->sa_family) {
+#ifdef INET
+	case AF_INET:
+		/*
+		 * Remember the IP options, if any.
+		 */
+		ipopts = ip_srcroute(m);
+		break;
+#endif
+	default:
+		ipopts = NULL;
+	}
 
 	/*
 	 * See if we already have an entry for this connection.
@@ -4321,7 +4313,7 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 			 * forget it and use the new one we've been given.
 			 */
 			if (sc->sc_ipopts)
-				(void) m_free(sc->sc_ipopts);
+				(void)m_free(sc->sc_ipopts);
 			sc->sc_ipopts = ipopts;
 		}
 		sc->sc_timestamp = tb.ts_recent;
@@ -4331,7 +4323,7 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 			tcps[TCP_STAT_SNDTOTAL]++;
 			TCP_STAT_PUTREF();
 		}
-		return (1);
+		return 1;
 	}
 
 	s = splsoftnet();
@@ -4339,8 +4331,8 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	splx(s);
 	if (sc == NULL) {
 		if (ipopts)
-			(void) m_free(ipopts);
-		return (0);
+			(void)m_free(ipopts);
+		return 0;
 	}
 
 	/*
@@ -4358,8 +4350,8 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 #ifdef INET
 	case AF_INET:
 	    {
-		struct sockaddr_in *srcin = (void *) src;
-		struct sockaddr_in *dstin = (void *) dst;
+		struct sockaddr_in *srcin = (void *)src;
+		struct sockaddr_in *dstin = (void *)dst;
 
 		sc->sc_iss = tcp_new_iss1(&dstin->sin_addr,
 		    &srcin->sin_addr, dstin->sin_port,
@@ -4370,8 +4362,8 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 #ifdef INET6
 	case AF_INET6:
 	    {
-		struct sockaddr_in6 *srcin6 = (void *) src;
-		struct sockaddr_in6 *dstin6 = (void *) dst;
+		struct sockaddr_in6 *srcin6 = (void *)src;
+		struct sockaddr_in6 *dstin6 = (void *)dst;
 
 		sc->sc_iss = tcp_new_iss1(&dstin6->sin6_addr,
 		    &srcin6->sin6_addr, dstin6->sin6_port,
@@ -4382,8 +4374,7 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	}
 	sc->sc_peermaxseg = oi->maxseg;
 	sc->sc_ourmaxseg = tcp_mss_to_advertise(m->m_flags & M_PKTHDR ?
-						m_get_rcvif_NOMPSAFE(m) : NULL,
-						sc->sc_src.sa.sa_family);
+	    m_get_rcvif_NOMPSAFE(m) : NULL, sc->sc_src.sa.sa_family);
 	sc->sc_win = win;
 	sc->sc_timebase = tcp_now - 1;	/* see tcp_newtcpcb() */
 	sc->sc_timestamp = tb.ts_recent;
@@ -4452,7 +4443,7 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 		splx(s);
 		TCP_STATINC(TCP_STAT_SC_DROPPED);
 	}
-	return (1);
+	return 1;
 }
 
 /*
