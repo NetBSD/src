@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.6,v 1.1.2.124 2018/02/09 14:11:54 martin Exp $
+# $NetBSD: CHANGES-6.1.6,v 1.1.2.125 2018/02/10 04:26:15 snj Exp $
 
 A complete list of changes from the NetBSD 6.1.5 release to the NetBSD 6.1.6
 release:
@@ -14985,4 +14985,9 @@ sys/netinet/ip_input.c				1.366
 
 	Disable LSRR/SSRR by default.
 	[maxv, ticket #1526]
+
+sys/dist/pf/net/pf.c				1.78 via patch
+
+	Fix signedness bug in PF. PR/44059.
+	[maxv, ticket #1527]
 
