@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.68 2011/12/19 16:10:07 drochner Exp $	*/
+/*	$NetBSD: pf.c,v 1.68.6.1 2018/02/10 04:25:34 snj Exp $	*/
 /*	$OpenBSD: pf.c,v 1.552.2.1 2007/11/27 16:37:57 henning Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.68 2011/12/19 16:10:07 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.68.6.1 2018/02/10 04:25:34 snj Exp $");
 
 #include "pflog.h"
 
@@ -1590,7 +1590,7 @@ pf_modulate_sack(struct mbuf *m, int off, struct pf_pdesc *pd,
 	struct sackblk sack;
 
 #ifdef __NetBSD__
-#define	TCPOLEN_SACK (2 * sizeof(uint32_t))
+#define	TCPOLEN_SACK		8		/* 2*sizeof(tcp_seq) */
 #endif
 
 #define TCPOLEN_SACKLEN	(TCPOLEN_SACK + 2)
