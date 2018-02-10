@@ -32,7 +32,10 @@ RC4:
 	movl	%ebp,32(%esp)
 	testl	$-8,%edx
 	jz	.L003go4loop4
-	leal	OPENSSL_ia32cap_P,%ebp
+	call	.L004PIC_me_up
+.L004PIC_me_up:
+	popl	%ebp
+	leal	OPENSSL_ia32cap_P-.L004PIC_me_up(%ebp),%ebp
 	btl	$26,(%ebp)
 	jnc	.L003go4loop4
 	movl	32(%esp),%ebp
@@ -50,9 +53,9 @@ RC4:
 	movq	(%esi),%mm0
 	movl	(%edi,%eax,4),%ecx
 	movd	(%edi,%edx,4),%mm2
-	jmp	.L004loop_mmx_enter
+	jmp	.L005loop_mmx_enter
 .align	16
-.L005loop_mmx:
+.L006loop_mmx:
 	addb	%cl,%bl
 	psllq	$56,%mm1
 	movl	(%edi,%ebx,4),%edx
@@ -67,7 +70,7 @@ RC4:
 	movq	%mm2,-8(%ebp,%esi,1)
 	movl	(%edi,%eax,4),%ecx
 	movd	(%edi,%edx,4),%mm2
-.L004loop_mmx_enter:
+.L005loop_mmx_enter:
 	addb	%cl,%bl
 	movl	(%edi,%ebx,4),%edx
 	movl	%ecx,(%edi,%ebx,4)
@@ -156,19 +159,19 @@ RC4:
 	movb	%dl,%bl
 	cmpl	-4(%edi),%esi
 	leal	8(%esi),%esi
-	jb	.L005loop_mmx
+	jb	.L006loop_mmx
 	psllq	$56,%mm1
 	pxor	%mm1,%mm2
 	movq	%mm2,-8(%ebp,%esi,1)
 	emms
 	cmpl	24(%esp),%esi
-	je	.L006done
+	je	.L007done
 	jmp	.L002loop1
 .align	16
 .L003go4loop4:
 	leal	-4(%esi,%edx,1),%edx
 	movl	%edx,28(%esp)
-.L007loop4:
+.L008loop4:
 	addb	%cl,%bl
 	movl	(%edi,%ebx,4),%edx
 	movl	%ecx,(%edi,%ebx,4)
@@ -214,9 +217,9 @@ RC4:
 	movl	%ebp,(%ecx,%esi,1)
 	leal	4(%esi),%esi
 	movl	(%edi,%eax,4),%ecx
-	jb	.L007loop4
+	jb	.L008loop4
 	cmpl	24(%esp),%esi
-	je	.L006done
+	je	.L007done
 	movl	32(%esp),%ebp
 .align	16
 .L002loop1:
@@ -234,11 +237,11 @@ RC4:
 	cmpl	24(%esp),%esi
 	movb	%dl,-1(%ebp,%esi,1)
 	jb	.L002loop1
-	jmp	.L006done
+	jmp	.L007done
 .align	16
 .L001RC4_CHAR:
 	movzbl	(%edi,%eax,1),%ecx
-.L008cloop1:
+.L009cloop1:
 	addb	%cl,%bl
 	movzbl	(%edi,%ebx,1),%edx
 	movb	%cl,(%edi,%ebx,1)
@@ -251,8 +254,8 @@ RC4:
 	movzbl	(%edi,%eax,1),%ecx
 	cmpl	24(%esp),%esi
 	movb	%dl,-1(%ebp,%esi,1)
-	jb	.L008cloop1
-.L006done:
+	jb	.L009cloop1
+.L007done:
 	decb	%al
 	movl	%ebx,-4(%edi)
 	movb	%al,-8(%edi)
@@ -275,60 +278,63 @@ RC4_set_key:
 	movl	20(%esp),%edi
 	movl	24(%esp),%ebp
 	movl	28(%esp),%esi
-	leal	OPENSSL_ia32cap_P,%edx
+	call	.L010PIC_me_up
+.L010PIC_me_up:
+	popl	%edx
+	leal	OPENSSL_ia32cap_P-.L010PIC_me_up(%edx),%edx
 	leal	8(%edi),%edi
 	leal	(%esi,%ebp,1),%esi
 	negl	%ebp
 	xorl	%eax,%eax
 	movl	%ebp,-4(%edi)
 	btl	$20,(%edx)
-	jc	.L009c1stloop
+	jc	.L011c1stloop
 .align	16
-.L010w1stloop:
+.L012w1stloop:
 	movl	%eax,(%edi,%eax,4)
 	addb	$1,%al
-	jnc	.L010w1stloop
+	jnc	.L012w1stloop
 	xorl	%ecx,%ecx
 	xorl	%edx,%edx
 .align	16
-.L011w2ndloop:
+.L013w2ndloop:
 	movl	(%edi,%ecx,4),%eax
 	addb	(%esi,%ebp,1),%dl
 	addb	%al,%dl
 	addl	$1,%ebp
 	movl	(%edi,%edx,4),%ebx
-	jnz	.L012wnowrap
+	jnz	.L014wnowrap
 	movl	-4(%edi),%ebp
-.L012wnowrap:
+.L014wnowrap:
 	movl	%eax,(%edi,%edx,4)
 	movl	%ebx,(%edi,%ecx,4)
 	addb	$1,%cl
-	jnc	.L011w2ndloop
-	jmp	.L013exit
+	jnc	.L013w2ndloop
+	jmp	.L015exit
 .align	16
-.L009c1stloop:
+.L011c1stloop:
 	movb	%al,(%edi,%eax,1)
 	addb	$1,%al
-	jnc	.L009c1stloop
+	jnc	.L011c1stloop
 	xorl	%ecx,%ecx
 	xorl	%edx,%edx
 	xorl	%ebx,%ebx
 .align	16
-.L014c2ndloop:
+.L016c2ndloop:
 	movb	(%edi,%ecx,1),%al
 	addb	(%esi,%ebp,1),%dl
 	addb	%al,%dl
 	addl	$1,%ebp
 	movb	(%edi,%edx,1),%bl
-	jnz	.L015cnowrap
+	jnz	.L017cnowrap
 	movl	-4(%edi),%ebp
-.L015cnowrap:
+.L017cnowrap:
 	movb	%al,(%edi,%edx,1)
 	movb	%bl,(%edi,%ecx,1)
 	addb	$1,%cl
-	jnc	.L014c2ndloop
+	jnc	.L016c2ndloop
 	movl	$-1,256(%edi)
-.L013exit:
+.L015exit:
 	xorl	%eax,%eax
 	movl	%eax,-8(%edi)
 	movl	%eax,-4(%edi)
@@ -343,24 +349,27 @@ RC4_set_key:
 .align	16
 RC4_options:
 .L_RC4_options_begin:
-	call	.L016pic_point
-.L016pic_point:
+	call	.L018pic_point
+.L018pic_point:
 	popl	%eax
-	leal	.L017opts-.L016pic_point(%eax),%eax
-	leal	OPENSSL_ia32cap_P,%edx
+	leal	.L019opts-.L018pic_point(%eax),%eax
+	call	.L020PIC_me_up
+.L020PIC_me_up:
+	popl	%edx
+	leal	OPENSSL_ia32cap_P-.L020PIC_me_up(%edx),%edx
 	movl	(%edx),%edx
 	btl	$20,%edx
-	jc	.L0181xchar
+	jc	.L0211xchar
 	btl	$26,%edx
-	jnc	.L019ret
+	jnc	.L022ret
 	addl	$25,%eax
 	ret
-.L0181xchar:
+.L0211xchar:
 	addl	$12,%eax
-.L019ret:
+.L022ret:
 	ret
 .align	64
-.L017opts:
+.L019opts:
 .byte	114,99,52,40,52,120,44,105,110,116,41,0
 .byte	114,99,52,40,49,120,44,99,104,97,114,41,0
 .byte	114,99,52,40,56,120,44,109,109,120,41,0
