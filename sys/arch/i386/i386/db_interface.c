@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.77 2018/02/09 09:36:42 maxv Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.78 2018/02/10 11:50:39 kre Exp $	*/
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.77 2018/02/09 09:36:42 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.78 2018/02/10 11:50:39 kre Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -195,7 +195,9 @@ int
 kdb_trap(int type, int code, db_regs_t *regs)
 {
 	int s, flags;
+#ifdef MULTIPROCESSOR
 	db_regs_t dbreg;
+#endif
 
 	flags = regs->tf_err & TC_FLAGMASK;
 	regs->tf_err &= ~TC_FLAGMASK;
