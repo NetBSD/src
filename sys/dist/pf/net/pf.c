@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.76 2017/02/14 03:05:06 ozaki-r Exp $	*/
+/*	$NetBSD: pf.c,v 1.76.6.1 2018/02/10 04:12:17 snj Exp $	*/
 /*	$OpenBSD: pf.c,v 1.552.2.1 2007/11/27 16:37:57 henning Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.76 2017/02/14 03:05:06 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.76.6.1 2018/02/10 04:12:17 snj Exp $");
 
 #include "pflog.h"
 
@@ -1590,7 +1590,7 @@ pf_modulate_sack(struct mbuf *m, int off, struct pf_pdesc *pd,
 	struct sackblk sack;
 
 #ifdef __NetBSD__
-#define	TCPOLEN_SACK (2 * sizeof(uint32_t))
+#define	TCPOLEN_SACK		8		/* 2*sizeof(tcp_seq) */
 #endif
 
 #define TCPOLEN_SACKLEN	(TCPOLEN_SACK + 2)
@@ -1708,7 +1708,7 @@ pf_send_tcp(const struct pf_rule *r, sa_family_t af,
 	m->m_pkthdr.pf.tag = rtag;
 
 	if (r != NULL && r->rtableid >= 0)
-		m->m_pkthdr.pf.rtableid = m->m_pkthdr.pf.rtableid;
+		m->m_pkthdr.pf.rtableid = r->rtableid;
 #endif /* !__NetBSD__ */
 
 #ifdef ALTQ
