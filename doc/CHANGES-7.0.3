@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.78 2018/02/09 14:06:57 martin Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.79 2018/02/10 04:22:10 snj Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -5216,4 +5216,9 @@ sys/netinet/ip_input.c				1.366 (via patch)
 
 	Disable LSRR/SSRR by default.
 	[maxv, ticket #1563]
+
+sys/dist/pf/net/pf.c				1.78 via patch
+
+	Fix signedness bug in PF. PR/44059.
+	[maxv, ticket #1565]
 
