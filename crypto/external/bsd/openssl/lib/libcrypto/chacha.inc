@@ -1,4 +1,4 @@
-#	$NetBSD: chacha.inc,v 1.1 2018/02/08 21:57:24 christos Exp $
+#	$NetBSD: chacha.inc,v 1.2 2018/02/10 16:16:28 christos Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -9,7 +9,7 @@
 
 
 CHACHA_SRCS ?= \
-poly_enc.c
+chacha_enc.c
 
 SRCS += ${CHACHA_SRCS}
 
