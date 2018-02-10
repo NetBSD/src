@@ -15,7 +15,7 @@ fcrypt_body:
 	xorl	%esi,%esi
 	PIC_PROLOGUE
 	leal	PIC_GOT(DES_SPtrans),%edx
-	PIC_EPOLOGUE
+	PIC_EPILOGUE
 	pushl	%edx
 	movl	28(%esp),%ebp
 	pushl	$25
