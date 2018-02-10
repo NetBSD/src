@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2018/02/10 05:51:06 christos Exp $
+#	$NetBSD: Makefile,v 1.11 2018/02/10 06:22:22 christos Exp $
 
 .include "bsd.own.mk"
 
@@ -12,8 +12,8 @@ regen:
 		-I${OPENSSLSRC}/crypto/bn/asm $$i elf /dev/stdout \
 		| sed -e 's,^\.file.*$$,#include <machine/asm.h>,' \
 			-e 's/	call	OPENSSL_cpuid_setup/	PIC_PROLOGUE!	call	PIC_PLT(OPENSSL_cpuid_setup)!	PIC_EPILOGUE/' \
-			-e 's/	leal	DES_SPtrans,%edx/	PIC_PROLOGUE!	leal	PIC_GOT(DES_SPtrans),%edx!	PIC_EPOLOGUE/' \
-			-e 's/	leal	OPENSSL_ia32cap_P,%eax/	PIC_PROLOGUE!	leal	PIC_GOT(OPENSSL_ia32cap_P),%eax!	PIC_EPOLOGUE/' \
+			-e 's/	leal	DES_SPtrans,%edx/	PIC_PROLOGUE!	leal	PIC_GOT(DES_SPtrans),%edx!	PIC_EPILOGUE/' \
+			-e 's/	leal	OPENSSL_ia32cap_P,%eax/	PIC_PROLOGUE!	leal	PIC_GOT(OPENSSL_ia32cap_P),%eax!	PIC_EPILOGUE/' \
 			| tr '!' '\n' \
 		> $$(basename $$i .pl).S; \
 	done
