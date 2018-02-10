@@ -2854,7 +2854,7 @@ _aesni_set_encrypt_key:
 .L112pic:
 	popl	%ebx
 	leal	.Lkey_const-.L112pic(%ebx),%ebx
-	leal	OPENSSL_ia32cap_P,%ebp
+	leal	OPENSSL_ia32cap_P-.Lkey_const(%ebx),%ebp
 	movups	(%eax),%xmm0
 	xorps	%xmm4,%xmm4
 	movl	4(%ebp),%ebp
