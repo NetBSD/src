@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.51 2017/05/21 15:28:41 riastradh Exp $
+#	$NetBSD: Makefile,v 1.52 2018/02/10 19:34:34 christos Exp $
 #	from: @(#)Makefile	8.2 (Berkeley) 12/15/93
 
 WARNS?=	4		# XXX: const issues in sys_term.c
@@ -21,11 +21,12 @@ CPPFLAGS+=-I${.CURDIR}
 LIBTELNETDIR!=	cd ${.CURDIR}/../../lib/libtelnet; ${PRINTOBJDIR}
 
 .if (${USE_KERBEROS} != "no")
-CPPFLAGS+=-DKRB5 -DAUTHENTICATION -DENCRYPTION
+CPPFLAGS+=-DKRB5
 LDADD+= -lkrb5 -lasn1 -lcom_err -lroken -lsqlite3
 DPADD+=	${LIBKRB5} ${LIBASN1} ${LIBCOM_ERR} ${LIBROKEN} ${LIBSQLITE3}
 .endif
 
+CPPFLAGS+=-DAUTHENTICATION -DENCRYPTION
 LDADD+=-ldes -lcrypto -lcrypt
 DPADD+=${LIBDES} ${LIBCRYPTO} ${LIBCRYPT}
 
