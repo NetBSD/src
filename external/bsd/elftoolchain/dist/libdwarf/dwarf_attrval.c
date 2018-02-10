@@ -1,4 +1,4 @@
-/*	$NetBSD: dwarf_attrval.c,v 1.9 2018/02/10 23:39:29 christos Exp $	*/
+/*	$NetBSD: dwarf_attrval.c,v 1.10 2018/02/10 23:46:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 John Birrell (jb@freebsd.org)
@@ -28,7 +28,7 @@
 
 #include "_libdwarf.h"
 
-__RCSID("$NetBSD: dwarf_attrval.c,v 1.9 2018/02/10 23:39:29 christos Exp $");
+__RCSID("$NetBSD: dwarf_attrval.c,v 1.10 2018/02/10 23:46:44 christos Exp $");
 ELFTC_VCSID("Id: dwarf_attrval.c 3159 2015-02-15 21:43:27Z emaste ");
 
 int
@@ -201,13 +201,9 @@ dwarf_attrval_unsigned(Dwarf_Die die, Dwarf_Half attr, Dwarf_Unsigned *valp, Dwa
 		*valp = at->u[0].u64;
 		break;
 	default:
-		if (at->at_die != die)
-			dwarf_dealloc(dbg, at->at_die, DW_DLA_DIE);
 		DWARF_SET_ERROR(dbg, err, DW_DLE_ATTR_FORM_BAD);
 		return (DW_DLV_ERROR);
 	}
 
-	if (at->at_die != die)
-		dwarf_dealloc(dbg, at->at_die, DW_DLA_DIE);
 	return (DW_DLV_OK);
 }
