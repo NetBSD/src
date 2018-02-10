@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.239 2018/02/08 10:24:46 maxv Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.240 2018/02/10 08:17:00 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.239 2018/02/08 10:24:46 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.240 2018/02/10 08:17:00 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -139,7 +139,7 @@ percpu_t *udpstat_percpu;
 
 #ifdef INET
 #ifdef IPSEC
-static int udp4_espinudp(struct mbuf **, int, struct sockaddr *,
+static void udp4_espinudp(struct mbuf *, int, struct sockaddr *,
     struct socket *);
 #endif
 static void udp4_sendup(struct mbuf *, int, struct sockaddr *,
@@ -606,25 +606,9 @@ udp4_realinput(struct sockaddr_in *src, struct sockaddr_in *dst,
 		/* Handle ESP over UDP */
 		if (inp->inp_flags & INP_ESPINUDP_ALL) {
 			struct sockaddr *sa = (struct sockaddr *)src;
-
-			switch (udp4_espinudp(mp, off, sa, inp->inp_socket)) {
-			case -1: /* Error, m was freed */
-				rcvcnt = -1;
-				goto bad;
-
-			case 1: /* ESP over UDP */
-				rcvcnt++;
-				goto bad;
-
-			case 0: /* plain UDP */
-			default: /* Unexpected */
-				/*
-				 * Normal UDP processing will take place,
-				 * m may have changed.
-				 */
-				m = *mp;
-				break;
-			}
+			udp4_espinudp(m, off, sa, inp->inp_socket);
+			*mp = NULL;
+			goto bad;
 		}
 #endif
 
@@ -1246,13 +1230,10 @@ udp_statinc(u_int stat)
 
 #if defined(INET) && defined(IPSEC)
 /*
- * Returns:
- *     1 if the packet was processed
- *     0 if normal UDP processing should take place
- *    -1 if an error occurred and m was freed
+ * This function always frees the mbuf.
  */
-static int
-udp4_espinudp(struct mbuf **mp, int off, struct sockaddr *src,
+static void
+udp4_espinudp(struct mbuf *m, int off, struct sockaddr *src,
     struct socket *so)
 {
 	size_t len;
@@ -1265,7 +1246,6 @@ udp4_espinudp(struct mbuf **mp, int off, struct sockaddr *src,
 	struct m_tag *tag;
 	struct udphdr *udphdr;
 	u_int16_t sport, dport;
-	struct mbuf *m = *mp;
 
 	/*
 	 * Collapse the mbuf chain if the first mbuf is too short
@@ -1276,10 +1256,9 @@ udp4_espinudp(struct mbuf **mp, int off, struct sockaddr *src,
 		minlen = m->m_pkthdr.len;
 
 	if (m->m_len < minlen) {
-		if ((*mp = m_pullup(m, minlen)) == NULL) {
-			return -1;
+		if ((m = m_pullup(m, minlen)) == NULL) {
+			return;
 		}
-		m = *mp;
 	}
 
 	len = m->m_len - off;
@@ -1288,9 +1267,7 @@ udp4_espinudp(struct mbuf **mp, int off, struct sockaddr *src,
 
 	/* Ignore keepalive packets */
 	if ((len == 1) && (*(unsigned char *)data == 0xff)) {
-		m_freem(m);
-		*mp = NULL; /* avoid any further processing by caller ... */
-		return 1;
+		goto out;
 	}
 
 	/*
@@ -1301,8 +1278,9 @@ udp4_espinudp(struct mbuf **mp, int off, struct sockaddr *src,
 	if (inp->inp_flags & INP_ESPINUDP) {
 		u_int32_t *st = (u_int32_t *)data;
 
-		if ((len <= sizeof(struct esp)) || (*st == 0))
-			return 0; /* Normal UDP processing */
+		if ((len <= sizeof(struct esp)) || (*st == 0)) {
+			goto out;
+		}
 
 		skip = sizeof(struct udphdr);
 	}
@@ -1311,8 +1289,9 @@ udp4_espinudp(struct mbuf **mp, int off, struct sockaddr *src,
 		u_int32_t *st = (u_int32_t *)data;
 
 		if ((len <= sizeof(u_int64_t) + sizeof(struct esp)) ||
-		    ((st[0] | st[1]) != 0))
-			return 0; /* Normal UDP processing */
+		    ((st[0] | st[1]) != 0)) {
+			goto out;
+		}
 
 		skip = sizeof(struct udphdr) + sizeof(u_int64_t);
 	}
@@ -1359,8 +1338,7 @@ udp4_espinudp(struct mbuf **mp, int off, struct sockaddr *src,
 	 */
 	if ((tag = m_tag_get(PACKET_TAG_IPSEC_NAT_T_PORTS,
 	    sizeof(sport) + sizeof(dport), M_DONTWAIT)) == NULL) {
-		m_freem(m);
-		return -1;
+		goto out;
 	}
 	((u_int16_t *)(tag + 1))[0] = sport;
 	((u_int16_t *)(tag + 1))[1] = dport;
@@ -1371,9 +1349,11 @@ udp4_espinudp(struct mbuf **mp, int off, struct sockaddr *src,
 	else
 		m_freem(m);
 
-	/* We handled it, it shouldn't be handled by UDP */
-	*mp = NULL; /* avoid free by caller ... */
-	return 1;
+	return;
+
+out:
+	m_freem(m);
+	return;
 }
 #endif
 
