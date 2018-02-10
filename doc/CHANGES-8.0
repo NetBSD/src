@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.118 2018/02/06 20:33:35 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.119 2018/02/10 04:13:26 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -9532,4 +9532,10 @@ share/man/man4/vnd.4				1.19
 
 	Remove outdated BUGS entry - vnd does work on sparse files.
 	[maya, ticket #535]
+
+sys/dist/pf/net/pf.c				1.77-1.78
+
+	- Fix wrong assignment in !__NetBSD__ code. PR/52682.
+	- Fix a remotely-triggerable integer overflow. PR/44059.
+	[maxv, ticket #540]
 
