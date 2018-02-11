@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.239.2.3 2018/01/02 10:20:33 snj Exp $	*/
+/*	$NetBSD: if.h,v 1.239.2.4 2018/02/11 21:17:34 snj Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -1100,6 +1100,8 @@ ifnet_t *if_get_bylla(const void *, unsigned char, struct psref *);
 void	if_put(const struct ifnet *, struct psref *);
 void	if_acquire(struct ifnet *, struct psref *);
 #define	if_release	if_put
+
+int if_tunnel_check_nesting(struct ifnet *, struct mbuf *, int);
 
 static inline if_index_t
 if_get_index(const struct ifnet *ifp)

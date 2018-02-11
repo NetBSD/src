@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.245.2.6 2018/02/03 22:07:26 snj Exp $	*/
+/*	$NetBSD: in6.c,v 1.245.2.7 2018/02/11 21:17:34 snj Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.245.2.6 2018/02/03 22:07:26 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.245.2.7 2018/02/11 21:17:34 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2323,6 +2323,24 @@ in6_setmaxmtu(void)
 	pserialize_read_exit(s);
 	if (maxmtu)	     /* update only when maxmtu is positive */
 		in6_maxmtu = maxmtu;
+}
+
+int
+in6_tunnel_validate(const struct ip6_hdr *ip6, const struct in6_addr *src,
+    const struct in6_addr *dst)
+{
+
+	/* check for address match */
+	if (!IN6_ARE_ADDR_EQUAL(src, &ip6->ip6_dst) ||
+	    !IN6_ARE_ADDR_EQUAL(dst, &ip6->ip6_src))
+		return 0;
+
+	/* martian filters on outer source - done in ip6_input */
+
+	/* NOTE: the pakcet may be dropped by uRPF. */
+
+	/* return valid bytes length */
+	return sizeof(*src) + sizeof(*dst);
 }
 
 /*

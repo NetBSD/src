@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.306.2.2 2017/11/23 11:02:16 martin Exp $
+# $NetBSD: shl.mi,v 1.306.2.3 2018/02/11 21:17:33 snj Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -219,6 +219,7 @@
 ./usr/lib/librumpnet_bpfjit_pic.a		comp-c-piclib		picinstall,rump,sljit
 ./usr/lib/librumpnet_bridge_pic.a		comp-c-piclib		picinstall,rump
 ./usr/lib/librumpnet_gif_pic.a			comp-c-piclib		picinstall,rump
+./usr/lib/librumpnet_ipsec_pic.a		comp-c-piclib		picinstall,rump
 ./usr/lib/librumpnet_l2tp_pic.a			comp-c-piclib		picinstall,rump
 ./usr/lib/librumpnet_local_pic.a		comp-c-piclib		picinstall,rump
 ./usr/lib/librumpnet_net80211_pic.a		comp-c-piclib		picinstall,rump

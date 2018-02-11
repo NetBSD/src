@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.459.2.4 2018/02/05 13:06:55 martin Exp $
+# $NetBSD: GENERIC,v 1.459.2.5 2018/02/11 21:17:34 snj Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.459.2.4 $"
+#ident		"GENERIC-$Revision: 1.459.2.5 $"
 
 maxusers	64		# estimated number of users
 
@@ -1275,6 +1275,7 @@ pseudo-device	tun			# network tunneling over tty
 pseudo-device	tap			# virtual Ethernet
 pseudo-device	gre			# generic L3 over IP tunnel
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
+pseudo-device	ipsecif			# tunnel interface for routing based ipsec
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
 pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
