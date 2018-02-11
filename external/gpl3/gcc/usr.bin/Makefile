@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.9 2018/02/06 23:12:01 mrg Exp $
+#	$NetBSD: Makefile,v 1.10 2018/02/11 02:12:28 christos Exp $
 
 NOOBJ=# defined
 
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 
 GCC_MACHINE_ARCH=${MACHINE_ARCH:S/earmv5/earm/}
 

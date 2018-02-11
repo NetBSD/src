@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.30 2018/02/04 09:22:03 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.31 2018/02/11 02:12:28 christos Exp $
 
 .ifndef _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_INC_
 _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_INC_=1
 
-.include <bsd.own.mk>
+NOCTF=	# defined
+.include <bsd.init.mk>
 
 .sinclude "../../Makefile.gcc_path"
 
