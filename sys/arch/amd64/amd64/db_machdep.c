@@ -1,32 +1,32 @@
-/*	$NetBSD: db_machdep.c,v 1.4 2012/10/03 17:43:22 riastradh Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.5 2018/02/11 08:27:18 maxv Exp $	*/
 
-/* 
+/*
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
+ *
  * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
- * 
+ *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
- * 
+ *
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.4 2012/10/03 17:43:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.5 2018/02/11 08:27:18 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,7 @@ const struct db_variable db_regs[] = {
 	{ "ss",		dbreg(ss),     db_x86_regop, NULL },
 };
 const struct db_variable * const db_eregs =
-	db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
+    db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
 
 /*
  * Figure out how many arguments were passed into the frame at "fp".
@@ -93,19 +93,19 @@ db_numargs(long *retaddrp)
 	return 0;
 }
 
-/* 
- * Figure out the next frame up in the call stack.  
- * For trap(), we print the address of the faulting instruction and 
+/*
+ * Figure out the next frame up in the call stack.
+ * For trap(), we print the address of the faulting instruction and
  *   proceed with the calling frame.  We return the ip that faulted.
  *   If the trap was caused by jumping through a bogus pointer, then
- *   the next line in the backtrace will list some random function as 
- *   being called.  It should get the argument list correct, though.  
+ *   the next line in the backtrace will list some random function as
+ *   being called.  It should get the argument list correct, though.
  *   It might be possible to dig out from the next frame up the name
  *   of the function that faulted, but that could get hairy.
  */
 int
 db_nextframe(long **nextframe, long **retaddr, long **arg0, db_addr_t *ip,
-	     long *argp, int is_trap, void (*pr)(const char *, ...))
+    long *argp, int is_trap, void (*pr)(const char *, ...))
 {
 	struct trapframe *tf;
 	struct x86_64_frame *fp;
@@ -189,10 +189,10 @@ db_nextframe(long **nextframe, long **retaddr, long **arg0, db_addr_t *ip,
 
 db_sym_t
 db_frame_info(long *frame, db_addr_t callpc, const char **namep,
-	      db_expr_t *offp, int *is_trap, int *nargp)
+    db_expr_t *offp, int *is_trap, int *nargp)
 {
-	db_expr_t	offset;
-	db_sym_t	sym;
+	db_expr_t offset;
+	db_sym_t sym;
 	int narg;
 	const char *name;
 
