@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1173.2.3 2017/07/18 19:13:09 snj Exp $
+#	$NetBSD: files,v 1.1173.2.4 2018/02/11 21:17:34 snj Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20170615
@@ -1453,6 +1453,7 @@ defpseudo carp:		ifnet, ether, arp
 defpseudodev etherip:	ifnet, ether, arp
 defpseudodev l2tp:	ifnet, ether, arp
 defpseudo canloop:	ifnet
+defpseudo ipsecif:	ifnet		# avoid to confuse ipsec itself option
 
 defpseudo sequencer
 defpseudo clockctl

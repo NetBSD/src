@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.176.2.5 2017/12/04 10:55:19 snj Exp $
+# $NetBSD: shl.mi,v 1.176.2.6 2018/02/11 21:17:33 snj Exp $
 ./usr/lib/libbfd_g.a						comp-c-debuglib	debuglib,compatfile,binutils
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libblacklist.so.0.0.debug		comp-sys-debug	debug,dynamicroot
@@ -240,6 +240,7 @@
 ./usr/libdata/debug/usr/lib/librumpnet_bpfjit.so.0.0.debug	comp-rump-debug	debug,rump,sljit
 ./usr/libdata/debug/usr/lib/librumpnet_bridge.so.0.0.debug	comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpnet_gif.so.0.0.debug		comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpnet_ipsec.so.0.0.debug	comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpnet_l2tp.so.0.0.debug	comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpnet_local.so.0.0.debug	comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpnet_net.so.0.0.debug		comp-rump-debug	debug,rump

@@ -1,4 +1,4 @@
-/*	$NetBSD: key.h,v 1.19.2.2 2017/11/30 14:57:34 martin Exp $	*/
+/*	$NetBSD: key.h,v 1.19.2.3 2018/02/11 21:17:35 snj Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: key.h,v 1.21 2001/07/27 03:51:30 itojun Exp $	*/
 
@@ -42,10 +42,17 @@ struct ipsecrequest;
 struct secasvar;
 struct sockaddr;
 struct socket;
-struct sadb_msg;
-struct sadb_x_policy;
 struct secasindex;
 union sockaddr_union;
+
+#include <net/pfkeyv2.h>
+
+struct sadb_msghdr {
+	struct sadb_msg *msg;
+	void *ext[SADB_EXT_MAX + 1];
+	int extoff[SADB_EXT_MAX + 1];
+	int extlen[SADB_EXT_MAX + 1];
+};
 
 int key_havesp(u_int dir);
 struct secpolicy *key_lookup_sp_byspidx(const struct secpolicyindex *, u_int,
@@ -116,7 +123,10 @@ int key_get_used(void);
 
 u_int16_t key_portfromsaddr (const union sockaddr_union *);
 
-
+/* for ipsec(4) */
+struct secpolicy *key_kpi_spdadd(struct mbuf *);
+int key_kpi_spddelete2(struct mbuf *);
+u_int16_t key_newreqid(void);
 
 #ifdef MALLOC_DECLARE
 MALLOC_DECLARE(M_SECA);

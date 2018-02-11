@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_gif.c,v 1.85.6.3 2018/01/02 10:48:51 snj Exp $	*/
+/*	$NetBSD: in6_gif.c,v 1.85.6.4 2018/02/11 21:17:34 snj Exp $	*/
 /*	$KAME: in6_gif.c,v 1.62 2001/07/29 04:27:25 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.85.6.3 2018/01/02 10:48:51 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.85.6.4 2018/02/11 21:17:34 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -322,16 +322,14 @@ gif_validate6(const struct ip6_hdr *ip6, struct gif_variant *var,
 	struct ifnet *ifp)
 {
 	const struct sockaddr_in6 *src, *dst;
+	int ret;
 
 	src = satosin6(var->gv_psrc);
 	dst = satosin6(var->gv_pdst);
 
-	/* check for address match */
-	if (!IN6_ARE_ADDR_EQUAL(&src->sin6_addr, &ip6->ip6_dst) ||
-	    !IN6_ARE_ADDR_EQUAL(&dst->sin6_addr, &ip6->ip6_src))
+	ret = in6_tunnel_validate(ip6, &src->sin6_addr, &dst->sin6_addr);
+	if (ret == 0)
 		return 0;
-
-	/* martian filters on outer source - done in ip6_input */
 
 	/* ingress filters on outer source */
 	if ((var->gv_softc->gif_if.if_flags & IFF_LINK2) == 0 && ifp) {
@@ -359,7 +357,7 @@ gif_validate6(const struct ip6_hdr *ip6, struct gif_variant *var,
 		rt_unref(rt);
 	}
 
-	return 128 * 2;
+	return ret;
 }
 
 #ifdef GIF_ENCAPCHECK

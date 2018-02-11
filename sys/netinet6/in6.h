@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.87 2016/02/15 14:59:03 rtr Exp $	*/
+/*	$NetBSD: in6.h,v 1.87.10.1 2018/02/11 21:17:34 snj Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -711,6 +711,10 @@ extern void in6_if_up(struct ifnet *);
 extern void in6_if_down(struct ifnet *);
 extern void addrsel_policy_init(void);
 extern	u_char	ip6_protox[];
+
+struct ip6_hdr;
+int in6_tunnel_validate(const struct ip6_hdr *, const struct in6_addr *,
+	const struct in6_addr *);
 
 #define	satosin6(sa)	((struct sockaddr_in6 *)(sa))
 #define	satocsin6(sa)	((const struct sockaddr_in6 *)(sa))

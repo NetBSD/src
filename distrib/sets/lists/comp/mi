@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2138.2.4 2017/12/04 19:48:55 snj Exp $
+#	$NetBSD: mi,v 1.2138.2.5 2018/02/11 21:17:33 snj Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -2218,6 +2218,7 @@
 ./usr/include/net/if_hippi.h			comp-c-include
 ./usr/include/net/if_ieee1394.h			comp-c-include
 ./usr/include/net/if_ieee80211.h		comp-obsolete		obsolete
+./usr/include/net/if_ipsec.h			comp-c-include
 ./usr/include/net/if_l2tp.h			comp-c-include
 ./usr/include/net/if_llc.h			comp-c-include
 ./usr/include/net/if_media.h			comp-c-include
@@ -2376,6 +2377,7 @@
 ./usr/include/netipsec/ipcomp_var.h		comp-c-include
 ./usr/include/netipsec/ipip_var.h		comp-c-include
 ./usr/include/netipsec/ipsec.h			comp-c-include
+./usr/include/netipsec/ipsecif.h		comp-c-include
 ./usr/include/netipsec/ipsec_var.h		comp-c-include
 ./usr/include/netipsec/keydb.h			comp-obsolete		obsolete
 ./usr/include/netipsec/keysock.h		comp-c-include
@@ -3560,6 +3562,8 @@
 ./usr/lib/librumpnet_bridge_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpnet_gif.a			comp-c-lib		rump
 ./usr/lib/librumpnet_gif_p.a			comp-c-proflib		rump,profile
+./usr/lib/librumpnet_ipsec.a			comp-c-lib		rump
+./usr/lib/librumpnet_ipsec_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpnet_l2tp.a			comp-c-lib		rump
 ./usr/lib/librumpnet_l2tp_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpnet_local.a			comp-c-lib		rump

@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.c,v 1.87.8.3 2018/01/02 10:48:51 snj Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.87.8.4 2018/02/11 21:17:34 snj Exp $	*/
 /*	$KAME: in_gif.c,v 1.66 2001/07/29 04:46:09 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.87.8.3 2018/01/02 10:48:51 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.87.8.4 2018/02/11 21:17:34 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -303,35 +303,14 @@ static int
 gif_validate4(const struct ip *ip, struct gif_variant *var, struct ifnet *ifp)
 {
 	struct sockaddr_in *src, *dst;
-	struct in_ifaddr *ia4;
-	int s;
+	int ret;
 
 	src = satosin(var->gv_psrc);
 	dst = satosin(var->gv_pdst);
 
-	/* check for address match */
-	if (src->sin_addr.s_addr != ip->ip_dst.s_addr ||
-	    dst->sin_addr.s_addr != ip->ip_src.s_addr)
+	ret = in_tunnel_validate(ip, src->sin_addr, dst->sin_addr);
+	if (ret == 0)
 		return 0;
-
-	/* martian filters on outer source - NOT done in ip_input! */
-	if (IN_MULTICAST(ip->ip_src.s_addr))
-		return 0;
-	switch ((ntohl(ip->ip_src.s_addr) & 0xff000000) >> 24) {
-	case 0: case 127: case 255:
-		return 0;
-	}
-	/* reject packets with broadcast on source */
-	s = pserialize_read_enter();
-	IN_ADDRLIST_READER_FOREACH(ia4) {
-		if ((ia4->ia_ifa.ifa_ifp->if_flags & IFF_BROADCAST) == 0)
-			continue;
-		if (ip->ip_src.s_addr == ia4->ia_broadaddr.sin_addr.s_addr) {
-			pserialize_read_exit(s);
-			return 0;
-		}
-	}
-	pserialize_read_exit(s);
 
 	/* ingress filters on outer source */
 	if ((var->gv_softc->gif_if.if_flags & IFF_LINK2) == 0 && ifp) {
@@ -357,7 +336,7 @@ gif_validate4(const struct ip *ip, struct gif_variant *var, struct ifnet *ifp)
 		rt_unref(rt);
 	}
 
-	return 32 * 2;
+	return ret;
 }
 
 #ifdef GIF_ENCAPCHECK

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.752.2.8 2018/01/16 13:01:10 martin Exp $
+# $NetBSD: mi,v 1.752.2.9 2018/02/11 21:17:34 snj Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3284,6 +3284,10 @@
 ./usr/tests/net/if_gif/Atffile			tests-net-tests		atf,rump
 ./usr/tests/net/if_gif/Kyuafile			tests-net-tests		atf,rump,kyua
 ./usr/tests/net/if_gif/t_gif			tests-net-tests		atf,rump
+./usr/tests/net/if_ipsec			tests-net-tests		compattestfile,atf
+./usr/tests/net/if_ipsec/Atffile		tests-net-tests		atf,rump
+./usr/tests/net/if_ipsec/Kyuafile		tests-net-tests		atf,rump,kyua
+./usr/tests/net/if_ipsec/t_ipsec		tests-net-tests		atf,rump
 ./usr/tests/net/if_l2tp				tests-net-tests		compattestfile,atf
 ./usr/tests/net/if_l2tp/Atffile			tests-net-tests		atf,rump
 ./usr/tests/net/if_l2tp/Kyuafile		tests-net-tests		atf,rump,kyua
