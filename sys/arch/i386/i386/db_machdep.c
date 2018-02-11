@@ -1,33 +1,33 @@
-/*	$NetBSD: db_machdep.c,v 1.6 2017/08/15 06:39:37 maxv Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.7 2018/02/11 08:27:18 maxv Exp $	*/
 
-/* 
+/*
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
+ *
  * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
- * 
+ *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
- * 
+ *
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.6 2017/08/15 06:39:37 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.7 2018/02/11 08:27:18 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,6 +61,9 @@ __KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.6 2017/08/15 06:39:37 maxv Exp $");
 
 #define dbreg(xx) (long *)offsetof(db_regs_t, tf_ ## xx)
 
+/*
+ * Machine register set.
+ */
 const struct db_variable db_regs[] = {
 	{ "ds",		dbreg(ds),     db_x86_regop, NULL },
 	{ "es",		dbreg(es),     db_x86_regop, NULL },
@@ -108,85 +111,19 @@ db_numargs(long *retaddrp)
 	return (args);
 }
 
-db_sym_t
-db_frame_info(long *frame, db_addr_t callpc, const char **namep, db_expr_t *offp,
-	      int *is_trap, int *nargp)
-{
-	db_expr_t	offset;
-	db_sym_t	sym;
-	int narg;
-	const char *name;
-
-	sym = db_search_symbol(callpc, DB_STGY_ANY, &offset);
-	db_symbol_values(sym, &name, NULL);
-	if (sym == (db_sym_t)0)
-		return (db_sym_t)0;
-
-	*is_trap = NONE;
-	narg = MAXNARG;
-
-	if (INKERNEL((int)frame) && name) {
-		/*
-		 * XXX traps should be based off of the Xtrap*
-		 * locations rather than on trap, since some traps
-		 * (e.g., npxdna) don't go through trap()
-		 */
-		if (!strcmp(name, "trap_tss")) {
-			*is_trap = TRAP_TSS;
-			narg = 0;
-		} else if (!strcmp(name, "trap")) {
-			*is_trap = TRAP;
-			narg = 0;
-		} else if (!strcmp(name, "syscall")) {
-			*is_trap = SYSCALL;
-			narg = 0;
-		} else if (name[0] == 'X') {
-			if (!strncmp(name, "Xintr", 5) ||
-			    !strncmp(name, "Xresume", 7) ||
-			    !strncmp(name, "Xstray", 6) ||
-			    !strncmp(name, "Xhold", 5) ||
-			    !strncmp(name, "Xrecurse", 8) ||
-			    !strcmp(name, "Xdoreti")) {
-				*is_trap = INTERRUPT;
-				narg = 0;
-			} else if (!strcmp(name, "Xsoftintr")) {
-				*is_trap = SOFTINTR;
-				narg = 0;
-			} else if (!strncmp(name, "Xtss_", 5)) {
-				*is_trap = INTERRUPT_TSS;
-				narg = 0;
-			}
-		}
-	}
-
-	if (offp != NULL)
-		*offp = offset;
-	if (nargp != NULL)
-		*nargp = narg;
-	if (namep != NULL)
-		*namep = name;
-	return sym;
-}
-
-/* 
- * Figure out the next frame up in the call stack.  
- * For trap(), we print the address of the faulting instruction and 
+/*
+ * Figure out the next frame up in the call stack.
+ * For trap(), we print the address of the faulting instruction and
  *   proceed with the calling frame.  We return the ip that faulted.
  *   If the trap was caused by jumping through a bogus pointer, then
- *   the next line in the backtrace will list some random function as 
- *   being called.  It should get the argument list correct, though.  
+ *   the next line in the backtrace will list some random function as
+ *   being called.  It should get the argument list correct, though.
  *   It might be possible to dig out from the next frame up the name
  *   of the function that faulted, but that could get hairy.
  */
-
 int
-db_nextframe(
-    long **nextframe,	/* IN/OUT */
-    long **retaddr,	/* IN/OUT */
-    long **arg0,		/* OUT */
-    db_addr_t *ip,	/* OUT */
-    long *argp,		/* IN */
-    int is_trap, void (*pr)(const char *, ...))
+db_nextframe(long **nextframe, long **retaddr, long **arg0, db_addr_t *ip,
+    long *argp, int is_trap, void (*pr)(const char *, ...))
 {
 	static struct trapframe tf;
 	static struct i386tss tss;
@@ -306,6 +243,66 @@ db_nextframe(
 		}
 	}
 	return 1;
+}
+
+db_sym_t
+db_frame_info(long *frame, db_addr_t callpc, const char **namep,
+    db_expr_t *offp, int *is_trap, int *nargp)
+{
+	db_expr_t offset;
+	db_sym_t sym;
+	int narg;
+	const char *name;
+
+	sym = db_search_symbol(callpc, DB_STGY_ANY, &offset);
+	db_symbol_values(sym, &name, NULL);
+	if (sym == (db_sym_t)0)
+		return (db_sym_t)0;
+
+	*is_trap = NONE;
+	narg = MAXNARG;
+
+	if (INKERNEL((int)frame) && name) {
+		/*
+		 * XXX traps should be based off of the Xtrap*
+		 * locations rather than on trap, since some traps
+		 * (e.g., npxdna) don't go through trap()
+		 */
+		if (!strcmp(name, "trap_tss")) {
+			*is_trap = TRAP_TSS;
+			narg = 0;
+		} else if (!strcmp(name, "trap")) {
+			*is_trap = TRAP;
+			narg = 0;
+		} else if (!strcmp(name, "syscall")) {
+			*is_trap = SYSCALL;
+			narg = 0;
+		} else if (name[0] == 'X') {
+			if (!strncmp(name, "Xintr", 5) ||
+			    !strncmp(name, "Xresume", 7) ||
+			    !strncmp(name, "Xstray", 6) ||
+			    !strncmp(name, "Xhold", 5) ||
+			    !strncmp(name, "Xrecurse", 8) ||
+			    !strcmp(name, "Xdoreti")) {
+				*is_trap = INTERRUPT;
+				narg = 0;
+			} else if (!strcmp(name, "Xsoftintr")) {
+				*is_trap = SOFTINTR;
+				narg = 0;
+			} else if (!strncmp(name, "Xtss_", 5)) {
+				*is_trap = INTERRUPT_TSS;
+				narg = 0;
+			}
+		}
+	}
+
+	if (offp != NULL)
+		*offp = offset;
+	if (nargp != NULL)
+		*nargp = narg;
+	if (namep != NULL)
+		*namep = name;
+	return sym;
 }
 
 bool
