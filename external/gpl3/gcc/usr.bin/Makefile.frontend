@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.frontend,v 1.4 2014/04/04 01:19:14 christos Exp $
+#	$NetBSD: Makefile.frontend,v 1.5 2018/02/11 02:12:28 christos Exp $
 
 BINDIR=		/usr/bin
 
@@ -6,8 +6,8 @@ CPPFLAGS+=	-I${GCCARCH} -I${FRONTENDOBJ} \
 		${G_ALL_CFLAGS:M-D*} ${G_INCLUDES:M-I*:N-I.*} \
 		-DIN_GCC_FRONTEND
 
-NOCTF=	# defined
-.include <bsd.own.mk>
+NOCTF=		# defined
+.include <bsd.init.mk>
 
 DPADD+=			${FRONTENDOBJ}/libfrontend.a
 LDADD+=			-L${FRONTENDOBJ} -lfrontend

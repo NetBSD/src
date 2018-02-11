@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.42 2018/02/07 02:33:05 mrg Exp $
+#	$NetBSD: Makefile,v 1.43 2018/02/11 02:12:28 christos Exp $
 
 LIBISPRIVATE=	yes
 
@@ -28,7 +28,7 @@ HOST_CXXFLAGS+=	-std=gnu++98
 
 HOSTPROG_CXX=	1
 
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 
 HOST_LIBIBERTYOBJ!=	cd ${.CURDIR}/../host-libiberty && ${PRINTOBJDIR}
 
