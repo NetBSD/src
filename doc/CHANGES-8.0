@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.119 2018/02/10 04:13:26 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.120 2018/02/11 21:56:20 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -9538,4 +9538,75 @@ sys/dist/pf/net/pf.c				1.77-1.78
 	- Fix wrong assignment in !__NetBSD__ code. PR/52682.
 	- Fix a remotely-triggerable integer overflow. PR/44059.
 	[maxv, ticket #540]
+
+distrib/sets/lists/base/shl.mi			1.825
+distrib/sets/lists/comp/mi			1.2168-1.2169
+distrib/sets/lists/comp/shl.mi			1.310
+distrib/sets/lists/debug/mi			1.234
+distrib/sets/lists/debug/shl.mi			1.188
+distrib/sets/lists/man/mi			1.1570
+distrib/sets/lists/tests/mi			1.772
+etc/mtree/NetBSD.dist.tests			1.150
+share/man/man4/Makefile				1.650
+share/man/man4/ipsec.4				1.42-1.43
+share/man/man4/ipsecif.4			1.1-1.5
+sys/arch/amd64/conf/ALL				1.77
+sys/arch/amd64/conf/GENERIC			1.480
+sys/conf/files					1.1191
+sys/net/Makefile				1.34
+sys/net/files.net				1.14
+sys/net/if.c					1.404
+sys/net/if.h					1.248
+sys/net/if_gif.c				1.135
+sys/net/if_ipsec.c				1.1-1.3
+sys/net/if_ipsec.h				1.1
+sys/net/if_l2tp.c				1.16
+sys/net/if_types.h				1.28
+sys/netinet/in.c				1.214
+sys/netinet/in.h				1.103
+sys/netinet/in_gif.c				1.92
+sys/netinet/ip_var.h				1.122
+sys/netinet6/in6.c				1.257
+sys/netinet6/in6.h				1.88
+sys/netinet6/in6_gif.c				1.90
+sys/netinet6/ip6_var.h				1.75
+sys/netipsec/Makefile				1.6
+sys/netipsec/files.netipsec			1.13
+sys/netipsec/ipsec.h				1.62
+sys/netipsec/ipsecif.c				1.1
+sys/netipsec/ipsecif.h				1.1
+sys/netipsec/key.c				1.246-1.247
+sys/netipsec/key.h				1.34
+sys/rump/net/Makefile.rumpnetcomp		1.20
+sys/rump/net/lib/libipsec/IPSEC.ioconf		1.1
+sys/rump/net/lib/libipsec/Makefile		1.1
+sys/rump/net/lib/libipsec/ipsec_component.c	1.1
+tests/net/Makefile				1.34
+tests/net/if_ipsec/Makefile			1.1
+tests/net/if_ipsec/t_ipsec.sh			1.1-1.2
+
+	Add ipsec interface, which is used for route-based VPN.
+	See ipsecif(4).
+	[ozaki-r, ticket #536]
+
+sys/dev/sdmmc/sdmmc_mem.c			1.64
+
+	Fix uninitialized variable use.
+	[bouyer, ticket #537]
+
+sys/netinet/in.c				1.217
+
+	Fix a panic on a kernel without ARP.
+	[ozaki-r, ticket #539]
+
+sys/external/bsd/drm2/dist/drm/nouveau/core/engine/device/nouveau_engine_device_nve0.c 1.3
+
+	Add NVIDIA GT730 support.  PR/53006.
+	[maya, ticket #541]
+
+usr.sbin/ypserv/ypserv/ypserv_proc.c		1.18
+
+	Always zero out the result structs in the svc procs to avoid
+	returning stale request data to the client.  PR/47615
+	[christos, ticket #542]
 
