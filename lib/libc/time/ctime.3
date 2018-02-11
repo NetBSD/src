@@ -1,4 +1,4 @@
-.\" $NetBSD: ctime.3,v 1.57 2018/02/07 11:16:05 pgoyette Exp $
+.\" $NetBSD: ctime.3,v 1.58 2018/02/11 13:28:26 wiz Exp $
 .\"
 .\" XXX: License missing?
 .\"
@@ -131,7 +131,7 @@ or a
 .Dv NULL
 pointer denoting
 Coordinated Universal Time
-.Pq Tn UTC .
+.Pq UTC .
 .It Fn difftime "time1" "time2"
 The
 .Fn difftime
@@ -176,7 +176,7 @@ fields.
 The
 .Fn gmtime
 function converts to Coordinated Universal Time
-.Pq Tn UTC
+.Pq UTC
 and returns a pointer to the
 .Va tm
 structure described in
@@ -233,7 +233,7 @@ argument, returned by a previous call to
 or a
 .Dv NULL
 pointer denoting Coordinated Universal Time
-.Pq Tn UTC .
+.Pq UTC .
 .It Fn mktime "tm"
 The
 .Fn mktime
@@ -313,7 +313,7 @@ argument, returned by a previous call to
 .Fn tzalloc ,
 or a null pointer denoting
 Coordinated Universal Time
-.Pq Tn UTC .
+.Pq UTC .
 .El
 .Pp
 Declarations of all the functions and externals, and the
@@ -337,7 +337,6 @@ includes the following fields:
        char *tm_zone;   /* abbreviation of timezone name (optional) */
        long tm_gmtoff;  /* offset from UT in seconds (optional) */
 .Ed
-.Pp
 .Bl -bullet
 .It
 .Va tm_isdst
@@ -432,7 +431,7 @@ argument is
 .Dv NULL ,
 and this is not an error, but a way of referring to
 Coordinated Universal Time
-.Pq Tn UTC .
+.Pq UTC .
 .It
 .Fn tzgetzone
 function returns string containing the name of the timezone given in
@@ -509,9 +508,9 @@ point to an array of characters that
 can be freed or overwritten by later calls to the functions
 .Fn localtime ,
 .Fn tzfree ,
-and    
-.Fn tzset , 
-if these functions affect the time zone information that specifies the 
+and
+.Fn tzset ,
+if these functions affect the time zone information that specifies the
 abbreviation in question.
 The remaining functions and data are thread-safe.
 The functions that do take an explicit
