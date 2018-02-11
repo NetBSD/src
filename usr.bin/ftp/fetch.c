@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.229 2017/11/25 15:39:17 christos Exp $	*/
+/*	$NetBSD: fetch.c,v 1.230 2018/02/11 02:51:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2015 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.229 2017/11/25 15:39:17 christos Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.230 2018/02/11 02:51:58 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -1277,7 +1277,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 	static char		*xferbuf;
 	const char		*cp;
 	char			*ep;
-	char			*auth;
+	char			*volatile auth;
 	char			*volatile savefile;
 	char			*volatile location;
 	char			*volatile message;
@@ -1460,7 +1460,8 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 #ifdef WITH_SSL
 		if (isproxy && oui.utype == HTTPS_URL_T) {
 			switch (connectmethod(fin, url, penv, &oui, &ui,
-			    &wauth, &pauth, &auth, &hasleading, &rval)) {
+			    &wauth, &pauth, __UNVOLATILE(&auth), &hasleading,
+			    &rval)) {
 			case C_CLEANUP:
 				goto cleanup_fetch_url;
 			case C_IMPROPER:
@@ -1496,7 +1497,8 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 		alarmtimer(0);
 
 		switch (negotiate_connection(fin, url, penv, &pi,
-		    &mtime, &wauth, &pauth, &rval, &ischunked, &auth)) {
+		    &mtime, &wauth, &pauth, &rval, &ischunked,
+		    __UNVOLATILE(&auth))) {
 		case C_OK:
 			break;
 		case C_CLEANUP:
