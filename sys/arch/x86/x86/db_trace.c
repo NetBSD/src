@@ -1,33 +1,33 @@
-/*	$NetBSD: db_trace.c,v 1.3 2011/04/21 00:24:07 enami Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.4 2018/02/11 08:27:18 maxv Exp $	*/
 
-/* 
+/*
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
+ *
  * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
- * 
+ *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
- * 
+ *
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.3 2011/04/21 00:24:07 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.4 2018/02/11 08:27:18 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,21 +55,21 @@ __KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.3 2011/04/21 00:24:07 enami Exp $");
 int
 db_x86_regop(const struct db_variable *vp, db_expr_t *val, int opcode)
 {
-        db_expr_t *regaddr =
-            (db_expr_t *)(((uint8_t *)DDB_REGS) + ((size_t)vp->valuep));
-        
-        switch (opcode) {
-        case DB_VAR_GET:
-                *val = *regaddr;
-                break;
-        case DB_VAR_SET:
-                *regaddr = *val;
-                break;
-        default:
+	db_expr_t *regaddr =
+	    (db_expr_t *)(((uint8_t *)DDB_REGS) + ((size_t)vp->valuep));
+
+	switch (opcode) {
+	case DB_VAR_GET:
+		*val = *regaddr;
+		break;
+	case DB_VAR_SET:
+		*regaddr = *val;
+		break;
+	default:
 		db_printf("db_x86_regop: unknown op %d", opcode);
 		db_error(NULL);
-        }
-        return 0;
+	}
+	return 0;
 }
 
 /*
@@ -77,17 +77,17 @@ db_x86_regop(const struct db_variable *vp, db_expr_t *val, int opcode)
  */
 
 #if 0
-db_addr_t	db_trap_symbol_value = 0;
-db_addr_t	db_syscall_symbol_value = 0;
-db_addr_t	db_kdintr_symbol_value = 0;
-bool		db_trace_symbols_found = false;
+db_addr_t db_trap_symbol_value = 0;
+db_addr_t db_syscall_symbol_value = 0;
+db_addr_t db_kdintr_symbol_value = 0;
+bool db_trace_symbols_found = false;
 
 void db_find_trace_symbols(void);
 
 void
 db_find_trace_symbols(void)
 {
-	db_expr_t	value;
+	db_expr_t value;
 
 	if (db_value_of_name("_trap", &value))
 		db_trap_symbol_value = (db_addr_t) value;
@@ -99,18 +99,23 @@ db_find_trace_symbols(void)
 }
 #endif
 
+#define set_frame_callpc() do {				\
+		frame = (long *)ddb_regs.tf_bp;		\
+		callpc = (db_addr_t)ddb_regs.tf_ip;	\
+	} while (/*CONSTCCOND*/0)
+
 void
 db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
-		     const char *modif, void (*pr)(const char *, ...))
+    const char *modif, void (*pr)(const char *, ...))
 {
-	long		*frame, *lastframe;
-	long		*retaddr, *arg0;
-	long		*argp;
-	db_addr_t	 callpc;
-	int		 is_trap;
-	bool		 kernel_only = true;
-	bool		 trace_thread = false;
-	bool		 lwpaddr = false;
+	long *frame, *lastframe;
+	long *retaddr, *arg0;
+	long *argp;
+	db_addr_t callpc;
+	int is_trap;
+	bool kernel_only = true;
+	bool trace_thread = false;
+	bool lwpaddr = false;
 
 #if 0
 	if (!db_trace_symbols_found)
@@ -132,11 +137,6 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 				kernel_only = false;
 		}
 	}
-
-#define set_frame_callpc() do {				\
-		frame = (long *)ddb_regs.tf_bp;		\
-		callpc = (db_addr_t)ddb_regs.tf_ip;	\
-	} while (/*CONSTCCOND*/0)
 
 	if (have_addr && trace_thread) {
 		struct pcb *pcb;
@@ -183,29 +183,31 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 		    sizeof(callpc), (char *)&callpc);
 		db_read_bytes((db_addr_t)frame,
 		    sizeof(frame), (char *)&frame);
-	} else
+	} else {
 		set_frame_callpc();
+	}
+
 	retaddr = frame + 1;
 	arg0 = frame + 2;
 
-	lastframe = 0;
+	lastframe = NULL;
 	while (count && frame != 0) {
-		int		narg;
-		const char *	name;
-		db_expr_t	offset;
-		db_sym_t	sym;
-		char	*argnames[MAXNARG], **argnp = NULL;
-		db_addr_t	lastcallpc;
+		int narg;
+		const char *name;
+		db_expr_t offset;
+		db_sym_t sym;
+		char *argnames[MAXNARG], **argnp = NULL;
+		db_addr_t lastcallpc;
 
 		name = "?";
 		is_trap = NONE;
 		offset = 0;
 		sym = db_frame_info(frame, callpc, &name, &offset, &is_trap,
-				    &narg);
+		    &narg);
 
-		if (lastframe == 0 && sym == (db_sym_t)0 && callpc != 0) {
+		if (lastframe == NULL && sym == (db_sym_t)0 && callpc != 0) {
 			/* Symbol not found, peek at code */
-			u_long	instr = db_get_value(callpc, 4, false);
+			u_long instr = db_get_value(callpc, 4, false);
 
 			offset = 1;
 			if (
@@ -234,7 +236,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 
 		(*pr)("%s(", name);
 
-		if (lastframe == 0 && offset == 0 && !have_addr) {
+		if (lastframe == NULL && offset == 0 && !have_addr) {
 			/*
 			 * We have a breakpoint before the frame is set up
 			 * Use %[er]sp instead
@@ -258,7 +260,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 		db_printsym(callpc, DB_STGY_PROC, pr);
 		(*pr)("\n");
 
-		if (lastframe == 0 && offset == 0 && !have_addr) {
+		if (lastframe == NULL && offset == 0 && !have_addr) {
 			/* Frame really belongs to next callpc */
 			struct x86_frame *fp = (void *)
 			    (ddb_regs.tf_sp-sizeof(long));
@@ -272,15 +274,15 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 
 		lastframe = frame;
 		lastcallpc = callpc;
-		if (!db_nextframe(&frame, &retaddr, &arg0,
-		   &callpc, frame + 2, is_trap, pr))
+		if (!db_nextframe(&frame, &retaddr, &arg0, &callpc,
+		    frame + 2, is_trap, pr))
 			break;
 
 		if (INKERNEL((long)frame)) {
 			/* staying in kernel */
 #ifdef __i386__
-			if (!db_intrstack_p(frame)
-			    && db_intrstack_p(lastframe)) {
+			if (!db_intrstack_p(frame) &&
+			    db_intrstack_p(lastframe)) {
 				(*pr)("--- switch to interrupt stack ---\n");
 			} else
 #endif
@@ -307,5 +309,4 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 		db_printsym(callpc, DB_STGY_XTRN, pr);
 		(*pr)(":\n");
 	}
-#undef set_frame_callpc
 }
