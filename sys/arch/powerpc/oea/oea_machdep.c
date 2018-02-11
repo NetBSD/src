@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.73 2016/05/30 13:04:24 chs Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.74 2018/02/11 00:01:12 mrg Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.73 2016/05/30 13:04:24 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.74 2018/02/11 00:01:12 mrg Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -109,6 +109,19 @@ extern int dsitrap_fix_dbat5[];
 extern int dsitrap_fix_dbat6[];
 extern int dsitrap_fix_dbat7[];
 
+/*
+ * Load pointer with 0 behind GCC's back, otherwise it will
+ * emit a "trap" instead.
+ */
+static __inline__ uintptr_t
+zero_value(void)
+{
+	uintptr_t dont_tell_gcc;
+
+	__asm volatile ("li %0, 0" : "=r"(dont_tell_gcc) :);
+	return dont_tell_gcc;
+}
+
 void
 oea_init(void (*handler)(void))
 {
@@ -144,7 +157,7 @@ oea_init(void (*handler)(void))
 #ifdef PPC_HIGH_VEC
 	exc_base = EXC_HIGHVEC;
 #else
-	exc_base = 0;
+	exc_base = zero_value();
 #endif
 	KASSERT(mfspr(SPR_SPRG0) == (uintptr_t)ci);
 
@@ -289,8 +302,10 @@ oea_init(void (*handler)(void))
 	 * Install a branch absolute to trap0 to force a panic.
 	 */
 	if ((uintptr_t)trap0 < 0x2000000) {
-		*(volatile uint32_t *) 0 = 0x7c6802a6;
-		*(volatile uint32_t *) 4 = 0x48000002 | (uintptr_t) trap0;
+		uint32_t *p = (uint32_t *)zero_value();
+
+		p[0] = 0x7c6802a6;
+		p[1] = 0x48000002 | (uintptr_t) trap0;
 	}
 
 	/*
