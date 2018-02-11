@@ -8686,7 +8686,7 @@ function_arg_advance_32 (CUMULATIVE_ARGS *cum, machine_mode mode,
 			 HOST_WIDE_INT words)
 {
   int res = 0;
-  bool error_p = NULL;
+  bool error_p = false;
 
   if (TARGET_IAMCU)
     {
@@ -8731,12 +8731,12 @@ pass_in_reg:
 
     case DFmode:
       if (cum->float_in_sse == -1)
-	error_p = 1;
+	error_p = true;
       if (cum->float_in_sse < 2)
 	break;
     case SFmode:
       if (cum->float_in_sse == -1)
-	error_p = 1;
+	error_p = true;
       if (cum->float_in_sse < 1)
 	break;
       /* FALLTHRU */
