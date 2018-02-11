@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2179 2018/02/09 04:20:38 christos Exp $
+#	$NetBSD: mi,v 1.2180 2018/02/11 16:45:35 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -2001,13 +2001,73 @@
 ./usr/include/gcc-4.5/omp.h			comp-obsolete		obsolete
 ./usr/include/gcc-4.8/mf-runtime.h		comp-gcc-include	obsolete
 ./usr/include/gcc-4.8/omp.h			comp-gcc-include	obsolete
+./usr/include/gcc-5/adxintrin.h		comp-obsolete	gcc=6,obsolete
+./usr/include/gcc-5/ammintrin.h		comp-obsolete	gcc=6,obsolete
+./usr/include/gcc-5/avx2intrin.h		comp-obsolete	gcc=6,obsolete
+./usr/include/gcc-5/avx512bwintrin.h	comp-obsolete	gcc=6,obsolete
+./usr/include/gcc-5/avx512cdintrin.h	comp-obsolete	gcc=6,obsolete
+./usr/include/gcc-5/avx512dqintrin.h	comp-obsolete	gcc=6,obsolete
+./usr/include/gcc-5/avx512erintrin.h	comp-obsolete	gcc=6,obsolete
+./usr/include/gcc-5/avx512fintrin.h	comp-obsolete	gcc=6,obsolete
+./usr/include/gcc-5/avx512ifmaintrin.h	comp-obsolete	gcc=6,obsolete
+./usr/include/gcc-5/avx512ifmavlintrin.h	comp-obsolete	gcc=6,obsolete
+./usr/include/gcc-5/avx512pfintrin.h	comp-obsolete	gcc=6,obsolete
+./usr/include/gcc-5/avx512vbmiintrin.h	comp-obsolete	gcc=6,obsolete
+./usr/include/gcc-5/avx512vbmivlintrin.h	comp-obsolete	gcc=6,obsolete
+./usr/include/gcc-5/avx512vlbwintrin.h	comp-obsolete	gcc=6,obsolete
+./usr/include/gcc-5/avx512vldqintrin.h	comp-obsolete	gcc=6,obsolete
+./usr/include/gcc-5/avx512vlintrin.h	comp-obsolete	gcc=6,obsolete
+./usr/include/gcc-5/avxintrin.h		comp-obsolete	gcc=6,obsolete
+./usr/include/gcc-5/bmi2intrin.h		comp-obsolete	gcc=6,obsolete
+./usr/include/gcc-5/bmiintrin.h		comp-obsolete	gcc=6,obsolete
+./usr/include/gcc-5/bmmintrin.h		comp-obsolete	gcc=6,obsolete
+./usr/include/gcc-5/clflushoptintrin.h	comp-obsolete	gcc=6,obsolete
+./usr/include/gcc-5/clwbintrin.h		comp-obsolete	gcc=6,obsolete
+./usr/include/gcc-5/cpuid.h		comp-obsolete	gcc=6,obsolete
+./usr/include/gcc-5/cross-stdarg.h	comp-obsolete	gcc=6,obsolete
+./usr/include/gcc-5/emmintrin.h		comp-obsolete	gcc=6,obsolete
+./usr/include/gcc-5/f16cintrin.h		comp-obsolete	gcc=6,obsolete
+./usr/include/gcc-5/fma4intrin.h		comp-obsolete	gcc=6,obsolete
+./usr/include/gcc-5/fmaintrin.h		comp-obsolete	gcc=6,obsolete
+./usr/include/gcc-5/fxsrintrin.h		comp-obsolete	gcc=6,obsolete
+./usr/include/gcc-5/ia32intrin.h		comp-obsolete	gcc=6,obsolete
+./usr/include/gcc-5/immintrin.h		comp-obsolete	gcc=6,obsolete
+./usr/include/gcc-5/lwpintrin.h		comp-obsolete	gcc=6,obsolete
+./usr/include/gcc-5/lzcntintrin.h	comp-obsolete	gcc=6,obsolete
+./usr/include/gcc-5/mm3dnow.h		comp-obsolete	gcc=6,obsolete
+./usr/include/gcc-5/mm_malloc.h		comp-obsolete	gcc=6,obsolete
+./usr/include/gcc-5/mmintrin.h		comp-obsolete	gcc=6,obsolete
+./usr/include/gcc-5/mwaitxintrin.h	comp-obsolete	gcc=6,obsolete
+./usr/include/gcc-5/nmmintrin.h		comp-obsolete	gcc=6,obsolete
 ./usr/include/gcc-5/omp.h			comp-gcc-include	gcc=5
+./usr/include/gcc-5/omp.h		comp-obsolete	gcc=6,obsolete
 ./usr/include/gcc-5/openacc.h			comp-gcc-include	gcc=5
+./usr/include/gcc-5/openacc.h		comp-obsolete	gcc=6,obsolete
+./usr/include/gcc-5/pmmintrin.h		comp-obsolete	gcc=6,obsolete
+./usr/include/gcc-5/popcntintrin.h	comp-obsolete	gcc=6,obsolete
+./usr/include/gcc-5/prfchwintrin.h	comp-obsolete	gcc=6,obsolete
+./usr/include/gcc-5/rdseedintrin.h	comp-obsolete	gcc=6,obsolete
+./usr/include/gcc-5/rtmintrin.h		comp-obsolete	gcc=6,obsolete
 ./usr/include/gcc-5/sanitizer/allocator_interface.h	comp-gcc-include	gcc=5
 ./usr/include/gcc-5/sanitizer/asan_interface.h	comp-gcc-include	gcc=5
 ./usr/include/gcc-5/sanitizer/common_interface_defs.h	comp-gcc-include	gcc=5
 ./usr/include/gcc-5/sanitizer/tsan_interface_atomic.h	comp-gcc-include	gcc=5
+./usr/include/gcc-5/shaintrin.h		comp-obsolete	gcc=6,obsolete
+./usr/include/gcc-5/smmintrin.h		comp-obsolete	gcc=6,obsolete
 ./usr/include/gcc-5/stdatomic.h			comp-gcc-include	gcc=5,gcccmds
+./usr/include/gcc-5/stdatomic.h		comp-obsolete	gcc=6,obsolete
+./usr/include/gcc-5/tbmintrin.h		comp-obsolete	gcc=6,obsolete
+./usr/include/gcc-5/tgmath.h		comp-obsolete	gcc=6,obsolete
+./usr/include/gcc-5/tmmintrin.h		comp-obsolete	gcc=6,obsolete
+./usr/include/gcc-5/wmmintrin.h		comp-obsolete	gcc=6,obsolete
+./usr/include/gcc-5/x86intrin.h		comp-obsolete	gcc=6,obsolete
+./usr/include/gcc-5/xmmintrin.h		comp-obsolete	gcc=6,obsolete
+./usr/include/gcc-5/xopintrin.h		comp-obsolete	gcc=6,obsolete
+./usr/include/gcc-5/xsavecintrin.h	comp-obsolete	gcc=6,obsolete
+./usr/include/gcc-5/xsaveintrin.h	comp-obsolete	gcc=6,obsolete
+./usr/include/gcc-5/xsaveoptintrin.h	comp-obsolete	gcc=6,obsolete
+./usr/include/gcc-5/xsavesintrin.h	comp-obsolete	gcc=6,obsolete
+./usr/include/gcc-5/xtestintrin.h	comp-obsolete	gcc=6,obsolete
 ./usr/include/gcc-6/omp.h			comp-gcc-include	gcc=6
 ./usr/include/gcc-6/openacc.h			comp-gcc-include	gcc=6
 ./usr/include/gcc-6/sanitizer/allocator_interface.h	comp-gcc-include	gcc=6
@@ -2579,8 +2639,10 @@
 ./usr/include/openssl/hmac.h			comp-c-include
 ./usr/include/openssl/idea.h			comp-c-include
 ./usr/include/openssl/kdf.h			comp-c-include  openssl=11
+./usr/include/openssl/krb5_asn.h			comp-obsolete	openssl=11,obsolete
 ./usr/include/openssl/krb5_asn.h		comp-c-include	openssl=10
 ./usr/include/openssl/kssl.h			comp-c-include	openssl=10
+./usr/include/openssl/kssl.h			comp-obsolete	openssl=11,obsolete
 ./usr/include/openssl/lhash.h			comp-c-include
 ./usr/include/openssl/md2.h			comp-c-include
 ./usr/include/openssl/md4.h			comp-c-include
@@ -2599,6 +2661,7 @@
 ./usr/include/openssl/pkcs7.h			comp-c-include
 ./usr/include/openssl/pq_compat.h		comp-obsolete		obsolete
 ./usr/include/openssl/pqueue.h			comp-c-include	openssl=10
+./usr/include/openssl/pqueue.h			comp-obsolete	openssl=11,obsolete
 ./usr/include/openssl/rand.h			comp-c-include
 ./usr/include/openssl/rc2.h			comp-c-include
 ./usr/include/openssl/rc4.h			comp-c-include
@@ -2614,9 +2677,11 @@
 ./usr/include/openssl/ssl.h			comp-c-include
 ./usr/include/openssl/ssl2.h			comp-c-include
 ./usr/include/openssl/ssl23.h			comp-c-include	openssl=10
+./usr/include/openssl/ssl23.h			comp-obsolete	openssl=11,obsolete
 ./usr/include/openssl/ssl3.h			comp-c-include
 ./usr/include/openssl/stack.h			comp-c-include
 ./usr/include/openssl/store.h			comp-c-include	openssl=10
+./usr/include/openssl/store.h			comp-obsolete	openssl=11,obsolete
 ./usr/include/openssl/symhacks.h		comp-c-include
 ./usr/include/openssl/tls1.h			comp-c-include
 ./usr/include/openssl/tmdiff.h			comp-obsolete		obsolete
@@ -2624,6 +2689,7 @@
 ./usr/include/openssl/txt_db.h			comp-c-include
 ./usr/include/openssl/ui.h			comp-c-include
 ./usr/include/openssl/ui_compat.h		comp-c-include	openssl=10
+./usr/include/openssl/ui_compat.h		comp-obsolete	openssl=11,obsolete
 ./usr/include/openssl/whrlpool.h		comp-c-include
 ./usr/include/openssl/x509.h			comp-c-include
 ./usr/include/openssl/x509_vfy.h		comp-c-include
@@ -3718,6 +3784,9 @@
 ./usr/lib/pkgconfig/openssl.pc			comp-crypto-lib		share
 ./usr/lib/pkgconfig/sqlite3.pc			comp-c-lib
 ./usr/lib/pkgconfig/zlib.pc			comp-c-lib
+./usr/libdata/debug/usr/tests/crypto/libcrypto/h_lhashtest.debug	comp-obsolete	openssl=11,obsolete
+./usr/libdata/debug/usr/tests/crypto/libcrypto/h_shatest.debug	comp-obsolete	openssl=11,obsolete
+./usr/libdata/debug/usr/tests/crypto/libcrypto/h_x509v3test.debug	comp-obsolete	openssl=11,obsolete
 ./usr/libdata/ldscripts/kmodule			comp-util-share		binutils,kmod
 ./usr/libdata/lint/llib-larchive.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lasn1.ln		comp-krb5-lintlib	lint,kerberos
@@ -3856,6 +3925,7 @@
 ./usr/sbin/gspa					comp-util-sbin
 ./usr/sbin/gspahextoc				comp-obsolete		obsolete
 ./usr/sbin/kgmon				comp-debug-sbin
+./usr/share/examples/openssl/CA.sh		comp-obsolete	openssl=11,obsolete
 ./usr/share/ldscripts/elf32_sparc.x		comp-obsolete		obsolete
 ./usr/share/ldscripts/elf32_sparc.xbn		comp-obsolete		obsolete
 ./usr/share/ldscripts/elf32_sparc.xn		comp-obsolete		obsolete
@@ -11875,6 +11945,7 @@
 ./usr/share/man/html1/objcopy.html		comp-util-htmlman	binutils,html
 ./usr/share/man/html1/objdump.html		comp-util-htmlman	binutils,html
 ./usr/share/man/html1/openssl_c_rehash.html	comp-c-htmlman	html,openssl=10
+./usr/share/man/html1/openssl_c_rehash.html	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/html1/openssl_engine.html	comp-c-htmlman	html,openssl=11
 ./usr/share/man/html1/openssl_list.html	comp-c-htmlman	html,openssl=11
 ./usr/share/man/html1/openssl_ocsp.html		comp-c-htmlman		html
@@ -12300,6 +12371,7 @@
 ./usr/share/man/html3/CRYPTO_THREAD_run_once.html	comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/CRYPTO_get_ex_new_index.html	comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/CRYPTO_set_ex_data.html	comp-c-htmlman	html,openssl=10
+./usr/share/man/html3/CRYPTO_set_ex_data.html	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/html3/CTLOG_STORE_get0_log_by_id.html	comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/CTLOG_STORE_new.html	comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/CTLOG_new.html	comp-c-htmlman	html,openssl=11
@@ -12311,6 +12383,7 @@
 ./usr/share/man/html3/DH_get0_pqg.html	comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/DH_get_1024_160.html	comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/DH_get_ex_new_index.html	comp-c-htmlman	html,openssl=10
+./usr/share/man/html3/DH_get_ex_new_index.html	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/html3/DH_meth_new.html	comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/DH_new.html		comp-c-htmlman	html
 ./usr/share/man/html3/DH_set_method.html	comp-c-htmlman	html
@@ -12322,6 +12395,7 @@
 ./usr/share/man/html3/DSA_generate_parameters.html	comp-c-htmlman	html
 ./usr/share/man/html3/DSA_get0_pqg.html	comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/DSA_get_ex_new_index.html	comp-c-htmlman	html,openssl=10
+./usr/share/man/html3/DSA_get_ex_new_index.html	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/html3/DSA_meth_new.html	comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/DSA_new.html		comp-c-htmlman	html
 ./usr/share/man/html3/DSA_set_method.html	comp-c-htmlman	html
@@ -12370,6 +12444,7 @@
 ./usr/share/man/html3/EVP_PKEY_derive.html	comp-c-htmlman	html
 ./usr/share/man/html3/EVP_PKEY_encrypt.html	comp-c-htmlman	html
 ./usr/share/man/html3/EVP_PKEY_get_default_digest.html	comp-c-htmlman	html,openssl=10
+./usr/share/man/html3/EVP_PKEY_get_default_digest.html	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/html3/EVP_PKEY_get_default_digest_nid.html	comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/EVP_PKEY_keygen.html	comp-c-htmlman	html
 ./usr/share/man/html3/EVP_PKEY_new.html		comp-c-htmlman	html
@@ -12549,6 +12624,7 @@
 ./usr/share/man/html3/RSA_generate_key.html	comp-c-htmlman		html
 ./usr/share/man/html3/RSA_get0_key.html	comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/RSA_get_ex_new_index.html	comp-c-htmlman	html,openssl=10
+./usr/share/man/html3/RSA_get_ex_new_index.html	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/html3/RSA_meth_new.html	comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/RSA_new.html		comp-c-htmlman		html
 ./usr/share/man/html3/RSA_padding_add_PKCS1_type_1.html comp-c-htmlman		html
@@ -12719,6 +12795,7 @@
 ./usr/share/man/html3/SSL_CTX_free.html		comp-c-htmlman		html
 ./usr/share/man/html3/SSL_CTX_get0_param.html		comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/SSL_CTX_get_ex_new_index.html	comp-c-htmlman	html,openssl=10
+./usr/share/man/html3/SSL_CTX_get_ex_new_index.html	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/html3/SSL_CTX_get_verify_mode.html	comp-c-htmlman		html
 ./usr/share/man/html3/SSL_CTX_has_client_custom_ext.html	comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/SSL_CTX_load_verify_locations.html	comp-c-htmlman		html
@@ -12762,6 +12839,7 @@
 ./usr/share/man/html3/SSL_CTX_set_tlsext_use_srtp.html	comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/SSL_CTX_set_tmp_dh_callback.html	comp-c-htmlman		html
 ./usr/share/man/html3/SSL_CTX_set_tmp_rsa_callback.html	comp-c-htmlman	html,openssl=10
+./usr/share/man/html3/SSL_CTX_set_tmp_rsa_callback.html	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/html3/SSL_CTX_set_verify.html	comp-c-htmlman		html
 ./usr/share/man/html3/SSL_CTX_use_certificate.html	comp-c-htmlman		html
 ./usr/share/man/html3/SSL_CTX_use_psk_identity_hint.html	comp-c-htmlman	html
@@ -12774,6 +12852,7 @@
 ./usr/share/man/html3/SSL_SESSION_get_compress_id.html	comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/SSL_SESSION_get_ex_data.html	comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/SSL_SESSION_get_ex_new_index.html	comp-c-htmlman	html,openssl=10
+./usr/share/man/html3/SSL_SESSION_get_ex_new_index.html	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/html3/SSL_SESSION_get_protocol_version.html	comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/SSL_SESSION_get_time.html comp-c-htmlman		html
 ./usr/share/man/html3/SSL_SESSION_has_ticket.html	comp-c-htmlman	html,openssl=11
@@ -12798,7 +12877,9 @@
 ./usr/share/man/html3/SSL_get_default_timeout.html	comp-c-htmlman		html
 ./usr/share/man/html3/SSL_get_error.html	comp-c-htmlman		html
 ./usr/share/man/html3/SSL_get_ex_data_X509_STORE_CTX_idx.html	comp-c-htmlman	html,openssl=10
+./usr/share/man/html3/SSL_get_ex_data_X509_STORE_CTX_idx.html	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/html3/SSL_get_ex_new_index.html	comp-c-htmlman	html,openssl=10
+./usr/share/man/html3/SSL_get_ex_new_index.html	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/html3/SSL_get_extms_support.html	comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/SSL_get_fd.html		comp-c-htmlman		html
 ./usr/share/man/html3/SSL_get_peer_cert_chain.html	comp-c-htmlman		html
@@ -12972,6 +13053,7 @@
 ./usr/share/man/html3/X509_SIG_get0.html	comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/X509_STORE_CTX_get_error.html		comp-c-htmlman		html
 ./usr/share/man/html3/X509_STORE_CTX_get_ex_new_index.html	comp-c-htmlman	html,openssl=10
+./usr/share/man/html3/X509_STORE_CTX_get_ex_new_index.html	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/html3/X509_STORE_CTX_new.html			comp-c-htmlman		html
 ./usr/share/man/html3/X509_STORE_CTX_set_verify_cb.html		comp-c-htmlman		html
 ./usr/share/man/html3/X509_STORE_get0_param.html	comp-c-htmlman	html,openssl=11
@@ -13839,22 +13921,33 @@
 ./usr/share/man/html3/curses_window.html	comp-c-htmlman		html
 ./usr/share/man/html3/cuserid.html		comp-c-htmlman		html
 ./usr/share/man/html3/d2i_ASN1_OBJECT.html	comp-c-htmlman	html,openssl=10
+./usr/share/man/html3/d2i_ASN1_OBJECT.html	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/html3/d2i_CMS_ContentInfo.html	comp-c-htmlman	html,openssl=10
+./usr/share/man/html3/d2i_CMS_ContentInfo.html	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/html3/d2i_DHparams.html		comp-c-htmlman		html
 ./usr/share/man/html3/d2i_DSAPublicKey.html	comp-c-htmlman	html,openssl=10
+./usr/share/man/html3/d2i_DSAPublicKey.html	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/html3/d2i_ECPrivateKey.html	comp-c-htmlman	html,openssl=10
+./usr/share/man/html3/d2i_ECPrivateKey.html	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/html3/d2i_Netscape_RSA.html	comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/d2i_PKCS8PrivateKey.html	comp-c-htmlman	html,openssl=10
+./usr/share/man/html3/d2i_PKCS8PrivateKey.html	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/html3/d2i_PKCS8PrivateKey_bio.html	comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/d2i_PrivateKey.html		comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/d2i_RSAPublicKey.html	comp-c-htmlman	html,openssl=10
+./usr/share/man/html3/d2i_RSAPublicKey.html	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/html3/d2i_SSL_SESSION.html	comp-c-htmlman		html
 ./usr/share/man/html3/d2i_X509.html		comp-c-htmlman		html
 ./usr/share/man/html3/d2i_X509_ALGOR.html	comp-c-htmlman	html,openssl=10
+./usr/share/man/html3/d2i_X509_ALGOR.html	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/html3/d2i_X509_CRL.html	comp-c-htmlman	html,openssl=10
+./usr/share/man/html3/d2i_X509_CRL.html	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/html3/d2i_X509_NAME.html	comp-c-htmlman	html,openssl=10
+./usr/share/man/html3/d2i_X509_NAME.html	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/html3/d2i_X509_REQ.html	comp-c-htmlman	html,openssl=10
+./usr/share/man/html3/d2i_X509_REQ.html	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/html3/d2i_X509_SIG.html	comp-c-htmlman	html,openssl=10
+./usr/share/man/html3/d2i_X509_SIG.html	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/html3/daemon.html		comp-c-htmlman		html
 ./usr/share/man/html3/data_ahead.html		comp-c-htmlman		html
 ./usr/share/man/html3/data_behind.html		comp-c-htmlman		html
@@ -15762,6 +15855,7 @@
 ./usr/share/man/html3/lgammaf.html		comp-c-htmlman		html
 ./usr/share/man/html3/lgammaf_r.html		comp-c-htmlman		html
 ./usr/share/man/html3/lh_stats.html	comp-c-htmlman	html,openssl=10
+./usr/share/man/html3/lh_stats.html	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/html3/libarchive.html		comp-c-htmlman		html
 ./usr/share/man/html3/libarchive_changes.html	comp-c-htmlman		html
 ./usr/share/man/html3/libarchive_internals.html comp-c-htmlman		html
@@ -16056,29 +16150,52 @@
 ./usr/share/man/html3/openpty.html		comp-c-htmlman		html
 ./usr/share/man/html3/openssl_bio.html		comp-c-htmlman		html
 ./usr/share/man/html3/openssl_blowfish.html	comp-c-htmlman	html,openssl=10
+./usr/share/man/html3/openssl_blowfish.html	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/html3/openssl_bn.html	comp-c-htmlman	html,openssl=10
+./usr/share/man/html3/openssl_bn.html	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/html3/openssl_bn_internal.html	comp-c-htmlman	html,openssl=10
+./usr/share/man/html3/openssl_bn_internal.html	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/html3/openssl_buffer.html	comp-c-htmlman	html,openssl=10
+./usr/share/man/html3/openssl_buffer.html	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/html3/openssl_des.html	comp-c-htmlman	html,openssl=10
+./usr/share/man/html3/openssl_des.html	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/html3/openssl_dh.html	comp-c-htmlman	html,openssl=10
+./usr/share/man/html3/openssl_dh.html	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/html3/openssl_dsa.html	comp-c-htmlman	html,openssl=10
+./usr/share/man/html3/openssl_dsa.html	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/html3/openssl_ecdsa.html	comp-c-htmlman	html,openssl=10
+./usr/share/man/html3/openssl_ecdsa.html	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/html3/openssl_engine.html	comp-c-htmlman	html,openssl=10
+./usr/share/man/html3/openssl_engine.html	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/html3/openssl_err.html	comp-c-htmlman	html,openssl=10
+./usr/share/man/html3/openssl_err.html	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/html3/openssl_evp.html		comp-c-htmlman		html
 ./usr/share/man/html3/openssl_hmac.html	comp-c-htmlman	html,openssl=10
+./usr/share/man/html3/openssl_hmac.html	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/html3/openssl_lhash.html	comp-c-htmlman	html,openssl=10
+./usr/share/man/html3/openssl_lhash.html	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/html3/openssl_md5.html	comp-c-htmlman	html,openssl=10
+./usr/share/man/html3/openssl_md5.html	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/html3/openssl_mdc2.html	comp-c-htmlman	html,openssl=10
+./usr/share/man/html3/openssl_mdc2.html	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/html3/openssl_pem.html	comp-c-htmlman	html,openssl=10
+./usr/share/man/html3/openssl_pem.html	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/html3/openssl_rand.html	comp-c-htmlman	html,openssl=10
+./usr/share/man/html3/openssl_rand.html	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/html3/openssl_rc4.html	comp-c-htmlman	html,openssl=10
+./usr/share/man/html3/openssl_rc4.html	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/html3/openssl_ripemd.html	comp-c-htmlman	html,openssl=10
+./usr/share/man/html3/openssl_ripemd.html	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/html3/openssl_rsa.html	comp-c-htmlman	html,openssl=10
+./usr/share/man/html3/openssl_rsa.html	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/html3/openssl_sha.html	comp-c-htmlman	html,openssl=10
+./usr/share/man/html3/openssl_sha.html	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/html3/openssl_threads.html	comp-c-htmlman	html,openssl=10
+./usr/share/man/html3/openssl_threads.html	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/html3/openssl_ui.html	comp-c-htmlman	html,openssl=10
+./usr/share/man/html3/openssl_ui.html	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/html3/openssl_ui_compat.html	comp-c-htmlman	html,openssl=10
+./usr/share/man/html3/openssl_ui_compat.html	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/html3/openssl_x509.html		comp-c-htmlman		html
 ./usr/share/man/html3/orcmd.html		comp-c-htmlman		html
 ./usr/share/man/html3/orcmd_af.html		comp-c-htmlman		html
@@ -19469,6 +19586,7 @@
 ./usr/share/man/man1/objcopy.1			comp-util-man		binutils,.man
 ./usr/share/man/man1/objdump.1			comp-util-man		binutils,.man
 ./usr/share/man/man1/openssl_c_rehash.1	comp-c-man	.man,openssl=10
+./usr/share/man/man1/openssl_c_rehash.1	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/man1/openssl_engine.1	comp-c-man	.man,openssl=11
 ./usr/share/man/man1/openssl_list.1	comp-c-man	.man,openssl=11
 ./usr/share/man/man1/openssl_ocsp.1		comp-c-man		.man
@@ -19909,6 +20027,7 @@
 ./usr/share/man/man3/CRYPTO_THREAD_run_once.3	comp-c-man	.man,openssl=11
 ./usr/share/man/man3/CRYPTO_get_ex_new_index.3	comp-c-man	.man,openssl=11
 ./usr/share/man/man3/CRYPTO_set_ex_data.3	comp-c-man	.man,openssl=10
+./usr/share/man/man3/CRYPTO_set_ex_data.3	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/man3/CTLOG_STORE_get0_log_by_id.3	comp-c-man	.man,openssl=11
 ./usr/share/man/man3/CTLOG_STORE_new.3	comp-c-man	.man,openssl=11
 ./usr/share/man/man3/CTLOG_new.3	comp-c-man	.man,openssl=11
@@ -19920,6 +20039,7 @@
 ./usr/share/man/man3/DH_get0_pqg.3	comp-c-man	.man,openssl=11
 ./usr/share/man/man3/DH_get_1024_160.3	comp-c-man	.man,openssl=11
 ./usr/share/man/man3/DH_get_ex_new_index.3	comp-c-man	.man,openssl=10
+./usr/share/man/man3/DH_get_ex_new_index.3	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/man3/DH_meth_new.3	comp-c-man	.man,openssl=11
 ./usr/share/man/man3/DH_new.3			comp-c-man		.man
 ./usr/share/man/man3/DH_set_method.3		comp-c-man		.man
@@ -19931,6 +20051,7 @@
 ./usr/share/man/man3/DSA_generate_parameters.3	comp-c-man		.man
 ./usr/share/man/man3/DSA_get0_pqg.3	comp-c-man	.man,openssl=11
 ./usr/share/man/man3/DSA_get_ex_new_index.3	comp-c-man	.man,openssl=10
+./usr/share/man/man3/DSA_get_ex_new_index.3	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/man3/DSA_meth_new.3	comp-c-man	.man,openssl=11
 ./usr/share/man/man3/DSA_new.3			comp-c-man		.man
 ./usr/share/man/man3/DSA_set_method.3		comp-c-man		.man
@@ -19979,6 +20100,7 @@
 ./usr/share/man/man3/EVP_PKEY_derive.3			comp-c-man	.man
 ./usr/share/man/man3/EVP_PKEY_encrypt.3			comp-c-man	.man
 ./usr/share/man/man3/EVP_PKEY_get_default_digest.3	comp-c-man	.man,openssl=10
+./usr/share/man/man3/EVP_PKEY_get_default_digest.3	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/man3/EVP_PKEY_get_default_digest_nid.3	comp-c-man	.man,openssl=11
 ./usr/share/man/man3/EVP_PKEY_keygen.3			comp-c-man	.man
 ./usr/share/man/man3/EVP_PKEY_new.3		comp-c-man		.man
@@ -20160,6 +20282,7 @@
 ./usr/share/man/man3/RSA_generate_key.3		comp-c-man		.man
 ./usr/share/man/man3/RSA_get0_key.3	comp-c-man	.man,openssl=11
 ./usr/share/man/man3/RSA_get_ex_new_index.3	comp-c-man	.man,openssl=10
+./usr/share/man/man3/RSA_get_ex_new_index.3	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/man3/RSA_meth_new.3	comp-c-man	.man,openssl=11
 ./usr/share/man/man3/RSA_new.3			comp-c-man		.man
 ./usr/share/man/man3/RSA_padding_add_PKCS1_type_1.3	comp-c-man		.man
@@ -20330,6 +20453,7 @@
 ./usr/share/man/man3/SSL_CTX_free.3		comp-c-man		.man
 ./usr/share/man/man3/SSL_CTX_get0_param.3		comp-c-man	.man,openssl=11
 ./usr/share/man/man3/SSL_CTX_get_ex_new_index.3	comp-c-man	.man,openssl=10
+./usr/share/man/man3/SSL_CTX_get_ex_new_index.3	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/man3/SSL_CTX_get_verify_mode.3	comp-c-man		.man
 ./usr/share/man/man3/SSL_CTX_has_client_custom_ext.3	comp-c-man	.man,openssl=11
 ./usr/share/man/man3/SSL_CTX_load_verify_locations.3	comp-c-man		.man
@@ -20373,6 +20497,7 @@
 ./usr/share/man/man3/SSL_CTX_set_tlsext_use_srtp.3	comp-c-man	.man,openssl=11
 ./usr/share/man/man3/SSL_CTX_set_tmp_dh_callback.3	comp-c-man		.man
 ./usr/share/man/man3/SSL_CTX_set_tmp_rsa_callback.3	comp-c-man	.man,openssl=10
+./usr/share/man/man3/SSL_CTX_set_tmp_rsa_callback.3	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/man3/SSL_CTX_set_verify.3	comp-c-man		.man
 ./usr/share/man/man3/SSL_CTX_use_certificate.3	comp-c-man		.man
 ./usr/share/man/man3/SSL_CTX_use_psk_identity_hint.3	comp-c-man	.man
@@ -20385,6 +20510,7 @@
 ./usr/share/man/man3/SSL_SESSION_get_compress_id.3	comp-c-man	.man,openssl=11
 ./usr/share/man/man3/SSL_SESSION_get_ex_data.3	comp-c-man	.man,openssl=11
 ./usr/share/man/man3/SSL_SESSION_get_ex_new_index.3	comp-c-man	.man,openssl=10
+./usr/share/man/man3/SSL_SESSION_get_ex_new_index.3	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/man3/SSL_SESSION_get_protocol_version.3	comp-c-man	.man,openssl=11
 ./usr/share/man/man3/SSL_SESSION_get_time.3	comp-c-man		.man
 ./usr/share/man/man3/SSL_SESSION_has_ticket.3	comp-c-man	.man,openssl=11
@@ -20409,7 +20535,9 @@
 ./usr/share/man/man3/SSL_get_default_timeout.3	comp-c-man		.man
 ./usr/share/man/man3/SSL_get_error.3		comp-c-man		.man
 ./usr/share/man/man3/SSL_get_ex_data_X509_STORE_CTX_idx.3	comp-c-man	.man,openssl=10
+./usr/share/man/man3/SSL_get_ex_data_X509_STORE_CTX_idx.3	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/man3/SSL_get_ex_new_index.3	comp-c-man	.man,openssl=10
+./usr/share/man/man3/SSL_get_ex_new_index.3	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/man3/SSL_get_extms_support.3	comp-c-man	.man,openssl=11
 ./usr/share/man/man3/SSL_get_fd.3		comp-c-man		.man
 ./usr/share/man/man3/SSL_get_peer_cert_chain.3	comp-c-man		.man
@@ -20583,6 +20711,7 @@
 ./usr/share/man/man3/X509_SIG_get0.3	comp-c-man	.man,openssl=11
 ./usr/share/man/man3/X509_STORE_CTX_get_error.3		comp-c-man		.man
 ./usr/share/man/man3/X509_STORE_CTX_get_ex_new_index.3	comp-c-man	.man,openssl=10
+./usr/share/man/man3/X509_STORE_CTX_get_ex_new_index.3	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/man3/X509_STORE_CTX_new.3		comp-c-man		.man
 ./usr/share/man/man3/X509_STORE_CTX_set_verify_cb.3	comp-c-man		.man
 ./usr/share/man/man3/X509_STORE_get0_param.3	comp-c-man	.man,openssl=11
@@ -21503,22 +21632,33 @@
 ./usr/share/man/man3/curses_window.3		comp-c-man		.man
 ./usr/share/man/man3/cuserid.3			comp-c-man		.man
 ./usr/share/man/man3/d2i_ASN1_OBJECT.3	comp-c-man	.man,openssl=10
+./usr/share/man/man3/d2i_ASN1_OBJECT.3	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/man3/d2i_CMS_ContentInfo.3	comp-c-man	.man,openssl=10
+./usr/share/man/man3/d2i_CMS_ContentInfo.3	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/man3/d2i_DHparams.3		comp-c-man		.man
 ./usr/share/man/man3/d2i_DSAPublicKey.3	comp-c-man	.man,openssl=10
+./usr/share/man/man3/d2i_DSAPublicKey.3	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/man3/d2i_ECPrivateKey.3	comp-c-man	.man,openssl=10
+./usr/share/man/man3/d2i_ECPrivateKey.3	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/man3/d2i_Netscape_RSA.3	comp-c-man	.man,openssl=11
 ./usr/share/man/man3/d2i_PKCS8PrivateKey.3	comp-c-man	.man,openssl=10
+./usr/share/man/man3/d2i_PKCS8PrivateKey.3	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/man3/d2i_PKCS8PrivateKey_bio.3	comp-c-man	.man,openssl=11
 ./usr/share/man/man3/d2i_PrivateKey.3			comp-c-man	.man,openssl=11
 ./usr/share/man/man3/d2i_RSAPublicKey.3	comp-c-man	.man,openssl=10
+./usr/share/man/man3/d2i_RSAPublicKey.3	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/man3/d2i_SSL_SESSION.3		comp-c-man		.man
 ./usr/share/man/man3/d2i_X509.3			comp-c-man		.man
 ./usr/share/man/man3/d2i_X509_ALGOR.3	comp-c-man	.man,openssl=10
+./usr/share/man/man3/d2i_X509_ALGOR.3	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/man3/d2i_X509_CRL.3	comp-c-man	.man,openssl=10
+./usr/share/man/man3/d2i_X509_CRL.3	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/man3/d2i_X509_NAME.3	comp-c-man	.man,openssl=10
+./usr/share/man/man3/d2i_X509_NAME.3	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/man3/d2i_X509_REQ.3	comp-c-man	.man,openssl=10
+./usr/share/man/man3/d2i_X509_REQ.3	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/man3/d2i_X509_SIG.3	comp-c-man	.man,openssl=10
+./usr/share/man/man3/d2i_X509_SIG.3	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/man3/daemon.3			comp-c-man		.man
 ./usr/share/man/man3/data_ahead.3		comp-c-man		.man
 ./usr/share/man/man3/data_behind.3		comp-c-man		.man
@@ -23450,6 +23590,7 @@
 ./usr/share/man/man3/lgammaf.3			comp-c-man		.man
 ./usr/share/man/man3/lgammaf_r.3		comp-c-man		.man
 ./usr/share/man/man3/lh_stats.3	comp-c-man	.man,openssl=10
+./usr/share/man/man3/lh_stats.3	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/man3/lhash.3			comp-obsolete		obsolete
 ./usr/share/man/man3/libarchive.3		comp-c-man		.man
 ./usr/share/man/man3/libarchive_changes.3	comp-c-man		.man
@@ -23761,29 +23902,52 @@
 ./usr/share/man/man3/openpty.3			comp-c-man		.man
 ./usr/share/man/man3/openssl_bio.3		comp-c-man		.man
 ./usr/share/man/man3/openssl_blowfish.3	comp-c-man	.man,openssl=10
+./usr/share/man/man3/openssl_blowfish.3	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/man3/openssl_bn.3		comp-c-man		.man,openssl=10
+./usr/share/man/man3/openssl_bn.3	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/man3/openssl_bn_internal.3	comp-c-man		.man,openssl=10
+./usr/share/man/man3/openssl_bn_internal.3	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/man3/openssl_buffer.3		comp-c-man		.man,openssl=10
+./usr/share/man/man3/openssl_buffer.3	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/man3/openssl_des.3		comp-c-man		.man,openssl=10
+./usr/share/man/man3/openssl_des.3	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/man3/openssl_dh.3		comp-c-man		.man,openssl=10
+./usr/share/man/man3/openssl_dh.3	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/man3/openssl_dsa.3		comp-c-man		.man,openssl=10
+./usr/share/man/man3/openssl_dsa.3	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/man3/openssl_ecdsa.3		comp-c-man		.man,openssl=10
+./usr/share/man/man3/openssl_ecdsa.3	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/man3/openssl_engine.3		comp-c-man		.man,openssl=10
+./usr/share/man/man3/openssl_engine.3	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/man3/openssl_err.3		comp-c-man		.man,openssl=10
+./usr/share/man/man3/openssl_err.3	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/man3/openssl_evp.3		comp-c-man		.man
 ./usr/share/man/man3/openssl_hmac.3		comp-c-man		.man,openssl=10
+./usr/share/man/man3/openssl_hmac.3	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/man3/openssl_lhash.3		comp-c-man		.man,openssl=10
+./usr/share/man/man3/openssl_lhash.3	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/man3/openssl_md5.3		comp-c-man		.man,openssl=10
+./usr/share/man/man3/openssl_md5.3	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/man3/openssl_mdc2.3		comp-c-man		.man,openssl=10
+./usr/share/man/man3/openssl_mdc2.3	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/man3/openssl_pem.3		comp-c-man		.man,openssl=10
+./usr/share/man/man3/openssl_pem.3	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/man3/openssl_rand.3		comp-c-man		.man,openssl=10
+./usr/share/man/man3/openssl_rand.3	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/man3/openssl_rc4.3		comp-c-man		.man,openssl=10
+./usr/share/man/man3/openssl_rc4.3	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/man3/openssl_ripemd.3		comp-c-man		.man,openssl=10
+./usr/share/man/man3/openssl_ripemd.3	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/man3/openssl_rsa.3		comp-c-man		.man,openssl=10
+./usr/share/man/man3/openssl_rsa.3	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/man3/openssl_sha.3		comp-c-man		.man,openssl=10
+./usr/share/man/man3/openssl_sha.3	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/man3/openssl_threads.3		comp-c-man		.man,openssl=10
+./usr/share/man/man3/openssl_threads.3	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/man3/openssl_ui.3		comp-c-man		.man,openssl=10
+./usr/share/man/man3/openssl_ui.3	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/man3/openssl_ui_compat.3	comp-c-man		.man,openssl=10
+./usr/share/man/man3/openssl_ui_compat.3	comp-obsolete	openssl=11,obsolete
 ./usr/share/man/man3/openssl_x509.3		comp-c-man		.man
 ./usr/share/man/man3/orcmd.3			comp-c-man		.man
 ./usr/share/man/man3/orcmd_af.3			comp-c-man		.man

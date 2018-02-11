@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.773 2018/02/08 03:27:51 christos Exp $
+# $NetBSD: mi,v 1.774 2018/02/11 16:45:35 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1320,6 +1320,7 @@
 ./usr/tests/crypto/libcrypto/h_exptest		tests-crypto-tests	compattestfile,atf
 ./usr/tests/crypto/libcrypto/h_hmactest		tests-crypto-tests	compattestfile,atf
 ./usr/tests/crypto/libcrypto/h_ideatest		tests-crypto-tests	compattestfile,atf
+./usr/tests/crypto/libcrypto/h_lhashtest	comp-obsolete	openssl=11,obsolete
 ./usr/tests/crypto/libcrypto/h_lhashtest	tests-crypto-tests	compattestfile,atf,openssl=10
 ./usr/tests/crypto/libcrypto/h_md2test		tests-crypto-tests	compattestfile,atf
 ./usr/tests/crypto/libcrypto/h_md4test		tests-crypto-tests	compattestfile,atf
@@ -1333,8 +1334,10 @@
 ./usr/tests/crypto/libcrypto/h_rsatest		tests-crypto-tests	compattestfile,atf
 ./usr/tests/crypto/libcrypto/h_sha1test		tests-crypto-tests	compattestfile,atf
 ./usr/tests/crypto/libcrypto/h_shatest		tests-crypto-tests	compattestfile,atf,openssl=10
+./usr/tests/crypto/libcrypto/h_shatest	comp-obsolete	openssl=11,obsolete
 ./usr/tests/crypto/libcrypto/h_srptest		tests-crypto-tests	compattestfile,atf
 ./usr/tests/crypto/libcrypto/h_threadstest	tests-crypto-tests	compattestfile,atf
+./usr/tests/crypto/libcrypto/h_x509v3test	comp-obsolete	openssl=11,obsolete
 ./usr/tests/crypto/libcrypto/h_x509v3test	tests-crypto-tests	compattestfile,atf,openssl=10
 ./usr/tests/crypto/libcrypto/t_certs		tests-crypto-tests	compattestfile,atf
 ./usr/tests/crypto/libcrypto/t_ciphers		tests-crypto-tests	compattestfile,atf
@@ -1349,8 +1352,8 @@
 ./usr/tests/crypto/opencrypto/h_aesctr2		tests-crypto-tests	compattestfile,atf
 ./usr/tests/crypto/opencrypto/h_arc4		tests-crypto-tests	compattestfile,atf
 ./usr/tests/crypto/opencrypto/h_camellia	tests-crypto-tests	compattestfile,atf
-./usr/tests/crypto/opencrypto/h_cbcdes		tests-crypto-tests	compattestfile,atf
 ./usr/tests/crypto/opencrypto/h_cbc3des		tests-crypto-tests	compattestfile,atf
+./usr/tests/crypto/opencrypto/h_cbcdes		tests-crypto-tests	compattestfile,atf
 ./usr/tests/crypto/opencrypto/h_comp		tests-crypto-tests	compattestfile,atf
 ./usr/tests/crypto/opencrypto/h_comp_zlib	tests-crypto-tests	compattestfile,atf
 ./usr/tests/crypto/opencrypto/h_comp_zlib_rnd	tests-crypto-tests	compattestfile,atf
@@ -2182,13 +2185,13 @@
 ./usr/tests/kernel/t_ptrace_waitpid		tests-obsolete		obsolete
 ./usr/tests/kernel/t_pty			tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_rnd			tests-kernel-tests	atf,rump
-./usr/tests/kernel/t_timeleft			tests-kernel-tests	compattestfile,atf
-./usr/tests/kernel/t_trapsignal			tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_sigaction			tests-obsolete		obsolete
 ./usr/tests/kernel/t_subr_prf			tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_sysctl			tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_sysv			tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_time			tests-obsolete		obsolete
+./usr/tests/kernel/t_timeleft			tests-kernel-tests	compattestfile,atf
+./usr/tests/kernel/t_trapsignal			tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_ucontext			tests-obsolete		obsolete
 ./usr/tests/kernel/t_umount			tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_umountstress		tests-kernel-tests	compattestfile,atf
@@ -2550,9 +2553,9 @@
 ./usr/tests/lib/libc/locale			tests-lib-tests	compattestfile,atf
 ./usr/tests/lib/libc/locale/Atffile		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/locale/Kyuafile		tests-lib-tests		compattestfile,atf,kyua
+./usr/tests/lib/libc/locale/t_btowc		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/locale/t_ctype1		tests-obsolete		obsolete
 ./usr/tests/lib/libc/locale/t_ctype2		tests-obsolete		obsolete
-./usr/tests/lib/libc/locale/t_btowc		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/locale/t_digittoint	tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/locale/t_ducet		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/locale/t_io		tests-lib-tests		compattestfile,atf
@@ -2990,8 +2993,8 @@
 ./usr/tests/lib/libm/t_cosh			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libm/t_erf			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libm/t_exp			tests-lib-tests		compattestfile,atf
-./usr/tests/lib/libm/t_fenv			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libm/t_fe_round			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libm/t_fenv			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libm/t_floor			tests-obsolete		obsolete
 ./usr/tests/lib/libm/t_fmod			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libm/t_hypot			tests-lib-tests		compattestfile,atf
@@ -3274,7 +3277,6 @@
 ./usr/tests/net/icmp/Atffile			tests-net-tests		atf,rump
 ./usr/tests/net/icmp/Kyuafile			tests-net-tests		atf,rump,kyua
 ./usr/tests/net/icmp/t_forward			tests-net-tests		atf,rump
-./usr/tests/net/icmp/t_forward			tests-net-tests		atf,rump
 ./usr/tests/net/icmp/t_icmp6_redirect		tests-net-tests		atf,rump
 ./usr/tests/net/icmp/t_icmp_redirect		tests-net-tests		atf,rump
 ./usr/tests/net/icmp/t_ping			tests-net-tests		atf,rump
@@ -3432,8 +3434,8 @@
 ./usr/tests/rump/rumpkern/t_sp			tests-rump-tests	atf,rump
 ./usr/tests/rump/rumpkern/t_threads		tests-rump-tests	atf,rump
 ./usr/tests/rump/rumpkern/t_tsleep		tests-rump-tests	atf,rump
-./usr/tests/rump/rumpkern/t_workqueue		tests-rump-tests	atf,rump
 ./usr/tests/rump/rumpkern/t_vm			tests-rump-tests	atf,rump
+./usr/tests/rump/rumpkern/t_workqueue		tests-rump-tests	atf,rump
 ./usr/tests/rump/rumpnet			tests-rump-tests	compattestfile,atf
 ./usr/tests/rump/rumpnet/Atffile		tests-rump-tests	atf,rump
 ./usr/tests/rump/rumpnet/Kyuafile		tests-rump-tests	atf,rump,kyua
@@ -3535,7 +3537,6 @@
 ./usr/tests/sys/netinet6/Atffile		tests-sys-tests	compattestfile,atf
 ./usr/tests/sys/netinet6/Kyuafile		tests-sys-tests	compattestfile,atf,kyua
 ./usr/tests/sys/netinet6/t_print		tests-sys-tests	compattestfile,atf
-./usr/tests/sys/rc				tests-sys-tests	compattestfile,atf
 ./usr/tests/sys/rc				tests-sys-tests	compattestfile,atf
 ./usr/tests/sys/rc/Atffile			tests-sys-tests	compattestfile,atf
 ./usr/tests/sys/rc/Kyuafile			tests-sys-tests	compattestfile,atf,kyua
