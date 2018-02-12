@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.133 2017/12/07 10:22:04 ozaki-r Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.134 2018/02/12 15:38:14 maxv Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.133 2017/12/07 10:22:04 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.134 2018/02/12 15:38:14 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -1795,7 +1795,7 @@ pppoe_transmit(struct ifnet *ifp, struct mbuf *m)
 	PPPOE_LOCK(sc, RW_READER);
 	if (sc->sc_state < PPPOE_STATE_SESSION) {
 		PPPOE_UNLOCK(sc);
-		m_free(m);
+		m_freem(m);
 		return ENOBUFS;
 	}
 
@@ -1887,13 +1887,13 @@ static void
 pppoe_enqueue(struct ifqueue *inq, struct mbuf *m)
 {
 	if (m->m_flags & M_PROMISC) {
-		m_free(m);
+		m_freem(m);
 		return;
 	}
 
 #ifndef PPPOE_SERVER
 	if (m->m_flags & (M_MCAST | M_BCAST)) {
-		m_free(m);
+		m_freem(m);
 		return;
 	}
 #endif
