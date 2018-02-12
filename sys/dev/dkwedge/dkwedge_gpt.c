@@ -1,4 +1,4 @@
-/*	$NetBSD: dkwedge_gpt.c,v 1.18 2017/01/19 00:44:40 maya Exp $	*/
+/*	$NetBSD: dkwedge_gpt.c,v 1.18.6.1 2018/02/12 04:05:07 snj Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dkwedge_gpt.c,v 1.18 2017/01/19 00:44:40 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dkwedge_gpt.c,v 1.18.6.1 2018/02/12 04:05:07 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -252,7 +252,8 @@ dkwedge_discover_gpt(struct disk *pdk, struct vnode *vp)
 		else {
 			c = dkw.dkw_wname;
 			r = sizeof(dkw.dkw_wname) - 1;
-			for (j = 0; ent->ent_name[j] != 0x0000; j++) {
+			for (j = 0; j < __arraycount(ent->ent_name)
+			    && ent->ent_name[j] != 0x0000; j++) {
 				n = wput_utf8(c, r, le16toh(ent->ent_name[j]));
 				if (n == 0)
 					break;

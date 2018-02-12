@@ -1,4 +1,4 @@
-/*	$NetBSD: biosboot.c,v 1.27.4.1 2017/07/05 20:07:42 snj Exp $ */
+/*	$NetBSD: biosboot.c,v 1.27.4.2 2018/02/12 04:05:07 snj Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: biosboot.c,v 1.27.4.1 2017/07/05 20:07:42 snj Exp $");
+__RCSID("$NetBSD: biosboot.c,v 1.27.4.2 2018/02/12 04:05:07 snj Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -219,7 +219,9 @@ biosboot(gpt_t gpt, daddr_t start, uint64_t size, u_int entry, uint8_t *label,
 			break;
 
 		if (label != NULL) {
-			utf16_to_utf8(ent->ent_name, utfbuf, sizeof(utfbuf));
+			utf16_to_utf8(ent->ent_name,
+			    __arraycount(ent->ent_name), utfbuf,
+			    __arraycount(utfbuf));
 			if (strcmp((char *)label, (char *)utfbuf) == 0)
 				break;
 		}

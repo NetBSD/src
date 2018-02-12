@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/show.c,v 1.14 2006/06/22 22:22:32 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: show.c,v 1.39 2016/10/05 03:06:24 kre Exp $");
+__RCSID("$NetBSD: show.c,v 1.39.6.1 2018/02/12 04:05:07 snj Exp $");
 #endif
 
 #include <sys/bootblock.h>
@@ -129,8 +129,9 @@ print_part_type(int map_type, int flags, void *map_data, off_t map_start)
 		printf("GPT part ");
 		ent = map_data;
 		if (flags & SHOW_LABEL) {
-			utf16_to_utf8(ent->ent_name, utfbuf,
-			    sizeof(utfbuf));
+			utf16_to_utf8(ent->ent_name,
+			    __arraycount(ent->ent_name), utfbuf,
+			    __arraycount(utfbuf));
 			b = (char *)utfbuf;
 		} else if (flags & SHOW_GUID) {
 			gpt_uuid_snprintf( buf, sizeof(buf), "%d",
@@ -215,7 +216,8 @@ show_one(gpt_t gpt, unsigned int entry)
 	gpt_uuid_snprintf(s2, sizeof(s1), "%d", ent->ent_guid);
 	printf("GUID: %s\n", s2);
 
-	utf16_to_utf8(ent->ent_name, utfbuf, sizeof(utfbuf));
+	utf16_to_utf8(ent->ent_name, __arraycount(ent->ent_name), utfbuf,
+	    __arraycount(utfbuf));
 	printf("Label: %s\n", (char *)utfbuf);
 
 	printf("Attributes: ");
@@ -284,7 +286,9 @@ show_all(gpt_t gpt)
 #endif
 			putchar('\n');
 
-			utf16_to_utf8(ent->ent_name, utfbuf, sizeof(utfbuf));
+			utf16_to_utf8(ent->ent_name,
+			    __arraycount(ent->ent_name), utfbuf,
+			    __arraycount(utfbuf));
 			printf(PFX "Label: %s\n", (char *)utfbuf);
 
 			printf(PFX "Attributes: ");
