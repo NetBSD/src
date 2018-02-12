@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_eth.c,v 1.11 2016/06/10 13:27:10 ozaki-r Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_eth.c,v 1.12 2018/02/12 16:58:01 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -401,6 +401,9 @@ awin_eth_mgethdr(struct awin_eth_softc *sc, size_t rxlen)
 {
 	struct mbuf *m = m_gethdr(M_DONTWAIT, MT_DATA);
 
+	if (m == NULL) {
+		return NULL;
+	}
 	if (rxlen + 2 > MHLEN) {
 		MCLGET(m, M_DONTWAIT);
 		if ((m->m_flags & M_EXT) == 0) {
