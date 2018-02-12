@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.257 2018/01/19 12:31:27 nakayama Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.258 2018/02/12 12:17:38 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.257 2018/01/19 12:31:27 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.258 2018/02/12 12:17:38 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -260,7 +260,7 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 			void *tha = ar_tha(ah);
 
 			if (tha == NULL) {
-				/* fake with ARPHDR_IEEE1394 */
+				/* fake with ARPHRD_IEEE1394 */
 				m_freem(m);
 				return 0;
 			}
@@ -606,7 +606,8 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	}
 
 	/*
-	 * Determine if the packet is within its size limits.
+	 * Determine if the packet is within its size limits. For MPLS the
+	 * header length is variable, so we skip the check.
 	 */
 	if (etype != ETHERTYPE_MPLS && m->m_pkthdr.len >
 	    ETHER_MAX_FRAME(ifp, etype, m->m_flags & M_HASFCS)) {
