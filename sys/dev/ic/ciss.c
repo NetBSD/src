@@ -1,4 +1,4 @@
-/*	$NetBSD: ciss.c,v 1.37 2017/07/28 14:49:55 riastradh Exp $	*/
+/*	$NetBSD: ciss.c,v 1.38 2018/02/12 23:11:00 joerg Exp $	*/
 /*	$OpenBSD: ciss.c,v 1.68 2013/05/30 16:15:02 deraadt Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.37 2017/07/28 14:49:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.38 2018/02/12 23:11:00 joerg Exp $");
 
 #include "bio.h"
 
@@ -593,9 +593,11 @@ ciss_cmd(struct ciss_ccb *ccb, int flags, int wait)
 	bus_dmamap_sync(sc->sc_dmat, sc->cmdmap, 0, sc->cmdmap->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE);
 
+#ifndef CISS_NO_INTERRUPT_HACK
 	if ((wait & (XS_CTL_POLL|XS_CTL_NOSLEEP)) == (XS_CTL_POLL|XS_CTL_NOSLEEP))
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh, CISS_IMR,
 		    bus_space_read_4(sc->sc_iot, sc->sc_ioh, CISS_IMR) | sc->iem);
+#endif
 
 	mutex_enter(&sc->sc_mutex);
 	TAILQ_INSERT_TAIL(&sc->sc_ccbq, ccb, ccb_link);
@@ -637,9 +639,11 @@ ciss_cmd(struct ciss_ccb *ccb, int flags, int wait)
 		    ccb->ccb_err.cmd_stat, ccb->ccb_err.scsi_stat));
 	}
 
+#ifndef CISS_NO_INTERRUPT_HACK
 	if ((wait & (XS_CTL_POLL|XS_CTL_NOSLEEP)) == (XS_CTL_POLL|XS_CTL_NOSLEEP))
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh, CISS_IMR,
 		    bus_space_read_4(sc->sc_iot, sc->sc_ioh, CISS_IMR) & ~sc->iem);
+#endif
 
 	return (error);
 }
