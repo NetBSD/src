@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.240 2018/02/10 08:17:00 maxv Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.241 2018/02/12 09:31:06 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.240 2018/02/10 08:17:00 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.241 2018/02/12 09:31:06 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -404,14 +404,6 @@ udp_input(struct mbuf *m, ...)
 		 */
 		return;
 	}
-
-	ip = mtod(m, struct ip *);
-	IP6_EXTHDR_GET(uh, struct udphdr *, m, iphlen, sizeof(struct udphdr));
-	if (uh == NULL) {
-		UDP_STATINC(UDP_STAT_HDROPS);
-		return;
-	}
-	/* XXX Re-enforce alignment? */
 
 #ifdef INET6
 	if (IN_MULTICAST(ip->ip_dst.s_addr) || n == 0) {
