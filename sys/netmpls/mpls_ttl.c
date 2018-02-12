@@ -1,35 +1,6 @@
-/*	$NetBSD: mpls_ttl.c,v 1.8 2016/06/10 13:31:44 ozaki-r Exp $ */
+/*	$NetBSD: mpls_ttl.c,v 1.8.10.1 2018/02/12 18:18:00 snj Exp $ */
 
 /*
- * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the project nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE PROJECT OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- */
-
-/*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -66,6 +37,35 @@
  */
 
 /*
+ * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the project nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE PROJECT OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+
+/*
  * Copyright (c) 1982, 1986, 1988, 1993
  *      The Regents of the University of California.  All rights reserved.
  *
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpls_ttl.c,v 1.8 2016/06/10 13:31:44 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpls_ttl.c,v 1.8.10.1 2018/02/12 18:18:00 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -162,15 +162,19 @@ struct mpls_extension {
 } __packed;
 
 static void mpls_icmp_error(struct mbuf *, int, int, n_long, int,
-	union mpls_shim *);
-static bool ip4_check(struct mbuf *);
+    union mpls_shim *);
+static struct mbuf *ip4_check(struct mbuf *);
 
 /*
- * References: RFC 4884 and RFC 4950
+ * Send an ICMP Extended error message. References: RFC4884 and RFC4950.
+ *
  * This should be in sync with icmp_error() in sys/netinet/ip_icmp.c
- * XXX: is called only for ICMP_TIMXCEED_INTRANS but code is too general
+ * XXX: is called only for ICMP_TIMXCEED_INTRANS but code is too general.
+ *
+ * XXX We're not setting the 'length' field of the Extended ICMP header.
+ * According to RFC4884, we are in 'non-compliant' mode. Moreover, we're
+ * not computing the checksum of the Extended ICMP header.
  */
-
 static void
 mpls_icmp_error(struct mbuf *n, int type, int code, n_long dest,
     int destmtu, union mpls_shim *shim)
@@ -181,13 +185,13 @@ mpls_icmp_error(struct mbuf *n, int type, int code, n_long dest,
 	struct mbuf *m;
 	unsigned icmplen, mblen, packetlen;
 	struct mpls_extension mpls_icmp_ext;
-	
+
 	memset(&mpls_icmp_ext, 0, sizeof(mpls_icmp_ext));
 	mpls_icmp_ext.cmn_hdr.version = ICMP_EXT_VERSION;
-	mpls_icmp_ext.cmn_hdr.checksum = 0;
+	mpls_icmp_ext.cmn_hdr.checksum = 0; /* XXX */
 
-	mpls_icmp_ext.obj_hdr.length = htons(sizeof(union mpls_shim) + 
-					sizeof(struct icmp_ext_obj_hdr));
+	mpls_icmp_ext.obj_hdr.length = htons(sizeof(union mpls_shim) +
+	    sizeof(struct icmp_ext_obj_hdr));
 	mpls_icmp_ext.obj_hdr.class_num = MPLS_STACK_ENTRY_CLASS;
 	mpls_icmp_ext.obj_hdr.c_type = MPLS_STACK_ENTRY_C_TYPE;
 
@@ -200,6 +204,7 @@ mpls_icmp_error(struct mbuf *n, int type, int code, n_long dest,
 #endif
 	if (type != ICMP_REDIRECT)
 		ICMP_STATINC(ICMP_STAT_ERROR);
+
 	/*
 	 * Don't send error if the original packet was encrypted.
 	 * Don't send error if not the first fragment of message.
@@ -217,6 +222,7 @@ mpls_icmp_error(struct mbuf *n, int type, int code, n_long dest,
 		ICMP_STATINC(ICMP_STAT_OLDICMP);
 		goto freeit;
 	}
+
 	/* Don't send error in response to a multicast or broadcast packet */
 	if (n->m_flags & (M_BCAST|M_MCAST))
 		goto freeit;
@@ -232,6 +238,7 @@ mpls_icmp_error(struct mbuf *n, int type, int code, n_long dest,
 	 * Now, formulate icmp message
 	 */
 	icmplen = min(ICMP_EXT_OFFSET, ntohs(oip->ip_len));
+
 	/*
 	 * Defend against mbuf chains shorter than oip->ip_len - oiplen:
 	 */
@@ -252,7 +259,7 @@ mpls_icmp_error(struct mbuf *n, int type, int code, n_long dest,
 	 * icmp_sysctl will keep things below that limit.
 	 */
 
-	KASSERT (packetlen <= MCLBYTES);
+	KASSERT(packetlen <= MCLBYTES);
 
 	m = m_gethdr(M_DONTWAIT, MT_HEADER);
 	if (m && (packetlen > MHLEN)) {
@@ -264,6 +271,7 @@ mpls_icmp_error(struct mbuf *n, int type, int code, n_long dest,
 	}
 	if (m == NULL)
 		goto freeit;
+
 	MCLAIM(m, n->m_owner);
 	m->m_len = packetlen;
 	if ((m->m_flags & M_EXT) == 0)
@@ -304,7 +312,7 @@ mpls_icmp_error(struct mbuf *n, int type, int code, n_long dest,
 	/*
 	 * Now, copy old ip header (without options)
 	 * in front of icmp message.
-	*/
+	 */
 	if ((m->m_flags & M_EXT) == 0 &&
 	    m->m_data - sizeof(struct ip) < m->m_pktdat)
 		panic("icmp len");
@@ -327,10 +335,9 @@ mpls_icmp_error(struct mbuf *n, int type, int code, n_long dest,
 
 freeit:
 	m_freem(n);
-
 }
 
-static bool
+static struct mbuf *
 ip4_check(struct mbuf *m)
 {
 	struct ip *iph;
@@ -338,7 +345,7 @@ ip4_check(struct mbuf *m)
 
 	if (m->m_len < sizeof(struct ip) &&
 	    (m = m_pullup(m, sizeof(struct ip))) == NULL)
-		return false;
+		return NULL;
 
 	iph = mtod(m, struct ip *);
 
@@ -349,9 +356,15 @@ ip4_check(struct mbuf *m)
 		goto freeit;
 	if (hlen > m->m_len) {
 		if ((m = m_pullup(m, hlen)) == NULL)
-			return false;
+			return NULL;
 		iph = mtod(m, struct ip *);
 	}
+
+	/*
+	 * RFC1122: packets with a multicast source address are
+	 * not allowed.
+	 * RFC1122: 127/8 must not appear on wire.
+	 */
 	if (IN_MULTICAST(iph->ip_src.s_addr) ||
 	    (ntohl(iph->ip_dst.s_addr) >> IN_CLASSA_NSHIFT) == IN_LOOPBACKNET ||
 	    (ntohl(iph->ip_src.s_addr) >> IN_CLASSA_NSHIFT) == IN_LOOPBACKNET ||
@@ -362,13 +375,12 @@ ip4_check(struct mbuf *m)
 	if (len < hlen || m->m_pkthdr.len < len)
 		goto freeit;
 
-	return true;
+	return m;
+
 freeit:
 	m_freem(m);
-	return false;
-
+	return NULL;
 }
-
 #endif	/* INET */
 
 struct mbuf *
@@ -376,7 +388,7 @@ mpls_ttl_dec(struct mbuf *m)
 {
 	union mpls_shim *mshim;
 #ifdef INET
-	union mpls_shim top_shim, bossh;
+	union mpls_shim top_shim, bos_shim;
 #endif
 
 	if (__predict_false(m->m_len < sizeof(union mpls_shim) &&
@@ -394,25 +406,24 @@ mpls_ttl_dec(struct mbuf *m)
 
 #ifdef INET
 		/*
-		 * shim ttl exceeded
-		 * send back ICMP type 11 code 0
+		 * Shim ttl exceeded. Send back ICMP type 11 code 0.
 		 */
-		bossh.s_addr = mshim->s_addr;
+		bos_shim.s_addr = mshim->s_addr;
 		top_shim.s_addr = htonl(mshim->s_addr);
 		m_adj(m, sizeof(union mpls_shim));
 
 		/* Goto BOS */
-		while(bossh.shim.bos == 0) {
+		while (bos_shim.shim.bos == 0) {
 			if (m->m_len < sizeof(union mpls_shim) &&
 			    (m = m_pullup(m, sizeof(union mpls_shim))) == NULL) {
 				m_freem(m);
 				return NULL;
 			}
-			bossh.s_addr = ntohl(mtod(m, union mpls_shim *)->s_addr);
+			bos_shim.s_addr = ntohl(mtod(m, union mpls_shim *)->s_addr);
 			m_adj(m, sizeof(union mpls_shim));
 		}
-		
-		if (ip4_check(m) == true)
+
+		if ((m = ip4_check(m)) != NULL)
 			mpls_icmp_error(m, ICMP_TIMXCEED, ICMP_TIMXCEED_INTRANS,
 			    0, 0, &top_shim);
 #else
