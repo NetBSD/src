@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.120 2018/02/11 21:56:20 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.121 2018/02/12 00:57:48 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -9609,4 +9609,14 @@ usr.sbin/ypserv/ypserv/ypserv_proc.c		1.18
 	Always zero out the result structs in the svc procs to avoid
 	returning stale request data to the client.  PR/47615
 	[christos, ticket #542]
+
+external/gpl2/xcvs/dist/src/rsh-client.c	1.3
+
+	Fix for CVE-2017-12836; (cvs command injection) from MirBSD.
+	[christos, ticket #543]
+
+sys/rump/dev/lib/libucom/UCOM.ioconf		1.6
+
+	Fix device name: u3ginit -> umodeswitch
+	[christos, ticket #544]
 
