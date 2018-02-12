@@ -10,7 +10,7 @@
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rsh-client.c,v 1.2 2016/05/17 14:00:09 christos Exp $");
+__RCSID("$NetBSD: rsh-client.c,v 1.2.8.1 2018/02/12 00:20:01 snj Exp $");
 
 #include <config.h>
 
@@ -55,11 +55,11 @@ start_rsh_server (cvsroot_t *root, struct buffer **to_server_p,
     char *cvs_server = (root->cvs_server != NULL
 			? root->cvs_server : getenv ("CVS_SERVER"));
     int i = 0;
-    /* This needs to fit "rsh", "-b", "-l", "USER", "host",
+    /* This needs to fit "rsh", "-b", "-l", "USER", "--", "host",
        "cmd (w/ args)", and NULL.  We leave some room to grow. */
-    char *rsh_argv[10];
+    char *rsh_argv[16];
 
-    if (!cvs_rsh)
+    if (!cvs_rsh || !*cvs_rsh)
 	/* People sometimes suggest or assume that this should default
 	   to "remsh" on systems like HPUX in which that is the
 	   system-supplied name for the rsh program.  However, that
@@ -98,6 +98,9 @@ start_rsh_server (cvsroot_t *root, struct buffer **to_server_p,
 	rsh_argv[i++] = "-l";
 	rsh_argv[i++] = root->username;
     }
+
+    /* Only non-option arguments from here. (CVE-2017-12836) */
+    rsh_argv[i++] = "--";
 
     rsh_argv[i++] = root->hostname;
     rsh_argv[i++] = cvs_server;
@@ -159,7 +162,7 @@ start_rsh_server (cvsroot_t *root, struct buffer **to_server_p,
     command = Xasprintf ("%s server", cvs_server);
 
     {
-        char *argv[10];
+        char *argv[16];
 	char **p = argv;
 
 	*p++ = cvs_rsh;
@@ -172,6 +175,8 @@ start_rsh_server (cvsroot_t *root, struct buffer **to_server_p,
 	    *p++ = "-l";
 	    *p++ = root->username;
 	}
+
+	*p++ = "--";
 
 	*p++ = root->hostname;
 	*p++ = command;
