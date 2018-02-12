@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.197 2017/08/03 06:32:51 ozaki-r Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.198 2018/02/12 08:22:26 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -135,7 +135,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.197 2017/08/03 06:32:51 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.198 2018/02/12 08:22:26 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1492,8 +1492,7 @@ reset:			TCP_REASS_UNLOCK(tp);
 		struct secasvar *sav;
 		u_int8_t *sigp;
 
-		sav = tcp_signature_getsav(m, th);
-
+		sav = tcp_signature_getsav(m);
 		if (sav == NULL) {
 			if (m)
 				m_freem(m);
