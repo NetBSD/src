@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.376 2018/02/12 08:03:42 maxv Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.377 2018/02/12 08:08:28 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.376 2018/02/12 08:03:42 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.377 2018/02/12 08:08:28 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -3749,7 +3749,7 @@ syn_cache_timer(void *arg)
 		goto dropit;
 
 	TCP_STATINC(TCP_STAT_SC_RETRANSMITTED);
-	(void) syn_cache_respond(sc, NULL);
+	(void)syn_cache_respond(sc);
 
 	/* Advance the timer back-off. */
 	sc->sc_rxtshift++;
@@ -3884,7 +3884,8 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 	if ((th->th_ack != sc->sc_iss + 1) ||
 	    SEQ_LEQ(th->th_seq, sc->sc_irs) ||
 	    SEQ_GT(th->th_seq, sc->sc_irs + 1 + sc->sc_win)) {
-		(void) syn_cache_respond(sc, m);
+		m_freem(m);
+		(void)syn_cache_respond(sc);
 		splx(s);
 		return ((struct socket *)(-1));
 	}
@@ -4302,7 +4303,8 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 			sc->sc_ipopts = ipopts;
 		}
 		sc->sc_timestamp = tb.ts_recent;
-		if (syn_cache_respond(sc, m) == 0) {
+		m_freem(m);
+		if (syn_cache_respond(sc) == 0) {
 			uint64_t *tcps = TCP_STAT_GETREF();
 			tcps[TCP_STAT_SNDACKS]++;
 			tcps[TCP_STAT_SNDTOTAL]++;
@@ -4411,7 +4413,8 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 		sc->sc_flags |= SCF_SIGNATURE;
 #endif
 	sc->sc_tp = tp;
-	if (syn_cache_respond(sc, m) == 0) {
+	m_freem(m);
+	if (syn_cache_respond(sc) == 0) {
 		uint64_t *tcps = TCP_STAT_GETREF();
 		tcps[TCP_STAT_SNDACKS]++;
 		tcps[TCP_STAT_SNDTOTAL]++;
@@ -4438,7 +4441,7 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
  */
 
 int
-syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
+syn_cache_respond(struct syn_cache *sc)
 {
 #ifdef INET6
 	struct rtentry *rt = NULL;
@@ -4453,6 +4456,7 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 #endif
 	struct tcpcb *tp = NULL;
 	struct tcphdr *th;
+	struct mbuf *m;
 	u_int hlen;
 #ifdef TCP_SIGNATURE
 	struct secasvar *sav = NULL;
@@ -4470,8 +4474,6 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 		break;
 #endif
 	default:
-		if (m)
-			m_freem(m);
 		return (EAFNOSUPPORT);
 	}
 
@@ -4481,8 +4483,6 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 	/*
 	 * Create the IP+TCP header from scratch.
 	 */
-	if (m)
-		m_freem(m);
 #ifdef DIAGNOSTIC
 	if (max_linkhdr + tlen > MCLBYTES)
 		return ENOBUFS;
