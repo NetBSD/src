@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2018/02/12 20:47:09 adam Exp $
+# $NetBSD: Makefile,v 1.8 2018/02/12 22:18:36 joerg Exp $
 
 .include "../Makefile.inc"
 
@@ -20,7 +20,7 @@ SRCS+=	tcp_rndiss.c
 
 CPPFLAGS+=	-I${S}/dist/pf -I${S} -DINET6 -DINET
 
-.if defined(HAVE_GCC) && ${HAVE_GCC} != 5
+.if ${HAVE_GCC:U0} == "6"
 COPTS.pf_table.c+=	-Wno-error=shift-negative-value
 .endif
 
