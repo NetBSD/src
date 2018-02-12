@@ -1,4 +1,4 @@
-/*	$NetBSD: timerreg.h,v 1.9 2005/11/16 03:00:23 uwe Exp $ */
+/*	$NetBSD: timerreg.h,v 1.9.140.1 2018/02/12 18:42:19 snj Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -120,9 +120,12 @@ struct counter_4m {		/* counter that interrupts at ipl 14 */
  */
 #define	tmr_ustolim(n)	(((n) + 1) << TMR_SHIFT)
 
-/*efine	TMR_SHIFT4M	9		-* shift to obtain microseconds */
-/*efine tmr_ustolim4m(n)	(((2*(n)) + 1) << TMR_SHIFT4M)*/
+#define	TMR_SHIFT4M	9		/* shift to obtain microseconds */
+#if 1
+#define tmr_ustolim4m(n)	(((2*(n)) + 1) << TMR_SHIFT4M)
+#else
 #define tmr_ustolim4m(n)	((n) << TMR_SHIFT)
+#endif
 
 /* The number of microseconds represented by a counter register value */
 #define tmr_cnttous(c)	((((c) >> TMR_SHIFT) & TMR_MASK) - 1)
