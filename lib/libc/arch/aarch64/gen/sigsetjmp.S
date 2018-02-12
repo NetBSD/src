@@ -1,4 +1,4 @@
-/* $NetBSD: sigsetjmp.S,v 1.1 2014/08/10 05:47:36 matt Exp $ */
+/* $NetBSD: sigsetjmp.S,v 1.2 2018/02/12 22:31:04 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -47,6 +47,6 @@ END(__sigsetjmp14)
 
 ENTRY(__siglongjmp14)
 	ldr	x3, [x0, #_JB_MAGIC]
-	tbz	x3, #0, _C_LABEL(__longjmp14)
+	tbnz	x3, #0, _C_LABEL(__longjmp14)
 	b	_C_LABEL(_longjmp)
 END(__siglongjmp14)
