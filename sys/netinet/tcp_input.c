@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.378 2018/02/12 08:13:08 maxv Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.379 2018/02/12 08:22:26 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.378 2018/02/12 08:13:08 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.379 2018/02/12 08:22:26 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -3092,7 +3092,7 @@ tcp_signature_apply(void *fstate, void *data, u_int len)
 }
 
 struct secasvar *
-tcp_signature_getsav(struct mbuf *m, struct tcphdr *th)
+tcp_signature_getsav(struct mbuf *m)
 {
 	struct ip *ip;
 	struct ip6_hdr *ip6;
@@ -3341,9 +3341,7 @@ tcp_dooptions(struct tcpcb *tp, const u_char *cp, int cnt, struct tcphdr *th,
 	return 0;
 #else
 	if (tp->t_flags & TF_SIGNATURE) {
-
-		sav = tcp_signature_getsav(m, th);
-
+		sav = tcp_signature_getsav(m);
 		if (sav == NULL && tp->t_state == TCPS_LISTEN)
 			return (-1);
 	}
@@ -4584,9 +4582,7 @@ syn_cache_respond(struct syn_cache *sc)
 
 #ifdef TCP_SIGNATURE
 	if (sc->sc_flags & SCF_SIGNATURE) {
-
-		sav = tcp_signature_getsav(m, th);
-
+		sav = tcp_signature_getsav(m);
 		if (sav == NULL) {
 			if (m)
 				m_freem(m);
