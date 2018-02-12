@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.225 2017/04/17 13:29:07 maya Exp $	*/
+/*	$NetBSD: parse.c,v 1.226 2018/02/12 21:38:09 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.225 2017/04/17 13:29:07 maya Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.226 2018/02/12 21:38:09 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.225 2017/04/17 13:29:07 maya Exp $");
+__RCSID("$NetBSD: parse.c,v 1.226 2018/02/12 21:38:09 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -703,6 +703,8 @@ ParseVErrorInternal(FILE *f, const char *cfname, size_t clineno, int type,
 	(void)vfprintf(f, fmt, ap);
 	(void)fprintf(f, "\n");
 	(void)fflush(f);
+	if (type == PARSE_INFO)
+		return;
 	if (type == PARSE_FATAL || parseWarnFatal)
 		fatals += 1;
 	if (parseWarnFatal && !fatal_warning_error_printed) {
@@ -795,7 +797,7 @@ ParseMessage(char *line)
 
     switch(*line) {
     case 'i':
-	mtype = 0;
+	mtype = PARSE_INFO;
 	break;
     case 'w':
 	mtype = PARSE_WARNING;
