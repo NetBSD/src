@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.121 2018/02/12 00:57:48 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.122 2018/02/12 05:40:25 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -9619,4 +9619,15 @@ sys/rump/dev/lib/libucom/UCOM.ioconf		1.6
 
 	Fix device name: u3ginit -> umodeswitch
 	[christos, ticket #544]
+
+sbin/gpt/backup.c				1.17-1.18
+sbin/gpt/biosboot.c				1.29-1.30
+sbin/gpt/gpt.c					1.71-1.73
+sbin/gpt/gpt.h					1.36
+sbin/gpt/restore.c				1.17
+sbin/gpt/show.c					1.40-1.41
+sys/dev/dkwedge/dkwedge_gpt.c			1.19-1.20
+
+	Fix termination of gpt labels.  PR kern/52522.
+	[christos, ticket #545]
 
