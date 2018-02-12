@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.182 2018/01/19 07:53:01 ozaki-r Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.183 2018/02/12 08:08:28 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -968,7 +968,7 @@ struct syn_cache *syn_cache_lookup(const struct sockaddr *, const struct sockadd
 		struct syn_cache_head **);
 void	 syn_cache_reset(struct sockaddr *, struct sockaddr *,
 		struct tcphdr *);
-int	 syn_cache_respond(struct syn_cache *, struct mbuf *);
+int	 syn_cache_respond(struct syn_cache *);
 void	 syn_cache_cleanup(struct tcpcb *);
 
 int	 tcp_input_checksum(int, struct mbuf *, const struct tcphdr *, int, int,
