@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.122 2018/02/12 05:40:25 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.123 2018/02/12 20:32:59 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -9630,4 +9630,15 @@ sys/dev/dkwedge/dkwedge_gpt.c			1.19-1.20
 
 	Fix termination of gpt labels.  PR kern/52522.
 	[christos, ticket #545]
+
+sys/net/if_mpls.c				1.31-1.33
+sys/netmpls/mpls_ttl.c				1.9-1.11 via patch
+
+	Sync MPLS with NetBSD-current, fix several bugs.
+	[maxv, ticket #546]
+
+sys/netinet/ip_input.c				1.366
+
+	Don't allow source-routed packets by default.
+	[maxv, ticket #547]
 
