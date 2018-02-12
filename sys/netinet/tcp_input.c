@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.375 2018/02/09 14:06:17 maxv Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.376 2018/02/12 08:03:42 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.375 2018/02/09 14:06:17 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.376 2018/02/12 08:03:42 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -3043,24 +3043,9 @@ dropwithreset:
 	 */
 	if (tiflags & TH_RST)
 		goto drop;
-
-	switch (af) {
-#ifdef INET6
-	case AF_INET6:
-		/* For following calls to tcp_respond */
-		if (IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst))
-			goto drop;
-		break;
-#endif /* INET6 */
-	case AF_INET:
-		if (IN_MULTICAST(ip->ip_dst.s_addr) ||
-		    in_broadcast(ip->ip_dst, m_get_rcvif_NOMPSAFE(m)))
-			goto drop;
-	}
-
-	if (tiflags & TH_ACK)
+	if (tiflags & TH_ACK) {
 		(void)tcp_respond(tp, m, m, th, (tcp_seq)0, th->th_ack, TH_RST);
-	else {
+	} else {
 		if (tiflags & TH_SYN)
 			tlen++;
 		(void)tcp_respond(tp, m, m, th, th->th_seq + tlen, (tcp_seq)0,
