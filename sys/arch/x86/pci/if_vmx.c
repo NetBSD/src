@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.20 2017/09/26 07:42:05 knakahara Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.21 2018/02/12 17:01:22 maxv Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.20 2017/09/26 07:42:05 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.21 2018/02/12 17:01:22 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -2527,7 +2527,7 @@ vmxnet3_txq_offload_ctx(struct vmxnet3_txqueue *txq, struct mbuf *m,
 		offset = ETHER_HDR_LEN + ETHER_VLAN_ENCAP_LEN;
 		break;
 	default:
-		m_free(m);
+		m_freem(m);
 		return (EINVAL);
 	}
 
