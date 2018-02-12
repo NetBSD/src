@@ -1,4 +1,4 @@
-/* $NetBSD: sun4i_emac.c,v 1.2 2017/11/30 18:29:25 jmcneill Exp $ */
+/* $NetBSD: sun4i_emac.c,v 1.3 2018/02/12 17:04:58 maxv Exp $ */
 
 /*-
  * Copyright (c) 2013-2017 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun4i_emac.c,v 1.2 2017/11/30 18:29:25 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun4i_emac.c,v 1.3 2018/02/12 17:04:58 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -509,6 +509,9 @@ sun4i_emac_mgethdr(struct sun4i_emac_softc *sc, size_t rxlen)
 {
 	struct mbuf *m = m_gethdr(M_DONTWAIT, MT_DATA);
 
+	if (m == NULL) {
+		return NULL;
+	}
 	if (rxlen + 2 > MHLEN) {
 		MCLGET(m, M_DONTWAIT);
 		if ((m->m_flags & M_EXT) == 0) {
