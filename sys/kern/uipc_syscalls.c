@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.190 2018/01/04 01:42:25 christos Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.191 2018/02/12 16:01:35 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.190 2018/01/04 01:42:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.191 2018/02/12 16:01:35 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pipe.h"
@@ -989,6 +989,7 @@ do_sys_recvmsg_so(struct lwp *l, int s, struct socket *so, struct msghdr *mp,
 	mp->msg_flags &= MSG_USERFLAGS;
 	error = (*so->so_receive)(so, from, &auio, NULL, control,
 	    &mp->msg_flags);
+	KASSERT(*from == NULL || (*from)->m_next == NULL);
 	len -= auio.uio_resid;
 	*retsize = len;
 	if (error != 0 && len != 0
