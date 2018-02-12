@@ -1,4 +1,4 @@
-/*	$NetBSD: cissvar.h,v 1.6 2013/10/12 16:52:21 christos Exp $	*/
+/*	$NetBSD: cissvar.h,v 1.7 2018/02/12 23:11:00 joerg Exp $	*/
 /*	$OpenBSD: cissvar.h,v 1.15 2013/05/30 16:15:02 deraadt Exp $	*/
 
 /*
@@ -24,6 +24,8 @@
 #include <dev/sysmon/sysmonvar.h>
 #include <sys/envsys.h>
 
+#include "opt_ciss.h"
+
 struct ciss_ld {
 	struct ciss_blink bling;	/* a copy of blink state */
 	char	xname[16];		/* copy of the sdN name */
@@ -43,6 +45,9 @@ struct ciss_softc {
 	void			*sc_sh;		/* shutdown hook */
 	struct proc		*sc_thread;
 	int			sc_flush;
+#ifdef CISS_NO_INTERRUPT_HACK
+	struct callout		sc_interrupt_hack;
+#endif
 
 	struct scsipi_channel	sc_channel;
 	struct scsipi_channel	*sc_channel_raw;

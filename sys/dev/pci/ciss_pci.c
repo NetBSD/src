@@ -1,4 +1,4 @@
-/*	$NetBSD: ciss_pci.c,v 1.13 2016/07/14 04:00:46 msaitoh Exp $	*/
+/*	$NetBSD: ciss_pci.c,v 1.14 2018/02/12 23:11:00 joerg Exp $	*/
 /*	$OpenBSD: ciss_pci.c,v 1.9 2005/12/13 15:56:01 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss_pci.c,v 1.13 2016/07/14 04:00:46 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss_pci.c,v 1.14 2018/02/12 23:11:00 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -243,6 +243,20 @@ ciss_pci_match(device_t parent, cfdata_t match, void *aux)
 	return 0;
 }
 
+#ifdef CISS_NO_INTERRUPT_HACK
+static void
+ciss_intr_wrapper(void *sc_)
+{
+	struct ciss_softc *sc = sc_;
+	int s;
+
+	s = splbio();
+	ciss_intr(sc);
+	splx(s);
+	callout_schedule(&sc->sc_interrupt_hack, 1);
+}
+#endif
+
 void
 ciss_pci_attach(device_t parent, device_t self, void *aux)
 {
@@ -256,6 +270,10 @@ ciss_pci_attach(device_t parent, device_t self, void *aux)
 	int i;
 	char intrbuf[PCI_INTRSTR_LEN];
 
+#ifdef CISS_NO_INTERRUPT_HACK
+	callout_init(&sc->sc_interrupt_hack, 0);
+	callout_setfunc(&sc->sc_interrupt_hack, ciss_intr_wrapper, sc);
+#endif
 	sc->sc_dev = self;
 
 	aprint_naive("\n");
@@ -316,8 +334,10 @@ ciss_pci_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* disable interrupts until ready */
+#ifndef CISS_NO_INTERRUPT_HACK
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, CISS_IMR,
 	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, CISS_IMR) | sc->iem);
+#endif
 
 	if (pci_intr_map(pa, &ih)) {
 		aprint_error_dev(self, "can't map interrupt\n");
@@ -350,7 +370,11 @@ ciss_pci_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+#ifndef CISS_NO_INTERRUPT_HACK
 	/* enable interrupts now */
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, CISS_IMR,
 	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, CISS_IMR) & ~sc->iem);
+#else
+	callout_schedule(&sc->sc_interrupt_hack, 1);
+#endif
 }
