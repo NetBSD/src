@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.200 2018/01/31 15:23:08 maxv Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.201 2018/02/12 12:52:12 maxv Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.200 2018/01/31 15:23:08 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.201 2018/02/12 12:52:12 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1115,7 +1115,7 @@ ip6_copyexthdr(struct mbuf **mp, void *hdr, int hlen)
 	}
 	m->m_len = hlen;
 	if (hdr)
-		bcopy(hdr, mtod(m, void *), hlen);
+		memcpy(mtod(m, void *), hdr, hlen);
 
 	*mp = m;
 	return 0;
@@ -1236,7 +1236,7 @@ ip6_insert_jumboopt(struct ip6_exthdrs *exthdrs, u_int32_t plen)
 	optbuf[2] = IP6OPT_JUMBO;
 	optbuf[3] = 4;
 	v = (u_int32_t)htonl(plen + JUMBOOPTLEN);
-	bcopy(&v, &optbuf[4], sizeof(u_int32_t));
+	memcpy(&optbuf[4], &v, sizeof(u_int32_t));
 
 	/* finally, adjust the packet header length */
 	exthdrs->ip6e_ip6->m_pkthdr.len += JUMBOOPTLEN;
@@ -3328,7 +3328,7 @@ ip6_mloopback(struct ifnet *ifp, struct mbuf *m,
  * Chop IPv6 header off from the payload.
  */
 static int
-ip6_splithdr(struct mbuf *m,  struct ip6_exthdrs *exthdrs)
+ip6_splithdr(struct mbuf *m, struct ip6_exthdrs *exthdrs)
 {
 	struct mbuf *mh;
 	struct ip6_hdr *ip6;
@@ -3336,7 +3336,7 @@ ip6_splithdr(struct mbuf *m,  struct ip6_exthdrs *exthdrs)
 	ip6 = mtod(m, struct ip6_hdr *);
 	if (m->m_len > sizeof(*ip6)) {
 		MGETHDR(mh, M_DONTWAIT, MT_HEADER);
-		if (mh == 0) {
+		if (mh == NULL) {
 			m_freem(m);
 			return ENOBUFS;
 		}
@@ -3345,9 +3345,9 @@ ip6_splithdr(struct mbuf *m,  struct ip6_exthdrs *exthdrs)
 		m->m_len -= sizeof(*ip6);
 		m->m_data += sizeof(*ip6);
 		mh->m_next = m;
+		mh->m_len = sizeof(*ip6);
+		memcpy(mtod(mh, void *), (void *)ip6, sizeof(*ip6));
 		m = mh;
-		m->m_len = sizeof(*ip6);
-		bcopy((void *)ip6, mtod(m, void *), sizeof(*ip6));
 	}
 	exthdrs->ip6e_ip6 = m;
 	return 0;

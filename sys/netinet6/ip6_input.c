@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.190 2018/02/09 18:31:52 maxv Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.191 2018/02/12 12:52:12 maxv Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.190 2018/02/09 18:31:52 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.191 2018/02/12 12:52:12 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -960,7 +960,7 @@ ip6_process_hopopts(struct mbuf *m, u_int8_t *opthead, int hbhlen,
 
 			/*
 			 * We may see jumbolen in unaligned location, so
-			 * we'd need to perform bcopy().
+			 * we'd need to perform memcpy().
 			 */
 			memcpy(&jumboplen, opt + 2, sizeof(jumboplen));
 			jumboplen = (u_int32_t)htonl(jumboplen);
