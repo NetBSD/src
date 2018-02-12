@@ -99,7 +99,7 @@ struct gpt_ent *gpt_ent_primary(gpt_t, unsigned int);
 struct gpt_ent *gpt_ent_backup(gpt_t, unsigned int);
 int	gpt_usage(const char *, const struct gpt_cmd *);
 
-void 	utf16_to_utf8(const uint16_t *, uint8_t *, size_t);
+void 	utf16_to_utf8(const uint16_t *, size_t, uint8_t *, size_t);
 void	utf8_to_utf16(const uint8_t *, uint16_t *, size_t);
 
 #define GPT_FIND "ab:i:L:s:t:"

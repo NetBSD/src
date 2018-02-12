@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/create.c,v 1.11 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: restore.c,v 1.16 2015/12/03 02:02:43 christos Exp $");
+__RCSID("$NetBSD: restore.c,v 1.16.8.1 2018/02/12 04:05:07 snj Exp $");
 #endif
 
 #include <sys/types.h>
@@ -178,7 +178,7 @@ restore_ent(gpt_t gpt, prop_dictionary_t gpt_dict, void *secbuf, u_int gpt_size,
 	if (propstr != NULL) {
 		s = prop_string_cstring_nocopy(propstr);
 		utf8_to_utf16((const uint8_t *)s, ent.ent_name,
-			__arraycount(ent.ent_name));
+		    __arraycount(ent.ent_name));
 	}
 	propnum = prop_dictionary_get(gpt_dict, "index");
 	PROP_ERR(propnum);

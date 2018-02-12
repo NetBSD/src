@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.70 2017/02/16 03:32:17 christos Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.70.4.1 2018/02/12 04:05:07 snj Exp $");
 #endif
 
 #include <sys/param.h>
@@ -121,16 +121,22 @@ crc32(const void *buf, size_t size)
 	return crc ^ ~0U;
 }
 
+/*
+ * Produce a NUL-terminated utf-8 string from the non-NUL-terminated
+ * utf16 string.
+ */
 void
-utf16_to_utf8(const uint16_t *s16, uint8_t *s8, size_t s8len)
+utf16_to_utf8(const uint16_t *s16, size_t s16len, uint8_t *s8, size_t s8len)
 {
-	size_t s8idx, s16idx, s16len;
+	size_t s8idx, s16idx;
 	uint32_t utfchar;
 	unsigned int c;
 
-	s16len = 0;
-	while (s16[s16len++] != 0)
-		continue;
+	for (s16idx = 0; s16idx < s16len; s16idx++)
+		if (s16[s16idx] == 0)
+			break;
+
+	s16len = s16idx;
 	s8idx = s16idx = 0;
 	while (s16idx < s16len) {
 		utfchar = le16toh(s16[s16idx++]);
@@ -168,6 +174,10 @@ utf16_to_utf8(const uint16_t *s16, uint8_t *s8, size_t s8len)
 	s8[s8idx] = 0;
 }
 
+/*
+ * Produce a non-NUL-terminated utf-16 string from the NUL-terminated
+ * utf8 string.
+ */
 void
 utf8_to_utf16(const uint8_t *s8, uint16_t *s16, size_t s16len)
 {
@@ -224,11 +234,13 @@ utf8_to_utf16(const uint8_t *s8, uint16_t *s16, size_t s16len)
 			} else
 				s16[s16idx++] = htole16((uint16_t)utfchar);
 			if (s16idx == s16len) {
-				s16[--s16idx] = 0;
 				return;
 			}
 		}
 	} while (c != 0);
+
+	while (s16idx < s16len)
+		s16[s16idx++] = 0;
 }
 
 void *
@@ -1028,7 +1040,9 @@ gpt_change_ent(gpt_t gpt, const struct gpt_find *find,
 
 		ent = gpt_ent_primary(gpt, i);
 		if (find->label != NULL) {
-			utf16_to_utf8(ent->ent_name, utfbuf, sizeof(utfbuf));
+			utf16_to_utf8(ent->ent_name,
+			    __arraycount(ent->ent_name),
+			    utfbuf, __arraycount(utfbuf));
 			if (strcmp((char *)find->label, (char *)utfbuf) == 0)
 				continue;
 		}
