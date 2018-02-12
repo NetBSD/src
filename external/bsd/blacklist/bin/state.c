@@ -1,4 +1,4 @@
-/*	$NetBSD: state.c,v 1.15.2.3 2015/08/07 04:10:23 snj Exp $	*/
+/*	$NetBSD: state.c,v 1.15.2.4 2018/02/12 18:30:22 snj Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: state.c,v 1.15.2.3 2015/08/07 04:10:23 snj Exp $");
+__RCSID("$NetBSD: state.c,v 1.15.2.4 2018/02/12 18:30:22 snj Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -200,8 +200,10 @@ state_iterate(DB *db, struct conf *c, struct dbinfo *dbi, unsigned int first)
 	int rv;
 	DBT k, v;
 
-	if (db == NULL)
+	if (db == NULL) {
+		(*lfun)(LOG_ERR, "%s: called with no database file", __func__);
 		return -1;
+	}
 
 	first = first ? R_FIRST : R_NEXT;
 
