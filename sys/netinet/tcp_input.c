@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.377 2018/02/12 08:08:28 maxv Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.378 2018/02/12 08:13:08 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.377 2018/02/12 08:08:28 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.378 2018/02/12 08:13:08 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1615,6 +1615,8 @@ nosave:;
 	if (so->so_options & SO_ACCEPTCONN) {
 		union syn_cache_sa src;
 		union syn_cache_sa dst;
+
+		KASSERT(tp->t_state == TCPS_LISTEN);
 
 		memset(&src, 0, sizeof(src));
 		memset(&dst, 0, sizeof(dst));
