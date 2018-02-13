@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.48 2017/11/02 15:28:23 riastradh Exp $ */
+/* $NetBSD: kern_tc.c,v 1.49 2018/02/13 09:26:17 maxv Exp $ */
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.48 2017/11/02 15:28:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.49 2018/02/13 09:26:17 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
@@ -131,8 +131,8 @@ static struct timehands *volatile timehands = &th0;
 struct timecounter *timecounter = &dummy_timecounter;
 static struct timecounter *timecounters = &dummy_timecounter;
 
-volatile time_t time_second = 1;
-volatile time_t time_uptime = 1;
+volatile time_t time_second __cacheline_aligned = 1;
+volatile time_t time_uptime __cacheline_aligned = 1;
 
 static struct bintime timebasebin;
 
