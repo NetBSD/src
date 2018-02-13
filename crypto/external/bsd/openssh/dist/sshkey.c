@@ -1,4 +1,4 @@
-/*	$NetBSD: sshkey.c,v 1.12 2018/02/05 00:13:50 christos Exp $	*/
+/*	$NetBSD: sshkey.c,v 1.13 2018/02/13 09:51:33 martin Exp $	*/
 /* $OpenBSD: sshkey.c,v 1.56 2017/08/12 06:42:52 djm Exp $ */
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
@@ -26,7 +26,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: sshkey.c,v 1.12 2018/02/05 00:13:50 christos Exp $");
+__RCSID("$NetBSD: sshkey.c,v 1.13 2018/02/13 09:51:33 martin Exp $");
 
 #include <sys/types.h>
 #include <netinet/in.h>
@@ -258,7 +258,7 @@ sshkey_size(const struct sshkey *k)
 #if OPENSSL_VERSION_NUMBER >= 0x10100000UL
 		return RSA_bits(k->rsa);
 #else
-		return BN_num_bits(k->rsa->p);
+		return BN_num_bits(k->rsa->n);
 #endif
 	case KEY_DSA:
 	case KEY_DSA_CERT:
