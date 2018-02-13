@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.72 2018/02/03 21:27:45 mrg Exp $
+# $NetBSD: ad.mips,v 1.73 2018/02/13 10:02:12 mrg Exp $
 -./usr/lib/64/libgomp.a
 -./usr/lib/64/libgomp.so
 -./usr/lib/64/libgomp.so.1
@@ -15,8 +15,8 @@
 ./usr/include/g++/bits/mips64/c++config.h	comp-c-include		compat,arch64,gcc
 ./usr/include/g++/bits/mipso32			comp-c-include		compat,arch64
 ./usr/include/g++/bits/mipso32/c++config.h	comp-c-include		compat,arch64,gcc
-./usr/include/gcc-4.8/loongson.h		comp-c-include		gcccmds,gcc=48
-./usr/include/gcc-4.8/tgmath.h			comp-c-include		gcccmds,gcc=48
+./usr/include/gcc-4.8/loongson.h		comp-c-include		obsolete
+./usr/include/gcc-4.8/tgmath.h			comp-c-include		obsolete
 ./usr/include/gcc-5/loongson.h			comp-c-include		gcccmds,gcc=5
 ./usr/include/gcc-5/tgmath.h			comp-c-include		gcccmds,gcc=5
 ./usr/include/gcc-6/loongson.h			comp-c-include		gcccmds,gcc=6

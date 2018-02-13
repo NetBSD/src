@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.89 2018/02/03 21:27:45 mrg Exp $
+# $NetBSD: ad.powerpc,v 1.90 2018/02/13 10:02:12 mrg Exp $
 ./usr/bin/elf2aout				comp-sysutil-bin
 ./usr/bin/psim					comp-debug-bin		gdb
 ./usr/include/altivec.h				comp-obsolete		obsolete
@@ -28,17 +28,17 @@
 ./usr/include/gcc-4.5/spu2vmx.h			comp-obsolete		obsolete
 ./usr/include/gcc-4.5/tgmath.h			comp-obsolete		obsolete
 ./usr/include/gcc-4.5/vec_types.h		comp-obsolete		obsolete
-./usr/include/gcc-4.8/altivec.h			comp-c-include		gcccmds,gcc=48
-./usr/include/gcc-4.8/htmintrin.h		comp-c-include		gcccmds,gcc=48
-./usr/include/gcc-4.8/htmxlintrin.h		comp-c-include		gcccmds,gcc=48
-./usr/include/gcc-4.8/paired.h			comp-c-include		gcccmds,gcc=48
-./usr/include/gcc-4.8/ppc-asm.h			comp-c-include		gcccmds,gcc=48
-./usr/include/gcc-4.8/ppu_intrinsics.h		comp-c-include		gcccmds,gcc=48
-./usr/include/gcc-4.8/si2vmx.h			comp-c-include		gcccmds,gcc=48
-./usr/include/gcc-4.8/spe.h			comp-c-include		gcccmds,gcc=48
-./usr/include/gcc-4.8/spu2vmx.h			comp-c-include		gcccmds,gcc=48
-./usr/include/gcc-4.8/tgmath.h			comp-c-include		gcccmds,gcc=48
-./usr/include/gcc-4.8/vec_types.h		comp-c-include		gcccmds,gcc=48
+./usr/include/gcc-4.8/altivec.h			comp-c-include		obsolete
+./usr/include/gcc-4.8/htmintrin.h		comp-c-include		obsolete
+./usr/include/gcc-4.8/htmxlintrin.h		comp-c-include		obsolete
+./usr/include/gcc-4.8/paired.h			comp-c-include		obsolete
+./usr/include/gcc-4.8/ppc-asm.h			comp-c-include		obsolete
+./usr/include/gcc-4.8/ppu_intrinsics.h		comp-c-include		obsolete
+./usr/include/gcc-4.8/si2vmx.h			comp-c-include		obsolete
+./usr/include/gcc-4.8/spe.h			comp-c-include		obsolete
+./usr/include/gcc-4.8/spu2vmx.h			comp-c-include		obsolete
+./usr/include/gcc-4.8/tgmath.h			comp-c-include		obsolete
+./usr/include/gcc-4.8/vec_types.h		comp-c-include		obsolete
 ./usr/include/gcc-5/altivec.h			comp-c-include		gcccmds,gcc=5
 ./usr/include/gcc-5/htmintrin.h			comp-c-include		gcccmds,gcc=5
 ./usr/include/gcc-5/htmxlintrin.h		comp-c-include		gcccmds,gcc=5
