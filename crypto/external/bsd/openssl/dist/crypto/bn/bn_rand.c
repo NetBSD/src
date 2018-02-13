@@ -232,7 +232,7 @@ int BN_generate_dsa_nonce(BIGNUM *out, const BIGNUM *range,
         if (RAND_bytes(random_bytes, sizeof(random_bytes)) != 1)
             goto err;
         SHA512_Init(&sha);
-        SHA512_Update(&sha, &done, sizeof(done));
+        SHA512_Update(&sha, (void *)&done, sizeof(done));
         SHA512_Update(&sha, private_bytes, sizeof(private_bytes));
         SHA512_Update(&sha, message, message_len);
         SHA512_Update(&sha, random_bytes, sizeof(random_bytes));
