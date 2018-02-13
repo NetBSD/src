@@ -1,6 +1,6 @@
-/*	$NetBSD: if_arp.c,v 1.256 2018/01/16 08:13:47 ozaki-r Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.257 2018/02/13 07:44:25 maxv Exp $	*/
 
-/*-
+/*
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.256 2018/01/16 08:13:47 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.257 2018/02/13 07:44:25 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -140,38 +140,38 @@ __KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.256 2018/01/16 08:13:47 ozaki-r Exp $")
 #define ETHERTYPE_IPTRAILERS ETHERTYPE_TRAIL
 
 /* timer values */
-static int	arpt_keep = (20*60);	/* once resolved, good for 20 more minutes */
-static int	arpt_down = 20;		/* once declared down, don't send for 20 secs */
-static int	arp_maxhold = 1;	/* number of packets to hold per ARP entry */
+static int arpt_keep = (20*60);	/* once resolved, good for 20 more minutes */
+static int arpt_down = 20;		/* once declared down, don't send for 20 secs */
+static int arp_maxhold = 1;	/* number of packets to hold per ARP entry */
 #define	rt_expire rt_rmx.rmx_expire
 #define	rt_pksent rt_rmx.rmx_pksent
 
-int		ip_dad_count = PROBE_NUM;
+int ip_dad_count = PROBE_NUM;
 #ifdef ARP_DEBUG
-int		arp_debug = 1;
+int arp_debug = 1;
 #else
-int		arp_debug = 0;
+int arp_debug = 0;
 #endif
 
-static	void arp_init(void);
+static void arp_init(void);
 
-static	void arprequest(struct ifnet *,
+static void arprequest(struct ifnet *,
     const struct in_addr *, const struct in_addr *,
     const u_int8_t *);
-static	void arpannounce1(struct ifaddr *);
-static	struct sockaddr *arp_setgate(struct rtentry *, struct sockaddr *,
-	    const struct sockaddr *);
-static	void arptimer(void *);
-static	void arp_settimer(struct llentry *, int);
-static	struct llentry *arplookup(struct ifnet *, struct mbuf *,
-	    const struct in_addr *, const struct sockaddr *, int);
-static	struct llentry *arpcreate(struct ifnet *, struct mbuf *,
-	    const struct in_addr *, const struct sockaddr *, int);
-static	void in_arpinput(struct mbuf *);
-static	void in_revarpinput(struct mbuf *);
-static	void revarprequest(struct ifnet *);
+static void arpannounce1(struct ifaddr *);
+static struct sockaddr *arp_setgate(struct rtentry *, struct sockaddr *,
+    const struct sockaddr *);
+static void arptimer(void *);
+static void arp_settimer(struct llentry *, int);
+static struct llentry *arplookup(struct ifnet *, struct mbuf *,
+    const struct in_addr *, const struct sockaddr *, int);
+static struct llentry *arpcreate(struct ifnet *, struct mbuf *,
+    const struct in_addr *, const struct sockaddr *, int);
+static void in_arpinput(struct mbuf *);
+static void in_revarpinput(struct mbuf *);
+static void revarprequest(struct ifnet *);
 
-static	void arp_drainstub(void);
+static void arp_drainstub(void);
 
 struct dadq;
 static void arp_dad_timer(struct dadq *);
@@ -184,15 +184,15 @@ static void arp_init_llentry(struct ifnet *, struct llentry *);
 static void arp_free_llentry_tokenring(struct llentry *);
 #endif
 
-struct	ifqueue arpintrq = {
+struct ifqueue arpintrq = {
 	.ifq_head = NULL,
 	.ifq_tail = NULL,
 	.ifq_len = 0,
 	.ifq_maxlen = 50,
 	.ifq_drops = 0,
 };
-static int	arp_maxtries = 5;
-static int	useloopback = 1;	/* use loopback interface for local traffic */
+static int arp_maxtries = 5;
+static int useloopback = 1;	/* use loopback interface for local traffic */
 
 static percpu_t *arpstat_percpu;
 
@@ -203,10 +203,10 @@ static percpu_t *arpstat_percpu;
 #define	ARP_STATADD(x, v)	_NET_STATADD(arpstat_percpu, x, v)
 
 /* revarp state */
-static struct	in_addr myip, srv_ip;
-static int	myip_initialized = 0;
-static int	revarp_in_progress = 0;
-static struct	ifnet *myip_ifp = NULL;
+static struct in_addr myip, srv_ip;
+static int myip_initialized = 0;
+static int revarp_in_progress = 0;
+static struct ifnet *myip_ifp = NULL;
 
 static int arp_drainwanted;
 
@@ -257,18 +257,19 @@ arp_fasttimo(void)
 }
 
 const struct protosw arpsw[] = {
-	{ .pr_type = 0,
-	  .pr_domain = &arpdomain,
-	  .pr_protocol = 0,
-	  .pr_flags = 0,
-	  .pr_input = 0,
-	  .pr_ctlinput = 0,
-	  .pr_ctloutput = 0,
-	  .pr_usrreqs = 0,
-	  .pr_init = arp_init,
-	  .pr_fasttimo = arp_fasttimo,
-	  .pr_slowtimo = 0,
-	  .pr_drain = arp_drainstub,
+	{
+		.pr_type = 0,
+		.pr_domain = &arpdomain,
+		.pr_protocol = 0,
+		.pr_flags = 0,
+		.pr_input = 0,
+		.pr_ctlinput = 0,
+		.pr_ctloutput = 0,
+		.pr_usrreqs = 0,
+		.pr_init = arp_init,
+		.pr_fasttimo = arp_fasttimo,
+		.pr_slowtimo = 0,
+		.pr_drain = arp_drainstub,
 	}
 };
 
@@ -564,10 +565,12 @@ arp_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 		satosdl(gate)->sdl_type = ifp->if_type;
 		satosdl(gate)->sdl_index = ifp->if_index;
 
-		/* If the route is for a broadcast address mark it as such.
+		/*
+		 * If the route is for a broadcast address mark it as such.
 		 * This way we can avoid an expensive call to in_broadcast()
 		 * in ip_output() most of the time (because the route passed
-		 * to ip_output() is almost always a host route). */
+		 * to ip_output() is almost always a host route).
+		 */
 		if (rt->rt_flags & RTF_HOST &&
 		    !(rt->rt_flags & RTF_BROADCAST) &&
 		    in_broadcast(satocsin(rt_getkey(rt))->sin_addr, rt->rt_ifp))
@@ -703,15 +706,15 @@ arpannounce1(struct ifaddr *ifa)
 }
 
 /*
- * Resolve an IP address into an ethernet address.  If success,
- * desten is filled in.  If there is no entry in arptab,
- * set one up and broadcast a request for the IP address.
- * Hold onto this mbuf and resend it once the address
- * is finally resolved.  A return value of 0 indicates
- * that desten has been filled in and the packet should be sent
- * normally; a return value of EWOULDBLOCK indicates that the packet has been
- * held pending resolution.
- * Any other value indicates an error.
+ * Resolve an IP address into an ethernet address.  If success, desten is
+ * filled in. If there is no entry in arptab, set one up and broadcast a
+ * request for the IP address. Hold onto this mbuf and resend it once the
+ * address is finally resolved.
+ *
+ * A return value of 0 indicates that desten has been filled in and the packet
+ * should be sent normally; a return value of EWOULDBLOCK indicates that the
+ * packet has been held pending resolution. Any other value indicates an
+ * error.
  */
 int
 arpresolve(struct ifnet *ifp, const struct rtentry *rt, struct mbuf *m,
@@ -2087,11 +2090,11 @@ sysctl_net_inet_arp_setup(struct sysctllog **clog)
 			CTL_NET,PF_INET, node->sysctl_num, CTL_CREATE, CTL_EOL);
 
 	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "debug",
-		       SYSCTL_DESCR("Enable ARP DAD debug output"),
-		       NULL, 0, &arp_debug, 0,
-		       CTL_NET, PF_INET, node->sysctl_num, CTL_CREATE, CTL_EOL);
+			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+			CTLTYPE_INT, "debug",
+			SYSCTL_DESCR("Enable ARP DAD debug output"),
+			NULL, 0, &arp_debug, 0,
+			CTL_NET, PF_INET, node->sysctl_num, CTL_CREATE, CTL_EOL);
 }
 
 #endif /* INET */
