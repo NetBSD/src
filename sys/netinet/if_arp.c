@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.258 2018/02/13 07:51:24 maxv Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.259 2018/02/13 08:20:12 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.258 2018/02/13 07:51:24 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.259 2018/02/13 08:20:12 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1033,14 +1033,15 @@ in_arpinput(struct mbuf *m)
 
 	ifp = if_get_bylla(ar_sha(ah), ah->ar_hln, &psref);
 	if (ifp) {
+		/* it's from me, ignore it. */
 		if_put(ifp, &psref);
 		ARP_STATINC(ARP_STAT_RCVLOCALSHA);
-		goto out;	/* it's from me, ignore it. */
+		goto out;
 	}
 
 	rcvif = ifp = m_get_rcvif_psref(m, &psref);
 	if (__predict_false(rcvif == NULL))
-		goto drop;
+		goto out;
 
 	/*
 	 * Fix up ah->ar_hrd if necessary, before using ar_tha() or ar_tpa().
@@ -1367,7 +1368,7 @@ reply:
 		} else {
 			if (lle != NULL)
 				LLE_RUNLOCK(lle);
-			goto drop;
+			goto out;
 		}
 	}
 	ia4_release(ia, &psref_ia);
@@ -1405,7 +1406,6 @@ reply:
 out:
 	if (la != NULL)
 		LLE_WUNLOCK(la);
-drop:
 	if (ia != NULL)
 		ia4_release(ia, &psref_ia);
 	if (rcvif != NULL)
