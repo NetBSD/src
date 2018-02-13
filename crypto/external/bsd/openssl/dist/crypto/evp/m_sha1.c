@@ -178,6 +178,16 @@ static int init384(EVP_MD_CTX *ctx)
     return SHA384_Init(EVP_MD_CTX_md_data(ctx));
 }
 
+static int update384(EVP_MD_CTX *ctx, const void *data, size_t count)
+{
+    return SHA384_Update(EVP_MD_CTX_md_data(ctx), data, count);
+}
+
+static int final384(EVP_MD_CTX *ctx, unsigned char *md)
+{
+    return SHA384_Final(md, EVP_MD_CTX_md_data(ctx));
+}
+
 static int init512(EVP_MD_CTX *ctx)
 {
     return SHA512_Init(EVP_MD_CTX_md_data(ctx));
@@ -200,8 +210,8 @@ static const EVP_MD sha384_md = {
     SHA384_DIGEST_LENGTH,
     EVP_MD_FLAG_DIGALGID_ABSENT,
     init384,
-    update512,
-    final512,
+    update384,
+    final384,
     NULL,
     NULL,
     SHA512_CBLOCK,
