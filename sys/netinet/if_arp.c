@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.264 2018/02/13 10:47:41 maxv Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.265 2018/02/13 14:50:28 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.264 2018/02/13 10:47:41 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.265 2018/02/13 14:50:28 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -324,7 +324,7 @@ arptimer(void *arg)
 	LLE_WLOCK(lle);
 	if (callout_pending(&lle->la_timer)) {
 		/*
-		 * Here we are a bit odd here in the treatment of
+		 * Here we are a bit odd in the treatment of
 		 * active/pending. If the pending bit is set, it got
 		 * rescheduled before I ran. The active
 		 * bit we ignore, since if it was stopped
@@ -725,6 +725,7 @@ arpresolve(struct ifnet *ifp, const struct rtentry *rt, struct mbuf *m,
 	bool renew;
 	int error;
 	struct ifnet *origifp = ifp;
+
 #if NCARP > 0
 	if (rt != NULL && rt->rt_ifp->if_type == IFT_CARP)
 		ifp = rt->rt_ifp;
@@ -1057,6 +1058,8 @@ in_arpinput(struct mbuf *m)
 
 	rcvif = ifp = m_get_rcvif_psref(m, &psref);
 	if (__predict_false(rcvif == NULL))
+		goto out;
+	if (rcvif->if_flags & IFF_NOARP)
 		goto out;
 
 	memcpy(&isaddr, ar_spa(ah), sizeof(isaddr));
@@ -1882,6 +1885,9 @@ in_revarpinput(struct mbuf *m)
 	rcvif = m_get_rcvif(m, &s);
 	if (__predict_false(rcvif == NULL))
 		goto out;
+	if (rcvif->if_flags & IFF_NOARP)
+		goto out;
+
 	switch (rcvif->if_type) {
 	case IFT_IEEE1394:
 		/* ARP without target hardware address is not supported */
