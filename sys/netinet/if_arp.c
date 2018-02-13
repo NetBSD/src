@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.262 2018/02/13 10:20:50 maxv Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.263 2018/02/13 10:31:01 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.262 2018/02/13 10:20:50 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.263 2018/02/13 10:31:01 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1820,16 +1820,18 @@ void
 revarpinput(struct mbuf *m)
 {
 	struct arphdr *ar;
+	int arplen;
 
-	if (m->m_len < sizeof(struct arphdr))
-		goto out;
+	arplen = sizeof(struct arphdr);
+	if (m->m_len < arplen && (m = m_pullup(m, arplen)) == NULL)
+		return;
 	ar = mtod(m, struct arphdr *);
-#if 0 /* XXX I don't think we need this... and it will prevent other LL */
-	if (ntohs(ar->ar_hrd) != ARPHRD_ETHER)
-		goto out;
-#endif
-	if (m->m_len < sizeof(struct arphdr) + 2 * (ar->ar_hln + ar->ar_pln))
-		goto out;
+
+	arplen = sizeof(struct arphdr) + 2 * (ar->ar_hln + ar->ar_pln);
+	if (m->m_len < arplen && (m = m_pullup(m, arplen)) == NULL)
+		return;
+	ar = mtod(m, struct arphdr *);
+
 	switch (ntohs(ar->ar_pro)) {
 	case ETHERTYPE_IP:
 	case ETHERTYPE_IPTRAILERS:
@@ -1839,7 +1841,7 @@ revarpinput(struct mbuf *m)
 	default:
 		break;
 	}
-out:
+
 	m_freem(m);
 }
 
