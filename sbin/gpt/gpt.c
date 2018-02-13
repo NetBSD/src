@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.73 2017/09/07 10:23:33 christos Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.74 2018/02/13 00:34:11 sevan Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1165,7 +1165,7 @@ gpt_attr_get(gpt_t gpt, uint64_t *attributes)
 			if (strcmp(gpt_attr[i].name, ptr) == 0)
 				break;
 		if (i == __arraycount(gpt_attr)) {
-			gpt_warnx(gpt, "Unregognized attribute `%s'", ptr);
+			gpt_warnx(gpt, "Unrecognized attribute `%s'", ptr);
 			rv = -1;
 		} else
 			*attributes |= gpt_attr[i].mask;
