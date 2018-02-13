@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.312 2018/02/03 21:27:45 mrg Exp $
+# $NetBSD: shl.mi,v 1.313 2018/02/13 10:02:12 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -102,11 +102,11 @@
 ./usr/lib/libmudflap.so				comp-c-shlib		compatfile,gcc=48
 ./usr/lib/libmudflap.so.0			comp-c-shlib		compatfile,gcc=48
 ./usr/lib/libmudflap.so.0.0			comp-c-shlib		compatfile,gcc=48
-./usr/lib/libmudflap_pic.a			comp-c-piclib		compatfile,picinstall,gcc=48
+./usr/lib/libmudflap_pic.a			comp-c-piclib		obsolete
 ./usr/lib/libmudflapth.so			comp-c-shlib		compatfile,gcc=48
 ./usr/lib/libmudflapth.so.0			comp-c-shlib		compatfile,gcc=48
 ./usr/lib/libmudflapth.so.0.0			comp-c-shlib		compatfile,gcc=48
-./usr/lib/libmudflapth_pic.a			comp-c-piclib		compatfile,picinstall,gcc=48
+./usr/lib/libmudflapth_pic.a			comp-c-piclib		obsolete
 ./usr/lib/libnetpgp_pic.a			comp-c-piclib		compatfile,picinstall
 ./usr/lib/libnetpgpverify_pic.a			comp-c-piclib		compatfile,picinstall
 ./usr/lib/libnpf_pic.a				comp-npf-piclib		compatfile,picinstall,npf

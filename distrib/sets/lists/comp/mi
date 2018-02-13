@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2180 2018/02/11 16:45:35 christos Exp $
+#	$NetBSD: mi,v 1.2181 2018/02/13 10:02:12 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -3445,10 +3445,10 @@
 ./usr/lib/libmpfr.a				-obsolete		obsolete
 ./usr/lib/libmpfr.a				comp-obsolete		obsolete
 ./usr/lib/libmpfr_p.a				comp-obsolete		obsolete
-./usr/lib/libmudflap.a				comp-c-lib		compatfile,gcc=48
-./usr/lib/libmudflap_p.a			comp-c-proflib		compatfile,gcc=48,profile
-./usr/lib/libmudflapth.a			comp-c-lib		compatfile,gcc=48
-./usr/lib/libmudflapth_p.a			comp-c-proflib		compatfile,gcc=48,profile
+./usr/lib/libmudflap.a				comp-c-lib		obsolete
+./usr/lib/libmudflap_p.a			comp-c-proflib		obsolete
+./usr/lib/libmudflapth.a			comp-c-lib		obsolete
+./usr/lib/libmudflapth_p.a			comp-c-proflib		obsolete
 ./usr/lib/libnetpgp.a				comp-c-lib		compatfile
 ./usr/lib/libnetpgp_p.a				comp-c-proflib		compatfile,profile
 ./usr/lib/libnetpgpverify.a			comp-c-lib		compatfile

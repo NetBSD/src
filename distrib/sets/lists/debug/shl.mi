@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.192 2018/02/08 03:27:51 christos Exp $
+# $NetBSD: shl.mi,v 1.193 2018/02/13 10:02:12 mrg Exp $
 ./usr/lib/libbfd_g.a						comp-c-debuglib	debuglib,compatfile,binutils
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libblacklist.so.0.0.debug		comp-sys-debug	debug,dynamicroot
@@ -143,8 +143,6 @@
 ./usr/libdata/debug/usr/lib/libmj.so.1.0.debug			comp-crypto-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libmpc.so.2.0.debug			comp-obsolete	debug,compatfile,obsolete
 ./usr/libdata/debug/usr/lib/libmpfr.so.4.1.debug		comp-obsolete	debug,compatfile,obsolete
-./usr/libdata/debug/usr/lib/libmudflap.so.0.0.debug		comp-sys-debug	debug,compatfile,gcc=48
-./usr/libdata/debug/usr/lib/libmudflapth.so.0.0.debug		comp-sys-debug	debug,compatfile,gcc=48
 ./usr/libdata/debug/usr/lib/libnetpgp.so.3.0.debug		comp-crypto-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libnetpgpverify.so.5.0.debug	comp-crypto-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libnpf.so.0.1.debug			comp-npf-debug	debug,compatfile,npf

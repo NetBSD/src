@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.76 2018/02/03 21:27:45 mrg Exp $
+# $NetBSD: ad.mips,v 1.77 2018/02/13 10:02:12 mrg Exp $
 ./lib/libc_fp.so				base-sys-shlib		dynamicroot,softfloat,arch64
 ./lib/libc_fp.so.0				base-sys-shlib		dynamicroot,softfloat,arch64
 ./lib/libc_fp.so.0.0				base-sys-shlib		dynamicroot,softfloat,arch64
@@ -13,7 +13,6 @@
 ./usr/lib/o32/libc_fp.so			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libc_fp.so.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libc_fp.so.0.0			base-compat-shlib	compat,pic,arch64
-./usr/lib/o32/libgomp.so.1.1			base-compat-shlib	compat,pic,arch64,gcc=48
 ./usr/lib/o32/libgomp.so.1.2			base-compat-shlib	compat,pic,arch64,gcc=5
 ./usr/lib/o32/libgomp.so.1.3			base-compat-shlib	compat,pic,arch64,gcc=6
 ./usr/libexec/ld.elf_so-64			base-compat-shlib	compat,pic,arch64
