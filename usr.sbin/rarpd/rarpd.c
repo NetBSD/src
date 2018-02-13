@@ -1,4 +1,4 @@
-/*	$NetBSD: rarpd.c,v 1.59 2011/08/30 20:25:18 joerg Exp $	*/
+/*	$NetBSD: rarpd.c,v 1.60 2018/02/13 10:17:04 martin Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -25,7 +25,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: rarpd.c,v 1.59 2011/08/30 20:25:18 joerg Exp $");
+__RCSID("$NetBSD: rarpd.c,v 1.60 2018/02/13 10:17:04 martin Exp $");
 #endif
 
 
@@ -414,7 +414,7 @@ rarp_check(u_char *p, int len)
 	}
 	{
 #ifdef __NetBSD__
-		caddr_t tha = ar_tha(ap);
+		uint8_t *tha = ar_tha(ap);
 
 		if (!tha || memcmp(ar_sha(ap), tha, 6) != 0) {
 #else
