@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.79 2018/02/13 04:10:41 ozaki-r Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.80 2018/02/13 04:11:28 ozaki-r Exp $	*/
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.79 2018/02/13 04:10:41 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.80 2018/02/13 04:11:28 ozaki-r Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -73,7 +73,9 @@ extern int trap_types;
 
 int	db_active = 0;
 db_regs_t ddb_regs;	/* register state */
+#ifdef MULTIPROCESSOR
 db_regs_t *ddb_regp = NULL;
+#endif
 
 void db_mach_cpu (db_expr_t, bool, db_expr_t, const char *);
 
@@ -279,7 +281,9 @@ kdb_trap(int type, int code, db_regs_t *regs)
 		regs->tf_ss     = ddb_regs.tf_ss;
 	}
 
+#ifdef MULTIPROCESSOR
 	ddb_regp = NULL;
+#endif
 
 	return (1);
 }
