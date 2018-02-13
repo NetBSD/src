@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.261 2018/02/13 10:05:05 maxv Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.262 2018/02/13 10:20:50 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.261 2018/02/13 10:05:05 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.262 2018/02/13 10:20:50 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -157,7 +157,7 @@ static void arp_init(void);
 
 static void arprequest(struct ifnet *,
     const struct in_addr *, const struct in_addr *,
-    const u_int8_t *);
+    const uint8_t *);
 static void arpannounce1(struct ifaddr *);
 static struct sockaddr *arp_setgate(struct rtentry *, struct sockaddr *,
     const struct sockaddr *);
@@ -222,10 +222,10 @@ static int log_unknown_network = 1;
 #define	LLA_ADDRSTRLEN	(16 * 3)
 
 static char *
-lla_snprintf(char *, u_int8_t *, int);
+lla_snprintf(char *, uint8_t *, int);
 
 static char *
-lla_snprintf(char *dst, u_int8_t *adrp, int len)
+lla_snprintf(char *dst, uint8_t *adrp, int len)
 {
 	int i;
 	char *p;
@@ -631,7 +631,7 @@ arp_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 static void
 arprequest(struct ifnet *ifp,
     const struct in_addr *sip, const struct in_addr *tip,
-    const u_int8_t *enaddr)
+    const uint8_t *enaddr)
 {
 	struct mbuf *m;
 	struct arphdr *ah;
@@ -814,8 +814,7 @@ notfound:
 		LLE_WUNLOCK(la);
 
 		if (renew) {
-			const u_int8_t *enaddr =
-			    CLLADDR(ifp->if_sadl);
+			const uint8_t *enaddr = CLLADDR(ifp->if_sadl);
 			arprequest(origifp,
 			    &satocsin(rt->rt_ifa->ifa_addr)->sin_addr,
 			    &satocsin(dst)->sin_addr, enaddr);
@@ -875,8 +874,7 @@ notfound:
 		    EHOSTUNREACH : EHOSTDOWN;
 
 	if (renew) {
-		const u_int8_t *enaddr =
-		    CLLADDR(ifp->if_sadl);
+		const uint8_t *enaddr = CLLADDR(ifp->if_sadl);
 		la->la_expire = time_uptime;
 		arp_settimer(la, arpt_down);
 		la->la_asked++;
@@ -1022,7 +1020,7 @@ in_arpinput(struct mbuf *m)
 	struct in_ifaddr *bridge_ia = NULL;
 #endif
 #if NCARP > 0
-	u_int32_t count = 0, index = 0;
+	uint32_t count = 0, index = 0;
 #endif
 	struct sockaddr sa;
 	struct in_addr isaddr, itaddr, myaddr;
@@ -1100,7 +1098,7 @@ in_arpinput(struct mbuf *m)
 		if (rcvif->if_bridge != NULL &&
 		    rcvif->if_bridge == ia->ia_ifp->if_bridge)
 			bridge_ia = ia;
-#endif /* NBRIDGE > 0 */
+#endif
 	}
 
 #if NBRIDGE > 0
@@ -1260,7 +1258,7 @@ in_arpinput(struct mbuf *m)
 			}
 		}
 	}
-#endif /* NTOKEN > 0 */
+#endif
 
 	KASSERT(sizeof(la->ll_addr) >= ifp->if_addrlen);
 	memcpy(&la->ll_addr, ar_sha(ah), ifp->if_addrlen);
@@ -1322,6 +1320,7 @@ reply:
 		/* Proxy ARP */
 		struct llentry *lle = NULL;
 		struct sockaddr_in sin;
+
 #if NCARP > 0
 		if (ifp->if_type == IFT_CARP) {
 			struct ifnet *_rcvif = m_get_rcvif(m, &s);
@@ -1361,9 +1360,7 @@ reply:
 	ah->ar_pro = htons(ETHERTYPE_IP); /* let's be sure! */
 	switch (ifp->if_type) {
 	case IFT_IEEE1394:
-		/*
-		 * ieee1394 arp reply is broadcast
-		 */
+		/* ieee1394 arp reply is broadcast */
 		m->m_flags &= ~M_MCAST;
 		m->m_flags |= M_BCAST;
 		m->m_len = sizeof(*ah) + (2 * ah->ar_pln) + ah->ar_hln;
