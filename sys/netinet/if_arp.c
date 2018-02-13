@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.257 2018/02/13 07:44:25 maxv Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.258 2018/02/13 07:51:24 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.257 2018/02/13 07:44:25 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.258 2018/02/13 07:51:24 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -939,12 +939,10 @@ arpintr(void)
 		MCLAIM(m, &arpdomain.dom_mowner);
 		ARP_STATINC(ARP_STAT_RCVTOTAL);
 
-		/*
-		 * First, make sure we have at least struct arphdr.
-		 */
-		if (m->m_len < sizeof(struct arphdr) ||
-		    (ar = mtod(m, struct arphdr *)) == NULL)
+		arplen = sizeof(struct arphdr);
+		if (m->m_len < arplen && (m = m_pullup(m, arplen)) == NULL)
 			goto badlen;
+		ar = mtod(m, struct arphdr *);
 
 		rcvif = m_get_rcvif(m, &s);
 		if (__predict_false(rcvif == NULL)) {
@@ -963,23 +961,26 @@ arpintr(void)
 		}
 		m_put_rcvif(rcvif, &s);
 
-		if (/* XXX ntohs(ar->ar_hrd) == ARPHRD_ETHER && */
-		    m->m_len >= arplen)
-			switch (ntohs(ar->ar_pro)) {
-			case ETHERTYPE_IP:
-			case ETHERTYPE_IPTRAILERS:
-				in_arpinput(m);
-				continue;
-			default:
-				ARP_STATINC(ARP_STAT_RCVBADPROTO);
-			}
-		else {
-badlen:
-			ARP_STATINC(ARP_STAT_RCVBADLEN);
+		if (m->m_len < arplen && (m = m_pullup(m, arplen)) == NULL)
+			goto badlen;
+		ar = mtod(m, struct arphdr *);
+
+		switch (ntohs(ar->ar_pro)) {
+		case ETHERTYPE_IP:
+		case ETHERTYPE_IPTRAILERS:
+			in_arpinput(m);
+			continue;
+		default:
+			ARP_STATINC(ARP_STAT_RCVBADPROTO);
+			goto free;
 		}
+
+badlen:
+		ARP_STATINC(ARP_STAT_RCVBADLEN);
 free:
 		m_freem(m);
 	}
+
 out:
 	SOFTNET_KERNEL_UNLOCK_UNLESS_NET_MPSAFE();
 	return; /* XXX gcc */
