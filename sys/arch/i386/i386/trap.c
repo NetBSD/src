@@ -1,5 +1,5 @@
 
-/*	$NetBSD: trap.c,v 1.292 2018/01/27 09:33:25 maxv Exp $	*/
+/*	$NetBSD: trap.c,v 1.293 2018/02/13 01:05:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.292 2018/01/27 09:33:25 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.293 2018/02/13 01:05:18 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -307,8 +307,7 @@ trap(struct trapframe *frame)
 
 	default:
 	we_re_toast:
-		if (type != T_TRCTRAP)
-			trap_print(frame, l);
+		trap_print(frame, l);
 
 		if (kdb_trap(type, 0, frame))
 			return;
