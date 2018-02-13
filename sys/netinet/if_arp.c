@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.259 2018/02/13 08:20:12 maxv Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.260 2018/02/13 08:51:37 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.259 2018/02/13 08:20:12 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.260 2018/02/13 08:51:37 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -949,8 +949,19 @@ arpintr(void)
 			ARP_STATINC(ARP_STAT_RCVNOINT);
 			goto free;
 		}
+
 		switch (rcvif->if_type) {
 		case IFT_IEEE1394:
+			/*
+			 * We don't want non-IEEE1394 ARP packets on IEEE1394
+			 * interfaces. Our life depends on that.
+			 */
+			if (ntohs(ar->ar_hrd) != ARPHRD_IEEE1394) {
+				m_put_rcvif(rcvif, &s);
+				ARP_STATINC(ARP_STAT_RCVBADPROTO);
+				goto free;
+			}
+
 			arplen = sizeof(struct arphdr) +
 			    ar->ar_hln + 2 * ar->ar_pln;
 			break;
@@ -959,6 +970,7 @@ arpintr(void)
 			    2 * ar->ar_hln + 2 * ar->ar_pln;
 			break;
 		}
+
 		m_put_rcvif(rcvif, &s);
 
 		if (m->m_len < arplen && (m = m_pullup(m, arplen)) == NULL)
@@ -1042,23 +1054,6 @@ in_arpinput(struct mbuf *m)
 	rcvif = ifp = m_get_rcvif_psref(m, &psref);
 	if (__predict_false(rcvif == NULL))
 		goto out;
-
-	/*
-	 * Fix up ah->ar_hrd if necessary, before using ar_tha() or ar_tpa().
-	 * XXX check ar_hrd more strictly?
-	 */
-	switch (ifp->if_type) {
-	case IFT_IEEE1394:
-		if (ntohs(ah->ar_hrd) == ARPHRD_IEEE1394)
-			;
-		else {
-			/* XXX this is to make sure we compute ar_tha right */
-			ah->ar_hrd = htons(ARPHRD_IEEE1394);
-		}
-		break;
-	default:
-		break;
-	}
 
 	memcpy(&isaddr, ar_spa(ah), sizeof(isaddr));
 	memcpy(&itaddr, ar_tpa(ah), sizeof(itaddr));
