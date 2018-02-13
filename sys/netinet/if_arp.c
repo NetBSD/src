@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.263 2018/02/13 10:31:01 maxv Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.264 2018/02/13 10:47:41 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.263 2018/02/13 10:31:01 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.264 2018/02/13 10:47:41 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -948,12 +948,12 @@ arpintr(void)
 			goto free;
 		}
 
+		/*
+		 * We don't want non-IEEE1394 ARP packets on IEEE1394
+		 * interfaces, and vice versa. Our life depends on that.
+		 */
 		switch (rcvif->if_type) {
 		case IFT_IEEE1394:
-			/*
-			 * We don't want non-IEEE1394 ARP packets on IEEE1394
-			 * interfaces. Our life depends on that.
-			 */
 			if (ntohs(ar->ar_hrd) != ARPHRD_IEEE1394) {
 				m_put_rcvif(rcvif, &s);
 				ARP_STATINC(ARP_STAT_RCVBADPROTO);
@@ -964,6 +964,12 @@ arpintr(void)
 			    ar->ar_hln + 2 * ar->ar_pln;
 			break;
 		default:
+			if (ntohs(ar->ar_hrd) == ARPHRD_IEEE1394) {
+				m_put_rcvif(rcvif, &s);
+				ARP_STATINC(ARP_STAT_RCVBADPROTO);
+				goto free;
+			}
+
 			arplen = sizeof(struct arphdr) +
 			    2 * ar->ar_hln + 2 * ar->ar_pln;
 			break;
@@ -1827,6 +1833,10 @@ revarpinput(struct mbuf *m)
 		return;
 	ar = mtod(m, struct arphdr *);
 
+	if (ntohs(ar->ar_hrd) == ARPHRD_IEEE1394) {
+		goto out;
+	}
+
 	arplen = sizeof(struct arphdr) + 2 * (ar->ar_hln + ar->ar_pln);
 	if (m->m_len < arplen && (m = m_pullup(m, arplen)) == NULL)
 		return;
@@ -1842,6 +1852,7 @@ revarpinput(struct mbuf *m)
 		break;
 	}
 
+out:
 	m_freem(m);
 }
 
