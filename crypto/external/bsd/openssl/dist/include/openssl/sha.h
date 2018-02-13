@@ -10,6 +10,10 @@
 #ifndef HEADER_SHA_H
 # define HEADER_SHA_H
 
+#ifdef USE_LIBC_SHA2
+# include <sha2.h>
+#endif
+
 # include <openssl/e_os2.h>
 # include <stddef.h>
 
@@ -44,6 +48,7 @@ int SHA1_Final(unsigned char *md, SHA_CTX *c);
 unsigned char *SHA1(const unsigned char *d, size_t n, unsigned char *md);
 void SHA1_Transform(SHA_CTX *c, const unsigned char *data);
 
+#ifndef USE_LIBC_SHA2
 # define SHA256_CBLOCK   (SHA_LBLOCK*4)/* SHA-256 treats input data as a
                                         * contiguous array of 32 bit wide
                                         * big-endian values. */
@@ -111,6 +116,14 @@ int SHA512_Update(SHA512_CTX *c, const void *data, size_t len);
 int SHA512_Final(unsigned char *md, SHA512_CTX *c);
 unsigned char *SHA512(const unsigned char *d, size_t n, unsigned char *md);
 void SHA512_Transform(SHA512_CTX *c, const unsigned char *data);
+
+#else
+#define SHA256_CBLOCK 64
+#define SHA512_CBLOCK 128
+unsigned char *SHA256(const unsigned char *d, size_t n, unsigned char *md);
+unsigned char *SHA384(const unsigned char *d, size_t n, unsigned char *md);
+unsigned char *SHA512(const unsigned char *d, size_t n, unsigned char *md);
+#endif
 
 #ifdef  __cplusplus
 }
