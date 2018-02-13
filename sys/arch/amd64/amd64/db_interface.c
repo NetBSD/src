@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.29 2018/02/10 03:55:58 christos Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.30 2018/02/13 04:10:41 ozaki-r Exp $	*/
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.29 2018/02/10 03:55:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.30 2018/02/13 04:10:41 ozaki-r Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -189,6 +189,9 @@ int
 kdb_trap(int type, int code, db_regs_t *regs)
 {
 	int s;
+#ifdef MULTIPROCESSOR
+	db_regs_t dbreg;
+#endif
 
 	switch (type) {
 	case T_NMI:	/* NMI */
@@ -210,7 +213,6 @@ kdb_trap(int type, int code, db_regs_t *regs)
 	}
 
 #ifdef MULTIPROCESSOR
-	db_regs_t dbreg;
 	if (!db_suspend_others()) {
 		ddb_suspend(regs);
 	} else {
@@ -237,10 +239,12 @@ kdb_trap(int type, int code, db_regs_t *regs)
 #ifdef MULTIPROCESSOR
 	db_resume_others();
 	}
+	/* Restore dbreg because ddb_regp can be changed by db_mach_cpu */
+	ddb_regp = &dbreg;
 #endif
-	ddb_regp = NULL;
 
 	*regs = ddb_regs;
+	ddb_regp = NULL;
 
 	return (1);
 }
