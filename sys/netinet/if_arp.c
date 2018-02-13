@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.260 2018/02/13 08:51:37 maxv Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.261 2018/02/13 10:05:05 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.260 2018/02/13 08:51:37 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.261 2018/02/13 10:05:05 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1232,20 +1232,7 @@ in_arpinput(struct mbuf *m)
 		}
 	}
 
-	/* XXX llentry should have addrlen? */
-#if 0
-	/*
-	 * sanity check for the address length.
-	 * XXX this does not work for protocols with variable address
-	 * length. -is
-	 */
-	if (sdl->sdl_alen && sdl->sdl_alen != ah->ar_hln) {
-		ARP_STATINC(ARP_STAT_RCVLENCHG);
-		log(LOG_WARNING,
-		    "arp from %s: new addr len %d, was %d\n",
-		    IN_PRINT(ipbuf, &isaddr), ah->ar_hln, sdl->sdl_alen);
-	}
-#endif
+	KASSERT(ifp->if_sadl->sdl_alen == ifp->if_addrlen);
 
 #if NTOKEN > 0
 	/*
