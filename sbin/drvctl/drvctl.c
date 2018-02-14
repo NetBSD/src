@@ -1,4 +1,4 @@
-/* $NetBSD: drvctl.c,v 1.19 2018/01/07 15:26:43 christos Exp $ */
+/* $NetBSD: drvctl.c,v 1.20 2018/02/14 17:43:09 jakllsch Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -86,17 +86,17 @@ main(int argc, char **argv)
 		case 'Q':
 		case 'R':
 		case 'S':
-		case 'a':
-			attr = optarg;
-			break;
 		case 'd':
-		case 'n':
-			nflag = true;
-			break;
 		case 'l':
 		case 'p':
 		case 'r':
 			mode = c;
+			break;
+		case 'a':
+			attr = optarg;
+			break;
+		case 'n':
+			nflag = true;
 			break;
 		case 't':
 			tflag = nflag = true;
