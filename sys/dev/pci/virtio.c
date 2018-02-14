@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.29 2017/08/02 08:39:14 cherry Exp $	*/
+/*	$NetBSD: virtio.c,v 1.30 2018/02/14 14:04:48 uwe Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.29 2017/08/02 08:39:14 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.30 2018/02/14 14:04:48 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,10 +96,10 @@ nbo_bus_space_write_4(bus_space_tag_t space, bus_space_handle_t handle,
 /* some functions access registers at 4 byte offset for little/high halves */
 #if BYTE_ORDER == BIG_ENDIAN
 #define REG_HI_OFF	0
-#define	REG_LO_OFF	4
+#define REG_LO_OFF	4
 #else
 #define REG_HI_OFF	4
-#define	REG_LO_OFF	0
+#define REG_LO_OFF	0
 #endif
 
 void
