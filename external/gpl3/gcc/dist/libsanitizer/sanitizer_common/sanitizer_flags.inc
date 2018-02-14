@@ -27,7 +27,7 @@ COMMON_FLAG(
     "Path to external symbolizer. If empty, the tool will search $PATH for "
     "the symbolizer.")
 COMMON_FLAG(
-    bool, allow_addr2line, false,
+    bool, allow_addr2line, true,
     "If set, allows online symbolizer to run addr2line binary to symbolize "
     "stack traces (addr2line will only be used if llvm-symbolizer binary is "
     "unavailable.")
