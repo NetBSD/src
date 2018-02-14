@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.28 2018/02/04 03:19:52 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.29 2018/02/14 12:47:43 ryoon Exp $
 
 .if !defined(BIND9_MAKEFILE_INC)
 BIND9_MAKEFILE_INC=yes
@@ -87,7 +87,10 @@ LIBDPLIBS+=      pthread  ${NETBSDSRCDIR}/lib/libpthread
 .endif
 
 .if ${NAMED_USE_OPENSSL} == "yes"
-CPPFLAGS+=-DOPENSSL -DUSE_ISC_SPNEGO -DHAVE_OPENSSL_GOST
+CPPFLAGS+=-DOPENSSL -DUSE_ISC_SPNEGO
+.if ${HAVE_OPENSSL} == 10
+CPPFLAGS+=-DHAVE_OPENSSL_GOST
+.endif
 .if ${MKKERBEROS} != "no"
 CPPFLAGS+=-DGSSAPI
 .endif
