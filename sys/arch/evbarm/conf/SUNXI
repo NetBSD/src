@@ -1,5 +1,5 @@
 #
-#	$NetBSD: SUNXI,v 1.58 2018/01/31 16:24:11 jakllsch Exp $
+#	$NetBSD: SUNXI,v 1.59 2018/02/14 20:10:17 jakllsch Exp $
 #
 #	Allwinner sunxi family
 #
@@ -214,8 +214,7 @@ sunxigpio*	at fdt? pass 3		# GPIO
 gpio*		at gpiobus?
 
 # Ethernet
-sun4iemac*	at fdt?			# Allwinner Fast Ethernet (EMAC)
-sunxiemac*	at fdt?			# Allwinner Gigabit Ethernet (EMAC)
+emac*		at fdt?		# Allwinner Fast or Gigabit Ethernet (EMAC)
 awge*		at fdt?			# Allwinner Gigabit Ethernet (GMAC)
 rgephy*		at mii? phy ?
 rlphy*		at mii? phy ?

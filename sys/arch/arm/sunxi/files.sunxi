@@ -1,4 +1,4 @@
-#	$NetBSD: files.sunxi,v 1.40 2018/02/14 19:09:09 jakllsch Exp $
+#	$NetBSD: files.sunxi,v 1.41 2018/02/14 20:10:17 jakllsch Exp $
 #
 # Configuration info for Allwinner sunxi family SoCs
 #
@@ -144,14 +144,17 @@ device	sunxirtc
 attach	sunxirtc at fdt with sunxi_rtc
 file	arch/arm/sunxi/sunxi_rtc.c		sunxi_rtc
 
+# EMAC (common)
+device	emac: arp, ether, ifnet, mii
+
 # EMAC (sun4i/sun5i/sun7i)
-device	sun4iemac: arp, ether, ifnet, mii
-attach	sun4iemac at fdt with sun4i_emac
+ifdef arm
+attach	emac at fdt with sun4i_emac
 file	arch/arm/sunxi/sun4i_emac.c		sun4i_emac
+endif
 
 # EMAC (sun8i/sun50i)
-device	sunxiemac: arp, ether, ifnet, mii
-attach	sunxiemac at fdt with sunxi_emac
+attach	emac at fdt with sunxi_emac
 file	arch/arm/sunxi/sunxi_emac.c		sunxi_emac
 
 # GMAC
