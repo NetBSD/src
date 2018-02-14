@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.265 2018/02/13 14:50:28 maxv Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.266 2018/02/14 14:15:53 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.265 2018/02/13 14:50:28 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.266 2018/02/14 14:15:53 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -746,18 +746,13 @@ arpresolve(struct ifnet *ifp, const struct rtentry *rt, struct mbuf *m,
 	}
 
 notfound:
-#ifdef IFF_STATICARP /* FreeBSD */
-#define _IFF_NOARP (IFF_NOARP | IFF_STATICARP)
-#else
-#define _IFF_NOARP IFF_NOARP
-#endif
-	if (ifp->if_flags & _IFF_NOARP) {
+	if (ifp->if_flags & IFF_NOARP) {
 		if (la != NULL)
 			LLE_RUNLOCK(la);
 		error = ENOTSUP;
 		goto bad;
 	}
-#undef _IFF_NOARP
+
 	if (la == NULL) {
 		struct rtentry *_rt;
 
