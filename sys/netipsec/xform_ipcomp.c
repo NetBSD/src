@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipcomp.c,v 1.54 2018/02/14 08:59:23 ozaki-r Exp $	*/
+/*	$NetBSD: xform_ipcomp.c,v 1.55 2018/02/14 09:13:03 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipcomp.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /* $OpenBSD: ip_ipcomp.c,v 1.1 2001/07/05 12:08:52 jjbg Exp $ */
 
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.54 2018/02/14 08:59:23 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.55 2018/02/14 09:13:03 ozaki-r Exp $");
 
 /* IP payload compression protocol (IPComp), see RFC 2393 */
 #if defined(_KERNEL_OPT)
@@ -152,36 +152,29 @@ ipcomp_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 	struct tdb_crypto *tc;
 	struct cryptodesc *crdc;
 	struct cryptop *crp;
-	int error, hlen = IPCOMP_HLENGTH;
+	int error, hlen = IPCOMP_HLENGTH, stat = IPCOMP_STAT_CRYPTO;
 
 	IPSEC_SPLASSERT_SOFTNET(__func__);
 
 	/* Get crypto descriptors */
 	crp = crypto_getreq(1);
 	if (crp == NULL) {
-		m_freem(m);
 		DPRINTF(("%s: no crypto descriptors\n", __func__));
-		IPCOMP_STATINC(IPCOMP_STAT_CRYPTO);
-		return ENOBUFS;
+		error = ENOBUFS;
+		goto error_m;
 	}
 	/* Get IPsec-specific opaque pointer */
 	tc = pool_cache_get(ipcomp_tdb_crypto_pool_cache, PR_NOWAIT);
 	if (tc == NULL) {
-		m_freem(m);
-		crypto_freereq(crp);
 		DPRINTF(("%s: cannot allocate tdb_crypto\n", __func__));
-		IPCOMP_STATINC(IPCOMP_STAT_CRYPTO);
-		return ENOBUFS;
+		error = ENOBUFS;
+		goto error_crp;
 	}
 
 	error = m_makewritable(&m, 0, m->m_pkthdr.len, M_NOWAIT);
 	if (error) {
 		DPRINTF(("%s: m_makewritable failed\n", __func__));
-		m_freem(m);
-		pool_cache_put(ipcomp_tdb_crypto_pool_cache, tc);
-		crypto_freereq(crp);
-		IPCOMP_STATINC(IPCOMP_STAT_CRYPTO);
-		return error;
+		goto error_tc;
 	}
 
     {
@@ -192,11 +185,9 @@ ipcomp_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 	 */
 	if (__predict_false(sav->state == SADB_SASTATE_DEAD)) {
 		pserialize_read_exit(s);
-		m_freem(m);
-		pool_cache_put(ipcomp_tdb_crypto_pool_cache, tc);
-		crypto_freereq(crp);
-		IPCOMP_STATINC(IPCOMP_STAT_NOTDB);
-		return ENOENT;
+		stat = IPCOMP_STAT_NOTDB;
+		error = ENOENT;
+		goto error_tc;
 	}
 	KEY_SA_REF(sav);
 	pserialize_read_exit(s);
@@ -229,6 +220,15 @@ ipcomp_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 	tc->tc_sav = sav;
 
 	return crypto_dispatch(crp);
+
+error_tc:
+	pool_cache_put(ipcomp_tdb_crypto_pool_cache, tc);
+error_crp:
+	crypto_freereq(crp);
+error_m:
+	m_freem(m);
+	IPCOMP_STATINC(stat);
+	return error;
 }
 
 #ifdef INET6
