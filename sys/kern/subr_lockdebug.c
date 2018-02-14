@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.58 2017/09/16 23:55:33 christos Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.59 2018/02/14 03:56:26 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.58 2017/09/16 23:55:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.59 2018/02/14 03:56:26 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -369,7 +369,7 @@ lockdebug_more(int s)
 	 * Can't call kmem_alloc() if in interrupt context.  XXX We could
 	 * deadlock, because we don't know which locks the caller holds.
 	 */
-	if (cpu_intr_p() || (curlwp->l_pflag & LP_INTR) != 0) {
+	if (cpu_intr_p() || cpu_softintr_p()) {
 		return s;
 	}
 
