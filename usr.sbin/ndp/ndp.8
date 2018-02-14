@@ -1,4 +1,4 @@
-.\"	$NetBSD: ndp.8,v 1.28 2018/02/14 06:52:41 maxv Exp $
+.\"	$NetBSD: ndp.8,v 1.29 2018/02/14 10:13:25 wiz Exp $
 .\"	$KAME: ndp.8,v 1.33 2005/10/19 14:57:42 suz Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -78,6 +78,13 @@ The
 command manipulates the address mapping table
 used by the Neighbor Discovery Protocol (NDP).
 .Bl -tag -width Ds
+.It Fl A Ar wait
+Repeat
+.Fl a
+.Pq dump NDP entries
+every
+.Ar wait
+seconds.
 .It Fl a
 Dump the currently existing NDP entries.
 The following information will be printed:
@@ -100,20 +107,20 @@ in which case it will never expire.
 State of the neighbor cache entry, as a single letter:
 .Pp
 .Bl -tag -width indent -compact
-.It N
-Nostate
-.It W
-Waitdelete
+.It D
+Delay
 .It I
 Incomplete
+.It N
+Nostate
+.It P
+Probe
 .It R
 Reachable
 .It S
 Stale
-.It D
-Delay
-.It P
-Probe
+.It W
+Waitdelete
 .It ?
 Unknown state (should never happen).
 .El
@@ -124,13 +131,6 @@ They are: Router, proxy neighbor advertisement
 The field could be followed by a decimal number,
 which means the number of NS probes the node has sent during the current state.
 .El
-.It Fl A Ar wait
-Repeat
-.Fl a
-.Pq dump NDP entries
-every
-.Ar wait
-seconds.
 .It Fl c
 Erase all the NDP entries.
 .It Fl d
@@ -236,14 +236,14 @@ Specify the Cur Hop Limit on the interface.
 .El
 .It Fl n
 Do not try to resolve numeric addresses to hostnames.
-.It Fl p
-Show prefix list.
 .It Fl P
 Flush all the entries in the prefix list.
-.It Fl r
-Show default router list.
+.It Fl p
+Show prefix list.
 .It Fl R
 Flush all the entries in the default router list.
+.It Fl r
+Show default router list.
 .It Fl s
 Register an NDP entry for a node.
 The entry will be permanent unless the word
@@ -263,7 +263,7 @@ Most useful when used with
 .Fl A .
 .El
 .\"
-.Sh RETURN VALUES
+.Sh EXIT STATUS
 The
 .Nm
 command will exit with 0 on success, and non-zero on errors.
