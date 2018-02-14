@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.74 2018/02/14 08:59:23 ozaki-r Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.75 2018/02/14 09:13:03 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.74 2018/02/14 08:59:23 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.75 2018/02/14 09:13:03 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -306,9 +306,8 @@ esp_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 	const struct auth_hash *esph;
 	const struct enc_xform *espx;
 	struct tdb_crypto *tc;
-	int plen, alen, hlen, error;
+	int plen, alen, hlen, error, stat = ESP_STAT_CRYPTO;
 	struct newesp *esp;
-
 	struct cryptodesc *crde;
 	struct cryptop *crp;
 
@@ -353,9 +352,9 @@ esp_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 		    "  SA %s/%08lx\n", __func__, plen, espx->blocksize,
 		    ipsec_address(&sav->sah->saidx.dst, buf, sizeof(buf)),
 		    (u_long) ntohl(sav->spi)));
-		ESP_STATINC(ESP_STAT_BADILEN);
-		m_freem(m);
-		return EINVAL;
+		stat = ESP_STAT_BADILEN;
+		error = EINVAL;
+		goto out;
 	}
 
 	/*
@@ -365,9 +364,9 @@ esp_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 		char logbuf[IPSEC_LOGSASTRLEN];
 		DPRINTF(("%s: packet replay check for %s\n", __func__,
 		    ipsec_logsastr(sav, logbuf, sizeof(logbuf))));	/*XXX*/
-		ESP_STATINC(ESP_STAT_REPLAY);
-		m_freem(m);
-		return ENOBUFS;		/*XXX*/
+		stat = ESP_STAT_REPLAY;
+		error = ENOBUFS;		/*XXX*/
+		goto out;
 	}
 
 	/* Update the counters */
@@ -441,11 +440,9 @@ esp_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 	 */
 	if (__predict_false(sav->state == SADB_SASTATE_DEAD)) {
 		pserialize_read_exit(s);
-		pool_cache_put(esp_tdb_crypto_pool_cache, tc);
-		crypto_freereq(crp);
-		ESP_STATINC(ESP_STAT_NOTDB);
-		m_freem(m);
-		return ENOENT;
+		stat = ESP_STAT_NOTDB;
+		error = ENOENT;
+		goto out2;
 	}
 	KEY_SA_REF(sav);
 	pserialize_read_exit(s);
@@ -490,7 +487,7 @@ out2:
 out1:
 	crypto_freereq(crp);
 out:
-	ESP_STATINC(ESP_STAT_CRYPTO);
+	ESP_STATINC(stat);
 	m_freem(m);
 	return error;
 }
