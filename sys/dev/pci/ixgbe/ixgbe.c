@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.120 2018/01/26 09:07:46 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.121 2018/02/14 10:38:28 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -5712,11 +5712,12 @@ ixgbe_handle_que(void *context)
 	struct adapter  *adapter = que->adapter;
 	struct tx_ring  *txr = que->txr;
 	struct ifnet    *ifp = adapter->ifp;
+	bool		more = false;
 
 	adapter->handleq.ev_count++;
 
 	if (ifp->if_flags & IFF_RUNNING) {
-		ixgbe_rxeof(que);
+		more = ixgbe_rxeof(que);
 		IXGBE_TX_LOCK(txr);
 		ixgbe_txeof(txr);
 		if (!(adapter->feat_en & IXGBE_FEATURE_LEGACY_TX))
@@ -5730,10 +5731,12 @@ ixgbe_handle_que(void *context)
 		IXGBE_TX_UNLOCK(txr);
 	}
 
-	/* Re-enable this interrupt */
-	if (que->res != NULL)
+	if (more)
+		softint_schedule(que->que_si);
+	else if (que->res != NULL) {
+		/* Re-enable this interrupt */
 		ixgbe_enable_queue(adapter, que->msix);
-	else
+	} else
 		ixgbe_enable_intr(adapter);
 
 	return;
