@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.217 2018/02/08 10:11:38 ozaki-r Exp $	*/
+/*	$NetBSD: in.c,v 1.218 2018/02/14 14:15:53 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.217 2018/02/08 10:11:38 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.218 2018/02/14 14:15:53 maxv Exp $");
 
 #include "arp.h"
 
@@ -2047,11 +2047,7 @@ in_lltable_rtcheck(struct ifnet *ifp, u_int flags, const struct sockaddr *l3addr
 	if (rt->rt_flags & RTF_GATEWAY) {
 		if (!(rt->rt_flags & RTF_HOST) || !rt->rt_ifp ||
 		    rt->rt_ifp->if_type != IFT_ETHER ||
-#ifdef __FreeBSD__
-		    (rt->rt_ifp->if_flags & (IFF_NOARP | IFF_STATICARP)) != 0 ||
-#else
 		    (rt->rt_ifp->if_flags & IFF_NOARP) != 0 ||
-#endif
 		    memcmp(rt->rt_gateway->sa_data, l3addr->sa_data,
 		    sizeof(in_addr_t)) != 0) {
 			goto error;
