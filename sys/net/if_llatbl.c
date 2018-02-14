@@ -1,4 +1,4 @@
-/*	$NetBSD: if_llatbl.c,v 1.22 2017/11/10 07:24:28 ozaki-r Exp $	*/
+/*	$NetBSD: if_llatbl.c,v 1.23 2018/02/14 14:15:53 maxv Exp $	*/
 /*
  * Copyright (c) 2004 Luigi Rizzo, Alessandro Cerri. All rights reserved.
  * Copyright (c) 2004-2008 Qing Li. All rights reserved.
@@ -379,12 +379,7 @@ llentry_alloc(struct ifnet *ifp, struct lltable *lt,
 	IF_AFDATA_RLOCK(ifp);
 	la = lla_lookup(lt, LLE_EXCLUSIVE, (struct sockaddr *)dst);
 	IF_AFDATA_RUNLOCK(ifp);
-	if ((la == NULL) &&
-#ifdef __FreeBSD__
-	    (ifp->if_flags & (IFF_NOARP | IFF_STATICARP)) == 0) {
-#else /* XXX */
-	    (ifp->if_flags & IFF_NOARP) == 0) {
-#endif
+	if ((la == NULL) && (ifp->if_flags & IFF_NOARP) == 0) {
 		IF_AFDATA_WLOCK(ifp);
 		la = lla_create(lt, 0, (struct sockaddr *)dst, NULL /* XXX */);
 		IF_AFDATA_WUNLOCK(ifp);
