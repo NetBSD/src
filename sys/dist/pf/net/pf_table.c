@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_table.c,v 1.17 2011/05/11 12:22:34 hauke Exp $	*/
+/*	$NetBSD: pf_table.c,v 1.18 2018/02/14 16:07:55 maya Exp $	*/
 /*	$OpenBSD: pf_table.c,v 1.70 2007/05/23 11:53:45 markus Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf_table.c,v 1.17 2011/05/11 12:22:34 hauke Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf_table.c,v 1.18 2018/02/14 16:07:55 maya Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -984,14 +984,14 @@ pfr_prepare_network(union sockaddr_union *sa, int af, int net)
 	if (af == AF_INET) {
 		sa->sin.sin_len = sizeof(sa->sin);
 		sa->sin.sin_family = AF_INET;
-		sa->sin.sin_addr.s_addr = net ? htonl(-1 << (32-net)) : 0;
+		sa->sin.sin_addr.s_addr = net ? htonl(~0U << (32-net)) : 0;
 	} else if (af == AF_INET6) {
 		sa->sin6.sin6_len = sizeof(sa->sin6);
 		sa->sin6.sin6_family = AF_INET6;
 		for (i = 0; i < 4; i++) {
 			if (net <= 32) {
 				sa->sin6.sin6_addr.s6_addr32[i] =
-				    net ? htonl(-1 << (32-net)) : 0;
+				    net ? htonl(~0U << (32-net)) : 0;
 				break;
 			}
 			sa->sin6.sin6_addr.s6_addr32[i] = 0xFFFFFFFF;
