@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.241 2018/02/12 09:31:06 maxv Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.242 2018/02/14 05:24:44 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.241 2018/02/12 09:31:06 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.242 2018/02/14 05:24:44 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -139,7 +139,7 @@ percpu_t *udpstat_percpu;
 
 #ifdef INET
 #ifdef IPSEC
-static void udp4_espinudp(struct mbuf *, int, struct sockaddr *,
+static int udp4_espinudp(struct mbuf **, int, struct sockaddr *,
     struct socket *);
 #endif
 static void udp4_sendup(struct mbuf *, int, struct sockaddr *,
@@ -405,6 +405,14 @@ udp_input(struct mbuf *m, ...)
 		return;
 	}
 
+	ip = mtod(m, struct ip *);
+	IP6_EXTHDR_GET(uh, struct udphdr *, m, iphlen, sizeof(struct udphdr));
+	if (uh == NULL) {
+		UDP_STATINC(UDP_STAT_HDROPS);
+		return;
+	}
+	/* XXX Re-enforce alignment? */
+
 #ifdef INET6
 	if (IN_MULTICAST(ip->ip_dst.s_addr) || n == 0) {
 		struct sockaddr_in6 src6, dst6;
@@ -598,9 +606,25 @@ udp4_realinput(struct sockaddr_in *src, struct sockaddr_in *dst,
 		/* Handle ESP over UDP */
 		if (inp->inp_flags & INP_ESPINUDP_ALL) {
 			struct sockaddr *sa = (struct sockaddr *)src;
-			udp4_espinudp(m, off, sa, inp->inp_socket);
-			*mp = NULL;
-			goto bad;
+
+			switch (udp4_espinudp(mp, off, sa, inp->inp_socket)) {
+			case -1: /* Error, m was freed */
+				rcvcnt = -1;
+				goto bad;
+
+			case 1: /* ESP over UDP */
+				rcvcnt++;
+				goto bad;
+
+			case 0: /* plain UDP */
+			default: /* Unexpected */
+				/*
+				 * Normal UDP processing will take place,
+				 * m may have changed.
+				 */
+				m = *mp;
+				break;
+			}
 		}
 #endif
 
@@ -1222,10 +1246,13 @@ udp_statinc(u_int stat)
 
 #if defined(INET) && defined(IPSEC)
 /*
- * This function always frees the mbuf.
+ * Returns:
+ *     1 if the packet was processed
+ *     0 if normal UDP processing should take place
+ *    -1 if an error occurred and m was freed
  */
-static void
-udp4_espinudp(struct mbuf *m, int off, struct sockaddr *src,
+static int
+udp4_espinudp(struct mbuf **mp, int off, struct sockaddr *src,
     struct socket *so)
 {
 	size_t len;
@@ -1238,6 +1265,7 @@ udp4_espinudp(struct mbuf *m, int off, struct sockaddr *src,
 	struct m_tag *tag;
 	struct udphdr *udphdr;
 	u_int16_t sport, dport;
+	struct mbuf *m = *mp;
 
 	/*
 	 * Collapse the mbuf chain if the first mbuf is too short
@@ -1248,9 +1276,10 @@ udp4_espinudp(struct mbuf *m, int off, struct sockaddr *src,
 		minlen = m->m_pkthdr.len;
 
 	if (m->m_len < minlen) {
-		if ((m = m_pullup(m, minlen)) == NULL) {
-			return;
+		if ((*mp = m_pullup(m, minlen)) == NULL) {
+			return -1;
 		}
+		m = *mp;
 	}
 
 	len = m->m_len - off;
@@ -1259,7 +1288,9 @@ udp4_espinudp(struct mbuf *m, int off, struct sockaddr *src,
 
 	/* Ignore keepalive packets */
 	if ((len == 1) && (*(unsigned char *)data == 0xff)) {
-		goto out;
+		m_freem(m);
+		*mp = NULL; /* avoid any further processing by caller ... */
+		return 1;
 	}
 
 	/*
@@ -1270,9 +1301,8 @@ udp4_espinudp(struct mbuf *m, int off, struct sockaddr *src,
 	if (inp->inp_flags & INP_ESPINUDP) {
 		u_int32_t *st = (u_int32_t *)data;
 
-		if ((len <= sizeof(struct esp)) || (*st == 0)) {
-			goto out;
-		}
+		if ((len <= sizeof(struct esp)) || (*st == 0))
+			return 0; /* Normal UDP processing */
 
 		skip = sizeof(struct udphdr);
 	}
@@ -1281,9 +1311,8 @@ udp4_espinudp(struct mbuf *m, int off, struct sockaddr *src,
 		u_int32_t *st = (u_int32_t *)data;
 
 		if ((len <= sizeof(u_int64_t) + sizeof(struct esp)) ||
-		    ((st[0] | st[1]) != 0)) {
-			goto out;
-		}
+		    ((st[0] | st[1]) != 0))
+			return 0; /* Normal UDP processing */
 
 		skip = sizeof(struct udphdr) + sizeof(u_int64_t);
 	}
@@ -1330,7 +1359,8 @@ udp4_espinudp(struct mbuf *m, int off, struct sockaddr *src,
 	 */
 	if ((tag = m_tag_get(PACKET_TAG_IPSEC_NAT_T_PORTS,
 	    sizeof(sport) + sizeof(dport), M_DONTWAIT)) == NULL) {
-		goto out;
+		m_freem(m);
+		return -1;
 	}
 	((u_int16_t *)(tag + 1))[0] = sport;
 	((u_int16_t *)(tag + 1))[1] = dport;
@@ -1341,11 +1371,9 @@ udp4_espinudp(struct mbuf *m, int off, struct sockaddr *src,
 	else
 		m_freem(m);
 
-	return;
-
-out:
-	m_freem(m);
-	return;
+	/* We handled it, it shouldn't be handled by UDP */
+	*mp = NULL; /* avoid free by caller ... */
+	return 1;
 }
 #endif
 
