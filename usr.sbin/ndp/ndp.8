@@ -1,4 +1,4 @@
-.\"	$NetBSD: ndp.8,v 1.27 2014/06/05 16:06:49 roy Exp $
+.\"	$NetBSD: ndp.8,v 1.28 2018/02/14 06:52:41 maxv Exp $
 .\"	$KAME: ndp.8,v 1.33 2005/10/19 14:57:42 suz Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd June 5, 2014
+.Dd February 14, 2018
 .Dt NDP 8
 .Os
 .\"
@@ -247,10 +247,10 @@ Flush all the entries in the default router list.
 .It Fl s
 Register an NDP entry for a node.
 The entry will be permanent unless the word
-.Li temp
+.Cm temp
 is given in the command.
 If the word
-.Li proxy
+.Cm proxy
 is given, this system will act as a proxy NDP server,
 responding to requests for
 .Ar hostname
