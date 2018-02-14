@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.63 2018/02/14 14:19:53 maxv Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.64 2018/02/14 14:28:40 maxv Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -267,74 +267,57 @@ extern int crypto_support;
 			log(level, "%s: " fmt, __func__, ##args);	\
 	} while (0)
 
-void ipsec_pcbconn (struct inpcbpolicy *);
-void ipsec_pcbdisconn (struct inpcbpolicy *);
-void ipsec_invalpcbcacheall (void);
+void ipsec_pcbconn(struct inpcbpolicy *);
+void ipsec_pcbdisconn(struct inpcbpolicy *);
+void ipsec_invalpcbcacheall(void);
 
 struct inpcb;
-struct secpolicy *ipsec4_checkpolicy (struct mbuf *, u_int, u_int,
-	int *, struct inpcb *);
-struct secpolicy * ipsec_getpolicybyaddr(struct mbuf *, u_int,
-	int, int *);
-int ipsec4_output(struct mbuf *, struct inpcb *, int,
-	u_long *, bool *, bool *);
+struct secpolicy *ipsec4_checkpolicy(struct mbuf *, u_int, u_int, int *,
+    struct inpcb *);
+struct secpolicy *ipsec_getpolicybyaddr(struct mbuf *, u_int, int, int *);
+int ipsec4_output(struct mbuf *, struct inpcb *, int, u_long *, bool *, bool *);
 int ipsec4_input(struct mbuf *, int);
 int ipsec4_forward(struct mbuf *, int *);
 #ifdef INET6
 int ipsec6_input(struct mbuf *);
 #endif
 
-static __inline struct secpolicy*
-ipsec4_getpolicybysock(
-    struct mbuf *m,
-    u_int dir,
-    const struct socket *so,
-    int *err
-)
-{
-  panic("ipsec4_getpolicybysock");
-}
-
 static __inline int
-ipsec_copy_pcbpolicy(
-    struct inpcbpolicy *oldp,
-    struct inpcbpolicy *newp
-)
+ipsec_copy_pcbpolicy(struct inpcbpolicy *oldp, struct inpcbpolicy *newp)
 {
-  /*XXX do nothing */
-  return (0);
+	/* XXX do nothing */
+	return 0;
 }
 
 struct inpcb;
 #define	ipsec_init_pcbpolicy ipsec_init_policy
-int ipsec_init_policy (struct socket *so, struct inpcbpolicy **);
-int ipsec_copy_policy
-	(const struct inpcbpolicy *, struct inpcbpolicy *);
-u_int ipsec_get_reqlevel (const struct ipsecrequest *);
-int ipsec_in_reject (const struct secpolicy *, const struct mbuf *);
+int ipsec_init_policy(struct socket *so, struct inpcbpolicy **);
+int ipsec_copy_policy(const struct inpcbpolicy *, struct inpcbpolicy *);
+u_int ipsec_get_reqlevel(const struct ipsecrequest *);
+int ipsec_in_reject(const struct secpolicy *, const struct mbuf *);
 
-int ipsec4_set_policy (struct inpcb *, int, const void *, size_t, kauth_cred_t);
-int ipsec4_get_policy (struct inpcb *, const void *, size_t, struct mbuf **);
-int ipsec4_delete_pcbpolicy (struct inpcb *);
-int ipsec4_in_reject (struct mbuf *, struct inpcb *);
+int ipsec4_set_policy(struct inpcb *, int, const void *, size_t, kauth_cred_t);
+int ipsec4_get_policy(struct inpcb *, const void *, size_t, struct mbuf **);
+int ipsec4_delete_pcbpolicy(struct inpcb *);
+int ipsec4_in_reject(struct mbuf *, struct inpcb *);
 
-struct secasvar *
-	ipsec_lookup_sa(const struct ipsecrequest *, const struct mbuf *);
+struct secasvar *ipsec_lookup_sa(const struct ipsecrequest *,
+    const struct mbuf *);
 
 struct secas;
 struct tcpcb;
-int ipsec_chkreplay (u_int32_t, const struct secasvar *);
-int ipsec_updatereplay (u_int32_t, const struct secasvar *);
+int ipsec_chkreplay(u_int32_t, const struct secasvar *);
+int ipsec_updatereplay(u_int32_t, const struct secasvar *);
 
-size_t ipsec4_hdrsiz (struct mbuf *, u_int, struct inpcb *);
-size_t ipsec4_hdrsiz_tcp (struct tcpcb *);
+size_t ipsec4_hdrsiz(struct mbuf *, u_int, struct inpcb *);
+size_t ipsec4_hdrsiz_tcp(struct tcpcb *);
 #define ipsec4_getpolicybyaddr ipsec_getpolicybyaddr
 
 union sockaddr_union;
 const char *ipsec_address(const union sockaddr_union* sa, char *, size_t);
 const char *ipsec_logsastr(const struct secasvar *, char *, size_t);
 
-void ipsec_dumpmbuf (struct mbuf *);
+void ipsec_dumpmbuf(struct mbuf *);
 
 /* NetBSD protosw ctlin entrypoint */
 void *esp4_ctlinput(int, const struct sockaddr *, void *);
@@ -343,30 +326,20 @@ void *ah4_ctlinput(int, const struct sockaddr *, void *);
 void ipsec_output_init(void);
 struct m_tag;
 void ipsec4_common_input(struct mbuf *m, ...);
-int ipsec4_common_input_cb(struct mbuf *, struct secasvar *,
-			int, int);
+int ipsec4_common_input_cb(struct mbuf *, struct secasvar *, int, int);
 int ipsec4_process_packet(struct mbuf *, const struct ipsecrequest *, u_long *);
 int ipsec_process_done(struct mbuf *, const struct ipsecrequest *,
     struct secasvar *);
+
 #define ipsec_indone(m)	\
 	((m->m_flags & M_AUTHIPHDR) || (m->m_flags & M_DECRYPTED))
-
 #define ipsec_outdone(m) \
 	(m_tag_find((m), PACKET_TAG_IPSEC_OUT_DONE, NULL) != NULL)
-
-struct mbuf *ipsec_copypkt (struct mbuf *);
 
 struct mbuf *m_clone(struct mbuf *);
 struct mbuf *m_makespace(struct mbuf *, int, int, int *);
 void *m_pad(struct mbuf *, int );
 int m_striphdr(struct mbuf *, int, int);
-
-/* Per-socket caching of IPsec output policy */
-static __inline
-int ipsec_clear_socket_cache(struct mbuf *m)
-{
-  return 0;
-}
 
 void nat_t_ports_get(struct mbuf *, u_int16_t *, u_int16_t *);
 
@@ -375,11 +348,10 @@ extern int ipsec_used __read_mostly, ipsec_enabled __read_mostly;
 #endif /* _KERNEL */
 
 #ifndef _KERNEL
-char *ipsec_set_policy (const char *, int);
-int ipsec_get_policylen (char *);
-char *ipsec_dump_policy (char *, const char *);
-
-const char *ipsec_strerror (void);
+char *ipsec_set_policy(const char *, int);
+int ipsec_get_policylen(char *);
+char *ipsec_dump_policy(char *, const char *);
+const char *ipsec_strerror(void);
 #endif /* !_KERNEL */
 
 #ifdef _KERNEL
