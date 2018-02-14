@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.191 2018/02/12 12:52:12 maxv Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.192 2018/02/14 05:29:39 maxv Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.191 2018/02/12 12:52:12 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.192 2018/02/14 05:29:39 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -1402,7 +1402,7 @@ ip6_get_prevhdr(struct mbuf *m, int off)
 /*
  * get next header offset.  m will be retained.
  */
-static int
+int
 ip6_nexthdr(struct mbuf *m, int off, int proto, int *nxtp)
 {
 	struct ip6_hdr ip6;
