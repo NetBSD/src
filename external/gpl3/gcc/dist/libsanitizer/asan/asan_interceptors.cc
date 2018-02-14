@@ -705,10 +705,17 @@ INTERCEPTOR(long long, atoll, const char *nptr) {  // NOLINT
 }
 #endif  // ASAN_INTERCEPT_ATOLL_AND_STRTOLL
 
+#ifdef SANITIZER_NETBSD
+extern "C" void atexit(void (*)(void));
+static void Atexit(void) {
+  StopInitOrderChecking();
+}
+#else
 static void AtCxaAtexit(void *unused) {
   (void)unused;
   StopInitOrderChecking();
 }
+#endif
 
 #if ASAN_INTERCEPT___CXA_ATEXIT
 INTERCEPTOR(int, __cxa_atexit, void (*func)(void *), void *arg,
@@ -718,7 +725,11 @@ INTERCEPTOR(int, __cxa_atexit, void (*func)(void *), void *arg,
 #endif
   ENSURE_ASAN_INITED();
   int res = REAL(__cxa_atexit)(func, arg, dso_handle);
+#ifdef SANITIZER_NETBSD
+  ::atexit(Atexit);
+#else
   REAL(__cxa_atexit)(AtCxaAtexit, nullptr, nullptr);
+#endif
   return res;
 }
 #endif  // ASAN_INTERCEPT___CXA_ATEXIT
