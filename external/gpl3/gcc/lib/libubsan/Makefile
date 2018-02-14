@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2018/02/04 01:16:33 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2018/02/14 03:37:39 christos Exp $
 
 UNSUPPORTED_COMPILER.clang=	# defined
 
@@ -28,6 +28,7 @@ COPTS.${_s}.cc+=-frtti
 
 LIB=	ubsan
 SRCS+=	${UBSAN_SRCS}
+LIBDPLIBS+= rt ${NETBSDSRCDIR}/lib/librt
 
 .if ${MACHINE_ARCH} == "vax"
 COPTS += -O1
