@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.62 2018/01/10 10:56:30 knakahara Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.63 2018/02/14 14:19:53 maxv Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -356,7 +356,6 @@ int ipsec_process_done(struct mbuf *, const struct ipsecrequest *,
 
 struct mbuf *ipsec_copypkt (struct mbuf *);
 
-void m_checkalignment(const char* , struct mbuf *, int, int);
 struct mbuf *m_clone(struct mbuf *);
 struct mbuf *m_makespace(struct mbuf *, int, int, int *);
 void *m_pad(struct mbuf *, int );

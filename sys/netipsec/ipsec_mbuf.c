@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_mbuf.c,v 1.18 2018/02/08 20:57:41 maxv Exp $	*/
+/*	$NetBSD: ipsec_mbuf.c,v 1.19 2018/02/14 14:19:53 maxv Exp $	*/
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_mbuf.c,v 1.18 2018/02/08 20:57:41 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_mbuf.c,v 1.19 2018/02/14 14:19:53 maxv Exp $");
 
 /*
  * IPsec-specific mbuf routines.
@@ -444,42 +444,4 @@ m_striphdr(struct mbuf *m, int skip, int hlen)
 		m->m_pkthdr.len -= hlen;
 	}
 	return (0);
-}
-
-/*
- * Diagnostic routine to check mbuf alignment as required by the
- * crypto device drivers (that use DMA).
- */
-void
-m_checkalignment(const char* where, struct mbuf *m0, int off, int len)
-{
-	int roff;
-	struct mbuf *m = m_getptr(m0, off, &roff);
-	void *addr;
-
-	if (m == NULL)
-		return;
-	printf("%s (off %u len %u): ", where, off, len);
-	addr = mtod(m, char *) + roff;
-	do {
-		int mlen;
-
-		if (((uintptr_t) addr) & 3) {
-			printf("addr misaligned %p,", addr);
-			break;
-		}
-		mlen = m->m_len;
-		if (mlen > len)
-			mlen = len;
-		len -= mlen;
-		if (len && (mlen & 3)) {
-			printf("len mismatch %u,", mlen);
-			break;
-		}
-		m = m->m_next;
-		addr = m ? mtod(m, void *) : NULL;
-	} while (m && len > 0);
-	for (m = m0; m; m = m->m_next)
-		printf(" [%p:%u]", mtod(m, void *), m->m_len);
-	printf("\n");
 }
