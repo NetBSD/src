@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.20 2018/02/07 02:32:39 mrg Exp $
+# $NetBSD: Makefile,v 1.21 2018/02/14 02:12:35 christos Exp $
 
 UNSUPPORTED_COMPILER.clang=	# defined
 
@@ -37,6 +37,7 @@ asan_win_dynamic_runtime_thunk.cc
 
 LIB=	asan
 SRCS+=	${ASAN_SRCS}
+LIBDPLIBS+= rt ${NETBSDSRCDIR}/lib/librt
 
 .if ${MACHINE_ARCH} == "vax"
 COPTS.asan_allocator.cc += -O1
