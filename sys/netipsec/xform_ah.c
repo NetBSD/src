@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.81 2018/02/15 07:38:46 maxv Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.82 2018/02/15 08:38:00 maxv Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.81 2018/02/15 07:38:46 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.82 2018/02/15 08:38:00 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -101,8 +101,8 @@ __KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.81 2018/02/15 07:38:46 maxv Exp $");
 
 percpu_t *ahstat_percpu;
 
-int	ah_enable = 1;			/* control flow of packets with AH */
-int	ip4_ah_cleartos = 1;		/* clear ip_tos when doing AH calc */
+int ah_enable = 1;			/* control flow of packets with AH */
+int ip4_ah_cleartos = 1;		/* clear ip_tos when doing AH calc */
 
 #ifdef __FreeBSD__
 SYSCTL_DECL(_net_inet_ah);
@@ -112,7 +112,6 @@ SYSCTL_INT(_net_inet_ah, OID_AUTO,
 	ah_cleartos,	CTLFLAG_RW,	&ip4_ah_cleartos,	0, "");
 SYSCTL_STRUCT(_net_inet_ah, IPSECCTL_STATS,
 	stats,		CTLFLAG_RD,	&ahstat,	ahstat, "");
-
 #endif /* __FreeBSD__ */
 
 static unsigned char ipseczeroes[256];	/* larger than an ip6 extension hdr */
@@ -278,17 +277,15 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 	struct mbuf *m = *m0;
 	unsigned char *ptr;
 	int off, count;
-
 #ifdef INET
 	struct ip *ip;
-#endif /* INET */
-
+#endif
 #ifdef INET6
 	struct ip6_ext *ip6e;
 	struct ip6_hdr ip6;
 	struct ip6_rthdr *rh;
 	int alloc, ad, nxt;
-#endif /* INET6 */
+#endif
 
 	switch (proto) {
 #ifdef INET
@@ -429,7 +426,6 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 			if (off > skip)	{
 				DPRINTF(("%s: malformed IPv4 options header\n",
 					__func__));
-
 				m_freem(m);
 				return EINVAL;
 			}
@@ -945,7 +941,7 @@ ah_input_cb(struct cryptop *crp)
 		    sizeof(seq), &seq);
 		if (ipsec_updatereplay(ntohl(seq), sav)) {
 			AH_STATINC(AH_STAT_REPLAY);
-			error = ENOBUFS;			/*XXX as above*/
+			error = ENOBUFS; /* XXX as above */
 			goto bad;
 		}
 	}
@@ -968,6 +964,7 @@ ah_input_cb(struct cryptop *crp)
 	KEY_SA_UNREF(&sav);
 	IPSEC_RELEASE_GLOBAL_LOCKS();
 	return error;
+
 bad:
 	if (sav)
 		KEY_SA_UNREF(&sav);
@@ -989,14 +986,8 @@ bad:
  * AH output routine, called by ipsec[46]_process_packet().
  */
 static int
-ah_output(
-    struct mbuf *m,
-    const struct ipsecrequest *isr,
-    struct secasvar *sav,
-    struct mbuf **mp,
-    int skip,
-    int protoff
-)
+ah_output(struct mbuf *m, const struct ipsecrequest *isr, struct secasvar *sav,
+    struct mbuf **mp, int skip, int protoff)
 {
 	char buf[IPSEC_ADDRSTRLEN];
 	const struct auth_hash *ahx;
@@ -1008,6 +999,7 @@ ah_output(
 	int error, rplen, authsize, maxpacketsize, roff;
 	uint8_t prot;
 	struct newah *ah;
+	size_t ipoffs;
 
 	IPSEC_SPLASSERT_SOFTNET(__func__);
 
@@ -1020,7 +1012,6 @@ ah_output(
 	/* Figure out header size. */
 	rplen = HDRSIZE(sav);
 
-	size_t ipoffs;
 	/* Check for maximum packet size violations. */
 	switch (sav->sah->saidx.dst.sa.sa_family) {
 #ifdef INET
@@ -1028,13 +1019,13 @@ ah_output(
 		maxpacketsize = IP_MAXPACKET;
 		ipoffs = offsetof(struct ip, ip_len);
 		break;
-#endif /* INET */
+#endif
 #ifdef INET6
 	case AF_INET6:
 		maxpacketsize = IPV6_MAXPACKET;
 		ipoffs = offsetof(struct ip6_hdr, ip6_plen);
 		break;
-#endif /* INET6 */
+#endif
 	default:
 		DPRINTF(("%s: unknown/unsupported protocol "
 		    "family %u, SA %s/%08lx\n", __func__,
@@ -1078,7 +1069,7 @@ ah_output(
 		    rplen + authsize,
 		    ipsec_address(&sav->sah->saidx.dst, buf, sizeof(buf)),
 		    (u_long) ntohl(sav->spi)));
-		AH_STATINC(AH_STAT_HDROPS);	/*XXX differs from openbsd */
+		AH_STATINC(AH_STAT_HDROPS);
 		error = ENOBUFS;
 		goto bad;
 	}
