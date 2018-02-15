@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.76 2018/02/15 04:24:32 ozaki-r Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.77 2018/02/15 12:40:12 maxv Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.76 2018/02/15 04:24:32 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.77 2018/02/15 12:40:12 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -87,7 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.76 2018/02/15 04:24:32 ozaki-r Exp $
 
 percpu_t *espstat_percpu;
 
-int	esp_enable = 1;
+int esp_enable = 1;
 
 #ifdef __FreeBSD__
 SYSCTL_DECL(_net_inet_esp);
@@ -97,7 +97,7 @@ SYSCTL_STRUCT(_net_inet_esp, IPSECCTL_STATS,
 	stats,		CTLFLAG_RD,	&espstat,	espstat, "");
 #endif /* __FreeBSD__ */
 
-static	int esp_max_ivlen;		/* max iv length over all algorithms */
+static int esp_max_ivlen;		/* max iv length over all algorithms */
 
 static int esp_input_cb(struct cryptop *op);
 static int esp_output_cb(struct cryptop *crp);
@@ -696,14 +696,8 @@ bad:
  * ESP output routine, called by ipsec[46]_process_packet().
  */
 static int
-esp_output(
-    struct mbuf *m,
-    const struct ipsecrequest *isr,
-    struct secasvar *sav,
-    struct mbuf **mp,
-    int skip,
-    int protoff
-)
+esp_output(struct mbuf *m, const struct ipsecrequest *isr, struct secasvar *sav,
+    struct mbuf **mp, int skip, int protoff)
 {
 	char buf[IPSEC_ADDRSTRLEN];
 	const struct enc_xform *espx;
@@ -754,12 +748,12 @@ esp_output(
 	case AF_INET:
 		maxpacketsize = IP_MAXPACKET;
 		break;
-#endif /* INET */
+#endif
 #ifdef INET6
 	case AF_INET6:
 		maxpacketsize = IPV6_MAXPACKET;
 		break;
-#endif /* INET6 */
+#endif
 	default:
 		DPRINTF(("%s: unknown/unsupported protocol family %d, "
 		    "SA %s/%08lx\n", __func__, saidx->dst.sa.sa_family,
@@ -800,7 +794,7 @@ esp_output(
 		    "%s/%08lx\n", __func__, hlen,
 		    ipsec_address(&saidx->dst, buf, sizeof(buf)),
 		    (u_long) ntohl(sav->spi)));
-		ESP_STATINC(ESP_STAT_HDROPS);	/* XXX diffs from openbsd */
+		ESP_STATINC(ESP_STAT_HDROPS);
 		error = ENOBUFS;
 		goto bad;
 	}
@@ -837,18 +831,18 @@ esp_output(
 
 	/*
 	 * Add padding: random, zero, or self-describing.
-	 * XXX catch unexpected setting
 	 */
 	switch (sav->flags & SADB_X_EXT_PMASK) {
-	case SADB_X_EXT_PRAND:
-		(void) cprng_fast(pad, padding - 2);
-		break;
-	case SADB_X_EXT_PZERO:
-		memset(pad, 0, padding - 2);
-		break;
 	case SADB_X_EXT_PSEQ:
 		for (i = 0; i < padding - 2; i++)
 			pad[i] = i+1;
+		break;
+	case SADB_X_EXT_PRAND:
+		(void)cprng_fast(pad, padding - 2);
+		break;
+	case SADB_X_EXT_PZERO:
+	default:
+		memset(pad, 0, padding - 2);
 		break;
 	}
 
@@ -958,10 +952,11 @@ esp_output(
 	}
 
 	return crypto_dispatch(crp);
+
 bad:
 	if (m)
 		m_freem(m);
-	return (error);
+	return error;
 }
 
 /*
@@ -1035,6 +1030,7 @@ esp_output_cb(struct cryptop *crp)
 	KEY_SP_UNREF(&isr->sp);
 	IPSEC_RELEASE_GLOBAL_LOCKS();
 	return err;
+
 bad:
 	if (sav)
 		KEY_SA_UNREF(&sav);
