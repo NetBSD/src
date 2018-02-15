@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.73 2017/04/22 21:48:56 jmcneill Exp $
+#	$NetBSD: files.i2c,v 1.73.4.1 2018/02/15 07:52:17 martin Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -130,7 +130,6 @@ attach	xrtc at iic
 file	dev/i2c/x1226.c				xrtc
 
 # Analog Devices dBCool family of thermal monitors / fan controllers
-define dbcool {}
 device dbcool: sysmon_envsys
 attach dbcool at iic
 file dev/i2c/dbcool.c			dbcool
