@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.322 2018/02/15 08:08:58 martin Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.323 2018/02/15 14:49:40 martin Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -21053,4 +21053,9 @@ sys/netipsec/xform_ah.c				1.80-1.81 via patch
 
 	Fix use-after-free and and add more consistency checks.
 	[maxv, ticket #1530]
+
+sys/netipsec/xform_ipip.c			1.44 via patch
+
+	Fix IPv6-IPsec-AH tunnels.
+	[maxv, ticket #1529]
 
