@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipip.c,v 1.59 2018/02/15 10:04:43 maxv Exp $	*/
+/*	$NetBSD: xform_ipip.c,v 1.60 2018/02/15 10:09:53 maxv Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipip.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipip.c,v 1.25 2002/06/10 18:04:55 itojun Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.59 2018/02/15 10:04:43 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.60 2018/02/15 10:09:53 maxv Exp $");
 
 /*
  * IP-inside-IP processing
@@ -358,7 +358,7 @@ ipip_output(struct mbuf *m, const struct ipsecrequest *isr,
 	char buf[IPSEC_ADDRSTRLEN];
 	uint8_t tp, otos;
 	struct secasindex *saidx;
-	int error;
+	int error, iphlen;
 #ifdef INET
 	uint8_t itos;
 	struct ip *ipo;
@@ -399,8 +399,9 @@ ipip_output(struct mbuf *m, const struct ipsecrequest *isr,
 			goto bad;
 		}
 
-		ipo = mtod(m, struct ip *);
+		iphlen = sizeof(struct ip);
 
+		ipo = mtod(m, struct ip *);
 		ipo->ip_v = IPVERSION;
 		ipo->ip_hl = 5;
 		ipo->ip_len = htons(m->m_pkthdr.len);
@@ -482,6 +483,8 @@ ipip_output(struct mbuf *m, const struct ipsecrequest *isr,
 			goto bad;
 		}
 
+		iphlen = sizeof(struct ip6_hdr);
+
 		/* Initialize IPv6 header */
 		ip6o = mtod(m, struct ip6_hdr *);
 		ip6o->ip6_flow = 0;
@@ -532,37 +535,18 @@ nofamily:
 		DPRINTF(("%s: unsupported protocol family %u\n", __func__,
 		    saidx->dst.sa.sa_family));
 		IPIP_STATINC(IPIP_STAT_FAMILY);
-		error = EAFNOSUPPORT;		/* XXX diffs from openbsd */
+		error = EAFNOSUPPORT;
 		goto bad;
 	}
 
 	IPIP_STATINC(IPIP_STAT_OPACKETS);
+	IPIP_STATADD(IPIP_STAT_OBYTES, m->m_pkthdr.len - iphlen);
+#if 0
+	if (sav->tdb_xform->xf_type == XF_IP4)
+		tdb->tdb_cur_bytes += m->m_pkthdr.len - iphlen;
+#endif
+
 	*mp = m;
-
-#ifdef INET
-	if (saidx->dst.sa.sa_family == AF_INET) {
-#if 0
-		if (sav->tdb_xform->xf_type == XF_IP4)
-			tdb->tdb_cur_bytes +=
-			    m->m_pkthdr.len - sizeof(struct ip);
-#endif
-		IPIP_STATADD(IPIP_STAT_OBYTES,
-		    m->m_pkthdr.len - sizeof(struct ip));
-	}
-#endif /* INET */
-
-#ifdef INET6
-	if (saidx->dst.sa.sa_family == AF_INET6) {
-#if 0
-		if (sav->tdb_xform->xf_type == XF_IP4)
-			tdb->tdb_cur_bytes +=
-			    m->m_pkthdr.len - sizeof(struct ip6_hdr);
-#endif
-		IPIP_STATADD(IPIP_STAT_OBYTES,
-		    m->m_pkthdr.len - sizeof(struct ip6_hdr));
-	}
-#endif /* INET6 */
-
 	return 0;
 
 bad:
