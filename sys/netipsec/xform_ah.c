@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.42.4.1 2018/01/29 19:39:39 martin Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.42.4.2 2018/02/15 08:03:08 martin Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.42.4.1 2018/01/29 19:39:39 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.42.4.2 2018/02/15 08:03:08 martin Exp $");
 
 #include "opt_inet.h"
 #ifdef __FreeBSD__
@@ -636,6 +636,7 @@ ah_input(struct mbuf *m, const struct secasvar *sav, int skip, int protoff)
 	struct m_tag *mtag;
 	struct newah *ah;
 	int hl, rplen, authsize, error;
+	uint8_t nxt;
 
 	struct cryptodesc *crda;
 	struct cryptop *crp;
@@ -660,6 +661,8 @@ ah_input(struct mbuf *m, const struct secasvar *sav, int skip, int protoff)
 		return ENOBUFS;
 	}
 
+	nxt = ah->ah_nxt;
+
 	/* Check replay window, if applicable. */
 	if (sav->replay && !ipsec_chkreplay(ntohl(ah->ah_seq), sav)) {
 		AH_STATINC(AH_STAT_REPLAY);
@@ -683,6 +686,18 @@ ah_input(struct mbuf *m, const struct secasvar *sav, int skip, int protoff)
 		m_freem(m);
 		return EACCES;
 	}
+	if (skip + authsize + rplen > m->m_pkthdr.len) {
+		char buf[IPSEC_ADDRSTRLEN];
+		DPRINTF(("%s: bad mbuf length %u (expecting >= %lu)"
+			" for packet in SA %s/%08lx\n", __func__,
+			m->m_pkthdr.len, (u_long)(skip + authsize + rplen),
+			ipsec_address(&sav->sah->saidx.dst, buf, sizeof(buf)),
+			(u_long) ntohl(sav->spi)));
+		AH_STATINC(AH_STAT_BADAUTHL);
+		m_freem(m);
+		return EACCES;
+	}
+
 	AH_STATADD(AH_STAT_IBYTES, m->m_pkthdr.len - skip - hl);
 
 	/* Get crypto descriptors. */
@@ -780,7 +795,7 @@ ah_input(struct mbuf *m, const struct secasvar *sav, int skip, int protoff)
 	tc->tc_spi = sav->spi;
 	tc->tc_dst = sav->sah->saidx.dst;
 	tc->tc_proto = sav->sah->saidx.proto;
-	tc->tc_nxt = ah->ah_nxt;
+	tc->tc_nxt = nxt;
 	tc->tc_protoff = protoff;
 	tc->tc_skip = skip;
 	tc->tc_ptr = mtag; /* Save the mtag we've identified. */
