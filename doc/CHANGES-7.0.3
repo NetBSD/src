@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.82 2018/02/15 14:43:52 martin Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.83 2018/02/15 17:53:48 martin Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -5243,4 +5243,13 @@ sys/netipsec/xform_ipip.c			1.44
 
 	Fix IPv6-IPsec-AH tunnels.
 	[maxv, ticket #1567]
+
+sys/netipsec/xform_ah.c				1.77,1.81 via patch
+sys/netipsec/xform_esp.c			1.73 via patch
+sys/netipsec/xform_ipip.c			1.56,1.57 via patch
+
+	Several fixes in IPsec: strengthen sanity checks (AH/ESP), and fix
+	possible use-after-free (Tunnel).
+	[maxv, ticket #1569]
+
 
