@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.2,v 1.1.2.66 2018/02/12 18:44:13 snj Exp $
+# $NetBSD: CHANGES-7.2,v 1.1.2.67 2018/02/15 08:04:07 martin Exp $
 
 A complete list of changes from the NetBSD 7.1 release to the NetBSD 7.2
 release:
@@ -5110,4 +5110,9 @@ sys/arch/sparc/sparc/timerreg.h			1.10
 
 	Fix time goes backwards problems on sparc.
 	[mrg, ticket #1552]
+
+sys/netipsec/xform_ah.c				1.80-1.81 via patch
+
+	Fix use-after-free and and add more consistency checks.
+	[maxv, ticket #1568]
 
