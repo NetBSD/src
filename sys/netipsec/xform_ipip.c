@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipip.c,v 1.62 2018/02/15 10:28:49 maxv Exp $	*/
+/*	$NetBSD: xform_ipip.c,v 1.63 2018/02/15 10:41:51 maxv Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipip.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipip.c,v 1.25 2002/06/10 18:04:55 itojun Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.62 2018/02/15 10:28:49 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.63 2018/02/15 10:41:51 maxv Exp $");
 
 /*
  * IP-inside-IP processing
@@ -73,10 +73,6 @@ __KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.62 2018/02/15 10:28:49 maxv Exp $")
 #include <netipsec/xform.h>
 
 #include <netipsec/ipip_var.h>
-
-#ifdef MROUTING
-#include <netinet/ip_mroute.h>
-#endif
 
 #ifdef INET6
 #include <netinet/ip6.h>
@@ -130,7 +126,7 @@ _ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 	register struct ifnet *ifp;
 	register struct ifaddr *ifa;
 	pktqueue_t *pktq = NULL;
-	struct ip *ipo;
+	struct ip *ip4 = NULL;
 #ifdef INET6
 	register struct sockaddr_in6 *sin6;
 	struct ip6_hdr *ip6 = NULL;
@@ -172,23 +168,11 @@ _ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 		}
 	}
 
-	ipo = mtod(m, struct ip *);
-
-#ifdef MROUTING
-	/* XXX: DEAD AND BROKEN! */
-	if (ipo->ip_v == IPVERSION && ipo->ip_p == IPPROTO_IPV4) {
-		if (IN_MULTICAST(((struct ip *)((char *)ipo + iphlen))->ip_dst.s_addr)) {
-			ipip_mroute_input(m, iphlen);
-			return;
-		}
-	}
-#endif
-
 	/* Keep outer ecn field. */
 	switch (v >> 4) {
 #ifdef INET
 	case 4:
-		otos = ipo->ip_tos;
+		otos = mtod(m, struct ip *)->ip_tos;
 		break;
 #endif
 #ifdef INET6
@@ -254,18 +238,17 @@ _ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 	switch (v >> 4) {
 #ifdef INET
 	case 4:
-		ipo = mtod(m, struct ip *);
-		ip_ecn_egress(ip4_ipsec_ecn, &otos, &ipo->ip_tos);
+		ip4 = mtod(m, struct ip *);
+		ip_ecn_egress(ip4_ipsec_ecn, &otos, &ip4->ip_tos);
 		break;
 #endif
 #ifdef INET6
 	case 6:
-		ipo = NULL;
 		ip6 = mtod(m, struct ip6_hdr *);
 		itos = (ntohl(ip6->ip6_flow) >> 20) & 0xff;
 		ip_ecn_egress(ip6_ipsec_ecn, &otos, &itos);
 		ip6->ip6_flow &= ~htonl(0xff << 20);
-		ip6->ip6_flow |= htonl((uint32_t) itos << 20);
+		ip6->ip6_flow |= htonl((uint32_t)itos << 20);
 		break;
 #endif
 	default:
@@ -280,7 +263,7 @@ _ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 		IFNET_READER_FOREACH(ifp) {
 			IFADDR_READER_FOREACH(ifa, ifp) {
 #ifdef INET
-				if (ipo) {
+				if (ip4) {
 					if (ifa->ifa_addr->sa_family !=
 					    AF_INET)
 						continue;
@@ -288,7 +271,7 @@ _ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 					sin = (struct sockaddr_in *) ifa->ifa_addr;
 
 					if (sin->sin_addr.s_addr ==
-					    ipo->ip_src.s_addr)	{
+					    ip4->ip_src.s_addr)	{
 						pserialize_read_exit(s);
 						IPIP_STATINC(IPIP_STAT_SPOOF);
 						m_freem(m);
