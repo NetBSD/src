@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.78 2018/02/15 04:24:32 ozaki-r Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.79 2018/02/15 04:27:24 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.78 2018/02/15 04:24:32 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.79 2018/02/15 04:27:24 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.78 2018/02/15 04:24:32 ozaki-r Exp $"
 #include <sys/sysctl.h>
 #include <sys/pool.h>
 #include <sys/pserialize.h>
+#include <sys/kmem.h>
 
 #include <net/if.h>
 
@@ -621,6 +622,7 @@ ah_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 	int hl, rplen, authsize, error, stat = AH_STAT_HDROPS;
 	struct cryptodesc *crda;
 	struct cryptop *crp = NULL;
+	bool pool_used;
 
 	IPSEC_SPLASSERT_SOFTNET(__func__);
 
@@ -693,9 +695,14 @@ ah_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 	size_t extra = skip + rplen + authsize;
 	size += extra;
 
-	KASSERTMSG(size <= ah_pool_item_size,
-	    "size=%zu > ah_pool_item_size=%zu\n", size, ah_pool_item_size);
-	tc = pool_cache_get(ah_tdb_crypto_pool_cache, PR_NOWAIT);
+	if (__predict_true(size <= ah_pool_item_size)) {
+		tc = pool_cache_get(ah_tdb_crypto_pool_cache, PR_NOWAIT);
+		pool_used = true;
+	} else {
+		/* size can exceed on IPv6 packets with large options.  */
+		tc = kmem_intr_zalloc(size, KM_NOSLEEP);
+		pool_used = false;
+	}
 	if (tc == NULL) {
 		DPRINTF(("%s: failed to allocate tdb_crypto\n", __func__));
 		stat = AH_STAT_CRYPTO;
@@ -767,8 +774,12 @@ ah_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 	return crypto_dispatch(crp);
 
 bad:
-	if (tc != NULL)
-		pool_cache_put(ah_tdb_crypto_pool_cache, tc);
+	if (tc != NULL) {
+		if (__predict_true(pool_used))
+			pool_cache_put(ah_tdb_crypto_pool_cache, tc);
+		else
+			kmem_intr_free(tc, size);
+	}
 	if (crp != NULL)
 		crypto_freereq(crp);
 	if (m != NULL)
@@ -808,6 +819,8 @@ ah_input_cb(struct cryptop *crp)
 	int authsize;
 	uint16_t dport;
 	uint16_t sport;
+	bool pool_used;
+	size_t size;
 	IPSEC_DECLARE_LOCK_VARIABLE;
 
 	KASSERT(crp->crp_opaque != NULL);
@@ -829,6 +842,16 @@ ah_input_cb(struct cryptop *crp)
 	    saidx->dst.sa.sa_family == AF_INET6,
 	    "unexpected protocol family %u", saidx->dst.sa.sa_family);
 
+	/* Figure out header size. */
+	rplen = HDRSIZE(sav);
+	authsize = AUTHSIZE(sav);
+
+	size = sizeof(*tc) + skip + rplen + authsize;
+	if (__predict_true(size <= ah_pool_item_size))
+		pool_used = true;
+	else
+		pool_used = false;
+
 	/* Check for crypto errors. */
 	if (crp->crp_etype) {
 		if (sav->tdb_cryptoid != 0)
@@ -848,10 +871,6 @@ ah_input_cb(struct cryptop *crp)
 		crypto_freereq(crp);		/* No longer needed. */
 		crp = NULL;
 	}
-
-	/* Figure out header size. */
-	rplen = HDRSIZE(sav);
-	authsize = AUTHSIZE(sav);
 
 	if (ipsec_debug)
 		memset(calc, 0, sizeof(calc));
@@ -890,7 +909,10 @@ ah_input_cb(struct cryptop *crp)
 	/* Copyback the saved (uncooked) network headers. */
 	m_copyback(m, 0, skip, ptr);
 
-	pool_cache_put(ah_tdb_crypto_pool_cache, tc);
+	if (__predict_true(pool_used))
+		pool_cache_put(ah_tdb_crypto_pool_cache, tc);
+	else
+		kmem_intr_free(tc, size);
 	tc = NULL;
 
 	/*
@@ -937,8 +959,12 @@ bad:
 	IPSEC_RELEASE_GLOBAL_LOCKS();
 	if (m != NULL)
 		m_freem(m);
-	if (tc != NULL)
-		pool_cache_put(ah_tdb_crypto_pool_cache, tc);
+	if (tc != NULL) {
+		if (pool_used)
+			pool_cache_put(ah_tdb_crypto_pool_cache, tc);
+		else
+			kmem_intr_free(tc, size);
+	}
 	if (crp != NULL)
 		crypto_freereq(crp);
 	return error;
