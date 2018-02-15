@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.57 2017/02/08 16:11:40 rin Exp $	*/
+/*	$NetBSD: pass1.c,v 1.57.4.1 2018/02/15 08:26:37 martin Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass1.c,v 1.57 2017/02/08 16:11:40 rin Exp $");
+__RCSID("$NetBSD: pass1.c,v 1.57.4.1 2018/02/15 08:26:37 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -253,8 +253,9 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 		    (memcmp(dp->dp1.di_db, ufs1_zino.di_db,
 			UFS_NDADDR * sizeof(int32_t)) ||
 		    memcmp(dp->dp1.di_ib, ufs1_zino.di_ib,
-			UFS_NIADDR * sizeof(int32_t)))) ||
-		    mode || size) {
+			UFS_NIADDR * sizeof(int32_t))))
+		    ||
+		    mode || size || DIP(dp, blocks)) {
 			pfatal("PARTIALLY ALLOCATED INODE I=%llu",
 			    (unsigned long long)inumber);
 			if (reply("CLEAR") == 1) {
