@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.37.2.2 2018/02/15 08:08:19 martin Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.37.2.3 2018/02/15 16:49:04 martin Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.37.2.2 2018/02/15 08:08:19 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.37.2.3 2018/02/15 16:49:04 martin Exp $");
 
 #include "opt_inet.h"
 #ifdef __FreeBSD__
@@ -687,11 +687,10 @@ ah_input(struct mbuf *m, const struct secasvar *sav, int skip, int protoff)
 		return EACCES;
 	}
 	if (skip + authsize + rplen > m->m_pkthdr.len) {
-		char buf[IPSEC_ADDRSTRLEN];
 		DPRINTF(("%s: bad mbuf length %u (expecting >= %lu)"
 			" for packet in SA %s/%08lx\n", __func__,
 			m->m_pkthdr.len, (u_long)(skip + authsize + rplen),
-			ipsec_address(&sav->sah->saidx.dst, buf, sizeof(buf)),
+			ipsec_address(&sav->sah->saidx.dst),
 			(u_long) ntohl(sav->spi)));
 		AH_STATINC(AH_STAT_BADAUTHL);
 		m_freem(m);
