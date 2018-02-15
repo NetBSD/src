@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.123 2018/02/12 20:32:59 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.124 2018/02/15 07:59:23 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -9641,4 +9641,14 @@ sys/netinet/ip_input.c				1.366
 
 	Don't allow source-routed packets by default.
 	[maxv, ticket #547]
+
+sys/dev/i2c/files.i2c				1.84 via patch
+
+	Delete superflous 'define dbcool {}' line.
+	[uwe, ticket #548]
+
+sys/netipsec/xform_ah.c				1.80-1.81 via patch
+
+	Fix use-after-free and and add more consistency checks.
+	[maxv, ticket #549]
 
