@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.125 2018/02/15 08:27:24 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.126 2018/02/15 14:29:45 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -9657,4 +9657,9 @@ sbin/fsck_ffs/pass1.c				1.58
 	Treat an inode with "mode == 0" and "blocks != 0" as partially
 	allocated and clear it as ffs_newvnode() tests for "blocks == 0".
 	[hannken, ticket #550]
+
+sys/netipsec/xform_ipip.c			1.56-1.63
+
+	Sync IPsec-Tunnel with NetBSD-current, fix several bugs.
+	[maxv, ticket #551]
 
