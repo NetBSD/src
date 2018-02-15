@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.82 2018/02/15 08:38:00 maxv Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.83 2018/02/15 09:17:37 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.82 2018/02/15 08:38:00 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.83 2018/02/15 09:17:37 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1132,11 +1132,10 @@ ah_output(struct mbuf *m, const struct ipsecrequest *isr, struct secasvar *sav,
 	/* Allocate IPsec-specific opaque crypto info. */
 	tc = pool_cache_get(ah_tdb_crypto_pool_cache, PR_NOWAIT);
 	if (tc == NULL) {
-		crypto_freereq(crp);
 		DPRINTF(("%s: failed to allocate tdb_crypto\n", __func__));
 		AH_STATINC(AH_STAT_CRYPTO);
 		error = ENOBUFS;
-		goto bad;
+		goto bad_crp;
 	}
 
 	uint8_t *pext = (char *)(tc + 1);
@@ -1164,9 +1163,7 @@ ah_output(struct mbuf *m, const struct ipsecrequest *isr, struct secasvar *sav,
 	    skip, ahx->type, 1);
 	if (error != 0) {
 		m = NULL;	/* mbuf was free'd by ah_massage_headers. */
-		pool_cache_put(ah_tdb_crypto_pool_cache, tc);
-		crypto_freereq(crp);
-		goto bad;
+		goto bad_tc;
 	}
 
     {
@@ -1178,11 +1175,9 @@ ah_output(struct mbuf *m, const struct ipsecrequest *isr, struct secasvar *sav,
 	if (__predict_false(isr->sp->state == IPSEC_SPSTATE_DEAD ||
 	    sav->state == SADB_SASTATE_DEAD)) {
 		pserialize_read_exit(s);
-		pool_cache_put(ah_tdb_crypto_pool_cache, tc);
-		crypto_freereq(crp);
 		AH_STATINC(AH_STAT_NOTDB);
 		error = ENOENT;
-		goto bad;
+		goto bad_tc;
 	}
 	KEY_SP_REF(isr->sp);
 	KEY_SA_REF(sav);
@@ -1207,6 +1202,10 @@ ah_output(struct mbuf *m, const struct ipsecrequest *isr, struct secasvar *sav,
 	tc->tc_sav = sav;
 
 	return crypto_dispatch(crp);
+bad_tc:
+	pool_cache_put(ah_tdb_crypto_pool_cache, tc);
+bad_crp:
+	crypto_freereq(crp);
 bad:
 	if (m)
 		m_freem(m);
