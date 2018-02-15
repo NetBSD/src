@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.75 2018/02/14 09:13:03 ozaki-r Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.76 2018/02/15 04:24:32 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.75 2018/02/14 09:13:03 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.76 2018/02/15 04:24:32 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -538,21 +538,6 @@ esp_input_cb(struct cryptop *crp)
 	IPSEC_ACQUIRE_GLOBAL_LOCKS();
 
 	sav = tc->tc_sav;
-	if (__predict_false(!SADB_SASTATE_USABLE_P(sav))) {
-		KEY_SA_UNREF(&sav);
-		sav = KEY_LOOKUP_SA(&tc->tc_dst, tc->tc_proto, tc->tc_spi,
-		    sport, dport);
-		if (sav == NULL) {
-			ESP_STATINC(ESP_STAT_NOTDB);
-			DPRINTF(("%s: SA expired while in crypto "
-			    "(SA %s/%08lx proto %u)\n", __func__,
-			    ipsec_address(&tc->tc_dst, buf, sizeof(buf)),
-			    (u_long) ntohl(tc->tc_spi), tc->tc_proto));
-			error = ENOBUFS;		/*XXX*/
-			goto bad;
-		}
-	}
-
 	saidx = &sav->sah->saidx;
 	KASSERTMSG(saidx->dst.sa.sa_family == AF_INET ||
 	    saidx->dst.sa.sa_family == AF_INET6,
@@ -1000,28 +985,6 @@ esp_output_cb(struct cryptop *crp)
 
 	isr = tc->tc_isr;
 	sav = tc->tc_sav;
-	if (__predict_false(isr->sp->state == IPSEC_SPSTATE_DEAD)) {
-		ESP_STATINC(ESP_STAT_NOTDB);
-		IPSECLOG(LOG_DEBUG,
-		    "SP is being destroyed while in crypto (id=%u)\n",
-		    isr->sp->id);
-		error = ENOENT;
-		goto bad;
-	}
-	if (__predict_false(!SADB_SASTATE_USABLE_P(sav))) {
-		KEY_SA_UNREF(&sav);
-		sav = KEY_LOOKUP_SA(&tc->tc_dst, tc->tc_proto, tc->tc_spi, 0, 0);
-		if (sav == NULL) {
-			char buf[IPSEC_ADDRSTRLEN];
-			ESP_STATINC(ESP_STAT_NOTDB);
-			DPRINTF(("%s: SA expired while in crypto (SA %s/%08lx "
-			    "proto %u)\n", __func__,
-			    ipsec_address(&tc->tc_dst, buf, sizeof(buf)),
-			    (u_long) ntohl(tc->tc_spi), tc->tc_proto));
-			error = ENOBUFS;		/*XXX*/
-			goto bad;
-		}
-	}
 
 	/* Check for crypto errors. */
 	if (crp->crp_etype) {
