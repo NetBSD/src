@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.18 2015/03/24 08:38:29 matt Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.19 2018/02/15 15:53:56 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -110,6 +110,7 @@ typedef struct {
 #define _UC_MACHINE_PAD	1		/* Padding appended to ucontext_t */
 
 #define _UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_SP])
+#define _UC_MACHINE_FP(uc)	((uc)->uc_mcontext.__gregs[_REG_R11])
 #define _UC_MACHINE_PC(uc)	((uc)->uc_mcontext.__gregs[_REG_PC])
 #define _UC_MACHINE_INTRV(uc)	((uc)->uc_mcontext.__gregs[_REG_R0])
 

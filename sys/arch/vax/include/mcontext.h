@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.8 2012/02/02 18:32:16 matt Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.9 2018/02/15 15:53:57 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -68,6 +68,7 @@ typedef struct {
 #define _UC_TLSBASE	0x00080000
 
 #define	_UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_SP])
+#define	_UC_MACHINE_FP(uc)	((uc)->uc_mcontext.__gregs[_REG_FP])
 #define	_UC_MACHINE_PC(uc)	((uc)->uc_mcontext.__gregs[_REG_PC])
 #define	_UC_MACHINE_INTRV(uc)	((uc)->uc_mcontext.__gregs[_REG_R0])
 
