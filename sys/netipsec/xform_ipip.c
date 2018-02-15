@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipip.c,v 1.31 2014/06/05 23:48:17 rmind Exp $	*/
+/*	$NetBSD: xform_ipip.c,v 1.31.6.1 2018/02/15 14:43:12 martin Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipip.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipip.c,v 1.25 2002/06/10 18:04:55 itojun Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.31 2014/06/05 23:48:17 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.31.6.1 2018/02/15 14:43:12 martin Exp $");
 
 /*
  * IP-inside-IP processing
@@ -562,7 +562,7 @@ ipip_output(
 		ip6o->ip6_flow = 0;
 		ip6o->ip6_vfc &= ~IPV6_VERSION_MASK;
 		ip6o->ip6_vfc |= IPV6_VERSION;
-		ip6o->ip6_plen = htons(m->m_pkthdr.len);
+		ip6o->ip6_plen = htons(m->m_pkthdr.len - sizeof(*ip6o));
 		ip6o->ip6_hlim = ip_defttl;
 		ip6o->ip6_dst = saidx->dst.sin6.sin6_addr;
 		ip6o->ip6_src = saidx->src.sin6.sin6_addr;
