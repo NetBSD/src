@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.83 2018/02/15 09:17:37 ozaki-r Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.84 2018/02/15 09:23:47 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.83 2018/02/15 09:17:37 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.84 2018/02/15 09:23:47 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1000,6 +1000,7 @@ ah_output(struct mbuf *m, const struct ipsecrequest *isr, struct secasvar *sav,
 	uint8_t prot;
 	struct newah *ah;
 	size_t ipoffs;
+	bool pool_used;
 
 	IPSEC_SPLASSERT_SOFTNET(__func__);
 
@@ -1130,7 +1131,16 @@ ah_output(struct mbuf *m, const struct ipsecrequest *isr, struct secasvar *sav,
 	crda->crd_klen = _KEYBITS(sav->key_auth);
 
 	/* Allocate IPsec-specific opaque crypto info. */
-	tc = pool_cache_get(ah_tdb_crypto_pool_cache, PR_NOWAIT);
+	size_t size = sizeof(*tc) + skip;
+
+	if (__predict_true(size <= ah_pool_item_size)) {
+		tc = pool_cache_get(ah_tdb_crypto_pool_cache, PR_NOWAIT);
+		pool_used = true;
+	} else {
+		/* size can exceed on IPv6 packets with large options.  */
+		tc = kmem_intr_zalloc(size, KM_NOSLEEP);
+		pool_used = false;
+	}
 	if (tc == NULL) {
 		DPRINTF(("%s: failed to allocate tdb_crypto\n", __func__));
 		AH_STATINC(AH_STAT_CRYPTO);
@@ -1202,8 +1212,12 @@ ah_output(struct mbuf *m, const struct ipsecrequest *isr, struct secasvar *sav,
 	tc->tc_sav = sav;
 
 	return crypto_dispatch(crp);
+
 bad_tc:
-	pool_cache_put(ah_tdb_crypto_pool_cache, tc);
+	if (__predict_true(pool_used))
+		pool_cache_put(ah_tdb_crypto_pool_cache, tc);
+	else
+		kmem_intr_free(tc, size);
 bad_crp:
 	crypto_freereq(crp);
 bad:
@@ -1225,6 +1239,8 @@ ah_output_cb(struct cryptop *crp)
 	struct mbuf *m;
 	void *ptr;
 	int err;
+	size_t size;
+	bool pool_used;
 	IPSEC_DECLARE_LOCK_VARIABLE;
 
 	KASSERT(crp->crp_opaque != NULL);
@@ -1232,6 +1248,8 @@ ah_output_cb(struct cryptop *crp)
 	skip = tc->tc_skip;
 	ptr = (tc + 1);
 	m = crp->crp_buf;
+	size = sizeof(*tc) + skip;
+	pool_used = size <= ah_pool_item_size;
 
 	IPSEC_ACQUIRE_GLOBAL_LOCKS();
 
@@ -1263,7 +1281,10 @@ ah_output_cb(struct cryptop *crp)
 	m_copyback(m, 0, skip, ptr);
 
 	/* No longer needed. */
-	pool_cache_put(ah_tdb_crypto_pool_cache, tc);
+	if (__predict_true(pool_used))
+		pool_cache_put(ah_tdb_crypto_pool_cache, tc);
+	else
+		kmem_intr_free(tc, size);
 	crypto_freereq(crp);
 
 #ifdef IPSEC_DEBUG
@@ -1293,7 +1314,10 @@ bad:
 	IPSEC_RELEASE_GLOBAL_LOCKS();
 	if (m)
 		m_freem(m);
-	pool_cache_put(ah_tdb_crypto_pool_cache, tc);
+	if (__predict_true(pool_used))
+		pool_cache_put(ah_tdb_crypto_pool_cache, tc);
+	else
+		kmem_intr_free(tc, size);
 	crypto_freereq(crp);
 	return error;
 }
