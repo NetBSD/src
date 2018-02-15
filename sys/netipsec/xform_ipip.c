@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipip.c,v 1.61 2018/02/15 10:21:39 maxv Exp $	*/
+/*	$NetBSD: xform_ipip.c,v 1.62 2018/02/15 10:28:49 maxv Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipip.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipip.c,v 1.25 2002/06/10 18:04:55 itojun Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.61 2018/02/15 10:21:39 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.62 2018/02/15 10:28:49 maxv Exp $");
 
 /*
  * IP-inside-IP processing
@@ -319,8 +319,8 @@ _ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 		pserialize_read_exit(s);
 	}
 
-	/* Statistics */
-	IPIP_STATADD(IPIP_STAT_IBYTES, m->m_pkthdr.len - iphlen);
+	/* Statistics: m->m_pkthdr.len is the length of the inner packet */
+	IPIP_STATADD(IPIP_STAT_IBYTES, m->m_pkthdr.len);
 
 	/*
 	 * Interface pointer stays the same; if no IPsec processing has
