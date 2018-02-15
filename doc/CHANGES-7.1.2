@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1.2,v 1.1.2.11 2018/02/15 08:05:41 martin Exp $
+# $NetBSD: CHANGES-7.1.2,v 1.1.2.12 2018/02/15 14:42:44 martin Exp $
 
 A complete list of changes from the NetBSD 7.1.1 release to the NetBSD 7.1.2
 release:
@@ -126,4 +126,9 @@ sys/netipsec/xform_ah.c				1.80-1.81 via patch
 
 	Fix use-after-free and and add more consistency checks.
 	[maxv, ticket #1568]
+
+sys/netipsec/xform_ipip.c			1.44
+
+	Fix IPv6-IPsec-AH tunnels.
+	[maxv, ticket #1567]
 
