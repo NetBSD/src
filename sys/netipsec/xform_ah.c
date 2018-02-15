@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.80 2018/02/15 07:16:05 maxv Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.81 2018/02/15 07:38:46 maxv Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.80 2018/02/15 07:16:05 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.81 2018/02/15 07:38:46 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -664,6 +664,17 @@ ah_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 		DPRINTF(("%s: bad authenticator length %u (expecting %lu)"
 			" for packet in SA %s/%08lx\n", __func__,
 			hl, (u_long) (authsize + rplen - sizeof(struct ah)),
+			ipsec_address(&sav->sah->saidx.dst, buf, sizeof(buf)),
+			(u_long) ntohl(sav->spi)));
+		stat = AH_STAT_BADAUTHL;
+		error = EACCES;
+		goto bad;
+	}
+	if (skip + authsize + rplen > m->m_pkthdr.len) {
+		char buf[IPSEC_ADDRSTRLEN];
+		DPRINTF(("%s: bad mbuf length %u (expecting >= %lu)"
+			" for packet in SA %s/%08lx\n", __func__,
+			m->m_pkthdr.len, (u_long)(skip + authsize + rplen),
 			ipsec_address(&sav->sah->saidx.dst, buf, sizeof(buf)),
 			(u_long) ntohl(sav->spi)));
 		stat = AH_STAT_BADAUTHL;
