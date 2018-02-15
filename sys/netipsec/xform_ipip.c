@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipip.c,v 1.60 2018/02/15 10:09:53 maxv Exp $	*/
+/*	$NetBSD: xform_ipip.c,v 1.61 2018/02/15 10:21:39 maxv Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipip.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipip.c,v 1.25 2002/06/10 18:04:55 itojun Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.60 2018/02/15 10:09:53 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.61 2018/02/15 10:21:39 maxv Exp $");
 
 /*
  * IP-inside-IP processing
@@ -216,11 +216,13 @@ _ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 #ifdef INET
 	case 4:
 		hlen = sizeof(struct ip);
+		pktq = ip_pktq;
 		break;
 #endif
 #ifdef INET6
 	case 6:
 		hlen = sizeof(struct ip6_hdr);
+		pktq = ip6_pktq;
 		break;
 #endif
 	default:
@@ -327,21 +329,6 @@ _ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 	 * will allow a packet filter to distinguish between secure and
 	 * untrusted packets.
 	 */
-
-	switch (v >> 4) {
-#ifdef INET
-	case 4:
-		pktq = ip_pktq;
-		break;
-#endif
-#ifdef INET6
-	case 6:
-		pktq = ip6_pktq;
-		break;
-#endif
-	default:
-		panic("%s: should never reach here", __func__);
-	}
 
 	int s = splnet();
 	if (__predict_false(!pktq_enqueue(pktq, m, 0))) {
