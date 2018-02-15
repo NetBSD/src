@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.124 2018/02/15 07:59:23 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.125 2018/02/15 08:27:24 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -9651,4 +9651,10 @@ sys/netipsec/xform_ah.c				1.80-1.81 via patch
 
 	Fix use-after-free and and add more consistency checks.
 	[maxv, ticket #549]
+
+sbin/fsck_ffs/pass1.c				1.58
+
+	Treat an inode with "mode == 0" and "blocks != 0" as partially
+	allocated and clear it as ffs_newvnode() tests for "blocks == 0".
+	[hannken, ticket #550]
 
