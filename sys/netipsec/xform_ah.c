@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.79 2018/02/15 04:27:24 ozaki-r Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.80 2018/02/15 07:16:05 maxv Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.79 2018/02/15 04:27:24 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.80 2018/02/15 07:16:05 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -623,6 +623,7 @@ ah_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 	struct cryptodesc *crda;
 	struct cryptop *crp = NULL;
 	bool pool_used;
+	uint8_t nxt;
 
 	IPSEC_SPLASSERT_SOFTNET(__func__);
 
@@ -641,6 +642,8 @@ ah_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 		stat = AH_STAT_HDROPS;	/*XXX*/
 		goto bad;
 	}
+
+	nxt = ah->ah_nxt;
 
 	/* Check replay window, if applicable. */
 	if (sav->replay && !ipsec_chkreplay(ntohl(ah->ah_seq), sav)) {
@@ -667,6 +670,7 @@ ah_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 		error = EACCES;
 		goto bad;
 	}
+
 	AH_STATADD(AH_STAT_IBYTES, m->m_pkthdr.len - skip - hl);
 
 	/* Get crypto descriptors. */
@@ -761,7 +765,7 @@ ah_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 	tc->tc_spi = sav->spi;
 	tc->tc_dst = sav->sah->saidx.dst;
 	tc->tc_proto = sav->sah->saidx.proto;
-	tc->tc_nxt = ah->ah_nxt;
+	tc->tc_nxt = nxt;
 	tc->tc_protoff = protoff;
 	tc->tc_skip = skip;
 	tc->tc_sav = sav;
