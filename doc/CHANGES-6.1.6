@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.6,v 1.1.2.125 2018/02/10 04:26:15 snj Exp $
+# $NetBSD: CHANGES-6.1.6,v 1.1.2.126 2018/02/15 08:10:07 martin Exp $
 
 A complete list of changes from the NetBSD 6.1.5 release to the NetBSD 6.1.6
 release:
@@ -14990,4 +14990,9 @@ sys/dist/pf/net/pf.c				1.78 via patch
 
 	Fix signedness bug in PF. PR/44059.
 	[maxv, ticket #1527]
+
+sys/netipsec/xform_ah.c				1.80-1.81 via patch
+
+	Fix use-after-free and and add more consistency checks.
+	[maxv, ticket #1530]
 
