@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipip.c,v 1.58 2018/01/24 14:39:14 maxv Exp $	*/
+/*	$NetBSD: xform_ipip.c,v 1.59 2018/02/15 10:04:43 maxv Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipip.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipip.c,v 1.25 2002/06/10 18:04:55 itojun Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.58 2018/01/24 14:39:14 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.59 2018/02/15 10:04:43 maxv Exp $");
 
 /*
  * IP-inside-IP processing
@@ -88,84 +88,41 @@ __KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.58 2018/01/24 14:39:14 maxv Exp $")
 #include <netipsec/key.h>
 #include <netipsec/key_debug.h>
 
-typedef void	pr_in_input_t (struct mbuf *m, ...);
-
-/*
- * We can control the acceptance of IP4 packets by altering the sysctl
- * net.inet.ipip.allow value.  Zero means drop them, all else is acceptance.
- */
-int	ipip_allow = 0;
-
-percpu_t *ipipstat_percpu;
-
-#ifdef SYSCTL_DECL
-SYSCTL_DECL(_net_inet_ipip);
-
-SYSCTL_INT(_net_inet_ipip, OID_AUTO,
-	ipip_allow,	CTLFLAG_RW,	&ipip_allow,	0, "");
-SYSCTL_STRUCT(_net_inet_ipip, IPSECCTL_STATS,
-	stats,		CTLFLAG_RD,	&ipipstat,	ipipstat, "");
-
-#endif
-
-void ipe4_attach(void);
-
-
 /* XXX IPCOMP */
 #define	M_IPSEC	(M_AUTHIPHDR|M_AUTHIPDGM|M_DECRYPTED)
+
+typedef void pr_in_input_t(struct mbuf *m, ...);
+
+int ipip_allow = 0;
+percpu_t *ipipstat_percpu;
+
+void ipe4_attach(void);
 
 static void _ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp);
 
 #ifdef INET6
-/*
- * Really only a wrapper for ipip_input(), for use with IPv6.
- */
 int
 ip4_input6(struct mbuf **m, int *offp, int proto, void *eparg __unused)
 {
-#if 0
-	/* If we do not accept IP-in-IP explicitly, drop.  */
-	if (!ipip_allow && ((*m)->m_flags & M_IPSEC) == 0) {
-		DPRINTF(("%s: dropped due to policy\n", __func__));
-		IPIP_STATINC(IPIP_STAT_PDROPS);
-		m_freem(*m);
-		return IPPROTO_DONE;
-	}
-#endif
 	_ipip_input(*m, *offp, NULL);
 	return IPPROTO_DONE;
 }
-#endif /* INET6 */
+#endif
 
 #ifdef INET
-/*
- * Really only a wrapper for ipip_input(), for use with IPv4.
- */
 void
 ip4_input(struct mbuf *m, int off, int proto, void *eparg __unused)
 {
-
-#if 0
-	/* If we do not accept IP-in-IP explicitly, drop.  */
-	if (!ipip_allow && (m->m_flags & M_IPSEC) == 0) {
-		DPRINTF(("%s: dropped due to policy\n", __func__));
-		IPIP_STATINC(IPIP_STAT_PDROPS);
-		m_freem(m);
-		return;
-	}
-#endif
-
 	_ipip_input(m, off, NULL);
 }
-#endif /* INET */
+#endif
 
 /*
  * ipip_input gets called when we receive an IP{46} encapsulated packet,
  * either because we got it at a real interface, or because AH or ESP
  * were being used in tunnel mode (in which case the rcvif element will
- * contain the address of the encX interface associated with the tunnel.
+ * contain the address of the encX interface associated with the tunnel).
  */
-
 static void
 _ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 {
@@ -192,7 +149,7 @@ _ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 	case 4:
 		hlen = sizeof(struct ip);
 		break;
-#endif /* INET */
+#endif
 #ifdef INET6
 	case 6:
 		hlen = sizeof(struct ip6_hdr);
@@ -203,7 +160,7 @@ _ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 		    "for outer header\n", __func__, v, v>>4));
 		IPIP_STATINC(IPIP_STAT_FAMILY);
 		m_freem(m);
-		return /* EAFNOSUPPORT */;
+		return;
 	}
 
 	/* Bring the IP header in the first mbuf, if not there already */
@@ -218,13 +175,14 @@ _ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 	ipo = mtod(m, struct ip *);
 
 #ifdef MROUTING
+	/* XXX: DEAD AND BROKEN! */
 	if (ipo->ip_v == IPVERSION && ipo->ip_p == IPPROTO_IPV4) {
-		if (IN_MULTICAST(((struct ip *)((char *) ipo + iphlen))->ip_dst.s_addr)) {
-			ipip_mroute_input (m, iphlen);
+		if (IN_MULTICAST(((struct ip *)((char *)ipo + iphlen))->ip_dst.s_addr)) {
+			ipip_mroute_input(m, iphlen);
 			return;
 		}
 	}
-#endif /* MROUTING */
+#endif
 
 	/* Keep outer ecn field. */
 	switch (v >> 4) {
@@ -232,7 +190,7 @@ _ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 	case 4:
 		otos = ipo->ip_tos;
 		break;
-#endif /* INET */
+#endif
 #ifdef INET6
 	case 6:
 		otos = (ntohl(mtod(m, struct ip6_hdr *)->ip6_flow) >> 20) & 0xff;
@@ -259,8 +217,7 @@ _ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 	case 4:
 		hlen = sizeof(struct ip);
 		break;
-#endif /* INET */
-
+#endif
 #ifdef INET6
 	case 6:
 		hlen = sizeof(struct ip6_hdr);
@@ -271,7 +228,7 @@ _ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 		    "for inner header\n", __func__, v, v >> 4));
 		IPIP_STATINC(IPIP_STAT_FAMILY);
 		m_freem(m);
-		return; /* EAFNOSUPPORT */
+		return;
 	}
 
 	/*
@@ -298,7 +255,7 @@ _ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 		ipo = mtod(m, struct ip *);
 		ip_ecn_egress(ip4_ipsec_ecn, &otos, &ipo->ip_tos);
 		break;
-#endif /* INET */
+#endif
 #ifdef INET6
 	case 6:
 		ipo = NULL;
@@ -395,14 +352,8 @@ _ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 }
 
 int
-ipip_output(
-    struct mbuf *m,
-    const struct ipsecrequest *isr,
-    struct secasvar *sav,
-    struct mbuf **mp,
-    int skip,
-    int protoff
-)
+ipip_output(struct mbuf *m, const struct ipsecrequest *isr,
+    struct secasvar *sav, struct mbuf **mp, int skip, int protoff)
 {
 	char buf[IPSEC_ADDRSTRLEN];
 	uint8_t tp, otos;
@@ -411,10 +362,10 @@ ipip_output(
 #ifdef INET
 	uint8_t itos;
 	struct ip *ipo;
-#endif /* INET */
+#endif
 #ifdef INET6
 	struct ip6_hdr *ip6, *ip6o;
-#endif /* INET6 */
+#endif
 
 	IPSEC_SPLASSERT_SOFTNET(__func__);
 	KASSERT(sav != NULL);
@@ -441,7 +392,7 @@ ipip_output(
 		}
 
 		M_PREPEND(m, sizeof(struct ip), M_DONTWAIT);
-		if (m == 0) {
+		if (m == NULL) {
 			DPRINTF(("%s: M_PREPEND failed\n", __func__));
 			IPIP_STATINC(IPIP_STAT_HDROPS);
 			error = ENOBUFS;
@@ -524,7 +475,7 @@ ipip_output(
 		}
 
 		M_PREPEND(m, sizeof(struct ip6_hdr), M_DONTWAIT);
-		if (m == 0) {
+		if (m == NULL) {
 			DPRINTF(("%s: M_PREPEND failed\n", __func__));
 			IPIP_STATINC(IPIP_STAT_HDROPS);
 			error = ENOBUFS;
@@ -556,19 +507,19 @@ ipip_output(
 			ip6o->ip6_nxt = IPPROTO_IPIP;
 		} else
 #endif /* INET */
-			if (tp == (IPV6_VERSION >> 4)) {
-				uint32_t itos32;
+		if (tp == (IPV6_VERSION >> 4)) {
+			uint32_t itos32;
 
-				/* Save ECN notification. */
-				m_copydata(m, sizeof(struct ip6_hdr) +
-				    offsetof(struct ip6_hdr, ip6_flow),
-				    sizeof(uint32_t), &itos32);
-				itos = ntohl(itos32) >> 20;
+			/* Save ECN notification. */
+			m_copydata(m, sizeof(struct ip6_hdr) +
+			    offsetof(struct ip6_hdr, ip6_flow),
+			    sizeof(uint32_t), &itos32);
+			itos = ntohl(itos32) >> 20;
 
-				ip6o->ip6_nxt = IPPROTO_IPV6;
-			} else {
-				goto nofamily;
-			}
+			ip6o->ip6_nxt = IPPROTO_IPV6;
+		} else {
+			goto nofamily;
+		}
 
 		otos = 0;
 		ip_ecn_ingress(ECN_ALLOWED, &otos, &itos);
@@ -596,7 +547,7 @@ nofamily:
 			    m->m_pkthdr.len - sizeof(struct ip);
 #endif
 		IPIP_STATADD(IPIP_STAT_OBYTES,
-			     m->m_pkthdr.len - sizeof(struct ip));
+		    m->m_pkthdr.len - sizeof(struct ip));
 	}
 #endif /* INET */
 
@@ -613,11 +564,12 @@ nofamily:
 #endif /* INET6 */
 
 	return 0;
+
 bad:
 	if (m)
 		m_freem(m);
 	*mp = NULL;
-	return (error);
+	return error;
 }
 
 static int
@@ -635,12 +587,7 @@ ipe4_zeroize(struct secasvar *sav)
 }
 
 static int
-ipe4_input(
-    struct mbuf *m,
-    struct secasvar *sav,
-    int skip,
-    int protoff
-)
+ipe4_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 {
 	/* This is a rather serious mistake, so no conditional printing. */
 	printf("%s: should never be called\n", __func__);
@@ -681,11 +628,7 @@ static struct encapsw ipe4_encapsw6 = {
  * Check the encapsulated packet to see if we want it
  */
 static int
-ipe4_encapcheck(struct mbuf *m,
-    int off,
-    int proto,
-    void *arg
-)
+ipe4_encapcheck(struct mbuf *m, int off, int proto, void *arg)
 {
 	/*
 	 * Only take packets coming from IPSEC tunnels; the rest
@@ -711,12 +654,12 @@ ipe4_attach(void)
 	(void)encap_lock_enter();
 	/* ipe4_encapsw and ipe4_encapsw must be added atomically */
 #ifdef INET
-	(void) encap_attach_func(AF_INET, -1,
-		ipe4_encapcheck, &ipe4_encapsw, NULL);
+	(void)encap_attach_func(AF_INET, -1, ipe4_encapcheck, &ipe4_encapsw,
+	    NULL);
 #endif
 #ifdef INET6
-	(void) encap_attach_func(AF_INET6, -1,
-		ipe4_encapcheck, &ipe4_encapsw6, NULL);
+	(void)encap_attach_func(AF_INET6, -1, ipe4_encapcheck, &ipe4_encapsw6,
+	    NULL);
 #endif
 	encap_lock_exit();
 }
