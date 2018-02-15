@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.54.2.2 2018/01/26 19:51:19 martin Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.54.2.3 2018/02/15 07:58:04 martin Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.54.2.2 2018/01/26 19:51:19 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.54.2.3 2018/02/15 07:58:04 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -628,6 +628,7 @@ ah_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 	int hl, rplen, authsize, error, stat = AH_STAT_HDROPS;
 	struct cryptodesc *crda;
 	struct cryptop *crp = NULL;
+	uint8_t nxt;
 
 	IPSEC_SPLASSERT_SOFTNET(__func__);
 
@@ -646,6 +647,8 @@ ah_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 		stat = AH_STAT_HDROPS;	/*XXX*/
 		goto bad;
 	}
+
+	nxt = ah->ah_nxt;
 
 	/* Check replay window, if applicable. */
 	if (sav->replay && !ipsec_chkreplay(ntohl(ah->ah_seq), sav)) {
@@ -672,6 +675,18 @@ ah_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 		error = EACCES;
 		goto bad;
 	}
+	if (skip + authsize + rplen > m->m_pkthdr.len) {
+		char buf[IPSEC_ADDRSTRLEN];
+		DPRINTF(("%s: bad mbuf length %u (expecting >= %lu)"
+			" for packet in SA %s/%08lx\n", __func__,
+			m->m_pkthdr.len, (u_long)(skip + authsize + rplen),
+			ipsec_address(&sav->sah->saidx.dst, buf, sizeof(buf)),
+			(u_long) ntohl(sav->spi)));
+		stat = AH_STAT_BADAUTHL;
+		error = EACCES;
+		goto bad;
+	}
+
 	AH_STATADD(AH_STAT_IBYTES, m->m_pkthdr.len - skip - hl);
 
 	/* Get crypto descriptors. */
@@ -761,7 +776,7 @@ ah_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 	tc->tc_spi = sav->spi;
 	tc->tc_dst = sav->sah->saidx.dst;
 	tc->tc_proto = sav->sah->saidx.proto;
-	tc->tc_nxt = ah->ah_nxt;
+	tc->tc_nxt = nxt;
 	tc->tc_protoff = protoff;
 	tc->tc_skip = skip;
 	tc->tc_sav = sav;
