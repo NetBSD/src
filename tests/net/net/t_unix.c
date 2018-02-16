@@ -1,4 +1,4 @@
-/*	$NetBSD: t_unix.c,v 1.14 2018/02/16 16:30:20 christos Exp $	*/
+/*	$NetBSD: t_unix.c,v 1.15 2018/02/16 22:17:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$Id: t_unix.c,v 1.14 2018/02/16 16:30:20 christos Exp $");
+__RCSID("$Id: t_unix.c,v 1.15 2018/02/16 22:17:17 christos Exp $");
 #else
 #define getprogname() argv[0]
 #endif
@@ -135,6 +135,8 @@ test(bool closeit, size_t len)
 	gid_t egid;
 	struct sockaddr_un *sock_addr = NULL, *sun = NULL;
 	socklen_t sock_addrlen;
+	socklen_t peer_addrlen;
+	struct sockaddr_un peer_addr;
 
 	srvr = socket(AF_UNIX, SOCK_STREAM, 0);
 	if (srvr == -1)
@@ -182,13 +184,15 @@ test(bool closeit, size_t len)
 	CHECK_EQUAL(euid, geteuid(), "client");
 	CHECK_EQUAL(egid, getegid(), "client");
 
-#if 0
-	/* This is not symmetric? It is supposed to work! */
-	if (getpeereid(srvr, &euid, &egid) == -1)
-		FAIL("getpeereid(srvr)");
-	CHECK_EQUAL(euid, geteuid(), "server");
-	CHECK_EQUAL(egid, getegid(), "server");
-#endif
+
+	acpt = acc(srvr);
+
+	peer_addrlen = sizeof(peer_addr);
+	memset(&peer_addr, 0, sizeof(peer_addr));
+	if (getpeername(acpt, (struct sockaddr *)&peer_addr,
+	    &peer_addrlen) == -1)
+		FAIL("getpeername");
+	print("peer", &peer_addr, peer_addrlen);
 
 	if (closeit) {
 		if (close(clnt) == -1)
@@ -196,23 +200,11 @@ test(bool closeit, size_t len)
 		clnt = -1;
 	}
 
-	acpt = acc(srvr);
-#if 0
-	/*
-	 * Both linux and NetBSD return ENOTCONN, why?
-	 */
-	if (!closeit) {
-		socklen_t peer_addrlen;
-		sockaddr_un peer_addr;
-
-		peer_addrlen = sizeof(peer_addr);
-		memset(&peer_addr, 0, sizeof(peer_addr));
-		if (getpeername(srvr, (struct sockaddr *)&peer_addr,
-		    &peer_addrlen) == -1)
-			FAIL("getpeername");
-		print("peer", &peer_addr, peer_addrlen);
-	}
-#endif
+	/* This is not symmetric? It is supposed to work! */
+	if (getpeereid(acpt, &euid, &egid) == -1)
+		FAIL("getpeereid(srvr)");
+	CHECK_EQUAL(euid, geteuid(), "server");
+	CHECK_EQUAL(egid, getegid(), "server");
 
 	if ((sock_addr = calloc(1, slen)) == NULL)
 		FAIL("calloc");
