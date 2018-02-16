@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.84 2018/02/15 09:23:47 ozaki-r Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.85 2018/02/16 09:07:50 maxv Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.84 2018/02/15 09:23:47 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.85 2018/02/16 09:07:50 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -108,10 +108,6 @@ int ip4_ah_cleartos = 1;		/* clear ip_tos when doing AH calc */
 SYSCTL_DECL(_net_inet_ah);
 SYSCTL_INT(_net_inet_ah, OID_AUTO,
 	ah_enable,	CTLFLAG_RW,	&ah_enable,	0, "");
-SYSCTL_INT(_net_inet_ah, OID_AUTO,
-	ah_cleartos,	CTLFLAG_RW,	&ip4_ah_cleartos,	0, "");
-SYSCTL_STRUCT(_net_inet_ah, IPSECCTL_STATS,
-	stats,		CTLFLAG_RD,	&ahstat,	ahstat, "");
 #endif /* __FreeBSD__ */
 
 static unsigned char ipseczeroes[256];	/* larger than an ip6 extension hdr */
