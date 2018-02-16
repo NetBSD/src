@@ -1,4 +1,6 @@
-/*-
+/*	$NetBSD: valkyriefbreg.h,v 1.2 2018/02/16 18:10:32 macallan Exp $	*/
+
+/*
  * Copyright (c) 2012 Michael Lorenz
  * All rights reserved.
  *
@@ -25,16 +27,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: valkyriefbreg.h,v 1.1 2012/01/24 04:33:11 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: valkyriefbreg.h,v 1.2 2018/02/16 18:10:32 macallan Exp $");
 
 #ifndef VALKYRIEFBREG_H
 #define VALKYRIEFBREG_H
 
-#define VAL_FB_OFFSET		0x00000000
-#define VAL_CMAP_OFFSET		0x00304000
+#define VAL_FB_OFFSET	0x00000000
+#define VAL_CMAP_OFFSET	0x00304000
 #define VAL_CMAP_ADDR	0x00000000
 #define VAL_CMAP_LUT	0x00000008
-#define VAL_REGS_OFFSET		0x0030a000
+#define VAL_REGS_OFFSET	0x0030a000
 #define VAL_MODE	0x00000000
 	#define VAL_MODE_STOP	0x80
 	#define VAL_MODE_NOSYNC	0x40
