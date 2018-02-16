@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.127 2018/02/16 08:56:50 maxv Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.128 2018/02/16 09:07:50 maxv Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.127 2018/02/16 08:56:50 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.128 2018/02/16 09:07:50 maxv Exp $");
 
 /*
  * IPsec controller part.
@@ -159,12 +159,6 @@ int	crypto_support = 0;
 
 static struct secpolicy *ipsec_getpolicybysock(struct mbuf *, u_int,
     struct inpcb_hdr *, int *);
-
-#ifdef __FreeBSD__
-/* net.inet.ipsec */
-SYSCTL_INT(_net_inet_ipsec, OID_AUTO,
-	crypto_support,	CTLFLAG_RW,	&crypto_support,0, "");
-#endif /* __FreeBSD__ */
 
 #ifdef INET6
 int ip6_esp_trans_deflev = IPSEC_LEVEL_USE;

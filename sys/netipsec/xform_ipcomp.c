@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipcomp.c,v 1.57 2018/02/15 13:51:32 maxv Exp $	*/
+/*	$NetBSD: xform_ipcomp.c,v 1.58 2018/02/16 09:07:50 maxv Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipcomp.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /* $OpenBSD: ip_ipcomp.c,v 1.1 2001/07/05 12:08:52 jjbg Exp $ */
 
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.57 2018/02/15 13:51:32 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.58 2018/02/16 09:07:50 maxv Exp $");
 
 /* IP payload compression protocol (IPComp), see RFC 2393 */
 #if defined(_KERNEL_OPT)
@@ -80,8 +80,6 @@ int ipcomp_enable = 1;
 SYSCTL_DECL(_net_inet_ipcomp);
 SYSCTL_INT(_net_inet_ipcomp, OID_AUTO,
 	ipcomp_enable,	CTLFLAG_RW,	&ipcomp_enable,	0, "");
-SYSCTL_STRUCT(_net_inet_ipcomp, IPSECCTL_STATS,
-	stats,		CTLFLAG_RD,	&ipcompstat,	ipcompstat, "");
 #endif /* __FreeBSD__ */
 
 static int ipcomp_input_cb(struct cryptop *crp);

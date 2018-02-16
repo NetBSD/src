@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.77 2018/02/15 12:40:12 maxv Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.78 2018/02/16 09:07:50 maxv Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.77 2018/02/15 12:40:12 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.78 2018/02/16 09:07:50 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -93,8 +93,6 @@ int esp_enable = 1;
 SYSCTL_DECL(_net_inet_esp);
 SYSCTL_INT(_net_inet_esp, OID_AUTO,
 	esp_enable,	CTLFLAG_RW,	&esp_enable,	0, "");
-SYSCTL_STRUCT(_net_inet_esp, IPSECCTL_STATS,
-	stats,		CTLFLAG_RD,	&espstat,	espstat, "");
 #endif /* __FreeBSD__ */
 
 static int esp_max_ivlen;		/* max iv length over all algorithms */
