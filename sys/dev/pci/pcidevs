@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1307 2018/01/25 16:02:12 sborrill Exp $
+$NetBSD: pcidevs,v 1.1308 2018/02/16 01:38:24 sevan Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -5745,6 +5745,7 @@ product NVIDIA	MCP73_AHCI_11	0x07fa	nForce MCP73 AHCI Controller
 product NVIDIA	MCP73_AHCI_12	0x07fb	nForce MCP73 AHCI Controller
 product NVIDIA	MCP73_HDA_1	0x07fc	nForce MCP73 High Definition Audio Controller
 product NVIDIA	MCP73_HDA_2	0x07fd	nForce MCP73 High Definition Audio Controller
+product NVIDIA	GEFORCE_9400M	0x0863	GeForce 9400M
 product NVIDIA	GEFORCE_210	0x0a65	GeForce 210
 product NVIDIA	MCP79_SMB	0x0aa2	nForce MCP79 SMBus Controller
 product NVIDIA	MCP79_LAN1	0x0ab0	nForce MCP79 Gigabit Ethernet Controller
