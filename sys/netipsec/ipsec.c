@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.125 2018/02/08 20:57:41 maxv Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.126 2018/02/16 08:51:28 maxv Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.125 2018/02/08 20:57:41 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.126 2018/02/16 08:51:28 maxv Exp $");
 
 /*
  * IPsec controller part.
@@ -133,7 +133,6 @@ int ip4_ah_trans_deflev = IPSEC_LEVEL_USE;
 int ip4_ah_net_deflev = IPSEC_LEVEL_USE;
 struct secpolicy ip4_def_policy;
 int ip4_ipsec_ecn = 0;		/* ECN ignore(-1)/forbidden(0)/allowed(1) */
-int ip4_esp_randpad = -1;
 
 u_int ipsec_spdgen = 1;		/* SPD generation # */
 
@@ -163,8 +162,6 @@ static struct secpolicy *ipsec_getpolicybysock(struct mbuf *, u_int,
 
 #ifdef __FreeBSD__
 /* net.inet.ipsec */
-SYSCTL_INT(_net_inet_ipsec, IPSECCTL_ESP_RANDPAD,
-	esp_randpad, CTLFLAG_RW,	&ip4_esp_randpad,	0, "");
 SYSCTL_INT(_net_inet_ipsec, OID_AUTO,
 	crypto_support,	CTLFLAG_RW,	&crypto_support,0, "");
 SYSCTL_INT(_net_inet_ipsec, OID_AUTO, test_replay, CTLFLAG_RW, &ipsec_replay, 0,
@@ -180,14 +177,6 @@ int ip6_ah_trans_deflev = IPSEC_LEVEL_USE;
 int ip6_ah_net_deflev = IPSEC_LEVEL_USE;
 struct secpolicy ip6_def_policy;
 int ip6_ipsec_ecn = 0;		/* ECN ignore(-1)/forbidden(0)/allowed(1) */
-int ip6_esp_randpad = -1;
-
-
-#ifdef __FreeBSD__
-/* net.inet6.ipsec6 */
-SYSCTL_INT(_net_inet6_ipsec6, IPSECCTL_ESP_RANDPAD,
-	esp_randpad, CTLFLAG_RW,	&ip6_esp_randpad,	0, "");
-#endif /* __FreeBSD__ */
 #endif /* INET6 */
 
 static int ipsec4_setspidx_inpcb (struct mbuf *, struct inpcb *);
