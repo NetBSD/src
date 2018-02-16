@@ -1,4 +1,4 @@
-/*	$NetBSD: pmu.c,v 1.29 2017/09/29 14:15:42 macallan Exp $ */
+/*	$NetBSD: pmu.c,v 1.30 2018/02/16 18:07:05 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.29 2017/09/29 14:15:42 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.30 2018/02/16 18:07:05 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -338,7 +338,7 @@ pmu_attach(device_t parent, device_t self, void *aux)
 
 	while (node != 0) {
 
-		if (OF_getprop(node, "name", name, 256) == 0)
+		if (OF_getprop(node, "name", name, 256) <= 0)
 			goto next;
 
 		if (strncmp(name, "pmu-i2c", 8) == 0) {
@@ -358,12 +358,12 @@ pmu_attach(device_t parent, device_t self, void *aux)
 			/* look for i2c devices */
 			devs = OF_child(node);
 			while (devs != 0) {
-				if (OF_getprop(devs, "name", name, 256) == 0)
+				if (OF_getprop(devs, "name", name, 256) <= 0)
 					goto skip;
 				if (OF_getprop(devs, "compatible",
-				    compat, 256) == 0)
+				    compat, 256) <= 0)
 					goto skip;
-				if (OF_getprop(devs, "reg", &addr, 4) == 0)
+				if (OF_getprop(devs, "reg", &addr, 4) <= 0)
 					goto skip;
 				addr = (addr & 0xff) >> 1;
 				DPRINTF("-> %s@%x\n", name, addr);
