@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.126 2018/02/16 08:51:28 maxv Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.127 2018/02/16 08:56:50 maxv Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.126 2018/02/16 08:51:28 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.127 2018/02/16 08:56:50 maxv Exp $");
 
 /*
  * IPsec controller part.
@@ -164,10 +164,6 @@ static struct secpolicy *ipsec_getpolicybysock(struct mbuf *, u_int,
 /* net.inet.ipsec */
 SYSCTL_INT(_net_inet_ipsec, OID_AUTO,
 	crypto_support,	CTLFLAG_RW,	&crypto_support,0, "");
-SYSCTL_INT(_net_inet_ipsec, OID_AUTO, test_replay, CTLFLAG_RW, &ipsec_replay, 0,
-	"Emulate replay attack");
-SYSCTL_INT(_net_inet_ipsec, OID_AUTO, test_integrity, CTLFLAG_RW,
-	&ipsec_integrity, 0, "Emulate man-in-the-middle attack");
 #endif /* __FreeBSD__ */
 
 #ifdef INET6
