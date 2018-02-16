@@ -1,4 +1,4 @@
-/*	$NetBSD: t_tcp.c,v 1.6 2017/08/28 10:19:57 christos Exp $	*/
+/*	$NetBSD: t_tcp.c,v 1.7 2018/02/16 16:23:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$Id: t_tcp.c,v 1.6 2017/08/28 10:19:57 christos Exp $");
+__RCSID("$Id: t_tcp.c,v 1.7 2018/02/16 16:23:15 christos Exp $");
 #endif
 
 /* Example code. Should block; does with accept not paccept. */
@@ -55,20 +55,8 @@ __RCSID("$Id: t_tcp.c,v 1.6 2017/08/28 10:19:57 christos Exp $");
 #include <stdlib.h>
 #include <signal.h>
 
-#ifdef TEST
-#define FAIL(msg)  err(EXIT_FAILURE, msg)
-#define FAILX(msg, ...)  err(EXIT_FAILURE, msg, ## __VA_ARGS__)
-#else 
-#include <atf-c.h> 
-#define FAIL(msg)  do { \
-		ATF_CHECK_MSG(0, msg " (%s)", strerror(errno)); \
-		goto fail; \
-	} while (/*CONSTCOND*/0)
-#define FAILX(msg, ...)  do { \
-	    ATF_CHECK_MSG(0, msg, ## __VA_ARGS__); \
-	    goto fail; \
-	} while (/*CONSTCOND*/0)
-#endif
+
+#include "test.h"
 
 #ifdef __linux__
 #define paccept(a, b, c, d, e) accept4((a), (b), (c), (e))
@@ -93,6 +81,8 @@ paccept_block(sa_family_t sfamily, sa_family_t cfamily,
 	struct sockaddr_in6 *sin6;
 	struct sigaction sa;
 	socklen_t slen;
+	uid_t euid;
+	gid_t egid;
 
 	srvr = socket(sfamily, SOCK_STREAM | SOCK_NONBLOCK, 0);
 	if (srvr == -1)
@@ -192,6 +182,18 @@ again:
 		FAIL("fnctl setfl");
 #endif
 
+	if (getpeereid(clnt, &euid, &egid) == -1)
+		FAIL("getpeereid(clnt)");
+	CHECK_EQUAL(euid, geteuid(), "client");
+	CHECK_EQUAL(egid, getegid(), "client");
+
+	/* This is not symmetric? */
+	if (getpeereid(srvr, &euid, &egid) == -1)
+		FAIL("getpeereid(srvr)");
+	CHECK_EQUAL(euid, geteuid(), "server");
+	CHECK_EQUAL(egid, getegid(), "server");
+
+
 	if (as == -1) {		/* not true under NetBSD */
 		as = paccept(srvr, NULL, NULL, NULL, pacceptblock ? 0 : SOCK_NONBLOCK);
 		if (as == -1)
@@ -202,7 +204,7 @@ again:
 		if (fl == -1)
 			FAIL("fnctl");
 		if (fl != (O_RDWR|O_NONBLOCK))
-			FAILX("fl 0x%x != 0x%x\n", fl, O_RDWR|O_NONBLOCK);
+			FAIL("fl 0x%x != 0x%x\n", fl, O_RDWR|O_NONBLOCK);
 		ok = fcntl(as, F_SETFL, fl & ~O_NONBLOCK);
 		if (ok == -1)
 			FAIL("fnctl setfl");
