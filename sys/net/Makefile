@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 2018/01/10 10:56:30 knakahara Exp $
+#	$NetBSD: Makefile,v 1.35 2018/02/16 04:48:32 knakahara Exp $
 
 INCSDIR= /usr/include/net
 
@@ -8,7 +8,7 @@ INCS=	bpf.h bpfjit.h bpfdesc.h dlt.h ethertypes.h if.h if_arc.h if_arp.h \
 	if_pflog.h if_ppp.h if_pppoe.h if_l2tp.h if_sppp.h if_srt.h if_stf.h \
 	if_tap.h if_token.h if_tun.h if_types.h if_vlanvar.h net_stats.h \
 	netisr.h pfil.h pfkeyv2.h pfvar.h ppp-comp.h ppp_defs.h radix.h \
-	raw_cb.h route.h slcompress.h slip.h zlib.h
+	raw_cb.h route.h rss_config.h slcompress.h slip.h zlib.h
 
 SUBDIR=	agr npf
 
