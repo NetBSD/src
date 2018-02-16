@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec6.h,v 1.21 2018/02/16 08:51:28 maxv Exp $	*/
+/*	$NetBSD: ipsec6.h,v 1.22 2018/02/16 15:18:41 maxv Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/ipsec6.h,v 1.1.4.1 2003/01/24 05:11:35 sam Exp $	*/
 /*	$KAME: ipsec.h,v 1.44 2001/03/23 08:08:47 itojun Exp $	*/
 
@@ -53,30 +53,23 @@ extern struct secpolicy ip6_def_policy;
 struct inpcb;
 struct in6pcb;
 
-/* KAME compatibility shims */
-#define	ipsec6_getpolicybyaddr	ipsec_getpolicybyaddr
-#define	ipsec6_getpolicybysock	ipsec_getpolicybysock
-
-int ipsec6_delete_pcbpolicy (struct in6pcb *);
-int ipsec6_set_policy (struct in6pcb *, int, const void *, size_t, kauth_cred_t);
-int ipsec6_get_policy (struct in6pcb *, const void *, size_t, struct mbuf **);
-struct secpolicy *ipsec6_checkpolicy (struct mbuf *, u_int, 
+int ipsec6_delete_pcbpolicy(struct in6pcb *);
+int ipsec6_set_policy(struct in6pcb *, int, const void *, size_t, kauth_cred_t);
+int ipsec6_get_policy(struct in6pcb *, const void *, size_t, struct mbuf **);
+struct secpolicy *ipsec6_checkpolicy(struct mbuf *, u_int, 
     u_int, int *, struct in6pcb *);
-struct secpolicy * ipsec6_check_policy(struct mbuf *, 
-				struct in6pcb *, int, int*,int*);
-int ipsec6_in_reject (struct mbuf *, struct in6pcb *);
+struct secpolicy *ipsec6_check_policy(struct mbuf *, 
+    struct in6pcb *, int, int*,int*);
+int ipsec6_in_reject(struct mbuf *, struct in6pcb *);
 
 struct tcp6cb;
 
-size_t ipsec6_hdrsiz (struct mbuf *, u_int, struct in6pcb *);
-size_t ipsec6_hdrsiz_tcp (struct tcpcb*);
-
-struct ip6_hdr;
-const char *ipsec6_logpacketstr (struct ip6_hdr *, u_int32_t);
+size_t ipsec6_hdrsiz(struct mbuf *, u_int, struct in6pcb *);
+size_t ipsec6_hdrsiz_tcp(struct tcpcb*);
 
 /* NetBSD protosw ctlin entrypoint */
-void * esp6_ctlinput(int, const struct sockaddr *, void *);
-void * ah6_ctlinput(int, const struct sockaddr *, void *);
+void *esp6_ctlinput(int, const struct sockaddr *, void *);
+void *ah6_ctlinput(int, const struct sockaddr *, void *);
 
 struct m_tag;
 int ipsec6_common_input(struct mbuf **, int *, int);
