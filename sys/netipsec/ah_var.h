@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_var.h,v 1.5 2017/04/13 16:38:32 christos Exp $	*/
+/*	$NetBSD: ah_var.h,v 1.6 2018/02/16 10:07:07 maxv Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/ah_var.h,v 1.1.4.1 2003/01/24 05:11:35 sam Exp $	*/
 /*	$OpenBSD: ip_ah.h,v 1.29 2002/06/09 16:26:10 itojun Exp $	*/
 /*
@@ -68,7 +68,6 @@
 
 #ifdef _KERNEL
 extern const uint8_t ah_stats[256];
-extern	int ah_enable;
-extern	int ah_cleartos;
+extern int ah_enable;
 #endif /* _KERNEL */
 #endif /* !_NETIPSEC_AH_VAR_H_ */
