@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.83 2018/02/15 17:53:48 martin Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.84 2018/02/16 16:43:12 martin Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -5252,4 +5252,8 @@ sys/netipsec/xform_ipip.c			1.56,1.57 via patch
 	possible use-after-free (Tunnel).
 	[maxv, ticket #1569]
 
+sys/netipsec/ipsec.c				1.130
+
+	Fix inverted logic that could crash the kernel.
+	[maxv, ticket #1570]
 
