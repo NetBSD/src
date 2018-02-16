@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.78 2018/02/16 04:50:19 knakahara Exp $*/
+/*$NetBSD: ixv.c,v 1.79 2018/02/16 10:11:21 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -784,6 +784,9 @@ ixv_init_locked(struct adapter *adapter)
 
 	/* And now turn on interrupts */
 	ixv_enable_intr(adapter);
+
+	/* Update saved flags. See ixgbe_ifflags_cb() */
+	adapter->if_flags = ifp->if_flags;
 
 	/* Now inform the stack we're ready */
 	ifp->if_flags |= IFF_RUNNING;
