@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enet.c,v 1.11 2017/06/09 18:14:59 ryo Exp $	*/
+/*	$NetBSD: if_enet.c,v 1.12 2018/02/16 08:42:45 ryo Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.11 2017/06/09 18:14:59 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.12 2018/02/16 08:42:45 ryo Exp $");
 
 #include "vlan.h"
 
@@ -1689,8 +1689,7 @@ enet_encap_txring(struct enet_softc *sc, struct mbuf **mp)
 	/* fill protocol cksum zero beforehand */
 	if (csumflags & (M_CSUM_UDPv4 | M_CSUM_TCPv4 |
 	    M_CSUM_UDPv6 | M_CSUM_TCPv6)) {
-		struct mbuf *m1;
-		int ehlen, moff;
+		int ehlen;
 		uint16_t etype;
 
 		m_copydata(m, ETHER_ADDR_LEN * 2, sizeof(etype), &etype);
@@ -1708,12 +1707,13 @@ enet_encap_txring(struct enet_softc *sc, struct mbuf **mp)
 		}
 
 		if (ehlen) {
-			m1 = m_getptr(m, ehlen +
+			const int off =
 			    M_CSUM_DATA_IPv4_IPHL(m->m_pkthdr.csum_data) +
-			    M_CSUM_DATA_IPv4_OFFSET(m->m_pkthdr.csum_data),
-			    &moff);
-			if (m1 != NULL)
-				*(uint16_t *)(mtod(m1, char *) + moff) = 0;
+			    M_CSUM_DATA_IPv4_OFFSET(m->m_pkthdr.csum_data);
+			if (m->m_pkthdr.len >= ehlen + off + sizeof(uint16_t)) {
+				uint16_t zero = 0;
+				m_copyback(m, ehlen + off, sizeof(zero), &zero);
+			}
 		}
 	}
 
