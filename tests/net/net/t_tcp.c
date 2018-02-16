@@ -1,4 +1,4 @@
-/*	$NetBSD: t_tcp.c,v 1.8 2018/02/16 16:30:20 christos Exp $	*/
+/*	$NetBSD: t_tcp.c,v 1.9 2018/02/16 19:24:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$Id: t_tcp.c,v 1.8 2018/02/16 16:30:20 christos Exp $");
+__RCSID("$Id: t_tcp.c,v 1.9 2018/02/16 19:24:16 christos Exp $");
 #endif
 
 /* Example code. Should block; does with accept not paccept. */
@@ -183,17 +183,11 @@ again:
 #endif
 
 	/* This is supposed to only work on Unix sockets but returns garbage */
-	if (getpeereid(clnt, &euid, &egid) == -1)
+	if (getpeereid(clnt, &euid, &egid) != -1)
 		FAIL("getpeereid(clnt)");
-	CHECK_EQUAL(euid, geteuid(), "client");
-	CHECK_EQUAL(egid, getegid(), "client");
-
 	/* This is supposed to only work on Unix sockets but returns garbage */
-	if (getpeereid(srvr, &euid, &egid) == -1)
+	if (getpeereid(srvr, &euid, &egid) != -1)
 		FAIL("getpeereid(srvr)");
-	CHECK_EQUAL(euid, geteuid(), "server");
-	CHECK_EQUAL(egid, getegid(), "server");
-
 
 	if (as == -1) {		/* not true under NetBSD */
 		as = paccept(srvr, NULL, NULL, NULL, pacceptblock ? 0 : SOCK_NONBLOCK);
