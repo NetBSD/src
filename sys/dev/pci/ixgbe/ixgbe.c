@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.121 2018/02/14 10:38:28 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.122 2018/02/16 04:50:19 knakahara Exp $ */
 
 /******************************************************************************
 
@@ -411,6 +411,10 @@ ixgbe_initialize_rss_mapping(struct adapter *adapter)
 	int             i, j;
 	u32             rss_hash_config;
 
+	/* force use default RSS key. */
+#ifdef __NetBSD__
+	rss_getkey((uint8_t *) &rss_key);
+#else
 	if (adapter->feat_en & IXGBE_FEATURE_RSS) {
 		/* Fetch the configured RSS key */
 		rss_getkey((uint8_t *) &rss_key);
@@ -418,6 +422,7 @@ ixgbe_initialize_rss_mapping(struct adapter *adapter)
 		/* set up random bits */
 		cprng_fast(&rss_key, sizeof(rss_key));
 	}
+#endif
 
 	/* Set multiplier for RETA setup and table size based on MAC */
 	index_mult = 0x1;
