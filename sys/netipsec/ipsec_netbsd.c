@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_netbsd.c,v 1.45 2017/08/03 06:32:51 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec_netbsd.c,v 1.46 2018/02/16 09:24:55 maxv Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.45 2017/08/03 06:32:51 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.46 2018/02/16 09:24:55 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -698,10 +698,29 @@ sysctl_net_inet_ipsec_setup(struct sysctllog **clog)
 		       CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "ah_enable", NULL,
+		       NULL, 0, &ah_enable, 0,
+		       CTL_NET, PF_INET, ipproto_ipsec,
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "esp_enable", NULL,
+		       NULL, 0, &esp_enable, 0,
+		       CTL_NET, PF_INET, ipproto_ipsec,
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "ipcomp_enable", NULL,
+		       NULL, 0, &ipcomp_enable, 0,
+		       CTL_NET, PF_INET, ipproto_ipsec,
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "crypto_support", NULL,
 		       NULL, 0, &crypto_support, 0,
 		       CTL_NET, PF_INET, ipproto_ipsec,
 		       CTL_CREATE, CTL_EOL);
+
 #ifdef IPSEC_DEBUG
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
