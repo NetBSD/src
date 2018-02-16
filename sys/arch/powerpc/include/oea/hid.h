@@ -1,4 +1,4 @@
-/*	$NetBSD: hid.h,v 1.11 2017/07/07 22:13:35 macallan Exp $	*/
+/*	$NetBSD: hid.h,v 1.12 2018/02/16 18:04:06 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -171,5 +171,19 @@
 #define	HID1_DFS2	0x00400000	/* Dynamic Freq Switch / 2 (7447A) */
 #define	HID1_SYNCBE	0x00000800	/* Enable sync/eieio broadcast */
 #define	HID1_ABE	0x00000400	/* Enable address broadcast */
+
+/* PPC970 HID4 */
+#define HID4_RMLR0	0x0000000000000020	/* real mode limit bit 0 */
+#define HID4_RMLR1	0x4000000000000000	/* real mode limit bit 1 */
+#define HID4_RMLR2	0x2000000000000000	/* real mode limit bit 2 */
+/*
+ * real mode limit bits 012
+ * 011 - 64MB
+ * 111 - 128MB
+ * 100 - 256MB
+ * x10 - 1GB
+ * x01 - 16GB
+ * 000 - 256GB
+ */
 
 #endif /* _POWERPC_OEA_HID_H_ */
