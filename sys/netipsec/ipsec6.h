@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec6.h,v 1.20 2017/10/03 08:56:52 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec6.h,v 1.21 2018/02/16 08:51:28 maxv Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/ipsec6.h,v 1.1.4.1 2003/01/24 05:11:35 sam Exp $	*/
 /*	$KAME: ipsec.h,v 1.44 2001/03/23 08:08:47 itojun Exp $	*/
 
@@ -48,7 +48,6 @@ extern int ip6_esp_net_deflev;
 extern int ip6_ah_trans_deflev;
 extern int ip6_ah_net_deflev;
 extern int ip6_ipsec_ecn;
-extern int ip6_esp_randpad;
 extern struct secpolicy ip6_def_policy;
 
 struct inpcb;

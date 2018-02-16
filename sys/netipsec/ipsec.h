@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.64 2018/02/14 14:28:40 maxv Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.65 2018/02/16 08:51:28 maxv Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -253,7 +253,6 @@ extern int ip4_ah_cleartos;
 extern int ip4_ah_offsetmask;
 extern int ip4_ipsec_dfbit;
 extern int ip4_ipsec_ecn;
-extern int ip4_esp_randpad;
 extern int crypto_support;
 
 #include <sys/syslog.h>
