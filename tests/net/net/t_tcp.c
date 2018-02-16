@@ -1,4 +1,4 @@
-/*	$NetBSD: t_tcp.c,v 1.9 2018/02/16 19:24:16 christos Exp $	*/
+/*	$NetBSD: t_tcp.c,v 1.10 2018/02/16 22:20:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$Id: t_tcp.c,v 1.9 2018/02/16 19:24:16 christos Exp $");
+__RCSID("$Id: t_tcp.c,v 1.10 2018/02/16 22:20:18 christos Exp $");
 #endif
 
 /* Example code. Should block; does with accept not paccept. */
@@ -71,7 +71,7 @@ static void
 paccept_block(sa_family_t sfamily, sa_family_t cfamily,
     bool pacceptblock, bool fcntlblock)
 {
-	int srvr = -1, clnt = -1, as = -1;
+	int srvr = -1, clnt = -1, acpt = -1;
 	int ok, fl;
 	int count = 5;
 	ssize_t n;
@@ -154,7 +154,7 @@ paccept_block(sa_family_t sfamily, sa_family_t cfamily,
 	ok = connect(clnt, (struct sockaddr *) &bs, addrlen);
 	if (ok != -1 || errno != EINPROGRESS)
 		FAIL("expected connect to fail");
-	as = paccept(srvr, NULL, NULL, NULL, pacceptblock ? 0 : SOCK_NONBLOCK);
+	acpt = paccept(srvr, NULL, NULL, NULL, pacceptblock ? 0 : SOCK_NONBLOCK);
 again:
 	ok = connect(clnt, (struct sockaddr *) &bs, addrlen);
 	if (ok == -1 && errno != EISCONN) {
@@ -182,29 +182,30 @@ again:
 		FAIL("fnctl setfl");
 #endif
 
+	if (acpt == -1) {		/* not true under NetBSD */
+		acpt = paccept(srvr, NULL, NULL, NULL,
+		    pacceptblock ? 0 : SOCK_NONBLOCK);
+		if (acpt == -1)
+			FAIL("paccept");
+	}
 	/* This is supposed to only work on Unix sockets but returns garbage */
 	if (getpeereid(clnt, &euid, &egid) != -1)
 		FAIL("getpeereid(clnt)");
 	/* This is supposed to only work on Unix sockets but returns garbage */
-	if (getpeereid(srvr, &euid, &egid) != -1)
+	if (getpeereid(acpt, &euid, &egid) != -1)
 		FAIL("getpeereid(srvr)");
 
-	if (as == -1) {		/* not true under NetBSD */
-		as = paccept(srvr, NULL, NULL, NULL, pacceptblock ? 0 : SOCK_NONBLOCK);
-		if (as == -1)
-			FAIL("paccept");
-	}
 	if (fcntlblock) {
-		fl = fcntl(as, F_GETFL, 0);
+		fl = fcntl(acpt, F_GETFL, 0);
 		if (fl == -1)
 			FAIL("fnctl");
 		if (fl != (O_RDWR|O_NONBLOCK))
 			FAIL("fl 0x%x != 0x%x\n", fl, O_RDWR|O_NONBLOCK);
-		ok = fcntl(as, F_SETFL, fl & ~O_NONBLOCK);
+		ok = fcntl(acpt, F_SETFL, fl & ~O_NONBLOCK);
 		if (ok == -1)
 			FAIL("fnctl setfl");
 
-		fl = fcntl(as, F_GETFL, 0);
+		fl = fcntl(acpt, F_GETFL, 0);
 		if (fl & O_NONBLOCK)
 			FAIL("fl non blocking after reset");
 	}
@@ -213,7 +214,7 @@ again:
 	sigemptyset(&sa.sa_mask);
 	sigaction(SIGALRM, &sa, NULL);
 	alarm(1);
-	n = read(as, buf, 10);
+	n = read(acpt, buf, 10);
 
 	if (pacceptblock || fcntlblock) {
 		if (n == -1 && errno != EINTR)
@@ -226,7 +227,7 @@ again:
 fail:
 	close(srvr);
 	close(clnt);
-	close(as);
+	close(acpt);
 }
 
 #ifndef TEST
