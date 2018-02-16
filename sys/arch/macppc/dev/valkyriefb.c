@@ -1,4 +1,4 @@
-/*	$NetBSD: valkyriefb.c,v 1.4 2016/07/06 13:30:42 macallan Exp $	*/
+/*	$NetBSD: valkyriefb.c,v 1.5 2018/02/16 18:13:47 macallan Exp $	*/
 
 /*
  * Copyright (c) 2012 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: valkyriefb.c,v 1.4 2016/07/06 13:30:42 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: valkyriefb.c,v 1.5 2018/02/16 18:13:47 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,6 +42,9 @@ __KERNEL_RCSID(0, "$NetBSD: valkyriefb.c,v 1.4 2016/07/06 13:30:42 macallan Exp 
 #include <dev/ofw/openfirm.h>
 
 #include <machine/autoconf.h>
+
+#include <uvm/uvm_extern.h>
+#include <powerpc/oea/pmap.h>
 
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wsconsio.h>
@@ -402,6 +405,7 @@ valkyriefb_mmap(void *v, void *vs, off_t offset, int prot)
 	/* 'regular' framebuffer mmap()ing */
 	if (offset < 0x100000) {
 		pa = (paddr_t)(sc->sc_base + 0x1000 + offset);	
+		pa |= POWERPC_MMAP_FLAG_PREFETCHABLE;
 		return pa;
 	}
 	return -1;
