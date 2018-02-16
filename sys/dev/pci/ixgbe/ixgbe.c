@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.122 2018/02/16 04:50:19 knakahara Exp $ */
+/* $NetBSD: ixgbe.c,v 1.123 2018/02/16 10:11:21 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -3778,6 +3778,9 @@ ixgbe_init_locked(struct adapter *adapter)
 		ctrl_ext |= IXGBE_CTRL_EXT_PFRSTD;
 		IXGBE_WRITE_REG(hw, IXGBE_CTRL_EXT, ctrl_ext);
 	}
+
+	/* Update saved flags. See ixgbe_ifflags_cb() */
+	adapter->if_flags = ifp->if_flags;
 
 	/* Now inform the stack we're ready */
 	ifp->if_flags |= IFF_RUNNING;
