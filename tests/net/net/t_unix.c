@@ -1,4 +1,4 @@
-/*	$NetBSD: t_unix.c,v 1.13 2018/02/16 16:23:15 christos Exp $	*/
+/*	$NetBSD: t_unix.c,v 1.14 2018/02/16 16:30:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$Id: t_unix.c,v 1.13 2018/02/16 16:23:15 christos Exp $");
+__RCSID("$Id: t_unix.c,v 1.14 2018/02/16 16:30:20 christos Exp $");
 #else
 #define getprogname() argv[0]
 #endif
@@ -183,7 +183,7 @@ test(bool closeit, size_t len)
 	CHECK_EQUAL(egid, getegid(), "client");
 
 #if 0
-	/* This is not symmetric? */
+	/* This is not symmetric? It is supposed to work! */
 	if (getpeereid(srvr, &euid, &egid) == -1)
 		FAIL("getpeereid(srvr)");
 	CHECK_EQUAL(euid, geteuid(), "server");
