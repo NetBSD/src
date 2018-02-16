@@ -1,4 +1,4 @@
-/*	$NetBSD: spr.h,v 1.3 2015/07/07 15:41:46 macallan Exp $	*/
+/*	$NetBSD: spr.h,v 1.4 2018/02/16 18:04:06 macallan Exp $	*/
 
 #ifndef _POWERPC_OEA_SPR_H_
 #define	_POWERPC_OEA_SPR_H_
@@ -28,6 +28,15 @@
 #define	SPR_RTCL_W		0x015	/* ..6. 601 RTC Lower - Write */
 #define	SPR_SDR1		0x019	/* ..68 Page table base address register */
 #define	SPR_VRSAVE		0x100	/* ..6. AltiVec VRSAVE */
+#define SPR_SCOMC		0x114	/* .... SCOM Control Register (970) */
+#define SPR_SCOMD		0x115	/* .... SCOM Data Register (970) */
+#define  SCOM_PCR		  0x0aa00100	/* Power Control Register */
+#define  SCOM_PCR_BIT		  0x80000000	/* Data bit */
+#define  SCOM_PSR		  0x40800100	/* Power Status Register */
+#define  PSR_RECEIVED		  (1ULL << 61)
+#define  PSR_COMPLETED		  (1ULL << 60)
+#define  SCOMC_READ		  0x00008000
+#define  SCOMC_WRITE		  0x00000000
 #define	SPR_ASR			0x118	/* ..6. Address Space Register (PPC64) */
 #define	SPR_EAR			0x11a	/* ..68 External Access Register */
 #define	  MPC601		  0x0001
