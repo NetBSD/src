@@ -1269,6 +1269,11 @@ void GetPcSpBp(void *context, uptr *pc, uptr *sp, uptr *bp) {
   *pc = _UC_MACHINE_PC(ucontext);
   *sp = _UC_MACHINE_SP(ucontext);
   *bp = ucontext->uc_mcontext.__gregs[_REG_R14];
+#elif defined(__ia64__) && SANITIZER_NETBSD
+  ucontext_t *ucontext = (ucontext_t*)context;
+  *pc = _UC_MACHINE_PC(ucontext);
+  *sp = _UC_MACHINE_SP(ucontext);
+  *bp = ucontext->uc_mcontext.__gregs[1];	/* XXX */
 #else
 # error "Unsupported arch"
 #endif
