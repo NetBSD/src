@@ -1,4 +1,4 @@
-/*	$NetBSD: t_unix.c,v 1.11 2013/11/13 21:41:23 christos Exp $	*/
+/*	$NetBSD: t_unix.c,v 1.12 2018/02/16 16:08:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$Id: t_unix.c,v 1.11 2013/11/13 21:41:23 christos Exp $");
+__RCSID("$Id: t_unix.c,v 1.12 2018/02/16 16:08:22 christos Exp $");
 #else
 #define getprogname() argv[0]
 #endif
@@ -62,6 +62,8 @@ __RCSID("$Id: t_unix.c,v 1.11 2013/11/13 21:41:23 christos Exp $");
 
 #ifdef TEST
 #define FAIL(msg, ...)	err(EXIT_FAILURE, msg, ## __VA_ARGS__)
+#define CHECK_EQUAL(a, b) if ((a) != (b)) \
+    errx(EXIT_FAILURE, # a "(%ju) != " # b "(%ju)", (uintmax_t)(a), (uintmax_t)((b));
 #else
 
 #include <atf-c.h>
@@ -70,7 +72,7 @@ __RCSID("$Id: t_unix.c,v 1.11 2013/11/13 21:41:23 christos Exp $");
 		ATF_CHECK_MSG(0, msg, ## __VA_ARGS__); \
 		goto fail; \
 	} while (/*CONSTCOND*/0)
-
+#define CHECK_EQUAL(a, b) ATF_CHECK_EQ(a, b) 
 #endif
 
 #define OF offsetof(struct sockaddr_un, sun_path)
@@ -142,6 +144,8 @@ test(bool closeit, size_t len)
 	size_t slen;
 	socklen_t sl;
 	int srvr = -1, clnt = -1, acpt = -1;
+	uid_t euid;
+	gid_t egid;
 	struct sockaddr_un *sock_addr = NULL, *sun = NULL;
 	socklen_t sock_addrlen;
 
@@ -185,6 +189,19 @@ test(bool closeit, size_t len)
 
 	if (connect(clnt, (const struct sockaddr *)sun, sl) == -1)
 		FAIL("connect");
+
+	if (getpeereid(clnt, &euid, &egid) == -1)
+		FAIL("getpeereid(clnt)");
+	CHECK_EQUAL(euid, geteuid());
+	CHECK_EQUAL(egid, getegid());
+
+#if 0
+	/* This is not symmetric? */
+	if (getpeereid(srvr, &euid, &egid) == -1)
+		FAIL("getpeereid(srvr)");
+	CHECK_EQUAL(euid, geteuid());
+	CHECK_EQUAL(egid, getegid());
+#endif
 
 	if (closeit) {
 		if (close(clnt) == -1)
