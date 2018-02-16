@@ -1,4 +1,4 @@
-/* $NetBSD: ipsec.c,v 1.130 2018/02/16 11:25:16 maxv Exp $ */
+/* $NetBSD: ipsec.c,v 1.131 2018/02/16 15:18:41 maxv Exp $ */
 /* $FreeBSD: src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $ */
 /* $KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $ */
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.130 2018/02/16 11:25:16 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.131 2018/02/16 15:18:41 maxv Exp $");
 
 /*
  * IPsec controller part.
@@ -540,7 +540,7 @@ ipsec_getpolicybysock(struct mbuf *m, u_int dir, struct inpcb_hdr *inph,
  *		ENOENT	: ipsec_acquire() in progress, maybe.
  *		others	: error occurred.
  */
-struct secpolicy *
+static struct secpolicy *
 ipsec_getpolicybyaddr(struct mbuf *m, u_int dir, int flag, int *error)
 {
 	struct secpolicyindex spidx;
@@ -572,7 +572,7 @@ ipsec_getpolicybyaddr(struct mbuf *m, u_int dir, int flag, int *error)
 	return sp;
 }
 
-struct secpolicy *
+static struct secpolicy *
 ipsec4_checkpolicy(struct mbuf *m, u_int dir, u_int flag, int *error,
     struct inpcb *inp)
 {
@@ -766,7 +766,7 @@ ipsec4_forward(struct mbuf *m, int *destmtu)
 	size_t ipsechdr;
 	int error;
 
-	sp = ipsec4_getpolicybyaddr(m,
+	sp = ipsec_getpolicybyaddr(m,
 	    IPSEC_DIR_OUTBOUND, IP_FORWARDING, &error);
 	if (sp == NULL) {
 		return EINVAL;
@@ -1687,14 +1687,10 @@ ipsec_get_reqlevel(const struct ipsecrequest *isr)
 }
 
 /*
- * Check security policy requirements against the actual
- * packet contents.  Return one if the packet should be
- * reject as "invalid"; otherwiser return zero to have the
- * packet treated as "valid".
+ * Check security policy requirements against the actual packet contents.
  *
- * OUT:
- *	0: valid
- *	1: invalid
+ * If the SP requires an IPsec packet, and the packet was neither AH nor ESP,
+ * then kick it.
  */
 int
 ipsec_in_reject(const struct secpolicy *sp, const struct mbuf *m)
@@ -1740,7 +1736,7 @@ ipsec_in_reject(const struct secpolicy *sp, const struct mbuf *m)
 			break;
 		case IPPROTO_IPCOMP:
 			/*
-			 * we don't really care, as IPcomp document
+			 * We don't really care, as IPcomp document
 			 * says that we shouldn't compress small
 			 * packets, IPComp policy should always be
 			 * treated as being in "use" level.
@@ -1765,12 +1761,9 @@ ipsec4_in_reject(struct mbuf *m, struct inpcb *inp)
 
 	KASSERT(m != NULL);
 
-	/* get SP for this packet.
-	 * When we are called from ip_forward(), we call
-	 * ipsec_getpolicybyaddr() with IP_FORWARDING flag.
-	 */
 	if (inp == NULL)
-		sp = ipsec_getpolicybyaddr(m, IPSEC_DIR_INBOUND, IP_FORWARDING, &error);
+		sp = ipsec_getpolicybyaddr(m, IPSEC_DIR_INBOUND,
+		    IP_FORWARDING, &error);
 	else
 		sp = ipsec_getpolicybysock(m, IPSEC_DIR_INBOUND,
 		    (struct inpcb_hdr *)inp, &error);
@@ -1781,12 +1774,10 @@ ipsec4_in_reject(struct mbuf *m, struct inpcb *inp)
 			IPSEC_STATINC(IPSEC_STAT_IN_POLVIO);
 		KEY_SP_UNREF(&sp);
 	} else {
-		result = 0;	/* XXX should be panic ?
-				 * -> No, there may be error. */
+		result = 0;
 	}
 	return result;
 }
-
 
 #ifdef INET6
 /*
@@ -1797,20 +1788,15 @@ ipsec4_in_reject(struct mbuf *m, struct inpcb *inp)
 int
 ipsec6_in_reject(struct mbuf *m, struct in6pcb *in6p)
 {
-	struct secpolicy *sp = NULL;
+	struct secpolicy *sp;
 	int error;
 	int result;
 
 	KASSERT(m != NULL);
 
-	/*
-	 * Get SP for this packet.
-	 * When we are called from ip_forward(), we call
-	 * ipsec_getpolicybyaddr() with IP_FORWARDING flag.
-	 */
 	if (in6p == NULL)
-		sp = ipsec_getpolicybyaddr(m, IPSEC_DIR_INBOUND, IP_FORWARDING,
-		    &error);
+		sp = ipsec_getpolicybyaddr(m, IPSEC_DIR_INBOUND,
+		    IP_FORWARDING, &error);
 	else
 		sp = ipsec_getpolicybysock(m, IPSEC_DIR_INBOUND,
 		    (struct inpcb_hdr *)in6p, &error);
@@ -1904,7 +1890,6 @@ ipsec_hdrsiz(const struct secpolicy *sp, const struct mbuf *m)
 	return siz;
 }
 
-/* This function is called from ip_forward() and ipsec4_hdrsize_tcp(). */
 size_t
 ipsec4_hdrsiz(struct mbuf *m, u_int dir, struct inpcb *inp)
 {
@@ -1915,11 +1900,6 @@ ipsec4_hdrsiz(struct mbuf *m, u_int dir, struct inpcb *inp)
 	KASSERT(m != NULL);
 	KASSERTMSG(inp == NULL || inp->inp_socket != NULL, "socket w/o inpcb");
 
-	/*
-	 * Get SP for this packet.
-	 * When we are called from ip_forward(), we call
-	 * ipsec_getpolicybyaddr() with IP_FORWARDING flag.
-	 */
 	if (inp == NULL)
 		sp = ipsec_getpolicybyaddr(m, dir, IP_FORWARDING, &error);
 	else
@@ -1928,20 +1908,16 @@ ipsec4_hdrsiz(struct mbuf *m, u_int dir, struct inpcb *inp)
 
 	if (sp != NULL) {
 		size = ipsec_hdrsiz(sp, m);
-		KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_DATA, "size:%lu.\n",
-		    (unsigned long)size);
-
+		KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_DATA, "size:%zu.\n", size);
 		KEY_SP_UNREF(&sp);
 	} else {
 		size = 0;	/* XXX should be panic ? */
 	}
+
 	return size;
 }
 
 #ifdef INET6
-/* This function is called from ipsec6_hdrsize_tcp(),
- * and maybe from ip6_forward.()
- */
 size_t
 ipsec6_hdrsiz(struct mbuf *m, u_int dir, struct in6pcb *in6p)
 {
@@ -1953,23 +1929,23 @@ ipsec6_hdrsiz(struct mbuf *m, u_int dir, struct in6pcb *in6p)
 	KASSERTMSG(in6p == NULL || in6p->in6p_socket != NULL,
 	    "socket w/o inpcb");
 
-	/* get SP for this packet */
-	/* XXX Is it right to call with IP_FORWARDING. */
 	if (in6p == NULL)
 		sp = ipsec_getpolicybyaddr(m, dir, IP_FORWARDING, &error);
 	else
 		sp = ipsec_getpolicybysock(m, dir,
 		    (struct inpcb_hdr *)in6p, &error);
 
-	if (sp == NULL)
-		return 0;
-	size = ipsec_hdrsiz(sp, m);
-	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_DATA, "size:%zu.\n", size);
-	KEY_SP_UNREF(&sp);
+	if (sp != NULL) {
+		size = ipsec_hdrsiz(sp, m);
+		KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_DATA, "size:%zu.\n", size);
+		KEY_SP_UNREF(&sp);
+	} else {
+		size = 0;
+	}
 
 	return size;
 }
-#endif /*INET6*/
+#endif
 
 /*
  * Check the variable replay window.
