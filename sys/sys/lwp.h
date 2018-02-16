@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.177 2018/01/14 16:43:03 maxv Exp $	*/
+/*	$NetBSD: lwp.h,v 1.178 2018/02/16 07:11:50 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010
@@ -536,6 +536,7 @@ curlwp_bind(void)
 
 	bound = curlwp->l_pflag & LP_BOUND;
 	curlwp->l_pflag |= LP_BOUND;
+	__insn_barrier();
 
 	return bound;
 }
@@ -545,6 +546,7 @@ curlwp_bindx(int bound)
 {
 
 	KASSERT(curlwp->l_pflag & LP_BOUND);
+	__insn_barrier();
 	curlwp->l_pflag ^= bound ^ LP_BOUND;
 }
 
