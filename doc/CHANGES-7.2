@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.2,v 1.1.2.69 2018/02/15 17:02:15 martin Exp $
+# $NetBSD: CHANGES-7.2,v 1.1.2.70 2018/02/16 16:39:48 martin Exp $
 
 A complete list of changes from the NetBSD 7.1 release to the NetBSD 7.2
 release:
@@ -5128,4 +5128,9 @@ sys/netipsec/xform_ipip.c			1.56,1.57 via patch
 	Several fixes in IPsec: strengthen sanity checks (AH/ESP), and fix
 	possible use-after-free (Tunnel).
 	[maxv, ticket #1569]
+
+sys/netipsec/ipsec.c				1.130
+
+	Fix inverted logic that could crash the kernel.
+	[maxv, ticket #1570]
 
