@@ -1,4 +1,6 @@
-/*-
+/*	$NetBSD: videopllvar.h,v 1.2 2018/02/16 18:10:32 macallan Exp $	*/
+
+/*
  * Copyright (c) 2012 Michael Lorenz
  * All rights reserved.
  *
@@ -25,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: videopllvar.h,v 1.1 2012/01/24 04:33:11 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: videopllvar.h,v 1.2 2018/02/16 18:10:32 macallan Exp $");
 
 #ifndef VIDEOPLLVAR_H
 #define VIDEOPLLVAR_H
