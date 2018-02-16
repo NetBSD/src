@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.65 2018/02/16 08:51:28 maxv Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.66 2018/02/16 15:18:41 maxv Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -271,9 +271,6 @@ void ipsec_pcbdisconn(struct inpcbpolicy *);
 void ipsec_invalpcbcacheall(void);
 
 struct inpcb;
-struct secpolicy *ipsec4_checkpolicy(struct mbuf *, u_int, u_int, int *,
-    struct inpcb *);
-struct secpolicy *ipsec_getpolicybyaddr(struct mbuf *, u_int, int, int *);
 int ipsec4_output(struct mbuf *, struct inpcb *, int, u_long *, bool *, bool *);
 int ipsec4_input(struct mbuf *, int);
 int ipsec4_forward(struct mbuf *, int *);
@@ -310,7 +307,6 @@ int ipsec_updatereplay(u_int32_t, const struct secasvar *);
 
 size_t ipsec4_hdrsiz(struct mbuf *, u_int, struct inpcb *);
 size_t ipsec4_hdrsiz_tcp(struct tcpcb *);
-#define ipsec4_getpolicybyaddr ipsec_getpolicybyaddr
 
 union sockaddr_union;
 const char *ipsec_address(const union sockaddr_union* sa, char *, size_t);

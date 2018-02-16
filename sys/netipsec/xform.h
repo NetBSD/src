@@ -1,4 +1,4 @@
-/*	$NetBSD: xform.h,v 1.13 2017/11/15 10:42:41 knakahara Exp $	*/
+/*	$NetBSD: xform.h,v 1.14 2018/02/16 15:18:41 maxv Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipsp.h,v 1.119 2002/03/14 01:27:11 millert Exp $	*/
 /*
@@ -105,24 +105,23 @@ extern int xform_init(struct secasvar *sav, int xftype);
 struct cryptoini;
 
 /* XF_IP4 */
-extern	int ip4_input6(struct mbuf **m, int *offp, int proto, void *);
-extern	void ip4_input(struct mbuf *m, int, int, void *);
-extern	int ipip_output(struct mbuf *, const struct ipsecrequest *,
-	    struct secasvar *, struct mbuf **, int, int);
+int ip4_input6(struct mbuf **m, int *offp, int proto, void *);
+void ip4_input(struct mbuf *m, int, int, void *);
+int ipip_output(struct mbuf *, const struct ipsecrequest *, struct secasvar *,
+    struct mbuf **, int, int);
 
 /* XF_AH */
-extern int ah_init0(struct secasvar *, const struct xformsw *,
-		    struct cryptoini *);
-extern int ah_zeroize(struct secasvar *sav);
-extern const struct auth_hash *ah_algorithm_lookup(int alg);
-extern size_t ah_hdrsiz(const struct secasvar *);
+int ah_init0(struct secasvar *, const struct xformsw *, struct cryptoini *);
+int ah_zeroize(struct secasvar *sav);
+const struct auth_hash *ah_algorithm_lookup(int alg);
+size_t ah_hdrsiz(const struct secasvar *);
 
 /* XF_ESP */
-extern const struct enc_xform *esp_algorithm_lookup(int alg);
-extern size_t esp_hdrsiz(const struct secasvar *sav);
+const struct enc_xform *esp_algorithm_lookup(int alg);
+size_t esp_hdrsiz(const struct secasvar *sav);
 
 /* XF_COMP */
-extern const struct comp_algo *ipcomp_algorithm_lookup(int alg);
+const struct comp_algo *ipcomp_algorithm_lookup(int alg);
 
 #endif /* _KERNEL */
 #endif /* !_NETIPSEC_XFORM_H_ */
