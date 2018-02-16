@@ -877,7 +877,7 @@ BUILDING
                    MACHINE/MACHINE_ARCH pairs, and then exits.  The -m or -a
                    options (or both) may be used to specify glob patterns that
                    will be used to narrow the list of results; for example,
-                   "build.sh -m 'evm*' -a '*arm*' list-arch" will list all
+                   "build.sh -m 'evb*' -a '*arm*' list-arch" will list all
                    known MACHINE/MACHINE_ARCH values in which either MACHINE
                    or ALIAS matches the pattern `evb*', and MACHINE_ARCH
                    matches the pattern `*arm*'.
