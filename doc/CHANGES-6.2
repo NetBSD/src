@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.323 2018/02/15 14:49:40 martin Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.324 2018/02/16 18:10:40 martin Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -21058,4 +21058,9 @@ sys/netipsec/xform_ipip.c			1.44 via patch
 
 	Fix IPv6-IPsec-AH tunnels.
 	[maxv, ticket #1529]
+
+sys/netipsec/ipsec.c				1.130
+
+	Fix inverted logic that could crash the kernel.
+	[maxv, ticket #1531]
 
