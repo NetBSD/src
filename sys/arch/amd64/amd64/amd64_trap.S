@@ -1,4 +1,4 @@
-/*	$NetBSD: amd64_trap.S,v 1.30 2018/02/17 20:59:14 maxv Exp $	*/
+/*	$NetBSD: amd64_trap.S,v 1.31 2018/02/17 21:05:58 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2017 The NetBSD Foundation, Inc.
@@ -303,6 +303,52 @@ IDTVEC(\name)
 IDTVEC_END(\name)
 .endm
 
+#ifndef check_swapgs
+/*
+ * We need to worry about traps in kernel mode while the kernel %gs isn't
+ * loaded. These are either faults on iretq during return to user or loads to
+ * %gs.
+ *
+ * When such traps happen, we have CPL=0 and %gs=userland, and we must perform
+ * an additional swapgs to get %gs=kernel.
+ */
+.macro	SWAPGS_HANDLER
+NENTRY(check_swapgs)
+	INTRENTRY_L(3f,1:)
+2:
+	sti
+	jmp	calltrap
+3:
+	/*
+	 * Trap in kernel mode.
+	 */
+
+	/* Case 1: fault on sysretq? */
+	leaq	do_sysret(%rip),%rdi
+	cmpq	%rdi,TF_RIP(%rsp)
+	je	1b
+
+	/* Case 2: fault on iretq? */
+	leaq	do_iret(%rip),%rdi
+	cmpq	%rdi,TF_RIP(%rsp)
+	jne	5f
+	movq	TF_RSP(%rsp),%rax	/* Must read %rsp, may be a pad word */
+	testb	$SEL_UPL,8(%rax)	/* Check %cs of outer iret frame */
+	je	2b			/* jump if iret was to kernel  */
+	jmp	1b			/* to user - must restore %gs */
+5:
+
+	/* Case 3: move to %gs? */
+	movq	TF_RIP(%rsp),%rax
+	movw	(%rax),%ax
+	andb	$070,%ah		/* mask mod/rm from mod/reg/rm */
+	cmpw	$0x8e+050*256,%ax	/* Any move to %gs (reg 5) */
+	jne	2b			/* No - normal kernel fault */
+	jmp	1b			/* Yes - restore %gs */
+END(check_swapgs)
+.endm
+#endif
+
 	.text
 
 	TEXT_USER_BEGIN
@@ -343,47 +389,7 @@ TRAP_ENTRY_POINT	trap31,T_RESERVED,1
 TRAP_ENTRY_POINT_SPUR	intrspurious,T_ASTFLT,1
 
 #ifndef check_swapgs
-/*
- * We need to worry about traps in kernel mode while the kernel %gs isn't
- * loaded. These are either faults on iretq during return to user or loads to
- * %gs.
- *
- * When such traps happen, we have CPL=0 and %gs=userland, and we must perform
- * an additional swapgs to get %gs=kernel.
- */
-NENTRY(check_swapgs)
-	INTRENTRY_L(3f,1:)
-2:
-	sti
-	jmp	calltrap
-3:
-	/*
-	 * Trap in kernel mode.
-	 */
-
-	/* Case 1: fault on sysretq? */
-	leaq	do_sysret(%rip),%rdi
-	cmpq	%rdi,TF_RIP(%rsp)
-	je	1b
-
-	/* Case 2: fault on iretq? */
-	leaq	do_iret(%rip),%rdi
-	cmpq	%rdi,TF_RIP(%rsp)
-	jne	5f
-	movq	TF_RSP(%rsp),%rax	/* Must read %rsp, may be a pad word */
-	testb	$SEL_UPL,8(%rax)	/* Check %cs of outer iret frame */
-	je	2b			/* jump if iret was to kernel  */
-	jmp	1b			/* to user - must restore %gs */
-5:
-
-	/* Case 3: move to %gs? */
-	movq	TF_RIP(%rsp),%rax
-	movw	(%rax),%ax
-	andb	$070,%ah		/* mask mod/rm from mod/reg/rm */
-	cmpw	$0x8e+050*256,%ax	/* Any move to %gs (reg 5) */
-	jne	2b			/* No - normal kernel fault */
-	jmp	1b			/* Yes - restore %gs */
-END(check_swapgs)
+SWAPGS_HANDLER
 #endif
 
 	TEXT_USER_END
