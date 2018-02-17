@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_input.c,v 1.29 2016/12/08 05:16:33 ozaki-r Exp $	 */
+/*	$NetBSD: ddp_input.c,v 1.30 2018/02/17 19:10:18 rjs Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -27,7 +27,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_input.c,v 1.29 2016/12/08 05:16:33 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_input.c,v 1.30 2018/02/17 19:10:18 rjs Exp $");
+#include "opt_atalk.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
