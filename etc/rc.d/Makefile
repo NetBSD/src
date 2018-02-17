@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.96 2018/01/09 03:31:14 christos Exp $
+# $NetBSD: Makefile,v 1.97 2018/02/17 03:02:04 uwe Exp $
 
 .include <bsd.own.mk>
 
@@ -17,8 +17,10 @@ CONFIGFILES=\
 		DAEMON DISKS LOGIN NETWORKING SERVERS \
 		accounting altqd amd apmd automount automountd autounmountd \
 		bluetooth bootconf.sh bootparams \
-		ccd cgd cleartmp cron devpubd \
-		dhclient dhcpcd dhcpd dhcrelay dmesg downinterfaces envsys \
+		ccd cgd cleartmp cron \
+		devpubd dhclient dhcpcd dhcpd dhcpd6 dhcrelay dmesg \
+		downinterfaces \
+		envsys \
 		fsck fsck_root ftp_proxy ftpd \
 		gpio \
 		hostapd httpd \
