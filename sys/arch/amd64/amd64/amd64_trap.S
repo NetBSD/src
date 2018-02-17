@@ -1,4 +1,4 @@
-/*	$NetBSD: amd64_trap.S,v 1.28 2018/02/17 20:41:57 maxv Exp $	*/
+/*	$NetBSD: amd64_trap.S,v 1.29 2018/02/17 20:47:04 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2017 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
 #define check_swapgs alltraps
 #endif
 
-#define	TRAP(a)	PRE_TRAP ; pushq $(a)
+#define	TRAP(a)		PRE_TRAP ; pushq $(a)
 #define	ZTRAP(a)	PRE_TRAP ; pushq $0 ; pushq $(a)
 
 .macro	TRAP_ENTRY_POINT	name,code,is_ztrap
@@ -127,6 +127,19 @@ IDTVEC(\name)
 		TRAP(\code)
 	.endif
 	jmp	check_swapgs
+IDTVEC_END(\name)
+.endm
+
+.macro	TRAP_ENTRY_POINT_DNA	name,code
+IDTVEC(\name)
+	ZTRAP(\code)
+	INTRENTRY
+#ifdef DIAGNOSTIC
+	movl	CPUVAR(ILEVEL),%ebx
+#endif
+	movq	%rsp,%rdi
+	call	_C_LABEL(fpudna)
+	jmp	.Lalltraps_checkusr
 IDTVEC_END(\name)
 .endm
 
@@ -257,17 +270,7 @@ IDTVEC_END(trap03)
 TRAP_ENTRY_POINT	trap04,T_OFLOW,1
 TRAP_ENTRY_POINT	trap05,T_BOUND,1
 TRAP_ENTRY_POINT	trap06,T_PRIVINFLT,1
-
-IDTVEC(trap07)
-	ZTRAP(T_DNA)
-	INTRENTRY
-#ifdef DIAGNOSTIC
-	movl	CPUVAR(ILEVEL),%ebx
-#endif
-	movq	%rsp,%rdi
-	call	_C_LABEL(fpudna)
-	jmp	.Lalltraps_checkusr
-IDTVEC_END(trap07)
+TRAP_ENTRY_POINT_DNA	trap07,T_DNA
 
 /*
  * Double faults execute on a particular stack, and we must not jump out
