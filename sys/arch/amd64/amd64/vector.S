@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.58 2018/02/09 08:42:26 maxv Exp $	*/
+/*	$NetBSD: vector.S,v 1.59 2018/02/17 18:51:53 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -560,8 +560,8 @@ INTRSTUB(x2apic_level,31,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
 
 #endif
 
-	.type _C_LABEL(i8259_stubs), @object
-LABEL(i8259_stubs)
+	.type _C_LABEL(legacy_stubs), @object
+LABEL(legacy_stubs)
 	.quad _C_LABEL(Xintr_legacy0), _C_LABEL(Xrecurse_legacy0)
 	.quad _C_LABEL(Xresume_legacy0)
 	.quad _C_LABEL(Xintr_legacy1), _C_LABEL(Xrecurse_legacy1)
@@ -594,7 +594,7 @@ LABEL(i8259_stubs)
 	.quad _C_LABEL(Xresume_legacy14)
 	.quad _C_LABEL(Xintr_legacy15), _C_LABEL(Xrecurse_legacy15)
 	.quad _C_LABEL(Xresume_legacy15)
-END(i8259_stubs)
+END(legacy_stubs)
 
 #if NIOAPIC > 0
 

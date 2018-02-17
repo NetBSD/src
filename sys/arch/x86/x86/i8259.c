@@ -1,4 +1,4 @@
-/*	$NetBSD: i8259.c,v 1.16 2013/11/06 20:19:03 mrg Exp $	*/
+/*	$NetBSD: i8259.c,v 1.17 2018/02/17 18:51:53 maxv Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i8259.c,v 1.16 2013/11/06 20:19:03 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i8259.c,v 1.17 2018/02/17 18:51:53 maxv Exp $");
 
 #include <sys/param.h> 
 #include <sys/systm.h>
@@ -116,8 +116,8 @@ struct pic i8259_pic = {
 	.pic_hwunmask = i8259_hwunmask,
 	.pic_addroute = i8259_setup,
 	.pic_delroute = i8259_setup,
-	.pic_level_stubs = i8259_stubs,
-	.pic_edge_stubs = i8259_stubs,
+	.pic_level_stubs = legacy_stubs,
+	.pic_edge_stubs = legacy_stubs,
 };
 
 void
