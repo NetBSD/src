@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1308 2018/02/16 01:38:24 sevan Exp $
+$NetBSD: pcidevs,v 1.1309 2018/02/17 00:45:14 sevan Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -449,7 +449,7 @@ vendor MINDSHARE	0x119a	Mind Share
 vendor OMEGA		0x119b	Omega Micro
 vendor ITI		0x119c	Information Technology Institute
 vendor BUG		0x119d	Bug Sapporo
-vendor FUJITSU3		0x119e	Fujitsu (3th PCI Vendor ID)
+vendor FUJITSU3		0x119e	Fujitsu (3rd PCI Vendor ID)
 vendor BULL		0x119f	Bull Hn Information Systems
 vendor CONVEX		0x11a0	Convex Computer
 vendor HAMAMATSU	0x11a1	Hamamatsu Photonics
