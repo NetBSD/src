@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.279 2018/01/20 08:45:28 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.280 2018/02/17 17:44:09 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.279 2018/01/20 08:45:28 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.280 2018/02/17 17:44:09 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -559,7 +559,7 @@ static void pmap_init_pcpu(void);
 #ifdef __HAVE_DIRECT_MAP
 static void pmap_init_directmap(struct pmap *);
 #endif
-#if !defined(XEN) && !defined(SVS)
+#if !defined(XEN)
 static void pmap_remap_global(void);
 #endif
 #ifndef XEN
@@ -1289,7 +1289,7 @@ pmap_bootstrap(vaddr_t kva_start)
 	 * operation of the system.
 	 */
 
-#if !defined(XEN) && !defined(SVS)
+#if !defined(XEN)
 	/*
 	 * Begin to enable global TLB entries if they are supported.
 	 * The G bit has no effect until the CR4_PGE bit is set in CR4,
@@ -1655,7 +1655,7 @@ pmap_init_directmap(struct pmap *kpm)
 }
 #endif /* __HAVE_DIRECT_MAP */
 
-#if !defined(XEN) && !defined(SVS)
+#if !defined(XEN)
 /*
  * Remap all of the virtual pages created so far with the PG_G bit.
  */
