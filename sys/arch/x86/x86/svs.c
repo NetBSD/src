@@ -1,4 +1,4 @@
-/*	$NetBSD: svs.c,v 1.1 2018/02/11 09:39:37 maxv Exp $	*/
+/*	$NetBSD: svs.c,v 1.2 2018/02/17 17:44:09 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.1 2018/02/11 09:39:37 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.2 2018/02/17 17:44:09 maxv Exp $");
 
 #include "opt_svs.h"
 
@@ -38,6 +38,8 @@ __KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.1 2018/02/11 09:39:37 maxv Exp $");
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/cpu.h>
+
+#include <machine/cpuvar.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_page.h>
@@ -424,3 +426,83 @@ svs_pdir_switch(struct pmap *pmap)
 
 	mutex_exit(&ci->ci_svs_mtx);
 }
+
+static void
+svs_pgg_scanlvl(bool enable, int lvl, vaddr_t *levels)
+{
+	pd_entry_t *pde = (pd_entry_t *)(levels[lvl-1]);
+	pt_entry_t set, rem;
+	size_t i, start;
+	paddr_t pa;
+	int nlvl;
+
+	set = enable ? PG_G : 0;
+	rem = enable ? 0 : PG_G;
+
+	start = (lvl == 4) ? 256 : 0;
+
+	for (i = start; i < 512; i++) {
+		if (!pmap_valid_entry(pde[i])) {
+			continue;
+		}
+		if (lvl == 1) {
+			pde[i] = (pde[i] & ~rem) | set;
+		} else if (pde[i] & PG_PS) {
+			pde[i] = (pde[i] & ~rem) | set;
+		} else {
+			pa = (paddr_t)(pde[i] & PG_FRAME);
+			nlvl = lvl - 1;
+
+			/* remove the previous mapping */
+			pmap_kremove_local(levels[nlvl-1], PAGE_SIZE);
+
+			/* kenter the lower level */
+			pmap_kenter_pa(levels[nlvl-1], pa,
+			    VM_PROT_READ|VM_PROT_WRITE, 0);
+			pmap_update(pmap_kernel());
+
+			/* go to the lower level */
+			svs_pgg_scanlvl(enable, nlvl, levels);
+		}
+	}
+}
+
+static void
+svs_pgg_update(bool enable)
+{
+	const paddr_t pa = pmap_pdirpa(pmap_kernel(), 0);
+	vaddr_t levels[4];
+	size_t i;
+
+	if (!(cpu_feature[0] & CPUID_PGE)) {
+		return;
+	}
+
+	pmap_pg_g = enable ? PG_G : 0;
+
+	for (i = 0; i < 4; i++) {
+		levels[i] = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
+		    UVM_KMF_VAONLY);
+	}
+
+	pmap_kenter_pa(levels[3], pa, VM_PROT_READ|VM_PROT_WRITE, 0);
+	pmap_update(pmap_kernel());
+
+	svs_pgg_scanlvl(enable, 4, levels);
+
+	for (i = 0; i < 4; i++) {
+		pmap_kremove_local(levels[i], PAGE_SIZE);
+		uvm_km_free(kernel_map, levels[i], PAGE_SIZE, UVM_KMF_VAONLY);
+	}
+
+	tlbflushg();
+}
+
+void svs_init(void);
+
+void
+svs_init(void)
+{
+	svs_pgg_update(false);
+}
+
