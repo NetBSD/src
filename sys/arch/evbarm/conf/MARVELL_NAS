@@ -1,4 +1,4 @@
-#	$NetBSD: MARVELL_NAS,v 1.28 2017/09/14 07:58:40 mrg Exp $
+#	$NetBSD: MARVELL_NAS,v 1.29 2018/02/17 01:31:02 sevan Exp $
 #
 #  This configuration supports for generically Marvell NAS.
 
@@ -241,7 +241,7 @@ options 	BUFQ_PRIOCSCAN
 options 	DDB		# in-kernel debugger
 options 	DDB_ONPANIC=0
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
-options 	DDB_COMMANDONENTER="bt"
+#options 	DDB_COMMANDONENTER="bt"
 #options 	KGDB
 #options		SYSCALL_DEBUG
 
