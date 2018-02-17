@@ -1,4 +1,4 @@
-/*	$NetBSD: t_unix.c,v 1.16 2018/02/17 16:34:18 christos Exp $	*/
+/*	$NetBSD: t_unix.c,v 1.17 2018/02/17 20:16:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$Id: t_unix.c,v 1.16 2018/02/17 16:34:18 christos Exp $");
+__RCSID("$Id: t_unix.c,v 1.17 2018/02/17 20:16:18 christos Exp $");
 #else
 #define getprogname() argv[0]
 #endif
@@ -127,17 +127,36 @@ fail:
 }
 
 static int
+peercred(int s, uid_t *euid, gid_t *egid, pid_t *pid)
+{
+#ifdef LOCAL_PEEREID
+	struct unpcbid cred;
+	socklen_t crl;
+	crl = sizeof(cred);
+	if (getsockopt(s, 0, LOCAL_PEEREID, &cred, &crl) == -1)
+		return -1;
+	*euid = cred.unp_euid;
+	*egid = cred.unp_egid;
+	*pid = cred.unp_pid;
+	return 0;
+#else
+	return getpeereid(s, euid, egid);
+#endif
+}
+
+static int
 test(bool forkit, bool closeit, size_t len)
 {
 	size_t slen;
-	socklen_t sl, crl;
+	socklen_t sl;
 	int srvr = -1, clnt = -1, acpt = -1;
+	uid_t euid;
+	gid_t egid;
 	pid_t srvrpid, clntpid;
 	struct sockaddr_un *sock_addr = NULL, *sun = NULL;
 	socklen_t sock_addrlen;
 	socklen_t peer_addrlen;
 	struct sockaddr_un peer_addr;
-	struct unpcbid cred;
 
 	srvrpid = clntpid = getpid();
 	srvr = socket(AF_UNIX, SOCK_STREAM, 0);
@@ -188,6 +207,7 @@ test(bool forkit, bool closeit, size_t len)
 	}
 
 	if (clntpid == getpid()) {
+		pid_t pid = srvrpid;
 		clnt = socket(AF_UNIX, SOCK_STREAM, 0);
 		if (clnt == -1)
 			FAIL("socket(client)");
@@ -195,12 +215,13 @@ test(bool forkit, bool closeit, size_t len)
 		if (connect(clnt, (const struct sockaddr *)sun, sl) == -1)
 			FAIL("connect");
 
-		crl = sizeof(cred);
-		if (getsockopt(clnt, 0, LOCAL_PEEREID, &cred, &crl) == -1)
-			FAIL("getsockopt()");
-		CHECK_EQUAL(cred.unp_euid, geteuid(), "client");
-		CHECK_EQUAL(cred.unp_egid, getegid(), "client");
-		CHECK_EQUAL(cred.unp_pid, srvrpid, "client");
+		if (peercred(clnt, &euid, &egid, &pid) == -1)
+			FAIL("peercred (client)");
+		printf("peercred(client) euid=%jd egid=%jd pid=%jd\n",
+			(intmax_t)euid, (intmax_t)egid, (intmax_t)pid);
+		CHECK_EQUAL(euid, geteuid(), "client");
+		CHECK_EQUAL(egid, getegid(), "client");
+		CHECK_EQUAL(pid, srvrpid, "client");
 	}
 
 	if (srvrpid == getpid()) {
@@ -223,12 +244,14 @@ test(bool forkit, bool closeit, size_t len)
 	}
 
 	if (srvrpid == getpid()) {
-		crl = sizeof(cred);
-		if (getsockopt(acpt, 0, LOCAL_PEEREID, &cred, &crl) == -1)
-			FAIL("getsockopt()");
-		CHECK_EQUAL(cred.unp_euid, geteuid(), "server");
-		CHECK_EQUAL(cred.unp_egid, getegid(), "server");
-		CHECK_EQUAL(cred.unp_pid, clntpid, "client");
+		pid_t pid = clntpid;
+		if (peercred(acpt, &euid, &egid, &pid) == -1)
+			FAIL("peercred (server)");
+		printf("peercred(server) euid=%jd egid=%jd pid=%jd\n",
+			(intmax_t)euid, (intmax_t)egid, (intmax_t)pid);
+		CHECK_EQUAL(euid, geteuid(), "server");
+		CHECK_EQUAL(egid, getegid(), "server");
+		CHECK_EQUAL(pid, clntpid, "server");
 
 		if ((sock_addr = calloc(1, slen)) == NULL)
 			FAIL("calloc");
