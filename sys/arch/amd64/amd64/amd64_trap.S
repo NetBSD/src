@@ -1,4 +1,4 @@
-/*	$NetBSD: amd64_trap.S,v 1.24 2018/02/09 08:54:11 maxv Exp $	*/
+/*	$NetBSD: amd64_trap.S,v 1.25 2018/02/17 20:22:05 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2017 The NetBSD Foundation, Inc.
@@ -95,26 +95,49 @@
 #define	PRE_TRAP
 #endif
 
-#define TRAPENTRY			\
-	INTRENTRY			; \
-	jmp	.Lalltraps_noentry
+#ifdef XEN
+/*
+ * I don't believe XEN generates in-kernel traps for the
+ * equivalent of iret, if it does this code would be needed
+ * in order to copy the user segment registers into the fault frame.
+ */
+#define check_swapgs alltraps
+#endif
 
 #define	TRAP_NJ(a)	PRE_TRAP ; pushq $(a)
 #define	ZTRAP_NJ(a)	PRE_TRAP ; pushq $0 ; pushq $(a)
-#define	TRAP(a)		TRAP_NJ(a) ; TRAPENTRY
-#define	ZTRAP(a)	ZTRAP_NJ(a) ; TRAPENTRY
+#define	TRAP(a)		TRAP_NJ(a) ;
+#define	ZTRAP(a)	ZTRAP_NJ(a) ;
+
+.macro	TRAP_ENTRY_POINT	name,code,is_ztrap
+IDTVEC(\name)
+	.if	\is_ztrap
+		ZTRAP(\code)
+	.else
+		TRAP(\code)
+	.endif
+	INTRENTRY
+	jmp	.Lalltraps_noentry
+IDTVEC_END(\name)
+.endm
+
+.macro	TRAP_ENTRY_POINT_SWAPGS	name,code,is_ztrap
+IDTVEC(\name)
+	.if	\is_ztrap
+		ZTRAP_NJ(\code)
+	.else
+		TRAP_NJ(\code)
+	.endif
+	jmp	check_swapgs
+IDTVEC_END(\name)
+.endm
 
 	.text
 
 	TEXT_USER_BEGIN
 
-IDTVEC(trap00)
-	ZTRAP(T_DIVIDE)
-IDTVEC_END(trap00)
-
-IDTVEC(trap01)
-	ZTRAP(T_TRCTRAP)
-IDTVEC_END(trap01)
+TRAP_ENTRY_POINT	trap00,T_DIVIDE,1
+TRAP_ENTRY_POINT	trap01,T_TRCTRAP,1
 
 /*
  * Non Maskable Interrupts are a special case: they can be triggered even
@@ -197,17 +220,9 @@ IDTVEC(trap03)
 #endif
 IDTVEC_END(trap03)
 
-IDTVEC(trap04)
-	ZTRAP(T_OFLOW)
-IDTVEC_END(trap04)
-
-IDTVEC(trap05)
-	ZTRAP(T_BOUND)
-IDTVEC_END(trap05)
-
-IDTVEC(trap06)
-	ZTRAP(T_PRIVINFLT)
-IDTVEC_END(trap06)
+TRAP_ENTRY_POINT	trap04,T_OFLOW,1
+TRAP_ENTRY_POINT	trap05,T_BOUND,1
+TRAP_ENTRY_POINT	trap06,T_PRIVINFLT,1
 
 IDTVEC(trap07)
 	ZTRAP_NJ(T_DNA)
@@ -259,41 +274,12 @@ IDTVEC(trap08)
 #endif
 IDTVEC_END(trap08)
 
-IDTVEC(trap09)
-	ZTRAP(T_FPOPFLT)
-IDTVEC_END(trap09)
-
-IDTVEC(trap10)
-	TRAP(T_TSSFLT)
-IDTVEC_END(trap10)
-
-#ifdef XEN
-/*
- * I don't believe XEN generates in-kernel traps for the
- * equivalent of iret, if it does this code would be needed
- * in order to copy the user segment registers into the fault frame.
- */
-#define check_swapgs alltraps
-#endif
-
-IDTVEC(trap11)		/* #NP() Segment not present */
-	TRAP_NJ(T_SEGNPFLT)
-	jmp	check_swapgs
-IDTVEC_END(trap11)
-
-IDTVEC(trap12)		/* #SS() Stack exception */
-	TRAP_NJ(T_STKFLT)
-	jmp	check_swapgs
-IDTVEC_END(trap12)
-
-IDTVEC(trap13)		/* #GP() General protection */
-	TRAP_NJ(T_PROTFLT)
-	jmp	check_swapgs
-IDTVEC_END(trap13)
-
-IDTVEC(trap14)
-	TRAP(T_PAGEFLT)
-IDTVEC_END(trap14)
+TRAP_ENTRY_POINT	trap09,T_FPOPFLT,1
+TRAP_ENTRY_POINT	trap10,T_TSSFLT,0
+TRAP_ENTRY_POINT_SWAPGS	trap11,T_SEGNPFLT,0
+TRAP_ENTRY_POINT_SWAPGS	trap12,T_STKFLT,0
+TRAP_ENTRY_POINT_SWAPGS	trap13,T_PROTFLT,0
+TRAP_ENTRY_POINT	trap14,T_PAGEFLT,0
 
 IDTVEC(trap15)
 	ZTRAP_NJ(T_ASTFLT)
@@ -316,45 +302,26 @@ IDTVEC(trap16)
 	jmp	.Lalltraps_checkusr
 IDTVEC_END(trap16)
 
-IDTVEC(trap17)
-	TRAP(T_ALIGNFLT)
-IDTVEC_END(trap17)
-
-IDTVEC(trap18)
-	ZTRAP(T_MCA)
-IDTVEC_END(trap18)
+TRAP_ENTRY_POINT	trap17,T_ALIGNFLT,0
+TRAP_ENTRY_POINT	trap18,T_MCA,1
 
 IDTVEC(trap19)
 	ZTRAP_NJ(T_XMM)
 	jmp	.Ldo_fputrap
 IDTVEC_END(trap19)
 
-IDTVEC(trap20)
-IDTVEC(trap21)
-IDTVEC(trap22)
-IDTVEC(trap23)
-IDTVEC(trap24)
-IDTVEC(trap25)
-IDTVEC(trap26)
-IDTVEC(trap27)
-IDTVEC(trap28)
-IDTVEC(trap29)
-IDTVEC(trap30)
-IDTVEC(trap31)
-	/* 20 - 31 reserved for future exp */
-	ZTRAP(T_RESERVED)
-IDTVEC_END(trap20)
-IDTVEC_END(trap21)
-IDTVEC_END(trap22)
-IDTVEC_END(trap23)
-IDTVEC_END(trap24)
-IDTVEC_END(trap25)
-IDTVEC_END(trap26)
-IDTVEC_END(trap27)
-IDTVEC_END(trap28)
-IDTVEC_END(trap29)
-IDTVEC_END(trap30)
-IDTVEC_END(trap31)
+TRAP_ENTRY_POINT	trap20,T_RESERVED,1
+TRAP_ENTRY_POINT	trap21,T_RESERVED,1
+TRAP_ENTRY_POINT	trap22,T_RESERVED,1
+TRAP_ENTRY_POINT	trap23,T_RESERVED,1
+TRAP_ENTRY_POINT	trap24,T_RESERVED,1
+TRAP_ENTRY_POINT	trap25,T_RESERVED,1
+TRAP_ENTRY_POINT	trap26,T_RESERVED,1
+TRAP_ENTRY_POINT	trap27,T_RESERVED,1
+TRAP_ENTRY_POINT	trap28,T_RESERVED,1
+TRAP_ENTRY_POINT	trap29,T_RESERVED,1
+TRAP_ENTRY_POINT	trap30,T_RESERVED,1
+TRAP_ENTRY_POINT	trap31,T_RESERVED,1
 
 IDTVEC(intrspurious)
 	ZTRAP_NJ(T_ASTFLT)
