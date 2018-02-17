@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.122 2018/01/23 13:57:57 roy Exp $	*/
+/*	$NetBSD: intr.c,v 1.123 2018/02/17 18:51:53 maxv Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.122 2018/01/23 13:57:57 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.123 2018/02/17 18:51:53 maxv Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -280,7 +280,7 @@ intr_default_setup(void)
 	/* icu vectors */
 	for (i = 0; i < NUM_LEGACY_IRQS; i++) {
 		idt_vec_reserve(ICU_OFFSET + i);
-		idt_vec_set(ICU_OFFSET + i, i8259_stubs[i].ist_entry);
+		idt_vec_set(ICU_OFFSET + i, legacy_stubs[i].ist_entry);
 	}
 
 	/*
