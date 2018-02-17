@@ -1,4 +1,4 @@
-/*	$NetBSD: amd64_trap.S,v 1.27 2018/02/17 20:33:28 maxv Exp $	*/
+/*	$NetBSD: amd64_trap.S,v 1.28 2018/02/17 20:41:57 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2017 The NetBSD Foundation, Inc.
@@ -104,10 +104,8 @@
 #define check_swapgs alltraps
 #endif
 
-#define	TRAP_NJ(a)	PRE_TRAP ; pushq $(a)
-#define	ZTRAP_NJ(a)	PRE_TRAP ; pushq $0 ; pushq $(a)
-#define	TRAP(a)		TRAP_NJ(a) ;
-#define	ZTRAP(a)	ZTRAP_NJ(a) ;
+#define	TRAP(a)	PRE_TRAP ; pushq $(a)
+#define	ZTRAP(a)	PRE_TRAP ; pushq $0 ; pushq $(a)
 
 .macro	TRAP_ENTRY_POINT	name,code,is_ztrap
 IDTVEC(\name)
@@ -124,9 +122,9 @@ IDTVEC_END(\name)
 .macro	TRAP_ENTRY_POINT_SWAPGS	name,code,is_ztrap
 IDTVEC(\name)
 	.if	\is_ztrap
-		ZTRAP_NJ(\code)
+		ZTRAP(\code)
 	.else
-		TRAP_NJ(\code)
+		TRAP(\code)
 	.endif
 	jmp	check_swapgs
 IDTVEC_END(\name)
@@ -135,9 +133,9 @@ IDTVEC_END(\name)
 .macro	TRAP_ENTRY_POINT_FPU	name,code,is_ztrap
 IDTVEC(\name)
 	.if	\is_ztrap
-		ZTRAP_NJ(\code)
+		ZTRAP(\code)
 	.else
-		TRAP_NJ(\code)
+		TRAP(\code)
 	.endif
 	INTRENTRY
 #ifdef DIAGNOSTIC
@@ -152,9 +150,9 @@ IDTVEC_END(\name)
 .macro	TRAP_ENTRY_POINT_SPUR	name,code,is_ztrap
 IDTVEC(\name)
 	.if	\is_ztrap
-		ZTRAP_NJ(\code)
+		ZTRAP(\code)
 	.else
-		TRAP_NJ(\code)
+		TRAP(\code)
 	.endif
 	INTRENTRY
 #ifdef DIAGNOSTIC
@@ -185,8 +183,10 @@ TRAP_ENTRY_POINT	trap01,T_TRCTRAP,1
 IDTVEC(trap02)
 #if defined(XEN)
 	ZTRAP(T_NMI)
+	INTRENTRY
+	jmp	.Lalltraps_noentry
 #else
-	ZTRAP_NJ(T_NMI)
+	ZTRAP(T_NMI)
 	subq	$TF_REGSIZE,%rsp
 	INTR_SAVE_GPRS
 	SVS_ENTER_ALTSTACK
@@ -226,8 +226,10 @@ IDTVEC_END(trap02)
 IDTVEC(trap03)
 #ifndef KDTRACE_HOOKS
 	ZTRAP(T_BPTFLT)
+	INTRENTRY
+	jmp	.Lalltraps_noentry
 #else
-	ZTRAP_NJ(T_BPTFLT)
+	ZTRAP(T_BPTFLT)
 	INTRENTRY
 	STI(si)
 	/*
@@ -257,7 +259,7 @@ TRAP_ENTRY_POINT	trap05,T_BOUND,1
 TRAP_ENTRY_POINT	trap06,T_PRIVINFLT,1
 
 IDTVEC(trap07)
-	ZTRAP_NJ(T_DNA)
+	ZTRAP(T_DNA)
 	INTRENTRY
 #ifdef DIAGNOSTIC
 	movl	CPUVAR(ILEVEL),%ebx
@@ -274,8 +276,10 @@ IDTVEC_END(trap07)
 IDTVEC(trap08)
 #if defined(XEN)
 	TRAP(T_DOUBLEFLT)
+	INTRENTRY
+	jmp	.Lalltraps_noentry
 #else
-	TRAP_NJ(T_DOUBLEFLT)
+	TRAP(T_DOUBLEFLT)
 	subq	$TF_REGSIZE,%rsp
 	INTR_SAVE_GPRS
 	SVS_ENTER_ALTSTACK
