@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.59 2018/02/17 18:51:53 maxv Exp $	*/
+/*	$NetBSD: vector.S,v 1.60 2018/02/17 19:26:20 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -305,7 +305,7 @@ IDTVEC_END(intr_x2apic_tlb)
 #ifndef XEN
 
 /*
- * This macro defines the generic stub code. Its arguments modifiy it
+ * This macro defines the generic stub code. Its arguments modify it
  * for specific PICs.
  */
 
@@ -560,44 +560,6 @@ INTRSTUB(x2apic_level,31,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
 
 #endif
 
-	.type _C_LABEL(legacy_stubs), @object
-LABEL(legacy_stubs)
-	.quad _C_LABEL(Xintr_legacy0), _C_LABEL(Xrecurse_legacy0)
-	.quad _C_LABEL(Xresume_legacy0)
-	.quad _C_LABEL(Xintr_legacy1), _C_LABEL(Xrecurse_legacy1)
-	.quad _C_LABEL(Xresume_legacy1)
-	.quad _C_LABEL(Xintr_legacy2), _C_LABEL(Xrecurse_legacy2)
-	.quad _C_LABEL(Xresume_legacy2)
-	.quad _C_LABEL(Xintr_legacy3), _C_LABEL(Xrecurse_legacy3)
-	.quad _C_LABEL(Xresume_legacy3)
-	.quad _C_LABEL(Xintr_legacy4), _C_LABEL(Xrecurse_legacy4)
-	.quad _C_LABEL(Xresume_legacy4)
-	.quad _C_LABEL(Xintr_legacy5), _C_LABEL(Xrecurse_legacy5)
-	.quad _C_LABEL(Xresume_legacy5)
-	.quad _C_LABEL(Xintr_legacy6), _C_LABEL(Xrecurse_legacy6)
-	.quad _C_LABEL(Xresume_legacy6)
-	.quad _C_LABEL(Xintr_legacy7), _C_LABEL(Xrecurse_legacy7)
-	.quad _C_LABEL(Xresume_legacy7)
-	.quad _C_LABEL(Xintr_legacy8), _C_LABEL(Xrecurse_legacy8)
-	.quad _C_LABEL(Xresume_legacy8)
-	.quad _C_LABEL(Xintr_legacy9), _C_LABEL(Xrecurse_legacy9)
-	.quad _C_LABEL(Xresume_legacy9)
-	.quad _C_LABEL(Xintr_legacy10), _C_LABEL(Xrecurse_legacy10)
-	.quad _C_LABEL(Xresume_legacy10)
-	.quad _C_LABEL(Xintr_legacy11), _C_LABEL(Xrecurse_legacy11)
-	.quad _C_LABEL(Xresume_legacy11)
-	.quad _C_LABEL(Xintr_legacy12), _C_LABEL(Xrecurse_legacy12)
-	.quad _C_LABEL(Xresume_legacy12)
-	.quad _C_LABEL(Xintr_legacy13), _C_LABEL(Xrecurse_legacy13)
-	.quad _C_LABEL(Xresume_legacy13)
-	.quad _C_LABEL(Xintr_legacy14), _C_LABEL(Xrecurse_legacy14)
-	.quad _C_LABEL(Xresume_legacy14)
-	.quad _C_LABEL(Xintr_legacy15), _C_LABEL(Xrecurse_legacy15)
-	.quad _C_LABEL(Xresume_legacy15)
-END(legacy_stubs)
-
-#if NIOAPIC > 0
-
 /*
  * Create a struct intrstub.
  */
@@ -606,9 +568,33 @@ END(legacy_stubs)
 	.quad _C_LABEL(Xresume_ ## name ) ;
 
 /*
- * Create an array of structs intrstub.
+ * Create an array of structs intrstub (16 entries).
  */
-#define INTRSTUB_ARRAY(name) 			; \
+#define INTRSTUB_ARRAY_16(name) 		; \
+	.type _C_LABEL(name ## _stubs), @object	; \
+LABEL(name ## _stubs)				; \
+	INTRSTUB_ENTRY(name ## 0)		; \
+	INTRSTUB_ENTRY(name ## 1)		; \
+	INTRSTUB_ENTRY(name ## 2)		; \
+	INTRSTUB_ENTRY(name ## 3)		; \
+	INTRSTUB_ENTRY(name ## 4)		; \
+	INTRSTUB_ENTRY(name ## 5)		; \
+	INTRSTUB_ENTRY(name ## 6)		; \
+	INTRSTUB_ENTRY(name ## 7)		; \
+	INTRSTUB_ENTRY(name ## 8)		; \
+	INTRSTUB_ENTRY(name ## 9)		; \
+	INTRSTUB_ENTRY(name ## 10)		; \
+	INTRSTUB_ENTRY(name ## 11)		; \
+	INTRSTUB_ENTRY(name ## 12)		; \
+	INTRSTUB_ENTRY(name ## 13)		; \
+	INTRSTUB_ENTRY(name ## 14)		; \
+	INTRSTUB_ENTRY(name ## 15)		; \
+END(name ## _stubs)
+
+/*
+ * Create an array of structs intrstub (32 entries).
+ */
+#define INTRSTUB_ARRAY_32(name) 		; \
 	.type _C_LABEL(name ## _stubs), @object	; \
 LABEL(name ## _stubs)				; \
 	INTRSTUB_ENTRY(name ## 0)		; \
@@ -645,12 +631,14 @@ LABEL(name ## _stubs)				; \
 	INTRSTUB_ENTRY(name ## 31)		; \
 END(name ## _stubs)
 
-INTRSTUB_ARRAY(ioapic_edge)
-INTRSTUB_ARRAY(ioapic_level)
+INTRSTUB_ARRAY_16(legacy)
 
-INTRSTUB_ARRAY(x2apic_edge)
-INTRSTUB_ARRAY(x2apic_level)
+#if NIOAPIC > 0
+INTRSTUB_ARRAY_32(ioapic_edge)
+INTRSTUB_ARRAY_32(ioapic_level)
 
+INTRSTUB_ARRAY_32(x2apic_edge)
+INTRSTUB_ARRAY_32(x2apic_level)
 #endif
 
 #endif /* !defined(XEN) */
