@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.172 2018/01/24 10:04:28 wiz Exp $
+.\"	$NetBSD: ddb.4,v 1.173 2018/02/17 01:13:07 sevan Exp $
 .\"
 .\" Copyright (c) 1997 - 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,7 +56,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd December 28, 2017
+.Dd February 17, 2018
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -1194,6 +1194,21 @@ modifier to indicate user register
 .Pp
 Built-in variables currently supported are:
 .Bl -tag -offset indent -width "maxwidth" -compact
+.It Va dumpstack
+If non-zero (the default),
+causes a stack trace to be printed when
+.Nm
+is entered on panic.
+.It Va fromconsole
+If non-zero (the default),
+the kernel allows to enter
+.Nm
+from the console (by break signal or special key sequence).
+If the kernel configuration option
+.D1 Cd options DDB_FROMCONSOLE=0
+is used,
+.Va fromconsole
+will be initialized to off.
 .It Va lines
 The number of lines.
 This is used by the
@@ -1230,20 +1245,9 @@ will be initialized to off, causing a stack trace to be printed and
 the system to be rebooted instead of
 .Nm
 being entered.
-Other useful settings are \-1, which suppresses the stack trace before
-reboot, and 2, which causes a stack trace to be printed and
-.Nm
-to be entered.
-.It Va fromconsole
-If non-zero (the default),
-the kernel allows to enter
-.Nm
-from the console (by break signal or special key sequence).
-If the kernel configuration option
-.D1 Cd options DDB_FROMCONSOLE=0
-is used,
-.Va fromconsole
-will be initialized to off.
+Setting
+.Va onpanic
+to -1 suppresses the stack trace before reboot.
 .It Va radix
 Input and output radix.
 .It Va tabstops
