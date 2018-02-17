@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.182 2017/12/02 08:22:04 mrg Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.183 2018/02/17 20:19:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.182 2017/12/02 08:22:04 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.183 2018/02/17 20:19:36 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -212,6 +212,15 @@ uipc_init(void)
 	    NULL, &unp_thread_lwp, "unpgc");
 	if (error != 0)
 		panic("uipc_init %d", error);
+}
+
+static void
+unp_connid(struct lwp *l, struct unpcb *unp, int flags)
+{
+	unp->unp_connid.unp_pid = l->l_proc->p_pid;
+	unp->unp_connid.unp_euid = kauth_cred_geteuid(l->l_cred);
+	unp->unp_connid.unp_egid = kauth_cred_getegid(l->l_cred);
+	unp->unp_flags |= flags;
 }
 
 /*
@@ -627,8 +636,8 @@ uipc_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 		switch (sopt->sopt_name) {
 		case LOCAL_PEEREID:
 			if (unp->unp_flags & UNP_EIDSVALID) {
-				error = sockopt_set(sopt,
-				    &unp->unp_connid, sizeof(unp->unp_connid));
+				error = sockopt_set(sopt, &unp->unp_connid,
+				    sizeof(unp->unp_connid));
 			} else {
 				error = EINVAL;
 			}
@@ -986,10 +995,6 @@ unp_bind(struct socket *so, struct sockaddr *nam, struct lwp *l)
 	unp->unp_vnode = vp;
 	unp->unp_addrlen = addrlen;
 	unp->unp_addr = sun;
-	unp->unp_connid.unp_pid = p->p_pid;
-	unp->unp_connid.unp_euid = kauth_cred_geteuid(l->l_cred);
-	unp->unp_connid.unp_egid = kauth_cred_getegid(l->l_cred);
-	unp->unp_flags |= UNP_EIDSBIND;
 	VOP_UNLOCK(vp);
 	vput(nd.ni_dvp);
 	unp->unp_flags &= ~UNP_BUSY;
@@ -1019,6 +1024,7 @@ unp_listen(struct socket *so, struct lwp *l)
 	if (unp->unp_vnode == NULL)
 		return EINVAL;
 
+	unp_connid(l, unp, UNP_EIDSBIND);
 	return 0;
 }
 
@@ -1081,17 +1087,6 @@ unp_connect1(struct socket *so, struct socket *so2, struct lwp *l)
 
 	unp2 = sotounpcb(so2);
 	unp->unp_conn = unp2;
-
-	if ((so->so_proto->pr_flags & PR_CONNREQUIRED) != 0) {
-		unp2->unp_connid.unp_pid = l->l_proc->p_pid;
-		unp2->unp_connid.unp_euid = kauth_cred_geteuid(l->l_cred);
-		unp2->unp_connid.unp_egid = kauth_cred_getegid(l->l_cred);
-		unp2->unp_flags |= UNP_EIDSVALID;
-		if (unp2->unp_flags & UNP_EIDSBIND) {
-			unp->unp_connid = unp2->unp_connid;
-			unp->unp_flags |= UNP_EIDSVALID;
-		}
-	}
 
 	switch (so->so_type) {
 
@@ -1203,6 +1198,22 @@ unp_connect(struct socket *so, struct sockaddr *nam, struct lwp *l)
 		}
 		unp3->unp_flags = unp2->unp_flags;
 		so2 = so3;
+		/*
+		 * The connector's (client's) credentials are copied from its
+		 * process structure at the time of connect() (which is now).
+		 */
+		unp_connid(l, unp3, UNP_EIDSVALID);
+		 /*
+		  * The receiver's (server's) credentials are copied from the
+		  * unp_peercred member of socket on which the former called
+		  * listen(); unp_listen() cached that process's credentials
+		  * at that time so we can use them now.
+		  */
+		if (unp2->unp_flags & UNP_EIDSBIND) {
+			memcpy(&unp->unp_connid, &unp2->unp_connid,
+			    sizeof(unp->unp_connid));
+			unp->unp_flags |= UNP_EIDSVALID;
+		}
 	}
 	error = unp_connect1(so, so2, l);
 	if (error) {
@@ -1271,10 +1282,6 @@ unp_connect2(struct socket *so, struct socket *so2)
 	case SOCK_SEQPACKET: /* FALLTHROUGH */
 	case SOCK_STREAM:
 		unp2->unp_conn = unp;
-		if ((so->so_proto->pr_flags & PR_CONNREQUIRED) != 0) {
-			unp->unp_connid = unp2->unp_connid;
-			unp->unp_flags |= UNP_EIDSVALID;
-		}
 		soisconnected(so);
 		soisconnected(so2);
 		break;
