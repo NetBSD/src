@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.179 2018/02/13 10:02:12 mrg Exp $
+# $NetBSD: md.i386,v 1.180 2018/02/17 21:32:22 mrg Exp $
 ./usr/include/clang-3.4/__wmmintrin_aes.h	comp-obsolete		obsolete
 ./usr/include/clang-3.4/__wmmintrin_pclmul.h	comp-obsolete		obsolete
 ./usr/include/clang-3.4/ammintrin.h		comp-obsolete		obsolete
@@ -445,6 +445,7 @@
 ./usr/include/gcc-6/xsaveintrin.h		comp-c-include		gcccmds,gcc=6
 ./usr/include/gcc-6/xsaveoptintrin.h		comp-c-include		gcccmds,gcc=6
 ./usr/include/gcc-6/xsavesintrin.h		comp-c-include		gcccmds,gcc=6
+./usr/include/gcc-6/xtestintrin.h		comp-c-include		gcccmds,gcc=6
 ./usr/include/i386				comp-c-include
 ./usr/include/i386/_G_config.h			comp-obsolete		obsolete
 ./usr/include/i386/ansi.h			comp-c-include
