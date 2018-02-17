@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.74 2018/01/27 18:48:59 maxv Exp $	*/
+/*	$NetBSD: vector.S,v 1.75 2018/02/17 18:51:53 maxv Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.74 2018/01/27 18:48:59 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.75 2018/02/17 18:51:53 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -576,8 +576,8 @@ INTRSTUB(x2apic_level,31,voidop,x2apic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
 
 #endif
 
-	.type	_C_LABEL(i8259_stubs), @object
-LABEL(i8259_stubs)
+	.type	_C_LABEL(legacy_stubs), @object
+LABEL(legacy_stubs)
 	.long _C_LABEL(Xintr_legacy0), _C_LABEL(Xrecurse_legacy0)
 	.long _C_LABEL(Xresume_legacy0)
 	.long _C_LABEL(Xintr_legacy1), _C_LABEL(Xrecurse_legacy1)
@@ -610,7 +610,7 @@ LABEL(i8259_stubs)
 	.long _C_LABEL(Xresume_legacy14)
 	.long _C_LABEL(Xintr_legacy15), _C_LABEL(Xrecurse_legacy15)
 	.long _C_LABEL(Xresume_legacy15)
-END(i8259_stubs)
+END(legacy_stubs)
 
 #if NIOAPIC > 0
 	.type	_C_LABEL(ioapic_edge_stubs), @object
