@@ -1,4 +1,4 @@
-/*	$NetBSD: amd64_trap.S,v 1.26 2018/02/17 20:28:18 maxv Exp $	*/
+/*	$NetBSD: amd64_trap.S,v 1.27 2018/02/17 20:33:28 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2017 The NetBSD Foundation, Inc.
@@ -145,6 +145,21 @@ IDTVEC(\name)
 #endif
 	movq	%rsp,%rdi
 	call	_C_LABEL(fputrap)
+	jmp	.Lalltraps_checkusr
+IDTVEC_END(\name)
+.endm
+
+.macro	TRAP_ENTRY_POINT_SPUR	name,code,is_ztrap
+IDTVEC(\name)
+	.if	\is_ztrap
+		ZTRAP_NJ(\code)
+	.else
+		TRAP_NJ(\code)
+	.endif
+	INTRENTRY
+#ifdef DIAGNOSTIC
+	movl	CPUVAR(ILEVEL),%ebx
+#endif
 	jmp	.Lalltraps_checkusr
 IDTVEC_END(\name)
 .endm
@@ -297,16 +312,7 @@ TRAP_ENTRY_POINT_SWAPGS	trap11,T_SEGNPFLT,0
 TRAP_ENTRY_POINT_SWAPGS	trap12,T_STKFLT,0
 TRAP_ENTRY_POINT_SWAPGS	trap13,T_PROTFLT,0
 TRAP_ENTRY_POINT	trap14,T_PAGEFLT,0
-
-IDTVEC(trap15)
-	ZTRAP_NJ(T_ASTFLT)
-	INTRENTRY
-#ifdef DIAGNOSTIC
-	movl	CPUVAR(ILEVEL),%ebx
-#endif
-	jmp	.Lalltraps_checkusr
-IDTVEC_END(trap15)
-
+TRAP_ENTRY_POINT_SPUR	trap15,T_ASTFLT,1
 TRAP_ENTRY_POINT_FPU	trap16,T_ARITHTRAP,1
 TRAP_ENTRY_POINT	trap17,T_ALIGNFLT,0
 TRAP_ENTRY_POINT	trap18,T_MCA,1
@@ -324,14 +330,7 @@ TRAP_ENTRY_POINT	trap29,T_RESERVED,1
 TRAP_ENTRY_POINT	trap30,T_RESERVED,1
 TRAP_ENTRY_POINT	trap31,T_RESERVED,1
 
-IDTVEC(intrspurious)
-	ZTRAP_NJ(T_ASTFLT)
-	INTRENTRY
-#ifdef DIAGNOSTIC
-	movl	CPUVAR(ILEVEL),%ebx
-#endif
-	jmp	.Lalltraps_checkusr
-IDTVEC_END(intrspurious)
+TRAP_ENTRY_POINT_SPUR	intrspurious,T_ASTFLT,1
 
 #ifndef check_swapgs
 /*
