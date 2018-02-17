@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.88 2018/01/23 15:08:12 sevan Exp $
+# $NetBSD: XEN3_DOMU,v 1.89 2018/02/17 01:34:45 sevan Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -59,7 +59,7 @@ options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x2f8,KGDB_DEVRATE=57600
 #makeoptions	DEBUG="-g"	# compile full symbol table
-options DDB_COMMANDONENTER="trace;show registers"
+options DDB_COMMANDONENTER="show registers"
 
 # Compatibility options
 include 	"conf/compat_netbsd09.config"

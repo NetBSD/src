@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3_DOM0,v 1.126 2018/02/05 11:19:55 bouyer Exp $
+#	$NetBSD: XEN3_DOM0,v 1.127 2018/02/17 01:34:45 sevan Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -75,7 +75,7 @@ options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x2f8,KGDB_DEVRATE=57600
 #makeoptions	DEBUG="-g"	# compile full symbol table
-options DDB_COMMANDONENTER="trace;show registers"
+options DDB_COMMANDONENTER="show registers"
 
 # Compatibility options
 include 	"conf/compat_netbsd09.config"
