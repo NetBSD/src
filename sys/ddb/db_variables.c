@@ -1,4 +1,4 @@
-/*	$NetBSD: db_variables.c,v 1.45 2017/12/28 17:51:19 christos Exp $	*/
+/*	$NetBSD: db_variables.c,v 1.46 2018/02/17 00:41:09 sevan Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_variables.c,v 1.45 2017/12/28 17:51:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_variables.c,v 1.46 2018/02/17 00:41:09 sevan Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddbparam.h"
@@ -71,6 +71,10 @@ int		db_tee_msgbuf = DDB_TEE_MSGBUF;
 #endif
 int		db_panicstackframes = DDB_PANICSTACKFRAMES;
 
+#ifndef DDB_DUMPSTACK
+#define DDB_DUMPSTACK 1
+#endif
+int 		db_dumpstack = DDB_DUMPSTACK;
 
 static int	db_rw_internal_variable(const struct db_variable *, db_expr_t *,
 		    int);
@@ -111,6 +115,12 @@ const struct db_variable db_vars[] = {
 	{
 		.name = "panicstackframes",
 		.valuep = &db_panicstackframes,
+		.fcn = db_rw_internal_variable,
+		.modif = NULL,
+	},
+	{
+		.name = "dumpstack",
+		.valuep = &db_dumpstack,
 		.fcn = db_rw_internal_variable,
 		.modif = NULL,
 	},
@@ -216,6 +226,12 @@ SYSCTL_SETUP(sysctl_ddb_setup, "sysctl ddb subtree setup")
 		       CTLTYPE_INT, "panicstackframes",
 		       SYSCTL_DESCR("Number of stack frames to print on panic"),
 		       NULL, 0, &db_panicstackframes, 0,
+		       CTL_DDB, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "dumpstack",
+		       SYSCTL_DESCR("On panic print stack trace"),
+		       NULL, 0, &db_dumpstack, 0,
 		       CTL_DDB, CTL_CREATE, CTL_EOL);
 }
 #endif	/* _KERNEL */

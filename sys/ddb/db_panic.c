@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_panic.c,v 1.6 2017/12/28 17:51:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_panic.c,v 1.7 2018/02/17 00:41:09 sevan Exp $");
 
 #include <sys/types.h>
 #include <sys/cpu.h>
@@ -41,9 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_panic.c,v 1.6 2017/12/28 17:51:19 christos Exp $"
 void db_panic(void)
 {
 
-	if (db_onpanic == 1)
-		Debugger();
-	else if (db_onpanic >= 0) {
+	if (db_dumpstack > 0) {
 		static int intrace = 0;
 
 		if (intrace == 0) {
@@ -58,8 +56,10 @@ void db_panic(void)
 			intrace = 0;
 		} else
 			printf("Faulted in mid-traceback; aborting...\n");
-		if (db_onpanic == 2)
-			Debugger();
 	}
+
+	if (db_onpanic > 0)
+		Debugger();
+
 	return;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ddbvar.h,v 1.12 2017/12/28 17:51:19 christos Exp $	*/
+/*	$NetBSD: ddbvar.h,v 1.13 2018/02/17 00:41:09 sevan Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@ extern	int db_onpanic;
 extern	int db_fromconsole;
 extern	int db_panicstackframes;
 extern	int db_tee_msgbuf;
+extern	int db_dumpstack;
 
 extern	void db_panic(void);
 
