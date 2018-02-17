@@ -1,6 +1,6 @@
-#	$NetBSD: files.netatalk,v 1.3 2014/12/08 07:18:45 uebayasi Exp $
+#	$NetBSD: files.netatalk,v 1.4 2018/02/17 19:10:18 rjs Exp $
 
-defflag opt_atalk.h			NETATALK
+defflag opt_atalk.h			NETATALK NETATALKDEBUG
 
 define	netatalk
 file	netatalk/aarp.c			netatalk

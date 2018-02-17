@@ -1,4 +1,4 @@
-/*	$NetBSD: aarp.c,v 1.40 2017/12/09 10:14:04 maxv Exp $	*/
+/*	$NetBSD: aarp.c,v 1.41 2018/02/17 19:10:18 rjs Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,9 +27,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.40 2017/12/09 10:14:04 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.41 2018/02/17 19:10:18 rjs Exp $");
 
 #include "opt_mbuftrace.h"
+#include "opt_atalk.h"
 
 #include <sys/param.h>
 #include <sys/socket.h>
