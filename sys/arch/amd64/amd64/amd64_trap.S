@@ -1,4 +1,4 @@
-/*	$NetBSD: amd64_trap.S,v 1.25 2018/02/17 20:22:05 maxv Exp $	*/
+/*	$NetBSD: amd64_trap.S,v 1.26 2018/02/17 20:28:18 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2017 The NetBSD Foundation, Inc.
@@ -129,6 +129,23 @@ IDTVEC(\name)
 		TRAP_NJ(\code)
 	.endif
 	jmp	check_swapgs
+IDTVEC_END(\name)
+.endm
+
+.macro	TRAP_ENTRY_POINT_FPU	name,code,is_ztrap
+IDTVEC(\name)
+	.if	\is_ztrap
+		ZTRAP_NJ(\code)
+	.else
+		TRAP_NJ(\code)
+	.endif
+	INTRENTRY
+#ifdef DIAGNOSTIC
+	movl	CPUVAR(ILEVEL),%ebx
+#endif
+	movq	%rsp,%rdi
+	call	_C_LABEL(fputrap)
+	jmp	.Lalltraps_checkusr
 IDTVEC_END(\name)
 .endm
 
@@ -290,26 +307,10 @@ IDTVEC(trap15)
 	jmp	.Lalltraps_checkusr
 IDTVEC_END(trap15)
 
-IDTVEC(trap16)
-	ZTRAP_NJ(T_ARITHTRAP)
-.Ldo_fputrap:
-	INTRENTRY
-#ifdef DIAGNOSTIC
-	movl	CPUVAR(ILEVEL),%ebx
-#endif
-	movq	%rsp,%rdi
-	call	_C_LABEL(fputrap)
-	jmp	.Lalltraps_checkusr
-IDTVEC_END(trap16)
-
+TRAP_ENTRY_POINT_FPU	trap16,T_ARITHTRAP,1
 TRAP_ENTRY_POINT	trap17,T_ALIGNFLT,0
 TRAP_ENTRY_POINT	trap18,T_MCA,1
-
-IDTVEC(trap19)
-	ZTRAP_NJ(T_XMM)
-	jmp	.Ldo_fputrap
-IDTVEC_END(trap19)
-
+TRAP_ENTRY_POINT_FPU	trap19,T_XMM,1
 TRAP_ENTRY_POINT	trap20,T_RESERVED,1
 TRAP_ENTRY_POINT	trap21,T_RESERVED,1
 TRAP_ENTRY_POINT	trap22,T_RESERVED,1
