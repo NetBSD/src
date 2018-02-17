@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2183 2018/02/16 10:19:03 knakahara Exp $
+#	$NetBSD: mi,v 1.2184 2018/02/17 21:46:41 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -2048,10 +2048,10 @@
 ./usr/include/gcc-5/prfchwintrin.h	comp-obsolete	gcc=6,obsolete
 ./usr/include/gcc-5/rdseedintrin.h	comp-obsolete	gcc=6,obsolete
 ./usr/include/gcc-5/rtmintrin.h		comp-obsolete	gcc=6,obsolete
-./usr/include/gcc-5/sanitizer/allocator_interface.h	comp-gcc-include	gcc=5
-./usr/include/gcc-5/sanitizer/asan_interface.h	comp-gcc-include	gcc=5
-./usr/include/gcc-5/sanitizer/common_interface_defs.h	comp-gcc-include	gcc=5
-./usr/include/gcc-5/sanitizer/tsan_interface_atomic.h	comp-gcc-include	gcc=5
+./usr/include/gcc-5/sanitizer/allocator_interface.h	comp-gcc-include	gcc=5,gcccmds
+./usr/include/gcc-5/sanitizer/asan_interface.h	comp-gcc-include	gcc=5,gcccmds
+./usr/include/gcc-5/sanitizer/common_interface_defs.h	comp-gcc-include	gcc=5,gcccmds
+./usr/include/gcc-5/sanitizer/tsan_interface_atomic.h	comp-gcc-include	gcc=5,gcccmds
 ./usr/include/gcc-5/shaintrin.h		comp-obsolete	gcc=6,obsolete
 ./usr/include/gcc-5/smmintrin.h		comp-obsolete	gcc=6,obsolete
 ./usr/include/gcc-5/stdatomic.h			comp-gcc-include	gcc=5,gcccmds
@@ -2070,10 +2070,10 @@
 ./usr/include/gcc-5/xtestintrin.h	comp-obsolete	gcc=6,obsolete
 ./usr/include/gcc-6/omp.h			comp-gcc-include	gcc=6
 ./usr/include/gcc-6/openacc.h			comp-gcc-include	gcc=6
-./usr/include/gcc-6/sanitizer/allocator_interface.h	comp-gcc-include	gcc=6
-./usr/include/gcc-6/sanitizer/asan_interface.h	comp-gcc-include	gcc=6
-./usr/include/gcc-6/sanitizer/common_interface_defs.h	comp-gcc-include	gcc=6
-./usr/include/gcc-6/sanitizer/tsan_interface_atomic.h	comp-gcc-include	gcc=6
+./usr/include/gcc-6/sanitizer/allocator_interface.h	comp-gcc-include	gcc=6,gcccmds
+./usr/include/gcc-6/sanitizer/asan_interface.h	comp-gcc-include	gcc=6,gcccmds
+./usr/include/gcc-6/sanitizer/common_interface_defs.h	comp-gcc-include	gcc=6,gcccmds
+./usr/include/gcc-6/sanitizer/tsan_interface_atomic.h	comp-gcc-include	gcc=6,gcccmds
 ./usr/include/gcc-6/stdatomic.h			comp-gcc-include	gcc=6,gcccmds
 ./usr/include/gelf.h				comp-c-include
 ./usr/include/getopt.h				comp-c-include
