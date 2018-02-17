@@ -1,4 +1,4 @@
-/*	$NetBSD: amd64_trap.S,v 1.29 2018/02/17 20:47:04 maxv Exp $	*/
+/*	$NetBSD: amd64_trap.S,v 1.30 2018/02/17 20:59:14 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2017 The NetBSD Foundation, Inc.
@@ -130,6 +130,92 @@ IDTVEC(\name)
 IDTVEC_END(\name)
 .endm
 
+.macro	TRAP_ENTRY_POINT_NMI	name,code
+IDTVEC(\name)
+	ZTRAP(\code)
+#if defined(XEN)
+	INTRENTRY
+	jmp	.Lalltraps_noentry
+#else
+/*
+ * Non Maskable Interrupts are a special case: they can be triggered even
+ * with interrupts disabled, and once triggered they block further NMIs
+ * until an 'iret' instruction is executed.
+ *
+ * Therefore we don't enable interrupts, because the CPU could switch to
+ * another LWP, call 'iret' and unintentionally leave the NMI mode.
+ *
+ * We need to be careful about %gs too, because it is possible that we were
+ * running in kernel mode with a userland %gs.
+ */
+	subq	$TF_REGSIZE,%rsp
+	INTR_SAVE_GPRS
+	SVS_ENTER_ALTSTACK
+	cld
+	SMAP_ENABLE
+	movw	%gs,TF_GS(%rsp)
+	movw	%fs,TF_FS(%rsp)
+	movw	%es,TF_ES(%rsp)
+	movw	%ds,TF_DS(%rsp)
+
+	movl	$MSR_GSBASE,%ecx
+	rdmsr
+	cmpl	$VM_MIN_KERNEL_ADDRESS_HIGH32,%edx
+	jae	.Lnoswapgs
+
+	swapgs
+	movq	%rsp,%rdi
+	incq	CPUVAR(NTRAP)
+	call	_C_LABEL(nmitrap)
+	SVS_LEAVE_ALTSTACK
+	swapgs
+	jmp	.Lnmileave
+
+.Lnoswapgs:
+	movq	%rsp,%rdi
+	incq	CPUVAR(NTRAP)
+	call	_C_LABEL(nmitrap)
+	SVS_LEAVE_ALTSTACK
+
+.Lnmileave:
+	INTR_RESTORE_GPRS
+	addq	$TF_REGSIZE+16,%rsp
+	iretq
+#endif
+IDTVEC_END(\name)
+.endm
+
+.macro	TRAP_ENTRY_POINT_BPT	name,code
+IDTVEC(\name)
+	ZTRAP(\code)
+	INTRENTRY
+#ifndef KDTRACE_HOOKS
+	jmp	.Lalltraps_noentry
+#else
+	STI(si)
+	/*
+	 * DTrace Function Boundary Trace (fbt) probes are triggered
+	 * by int3 (0xcc).
+	 */
+	/* Check if there is no DTrace hook registered. */
+	cmpq	$0,dtrace_invop_jump_addr
+	je	calltrap
+
+	/*
+	 * Set our jump address for the jump back in the event that
+	 * the exception wasn't caused by DTrace at all.
+	 */
+	/* XXX: This doesn't look right for SMP - unless it is a
+	 * constant - so why set it everytime. (dsl) */
+	movq	$calltrap, dtrace_invop_calltrap_addr(%rip)
+
+	/* Jump to the code hooked in by DTrace. */
+	movq	dtrace_invop_jump_addr, %rax
+	jmpq	*dtrace_invop_jump_addr
+#endif
+IDTVEC_END(\name)
+.endm
+
 .macro	TRAP_ENTRY_POINT_DNA	name,code
 IDTVEC(\name)
 	ZTRAP(\code)
@@ -140,6 +226,48 @@ IDTVEC(\name)
 	movq	%rsp,%rdi
 	call	_C_LABEL(fpudna)
 	jmp	.Lalltraps_checkusr
+IDTVEC_END(\name)
+.endm
+
+.macro	TRAP_ENTRY_POINT_DOUBLE	name,code
+IDTVEC(\name)
+	TRAP(\code)
+#if defined(XEN)
+	INTRENTRY
+	jmp	.Lalltraps_noentry
+#else
+/*
+ * Double faults execute on a particular stack, and we must not jump out
+ * of it. So don't enable interrupts.
+ */
+	subq	$TF_REGSIZE,%rsp
+	INTR_SAVE_GPRS
+	SVS_ENTER_ALTSTACK
+	testb	$SEL_UPL,TF_CS(%rsp)
+	jz	1f
+	swapgs
+1:
+	cld
+	SMAP_ENABLE
+	movw	%gs,TF_GS(%rsp)
+	movw	%fs,TF_FS(%rsp)
+	movw	%es,TF_ES(%rsp)
+	movw	%ds,TF_DS(%rsp)
+
+	movq	%rsp,%rdi
+	incq	CPUVAR(NTRAP)
+	call	_C_LABEL(doubletrap)
+
+	SVS_LEAVE_ALTSTACK
+	INTR_RESTORE_GPRS
+
+	testb	$SEL_UPL,TF_CS(%rsp)
+	jz	1f
+	swapgs
+1:
+	addq	$TF_REGSIZE+16,%rsp
+	iretq
+#endif
 IDTVEC_END(\name)
 .endm
 
@@ -181,138 +309,13 @@ IDTVEC_END(\name)
 
 TRAP_ENTRY_POINT	trap00,T_DIVIDE,1
 TRAP_ENTRY_POINT	trap01,T_TRCTRAP,1
-
-/*
- * Non Maskable Interrupts are a special case: they can be triggered even
- * with interrupts disabled, and once triggered they block further NMIs
- * until an 'iret' instruction is executed.
- *
- * Therefore we don't enable interrupts, because the CPU could switch to
- * another LWP, call 'iret' and unintentionally leave the NMI mode.
- *
- * We need to be careful about %gs too, because it is possible that we were
- * running in kernel mode with a userland %gs.
- */
-IDTVEC(trap02)
-#if defined(XEN)
-	ZTRAP(T_NMI)
-	INTRENTRY
-	jmp	.Lalltraps_noentry
-#else
-	ZTRAP(T_NMI)
-	subq	$TF_REGSIZE,%rsp
-	INTR_SAVE_GPRS
-	SVS_ENTER_ALTSTACK
-	cld
-	SMAP_ENABLE
-	movw	%gs,TF_GS(%rsp)
-	movw	%fs,TF_FS(%rsp)
-	movw	%es,TF_ES(%rsp)
-	movw	%ds,TF_DS(%rsp)
-
-	movl	$MSR_GSBASE,%ecx
-	rdmsr
-	cmpl	$VM_MIN_KERNEL_ADDRESS_HIGH32,%edx
-	jae	.Lnoswapgs
-
-	swapgs
-	movq	%rsp,%rdi
-	incq	CPUVAR(NTRAP)
-	call	_C_LABEL(nmitrap)
-	SVS_LEAVE_ALTSTACK
-	swapgs
-	jmp	.Lnmileave
-
-.Lnoswapgs:
-	movq	%rsp,%rdi
-	incq	CPUVAR(NTRAP)
-	call	_C_LABEL(nmitrap)
-	SVS_LEAVE_ALTSTACK
-
-.Lnmileave:
-	INTR_RESTORE_GPRS
-	addq	$TF_REGSIZE+16,%rsp
-	iretq
-#endif
-IDTVEC_END(trap02)
-
-IDTVEC(trap03)
-#ifndef KDTRACE_HOOKS
-	ZTRAP(T_BPTFLT)
-	INTRENTRY
-	jmp	.Lalltraps_noentry
-#else
-	ZTRAP(T_BPTFLT)
-	INTRENTRY
-	STI(si)
-	/*
-	 * DTrace Function Boundary Trace (fbt) probes are triggered
-	 * by int3 (0xcc).
-	 */
-	/* Check if there is no DTrace hook registered. */
-	cmpq	$0,dtrace_invop_jump_addr
-	je	calltrap
-
-	/*
-	 * Set our jump address for the jump back in the event that
-	 * the exception wasn't caused by DTrace at all.
-	 */
-	/* XXX: This doesn't look right for SMP - unless it is a
-	 * constant - so why set it everytime. (dsl) */
-	movq	$calltrap, dtrace_invop_calltrap_addr(%rip)
-
-	/* Jump to the code hooked in by DTrace. */
-	movq	dtrace_invop_jump_addr, %rax
-	jmpq	*dtrace_invop_jump_addr
-#endif
-IDTVEC_END(trap03)
-
+TRAP_ENTRY_POINT_NMI	trap02,T_NMI
+TRAP_ENTRY_POINT_BPT	trap03,T_BPTFLT
 TRAP_ENTRY_POINT	trap04,T_OFLOW,1
 TRAP_ENTRY_POINT	trap05,T_BOUND,1
 TRAP_ENTRY_POINT	trap06,T_PRIVINFLT,1
 TRAP_ENTRY_POINT_DNA	trap07,T_DNA
-
-/*
- * Double faults execute on a particular stack, and we must not jump out
- * of it. So don't enable interrupts.
- */
-IDTVEC(trap08)
-#if defined(XEN)
-	TRAP(T_DOUBLEFLT)
-	INTRENTRY
-	jmp	.Lalltraps_noentry
-#else
-	TRAP(T_DOUBLEFLT)
-	subq	$TF_REGSIZE,%rsp
-	INTR_SAVE_GPRS
-	SVS_ENTER_ALTSTACK
-	testb	$SEL_UPL,TF_CS(%rsp)
-	jz	1f
-	swapgs
-1:
-	cld
-	SMAP_ENABLE
-	movw	%gs,TF_GS(%rsp)
-	movw	%fs,TF_FS(%rsp)
-	movw	%es,TF_ES(%rsp)
-	movw	%ds,TF_DS(%rsp)
-
-	movq	%rsp,%rdi
-	incq	CPUVAR(NTRAP)
-	call	_C_LABEL(doubletrap)
-
-	SVS_LEAVE_ALTSTACK
-	INTR_RESTORE_GPRS
-
-	testb	$SEL_UPL,TF_CS(%rsp)
-	jz	1f
-	swapgs
-1:
-	addq	$TF_REGSIZE+16,%rsp
-	iretq
-#endif
-IDTVEC_END(trap08)
-
+TRAP_ENTRY_POINT_DOUBLE	trap08,T_DOUBLEFLT
 TRAP_ENTRY_POINT	trap09,T_FPOPFLT,1
 TRAP_ENTRY_POINT	trap10,T_TSSFLT,0
 TRAP_ENTRY_POINT_SWAPGS	trap11,T_SEGNPFLT,0
