@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pintr.c,v 1.2 2017/12/13 16:30:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pintr.c,v 1.3 2018/02/17 18:51:53 maxv Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -135,7 +135,7 @@ __KERNEL_RCSID(0, "$NetBSD: pintr.c,v 1.2 2017/12/13 16:30:18 bouyer Exp $");
 /* XXX: todo - compat with lapic.c and XEN for x2apic */
 bool x2apic_mode __read_mostly = false;
 /* for x86/i8259.c */
-struct intrstub i8259_stubs[NUM_LEGACY_IRQS] = {{0,0}};
+struct intrstub legacy_stubs[NUM_LEGACY_IRQS] = {{0,0}};
 /* for x86/ioapic.c */
 struct intrstub ioapic_edge_stubs[MAX_INTR_SOURCES] = {{0,0}};
 struct intrstub ioapic_level_stubs[MAX_INTR_SOURCES] = {{0,0}};
