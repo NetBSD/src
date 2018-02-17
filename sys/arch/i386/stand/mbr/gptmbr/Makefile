@@ -1,9 +1,7 @@
-#	$NetBSD: Makefile,v 1.3 2011/09/21 18:15:59 jakllsch Exp $
+#	$NetBSD: Makefile,v 1.4 2018/02/17 13:54:52 joerg Exp $
 
 PROG=		gptmbr.bin
 SRCS=		gptmbr.S
-
-AFLAGS.gptmbr.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 
 .include <../Makefile.mbr>
 
