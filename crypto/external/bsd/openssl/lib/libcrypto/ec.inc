@@ -1,4 +1,4 @@
-#	$NetBSD: ec.inc,v 1.4 2018/02/08 21:57:24 christos Exp $
+#	$NetBSD: ec.inc,v 1.5 2018/02/18 23:41:44 christos Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -44,6 +44,8 @@ ecp_smpl.c \
 ecx_meth.c
 
 SRCS += ${EC_SRCS}
+
+COPTS.ecp_nistz256.c+=-Wno-error=stack-protector
 
 .for cryptosrc in ${EC_SRCS}
 CPPFLAGS.${cryptosrc} = -I${OPENSSLSRC}/crypto/ec
