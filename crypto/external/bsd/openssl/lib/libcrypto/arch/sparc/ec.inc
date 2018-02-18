@@ -1,0 +1,6 @@
+.PATH.S: ${.PARSEDIR}
+EC_SRCS += \
+ecp_nistz256-sparcv9.S 
+
+ECNI = yes
+.include "../../ec.inc"

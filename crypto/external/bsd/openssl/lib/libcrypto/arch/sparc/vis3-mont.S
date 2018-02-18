@@ -1,8 +1,15 @@
+#include "sparc_arch.h"
+
+#ifdef	__arch64__
+.register	%g2,#scratch
+.register	%g3,#scratch
+#endif
+
 .section	".text",#alloc,#execinstr
 .globl	bn_mul_mont_vis3
 .align	32
 bn_mul_mont_vis3:
-	add	%sp,	0,	%g4	! real top of stack
+	add	%sp,	STACK_BIAS,	%g4	! real top of stack
 	sll	%o5,	2,	%o5	! size in bytes
 	add	%o5,	63,	%g5
 	andn	%g5,	63,	%g5	! buffer size rounded up to 64 bytes
@@ -10,12 +17,12 @@ bn_mul_mont_vis3:
 	add	%g5,	%g1,	%g1	! 3*buffer size
 	sub	%g4,	%g1,	%g1
 	andn	%g1,	63,	%g1	! align at 64 byte
-	sub	%g1,	112,	%g1	! new top of stack
+	sub	%g1,	STACK_FRAME,	%g1	! new top of stack
 	sub	%g1,	%g4,	%g1
 
 	save	%sp,	%g1,	%sp
 	ld	[%i4+0],	%l0	! pull n0[0..1] value
-	add	%sp, 0+112, %l5
+	add	%sp, STACK_BIAS+STACK_FRAME, %l5
 	ld	[%i4+4],	%l1
 	add	%l5,	%g5,	%l7
 	ld	[%i2+0],	%l2	! m0=bp[0]
