@@ -1,4 +1,4 @@
-/*	$NetBSD: svs.c,v 1.2 2018/02/17 17:44:09 maxv Exp $	*/
+/*	$NetBSD: svs.c,v 1.3 2018/02/18 14:07:29 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.2 2018/02/17 17:44:09 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.3 2018/02/18 14:07:29 maxv Exp $");
 
 #include "opt_svs.h"
 
@@ -89,6 +89,8 @@ __KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.2 2018/02/17 17:44:09 maxv Exp $");
  * (d) Right now there is only one global LDT, and that's not compatible
  *     with USER_LDT.
  */
+
+bool svs_enabled __read_mostly = false;
 
 struct svs_utls {
 	paddr_t kpdirpa;
@@ -503,6 +505,7 @@ void svs_init(void);
 void
 svs_init(void)
 {
+	svs_enabled = true;
 	svs_pgg_update(false);
 }
 

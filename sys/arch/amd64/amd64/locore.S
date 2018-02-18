@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.150 2018/01/27 17:54:13 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.151 2018/02/18 14:07:29 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1091,7 +1091,11 @@ ENTRY(cpu_switchto)
 
 #ifdef SVS
 	pushq	%rdx
+	movb	_C_LABEL(svs_enabled),%dl
+	testb	%dl,%dl
+	jz	.Lskip_svs
 	callq	_C_LABEL(svs_lwp_switch)
+.Lskip_svs:
 	popq	%rdx
 #endif
 
