@@ -1,3 +1,5 @@
+#include "sparc_arch.h"
+
 .section	".text",#alloc,#execinstr
 
 .global	bn_mul_mont_int
@@ -10,7 +12,7 @@ bn_mul_mont_int:
 	clr	%o0
 .align	32
 .Lenter:
-	save	%sp,-192,%sp
+	save	%sp,-STACK_FRAME,%sp
 	sll	%i5,2,%i5		! num*=4
 	or	%g1,%lo(0xffffffff),%g1
 	ld	[%i4],%i4
@@ -19,21 +21,21 @@ bn_mul_mont_int:
 	ld	[%i2],%l2		! bp[0]
 	nop
 
-	add	%sp,2047,%o7		! real top of stack
+	add	%sp,STACK_BIAS,%o7		! real top of stack
 	ld	[%i1],%o0		! ap[0] ! redundant in squaring context
 	sub	%o7,%i5,%o7
 	ld	[%i1+4],%l5		! ap[1]
 	and	%o7,-1024,%o7
 	ld	[%i3],%o1		! np[0]
-	sub	%o7,2047,%sp		! alloca
+	sub	%o7,STACK_BIAS,%sp		! alloca
 	ld	[%i3+4],%l6		! np[1]
-	be,pt	%xcc,.Lbn_sqr_mont
+	be,pt	SIZE_T_CC,.Lbn_sqr_mont
 	mov	12,%l1
 
 	mulx	%o0,%l2,%o0	! ap[0]*bp[0]
 	mulx	%l5,%l2,%g4	!prologue! ap[1]*bp[0]
 	and	%o0,%g1,%o3
-	add	%sp,2047+192,%l4
+	add	%sp,STACK_BIAS+STACK_FRAME,%l4
 	ld	[%i1+8],%l5		!prologue!
 
 	mulx	%i4,%o3,%l3		! "t[0]"*n0
@@ -92,7 +94,7 @@ bn_mul_mont_int:
 	mov	4,%l0			! i++
 	ld	[%i2+4],%l2		! bp[1]
 .Louter:
-	add	%sp,2047+192,%l4
+	add	%sp,STACK_BIAS+STACK_FRAME,%l4
 	ld	[%i1],%o0		! ap[0]
 	ld	[%i1+4],%l5		! ap[1]
 	ld	[%i3],%o1		! np[0]
@@ -211,7 +213,7 @@ bn_mul_mont_int:
 	mulx	%l2,%l2,%o0		! ap[0]*ap[0]
 	mulx	%l5,%l2,%g4		!prologue!
 	and	%o0,%g1,%o3
-	add	%sp,2047+192,%l4
+	add	%sp,STACK_BIAS+STACK_FRAME,%l4
 	ld	[%i1+8],%l5			!prologue!
 
 	mulx	%i4,%o3,%l3			! "t[0]"*n0
@@ -220,7 +222,7 @@ bn_mul_mont_int:
 
 	mulx	%o1,%l3,%o1		! np[0]*"t[0]"*n0
 	mulx	%l6,%l3,%o4		!prologue!
-	and	%o0,1,%i2
+	and	%o0,1,%o5
 	ld	[%i3+8],%l6			!prologue!
 	srlx	%o0,1,%o0
 	add	%o3,%o1,%o1
@@ -237,9 +239,9 @@ bn_mul_mont_int:
 	ld	[%i3+%l1],%l6			! np[j]
 	srlx	%o0,32,%o0
 	add	%o3,%o3,%o3
-	or	%i2,%o3,%o3
+	or	%o5,%o3,%o3
 	mov	%g5,%o4
-	srlx	%o3,32,%i2
+	srlx	%o3,32,%o5
 	add	%l1,4,%l1				! j++
 	and	%o3,%g1,%o3
 	cmp	%l1,%i5
@@ -258,8 +260,8 @@ bn_mul_mont_int:
 	and	%o0,%g1,%o3
 	srlx	%o0,32,%o0
 	add	%o3,%o3,%o3
-	or	%i2,%o3,%o3
-	srlx	%o3,32,%i2
+	or	%o5,%o3,%o3
+	srlx	%o3,32,%o5
 	and	%o3,%g1,%o3
 	add	%o3,%o1,%o1
 	st	%o1,[%l4]
@@ -270,22 +272,22 @@ bn_mul_mont_int:
 	and	%o0,%g1,%o3
 	srlx	%o0,32,%o0
 	add	%o3,%o3,%o3
-	or	%i2,%o3,%o3
-	srlx	%o3,32,%i2
+	or	%o5,%o3,%o3
+	srlx	%o3,32,%o5
 	and	%o3,%g1,%o3
 	add	%o3,%o1,%o1
 	st	%o1,[%l4+4]
 	srlx	%o1,32,%o1
 
 	add	%o0,%o0,%o0
-	or	%i2,%o0,%o0
+	or	%o5,%o0,%o0
 	add	%o0,%o1,%o1
 	st	%o1,[%l4+8]
 	srlx	%o1,32,%o2
 
-	ld	[%sp+2047+192],%g4	! tp[0]
-	ld	[%sp+2047+192+4],%g5	! tp[1]
-	ld	[%sp+2047+192+8],%l7	! tp[2]
+	ld	[%sp+STACK_BIAS+STACK_FRAME],%g4	! tp[0]
+	ld	[%sp+STACK_BIAS+STACK_FRAME+4],%g5	! tp[1]
+	ld	[%sp+STACK_BIAS+STACK_FRAME+8],%l7	! tp[2]
 	ld	[%i1+4],%l2			! ap[1]
 	ld	[%i1+8],%l5			! ap[2]
 	ld	[%i3],%o1			! np[0]
@@ -304,19 +306,19 @@ bn_mul_mont_int:
 	add	%g5,%o1,%o1
 	srlx	%o0,32,%o0
 	add	%o3,%o1,%o1
-	and	%o0,1,%i2
+	and	%o0,1,%o5
 	add	%o4,%o1,%o1
 	srlx	%o0,1,%o0
 	mov	12,%l1
-	st	%o1,[%sp+2047+192]	! tp[0]=
+	st	%o1,[%sp+STACK_BIAS+STACK_FRAME]	! tp[0]=
 	srlx	%o1,32,%o1
-	add	%sp,2047+192+4,%l4
+	add	%sp,STACK_BIAS+STACK_FRAME+4,%l4
 
 .Lsqr_2nd:
 	mulx	%l5,%l2,%o3
 	mulx	%l6,%l3,%o4
 	add	%o3,%o0,%o0
-	add	%l7,%o1,%o1
+	add	%l7,%o5,%o5
 	ld	[%i1+%l1],%l5			! ap[j]
 	and	%o0,%g1,%o3
 	ld	[%i3+%l1],%l6			! np[j]
@@ -325,8 +327,8 @@ bn_mul_mont_int:
 	ld	[%l4+8],%l7			! tp[j]
 	add	%o3,%o3,%o3
 	add	%l1,4,%l1				! j++
-	or	%i2,%o3,%o3
-	srlx	%o3,32,%i2
+	add	%o5,%o3,%o3
+	srlx	%o3,32,%o5
 	and	%o3,%g1,%o3
 	cmp	%l1,%i5
 	add	%o3,%o1,%o1
@@ -339,27 +341,27 @@ bn_mul_mont_int:
 	mulx	%l5,%l2,%o3
 	mulx	%l6,%l3,%o4
 	add	%o3,%o0,%o0
-	add	%l7,%o1,%o1
+	add	%l7,%o5,%o5
 	and	%o0,%g1,%o3
 	srlx	%o0,32,%o0
 	add	%o4,%o1,%o1
 	add	%o3,%o3,%o3
-	or	%i2,%o3,%o3
-	srlx	%o3,32,%i2
+	add	%o5,%o3,%o3
+	srlx	%o3,32,%o5
 	and	%o3,%g1,%o3
 	add	%o3,%o1,%o1
 	st	%o1,[%l4]			! tp[j-1]
 	srlx	%o1,32,%o1
 
 	add	%o0,%o0,%o0
-	or	%i2,%o0,%o0
+	add	%o5,%o0,%o0
 	add	%o0,%o1,%o1
 	add	%o2,%o1,%o1
 	st	%o1,[%l4+4]
 	srlx	%o1,32,%o2
 
-	ld	[%sp+2047+192],%g5	! tp[0]
-	ld	[%sp+2047+192+4],%l7	! tp[1]
+	ld	[%sp+STACK_BIAS+STACK_FRAME],%g5	! tp[0]
+	ld	[%sp+STACK_BIAS+STACK_FRAME+4],%l7	! tp[1]
 	ld	[%i1+8],%l2			! ap[2]
 	ld	[%i3],%o1			! np[0]
 	ld	[%i3+4],%l6			! np[1]
@@ -372,9 +374,9 @@ bn_mul_mont_int:
 	and	%o0,%g1,%o3
 	add	%g5,%o1,%o1
 	srlx	%o0,32,%o0
-	add	%sp,2047+192,%l4
+	add	%sp,STACK_BIAS+STACK_FRAME,%l4
 	srlx	%o1,32,%o1
-	and	%o0,1,%i2
+	and	%o0,1,%o5
 	srlx	%o0,1,%o0
 	mov	4,%l1
 
@@ -412,7 +414,7 @@ bn_mul_mont_int:
 .Lsqr_inner2:
 	mulx	%l5,%l2,%o3
 	mulx	%l6,%l3,%o4
-	add	%l7,%o1,%o1
+	add	%l7,%o5,%o5
 	add	%o3,%o0,%o0
 	ld	[%i1+%l1],%l5			! ap[j]
 	and	%o0,%g1,%o3
@@ -420,9 +422,9 @@ bn_mul_mont_int:
 	srlx	%o0,32,%o0
 	add	%o3,%o3,%o3
 	ld	[%l4+8],%l7			! tp[j]
-	or	%i2,%o3,%o3
+	add	%o5,%o3,%o3
 	add	%l1,4,%l1				! j++
-	srlx	%o3,32,%i2
+	srlx	%o3,32,%o5
 	and	%o3,%g1,%o3
 	cmp	%l1,%i5
 	add	%o3,%o1,%o1
@@ -435,13 +437,13 @@ bn_mul_mont_int:
 .Lsqr_no_inner2:
 	mulx	%l5,%l2,%o3
 	mulx	%l6,%l3,%o4
-	add	%l7,%o1,%o1
+	add	%l7,%o5,%o5
 	add	%o3,%o0,%o0
 	and	%o0,%g1,%o3
 	srlx	%o0,32,%o0
 	add	%o3,%o3,%o3
-	or	%i2,%o3,%o3
-	srlx	%o3,32,%i2
+	add	%o5,%o3,%o3
+	srlx	%o3,32,%o5
 	and	%o3,%g1,%o3
 	add	%o3,%o1,%o1
 	add	%o4,%o1,%o1
@@ -449,15 +451,15 @@ bn_mul_mont_int:
 	srlx	%o1,32,%o1
 
 	add	%o0,%o0,%o0
-	or	%i2,%o0,%o0
+	add	%o5,%o0,%o0
 	add	%o0,%o1,%o1
 	add	%o2,%o1,%o1
 	st	%o1,[%l4+4]
 	srlx	%o1,32,%o2
 
 	add	%l0,4,%l0				! i++
-	ld	[%sp+2047+192],%g5	! tp[0]
-	ld	[%sp+2047+192+4],%l7	! tp[1]
+	ld	[%sp+STACK_BIAS+STACK_FRAME],%g5	! tp[0]
+	ld	[%sp+STACK_BIAS+STACK_FRAME+4],%l7	! tp[1]
 	ld	[%i1+%l0],%l2			! ap[j]
 	ld	[%i3],%o1			! np[0]
 	ld	[%i3+4],%l6			! np[1]
@@ -470,9 +472,9 @@ bn_mul_mont_int:
 	and	%o0,%g1,%o3
 	add	%g5,%o1,%o1
 	srlx	%o0,32,%o0
-	add	%sp,2047+192,%l4
+	add	%sp,STACK_BIAS+STACK_FRAME,%l4
 	srlx	%o1,32,%o1
-	and	%o0,1,%i2
+	and	%o0,1,%o5
 	srlx	%o0,1,%o0
 
 	cmp	%g4,%i5			! i<num-1
@@ -494,14 +496,17 @@ bn_mul_mont_int:
 !.Lsqr_last
 
 	mulx	%l6,%l3,%o4
-	add	%l7,%o1,%o1
+	add	%l7,%o3,%o3
+	srlx	%o3,32,%g4
+	and	%o3,%g1,%o3
+	add	%g4,%o5,%o5
 	add	%o3,%o1,%o1
 	add	%o4,%o1,%o1
 	st	%o1,[%l4]
 	srlx	%o1,32,%o1
 
 	add	%o0,%o0,%o0		! recover %o0
-	or	%i2,%o0,%o0
+	add	%o5,%o0,%o0
 	add	%o0,%o1,%o1
 	add	%o2,%o1,%o1
 	st	%o1,[%l4+4]
