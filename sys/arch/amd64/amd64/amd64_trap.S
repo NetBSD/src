@@ -1,4 +1,4 @@
-/*	$NetBSD: amd64_trap.S,v 1.31 2018/02/17 21:05:58 maxv Exp $	*/
+/*	$NetBSD: amd64_trap.S,v 1.32 2018/02/18 14:32:31 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2017 The NetBSD Foundation, Inc.
@@ -312,8 +312,8 @@ IDTVEC_END(\name)
  * When such traps happen, we have CPL=0 and %gs=userland, and we must perform
  * an additional swapgs to get %gs=kernel.
  */
-.macro	SWAPGS_HANDLER
-NENTRY(check_swapgs)
+.macro	SWAPGS_HANDLER	name
+NENTRY(\name)
 	INTRENTRY_L(3f,1:)
 2:
 	sti
@@ -345,7 +345,7 @@ NENTRY(check_swapgs)
 	cmpw	$0x8e+050*256,%ax	/* Any move to %gs (reg 5) */
 	jne	2b			/* No - normal kernel fault */
 	jmp	1b			/* Yes - restore %gs */
-END(check_swapgs)
+END(\name)
 .endm
 #endif
 
@@ -389,7 +389,7 @@ TRAP_ENTRY_POINT	trap31,T_RESERVED,1
 TRAP_ENTRY_POINT_SPUR	intrspurious,T_ASTFLT,1
 
 #ifndef check_swapgs
-SWAPGS_HANDLER
+SWAPGS_HANDLER		check_swapgs
 #endif
 
 	TEXT_USER_END
