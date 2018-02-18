@@ -1,4 +1,4 @@
-/* $NetBSD: sun50i-a64-pinebook.dts,v 1.2 2017/09/10 18:40:27 jmcneill Exp $ */
+/* $NetBSD: sun50i-a64-pinebook.dts,v 1.3 2018/02/18 12:22:16 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -32,6 +32,12 @@
 / {
 	model = "Pine64 Pinebook";
 	compatible = "pine64,pinebook", "allwinner,sun50i-a64";
+
+	chosen {
+		framebuffer@0 {
+			allwinner,pipeline = "mixer0-lcd0";
+		};
+	};
 };
 
 &ehci0 {
