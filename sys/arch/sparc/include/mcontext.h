@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.15 2018/02/17 15:22:22 kamil Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.16 2018/02/18 15:29:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -145,32 +145,18 @@ typedef struct {
 
 #ifdef __arch64__
 #define _UC_MACHINE_PAD	8		/* Padding appended to ucontext_t */
-#define	_UC_MACHINE_SP(uc)	(((uc)->uc_mcontext.__gregs[_REG_O6])+0x7ff)
-#define	_UC_MACHINE_FP(uc)	(_uc_machine_fp((uc), 2047))
+#define	_UC_MACHINE_SP(uc)	(((uc)->uc_mcontext.__gregs[_REG_O6]) + 0x7ff)
+#define	_UC_MACHINE_FP(uc)	(((__greg_t *)_UC_MACHINE_SP(uc))[15])
 #define _UC_MACHINE32_PAD	43	/* compat_netbsd32 variant */
 #define	_UC_MACHINE32_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_O6])
-#define	_UC_MACHINE32_FP(uc)	(_uc_machine_fp((uc), 0))
+#define	_UC_MACHINE32_FP(uc)	(((__greg_t *)_UC_MACHINE32_SP(uc))[15])
 #else
 #define _UC_MACHINE_PAD	43		/* Padding appended to ucontext_t */
 #define	_UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_O6])
-#define	_UC_MACHINE_FP(uc)	(_uc_machine_fp((uc), 0))
+#define	_UC_MACHINE_FP(uc)	(((__greg_t *)_UC_MACHINE_SP(uc))[15])
 #endif
 #define	_UC_MACHINE_PC(uc)	((uc)->uc_mcontext.__gregs[_REG_PC])
 #define	_UC_MACHINE_INTRV(uc)	((uc)->uc_mcontext.__gregs[_REG_O0])
-
-static inline long
-_uc_machine_fp(ucontext_t *ucontext, long shift)
-{
-	long *sptr;
-	long *sp;
-	long fp;
-
-	sp = (long *)_UC_MACHINE_SP(ucontext);
-	sptr = (long *)(*sp + shift);
-	fp = sptr[15];
-
-	return fp;
-}
 
 #define	_UC_MACHINE_SET_PC(uc, pc)					\
 do {									\
