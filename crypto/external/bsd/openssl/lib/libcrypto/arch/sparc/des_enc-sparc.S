@@ -1,26 +1,9 @@
-!  des_enc.m4
-!  des_enc.S  (generated from des_enc.m4)
+! Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
 !
-!  UltraSPARC assembler version of the LibDES/SSLeay/OpenSSL des_enc.c file.
-!
-!  Version 1.0. 32-bit version.
-!
-!  June 8, 2000.
-!
-!  Version 2.0. 32/64-bit, PIC-ification, blended CPU adaptation
-!		by Andy Polyakov.
-!
-!  January 1, 2003.
-!
-!  Assembler version: Copyright Svend Olaf Mikkelsen.
-!
-!  Original C code: Copyright Eric A. Young.
-!
-!  This code can be freely used by LibDES/SSLeay/OpenSSL users.
-!
-!  The LibDES/SSLeay/OpenSSL copyright notices must be respected.
-!
-!  This version can be redistributed.
+! Licensed under the OpenSSL license (the "License").  You may not use
+! this file except in compliance with the License.  You can obtain a copy
+! in the file LICENSE in the source distribution or at
+! https://www.openssl.org/source/license.html
 !
 !  To expand the m4 macros: m4 -B 8192 des_enc.m4 > des_enc.S
 !
@@ -48,6 +31,10 @@
 
 #include <openssl/opensslconf.h>
 
+#ifdef OPENSSL_FIPSCANISTER
+#include <openssl/fipssyms.h>
+#endif
+
 #if defined(__SUNPRO_C) && defined(__sparcv9)
 # define ABI64  /* They've said -xarch=v9 at command line */
 #elif defined(__GNUC__) && defined(__arch64__)
@@ -63,9 +50,6 @@
 # define	STPTR	stx
 # define	ARG0	128
 # define	ARGSZ	8
-# ifndef __sparc_v9__
-# define __sparc_v9__
-# endif
 #else
 # define	FRAME	-96
 # define	BIAS	0
@@ -159,7 +143,7 @@
 ! other half (use).
 !
 ! In this version we do two rounds in a loop repeated 7 times
-! and two rounds seperately.
+! and two rounds separately.
 !
 ! One half has the bits for the sboxes in the following positions:
 !
@@ -430,11 +414,7 @@
 	xor	out5, local1, out5            ! 1 finished
 
 	xor	out5, local2, out5            ! 3 finished
-#ifdef __sparc_v9__
-	bne,pt	%icc, .des_enc.1
-#else
 	bne	.des_enc.1
-#endif
 	and	local4, 252, local1       ! sbox 1 next round
 
 ! two rounds more:
@@ -688,11 +668,7 @@
 	xor	in5, local1, in5            ! 1 finished
 
 	xor	in5, local2, in5            ! 3 finished
-#ifdef __sparc_v9__
-	bne,pt	%icc, .des_dec.1
-#else
 	bne	.des_dec.1
-#endif
 	and	local4, 252, local1       ! sbox 1 next round
 
 ! two rounds more:
@@ -829,11 +805,7 @@ DES_encrypt1:
 	ld	[in0], in5                ! left
 	cmp	in2, 0                    ! enc
 
-#ifdef __sparc_v9__
-	be,pn	%icc, .encrypt.dec        ! enc/dec
-#else
 	be	.encrypt.dec
-#endif
 	ld	[in0+4], out5             ! right
 
 	! parameter 6  1/2 for include encryption/decryption
@@ -1061,11 +1033,7 @@ DES_encrypt1:
 	xor	out5, local1, out5            ! 1 finished
 
 	xor	out5, local2, out5            ! 3 finished
-#ifdef __sparc_v9__
-	bne,pt	%icc, .des_encrypt1.1
-#else
 	bne	.des_encrypt1.1
-#endif
 	and	local4, 252, local1       ! sbox 1 next round
 
 ! two rounds more:
@@ -1505,11 +1473,7 @@ DES_encrypt2:
 
 	! we use our own stackframe
 
-#ifdef __sparc_v9__
-	be,pn	%icc, .encrypt2.dec       ! decryption
-#else
 	be	.encrypt2.dec
-#endif
 	STPTR	in0, [%sp+BIAS+ARG0+0*ARGSZ]
 
 	ld	[in3], out0               ! key 7531 first round
@@ -2033,11 +1997,7 @@ DES_ncbc_encrypt:
 
 	cmp	in5, 0                    ! enc   
 
-#ifdef __sparc_v9__
-	be,pn	%icc, .ncbc.dec
-#else
 	be	.ncbc.dec
-#endif
 	STPTR	in4,  [%sp+BIAS+ARG0+4*ARGSZ] 
 
 	! addr  left  right  temp  label
@@ -2047,18 +2007,6 @@ DES_ncbc_encrypt:
 ! in4 in5 out5 local3 .LLE1    
 
 	! first in memory to rightmost in register
-
-#ifdef __sparc_v9__
-	andcc	in4, 3, global0
-	bne,pn	%icc, .LLE1
-	nop
-
-	lda	[in4] 0x88, in5
-	add	in4, 4, local3
-
-	ba,pt	%icc, .LLE1a
-	lda	[local3] 0x88, out5
-#endif
 
 .LLE1:
 	ldub	[in4+3], in5
@@ -2095,11 +2043,7 @@ DES_ncbc_encrypt:
 
 	addcc	in2, -8, in2              ! bytes missing when first block done
 
-#ifdef __sparc_v9__
-	bl,pn	%icc, .ncbc.enc.seven.or.less
-#else
 	bl	.ncbc.enc.seven.or.less
-#endif
 	mov	in3, in4                  ! schedule
 
 .ncbc.enc.next.block:
@@ -2110,18 +2054,6 @@ DES_ncbc_encrypt:
 ! in0 out4 global4 local3 .LLE2    
 
 	! first in memory to rightmost in register
-
-#ifdef __sparc_v9__
-	andcc	in0, 3, global0
-	bne,pn	%icc, .LLE2
-	nop
-
-	lda	[in0] 0x88, out4
-	add	in0, 4, local3
-
-	ba,pt	%icc, .LLE2a
-	lda	[local3] 0x88, global4
-#endif
 
 .LLE2:
 	ldub	[in0+3], out4
@@ -2390,11 +2322,7 @@ DES_ncbc_encrypt:
 	xor	out5, local1, out5            ! 1 finished
 
 	xor	out5, local2, out5            ! 3 finished
-#ifdef __sparc_v9__
-	bne,pt	%icc, .ncbc.enc.1
-#else
 	bne	.ncbc.enc.1
-#endif
 	and	local4, 252, local1       ! sbox 1 next round
 
 ! two rounds more:
@@ -2509,11 +2437,7 @@ DES_ncbc_encrypt:
 	xor	out5, local2, out5
  ! include encryption  ks in3
 
-#ifdef __sparc_v9__
-	bl,pn	%icc, .ncbc.enc.next.block_fp
-#else
 	bl	.ncbc.enc.next.block_fp
-#endif
 	add	in0, 8, in0               ! input address
 
 	! If 8 or more bytes are to be encrypted after this block,
@@ -2526,18 +2450,6 @@ DES_ncbc_encrypt:
 ! in0 global3 global4 local5 .LLE12    
 
 	! first in memory to rightmost in register
-
-#ifdef __sparc_v9__
-	andcc	in0, 3, global0
-	bne,pn	%icc, .LLE12
-	nop
-
-	lda	[in0] 0x88, global3
-	add	in0, 4, local5
-
-	ba,pt	%icc, .LLE12a
-	lda	[local5] 0x88, global4
-#endif
 
 .LLE12:
 	ldub	[in0+3], global3
@@ -2712,18 +2624,6 @@ DES_ncbc_encrypt:
 
 	! rightmost in register to first in memory
 
-#ifdef __sparc_v9__
-	andcc	in1, 3, global0
-	bne,pn	%icc, .SLE10
-	nop
-
-	sta	out0, [in1] 0x88
-	add	in1, 4, local3
-
-	ba,pt	%icc, .SLE10a
-	sta	out1, [local3] 0x88
-#endif
-
 .SLE10:
 	and	out0, 255, local3
 	stub	local3, [in1+0]
@@ -2767,7 +2667,7 @@ DES_ncbc_encrypt:
 	xor	global4, local1, out5     ! iv xor next block
 
 	ba	.ncbc.enc.next.block_2
-	add	in1, 8, in1               ! output adress
+	add	in1, 8, in1               ! output address
 
 .ncbc.enc.next.block_fp:
 
@@ -2854,18 +2754,6 @@ DES_ncbc_encrypt:
 
 	! rightmost in register to first in memory
 
-#ifdef __sparc_v9__
-	andcc	in1, 3, global0
-	bne,pn	%icc, .SLE1
-	nop
-
-	sta	in5, [in1] 0x88
-	add	in1, 4, local3
-
-	ba,pt	%icc, .SLE1a
-	sta	out5, [local3] 0x88
-#endif
-
 .SLE1:
 	and	in5, 255, local3
 	stub	local3, [in1+0]
@@ -2902,22 +2790,14 @@ DES_ncbc_encrypt:
 
 	addcc   in2, -8, in2              ! bytes missing when next block done
 
-#ifdef __sparc_v9__
-	bpos,pt	%icc, .ncbc.enc.next.block  ! also jumps if 0
-#else
 	bpos	.ncbc.enc.next.block
-#endif
 	add	in1, 8, in1
 
 .ncbc.enc.seven.or.less:
 
 	cmp	in2, -8
 
-#ifdef __sparc_v9__
-	ble,pt	%icc, .ncbc.enc.finish
-#else
 	ble	.ncbc.enc.finish
-#endif
 	nop
 
 	add	in2, 8, local1            ! bytes to load
@@ -2995,18 +2875,6 @@ DES_ncbc_encrypt:
 
 	! rightmost in register to first in memory
 
-#ifdef __sparc_v9__
-	andcc	local4, 3, global0
-	bne,pn	%icc, .SLE2
-	nop
-
-	sta	in5, [local4] 0x88
-	add	local4, 4, local5
-
-	ba,pt	%icc, .SLE2a
-	sta	out5, [local5] 0x88
-#endif
-
 .SLE2:
 	and	in5, 255, local5
 	stub	local5, [local4+0]
@@ -3052,11 +2920,7 @@ DES_ncbc_encrypt:
 	add	in3, 120, in3
 
 	LDPTR	 [%sp+BIAS+ARG0+4*ARGSZ] , local7              ! ivec
-#ifdef __sparc_v9__
-	ble,pn	%icc, .ncbc.dec.finish
-#else
 	ble	.ncbc.dec.finish
-#endif
 	mov	in3, in4                  ! schedule
 
 	STPTR	in1,  [%sp+BIAS+ARG0+1*ARGSZ] 
@@ -3068,18 +2932,6 @@ DES_ncbc_encrypt:
 ! local7 in0 in1 local3 .LLE3    
 
 	! first in memory to rightmost in register
-
-#ifdef __sparc_v9__
-	andcc	local7, 3, global0
-	bne,pn	%icc, .LLE3
-	nop
-
-	lda	[local7] 0x88, in0
-	add	local7, 4, local3
-
-	ba,pt	%icc, .LLE3a
-	lda	[local3] 0x88, in1
-#endif
 
 .LLE3:
 	ldub	[local7+3], in0
@@ -3122,18 +2974,6 @@ DES_ncbc_encrypt:
 ! local5 in5 out5 local3 .LLE4    
 
 	! first in memory to rightmost in register
-
-#ifdef __sparc_v9__
-	andcc	local5, 3, global0
-	bne,pn	%icc, .LLE4
-	nop
-
-	lda	[local5] 0x88, in5
-	add	local5, 4, local3
-
-	ba,pt	%icc, .LLE4a
-	lda	[local3] 0x88, out5
-#endif
 
 .LLE4:
 	ldub	[local5+3], in5
@@ -3354,11 +3194,7 @@ DES_ncbc_encrypt:
 	! in2 is compared to 8 in the rounds
 
 	xor	out5, in0, out4           ! iv xor
-#ifdef __sparc_v9__
-	bl,pn	%icc, .ncbc.dec.seven.or.less
-#else
 	bl	.ncbc.dec.seven.or.less
-#endif
 	xor	in5, in1, global4         ! iv xor
 
 	! Load ivec next block now, since input and output address might be the same.
@@ -3369,19 +3205,6 @@ DES_ncbc_encrypt:
 ! local5 in0 in1 local3 .LLE5    
 
 	! first in memory to rightmost in register
-
-#ifdef __sparc_v9__
-	andcc	local5, 3, global0
-	bne,pn	%icc, .LLE5
-	nop
-
-	lda	[local5] 0x88, in0
-	add	local5, 4, local5
-
-	lda	[local5] 0x88, in1
-	ba,pt	%icc, .LLE5a
-	add	local5, 4, local5
-#endif
 
 .LLE5:
 	ldub	[local5+3], in0
@@ -3423,18 +3246,6 @@ DES_ncbc_encrypt:
 
 	! rightmost in register to first in memory
 
-#ifdef __sparc_v9__
-	andcc	local7, 3, global0
-	bne,pn	%icc, .SLE3
-	nop
-
-	sta	out4, [local7] 0x88
-	add	local7, 4, local3
-
-	ba,pt	%icc, .SLE3a
-	sta	global4, [local3] 0x88
-#endif
-
 .SLE3:
 	and	out4, 255, local3
 	stub	local3, [local7+0]
@@ -3473,11 +3284,7 @@ DES_ncbc_encrypt:
 	add	local7, 8, local7
 	addcc   in2, -8, in2
 
-#ifdef __sparc_v9__
-	bg,pt	%icc, .ncbc.dec.next.block
-#else
 	bg	.ncbc.dec.next.block
-#endif
 	STPTR	local7,  [%sp+BIAS+ARG0+1*ARGSZ] 
 
 
@@ -3490,18 +3297,6 @@ DES_ncbc_encrypt:
 ! local4 in0 in1 local5 .SLE4    
 
 	! rightmost in register to first in memory
-
-#ifdef __sparc_v9__
-	andcc	local4, 3, global0
-	bne,pn	%icc, .SLE4
-	nop
-
-	sta	in0, [local4] 0x88
-	add	local4, 4, local5
-
-	ba,pt	%icc, .SLE4a
-	sta	in1, [local5] 0x88
-#endif
 
 .SLE4:
 	and	in0, 255, local5
@@ -3550,19 +3345,6 @@ DES_ncbc_encrypt:
 ! local5 in0 in1 local3 .LLE13    
 
 	! first in memory to rightmost in register
-
-#ifdef __sparc_v9__
-	andcc	local5, 3, global0
-	bne,pn	%icc, .LLE13
-	nop
-
-	lda	[local5] 0x88, in0
-	add	local5, 4, local5
-
-	lda	[local5] 0x88, in1
-	ba,pt	%icc, .LLE13a
-	add	local5, 4, local5
-#endif
 
 .LLE13:
 	ldub	[local5+3], in0
@@ -3688,11 +3470,7 @@ DES_ede3_cbc_encrypt:
 	LDPTR	[%fp+BIAS+ARG0+6*ARGSZ], local4          ! ivec
 	cmp	local3, 0                 ! enc
 
-#ifdef __sparc_v9__
-	be,pn	%icc, .ede3.dec
-#else
 	be	.ede3.dec
-#endif
 	STPTR	in4,  [%sp+BIAS+ARG0+4*ARGSZ] 
 
 	STPTR	in5,  [%sp+BIAS+ARG0+5*ARGSZ] 
@@ -3703,18 +3481,6 @@ DES_ede3_cbc_encrypt:
 ! local4 in5 out5 local3 .LLE6    
 
 	! first in memory to rightmost in register
-
-#ifdef __sparc_v9__
-	andcc	local4, 3, global0
-	bne,pn	%icc, .LLE6
-	nop
-
-	lda	[local4] 0x88, in5
-	add	local4, 4, local3
-
-	ba,pt	%icc, .LLE6a
-	lda	[local3] 0x88, out5
-#endif
 
 .LLE6:
 	ldub	[local4+3], in5
@@ -3751,11 +3517,7 @@ DES_ede3_cbc_encrypt:
 
 	addcc	in2, -8, in2              ! bytes missing after next block
 
-#ifdef __sparc_v9__
-	bl,pn	%icc,  .ede3.enc.seven.or.less
-#else
 	bl	.ede3.enc.seven.or.less
-#endif
 	STPTR	in3,  [%sp+BIAS+ARG0+3*ARGSZ] 
 
 .ede3.enc.next.block:
@@ -3766,18 +3528,6 @@ DES_ede3_cbc_encrypt:
 ! in0 out4 global4 local3 .LLE7    
 
 	! first in memory to rightmost in register
-
-#ifdef __sparc_v9__
-	andcc	in0, 3, global0
-	bne,pn	%icc, .LLE7
-	nop
-
-	lda	[in0] 0x88, out4
-	add	in0, 4, local3
-
-	ba,pt	%icc, .LLE7a
-	lda	[local3] 0x88, global4
-#endif
 
 .LLE7:
 	ldub	[in0+3], out4
@@ -3926,11 +3676,7 @@ DES_ede3_cbc_encrypt:
 	call .des_enc                     ! ks3 in3  compares in2 to 8
 	nop
 
-#ifdef __sparc_v9__
-	bl,pn	%icc, .ede3.enc.next.block_fp
-#else
 	bl	.ede3.enc.next.block_fp
-#endif
 	add	in0, 8, in0
 
 	! If 8 or more bytes are to be encrypted after this block,
@@ -3943,18 +3689,6 @@ DES_ede3_cbc_encrypt:
 ! in0 global3 global4 local5 .LLE11    
 
 	! first in memory to rightmost in register
-
-#ifdef __sparc_v9__
-	andcc	in0, 3, global0
-	bne,pn	%icc, .LLE11
-	nop
-
-	lda	[in0] 0x88, global3
-	add	in0, 4, local5
-
-	ba,pt	%icc, .LLE11a
-	lda	[local5] 0x88, global4
-#endif
 
 .LLE11:
 	ldub	[in0+3], global3
@@ -4129,18 +3863,6 @@ DES_ede3_cbc_encrypt:
 
 	! rightmost in register to first in memory
 
-#ifdef __sparc_v9__
-	andcc	in1, 3, global0
-	bne,pn	%icc, .SLE9
-	nop
-
-	sta	out0, [in1] 0x88
-	add	in1, 4, local3
-
-	ba,pt	%icc, .SLE9a
-	sta	out1, [local3] 0x88
-#endif
-
 .SLE9:
 	and	out0, 255, local3
 	stub	local3, [in1+0]
@@ -4272,18 +3994,6 @@ DES_ede3_cbc_encrypt:
 
 	! rightmost in register to first in memory
 
-#ifdef __sparc_v9__
-	andcc	in1, 3, global0
-	bne,pn	%icc, .SLE5
-	nop
-
-	sta	in5, [in1] 0x88
-	add	in1, 4, local3
-
-	ba,pt	%icc, .SLE5a
-	sta	out5, [local3] 0x88
-#endif
-
 .SLE5:
 	and	in5, 255, local3
 	stub	local3, [in1+0]
@@ -4320,22 +4030,14 @@ DES_ede3_cbc_encrypt:
 
 	addcc   in2, -8, in2              ! bytes missing when next block done
 
-#ifdef __sparc_v9__
-	bpos,pt	%icc, .ede3.enc.next.block
-#else
 	bpos	.ede3.enc.next.block
-#endif
 	add	in1, 8, in1
 
 .ede3.enc.seven.or.less:
 
 	cmp	in2, -8
 
-#ifdef __sparc_v9__
-	ble,pt	%icc, .ede3.enc.finish
-#else
 	ble	.ede3.enc.finish
-#endif
 	nop
 
 	add	in2, 8, local1            ! bytes to load
@@ -4410,18 +4112,6 @@ DES_ede3_cbc_encrypt:
 
 	! rightmost in register to first in memory
 
-#ifdef __sparc_v9__
-	andcc	local4, 3, global0
-	bne,pn	%icc, .SLE6
-	nop
-
-	sta	in5, [local4] 0x88
-	add	local4, 4, local5
-
-	ba,pt	%icc, .SLE6a
-	sta	out5, [local5] 0x88
-#endif
-
 .SLE6:
 	and	in5, 255, local5
 	stub	local5, [local4+0]
@@ -4471,11 +4161,7 @@ DES_ede3_cbc_encrypt:
 	STPTR	in3,  [%sp+BIAS+ARG0+3*ARGSZ] 
 	cmp	in2, 0
 
-#ifdef __sparc_v9__
-	ble	%icc, .ede3.dec.finish
-#else
 	ble	.ede3.dec.finish
-#endif
 	STPTR	in5,  [%sp+BIAS+ARG0+5*ARGSZ] 
 
 	LDPTR	[%fp+BIAS+ARG0+6*ARGSZ], local7          ! iv
@@ -4485,18 +4171,6 @@ DES_ede3_cbc_encrypt:
 ! local7 in0 in1 local3 .LLE8    
 
 	! first in memory to rightmost in register
-
-#ifdef __sparc_v9__
-	andcc	local7, 3, global0
-	bne,pn	%icc, .LLE8
-	nop
-
-	lda	[local7] 0x88, in0
-	add	local7, 4, local3
-
-	ba,pt	%icc, .LLE8a
-	lda	[local3] 0x88, in1
-#endif
 
 .LLE8:
 	ldub	[local7+3], in0
@@ -4539,18 +4213,6 @@ DES_ede3_cbc_encrypt:
 ! local5 in5 out5 local3 .LLE9    
 
 	! first in memory to rightmost in register
-
-#ifdef __sparc_v9__
-	andcc	local5, 3, global0
-	bne,pn	%icc, .LLE9
-	nop
-
-	lda	[local5] 0x88, in5
-	add	local5, 4, local3
-
-	ba,pt	%icc, .LLE9a
-	lda	[local3] 0x88, out5
-#endif
 
 .LLE9:
 	ldub	[local5+3], in5
@@ -4778,11 +4440,7 @@ DES_ede3_cbc_encrypt:
 	! in2 is compared to 8 in the rounds
 
 	xor	out5, in0, out4
-#ifdef __sparc_v9__
-	bl,pn	%icc, .ede3.dec.seven.or.less
-#else
 	bl	.ede3.dec.seven.or.less
-#endif
 	xor	in5, in1, global4
 
 	
@@ -4791,19 +4449,6 @@ DES_ede3_cbc_encrypt:
 ! local5 in0 in1 local3 .LLE10    
 
 	! first in memory to rightmost in register
-
-#ifdef __sparc_v9__
-	andcc	local5, 3, global0
-	bne,pn	%icc, .LLE10
-	nop
-
-	lda	[local5] 0x88, in0
-	add	local5, 4, local5
-
-	lda	[local5] 0x88, in1
-	ba,pt	%icc, .LLE10a
-	add	local5, 4, local5
-#endif
 
 .LLE10:
 	ldub	[local5+3], in0
@@ -4845,18 +4490,6 @@ DES_ede3_cbc_encrypt:
 
 	! rightmost in register to first in memory
 
-#ifdef __sparc_v9__
-	andcc	local7, 3, global0
-	bne,pn	%icc, .SLE7
-	nop
-
-	sta	out4, [local7] 0x88
-	add	local7, 4, local3
-
-	ba,pt	%icc, .SLE7a
-	sta	global4, [local3] 0x88
-#endif
-
 .SLE7:
 	and	out4, 255, local3
 	stub	local3, [local7+0]
@@ -4895,11 +4528,7 @@ DES_ede3_cbc_encrypt:
 	addcc   in2, -8, in2
 	add	local7, 8, local7
 
-#ifdef __sparc_v9__
-	bg,pt	%icc, .ede3.dec.next.block
-#else
 	bg	.ede3.dec.next.block
-#endif
 	STPTR	local7,  [%sp+BIAS+ARG0+1*ARGSZ] 
 
 .ede3.dec.store.iv:
@@ -4911,18 +4540,6 @@ DES_ede3_cbc_encrypt:
 ! local4 in0 in1 local5 .SLE8    
 
 	! rightmost in register to first in memory
-
-#ifdef __sparc_v9__
-	andcc	local4, 3, global0
-	bne,pn	%icc, .SLE8
-	nop
-
-	sta	in0, [local4] 0x88
-	add	local4, 4, local5
-
-	ba,pt	%icc, .SLE8a
-	sta	in1, [local5] 0x88
-#endif
 
 .SLE8:
 	and	in0, 255, local5
@@ -4971,19 +4588,6 @@ DES_ede3_cbc_encrypt:
 ! local5 in0 in1 local3 .LLE14    
 
 	! first in memory to rightmost in register
-
-#ifdef __sparc_v9__
-	andcc	local5, 3, global0
-	bne,pn	%icc, .LLE14
-	nop
-
-	lda	[local5] 0x88, in0
-	add	local5, 4, local5
-
-	lda	[local5] 0x88, in1
-	ba,pt	%icc, .LLE14a
-	add	local5, 4, local5
-#endif
 
 .LLE14:
 	ldub	[local5+3], in0

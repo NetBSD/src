@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2016/10/14 16:09:44 spz Exp $
+#	$NetBSD: Makefile,v 1.6 2018/02/18 23:38:47 christos Exp $
 
 .include "bsd.own.mk"
 
@@ -11,8 +11,8 @@ regen:
 		 ${OPENSSLSRC}/crypto/bn/asm/vis3-mont.pl; do \
 		j=$$(basename $$i .pl).S; \
 		case $$j in \
-		ghash*|sha*|md5*) perl $$i $$j -m64;; \
-		*) perl $$i -m64 > $$j;; \
+		sparc*_modes.pl|sha1-*) perl $$i $$j;; \
+		*) perl $$i > $$j;; \
 		esac; \
 	done
 	#cp ${OPENSSLSRC}/crypto/bn/asm/sparcv8plus.S bn-sparcv9.S

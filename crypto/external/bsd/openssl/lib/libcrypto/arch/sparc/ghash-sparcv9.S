@@ -1,3 +1,10 @@
+#include "sparc_arch.h"
+
+#ifdef  __arch64__
+.register	%g2,#scratch
+.register	%g3,#scratch
+#endif
+
 .section	".text",#alloc,#execinstr
 
 .align	64
@@ -12,7 +19,7 @@ rem_4bit:
 .globl	gcm_ghash_4bit
 .align	32
 gcm_ghash_4bit:
-	save	%sp,-112,%sp
+	save	%sp,-STACK_FRAME,%sp
 	ldub	[%i2+15],%l1
 	ldub	[%i0+15],%l2
 	ldub	[%i0+14],%l3
@@ -101,7 +108,7 @@ gcm_ghash_4bit:
 
 	add	%i2,16,%i2
 	cmp	%i2,%i3
-	be,pn	%icc,.Ldone
+	be,pn	SIZE_T_CC,.Ldone
 	and	%o1,0xf,%l5
 
 	ldx	[%l6+%l0],%o3
@@ -147,7 +154,7 @@ gcm_ghash_4bit:
 .globl	gcm_gmult_4bit
 .align	32
 gcm_gmult_4bit:
-	save	%sp,-112,%sp
+	save	%sp,-STACK_FRAME,%sp
 	ldub	[%i0+15],%l1
 	add	%i1,8,%l6
 
@@ -249,7 +256,7 @@ gcm_gmult_4bit:
 .globl	gcm_init_vis3
 .align	32
 gcm_init_vis3:
-	save	%sp,-112,%sp
+	save	%sp,-STACK_FRAME,%sp
 
 	ldx	[%i1+0],%o2
 	ldx	[%i1+8],%o1
@@ -282,7 +289,7 @@ gcm_init_vis3:
 .globl	gcm_gmult_vis3
 .align	32
 gcm_gmult_vis3:
-	save	%sp,-112,%sp
+	save	%sp,-STACK_FRAME,%sp
 
 	ldx	[%i0+8],%o3		! load Xi
 	ldx	[%i0+0],%o4
@@ -336,7 +343,7 @@ gcm_gmult_vis3:
 .globl	gcm_ghash_vis3
 .align	32
 gcm_ghash_vis3:
-	save	%sp,-112,%sp
+	save	%sp,-STACK_FRAME,%sp
 	nop
 	srln	%i3,0,%i3		! needed on v8+, "nop" on v9
 
