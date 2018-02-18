@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.280 2018/02/17 17:44:09 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.281 2018/02/18 14:07:29 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.280 2018/02/17 17:44:09 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.281 2018/02/18 14:07:29 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -2130,7 +2130,7 @@ pmap_free_ptp(struct pmap *pmap, struct vm_page *ptp, vaddr_t va,
 			xen_kpm_sync(pmap, index);
 		}
 #elif defined(SVS)
-		if (level == PTP_LEVELS - 1) {
+		if (svs_enabled && level == PTP_LEVELS - 1) {
 			svs_pmap_sync(pmap, index);
 		}
 #endif
@@ -2235,7 +2235,7 @@ pmap_get_ptp(struct pmap *pmap, vaddr_t va, pd_entry_t * const *pdes, int flags)
 			xen_kpm_sync(pmap, index);
 		}
 #elif defined(SVS)
-		if (i == PTP_LEVELS) {
+		if (svs_enabled && i == PTP_LEVELS) {
 			svs_pmap_sync(pmap, index);
 		}
 #endif
