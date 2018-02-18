@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.217 2017/12/08 03:36:42 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.218 2018/02/18 00:52:42 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.217 2017/12/08 03:36:42 sjg Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.218 2018/02/18 00:52:42 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.217 2017/12/08 03:36:42 sjg Exp $");
+__RCSID("$NetBSD: var.c,v 1.218 2018/02/18 00:52:42 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -971,7 +971,8 @@ Var_Set(const char *name, const char *val, GNode *ctxt, int flags)
 	VarAdd(name, val, ctxt);
     } else {
 	Buf_Empty(&v->val);
-	Buf_AddBytes(&v->val, strlen(val), val);
+	if (val)
+	    Buf_AddBytes(&v->val, strlen(val), val);
 
 	if (DEBUG(VAR)) {
 	    fprintf(debug_file, "%s:%s = %s\n", ctxt->name, name, val);
@@ -998,7 +999,7 @@ Var_Set(const char *name, const char *val, GNode *ctxt, int flags)
 	 * Makefile settings.
 	 */
 	if (varNoExportEnv != TRUE)
-	    setenv(name, val, 1);
+	    setenv(name, val ? val : "", 1);
 
 	Var_Append(MAKEOVERRIDES, name, VAR_GLOBAL);
     }
