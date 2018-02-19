@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.28 2017/06/01 02:45:11 chs Exp $	*/
+/*	$NetBSD: virtio.c,v 1.28.2.1 2018/02/19 18:19:15 snj Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.28 2017/06/01 02:45:11 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.28.2.1 2018/02/19 18:19:15 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -392,6 +392,7 @@ virtio_attach(device_t parent, device_t self, void *aux)
 	pcitag_t tag = pa->pa_tag;
 	int revision;
 	pcireg_t id;
+	pcireg_t csr;
 
 	revision = PCI_REVISION(pa->pa_class);
 	if (revision != 0) {
@@ -408,6 +409,10 @@ virtio_attach(device_t parent, device_t self, void *aux)
 			  (PCI_SUBSYS_ID(id) < NDEVNAMES?
 			   virtio_device_name[PCI_SUBSYS_ID(id)] : "Unknown"),
 			  revision);
+
+	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+	csr |= PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_IO_ENABLE;
+	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
 
 	sc->sc_dev = self;
 	sc->sc_pc = pc;
