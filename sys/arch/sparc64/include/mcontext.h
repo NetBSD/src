@@ -1,11 +1,11 @@
-/*	$NetBSD: mcontext.h,v 1.9 2012/09/12 02:00:54 manu Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.10 2018/02/19 08:31:13 mrg Exp $	*/
 
 #ifndef _SPARC64_MCONTEXT_H_
-#define _SPARC64_MCONTEXT_H_
+#define	_SPARC64_MCONTEXT_H_
 
 #include <sparc/mcontext.h>
 
-#define _NGREG32	19	/* %psr, pc, npc, %g1-7, %o0-7 */
+#define	_NGREG32	19	/* %psr, pc, npc, %g1-7, %o0-7 */
 typedef	int	__greg32_t;
 typedef	__greg32_t	__gregset32_t[_NGREG32];
 
@@ -75,5 +75,9 @@ typedef struct {
 #define	_UC_SETSTACK	0x00010000
 #define	_UC_CLRSTACK	0x00020000
 #define	_UC_TLSBASE	0x00080000
+
+#define	_UC_MACHINE32_PAD	43	/* compat_netbsd32 variant */
+#define	_UC_MACHINE32_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_O6])
+#define	_UC_MACHINE32_FP(uc)	(((__greg32_t *)_UC_MACHINE32_SP(uc))[15])
 
 #endif /* _SPARC64_MCONTEXT_H_ */
