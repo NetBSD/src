@@ -50,7 +50,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.8 2014/07/09 06:04:16 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.8.2.1 2018/02/19 19:39:52 snj Exp $");
 
 #include <sys/param.h>
 
@@ -68,6 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.8 2014/07/09 06:04:16 maxv Exp 
 #include <stdlib.h>
 #include <string.h>
 #include <util.h>
+#include <strings.h>
 
 #include "makefs.h"
 #include "msdos.h"
