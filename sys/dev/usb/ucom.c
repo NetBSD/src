@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.107.2.2 2017/04/05 19:54:19 snj Exp $	*/
+/*	$NetBSD: ucom.c,v 1.107.2.3 2018/02/19 19:33:06 snj Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.107.2.2 2017/04/05 19:54:19 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.107.2.3 2018/02/19 19:33:06 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -334,7 +334,7 @@ ucom_attach(device_t parent, device_t self, void *aux)
 		for (ub = &sc->sc_ibuff[0]; ub != &sc->sc_ibuff[UCOM_IN_BUFFS];
 		    ub++) {
 			error = usbd_create_xfer(sc->sc_bulkin_pipe,
-			    sc->sc_ibufsizepad, USBD_SHORT_XFER_OK, 0,
+			    sc->sc_ibufsizepad, 0, 0,
 			    &ub->ub_xfer);
 			if (error)
 				goto fail_1;

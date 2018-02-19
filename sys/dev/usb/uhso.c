@@ -1,4 +1,4 @@
-/*	$NetBSD: uhso.c,v 1.16.2.1 2017/04/05 19:54:20 snj Exp $	*/
+/*	$NetBSD: uhso.c,v 1.16.2.2 2018/02/19 19:33:06 snj Exp $	*/
 
 /*-
  * Copyright (c) 2009 Iain Hibbert
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.16.2.1 2017/04/05 19:54:20 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.16.2.2 2018/02/19 19:33:06 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1163,7 +1163,7 @@ uhso_bulk_init(struct uhso_port *hp)
 	}
 
 	int error = usbd_create_xfer(hp->hp_rpipe, hp->hp_rsize,
-	    USBD_SHORT_XFER_OK, 0, &hp->hp_rxfer);
+	    0, 0, &hp->hp_rxfer);
 	if (error)
 		return error;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ural.c,v 1.44.12.2 2017/08/09 06:34:53 snj Exp $ */
+/*	$NetBSD: if_ural.c,v 1.44.12.3 2018/02/19 19:33:06 snj Exp $ */
 /*	$FreeBSD: /repoman/r/ncvs/src/sys/dev/usb/if_ural.c,v 1.40 2006/06/02 23:14:40 sam Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.44.12.2 2017/08/09 06:34:53 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.44.12.3 2018/02/19 19:33:06 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -624,7 +624,7 @@ ural_alloc_rx_list(struct ural_softc *sc)
 		data->sc = sc;
 
 		error = usbd_create_xfer(sc->sc_rx_pipeh, MCLBYTES,
-		    USBD_SHORT_XFER_OK, 0, &data->xfer);
+		    0, 0, &data->xfer);
 		if (error) {
 			printf("%s: could not allocate rx xfer\n",
 			    device_xname(sc->sc_dev));

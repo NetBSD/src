@@ -1,4 +1,4 @@
-/*	$NetBSD: uirda.c,v 1.38.4.1 2017/04/05 19:54:20 snj Exp $	*/
+/*	$NetBSD: uirda.c,v 1.38.4.2 2018/02/19 19:33:06 snj Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.38.4.1 2017/04/05 19:54:20 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.38.4.2 2018/02/19 19:33:06 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -395,7 +395,7 @@ uirda_open(void *h, int flag, int mode,
 		goto bad2;
 	}
 	error = usbd_create_xfer(sc->sc_rd_pipe,
-	    IRDA_MAX_FRAME_SIZE + sc->sc_hdszi, USBD_SHORT_XFER_OK, 0,
+	    IRDA_MAX_FRAME_SIZE + sc->sc_hdszi, 0, 0,
 	    &sc->sc_rd_xfer);
 	if (error)
 		goto bad3;

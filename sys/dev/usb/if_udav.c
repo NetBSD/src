@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.43.2.1 2017/04/05 19:54:19 snj Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.43.2.2 2018/02/19 19:33:06 snj Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.43.2.1 2017/04/05 19:54:19 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.43.2.2 2018/02/19 19:33:06 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -959,7 +959,7 @@ udav_rx_list_init(struct udav_softc *sc)
 			return ENOBUFS;
 		if (c->udav_xfer == NULL) {
 			int error = usbd_create_xfer(sc->sc_pipe_rx,
-			    UDAV_BUFSZ, USBD_SHORT_XFER_OK, 0, &c->udav_xfer);
+			    UDAV_BUFSZ, 0, 0, &c->udav_xfer);
 			if (error)
 				return error;
 			c->udav_buf = usbd_get_buffer(c->udav_xfer);

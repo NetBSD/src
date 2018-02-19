@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.40.4.1 2017/04/05 19:54:21 snj Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.40.4.2 2018/02/19 19:33:06 snj Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.40.4.1 2017/04/05 19:54:21 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.40.4.2 2018/02/19 19:33:06 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1485,7 +1485,7 @@ uvideo_stream_start_xfer(struct uvideo_stream *vs)
 		DPRINTF(("uvideo: pipe %p\n", bx->bx_pipe));
 
 		error = usbd_create_xfer(bx->bx_pipe, vs->vs_max_payload_size,
-		    USBD_SHORT_XFER_OK, 0, &bx->bx_xfer);
+		    0, 0, &bx->bx_xfer);
 		if (error) {
 			DPRINTF(("uvideo: couldn't allocate xfer\n"));
 			return error;

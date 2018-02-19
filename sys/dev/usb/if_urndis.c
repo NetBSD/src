@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urndis.c,v 1.9.2.1 2017/04/05 19:54:19 snj Exp $ */
+/*	$NetBSD: if_urndis.c,v 1.9.2.2 2018/02/19 19:33:06 snj Exp $ */
 /*	$OpenBSD: if_urndis.c,v 1.31 2011/07/03 15:47:17 matthew Exp $ */
 
 /*
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.9.2.1 2017/04/05 19:54:19 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.9.2.2 2018/02/19 19:33:06 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -936,7 +936,7 @@ urndis_rx_list_init(struct urndis_softc *sc)
 
 		if (c->sc_xfer == NULL) {
 			int err = usbd_create_xfer(sc->sc_bulkin_pipe,
-			    RNDIS_BUFSZ, USBD_SHORT_XFER_OK, 0, &c->sc_xfer);
+			    RNDIS_BUFSZ, 0, 0, &c->sc_xfer);
 			if (err)
 				return err;
 			c->sc_buf = usbd_get_buffer(c->sc_xfer);
