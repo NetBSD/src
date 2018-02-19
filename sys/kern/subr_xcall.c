@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_xcall.c,v 1.19 2016/11/21 00:54:21 ozaki-r Exp $	*/
+/*	$NetBSD: subr_xcall.c,v 1.19.8.1 2018/02/19 18:33:38 snj Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.19 2016/11/21 00:54:21 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.19.8.1 2018/02/19 18:33:38 snj Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -98,6 +98,7 @@ typedef struct {
 	void *		xc_arg2;
 	uint64_t	xc_headp;
 	uint64_t	xc_donep;
+	unsigned int	xc_ipl;
 } xc_state_t;
 
 /* Bit indicating high (1) or low (0) priority. */
@@ -108,7 +109,7 @@ static xc_state_t	xc_low_pri	__cacheline_aligned;
 
 /* High priority xcall structures. */
 static xc_state_t	xc_high_pri	__cacheline_aligned;
-static void *		xc_sih		__cacheline_aligned;
+static void *		xc_sihs[4]	__cacheline_aligned;
 
 /* Event counters. */
 static struct evcnt	xc_unicast_ev	__cacheline_aligned;
@@ -117,8 +118,23 @@ static struct evcnt	xc_broadcast_ev	__cacheline_aligned;
 static void		xc_init(void);
 static void		xc_thread(void *);
 
-static inline uint64_t	xc_highpri(xcfunc_t, void *, void *, struct cpu_info *);
+static inline uint64_t	xc_highpri(xcfunc_t, void *, void *, struct cpu_info *,
+			    unsigned int);
 static inline uint64_t	xc_lowpri(xcfunc_t, void *, void *, struct cpu_info *);
+
+/* The internal form of IPL */
+#define XC_IPL_MASK		0xff00
+/*
+ * Assign 0 to XC_IPL_SOFTSERIAL to treat IPL_SOFTSERIAL as the default value
+ * (just XC_HIGHPRI).
+ */
+#define XC_IPL_SOFTSERIAL	0
+#define XC_IPL_SOFTNET		1
+#define XC_IPL_SOFTBIO		2
+#define XC_IPL_SOFTCLOCK	3
+#define XC_IPL_MAX		XC_IPL_SOFTCLOCK
+
+CTASSERT(XC_IPL_MAX <= __arraycount(xc_sihs));
 
 /*
  * xc_init:
@@ -137,14 +153,75 @@ xc_init(void)
 	memset(xchi, 0, sizeof(xc_state_t));
 	mutex_init(&xchi->xc_lock, MUTEX_DEFAULT, IPL_SOFTSERIAL);
 	cv_init(&xchi->xc_busy, "xchicv");
-	xc_sih = softint_establish(SOFTINT_SERIAL | SOFTINT_MPSAFE,
-	    xc__highpri_intr, NULL);
-	KASSERT(xc_sih != NULL);
+
+	/* Set up a softint for each IPL_SOFT*. */
+#define SETUP_SOFTINT(xipl, sipl) do {					\
+		xc_sihs[(xipl)] = softint_establish( (sipl) | SOFTINT_MPSAFE,\
+		    xc__highpri_intr, NULL);				\
+		KASSERT(xc_sihs[(xipl)] != NULL);			\
+	} while (0)
+
+	SETUP_SOFTINT(XC_IPL_SOFTSERIAL, SOFTINT_SERIAL);
+	/*
+	 * If a IPL_SOFTXXX have the same value of the previous, we don't use
+	 * the IPL (see xc_encode_ipl).  So we don't need to allocate a softint
+	 * for it.
+	 */
+#if IPL_SOFTNET != IPL_SOFTSERIAL
+	SETUP_SOFTINT(XC_IPL_SOFTNET, SOFTINT_NET);
+#endif
+#if IPL_SOFTBIO != IPL_SOFTNET
+	SETUP_SOFTINT(XC_IPL_SOFTBIO, SOFTINT_BIO);
+#endif
+#if IPL_SOFTCLOCK != IPL_SOFTBIO
+	SETUP_SOFTINT(XC_IPL_SOFTCLOCK, SOFTINT_CLOCK);
+#endif
+
+#undef SETUP_SOFTINT
 
 	evcnt_attach_dynamic(&xc_unicast_ev, EVCNT_TYPE_MISC, NULL,
 	   "crosscall", "unicast");
 	evcnt_attach_dynamic(&xc_broadcast_ev, EVCNT_TYPE_MISC, NULL,
 	   "crosscall", "broadcast");
+}
+
+/*
+ * Encode an IPL to a form that can be embedded into flags of xc_broadcast
+ * or xc_unicast.
+ */
+unsigned int
+xc_encode_ipl(int ipl)
+{
+
+	switch (ipl) {
+	case IPL_SOFTSERIAL:
+		return __SHIFTIN(XC_IPL_SOFTSERIAL, XC_IPL_MASK);
+	/* IPL_SOFT* can be the same value (e.g., on sparc or mips). */
+#if IPL_SOFTNET != IPL_SOFTSERIAL
+	case IPL_SOFTNET:
+		return __SHIFTIN(XC_IPL_SOFTNET, XC_IPL_MASK);
+#endif
+#if IPL_SOFTBIO != IPL_SOFTNET
+	case IPL_SOFTBIO:
+		return __SHIFTIN(XC_IPL_SOFTBIO, XC_IPL_MASK);
+#endif
+#if IPL_SOFTCLOCK != IPL_SOFTBIO
+	case IPL_SOFTCLOCK:
+		return __SHIFTIN(XC_IPL_SOFTCLOCK, XC_IPL_MASK);
+#endif
+	}
+
+	panic("Invalid IPL: %d", ipl);
+}
+
+/*
+ * Extract an XC_IPL from flags of xc_broadcast or xc_unicast.
+ */
+static inline unsigned int
+xc_extract_ipl(unsigned int flags)
+{
+
+	return __SHIFTOUT(flags, XC_IPL_MASK);
 }
 
 /*
@@ -176,13 +253,14 @@ xc_init_cpu(struct cpu_info *ci)
  *	Trigger a call on all CPUs in the system.
  */
 uint64_t
-xc_broadcast(u_int flags, xcfunc_t func, void *arg1, void *arg2)
+xc_broadcast(unsigned int flags, xcfunc_t func, void *arg1, void *arg2)
 {
 
 	KASSERT(!cpu_intr_p() && !cpu_softintr_p());
 
 	if ((flags & XC_HIGHPRI) != 0) {
-		return xc_highpri(func, arg1, arg2, NULL);
+		int ipl = xc_extract_ipl(flags);
+		return xc_highpri(func, arg1, arg2, NULL, ipl);
 	} else {
 		return xc_lowpri(func, arg1, arg2, NULL);
 	}
@@ -194,7 +272,7 @@ xc_broadcast(u_int flags, xcfunc_t func, void *arg1, void *arg2)
  *	Trigger a call on one CPU.
  */
 uint64_t
-xc_unicast(u_int flags, xcfunc_t func, void *arg1, void *arg2,
+xc_unicast(unsigned int flags, xcfunc_t func, void *arg1, void *arg2,
 	   struct cpu_info *ci)
 {
 
@@ -202,7 +280,8 @@ xc_unicast(u_int flags, xcfunc_t func, void *arg1, void *arg2,
 	KASSERT(!cpu_intr_p() && !cpu_softintr_p());
 
 	if ((flags & XC_HIGHPRI) != 0) {
-		return xc_highpri(func, arg1, arg2, ci);
+		int ipl = xc_extract_ipl(flags);
+		return xc_highpri(func, arg1, arg2, ci, ipl);
 	} else {
 		return xc_lowpri(func, arg1, arg2, ci);
 	}
@@ -329,8 +408,13 @@ xc_thread(void *cookie)
 void
 xc_ipi_handler(void)
 {
+	xc_state_t *xc = & xc_high_pri;
+
+	KASSERT(xc->xc_ipl < __arraycount(xc_sihs));
+	KASSERT(xc_sihs[xc->xc_ipl] != NULL);
+
 	/* Executes xc__highpri_intr() via software interrupt. */
-	softint_schedule(xc_sih);
+	softint_schedule(xc_sihs[xc->xc_ipl]);
 }
 
 /*
@@ -375,7 +459,8 @@ xc__highpri_intr(void *dummy)
  *	Trigger a high priority call on one or more CPUs.
  */
 static inline uint64_t
-xc_highpri(xcfunc_t func, void *arg1, void *arg2, struct cpu_info *ci)
+xc_highpri(xcfunc_t func, void *arg1, void *arg2, struct cpu_info *ci,
+    unsigned int ipl)
 {
 	xc_state_t *xc = &xc_high_pri;
 	uint64_t where;
@@ -388,6 +473,7 @@ xc_highpri(xcfunc_t func, void *arg1, void *arg2, struct cpu_info *ci)
 	xc->xc_arg1 = arg1;
 	xc->xc_arg2 = arg2;
 	xc->xc_headp += (ci ? 1 : ncpu);
+	xc->xc_ipl = ipl;
 	where = xc->xc_headp;
 	mutex_exit(&xc->xc_lock);
 
