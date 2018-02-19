@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.22 2017/10/28 00:37:13 pgoyette Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.23 2018/02/19 21:20:33 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.22 2017/10/28 00:37:13 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.23 2018/02/19 21:20:33 jdolecek Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -296,7 +296,7 @@ pmap_tlb_pai_reset(struct pmap_tlb_info *ti, struct pmap_asid_info *pai,
 void
 pmap_tlb_info_evcnt_attach(struct pmap_tlb_info *ti)
 {
-#if defined(MULTIPROCESSOR)
+#if defined(MULTIPROCESSOR) && !defined(PMAP_TLB_NO_SYNCI_EVCNT)
 	evcnt_attach_dynamic_nozero(&ti->ti_evcnt_synci_desired,
 	    EVCNT_TYPE_MISC, NULL,
 	    ti->ti_name, "icache syncs desired");
@@ -315,7 +315,7 @@ pmap_tlb_info_evcnt_attach(struct pmap_tlb_info *ti)
 	evcnt_attach_dynamic_nozero(&ti->ti_evcnt_synci_deferred,
 	    EVCNT_TYPE_MISC, &ti->ti_evcnt_synci_desired,
 	    ti->ti_name, "icache pages deferred");
-#endif /* MULTIPROCESSOR */
+#endif /* MULTIPROCESSOR && !PMAP_TLB_NO_SYNCI_EVCNT */
 	evcnt_attach_dynamic_nozero(&ti->ti_evcnt_asid_reinits,
 	    EVCNT_TYPE_MISC, NULL,
 	    ti->ti_name, "asid pool reinit");
