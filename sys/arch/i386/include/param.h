@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.82 2017/07/29 13:05:15 maxv Exp $	*/
+/*	$NetBSD: param.h,v 1.83 2018/02/19 13:02:47 sborrill Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -108,7 +108,7 @@
 #define	INTRSTACKSIZE	8192
 
 #ifndef MSGBUFSIZE
-#define MSGBUFSIZE	(8*NBPG)	/* default message buffer size */
+#define MSGBUFSIZE	(16*NBPG)	/* default message buffer size */
 #endif
 
 /*
