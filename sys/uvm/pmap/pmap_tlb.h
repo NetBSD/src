@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.h,v 1.12 2018/02/19 21:20:33 jdolecek Exp $	*/
+/*	$NetBSD: pmap_tlb.h,v 1.13 2018/02/19 22:01:15 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,6 +76,7 @@
 
 #include <sys/evcnt.h>
 #include <sys/kcpuset.h>
+#include <sys/bitops.h>
 
 #if !defined(PMAP_TLB_MAX)
 # if defined(MULTIPROCESSOR)
@@ -141,7 +142,10 @@ struct pmap_tlb_info {
 #define tlbinfo_index(ti)	((void)(ti), 0)
 #endif
 	struct evcnt ti_evcnt_asid_reinits;
-	u_long ti_asid_bitmap[256 / (sizeof(u_long) * 8)];
+#ifndef PMAP_TLB_BITMAP_LENGTH
+#define	PMAP_TLB_BITMAP_LENGTH 256
+#endif
+	__BITMAP_TYPE(, u_long, PMAP_TLB_BITMAP_LENGTH) ti_asid_bitmap;
 };
 
 #ifdef	_KERNEL
