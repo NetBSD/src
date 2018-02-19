@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.127 2018/02/16 16:36:03 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.128 2018/02/19 19:08:18 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -9667,4 +9667,53 @@ sys/netipsec/ipsec.c				1.130
 
 	Fix inverted logic that could crash the kernel.
 	[maxv, ticket #559]
+
+sys/dev/pci/virtio_pci.c			1.2 via patch to sys/dev/pci/virtio.c
+
+	Explicitly enable PCI_COMMAND_MASTER_ENABLE and
+	PCI_COMMAND_IO_ENABLE.  Recent versions of VirtualBox do
+	not enable bus-mastering by default.
+	[uwe, ticket #553]
+
+sys/arch/sh3/sh3/exception.c			1.66
+
+	tlb_exception - set ksi_addr to va also when a userland page
+	is not found.  Helps SIGSEGV handlers for PROT_NONE red zones.
+	[uwe, ticket #554]
+
+build.sh					1.322-1.323
+tools/make/buildmake.sh.in			1.9-1.12
+
+	Fix issues on host systems with older /usr/share/mk.
+	[uwe, ticket #555]
+
+share/man/man9/xcall.9				1.11-1.12
+sys/kern/subr_psref.c				1.11
+sys/kern/subr_xcall.c				1.21-1.25
+sys/sys/xcall.h					1.6
+
+	Improve stability of psref, which mitigates unexpected long
+	turn-around time of psref_target_destroy under load, by
+	extending xcall to use a softint with an arbitrary IPL for
+	its fast cross call.
+	[ozaki-r, ticket #556]
+
+sys/netinet/ip_output.c				1.295
+
+	Fix a NULL pointer dereference in ip_drop_membership.
+	[ozaki-r, ticket #557]
+
+share/man/man4/wbsio.4				1.7-1.8
+sys/dev/isa/files.isa				1.168-1.169
+sys/dev/isa/wbsio.c				1.16-1.21
+sys/dev/isa/wbsioreg.h				1.6-1.7
+
+	Add wbsio(4) GPIO and watchdog timer driver.
+	[yamaguchi, ticket #558]
+
+share/man/man4/gif.4				1.31
+
+	Add 'tunnel mode ipip' to the cisco configuration as
+	requested in PR kern/53037.
+	[pgoyette, ticket #560]
 
