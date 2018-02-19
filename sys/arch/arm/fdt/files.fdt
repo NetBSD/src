@@ -1,4 +1,4 @@
-# $NetBSD: files.fdt,v 1.14 2017/10/02 22:49:38 jmcneill Exp $
+# $NetBSD: files.fdt,v 1.15 2018/02/19 16:10:42 jmcneill Exp $
 
 include	"dev/pckbport/files.pckbport"
 
@@ -41,6 +41,9 @@ file	arch/arm/fdt/plrtc_fdt.c		plrtc_fdt
 
 attach	psci at fdt with psci_fdt
 file	arch/arm/fdt/psci_fdt.c			psci_fdt
+
+attach	genfb at fdt with plfb_fdt: fdt_display_timing
+file	arch/arm/fdt/plfb_fdt.c			plfb_fdt
 
 # Console parameters
 defparam opt_fdt_arm.h				CONSADDR

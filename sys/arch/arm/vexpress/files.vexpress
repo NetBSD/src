@@ -1,4 +1,4 @@
-#	$NetBSD: files.vexpress,v 1.3 2017/08/26 15:05:48 jmcneill Exp $
+#	$NetBSD: files.vexpress,v 1.4 2018/02/19 16:10:42 jmcneill Exp $
 #
 # Configuration info for ARM Ltd. Versatile Express peripherals
 #
@@ -20,6 +20,3 @@ file	arch/arm/vexpress/vexpress_platform.c
 device	vxsysreg
 attach	vxsysreg at fdt with vexpress_sysreg
 file	arch/arm/vexpress/vexpress_sysreg.c	vexpress_sysreg	
-
-attach	genfb at fdt with plfb_fdt: fdt_display_timing
-file	arch/arm/fdt/plfb_fdt.c			plfb_fdt
