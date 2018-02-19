@@ -1,4 +1,4 @@
-.\"	$NetBSD: wbsio.4,v 1.3.18.1 2017/11/22 14:56:30 martin Exp $
+.\"	$NetBSD: wbsio.4,v 1.3.18.2 2018/02/19 18:50:35 snj Exp $
 .\"	$OpenBSD: wbsio.4,v 1.2 2008/02/17 16:48:47 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd July 12, 2017
+.Dd December 12, 2017
 .Dt WBSIO 4
 .Os
 .Sh NAME
@@ -25,17 +25,25 @@
 .Cd "wbsio* at isa? port 0x2e"
 .Cd "wbsio* at isa? port 0x4e"
 .Cd "lm* at wbsio?"
+.Cd "gpio* at gpiobus?"
+.Pp
+.Cd "options WBSIO_GPIO"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the Winbond (was spun off as Nuvoton) LPC Super I/O
-ICs.
-Only the hardware monitoring function is currently supported.
+driver provides support for the Winbond (was spun off as Nuvoton)
+LPC Super I/O ICs.
+The hardware monitoring function and GPIO are currently supported.
 .Pp
 Support for the hardware monitor function is provided through the
 .Xr lm 4
 driver.
+The GPIO function supports 64 pins for NCT6795D.
+Access to the pins provided by the
+.Xr gpio 4
+interface.
 .Sh SEE ALSO
+.Xr gpio 4 ,
 .Xr intro 4 ,
 .Xr isa 4 ,
 .Xr lm 4

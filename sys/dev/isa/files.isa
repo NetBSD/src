@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.167 2016/12/09 04:32:39 christos Exp $
+#	$NetBSD: files.isa,v 1.167.8.1 2018/02/19 18:50:35 snj Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -454,7 +454,7 @@ attach	smsc at isa with smsc
 file	dev/isa/smsc.c			smsc			needs-flag
 
 # Winbond LPC Super I/O
-device	wbsio {}
+device	wbsio { }: gpiobus, sysmon_wdog
 attach	wbsio at isa
 file	dev/isa/wbsio.c			wbsio
 
