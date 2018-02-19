@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.23 2018/01/11 10:30:26 maxv Exp $	*/
+/*	$NetBSD: param.h,v 1.24 2018/02/19 13:02:47 sborrill Exp $	*/
 
 #ifdef __x86_64__
 
@@ -65,7 +65,7 @@
 #define	USPACE		(UPAGES * NBPG)	/* total size of u-area */
 
 #ifndef MSGBUFSIZE
-#define MSGBUFSIZE	(8*NBPG)	/* default message buffer size */
+#define MSGBUFSIZE	(16*NBPG)	/* default message buffer size */
 #endif
 
 /*
