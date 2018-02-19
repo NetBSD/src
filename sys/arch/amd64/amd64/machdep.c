@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.175.2.7.2.2 2017/08/08 11:55:20 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.175.2.7.2.3 2018/02/19 20:55:44 snj Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.175.2.7.2.2 2017/08/08 11:55:20 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.175.2.7.2.3 2018/02/19 20:55:44 snj Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -477,7 +477,7 @@ x86_64_proc0_tss_ldt_init(void)
 	pcb->pcb_fs = 0;
 	pcb->pcb_gs = 0;
 	pcb->pcb_rsp0 = (uvm_lwp_getuarea(l) + KSTACK_SIZE - 16) & ~0xf;
-	pcb->pcb_iopl = SEL_KPL;
+	pcb->pcb_iopl = IOPL_KPL;
 
 	pmap_kernel()->pm_ldt_sel = GSYSSEL(GLDT_SEL, SEL_KPL);
 	pcb->pcb_cr0 = rcr0() & ~CR0_TS;
