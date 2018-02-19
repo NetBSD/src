@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.191 2018/02/12 20:43:17 ginsbach Exp $
+$NetBSD: acronyms.comp,v 1.192 2018/02/19 20:49:01 ginsbach Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -46,6 +46,7 @@ AMP	asymmetric multiprocessing
 AMQP	advanced message queuing protocol
 AMT	active management technology
 AN	Arabic number
+ANR	application not responding
 ANSI	American National Standards Institute
 AO	analog output
 AOL	Alert-on-LAN
@@ -59,6 +60,7 @@ APT	advanced persistent threat
 AQM	active queue management
 ARAT	always running APIC timer
 ARC	adaptive replacement cache
+ARC	automatic reference counting
 ARM	Advanced RISC Machines
 ARP	Address Resolution Protocol
 ARPA	Advanced Research Projects Agency
