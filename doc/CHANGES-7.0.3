@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.84 2018/02/16 16:43:12 martin Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.85 2018/02/19 19:50:53 snj Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -5256,4 +5256,10 @@ sys/netipsec/ipsec.c				1.130
 
 	Fix inverted logic that could crash the kernel.
 	[maxv, ticket #1570]
+
+usr.sbin/ypserv/ypserv/ypserv_proc.c		1.18
+
+	PR/47615: Always zero out the result structs in the svc
+	procs to avoid returning stale request data to the client.
+	[christos, ticket #1566]
 
