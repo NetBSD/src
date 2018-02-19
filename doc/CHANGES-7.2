@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.2,v 1.1.2.70 2018/02/16 16:39:48 martin Exp $
+# $NetBSD: CHANGES-7.2,v 1.1.2.71 2018/02/19 19:46:26 snj Exp $
 
 A complete list of changes from the NetBSD 7.1 release to the NetBSD 7.2
 release:
@@ -5133,4 +5133,87 @@ sys/netipsec/ipsec.c				1.130
 
 	Fix inverted logic that could crash the kernel.
 	[maxv, ticket #1570]
+
+external/gpl3/gcc/dist/gcc/config/m68k/m68k.md	revert to 1.1.1.2
+
+	Undo the attempt to figure out mult clobbering.  PR 51783.
+	[mlelstv, ticket #1553]
+
+sys/arch/arm/arm/cpufunc_asm_arm11x6.S		1.10
+
+	PR/52934: Yasushi Oshima: Apply the erratum fix that was
+	applied to wbinv_range to isync_range so that we don't hang
+	when we try to sync from execcmd_readvn().
+	[skrll, ticket #1555]
+
+sys/dev/usb/if_athn_usb.c			1.25
+sys/dev/usb/if_atu.c				1.56
+sys/dev/usb/if_aue.c				1.142
+sys/dev/usb/if_axe.c				1.84
+sys/dev/usb/if_axen.c				1.12
+sys/dev/usb/if_cdce.c				1.45
+sys/dev/usb/if_cue.c				1.77
+sys/dev/usb/if_kue.c				1.91
+sys/dev/usb/if_otus.c				1.32
+sys/dev/usb/if_rum.c				1.59
+sys/dev/usb/if_run.c				1.25
+sys/dev/usb/if_smsc.c				1.33
+sys/dev/usb/if_udav.c				1.52
+sys/dev/usb/if_upgt.c				1.18
+sys/dev/usb/if_upl.c				1.61
+sys/dev/usb/if_ural.c				1.53
+sys/dev/usb/if_url.c				1.57
+sys/dev/usb/if_urndis.c				1.17
+sys/dev/usb/if_urtw.c				1.14
+sys/dev/usb/if_urtwn.c				1.56
+sys/dev/usb/if_zyd.c				1.45
+sys/dev/usb/irmce.c				1.4
+sys/dev/usb/pseye.c				1.24
+sys/dev/usb/ubt.c				1.60
+sys/dev/usb/ucom.c				1.120
+sys/dev/usb/udsir.c				1.6
+sys/dev/usb/ugen.c				1.137
+sys/dev/usb/uhso.c				1.27
+sys/dev/usb/uirda.c				1.43
+sys/dev/usb/ulpt.c				1.99
+sys/dev/usb/umass.c				1.163
+sys/dev/usb/umidi.c				1.74
+sys/dev/usb/uscanner.c				1.82
+sys/dev/usb/usscanner.c				1.43
+sys/dev/usb/ustir.c				1.39
+sys/dev/usb/utoppy.c				1.30
+sys/dev/usb/uvideo.c				1.46
+
+	PR kern/52931 Kernel panics with Atheros usb wireless interface
+
+	Audit the flags to usbd_create_xfer so that USBD_FORCE_SHORT_XFER
+	is supplied wherever such a transfer is setup.  We can drop
+	USBD_SHORT_XFER_OK as it has not bearing on number of TDs
+	[skrll, ticket #1556]
+
+sys/fs/msdosfs/msdosfs_fat.c			1.32
+usr.sbin/makefs/msdos/msdosfs_vfsops.c		1.11
+
+	Need strings.h for ffs()
+	Resolves implict declaration warning of ffs() when building
+	tools via build.sh
+	[sevan, ticket #1558]
+
+sys/arch/macppc/dev/snapper.c			1.42
+
+	Fix issue with audio being downpitched.
+	PR port-macppc/52949
+	[sevan, ticket #1559]
+
+libexec/httpd/bozohttpd.c			1.87
+
+	Use a protocol-agnostic URL (don't degrade HTTPS->HTTP)
+	Suggested by Travis Paul in PR bin/52958.
+	[maya, ticket #1564]
+
+usr.sbin/ypserv/ypserv/ypserv_proc.c		1.18
+
+	PR/47615: Always zero out the result structs in the svc procs
+	to avoid returning stale request data to the client.
+	[christos, ticket #1566]
 
