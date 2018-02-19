@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.7,v 1.1.2.131 2018/02/16 18:13:22 martin Exp $
+# $NetBSD: CHANGES-6.0.7,v 1.1.2.132 2018/02/19 20:56:02 snj Exp $
 
 A complete list of changes from the NetBSD 6.0.6 release to the NetBSD 6.0.7
 release:
@@ -15332,4 +15332,13 @@ sys/netipsec/ipsec.c				1.130
 
 	Fix inverted logic that could crash the kernel.
 	[maxv, ticket #1531]
+
+sys/arch/amd64/amd64/machdep.c			1.280 via patch
+sys/arch/amd64/include/segments.h		1.34 via patch
+sys/arch/i386/i386/machdep.c			1.800 via patch
+sys/arch/i386/include/segments.h		1.64 via patch
+sys/arch/x86/x86/vm_machdep.c			1.30 via patch
+
+	Prevent unrestricted userland access to I/O ports in XEN.
+	[maxv, ticket #1517]
 
