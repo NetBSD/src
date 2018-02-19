@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_emac.c,v 1.12 2017/12/22 13:39:57 jmcneill Exp $ */
+/* $NetBSD: sunxi_emac.c,v 1.13 2018/02/19 20:22:48 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2016-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.12 2017/12/22 13:39:57 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.13 2018/02/19 20:22:48 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -126,15 +126,17 @@ static int sunxi_emac_rx_tx_pri = RX_TX_PRI_DEFAULT;
 static int sunxi_emac_pause_time = PAUSE_TIME_DEFAULT;
 
 enum sunxi_emac_type {
-	EMAC_A83T = 1,
+	EMAC_A64 = 1,
+	EMAC_A83T,
 	EMAC_H3,
-	EMAC_A64,
+	EMAC_H6,
 };
 
 static const struct of_compat_data compat_data[] = {
 	{ "allwinner,sun8i-a83t-emac",	EMAC_A83T },
 	{ "allwinner,sun8i-h3-emac",	EMAC_H3 },
 	{ "allwinner,sun50i-a64-emac",	EMAC_A64 },
+	{ "allwinner,sun50i-h6-emac",	EMAC_H6 },
 	{ NULL }
 };
 
@@ -933,11 +935,19 @@ sunxi_emac_setup_phy(struct sunxi_emac_softc *sc)
 	else
 		reg |= EMAC_CLK_PIT_MII | EMAC_CLK_SRC_MII;
 
-	if (of_getprop_uint32(sc->phandle, "tx-delay", &tx_delay) == 0) {
+	if (of_getprop_uint32(sc->phandle, "allwinner,tx-delay-ps",
+	    &tx_delay) == 0) {
+		reg &= ~EMAC_CLK_ETXDC;
+		reg |= ((tx_delay / 100) << EMAC_CLK_ETXDC_SHIFT);
+	} else if (of_getprop_uint32(sc->phandle, "tx-delay", &tx_delay) == 0) {
 		reg &= ~EMAC_CLK_ETXDC;
 		reg |= (tx_delay << EMAC_CLK_ETXDC_SHIFT);
 	}
-	if (of_getprop_uint32(sc->phandle, "rx-delay", &rx_delay) == 0) {
+	if (of_getprop_uint32(sc->phandle, "allwinner,rx-delay-ps",
+	    &rx_delay) == 0) {
+		reg &= ~EMAC_CLK_ERXDC;
+		reg |= ((rx_delay / 100) << EMAC_CLK_ERXDC_SHIFT);
+	} else if (of_getprop_uint32(sc->phandle, "rx-delay", &rx_delay) == 0) {
 		reg &= ~EMAC_CLK_ERXDC;
 		reg |= (rx_delay << EMAC_CLK_ERXDC_SHIFT);
 	}
