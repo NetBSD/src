@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.h,v 1.11 2017/06/24 05:31:03 skrll Exp $	*/
+/*	$NetBSD: pmap_tlb.h,v 1.12 2018/02/19 21:20:33 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -129,12 +129,14 @@ struct pmap_tlb_info {
 #else
 #define tlbinfo_index(ti)	((void)(ti), 0)
 #endif
+#if !defined(PMAP_TLB_NO_SYNCI_EVCNT)
 	struct evcnt ti_evcnt_synci_asts;
 	struct evcnt ti_evcnt_synci_all;
 	struct evcnt ti_evcnt_synci_pages;
 	struct evcnt ti_evcnt_synci_deferred;
 	struct evcnt ti_evcnt_synci_desired;
 	struct evcnt ti_evcnt_synci_duplicate;
+#endif /* !PMAP_TLB_NO_SYNCI_EVCNT */
 #else
 #define tlbinfo_index(ti)	((void)(ti), 0)
 #endif
