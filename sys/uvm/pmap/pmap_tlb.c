@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.23 2018/02/19 21:20:33 jdolecek Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.24 2018/02/19 21:40:45 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.23 2018/02/19 21:20:33 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.24 2018/02/19 21:40:45 jdolecek Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -180,6 +180,9 @@ u_int pmap_ntlbs = 1;
 	__BITMAP_SET((ti)->ti_asid_bitmap, (asid))
 #define	TLBINFO_ASID_INUSE_P(ti, asid) \
 	__BITMAP_ISSET_P((ti)->ti_asid_bitmap, (asid))
+#define	TLBINFO_ASID_INITIAL_FREE(ti) \
+	((ti)->ti_asid_max + 1 /* 0 */ - 1 /* reserved KERNEL_PID */)
+	
 
 #ifdef MULTIPROCESSOR
 __unused static inline bool
@@ -337,7 +340,7 @@ pmap_tlb_info_init(struct pmap_tlb_info *ti)
 		ti->ti_asid_bitmap[0] = (2 << KERNEL_PID) - 1;
 		ti->ti_asid_hint = KERNEL_PID + 1;
 		ti->ti_asid_max = pmap_tlbs[0]->ti_asid_max;
-		ti->ti_asids_free = ti->ti_asid_max - KERNEL_PID;
+		ti->ti_asids_free = TLBINFO_ASID_INITIAL_FREE(ti);
 		ti->ti_tlbinvop = TLBINV_NOBODY;
 		ti->ti_victim = NULL;
 		kcpuset_create(&ti->ti_kcpuset, true);
@@ -362,7 +365,7 @@ pmap_tlb_info_init(struct pmap_tlb_info *ti)
 	//printf("asid ");
 	if (ti->ti_asid_max == 0) {
 		ti->ti_asid_max = pmap_md_tlb_asid_max();
-		ti->ti_asids_free = ti->ti_asid_max - KERNEL_PID;
+		ti->ti_asids_free = TLBINFO_ASID_INITIAL_FREE(ti);
 	}
 
 	KASSERT(ti->ti_asid_max < sizeof(ti->ti_asid_bitmap)*8);
@@ -424,7 +427,7 @@ pmap_tlb_asid_reinitialize(struct pmap_tlb_info *ti, enum tlb_invalidate_op op)
 	 * First, clear the ASID bitmap (except for ASID 0 which belongs
 	 * to the kernel).
 	 */
-	ti->ti_asids_free = ti->ti_asid_max - KERNEL_PID;
+	ti->ti_asids_free = TLBINFO_ASID_INITIAL_FREE(ti);
 	ti->ti_asid_hint = KERNEL_PID + 1;
 	ti->ti_asid_bitmap[0] = (2 << KERNEL_PID) - 1;
 	for (size_t word = 1; word <= asid_bitmap_words; word++) {
@@ -476,7 +479,7 @@ pmap_tlb_asid_reinitialize(struct pmap_tlb_info *ti, enum tlb_invalidate_op op)
 			     word++) {
 				ti->ti_asid_bitmap[word] = 0;
 			}
-			ti->ti_asids_free = ti->ti_asid_max - KERNEL_PID;
+			ti->ti_asids_free = TLBINFO_ASID_INITIAL_FREE(ti);
 #if !defined(MULTIPROCESSOR) || defined(PMAP_TLB_NEED_SHOOTDOWN)
 		} else {
 			ti->ti_asids_free -= asids_found;
