@@ -1,4 +1,4 @@
-$NetBSD: README.evbarm,v 1.16 2017/10/08 18:07:09 jmcneill Exp $
+$NetBSD: README.evbarm,v 1.17 2018/02/19 15:39:59 jmcneill Exp $
 
 config		date		boards
 -------------------------------------------------------------------------------
@@ -52,7 +52,6 @@ OVERO		2010/07/10	Gumstix Inc. Overo COMS boards
 PANDABOARD	2012/08/20	TI OMAP4430 PandaBoard
 PARALLELLA	2015/01/23	Xilinx Zynq and Epiphany multi-core chips
 PEPPER		2016/10/15	Gumstix Inc. Pepper SBC(Single Board Computer)
-ROCKCHIP	2014/12/26	Radxa Rock/Lite/Pro, MINIX NEO X7, Rayeager PX2
 SHEEVAPLUG	2010/10/02	Marvell SheevaPlug
 SMDK2410	2003/07/31	Samsung SMDK2410 S3C2410 eval board
 SMDK2800	2002/11/20	Samsung SMDK2800 S3C2800 eval board
