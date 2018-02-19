@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_usbphy.c,v 1.10 2017/10/28 12:56:27 jmcneill Exp $ */
+/* $NetBSD: sunxi_usbphy.c,v 1.11 2018/02/19 20:15:23 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sunxi_usbphy.c,v 1.10 2017/10/28 12:56:27 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_usbphy.c,v 1.11 2018/02/19 20:15:23 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -81,6 +81,7 @@ enum sunxi_usbphy_type {
 	USBPHY_A64,
 	USBPHY_A83T,
 	USBPHY_H3,
+	USBPHY_H6,
 };
 
 static const struct of_compat_data compat_data[] = {
@@ -91,6 +92,7 @@ static const struct of_compat_data compat_data[] = {
 	{ "allwinner,sun8i-a83t-usb-phy",	USBPHY_A83T },
 	{ "allwinner,sun8i-h3-usb-phy",		USBPHY_H3 },
 	{ "allwinner,sun50i-a64-usb-phy",	USBPHY_A64 },
+	{ "allwinner,sun50i-h6-usb-phy",	USBPHY_H6 },
 	{ NULL }
 };
 
@@ -148,6 +150,7 @@ sunxi_usbphy_write(struct sunxi_usbphy_softc *sc,
 		reg = PHYCTL_A10;
 		break;
 	case USBPHY_H3:
+	case USBPHY_H6:
 	case USBPHY_A64:
 	case USBPHY_A83T:
 		reg = PHYCTL_A33;
@@ -197,7 +200,7 @@ sunxi_usbphy_acquire(device_t dev, const void *data, size_t len)
 		return NULL;
 
 	const int phy_id = be32dec(data);
-	if (phy_id >= sc->sc_nphys)
+	if (phy_id >= sc->sc_nphys || !sc->sc_phys[phy_id].phy_bsh)
 		return NULL;
 
 	return &sc->sc_phys[phy_id];
@@ -230,6 +233,7 @@ sunxi_usbphy_enable(device_t dev, void *priv, bool enable)
 		break;
 	case USBPHY_A64:
 	case USBPHY_H3:
+	case USBPHY_H6:
 		disc_thresh = 0x3;
 		phy0_reroute = true;
 		break;
@@ -268,10 +272,17 @@ sunxi_usbphy_enable(device_t dev, void *priv, bool enable)
 	}
 
 	if (enable) {
-		if (phy->phy_index == 0)
-			sunxi_usbphy_write(sc, phy, PHY_RES45_CAL_EN, 0x1, 1);
-		sunxi_usbphy_write(sc, phy, PHY_TX_AMPLITUDE_TUNE, 0x14, 5);
-		sunxi_usbphy_write(sc, phy, PHY_DISCON_TH_SEL, disc_thresh, 2);
+		switch (sc->sc_type) {
+		case USBPHY_A83T:
+		case USBPHY_H6:
+			break;
+		default:
+			if (phy->phy_index == 0)
+				sunxi_usbphy_write(sc, phy, PHY_RES45_CAL_EN, 0x1, 1);
+			sunxi_usbphy_write(sc, phy, PHY_TX_AMPLITUDE_TUNE, 0x14, 5);
+			sunxi_usbphy_write(sc, phy, PHY_DISCON_TH_SEL, disc_thresh, 2);
+			break;
+		}
 	}
 
 	if (phy->phy_index == 0) {
@@ -358,9 +369,7 @@ sunxi_usbphy_attach(device_t parent, device_t self, void *aux)
 		phy->phy_index = sc->sc_nphys;
 		snprintf(pname, sizeof(pname), "pmu%d", sc->sc_nphys);
 		if (fdtbus_get_reg_byname(phandle, pname, &addr, &size) != 0) {
-			/* There may be no registers for OTG PHY */
-			if (sc->sc_nphys > 0)
-				break;
+			continue;
 		} else if (bus_space_map(sc->sc_bst, addr, size, 0, &phy->phy_bsh) != 0) {
 			aprint_error(": failed to map reg #%d\n", sc->sc_nphys);
 			return;
