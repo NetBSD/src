@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.16 2018/02/18 15:29:29 christos Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.17 2018/02/19 08:31:13 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,11 +30,11 @@
  */
 
 #ifndef _SPARC_MCONTEXT_H_
-#define _SPARC_MCONTEXT_H_
+#define	_SPARC_MCONTEXT_H_
 
-#define _UC_SETSTACK	0x00010000
-#define _UC_CLRSTACK	0x00020000
-#define _UC_TLSBASE	0x00080000
+#define	_UC_SETSTACK	0x00010000
+#define	_UC_CLRSTACK	0x00020000
+#define	_UC_TLSBASE	0x00080000
 
 /*
  * Layout of mcontext_t according the System V Application Binary Interface,
@@ -144,14 +144,11 @@ typedef struct {
 } mcontext_t;
 
 #ifdef __arch64__
-#define _UC_MACHINE_PAD	8		/* Padding appended to ucontext_t */
+#define	_UC_MACHINE_PAD	8		/* Padding appended to ucontext_t */
 #define	_UC_MACHINE_SP(uc)	(((uc)->uc_mcontext.__gregs[_REG_O6]) + 0x7ff)
 #define	_UC_MACHINE_FP(uc)	(((__greg_t *)_UC_MACHINE_SP(uc))[15])
-#define _UC_MACHINE32_PAD	43	/* compat_netbsd32 variant */
-#define	_UC_MACHINE32_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_O6])
-#define	_UC_MACHINE32_FP(uc)	(((__greg_t *)_UC_MACHINE32_SP(uc))[15])
 #else
-#define _UC_MACHINE_PAD	43		/* Padding appended to ucontext_t */
+#define	_UC_MACHINE_PAD	43		/* Padding appended to ucontext_t */
 #define	_UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_O6])
 #define	_UC_MACHINE_FP(uc)	(((__greg_t *)_UC_MACHINE_SP(uc))[15])
 #endif
