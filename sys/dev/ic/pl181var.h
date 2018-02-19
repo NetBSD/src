@@ -1,4 +1,4 @@
-/* $NetBSD: pl181var.h,v 1.2 2017/06/02 11:01:15 jmcneill Exp $ */
+/* $NetBSD: pl181var.h,v 1.3 2018/02/19 19:00:42 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,15 +33,17 @@ struct plmmc_softc {
 	device_t		sc_dev;
 	bus_space_tag_t		sc_bst;
 	bus_space_handle_t	sc_bsh;
-	void			*sc_ih;
 	unsigned int		sc_clock_freq;
 	unsigned int		sc_max_freq;
 
 	device_t		sc_sdmmc_dev;
-	kmutex_t		sc_intr_lock;
+	kmutex_t		sc_lock;
 	kcondvar_t		sc_intr_cv;
-
 	uint32_t		sc_intr_status;
+
+	struct sdmmc_command	*sc_cmd;
+	int			sc_fifo_resid;
+	uint32_t		sc_status_mask;
 };
 
 void	plmmc_init(struct plmmc_softc *);

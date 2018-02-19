@@ -1,4 +1,4 @@
-/* $NetBSD: pl181.c,v 1.4 2017/06/04 15:08:30 jmcneill Exp $ */
+/* $NetBSD: pl181.c,v 1.5 2018/02/19 19:00:42 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pl181.c,v 1.4 2017/06/04 15:08:30 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pl181.c,v 1.5 2018/02/19 19:00:42 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -49,6 +49,22 @@ __KERNEL_RCSID(0, "$NetBSD: pl181.c,v 1.4 2017/06/04 15:08:30 jmcneill Exp $");
  */
 #define	PLMMC_MAXXFER	rounddown(65535, SDMMC_SECTOR_SIZE)
 
+/*
+ * PL181 FIFO is 16 words deep (64 bytes)
+ */
+#define	PL181_FIFO_DEPTH	64
+
+/*
+ * Data transfer IRQ status bits
+ */
+#define	PLMMC_INT_DATA_MASK						\
+	(MMCI_INT_DATA_TIMEOUT|MMCI_INT_DATA_CRC_FAIL|			\
+	 MMCI_INT_TX_FIFO_EMPTY|MMCI_INT_TX_FIFO_HALF_EMPTY|		\
+	 MMCI_INT_RX_FIFO_FULL|MMCI_INT_RX_FIFO_HALF_FULL|		\
+	 MMCI_INT_DATA_END|MMCI_INT_DATA_BLOCK_END)
+#define	PLMMC_INT_CMD_MASK						\
+	(MMCI_INT_CMD_TIMEOUT|MMCI_INT_CMD_RESP_END)
+
 static int	plmmc_host_reset(sdmmc_chipset_handle_t);
 static uint32_t	plmmc_host_ocr(sdmmc_chipset_handle_t);
 static int	plmmc_host_maxblklen(sdmmc_chipset_handle_t);
@@ -63,9 +79,7 @@ static void	plmmc_exec_command(sdmmc_chipset_handle_t,
 static void	plmmc_card_enable_intr(sdmmc_chipset_handle_t, int);
 static void	plmmc_card_intr_ack(sdmmc_chipset_handle_t);
 
-static int	plmmc_wait_status(struct plmmc_softc *, uint32_t, int);
-static int	plmmc_pio_wait(struct plmmc_softc *,
-				 struct sdmmc_command *);
+static int	plmmc_wait_cmd(struct plmmc_softc *);
 static int	plmmc_pio_transfer(struct plmmc_softc *,
 				     struct sdmmc_command *, int);
 
@@ -86,15 +100,19 @@ static struct sdmmc_chip_functions plmmc_chip_functions = {
 
 #define MMCI_WRITE(sc, reg, val) \
 	bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, (reg), (val))
+#define	MMCI_WRITE_MULTI(sc, reg, datap, cnt) \
+	bus_space_write_multi_4((sc)->sc_bst, (sc)->sc_bsh, (reg), (datap), (cnt))
 #define MMCI_READ(sc, reg) \
 	bus_space_read_4((sc)->sc_bst, (sc)->sc_bsh, (reg))
+#define	MMCI_READ_MULTI(sc, reg, datap, cnt) \
+	bus_space_read_multi_4((sc)->sc_bst, (sc)->sc_bsh, (reg), (datap), (cnt))
 
 void
 plmmc_init(struct plmmc_softc *sc)
 {
 	struct sdmmcbus_attach_args saa;
 
-	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_BIO);
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_BIO);
 	cv_init(&sc->sc_intr_cv, "plmmcirq");
 
 #ifdef PLMMC_DEBUG
@@ -130,80 +148,124 @@ plmmc_init(struct plmmc_softc *sc)
 	sc->sc_sdmmc_dev = config_found(sc->sc_dev, &saa, NULL);
 }
 
+static int
+plmmc_intr_xfer(struct plmmc_softc *sc, struct sdmmc_command *cmd)
+{
+	uint32_t len;
+
+	if (cmd == NULL) {
+		device_printf(sc->sc_dev, "TX/RX interrupt with no active transfer\n");
+		return EINVAL;
+	}
+
+	if (cmd->c_buf == NULL) {
+		return EINVAL;
+	}
+
+	const uint32_t fifo_cnt =
+	    __SHIFTOUT(MMCI_READ(sc, MMCI_FIFO_CNT_REG), MMCI_FIFO_CNT) * 4;
+	if (fifo_cnt > sc->sc_fifo_resid) {
+		device_printf(sc->sc_dev, "FIFO counter is out of sync with active transfer\n");
+		return EIO;
+	}
+
+	if (cmd->c_flags & SCF_CMD_READ)
+		len = sc->sc_fifo_resid - fifo_cnt;
+	else
+		len = min(sc->sc_fifo_resid, PL181_FIFO_DEPTH);
+
+	if (len == 0)
+		return 0;
+
+	if (cmd->c_flags & SCF_CMD_READ)
+		MMCI_READ_MULTI(sc, MMCI_FIFO_REG, (uint32_t *)cmd->c_buf, len / 4);
+	else
+		MMCI_WRITE_MULTI(sc, MMCI_FIFO_REG, (uint32_t *)cmd->c_buf, len / 4);
+
+	sc->sc_fifo_resid -= len;
+	cmd->c_resid -= len;
+	cmd->c_buf += len;
+
+	return 0;
+}
+
 int
 plmmc_intr(void *priv)
 {
 	struct plmmc_softc *sc = priv;
-	uint32_t status;
+	uint32_t status, mask;
+	int retry = 100000;
 
-	mutex_enter(&sc->sc_intr_lock);
-	status = MMCI_READ(sc, MMCI_STATUS_REG);
+	mutex_enter(&sc->sc_lock);
+
+	while (--retry > 0) {
+		status = MMCI_READ(sc, MMCI_STATUS_REG);
 #ifdef PLMMC_DEBUG
-	printf("%s: MMCI_STATUS_REG = %#x\n", __func__, status);
+		printf("%s: MMCI_STATUS_REG = %#x\n", __func__, status);
 #endif
-	if (!status) {
-		mutex_exit(&sc->sc_intr_lock);
-		return 0;
+		if ((status & sc->sc_status_mask) == 0)
+			break;
+		MMCI_WRITE(sc, MMCI_CLEAR_REG, status);
+		sc->sc_intr_status |= status;
+
+		if (status & MMCI_INT_CMD_TIMEOUT)
+			break;
+
+		if (status & (MMCI_INT_DATA_TIMEOUT|MMCI_INT_DATA_CRC_FAIL)) {
+			device_printf(sc->sc_dev,
+			    "data xfer error, status %08x\n", status);
+			break;
+		}
+
+		if (status & (MMCI_INT_TX_FIFO_EMPTY|MMCI_INT_TX_FIFO_HALF_EMPTY|
+			      MMCI_INT_RX_FIFO_FULL|MMCI_INT_RX_FIFO_HALF_FULL|
+			      MMCI_INT_DATA_END|MMCI_INT_DATA_BLOCK_END)) {
+
+			/* Data transfer in progress */
+			if (plmmc_intr_xfer(sc, sc->sc_cmd) == 0 &&
+			    sc->sc_fifo_resid == 0) {
+				/* Disable data IRQs */
+				mask = MMCI_READ(sc, MMCI_MASK0_REG);
+				mask &= ~PLMMC_INT_DATA_MASK;
+				MMCI_WRITE(sc, MMCI_MASK0_REG, mask);
+				/* Ignore data status bits after transfer */
+				sc->sc_status_mask &= ~PLMMC_INT_DATA_MASK;
+			}
+		}
+
+		if (status & MMCI_INT_CMD_RESP_END)
+			cv_broadcast(&sc->sc_intr_cv);
+	}
+	if (retry == 0) {
+		device_printf(sc->sc_dev, "intr handler stuck, fifo resid %d, status %08x\n",
+		    sc->sc_fifo_resid, MMCI_READ(sc, MMCI_STATUS_REG));
 	}
 
-	sc->sc_intr_status |= status;
 	cv_broadcast(&sc->sc_intr_cv);
-
-	mutex_exit(&sc->sc_intr_lock);
+	mutex_exit(&sc->sc_lock);
 
 	return 1;
 }
 
 static int
-plmmc_wait_status(struct plmmc_softc *sc, uint32_t mask, int timeout)
+plmmc_wait_cmd(struct plmmc_softc *sc)
 {
-	int retry, error;
+	int error = 0;
 
-	KASSERT(mutex_owned(&sc->sc_intr_lock));
+	KASSERT(mutex_owned(&sc->sc_lock));
 
-	if (sc->sc_intr_status & mask)
-		return 0;
-
-	retry = timeout / hz;
-	if (sc->sc_ih == NULL)
-		retry *= 1000;
-
-	while (retry > 0) {
-		if (sc->sc_ih == NULL) {
-			sc->sc_intr_status |= MMCI_READ(sc, MMCI_STATUS_REG);
-			if (sc->sc_intr_status & mask)
-				return 0;
-			delay(10000);
-		} else {
-			error = cv_timedwait(&sc->sc_intr_cv,
-			    &sc->sc_intr_lock, hz);
-			if (error && error != EWOULDBLOCK) {
-				device_printf(sc->sc_dev,
-				    "cv_timedwait returned %d\n", error);
-				return error;
-			}
-			if (sc->sc_intr_status & mask)
-				return 0;
+	while (error == 0) {
+		if (sc->sc_intr_status & MMCI_INT_CMD_TIMEOUT) {
+			error = ETIMEDOUT;
+			break;
+		} else if (sc->sc_intr_status & MMCI_INT_CMD_RESP_END) {
+			break;
 		}
-		--retry;
+
+		error = cv_timedwait(&sc->sc_intr_cv, &sc->sc_lock, hz * 2);
+		if (error != 0)
+			break;
 	}
-
-	device_printf(sc->sc_dev, "%s timeout, MMCI_STATUS_REG = %#x\n",
-	    __func__, MMCI_READ(sc, MMCI_STATUS_REG));
-
-	return ETIMEDOUT;
-}
-
-static int
-plmmc_pio_wait(struct plmmc_softc *sc, struct sdmmc_command *cmd)
-{
-	uint32_t bit = (cmd->c_flags & SCF_CMD_READ) ?
-	    MMCI_INT_RX_DATA_AVAIL : MMCI_INT_TX_FIFO_EMPTY;
-
-	MMCI_WRITE(sc, MMCI_CLEAR_REG, bit);
-	const int error = plmmc_wait_status(sc,
-		bit | MMCI_INT_DATA_END | MMCI_INT_DATA_BLOCK_END, hz*2);
-	sc->sc_intr_status &= ~bit;
 
 	return error;
 }
@@ -212,22 +274,21 @@ static int
 plmmc_pio_transfer(struct plmmc_softc *sc, struct sdmmc_command *cmd,
     int xferlen)
 {
-	uint32_t *datap = (uint32_t *)cmd->c_buf;
-	int i;
+	int error = 0;
 
-	for (i = 0; i < xferlen / 4; i++) {
-		if (plmmc_pio_wait(sc, cmd))
-			return ETIMEDOUT;
-		if (cmd->c_flags & SCF_CMD_READ) {
-			datap[i] = MMCI_READ(sc, MMCI_FIFO_REG);
-		} else {
-			MMCI_WRITE(sc, MMCI_FIFO_REG, datap[i]);
-		}
-		cmd->c_resid -= 4;
-		cmd->c_buf += 4;
+	while (sc->sc_fifo_resid > 0 && error == 0) {
+		error = cv_timedwait(&sc->sc_intr_cv,
+		    &sc->sc_lock, hz * 5);
+		if (error != 0)
+			break;
+
+		if (sc->sc_intr_status & MMCI_INT_DATA_TIMEOUT)
+			error = ETIMEDOUT;
+		else if (sc->sc_intr_status & MMCI_INT_DATA_CRC_FAIL)
+			error = EIO;
 	}
 
-	return 0;
+	return error;
 }
 				     
 static int
@@ -321,9 +382,14 @@ plmmc_do_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	struct plmmc_softc *sc = sch;
 	uint32_t cmdval = MMCI_COMMAND_ENABLE;
 
-	KASSERT(mutex_owned(&sc->sc_intr_lock));
+	KASSERT(mutex_owned(&sc->sc_lock));
 
 	const int xferlen = min(cmd->c_resid, PLMMC_MAXXFER);
+
+	sc->sc_cmd = cmd;
+	sc->sc_fifo_resid = xferlen;
+	sc->sc_status_mask = ~0U;
+	sc->sc_intr_status = 0;
 
 #ifdef PLMMC_DEBUG
 	device_printf(sc->sc_dev,
@@ -334,13 +400,7 @@ plmmc_do_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	MMCI_WRITE(sc, MMCI_COMMAND_REG, 0);
 	MMCI_WRITE(sc, MMCI_MASK0_REG, 0);
 	MMCI_WRITE(sc, MMCI_CLEAR_REG, 0xffffffff);
-	MMCI_WRITE(sc, MMCI_MASK0_REG,
-	    MMCI_INT_CMD_TIMEOUT | MMCI_INT_DATA_TIMEOUT |
-	    MMCI_INT_RX_DATA_AVAIL | MMCI_INT_TX_FIFO_EMPTY |
-	    MMCI_INT_DATA_END | MMCI_INT_DATA_BLOCK_END |
-	    MMCI_INT_CMD_RESP_END | MMCI_INT_CMD_SENT);
-
-	sc->sc_intr_status = 0;
+	MMCI_WRITE(sc, MMCI_MASK0_REG, PLMMC_INT_DATA_MASK | PLMMC_INT_CMD_MASK);
 
 	if (cmd->c_flags & SCF_RSP_PRESENT)
 		cmdval |= MMCI_COMMAND_RESPONSE;
@@ -378,6 +438,10 @@ plmmc_do_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	if (xferlen > 0) {
 		cmd->c_error = plmmc_pio_transfer(sc, cmd, xferlen);
 		if (cmd->c_error) {
+#ifdef PLMMC_DEBUG
+			device_printf(sc->sc_dev,
+			    "MMCI_STATUS_REG = %08x\n", MMCI_READ(sc, MMCI_STATUS_REG));
+#endif
 			device_printf(sc->sc_dev,
 			    "error (%d) waiting for xfer\n", cmd->c_error);
 			goto done;
@@ -385,12 +449,7 @@ plmmc_do_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	}
 
 	if ((cmd->c_flags & SCF_RSP_PRESENT) && cmd->c_resid == 0) {
-		cmd->c_error = plmmc_wait_status(sc,
-		    MMCI_INT_CMD_RESP_END|MMCI_INT_CMD_TIMEOUT, hz * 2);
-		if (cmd->c_error == 0 &&
-		    (sc->sc_intr_status & MMCI_INT_CMD_TIMEOUT)) {
-			cmd->c_error = ETIMEDOUT;
-		}
+		cmd->c_error = plmmc_wait_cmd(sc);
 		if (cmd->c_error) {
 #ifdef PLMMC_DEBUG
 			device_printf(sc->sc_dev,
@@ -419,14 +478,15 @@ plmmc_do_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	}
 
 done:
+	sc->sc_cmd = NULL;
+
 	MMCI_WRITE(sc, MMCI_COMMAND_REG, 0);
 	MMCI_WRITE(sc, MMCI_MASK0_REG, 0);
 	MMCI_WRITE(sc, MMCI_CLEAR_REG, 0xffffffff);
 	MMCI_WRITE(sc, MMCI_DATA_CNT_REG, 0);
 
 #ifdef PLMMC_DEBUG
-	device_printf(sc->sc_dev, "MMCI_STATUS_REG = %#x\n",
-	    MMCI_READ(sc, MMCI_STATUS_REG));
+	device_printf(sc->sc_dev, "status = %#x\n", sc->sc_intr_status);
 #endif
 }
 
@@ -440,7 +500,7 @@ plmmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	    cmd->c_opcode, cmd->c_flags, cmd->c_data, cmd->c_datalen);
 #endif
 
-	mutex_enter(&sc->sc_intr_lock);
+	mutex_enter(&sc->sc_lock);
 	cmd->c_resid = cmd->c_datalen;
 	cmd->c_buf = cmd->c_data;
 	do {
@@ -460,7 +520,7 @@ plmmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 		}
 	} while (cmd->c_resid > 0 && cmd->c_error == 0);
 	cmd->c_flags |= SCF_ITSDONE;
-	mutex_exit(&sc->sc_intr_lock);
+	mutex_exit(&sc->sc_lock);
 }
 
 static void
