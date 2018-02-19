@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.48.2.1 2017/04/05 19:54:19 snj Exp $	*/
+/*	$NetBSD: if_url.c,v 1.48.2.2 2018/02/19 19:33:06 snj Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.48.2.1 2017/04/05 19:54:19 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.48.2.2 2018/02/19 19:33:06 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -808,7 +808,7 @@ url_rx_list_init(struct url_softc *sc)
 			return ENOBUFS;
 		if (c->url_xfer == NULL) {
 			int error = usbd_create_xfer(sc->sc_pipe_rx, URL_BUFSZ,
-			    USBD_SHORT_XFER_OK, 0, &c->url_xfer);
+			    0, 0, &c->url_xfer);
 			if (error)
 				return error;
 			c->url_buf = usbd_get_buffer(c->url_xfer);

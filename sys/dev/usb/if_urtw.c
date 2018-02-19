@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtw.c,v 1.6.4.1 2017/04/05 19:54:19 snj Exp $	*/
+/*	$NetBSD: if_urtw.c,v 1.6.4.2 2018/02/19 19:33:06 snj Exp $	*/
 /*	$OpenBSD: if_urtw.c,v 1.39 2011/07/03 15:47:17 matthew Exp $	*/
 
 /*-
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtw.c,v 1.6.4.1 2017/04/05 19:54:19 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtw.c,v 1.6.4.2 2018/02/19 19:33:06 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -901,7 +901,7 @@ urtw_alloc_rx_data_list(struct urtw_softc *sc)
 		data->sc = sc;
 
 		error = usbd_create_xfer(sc->sc_rxpipe, MCLBYTES,
-		    USBD_SHORT_XFER_OK, 0, &data->xfer);
+		    0, 0, &data->xfer);
 		if (error) {
 
 			printf("%s: could not allocate rx xfer\n",

@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.124.2.3 2017/04/05 19:54:20 snj Exp $	*/
+/*	$NetBSD: ugen.c,v 1.124.2.4 2018/02/19 19:33:06 snj Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.124.2.3 2017/04/05 19:54:20 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.124.2.4 2018/02/19 19:33:06 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -720,8 +720,7 @@ ugen_do_read(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 			break;
 		}
 		error = usbd_create_xfer(sce->pipeh, UGEN_BBSIZE,
-		    sce->state & UGEN_SHORT_OK ? USBD_SHORT_XFER_OK : 0,
-		    0, &xfer);
+		    0, 0, &xfer);
 		if (error)
 			return error;
 		while ((n = min(UGEN_BBSIZE, uio->uio_resid)) != 0) {
@@ -933,8 +932,7 @@ ugen_do_write(struct ugen_softc *sc, int endpt, struct uio *uio,
 			break;
 		}
 		error = usbd_create_xfer(sce->pipeh, UGEN_BBSIZE,
-		    sce->state & UGEN_SHORT_OK ? USBD_SHORT_XFER_OK : 0,
-		    0, &xfer);
+		    0, 0, &xfer);
 		if (error)
 			return error;
 		while ((n = min(UGEN_BBSIZE, uio->uio_resid)) != 0) {

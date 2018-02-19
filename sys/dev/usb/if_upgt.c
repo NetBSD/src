@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upgt.c,v 1.12.2.1 2017/04/05 19:54:19 snj Exp $	*/
+/*	$NetBSD: if_upgt.c,v 1.12.2.2 2018/02/19 19:33:06 snj Exp $	*/
 /*	$OpenBSD: if_upgt.c,v 1.49 2010/04/20 22:05:43 tedu Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.12.2.1 2017/04/05 19:54:19 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.12.2.2 2018/02/19 19:33:06 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2266,8 +2266,8 @@ upgt_alloc_tx(struct upgt_softc *sc)
 
 		data_tx->sc = sc;
 
-		int err = usbd_create_xfer(sc->sc_tx_pipeh, MCLBYTES, 0, 0,
-		    &data_tx->xfer);
+		int err = usbd_create_xfer(sc->sc_tx_pipeh, MCLBYTES,
+		    USBD_FORCE_SHORT_XFER, 0, &data_tx->xfer);
 		if (err) {
 			aprint_error_dev(sc->sc_dev,
 			    "could not allocate TX xfer\n");
@@ -2288,7 +2288,7 @@ upgt_alloc_rx(struct upgt_softc *sc)
 	data_rx->sc = sc;
 
 	int err = usbd_create_xfer(sc->sc_rx_pipeh, MCLBYTES,
-	    USBD_SHORT_XFER_OK, 0, &data_rx->xfer);
+	    0, 0, &data_rx->xfer);
 	if (err) {
 		aprint_error_dev(sc->sc_dev, "could not allocate RX xfer\n");
 		return err;

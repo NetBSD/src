@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.51.2.1 2017/04/05 19:54:19 snj Exp $	*/
+/*	$NetBSD: ubt.c,v 1.51.2.2 2018/02/19 19:33:06 snj Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.51.2.1 2017/04/05 19:54:19 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.51.2.2 2018/02/19 19:33:06 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1012,8 +1012,8 @@ ubt_enable(device_t self)
 
 	/* Commands */
 	struct usbd_pipe *pipe0 = usbd_get_pipe0(sc->sc_udev);
-	error = usbd_create_xfer(pipe0, UBT_BUFSIZ_CMD, 0, 0,
-	    &sc->sc_cmd_xfer);
+	error = usbd_create_xfer(pipe0, UBT_BUFSIZ_CMD, USBD_FORCE_SHORT_XFER,
+	    0, &sc->sc_cmd_xfer);
 	if (error)
 		goto bad;
 	sc->sc_cmd_buf = usbd_get_buffer(sc->sc_cmd_xfer);
@@ -1027,7 +1027,7 @@ ubt_enable(device_t self)
 		goto bad;
 	}
 	error = usbd_create_xfer(sc->sc_aclrd_pipe, UBT_BUFSIZ_ACL,
-	    USBD_SHORT_XFER_OK, 0, &sc->sc_aclrd_xfer);
+	    0, 0, &sc->sc_aclrd_xfer);
 	if (error)
 		goto bad;
 	sc->sc_aclrd_buf = usbd_get_buffer(sc->sc_aclrd_xfer);
@@ -1060,7 +1060,7 @@ ubt_enable(device_t self)
 		for (i = 0 ; i < UBT_NXFERS ; i++) {
 		        error = usbd_create_xfer(sc->sc_scord_pipe,
 			    sc->sc_scord_size * UBT_NFRAMES,
-			    USBD_SHORT_XFER_OK, UBT_NFRAMES,
+			    0, UBT_NFRAMES,
 			    &sc->sc_scord[i].xfer);
 			if (error)
 				goto bad;

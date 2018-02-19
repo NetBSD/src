@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.95.2.1 2017/04/05 19:54:20 snj Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.95.2.2 2018/02/19 19:33:06 snj Exp $	*/
 
 /*
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.95.2.1 2017/04/05 19:54:20 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.95.2.2 2018/02/19 19:33:06 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -497,7 +497,7 @@ ulptopen(dev_t dev, int flag, int mode, struct lwp *l)
 			goto err2;
 		}
 		error = usbd_create_xfer(sc->sc_in_pipe, ULPT_BSIZE,
-		    USBD_SHORT_XFER_OK, 0, &sc->sc_in_xfer);
+		    0, 0, &sc->sc_in_xfer);
 		if (error)
 			goto err3;
 		sc->sc_in_buf = usbd_get_buffer(sc->sc_in_xfer);
