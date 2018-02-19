@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_psref.c,v 1.7.2.2 2018/01/22 12:30:20 martin Exp $	*/
+/*	$NetBSD: subr_psref.c,v 1.7.2.3 2018/02/19 18:33:38 snj Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_psref.c,v 1.7.2.2 2018/01/22 12:30:20 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_psref.c,v 1.7.2.3 2018/02/19 18:33:38 snj Exp $");
 
 #include <sys/types.h>
 #include <sys/condvar.h>
@@ -94,6 +94,7 @@ struct psref_class {
 	kcondvar_t		prc_cv;
 	struct percpu		*prc_percpu; /* struct psref_cpu */
 	ipl_cookie_t		prc_iplcookie;
+	unsigned int		prc_xc_flags;
 };
 
 /*
@@ -124,6 +125,7 @@ psref_class_create(const char *name, int ipl)
 	mutex_init(&class->prc_lock, MUTEX_DEFAULT, ipl);
 	cv_init(&class->prc_cv, name);
 	class->prc_iplcookie = makeiplcookie(ipl);
+	class->prc_xc_flags = XC_HIGHPRI_IPL(ipl);
 
 	return class;
 }
@@ -434,7 +436,8 @@ psreffed_p(struct psref_target *target, struct psref_class *class)
 		 * Ask all CPUs to say whether they hold a psref to the
 		 * target.
 		 */
-		xc_wait(xc_broadcast(0, &psreffed_p_xc, &P, NULL));
+		xc_wait(xc_broadcast(class->prc_xc_flags, &psreffed_p_xc, &P,
+		                     NULL));
 	} else
 		psreffed_p_xc(&P, NULL);
 
