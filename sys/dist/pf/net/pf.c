@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.79 2018/02/18 21:51:28 christos Exp $	*/
+/*	$NetBSD: pf.c,v 1.80 2018/02/19 23:03:00 christos Exp $	*/
 /*	$OpenBSD: pf.c,v 1.552.2.1 2007/11/27 16:37:57 henning Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.79 2018/02/18 21:51:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.80 2018/02/19 23:03:00 christos Exp $");
 
 #include "pflog.h"
 
@@ -2847,13 +2847,8 @@ pf_socket_lookup(int direction, struct pf_pdesc *pd)
 		break;
 #endif /* INET6 */
 	}
-	if (so == NULL)
+	if (so == NULL || so->so_cred == NULL)
 		return -1;
-	if (so->so_cred == NULL) {
-		DPFPRINTF(PF_DEBUG_URGENT,
-		    ("%s: so->so_cred == NULL so=%p\n", __func__, so));
-		return -1;
-	}
 	pd->lookup.uid = kauth_cred_geteuid(so->so_cred);
 	pd->lookup.gid = kauth_cred_getegid(so->so_cred);
 #else
