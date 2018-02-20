@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.124 2018/02/20 07:24:37 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.125 2018/02/20 08:49:23 knakahara Exp $ */
 
 /******************************************************************************
 
@@ -2838,6 +2838,12 @@ ixgbe_msix_link(void *arg)
 	IXGBE_WRITE_REG(hw, IXGBE_EIMC, IXGBE_EIMC_OTHER);
 
 	/* First get the cause */
+	/*
+	 * The specifications of 82598, 82599, X540 and X550 say EICS register
+	 * is write only. However, Linux says it is a workaround for silicon
+	 * errata to read EICS instead of EICR to get interrupt cause. It seems
+	 * there is a problem about read clear mechanism for EICR register.
+	 */
 	eicr = IXGBE_READ_REG(hw, IXGBE_EICS);
 	/* Be sure the queue bits are not cleared */
 	eicr &= ~IXGBE_EICR_RTX_QUEUE;
