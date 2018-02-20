@@ -1,11 +1,9 @@
-#include "sparc_arch.h"
-
 .section	".text",#alloc,#execinstr
 
 .global bn_mul_mont_fpu
 .align  32
 bn_mul_mont_fpu:
-	save	%sp,-STACK_FRAME-64,%sp
+	save	%sp,-128-64,%sp
 
 	cmp	%i5,4
 	bl,a,pn %icc,.Lret
@@ -24,15 +22,15 @@ bn_mul_mont_fpu:
 
 	sll	%i5,3,%i5		! num*=8
 
-	add	%sp,STACK_BIAS,%o0		! real top of stack
+	add	%sp,0,%o0		! real top of stack
 	sll	%i5,2,%o1
 	add	%o1,%i5,%o1		! %o1=num*5
 	sub	%o0,%o1,%o0
 	and	%o0,-2048,%o0		! optimize TLB utilization
-	sub	%o0,STACK_BIAS,%sp		! alloca(5*num*8)
+	sub	%o0,0,%sp		! alloca(5*num*8)
 
 	rd	%asi,%o7		! save %asi
-	add	%sp,STACK_BIAS+STACK_FRAME+64,%l0
+	add	%sp,0+128+64,%l0
 	add	%l0,%i5,%l1
 	add	%l1,%i5,%l1	! [an]p_[lh] point at the vectors' ends !
 	add	%l1,%i5,%l2
@@ -46,7 +44,7 @@ bn_mul_mont_fpu:
 	add	%i2,%i5,%i2
 	add	%i3,%i5,%i3
 
-	stx	%o7,[%sp+STACK_BIAS+STACK_FRAME+48]	! save %asi
+	stx	%o7,[%sp+0+128+48]	! save %asi
 
 	sub	%g0,%i5,%l5		! i=-num
 	sub	%g0,%i5,%l6		! j=-num
@@ -67,7 +65,7 @@ bn_mul_mont_fpu:
 
 	mulx	%o1,%o0,%o0		! ap[0]*bp[0]
 	mulx	%g4,%o0,%o0		! ap[0]*bp[0]*n0
-	stx	%o0,[%sp+STACK_BIAS+STACK_FRAME+0]
+	stx	%o0,[%sp+0+128+0]
 
 	ld	[%o3+0],%f17	! load a[j] as pair of 32-bit words
 	.word	0xa1b00c20	! fzeros %f16
@@ -89,13 +87,13 @@ bn_mul_mont_fpu:
 	fxtod	%f22,%f22
 
 	! transfer ap[0]*b[0]*n0 to FPU as 4x16-bit values
-	ldda	[%sp+STACK_BIAS+STACK_FRAME+6]%asi,%f8
+	ldda	[%sp+0+128+6]%asi,%f8
 	fxtod	%f0,%f0
-	ldda	[%sp+STACK_BIAS+STACK_FRAME+4]%asi,%f10
+	ldda	[%sp+0+128+4]%asi,%f10
 	fxtod	%f2,%f2
-	ldda	[%sp+STACK_BIAS+STACK_FRAME+2]%asi,%f12
+	ldda	[%sp+0+128+2]%asi,%f12
 	fxtod	%f4,%f4
-	ldda	[%sp+STACK_BIAS+STACK_FRAME+0]%asi,%f14
+	ldda	[%sp+0+128+0]%asi,%f14
 	fxtod	%f6,%f6
 
 	std	%f16,[%l1+%l6]		! save smashed ap[j] in double format
@@ -141,13 +139,13 @@ bn_mul_mont_fpu:
 	fdtox	%f52,%f52
 	fdtox	%f54,%f54
 
-	std	%f48,[%sp+STACK_BIAS+STACK_FRAME+0]
+	std	%f48,[%sp+0+128+0]
 	add	%l6,8,%l6
-	std	%f50,[%sp+STACK_BIAS+STACK_FRAME+8]
+	std	%f50,[%sp+0+128+8]
 	add	%i1,%l6,%o4
-	std	%f52,[%sp+STACK_BIAS+STACK_FRAME+16]
+	std	%f52,[%sp+0+128+16]
 	add	%i3,%l6,%o5
-	std	%f54,[%sp+STACK_BIAS+STACK_FRAME+24]
+	std	%f54,[%sp+0+128+24]
 
 	ld	[%o4+0],%f17	! load a[j] as pair of 32-bit words
 	.word	0xa1b00c20	! fzeros %f16
@@ -163,13 +161,13 @@ bn_mul_mont_fpu:
 	fxtod	%f20,%f20
 	fxtod	%f22,%f22
 
-	ldx	[%sp+STACK_BIAS+STACK_FRAME+0],%o0
+	ldx	[%sp+0+128+0],%o0
 		fmuld	%f16,%f0,%f32
-	ldx	[%sp+STACK_BIAS+STACK_FRAME+8],%o1
+	ldx	[%sp+0+128+8],%o1
 		fmuld	%f20,%f8,%f48
-	ldx	[%sp+STACK_BIAS+STACK_FRAME+16],%o2
+	ldx	[%sp+0+128+16],%o2
 		fmuld	%f16,%f2,%f34
-	ldx	[%sp+STACK_BIAS+STACK_FRAME+24],%o3
+	ldx	[%sp+0+128+24],%o3
 		fmuld	%f20,%f10,%f50
 
 	srlx	%o0,16,%o7
@@ -225,12 +223,12 @@ bn_mul_mont_fpu:
 	fdtox	%f52,%f52
 	fdtox	%f54,%f54
 
-	std	%f48,[%sp+STACK_BIAS+STACK_FRAME+0]
-	std	%f50,[%sp+STACK_BIAS+STACK_FRAME+8]
+	std	%f48,[%sp+0+128+0]
+	std	%f50,[%sp+0+128+8]
 	addcc	%l6,8,%l6
-	std	%f52,[%sp+STACK_BIAS+STACK_FRAME+16]
+	std	%f52,[%sp+0+128+16]
 	bz,pn	%icc,.L1stskip
-	std	%f54,[%sp+STACK_BIAS+STACK_FRAME+24]
+	std	%f54,[%sp+0+128+24]
 
 .align	32			! incidentally already aligned !
 .L1st:
@@ -250,13 +248,13 @@ bn_mul_mont_fpu:
 	fxtod	%f20,%f20
 	fxtod	%f22,%f22
 
-	ldx	[%sp+STACK_BIAS+STACK_FRAME+0],%o0
+	ldx	[%sp+0+128+0],%o0
 		fmuld	%f16,%f0,%f32
-	ldx	[%sp+STACK_BIAS+STACK_FRAME+8],%o1
+	ldx	[%sp+0+128+8],%o1
 		fmuld	%f20,%f8,%f48
-	ldx	[%sp+STACK_BIAS+STACK_FRAME+16],%o2
+	ldx	[%sp+0+128+16],%o2
 		fmuld	%f16,%f2,%f34
-	ldx	[%sp+STACK_BIAS+STACK_FRAME+24],%o3
+	ldx	[%sp+0+128+24],%o3
 		fmuld	%f20,%f10,%f50
 
 	srlx	%o0,16,%o7
@@ -316,10 +314,10 @@ bn_mul_mont_fpu:
 	fdtox	%f52,%f52
 	fdtox	%f54,%f54
 
-	std	%f48,[%sp+STACK_BIAS+STACK_FRAME+0]
-	std	%f50,[%sp+STACK_BIAS+STACK_FRAME+8]
-	std	%f52,[%sp+STACK_BIAS+STACK_FRAME+16]
-	std	%f54,[%sp+STACK_BIAS+STACK_FRAME+24]
+	std	%f48,[%sp+0+128+0]
+	std	%f50,[%sp+0+128+8]
+	std	%f52,[%sp+0+128+16]
+	std	%f54,[%sp+0+128+24]
 
 	addcc	%l6,8,%l6
 	bnz,pt	%icc,.L1st
@@ -329,15 +327,15 @@ bn_mul_mont_fpu:
 	fdtox	%f24,%f24
 	fdtox	%f26,%f26
 
-	ldx	[%sp+STACK_BIAS+STACK_FRAME+0],%o0
-	ldx	[%sp+STACK_BIAS+STACK_FRAME+8],%o1
-	ldx	[%sp+STACK_BIAS+STACK_FRAME+16],%o2
-	ldx	[%sp+STACK_BIAS+STACK_FRAME+24],%o3
+	ldx	[%sp+0+128+0],%o0
+	ldx	[%sp+0+128+8],%o1
+	ldx	[%sp+0+128+16],%o2
+	ldx	[%sp+0+128+24],%o3
 
 	srlx	%o0,16,%o7
-	std	%f24,[%sp+STACK_BIAS+STACK_FRAME+32]
+	std	%f24,[%sp+0+128+32]
 	add	%o7,%o1,%o1
-	std	%f26,[%sp+STACK_BIAS+STACK_FRAME+40]
+	std	%f26,[%sp+0+128+40]
 	srlx	%o1,16,%o7
 	add	%o7,%o2,%o2
 	srlx	%o2,16,%o7
@@ -351,9 +349,9 @@ bn_mul_mont_fpu:
 	or	%o1,%o0,%o0
 	or	%o2,%o0,%o0
 	or	%o7,%o0,%o0		! 64-bit result
-	ldx	[%sp+STACK_BIAS+STACK_FRAME+32],%o4
+	ldx	[%sp+0+128+32],%o4
 	addcc	%g1,%o0,%o0
-	ldx	[%sp+STACK_BIAS+STACK_FRAME+40],%o5
+	ldx	[%sp+0+128+40],%o5
 	srlx	%o3,16,%g1		! 34-bit carry
 	bcs,a	%xcc,.+8
 	add	%g1,1,%g1
@@ -379,7 +377,7 @@ bn_mul_mont_fpu:
 .align	32
 .Louter:
 	sub	%g0,%i5,%l6		! j=-num
-	add	%sp,STACK_BIAS+STACK_FRAME+64,%l0
+	add	%sp,0+128+64,%l0
 
 	add	%i1,%l6,%o3
 	add	%i2,%l5,%o4
@@ -397,7 +395,7 @@ bn_mul_mont_fpu:
 	mulx	%o1,%o0,%o0
 	addcc	%o2,%o0,%o0
 	mulx	%g4,%o0,%o0		! (ap[0]*bp[i]+t[0])*n0
-	stx	%o0,[%sp+STACK_BIAS+STACK_FRAME+0]
+	stx	%o0,[%sp+0+128+0]
 
 	! transfer b[i] to FPU as 4x16-bit values
 	ldda	[%o4+2]%asi,%f0
@@ -406,13 +404,13 @@ bn_mul_mont_fpu:
 	ldda	[%o4+4]%asi,%f6
 
 	! transfer (ap[0]*b[i]+t[0])*n0 to FPU as 4x16-bit values
-	ldda	[%sp+STACK_BIAS+STACK_FRAME+6]%asi,%f8
+	ldda	[%sp+0+128+6]%asi,%f8
 	fxtod	%f0,%f0
-	ldda	[%sp+STACK_BIAS+STACK_FRAME+4]%asi,%f10
+	ldda	[%sp+0+128+4]%asi,%f10
 	fxtod	%f2,%f2
-	ldda	[%sp+STACK_BIAS+STACK_FRAME+2]%asi,%f12
+	ldda	[%sp+0+128+2]%asi,%f12
 	fxtod	%f4,%f4
-	ldda	[%sp+STACK_BIAS+STACK_FRAME+0]%asi,%f14
+	ldda	[%sp+0+128+0]%asi,%f14
 	fxtod	%f6,%f6
 	ldd	[%l1+%l6],%f16		! load a[j] in double format
 	fxtod	%f8,%f8
@@ -457,11 +455,11 @@ bn_mul_mont_fpu:
 	fdtox	%f52,%f52
 	fdtox	%f54,%f54
 
-	std	%f48,[%sp+STACK_BIAS+STACK_FRAME+0]
-	std	%f50,[%sp+STACK_BIAS+STACK_FRAME+8]
-	std	%f52,[%sp+STACK_BIAS+STACK_FRAME+16]
+	std	%f48,[%sp+0+128+0]
+	std	%f50,[%sp+0+128+8]
+	std	%f52,[%sp+0+128+16]
 	add	%l6,8,%l6
-	std	%f54,[%sp+STACK_BIAS+STACK_FRAME+24]
+	std	%f54,[%sp+0+128+24]
 
 	ldd	[%l1+%l6],%f16		! load a[j] in double format
 	ldd	[%l2+%l6],%f18
@@ -473,15 +471,15 @@ bn_mul_mont_fpu:
 		fmuld	%f16,%f2,%f34
 		fmuld	%f20,%f10,%f50
 		fmuld	%f16,%f4,%f36
-	ldx	[%sp+STACK_BIAS+STACK_FRAME+0],%o0
+	ldx	[%sp+0+128+0],%o0
 		faddd	%f32,%f48,%f48
 		fmuld	%f20,%f12,%f52
-	ldx	[%sp+STACK_BIAS+STACK_FRAME+8],%o1
+	ldx	[%sp+0+128+8],%o1
 		fmuld	%f16,%f6,%f38
-	ldx	[%sp+STACK_BIAS+STACK_FRAME+16],%o2
+	ldx	[%sp+0+128+16],%o2
 		faddd	%f34,%f50,%f50
 		fmuld	%f20,%f14,%f54
-	ldx	[%sp+STACK_BIAS+STACK_FRAME+24],%o3
+	ldx	[%sp+0+128+24],%o3
 		fmuld	%f18,%f0,%f40
 
 	srlx	%o0,16,%o7
@@ -529,12 +527,12 @@ bn_mul_mont_fpu:
 	fdtox	%f52,%f52
 	fdtox	%f54,%f54
 
-	std	%f48,[%sp+STACK_BIAS+STACK_FRAME+0]
-	std	%f50,[%sp+STACK_BIAS+STACK_FRAME+8]
+	std	%f48,[%sp+0+128+0]
+	std	%f50,[%sp+0+128+8]
 	addcc	%l6,8,%l6
-	std	%f52,[%sp+STACK_BIAS+STACK_FRAME+16]
+	std	%f52,[%sp+0+128+16]
 	bz,pn	%icc,.Linnerskip
-	std	%f54,[%sp+STACK_BIAS+STACK_FRAME+24]
+	std	%f54,[%sp+0+128+24]
 
 	ba	.Linner
 	nop
@@ -550,15 +548,15 @@ bn_mul_mont_fpu:
 		fmuld	%f16,%f2,%f34
 		fmuld	%f20,%f10,%f50
 		fmuld	%f16,%f4,%f36
-	ldx	[%sp+STACK_BIAS+STACK_FRAME+0],%o0
+	ldx	[%sp+0+128+0],%o0
 		faddd	%f32,%f48,%f48
 		fmuld	%f20,%f12,%f52
-	ldx	[%sp+STACK_BIAS+STACK_FRAME+8],%o1
+	ldx	[%sp+0+128+8],%o1
 		fmuld	%f16,%f6,%f38
-	ldx	[%sp+STACK_BIAS+STACK_FRAME+16],%o2
+	ldx	[%sp+0+128+16],%o2
 		faddd	%f34,%f50,%f50
 		fmuld	%f20,%f14,%f54
-	ldx	[%sp+STACK_BIAS+STACK_FRAME+24],%o3
+	ldx	[%sp+0+128+24],%o3
 		fmuld	%f18,%f0,%f40
 
 	srlx	%o0,16,%o7
@@ -608,11 +606,11 @@ bn_mul_mont_fpu:
 	stx	%o0,[%l0]		! tp[j-1]
 		fdtox	%f54,%f54
 
-	std	%f48,[%sp+STACK_BIAS+STACK_FRAME+0]
-	std	%f50,[%sp+STACK_BIAS+STACK_FRAME+8]
-	std	%f52,[%sp+STACK_BIAS+STACK_FRAME+16]
+	std	%f48,[%sp+0+128+0]
+	std	%f50,[%sp+0+128+8]
+	std	%f52,[%sp+0+128+16]
 	addcc	%l6,8,%l6
-	std	%f54,[%sp+STACK_BIAS+STACK_FRAME+24]
+	std	%f54,[%sp+0+128+24]
 	bnz,pt	%icc,.Linner
 	add	%l0,8,%l0
 
@@ -620,15 +618,15 @@ bn_mul_mont_fpu:
 	fdtox	%f24,%f24
 	fdtox	%f26,%f26
 
-	ldx	[%sp+STACK_BIAS+STACK_FRAME+0],%o0
-	ldx	[%sp+STACK_BIAS+STACK_FRAME+8],%o1
-	ldx	[%sp+STACK_BIAS+STACK_FRAME+16],%o2
-	ldx	[%sp+STACK_BIAS+STACK_FRAME+24],%o3
+	ldx	[%sp+0+128+0],%o0
+	ldx	[%sp+0+128+8],%o1
+	ldx	[%sp+0+128+16],%o2
+	ldx	[%sp+0+128+24],%o3
 
 	srlx	%o0,16,%o7
-	std	%f24,[%sp+STACK_BIAS+STACK_FRAME+32]
+	std	%f24,[%sp+0+128+32]
 	add	%o7,%o1,%o1
-	std	%f26,[%sp+STACK_BIAS+STACK_FRAME+40]
+	std	%f26,[%sp+0+128+40]
 	srlx	%o1,16,%o7
 	add	%o7,%o2,%o2
 	srlx	%o2,16,%o7
@@ -641,9 +639,9 @@ bn_mul_mont_fpu:
 	sllx	%o3,48,%o7
 	or	%o1,%o0,%o0
 	or	%o2,%o0,%o0
-	ldx	[%sp+STACK_BIAS+STACK_FRAME+32],%o4
+	ldx	[%sp+0+128+32],%o4
 	or	%o7,%o0,%o0		! 64-bit result
-	ldx	[%sp+STACK_BIAS+STACK_FRAME+40],%o5
+	ldx	[%sp+0+128+40],%o5
 	addcc	%g1,%o0,%o0
 	ldx	[%l0+8],%o7		! tp[j]
 	srlx	%o3,16,%g1		! 34-bit carry
@@ -730,7 +728,7 @@ bn_mul_mont_fpu:
 	brnz,pt	%o7,.Lzap
 	nop
 
-	ldx	[%sp+STACK_BIAS+STACK_FRAME+48],%o7
+	ldx	[%sp+0+128+48],%o7
 	wr	%g0,%o7,%asi		! restore %asi
 
 	mov	1,%i0

@@ -1,5 +1,3 @@
-#include "sparc_arch.h"
-
 .text
 
 .globl	cmll_t4_encrypt
@@ -976,9 +974,9 @@ _cmll256_decrypt_2x:
 .globl	cmll128_t4_cbc_encrypt
 .align	32
 cmll128_t4_cbc_encrypt:
-	save		%sp, -STACK_FRAME, %sp
+	save		%sp, -112, %sp
 	cmp		%i2, 0
-	be,pn		SIZE_T_CC, .L128_cbc_enc_abort
+	be,pn		%icc, .L128_cbc_enc_abort
 	srln		%i2, 0, %i2		! needed on v8+, "nop" on v9
 	sub		%i0, %i1, %l5	! %i0!=%i1
 	ld		[%i4 + 0], %f0
@@ -997,7 +995,7 @@ cmll128_t4_cbc_encrypt:
 	and		%i1, 7, %l2
 	cmp		%i2, 127
 	movrnz		%l2, 0, %l5		! if (	%i1&7 ||
-	movleu		SIZE_T_CC, 0, %l5	!	%i2<128 ||
+	movleu		%icc, 0, %l5	!	%i2<128 ||
 	brnz,pn		%l5, .L128cbc_enc_blk	!	%i0==%i1)
 	srl		%l3, %l2, %l3
 
@@ -1123,9 +1121,9 @@ cmll128_t4_cbc_encrypt:
 .globl	cmll256_t4_cbc_encrypt
 .align	32
 cmll256_t4_cbc_encrypt:
-	save		%sp, -STACK_FRAME, %sp
+	save		%sp, -112, %sp
 	cmp		%i2, 0
-	be,pn		SIZE_T_CC, .L256_cbc_enc_abort
+	be,pn		%icc, .L256_cbc_enc_abort
 	srln		%i2, 0, %i2		! needed on v8+, "nop" on v9
 	sub		%i0, %i1, %l5	! %i0!=%i1
 	ld		[%i4 + 0], %f0
@@ -1144,7 +1142,7 @@ cmll256_t4_cbc_encrypt:
 	and		%i1, 7, %l2
 	cmp		%i2, 127
 	movrnz		%l2, 0, %l5		! if (	%i1&7 ||
-	movleu		SIZE_T_CC, 0, %l5	!	%i2<128 ||
+	movleu		%icc, 0, %l5	!	%i2<128 ||
 	brnz,pn		%l5, .L256cbc_enc_blk	!	%i0==%i1)
 	srl		%l3, %l2, %l3
 
@@ -1270,9 +1268,9 @@ cmll256_t4_cbc_encrypt:
 .globl	cmll128_t4_cbc_decrypt
 .align	32
 cmll128_t4_cbc_decrypt:
-	save		%sp, -STACK_FRAME, %sp
+	save		%sp, -112, %sp
 	cmp		%i2, 0
-	be,pn		SIZE_T_CC, .L128_cbc_dec_abort
+	be,pn		%icc, .L128_cbc_dec_abort
 	srln		%i2, 0, %i2		! needed on v8+, "nop" on v9
 	sub		%i0, %i1, %l5	! %i0!=%i1
 	ld		[%i4 + 0], %f12	! load ivec
@@ -1291,7 +1289,7 @@ cmll128_t4_cbc_decrypt:
 	and		%i1, 7, %l2
 	cmp		%i2, 255
 	movrnz		%l2, 0, %l5		! if (	%i1&7 ||
-	movleu		SIZE_T_CC, 0, %l5	!	%i2<256 ||
+	movleu		%icc, 0, %l5	!	%i2<256 ||
 	brnz,pn		%l5, .L128cbc_dec_blk	!	%i0==%i1)
 	srl		%l3, %l2, %l3
 
@@ -1517,7 +1515,7 @@ cmll128_t4_cbc_decrypt:
 	stda		%f4, [%i1]0xe2		! ASI_BLK_INIT, T4-specific
 	add		%i1, 8, %i1
 	stda		%f6, [%i1]0xe2		! ASI_BLK_INIT, T4-specific
-	bgu,pt		SIZE_T_CC, .L128_cbc_dec_blk_loop2x
+	bgu,pt		%icc, .L128_cbc_dec_blk_loop2x
 	add		%i1, 8, %i1
 
 	add		%l5, %i2, %i2
@@ -1538,9 +1536,9 @@ cmll128_t4_cbc_decrypt:
 .globl	cmll256_t4_cbc_decrypt
 .align	32
 cmll256_t4_cbc_decrypt:
-	save		%sp, -STACK_FRAME, %sp
+	save		%sp, -112, %sp
 	cmp		%i2, 0
-	be,pn		SIZE_T_CC, .L256_cbc_dec_abort
+	be,pn		%icc, .L256_cbc_dec_abort
 	srln		%i2, 0, %i2		! needed on v8+, "nop" on v9
 	sub		%i0, %i1, %l5	! %i0!=%i1
 	ld		[%i4 + 0], %f12	! load ivec
@@ -1559,7 +1557,7 @@ cmll256_t4_cbc_decrypt:
 	and		%i1, 7, %l2
 	cmp		%i2, 255
 	movrnz		%l2, 0, %l5		! if (	%i1&7 ||
-	movleu		SIZE_T_CC, 0, %l5	!	%i2<256 ||
+	movleu		%icc, 0, %l5	!	%i2<256 ||
 	brnz,pn		%l5, .L256cbc_dec_blk	!	%i0==%i1)
 	srl		%l3, %l2, %l3
 
@@ -1785,7 +1783,7 @@ cmll256_t4_cbc_decrypt:
 	stda		%f4, [%i1]0xe2		! ASI_BLK_INIT, T4-specific
 	add		%i1, 8, %i1
 	stda		%f6, [%i1]0xe2		! ASI_BLK_INIT, T4-specific
-	bgu,pt		SIZE_T_CC, .L256_cbc_dec_blk_loop2x
+	bgu,pt		%icc, .L256_cbc_dec_blk_loop2x
 	add		%i1, 8, %i1
 
 	add		%l5, %i2, %i2
@@ -1806,7 +1804,7 @@ cmll256_t4_cbc_decrypt:
 .globl	cmll128_t4_ctr32_encrypt
 .align	32
 cmll128_t4_ctr32_encrypt:
-	save		%sp, -STACK_FRAME, %sp
+	save		%sp, -112, %sp
 	srln		%i2, 0, %i2		! needed on v8+, "nop" on v9
 
 	prefetch	[%i0], 20
@@ -1836,7 +1834,7 @@ cmll128_t4_ctr32_encrypt:
 	and		%i1, 7, %l2
 	cmp		%i2, 255
 	movrnz		%l2, 0, %l5		! if (	%i1&7 ||
-	movleu		SIZE_T_CC, 0, %l5	!	%i2<256 ||
+	movleu		%icc, 0, %l5	!	%i2<256 ||
 	brnz,pn		%l5, .L128_ctr32_blk	!	%i0==%i1)
 	srl		%l3, %l2, %l3
 
@@ -2055,7 +2053,7 @@ cmll128_t4_ctr32_encrypt:
 	stda		%f4, [%i1]0xe2		! ASI_BLK_INIT, T4-specific
 	add		%i1, 8, %i1
 	stda		%f6, [%i1]0xe2		! ASI_BLK_INIT, T4-specific
-	bgu,pt		SIZE_T_CC, .L128_ctr32_blk_loop2x
+	bgu,pt		%icc, .L128_ctr32_blk_loop2x
 	add		%i1, 8, %i1
 
 	add		%l5, %i2, %i2
@@ -2073,7 +2071,7 @@ cmll128_t4_ctr32_encrypt:
 .globl	cmll256_t4_ctr32_encrypt
 .align	32
 cmll256_t4_ctr32_encrypt:
-	save		%sp, -STACK_FRAME, %sp
+	save		%sp, -112, %sp
 	srln		%i2, 0, %i2		! needed on v8+, "nop" on v9
 
 	prefetch	[%i0], 20
@@ -2103,7 +2101,7 @@ cmll256_t4_ctr32_encrypt:
 	and		%i1, 7, %l2
 	cmp		%i2, 255
 	movrnz		%l2, 0, %l5		! if (	%i1&7 ||
-	movleu		SIZE_T_CC, 0, %l5	!	%i2<256 ||
+	movleu		%icc, 0, %l5	!	%i2<256 ||
 	brnz,pn		%l5, .L256_ctr32_blk	!	%i0==%i1)
 	srl		%l3, %l2, %l3
 
@@ -2322,7 +2320,7 @@ cmll256_t4_ctr32_encrypt:
 	stda		%f4, [%i1]0xe2		! ASI_BLK_INIT, T4-specific
 	add		%i1, 8, %i1
 	stda		%f6, [%i1]0xe2		! ASI_BLK_INIT, T4-specific
-	bgu,pt		SIZE_T_CC, .L256_ctr32_blk_loop2x
+	bgu,pt		%icc, .L256_ctr32_blk_loop2x
 	add		%i1, 8, %i1
 
 	add		%l5, %i2, %i2

@@ -1,9 +1,3 @@
-#include "sparc_arch.h"
-
-#ifdef  __arch64__
-.register	%g2,#scratch
-.register	%g3,#scratch
-#endif
 .section	".text",#alloc,#execinstr
 
 .align	256
@@ -302,8 +296,8 @@ AES_Te:
 .align	64
 .skip	16
 _sparcv9_AES_encrypt:
-	save	%sp,-STACK_FRAME-16,%sp
-	stx	%i7,[%sp+STACK_BIAS+STACK_FRAME+0]	! off-load return address
+	save	%sp,-112-16,%sp
+	stx	%i7,[%sp+0+112+0]	! off-load return address
 	ld	[%i5+240],%i7
 	ld	[%i5+0],%l4
 	ld	[%i5+4],%l5			!
@@ -591,7 +585,7 @@ _sparcv9_AES_encrypt:
 	ldub	[%i7+%g5],%g5
 		sll	%o0,16,%o0
 		xor	%l0,%i0,%i0
-	ldx	[%sp+STACK_BIAS+STACK_FRAME+0],%i7	! restore return address
+	ldx	[%sp+0+112+0],%i7	! restore return address
 	
 		sll	%o1,8,%o1		!
 		xor	%o0,%i0,%i0
@@ -629,7 +623,7 @@ AES_encrypt:
 	or	%o0,%o1,%g1
 	andcc	%g1,3,%g0
 	bnz,pn	%xcc,.Lunaligned_enc
-	save	%sp,-STACK_FRAME,%sp
+	save	%sp,-112,%sp
 
 	ld	[%i0+0],%o0
 	ld	[%i0+4],%o1
@@ -1034,8 +1028,8 @@ AES_Td:
 .align	64
 .skip	16
 _sparcv9_AES_decrypt:
-	save	%sp,-STACK_FRAME-16,%sp
-	stx	%i7,[%sp+STACK_BIAS+STACK_FRAME+0]	! off-load return address
+	save	%sp,-112-16,%sp
+	stx	%i7,[%sp+0+112+0]	! off-load return address
 	ld	[%i5+240],%i7
 	ld	[%i5+0],%l4
 	ld	[%i5+4],%l5			!
@@ -1323,7 +1317,7 @@ _sparcv9_AES_decrypt:
 	ldub	[%i7+%g5],%g5
 		sll	%o0,16,%o0
 		xor	%l0,%i0,%i0
-	ldx	[%sp+STACK_BIAS+STACK_FRAME+0],%i7	! restore return address
+	ldx	[%sp+0+112+0],%i7	! restore return address
 	
 		sll	%o1,8,%o1		!
 		xor	%o0,%i0,%i0
@@ -1361,7 +1355,7 @@ AES_decrypt:
 	or	%o0,%o1,%g1
 	andcc	%g1,3,%g0
 	bnz,pn	%xcc,.Lunaligned_dec
-	save	%sp,-STACK_FRAME,%sp
+	save	%sp,-112,%sp
 
 	ld	[%i0+0],%o0
 	ld	[%i0+4],%o1
