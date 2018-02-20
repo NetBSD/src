@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.148 2017/12/10 17:03:07 bouyer Exp $
+#	$NetBSD: files.usb,v 1.149 2018/02/20 15:48:37 ws Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -138,6 +138,7 @@ file	dev/usb/ucom.c			ucom | ucombus		needs-flag
 # Generic devices
 device	ugen
 attach	ugen at usbdevif
+attach	ugen at usbifif with ugenif
 file	dev/usb/ugen.c			ugen			needs-flag
 
 
@@ -387,7 +388,7 @@ file	dev/usb/umodem.c		umodem
 
 # FTDI serial driver
 device	uftdi: ucombus
-attach	uftdi at usbdevif
+attach	uftdi at usbifif
 file	dev/usb/uftdi.c			uftdi
 
 # Prolific PL2303 serial driver
