@@ -1,4 +1,4 @@
-.\" $NetBSD: gpio.4,v 1.31 2018/02/20 09:07:18 pgoyette Exp $
+.\" $NetBSD: gpio.4,v 1.32 2018/02/20 09:37:56 wiz Exp $
 .\"	$OpenBSD: gpio.4,v 1.5 2004/11/23 09:39:29 reyk Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -40,13 +40,10 @@
 .Sh DESCRIPTION
 The
 .Nm
-device attaches to the
-.Tn GPIO
-controller and provides a uniform programming interface to its pins.
+device attaches to the GPIO controller and provides a uniform
+programming interface to its pins.
 .Pp
-Each
-.Tn GPIO
-controller with an attached
+Each GPIO controller with an attached
 .Nm
 device has an associated device file under the
 .Pa /dev
@@ -76,10 +73,8 @@ The following structures and constants are defined in the
 header file:
 .Pp
 .Bl -tag -width XXXX -compact
-.It Dv GPIOINFO (struct gpio_info)
-Returns information about the
-.Tn GPIO
-controller in the
+.It Dv GPIOINFO ( struct gpio_info )
+Returns information about the GPIO controller in the
 .Fa gpio_info
 structure:
 .Bd -literal
@@ -88,7 +83,7 @@ struct gpio_info {
 };
 .Ed
 .Pp
-.It Dv GPIOREAD (struct gpio_req)
+.It Dv GPIOREAD ( struct gpio_req )
 Returns the input pin value in the
 .Fa gpio_pin_op
 structure:
@@ -108,7 +103,7 @@ or
 .Fa gp_pin
 field must be set before calling.
 .Pp
-.It Dv GPIOWRITE (struct gpio_req)
+.It Dv GPIOWRITE ( struct gpio_req )
 Writes the output value to the pin.
 The value set in the
 .Fa gp_value
@@ -121,12 +116,12 @@ On return, the
 .Fa gp_value
 field contains the old pin state.
 .Pp
-.It Dv GPIOTOGGLE (struct gpio_req)
+.It Dv GPIOTOGGLE ( struct gpio_req )
 Toggles the pin output value, i.e. changes it to the opposite.
 .Fa gp_value
 field is ignored and on return contains the old pin state.
 .Pp
-.It Dv GPIOSET (struct gpio_set)
+.It Dv GPIOSET ( struct gpio_set )
 Changes pin configuration flags with the new ones provided in the
 .Fa gpio_set
 structure:
@@ -191,11 +186,11 @@ Only GPIO pins that have been set using
 .Ar GPIOSET
 will be accessible at securelevels greater than 0.
 .Pp
-.It Dv GPIOUNSET (struct gpio_set)
+.It Dv GPIOUNSET ( struct gpio_set )
 Unset the specified pin, i.e. clear its name and make it unaccessible
 at securelevels greater than 0.
 .Pp
-.It Dv GPIOATTACH (struct gpio_attach)
+.It Dv GPIOATTACH ( struct gpio_attach )
 Attach the device described in the
 .Fa gpio_attach
 structure on this gpio device.
