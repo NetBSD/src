@@ -1,4 +1,4 @@
-.\"	$NetBSD: setbuf.3,v 1.15 2018/02/20 02:52:41 kamil Exp $
+.\"	$NetBSD: setbuf.3,v 1.16 2018/02/20 09:36:26 wiz Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -75,12 +75,12 @@ The environment variable value is a letter followed by an optional numeric
 value indicating the size of the buffer.
 Valid sizes range from 0B to 1MB.
 Valid letters are:
-.Bl -tag -width X -indent
-.It Dv Li U
+.Bl -tag -width X
+.It Li U
 Unbuffered.
-.It Dv Li L
+.It Li L
 Line-buffered.
-.It Dv Li F
+.It Li F
 Fully-buffered.
 .El
 .Pp
@@ -91,9 +91,7 @@ may be used to force the block out early.
 .Xr fclose 3 . )
 .Pp
 Normally all files are block buffered.
-When the first
-.Tn I/O
-operation occurs on a file,
+When the first I/O operation occurs on a file,
 .Xr malloc 3
 is called,
 and an optimally-sized buffer is obtained.
@@ -153,9 +151,7 @@ but may have peculiar side effects
 (such as discarding input or flushing output)
 if the stream is ``active''.
 Portable applications should call it only once on any given stream,
-and before any
-.Tn I/O
-is performed.
+and before any I/O is performed.
 .Pp
 The other three calls are, in effect, simply aliases for calls to
 .Fn setvbuf .
