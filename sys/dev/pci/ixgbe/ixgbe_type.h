@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_type.h,v 1.30 2017/12/06 04:08:50 msaitoh Exp $ */
+/* $NetBSD: ixgbe_type.h,v 1.31 2018/02/20 07:24:37 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -312,6 +312,11 @@
  */
 #define IXGBE_MAX_INT_RATE	488281
 #define IXGBE_MIN_INT_RATE	956
+/* On 82599 and newer, minimum RSC_DELAY is 4us. ITR interval must be larger
+ * than RSC_DELAY if RSC is used. ITR_INTERVAL is in 2(.048) us units on 10G
+ * and 1G. The minimun EITR is 6us.
+ */
+#define IXGBE_MIN_RSC_EITR_10G1G 0x00000018
 #define IXGBE_MAX_EITR		0x00000FF8
 #define IXGBE_MIN_EITR		8
 #define IXGBE_EITR(_i)		(((_i) <= 23) ? (0x00820 + ((_i) * 4)) : \
