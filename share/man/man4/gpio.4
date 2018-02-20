@@ -1,4 +1,4 @@
-.\" $NetBSD: gpio.4,v 1.30 2015/12/06 09:38:21 wiz Exp $
+.\" $NetBSD: gpio.4,v 1.31 2018/02/20 09:07:18 pgoyette Exp $
 .\"	$OpenBSD: gpio.4,v 1.5 2004/11/23 09:39:29 reyk Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd December 6, 2015
+.Dd February 20, 2018
 .Dt GPIO 4
 .Os
 .Sh NAME
@@ -32,6 +32,7 @@
 .Cd "gpio* at soekrisgpio?"
 .Cd "gpio* at ppbus?"
 .Cd "gpio* at ptcd?"
+.Cd "gpio* at wbsio?"
 .Pp
 .In sys/types.h
 .In sys/gpio.h
