@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.137 2018/01/21 13:57:12 skrll Exp $	*/
+/*	$NetBSD: ugen.c,v 1.138 2018/02/20 15:48:37 ws Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.137 2018/01/21 13:57:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.138 2018/02/20 15:48:37 ws Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -170,7 +170,7 @@ Static int ugen_do_read(struct ugen_softc *, int, struct uio *, int);
 Static int ugen_do_write(struct ugen_softc *, int, struct uio *, int);
 Static int ugen_do_ioctl(struct ugen_softc *, int, u_long,
 			 void *, int, struct lwp *);
-Static int ugen_set_config(struct ugen_softc *, int);
+Static int ugen_set_config(struct ugen_softc *, int, int);
 Static usb_config_descriptor_t *ugen_get_cdesc(struct ugen_softc *,
 					       int, int *);
 Static usbd_status ugen_set_interface(struct ugen_softc *, int, int);
@@ -181,13 +181,17 @@ Static void ugen_clear_endpoints(struct ugen_softc *);
 #define UGENENDPOINT(n) (minor(n) & 0xf)
 #define UGENDEV(u, e) (makedev(0, ((u) << 4) | (e)))
 
+int	ugenif_match(device_t, cfdata_t, void *);
+void	ugenif_attach(device_t, device_t, void *);
 int	ugen_match(device_t, cfdata_t, void *);
 void	ugen_attach(device_t, device_t, void *);
 int	ugen_detach(device_t, int);
 int	ugen_activate(device_t, enum devact);
 extern struct cfdriver ugen_cd;
-CFATTACH_DECL_NEW(ugen, sizeof(struct ugen_softc), ugen_match, ugen_attach,
-    ugen_detach, ugen_activate);
+CFATTACH_DECL_NEW(ugen, sizeof(struct ugen_softc), ugen_match,
+    ugen_attach, ugen_detach, ugen_activate);
+CFATTACH_DECL_NEW(ugenif, sizeof(struct ugen_softc), ugenif_match,
+    ugenif_attach, ugen_detach, ugen_activate);
 
 /* toggle to control attach priority. -1 means "let autoconf decide" */
 int ugen_override = -1;
@@ -211,11 +215,38 @@ ugen_match(device_t parent, cfdata_t match, void *aux)
 		return UMATCH_NONE;
 }
 
+int
+ugenif_match(device_t parent, cfdata_t match, void *aux)
+{
+	if (match->cf_flags & 1)
+		return UMATCH_HIGHEST;
+	else
+		return UMATCH_NONE;
+}
+
 void
 ugen_attach(device_t parent, device_t self, void *aux)
 {
-	struct ugen_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
+	struct usbif_attach_arg uiaa;
+
+	memset(&uiaa, 0, sizeof uiaa);
+	uiaa.uiaa_port = uaa->uaa_port;
+	uiaa.uiaa_vendor = uaa->uaa_vendor;
+	uiaa.uiaa_product = uaa->uaa_product;
+	uiaa.uiaa_release = uaa->uaa_release;
+	uiaa.uiaa_device = uaa->uaa_device;
+	uiaa.uiaa_configno = -1;
+	uiaa.uiaa_ifaceno = -1;
+
+	ugenif_attach(parent, self, &uiaa);
+}
+
+void
+ugenif_attach(device_t parent, device_t self, void *aux)
+{
+	struct ugen_softc *sc = device_private(self);
+	struct usbif_attach_arg *uiaa = aux;
 	struct usbd_device *udev;
 	char *devinfop;
 	usbd_status err;
@@ -227,12 +258,12 @@ ugen_attach(device_t parent, device_t self, void *aux)
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SOFTUSB);
 	cv_init(&sc->sc_detach_cv, "ugendet");
 
-	devinfop = usbd_devinfo_alloc(uaa->uaa_device, 0);
+	devinfop = usbd_devinfo_alloc(uiaa->uiaa_device, 0);
 	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
 	sc->sc_dev = self;
-	sc->sc_udev = udev = uaa->uaa_device;
+	sc->sc_udev = udev = uiaa->uiaa_device;
 
 	for (i = 0; i < USB_MAX_ENDPOINTS; i++) {
 		for (dir = OUT; dir <= IN; dir++) {
@@ -244,18 +275,25 @@ ugen_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 
-	/* First set configuration index 0, the default one for ugen. */
-	err = usbd_set_config_index(udev, 0, 0);
-	if (err) {
-		aprint_error_dev(self,
-		    "setting configuration index 0 failed\n");
-		sc->sc_dying = 1;
-		return;
+	if (uiaa->uiaa_ifaceno < 0) {
+		/*
+		 * If we attach the whole device,
+		 * set configuration index 0, the default one.
+		 */
+		err = usbd_set_config_index(udev, 0, 0);
+		if (err) {
+			aprint_error_dev(self,
+			    "setting configuration index 0 failed\n");
+			sc->sc_dying = 1;
+			return;
+		}
 	}
+
+	/* Get current configuration */
 	conf = usbd_get_config_descriptor(udev)->bConfigurationValue;
 
 	/* Set up all the local state for this configuration. */
-	err = ugen_set_config(sc, conf);
+	err = ugen_set_config(sc, conf, uiaa->uiaa_ifaceno < 0);
 	if (err) {
 		aprint_error_dev(self, "setting configuration %d failed\n",
 		    conf);
@@ -268,7 +306,6 @@ ugen_attach(device_t parent, device_t self, void *aux)
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
-	return;
 }
 
 Static void
@@ -285,7 +322,7 @@ ugen_clear_endpoints(struct ugen_softc *sc)
 }
 
 Static int
-ugen_set_config(struct ugen_softc *sc, int configno)
+ugen_set_config(struct ugen_softc *sc, int configno, int chkopen)
 {
 	struct usbd_device *dev = sc->sc_udev;
 	usb_config_descriptor_t *cdesc;
@@ -300,17 +337,19 @@ ugen_set_config(struct ugen_softc *sc, int configno)
 	DPRINTFN(1,("ugen_set_config: %s to configno %d, sc=%p\n",
 		    device_xname(sc->sc_dev), configno, sc));
 
-	/*
-	 * We start at 1, not 0, because we don't care whether the
-	 * control endpoint is open or not. It is always present.
-	 */
-	for (endptno = 1; endptno < USB_MAX_ENDPOINTS; endptno++)
-		if (sc->sc_is_open[endptno]) {
-			DPRINTFN(1,
-			     ("ugen_set_config: %s - endpoint %d is open\n",
-			      device_xname(sc->sc_dev), endptno));
-			return USBD_IN_USE;
-		}
+	if (chkopen) {
+		/*
+		 * We start at 1, not 0, because we don't care whether the
+		 * control endpoint is open or not. It is always present.
+		 */
+		for (endptno = 1; endptno < USB_MAX_ENDPOINTS; endptno++)
+			if (sc->sc_is_open[endptno]) {
+				DPRINTFN(1,
+				     ("ugen_set_config: %s - endpoint %d is open\n",
+				      device_xname(sc->sc_dev), endptno));
+				return USBD_IN_USE;
+			}
+	}
 
 	/* Avoid setting the current value. */
 	cdesc = usbd_get_config_descriptor(dev);
@@ -320,11 +359,11 @@ ugen_set_config(struct ugen_softc *sc, int configno)
 			return err;
 	}
 
+	ugen_clear_endpoints(sc);
+
 	err = usbd_interface_count(dev, &niface);
 	if (err)
 		return err;
-
-	ugen_clear_endpoints(sc);
 
 	for (ifaceno = 0; ifaceno < niface; ifaceno++) {
 		DPRINTFN(1,("ugen_set_config: ifaceno %d\n", ifaceno));
@@ -1601,7 +1640,7 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 	case USB_SET_CONFIG:
 		if (!(flag & FWRITE))
 			return EPERM;
-		err = ugen_set_config(sc, *(int *)addr);
+		err = ugen_set_config(sc, *(int *)addr, 1);
 		switch (err) {
 		case USBD_NORMAL_COMPLETION:
 			break;
