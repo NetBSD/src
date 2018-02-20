@@ -1,4 +1,4 @@
-.\" $NetBSD: ugen.4,v 1.32 2017/07/03 21:30:58 wiz Exp $
+.\" $NetBSD: ugen.4,v 1.33 2018/02/20 15:50:02 ws Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -35,6 +35,7 @@
 .Nd USB generic device support
 .Sh SYNOPSIS
 .Cd "ugen* at uhub? flags N"
+.Cd "ugen* at uhub? vendor V product P configuration C interface I flags 1
 .Sh DESCRIPTION
 The
 .Nm
@@ -59,6 +60,40 @@ locators this can be used to force the
 .Nm
 driver to be used for a certain
 device.
+.Pp
+The second form of attachment can be used to
+.Dq steal
+only one interface from some device for use by the
+.Nm
+driver.
+Be sure to include
+.Dq flags 1
+on the attachment.
+.Em NOTE :
+You have to be extremely careful,
+when using this,
+as the attached
+.Nm
+driver has access to all of the device
+and can easily interfere with the driver used for
+the other interface(s).
+.Pp
+As an example of this second form of attachment there are
+various debugging boards available based on some FTDI chip,
+where one interface is used for JTAG debugging
+and the other is used as a serial interface.
+In this case you want to attach the
+.Nm
+driver to interface 0
+while using
+.Xr uftdi 4
+together with
+.Xr ucom 4
+at interface 1 of this particular board
+identified by
+.Cd vendor
+and
+.Cd product .
 .Pp
 There can be up to 127 USB devices connected to a USB bus.
 Each USB device can have up to 16 endpoints.
