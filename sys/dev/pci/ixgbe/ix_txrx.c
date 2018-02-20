@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.30 2017/12/04 09:29:42 msaitoh Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.31 2018/02/20 07:30:57 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -1855,6 +1855,7 @@ ixgbe_rxeof(struct ix_queue *que)
 			mp->m_next = nbuf->buf;
 		} else { /* Sending this frame */
 			m_set_rcvif(sendmp, ifp);
+			++rxr->packets;
 			rxr->rx_packets.ev_count++;
 			/* capture data for AIM */
 			rxr->bytes += sendmp->m_pkthdr.len;
