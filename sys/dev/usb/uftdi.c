@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdi.c,v 1.66 2017/12/22 14:18:29 jakllsch Exp $	*/
+/*	$NetBSD: uftdi.c,v 1.67 2018/02/20 15:48:37 ws Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.66 2017/12/22 14:18:29 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.67 2018/02/20 15:48:37 ws Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -62,9 +62,7 @@ int uftdidebug = 0;
 #define DPRINTFN(n,x)
 #endif
 
-#define UFTDI_CONFIG_INDEX	0
-#define UFTDI_IFACE_INDEX	0
-#define UFTDI_MAX_PORTS		4
+#define UFTDI_CONFIG_NO		1
 
 /*
  * These are the default number of bytes transferred per frame if the
@@ -83,17 +81,17 @@ int uftdidebug = 0;
 struct uftdi_softc {
 	device_t		sc_dev;		/* base device */
 	struct usbd_device *	sc_udev;	/* device */
-	struct usbd_interface *	sc_iface[UFTDI_MAX_PORTS];	/* interface */
+	struct usbd_interface *	sc_iface;	/* interface */
+	int			sc_iface_no;
 
 	enum uftdi_type		sc_type;
 	u_int			sc_hdrlen;
-	u_int			sc_numports;
 	u_int			sc_chiptype;
 
 	u_char			sc_msr;
 	u_char			sc_lsr;
 
-	device_t		sc_subdev[UFTDI_MAX_PORTS];
+	device_t		sc_subdev;
 
 	u_char			sc_dying;
 
@@ -190,29 +188,30 @@ CFATTACH_DECL2_NEW(uftdi, sizeof(struct uftdi_softc), uftdi_match,
 int
 uftdi_match(device_t parent, cfdata_t match, void *aux)
 {
-	struct usb_attach_arg *uaa = aux;
+	struct usbif_attach_arg *uiaa = aux;
 
 	DPRINTFN(20,("uftdi: vendor=0x%x, product=0x%x\n",
-		     uaa->uaa_vendor, uaa->uaa_product));
+		     uiaa->uiaa_vendor, uiaa->uiaa_product));
 
-	return uftdi_lookup(uaa->uaa_vendor, uaa->uaa_product) != NULL ?
-		UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
+	if (uiaa->uiaa_configno != UFTDI_CONFIG_NO)
+		return UMATCH_NONE;
+
+	return uftdi_lookup(uiaa->uiaa_vendor, uiaa->uiaa_product) != NULL ?
+		UMATCH_VENDOR_PRODUCT_CONF_IFACE : UMATCH_NONE;
 }
 
 void
 uftdi_attach(device_t parent, device_t self, void *aux)
 {
 	struct uftdi_softc *sc = device_private(self);
-	struct usb_attach_arg *uaa = aux;
-	struct usbd_device *dev = uaa->uaa_device;
-	struct usbd_interface *iface;
+	struct usbif_attach_arg *uiaa = aux;
+	struct usbd_device *dev = uiaa->uiaa_device;
+	struct usbd_interface *iface = uiaa->uiaa_iface;
 	usb_device_descriptor_t *ddesc;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	char *devinfop;
-	const char *devname = device_xname(self);
-	int i,idx;
-	usbd_status err;
+	int i;
 	struct ucom_attach_args ucaa;
 
 	DPRINTFN(10,("\nuftdi_attach: sc=%p\n", sc));
@@ -224,122 +223,86 @@ uftdi_attach(device_t parent, device_t self, void *aux)
 	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
-	/* Move the device into the configured state. */
-	err = usbd_set_config_index(dev, UFTDI_CONFIG_INDEX, 1);
-	if (err) {
-		aprint_error("\n%s: failed to set configuration, err=%s\n",
-		       devname, usbd_errstr(err));
-		goto bad;
-	}
-
 	sc->sc_dev = self;
 	sc->sc_udev = dev;
-	sc->sc_numports = 1;
+	sc->sc_iface_no = uiaa->uiaa_ifaceno;
 	sc->sc_type = UFTDI_TYPE_8U232AM; /* most devices are post-8U232AM */
 	sc->sc_hdrlen = 0;
-	if (uaa->uaa_vendor == USB_VENDOR_FTDI
-	    && uaa->uaa_product == USB_PRODUCT_FTDI_SERIAL_8U100AX) {
+	if (uiaa->uiaa_vendor == USB_VENDOR_FTDI
+	    && uiaa->uiaa_product == USB_PRODUCT_FTDI_SERIAL_8U100AX) {
 		sc->sc_type = UFTDI_TYPE_SIO;
 		sc->sc_hdrlen = 1;
 	}
 
 	ddesc = usbd_get_device_descriptor(dev);
 	sc->sc_chiptype = UGETW(ddesc->bcdDevice);
-	switch (sc->sc_chiptype) {
-	case 0x500: /* 2232D */
-	case 0x700: /* 2232H */
-		sc->sc_numports = 2;
-		break;
-	case 0x800: /* 4232H */
-		sc->sc_numports = 4;
-		break;
-	case 0x200: /* 232/245AM */
-	case 0x400: /* 232/245BL */
-	case 0x600: /* 232/245R */
-	default:
-		break;
+
+	id = usbd_get_interface_descriptor(iface);
+
+	sc->sc_iface = iface;
+
+	ucaa.ucaa_bulkin = ucaa.ucaa_bulkout = -1;
+	ucaa.ucaa_ibufsize = ucaa.ucaa_obufsize = 0;
+	for (i = 0; i < id->bNumEndpoints; i++) {
+		int addr, dir, attr;
+		ed = usbd_interface2endpoint_descriptor(iface, i);
+		if (ed == NULL) {
+			aprint_error_dev(self,
+			    "could not read endpoint descriptor\n");
+			goto bad;
+		}
+
+		addr = ed->bEndpointAddress;
+		dir = UE_GET_DIR(ed->bEndpointAddress);
+		attr = ed->bmAttributes & UE_XFERTYPE;
+		if (dir == UE_DIR_IN && attr == UE_BULK) {
+			ucaa.ucaa_bulkin = addr;
+			ucaa.ucaa_ibufsize = UGETW(ed->wMaxPacketSize);
+			if (ucaa.ucaa_ibufsize >= UFTDI_MAX_IBUFSIZE)
+				ucaa.ucaa_ibufsize = UFTDI_MAX_IBUFSIZE;
+		} else if (dir == UE_DIR_OUT && attr == UE_BULK) {
+			ucaa.ucaa_bulkout = addr;
+			ucaa.ucaa_obufsize = UGETW(ed->wMaxPacketSize)
+			    - sc->sc_hdrlen;
+			if (ucaa.ucaa_obufsize >= UFTDI_MAX_OBUFSIZE)
+				ucaa.ucaa_obufsize = UFTDI_MAX_OBUFSIZE;
+			/* Limit length if we have a 6-bit header.  */
+			if ((sc->sc_hdrlen > 0) &&
+			    (ucaa.ucaa_obufsize > UFTDIOBUFSIZE))
+				ucaa.ucaa_obufsize = UFTDIOBUFSIZE;
+		} else {
+			aprint_error_dev(self, "unexpected endpoint\n");
+			goto bad;
+		}
+	}
+	if (ucaa.ucaa_bulkin == -1) {
+		aprint_error_dev(self, "Could not find data bulk in\n");
+		goto bad;
+	}
+	if (ucaa.ucaa_bulkout == -1) {
+		aprint_error_dev(self, "Could not find data bulk out\n");
+		goto bad;
 	}
 
-	for (idx = UFTDI_IFACE_INDEX; idx < sc->sc_numports; idx++) {
-		err = usbd_device2interface_handle(dev, idx, &iface);
-		if (err) {
-			aprint_error(
-			    "\n%s: failed to get interface idx=%d, err=%s\n",
-			    devname, idx, usbd_errstr(err));
-			goto bad;
-		}
+	ucaa.ucaa_portno = FTDI_PIT_SIOA + sc->sc_iface_no;
+	/* ucaa_bulkin, ucaa_bulkout set above */
+	if (ucaa.ucaa_ibufsize == 0)
+		ucaa.ucaa_ibufsize = UFTDIIBUFSIZE;
+	ucaa.ucaa_ibufsizepad = ucaa.ucaa_ibufsize;
+	if (ucaa.ucaa_obufsize == 0)
+		ucaa.ucaa_obufsize = UFTDIOBUFSIZE - sc->sc_hdrlen;
+	ucaa.ucaa_opkthdrlen = sc->sc_hdrlen;
+	ucaa.ucaa_device = dev;
+	ucaa.ucaa_iface = iface;
+	ucaa.ucaa_methods = &uftdi_methods;
+	ucaa.ucaa_arg = sc;
+	ucaa.ucaa_info = NULL;
 
-		id = usbd_get_interface_descriptor(iface);
-
-		sc->sc_iface[idx] = iface;
-
-		ucaa.ucaa_bulkin = ucaa.ucaa_bulkout = -1;
-		ucaa.ucaa_ibufsize = ucaa.ucaa_obufsize = 0;
-		for (i = 0; i < id->bNumEndpoints; i++) {
-			int addr, dir, attr;
-			ed = usbd_interface2endpoint_descriptor(iface, i);
-			if (ed == NULL) {
-				aprint_error_dev(self,
-				    "could not read endpoint descriptor: %s\n",
-				    usbd_errstr(err));
-				goto bad;
-			}
-
-			addr = ed->bEndpointAddress;
-			dir = UE_GET_DIR(ed->bEndpointAddress);
-			attr = ed->bmAttributes & UE_XFERTYPE;
-			if (dir == UE_DIR_IN && attr == UE_BULK) {
-				ucaa.ucaa_bulkin = addr;
-				ucaa.ucaa_ibufsize = UGETW(ed->wMaxPacketSize);
-				if (ucaa.ucaa_ibufsize >= UFTDI_MAX_IBUFSIZE)
-					ucaa.ucaa_ibufsize = UFTDI_MAX_IBUFSIZE;
-			} else if (dir == UE_DIR_OUT && attr == UE_BULK) {
-				ucaa.ucaa_bulkout = addr;
-				ucaa.ucaa_obufsize = UGETW(ed->wMaxPacketSize)
-				    - sc->sc_hdrlen;
-				if (ucaa.ucaa_obufsize >= UFTDI_MAX_OBUFSIZE)
-					ucaa.ucaa_obufsize = UFTDI_MAX_OBUFSIZE;
-				/* Limit length if we have a 6-bit header.  */
-				if ((sc->sc_hdrlen > 0) &&
-				    (ucaa.ucaa_obufsize > UFTDIOBUFSIZE))
-					ucaa.ucaa_obufsize = UFTDIOBUFSIZE;
-			} else {
-				aprint_error_dev(self,
-				    "unexpected endpoint\n");
-				goto bad;
-			}
-		}
-		if (ucaa.ucaa_bulkin == -1) {
-			aprint_error_dev(self,
-			    "Could not find data bulk in\n");
-			goto bad;
-		}
-		if (ucaa.ucaa_bulkout == -1) {
-			aprint_error_dev(self,
-			    "Could not find data bulk out\n");
-			goto bad;
-		}
-
-		ucaa.ucaa_portno = FTDI_PIT_SIOA + idx;
-		/* ucaa_bulkin, ucaa_bulkout set above */
-		if (ucaa.ucaa_ibufsize == 0)
-			ucaa.ucaa_ibufsize = UFTDIIBUFSIZE;
-		ucaa.ucaa_ibufsizepad = ucaa.ucaa_ibufsize;
-		if (ucaa.ucaa_obufsize == 0)
-			ucaa.ucaa_obufsize = UFTDIOBUFSIZE - sc->sc_hdrlen;
-		ucaa.ucaa_opkthdrlen = sc->sc_hdrlen;
-		ucaa.ucaa_device = dev;
-		ucaa.ucaa_iface = iface;
-		ucaa.ucaa_methods = &uftdi_methods;
-		ucaa.ucaa_arg = sc;
-		ucaa.ucaa_info = NULL;
-
-		DPRINTF(("uftdi: in=0x%x out=0x%x isize=0x%x osize=0x%x\n",
-			ucaa.ucaa_bulkin, ucaa.ucaa_bulkout,
-			ucaa.ucaa_ibufsize, ucaa.ucaa_obufsize));
-		sc->sc_subdev[idx] = config_found_sm_loc(self, "ucombus", NULL,
-		    &ucaa, ucomprint, ucomsubmatch);
-	}
+	DPRINTF(("uftdi: in=0x%x out=0x%x isize=0x%x osize=0x%x\n",
+		ucaa.ucaa_bulkin, ucaa.ucaa_bulkout,
+		ucaa.ucaa_ibufsize, ucaa.ucaa_obufsize));
+	sc->sc_subdev = config_found_sm_loc(self, "ucombus", NULL,
+	    &ucaa, ucomprint, ucomsubmatch);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
 
@@ -371,29 +334,21 @@ uftdi_activate(device_t self, enum devact act)
 void
 uftdi_childdet(device_t self, device_t child)
 {
-	int i;
 	struct uftdi_softc *sc = device_private(self);
 
-	for (i = 0; i < sc->sc_numports; i++) {
-		if (sc->sc_subdev[i] == child)
-			break;
-	}
-	KASSERT(i < sc->sc_numports);
-	sc->sc_subdev[i] = NULL;
+	KASSERT(child == sc->sc_subdev);
+	sc->sc_subdev = NULL;
 }
 
 int
 uftdi_detach(device_t self, int flags)
 {
 	struct uftdi_softc *sc = device_private(self);
-	int i;
 
 	DPRINTF(("uftdi_detach: sc=%p flags=%d\n", sc, flags));
 	sc->sc_dying = 1;
-	for (i=0; i < sc->sc_numports; i++) {
-		if (sc->sc_subdev[i] != NULL)
-			config_detach(sc->sc_subdev[i], flags);
-	}
+	if (sc->sc_subdev != NULL)
+		config_detach(sc->sc_subdev, flags);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
 
@@ -466,7 +421,7 @@ uftdi_read(void *vsc, int portno, u_char **ptr, uint32_t *count)
 			 lsr, sc->sc_lsr));
 		sc->sc_msr = msr;
 		sc->sc_lsr = lsr;
-		ucom_status_change(device_private(sc->sc_subdev[portno-1]));
+		ucom_status_change(device_private(sc->sc_subdev));
 	}
 
 	/* Adjust buffer pointer to skip status prefix */
