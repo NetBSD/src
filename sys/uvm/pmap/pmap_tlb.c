@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.25 2018/02/19 22:01:15 jdolecek Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.26 2018/02/21 21:53:54 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.25 2018/02/19 22:01:15 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.26 2018/02/21 21:53:54 jdolecek Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -144,14 +144,30 @@ static kmutex_t pmap_tlb0_lock __cacheline_aligned;
 #error "KERNEL_PID expected in range 0-31"
 #endif
 
+#define	TLBINFO_ASID_MARK_UNUSED(ti, asid) \
+	__BITMAP_CLR((asid), &(ti)->ti_asid_bitmap)
+#define	TLBINFO_ASID_MARK_USED(ti, asid) \
+	__BITMAP_SET((asid), &(ti)->ti_asid_bitmap)
+#define	TLBINFO_ASID_INUSE_P(ti, asid) \
+	__BITMAP_ISSET((asid), &(ti)->ti_asid_bitmap)
+#define	TLBINFO_ASID_RESET(ti) \
+	do {								\
+		__BITMAP_ZERO(&ti->ti_asid_bitmap);			\
+		for (tlb_asid_t asid = 0; asid <= KERNEL_PID; asid++) 	\
+			TLBINFO_ASID_MARK_USED(ti, asid);	 	\
+	} while (0)
+#define	TLBINFO_ASID_INITIAL_FREE(asid_max) \
+	(asid_max + 1 /* 0 */ - (1 + KERNEL_PID))
+
 struct pmap_tlb_info pmap_tlb0_info = {
 	.ti_name = "tlb0",
 	.ti_asid_hint = KERNEL_PID + 1,
 #ifdef PMAP_TLB_NUM_PIDS
 	.ti_asid_max = IFCONSTANT(PMAP_TLB_NUM_PIDS - 1),
-	.ti_asids_free = IFCONSTANT(PMAP_TLB_NUM_PIDS - (1 + KERNEL_PID)),
+	.ti_asids_free = IFCONSTANT(
+		TLBINFO_ASID_INITIAL_FREE(PMAP_TLB_NUM_PIDS - 1)),
 #endif
-	.ti_asid_bitmap._b[0] = __BIT(KERNEL_PID),
+	.ti_asid_bitmap._b[0] = __BITS(0, KERNEL_PID),
 #ifdef PMAP_TLB_WIRED_UPAGES
 	.ti_wired = PMAP_TLB_WIRED_UPAGES,
 #endif
@@ -170,20 +186,6 @@ struct pmap_tlb_info *pmap_tlbs[PMAP_TLB_MAX] = {
 };
 u_int pmap_ntlbs = 1;
 #endif
-
-#define	TLBINFO_ASID_MARK_UNUSED(ti, asid) \
-	__BITMAP_CLR((asid), &(ti)->ti_asid_bitmap)
-#define	TLBINFO_ASID_MARK_USED(ti, asid) \
-	__BITMAP_SET((asid), &(ti)->ti_asid_bitmap)
-#define	TLBINFO_ASID_INUSE_P(ti, asid) \
-	__BITMAP_ISSET((asid), &(ti)->ti_asid_bitmap)
-#define	TLBINFO_ASID_RESET(ti) \
-	do {						\
-		__BITMAP_ZERO(&ti->ti_asid_bitmap);	\
-		TLBINFO_ASID_MARK_USED(ti, KERNEL_PID); \
-	} while (0)
-#define	TLBINFO_ASID_INITIAL_FREE(ti) \
-	((ti)->ti_asid_max + 1 /* 0 */ - 1 /* reserved KERNEL_PID */)
 
 #ifdef MULTIPROCESSOR
 __unused static inline bool
@@ -338,10 +340,10 @@ pmap_tlb_info_init(struct pmap_tlb_info *ti)
 		KASSERT(pmap_tlbs[pmap_ntlbs] == NULL);
 
 		ti->ti_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_SCHED);
-		TLBINFO_ASID_MARK_USED(ti, KERNEL_PID);
+		TLBINFO_ASID_RESET(ti);
 		ti->ti_asid_hint = KERNEL_PID + 1;
 		ti->ti_asid_max = pmap_tlbs[0]->ti_asid_max;
-		ti->ti_asids_free = TLBINFO_ASID_INITIAL_FREE(ti);
+		ti->ti_asids_free = TLBINFO_ASID_INITIAL_FREE(ti->ti_asid_max);
 		ti->ti_tlbinvop = TLBINV_NOBODY;
 		ti->ti_victim = NULL;
 		kcpuset_create(&ti->ti_kcpuset, true);
@@ -368,7 +370,7 @@ pmap_tlb_info_init(struct pmap_tlb_info *ti)
 	//printf("asid ");
 	if (ti->ti_asid_max == 0) {
 		ti->ti_asid_max = pmap_md_tlb_asid_max();
-		ti->ti_asids_free = TLBINFO_ASID_INITIAL_FREE(ti);
+		ti->ti_asids_free = TLBINFO_ASID_INITIAL_FREE(ti->ti_asid_max);
 	}
 
 	KASSERT(ti->ti_asid_max < PMAP_TLB_BITMAP_LENGTH);
@@ -427,7 +429,7 @@ pmap_tlb_asid_reinitialize(struct pmap_tlb_info *ti, enum tlb_invalidate_op op)
 	 * First, clear the ASID bitmap (except for ASID 0 which belongs
 	 * to the kernel).
 	 */
-	ti->ti_asids_free = TLBINFO_ASID_INITIAL_FREE(ti);
+	ti->ti_asids_free = TLBINFO_ASID_INITIAL_FREE(ti->ti_asid_max);
 	ti->ti_asid_hint = KERNEL_PID + 1;
 	TLBINFO_ASID_RESET(ti);
 
@@ -471,7 +473,8 @@ pmap_tlb_asid_reinitialize(struct pmap_tlb_info *ti, enum tlb_invalidate_op op)
 			tlb_invalidate_all();
 #endif /* MULTIPROCESSOR && !PMAP_TLB_NEED_SHOOTDOWN */
 			TLBINFO_ASID_RESET(ti);
-			ti->ti_asids_free = TLBINFO_ASID_INITIAL_FREE(ti);
+			ti->ti_asids_free = TLBINFO_ASID_INITIAL_FREE(
+				ti->ti_asid_max);
 #if !defined(MULTIPROCESSOR) || defined(PMAP_TLB_NEED_SHOOTDOWN)
 		} else {
 			ti->ti_asids_free -= asids_found;
