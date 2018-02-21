@@ -1,4 +1,4 @@
-/* $NetBSD: ipsec.c,v 1.132 2018/02/21 16:18:52 maxv Exp $ */
+/* $NetBSD: ipsec.c,v 1.133 2018/02/21 16:38:15 maxv Exp $ */
 /* $FreeBSD: src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $ */
 /* $KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $ */
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.132 2018/02/21 16:18:52 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.133 2018/02/21 16:38:15 maxv Exp $");
 
 /*
  * IPsec controller part.
@@ -584,8 +584,9 @@ ipsec4_checkpolicy(struct mbuf *m, u_int dir, u_int flag, int *error,
 	if (inp == NULL) {
 		sp = ipsec_getpolicybyaddr(m, dir, flag, error);
 	} else {
-		KASSERT(inp->inp_socket != NULL);
-		sp = ipsec_getpolicybysock(m, dir, (struct inpcb_hdr *)inp, error);
+		struct inpcb_hdr *inph = (struct inpcb_hdr *)inp;
+		KASSERT(inph->inph_socket != NULL);
+		sp = ipsec_getpolicybysock(m, dir, inph, error);
 	}
 	if (sp == NULL) {
 		KASSERTMSG(*error != 0, "getpolicy failed w/o error");
@@ -813,8 +814,9 @@ ipsec6_checkpolicy(struct mbuf *m, u_int dir, u_int flag, int *error,
 	if (in6p == NULL) {
 		sp = ipsec_getpolicybyaddr(m, dir, flag, error);
 	} else {
-		KASSERT(in6p->in6p_socket != NULL);
-		sp = ipsec_getpolicybysock(m, dir, (struct inpcb_hdr *)in6p, error);
+		struct inpcb_hdr *inph = (struct inpcb_hdr *)in6p;
+		KASSERT(inph->inph_socket != NULL);
+		sp = ipsec_getpolicybysock(m, dir, inph, error);
 	}
 	if (sp == NULL) {
 		KASSERTMSG(*error != 0, "getpolicy failed w/o error");
@@ -834,7 +836,7 @@ ipsec6_checkpolicy(struct mbuf *m, u_int dir, u_int flag, int *error,
 	case IPSEC_POLICY_BYPASS:
 	case IPSEC_POLICY_NONE:
 		KEY_SP_UNREF(&sp);
-		sp = NULL;	  /* NB: force NULL result */
+		sp = NULL;		/* NB: force NULL result */
 		break;
 	case IPSEC_POLICY_IPSEC:
 		KASSERT(sp->req != NULL);
@@ -1753,18 +1755,19 @@ ipsec_sp_reject(const struct secpolicy *sp, const struct mbuf *m)
 int
 ipsec4_in_reject(struct mbuf *m, struct inpcb *inp)
 {
+	struct inpcb_hdr *inph = (struct inpcb_hdr *)inp;
 	struct secpolicy *sp;
 	int error;
 	int result;
 
 	KASSERT(m != NULL);
 
-	if (inp == NULL)
+	if (inph == NULL)
 		sp = ipsec_getpolicybyaddr(m, IPSEC_DIR_INBOUND,
 		    IP_FORWARDING, &error);
 	else
 		sp = ipsec_getpolicybysock(m, IPSEC_DIR_INBOUND,
-		    (struct inpcb_hdr *)inp, &error);
+		    inph, &error);
 
 	if (sp != NULL) {
 		result = ipsec_sp_reject(sp, m);
@@ -1786,18 +1789,19 @@ ipsec4_in_reject(struct mbuf *m, struct inpcb *inp)
 int
 ipsec6_in_reject(struct mbuf *m, struct in6pcb *in6p)
 {
+	struct inpcb_hdr *inph = (struct inpcb_hdr *)in6p;
 	struct secpolicy *sp;
 	int error;
 	int result;
 
 	KASSERT(m != NULL);
 
-	if (in6p == NULL)
+	if (inph == NULL)
 		sp = ipsec_getpolicybyaddr(m, IPSEC_DIR_INBOUND,
 		    IP_FORWARDING, &error);
 	else
 		sp = ipsec_getpolicybysock(m, IPSEC_DIR_INBOUND,
-		    (struct inpcb_hdr *)in6p, &error);
+		    inph, &error);
 
 	if (sp != NULL) {
 		result = ipsec_sp_reject(sp, m);
@@ -1890,25 +1894,26 @@ ipsec_sp_hdrsiz(const struct secpolicy *sp, const struct mbuf *m)
 size_t
 ipsec4_hdrsiz(struct mbuf *m, u_int dir, struct inpcb *inp)
 {
+	struct inpcb_hdr *inph = (struct inpcb_hdr *)inp;
 	struct secpolicy *sp;
 	int error;
 	size_t size;
 
 	KASSERT(m != NULL);
-	KASSERTMSG(inp == NULL || inp->inp_socket != NULL, "socket w/o inpcb");
+	KASSERTMSG(inph == NULL || inph->inph_socket != NULL,
+	    "socket w/o inpcb");
 
-	if (inp == NULL)
+	if (inph == NULL)
 		sp = ipsec_getpolicybyaddr(m, dir, IP_FORWARDING, &error);
 	else
-		sp = ipsec_getpolicybysock(m, dir,
-		    (struct inpcb_hdr *)inp, &error);
+		sp = ipsec_getpolicybysock(m, dir, inph, &error);
 
 	if (sp != NULL) {
 		size = ipsec_sp_hdrsiz(sp, m);
 		KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_DATA, "size:%zu.\n", size);
 		KEY_SP_UNREF(&sp);
 	} else {
-		size = 0;	/* XXX should be panic ? */
+		size = 0;
 	}
 
 	return size;
@@ -1918,19 +1923,19 @@ ipsec4_hdrsiz(struct mbuf *m, u_int dir, struct inpcb *inp)
 size_t
 ipsec6_hdrsiz(struct mbuf *m, u_int dir, struct in6pcb *in6p)
 {
+	struct inpcb_hdr *inph = (struct inpcb_hdr *)in6p;
 	struct secpolicy *sp;
 	int error;
 	size_t size;
 
 	KASSERT(m != NULL);
-	KASSERTMSG(in6p == NULL || in6p->in6p_socket != NULL,
+	KASSERTMSG(inph == NULL || inph->inph_socket != NULL,
 	    "socket w/o inpcb");
 
-	if (in6p == NULL)
+	if (inph == NULL)
 		sp = ipsec_getpolicybyaddr(m, dir, IP_FORWARDING, &error);
 	else
-		sp = ipsec_getpolicybysock(m, dir,
-		    (struct inpcb_hdr *)in6p, &error);
+		sp = ipsec_getpolicybysock(m, dir, inph, &error);
 
 	if (sp != NULL) {
 		size = ipsec_sp_hdrsiz(sp, m);
