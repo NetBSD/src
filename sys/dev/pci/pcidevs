@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1309 2018/02/17 00:45:14 sevan Exp $
+$NetBSD: pcidevs,v 1.1310 2018/02/21 07:49:47 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -632,6 +632,7 @@ vendor RENESAS		0x1912	Renesas Technologies
 vendor FREESCALE	0x1957	Freescale Semiconductor
 vendor ATTANSIC		0x1969	Attansic Technologies
 vendor JMICRON		0x197b	JMicron Technology
+vendor SERVERENGINES	0x19a2	ServerEngines
 vendor HUAWEI		0x19e5	Huaewi Technology
 vendor ASPEED		0x1a03	ASPEED Technology
 vendor AWT		0x1a3b	AWT
@@ -6241,6 +6242,13 @@ product SANDBURST	FE1000	0x0200	FE1000
 
 /* SEGA Enterprises products */
 product SEGA	BROADBAND	0x1234	Broadband Adapter
+
+/* ServerEngines (Emulex) products */
+product SERVERENGINES BE2	0x0211	BladeEngine2 10GbE
+product SERVERENGINES BE3	0x0221	BladeEngine3 10GbE
+product SERVERENGINES OCBE2	0x0700	BladeEngine2 10GbE
+product SERVERENGINES OCBE3	0x0710	BladeEngine3 10GbE
+product SERVERENGINES IRMC	0x0800	iRMC
 
 /* ServerWorks products */
 product SERVERWORKS CNB20_LE_AGP	0x0005	CNB20-LE PCI/AGP Bridge
