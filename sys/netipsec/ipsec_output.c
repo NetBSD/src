@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.66 2018/02/08 20:57:41 maxv Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.67 2018/02/21 16:55:53 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.66 2018/02/08 20:57:41 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.67 2018/02/21 16:55:53 maxv Exp $");
 
 /*
  * IPsec output processing.
@@ -696,7 +696,7 @@ compute_ipsec_pos(struct mbuf *m, int *i, int *off)
 		default:
 			return;
 		}
-	} while (*i < m->m_pkthdr.len);
+	} while (*i + sizeof(ip6e) < m->m_pkthdr.len);
 }
 
 static int
