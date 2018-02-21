@@ -1,4 +1,4 @@
-.\"	$NetBSD: getnetent.3,v 1.15 2018/02/21 09:47:37 wiz Exp $
+.\"	$NetBSD: getnetent.3,v 1.16 2018/02/21 14:11:09 uwe Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -83,7 +83,7 @@ The type of the network number returned; currently only
 .Dv AF_INET .
 .It Fa n_net
 The network number.
-Network numbers are returned in machine byte order.
+Network numbers are returned in host byte order.
 .El
 .Pp
 The
@@ -113,7 +113,7 @@ functions sequentially search from the beginning of the file until
 a matching net name or net address and type is found, or until
 .Dv EOF
 is encountered.
-Network numbers are supplied in host order.
+Network numbers are supplied in host byte order.
 .Sh FILES
 .Bl -tag -width /etc/networks -compact
 .It Pa /etc/networks
