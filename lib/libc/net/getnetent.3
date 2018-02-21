@@ -1,4 +1,4 @@
-.\"	$NetBSD: getnetent.3,v 1.14 2018/02/21 03:13:50 kamil Exp $
+.\"	$NetBSD: getnetent.3,v 1.15 2018/02/21 09:47:37 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -52,18 +52,16 @@
 .Ft void
 .Fn setnetent "int stayopen"
 .Ft void
-.Fn endnetent
+.Fn endnetent void
 .Sh DESCRIPTION
 The
 .Fn getnetent ,
 .Fn getnetbyname ,
 and
 .Fn getnetbyaddr
-functions
-each return a pointer to an object with the
-following structure
-containing the broken-out
-fields of a line in the network data base as described in
+functions each return a pointer to an object with the following
+structure containing the broken-out fields of a line in the network
+data base as described in
 .Xr networks 5 .
 .Bd -literal -offset indent
 struct	netent {
@@ -81,43 +79,38 @@ The official name of the network.
 .It Fa n_aliases
 A zero terminated list of alternative names for the network.
 .It Fa n_addrtype
-The type of the network number returned; currently only AF_INET.
+The type of the network number returned; currently only
+.Dv AF_INET .
 .It Fa n_net
-The network number.  Network numbers are returned in machine byte
-order.
+The network number.
+Network numbers are returned in machine byte order.
 .El
 .Pp
 The
 .Fn getnetent
-function
-reads the next line of the file, opening the file if necessary.
+function reads the next line of the file, opening the file if necessary.
 .Pp
 The
 .Fn setnetent
-function
-opens and rewinds the file.  If the
+function opens and rewinds the file.
+If the
 .Fa stayopen
-flag is non-zero,
-the net data base will not be closed after each call to
+flag is non-zero, the net data base will not be closed after each
+call to
 .Fn getnetbyname
 or
 .Fn getnetbyaddr .
 .Pp
 The
 .Fn endnetent
-function
-closes the file.
+function closes the file.
 .Pp
 The
 .Fn getnetbyname
-function
 and
 .Fn getnetbyaddr
-sequentially search from the beginning
-of the file until a matching
-net name or
-net address and type is found,
-or until
+functions sequentially search from the beginning of the file until
+a matching net name or net address and type is found, or until
 .Dv EOF
 is encountered.
 Network numbers are supplied in host order.
@@ -127,7 +120,8 @@ Network numbers are supplied in host order.
 .El
 .Sh DIAGNOSTICS
 Null pointer
-(0) returned on
+.Dv ( NULL )
+returned on
 .Dv EOF
 or error.
 .Sh SEE ALSO
@@ -144,11 +138,9 @@ and
 functions appeared in
 .Bx 4.2 .
 .Sh BUGS
-The data space used by
-these functions is static; if future use requires the data, it should be
-copied before any subsequent calls to these functions overwrite it.
-Only Internet network
-numbers are currently understood.
-Expecting network numbers to fit
-in no more than 32 bits is probably
+The data space used by these functions is static; if future use
+requires the data, it should be copied before any subsequent calls
+to these functions overwrite it.
+Only Internet network numbers are currently understood.
+Expecting network numbers to fit in no more than 32 bits is probably
 naive.
