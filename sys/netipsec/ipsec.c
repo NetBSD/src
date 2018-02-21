@@ -1,4 +1,4 @@
-/* $NetBSD: ipsec.c,v 1.131 2018/02/16 15:18:41 maxv Exp $ */
+/* $NetBSD: ipsec.c,v 1.132 2018/02/21 16:18:52 maxv Exp $ */
 /* $FreeBSD: src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $ */
 /* $KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $ */
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.131 2018/02/16 15:18:41 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.132 2018/02/21 16:18:52 maxv Exp $");
 
 /*
  * IPsec controller part.
@@ -189,8 +189,9 @@ static int ipsec_set_policy(struct secpolicy **, int, const void *, size_t,
     kauth_cred_t);
 static int ipsec_get_policy(struct secpolicy *, struct mbuf **);
 static void ipsec_destroy_policy(struct secpolicy *);
+static int ipsec_sp_reject(const struct secpolicy *, const struct mbuf *);
 static void vshiftl(unsigned char *, int, int);
-static size_t ipsec_hdrsiz(const struct secpolicy *, const struct mbuf *);
+static size_t ipsec_sp_hdrsiz(const struct secpolicy *, const struct mbuf *);
 
 /*
  * Try to validate and use cached policy on a PCB.
@@ -378,7 +379,7 @@ key_get_default_sp(int af, const char *where, int tag)
 	}
 
 	if (sp->policy != IPSEC_POLICY_DISCARD &&
-		sp->policy != IPSEC_POLICY_NONE) {
+	    sp->policy != IPSEC_POLICY_NONE) {
 		IPSECLOG(LOG_INFO, "fixed system default policy: %d->%d\n",
 		    sp->policy, IPSEC_POLICY_NONE);
 		sp->policy = IPSEC_POLICY_NONE;
@@ -531,7 +532,7 @@ ipsec_getpolicybysock(struct mbuf *m, u_int dir, struct inpcb_hdr *inph,
 }
 
 /*
- * For FORWADING packet or OUTBOUND without a socket. Searching SPD for packet,
+ * For FORWARDING packet or OUTBOUND without a socket. Searching SPD for packet,
  * and return a pointer to SP.
  * OUT:	positive: a pointer to the entry for security policy leaf matched.
  *	NULL:	no apropreate SP found, the following value is set to error.
@@ -681,7 +682,6 @@ ipsec4_output(struct mbuf *m, struct inpcb *inp, int flags,
     {
 	u_long _mtu = 0;
 
-	/* Note: callee frees mbuf */
 	error = ipsec4_process_packet(m, sp->req, &_mtu);
 
 	if (error == 0 && _mtu != 0) {
@@ -727,7 +727,7 @@ ipsec4_input(struct mbuf *m, int flags)
 	/*
 	 * Check security policy against packet attributes.
 	 */
-	error = ipsec_in_reject(sp, m);
+	error = ipsec_sp_reject(sp, m);
 	KEY_SP_UNREF(&sp);
 	splx(s);
 	if (error) {
@@ -989,7 +989,6 @@ ipsec4_get_ulp(struct mbuf *m, struct secpolicyindex *spidx, int needport)
 	u_int8_t nxt;
 	int off;
 
-	/* sanity check */
 	KASSERT(m != NULL);
 	KASSERTMSG(m->m_pkthdr.len >= sizeof(struct ip), "packet too short");
 
@@ -1068,7 +1067,6 @@ done_proto:
 	spidx->dst.sin.sin_port = IPSEC_PORT_ANY;
 }
 
-/* assumes that m is sane */
 static int
 ipsec4_setspidx_ipaddr(struct mbuf *m, struct secpolicyindex *spidx)
 {
@@ -1161,7 +1159,6 @@ ipsec6_get_ulp(struct mbuf *m, struct secpolicyindex *spidx, int needport)
 	}
 }
 
-/* assumes that m is sane */
 static int
 ipsec6_setspidx_ipaddr(struct mbuf *m, struct secpolicyindex *spidx)
 {
@@ -1693,7 +1690,7 @@ ipsec_get_reqlevel(const struct ipsecrequest *isr)
  * then kick it.
  */
 int
-ipsec_in_reject(const struct secpolicy *sp, const struct mbuf *m)
+ipsec_sp_reject(const struct secpolicy *sp, const struct mbuf *m)
 {
 	struct ipsecrequest *isr;
 
@@ -1744,7 +1741,8 @@ ipsec_in_reject(const struct secpolicy *sp, const struct mbuf *m)
 			break;
 		}
 	}
-	return 0;		/* valid */
+
+	return 0;
 }
 
 /*
@@ -1769,7 +1767,7 @@ ipsec4_in_reject(struct mbuf *m, struct inpcb *inp)
 		    (struct inpcb_hdr *)inp, &error);
 
 	if (sp != NULL) {
-		result = ipsec_in_reject(sp, m);
+		result = ipsec_sp_reject(sp, m);
 		if (result)
 			IPSEC_STATINC(IPSEC_STAT_IN_POLVIO);
 		KEY_SP_UNREF(&sp);
@@ -1802,7 +1800,7 @@ ipsec6_in_reject(struct mbuf *m, struct in6pcb *in6p)
 		    (struct inpcb_hdr *)in6p, &error);
 
 	if (sp != NULL) {
-		result = ipsec_in_reject(sp, m);
+		result = ipsec_sp_reject(sp, m);
 		if (result)
 			IPSEC_STATINC(IPSEC_STAT_IN_POLVIO);
 		KEY_SP_UNREF(&sp);
@@ -1814,12 +1812,11 @@ ipsec6_in_reject(struct mbuf *m, struct in6pcb *in6p)
 #endif
 
 /*
- * compute the byte size to be occupied by IPsec header.
- * in case it is tunneled, it includes the size of outer IP header.
- * NOTE: SP passed is free in this function.
+ * Compute the byte size to be occupied by the IPsec header. If it is
+ * tunneled, it includes the size of outer IP header.
  */
 static size_t
-ipsec_hdrsiz(const struct secpolicy *sp, const struct mbuf *m)
+ipsec_sp_hdrsiz(const struct secpolicy *sp, const struct mbuf *m)
 {
 	struct ipsecrequest *isr;
 	size_t siz;
@@ -1907,7 +1904,7 @@ ipsec4_hdrsiz(struct mbuf *m, u_int dir, struct inpcb *inp)
 		    (struct inpcb_hdr *)inp, &error);
 
 	if (sp != NULL) {
-		size = ipsec_hdrsiz(sp, m);
+		size = ipsec_sp_hdrsiz(sp, m);
 		KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_DATA, "size:%zu.\n", size);
 		KEY_SP_UNREF(&sp);
 	} else {
@@ -1936,7 +1933,7 @@ ipsec6_hdrsiz(struct mbuf *m, u_int dir, struct in6pcb *in6p)
 		    (struct inpcb_hdr *)in6p, &error);
 
 	if (sp != NULL) {
-		size = ipsec_hdrsiz(sp, m);
+		size = ipsec_sp_hdrsiz(sp, m);
 		KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_DATA, "size:%zu.\n", size);
 		KEY_SP_UNREF(&sp);
 	} else {
@@ -2109,7 +2106,7 @@ ok:
 }
 
 /*
- * shift variable length bunffer to left.
+ * shift variable length buffer to left.
  * IN:	bitmap: pointer to the buffer
  *	nbit:	the number of to shift.
  *	wsize:	buffer size (bytes).
@@ -2255,7 +2252,7 @@ ipsec6_input(struct mbuf *m)
 		 * Check security policy against packet
 		 * attributes.
 		 */
-		error = ipsec_in_reject(sp, m);
+		error = ipsec_sp_reject(sp, m);
 		KEY_SP_UNREF(&sp);
 	} else {
 		/* XXX error stat??? */
