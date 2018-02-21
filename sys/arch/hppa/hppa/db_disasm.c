@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.16 2012/01/18 09:35:48 skrll Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.17 2018/02/21 10:42:16 skrll Exp $	*/
 
 /*	$OpenBSD: db_disasm.c,v 1.9 2000/04/18 20:02:45 mickey Exp $	*/
 
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.16 2012/01/18 09:35:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.17 2018/02/21 10:42:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -865,23 +865,23 @@ struct majoropcode {
 #define	Bi2(i)		BitfR(i,6,13,_b613)
 
 /* fragmented field collating macros */
-#define	Ima5(i)		(Ima5S(i) ? Ima5M(i) | (-1<<4) : Ima5M(i))
+#define	Ima5(i)		(Ima5S(i) ? Ima5M(i) | (int)(~__BITS(3,0)) : Ima5M(i))
 
-#define	Imc5(i)		(Imc5S(i) ? Imc5M(i) | (-1<<4) : Imc5M(i))
+#define	Imc5(i)		(Imc5S(i) ? Imc5M(i) | (int)(~__BITS(3,0)) : Imc5M(i))
 
-#define	Disp(i)		(DispS(i) ?   DispM(i) | (-1<<13) : DispM(i))
+#define	Disp(i)		(DispS(i) ?   DispM(i) | (int)(~__BITS(12,0)) : DispM(i))
 
 #define	Im21(i)		(Im21S(i) << 31 | Im21H(i) << 20 | Im21M1(i) << 18 | \
 				Im21M2(i) << 13 | Im21L(i) << 11)
 
-#define	Im11(i)		(Im11S(i) ?   Im11M(i) | (-1<<10) : Im11M(i))
+#define	Im11(i)		(Im11S(i) ?   Im11M(i) | (int)(~__BITS(9,0)) : Im11M(i))
 
 #define	Bdisp(i)	((OffS(i) ? (Off5(i)<<11 | Off11L(i)<<10|Off11H(i)) \
-/* branch displacement (bytes) */	| (-1 << 16)			\
+/* branch displacement (bytes) */	| (int)(~__BITS(15,0))			\
 				  : (Off5(i)<<11|Off11L(i)<<10|Off11H(i))) << 2)
 
 #define	Cbdisp(i)	((OffS(i) ?   (Off11L(i) << 10 | Off11H(i)) \
- /* compare/branch disp (bytes) */ | (-1 << 11)			\
+ /* compare/branch disp (bytes) */ | (int)(~__BITS(10,0))		\
 				  :    Off11L(i) << 10 | Off11H(i)) << 2)
 
 #define	Sr(i)		(SrH(i)<<2 | SrL(i))
