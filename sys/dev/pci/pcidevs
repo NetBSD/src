@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1311 2018/02/21 08:39:08 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1312 2018/02/22 03:03:28 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -3807,11 +3807,12 @@ product INTEL 82801HO_LPC 	0x2814	82801HO LPC Interface Bridge
 product INTEL 82801HBM_LPC      0x2815  82801HBM LPC Interface Bridge
 product INTEL 82801H_SATA_1	0x2820	82801H SATA Controller
 product INTEL 82801H_SATA_AHCI6	0x2821	82801H AHCI SATA Controller w/ 6 ports
-product INTEL 82801H_SATA_RAID	0x2822	82801H/C61x/X99/Z170/[ZQH]270 RAID SATA Controller
+product INTEL 82801H_SATA_RAID	0x2822	82801H/C6[12]x/X99/Z170/[ZQH]270 RAID SATA Controller
+product INTEL C620_SSATA_RAID_2	0x2827	C62x9 sSATA Controller (RAID)
 product INTEL 82801H_SATA_AHCI4	0x2824	82801H AHCI SATA Controller w/ 4 ports
 product INTEL 82801H_SATA_2	0x2825	82801H SATA Controller
-product INTEL C610_SATA_RAID_3	0x2826	C61x/X99/[ZQH]270 SATA Controller (RAID)
-product INTEL C610_SSATA_RAID_2	0x2827	C61x/X99 sSATA Controller (RAID)
+product INTEL C610_SATA_RAID_3	0x2826	C6[12]x/X99/[ZQH]270 SATA Controller (RAID)
+product INTEL C610_SSATA_RAID_2	0x2827	C6[12]x/X99 sSATA Controller (RAID)
 product INTEL 82801HEM_SATA	0x2828	82801HEM SATA Controller
 product INTEL 82801HBM_SATA_AHCI 0x2829  82801HBM AHCI SATA Controller
 product INTEL 82801HBM_SATA_RAID 0x282a	82801HBM SATA RAID Controller
@@ -4152,8 +4153,17 @@ product INTEL E7520_PCIE_C1	0x359a	E7520 PCI Express Port C1
 product INTEL E7520_CFG		0x359b	E7520 Extended Configuration
 product INTEL X722_A0		0x374c	X722 A0 10GbE
 product INTEL X722_A0_VF	0x374d	X722 A0 10GbE VF
+product INTEL C620_THERM_SENS	0x37b1	Thermal Sensor
+product INTEL C620_NPX16	0x37c0	PCIe x16 Uplink (NPX16)
+product INTEL C620_NPX8		0x37c1	PCIe x8 Uplink (NPX8)
+product INTEL C620_VSWP_0	0x37c2	Virtual Switch Port (for QAT 0)
+product INTEL C620_VSWP_1	0x37c3	Virtual Switch Port (for QAT 1)
+product INTEL C620_VSWP_2	0x37c4	Virtual Switch Port (for QAT 2)
+product INTEL C620_VSWP_3	0x37c5	Virtual Switch Port (for 10GbE LAN)
+product INTEL C620_VSWP_4	0x37c6	Virtual Switch Port (for Termal Sensor)
 product INTEL C620_QAT		0x37c8	C620 QAT
 product INTEL C620_QAT_VF	0x37c9	C620 QAT Virtual Function
+product INTEL X722		0x37cc	X722 10GbE
 product INTEL X722_VF		0x37cd	X722 10GbE VF
 product INTEL X722_KX		0x37ce	X722 10GbE Backplane
 product INTEL X722_QSFP		0x37cf	X722 10GbE QSFP+
@@ -4852,6 +4862,106 @@ product INTEL 100SERIES_PCIE_18	0xa168	100 Series PCIE
 product INTEL 100SERIES_PCIE_19	0xa169	100 Series PCIE
 product INTEL 100SERIES_PCIE_20	0xa16a	100 Series PCIE
 product INTEL 100SERIES_HDA	0xa170	100 Series HD Audio
+product INTEL C620_AHCI		0xa182	AHCI
+product INTEL C620_3RD_RAID	0xa186	3rd Party RAID
+product INTEL C620_PCIE_0	0xa190	PCIe Root Port
+product INTEL C620_PCIE_1	0xa191	PCIe Root Port
+product INTEL C620_PCIE_2	0xa192	PCIe Root Port
+product INTEL C620_PCIE_3	0xa193	PCIe Root Port
+product INTEL C620_PCIE_4	0xa194	PCIe Root Port
+product INTEL C620_PCIE_5	0xa195	PCIe Root Port
+product INTEL C620_PCIE_6	0xa196	PCIe Root Port
+product INTEL C620_PCIE_7	0xa197	PCIe Root Port
+product INTEL C620_PCIE_8	0xa198	PCIe Root Port
+product INTEL C620_PCIE_9	0xa199	PCIe Root Port
+product INTEL C620_PCIE_10	0xa19a	PCIe Root Port
+product INTEL C620_PCIE_11	0xa19b	PCIe Root Port
+product INTEL C620_PCIE_12	0xa19c	PCIe Root Port
+product INTEL C620_PCIE_13	0xa19d	PCIe Root Port
+product INTEL C620_PCIE_14	0xa19e	PCIe Root Port
+product INTEL C620_PCIE_15	0xa19f	PCIe Root Port
+product INTEL C620_P2SB		0xa1a0	P2SB
+product INTEL C620_PMC		0xa1a1	PMC
+product INTEL C620_SMB		0xa1a3	SMBus
+product INTEL C620_SPI		0xa1a4	SPI
+product INTEL C620_TRACE	0xa1a6	Trace Hub
+product INTEL C620_XHCI		0xa1af	xHCI
+product INTEL C620_THERM	0xa1b1	Thermal Subsystem
+product INTEL C620_ME_HCI_1	0xa1ba	ME HCI
+product INTEL C620_ME_HCI_2	0xa1bb	ME HCI
+product INTEL C620_ME_IDER	0xa1bc	ME IDER
+product INTEL C620_ME_KT	0xa1bd	ME KT
+product INTEL C620_ME_HCI_3	0xa1be	ME HECI
+product INTEL C620_LPC_1	0xa1c1	LPC or eSPI
+product INTEL C620_LPC_2	0xa1c2	LPC or eSPI
+product INTEL C620_LPC_3	0xa1c3	LPC or eSPI
+product INTEL C620_LPC_4	0xa1c4	LPC or eSPI
+product INTEL C620_LPC_5	0xa1c5	LPC or eSPI
+product INTEL C620_LPC_6	0xa1c6	LPC or eSPI
+product INTEL C620_LPC_7	0xa1c7	LPC or eSPI
+product INTEL C620_SSATA_AHCI	0xa1d2	sSATA AHCI
+product INTEL C620_SSATA_RAID	0xa1d6	sSATA 3rd Party RAID
+product INTEL C620_PCIE_16	0xa1e7	PCIe Root Port
+product INTEL C620_PCIE_17	0xa1e8	PCIe Root Port
+product INTEL C620_PCIE_18	0xa1e9	PCIe Root Port
+product INTEL C620_PCIE_19	0xa1ea	PCIe Root Port
+product INTEL C620_MROM_0	0xa1ec	MROM
+product INTEL C620_MROM_1	0xa1ed	MROM
+product INTEL C620_HDA		0xa1f0	HD Audio
+product INTEL C620_IE_HECI_1	0xa1f8	IE HECI
+product INTEL C620_IE_HECI_2	0xa1f9	IE HECI
+product INTEL C620_IE_IDER	0xa1fa	IE IDER
+product INTEL C620_IE_KT	0xa1fb	IE KT
+product INTEL C620_IE_HECI_3	0xa1fc	IE HECI
+product INTEL C620_AHCI_S	0xa202	AHCI
+product INTEL C620_3RD_RAID_S	0xa206	3rd Party RAID
+product INTEL C620_PCIE_S_0	0xa210	PCIe Root Port
+product INTEL C620_PCIE_S_1	0xa211	PCIe Root Port
+product INTEL C620_PCIE_S_2	0xa212	PCIe Root Port
+product INTEL C620_PCIE_S_3	0xa213	PCIe Root Port
+product INTEL C620_PCIE_S_4	0xa214	PCIe Root Port
+product INTEL C620_PCIE_S_5	0xa215	PCIe Root Port
+product INTEL C620_PCIE_S_6	0xa216	PCIe Root Port
+product INTEL C620_PCIE_S_7	0xa217	PCIe Root Port
+product INTEL C620_PCIE_S_8	0xa218	PCIe Root Port
+product INTEL C620_PCIE_S_9	0xa219	PCIe Root Port
+product INTEL C620_PCIE_S_10	0xa21a	PCIe Root Port
+product INTEL C620_PCIE_S_11	0xa21b	PCIe Root Port
+product INTEL C620_PCIE_S_12	0xa21c	PCIe Root Port
+product INTEL C620_PCIE_S_13	0xa21d	PCIe Root Port
+product INTEL C620_PCIE_S_14	0xa21e	PCIe Root Port
+product INTEL C620_PCIE_S_15	0xa21f	PCIe Root Port
+product INTEL C620_P2SB_S	0xa220	P2SB
+product INTEL C620_PMC_S	0xa221	PMC
+product INTEL C620_SMB_S	0xa223	SMBus
+product INTEL C620_SPI_S	0xa224	SPI
+product INTEL C620_TRACE_S	0xa226	Trace Hub
+product INTEL C620_XHCI_S	0xa22f	xHCI
+product INTEL C620_THERM_S	0xa231	Thermal Subsystem
+product INTEL C620_ME_HCI_S_1	0xa23a	ME HCI
+product INTEL C620_ME_HCI_S_2	0xa23b	ME HCI
+product INTEL C620_ME_IDER_S	0xa23c	ME IDER
+product INTEL C620_ME_KT_S	0xa23d	ME KT
+product INTEL C620_ME_HCI_S_3	0xa23e	ME HECI
+product INTEL C620_LPC_S_1	0xa242	LPC or eSPI
+product INTEL C620_LPC_S_2	0xa243	LPC or eSPI
+product INTEL C620_LPC_S_3	0xa244	LPC or eSPI
+product INTEL C620_LPC_S_4	0xa245	LPC or eSPI
+product INTEL C620_LPC_S_5	0xa246	LPC or eSPI
+product INTEL C620_SSATA_AHCI_S	0xa252	sSATA AHCI
+product INTEL C620_SSATA_RAID_S	0xa256	sSATA 3rd Party RAID
+product INTEL C620_PCIE_S_16	0xa267	PCIe Root Port
+product INTEL C620_PCIE_S_17	0xa268	PCIe Root Port
+product INTEL C620_PCIE_S_18	0xa269	PCIe Root Port
+product INTEL C620_PCIE_S_19	0xa26a	PCIe Root Port
+product INTEL C620_MROM_S_0	0xa26c	MROM
+product INTEL C620_MROM_S_1	0xa26d	MROM
+product INTEL C620_HDA_S	0xa270	HD Audio
+product INTEL C620_IE_HECI_S_1	0xa278	IE HECI
+product INTEL C620_IE_HECI_S_2	0xa279	IE HECI
+product INTEL C620_IE_IDER_S	0xa27a	IE IDER
+product INTEL C620_IE_KT_S	0xa27b	IE KT
+product INTEL C620_IE_HECI_S_3	0xa27c	IE HECI
 product INTEL 2HS_AHCI		0xa282	200 Series SATA (AHCI)
 product INTEL 2HS_RAID		0xa286	200 Series SATA (RAID)
 product INTEL 2HS_RAID_RST_OPTANE 0xa28e 200 Series SATA (Acceleration with Optane)
