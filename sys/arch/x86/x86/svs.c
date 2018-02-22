@@ -1,4 +1,4 @@
-/*	$NetBSD: svs.c,v 1.7 2018/02/22 11:57:39 maxv Exp $	*/
+/*	$NetBSD: svs.c,v 1.8 2018/02/22 13:27:18 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.7 2018/02/22 11:57:39 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.8 2018/02/22 13:27:18 maxv Exp $");
 
 #include "opt_svs.h"
 
@@ -437,77 +437,6 @@ svs_pdir_switch(struct pmap *pmap)
 }
 
 static void
-svs_pgg_scanlvl(bool enable, int lvl, vaddr_t *levels)
-{
-	pd_entry_t *pde = (pd_entry_t *)(levels[lvl-1]);
-	pt_entry_t set, rem;
-	size_t i, start;
-	paddr_t pa;
-	int nlvl;
-
-	set = enable ? PG_G : 0;
-	rem = enable ? 0 : PG_G;
-
-	start = (lvl == 4) ? 256 : 0;
-
-	for (i = start; i < 512; i++) {
-		if (!pmap_valid_entry(pde[i])) {
-			continue;
-		}
-		if (lvl == 1) {
-			pde[i] = (pde[i] & ~rem) | set;
-		} else if (pde[i] & PG_PS) {
-			pde[i] = (pde[i] & ~rem) | set;
-		} else {
-			pa = (paddr_t)(pde[i] & PG_FRAME);
-			nlvl = lvl - 1;
-
-			/* remove the previous mapping */
-			pmap_kremove_local(levels[nlvl-1], PAGE_SIZE);
-
-			/* kenter the lower level */
-			pmap_kenter_pa(levels[nlvl-1], pa,
-			    VM_PROT_READ|VM_PROT_WRITE, 0);
-			pmap_update(pmap_kernel());
-
-			/* go to the lower level */
-			svs_pgg_scanlvl(enable, nlvl, levels);
-		}
-	}
-}
-
-static void
-svs_pgg_update(bool enable)
-{
-	const paddr_t pa = pmap_pdirpa(pmap_kernel(), 0);
-	vaddr_t levels[4];
-	size_t i;
-
-	if (!(cpu_feature[0] & CPUID_PGE)) {
-		return;
-	}
-
-	pmap_pg_g = enable ? PG_G : 0;
-
-	for (i = 0; i < 4; i++) {
-		levels[i] = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
-		    UVM_KMF_VAONLY);
-	}
-
-	pmap_kenter_pa(levels[3], pa, VM_PROT_READ|VM_PROT_WRITE, 0);
-	pmap_update(pmap_kernel());
-
-	svs_pgg_scanlvl(enable, 4, levels);
-
-	for (i = 0; i < 4; i++) {
-		pmap_kremove_local(levels[i], PAGE_SIZE);
-		uvm_km_free(kernel_map, levels[i], PAGE_SIZE, UVM_KMF_VAONLY);
-	}
-
-	tlbflushg();
-}
-
-static void
 svs_enable(void)
 {
 	extern uint8_t svs_enter, svs_enter_end;
@@ -604,6 +533,10 @@ svs_disable_cpu(void *arg1, void *arg2)
 	/* put back the non-SVS syscall entry point */
 	wrmsr(MSR_LSTAR, (uint64_t)Xsyscall);
 
+	/* enable global pages */
+	if (cpu_feature[0] & CPUID_PGE)
+		lcr4(rcr4() | CR4_PGE);
+
 	atomic_dec_ulong(&svs_cpu_barrier2);
 	while (atomic_cas_ulong(&svs_cpu_barrier2, 0, 0) != 0) {
 		x86_pause();
@@ -641,16 +574,10 @@ svs_disable(void)
 	svs_cpu_barrier1 = ncpu;
 	svs_cpu_barrier2 = ncpu;
 
-	printf("[+] Disabling SVS\n");
+	printf("[+] Disabling SVS...");
 	xc = xc_broadcast(0, svs_disable_cpu, NULL, NULL);
 	xc_wait(xc);
-
-	/*
-	 * XXX printf("[+] Installing PG_G\n");
-	 * XXX svs_pgg_update(true);
-	 */
-
-	printf("[+] Done\n");
+	printf(" done!\n");
 
 	mutex_exit(&cpu_lock);
 
@@ -687,19 +614,10 @@ sysctl_machdep_svs_enabled(SYSCTLFN_ARGS)
 }
 
 void
-svs_init(bool early)
+svs_init(void)
 {
-	/*
-	 * When early, declare that we want to use SVS, and hotpatch the
-	 * entry points. When late, remove PG_G from the page tables.
-	 */
-	if (early) {
-		if (cpu_vendor != CPUVENDOR_INTEL) {
-			return;
-		}
-		svs_enable();
-	} else if (svs_enabled) {
-		svs_pgg_update(false);
+	if (cpu_vendor != CPUVENDOR_INTEL) {
+		return;
 	}
+	svs_enable();
 }
-

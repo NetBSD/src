@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.148 2018/02/22 08:56:52 maxv Exp $	*/
+/*	$NetBSD: cpu.c,v 1.149 2018/02/22 13:27:18 maxv Exp $	*/
 
 /*
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.148 2018/02/22 08:56:52 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.149 2018/02/22 13:27:18 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -589,6 +589,9 @@ cpu_init(struct cpu_info *ci)
 	 * hardware supports it.
 	 */
 	if (cpu_feature[0] & CPUID_PGE)
+#ifdef SVS
+		if (!svs_enabled)
+#endif
 		cr4 |= CR4_PGE;	/* enable global TLB caching */
 
 	/*
