@@ -1,4 +1,4 @@
-# $NetBSD: t_libcrypto.sh,v 1.4 2016/10/13 09:25:37 martin Exp $
+# $NetBSD: t_libcrypto.sh,v 1.5 2018/02/22 14:24:03 martin Exp $
 #
 # Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -102,6 +102,6 @@ atf_init_test_cases()
 	atf_add_test_case rand
 	atf_add_test_case bn
 	atf_add_test_case conf
-	atf_add_test_case lhash
+	openssl version | fgrep -q "OpenSSL 1.0" && atf_add_test_case lhash
 	atf_add_test_case threads
 }
