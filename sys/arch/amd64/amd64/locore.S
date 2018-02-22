@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.151 2018/02/18 14:07:29 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.152 2018/02/22 08:56:51 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1117,17 +1117,27 @@ ENTRY(cpu_switchto)
 
 	/* Switch ring0 stack */
 #ifdef SVS
+	movb	_C_LABEL(svs_enabled),%al
+	testb	%al,%al
+	jz	.Lno_svs_switch
+
 	movq	CPUVAR(RSP0),%rax
 	movq	CPUVAR(TSS),%rdi
 	movq	%rax,TSS_RSP0(%rdi)
-#elif !defined(XEN)
+	jmp	.Lring0_switched
+
+.Lno_svs_switch:
+#endif
+
+#if !defined(XEN)
 	movq	PCB_RSP0(%r14),%rax
 	movq	CPUVAR(TSS),%rdi
 	movq	%rax,TSS_RSP0(%rdi)
 #else
 	movq	%r14,%rdi
-	callq	_C_LABEL(x86_64_switch_context);
+	callq	_C_LABEL(x86_64_switch_context)
 #endif
+.Lring0_switched:
 
 	/* Don't bother with the rest if switching to a system process. */
 	testl	$LW_SYSTEM,L_FLAG(%r12)
@@ -1347,9 +1357,10 @@ END(lwp_trampoline)
 /*
  * Entry points of the 'syscall' instruction, 64bit and 32bit mode.
  */
-	TEXT_USER_BEGIN
 
-IDTVEC(syscall)
+
+.macro	SYSCALL_ENTRY	name,is_svs
+IDTVEC(\name)
 #ifndef XEN
 	/*
 	 * The user %rip is in %rcx and the user %rflags in %r11. The kernel %cs
@@ -1365,31 +1376,39 @@ IDTVEC(syscall)
 	 */
 	swapgs
 
-#ifdef SVS
-	movq	%rax,SVS_UTLS+UTLS_SCRATCH
-	movq	SVS_UTLS+UTLS_RSP0,%rax
-#define SP(x)	(x)-(TF_SS+8)(%rax)
-#else
-	movq	%r15,CPUVAR(SCRATCH)
-	movq	CPUVAR(CURLWP),%r15
-	movq	L_PCB(%r15),%r15
-	movq	PCB_RSP0(%r15),%r15	/* LWP's kernel stack pointer */
-#define SP(x)	(x)-(TF_SS+8)(%r15)
-#endif
+#define SP(x,reg)	(x)-(TF_SS+8)(reg)
 
-	/* Make stack look like an 'int nn' frame */
-	movq	$(LSEL(LUDATA_SEL, SEL_UPL)),SP(TF_SS)	/* user %ss */
-	movq	%rsp,SP(TF_RSP)				/* user %rsp */
-	movq	%r11,SP(TF_RFLAGS)			/* user %rflags */
-	movq	$(LSEL(LUCODE_SEL, SEL_UPL)),SP(TF_CS)	/* user %cs */
-	movq	%rcx,SP(TF_RIP)				/* user %rip */
+	.if	\is_svs
+		movq	%rax,SVS_UTLS+UTLS_SCRATCH
+		movq	SVS_UTLS+UTLS_RSP0,%rax
 
-	leaq	SP(0),%rsp		/* %rsp now valid after frame */
-#ifdef SVS
-	movq	SVS_UTLS+UTLS_SCRATCH,%rax
-#else
-	movq	CPUVAR(SCRATCH),%r15
-#endif
+		/* Make stack look like an 'int nn' frame */
+		movq	$(LSEL(LUDATA_SEL, SEL_UPL)),SP(TF_SS,%rax)	/* user %ss */
+		movq	%rsp,SP(TF_RSP,%rax)				/* user %rsp */
+		movq	%r11,SP(TF_RFLAGS,%rax)				/* user %rflags */
+		movq	$(LSEL(LUCODE_SEL, SEL_UPL)),SP(TF_CS,%rax)	/* user %cs */
+		movq	%rcx,SP(TF_RIP,%rax)				/* user %rip */
+		leaq	SP(0,%rax),%rsp			/* %rsp now valid after frame */
+
+		movq	SVS_UTLS+UTLS_SCRATCH,%rax
+	.else
+		movq	%r15,CPUVAR(SCRATCH)
+		movq	CPUVAR(CURLWP),%r15
+		movq	L_PCB(%r15),%r15
+		movq	PCB_RSP0(%r15),%r15	/* LWP's kernel stack pointer */
+
+		/* Make stack look like an 'int nn' frame */
+		movq	$(LSEL(LUDATA_SEL, SEL_UPL)),SP(TF_SS,%r15)	/* user %ss */
+		movq	%rsp,SP(TF_RSP,%r15)				/* user %rsp */
+		movq	%r11,SP(TF_RFLAGS,%r15)				/* user %rflags */
+		movq	$(LSEL(LUCODE_SEL, SEL_UPL)),SP(TF_CS,%r15)	/* user %cs */
+		movq	%rcx,SP(TF_RIP,%r15)				/* user %rip */
+		leaq	SP(0,%r15),%rsp			/* %rsp now valid after frame */
+
+		movq	CPUVAR(SCRATCH),%r15
+	.endif
+
+#undef SP
 
 	movq	$2,TF_ERR(%rsp)		/* syscall instruction size */
 	movq	$T_ASTFLT,TF_TRAPNO(%rsp)
@@ -1406,9 +1425,18 @@ IDTVEC(syscall)
 	movw	$GSEL(GUDATA_SEL, SEL_UPL),TF_ES(%rsp)
 	movw	$0,TF_FS(%rsp)
 	movw	$0,TF_GS(%rsp)
-	SVS_ENTER
+	.if	\is_svs
+		SVS_ENTER
+	.endif
 	jmp	handle_syscall
-IDTVEC_END(syscall)
+IDTVEC_END(\name)
+.endm
+
+SYSCALL_ENTRY	syscall,is_svs=0
+
+	TEXT_USER_BEGIN
+
+SYSCALL_ENTRY	syscall_svs,is_svs=1
 
 IDTVEC(syscall32)
 	sysret		/* go away please */
@@ -1559,3 +1587,47 @@ do_mov_gs:
 do_iret:
 	iretq
 END(intrfastexit)
+
+	TEXT_USER_END
+
+#ifdef SVS
+	.globl	svs_enter
+	.globl	svs_enter_end
+	.globl	svs_enter_altstack
+	.globl	svs_enter_altstack_end
+	.globl	svs_leave
+	.globl	svs_leave_end
+	.globl	svs_leave_altstack
+	.globl	svs_leave_altstack_end
+
+LABEL(svs_enter)
+	movq	SVS_UTLS+UTLS_KPDIRPA,%rax
+	movq	%rax,%cr3
+	movq	CPUVAR(KRSP0),%rsp
+LABEL(svs_enter_end)
+
+LABEL(svs_enter_altstack)
+	testb	$SEL_UPL,TF_CS(%rsp)
+	jz	1234f
+	movq	SVS_UTLS+UTLS_KPDIRPA,%rax
+	movq	%rax,%cr3
+1234:
+LABEL(svs_enter_altstack_end)
+
+LABEL(svs_leave)
+	testb	$SEL_UPL,TF_CS(%rsp)
+	jz	1234f
+	movq	CPUVAR(URSP0),%rsp
+	movq	CPUVAR(UPDIRPA),%rax
+	movq	%rax,%cr3
+1234:
+LABEL(svs_leave_end)
+
+LABEL(svs_leave_altstack)
+	testb	$SEL_UPL,TF_CS(%rsp)
+	jz	1234f
+	movq	CPUVAR(UPDIRPA),%rax
+	movq	%rax,%cr3
+1234:
+LABEL(svs_leave_altstack_end)
+#endif
