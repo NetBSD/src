@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.298 2018/02/11 09:39:36 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.299 2018/02/22 09:41:06 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.298 2018/02/11 09:39:36 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.299 2018/02/22 09:41:06 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1598,6 +1598,7 @@ init_x86_64(paddr_t first_avail)
 	uvm_lwp_setuarea(&lwp0, lwp0uarea);
 
 	cpu_probe(&cpu_info_primary);
+	svs_init(true);
 	cpu_init_msrs(&cpu_info_primary, true);
 
 	use_pae = 1; /* PAE always enabled in long mode */

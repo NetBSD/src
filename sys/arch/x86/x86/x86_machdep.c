@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.104 2018/02/22 08:56:52 maxv Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.105 2018/02/22 09:41:06 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.104 2018/02/22 08:56:52 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.105 2018/02/22 09:41:06 maxv Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -1092,8 +1092,7 @@ void
 x86_startup(void)
 {
 #if SVS
-	void svs_init(void);
-	svs_init();
+	svs_init(false);
 #endif
 #if !defined(XEN)
 	nmi_init();
