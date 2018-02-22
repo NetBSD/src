@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.300 2018/02/22 10:26:32 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.301 2018/02/22 13:27:17 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.300 2018/02/22 10:26:32 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.301 2018/02/22 13:27:17 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1599,7 +1599,7 @@ init_x86_64(paddr_t first_avail)
 
 	cpu_probe(&cpu_info_primary);
 #ifdef SVS
-	svs_init(true);
+	svs_init();
 #endif
 	cpu_init_msrs(&cpu_info_primary, true);
 
