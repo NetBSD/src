@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.153 2018/02/22 10:42:10 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.154 2018/02/22 14:08:48 martin Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1378,6 +1378,7 @@ IDTVEC(\name)
 
 #define SP(x,reg)	(x)-(TF_SS+8)(reg)
 
+#ifdef SVS
 	.if	\is_svs
 		movq	%rax,SVS_UTLS+UTLS_SCRATCH
 		movq	SVS_UTLS+UTLS_RSP0,%rax
@@ -1392,6 +1393,7 @@ IDTVEC(\name)
 
 		movq	SVS_UTLS+UTLS_SCRATCH,%rax
 	.else
+#endif
 		movq	%r15,CPUVAR(SCRATCH)
 		movq	CPUVAR(CURLWP),%r15
 		movq	L_PCB(%r15),%r15
@@ -1406,7 +1408,9 @@ IDTVEC(\name)
 		leaq	SP(0,%r15),%rsp			/* %rsp now valid after frame */
 
 		movq	CPUVAR(SCRATCH),%r15
+#ifdef SVS
 	.endif
+#endif
 
 #undef SP
 
