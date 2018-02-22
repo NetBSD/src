@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.103 2018/02/17 17:44:09 maxv Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.104 2018/02/22 08:56:52 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.103 2018/02/17 17:44:09 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.104 2018/02/22 08:56:52 maxv Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -1257,6 +1257,14 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTLTYPE_INT, "tsc_user_enable",
 		       SYSCTL_DESCR("RDTSC instruction enabled in usermode"),
 		       sysctl_machdep_tsc_enable, 0, &tsc_user_enabled, 0,
+		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+#endif
+#ifdef SVS
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_BOOL, "svs_enabled",
+		       SYSCTL_DESCR("Whether the kernel uses SVS"),
+		       NULL, 0, &svs_enabled, 0,
 		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 #endif
 
