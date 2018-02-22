@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.23 2017/10/15 11:31:00 maxv Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.24 2018/02/22 09:41:06 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -50,6 +50,9 @@ void	x86_sfence(void);
 void	x86_mfence(void);
 void	x86_flush(void);
 #ifndef XEN
+void	x86_hotpatch(uint32_t, const uint8_t *, size_t);
+void	x86_patch_window_open(u_long *, u_long *);
+void	x86_patch_window_close(u_long, u_long);
 void	x86_patch(bool);
 #endif
 void	invlpg(vaddr_t);
