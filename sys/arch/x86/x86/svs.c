@@ -1,4 +1,4 @@
-/*	$NetBSD: svs.c,v 1.3 2018/02/18 14:07:29 maxv Exp $	*/
+/*	$NetBSD: svs.c,v 1.4 2018/02/22 08:56:52 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.3 2018/02/18 14:07:29 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.4 2018/02/22 08:56:52 maxv Exp $");
 
 #include "opt_svs.h"
 
@@ -157,7 +157,7 @@ svs_page_add(struct cpu_info *ci, vaddr_t va)
 	if (srcpde[idx] & PG_PS) {
 		pa = srcpde[idx] & PG_2MFRAME;
 		pa += (paddr_t)(va % NBPD_L2);
-		pde = (srcpde[idx] & ~(PG_PS|PG_2MFRAME)) | pa;
+		pde = (srcpde[idx] & ~(PG_G|PG_PS|PG_2MFRAME)) | pa;
 
 		if (pmap_valid_entry(dstpde[pidx])) {
 			panic("%s: L1 page already mapped", __func__);
@@ -177,7 +177,7 @@ svs_page_add(struct cpu_info *ci, vaddr_t va)
 	if (pmap_valid_entry(dstpde[pidx])) {
 		panic("%s: L1 page already mapped", __func__);
 	}
-	dstpde[pidx] = srcpde[idx];
+	dstpde[pidx] = srcpde[idx] & ~(PG_G);
 }
 
 static void
@@ -319,6 +319,7 @@ svs_pmap_sync(struct pmap *pmap, int index)
 	struct cpu_info *ci;
 	cpuid_t cid;
 
+	KASSERT(svs_enabled);
 	KASSERT(pmap != NULL);
 	KASSERT(pmap != pmap_kernel());
 	KASSERT(mutex_owned(pmap->pm_lock));
@@ -350,6 +351,8 @@ svs_lwp_switch(struct lwp *oldlwp, struct lwp *newlwp)
 	pt_entry_t *pte;
 	uintptr_t rsp0;
 	vaddr_t va;
+
+	KASSERT(svs_enabled);
 
 	if (newlwp->l_flag & LW_SYSTEM) {
 		return;
@@ -505,7 +508,7 @@ void svs_init(void);
 void
 svs_init(void)
 {
-	svs_enabled = true;
-	svs_pgg_update(false);
+	if (svs_enabled)
+		svs_pgg_update(false);
 }
 
