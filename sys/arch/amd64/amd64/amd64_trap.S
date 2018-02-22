@@ -1,4 +1,4 @@
-/*	$NetBSD: amd64_trap.S,v 1.32 2018/02/18 14:32:31 maxv Exp $	*/
+/*	$NetBSD: amd64_trap.S,v 1.33 2018/02/22 08:36:31 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2017 The NetBSD Foundation, Inc.
@@ -95,48 +95,27 @@
 #define	PRE_TRAP
 #endif
 
-#ifdef XEN
-/*
- * I don't believe XEN generates in-kernel traps for the
- * equivalent of iret, if it does this code would be needed
- * in order to copy the user segment registers into the fault frame.
- */
-#define check_swapgs alltraps
-#endif
-
-#define	TRAP(a)		PRE_TRAP ; pushq $(a)
-#define	ZTRAP(a)	PRE_TRAP ; pushq $0 ; pushq $(a)
-
-.macro	TRAP_ENTRY_POINT	name,code,is_ztrap
-IDTVEC(\name)
-	.if	\is_ztrap
-		ZTRAP(\code)
-	.else
-		TRAP(\code)
-	.endif
-	INTRENTRY
+#define TRAPENTRY			\
+	INTRENTRY			; \
 	jmp	.Lalltraps_noentry
-IDTVEC_END(\name)
-.endm
 
-.macro	TRAP_ENTRY_POINT_SWAPGS	name,code,is_ztrap
-IDTVEC(\name)
-	.if	\is_ztrap
-		ZTRAP(\code)
-	.else
-		TRAP(\code)
-	.endif
-	jmp	check_swapgs
-IDTVEC_END(\name)
-.endm
+#define	TRAP_NJ(a)	PRE_TRAP ; pushq $(a)
+#define	ZTRAP_NJ(a)	PRE_TRAP ; pushq $0 ; pushq $(a)
+#define	TRAP(a)		TRAP_NJ(a) ; TRAPENTRY
+#define	ZTRAP(a)	ZTRAP_NJ(a) ; TRAPENTRY
 
-.macro	TRAP_ENTRY_POINT_NMI	name,code
-IDTVEC(\name)
-	ZTRAP(\code)
-#if defined(XEN)
-	INTRENTRY
-	jmp	.Lalltraps_noentry
-#else
+	.text
+
+	TEXT_USER_BEGIN
+
+IDTVEC(trap00)
+	ZTRAP(T_DIVIDE)
+IDTVEC_END(trap00)
+
+IDTVEC(trap01)
+	ZTRAP(T_TRCTRAP)
+IDTVEC_END(trap01)
+
 /*
  * Non Maskable Interrupts are a special case: they can be triggered even
  * with interrupts disabled, and once triggered they block further NMIs
@@ -148,6 +127,11 @@ IDTVEC(\name)
  * We need to be careful about %gs too, because it is possible that we were
  * running in kernel mode with a userland %gs.
  */
+IDTVEC(trap02)
+#if defined(XEN)
+	ZTRAP(T_NMI)
+#else
+	ZTRAP_NJ(T_NMI)
 	subq	$TF_REGSIZE,%rsp
 	INTR_SAVE_GPRS
 	SVS_ENTER_ALTSTACK
@@ -182,16 +166,14 @@ IDTVEC(\name)
 	addq	$TF_REGSIZE+16,%rsp
 	iretq
 #endif
-IDTVEC_END(\name)
-.endm
+IDTVEC_END(trap02)
 
-.macro	TRAP_ENTRY_POINT_BPT	name,code
-IDTVEC(\name)
-	ZTRAP(\code)
-	INTRENTRY
+IDTVEC(trap03)
 #ifndef KDTRACE_HOOKS
-	jmp	.Lalltraps_noentry
+	ZTRAP(T_BPTFLT)
 #else
+	ZTRAP_NJ(T_BPTFLT)
+	INTRENTRY
 	STI(si)
 	/*
 	 * DTrace Function Boundary Trace (fbt) probes are triggered
@@ -213,12 +195,22 @@ IDTVEC(\name)
 	movq	dtrace_invop_jump_addr, %rax
 	jmpq	*dtrace_invop_jump_addr
 #endif
-IDTVEC_END(\name)
-.endm
+IDTVEC_END(trap03)
 
-.macro	TRAP_ENTRY_POINT_DNA	name,code
-IDTVEC(\name)
-	ZTRAP(\code)
+IDTVEC(trap04)
+	ZTRAP(T_OFLOW)
+IDTVEC_END(trap04)
+
+IDTVEC(trap05)
+	ZTRAP(T_BOUND)
+IDTVEC_END(trap05)
+
+IDTVEC(trap06)
+	ZTRAP(T_PRIVINFLT)
+IDTVEC_END(trap06)
+
+IDTVEC(trap07)
+	ZTRAP_NJ(T_DNA)
 	INTRENTRY
 #ifdef DIAGNOSTIC
 	movl	CPUVAR(ILEVEL),%ebx
@@ -226,20 +218,17 @@ IDTVEC(\name)
 	movq	%rsp,%rdi
 	call	_C_LABEL(fpudna)
 	jmp	.Lalltraps_checkusr
-IDTVEC_END(\name)
-.endm
+IDTVEC_END(trap07)
 
-.macro	TRAP_ENTRY_POINT_DOUBLE	name,code
-IDTVEC(\name)
-	TRAP(\code)
-#if defined(XEN)
-	INTRENTRY
-	jmp	.Lalltraps_noentry
-#else
 /*
  * Double faults execute on a particular stack, and we must not jump out
  * of it. So don't enable interrupts.
  */
+IDTVEC(trap08)
+#if defined(XEN)
+	TRAP(T_DOUBLEFLT)
+#else
+	TRAP_NJ(T_DOUBLEFLT)
 	subq	$TF_REGSIZE,%rsp
 	INTR_SAVE_GPRS
 	SVS_ENTER_ALTSTACK
@@ -268,16 +257,56 @@ IDTVEC(\name)
 	addq	$TF_REGSIZE+16,%rsp
 	iretq
 #endif
-IDTVEC_END(\name)
-.endm
+IDTVEC_END(trap08)
 
-.macro	TRAP_ENTRY_POINT_FPU	name,code,is_ztrap
-IDTVEC(\name)
-	.if	\is_ztrap
-		ZTRAP(\code)
-	.else
-		TRAP(\code)
-	.endif
+IDTVEC(trap09)
+	ZTRAP(T_FPOPFLT)
+IDTVEC_END(trap09)
+
+IDTVEC(trap10)
+	TRAP(T_TSSFLT)
+IDTVEC_END(trap10)
+
+#ifdef XEN
+/*
+ * I don't believe XEN generates in-kernel traps for the
+ * equivalent of iret, if it does this code would be needed
+ * in order to copy the user segment registers into the fault frame.
+ */
+#define check_swapgs alltraps
+#endif
+
+IDTVEC(trap11)		/* #NP() Segment not present */
+	TRAP_NJ(T_SEGNPFLT)
+	jmp	check_swapgs
+IDTVEC_END(trap11)
+
+IDTVEC(trap12)		/* #SS() Stack exception */
+	TRAP_NJ(T_STKFLT)
+	jmp	check_swapgs
+IDTVEC_END(trap12)
+
+IDTVEC(trap13)		/* #GP() General protection */
+	TRAP_NJ(T_PROTFLT)
+	jmp	check_swapgs
+IDTVEC_END(trap13)
+
+IDTVEC(trap14)
+	TRAP(T_PAGEFLT)
+IDTVEC_END(trap14)
+
+IDTVEC(trap15)
+	ZTRAP_NJ(T_ASTFLT)
+	INTRENTRY
+#ifdef DIAGNOSTIC
+	movl	CPUVAR(ILEVEL),%ebx
+#endif
+	jmp	.Lalltraps_checkusr
+IDTVEC_END(trap15)
+
+IDTVEC(trap16)
+	ZTRAP_NJ(T_ARITHTRAP)
+.Ldo_fputrap:
 	INTRENTRY
 #ifdef DIAGNOSTIC
 	movl	CPUVAR(ILEVEL),%ebx
@@ -285,23 +314,56 @@ IDTVEC(\name)
 	movq	%rsp,%rdi
 	call	_C_LABEL(fputrap)
 	jmp	.Lalltraps_checkusr
-IDTVEC_END(\name)
-.endm
+IDTVEC_END(trap16)
 
-.macro	TRAP_ENTRY_POINT_SPUR	name,code,is_ztrap
-IDTVEC(\name)
-	.if	\is_ztrap
-		ZTRAP(\code)
-	.else
-		TRAP(\code)
-	.endif
+IDTVEC(trap17)
+	TRAP(T_ALIGNFLT)
+IDTVEC_END(trap17)
+
+IDTVEC(trap18)
+	ZTRAP(T_MCA)
+IDTVEC_END(trap18)
+
+IDTVEC(trap19)
+	ZTRAP_NJ(T_XMM)
+	jmp	.Ldo_fputrap
+IDTVEC_END(trap19)
+
+IDTVEC(trap20)
+IDTVEC(trap21)
+IDTVEC(trap22)
+IDTVEC(trap23)
+IDTVEC(trap24)
+IDTVEC(trap25)
+IDTVEC(trap26)
+IDTVEC(trap27)
+IDTVEC(trap28)
+IDTVEC(trap29)
+IDTVEC(trap30)
+IDTVEC(trap31)
+	/* 20 - 31 reserved for future exp */
+	ZTRAP(T_RESERVED)
+IDTVEC_END(trap20)
+IDTVEC_END(trap21)
+IDTVEC_END(trap22)
+IDTVEC_END(trap23)
+IDTVEC_END(trap24)
+IDTVEC_END(trap25)
+IDTVEC_END(trap26)
+IDTVEC_END(trap27)
+IDTVEC_END(trap28)
+IDTVEC_END(trap29)
+IDTVEC_END(trap30)
+IDTVEC_END(trap31)
+
+IDTVEC(intrspurious)
+	ZTRAP_NJ(T_ASTFLT)
 	INTRENTRY
 #ifdef DIAGNOSTIC
 	movl	CPUVAR(ILEVEL),%ebx
 #endif
 	jmp	.Lalltraps_checkusr
-IDTVEC_END(\name)
-.endm
+IDTVEC_END(intrspurious)
 
 #ifndef check_swapgs
 /*
@@ -312,8 +374,7 @@ IDTVEC_END(\name)
  * When such traps happen, we have CPL=0 and %gs=userland, and we must perform
  * an additional swapgs to get %gs=kernel.
  */
-.macro	SWAPGS_HANDLER	name
-NENTRY(\name)
+NENTRY(check_swapgs)
 	INTRENTRY_L(3f,1:)
 2:
 	sti
@@ -345,51 +406,7 @@ NENTRY(\name)
 	cmpw	$0x8e+050*256,%ax	/* Any move to %gs (reg 5) */
 	jne	2b			/* No - normal kernel fault */
 	jmp	1b			/* Yes - restore %gs */
-END(\name)
-.endm
-#endif
-
-	.text
-
-	TEXT_USER_BEGIN
-
-TRAP_ENTRY_POINT	trap00,T_DIVIDE,1
-TRAP_ENTRY_POINT	trap01,T_TRCTRAP,1
-TRAP_ENTRY_POINT_NMI	trap02,T_NMI
-TRAP_ENTRY_POINT_BPT	trap03,T_BPTFLT
-TRAP_ENTRY_POINT	trap04,T_OFLOW,1
-TRAP_ENTRY_POINT	trap05,T_BOUND,1
-TRAP_ENTRY_POINT	trap06,T_PRIVINFLT,1
-TRAP_ENTRY_POINT_DNA	trap07,T_DNA
-TRAP_ENTRY_POINT_DOUBLE	trap08,T_DOUBLEFLT
-TRAP_ENTRY_POINT	trap09,T_FPOPFLT,1
-TRAP_ENTRY_POINT	trap10,T_TSSFLT,0
-TRAP_ENTRY_POINT_SWAPGS	trap11,T_SEGNPFLT,0
-TRAP_ENTRY_POINT_SWAPGS	trap12,T_STKFLT,0
-TRAP_ENTRY_POINT_SWAPGS	trap13,T_PROTFLT,0
-TRAP_ENTRY_POINT	trap14,T_PAGEFLT,0
-TRAP_ENTRY_POINT_SPUR	trap15,T_ASTFLT,1
-TRAP_ENTRY_POINT_FPU	trap16,T_ARITHTRAP,1
-TRAP_ENTRY_POINT	trap17,T_ALIGNFLT,0
-TRAP_ENTRY_POINT	trap18,T_MCA,1
-TRAP_ENTRY_POINT_FPU	trap19,T_XMM,1
-TRAP_ENTRY_POINT	trap20,T_RESERVED,1
-TRAP_ENTRY_POINT	trap21,T_RESERVED,1
-TRAP_ENTRY_POINT	trap22,T_RESERVED,1
-TRAP_ENTRY_POINT	trap23,T_RESERVED,1
-TRAP_ENTRY_POINT	trap24,T_RESERVED,1
-TRAP_ENTRY_POINT	trap25,T_RESERVED,1
-TRAP_ENTRY_POINT	trap26,T_RESERVED,1
-TRAP_ENTRY_POINT	trap27,T_RESERVED,1
-TRAP_ENTRY_POINT	trap28,T_RESERVED,1
-TRAP_ENTRY_POINT	trap29,T_RESERVED,1
-TRAP_ENTRY_POINT	trap30,T_RESERVED,1
-TRAP_ENTRY_POINT	trap31,T_RESERVED,1
-
-TRAP_ENTRY_POINT_SPUR	intrspurious,T_ASTFLT,1
-
-#ifndef check_swapgs
-SWAPGS_HANDLER		check_swapgs
+END(check_swapgs)
 #endif
 
 	TEXT_USER_END
