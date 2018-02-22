@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.152 2018/02/22 08:56:51 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.153 2018/02/22 10:42:10 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1591,14 +1591,14 @@ END(intrfastexit)
 	TEXT_USER_END
 
 #ifdef SVS
-	.globl	svs_enter
-	.globl	svs_enter_end
-	.globl	svs_enter_altstack
-	.globl	svs_enter_altstack_end
-	.globl	svs_leave
-	.globl	svs_leave_end
-	.globl	svs_leave_altstack
-	.globl	svs_leave_altstack_end
+	.globl	svs_enter, svs_enter_end
+	.globl	svs_enter_altstack, svs_enter_altstack_end
+	.globl	svs_leave, svs_leave_end
+	.globl	svs_leave_altstack, svs_leave_altstack_end
+	.globl	nosvs_enter, nosvs_enter_end
+	.globl	nosvs_enter_altstack, nosvs_enter_altstack_end
+	.globl	nosvs_leave, nosvs_leave_end
+	.globl	nosvs_leave_altstack, nosvs_leave_altstack_end
 
 LABEL(svs_enter)
 	movq	SVS_UTLS+UTLS_KPDIRPA,%rax
@@ -1630,4 +1630,20 @@ LABEL(svs_leave_altstack)
 	movq	%rax,%cr3
 1234:
 LABEL(svs_leave_altstack_end)
+
+LABEL(nosvs_enter)
+	NOSVS_ENTER
+LABEL(nosvs_enter_end)
+
+LABEL(nosvs_enter_altstack)
+	NOSVS_ENTER_ALTSTACK
+LABEL(nosvs_enter_altstack_end)
+
+LABEL(nosvs_leave)
+	NOSVS_LEAVE
+LABEL(nosvs_leave_end)
+
+LABEL(nosvs_leave_altstack)
+	NOSVS_LEAVE_ALTSTACK
+LABEL(nosvs_leave_altstack_end)
 #endif
