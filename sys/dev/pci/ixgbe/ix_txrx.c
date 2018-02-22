@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.31 2018/02/20 07:30:57 msaitoh Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.32 2018/02/22 10:02:08 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -993,7 +993,7 @@ ixgbe_tso_setup(struct tx_ring *txr, struct mbuf *mp, u32 *cmd_type_len,
  *   processing the packet then free associated resources. The
  *   tx_buffer is put back on the free queue.
  ************************************************************************/
-void
+bool
 ixgbe_txeof(struct tx_ring *txr)
 {
 	struct adapter		*adapter = txr->adapter;
@@ -1032,13 +1032,13 @@ ixgbe_txeof(struct tx_ring *txr)
 		     txd[kring->nr_kflags].wb.status & IXGBE_TXD_STAT_DD)) {
 			netmap_tx_irq(ifp, txr->me);
 		}
-		return;
+		return false;
 	}
 #endif /* DEV_NETMAP */
 
 	if (txr->tx_avail == txr->num_desc) {
 		txr->busy = 0;
-		return;
+		return false;
 	}
 
 	/* Get work starting point */
@@ -1139,7 +1139,7 @@ ixgbe_txeof(struct tx_ring *txr)
 	if (txr->tx_avail == txr->num_desc)
 		txr->busy = 0;
 
-	return;
+	return ((limit > 0) ? false : true);
 } /* ixgbe_txeof */
 
 /************************************************************************

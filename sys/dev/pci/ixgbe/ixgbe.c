@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.125 2018/02/20 08:49:23 knakahara Exp $ */
+/* $NetBSD: ixgbe.c,v 1.126 2018/02/22 10:02:08 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -5768,7 +5768,7 @@ ixgbe_handle_que(void *context)
 	if (ifp->if_flags & IFF_RUNNING) {
 		more = ixgbe_rxeof(que);
 		IXGBE_TX_LOCK(txr);
-		ixgbe_txeof(txr);
+		more |= ixgbe_txeof(txr);
 		if (!(adapter->feat_en & IXGBE_FEATURE_LEGACY_TX))
 			if (!ixgbe_mq_ring_empty(ifp, txr->txr_interq))
 				ixgbe_mq_start_locked(ifp, txr);
