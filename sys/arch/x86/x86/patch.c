@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.32 2018/02/22 08:56:52 maxv Exp $	*/
+/*	$NetBSD: patch.c,v 1.33 2018/02/22 09:41:06 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.32 2018/02/22 08:56:52 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.33 2018/02/22 09:41:06 maxv Exp $");
 
 #include "opt_lockdebug.h"
 #ifdef i386
@@ -143,7 +143,7 @@ patchbytes(void *addr, const uint8_t *bytes, size_t size)
 	}
 }
 
-static void
+void
 x86_hotpatch(uint32_t name, const uint8_t *bytes, size_t size)
 {
 	extern char __rodata_hotpatch_start;
@@ -165,6 +165,30 @@ x86_hotpatch(uint32_t name, const uint8_t *bytes, size_t size)
 }
 
 void
+x86_patch_window_open(u_long *psl, u_long *cr0)
+{
+	/* Disable interrupts. */
+	*psl = x86_read_psl();
+	x86_disable_intr();
+
+	/* Disable write protection in supervisor mode. */
+	*cr0 = rcr0();
+	lcr0(*cr0 & ~CR0_WP);
+}
+
+void
+x86_patch_window_close(u_long psl, u_long cr0)
+{
+	/* Write back and invalidate cache, flush pipelines. */
+	wbinvd();
+	x86_flush();
+	x86_write_psl(psl);
+
+	/* Re-enable write protection. */
+	lcr0(cr0);
+}
+
+void
 x86_patch(bool early)
 {
 	static bool first, second;
@@ -181,13 +205,7 @@ x86_patch(bool early)
 		second = true;
 	}
 
-	/* Disable interrupts. */
-	psl = x86_read_psl();
-	x86_disable_intr();
-
-	/* Disable write protection in supervisor mode. */
-	cr0 = rcr0();
-	lcr0(cr0 & ~CR0_WP);
+	x86_patch_window_open(&psl, &cr0);
 
 #if !defined(GPROF)
 	if (!early && ncpu == 1) {
@@ -298,43 +316,5 @@ x86_patch(bool early)
 		x86_hotpatch(HP_NAME_STAC, stac_bytes, sizeof(stac_bytes));
 	}
 
-#ifdef SVS
-	if (early && cpu_vendor == CPUVENDOR_INTEL) {
-		extern uint8_t svs_enter, svs_enter_end;
-		extern uint8_t svs_enter_altstack, svs_enter_altstack_end;
-		extern uint8_t svs_leave, svs_leave_end;
-		extern uint8_t svs_leave_altstack, svs_leave_altstack_end;
-		extern bool svs_enabled;
-		uint8_t *bytes;
-		size_t size;
-
-		svs_enabled = true;
-
-		bytes = &svs_enter;
-		size = (size_t)&svs_enter_end - (size_t)&svs_enter;
-		x86_hotpatch(HP_NAME_SVS_ENTER, bytes, size);
-
-		bytes = &svs_enter_altstack;
-		size = (size_t)&svs_enter_altstack_end -
-		    (size_t)&svs_enter_altstack;
-		x86_hotpatch(HP_NAME_SVS_ENTER_ALT, bytes, size);
-
-		bytes = &svs_leave;
-		size = (size_t)&svs_leave_end - (size_t)&svs_leave;
-		x86_hotpatch(HP_NAME_SVS_LEAVE, bytes, size);
-
-		bytes = &svs_leave_altstack;
-		size = (size_t)&svs_leave_altstack_end -
-		    (size_t)&svs_leave_altstack;
-		x86_hotpatch(HP_NAME_SVS_LEAVE_ALT, bytes, size);
-	}
-#endif
-
-	/* Write back and invalidate cache, flush pipelines. */
-	wbinvd();
-	x86_flush();
-	x86_write_psl(psl);
-
-	/* Re-enable write protection. */
-	lcr0(cr0);
+	x86_patch_window_close(psl, cr0);
 }
