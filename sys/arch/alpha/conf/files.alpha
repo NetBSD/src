@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.188 2014/10/17 18:31:07 uebayasi Exp $
+# $NetBSD: files.alpha,v 1.189 2018/02/22 07:30:43 mrg Exp $
 #
 # alpha-specific configuration info
 
@@ -119,6 +119,7 @@ include "dev/dec/files.dec"
 include "dev/tc/files.tc"
 
 # TC attachment is MD
+define	tcbus	{ }			# TURBOchannel attachment
 attach	tc at tcbus
 
 device	tcasic: tcbus
