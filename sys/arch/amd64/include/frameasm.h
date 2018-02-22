@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.34 2018/01/27 18:27:08 maxv Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.35 2018/02/22 08:56:51 maxv Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
 #define _AMD64_MACHINE_FRAMEASM_H
@@ -40,6 +40,10 @@
 #define HP_NAME_STAC		2
 #define HP_NAME_NOLOCK		3
 #define HP_NAME_RETFENCE	4
+#define HP_NAME_SVS_ENTER	5
+#define HP_NAME_SVS_LEAVE	6
+#define HP_NAME_SVS_ENTER_ALT	7
+#define HP_NAME_SVS_LEAVE_ALT	8
 
 #define HOTPATCH(name, size) \
 123:						; \
@@ -107,32 +111,30 @@
 #define UTLS_SCRATCH		8
 #define UTLS_RSP0		16
 
+#define SVS_ENTER_BYTES	22
 #define SVS_ENTER \
-	movq	SVS_UTLS+UTLS_KPDIRPA,%rax	; \
-	movq	%rax,%cr3			; \
-	movq	CPUVAR(KRSP0),%rsp
+	HOTPATCH(HP_NAME_SVS_ENTER, SVS_ENTER_BYTES)	; \
+	.byte 0xEB, (SVS_ENTER_BYTES-2)	/* jmp */	; \
+	.fill	(SVS_ENTER_BYTES-2),1,0xCC
 
+#define SVS_LEAVE_BYTES	31
 #define SVS_LEAVE \
-	testb	$SEL_UPL,TF_CS(%rsp)		; \
-	jz	1234f				; \
-	movq	CPUVAR(URSP0),%rsp		; \
-	movq	CPUVAR(UPDIRPA),%rax		; \
-	movq	%rax,%cr3			; \
-1234:
+	HOTPATCH(HP_NAME_SVS_LEAVE, SVS_LEAVE_BYTES)	; \
+	.byte 0xEB, (SVS_LEAVE_BYTES-2)	/* jmp */	; \
+	.fill	(SVS_LEAVE_BYTES-2),1,0xCC
 
+#define SVS_ENTER_ALT_BYTES	23
 #define SVS_ENTER_ALTSTACK \
-	testb	$SEL_UPL,TF_CS(%rsp)		; \
-	jz	1234f				; \
-	movq	SVS_UTLS+UTLS_KPDIRPA,%rax	; \
-	movq	%rax,%cr3			; \
-1234:
+	HOTPATCH(HP_NAME_SVS_ENTER_ALT, SVS_ENTER_ALT_BYTES)	; \
+	.byte 0xEB, (SVS_ENTER_ALT_BYTES-2)	/* jmp */	; \
+	.fill	(SVS_ENTER_ALT_BYTES-2),1,0xCC
 
+#define SVS_LEAVE_ALT_BYTES	22
 #define SVS_LEAVE_ALTSTACK \
-	testb	$SEL_UPL,TF_CS(%rsp)		; \
-	jz	1234f				; \
-	movq	CPUVAR(UPDIRPA),%rax		; \
-	movq	%rax,%cr3			; \
-1234:
+	HOTPATCH(HP_NAME_SVS_LEAVE_ALT, SVS_LEAVE_ALT_BYTES)	; \
+	.byte 0xEB, (SVS_LEAVE_ALT_BYTES-2)	/* jmp */	; \
+	.fill	(SVS_LEAVE_ALT_BYTES-2),1,0xCC
+
 #else
 #define SVS_ENTER	/* nothing */
 #define SVS_LEAVE	/* nothing */
