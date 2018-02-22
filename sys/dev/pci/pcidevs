@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1313 2018/02/22 03:13:18 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1314 2018/02/22 05:23:29 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -3808,7 +3808,7 @@ product INTEL 82801HBM_LPC      0x2815  82801HBM LPC Interface Bridge
 product INTEL 82801H_SATA_1	0x2820	82801H SATA Controller
 product INTEL 82801H_SATA_AHCI6	0x2821	82801H AHCI SATA Controller w/ 6 ports
 product INTEL 82801H_SATA_RAID	0x2822	82801H/C6[12]x/X99/Z170/[ZQH]270 RAID SATA Controller
-product INTEL C620_SSATA_RAID_2	0x2823	C62x9 sSATA Controller (RAID)
+product INTEL C620_SSATA_RAID_2	0x2823	C62x sSATA Controller (RAID)
 product INTEL 82801H_SATA_AHCI4	0x2824	82801H AHCI SATA Controller w/ 4 ports
 product INTEL 82801H_SATA_2	0x2825	82801H SATA Controller
 product INTEL C610_SATA_RAID_3	0x2826	C6[12]x/X99/[ZQH]270 SATA Controller (RAID)
