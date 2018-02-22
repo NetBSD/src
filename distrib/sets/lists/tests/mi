@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.774 2018/02/11 16:45:35 christos Exp $
+# $NetBSD: mi,v 1.775 2018/02/22 14:24:03 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1339,7 +1339,8 @@
 ./usr/tests/crypto/libcrypto/h_threadstest	tests-crypto-tests	compattestfile,atf
 ./usr/tests/crypto/libcrypto/h_x509v3test	comp-obsolete	openssl=11,obsolete
 ./usr/tests/crypto/libcrypto/h_x509v3test	tests-crypto-tests	compattestfile,atf,openssl=10
-./usr/tests/crypto/libcrypto/t_certs		tests-crypto-tests	compattestfile,atf
+./usr/tests/crypto/libcrypto/t_certs		comp-obsolete	openssl=11,obsolete
+./usr/tests/crypto/libcrypto/t_certs		tests-crypto-tests	compattestfile,atf,openssl=10
 ./usr/tests/crypto/libcrypto/t_ciphers		tests-crypto-tests	compattestfile,atf
 ./usr/tests/crypto/libcrypto/t_hashes		tests-crypto-tests	compattestfile,atf
 ./usr/tests/crypto/libcrypto/t_libcrypto	tests-crypto-tests	compattestfile,atf

@@ -1,4 +1,4 @@
-# $NetBSD: t_hashes.sh,v 1.2 2012/07/14 16:04:06 spz Exp $
+# $NetBSD: t_hashes.sh,v 1.3 2018/02/22 14:24:03 martin Exp $
 #
 # Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -103,6 +103,6 @@ atf_init_test_cases()
 	atf_add_test_case md4
 	atf_add_test_case md5
 	atf_add_test_case ripemd
-	atf_add_test_case sha
+	openssl version | fgrep -q "OpenSSL 1.0" && atf_add_test_case sha
 	atf_add_test_case mdc2
 }
