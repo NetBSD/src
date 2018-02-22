@@ -1,4 +1,4 @@
-/*	$NetBSD: svs.c,v 1.4 2018/02/22 08:56:52 maxv Exp $	*/
+/*	$NetBSD: svs.c,v 1.5 2018/02/22 09:41:06 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.4 2018/02/22 08:56:52 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.5 2018/02/22 09:41:06 maxv Exp $");
 
 #include "opt_svs.h"
 
@@ -39,7 +39,9 @@ __KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.4 2018/02/22 08:56:52 maxv Exp $");
 #include <sys/proc.h>
 #include <sys/cpu.h>
 
+#include <x86/cputypes.h>
 #include <machine/cpuvar.h>
+#include <machine/frameasm.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_page.h>
@@ -503,12 +505,56 @@ svs_pgg_update(bool enable)
 	tlbflushg();
 }
 
-void svs_init(void);
+static void
+svs_enable(void)
+{
+	extern uint8_t svs_enter, svs_enter_end;
+	extern uint8_t svs_enter_altstack, svs_enter_altstack_end;
+	extern uint8_t svs_leave, svs_leave_end;
+	extern uint8_t svs_leave_altstack, svs_leave_altstack_end;
+	u_long psl, cr0;
+	uint8_t *bytes;
+	size_t size;
+
+	svs_enabled = true;
+
+	x86_patch_window_open(&psl, &cr0);
+
+	bytes = &svs_enter;
+	size = (size_t)&svs_enter_end - (size_t)&svs_enter;
+	x86_hotpatch(HP_NAME_SVS_ENTER, bytes, size);
+
+	bytes = &svs_enter_altstack;
+	size = (size_t)&svs_enter_altstack_end -
+	    (size_t)&svs_enter_altstack;
+	x86_hotpatch(HP_NAME_SVS_ENTER_ALT, bytes, size);
+
+	bytes = &svs_leave;
+	size = (size_t)&svs_leave_end - (size_t)&svs_leave;
+	x86_hotpatch(HP_NAME_SVS_LEAVE, bytes, size);
+
+	bytes = &svs_leave_altstack;
+	size = (size_t)&svs_leave_altstack_end -
+	    (size_t)&svs_leave_altstack;
+	x86_hotpatch(HP_NAME_SVS_LEAVE_ALT, bytes, size);
+
+	x86_patch_window_close(psl, cr0);
+}
 
 void
-svs_init(void)
+svs_init(bool early)
 {
-	if (svs_enabled)
+	/*
+	 * When early, declare that we want to use SVS, and hotpatch the
+	 * entry points. When late, remove PG_G from the page tables.
+	 */
+	if (early) {
+		if (cpu_vendor != CPUVENDOR_INTEL) {
+			return;
+		}
+		svs_enable();
+	} else if (svs_enabled) {
 		svs_pgg_update(false);
+	}
 }
 
