@@ -4416,9 +4416,9 @@ print_host_wide_int (uint64_t val)
 {
   uint64_t min = uint64_t (1) << (HOST_BITS_PER_WIDE_INT - 1);
   if (val == min)
-    printf ("(" HOST_WIDE_INT_PRINT_DEC_C " - 1)", val + 1);
+    printf ("( HOST_WIDE_INT_C (" HOST_WIDE_INT_PRINT_DEC ") - 1)", val + 1);
   else
-    printf (HOST_WIDE_INT_PRINT_DEC_C, val);
+    printf (" HOST_WIDE_INT_C (" HOST_WIDE_INT_PRINT_DEC ")", val);
 }
 
 /* Print the C expression for actual parameter PARAM.  */
