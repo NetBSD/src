@@ -1,4 +1,4 @@
-/*	$NetBSD: sdtemp_reg.h,v 1.12 2016/12/07 04:58:39 nonaka Exp $	*/
+/*	$NetBSD: sdtemp_reg.h,v 1.13 2018/02/22 10:09:12 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -122,6 +122,7 @@
 /* Maxim */
 #define	MAXIM_MANUFACTURER_ID		0x004D
 #define	MAX_6604_DEVICE_ID		0x3E00
+#define	MAX_6604_2_DEVICE_ID		0x5400
 #define	MAX_6604_MASK			0xFFFF
 
 /* Microchip */
@@ -136,6 +137,9 @@
 #define	MCP_98243_MASK			0xFFFC
 #define	MCP_98244_DEVICE_ID		0x2200
 #define	MCP_98244_MASK			0xFFFC
+#define	MCP2_MANUFACTURER_ID		0x1055	/* PCI-SIG manufacturer ID */
+#define	MCP2_EMC1501_DEVICE_ID		0x0842
+#define	MCP2_EMC1501_MASK		0xFFFF
 
 #define	SDTEMP_REG_MCP_RESOLUTION_9804	0x08 /* 9804, 9824[23] */
 #define	SDTEMP_REG_MCP_RESOLUTION_98244	0x09 /* 98244 */
@@ -150,8 +154,8 @@
 
 /* Analog Devices */
 #define	ADT_MANUFACTURER_ID		0x11D4
-#define	ADT_7408_DEVICE_ID		0x8001
-#define	ADT_7408_MASK			0xFFFF
+#define	ADT_7408_DEVICE_ID		0x0800	/* e.g. 0x0801 */
+#define	ADT_7408_MASK			0xFFF0
 
 /* IDT */
 #define	IDT_MANUFACTURER_ID		0x00B3
