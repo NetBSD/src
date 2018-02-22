@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.31 2018/01/27 09:33:25 maxv Exp $	*/
+/*	$NetBSD: patch.c,v 1.32 2018/02/22 08:56:52 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.31 2018/01/27 09:33:25 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.32 2018/02/22 08:56:52 maxv Exp $");
 
 #include "opt_lockdebug.h"
 #ifdef i386
@@ -297,6 +297,38 @@ x86_patch(bool early)
 		/* nop,nop,nop -> stac */
 		x86_hotpatch(HP_NAME_STAC, stac_bytes, sizeof(stac_bytes));
 	}
+
+#ifdef SVS
+	if (early && cpu_vendor == CPUVENDOR_INTEL) {
+		extern uint8_t svs_enter, svs_enter_end;
+		extern uint8_t svs_enter_altstack, svs_enter_altstack_end;
+		extern uint8_t svs_leave, svs_leave_end;
+		extern uint8_t svs_leave_altstack, svs_leave_altstack_end;
+		extern bool svs_enabled;
+		uint8_t *bytes;
+		size_t size;
+
+		svs_enabled = true;
+
+		bytes = &svs_enter;
+		size = (size_t)&svs_enter_end - (size_t)&svs_enter;
+		x86_hotpatch(HP_NAME_SVS_ENTER, bytes, size);
+
+		bytes = &svs_enter_altstack;
+		size = (size_t)&svs_enter_altstack_end -
+		    (size_t)&svs_enter_altstack;
+		x86_hotpatch(HP_NAME_SVS_ENTER_ALT, bytes, size);
+
+		bytes = &svs_leave;
+		size = (size_t)&svs_leave_end - (size_t)&svs_leave;
+		x86_hotpatch(HP_NAME_SVS_LEAVE, bytes, size);
+
+		bytes = &svs_leave_altstack;
+		size = (size_t)&svs_leave_altstack_end -
+		    (size_t)&svs_leave_altstack;
+		x86_hotpatch(HP_NAME_SVS_LEAVE_ALT, bytes, size);
+	}
+#endif
 
 	/* Write back and invalidate cache, flush pipelines. */
 	wbinvd();
