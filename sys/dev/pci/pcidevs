@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1314 2018/02/22 05:23:29 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1315 2018/02/22 07:52:46 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2894,6 +2894,96 @@ product INTEL S1200_ILB		0x0c60	Atom S1200 LPC bridge
 product INTEL S1200_S1220	0x0c72	Atom S1220 Internal
 product INTEL S1200_S1240	0x0c73	Atom S1240 Internal
 product INTEL S1200_S1260	0x0c75	Atom S1260 Internal
+product INTEL E5V2_DMI2		0x0e00	E5 v2 DMI2
+product INTEL E5V2_PCIE_1	0x0e01	E5 v2 PCIe x4 (DMI2 Mode)
+product INTEL E5V2_PCIE_2	0x0e02	E5 v2 PCIe
+product INTEL E5V2_PCIE_3	0x0e03	E5 v2 PCIe
+product INTEL E5V2_PCIE_4	0x0e04	E5 v2 PCIe x16, x8 or x4
+product INTEL E5V2_PCIE_5	0x0e05	E5 v2 PCIe x16, x8 or x4
+product INTEL E5V2_PCIE_6	0x0e06	E5 v2 PCIe x16, x8 or x4
+product INTEL E5V2_PCIE_7	0x0e07	E5 v2 PCIe x16, x8 or x4
+product INTEL E5V2_PCIE_8	0x0e08	E5 v2 PCIe x16, x8 or x4
+product INTEL E5V2_PCIE_9	0x0e09	E5 v2 PCIe x16, x8 or x4
+product INTEL E5V2_PCIE_10	0x0e0a	E5 v2 PCIe x16, x8 or x4
+product INTEL E5V2_PCIE_11	0x0e0b	E5 v2 PCIe x16, x8 or x4
+product INTEL E5V2_R2PCIE	0x0e1d	E5 v2 R2PCIE
+product INTEL E5V2_UBOX_1	0x0e1e	E5 v2 UBOX
+product INTEL E5V2_UBOX_2	0x0e1f	E5 v2 UBOX
+product INTEL E5V2_IOAT_0	0x0e20	E5 v2 I/OAT DMA Channel 0
+product INTEL E5V2_IOAT_1	0x0e21	E5 v2 I/OAT DMA Channel 1
+product INTEL E5V2_IOAT_2	0x0e22	E5 v2 I/OAT DMA Channel 2
+product INTEL E5V2_IOAT_3	0x0e23	E5 v2 I/OAT DMA Channel 3
+product INTEL E5V2_IOAT_4	0x0e24	E5 v2 I/OAT DMA Channel 4
+product INTEL E5V2_IOAT_5	0x0e25	E5 v2 I/OAT DMA Channel 5
+product INTEL E5V2_IOAT_6	0x0e26	E5 v2 I/OAT DMA Channel 6
+product INTEL E5V2_IOAT_7	0x0e27	E5 v2 I/OAT DMA Channel 7
+product INTEL E5V2_ADDRMAP	0x0e28	E5 v2 Address Map
+product INTEL E5V2_HOTPLUG	0x0e29	E5 v2 Hot-Plug
+product INTEL E5V2_IIO_RAS	0x0e2a	E5 v2 IIO RAS
+product INTEL E5V2_IOAPIC	0x0e2c	E5 v2 I/O APIC
+product INTEL E5_IOAT_RAID_1	0x3c2e	E5 I/OAT DMA (RAID 5/6)
+product INTEL E5_IOAT_RAID_2	0x3c2f	E5 I/OAT DMA (RAID 5/6)
+product INTEL E5V2_HA_2		0x0e30	E5 v2 Home Agent
+product INTEL E5V2_PCIE_PM_1	0x0e34	E5 v2 PCIe Performance Monitor
+product INTEL E5V2_QPI_PM_1	0x0e36	E5 v2 QPI Performance Monitor
+product INTEL E5V2_QPI_PM_2	0x0e37	E5 v2 QPI Performance Monitor
+product INTEL E5V2_QPI_1	0x0e41	E5 v2 QPI
+product INTEL E5V2_IMC_RAS	0x0e71	E5 v2 IMC RAS
+product INTEL E5V2_UBOX_3	0x0e7d	E5 v2 UBOX
+product INTEL E5V2_QPI_L_0	0x0e80	E5 v2 QPI Link 0
+product INTEL E5V2_QPI_2	0x0e81	E5 v2 QPI
+product INTEL E5V2_QPI_L_0_1	0x0e83	E5 v2 QPI Link Reut 0
+product INTEL E5V2_QPI_L_0_2	0x0e84	E5 v2 QPI Link Reut 0
+product INTEL E5V2_QPI_L_1	0x0e90	E5 v2 QPI Link 1
+product INTEL E5V2_QPI_L_1_1	0x0e93	E5 v2 QPI Link Reut 1
+product INTEL E5V2_QPI_L_1_2	0x0e94	E5 v2 QPI Link Reut 1
+product INTEL E5V2_HA_1		0x0ea0	E5 v2 Home Agent
+product INTEL E5V2_IMC_TA	0x0ea8	E5 v2 IMC TA
+product INTEL E5V2_IMC_TAD_1	0x0eaa	E5 v2 IMC TAD
+product INTEL E5V2_IMC_TAD_2	0x0eab	E5 v2 IMC TAD
+product INTEL E5V2_IMC_TAD_3	0x0eac	E5 v2 IMC TAD
+product INTEL E5V2_IMC_TAD_4	0x0ead	E5 v2 IMC TAD
+product INTEL E5V2_IMC_THERMAL_1 0x0eb0	E5 v2 IMC Thermal
+product INTEL E5V2_IMC_THERMAL_2 0x0eb1	E5 v2 IMC Thermal
+product INTEL E5V2_IMC_ERR_1	0x0eb2	E5 v2 IMC Error
+product INTEL E5V2_IMC_ERR_2	0x0eb3	E5 v2 IMC Error
+product INTEL E5V2_IMC_THERMAL_3 0x0eb4	E5 v2 IMC Thermal
+product INTEL E5V2_IMC_THERMAL_4 0x0eb5	E5 v2 IMC Thermal
+product INTEL E5V2_IMC_ERR_3	0x0eb6	E5 v2 IMC Error
+product INTEL E5V2_IMC_ERR_4	0x0eb7	E5 v2 IMC Error
+product INTEL E5V2_IMC_DDRIO_1	0x0eba	E5 v2 IMC DDRIO 0,1,2,3 Multicast
+product INTEL E5V2_IMC_DDRIO_2	0x0ebb	E5 v2 IMC DDRIO 0,1,2,3 Multicast
+product INTEL E5V2_IMC_DDRIO_3	0x0ebc	E5 v2 IMC DDRIO 0 & 1
+product INTEL E5V2_IMC_DDRIO_4	0x0ebd	E5 v2 IMC DDRIO 0 & 1
+product INTEL E5V2_IMC_DDRIO_5	0x0ebe	E5 v2 IMC DDRIO 0,1 Multicast
+product INTEL E5V2_IMC_DDRIO_6	0x0ebf	E5 v2 IMC DDRIO 0,1 Multicast
+product INTEL E5V2_PCU_0	0x0ec0	E5 v2 PCU
+product INTEL E5V2_PCU_1	0x0ec1	E5 v2 PCU
+product INTEL E5V2_PCU_2	0x0ec2	E5 v2 PCU
+product INTEL E5V2_PCU_3	0x0ec3	E5 v2 PCU
+product INTEL E5V2_PCU_4	0x0ec4	E5 v2 PCU
+product INTEL E5V2_SAD_1	0x0ec8	E5 v2 SAD
+product INTEL E5V2_BROADCAST_1	0x0ec9	E5 v2 Broadcast
+product INTEL E5V2_BROADCAST_2	0x0eca	E5 v2 Broadcast
+product INTEL E5V2_IMC_DDRIO_7	0x0ed8	E5 v2 IMC DDRIO 2 & 3
+product INTEL E5V2_IMC_DDRIO_8	0x0ed9	E5 v2 IMC DDRIO 2 & 3
+product INTEL E5V2_IMC_DDRIO_9	0x0eda	E5 v2 IMC DDRIO 2 & 3
+product INTEL E5V2_IMC_DDRIO_10	0x0edb	E5 v2 IMC DDRIO 2 & 3
+product INTEL E5V2_UNICAST_1	0x0ee0	E5 v2 Unicast
+product INTEL E5V2_UNICAST_2	0x0ee1	E5 v2 Unicast
+product INTEL E5V2_UNICAST_3	0x0ee2	E5 v2 Unicast
+product INTEL E5V2_UNICAST_4	0x0ee3	E5 v2 Unicast
+product INTEL E5V2_UNICAST_5	0x0ee4	E5 v2 Unicast
+product INTEL E5V2_UNICAST_6	0x0ee5	E5 v2 Unicast
+product INTEL E5V2_UNICAST_7	0x0ee6	E5 v2 Unicast
+product INTEL E5V2_UNICAST_8	0x0ee7	E5 v2 Unicast
+product INTEL E5V2_UNICAST_9	0x0ee8	E5 v2 Unicast
+product INTEL E5V2_UNICAST_10	0x0ee9	E5 v2 Unicast
+product INTEL E5V2_UNICAST_11	0x0eea	E5 v2 Unicast
+product INTEL E5V2_UNICAST_12	0x0eeb	E5 v2 Unicast
+product INTEL E5V2_UNICAST_13	0x0eec	E5 v2 Unicast
+product INTEL E5V2_UNICAST_14	0x0eed	E5 v2 Unicast
+product INTEL E5V2_UNICAST_15	0x0eee	E5 v2 Unicast
 product INTEL BAYTRAIL_HB	0x0f00	Bay Trail Processor Transaction Router
 product INTEL BAYTRAIL_HDA	0x0f04	Bay Trail HD Audio
 product INTEL BAYTRAIL_SIO2_DMA	0x0f06	Bay Trail Serial IO (DMA)
@@ -4270,16 +4360,20 @@ product INTEL 3400_MEI_2	0x3b65	3400 MEI
 product INTEL 3400_PT_IDER	0x3b66	3400 PT IDER
 product INTEL 3400_KT		0x3b67	3400 KT
 product INTEL E5_HB		0x3c00	E5 Host
-product INTEL E5_PCIE_1		0x3c02	E5 PCIE
-product INTEL E5_PCIE_2		0x3c03	E5 PCIE
-product INTEL E5_PCIE_3		0x3c04	E5 PCIE
-product INTEL E5_PCIE_4		0x3c05	E5 PCIE
-product INTEL E5_PCIE_5		0x3c06	E5 PCIE
-product INTEL E5_PCIE_6		0x3c07	E5 PCIE
-product INTEL E5_PCIE_7		0x3c08	E5 PCIE
-product INTEL E5_PCIE_8		0x3c09	E5 PCIE
-product INTEL E5_PCIE_9		0x3c0a	E5 PCIE
-product INTEL E5_PCIE_10	0x3c0b	E5 PCIE
+product INTEL E5_PCIE_DMI	0x3c01	E5 PCIe x4 (DMI2 Mode)
+product INTEL E5_PCIE_1		0x3c02	E5 PCIe x8 or x4
+product INTEL E5_PCIE_2		0x3c03	E5 PCIe x8 or x4
+product INTEL E5_PCIE_3		0x3c04	E5 PCIe x16, x8 or x4
+product INTEL E5_PCIE_4		0x3c05	E5 PCIe x16, x8 or x4
+product INTEL E5_PCIE_5		0x3c06	E5 PCIe x16, x8 or x4
+product INTEL E5_PCIE_6		0x3c07	E5 PCIe x16, x8 or x4
+product INTEL E5_PCIE_7		0x3c08	E5 PCIe x16, x8 or x4
+product INTEL E5_PCIE_8		0x3c09	E5 PCIe x16, x8 or x4
+product INTEL E5_PCIE_9		0x3c0a	E5 PCIe x16, x8 or x4
+product INTEL E5_PCIE_10	0x3c0b	E5 PCIe x16, x8 or x4
+product INTEL E5_NTB_NTB	0x3c0d	E5 Non Transparent Bridge Primary(NTB/NTB)
+product INTEL E5_NTB_RP		0x3c0e	E5 Non Transparent Bridge Primary(NTB/RP)
+product INTEL E5_NTB_SECONDARY	0x3c0f	E5 Non Transparent Bridge Secondary
 product INTEL E5_DMA_1		0x3c20	E5 DMA
 product INTEL E5_DMA_2		0x3c21	E5 DMA
 product INTEL E5_DMA_3		0x3c22	E5 DMA
@@ -4291,6 +4385,48 @@ product INTEL E5_DMA_8		0x3c27	E5 DMA
 product INTEL E5_ADDRMAP	0x3c28	E5 Address Map
 product INTEL E5_ERR		0x3c2a	E5 Error Reporting
 product INTEL E5_IOAPIC		0x3c2c	E5 I/O APIC
+product INTEL E5_QD_1		0x3c2e	E5 QuickData (RAID 5/6)
+product INTEL E5_QD_2		0x3c2f	E5 QuickData (RAID 5/6)
+product INTEL E5_IIO		0x3c40	E5 IOO Switch and IRP Perfmon
+product INTEL E5_R2PCIE_MON	0x3c43	E5 PCIE Monitor
+product INTEL E5_QPI_L_MON_0	0x3c44	E5 QPI Link Monitor
+product INTEL E5_QPI_L_MON_1	0x3c45	E5 QPI Link Monitor
+product INTEL E5_HA_2		0x3c46	E5 Home Agent
+product INTEL E5_IMC_RAS	0x3c71	E5 RAS
+product INTEL E5_QPI_L_0	0x3c80	E5 QPI Link 0
+product INTEL E5_QPI_L_REUT_0_1	0x3c83	E5 QPI Link Reut 0
+product INTEL E5_QPI_L_REUT_0_2	0x3c84	E5 QPI Link Reut 0
+product INTEL E5_QPI_L_1	0x3c90	E5 QPI Link 1
+product INTEL E5_QPI_L_REUT_1_1	0x3c93	E5 QPI Link Reut 1
+product INTEL E5_QPI_L_REUT_1_2	0x3c94	E5 QPI Link Reut 1
+product INTEL E5_HA_1		0x3ca0	E5 Home Agent
+product INTEL E5_IMC_TA		0x3ca8	E5 IMC Target Address / Thermal
+product INTEL E5_IMC_TAD_1	0x3caa	E5 IMC Channlel Target Address Decoder
+product INTEL E5_IMC_TAD_2	0x3cab	E5 IMC Channlel Target Address Decoder
+product INTEL E5_IMC_TAD_3	0x3cac	E5 IMC Channlel Target Address Decoder
+product INTEL E5_IMC_TAD_4	0x3cad	E5 IMC Channlel Target Address Decoder
+product INTEL E5_IMC_TAD_5	0x3cae	E5 IMC Channlel Target Address Decoder
+product INTEL E5_IMC_THERMAL_1	0x3cb0	E5 IMC Thermal
+product INTEL E5_IMC_THERMAL_2	0x3cb1	E5 IMC Thermal
+product INTEL E5_IMC_ERR_2	0x3cb2	E5 IMC Error
+product INTEL E5_IMC_ERR_3	0x3cb3	E5 IMC Error
+product INTEL E5_IMC_THERMAL_3	0x3cb4	E5 IMC Thermal
+product INTEL E5_IMC_THERMAL_4	0x3cb5	E5 IMC Thermal
+product INTEL E5_IMC_ERR_4	0x3cb6	E5 IMC Error
+product INTEL E5_IMC_ERR_5	0x3cb7	E5 IMC Error
+product INTEL E5_IMC_DDRIO	0x3cb8	E5 IMC DDRIO
+product INTEL E5_PCU_0		0x3cc0	E5 PCU
+product INTEL E5_PCU_1		0x3cc1	E5 PCU
+product INTEL E5_PCU_2		0x3cc2	E5 PCU
+product INTEL E5_PCU_3		0x3cd0	E5 PCU
+product INTEL E5_SCRATCH_1	0x3ce0	E5 Scratch
+product INTEL E5_SCRATCH_2	0x3ce3	E5 Scratch
+product INTEL E5_R2PCIE		0x3ce4	E5 R2PCIE
+product INTEL E5_R3_QPI		0x3ce6	E5 QPI
+product INTEL E5_UNICAST	0x3ce8	E5 Unicast
+product INTEL E5_SAD_1		0x3cf4	E5 SAD
+product INTEL E5_BROADCAST	0x3cf5	E5 Broadcast
+product INTEL E5_SAD_2		0x3cf6	E5 SAD
 product INTEL 5400_HB		0x4000	5400 Host
 product INTEL 5400A_HB		0x4001	5400A Host
 product INTEL 5400B_HB		0x4003	5400B Host
