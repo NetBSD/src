@@ -1,4 +1,4 @@
-/*      $NetBSD: sdtemp.c,v 1.32 2016/08/03 03:35:24 msaitoh Exp $        */
+/*      $NetBSD: sdtemp.c,v 1.33 2018/02/22 10:09:12 msaitoh Exp $        */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.32 2016/08/03 03:35:24 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.33 2018/02/22 10:09:12 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,6 +115,8 @@ sdtemp_dev_table[] = {
 	"Giantec GT34TS02" },
     { MAXIM_MANUFACTURER_ID, MAX_6604_DEVICE_ID,     MAX_6604_MASK,	  NULL,
 	"Maxim MAX6604" },
+    { MAXIM_MANUFACTURER_ID, MAX_6604_2_DEVICE_ID,   MAX_6604_MASK,	  NULL,
+	"Maxim MAX6604" },
     { MCP_MANUFACTURER_ID,  MCP_9804_DEVICE_ID,	     MCP_9804_MASK,	  CMCP,
 	"Microchip Tech MCP9804" },
     { MCP_MANUFACTURER_ID,  MCP_9805_DEVICE_ID,	     MCP_9805_MASK,	  NULL,
@@ -125,6 +127,8 @@ sdtemp_dev_table[] = {
 	"Microchip Tech MCP98243" },
     { MCP_MANUFACTURER_ID,  MCP_98244_DEVICE_ID,     MCP_98244_MASK,	  CMCP,
 	"Microchip Tech MCP98244" },
+    { MCP2_MANUFACTURER_ID, MCP2_EMC1501_DEVICE_ID,  MCP2_EMC1501_MASK,	  NULL,
+	"Microchip Tech EMC1501" },
     { ADT_MANUFACTURER_ID,  ADT_7408_DEVICE_ID,	     ADT_7408_MASK,	  NULL,
 	"Analog Devices ADT7408" },
     { NXP_MANUFACTURER_ID,  NXP_SE98_DEVICE_ID,	     NXP_SE98_MASK,	  NULL,
