@@ -1,4 +1,4 @@
-/* $NetBSD: tpm_acpi.c,v 1.5 2017/10/28 04:53:55 riastradh Exp $ */
+/* $NetBSD: tpm_acpi.c,v 1.6 2018/02/22 01:50:26 christos Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tpm_acpi.c,v 1.5 2017/10/28 04:53:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tpm_acpi.c,v 1.6 2018/02/22 01:50:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -85,11 +85,13 @@ CFATTACH_DECL_NEW(tpm_acpi, sizeof(struct tpm_softc), tpm_acpi_match,
  * Supported device IDs
  */
 
+#ifdef notyet
 static const char * const tpm_acpi_ids[] = {
 	"IFX0101",
 	"IFX0102",
 	NULL
 };
+#endif
 
 static int
 tpm_acpi_match(device_t parent, cfdata_t match, void *aux)
