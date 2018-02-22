@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.105 2018/02/22 09:41:06 maxv Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.106 2018/02/22 10:42:11 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.105 2018/02/22 09:41:06 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.106 2018/02/22 10:42:11 maxv Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -1259,11 +1259,12 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 #endif
 #ifdef SVS
+	int sysctl_machdep_svs_enabled(SYSCTLFN_ARGS);
 	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
+		       CTLFLAG_READWRITE,
 		       CTLTYPE_BOOL, "svs_enabled",
 		       SYSCTL_DESCR("Whether the kernel uses SVS"),
-		       NULL, 0, &svs_enabled, 0,
+		       sysctl_machdep_svs_enabled, 0, &svs_enabled, 0,
 		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 #endif
 
