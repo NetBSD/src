@@ -99,11 +99,9 @@ typedef HOST_WIDE_INT __gcc_host_wide_int__;
 #if INT64_T_IS_LONG
 # define HOST_WIDE_INT_PRINT HOST_LONG_FORMAT
 # define HOST_WIDE_INT_PRINT_C "L"
-# define HOST_WIDE_INT_CONSTANT(x) x ## L
 #else
 # define HOST_WIDE_INT_PRINT HOST_LONG_LONG_FORMAT
 # define HOST_WIDE_INT_PRINT_C "LL"
-# define HOST_WIDE_INT_CONSTANT(x) x ## LL
 #endif
 
 #define HOST_WIDE_INT_PRINT_DEC "%" PRId64
