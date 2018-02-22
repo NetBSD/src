@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.79 2018/02/16 10:11:21 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.80 2018/02/22 08:49:42 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -118,6 +118,7 @@ static int	ixv_sysctl_debug(SYSCTLFN_PROTO);
 static void	ixv_set_ivar(struct adapter *, u8, u8, s8);
 static void	ixv_configure_ivars(struct adapter *);
 static u8 *	ixv_mc_array_itr(struct ixgbe_hw *, u8 **, u32 *);
+static void	ixv_eitr_write(struct ix_queue *, uint32_t);
 
 static void	ixv_setup_vlan_support(struct adapter *);
 #if 0
@@ -867,8 +868,7 @@ ixv_msix_que(void *arg)
 	 *    the last interval.
 	 */
 	if (que->eitr_setting)
-		IXGBE_WRITE_REG(&adapter->hw, IXGBE_VTEITR(que->msix),
-		    que->eitr_setting);
+		ixv_eitr_write(que, que->eitr_setting);
 
 	que->eitr_setting = 0;
 
@@ -891,7 +891,17 @@ ixv_msix_que(void *arg)
 	else
 		newitr = (newitr / 2);
 
-	newitr |= newitr << 16;
+	/*
+	 * When RSC is used, ITR interval must be larger than RSC_DELAY.
+	 * Currently, we use 2us for RSC_DELAY. The minimum value is always
+	 * greater than 2us on 100M (and 10M?(not documented)), but it's not
+	 * on 1G and higher.
+	 */
+	if ((adapter->link_speed != IXGBE_LINK_SPEED_100_FULL)
+	    && (adapter->link_speed != IXGBE_LINK_SPEED_10_FULL)) {
+		if (newitr < IXGBE_MIN_RSC_EITR_10G1G)
+			newitr = IXGBE_MIN_RSC_EITR_10G1G;
+	}
 
 	/* save for next interrupt */
 	que->eitr_setting = newitr;
@@ -931,6 +941,21 @@ ixv_msix_mbx(void *arg)
 
 	return 1;
 } /* ixv_msix_mbx */
+
+static void
+ixv_eitr_write(struct ix_queue *que, uint32_t itr)
+{
+	struct adapter *adapter = que->adapter;
+
+	/*
+	 * Newer devices than 82598 have VF function, so this function is
+	 * simple.
+	 */
+	itr |= IXGBE_EITR_CNT_WDIS;
+
+	IXGBE_WRITE_REG(&adapter->hw, IXGBE_VTEITR(que->msix), itr);
+}
+
 
 /************************************************************************
  * ixv_media_status - Media Ioctl callback
@@ -1943,14 +1968,15 @@ ixv_configure_ivars(struct adapter *adapter)
 {
 	struct ix_queue *que = adapter->queues;
 
+	/* XXX We should sync EITR value calculation with ixgbe.c? */
+
 	for (int i = 0; i < adapter->num_queues; i++, que++) {
 		/* First the RX queue entry */
 		ixv_set_ivar(adapter, i, que->msix, 0);
 		/* ... and the TX */
 		ixv_set_ivar(adapter, i, que->msix, 1);
 		/* Set an initial value in EITR */
-		IXGBE_WRITE_REG(&adapter->hw, IXGBE_VTEITR(que->msix),
-		    IXGBE_EITR_DEFAULT);
+		ixv_eitr_write(que, IXGBE_EITR_DEFAULT);
 	}
 
 	/* For the mailbox interrupt */
