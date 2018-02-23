@@ -1,4 +1,4 @@
-/*	$NetBSD: svs.c,v 1.8 2018/02/22 13:27:18 maxv Exp $	*/
+/*	$NetBSD: svs.c,v 1.9 2018/02/23 19:39:27 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.8 2018/02/22 13:27:18 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.9 2018/02/23 19:39:27 maxv Exp $");
 
 #include "opt_svs.h"
 
@@ -92,6 +92,8 @@ __KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.8 2018/02/22 13:27:18 maxv Exp $");
  *
  * (d) Right now there is only one global LDT, and that's not compatible
  *     with USER_LDT.
+ *
+ * (e) Handle segment register faults properly.
  */
 
 bool svs_enabled __read_mostly = false;
