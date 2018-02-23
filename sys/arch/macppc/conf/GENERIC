@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.341 2018/02/23 02:54:56 sevan Exp $
+# $NetBSD: GENERIC,v 1.342 2018/02/23 03:04:01 sevan Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.341 $"
+#ident 		"GENERIC-$Revision: 1.342 $"
 
 maxusers	32
 
@@ -49,7 +49,7 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 # Alternate buffer queue strategies for better responsiveness under high
 # disk I/O load.
 #options 	BUFQ_READPRIO
-#options 	BUFQ_PRIOCSCAN
+options 	BUFQ_PRIOCSCAN
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# cheap kernel consistency checks
