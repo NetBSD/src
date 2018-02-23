@@ -1,4 +1,4 @@
-#	$NetBSD: POWERMAC,v 1.68 2017/09/22 17:56:07 macallan Exp $
+#	$NetBSD: POWERMAC,v 1.69 2018/02/23 02:54:56 sevan Exp $
 #
 # POWERMAC config file
 #
@@ -85,7 +85,6 @@ wsdisplay* at wsemuldisplaydev? console 0
 
 # ofb is deprecated, use genfb instead
 #ofb*	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
-#options 	OFB_ENABLE_CACHE	# Speed up console
 obio*	at pci? dev ? function ?
 
 nsphy*	at mii? phy ?			# NS83840 PHYs
