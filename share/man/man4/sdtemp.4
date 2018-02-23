@@ -1,4 +1,4 @@
-.\"	$NetBSD: sdtemp.4,v 1.7 2018/02/22 10:12:54 msaitoh Exp $
+.\"	$NetBSD: sdtemp.4,v 1.8 2018/02/23 16:32:44 wiz Exp $
 .\"
 .\" Copyright (c) 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -45,8 +45,7 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the
-.Tn Microchip Technology
+driver provides support for the Microchip Technology
 MCP9805/98242 and other chips that conform to JEDEC Standard 21-C section
 4.7.
 Memory module temperature sensors are optional on DDR2 and newer DIMMs.
@@ -62,64 +61,29 @@ supports temperature ranges from -256 to +255 degrees C.
 Chips supported by the
 .Nm
 driver include TSE2004av compliant devices and:
-.Pp
 .Bl -bullet -offset indent
 .It
-.Tn Analog Devices
-.Em ADT7408
+Analog Devices ADT7408
 .It
-.Tn Atmel
-.Em AT30TS00
-and
-.Em AT30TSE004
+Atmel AT30TS00 and AT30TSE004
 .It
-.Tn On semiconductor (Catalyst)
-.Em CAT34TS02 ,
-.Em CAT34TS02C ,
-.Em CAT34TS04
-and
-.Em CAT6095
+On semiconductor (Catalyst) CAT34TS02, CAT34TS02C, CAT34TS04
+and CAT6095
 .It
-.Tn Giantec Semiconductor
-.Em GT30TS00
-and
-.Em GT34TS02
+Giantec Semiconductor GT30TS00 and GT34TS02
 .It
-.Tn Integrated Deviced Technology
-.Em TSE2002B3 ,
-.Em TSE2002GB2 ,
-.Em TSE2004GB2 ,
-.Em TS3000B3 ,
-.Em TS3000GB0 ,
-.Em TS3000GB2
-and
-.Em TS30001GB2
+Integrated Deviced Technology TSE2002B3, TSE2002GB2, TSE2004GB2,
+TS3000B3, TS3000GB0, TS3000GB2, and TS30001GB2
 .It
-.Tn Maxim
-.Em MAX6604
+Maxim MAX6604
 .It
-.Tn Microchip Technology
-.Em EMC1501 .
-.Em MCP9804 ,
-.Em MCP9805 ,
-.Em MCP9843 ,
-.Em MCP98242 ,
-.Em MCP98243
-and
-.Em MCP98244
+Microchip Technology EMC1501, MCP9804, MCP9805, MCP9843, MCP98242,
+MCP98243, and MCP98244
 .It
-.Tn NXP Semiconductors
-.Em SE97
-and
-.Em SE98
+NXP Semiconductors SE97 and SE98
 .It
-.Tn STmicroelectronics
-.Em STTS424 ,
-.Em STTS424E ,
-.Em STTS2002 ,
-.Em STTS2004
-and
-.Em STTS3000
+STmicroelectronics STTS424, STTS424E, STTS2002, STTS2004, and
+STTS3000
 .El
 .Sh SEE ALSO
 .Xr envsys 4 ,
