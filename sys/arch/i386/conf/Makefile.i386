@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.188 2018/02/23 09:00:55 maxv Exp $
+#	$NetBSD: Makefile.i386,v 1.189 2018/02/23 14:16:52 maxv Exp $
 
 # Makefile for NetBSD
 #
@@ -35,7 +35,7 @@ GENASSYM_CONF=	${I386}/i386/genassym.cf
 ##
 DEFCOPTS=	-O2 -fno-omit-frame-pointer
 CPPFLAGS+=	-Di386
-CFLAGS+=	-msoft-float -fno-shrink-wrap
+CFLAGS+=	-msoft-float
 ## no-sse implies no-sse2 but not no-avx
 CFLAGS+=	-mno-mmx -mno-sse -mno-avx
 
