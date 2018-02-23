@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.340 2018/02/17 01:31:02 sevan Exp $
+# $NetBSD: GENERIC,v 1.341 2018/02/23 02:54:56 sevan Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.340 $"
+#ident 		"GENERIC-$Revision: 1.341 $"
 
 maxusers	32
 
@@ -268,10 +268,6 @@ trm*	at pci? dev ? function ?	# Tekram DC-395U/UW/F, DC-315/U SCSI
 
 # Display devices
 # ofb*	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
-# OFB_ENABLE_CACHE speeds up the console on many machines, but should
-# not be enabled on some older machines, such as the rev. A-D iMacs or any
-# O'Hare based machine that uses external cache like the PowerBook 3400c
-#options 	OFB_ENABLE_CACHE	# Speed up console in ofb
 #options 	OFB_FAKE_VGA_FB		# Allow X to mmap VGA regs
 # 
 # ofb is considered obsolete and machine-independent genfb should be used

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_rascons.c,v 1.9 2013/04/11 18:04:20 macallan Exp $	*/
+/*	$NetBSD: ofw_rascons.c,v 1.10 2018/02/23 02:54:56 sevan Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_rascons.c,v 1.9 2013/04/11 18:04:20 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_rascons.c,v 1.10 2018/02/23 02:54:56 sevan Exp $");
 
 #include "wsdisplay.h"
 
@@ -57,16 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: ofw_rascons.c,v 1.9 2013/04/11 18:04:20 macallan Exp
 
 /* we need a wsdisplay to do anything halfway useful */
 #if NWSDISPLAY > 0
-
-#if defined(PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
-int rascons_enable_cache = 0;
-#else
-#ifdef OFB_ENABLE_CACHE
-int rascons_enable_cache = 1;
-#else
-int rascons_enable_cache = 0;
-#endif
-#endif /* PPC_OEA64 */
 
 static int copy_rom_font(void);
 static struct wsdisplay_font openfirm6x11;
@@ -195,39 +185,6 @@ rascons_init_rasops(int node, struct rasops_info *ri)
 
 	if (width == -1 || height == -1 || fbaddr == 0 || fbaddr == -1)
 		return false;
-
-	/* Enable write-through cache. */
-#if defined (PPC_OEA) && !defined (PPC_OEA64) && !defined (PPC_OEA64_BRIDGE)
-	if (rascons_enable_cache) {
-		vaddr_t va;
-		/*
-		 * Let's try to find an empty 256M BAT to use
-		 */
-		for (va = SEGMENT_LENGTH; va < (USER_SR << ADDR_SR_SHFT);
-		     va += SEGMENT_LENGTH) {
-			const u_int i = BAT_VA2IDX(va);
-			const u_int n = BAT_VA2IDX(SEGMENT_LENGTH);
-			u_int j;
-			for (j = 0; j < n; j++) {
-				if (battable[i+j].batu != 0) {
-					break;
-				}
-			}
-			if (j == n) {
-				register_t batl = BATL(fbaddr & 0xf0000000,
-				    BAT_G | BAT_W | BAT_M, BAT_PP_RW);
-				register_t batu = BATL(va, BAT_BL_256M, BAT_Vs);
-				for (j = 0; j < n; j++) {
-					battable[i+j].batl = batl;
-					battable[i+j].batu = batu;
-				}
-				fbaddr &= SEGMENT_MASK;
-				fbaddr |= va;
-				break;
-			}
-		}
-	}
-#endif /* PPC_OEA64 */
 
 	/* initialize rasops */
 	ri->ri_width = width;
