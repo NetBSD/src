@@ -1,4 +1,4 @@
-/*	$NetBSD: wqinput.c,v 1.3 2017/06/02 19:10:19 para Exp $	*/
+/*	$NetBSD: wqinput.c,v 1.4 2018/02/24 07:37:09 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -25,6 +25,10 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifdef _KERNEL_OPT
+#include "opt_net_mpsafe.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -210,7 +214,9 @@ wqinput_work(struct work *wk, void *arg)
 
 	while ((work = wqinput_work_get(wwl)) != NULL) {
 		mutex_enter(softnet_lock);
+		KERNEL_LOCK_UNLESS_NET_MPSAFE();
 		wqi->wqi_input(work->ww_mbuf, work->ww_off, work->ww_proto);
+		KERNEL_UNLOCK_UNLESS_NET_MPSAFE();
 		mutex_exit(softnet_lock);
 
 		pool_put(&wqi->wqi_work_pool, work);
