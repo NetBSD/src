@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC_601,v 1.18 2018/02/23 03:04:01 sevan Exp $
+# $NetBSD: GENERIC_601,v 1.19 2018/02/24 18:58:00 sevan Exp $
 #
 # GENERIC machine description file
 # 
@@ -28,7 +28,7 @@ include 	"arch/macppc/conf/std.macppc.601"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"GENERIC-$Revision: 1.18 $"
+ident 		"GENERIC-$Revision: 1.19 $"
 
 maxusers	32
 
@@ -264,10 +264,6 @@ iic0	at cuda0		# CUDA's IIC bus
 zsc*	at obio?
 zstty*	at zsc? channel ?
 
-# awacs is disabled because on most systems (7300 - 9600 PowerMacs,
-# many kinds of G4s), very heavy load can cause the machine to lock
-# up. ONLY enable this if your machine is never under heavy load, or
-# you'd rather have audio than worry about occasional lockups.
 awacs*	at obio?			# Apple audio device
 
 # Cryptographic Devices
