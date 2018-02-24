@@ -1,4 +1,4 @@
-/*	$NetBSD: svs.c,v 1.10 2018/02/24 10:31:30 maxv Exp $	*/
+/*	$NetBSD: svs.c,v 1.11 2018/02/24 19:52:46 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.10 2018/02/24 10:31:30 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.11 2018/02/24 19:52:46 maxv Exp $");
 
 #include "opt_svs.h"
 
@@ -61,9 +61,9 @@ __KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.10 2018/02/24 10:31:30 maxv Exp $");
  * Storage. Each CPU has one UTLS page. This page has two VAs:
  *
  *  o When the user page tables are loaded in CR3, the VA to access this
- *    page is &pcpuarea->utls, defined as SVS_UTLS+UTLS_KPDIRPA in assembly.
- *    This VA is _constant_ across CPUs, but in the user page tables this
- *    VA points to the physical page of the UTLS that is _local_ to the CPU.
+ *    page is &pcpuarea->utls, defined as SVS_UTLS in assembly. This VA is
+ *    _constant_ across CPUs, but in the user page tables this VA points to
+ *    the physical page of the UTLS that is _local_ to the CPU.
  *
  *  o When the kernel page tables are loaded in CR3, the VA to access this
  *    page is ci->ci_svs_utls.
@@ -71,7 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.10 2018/02/24 10:31:30 maxv Exp $");
  * +----------------------------------------------------------------------+
  * | CPU0 Local Data                                      (Physical Page) |
  * | +------------------+                                 +-------------+ |
- * | | User Page Tables | SVS_UTLS+UTLS_KPDIRPA --------> | cpu0's UTLS | |
+ * | | User Page Tables | SVS_UTLS ---------------------> | cpu0's UTLS | |
  * | +------------------+                                 +-------------+ |
  * +-------------------------------------------------------------^--------+
  *                                                               |
@@ -80,7 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.10 2018/02/24 10:31:30 maxv Exp $");
  * +----------------------------------------------------------------------+ |
  * | CPU1 Local Data                                      (Physical Page) | |
  * | +------------------+                                 +-------------+ | |
- * | | User Page Tables | SVS_UTLS+UTLS_KPDIRPA --------> | cpu1's UTLS | | |
+ * | | User Page Tables | SVS_UTLS ---------------------> | cpu1's UTLS | | |
  * | +------------------+                                 +-------------+ | |
  * +-------------------------------------------------------------^--------+ |
  *                                                               |          |
