@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mpls.c,v 1.16 2014/07/17 10:46:57 bouyer Exp $ */
+/*	$NetBSD: if_mpls.c,v 1.16.6.1 2018/02/24 18:29:36 snj Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.16 2014/07/17 10:46:57 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.16.6.1 2018/02/24 18:29:36 snj Exp $");
 
 #include "opt_inet.h"
 #include "opt_mpls.h"
@@ -92,12 +92,12 @@ static int mpls_send_frame(struct mbuf *, struct ifnet *, struct rtentry *);
 static int mpls_lse(struct mbuf *);
 
 #ifdef INET
-static int mpls_unlabel_inet(struct mbuf *);
+static struct mbuf *mpls_unlabel_inet(struct mbuf *, int *error);
 static struct mbuf *mpls_label_inet(struct mbuf *, union mpls_shim *, uint);
 #endif
 
 #ifdef INET6
-static int mpls_unlabel_inet6(struct mbuf *);
+static struct mbuf *mpls_unlabel_inet6(struct mbuf *, int *error);
 static struct mbuf *mpls_label_inet6(struct mbuf *, union mpls_shim *, uint);
 #endif
 
@@ -321,6 +321,12 @@ mpls_lse(struct mbuf *m)
 	uint psize = sizeof(struct sockaddr_mpls);
 	bool push_back_alert = false;
 
+	/* If we're not accepting MPLS frames, leave now. */
+	if (!mpls_frame_accept) {
+		error = EINVAL;
+		goto done;
+	}
+
 	if (m->m_len < sizeof(union mpls_shim) &&
 	    (m = m_pullup(m, sizeof(union mpls_shim))) == NULL)
 		goto done;
@@ -329,21 +335,19 @@ mpls_lse(struct mbuf *m)
 	dst.smpls_family = AF_MPLS;
 	dst.smpls_addr.s_addr = ntohl(mtod(m, union mpls_shim *)->s_addr);
 
-	/* Check if we're accepting MPLS Frames */
 	error = EINVAL;
-	if (!mpls_frame_accept)
-		goto done;
 
 	/* TTL decrement */
 	if ((m = mpls_ttl_dec(m)) == NULL)
 		goto done;
 
 	/* RFC 4182 */
-	if (mpls_rfc4182 != 0)
-		while((dst.smpls_addr.shim.label == MPLS_LABEL_IPV4NULL ||
+	if (mpls_rfc4182 != 0) {
+		while ((dst.smpls_addr.shim.label == MPLS_LABEL_IPV4NULL ||
 		    dst.smpls_addr.shim.label == MPLS_LABEL_IPV6NULL) &&
 		    __predict_false(dst.smpls_addr.shim.bos == 0))
 			TRIM_LABEL;
+	}
 
 	/* RFC 3032 Section 2.1 Page 4 */
 	if (__predict_false(dst.smpls_addr.shim.label == MPLS_LABEL_RTALERT) &&
@@ -358,15 +362,17 @@ mpls_lse(struct mbuf *m)
 #ifdef INET
 		case MPLS_LABEL_IPV4NULL:
 			/* Pop shim and push mbuf to IP stack */
-			if (dst.smpls_addr.shim.bos)
-				error = mpls_unlabel_inet(m);
+			if (dst.smpls_addr.shim.bos) {
+				m = mpls_unlabel_inet(m, &error);
+			}
 			break;
 #endif
 #ifdef INET6
 		case MPLS_LABEL_IPV6NULL:
 			/* Pop shim and push mbuf to IPv6 stack */
-			if (dst.smpls_addr.shim.bos)
-				error = mpls_unlabel_inet6(m);
+			if (dst.smpls_addr.shim.bos) {
+				m = mpls_unlabel_inet6(m, &error);
+			}
 			break;
 #endif
 		case MPLS_LABEL_RTALERT:	/* Yeah, I'm all alerted */
@@ -420,8 +426,10 @@ mpls_lse(struct mbuf *m)
 		tshim.shim.bos = tshim.shim.exp = 0;
 		tshim.shim.ttl = mpls_defttl;
 		if (tshim.shim.label != MPLS_LABEL_IMPLNULL &&
-		    ((m = mpls_prepend_shim(m, &tshim)) == NULL))
-			return ENOBUFS;
+		    ((m = mpls_prepend_shim(m, &tshim)) == NULL)) {
+			error = ENOBUFS;
+			goto done;
+		}
 		psize += sizeof(tshim);
 	}
 
@@ -431,8 +439,10 @@ mpls_lse(struct mbuf *m)
 		tshim.s_addr = MPLS_LABEL_RTALERT;
 		tshim.shim.bos = tshim.shim.exp = 0;
 		tshim.shim.ttl = mpls_defttl;
-		if ((m = mpls_prepend_shim(m, &tshim)) == NULL)
-			return ENOBUFS;
+		if ((m = mpls_prepend_shim(m, &tshim)) == NULL) {
+			error = ENOBUFS;
+			goto done;
+		}
 	}
 
 	error = mpls_send_frame(m, rt->rt_ifp, rt);
@@ -480,18 +490,15 @@ mpls_send_frame(struct mbuf *m, struct ifnet *ifp, struct rtentry *rt)
 	return 0;
 }
 
-
-
 #ifdef INET
-static int
-mpls_unlabel_inet(struct mbuf *m)
+static struct mbuf *
+mpls_unlabel_inet(struct mbuf *m, int *error)
 {
 	struct ip *iph;
 	union mpls_shim *ms;
 	int iphlen;
 
 	if (mpls_mapttl_inet || mpls_mapprec_inet) {
-
 		/* get shim info */
 		ms = mtod(m, union mpls_shim *);
 		ms->s_addr = ntohl(ms->s_addr);
@@ -500,23 +507,29 @@ mpls_unlabel_inet(struct mbuf *m)
 		m_adj(m, sizeof(union mpls_shim));
 
 		/* get ip header */
-		if (m->m_len < sizeof (struct ip) &&
-		    (m = m_pullup(m, sizeof(struct ip))) == NULL)
-			return ENOBUFS;
+		if (m->m_len < sizeof(struct ip) &&
+		    (m = m_pullup(m, sizeof(struct ip))) == NULL) {
+			*error = ENOBUFS;
+			return NULL;
+		}
+
 		iph = mtod(m, struct ip *);
 		iphlen = iph->ip_hl << 2;
 
 		/* get it all */
 		if (m->m_len < iphlen) {
-			if ((m = m_pullup(m, iphlen)) == NULL)
-				return ENOBUFS;
+			if ((m = m_pullup(m, iphlen)) == NULL) {
+				*error = ENOBUFS;
+				return NULL;
+			}
 			iph = mtod(m, struct ip *);
 		}
 
 		/* check ipsum */
 		if (in_cksum(m, iphlen) != 0) {
 			m_freem(m);
-			return EINVAL;
+			*error = EINVAL;
+			return NULL;
 		}
 
 		/* set IP ttl from MPLS ttl */
@@ -532,15 +545,19 @@ mpls_unlabel_inet(struct mbuf *m)
 		/* reset ipsum because we modified TTL and TOS */
 		iph->ip_sum = 0;
 		iph->ip_sum = in_cksum(m, iphlen);
-	} else
+	} else {
 		m_adj(m, sizeof(union mpls_shim));
+	}
 
 	/* Put it on IP queue */
 	if (__predict_false(!pktq_enqueue(ip_pktq, m, 0))) {
 		m_freem(m);
-		return ENOBUFS;
+		*error = ENOBUFS;
+		return NULL;
 	}
-	return 0;
+
+	*error = 0;
+	return m;
 }
 
 /*
@@ -552,9 +569,11 @@ mpls_label_inet(struct mbuf *m, union mpls_shim *ms, uint offset)
 	struct ip iphdr;
 
 	if (mpls_mapttl_inet || mpls_mapprec_inet) {
-		if ((m->m_len < sizeof(struct ip)) &&
+		/* XXX Maybe just check m->m_pkthdr.len instead? */
+		if ((m->m_len < offset + sizeof(struct ip)) &&
 		    (m = m_pullup(m, offset + sizeof(struct ip))) == 0)
-			return NULL; /* XXX */
+			return NULL;
+
 		m_copydata(m, offset, sizeof(struct ip), &iphdr);
 
 		/* Map TTL */
@@ -571,13 +590,11 @@ mpls_label_inet(struct mbuf *m, union mpls_shim *ms, uint offset)
 
 	return m;
 }
-
 #endif	/* INET */
 
 #ifdef INET6
-
-static int
-mpls_unlabel_inet6(struct mbuf *m)
+static struct mbuf *
+mpls_unlabel_inet6(struct mbuf *m, int *error)
 {
 	struct ip6_hdr *ip6hdr;
 	union mpls_shim ms;
@@ -588,21 +605,27 @@ mpls_unlabel_inet6(struct mbuf *m)
 		m_adj(m, sizeof(union mpls_shim));
 
 		if (m->m_len < sizeof (struct ip6_hdr) &&
-		    (m = m_pullup(m, sizeof(struct ip6_hdr))) == 0)
-			return ENOBUFS;
+		    (m = m_pullup(m, sizeof(struct ip6_hdr))) == 0) {
+			*error = ENOBUFS;
+			return NULL;
+		}
 		ip6hdr = mtod(m, struct ip6_hdr *);
 
 		/* Because we just decremented this in mpls_lse */
 		ip6hdr->ip6_hlim = ms.shim.ttl + 1;
-	} else
+	} else {
 		m_adj(m, sizeof(union mpls_shim));
+	}
 
 	/* Put it back on IPv6 queue. */
 	if (__predict_false(!pktq_enqueue(ip6_pktq, m, 0))) {
 		m_freem(m);
-		return ENOBUFS;
+		*error = ENOBUFS;
+		return NULL;
 	}
-	return 0;
+
+	*error = 0;
+	return m;
 }
 
 static struct mbuf *
@@ -611,9 +634,11 @@ mpls_label_inet6(struct mbuf *m, union mpls_shim *ms, uint offset)
 	struct ip6_hdr ip6h;
 
 	if (mpls_mapttl_inet6 || mpls_mapclass_inet6) {
-		if (m->m_len < sizeof(struct ip6_hdr) &&
+		/* XXX Maybe just check m->m_pkthdr.len instead? */
+		if ((m->m_len < offset + sizeof(struct ip6_hdr)) &&
 		    (m = m_pullup(m, offset + sizeof(struct ip6_hdr))) == 0)
 			return NULL;
+
 		m_copydata(m, offset, sizeof(struct ip6_hdr), &ip6h);
 
 		if (mpls_mapttl_inet6)
@@ -628,14 +653,13 @@ mpls_label_inet6(struct mbuf *m, union mpls_shim *ms, uint offset)
 
 	return m;
 }
-
 #endif	/* INET6 */
 
 static struct mbuf *
-mpls_prepend_shim(struct mbuf *m, union mpls_shim *ms) 
+mpls_prepend_shim(struct mbuf *m, union mpls_shim *ms)
 {
 	union mpls_shim *shim; 
- 
+
 	M_PREPEND(m, sizeof(*ms), M_DONTWAIT);
 	if (m == NULL)
 		return NULL;
