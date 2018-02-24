@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.192 2018/02/14 05:29:39 maxv Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.193 2018/02/24 07:37:09 ozaki-r Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.192 2018/02/14 05:29:39 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.193 2018/02/24 07:37:09 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -218,7 +218,7 @@ ip6intr(void *arg __unused)
 {
 	struct mbuf *m;
 
-	SOFTNET_LOCK_UNLESS_NET_MPSAFE();
+	SOFTNET_KERNEL_LOCK_UNLESS_NET_MPSAFE();
 	while ((m = pktq_dequeue(ip6_pktq)) != NULL) {
 		struct psref psref;
 		struct ifnet *rcvif = m_get_rcvif_psref(m, &psref);
@@ -238,7 +238,7 @@ ip6intr(void *arg __unused)
 		ip6_input(m, rcvif);
 		m_put_rcvif_psref(rcvif, &psref);
 	}
-	SOFTNET_UNLOCK_UNLESS_NET_MPSAFE();
+	SOFTNET_KERNEL_UNLOCK_UNLESS_NET_MPSAFE();
 }
 
 void

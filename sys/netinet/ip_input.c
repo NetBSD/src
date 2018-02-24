@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.375 2018/02/09 18:31:52 maxv Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.376 2018/02/24 07:37:09 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.375 2018/02/09 18:31:52 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.376 2018/02/24 07:37:09 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -404,11 +404,11 @@ ipintr(void *arg __unused)
 
 	KASSERT(cpu_softintr_p());
 
-	SOFTNET_LOCK_UNLESS_NET_MPSAFE();
+	SOFTNET_KERNEL_LOCK_UNLESS_NET_MPSAFE();
 	while ((m = pktq_dequeue(ip_pktq)) != NULL) {
 		ip_input(m);
 	}
-	SOFTNET_UNLOCK_UNLESS_NET_MPSAFE();
+	SOFTNET_KERNEL_UNLOCK_UNLESS_NET_MPSAFE();
 }
 
 /*
