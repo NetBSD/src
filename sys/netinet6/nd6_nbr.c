@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.147 2018/02/24 07:40:40 ozaki-r Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.148 2018/02/24 07:53:15 ozaki-r Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.147 2018/02/24 07:40:40 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.148 2018/02/24 07:53:15 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1231,15 +1231,10 @@ nd6_dad_timer(struct dadq *dp)
 
 	ifa = dp->dad_ifa;
 	if (ifa == NULL) {
-		/* ifa is being deleted. DAD should be freed too. */
-		if (callout_pending(&dp->dad_timer_ch)) {
-			/*
-			 * The callout is scheduled again, so we cannot destroy
-			 * dp in this run.
-			 */
-			goto done;
-		}
-		need_free = true;
+		/*
+		 * ifa is being deleted and the callout is already scheduled
+		 * again, so we cannot destroy dp in this run.
+		 */
 		goto done;
 	}
 
