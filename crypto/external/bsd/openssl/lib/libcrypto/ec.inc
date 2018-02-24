@@ -1,4 +1,4 @@
-#	$NetBSD: ec.inc,v 1.5 2018/02/18 23:41:44 christos Exp $
+#	$NetBSD: ec.inc,v 1.6 2018/02/24 21:45:57 christos Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -38,15 +38,17 @@ ecp_nistp224.c \
 ecp_nistp256.c \
 ecp_nistp521.c \
 ecp_nistputil.c \
-ecp_nistz256.c \
 ecp_oct.c \
 ecp_smpl.c \
 ecx_meth.c
 
 SRCS += ${EC_SRCS}
 
+.if defined(ECNI)
 COPTS.ecp_nistz256.c+=-Wno-error=stack-protector
+SRCS+= ecp_nistz256.c
+.endif
 
 .for cryptosrc in ${EC_SRCS}
-CPPFLAGS.${cryptosrc} = -I${OPENSSLSRC}/crypto/ec
+CPPFLAGS.${cryptosrc} = -I${OPENSSLSRC}/crypto/ec ${ECCPPFLAGS}
 .endfor
