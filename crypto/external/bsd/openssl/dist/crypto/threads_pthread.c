@@ -150,12 +150,15 @@ int CRYPTO_THREAD_compare_id(CRYPTO_THREAD_ID a, CRYPTO_THREAD_ID b)
 
 int CRYPTO_atomic_add(int *val, int amount, int *ret, CRYPTO_RWLOCK *lock)
 {
+#ifdef notyet
+// We don't provide yet __atomic_is_lock_free
 # if defined(__GNUC__) && defined(__ATOMIC_ACQ_REL)
     if (__atomic_is_lock_free(sizeof(*val), val)) {
         *ret = __atomic_add_fetch(val, amount, __ATOMIC_ACQ_REL);
         return 1;
     }
 # endif
+#endif
     if (!CRYPTO_THREAD_write_lock(lock))
         return 0;
 
