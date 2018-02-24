@@ -1,4 +1,4 @@
-/*	$NetBSD: svs.c,v 1.9 2018/02/23 19:39:27 maxv Exp $	*/
+/*	$NetBSD: svs.c,v 1.10 2018/02/24 10:31:30 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.9 2018/02/23 19:39:27 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.10 2018/02/24 10:31:30 maxv Exp $");
 
 #include "opt_svs.h"
 
@@ -52,48 +52,179 @@ __KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.9 2018/02/23 19:39:27 maxv Exp $");
  * Separate Virtual Space
  *
  * A per-cpu L4 page is maintained in ci_svs_updirpa. During each context
- * switch to a user pmap, updirpa is populated with the entries of the new
- * pmap, minus what we don't want to have mapped in userland.
+ * switch to a user pmap, the lower half of updirpa is populated with the
+ * entries containing the userland pages.
  *
- * Note on locking/synchronization here:
+ * ~~~~~~~~~~ The UTLS Page ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * 
+ * We use a special per-cpu page that we call UTLS, for User Thread Local
+ * Storage. Each CPU has one UTLS page. This page has two VAs:
  *
- * (a) Touching ci_svs_updir without holding ci_svs_mtx first is *not*
- *     allowed.
+ *  o When the user page tables are loaded in CR3, the VA to access this
+ *    page is &pcpuarea->utls, defined as SVS_UTLS+UTLS_KPDIRPA in assembly.
+ *    This VA is _constant_ across CPUs, but in the user page tables this
+ *    VA points to the physical page of the UTLS that is _local_ to the CPU.
  *
- * (b) pm_kernel_cpus contains the set of CPUs that have the pmap loaded
- *     in their CR3 register. It must *not* be replaced by pm_cpus.
+ *  o When the kernel page tables are loaded in CR3, the VA to access this
+ *    page is ci->ci_svs_utls.
  *
- * (c) When a context switch on the current CPU is made from a user LWP
- *     towards a kernel LWP, CR3 is not updated. Therefore, the pmap's
- *     pm_kernel_cpus still contains the current CPU. It implies that the
- *     remote CPUs that execute other threads of the user process we just
- *     left will keep synchronizing us against their changes.
+ * +----------------------------------------------------------------------+
+ * | CPU0 Local Data                                      (Physical Page) |
+ * | +------------------+                                 +-------------+ |
+ * | | User Page Tables | SVS_UTLS+UTLS_KPDIRPA --------> | cpu0's UTLS | |
+ * | +------------------+                                 +-------------+ |
+ * +-------------------------------------------------------------^--------+
+ *                                                               |
+ *                                                               +----------+
+ *                                                                          |
+ * +----------------------------------------------------------------------+ |
+ * | CPU1 Local Data                                      (Physical Page) | |
+ * | +------------------+                                 +-------------+ | |
+ * | | User Page Tables | SVS_UTLS+UTLS_KPDIRPA --------> | cpu1's UTLS | | |
+ * | +------------------+                                 +-------------+ | |
+ * +-------------------------------------------------------------^--------+ |
+ *                                                               |          |
+ *   +------------------+                 /----------------------+          |
+ *   | Kern Page Tables | ci->ci_svs_utls                                   |
+ *   +------------------+                 \---------------------------------+
  *
- * List of areas that are removed from userland:
- *     PTE Space         [OK]
- *     Direct Map        [OK]
- *     Remote PCPU Areas [OK]
- *     Kernel Heap       [OK]
- *     Kernel Image      [OK]
+ * The goal of the UTLS page is to provide an area where we can store whatever
+ * we want, in a way that it is accessible both when the Kernel and when the
+ * User page tables are loaded in CR3.
  *
- * TODO:
+ * We store in the UTLS page three 64bit values:
  *
- * (a) The NMI stack is not double-entered. Therefore if we ever receive
- *     an NMI and leave it, the content of the stack will be visible to
- *     userland (via Meltdown). Normally we never leave NMIs, unless a
- *     privileged user launched PMCs. That's unlikely to happen, our PMC
- *     support is pretty minimal.
+ *  o UTLS_KPDIRPA: the value we must put in CR3 in order to load the kernel
+ *    page tables.
  *
- * (b) Enable SVS depending on the CPU model, and add a sysctl to disable
- *     it dynamically.
+ *  o UTLS_SCRATCH: a dummy place where we temporarily store a value during
+ *    the syscall entry procedure.
  *
- * (c) Narrow down the entry points: hide the 'jmp handler' instructions.
- *     This makes sense on GENERIC_KASLR kernels.
+ *  o UTLS_RSP0: the value we must put in RSP in order to have a stack where
+ *    we can push the register states. This is used only during the syscall
+ *    entry procedure, because there the CPU does not automatically switch
+ *    RSP (it does not use the TSS.rsp0 mechanism described below).
  *
- * (d) Right now there is only one global LDT, and that's not compatible
- *     with USER_LDT.
+ * ~~~~~~~~~~ The Stack Switching Mechanism Without SVS ~~~~~~~~~~~~~~~~~~~~~~
  *
- * (e) Handle segment register faults properly.
+ * The kernel stack is per-lwp (pcb_rsp0). When doing a context switch between
+ * two user LWPs, the kernel updates TSS.rsp0 (which is per-cpu) to point to
+ * the stack of the new LWP. Then the execution continues. At some point, the
+ * user LWP we context-switched to will perform a syscall or will receive an
+ * interrupt. There, the CPU will automatically read TSS.rsp0 and use it as a
+ * stack. The kernel then pushes the register states on this stack, and
+ * executes in kernel mode normally.
+ *
+ * TSS.rsp0 is used by the CPU only during ring3->ring0 transitions. Therefore,
+ * when an interrupt is received while we were in kernel mode, the CPU does not
+ * read TSS.rsp0. Instead, it just uses the current stack.
+ *
+ * ~~~~~~~~~~ The Stack Switching Mechanism With SVS ~~~~~~~~~~~~~~~~~~~~~~~~~
+ *
+ * In the pcpu_area structure, pointed to by the "pcpuarea" variable, each CPU
+ * has a two-page rsp0 entry (pcpuarea->ent[cid].rsp0). These two pages do
+ * _not_ have associated physical addresses. They are only two VAs.
+ *
+ * The first page is unmapped and acts as a redzone. The second page is
+ * dynamically kentered into the highest page of the real per-lwp kernel stack;
+ * but pay close attention, it is kentered _only_ in the user page tables.
+ * That is to say, the VA of this second page is mapped when the user page
+ * tables are loaded, but not mapped when the kernel page tables are loaded.
+ *
+ * During a context switch, svs_lwp_switch() gets called first. This function
+ * does the kenter job described above, not in the kernel page tables (that
+ * are currently loaded), but in the user page tables (that are not loaded).
+ * 
+ *           VIRTUAL ADDRESSES                     PHYSICAL ADDRESSES
+ *
+ * +-----------------------------+
+ * |      KERNEL PAGE TABLES     |
+ * |    +-------------------+    |                +-------------------+
+ * |    | pcb_rsp0 (page 0) | ------------------> | pcb_rsp0 (page 0) |
+ * |    +-------------------+    |                +-------------------+
+ * |    | pcb_rsp0 (page 1) | ------------------> | pcb_rsp0 (page 1) |
+ * |    +-------------------+    |                +-------------------+
+ * |    | pcb_rsp0 (page 2) | ------------------> | pcb_rsp0 (page 2) |
+ * |    +-------------------+    |                +-------------------+
+ * |    | pcb_rsp0 (page 3) | ------------------> | pcb_rsp0 (page 3) |
+ * |    +-------------------+    |            +-> +-------------------+
+ * +-----------------------------+            |
+ *                                            |
+ * +---------------------------------------+  |
+ * |           USER PAGE TABLES            |  |
+ * | +----------------------------------+  |  |
+ * | | pcpuarea->ent[cid].rsp0 (page 0) |  |  |
+ * | +----------------------------------+  |  |
+ * | | pcpuarea->ent[cid].rsp0 (page 1) | ----+
+ * | +----------------------------------+  |
+ * +---------------------------------------+
+ *
+ * After svs_lwp_switch() gets called, we set pcpuarea->ent[cid].rsp0 (page 1)
+ * in TSS.rsp0. Later, when returning to userland on the lwp we context-
+ * switched to, we will load the user page tables and execute in userland
+ * normally.
+ *
+ * Next time an interrupt or syscall is received, the CPU will automatically
+ * use TSS.rsp0 as a stack. Here it is executing with the user page tables
+ * loaded, and therefore TSS.rsp0 is _mapped_.
+ *
+ * As part of the kernel entry procedure, we now switch CR3 to load the kernel
+ * page tables. Here, we are still using the stack pointer we set in TSS.rsp0.
+ *
+ * Remember that it was only one page of stack which was mapped only in the
+ * user page tables. We just switched to the kernel page tables, so we must
+ * update RSP to be the real per-lwp kernel stack (pcb_rsp0). And we do so,
+ * without touching the stack (since it is now unmapped, touching it would
+ * fault).
+ *
+ * After we updated RSP, we can continue execution exactly as in the non-SVS
+ * case. We don't need to copy the values the CPU pushed on TSS.rsp0: even if
+ * we updated RSP to a totally different VA, this VA points to the same
+ * physical page as TSS.rsp0. So in the end, the values the CPU pushed are
+ * still here even with the new RSP.
+ *
+ * Thanks to this double-kenter optimization, we don't need to copy the
+ * trapframe during each user<->kernel transition.
+ *
+ * ~~~~~~~~~~ Notes On Locking And Synchronization ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ *
+ *  o Touching ci_svs_updir without holding ci_svs_mtx first is *not*
+ *    allowed.
+ *
+ *  o pm_kernel_cpus contains the set of CPUs that have the pmap loaded
+ *    in their CR3 register. It must *not* be replaced by pm_cpus.
+ *
+ *  o When a context switch on the current CPU is made from a user LWP
+ *    towards a kernel LWP, CR3 is not updated. Therefore, the pmap's
+ *    pm_kernel_cpus still contains the current CPU. It implies that the
+ *    remote CPUs that execute other threads of the user process we just
+ *    left will keep synchronizing us against their changes.
+ *
+ * ~~~~~~~~~~ List Of Areas That Are Removed From Userland ~~~~~~~~~~~~~~~~~~~
+ *
+ *  o PTE Space
+ *  o Direct Map
+ *  o Remote PCPU Areas
+ *  o Kernel Heap
+ *  o Kernel Image
+ *
+ * ~~~~~~~~~~ Todo List ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ *
+ * Ordered from highest priority to lowest:
+ *
+ *  o Handle segment register faults properly.
+ *
+ *  o The NMI stack is not double-entered. Therefore if we ever receive an NMI
+ *    and leave it, the content of the stack will be visible to userland (via
+ *    Meltdown). Normally we never leave NMIs, unless a privileged user
+ *    launched PMCs. That's unlikely to happen, our PMC support is pretty
+ *    minimal, and privileged only.
+ *
+ *  o Narrow down the entry points: hide the 'jmp handler' instructions. This
+ *    makes sense on GENERIC_KASLR kernels.
+ *
+ *  o Right now there is only one global LDT, and that's not compatible with
+ *    USER_LDT.
  */
 
 bool svs_enabled __read_mostly = false;
@@ -225,7 +356,7 @@ svs_utls_init(struct cpu_info *ci)
 	paddr_t pa;
 	vaddr_t va;
 
-	/* Create levels L4, L3 and L2. */
+	/* Create levels L4, L3 and L2 of the UTLS page. */
 	pd = svs_tree_add(ci, utlsva);
 
 	/* Allocate L1. */
@@ -247,7 +378,8 @@ svs_utls_init(struct cpu_info *ci)
 
 	/*
 	 * Now, allocate a VA in the kernel map, that points to the UTLS
-	 * page.
+	 * page. After that, the UTLS page will be accessible in kernel
+	 * mode via ci_svs_utls.
 	 */
 	va = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
 	    UVM_KMF_VAONLY|UVM_KMF_NOWAIT);
