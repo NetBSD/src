@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.146 2018/02/24 07:38:05 ozaki-r Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.147 2018/02/24 07:40:40 ozaki-r Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.146 2018/02/24 07:38:05 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.147 2018/02/24 07:40:40 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -84,7 +84,7 @@ static void nd6_dad_timer(struct dadq *);
 static void nd6_dad_ns_output(struct dadq *, struct ifaddr *);
 static void nd6_dad_ns_input(struct ifaddr *);
 static void nd6_dad_na_input(struct ifaddr *);
-static void nd6_dad_duplicated(struct ifaddr *);
+static void nd6_dad_duplicated(struct dadq *);
 
 static int dad_ignore_ns = 0;	/* ignore NS in DAD - specwise incorrect*/
 static int dad_maxtry = 15;	/* max # of *tries* to transmit DAD packet */
@@ -1092,10 +1092,13 @@ nd6_dad_starttimer(struct dadq *dp, int ticks)
 static void
 nd6_dad_destroytimer(struct dadq *dp)
 {
+	struct ifaddr *ifa;
 
 	TAILQ_REMOVE(&dadq, dp, dad_list);
 	/* Request the timer to destroy dp. */
+	ifa = dp->dad_ifa;
 	dp->dad_ifa = NULL;
+	ifafree(ifa);
 	callout_reset(&dp->dad_timer_ch, 0,
 	    (void (*)(void *))nd6_dad_timer, dp);
 }
@@ -1212,8 +1215,6 @@ nd6_dad_stop(struct ifaddr *ifa)
 	nd6_dad_destroytimer(dp);
 
 	mutex_exit(&nd6_dad_lock);
-
-	ifafree(ifa);
 }
 
 static void
@@ -1315,6 +1316,9 @@ nd6_dad_timer(struct dadq *dp)
 		}
 	}
 done:
+	if (duplicate)
+		nd6_dad_duplicated(dp);
+
 	mutex_exit(&nd6_dad_lock);
 
 	if (need_free) {
@@ -1324,29 +1328,22 @@ done:
 			ifafree(ifa);
 	}
 
-	if (duplicate)
-		nd6_dad_duplicated(ifa);
-
 	SOFTNET_KERNEL_UNLOCK_UNLESS_NET_MPSAFE();
 }
 
 static void
-nd6_dad_duplicated(struct ifaddr *ifa)
+nd6_dad_duplicated(struct dadq *dp)
 {
-	struct in6_ifaddr *ia = (struct in6_ifaddr *)ifa;
+	struct ifaddr *ifa = dp->dad_ifa;
+	struct in6_ifaddr *ia;
 	struct ifnet *ifp;
-	struct dadq *dp;
 	char ip6buf[INET6_ADDRSTRLEN];
 
-	mutex_enter(&nd6_dad_lock);
-	dp = nd6_dad_find(ifa);
-	if (dp == NULL) {
-		mutex_exit(&nd6_dad_lock);
-		/* DAD seems to be stopping, so do nothing. */
-		return;
-	}
+	KASSERT(mutex_owned(&nd6_dad_lock));
+	KASSERT(ifa != NULL);
 
 	ifp = ifa->ifa_ifp;
+	ia = (struct in6_ifaddr *)ifa;
 	log(LOG_ERR, "%s: DAD detected duplicate IPv6 address %s: "
 	    "NS in/out=%d/%d, NA in=%d\n",
 	    if_name(ifp), IN6_PRINT(ip6buf, &ia->ia_addr.sin6_addr),
@@ -1397,10 +1394,6 @@ nd6_dad_duplicated(struct ifaddr *ifa)
 
 	/* We are done with DAD, with duplicated address found. (failure) */
 	nd6_dad_destroytimer(dp);
-
-	mutex_exit(&nd6_dad_lock);
-
-	ifafree(ifa);
 }
 
 static void
@@ -1465,9 +1458,7 @@ nd6_dad_ns_input(struct ifaddr *ifa)
 	/* XXX more checks for loopback situation - see nd6_dad_timer too */
 
 	if (duplicate) {
-		dp = NULL;	/* will be freed in nd6_dad_duplicated() */
-		mutex_exit(&nd6_dad_lock);
-		nd6_dad_duplicated(ifa);
+		nd6_dad_duplicated(dp);
 	} else {
 		/*
 		 * not sure if I got a duplicate.
@@ -1475,8 +1466,8 @@ nd6_dad_ns_input(struct ifaddr *ifa)
 		 */
 		if (dp)
 			dp->dad_ns_icount++;
-		mutex_exit(&nd6_dad_lock);
 	}
+	mutex_exit(&nd6_dad_lock);
 }
 
 static void
@@ -1490,8 +1481,9 @@ nd6_dad_na_input(struct ifaddr *ifa)
 	dp = nd6_dad_find(ifa);
 	if (dp)
 		dp->dad_na_icount++;
-	mutex_exit(&nd6_dad_lock);
 
 	/* remove the address. */
-	nd6_dad_duplicated(ifa);
+	nd6_dad_duplicated(dp);
+
+	mutex_exit(&nd6_dad_lock);
 }
