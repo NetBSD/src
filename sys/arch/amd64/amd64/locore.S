@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.155 2018/02/22 14:57:11 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.156 2018/02/24 17:12:10 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1358,6 +1358,7 @@ END(lwp_trampoline)
  * Entry points of the 'syscall' instruction, 64bit and 32bit mode.
  */
 
+#define SP(x)	(x)-(TF_SS+8)(%rax)
 
 .macro	SYSCALL_ENTRY	name,is_svs
 IDTVEC(\name)
@@ -1376,39 +1377,31 @@ IDTVEC(\name)
 	 */
 	swapgs
 
-#define SP(x,reg)	(x)-(TF_SS+8)(reg)
-
+	/* Get the LWP's kernel stack pointer in %rax */
 	.if	\is_svs
 		movq	%rax,SVS_UTLS+UTLS_SCRATCH
 		movq	SVS_UTLS+UTLS_RSP0,%rax
-
-		/* Make stack look like an 'int nn' frame */
-		movq	$(LSEL(LUDATA_SEL, SEL_UPL)),SP(TF_SS,%rax)	/* user %ss */
-		movq	%rsp,SP(TF_RSP,%rax)				/* user %rsp */
-		movq	%r11,SP(TF_RFLAGS,%rax)				/* user %rflags */
-		movq	$(LSEL(LUCODE_SEL, SEL_UPL)),SP(TF_CS,%rax)	/* user %cs */
-		movq	%rcx,SP(TF_RIP,%rax)				/* user %rip */
-		leaq	SP(0,%rax),%rsp			/* %rsp now valid after frame */
-
-		movq	SVS_UTLS+UTLS_SCRATCH,%rax
 	.else
-		movq	%r15,CPUVAR(SCRATCH)
-		movq	CPUVAR(CURLWP),%r15
-		movq	L_PCB(%r15),%r15
-		movq	PCB_RSP0(%r15),%r15	/* LWP's kernel stack pointer */
-
-		/* Make stack look like an 'int nn' frame */
-		movq	$(LSEL(LUDATA_SEL, SEL_UPL)),SP(TF_SS,%r15)	/* user %ss */
-		movq	%rsp,SP(TF_RSP,%r15)				/* user %rsp */
-		movq	%r11,SP(TF_RFLAGS,%r15)				/* user %rflags */
-		movq	$(LSEL(LUCODE_SEL, SEL_UPL)),SP(TF_CS,%r15)	/* user %cs */
-		movq	%rcx,SP(TF_RIP,%r15)				/* user %rip */
-		leaq	SP(0,%r15),%rsp			/* %rsp now valid after frame */
-
-		movq	CPUVAR(SCRATCH),%r15
+		movq	%rax,CPUVAR(SCRATCH)
+		movq	CPUVAR(CURLWP),%rax
+		movq	L_PCB(%rax),%rax
+		movq	PCB_RSP0(%rax),%rax
 	.endif
 
-#undef SP
+	/* Make stack look like an 'int nn' frame */
+	movq	$(LSEL(LUDATA_SEL, SEL_UPL)),SP(TF_SS)	/* user %ss */
+	movq	%rsp,SP(TF_RSP)				/* user %rsp */
+	movq	%r11,SP(TF_RFLAGS)			/* user %rflags */
+	movq	$(LSEL(LUCODE_SEL, SEL_UPL)),SP(TF_CS)	/* user %cs */
+	movq	%rcx,SP(TF_RIP)				/* user %rip */
+	leaq	SP(0),%rsp		/* %rsp now valid after frame */
+
+	/* Restore %rax */
+	.if	\is_svs
+		movq	SVS_UTLS+UTLS_SCRATCH,%rax
+	.else
+		movq	CPUVAR(SCRATCH),%rax
+	.endif
 
 	movq	$2,TF_ERR(%rsp)		/* syscall instruction size */
 	movq	$T_ASTFLT,TF_TRAPNO(%rsp)
