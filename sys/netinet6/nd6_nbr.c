@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.145 2018/02/02 10:49:01 maxv Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.146 2018/02/24 07:38:05 ozaki-r Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.145 2018/02/02 10:49:01 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.146 2018/02/24 07:38:05 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1484,8 +1484,7 @@ nd6_dad_na_input(struct ifaddr *ifa)
 {
 	struct dadq *dp;
 
-	if (ifa == NULL)
-		panic("ifa == NULL in nd6_dad_na_input");
+	KASSERT(ifa != NULL);
 
 	mutex_enter(&nd6_dad_lock);
 	dp = nd6_dad_find(ifa);
