@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.266 2018/02/14 14:15:53 maxv Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.267 2018/02/24 07:53:15 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.266 2018/02/14 14:15:53 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.267 2018/02/24 07:53:15 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1673,15 +1673,10 @@ arp_dad_timer(struct dadq *dp)
 
 	ifa = dp->dad_ifa;
 	if (ifa == NULL) {
-		/* ifa is being deleted. DAD should be freed too. */
-		if (callout_pending(&dp->dad_timer_ch)) {
-			/*
-			 * The callout is scheduled again, so we cannot destroy
-			 * dp in this run.
-			 */
-			goto done;
-		}
-		need_free = true;
+		/*
+		 * ifa is being deleted and the callout is already scheduled
+		 * again, so we cannot destroy dp in this run.
+		 */
 		goto done;
 	}
 
