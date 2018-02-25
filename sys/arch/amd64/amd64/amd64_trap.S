@@ -1,4 +1,4 @@
-/*	$NetBSD: amd64_trap.S,v 1.36 2018/02/25 11:57:44 maxv Exp $	*/
+/*	$NetBSD: amd64_trap.S,v 1.37 2018/02/25 12:37:16 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2017 The NetBSD Foundation, Inc.
@@ -368,67 +368,137 @@ IDTVEC_END(intrspurious)
 #ifndef kernuser_reenter
 /*
  * We need to worry about traps in kernel mode while the kernel %gs isn't
- * loaded. These are either faults on iretq during return to user or loads to
- * %gs.
+ * loaded. When such traps happen, we have CPL=0 and %gs=userland, and we
+ * must perform an additional swapgs to get %gs=kernel.
+ */
+
+#define TF_SMALL(val, reg)		(val - TF_REGSIZE)(reg)
+#define TF_SMALL_REGPUSHED(val, reg)	(val - (TF_REGSIZE - 8))(reg)
+
+/*
+ * It is possible that we received a trap in kernel mode, but with the user
+ * context loaded. There are six cases where this can happen:
  *
- * When such traps happen, we have CPL=0 and %gs=userland, and we must perform
- * an additional swapgs to get %gs=kernel.
+ *  o Execution of SYSRETQ.
+ *  o Execution of IRETQ.
+ *  o Reload of ES.
+ *  o Reload of DS.
+ *  o Reload of FS.
+ *  o Reload of GS.
+ *
+ * When this happens, the kernel is re-entered in kernel mode, but the
+ * previous context is in kernel mode too.
+ *
+ * We have two iret frames in the stack. In the first one, the 'rsp' field
+ * points to the outer iret frame:
+ *
+ * +---------------------------------------------------+
+ * | trapno | err | rip | cs=ring0 | rflags | rsp | ss |
+ * +-------------------------------------------|-------+
+ *                                             |
+ *           +---------------------------------+
+ *           |
+ *           |    +---------------------------------------------------+
+ *           +--> | trapno | err | rip | cs=ring3 | rflags | rsp | ss |
+ *                +---------------------------------------------------+
+ *
+ * We perform a three-step procedure:
+ *
+ *  o We copy the 'trapno' field of the current frame into the 'trapno'
+ *    field of the outer frame.
+ *
+ *  o We update RSP to point to the outer frame. This outer frame is in the
+ *    same stack as the current frame, and likely just after the current
+ *    frame.
+ *
+ *  o We do a normal INTRENTRY. Now that RSP points to the outer frame,
+ *    everything behaves as if we had received a trap from the outer frame,
+ *    that is to say, from userland directly.
+ *
+ * Finally, we jump to 'calltrap' and handle the trap smoothly.
+ *
+ * Two notes regarding SVS:
+ *
+ *  o With SVS, we will receive the trap while the user page tables are
+ *    loaded. That's not a problem, we don't touch anything unmapped here.
+ *
+ *  o With SVS, when the user page tables are loaded, the stack is really
+ *    small, and can contain only one trapframe structure. Therefore, in
+ *    intrfastexit, we must save the GPRs and pop their part of the stack
+ *    right away. If we weren't doing that, and the reload of ES faulted for
+ *    example, then the CPU would try to push an iret frame on the current
+ *    stack (nested), and would double-fault because it touches the redzone
+ *    below the stack (see the documentation in x86/x86/svs.c). By popping
+ *    the GPR part of the stack, we leave enough stack for the CPU to push
+ *    an iret frame, and for us to push two 8-byte registers too.
  */
 	_ALIGN_TEXT
 LABEL(kernuser_reenter)
-	INTRENTRY_L(3f,1:)
-2:
+	testb	$SEL_UPL,TF_SMALL(TF_CS, %rsp)
+	jz	.Lkernelmode
+
+.Lnormal_entry:
+	INTRENTRY
 	sti
 	jmp	calltrap
-3:
-	/*
-	 * Trap in kernel mode.
-	 */
+
+.Lkernelmode:
+	/* We will clobber %rdi */
+	pushq	%rdi
 
 	/* Case 1: fault on sysretq? */
 	leaq	do_sysret(%rip),%rdi
-	cmpq	%rdi,TF_RIP(%rsp)
-	je	1b
+	cmpq	%rdi,TF_SMALL_REGPUSHED(TF_RIP, %rsp)
+	je	.Lkernelmode_but_user
 
 	/* Case 2: fault on iretq? */
 	leaq	do_iret(%rip),%rdi
-	cmpq	%rdi,TF_RIP(%rsp)
+	cmpq	%rdi,TF_SMALL_REGPUSHED(TF_RIP, %rsp)
 	jne	5f
-	movq	TF_RSP(%rsp),%rdi	/* Must read %rsp, may be a pad word */
-	testb	$SEL_UPL,8(%rdi)	/* Check %cs of outer iret frame */
-	je	2b			/* jump if iret was to kernel  */
-	jmp	1b			/* to user - must restore %gs */
+	movq	TF_SMALL_REGPUSHED(TF_RSP, %rsp),%rdi	/* get %rsp */
+	testb	$SEL_UPL,8(%rdi)	/* check %cs of outer iret frame */
+	je	.Lnormal_entry		/* jump if iret was to kernel  */
+	jmp	.Lkernelmode_but_user	/* to user - must restore %gs */
 5:
 
-	/* Case 3: move to %gs? */
-	leaq	do_mov_gs(%rip),%rdi
-	cmpq	%rdi,TF_RIP(%rsp)
-	je	1b
+	/* Case 3: move to %es? */
+	leaq	do_mov_es(%rip),%rdi
+	cmpq	%rdi,TF_SMALL_REGPUSHED(TF_RIP, %rsp)
+	je	.Lkernelmode_but_user
 
-	/* None of the above cases */
-	jmp	2b	/* normal kernel fault */
+	/* Case 4: move to %ds? */
+	leaq	do_mov_ds(%rip),%rdi
+	cmpq	%rdi,TF_SMALL_REGPUSHED(TF_RIP, %rsp)
+	je	.Lkernelmode_but_user
+
+	/* Case 5: move to %fs? */
+	leaq	do_mov_fs(%rip),%rdi
+	cmpq	%rdi,TF_SMALL_REGPUSHED(TF_RIP, %rsp)
+	je	.Lkernelmode_but_user
+
+	/* Case 6: move to %gs? */
+	leaq	do_mov_gs(%rip),%rdi
+	cmpq	%rdi,TF_SMALL_REGPUSHED(TF_RIP, %rsp)
+	je	.Lkernelmode_but_user
+
+	/* None of the above cases: normal kernel fault */
+	popq	%rdi
+	jmp	.Lnormal_entry
+
+.Lkernelmode_but_user:
+	movq	TF_SMALL_REGPUSHED(TF_RSP, %rsp),%rdi
+
+	pushq	%rax
+	movq	16(%rsp),%rax	/* 16(%rsp) = current TF_TRAPNO */
+	movq	%rax,(%rdi)	/* (%rdi) = outer TF_TRAPNO */
+	popq	%rax
+
+	movq	%rdi,%rsp
+	jmp	.Lnormal_entry
 END(kernuser_reenter)
 #endif
 
 	TEXT_USER_END
-
-/*
- * trap() calls here when it detects a fault in INTRFASTEXIT (loading the
- * segment registers or during the iret itself). The address of the (possibly
- * reconstructed) user trap frame is passed as an argument.
- *
- * Typically the code will have raised a SIGSEGV which will be actioned
- * by the code below.
- */
-	.type	_C_LABEL(trap_return_fault_return), @function
-LABEL(trap_return_fault_return)
-	mov	%rdi,%rsp		/* frame for user return */
-#ifdef DIAGNOSTIC
-	/* We can't recover the saved %rbx, so suppress warning */
-	movl	CPUVAR(ILEVEL),%ebx
-#endif
-	jmp	.Lalltraps_checkusr
-END(trap_return_fault_return)
 
 /*
  * All traps go through here. Call the generic trap handler, and

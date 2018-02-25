@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.156 2018/02/24 17:12:10 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.157 2018/02/25 12:37:16 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1544,33 +1544,43 @@ END(pagezero)
 
 	TEXT_USER_BEGIN
 
+/*
+ * In intrfastexit, we advance %rsp at the beginning. We then access the
+ * segment registers in the trapframe with TF_BACKW (backwards). See the
+ * documentation in amd64_trap.S for an explanation.
+ */
+
+#define TF_BACKW(val, reg)	(val - TF_REGSIZE)(reg)
+
 	_ALIGN_TEXT
 LABEL(intrfastexit)
 	NOT_XEN(cli;)
 	SVS_LEAVE
 	INTR_RESTORE_GPRS
-	testb	$SEL_UPL,TF_CS(%rsp)	/* interrupted %cs */
+	addq	$TF_REGSIZE,%rsp	/* iret frame */
+
+	testb	$SEL_UPL,TF_BACKW(TF_CS, %rsp)
 	jz	.Lkexit
-	cmpw	$LSEL(LUCODE_SEL, SEL_UPL),TF_CS(%rsp)
+	cmpw	$LSEL(LUCODE_SEL, SEL_UPL),TF_BACKW(TF_CS, %rsp)
 	je	.Luexit64
-	cmpw	$GSEL(GUCODE_SEL, SEL_UPL),TF_CS(%rsp)
+	cmpw	$GSEL(GUCODE_SEL, SEL_UPL),TF_BACKW(TF_CS, %rsp)
 	je	.Luexit64
 #ifdef XEN
-	cmpw	$FLAT_RING3_CS64,TF_CS(%rsp)
+	cmpw	$FLAT_RING3_CS64,TF_BACKW(TF_CS, %rsp)
 	je	.Luexit64
 #endif
 
 .Luexit32:
-do_mov_es:
-	movw	TF_ES(%rsp),%es
-do_mov_ds:
-	movw	TF_DS(%rsp),%ds
-do_mov_fs:
-	movw	TF_FS(%rsp),%fs
 	SWAPGS
+do_mov_es:
+	movw	TF_BACKW(TF_ES, %rsp),%es
+do_mov_ds:
+	movw	TF_BACKW(TF_DS, %rsp),%ds
+do_mov_fs:
+	movw	TF_BACKW(TF_FS, %rsp),%fs
 #ifndef XEN
 do_mov_gs:
-	movw	TF_GS(%rsp),%gs
+	movw	TF_BACKW(TF_GS, %rsp),%gs
 #endif
 	jmp	.Lkexit
 
@@ -1578,7 +1588,7 @@ do_mov_gs:
 	SWAPGS
 
 .Lkexit:
-	addq	$TF_REGSIZE+16,%rsp	/* + T_xxx and error code */
+	addq	$16,%rsp	/* 16 = T_xxx + error code */
 do_iret:
 	iretq
 END(intrfastexit)

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.111 2018/01/20 08:30:53 maxv Exp $	*/
+/*	$NetBSD: trap.c,v 1.112 2018/02/25 12:37:16 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2017 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.111 2018/01/20 08:30:53 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.112 2018/02/25 12:37:16 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -246,93 +246,6 @@ doubletrap(struct trapframe *frame)
 }
 
 /*
- * Did we receive in kernel mode a trap that ought to be considered as a user
- * trap? If this function returns, the answer is no.
- *
- * Such traps can be triggered when the kernel fails to return to userland,
- * because of incorrect segment registers.
- */
-#ifndef XEN
-static void trap_user_kernelmode(struct trapframe *, int, lwp_t *, proc_t *);
-
-static void
-trap_user_kernelmode(struct trapframe *frame, int type, lwp_t *l, proc_t *p)
-{
-	extern uint64_t do_mov_es, do_mov_ds, do_mov_fs, do_mov_gs;
-	extern uint64_t do_iret;
-	struct trapframe *vframe;
-	ksiginfo_t ksi;
-
-	if (frame->tf_rip == 0) {
-		/*
-		 * Assume that if we jumped to null we probably did it via a
-		 * null function pointer, so print the return address.
-		 */
-		printf("kernel jumped to null; return addr was %p\n",
-		    *(void **)frame->tf_rsp);
-		return;
-	}
-
-	KSI_INIT_TRAP(&ksi);
-	ksi.ksi_signo = SIGSEGV;
-	ksi.ksi_code = SEGV_ACCERR;
-	ksi.ksi_trap = type;
-
-	/*
-	 * Get %rsp value before fault - there may be a pad word below the
-	 * trap frame.
-	 */
-	vframe = (void *)frame->tf_rsp;
-
-	if (frame->tf_rip == (uint64_t)&do_iret) {
-		/*
-		 * The 'iretq' instruction faulted, so we have the
-		 * 'user' registers saved after the kernel
-		 * %rip:%cs:%fl:%rsp:%ss of the iret, and below that
-		 * the user %rip:%cs:%fl:%rsp:%ss the 'iret' was
-		 * processing.
-		 * We must copy the user register back over the
-		 * kernel fault frame to generate a normal stack
-		 * frame (eg for sending a SIGSEGV).
-		 */
-		vframe = (void *)((char *)vframe
-		    - offsetof(struct trapframe, tf_rip));
-		memmove(vframe, frame, offsetof(struct trapframe, tf_rip));
-		/* Set the faulting address to the user %rip */
-		ksi.ksi_addr = (void *)vframe->tf_rip;
-	} else if (frame->tf_rip == (uint64_t)&do_mov_es ||
-	    frame->tf_rip == (uint64_t)&do_mov_ds ||
-	    frame->tf_rip == (uint64_t)&do_mov_fs ||
-	    frame->tf_rip == (uint64_t)&do_mov_gs) {
-		/*
-		 * We faulted loading one of the user segment registers.
-		 * The stack frame containing the user registers is
-		 * still valid and pointed to by tf_rsp.
-		 */
-		if (KERNELMODE(vframe->tf_cs))
-			return;
-		/* There is no valid address for the fault */
-	} else {
-		return;
-	}
-
-	/* XXX: worry about on-stack trampolines for nested handlers?? */
-	/* Save outer frame for any signal return */
-	l->l_md.md_regs = vframe;
-	(*p->p_emul->e_trapsignal)(l, &ksi);
-	/* Return to user by reloading the user frame */
-	trap_return_fault_return(vframe);
-	/* NOTREACHED */
-}
-#else
-/*
- * XXX: there has to be an equivalent 'problem' but I (dsl) don't know exactly
- * what happens! For now panic the kernel.
- */
-#define trap_user_kernelmode(frame, type, l, p)	/* NOTHING */
-#endif
-
-/*
  * trap(frame): exception, fault, and trap interface to BSD kernel.
  *
  * This common code is called from assembly language IDT gate entry routines
@@ -433,7 +346,6 @@ trap(struct trapframe *frame)
 			return;
 		}
 
-		trap_user_kernelmode(frame, type, l, p);
 		goto we_re_toast;
 
 	case T_PROTFLT|T_USER:		/* protection fault */
