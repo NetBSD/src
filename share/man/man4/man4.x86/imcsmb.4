@@ -1,4 +1,4 @@
-.\" $NetBSD: imcsmb.4,v 1.3 2018/02/25 10:04:04 wiz Exp $
+.\" $NetBSD: imcsmb.4,v 1.4 2018/02/25 12:39:44 uwe Exp $
 .\"
 .\" Copyright (c) 2018 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -94,7 +94,7 @@ The iMC-SMBs are
 .Sy not
 general-purpose SMBus controllers.
 By their nature, they are only ever attached to DIMMs, so they implement only
-the SMBus operations need for communicating with DIMMs.
+the SMBus operations needed for communicating with DIMMs.
 Specifically:
 .Pp
 .Bl -dash -offset indent -compact
@@ -114,8 +114,8 @@ at the top of
 .Sh WARNINGS
 As mentioned above, firmware might use the iMC-SMBs to read DIMM temperatures.
 The public iMC documentation does not describe any sort of coordination
-mechanism to prevent requests from different sources -- such as the motherboard
-firmware, a BMC, or the operating system -- from interfering with each other.
+mechanism to prevent requests from different sources \(em such as the motherboard
+firmware, a BMC, or the operating system \(em from interfering with each other.
 .Pp
 .Bf Sy
 Therefore, it is highly recommended that developers contact the motherboard
