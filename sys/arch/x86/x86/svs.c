@@ -1,4 +1,4 @@
-/*	$NetBSD: svs.c,v 1.11 2018/02/24 19:52:46 maxv Exp $	*/
+/*	$NetBSD: svs.c,v 1.12 2018/02/25 13:15:35 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.11 2018/02/24 19:52:46 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.12 2018/02/25 13:15:35 maxv Exp $");
 
 #include "opt_svs.h"
 
@@ -211,8 +211,6 @@ __KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.11 2018/02/24 19:52:46 maxv Exp $");
  * ~~~~~~~~~~ Todo List ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  *
  * Ordered from highest priority to lowest:
- *
- *  o Handle segment register faults properly.
  *
  *  o The NMI stack is not double-entered. Therefore if we ever receive an NMI
  *    and leave it, the content of the stack will be visible to userland (via
