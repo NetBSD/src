@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.luna68k,v 1.27 2015/09/06 02:17:30 uebayasi Exp $
+#	$NetBSD: Makefile.luna68k,v 1.28 2018/02/25 00:27:16 mrg Exp $
 
 # Makefile for NetBSD
 #
@@ -57,6 +57,8 @@ MD_SFILES=
 
 locore.o: ${LUNA68K}/luna68k/locore.s assym.h
 	${NORMAL_S}
+
+.include "$S/arch/m68k/conf/Makefile.kern.m68k.inc"
 
 ##
 ## (5) link settings
