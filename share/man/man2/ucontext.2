@@ -1,4 +1,4 @@
-.\"	$NetBSD: ucontext.2,v 1.7 2018/02/25 16:53:51 kamil Exp $
+.\"	$NetBSD: ucontext.2,v 1.8 2018/02/25 17:37:05 uwe Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -117,10 +117,10 @@ The frame pointer macro does not guarantee to retrieve a reliable value
 and should not be used in a code unless no other debugging format is
 easily accessible.
 A compiler might optimize the frame pointer register in a function,
-reusing as a general purpose register storage
-.Ar -fomit-frame-pointer
+reusing it as a general purpose register storage
+.Fl ( fomit-frame-pointer )
 or emit function prologues only before parts that need them
-.Ar -fshrink-wrap .
+.Fl ( fshrink-wrap ) .
 .Sh SEE ALSO
 .Xr _exit 2 ,
 .Xr getcontext 2 ,
