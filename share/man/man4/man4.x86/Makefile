@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.17 2018/01/25 01:25:39 christos Exp $
+#	$NetBSD: Makefile,v 1.18 2018/02/25 08:22:53 pgoyette Exp $
 
 MAN=	amdpcib.4 apic.4 balloon.4 coretemp.4 est.4 fdc.4 \
-	fwhrng.4 hpet.4 ichlpcib.4 lpt.4 mem.4 odcm.4 powernow.4 \
+	fwhrng.4 hpet.4 ichlpcib.4 imcsmb.4 lpt.4 mem.4 odcm.4 powernow.4 \
 	soekrisgpio.4 tco.4 tprof_amdpmi.4 tprof_pmi.4 vmt.4 vmx.4 \
 	amdsmn.4 amdzentemp.4
 
