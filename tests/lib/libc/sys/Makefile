@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.49 2017/04/02 21:44:00 kamil Exp $
+# $NetBSD: Makefile,v 1.50 2018/02/25 14:27:07 kamil Exp $
 
 MKMAN=	no
 
@@ -96,6 +96,7 @@ CPPFLAGS.t_ptrace_wait4.c	+= -D_KERNTYPES
 CPPFLAGS.t_ptrace_wait6.c	+= -D_KERNTYPES
 CPPFLAGS.t_ptrace_waitid.c	+= -D_KERNTYPES
 CPPFLAGS.t_ptrace_waitpid.c	+= -D_KERNTYPES
+CPPFLAGS.t_ucontext.c		+= -D_KERNTYPES
 
 FILES=		truncate_test.root_owned
 FILESBUILD=	yes
