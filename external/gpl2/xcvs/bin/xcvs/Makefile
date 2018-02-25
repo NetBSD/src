@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2017/01/29 00:01:48 christos Exp $
+#	$NetBSD: Makefile,v 1.6 2018/02/25 00:16:48 mrg Exp $
 
 .include "${.CURDIR}/../../Makefile.inc"
 PROG=	xcvs
@@ -25,35 +25,9 @@ LDADD+= ${LIBDIFF} ${LIBCVS}
 
 .if defined(USE_KERBEROS) && (${USE_KERBEROS} != "no")
 CPPFLAGS+= -DHAVE_GSSAPI -I${DESTDIR}/usr/include/krb5
-DPADD+= ${LIBGSSAPI} ${LIBKRB5}
+LDADD+= -lgssapi -lheimntlm ${LIBKRB5_LDADD}
+DPADD+= ${LIBGSSAPI} ${LIBHEIMNTLM} ${LIBKRB5_DPADD}
 SRCS+=	gssapi-client.c
-LDADD+= -lgssapi -lkrb5
-
-# libheimntlm is required by libgssapi
-DPADD+= ${LIBHEIMNTLM}
-LDADD+= -lheimntlm
-
-# libheimbase is required by libkrb5
-# libhx509 is required by libkrb5
-DPADD+= ${LIBHEIMBASE} ${LIBHX509}
-LDADD+= -lheimbase -lhx509
-
-# libasn1 is required by all the above libs
-DPADD+= ${LIBASN1}
-LDADD+= -lasn1
-
-# libcom_err is required by libasn1
-# libroken is required by libgssapi, libkrb5, libheimntlm, and libhx509
-# libcrypto is required by libgssapi, libkrb5, and libhx509
-# libwind is required by libhx509
-CPPFLAGS+= -DENCRYPTION
-DPADD+= ${LIBCOM_ERR} ${LIBROKEN} ${LIBWIND} ${LIBCRYPTO} ${LIBSQLITE3}
-LDADD+= -lcom_err -lroken -lwind -lcrypto -lsqlite3
-
-
-# libutil is required by libroken
-DPADD+= ${LIBUTIL}
-LDADD+= -lutil
 .endif
 
 DPADD+= ${LIBCRYPT} ${LIBZ}

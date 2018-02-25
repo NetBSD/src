@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.18 2017/05/21 15:28:39 riastradh Exp $
+# $NetBSD: Makefile.inc,v 1.19 2018/02/25 00:16:48 mrg Exp $
 
 WARNS?=	1	# XXX -Wshadow -Wcast-qual -Wsign-compare
 
@@ -36,10 +36,8 @@ LDADD+=-Wl,-Bstatic
 LDADD+= -lirs -lisccfg -ldns -lisc
 LDADD+=-lpthread
 .if (${MKKERBEROS} != "no")
-LDADD+= -lgssapi -lkrb5 -lhx509 -lheimntlm -lheimbase \
-	-lcom_err  -lroken -lasn1 -lwind -lsqlite3
-DPADD+= ${LIBGSSAPI} ${LIBKRB5} ${LIBHX509} ${LIBHEIMNTLM} ${LIBHEIMBASE} \
-	${LIBCOM_ERR} ${LIBROKEN} ${LIBASN1} ${LIBWIND} ${LIBSQLITE3}
+LDADD+= -lgssapi -lheimntlm ${LIBKRB5_LDADD} ${LIBKRB5_STATIC_LDADD}
+DPADD+= ${LIBKRB5_DPADD} ${LIBHEIMNTLM} ${LIBGSSAPI} ${LIBKRB5_STATIC_DPADD}
 .endif
 .if defined(PROG) && ${PROG} == "dhclient"
 LDADD+=-Wl,-Bdynamic

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.310 2017/12/11 13:08:47 christos Exp $
+#	$NetBSD: bsd.prog.mk,v 1.311 2018/02/25 00:16:48 mrg Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -209,6 +209,22 @@ LIB${_lib:tu}=	${DESTDIR}/usr/lib/lib${_lib:S/xx/++/:S/atf_c/atf-c/}.a
 .MADE:		${LIB${_lib:tu}}	# Note: ${DESTDIR} will be expanded
 .endif
 .endfor
+
+.if (${MKKERBEROS} != "no")
+LIBKRB5_LDADD+= -lkrb5
+LIBKRB5_DPADD+= ${LIBKRB5}
+# Kerberos5 applications, if linked statically, need more libraries
+LIBKRB5_STATIC_LDADD+= \
+	-lhx509 -lcrypto -lasn1 -lcom_err -lroken \
+	-lwind -lheimbase -lsqlite3 -lcrypt -lutil
+LIBKRB5_STATIC_DPADD+= \
+	${LIBHX509} ${LIBCRYPTO} ${LIBASN1} ${LIBCOM_ERR} ${LIBROKEN} \
+	${LIBWIND} ${LIBHEIMBASE} ${LIBSQLITE3} ${LIBCRYPT}  ${LIBUTIL}
+. if (${MKPIC} == "no")
+LIBKRB5_LDADD+= ${LIBKRB5_STATIC_LDADD}
+LIBKRB5_DPADD+= ${LIBKRB5_STATIC_DPADD}
+. endif
+.endif
 
 # PAM applications, if linked statically, need more libraries
 .if (${MKPIC} == "no")

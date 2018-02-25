@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.56 2013/08/11 06:32:13 dholland Exp $
+#	$NetBSD: Makefile,v 1.57 2018/02/25 00:16:49 mrg Exp $
 #	@(#)Makefile	8.1 (Berkeley) 7/19/93
 
 .include <bsd.own.mk>
@@ -23,11 +23,8 @@ CPPFLAGS+=-DLOGIN_CAP -DSUPPORT_UTMP -DSUPPORT_UTMPX
 .if (${USE_KERBEROS} != "no")
 SRCS+= k5login.c
 CPPFLAGS+=-DKERBEROS5
-DPADD+=	${LIBKRB5} ${LIBASN1}
-LDADD+= -lkrb5 -lasn1
-
-DPADD+=	${LIBCRYPTO} ${LIBROKEN} ${LIBCOM_ERR}
-LDADD+=	-lcrypto -lroken -lcom_err
+LDADD+= ${LIBKRB5_LDADD}
+DPADD+= ${LIBKRB5_DPADD}
 .endif
 
 .if (${USE_SKEY} != "no")

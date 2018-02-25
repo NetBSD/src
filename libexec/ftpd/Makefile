@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.64 2015/01/25 15:53:49 christos Exp $
+#	$NetBSD: Makefile,v 1.65 2018/02/25 00:16:48 mrg Exp $
 #	@(#)Makefile	8.2 (Berkeley) 4/4/94
 
 .include <bsd.own.mk>
@@ -47,11 +47,8 @@ ftpd.o ftpcmd.o: version.h
 #
 #SRCS+=	k5login.c
 #CPPFLAGS+=-DKERBEROS5
-#DPADD+=	${LIBKRB5} ${LIBASN1}
-#LDADD+= -lkrb5 -lasn1
-#
-#DPADD+=	${LIBCRYPTO} ${{LIBCRYPT} ${LIBROKEN} ${LIBCOM_ERR}
-#LDADD+=	-lcrypto -lcrypt -lroken -lcom_err
+#LDADD+= ${LIBKRB5_LDADD}
+#DPADD+= ${LIBKRB5_DPADD}
 #
 #.endif
 
