@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.87 2016/07/03 14:24:58 christos Exp $
+#	$NetBSD: Makefile,v 1.88 2018/02/25 18:51:18 chs Exp $
 #
 
 WARNS?=	5
@@ -90,30 +90,12 @@ SRCS+=		pthread_compat.c
 
 ALIGN_FUNCTIONS=	${${ACTIVE_CC} == "gcc":? -falign-functions=32 :}
 
-.if ${MACHINE_CPU} != "m68k" && ${MACHINE_CPU} != "sh3" && ${MACHINE_ARCH} != "vax"
-OMIT_FRAME_POINTER=	-fomit-frame-pointer
-.else
-OMIT_FRAME_POINTER=
-.endif
-
 # The TSD routines are used in the implementation of profiling, and so
 # can't be profiled themselves.
-COPTS.pthread_specific.c+=	${OMIT_FRAME_POINTER} ${ALIGN_FUNCTIONS}
+COPTS.pthread_specific.c+=	${ALIGN_FUNCTIONS}
 pthread_specific.po: pthread_specific.o
 	${_MKTARGET_CREATE}
 	cp pthread_specific.o pthread_specific.po
-
-# Internal spinlock routines are performance critical.  Don't profile them,
-# it's incompatibile with -fomit-frame-pointer.
-COPTS.pthread_lock.c+=	${OMIT_FRAME_POINTER} ${ALIGN_FUNCTIONS}
-pthread_lock.po: pthread_lock.o
-	${_MKTARGET_CREATE}
-	cp pthread_lock.o pthread_lock.po
-
-COPTS.pthread_mutex.c+=	${OMIT_FRAME_POINTER} ${ALIGN_FUNCTIONS}
-pthread_mutex.po: pthread_mutex.o
-	${_MKTARGET_CREATE}
-	cp pthread_mutex.o pthread_mutex.po
 
 COPTS.pthread.c += -Wno-stack-protector -Wno-format-nonliteral
 COPTS.pthread_attr.c += -Wno-format-nonliteral
