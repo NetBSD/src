@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.36 2018/02/22 10:42:11 maxv Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.37 2018/02/25 13:14:27 maxv Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
 #define _AMD64_MACHINE_FRAMEASM_H
@@ -150,23 +150,19 @@
 #define SVS_LEAVE_ALTSTACK	/* nothing */
 #endif
 
-#define	INTRENTRY_L(kernel_trap, usertrap) \
+#define	INTRENTRY \
 	subq	$TF_REGSIZE,%rsp	; \
 	INTR_SAVE_GPRS			; \
 	cld				; \
 	SMAP_ENABLE			; \
 	testb	$SEL_UPL,TF_CS(%rsp)	; \
-	je	kernel_trap		; \
-usertrap				; \
+	je	98f			; \
 	SWAPGS				; \
 	SVS_ENTER			; \
 	movw	%gs,TF_GS(%rsp)		; \
 	movw	%fs,TF_FS(%rsp)		; \
 	movw	%es,TF_ES(%rsp)		; \
-	movw	%ds,TF_DS(%rsp)	
-
-#define	INTRENTRY \
-	INTRENTRY_L(98f,)		; \
+	movw	%ds,TF_DS(%rsp)		; \
 98:
 
 #define INTRFASTEXIT \
