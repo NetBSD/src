@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1107.2.8.2.1 2017/08/24 06:50:16 snj Exp $
+# $NetBSD: GENERIC,v 1.1107.2.8.2.2 2018/02/25 21:15:19 snj Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1107.2.8.2.1 $"
+#ident 		"GENERIC-$Revision: 1.1107.2.8.2.2 $"
 
 maxusers	64		# estimated number of users
 
@@ -144,8 +144,8 @@ options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 options 	COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
-options 	COMPAT_SVR4	# binary compatibility with SVR4
-options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
+#options 	COMPAT_SVR4	# binary compatibility with SVR4
+#options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
 options 	COMPAT_LINUX	# binary compatibility with Linux
 #options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
 #options 	COMPAT_NDIS	# NDIS network driver

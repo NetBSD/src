@@ -1,4 +1,4 @@
-# 	$NetBSD: TADPOLE3GX,v 1.61.4.2 2014/11/18 19:05:31 snj Exp $
+# 	$NetBSD: TADPOLE3GX,v 1.61.4.2.2.1 2018/02/25 21:15:20 snj Exp $
 
 include "arch/sparc/conf/std.sparc"
 
@@ -145,7 +145,7 @@ options 	COMPAT_40	# NetBSD 4.0 binary compatibility
 options 	COMPAT_50	# NetBSD 5.0 binary compatibility
 options 	COMPAT_60	# NetBSD 6.0 compatibility.
 options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility
-options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
+#options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
