@@ -14,7 +14,7 @@
 .\" See the License for the specific language governing permissions and
 .\" limitations under the License.
 .\"
-.Dd April 2004              \" Date
+.Dd Feb 25, 2018              \" Date
 .Dt mDNSResponder 8         \" Document Title
 .Os Darwin                  \" Operating System
 .\"
@@ -61,23 +61,24 @@ logging levels map as follows:
 .Dl Info - Informational messages
 .Pp
 By default, only log level Error is logged.
-.Pp
-A SIGUSR1 signal toggles additional logging, with Warning and Notice
-enabled by default:
-.Pp
-.Dl % sudo killall -USR1 mDNSResponder
+.\" .Pp
+.\" A SIGUSR1 signal toggles additional logging, with Warning and Notice
+.\" enabled by default:
+.\" .Pp
+.\" .Dl % sudo killall -USR1 mDNSResponder
 .Pp
 Once this logging is enabled, users can additionally use syslog(1)
 to change the log filter for the process. For example, to enable log levels Emergency - Debug:
 .Pp
 .Dl % sudo syslog -c mDNSResponder -d
+.\" .Pp
+.\" A SIGUSR2 signal toggles packet logging:
+.\" .Pp
+.\" .Dl % sudo killall -USR2 mDNSResponder
 .Pp
-A SIGUSR2 signal toggles packet logging:
-.Pp
-.Dl % sudo killall -USR2 mDNSResponder
-.Pp
-A SIGINFO signal will dump a snapshot summary of the internal state to 
-.Pa /var/log/system.log Ns :
+A SIGUSR1 signal will dump a snapshot summary of the internal state to 
+.\" .Pa /var/log/system.log Ns :
+.Xr syslog 8 .
 .Pp
 .Dl % sudo killall -INFO mDNSResponder
 .Sh OPTIONAL ARGUMENTS
