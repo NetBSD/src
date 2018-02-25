@@ -1,4 +1,4 @@
-.\"	$NetBSD: ucontext.2,v 1.6 2010/04/29 06:07:35 jruoho Exp $
+.\"	$NetBSD: ucontext.2,v 1.7 2018/02/25 16:53:51 kamil Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 29, 2010
+.Dd February 25, 2018
 .Dt UCONTEXT 2
 .Os
 .Sh NAME
@@ -35,6 +35,11 @@
 .Nd user context
 .Sh SYNOPSIS
 .In ucontext.h
+.Fn _UC_MACHINE_SP "&uc"
+.Fn _UC_MACHINE_FP "&uc"
+.Fn _UC_MACHINE_PC "&uc"
+.Fn _UC_MACHINE_INTRV "&uc"
+.Fn _UC_MACHINE_SET_PC "&uc"
 .Sh DESCRIPTION
 The
 .Vt ucontext_t
@@ -86,6 +91,36 @@ it may consist of general registers, floating point registers
 and other machine-specific information.
 Its description is beyond the scope of this manual page;
 portable applications should not access this structure member.
+.Pp
+The
+.Fn _UC_MACHINE_SP ,
+.Fn _UC_MACHINE_FP ,
+.Fn _UC_MACHINE_PC ,
+.Fn _UC_MACHINE_INTRV
+and
+.Fn _UC_MACHINE_SET_PC
+auxiliary macros are designed to perform respectively the following operations:
+.Bl -dash
+.It
+read stack pointer ,
+.It
+read frame pointer (base pointer) ,
+.It
+read program counter ,
+.It
+read interrupt vector ,
+.It
+write program counter .
+.El
+.Pp
+The frame pointer macro does not guarantee to retrieve a reliable value
+and should not be used in a code unless no other debugging format is
+easily accessible.
+A compiler might optimize the frame pointer register in a function,
+reusing as a general purpose register storage
+.Ar -fomit-frame-pointer
+or emit function prologues only before parts that need them
+.Ar -fshrink-wrap .
 .Sh SEE ALSO
 .Xr _exit 2 ,
 .Xr getcontext 2 ,
