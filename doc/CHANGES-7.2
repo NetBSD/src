@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.2,v 1.1.2.73 2018/02/25 21:15:52 snj Exp $
+# $NetBSD: CHANGES-7.2,v 1.1.2.74 2018/02/25 23:35:15 snj Exp $
 
 A complete list of changes from the NetBSD 7.1 release to the NetBSD 7.2
 release:
@@ -5241,4 +5241,35 @@ sys/kern/kern_exec.c				patch
 	- disable compat_ibcs2 everywhere but on Vax
 	- remove svr4/svr4_32/ibcs2/freebsd from the module autoload list
 	[maxv, ticket #1499]
+
+sys/modules/lua/lua.c				up to 1.24
+
+	lua(4):
+	- fix crash when executing luactl after creating a Lua state.
+	  PR 52864.
+	- plug leak on error
+	- fixed require
+	- fix double require bug
+	- use aprint*() instead of printf() in xxx_attach().
+	- check pmf_device_register return value. NFC
+	- can't destroy pb until we're done using it.
+	- whitespace, knf, comments
+	[sevan, ticket #1545]
+
+sys/netinet6/ip6_input.c			1.188 via patch
+
+	Kick nested IPv6 fragments.
+	[maxv, ticket #1572]
+
+sys/kern/subr_tftproot.c			1.20
+
+	Fix md(4) double attachment in TFTPROOT option.  Avoids
+	deadlock at boot.
+	[manu, ticket #1573]
+
+sys/fs/msdosfs/msdosfs_vfsops.c			1.129
+
+	Relax sanity check. It's ok to have more FAT sectors
+	than needed.
+	[mlelstv, ticket #1574]
 
