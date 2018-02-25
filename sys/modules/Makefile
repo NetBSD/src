@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.200 2018/02/25 08:20:28 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.201 2018/02/25 10:17:12 kamil Exp $
 
 .include <bsd.own.mk>
 
@@ -76,7 +76,6 @@ SUBDIR+=	iic
 SUBDIR+=	ip_ecn
 SUBDIR+=	ipl
 SUBDIR+=	kernfs
-SUBDIR+=	ksem
 SUBDIR+=	layerfs
 SUBDIR+=	lfs
 SUBDIR+=	lua
