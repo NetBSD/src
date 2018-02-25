@@ -657,7 +657,7 @@ mDNSlocal int SetupSocket(struct sockaddr *intfAddr, mDNSIPPort port, int interf
         // to bind to the socket. Our suggestion was to switch the order in which
         // SO_REUSEPORT and SO_REUSEADDR was tested so that SO_REUSEADDR stays on
         // top and SO_REUSEPORT to be used only if SO_REUSEADDR doesn't exist.
-        #if defined(SO_REUSEADDR) && !defined(__MAC_OS_X_VERSION_MIN_REQUIRED)
+        #if defined(SO_REUSEADDR) && !defined(__MAC_OS_X_VERSION_MIN_REQUIRED) && !defined(__NetBSD__)
         err = setsockopt(*sktPtr, SOL_SOCKET, SO_REUSEADDR, &kOn, sizeof(kOn));
         #elif defined(SO_REUSEPORT)
         err = setsockopt(*sktPtr, SOL_SOCKET, SO_REUSEPORT, &kOn, sizeof(kOn));
@@ -666,6 +666,7 @@ mDNSlocal int SetupSocket(struct sockaddr *intfAddr, mDNSIPPort port, int interf
         #endif
         if (err < 0) { err = errno; perror("setsockopt - SO_REUSExxxx"); }
 
+#ifndef __NetBSD__
         // Enable inbound packets on IFEF_AWDL interface.
         // Only done for multicast sockets, since we don't expect unicast socket operations
         // on the IFEF_AWDL interface. Operation is a no-op for other interface types.
@@ -673,6 +674,7 @@ mDNSlocal int SetupSocket(struct sockaddr *intfAddr, mDNSIPPort port, int interf
         #define SO_RECV_ANYIF   0x1104      /* unrestricted inbound processing */
         #endif
         if (setsockopt(*sktPtr, SOL_SOCKET, SO_RECV_ANYIF, &kOn, sizeof(kOn)) < 0) perror("setsockopt - SO_RECV_ANYIF");
+#endif
     }
 
     // We want to receive destination addresses and interface identifiers.

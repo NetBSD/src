@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 4 -*-
  *
- * Copyright (c) 2002-2015 Apple Inc. All rights reserved.
+ * Copyright (c) 2002-2017 Apple Inc. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,10 @@
 #include <TargetConditionals.h>
 #endif
 #include "uDNS.h"
+
+#if AWD_METRICS
+#include "Metrics.h"
+#endif
 
 #if (defined(_MSC_VER))
 // Disable "assignment within conditional expression".
@@ -1329,6 +1333,12 @@ mDNSlocal void tcpCallback(TCPSocket *sock, void *context, mDNSBool ConnectionEs
 
         err = mDNSSendDNSMessage(m, &tcpInfo->request, end, mDNSInterface_Any, mDNSNULL, &tcpInfo->Addr, tcpInfo->Port, sock, AuthInfo, mDNSfalse);
         if (err) { debugf("ERROR: tcpCallback: mDNSSendDNSMessage - %d", err); err = mStatus_UnknownErr; goto exit; }
+#if AWD_METRICS
+        if (mDNSSameIPPort(tcpInfo->Port, UnicastDNSPort))
+        {
+            MetricsUpdateDNSQuerySize((mDNSu32)(end - (mDNSu8 *)&tcpInfo->request));
+        }
+#endif
 
         // Record time we sent this question
         if (q)
@@ -4758,9 +4768,10 @@ mDNSexport void uDNS_CheckCurrentQuestion(mDNS *const m)
                     else
                     {
                         err = mDNSSendDNSMessage(m, &m->omsg, end, q->qDNSServer->interface, q->LocalSocket, &q->qDNSServer->addr, q->qDNSServer->port, mDNSNULL, mDNSNULL, q->UseBackgroundTrafficClass);
-#if TARGET_OS_EMBEDDED
+#if AWD_METRICS
                         if (!err)
                         {
+                            MetricsUpdateDNSQuerySize((mDNSu32)(end - (mDNSu8 *)&m->omsg));
                             if (q->metrics.answered)
                             {
                                 q->metrics.querySendCount = 0;
