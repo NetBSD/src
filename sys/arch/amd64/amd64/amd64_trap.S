@@ -1,4 +1,4 @@
-/*	$NetBSD: amd64_trap.S,v 1.35 2018/02/25 08:28:55 maxv Exp $	*/
+/*	$NetBSD: amd64_trap.S,v 1.36 2018/02/25 11:57:44 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2017 The NetBSD Foundation, Inc.
@@ -273,22 +273,22 @@ IDTVEC_END(trap10)
  * equivalent of iret, if it does this code would be needed
  * in order to copy the user segment registers into the fault frame.
  */
-#define check_swapgs alltraps
+#define kernuser_reenter alltraps
 #endif
 
 IDTVEC(trap11)		/* #NP() Segment not present */
 	TRAP_NJ(T_SEGNPFLT)
-	jmp	check_swapgs
+	jmp	kernuser_reenter
 IDTVEC_END(trap11)
 
 IDTVEC(trap12)		/* #SS() Stack exception */
 	TRAP_NJ(T_STKFLT)
-	jmp	check_swapgs
+	jmp	kernuser_reenter
 IDTVEC_END(trap12)
 
 IDTVEC(trap13)		/* #GP() General protection */
 	TRAP_NJ(T_PROTFLT)
-	jmp	check_swapgs
+	jmp	kernuser_reenter
 IDTVEC_END(trap13)
 
 IDTVEC(trap14)
@@ -365,7 +365,7 @@ IDTVEC(intrspurious)
 	jmp	.Lalltraps_checkusr
 IDTVEC_END(intrspurious)
 
-#ifndef check_swapgs
+#ifndef kernuser_reenter
 /*
  * We need to worry about traps in kernel mode while the kernel %gs isn't
  * loaded. These are either faults on iretq during return to user or loads to
@@ -374,7 +374,8 @@ IDTVEC_END(intrspurious)
  * When such traps happen, we have CPL=0 and %gs=userland, and we must perform
  * an additional swapgs to get %gs=kernel.
  */
-NENTRY(check_swapgs)
+	_ALIGN_TEXT
+LABEL(kernuser_reenter)
 	INTRENTRY_L(3f,1:)
 2:
 	sti
@@ -406,7 +407,7 @@ NENTRY(check_swapgs)
 
 	/* None of the above cases */
 	jmp	2b	/* normal kernel fault */
-END(check_swapgs)
+END(kernuser_reenter)
 #endif
 
 	TEXT_USER_END
