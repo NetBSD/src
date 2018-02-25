@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2359 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2360 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -115,3 +115,5 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 		enable by default. [sevan 20180217]
 	macppc: Enable support for "per-priority cyclical scan" buffer queue
 		strategy. [sevan 20180223]
+	mdnsd(8), dns-sd(1), libdns_sd: import mDNSResponder 878.30.4
+		[christos 20180225]
