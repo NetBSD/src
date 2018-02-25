@@ -1,4 +1,4 @@
-/*	$NetBSD: amd64_trap.S,v 1.33 2018/02/22 08:36:31 maxv Exp $	*/
+/*	$NetBSD: amd64_trap.S,v 1.34 2018/02/25 08:09:07 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2017 The NetBSD Foundation, Inc.
@@ -400,12 +400,12 @@ NENTRY(check_swapgs)
 5:
 
 	/* Case 3: move to %gs? */
-	movq	TF_RIP(%rsp),%rax
-	movw	(%rax),%ax
-	andb	$070,%ah		/* mask mod/rm from mod/reg/rm */
-	cmpw	$0x8e+050*256,%ax	/* Any move to %gs (reg 5) */
-	jne	2b			/* No - normal kernel fault */
-	jmp	1b			/* Yes - restore %gs */
+	leaq	do_mov_gs(%rip),%rdi
+	cmpq	%rdi,TF_RIP(%rsp)
+	je	1b
+
+	/* None of the above cases */
+	jmp	2b	/* normal kernel fault */
 END(check_swapgs)
 #endif
 
