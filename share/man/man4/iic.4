@@ -1,4 +1,4 @@
-.\"	$NetBSD: iic.4,v 1.16 2018/02/25 23:51:25 pgoyette Exp $
+.\"	$NetBSD: iic.4,v 1.17 2018/02/25 23:55:21 pgoyette Exp $
 .\"	$OpenBSD: iic.4,v 1.74 2008/09/10 16:13:43 reyk Exp $
 .\"
 .\" Copyright (c) 2004, 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -24,9 +24,11 @@
 .Nd Inter IC (I2C) bus
 .Sh SYNOPSIS
 .\"
-.\" Use the following commands in (t)csh to output the list below:
+.\" Use the following commands in (t)csh to output the list below (note
+\." the first sed command includes a <space> and <tab> character in each
+\." of the bracket expressions):
 .\" cd .../src/sys/arch
-.\" grep -h '^iic.*at' */conf/* | sort -u -k +3 | sed -e 's,[         ][      ]*, ,g' -e 's, *#.*,,' | sh -c 'while read iic at ic ; do printf ".Cd \"$iic $at %-20s # %s\"\n" "$ic" "`grep \"iic.*at.*$ic\" */conf/* | sed \"s,/.*,,\" | sort -u | tr \"\012\" \ `"  ; done' | uniq | tee /tmp/x
+.\" grep -h '^iic.*at' */conf/* | sort -u -k +3 | sed -e 's,[	 ][	 ]*, ,g' -e 's, *#.*,,' | sh -c 'while read iic at ic ; do printf ".Cd \"$iic $at %-20s # %s\"\n" "$ic" "`grep \"iic.*at.*$ic\" */conf/* | sed \"s,/.*,,\" | sort -u | tr \"\012\" \ `"  ; done' | uniq | tee /tmp/x
 .\" cat /tmp/x
 .\"
 .Sh DESCRIPTION
