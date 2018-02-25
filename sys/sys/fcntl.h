@@ -1,4 +1,4 @@
-/*	$NetBSD: fcntl.h,v 1.48 2017/01/10 23:08:13 christos Exp $	*/
+/*	$NetBSD: fcntl.h,v 1.48.8.1 2018/02/25 23:57:51 snj Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993
@@ -90,7 +90,7 @@
     (_XOPEN_SOURCE - 0) >= 500 || defined(_NETBSD_SOURCE)
 #define	O_SYNC		0x00000080	/* synchronous writes */
 #endif
-#if defined(_NETBSD_SOURCE)
+#if (_POSIX_C_SOURCE - 0) >= 200809L || defined(_NETBSD_SOURCE)
 #define	O_NOFOLLOW	0x00000100	/* don't follow symlinks on the last */
 					/* path component */
 #endif
