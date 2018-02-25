@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2184 2018/02/17 21:46:41 kamil Exp $
+#	$NetBSD: mi,v 1.2185 2018/02/25 12:28:18 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -4476,7 +4476,7 @@
 ./usr/share/man/cat3/BIO_f_null.0		comp-c-catman		.cat
 ./usr/share/man/cat3/BIO_f_ssl.0		comp-c-catman		.cat
 ./usr/share/man/cat3/BIO_find_type.0		comp-c-catman		.cat
-./usr/share/man/cat3/BIO_get_data.	0	comp-c-catman		.cat,openssl=11
+./usr/share/man/cat3/BIO_get_data.0		comp-c-catman		.cat,openssl=11
 ./usr/share/man/cat3/BIO_get_ex_new_index.0	comp-c-catman		.cat,openssl=11
 ./usr/share/man/cat3/BIO_meth_new.0		comp-c-catman		.cat,openssl=11
 ./usr/share/man/cat3/BIO_new.0			comp-c-catman		.cat
@@ -4967,7 +4967,7 @@
 ./usr/share/man/cat3/SSL_CONF_CTX_set1_prefix.0		comp-c-catman	.cat,openssl=11
 ./usr/share/man/cat3/SSL_CONF_CTX_set_flags.0		comp-c-catman	.cat,openssl=11
 ./usr/share/man/cat3/SSL_CONF_CTX_set_ssl_ctx.0		comp-c-catman	.cat,openssl=11
-./usr/share/man/cat3/SSL_CONF_cmd.0		`	comp-c-catman	.cat,openssl=11
+./usr/share/man/cat3/SSL_CONF_cmd.0			comp-c-catman	.cat,openssl=11
 ./usr/share/man/cat3/SSL_CONF_cmd_argv.0		comp-c-catman	.cat,openssl=11
 ./usr/share/man/cat3/SSL_CTX_add1_chain_cert.0		comp-c-catman	.cat,openssl=11
 ./usr/share/man/cat3/SSL_CTX_add_extra_chain_cert.0	comp-c-catman		.cat
