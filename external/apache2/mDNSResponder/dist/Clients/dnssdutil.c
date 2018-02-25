@@ -19,6 +19,7 @@
 #include <dns_sd_private.h>
 
 #if( TARGET_OS_DARWIN )
+	#include <dnsinfo.h>
 	#include <libproc.h>
 	#include <sys/proc_info.h>
 #endif
@@ -348,7 +349,7 @@ static CLIOption		kQueryRecordOpts[] =
 	ConnectionOptions(),
 	BooleanOption( 'o', "oneshot",		&gQueryRecord_OneShot,			"Finish after first set of results." ),
 	IntegerOption( 'l', "timeLimit",	&gQueryRecord_TimeLimitSecs,	"seconds", "Maximum duration of the query record operation. Use '0' for no time limit.", false ),
-	BooleanOption( 'r', "raw",			&gQueryRecord_RawRData,			"Show record data as a hexdump." ),
+	BooleanOption(  0 , "raw",			&gQueryRecord_RawRData,			"Show record data as a hexdump." ),
 	
 	ConnectionSection(),
 	CLI_OPTION_END()
@@ -502,18 +503,49 @@ static CLIOption		kReconfirmOpts[] =
 //	getaddrinfo-POSIX Command Options
 //===========================================================================================================================
 
-static const char *		gGAIPOSIX_Name		= NULL;
-static const char *		gGAIPOSIX_Family	= NULL;
+static const char *		gGAIPOSIX_HostName			= NULL;
+static const char *		gGAIPOSIX_ServName			= NULL;
+static const char *		gGAIPOSIX_Family			= NULL;
+static int				gGAIPOSIXFlag_AddrConfig	= false;
+static int				gGAIPOSIXFlag_All			= false;
+static int				gGAIPOSIXFlag_CanonName		= false;
+static int				gGAIPOSIXFlag_NumericHost	= false;
+static int				gGAIPOSIXFlag_NumericServ	= false;
+static int				gGAIPOSIXFlag_Passive		= false;
+static int				gGAIPOSIXFlag_V4Mapped		= false;
+#if( defined( AI_V4MAPPED_CFG ) )
+static int				gGAIPOSIXFlag_V4MappedCFG	= false;
+#endif
+#if( defined( AI_DEFAULT ) )
+static int				gGAIPOSIXFlag_Default		= false;
+#endif
 
 static CLIOption		kGetAddrInfoPOSIXOpts[] =
 {
-	StringOption(	'n', "name",	&gGAIPOSIX_Name,	"domain name", "Domain name to resolve.", true ),
-	StringOptionEx(	'f', "family",	&gGAIPOSIX_Family,	"address family", "Address family to pass to getaddrinfo().", false,
-		"The address family value determines which value to use for the ai_family element of the hints struct addrinfo\n"
-		"argument used when calling getaddrinfo().\n"
+	StringOption(	'n', "hostname",			&gGAIPOSIX_HostName,		"hostname", "Domain name to resolve or an IPv4 or IPv6 address.", true ),
+	StringOption(	's', "servname",			&gGAIPOSIX_ServName,		"servname", "Port number in decimal or service name from services(5).", false ),
+	
+	CLI_OPTION_GROUP( "Hints " ),
+	StringOptionEx(	'f', "family",				&gGAIPOSIX_Family,			"address family", "Address family to use for hints ai_family field.", false,
 		"\n"
 		"Possible address family values are 'inet' for AF_INET, 'inet6' for AF_INET6, or 'unspec' for AF_UNSPEC. If no\n"
-		"address family is specified, then AF_UNSPEC is used.\n" ),
+		"address family is specified, then AF_UNSPEC is used.\n"
+		"\n" ),
+	BooleanOption(   0 , "flag-addrconfig",		&gGAIPOSIXFlag_AddrConfig,	"In hints ai_flags field, set AI_ADDRCONFIG." ),
+	BooleanOption(   0 , "flag-all",			&gGAIPOSIXFlag_All,			"In hints ai_flags field, set AI_ALL." ),
+	BooleanOption(   0 , "flag-canonname",		&gGAIPOSIXFlag_CanonName,	"In hints ai_flags field, set AI_CANONNAME." ),
+	BooleanOption(   0 , "flag-numerichost",	&gGAIPOSIXFlag_NumericHost,	"In hints ai_flags field, set AI_NUMERICHOST." ),
+	BooleanOption(   0 , "flag-numericserv",	&gGAIPOSIXFlag_NumericServ,	"In hints ai_flags field, set AI_NUMERICSERV." ),
+	BooleanOption(   0 , "flag-passive",		&gGAIPOSIXFlag_Passive,		"In hints ai_flags field, set AI_PASSIVE." ),
+	BooleanOption(   0 , "flag-v4mapped",		&gGAIPOSIXFlag_V4Mapped,	"In hints ai_flags field, set AI_V4MAPPED." ),
+#if( defined( AI_V4MAPPED_CFG ) )
+	BooleanOption(   0 , "flag-v4mappedcfg",	&gGAIPOSIXFlag_V4MappedCFG,	"In hints ai_flags field, set AI_V4MAPPED_CFG." ),
+#endif
+#if( defined( AI_DEFAULT ) )
+	BooleanOption(   0 , "flag-default",		&gGAIPOSIXFlag_Default,		"In hints ai_flags field, set AI_DEFAULT." ),
+#endif
+	
+	CLI_SECTION( "Notes", "See getaddrinfo(3) man page for more details.\n" ),
 	CLI_OPTION_END()
 };
 
@@ -611,15 +643,21 @@ static int			gDNSQuery_Flags			= kDNSHeaderFlag_RecursionDesired;
 static int			gDNSQuery_RawRData		= false;
 static int			gDNSQuery_Verbose		= false;
 
+#if( TARGET_OS_DARWIN )
+	#define kDNSQueryServerOptionIsRequired		false
+#else
+	#define kDNSQueryServerOptionIsRequired		true
+#endif
+
 static CLIOption		kDNSQueryOpts[] =
 {
 	StringOption(  'n', "name",			&gDNSQuery_Name,			"name",	"Question name (QNAME) to put in DNS query message.", true ),
 	StringOption(  't', "type",			&gDNSQuery_Type,			"type",	"Question type (QTYPE) to put in DNS query message. Default value is 'A'.", false ),
-	StringOption(  's', "server",		&gDNSQuery_Server,			"IP address", "DNS server's IPv4 or IPv6 address.", true ),
+	StringOption(  's', "server",		&gDNSQuery_Server,			"IP address", "DNS server's IPv4 or IPv6 address.", kDNSQueryServerOptionIsRequired ),
 	IntegerOption( 'l', "timeLimit",	&gDNSQuery_TimeLimitSecs,	"seconds", "Specifies query time limit. Use '-1' for no limit and '0' to exit immediately after sending.", false ),
 	BooleanOption(  0 , "tcp",			&gDNSQuery_UseTCP,			"Send the DNS query via TCP instead of UDP." ),
 	IntegerOption( 'f', "flags",		&gDNSQuery_Flags,			"flags", "16-bit value for DNS header flags/codes field. Default value is 0x0100 (Recursion Desired).", false ),
-	BooleanOption( 'r', "raw",			&gDNSQuery_RawRData,		"Present record data as a hexdump." ),
+	BooleanOption(  0 , "raw",			&gDNSQuery_RawRData,		"Present record data as a hexdump." ),
 	BooleanOption( 'v', "verbose",		&gDNSQuery_Verbose,			"Prints the DNS message to be sent to the server." ),
 	CLI_OPTION_END()
 };
@@ -646,7 +684,7 @@ static CLIOption		kDNSCryptOpts[] =
 	StringOption(  't', "type",			&gDNSCrypt_Type,			"type",	"Question type (QTYPE) to put in DNS query message.", true ),
 	StringOption(  's', "server",		&gDNSCrypt_Server,			"IP address", "DNS server's IPv4 or IPv6 address.", true ),
 	IntegerOption( 'l', "timeLimit",	&gDNSCrypt_TimeLimitSecs,	"seconds", "Specifies query time limit. Use '-1' for no time limit and '0' to exit immediately after sending.", false ),
-	BooleanOption( 'r', "raw",			&gDNSCrypt_RawRData,		"Present record data as a hexdump." ),
+	BooleanOption(  0 , "raw",			&gDNSCrypt_RawRData,		"Present record data as a hexdump." ),
 	BooleanOption( 'v', "verbose",		&gDNSCrypt_Verbose,			"Prints the DNS message to be sent to the server." ),
 	CLI_OPTION_END()
 };
@@ -664,6 +702,7 @@ static int			gMDNSQuery_RawRData		= false;
 static int			gMDNSQuery_UseIPv4		= false;
 static int			gMDNSQuery_UseIPv6		= false;
 static int			gMDNSQuery_AllResponses	= false;
+static int			gMDNSQuery_ReceiveSecs	= 1;
 
 static CLIOption		kMDNSQueryOpts[] =
 {
@@ -672,10 +711,11 @@ static CLIOption		kMDNSQueryOpts[] =
 	StringOption(  't', "type",			&gMDNSQuery_Type,			"type", "Question type (QTYPE) to put in mDNS message.", true ),
 	IntegerOption( 'p', "sourcePort",	&gMDNSQuery_SourcePort,		"port number", "UDP source port to use when sending mDNS messages. Default is 5353 for QM questions.", false ),
 	BooleanOption( 'u', "QU",			&gMDNSQuery_IsQU,			"Set the unicast-response bit, i.e., send a QU question." ),
-	BooleanOption( 'r', "raw",			&gMDNSQuery_RawRData,		"Present record data as a hexdump." ),
+	BooleanOption(  0 , "raw",			&gMDNSQuery_RawRData,		"Present record data as a hexdump." ),
 	BooleanOption(  0 , "ipv4",			&gMDNSQuery_UseIPv4,		"Use IPv4." ),
 	BooleanOption(  0 , "ipv6",			&gMDNSQuery_UseIPv6,		"Use IPv6." ),
-	BooleanOption( 'a', "allResponses",	&gMDNSQuery_AllResponses,	"Print all responses." ),
+	BooleanOption( 'a', "allResponses",	&gMDNSQuery_AllResponses,	"Print all received mDNS messages, not just those containing answers." ),
+	IntegerOption( 'r', "receiveTime",	&gMDNSQuery_ReceiveSecs,	"seconds", "Amount of time to spend receiving messages after the query is sent. The default is one second. Use -1 for unlimited time.", false ),
 	CLI_OPTION_END()
 };
 
@@ -931,6 +971,9 @@ typedef struct
 static void			SocketContextCancelHandler( void *inContext );
 static OSStatus		StringToInt32( const char *inString, int32_t *outValue );
 static OSStatus		StringToUInt32( const char *inString, uint32_t *outValue );
+#if( TARGET_OS_DARWIN )
+static OSStatus		GetDefaultDNSServer( sockaddr_ip *outAddr );
+#endif
 
 #define AddRmvString( X )		( ( (X) & kDNSServiceFlagsAdd ) ? "Add" : "Rmv" )
 #define Unused( X )				(void)(X)
@@ -1686,7 +1729,7 @@ typedef struct
 	Boolean				printedHeader;	// True if the results header was printed.
 	Boolean				oneShotMode;	// True if command is done after the first set of results (one-shot mode).
 	Boolean				gotRecord;		// True if in one-shot mode and received at least one record of the desired type.
-	Boolean				printRawRData;	// True if RDATA results are not to be formatted.
+	Boolean				printRawRData;	// True if RDATA results are not to be formatted when printed.
 	
 }	QueryRecordContext;
 
@@ -2753,15 +2796,17 @@ static void DNSSD_API
 
 static void	GetAddrInfoPOSIXCmd( void )
 {
-	OSStatus				err;
-	struct addrinfo			hints;
-	struct addrinfo *		addrInfo;
-	struct addrinfo *		addrInfoList = NULL;
-	int						addrCount;
-	char					time[ kTimestampBufLen ];
+	OSStatus					err;
+	struct addrinfo				hints;
+	const struct addrinfo *		addrInfo;
+	struct addrinfo *			addrInfoList = NULL;
+	char						time[ kTimestampBufLen ];
 	
 	memset( &hints, 0, sizeof( hints ) );
 	hints.ai_socktype = SOCK_STREAM;
+	
+	// Set hints address family.
+	
 	if( !gGAIPOSIX_Family )										hints.ai_family = AF_UNSPEC;
 	else if( strcasecmp( gGAIPOSIX_Family, "inet" ) == 0 )		hints.ai_family = AF_INET;
 	else if( strcasecmp( gGAIPOSIX_Family, "inet6" ) == 0 )		hints.ai_family = AF_INET6;
@@ -2773,32 +2818,66 @@ static void	GetAddrInfoPOSIXCmd( void )
 		goto exit;
 	}
 	
-	FPrintF( stdout, "Name:           %s\n", gGAIPOSIX_Name );
-	FPrintF( stdout, "Address family: %s\n", AddressFamilyStr( hints.ai_family ) );
+	// Set hints flags.
+	
+	if( gGAIPOSIXFlag_AddrConfig )	hints.ai_flags |= AI_ADDRCONFIG;
+	if( gGAIPOSIXFlag_All )			hints.ai_flags |= AI_ALL;
+	if( gGAIPOSIXFlag_CanonName )	hints.ai_flags |= AI_CANONNAME;
+	if( gGAIPOSIXFlag_NumericHost )	hints.ai_flags |= AI_NUMERICHOST;
+	if( gGAIPOSIXFlag_NumericServ )	hints.ai_flags |= AI_NUMERICSERV;
+	if( gGAIPOSIXFlag_Passive )		hints.ai_flags |= AI_PASSIVE;
+	if( gGAIPOSIXFlag_V4Mapped )	hints.ai_flags |= AI_V4MAPPED;
+#if( defined( AI_V4MAPPED_CFG ) )
+	if( gGAIPOSIXFlag_V4MappedCFG )	hints.ai_flags |= AI_V4MAPPED_CFG;
+#endif
+#if( defined( AI_DEFAULT ) )
+	if( gGAIPOSIXFlag_Default )		hints.ai_flags |= AI_DEFAULT;
+#endif
+	
+	// Print prologue.
+	
+	FPrintF( stdout, "Hostname:       %s\n",	gGAIPOSIX_HostName );
+	FPrintF( stdout, "Servname:       %s\n",	gGAIPOSIX_ServName );
+	FPrintF( stdout, "Address family: %s\n",	AddressFamilyStr( hints.ai_family ) );
+	FPrintF( stdout, "Flags:          0x%X < ",	hints.ai_flags );
+	if( hints.ai_flags & AI_NUMERICSERV )	FPrintF( stdout, "AI_NUMERICSERV " );
+	if( hints.ai_flags & AI_V4MAPPED )		FPrintF( stdout, "AI_V4MAPPED " );
+	if( hints.ai_flags & AI_ADDRCONFIG )	FPrintF( stdout, "AI_ADDRCONFIG " );
+#if( defined( AI_V4MAPPED_CFG ) )
+	if( hints.ai_flags & AI_V4MAPPED_CFG )	FPrintF( stdout, "AI_V4MAPPED_CFG " );
+#endif
+	if( hints.ai_flags & AI_ALL )			FPrintF( stdout, "AI_ALL " );
+	if( hints.ai_flags & AI_NUMERICHOST )	FPrintF( stdout, "AI_NUMERICHOST " );
+	if( hints.ai_flags & AI_CANONNAME )		FPrintF( stdout, "AI_CANONNAME " );
+	if( hints.ai_flags & AI_PASSIVE )		FPrintF( stdout, "AI_PASSIVE " );
+	FPrintF( stdout, ">\n" );
 	FPrintF( stdout, "Start time:     %s\n", GetTimestampStr( time ) );
 	FPrintF( stdout, "---\n" );
 	
-	err = getaddrinfo( gGAIPOSIX_Name, NULL, &hints, &addrInfoList );
-	FPrintF( stdout, "%s:\n", GetTimestampStr( time ) );
+	// Call getaddrinfo().
+	
+	err = getaddrinfo( gGAIPOSIX_HostName, gGAIPOSIX_ServName, &hints, &addrInfoList );
+	GetTimestampStr( time );
 	if( err )
 	{
-		FPrintF( stderr, "getaddrinfo() error %#m: %s.\n", err, gai_strerror( err ) );
-		goto exit;
+		FPrintF( stderr, "Error %#m: %s.\n", err, gai_strerror( err ) );
 	}
-	
-	addrCount = 0;
-	for( addrInfo = addrInfoList; addrInfo; addrInfo = addrInfo->ai_next ) { ++addrCount; }
-	
-	FPrintF( stdout, "Addresses (%d total):\n", addrCount );
-	for( addrInfo = addrInfoList; addrInfo; addrInfo = addrInfo->ai_next )
+	else
 	{
-		FPrintF( stdout, "%##a\n", addrInfo->ai_addr );
+		int		addrCount = 0;
+		
+		for( addrInfo = addrInfoList; addrInfo; addrInfo = addrInfo->ai_next ) { ++addrCount; }
+		
+		FPrintF( stdout, "Addresses (%d total):\n", addrCount );
+		for( addrInfo = addrInfoList; addrInfo; addrInfo = addrInfo->ai_next )
+		{
+			FPrintF( stdout, "%##a\n", addrInfo->ai_addr );
+		}
 	}
+	FPrintF( stdout, "---\n" );
+	FPrintF( stdout, "End time:       %s\n", time );
 	
 exit:
-	FPrintF( stdout, "---\n" );
-	FPrintF( stdout, "End time:       %s\n", GetTimestampStr( time ) );
-	
 	if( addrInfoList ) freeaddrinfo( addrInfoList );
 	if( err ) exit( 1 );
 }
@@ -4570,7 +4649,7 @@ static void	DNSQueryCmd( void )
 	
 	if( gDNSQuery_TimeLimitSecs < -1 )
 	{
-		FPrintF( stdout, "Invalid wait period: %d seconds.\n", gDNSQuery_TimeLimitSecs );
+		FPrintF( stdout, "Invalid time limit: %d seconds.\n", gDNSQuery_TimeLimitSecs );
 		err = kParamErr;
 		goto exit;
 	}
@@ -4593,8 +4672,20 @@ static void	DNSQueryCmd( void )
 	context->useTCP			= gDNSQuery_UseTCP	 ? true : false;
 	context->printRawRData	= gDNSQuery_RawRData ? true : false;
 	
-	err = StringToSockAddr( gDNSQuery_Server, &context->serverAddr, sizeof( context->serverAddr ), NULL );
-	require_noerr( err, exit );
+#if( TARGET_OS_DARWIN )
+	if( gDNSQuery_Server )
+#endif
+	{
+		err = StringToSockAddr( gDNSQuery_Server, &context->serverAddr, sizeof( context->serverAddr ), NULL );
+		require_noerr( err, exit );
+	}
+#if( TARGET_OS_DARWIN )
+	else
+	{
+		err = GetDefaultDNSServer( &context->serverAddr );
+		require_noerr( err, exit );
+	}
+#endif
 	if( SockAddrGetPort( &context->serverAddr ) == 0 ) SockAddrSetPort( &context->serverAddr, kDNSPort );
 	
 	err = RecordTypeFromArgString( gDNSQuery_Type, &context->type );
@@ -4893,9 +4984,9 @@ static void	DNSCryptCmd( void )
 	
 	// Check command parameters.
 	
-	if( gDNSQuery_TimeLimitSecs < -1 )
+	if( gDNSCrypt_TimeLimitSecs < -1 )
 	{
-		FPrintF( stdout, "Invalid wait period: %d seconds.\n", gDNSQuery_TimeLimitSecs );
+		FPrintF( stdout, "Invalid time limit: %d seconds.\n", gDNSCrypt_TimeLimitSecs );
 		err = kParamErr;
 		goto exit;
 	}
@@ -5409,7 +5500,6 @@ static char *	CertTimeStr( time_t inTime, char inBuffer[ kCertTimeStrBufLen ] )
 //	MDNSQueryCmd
 //===========================================================================================================================
 
-#define kMDNSMulticastAddressIPv4	0xE00000FB	// 224.0.0.251
 #define kMDNSPort					5353
 
 #define kDefaultMDNSMessageID		0
@@ -5417,21 +5507,21 @@ static char *	CertTimeStr( time_t inTime, char inBuffer[ kCertTimeStrBufLen ] )
 
 typedef struct
 {
-	const char *			qname;
-	dispatch_source_t		readSourceV4;
-	dispatch_source_t		readSourceV6;
-	int						receivedMsgCount;
-	int						localPort;
-	uint32_t				ifIndex;
-	uint16_t				type;
-	Boolean					isQU;
-	Boolean					printRawRData;
-	Boolean					useIPv4;
-	Boolean					useIPv6;
-	Boolean					allResponses;
-	char					ifName[ IF_NAMESIZE + 1 ];
-	uint8_t					domainName[ kDomainNameLengthMax ];
-	uint8_t					msgBuf[ 8940 ];
+	const char *			qnameStr;							// Name (QNAME) of the record being queried as a C string.
+	dispatch_source_t		readSourceV4;						// Read dispatch source for IPv4 socket.
+	dispatch_source_t		readSourceV6;						// Read dispatch source for IPv6 socket.
+	int						localPort;							// The port number to which the sockets are bound.
+	int						receiveSecs;						// After send, the amount of time to spend receiving.
+	uint32_t				ifIndex;							// Index of the interface over which to send the query.
+	uint16_t				qtype;								// The type (QTYPE) of the record being queried.
+	Boolean					isQU;								// True if the query is QU, i.e., requests unicast responses.
+	Boolean					allResponses;						// True if all mDNS messages received should be printed.
+	Boolean					printRawRData;						// True if RDATA should be printed as hexdumps.
+	Boolean					useIPv4;							// True if the query should be sent via IPv4 multicast.
+	Boolean					useIPv6;							// True if the query should be sent via IPv6 multicast.
+	char					ifName[ IF_NAMESIZE + 1 ];			// Name of the interface over which to send the query.
+	uint8_t					qname[ kDomainNameLengthMax ];		// Buffer to hold the QNAME in label format.
+	uint8_t					msgBuf[ 8940 ];						// Message buffer. 8940 is max size used by mDNSResponder.
 	
 }	MDNSQueryContext;
 
@@ -5448,16 +5538,26 @@ static void	MDNSQueryCmd( void )
 	SocketRef				sockV6 = kInvalidSocketRef;
 	ssize_t					n;
 	const char *			ifNamePtr;
-	SocketContext *			sockContext;
 	size_t					msgLen;
+	unsigned int			sendCount;
+	
+	// Check command parameters.
+	
+	if( gMDNSQuery_ReceiveSecs < -1 )
+	{
+		FPrintF( stdout, "Invalid receive time value: %d seconds.\n", gMDNSQuery_ReceiveSecs );
+		err = kParamErr;
+		goto exit;
+	}
 	
 	context = (MDNSQueryContext *) calloc( 1, sizeof( *context ) );
 	require_action( context, exit, err = kNoMemoryErr );
 	
-	context->qname			= gMDNSQuery_Name;
+	context->qnameStr		= gMDNSQuery_Name;
+	context->receiveSecs	= gMDNSQuery_ReceiveSecs;
 	context->isQU			= gMDNSQuery_IsQU		  ? true : false;
-	context->printRawRData	= gMDNSQuery_RawRData	  ? true : false;
 	context->allResponses	= gMDNSQuery_AllResponses ? true : false;
+	context->printRawRData	= gMDNSQuery_RawRData	  ? true : false;
 	context->useIPv4		= ( gMDNSQuery_UseIPv4 || !gMDNSQuery_UseIPv6 ) ? true : false;
 	context->useIPv6		= ( gMDNSQuery_UseIPv6 || !gMDNSQuery_UseIPv4 ) ? true : false;
 	
@@ -5467,7 +5567,7 @@ static void	MDNSQueryCmd( void )
 	ifNamePtr = if_indextoname( context->ifIndex, context->ifName );
 	require_action( ifNamePtr, exit, err = kNameErr );
 	
-	err = RecordTypeFromArgString( gMDNSQuery_Type, &context->type );
+	err = RecordTypeFromArgString( gMDNSQuery_Type, &context->qtype );
 	require_noerr( err, exit );
 	
 	// Set up IPv4 socket.
@@ -5490,7 +5590,7 @@ static void	MDNSQueryCmd( void )
 		SIN_LEN_SET( &mcastAddr4 );
 		mcastAddr4.sin_family		= AF_INET;
 		mcastAddr4.sin_port			= htons( kMDNSPort );
-		mcastAddr4.sin_addr.s_addr	= htonl( kMDNSMulticastAddressIPv4 );
+		mcastAddr4.sin_addr.s_addr	= htonl( 0xE00000FB );	// The mDNS IPv4 multicast address is 224.0.0.251
 		
 		if( !context->isQU && ( context->localPort == kMDNSPort ) )
 		{
@@ -5530,23 +5630,59 @@ static void	MDNSQueryCmd( void )
 		}
 	}
 	
-	// Write mDNS query message.
+	// Craft mDNS query message.
 	
 	check_compile_time_code( sizeof( context->msgBuf ) >= kDNSQueryMessageMaxLen );
-	err = WriteDNSQueryMessage( context->msgBuf, kDefaultMDNSMessageID, kDefaultMDNSQueryFlags, context->qname,
-		context->type,
-		context->isQU ? ( kDNSServiceClass_IN | kQClassUnicastResponseBit ) : kDNSServiceClass_IN, &msgLen );
+	err = WriteDNSQueryMessage( context->msgBuf, kDefaultMDNSMessageID, kDefaultMDNSQueryFlags, context->qnameStr,
+		context->qtype, context->isQU ? ( kDNSServiceClass_IN | kQClassUnicastResponseBit ) : kDNSServiceClass_IN, &msgLen );
 	require_noerr( err, exit );
 	
 	// Print prologue.
 	
 	MDNSQueryPrintPrologue( context );
 	
-	if( context->useIPv4 )
+	// Send mDNS query message.
+	
+	sendCount = 0;
+	if( IsValidSocket( sockV4 ) )
 	{
 		n = sendto( sockV4, context->msgBuf, msgLen, 0, (struct sockaddr *) &mcastAddr4, (socklen_t) sizeof( mcastAddr4 ) );
 		err = map_socket_value_errno( sockV4, n == (ssize_t) msgLen, n );
-		require_noerr_quiet( err, exit );
+		if( err )
+		{
+			FPrintF( stderr, "*** Failed to send query on IPv4 socket with error %#m\n", err );
+			ForgetSocket( &sockV4 );
+		}
+		else
+		{
+			++sendCount;
+		}
+	}
+	if( IsValidSocket( sockV6 ) )
+	{
+		n = sendto( sockV6, context->msgBuf, msgLen, 0, (struct sockaddr *) &mcastAddr6, (socklen_t) sizeof( mcastAddr6 ) );
+		err = map_socket_value_errno( sockV6, n == (ssize_t) msgLen, n );
+		if( err )
+		{
+			FPrintF( stderr, "*** Failed to send query on IPv6 socket with error %#m\n", err );
+			ForgetSocket( &sockV6 );
+		}
+		else
+		{
+			++sendCount;
+		}
+	}
+	require_action_quiet( sendCount > 0, exit, err = kUnexpectedErr );
+	
+	// If there's no wait period after the send, then exit.
+	
+	if( context->receiveSecs == 0 ) goto exit;
+	
+	// Create dispatch read sources for socket(s).
+	
+	if( IsValidSocket( sockV4 ) )
+	{
+		SocketContext *		sockContext;
 		
 		sockContext = (SocketContext *) calloc( 1, sizeof( *sockContext ) );
 		require_action( sockContext, exit, err = kNoMemoryErr );
@@ -5562,11 +5698,9 @@ static void	MDNSQueryCmd( void )
 		dispatch_resume( context->readSourceV4 );
 	}
 	
-	if( context->useIPv6 )
+	if( IsValidSocket( sockV6 ) )
 	{
-		n = sendto( sockV6, context->msgBuf, msgLen, 0, (struct sockaddr *) &mcastAddr6, (socklen_t) sizeof( mcastAddr6 ) );
-		err = map_socket_value_errno( sockV6, n == (ssize_t) msgLen, n );
-		require_noerr_quiet( err, exit );
+		SocketContext *		sockContext;
 		
 		sockContext = (SocketContext *) calloc( 1, sizeof( *sockContext ) );
 		require_action( sockContext, exit, err = kNoMemoryErr );
@@ -5582,6 +5716,11 @@ static void	MDNSQueryCmd( void )
 		dispatch_resume( context->readSourceV6 );
 	}
 	
+	if( context->receiveSecs > 0 )
+	{
+		dispatch_after_f( dispatch_time_seconds( context->receiveSecs ), dispatch_get_main_queue(), kExitReason_Timeout,
+			Exit );
+	}
 	dispatch_main();
 	
 exit:
@@ -5596,13 +5735,19 @@ exit:
 
 static void	MDNSQueryPrintPrologue( const MDNSQueryContext *inContext )
 {
-	char		time[ kTimestampBufLen ];
+	const int		receiveSecs = inContext->receiveSecs;
+	char			time[ kTimestampBufLen ];
 	
-	FPrintF( stdout, "Interface:   %d (%s)\n",	(int32_t) inContext->ifIndex, inContext->ifName );
-	FPrintF( stdout, "Name:        %s\n",		inContext->qname );
-	FPrintF( stdout, "Type:        %s (%u)\n",	RecordTypeToString( inContext->type ), inContext->type );
-	FPrintF( stdout, "Class:       IN (%s)\n",	inContext->isQU ? "QU" : "QM" );
-	FPrintF( stdout, "Local port:  %d\n",		inContext->localPort );
+	FPrintF( stdout, "Interface:        %d (%s)\n",		(int32_t) inContext->ifIndex, inContext->ifName );
+	FPrintF( stdout, "Name:             %s\n",			inContext->qnameStr );
+	FPrintF( stdout, "Type:             %s (%u)\n",		RecordTypeToString( inContext->qtype ), inContext->qtype );
+	FPrintF( stdout, "Class:            IN (%s)\n",		inContext->isQU ? "QU" : "QM" );
+	FPrintF( stdout, "Local port:       %d\n",			inContext->localPort );
+	FPrintF( stdout, "IP protocols:     %?s%?s%?s\n",
+		inContext->useIPv4, "IPv4", ( inContext->useIPv4 && inContext->useIPv6 ), ", ", inContext->useIPv6, "IPv6" );
+	FPrintF( stdout, "Receive duration: " );
+	if( receiveSecs >= 0 )	FPrintF( stdout, "%d second%?c\n", receiveSecs, receiveSecs != 1, 's' );
+	else					FPrintF( stdout, "∞\n" );
 	FPrintF( stdout, "Start time:  %s\n",		GetTimestampStr( time ) );
 }
 
@@ -5632,24 +5777,25 @@ static void	MDNSQueryReadHandler( void *inContext )
 		const DNSHeader * const		hdr = (DNSHeader *) context->msgBuf;
 		unsigned int				rrCount, i;
 		uint16_t					type, class;
-		uint8_t						domainName[ kDomainNameLengthMax ];
+		uint8_t						name[ kDomainNameLengthMax ];
 		
 		err = DNSMessageGetAnswerSection( context->msgBuf, msgLen, &ptr );
 		require_noerr( err, exit );
 		
-		if( context->domainName[ 0 ] == 0 )
+		if( context->qname[ 0 ] == 0 )
 		{
-			err = DomainNameAppendString( context->domainName, context->qname, NULL );
+			err = DomainNameAppendString( context->qname, context->qnameStr, NULL );
 			require_noerr( err, exit );
 		}
 		
 		rrCount = DNSHeaderGetAnswerCount( hdr ) + DNSHeaderGetAuthorityCount( hdr ) + DNSHeaderGetAdditionalCount( hdr );
 		for( i = 0; i < rrCount; ++i )
 		{
-			err = DNSMessageExtractRecord( context->msgBuf, msgLen, ptr, domainName, &type, &class, NULL, NULL, NULL, &ptr );
+			err = DNSMessageExtractRecord( context->msgBuf, msgLen, ptr, name, &type, &class, NULL, NULL, NULL, &ptr );
 			require_noerr( err, exit );
 			
-			if( ( type == context->type ) && DomainNameEqual( domainName, context->domainName ) )
+			if( ( ( context->qtype == kDNSServiceType_ANY ) || ( type == context->qtype ) ) &&
+				DomainNameEqual( name, context->qname ) )
 			{
 				foundAnswer = true;
 				break;
@@ -6817,7 +6963,7 @@ static OSStatus	PrintDNSMessage( const uint8_t *inMsgPtr, size_t inMsgLen, const
 	opcode			= DNSFlagsGetOpCode( flags );
 	rcode			= DNSFlagsGetRCode( flags );
 	
-	FPrintF( stdout, "ID:               0x%04X\n", id );
+	FPrintF( stdout, "ID:               0x%04X (%u)\n", id, id );
 	FPrintF( stdout, "Flags:            0x%04X %c/%s %cAA%cTC%cRD%cRA %s\n",
 		flags,
 		( flags & kDNSHeaderFlag_Response )				? 'R' : 'Q', DNSFlagsOpCodeToString( opcode ),
@@ -7154,6 +7300,43 @@ static OSStatus	StringToUInt32( const char *inString, uint32_t *outValue )
 exit:
 	return( err );
 }
+
+#if( TARGET_OS_DARWIN )
+//===========================================================================================================================
+//	GetDefaultDNSServer
+//===========================================================================================================================
+
+static OSStatus	GetDefaultDNSServer( sockaddr_ip *outAddr )
+{
+	OSStatus				err;
+	dns_config_t *			config;
+	struct sockaddr *		addr;
+	int32_t					i;
+	
+	config = dns_configuration_copy();
+	require_action( config, exit, err = kUnknownErr );
+	
+	addr = NULL;
+	for( i = 0; i < config->n_resolver; ++i )
+	{
+		const dns_resolver_t * const		resolver = config->resolver[ i ];
+		
+		if( !resolver->domain && ( resolver->n_nameserver > 0 ) )
+		{
+			addr = resolver->nameserver[ 0 ];
+			break;
+		}
+	}
+	require_action_quiet( addr, exit, err = kNotFoundErr );
+	
+	SockAddrCopy( addr, outAddr );
+	err = kNoErr;
+	
+exit:
+	if( config ) dns_configuration_free( config );
+	return( err );
+}
+#endif
 
 //===========================================================================================================================
 //	SocketWriteAll
