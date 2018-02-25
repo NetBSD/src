@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1.2,v 1.1.2.16 2018/02/24 18:30:46 snj Exp $
+# $NetBSD: CHANGES-7.1.2,v 1.1.2.17 2018/02/25 21:16:25 snj Exp $
 
 A complete list of changes from the NetBSD 7.1.1 release to the NetBSD 7.1.2
 release:
@@ -156,4 +156,23 @@ sys/netmpls/mpls_ttl.c				1.9
 
    	Fix several memory corruptions and inconsistencies in MPLS.
 	[maxv, ticket #1571]
+
+sys/arch/amiga/conf/DRACO			patch
+sys/arch/amiga/conf/GENERIC			patch
+sys/arch/amiga/conf/GENERIC.in			patch
+sys/arch/i386/conf/GENERIC			patch
+sys/arch/i386/conf/XEN3_DOM0			patch
+sys/arch/i386/conf/XEN3_DOMU			patch
+sys/arch/sparc/conf/GENERIC			patch
+sys/arch/sparc/conf/KRUPS			patch
+sys/arch/sparc/conf/MRCOFFEE			patch
+sys/arch/sparc/conf/TADPOLE3GX			patch
+sys/arch/sparc64/conf/GENERIC			patch
+sys/arch/sparc64/conf/NONPLUS64			patch
+sys/kern/kern_exec.c				patch
+
+	- disable compat_svr4 and compat_svr4_32 everywhere
+	- disable compat_ibcs2 everywhere but on Vax
+	- remove svr4/svr4_32/ibcs2/freebsd from the module autoload list
+	[maxv, ticket #1499]
 
