@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.307.2.2 2014/11/18 19:05:28 snj Exp $
+# $NetBSD: GENERIC,v 1.307.2.3 2018/02/25 21:16:07 snj Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
@@ -29,7 +29,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.307.2.2 $"
+#ident 		"GENERIC-$Revision: 1.307.2.3 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
@@ -153,7 +153,7 @@ options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_50	# NetBSD 5.0 compatibility.
 options 	COMPAT_60	# NetBSD 6.0 compatibility.
 options 	COMPAT_SUNOS	# Support to run Sun (m68k) executables
-options 	COMPAT_SVR4	# Support to run SVR4 (m68k) executables
+#options 	COMPAT_SVR4	# Support to run SVR4 (m68k) executables
 options 	COMPAT_NOMID	# allow nonvalid machine id executables
 #options 	COMPAT_LINUX	# Support to run Linux/m68k executables
 
