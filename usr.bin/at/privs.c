@@ -1,4 +1,4 @@
-/*	$NetBSD: privs.c,v 1.2 2016/03/13 00:33:12 dholland Exp $	*/
+/*	$NetBSD: privs.c,v 1.3 2018/02/25 23:48:16 htodd Exp $	*/
 
 /*
  *  privs.c - privileged operations
@@ -78,9 +78,9 @@ void
 privs_exit(void)
 {
 	if (setegid(real_gid) == -1)
-		privs_fail("Cannot relinguish group privs");
+		privs_fail("Cannot relinquish group privs");
 	if (seteuid(real_uid) == -1)
-		privs_fail("Cannot relinguish user privs");
+		privs_fail("Cannot relinquish user privs");
 }
 
 void
