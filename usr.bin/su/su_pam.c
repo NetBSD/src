@@ -1,4 +1,4 @@
-/*	$NetBSD: su_pam.c,v 1.20 2015/08/09 09:39:21 shm Exp $	*/
+/*	$NetBSD: su_pam.c,v 1.20.8.1 2018/02/25 23:51:22 htodd Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988\
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su_pam.c,v 1.20 2015/08/09 09:39:21 shm Exp $");
+__RCSID("$NetBSD: su_pam.c,v 1.20.8.1 2018/02/25 23:51:22 htodd Exp $");
 #endif
 #endif /* not lint */
 
@@ -337,7 +337,7 @@ main(int argc, char **argv)
 	/*
 	 * Initialize the supplemental groups before pam gets to them,
 	 * so that other pam modules get a chance to add more when
-	 * we do setcred. Note, we don't relinguish our set-userid yet
+	 * we do setcred. Note, we don't relinquish our set-userid yet
 	 */
 	/* if we aren't changing users, keep the current group members */
 	if (ruid != pwd->pw_uid &&
