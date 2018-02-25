@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.26 2018/02/21 21:53:54 jdolecek Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.27 2018/02/25 16:44:31 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.26 2018/02/21 21:53:54 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.27 2018/02/25 16:44:31 jdolecek Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -457,7 +457,11 @@ pmap_tlb_asid_reinitialize(struct pmap_tlb_info *ti, enum tlb_invalidate_op op)
 		const u_int asids_found = tlb_record_asids(
 		    ti->ti_asid_bitmap._b, ti->ti_asid_max);
 		pmap_tlb_asid_check();
-		KASSERT(asids_found == pmap_tlb_asid_count(ti));
+#ifdef DIAGNOSTIC
+		const u_int asids_count = pmap_tlb_asid_count(ti);
+#endif
+		KASSERTMSG(asids_found == asids_count,
+		    "found %u != count %u", asids_found, asids_count);
 		if (__predict_false(asids_found >= ti->ti_asid_max / 2)) {
 			tlb_invalidate_asids(KERNEL_PID + 1, ti->ti_asid_max);
 #else /* MULTIPROCESSOR && !PMAP_TLB_NEED_SHOOTDOWN */
