@@ -1,4 +1,4 @@
-.\" $NetBSD: mdoc.local,v 1.4 2018/01/14 03:33:10 uwe Exp $
+.\" $NetBSD: mdoc.local,v 1.5 2018/02/25 12:46:49 uwe Exp $
 .\"
 .\" Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -78,6 +78,8 @@
 .ds doc-operating-system-FreeBSD-9.0   9.0
 .ds doc-operating-system-FreeBSD-10.0   10.0
 .ds doc-operating-system-FreeBSD-10.1   10.1
+.ds doc-operating-system-FreeBSD-11.0   11.0
+.ds doc-operating-system-FreeBSD-12.0   12.0
 .
 .
 .nr Dx 1
