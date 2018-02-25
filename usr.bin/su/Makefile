@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.50 2011/04/24 21:42:06 elric Exp $
+#	$NetBSD: Makefile,v 1.51 2018/02/25 00:16:49 mrg Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 7/19/93
 
 .include <bsd.own.mk>
@@ -27,8 +27,8 @@ SRCS=su_pam.c grutil.c suutil.c
 
 SRCS=su.c grutil.c suutil.c
 
-DPADD+=	${LIBCRYPT} ${LIBUTIL}
 LDADD+=	-lcrypt -lutil
+DPADD+=	${LIBCRYPT} ${LIBUTIL}
 
 # Uncomment the following line to change the group that may su root to "sugroup"
 #
@@ -41,22 +41,19 @@ LDADD+=	-lcrypt -lutil
 
 .if (${USE_KERBEROS} != "no")
 .ifdef AFS
-DPADD+= ${LIBKAFS}
 LDADD+= -lkafs
+DPADD+= ${LIBKAFS}
 .endif
 
 CPPFLAGS+=-DKERBEROS5
-DPADD+=	${LIBKRB5} ${LIBASN1}
-LDADD+= -lkrb5 -lasn1
-
-DPADD+=	${LIBCRYPTO} ${LIBROKEN} ${LIBCOM_ERR}
-LDADD+=	-lcrypto -lroken -lcom_err
+LDADD+=	${LIBKRB5_LDADD}
+DPADD+=	${LIBKRB5_DPADD}
 .endif
 
 .if (${USE_SKEY} != "no")
 CPPFLAGS+=-DSKEY
-DPADD+= ${LIBSKEY}
 LDADD+= -lskey
+DPADD+= ${LIBSKEY}
 .endif
 
 .ifdef SU_ROOTAUTH
