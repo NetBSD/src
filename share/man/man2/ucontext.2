@@ -1,4 +1,4 @@
-.\"	$NetBSD: ucontext.2,v 1.8 2018/02/25 17:37:05 uwe Exp $
+.\"	$NetBSD: ucontext.2,v 1.9 2018/02/25 17:45:40 uwe Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -92,25 +92,19 @@ and other machine-specific information.
 Its description is beyond the scope of this manual page;
 portable applications should not access this structure member.
 .Pp
-The
-.Fn _UC_MACHINE_SP ,
-.Fn _UC_MACHINE_FP ,
-.Fn _UC_MACHINE_PC ,
-.Fn _UC_MACHINE_INTRV
-and
-.Fn _UC_MACHINE_SET_PC
-auxiliary macros are designed to perform respectively the following operations:
-.Bl -dash
-.It
-read stack pointer ,
-.It
-read frame pointer (base pointer) ,
-.It
-read program counter ,
-.It
-read interrupt vector ,
-.It
-write program counter .
+The following auxiliary macros are available to access some of that
+machine-specific information:
+.Bl -tag -width ".Fn _UC_MACHINE_SET_PC" -offset indent
+.It Fn _UC_MACHINE_SP
+\(em read stack pointer,
+.It Fn _UC_MACHINE_FP
+\(em read frame pointer (base pointer),
+.It Fn _UC_MACHINE_PC
+\(em read program counter,
+.It Fn _UC_MACHINE_INTRV
+\(em read interrupt vector,
+.It Fn _UC_MACHINE_SET_PC
+\(em write program counter.
 .El
 .Pp
 The frame pointer macro does not guarantee to retrieve a reliable value
