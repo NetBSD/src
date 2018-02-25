@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.199 2018/01/25 23:40:06 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.200 2018/02/25 08:20:28 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -76,6 +76,7 @@ SUBDIR+=	iic
 SUBDIR+=	ip_ecn
 SUBDIR+=	ipl
 SUBDIR+=	kernfs
+SUBDIR+=	ksem
 SUBDIR+=	layerfs
 SUBDIR+=	lfs
 SUBDIR+=	lua
@@ -376,6 +377,12 @@ SUBDIR+=	auvitek
 SUBDIR+=	coram
 SUBDIR+=	cxdtv
 SUBDIR+=	emdtv
+
+# Intel Integrated Memory Controller and associated SMBus
+# (Experimental)
+SUBDIR+=	imc
+SUBDIR+=	imcsmb
+
 .endif
 
 .if (${MKISCSI} != "no")
