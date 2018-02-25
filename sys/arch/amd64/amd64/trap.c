@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.112 2018/02/25 12:37:16 maxv Exp $	*/
+/*	$NetBSD: trap.c,v 1.113 2018/02/25 13:09:33 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2017 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.112 2018/02/25 12:37:16 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.113 2018/02/25 13:09:33 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -376,7 +376,7 @@ trap(struct trapframe *frame)
 	case T_ALIGNFLT|T_USER:
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_trap = type & ~T_USER;
-		ksi.ksi_addr = (void *)rcr2();
+		ksi.ksi_addr = (void *)frame->tf_rip;
 		switch (type) {
 		case T_SEGNPFLT|T_USER:
 		case T_STKFLT|T_USER:
