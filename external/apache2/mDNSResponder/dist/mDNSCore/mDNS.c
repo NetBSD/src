@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 4 -*-
  *
- * Copyright (c) 2002-2015 Apple Inc. All rights reserved.
+ * Copyright (c) 2002-2017 Apple Inc. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -4172,12 +4172,12 @@ mDNSexport void AnswerCurrentQuestionWithResourceRecord(mDNS *const m, CacheReco
                 responseLatencyMs = 0;
             }
 
-            MetricsUpdateUDNSQueryStats(queryName, q->qtype, &rr->resrec, q->metrics.querySendCount, responseLatencyMs, isForCellular);
+            MetricsUpdateDNSQueryStats(queryName, q->qtype, &rr->resrec, q->metrics.querySendCount, responseLatencyMs, isForCellular);
             q->metrics.answered = mDNStrue;
         }
         if (q->metrics.querySendCount > 0)
         {
-            MetricsUpdateUDNSResolveStats(queryName, &rr->resrec, isForCellular);
+            MetricsUpdateDNSResolveStats(queryName, &rr->resrec, isForCellular);
         }
     }
 #endif
@@ -8946,6 +8946,13 @@ mDNSlocal void mDNSCoreReceiveResponse(mDNS *const m,
            response->h.numAuthorities, response->h.numAuthorities == 1 ? "y,  " : "ies,",
            response->h.numAdditionals, response->h.numAdditionals == 1 ? " "    : "s", end - response->data, LLQType);
 
+#if AWD_METRICS
+    if (mDNSSameIPPort(srcport, UnicastDNSPort))
+    {
+        MetricsUpdateDNSResponseSize((mDNSu32)(end - (mDNSu8 *)response));
+    }
+#endif
+
     // According to RFC 2181 <http://www.ietf.org/rfc/rfc2181.txt>
     //    When a DNS client receives a reply with TC
     //    set, it should ignore that response, and query again, using a
@@ -12129,7 +12136,7 @@ mDNSexport mStatus mDNS_StopQuery_internal(mDNS *const m, DNSQuestion *const que
         queryName  = question->metrics.originalQName ? question->metrics.originalQName : &question->qname;
         isForCell  = (question->qDNSServer && question->qDNSServer->cellIntf);
         durationMs = ((m->timenow - question->metrics.firstQueryTime) * 1000) / mDNSPlatformOneSecond;
-        MetricsUpdateUDNSQueryStats(queryName, question->qtype, mDNSNULL, question->metrics.querySendCount, durationMs, isForCell);
+        MetricsUpdateDNSQueryStats(queryName, question->qtype, mDNSNULL, question->metrics.querySendCount, durationMs, isForCell);
     }
 #endif
     // Take care to cut question from list *before* calling UpdateQuestionDuplicates

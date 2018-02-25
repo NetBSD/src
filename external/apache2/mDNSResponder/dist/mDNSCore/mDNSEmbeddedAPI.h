@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 4 -*-
  *
- * Copyright (c) 2002-2015 Apple Inc. All rights reserved.
+ * Copyright (c) 2002-2017 Apple Inc. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1896,7 +1896,7 @@ typedef enum { DNSSECValNotRequired = 0, DNSSECValRequired, DNSSECValInProgress,
 // RFC 4122 defines it to be 16 bytes 
 #define UUID_SIZE       16
 
-#define AWD_METRICS (USE_AWD && TARGET_OS_EMBEDDED)
+#define AWD_METRICS (USE_AWD && TARGET_OS_IOS)
 
 #if AWD_METRICS
 typedef struct
@@ -2039,7 +2039,7 @@ struct DNSQuestion_struct
     domainname           *qnameOrig;        // Copy of the original question name if it is not fully qualified
     mDNSQuestionCallback *QuestionCallback;
     void                 *QuestionContext;
-#if TARGET_OS_EMBEDDED
+#if AWD_METRICS
     uDNSMetrics metrics;                    // Data used for collecting unicast DNS query metrics.
 #endif
 #if USE_DNS64

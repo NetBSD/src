@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: prepare-import.sh,v 1.4 2018/01/14 22:51:12 christos Exp $
+# $NetBSD: prepare-import.sh,v 1.5 2018/02/25 20:04:55 christos Exp $
 #
 # Extract the new tarball and run this script with the first argument
 # the mDNSResponder-X.Y directory that was created. cd to that directory
@@ -10,8 +10,8 @@
 
 set -e
 cd "$1"
-rm -rf mDNSMacOS9 mDNSMacOSX mDNSVxWorks mDNSWindows
-rm -f Makefile mDNSResponder.sln README.txt PrivateDNS.txt Documents
+rm -rf mDNSMacOS9 mDNSMacOSX mDNSVxWorks mDNSWindows Documents
+rm -f Makefile mDNSResponder.sln README.txt PrivateDNS.txt
 
 (cd Clients
 rm -rf BonjourExample DNS-SD.VisualStudio DNS-SD.xcodeproj
