@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.392 2017/12/03 14:26:38 jdolecek Exp $
+#	$NetBSD: files.pci,v 1.393 2018/02/25 08:19:34 pgoyette Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -1189,3 +1189,14 @@ include "external/bsd/drm2/pci/files.drmkms_pci"
 device	ismt: i2cbus
 attach	ismt at pci
 file	dev/pci/ismt.c		ismt
+
+# Intel Integrated Memory Controller and associated SMBus
+# (Experimental)
+
+device	imc {}: imcsmb
+attach	imc at pci
+file	dev/imcsmb/imc.c		imc
+
+device	imcsmb: i2cbus
+attach	imcsmb at imc
+file	dev/imcsmb/imcsmb.c		imcsmb
