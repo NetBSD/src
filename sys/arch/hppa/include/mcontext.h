@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.8 2014/02/19 13:01:51 skrll Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.8.22.1 2018/02/25 23:50:22 snj Exp $	*/
 
 #ifndef _HPPA_MCONTEXT_H_
 #define	_HPPA_MCONTEXT_H_
@@ -50,6 +50,7 @@ typedef struct {
 } mcontext_t;
 
 #define	_UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_SP])
+#define	_UC_MACHINE_FP(uc)	((uc)->uc_mcontext.__gregs[3])
 #define	_UC_MACHINE_PC(uc) 	((uc)->uc_mcontext.__gregs[_REG_PCOQH])
 #define	_UC_MACHINE_SET_PC(uc, pc)					\
 do {									\
