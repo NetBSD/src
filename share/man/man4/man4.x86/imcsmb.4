@@ -1,4 +1,4 @@
-.\" $NetBSD: imcsmb.4,v 1.5 2018/02/25 12:51:33 uwe Exp $
+.\" $NetBSD: imcsmb.4,v 1.6 2018/02/25 12:57:39 uwe Exp $
 .\"
 .\" Copyright (c) 2018 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -68,13 +68,12 @@
 Alternatively, to load the driver as a module at boot time, place the following
 line in
 .Xr boot.cfg 5 :
-.Bd -literal -offset indent
-load=imcsmb
-.Ed
+.Pp
+.Dl load=imcsmb
+.Pp
 or add the following line to your /etc/modules file:
-.Bd -literal -offset indent
-imcsmb
-.Ed
+.Pp
+.Dl imcsmb
 .Sh DESCRIPTION
 The
 .Nm
