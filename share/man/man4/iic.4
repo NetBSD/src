@@ -1,4 +1,4 @@
-.\"	$NetBSD: iic.4,v 1.15 2018/01/24 10:00:42 wiz Exp $
+.\"	$NetBSD: iic.4,v 1.16 2018/02/25 23:51:25 pgoyette Exp $
 .\"	$OpenBSD: iic.4,v 1.74 2008/09/10 16:13:43 reyk Exp $
 .\"
 .\" Copyright (c) 2004, 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -29,20 +29,23 @@
 .\" grep -h '^iic.*at' */conf/* | sort -u -k +3 | sed -e 's,[         ][      ]*, ,g' -e 's, *#.*,,' | sh -c 'while read iic at ic ; do printf ".Cd \"$iic $at %-20s # %s\"\n" "$ic" "`grep \"iic.*at.*$ic\" */conf/* | sed \"s,/.*,,\" | sort -u | tr \"\012\" \ `"  ; done' | uniq | tee /tmp/x
 .\" cat /tmp/x
 .\"
-.Cd "iic* at acpismbus?           # amd64 i386"
+.Sh DESCRIPTION
+.Cd "iic* at tsciic?              # alpha "
 .Cd "iic* at alipm?               # alpha amd64 i386 sparc64 "
 .Cd "iic* at amdpm?               # amd64 i386 "
 .Cd "iic* at armadillo9iic?       # evbarm "
 .Cd "iic0 at at91twi?             # evbarm "
 .Cd "iic0 at ausmbus0             # evbmips "
 .Cd "iic* at awiniic?             # evbarm "
-.Cd "iic4 at awinp2wi0            # evbarm "
 .Cd "iic* at bcmi2c?              # evbarm "
 .Cd "iic* at coram?               # amd64 i386 "
+.Cd "iic* at cuda0                # macppc "
 .Cd "iic0 at cuda0                # macppc "
+.Cd "iic* at cuda?                # macppc "
 .Cd "iic* at cxdtv?               # amd64 i386 "
 .Cd "iic* at diic?                # acorn32 evbppc "
-.Cd "iic* at exyoiic?             # evbarm "
+.Cd "iic* at dwiic?               # amd64 i386 "
+.Cd "iic* at exyoi2c?             # evbarm "
 .Cd "iic* at g2i2c?               # evbarm "
 .Cd "iic0 at gpiic?               # evbppc "
 .Cd "iic* at gpioiic?             # amd64 i386 "
@@ -50,6 +53,7 @@
 .Cd "iic* at gxiic?               # evbarm "
 .Cd "iic* at i2cbus?              # evbarm "
 .Cd "iic* at ichsmb?              # amd64 i386 "
+.Cd "iic* at imcsmb?              # amd64 i386 "
 .Cd "iic* at imxi2c?              # evbarm "
 .Cd "iic0 at iomdiic?             # acorn32 "
 .Cd "iic0 at iopiic?              # evbarm iyonix "
@@ -62,21 +66,15 @@
 .Cd "iic* at omapiic?             # evbarm "
 .Cd "iic* at pcfiic?              # sparc64 "
 .Cd "iic* at piixpm?              # amd64 i386 "
+.Cd "iic* at pmu?                 # macppc "
 .Cd "iic* at ri2c?                # evbmips "
-.Cd "iic0 at rkiic0               # evbarm "
-.Cd "iic1 at rkiic1               # evbarm "
-.Cd "iic2 at rkiic2               # evbarm "
-.Cd "iic3 at rkiic3               # evbarm "
-.Cd "iic4 at rkiic4               # evbarm "
 .Cd "iic* at rtciic?              # mmeye "
 .Cd "iic0 at slugiic0             # evbarm "
 .Cd "iic* at tegrai2c?            # evbarm "
 .Cd "iic* at tiiic?               # evbarm "
-.Cd "iic* at tsciic?              # alpha "
 .Cd "iic* at viapcib?             # i386 "
 .Cd "iic* at voyager0             # evbmips "
 .Cd "iic0 at ziic?                # evbmips zaurus "
-.Sh DESCRIPTION
 I2C is a two-wire bus developed by Philips used for connecting
 integrated circuits.
 It is commonly used for connecting devices such as EEPROMs,
