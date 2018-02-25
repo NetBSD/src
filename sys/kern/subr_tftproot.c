@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_tftproot.c,v 1.12.12.2 2015/04/06 01:37:29 snj Exp $ */
+/*	$NetBSD: subr_tftproot.c,v 1.12.12.3 2018/02/25 23:27:17 snj Exp $ */
 
 /*-
  * Copyright (c) 2007 Emmanuel Dreyfus, all rights reserved.
@@ -39,7 +39,7 @@
 #include "opt_md.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_tftproot.c,v 1.12.12.2 2015/04/06 01:37:29 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_tftproot.c,v 1.12.12.3 2018/02/25 23:27:17 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -64,8 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: subr_tftproot.c,v 1.12.12.2 2015/04/06 01:37:29 snj 
 #include <nfs/nfsmount.h>
 #include <nfs/nfsdiskless.h>
 #include <nfs/nfs_var.h>
-
-extern void       mdattach(int);
 
 /* 
  * Copied from <lib/libsa/tftp.h> 
@@ -333,7 +331,6 @@ tftproot_getfile(struct tftproot_handle *trh, struct lwp *l)
 	DPRINTF(("%s():%d RAMdisk loaded: %ld@%p\n", 
 	    __func__, __LINE__, trh->trh_len, trh->trh_base));
 	md_root_setconf(trh->trh_base, trh->trh_len);
-	mdattach(0);
 
 	error = 0;
 out:
