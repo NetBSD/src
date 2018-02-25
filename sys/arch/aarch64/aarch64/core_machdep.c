@@ -1,4 +1,4 @@
-/* $NetBSD: core_machdep.c,v 1.2 2018/02/25 08:23:09 skrll Exp $ */
+/* $NetBSD: core_machdep.c,v 1.3 2018/02/25 08:24:36 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: core_machdep.c,v 1.2 2018/02/25 08:23:09 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: core_machdep.c,v 1.3 2018/02/25 08:24:36 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/cpu.h>
@@ -57,9 +57,9 @@ cpu_coredump(struct lwp *l, struct coredump_iostate *iocookie,
 
 	if (iocookie == NULL) {
 		CORE_SETMAGIC(*chdr, COREMAGIC, MID_MACHINE, 0);
-		chdr->c_hdrsize = ALIGN(sizeof *chdr);
-		chdr->c_seghdrsize = ALIGN(sizeof cseg);
-		chdr->c_cpusize = sizeof md_core;
+		chdr->c_hdrsize = ALIGN(sizeof(*chdr));
+		chdr->c_seghdrsize = ALIGN(sizeof(cseg));
+		chdr->c_cpusize = sizeof(md_core);
 		chdr->c_nseg++;
 		return 0;
 	}
