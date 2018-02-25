@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3_DOM0,v 1.85.2.5 2015/07/22 16:53:34 snj Exp $
+#	$NetBSD: XEN3_DOM0,v 1.85.2.5.2.1 2018/02/25 21:15:19 snj Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -94,8 +94,8 @@ options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 options 	COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
-options 	COMPAT_SVR4	# binary compatibility with SVR4
-options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
+#options 	COMPAT_SVR4	# binary compatibility with SVR4
+#options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
 options 	COMPAT_LINUX	# binary compatibility with Linux
 #options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
