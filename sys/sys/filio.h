@@ -1,4 +1,4 @@
-/*	$NetBSD: filio.h,v 1.10 2005/12/11 12:25:20 christos Exp $	*/
+/*	$NetBSD: filio.h,v 1.11 2018/02/25 18:55:23 chs Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -44,6 +44,9 @@
 /* Generic file-descriptor ioctl's. */
 #define	FIOCLEX		 _IO('f', 1)		/* set close on exec on fd */
 #define	FIONCLEX	 _IO('f', 2)		/* remove close on exec */
+/* Handle lseek SEEK_DATA and SEEK_HOLE for holey file knowledge. */
+#define	FIOSEEKDATA	_IOWR('f', 97, off_t)	/* SEEK_DATA */
+#define	FIOSEEKHOLE	_IOWR('f', 98, off_t)	/* SEEK_HOLE */
 #define	FIONREAD	_IOR('f', 127, int)	/* get # bytes to read */
 #define	FIONBIO		_IOW('f', 126, int)	/* set/clear non-blocking i/o */
 #define	FIOASYNC	_IOW('f', 125, int)	/* set/clear async i/o */
@@ -54,7 +57,6 @@
 #define	FIONWRITE	_IOR('f', 121, int)	/* get # bytes outstanding
 						 * in send queue. */
 #define	FIONSPACE	_IOR('f', 120, int)	/* get space in send queue. */
-
 
 /* Ugly symbol for compatibility with other operating systems */
 #define	FIBMAP		FIOGETBMAP
