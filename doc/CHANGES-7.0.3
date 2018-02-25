@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.87 2018/02/25 21:16:33 snj Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.88 2018/02/25 23:35:25 snj Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -5287,4 +5287,9 @@ sys/kern/kern_exec.c				patch
 	- disable compat_ibcs2 everywhere but on Vax
 	- remove svr4/svr4_32/ibcs2/freebsd from the module autoload list
 	[maxv, ticket #1499]
+
+sys/netinet6/ip6_input.c			1.188 via patch
+
+	Kick nested IPv6 fragments.
+	[maxv, ticket #1572]
 
