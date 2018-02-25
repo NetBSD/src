@@ -1,4 +1,4 @@
-/* $NetBSD: t_ucontext.c,v 1.2 2018/02/25 14:27:07 kamil Exp $ */
+/* $NetBSD: t_ucontext.c,v 1.3 2018/02/25 15:31:07 christos Exp $ */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_ucontext.c,v 1.2 2018/02/25 14:27:07 kamil Exp $");
+__RCSID("$NetBSD: t_ucontext.c,v 1.3 2018/02/25 15:31:07 christos Exp $");
 
 #include <atf-c.h>
 #include <stdio.h>
@@ -71,7 +71,7 @@ ATF_TC_BODY(ucontext_basic, tc)
 ATF_TC(ucontext_sp);
 ATF_TC_HEAD(ucontext_sp, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Retrive _UC_MACHINE_SP()");
+	atf_tc_set_md_var(tc, "descr", "Retrieve _UC_MACHINE_SP()");
 }
 
 ATF_TC_BODY(ucontext_sp, tc)
@@ -86,7 +86,7 @@ ATF_TC_BODY(ucontext_sp, tc)
 ATF_TC(ucontext_fp);
 ATF_TC_HEAD(ucontext_fp, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Retrive _UC_MACHINE_FP()");
+	atf_tc_set_md_var(tc, "descr", "Retrieve _UC_MACHINE_FP()");
 }
 
 ATF_TC_BODY(ucontext_fp, tc)
@@ -101,7 +101,7 @@ ATF_TC_BODY(ucontext_fp, tc)
 ATF_TC(ucontext_pc);
 ATF_TC_HEAD(ucontext_pc, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Retrive _UC_MACHINE_PC()");
+	atf_tc_set_md_var(tc, "descr", "Retrieve _UC_MACHINE_PC()");
 }
 
 ATF_TC_BODY(ucontext_pc, tc)
@@ -116,7 +116,7 @@ ATF_TC_BODY(ucontext_pc, tc)
 ATF_TC(ucontext_intrv);
 ATF_TC_HEAD(ucontext_intrv, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Retrive _UC_MACHINE_INTRV()");
+	atf_tc_set_md_var(tc, "descr", "Retrieve _UC_MACHINE_INTRV()");
 }
 
 ATF_TC_BODY(ucontext_intrv, tc)
