@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1576 2018/02/09 04:20:38 christos Exp $
+# $NetBSD: mi,v 1.1577 2018/02/25 12:53:22 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2015,6 +2015,7 @@
 ./usr/share/man/cat4/x86/fwhrng.0		man-sys-catman		.cat
 ./usr/share/man/cat4/x86/hpet.0			man-sys-catman		.cat
 ./usr/share/man/cat4/x86/ichlpcib.0		man-sys-catman		.cat
+./usr/share/man/cat4/x86/imcsmb.0		man-sys-catman		.cat
 ./usr/share/man/cat4/x86/ioapic.0		man-sys-catman		.cat
 ./usr/share/man/cat4/x86/kmem.0			man-sys-catman		.cat
 ./usr/share/man/cat4/x86/lapic.0		man-sys-catman		.cat
@@ -5070,6 +5071,7 @@
 ./usr/share/man/html4/x86/fwhrng.html		man-sys-htmlman		html
 ./usr/share/man/html4/x86/hpet.html		man-sys-htmlman		html
 ./usr/share/man/html4/x86/ichlpcib.html		man-sys-htmlman		html
+./usr/share/man/html4/x86/imcsmb.html		man-sys-htmlman		html
 ./usr/share/man/html4/x86/ioapic.html		man-sys-htmlman		html
 ./usr/share/man/html4/x86/kmem.html		man-sys-htmlman		html
 ./usr/share/man/html4/x86/lapic.html		man-sys-htmlman		html
@@ -8057,6 +8059,7 @@
 ./usr/share/man/man4/x86/fwhrng.4		man-sys-man		.man
 ./usr/share/man/man4/x86/hpet.4			man-sys-man		.man
 ./usr/share/man/man4/x86/ichlpcib.4		man-sys-man		.man
+./usr/share/man/man4/x86/imcsmb.4		man-sys-man		.man
 ./usr/share/man/man4/x86/ioapic.4		man-sys-man		.man
 ./usr/share/man/man4/x86/kmem.4			man-sys-man		.man
 ./usr/share/man/man4/x86/lapic.4		man-sys-man		.man
