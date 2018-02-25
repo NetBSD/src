@@ -1,4 +1,4 @@
-/*	$NetBSD: string.h,v 1.51 2016/10/12 20:01:22 christos Exp $	*/
+/*	$NetBSD: string.h,v 1.51.6.1 2018/02/25 23:53:59 snj Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -74,7 +74,8 @@ int	 strerror_r(int, char *, size_t);
 #endif /* _POSIX_C_SOURCE >= 199506 || XOPEN_SOURCE >= 500 || ... */
 size_t	 strxfrm(char * __restrict, const char * __restrict, size_t);
 
-#if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
+#if (_POSIX_C_SOURCE - 0 >= 200112L) || defined(_XOPEN_SOURCE) || \
+    defined(_NETBSD_SOURCE)
 void	*memccpy(void *, const void *, int, size_t);
 char	*strdup(const char *);
 #endif
