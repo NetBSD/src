@@ -1,4 +1,4 @@
-/*	$NetBSD: amd64_trap.S,v 1.34 2018/02/25 08:09:07 maxv Exp $	*/
+/*	$NetBSD: amd64_trap.S,v 1.35 2018/02/25 08:28:55 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2017 The NetBSD Foundation, Inc.
@@ -393,8 +393,8 @@ NENTRY(check_swapgs)
 	leaq	do_iret(%rip),%rdi
 	cmpq	%rdi,TF_RIP(%rsp)
 	jne	5f
-	movq	TF_RSP(%rsp),%rax	/* Must read %rsp, may be a pad word */
-	testb	$SEL_UPL,8(%rax)	/* Check %cs of outer iret frame */
+	movq	TF_RSP(%rsp),%rdi	/* Must read %rsp, may be a pad word */
+	testb	$SEL_UPL,8(%rdi)	/* Check %cs of outer iret frame */
 	je	2b			/* jump if iret was to kernel  */
 	jmp	1b			/* to user - must restore %gs */
 5:
