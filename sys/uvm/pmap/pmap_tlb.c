@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.27 2018/02/25 16:44:31 jdolecek Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.28 2018/02/25 21:43:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.27 2018/02/25 16:44:31 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.28 2018/02/25 21:43:03 jdolecek Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -409,7 +409,8 @@ pmap_tlb_asid_count(struct pmap_tlb_info *ti)
 {
 	size_t count = 0;
 	for (tlb_asid_t asid = 1; asid <= ti->ti_asid_max; asid++) {
-		count += TLBINFO_ASID_INUSE_P(ti, asid);
+		if (TLBINFO_ASID_INUSE_P(ti, asid))
+			count++;
 	}
 	return count;
 }
