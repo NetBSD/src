@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.149.2.1.6.1 2018/01/30 18:30:31 martin Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.149.2.1.6.2 2018/02/25 23:17:37 snj Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.149.2.1.6.1 2018/01/30 18:30:31 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.149.2.1.6.2 2018/02/25 23:17:37 snj Exp $");
 
 #include "opt_gateway.h"
 #include "opt_inet.h"
@@ -249,7 +249,7 @@ ip6_input(struct mbuf *m)
 	int hit, off = sizeof(struct ip6_hdr), nest;
 	u_int32_t plen;
 	u_int32_t rtalert = ~0;
-	int nxt, ours = 0, rh_present = 0;
+	int nxt, ours = 0, rh_present = 0, frg_present;
 	struct ifnet *deliverifp = NULL;
 	int srcrt = 0;
 	const struct rtentry *rt;
@@ -720,6 +720,7 @@ ip6_input(struct mbuf *m)
 	nest = 0;
 
 	rh_present = 0;
+	frg_present = 0;
 	while (nxt != IPPROTO_DONE) {
 		if (ip6_hdrnestlimit && (++nest > ip6_hdrnestlimit)) {
 			IP6_STATINC(IP6_STAT_TOOMANYHDR);
@@ -739,6 +740,13 @@ ip6_input(struct mbuf *m)
 
 		if (nxt == IPPROTO_ROUTING) {
 			if (rh_present++) {
+				in6_ifstat_inc(m->m_pkthdr.rcvif,
+				    ifs6_in_hdrerr);
+				IP6_STATINC(IP6_STAT_BADOPTIONS);
+				goto bad;
+			}
+		} else if (nxt == IPPROTO_FRAGMENT) {
+			if (frg_present++) {
 				in6_ifstat_inc(m->m_pkthdr.rcvif,
 				    ifs6_in_hdrerr);
 				IP6_STATINC(IP6_STAT_BADOPTIONS);
