@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.9 2017/05/03 19:46:54 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.9.2.1 2018/02/25 20:59:46 snj Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.9 2017/05/03 19:46:54 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.9.2.1 2018/02/25 20:59:46 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -58,7 +58,7 @@ __RCSID("$NetBSD: t_ptrace_wait.c,v 1.9 2017/05/03 19:46:54 kamil Exp $");
 #include "msg.h"
 
 #define PARENT_TO_CHILD(info, fds, msg) \
-    ATF_REQUIRE(msg_write_child(info " to child " # fds, &fds, &msg, sizeof(msg)) == 0)
+    SYSCALL_REQUIRE(msg_write_child(info " to child " # fds, &fds, &msg, sizeof(msg)) == 0)
 
 #define CHILD_FROM_PARENT(info, fds, msg) \
     FORKEE_ASSERT(msg_read_parent(info " from parent " # fds, &fds, &msg, sizeof(msg)) == 0)
@@ -67,7 +67,18 @@ __RCSID("$NetBSD: t_ptrace_wait.c,v 1.9 2017/05/03 19:46:54 kamil Exp $");
     FORKEE_ASSERT(msg_write_parent(info " to parent " # fds, &fds, &msg, sizeof(msg)) == 0)
 
 #define PARENT_FROM_CHILD(info, fds, msg) \
-    ATF_REQUIRE(msg_read_child(info " from parent " # fds, &fds, &msg, sizeof(msg)) == 0)
+    SYSCALL_REQUIRE(msg_read_child(info " from parent " # fds, &fds, &msg, sizeof(msg)) == 0)
+
+#define SYSCALL_REQUIRE(expr) ATF_REQUIRE_MSG(expr, "%s: %s", # expr, \
+    strerror(errno))
+#define SYSCALL_REQUIRE_ERRNO(res, exp) ATF_REQUIRE_MSG(res == exp, \
+    "%d(%s) != %d", res, strerror(res), exp)
+
+static int debug = 0;
+
+#define DPRINTF(a, ...)	do  \
+	if (debug) printf(a,  ##__VA_ARGS__); \
+    while (/*CONSTCOND*/0)
 
 
 ATF_TC(traceme1);
@@ -86,35 +97,35 @@ ATF_TC_BODY(traceme1, tc)
 	int status;
 #endif
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
@@ -145,10 +156,10 @@ ATF_TC_BODY(traceme2, tc)
 	int status;
 #endif
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
 		sa.sa_handler = traceme2_sighandler;
@@ -157,31 +168,31 @@ ATF_TC_BODY(traceme2, tc)
 
 		FORKEE_ASSERT(sigaction(sigsent, &sa, NULL) != -1);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
 		FORKEE_ASSERT_EQ(traceme2_caught, 1);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Before resuming the child process where it left off and with "
+	DPRINTF("Before resuming the child process where it left off and with "
 	    "signal %s to be sent\n", strsignal(sigsent));
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, sigsent) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, sigsent) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the exited child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the exited child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
@@ -200,36 +211,36 @@ ATF_TC_BODY(traceme3, tc)
 	int status;
 #endif
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
 		/* NOTREACHED */
 		FORKEE_ASSERTX(0 &&
 		    "Child should be terminated by a signal from its parent");
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Before resuming the child process where it left off and with "
+	DPRINTF("Before resuming the child process where it left off and with "
 	    "signal %s to be sent\n", strsignal(sigsent));
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, sigsent) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, sigsent) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_signaled(status, sigsent, 0);
 
-	printf("Before calling %s() for the exited child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the exited child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
@@ -249,47 +260,47 @@ ATF_TC_BODY(traceme4, tc)
 	int status;
 #endif
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		printf("Before raising %s from child\n", strsignal(sigsent));
+		DPRINTF("Before raising %s from child\n", strsignal(sigsent));
 		FORKEE_ASSERT(raise(sigsent) == 0);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(),child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(),child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigsent);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the exited child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the exited child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
@@ -312,8 +323,8 @@ ATF_TC_BODY(attach1, tc)
 	int status;
 #endif
 
-	printf("Spawn tracee\n");
-	ATF_REQUIRE(msg_open(&parent_tracee) == 0);
+	DPRINTF("Spawn tracee\n");
+	SYSCALL_REQUIRE(msg_open(&parent_tracee) == 0);
 	tracee = atf_utils_fork();
 	if (tracee == 0) {
 		// Wait for parent to let us exit
@@ -321,11 +332,11 @@ ATF_TC_BODY(attach1, tc)
 		_exit(exitval_tracee);
 	}
 
-	printf("Spawn debugger\n");
-	ATF_REQUIRE(msg_open(&parent_tracer) == 0);
+	DPRINTF("Spawn debugger\n");
+	SYSCALL_REQUIRE(msg_open(&parent_tracer) == 0);
 	tracer = atf_utils_fork();
 	if (tracer == 0) {
-		printf("Before calling PT_ATTACH from tracee %d\n", getpid());
+		DPRINTF("Before calling PT_ATTACH from tracee %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_ATTACH, tracee, NULL, 0) != -1);
 
 		/* Wait for tracee and assert that it was stopped w/ SIGSTOP */
@@ -348,40 +359,40 @@ ATF_TC_BODY(attach1, tc)
 		    wpid = TWAIT_GENERIC(tracee, &status, 0), tracee);
 
 		forkee_status_exited(status, exitval_tracee);
-		printf("Tracee %d exited with %d\n", tracee, exitval_tracee);
+		DPRINTF("Tracee %d exited with %d\n", tracee, exitval_tracee);
 
-		printf("Before exiting of the tracer process\n");
+		DPRINTF("Before exiting of the tracer process\n");
 		_exit(exitval_tracer);
 	}
 
-	printf("Wait for the tracer to attach to the tracee\n");
+	DPRINTF("Wait for the tracer to attach to the tracee\n");
 	PARENT_FROM_CHILD("tracer ready", parent_tracer, msg);
 
-	printf("Resume the tracee and let it exit\n");
+	DPRINTF("Resume the tracee and let it exit\n");
 	PARENT_TO_CHILD("exit tracee", parent_tracee,  msg);
 
-	printf("Detect that tracee is zombie\n");
+	DPRINTF("Detect that tracee is zombie\n");
 	await_zombie(tracee);
 
 
-	printf("Assert that there is no status about tracee %d - "
+	DPRINTF("Assert that there is no status about tracee %d - "
 	    "Tracer must detect zombie first - calling %s()\n", tracee,
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(
 	    wpid = TWAIT_GENERIC(tracee, &status, WNOHANG), 0);
 
-	printf("Tell the tracer child should have exited\n");
+	DPRINTF("Tell the tracer child should have exited\n");
 	PARENT_TO_CHILD("wait for tracee exit", parent_tracer,  msg);
-	printf("Wait for tracer to finish its job and exit - calling %s()\n",
+	DPRINTF("Wait for tracer to finish its job and exit - calling %s()\n",
 	    TWAIT_FNAME);
 
-	printf("Wait from tracer child to complete waiting for tracee\n");
+	DPRINTF("Wait from tracer child to complete waiting for tracee\n");
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(tracer, &status, 0),
 	    tracer);
 
 	validate_status_exited(status, exitval_tracer);
 
-	printf("Wait for tracee to finish its job and exit - calling %s()\n",
+	DPRINTF("Wait for tracee to finish its job and exit - calling %s()\n",
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(tracee, &status, WNOHANG),
 	    tracee);
@@ -413,10 +424,11 @@ ATF_TC_BODY(attach2, tc)
 	int status;
 #endif
 
-	atf_tc_expect_fail("PR kern/52168");
+	// Feature pending for refactoring
+	atf_tc_expect_fail("test is racy");
 
-	printf("Spawn tracee\n");
-	ATF_REQUIRE(msg_open(&parent_tracee) == 0);
+	DPRINTF("Spawn tracee\n");
+	SYSCALL_REQUIRE(msg_open(&parent_tracee) == 0);
 	tracee = atf_utils_fork();
 	if (tracee == 0) {
 		/* Wait for message from the parent */
@@ -424,8 +436,8 @@ ATF_TC_BODY(attach2, tc)
 		_exit(exitval_tracee);
 	}
 
-	printf("Spawn debugger\n");
-	ATF_REQUIRE(msg_open(&parent_tracer) == 0);
+	DPRINTF("Spawn debugger\n");
+	SYSCALL_REQUIRE(msg_open(&parent_tracer) == 0);
 	tracer = atf_utils_fork();
 	if (tracer == 0) {
 		/* Fork again and drop parent to reattach to PID 1 */
@@ -433,7 +445,7 @@ ATF_TC_BODY(attach2, tc)
 		if (tracer != 0)
 			_exit(exitval_tracer1);
 
-		printf("Before calling PT_ATTACH from tracee %d\n", getpid());
+		DPRINTF("Before calling PT_ATTACH from tracee %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_ATTACH, tracee, NULL, 0) != -1);
 
 		/* Wait for tracee and assert that it was stopped w/ SIGSTOP */
@@ -455,38 +467,38 @@ ATF_TC_BODY(attach2, tc)
 
 		forkee_status_exited(status, exitval_tracee);
 
-		printf("Before exiting of the tracer process\n");
+		DPRINTF("Before exiting of the tracer process\n");
 		_exit(exitval_tracer2);
 	}
-	printf("Wait for the tracer process (direct child) to exit calling "
+	DPRINTF("Wait for the tracer process (direct child) to exit calling "
 	    "%s()\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(
 	    wpid = TWAIT_GENERIC(tracer, &status, 0), tracer);
 
 	validate_status_exited(status, exitval_tracer1);
 
-	printf("Wait for the non-exited tracee process with %s()\n",
+	DPRINTF("Wait for the non-exited tracee process with %s()\n",
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(
 	    wpid = TWAIT_GENERIC(tracee, NULL, WNOHANG), 0);
 
-	printf("Wait for the tracer to attach to the tracee\n");
+	DPRINTF("Wait for the tracer to attach to the tracee\n");
 	PARENT_FROM_CHILD("Message 1", parent_tracer, msg);
-	printf("Resume the tracee and let it exit\n");
+	DPRINTF("Resume the tracee and let it exit\n");
 	PARENT_TO_CHILD("Message 1", parent_tracee, msg);
 
-	printf("Detect that tracee is zombie\n");
+	DPRINTF("Detect that tracee is zombie\n");
 	await_zombie(tracee);
 
-	printf("Assert that there is no status about tracee - "
+	DPRINTF("Assert that there is no status about tracee - "
 	    "Tracer must detect zombie first - calling %s()\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(
 	    wpid = TWAIT_GENERIC(tracee, &status, WNOHANG), 0);
 
-	printf("Resume the tracer and let it detect exited tracee\n");
+	DPRINTF("Resume the tracer and let it detect exited tracee\n");
 	PARENT_TO_CHILD("Message 2", parent_tracer, msg);
 
-	printf("Wait for tracee to finish its job and exit - calling %s()\n",
+	DPRINTF("Wait for tracee to finish its job and exit - calling %s()\n",
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(tracee, &status, WNOHANG),
 	    tracee);
@@ -496,6 +508,7 @@ ATF_TC_BODY(attach2, tc)
 	msg_close(&parent_tracer);
 	msg_close(&parent_tracee);
 
+	// Test is racy
 	ATF_REQUIRE(0 && "In order to get reliable failure, abort");
 }
 #endif
@@ -517,12 +530,12 @@ ATF_TC_BODY(attach3, tc)
 	int status;
 #endif
 
-	printf("Spawn tracee\n");
-	ATF_REQUIRE(msg_open(&parent_tracee) == 0);
+	DPRINTF("Spawn tracee\n");
+	SYSCALL_REQUIRE(msg_open(&parent_tracee) == 0);
 	tracee = atf_utils_fork();
 	if (tracee == 0) {
 		CHILD_FROM_PARENT("Message 1", parent_tracee, msg);
-		printf("Parent should now attach to tracee\n");
+		DPRINTF("Parent should now attach to tracee\n");
 
 		CHILD_FROM_PARENT("Message 2", parent_tracee, msg);
 		/* Wait for message from the parent */
@@ -530,29 +543,29 @@ ATF_TC_BODY(attach3, tc)
 	}
 	PARENT_TO_CHILD("Message 1", parent_tracee, msg);
 	
-	printf("Before calling PT_ATTACH for tracee %d\n", tracee);
-	ATF_REQUIRE(ptrace(PT_ATTACH, tracee, NULL, 0) != -1);
+	DPRINTF("Before calling PT_ATTACH for tracee %d\n", tracee);
+	SYSCALL_REQUIRE(ptrace(PT_ATTACH, tracee, NULL, 0) != -1);
 
-	printf("Wait for the stopped tracee process with %s()\n",
+	DPRINTF("Wait for the stopped tracee process with %s()\n",
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(
 	    wpid = TWAIT_GENERIC(tracee, &status, 0), tracee);
 
 	validate_status_stopped(status, SIGSTOP);
 
-	printf("Resume tracee with PT_CONTINUE\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, tracee, (void *)1, 0) != -1);
+	DPRINTF("Resume tracee with PT_CONTINUE\n");
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, tracee, (void *)1, 0) != -1);
 
-	printf("Let the tracee exit now\n");
+	DPRINTF("Let the tracee exit now\n");
 	PARENT_TO_CHILD("Message 2", parent_tracee, msg);
 
-	printf("Wait for tracee to exit with %s()\n", TWAIT_FNAME);
+	DPRINTF("Wait for tracee to exit with %s()\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(
 	    wpid = TWAIT_GENERIC(tracee, &status, 0), tracee);
 
 	validate_status_exited(status, exitval_tracee);
 
-	printf("Before calling %s() for tracee\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for tracee\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD,
 	    wpid = TWAIT_GENERIC(tracee, &status, 0));
 
@@ -576,26 +589,26 @@ ATF_TC_BODY(attach4, tc)
 	int status;
 #endif
 
-	printf("Spawn tracer\n");
-	ATF_REQUIRE(msg_open(&parent_tracee) == 0);
+	DPRINTF("Spawn tracer\n");
+	SYSCALL_REQUIRE(msg_open(&parent_tracee) == 0);
 	tracer = atf_utils_fork();
 	if (tracer == 0) {
 
 		/* Wait for message from the parent */
 		CHILD_FROM_PARENT("Message 1", parent_tracee, msg);
 
-		printf("Attach to parent PID %d with PT_ATTACH from child\n",
+		DPRINTF("Attach to parent PID %d with PT_ATTACH from child\n",
 		    getppid());
 		FORKEE_ASSERT(ptrace(PT_ATTACH, getppid(), NULL, 0) != -1);
 
-		printf("Wait for the stopped parent process with %s()\n",
+		DPRINTF("Wait for the stopped parent process with %s()\n",
 		    TWAIT_FNAME);
 		FORKEE_REQUIRE_SUCCESS(
 		    wpid = TWAIT_GENERIC(getppid(), &status, 0), getppid());
 
 		forkee_status_stopped(status, SIGSTOP);
 
-		printf("Resume parent with PT_DETACH\n");
+		DPRINTF("Resume parent with PT_DETACH\n");
 		FORKEE_ASSERT(ptrace(PT_DETACH, getppid(), (void *)1, 0)
 		    != -1);
 
@@ -605,18 +618,18 @@ ATF_TC_BODY(attach4, tc)
 		_exit(exitval_tracer);
 	}
 
-	printf("Wait for the tracer to become ready\n");
+	DPRINTF("Wait for the tracer to become ready\n");
 	PARENT_TO_CHILD("Message 1", parent_tracee, msg);
-	printf("Allow the tracer to exit now\n");
+	DPRINTF("Allow the tracer to exit now\n");
 	PARENT_FROM_CHILD("Message 1", parent_tracee, msg);
 
-	printf("Wait for tracer to exit with %s()\n", TWAIT_FNAME);
+	DPRINTF("Wait for tracer to exit with %s()\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(
 	    wpid = TWAIT_GENERIC(tracer, &status, 0), tracer);
 
 	validate_status_exited(status, exitval_tracer);
 
-	printf("Before calling %s() for tracer\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for tracer\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD,
 	    wpid = TWAIT_GENERIC(tracer, &status, 0));
 
@@ -643,9 +656,9 @@ ATF_TC_BODY(attach5, tc)
 	int status;
 #endif
 
-	printf("Spawn tracee\n");
-	ATF_REQUIRE(msg_open(&parent_tracer) == 0);
-	ATF_REQUIRE(msg_open(&parent_tracee) == 0);
+	DPRINTF("Spawn tracee\n");
+	SYSCALL_REQUIRE(msg_open(&parent_tracer) == 0);
+	SYSCALL_REQUIRE(msg_open(&parent_tracee) == 0);
 	tracee = atf_utils_fork();
 	if (tracee == 0) {
 		parent = getppid();
@@ -658,14 +671,14 @@ ATF_TC_BODY(attach5, tc)
 
 		_exit(exitval_tracee);
 	}
-	printf("Wait for child to record its parent identifier (pid)\n");
+	DPRINTF("Wait for child to record its parent identifier (pid)\n");
 	PARENT_FROM_CHILD("tracee ready", parent_tracee, msg);
 
-	printf("Spawn debugger\n");
+	DPRINTF("Spawn debugger\n");
 	tracer = atf_utils_fork();
 	if (tracer == 0) {
 		/* No IPC to communicate with the child */
-		printf("Before calling PT_ATTACH from tracee %d\n", getpid());
+		DPRINTF("Before calling PT_ATTACH from tracee %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_ATTACH, tracee, NULL, 0) != -1);
 
 		/* Wait for tracee and assert that it was stopped w/ SIGSTOP */
@@ -689,34 +702,34 @@ ATF_TC_BODY(attach5, tc)
 
 		forkee_status_exited(status, exitval_tracee);
 
-		printf("Before exiting of the tracer process\n");
+		DPRINTF("Before exiting of the tracer process\n");
 		_exit(exitval_tracer);
 	}
 
-	printf("Wait for the tracer to attach to the tracee\n");
+	DPRINTF("Wait for the tracer to attach to the tracee\n");
 	PARENT_FROM_CHILD("tracer ready",  parent_tracer, msg);
 
-	printf("Resume the tracee and let it exit\n");
+	DPRINTF("Resume the tracee and let it exit\n");
 	PARENT_TO_CHILD("exit tracee",  parent_tracee, msg);
 
-	printf("Detect that tracee is zombie\n");
+	DPRINTF("Detect that tracee is zombie\n");
 	await_zombie(tracee);
 
-	printf("Assert that there is no status about tracee - "
+	DPRINTF("Assert that there is no status about tracee - "
 	    "Tracer must detect zombie first - calling %s()\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(
 	    wpid = TWAIT_GENERIC(tracee, &status, WNOHANG), 0);
 
-	printf("Tell the tracer child should have exited\n");
+	DPRINTF("Tell the tracer child should have exited\n");
 	PARENT_TO_CHILD("wait for tracee exit",  parent_tracer, msg);
 
-	printf("Wait from tracer child to complete waiting for tracee\n");
+	DPRINTF("Wait from tracer child to complete waiting for tracee\n");
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(tracer, &status, 0),
 	    tracer);
 
 	validate_status_exited(status, exitval_tracer);
 
-	printf("Wait for tracee to finish its job and exit - calling %s()\n",
+	DPRINTF("Wait for tracee to finish its job and exit - calling %s()\n",
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(tracee, &status, WNOHANG),
 	    tracee);
@@ -752,9 +765,9 @@ ATF_TC_BODY(attach6, tc)
 	size_t len = sizeof(kp);
 	unsigned int namelen;
 
-	printf("Spawn tracee\n");
-	ATF_REQUIRE(msg_open(&parent_tracee) == 0);
-	ATF_REQUIRE(msg_open(&parent_tracer) == 0);
+	DPRINTF("Spawn tracee\n");
+	SYSCALL_REQUIRE(msg_open(&parent_tracee) == 0);
+	SYSCALL_REQUIRE(msg_open(&parent_tracer) == 0);
 	tracee = atf_utils_fork();
 	if (tracee == 0) {
 		parent = getppid();
@@ -777,14 +790,14 @@ ATF_TC_BODY(attach6, tc)
 		_exit(exitval_tracee);
 	}
 
-	printf("Wait for child to record its parent identifier (pid)\n");
+	DPRINTF("Wait for child to record its parent identifier (pid)\n");
 	PARENT_FROM_CHILD("Message 1", parent_tracee, msg);
 
-	printf("Spawn debugger\n");
+	DPRINTF("Spawn debugger\n");
 	tracer = atf_utils_fork();
 	if (tracer == 0) {
 		/* No IPC to communicate with the child */
-		printf("Before calling PT_ATTACH from tracee %d\n", getpid());
+		DPRINTF("Before calling PT_ATTACH from tracee %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_ATTACH, tracee, NULL, 0) != -1);
 
 		/* Wait for tracee and assert that it was stopped w/ SIGSTOP */
@@ -807,35 +820,35 @@ ATF_TC_BODY(attach6, tc)
 
 		forkee_status_exited(status, exitval_tracee);
 
-		printf("Before exiting of the tracer process\n");
+		DPRINTF("Before exiting of the tracer process\n");
 		_exit(exitval_tracer);
 	}
 
-	printf("Wait for the tracer to attach to the tracee\n");
+	DPRINTF("Wait for the tracer to attach to the tracee\n");
 	PARENT_FROM_CHILD("Message 1", parent_tracer, msg);
 
-	printf("Resume the tracee and let it exit\n");
+	DPRINTF("Resume the tracee and let it exit\n");
 	PARENT_TO_CHILD("Message 1", parent_tracee, msg);
 
-	printf("Detect that tracee is zombie\n");
+	DPRINTF("Detect that tracee is zombie\n");
 	await_zombie(tracee);
 
-	printf("Assert that there is no status about tracee - "
+	DPRINTF("Assert that there is no status about tracee - "
 	    "Tracer must detect zombie first - calling %s()\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(
 	    wpid = TWAIT_GENERIC(tracee, &status, WNOHANG), 0);
 
-	printf("Resume the tracer and let it detect exited tracee\n");
+	DPRINTF("Resume the tracer and let it detect exited tracee\n");
 	PARENT_TO_CHILD("Message 2", parent_tracer, msg);
 
-	printf("Wait for tracer to finish its job and exit - calling %s()\n",
+	DPRINTF("Wait for tracer to finish its job and exit - calling %s()\n",
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(tracer, &status, 0),
 	    tracer);
 
 	validate_status_exited(status, exitval_tracer);
 
-	printf("Wait for tracee to finish its job and exit - calling %s()\n",
+	DPRINTF("Wait for tracee to finish its job and exit - calling %s()\n",
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(tracee, &status, WNOHANG),
 	    tracee);
@@ -877,14 +890,14 @@ ATF_TC_BODY(attach7, tc)
 	 *  EXECUTABLE PID PPID ...
 	 */
 
-	ATF_REQUIRE((rv = stat(fname, &st)) == 0 || (errno == ENOENT));
+	SYSCALL_REQUIRE((rv = stat(fname, &st)) == 0 || (errno == ENOENT));
 	if (rv != 0) {
 		atf_tc_skip("/proc/curproc/status not found");
 	}
 
-	printf("Spawn tracee\n");
-	ATF_REQUIRE(msg_open(&parent_tracee) == 0);
-	ATF_REQUIRE(msg_open(&parent_tracer) == 0);
+	DPRINTF("Spawn tracee\n");
+	SYSCALL_REQUIRE(msg_open(&parent_tracee) == 0);
+	SYSCALL_REQUIRE(msg_open(&parent_tracer) == 0);
 	tracee = atf_utils_fork();
 	if (tracee == 0) {
 		parent = getppid();
@@ -901,13 +914,13 @@ ATF_TC_BODY(attach7, tc)
 		_exit(exitval_tracee);
 	}
 
-	printf("Wait for child to record its parent identifier (pid)\n");
+	DPRINTF("Wait for child to record its parent identifier (pid)\n");
 	PARENT_FROM_CHILD("tracee ready", parent_tracee, msg);
 
-	printf("Spawn debugger\n");
+	DPRINTF("Spawn debugger\n");
 	tracer = atf_utils_fork();
 	if (tracer == 0) {
-		printf("Before calling PT_ATTACH from tracee %d\n", getpid());
+		DPRINTF("Before calling PT_ATTACH from tracee %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_ATTACH, tracee, NULL, 0) != -1);
 
 		/* Wait for tracee and assert that it was stopped w/ SIGSTOP */
@@ -931,33 +944,33 @@ ATF_TC_BODY(attach7, tc)
 
 		forkee_status_exited(status, exitval_tracee);
 
-		printf("Before exiting of the tracer process\n");
+		DPRINTF("Before exiting of the tracer process\n");
 		_exit(exitval_tracer);
 	}
-	printf("Wait for the tracer to attach to the tracee\n");
+	DPRINTF("Wait for the tracer to attach to the tracee\n");
 	PARENT_FROM_CHILD("tracer ready", parent_tracer, msg);
-	printf("Resume the tracee and let it exit\n");
+	DPRINTF("Resume the tracee and let it exit\n");
 	PARENT_TO_CHILD("tracee exit", parent_tracee, msg);
 
-	printf("Detect that tracee is zombie\n");
+	DPRINTF("Detect that tracee is zombie\n");
 	await_zombie(tracee);
 
-	printf("Assert that there is no status about tracee - "
+	DPRINTF("Assert that there is no status about tracee - "
 	    "Tracer must detect zombie first - calling %s()\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(
 	    wpid = TWAIT_GENERIC(tracee, &status, WNOHANG), 0);
 
-	printf("Resume the tracer and let it detect exited tracee\n");
+	DPRINTF("Resume the tracer and let it detect exited tracee\n");
 	PARENT_TO_CHILD("Message 2", parent_tracer, msg);
 
-	printf("Wait for tracer to finish its job and exit - calling %s()\n",
+	DPRINTF("Wait for tracer to finish its job and exit - calling %s()\n",
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(tracer, &status, 0),
 	    tracer);
 
 	validate_status_exited(status, exitval_tracer);
 
-	printf("Wait for tracee to finish its job and exit - calling %s()\n",
+	DPRINTF("Wait for tracee to finish its job and exit - calling %s()\n",
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(tracee, &status, WNOHANG),
 	    tracee);
@@ -987,40 +1000,40 @@ ATF_TC_BODY(eventmask1, tc)
 	ptrace_event_t set_event, get_event;
 	const int len = sizeof(ptrace_event_t);
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
 	set_event.pe_set_event = 0;
-	ATF_REQUIRE(ptrace(PT_SET_EVENT_MASK, child, &set_event, len) != -1);
-	ATF_REQUIRE(ptrace(PT_GET_EVENT_MASK, child, &get_event, len) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_SET_EVENT_MASK, child, &set_event, len) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_GET_EVENT_MASK, child, &get_event, len) != -1);
 	ATF_REQUIRE(memcmp(&set_event, &get_event, len) == 0);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
@@ -1042,40 +1055,40 @@ ATF_TC_BODY(eventmask2, tc)
 	ptrace_event_t set_event, get_event;
 	const int len = sizeof(ptrace_event_t);
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
 	set_event.pe_set_event = PTRACE_FORK;
-	ATF_REQUIRE(ptrace(PT_SET_EVENT_MASK, child, &set_event, len) != -1);
-	ATF_REQUIRE(ptrace(PT_GET_EVENT_MASK, child, &get_event, len) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_SET_EVENT_MASK, child, &set_event, len) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_GET_EVENT_MASK, child, &get_event, len) != -1);
 	ATF_REQUIRE(memcmp(&set_event, &get_event, len) == 0);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
@@ -1099,40 +1112,40 @@ ATF_TC_BODY(eventmask3, tc)
 
 	atf_tc_expect_fail("PR kern/51630");
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
 	set_event.pe_set_event = PTRACE_VFORK;
-	ATF_REQUIRE(ptrace(PT_SET_EVENT_MASK, child, &set_event, len) != -1);
-	ATF_REQUIRE(ptrace(PT_GET_EVENT_MASK, child, &get_event, len) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_SET_EVENT_MASK, child, &set_event, len) != -1 || errno == ENOTSUP);
+	SYSCALL_REQUIRE(ptrace(PT_GET_EVENT_MASK, child, &get_event, len) != -1);
 	ATF_REQUIRE(memcmp(&set_event, &get_event, len) == 0);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
@@ -1154,40 +1167,40 @@ ATF_TC_BODY(eventmask4, tc)
 	ptrace_event_t set_event, get_event;
 	const int len = sizeof(ptrace_event_t);
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
 	set_event.pe_set_event = PTRACE_VFORK_DONE;
-	ATF_REQUIRE(ptrace(PT_SET_EVENT_MASK, child, &set_event, len) != -1);
-	ATF_REQUIRE(ptrace(PT_GET_EVENT_MASK, child, &get_event, len) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_SET_EVENT_MASK, child, &set_event, len) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_GET_EVENT_MASK, child, &get_event, len) != -1);
 	ATF_REQUIRE(memcmp(&set_event, &get_event, len) == 0);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
@@ -1209,40 +1222,40 @@ ATF_TC_BODY(eventmask5, tc)
 	ptrace_event_t set_event, get_event;
 	const int len = sizeof(ptrace_event_t);
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
 	set_event.pe_set_event = PTRACE_LWP_CREATE;
-	ATF_REQUIRE(ptrace(PT_SET_EVENT_MASK, child, &set_event, len) != -1);
-	ATF_REQUIRE(ptrace(PT_GET_EVENT_MASK, child, &get_event, len) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_SET_EVENT_MASK, child, &set_event, len) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_GET_EVENT_MASK, child, &get_event, len) != -1);
 	ATF_REQUIRE(memcmp(&set_event, &get_event, len) == 0);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
@@ -1264,40 +1277,40 @@ ATF_TC_BODY(eventmask6, tc)
 	ptrace_event_t set_event, get_event;
 	const int len = sizeof(ptrace_event_t);
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
 	set_event.pe_set_event = PTRACE_LWP_EXIT;
-	ATF_REQUIRE(ptrace(PT_SET_EVENT_MASK, child, &set_event, len) != -1);
-	ATF_REQUIRE(ptrace(PT_GET_EVENT_MASK, child, &get_event, len) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_SET_EVENT_MASK, child, &set_event, len) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_GET_EVENT_MASK, child, &get_event, len) != -1);
 	ATF_REQUIRE(memcmp(&set_event, &get_event, len) == 0);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
@@ -1324,13 +1337,13 @@ ATF_TC_BODY(fork1, tc)
 	ptrace_event_t event;
 	const int elen = sizeof(event);
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
 		FORKEE_ASSERT((child2 = fork()) != -1);
@@ -1343,87 +1356,87 @@ ATF_TC_BODY(fork1, tc)
 
 		forkee_status_exited(status, exitval2);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Enable PTRACE_FORK in EVENT_MASK for the child %d\n", child);
+	DPRINTF("Enable PTRACE_FORK in EVENT_MASK for the child %d\n", child);
 	event.pe_set_event = PTRACE_FORK;
-	ATF_REQUIRE(ptrace(PT_SET_EVENT_MASK, child, &event, elen) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_SET_EVENT_MASK, child, &event, elen) != -1);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-        printf("We expect two SIGTRAP events, for child %d (TRAP_CHLD, "
+        DPRINTF("We expect two SIGTRAP events, for child %d (TRAP_CHLD, "
                "pe_report_event=PTRACE_FORK, state.pe_other_pid=child2) and "
                "for child2 (TRAP_CHLD, pe_report_event=PTRACE_FORK, "
                 "state.pe_other_pid=child)\n", child);
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child %d\n", TWAIT_FNAME, child);
+	DPRINTF("Before calling %s() for the child %d\n", TWAIT_FNAME, child);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, SIGTRAP);
 
-	ATF_REQUIRE(ptrace(PT_GET_PROCESS_STATE, child, &state, slen) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_GET_PROCESS_STATE, child, &state, slen) != -1);
 	ATF_REQUIRE_EQ(state.pe_report_event, PTRACE_FORK);
 
 	child2 = state.pe_other_pid;
-	printf("Reported PTRACE_FORK event with forkee %d\n", child2);
+	DPRINTF("Reported PTRACE_FORK event with forkee %d\n", child2);
 
-	printf("Before calling %s() for the forkee %d of the child %d\n",
+	DPRINTF("Before calling %s() for the forkee %d of the child %d\n",
 	    TWAIT_FNAME, child2, child);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child2, &status, 0),
 	    child2);
 
 	validate_status_stopped(status, SIGTRAP);
 
-	ATF_REQUIRE(ptrace(PT_GET_PROCESS_STATE, child2, &state, slen) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_GET_PROCESS_STATE, child2, &state, slen) != -1);
 	ATF_REQUIRE_EQ(state.pe_report_event, PTRACE_FORK);
 	ATF_REQUIRE_EQ(state.pe_other_pid, child);
 
-	printf("Before resuming the forkee process where it left off and "
+	DPRINTF("Before resuming the forkee process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child2, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child2, (void *)1, 0) != -1);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the forkee - expected exited\n",
+	DPRINTF("Before calling %s() for the forkee - expected exited\n",
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child2, &status, 0),
 	    child2);
 
 	validate_status_exited(status, exitval2);
 
-	printf("Before calling %s() for the forkee - expected no process\n",
+	DPRINTF("Before calling %s() for the forkee - expected no process\n",
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD,
 	    wpid = TWAIT_GENERIC(child2, &status, 0));
 
-	printf("Before calling %s() for the child - expected stopped "
+	DPRINTF("Before calling %s() for the child - expected stopped "
 	    "SIGCHLD\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, SIGCHLD);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child - expected exited\n",
+	DPRINTF("Before calling %s() for the child - expected exited\n",
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child - expected no process\n",
+	DPRINTF("Before calling %s() for the child - expected no process\n",
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
@@ -1449,13 +1462,13 @@ ATF_TC_BODY(fork2, tc)
 	ptrace_event_t event;
 	const int elen = sizeof(event);
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
 		FORKEE_ASSERT((child2 = fork()) != -1);
@@ -1468,41 +1481,41 @@ ATF_TC_BODY(fork2, tc)
 
 		forkee_status_exited(status, exitval2);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Set empty EVENT_MASK for the child %d\n", child);
+	DPRINTF("Set empty EVENT_MASK for the child %d\n", child);
 	event.pe_set_event = 0;
-	ATF_REQUIRE(ptrace(PT_SET_EVENT_MASK, child, &event, elen) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_SET_EVENT_MASK, child, &event, elen) != -1);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child - expected stopped "
+	DPRINTF("Before calling %s() for the child - expected stopped "
 	    "SIGCHLD\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, SIGCHLD);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child - expected exited\n",
+	DPRINTF("Before calling %s() for the child - expected exited\n",
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child - expected no process\n",
+	DPRINTF("Before calling %s() for the child - expected no process\n",
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
@@ -1532,13 +1545,13 @@ ATF_TC_BODY(vfork1, tc)
 
 	atf_tc_expect_fail("PR kern/51630");
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
 		FORKEE_ASSERT((child2 = vfork()) != -1);
@@ -1551,83 +1564,83 @@ ATF_TC_BODY(vfork1, tc)
 
 		forkee_status_exited(status, exitval2);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Enable PTRACE_VFORK in EVENT_MASK for the child %d\n", child);
+	DPRINTF("Enable PTRACE_VFORK in EVENT_MASK for the child %d\n", child);
 	event.pe_set_event = PTRACE_VFORK;
-	ATF_REQUIRE(ptrace(PT_SET_EVENT_MASK, child, &event, elen) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_SET_EVENT_MASK, child, &event, elen) != -1 || errno == ENOTSUP);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child %d\n", TWAIT_FNAME, child);
+	DPRINTF("Before calling %s() for the child %d\n", TWAIT_FNAME, child);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, SIGTRAP);
 
-	ATF_REQUIRE(ptrace(PT_GET_PROCESS_STATE, child, &state, slen) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_GET_PROCESS_STATE, child, &state, slen) != -1);
 	ATF_REQUIRE_EQ(state.pe_report_event, PTRACE_VFORK);
 
 	child2 = state.pe_other_pid;
-	printf("Reported PTRACE_VFORK event with forkee %d\n", child2);
+	DPRINTF("Reported PTRACE_VFORK event with forkee %d\n", child2);
 
-	printf("Before calling %s() for the forkee %d of the child %d\n",
+	DPRINTF("Before calling %s() for the forkee %d of the child %d\n",
 	    TWAIT_FNAME, child2, child);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child2, &status, 0),
 	    child2);
 
 	validate_status_stopped(status, SIGTRAP);
 
-	ATF_REQUIRE(ptrace(PT_GET_PROCESS_STATE, child2, &state, slen) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_GET_PROCESS_STATE, child2, &state, slen) != -1);
 	ATF_REQUIRE_EQ(state.pe_report_event, PTRACE_VFORK);
 	ATF_REQUIRE_EQ(state.pe_other_pid, child);
 
-	printf("Before resuming the forkee process where it left off and "
+	DPRINTF("Before resuming the forkee process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child2, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child2, (void *)1, 0) != -1);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the forkee - expected exited\n",
+	DPRINTF("Before calling %s() for the forkee - expected exited\n",
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child2, &status, 0),
 	    child2);
 
 	validate_status_exited(status, exitval2);
 
-	printf("Before calling %s() for the forkee - expected no process\n",
+	DPRINTF("Before calling %s() for the forkee - expected no process\n",
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD,
 	    wpid = TWAIT_GENERIC(child2, &status, 0));
 
-	printf("Before calling %s() for the child - expected stopped "
+	DPRINTF("Before calling %s() for the child - expected stopped "
 	    "SIGCHLD\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, SIGCHLD);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child - expected exited\n",
+	DPRINTF("Before calling %s() for the child - expected exited\n",
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child - expected no process\n",
+	DPRINTF("Before calling %s() for the child - expected no process\n",
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
@@ -1653,13 +1666,13 @@ ATF_TC_BODY(vfork2, tc)
 	ptrace_event_t event;
 	const int elen = sizeof(event);
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
 		FORKEE_ASSERT((child2 = vfork()) != -1);
@@ -1672,41 +1685,41 @@ ATF_TC_BODY(vfork2, tc)
 
 		forkee_status_exited(status, exitval2);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Set empty EVENT_MASK for the child %d\n", child);
+	DPRINTF("Set empty EVENT_MASK for the child %d\n", child);
 	event.pe_set_event = 0;
-	ATF_REQUIRE(ptrace(PT_SET_EVENT_MASK, child, &event, elen) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_SET_EVENT_MASK, child, &event, elen) != -1);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child - expected stopped "
+	DPRINTF("Before calling %s() for the child - expected stopped "
 	    "SIGCHLD\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, SIGCHLD);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child - expected exited\n",
+	DPRINTF("Before calling %s() for the child - expected exited\n",
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child - expected no process\n",
+	DPRINTF("Before calling %s() for the child - expected no process\n",
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
@@ -1733,13 +1746,13 @@ ATF_TC_BODY(vforkdone1, tc)
 	ptrace_event_t event;
 	const int elen = sizeof(event);
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
 		FORKEE_ASSERT((child2 = vfork()) != -1);
@@ -1752,57 +1765,57 @@ ATF_TC_BODY(vforkdone1, tc)
 
 		forkee_status_exited(status, exitval2);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Enable PTRACE_VFORK_DONE in EVENT_MASK for the child %d\n",
+	DPRINTF("Enable PTRACE_VFORK_DONE in EVENT_MASK for the child %d\n",
 	    child);
 	event.pe_set_event = PTRACE_VFORK_DONE;
-	ATF_REQUIRE(ptrace(PT_SET_EVENT_MASK, child, &event, elen) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_SET_EVENT_MASK, child, &event, elen) != -1);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child %d\n", TWAIT_FNAME, child);
+	DPRINTF("Before calling %s() for the child %d\n", TWAIT_FNAME, child);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, SIGTRAP);
 
-	ATF_REQUIRE(ptrace(PT_GET_PROCESS_STATE, child, &state, slen) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_GET_PROCESS_STATE, child, &state, slen) != -1);
 	ATF_REQUIRE_EQ(state.pe_report_event, PTRACE_VFORK_DONE);
 
 	child2 = state.pe_other_pid;
-	printf("Reported PTRACE_VFORK_DONE event with forkee %d\n", child2);
+	DPRINTF("Reported PTRACE_VFORK_DONE event with forkee %d\n", child2);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child - expected stopped "
+	DPRINTF("Before calling %s() for the child - expected stopped "
 	    "SIGCHLD\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, SIGCHLD);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child - expected exited\n",
+	DPRINTF("Before calling %s() for the child - expected exited\n",
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child - expected no process\n",
+	DPRINTF("Before calling %s() for the child - expected no process\n",
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
@@ -1829,13 +1842,13 @@ ATF_TC_BODY(vforkdone2, tc)
 	ptrace_event_t event;
 	const int elen = sizeof(event);
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
 		FORKEE_ASSERT((child2 = vfork()) != -1);
@@ -1848,56 +1861,56 @@ ATF_TC_BODY(vforkdone2, tc)
 
 		forkee_status_exited(status, exitval2);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Enable PTRACE_VFORK in EVENT_MASK for the child %d\n", child);
+	DPRINTF("Enable PTRACE_VFORK in EVENT_MASK for the child %d\n", child);
 	event.pe_set_event = PTRACE_FORK | PTRACE_VFORK_DONE;
-	ATF_REQUIRE(ptrace(PT_SET_EVENT_MASK, child, &event, elen) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_SET_EVENT_MASK, child, &event, elen) != -1);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child %d\n", TWAIT_FNAME, child);
+	DPRINTF("Before calling %s() for the child %d\n", TWAIT_FNAME, child);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, SIGTRAP);
 
-	ATF_REQUIRE(ptrace(PT_GET_PROCESS_STATE, child, &state, slen) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_GET_PROCESS_STATE, child, &state, slen) != -1);
 	ATF_REQUIRE_EQ(state.pe_report_event, PTRACE_VFORK_DONE);
 
 	child2 = state.pe_other_pid;
-	printf("Reported PTRACE_VFORK_DONE event with forkee %d\n", child2);
+	DPRINTF("Reported PTRACE_VFORK_DONE event with forkee %d\n", child2);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child - expected stopped "
+	DPRINTF("Before calling %s() for the child - expected stopped "
 	    "SIGCHLD\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, SIGCHLD);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child - expected exited\n",
+	DPRINTF("Before calling %s() for the child - expected exited\n",
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child - expected no process\n",
+	DPRINTF("Before calling %s() for the child - expected no process\n",
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
@@ -1926,44 +1939,44 @@ ATF_TC_BODY(io_read_d1, tc)
 	int status;
 #endif
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
 		lookup_me = magic;
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Read lookup_me from tracee (PID=%d) by tracer (PID=%d)\n",
+	DPRINTF("Read lookup_me from tracee (PID=%d) by tracer (PID=%d)\n",
 	    child, getpid());
-	ATF_REQUIRE(ptrace(PT_IO, child, &io, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_IO, child, &io, 0) != -1);
 
 	ATF_REQUIRE_EQ_MSG(lookup_me, magic,
 	    "got value %" PRIx8 " != expected %" PRIx8, lookup_me, magic);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
@@ -1991,44 +2004,44 @@ ATF_TC_BODY(io_read_d2, tc)
 	int status;
 #endif
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
 		lookup_me = magic;
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Read lookup_me from tracee (PID=%d) by tracer (PID=%d)\n",
+	DPRINTF("Read lookup_me from tracee (PID=%d) by tracer (PID=%d)\n",
 	    child, getpid());
-	ATF_REQUIRE(ptrace(PT_IO, child, &io, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_IO, child, &io, 0) != -1);
 
 	ATF_REQUIRE_EQ_MSG(lookup_me, magic,
 	    "got value %" PRIx16 " != expected %" PRIx16, lookup_me, magic);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
@@ -2056,44 +2069,44 @@ ATF_TC_BODY(io_read_d3, tc)
 	int status;
 #endif
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
 		lookup_me = magic;
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Read lookup_me from tracee (PID=%d) by tracer (PID=%d)\n",
+	DPRINTF("Read lookup_me from tracee (PID=%d) by tracer (PID=%d)\n",
 	    child, getpid());
-	ATF_REQUIRE(ptrace(PT_IO, child, &io, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_IO, child, &io, 0) != -1);
 
 	ATF_REQUIRE_EQ_MSG(lookup_me, magic,
 	    "got value %" PRIx32 " != expected %" PRIx32, lookup_me, magic);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
@@ -2121,44 +2134,44 @@ ATF_TC_BODY(io_read_d4, tc)
 	int status;
 #endif
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
 		lookup_me = magic;
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Read lookup_me from tracee (PID=%d) by tracer (PID=%d)\n",
+	DPRINTF("Read lookup_me from tracee (PID=%d) by tracer (PID=%d)\n",
 	    child, getpid());
-	ATF_REQUIRE(ptrace(PT_IO, child, &io, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_IO, child, &io, 0) != -1);
 
 	ATF_REQUIRE_EQ_MSG(lookup_me, magic,
 	    "got value %" PRIx64 " != expected %" PRIx64, lookup_me, magic);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
@@ -2186,43 +2199,43 @@ ATF_TC_BODY(io_write_d1, tc)
 	int status;
 #endif
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
 		FORKEE_ASSERT_EQ(lookup_me, magic);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
 	lookup_me = magic;
 
-	printf("Write new lookup_me to tracee (PID=%d) from tracer (PID=%d)\n",
+	DPRINTF("Write new lookup_me to tracee (PID=%d) from tracer (PID=%d)\n",
 	    child, getpid());
-	ATF_REQUIRE(ptrace(PT_IO, child, &io, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_IO, child, &io, 0) != -1);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
@@ -2250,43 +2263,43 @@ ATF_TC_BODY(io_write_d2, tc)
 	int status;
 #endif
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
 		FORKEE_ASSERT_EQ(lookup_me, magic);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
 	lookup_me = magic;
 
-	printf("Write new lookup_me to tracee (PID=%d) from tracer (PID=%d)\n",
+	DPRINTF("Write new lookup_me to tracee (PID=%d) from tracer (PID=%d)\n",
 	    child, getpid());
-	ATF_REQUIRE(ptrace(PT_IO, child, &io, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_IO, child, &io, 0) != -1);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
@@ -2314,43 +2327,43 @@ ATF_TC_BODY(io_write_d3, tc)
 	int status;
 #endif
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
 		FORKEE_ASSERT_EQ(lookup_me, magic);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
 	lookup_me = magic;
 
-	printf("Write new lookup_me to tracee (PID=%d) from tracer (PID=%d)\n",
+	DPRINTF("Write new lookup_me to tracee (PID=%d) from tracer (PID=%d)\n",
 	    child, getpid());
-	ATF_REQUIRE(ptrace(PT_IO, child, &io, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_IO, child, &io, 0) != -1);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
@@ -2378,43 +2391,43 @@ ATF_TC_BODY(io_write_d4, tc)
 	int status;
 #endif
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
 		FORKEE_ASSERT_EQ(lookup_me, magic);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
 	lookup_me = magic;
 
-	printf("Write new lookup_me to tracee (PID=%d) from tracer (PID=%d)\n",
+	DPRINTF("Write new lookup_me to tracee (PID=%d) from tracer (PID=%d)\n",
 	    child, getpid());
-	ATF_REQUIRE(ptrace(PT_IO, child, &io, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_IO, child, &io, 0) != -1);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
@@ -2441,46 +2454,46 @@ ATF_TC_BODY(io_read_auxv1, tc)
 		.piod_len = sizeof(ai)
 	};
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Read new AUXV from tracee (PID=%d) by tracer (PID=%d)\n",
+	DPRINTF("Read new AUXV from tracee (PID=%d) by tracer (PID=%d)\n",
 	    child, getpid());
-	ATF_REQUIRE(ptrace(PT_IO, child, &io, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_IO, child, &io, 0) != -1);
 
-	printf("Asserting that AUXV length (%zu) is > 0\n", io.piod_len);
+	DPRINTF("Asserting that AUXV length (%zu) is > 0\n", io.piod_len);
 	ATF_REQUIRE(io.piod_len > 0);
 
 	for (aip = ai; aip->a_type != AT_NULL; aip++)
-		printf("a_type=%#llx a_v=%#llx\n",
+		DPRINTF("a_type=%#llx a_v=%#llx\n",
 		    (long long int)aip->a_type, (long long int)aip->a_v);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
@@ -2502,46 +2515,46 @@ ATF_TC_BODY(read_d1, tc)
 	int status;
 #endif
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
 		lookup_me = magic;
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Read new lookup_me from tracee (PID=%d) by tracer (PID=%d)\n",
+	DPRINTF("Read new lookup_me from tracee (PID=%d) by tracer (PID=%d)\n",
 	    child, getpid());
 	errno = 0;
 	lookup_me = ptrace(PT_READ_D, child, &lookup_me, 0);
-	ATF_REQUIRE_EQ(errno, 0);
+	SYSCALL_REQUIRE_ERRNO(errno, 0);
 
 	ATF_REQUIRE_EQ_MSG(lookup_me, magic,
 	    "got value %#x != expected %#x", lookup_me, magic);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
@@ -2565,56 +2578,56 @@ ATF_TC_BODY(read_d2, tc)
 	int status;
 #endif
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
 		lookup_me1 = magic1;
 		lookup_me2 = magic2;
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Read new lookup_me1 from tracee (PID=%d) by tracer (PID=%d)\n",
+	DPRINTF("Read new lookup_me1 from tracee (PID=%d) by tracer (PID=%d)\n",
 	    child, getpid());
 	errno = 0;
 	lookup_me1 = ptrace(PT_READ_D, child, &lookup_me1, 0);
-	ATF_REQUIRE_EQ(errno, 0);
+	SYSCALL_REQUIRE_ERRNO(errno, 0);
 
 	ATF_REQUIRE_EQ_MSG(lookup_me1, magic1,
 	    "got value %#x != expected %#x", lookup_me1, magic1);
 
-	printf("Read new lookup_me2 from tracee (PID=%d) by tracer (PID=%d)\n",
+	DPRINTF("Read new lookup_me2 from tracee (PID=%d) by tracer (PID=%d)\n",
 	    child, getpid());
 	errno = 0;
 	lookup_me2 = ptrace(PT_READ_D, child, &lookup_me2, 0);
-	ATF_REQUIRE_EQ(errno, 0);
+	SYSCALL_REQUIRE_ERRNO(errno, 0);
 
 	ATF_REQUIRE_EQ_MSG(lookup_me2, magic2,
 	    "got value %#x != expected %#x", lookup_me2, magic2);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
@@ -2640,66 +2653,66 @@ ATF_TC_BODY(read_d3, tc)
 	int status;
 #endif
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
 		lookup_me1 = magic1;
 		lookup_me2 = magic2;
 		lookup_me3 = magic3;
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Read new lookup_me1 from tracee (PID=%d) by tracer (PID=%d)\n",
+	DPRINTF("Read new lookup_me1 from tracee (PID=%d) by tracer (PID=%d)\n",
 	    child, getpid());
 	errno = 0;
 	lookup_me1 = ptrace(PT_READ_D, child, &lookup_me1, 0);
-	ATF_REQUIRE_EQ(errno, 0);
+	SYSCALL_REQUIRE_ERRNO(errno, 0);
 
 	ATF_REQUIRE_EQ_MSG(lookup_me1, magic1,
 	    "got value %#x != expected %#x", lookup_me1, magic1);
 
-	printf("Read new lookup_me2 from tracee (PID=%d) by tracer (PID=%d)\n",
+	DPRINTF("Read new lookup_me2 from tracee (PID=%d) by tracer (PID=%d)\n",
 	    child, getpid());
 	errno = 0;
 	lookup_me2 = ptrace(PT_READ_D, child, &lookup_me2, 0);
-	ATF_REQUIRE_EQ(errno, 0);
+	SYSCALL_REQUIRE_ERRNO(errno, 0);
 
 	ATF_REQUIRE_EQ_MSG(lookup_me2, magic2,
 	    "got value %#x != expected %#x", lookup_me2, magic2);
 
-	printf("Read new lookup_me3 from tracee (PID=%d) by tracer (PID=%d)\n",
+	DPRINTF("Read new lookup_me3 from tracee (PID=%d) by tracer (PID=%d)\n",
 	    child, getpid());
 	errno = 0;
 	lookup_me3 = ptrace(PT_READ_D, child, &lookup_me3, 0);
-	ATF_REQUIRE_EQ(errno, 0);
+	SYSCALL_REQUIRE_ERRNO(errno, 0);
 
 	ATF_REQUIRE_EQ_MSG(lookup_me3, magic3,
 	    "got value %#x != expected %#x", lookup_me3, magic3);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
@@ -2727,10 +2740,10 @@ ATF_TC_BODY(read_d4, tc)
 	int status;
 #endif
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
 		lookup_me1 = magic1;
@@ -2738,65 +2751,65 @@ ATF_TC_BODY(read_d4, tc)
 		lookup_me3 = magic3;
 		lookup_me4 = magic4;
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Read new lookup_me1 from tracee (PID=%d) by tracer (PID=%d)\n",
+	DPRINTF("Read new lookup_me1 from tracee (PID=%d) by tracer (PID=%d)\n",
 	    child, getpid());
 	errno = 0;
 	lookup_me1 = ptrace(PT_READ_D, child, &lookup_me1, 0);
-	ATF_REQUIRE_EQ(errno, 0);
+	SYSCALL_REQUIRE_ERRNO(errno, 0);
 
 	ATF_REQUIRE_EQ_MSG(lookup_me1, magic1,
 	    "got value %#x != expected %#x", lookup_me1, magic1);
 
-	printf("Read new lookup_me2 from tracee (PID=%d) by tracer (PID=%d)\n",
+	DPRINTF("Read new lookup_me2 from tracee (PID=%d) by tracer (PID=%d)\n",
 	    child, getpid());
 	errno = 0;
 	lookup_me2 = ptrace(PT_READ_D, child, &lookup_me2, 0);
-	ATF_REQUIRE_EQ(errno, 0);
+	SYSCALL_REQUIRE_ERRNO(errno, 0);
 
 	ATF_REQUIRE_EQ_MSG(lookup_me2, magic2,
 	    "got value %#x != expected %#x", lookup_me2, magic2);
 
-	printf("Read new lookup_me3 from tracee (PID=%d) by tracer (PID=%d)\n",
+	DPRINTF("Read new lookup_me3 from tracee (PID=%d) by tracer (PID=%d)\n",
 	    child, getpid());
 	errno = 0;
 	lookup_me3 = ptrace(PT_READ_D, child, &lookup_me3, 0);
-	ATF_REQUIRE_EQ(errno, 0);
+	SYSCALL_REQUIRE_ERRNO(errno, 0);
 
 	ATF_REQUIRE_EQ_MSG(lookup_me3, magic3,
 	    "got value %#x != expected %#x", lookup_me3, magic3);
 
-	printf("Read new lookup_me4 from tracee (PID=%d) by tracer (PID=%d)\n",
+	DPRINTF("Read new lookup_me4 from tracee (PID=%d) by tracer (PID=%d)\n",
 	    child, getpid());
 	errno = 0;
 	lookup_me4 = ptrace(PT_READ_D, child, &lookup_me4, 0);
-	ATF_REQUIRE_EQ(errno, 0);
+	SYSCALL_REQUIRE_ERRNO(errno, 0);
 
 	ATF_REQUIRE_EQ_MSG(lookup_me4, magic4,
 	    "got value %#x != expected %#x", lookup_me4, magic4);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
@@ -2818,41 +2831,41 @@ ATF_TC_BODY(write_d1, tc)
 	int status;
 #endif
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
 		FORKEE_ASSERT_EQ(lookup_me, magic);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Write new lookup_me to tracee (PID=%d) from tracer (PID=%d)\n",
+	DPRINTF("Write new lookup_me to tracee (PID=%d) from tracer (PID=%d)\n",
 	    child, getpid());
-	ATF_REQUIRE(ptrace(PT_WRITE_D, child, &lookup_me, magic) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_WRITE_D, child, &lookup_me, magic) != -1);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
@@ -2876,46 +2889,46 @@ ATF_TC_BODY(write_d2, tc)
 	int status;
 #endif
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
 		FORKEE_ASSERT_EQ(lookup_me1, magic1);
 		FORKEE_ASSERT_EQ(lookup_me2, magic2);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Write new lookup_me1 to tracee (PID=%d) from tracer (PID=%d)\n",
+	DPRINTF("Write new lookup_me1 to tracee (PID=%d) from tracer (PID=%d)\n",
 	    child, getpid());
-	ATF_REQUIRE(ptrace(PT_WRITE_D, child, &lookup_me1, magic1) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_WRITE_D, child, &lookup_me1, magic1) != -1);
 
-	printf("Write new lookup_me2 to tracee (PID=%d) from tracer (PID=%d)\n",
+	DPRINTF("Write new lookup_me2 to tracee (PID=%d) from tracer (PID=%d)\n",
 	    child, getpid());
-	ATF_REQUIRE(ptrace(PT_WRITE_D, child, &lookup_me2, magic2) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_WRITE_D, child, &lookup_me2, magic2) != -1);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
@@ -2941,51 +2954,51 @@ ATF_TC_BODY(write_d3, tc)
 	int status;
 #endif
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
 		FORKEE_ASSERT_EQ(lookup_me1, magic1);
 		FORKEE_ASSERT_EQ(lookup_me2, magic2);
 		FORKEE_ASSERT_EQ(lookup_me3, magic3);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Write new lookup_me1 to tracee (PID=%d) from tracer (PID=%d)\n",
+	DPRINTF("Write new lookup_me1 to tracee (PID=%d) from tracer (PID=%d)\n",
 	    child, getpid());
-	ATF_REQUIRE(ptrace(PT_WRITE_D, child, &lookup_me1, magic1) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_WRITE_D, child, &lookup_me1, magic1) != -1);
 
-	printf("Write new lookup_me2 to tracee (PID=%d) from tracer (PID=%d)\n",
+	DPRINTF("Write new lookup_me2 to tracee (PID=%d) from tracer (PID=%d)\n",
 	    child, getpid());
-	ATF_REQUIRE(ptrace(PT_WRITE_D, child, &lookup_me2, magic2) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_WRITE_D, child, &lookup_me2, magic2) != -1);
 
-	printf("Write new lookup_me3 to tracee (PID=%d) from tracer (PID=%d)\n",
+	DPRINTF("Write new lookup_me3 to tracee (PID=%d) from tracer (PID=%d)\n",
 	    child, getpid());
-	ATF_REQUIRE(ptrace(PT_WRITE_D, child, &lookup_me3, magic3) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_WRITE_D, child, &lookup_me3, magic3) != -1);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
@@ -3013,13 +3026,13 @@ ATF_TC_BODY(write_d4, tc)
 	int status;
 #endif
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
 		FORKEE_ASSERT_EQ(lookup_me1, magic1);
@@ -3027,42 +3040,42 @@ ATF_TC_BODY(write_d4, tc)
 		FORKEE_ASSERT_EQ(lookup_me3, magic3);
 		FORKEE_ASSERT_EQ(lookup_me4, magic4);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Write new lookup_me1 to tracee (PID=%d) from tracer (PID=%d)\n",
+	DPRINTF("Write new lookup_me1 to tracee (PID=%d) from tracer (PID=%d)\n",
 	    child, getpid());
-	ATF_REQUIRE(ptrace(PT_WRITE_D, child, &lookup_me1, magic1) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_WRITE_D, child, &lookup_me1, magic1) != -1);
 
-	printf("Write new lookup_me2 to tracee (PID=%d) from tracer (PID=%d)\n",
+	DPRINTF("Write new lookup_me2 to tracee (PID=%d) from tracer (PID=%d)\n",
 	    child, getpid());
-	ATF_REQUIRE(ptrace(PT_WRITE_D, child, &lookup_me2, magic2) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_WRITE_D, child, &lookup_me2, magic2) != -1);
 
-	printf("Write new lookup_me3 to tracee (PID=%d) from tracer (PID=%d)\n",
+	DPRINTF("Write new lookup_me3 to tracee (PID=%d) from tracer (PID=%d)\n",
 	    child, getpid());
-	ATF_REQUIRE(ptrace(PT_WRITE_D, child, &lookup_me3, magic3) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_WRITE_D, child, &lookup_me3, magic3) != -1);
 
-	printf("Write new lookup_me4 to tracee (PID=%d) from tracer (PID=%d)\n",
+	DPRINTF("Write new lookup_me4 to tracee (PID=%d) from tracer (PID=%d)\n",
 	    child, getpid());
-	ATF_REQUIRE(ptrace(PT_WRITE_D, child, &lookup_me4, magic4) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_WRITE_D, child, &lookup_me4, magic4) != -1);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
@@ -3098,32 +3111,32 @@ ATF_TC_BODY(io_read_d_write_d_handshake1, tc)
 	int status;
 #endif
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
 		lookup_me_fromtracee = magic_fromtracee;
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
 		FORKEE_ASSERT_EQ(lookup_me_totracee, magic_totracee);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Read lookup_me_fromtracee PID=%d by tracer (PID=%d)\n",
+	DPRINTF("Read lookup_me_fromtracee PID=%d by tracer (PID=%d)\n",
 	    child, getpid());
-	ATF_REQUIRE(ptrace(PT_IO, child, &io_fromtracee, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_IO, child, &io_fromtracee, 0) != -1);
 
 	ATF_REQUIRE_EQ_MSG(lookup_me_fromtracee, magic_fromtracee,
 	    "got value %" PRIx8 " != expected %" PRIx8, lookup_me_fromtracee,
@@ -3131,24 +3144,24 @@ ATF_TC_BODY(io_read_d_write_d_handshake1, tc)
 
 	lookup_me_totracee = magic_totracee;
 
-	printf("Write lookup_me_totracee to PID=%d by tracer (PID=%d)\n",
+	DPRINTF("Write lookup_me_totracee to PID=%d by tracer (PID=%d)\n",
 	    child, getpid());
-	ATF_REQUIRE(ptrace(PT_IO, child, &io_totracee, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_IO, child, &io_totracee, 0) != -1);
 
 	ATF_REQUIRE_EQ_MSG(lookup_me_totracee, magic_totracee,
 	    "got value %" PRIx8 " != expected %" PRIx8, lookup_me_totracee,
 	    magic_totracee);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
@@ -3184,57 +3197,57 @@ ATF_TC_BODY(io_read_d_write_d_handshake2, tc)
 	int status;
 #endif
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
 		lookup_me_fromtracee = magic_fromtracee;
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
 		FORKEE_ASSERT_EQ(lookup_me_totracee, magic_totracee);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
 	lookup_me_totracee = magic_totracee;
 
-	printf("Write lookup_me_totracee to PID=%d by tracer (PID=%d)\n",
+	DPRINTF("Write lookup_me_totracee to PID=%d by tracer (PID=%d)\n",
 	    child, getpid());
-	ATF_REQUIRE(ptrace(PT_IO, child, &io_totracee, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_IO, child, &io_totracee, 0) != -1);
 
 	ATF_REQUIRE_EQ_MSG(lookup_me_totracee, magic_totracee,
 	    "got value %" PRIx8 " != expected %" PRIx8, lookup_me_totracee,
 	    magic_totracee);
 
-	printf("Read lookup_me_fromtracee PID=%d by tracer (PID=%d)\n",
+	DPRINTF("Read lookup_me_fromtracee PID=%d by tracer (PID=%d)\n",
 	    child, getpid());
-	ATF_REQUIRE(ptrace(PT_IO, child, &io_fromtracee, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_IO, child, &io_fromtracee, 0) != -1);
 
 	ATF_REQUIRE_EQ_MSG(lookup_me_fromtracee, magic_fromtracee,
 	    "got value %" PRIx8 " != expected %" PRIx8, lookup_me_fromtracee,
 	    magic_fromtracee);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
@@ -3258,56 +3271,56 @@ ATF_TC_BODY(read_d_write_d_handshake1, tc)
 	int status;
 #endif
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
 		lookup_me_fromtracee = magic_fromtracee;
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
 		FORKEE_ASSERT_EQ(lookup_me_totracee, magic_totracee);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Read new lookup_me_fromtracee PID=%d by tracer (PID=%d)\n",
+	DPRINTF("Read new lookup_me_fromtracee PID=%d by tracer (PID=%d)\n",
 	    child, getpid());
 	errno = 0;
 	lookup_me_fromtracee =
 	    ptrace(PT_READ_D, child, &lookup_me_fromtracee, 0);
-	ATF_REQUIRE_EQ(errno, 0);
+	SYSCALL_REQUIRE_ERRNO(errno, 0);
 
 	ATF_REQUIRE_EQ_MSG(lookup_me_fromtracee, magic_fromtracee,
 	    "got value %#x != expected %#x", lookup_me_fromtracee,
 	    magic_fromtracee);
 
-	printf("Write new lookup_me_totracee to PID=%d from tracer (PID=%d)\n",
+	DPRINTF("Write new lookup_me_totracee to PID=%d from tracer (PID=%d)\n",
 	    child, getpid());
 	ATF_REQUIRE
 	    (ptrace(PT_WRITE_D, child, &lookup_me_totracee, magic_totracee)
 	    != -1);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
@@ -3331,56 +3344,56 @@ ATF_TC_BODY(read_d_write_d_handshake2, tc)
 	int status;
 #endif
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
 		lookup_me_fromtracee = magic_fromtracee;
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
 		FORKEE_ASSERT_EQ(lookup_me_totracee, magic_totracee);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Write new lookup_me_totracee to PID=%d from tracer (PID=%d)\n",
+	DPRINTF("Write new lookup_me_totracee to PID=%d from tracer (PID=%d)\n",
 	    child, getpid());
 	ATF_REQUIRE
 	    (ptrace(PT_WRITE_D, child, &lookup_me_totracee, magic_totracee)
 	    != -1);
 
-	printf("Read new lookup_me_fromtracee PID=%d by tracer (PID=%d)\n",
+	DPRINTF("Read new lookup_me_fromtracee PID=%d by tracer (PID=%d)\n",
 	    child, getpid());
 	errno = 0;
 	lookup_me_fromtracee =
 	    ptrace(PT_READ_D, child, &lookup_me_fromtracee, 0);
-	ATF_REQUIRE_EQ(errno, 0);
+	SYSCALL_REQUIRE_ERRNO(errno, 0);
 
 	ATF_REQUIRE_EQ_MSG(lookup_me_fromtracee, magic_fromtracee,
 	    "got value %#x != expected %#x", lookup_me_fromtracee,
 	    magic_fromtracee);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
@@ -3458,42 +3471,42 @@ ATF_TC_BODY(io_read_i1, tc)
 	int status;
 #endif
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Read lookup_me from tracee (PID=%d) by tracer (PID=%d)\n",
+	DPRINTF("Read lookup_me from tracee (PID=%d) by tracer (PID=%d)\n",
 	    child, getpid());
-	ATF_REQUIRE(ptrace(PT_IO, child, &io, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_IO, child, &io, 0) != -1);
 
 	ATF_REQUIRE_EQ_MSG(lookup_me, magic,
 	    "got value %" PRIx8 " != expected %" PRIx8, lookup_me, magic);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
@@ -3522,42 +3535,42 @@ ATF_TC_BODY(io_read_i2, tc)
 	int status;
 #endif
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Read lookup_me from tracee (PID=%d) by tracer (PID=%d)\n",
+	DPRINTF("Read lookup_me from tracee (PID=%d) by tracer (PID=%d)\n",
 	    child, getpid());
-	ATF_REQUIRE(ptrace(PT_IO, child, &io, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_IO, child, &io, 0) != -1);
 
 	ATF_REQUIRE_EQ_MSG(lookup_me, magic,
 	    "got value %" PRIx16 " != expected %" PRIx16, lookup_me, magic);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
@@ -3586,42 +3599,42 @@ ATF_TC_BODY(io_read_i3, tc)
 	int status;
 #endif
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Read lookup_me from tracee (PID=%d) by tracer (PID=%d)\n",
+	DPRINTF("Read lookup_me from tracee (PID=%d) by tracer (PID=%d)\n",
 	    child, getpid());
-	ATF_REQUIRE(ptrace(PT_IO, child, &io, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_IO, child, &io, 0) != -1);
 
 	ATF_REQUIRE_EQ_MSG(lookup_me, magic,
 	    "got value %" PRIx32 " != expected %" PRIx32, lookup_me, magic);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
@@ -3650,42 +3663,42 @@ ATF_TC_BODY(io_read_i4, tc)
 	int status;
 #endif
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Read lookup_me from tracee (PID=%d) by tracer (PID=%d)\n",
+	DPRINTF("Read lookup_me from tracee (PID=%d) by tracer (PID=%d)\n",
 	    child, getpid());
-	ATF_REQUIRE(ptrace(PT_IO, child, &io, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_IO, child, &io, 0) != -1);
 
 	ATF_REQUIRE_EQ_MSG(lookup_me, magic,
 	    "got value %" PRIx64 " != expected %" PRIx64, lookup_me, magic);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
@@ -3708,44 +3721,44 @@ ATF_TC_BODY(read_i1, tc)
 	int status;
 #endif
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Read new lookup_me from tracee (PID=%d) by tracer (PID=%d)\n",
+	DPRINTF("Read new lookup_me from tracee (PID=%d) by tracer (PID=%d)\n",
 	    child, getpid());
 	errno = 0;
 	lookup_me = ptrace(PT_READ_I, child, dummy_fn1, 0);
-	ATF_REQUIRE_EQ(errno, 0);
+	SYSCALL_REQUIRE_ERRNO(errno, 0);
 
 	ATF_REQUIRE_EQ_MSG(lookup_me, magic,
 	    "got value %#x != expected %#x", lookup_me, magic);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
@@ -3771,53 +3784,53 @@ ATF_TC_BODY(read_i2, tc)
 	int status;
 #endif
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Read new lookup_me1 from tracee (PID=%d) by tracer (PID=%d)\n",
+	DPRINTF("Read new lookup_me1 from tracee (PID=%d) by tracer (PID=%d)\n",
 	    child, getpid());
 	errno = 0;
 	lookup_me1 = ptrace(PT_READ_I, child, dummy_fn1, 0);
-	ATF_REQUIRE_EQ(errno, 0);
+	SYSCALL_REQUIRE_ERRNO(errno, 0);
 
 	ATF_REQUIRE_EQ_MSG(lookup_me1, magic1,
 	    "got value %#x != expected %#x", lookup_me1, magic1);
 
-	printf("Read new lookup_me2 from tracee (PID=%d) by tracer (PID=%d)\n",
+	DPRINTF("Read new lookup_me2 from tracee (PID=%d) by tracer (PID=%d)\n",
 	    child, getpid());
 	errno = 0;
 	lookup_me2 = ptrace(PT_READ_I, child, dummy_fn2, 0);
-	ATF_REQUIRE_EQ(errno, 0);
+	SYSCALL_REQUIRE_ERRNO(errno, 0);
 
 	ATF_REQUIRE_EQ_MSG(lookup_me2, magic2,
 	    "got value %#x != expected %#x", lookup_me2, magic2);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
@@ -3846,62 +3859,62 @@ ATF_TC_BODY(read_i3, tc)
 	int status;
 #endif
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Read new lookup_me1 from tracee (PID=%d) by tracer (PID=%d)\n",
+	DPRINTF("Read new lookup_me1 from tracee (PID=%d) by tracer (PID=%d)\n",
 	    child, getpid());
 	errno = 0;
 	lookup_me1 = ptrace(PT_READ_I, child, dummy_fn1, 0);
-	ATF_REQUIRE_EQ(errno, 0);
+	SYSCALL_REQUIRE_ERRNO(errno, 0);
 
 	ATF_REQUIRE_EQ_MSG(lookup_me1, magic1,
 	    "got value %#x != expected %#x", lookup_me1, magic1);
 
-	printf("Read new lookup_me2 from tracee (PID=%d) by tracer (PID=%d)\n",
+	DPRINTF("Read new lookup_me2 from tracee (PID=%d) by tracer (PID=%d)\n",
 	    child, getpid());
 	errno = 0;
 	lookup_me2 = ptrace(PT_READ_I, child, dummy_fn2, 0);
-	ATF_REQUIRE_EQ(errno, 0);
+	SYSCALL_REQUIRE_ERRNO(errno, 0);
 
 	ATF_REQUIRE_EQ_MSG(lookup_me2, magic2,
 	    "got value %#x != expected %#x", lookup_me2, magic2);
 
-	printf("Read new lookup_me3 from tracee (PID=%d) by tracer (PID=%d)\n",
+	DPRINTF("Read new lookup_me3 from tracee (PID=%d) by tracer (PID=%d)\n",
 	    child, getpid());
 	errno = 0;
 	lookup_me3 = ptrace(PT_READ_I, child, dummy_fn3, 0);
-	ATF_REQUIRE_EQ(errno, 0);
+	SYSCALL_REQUIRE_ERRNO(errno, 0);
 
 	ATF_REQUIRE_EQ_MSG(lookup_me3, magic3,
 	    "got value %#x != expected %#x", lookup_me3, magic3);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
@@ -3933,71 +3946,71 @@ ATF_TC_BODY(read_i4, tc)
 	int status;
 #endif
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Read new lookup_me1 from tracee (PID=%d) by tracer (PID=%d)\n",
+	DPRINTF("Read new lookup_me1 from tracee (PID=%d) by tracer (PID=%d)\n",
 	    child, getpid());
 	errno = 0;
 	lookup_me1 = ptrace(PT_READ_I, child, dummy_fn1, 0);
-	ATF_REQUIRE_EQ(errno, 0);
+	SYSCALL_REQUIRE_ERRNO(errno, 0);
 
 	ATF_REQUIRE_EQ_MSG(lookup_me1, magic1,
 	    "got value %#x != expected %#x", lookup_me1, magic1);
 
-	printf("Read new lookup_me2 from tracee (PID=%d) by tracer (PID=%d)\n",
+	DPRINTF("Read new lookup_me2 from tracee (PID=%d) by tracer (PID=%d)\n",
 	    child, getpid());
 	errno = 0;
 	lookup_me2 = ptrace(PT_READ_I, child, dummy_fn2, 0);
-	ATF_REQUIRE_EQ(errno, 0);
+	SYSCALL_REQUIRE_ERRNO(errno, 0);
 
 	ATF_REQUIRE_EQ_MSG(lookup_me2, magic2,
 	    "got value %#x != expected %#x", lookup_me2, magic2);
 
-	printf("Read new lookup_me3 from tracee (PID=%d) by tracer (PID=%d)\n",
+	DPRINTF("Read new lookup_me3 from tracee (PID=%d) by tracer (PID=%d)\n",
 	    child, getpid());
 	errno = 0;
 	lookup_me3 = ptrace(PT_READ_I, child, dummy_fn3, 0);
-	ATF_REQUIRE_EQ(errno, 0);
+	SYSCALL_REQUIRE_ERRNO(errno, 0);
 
 	ATF_REQUIRE_EQ_MSG(lookup_me3, magic3,
 	    "got value %#x != expected %#x", lookup_me3, magic3);
 
-	printf("Read new lookup_me4 from tracee (PID=%d) by tracer (PID=%d)\n",
+	DPRINTF("Read new lookup_me4 from tracee (PID=%d) by tracer (PID=%d)\n",
 	    child, getpid());
 	errno = 0;
 	lookup_me4 = ptrace(PT_READ_I, child, dummy_fn4, 0);
-	ATF_REQUIRE_EQ(errno, 0);
+	SYSCALL_REQUIRE_ERRNO(errno, 0);
 
 	ATF_REQUIRE_EQ_MSG(lookup_me4, magic4,
 	    "got value %#x != expected %#x", lookup_me4, magic4);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
@@ -4019,38 +4032,38 @@ ATF_TC_BODY(regs1, tc)
 #endif
 	struct reg r;
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Call GETREGS for the child process\n");
-	ATF_REQUIRE(ptrace(PT_GETREGS, child, &r, 0) != -1);
+	DPRINTF("Call GETREGS for the child process\n");
+	SYSCALL_REQUIRE(ptrace(PT_GETREGS, child, &r, 0) != -1);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 #endif
@@ -4073,40 +4086,40 @@ ATF_TC_BODY(regs2, tc)
 #endif
 	struct reg r;
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Call GETREGS for the child process\n");
-	ATF_REQUIRE(ptrace(PT_GETREGS, child, &r, 0) != -1);
+	DPRINTF("Call GETREGS for the child process\n");
+	SYSCALL_REQUIRE(ptrace(PT_GETREGS, child, &r, 0) != -1);
 
-	printf("Retrieved PC=%" PRIxREGISTER "\n", PTRACE_REG_PC(&r));
+	DPRINTF("Retrieved PC=%" PRIxREGISTER "\n", PTRACE_REG_PC(&r));
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 #endif
@@ -4129,40 +4142,40 @@ ATF_TC_BODY(regs3, tc)
 #endif
 	struct reg r;
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Call GETREGS for the child process\n");
-	ATF_REQUIRE(ptrace(PT_GETREGS, child, &r, 0) != -1);
+	DPRINTF("Call GETREGS for the child process\n");
+	SYSCALL_REQUIRE(ptrace(PT_GETREGS, child, &r, 0) != -1);
 
-	printf("Retrieved SP=%" PRIxREGISTER "\n", PTRACE_REG_SP(&r));
+	DPRINTF("Retrieved SP=%" PRIxREGISTER "\n", PTRACE_REG_SP(&r));
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 #endif
@@ -4185,40 +4198,40 @@ ATF_TC_BODY(regs4, tc)
 #endif
 	struct reg r;
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Call GETREGS for the child process\n");
-	ATF_REQUIRE(ptrace(PT_GETREGS, child, &r, 0) != -1);
+	DPRINTF("Call GETREGS for the child process\n");
+	SYSCALL_REQUIRE(ptrace(PT_GETREGS, child, &r, 0) != -1);
 
-	printf("Retrieved INTRV=%" PRIxREGISTER "\n", PTRACE_REG_INTRV(&r));
+	DPRINTF("Retrieved INTRV=%" PRIxREGISTER "\n", PTRACE_REG_INTRV(&r));
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 #endif
@@ -4241,41 +4254,41 @@ ATF_TC_BODY(regs5, tc)
 #endif
 	struct reg r;
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Call GETREGS for the child process\n");
-	ATF_REQUIRE(ptrace(PT_GETREGS, child, &r, 0) != -1);
+	DPRINTF("Call GETREGS for the child process\n");
+	SYSCALL_REQUIRE(ptrace(PT_GETREGS, child, &r, 0) != -1);
 
-	printf("Call SETREGS for the child process (without changed regs)\n");
-	ATF_REQUIRE(ptrace(PT_GETREGS, child, &r, 0) != -1);
+	DPRINTF("Call SETREGS for the child process (without changed regs)\n");
+	SYSCALL_REQUIRE(ptrace(PT_GETREGS, child, &r, 0) != -1);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 #endif
@@ -4298,38 +4311,38 @@ ATF_TC_BODY(fpregs1, tc)
 #endif
 	struct fpreg r;
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Call GETFPREGS for the child process\n");
-	ATF_REQUIRE(ptrace(PT_GETFPREGS, child, &r, 0) != -1);
+	DPRINTF("Call GETFPREGS for the child process\n");
+	SYSCALL_REQUIRE(ptrace(PT_GETFPREGS, child, &r, 0) != -1);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 #endif
@@ -4353,41 +4366,41 @@ ATF_TC_BODY(fpregs2, tc)
 #endif
 	struct fpreg r;
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Call GETFPREGS for the child process\n");
-	ATF_REQUIRE(ptrace(PT_GETFPREGS, child, &r, 0) != -1);
+	DPRINTF("Call GETFPREGS for the child process\n");
+	SYSCALL_REQUIRE(ptrace(PT_GETFPREGS, child, &r, 0) != -1);
 
-	printf("Call SETFPREGS for the child (without changed regs)\n");
-	ATF_REQUIRE(ptrace(PT_SETFPREGS, child, &r, 0) != -1);
+	DPRINTF("Call SETFPREGS for the child (without changed regs)\n");
+	SYSCALL_REQUIRE(ptrace(PT_SETFPREGS, child, &r, 0) != -1);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 #endif
@@ -4409,66 +4422,66 @@ ptrace_step(int N, int setstep)
 	atf_tc_expect_fail("PR kern/52119");
 #endif
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
 		happy = check_happy(999);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
 		FORKEE_ASSERT_EQ(happy, check_happy(999));
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
 	while (N --> 0) {
 		if (setstep) {
-			printf("Before resuming the child process where it "
+			DPRINTF("Before resuming the child process where it "
 			    "left off and without signal to be sent (use "
 			    "PT_SETSTEP and PT_CONTINUE)\n");
-			ATF_REQUIRE(ptrace(PT_SETSTEP, child, 0, 0) != -1);
-			ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0)
+			SYSCALL_REQUIRE(ptrace(PT_SETSTEP, child, 0, 0) != -1);
+			SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0)
 			    != -1);
 		} else {
-			printf("Before resuming the child process where it "
+			DPRINTF("Before resuming the child process where it "
 			    "left off and without signal to be sent (use "
 			    "PT_STEP)\n");
-			ATF_REQUIRE(ptrace(PT_STEP, child, (void *)1, 0)
+			SYSCALL_REQUIRE(ptrace(PT_STEP, child, (void *)1, 0)
 			    != -1);
 		}
 
-		printf("Before calling %s() for the child\n", TWAIT_FNAME);
+		DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 		TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0),
 		    child);
 
 		validate_status_stopped(status, SIGTRAP);
 
 		if (setstep) {
-			ATF_REQUIRE(ptrace(PT_CLEARSTEP, child, 0, 0) != -1);
+			SYSCALL_REQUIRE(ptrace(PT_CLEARSTEP, child, 0, 0) != -1);
 		}
 	}
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 #endif
@@ -4600,36 +4613,36 @@ ATF_TC_BODY(kill1, tc)
 	int status;
 #endif
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
 		/* NOTREACHED */
 		FORKEE_ASSERTX(0 &&
 		    "Child should be terminated by a signal from its parent");
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, sigsent) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, sigsent) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_signaled(status, sigsent, 0);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
@@ -4648,36 +4661,36 @@ ATF_TC_BODY(kill2, tc)
 	int status;
 #endif
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
 		/* NOTREACHED */
 		FORKEE_ASSERTX(0 &&
 		    "Child should be terminated by a signal from its parent");
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_KILL, child, (void*)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_KILL, child, (void*)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_signaled(status, SIGKILL, 0);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
@@ -4698,53 +4711,53 @@ ATF_TC_BODY(lwpinfo1, tc)
 #endif
 	struct ptrace_lwpinfo info = {0, 0};
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Before calling ptrace(2) with PT_LWPINFO for child\n");
-	ATF_REQUIRE(ptrace(PT_LWPINFO, child, &info, sizeof(info)) != -1);
+	DPRINTF("Before calling ptrace(2) with PT_LWPINFO for child\n");
+	SYSCALL_REQUIRE(ptrace(PT_LWPINFO, child, &info, sizeof(info)) != -1);
 
-	printf("Assert that there exists a thread\n");
+	DPRINTF("Assert that there exists a thread\n");
 	ATF_REQUIRE(info.pl_lwpid > 0);
 
-	printf("Assert that lwp thread %d received event PL_EVENT_SIGNAL\n",
+	DPRINTF("Assert that lwp thread %d received event PL_EVENT_SIGNAL\n",
 	    info.pl_lwpid);
 	ATF_REQUIRE_EQ_MSG(info.pl_event, PL_EVENT_SIGNAL,
 	    "Received event %d != expected event %d",
 	    info.pl_event, PL_EVENT_SIGNAL);
 
-	printf("Before calling ptrace(2) with PT_LWPINFO for child\n");
-	ATF_REQUIRE(ptrace(PT_LWPINFO, child, &info, sizeof(info)) != -1);
+	DPRINTF("Before calling ptrace(2) with PT_LWPINFO for child\n");
+	SYSCALL_REQUIRE(ptrace(PT_LWPINFO, child, &info, sizeof(info)) != -1);
 
-	printf("Assert that there are no more lwp threads in child\n");
+	DPRINTF("Assert that there are no more lwp threads in child\n");
 	ATF_REQUIRE_EQ(info.pl_lwpid, 0);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
@@ -4769,9 +4782,9 @@ ATF_TC_BODY(lwpinfo2, tc)
 #endif
 	struct ptrace_lwpinfo info = {0, 0};
 
-	printf("Spawn tracee\n");
-	ATF_REQUIRE(msg_open(&parent_tracee) == 0);
-	ATF_REQUIRE(msg_open(&parent_tracer) == 0);
+	DPRINTF("Spawn tracee\n");
+	SYSCALL_REQUIRE(msg_open(&parent_tracee) == 0);
+	SYSCALL_REQUIRE(msg_open(&parent_tracer) == 0);
 	tracee = atf_utils_fork();
 	if (tracee == 0) {
 
@@ -4783,11 +4796,11 @@ ATF_TC_BODY(lwpinfo2, tc)
 	}
 	PARENT_FROM_CHILD("tracee ready", parent_tracee, msg);
 
-	printf("Spawn debugger\n");
+	DPRINTF("Spawn debugger\n");
 	tracer = atf_utils_fork();
 	if (tracer == 0) {
 		/* No IPC to communicate with the child */
-		printf("Before calling PT_ATTACH from tracee %d\n", getpid());
+		DPRINTF("Before calling PT_ATTACH from tracee %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_ATTACH, tracee, NULL, 0) != -1);
 
 		/* Wait for tracee and assert that it was stopped w/ SIGSTOP */
@@ -4796,22 +4809,22 @@ ATF_TC_BODY(lwpinfo2, tc)
 
 		forkee_status_stopped(status, SIGSTOP);
 
-		printf("Before calling ptrace(2) with PT_LWPINFO for child\n");
+		DPRINTF("Before calling ptrace(2) with PT_LWPINFO for child\n");
 		FORKEE_ASSERT(ptrace(PT_LWPINFO, tracee, &info, sizeof(info))
 		    != -1);
 
-		printf("Assert that there exists a thread\n");
+		DPRINTF("Assert that there exists a thread\n");
 		FORKEE_ASSERTX(info.pl_lwpid > 0);
 
-		printf("Assert that lwp thread %d received event "
+		DPRINTF("Assert that lwp thread %d received event "
 		    "PL_EVENT_SIGNAL\n", info.pl_lwpid);
 		FORKEE_ASSERT_EQ(info.pl_event, PL_EVENT_SIGNAL);
 
-		printf("Before calling ptrace(2) with PT_LWPINFO for child\n");
+		DPRINTF("Before calling ptrace(2) with PT_LWPINFO for child\n");
 		FORKEE_ASSERT(ptrace(PT_LWPINFO, tracee, &info, sizeof(info))
 		    != -1);
 
-		printf("Assert that there are no more lwp threads in child\n");
+		DPRINTF("Assert that there are no more lwp threads in child\n");
 		FORKEE_ASSERTX(info.pl_lwpid == 0);
 
 		/* Resume tracee with PT_CONTINUE */
@@ -4828,35 +4841,35 @@ ATF_TC_BODY(lwpinfo2, tc)
 
 		forkee_status_exited(status, exitval_tracee);
 
-		printf("Before exiting of the tracer process\n");
+		DPRINTF("Before exiting of the tracer process\n");
 		_exit(exitval_tracer);
 	}
 
-	printf("Wait for the tracer to attach to the tracee\n");
+	DPRINTF("Wait for the tracer to attach to the tracee\n");
 	PARENT_FROM_CHILD("tracer ready", parent_tracer, msg);
 
-	printf("Resume the tracee and let it exit\n");
+	DPRINTF("Resume the tracee and let it exit\n");
 	PARENT_TO_CHILD("tracee exit", parent_tracee, msg);
 
-	printf("Detect that tracee is zombie\n");
+	DPRINTF("Detect that tracee is zombie\n");
 	await_zombie(tracee);
 
-	printf("Assert that there is no status about tracee - "
+	DPRINTF("Assert that there is no status about tracee - "
 	    "Tracer must detect zombie first - calling %s()\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(
 	    wpid = TWAIT_GENERIC(tracee, &status, WNOHANG), 0);
 
-	printf("Resume the tracer and let it detect exited tracee\n");
+	DPRINTF("Resume the tracer and let it detect exited tracee\n");
 	PARENT_TO_CHILD("tracer wait", parent_tracer, msg);
 
-	printf("Wait for tracer to finish its job and exit - calling %s()\n",
+	DPRINTF("Wait for tracer to finish its job and exit - calling %s()\n",
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(tracer, &status, 0),
 	    tracer);
 
 	validate_status_exited(status, exitval_tracer);
 
-	printf("Wait for tracee to finish its job and exit - calling %s()\n",
+	DPRINTF("Wait for tracee to finish its job and exit - calling %s()\n",
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(tracee, &status, WNOHANG),
 	    tracee);
@@ -4886,43 +4899,43 @@ ATF_TC_BODY(siginfo1, tc)
 	struct ptrace_siginfo info;
 	memset(&info, 0, sizeof(info));
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
-	ATF_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
+	DPRINTF("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
+	SYSCALL_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
 
-	printf("Signal traced to lwpid=%d\n", info.psi_lwpid);
-	printf("Signal properties: si_signo=%#x si_code=%#x si_errno=%#x\n",
+	DPRINTF("Signal traced to lwpid=%d\n", info.psi_lwpid);
+	DPRINTF("Signal properties: si_signo=%#x si_code=%#x si_errno=%#x\n",
 	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
 	    info.psi_siginfo.si_errno);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
@@ -4956,10 +4969,10 @@ ATF_TC_BODY(siginfo2, tc)
 	struct ptrace_siginfo info;
 	memset(&info, 0, sizeof(info));
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
 		sa.sa_handler = siginfo2_sighandler;
@@ -4968,42 +4981,42 @@ ATF_TC_BODY(siginfo2, tc)
 
 		FORKEE_ASSERT(sigaction(sigval, &sa, NULL) != -1);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
 		FORKEE_ASSERT_EQ(siginfo2_caught, 1);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
-	ATF_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
+	DPRINTF("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
+	SYSCALL_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
 
-	printf("Signal traced to lwpid=%d\n", info.psi_lwpid);
-	printf("Signal properties: si_signo=%#x si_code=%#x si_errno=%#x\n",
+	DPRINTF("Signal traced to lwpid=%d\n", info.psi_lwpid);
+	DPRINTF("Signal properties: si_signo=%#x si_code=%#x si_errno=%#x\n",
 	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
 	    info.psi_siginfo.si_errno);
 
-	printf("Before calling ptrace(2) with PT_SET_SIGINFO for child\n");
-	ATF_REQUIRE(ptrace(PT_SET_SIGINFO, child, &info, sizeof(info)) != -1);
+	DPRINTF("Before calling ptrace(2) with PT_SET_SIGINFO for child\n");
+	SYSCALL_REQUIRE(ptrace(PT_SET_SIGINFO, child, &info, sizeof(info)) != -1);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, sigval) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, sigval) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
@@ -5042,10 +5055,10 @@ ATF_TC_BODY(siginfo3, tc)
 	struct ptrace_siginfo info;
 	memset(&info, 0, sizeof(info));
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
 		sa.sa_sigaction = siginfo3_sigaction;
@@ -5054,54 +5067,54 @@ ATF_TC_BODY(siginfo3, tc)
 
 		FORKEE_ASSERT(sigaction(sigfaked, &sa, NULL) != -1);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
 		FORKEE_ASSERT_EQ(siginfo3_caught, 1);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
-	ATF_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
+	DPRINTF("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
+	SYSCALL_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
 
-	printf("Signal traced to lwpid=%d\n", info.psi_lwpid);
-	printf("Signal properties: si_signo=%#x si_code=%#x si_errno=%#x\n",
+	DPRINTF("Signal traced to lwpid=%d\n", info.psi_lwpid);
+	DPRINTF("Signal properties: si_signo=%#x si_code=%#x si_errno=%#x\n",
 	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
 	    info.psi_siginfo.si_errno);
 
-	printf("Before setting new faked signal to signo=%d si_code=%d\n",
+	DPRINTF("Before setting new faked signal to signo=%d si_code=%d\n",
 	    sigfaked, sicodefaked);
 	info.psi_siginfo.si_signo = sigfaked;
 	info.psi_siginfo.si_code = sicodefaked;
 
-	printf("Before calling ptrace(2) with PT_SET_SIGINFO for child\n");
-	ATF_REQUIRE(ptrace(PT_SET_SIGINFO, child, &info, sizeof(info)) != -1);
+	DPRINTF("Before calling ptrace(2) with PT_SET_SIGINFO for child\n");
+	SYSCALL_REQUIRE(ptrace(PT_SET_SIGINFO, child, &info, sizeof(info)) != -1);
 
-	printf("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
-	ATF_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
+	DPRINTF("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
+	SYSCALL_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
 
-	printf("Before checking siginfo_t\n");
+	DPRINTF("Before checking siginfo_t\n");
 	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, sigfaked);
 	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, sicodefaked);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, sigfaked) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, sigfaked) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
@@ -5123,43 +5136,43 @@ ATF_TC_BODY(siginfo4, tc)
 	struct ptrace_siginfo info;
 	memset(&info, 0, sizeof(info));
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		printf("Before calling execve(2) from child\n");
+		DPRINTF("Before calling execve(2) from child\n");
 		execlp("/bin/echo", "/bin/echo", NULL);
 
 		FORKEE_ASSERT(0 && "Not reached");
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
-	ATF_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
+	DPRINTF("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
+	SYSCALL_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
 
-	printf("Signal traced to lwpid=%d\n", info.psi_lwpid);
-	printf("Signal properties: si_signo=%#x si_code=%#x si_errno=%#x\n",
+	DPRINTF("Signal traced to lwpid=%d\n", info.psi_lwpid);
+	DPRINTF("Signal properties: si_signo=%#x si_code=%#x si_errno=%#x\n",
 	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
 	    info.psi_siginfo.si_errno);
 
 	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, sigval);
 	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_EXEC);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
@@ -5189,13 +5202,13 @@ ATF_TC_BODY(siginfo5, tc)
 
 	memset(&info, 0, sizeof(info));
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
 		FORKEE_ASSERT((child2 = fork()) != -1);
@@ -5208,115 +5221,115 @@ ATF_TC_BODY(siginfo5, tc)
 
 		forkee_status_exited(status, exitval2);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
-	ATF_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
+	DPRINTF("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
+	SYSCALL_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
 
-	printf("Before checking siginfo_t\n");
+	DPRINTF("Before checking siginfo_t\n");
 	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, sigval);
 	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, SI_LWP);
 
-	printf("Enable PTRACE_FORK in EVENT_MASK for the child %d\n", child);
+	DPRINTF("Enable PTRACE_FORK in EVENT_MASK for the child %d\n", child);
 	event.pe_set_event = PTRACE_FORK;
-	ATF_REQUIRE(ptrace(PT_SET_EVENT_MASK, child, &event, elen) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_SET_EVENT_MASK, child, &event, elen) != -1);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-        printf("We expect two SIGTRAP events, for child %d (TRAP_CHLD, "
+        DPRINTF("We expect two SIGTRAP events, for child %d (TRAP_CHLD, "
                "pe_report_event=PTRACE_FORK, state.pe_other_pid=child2) and "
                "for child2 (TRAP_CHLD, pe_report_event=PTRACE_FORK, "
                 "state.pe_other_pid=child)\n", child);
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child %d\n", TWAIT_FNAME, child);
+	DPRINTF("Before calling %s() for the child %d\n", TWAIT_FNAME, child);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, SIGTRAP);
 
-	printf("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
-	ATF_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
+	DPRINTF("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
+	SYSCALL_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
 
-	printf("Before checking siginfo_t\n");
+	DPRINTF("Before checking siginfo_t\n");
 	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, SIGTRAP);
 	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_CHLD);
 
-	ATF_REQUIRE(ptrace(PT_GET_PROCESS_STATE, child, &state, slen) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_GET_PROCESS_STATE, child, &state, slen) != -1);
 	ATF_REQUIRE_EQ(state.pe_report_event, PTRACE_FORK);
 
 	child2 = state.pe_other_pid;
-	printf("Reported PTRACE_FORK event with forkee %d\n", child2);
+	DPRINTF("Reported PTRACE_FORK event with forkee %d\n", child2);
 
-	printf("Before calling %s() for the forkee %d of the child %d\n",
+	DPRINTF("Before calling %s() for the forkee %d of the child %d\n",
 	    TWAIT_FNAME, child2, child);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child2, &status, 0),
 	    child2);
 
 	validate_status_stopped(status, SIGTRAP);
 
-	printf("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
-	ATF_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
+	DPRINTF("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
+	SYSCALL_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
 
-	printf("Before checking siginfo_t\n");
+	DPRINTF("Before checking siginfo_t\n");
 	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, SIGTRAP);
 	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_CHLD);
 
-	ATF_REQUIRE(ptrace(PT_GET_PROCESS_STATE, child2, &state, slen) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_GET_PROCESS_STATE, child2, &state, slen) != -1);
 	ATF_REQUIRE_EQ(state.pe_report_event, PTRACE_FORK);
 	ATF_REQUIRE_EQ(state.pe_other_pid, child);
 
-	printf("Before resuming the forkee process where it left off and "
+	DPRINTF("Before resuming the forkee process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child2, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child2, (void *)1, 0) != -1);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the forkee - expected exited\n",
+	DPRINTF("Before calling %s() for the forkee - expected exited\n",
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child2, &status, 0),
 	    child2);
 
 	validate_status_exited(status, exitval2);
 
-	printf("Before calling %s() for the forkee - expected no process\n",
+	DPRINTF("Before calling %s() for the forkee - expected no process\n",
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD,
 	    wpid = TWAIT_GENERIC(child2, &status, 0));
 
-	printf("Before calling %s() for the child - expected stopped "
+	DPRINTF("Before calling %s() for the child - expected stopped "
 	    "SIGCHLD\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, SIGCHLD);
 
-	printf("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
-	ATF_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
+	DPRINTF("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
+	SYSCALL_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
 
-	printf("Before checking siginfo_t\n");
+	DPRINTF("Before checking siginfo_t\n");
 	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, SIGCHLD);
 	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, CLD_EXITED);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child - expected exited\n",
+	DPRINTF("Before calling %s() for the child - expected exited\n",
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child - expected no process\n",
+	DPRINTF("Before calling %s() for the child - expected no process\n",
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
@@ -5348,62 +5361,62 @@ ATF_TC_BODY(siginfo6, tc)
 
 	memset(&info, 0, sizeof(info));
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
 		happy = check_happy(100);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
 		FORKEE_ASSERT_EQ(happy, check_happy(100));
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
-	ATF_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
+	DPRINTF("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
+	SYSCALL_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
 
-	printf("Before checking siginfo_t\n");
+	DPRINTF("Before checking siginfo_t\n");
 	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, sigval);
 	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, SI_LWP);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent (use PT_STEP)\n");
-	ATF_REQUIRE(ptrace(PT_STEP, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_STEP, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, SIGTRAP);
 
-	printf("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
-	ATF_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
+	DPRINTF("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
+	SYSCALL_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
 
-	printf("Before checking siginfo_t\n");
+	DPRINTF("Before checking siginfo_t\n");
 	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, SIGTRAP);
 	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_TRACE);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 #endif
@@ -5442,73 +5455,73 @@ ATF_TC_BODY(lwp_create1, tc)
 	static const size_t ssize = 16*1024;
 	void *stack;
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		printf("Before allocating memory for stack in child\n");
+		DPRINTF("Before allocating memory for stack in child\n");
 		FORKEE_ASSERT((stack = malloc(ssize)) != NULL);
 
-		printf("Before making context for new lwp in child\n");
+		DPRINTF("Before making context for new lwp in child\n");
 		_lwp_makecontext(&uc, lwp_main_func, NULL, NULL, stack, ssize);
 
-		printf("Before creating new in child\n");
+		DPRINTF("Before creating new in child\n");
 		FORKEE_ASSERT(_lwp_create(&uc, 0, &lid) == 0);
 
-		printf("Before waiting for lwp %d to exit\n", lid);
+		DPRINTF("Before waiting for lwp %d to exit\n", lid);
 		FORKEE_ASSERT(_lwp_wait(lid, NULL) == 0);
 
-		printf("Before verifying that reported %d and running lid %d "
+		DPRINTF("Before verifying that reported %d and running lid %d "
 		    "are the same\n", lid, the_lwp_id);
 		FORKEE_ASSERT_EQ(lid, the_lwp_id);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Set empty EVENT_MASK for the child %d\n", child);
+	DPRINTF("Set empty EVENT_MASK for the child %d\n", child);
 	event.pe_set_event = PTRACE_LWP_CREATE;
-	ATF_REQUIRE(ptrace(PT_SET_EVENT_MASK, child, &event, elen) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_SET_EVENT_MASK, child, &event, elen) != -1);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child - expected stopped "
+	DPRINTF("Before calling %s() for the child - expected stopped "
 	    "SIGTRAP\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, SIGTRAP);
 
-	ATF_REQUIRE(ptrace(PT_GET_PROCESS_STATE, child, &state, slen) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_GET_PROCESS_STATE, child, &state, slen) != -1);
 
 	ATF_REQUIRE_EQ(state.pe_report_event, PTRACE_LWP_CREATE);
 
 	lid = state.pe_lwp;
-	printf("Reported PTRACE_LWP_CREATE event with lid %d\n", lid);
+	DPRINTF("Reported PTRACE_LWP_CREATE event with lid %d\n", lid);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child - expected exited\n",
+	DPRINTF("Before calling %s() for the child - expected exited\n",
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child - expected no process\n",
+	DPRINTF("Before calling %s() for the child - expected no process\n",
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
@@ -5538,73 +5551,73 @@ ATF_TC_BODY(lwp_exit1, tc)
 	static const size_t ssize = 16*1024;
 	void *stack;
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		printf("Before allocating memory for stack in child\n");
+		DPRINTF("Before allocating memory for stack in child\n");
 		FORKEE_ASSERT((stack = malloc(ssize)) != NULL);
 
-		printf("Before making context for new lwp in child\n");
+		DPRINTF("Before making context for new lwp in child\n");
 		_lwp_makecontext(&uc, lwp_main_func, NULL, NULL, stack, ssize);
 
-		printf("Before creating new in child\n");
+		DPRINTF("Before creating new in child\n");
 		FORKEE_ASSERT(_lwp_create(&uc, 0, &lid) == 0);
 
-		printf("Before waiting for lwp %d to exit\n", lid);
+		DPRINTF("Before waiting for lwp %d to exit\n", lid);
 		FORKEE_ASSERT(_lwp_wait(lid, NULL) == 0);
 
-		printf("Before verifying that reported %d and running lid %d "
+		DPRINTF("Before verifying that reported %d and running lid %d "
 		    "are the same\n", lid, the_lwp_id);
 		FORKEE_ASSERT_EQ(lid, the_lwp_id);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Set empty EVENT_MASK for the child %d\n", child);
+	DPRINTF("Set empty EVENT_MASK for the child %d\n", child);
 	event.pe_set_event = PTRACE_LWP_EXIT;
-	ATF_REQUIRE(ptrace(PT_SET_EVENT_MASK, child, &event, elen) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_SET_EVENT_MASK, child, &event, elen) != -1);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child - expected stopped "
+	DPRINTF("Before calling %s() for the child - expected stopped "
 	    "SIGTRAP\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, SIGTRAP);
 
-	ATF_REQUIRE(ptrace(PT_GET_PROCESS_STATE, child, &state, slen) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_GET_PROCESS_STATE, child, &state, slen) != -1);
 
 	ATF_REQUIRE_EQ(state.pe_report_event, PTRACE_LWP_EXIT);
 
 	lid = state.pe_lwp;
-	printf("Reported PTRACE_LWP_EXIT event with lid %d\n", lid);
+	DPRINTF("Reported PTRACE_LWP_EXIT event with lid %d\n", lid);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child - expected exited\n",
+	DPRINTF("Before calling %s() for the child - expected exited\n",
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child - expected no process\n",
+	DPRINTF("Before calling %s() for the child - expected no process\n",
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
@@ -5629,52 +5642,52 @@ ATF_TC_BODY(signal1, tc)
 #endif
 	sigset_t intmask;
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
 		sigemptyset(&intmask);
 		sigaddset(&intmask, sigmasked);
 		sigprocmask(SIG_BLOCK, &intmask, NULL);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		printf("Before raising %s from child\n",
+		DPRINTF("Before raising %s from child\n",
 		    strsignal(signotmasked));
 		FORKEE_ASSERT(raise(signotmasked) == 0);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, signotmasked);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
@@ -5697,43 +5710,43 @@ ATF_TC_BODY(signal2, tc)
 #endif
 	sigset_t intmask;
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
 		sigemptyset(&intmask);
 		sigaddset(&intmask, sigmasked);
 		sigprocmask(SIG_BLOCK, &intmask, NULL);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		printf("Before raising %s breakpoint from child\n",
+		DPRINTF("Before raising %s breakpoint from child\n",
 		    strsignal(sigmasked));
 		FORKEE_ASSERT(raise(sigmasked) == 0);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
@@ -5757,29 +5770,32 @@ ATF_TC_BODY(signal3, tc)
 #endif
 	sigset_t intmask;
 
-#if defined(__sparc__) && !defined(__sparc64__)
+	atf_tc_expect_fail("PR kern/51918");
+
+	// This test breaks now on some ports, temporarily disable it
+	ATF_REQUIRE(0 && "In order to get reliable failure, abort");
+
+#if defined(__sparc__)
 	atf_tc_expect_timeout("PR kern/52167");
 
 	// timeout wins, failure still valid
 	// atf_tc_expect_fail("PR kern/51918");
-#else
-	atf_tc_expect_fail("PR kern/51918");
 #endif
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
 		sigemptyset(&intmask);
 		sigaddset(&intmask, sigmasked);
 		sigprocmask(SIG_BLOCK, &intmask, NULL);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		printf("Before raising software breakpoint from child\n");
+		DPRINTF("Before raising software breakpoint from child\n");
 
 #ifdef PTRACE_BREAKPOINT_ASM
 		PTRACE_BREAKPOINT_ASM;
@@ -5787,35 +5803,35 @@ ATF_TC_BODY(signal3, tc)
 		/* port me */
 #endif
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigmasked);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
@@ -5843,14 +5859,12 @@ ATF_TC_BODY(signal4, tc)
 #if defined(__arm__)
 	/* PT_STEP not supported on arm 32-bit */
 	atf_tc_expect_fail("PR kern/51918 PR kern/52119");
-#else
-	atf_tc_expect_fail("PR kern/52118");
 #endif
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
 		happy = check_happy(100);
@@ -5859,40 +5873,40 @@ ATF_TC_BODY(signal4, tc)
 		sigaddset(&intmask, sigmasked);
 		sigprocmask(SIG_BLOCK, &intmask, NULL);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
 		FORKEE_ASSERT_EQ(happy, check_happy(100));
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_STEP, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_STEP, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigmasked);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 #endif
@@ -5916,53 +5930,53 @@ ATF_TC_BODY(signal5, tc)
 #endif
 	sigset_t intmask;
 
-	atf_tc_expect_fail("PR kern/51918");
+	atf_tc_expect_fail("wrong signal");
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
 		sigemptyset(&intmask);
 		sigaddset(&intmask, sigmasked);
 		sigprocmask(SIG_BLOCK, &intmask, NULL);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		printf("Before calling execve(2) from child\n");
+		DPRINTF("Before calling execve(2) from child\n");
 		execlp("/bin/echo", "/bin/echo", NULL);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigmasked);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
@@ -5994,17 +6008,17 @@ ATF_TC_BODY(signal6, tc)
 
 	atf_tc_expect_timeout("PR kern/51918");
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
 		sigemptyset(&intmask);
 		sigaddset(&intmask, sigmasked);
 		sigprocmask(SIG_BLOCK, &intmask, NULL);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
 		FORKEE_ASSERT((child2 = fork()) != -1);
@@ -6017,82 +6031,82 @@ ATF_TC_BODY(signal6, tc)
 
 		forkee_status_exited(status, exitval2);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Enable PTRACE_FORK in EVENT_MASK for the child %d\n", child);
+	DPRINTF("Enable PTRACE_FORK in EVENT_MASK for the child %d\n", child);
 	event.pe_set_event = PTRACE_FORK;
-	ATF_REQUIRE(ptrace(PT_SET_EVENT_MASK, child, &event, elen) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_SET_EVENT_MASK, child, &event, elen) != -1);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigmasked);
 
-	ATF_REQUIRE(ptrace(PT_GET_PROCESS_STATE, child, &state, slen) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_GET_PROCESS_STATE, child, &state, slen) != -1);
 	ATF_REQUIRE_EQ(state.pe_report_event, PTRACE_FORK);
 
 	child2 = state.pe_other_pid;
-	printf("Reported PTRACE_FORK event with forkee %d\n", child2);
+	DPRINTF("Reported PTRACE_FORK event with forkee %d\n", child2);
 
-	printf("Before calling %s() for the child2\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child2\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child2, &status, 0),
 	    child2);
 
 	validate_status_stopped(status, SIGTRAP);
 
-	ATF_REQUIRE(ptrace(PT_GET_PROCESS_STATE, child2, &state, slen) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_GET_PROCESS_STATE, child2, &state, slen) != -1);
 	ATF_REQUIRE_EQ(state.pe_report_event, PTRACE_FORK);
 	ATF_REQUIRE_EQ(state.pe_other_pid, child);
 
-	printf("Before resuming the forkee process where it left off and "
+	DPRINTF("Before resuming the forkee process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child2, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child2, (void *)1, 0) != -1);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the forkee - expected exited\n",
+	DPRINTF("Before calling %s() for the forkee - expected exited\n",
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child2, &status, 0),
 	    child2);                                                                                                                                         
 
 	validate_status_exited(status, exitval2);
 
-	printf("Before calling %s() for the forkee - expected no process\n",
+	DPRINTF("Before calling %s() for the forkee - expected no process\n",
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD,
 	    wpid = TWAIT_GENERIC(child2, &status, 0));
 
-	printf("Before calling %s() for the child - expected stopped "
+	DPRINTF("Before calling %s() for the child - expected stopped "
 	    "SIGCHLD\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);                                                                               
 
 	validate_status_stopped(status, SIGCHLD);
 
-	printf("Before resuming the child process where it left off and "                                                                                    
+	DPRINTF("Before resuming the child process where it left off and "                                                                                    
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child - expected exited\n",
+	DPRINTF("Before calling %s() for the child - expected exited\n",
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child - expected no process\n",
+	DPRINTF("Before calling %s() for the child - expected no process\n",
 	    TWAIT_FNAME);                                                                                                                                    
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
@@ -6125,17 +6139,17 @@ ATF_TC_BODY(signal7, tc)
 
 	atf_tc_expect_fail("PR kern/51918 PR kern/51630");
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
 		sigemptyset(&intmask);
 		sigaddset(&intmask, sigmasked);
 		sigprocmask(SIG_BLOCK, &intmask, NULL);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
 		FORKEE_ASSERT((child2 = fork()) != -1);
@@ -6148,82 +6162,82 @@ ATF_TC_BODY(signal7, tc)
 
 		forkee_status_exited(status, exitval2);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Enable PTRACE_VFORK in EVENT_MASK for the child %d\n", child);
+	DPRINTF("Enable PTRACE_VFORK in EVENT_MASK for the child %d\n", child);
 	event.pe_set_event = PTRACE_VFORK;
-	ATF_REQUIRE(ptrace(PT_SET_EVENT_MASK, child, &event, elen) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_SET_EVENT_MASK, child, &event, elen) != -1 || errno == ENOTSUP);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigmasked);
 
-	ATF_REQUIRE(ptrace(PT_GET_PROCESS_STATE, child, &state, slen) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_GET_PROCESS_STATE, child, &state, slen) != -1);
 	ATF_REQUIRE_EQ(state.pe_report_event, PTRACE_VFORK);
 
 	child2 = state.pe_other_pid;
-	printf("Reported PTRACE_VFORK event with forkee %d\n", child2);
+	DPRINTF("Reported PTRACE_VFORK event with forkee %d\n", child2);
 
-	printf("Before calling %s() for the child2\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child2\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child2, &status, 0),
 	    child2);
 
 	validate_status_stopped(status, SIGTRAP);
 
-	ATF_REQUIRE(ptrace(PT_GET_PROCESS_STATE, child2, &state, slen) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_GET_PROCESS_STATE, child2, &state, slen) != -1);
 	ATF_REQUIRE_EQ(state.pe_report_event, PTRACE_VFORK);
 	ATF_REQUIRE_EQ(state.pe_other_pid, child);
 
-	printf("Before resuming the forkee process where it left off and "
+	DPRINTF("Before resuming the forkee process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child2, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child2, (void *)1, 0) != -1);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the forkee - expected exited\n",
+	DPRINTF("Before calling %s() for the forkee - expected exited\n",
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child2, &status, 0),
 	    child2);                                                                                                                                         
 
 	validate_status_exited(status, exitval2);
 
-	printf("Before calling %s() for the forkee - expected no process\n",
+	DPRINTF("Before calling %s() for the forkee - expected no process\n",
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD,
 	    wpid = TWAIT_GENERIC(child2, &status, 0));
 
-	printf("Before calling %s() for the child - expected stopped "
+	DPRINTF("Before calling %s() for the child - expected stopped "
 	    "SIGCHLD\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);                                                                               
 
 	validate_status_stopped(status, SIGCHLD);
 
-	printf("Before resuming the child process where it left off and "                                                                                    
+	DPRINTF("Before resuming the child process where it left off and "                                                                                    
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child - expected exited\n",
+	DPRINTF("Before calling %s() for the child - expected exited\n",
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child - expected no process\n",
+	DPRINTF("Before calling %s() for the child - expected no process\n",
 	    TWAIT_FNAME);                                                                                                                                    
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
@@ -6255,17 +6269,17 @@ ATF_TC_BODY(signal8, tc)
 
 	atf_tc_expect_fail("PR kern/51918");
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
 		sigemptyset(&intmask);
 		sigaddset(&intmask, sigmasked);
 		sigprocmask(SIG_BLOCK, &intmask, NULL);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
 		FORKEE_ASSERT((child2 = vfork()) != -1);
@@ -6278,57 +6292,57 @@ ATF_TC_BODY(signal8, tc)
 
 		forkee_status_exited(status, exitval2);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Enable PTRACE_VFORK_DONE in EVENT_MASK for the child %d\n",
+	DPRINTF("Enable PTRACE_VFORK_DONE in EVENT_MASK for the child %d\n",
 	    child);
 	event.pe_set_event = PTRACE_VFORK_DONE;
-	ATF_REQUIRE(ptrace(PT_SET_EVENT_MASK, child, &event, elen) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_SET_EVENT_MASK, child, &event, elen) != -1);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigmasked);
 
-	ATF_REQUIRE(ptrace(PT_GET_PROCESS_STATE, child, &state, slen) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_GET_PROCESS_STATE, child, &state, slen) != -1);
 	ATF_REQUIRE_EQ(state.pe_report_event, PTRACE_VFORK_DONE);
 
 	child2 = state.pe_other_pid;
-	printf("Reported PTRACE_VFORK_DONE event with forkee %d\n", child2);
+	DPRINTF("Reported PTRACE_VFORK_DONE event with forkee %d\n", child2);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child - expected stopped "
+	DPRINTF("Before calling %s() for the child - expected stopped "
 	    "SIGCHLD\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);                                                                               
 
 	validate_status_stopped(status, SIGCHLD);
 
-	printf("Before resuming the child process where it left off and "                                                                                    
+	DPRINTF("Before resuming the child process where it left off and "                                                                                    
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child - expected exited\n",
+	DPRINTF("Before calling %s() for the child - expected exited\n",
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child - expected no process\n",
+	DPRINTF("Before calling %s() for the child - expected no process\n",
 	    TWAIT_FNAME);                                                                                                                                    
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
@@ -6362,77 +6376,77 @@ ATF_TC_BODY(signal9, tc)
 
 	atf_tc_expect_fail("PR kern/51918");
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
 		sigemptyset(&intmask);
 		sigaddset(&intmask, sigmasked);
 		sigprocmask(SIG_BLOCK, &intmask, NULL);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		printf("Before allocating memory for stack in child\n");
+		DPRINTF("Before allocating memory for stack in child\n");
 		FORKEE_ASSERT((stack = malloc(ssize)) != NULL);
 
-		printf("Before making context for new lwp in child\n");
+		DPRINTF("Before making context for new lwp in child\n");
 		_lwp_makecontext(&uc, lwp_main_func, NULL, NULL, stack, ssize);
 
-		printf("Before creating new in child\n");
+		DPRINTF("Before creating new in child\n");
 		FORKEE_ASSERT(_lwp_create(&uc, 0, &lid) == 0);
 
-		printf("Before waiting for lwp %d to exit\n", lid);
+		DPRINTF("Before waiting for lwp %d to exit\n", lid);
 		FORKEE_ASSERT(_lwp_wait(lid, NULL) == 0);
 
-		printf("Before verifying that reported %d and running lid %d "
+		DPRINTF("Before verifying that reported %d and running lid %d "
 		    "are the same\n", lid, the_lwp_id);
 		FORKEE_ASSERT_EQ(lid, the_lwp_id);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Set empty EVENT_MASK for the child %d\n", child);
+	DPRINTF("Set empty EVENT_MASK for the child %d\n", child);
 	event.pe_set_event = PTRACE_LWP_CREATE;
-	ATF_REQUIRE(ptrace(PT_SET_EVENT_MASK, child, &event, elen) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_SET_EVENT_MASK, child, &event, elen) != -1);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child - expected stopped "
+	DPRINTF("Before calling %s() for the child - expected stopped "
 	    "SIGTRAP\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigmasked);
 
-	ATF_REQUIRE(ptrace(PT_GET_PROCESS_STATE, child, &state, slen) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_GET_PROCESS_STATE, child, &state, slen) != -1);
 
 	ATF_REQUIRE_EQ(state.pe_report_event, PTRACE_LWP_CREATE);
 
 	lid = state.pe_lwp;
-	printf("Reported PTRACE_LWP_CREATE event with lid %d\n", lid);
+	DPRINTF("Reported PTRACE_LWP_CREATE event with lid %d\n", lid);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child - expected exited\n",
+	DPRINTF("Before calling %s() for the child - expected exited\n",
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child - expected no process\n",
+	DPRINTF("Before calling %s() for the child - expected no process\n",
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
@@ -6466,77 +6480,77 @@ ATF_TC_BODY(signal10, tc)
 
 	atf_tc_expect_fail("PR kern/51918");
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
 		sigemptyset(&intmask);
 		sigaddset(&intmask, sigmasked);
 		sigprocmask(SIG_BLOCK, &intmask, NULL);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		printf("Before allocating memory for stack in child\n");
+		DPRINTF("Before allocating memory for stack in child\n");
 		FORKEE_ASSERT((stack = malloc(ssize)) != NULL);
 
-		printf("Before making context for new lwp in child\n");
+		DPRINTF("Before making context for new lwp in child\n");
 		_lwp_makecontext(&uc, lwp_main_func, NULL, NULL, stack, ssize);
 
-		printf("Before creating new in child\n");
+		DPRINTF("Before creating new in child\n");
 		FORKEE_ASSERT(_lwp_create(&uc, 0, &lid) == 0);
 
-		printf("Before waiting for lwp %d to exit\n", lid);
+		DPRINTF("Before waiting for lwp %d to exit\n", lid);
 		FORKEE_ASSERT(_lwp_wait(lid, NULL) == 0);
 
-		printf("Before verifying that reported %d and running lid %d "
+		DPRINTF("Before verifying that reported %d and running lid %d "
 		    "are the same\n", lid, the_lwp_id);
 		FORKEE_ASSERT_EQ(lid, the_lwp_id);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Set empty EVENT_MASK for the child %d\n", child);
+	DPRINTF("Set empty EVENT_MASK for the child %d\n", child);
 	event.pe_set_event = PTRACE_LWP_EXIT;
-	ATF_REQUIRE(ptrace(PT_SET_EVENT_MASK, child, &event, elen) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_SET_EVENT_MASK, child, &event, elen) != -1);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child - expected stopped "
+	DPRINTF("Before calling %s() for the child - expected stopped "
 	    "SIGTRAP\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigmasked);
 
-	ATF_REQUIRE(ptrace(PT_GET_PROCESS_STATE, child, &state, slen) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_GET_PROCESS_STATE, child, &state, slen) != -1);
 
 	ATF_REQUIRE_EQ(state.pe_report_event, PTRACE_LWP_EXIT);
 
 	lid = state.pe_lwp;
-	printf("Reported PTRACE_LWP_EXIT event with lid %d\n", lid);
+	DPRINTF("Reported PTRACE_LWP_EXIT event with lid %d\n", lid);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child - expected exited\n",
+	DPRINTF("Before calling %s() for the child - expected exited\n",
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child - expected no process\n",
+	DPRINTF("Before calling %s() for the child - expected no process\n",
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
@@ -6558,38 +6572,38 @@ ATF_TC_BODY(getsigmask1, tc)
 #endif
 	sigset_t mask;
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Before calling PT_GET_SIGMASK\n");
-	ATF_REQUIRE(ptrace(PT_GET_SIGMASK, child, &mask, 0) != -1);
+	DPRINTF("Before calling PT_GET_SIGMASK\n");
+	SYSCALL_REQUIRE(ptrace(PT_GET_SIGMASK, child, &mask, 0) != -1);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
@@ -6615,43 +6629,43 @@ ATF_TC_BODY(getsigmask2, tc)
 	ATF_REQUIRE(sigemptyset(&expected_mask) == 0);
 	ATF_REQUIRE(sigaddset(&expected_mask, sigmasked) == 0);
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
 		sigaddset(&mask, sigmasked);
 		sigprocmask(SIG_BLOCK, &mask, NULL);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Before calling PT_GET_SIGMASK\n");
-	ATF_REQUIRE(ptrace(PT_GET_SIGMASK, child, &mask, 0) != -1);
+	DPRINTF("Before calling PT_GET_SIGMASK\n");
+	SYSCALL_REQUIRE(ptrace(PT_GET_SIGMASK, child, &mask, 0) != -1);
 
 	ATF_REQUIRE(memcmp(&mask, &expected_mask, sizeof(sigset_t)) == 0);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
@@ -6673,38 +6687,38 @@ ATF_TC_BODY(setsigmask1, tc)
 	sigset_t mask;
 	ATF_REQUIRE(sigemptyset(&mask) == 0);
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Before calling PT_SET_SIGMASK for empty mask\n");
-	ATF_REQUIRE(ptrace(PT_SET_SIGMASK, child, &mask, 0) != -1);
+	DPRINTF("Before calling PT_SET_SIGMASK for empty mask\n");
+	SYSCALL_REQUIRE(ptrace(PT_SET_SIGMASK, child, &mask, 0) != -1);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
@@ -6730,43 +6744,43 @@ ATF_TC_BODY(setsigmask2, tc)
 	ATF_REQUIRE(sigemptyset(&mask) == 0);
 	ATF_REQUIRE(sigaddset(&mask, SIGINT) == 0);
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Before calling PT_SET_SIGMASK for new mask with SIGINT\n");
-	ATF_REQUIRE(ptrace(PT_SET_SIGMASK, child, &mask, 0) != -1);
+	DPRINTF("Before calling PT_SET_SIGMASK for new mask with SIGINT\n");
+	SYSCALL_REQUIRE(ptrace(PT_SET_SIGMASK, child, &mask, 0) != -1);
 
-	printf("Before calling PT_GET_SIGMASK to store it in new_mask\n");
-	ATF_REQUIRE(ptrace(PT_GET_SIGMASK, child, &new_mask, 0) != -1);
+	DPRINTF("Before calling PT_GET_SIGMASK to store it in new_mask\n");
+	SYSCALL_REQUIRE(ptrace(PT_GET_SIGMASK, child, &new_mask, 0) != -1);
 
 	ATF_REQUIRE(memcmp(&mask, &new_mask, sizeof(sigset_t)) == 0);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
@@ -6792,55 +6806,55 @@ ATF_TC_BODY(setsigmask3, tc)
 	ATF_REQUIRE(sigemptyset(&mask) == 0);
 	ATF_REQUIRE(sigaddset(&mask, SIGINT) == 0);
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Before calling PT_SET_SIGMASK for new mask with SIGINT\n");
-	ATF_REQUIRE(ptrace(PT_SET_SIGMASK, child, &mask, 0) != -1);
+	DPRINTF("Before calling PT_SET_SIGMASK for new mask with SIGINT\n");
+	SYSCALL_REQUIRE(ptrace(PT_SET_SIGMASK, child, &mask, 0) != -1);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Before calling PT_GET_SIGMASK to store it in new_mask\n");
-	ATF_REQUIRE(ptrace(PT_GET_SIGMASK, child, &new_mask, 0) != -1);
+	DPRINTF("Before calling PT_GET_SIGMASK to store it in new_mask\n");
+	SYSCALL_REQUIRE(ptrace(PT_GET_SIGMASK, child, &new_mask, 0) != -1);
 
 	ATF_REQUIRE(memcmp(&mask, &new_mask, sizeof(sigset_t)) == 0);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
@@ -6865,13 +6879,13 @@ ATF_TC_BODY(setsigmask4, tc)
 	ATF_REQUIRE(sigemptyset(&expected_mask) == 0);
 	ATF_REQUIRE(sigaddset(&expected_mask, SIGINT) == 0);
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
 		sigprocmask(0, NULL, &mask);
@@ -6879,29 +6893,29 @@ ATF_TC_BODY(setsigmask4, tc)
 		FORKEE_ASSERT
 		    (memcmp(&mask, &expected_mask, sizeof(sigset_t)) == 0);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Before calling PT_SET_SIGMASK for new mask with SIGINT\n");
-	ATF_REQUIRE(ptrace(PT_SET_SIGMASK, child, &expected_mask, 0) != -1);
+	DPRINTF("Before calling PT_SET_SIGMASK for new mask with SIGINT\n");
+	SYSCALL_REQUIRE(ptrace(PT_SET_SIGMASK, child, &expected_mask, 0) != -1);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
@@ -6926,43 +6940,43 @@ ATF_TC_BODY(setsigmask5, tc)
 	ATF_REQUIRE(sigemptyset(&mask) == 0);
 	ATF_REQUIRE(sigaddset(&mask, SIGKILL) == 0);
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Before calling PT_SET_SIGMASK for new mask with SIGINT\n");
-	ATF_REQUIRE(ptrace(PT_SET_SIGMASK, child, &mask, 0) != -1);
+	DPRINTF("Before calling PT_SET_SIGMASK for new mask with SIGINT\n");
+	SYSCALL_REQUIRE(ptrace(PT_SET_SIGMASK, child, &mask, 0) != -1);
 
-	printf("Before calling PT_GET_SIGMASK to store it in new_mask\n");
-	ATF_REQUIRE(ptrace(PT_GET_SIGMASK, child, &new_mask, 0) != -1);
+	DPRINTF("Before calling PT_GET_SIGMASK to store it in new_mask\n");
+	SYSCALL_REQUIRE(ptrace(PT_GET_SIGMASK, child, &new_mask, 0) != -1);
 
 	ATF_REQUIRE(memcmp(&mask, &new_mask, sizeof(sigset_t)) != 0);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
@@ -6987,43 +7001,43 @@ ATF_TC_BODY(setsigmask6, tc)
 	ATF_REQUIRE(sigemptyset(&mask) == 0);
 	ATF_REQUIRE(sigaddset(&mask, SIGSTOP) == 0);
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Before calling PT_SET_SIGMASK for new mask with SIGINT\n");
-	ATF_REQUIRE(ptrace(PT_SET_SIGMASK, child, &mask, 0) != -1);
+	DPRINTF("Before calling PT_SET_SIGMASK for new mask with SIGINT\n");
+	SYSCALL_REQUIRE(ptrace(PT_SET_SIGMASK, child, &mask, 0) != -1);
 
-	printf("Before calling PT_GET_SIGMASK to store it in new_mask\n");
-	ATF_REQUIRE(ptrace(PT_GET_SIGMASK, child, &new_mask, 0) != -1);
+	DPRINTF("Before calling PT_GET_SIGMASK to store it in new_mask\n");
+	SYSCALL_REQUIRE(ptrace(PT_GET_SIGMASK, child, &new_mask, 0) != -1);
 
 	ATF_REQUIRE(memcmp(&mask, &new_mask, sizeof(sigset_t)) != 0);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
@@ -7061,22 +7075,28 @@ ATF_TC_BODY(suspend1, tc)
 	struct ptrace_siginfo psi;
 	volatile int go = 0;
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	// Feature pending for refactoring
+	atf_tc_expect_fail("PR kern/51995");
+
+	// Hangs with qemu
+	ATF_REQUIRE(0 && "In order to get reliable failure, abort");
+
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		printf("Before allocating memory for stack in child\n");
+		DPRINTF("Before allocating memory for stack in child\n");
 		FORKEE_ASSERT((stack = malloc(ssize)) != NULL);
 
-		printf("Before making context for new lwp in child\n");
+		DPRINTF("Before making context for new lwp in child\n");
 		_lwp_makecontext(&uc, lwp_main_stop, NULL, NULL, stack, ssize);
 
-		printf("Before creating new in child\n");
+		DPRINTF("Before creating new in child\n");
 		FORKEE_ASSERT(_lwp_create(&uc, 0, &lid) == 0);
 
 		while (go == 0)
@@ -7086,48 +7106,48 @@ ATF_TC_BODY(suspend1, tc)
 
 		FORKEE_ASSERT(_lwp_continue(lid) == 0);
 
-		printf("Before waiting for lwp %d to exit\n", lid);
+		DPRINTF("Before waiting for lwp %d to exit\n", lid);
 		FORKEE_ASSERT(_lwp_wait(lid, NULL) == 0);
 
-		printf("Before verifying that reported %d and running lid %d "
+		DPRINTF("Before verifying that reported %d and running lid %d "
 		    "are the same\n", lid, the_lwp_id);
 		FORKEE_ASSERT_EQ(lid, the_lwp_id);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child - expected stopped "
+	DPRINTF("Before calling %s() for the child - expected stopped "
 	    "SIGTRAP\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, SIGTRAP);
 
-	printf("Before reading siginfo and lwpid_t\n");
-	ATF_REQUIRE(ptrace(PT_GET_SIGINFO, child, &psi, sizeof(psi)) != -1);
+	DPRINTF("Before reading siginfo and lwpid_t\n");
+	SYSCALL_REQUIRE(ptrace(PT_GET_SIGINFO, child, &psi, sizeof(psi)) != -1);
 
-	printf("Before suspending LWP %d\n", psi.psi_lwpid);
-	ATF_REQUIRE(ptrace(PT_SUSPEND, child, NULL, psi.psi_lwpid) != -1);
+	DPRINTF("Before suspending LWP %d\n", psi.psi_lwpid);
+	SYSCALL_REQUIRE(ptrace(PT_SUSPEND, child, NULL, psi.psi_lwpid) != -1);
 
-        printf("Write new go to tracee (PID=%d) from tracer (PID=%d)\n",
+        DPRINTF("Write new go to tracee (PID=%d) from tracer (PID=%d)\n",
 	    child, getpid());
-	ATF_REQUIRE(ptrace(PT_WRITE_D, child, __UNVOLATILE(&go), 1) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_WRITE_D, child, __UNVOLATILE(&go), 1) != -1);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child - expected stopped "
+	DPRINTF("Before calling %s() for the child - expected stopped "
 	    "SIGINT\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
@@ -7135,10 +7155,10 @@ ATF_TC_BODY(suspend1, tc)
 
 	pl.pl_lwpid = 0;
 
-	ATF_REQUIRE(ptrace(PT_LWPINFO, child, &pl, sizeof(pl)) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_LWPINFO, child, &pl, sizeof(pl)) != -1);
 	while (pl.pl_lwpid != 0) {
 
-		ATF_REQUIRE(ptrace(PT_LWPINFO, child, &pl, sizeof(pl)) != -1);
+		SYSCALL_REQUIRE(ptrace(PT_LWPINFO, child, &pl, sizeof(pl)) != -1);
 		switch (pl.pl_lwpid) {
 		case 1:
 			ATF_REQUIRE_EQ(pl.pl_event, PL_EVENT_SIGNAL);
@@ -7149,17 +7169,17 @@ ATF_TC_BODY(suspend1, tc)
 		}
 	}
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child - expected exited\n",
+	DPRINTF("Before calling %s() for the child - expected exited\n",
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child - expected no process\n",
+	DPRINTF("Before calling %s() for the child - expected no process\n",
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
@@ -7182,50 +7202,56 @@ ATF_TC_BODY(suspend2, tc)
 #endif
 	struct ptrace_siginfo psi;
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	// Feature pending for refactoring
+	atf_tc_expect_fail("PR kern/51995");
+
+	// Hangs with qemu
+	ATF_REQUIRE(0 && "In order to get reliable failure, abort");
+
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Before reading siginfo and lwpid_t\n");
-	ATF_REQUIRE(ptrace(PT_GET_SIGINFO, child, &psi, sizeof(psi)) != -1);
+	DPRINTF("Before reading siginfo and lwpid_t\n");
+	SYSCALL_REQUIRE(ptrace(PT_GET_SIGINFO, child, &psi, sizeof(psi)) != -1);
 
-	printf("Before suspending LWP %d\n", psi.psi_lwpid);
-	ATF_REQUIRE(ptrace(PT_SUSPEND, child, NULL, psi.psi_lwpid) != -1);
+	DPRINTF("Before suspending LWP %d\n", psi.psi_lwpid);
+	SYSCALL_REQUIRE(ptrace(PT_SUSPEND, child, NULL, psi.psi_lwpid) != -1);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
 	ATF_REQUIRE_ERRNO(EDEADLK,
 	    ptrace(PT_CONTINUE, child, (void *)1, 0) == -1);
 
-	printf("Before resuming LWP %d\n", psi.psi_lwpid);
-	ATF_REQUIRE(ptrace(PT_RESUME, child, NULL, psi.psi_lwpid) != -1);
+	DPRINTF("Before resuming LWP %d\n", psi.psi_lwpid);
+	SYSCALL_REQUIRE(ptrace(PT_RESUME, child, NULL, psi.psi_lwpid) != -1);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child - expected exited\n",
+	DPRINTF("Before calling %s() for the child - expected exited\n",
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child - expected no process\n",
+	DPRINTF("Before calling %s() for the child - expected no process\n",
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
@@ -7256,72 +7282,76 @@ ATF_TC_BODY(resume1, tc)
 	struct ptrace_lwpinfo pl;
 	struct ptrace_siginfo psi;
 
-	atf_tc_expect_timeout("PR kern/51995");
+	// Feature pending for refactoring
+	atf_tc_expect_fail("PR kern/51995");
 
-	ATF_REQUIRE(msg_open(&fds) == 0);
+	// Hangs with qemu
+	ATF_REQUIRE(0 && "In order to get reliable failure, abort");
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	SYSCALL_REQUIRE(msg_open(&fds) == 0);
+
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		printf("Before allocating memory for stack in child\n");
+		DPRINTF("Before allocating memory for stack in child\n");
 		FORKEE_ASSERT((stack = malloc(ssize)) != NULL);
 
-		printf("Before making context for new lwp in child\n");
+		DPRINTF("Before making context for new lwp in child\n");
 		_lwp_makecontext(&uc, lwp_main_stop, NULL, NULL, stack, ssize);
 
-		printf("Before creating new in child\n");
+		DPRINTF("Before creating new in child\n");
 		FORKEE_ASSERT(_lwp_create(&uc, 0, &lid) == 0);
 
 		CHILD_TO_PARENT("Message", fds, msg);
 
 		raise(SIGINT);
 
-		printf("Before waiting for lwp %d to exit\n", lid);
+		DPRINTF("Before waiting for lwp %d to exit\n", lid);
 		FORKEE_ASSERT(_lwp_wait(lid, NULL) == 0);
 
-		printf("Before verifying that reported %d and running lid %d "
+		DPRINTF("Before verifying that reported %d and running lid %d "
 		    "are the same\n", lid, the_lwp_id);
 		FORKEE_ASSERT_EQ(lid, the_lwp_id);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child - expected stopped "
+	DPRINTF("Before calling %s() for the child - expected stopped "
 	    "SIGTRAP\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, SIGTRAP);
 
-	printf("Before reading siginfo and lwpid_t\n");
-	ATF_REQUIRE(ptrace(PT_GET_SIGINFO, child, &psi, sizeof(psi)) != -1);
+	DPRINTF("Before reading siginfo and lwpid_t\n");
+	SYSCALL_REQUIRE(ptrace(PT_GET_SIGINFO, child, &psi, sizeof(psi)) != -1);
 
-	printf("Before suspending LWP %d\n", psi.psi_lwpid);
-	ATF_REQUIRE(ptrace(PT_SUSPEND, child, NULL, psi.psi_lwpid) != -1);
+	DPRINTF("Before suspending LWP %d\n", psi.psi_lwpid);
+	SYSCALL_REQUIRE(ptrace(PT_SUSPEND, child, NULL, psi.psi_lwpid) != -1);
 
 	PARENT_FROM_CHILD("Message", fds, msg);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child - expected stopped "
+	DPRINTF("Before calling %s() for the child - expected stopped "
 	    "SIGINT\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
@@ -7329,9 +7359,9 @@ ATF_TC_BODY(resume1, tc)
 
 	pl.pl_lwpid = 0;
 
-	ATF_REQUIRE(ptrace(PT_LWPINFO, child, &pl, sizeof(pl)) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_LWPINFO, child, &pl, sizeof(pl)) != -1);
 	while (pl.pl_lwpid != 0) {
-		ATF_REQUIRE(ptrace(PT_LWPINFO, child, &pl, sizeof(pl)) != -1);
+		SYSCALL_REQUIRE(ptrace(PT_LWPINFO, child, &pl, sizeof(pl)) != -1);
 		switch (pl.pl_lwpid) {
 		case 1:
 			ATF_REQUIRE_EQ(pl.pl_event, PL_EVENT_SIGNAL);
@@ -7342,26 +7372,26 @@ ATF_TC_BODY(resume1, tc)
 		}
 	}
 
-	printf("Before resuming LWP %d\n", psi.psi_lwpid);
-	ATF_REQUIRE(ptrace(PT_RESUME, child, NULL, psi.psi_lwpid) != -1);
+	DPRINTF("Before resuming LWP %d\n", psi.psi_lwpid);
+	SYSCALL_REQUIRE(ptrace(PT_RESUME, child, NULL, psi.psi_lwpid) != -1);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child - expected exited\n",
+	DPRINTF("Before calling %s() for the child - expected exited\n",
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child - expected no process\n",
+	DPRINTF("Before calling %s() for the child - expected no process\n",
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 
 	msg_close(&fds);
 
-	printf("XXX: Test worked this time but for consistency timeout it\n");
+	DPRINTF("XXX: Test worked this time but for consistency timeout it\n");
 	sleep(10);
 }
 
@@ -7383,68 +7413,68 @@ ATF_TC_BODY(syscall1, tc)
 	struct ptrace_siginfo info;
 	memset(&info, 0, sizeof(info));
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
 		syscall(SYS_getpid);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_SYSCALL, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_SYSCALL, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, SIGTRAP);
 
-	printf("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
-	ATF_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
+	DPRINTF("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
+	SYSCALL_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
 
 	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, SIGTRAP);
 	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_SCE);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_SYSCALL, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_SYSCALL, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, SIGTRAP);
 
-	printf("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
-	ATF_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
+	DPRINTF("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
+	SYSCALL_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
 
-	printf("Before checking siginfo_t\n");
+	DPRINTF("Before checking siginfo_t\n");
 	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, SIGTRAP);
 	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_SCX);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
@@ -7469,58 +7499,58 @@ ATF_TC_BODY(syscallemu1, tc)
 	atf_tc_expect_fail("PR kern/52166");
 #endif
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
 		syscall(SYS_exit, 100);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_SYSCALL, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_SYSCALL, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, SIGTRAP);
 
-	printf("Set SYSCALLEMU for intercepted syscall\n");
-	ATF_REQUIRE(ptrace(PT_SYSCALLEMU, child, (void *)1, 0) != -1);
+	DPRINTF("Set SYSCALLEMU for intercepted syscall\n");
+	SYSCALL_REQUIRE(ptrace(PT_SYSCALLEMU, child, (void *)1, 0) != -1);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_SYSCALL, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_SYSCALL, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, SIGTRAP);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
