@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1503 2018/02/09 17:14:26 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1504 2018/02/25 23:53:57 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -847,8 +847,8 @@ Notes:
 Uses libc's ohash
 
 Package:	mDNSResponder
-Version:	878.1.1
-Current Vers:	878.1.1
+Version:	878.30.4
+Current Vers:	878.30.4
 Maintainer:	Apple
 Archive Site:	https://www.opensource.apple.com/tarballs/mDNSResponder/
 Home Page:	https://developer.apple.com/bonjour/
