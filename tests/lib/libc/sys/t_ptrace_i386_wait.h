@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_i386_wait.h,v 1.1 2017/04/02 21:44:00 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_i386_wait.h,v 1.1.8.1 2018/02/25 20:59:46 snj Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -44,60 +44,60 @@ ATF_TC_BODY(i386_regs1, tc)
 #endif
 	struct reg r;
 
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		printf("Before raising %s from child\n", strsignal(sigval));
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		printf("Before exiting of the child process\n");
+		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
 	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Call GETREGS for the child process\n");
-	ATF_REQUIRE(ptrace(PT_GETREGS, child, &r, 0) != -1);
+	DPRINTF("Call GETREGS for the child process\n");
+	SYSCALL_REQUIRE(ptrace(PT_GETREGS, child, &r, 0) != -1);
 
-	printf("EAX=%#" PRIxREGISTER "\n", r.r_eax);
-	printf("EBX=%#" PRIxREGISTER "\n", r.r_ebx);
-	printf("ECX=%#" PRIxREGISTER "\n", r.r_ecx);
-	printf("EDX=%#" PRIxREGISTER "\n", r.r_edx);
+	DPRINTF("EAX=%#" PRIxREGISTER "\n", r.r_eax);
+	DPRINTF("EBX=%#" PRIxREGISTER "\n", r.r_ebx);
+	DPRINTF("ECX=%#" PRIxREGISTER "\n", r.r_ecx);
+	DPRINTF("EDX=%#" PRIxREGISTER "\n", r.r_edx);
 
-	printf("ESP=%#" PRIxREGISTER "\n", r.r_esp);
-	printf("EBP=%#" PRIxREGISTER "\n", r.r_ebp);
+	DPRINTF("ESP=%#" PRIxREGISTER "\n", r.r_esp);
+	DPRINTF("EBP=%#" PRIxREGISTER "\n", r.r_ebp);
 
-	printf("ESI=%#" PRIxREGISTER "\n", r.r_esi);
-	printf("EDI=%#" PRIxREGISTER "\n", r.r_edi);
+	DPRINTF("ESI=%#" PRIxREGISTER "\n", r.r_esi);
+	DPRINTF("EDI=%#" PRIxREGISTER "\n", r.r_edi);
 
-	printf("EIP=%#" PRIxREGISTER "\n", r.r_eip);
+	DPRINTF("EIP=%#" PRIxREGISTER "\n", r.r_eip);
 
-	printf("EFLAGS=%#" PRIxREGISTER "\n", r.r_eflags);
+	DPRINTF("EFLAGS=%#" PRIxREGISTER "\n", r.r_eflags);
 
-	printf("CS=%#" PRIxREGISTER "\n", r.r_cs);
-	printf("SS=%#" PRIxREGISTER "\n", r.r_ss);
-	printf("DS=%#" PRIxREGISTER "\n", r.r_ds);
-	printf("ES=%#" PRIxREGISTER "\n", r.r_es);
-	printf("FS=%#" PRIxREGISTER "\n", r.r_fs);
-	printf("GS=%#" PRIxREGISTER "\n", r.r_gs);
+	DPRINTF("CS=%#" PRIxREGISTER "\n", r.r_cs);
+	DPRINTF("SS=%#" PRIxREGISTER "\n", r.r_ss);
+	DPRINTF("DS=%#" PRIxREGISTER "\n", r.r_ds);
+	DPRINTF("ES=%#" PRIxREGISTER "\n", r.r_es);
+	DPRINTF("FS=%#" PRIxREGISTER "\n", r.r_fs);
+	DPRINTF("GS=%#" PRIxREGISTER "\n", r.r_gs);
 
-	printf("Before resuming the child process where it left off and "
+	DPRINTF("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_exited(status, exitval);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 #define ATF_TP_ADD_TCS_PTRACE_WAIT_I386() \
