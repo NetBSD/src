@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.x68k,v 1.64 2015/09/06 02:17:31 uebayasi Exp $
+#	$NetBSD: Makefile.x68k,v 1.65 2018/02/25 00:27:16 mrg Exp $
 #
 # Makefile for NetBSD
 #
@@ -65,6 +65,8 @@ copy.o copypage.o lock_stubs.o: assym.h
 ##
 TEXTADDR?=	0
 LINKFORMAT=	-n
+
+.include "$S/arch/m68k/conf/Makefile.kern.m68k.inc"
 
 ##
 ## (6) port specific target dependencies

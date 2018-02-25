@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.120 2011/11/15 12:23:21 tsutsui Exp $
+#	$NetBSD: files.atari,v 1.121 2018/02/25 00:27:16 mrg Exp $
 
 maxpartitions 16
 
@@ -217,7 +217,7 @@ file	arch/atari/dev/ym2149.c			_atarihw_
 file	arch/atari/atari/intr.c
 file	arch/m68k/m68k/cacheops.c
 file	arch/m68k/m68k/db_memrw.c		ddb
-file	arch/m68k/m68k/fpu.c
+file	arch/m68k/m68k/fpu.c			compile-with "${M68K_KERN_FPU}"
 file	arch/m68k/m68k/pmap_motorola.c
 file	arch/m68k/m68k/procfs_machdep.c		procfs
 file	arch/m68k/m68k/sys_machdep.c

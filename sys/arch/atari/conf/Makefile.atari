@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.atari,v 1.76 2015/09/06 02:17:30 uebayasi Exp $
+#	$NetBSD: Makefile.atari,v 1.77 2018/02/25 00:27:16 mrg Exp $
 
 # Makefile for NetBSD
 #
@@ -57,6 +57,8 @@ copy.o copypage.o lock_stubs.o: assym.h
 
 locore.o: ${ATARI}/atari/locore.s assym.h
 	${NORMAL_S}
+
+.include "$S/arch/m68k/conf/Makefile.kern.m68k.inc"
 
 ##
 ## (5) link settings

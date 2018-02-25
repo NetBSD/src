@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.125 2011/11/15 12:23:22 tsutsui Exp $
+#	$NetBSD: files.mac68k,v 1.126 2018/02/25 00:27:16 mrg Exp $
 
 # mac68k-specific configuration info
 
@@ -174,7 +174,7 @@ file	arch/mac68k/mac68k/via.c
 file	arch/m68k/m68k/bus_dma.c
 file	arch/m68k/m68k/cacheops.c
 file	arch/m68k/m68k/db_memrw.c		ddb | kgdb
-file	arch/m68k/m68k/fpu.c
+file	arch/m68k/m68k/fpu.c			compile-with "${M68K_KERN_FPU}"
 file	arch/m68k/m68k/kgdb_machdep.c		kgdb
 file	arch/m68k/m68k/pmap_motorola.c
 file	arch/m68k/m68k/procfs_machdep.c		procfs

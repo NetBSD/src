@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.sun3,v 1.104 2015/04/15 19:13:47 mrg Exp $
+# $NetBSD: Makefile.sun3,v 1.105 2018/02/25 00:27:16 mrg Exp $
 
 # Makefile for NetBSD
 #
@@ -50,6 +50,8 @@ MD_SFILES=	${SUN3}/${MACHTYPE}/locore.s
 
 locore.o: ${SUN3}/${MACHTYPE}/locore.s
 	${NORMAL_S}
+
+.include "$S/arch/m68k/conf/Makefile.kern.m68k.inc"
 
 ##
 ## (5) link settings
