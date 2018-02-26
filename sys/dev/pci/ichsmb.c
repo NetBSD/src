@@ -1,4 +1,4 @@
-/*	$NetBSD: ichsmb.c,v 1.52 2018/02/22 05:09:56 msaitoh Exp $	*/
+/*	$NetBSD: ichsmb.c,v 1.53 2018/02/26 07:28:02 pgoyette Exp $	*/
 /*	$OpenBSD: ichiic.c,v 1.18 2007/05/03 09:36:26 dlg Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.52 2018/02/22 05:09:56 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.53 2018/02/26 07:28:02 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -30,6 +30,7 @@ __KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.52 2018/02/22 05:09:56 msaitoh Exp $");
 #include <sys/kernel.h>
 #include <sys/mutex.h>
 #include <sys/proc.h>
+#include <sys/module.h>
 
 #include <sys/bus.h>
 
@@ -82,6 +83,7 @@ static int	ichsmb_i2c_exec(void *, i2c_op_t, i2c_addr_t, const void *,
 
 static int	ichsmb_intr(void *);
 
+#include "ioconf.h"
 
 CFATTACH_DECL3_NEW(ichsmb, sizeof(struct ichsmb_softc),
     ichsmb_match, ichsmb_attach, NULL, NULL, ichsmb_rescan, ichsmb_chdet, 0);
@@ -449,4 +451,38 @@ done:
 	if ((sc->sc_i2c_xfer.flags & I2C_F_POLL) == 0)
 		wakeup(sc);
 	return (1);
+}
+
+MODULE(MODULE_CLASS_DRIVER, ichsmb, "pci");
+
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
+
+static int
+ichsmb_modcmd(modcmd_t cmd, void *opaque)
+{
+	int error = 0;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+#ifdef _MODULE
+		error = config_init_component(cfdriver_ioconf_ichsmb,
+		    cfattach_ioconf_ichsmb, cfdata_ioconf_ichsmb);
+#endif
+		break;
+	case MODULE_CMD_FINI:
+#ifdef _MODULE
+		error = config_fini_component(cfdriver_ioconf_ichsmb,
+		    cfattach_ioconf_ichsmb, cfdata_ioconf_ichsmb);
+#endif
+		break;
+	default:
+#ifdef _MODULE
+		error = ENOTTY;
+#endif
+		break;
+	}
+
+	return error;
 }
