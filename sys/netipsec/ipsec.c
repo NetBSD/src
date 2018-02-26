@@ -1,4 +1,4 @@
-/* $NetBSD: ipsec.c,v 1.138 2018/02/26 08:50:25 maxv Exp $ */
+/* $NetBSD: ipsec.c,v 1.139 2018/02/26 09:04:29 maxv Exp $ */
 /* $FreeBSD: src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $ */
 /* $KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $ */
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.138 2018/02/26 08:50:25 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.139 2018/02/26 09:04:29 maxv Exp $");
 
 /*
  * IPsec controller part.
@@ -1701,12 +1701,13 @@ ipsec_sp_reject(const struct secpolicy *sp, const struct mbuf *m)
 }
 
 /*
- * Check AH/ESP integrity.
- * This function is called from tcp_input(), udp_input(),
- * and {ah,esp}4_input for tunnel mode
+ * Check security policy requirements.
+ *
+ * This function is called from tcp{6}_input(), udp{6}_input(),
+ * and {ah,esp}_input for tunnel mode
  */
 int
-ipsec4_in_reject(struct mbuf *m, struct inpcb *inp)
+ipsec_in_reject(struct mbuf *m, void *inp)
 {
 	struct inpcb_hdr *inph = (struct inpcb_hdr *)inp;
 	struct secpolicy *sp;
@@ -1732,41 +1733,6 @@ ipsec4_in_reject(struct mbuf *m, struct inpcb *inp)
 	}
 	return result;
 }
-
-#ifdef INET6
-/*
- * Check AH/ESP integrity.
- * This function is called from tcp6_input(), udp6_input(),
- * and {ah,esp}6_input for tunnel mode
- */
-int
-ipsec6_in_reject(struct mbuf *m, struct in6pcb *in6p)
-{
-	struct inpcb_hdr *inph = (struct inpcb_hdr *)in6p;
-	struct secpolicy *sp;
-	int error;
-	int result;
-
-	KASSERT(m != NULL);
-
-	if (inph == NULL)
-		sp = ipsec_getpolicybyaddr(m, IPSEC_DIR_INBOUND,
-		    IP_FORWARDING, &error);
-	else
-		sp = ipsec_getpolicybysock(m, IPSEC_DIR_INBOUND,
-		    inph, &error);
-
-	if (sp != NULL) {
-		result = ipsec_sp_reject(sp, m);
-		if (result)
-			IPSEC_STATINC(IPSEC_STAT_IN_POLVIO);
-		KEY_SP_UNREF(&sp);
-	} else {
-		result = 0;
-	}
-	return result;
-}
-#endif
 
 /*
  * Compute the byte size to be occupied by the IPsec header. If it is
