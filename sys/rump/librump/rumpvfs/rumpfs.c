@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.150 2017/05/28 16:37:16 hannken Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.150.2.1 2018/02/26 01:18:28 snj Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.150 2017/05/28 16:37:16 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.150.2.1 2018/02/26 01:18:28 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -614,6 +614,32 @@ freedir(struct rumpfs_node *rnd, struct componentname *cnp)
 	}
 }
 
+#define	RUMPFS_ACCESS	1
+#define	RUMPFS_MODIFY	2
+#define	RUMPFS_CHANGE	4
+
+static int
+rumpfs_update(int flags, struct vnode *vp, const struct timespec *acc,
+    const struct timespec *mod, const struct timespec *chg)
+{
+	struct rumpfs_node *rn = vp->v_data;
+
+	if (flags == 0)
+		return 0;
+
+	if (vp->v_mount->mnt_flag & MNT_RDONLY)
+		return EROFS;
+
+	if (flags & RUMPFS_ACCESS)
+		rn->rn_va.va_atime = *acc;
+	if (flags & RUMPFS_MODIFY)
+		rn->rn_va.va_mtime = *mod;
+	if (flags & RUMPFS_CHANGE)
+		rn->rn_va.va_ctime = *chg;
+
+	return 0;
+}
+
 /*
  * Simple lookup for rump file systems.
  *
@@ -858,6 +884,7 @@ rump_vop_setattr(void *v)
 	struct vattr *vap = ap->a_vap;
 	struct rumpfs_node *rn = vp->v_data;
 	struct vattr *attr = &rn->rn_va;
+	struct timespec now;
 	kauth_cred_t cred = ap->a_cred;
 	int error;
 
@@ -878,14 +905,25 @@ rump_vop_setattr(void *v)
 			return error;
 	}
 
-	SETIFVAL(va_atime.tv_sec, time_t);
-	SETIFVAL(va_ctime.tv_sec, time_t);
-	SETIFVAL(va_mtime.tv_sec, time_t);
+	int flags = 0;
+	getnanotime(&now);
+	if (vap->va_atime.tv_sec != VNOVAL)
+		if (!(vp->v_mount->mnt_flag & MNT_NOATIME))
+			flags |= RUMPFS_ACCESS;
+	if (vap->va_mtime.tv_sec != VNOVAL) {
+		flags |= RUMPFS_CHANGE | RUMPFS_MODIFY;
+		if (vp->v_mount->mnt_flag & MNT_RELATIME)
+			flags |= RUMPFS_ACCESS;
+	} else if (vap->va_size == 0) {
+		flags |= RUMPFS_MODIFY;
+		vap->va_mtime = now;
+	}
 	SETIFVAL(va_birthtime.tv_sec, time_t);
-	SETIFVAL(va_atime.tv_nsec, long);
-	SETIFVAL(va_ctime.tv_nsec, long);
-	SETIFVAL(va_mtime.tv_nsec, long);
 	SETIFVAL(va_birthtime.tv_nsec, long);
+	flags |= RUMPFS_CHANGE;
+	error = rumpfs_update(flags, vp, &vap->va_atime, &vap->va_mtime, &now);
+	if (error)
+		return error;
 
 	if (CHANGED(va_flags, u_long)) {
 		/* XXX Can we handle system flags here...? */
@@ -1345,6 +1383,7 @@ rump_vop_read(void *v)
 	const int advice = IO_ADV_DECODE(ap->a_ioflag);
 	off_t chunk;
 	int error = 0;
+	struct timespec ts;
 
 	if (vp->v_type == VDIR)
 		return EISDIR;
@@ -1352,6 +1391,9 @@ rump_vop_read(void *v)
 	/* et op? */
 	if (rn->rn_flags & RUMPNODE_ET_PHONE_HOST)
 		return etread(rn, uio);
+
+	getnanotime(&ts);
+	(void)rumpfs_update(RUMPFS_ACCESS, vp, &ts, &ts, &ts);
 
 	/* otherwise, it's off to ubc with us */
 	while (uio->uio_resid > 0) {
@@ -1415,6 +1457,10 @@ rump_vop_write(void *v)
 	off_t chunk;
 	int error = 0;
 	bool allocd = false;
+	struct timespec ts;
+
+	getnanotime(&ts);
+	(void)rumpfs_update(RUMPFS_MODIFY, vp, &ts, &ts, &ts);
 
 	if (ap->a_ioflag & IO_APPEND)
 		uio->uio_offset = vp->v_size;
