@@ -1,5 +1,6 @@
-/*	$NetBSD: ipsec_mbuf.c,v 1.19 2018/02/14 14:19:53 maxv Exp $	*/
-/*-
+/*	$NetBSD: ipsec_mbuf.c,v 1.20 2018/02/26 06:17:01 maxv Exp $	*/
+
+/*
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
  * All rights reserved.
  *
@@ -28,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_mbuf.c,v 1.19 2018/02/14 14:19:53 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_mbuf.c,v 1.20 2018/02/26 06:17:01 maxv Exp $");
 
 /*
  * IPsec-specific mbuf routines.
@@ -223,7 +224,7 @@ m_makespace(struct mbuf *m0, int skip, int hlen, int *off)
 	 * At this point skip is the offset into the mbuf m
 	 * where the new header should be placed.  Figure out
 	 * if there's space to insert the new header.  If so,
-	 * and copying the remainder makese sense then do so.
+	 * and copying the remainder makes sense then do so.
 	 * Otherwise insert a new mbuf in the chain, splitting
 	 * the contents of m as needed.
 	 */
@@ -241,8 +242,7 @@ m_makespace(struct mbuf *m0, int skip, int hlen, int *off)
 			if (todo > MHLEN) {
 				n = m_getcl(M_DONTWAIT, m->m_type, 0);
 				len = MCLBYTES;
-			}
-			else {
+			} else {
 				n = m_get(M_DONTWAIT, m->m_type);
 				len = MHLEN;
 			}
@@ -267,8 +267,7 @@ m_makespace(struct mbuf *m0, int skip, int hlen, int *off)
 				*np = m->m_next;
 				m->m_next = n0;
 			}
-		}
-		else {
+		} else {
 			n = m_get(M_DONTWAIT, m->m_type);
 			if (n == NULL) {
 				m_freem(n0);
