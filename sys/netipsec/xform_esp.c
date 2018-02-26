@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.55.2.1 2017/10/21 19:43:54 snj Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.55.2.2 2018/02/26 13:10:52 martin Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.55.2.1 2017/10/21 19:43:54 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.55.2.2 2018/02/26 13:10:52 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -87,17 +87,15 @@ __KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.55.2.1 2017/10/21 19:43:54 snj Exp $
 
 percpu_t *espstat_percpu;
 
-int	esp_enable = 1;
+int esp_enable = 1;
 
 #ifdef __FreeBSD__
 SYSCTL_DECL(_net_inet_esp);
 SYSCTL_INT(_net_inet_esp, OID_AUTO,
 	esp_enable,	CTLFLAG_RW,	&esp_enable,	0, "");
-SYSCTL_STRUCT(_net_inet_esp, IPSECCTL_STATS,
-	stats,		CTLFLAG_RD,	&espstat,	espstat, "");
 #endif /* __FreeBSD__ */
 
-static	int esp_max_ivlen;		/* max iv length over all algorithms */
+static int esp_max_ivlen;		/* max iv length over all algorithms */
 
 static int esp_input_cb(struct cryptop *op);
 static int esp_output_cb(struct cryptop *crp);
@@ -306,9 +304,8 @@ esp_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 	const struct auth_hash *esph;
 	const struct enc_xform *espx;
 	struct tdb_crypto *tc;
-	int plen, alen, hlen, error;
+	int plen, alen, hlen, error, stat = ESP_STAT_CRYPTO;
 	struct newesp *esp;
-
 	struct cryptodesc *crde;
 	struct cryptop *crp;
 
@@ -349,9 +346,9 @@ esp_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 		    "  SA %s/%08lx\n", __func__, plen, espx->blocksize,
 		    ipsec_address(&sav->sah->saidx.dst, buf, sizeof(buf)),
 		    (u_long) ntohl(sav->spi)));
-		ESP_STATINC(ESP_STAT_BADILEN);
-		m_freem(m);
-		return EINVAL;
+		stat = ESP_STAT_BADILEN;
+		error = EINVAL;
+		goto out;
 	}
 
 	/*
@@ -361,9 +358,9 @@ esp_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 		char logbuf[IPSEC_LOGSASTRLEN];
 		DPRINTF(("%s: packet replay check for %s\n", __func__,
 		    ipsec_logsastr(sav, logbuf, sizeof(logbuf))));	/*XXX*/
-		ESP_STATINC(ESP_STAT_REPLAY);
-		m_freem(m);
-		return ENOBUFS;		/*XXX*/
+		stat = ESP_STAT_REPLAY;
+		error = ENOBUFS;		/*XXX*/
+		goto out;
 	}
 
 	/* Update the counters */
@@ -437,10 +434,9 @@ esp_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 	 */
 	if (__predict_false(sav->state == SADB_SASTATE_DEAD)) {
 		pserialize_read_exit(s);
-		pool_cache_put(esp_tdb_crypto_pool_cache, tc);
-		crypto_freereq(crp);
-		ESP_STATINC(ESP_STAT_NOTDB);
-		return ENOENT;
+		stat = ESP_STAT_NOTDB;
+		error = ENOENT;
+		goto out2;
 	}
 	KEY_SA_REF(sav);
 	pserialize_read_exit(s);
@@ -485,7 +481,7 @@ out2:
 out1:
 	crypto_freereq(crp);
 out:
-	ESP_STATINC(ESP_STAT_CRYPTO);
+	ESP_STATINC(stat);
 	m_freem(m);
 	return error;
 }
@@ -536,21 +532,6 @@ esp_input_cb(struct cryptop *crp)
 	IPSEC_ACQUIRE_GLOBAL_LOCKS();
 
 	sav = tc->tc_sav;
-	if (__predict_false(!SADB_SASTATE_USABLE_P(sav))) {
-		KEY_SA_UNREF(&sav);
-		sav = KEY_LOOKUP_SA(&tc->tc_dst, tc->tc_proto, tc->tc_spi,
-		    sport, dport);
-		if (sav == NULL) {
-			ESP_STATINC(ESP_STAT_NOTDB);
-			DPRINTF(("%s: SA expired while in crypto "
-			    "(SA %s/%08lx proto %u)\n", __func__,
-			    ipsec_address(&tc->tc_dst, buf, sizeof(buf)),
-			    (u_long) ntohl(tc->tc_spi), tc->tc_proto));
-			error = ENOBUFS;		/*XXX*/
-			goto bad;
-		}
-	}
-
 	saidx = &sav->sah->saidx;
 	KASSERTMSG(saidx->dst.sa.sa_family == AF_INET ||
 	    saidx->dst.sa.sa_family == AF_INET6,
@@ -709,14 +690,8 @@ bad:
  * ESP output routine, called by ipsec[46]_process_packet().
  */
 static int
-esp_output(
-    struct mbuf *m,
-    const struct ipsecrequest *isr,
-    struct secasvar *sav,
-    struct mbuf **mp,
-    int skip,
-    int protoff
-)
+esp_output(struct mbuf *m, const struct ipsecrequest *isr, struct secasvar *sav,
+    struct mbuf **mp, int skip, int protoff)
 {
 	char buf[IPSEC_ADDRSTRLEN];
 	const struct enc_xform *espx;
@@ -767,12 +742,12 @@ esp_output(
 	case AF_INET:
 		maxpacketsize = IP_MAXPACKET;
 		break;
-#endif /* INET */
+#endif
 #ifdef INET6
 	case AF_INET6:
 		maxpacketsize = IPV6_MAXPACKET;
 		break;
-#endif /* INET6 */
+#endif
 	default:
 		DPRINTF(("%s: unknown/unsupported protocol family %d, "
 		    "SA %s/%08lx\n", __func__, saidx->dst.sa.sa_family,
@@ -813,7 +788,7 @@ esp_output(
 		    "%s/%08lx\n", __func__, hlen,
 		    ipsec_address(&saidx->dst, buf, sizeof(buf)),
 		    (u_long) ntohl(sav->spi)));
-		ESP_STATINC(ESP_STAT_HDROPS);	/* XXX diffs from openbsd */
+		ESP_STATINC(ESP_STAT_HDROPS);
 		error = ENOBUFS;
 		goto bad;
 	}
@@ -850,18 +825,18 @@ esp_output(
 
 	/*
 	 * Add padding: random, zero, or self-describing.
-	 * XXX catch unexpected setting
 	 */
 	switch (sav->flags & SADB_X_EXT_PMASK) {
-	case SADB_X_EXT_PRAND:
-		(void) cprng_fast(pad, padding - 2);
-		break;
-	case SADB_X_EXT_PZERO:
-		memset(pad, 0, padding - 2);
-		break;
 	case SADB_X_EXT_PSEQ:
 		for (i = 0; i < padding - 2; i++)
 			pad[i] = i+1;
+		break;
+	case SADB_X_EXT_PRAND:
+		(void)cprng_fast(pad, padding - 2);
+		break;
+	case SADB_X_EXT_PZERO:
+	default:
+		memset(pad, 0, padding - 2);
 		break;
 	}
 
@@ -971,10 +946,11 @@ esp_output(
 	}
 
 	return crypto_dispatch(crp);
+
 bad:
 	if (m)
 		m_freem(m);
-	return (error);
+	return error;
 }
 
 /*
@@ -998,28 +974,6 @@ esp_output_cb(struct cryptop *crp)
 
 	isr = tc->tc_isr;
 	sav = tc->tc_sav;
-	if (__predict_false(isr->sp->state == IPSEC_SPSTATE_DEAD)) {
-		ESP_STATINC(ESP_STAT_NOTDB);
-		IPSECLOG(LOG_DEBUG,
-		    "SP is being destroyed while in crypto (id=%u)\n",
-		    isr->sp->id);
-		error = ENOENT;
-		goto bad;
-	}
-	if (__predict_false(!SADB_SASTATE_USABLE_P(sav))) {
-		KEY_SA_UNREF(&sav);
-		sav = KEY_LOOKUP_SA(&tc->tc_dst, tc->tc_proto, tc->tc_spi, 0, 0);
-		if (sav == NULL) {
-			char buf[IPSEC_ADDRSTRLEN];
-			ESP_STATINC(ESP_STAT_NOTDB);
-			DPRINTF(("%s: SA expired while in crypto (SA %s/%08lx "
-			    "proto %u)\n", __func__,
-			    ipsec_address(&tc->tc_dst, buf, sizeof(buf)),
-			    (u_long) ntohl(tc->tc_spi), tc->tc_proto));
-			error = ENOBUFS;		/*XXX*/
-			goto bad;
-		}
-	}
 
 	/* Check for crypto errors. */
 	if (crp->crp_etype) {
@@ -1070,6 +1024,7 @@ esp_output_cb(struct cryptop *crp)
 	KEY_SP_UNREF(&isr->sp);
 	IPSEC_RELEASE_GLOBAL_LOCKS();
 	return err;
+
 bad:
 	if (sav)
 		KEY_SA_UNREF(&sav);
