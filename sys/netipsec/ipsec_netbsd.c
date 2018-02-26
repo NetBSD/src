@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_netbsd.c,v 1.46 2018/02/16 09:24:55 maxv Exp $	*/
+/*	$NetBSD: ipsec_netbsd.c,v 1.47 2018/02/26 06:17:01 maxv Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.46 2018/02/16 09:24:55 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.47 2018/02/26 06:17:01 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -64,7 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.46 2018/02/16 09:24:55 maxv Exp $
 #include <netinet/ip_ecn.h>
 #include <netinet/ip_icmp.h>
 
-
 #include <netipsec/ipsec.h>
 #include <netipsec/ipsec_var.h>
 #include <netipsec/ipsec_private.h>
@@ -87,7 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.46 2018/02/16 09:24:55 maxv Exp $
 #include <netipsec/key.h>
 
 /* assumes that ip header and ah header are contiguous on mbuf */
-void*
+void *
 ah4_ctlinput(int cmd, const struct sockaddr *sa, void *v)
 {
 	struct ip *ip = v;
@@ -96,7 +95,7 @@ ah4_ctlinput(int cmd, const struct sockaddr *sa, void *v)
 	struct secasvar *sav;
 
 	if (sa->sa_family != AF_INET ||
-		sa->sa_len != sizeof(struct sockaddr_in))
+	    sa->sa_len != sizeof(struct sockaddr_in))
 		return NULL;
 	if ((unsigned)cmd >= PRC_NCMDS)
 		return NULL;
@@ -108,18 +107,18 @@ ah4_ctlinput(int cmd, const struct sockaddr *sa, void *v)
 		 */
 		ah = (struct ah *)((char *)ip + (ip->ip_hl << 2));
 		sav = KEY_LOOKUP_SA((const union sockaddr_union *)sa,
-					   	IPPROTO_AH, ah->ah_spi, 0, 0);
+		    IPPROTO_AH, ah->ah_spi, 0, 0);
 
 		if (sav) {
 			if (SADB_SASTATE_USABLE_P(sav)) {
 				/*
-				 * Now that we've validated that we are actually 
-				 * communicating with the host indicated in the 	
-				 * ICMP message, locate the ICMP header, 
+				 * Now that we've validated that we are actually
+				 * communicating with the host indicated in the
+				 * ICMP message, locate the ICMP header,
 				 * recalculate the new MTU, and create the
-		 		 * corresponding routing entry.
-		 		 */
-				icp = (struct icmp *)((char *)ip - 
+				 * corresponding routing entry.
+				 */
+				icp = (struct icmp *)((char *)ip -
 				    offsetof(struct icmp, icmp_ip));
 				icmp_mtudisc(icp, ip->ip_dst);
 			}
@@ -129,10 +128,8 @@ ah4_ctlinput(int cmd, const struct sockaddr *sa, void *v)
 	return NULL;
 }
 
-
-
 /* assumes that ip header and esp header are contiguous on mbuf */
-void*
+void *
 esp4_ctlinput(int cmd, const struct sockaddr *sa, void *v)
 {
 	struct ip *ip = v;
@@ -153,18 +150,18 @@ esp4_ctlinput(int cmd, const struct sockaddr *sa, void *v)
 		 */
 		esp = (struct esp *)((char *)ip + (ip->ip_hl << 2));
 		sav = KEY_LOOKUP_SA((const union sockaddr_union *)sa,
-					   	IPPROTO_ESP, esp->esp_spi, 0, 0);
+		    IPPROTO_ESP, esp->esp_spi, 0, 0);
 
 		if (sav) {
 			if (SADB_SASTATE_USABLE_P(sav)) {
 				/*
-				 * Now that we've validated that we are actually 
-				 * communicating with the host indicated in the 	
-				 * ICMP message, locate the ICMP header, 
+				 * Now that we've validated that we are actually
+				 * communicating with the host indicated in the
+				 * ICMP message, locate the ICMP header,
 				 * recalculate the new MTU, and create the
-		 		 * corresponding routing entry.
-		 		 */
-				icp = (struct icmp *)((char *)ip - 
+				 * corresponding routing entry.
+				 */
+				icp = (struct icmp *)((char *)ip -
 				    offsetof(struct icmp, icmp_ip));
 				icmp_mtudisc(icp, ip->ip_dst);
 			}
@@ -245,11 +242,11 @@ ah6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 			/*
 			 * Depending on the value of "valid" and routing
 			 * table size (mtudisc_{hi,lo}wat), we will:
-			 * - recalcurate the new MTU and create the
+			 * - recalculate the new MTU and create the
 			 *   corresponding routing entry, or
 			 * - ignore the MTU change notification.
 			 */
-			icmp6_mtudisc_update((struct ip6ctlparam *)d,valid);
+			icmp6_mtudisc_update((struct ip6ctlparam *)d, valid);
 		}
 
 		/* we normally notify single pcb here */
@@ -258,8 +255,6 @@ ah6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 	}
 	return NULL;
 }
-
-
 
 void *
 esp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
@@ -337,7 +332,7 @@ esp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 			 */
 
 			sav = KEY_LOOKUP_SA((const union sockaddr_union*)sa,
-					  IPPROTO_ESP, espp->esp_spi, 0, 0);
+			    IPPROTO_ESP, espp->esp_spi, 0, 0);
 
 			if (sav) {
 				if (SADB_SASTATE_USABLE_P(sav))
@@ -386,7 +381,7 @@ sysctl_ipsec(SYSCTLFN_ARGS)
 			return (EINVAL);
 		ipsec_invalpcbcacheall();
 		break;
-      	case IPSECCTL_DEF_POLICY:
+	case IPSECCTL_DEF_POLICY:
 		if (t != IPSEC_POLICY_DISCARD &&
 		    t != IPSEC_POLICY_NONE)
 			return (EINVAL);

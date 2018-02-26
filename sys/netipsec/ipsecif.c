@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsecif.c,v 1.1 2018/01/10 10:56:30 knakahara Exp $  */
+/*	$NetBSD: ipsecif.c,v 1.2 2018/02/26 06:17:01 maxv Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsecif.c,v 1.1 2018/01/10 10:56:30 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsecif.c,v 1.2 2018/02/26 06:17:01 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -121,7 +121,7 @@ ipsecif4_prepend_hdr(struct ipsec_variant *var, struct mbuf *m,
 	m->m_flags &= ~M_BCAST;
 
 	if (IN_MULTICAST(src->sin_addr.s_addr) ||
-	   IN_MULTICAST(dst->sin_addr.s_addr)) {
+	    IN_MULTICAST(dst->sin_addr.s_addr)) {
 		m_freem(m);
 		return NULL;
 	}
@@ -179,7 +179,6 @@ ipsecif4_needfrag(struct mbuf *m, struct ipsecrequest *isr)
 	if (m->m_len < sizeof(struct ip)) {
 		m_copydata(m, 0, sizeof(ip0), &ip0);
 		ip = &ip0;
-
 	} else {
 		ip = mtod(m, struct ip *);
 	}
@@ -207,10 +206,10 @@ ipsecif4_flowinfo(struct mbuf *m, int family, int *proto0, u_int8_t *tos0)
 		proto = IPPROTO_IPV4;
 		if (m->m_len < sizeof(*ip)) {
 			m = m_pullup(m, sizeof(*ip));
-			if (!m) {
+			if (m == NULL) {
 				*tos0 = 0;
 				*proto0 = 0;
-				return  NULL;
+				return NULL;
 			}
 		}
 		ip = mtod(m, const struct ip *);
@@ -223,7 +222,7 @@ ipsecif4_flowinfo(struct mbuf *m, int family, int *proto0, u_int8_t *tos0)
 		proto = IPPROTO_IPV6;
 		if (m->m_len < sizeof(*ip6)) {
 			m = m_pullup(m, sizeof(*ip6));
-			if (!m) {
+			if (m == NULL) {
 				*tos0 = 0;
 				*proto0 = 0;
 				return NULL;
@@ -356,7 +355,7 @@ ipsecif4_output(struct ipsec_variant *var, int family, struct mbuf *m)
 	KASSERT(sp->policy != IPSEC_POLICY_NONE);
 	KASSERT(sp->policy != IPSEC_POLICY_ENTRUST);
 	KASSERT(sp->policy != IPSEC_POLICY_BYPASS);
-	if(sp->policy != IPSEC_POLICY_IPSEC) {
+	if (sp->policy != IPSEC_POLICY_IPSEC) {
 		struct ifnet *ifp = &var->iv_softc->ipsec_if;
 		m_freem(m);
 		IF_DROP(&ifp->if_snd);
@@ -439,15 +438,12 @@ ipsecif6_output(struct ipsec_variant *var, int family, struct mbuf *m)
 		proto = IPPROTO_IPV4;
 		if (m->m_len < sizeof(*ip)) {
 			m = m_pullup(m, sizeof(*ip));
-			if (!m)
+			if (m == NULL)
 				return ENOBUFS;
 		}
 		ip = mtod(m, struct ip *);
 		itos = ip->ip_tos;
-		/*
-		 * TODO:
-		 *support ALTQ for innner packet
-		 */
+		/* TODO: support ALTQ for innner packet */
 		break;
 	    }
 #endif /* INET */
@@ -457,14 +453,12 @@ ipsecif6_output(struct ipsec_variant *var, int family, struct mbuf *m)
 		proto = IPPROTO_IPV6;
 		if (m->m_len < sizeof(*xip6)) {
 			m = m_pullup(m, sizeof(*xip6));
-			if (!m)
+			if (m == NULL)
 				return ENOBUFS;
 		}
 		xip6 = mtod(m, struct ip6_hdr *);
 		itos = (ntohl(xip6->ip6_flow) >> 20) & 0xff;
-		/* TODO:
-		 * support ALTQ for innner packet
-		 */
+		/* TODO: support ALTQ for innner packet */
 		break;
 	    }
 	default:
@@ -605,7 +599,7 @@ ipsecif4_input(struct mbuf *m, int off, int proto, void *eparg)
 		af = AF_INET;
 		if (M_UNWRITABLE(m, sizeof(*xip))) {
 			m = m_pullup(m, sizeof(*xip));
-			if (!m)
+			if (m == NULL)
 				return;
 		}
 		xip = mtod(m, struct ip *);
@@ -625,7 +619,7 @@ ipsecif4_input(struct mbuf *m, int off, int proto, void *eparg)
 		af = AF_INET6;
 		if (M_UNWRITABLE(m, sizeof(*ip6))) {
 			m = m_pullup(m, sizeof(*ip6));
-			if (!m)
+			if (m == NULL)
 				return;
 		}
 		ip6 = mtod(m, struct ip6_hdr *);
@@ -730,7 +724,7 @@ ipsecif6_input(struct mbuf **mp, int *offp, int proto, void *eparg)
 
 		if (M_UNWRITABLE(m, sizeof(*ip))) {
 			m = m_pullup(m, sizeof(*ip));
-			if (!m)
+			if (m == NULL)
 				return IPPROTO_DONE;
 		}
 		ip = mtod(m, struct ip *);
@@ -750,7 +744,7 @@ ipsecif6_input(struct mbuf **mp, int *offp, int proto, void *eparg)
 
 		if (M_UNWRITABLE(m, sizeof(*xip6))) {
 			m = m_pullup(m, sizeof(*xip6));
-			if (!m)
+			if (m == NULL)
 				return IPPROTO_DONE;
 		}
 		xip6 = mtod(m, struct ip6_hdr *);

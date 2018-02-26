@@ -1,4 +1,4 @@
-/* $NetBSD: ipsec.c,v 1.134 2018/02/21 16:42:33 maxv Exp $ */
+/* $NetBSD: ipsec.c,v 1.135 2018/02/26 06:17:01 maxv Exp $ */
 /* $FreeBSD: src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $ */
 /* $KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $ */
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.134 2018/02/21 16:42:33 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.135 2018/02/26 06:17:01 maxv Exp $");
 
 /*
  * IPsec controller part.
@@ -594,6 +594,7 @@ ipsec4_checkpolicy(struct mbuf *m, u_int dir, u_int flag, int *error,
 		return NULL;
 	}
 	KASSERTMSG(*error == 0, "sp w/ error set to %u", *error);
+
 	switch (sp->policy) {
 	case IPSEC_POLICY_ENTRUST:
 	default:
@@ -612,11 +613,13 @@ ipsec4_checkpolicy(struct mbuf *m, u_int dir, u_int flag, int *error,
 		KASSERT(sp->req != NULL);
 		break;
 	}
+
 	if (*error != 0) {
 		KEY_SP_UNREF(&sp);
 		sp = NULL;
 		IPSECLOG(LOG_DEBUG, "done, error %d\n", *error);
 	}
+
 	return sp;
 }
 
@@ -697,6 +700,7 @@ ipsec4_output(struct mbuf *m, struct inpcb *inp, int flags,
 		return 0;
 	}
     }
+
 	/*
 	 * Preserve KAME behaviour: ENOENT can be returned
 	 * when an SA acquire is in progress.  Don't propagate
@@ -767,8 +771,8 @@ ipsec4_forward(struct mbuf *m, int *destmtu)
 	size_t ipsechdr;
 	int error;
 
-	sp = ipsec_getpolicybyaddr(m,
-	    IPSEC_DIR_OUTBOUND, IP_FORWARDING, &error);
+	sp = ipsec_getpolicybyaddr(m, IPSEC_DIR_OUTBOUND, IP_FORWARDING,
+	    &error);
 	if (sp == NULL) {
 		return EINVAL;
 	}
@@ -940,6 +944,7 @@ ipsec_setspidx(struct mbuf *m, struct secpolicyindex *spidx, int needport)
 		KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_DUMP,
 		    "total of m_len(%d) != pkthdr.len(%d), ignored.\n",
 		    len, m->m_pkthdr.len);
+		KASSERTMSG(0, "impossible");
 		return EINVAL;
 	}
 
@@ -1474,7 +1479,6 @@ ipsec4_get_policy(struct inpcb *inp, const void *request, size_t len,
 	return ipsec_get_policy(policy, mp);
 }
 
-/* delete policy in PCB */
 int
 ipsec4_delete_pcbpolicy(struct inpcb *inp)
 {
@@ -1590,8 +1594,7 @@ ipsec6_delete_pcbpolicy(struct in6pcb *in6p)
 #endif
 
 /*
- * return current level.
- * Either IPSEC_LEVEL_USE or IPSEC_LEVEL_REQUIRE are always returned.
+ * Return the current level (either IPSEC_LEVEL_USE or IPSEC_LEVEL_REQUIRE).
  */
 u_int
 ipsec_get_reqlevel(const struct ipsecrequest *isr)
@@ -1608,7 +1611,7 @@ ipsec_get_reqlevel(const struct ipsecrequest *isr)
 	    isr->sp->spidx.src.sa.sa_family, isr->sp->spidx.dst.sa.sa_family);
 
 /* XXX note that we have ipseclog() expanded here - code sync issue */
-#define IPSEC_CHECK_DEFAULT(lev) 					\
+#define IPSEC_CHECK_DEFAULT(lev)					\
     (((lev) != IPSEC_LEVEL_USE && (lev) != IPSEC_LEVEL_REQUIRE		\
     && (lev) != IPSEC_LEVEL_UNIQUE) ?					\
 	(ipsec_debug ? log(LOG_INFO, "fixed system default level " #lev \
@@ -2145,13 +2148,11 @@ ipsec_address(const union sockaddr_union *sa, char *buf, size_t size)
 		in_print(buf, size, &sa->sin.sin_addr);
 		return buf;
 #endif
-
 #if INET6
 	case AF_INET6:
 		in6_print(buf, size, &sa->sin6.sin6_addr);
 		return buf;
 #endif
-
 	default:
 		return "(unknown address family)";
 	}
@@ -2216,7 +2217,8 @@ ipsec6_check_policy(struct mbuf *m, struct in6pcb *in6p, int flags,
 			splx(s);
 			goto skippolicycheck;
 		}
-		sp = ipsec6_checkpolicy(m, IPSEC_DIR_OUTBOUND, flags, &error,in6p);
+		sp = ipsec6_checkpolicy(m, IPSEC_DIR_OUTBOUND, flags, &error,
+		    in6p);
 
 		/*
 		 * There are four return cases:
@@ -2270,11 +2272,13 @@ ipsec6_input(struct mbuf *m)
 }
 #endif /* INET6 */
 
-
+/*
+ * -----------------------------------------------------------------------------
+ */
 
 /* XXX this stuff doesn't belong here... */
 
-static	struct xformsw *xforms = NULL;
+static struct xformsw *xforms = NULL;
 
 /*
  * Register a transform; typically at system startup.
