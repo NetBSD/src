@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.47 2016/05/09 21:46:56 christos Exp $	*/
+/*	$NetBSD: search.c,v 1.48 2018/02/26 17:36:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)search.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: search.c,v 1.47 2016/05/09 21:46:56 christos Exp $");
+__RCSID("$NetBSD: search.c,v 1.48 2018/02/26 17:36:14 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -603,8 +603,10 @@ cv_csearch(EditLine *el, int direction, wint_t ch, int count, int tflag)
 		return CC_ERROR;
 
 	if (ch == (wint_t)-1) {
-		if (el_wgetc(el, &ch) != 1)
+		wchar_t c;
+		if (el_wgetc(el, &c) != 1)
 			return ed_end_of_file(el, 0);
+		ch = c;
 	}
 
 	/* Save for ';' and ',' commands */
