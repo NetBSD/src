@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.201 2018/02/25 10:17:12 kamil Exp $
+#	$NetBSD: Makefile,v 1.202 2018/02/26 07:29:24 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -191,6 +191,7 @@ SUBDIR+=	hdaudio
 SUBDIR+=	hdaudio_pci
 SUBDIR+=	hdaudioverbose
 SUBDIR+=	hpet
+SUBDIR+=	ichsmb
 SUBDIR+=	odcm
 SUBDIR+=	powernow
 SUBDIR+=	tco
