@@ -125,7 +125,7 @@ imcsmb_attach(device_t parent, device_t self, void *aux)
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
-	imcsmb_rescan(self, "imcsmb", 0);
+	imcsmb_rescan(self, "i2cbus", 0);
 }
 
 static int
@@ -133,6 +133,9 @@ imcsmb_rescan(device_t self, const char *ifattr, const int *flags)
 {
 	struct imcsmb_softc *sc = device_private(self);
 	struct i2cbus_attach_args iba;
+
+	if (!ifattr_match(ifattr, "i2cbus"))
+		return 0;
 
 	/* Create the i2cbus child */
 	if (sc->sc_smbus != NULL)
