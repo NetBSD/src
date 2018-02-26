@@ -1,5 +1,5 @@
 /*	$KAME: sctp_input.c,v 1.28 2005/04/21 18:36:21 nishida Exp $	*/
-/*	$NetBSD: sctp_input.c,v 1.7 2017/06/27 13:27:54 rjs Exp $	*/
+/*	$NetBSD: sctp_input.c,v 1.8 2018/02/26 09:04:29 maxv Exp $	*/
 
 /*
  * Copyright (C) 2002, 2003, 2004 Cisco Systems Inc,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_input.c,v 1.7 2017/06/27 13:27:54 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_input.c,v 1.8 2018/02/26 09:04:29 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -4238,7 +4238,7 @@ sctp_input(struct mbuf *m, ...)
 	 * I very much doubt any of the IPSEC stuff will work but I have
 	 * no idea, so I will leave it in place.
 	 */
-	if (ipsec_used && ipsec4_in_reject(m, (struct inpcb *)inp)) {
+	if (ipsec_used && ipsec_in_reject(m, (struct inpcb *)inp)) {
 #if 0
 		ipsecstat.in_polvio++;
 #endif
