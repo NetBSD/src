@@ -1,4 +1,4 @@
-/* $NetBSD: imc.c,v 1.1 2018/02/25 08:19:34 pgoyette Exp $ */
+/* $NetBSD: imc.c,v 1.2 2018/02/26 04:31:32 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -225,19 +225,6 @@ imc_attach(device_t parent, device_t self, void *aux)
 /* Create the imcsmbX children */
 
 static int
-imc_print(void *aux, const char *pnp)
-{
-	struct imc_attach_args *imca = aux;
-
-	if (pnp != NULL) {
-		aprint_normal("smbus controller not %d attached to %s\n",
-		    imca->ia_unit, pnp);
-		return UNCONF;
-	} else
-		return QUIET;
-}
-
-static int
 imc_rescan(device_t self, const char * ifattr, const int *flags)
 {
 	struct imc_softc *sc = device_private(self);
@@ -253,7 +240,7 @@ imc_rescan(device_t self, const char * ifattr, const int *flags)
 		imca.ia_regs = &imcsmb_regs[unit];
 		imca.ia_pci_tag = sc->sc_pci_tag;
 		imca.ia_pci_chipset_tag = sc->sc_pci_chipset_tag;
-		child = config_found_ia(self, "imc", &imca, imc_print);
+		child = config_found_ia(self, "imc", &imca, NULL);
 
 		if (child == NULL) {
 			aprint_normal_dev(self, "Child %d imcsmb not added\n",
