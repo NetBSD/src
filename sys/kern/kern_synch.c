@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.311 2016/07/03 14:24:58 christos Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.311.10.1 2018/02/26 00:43:23 snj Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.311 2016/07/03 14:24:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.311.10.1 2018/02/26 00:43:23 snj Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -589,7 +589,8 @@ mi_switch(lwp_t *l)
 			 * be reset here, if interrupt/preemption happens
 			 * early in idle LWP.
 			 */
-			if (l->l_target_cpu != NULL) {
+			if (l->l_target_cpu != NULL &&
+			    (l->l_pflag & LP_BOUND) == 0) {
 				KASSERT((l->l_pflag & LP_INTR) == 0);
 				spc->spc_migrating = l;
 			}
