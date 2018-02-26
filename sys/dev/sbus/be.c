@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.85 2016/12/15 09:28:06 ozaki-r Exp $	*/
+/*	$NetBSD: be.c,v 1.85.8.1 2018/02/26 13:45:11 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.85 2016/12/15 09:28:06 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.85.8.1 2018/02/26 13:45:11 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -1119,6 +1119,7 @@ beinit(struct ifnet *ifp)
 
 	callout_reset(&sc->sc_tick_ch, hz, be_tick, sc);
 
+	splx(s);
 	return 0;
 out:
 	splx(s);
