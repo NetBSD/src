@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.272 2018/01/19 07:53:01 ozaki-r Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.273 2018/02/26 08:50:25 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.272 2018/01/19 07:53:01 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.273 2018/02/26 08:50:25 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2351,8 +2351,8 @@ ipsec4_hdrsiz_tcp(struct tcpcb *tp)
 		return 0;
 	switch (tp->t_family) {
 	case AF_INET:
-		/* XXX: should use currect direction. */
-		hdrsiz = ipsec4_hdrsiz(tp->t_template, IPSEC_DIR_OUTBOUND, inp);
+		/* XXX: should use correct direction. */
+		hdrsiz = ipsec_hdrsiz(tp->t_template, IPSEC_DIR_OUTBOUND, inp);
 		break;
 	default:
 		hdrsiz = 0;
@@ -2373,8 +2373,8 @@ ipsec6_hdrsiz_tcp(struct tcpcb *tp)
 		return 0;
 	switch (tp->t_family) {
 	case AF_INET6:
-		/* XXX: should use currect direction. */
-		hdrsiz = ipsec6_hdrsiz(tp->t_template, IPSEC_DIR_OUTBOUND, in6p);
+		/* XXX: should use correct direction. */
+		hdrsiz = ipsec_hdrsiz(tp->t_template, IPSEC_DIR_OUTBOUND, in6p);
 		break;
 	case AF_INET:
 		/* mapped address case - tricky */
