@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_input.c,v 1.59 2018/02/26 06:17:01 maxv Exp $	*/
+/*	$NetBSD: ipsec_input.c,v 1.60 2018/02/26 06:53:22 maxv Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/ipsec_input.c,v 1.2.4.2 2003/03/28 20:32:53 sam Exp $	*/
 /*	$OpenBSD: ipsec_input.c,v 1.63 2003/02/20 18:35:43 deraadt Exp $	*/
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.59 2018/02/26 06:17:01 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.60 2018/02/26 06:53:22 maxv Exp $");
 
 /*
  * IPsec input processing.
@@ -329,7 +329,10 @@ ipsec4_common_input_cb(struct mbuf *m, struct secasvar *sav,
 
 	IPSEC_SPLASSERT_SOFTNET("ipsec4_common_input_cb");
 
-	KASSERT(m != NULL);
+	if (__predict_false(m == NULL)) {
+		panic("%s: NULL mbuf", __func__);
+	}
+
 	KASSERT(sav != NULL);
 	saidx = &sav->sah->saidx;
 	af = saidx->dst.sa.sa_family;
@@ -338,14 +341,6 @@ ipsec4_common_input_cb(struct mbuf *m, struct secasvar *sav,
 	KASSERTMSG(sproto == IPPROTO_ESP || sproto == IPPROTO_AH ||
 	    sproto == IPPROTO_IPCOMP,
 	    "unexpected security protocol %u", sproto);
-
-	/* Sanity check */
-	if (m == NULL) {
-		IPSECLOG(LOG_DEBUG, "null mbuf");
-		IPSEC_ISTAT(sproto, ESP_STAT_BADKCR, AH_STAT_BADKCR,
-		    IPCOMP_STAT_BADKCR);
-		return EINVAL;
-	}
 
 	/* Fix IPv4 header */
 	if (skip != 0) {
@@ -548,7 +543,10 @@ ipsec6_common_input_cb(struct mbuf *m, struct secasvar *sav, int skip,
 	u_int8_t prot, nxt8;
 	int error, nest;
 
-	KASSERT(m != NULL);
+	if (__predict_false(m == NULL)) {
+		panic("%s: NULL mbuf", __func__);
+	}
+
 	KASSERT(sav != NULL);
 	saidx = &sav->sah->saidx;
 	af = saidx->dst.sa.sa_family;
@@ -557,15 +555,6 @@ ipsec6_common_input_cb(struct mbuf *m, struct secasvar *sav, int skip,
 	KASSERTMSG(sproto == IPPROTO_ESP || sproto == IPPROTO_AH ||
 	    sproto == IPPROTO_IPCOMP,
 	    "unexpected security protocol %u", sproto);
-
-	/* Sanity check */
-	if (m == NULL) {
-		IPSECLOG(LOG_DEBUG, "null mbuf");
-		IPSEC_ISTAT(sproto, ESP_STAT_BADKCR, AH_STAT_BADKCR,
-		    IPCOMP_STAT_BADKCR);
-		error = EINVAL;
-		goto bad;
-	}
 
 	/* Fix IPv6 header */
 	if (m->m_len < sizeof(struct ip6_hdr) &&
