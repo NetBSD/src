@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.20.10.1 2017/09/04 20:41:28 snj Exp $	*/
+/*	$NetBSD: copy.S,v 1.20.10.2 2018/02/26 00:49:48 snj Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -105,6 +105,7 @@ ENTRY(do_pmap_load)
 	popq	%rdi
 	leaveq
 	ret
+END(do_pmap_load)
 
 /*
  * Copy routines from and to userland, plus a few more. See the
@@ -172,6 +173,7 @@ ENTRY(kcopy)
 .Lkcopy_end:
 	xorq	%rax,%rax
 	ret
+END(kcopy)
 
 ENTRY(copyout)
 	DEFERRED_SWITCH_CHECK
@@ -199,6 +201,7 @@ ENTRY(copyout)
 	xorl	%eax,%eax
 	ret
 	DEFERRED_SWITCH_CALL
+END(copyout)
 
 ENTRY(copyin)
 	DEFERRED_SWITCH_CHECK
@@ -227,21 +230,20 @@ ENTRY(copyin)
 	xorl	%eax,%eax
 	ret
 	DEFERRED_SWITCH_CALL
+END(copyin)
 
 NENTRY(copy_efault)
 	movq	$EFAULT,%rax
-
-/*
- * kcopy_fault is used by kcopy and copy_fault is used by copyin/out.
- *
- * they're distinguished for lazy pmap switching.  see trap().
- */
+	ret
+END(copy_efault)
 
 NENTRY(kcopy_fault)
 	ret
+END(kcopy_fault)
 
 NENTRY(copy_fault)
 	ret
+END(copy_fault)
 
 ENTRY(copyoutstr)
 	DEFERRED_SWITCH_CHECK
@@ -282,6 +284,7 @@ ENTRY(copyoutstr)
 	movq	$ENAMETOOLONG,%rax
 	jmp	copystr_return
 	DEFERRED_SWITCH_CALL
+END(copyoutstr)
 
 ENTRY(copyinstr)
 	DEFERRED_SWITCH_CHECK
@@ -315,16 +318,19 @@ ENTRY(copyinstr)
 	xorq	%rax,%rax
 	jmp	copystr_return
 
-2:	/* edx is zero -- return EFAULT or ENAMETOOLONG. */
+2:	/* rdx is zero -- return EFAULT or ENAMETOOLONG. */
 	movq	$VM_MAXUSER_ADDRESS,%r11
 	cmpq	%r11,%rsi
 	jae	_C_LABEL(copystr_efault)
 	movq	$ENAMETOOLONG,%rax
 	jmp	copystr_return
 	DEFERRED_SWITCH_CALL
+END(copyinstr)
 
 ENTRY(copystr_efault)
 	movl	$EFAULT,%eax
+	jmp	copystr_return
+END(copystr_efault)
 
 ENTRY(copystr_fault)
 copystr_return:
@@ -333,8 +339,8 @@ copystr_return:
 	jz	8f
 	subq	%rdx,%r8
 	movq	%r8,(%r9)
-
 8:	ret
+END(copystr_fault)
 
 ENTRY(copystr)
 	xchgq	%rdi,%rsi
@@ -354,7 +360,7 @@ ENTRY(copystr)
 	xorl	%eax,%eax
 	jmp	6f
 
-4:	/* edx is zero -- return ENAMETOOLONG. */
+4:	/* rdx is zero -- return ENAMETOOLONG. */
 	movl	$ENAMETOOLONG,%eax
 
 6:	/* Set *lencopied and return %eax. */
@@ -364,7 +370,7 @@ ENTRY(copystr)
 	movq	%r8,(%rcx)
 
 7:	ret
-
+END(copystr)
 
 ENTRY(fuswintr)
 	cmpl	$TLBSTATE_VALID,CPUVAR(TLBSTATE)
@@ -380,6 +386,7 @@ ENTRY(fuswintr)
 
 	movq	$0,PCB_ONFAULT(%rcx)
 	ret
+END(fuswintr)
 
 ENTRY(fubyte)
 	DEFERRED_SWITCH_CHECK
@@ -395,6 +402,7 @@ ENTRY(fubyte)
 	movq	$0,PCB_ONFAULT(%rcx)
 	ret
 	DEFERRED_SWITCH_CALL
+END(fubyte)
 
 ENTRY(suswintr)
 	cmpl	$TLBSTATE_VALID,CPUVAR(TLBSTATE)
@@ -411,6 +419,7 @@ ENTRY(suswintr)
 	xorq	%rax,%rax
 	movq	%rax,PCB_ONFAULT(%rcx)
 	ret
+END(suswintr)
 
 ENTRY(subyte)
 	DEFERRED_SWITCH_CHECK
@@ -428,6 +437,7 @@ ENTRY(subyte)
 	movq	%rax,PCB_ONFAULT(%rcx)
 	ret
 	DEFERRED_SWITCH_CALL
+END(subyte)
 
 /*
  * These are the same, but must reside at different addresses,
@@ -437,15 +447,18 @@ ENTRY(fusuintrfailure)
 	movq	$0,PCB_ONFAULT(%rcx)
 	movl	$-1,%eax
 	ret
+END(fusuintrfailure)
 
 ENTRY(fusufailure)
 	movq	$0,PCB_ONFAULT(%rcx)
 	movl	$-1,%eax
 	ret
+END(fusufailure)
 
 ENTRY(fusuaddrfault)
 	movl	$-1,%eax
 	ret
+END(fusuaddrfault)
 
 /*
  * Compare-and-swap the 64-bit integer in the user-space.
@@ -474,6 +487,7 @@ ENTRY(ucas_64)
 	xorq	%rax,%rax
 	ret
 	DEFERRED_SWITCH_CALL
+END(ucas_64)
 
 /*
  * int	ucas_32(volatile int32_t *uptr, int32_t old, int32_t new, int32_t *ret);
@@ -500,12 +514,16 @@ ENTRY(ucas_32)
 	xorq	%rax,%rax
 	ret
 	DEFERRED_SWITCH_CALL
+END(ucas_32)
 
 ENTRY(ucas_efault)
 	movq	$EFAULT,%rax
+	ret
+END(ucas_efault)
 
 NENTRY(ucas_fault)
 	ret
+END(ucas_fault)
 
 /*
  * int	ucas_ptr(volatile void **uptr, void *old, void *new, void **ret);
@@ -524,6 +542,7 @@ x86_copyfunc_end:	.globl	x86_copyfunc_end
  */
 	.section ".rodata"
 	.globl _C_LABEL(onfault_table)
+
 _C_LABEL(onfault_table):
 	.quad .Lcopyin_start
 	.quad .Lcopyin_end
