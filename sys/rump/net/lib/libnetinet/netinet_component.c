@@ -1,4 +1,4 @@
-/*	$NetBSD: netinet_component.c,v 1.8.6.1 2018/01/02 10:20:34 snj Exp $	*/
+/*	$NetBSD: netinet_component.c,v 1.8.6.2 2018/02/26 13:32:01 martin Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netinet_component.c,v 1.8.6.1 2018/01/02 10:20:34 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netinet_component.c,v 1.8.6.2 2018/02/26 13:32:01 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -94,9 +94,11 @@ RUMP_COMPONENT(RUMP_COMPONENT_NET_IFCFG)
 	sin->sin_len = sizeof(struct sockaddr_in);
 	sin->sin_addr.s_addr = inet_addr("127.255.255.255");
 
+	KERNEL_LOCK(1, NULL);
 	IFNET_LOCK(lo0ifp);
 	in_control(so, SIOCAIFADDR, &ia, lo0ifp);
 	IFNET_UNLOCK(lo0ifp);
+	KERNEL_UNLOCK_ONE(NULL);
 	if_up(lo0ifp);
 	soclose(so);
 }
