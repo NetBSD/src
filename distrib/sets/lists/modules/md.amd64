@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.74 2018/02/25 08:21:57 pgoyette Exp $
+# $NetBSD: md.amd64,v 1.75 2018/02/26 07:30:17 pgoyette Exp $
 #
 # NOTE that there are two sets of files here:
 # @MODULEDIR@ and amd64-xen
@@ -109,6 +109,8 @@
 ./@MODULEDIR@/hpacel/hpacel.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/hpet				base-kernel-modules	kmod
 ./@MODULEDIR@/hpet/hpet.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/ichsmb				base-kernel-modules	kmod
+./@MODULEDIR@/ichsmb/ichsmb.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/imc				base-kernel-modules	kmod
 ./@MODULEDIR@/imc/imc.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/imcsmb				base-kernel-modules	kmod
