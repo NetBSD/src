@@ -1,4 +1,4 @@
-.\"	$NetBSD: iic.4,v 1.19 2018/02/26 00:10:44 pgoyette Exp $
+.\"	$NetBSD: iic.4,v 1.20 2018/02/26 00:14:56 pgoyette Exp $
 .\"	$OpenBSD: iic.4,v 1.74 2008/09/10 16:13:43 reyk Exp $
 .\"
 .\" Copyright (c) 2004, 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -31,7 +31,6 @@
 .\" grep -h '^iic.*at' */conf/* | sort -u -k +3 | sed -e 's,[	 ][	 ]*, ,g' -e 's, *#.*,,' | sh -c 'while read iic at ic ; do printf ".Cd \"$iic $at %-20s # %s\"\n" "$ic" "`grep \"iic.*at.*$ic\" */conf/* | sed \"s,/.*,,\" | sort -u | tr \"\012\" \ `"  ; done' | uniq | tee /tmp/x
 .\" cat /tmp/x
 .\"
-.Sh DESCRIPTION
 .Cd "iic* at alipm?               # alpha amd64 i386 sparc64 "
 .Cd "iic* at amdpm?               # amd64 i386 "
 .Cd "iic* at armadillo9iic?       # evbarm "
@@ -77,6 +76,7 @@
 .Cd "iic* at viapcib?             # i386 "
 .Cd "iic* at voyager0             # evbmips "
 .Cd "iic0 at ziic?                # evbmips zaurus "
+.Sh DESCRIPTION
 I2C is a two-wire bus developed by Philips used for connecting
 integrated circuits.
 It is commonly used for connecting devices such as EEPROMs,
