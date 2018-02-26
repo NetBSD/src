@@ -60,7 +60,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/sys/dev/ismt/ismt.c 266474 2014-05-20 19:55:06Z jimharris $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ismt.c,v 1.5 2017/04/27 10:01:54 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ismt.c,v 1.5.2.1 2018/02/26 00:05:04 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -801,6 +801,7 @@ ismt_match(device_t parent, cfdata_t match, void *aux)
 	case PCI_PRODUCT_INTEL_S1200_SMBUS_0:
 	case PCI_PRODUCT_INTEL_S1200_SMBUS_1:
 	case PCI_PRODUCT_INTEL_C2000_SMBUS:
+	case PCI_PRODUCT_INTEL_C3K_SMBUS:
 		break;
 	default:
 		return 0;
