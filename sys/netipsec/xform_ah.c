@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.86 2018/02/16 09:24:55 maxv Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.87 2018/02/26 06:40:08 maxv Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.86 2018/02/16 09:24:55 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.87 2018/02/26 06:40:08 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -505,6 +505,9 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 						continue;
 					}
 
+					if (count + 1 >= noff) {
+						goto error6;
+					}
 					ad = ptr[count + 1] + 2;
 
 					if (count + ad > noff) {
@@ -532,7 +535,7 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 				 * Always include routing headers in
 				 * computation.
 				 */
-				ip6e = (struct ip6_ext *) (ptr + off);
+				ip6e = (struct ip6_ext *)(ptr + off);
 				rh = (struct ip6_rthdr *)(ptr + off);
 				/*
 				 * must adjust content to make it look like
