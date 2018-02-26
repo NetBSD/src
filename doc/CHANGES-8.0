@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.131 2018/02/26 04:32:29 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.132 2018/02/26 13:57:25 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -9906,4 +9906,64 @@ tests/lib/libpthread/t_mutex.c			1.19
 
 	Remove useless/nonsense/broken mutex6 test.
 	[maya, ticket #585]
+
+sys/netipsec/xform_ah.c				1.78,1.79 (via patch),1.82-1.84
+sys/netipsec/xform_esp.c			1.74-1.76
+sys/netipsec/xform_ipcomp.c			1.54-1.56
+
+	Fix mbuf leaks on error paths.
+	Dedup common codes in error paths.
+	Don't relook up an SP/SA in opencrpyto callbacks.
+	Fix kernel panic (assertion failure) on receiving an IPv6 packet
+	with large options.
+	Fix buffer overflow on sending an IPv6 packet with large options.
+	[ozaki-r, ticket #587]
+
+sys/netinet/in.c				1.219
+sys/netinet/ip_input.c				1.376
+sys/netinet/wqinput.c				1.4
+sys/netinet6/in6.c				1.260
+sys/netinet6/ip6_input.c			1.193
+sys/rump/net/lib/libnetinet/netinet_component.c	1.11
+
+	Avoid a deadlock between softnet_lock and IFNET_LOCK.
+	[ozaki-r, ticket #588]
+
+sys/netinet/if_arp.c				1.267
+sys/netinet6/nd6_nbr.c				1.146-1.148
+
+	Use KASSERT for checking a programming error.
+	Simplify; pass dp to nd6_dad_duplicated instead of looking it up
+	again in it.
+	Avoid a race condition of DAD timer destructions.
+	[ozaki-r, ticket #589]
+
+sys/dev/sbus/be.c				1.86
+
+	Fix spl leak.
+	[msaitoh, ticket #590]
+
+build.sh					1.317-1.320
+
+	Warn about a missing X11SRCDIR.
+	[maya, ticket #591]
+
+sys/dev/pci/ixgbe/ix_txrx.c			1.31-1.32
+sys/dev/pci/ixgbe/ixgbe.c			1.120-1.126
+sys/dev/pci/ixgbe/ixgbe.h			1.30
+sys/dev/pci/ixgbe/ixgbe_type.h			1.31
+sys/dev/pci/ixgbe/ixv.c				1.79-1.81
+
+	- Print bus/slot info correctly on 82599_SFP_SF_QP(DID 0x154a) and
+	  82599_QSFP_SF_QP(DID 0x1558).
+	- Fix a bug that TX/RX may stall on heavy load when loop limit reached.
+	- Fix a bug that the first call of ifflags_cb() causes linkdown.
+	- Use low limit of interrupt throttling rate to prevent stall.
+	- Increment rxr->packets correctly in ixgbe_rxeof() to calculate ITR
+	  value of AIM (Auto Interrupt Moderation) correctly.
+	- The bitfield of EITR register is different between 82598 and others.
+	  Make new function ix{gbe,v}_eitr_write() and use it.
+	- Improve a comment about reading EICS register defined write-only by
+	  the spec.
+	[msaitoh, ticket #592]
 
