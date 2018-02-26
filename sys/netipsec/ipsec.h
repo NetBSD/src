@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.67 2018/02/21 16:18:52 maxv Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.68 2018/02/26 08:50:25 maxv Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -304,7 +304,7 @@ struct tcpcb;
 int ipsec_chkreplay(u_int32_t, const struct secasvar *);
 int ipsec_updatereplay(u_int32_t, const struct secasvar *);
 
-size_t ipsec4_hdrsiz(struct mbuf *, u_int, struct inpcb *);
+size_t ipsec_hdrsiz(struct mbuf *, u_int, void *);
 size_t ipsec4_hdrsiz_tcp(struct tcpcb *);
 
 union sockaddr_union;
