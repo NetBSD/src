@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.183.2.3 2017/11/22 14:38:47 martin Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.183.2.4 2018/02/26 00:56:29 snj Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.183.2.3 2017/11/22 14:38:47 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.183.2.4 2018/02/26 00:56:29 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -70,7 +70,8 @@ __KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.183.2.3 2017/11/22 14:38:47 martin Ex
 #include <dev/pci/pcidevs_data.h>
 #endif
 
-static int pci_conf_find_cap(const pcireg_t *, int, unsigned int, int *);
+static int pci_conf_find_cap(const pcireg_t *, unsigned int, int *);
+static int pci_conf_find_extcap(const pcireg_t *, unsigned int, int *);
 static void pci_conf_print_pcie_power(uint8_t, unsigned int);
 
 /*
@@ -831,8 +832,7 @@ pci_conf_print_common(
 		int pcie_capoff;
 		pcireg_t reg;
 
-		if (pci_conf_find_cap(regs, PCI_CAPLISTPTR_REG,
-		    PCI_CAP_PCIEXPRESS, &pcie_capoff)) {
+		if (pci_conf_find_cap(regs, PCI_CAP_PCIEXPRESS, &pcie_capoff)) {
 			reg = regs[o2i(pcie_capoff + PCIE_XCAP)];
 			if (PCIE_XCAP_TYPE(reg) == PCIE_XCAP_TYPE_ROOT_EVNTC)
 				subclass = PCI_SUBCLASS_SYSTEM_RCEC;
@@ -1769,10 +1769,10 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 	/* Capability Register */
 	reg = regs[o2i(capoff)];
 	printf("    Capability register: 0x%04x\n", reg >> 16);
-	pciever = (unsigned int)((reg & 0x000f0000) >> 16);
+	pciever = (unsigned int)(PCIE_XCAP_VER(reg));
 	printf("      Capability version: %u\n", pciever);
 	printf("      Device type: ");
-	switch ((reg & 0x00f00000) >> 20) {
+	switch (PCIE_XCAP_TYPE(reg)) {
 	case PCIE_XCAP_TYPE_PCIE_DEV:	/* 0x0 */
 		printf("PCI Express Endpoint device\n");
 		check_upstreamport = true;
@@ -2446,13 +2446,29 @@ static struct {
 };
 
 static int
-pci_conf_find_cap(const pcireg_t *regs, int capoff, unsigned int capid,
-    int *offsetp)
+pci_conf_find_cap(const pcireg_t *regs, unsigned int capid, int *offsetp)
 {
 	pcireg_t rval;
+	unsigned int capptr;
 	int off;
 
-	for (off = PCI_CAPLIST_PTR(regs[o2i(capoff)]);
+	if (!(regs[o2i(PCI_COMMAND_STATUS_REG)] & PCI_STATUS_CAPLIST_SUPPORT))
+		return 0;
+
+	/* Determine the Capability List Pointer register to start with. */
+	switch (PCI_HDRTYPE_TYPE(regs[o2i(PCI_BHLC_REG)])) {
+	case 0:	/* standard device header */
+	case 1: /* PCI-PCI bridge header */
+		capptr = PCI_CAPLISTPTR_REG;
+		break;
+	case 2:	/* PCI-CardBus Bridge header */
+		capptr = PCI_CARDBUS_CAPLISTPTR_REG;
+		break;
+	default:
+		return 0;
+	}
+	
+	for (off = PCI_CAPLIST_PTR(regs[o2i(capptr)]);
 	     off != 0; off = PCI_CAPLIST_NEXT(rval)) {
 		rval = regs[o2i(off)];
 		if (capid == PCI_CAPLIST_CAP(rval)) {
@@ -2511,13 +2527,6 @@ pci_conf_print_caplist(
 		 * the same. This is required because some capabilities
 		 * appear multiple times (e.g. HyperTransport capability).
 		 */
-#if 0
-		if (pci_conf_find_cap(regs, capoff, i, &off)) {
-			rval = regs[o2i(off)];
-			if (pci_captab[i].printfunc != NULL)
-				pci_captab[i].printfunc(regs, off);
-		}
-#else
 		for (off = PCI_CAPLIST_PTR(regs[o2i(capoff)]);
 		     off != 0; off = PCI_CAPLIST_NEXT(regs[o2i(off)])) {
 			rval = regs[o2i(off)];
@@ -2525,7 +2534,6 @@ pci_conf_print_caplist(
 			    && (pci_captab[i].printfunc != NULL))
 				pci_captab[i].printfunc(regs, off);
 		}
-#endif
 	}
 }
 
@@ -2633,14 +2641,14 @@ pci_conf_print_aer_cap_errsrc_id(pcireg_t reg)
 }
 
 static void
-pci_conf_print_aer_cap(const pcireg_t *regs, int capoff, int extcapoff)
+pci_conf_print_aer_cap(const pcireg_t *regs, int extcapoff)
 {
 	pcireg_t reg;
 	int pcie_capoff;
 	int pcie_devtype = -1;
 	bool tlp_prefix_log = false;
 
-	if (pci_conf_find_cap(regs, capoff, PCI_CAP_PCIEXPRESS, &pcie_capoff)) {
+	if (pci_conf_find_cap(regs, PCI_CAP_PCIEXPRESS, &pcie_capoff)) {
 		reg = regs[o2i(pcie_capoff)];
 		pcie_devtype = PCIE_XCAP_TYPE(reg);
 		/* PCIe DW9 to DW14 is for PCIe 2.0 and newer */
@@ -2727,7 +2735,7 @@ pci_conf_print_vc_cap_arbtab(const pcireg_t *regs, int off, const char *name,
 }
 
 static void
-pci_conf_print_vc_cap(const pcireg_t *regs, int capoff, int extcapoff)
+pci_conf_print_vc_cap(const pcireg_t *regs, int extcapoff)
 {
 	pcireg_t reg, n;
 	int parbtab, parbsize;
@@ -2856,7 +2864,7 @@ pci_conf_print_pcie_power(uint8_t base, unsigned int scale)
 			s = "275W < x <= 300W";
 			break;
 		default:
-			s = "reserved for above 300W";
+			s = "reserved for greater than 300W";
 			break;
 		}
 		printf("%s\n", s);
@@ -2918,7 +2926,7 @@ pci_conf_print_pwrbdgt_pwrrail(uint8_t reg)
 }
 
 static void
-pci_conf_print_pwrbdgt_cap(const pcireg_t *regs, int capoff, int extcapoff)
+pci_conf_print_pwrbdgt_cap(const pcireg_t *regs, int extcapoff)
 {
 	pcireg_t reg;
 
@@ -2967,7 +2975,7 @@ pci_conf_print_rclink_dcl_cap_elmtype(unsigned char type)
 }
 
 static void
-pci_conf_print_rclink_dcl_cap(const pcireg_t *regs, int capoff, int extcapoff)
+pci_conf_print_rclink_dcl_cap(const pcireg_t *regs, int extcapoff)
 {
 	pcireg_t reg;
 	unsigned char nent, linktype;
@@ -3046,7 +3054,7 @@ pci_conf_print_rclink_dcl_cap(const pcireg_t *regs, int capoff, int extcapoff)
 /* XXX pci_conf_print_rclink_ctl_cap */
 
 static void
-pci_conf_print_rcec_assoc_cap(const pcireg_t *regs, int capoff, int extcapoff)
+pci_conf_print_rcec_assoc_cap(const pcireg_t *regs, int extcapoff)
 {
 	pcireg_t reg;
 
@@ -3064,7 +3072,7 @@ pci_conf_print_rcec_assoc_cap(const pcireg_t *regs, int capoff, int extcapoff)
 /* XXX pci_conf_print_cac_cap */
 
 static void
-pci_conf_print_acs_cap(const pcireg_t *regs, int capoff, int extcapoff)
+pci_conf_print_acs_cap(const pcireg_t *regs, int extcapoff)
 {
 	pcireg_t reg, cap, ctl;
 	unsigned int size, i;
@@ -3107,7 +3115,7 @@ pci_conf_print_acs_cap(const pcireg_t *regs, int capoff, int extcapoff)
 }
 
 static void
-pci_conf_print_ari_cap(const pcireg_t *regs, int capoff, int extcapoff)
+pci_conf_print_ari_cap(const pcireg_t *regs, int extcapoff)
 {
 	pcireg_t reg, cap, ctl;
 
@@ -3129,7 +3137,7 @@ pci_conf_print_ari_cap(const pcireg_t *regs, int capoff, int extcapoff)
 }
 
 static void
-pci_conf_print_ats_cap(const pcireg_t *regs, int capoff, int extcapoff)
+pci_conf_print_ats_cap(const pcireg_t *regs, int extcapoff)
 {
 	pcireg_t reg, cap, ctl;
 	unsigned int num;
@@ -3154,7 +3162,7 @@ pci_conf_print_ats_cap(const pcireg_t *regs, int capoff, int extcapoff)
 }
 
 static void
-pci_conf_print_sernum_cap(const pcireg_t *regs, int capoff, int extcapoff)
+pci_conf_print_sernum_cap(const pcireg_t *regs, int extcapoff)
 {
 	pcireg_t lo, hi;
 
@@ -3168,7 +3176,7 @@ pci_conf_print_sernum_cap(const pcireg_t *regs, int capoff, int extcapoff)
 }
 
 static void
-pci_conf_print_sriov_cap(const pcireg_t *regs, int capoff, int extcapoff)
+pci_conf_print_sriov_cap(const pcireg_t *regs, int extcapoff)
 {
 	char buf[sizeof("99999 MB")];
 	pcireg_t reg;
@@ -3280,7 +3288,7 @@ pci_conf_print_sriov_cap(const pcireg_t *regs, int capoff, int extcapoff)
 /* XXX pci_conf_print_mriov_cap */
 
 static void
-pci_conf_print_multicast_cap(const pcireg_t *regs, int capoff, int extcapoff)
+pci_conf_print_multicast_cap(const pcireg_t *regs, int extcapoff)
 {
 	pcireg_t reg, cap, ctl;
 	pcireg_t regl, regh;
@@ -3348,7 +3356,7 @@ pci_conf_print_multicast_cap(const pcireg_t *regs, int capoff, int extcapoff)
 }
 
 static void
-pci_conf_print_page_req_cap(const pcireg_t *regs, int capoff, int extcapoff)
+pci_conf_print_page_req_cap(const pcireg_t *regs, int extcapoff)
 {
 	pcireg_t reg, ctl, sta;
 
@@ -3379,7 +3387,7 @@ pci_conf_print_page_req_cap(const pcireg_t *regs, int capoff, int extcapoff)
 #define MEM_PBUFSIZE	sizeof("999GB")
 
 static void
-pci_conf_print_resizbar_cap(const pcireg_t *regs, int capoff, int extcapoff)
+pci_conf_print_resizbar_cap(const pcireg_t *regs, int extcapoff)
 {
 	pcireg_t cap, ctl;
 	unsigned int bars, i, n;
@@ -3436,7 +3444,7 @@ pci_conf_print_resizbar_cap(const pcireg_t *regs, int capoff, int extcapoff)
 }
 
 static void
-pci_conf_print_dpa_cap(const pcireg_t *regs, int capoff, int extcapoff)
+pci_conf_print_dpa_cap(const pcireg_t *regs, int extcapoff)
 {
 	pcireg_t reg;
 	unsigned int substmax, i;
@@ -3516,7 +3524,7 @@ pci_conf_print_tph_req_cap_sttabloc(uint8_t val)
 }
 
 static void
-pci_conf_print_tph_req_cap(const pcireg_t *regs, int capoff, int extcapoff)
+pci_conf_print_tph_req_cap(const pcireg_t *regs, int extcapoff)
 {
 	pcireg_t reg;
 	int size, i, j;
@@ -3587,7 +3595,7 @@ pci_conf_print_tph_req_cap(const pcireg_t *regs, int capoff, int extcapoff)
 }
 
 static void
-pci_conf_print_ltr_cap(const pcireg_t *regs, int capoff, int extcapoff)
+pci_conf_print_ltr_cap(const pcireg_t *regs, int extcapoff)
 {
 	pcireg_t reg;
 
@@ -3604,7 +3612,7 @@ pci_conf_print_ltr_cap(const pcireg_t *regs, int capoff, int extcapoff)
 }
 
 static void
-pci_conf_print_sec_pcie_cap(const pcireg_t *regs, int capoff, int extcapoff)
+pci_conf_print_sec_pcie_cap(const pcireg_t *regs, int extcapoff)
 {
 	int pcie_capoff;
 	pcireg_t reg;
@@ -3626,7 +3634,7 @@ pci_conf_print_sec_pcie_cap(const pcireg_t *regs, int capoff, int extcapoff)
 	printf("    Lane Error Status register: 0x%08x\n", reg);
 
 	/* Get Max Link Width */
-	if (pci_conf_find_cap(regs, capoff, PCI_CAP_PCIEXPRESS, &pcie_capoff)){
+	if (pci_conf_find_cap(regs, PCI_CAP_PCIEXPRESS, &pcie_capoff)) {
 		reg = regs[o2i(pcie_capoff + PCIE_LCAP)];
 		maxlinkwidth = __SHIFTOUT(reg, PCIE_LCAP_MAX_WIDTH);
 	} else {
@@ -3657,7 +3665,7 @@ pci_conf_print_sec_pcie_cap(const pcireg_t *regs, int capoff, int extcapoff)
 /* XXX pci_conf_print_pmux_cap */
 
 static void
-pci_conf_print_pasid_cap(const pcireg_t *regs, int capoff, int extcapoff)
+pci_conf_print_pasid_cap(const pcireg_t *regs, int extcapoff)
 {
 	pcireg_t reg, cap, ctl;
 	unsigned int num;
@@ -3680,7 +3688,7 @@ pci_conf_print_pasid_cap(const pcireg_t *regs, int capoff, int extcapoff)
 }
 
 static void
-pci_conf_print_lnr_cap(const pcireg_t *regs, int capoff, int extcapoff)
+pci_conf_print_lnr_cap(const pcireg_t *regs, int extcapoff)
 {
 	pcireg_t reg, cap, ctl;
 	unsigned int num;
@@ -3718,7 +3726,7 @@ pci_conf_print_dpc_pio(pcireg_t r)
 }
 
 static void
-pci_conf_print_dpc_cap(const pcireg_t *regs, int capoff, int extcapoff)
+pci_conf_print_dpc_cap(const pcireg_t *regs, int extcapoff)
 {
 	pcireg_t reg, cap, ctl, stat, errsrc;
 	const char *trigstr;
@@ -3861,10 +3869,11 @@ pci_conf_l1pm_cap_tposcale(unsigned char scale)
 }
 
 static void
-pci_conf_print_l1pm_cap(const pcireg_t *regs, int capoff, int extcapoff)
+pci_conf_print_l1pm_cap(const pcireg_t *regs, int extcapoff)
 {
 	pcireg_t reg;
 	int scale, val;
+	int pcie_capoff;
 
 	printf("\n  L1 PM Substates\n");
 
@@ -3875,6 +3884,14 @@ pci_conf_print_l1pm_cap(const pcireg_t *regs, int capoff, int extcapoff)
 	onoff("ASPM L1.2 Supported", reg, PCI_L1PM_CAP_ASPM12);
 	onoff("ASPM L1.1 Supported", reg, PCI_L1PM_CAP_ASPM11);
 	onoff("L1 PM Substates Supported", reg, PCI_L1PM_CAP_L1PM);
+	/* The Link Activation Supported bit is only for Downstream Port */
+	if (pci_conf_find_cap(regs, PCI_CAP_PCIEXPRESS, &pcie_capoff)) {
+		uint32_t t = regs[o2i(pcie_capoff)];
+
+		if ((t == PCIE_XCAP_TYPE_ROOT) || (t == PCIE_XCAP_TYPE_DOWN))
+			onoff("Link Activation Supported", reg,
+			    PCI_L1PM_CAP_LA);
+	}
 	printf("      Port Common Mode Restore Time: %uus\n",
 	    (unsigned int)__SHIFTOUT(reg, PCI_L1PM_CAP_PCMRT));
 	scale = pci_conf_l1pm_cap_tposcale(
@@ -3892,6 +3909,8 @@ pci_conf_print_l1pm_cap(const pcireg_t *regs, int capoff, int extcapoff)
 	onoff("PCI-PM L1.1 Enable", reg, PCI_L1PM_CTL1_PCIPM11_EN);
 	onoff("ASPM L1.2 Enable", reg, PCI_L1PM_CTL1_ASPM12_EN);
 	onoff("ASPM L1.1 Enable", reg, PCI_L1PM_CTL1_ASPM11_EN);
+	onoff("Link Activation Interrupt Enable", reg, PCI_L1PM_CTL1_LAIE);
+	onoff("Link Activation Control", reg, PCI_L1PM_CTL1_LA);
 	printf("      Common Mode Restore Time: %uus\n",
 	    (unsigned int)__SHIFTOUT(reg, PCI_L1PM_CTL1_CMRT));
 	scale = PCI_LTR_SCALETONS(__SHIFTOUT(reg, PCI_L1PM_CTL1_LTRTHSCALE));
@@ -3908,10 +3927,16 @@ pci_conf_print_l1pm_cap(const pcireg_t *regs, int capoff, int extcapoff)
 		printf("unknown\n");
 	else
 		printf("%dus\n", val * scale);
+
+	if (PCI_EXTCAPLIST_VERSION(regs[o2i(extcapoff)]) >= 2) {
+		reg = regs[o2i(extcapoff + PCI_L1PM_CTL2)];
+		printf("    L1 PM Substates Status register: 0x%08x\n", reg);
+		onoff("Link Activation Status", reg, PCI_L1PM_STAT_LA);
+	}
 }
 
 static void
-pci_conf_print_ptm_cap(const pcireg_t *regs, int capoff, int extcapoff)
+pci_conf_print_ptm_cap(const pcireg_t *regs, int extcapoff)
 {
 	pcireg_t reg;
 	uint32_t val;
@@ -3971,7 +3996,7 @@ pci_conf_print_ptm_cap(const pcireg_t *regs, int capoff, int extcapoff)
 static struct {
 	pcireg_t cap;
 	const char *name;
-	void (*printfunc)(const pcireg_t *, int, int);
+	void (*printfunc)(const pcireg_t *, int);
 } pci_extcaptab[] = {
 	{ 0,			"reserved",
 	  NULL },
@@ -4054,8 +4079,7 @@ static struct {
 };
 
 static int
-pci_conf_find_extcap(const pcireg_t *regs, int capoff, unsigned int capid,
-    int *offsetp)
+pci_conf_find_extcap(const pcireg_t *regs, unsigned int capid, int *offsetp)
 {
 	int off;
 	pcireg_t rval;
@@ -4078,7 +4102,7 @@ pci_conf_print_extcaplist(
 #ifdef _KERNEL
     pci_chipset_tag_t pc, pcitag_t tag,
 #endif
-    const pcireg_t *regs, int capoff)
+    const pcireg_t *regs)
 {
 	int off;
 	pcireg_t foundcap;
@@ -4133,14 +4157,14 @@ pci_conf_print_extcaplist(
 		 * print all capabilities that the capabiliy type is
 		 * the same.
 		 */
-		if (pci_conf_find_extcap(regs, capoff, i, &off) == 0)
+		if (pci_conf_find_extcap(regs, i, &off) == 0)
 			continue;
 		rval = regs[o2i(off)];
 		if ((PCI_EXTCAPLIST_VERSION(rval) <= 0)
 		    || (pci_extcaptab[i].printfunc == NULL))
 			continue;
 
-		pci_extcaptab[i].printfunc(regs, capoff, off);
+		pci_extcaptab[i].printfunc(regs, off);
 
 	}
 }
@@ -4290,7 +4314,7 @@ pci_conf_print_type1(
     const pcireg_t *regs)
 {
 	int off, width;
-	pcireg_t rval;
+	pcireg_t rval, csreg;
 	uint32_t base, limit;
 	uint32_t base_h, limit_h;
 	uint64_t pbase, plimit;
@@ -4407,7 +4431,8 @@ pci_conf_print_type1(
 	} else
 		printf("      range: not set\n");
 
-	if (regs[o2i(PCI_COMMAND_STATUS_REG)] & PCI_STATUS_CAPLIST_SUPPORT)
+	csreg = regs[o2i(PCI_COMMAND_STATUS_REG)];
+	if (csreg & PCI_STATUS_CAPLIST_SUPPORT)
 		printf("    Capability list pointer: 0x%02x\n",
 		    PCI_CAPLIST_PTR(regs[o2i(PCI_CAPLISTPTR_REG)]));
 	else
@@ -4449,6 +4474,13 @@ pci_conf_print_type1(
 	onoff("Secondary SERR forwarding", rval, PCI_BRIDGE_CONTROL_SERR);
 	onoff("ISA enable", rval, PCI_BRIDGE_CONTROL_ISA);
 	onoff("VGA enable", rval, PCI_BRIDGE_CONTROL_VGA);
+	/*
+	 * VGA 16bit decode bit has meaning if the VGA enable bit or the
+	 * VGA Palette Snoop Enable bit is set.
+	 */
+	if (((rval & PCI_BRIDGE_CONTROL_VGA) != 0)
+	    || ((csreg & PCI_COMMAND_PALETTE_ENABLE) != 0))
+		onoff("VGA 16bit enable", rval, PCI_BRIDGE_CONTROL_VGA16);
 	onoff("Master abort reporting", rval, PCI_BRIDGE_CONTROL_MABRT);
 	onoff("Secondary bus reset", rval, PCI_BRIDGE_CONTROL_SECBR);
 	onoff("Fast back-to-back capable", rval,PCI_BRIDGE_CONTROL_SECFASTB2B);
@@ -4683,9 +4715,9 @@ pci_conf_print(
 		return;
 
 #ifdef _KERNEL
-	pci_conf_print_extcaplist(pc, tag, regs, capoff);
+	pci_conf_print_extcaplist(pc, tag, regs);
 #else
-	pci_conf_print_extcaplist(regs, capoff);
+	pci_conf_print_extcaplist(regs);
 #endif
 	printf("\n");
 

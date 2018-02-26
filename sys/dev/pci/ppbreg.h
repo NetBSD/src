@@ -1,4 +1,4 @@
-/*	$NetBSD: ppbreg.h,v 1.7 2017/05/10 03:24:31 msaitoh Exp $	*/
+/*	$NetBSD: ppbreg.h,v 1.7.2.1 2018/02/26 00:56:29 snj Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -100,6 +100,7 @@
 #define PPB_BC_SERR_ENABLE                 (1U << (1 + PPB_BC_BITBASE))
 #define PPB_BC_ISA_ENABLE                  (1U << (2 + PPB_BC_BITBASE))
 #define PPB_BC_VGA_ENABLE                  (1U << (3 + PPB_BC_BITBASE))
+#define PPB_BC_VGA16_ENABLE                (1U << (3 + PPB_BC_BITBASE))
 #define PPB_BC_MASTER_ABORT_MODE           (1U << (5 + PPB_BC_BITBASE))
 #define PPB_BC_SECONDARY_RESET             (1U << (6 + PPB_BC_BITBASE))
 #define	PPB_BC_FAST_B2B_ENABLE		   (1U << (7 + PPB_BC_BITBASE))
