@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.77 2018/02/25 08:21:57 pgoyette Exp $
+# $NetBSD: md.i386,v 1.78 2018/02/26 07:30:17 pgoyette Exp $
 #
 # NOTE that there are three sets of files here:
 # @MODULEDIR@, i386-xen, and i386pae-xen
@@ -106,6 +106,8 @@
 ./@MODULEDIR@/hpet/hpet.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/hpqlb				base-kernel-modules	kmod
 ./@MODULEDIR@/hpqlb/hpqlb.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/ichsmb				base-kernel-modules     kmod
+./@MODULEDIR@/ichsmb/ichsmb.kmod		base-kernel-modules     kmod
 ./@MODULEDIR@/imc				base-kernel-modules     kmod
 ./@MODULEDIR@/imc/imc.kmod			base-kernel-modules     kmod
 ./@MODULEDIR@/imcsmb				base-kernel-modules     kmod
