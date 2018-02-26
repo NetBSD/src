@@ -1,4 +1,4 @@
-.\"	$NetBSD: iic.4,v 1.21 2018/02/26 00:17:40 pgoyette Exp $
+.\"	$NetBSD: iic.4,v 1.22 2018/02/26 08:23:44 wiz Exp $
 .\"	$OpenBSD: iic.4,v 1.74 2008/09/10 16:13:43 reyk Exp $
 .\"
 .\" Copyright (c) 2004, 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -25,8 +25,8 @@
 .Sh SYNOPSIS
 .\"
 .\" Use the following commands in (t)csh to output the list below (note
-\." the first sed command includes a <space> and <tab> character in each
-\." of the bracket expressions):
+.\" the first sed command includes a <space> and <tab> character in each
+.\" of the bracket expressions):
 .\" cd .../src/sys/arch
 .\" grep -h '^iic.*at' */conf/* | sort -u -k +3 | sed -e 's,[	 ][	 ]*, ,g' -e 's, *#.*,,' | sh -c 'while read iic at ic ; do printf ".Cd \"$iic $at %-20s # %s\"\n" "$ic" "`grep \"iic.*at.*$ic\" */conf/* | sed \"s,/.*,,\" | sort -u | tr \"\012\" \ `"  ; done' | uniq | tee /tmp/x
 .\" cat /tmp/x
