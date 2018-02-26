@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC_601,v 1.19 2018/02/24 18:58:00 sevan Exp $
+# $NetBSD: GENERIC_601,v 1.20 2018/02/26 23:09:32 sevan Exp $
 #
 # GENERIC machine description file
 # 
@@ -28,7 +28,7 @@ include 	"arch/macppc/conf/std.macppc.601"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"GENERIC-$Revision: 1.19 $"
+ident 		"GENERIC-$Revision: 1.20 $"
 
 maxusers	32
 
@@ -238,8 +238,6 @@ genfb*		at pci? function ?
 # make sure the console display is always wsdisplay0
 wsdisplay0	at wsemuldisplaydev? console 1
 wsdisplay*	at wsemuldisplaydev?
-
-#macofcons0 at pci? dev ? function ?	# OpenFirmware console (for debugging)
 
 obio*	at pci? dev ? function ?
 

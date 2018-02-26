@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.106 2017/12/18 15:53:38 skrll Exp $
+#	$NetBSD: files.macppc,v 1.107 2018/02/26 23:09:32 sevan Exp $
 #
 # macppc-specific configuration info
 
@@ -264,10 +264,6 @@ device macgpio {}
 attach macgpio at obio with gpio_obio
 #attach gpio at macgpio with gpio_gpio
 file arch/macppc/dev/gpio.c			macgpio
-
-device macofcons: tty
-attach macofcons at pci
-file arch/macppc/dev/ofcons.c			macofcons needs-flag
 
 attach  com at mainbus with com_mainbus
 file    arch/macppc/dev/com_mainbus.c               com_mainbus

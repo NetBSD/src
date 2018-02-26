@@ -6,7 +6,7 @@ include 	"arch/macppc/conf/std.macppc.g5"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.30 $"
+#ident 		"GENERIC-$Revision: 1.31 $"
 
 maxusers	32
 
@@ -133,8 +133,6 @@ ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 #ofb*	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
 pciide* at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
 obio*	at pci? dev ? function ?
-macofcons0 at pci? dev ? function ?	# OpenFirmware console (for debugging)
-#macofcons0 at mainbus? 		# OpenFirmware console (for debugging)
 
 # PCI serial interfaces
 nvram*	at obio?			# nvram
