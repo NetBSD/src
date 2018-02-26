@@ -1,4 +1,4 @@
-/* $NetBSD: ipsec.c,v 1.135 2018/02/26 06:17:01 maxv Exp $ */
+/* $NetBSD: ipsec.c,v 1.136 2018/02/26 06:48:01 maxv Exp $ */
 /* $FreeBSD: src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $ */
 /* $KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $ */
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.135 2018/02/26 06:17:01 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.136 2018/02/26 06:48:01 maxv Exp $");
 
 /*
  * IPsec controller part.
@@ -1511,11 +1511,10 @@ ipsec6_set_policy(struct in6pcb *in6p, int optname, const void *request,
 	struct secpolicy **policy;
 
 	KASSERT(!cpu_softintr_p());
+	KASSERT(in6p != NULL);
 	KASSERT(in6p_locked(in6p));
+	KASSERT(request != NULL);
 
-	/* sanity check. */
-	if (in6p == NULL || request == NULL)
-		return EINVAL;
 	if (len < sizeof(*xpl))
 		return EINVAL;
 	xpl = (const struct sadb_x_policy *)request;
