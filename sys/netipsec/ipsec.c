@@ -1,4 +1,4 @@
-/* $NetBSD: ipsec.c,v 1.136 2018/02/26 06:48:01 maxv Exp $ */
+/* $NetBSD: ipsec.c,v 1.137 2018/02/26 08:42:16 maxv Exp $ */
 /* $FreeBSD: src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $ */
 /* $KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $ */
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.136 2018/02/26 06:48:01 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.137 2018/02/26 08:42:16 maxv Exp $");
 
 /*
  * IPsec controller part.
@@ -574,8 +574,8 @@ ipsec_getpolicybyaddr(struct mbuf *m, u_int dir, int flag, int *error)
 }
 
 static struct secpolicy *
-ipsec4_checkpolicy(struct mbuf *m, u_int dir, u_int flag, int *error,
-    struct inpcb *inp)
+ipsec_checkpolicy(struct mbuf *m, u_int dir, u_int flag, int *error,
+    void *inp)
 {
 	struct secpolicy *sp;
 
@@ -634,7 +634,7 @@ ipsec4_output(struct mbuf *m, struct inpcb *inp, int flags,
 	 * Check the security policy (SP) for the packet and, if required,
 	 * do IPsec-related processing.  There are two cases here; the first
 	 * time a packet is sent through it will be untagged and handled by
-	 * ipsec4_checkpolicy().  If the packet is resubmitted to ip_output
+	 * ipsec_checkpolicy().  If the packet is resubmitted to ip_output
 	 * (e.g. after AH, ESP, etc. processing), there will be a tag to
 	 * bypass the lookup and related policy checking.
 	 */
@@ -646,7 +646,7 @@ ipsec4_output(struct mbuf *m, struct inpcb *inp, int flags,
 		splx(s);
 		return 0;
 	}
-	sp = ipsec4_checkpolicy(m, IPSEC_DIR_OUTBOUND, flags, &error, inp);
+	sp = ipsec_checkpolicy(m, IPSEC_DIR_OUTBOUND, flags, &error, inp);
 
 	/*
 	 * There are four return cases:
@@ -749,7 +749,7 @@ ipsec4_input(struct mbuf *m, int flags)
 	 * it is a Fast Forward candidate.
 	 */
 	s = splsoftnet();
-	sp = ipsec4_checkpolicy(m, IPSEC_DIR_OUTBOUND, flags, &error, NULL);
+	sp = ipsec_checkpolicy(m, IPSEC_DIR_OUTBOUND, flags, &error, NULL);
 	if (sp != NULL) {
 		m->m_flags &= ~M_CANFASTFWD;
 		KEY_SP_UNREF(&sp);
@@ -805,55 +805,6 @@ ipsec4_forward(struct mbuf *m, int *destmtu)
 	KEY_SP_UNREF(&sp);
 	return 0;
 }
-
-#ifdef INET6
-struct secpolicy *
-ipsec6_checkpolicy(struct mbuf *m, u_int dir, u_int flag, int *error,
-    struct in6pcb *in6p)
-{
-	struct secpolicy *sp;
-
-	*error = 0;
-
-	if (in6p == NULL) {
-		sp = ipsec_getpolicybyaddr(m, dir, flag, error);
-	} else {
-		struct inpcb_hdr *inph = (struct inpcb_hdr *)in6p;
-		KASSERT(inph->inph_socket != NULL);
-		sp = ipsec_getpolicybysock(m, dir, inph, error);
-	}
-	if (sp == NULL) {
-		KASSERTMSG(*error != 0, "getpolicy failed w/o error");
-		IPSEC_STATINC(IPSEC_STAT_OUT_INVAL);
-		return NULL;
-	}
-	KASSERTMSG(*error == 0, "sp w/ error set to %u", *error);
-	switch (sp->policy) {
-	case IPSEC_POLICY_ENTRUST:
-	default:
-		printf("%s: invalid policy %u\n", __func__, sp->policy);
-		/* fall thru... */
-	case IPSEC_POLICY_DISCARD:
-		IPSEC_STATINC(IPSEC_STAT_OUT_POLVIO);
-		*error = -EINVAL;   /* packet is discarded by caller */
-		break;
-	case IPSEC_POLICY_BYPASS:
-	case IPSEC_POLICY_NONE:
-		KEY_SP_UNREF(&sp);
-		sp = NULL;		/* NB: force NULL result */
-		break;
-	case IPSEC_POLICY_IPSEC:
-		KASSERT(sp->req != NULL);
-		break;
-	}
-	if (*error != 0) {
-		KEY_SP_UNREF(&sp);
-		sp = NULL;
-		IPSECLOG(LOG_DEBUG, "done, error %d\n", *error);
-	}
-	return sp;
-}
-#endif /* INET6 */
 
 static int
 ipsec4_setspidx_inpcb(struct mbuf *m, struct inpcb *pcb)
@@ -2216,7 +2167,7 @@ ipsec6_check_policy(struct mbuf *m, struct in6pcb *in6p, int flags,
 			splx(s);
 			goto skippolicycheck;
 		}
-		sp = ipsec6_checkpolicy(m, IPSEC_DIR_OUTBOUND, flags, &error,
+		sp = ipsec_checkpolicy(m, IPSEC_DIR_OUTBOUND, flags, &error,
 		    in6p);
 
 		/*
