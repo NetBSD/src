@@ -6,7 +6,7 @@ include		"arch/macppc/conf/std.macppc.g5"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.24.12.1 $"
+#ident 		"GENERIC-$Revision: 1.24.12.2 $"
 
 maxusers	32
 
@@ -141,9 +141,6 @@ ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 
 # Other  PCI devices
 #ofb*	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
-# OFB_ENABLE_CACHE speeds up the console on many machines, but should
-# not be enabled on some older machines, such as the rev. A-D iMacs.
-#options 	OFB_ENABLE_CACHE	# Speed up console
 pciide* at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
 obio*	at pci? dev ? function ?
 macofcons0 at pci? dev ? function ?	# OpenFirmware console (for debugging)
