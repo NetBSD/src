@@ -1,4 +1,4 @@
-/* $NetBSD: imc.c,v 1.3 2018/02/26 05:01:21 pgoyette Exp $ */
+/* $NetBSD: imc.c,v 1.4 2018/02/26 05:47:03 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -376,8 +376,10 @@ imc_modcmd(modcmd_t cmd, void *opaque)
 			mutex_destroy(&imc_access_mutex);
 		break;
 	default:
+#ifdef _MODULE
 		error = ENOTTY;
 		break;
+#endif
 	}
 
 	return error;
