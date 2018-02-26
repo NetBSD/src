@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.27 2016/11/27 14:49:21 kamil Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.27.8.1 2018/02/26 00:49:48 snj Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -371,8 +371,7 @@ ENTRY(__byte_swap_u16_variable)
  * Load a new GDT pointer (and do any necessary cleanup).
  * XXX It's somewhat questionable whether reloading all the segment registers
  * is necessary, since the actual descriptor data is not changed except by
- * process creation and exit, both of which clean up via task switches.  OTOH,
- * this only happens at run time when the GDT is resized.
+ * process creation and exit, both of which clean up via task switches.
  */
 #ifndef XEN
 ENTRY(lgdt)
@@ -382,19 +381,21 @@ ENTRY(lgdt)
 	/* Flush the prefetch q. */
 	jmp	1f
 	nop
-1:	/* Reload "stale" selectors. */
-#else /* XEN */
+1:	jmp	_C_LABEL(lgdt_finish)
+END(lgdt)
+#endif
+
 /*
  * void lgdt_finish(void);
  * Reload segments after a GDT change
  */
 ENTRY(lgdt_finish)
-#endif /* XEN */
 	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
 	movl	%eax,%ds
 	movl	%eax,%es
 	movl	%eax,%ss
-	/* FALLTHROUGH */
+	jmp	_C_LABEL(x86_flush)
+END(lgdt_finish)
 
 /*
  * void x86_flush()
