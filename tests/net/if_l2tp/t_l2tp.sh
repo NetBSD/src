@@ -1,4 +1,4 @@
-#	$NetBSD: t_l2tp.sh,v 1.2.8.1 2017/10/21 19:43:55 snj Exp $
+#	$NetBSD: t_l2tp.sh,v 1.2.8.2 2018/02/26 00:41:13 snj Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -48,6 +48,29 @@ CLIENT2_LANIP6=fc00:1::2
 
 TIMEOUT=5
 DEBUG=${DEBUG:-false}
+
+atf_test_case l2tp_create_destroy cleanup
+l2tp_create_destroy_head()
+{
+
+	atf_set "descr" "Test creating/destroying l2tp interfaces"
+	atf_set "require.progs" "rump_server"
+}
+
+l2tp_create_destroy_body()
+{
+
+	rump_server_start $LAC1SOCK l2tp
+
+	test_create_destroy_common $LAC1SOCK l2tp0
+}
+
+l2tp_create_destroy_cleanup()
+{
+
+	$DEBUG && dump
+	cleanup
+}
 
 setup_lac()
 {
@@ -435,6 +458,9 @@ add_test_allproto()
 
 atf_init_test_cases()
 {
+
+	atf_add_test_case l2tp_create_destroy
+
 	add_test_allproto basic "basic tests"
 #	add_test_allproto recursive "recursive check tests"
 }

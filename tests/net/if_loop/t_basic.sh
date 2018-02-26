@@ -1,4 +1,4 @@
-#	$NetBSD: t_basic.sh,v 1.1 2017/02/28 03:32:11 ozaki-r Exp $
+#	$NetBSD: t_basic.sh,v 1.1.8.1 2018/02/26 00:41:14 snj Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -41,12 +41,7 @@ loop_create_destroy_body()
 
 	rump_server_start $SOCK_LOCAL netinet6
 
-	export RUMP_SERVER=${SOCK_LOCAL}
-
-	atf_check -s exit:0 rump.ifconfig lo1 create
-	atf_check -s exit:0 rump.ifconfig lo1 up
-	atf_check -s exit:0 rump.ifconfig lo1 down
-	atf_check -s exit:0 rump.ifconfig lo1 destroy
+	test_create_destroy_common $SOCK_LOCAL lo1 true
 }
 
 loop_create_destroy_cleanup()
