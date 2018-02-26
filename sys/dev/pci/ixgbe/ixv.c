@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.81 2018/02/22 10:02:08 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.82 2018/02/26 08:14:01 knakahara Exp $*/
 
 /******************************************************************************
 
@@ -664,6 +664,10 @@ ixv_detach(device_t dev, int flags)
 
 	ixgbe_free_transmit_structures(adapter);
 	ixgbe_free_receive_structures(adapter);
+	for (int i = 0; i < adapter->num_queues; i++) {
+		struct ix_queue *lque = &adapter->queues[i];
+		mutex_destroy(&lque->im_mtx);
+	}
 	free(adapter->queues, M_DEVBUF);
 
 	IXGBE_CORE_LOCK_DESTROY(adapter);
@@ -804,22 +808,36 @@ static inline void
 ixv_enable_queue(struct adapter *adapter, u32 vector)
 {
 	struct ixgbe_hw *hw = &adapter->hw;
+	struct ix_queue *que = &adapter->queues[vector];
 	u32             queue = 1 << vector;
 	u32             mask;
 
+	mutex_enter(&que->im_mtx);
+	if (que->im_nest > 0 && --que->im_nest > 0)
+		goto out;
+
 	mask = (IXGBE_EIMS_RTX_QUEUE & queue);
 	IXGBE_WRITE_REG(hw, IXGBE_VTEIMS, mask);
+out:
+	mutex_exit(&que->im_mtx);
 } /* ixv_enable_queue */
 
 static inline void
 ixv_disable_queue(struct adapter *adapter, u32 vector)
 {
 	struct ixgbe_hw *hw = &adapter->hw;
+	struct ix_queue *que = &adapter->queues[vector];
 	u64             queue = (u64)(1 << vector);
 	u32             mask;
 
+	mutex_enter(&que->im_mtx);
+	if (que->im_nest++ > 0)
+		goto  out;
+
 	mask = (IXGBE_EIMS_RTX_QUEUE & queue);
 	IXGBE_WRITE_REG(hw, IXGBE_VTEIMC, mask);
+out:
+	mutex_exit(&que->im_mtx);
 } /* ixv_disable_queue */
 
 static inline void
@@ -1923,8 +1941,16 @@ ixv_enable_intr(struct adapter *adapter)
 static void
 ixv_disable_intr(struct adapter *adapter)
 {
+	struct ix_queue	*que = adapter->queues;
+
 	IXGBE_WRITE_REG(&adapter->hw, IXGBE_VTEIAC, 0);
-	IXGBE_WRITE_REG(&adapter->hw, IXGBE_VTEIMC, ~0);
+
+	/* disable interrupts other than queues */
+	IXGBE_WRITE_REG(&adapter->hw, IXGBE_VTEIMC, adapter->vector);
+
+	for (int i = 0; i < adapter->num_queues; i++, que++)
+		ixv_disable_queue(adapter, que->msix);
+
 	IXGBE_WRITE_FLUSH(&adapter->hw);
 
 	return;
