@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.56.2.5 2018/01/13 21:40:01 snj Exp $*/
+/*$NetBSD: ixv.c,v 1.56.2.6 2018/02/26 00:25:16 snj Exp $*/
 
 /******************************************************************************
 
@@ -1527,6 +1527,10 @@ ixv_initialize_rss_mapping(struct adapter *adapter)
 	int             i, j;
 	u32             rss_hash_config;
 
+	/* force use default RSS key. */
+#ifdef __NetBSD__
+	rss_getkey((uint8_t *) &rss_key);
+#else
 	if (adapter->feat_en & IXGBE_FEATURE_RSS) {
 		/* Fetch the configured RSS key */
 		rss_getkey((uint8_t *)&rss_key);
@@ -1534,6 +1538,7 @@ ixv_initialize_rss_mapping(struct adapter *adapter)
 		/* set up random bits */
 		cprng_fast(&rss_key, sizeof(rss_key));
 	}
+#endif
 
 	/* Now fill out hash function seeds */
 	for (i = 0; i < 10; i++)

@@ -1,4 +1,4 @@
-#	$NetBSD: files.net,v 1.13.6.1 2018/02/11 21:17:34 snj Exp $
+#	$NetBSD: files.net,v 1.13.6.2 2018/02/26 00:25:16 snj Exp $
 
 # XXX CLEANUP
 define	net
@@ -48,6 +48,7 @@ file	net/radix.c			net
 file	net/raw_cb.c			net
 file	net/raw_usrreq.c		net
 file	net/route.c			net
+file	net/rss_config.c		net
 file	net/rtbl.c			net
 file	net/rtsock.c			net
 file	net/slcompress.c		sl | ppp | strip | (irip & irip_vj)

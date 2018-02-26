@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.508.4.14 2018/02/26 00:00:53 snj Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.508.4.15 2018/02/26 00:25:16 snj Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.508.4.14 2018/02/26 00:00:53 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.508.4.15 2018/02/26 00:25:16 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -115,6 +115,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.508.4.14 2018/02/26 00:00:53 snj Exp $")
 #include <net/if_ether.h>
 
 #include <net/bpf.h>
+
+#include <net/rss_config.h>
 
 #include <netinet/in.h>			/* XXX for struct ip */
 #include <netinet/in_systm.h>		/* XXX for struct ip */
@@ -715,7 +717,6 @@ static void	wm_flush_desc_rings(struct wm_softc *);
 static void	wm_reset(struct wm_softc *);
 static int	wm_add_rxbuf(struct wm_rxqueue *, int);
 static void	wm_rxdrain(struct wm_rxqueue *);
-static void	wm_rss_getkey(uint8_t *);
 static void	wm_init_rss(struct wm_softc *);
 static void	wm_adjust_qnum(struct wm_softc *, int);
 static inline bool	wm_is_using_msix(struct wm_softc *);
@@ -4838,43 +4839,6 @@ wm_rxdrain(struct wm_rxqueue *rxq)
 	}
 }
 
-
-/*
- * XXX copy from FreeBSD's sys/net/rss_config.c
- */
-/*
- * RSS secret key, intended to prevent attacks on load-balancing.  Its
- * effectiveness may be limited by algorithm choice and available entropy
- * during the boot.
- *
- * XXXRW: And that we don't randomize it yet!
- *
- * This is the default Microsoft RSS specification key which is also
- * the Chelsio T5 firmware default key.
- */
-#define RSS_KEYSIZE 40
-static uint8_t wm_rss_key[RSS_KEYSIZE] = {
-	0x6d, 0x5a, 0x56, 0xda, 0x25, 0x5b, 0x0e, 0xc2,
-	0x41, 0x67, 0x25, 0x3d, 0x43, 0xa3, 0x8f, 0xb0,
-	0xd0, 0xca, 0x2b, 0xcb, 0xae, 0x7b, 0x30, 0xb4,
-	0x77, 0xcb, 0x2d, 0xa3, 0x80, 0x30, 0xf2, 0x0c,
-	0x6a, 0x42, 0xb7, 0x3b, 0xbe, 0xac, 0x01, 0xfa,
-};
-
-/*
- * Caller must pass an array of size sizeof(rss_key).
- *
- * XXX
- * As if_ixgbe may use this function, this function should not be
- * if_wm specific function.
- */
-static void
-wm_rss_getkey(uint8_t *key)
-{
-
-	memcpy(key, wm_rss_key, sizeof(wm_rss_key));
-}
-
 /*
  * Setup registers for RSS.
  *
@@ -4886,7 +4850,7 @@ wm_init_rss(struct wm_softc *sc)
 	uint32_t mrqc, reta_reg, rss_key[RSSRK_NUM_REGS];
 	int i;
 
-	CTASSERT(sizeof(rss_key) == sizeof(wm_rss_key));
+	CTASSERT(sizeof(rss_key) == RSS_KEYSIZE);
 
 	for (i = 0; i < RETA_NUM_ENTRIES; i++) {
 		int qid, reta_ent;
@@ -4912,7 +4876,7 @@ wm_init_rss(struct wm_softc *sc)
 		CSR_WRITE(sc, WMREG_RETA_Q(i), reta_reg);
 	}
 
-	wm_rss_getkey((uint8_t *)rss_key);
+	rss_getkey((uint8_t *)rss_key);
 	for (i = 0; i < RSSRK_NUM_REGS; i++)
 		CSR_WRITE(sc, WMREG_RSSRK(i), rss_key[i]);
 
