@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_input.c,v 1.60 2018/02/26 06:53:22 maxv Exp $	*/
+/*	$NetBSD: ipsec_input.c,v 1.61 2018/02/26 06:58:56 maxv Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/ipsec_input.c,v 1.2.4.2 2003/03/28 20:32:53 sam Exp $	*/
 /*	$OpenBSD: ipsec_input.c,v 1.63 2003/02/20 18:35:43 deraadt Exp $	*/
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.60 2018/02/26 06:53:22 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.61 2018/02/26 06:58:56 maxv Exp $");
 
 /*
  * IPsec input processing.
@@ -332,6 +332,9 @@ ipsec4_common_input_cb(struct mbuf *m, struct secasvar *sav,
 	if (__predict_false(m == NULL)) {
 		panic("%s: NULL mbuf", __func__);
 	}
+	if (__predict_false(skip < sizeof(struct ip))) {
+		panic("%s: short skip", __func__);
+	}
 
 	KASSERT(sav != NULL);
 	saidx = &sav->sah->saidx;
@@ -342,29 +345,26 @@ ipsec4_common_input_cb(struct mbuf *m, struct secasvar *sav,
 	    sproto == IPPROTO_IPCOMP,
 	    "unexpected security protocol %u", sproto);
 
-	/* Fix IPv4 header */
-	if (skip != 0) {
-		if (m->m_len < skip && (m = m_pullup(m, skip)) == NULL) {
-			char buf[IPSEC_ADDRSTRLEN];
+	/*
+	 * Update the IPv4 header. The length of the packet may have changed,
+	 * so fix it, and recompute the checksum.
+	 */
+	if (m->m_len < skip && (m = m_pullup(m, skip)) == NULL) {
+		char buf[IPSEC_ADDRSTRLEN];
 cantpull:
-			IPSECLOG(LOG_DEBUG,
-			    "processing failed for SA %s/%08lx\n",
-			    ipsec_address(&sav->sah->saidx.dst, buf,
-			    sizeof(buf)), (u_long) ntohl(sav->spi));
-			IPSEC_ISTAT(sproto, ESP_STAT_HDROPS, AH_STAT_HDROPS,
-			    IPCOMP_STAT_HDROPS);
-			error = ENOBUFS;
-			goto bad;
-		}
-
-		ip = mtod(m, struct ip *);
-		ip->ip_len = htons(m->m_pkthdr.len);
-		ip->ip_sum = 0;
-		ip->ip_sum = in_cksum(m, ip->ip_hl << 2);
-	} else {
-		/* XXX this branch is never taken */
-		ip = mtod(m, struct ip *);
+		IPSECLOG(LOG_DEBUG,
+		    "processing failed for SA %s/%08lx\n",
+		    ipsec_address(&sav->sah->saidx.dst, buf,
+		    sizeof(buf)), (u_long) ntohl(sav->spi));
+		IPSEC_ISTAT(sproto, ESP_STAT_HDROPS, AH_STAT_HDROPS,
+		    IPCOMP_STAT_HDROPS);
+		error = ENOBUFS;
+		goto bad;
 	}
+	ip = mtod(m, struct ip *);
+	ip->ip_len = htons(m->m_pkthdr.len);
+	ip->ip_sum = 0;
+	ip->ip_sum = in_cksum(m, ip->ip_hl << 2);
 
 	/*
 	 * Update TCP/UDP checksum
@@ -692,6 +692,7 @@ ipsec6_common_input_cb(struct mbuf *m, struct secasvar *sav, int skip,
 		nxt = (*inet6sw[ip6_protox[nxt]].pr_input)(&m, &skip, nxt);
 	}
 	return 0;
+
 bad:
 	if (m)
 		m_freem(m);
