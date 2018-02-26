@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.68 2018/02/21 17:04:52 maxv Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.69 2018/02/26 06:34:39 maxv Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.68 2018/02/21 17:04:52 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.69 2018/02/26 06:34:39 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -739,7 +739,13 @@ ipsec6_process_packet(struct mbuf *m, const struct ipsecrequest *isr)
 	KASSERT(sav != NULL);
 	dst = &sav->sah->saidx.dst;
 
-	ip6 = mtod(m, struct ip6_hdr *); /* XXX */
+	if (m->m_len < sizeof(struct ip6_hdr)) {
+		if ((m = m_pullup(m,sizeof(struct ip6_hdr))) == NULL) {
+			error = ENOBUFS;
+			goto unrefsav;
+		}
+	}
+	ip6 = mtod(m, struct ip6_hdr *);
 
 	/* Do the appropriate encapsulation, if necessary */
 	if (isr->saidx.mode == IPSEC_MODE_TUNNEL || /* Tunnel requ'd */
@@ -749,21 +755,13 @@ ipsec6_process_packet(struct mbuf *m, const struct ipsecrequest *isr)
 	     (!in6_sa_equal_addrwithscope(&dst->sin6, &ip6->ip6_dst)))) {
 		struct mbuf *mp;
 
-		/* Fix IPv6 header payload length. */
-		if (m->m_len < sizeof(struct ip6_hdr)) {
-			if ((m = m_pullup(m,sizeof(struct ip6_hdr))) == NULL) {
-				error = ENOBUFS;
-				goto unrefsav;
-			}
-		}
-
 		if (m->m_pkthdr.len - sizeof(*ip6) > IPV6_MAXPACKET) {
 			/* No jumbogram support. */
 			error = ENXIO;   /*XXX*/
 			goto unrefsav;
 		}
 
-		ip6 = mtod(m, struct ip6_hdr *);
+		/* Fix IPv6 header payload length. */
 		ip6->ip6_plen = htons(m->m_pkthdr.len - sizeof(*ip6));
 
 		/* Encapsulate the packet */
