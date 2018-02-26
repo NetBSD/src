@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.220 2018/02/12 12:52:12 maxv Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.221 2018/02/26 09:04:29 maxv Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.220 2018/02/12 12:52:12 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.221 2018/02/26 09:04:29 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2008,7 +2008,7 @@ icmp6_rip6_input(struct mbuf **mp, int off)
 			 * Check AH/ESP integrity
 			 */
 			if (!ipsec_used ||
-			    (ipsec_used && !ipsec6_in_reject(m, last)))
+			    (ipsec_used && !ipsec_in_reject(m, last)))
 #endif
 			if ((n = m_copy(m, 0, (int)M_COPYALL)) != NULL) {
 				if (last->in6p_flags & IN6P_CONTROLOPTS)
@@ -2030,7 +2030,7 @@ icmp6_rip6_input(struct mbuf **mp, int off)
 	}
 
 #ifdef IPSEC
-	if (ipsec_used && last && ipsec6_in_reject(m, last)) {
+	if (ipsec_used && last && ipsec_in_reject(m, last)) {
 		m_freem(m);
 		IP6_STATDEC(IP6_STAT_DELIVERED);
 		/* do not inject data into pcb */
