@@ -1,4 +1,4 @@
-/* $NetBSD: ipsec.c,v 1.140 2018/02/26 10:19:13 maxv Exp $ */
+/* $NetBSD: ipsec.c,v 1.141 2018/02/26 10:36:24 maxv Exp $ */
 /* $FreeBSD: src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $ */
 /* $KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $ */
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.140 2018/02/26 10:19:13 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.141 2018/02/26 10:36:24 maxv Exp $");
 
 /*
  * IPsec controller part.
@@ -723,20 +723,10 @@ ipsec4_input(struct mbuf *m, int flags)
 	int error, s;
 
 	s = splsoftnet();
-	sp = ipsec_getpolicybyaddr(m, IPSEC_DIR_INBOUND, IP_FORWARDING, &error);
-	if (sp == NULL) {
-		splx(s);
-		return EINVAL;
-	}
-
-	/*
-	 * Check security policy against packet attributes.
-	 */
-	error = ipsec_sp_reject(sp, m);
-	KEY_SP_UNREF(&sp);
+	error = ipsec_in_reject(m, NULL);
 	splx(s);
 	if (error) {
-		return error;
+		return EINVAL;
 	}
 
 	if (flags == 0) {
@@ -1702,9 +1692,6 @@ ipsec_sp_reject(const struct secpolicy *sp, const struct mbuf *m)
 
 /*
  * Check security policy requirements.
- *
- * This function is called from tcp{6}_input(), udp{6}_input(),
- * and {ah,esp}_input for tunnel mode
  */
 int
 ipsec_in_reject(struct mbuf *m, void *inp)
@@ -2135,24 +2122,16 @@ skippolicycheck:;
 int
 ipsec6_input(struct mbuf *m)
 {
-	struct secpolicy *sp;
 	int s, error;
 
 	s = splsoftnet();
-	sp = ipsec_getpolicybyaddr(m, IPSEC_DIR_INBOUND, IP_FORWARDING, &error);
-	if (sp == NULL) {
-		splx(s);
+	error = ipsec_in_reject(m, NULL);
+	splx(s);
+	if (error) {
 		return EINVAL;
 	}
 
-	/*
-	 * Check security policy against packet attributes.
-	 */
-	error = ipsec_sp_reject(sp, m);
-	KEY_SP_UNREF(&sp);
-	splx(s);
-
-	return error;
+	return 0;
 }
 #endif /* INET6 */
 
