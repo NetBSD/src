@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.484 2018/01/27 21:46:54 pgoyette Exp $
+# $NetBSD: GENERIC,v 1.485 2018/02/26 05:52:50 maxv Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.484 $"
+#ident		"GENERIC-$Revision: 1.485 $"
 
 maxusers	64		# estimated number of users
 
@@ -75,7 +75,7 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # CPU-related options
 #options 	USER_LDT	# user-settable LDT; used by WINE
-#options 	SVS		# Separate Virtual Space
+options 	SVS		# Separate Virtual Space
 
 # CPU features
 acpicpu*	at cpu?		# ACPI CPU (including frequency scaling)
