@@ -1,4 +1,4 @@
-/* $NetBSD: imc.c,v 1.2 2018/02/26 04:31:32 pgoyette Exp $ */
+/* $NetBSD: imc.c,v 1.3 2018/02/26 05:01:21 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -243,7 +243,7 @@ imc_rescan(device_t self, const char * ifattr, const int *flags)
 		child = config_found_ia(self, "imc", &imca, NULL);
 
 		if (child == NULL) {
-			aprint_normal_dev(self, "Child %d imcsmb not added\n",
+			aprint_debug_dev(self, "Child %d imcsmb not added\n",
 			    unit);
 		}
 		sc->sc_smbchild[unit] = child;
