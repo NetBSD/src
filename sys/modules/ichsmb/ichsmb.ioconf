@@ -1,0 +1,10 @@
+#       $NetBSD: ichsmb.ioconf,v 1.1 2018/02/26 07:29:25 pgoyette Exp $
+
+ioconf ichsmb
+
+include "conf/files"
+include "dev/pci/files.pci"
+
+pseudo-root pci*
+
+ichsmb* at pci? dev ? func ?
