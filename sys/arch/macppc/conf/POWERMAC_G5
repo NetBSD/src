@@ -151,9 +151,6 @@ wsmouse* at ums?
 
 # Other  PCI devices
 #ofb*	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
-# OFB_ENABLE_CACHE speeds up the console on many machines, but should
-# not be enabled on some older machines, such as the rev. A-D iMacs.
-#options 	OFB_ENABLE_CACHE	# Speed up console
 pciide* at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
 svwsata* at pci? dev ? function ?		# ServerWorks SATA controllers
 obio*	at pci? dev ? function ?
