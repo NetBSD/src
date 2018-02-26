@@ -1,4 +1,4 @@
-/* $NetBSD: ipsec.c,v 1.137 2018/02/26 08:42:16 maxv Exp $ */
+/* $NetBSD: ipsec.c,v 1.138 2018/02/26 08:50:25 maxv Exp $ */
 /* $FreeBSD: src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $ */
 /* $KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $ */
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.137 2018/02/26 08:42:16 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.138 2018/02/26 08:50:25 maxv Exp $");
 
 /*
  * IPsec controller part.
@@ -778,7 +778,7 @@ ipsec4_forward(struct mbuf *m, int *destmtu)
 	}
 
 	/* Count IPsec header size. */
-	ipsechdr = ipsec4_hdrsiz(m, IPSEC_DIR_OUTBOUND, NULL);
+	ipsechdr = ipsec_hdrsiz(m, IPSEC_DIR_OUTBOUND, NULL);
 
 	/*
 	 * Find the correct route for outer IPv4 header, compute tunnel MTU.
@@ -1845,7 +1845,7 @@ ipsec_sp_hdrsiz(const struct secpolicy *sp, const struct mbuf *m)
 }
 
 size_t
-ipsec4_hdrsiz(struct mbuf *m, u_int dir, struct inpcb *inp)
+ipsec_hdrsiz(struct mbuf *m, u_int dir, void *inp)
 {
 	struct inpcb_hdr *inph = (struct inpcb_hdr *)inp;
 	struct secpolicy *sp;
@@ -1871,36 +1871,6 @@ ipsec4_hdrsiz(struct mbuf *m, u_int dir, struct inpcb *inp)
 
 	return size;
 }
-
-#ifdef INET6
-size_t
-ipsec6_hdrsiz(struct mbuf *m, u_int dir, struct in6pcb *in6p)
-{
-	struct inpcb_hdr *inph = (struct inpcb_hdr *)in6p;
-	struct secpolicy *sp;
-	int error;
-	size_t size;
-
-	KASSERT(m != NULL);
-	KASSERTMSG(inph == NULL || inph->inph_socket != NULL,
-	    "socket w/o inpcb");
-
-	if (inph == NULL)
-		sp = ipsec_getpolicybyaddr(m, dir, IP_FORWARDING, &error);
-	else
-		sp = ipsec_getpolicybysock(m, dir, inph, &error);
-
-	if (sp != NULL) {
-		size = ipsec_sp_hdrsiz(sp, m);
-		KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_DATA, "size:%zu.\n", size);
-		KEY_SP_UNREF(&sp);
-	} else {
-		size = 0;
-	}
-
-	return size;
-}
-#endif
 
 /*
  * Check the variable replay window.
