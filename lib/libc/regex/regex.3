@@ -1,4 +1,4 @@
-.\"	$NetBSD: regex.3,v 1.25 2017/07/03 21:32:49 wiz Exp $
+.\"	$NetBSD: regex.3,v 1.26 2018/02/26 14:04:43 kamil Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -65,7 +65,7 @@
 .\"
 .\"	@(#)regex.3	8.4 (Berkeley) 3/20/94
 .\"
-.Dd January 8, 2016
+.Dd February 26, 2018
 .Dt REGEX 3
 .Os
 .Sh NAME
@@ -509,6 +509,9 @@ array must be at least 10 elements long, and should contain the result
 of the matches from a previous
 .Fn regexec
 call.
+Only 10 elements of the
+.Fa rm
+array can be used.
 The
 .Fa str
 argument contains the source string to apply the transformation to.
