@@ -115,6 +115,8 @@ imcsmb_attach(device_t parent, device_t self, void *aux)
 	struct imcsmb_softc *sc = device_private(self);
 	struct imc_attach_args *imca = aux;
 
+	aprint_normal_dev(self, ": SMBus controller\n");
+
 	/* Initialize private state */
 	sc->sc_dev = self;
 	sc->sc_regs = imca->ia_regs;
@@ -344,13 +346,13 @@ imcsmb_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 	 * is idle before issuing a command. We can safely timeout after 35 ms,
 	 * as this is the maximum time the SMBus spec allows for a transaction.
 	 */
-	for (i = 40; i != 0; i--) {
+	for (i = 4; i != 0; i--) {
 		stat_val = pci_conf_read(sc->sc_pci_chipset_tag,
 		    sc->sc_pci_tag, sc->sc_regs->smb_stat);
 		if (! (stat_val & IMCSMB_STATUS_BUSY_BIT)) {
 			break;
 		}
-		delay(1000);	/* wait 1ms */
+		delay(100);	/* wait 10ms */
 	}
 
 	if (i == 0) {
