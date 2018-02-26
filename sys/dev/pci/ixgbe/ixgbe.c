@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.88.2.9 2018/02/26 00:25:16 snj Exp $ */
+/* $NetBSD: ixgbe.c,v 1.88.2.10 2018/02/26 13:55:54 martin Exp $ */
 
 /******************************************************************************
 
@@ -207,6 +207,7 @@ static void     ixgbe_update_link_status(struct adapter *);
 static void	ixgbe_set_ivar(struct adapter *, u8, u8, s8);
 static void	ixgbe_configure_ivars(struct adapter *);
 static u8 *	ixgbe_mc_array_itr(struct ixgbe_hw *, u8 **, u32 *);
+static void	ixgbe_eitr_write(struct ix_queue *, uint32_t);
 
 static void	ixgbe_setup_vlan_hw_support(struct adapter *);
 #if 0
@@ -2337,8 +2338,8 @@ get_parent_info:
 	}
 	/* ...and read the Link Status Register */
 	link = pci_conf_read(adapter->osdep.pc, adapter->osdep.tag,
-	    offset + PCIE_LCSR);
-	ixgbe_set_pci_config_data_generic(hw, link >> 16);
+	    offset + PCIE_LCSR) >> 16;
+	ixgbe_set_pci_config_data_generic(hw, link);
 
 display:
 	device_printf(dev, "PCI Express Bus: Speed %s Width %s\n",
@@ -2465,8 +2466,7 @@ ixgbe_msix_que(void *arg)
 	 *    the last interval.
 	 */
 	if (que->eitr_setting)
-		IXGBE_WRITE_REG(&adapter->hw, IXGBE_EITR(que->msix),
-		    que->eitr_setting);
+		ixgbe_eitr_write(que, que->eitr_setting);
 
 	que->eitr_setting = 0;
 
@@ -2489,11 +2489,18 @@ ixgbe_msix_que(void *arg)
 	else
 		newitr = (newitr / 2);
 
-        if (adapter->hw.mac.type == ixgbe_mac_82598EB)
-                newitr |= newitr << 16;
-        else
-                newitr |= IXGBE_EITR_CNT_WDIS;
-                 
+	/*
+	 * When RSC is used, ITR interval must be larger than RSC_DELAY.
+	 * Currently, we use 2us for RSC_DELAY. The minimum value is always
+	 * greater than 2us on 100M (and 10M?(not documented)), but it's not
+	 * on 1G and higher.
+	 */
+	if ((adapter->link_speed != IXGBE_LINK_SPEED_100_FULL)
+	    && (adapter->link_speed != IXGBE_LINK_SPEED_10_FULL)) {
+		if (newitr < IXGBE_MIN_RSC_EITR_10G1G)
+			newitr = IXGBE_MIN_RSC_EITR_10G1G;
+	}
+
         /* save for next interrupt */
         que->eitr_setting = newitr;
 
@@ -2831,6 +2838,12 @@ ixgbe_msix_link(void *arg)
 	IXGBE_WRITE_REG(hw, IXGBE_EIMC, IXGBE_EIMC_OTHER);
 
 	/* First get the cause */
+	/*
+	 * The specifications of 82598, 82599, X540 and X550 say EICS register
+	 * is write only. However, Linux says it is a workaround for silicon
+	 * errata to read EICS instead of EICR to get interrupt cause. It seems
+	 * there is a problem about read clear mechanism for EICR register.
+	 */
 	eicr = IXGBE_READ_REG(hw, IXGBE_EICS);
 	/* Be sure the queue bits are not cleared */
 	eicr &= ~IXGBE_EICR_RTX_QUEUE;
@@ -2933,6 +2946,21 @@ ixgbe_msix_link(void *arg)
 	return 1;
 } /* ixgbe_msix_link */
 
+static void
+ixgbe_eitr_write(struct ix_queue *que, uint32_t itr)
+{
+	struct adapter *adapter = que->adapter;
+	
+        if (adapter->hw.mac.type == ixgbe_mac_82598EB)
+                itr |= itr << 16;
+        else
+                itr |= IXGBE_EITR_CNT_WDIS;
+
+	IXGBE_WRITE_REG(&adapter->hw, IXGBE_EITR(que->msix),
+	    itr);
+}
+
+
 /************************************************************************
  * ixgbe_sysctl_interrupt_rate_handler
  ************************************************************************/
@@ -2941,6 +2969,7 @@ ixgbe_sysctl_interrupt_rate_handler(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node = *rnode;
 	struct ix_queue *que = (struct ix_queue *)node.sysctl_data;
+	struct adapter  *adapter = que->adapter;
 	uint32_t reg, usec, rate;
 	int error;
 
@@ -2957,14 +2986,26 @@ ixgbe_sysctl_interrupt_rate_handler(SYSCTLFN_ARGS)
 	if (error || newp == NULL)
 		return error;
 	reg &= ~0xfff; /* default, no limitation */
-	ixgbe_max_interrupt_rate = 0;
 	if (rate > 0 && rate < 500000) {
 		if (rate < 1000)
 			rate = 1000;
-		ixgbe_max_interrupt_rate = rate;
 		reg |= ((4000000/rate) & 0xff8);
-	}
-	IXGBE_WRITE_REG(&que->adapter->hw, IXGBE_EITR(que->msix), reg);
+		/*
+		 * When RSC is used, ITR interval must be larger than
+		 * RSC_DELAY. Currently, we use 2us for RSC_DELAY.
+		 * The minimum value is always greater than 2us on 100M
+		 * (and 10M?(not documented)), but it's not on 1G and higher.
+		 */
+		if ((adapter->link_speed != IXGBE_LINK_SPEED_100_FULL)
+		    && (adapter->link_speed != IXGBE_LINK_SPEED_10_FULL)) {
+			if ((adapter->num_queues > 1)
+			    && (reg < IXGBE_MIN_RSC_EITR_10G1G))
+				return EINVAL;
+		}
+		ixgbe_max_interrupt_rate = rate;
+	} else
+		ixgbe_max_interrupt_rate = 0;
+	ixgbe_eitr_write(que, reg);
 
 	return (0);
 } /* ixgbe_sysctl_interrupt_rate_handler */
@@ -3779,6 +3820,9 @@ ixgbe_init_locked(struct adapter *adapter)
 		IXGBE_WRITE_REG(hw, IXGBE_CTRL_EXT, ctrl_ext);
 	}
 
+	/* Update saved flags. See ixgbe_ifflags_cb() */
+	adapter->if_flags = ifp->if_flags;
+
 	/* Now inform the stack we're ready */
 	ifp->if_flags |= IFF_RUNNING;
 
@@ -3883,7 +3927,7 @@ ixgbe_configure_ivars(struct adapter *adapter)
 		/* ... and the TX */
 		ixgbe_set_ivar(adapter, txr->me, que->msix, 1);
 		/* Set an Initial EITR value */
-		IXGBE_WRITE_REG(&adapter->hw, IXGBE_EITR(que->msix), newitr);
+		ixgbe_eitr_write(que, newitr);
 	}
 
 	/* For the Link interrupt */
@@ -5717,13 +5761,14 @@ ixgbe_handle_que(void *context)
 	struct adapter  *adapter = que->adapter;
 	struct tx_ring  *txr = que->txr;
 	struct ifnet    *ifp = adapter->ifp;
+	bool		more = false;
 
 	adapter->handleq.ev_count++;
 
 	if (ifp->if_flags & IFF_RUNNING) {
-		ixgbe_rxeof(que);
+		more = ixgbe_rxeof(que);
 		IXGBE_TX_LOCK(txr);
-		ixgbe_txeof(txr);
+		more |= ixgbe_txeof(txr);
 		if (!(adapter->feat_en & IXGBE_FEATURE_LEGACY_TX))
 			if (!ixgbe_mq_ring_empty(ifp, txr->txr_interq))
 				ixgbe_mq_start_locked(ifp, txr);
@@ -5735,10 +5780,12 @@ ixgbe_handle_que(void *context)
 		IXGBE_TX_UNLOCK(txr);
 	}
 
-	/* Re-enable this interrupt */
-	if (que->res != NULL)
+	if (more)
+		softint_schedule(que->que_si);
+	else if (que->res != NULL) {
+		/* Re-enable this interrupt */
 		ixgbe_enable_queue(adapter, que->msix);
-	else
+	} else
 		ixgbe_enable_intr(adapter);
 
 	return;

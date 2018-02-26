@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.24.6.2 2017/12/21 19:28:54 snj Exp $ */
+/* $NetBSD: ixgbe.h,v 1.24.6.3 2018/02/26 13:55:54 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -717,7 +717,7 @@ int  ixgbe_setup_transmit_structures(struct adapter *);
 void ixgbe_free_transmit_structures(struct adapter *);
 int  ixgbe_setup_receive_structures(struct adapter *);
 void ixgbe_free_receive_structures(struct adapter *);
-void ixgbe_txeof(struct tx_ring *);
+bool ixgbe_txeof(struct tx_ring *);
 bool ixgbe_rxeof(struct ix_queue *);
 
 const struct sysctlnode *ixgbe_sysctl_instance(struct adapter *);
