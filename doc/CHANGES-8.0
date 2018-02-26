@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.130 2018/02/26 01:31:19 snj Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.131 2018/02/26 04:32:29 snj Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -9726,34 +9726,6 @@ tests/lib/libc/sys/t_ptrace_x86_wait.h		1.2-1.3
 	This mostly disables a few tests that fail or hang various
 	test environments.
 	[martin, ticket #586]
-
-sys/arch/aarch64/include/mcontext.h		1.2
-sys/arch/alpha/include/mcontext.h		1.9
-sys/arch/amd64/include/mcontext.h		1.19
-sys/arch/arm/include/mcontext.h			1.19
-sys/arch/hppa/include/mcontext.h		1.9
-sys/arch/i386/include/mcontext.h		1.14
-sys/arch/ia64/include/mcontext.h		1.6
-sys/arch/m68k/include/mcontext.h		1.10
-sys/arch/mips/include/mcontext.h		1.22
-sys/arch/or1k/include/mcontext.h		1.2
-sys/arch/powerpc/include/mcontext.h		1.18
-sys/arch/riscv/include/mcontext.h		1.5
-sys/arch/sh3/include/mcontext.h			1.11
-sys/arch/sparc/include/mcontext.h		1.14-1.17
-sys/arch/sparc64/include/mcontext.h		1.10
-sys/arch/vax/include/mcontext.h			1.9
-tests/lib/libc/sys/Makefile			1.50
-tests/lib/libc/sys/t_ucontext.c			1.2
-
-	- Introduce _UC_MACHINE_FP().  _UC_MACHINE_FP() is a helper
-	  macro to extract from mcontext a frame pointer.
-	- Add new tests in lib/libc/sys/t_ucontext:
-	  * ucontext_sp (testing _UC_MACHINE_SP)
-	  * ucontext_fp (testing _UC_MACHINE_FP)
-	  * ucontext_pc (testing _UC_MACHINE_PC)
-	  * ucontext_intrv (testing _UC_MACHINE_INTRV)
-	[kamil, ticket #552]
 
 include/string.h				1.52
 
