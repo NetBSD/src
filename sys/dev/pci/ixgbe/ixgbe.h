@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.30 2018/02/22 10:02:08 msaitoh Exp $ */
+/* $NetBSD: ixgbe.h,v 1.31 2018/02/26 04:19:00 knakahara Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -335,6 +335,9 @@ struct ix_queue {
 	struct evcnt     irqs;
 	char             namebuf[32];
 	char             evnamebuf[32];
+
+	kmutex_t         im_mtx;	/* lock for im_nest and this queue's EIMS/EIMC bit */
+	int              im_nest;
 };
 
 /*
