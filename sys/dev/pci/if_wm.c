@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.508.4.13 2018/02/05 15:07:30 martin Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.508.4.14 2018/02/26 00:00:53 snj Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.508.4.13 2018/02/05 15:07:30 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.508.4.14 2018/02/26 00:00:53 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -775,8 +775,8 @@ static void	wm_nq_send_common_locked(struct ifnet *, struct wm_txqueue *, bool);
 static void	wm_deferred_start_locked(struct wm_txqueue *);
 static void	wm_handle_queue(void *);
 /* Interrupt */
-static int	wm_txeof(struct wm_txqueue *, u_int);
-static void	wm_rxeof(struct wm_rxqueue *, u_int);
+static bool	wm_txeof(struct wm_txqueue *, u_int);
+static bool	wm_rxeof(struct wm_rxqueue *, u_int);
 static void	wm_linkintr_gmii(struct wm_softc *, uint32_t);
 static void	wm_linkintr_tbi(struct wm_softc *, uint32_t);
 static void	wm_linkintr_serdes(struct wm_softc *, uint32_t);
@@ -8066,7 +8066,7 @@ wm_deferred_start_locked(struct wm_txqueue *txq)
  *
  *	Helper; handle transmit interrupts.
  */
-static int
+static bool
 wm_txeof(struct wm_txqueue *txq, u_int limit)
 {
 	struct wm_softc *sc = txq->txq_sc;
@@ -8076,11 +8076,12 @@ wm_txeof(struct wm_txqueue *txq, u_int limit)
 	int i;
 	uint8_t status;
 	struct wm_queue *wmq = container_of(txq, struct wm_queue, wmq_txq);
+	bool more = false;
 
 	KASSERT(mutex_owned(txq->txq_lock));
 
 	if (txq->txq_stopping)
-		return 0;
+		return false;
 
 	txq->txq_flags &= ~WM_TXQ_NO_SPACE;
 	/* for ALTQ and legacy(not use multiqueue) ethernet controller */
@@ -8093,8 +8094,13 @@ wm_txeof(struct wm_txqueue *txq, u_int limit)
 	 */
 	for (i = txq->txq_sdirty; txq->txq_sfree != WM_TXQUEUELEN(txq);
 	     i = WM_NEXTTXS(txq, i), txq->txq_sfree++) {
-		if (limit-- == 0)
+		if (limit-- == 0) {
+			more = true;
+			DPRINTF(WM_DEBUG_TX,
+			    ("%s: TX: loop limited, job %d is not processed\n",
+				device_xname(sc->sc_dev), i));
 			break;
+		}
 
 		txs = &txq->txq_soft[i];
 
@@ -8168,7 +8174,7 @@ wm_txeof(struct wm_txqueue *txq, u_int limit)
 	if (txq->txq_sfree == WM_TXQUEUELEN(txq))
 		txq->txq_watchdog = false;
 
-	return count;
+	return more;
 }
 
 static inline uint32_t
@@ -8381,7 +8387,7 @@ wm_rxdesc_ensure_checksum(struct wm_rxqueue *rxq, uint32_t status,
  *
  *	Helper; handle receive interrupts.
  */
-static void
+static bool
 wm_rxeof(struct wm_rxqueue *rxq, u_int limit)
 {
 	struct wm_softc *sc = rxq->rxq_sc;
@@ -8392,12 +8398,17 @@ wm_rxeof(struct wm_rxqueue *rxq, u_int limit)
 	int count = 0;
 	uint32_t status, errors;
 	uint16_t vlantag;
+	bool more = false;
 
 	KASSERT(mutex_owned(rxq->rxq_lock));
 
 	for (i = rxq->rxq_ptr;; i = WM_NEXTRX(i)) {
 		if (limit-- == 0) {
 			rxq->rxq_ptr = i;
+			more = true;
+			DPRINTF(WM_DEBUG_RX,
+			    ("%s: RX: loop limited, descriptor %d is not processed\n",
+				device_xname(sc->sc_dev), i));
 			break;
 		}
 
@@ -8571,6 +8582,8 @@ wm_rxeof(struct wm_rxqueue *rxq, u_int limit)
 
 	DPRINTF(WM_DEBUG_RX,
 	    ("%s: RX: rxptr -> %d\n", device_xname(sc->sc_dev), i));
+
+	return more;
 }
 
 /*
@@ -9009,6 +9022,8 @@ wm_txrxintr_msix(void *arg)
 	struct wm_softc *sc = txq->txq_sc;
 	u_int txlimit = sc->sc_tx_intr_process_limit;
 	u_int rxlimit = sc->sc_rx_intr_process_limit;
+	bool txmore;
+	bool rxmore;
 
 	KASSERT(wmq->wmq_intr_idx == wmq->wmq_id);
 
@@ -9025,7 +9040,7 @@ wm_txrxintr_msix(void *arg)
 	}
 
 	WM_Q_EVCNT_INCR(txq, txdw);
-	wm_txeof(txq, txlimit);
+	txmore = wm_txeof(txq, txlimit);
 	/* wm_deferred start() is done in wm_handle_queue(). */
 	mutex_exit(txq->txq_lock);
 
@@ -9039,12 +9054,15 @@ wm_txrxintr_msix(void *arg)
 	}
 
 	WM_Q_EVCNT_INCR(rxq, rxintr);
-	wm_rxeof(rxq, rxlimit);
+	rxmore = wm_rxeof(rxq, rxlimit);
 	mutex_exit(rxq->rxq_lock);
 
 	wm_itrs_writereg(sc, wmq);
 
-	softint_schedule(wmq->wmq_si);
+	if (txmore || rxmore)
+		softint_schedule(wmq->wmq_si);
+	else
+		wm_txrxintr_enable(wmq);
 
 	return 1;
 }
@@ -9058,13 +9076,15 @@ wm_handle_queue(void *arg)
 	struct wm_softc *sc = txq->txq_sc;
 	u_int txlimit = sc->sc_tx_process_limit;
 	u_int rxlimit = sc->sc_rx_process_limit;
+	bool txmore;
+	bool rxmore;
 
 	mutex_enter(txq->txq_lock);
 	if (txq->txq_stopping) {
 		mutex_exit(txq->txq_lock);
 		return;
 	}
-	wm_txeof(txq, txlimit);
+	txmore = wm_txeof(txq, txlimit);
 	wm_deferred_start_locked(txq);
 	mutex_exit(txq->txq_lock);
 
@@ -9074,10 +9094,13 @@ wm_handle_queue(void *arg)
 		return;
 	}
 	WM_Q_EVCNT_INCR(rxq, rxdefer);
-	wm_rxeof(rxq, rxlimit);
+	rxmore = wm_rxeof(rxq, rxlimit);
 	mutex_exit(rxq->rxq_lock);
 
-	wm_txrxintr_enable(wmq);
+	if (txmore || rxmore)
+		softint_schedule(wmq->wmq_si);
+	else
+		wm_txrxintr_enable(wmq);
 }
 
 /*
