@@ -115,7 +115,8 @@ imcsmb_attach(device_t parent, device_t self, void *aux)
 	struct imcsmb_softc *sc = device_private(self);
 	struct imc_attach_args *imca = aux;
 
-	aprint_normal_dev(self, ": SMBus controller\n");
+	aprint_naive("\n");
+	aprint_normal("SMBus controller\n");
 
 	/* Initialize private state */
 	sc->sc_dev = self;
