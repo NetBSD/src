@@ -271,7 +271,7 @@ imcsmb_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 	 * the four high bits of the slave address.
 	 */
 	cntl_val &= ~IMCSMB_CNTL_DTI_MASK;
-	cntl_val |= ((uint32_t) addr & 0xf0) << 24;
+	cntl_val |= ((uint32_t) addr & 0x78) << 25;
 
 	/* [27:27] Set the CLK_OVERRIDE bit, to enable normal operation */
 	cntl_val |= IMCSMB_CNTL_CLK_OVERRIDE;
@@ -304,7 +304,7 @@ imcsmb_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 	}
 
 	/* [26:24] The three non-DTI, non-R/W bits of the slave address. */
-	cmd_val |= (uint32_t) ((addr & 0xe) << 23);
+	cmd_val |= (uint32_t) ((addr & 0x7) << 24);
 
 	/* [23:16] The command (offset in the case of an EEPROM, or register in
 	 * the case of TSOD or NVDIMM controller).
