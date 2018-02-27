@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.132 2018/02/26 13:57:25 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.133 2018/02/27 06:07:28 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -9908,12 +9908,14 @@ tests/lib/libpthread/t_mutex.c			1.19
 	[maya, ticket #585]
 
 sys/netipsec/xform_ah.c				1.78,1.79 (via patch),1.82-1.84
-sys/netipsec/xform_esp.c			1.74-1.76
+sys/netipsec/xform_esp.c			1.74-1.77
 sys/netipsec/xform_ipcomp.c			1.54-1.56
 
 	Fix mbuf leaks on error paths.
 	Dedup common codes in error paths.
 	Don't relook up an SP/SA in opencrpyto callbacks.
+	If we don't know the pad-filling policy use SADB_X_EXT_PZERO by
+	default.
 	Fix kernel panic (assertion failure) on receiving an IPv6 packet
 	with large options.
 	Fix buffer overflow on sending an IPv6 packet with large options.
