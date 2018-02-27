@@ -1,4 +1,4 @@
-/* $NetBSD: ipsec.c,v 1.144 2018/02/27 14:44:10 maxv Exp $ */
+/* $NetBSD: ipsec.c,v 1.145 2018/02/27 14:52:51 maxv Exp $ */
 /* $FreeBSD: src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $ */
 /* $KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $ */
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.144 2018/02/27 14:44:10 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.145 2018/02/27 14:52:51 maxv Exp $");
 
 /*
  * IPsec controller part.
@@ -1278,15 +1278,13 @@ ipsec_set_policy(struct secpolicy **policy, int optname, const void *request,
     size_t len, kauth_cred_t cred)
 {
 	const struct sadb_x_policy *xpl;
-	struct secpolicy *newsp = NULL, *oldsp;
+	struct secpolicy *newsp, *oldsp;
 	int error;
 
 	KASSERT(!cpu_softintr_p());
 
 	/* sanity check. */
-	if (policy == NULL || *policy == NULL || request == NULL)
-		return EINVAL;
-	if (len < sizeof(*xpl))
+	if (policy == NULL || *policy == NULL)
 		return EINVAL;
 	xpl = (const struct sadb_x_policy *)request;
 
@@ -1396,8 +1394,7 @@ ipsec_get_policy(void *inp, const void *request, size_t len,
 		return EINVAL;
 	}
 
-	/* sanity check. */
-	if (policy == NULL || mp == NULL)
+	if (policy == NULL)
 		return EINVAL;
 
 	*mp = key_sp2msg(policy, M_NOWAIT);
