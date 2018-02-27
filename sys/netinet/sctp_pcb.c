@@ -1,5 +1,5 @@
 /* $KAME: sctp_pcb.c,v 1.39 2005/06/16 18:29:25 jinmei Exp $ */
-/* $NetBSD: sctp_pcb.c,v 1.15 2017/10/17 19:23:42 rjs Exp $ */
+/* $NetBSD: sctp_pcb.c,v 1.16 2018/02/27 14:44:10 maxv Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_pcb.c,v 1.15 2017/10/17 19:23:42 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_pcb.c,v 1.16 2018/02/27 14:44:10 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2153,7 +2153,7 @@ sctp_inpcb_free(struct sctp_inpcb *inp, int immediate)
 	/* First take care of socket level things */
 #ifdef IPSEC
 		if (ipsec_enabled)
-			ipsec4_delete_pcbpolicy(ip_pcb);
+			ipsec_delete_pcbpolicy(ip_pcb);
 #endif /*IPSEC*/
 		so->so_pcb = 0;
 	}
