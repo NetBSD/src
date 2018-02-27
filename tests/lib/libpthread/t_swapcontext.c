@@ -1,4 +1,4 @@
-/* $NetBSD: t_swapcontext.c,v 1.6 2018/02/27 20:31:35 uwe Exp $ */
+/* $NetBSD: t_swapcontext.c,v 1.7 2018/02/27 20:34:04 uwe Exp $ */
 
 /*
  * Copyright (c) 2012 Emmanuel Dreyfus. All rights reserved.
@@ -82,7 +82,6 @@ threadfunc(void *arg)
 	ATF_REQUIRE_MSG(swapcontext(&octx, &nctx) != -1, "swapcontext failed: %s",
 	    strerror(errno));
 
-	/* NOTREACHED */
 	return NULL;
 }
 
