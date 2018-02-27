@@ -1,4 +1,4 @@
-/* $NetBSD: mcontext.h,v 1.2 2018/02/15 15:53:56 kamil Exp $ */
+/* $NetBSD: mcontext.h,v 1.3 2018/02/27 07:24:13 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,14 +32,6 @@
 #define _AARCH64_MCONTEXT_H_
 
 #ifdef __aarch64__
-
-/*
- * Layout of mcontext_t based on the System V Application Binary Interface,
- * Edition 4.1, PowerPC Processor ABI Supplement - September 1995, and
- * extended for the AltiVec Register File.  Note that due to the increased
- * alignment requirements of the latter, the offset of mcontext_t within
- * an ucontext_t is different from System V.
- */
 
 #define	_NGREG	35		/* GR0-30, SP, PC, APSR, TPIDR */
 
