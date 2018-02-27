@@ -331,7 +331,7 @@ imcsmb_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 			/* For byte operations, the data goes in the LSB, and
 			 * the MSB is a don't care.
 			 */
-			lword = *(uint16_t *) buf;
+			lword = *(uint8_t *) buf;
 		}
 		cmd_val |= lword;
 	}
