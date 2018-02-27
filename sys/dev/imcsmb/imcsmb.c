@@ -1,4 +1,4 @@
-/* $NetBSD $/ */
+/* $NetBSD: imcsmb.c,v 1.15 2018/02/27 23:33:44 pgoyette Exp $/ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
