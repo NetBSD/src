@@ -1,4 +1,4 @@
-/* $NetBSD: imc.c,v 1.4 2018/02/26 05:47:03 pgoyette Exp $ */
+/* $NetBSD: imc.c,v 1.5 2018/02/27 11:50:57 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -259,6 +259,16 @@ imc_rescan(device_t self, const char * ifattr, const int *flags)
 static int
 imc_detach(device_t self, int flags)
 {
+	struct imc_softc *sc = device_private(self);
+	int i, error;
+
+	for (i = 0; i < 2; i++) {
+		if (sc->sc_smbchild[i] != NULL) {
+			error = config_detach(sc->sc_smbchild[i], flags);     
+			if (error)
+				return error;
+		}
+	}
 
 	pmf_device_deregister(self);
 	return 0;
