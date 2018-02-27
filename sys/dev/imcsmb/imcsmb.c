@@ -357,7 +357,7 @@ imcsmb_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 	}
 
 	if (i == 0) {
-		aprint_normal_dev(sc->sc_dev,
+		aprint_debug_dev(sc->sc_dev,
 		    "transfer: timeout waiting for device to settle\n");
 	}
 
@@ -397,7 +397,7 @@ imcsmb_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 	}
 	if (i == 0) {
 		rc = ETIMEDOUT;
-		aprint_normal_dev(sc->sc_dev, "transfer timeout\n");
+		aprint_debug_dev(sc->sc_dev, "transfer timeout\n");
 		goto out;
 	}
 
