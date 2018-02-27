@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.133 2018/02/27 06:07:28 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.134 2018/02/27 09:08:22 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -9968,4 +9968,24 @@ sys/dev/pci/ixgbe/ixv.c				1.79-1.81
 	- Improve a comment about reading EICS register defined write-only by
 	  the spec.
 	[msaitoh, ticket #592]
+
+sys/arch/alpha/alpha/pmap.c			1.262
+sys/arch/m68k/m68k/pmap_motorola.c		1.70
+sys/arch/powerpc/oea/pmap.c			1.95
+sys/arch/sparc64/sparc64/pmap.c			1.308
+sys/arch/x86/x86/pmap.c				1.266 (via patch)
+sys/dev/dtv/dtv_scatter.c			1.4
+sys/dev/marvell/mvxpsec.c			1.2
+sys/kern/subr_extent.c				1.86
+sys/kern/subr_pool.c				1.209-1.216,1.219-1.220
+sys/kern/uipc_mbuf.c				1.173
+sys/opencrypto/crypto.c				1.102
+sys/sys/mbuf.h					1.172
+sys/sys/pool.h					1.80,1.82
+sys/ufs/chfs/chfs_malloc.c			1.5
+sys/uvm/uvm_fault.c				1.202
+
+	Always use PR_WAITOK or PR_NOWAIT, never 0.  assert this.
+	Allow only one pending call to a pool's backing allocator at a time.
+	[mrg, ticket #593]
 
