@@ -1,4 +1,4 @@
-/* $NetBSD: t_swapcontext.c,v 1.3 2017/01/16 16:27:06 christos Exp $ */
+/* $NetBSD: t_swapcontext.c,v 1.4 2018/02/27 20:22:31 uwe Exp $ */
 
 /*
  * Copyright (c) 2012 Emmanuel Dreyfus. All rights reserved.
@@ -54,9 +54,9 @@ static void
 swapfunc(void *arg)
 {
 	/*
-	 * If the test fails, we are very likely to crash 
+	 * If the test fails, we are very likely to crash
 	 * without the opportunity to report
-	 */ 
+	 */
 	nself = (void *)pthread_self();
 	printf("after swapcontext self = %p\n", nself);
 
@@ -75,9 +75,9 @@ threadfunc(void *arg)
 {
 	nctx.uc_stack.ss_sp = stack;
 	nctx.uc_stack.ss_size = sizeof(stack);
-       
+
 	makecontext(&nctx, (void *)*swapfunc, 0);
-       
+
 	oself = (void *)pthread_self();
 	printf("before swapcontext self = %p\n", oself);
 	ATF_REQUIRE_MSG(swapcontext(&octx, &nctx) != -1, "swapcontext failed: %s",
