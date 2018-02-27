@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1195 2018/02/22 07:30:43 mrg Exp $
+#	$NetBSD: files,v 1.1196 2018/02/27 14:28:01 maxv Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -418,11 +418,10 @@ include "dev/splash/files.splash"
 include "dev/videomode/files.videomode"
 
 # net device attributes - we have generic code for arc(net), ether(net),
-# fddi, token ring, atm and eco(net).
+# fddi, token ring, and atm.
 #
 define	arcnet
 define	atm
-define	eco
 define	ether
 define	fddi
 define	hippi
