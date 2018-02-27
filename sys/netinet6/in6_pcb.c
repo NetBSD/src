@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.164 2018/02/08 09:05:20 dholland Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.165 2018/02/27 14:44:10 maxv Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.164 2018/02/08 09:05:20 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.165 2018/02/27 14:44:10 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -628,7 +628,7 @@ in6_pcbdetach(struct in6pcb *in6p)
 
 #if defined(IPSEC)
 	if (ipsec_enabled)
-		ipsec6_delete_pcbpolicy(in6p);
+		ipsec_delete_pcbpolicy(in6p);
 #endif
 	so->so_pcb = NULL;
 

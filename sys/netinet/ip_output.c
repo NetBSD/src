@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.295 2018/02/12 18:19:12 christos Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.296 2018/02/27 14:44:10 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.295 2018/02/12 18:19:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.296 2018/02/27 14:44:10 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1384,7 +1384,7 @@ ip_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 			struct mbuf *m = NULL;
 
 			/* XXX this will return EINVAL as sopt is empty */
-			error = ipsec4_get_policy(inp, sopt->sopt_data,
+			error = ipsec_get_policy(inp, sopt->sopt_data,
 			    sopt->sopt_size, &m);
 			if (error == 0)
 				error = sockopt_setmbuf(sopt, m);

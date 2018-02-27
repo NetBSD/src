@@ -1,4 +1,4 @@
-/* $NetBSD: ipsec.c,v 1.143 2018/02/27 13:36:21 maxv Exp $ */
+/* $NetBSD: ipsec.c,v 1.144 2018/02/27 14:44:10 maxv Exp $ */
 /* $FreeBSD: src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $ */
 /* $KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $ */
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.143 2018/02/27 13:36:21 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.144 2018/02/27 14:44:10 maxv Exp $");
 
 /*
  * IPsec controller part.
@@ -187,7 +187,6 @@ static struct secpolicy *ipsec_deepcopy_policy(const struct secpolicy *);
 #endif
 static int ipsec_set_policy(struct secpolicy **, int, const void *, size_t,
     kauth_cred_t);
-static int ipsec_get_policy(struct secpolicy *, struct mbuf **);
 static void ipsec_destroy_policy(struct secpolicy *);
 static int ipsec_sp_reject(const struct secpolicy *, const struct mbuf *);
 static void vshiftl(unsigned char *, int, int);
@@ -1331,28 +1330,6 @@ ipsec_set_policy(struct secpolicy **policy, int optname, const void *request,
 	return 0;
 }
 
-static int
-ipsec_get_policy(struct secpolicy *policy, struct mbuf **mp)
-{
-
-	/* sanity check. */
-	if (policy == NULL || mp == NULL)
-		return EINVAL;
-
-	*mp = key_sp2msg(policy, M_NOWAIT);
-	if (!*mp) {
-		IPSECLOG(LOG_DEBUG, "No more memory.\n");
-		return ENOBUFS;
-	}
-
-	(*mp)->m_type = MT_DATA;
-	if (KEYDEBUG_ON(KEYDEBUG_IPSEC_DUMP)) {
-		kdebug_mbuf(__func__, *mp);
-	}
-
-	return 0;
-}
-
 int
 ipsec4_set_policy(struct inpcb *inp, int optname, const void *request,
     size_t len, kauth_cred_t cred)
@@ -1390,7 +1367,7 @@ ipsec4_set_policy(struct inpcb *inp, int optname, const void *request,
 }
 
 int
-ipsec4_get_policy(struct inpcb *inp, const void *request, size_t len,
+ipsec_get_policy(void *inp, const void *request, size_t len,
     struct mbuf **mp)
 {
 	struct inpcb_hdr *inph = (struct inpcb_hdr *)inp;
@@ -1419,11 +1396,26 @@ ipsec4_get_policy(struct inpcb *inp, const void *request, size_t len,
 		return EINVAL;
 	}
 
-	return ipsec_get_policy(policy, mp);
+	/* sanity check. */
+	if (policy == NULL || mp == NULL)
+		return EINVAL;
+
+	*mp = key_sp2msg(policy, M_NOWAIT);
+	if (!*mp) {
+		IPSECLOG(LOG_DEBUG, "No more memory.\n");
+		return ENOBUFS;
+	}
+
+	(*mp)->m_type = MT_DATA;
+	if (KEYDEBUG_ON(KEYDEBUG_IPSEC_DUMP)) {
+		kdebug_mbuf(__func__, *mp);
+	}
+
+	return 0;
 }
 
 int
-ipsec4_delete_pcbpolicy(struct inpcb *inp)
+ipsec_delete_pcbpolicy(void *inp)
 {
 	struct inpcb_hdr *inph = (struct inpcb_hdr *)inp;
 
@@ -1479,63 +1471,6 @@ ipsec6_set_policy(struct in6pcb *in6p, int optname, const void *request,
 	}
 
 	return ipsec_set_policy(policy, optname, request, len, cred);
-}
-
-int
-ipsec6_get_policy(struct in6pcb *in6p, const void *request, size_t len,
-    struct mbuf **mp)
-{
-	struct inpcb_hdr *inph = (struct inpcb_hdr *)in6p;
-	const struct sadb_x_policy *xpl;
-	struct secpolicy *policy;
-
-	/* sanity check. */
-	if (inph == NULL || request == NULL || mp == NULL)
-		return EINVAL;
-	KASSERT(inph->inph_sp != NULL);
-	if (len < sizeof(*xpl))
-		return EINVAL;
-	xpl = (const struct sadb_x_policy *)request;
-
-	/* select direction */
-	switch (xpl->sadb_x_policy_dir) {
-	case IPSEC_DIR_INBOUND:
-		policy = inph->inph_sp->sp_in;
-		break;
-	case IPSEC_DIR_OUTBOUND:
-		policy = inph->inph_sp->sp_out;
-		break;
-	default:
-		IPSECLOG(LOG_ERR, "invalid direction=%u\n",
-		    xpl->sadb_x_policy_dir);
-		return EINVAL;
-	}
-
-	return ipsec_get_policy(policy, mp);
-}
-
-int
-ipsec6_delete_pcbpolicy(struct in6pcb *in6p)
-{
-	struct inpcb_hdr *inph = (struct inpcb_hdr *)in6p;
-
-	KASSERT(inph != NULL);
-
-	if (inph->inph_sp == NULL)
-		return 0;
-
-	if (inph->inph_sp->sp_in != NULL)
-		ipsec_destroy_policy(inph->inph_sp->sp_in);
-
-	if (inph->inph_sp->sp_out != NULL)
-		ipsec_destroy_policy(inph->inph_sp->sp_out);
-
-	ipsec_invalpcbcache(inph->inph_sp, IPSEC_DIR_ANY);
-
-	ipsec_delpcbpolicy(inph->inph_sp);
-	inph->inph_sp = NULL;
-
-	return 0;
 }
 #endif
 
