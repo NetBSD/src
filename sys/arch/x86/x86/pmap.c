@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.245.6.1 2017/07/05 20:23:08 snj Exp $	*/
+/*	$NetBSD: pmap.c,v 1.245.6.2 2018/02/27 09:07:33 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.245.6.1 2017/07/05 20:23:08 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.245.6.2 2018/02/27 09:07:33 martin Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1726,6 +1726,20 @@ pmap_vpage_cpu_init(struct cpu_info *ci)
 /*
  * p v _ e n t r y   f u n c t i o n s
  */
+
+static bool
+pmap_pp_needs_pve(struct pmap_page *pp)
+{
+
+	/*
+	 * Adding a pv entry for this page only needs to allocate a pv_entry
+	 * structure if the page already has at least one pv entry,
+	 * since the first pv entry is stored in the pmap_page.
+	 */
+
+	return (pp->pp_flags & PP_EMBEDDED) != 0 ||
+		!LIST_EMPTY(&pp->pp_head.pvh_list);
+}
 
 /*
  * pmap_free_pvs: free a list of pv_entrys
@@ -4101,15 +4115,20 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 		new_pp = NULL;
 	}
 
-	/* get pves. */
-	new_pve = pool_cache_get(&pmap_pv_cache, PR_NOWAIT);
-	new_sparepve = pool_cache_get(&pmap_pv_cache, PR_NOWAIT);
-	if (new_pve == NULL || new_sparepve == NULL) {
-		if (flags & PMAP_CANFAIL) {
-			error = ENOMEM;
-			goto out2;
-		}
-		panic("pmap_enter: pve allocation failed");
+	/*
+	 * Try to get pves now if we might need them.
+	 * Keep going even if we fail, since we will not actually need them
+	 * if we are just changing the permissions on an existing mapping,
+	 * but we won't know if that's the case until later.
+	 */
+
+	bool needpves = pmap_pp_needs_pve(new_pp);
+	if (new_pp && needpves) {
+		new_pve = pool_cache_get(&pmap_pv_cache, PR_NOWAIT);
+		new_sparepve = pool_cache_get(&pmap_pv_cache, PR_NOWAIT);
+	} else {
+		new_pve = NULL;
+		new_sparepve = NULL;
 	}
 
 	kpreempt_disable();
@@ -4129,10 +4148,31 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 	}
 
 	/*
-	 * update the pte.
+	 * Check if there is an existing mapping.  If we are now sure that
+	 * we need pves and we failed to allocate them earlier, handle that.
+	 * Caching the value of oldpa here is safe because only the mod/ref bits
+	 * can change while the pmap is locked.
 	 */
 
 	ptep = &ptes[pl1_i(va)];
+	opte = *ptep;
+	bool have_oldpa = pmap_valid_entry(opte);
+	paddr_t oldpa = pmap_pte2pa(opte);
+
+	if (needpves && (!have_oldpa || oldpa != pa) &&
+	    (new_pve == NULL || new_sparepve == NULL)) {
+		pmap_unmap_ptes(pmap, pmap2);
+		if (flags & PMAP_CANFAIL) {
+			error = ENOMEM;
+			goto out;
+		}
+		panic("%s: pve allocation failed", __func__);
+	}
+
+	/*
+	 * update the pte.
+	 */
+
 	do {
 		opte = *ptep;
 
@@ -4170,7 +4210,7 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 	 */
 
 	pmap_stats_update_bypte(pmap, npte, opte);
-	if (ptp != NULL && !pmap_valid_entry(opte)) {
+	if (ptp != NULL && !have_oldpa) {
 		ptp->wire_count++;
 	}
 	KASSERT(ptp == NULL || ptp->wire_count > 1);
@@ -4189,16 +4229,14 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 	 */
 
 	if ((~opte & (PG_V | PG_PVLIST)) == 0) {
-		if ((old_pg = PHYS_TO_VM_PAGE(pmap_pte2pa(opte))) != NULL) {
+		if ((old_pg = PHYS_TO_VM_PAGE(oldpa)) != NULL) {
 			KASSERT(uvm_page_locked_p(old_pg));
 			old_pp = VM_PAGE_TO_PP(old_pg);
-		} else if ((old_pp = pmap_pv_tracked(pmap_pte2pa(opte)))
-		    == NULL) {
-			pa = pmap_pte2pa(opte);
-			panic("pmap_enter: PG_PVLIST with pv-untracked page"
+		} else if ((old_pp = pmap_pv_tracked(oldpa)) == NULL) {
+			panic("%s: pmap_enter: PG_PVLIST with pv-untracked page"
 			    " va = 0x%"PRIxVADDR
 			    " pa = 0x%" PRIxPADDR " (0x%" PRIxPADDR ")",
-			    va, pa, atop(pa));
+			    __func__, va, oldpa, atop(pa));
 		}
 
 		old_pve = pmap_remove_pv(old_pp, ptp, va);
@@ -4228,7 +4266,6 @@ same_pa:
 	error = 0;
 out:
 	kpreempt_enable();
-out2:
 	if (old_pve != NULL) {
 		pool_cache_put(&pmap_pv_cache, old_pve);
 	}

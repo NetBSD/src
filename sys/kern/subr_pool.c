@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.207 2017/03/14 03:13:50 riastradh Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.207.6.1 2018/02/27 09:07:32 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.207 2017/03/14 03:13:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.207.6.1 2018/02/27 09:07:32 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -483,7 +483,7 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	 */
 	TAILQ_FOREACH(pp1, &pool_head, pr_poollist) {
 		if (pp == pp1)
-			panic("pool_init: pool %s already initialised",
+			panic("%s: [%s] already initialised", __func__,
 			    wchan);
 	}
 	if (__predict_true(!cold))
@@ -524,8 +524,8 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 
 	prsize = roundup(prsize, align);
 	KASSERTMSG((prsize <= palloc->pa_pagesz),
-	    "pool_init: pool item size (%zu) larger than page size (%u)",
-	    prsize, palloc->pa_pagesz);
+	    "%s: [%s] pool item size (%zu) larger than page size (%u)",
+	    __func__, wchan, prsize, palloc->pa_pagesz);
 
 	/*
 	 * Initialize the pool structure.
@@ -608,7 +608,8 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 			 * if you see this panic, consider to tweak
 			 * PHPOOL_MAX and PHPOOL_FREELIST_NELEM.
 			 */
-			panic("%s: too large itemsperpage(%d) for PR_NOTOUCH",
+			panic("%s: [%s] too large itemsperpage(%d) for "
+			    "PR_NOTOUCH", __func__,
 			    pp->pr_wchan, pp->pr_itemsperpage);
 		}
 		pp->pr_phpool = &phpool[idx];
@@ -696,7 +697,7 @@ pool_destroy(struct pool *pp)
 
 	KASSERT(pp->pr_cache == NULL);
 	KASSERTMSG((pp->pr_nout == 0),
-	    "pool_destroy: pool busy: still out: %u", pp->pr_nout);
+	    "%s: pool busy: still out: %u", __func__, pp->pr_nout);
 	KASSERT(LIST_EMPTY(&pp->pr_fullpages));
 	KASSERT(LIST_EMPTY(&pp->pr_partpages));
 
@@ -718,7 +719,7 @@ pool_set_drain_hook(struct pool *pp, void (*fn)(void *, int), void *arg)
 
 	/* XXX no locking -- must be used just after pool_init() */
 	KASSERTMSG((pp->pr_drain_hook == NULL),
-	    "pool_set_drain_hook(%s): already set", pp->pr_wchan);
+	    "%s: [%s] already set", __func__, pp->pr_wchan);
 	pp->pr_drain_hook = fn;
 	pp->pr_drain_hook_arg = arg;
 }
@@ -729,7 +730,7 @@ pool_alloc_item_header(struct pool *pp, void *storage, int flags)
 	struct pool_item_header *ph;
 
 	if ((pp->pr_roflags & PR_PHINPAGE) != 0)
-		ph = (struct pool_item_header *) ((char *)storage + pp->pr_phoffset);
+		ph = (void *)((char *)storage + pp->pr_phoffset);
 	else
 		ph = pool_get(pp->pr_phpool, flags);
 
@@ -746,13 +747,14 @@ pool_get(struct pool *pp, int flags)
 	struct pool_item_header *ph;
 	void *v;
 
+	KASSERT(!(flags & PR_NOWAIT) != !(flags & PR_WAITOK));
 	KASSERTMSG((pp->pr_itemsperpage != 0),
-	    "pool_get: pool '%s': pr_itemsperpage is zero, "
-	    "pool not initialized?", pp->pr_wchan);
+	    "%s: [%s] pr_itemsperpage is zero, "
+	    "pool not initialized?", __func__, pp->pr_wchan);
 	KASSERTMSG((!(cpu_intr_p() || cpu_softintr_p())
 		|| pp->pr_ipl != IPL_NONE || cold || panicstr != NULL),
-	    "pool '%s' is IPL_NONE, but called from interrupt context",
-	    pp->pr_wchan);
+	    "%s: [%s] is IPL_NONE, but called from interrupt context",
+	    __func__, pp->pr_wchan);
 	if (flags & PR_WAITOK) {
 		ASSERT_SLEEPABLE();
 	}
@@ -765,7 +767,7 @@ pool_get(struct pool *pp, int flags)
 	 * the pool.
 	 */
 	KASSERTMSG((pp->pr_nout <= pp->pr_hardlimit),
-	    "pool_get: %s: crossed hard limit", pp->pr_wchan);
+	    "%s: %s: crossed hard limit", __func__, pp->pr_wchan);
 	if (__predict_false(pp->pr_nout == pp->pr_hardlimit)) {
 		if (pp->pr_drain_hook != NULL) {
 			/*
@@ -786,7 +788,9 @@ pool_get(struct pool *pp, int flags)
 			 * it be?
 			 */
 			pp->pr_flags |= PR_WANTED;
-			cv_wait(&pp->pr_cv, &pp->pr_lock);
+			do {
+				cv_wait(&pp->pr_cv, &pp->pr_lock);
+			} while (pp->pr_flags & PR_WANTED);
 			goto startover;
 		}
 
@@ -801,6 +805,7 @@ pool_get(struct pool *pp, int flags)
 		pp->pr_nfail++;
 
 		mutex_exit(&pp->pr_lock);
+		KASSERT((flags & (PR_NOWAIT|PR_LIMITFAIL)) != 0);
 		return (NULL);
 	}
 
@@ -814,9 +819,8 @@ pool_get(struct pool *pp, int flags)
 		int error;
 
 		KASSERTMSG((pp->pr_nitems == 0),
-		    "pool_get: nitems inconsistent"
-		    ": %s: curpage NULL, nitems %u",
-		    pp->pr_wchan, pp->pr_nitems);
+		    "%s: [%s] curpage NULL, inconsistent nitems %u",
+		    __func__, pp->pr_wchan, pp->pr_nitems);
 
 		/*
 		 * Call the back-end page allocator for more memory.
@@ -825,6 +829,14 @@ pool_get(struct pool *pp, int flags)
 		 */
 		error = pool_grow(pp, flags);
 		if (error != 0) {
+			/*
+			 * pool_grow aborts when another thread
+			 * is allocating a new page. Retry if it
+			 * waited for it.
+			 */
+			if (error == ERESTART)
+				goto startover;
+
 			/*
 			 * We were unable to allocate a page or item
 			 * header, but we released the lock during
@@ -836,6 +848,7 @@ pool_get(struct pool *pp, int flags)
 
 			pp->pr_nfail++;
 			mutex_exit(&pp->pr_lock);
+			KASSERT((flags & (PR_WAITOK|PR_NOWAIT)) == PR_NOWAIT);
 			return (NULL);
 		}
 
@@ -844,21 +857,20 @@ pool_get(struct pool *pp, int flags)
 	}
 	if (pp->pr_roflags & PR_NOTOUCH) {
 		KASSERTMSG((ph->ph_nmissing < pp->pr_itemsperpage),
-		    "pool_get: %s: page empty", pp->pr_wchan);
+		    "%s: %s: page empty", __func__, pp->pr_wchan);
 		v = pr_item_notouch_get(pp, ph);
 	} else {
 		v = pi = LIST_FIRST(&ph->ph_itemlist);
 		if (__predict_false(v == NULL)) {
 			mutex_exit(&pp->pr_lock);
-			panic("pool_get: %s: page empty", pp->pr_wchan);
+			panic("%s: [%s] page empty", __func__, pp->pr_wchan);
 		}
 		KASSERTMSG((pp->pr_nitems > 0),
-		    "pool_get: nitems inconsistent"
-		    ": %s: items on itemlist, nitems %u",
-		    pp->pr_wchan, pp->pr_nitems);
+		    "%s: [%s] nitems %u inconsistent on itemlist",
+		    __func__, pp->pr_wchan, pp->pr_nitems);
 		KASSERTMSG((pi->pi_magic == PI_MAGIC),
-		    "pool_get(%s): free list modified: "
-		    "magic=%x; page %p; item addr %p",
+		    "%s: [%s] free list modified: "
+		    "magic=%x; page %p; item addr %p", __func__,
 		    pp->pr_wchan, pi->pi_magic, ph->ph_page, pi);
 
 		/*
@@ -883,7 +895,8 @@ pool_get(struct pool *pp, int flags)
 	if (ph->ph_nmissing == pp->pr_itemsperpage) {
 		KASSERTMSG(((pp->pr_roflags & PR_NOTOUCH) ||
 			LIST_EMPTY(&ph->ph_itemlist)),
-		    "pool_get: %s: nmissing inconsistent", pp->pr_wchan);
+		    "%s: [%s] nmissing (%u) inconsistent", __func__,
+			pp->pr_wchan, ph->ph_nmissing);
 		/*
 		 * This page is now full.  Move it to the full list
 		 * and select a new current page.
@@ -929,10 +942,10 @@ pool_do_put(struct pool *pp, void *v, struct pool_pagelist *pq)
 	LOCKDEBUG_MEM_CHECK(v, pp->pr_size);
 
 	KASSERTMSG((pp->pr_nout > 0),
-	    "pool_put: pool %s: putting with none out", pp->pr_wchan);
+	    "%s: [%s] putting with none out", __func__, pp->pr_wchan);
 
 	if (__predict_false((ph = pr_find_pagehead(pp, v)) == NULL)) {
-		panic("pool_put: %s: page header missing", pp->pr_wchan);
+		panic("%s: [%s] page header missing", __func__,  pp->pr_wchan);
 	}
 
 	/*
@@ -1045,26 +1058,65 @@ pool_put(struct pool *pp, void *v)
 static int
 pool_grow(struct pool *pp, int flags)
 {
-	struct pool_item_header *ph = NULL;
-	char *cp;
-
-	mutex_exit(&pp->pr_lock);
-	cp = pool_allocator_alloc(pp, flags);
-	if (__predict_true(cp != NULL)) {
-		ph = pool_alloc_item_header(pp, cp, flags);
-	}
-	if (__predict_false(cp == NULL || ph == NULL)) {
-		if (cp != NULL) {
-			pool_allocator_free(pp, cp);
+	/*
+	 * If there's a pool_grow in progress, wait for it to complete
+	 * and try again from the top.
+	 */
+	if (pp->pr_flags & PR_GROWING) {
+		if (flags & PR_WAITOK) {
+			do {
+				cv_wait(&pp->pr_cv, &pp->pr_lock);
+			} while (pp->pr_flags & PR_GROWING);
+			return ERESTART;
+		} else {
+			if (pp->pr_flags & PR_GROWINGNOWAIT) {
+				/*
+				 * This needs an unlock/relock dance so
+				 * that the other caller has a chance to
+				 * run and actually do the thing.  Note
+				 * that this is effectively a busy-wait.
+				 */
+				mutex_exit(&pp->pr_lock);
+				mutex_enter(&pp->pr_lock);
+				return ERESTART;
+			}
+			return EWOULDBLOCK;
 		}
-		mutex_enter(&pp->pr_lock);
-		return ENOMEM;
+	}
+	pp->pr_flags |= PR_GROWING;
+	if (flags & PR_WAITOK)
+		mutex_exit(&pp->pr_lock);
+	else
+		pp->pr_flags |= PR_GROWINGNOWAIT;
+
+	char *cp = pool_allocator_alloc(pp, flags);
+	if (__predict_false(cp == NULL))
+		goto out;
+
+	struct pool_item_header *ph = pool_alloc_item_header(pp, cp, flags);
+	if (__predict_false(ph == NULL)) {
+		pool_allocator_free(pp, cp);
+		goto out;
 	}
 
-	mutex_enter(&pp->pr_lock);
+	if (flags & PR_WAITOK)
+		mutex_enter(&pp->pr_lock);
 	pool_prime_page(pp, cp, ph);
 	pp->pr_npagealloc++;
+	KASSERT(pp->pr_flags & PR_GROWING);
+	pp->pr_flags &= ~(PR_GROWING|PR_GROWINGNOWAIT);
+	/*
+	 * If anyone was waiting for pool_grow, notify them that we
+	 * may have just done it.
+	 */
+	cv_broadcast(&pp->pr_cv);
 	return 0;
+out:
+	if (flags & PR_WAITOK)
+		mutex_enter(&pp->pr_lock);
+	KASSERT(pp->pr_flags & PR_GROWING);
+	pp->pr_flags &= ~(PR_GROWING|PR_GROWINGNOWAIT);
+	return ENOMEM;
 }
 
 /*
@@ -1080,12 +1132,15 @@ pool_prime(struct pool *pp, int n)
 
 	newpages = roundup(n, pp->pr_itemsperpage) / pp->pr_itemsperpage;
 
-	while (newpages-- > 0) {
+	while (newpages > 0) {
 		error = pool_grow(pp, PR_NOWAIT);
 		if (error) {
+			if (error == ERESTART)
+				continue;
 			break;
 		}
 		pp->pr_minpages++;
+		newpages--;
 	}
 
 	if (pp->pr_minpages >= pp->pr_maxpages)
@@ -1112,7 +1167,7 @@ pool_prime_page(struct pool *pp, void *storage, struct pool_item_header *ph)
 	KASSERT(mutex_owned(&pp->pr_lock));
 	KASSERTMSG(((pp->pr_roflags & PR_NOALIGN) ||
 		(((uintptr_t)cp & (pp->pr_alloc->pa_pagesz - 1)) == 0)),
-	    "pool_prime_page: %s: unaligned page: %p", pp->pr_wchan, cp);
+	    "%s: [%s] unaligned page: %p", __func__, pp->pr_wchan, cp);
 
 	/*
 	 * Insert page header.
@@ -1195,6 +1250,8 @@ pool_catchup(struct pool *pp)
 	while (POOL_NEEDS_CATCHUP(pp)) {
 		error = pool_grow(pp, PR_NOWAIT);
 		if (error) {
+			if (error == ERESTART)
+				continue;
 			break;
 		}
 	}
@@ -2134,8 +2191,10 @@ pool_cache_get_slow(pool_cache_cpu_t *cc, int s, void **objectp,
 
 	object = pool_get(&pc->pc_pool, flags);
 	*objectp = object;
-	if (__predict_false(object == NULL))
+	if (__predict_false(object == NULL)) {
+		KASSERT((flags & (PR_WAITOK|PR_NOWAIT)) == PR_NOWAIT);
 		return false;
+	}
 
 	if (__predict_false((*pc->pc_ctor)(pc->pc_arg, object, flags) != 0)) {
 		pool_put(&pc->pc_pool, object);
@@ -2173,10 +2232,11 @@ pool_cache_get_paddr(pool_cache_t pc, int flags, paddr_t *pap)
 	void *object;
 	int s;
 
+	KASSERT(!(flags & PR_NOWAIT) != !(flags & PR_WAITOK));
 	KASSERTMSG((!cpu_intr_p() && !cpu_softintr_p()) ||
 	    (pc->pc_pool.pr_ipl != IPL_NONE || cold || panicstr != NULL),
-	    "pool '%s' is IPL_NONE, but called from interrupt context\n",
-	    pc->pc_pool.pr_wchan);
+	    "%s: [%s] is IPL_NONE, but called from interrupt context",
+	    __func__, pc->pc_pool.pr_wchan);
 
 	if (flags & PR_WAITOK) {
 		ASSERT_SLEEPABLE();
@@ -2226,6 +2286,11 @@ pool_cache_get_paddr(pool_cache_t pc, int flags, paddr_t *pap)
 			break;
 	}
 
+	/*
+	 * We would like to KASSERT(object || (flags & PR_NOWAIT)), but
+	 * pool_cache_get can fail even in the PR_WAITOK case, if the
+	 * constructor fails.
+	 */
 	return object;
 }
 

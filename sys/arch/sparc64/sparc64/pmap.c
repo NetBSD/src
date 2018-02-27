@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.307 2017/02/10 23:26:23 palle Exp $	*/
+/*	$NetBSD: pmap.c,v 1.307.6.1 2018/02/27 09:07:32 martin Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.307 2017/02/10 23:26:23 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.307.6.1 2018/02/27 09:07:32 martin Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -135,7 +135,7 @@ struct pool_cache pmap_pv_cache;
 
 pv_entry_t	pmap_remove_pv(struct pmap *, vaddr_t, struct vm_page *);
 void	pmap_enter_pv(struct pmap *, vaddr_t, paddr_t, struct vm_page *,
-			   pv_entry_t);
+			   pv_entry_t *);
 void	pmap_page_cache(struct pmap *, paddr_t, int);
 
 /*
@@ -1783,13 +1783,13 @@ pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	pte_t tte;
 	int64_t data;
 	paddr_t opa = 0, ptp; /* XXX: gcc */
-	pv_entry_t pvh, npv = NULL, freepv;
+	pv_entry_t pvh, opv = NULL, npv;
 	struct vm_page *pg, *opg, *ptpg;
 	int s, i, uncached = 0, error = 0;
 	int size = PGSZ_8K; /* PMAP_SZ_TO_TTE(pa); */
 	bool wired = (flags & PMAP_WIRED) != 0;
-	bool wasmapped = FALSE;
-	bool dopv = TRUE;
+	bool wasmapped = false;
+	bool dopv = true;
 
 	/*
 	 * Is this part of the permanent mappings?
@@ -1797,14 +1797,12 @@ pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	KASSERT(pm != pmap_kernel() || va < INTSTACK || va > EINTSTACK);
 	KASSERT(pm != pmap_kernel() || va < kdata || va > ekdata);
 
-	/* Grab a spare PV. */
-	freepv = pool_cache_get(&pmap_pv_cache, PR_NOWAIT);
-	if (__predict_false(freepv == NULL)) {
-		if (flags & PMAP_CANFAIL)
-			return (ENOMEM);
-		panic("pmap_enter: no pv entries available");
-	}
-	freepv->pv_next = NULL;
+	/*
+	 * Grab a spare PV.  Keep going even if this fails since we don't
+	 * yet know if we will need it.
+	 */
+
+	npv = pool_cache_get(&pmap_pv_cache, PR_NOWAIT);
 
 	/*
 	 * If a mapping at this address already exists, check if we're
@@ -1819,7 +1817,7 @@ pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		if (opa != pa) {
 			opg = PHYS_TO_VM_PAGE(opa);
 			if (opg != NULL) {
-				npv = pmap_remove_pv(pm, va, opg);
+				opv = pmap_remove_pv(pm, va, opg);
 			}
 		}
 	}
@@ -1849,31 +1847,21 @@ pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		/*
 		 * make sure we have a pv entry ready if we need one.
 		 */
-		if (pvh->pv_pmap == NULL || (wasmapped && opa == pa)) {
-			if (npv != NULL) {
-				/* free it */
-				npv->pv_next = freepv;
-				freepv = npv;
-				npv = NULL;
-			}
-			if (wasmapped && opa == pa) {
-				dopv = FALSE;
-			}
+		if (wasmapped && opa == pa) {
+			dopv = false;
 		} else if (npv == NULL) {
-			/* use the pre-allocated pv */
-			npv = freepv;
-			freepv = freepv->pv_next;
+			npv = opv;
+			opv = NULL;
+			if (npv == NULL) {
+				mutex_exit(&pmap_lock);
+				error = ENOMEM;
+				goto out;
+			}
 		}
 		ENTER_STAT(managed);
 	} else {
 		ENTER_STAT(unmanaged);
-		dopv = FALSE;
-		if (npv != NULL) {
-			/* free it */
-			npv->pv_next = freepv;
-			freepv = npv;
-			npv = NULL;
-		}
+		dopv = false;
 	}
 
 #ifndef NO_VCACHE
@@ -1945,11 +1933,6 @@ pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		if (!pmap_get_page(&ptp)) {
 			mutex_exit(&pmap_lock);
 			if (flags & PMAP_CANFAIL) {
-				if (npv != NULL) {
-					/* free it */
-					npv->pv_next = freepv;
-					freepv = npv;
-				}
 				error = ENOMEM;
 				goto out;
 			} else {
@@ -1966,7 +1949,7 @@ pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		pmap_free_page_noflush(ptp);
 	}
 	if (dopv) {
-		pmap_enter_pv(pm, va, pa, pg, npv);
+		pmap_enter_pv(pm, va, pa, pg, &npv);
 	}
 
 	mutex_exit(&pmap_lock);
@@ -2039,11 +2022,11 @@ pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	/* We will let the fast mmu miss interrupt load the new translation */
 	pv_check();
  out:
-	/* Catch up on deferred frees. */
-	for (; freepv != NULL; freepv = npv) {
-		npv = freepv->pv_next;
-		pool_cache_put(&pmap_pv_cache, freepv);
-	}
+	if (opv)
+		pool_cache_put(&pmap_pv_cache, opv);
+	if (npv)
+		pool_cache_put(&pmap_pv_cache, npv);
+
 	return error;
 }
 
@@ -3302,14 +3285,16 @@ ctx_free(struct pmap *pm, struct cpu_info *ci)
  * physical to virtual map table.
  *
  * We enter here with the pmap locked.
+ * The pv_entry_t in *npvp is replaced with NULL if this function
+ * uses it, otherwise the caller needs to free it.
  */
 
 void
 pmap_enter_pv(struct pmap *pmap, vaddr_t va, paddr_t pa, struct vm_page *pg,
-	      pv_entry_t npv)
+	      pv_entry_t *npvp)
 {
 	struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
-	pv_entry_t pvh;
+	pv_entry_t pvh, npv;
 
 	KASSERT(mutex_owned(&pmap_lock));
 
@@ -3327,7 +3312,6 @@ pmap_enter_pv(struct pmap *pmap, vaddr_t va, paddr_t pa, struct vm_page *pg,
 		PV_SETVA(pvh, va);
 		pvh->pv_pmap = pmap;
 		pvh->pv_next = NULL;
-		KASSERT(npv == NULL);
 	} else {
 		if (pg->loan_count == 0 && !(pvh->pv_va & PV_ALIAS)) {
 
@@ -3352,6 +3336,8 @@ pmap_enter_pv(struct pmap *pmap, vaddr_t va, paddr_t pa, struct vm_page *pg,
 
 		DPRINTF(PDB_ENTER, ("pmap_enter: new pv: pmap %p va %lx\n",
 		    pmap, va));
+		npv = *npvp;
+		*npvp = NULL;
 		npv->pv_pmap = pmap;
 		npv->pv_va = va & PV_VAMASK;
 		npv->pv_next = pvh->pv_next;

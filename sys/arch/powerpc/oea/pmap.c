@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.94 2016/12/23 07:15:28 cherry Exp $	*/
+/*	$NetBSD: pmap.c,v 1.94.8.1 2018/02/27 09:07:33 martin Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.94 2016/12/23 07:15:28 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.94.8.1 2018/02/27 09:07:33 martin Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -1551,6 +1551,13 @@ pmap_pvo_reclaim(struct pmap *pm)
 	return NULL;
 }
 
+static struct pool *
+pmap_pvo_pl(struct pvo_entry *pvo)
+{
+
+	return PVO_MANAGED_P(pvo) ? &pmap_mpvo_pool : &pmap_upvo_pool;
+}
+
 /*
  * This returns whether this is the first mapping of a page.
  */
@@ -1616,9 +1623,10 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 #endif
 	pmap_interrupts_restore(msr);
 	if (pvo) {
-		pmap_pvo_free(pvo);
+		KASSERT(pmap_pvo_pl(pvo) == pl);
+	} else {
+		pvo = pool_get(pl, poolflags);
 	}
-	pvo = pool_get(pl, poolflags);
 	KASSERT((vaddr_t)pvo < VM_MIN_KERNEL_ADDRESS);
 
 #ifdef DEBUG
@@ -1822,7 +1830,7 @@ void
 pmap_pvo_free(struct pvo_entry *pvo)
 {
 
-	pool_put(PVO_MANAGED_P(pvo) ? &pmap_mpvo_pool : &pmap_upvo_pool, pvo);
+	pool_put(pmap_pvo_pl(pvo), pvo);
 }
 
 void

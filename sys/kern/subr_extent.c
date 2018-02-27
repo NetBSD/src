@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.80 2016/12/19 13:02:14 cherry Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.80.8.1 2018/02/27 09:07:32 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.80 2016/12/19 13:02:14 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.80.8.1 2018/02/27 09:07:32 martin Exp $");
 
 #ifdef _KERNEL
 #ifdef _KERNEL_OPT
@@ -175,7 +175,7 @@ extent_alloc_region_descriptor(struct extent *ex, int flags)
 	}
 
  alloc:
-	rp = pool_get(&expool, (flags & EX_WAITOK) ? PR_WAITOK : 0);
+	rp = pool_get(&expool, (flags & EX_WAITOK) ? PR_WAITOK : PR_NOWAIT);
 
 	if (rp != NULL)
 		rp->er_flags = ER_ALLOC;

@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.78.2.4 2018/01/02 10:38:36 snj Exp $ */
+/*	$NetBSD: crypto.c,v 1.78.2.5 2018/02/27 09:07:32 martin Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.78.2.4 2018/01/02 10:38:36 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.78.2.5 2018/02/27 09:07:32 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -1655,14 +1655,14 @@ crypto_getreq(int num)
 	}
 	crypto_put_crp_ret_qs(curcpu());
 
-	crp = pool_cache_get(cryptop_cache, 0);
+	crp = pool_cache_get(cryptop_cache, PR_NOWAIT);
 	if (crp == NULL) {
 		return NULL;
 	}
 	memset(crp, 0, sizeof(struct cryptop));
 
 	while (num--) {
-		crd = pool_cache_get(cryptodesc_cache, 0);
+		crd = pool_cache_get(cryptodesc_cache, PR_NOWAIT);
 		if (crd == NULL) {
 			crypto_freereq(crp);
 			return NULL;
