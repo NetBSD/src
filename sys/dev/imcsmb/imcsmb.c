@@ -417,7 +417,7 @@ imcsmb_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 	}
 
 	/* For a read operation, copy the data out */
-	if (! I2C_OP_WRITE_P(op)) {
+	if (I2C_OP_READ_P(op)) {
 		if (len == 2) {
 			/* The data is returned in bits [15:0]; as discussed
 			 * above, byte-swap.
