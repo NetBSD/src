@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.181 2018/01/01 00:51:36 christos Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.182 2018/02/27 14:44:10 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.181 2018/01/01 00:51:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.182 2018/02/27 14:44:10 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -628,7 +628,7 @@ in_pcbdetach(void *v)
 
 #if defined(IPSEC)
 	if (ipsec_enabled)
-		ipsec4_delete_pcbpolicy(inp);
+		ipsec_delete_pcbpolicy(inp);
 #endif
 	so->so_pcb = NULL;
 
