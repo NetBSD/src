@@ -1,4 +1,4 @@
-/* $NetBSD: t_ucontext.c,v 1.4 2018/02/27 11:15:53 kamil Exp $ */
+/* $NetBSD: t_ucontext.c,v 1.5 2018/02/27 12:20:35 kamil Exp $ */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,11 +29,12 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_ucontext.c,v 1.4 2018/02/27 11:15:53 kamil Exp $");
+__RCSID("$NetBSD: t_ucontext.c,v 1.5 2018/02/27 12:20:35 kamil Exp $");
 
 #include <atf-c.h>
 #include <stdio.h>
 #include <ucontext.h>
+#include <inttypes.h>
 
 ATF_TC(ucontext_basic);
 ATF_TC_HEAD(ucontext_basic, tc)
