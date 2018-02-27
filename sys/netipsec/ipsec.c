@@ -1,4 +1,4 @@
-/* $NetBSD: ipsec.c,v 1.145 2018/02/27 14:52:51 maxv Exp $ */
+/* $NetBSD: ipsec.c,v 1.146 2018/02/27 15:01:30 maxv Exp $ */
 /* $FreeBSD: src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $ */
 /* $KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $ */
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.145 2018/02/27 14:52:51 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.146 2018/02/27 15:01:30 maxv Exp $");
 
 /*
  * IPsec controller part.
@@ -185,8 +185,6 @@ static void ipsec_delpcbpolicy(struct inpcbpolicy *);
 #if 0 /* unused */
 static struct secpolicy *ipsec_deepcopy_policy(const struct secpolicy *);
 #endif
-static int ipsec_set_policy(struct secpolicy **, int, const void *, size_t,
-    kauth_cred_t);
 static void ipsec_destroy_policy(struct secpolicy *);
 static int ipsec_sp_reject(const struct secpolicy *, const struct mbuf *);
 static void vshiftl(unsigned char *, int, int);
@@ -1272,21 +1270,44 @@ ipsec_destroy_policy(struct secpolicy *sp)
 	}
 }
 
-/* set policy and ipsec request if present. */
-static int
-ipsec_set_policy(struct secpolicy **policy, int optname, const void *request,
-    size_t len, kauth_cred_t cred)
+int
+ipsec_set_policy(void *inp, int optname, const void *request, size_t len,
+    kauth_cred_t cred)
 {
+	struct inpcb_hdr *inph = (struct inpcb_hdr *)inp;
 	const struct sadb_x_policy *xpl;
 	struct secpolicy *newsp, *oldsp;
+	struct secpolicy **policy;
 	int error;
 
 	KASSERT(!cpu_softintr_p());
+	KASSERT(inph != NULL);
+	KASSERT(inph_locked(inph));
+	KASSERT(request != NULL);
+
+	if (len < sizeof(*xpl))
+		return EINVAL;
+	xpl = (const struct sadb_x_policy *)request;
+
+	KASSERT(inph->inph_sp != NULL);
+
+	/* select direction */
+	switch (xpl->sadb_x_policy_dir) {
+	case IPSEC_DIR_INBOUND:
+		policy = &inph->inph_sp->sp_in;
+		break;
+	case IPSEC_DIR_OUTBOUND:
+		policy = &inph->inph_sp->sp_out;
+		break;
+	default:
+		IPSECLOG(LOG_ERR, "invalid direction=%u\n",
+		    xpl->sadb_x_policy_dir);
+		return EINVAL;
+	}
 
 	/* sanity check. */
 	if (policy == NULL || *policy == NULL)
 		return EINVAL;
-	xpl = (const struct sadb_x_policy *)request;
 
 	if (KEYDEBUG_ON(KEYDEBUG_IPSEC_DUMP)) {
 		kdebug_sadb_xpolicy("set passed policy", request);
@@ -1326,42 +1347,6 @@ ipsec_set_policy(struct secpolicy **policy, int optname, const void *request,
 	}
 
 	return 0;
-}
-
-int
-ipsec4_set_policy(struct inpcb *inp, int optname, const void *request,
-    size_t len, kauth_cred_t cred)
-{
-	struct inpcb_hdr *inph = (struct inpcb_hdr *)inp;
-	const struct sadb_x_policy *xpl;
-	struct secpolicy **policy;
-
-	KASSERT(!cpu_softintr_p());
-	KASSERT(inph != NULL);
-	KASSERT(inph_locked(inph));
-	KASSERT(request != NULL);
-
-	if (len < sizeof(*xpl))
-		return EINVAL;
-	xpl = (const struct sadb_x_policy *)request;
-
-	KASSERT(inph->inph_sp != NULL);
-
-	/* select direction */
-	switch (xpl->sadb_x_policy_dir) {
-	case IPSEC_DIR_INBOUND:
-		policy = &inph->inph_sp->sp_in;
-		break;
-	case IPSEC_DIR_OUTBOUND:
-		policy = &inph->inph_sp->sp_out;
-		break;
-	default:
-		IPSECLOG(LOG_ERR, "invalid direction=%u\n",
-		    xpl->sadb_x_policy_dir);
-		return EINVAL;
-	}
-
-	return ipsec_set_policy(policy, optname, request, len, cred);
 }
 
 int
@@ -1434,42 +1419,6 @@ ipsec_delete_pcbpolicy(void *inp)
 
 	return 0;
 }
-
-#ifdef INET6
-int
-ipsec6_set_policy(struct in6pcb *in6p, int optname, const void *request,
-    size_t len, kauth_cred_t cred)
-{
-	struct inpcb_hdr *inph = (struct inpcb_hdr *)in6p;
-	const struct sadb_x_policy *xpl;
-	struct secpolicy **policy;
-
-	KASSERT(!cpu_softintr_p());
-	KASSERT(inph != NULL);
-	KASSERT(inph_locked(inph));
-	KASSERT(request != NULL);
-
-	if (len < sizeof(*xpl))
-		return EINVAL;
-	xpl = (const struct sadb_x_policy *)request;
-
-	/* select direction */
-	switch (xpl->sadb_x_policy_dir) {
-	case IPSEC_DIR_INBOUND:
-		policy = &inph->inph_sp->sp_in;
-		break;
-	case IPSEC_DIR_OUTBOUND:
-		policy = &inph->inph_sp->sp_out;
-		break;
-	default:
-		IPSECLOG(LOG_ERR, "invalid direction=%u\n",
-		    xpl->sadb_x_policy_dir);
-		return EINVAL;
-	}
-
-	return ipsec_set_policy(policy, optname, request, len, cred);
-}
-#endif
 
 /*
  * Return the current level (either IPSEC_LEVEL_USE or IPSEC_LEVEL_REQUIRE).
