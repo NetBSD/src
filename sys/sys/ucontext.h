@@ -1,4 +1,4 @@
-/*	$NetBSD: ucontext.h,v 1.18 2013/03/06 18:16:58 pooka Exp $	*/
+/*	$NetBSD: ucontext.h,v 1.19 2018/02/27 23:09:02 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2003 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ struct __ucontext {
  *			[undefined]	alpha, powerpc and vax
  *			0x00020000	other ports
  *
- *	_UC_POWERPC_VEC Context does not use signal stack
+ *	_UC_POWERPC_VEC Context contains valid AltiVec context
  *			0x00010000	powerpc only
  *
  *	_UC_POWERPC_SPE	Context contains valid SPE context
