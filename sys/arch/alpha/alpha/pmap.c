@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.261 2016/12/23 07:15:27 cherry Exp $ */
+/* $NetBSD: pmap.c,v 1.261.8.1 2018/02/27 09:07:33 martin Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.261 2016/12/23 07:15:27 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.261.8.1 2018/02/27 09:07:33 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -439,7 +439,8 @@ static struct pool_cache pmap_tlb_shootdown_job_cache;
  * Internal routines
  */
 static void	alpha_protection_init(void);
-static bool	pmap_remove_mapping(pmap_t, vaddr_t, pt_entry_t *, bool, long);
+static bool	pmap_remove_mapping(pmap_t, vaddr_t, pt_entry_t *, bool, long,
+				    pv_entry_t *);
 static void	pmap_changebit(struct vm_page *, pt_entry_t, pt_entry_t, long);
 
 /*
@@ -466,8 +467,9 @@ static int	pmap_l1pt_ctor(void *, void *, int);
  * PV table management functions.
  */
 static int	pmap_pv_enter(pmap_t, struct vm_page *, vaddr_t, pt_entry_t *,
-			      bool);
-static void	pmap_pv_remove(pmap_t, struct vm_page *, vaddr_t, bool);
+			      bool, pv_entry_t);
+static void	pmap_pv_remove(pmap_t, struct vm_page *, vaddr_t, bool,
+			       pv_entry_t *);
 static void	*pmap_pv_page_alloc(struct pool *, int);
 static void	pmap_pv_page_free(struct pool *, void *);
 
@@ -1266,7 +1268,7 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 					    sva);
 #endif
 				needisync |= pmap_remove_mapping(pmap, sva,
-				    l3pte, true, cpu_id);
+				    l3pte, true, cpu_id, NULL);
 			}
 			sva += PAGE_SIZE;
 		}
@@ -1343,7 +1345,7 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 						    pmap_remove_mapping(
 							pmap, sva,
 							l3pte, true,
-							cpu_id);
+							cpu_id, NULL);
 					}
 
 					/*
@@ -1450,7 +1452,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 			panic("pmap_page_protect: bad mapping");
 #endif
 		if (pmap_remove_mapping(pmap, pv->pv_va, pv->pv_pte,
-		    false, cpu_id) == true) {
+		    false, cpu_id, NULL)) {
 			if (pmap == pmap_kernel())
 				needkisync |= true;
 			else
@@ -1558,6 +1560,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
 	struct vm_page *pg;			/* if != NULL, managed page */
 	pt_entry_t *pte, npte, opte;
+	pv_entry_t opv = NULL;
 	paddr_t opa;
 	bool tflush = true;
 	bool hadasm = false;	/* XXX gcc -Wuninitialized */
@@ -1750,14 +1753,15 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		 */
 		pmap_physpage_addref(pte);
 	}
-	needisync |= pmap_remove_mapping(pmap, va, pte, true, cpu_id);
+	needisync |= pmap_remove_mapping(pmap, va, pte, true, cpu_id, &opv);
 
  validate_enterpv:
 	/*
 	 * Enter the mapping into the pv_table if appropriate.
 	 */
 	if (pg != NULL) {
-		error = pmap_pv_enter(pmap, pg, va, pte, true);
+		error = pmap_pv_enter(pmap, pg, va, pte, true, opv);
+		opv = NULL;
 		if (error) {
 			pmap_l3pt_delref(pmap, va, pte, cpu_id);
 			if (flags & PMAP_CANFAIL)
@@ -1845,6 +1849,8 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 out:
 	PMAP_UNLOCK(pmap);
 	PMAP_MAP_TO_HEAD_UNLOCK();
+	if (opv)
+		pmap_pv_free(opv);
 	
 	return error;
 }
@@ -2422,7 +2428,7 @@ alpha_protection_init(void)
  */
 static bool
 pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *pte,
-    bool dolock, long cpu_id)
+    bool dolock, long cpu_id, pv_entry_t *opvp)
 {
 	paddr_t pa;
 	struct vm_page *pg;		/* if != NULL, page is managed */
@@ -2434,8 +2440,8 @@ pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *pte,
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_REMOVE|PDB_PROTECT))
-		printf("pmap_remove_mapping(%p, %lx, %p, %d, %ld)\n",
-		       pmap, va, pte, dolock, cpu_id);
+		printf("pmap_remove_mapping(%p, %lx, %p, %d, %ld, %p)\n",
+		       pmap, va, pte, dolock, cpu_id, opvp);
 #endif
 
 	/*
@@ -2511,7 +2517,8 @@ pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *pte,
 	 */
 	pg = PHYS_TO_VM_PAGE(pa);
 	KASSERT(pg != NULL);
-	pmap_pv_remove(pmap, pg, va, dolock);
+	pmap_pv_remove(pmap, pg, va, dolock, opvp);
+	KASSERT(opvp == NULL || *opvp != NULL);
 
 	return (needisync);
 }
@@ -2765,18 +2772,19 @@ vtophys(vaddr_t vaddr)
  */
 static int
 pmap_pv_enter(pmap_t pmap, struct vm_page *pg, vaddr_t va, pt_entry_t *pte,
-    bool dolock)
+    bool dolock, pv_entry_t newpv)
 {
 	struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
-	pv_entry_t newpv;
 	kmutex_t *lock;
 
 	/*
 	 * Allocate and fill in the new pv_entry.
 	 */
-	newpv = pmap_pv_alloc();
-	if (newpv == NULL)
-		return ENOMEM;
+	if (newpv == NULL) {
+		newpv = pmap_pv_alloc();
+		if (newpv == NULL)
+			return ENOMEM;
+	}
 	newpv->pv_va = va;
 	newpv->pv_pmap = pmap;
 	newpv->pv_pte = pte;
@@ -2820,7 +2828,8 @@ pmap_pv_enter(pmap_t pmap, struct vm_page *pg, vaddr_t va, pt_entry_t *pte,
  *	Remove a physical->virtual entry from the pv_table.
  */
 static void
-pmap_pv_remove(pmap_t pmap, struct vm_page *pg, vaddr_t va, bool dolock)
+pmap_pv_remove(pmap_t pmap, struct vm_page *pg, vaddr_t va, bool dolock,
+	pv_entry_t *opvp)
 {
 	struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
 	pv_entry_t pv, *pvp;
@@ -2852,7 +2861,10 @@ pmap_pv_remove(pmap_t pmap, struct vm_page *pg, vaddr_t va, bool dolock)
 		mutex_exit(lock);
 	}
 
-	pmap_pv_free(pv);
+	if (opvp != NULL)
+		*opvp = pv;
+	else
+		pmap_pv_free(pv);
 }
 
 /*

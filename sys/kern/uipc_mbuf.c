@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.172 2017/03/31 05:44:05 msaitoh Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.172.6.1 2018/02/27 09:07:32 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.172 2017/03/31 05:44:05 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.172.6.1 2018/02/27 09:07:32 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -589,7 +589,7 @@ m_get(int nowait, int type)
 	KASSERT(type != MT_FREE);
 
 	m = pool_cache_get(mb_cache,
-	    nowait == M_WAIT ? PR_WAITOK|PR_LIMITFAIL : 0);
+	    nowait == M_WAIT ? PR_WAITOK|PR_LIMITFAIL : PR_NOWAIT);
 	if (m == NULL)
 		return NULL;
 
