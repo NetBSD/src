@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.6 2018/02/15 15:53:56 kamil Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.7 2018/02/27 09:51:28 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -115,6 +115,7 @@ typedef struct __mcontext {
 #define _UC_MACHINE_FP(uc)	((uc)->uc_mcontext.__gregs[79])
 /* XXX or assembly "mov Rn = ip" or ...? */
 #define	_UC_MACHINE_PC(uc)	((uc)->uc_mcontext.mc_special.iip)
+#define	_UC_MACHINE_INTRV(uc)	0 /* XXX */
 
 static __inline void *
 __lwp_getprivate_fast(void)
