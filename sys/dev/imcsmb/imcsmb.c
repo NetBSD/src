@@ -179,7 +179,14 @@ imcsmb_chdet(device_t self, device_t child)
 static int
 imcsmb_detach(device_t self, int flags)
 {
+	int error;
 	struct imcsmb_softc *sc = device_private(self);
+
+	if (sc->sc_smbus != NULL) {
+		error = config_detach(sc->sc_smbus, flags);
+		if (error)
+			return error;
+	}
 
 	pmf_device_deregister(self);
 	mutex_destroy(&sc->sc_i2c_mutex);
