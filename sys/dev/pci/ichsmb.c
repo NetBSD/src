@@ -1,4 +1,4 @@
-/*	$NetBSD: ichsmb.c,v 1.53 2018/02/26 07:28:02 pgoyette Exp $	*/
+/*	$NetBSD: ichsmb.c,v 1.54 2018/02/27 00:18:02 pgoyette Exp $	*/
 /*	$OpenBSD: ichiic.c,v 1.18 2007/05/03 09:36:26 dlg Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.53 2018/02/26 07:28:02 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.54 2018/02/27 00:18:02 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -453,7 +453,7 @@ done:
 	return (1);
 }
 
-MODULE(MODULE_CLASS_DRIVER, ichsmb, "pci");
+MODULE(MODULE_CLASS_DRIVER, ichsmb, "pci,iic");
 
 #ifdef _MODULE
 #include "ioconf.c"
