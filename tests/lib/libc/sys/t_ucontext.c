@@ -1,4 +1,4 @@
-/* $NetBSD: t_ucontext.c,v 1.3 2018/02/25 15:31:07 christos Exp $ */
+/* $NetBSD: t_ucontext.c,v 1.4 2018/02/27 11:15:53 kamil Exp $ */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_ucontext.c,v 1.3 2018/02/25 15:31:07 christos Exp $");
+__RCSID("$NetBSD: t_ucontext.c,v 1.4 2018/02/27 11:15:53 kamil Exp $");
 
 #include <atf-c.h>
 #include <stdio.h>
@@ -80,7 +80,7 @@ ATF_TC_BODY(ucontext_sp, tc)
 
 	getcontext(&u);
 
-	printf("_UC_MACHINE_SP(u)=%" PRIxREGISTER "\n", _UC_MACHINE_SP(&u));
+	printf("_UC_MACHINE_SP(u)=%" PRIxREGISTER "\n", (register_t)_UC_MACHINE_SP(&u));
 }
 
 ATF_TC(ucontext_fp);
@@ -95,7 +95,7 @@ ATF_TC_BODY(ucontext_fp, tc)
 
 	getcontext(&u);
 
-	printf("_UC_MACHINE_FP(u)=%" PRIxREGISTER "\n", _UC_MACHINE_FP(&u));
+	printf("_UC_MACHINE_FP(u)=%" PRIxREGISTER "\n", (register_t)_UC_MACHINE_FP(&u));
 }
 
 ATF_TC(ucontext_pc);
@@ -110,7 +110,7 @@ ATF_TC_BODY(ucontext_pc, tc)
 
 	getcontext(&u);
 
-	printf("_UC_MACHINE_PC(u)=%" PRIxREGISTER "\n", _UC_MACHINE_PC(&u));
+	printf("_UC_MACHINE_PC(u)=%" PRIxREGISTER "\n", (register_t)_UC_MACHINE_PC(&u));
 }
 
 ATF_TC(ucontext_intrv);
@@ -125,7 +125,7 @@ ATF_TC_BODY(ucontext_intrv, tc)
 
 	getcontext(&u);
 
-	printf("_UC_MACHINE_INTRV(u)=%" PRIxREGISTER "\n", _UC_MACHINE_INTRV(&u));
+	printf("_UC_MACHINE_INTRV(u)=%" PRIxREGISTER "\n", (register_t)_UC_MACHINE_INTRV(&u));
 }
 
 ATF_TP_ADD_TCS(tp)
