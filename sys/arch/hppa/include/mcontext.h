@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.9 2018/02/15 15:53:56 kamil Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.10 2018/02/27 11:26:39 kamil Exp $	*/
 
 #ifndef _HPPA_MCONTEXT_H_
 #define	_HPPA_MCONTEXT_H_
@@ -57,6 +57,7 @@ do {									\
 	(uc)->uc_mcontext.__gregs[_REG_PCOQH] = (pc);			\
 	(uc)->uc_mcontext.__gregs[_REG_PCOQT] = (pc) + 4;		\
 } while (/*CONSTCOND*/0)
+#define	_UC_MACHINE_INTRV(uc) 	((uc)->uc_mcontext.__gregs[_REG_RET0])
 
 static __inline void *
 __lwp_getprivate_fast(void)
