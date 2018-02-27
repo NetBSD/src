@@ -439,7 +439,7 @@ out:
 	return rc;
 };
 
-MODULE(MODULE_CLASS_DRIVER, imcsmb, "imc");
+MODULE(MODULE_CLASS_DRIVER, imcsmb, "imc,iic");
 
 #ifdef _MODULE
 #include "ioconf.c"
