@@ -1,4 +1,4 @@
-/* $NetBSD: t_swapcontext.c,v 1.5 2018/02/27 20:24:50 uwe Exp $ */
+/* $NetBSD: t_swapcontext.c,v 1.6 2018/02/27 20:31:35 uwe Exp $ */
 
 /*
  * Copyright (c) 2012 Emmanuel Dreyfus. All rights reserved.
@@ -49,9 +49,8 @@ void *oself;
 void *nself;
 int val1, val2;
 
-/* ARGSUSED0 */
 static void
-swapfunc(void *arg)
+swapfunc(void)
 {
 	/*
 	 * If the test fails, we are very likely to crash
