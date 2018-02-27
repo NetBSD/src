@@ -1,4 +1,4 @@
-/* $NetBSD: ipsec.c,v 1.142 2018/02/27 08:05:19 maxv Exp $ */
+/* $NetBSD: ipsec.c,v 1.143 2018/02/27 13:36:21 maxv Exp $ */
 /* $FreeBSD: src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $ */
 /* $KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $ */
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.142 2018/02/27 08:05:19 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.143 2018/02/27 13:36:21 maxv Exp $");
 
 /*
  * IPsec controller part.
@@ -1357,27 +1357,28 @@ int
 ipsec4_set_policy(struct inpcb *inp, int optname, const void *request,
     size_t len, kauth_cred_t cred)
 {
+	struct inpcb_hdr *inph = (struct inpcb_hdr *)inp;
 	const struct sadb_x_policy *xpl;
 	struct secpolicy **policy;
 
 	KASSERT(!cpu_softintr_p());
-	KASSERT(inp != NULL);
-	KASSERT(inp_locked(inp));
+	KASSERT(inph != NULL);
+	KASSERT(inph_locked(inph));
 	KASSERT(request != NULL);
 
 	if (len < sizeof(*xpl))
 		return EINVAL;
 	xpl = (const struct sadb_x_policy *)request;
 
-	KASSERT(inp->inp_sp != NULL);
+	KASSERT(inph->inph_sp != NULL);
 
 	/* select direction */
 	switch (xpl->sadb_x_policy_dir) {
 	case IPSEC_DIR_INBOUND:
-		policy = &inp->inp_sp->sp_in;
+		policy = &inph->inph_sp->sp_in;
 		break;
 	case IPSEC_DIR_OUTBOUND:
-		policy = &inp->inp_sp->sp_out;
+		policy = &inph->inph_sp->sp_out;
 		break;
 	default:
 		IPSECLOG(LOG_ERR, "invalid direction=%u\n",
@@ -1392,13 +1393,14 @@ int
 ipsec4_get_policy(struct inpcb *inp, const void *request, size_t len,
     struct mbuf **mp)
 {
+	struct inpcb_hdr *inph = (struct inpcb_hdr *)inp;
 	const struct sadb_x_policy *xpl;
 	struct secpolicy *policy;
 
 	/* sanity check. */
-	if (inp == NULL || request == NULL || mp == NULL)
+	if (inph == NULL || request == NULL || mp == NULL)
 		return EINVAL;
-	KASSERT(inp->inp_sp != NULL);
+	KASSERT(inph->inph_sp != NULL);
 	if (len < sizeof(*xpl))
 		return EINVAL;
 	xpl = (const struct sadb_x_policy *)request;
@@ -1406,10 +1408,10 @@ ipsec4_get_policy(struct inpcb *inp, const void *request, size_t len,
 	/* select direction */
 	switch (xpl->sadb_x_policy_dir) {
 	case IPSEC_DIR_INBOUND:
-		policy = inp->inp_sp->sp_in;
+		policy = inph->inph_sp->sp_in;
 		break;
 	case IPSEC_DIR_OUTBOUND:
-		policy = inp->inp_sp->sp_out;
+		policy = inph->inph_sp->sp_out;
 		break;
 	default:
 		IPSECLOG(LOG_ERR, "invalid direction=%u\n",
@@ -1423,22 +1425,23 @@ ipsec4_get_policy(struct inpcb *inp, const void *request, size_t len,
 int
 ipsec4_delete_pcbpolicy(struct inpcb *inp)
 {
+	struct inpcb_hdr *inph = (struct inpcb_hdr *)inp;
 
-	KASSERT(inp != NULL);
+	KASSERT(inph != NULL);
 
-	if (inp->inp_sp == NULL)
+	if (inph->inph_sp == NULL)
 		return 0;
 
-	if (inp->inp_sp->sp_in != NULL)
-		ipsec_destroy_policy(inp->inp_sp->sp_in);
+	if (inph->inph_sp->sp_in != NULL)
+		ipsec_destroy_policy(inph->inph_sp->sp_in);
 
-	if (inp->inp_sp->sp_out != NULL)
-		ipsec_destroy_policy(inp->inp_sp->sp_out);
+	if (inph->inph_sp->sp_out != NULL)
+		ipsec_destroy_policy(inph->inph_sp->sp_out);
 
-	ipsec_invalpcbcache(inp->inp_sp, IPSEC_DIR_ANY);
+	ipsec_invalpcbcache(inph->inph_sp, IPSEC_DIR_ANY);
 
-	ipsec_delpcbpolicy(inp->inp_sp);
-	inp->inp_sp = NULL;
+	ipsec_delpcbpolicy(inph->inph_sp);
+	inph->inph_sp = NULL;
 
 	return 0;
 }
@@ -1448,12 +1451,13 @@ int
 ipsec6_set_policy(struct in6pcb *in6p, int optname, const void *request,
     size_t len, kauth_cred_t cred)
 {
+	struct inpcb_hdr *inph = (struct inpcb_hdr *)in6p;
 	const struct sadb_x_policy *xpl;
 	struct secpolicy **policy;
 
 	KASSERT(!cpu_softintr_p());
-	KASSERT(in6p != NULL);
-	KASSERT(in6p_locked(in6p));
+	KASSERT(inph != NULL);
+	KASSERT(inph_locked(inph));
 	KASSERT(request != NULL);
 
 	if (len < sizeof(*xpl))
@@ -1463,10 +1467,10 @@ ipsec6_set_policy(struct in6pcb *in6p, int optname, const void *request,
 	/* select direction */
 	switch (xpl->sadb_x_policy_dir) {
 	case IPSEC_DIR_INBOUND:
-		policy = &in6p->in6p_sp->sp_in;
+		policy = &inph->inph_sp->sp_in;
 		break;
 	case IPSEC_DIR_OUTBOUND:
-		policy = &in6p->in6p_sp->sp_out;
+		policy = &inph->inph_sp->sp_out;
 		break;
 	default:
 		IPSECLOG(LOG_ERR, "invalid direction=%u\n",
@@ -1481,13 +1485,14 @@ int
 ipsec6_get_policy(struct in6pcb *in6p, const void *request, size_t len,
     struct mbuf **mp)
 {
+	struct inpcb_hdr *inph = (struct inpcb_hdr *)in6p;
 	const struct sadb_x_policy *xpl;
 	struct secpolicy *policy;
 
 	/* sanity check. */
-	if (in6p == NULL || request == NULL || mp == NULL)
+	if (inph == NULL || request == NULL || mp == NULL)
 		return EINVAL;
-	KASSERT(in6p->in6p_sp != NULL);
+	KASSERT(inph->inph_sp != NULL);
 	if (len < sizeof(*xpl))
 		return EINVAL;
 	xpl = (const struct sadb_x_policy *)request;
@@ -1495,10 +1500,10 @@ ipsec6_get_policy(struct in6pcb *in6p, const void *request, size_t len,
 	/* select direction */
 	switch (xpl->sadb_x_policy_dir) {
 	case IPSEC_DIR_INBOUND:
-		policy = in6p->in6p_sp->sp_in;
+		policy = inph->inph_sp->sp_in;
 		break;
 	case IPSEC_DIR_OUTBOUND:
-		policy = in6p->in6p_sp->sp_out;
+		policy = inph->inph_sp->sp_out;
 		break;
 	default:
 		IPSECLOG(LOG_ERR, "invalid direction=%u\n",
@@ -1512,22 +1517,23 @@ ipsec6_get_policy(struct in6pcb *in6p, const void *request, size_t len,
 int
 ipsec6_delete_pcbpolicy(struct in6pcb *in6p)
 {
+	struct inpcb_hdr *inph = (struct inpcb_hdr *)in6p;
 
-	KASSERT(in6p != NULL);
+	KASSERT(inph != NULL);
 
-	if (in6p->in6p_sp == NULL)
+	if (inph->inph_sp == NULL)
 		return 0;
 
-	if (in6p->in6p_sp->sp_in != NULL)
-		ipsec_destroy_policy(in6p->in6p_sp->sp_in);
+	if (inph->inph_sp->sp_in != NULL)
+		ipsec_destroy_policy(inph->inph_sp->sp_in);
 
-	if (in6p->in6p_sp->sp_out != NULL)
-		ipsec_destroy_policy(in6p->in6p_sp->sp_out);
+	if (inph->inph_sp->sp_out != NULL)
+		ipsec_destroy_policy(inph->inph_sp->sp_out);
 
-	ipsec_invalpcbcache(in6p->in6p_sp, IPSEC_DIR_ANY);
+	ipsec_invalpcbcache(inph->inph_sp, IPSEC_DIR_ANY);
 
-	ipsec_delpcbpolicy(in6p->in6p_sp);
-	in6p->in6p_sp = NULL;
+	ipsec_delpcbpolicy(inph->inph_sp);
+	inph->inph_sp = NULL;
 
 	return 0;
 }
