@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.202 2018/02/27 14:44:10 maxv Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.203 2018/02/27 15:01:30 maxv Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.202 2018/02/27 14:44:10 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.203 2018/02/27 15:01:30 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1773,7 +1773,7 @@ else 					\
 #if defined(IPSEC)
 		case IPV6_IPSEC_POLICY:
 			if (ipsec_enabled) {
-				error = ipsec6_set_policy(in6p, optname,
+				error = ipsec_set_policy(in6p, optname,
 				    sopt->sopt_data, sopt->sopt_size,
 				    kauth_cred_get());
 				break;
