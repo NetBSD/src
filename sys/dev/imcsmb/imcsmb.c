@@ -407,10 +407,10 @@ imcsmb_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 	 */
 	if (stat_val & IMCSMB_STATUS_BUS_ERROR_BIT) {
 		/* While it is not documented, empirically, SPD page-change
-		 * commands (writes with DTI = 0x60) always complete with the
+		 * commands (writes with DTI = 0x30) always complete with the
 		 * error bit set. So, ignore it in those cases.
 		 */
-		if ((addr & 0xf0) != 0x60) {
+		if ((addr & 0x78) != 0x30) {
 			rc = ENODEV;
 			goto out;
 		}
