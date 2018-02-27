@@ -247,7 +247,7 @@ imcsmb_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 	uint8_t lbyte;
 	uint8_t cmd;
 
-	if ((cmdlen > 1) || (len > 2) || (len < 1))
+	if ((cmdlen != 1) || (len > 2) || (len < 1))
 		return EINVAL;
 
 	byte = (uint8_t *) buf;
