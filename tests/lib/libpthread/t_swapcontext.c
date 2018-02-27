@@ -1,4 +1,4 @@
-/* $NetBSD: t_swapcontext.c,v 1.4 2018/02/27 20:22:31 uwe Exp $ */
+/* $NetBSD: t_swapcontext.c,v 1.5 2018/02/27 20:24:50 uwe Exp $ */
 
 /*
  * Copyright (c) 2012 Emmanuel Dreyfus. All rights reserved.
@@ -76,7 +76,7 @@ threadfunc(void *arg)
 	nctx.uc_stack.ss_sp = stack;
 	nctx.uc_stack.ss_size = sizeof(stack);
 
-	makecontext(&nctx, (void *)*swapfunc, 0);
+	makecontext(&nctx, swapfunc, 0);
 
 	oself = (void *)pthread_self();
 	printf("before swapcontext self = %p\n", oself);
