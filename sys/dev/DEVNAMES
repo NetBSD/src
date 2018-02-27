@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.301 2018/02/26 23:09:32 sevan Exp $
+#	$NetBSD: DEVNAMES,v 1.302 2018/02/27 14:28:01 maxv Exp $
 #
 # This file contains all used device names and defined attributes in
 # alphabetical order. New devices added to the system somewhere should first
@@ -382,7 +382,6 @@ ec			MI
 ec			sun2
 eca			acorn26
 eccmemctl		sparc
-eco			MI		Attribute
 ed			MI (MCA)
 ed			amiga
 ed			amigappc
