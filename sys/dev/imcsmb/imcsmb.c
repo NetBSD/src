@@ -370,7 +370,7 @@ imcsmb_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 	/* Wait for WRITE_DATA_DONE/READ_DATA_VALID to be set, or timeout and
 	 * fail. We wait up to 35ms.
 	 */
-	for (i = 3500; i != 0; i -= 10)
+	for (i = 35000; i != 0; i -= 10)
 	{
 		delay(10);
 		stat_val = pci_conf_read(sc->sc_pci_chipset_tag,
