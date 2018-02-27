@@ -1,4 +1,4 @@
-/* $NetBSD: ipsec.c,v 1.141 2018/02/26 10:36:24 maxv Exp $ */
+/* $NetBSD: ipsec.c,v 1.142 2018/02/27 08:05:19 maxv Exp $ */
 /* $FreeBSD: src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $ */
 /* $KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $ */
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.141 2018/02/26 10:36:24 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.142 2018/02/27 08:05:19 maxv Exp $");
 
 /*
  * IPsec controller part.
@@ -768,7 +768,7 @@ ipsec4_forward(struct mbuf *m, int *destmtu)
 	}
 
 	/* Count IPsec header size. */
-	ipsechdr = ipsec_hdrsiz(m, IPSEC_DIR_OUTBOUND, NULL);
+	ipsechdr = ipsec_sp_hdrsiz(sp, m);
 
 	/*
 	 * Find the correct route for outer IPv4 header, compute tunnel MTU.
