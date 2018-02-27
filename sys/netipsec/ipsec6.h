@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec6.h,v 1.24 2018/02/26 09:04:29 maxv Exp $	*/
+/*	$NetBSD: ipsec6.h,v 1.25 2018/02/27 14:44:10 maxv Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/ipsec6.h,v 1.1.4.1 2003/01/24 05:11:35 sam Exp $	*/
 /*	$KAME: ipsec.h,v 1.44 2001/03/23 08:08:47 itojun Exp $	*/
 
@@ -53,9 +53,7 @@ extern struct secpolicy ip6_def_policy;
 struct inpcb;
 struct in6pcb;
 
-int ipsec6_delete_pcbpolicy(struct in6pcb *);
 int ipsec6_set_policy(struct in6pcb *, int, const void *, size_t, kauth_cred_t);
-int ipsec6_get_policy(struct in6pcb *, const void *, size_t, struct mbuf **);
 struct secpolicy *ipsec6_check_policy(struct mbuf *, 
     struct in6pcb *, int, int*,int*);
 

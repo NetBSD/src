@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.201 2018/02/12 12:52:12 maxv Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.202 2018/02/27 14:44:10 maxv Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.201 2018/02/12 12:52:12 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.202 2018/02/27 14:44:10 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1980,7 +1980,7 @@ else 					\
 				 * XXX: this will return EINVAL as sopt is
 				 * empty
 				 */
-				error = ipsec6_get_policy(in6p, sopt->sopt_data,
+				error = ipsec_get_policy(in6p, sopt->sopt_data,
 				    sopt->sopt_size, &m);
 				if (!error)
 					error = sockopt_setmbuf(sopt, m);
