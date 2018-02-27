@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.176 2018/02/27 14:14:19 maxv Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.177 2018/02/27 14:28:01 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -919,8 +919,6 @@ struct	m_tag *m_tag_next(struct mbuf *, struct m_tag *);
 #define	PACKET_TAG_IPSEC_NAT_T_PORTS		25 /* two uint16_t */
 
 #define	PACKET_TAG_INET6			26 /* IPv6 info */
-
-#define	PACKET_TAG_ECO_RETRYPARMS		27 /* Econet retry parameters */
 
 #define	PACKET_TAG_TUNNEL_INFO			28 /* tunnel identification and
 						    * protocol callback, for

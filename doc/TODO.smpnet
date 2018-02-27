@@ -1,4 +1,4 @@
-$NetBSD: TODO.smpnet,v 1.18 2017/12/05 03:23:29 ozaki-r Exp $
+$NetBSD: TODO.smpnet,v 1.19 2018/02/27 14:28:01 maxv Exp $
 
 MP-safe components
 ==================
@@ -40,7 +40,6 @@ Non MP-safe components and kernel options
    - ARCNET (if_arcsubr.c)
    - ATM (if_atmsubr.c)
    - BRIDGE_IPF
-   - if_ecosubr.c
    - FDDI (if_fddisubr.c)
    - HIPPI (if_hippisubr.c)
    - IEEE 1394 (if_ieee1394subr.c)
