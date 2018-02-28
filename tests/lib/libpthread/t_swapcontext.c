@@ -1,4 +1,4 @@
-/* $NetBSD: t_swapcontext.c,v 1.8 2018/02/28 21:29:10 uwe Exp $ */
+/* $NetBSD: t_swapcontext.c,v 1.9 2018/02/28 21:36:50 uwe Exp $ */
 
 /*
  * Copyright (c) 2012 Emmanuel Dreyfus. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_swapcontext.c,v 1.8 2018/02/28 21:29:10 uwe Exp $");
+__RCSID("$NetBSD: t_swapcontext.c,v 1.9 2018/02/28 21:36:50 uwe Exp $");
 
 #include <sys/types.h>
 #include <errno.h>
@@ -61,11 +61,6 @@ swapfunc(void)
 
 	ATF_REQUIRE_EQ(oself, nself);
 	printf("Test succeeded\n");
-	/* Go back in main */
-	ATF_REQUIRE(swapcontext(&nctx, &octx));
-
-	/* NOTREACHED */
-	return;
 }
 
 /* ARGSUSED0 */
@@ -74,6 +69,7 @@ threadfunc(void *arg)
 {
 	nctx.uc_stack.ss_sp = stack;
 	nctx.uc_stack.ss_size = sizeof(stack);
+	nctx.uc_link = &octx;
 
 	makecontext(&nctx, swapfunc, 0);
 
