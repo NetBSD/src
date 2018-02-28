@@ -1,4 +1,4 @@
-/* $NetBSD: ipsec.c,v 1.148 2018/02/28 10:16:19 maxv Exp $ */
+/* $NetBSD: ipsec.c,v 1.149 2018/02/28 11:29:14 maxv Exp $ */
 /* $FreeBSD: src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $ */
 /* $KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $ */
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.148 2018/02/28 10:16:19 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.149 2018/02/28 11:29:14 maxv Exp $");
 
 /*
  * IPsec controller part.
@@ -1483,7 +1483,7 @@ ipsec_get_reqlevel(const struct ipsecrequest *isr)
  * If the SP requires an IPsec packet, and the packet was neither AH nor ESP,
  * then kick it.
  */
-int
+static int
 ipsec_sp_reject(const struct secpolicy *sp, const struct mbuf *m)
 {
 	struct ipsecrequest *isr;
