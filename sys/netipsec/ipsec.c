@@ -1,4 +1,4 @@
-/* $NetBSD: ipsec.c,v 1.147 2018/02/28 10:09:17 maxv Exp $ */
+/* $NetBSD: ipsec.c,v 1.148 2018/02/28 10:16:19 maxv Exp $ */
 /* $FreeBSD: src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $ */
 /* $KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $ */
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.147 2018/02/28 10:09:17 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.148 2018/02/28 10:16:19 maxv Exp $");
 
 /*
  * IPsec controller part.
@@ -170,10 +170,7 @@ struct secpolicy ip6_def_policy;
 int ip6_ipsec_ecn = 0;		/* ECN ignore(-1)/forbidden(0)/allowed(1) */
 #endif
 
-static int ipsec4_setspidx_inpcb(struct mbuf *, struct inpcb *);
-#ifdef INET6
-static int ipsec6_setspidx_in6pcb(struct mbuf *, struct in6pcb *);
-#endif
+static int ipsec_setspidx_inpcb(struct mbuf *, void *);
 static int ipsec_setspidx(struct mbuf *, struct secpolicyindex *, int);
 static void ipsec4_get_ulp(struct mbuf *m, struct secpolicyindex *, int);
 static int ipsec4_setspidx_ipaddr(struct mbuf *, struct secpolicyindex *);
@@ -439,7 +436,7 @@ ipsec_getpolicybysock(struct mbuf *m, u_int dir, struct inpcb_hdr *inph,
 	case AF_INET: {
 		struct inpcb *in4p = (struct inpcb *)inph;
 		/* set spidx in pcb */
-		*error = ipsec4_setspidx_inpcb(m, in4p);
+		*error = ipsec_setspidx_inpcb(m, in4p);
 		pcbsp = in4p->inp_sp;
 		break;
 		}
@@ -447,7 +444,7 @@ ipsec_getpolicybysock(struct mbuf *m, u_int dir, struct inpcb_hdr *inph,
 	case AF_INET6: {
 		struct in6pcb *in6p = (struct in6pcb *)inph;
 		/* set spidx in pcb */
-		*error = ipsec6_setspidx_in6pcb(m, in6p);
+		*error = ipsec_setspidx_inpcb(m, in6p);
 		pcbsp = in6p->in6p_sp;
 		break;
 		}
@@ -794,54 +791,29 @@ ipsec4_forward(struct mbuf *m, int *destmtu)
 }
 
 static int
-ipsec4_setspidx_inpcb(struct mbuf *m, struct inpcb *pcb)
+ipsec_setspidx_inpcb(struct mbuf *m, void *pcb)
 {
+	struct inpcb_hdr *inph = (struct inpcb_hdr *)pcb;
 	int error;
 
-	KASSERT(pcb != NULL);
-	KASSERT(pcb->inp_sp != NULL);
-	KASSERT(pcb->inp_sp->sp_out != NULL);
-	KASSERT(pcb->inp_sp->sp_in != NULL);
+	KASSERT(inph != NULL);
+	KASSERT(inph->inph_sp != NULL);
+	KASSERT(inph->inph_sp->sp_out != NULL);
+	KASSERT(inph->inph_sp->sp_in != NULL);
 
-	error = ipsec_setspidx(m, &pcb->inp_sp->sp_in->spidx, 1);
+	error = ipsec_setspidx(m, &inph->inph_sp->sp_in->spidx, 1);
 	if (error == 0) {
-		pcb->inp_sp->sp_in->spidx.dir = IPSEC_DIR_INBOUND;
-		pcb->inp_sp->sp_out->spidx = pcb->inp_sp->sp_in->spidx;
-		pcb->inp_sp->sp_out->spidx.dir = IPSEC_DIR_OUTBOUND;
+		inph->inph_sp->sp_in->spidx.dir = IPSEC_DIR_INBOUND;
+		inph->inph_sp->sp_out->spidx = inph->inph_sp->sp_in->spidx;
+		inph->inph_sp->sp_out->spidx.dir = IPSEC_DIR_OUTBOUND;
 	} else {
-		memset(&pcb->inp_sp->sp_in->spidx, 0,
-		    sizeof(pcb->inp_sp->sp_in->spidx));
-		memset(&pcb->inp_sp->sp_out->spidx, 0,
-		    sizeof(pcb->inp_sp->sp_out->spidx));
+		memset(&inph->inph_sp->sp_in->spidx, 0,
+		    sizeof(inph->inph_sp->sp_in->spidx));
+		memset(&inph->inph_sp->sp_out->spidx, 0,
+		    sizeof(inph->inph_sp->sp_out->spidx));
 	}
 	return error;
 }
-
-#ifdef INET6
-static int
-ipsec6_setspidx_in6pcb(struct mbuf *m, struct in6pcb *pcb)
-{
-	int error;
-
-	KASSERT(pcb != NULL);
-	KASSERT(pcb->in6p_sp != NULL);
-	KASSERT(pcb->in6p_sp->sp_out != NULL);
-	KASSERT(pcb->in6p_sp->sp_in != NULL);
-
-	error = ipsec_setspidx(m, &pcb->in6p_sp->sp_in->spidx, 1);
-	if (error == 0) {
-		pcb->in6p_sp->sp_in->spidx.dir = IPSEC_DIR_INBOUND;
-		pcb->in6p_sp->sp_out->spidx = pcb->in6p_sp->sp_in->spidx;
-		pcb->in6p_sp->sp_out->spidx.dir = IPSEC_DIR_OUTBOUND;
-	} else {
-		memset(&pcb->in6p_sp->sp_in->spidx, 0,
-		    sizeof(pcb->in6p_sp->sp_in->spidx));
-		memset(&pcb->in6p_sp->sp_out->spidx, 0,
-		    sizeof(pcb->in6p_sp->sp_out->spidx));
-	}
-	return error;
-}
-#endif
 
 /*
  * configure security policy index (src/dst/proto/sport/dport)
