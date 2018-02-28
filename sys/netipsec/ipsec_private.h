@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_private.h,v 1.5 2017/07/27 06:59:28 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec_private.h,v 1.6 2018/02/28 11:09:03 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -49,7 +49,6 @@ extern	percpu_t *pfkeystat_percpu;
 
 #define	IPSEC6_STAT_GETREF()	IPSEC_STAT_GETREF()
 #define	IPSEC6_STAT_PUTREF()	IPSEC_STAT_PUTREF()
-#define	IPSEC6_STATINC(x)	IPSEC_STATINC(x)
 
 #define	AH_STATINC(x)		_NET_STATINC(ahstat_percpu, x)
 #define	AH_STATADD(x, v)	_NET_STATADD(ahstat_percpu, x, v)

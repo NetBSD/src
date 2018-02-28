@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.380 2018/02/26 09:04:29 maxv Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.381 2018/02/28 11:09:03 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.380 2018/02/26 09:04:29 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.381 2018/02/28 11:09:03 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1461,14 +1461,12 @@ findpcb:
 			if (inp &&
 			    (inp->inp_socket->so_options & SO_ACCEPTCONN) == 0
 			    && ipsec_in_reject(m, inp)) {
-				IPSEC_STATINC(IPSEC_STAT_IN_POLVIO);
 				goto drop;
 			}
 #ifdef INET6
 			else if (in6p &&
 			    (in6p->in6p_socket->so_options & SO_ACCEPTCONN) == 0
 			    && ipsec_in_reject(m, in6p)) {
-				IPSEC_STATINC(IPSEC_STAT_IN_POLVIO);
 				goto drop;
 			}
 #endif
@@ -1506,7 +1504,6 @@ findpcb:
 		if (ipsec_used && in6p &&
 		    (in6p->in6p_socket->so_options & SO_ACCEPTCONN) == 0 &&
 		    ipsec_in_reject(m, in6p)) {
-			IPSEC6_STATINC(IPSEC_STAT_IN_POLVIO);
 			goto drop;
 		}
 #endif /*IPSEC*/
@@ -1787,7 +1784,6 @@ nosave:;
 					    sotoinpcb(so) == inp);
 					if (!ipsec_in_reject(m, inp))
 						break;
-					IPSEC_STATINC(IPSEC_STAT_IN_POLVIO);
 					tp = NULL;
 					goto dropwithreset;
 #endif
@@ -1796,7 +1792,6 @@ nosave:;
 					KASSERT(sotoin6pcb(so) == in6p);
 					if (!ipsec_in_reject(m, in6p))
 						break;
-					IPSEC6_STATINC(IPSEC_STAT_IN_POLVIO);
 					tp = NULL;
 					goto dropwithreset;
 #endif /*INET6*/
