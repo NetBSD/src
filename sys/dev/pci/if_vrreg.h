@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vrreg.h,v 1.16 2006/11/05 13:05:18 tsutsui Exp $	*/
+/*	$NetBSD: if_vrreg.h,v 1.17 2018/02/28 17:13:44 flxd Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -38,8 +38,12 @@
  * Rhine register definitions.
  */
 
-#define	VR_PAR0			0x00	/* node address 0 to 4 */
-#define	VR_PAR1			0x04	/* node address 2 to 6 */
+#define	VR_PAR0			0x00	/* node address 0 */
+#define	VR_PAR1			0x01	/* node address 1 */
+#define	VR_PAR2			0x02	/* node address 2 */
+#define	VR_PAR3			0x03	/* node address 3 */
+#define	VR_PAR4			0x04	/* node address 4 */
+#define	VR_PAR5			0x05	/* node address 5 */
 #define	VR_RXCFG		0x06	/* receiver config register */
 #define	VR_TXCFG		0x07	/* transmit config register */
 #define	VR_COMMAND		0x08	/* command register */
