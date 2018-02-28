@@ -1,4 +1,4 @@
-/* $NetBSD: imcsmb.c,v 1.18 2018/02/28 09:07:18 pgoyette Exp $/ */
+/* $NetBSD: imcsmb.c,v 1.19 2018/02/28 09:25:02 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imcsmb.c,v 1.18 2018/02/28 09:07:18 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imcsmb.c,v 1.19 2018/02/28 09:25:02 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
