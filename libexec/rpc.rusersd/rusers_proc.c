@@ -1,4 +1,4 @@
-/*	$NetBSD: rusers_proc.c,v 1.27 2011/08/30 17:06:20 plunky Exp $	*/
+/*	$NetBSD: rusers_proc.c,v 1.28 2018/02/28 23:45:56 snj Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rusers_proc.c,v 1.27 2011/08/30 17:06:20 plunky Exp $");
+__RCSID("$NetBSD: rusers_proc.c,v 1.28 2018/02/28 23:45:56 snj Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -52,12 +52,6 @@ __RCSID("$NetBSD: rusers_proc.c,v 1.27 2011/08/30 17:06:20 plunky Exp $");
 
 #include "rusers_proc.h"
 #include "utmpentry.h"
-
-#ifdef XIDLE
-#include <setjmp.h>
-#include <X11/Xlib.h>
-#include <X11/extensions/xidle.h>
-#endif
 
 #include <rpcsvc/rusers.h>	/* New version */
 static size_t maxusers3 = 0;
@@ -88,57 +82,6 @@ static struct utmpidlearr *do_names_2(int);
 struct utmpidlearr *rusersproc_names_2_svc(void *, struct svc_req *);
 struct utmpidlearr *rusersproc_allnames_2_svc(void *, struct svc_req *);
 
-
-#ifdef XIDLE
-static Display *dpy;
-static sigjmp_buf openAbort;
-
-static int XqueryIdle(char *);
-static void abortOpen(int);
-
-static void
-abortOpen(int n)
-{
-	siglongjmp(openAbort, 1);
-}
-
-static int
-XqueryIdle(char *display)
-{
-	int first_event, first_error;
-	Time IdleTime;
-
-	(void)signal(SIGALRM, abortOpen);
-	(void)alarm(10);
-	if (!sigsetjmp(openAbort, 0)) {
-		if ((dpy = XOpenDisplay(display)) == NULL) {
-			syslog(LOG_DEBUG, "cannot open display %s", display);
-			return -1;
-		}
-		if (XidleQueryExtension(dpy, &first_event, &first_error)) {
-			if (!XGetIdleTime(dpy, &IdleTime)) {
-				syslog(LOG_DEBUG,
-				    "%s: unable to get idle time", display);
-				return -1;
-			}
-		} else {
-			syslog(LOG_DEBUG, "%s: Xidle extension not loaded",
-			    display);
-			return -1;
-		}
-		XCloseDisplay(dpy);
-	} else {
-		syslog(LOG_DEBUG, "%s: server grabbed for over 10 seconds",
-		    display);
-		return -1;
-	}
-	(void)alarm(0);
-	(void)signal(SIGALRM, SIG_DFL);
-
-	IdleTime /= 1000;
-	return (IdleTime + 30) / 60;
-}
-#endif /* XIDLE */
 
 static int
 getarrays2(int ne)
@@ -205,11 +148,6 @@ getidle(const char *tty, char *display)
 	 * If this is an X terminal or console, then try the
 	 * XIdle extension
 	 */
-#ifdef XIDLE
-	if (display && *display && strchr(display, ':') != NULL &&
-	    (idle = XqueryIdle(display)) >= 0)
-		return idle;
-#endif
 	idle = 0;
 	if (*tty == 'X') {
 		long kbd_idle, mouse_idle;
