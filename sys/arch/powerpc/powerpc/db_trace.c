@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.57 2011/12/13 11:03:52 kiyohara Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.58 2018/02/28 20:11:09 mrg Exp $	*/
 /*	$OpenBSD: db_trace.c,v 1.3 1997/03/21 02:10:48 niklas Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.57 2011/12/13 11:03:52 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.58 2018/02/28 20:11:09 mrg Exp $");
 
 #include "opt_ppcarch.h"
 
@@ -161,7 +161,10 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 					return;
 				}
 				l = LIST_FIRST(&p->p_lwps);
-				KASSERT(l != NULL);
+				if (l == NULL) {
+					(*pr)("trace: no LWP?\n");
+					return;
+				}
 			}
 			(*pr)("lid %d ", l->l_lid);
 			pcb = lwp_getpcb(l);
