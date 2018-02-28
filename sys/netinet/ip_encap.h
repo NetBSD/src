@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_encap.h,v 1.23 2017/11/15 10:42:41 knakahara Exp $	*/
+/*	$NetBSD: ip_encap.h,v 1.24 2018/02/28 10:30:20 maxv Exp $	*/
 /*	$KAME: ip_encap.h,v 1.7 2000/03/25 07:23:37 sumikawa Exp $	*/
 
 /*
@@ -75,7 +75,7 @@ struct encaptab {
 	struct sockaddr *dstmask;
 	int (*func) (struct mbuf *, int, int, void *);
 	const struct encapsw *esw;
-	void *arg;			/* passed via PACKET_TAG_ENCAP */
+	void *arg;
 	struct psref_target	psref;
 };
 
