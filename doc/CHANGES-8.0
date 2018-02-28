@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.134 2018/02/27 09:08:22 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.135 2018/02/28 18:55:54 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -9988,4 +9988,16 @@ sys/uvm/uvm_fault.c				1.202
 	Always use PR_WAITOK or PR_NOWAIT, never 0.  assert this.
 	Allow only one pending call to a pool's backing allocator at a time.
 	[mrg, ticket #593]
+
+lib/librumphijack/hijack.c			1.123
+
+	Since ln(1) now uses linkat(2) provide a wrapper.
+	[maya, ticket #594]
+
+sys/net/if.c					1.398
+sys/net/rtsock.c				1.231
+
+	Remove useless cast, initialize family.
+	Avoid using a zero family mask.
+	[mrg, ticket #595]
 
