@@ -1,4 +1,4 @@
-/* $NetBSD: imc.c,v 1.5 2018/02/27 11:50:57 pgoyette Exp $ */
+/* $NetBSD: imc.c,v 1.6 2018/02/28 05:53:13 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -58,6 +58,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+/*
+ * Driver to expose the SMBus controllers in Intel's Integrated
+ * Memory Controllers in certain CPUs.
+ */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: imc.c,v 1.6 2018/02/28 05:53:13 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
