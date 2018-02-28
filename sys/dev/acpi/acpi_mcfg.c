@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_mcfg.c,v 1.4 2016/07/12 09:45:34 hannken Exp $	*/
+/*	$NetBSD: acpi_mcfg.c,v 1.5 2018/02/28 05:50:06 msaitoh Exp $	*/
 
 /*-
  * Copyright (C) 2015 NONAKA Kimihiro <nonaka@NetBSD.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_mcfg.c,v 1.4 2016/07/12 09:45:34 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_mcfg.c,v 1.5 2018/02/28 05:50:06 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -464,6 +464,9 @@ acpimcfg_device_probe(const struct pci_attach_args *pa)
 	int func = pa->pa_function;
 	int last_dev, last_func, end_func;
 	int alias = 0;
+	const struct pci_quirkdata *qd;
+	bool force_hasextcnf = false;
+	bool force_noextcnf = false;
 	int i, j;
 
 	seg = acpimcfg_get_segment(bus);
@@ -488,9 +491,18 @@ acpimcfg_device_probe(const struct pci_attach_args *pa)
 	}
 	mb->last_probed = tag;
 
+	reg = pci_conf_read(pc, tag, PCI_ID_REG);
+	qd = pci_lookup_quirkdata(PCI_VENDOR(reg), PCI_PRODUCT(reg));
+	if (qd != NULL && (qd->quirks & PCI_QUIRK_HASEXTCNF) != 0)
+		force_hasextcnf = true;
+	if (qd != NULL && (qd->quirks & PCI_QUIRK_NOEXTCNF) != 0)
+		force_noextcnf = true;
+	
 	/* Probe extended configuration space. */
-	if (((reg = pci_conf_read(pc, tag, PCI_CONF_SIZE)) == (pcireg_t)-1) ||
-	    (reg == 0) || (alias = acpimcfg_ext_conf_is_aliased(pc, tag))) {
+	if ((!force_hasextcnf) && ((force_noextcnf) ||
+		((reg = pci_conf_read(pc, tag, PCI_CONF_SIZE)) == (pcireg_t)-1)
+		|| (reg == 0)
+		|| (alias = acpimcfg_ext_conf_is_aliased(pc, tag)))) {
 		aprint_debug_dev(acpi_sc->sc_dev,
 		    "MCFG: %03d:%02d:%d: invalid config space "
 		    "(cfg[0x%03x]=0x%08x, alias=%s)\n", bus, dev, func,

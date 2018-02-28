@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_quirks.c,v 1.9 2009/08/19 16:31:28 pgoyette Exp $	*/
+/*	$NetBSD: pci_quirks.c,v 1.10 2018/02/28 05:50:06 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_quirks.c,v 1.9 2009/08/19 16:31:28 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_quirks.c,v 1.10 2018/02/28 05:50:06 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -49,6 +49,10 @@ static const struct pci_quirkdata pci_quirks[] = {
 	    PCI_QUIRK_MULTIFUNCTION },
 	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_XBOX_PCHB,
 	    PCI_QUIRK_SKIP_FUNC1 | PCI_QUIRK_SKIP_FUNC2 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEOND_MEM_0_TTR_1,
+	    PCI_QUIRK_HASEXTCNF },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_COREI76K_IMC_0,
+	    PCI_QUIRK_HASEXTCNF },
 };
 
 const struct pci_quirkdata *
