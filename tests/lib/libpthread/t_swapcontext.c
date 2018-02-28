@@ -1,4 +1,4 @@
-/* $NetBSD: t_swapcontext.c,v 1.7 2018/02/27 20:34:04 uwe Exp $ */
+/* $NetBSD: t_swapcontext.c,v 1.8 2018/02/28 21:29:10 uwe Exp $ */
 
 /*
  * Copyright (c) 2012 Emmanuel Dreyfus. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD");
+__RCSID("$NetBSD: t_swapcontext.c,v 1.8 2018/02/28 21:29:10 uwe Exp $");
 
 #include <sys/types.h>
 #include <errno.h>
