@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.122 2018/02/28 17:13:44 flxd Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.123 2018/02/28 18:03:48 flxd Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.122 2018/02/28 17:13:44 flxd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.123 2018/02/28 18:03:48 flxd Exp $");
 
 
 
@@ -436,8 +436,7 @@ vr_mii_statchg(struct ifnet *ifp)
 		}
 		if (i == 0) {
 #ifdef VR_DEBUG
-			printf("%s: rx shutdown error!\n",
-			    device_xname(sc->vr_dev));
+			aprint_error_dev(sc->vr_dev, "rx shutdown error!\n");
 #endif
 			sc->vr_flags |= VR_F_RESTART;
 		}
@@ -522,12 +521,12 @@ vr_reset(struct vr_softc *sc)
 	}
 	if (i == VR_TIMEOUT) {
 		if (sc->vr_revid < REV_ID_VT3065_A) {
-			printf("%s: reset never completed!\n",
-			    device_xname(sc->vr_dev));
+			aprint_error_dev(sc->vr_dev,
+			    "reset never completed!\n");
 		} else {
 			/* Use newer force reset command */
-			printf("%s: using force reset command.\n",
-			    device_xname(sc->vr_dev));
+			aprint_normal_dev(sc->vr_dev,
+			    "using force reset command.\n");
 			VR_SETBIT(sc, VR_MISC_CR1, VR_MISCCR1_FORSRST);
 		}
 	}
@@ -649,7 +648,7 @@ vr_rxeof(struct vr_softc *sc)
 				errstr = "unknown rx error";
 				break;
 			}
-			printf("%s: receive error: %s\n", device_xname(sc->vr_dev),
+			aprint_error_dev(sc->vr_dev, "receive error: %s\n",
 			    errstr);
 
 			VR_INIT_RXDESC(sc, i);
@@ -664,10 +663,10 @@ vr_rxeof(struct vr_softc *sc)
 			 */
 			ifp->if_ierrors++;
 
-			printf("%s: receive error: incomplete frame; "
-			       "size = %d, status = 0x%x\n",
-			       device_xname(sc->vr_dev),
-			       VR_RXBYTES(le32toh(d->vr_status)), rxstat);
+			aprint_error_dev(sc->vr_dev,
+			    "receive error: incomplete frame; "
+			    "size = %d, status = 0x%x\n",
+			    VR_RXBYTES(le32toh(d->vr_status)), rxstat);
 
 			VR_INIT_RXDESC(sc, i);
 
@@ -688,9 +687,9 @@ vr_rxeof(struct vr_softc *sc)
 			 */
 			ifp->if_ierrors++;
 
-			printf("%s: receive error: zero-length packet; "
-			       "status = 0x%x\n",
-			       device_xname(sc->vr_dev), rxstat);
+			aprint_error_dev(sc->vr_dev,
+			    "receive error: zero-length packet; "
+			    "status = 0x%x\n", rxstat);
 
 			VR_INIT_RXDESC(sc, i);
 
@@ -805,8 +804,7 @@ vr_rxeoc(struct vr_softc *sc)
 	}
 	if (i == VR_TIMEOUT) {
 		/* XXX need reset? */
-		printf("%s: RX shutdown never complete\n",
-		    device_xname(sc->vr_dev));
+		aprint_error_dev(sc->vr_dev, "RX shutdown never completed\n");
 	}
 
 	vr_rxeof(sc);
@@ -854,8 +852,8 @@ vr_txeof(struct vr_softc *sc)
 			}
 			if (j == VR_TIMEOUT) {
 				/* XXX need reset? */
-				printf("%s: TX shutdown never complete\n",
-				    device_xname(sc->vr_dev));
+				aprint_error_dev(sc->vr_dev,
+				    "TX shutdown never completed\n");
 			}
 			d->vr_status = htole32(VR_TXSTAT_OWN);
 			CSR_WRITE_4(sc, VR_TXADDR, VR_CDTXADDR(sc, i));
@@ -930,7 +928,7 @@ vr_intr(void *arg)
 			vr_rxeof(sc);
 
 		if (status & VR_ISR_RX_DROPPED) {
-			printf("%s: rx packet lost\n", device_xname(sc->vr_dev));
+			aprint_error_dev(sc->vr_dev, "rx packet lost\n");
 			ifp->if_ierrors++;
 		}
 
@@ -941,11 +939,10 @@ vr_intr(void *arg)
 
 		if (status & (VR_ISR_BUSERR | VR_ISR_TX_UNDERRUN)) {
 			if (status & VR_ISR_BUSERR)
-				printf("%s: PCI bus error\n",
-				    device_xname(sc->vr_dev));
+				aprint_error_dev(sc->vr_dev, "PCI bus error\n");
 			if (status & VR_ISR_TX_UNDERRUN)
-				printf("%s: transmit underrun\n",
-				    device_xname(sc->vr_dev));
+				aprint_error_dev(sc->vr_dev,
+				    "transmit underrun\n");
 			/* vr_init() calls vr_start() */
 			dotx = 0;
 			(void)vr_init(ifp);
@@ -960,11 +957,11 @@ vr_intr(void *arg)
 		if (status &
 		    (VR_ISR_TX_ABRT | VR_ISR_TX_ABRT2 | VR_ISR_TX_UDFI)) {
 			if (status & (VR_ISR_TX_ABRT | VR_ISR_TX_ABRT2))
-				printf("%s: transmit aborted\n",
-				    device_xname(sc->vr_dev));
+				aprint_error_dev(sc->vr_dev,
+				    "transmit aborted\n");
 			if (status & VR_ISR_TX_UDFI)
-				printf("%s: transmit underflow\n",
-				    device_xname(sc->vr_dev));
+				aprint_error_dev(sc->vr_dev,
+				    "transmit underflow\n");
 			ifp->if_oerrors++;
 			dotx = 1;
 			vr_txeof(sc);
@@ -1045,15 +1042,15 @@ vr_start(struct ifnet *ifp)
 		     BUS_DMA_WRITE|BUS_DMA_NOWAIT) != 0) {
 			MGETHDR(m, M_DONTWAIT, MT_DATA);
 			if (m == NULL) {
-				printf("%s: unable to allocate Tx mbuf\n",
-				    device_xname(sc->vr_dev));
+				aprint_error_dev(sc->vr_dev,
+				    "unable to allocate Tx mbuf\n");
 				break;
 			}
 			if (m0->m_pkthdr.len > MHLEN) {
 				MCLGET(m, M_DONTWAIT);
 				if ((m->m_flags & M_EXT) == 0) {
-					printf("%s: unable to allocate Tx "
-					    "cluster\n", device_xname(sc->vr_dev));
+					aprint_error_dev(sc->vr_dev,
+					    "unable to allocate Tx cluster\n");
 					m_freem(m);
 					break;
 				}
@@ -1073,8 +1070,8 @@ vr_start(struct ifnet *ifp)
 			    ds->ds_dmamap, m, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
 			if (error) {
 				m_freem(m);
-				printf("%s: unable to load Tx buffer, "
-				    "error = %d\n", device_xname(sc->vr_dev), error);
+				aprint_error_dev(sc->vr_dev, "unable to load "
+				    "Tx buffer, error = %d\n", error);
 				break;
 			}
 		}
@@ -1218,9 +1215,9 @@ vr_init(struct ifnet *ifp)
 		ds = VR_DSRX(sc, i);
 		if (ds->ds_mbuf == NULL) {
 			if ((error = vr_add_rxbuf(sc, i)) != 0) {
-				printf("%s: unable to allocate or map rx "
-				    "buffer %d, error = %d\n",
-				    device_xname(sc->vr_dev), i, error);
+				aprint_error_dev(sc->vr_dev,
+				    "unable to allocate or map rx buffer %d, "
+				    "error = %d\n", i, error);
 				/*
 				 * XXX Should attempt to run with fewer receive
 				 * XXX buffers instead of just failing.
@@ -1277,7 +1274,7 @@ vr_init(struct ifnet *ifp)
 
  out:
 	if (error)
-		printf("%s: interface not running\n", device_xname(sc->vr_dev));
+		aprint_error_dev(sc->vr_dev, "interface not running\n");
 	return (error);
 }
 
@@ -1327,7 +1324,7 @@ vr_watchdog(struct ifnet *ifp)
 {
 	struct vr_softc *sc = ifp->if_softc;
 
-	printf("%s: device timeout\n", device_xname(sc->vr_dev));
+	aprint_error_dev(sc->vr_dev, "device timeout\n");
 	ifp->if_oerrors++;
 
 	(void) vr_init(ifp);
@@ -1344,7 +1341,7 @@ vr_tick(void *arg)
 
 	s = splnet();
 	if (sc->vr_flags & VR_F_RESTART) {
-		printf("%s: restarting\n", device_xname(sc->vr_dev));
+		aprint_normal_dev(sc->vr_dev, "restarting\n");
 		vr_init(&sc->vr_ec.ec_if);
 		sc->vr_flags &= ~VR_F_RESTART;
 	}
@@ -1553,7 +1550,8 @@ vr_attach(device_t parent, device_t self, void *aux)
 		}
 #endif
 		else {
-			aprint_error(": unable to map device registers\n");
+			aprint_error_dev(self,
+			    "unable to map device registers\n");
 			return;
 		}
 
@@ -1571,6 +1569,7 @@ vr_attach(device_t parent, device_t self, void *aux)
 			if (intrstr != NULL)
 				aprint_error(" at %s", intrstr);
 			aprint_error("\n");
+			return;
 		}
 		aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 	}
@@ -1623,8 +1622,7 @@ vr_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * A Rhine chip was detected. Inform the world.
 	 */
-	aprint_normal("%s: Ethernet address: %s\n",
-		device_xname(self), ether_sprintf(eaddr));
+	aprint_normal_dev(self, "Ethernet address: %s\n", ether_sprintf(eaddr));
 
 	memcpy(sc->vr_enaddr, eaddr, ETHER_ADDR_LEN);
 
