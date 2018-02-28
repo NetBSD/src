@@ -1,6 +1,6 @@
-/*	$NetBSD: ipsec_private.h,v 1.6 2018/02/28 11:09:03 maxv Exp $	*/
+/*	$NetBSD: ipsec_private.h,v 1.7 2018/02/28 11:19:49 maxv Exp $	*/
 
-/*-
+/*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -35,20 +35,17 @@
 #ifdef _KERNEL
 #include <net/net_stats.h>
 
-extern	percpu_t *ipsecstat_percpu;
-extern	percpu_t *ahstat_percpu;
-extern	percpu_t *espstat_percpu;
-extern	percpu_t *ipcompstat_percpu;
-extern	percpu_t *ipipstat_percpu;
-extern	percpu_t *pfkeystat_percpu;
+extern percpu_t *ipsecstat_percpu;
+extern percpu_t *ahstat_percpu;
+extern percpu_t *espstat_percpu;
+extern percpu_t *ipcompstat_percpu;
+extern percpu_t *ipipstat_percpu;
+extern percpu_t *pfkeystat_percpu;
 
 #define	IPSEC_STAT_GETREF()	_NET_STAT_GETREF(ipsecstat_percpu)
 #define	IPSEC_STAT_PUTREF()	_NET_STAT_PUTREF(ipsecstat_percpu)
 #define	IPSEC_STATINC(x)	_NET_STATINC(ipsecstat_percpu, x)
 #define	IPSEC_STATADD(x, v)	_NET_STATADD(ipsecstat_percpu, x, v)
-
-#define	IPSEC6_STAT_GETREF()	IPSEC_STAT_GETREF()
-#define	IPSEC6_STAT_PUTREF()	IPSEC_STAT_PUTREF()
 
 #define	AH_STATINC(x)		_NET_STATINC(ahstat_percpu, x)
 #define	AH_STATADD(x, v)	_NET_STATADD(ahstat_percpu, x, v)
@@ -90,14 +87,16 @@ extern	percpu_t *pfkeystat_percpu;
 #include <sys/socketvar.h> /* for softnet_lock */
 
 #define IPSEC_DECLARE_LOCK_VARIABLE	int __s
-#define IPSEC_ACQUIRE_GLOBAL_LOCKS()	do {					\
-					__s = splsoftnet();		\
-					mutex_enter(softnet_lock);	\
-				} while (0)
-#define IPSEC_RELEASE_GLOBAL_LOCKS()	do {					\
-					mutex_exit(softnet_lock);	\
-					splx(__s);			\
-				} while (0)
+#define IPSEC_ACQUIRE_GLOBAL_LOCKS()	\
+	do {					\
+		__s = splsoftnet();		\
+		mutex_enter(softnet_lock);	\
+	} while (0)
+#define IPSEC_RELEASE_GLOBAL_LOCKS()	\
+	do {					\
+		mutex_exit(softnet_lock);	\
+		splx(__s);			\
+	} while (0)
 #endif
 
 #endif /* _KERNEL */
