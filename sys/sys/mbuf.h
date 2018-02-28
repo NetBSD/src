@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.177 2018/02/27 14:28:01 maxv Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.178 2018/02/28 10:30:20 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -899,32 +899,16 @@ struct	m_tag *m_tag_next(struct mbuf *, struct m_tag *);
 
 /* Packet tag types */
 #define PACKET_TAG_NONE				0  /* Nothing */
-						   /* 1: Used to be VLAN ID */
-#define PACKET_TAG_ENCAP			2  /* encapsulation data */
-#define PACKET_TAG_ESP				3  /* ESP information */
 #define PACKET_TAG_SO				4  /* sending socket pointer */
 #define PACKET_TAG_PF				11 /* packet filter */
 #define PACKET_TAG_ALTQ_QID			12 /* ALTQ queue id */
-
-#define PACKET_TAG_IPSEC_IN_CRYPTO_DONE		16
-#define PACKET_TAG_IPSEC_IN_DONE		17
 #define PACKET_TAG_IPSEC_OUT_DONE		18
-#define	PACKET_TAG_IPSEC_OUT_CRYPTO_NEEDED	19  /* NIC IPsec crypto req'ed */
-#define	PACKET_TAG_IPSEC_IN_COULD_DO_CRYPTO	20  /* NIC notifies IPsec */
-#define	PACKET_TAG_IPSEC_PENDING_TDB		21  /* Reminder to do IPsec */
-
-#define	PACKET_TAG_IPSEC_SOCKET			22 /* IPSEC socket ref */
-#define	PACKET_TAG_IPSEC_HISTORY		23 /* IPSEC history */
-
 #define	PACKET_TAG_IPSEC_NAT_T_PORTS		25 /* two uint16_t */
-
 #define	PACKET_TAG_INET6			26 /* IPv6 info */
-
 #define	PACKET_TAG_TUNNEL_INFO			28 /* tunnel identification and
 						    * protocol callback, for
 						    * loop detection/recovery
 						    */
-
 #define	PACKET_TAG_MPLS				29 /* Indicate it's for MPLS */
 #define	PACKET_TAG_SRCROUTE			30 /* IPv4 source routing */
 
