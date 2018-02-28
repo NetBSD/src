@@ -1,4 +1,4 @@
-/* $NetBSD: imcsmb.c,v 1.15 2018/02/27 23:33:44 pgoyette Exp $/ */
+/* $NetBSD: imcsmb.c,v 1.16 2018/02/28 05:53:13 pgoyette Exp $/ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -59,7 +59,15 @@
  * SUCH DAMAGE.
  */
 
-/* A detailed description of this device is present in imc.c */
+/* 
+ * Driver for the SMBus controllers in Intel's Integrated Memory Controllers
+ * in certain CPUs.  A more detailed description of this device is present
+ * in imc.c */
+ */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: imcsmb.c,v 1.16 2018/02/28 05:53:13 pgoyette Exp $");
+
 
 #include <sys/param.h>
 #include <sys/kernel.h>
