@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.121 2016/12/15 09:28:05 ozaki-r Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.122 2018/02/28 17:13:44 flxd Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.121 2016/12/15 09:28:05 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.122 2018/02/28 17:13:44 flxd Exp $");
 
 
 
@@ -1594,8 +1594,7 @@ vr_attach(device_t parent, device_t self, void *aux)
 	 * Get station address. The way the Rhine chips work,
 	 * you're not allowed to directly access the EEPROM once
 	 * they've been programmed a special way. Consequently,
-	 * we need to read the node address from the PAR0 and PAR1
-	 * registers.
+	 * we need to read the node address from the PAR registers.
 	 *
 	 * XXXSCW: On the Rhine III, setting VR_EECSR_LOAD forces a reload
 	 *         of the *whole* EEPROM, not just the MAC address. This is
