@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.101 2018/01/10 02:50:26 ozaki-r Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.102 2018/02/28 09:44:25 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.101 2018/01/10 02:50:26 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.102 2018/02/28 09:44:25 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -289,7 +289,9 @@ sockaddr_getsize_by_family(sa_family_t af)
 		return sizeof(struct sockaddr_at);
 	default:
 #ifdef DIAGNOSTIC
-		printf("%s: Unhandled address family=%hhu\n", __func__, af);
+		printf("%s: (%s:%u:%u) Unhandled address family=%hhu\n",
+		    __func__, curlwp->l_proc->p_comm,
+		    curlwp->l_proc->p_pid, curlwp->l_lid, af);
 #endif
 		return 0;
 	}
