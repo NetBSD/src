@@ -1,4 +1,4 @@
-/*	$NetBSD: bridgestp.c,v 1.25 2018/02/28 10:34:04 ozaki-r Exp $	*/
+/*	$NetBSD: bridgestp.c,v 1.26 2018/02/28 13:12:53 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bridgestp.c,v 1.25 2018/02/28 10:34:04 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bridgestp.c,v 1.26 2018/02/28 13:12:53 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -593,8 +593,6 @@ bstp_input(struct bridge_softc *sc, struct bridge_iflist *bif, struct mbuf *m)
 	struct bstp_config_unit cu;
 	struct bstp_tcn_unit tu;
 	uint16_t len;
-
-	KASSERT(bif->bif_refs > 0);
 
 	eh = mtod(m, struct ether_header *);
 
