@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.222 2018/02/26 09:13:00 maxv Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.223 2018/02/28 11:23:24 maxv Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.222 2018/02/26 09:13:00 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.223 2018/02/28 11:23:24 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -105,11 +105,9 @@ __KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.222 2018/02/26 09:13:00 maxv Exp $");
 #ifdef IPSEC
 #include <netipsec/ipsec.h>
 #include <netipsec/ipsec_var.h>
-#include <netipsec/ipsec_private.h>
 #include <netipsec/ipsec6.h>
 #include <netipsec/key.h>
 #endif
-
 
 #include "faith.h"
 #if defined(NFAITH) && 0 < NFAITH

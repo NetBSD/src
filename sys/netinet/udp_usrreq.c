@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.244 2018/02/28 11:09:03 maxv Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.245 2018/02/28 11:23:24 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.244 2018/02/28 11:09:03 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.245 2018/02/28 11:23:24 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -119,7 +119,6 @@ __KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.244 2018/02/28 11:09:03 maxv Exp $"
 #ifdef IPSEC
 #include <netipsec/ipsec.h>
 #include <netipsec/ipsec_var.h>
-#include <netipsec/ipsec_private.h>
 #include <netipsec/esp.h>
 #ifdef INET6
 #include <netipsec/ipsec6.h>
