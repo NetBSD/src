@@ -1,4 +1,4 @@
-/* $NetBSD: ipsec.c,v 1.146 2018/02/27 15:01:30 maxv Exp $ */
+/* $NetBSD: ipsec.c,v 1.147 2018/02/28 10:09:17 maxv Exp $ */
 /* $FreeBSD: src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $ */
 /* $KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $ */
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.146 2018/02/27 15:01:30 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.147 2018/02/28 10:09:17 maxv Exp $");
 
 /*
  * IPsec controller part.
@@ -812,7 +812,7 @@ ipsec4_setspidx_inpcb(struct mbuf *m, struct inpcb *pcb)
 		memset(&pcb->inp_sp->sp_in->spidx, 0,
 		    sizeof(pcb->inp_sp->sp_in->spidx));
 		memset(&pcb->inp_sp->sp_out->spidx, 0,
-		    sizeof(pcb->inp_sp->sp_in->spidx));
+		    sizeof(pcb->inp_sp->sp_out->spidx));
 	}
 	return error;
 }
@@ -821,7 +821,6 @@ ipsec4_setspidx_inpcb(struct mbuf *m, struct inpcb *pcb)
 static int
 ipsec6_setspidx_in6pcb(struct mbuf *m, struct in6pcb *pcb)
 {
-	struct secpolicyindex *spidx;
 	int error;
 
 	KASSERT(pcb != NULL);
@@ -829,26 +828,17 @@ ipsec6_setspidx_in6pcb(struct mbuf *m, struct in6pcb *pcb)
 	KASSERT(pcb->in6p_sp->sp_out != NULL);
 	KASSERT(pcb->in6p_sp->sp_in != NULL);
 
-	memset(&pcb->in6p_sp->sp_in->spidx, 0, sizeof(*spidx));
-	memset(&pcb->in6p_sp->sp_out->spidx, 0, sizeof(*spidx));
-
-	spidx = &pcb->in6p_sp->sp_in->spidx;
-	error = ipsec_setspidx(m, spidx, 1);
-	if (error)
-		goto bad;
-	spidx->dir = IPSEC_DIR_INBOUND;
-
-	spidx = &pcb->in6p_sp->sp_out->spidx;
-	error = ipsec_setspidx(m, spidx, 1);
-	if (error)
-		goto bad;
-	spidx->dir = IPSEC_DIR_OUTBOUND;
-
-	return 0;
-
-bad:
-	memset(&pcb->in6p_sp->sp_in->spidx, 0, sizeof(*spidx));
-	memset(&pcb->in6p_sp->sp_out->spidx, 0, sizeof(*spidx));
+	error = ipsec_setspidx(m, &pcb->in6p_sp->sp_in->spidx, 1);
+	if (error == 0) {
+		pcb->in6p_sp->sp_in->spidx.dir = IPSEC_DIR_INBOUND;
+		pcb->in6p_sp->sp_out->spidx = pcb->in6p_sp->sp_in->spidx;
+		pcb->in6p_sp->sp_out->spidx.dir = IPSEC_DIR_OUTBOUND;
+	} else {
+		memset(&pcb->in6p_sp->sp_in->spidx, 0,
+		    sizeof(pcb->in6p_sp->sp_in->spidx));
+		memset(&pcb->in6p_sp->sp_out->spidx, 0,
+		    sizeof(pcb->in6p_sp->sp_out->spidx));
+	}
 	return error;
 }
 #endif
