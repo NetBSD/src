@@ -1,4 +1,4 @@
-/* $NetBSD: udp6_usrreq.c,v 1.136 2018/02/28 11:09:03 maxv Exp $ */
+/* $NetBSD: udp6_usrreq.c,v 1.137 2018/02/28 11:23:24 maxv Exp $ */
 /* $KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $ */
 /* $KAME: udp6_output.c,v 1.43 2001/10/15 09:19:52 itojun Exp $ */
 
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.136 2018/02/28 11:09:03 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.137 2018/02/28 11:23:24 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -110,7 +110,6 @@ __KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.136 2018/02/28 11:09:03 maxv Exp $
 #ifdef IPSEC
 #include <netipsec/ipsec.h>
 #include <netipsec/ipsec_var.h>
-#include <netipsec/ipsec_private.h>
 #ifdef INET6
 #include <netipsec/ipsec6.h>
 #endif
