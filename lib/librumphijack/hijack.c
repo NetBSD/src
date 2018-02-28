@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.122 2017/02/16 08:08:01 ozaki-r Exp $	*/
+/*      $NetBSD: hijack.c,v 1.122.4.1 2018/02/28 18:53:06 martin Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 #include <rump/rumpuser_port.h>
 
 #if !defined(lint)
-__RCSID("$NetBSD: hijack.c,v 1.122 2017/02/16 08:08:01 ozaki-r Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.122.4.1 2018/02/28 18:53:06 martin Exp $");
 #endif
 
 #include <sys/param.h>
@@ -162,6 +162,9 @@ enum dualcall {
 
 #ifdef HAVE___QUOTACTL
 	DUALCALL_QUOTACTL,
+#endif
+#ifdef __NetBSD__
+	DUALCALL_LINKAT,
 #endif
 	DUALCALL__NUM
 };
@@ -379,6 +382,9 @@ struct sysnames {
 	{ DUALCALL_QUOTACTL,	"__quotactl",	RSYS_NAME(__QUOTACTL)	},
 #endif /* HAVE___QUOTACTL */
 
+#ifdef __NetBSD__
+	{ DUALCALL_LINKAT,	"linkat",	RSYS_NAME(LINKAT)	},
+#endif
 };
 #undef S
 
@@ -1270,6 +1276,19 @@ moveish(const char *from, const char *to,
 
 	return op(from, to);
 }
+
+#ifdef __NetBSD__
+int
+linkat(int fromfd, const char *from, int tofd, const char *to, int flags)
+{
+	if (fromfd != AT_FDCWD || tofd != AT_FDCWD
+	    || flags != AT_SYMLINK_FOLLOW)
+		return ENOSYS;
+
+	return moveish(from, to,
+	    GETSYSCALL(rump, LINK), GETSYSCALL(host, LINK));
+}
+#endif
 
 int
 link(const char *from, const char *to)
