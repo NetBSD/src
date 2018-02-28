@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.541 2018/01/25 04:48:45 yamaguchi Exp $
+.\"	$NetBSD: main,v 1.542 2018/02/28 20:13:09 snj Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -801,39 +801,6 @@ again.
 .enum)
 .
 .\}
-.Ss2 Issues affecting an upgrade from NetBSD 5.x releases
-.Pp
-See the section below on upgrading from NetBSD 6.x as well.
-.Pp
-The following users need to be created:
-.(bullet -compact -offset indent
-_mdnsd
-.It
-_tests
-.It
-_tcpdump
-.It
-_tss
-.bullet)
-.Pp
-The following groups need to be created:
-.(bullet -compact -offset indent
-_mdnsd
-.It
-_tests
-.It
-_tcpdump
-.It
-_tss
-.bullet)
-.Pp
-The implementation of SHA2-HMAC in KAME_IPSEC as used in
-.Nx
-5.0 and before did not comply with current standards.
-FAST_IPSEC does, with the result that old and new systems cannot
-communicate over IPSEC if one of the affected authentication
-algorithms (hmac_sha256, hmac_sha384, hmac_sha512) is used.
-.
 .Ss2 Issues affecting an upgrade from NetBSD 6.x releases
 .Pp
 The following user needs to be created:
