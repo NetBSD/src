@@ -1,4 +1,4 @@
-/*	$NetBSD: uni-n.c,v 1.7 2017/09/15 21:33:52 macallan Exp $	*/
+/*	$NetBSD: uni-n.c,v 1.8 2018/03/01 13:55:25 macallan Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz.
@@ -31,7 +31,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uni-n.c,v 1.7 2017/09/15 21:33:52 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uni-n.c,v 1.8 2018/03/01 13:55:25 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,8 @@ uni_n_match(device_t parent, cfdata_t cf, void *aux)
 	struct confargs *ca = aux;
 	char compat[32];
 	if ((strcmp(ca->ca_name, "uni-n") != 0) &&
-	    (strcmp(ca->ca_name, "u4") != 0))
+	    (strcmp(ca->ca_name, "u4") != 0) &&
+	    (strcmp(ca->ca_name, "u3") != 0))
 		return 0;
 
 	memset(compat, 0, sizeof(compat));
