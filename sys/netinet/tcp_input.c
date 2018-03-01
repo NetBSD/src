@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.382 2018/02/28 11:23:24 maxv Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.383 2018/03/01 06:08:43 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.382 2018/02/28 11:23:24 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.383 2018/03/01 06:08:43 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1457,15 +1457,11 @@ findpcb:
 		}
 #if defined(IPSEC)
 		if (ipsec_used) {
-			if (inp &&
-			    (inp->inp_socket->so_options & SO_ACCEPTCONN) == 0
-			    && ipsec_in_reject(m, inp)) {
+			if (inp && ipsec_in_reject(m, inp)) {
 				goto drop;
 			}
 #ifdef INET6
-			else if (in6p &&
-			    (in6p->in6p_socket->so_options & SO_ACCEPTCONN) == 0
-			    && ipsec_in_reject(m, in6p)) {
+			else if (in6p && ipsec_in_reject(m, in6p)) {
 				goto drop;
 			}
 #endif
@@ -1500,9 +1496,7 @@ findpcb:
 			goto dropwithreset_ratelim;
 		}
 #if defined(IPSEC)
-		if (ipsec_used && in6p &&
-		    (in6p->in6p_socket->so_options & SO_ACCEPTCONN) == 0 &&
-		    ipsec_in_reject(m, in6p)) {
+		if (ipsec_used && in6p && ipsec_in_reject(m, in6p)) {
 			goto drop;
 		}
 #endif /*IPSEC*/
@@ -1768,35 +1762,6 @@ nosave:;
 				m_put_rcvif(rcvif, &s);
 			}
 #endif
-
-#if defined(IPSEC)
-			if (ipsec_used) {
-				switch (af) {
-#ifdef INET
-				case AF_INET:
-					/*
-					 * inp can be NULL when receiving an
-					 * IPv4 packet on an IPv4-mapped IPv6
-					 * address.
-					 */
-					KASSERT(inp == NULL ||
-					    sotoinpcb(so) == inp);
-					if (!ipsec_in_reject(m, inp))
-						break;
-					tp = NULL;
-					goto dropwithreset;
-#endif
-#ifdef INET6
-				case AF_INET6:
-					KASSERT(sotoin6pcb(so) == in6p);
-					if (!ipsec_in_reject(m, in6p))
-						break;
-					tp = NULL;
-					goto dropwithreset;
-#endif /*INET6*/
-				}
-			}
-#endif /*IPSEC*/
 
 			/*
 			 * LISTEN socket received a SYN from itself? This
