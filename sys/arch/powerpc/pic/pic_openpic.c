@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_openpic.c,v 1.10 2017/06/01 02:45:07 chs Exp $ */
+/*	$NetBSD: pic_openpic.c,v 1.11 2018/03/01 16:03:02 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_openpic.c,v 1.10 2017/06/01 02:45:07 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_openpic.c,v 1.11 2018/03/01 16:03:02 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -54,7 +54,7 @@ setup_openpic(void *addr, int passthrough)
 	int irq;
 	u_int x;
 
-	openpic_base = (void *)addr;
+	openpic_base = mapiodev((paddr_t)addr, 0x40000, false);
 	opicops = kmem_alloc(sizeof(*opicops), KM_SLEEP);
 	pic = &opicops->pic;
 
