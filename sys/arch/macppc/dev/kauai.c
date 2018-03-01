@@ -1,4 +1,4 @@
-/*	$NetBSD: kauai.c,v 1.38 2017/10/20 07:06:07 jdolecek Exp $	*/
+/*	$NetBSD: kauai.c,v 1.39 2018/03/01 13:54:36 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2003 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.38 2017/10/20 07:06:07 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.39 2018/03/01 13:54:36 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,6 +94,7 @@ kauai_match(device_t parent, cfdata_t match, void *aux)
 		case PCI_PRODUCT_APPLE_UNINORTH_ATA:
 		case PCI_PRODUCT_APPLE_INTREPID2_ATA:
 		case PCI_PRODUCT_APPLE_SHASTA_ATA:
+		case PCI_PRODUCT_APPLE_K2_UATA:
 		    return 5;
 		}
 	}
