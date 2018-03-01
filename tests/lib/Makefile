@@ -1,11 +1,13 @@
-# $NetBSD: Makefile,v 1.29 2017/05/21 15:28:42 riastradh Exp $
+# $NetBSD: Makefile,v 1.29.2.1 2018/03/01 19:04:57 martin Exp $
 
 .include <bsd.own.mk>
 
-TESTS_SUBDIRS=	csu libbluetooth libc libcrypt libcurses libevent libexecinfo \
+TESTS_SUBDIRS=	csu libbluetooth libc libcrypt libcurses libexecinfo \
 		libm libobjc libposix libppath libprop libpthread \
 		librefuse librt libtre libusbhid libutil \
 		semaphore
+
+TESTS_SUBDIR_INSTALL_ONLY=	libevent
 
 .if (${MKRUMP} != "no") && !defined(BSD_MK_COMPAT_FILE)
 TESTS_SUBDIRS+= librumpclient librumphijack

@@ -1,4 +1,4 @@
-# $NetBSD: bsd.test.mk,v 1.24 2013/02/23 22:01:51 jmmv Exp $
+# $NetBSD: bsd.test.mk,v 1.24.22.1 2018/03/01 19:04:57 martin Exp $
 #
 
 .include <bsd.init.mk>
@@ -7,6 +7,9 @@ _TESTS:=	# empty
 
 .if defined(TESTS_SUBDIRS)
 SUBDIR+=	${TESTS_SUBDIRS}
+.endif
+.if defined(TESTS_SUBDIR_INSTALL_ONLY)
+SUBDIR+=	${TESTS_SUBDIR_INSTALL_ONLY}
 .endif
 
 .include <bsd.subdir.mk>
