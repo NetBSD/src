@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.23 2018/01/27 00:21:41 christos Exp $
+#	$NetBSD: files.pci,v 1.24 2018/03/01 06:36:12 mrg Exp $
 
 device 	aapic
 attach 	aapic at pci
@@ -84,3 +84,14 @@ file	arch/x86/pci/fwhrng.c		fwhrng needs-flag
 device	vmx: ether, ifnet, arp
 attach	vmx at pci
 file	arch/x86/pci/if_vmx.c		vmx
+
+# Intel Integrated Memory Controller and associated SMBus
+# (Experimental)
+
+device	imc {}: imcsmb
+attach	imc at pci
+file	arch/x86/pci/imcsmb/imc.c		imc
+
+device	imcsmb: i2cbus
+attach	imcsmb at imc
+file	arch/x86/pci/imcsmb/imcsmb.c		imcsmb
