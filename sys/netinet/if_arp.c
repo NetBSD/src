@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.267 2018/02/24 07:53:15 ozaki-r Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.268 2018/03/01 14:40:57 roy Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.267 2018/02/24 07:53:15 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.268 2018/03/01 14:40:57 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -222,10 +222,10 @@ static int log_unknown_network = 1;
 #define	LLA_ADDRSTRLEN	(16 * 3)
 
 static char *
-lla_snprintf(char *, uint8_t *, int);
+lla_snprintf(char *, const u_int8_t *, int);
 
 static char *
-lla_snprintf(char *dst, uint8_t *adrp, int len)
+lla_snprintf(char *dst, const u_int8_t *adrp, int len)
 {
 	int i;
 	char *p;
