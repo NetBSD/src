@@ -1,4 +1,4 @@
-/*	$NetBSD: swapcontext.S,v 1.7 2013/09/12 15:36:15 joerg Exp $	*/
+/*	$NetBSD: swapcontext.S,v 1.7.18.1 2018/03/01 17:15:14 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "SYS.h"
 #include "assym.h"
 
-__RCSID("$NetBSD: swapcontext.S,v 1.7 2013/09/12 15:36:15 joerg Exp $")
+__RCSID("$NetBSD: swapcontext.S,v 1.7.18.1 2018/03/01 17:15:14 martin Exp $")
 
 #define	XCALLFRAMELEN	(((2+3)*SZREG + CALLFRAMELEN - 1) & -CALLFRAMELEN)
 #define	XCALLFRAME_R30	(XCALLFRAMELEN-1*SZREG)
@@ -57,6 +57,10 @@ ENTRY(swapcontext)
 	stw	%r0,UC_GREGS_PC(%r11)		# pc <- lr
 	addi	%r0,%r1,XCALLFRAMELEN
 	stw	%r0,UC_GREGS_R1(%r11)		# adjust sp
+#ifdef __PIC__
+	lwz	%r0,XCALLFRAME_R30(%r1)
+	stw	%r0,UC_GREGS_R30(%r11)		# caller's r30
+#endif
 	lwz	%r3,XCALLFRAME_UCP(%r1)		# load ucp
 	bl	PIC_PLT(_C_LABEL(setcontext))	# setcontext(ucp)
 1:
