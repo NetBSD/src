@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.564 2018/02/16 04:49:27 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.565 2018/03/01 03:30:12 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.564 2018/02/16 04:49:27 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.565 2018/03/01 03:30:12 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -885,7 +885,7 @@ static int	wm_nvm_read_word_invm(struct wm_softc *, uint16_t, uint16_t *);
 static int	wm_nvm_read_invm(struct wm_softc *, int, int, uint16_t *);
 /* Lock, detecting NVM type, validate checksum and read */
 static int	wm_nvm_is_onboard_eeprom(struct wm_softc *);
-static int	wm_nvm_get_flash_presence_i210(struct wm_softc *);
+static int	wm_nvm_flash_presence_i210(struct wm_softc *);
 static int	wm_nvm_validate_checksum(struct wm_softc *);
 static void	wm_nvm_version_invm(struct wm_softc *);
 static void	wm_nvm_version(struct wm_softc *);
@@ -2256,7 +2256,7 @@ alloc_retry:
 	case WM_T_I211:
 		/* Allow a single clear of the SW semaphore on I210 and newer*/
 		sc->sc_flags |= WM_F_WA_I210_CLSEM;
-		if (wm_nvm_get_flash_presence_i210(sc)) {
+		if (wm_nvm_flash_presence_i210(sc)) {
 			sc->nvm.read = wm_nvm_read_eerd;
 			/* Don't use WM_F_LOCK_EECD because we use EERD */
 			sc->sc_flags |= WM_F_EEPROM_FLASH_HW;
@@ -2353,12 +2353,20 @@ alloc_retry:
 	/* Reset the chip to a known state. */
 	wm_reset(sc);
 
-	/* Check for I21[01] PLL workaround */
-	if (sc->sc_type == WM_T_I210)
+	/*
+	 * Check for I21[01] PLL workaround.
+	 *
+	 * Three cases:
+	 * a) Chip is I211.
+	 * b) Chip is I210 and it uses INVM (not FLASH).
+	 * c) Chip is I210 (and it uses FLASH) and the NVM image version < 3.25
+	 */
+	if (sc->sc_type == WM_T_I211)
 		sc->sc_flags |= WM_F_PLL_WA_I210;
-	if ((sc->sc_type == WM_T_I210) && wm_nvm_get_flash_presence_i210(sc)) {
-		/* NVM image release 3.25 has a workaround */
-		if ((sc->sc_nvm_ver_major < 3)
+	if (sc->sc_type == WM_T_I210) {
+		if (!wm_nvm_flash_presence_i210(sc))
+			sc->sc_flags |= WM_F_PLL_WA_I210;
+		else if ((sc->sc_nvm_ver_major < 3)
 		    || ((sc->sc_nvm_ver_major == 3)
 			&& (sc->sc_nvm_ver_minor < 25))) {
 			aprint_verbose_dev(sc->sc_dev,
@@ -12485,7 +12493,7 @@ wm_nvm_is_onboard_eeprom(struct wm_softc *sc)
 }
 
 static int
-wm_nvm_get_flash_presence_i210(struct wm_softc *sc)
+wm_nvm_flash_presence_i210(struct wm_softc *sc)
 {
 	uint32_t eec;
 
@@ -12649,7 +12657,7 @@ wm_nvm_version(struct wm_softc *sc)
 		have_uid = false;
 		goto printver;
 	case WM_T_I210:
-		if (!wm_nvm_get_flash_presence_i210(sc)) {
+		if (!wm_nvm_flash_presence_i210(sc)) {
 			wm_nvm_version_invm(sc);
 			have_uid = false;
 			goto printver;
