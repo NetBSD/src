@@ -1,4 +1,4 @@
-#	$NetBSD: dot.profile,v 1.9 2012/04/10 19:02:30 dholland Exp $
+#	$NetBSD: dot.profile,v 1.10 2018/03/01 06:12:09 snj Exp $
 #
 # This is the default .profile file.
 # Users are expected to edit it to meet their own needs.
@@ -32,7 +32,7 @@ export EDITOR=vi
 #export PRINTER=change-this-to-a-printer
 
 # Set the search path for programs.
-PATH=$HOME/bin:/bin:/sbin:/usr/bin:/usr/sbin:/usr/X11R7/bin:/usr/X11R6/bin:/usr/pkg/bin
+PATH=$HOME/bin:/bin:/sbin:/usr/bin:/usr/sbin:/usr/X11R7/bin:/usr/pkg/bin
 PATH=${PATH}:/usr/pkg/sbin:/usr/games:/usr/local/bin:/usr/local/sbin
 export PATH
 
