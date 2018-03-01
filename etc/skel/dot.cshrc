@@ -1,4 +1,4 @@
-#	$NetBSD: dot.cshrc,v 1.7 2011/10/19 14:42:37 christos Exp $
+#	$NetBSD: dot.cshrc,v 1.8 2018/03/01 06:12:09 snj Exp $
 #
 # This is the default .cshrc file.
 # Users are expected to edit it to meet their own needs.
@@ -32,7 +32,7 @@ setenv	EDITOR	vi
 #setenv	PRINTER	change-this-to-a-printer
 
 # Set the search path for programs.
-set path = (~/bin /bin /sbin /usr/{bin,sbin,X11R7/bin,X11R6/bin,pkg/{,s}bin,games} \
+set path = (~/bin /bin /sbin /usr/{bin,sbin,X11R7/bin,pkg/{,s}bin,games} \
 	    /usr/local/{,s}bin)
 
 if ($?prompt) then
