@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.88.2.10 2018/02/26 13:55:54 martin Exp $ */
+/* $NetBSD: ixgbe.c,v 1.88.2.11 2018/03/01 19:02:15 martin Exp $ */
 
 /******************************************************************************
 
@@ -2384,8 +2384,13 @@ static inline void
 ixgbe_enable_queue(struct adapter *adapter, u32 vector)
 {
 	struct ixgbe_hw *hw = &adapter->hw;
+	struct ix_queue *que = &adapter->queues[vector];
 	u64             queue = (u64)(1ULL << vector);
 	u32             mask;
+
+	mutex_enter(&que->im_mtx);
+	if (que->im_nest > 0 && --que->im_nest > 0)
+		goto out;
 
 	if (hw->mac.type == ixgbe_mac_82598EB) {
 		mask = (IXGBE_EIMS_RTX_QUEUE & queue);
@@ -2398,6 +2403,8 @@ ixgbe_enable_queue(struct adapter *adapter, u32 vector)
 		if (mask)
 			IXGBE_WRITE_REG(hw, IXGBE_EIMS_EX(1), mask);
 	}
+out:
+	mutex_exit(&que->im_mtx);
 } /* ixgbe_enable_queue */
 
 /************************************************************************
@@ -2407,8 +2414,13 @@ static inline void
 ixgbe_disable_queue(struct adapter *adapter, u32 vector)
 {
 	struct ixgbe_hw *hw = &adapter->hw;
+	struct ix_queue *que = &adapter->queues[vector];
 	u64             queue = (u64)(1ULL << vector);
 	u32             mask;
+
+	mutex_enter(&que->im_mtx);
+	if (que->im_nest++ > 0)
+		goto  out;
 
 	if (hw->mac.type == ixgbe_mac_82598EB) {
 		mask = (IXGBE_EIMS_RTX_QUEUE & queue);
@@ -2421,6 +2433,8 @@ ixgbe_disable_queue(struct adapter *adapter, u32 vector)
 		if (mask)
 			IXGBE_WRITE_REG(hw, IXGBE_EIMC_EX(1), mask);
 	}
+out:
+	mutex_exit(&que->im_mtx);
 } /* ixgbe_disable_queue */
 
 /************************************************************************
@@ -3427,6 +3441,10 @@ ixgbe_detach(device_t dev, int flags)
 
 	ixgbe_free_transmit_structures(adapter);
 	ixgbe_free_receive_structures(adapter);
+	for (int i = 0; i < adapter->num_queues; i++) {
+		struct ix_queue * que = &adapter->queues[i];
+		mutex_destroy(&que->im_mtx);
+	}
 	free(adapter->queues, M_DEVBUF);
 	free(adapter->mta, M_DEVBUF);
 
@@ -4568,15 +4586,17 @@ ixgbe_enable_intr(struct adapter *adapter)
 static void
 ixgbe_disable_intr(struct adapter *adapter)
 {
+	struct ix_queue	*que = adapter->queues;
+
+	/* disable interrupts other than queues */
+	IXGBE_WRITE_REG(&adapter->hw, IXGBE_EIMC, ~IXGBE_EIMC_RTX_QUEUE);
+
 	if (adapter->msix_mem)
 		IXGBE_WRITE_REG(&adapter->hw, IXGBE_EIAC, 0);
-	if (adapter->hw.mac.type == ixgbe_mac_82598EB) {
-		IXGBE_WRITE_REG(&adapter->hw, IXGBE_EIMC, ~0);
-	} else {
-		IXGBE_WRITE_REG(&adapter->hw, IXGBE_EIMC, 0xFFFF0000);
-		IXGBE_WRITE_REG(&adapter->hw, IXGBE_EIMC_EX(0), ~0);
-		IXGBE_WRITE_REG(&adapter->hw, IXGBE_EIMC_EX(1), ~0);
-	}
+
+	for (int i = 0; i < adapter->num_queues; i++, que++)
+		ixgbe_disable_queue(adapter, que->msix);
+
 	IXGBE_WRITE_FLUSH(&adapter->hw);
 
 	return;
