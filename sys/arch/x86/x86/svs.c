@@ -1,4 +1,4 @@
-/*	$NetBSD: svs.c,v 1.12 2018/02/25 13:15:35 maxv Exp $	*/
+/*	$NetBSD: svs.c,v 1.13 2018/03/01 16:49:06 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.12 2018/02/25 13:15:35 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.13 2018/03/01 16:49:06 maxv Exp $");
 
 #include "opt_svs.h"
 
@@ -455,7 +455,6 @@ svs_pmap_sync(struct pmap *pmap, int index)
 	struct cpu_info *ci;
 	cpuid_t cid;
 
-	KASSERT(svs_enabled);
 	KASSERT(pmap != NULL);
 	KASSERT(pmap != pmap_kernel());
 	KASSERT(mutex_owned(pmap->pm_lock));
@@ -487,8 +486,6 @@ svs_lwp_switch(struct lwp *oldlwp, struct lwp *newlwp)
 	pt_entry_t *pte;
 	uintptr_t rsp0;
 	vaddr_t va;
-
-	KASSERT(svs_enabled);
 
 	if (newlwp->l_flag & LW_SYSTEM) {
 		return;
