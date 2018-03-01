@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.281 2018/02/18 14:07:29 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.282 2018/03/01 16:55:01 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.281 2018/02/18 14:07:29 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.282 2018/03/01 16:55:01 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1672,7 +1672,7 @@ pmap_remap_global(void)
 	for ( ; kva < kva_end; kva += PAGE_SIZE) {
 		p1i = pl1_i(kva);
 		if (pmap_valid_entry(PTE_BASE[p1i]))
-			PTE_BASE[p1i] |= PG_G;
+			PTE_BASE[p1i] |= pmap_pg_g;
 	}
 
 	/* kernel segments */
@@ -1685,7 +1685,7 @@ pmap_remap_global(void)
 		for ( ; kva < kva_end; kva += PAGE_SIZE) {
 			p1i = pl1_i(kva);
 			if (pmap_valid_entry(PTE_BASE[p1i]))
-				PTE_BASE[p1i] |= PG_G;
+				PTE_BASE[p1i] |= pmap_pg_g;
 		}
 	}
 
@@ -1695,7 +1695,7 @@ pmap_remap_global(void)
 	for ( ; kva < kva_end; kva += PAGE_SIZE) {
 		p1i = pl1_i(kva);
 		if (pmap_valid_entry(PTE_BASE[p1i]))
-			PTE_BASE[p1i] |= PG_G;
+			PTE_BASE[p1i] |= pmap_pg_g;
 	}
 }
 #endif
