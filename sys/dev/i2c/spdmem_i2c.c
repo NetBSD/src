@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem_i2c.c,v 1.13 2016/09/09 05:36:59 msaitoh Exp $ */
+/* $NetBSD: spdmem_i2c.c,v 1.14 2018/03/01 05:47:22 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem_i2c.c,v 1.13 2016/09/09 05:36:59 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem_i2c.c,v 1.14 2018/03/01 05:47:22 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -102,6 +102,7 @@ static int
 spdmem_reset_page(struct spdmem_i2c_softc *sc)
 {
 	uint8_t reg, byte0, byte2;
+	static uint8_t dummy = 0;
 	int rv;
 
 	reg = 0;
@@ -142,7 +143,7 @@ spdmem_reset_page(struct spdmem_i2c_softc *sc)
 		 * I don't know whether our icc_exec()'s API is good or not.
 		 */
 		rv = iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_page0,
-		    &reg, 1, NULL, 0, I2C_F_POLL);
+		    &reg, 1, &dummy, 1, I2C_F_POLL);
 		if (rv != 0) {
 			/*
 			 * The possibilities are:
@@ -152,7 +153,7 @@ spdmem_reset_page(struct spdmem_i2c_softc *sc)
 			 * Is there no way to distinguish them now?
 			 */
 			rv = iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
-			    sc->sc_page0, &reg, 1, NULL, 0, I2C_F_POLL);
+			    sc->sc_page0, &reg, 1, &dummy, 1, I2C_F_POLL);
 			if (rv == 0) {
 				aprint_debug("Page 1 was selected. Page 0 is "
 				    "selected now.\n");
@@ -245,11 +246,11 @@ spdmem_i2c_read(struct spdmem_softc *softc, uint16_t addr, uint8_t *val)
 
 	if (addr & 0x100) {
 		rv = iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP, sc->sc_page1,
-		    &dummy, 1, NULL, 0, I2C_F_POLL);
+		    &dummy, 1, &dummy, 1, I2C_F_POLL);
 		rv |= iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr,
 		    &reg, 1, val, 1, I2C_F_POLL);
 		rv |= iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
-		    sc->sc_page0, &dummy, 1, NULL, 0, I2C_F_POLL);
+		    sc->sc_page0, &dummy, 1, &dummy, 1, I2C_F_POLL);
 	} else {
 		rv = iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr,
 		    &reg, 1, val, 1, I2C_F_POLL);
