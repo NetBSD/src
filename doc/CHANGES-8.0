@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.135 2018/02/28 18:55:54 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.136 2018/03/01 19:09:02 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -10000,4 +10000,31 @@ sys/net/rtsock.c				1.231
 	Remove useless cast, initialize family.
 	Avoid using a zero family mask.
 	[mrg, ticket #595]
+
+lib/libc/arch/powerpc/gen/swapcontext.S		1.8
+lib/libc/arch/powerpc/genassym.cf		1.5
+
+	Fix swapcontext for PIC code.
+	[uwe, ticket #596]
+
+sys/dev/pci/ixgbe/ix_txrx.c			1.33
+sys/dev/pci/ixgbe/ixgbe.c			1.127
+sys/dev/pci/ixgbe/ixgbe.h			1.31
+sys/dev/pci/ixgbe/ixv.c				1.82
+
+	Do not queue interrupts while polling Tx/Rx rings.
+	[knakahara, ticket #597]
+
+share/mk/bsd.test.mk				1.25
+tests/lib/Makefile				1.30
+
+	Provide a mechanism whereby a test sub-directory can be installed,
+	without the test being scheduled to run by default.
+	Apply this to the libevent tests.
+	[kre, ticket #598]
+
+sys/arch/x86/include/Makefile			1.22
+
+	Do not install dbregs.h, it is a kernel-only header.
+	[kamil, ticket #599]
 
