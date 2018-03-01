@@ -1,4 +1,4 @@
-/*	$NetBSD: rusers_proc.c,v 1.28 2018/02/28 23:45:56 snj Exp $	*/
+/*	$NetBSD: rusers_proc.c,v 1.29 2018/03/01 06:24:12 snj Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rusers_proc.c,v 1.28 2018/02/28 23:45:56 snj Exp $");
+__RCSID("$NetBSD: rusers_proc.c,v 1.29 2018/03/01 06:24:12 snj Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -144,10 +144,6 @@ getidle(const char *tty, char *display)
 	time_t now;
 	long idle;
 	
-	/*
-	 * If this is an X terminal or console, then try the
-	 * XIdle extension
-	 */
 	idle = 0;
 	if (*tty == 'X') {
 		long kbd_idle, mouse_idle;
