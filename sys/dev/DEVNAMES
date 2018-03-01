@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.304 2018/03/01 04:31:22 pgoyette Exp $
+#	$NetBSD: DEVNAMES,v 1.305 2018/03/01 08:44:12 pgoyette Exp $
 #
 # This file contains all used device names and defined attributes in
 # alphabetical order. New devices added to the system somewhere should first
@@ -646,8 +646,10 @@ iic			acorn32
 ik			vax
 il			MI
 imc			sgimips
-imc			x86_64,i386
-imcsmb			x86_64,i386
+imc			amd64
+imc			i386
+imcsmb			amd64
+imcsmb			i386
 inphy			MI
 intersil7170		MI		Attribute
 interwave		MI		Attribute
