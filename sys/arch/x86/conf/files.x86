@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.95 2018/03/01 04:35:04 pgoyette Exp $
+#	$NetBSD: files.x86,v 1.96 2018/03/01 04:45:05 pgoyette Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI
@@ -167,8 +167,8 @@ file	arch/x86/pci/pci_addr_fixup.c	pci_addr_fixup
 
 device	imc {}: imcsmb
 attach	imc at pci
-file	dev/imcsmb/imc.c		imc
+file	arch/x86/pci/imcsmb/imc.c		imc
 
 device	imcsmb: i2cbus
 attach	imcsmb at imc
-file	dev/imcsmb/imcsmb.c		imcsmb
+file	arch/x86/pci/imcsmb/imcsmb.c		imcsmb
