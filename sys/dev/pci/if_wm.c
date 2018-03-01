@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.565 2018/03/01 03:30:12 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.566 2018/03/01 03:32:33 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.565 2018/03/01 03:30:12 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.566 2018/03/01 03:32:33 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -14309,6 +14309,8 @@ wm_reset_mdicnfg_82580(struct wm_softc *sc)
 	uint16_t nvmword;
 	int rv;
 
+	if (sc->sc_type != WM_T_82580)
+		return;
 	if ((sc->sc_flags & WM_F_SGMII) == 0)
 		return;
 
