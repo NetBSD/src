@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.192 2018/02/19 20:49:01 ginsbach Exp $
+$NetBSD: acronyms.comp,v 1.193 2018/03/01 19:09:33 ginsbach Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -251,7 +251,7 @@ CS	cable select
 CS	chip select
 CS	code segment
 CS	computer science
-CSDL	common schema definition language
+CSDL	{common,conceptual} schema definition language
 CSI	channel state information
 CSI	common system interface
 CSMA	carrier sense multiple access
@@ -723,6 +723,7 @@ LSN	Large Scale NAT
 LSN	log sequence number
 LSR	label switch router
 LTCC	low temperature co-fired ceramic
+LTO	linear tape-open
 LTO	link time optimization
 LTR	left to right
 LTR	load task register
@@ -1205,6 +1206,7 @@ SMAP	supervisor mode access prevention
 SMART	self-monitoring analysis and reporting technology
 SMBIOS	System Management BIOS
 SMC	system management controller
+SMEP	supervisor mode execution protection
 SMF	single mode fiber
 SMI	structure of management information
 SMI	system management interrupt
