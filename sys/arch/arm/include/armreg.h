@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.117 2018/01/24 09:04:45 skrll Exp $	*/
+/*	$NetBSD: armreg.h,v 1.118 2018/03/02 22:23:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -858,13 +858,15 @@ static inline void armreg_##name##_write(uint32_t __val)	\
 static inline uint32_t armreg_##name##_read(void)		\
 {								\
 	uint32_t __rv;						\
-	__asm __volatile(__insnstring : "=r"(__rv));	\
+	__asm __volatile(".fpu vfp");				\
+	__asm __volatile(__insnstring : "=r"(__rv));		\
 	return __rv;						\
 }
 
 #define	ARMREG_WRITE_INLINE2(name, __insnstring)		\
 static inline void armreg_##name##_write(uint32_t __val)	\
 {								\
+	__asm __volatile(".fpu vfp");				\
 	__asm __volatile(__insnstring :: "r"(__val));		\
 }
 
