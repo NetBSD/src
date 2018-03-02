@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_openpic.c,v 1.11 2018/03/01 16:03:02 macallan Exp $ */
+/*	$NetBSD: pic_openpic.c,v 1.12 2018/03/02 19:36:19 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_openpic.c,v 1.11 2018/03/01 16:03:02 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_openpic.c,v 1.12 2018/03/02 19:36:19 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -144,7 +144,7 @@ opic_establish_irq(struct pic_ops *pic, int irq, int type, int pri)
 	x = irq;
 	x |= OPENPIC_IMASK;
 
-	if (irq == 0 || type == IST_EDGE_RISING || type == IST_LEVEL_HIGH)
+	if (type == IST_EDGE_RISING || type == IST_LEVEL_HIGH)
 		x |= OPENPIC_POLARITY_POSITIVE;
 	else
 		x |= OPENPIC_POLARITY_NEGATIVE;
