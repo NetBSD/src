@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2018/02/08 22:51:06 christos Exp $
+#	$NetBSD: Makefile,v 1.9 2018/03/02 13:26:40 christos Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -42,17 +42,6 @@ AFLAGS+=-DELF
 # This is from the include/openssl directory; see ../libcrypto/Makefile
 INCS=	dtls1.h ssl.h ssl2.h ssl3.h tls1.h srtp.h async.h
 INCSDIR=/usr/include/openssl
-
-# this rebuilds the `srcs.inc' and the .inc files it reads.
-# note that we have no idea, rc5 or rsa here so we include
-# them explicitly above if we are using these ciphers.
-# XXX
-# we patch `ssl.inc' as we need to be able to turn off SSLv2.
-update_inc:
-	(cd ${.CURDIR}; \
-	find ${OPENSSLSRC}/ssl -name Makefile | \
-		perl ${OPENSSLSRC}/extsrcs.pl 2> srcs.inc; \
-	patch -s ssl.inc < ssl.diff )
 
 LDFLAGS+=-Wl,--version-script=${.CURDIR}/ssl.map
 
