@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.42 2018/01/21 08:46:48 mrg Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.43 2018/03/02 14:37:18 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.42 2018/01/21 08:46:48 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.43 2018/03/02 14:37:18 macallan Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -180,8 +180,8 @@ ofwoea_initppc(u_int startkernel, u_int endkernel, char *args)
 		model_init();
 	}
 
-	if (strcmp(model_name, "PowerMac11,2") == 0 ||
-	    strcmp(model_name, "PowerMac11,1") == 0)
+	if (strncmp(model_name, "PowerMac11,", 11) == 0 ||
+	    strncmp(model_name, "PowerMac7,", 10) == 0) 
 		OF_quiesce();
 
 	/* Initialize bus_space */
@@ -292,6 +292,8 @@ ofwoea_initppc(u_int startkernel, u_int endkernel, char *args)
 	    : "K"(PSL_IR|PSL_DR|PSL_ME|PSL_RI));
 
 	restore_ofmap(ofmap, ofmaplen);
+
+	rascons_finalize();
 
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 	ksyms_addsyms_elf((int)((uintptr_t)endsym - (uintptr_t)startsym), startsym, endsym);
