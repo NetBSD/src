@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.83 2018/02/27 04:58:27 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.84 2018/03/02 10:21:01 knakahara Exp $*/
 
 /******************************************************************************
 
@@ -150,6 +150,9 @@ static int	ixv_msix_mbx(void *);
 static void	ixv_handle_que(void *);
 static void     ixv_handle_link(void *);
 
+/* Workqueue handler for deferred work */
+static void	ixv_handle_que_work(struct work *, void *);
+
 const struct sysctlnode *ixv_sysctl_instance(struct adapter *);
 static ixgbe_vendor_info_t *ixv_lookup(const struct pci_attach_args *);
 
@@ -200,6 +203,9 @@ TUNABLE_INT("hw.ixv.rx_process_limit", &ixv_rx_process_limit);
 static int ixv_tx_process_limit = 256;
 TUNABLE_INT("hw.ixv.tx_process_limit", &ixv_tx_process_limit);
 
+/* Which pakcet processing uses workqueue or softint */
+static bool ixv_txrx_workqueue = false;
+
 /*
  * Number of TX descriptors per ring,
  * setting higher than RX as this seems
@@ -220,10 +226,13 @@ TUNABLE_INT("hw.ixv.enable_legacy_tx", &ixv_enable_legacy_tx);
 #define IXGBE_MPSAFE		1
 #define IXGBE_CALLOUT_FLAGS	CALLOUT_MPSAFE
 #define IXGBE_SOFTINFT_FLAGS	SOFTINT_MPSAFE
+#define IXGBE_WORKQUEUE_FLAGS	WQ_PERCPU | WQ_MPSAFE
 #else
 #define IXGBE_CALLOUT_FLAGS	0
 #define IXGBE_SOFTINFT_FLAGS	0
+#define IXGBE_WORKQUEUE_FLAGS	WQ_PERCPU
 #endif
+#define IXGBE_WORKQUEUE_PRI PRI_SOFTNET
 
 #if 0
 static int (*ixv_start_locked)(struct ifnet *, struct tx_ring *);
@@ -508,6 +517,8 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 	/* hw.ix defaults init */
 	adapter->enable_aim = ixv_enable_aim;
 
+	adapter->txrx_use_workqueue = ixv_txrx_workqueue;
+
 	error = ixv_allocate_msix(adapter, pa);
 	if (error) {
 		device_printf(dev, "ixv_allocate_msix() failed!\n");
@@ -597,6 +608,12 @@ ixv_detach(device_t dev, int flags)
 			softint_disestablish(txr->txr_si);
 		softint_disestablish(que->que_si);
 	}
+	if (adapter->txr_wq != NULL)
+		workqueue_destroy(adapter->txr_wq);
+	if (adapter->txr_wq_enqueued != NULL)
+		percpu_free(adapter->txr_wq_enqueued, sizeof(u_int));
+	if (adapter->que_wq != NULL)
+		workqueue_destroy(adapter->que_wq);
 
 	/* Drain the Mailbox(link) queue */
 	softint_disestablish(adapter->link_si);
@@ -2300,6 +2317,12 @@ ixv_add_device_sysctls(struct adapter *adapter)
 	    "enable_aim", SYSCTL_DESCR("Interrupt Moderation"),
 	    NULL, 0, &adapter->enable_aim, 0, CTL_CREATE, CTL_EOL) != 0)
 		aprint_error_dev(dev, "could not create sysctl\n");
+
+	if (sysctl_createv(log, 0, &rnode, &cnode,
+	    CTLFLAG_READWRITE, CTLTYPE_BOOL,
+	    "txrx_workqueue", SYSCTL_DESCR("Use workqueue for packet processing"),
+		NULL, 0, &adapter->txrx_use_workqueue, 0, CTL_CREATE, CTL_EOL) != 0)
+		aprint_error_dev(dev, "could not create sysctl\n");
 }
 
 /************************************************************************
@@ -2769,7 +2792,6 @@ ixv_init(struct ifnet *ifp)
 	return 0;
 } /* ixv_init */
 
-
 /************************************************************************
  * ixv_handle_que
  ************************************************************************/
@@ -2799,7 +2821,15 @@ ixv_handle_que(void *context)
 		IXGBE_TX_UNLOCK(txr);
 		if (more) {
 			adapter->req.ev_count++;
-			softint_schedule(que->que_si);
+			if (adapter->txrx_use_workqueue) {
+				/*
+				 * "enqueued flag" is not required here
+				 * the same as ixg(4). See ixgbe_msix_que().
+				 */
+				workqueue_enqueue(adapter->que_wq,
+				    &que->wq_cookie, curcpu());
+			} else
+				  softint_schedule(que->que_si);
 			return;
 		}
 	}
@@ -2809,6 +2839,21 @@ ixv_handle_que(void *context)
 
 	return;
 } /* ixv_handle_que */
+
+/************************************************************************
+ * ixv_handle_que_work
+ ************************************************************************/
+static void
+ixv_handle_que_work(struct work *wk, void *context)
+{
+	struct ix_queue *que = container_of(wk, struct ix_queue, wq_cookie);
+
+	/*
+	 * "enqueued flag" is not required here the same as ixg(4).
+	 * See ixgbe_msix_que().
+	 */
+	ixv_handle_que(que);
+}
 
 /************************************************************************
  * ixv_allocate_msix - Setup MSI-X Interrupt resources and handlers
@@ -2823,6 +2868,7 @@ ixv_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 	pci_chipset_tag_t pc;
 	pcitag_t	tag;
 	char		intrbuf[PCI_INTRSTR_LEN];
+	char		wqname[MAXCOMLEN];
 	char		intr_xname[32];
 	const char	*intrstr = NULL;
 	kcpuset_t	*affinity;
@@ -2890,6 +2936,23 @@ ixv_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 			aprint_error_dev(dev,
 			    "could not establish software interrupt\n"); 
 		}
+	}
+	snprintf(wqname, sizeof(wqname), "%sdeferTx", device_xname(dev));
+	error = workqueue_create(&adapter->txr_wq, wqname,
+	    ixgbe_deferred_mq_start_work, adapter, IXGBE_WORKQUEUE_PRI, IPL_NET,
+	    IXGBE_WORKQUEUE_FLAGS);
+	if (error) {
+		aprint_error_dev(dev, "couldn't create workqueue for deferred Tx\n");
+	}
+	adapter->txr_wq_enqueued = percpu_alloc(sizeof(u_int));
+
+	snprintf(wqname, sizeof(wqname), "%sTxRx", device_xname(dev));
+	error = workqueue_create(&adapter->que_wq, wqname,
+	    ixv_handle_que_work, adapter, IXGBE_WORKQUEUE_PRI, IPL_NET,
+	    IXGBE_WORKQUEUE_FLAGS);
+	if (error) {
+		aprint_error_dev(dev,
+		    "couldn't create workqueue\n");
 	}
 
 	/* and Mailbox */
