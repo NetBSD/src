@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep_common.c,v 1.22 2017/06/01 02:45:07 chs Exp $ */
+/* $NetBSD: pci_machdep_common.c,v 1.23 2018/03/02 19:36:19 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep_common.c,v 1.22 2017/06/01 02:45:07 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep_common.c,v 1.23 2018/03/02 19:36:19 macallan Exp $");
 
 #define _POWERPC_BUS_DMA_PRIVATE
 
@@ -89,7 +89,7 @@ const char *
 genppc_pci_intr_string(void *v, pci_intr_handle_t ih, char *buf, size_t len)
 {
 #ifdef ICU_LEN
-	if (ih == 0 || ih >= ICU_LEN
+	if (ih >= ICU_LEN
 /* XXX on macppc it's completely legal to have PCI interrupts on a slave PIC */
 #ifdef IRQ_SLAVE
 	    || ih == IRQ_SLAVE
@@ -117,7 +117,7 @@ genppc_pci_intr_establish(void *v, pci_intr_handle_t ih, int level,
 {
 
 #ifdef ICU_LEN
-	if (ih == 0 || ih >= ICU_LEN
+	if (ih >= ICU_LEN
 #ifdef IRQ_SLAVE
 	    || ih == IRQ_SLAVE
 #endif
@@ -245,8 +245,10 @@ genppc_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	 * Since IRQ 0 is only used by the clock, and we can't actually be sure
 	 * that the BIOS did its job, we also recognize that as meaning that
 	 * the BIOS has not configured the device.
+	 * XXX
+	 * it's perfectly legal to use IRQ 0 on macppc
 	 */
-	if (line == 0 || line == 255) {
+	if (line == 255) {
 		aprint_error("pci_intr_map: no mapping for pin %c\n", '@' + pin);
 		goto bad;
 #ifdef ICU_LEN
