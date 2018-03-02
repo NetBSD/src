@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.31 2018/02/26 04:19:00 knakahara Exp $ */
+/* $NetBSD: ixgbe.h,v 1.32 2018/03/02 10:19:20 knakahara Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -80,6 +80,7 @@
 #include <sys/kernel.h>
 #include <sys/module.h>
 #include <sys/sockio.h>
+#include <sys/percpu.h>
 
 #include <net/if.h>
 #include <net/if_arp.h>
@@ -338,6 +339,8 @@ struct ix_queue {
 
 	kmutex_t         im_mtx;	/* lock for im_nest and this queue's EIMS/EIMC bit */
 	int              im_nest;
+
+	struct work      wq_cookie;
 };
 
 /*
@@ -373,6 +376,8 @@ struct tx_ring {
 	struct evcnt		no_desc_avail;
 	struct evcnt		total_packets;
 	struct evcnt		pcq_drops;
+
+	struct work		wq_cookie;
 };
 
 
@@ -498,6 +503,18 @@ struct adapter {
 	void			*fdir_si;
 
 	void			*phy_si;   /* PHY intr tasklet */
+
+	bool			txrx_use_workqueue;
+	struct workqueue	*que_wq;    /* workqueue for ixgbe_handle_que_work() */
+					    /*
+					     * que_wq's "enqueued flag" is not required,
+					     * because twice workqueue_enqueue() for
+					     * ixgbe_handle_que_work() is avoided by masking
+					     * the queue's interrupt by EIMC.
+					     * See also ixgbe_msix_que().
+					     */
+	struct workqueue	*txr_wq;    /* workqueue for ixgbe_deferred_mq_start_work() */
+	percpu_t		*txr_wq_enqueued;
 
 	/*
 	 * Queues:
@@ -714,6 +731,7 @@ int  ixgbe_legacy_start_locked(struct ifnet *, struct tx_ring *);
 int  ixgbe_mq_start(struct ifnet *, struct mbuf *);
 int  ixgbe_mq_start_locked(struct ifnet *, struct tx_ring *);
 void ixgbe_deferred_mq_start(void *);
+void ixgbe_deferred_mq_start_work(struct work *, void *);
 
 int  ixgbe_allocate_queues(struct adapter *);
 int  ixgbe_setup_transmit_structures(struct adapter *);
