@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_rascons.c,v 1.10 2018/02/23 02:54:56 sevan Exp $	*/
+/*	$NetBSD: ofw_rascons.c,v 1.11 2018/03/02 14:37:18 macallan Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_rascons.c,v 1.10 2018/02/23 02:54:56 sevan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_rascons.c,v 1.11 2018/03/02 14:37:18 macallan Exp $");
 
 #include "wsdisplay.h"
 
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: ofw_rascons.c,v 1.10 2018/02/23 02:54:56 sevan Exp $
 #include <dev/wsfont/wsfont.h>
 
 #include <powerpc/oea/bat.h>
+#include <powerpc/oea/cpufeat.h>
 #include <powerpc/oea/ofw_rasconsvar.h>
 
 /* we need a wsdisplay to do anything halfway useful */
@@ -62,6 +63,7 @@ static int copy_rom_font(void);
 static struct wsdisplay_font openfirm6x11;
 static vaddr_t fbaddr;
 static int romfont_loaded = 0;
+static int needs_finalize = 0;
 
 struct vcons_screen rascons_console_screen;
 
@@ -115,15 +117,30 @@ rascons_cnattach(void)
 	rascons_stdscreen.textops = &ri->ri_ops;
 	rascons_stdscreen.capabilities = ri->ri_caps;
 
-	ri->ri_ops.allocattr(ri, 0, 0, 0, &defattr);
-	wsdisplay_preattach(&rascons_stdscreen, ri, 0, max(0,
-	    min(crow, ri->ri_rows - 1)), defattr);
-
+	if ((oeacpufeat & OEACPU_64_BRIDGE) != 0) {
+		needs_finalize = 1;
+	} else {
+		ri->ri_ops.allocattr(ri, 0, 0, 0, &defattr);
+		wsdisplay_preattach(&rascons_stdscreen, ri, 0, max(0,
+		    min(crow, ri->ri_rows - 1)), defattr);
+	}
 #if notyet
 	rascons_init_cmap(NULL);
 #endif
 
 	return 0;
+}
+
+void
+rascons_finalize(void)
+{
+	struct rasops_info *ri = &rascons_console_screen.scr_ri;
+	long defattr;
+
+	if (needs_finalize == 0) return;
+	
+	ri->ri_ops.allocattr(ri, 0, 0, 0, &defattr);
+	wsdisplay_preattach(&rascons_stdscreen, ri, 0, 0, defattr);
 }
 
 static int
