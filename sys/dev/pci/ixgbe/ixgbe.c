@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.127 2018/02/26 04:19:00 knakahara Exp $ */
+/* $NetBSD: ixgbe.c,v 1.128 2018/03/02 10:19:20 knakahara Exp $ */
 
 /******************************************************************************
 
@@ -260,6 +260,9 @@ static void	ixgbe_handle_msf(void *);
 static void	ixgbe_handle_mod(void *);
 static void	ixgbe_handle_phy(void *);
 
+/* Workqueue handler for deferred work */
+static void	ixgbe_handle_que_work(struct work *, void *);
+
 static ixgbe_vendor_info_t *ixgbe_lookup(const struct pci_attach_args *);
 
 /************************************************************************
@@ -314,6 +317,9 @@ SYSCTL_INT(_hw_ix, OID_AUTO, tx_process_limit, CTLFLAG_RDTUN,
 static int ixgbe_flow_control = ixgbe_fc_full;
 SYSCTL_INT(_hw_ix, OID_AUTO, flow_control, CTLFLAG_RDTUN,
     &ixgbe_flow_control, 0, "Default flow control used for all adapters");
+
+/* Which pakcet processing uses workqueue or softint */
+static bool ixgbe_txrx_workqueue = false;
 
 /*
  * Smart speed setting, default to on
@@ -395,10 +401,13 @@ static int (*ixgbe_ring_empty)(struct ifnet *, pcq_t *);
 #define IXGBE_MPSAFE		1
 #define IXGBE_CALLOUT_FLAGS	CALLOUT_MPSAFE
 #define IXGBE_SOFTINFT_FLAGS	SOFTINT_MPSAFE
+#define IXGBE_WORKQUEUE_FLAGS	WQ_PERCPU | WQ_MPSAFE
 #else
 #define IXGBE_CALLOUT_FLAGS	0
 #define IXGBE_SOFTINFT_FLAGS	0
+#define IXGBE_WORKQUEUE_FLAGS	WQ_PERCPU
 #endif
+#define IXGBE_WORKQUEUE_PRI PRI_SOFTNET
 
 /************************************************************************
  * ixgbe_initialize_rss_mapping
@@ -2525,9 +2534,30 @@ ixgbe_msix_que(void *arg)
 	rxr->packets = 0;
 
 no_calc:
-	if (more)
-		softint_schedule(que->que_si);
-	else
+	if (more) {
+		if (adapter->txrx_use_workqueue) {
+			/*
+			 * adapter->que_wq is bound to each CPU instead of
+			 * each NIC queue to reduce workqueue kthread. As we
+			 * should consider about interrupt affinity in this
+			 * function, the workqueue kthread must be WQ_PERCPU.
+			 * If create WQ_PERCPU workqueue kthread for each NIC
+			 * queue, that number of created workqueue kthread is
+			 * (number of used NIC queue) * (number of CPUs) =
+			 * (number of CPUs) ^ 2 most often.
+			 *
+			 * The same NIC queue's interrupts are avoided by
+			 * masking the queue's interrupt. And different
+			 * NIC queue's interrupts use different struct work
+			 * (que->wq_cookie). So, "enqueued flag" to avoid
+			 * twice workqueue_enqueue() is not required .
+			 */
+			workqueue_enqueue(adapter->que_wq, &que->wq_cookie,
+			    curcpu());
+		} else {
+			softint_schedule(que->que_si);
+		}
+	} else
 		ixgbe_enable_queue(adapter, que->msix);
 
 	return 1;
@@ -3100,6 +3130,12 @@ ixgbe_add_device_sysctls(struct adapter *adapter)
 	    CTL_EOL) != 0)
 		aprint_error_dev(dev, "could not create sysctl\n");
 
+	adapter->txrx_use_workqueue = ixgbe_txrx_workqueue;
+	if (sysctl_createv(log, 0, &rnode, &cnode, CTLFLAG_READWRITE,
+	    CTLTYPE_BOOL, "txrx_workqueue", SYSCTL_DESCR("Use workqueue for packet processing"),
+	    NULL, 0, &adapter->txrx_use_workqueue, 0, CTL_CREATE, CTL_EOL) != 0)
+		aprint_error_dev(dev, "could not create sysctl\n");
+
 #ifdef IXGBE_DEBUG
 	/* testing sysctls (for all devices) */
 	if (sysctl_createv(log, 0, &rnode, &cnode, CTLFLAG_READWRITE,
@@ -3232,6 +3268,12 @@ ixgbe_free_softint(struct adapter *adapter)
 		if (que->que_si != NULL)
 			softint_disestablish(que->que_si);
 	}
+	if (adapter->txr_wq != NULL)
+		workqueue_destroy(adapter->txr_wq);
+	if (adapter->txr_wq_enqueued != NULL)
+		percpu_free(adapter->txr_wq_enqueued, sizeof(u_int));
+	if (adapter->que_wq != NULL)
+		workqueue_destroy(adapter->que_wq);
 
 	/* Drain the Link queue */
 	if (adapter->link_si != NULL) {
@@ -5800,9 +5842,18 @@ ixgbe_handle_que(void *context)
 		IXGBE_TX_UNLOCK(txr);
 	}
 
-	if (more)
-		softint_schedule(que->que_si);
-	else if (que->res != NULL) {
+	if (more) {
+		if (adapter->txrx_use_workqueue) {
+			/*
+			 * "enqueued flag" is not required here.
+			 * See ixgbe_msix_que().
+			 */
+			workqueue_enqueue(adapter->que_wq, &que->wq_cookie,
+			    curcpu());
+		} else {
+			softint_schedule(que->que_si);
+		}
+	} else if (que->res != NULL) {
 		/* Re-enable this interrupt */
 		ixgbe_enable_queue(adapter, que->msix);
 	} else
@@ -5810,6 +5861,21 @@ ixgbe_handle_que(void *context)
 
 	return;
 } /* ixgbe_handle_que */
+
+/************************************************************************
+ * ixgbe_handle_que_work
+ ************************************************************************/
+static void
+ixgbe_handle_que_work(struct work *wk, void *context)
+{
+	struct ix_queue *que = container_of(wk, struct ix_queue, wq_cookie);
+
+	/*
+	 * "enqueued flag" is not required here.
+	 * See ixgbe_msix_que().
+	 */
+	ixgbe_handle_que(que);
+}
 
 /************************************************************************
  * ixgbe_allocate_legacy - Setup the Legacy or MSI Interrupt handler
@@ -5906,7 +5972,6 @@ alloc_retry:
 	return (0);
 } /* ixgbe_allocate_legacy */
 
-
 /************************************************************************
  * ixgbe_allocate_msix - Setup MSI-X Interrupt resources and handlers
  ************************************************************************/
@@ -5919,6 +5984,7 @@ ixgbe_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 	pci_chipset_tag_t pc;
 	char		intrbuf[PCI_INTRSTR_LEN];
 	char		intr_xname[32];
+	char		wqname[MAXCOMLEN];
 	const char	*intrstr = NULL;
 	int 		error, vector = 0;
 	int		cpu_id = 0;
@@ -6043,6 +6109,24 @@ ixgbe_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 			error = ENXIO;
 			goto err_out;
 		}
+	}
+	snprintf(wqname, sizeof(wqname), "%sdeferTx", device_xname(dev));
+	error = workqueue_create(&adapter->txr_wq, wqname,
+	    ixgbe_deferred_mq_start_work, adapter, IXGBE_WORKQUEUE_PRI, IPL_NET,
+	    IXGBE_WORKQUEUE_FLAGS);
+	if (error) {
+		aprint_error_dev(dev, "couldn't create workqueue for deferred Tx\n");
+		goto err_out;
+	}
+	adapter->txr_wq_enqueued = percpu_alloc(sizeof(u_int));
+
+	snprintf(wqname, sizeof(wqname), "%sTxRx", device_xname(dev));
+	error = workqueue_create(&adapter->que_wq, wqname,
+	    ixgbe_handle_que_work, adapter, IXGBE_WORKQUEUE_PRI, IPL_NET,
+	    IXGBE_WORKQUEUE_FLAGS);
+	if (error) {
+		aprint_error_dev(dev, "couldn't create workqueue for Tx/Rx\n");
+		goto err_out;
 	}
 
 	/* and Link */
