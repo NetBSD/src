@@ -1,4 +1,4 @@
-/*	$NetBSD: keydb.h,v 1.20 2017/08/09 09:48:11 ozaki-r Exp $	*/
+/*	$NetBSD: keydb.h,v 1.21 2018/03/02 07:37:13 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keydb.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keydb.h,v 1.14 2000/08/02 17:58:26 sakane Exp $	*/
 
@@ -37,6 +37,7 @@
 #ifdef _KERNEL
 
 #include <sys/localcount.h>
+#include <sys/percpu.h>
 
 #include <netipsec/key_var.h>
 #include <net/route.h>
@@ -117,6 +118,9 @@ struct secasvar {
 	struct sadb_lifetime *lft_c;	/* CURRENT lifetime, it's constant. */
 	struct sadb_lifetime *lft_h;	/* HARD lifetime */
 	struct sadb_lifetime *lft_s;	/* SOFT lifetime */
+
+	/* percpu counters for lft_c->sadb_lifetime_{allocations,bytes} */
+	percpu_t *lft_c_counters_percpu;
 
 	u_int32_t seq;			/* sequence number */
 	pid_t pid;			/* message's pid */

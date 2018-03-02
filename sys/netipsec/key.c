@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.248 2018/02/08 20:57:41 maxv Exp $	*/
+/*	$NetBSD: key.c,v 1.249 2018/03/02 07:37:13 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.248 2018/02/08 20:57:41 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.249 2018/03/02 07:37:13 ozaki-r Exp $");
 
 /*
  * This code is referred to RFC 2367
@@ -784,6 +784,26 @@ static void key_timehandler_work(struct work *, void *);
 static struct callout	key_timehandler_ch;
 static struct workqueue	*key_timehandler_wq;
 static struct work	key_timehandler_wk;
+
+/*
+ * Utilities for percpu counters for sadb_lifetime_allocations and
+ * sadb_lifetime_bytes.
+ */
+#define LIFETIME_COUNTER_ALLOCATIONS	0
+#define LIFETIME_COUNTER_BYTES		1
+#define LIFETIME_COUNTER_SIZE		2
+
+typedef uint64_t lifetime_counters_t[LIFETIME_COUNTER_SIZE];
+
+static void
+key_sum_lifetime_counters(void *p, void *arg, struct cpu_info *ci __unused)
+{
+	lifetime_counters_t *one = p;
+	lifetime_counters_t *sum = arg;
+
+	(*sum)[LIFETIME_COUNTER_ALLOCATIONS] += (*one)[LIFETIME_COUNTER_ALLOCATIONS];
+	(*sum)[LIFETIME_COUNTER_BYTES] += (*one)[LIFETIME_COUNTER_BYTES];
+}
 
 u_int
 key_sp_refcnt(const struct secpolicy *sp)
@@ -3257,6 +3277,8 @@ key_newsav(struct mbuf *m, const struct sadb_msghdr *mhp,
 		/* We don't allow lft_c to be NULL */
 		newsav->lft_c = kmem_zalloc(sizeof(struct sadb_lifetime),
 		    KM_SLEEP);
+		newsav->lft_c_counters_percpu =
+		    percpu_alloc(sizeof(lifetime_counters_t));
 	}
 
 	/* reset created */
@@ -3467,6 +3489,10 @@ key_freesaval(struct secasvar *sav)
 		kmem_intr_free(sav->key_auth, sav->key_auth_len);
 	if (sav->key_enc != NULL)
 		kmem_intr_free(sav->key_enc, sav->key_enc_len);
+	if (sav->lft_c_counters_percpu != NULL) {
+		percpu_free(sav->lft_c_counters_percpu,
+		    sizeof(lifetime_counters_t));
+	}
 	if (sav->lft_c != NULL)
 		kmem_intr_free(sav->lft_c, sizeof(*(sav->lft_c)));
 	if (sav->lft_h != NULL)
@@ -3634,6 +3660,8 @@ key_setsaval(struct secasvar *sav, struct mbuf *m,
 	sav->lft_c->sadb_lifetime_bytes = 0;
 	sav->lft_c->sadb_lifetime_addtime = time_uptime;
 	sav->lft_c->sadb_lifetime_usetime = 0;
+
+	sav->lft_c_counters_percpu = percpu_alloc(sizeof(lifetime_counters_t));
 
 	/* lifetimes for HARD and SOFT */
     {
@@ -3818,7 +3846,9 @@ key_setdumpsa(struct secasvar *sav, u_int8_t type, u_int8_t satype,
 			p = sav->key_enc;
 			break;
 
-		case SADB_EXT_LIFETIME_CURRENT:
+		case SADB_EXT_LIFETIME_CURRENT: {
+			lifetime_counters_t sum = {0};
+
 			KASSERT(sav->lft_c != NULL);
 			l = PFKEY_UNUNIT64(((struct sadb_ext *)sav->lft_c)->sadb_ext_len);
 			memcpy(&lt, sav->lft_c, sizeof(struct sadb_lifetime));
@@ -3826,8 +3856,15 @@ key_setdumpsa(struct secasvar *sav, u_int8_t type, u_int8_t satype,
 			    time_mono_to_wall(lt.sadb_lifetime_addtime);
 			lt.sadb_lifetime_usetime =
 			    time_mono_to_wall(lt.sadb_lifetime_usetime);
+			percpu_foreach(sav->lft_c_counters_percpu,
+			    key_sum_lifetime_counters, sum);
+			lt.sadb_lifetime_allocations =
+			    sum[LIFETIME_COUNTER_ALLOCATIONS];
+			lt.sadb_lifetime_bytes =
+			    sum[LIFETIME_COUNTER_BYTES];
 			p = &lt;
 			break;
+		    }
 
 		case SADB_EXT_LIFETIME_HARD:
 			if (!sav->lft_h)
@@ -4857,9 +4894,17 @@ restart:
 			 * when new SA is installed.  Caution when it's
 			 * installed too big lifetime by time.
 			 */
-			else if (sav->lft_s->sadb_lifetime_bytes != 0 &&
-			         sav->lft_s->sadb_lifetime_bytes <
-			         sav->lft_c->sadb_lifetime_bytes) {
+			else {
+				uint64_t lft_c_bytes = 0;
+				lifetime_counters_t sum = {0};
+
+				percpu_foreach(sav->lft_c_counters_percpu,
+				    key_sum_lifetime_counters, sum);
+				lft_c_bytes = sum[LIFETIME_COUNTER_BYTES];
+
+				if (sav->lft_s->sadb_lifetime_bytes == 0 ||
+				    sav->lft_s->sadb_lifetime_bytes >= lft_c_bytes)
+					continue;
 
 				key_sa_chgstate(sav, SADB_SASTATE_DYING);
 				mutex_exit(&key_sad.lock);
@@ -4907,9 +4952,18 @@ restart:
 			}
 #endif
 			/* check HARD lifetime by bytes */
-			else if (sav->lft_h->sadb_lifetime_bytes != 0 &&
-			         sav->lft_h->sadb_lifetime_bytes <
-			         sav->lft_c->sadb_lifetime_bytes) {
+			else {
+				uint64_t lft_c_bytes = 0;
+				lifetime_counters_t sum = {0};
+
+				percpu_foreach(sav->lft_c_counters_percpu,
+				    key_sum_lifetime_counters, sum);
+				lft_c_bytes = sum[LIFETIME_COUNTER_BYTES];
+
+				if (sav->lft_h->sadb_lifetime_bytes == 0 ||
+				    sav->lft_h->sadb_lifetime_bytes >= lft_c_bytes)
+					continue;
+
 				key_sa_chgstate(sav, SADB_SASTATE_DEAD);
 				goto restart_sav_DYING;
 			}
@@ -7178,6 +7232,7 @@ key_expire(struct secasvar *sav)
 	int len;
 	int error = -1;
 	struct sadb_lifetime *lt;
+	lifetime_counters_t sum = {0};
 
 	/* XXX: Why do we lock ? */
 	s = splsoftnet();	/*called from softclock()*/
@@ -7210,8 +7265,10 @@ key_expire(struct secasvar *sav)
 	lt = mtod(m, struct sadb_lifetime *);
 	lt->sadb_lifetime_len = PFKEY_UNIT64(sizeof(struct sadb_lifetime));
 	lt->sadb_lifetime_exttype = SADB_EXT_LIFETIME_CURRENT;
-	lt->sadb_lifetime_allocations = sav->lft_c->sadb_lifetime_allocations;
-	lt->sadb_lifetime_bytes = sav->lft_c->sadb_lifetime_bytes;
+	percpu_foreach(sav->lft_c_counters_percpu,
+	    key_sum_lifetime_counters, sum);
+	lt->sadb_lifetime_allocations = sum[LIFETIME_COUNTER_ALLOCATIONS];
+	lt->sadb_lifetime_bytes = sum[LIFETIME_COUNTER_BYTES];
 	lt->sadb_lifetime_addtime =
 	    time_mono_to_wall(sav->lft_c->sadb_lifetime_addtime);
 	lt->sadb_lifetime_usetime =
@@ -8171,16 +8228,19 @@ key_getuserfqdn(void)
 void
 key_sa_recordxfer(struct secasvar *sav, struct mbuf *m)
 {
+	lifetime_counters_t *counters;
 
 	KASSERT(sav != NULL);
 	KASSERT(sav->lft_c != NULL);
 	KASSERT(m != NULL);
 
+	counters = percpu_getref(sav->lft_c_counters_percpu);
+
 	/*
 	 * XXX Currently, there is a difference of bytes size
 	 * between inbound and outbound processing.
 	 */
-	sav->lft_c->sadb_lifetime_bytes += m->m_pkthdr.len;
+	(*counters)[LIFETIME_COUNTER_BYTES] += m->m_pkthdr.len;
 	/* to check bytes lifetime is done in key_timehandler(). */
 
 	/*
@@ -8188,8 +8248,10 @@ key_sa_recordxfer(struct secasvar *sav, struct mbuf *m)
 	 * sadb_lifetime_allocations.  We increment the variable
 	 * whenever {esp,ah}_{in,out}put is called.
 	 */
-	sav->lft_c->sadb_lifetime_allocations++;
+	(*counters)[LIFETIME_COUNTER_ALLOCATIONS]++;
 	/* XXX check for expires? */
+
+	percpu_putref(sav->lft_c_counters_percpu);
 
 	/*
 	 * NOTE: We record CURRENT sadb_lifetime_usetime by using wall clock,
