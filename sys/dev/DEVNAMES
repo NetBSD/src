@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.305 2018/03/01 08:44:12 pgoyette Exp $
+#	$NetBSD: DEVNAMES,v 1.306 2018/03/02 06:01:20 pgoyette Exp $
 #
 # This file contains all used device names and defined attributes in
 # alphabetical order. New devices added to the system somewhere should first
@@ -88,10 +88,7 @@ apm			i386
 aps			MI
 arbus			evbmips
 arc			MI		Attribute
-arckbd			acorn26
 arcmsr			MI
-arcpp			acorn26
-arcvideo		acorn26
 aria			MI
 armgic			arm
 arml2cc			arm
@@ -287,7 +284,6 @@ cpciic			MI
 cpctim			MI
 cprofb			MI
 cpsw			evbarm
-cpu			acorn26
 cpu			acorn32
 cpu			algor
 cpu			alpha
@@ -380,7 +376,6 @@ ebus			sparc
 ebus			sparc64
 ec			MI
 ec			sun2
-eca			acorn26
 eccmemctl		sparc
 ed			MI (MCA)
 ed			amiga
@@ -394,7 +389,6 @@ ef			MI
 efa			amiga
 eg			MI
 ega			MI
-eh			acorn26
 ehci			MI
 ei			MI
 eisa			MI
@@ -487,7 +481,6 @@ fec			arm
 ffb			sparc64
 fhpib			hp300
 finsio			MI
-fiq			acorn26		Attribute
 flash			evbppc
 flsc			amiga
 flsc			amigappc
@@ -496,7 +489,6 @@ fmv			MI
 footbridge		cats		Attribute
 footbridge		netwinder	Attribute
 fpa			MI
-fpu			acorn26
 fpu			mac68k
 frodo			hp300
 fta			MI
@@ -641,7 +633,6 @@ ifpci			MI
 ifuba			MI		Attribute
 igsfb			MI
 iha			MI
-iic			acorn26
 iic			acorn32
 ik			vax
 il			MI
@@ -661,9 +652,6 @@ intvid			mac68k
 ioasic			MI
 ioat			MI
 iobl			amiga
-iobus			acorn26
-ioc			acorn26
-ioeb			acorn26
 iomd			acorn32
 iomdiic			acorn32
 iomdkbc			acorn32
@@ -754,7 +742,6 @@ kdb			MI
 kft			alpha
 kse			MI
 kue			MI
-latches			acorn26
 lc			MI
 lca			alpha
 ld			MI
@@ -969,7 +956,6 @@ njs			MI
 np			vax
 npx			i386
 nsclpcsio		MI
-nsio			acorn26		Attribute
 nsphy			MI
 nsphyter		MI
 ntwoc			MI
@@ -1180,7 +1166,6 @@ rk			vax
 rl			vax
 rlc			vax
 rt			MI
-rtc			acorn26
 rtc			acorn32
 rtc			evbmips
 rtc			hp300
@@ -1444,7 +1429,6 @@ umodem_common		MI		Attribute
 ums			MI
 uninorth		macppc
 univ_pci		MI		Attribute
-unixbp			acorn26
 up			vax
 upc			MI
 upl			MI
