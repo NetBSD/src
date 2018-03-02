@@ -1,13 +1,19 @@
 # Lean and mean config file for the POWERMAC G5
 # Author: Sanjay Lal <sanjayl@kymasys.com>
 
-include 	"arch/macppc/conf/std.macppc.g5"
+include		"arch/macppc/conf/std.macppc.g5"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 maxusers	32
 
 options 	PMAC_G5
+#options 	OFWOEA_DEBUG
+#no makeoptions	MACHINE_ARCH
+#makeoptions	MACHINE_ARCH="powerpc64"
+
 options 	ALTIVEC		# Include AltiVec support
+options		EXSTORAGE_MAX=64
+#options 	MULTIPROCESSOR
 
 # Standard system options
 options 	INSECURE	# disable kernel security levels
@@ -23,85 +29,88 @@ options 	SYSVSEM		# System V semaphores
 #options 	SEMUME=10	# max number of undo entries per process
 #options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V shared memory
+#options 	SHMMAXPGS=1024	# 1024 pages is the default
+options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
+
+options 	MODULAR		# loadable kernel modules
 
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-# Alternate buffer queue strategies for better responsiveness under high
-# disk I/O load.
-#options 	BUFQ_READPRIO
-options 	BUFQ_PRIOCSCAN
+# Enable experimental buffer queue strategy for better responsiveness under
+# high disk I/O load. Use it with caution - it's not proven to be stable yet.
+#options 	NEW_BUFQ_STRATEGY
 
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC	# cheap kernel consistency checks
-options 	DEBUG		# expensive debugging checks/support
+#options 	DEBUG		# expensive debugging checks/support
 options 	ZS_CONSOLE_ABORT# allow break to get into DDB on serial
 options 	DDB		# in-kernel debugger
 options 	DDB_ONPANIC=1	# don't go into ddb on panic.
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 options 	TRAP_PANICWAIT
+options		DDB_COMMANDONENTER="bt"
 
 makeoptions 	DEBUG="-g"	# compile full symbol table
 
 # Compatibility options
-include 	"conf/compat_netbsd30.config"
-#options 	COMPAT_386BSD_MBRPART # recognize old partition ID
+include 	"conf/compat_netbsd70.config"
+#options 	COMPAT_DARWIN	# Darwin binary compatibility (experimental)
+#options 	COMPAT_MACH	# Mach compatibility, needed for COMPAT_DARWIN 
+#options 	EXEC_MACHO	# Mach-O binary support, needed for COMPAT_MACH
+#options 	DEBUG_DARWIN	# COMPAT_DARWIN debugging
+#options 	DEBUG_MACH	# COMPAT_MACH debugging
+#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
+#options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # File systems
 file-system 	FFS		# UFS
-file-system 	MFS		# memory file system
+options 	WAPBL
+file-system 	TMPFS		# memory file system
 file-system 	KERNFS		# /kern
 file-system 	PROCFS		# /proc
 file-system 	NFS		# Network File System client
+#file-system 	CD9660		# ISO 9660 + Rock Ridge file system
+#file-system 	MSDOSFS		# MS-DOS file system
+file-system	PTYFS		# /dev/pts/N support
+#file-system	HFS
 
 # File system options
-options 	QUOTA		# legacy UFS quotas
-options 	QUOTA2		# new, in-filesystem UFS quotas
-#options 	FFS_EI		# FFS Endian Independent support
+#options 	QUOTA		# UFS quotas
+#options 	FFS_EI		# FFS Endian Independant support
+#options 	SOFTDEP		# FFS soft updates support.
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 #options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# ffs snapshots
-options 	UFS_EXTATTR	# Extended attribute support for UFS1
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
 #options 	APPLE_UFS	# Apple UFS support in FFS
 # Networking options
 #options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
+options 	INET6		# IPV6
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
-options 	PCIVERBOSE	# verbose PCI device autoconfig messages
-options 	MIIVERBOSE	# verbose PHY autoconfig messages
+#options 	PCIVERBOSE	# verbose PCI device autoconfig messages
+#options 	MIIVERBOSE	# verbose PHY autoconfig messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 
 # wscons options
 #options 	WSEMUL_SUN			# sun terminal emulation
 options 	WSEMUL_VT100			# VT100 / VT220 emulation
-options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 #options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
+options 	WS_DEFAULT_FG=WSCOL_BLACK
+options 	WS_DEFAULT_BG=WSCOL_LIGHT_WHITE
+options 	WS_KERNEL_FG=WSCOL_GREEN
+options 	WS_KERNEL_BG=WSCOL_LIGHT_WHITE
 options 	FONT_GALLANT12x22
 
-# Optional Mac keyboard tweaks
-
-# Tweak the keyboard driver to treat the caps lock key on an ADB
-# keyboard as a control key; requires special remapping because of
-# ADB's strange emulation of a mechanically-locked key.
-#options 	CAPS_IS_CONTROL
-
-# On Mac laptops, several function keys double as "hot keys"
-# (brightness, volume, eject) when the Fn modifier is held down.  Mac
-# OS X likes to reprogram the keyboard controller to send hot key
-# events when Fn is not held down and send function key events when it
-# is.  This option transforms the non-keyboard "button" events back
-# into function key events.
-#options 	FORCE_FUNCTION_KEYS
-
 # Kernel root file system and dump configuration.
-config		netbsd	root on ? type ?
-#config		netbsd	root on gem0 type nfs
-#options         NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
+#config		netbsd	root on ? type ?
+config		netbsd	root on gem0 type nfs
+options         NFS_BOOT_DHCP
 
 #
 # Device configuration
@@ -109,16 +118,51 @@ config		netbsd	root on ? type ?
 
 mainbus* at root
 
-cpu*	at mainbus?
-ibmcpc* at mainbus?
+cpu* 		at mainbus?
+uni_n*	at mainbus?
+memory* at mainbus?
+spdmem* at memory? addr ?
+ki2c*	at uni_n?			# Keywest I2C
+
+ibmcpc* 	at mainbus?
+uninorth* 	at mainbus?
+smu* 		at mainbus?
+#options 	SMU_DEBUG
+smuiic* 	at smu?
+smusat* 	at smuiic?
 
 pci*	at ibmcpc? bus ?
+pci*	at uninorth? bus ?
 pci*	at ppb? bus ?
 
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 
+obio0		at pci? dev ? function ?
+zsc*		at obio?
+zstty*		at zsc? channel ?
+#snapper* 	at obio?
+ki2c*		at obio?	# Keywest I2C
+iic*		at i2cbus?
+
+admtemp* 	at iic?
+lmtemp* 	at iic?
+dstemp* 	at iic?
+deq* 		at iic?
+
+pmu* 		at obio?	# Apple PMU
+
+# Audio support
+#audio*	at audiobus?
+
+#spkr*	at audio?		# PC speaker (synthesized)
+#wsbell* at spkr?
+
 gem*	at pci? dev ? function ?	# gmac ethernet
+options 	GEM_DEBUG
+bge*	at pci? dev ? function ?	# borgcom ethernet
+bmtphy*	at mii? phy ?			# Broadcom BCM5201/BCM5202 PHYs
+brgphy*	at mii? phy ?			# Broadcom BCM5400 PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # PCI IEEE1394 controllers
@@ -133,30 +177,37 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # PCI USB controllers
 ohci*	at pci? dev ? function ?	# USB Open Host Controller
-#ehci*	at pci? dev ? function ?	# USB Enhanced Host Controller
+ehci*	at pci? dev ? function ?	# USB Enhanced Host Controller
 
 usb*	at ohci?					# USB bus support
+usb*	at ehci?					# USB bus support
 uhub*	at usb?						# USB Hubs
 uhub*	at uhub? port ?
 uhidev*	at uhub? port ? configuration ? interface ?	# USB HID device
 uhid*	at uhidev? reportid ?				# USB Generic HID
-
 ukbd*	at uhidev? reportid ?				# USB Keyboards
 wskbd*	at ukbd? console ?
 ums*	at uhidev? reportid ?				# USB Mice
 wsmouse* at ums?
 
-# Other  PCI devices
-#ofb*	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
-pciide* at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
+options		OFWOEA_WSCONS_NO_ROM_FONT
+genfb*	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
+radeonfb*	at pci? dev ? function ?
+options 	RADEONFB_ALWAYS_ACCEL_PUTCHAR
+
+#radeon* 	at pci? dev ? function ?
+#radeondrmkmsfb* at radeonfbbus?
+
+#pciide* at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
+wdc* 	at pci? dev ? function ?		# Kauai ATA
 svwsata* at pci? dev ? function ?		# ServerWorks SATA controllers
+#options 	ATADEBUG
 obio*	at pci? dev ? function ?
 zsc*	at obio?
 zstty*	at zsc? channel ?
 
-# PCI serial interfaces
-nvram*	at obio?			# nvram
-#wsdisplay0 at ofb? console ?
+wsdisplay0	at wsemuldisplaydev? console 1
+wsdisplay*	at wsemuldisplaydev?
 
 atabus* at ata?
 wd*	at atabus? drive ? flags 0x0000
@@ -168,20 +219,19 @@ uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
 
 #pseudo-device 	crypto			# opencrypto framework
 					# (disabled, requires generic softints)
-pseudo-device	vnd			# disk-like interface to files
-pseudo-device	md			# memory disk device
+pseudo-device	vnd		4	# disk-like interface to files
+#pseudo-device	md		1	# memory disk device
 pseudo-device	loop			# network loopback
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	openfirm		# /dev/openfirm
 pseudo-device	wsmux			# mouse and keyboard multiplexor
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
-pseudo-device	nsmb			# SMB requester
+#pseudo-device	nsmb			# SMB requester
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
 
 # Enable the hooks used for initializing the ram-disk.
-options 	MEMORY_DISK_HOOKS
-options 	MEMORY_DISK_IS_ROOT		# Force root on ram-disk
-options 	MEMORY_DISK_ROOT_SIZE=4496	# 2248 KiB
-options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
+#options 	MEMORY_DISK_HOOKS
+#options 	MEMORY_DISK_IS_ROOT		# Force root on ram-disk
+#options 	MEMORY_DISK_ROOT_SIZE=4096	# 2 Megabytes
