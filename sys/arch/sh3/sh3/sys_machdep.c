@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.13 2007/12/22 08:59:02 dsl Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.14 2018/03/02 23:11:42 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -73,16 +73,46 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.13 2007/12/22 08:59:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.14 2018/03/02 23:11:42 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
+#include <sh3/sysarch.h>
+#include <sh3/cache.h>
+
 int
 sys_sysarch(struct lwp *l, const struct sys_sysarch_args *uap, register_t *retval)
 {
+	/* {
+		syscallarg(int) op;
+		syscallarg(void *) parms;
+	} */
+	int op;
+	int error = 0;
 
-	return (ENOSYS);
+	op = SCARG(uap, op);
+	switch (op) {
+	case SH3_SYNC_ICACHE: {
+		struct sh3_sync_icache_args args;
+
+		error = copyin(SCARG(uap, parms), &args, sizeof(args));
+		if (error != 0)
+			break;
+
+		if (args.len < (size_t)sh_cache_size_icache)
+			sh_icache_sync_range_index(args.addr, args.len);
+		else
+			sh_icache_sync_all();
+		break;
+	}
+
+	default:
+		error = ENOSYS;
+		break;
+	}
+
+	return error;
 }
