@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_rascons.c,v 1.11 2018/03/02 14:37:18 macallan Exp $	*/
+/*	$NetBSD: ofw_rascons.c,v 1.12 2018/03/02 14:45:23 macallan Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_rascons.c,v 1.11 2018/03/02 14:37:18 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_rascons.c,v 1.12 2018/03/02 14:45:23 macallan Exp $");
 
 #include "wsdisplay.h"
 
@@ -117,6 +117,16 @@ rascons_cnattach(void)
 	rascons_stdscreen.textops = &ri->ri_ops;
 	rascons_stdscreen.capabilities = ri->ri_caps;
 
+	/*
+	 * XXX
+	 * On some G5 models ( so far, 970FX but not 970MP ) we can't seem to
+	 * access video memory in real mode, but a lot of code relies on rasops
+	 * data structures being set up early so we can't just push the whole
+	 * thing further down. Instead set things up but don't actually attach
+	 * the console until later.
+	 * This needs a better trigger but for now I can't reliably tell which
+	 * exact models / CPUs / other hardware actually need it.
+	 */
 	if ((oeacpufeat & OEACPU_64_BRIDGE) != 0) {
 		needs_finalize = 1;
 	} else {
