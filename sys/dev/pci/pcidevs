@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1316 2018/02/24 14:05:46 mlelstv Exp $
+$NetBSD: pcidevs,v 1.1317 2018/03/02 06:40:31 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -4187,6 +4187,42 @@ product INTEL XE5_V3_IMC0_DDRIO_B 0x2fda Xeon E5 v3 IMC DDRIO
 product INTEL XE5_V3_IMC0_DDRIO_C 0x2fdb Xeon E5 v3 IMC DDRIO
 product INTEL WIFI_LINK_3165_1	0x3165	Dual Band Wireless AC 3165
 product INTEL WIFI_LINK_3165_2	0x3166	Dual Band Wireless AC 3165
+product INTEL GLK_IGD_1		0x3184	UHD Graphics 605
+product INTEL GLK_IGD_2		0x3185	UHD Graphics 600
+product INTEL GLK_DPTF		0x318c	Gemini Lake DPTF
+product INTEL GLK_GNA		0x3190	Gemini Lake GNA
+product INTEL GLK_P2SB		0x3192	Gemini Lake Primary to SideBand Bridge
+product INTEL GLK_PMC		0x3194	Gemini Lake PMC
+product INTEL GLK_FASTSPI	0x3196	Gemini Lake Fast SPI
+product INTEL GLK_ESPI		0x3197	Gemini Lake eSPI
+product INTEL GLK_HDA		0x3198	Gemini Lake HD Audio
+product INTEL GLK_ISH		0x31a2	Gemini Lake Integrated Sensor Hub
+product INTEL GLK_XHCI		0x31a8	Gemini Lake USB Host (xHCI)
+product INTEL GLK_XDCI		0x31aa	Gemini Lake USB Device (xDCI)
+product INTEL GLK_I2C_0		0x31ac	Gemini Lake I2C 0
+product INTEL GLK_I2C_1		0x31ae	Gemini Lake I2C 1
+product INTEL GLK_I2C_2		0x31b0	Gemini Lake I2C 2
+product INTEL GLK_I2C_3		0x31b2	Gemini Lake I2C 3
+product INTEL GLK_I2C_4		0x31b4	Gemini Lake I2C 4
+product INTEL GLK_I2C_5		0x31b6	Gemini Lake I2C 5
+product INTEL GLK_I2C_6		0x31b8	Gemini Lake I2C 6
+product INTEL GLK_I2C_7		0x31ba	Gemini Lake I2C 7
+product INTEL GLK_UART_0	0x31bc	Gemini Lake UART 0
+product INTEL GLK_UART_2	0x31c0	Gemini Lake UART 2
+product INTEL GLK_SPI		0x31c2	Gemini Lake SPI
+product INTEL GLK_EMMC		0x31cc	Gemini Lake eMMC
+product INTEL GLK_SMB		0x31d4	Gemini Lake SMBus
+product INTEL GLK_PCIE_4	0x31d6	Gemini Lake PCIe x2
+product INTEL GLK_PCIE_5	0x31d7	Gemini Lake PCIe x2
+product INTEL GLK_PCIE_0	0x31d8	Gemini Lake PCIe x4
+product INTEL GLK_PCIE_1	0x31d9	Gemini Lake PCIe x4
+product INTEL GLK_PCIE_2	0x31da	Gemini Lake PCIe x4
+product INTEL GLK_PCIE_3	0x31db	Gemini Lake PCIe x4
+product INTEL GLK_CNVI		0x31dc	Gemini Lake CNVi
+product INTEL GLK_SATA		0x31e3	Gemini Lake SATA
+product INTEL GLK_LPC		0x31e8	Gemini Lake LPC
+product INTEL GLK_SSRAM		0x31ec	Gemini Lake Shared SRAM
+product INTEL GLK_HB		0x31f0	Gemini Lake Host Bridge
 product INTEL 31244		0x3200	31244 Serial ATA Controller
 product INTEL 82855PM_DDR	0x3340	82855PM MCH Host Controller
 product INTEL 82855PM_AGP	0x3341	82855PM Host-AGP Bridge
