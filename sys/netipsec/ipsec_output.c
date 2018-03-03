@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.69 2018/02/26 06:34:39 maxv Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.70 2018/03/03 09:39:29 maxv Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.69 2018/02/26 06:34:39 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.70 2018/03/03 09:39:29 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -466,6 +466,7 @@ ipsec4_process_packet(struct mbuf *m, const struct ipsecrequest *isr,
 	int setdf;
 
 	KASSERT(m != NULL);
+	KASSERT(m->m_nextpkt == NULL);
 	KASSERT(isr != NULL);
 
 	s = splsoftnet();	/* insure SA contents don't change */
@@ -718,6 +719,7 @@ ipsec6_process_packet(struct mbuf *m, const struct ipsecrequest *isr)
 	union sockaddr_union *dst;
 
 	KASSERT(m != NULL);
+	KASSERT(m->m_nextpkt == NULL);
 	KASSERT(isr != NULL);
 
 	s = splsoftnet();   /* insure SA contents don't change */
