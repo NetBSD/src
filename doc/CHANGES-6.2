@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.325 2018/02/19 20:56:37 snj Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.326 2018/03/03 20:50:38 snj Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -21072,4 +21072,24 @@ sys/arch/x86/x86/vm_machdep.c			1.30 via patch
 
 	Prevent unrestricted userland access to I/O ports in XEN.
 	[maxv, ticket #1517]
+
+sys/dev/rndpseudo.c				patch
+sys/kern/subr_cprng.c				patch
+sys/sys/cprng.h					patch
+
+	Fix panic when waiting with kqueue/kevent for a read from
+	/dev/random.
+	[riastradh, ticket #1512]
+
+sys/arch/sparc/sparc/locore.s			1.269
+
+	Avoid an instruction requiring a higher alignment than we
+	are guaranteed. PR port-sparc/52721: ddb errors on ps command
+	[maya, ticket #1513]
+
+dist/pf/etc/pf.os				1.4-1.5
+
+	Synchronise with r1.27 from OpenBSD
+	Add DragonFly BSD fingerprints.
+	[sevan, ticket #1515]
 
