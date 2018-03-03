@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.2,v 1.1.2.74 2018/02/25 23:35:15 snj Exp $
+# $NetBSD: CHANGES-7.2,v 1.1.2.75 2018/03/03 20:26:52 snj Exp $
 
 A complete list of changes from the NetBSD 7.1 release to the NetBSD 7.2
 release:
@@ -5272,4 +5272,22 @@ sys/fs/msdosfs/msdosfs_vfsops.c			1.129
 	Relax sanity check. It's ok to have more FAT sectors
 	than needed.
 	[mlelstv, ticket #1574]
+
+sys/dev/sbus/be.c				1.86
+
+	Fix an spl leak.
+	[msaitoh, ticket #1575]
+
+lib/libc/arch/powerpc/gen/swapcontext.S		1.8
+lib/libc/arch/powerpc/genassym.cf		1.5
+
+	PIC code clobbers %r30 so we need to update the saved oucp with
+	caller's %r30 manually.  Makes old context happy when it needs
+	to do more function calls after restore.
+	[uwe, ticket #1576]
+
+sys/netipsec/ipsec_input.c			1.57-1.58
+
+	Fix out-of-bounds read.
+	[maxv, ticket #1577]
 
