@@ -32,13 +32,14 @@
 #include "opt_cputypes.h"
 #include "opt_multiprocessor.h"
 #include "opt_arm_debug.h"
+#include "opt_fdt.h"
 
 #include <arm/asm.h>
 #include <arm/armreg.h>
 
 #include "assym.h"
 
-RCSID("$NetBSD: rpi2_start.S,v 1.4 2017/12/10 21:38:27 skrll Exp $")
+RCSID("$NetBSD: rpi2_start.S,v 1.5 2018/03/03 13:46:32 skrll Exp $")
 
 #if defined(KERNEL_BASES_EQUAL)
 #define CALL(f)		bl	_C_LABEL(f)
@@ -99,6 +100,16 @@ _C_LABEL(rpi_start):
 #endif
 
 	stmia	r4, {r0-r3}		// Save the arguments
+
+#ifdef FDT
+	/*
+	 * ARM boot protocol has FDT address in r2
+	 */
+	movw	r4, #:lower16:fdt_addr_r
+	movt	r4, #:upper16:fdt_addr_r
+	sub	r4, r4, #KERNEL_BASE_VOFFSET
+	str	r2, [r4]
+#endif
 
 	/*
 	 * Setup the CPU
