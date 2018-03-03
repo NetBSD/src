@@ -249,9 +249,15 @@ asm (".desc ___crashreporter_info__, 0x10");
 
 // For convenience when using the "strings" command, this is the last thing in the file
 #if mDNSResponderVersion > 1
-mDNSexport const char mDNSResponderVersionString_SCCS[] = "@(#) mDNSResponder-" STRINGIFY(mDNSResponderVersion) " (" __DATE__ " " __TIME__ ")";
-#elif MDNS_VERSIONSTR_NODTS
-mDNSexport const char mDNSResponderVersionString_SCCS[] = "@(#) mDNSResponder (Engineering Build)";
+mDNSexport const char mDNSResponderVersionString_SCCS[] = "@(#) mDNSResponder-" STRINGIFY(mDNSResponderVersion)
+#ifndef MDNS_VERSIONSTR_NODTS
+    " (" __DATE__ " " __TIME__ ")" 
+#endif 
+;
 #else
-mDNSexport const char mDNSResponderVersionString_SCCS[] = "@(#) mDNSResponder (Engineering Build) (" __DATE__ " " __TIME__ ")";
+mDNSexport const char mDNSResponderVersionString_SCCS[] = "@(#) mDNSResponder (Engineering Build)"
+#ifndef MDNS_VERSIONSTR_NODTS
+    " (" __DATE__ " " __TIME__ ")" 
+#endif 
+;
 #endif

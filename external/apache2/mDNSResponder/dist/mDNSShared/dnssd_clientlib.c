@@ -363,4 +363,10 @@ DNSServiceErrorType DNSSD_API TXTRecordGetItemAtIndex
 
 // NOT static -- otherwise the compiler may optimize it out
 // The "@(#) " pattern is a special prefix the "what" command looks for
-const char VersionString_SCCS_libdnssd[] = "@(#) libdns_sd " STRINGIFY(mDNSResponderVersion) " (" __DATE__ " " __TIME__ ")";
+const char VersionString_SCCS_libdnssd[] = "@(#) libdns_sd "
+    STRINGIFY(mDNSResponderVersion)
+#ifndef MDNS_VERSIONSTR_NODTS
+    " (" __DATE__ " " __TIME__ ")" 
+#endif 
+;
+
