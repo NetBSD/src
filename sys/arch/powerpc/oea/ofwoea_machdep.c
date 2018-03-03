@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.43 2018/03/02 14:37:18 macallan Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.44 2018/03/03 22:50:17 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.43 2018/03/02 14:37:18 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.44 2018/03/03 22:50:17 macallan Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -230,6 +230,13 @@ ofwoea_initppc(u_int startkernel, u_int endkernel, char *args)
 			while (*args)
 				BOOT_FLAG(*args++, boothowto);
 		}
+	} else {
+		int chs = OF_finddevice("/chosen");
+		int len;
+
+		len = OF_getprop(chs, "bootpath", bootpath, sizeof(bootpath) - 1);
+		if (len > -1)
+			bootpath[len] = 0;
 	}
 
 	uvm_md_init();
