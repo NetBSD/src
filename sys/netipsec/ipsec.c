@@ -1,4 +1,4 @@
-/* $NetBSD: ipsec.c,v 1.149 2018/02/28 11:29:14 maxv Exp $ */
+/* $NetBSD: ipsec.c,v 1.150 2018/03/03 09:47:01 maxv Exp $ */
 /* $FreeBSD: src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $ */
 /* $KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $ */
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.149 2018/02/28 11:29:14 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.150 2018/03/03 09:47:01 maxv Exp $");
 
 /*
  * IPsec controller part.
@@ -417,7 +417,7 @@ ipsec_getpolicybysock(struct mbuf *m, u_int dir, struct inpcb_hdr *inph,
 	KASSERT(inph->inph_socket != NULL);
 	KASSERT(inph_locked(inph));
 
-	/* XXX FIXME inpcb/in6pcb  vs socket*/
+	/* XXX FIXME inpcb/in6pcb vs socket*/
 	af = inph->inph_af;
 	KASSERTMSG(af == AF_INET || af == AF_INET6,
 	    "unexpected protocol family %u", af);
@@ -433,22 +433,13 @@ ipsec_getpolicybysock(struct mbuf *m, u_int dir, struct inpcb_hdr *inph,
 	IPSEC_STATINC(IPSEC_STAT_SPDCACHEMISS);
 
 	switch (af) {
-	case AF_INET: {
-		struct inpcb *in4p = (struct inpcb *)inph;
-		/* set spidx in pcb */
-		*error = ipsec_setspidx_inpcb(m, in4p);
-		pcbsp = in4p->inp_sp;
-		break;
-		}
+	case AF_INET:
 #if defined(INET6)
-	case AF_INET6: {
-		struct in6pcb *in6p = (struct in6pcb *)inph;
-		/* set spidx in pcb */
-		*error = ipsec_setspidx_inpcb(m, in6p);
-		pcbsp = in6p->in6p_sp;
-		break;
-		}
+	case AF_INET6:
 #endif
+		*error = ipsec_setspidx_inpcb(m, inph);
+		pcbsp = inph->inph_sp;
+		break;
 	default:
 		*error = EPFNOSUPPORT;
 		break;
