@@ -1,4 +1,4 @@
-/*	$NetBSD: once.h,v 1.5 2008/10/09 10:48:21 pooka Exp $	*/
+/*	$NetBSD: once.h,v 1.6 2018/03/03 19:21:59 jdolecek Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -42,7 +42,7 @@ void once_init(void);
 int _run_once(once_t *, int (*)(void));
 
 #define	ONCE_DECL(o) \
-	once_t (o) = { \
+	once_t (o) __read_mostly = { \
 		.o_status = 0, \
 	};
 
