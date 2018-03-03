@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_bsc.c,v 1.9 2017/12/28 22:42:36 christos Exp $	*/
+/*	$NetBSD: bcm2835_bsc.c,v 1.10 2018/03/03 16:03:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 2012 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_bsc.c,v 1.9 2017/12/28 22:42:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_bsc.c,v 1.10 2018/03/03 16:03:38 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_kernhist.h"
@@ -102,6 +102,8 @@ bsciic_attach(device_t parent, device_t self, void *aux)
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
 	prop_dictionary_t prop = device_properties(self);
+	prop_dictionary_t devs;
+	uint32_t address_cells;
 	struct i2cbus_attach_args iba;
 	bool disable = false;
 
@@ -170,10 +172,21 @@ bsciic_attach(device_t parent, device_t self, void *aux)
 	sc->sc_i2c.ic_release_bus = bsciic_release_bus;
 	sc->sc_i2c.ic_exec = bsciic_exec;
 
-	memset(&iba, 0, sizeof(iba));
+	devs = prop_dictionary_create();
+	if (of_getprop_uint32(phandle, "#address-cells", &address_cells))
+		address_cells = 1;
 
+	of_enter_i2c_devs(devs, phandle, address_cells * 4, 0);
+
+	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_i2c;
-	iba.iba_type = 0;
+	iba.iba_child_devices = prop_dictionary_get(devs, "i2c-child-devices");
+	if (iba.iba_child_devices)
+		prop_object_retain(iba.iba_child_devices);
+	else
+		iba.iba_child_devices = prop_array_create();
+	prop_object_release(devs);
+
 	config_found_ia(self, "i2cbus", &iba, iicbus_print);
 }
 
