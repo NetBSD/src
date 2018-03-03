@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.58 2017/05/14 09:37:13 skrll Exp $	*/
+/*	$NetBSD: cache.c,v 1.59 2018/03/03 15:47:49 flxd Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.58 2017/05/14 09:37:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.59 2018/03/03 15:47:49 flxd Exp $");
 
 #include "opt_cputype.h"
 #include "opt_mips_cache.h"
@@ -1455,5 +1455,7 @@ mips_config_cache_modern(uint32_t cpu_id)
 		mco->mco_intern_pdcache_sync_range_index = no_cache_op_range_index;
 		mco->mco_intern_pdcache_sync_range = no_cache_op_range;
 	}
+
+	mips_dcache_compute_align();
 }
 #endif /* MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2 > 0 */
