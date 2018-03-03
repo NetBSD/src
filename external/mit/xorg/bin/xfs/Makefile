@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2015/07/17 17:57:11 mrg Exp $
+#	$NetBSD: Makefile,v 1.13 2018/03/03 03:34:17 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -59,8 +59,8 @@ FILESNAME=	config
 FILESDIR=	${XFSCONFIGDIR}
 
 
-LDADD+=	-lXfont -lfontenc -lXfontcache -lXext -lX11 -lfreetype -lm -lz
-DPADD+=	${LIBXFONT} ${LIBFONTENC} ${LIBXFONTCACHE} ${LIBXEXT} ${LIBX11} \
+LDADD+=	-lXfont -lfontenc -lXext -lX11 -lfreetype -lm -lz
+DPADD+=	${LIBXFONT} ${LIBFONTENC} ${LIBXEXT} ${LIBX11} \
 	${LIBFREETYPE} ${LIBM} ${LIBZ}
 
 .PATH:	${XFSDIR}
