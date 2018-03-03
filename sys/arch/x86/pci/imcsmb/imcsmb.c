@@ -1,4 +1,4 @@
-/* $NetBSD: imcsmb.c,v 1.1 2018/03/01 04:45:06 pgoyette Exp $ */
+/* $NetBSD: imcsmb.c,v 1.2 2018/03/03 05:27:02 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imcsmb.c,v 1.1 2018/03/01 04:45:06 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imcsmb.c,v 1.2 2018/03/03 05:27:02 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -123,7 +123,7 @@ imcsmb_attach(device_t parent, device_t self, void *aux)
 	struct imc_attach_args *imca = aux;
 
 	aprint_naive("\n");
-	aprint_normal("SMBus controller\n");
+	aprint_normal(": SMBus controller\n");
 
 	/* Initialize private state */
 	sc->sc_dev = self;
