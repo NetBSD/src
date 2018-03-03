@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.123 2018/01/18 00:32:49 mrg Exp $
+#	$NetBSD: Makefile.rump,v 1.124 2018/03/03 22:46:30 christos Exp $
 #
 
 .if !defined(_RUMP_MK)
@@ -18,6 +18,11 @@ _RUMP_NATIVEABI= no
 CPPFLAGS:=	-I${RUMPTOP}/include ${CPPFLAGS}
 CPPFLAGS+=	-D_RUMPKERNEL -I${RUMPTOP}/librump/rumpkern
 .endif
+
+# We are compiling the kernel code with no-delete-null-pointer-checks,
+# and compiling without it, causes issues at least on sh3 by adding
+# aborts after kern_assert on NULL pointer checks.
+CFLAGS+=    ${${ACTIVE_CC} == "gcc":? -fno-delete-null-pointer-checks :}
 
 # Define baseline cpu for mips ports, required for
 # rumpcomp_sync_icache() hypercall.
