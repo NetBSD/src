@@ -12,7 +12,7 @@ options 	PMAC_G5
 #makeoptions	MACHINE_ARCH="powerpc64"
 
 options 	ALTIVEC		# Include AltiVec support
-options		EXSTORAGE_MAX=64
+options 	EXSTORAGE_MAX=64
 #options 	MULTIPROCESSOR
 
 # Standard system options
@@ -30,7 +30,6 @@ options 	SYSVSEM		# System V semaphores
 #options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V shared memory
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
-options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 options 	MODULAR		# loadable kernel modules
 
@@ -38,9 +37,10 @@ options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-# Enable experimental buffer queue strategy for better responsiveness under
-# high disk I/O load. Use it with caution - it's not proven to be stable yet.
-#options 	NEW_BUFQ_STRATEGY
+# Alternate buffer queue strategies for better responsiveness under high
+# disk I/O load.
+#options 	BUFQ_READPRIO
+options 	BUFQ_PRIOCSCAN
 
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC	# cheap kernel consistency checks
@@ -50,23 +50,17 @@ options 	DDB		# in-kernel debugger
 options 	DDB_ONPANIC=1	# don't go into ddb on panic.
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 options 	TRAP_PANICWAIT
-options		DDB_COMMANDONENTER="bt"
+#options 	DDB_COMMANDONENTER="bt"
 
 makeoptions 	DEBUG="-g"	# compile full symbol table
 
 # Compatibility options
 include 	"conf/compat_netbsd70.config"
-#options 	COMPAT_DARWIN	# Darwin binary compatibility (experimental)
-#options 	COMPAT_MACH	# Mach compatibility, needed for COMPAT_DARWIN 
-#options 	EXEC_MACHO	# Mach-O binary support, needed for COMPAT_MACH
-#options 	DEBUG_DARWIN	# COMPAT_DARWIN debugging
-#options 	DEBUG_MACH	# COMPAT_MACH debugging
-#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 #options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # File systems
 file-system 	FFS		# UFS
-options 	WAPBL
+file-system 	MFS		# memory file system
 file-system 	TMPFS		# memory file system
 file-system 	KERNFS		# /kern
 file-system 	PROCFS		# /proc
@@ -74,15 +68,17 @@ file-system 	NFS		# Network File System client
 #file-system 	CD9660		# ISO 9660 + Rock Ridge file system
 #file-system 	MSDOSFS		# MS-DOS file system
 file-system	PTYFS		# /dev/pts/N support
-#file-system	HFS
+#file-system	HFS		# experimental - Apple HFS+ (read-only)
 
 # File system options
-#options 	QUOTA		# UFS quotas
+#options 	QUOTA		# legacy UFS quotas
+#options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
-#options 	SOFTDEP		# FFS soft updates support.
+#options 	WAPBL		# File system journaling support
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 #options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# ffs snapshots
+#options 	UFS_EXTATTR	# Extended attribute support for UFS1
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
 #options 	APPLE_UFS	# Apple UFS support in FFS
@@ -100,6 +96,7 @@ options 	INET6		# IPV6
 # wscons options
 #options 	WSEMUL_SUN			# sun terminal emulation
 options 	WSEMUL_VT100			# VT100 / VT220 emulation
+#options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 #options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 options 	WS_DEFAULT_FG=WSCOL_BLACK
 options 	WS_DEFAULT_BG=WSCOL_LIGHT_WHITE
@@ -219,8 +216,8 @@ uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
 
 #pseudo-device 	crypto			# opencrypto framework
 					# (disabled, requires generic softints)
-pseudo-device	vnd		4	# disk-like interface to files
-#pseudo-device	md		1	# memory disk device
+pseudo-device	vnd			# disk-like interface to files
+#pseudo-device	md			# memory disk device
 pseudo-device	loop			# network loopback
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	openfirm		# /dev/openfirm
@@ -235,3 +232,4 @@ pseudo-device	ksyms			# /dev/ksyms
 #options 	MEMORY_DISK_HOOKS
 #options 	MEMORY_DISK_IS_ROOT		# Force root on ram-disk
 #options 	MEMORY_DISK_ROOT_SIZE=4096	# 2 Megabytes
+#options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
