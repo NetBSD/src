@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_input.c,v 1.32 2014/03/08 12:18:04 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec_input.c,v 1.32.4.1 2018/03/03 20:24:56 snj Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec_input.c,v 1.2.4.2 2003/03/28 20:32:53 sam Exp $	*/
 /*	$OpenBSD: ipsec_input.c,v 1.63 2003/02/20 18:35:43 deraadt Exp $	*/
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.32 2014/03/08 12:18:04 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.32.4.1 2018/03/03 20:24:56 snj Exp $");
 
 /*
  * IPsec input processing.
@@ -324,14 +324,15 @@ ipsec4_common_input_cb(struct mbuf *m, struct secasvar *sav,
 	ip->ip_len = htons(m->m_pkthdr.len);
 	prot = ip->ip_p;
 
+#ifdef notyet
 	/* IP-in-IP encapsulation */
 	if (prot == IPPROTO_IPIP) {
 		struct ip ipn;
 
 		/* ipn will now contain the inner IPv4 header */
+		/* XXX: check m_pkthdr.len */
 		m_copydata(m, ip->ip_hl << 2, sizeof(struct ip), &ipn);
 
-#ifdef notyet
 		/* XXX PROXY address isn't recorded in SAH */
 		/*
 		 * Check that the inner source address is the same as
@@ -359,7 +360,6 @@ ipsec4_common_input_cb(struct mbuf *m, struct secasvar *sav,
 			error = EACCES;
 			goto bad;
 		}
-#endif /*XXX*/
 	}
 #if INET6
 	/* IPv6-in-IP encapsulation. */
@@ -367,9 +367,9 @@ ipsec4_common_input_cb(struct mbuf *m, struct secasvar *sav,
 		struct ip6_hdr ip6n;
 
 		/* ip6n will now contain the inner IPv6 header. */
+		/* XXX: check m_pkthdr.len */
 		m_copydata(m, ip->ip_hl << 2, sizeof(struct ip6_hdr), &ip6n);
 
-#ifdef notyet
 		/*
 		 * Check that the inner source address is the same as
 		 * the proxy address, if available.
@@ -395,9 +395,9 @@ ipsec4_common_input_cb(struct mbuf *m, struct secasvar *sav,
 			error = EACCES;
 			goto bad;
 		}
-#endif /*XXX*/
 	}
 #endif /* INET6 */
+#endif /* notyet */
 
 	/*
 	 * Record what we've done to the packet (under what SA it was
@@ -643,15 +643,16 @@ ipsec6_common_input_cb(struct mbuf *m, struct secasvar *sav, int skip, int proto
 	/* Save protocol */
 	m_copydata(m, protoff, 1, &prot);
 
+#ifdef notyet
 #ifdef INET
 	/* IP-in-IP encapsulation */
 	if (prot == IPPROTO_IPIP) {
 		struct ip ipn;
 
 		/* ipn will now contain the inner IPv4 header */
+		/* XXX: check m_pkthdr.len */
 		m_copydata(m, skip, sizeof(struct ip), &ipn);
 
-#ifdef notyet
 		/*
 		 * Check that the inner source address is the same as
 		 * the proxy address, if available.
@@ -675,18 +676,16 @@ ipsec6_common_input_cb(struct mbuf *m, struct secasvar *sav, int skip, int proto
 			error = EACCES;
 			goto bad;
 		}
-#endif /*XXX*/
 	}
 #endif /* INET */
-
 	/* IPv6-in-IP encapsulation */
 	if (prot == IPPROTO_IPV6) {
 		struct ip6_hdr ip6n;
 
 		/* ip6n will now contain the inner IPv6 header. */
+		/* XXX: check m_pkthdr.len */
 		m_copydata(m, skip, sizeof(struct ip6_hdr), &ip6n);
 
-#ifdef notyet
 		/*
 		 * Check that the inner source address is the same as
 		 * the proxy address, if available.
@@ -711,8 +710,8 @@ ipsec6_common_input_cb(struct mbuf *m, struct secasvar *sav, int skip, int proto
 			error = EACCES;
 			goto bad;
 		}
-#endif /*XXX*/
 	}
+#endif /* notyet */
 
 	/*
 	 * Record what we've done to the packet (under what SA it was
