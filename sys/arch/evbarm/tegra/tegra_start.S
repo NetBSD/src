@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_start.S,v 1.15 2017/05/30 22:55:27 jmcneill Exp $ */
+/* $NetBSD: tegra_start.S,v 1.16 2018/03/03 13:46:33 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014, 2015 The NetBSD Foundation, Inc.
@@ -35,6 +35,7 @@
 #include "opt_multiprocessor.h"
 #include "opt_arm_debug.h"
 #include "opt_fdt_arm.h"
+#include "opt_fdt.h"
 
 #include <arm/asm.h>
 #include <arm/armreg.h>
@@ -42,7 +43,7 @@
 
 #include <arm/nvidia/tegra_reg.h>
 
-RCSID("$NetBSD: tegra_start.S,v 1.15 2017/05/30 22:55:27 jmcneill Exp $")
+RCSID("$NetBSD: tegra_start.S,v 1.16 2018/03/03 13:46:33 skrll Exp $")
 
 #if defined(VERBOSE_INIT_ARM) && defined(CONSADDR)
 #define	XPUTC(n)	mov r0, n; bl xputc
@@ -95,6 +96,16 @@ _C_LABEL(tegra_start):
 	sub	r4, r4, #KERNEL_BASE_VOFFSET
 
 	stmia	r4, {r0-r3}		// Save the arguments
+
+#ifdef FDT
+	/*
+	 * ARM boot protocol has FDT address in r2
+	 */
+	movw	r4, #:lower16:fdt_addr_r
+	movt	r4, #:upper16:fdt_addr_r
+	sub	r4, r4, #KERNEL_BASE_VOFFSET
+	str	r2, [r4]
+#endif
 
 	/*
 	 * Turn on the SMP bit
