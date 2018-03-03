@@ -1,4 +1,4 @@
-/*	$NetBSD: rndpseudo.c,v 1.6.2.3 2012/05/21 16:49:54 jdc Exp $	*/
+/*	$NetBSD: rndpseudo.c,v 1.6.2.3.6.1 2018/03/03 20:44:35 snj Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.6.2.3 2012/05/21 16:49:54 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.6.2.3.6.1 2018/03/03 20:44:35 snj Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -673,13 +673,13 @@ rnd_poll(struct file *fp, int events)
 		}       
 	}
 
+	mutex_enter(&ctx->cprng->mtx);
 	if (cprng_strong_ready(ctx->cprng)) {
 		revents |= events & (POLLIN | POLLRDNORM);
 	} else {
-		mutex_enter(&ctx->cprng->mtx);
 		selrecord(curlwp, &ctx->cprng->selq);
-		mutex_exit(&ctx->cprng->mtx);
 	}
+	mutex_exit(&ctx->cprng->mtx);
 
 	return (revents);
 }
@@ -731,12 +731,24 @@ static int
 filt_rndread(struct knote *kn, long hint)
 {
 	cprng_strong_t *c = kn->kn_hook;
+	int ret;
 
+	if (hint & NOTE_SUBMIT)
+		KASSERT(mutex_owned(&c->mtx));
+	else
+		mutex_enter(&c->mtx);
 	if (cprng_strong_ready(c)) {
 		kn->kn_data = RND_TEMP_BUFFER_SIZE;
-		return 1;
+		ret = 1;
+	} else {
+		ret = 0;
 	}
-	return 0;
+	if (hint & NOTE_SUBMIT)
+		KASSERT(mutex_owned(&c->mtx));
+	else
+		mutex_exit(&c->mtx);
+
+	return ret;
 }
 
 static const struct filterops rnd_seltrue_filtops =
