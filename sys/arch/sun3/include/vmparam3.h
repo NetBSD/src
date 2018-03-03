@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam3.h,v 1.38 2017/02/02 21:53:55 rin Exp $	*/
+/*	$NetBSD: vmparam3.h,v 1.39 2018/03/03 03:19:36 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -112,4 +112,4 @@
 #define	MAXSSIZ		MAXDSIZ			/* max stack size */
 #endif
 
-#define	PAGER_MAP_DEFAULT_SIZE (4 * 1024 * 1024)
+#define	PAGER_MAP_DEFAULT_SIZE (2 * 1024 * 1024)

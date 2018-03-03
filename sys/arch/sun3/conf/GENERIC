@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.176 2018/01/23 14:47:56 sevan Exp $
+# $NetBSD: GENERIC,v 1.177 2018/03/03 03:19:36 mrg Exp $
 #
 # GENERIC machine description file
 # 
@@ -23,9 +23,9 @@
 
 include 	"arch/sun3/conf/std.sun3"
 
-options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.176 $"
+#ident		"GENERIC-$Revision: 1.177 $"
 
 makeoptions	COPTS="-Os"		# bootloader has size limit (~2MB)
 
@@ -47,7 +47,7 @@ options 	SYSVSHM		# System V shared memory
 
 #options 	INSECURE	# disable kernel security level
 #options 	USERCONF	# userconf(4) support
-#options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Alternate buffer queue strategies for better responsiveness under high
@@ -71,41 +71,44 @@ options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	SCSIVERBOSE		# Verbose SCSI errors
 
 # Compatibility options
-include 	"conf/compat_netbsd10.config"
+# Originally in NetBSD 1.0, but limited to 6.0 for size.
+#include 	"conf/compat_netbsd10.config"
+include 	"conf/compat_netbsd60.config"
 
-options 	COMPAT_SUNOS	# can run SunOS 4.1.1 executables
+#options 	COMPAT_SUNOS	# can run SunOS 4.1.1 executables
 #options 	COMPAT_SVR4	# can run SVR4 executables
-options 	COMPAT_AOUT_M68K # support for NetBSD a.out executables
+#options 	COMPAT_AOUT_M68K # support for NetBSD a.out executables
 #options 	COMPAT_LINUX	# can run Linux/m68k executables
-options 	EXEC_AOUT	# support for a.out executables
+#options 	EXEC_AOUT	# support for a.out executables
 
 # Filesystem options
 file-system	FFS		# Berkeley Fast Filesystem
 file-system	NFS		# Sun NFS client support
 file-system	CD9660		# ISO 9660 + Rock Ridge file system
-file-system	FDESC		# /dev/fd/*
-file-system	KERNFS		# /kern
+#file-system	FDESC		# /dev/fd/*
+#file-system	KERNFS		# /kern
 file-system	NULLFS		# loopback file system
 #file-system	OVERLAY		# overlay file system
 file-system	PROCFS		# /proc
 #file-system	UNION		# union file system
 file-system	MFS		# memory-based filesystem
 file-system	PTYFS		# /dev/pts/N support
-file-system	TMPFS		# Efficient memory file-system
+# Disabled as 20KB larger than MFS.
+#file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
-options 	NFSSERVER	# nfs server support
+#options 	NFSSERVER	# nfs server support
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-options 	WAPBL		# File system journaling support
+#options 	WAPBL		# File system journaling support
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	UFS_EXTATTR	# Extended attribute support for UFS1
 
 # Networking options
 options 	INET		# IP protocol stack support
-options 	INET6		# IPV6
+#options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# IP packet forwarding
@@ -241,8 +244,8 @@ uk* at scsibus? target ? lun ?		# unknown SCSI devices
 
 #
 # accept filters
-pseudo-device   accf_data		# "dataready" accept filter
-pseudo-device   accf_http		# "httpready" accept filter
+#pseudo-device   accf_data		# "dataready" accept filter
+#pseudo-device   accf_http		# "httpready" accept filter
 
 # Memory-disk drivers
 pseudo-device	md		
