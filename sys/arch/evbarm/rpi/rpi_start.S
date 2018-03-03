@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_start.S,v 1.16 2018/01/01 11:28:33 skrll Exp $	*/
+/*	$NetBSD: rpi_start.S,v 1.17 2018/03/03 13:46:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -90,12 +90,13 @@
 #include "opt_arm_debug.h"
 #include "opt_cputypes.h"
 #include "opt_cpuoptions.h"
+#include "opt_fdt.h"
 
 #include <machine/asm.h>
 #include <arm/armreg.h>
 #include "assym.h"
 
-RCSID("$NetBSD: rpi_start.S,v 1.16 2018/01/01 11:28:33 skrll Exp $")
+RCSID("$NetBSD: rpi_start.S,v 1.17 2018/03/03 13:46:32 skrll Exp $")
 
 
 #if defined(VERBOSE_INIT_ARM)
@@ -139,6 +140,10 @@ _C_LABEL(rpi_start):
 	ldr	r8, Luboot_args
 	stmia	r8!, {r0-r3}
 
+#ifdef FDT
+	ldr	r8, Lfdt_addr_r
+	str	r2, [r8]
+#endif
 	mrs	r0, cpsr
 	bic	r0, r0, #PSR_MODE
 	orr	r0, r0, #(I32_bit | F32_bit | PSR_SVC32_MODE)
@@ -296,6 +301,8 @@ Lstart:
 
 Luboot_args:
 	.word	uboot_args
+Lfdt_addr_r:
+	.word	fdt_addr_r
 
 /*
  * Coprocessor register initialization values
