@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.104 2018/03/03 18:11:25 skrll Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.105 2018/03/03 18:14:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "opt_arm_bus_space.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.104 2018/03/03 18:11:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.105 2018/03/03 18:14:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -118,13 +118,11 @@ EVCNT_ATTACH_STATIC(bus_dma_sync_postwrite);
 
 int	_bus_dmamap_load_buffer(bus_dma_tag_t, bus_dmamap_t, void *,
 	    bus_size_t, struct vmspace *, int);
-static struct arm32_dma_range *
-	_bus_dma_paddr_inrange(struct arm32_dma_range *, int, paddr_t);
 
 /*
  * Check to see if the specified page is in an allowed DMA range.
  */
-inline struct arm32_dma_range *
+static inline struct arm32_dma_range *
 _bus_dma_paddr_inrange(struct arm32_dma_range *ranges, int nranges,
     bus_addr_t curaddr)
 {
@@ -528,8 +526,8 @@ int
 _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
     int flags)
 {
-	int error;
 	struct mbuf *m;
+	int error;
 
 #ifdef DEBUG_DMA
 	printf("dmamap_load_mbuf: t=%p map=%p m0=%p f=%d\n",
@@ -672,10 +670,10 @@ int
 _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
     int flags)
 {
-	int i, error;
 	bus_size_t minlen, resid;
 	struct iovec *iov;
 	void *addr;
+	int i, error;
 
 	/*
 	 * Make sure that on error condition we return "no valid mappings."
