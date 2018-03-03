@@ -1,4 +1,4 @@
-/* $NetBSD: ipsec.c,v 1.150 2018/03/03 09:47:01 maxv Exp $ */
+/* $NetBSD: ipsec.c,v 1.151 2018/03/03 09:54:55 maxv Exp $ */
 /* $FreeBSD: src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $ */
 /* $KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $ */
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.150 2018/03/03 09:47:01 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.151 2018/03/03 09:54:55 maxv Exp $");
 
 /*
  * IPsec controller part.
@@ -458,7 +458,7 @@ ipsec_getpolicybysock(struct mbuf *m, u_int dir, struct inpcb_hdr *inph,
 	}
 	KASSERT(currsp != NULL);
 
-	if (pcbsp->priv) {			/* when privilieged socket */
+	if (pcbsp->priv) {	/* when privileged socket */
 		switch (currsp->policy) {
 		case IPSEC_POLICY_BYPASS:
 		case IPSEC_POLICY_IPSEC:
@@ -613,6 +613,7 @@ ipsec4_output(struct mbuf *m, struct inpcb *inp, int flags,
     u_long *mtu, bool *natt_frag, bool *done)
 {
 	struct secpolicy *sp = NULL;
+	u_long _mtu = 0;
 	int error, s;
 
 	/*
@@ -635,10 +636,10 @@ ipsec4_output(struct mbuf *m, struct inpcb *inp, int flags,
 
 	/*
 	 * There are four return cases:
-	 *	sp != NULL			apply IPsec policy
-	 *	sp == NULL, error == 0		no IPsec handling needed
-	 *	sp == NULL, error == -EINVAL	discard packet w/o error
-	 *	sp == NULL, error != 0		discard packet, report error
+	 *	sp != NULL                    apply IPsec policy
+	 *	sp == NULL, error == 0        no IPsec handling needed
+	 *	sp == NULL, error == -EINVAL  discard packet w/o error
+	 *	sp == NULL, error != 0        discard packet, report error
 	 */
 	if (sp == NULL) {
 		splx(s);
@@ -668,11 +669,7 @@ ipsec4_output(struct mbuf *m, struct inpcb *inp, int flags,
 		m->m_pkthdr.csum_flags &= ~(M_CSUM_TCPv4|M_CSUM_UDPv4);
 	}
 
-    {
-	u_long _mtu = 0;
-
 	error = ipsec4_process_packet(m, sp->req, &_mtu);
-
 	if (error == 0 && _mtu != 0) {
 		/*
 		 * NAT-T ESP fragmentation: do not do IPSec processing
@@ -684,7 +681,6 @@ ipsec4_output(struct mbuf *m, struct inpcb *inp, int flags,
 		splx(s);
 		return 0;
 	}
-    }
 
 	/*
 	 * Preserve KAME behaviour: ENOENT can be returned
@@ -1923,37 +1919,31 @@ ipsec6_check_policy(struct mbuf *m, struct in6pcb *in6p, int flags,
 	int error = 0;
 	int needipsec = 0;
 
-	if (!ipsec_outdone(m)) {
-		s = splsoftnet();
-		if (in6p != NULL &&
-		    ipsec_pcb_skip_ipsec(in6p->in6p_sp, IPSEC_DIR_OUTBOUND)) {
-			splx(s);
-			goto skippolicycheck;
-		}
-		sp = ipsec_checkpolicy(m, IPSEC_DIR_OUTBOUND, flags, &error,
-		    in6p);
-
-		/*
-		 * There are four return cases:
-		 *	sp != NULL			apply IPsec policy
-		 *	sp == NULL, error == 0		no IPsec handling needed
-		 *	sp == NULL, error == -EINVAL  discard packet w/o error
-		 *	sp == NULL, error != 0		discard packet, report error
-		 */
-
-		splx(s);
-		if (sp == NULL) {
-			/*
-			 * Caller must check the error return to see if it needs to discard
-			 * the packet.
-			 */
-			needipsec = 0;
-		} else {
-			needipsec = 1;
-		}
+	if (ipsec_outdone(m)) {
+		goto skippolicycheck;
 	}
-skippolicycheck:;
+	s = splsoftnet();
+	if (in6p && ipsec_pcb_skip_ipsec(in6p->in6p_sp, IPSEC_DIR_OUTBOUND)) {
+		splx(s);
+		goto skippolicycheck;
+	}
+	sp = ipsec_checkpolicy(m, IPSEC_DIR_OUTBOUND, flags, &error, in6p);
+	splx(s);
 
+	/*
+	 * There are four return cases:
+	 *	sp != NULL                    apply IPsec policy
+	 *	sp == NULL, error == 0        no IPsec handling needed
+	 *	sp == NULL, error == -EINVAL  discard packet w/o error
+	 *	sp == NULL, error != 0        discard packet, report error
+	 */
+	if (sp == NULL) {
+		needipsec = 0;
+	} else {
+		needipsec = 1;
+	}
+
+skippolicycheck:
 	*errorp = error;
 	*needipsecp = needipsec;
 	return sp;
