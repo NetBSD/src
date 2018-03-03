@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.101 2017/12/29 08:58:57 skrll Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.102 2018/03/03 16:14:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -35,22 +35,13 @@
 #include "opt_arm_bus_space.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.101 2017/12/29 08:58:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.102 2018/03/03 16:14:06 skrll Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/proc.h>
-#include <sys/buf.h>
 #include <sys/bus.h>
 #include <sys/cpu.h>
-#include <sys/reboot.h>
-#include <sys/conf.h>
-#include <sys/file.h>
 #include <sys/kmem.h>
 #include <sys/mbuf.h>
-#include <sys/vnode.h>
-#include <sys/device.h>
 
 #include <uvm/uvm.h>
 
