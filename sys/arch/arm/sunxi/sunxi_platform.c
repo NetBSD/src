@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_platform.c,v 1.19 2018/01/27 14:17:45 jmcneill Exp $ */
+/* $NetBSD: sunxi_platform.c,v 1.20 2018/03/03 01:19:46 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_fdt_arm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.19 2018/01/27 14:17:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.20 2018/03/03 01:19:46 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -94,6 +94,13 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.19 2018/01/27 14:17:45 jmcneill
 #define	 SUN9I_WDT_CFG_SYS	__BIT(0)
 #define	SUN9I_WDT_MODE		0x18
 #define	 SUN9I_WDT_MODE_EN	__BIT(0)
+
+#define	SUN50I_H6_WDT_BASE	0x01c20ca0
+#define	SUN50I_H6_WDT_SIZE	0x20
+#define	SUN50I_H6_WDT_CFG	0x14
+#define	 SUN50I_H6_WDT_CFG_SYS	__BIT(0)
+#define	SUN50I_H6_WDT_MODE	0x18
+#define	 SUN50I_H6_WDT_MODE_EN	__BIT(0)
 
 extern struct bus_space armv7_generic_bs_tag;
 extern struct bus_space armv7_generic_a4x_bs_tag;
@@ -251,6 +258,18 @@ sun9i_platform_reset(void)
 	bus_space_write_4(bst, bsh, SUN9I_WDT_MODE, SUN9I_WDT_MODE_EN);
 }
 
+static void
+sun50i_h6_platform_reset(void)
+{
+	bus_space_tag_t bst = &armv7_generic_bs_tag;
+	bus_space_handle_t bsh;
+
+	bus_space_map(bst, SUN50I_H6_WDT_BASE, SUN50I_H6_WDT_SIZE, 0, &bsh);
+
+	bus_space_write_4(bst, bsh, SUN50I_H6_WDT_CFG, SUN50I_H6_WDT_CFG_SYS);
+	bus_space_write_4(bst, bsh, SUN50I_H6_WDT_MODE, SUN50I_H6_WDT_MODE_EN);
+}
+
 static const struct arm_platform sun4i_platform = {
 	.devmap = sunxi_platform_devmap,
 	.bootstrap = sunxi_platform_bootstrap,
@@ -345,3 +364,16 @@ static const struct arm_platform sun50i_platform = {
 
 ARM_PLATFORM(sun50i_a64, "allwinner,sun50i-a64", &sun50i_platform);
 ARM_PLATFORM(sun50i_h5, "allwinner,sun50i-h5", &sun50i_platform);
+
+static const struct arm_platform sun50i_h6_platform = {
+	.devmap = sunxi_platform_devmap,
+	.bootstrap = sunxi_platform_bootstrap,
+	.init_attach_args = sunxi_platform_init_attach_args,
+	.early_putchar = sunxi_platform_early_putchar,
+	.device_register = sunxi_platform_device_register,
+	.reset = sun50i_h6_platform_reset,
+	.delay = gtmr_delay,
+	.uart_freq = sunxi_platform_uart_freq,
+};
+
+ARM_PLATFORM(sun50i_h6, "allwinner,sun50i-h6", &sun50i_h6_platform);
