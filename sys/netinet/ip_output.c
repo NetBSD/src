@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.297 2018/02/27 15:01:30 maxv Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.298 2018/03/03 09:39:29 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.297 2018/02/27 15:01:30 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.298 2018/03/03 09:39:29 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -760,7 +760,7 @@ sendit:
 
 	for (; m; m = m0) {
 		m0 = m->m_nextpkt;
-		m->m_nextpkt = 0;
+		m->m_nextpkt = NULL;
 		if (error) {
 			m_freem(m);
 			continue;
