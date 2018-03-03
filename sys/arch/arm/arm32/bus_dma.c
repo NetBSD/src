@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.102 2018/03/03 16:14:06 skrll Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.103 2018/03/03 16:16:24 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "opt_arm_bus_space.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.102 2018/03/03 16:14:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.103 2018/03/03 16:16:24 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -316,8 +316,8 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	void *mapstore;
 
 #ifdef DEBUG_DMA
-	printf("dmamap_create: t=%p size=%lx nseg=%x msegsz=%lx boundary=%lx flags=%x\n",
-	    t, size, nsegments, maxsegsz, boundary, flags);
+	printf("dmamap_create: t=%p size=%lx nseg=%x msegsz=%lx boundary=%lx"
+	    " flags=%x\n", t, size, nsegments, maxsegsz, boundary, flags);
 #endif	/* DEBUG_DMA */
 
 	/*
@@ -792,7 +792,8 @@ _bus_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 }
 
 static void
-_bus_dmamap_sync_segment(vaddr_t va, paddr_t pa, vsize_t len, int ops, bool readonly_p)
+_bus_dmamap_sync_segment(vaddr_t va, paddr_t pa, vsize_t len, int ops,
+    bool readonly_p)
 {
 	KASSERTMSG((va & PAGE_MASK) == (pa & PAGE_MASK),
 	    "va %#lx pa %#lx", va, pa);
