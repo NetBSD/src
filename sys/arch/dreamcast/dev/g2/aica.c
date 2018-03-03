@@ -1,4 +1,4 @@
-/*	$NetBSD: aica.c,v 1.23 2017/07/25 23:18:04 nat Exp $	*/
+/*	$NetBSD: aica.c,v 1.24 2018/03/03 23:27:51 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 SHIMIZU Ryo <ryo@misakimix.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.23 2017/07/25 23:18:04 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.24 2018/03/03 23:27:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -414,8 +414,9 @@ aica_ch2p8write(struct aica_softc *sc, bus_size_t offset, uint8_t *src,
 
 	if (len) {
 		p = (uint8_t *)buf;
-		for (i = 0; i < len; i++)
+		for (i = 0; i < len; i++) {
 			*p++ = *src++; src++;
+		}
 
 		aica_g2fifo_wait();
 		bus_space_write_region_4(sc->sc_memt, sc->sc_aica_memh,
