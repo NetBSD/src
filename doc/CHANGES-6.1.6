@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.6,v 1.1.2.129 2018/02/19 20:56:16 snj Exp $
+# $NetBSD: CHANGES-6.1.6,v 1.1.2.130 2018/03/03 20:51:09 snj Exp $
 
 A complete list of changes from the NetBSD 6.1.5 release to the NetBSD 6.1.6
 release:
@@ -15015,4 +15015,12 @@ sys/arch/x86/x86/vm_machdep.c			1.30 via patch
 
 	Prevent unrestricted userland access to I/O ports in XEN.
 	[maxv, ticket #1517]
+
+sys/dev/rndpseudo.c				patch
+sys/kern/subr_cprng.c				patch
+sys/sys/cprng.h					patch
+
+	Fix panic when waiting with kqueue/kevent for a read from
+	/dev/random.
+	[riastradh, ticket #1512]
 
