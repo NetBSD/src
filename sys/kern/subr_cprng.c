@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cprng.c,v 1.5.2.3.4.2 2013/03/29 00:46:58 msaitoh Exp $ */
+/*	$NetBSD: subr_cprng.c,v 1.5.2.3.4.3 2018/03/03 20:44:33 snj Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 
 #include <sys/cprng.h>
 
-__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.5.2.3.4.2 2013/03/29 00:46:58 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.5.2.3.4.3 2018/03/03 20:44:33 snj Exp $");
 
 void
 cprng_init(void)
@@ -95,7 +95,7 @@ cprng_strong_doreseed(cprng_strong_t *const c)
 	if (c->flags & CPRNG_USE_CV) {
 		cv_broadcast(&c->cv);
 	}
-	selnotify(&c->selq, 0, 0);
+	selnotify(&c->selq, 0, NOTE_SUBMIT);
 }
 
 static void
@@ -389,7 +389,7 @@ cprng_strong_setflags(cprng_strong_t *const c, int flags)
 			if (c->flags & CPRNG_USE_CV) {
 				cv_broadcast(&c->cv);
 			}
-			selnotify(&c->selq, 0, 0);
+			selnotify(&c->selq, 0, NOTE_SUBMIT);
 		}
 	}
 	c->flags = flags;

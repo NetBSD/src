@@ -1,4 +1,4 @@
-/*	$NetBSD: cprng.h,v 1.4.2.1 2012/04/20 23:35:20 riz Exp $ */
+/*	$NetBSD: cprng.h,v 1.4.2.1.4.1 2018/03/03 20:44:33 snj Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -121,12 +121,11 @@ static inline int
 cprng_strong_ready(cprng_strong_t *c)
 {
 	int ret = 0;
-	
-	mutex_enter(&c->mtx);
+
+	KASSERT(mutex_owned(&c->mtx));
 	if (c->drbg.reseed_counter < NIST_CTR_DRBG_RESEED_INTERVAL) {
 		ret = 1;
 	}
-	mutex_exit(&c->mtx);
 	return ret;
 }
 
