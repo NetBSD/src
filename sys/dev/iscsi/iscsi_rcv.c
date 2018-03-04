@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_rcv.c,v 1.24 2017/12/03 19:07:10 christos Exp $	*/
+/*	$NetBSD: iscsi_rcv.c,v 1.25 2018/03/04 07:37:43 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -734,6 +734,11 @@ receive_command_response_pdu(connection_t *conn, pdu_t *pdu, ccb_t *req_ccb)
 	if (req_ccb == NULL) {
 		/* Assume duplicate... */
 		DEBOUT(("Possibly duplicate command response (no associated CCB)\n"));
+		return -1;
+	}
+
+	if (req_ccb->ccb_flags & CCBF_COMPLETE) {
+		DEBOUT(("Possibly duplicate command response (tagged as COMPLETE)\n"));
 		return -1;
 	}
 
