@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.105 2018/03/03 18:14:27 skrll Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.106 2018/03/04 08:04:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "opt_arm_bus_space.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.105 2018/03/03 18:14:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.106 2018/03/04 08:04:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -793,6 +793,17 @@ static void
 _bus_dmamap_sync_segment(vaddr_t va, paddr_t pa, vsize_t len, int ops,
     bool readonly_p)
 {
+
+#ifdef ARM_MMU_EXTENDED
+	/*
+	 * No optimisations are available for readonly mbufs on armv6+, so
+	 * assume it's not readonly from here on.
+	 *
+ 	 * See the comment in _bus_dmamap_sync_mbuf
+	 */
+	readonly_p = false;
+#endif
+
 	KASSERTMSG((va & PAGE_MASK) == (pa & PAGE_MASK),
 	    "va %#lx pa %#lx", va, pa);
 #if 0
@@ -802,19 +813,13 @@ _bus_dmamap_sync_segment(vaddr_t va, paddr_t pa, vsize_t len, int ops,
 
 	switch (ops) {
 	case BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE:
-#ifdef ARM_MMU_EXTENDED
-		(void)readonly_p;
-#else
 		if (!readonly_p) {
-#endif
 			STAT_INCR(sync_prereadwrite);
 			cpu_dcache_wbinv_range(va, len);
 			cpu_sdcache_wbinv_range(va, pa, len);
 			break;
-#ifndef ARM_MMU_EXTENDED
 		}
 		/* FALLTHROUGH */
-#endif
 
 	case BUS_DMASYNC_PREREAD: {
 		const size_t line_size = arm_dcache_align;
