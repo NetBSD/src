@@ -1,4 +1,4 @@
-/*	$NetBSD: viaenv.c,v 1.33 2014/08/11 06:02:38 ozaki-r Exp $	*/
+/*	$NetBSD: viaenv.c,v 1.34 2018/03/04 13:24:17 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 Johan Danielsson
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaenv.c,v 1.33 2014/08/11 06:02:38 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaenv.c,v 1.34 2018/03/04 13:24:17 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,7 +99,7 @@ viaenv_match(device_t parent, cfdata_t match, void *aux)
 		return 0;
 
 	switch (PCI_PRODUCT(pa->pa_id)) {
-	case PCI_PRODUCT_VIATECH_VT82C686A_SMB:
+	case PCI_PRODUCT_VIATECH_VT82C686A_PWR:
 	case PCI_PRODUCT_VIATECH_VT8231_PWR:
 		return 1;
 	default:
@@ -284,7 +284,7 @@ viaenv_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": VIA Technologies ");
 	switch (PCI_PRODUCT(pa->pa_id)) {
-	case PCI_PRODUCT_VIATECH_VT82C686A_SMB:
+	case PCI_PRODUCT_VIATECH_VT82C686A_PWR:
 		aprint_normal("VT82C686A Hardware Monitor\n");
 		break;
 	case PCI_PRODUCT_VIATECH_VT8231_PWR:

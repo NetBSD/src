@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.15 2012/04/06 20:38:52 plunky Exp $	*/
+/*	$NetBSD: pcib.c,v 1.16 2018/03/04 13:24:17 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.15 2012/04/06 20:38:52 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.16 2018/03/04 13:24:17 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -143,10 +143,10 @@ pcibmatch(device_t parent, cfdata_t match, void *aux)
 		break;
 	case PCI_VENDOR_VIATECH:
 		switch (PCI_PRODUCT(pa->pa_id)) {
-		case PCI_PRODUCT_VIATECH_VT82C686A_SMB:
+		case PCI_PRODUCT_VIATECH_VT82C686A_PWR:
 			/*
-			 * The VIA VT82C686A SMBus Controller itself as 
-			 * ISA bridge, but it's wrong !
+			 * The VIA VT82C686A Power Management Controller
+			 * identifies itself as ISA bridge, but it's wrong !
 			 */
 			return (0);
 		}
