@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_ebus.c,v 1.8 2014/07/25 08:10:32 dholland Exp $	*/
+/*	$NetBSD: dz_ebus.c,v 1.9 2018/03/04 21:41:48 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz_ebus.c,v 1.8 2014/07/25 08:10:32 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz_ebus.c,v 1.9 2018/03/04 21:41:48 mrg Exp $");
 
 #include "opt_ddb.h"
 
@@ -167,15 +167,15 @@ dzopen(dev_t dev, int flag, int mode, struct lwp *l)
 	/* we have no modem control but..*/
 	if (dzmctl(sc, line, TIOCM_DTR, DMBIS) & TIOCM_CD)
 		tp->t_state |= TS_CARR_ON;
-		s = spltty();
-		while (!(flag & O_NONBLOCK) && !(tp->t_cflag & CLOCAL) &&
-		    !(tp->t_state & TS_CARR_ON)) {
-			tp->t_wopen++;
-			error = ttysleep(tp, &tp->t_rawcv, true, 0);
-			tp->t_wopen--;
-			if (error)
-				break;
-		}
+	s = spltty();
+	while (!(flag & O_NONBLOCK) && !(tp->t_cflag & CLOCAL) &&
+	    !(tp->t_state & TS_CARR_ON)) {
+		tp->t_wopen++;
+		error = ttysleep(tp, &tp->t_rawcv, true, 0);
+		tp->t_wopen--;
+		if (error)
+			break;
+	}
 	(void)splx(s);
 	if (error)
 		return error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: flash_ebus.c,v 1.19 2016/11/20 02:34:27 pgoyette Exp $	*/
+/*	$NetBSD: flash_ebus.c,v 1.20 2018/03/04 21:41:48 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: flash_ebus.c,v 1.19 2016/11/20 02:34:27 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flash_ebus.c,v 1.20 2018/03/04 21:41:48 mrg Exp $");
 
 /* Driver for the Intel 28F320/640/128 (J3A150) StrataFlash memory device
  * Extended to include the Intel JS28F256P30T95.
@@ -2075,8 +2075,8 @@ eflashperror(const struct eflash_softc *sc)
 
 	if (Status == 0)
 		printf("error not notified");
-    else
-        printf("status=x%x", Status);
+	else
+		printf("status=x%x", Status);
 
 	printf(")\n");
 }

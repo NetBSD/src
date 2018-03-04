@@ -1,4 +1,4 @@
-/*	$NetBSD: icap_ebus.c,v 1.6 2014/07/25 08:10:32 dholland Exp $	*/
+/*	$NetBSD: icap_ebus.c,v 1.7 2018/03/04 21:41:48 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: icap_ebus.c,v 1.6 2014/07/25 08:10:32 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icap_ebus.c,v 1.7 2018/03/04 21:41:48 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -410,7 +410,7 @@ icap_ebus_intr(void *cookie, void *f)
     if (saf)
         icapstart(sc);
 
-	return (1);
+    return (1);
 }
 
 /*
