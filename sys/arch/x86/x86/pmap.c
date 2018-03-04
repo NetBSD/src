@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.286 2018/03/04 10:59:11 jdolecek Exp $	*/
+/*	$NetBSD: pmap.c,v 1.287 2018/03/04 11:01:48 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.286 2018/03/04 10:59:11 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.287 2018/03/04 11:01:48 jdolecek Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -2855,22 +2855,23 @@ pmap_activate(struct lwp *l)
 
 	ci = curcpu();
 
-	if (l == ci->ci_curlwp) {
-		KASSERT(ci->ci_want_pmapload == 0);
-		KASSERT(ci->ci_tlbstate != TLBSTATE_VALID);
+	if (l != ci->ci_curlwp)
+		return;
 
-		/*
-		 * no need to switch to kernel vmspace because
-		 * it's a subset of any vmspace.
-		 */
+	KASSERT(ci->ci_want_pmapload == 0);
+	KASSERT(ci->ci_tlbstate != TLBSTATE_VALID);
 
-		if (pmap == pmap_kernel()) {
-			ci->ci_want_pmapload = 0;
-			return;
-		}
+	/*
+	 * no need to switch to kernel vmspace because
+	 * it's a subset of any vmspace.
+	 */
 
-		ci->ci_want_pmapload = 1;
+	if (pmap == pmap_kernel()) {
+		ci->ci_want_pmapload = 0;
+		return;
 	}
+
+	ci->ci_want_pmapload = 1;
 }
 
 #if defined(XEN) && defined(__x86_64__)
