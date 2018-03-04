@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.41 2014/11/11 23:08:37 macallan Exp $	*/
+/*	$NetBSD: obio.c,v 1.42 2018/03/04 15:25:15 christos Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.41 2014/11/11 23:08:37 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.42 2018/03/04 15:25:15 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,10 +154,11 @@ obio_attach(device_t parent, device_t self, void *aux)
 	case PCI_PRODUCT_APPLE_PANGEA_MACIO:
 	case PCI_PRODUCT_APPLE_INTREPID:
 		node = pcidev_to_ofdev(pa->pa_pc, pa->pa_tag);
-		if (node == -1)
+		if (node == -1) {
 			node = OF_finddevice("mac-io");
 			if (node == -1)
 				node = OF_finddevice("/pci/mac-io");
+		}
 		break;
 	case PCI_PRODUCT_APPLE_K2:
 	case PCI_PRODUCT_APPLE_SHASTA:
