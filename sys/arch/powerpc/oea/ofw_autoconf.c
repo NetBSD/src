@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_autoconf.c,v 1.20 2014/02/18 12:27:15 macallan Exp $ */
+/* $NetBSD: ofw_autoconf.c,v 1.21 2018/03/04 00:21:20 macallan Exp $ */
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
  * Copyright (C) 1995, 1996 TooLs GmbH.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.20 2014/02/18 12:27:15 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.21 2018/03/04 00:21:20 macallan Exp $");
 
 #ifdef ofppc
 #include "gtpci.h"
@@ -67,6 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.20 2014/02/18 12:27:15 macallan E
 
 extern char bootpath[256];
 char cbootpath[256];
+static int boot_node = 0;	/* points at boot device if we netboot */
 
 static void canonicalize_bootpath(void);
 
@@ -88,9 +89,9 @@ cpu_configure(void)
 static void
 canonicalize_bootpath(void)
 {
-	int node;
+	int node, len;
 	char *p, *lastp;
-	char last[32];
+	char last[32], type[32];
 
 	/*
 	 * If the bootpath doesn't start with a / then it isn't
@@ -104,7 +105,6 @@ canonicalize_bootpath(void)
 		if (aliases != 0) {
 			char *cp1, *cp2, *cp;
 			char saved_ch = '\0';
-			int len;
 			cp1 = strchr(bootpath, ':');
 			cp2 = strchr(bootpath, ',');
 			cp = cp1;
@@ -149,6 +149,15 @@ canonicalize_bootpath(void)
 		strcpy(cbootpath, bootpath);
 
 		return;
+	}
+
+	/* see if we netbooted */
+	len = OF_getprop(node, "device_type", type, sizeof(type) - 1);
+	if (len > -1) {
+		type[len] = 0;
+		if (strcmp(type, "network") == 0) {
+			boot_node = node;
+		}
 	}
 
 	/*
@@ -326,6 +335,10 @@ device_register(device_t dev, void *aux)
 
 			prop_dictionary_set_uint32(dict, "device_node", node);
 
+			if (node == boot_node) {
+				/* we netbooted from whatever this is */
+				booted_device = dev;
+			}
 			/* see if this is going to be console */
 			memset(name, 0, sizeof(name));
 			OF_getprop(node, "device_type", name, sizeof(name));
