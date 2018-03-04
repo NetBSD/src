@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2018/02/08 22:48:55 christos Exp $
+#	$NetBSD: Makefile,v 1.15 2018/03/04 04:09:03 christos Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -27,6 +27,9 @@ USE_FIPS=	no
 # XXX There's a bit of work to do before we can enable warnings.
 WARNS=0
 CWARNFLAGS.clang+=	-Wno-empty-body -Wno-unused-value -Wno-parentheses
+
+# XXX Not yet.
+LINTFLAGS+=-D__int128='long long'
 
 CPPFLAGS+= -Dlib${LIB} -I. -I${OPENSSLSRC}/crypto -I${OPENSSLSRC}
 CPPFLAGS+= -I${OPENSSLSRC}/include -I${OPENSSLSRC}/crypto/include
