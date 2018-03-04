@@ -1,4 +1,4 @@
-/*	$NetBSD: device_if.h,v 1.5 2010/02/24 22:38:10 dyoung Exp $	*/
+/*	$NetBSD: device_if.h,v 1.6 2018/03/04 18:07:34 kre Exp $	*/
 
 #ifndef	_SYS_DEVICE_IF_H
 #define	_SYS_DEVICE_IF_H
@@ -6,7 +6,7 @@
 struct device;
 typedef struct device *device_t;
 
-#ifdef _KERNEL
+#if defined(_KERNEL) || defined(_KMEMUSER)
 typedef enum devact_level {
 	  DEVACT_LEVEL_CLASS	= 0
 	, DEVACT_LEVEL_DRIVER	= 1
