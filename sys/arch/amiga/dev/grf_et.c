@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_et.c,v 1.33 2016/11/04 18:06:08 phx Exp $ */
+/*	$NetBSD: grf_et.c,v 1.34 2018/03/04 22:28:18 mrg Exp $ */
 
 /*
  * Copyright (c) 1997 Klaus Burkert
@@ -37,7 +37,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_et.c,v 1.33 2016/11/04 18:06:08 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_et.c,v 1.34 2018/03/04 22:28:18 mrg Exp $");
 
 #include "grfet.h"
 #include "ite.h"
@@ -1599,8 +1599,11 @@ et_getDACType(struct grf_softc *gp)
 	/* check for Sierra SC 15025 */
 
 	/* We MUST do 4 HW reads to switch into command mode */
-	if (vgar(ba, HDR)); if (vgar(ba, HDR)); if (vgar(ba, HDR)); if (vgar(ba, HDR));
-		vgaw(ba, VDAC_COMMAND, 0x10); /* set ERPF */
+	vgar(ba, HDR);
+	vgar(ba, HDR);
+	vgar(ba, HDR);
+	vgar(ba, HDR);
+	vgaw(ba, VDAC_COMMAND, 0x10); /* set ERPF */
 
 	vgaw(ba, VDAC_XINDEX, 9);
 	check.cc[0] = vgar(ba, VDAC_XDATA);
@@ -1611,12 +1614,18 @@ et_getDACType(struct grf_softc *gp)
 	vgaw(ba, VDAC_XINDEX, 12);
 	check.cc[3] = vgar(ba, VDAC_XDATA);
 
-	if (vgar(ba, HDR)); if (vgar(ba, HDR)); if (vgar(ba, HDR)); if (vgar(ba, HDR));
-		vgaw(ba, VDAC_COMMAND, 0x00); /* clear ERPF */
+	vgar(ba, HDR);
+	vgar(ba, HDR);
+	vgar(ba, HDR);
+	vgar(ba, HDR);
+	vgaw(ba, VDAC_COMMAND, 0x00); /* clear ERPF */
 
 	if (check.tt == 0x533ab141) {
-		if (vgar(ba, HDR)); if (vgar(ba, HDR)); if (vgar(ba, HDR)); if (vgar(ba, HDR));
-			vgaw(ba, VDAC_COMMAND, 0x10); /* set ERPF */
+		vgar(ba, HDR);
+		vgar(ba, HDR);
+		vgar(ba, HDR);
+		vgar(ba, HDR);
+		vgaw(ba, VDAC_COMMAND, 0x10); /* set ERPF */
 
 		/* switch to 8 bits per color */
 		vgaw(ba, VDAC_XINDEX, 8);
@@ -1624,8 +1633,11 @@ et_getDACType(struct grf_softc *gp)
 		/* do not shift color values */
 		etcmap_shift = 0;
 
-		if (vgar(ba, HDR)); if (vgar(ba, HDR)); if (vgar(ba, HDR)); if (vgar(ba, HDR));
-			vgaw(ba, VDAC_COMMAND, 0x00); /* clear ERPF */
+		vgar(ba, HDR);
+		vgar(ba, HDR);
+		vgar(ba, HDR);
+		vgar(ba, HDR);
+		vgaw(ba, VDAC_COMMAND, 0x00); /* clear ERPF */
 
 		vgaw(ba, VDAC_MASK, 0xff);
 		return (SIERRA15025);
@@ -1633,8 +1645,11 @@ et_getDACType(struct grf_softc *gp)
 
 	/* check for MUSIC DAC */
 
-	if (vgar(ba, HDR)); if (vgar(ba, HDR)); if (vgar(ba, HDR)); if (vgar(ba, HDR));
-		vgaw(ba, VDAC_COMMAND, 0x02);	/* set some strange MUSIC mode (???) */
+	vgar(ba, HDR);
+	vgar(ba, HDR);
+	vgar(ba, HDR);
+	vgar(ba, HDR);
+	vgaw(ba, VDAC_COMMAND, 0x02);	/* set some strange MUSIC mode (???) */
 
 	vgaw(ba, VDAC_XINDEX, 0x01);
 	if (vgar(ba, VDAC_XDATA) == 0x01) {
@@ -1646,10 +1661,16 @@ et_getDACType(struct grf_softc *gp)
 	}
 
 	/* check for AT&T ATT20c491 DAC (crest) */
-	if (vgar(ba, HDR)); if (vgar(ba, HDR)); if (vgar(ba, HDR)); if (vgar(ba, HDR));
+	vgar(ba, HDR);
+	vgar(ba, HDR);
+	vgar(ba, HDR);
+	vgar(ba, HDR);
 	vgaw(ba, HDR, 0xff);
 	vgaw(ba, VDAC_MASK, 0x01);
-	if (vgar(ba, HDR)); if (vgar(ba, HDR)); if (vgar(ba, HDR)); if (vgar(ba, HDR));
+	vgar(ba, HDR);
+	vgar(ba, HDR);
+	vgar(ba, HDR);
+	vgar(ba, HDR);
 	if (vgar(ba, HDR) == 0xff) {
 		/* do not shift color values */
 		etcmap_shift = 0;
@@ -1659,7 +1680,10 @@ et_getDACType(struct grf_softc *gp)
 	}
 
 	/* restore PowerUp settings (crest) */
-	if (vgar(ba, HDR)); if (vgar(ba, HDR)); if (vgar(ba, HDR)); if (vgar(ba, HDR));
+	vgar(ba, HDR);
+	vgar(ba, HDR);
+	vgar(ba, HDR);
+	vgar(ba, HDR);
 	vgaw(ba, HDR, 0x00);
 
 	/*
