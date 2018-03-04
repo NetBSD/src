@@ -1,4 +1,4 @@
-#	$NetBSD: files.ddb,v 1.11 2017/12/28 17:51:19 christos Exp $
+#	$NetBSD: files.ddb,v 1.12 2018/03/04 07:14:50 mlelstv Exp $
 
 #
 # DDB options
@@ -10,6 +10,7 @@ defparam opt_ddbparam.h		DDB_FROMCONSOLE DDB_ONPANIC DDB_HISTORY_SIZE
 
 define	ddb
 file	ddb/db_access.c			ddb | kgdb
+file	ddb/db_autoconf.c		ddb
 file	ddb/db_break.c			ddb
 file	ddb/db_command.c		ddb
 file	ddb/db_cpu.c			ddb
