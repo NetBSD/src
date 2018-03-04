@@ -1832,3 +1832,1810 @@ _aesp8_ctr32_encrypt8x:
 .byte	0,12,0x04,0,0x80,6,6,0
 .long	0
 
+.globl	aes_p8_xts_encrypt
+.type	aes_p8_xts_encrypt,@function
+.align	5
+aes_p8_xts_encrypt:
+	mr	10,3
+	li	3,-1
+	cmplwi	5,16
+	bltlr
+
+	lis	0,0xfff0
+	mfspr	12,256
+	li	11,0
+	mtspr	256,0
+
+	vspltisb	9,0x07
+
+
+
+
+	li	3,15
+	lvx	8,0,8
+	lvsl	5,0,8
+	lvx	4,3,8
+
+	vperm	8,8,4,5
+
+	neg	11,10
+	lvsr	5,0,11
+	lvx	2,0,10
+	addi	10,10,15
+
+
+	cmplwi	7,0
+	beq	.Lxts_enc_no_key2
+
+	lvsl	7,0,7
+	lwz	9,240(7)
+	srwi	9,9,1
+	subi	9,9,1
+	li	3,16
+
+	lvx	0,0,7
+	lvx	1,3,7
+	addi	3,3,16
+	vperm	0,0,1,7
+	vxor	8,8,0
+	lvx	0,3,7
+	addi	3,3,16
+	mtctr	9
+
+.Ltweak_xts_enc:
+	vperm	1,1,0,7
+.long	0x11080D08
+	lvx	1,3,7
+	addi	3,3,16
+	vperm	0,0,1,7
+.long	0x11080508
+	lvx	0,3,7
+	addi	3,3,16
+	bc	16,0,.Ltweak_xts_enc
+
+	vperm	1,1,0,7
+.long	0x11080D08
+	lvx	1,3,7
+	vperm	0,0,1,7
+.long	0x11080509
+
+	li	8,0
+	b	.Lxts_enc
+
+.Lxts_enc_no_key2:
+	li	3,-16
+	and	5,5,3
+
+
+.Lxts_enc:
+	lvx	4,0,10
+	addi	10,10,16
+
+	lvsl	7,0,6
+	lwz	9,240(6)
+	srwi	9,9,1
+	subi	9,9,1
+	li	3,16
+
+	vslb	10,9,9
+	vor	10,10,9
+	vspltisb	11,1
+	vsldoi	10,10,11,15
+
+	cmplwi	5,96
+	bge	_aesp8_xts_encrypt6x
+
+	andi.	7,5,15
+	subic	0,5,32
+	subi	7,7,16
+	subfe	0,0,0
+	and	0,0,7
+	add	10,10,0
+
+	lvx	0,0,6
+	lvx	1,3,6
+	addi	3,3,16
+	vperm	2,2,4,5
+	vperm	0,0,1,7
+	vxor	2,2,8
+	vxor	2,2,0
+	lvx	0,3,6
+	addi	3,3,16
+	mtctr	9
+	b	.Loop_xts_enc
+
+.align	5
+.Loop_xts_enc:
+	vperm	1,1,0,7
+.long	0x10420D08
+	lvx	1,3,6
+	addi	3,3,16
+	vperm	0,0,1,7
+.long	0x10420508
+	lvx	0,3,6
+	addi	3,3,16
+	bc	16,0,.Loop_xts_enc
+
+	vperm	1,1,0,7
+.long	0x10420D08
+	lvx	1,3,6
+	li	3,16
+	vperm	0,0,1,7
+	vxor	0,0,8
+.long	0x10620509
+
+
+	nop	
+
+.long	0x7C602799
+	addi	4,4,16
+
+	subic.	5,5,16
+	beq	.Lxts_enc_done
+
+	vor	2,4,4
+	lvx	4,0,10
+	addi	10,10,16
+	lvx	0,0,6
+	lvx	1,3,6
+	addi	3,3,16
+
+	subic	0,5,32
+	subfe	0,0,0
+	and	0,0,7
+	add	10,10,0
+
+	vsrab	11,8,9
+	vaddubm	8,8,8
+	vsldoi	11,11,11,15
+	vand	11,11,10
+	vxor	8,8,11
+
+	vperm	2,2,4,5
+	vperm	0,0,1,7
+	vxor	2,2,8
+	vxor	3,3,0
+	vxor	2,2,0
+	lvx	0,3,6
+	addi	3,3,16
+
+	mtctr	9
+	cmplwi	5,16
+	bge	.Loop_xts_enc
+
+	vxor	3,3,8
+	lvsr	5,0,5
+	vxor	4,4,4
+	vspltisb	11,-1
+	vperm	4,4,11,5
+	vsel	2,2,3,4
+
+	subi	11,4,17
+	subi	4,4,16
+	mtctr	5
+	li	5,16
+.Loop_xts_enc_steal:
+	lbzu	0,1(11)
+	stb	0,16(11)
+	bc	16,0,.Loop_xts_enc_steal
+
+	mtctr	9
+	b	.Loop_xts_enc
+
+.Lxts_enc_done:
+	cmplwi	8,0
+	beq	.Lxts_enc_ret
+
+	vsrab	11,8,9
+	vaddubm	8,8,8
+	vsldoi	11,11,11,15
+	vand	11,11,10
+	vxor	8,8,11
+
+
+.long	0x7D004799
+
+.Lxts_enc_ret:
+	mtspr	256,12
+	li	3,0
+	blr	
+.long	0
+.byte	0,12,0x04,0,0x80,6,6,0
+.long	0
+
+
+.globl	aes_p8_xts_decrypt
+.type	aes_p8_xts_decrypt,@function
+.align	5
+aes_p8_xts_decrypt:
+	mr	10,3
+	li	3,-1
+	cmplwi	5,16
+	bltlr
+
+	lis	0,0xfff8
+	mfspr	12,256
+	li	11,0
+	mtspr	256,0
+
+	andi.	0,5,15
+	neg	0,0
+	andi.	0,0,16
+	sub	5,5,0
+
+	vspltisb	9,0x07
+
+
+
+
+	li	3,15
+	lvx	8,0,8
+	lvsl	5,0,8
+	lvx	4,3,8
+
+	vperm	8,8,4,5
+
+	neg	11,10
+	lvsr	5,0,11
+	lvx	2,0,10
+	addi	10,10,15
+
+
+	cmplwi	7,0
+	beq	.Lxts_dec_no_key2
+
+	lvsl	7,0,7
+	lwz	9,240(7)
+	srwi	9,9,1
+	subi	9,9,1
+	li	3,16
+
+	lvx	0,0,7
+	lvx	1,3,7
+	addi	3,3,16
+	vperm	0,0,1,7
+	vxor	8,8,0
+	lvx	0,3,7
+	addi	3,3,16
+	mtctr	9
+
+.Ltweak_xts_dec:
+	vperm	1,1,0,7
+.long	0x11080D08
+	lvx	1,3,7
+	addi	3,3,16
+	vperm	0,0,1,7
+.long	0x11080508
+	lvx	0,3,7
+	addi	3,3,16
+	bc	16,0,.Ltweak_xts_dec
+
+	vperm	1,1,0,7
+.long	0x11080D08
+	lvx	1,3,7
+	vperm	0,0,1,7
+.long	0x11080509
+
+	li	8,0
+	b	.Lxts_dec
+
+.Lxts_dec_no_key2:
+	neg	3,5
+	andi.	3,3,15
+	add	5,5,3
+
+
+.Lxts_dec:
+	lvx	4,0,10
+	addi	10,10,16
+
+	lvsl	7,0,6
+	lwz	9,240(6)
+	srwi	9,9,1
+	subi	9,9,1
+	li	3,16
+
+	vslb	10,9,9
+	vor	10,10,9
+	vspltisb	11,1
+	vsldoi	10,10,11,15
+
+	cmplwi	5,96
+	bge	_aesp8_xts_decrypt6x
+
+	lvx	0,0,6
+	lvx	1,3,6
+	addi	3,3,16
+	vperm	2,2,4,5
+	vperm	0,0,1,7
+	vxor	2,2,8
+	vxor	2,2,0
+	lvx	0,3,6
+	addi	3,3,16
+	mtctr	9
+
+	cmplwi	5,16
+	blt	.Ltail_xts_dec
+	b	.Loop_xts_dec
+
+.align	5
+.Loop_xts_dec:
+	vperm	1,1,0,7
+.long	0x10420D48
+	lvx	1,3,6
+	addi	3,3,16
+	vperm	0,0,1,7
+.long	0x10420548
+	lvx	0,3,6
+	addi	3,3,16
+	bc	16,0,.Loop_xts_dec
+
+	vperm	1,1,0,7
+.long	0x10420D48
+	lvx	1,3,6
+	li	3,16
+	vperm	0,0,1,7
+	vxor	0,0,8
+.long	0x10620549
+
+
+	nop	
+
+.long	0x7C602799
+	addi	4,4,16
+
+	subic.	5,5,16
+	beq	.Lxts_dec_done
+
+	vor	2,4,4
+	lvx	4,0,10
+	addi	10,10,16
+	lvx	0,0,6
+	lvx	1,3,6
+	addi	3,3,16
+
+	vsrab	11,8,9
+	vaddubm	8,8,8
+	vsldoi	11,11,11,15
+	vand	11,11,10
+	vxor	8,8,11
+
+	vperm	2,2,4,5
+	vperm	0,0,1,7
+	vxor	2,2,8
+	vxor	2,2,0
+	lvx	0,3,6
+	addi	3,3,16
+
+	mtctr	9
+	cmplwi	5,16
+	bge	.Loop_xts_dec
+
+.Ltail_xts_dec:
+	vsrab	11,8,9
+	vaddubm	12,8,8
+	vsldoi	11,11,11,15
+	vand	11,11,10
+	vxor	12,12,11
+
+	subi	10,10,16
+	add	10,10,5
+
+	vxor	2,2,8
+	vxor	2,2,12
+
+.Loop_xts_dec_short:
+	vperm	1,1,0,7
+.long	0x10420D48
+	lvx	1,3,6
+	addi	3,3,16
+	vperm	0,0,1,7
+.long	0x10420548
+	lvx	0,3,6
+	addi	3,3,16
+	bc	16,0,.Loop_xts_dec_short
+
+	vperm	1,1,0,7
+.long	0x10420D48
+	lvx	1,3,6
+	li	3,16
+	vperm	0,0,1,7
+	vxor	0,0,12
+.long	0x10620549
+
+
+	nop	
+
+.long	0x7C602799
+
+	vor	2,4,4
+	lvx	4,0,10
+
+	lvx	0,0,6
+	lvx	1,3,6
+	addi	3,3,16
+	vperm	2,2,4,5
+	vperm	0,0,1,7
+
+	lvsr	5,0,5
+	vxor	4,4,4
+	vspltisb	11,-1
+	vperm	4,4,11,5
+	vsel	2,2,3,4
+
+	vxor	0,0,8
+	vxor	2,2,0
+	lvx	0,3,6
+	addi	3,3,16
+
+	subi	11,4,1
+	mtctr	5
+	li	5,16
+.Loop_xts_dec_steal:
+	lbzu	0,1(11)
+	stb	0,16(11)
+	bc	16,0,.Loop_xts_dec_steal
+
+	mtctr	9
+	b	.Loop_xts_dec
+
+.Lxts_dec_done:
+	cmplwi	8,0
+	beq	.Lxts_dec_ret
+
+	vsrab	11,8,9
+	vaddubm	8,8,8
+	vsldoi	11,11,11,15
+	vand	11,11,10
+	vxor	8,8,11
+
+
+.long	0x7D004799
+
+.Lxts_dec_ret:
+	mtspr	256,12
+	li	3,0
+	blr	
+.long	0
+.byte	0,12,0x04,0,0x80,6,6,0
+.long	0
+
+.align	5
+_aesp8_xts_encrypt6x:
+	stwu	1,-392(1)
+	mflr	11
+	li	7,175
+	li	3,191
+	stw	11,396(1)
+	stvx	20,7,1
+	addi	7,7,32
+	stvx	21,3,1
+	addi	3,3,32
+	stvx	22,7,1
+	addi	7,7,32
+	stvx	23,3,1
+	addi	3,3,32
+	stvx	24,7,1
+	addi	7,7,32
+	stvx	25,3,1
+	addi	3,3,32
+	stvx	26,7,1
+	addi	7,7,32
+	stvx	27,3,1
+	addi	3,3,32
+	stvx	28,7,1
+	addi	7,7,32
+	stvx	29,3,1
+	addi	3,3,32
+	stvx	30,7,1
+	stvx	31,3,1
+	li	0,-1
+	stw	12,364(1)
+	li	3,0x10
+	stw	26,368(1)
+	li	26,0x20
+	stw	27,372(1)
+	li	27,0x30
+	stw	28,376(1)
+	li	28,0x40
+	stw	29,380(1)
+	li	29,0x50
+	stw	30,384(1)
+	li	30,0x60
+	stw	31,388(1)
+	li	31,0x70
+	mtspr	256,0
+
+	subi	9,9,3
+
+	lvx	23,0,6
+	lvx	30,3,6
+	addi	6,6,0x20
+	lvx	31,0,6
+	vperm	23,23,30,7
+	addi	7,1,32+15
+	mtctr	9
+
+.Load_xts_enc_key:
+	vperm	24,30,31,7
+	lvx	30,3,6
+	addi	6,6,0x20
+	stvx	24,0,7
+	vperm	25,31,30,7
+	lvx	31,0,6
+	stvx	25,3,7
+	addi	7,7,0x20
+	bc	16,0,.Load_xts_enc_key
+
+	lvx	26,3,6
+	vperm	24,30,31,7
+	lvx	27,26,6
+	stvx	24,0,7
+	vperm	25,31,26,7
+	lvx	28,27,6
+	stvx	25,3,7
+	addi	7,1,32+15
+	vperm	26,26,27,7
+	lvx	29,28,6
+	vperm	27,27,28,7
+	lvx	30,29,6
+	vperm	28,28,29,7
+	lvx	31,30,6
+	vperm	29,29,30,7
+	lvx	22,31,6
+	vperm	30,30,31,7
+	lvx	24,0,7
+	vperm	31,31,22,7
+	lvx	25,3,7
+
+	vperm	0,2,4,5
+	subi	10,10,31
+	vxor	17,8,23
+	vsrab	11,8,9
+	vaddubm	8,8,8
+	vsldoi	11,11,11,15
+	vand	11,11,10
+	vxor	7,0,17
+	vxor	8,8,11
+
+.long	0x7C235699
+	vxor	18,8,23
+	vsrab	11,8,9
+	vaddubm	8,8,8
+	vsldoi	11,11,11,15
+
+	vand	11,11,10
+	vxor	12,1,18
+	vxor	8,8,11
+
+.long	0x7C5A5699
+	andi.	31,5,15
+	vxor	19,8,23
+	vsrab	11,8,9
+	vaddubm	8,8,8
+	vsldoi	11,11,11,15
+
+	vand	11,11,10
+	vxor	13,2,19
+	vxor	8,8,11
+
+.long	0x7C7B5699
+	sub	5,5,31
+	vxor	20,8,23
+	vsrab	11,8,9
+	vaddubm	8,8,8
+	vsldoi	11,11,11,15
+
+	vand	11,11,10
+	vxor	14,3,20
+	vxor	8,8,11
+
+.long	0x7C9C5699
+	subi	5,5,0x60
+	vxor	21,8,23
+	vsrab	11,8,9
+	vaddubm	8,8,8
+	vsldoi	11,11,11,15
+
+	vand	11,11,10
+	vxor	15,4,21
+	vxor	8,8,11
+
+.long	0x7CBD5699
+	addi	10,10,0x60
+	vxor	22,8,23
+	vsrab	11,8,9
+	vaddubm	8,8,8
+	vsldoi	11,11,11,15
+
+	vand	11,11,10
+	vxor	16,5,22
+	vxor	8,8,11
+
+	vxor	31,31,23
+	mtctr	9
+	b	.Loop_xts_enc6x
+
+.align	5
+.Loop_xts_enc6x:
+.long	0x10E7C508
+.long	0x118CC508
+.long	0x11ADC508
+.long	0x11CEC508
+.long	0x11EFC508
+.long	0x1210C508
+	lvx	24,26,7
+	addi	7,7,0x20
+
+.long	0x10E7CD08
+.long	0x118CCD08
+.long	0x11ADCD08
+.long	0x11CECD08
+.long	0x11EFCD08
+.long	0x1210CD08
+	lvx	25,3,7
+	bc	16,0,.Loop_xts_enc6x
+
+	subic	5,5,96
+	vxor	0,17,31
+.long	0x10E7C508
+.long	0x118CC508
+	vsrab	11,8,9
+	vxor	17,8,23
+	vaddubm	8,8,8
+.long	0x11ADC508
+.long	0x11CEC508
+	vsldoi	11,11,11,15
+.long	0x11EFC508
+.long	0x1210C508
+
+	subfe.	0,0,0
+	vand	11,11,10
+.long	0x10E7CD08
+.long	0x118CCD08
+	vxor	8,8,11
+.long	0x11ADCD08
+.long	0x11CECD08
+	vxor	1,18,31
+	vsrab	11,8,9
+	vxor	18,8,23
+.long	0x11EFCD08
+.long	0x1210CD08
+
+	and	0,0,5
+	vaddubm	8,8,8
+	vsldoi	11,11,11,15
+.long	0x10E7D508
+.long	0x118CD508
+	vand	11,11,10
+.long	0x11ADD508
+.long	0x11CED508
+	vxor	8,8,11
+.long	0x11EFD508
+.long	0x1210D508
+
+	add	10,10,0
+
+
+
+	vxor	2,19,31
+	vsrab	11,8,9
+	vxor	19,8,23
+	vaddubm	8,8,8
+.long	0x10E7DD08
+.long	0x118CDD08
+	vsldoi	11,11,11,15
+.long	0x11ADDD08
+.long	0x11CEDD08
+	vand	11,11,10
+.long	0x11EFDD08
+.long	0x1210DD08
+
+	addi	7,1,32+15
+	vxor	8,8,11
+.long	0x10E7E508
+.long	0x118CE508
+	vxor	3,20,31
+	vsrab	11,8,9
+	vxor	20,8,23
+.long	0x11ADE508
+.long	0x11CEE508
+	vaddubm	8,8,8
+	vsldoi	11,11,11,15
+.long	0x11EFE508
+.long	0x1210E508
+	lvx	24,0,7
+	vand	11,11,10
+
+.long	0x10E7ED08
+.long	0x118CED08
+	vxor	8,8,11
+.long	0x11ADED08
+.long	0x11CEED08
+	vxor	4,21,31
+	vsrab	11,8,9
+	vxor	21,8,23
+.long	0x11EFED08
+.long	0x1210ED08
+	lvx	25,3,7
+	vaddubm	8,8,8
+	vsldoi	11,11,11,15
+
+.long	0x10E7F508
+.long	0x118CF508
+	vand	11,11,10
+.long	0x11ADF508
+.long	0x11CEF508
+	vxor	8,8,11
+.long	0x11EFF508
+.long	0x1210F508
+	vxor	5,22,31
+	vsrab	11,8,9
+	vxor	22,8,23
+
+.long	0x10E70509
+.long	0x7C005699
+	vaddubm	8,8,8
+	vsldoi	11,11,11,15
+.long	0x118C0D09
+.long	0x7C235699
+.long	0x11AD1509
+
+.long	0x7C5A5699
+	vand	11,11,10
+.long	0x11CE1D09
+
+.long	0x7C7B5699
+.long	0x11EF2509
+
+.long	0x7C9C5699
+	vxor	8,8,11
+.long	0x11702D09
+
+
+.long	0x7CBD5699
+	addi	10,10,0x60
+
+
+
+
+
+.long	0x7CE02799
+	vxor	7,0,17
+
+.long	0x7D832799
+	vxor	12,1,18
+
+.long	0x7DBA2799
+	vxor	13,2,19
+
+.long	0x7DDB2799
+	vxor	14,3,20
+
+.long	0x7DFC2799
+	vxor	15,4,21
+
+.long	0x7D7D2799
+	vxor	16,5,22
+	addi	4,4,0x60
+
+	mtctr	9
+	beq	.Loop_xts_enc6x
+
+	addic.	5,5,0x60
+	beq	.Lxts_enc6x_zero
+	cmpwi	5,0x20
+	blt	.Lxts_enc6x_one
+	nop	
+	beq	.Lxts_enc6x_two
+	cmpwi	5,0x40
+	blt	.Lxts_enc6x_three
+	nop	
+	beq	.Lxts_enc6x_four
+
+.Lxts_enc6x_five:
+	vxor	7,1,17
+	vxor	12,2,18
+	vxor	13,3,19
+	vxor	14,4,20
+	vxor	15,5,21
+
+	bl	_aesp8_xts_enc5x
+
+
+	vor	17,22,22
+
+.long	0x7CE02799
+
+.long	0x7D832799
+
+.long	0x7DBA2799
+	vxor	11,15,22
+
+.long	0x7DDB2799
+.long	0x7DFC2799
+	addi	4,4,0x50
+	bne	.Lxts_enc6x_steal
+	b	.Lxts_enc6x_done
+
+.align	4
+.Lxts_enc6x_four:
+	vxor	7,2,17
+	vxor	12,3,18
+	vxor	13,4,19
+	vxor	14,5,20
+	vxor	15,15,15
+
+	bl	_aesp8_xts_enc5x
+
+
+	vor	17,21,21
+
+.long	0x7CE02799
+
+.long	0x7D832799
+	vxor	11,14,21
+
+.long	0x7DBA2799
+.long	0x7DDB2799
+	addi	4,4,0x40
+	bne	.Lxts_enc6x_steal
+	b	.Lxts_enc6x_done
+
+.align	4
+.Lxts_enc6x_three:
+	vxor	7,3,17
+	vxor	12,4,18
+	vxor	13,5,19
+	vxor	14,14,14
+	vxor	15,15,15
+
+	bl	_aesp8_xts_enc5x
+
+
+	vor	17,20,20
+
+.long	0x7CE02799
+	vxor	11,13,20
+
+.long	0x7D832799
+.long	0x7DBA2799
+	addi	4,4,0x30
+	bne	.Lxts_enc6x_steal
+	b	.Lxts_enc6x_done
+
+.align	4
+.Lxts_enc6x_two:
+	vxor	7,4,17
+	vxor	12,5,18
+	vxor	13,13,13
+	vxor	14,14,14
+	vxor	15,15,15
+
+	bl	_aesp8_xts_enc5x
+
+
+	vor	17,19,19
+	vxor	11,12,19
+
+.long	0x7CE02799
+.long	0x7D832799
+	addi	4,4,0x20
+	bne	.Lxts_enc6x_steal
+	b	.Lxts_enc6x_done
+
+.align	4
+.Lxts_enc6x_one:
+	vxor	7,5,17
+	nop	
+.Loop_xts_enc1x:
+.long	0x10E7C508
+	lvx	24,26,7
+	addi	7,7,0x20
+
+.long	0x10E7CD08
+	lvx	25,3,7
+	bc	16,0,.Loop_xts_enc1x
+
+	add	10,10,31
+	cmpwi	31,0
+.long	0x10E7C508
+
+	subi	10,10,16
+.long	0x10E7CD08
+
+	lvsr	5,0,31
+.long	0x10E7D508
+
+.long	0x7C005699
+.long	0x10E7DD08
+
+	addi	7,1,32+15
+.long	0x10E7E508
+	lvx	24,0,7
+
+.long	0x10E7ED08
+	lvx	25,3,7
+	vxor	17,17,31
+
+
+.long	0x10E7F508
+
+	vperm	0,0,0,5
+.long	0x10E78D09
+
+	vor	17,18,18
+	vxor	11,7,18
+
+.long	0x7CE02799
+	addi	4,4,0x10
+	bne	.Lxts_enc6x_steal
+	b	.Lxts_enc6x_done
+
+.align	4
+.Lxts_enc6x_zero:
+	cmpwi	31,0
+	beq	.Lxts_enc6x_done
+
+	add	10,10,31
+	subi	10,10,16
+.long	0x7C005699
+	lvsr	5,0,31
+
+	vperm	0,0,0,5
+	vxor	11,11,17
+.Lxts_enc6x_steal:
+	vxor	0,0,17
+	vxor	7,7,7
+	vspltisb	12,-1
+	vperm	7,7,12,5
+	vsel	7,0,11,7
+
+	subi	30,4,17
+	subi	4,4,16
+	mtctr	31
+.Loop_xts_enc6x_steal:
+	lbzu	0,1(30)
+	stb	0,16(30)
+	bc	16,0,.Loop_xts_enc6x_steal
+
+	li	31,0
+	mtctr	9
+	b	.Loop_xts_enc1x
+
+.align	4
+.Lxts_enc6x_done:
+	cmplwi	8,0
+	beq	.Lxts_enc6x_ret
+
+	vxor	8,17,23
+
+.long	0x7D004799
+
+.Lxts_enc6x_ret:
+	mtlr	11
+	li	10,47
+	li	11,63
+	stvx	9,10,1
+	addi	10,10,32
+	stvx	9,11,1
+	addi	11,11,32
+	stvx	9,10,1
+	addi	10,10,32
+	stvx	9,11,1
+	addi	11,11,32
+	stvx	9,10,1
+	addi	10,10,32
+	stvx	9,11,1
+	addi	11,11,32
+	stvx	9,10,1
+	addi	10,10,32
+	stvx	9,11,1
+	addi	11,11,32
+
+	mtspr	256,12
+	lvx	20,10,1
+	addi	10,10,32
+	lvx	21,11,1
+	addi	11,11,32
+	lvx	22,10,1
+	addi	10,10,32
+	lvx	23,11,1
+	addi	11,11,32
+	lvx	24,10,1
+	addi	10,10,32
+	lvx	25,11,1
+	addi	11,11,32
+	lvx	26,10,1
+	addi	10,10,32
+	lvx	27,11,1
+	addi	11,11,32
+	lvx	28,10,1
+	addi	10,10,32
+	lvx	29,11,1
+	addi	11,11,32
+	lvx	30,10,1
+	lvx	31,11,1
+	lwz	26,368(1)
+	lwz	27,372(1)
+	lwz	28,376(1)
+	lwz	29,380(1)
+	lwz	30,384(1)
+	lwz	31,388(1)
+	addi	1,1,392
+	blr	
+.long	0
+.byte	0,12,0x04,1,0x80,6,6,0
+.long	0
+
+.align	5
+_aesp8_xts_enc5x:
+.long	0x10E7C508
+.long	0x118CC508
+.long	0x11ADC508
+.long	0x11CEC508
+.long	0x11EFC508
+	lvx	24,26,7
+	addi	7,7,0x20
+
+.long	0x10E7CD08
+.long	0x118CCD08
+.long	0x11ADCD08
+.long	0x11CECD08
+.long	0x11EFCD08
+	lvx	25,3,7
+	bc	16,0,_aesp8_xts_enc5x
+
+	add	10,10,31
+	cmpwi	31,0
+.long	0x10E7C508
+.long	0x118CC508
+.long	0x11ADC508
+.long	0x11CEC508
+.long	0x11EFC508
+
+	subi	10,10,16
+.long	0x10E7CD08
+.long	0x118CCD08
+.long	0x11ADCD08
+.long	0x11CECD08
+.long	0x11EFCD08
+	vxor	17,17,31
+
+.long	0x10E7D508
+	lvsr	5,0,31
+.long	0x118CD508
+.long	0x11ADD508
+.long	0x11CED508
+.long	0x11EFD508
+	vxor	1,18,31
+
+.long	0x10E7DD08
+.long	0x7C005699
+.long	0x118CDD08
+.long	0x11ADDD08
+.long	0x11CEDD08
+.long	0x11EFDD08
+	vxor	2,19,31
+
+	addi	7,1,32+15
+.long	0x10E7E508
+.long	0x118CE508
+.long	0x11ADE508
+.long	0x11CEE508
+.long	0x11EFE508
+	lvx	24,0,7
+	vxor	3,20,31
+
+.long	0x10E7ED08
+
+.long	0x118CED08
+.long	0x11ADED08
+.long	0x11CEED08
+.long	0x11EFED08
+	lvx	25,3,7
+	vxor	4,21,31
+
+.long	0x10E7F508
+	vperm	0,0,0,5
+.long	0x118CF508
+.long	0x11ADF508
+.long	0x11CEF508
+.long	0x11EFF508
+
+.long	0x10E78D09
+.long	0x118C0D09
+.long	0x11AD1509
+.long	0x11CE1D09
+.long	0x11EF2509
+	blr	
+.long	0
+.byte	0,12,0x14,0,0,0,0,0
+
+.align	5
+_aesp8_xts_decrypt6x:
+	stwu	1,-392(1)
+	mflr	11
+	li	7,175
+	li	3,191
+	stw	11,396(1)
+	stvx	20,7,1
+	addi	7,7,32
+	stvx	21,3,1
+	addi	3,3,32
+	stvx	22,7,1
+	addi	7,7,32
+	stvx	23,3,1
+	addi	3,3,32
+	stvx	24,7,1
+	addi	7,7,32
+	stvx	25,3,1
+	addi	3,3,32
+	stvx	26,7,1
+	addi	7,7,32
+	stvx	27,3,1
+	addi	3,3,32
+	stvx	28,7,1
+	addi	7,7,32
+	stvx	29,3,1
+	addi	3,3,32
+	stvx	30,7,1
+	stvx	31,3,1
+	li	0,-1
+	stw	12,364(1)
+	li	3,0x10
+	stw	26,368(1)
+	li	26,0x20
+	stw	27,372(1)
+	li	27,0x30
+	stw	28,376(1)
+	li	28,0x40
+	stw	29,380(1)
+	li	29,0x50
+	stw	30,384(1)
+	li	30,0x60
+	stw	31,388(1)
+	li	31,0x70
+	mtspr	256,0
+
+	subi	9,9,3
+
+	lvx	23,0,6
+	lvx	30,3,6
+	addi	6,6,0x20
+	lvx	31,0,6
+	vperm	23,23,30,7
+	addi	7,1,32+15
+	mtctr	9
+
+.Load_xts_dec_key:
+	vperm	24,30,31,7
+	lvx	30,3,6
+	addi	6,6,0x20
+	stvx	24,0,7
+	vperm	25,31,30,7
+	lvx	31,0,6
+	stvx	25,3,7
+	addi	7,7,0x20
+	bc	16,0,.Load_xts_dec_key
+
+	lvx	26,3,6
+	vperm	24,30,31,7
+	lvx	27,26,6
+	stvx	24,0,7
+	vperm	25,31,26,7
+	lvx	28,27,6
+	stvx	25,3,7
+	addi	7,1,32+15
+	vperm	26,26,27,7
+	lvx	29,28,6
+	vperm	27,27,28,7
+	lvx	30,29,6
+	vperm	28,28,29,7
+	lvx	31,30,6
+	vperm	29,29,30,7
+	lvx	22,31,6
+	vperm	30,30,31,7
+	lvx	24,0,7
+	vperm	31,31,22,7
+	lvx	25,3,7
+
+	vperm	0,2,4,5
+	subi	10,10,31
+	vxor	17,8,23
+	vsrab	11,8,9
+	vaddubm	8,8,8
+	vsldoi	11,11,11,15
+	vand	11,11,10
+	vxor	7,0,17
+	vxor	8,8,11
+
+.long	0x7C235699
+	vxor	18,8,23
+	vsrab	11,8,9
+	vaddubm	8,8,8
+	vsldoi	11,11,11,15
+
+	vand	11,11,10
+	vxor	12,1,18
+	vxor	8,8,11
+
+.long	0x7C5A5699
+	andi.	31,5,15
+	vxor	19,8,23
+	vsrab	11,8,9
+	vaddubm	8,8,8
+	vsldoi	11,11,11,15
+
+	vand	11,11,10
+	vxor	13,2,19
+	vxor	8,8,11
+
+.long	0x7C7B5699
+	sub	5,5,31
+	vxor	20,8,23
+	vsrab	11,8,9
+	vaddubm	8,8,8
+	vsldoi	11,11,11,15
+
+	vand	11,11,10
+	vxor	14,3,20
+	vxor	8,8,11
+
+.long	0x7C9C5699
+	subi	5,5,0x60
+	vxor	21,8,23
+	vsrab	11,8,9
+	vaddubm	8,8,8
+	vsldoi	11,11,11,15
+
+	vand	11,11,10
+	vxor	15,4,21
+	vxor	8,8,11
+
+.long	0x7CBD5699
+	addi	10,10,0x60
+	vxor	22,8,23
+	vsrab	11,8,9
+	vaddubm	8,8,8
+	vsldoi	11,11,11,15
+
+	vand	11,11,10
+	vxor	16,5,22
+	vxor	8,8,11
+
+	vxor	31,31,23
+	mtctr	9
+	b	.Loop_xts_dec6x
+
+.align	5
+.Loop_xts_dec6x:
+.long	0x10E7C548
+.long	0x118CC548
+.long	0x11ADC548
+.long	0x11CEC548
+.long	0x11EFC548
+.long	0x1210C548
+	lvx	24,26,7
+	addi	7,7,0x20
+
+.long	0x10E7CD48
+.long	0x118CCD48
+.long	0x11ADCD48
+.long	0x11CECD48
+.long	0x11EFCD48
+.long	0x1210CD48
+	lvx	25,3,7
+	bc	16,0,.Loop_xts_dec6x
+
+	subic	5,5,96
+	vxor	0,17,31
+.long	0x10E7C548
+.long	0x118CC548
+	vsrab	11,8,9
+	vxor	17,8,23
+	vaddubm	8,8,8
+.long	0x11ADC548
+.long	0x11CEC548
+	vsldoi	11,11,11,15
+.long	0x11EFC548
+.long	0x1210C548
+
+	subfe.	0,0,0
+	vand	11,11,10
+.long	0x10E7CD48
+.long	0x118CCD48
+	vxor	8,8,11
+.long	0x11ADCD48
+.long	0x11CECD48
+	vxor	1,18,31
+	vsrab	11,8,9
+	vxor	18,8,23
+.long	0x11EFCD48
+.long	0x1210CD48
+
+	and	0,0,5
+	vaddubm	8,8,8
+	vsldoi	11,11,11,15
+.long	0x10E7D548
+.long	0x118CD548
+	vand	11,11,10
+.long	0x11ADD548
+.long	0x11CED548
+	vxor	8,8,11
+.long	0x11EFD548
+.long	0x1210D548
+
+	add	10,10,0
+
+
+
+	vxor	2,19,31
+	vsrab	11,8,9
+	vxor	19,8,23
+	vaddubm	8,8,8
+.long	0x10E7DD48
+.long	0x118CDD48
+	vsldoi	11,11,11,15
+.long	0x11ADDD48
+.long	0x11CEDD48
+	vand	11,11,10
+.long	0x11EFDD48
+.long	0x1210DD48
+
+	addi	7,1,32+15
+	vxor	8,8,11
+.long	0x10E7E548
+.long	0x118CE548
+	vxor	3,20,31
+	vsrab	11,8,9
+	vxor	20,8,23
+.long	0x11ADE548
+.long	0x11CEE548
+	vaddubm	8,8,8
+	vsldoi	11,11,11,15
+.long	0x11EFE548
+.long	0x1210E548
+	lvx	24,0,7
+	vand	11,11,10
+
+.long	0x10E7ED48
+.long	0x118CED48
+	vxor	8,8,11
+.long	0x11ADED48
+.long	0x11CEED48
+	vxor	4,21,31
+	vsrab	11,8,9
+	vxor	21,8,23
+.long	0x11EFED48
+.long	0x1210ED48
+	lvx	25,3,7
+	vaddubm	8,8,8
+	vsldoi	11,11,11,15
+
+.long	0x10E7F548
+.long	0x118CF548
+	vand	11,11,10
+.long	0x11ADF548
+.long	0x11CEF548
+	vxor	8,8,11
+.long	0x11EFF548
+.long	0x1210F548
+	vxor	5,22,31
+	vsrab	11,8,9
+	vxor	22,8,23
+
+.long	0x10E70549
+.long	0x7C005699
+	vaddubm	8,8,8
+	vsldoi	11,11,11,15
+.long	0x118C0D49
+.long	0x7C235699
+.long	0x11AD1549
+
+.long	0x7C5A5699
+	vand	11,11,10
+.long	0x11CE1D49
+
+.long	0x7C7B5699
+.long	0x11EF2549
+
+.long	0x7C9C5699
+	vxor	8,8,11
+.long	0x12102D49
+
+.long	0x7CBD5699
+	addi	10,10,0x60
+
+
+
+
+
+.long	0x7CE02799
+	vxor	7,0,17
+
+.long	0x7D832799
+	vxor	12,1,18
+
+.long	0x7DBA2799
+	vxor	13,2,19
+
+.long	0x7DDB2799
+	vxor	14,3,20
+
+.long	0x7DFC2799
+	vxor	15,4,21
+.long	0x7E1D2799
+	vxor	16,5,22
+	addi	4,4,0x60
+
+	mtctr	9
+	beq	.Loop_xts_dec6x
+
+	addic.	5,5,0x60
+	beq	.Lxts_dec6x_zero
+	cmpwi	5,0x20
+	blt	.Lxts_dec6x_one
+	nop	
+	beq	.Lxts_dec6x_two
+	cmpwi	5,0x40
+	blt	.Lxts_dec6x_three
+	nop	
+	beq	.Lxts_dec6x_four
+
+.Lxts_dec6x_five:
+	vxor	7,1,17
+	vxor	12,2,18
+	vxor	13,3,19
+	vxor	14,4,20
+	vxor	15,5,21
+
+	bl	_aesp8_xts_dec5x
+
+
+	vor	17,22,22
+	vxor	18,8,23
+
+.long	0x7CE02799
+	vxor	7,0,18
+
+.long	0x7D832799
+
+.long	0x7DBA2799
+
+.long	0x7DDB2799
+.long	0x7DFC2799
+	addi	4,4,0x50
+	bne	.Lxts_dec6x_steal
+	b	.Lxts_dec6x_done
+
+.align	4
+.Lxts_dec6x_four:
+	vxor	7,2,17
+	vxor	12,3,18
+	vxor	13,4,19
+	vxor	14,5,20
+	vxor	15,15,15
+
+	bl	_aesp8_xts_dec5x
+
+
+	vor	17,21,21
+	vor	18,22,22
+
+.long	0x7CE02799
+	vxor	7,0,22
+
+.long	0x7D832799
+
+.long	0x7DBA2799
+.long	0x7DDB2799
+	addi	4,4,0x40
+	bne	.Lxts_dec6x_steal
+	b	.Lxts_dec6x_done
+
+.align	4
+.Lxts_dec6x_three:
+	vxor	7,3,17
+	vxor	12,4,18
+	vxor	13,5,19
+	vxor	14,14,14
+	vxor	15,15,15
+
+	bl	_aesp8_xts_dec5x
+
+
+	vor	17,20,20
+	vor	18,21,21
+
+.long	0x7CE02799
+	vxor	7,0,21
+
+.long	0x7D832799
+.long	0x7DBA2799
+	addi	4,4,0x30
+	bne	.Lxts_dec6x_steal
+	b	.Lxts_dec6x_done
+
+.align	4
+.Lxts_dec6x_two:
+	vxor	7,4,17
+	vxor	12,5,18
+	vxor	13,13,13
+	vxor	14,14,14
+	vxor	15,15,15
+
+	bl	_aesp8_xts_dec5x
+
+
+	vor	17,19,19
+	vor	18,20,20
+
+.long	0x7CE02799
+	vxor	7,0,20
+.long	0x7D832799
+	addi	4,4,0x20
+	bne	.Lxts_dec6x_steal
+	b	.Lxts_dec6x_done
+
+.align	4
+.Lxts_dec6x_one:
+	vxor	7,5,17
+	nop	
+.Loop_xts_dec1x:
+.long	0x10E7C548
+	lvx	24,26,7
+	addi	7,7,0x20
+
+.long	0x10E7CD48
+	lvx	25,3,7
+	bc	16,0,.Loop_xts_dec1x
+
+	subi	0,31,1
+.long	0x10E7C548
+
+	andi.	0,0,16
+	cmpwi	31,0
+.long	0x10E7CD48
+
+	sub	10,10,0
+.long	0x10E7D548
+
+.long	0x7C005699
+.long	0x10E7DD48
+
+	addi	7,1,32+15
+.long	0x10E7E548
+	lvx	24,0,7
+
+.long	0x10E7ED48
+	lvx	25,3,7
+	vxor	17,17,31
+
+
+.long	0x10E7F548
+
+	mtctr	9
+.long	0x10E78D49
+
+	vor	17,18,18
+	vor	18,19,19
+
+.long	0x7CE02799
+	addi	4,4,0x10
+	vxor	7,0,19
+	bne	.Lxts_dec6x_steal
+	b	.Lxts_dec6x_done
+
+.align	4
+.Lxts_dec6x_zero:
+	cmpwi	31,0
+	beq	.Lxts_dec6x_done
+
+.long	0x7C005699
+
+	vxor	7,0,18
+.Lxts_dec6x_steal:
+.long	0x10E7C548
+	lvx	24,26,7
+	addi	7,7,0x20
+
+.long	0x10E7CD48
+	lvx	25,3,7
+	bc	16,0,.Lxts_dec6x_steal
+
+	add	10,10,31
+.long	0x10E7C548
+
+	cmpwi	31,0
+.long	0x10E7CD48
+
+.long	0x7C005699
+.long	0x10E7D548
+
+	lvsr	5,0,31
+.long	0x10E7DD48
+
+	addi	7,1,32+15
+.long	0x10E7E548
+	lvx	24,0,7
+
+.long	0x10E7ED48
+	lvx	25,3,7
+	vxor	18,18,31
+
+
+.long	0x10E7F548
+
+	vperm	0,0,0,5
+.long	0x11679549
+
+
+
+.long	0x7D602799
+
+	vxor	7,7,7
+	vspltisb	12,-1
+	vperm	7,7,12,5
+	vsel	7,0,11,7
+	vxor	7,7,17
+
+	subi	30,4,1
+	mtctr	31
+.Loop_xts_dec6x_steal:
+	lbzu	0,1(30)
+	stb	0,16(30)
+	bc	16,0,.Loop_xts_dec6x_steal
+
+	li	31,0
+	mtctr	9
+	b	.Loop_xts_dec1x
+
+.align	4
+.Lxts_dec6x_done:
+	cmplwi	8,0
+	beq	.Lxts_dec6x_ret
+
+	vxor	8,17,23
+
+.long	0x7D004799
+
+.Lxts_dec6x_ret:
+	mtlr	11
+	li	10,47
+	li	11,63
+	stvx	9,10,1
+	addi	10,10,32
+	stvx	9,11,1
+	addi	11,11,32
+	stvx	9,10,1
+	addi	10,10,32
+	stvx	9,11,1
+	addi	11,11,32
+	stvx	9,10,1
+	addi	10,10,32
+	stvx	9,11,1
+	addi	11,11,32
+	stvx	9,10,1
+	addi	10,10,32
+	stvx	9,11,1
+	addi	11,11,32
+
+	mtspr	256,12
+	lvx	20,10,1
+	addi	10,10,32
+	lvx	21,11,1
+	addi	11,11,32
+	lvx	22,10,1
+	addi	10,10,32
+	lvx	23,11,1
+	addi	11,11,32
+	lvx	24,10,1
+	addi	10,10,32
+	lvx	25,11,1
+	addi	11,11,32
+	lvx	26,10,1
+	addi	10,10,32
+	lvx	27,11,1
+	addi	11,11,32
+	lvx	28,10,1
+	addi	10,10,32
+	lvx	29,11,1
+	addi	11,11,32
+	lvx	30,10,1
+	lvx	31,11,1
+	lwz	26,368(1)
+	lwz	27,372(1)
+	lwz	28,376(1)
+	lwz	29,380(1)
+	lwz	30,384(1)
+	lwz	31,388(1)
+	addi	1,1,392
+	blr	
+.long	0
+.byte	0,12,0x04,1,0x80,6,6,0
+.long	0
+
+.align	5
+_aesp8_xts_dec5x:
+.long	0x10E7C548
+.long	0x118CC548
+.long	0x11ADC548
+.long	0x11CEC548
+.long	0x11EFC548
+	lvx	24,26,7
+	addi	7,7,0x20
+
+.long	0x10E7CD48
+.long	0x118CCD48
+.long	0x11ADCD48
+.long	0x11CECD48
+.long	0x11EFCD48
+	lvx	25,3,7
+	bc	16,0,_aesp8_xts_dec5x
+
+	subi	0,31,1
+.long	0x10E7C548
+.long	0x118CC548
+.long	0x11ADC548
+.long	0x11CEC548
+.long	0x11EFC548
+
+	andi.	0,0,16
+	cmpwi	31,0
+.long	0x10E7CD48
+.long	0x118CCD48
+.long	0x11ADCD48
+.long	0x11CECD48
+.long	0x11EFCD48
+	vxor	17,17,31
+
+	sub	10,10,0
+.long	0x10E7D548
+.long	0x118CD548
+.long	0x11ADD548
+.long	0x11CED548
+.long	0x11EFD548
+	vxor	1,18,31
+
+.long	0x10E7DD48
+.long	0x7C005699
+.long	0x118CDD48
+.long	0x11ADDD48
+.long	0x11CEDD48
+.long	0x11EFDD48
+	vxor	2,19,31
+
+	addi	7,1,32+15
+.long	0x10E7E548
+.long	0x118CE548
+.long	0x11ADE548
+.long	0x11CEE548
+.long	0x11EFE548
+	lvx	24,0,7
+	vxor	3,20,31
+
+.long	0x10E7ED48
+
+.long	0x118CED48
+.long	0x11ADED48
+.long	0x11CEED48
+.long	0x11EFED48
+	lvx	25,3,7
+	vxor	4,21,31
+
+.long	0x10E7F548
+.long	0x118CF548
+.long	0x11ADF548
+.long	0x11CEF548
+.long	0x11EFF548
+
+.long	0x10E78D49
+.long	0x118C0D49
+.long	0x11AD1549
+.long	0x11CE1D49
+.long	0x11EF2549
+	mtctr	9
+	blr	
+.long	0
+.byte	0,12,0x14,0,0,0,0,0
