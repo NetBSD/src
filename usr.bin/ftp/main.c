@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.124 2017/11/25 15:39:17 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.125 2018/03/04 19:57:41 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1996-2015 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.124 2017/11/25 15:39:17 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.125 2018/03/04 19:57:41 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -464,7 +464,6 @@ main(int volatile argc, char **volatile argv)
 		if (localhome == NULL && !EMPTYSTRING(pw->pw_dir))
 			localhome = ftp_strdup(pw->pw_dir);
 		localname = ftp_strdup(pw->pw_name);
-		anonuser = localname;
 	}
 	if (netrc[0] == '\0' && localhome != NULL) {
 		if (strlcpy(netrc, localhome, sizeof(netrc)) >= sizeof(netrc) ||
