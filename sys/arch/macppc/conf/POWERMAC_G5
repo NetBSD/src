@@ -105,8 +105,8 @@ options 	WS_KERNEL_BG=WSCOL_LIGHT_WHITE
 options 	FONT_GALLANT12x22
 
 # Kernel root file system and dump configuration.
-#config		netbsd	root on ? type ?
-config		netbsd	root on gem0 type nfs
+config		netbsd	root on ? type ?
+#config		netbsd	root on gem0 type nfs
 options         NFS_BOOT_DHCP
 
 #
