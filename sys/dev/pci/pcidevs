@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1318 2018/03/04 13:11:51 jdolecek Exp $
+$NetBSD: pcidevs,v 1.1319 2018/03/04 13:24:17 jdolecek Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -7072,7 +7072,7 @@ product VIATECH VT82C586_PWR	0x3040	VT82C586 Power Management Controller
 product VIATECH VT3043		0x3043	VT3043 (Rhine) 10/100 Ethernet
 product VIATECH VT6306		0x3044	VT6306 IEEE 1394 Host Controller
 product VIATECH VT6105M 	0x3053	VT6105M (Rhine III) 10/100 Ethernet
-product VIATECH VT82C686A_SMB	0x3057	VT82C686A SMBus Controller
+product VIATECH VT82C686A_PWR	0x3057	VT82C686A Power Management Controller
 product VIATECH VT82C686A_AC97	0x3058	VT82C686A AC-97 Audio Controller
 product VIATECH VT8233_AC97	0x3059	VT8233/VT8235 AC-97 Audio Controller
 product VIATECH	VT6102		0x3065	VT6102 (Rhine II) 10/100 Ethernet
