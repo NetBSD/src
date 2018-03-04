@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.89 2018/02/16 18:02:10 macallan Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.90 2018/03/04 21:51:44 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.89 2018/02/16 18:02:10 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.90 2018/03/04 21:51:44 mrg Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_ppccache.h"
@@ -533,6 +533,7 @@ cpu_setup(device_t self, struct cpu_info *ci)
 	 * Configure power-saving mode.
 	 */
 	switch (vers) {
+#if !defined(_ARCH_PPC64)
 	case MPC604:
 	case MPC604e:
 	case MPC604ev:
@@ -582,6 +583,7 @@ cpu_setup(device_t self, struct cpu_info *ci)
 		hid0 |= HID0_NAP | HID0_DPM;
 		powersave = 1;
 		break;
+#endif
 
 	case IBM970:
 	case IBM970FX:
