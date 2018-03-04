@@ -1,11 +1,8 @@
-/*	$NetBSD: ddb.h,v 1.3 2018/03/04 07:14:50 mlelstv Exp $	*/
+/*	$NetBSD: db_autoconf.h,v 1.1 2018/03/04 07:14:50 mlelstv Exp $	*/
 
 /*-
- * Copyright (c) 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2016 The NetBSD Foundation, Inc.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,26 +26,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _DDB_DDB_H_
-#define	_DDB_DDB_H_
+#ifndef _DDB_DB_AUTOCONF_H_
+#define _DDB_DB_AUTOCONF_H_
 
-#include <machine/db_machdep.h>		/* type definitions */
+struct device *db_device_first(void);
+struct device *db_device_next(struct device *);
 
-#include <ddb/db_user.h>
-#include <ddb/db_lex.h>
-#include <ddb/db_output.h>
-#include <ddb/db_command.h>
-#include <ddb/db_break.h>
-#include <ddb/db_watch.h>
-#include <ddb/db_run.h>
-#include <ddb/db_variables.h>
-#include <ddb/db_interface.h>
-#include <ddb/db_sym.h>
-#include <ddb/db_extern.h>
-#include <ddb/db_lwp.h>
-#include <ddb/db_access.h>
-#include <ddb/db_proc.h>
-#include <ddb/db_cpu.h>
-#include <ddb/db_autoconf.h>
-
-#endif	/* _DDB_DDB_H_ */
+#endif /* _DDB_DB_AUTOCONF_H_ */
