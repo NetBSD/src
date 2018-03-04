@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.282 2018/03/01 16:55:01 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.283 2018/03/04 10:13:09 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.282 2018/03/01 16:55:01 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.283 2018/03/04 10:13:09 jdolecek Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -3388,7 +3388,8 @@ pmap_copy_page(paddr_t srcpa, paddr_t dstpa)
 	pmap_pte_set(srcpte, pmap_pa2pte(srcpa) | pteflags);
 	pmap_pte_set(dstpte, pmap_pa2pte(dstpa) | pteflags | PG_M);
 	pmap_pte_flush();
-	pmap_update_2pg(srcva, dstva);
+	pmap_update_pg(srcva);
+	pmap_update_pg(dstva);
 
 	memcpy((void *)dstva, (void *)srcva, PAGE_SIZE);
 
