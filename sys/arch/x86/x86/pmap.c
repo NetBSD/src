@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.285 2018/03/04 10:40:01 jdolecek Exp $	*/
+/*	$NetBSD: pmap.c,v 1.286 2018/03/04 10:59:11 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.285 2018/03/04 10:40:01 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.286 2018/03/04 10:59:11 jdolecek Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -2544,6 +2544,36 @@ pmap_check_ptps(struct pmap *pmap)
 	}
 }
 
+static inline void
+pmap_check_inuse(struct pmap *pmap)
+{
+#ifdef DIAGNOSTIC
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		if (ci->ci_pmap == pmap)
+			panic("destroying pmap being used");
+#if defined(XEN) && defined(__x86_64__)
+		for (i = 0; i < PDIR_SLOT_PTE; i++) {
+			if (pmap->pm_pdir[i] != 0 &&
+			    ci->ci_kpm_pdir[i] == pmap->pm_pdir[i]) {
+				printf("pmap_destroy(%p) pmap_kernel %p "
+				    "curcpu %d cpu %d ci_pmap %p "
+				    "ci->ci_kpm_pdir[%d]=%" PRIx64
+				    " pmap->pm_pdir[%d]=%" PRIx64 "\n",
+				    pmap, pmap_kernel(), curcpu()->ci_index,
+				    ci->ci_index, ci->ci_pmap,
+				    i, ci->ci_kpm_pdir[i],
+				    i, pmap->pm_pdir[i]);
+				panic("%s: used pmap", __func__);
+			}
+		}
+#endif
+	}
+#endif /* DIAGNOSTIC */
+}
+
 /*
  * pmap_destroy: drop reference count on pmap.   free pmap if
  *	reference count goes to zero.
@@ -2582,31 +2612,7 @@ pmap_destroy(struct pmap *pmap)
 		return;
 	}
 
-#ifdef DIAGNOSTIC
-	CPU_INFO_ITERATOR cii;
-	struct cpu_info *ci;
-
-	for (CPU_INFO_FOREACH(cii, ci)) {
-		if (ci->ci_pmap == pmap)
-			panic("destroying pmap being used");
-#if defined(XEN) && defined(__x86_64__)
-		for (i = 0; i < PDIR_SLOT_PTE; i++) {
-			if (pmap->pm_pdir[i] != 0 &&
-			    ci->ci_kpm_pdir[i] == pmap->pm_pdir[i]) {
-				printf("pmap_destroy(%p) pmap_kernel %p "
-				    "curcpu %d cpu %d ci_pmap %p "
-				    "ci->ci_kpm_pdir[%d]=%" PRIx64
-				    " pmap->pm_pdir[%d]=%" PRIx64 "\n",
-				    pmap, pmap_kernel(), curcpu()->ci_index,
-				    ci->ci_index, ci->ci_pmap,
-				    i, ci->ci_kpm_pdir[i],
-				    i, pmap->pm_pdir[i]);
-				panic("%s: used pmap", __func__);
-			}
-		}
-#endif
-	}
-#endif /* DIAGNOSTIC */
+	pmap_check_inuse(pmap);
 
 	/*
 	 * Reference count is zero, free pmap resources and then free pmap.
