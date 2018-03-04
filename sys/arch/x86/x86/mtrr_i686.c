@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrr_i686.c,v 1.29 2017/06/01 02:45:08 chs Exp $ */
+/*	$NetBSD: mtrr_i686.c,v 1.30 2018/03/04 10:02:10 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2000, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtrr_i686.c,v 1.29 2017/06/01 02:45:08 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtrr_i686.c,v 1.30 2018/03/04 10:02:10 jdolecek Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -170,7 +170,7 @@ i686_mtrr_reload(int synch)
 	 * much. Need to change the prototypes of l/rcr0 too if you
 	 * want to correct it. */
 	uint32_t cr0;
-	vaddr_t cr3, cr4;
+	vaddr_t cr4;
 	uint32_t origcr0;
 	vaddr_t origcr4;
 
@@ -221,8 +221,7 @@ i686_mtrr_reload(int synch)
 	 * to CR3)
 	 */
 
-	cr3 = rcr3();
-	lcr3(cr3);
+	tlbflush();
 
 	/*
 	 * 8. Disable all range registers (by clearing the E flag in
@@ -262,7 +261,7 @@ i686_mtrr_reload(int synch)
 	 */
 
 	wbinvd();
-	lcr3(cr3);
+	tlbflush();
 
 	/*
 	 * 12. Enter the normal cache mode to reenable caching (set the CD and
