@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.38 2018/01/24 09:04:46 skrll Exp $
+#	$NetBSD: Makefile,v 1.39 2018/03/04 07:15:37 mlelstv Exp $
 
 PROG=		crash
 MAN=		crash.8
@@ -40,6 +40,7 @@ CPPFLAGS+=	-UDB_MACHINE_COMMANDS
 # ddb files from kernel
 .PATH:	$S/ddb
 SRCS+=	db_command.c db_lwp.c db_proc.c db_xxx.c db_cpu.c
+SRCS+=  db_autoconf.c
 SRCS+=	db_access.c db_elf.c db_examine.c
 SRCS+=	db_expr.c db_lex.c db_output.c db_print.c
 SRCS+=	db_sym.c db_variables.c db_write_cmd.c
