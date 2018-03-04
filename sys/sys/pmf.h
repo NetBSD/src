@@ -1,4 +1,4 @@
-/* $NetBSD: pmf.h,v 1.22 2017/10/05 01:26:53 jmcneill Exp $ */
+/* $NetBSD: pmf.h,v 1.23 2018/03/04 19:23:33 kre Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #ifndef _SYS_PMF_H
 #define _SYS_PMF_H
 
-#ifdef _KERNEL
+#if defined(_KERNEL) || defined(_KMEMUSER)
 
 #include <sys/types.h>
 #include <sys/device_if.h>
@@ -62,6 +62,9 @@ struct pmf_qual {
 };
 
 typedef struct pmf_qual pmf_qual_t;
+#endif
+
+#if defined(_KERNEL)
 extern const pmf_qual_t * const PMF_Q_NONE;
 extern const pmf_qual_t * const PMF_Q_SELF;
 extern const pmf_qual_t * const PMF_Q_DRVCTL;
