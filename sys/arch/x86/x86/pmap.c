@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.287 2018/03/04 11:01:48 jdolecek Exp $	*/
+/*	$NetBSD: pmap.c,v 1.288 2018/03/04 23:07:58 kre Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.287 2018/03/04 11:01:48 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.288 2018/03/04 23:07:58 kre Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -2550,6 +2550,9 @@ pmap_check_inuse(struct pmap *pmap)
 #ifdef DIAGNOSTIC
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
+#if defined(XEN) && defined(__x86_64__)
+	int i;
+#endif
 
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		if (ci->ci_pmap == pmap)
