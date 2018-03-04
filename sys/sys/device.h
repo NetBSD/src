@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.150 2017/11/09 01:02:55 christos Exp $ */
+/* $NetBSD: device.h,v 1.151 2018/03/04 07:13:11 mlelstv Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -81,7 +81,7 @@
 #include <sys/evcnt.h>
 #include <sys/queue.h>
 
-#ifdef _KERNEL
+#if defined(_KERNEL) || defined(_KMEMUSER)
 #include <sys/mutex.h>
 #include <sys/condvar.h>
 #include <sys/pmf.h>
@@ -122,7 +122,7 @@ typedef struct cfdata *cfdata_t;
 typedef struct cfdriver *cfdriver_t;
 typedef struct cfattach *cfattach_t;
 
-#ifdef _KERNEL
+#if defined(_KERNEL) || defined(_KMEMUSER)
 struct device_lock {
 	int		dvl_nwait;
 	int		dvl_nlock;
@@ -199,7 +199,9 @@ struct device {
 #define	DVF_BUS_SUSPENDED	0x0020	/* device bus suspend was called */
 #define	DVF_DETACH_SHUTDOWN	0x0080	/* device detaches safely at shutdown */
 
+#ifdef _KERNEL
 TAILQ_HEAD(devicelist, device);
+#endif
 
 enum deviter_flags {
 	  DEVITER_F_RW =		0x1
@@ -288,7 +290,9 @@ struct cftable {
 	cfdata_t	ct_cfdata;	/* pointer to cfdata table */
 	TAILQ_ENTRY(cftable) ct_list;	/* list linkage */
 };
+#ifdef _KERNEL
 TAILQ_HEAD(cftablelist, cftable);
+#endif
 
 typedef int (*cfsubmatch_t)(device_t, cfdata_t, const int *, void *);
 
