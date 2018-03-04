@@ -1,4 +1,4 @@
-/* $NetBSD: grtwo.c,v 1.13 2012/10/27 17:18:09 chs Exp $	 */
+/* $NetBSD: grtwo.c,v 1.14 2018/03/04 21:42:28 mrg Exp $	 */
 
 /*
  * Copyright (c) 2004 Christopher SEKIYA
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grtwo.c,v 1.13 2012/10/27 17:18:09 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grtwo.c,v 1.14 2018/03/04 21:42:28 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,6 +156,7 @@ static int      grtwo_is_console = 0;
 #define GR2_ATTR_BG(a)		((a) & 0xff)
 #define GR2_ATTR_FG(a)		(((a) >> 8) & 0xff)
 
+#if 0
 static const u_int16_t grtwo_cursor_data[128] = {
 	/* Bit 0 */
 	0xff00, 0x0000,
@@ -225,6 +226,7 @@ static const u_int16_t grtwo_cursor_data[128] = {
 	0x0000, 0x0000,
 	0x0000, 0x0000,
 };
+#endif
 
 static const u_int8_t grtwo_defcmap[8 * 3] = {
 	/* Normal colors */
