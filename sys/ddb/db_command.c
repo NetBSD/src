@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.148 2017/01/11 12:17:34 joerg Exp $	*/
+/*	$NetBSD: db_command.c,v 1.149 2018/03/04 07:14:50 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2009 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.148 2017/01/11 12:17:34 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.149 2018/03/04 07:14:50 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -241,6 +241,7 @@ static const struct db_command db_show_cmds[] = {
 #endif
 	{ DDB_ADD_CMD("buf",	db_buf_print_cmd,	0,
 	    "Print the struct buf at address.", "[/f] address",NULL) },
+	{ DDB_ADD_CMD("devices", db_show_all_devices,	0,NULL,NULL,NULL) },
 	{ DDB_ADD_CMD("event",	db_event_print_cmd,	0,
 	    "Print all the non-zero evcnt(9) event counters.", "[/fitm]",NULL) },
 	{ DDB_ADD_CMD("files", db_show_files_cmd,	0,

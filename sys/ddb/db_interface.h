@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.h,v 1.35 2017/10/27 12:25:15 joerg Exp $	*/
+/*	$NetBSD: db_interface.h,v 1.36 2018/03/04 07:14:50 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -72,6 +72,13 @@ void		db_show_module_cmd(db_expr_t, bool, db_expr_t, const char *);
 
 /* kern/subr_vmem.c */
 void		db_show_all_vmems(db_expr_t, bool, db_expr_t, const char *);
+
+/* kern/subr_autoconf.c */
+void		db_show_all_devices(db_expr_t, bool, db_expr_t, const char *);
+void		db_show_all_device(db_expr_t, bool, db_expr_t, const char *);
+
+/* kern/subr_disk.c, dev/dksubr.c */
+void		db_show_disk(db_expr_t, bool, db_expr_t, const char *);
 
 #define	db_stacktrace() \
     db_stack_trace_print((db_expr_t)(intptr_t)__builtin_frame_address(0), \
