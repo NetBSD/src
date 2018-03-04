@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.283 2018/03/04 10:13:09 jdolecek Exp $	*/
+/*	$NetBSD: pmap.c,v 1.284 2018/03/04 10:26:10 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.283 2018/03/04 10:13:09 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.284 2018/03/04 10:26:10 jdolecek Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -581,7 +581,7 @@ static void pmap_remove_ptes(struct pmap *, struct vm_page *, vaddr_t, vaddr_t,
 static paddr_t pmap_get_physpage(void);
 static void pmap_alloc_level(struct pmap *, vaddr_t, long *);
 
-static bool pmap_reactivate(struct pmap *);
+static void pmap_reactivate(struct pmap *);
 
 /*
  * p m a p   h e l p e r   f u n c t i o n s
@@ -757,11 +757,7 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
 		 * often the case during exit(), when we have switched
 		 * to the kernel pmap in order to destroy a user pmap.
 		 */
-		if (!pmap_reactivate(pmap)) {
-			u_int gen = uvm_emap_gen_return();
-			tlbflush();
-			uvm_emap_update(gen);
-		}
+		pmap_reactivate(pmap);
 	} else {
 		/*
 		 * Toss current pmap from CPU, but keep a reference to it.
@@ -2877,12 +2873,11 @@ pmap_activate(struct lwp *l)
  * => Must be called with kernel preemption disabled.
  */
 
-static bool
+static void
 pmap_reactivate(struct pmap *pmap)
 {
 	struct cpu_info * const ci = curcpu();
 	const cpuid_t cid = cpu_index(ci);
-	bool result;
 
 	KASSERT(kpreempt_disabled());
 #if defined(XEN) && defined(__x86_64__)
@@ -2908,13 +2903,17 @@ pmap_reactivate(struct pmap *pmap)
 
 	if (kcpuset_isset(pmap->pm_cpus, cid)) {
 		/* We have the reference, state is valid. */
-		result = true;
 	} else {
-		/* Must reload the TLB. */
+		/*
+		 * Must reload the TLB, pmap has been changed during
+		 * deactivated.
+		 */
 		kcpuset_atomic_set(pmap->pm_cpus, cid);
-		result = false;
+
+		u_int gen = uvm_emap_gen_return();
+		tlbflush();
+		uvm_emap_update(gen);
 	}
-	return result;
 }
 
 /*
@@ -2964,18 +2963,7 @@ pmap_load(void)
 	pcb = lwp_getpcb(l);
 
 	if (pmap == oldpmap) {
-		if (!pmap_reactivate(pmap)) {
-			u_int gen = uvm_emap_gen_return();
-
-			/*
-			 * pmap has been changed during deactivated.
-			 * our tlb may be stale.
-			 */
-
-			tlbflush();
-			uvm_emap_update(gen);
-		}
-
+		pmap_reactivate(pmap);
 		ci->ci_want_pmapload = 0;
 		kpreempt_enable();
 		return;
