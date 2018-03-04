@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.75 2018/01/18 07:25:34 maxv Exp $	*/
+/*	$NetBSD: pmap.h,v 1.76 2018/03/04 10:13:08 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -395,17 +395,6 @@ __inline static void __unused
 pmap_update_pg(vaddr_t va)
 {
 	invlpg(va);
-}
-
-/*
- * pmap_update_2pg: flush two pages from the TLB
- */
-
-__inline static void __unused
-pmap_update_2pg(vaddr_t va, vaddr_t vb)
-{
-	invlpg(va);
-	invlpg(vb);
 }
 
 /*
