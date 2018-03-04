@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.107 2018/02/26 23:09:32 sevan Exp $
+#	$NetBSD: files.macppc,v 1.108 2018/03/04 15:51:15 christos Exp $
 #
 # macppc-specific configuration info
 
@@ -285,7 +285,6 @@ defflag opt_macppc.h	PB3400_CARDBUS_HACK UMAX_E100_HACK
 file arch/macppc/macppc/rbus_machdep.c		cardbus
 
 # Keywest I2C
-define ki2c {}
 device ki2c: i2cbus, ki2c
 attach ki2c at obio, uni_n
 file arch/macppc/dev/ki2c.c			ki2c
@@ -297,7 +296,6 @@ file arch/macppc/dev/snapper.c			snapper
 
 include "arch/powerpc/conf/majors.powerpc"
 
-define deq {}
 device deq
 attach deq at iic
 file arch/macppc/dev/deq.c				deq
