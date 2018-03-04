@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_send.c,v 1.36 2017/12/03 19:07:10 christos Exp $	*/
+/*	$NetBSD: iscsi_send.c,v 1.37 2018/03/04 07:39:45 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -1485,7 +1485,10 @@ send_run_xfer(session_t *session, struct scsipi_xfer *xs)
 	conn = assign_connection(session, waitok);
 
 	if (conn == NULL || conn->c_terminating || conn->c_state != ST_FULL_FEATURE) {
-		xs->error = XS_SELTIMEOUT;
+		if (session->s_terminating)
+			xs->error = XS_SELTIMEOUT;
+		else
+			xs->error = XS_BUSY;
 		DEBC(conn, 10, ("run_xfer on dead connection\n"));
 		scsipi_done(xs);
 		unref_session(session);
