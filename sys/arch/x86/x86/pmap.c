@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.284 2018/03/04 10:26:10 jdolecek Exp $	*/
+/*	$NetBSD: pmap.c,v 1.285 2018/03/04 10:40:01 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.284 2018/03/04 10:26:10 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.285 2018/03/04 10:40:01 jdolecek Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -2867,6 +2867,20 @@ pmap_activate(struct lwp *l)
 	}
 }
 
+#if defined(XEN) && defined(__x86_64__)
+#define	KASSERT_PDIRPA(pmap) \
+	KASSERT(pmap_pdirpa(pmap, 0) == ci->ci_xen_current_user_pgd || \
+	    pmap == pmap_kernel())
+#elif defined(PAE)
+#define	KASSERT_PDIRPA(pmap) \
+	KASSERT(pmap_pdirpa(pmap, 0) == pmap_pte2pa(ci->ci_pae_l3_pdir[0]))
+#elif !defined(XEN)
+#define	KASSERT_PDIRPA(pmap) \
+	KASSERT(pmap_pdirpa(pmap, 0) == pmap_pte2pa(rcr3()))
+#else
+#define	KASSERT_PDIRPA(pmap) 	KASSERT(true)	/* nothing to do */
+#endif
+
 /*
  * pmap_reactivate: try to regain reference to the pmap.
  *
@@ -2880,13 +2894,7 @@ pmap_reactivate(struct pmap *pmap)
 	const cpuid_t cid = cpu_index(ci);
 
 	KASSERT(kpreempt_disabled());
-#if defined(XEN) && defined(__x86_64__)
-	KASSERT(pmap_pdirpa(pmap, 0) == ci->ci_xen_current_user_pgd);
-#elif defined(PAE)
-	KASSERT(pmap_pdirpa(pmap, 0) == pmap_pte2pa(ci->ci_pae_l3_pdir[0]));
-#elif !defined(XEN)
-	KASSERT(pmap_pdirpa(pmap, 0) == pmap_pte2pa(rcr3()));
-#endif
+	KASSERT_PDIRPA(pmap);
 
 	/*
 	 * If we still have a lazy reference to this pmap, we can assume
@@ -2979,14 +2987,7 @@ pmap_load(void)
 	kcpuset_atomic_clear(oldpmap->pm_cpus, cid);
 	kcpuset_atomic_clear(oldpmap->pm_kernel_cpus, cid);
 
-#if defined(XEN) && defined(__x86_64__)
-	KASSERT(pmap_pdirpa(oldpmap, 0) == ci->ci_xen_current_user_pgd ||
-	    oldpmap == pmap_kernel());
-#elif defined(PAE)
-	KASSERT(pmap_pdirpa(oldpmap, 0) == pmap_pte2pa(ci->ci_pae_l3_pdir[0]));
-#elif !defined(XEN)
-	KASSERT(pmap_pdirpa(oldpmap, 0) == pmap_pte2pa(rcr3()));
-#endif
+	KASSERT_PDIRPA(oldpmap);
 	KASSERT(!kcpuset_isset(pmap->pm_cpus, cid));
 	KASSERT(!kcpuset_isset(pmap->pm_kernel_cpus, cid));
 
@@ -3091,13 +3092,7 @@ pmap_deactivate(struct lwp *l)
 		return;
 	}
 
-#if defined(XEN) && defined(__x86_64__)
-	KASSERT(pmap_pdirpa(pmap, 0) == ci->ci_xen_current_user_pgd);
-#elif defined(PAE)
-	KASSERT(pmap_pdirpa(pmap, 0) == pmap_pte2pa(ci->ci_pae_l3_pdir[0]));
-#elif !defined(XEN)
-	KASSERT(pmap_pdirpa(pmap, 0) == pmap_pte2pa(rcr3()));
-#endif
+	KASSERT_PDIRPA(pmap);
 	KASSERT(ci->ci_pmap == pmap);
 
 	/*
