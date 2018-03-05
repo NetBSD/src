@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.137 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.138 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -12169,8 +12169,6 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	bpf(4): Make it MP-safe [ozaki-r 20170209]
 	file(1): Upgraded to 5.30. [christos 20170210]
 	byacc: update to 20170201 [christos 20170211]
-	ptrace(2): Add signal mask information accessors API:
-		PT_GET_SIGMASK and PT_SET_SIGMASK [kamil 20170212]
 	postfix(1): Import version 3.1.4. [christos 20170213]
 	l2tp(4): Add L2TPv3 interface. [knakahara 20170216]
 	siginfo(2): Add new si_code for SIGTRAP: TRAP_DBREG [kamil 20170217]
@@ -12228,4 +12226,3 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	opencrypto(9): Complete MP-ification [knakahara 20170731]
 	ipsec(4): Make it MP-safe [ozaki-r 20170809]
 	evbmips: Merge sbmips port into evbmips. [mrg 20170815]
-
