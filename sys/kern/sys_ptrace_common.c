@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.34 2018/01/08 06:10:30 christos Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.35 2018/03/05 11:24:34 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.34 2018/01/08 06:10:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.35 2018/03/05 11:24:34 kamil Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -249,8 +249,6 @@ ptrace_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 	case PT_GET_PROCESS_STATE:
 	case PT_SET_SIGINFO:
 	case PT_GET_SIGINFO:
-	case PT_SET_SIGMASK:
-	case PT_GET_SIGMASK:
 #ifdef __HAVE_PTRACE_MACHDEP
 	PTRACE_MACHDEP_REQUEST_CASES
 #endif
@@ -411,8 +409,6 @@ ptrace_allowed(struct lwp *l, int req, struct proc *t, struct proc *p)
 	case PT_IO:
 	case PT_SET_SIGINFO:
 	case PT_GET_SIGINFO:
-	case PT_SET_SIGMASK:
-	case PT_GET_SIGMASK:
 	case_PT_GETREGS
 	case_PT_SETREGS
 	case_PT_GETFPREGS
@@ -711,24 +707,6 @@ ptrace_lwpinfo(struct proc *t, struct lwp **lt, void *addr, size_t data)
 	mutex_exit(t->p_lock);
 
 	return copyout(&pl, addr, sizeof(pl));
-}
-
-static int
-ptrace_sigmask(struct proc *t, struct lwp **lt, int rq, void *addr, size_t data)
-{
-	int error;
-
-	if ((error = ptrace_update_lwp(t, lt, data)) != 0)
-		return error;
-
-	if (rq == PT_GET_SIGMASK)
-		return copyout(&(*lt)->l_sigmask, addr, sizeof(sigset_t));
-
-	error = copyin(addr, &(*lt)->l_sigmask, sizeof(sigset_t));
-	if (error)
-		return error;
-	sigminusset(&sigcantmask, &(*lt)->l_sigmask);
-	return 0;
 }
 
 static int
@@ -1288,11 +1266,6 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 
 	case PT_GET_SIGINFO:
 		error = ptrace_get_siginfo(t, ptm, addr, data);
-		break;
-
-	case PT_SET_SIGMASK:
-	case PT_GET_SIGMASK:
-		error = ptrace_sigmask(t, &lt, req, addr, data);
 		break;
 
 	case PT_RESUME:
