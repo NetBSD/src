@@ -811,10 +811,10 @@ namespace std
 #define _GLIBCXX_HAVE_INT64_T 1
 
 /* Define if int64_t is a long. */
-/* #undef _GLIBCXX_HAVE_INT64_T_LONG */
+#define _GLIBCXX_HAVE_INT64_T_LONG 1
 
 /* Define if int64_t is a long long. */
-#define _GLIBCXX_HAVE_INT64_T_LONG_LONG 1
+/* #undef _GLIBCXX_HAVE_INT64_T_LONG_LONG */
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define _GLIBCXX_HAVE_INTTYPES_H 1
