@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amiga,v 1.109 2015/09/06 02:17:30 uebayasi Exp $
+#	$NetBSD: Makefile.amiga,v 1.110 2018/03/05 02:41:03 christos Exp $
 
 # Makefile for NetBSD
 #
@@ -34,7 +34,7 @@ GENASSYM_CONF=	${AMIGA}/amiga/genassym.cf
 CPPFLAGS+=	-Damiga -DFPCOPROC
 .if !defined(CMACHFLAGS)
 .include "$S/arch/m68k/Makefile.cmachflags"
-CMACHFLAGS+=	-Wa,-mcpu=68030 -Wa,-m68851
+CMACHFLAGS+=	-Wa,-mcpu=68030 -Wa,-m68030 -Wa,-m68851
 .endif
 CFLAGS+=	${CMACHFLAGS} -msoft-float
 AFLAGS+=	-x assembler-with-cpp
