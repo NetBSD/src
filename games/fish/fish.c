@@ -1,4 +1,4 @@
-/*	$NetBSD: fish.c,v 1.22 2011/09/01 07:18:50 plunky Exp $	*/
+/*	$NetBSD: fish.c,v 1.23 2018/03/05 04:59:54 eadler Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)fish.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: fish.c,v 1.22 2011/09/01 07:18:50 plunky Exp $");
+__RCSID("$NetBSD: fish.c,v 1.23 2018/03/05 04:59:54 eadler Exp $");
 #endif
 #endif /* not lint */
 
@@ -171,9 +171,14 @@ usermove(void)
 			continue;
 		}
 		buf[strlen(buf) - 1] = '\0';
-		if (!strcasecmp(buf, "p") && !promode) {
-			promode = 1;
-			(void)printf("Entering pro mode.\n");
+		if (!strcasecmp(buf, "p")) {
+			if (!promode) {
+				promode = 1;
+				printf("Entering pro mode.\n");
+			}
+			else {
+				printf("Already in pro mode.\n");
+			}
 			continue;
 		}
 		if (!strcasecmp(buf, "quit"))
@@ -186,10 +191,15 @@ usermove(void)
 			continue;
 		}
 		n = p - cards;
-		if (userhand[n]) {
+		if (userhand[n] <= 3) {
 			userasked[n] = 1;
 			return(n);
 		}
+		if (userhand[n] == 4) {
+			printf("You already have all of those.\n");
+			continue;
+		}
+
 		if (nrandom(3) == 1)
 			(void)printf("You don't have any of those!\n");
 		else
