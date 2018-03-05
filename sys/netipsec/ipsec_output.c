@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.70 2018/03/03 09:39:29 maxv Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.71 2018/03/05 11:50:25 maxv Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.70 2018/03/03 09:39:29 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.71 2018/03/05 11:50:25 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -485,6 +485,12 @@ ipsec4_process_packet(struct mbuf *m, const struct ipsecrequest *isr,
 	}
 	KASSERT(sav != NULL);
 
+	if (m->m_len < sizeof(struct ip) &&
+	    (m = m_pullup(m, sizeof(struct ip))) == NULL) {
+		error = ENOBUFS;
+		goto unrefsav;
+	}
+
 	/*
 	 * Check if we need to handle NAT-T fragmentation.
 	 */
@@ -509,11 +515,6 @@ noneed:
 	 * Collect IP_DF state from the outer header.
 	 */
 	if (dst->sa.sa_family == AF_INET) {
-		if (m->m_len < sizeof(struct ip) &&
-		    (m = m_pullup(m, sizeof(struct ip))) == NULL) {
-			error = ENOBUFS;
-			goto unrefsav;
-		}
 		ip = mtod(m, struct ip *);
 		/* Honor system-wide control of how to handle IP_DF */
 		switch (ip4_ipsec_dfbit) {
@@ -545,11 +546,6 @@ noneed:
 		struct mbuf *mp;
 
 		/* Fix IPv4 header checksum and length */
-		if (m->m_len < sizeof(struct ip) &&
-		    (m = m_pullup(m, sizeof(struct ip))) == NULL) {
-			error = ENOBUFS;
-			goto unrefsav;
-		}
 		ip = mtod(m, struct ip *);
 		ip->ip_len = htons(m->m_pkthdr.len);
 		ip->ip_sum = 0;
