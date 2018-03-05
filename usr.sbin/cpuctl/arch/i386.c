@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.80 2018/01/16 08:23:18 mrg Exp $	*/
+/*	$NetBSD: i386.c,v 1.81 2018/03/05 05:50:37 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.80 2018/01/16 08:23:18 mrg Exp $");
+__RCSID("$NetBSD: i386.c,v 1.81 2018/03/05 05:50:37 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1025,8 +1025,10 @@ intel_cpu_cacheinfo(struct cpu_info *ci)
 				    desc);
 				if (cai != NULL)
 					ci->ci_cinfo[cai->cai_index] = *cai;
-				else if ((verbose != 0) && (desc != 0xff))
-					printf("Unknown cacheinfo desc %02x\n",
+				else if ((verbose != 0) && (desc != 0xff)
+				    && (desc != 0xfe))
+					aprint_error_dev(ci->ci_dev, "error:"
+					    " Unknown cacheinfo desc %02x\n",
 					    desc);
 			}
 		}
@@ -1069,7 +1071,8 @@ intel_cpu_cacheinfo(struct cpu_info *ci)
 			break;
 		}
 		if (caitype == -1) {
-			printf("unknown cache level&type (%d & %d)\n",
+			aprint_error_dev(ci->ci_dev,
+			    "error: unknown cache level&type (%d & %d)\n",
 			    level, type);
 			continue;
 		}
@@ -1083,6 +1086,81 @@ intel_cpu_cacheinfo(struct cpu_info *ci)
 		ci->ci_cinfo[caitype].cai_totalsize = totalsize;
 		ci->ci_cinfo[caitype].cai_associativity = ways;
 		ci->ci_cinfo[caitype].cai_linesize = linesize;
+	}
+
+	if (ci->ci_cpuid_level < 0x18)
+		return;
+	/* Parse the TLB info from `cpuid leaf 18H', if we have it. */
+	x86_cpuid(0x18, descs);
+	iterations = descs[0];
+	for (i = 0; i <= iterations; i++) {
+		x86_cpuid2(0x18, i, descs);
+		type = __SHIFTOUT(descs[3], CPUID_DATP_TCTYPE);
+		if (type == CPUID_DATP_TCTYPE_N)
+			continue;
+		level = __SHIFTOUT(descs[3], CPUID_DATP_TCLEVEL);
+		switch (level) {
+		case 1:
+			if (type == CPUID_DATP_TCTYPE_I)
+				caitype = CAI_ITLB; /* XXX or ITLB2? */
+			else if (type == CPUID_DATP_TCTYPE_D)
+				caitype = CAI_DTLB;
+			else
+				caitype = -1;
+			break;
+		case 2:
+			if (type == CPUID_DATP_TCTYPE_I)
+				caitype = CAI_L2_ITLB;
+			else if (type == CPUID_DATP_TCTYPE_D)
+				caitype = CAI_L2_DTLB;
+			else if (type == CPUID_DATP_TCTYPE_U)
+				caitype = CAI_L2_STLB;
+			else
+				caitype = -1;
+			break;
+		case 3:
+			/* XXX need work for L3 TLB */
+			caitype = CAI_L3CACHE;
+			break;
+		default:
+			caitype = -1;
+			break;
+		}
+		if (caitype == -1) {
+			aprint_error_dev(ci->ci_dev,
+			    "error: unknown TLB level&type (%d & %d)\n",
+			    level, type);
+			continue;
+		}
+		switch (__SHIFTOUT(descs[1], CPUID_DATP_PGSIZE)) {
+		case CPUID_DATP_PGSIZE_4KB:
+			linesize = 4 * 1024;
+			break;
+		case CPUID_DATP_PGSIZE_2MB:
+			linesize = 2 * 1024 * 1024;
+			break;
+		case CPUID_DATP_PGSIZE_4MB:
+			linesize = 4 * 1024 * 1024;
+			break;
+		case CPUID_DATP_PGSIZE_1GB:
+			linesize = 1024 * 1024 * 1024;
+			break;
+		case CPUID_DATP_PGSIZE_2MB | CPUID_DATP_PGSIZE_4MB:
+			aprint_error_dev(ci->ci_dev,
+			    "WARINING: Currently 2M/4M info can't print correctly\n");
+			linesize = 4 * 1024 * 1024;
+			break;
+		default:
+			aprint_error_dev(ci->ci_dev,
+			    "error: Unknown size combination\n");
+			linesize = 4 * 1024;
+			break;
+		}
+		ways = __SHIFTOUT(descs[1], CPUID_DATP_WAYS);
+		sets = descs[2];
+		ci->ci_cinfo[caitype].cai_totalsize = sets; /* entries */
+		ci->ci_cinfo[caitype].cai_associativity = ways;
+		ci->ci_cinfo[caitype].cai_linesize = linesize; /* page size */
 	}
 }
 
