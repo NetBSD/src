@@ -1,4 +1,4 @@
-/*	$NetBSD: n_jn.c,v 1.7 2011/11/02 02:34:56 christos Exp $	*/
+/*	$NetBSD: n_jn.c,v 1.8 2018/03/05 23:00:55 christos Exp $	*/
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -102,7 +102,9 @@ static char sccsid[] = "@(#)jn.c	8.2 (Berkeley) 11/30/93";
 #endif
 
 static const double
+#if _IEEE
 invsqrtpi= 5.641895835477562869480794515607725858441e-0001,
+#endif
 two  = 2.0,
 zero = 0.0,
 one  = 1.0;
