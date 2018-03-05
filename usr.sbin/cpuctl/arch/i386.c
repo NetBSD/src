@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.81 2018/03/05 05:50:37 msaitoh Exp $	*/
+/*	$NetBSD: i386.c,v 1.82 2018/03/05 10:54:05 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.81 2018/03/05 05:50:37 msaitoh Exp $");
+__RCSID("$NetBSD: i386.c,v 1.82 2018/03/05 10:54:05 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1094,6 +1094,8 @@ intel_cpu_cacheinfo(struct cpu_info *ci)
 	x86_cpuid(0x18, descs);
 	iterations = descs[0];
 	for (i = 0; i <= iterations; i++) {
+		bool full;
+
 		x86_cpuid2(0x18, i, descs);
 		type = __SHIFTOUT(descs[3], CPUID_DATP_TCTYPE);
 		if (type == CPUID_DATP_TCTYPE_N)
@@ -1158,8 +1160,11 @@ intel_cpu_cacheinfo(struct cpu_info *ci)
 		}
 		ways = __SHIFTOUT(descs[1], CPUID_DATP_WAYS);
 		sets = descs[2];
-		ci->ci_cinfo[caitype].cai_totalsize = sets; /* entries */
-		ci->ci_cinfo[caitype].cai_associativity = ways;
+		full = descs[3] & CPUID_DATP_FULLASSOC;
+		ci->ci_cinfo[caitype].cai_totalsize
+		    = ways * sets; /* entries */
+		ci->ci_cinfo[caitype].cai_associativity
+		    = full ? 0xff : ways;
 		ci->ci_cinfo[caitype].cai_linesize = linesize; /* page size */
 	}
 }
