@@ -7,6 +7,8 @@
 .globl	bn_mul_mont
 .ent	bn_mul_mont
 bn_mul_mont:
+	lw	$8,16($29)
+	lw	$9,20($29)
 	slt	$1,$9,4
 	bnez	$1,1f
 	li	$2,0
