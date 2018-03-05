@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.149 2018/02/20 15:48:37 ws Exp $
+#	$NetBSD: files.usb,v 1.150 2018/03/05 09:35:01 ws Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -138,8 +138,9 @@ file	dev/usb/ucom.c			ucom | ucombus		needs-flag
 # Generic devices
 device	ugen
 attach	ugen at usbdevif
-attach	ugen at usbifif with ugenif
-file	dev/usb/ugen.c			ugen			needs-flag
+device	ugenif
+attach	ugenif at usbifif
+file	dev/usb/ugen.c			ugen | ugenif		needs-flag
 
 
 # HID

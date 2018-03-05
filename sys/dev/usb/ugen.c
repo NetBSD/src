@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.138 2018/02/20 15:48:37 ws Exp $	*/
+/*	$NetBSD: ugen.c,v 1.139 2018/03/05 09:35:01 ws Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.138 2018/02/20 15:48:37 ws Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.139 2018/03/05 09:35:01 ws Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -218,10 +218,8 @@ ugen_match(device_t parent, cfdata_t match, void *aux)
 int
 ugenif_match(device_t parent, cfdata_t match, void *aux)
 {
-	if (match->cf_flags & 1)
-		return UMATCH_HIGHEST;
-	else
-		return UMATCH_NONE;
+	/* Assume that they knew what they configured! (see ugenif(4)) */
+	return UMATCH_HIGHEST;
 }
 
 void
