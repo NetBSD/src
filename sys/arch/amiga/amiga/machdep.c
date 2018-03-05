@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.248 2017/08/15 09:51:43 maya Exp $	*/
+/*	$NetBSD: machdep.c,v 1.249 2018/03/05 02:39:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,7 +50,7 @@
 #include "empm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.248 2017/08/15 09:51:43 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.249 2018/03/05 02:39:06 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -721,8 +721,20 @@ initcpu(void)
 			/*
 			 * in this case, we're about to switch the FPU off;
 			 * do a FNOP to avoid stray FP traps later
+			 *
+			 * But we can't use fnop directly anymore as of
+			 * gcc-6 because it passes -mno-float to the assembler
+			 * because of -msoft-float and the assembler refuses
+			 * to assemble the instruction; adding -Wa,-mfloat
+			 * does not work either because the assembler then
+			 * complains about feature being turned off and on
+			 * so we just put in the opcode directly.
 			 */
+#if 0
 			__asm("fnop");
+#else
+			__asm(".word 0xf280,0x0000");
+#endif
 			/* ... and mark FPU as absent for identifyfpu() */
 			machineid &= ~(AMIGA_FPU40|AMIGA_68882|AMIGA_68881);
 		}
