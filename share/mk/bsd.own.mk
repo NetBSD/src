@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1042 2018/03/05 00:24:01 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.1043 2018/03/05 07:03:27 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -70,6 +70,7 @@ HAVE_GCC?=	0
 .elif \
     ${MACHINE_CPU} == "alpha" || \
     ${MACHINE_CPU} == "hppa" || \
+    ${MACHINE_CPU} == "ia64" || \
     ${MACHINE_CPU} == "i386" || \
     ${MACHINE_CPU} == "mips" || \
     ${MACHINE_CPU} == "powerpc" || \
