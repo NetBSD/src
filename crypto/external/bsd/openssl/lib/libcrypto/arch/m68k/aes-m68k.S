@@ -1,4 +1,4 @@
-|	$NetBSD: aes-m68k.S,v 1.1 2017/02/07 11:18:43 isaki Exp $
+|	$NetBSD: aes-m68k.S,v 1.2 2018/03/05 00:59:43 christos Exp $
 
 | Copyright (C) 2016 Tetsuya Isaki. All rights reserved.
 | Copyright (C) 2016 Y.Sugahara (moveccr). All rights reserved.
@@ -28,12 +28,12 @@
 #define rounds	(60 * 4)
 
 | int
-| private_AES_set_encrypt_key(const unsigned char *userKey,
+| AES_set_encrypt_key(const unsigned char *userKey,
 |  const int bits,
 |  AES_KEY *key)
-.global private_AES_set_encrypt_key
-private_AES_set_encrypt_key:
-_private_AES_set_encrypt_key:
+	.global	AES_set_encrypt_key
+	.type	AES_set_encrypt_key, @function
+AES_set_encrypt_key:
 	moveml	%d2-%d7/%a2-%a6,%sp@-
 	moveal	%sp@(44+4),%a0		| userKey
 	moveal	%sp@(44+8),%a1		| bits
@@ -378,14 +378,16 @@ pek_return1:
 pek_return2:
 	moveql	#-2,%d0
 	bra	pek_return
+	.size	AES_set_encrypt_key, .-AES_set_encrypt_key
 
 
 | int
 | private_AES_set_decrypt_key(const unsigned char *userKey,
 |  const int bits,
 |  AES_KEY *key)
-.global private_AES_set_decrypt_key
-private_AES_set_decrypt_key:
+	.global	AES_set_decrypt_key
+	.type	AES_set_decrypt_key, @function
+AES_set_decrypt_key:
 	moveml	%d2-%d7/%a2-%a6,%sp@-
 	moveal	%sp@(44+4),%a0		| userKey
 	moveal	%sp@(44+8),%a1		| bits
@@ -395,7 +397,7 @@ private_AES_set_decrypt_key:
 	movel	%a3,%sp@-
 	movel	%a1,%sp@-
 	movel	%a0,%sp@-
-	bsr	_private_AES_set_encrypt_key
+	bsr	AES_set_encrypt_key
 	lea	%sp@(12),%sp
 	bmi	pdk_return
 
@@ -473,13 +475,15 @@ pdk_apply_loop:
 pdk_return:
 	moveml	%sp@+,%d2-%d7/%a2-%a6
 	rts
+	.size	AES_set_decrypt_key, .-AES_set_decrypt_key
 
 
 | void
 | AES_encrypt(const unsigned char *in,
 |  unsigned char *out,
 |  const AES_KEY *key)
-.global AES_encrypt
+	.global AES_encrypt
+	.type	AES_encrypt, @function
 AES_encrypt:
 	| %a0  in,  Te0
 	| %a1  out, Te1
@@ -823,12 +827,14 @@ enc_last:
 
 	moveml	%sp@+,%d2-%d7/%a2-%a5
 	rts
+	.size	AES_set_decrypt_key, .-AES_set_decrypt_key
 
 | void
 | AES_decrypt(const unsigned char *in,
 |  unsigned char *out,
 |  const AES_KEY *key)
-.global AES_decrypt
+	.global	AES_decrypt
+	.type	AES_decrypt, @function
 AES_decrypt:
 	| %a0  in,  Td0
 	| %a1  out, Td1
@@ -1183,6 +1189,7 @@ dec_loop_start:
 
 	moveml	%sp@+,%d2-%d7/%a2-%a5
 	rts
+	.size	AES_decrypt, .-AES_decrypt
 
 	.data
 	.balign	4
