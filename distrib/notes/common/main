@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.542 2018/02/28 20:13:09 snj Exp $
+.\"	$NetBSD: main,v 1.543 2018/03/05 00:06:24 eadler Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1074,6 +1074,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .\"
 .It Ta Ta
 .It Ta Hikaru Abe Ta Mt hikaru@NetBSD.org
+.It Ta Eitan Adler Ta Mt eadler@NetBSD.org
 .It Ta Nathan Ahlstrom Ta Mt nra@NetBSD.org
 .It Ta Steve Allen Ta Mt wormey@NetBSD.org
 .It Ta Utkarsh Anand Ta Mt utkarsh009@NetBSD.org
