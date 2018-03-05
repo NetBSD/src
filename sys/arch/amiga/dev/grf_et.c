@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_et.c,v 1.35 2018/03/05 02:41:19 christos Exp $ */
+/*	$NetBSD: grf_et.c,v 1.36 2018/03/05 04:23:00 rin Exp $ */
 
 /*
  * Copyright (c) 1997 Klaus Burkert
@@ -37,7 +37,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_et.c,v 1.35 2018/03/05 02:41:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_et.c,v 1.36 2018/03/05 04:23:00 rin Exp $");
 
 #include "grfet.h"
 #include "ite.h"
@@ -1604,7 +1604,6 @@ et_getDACType(struct grf_softc *gp)
 	/* check for Sierra SC 15025 */
 
 	vgar4HDR(ba);
-	vgaw(ba, VDAC_COMMAND, 0x10); /* set ERPF */
 	vgaw(ba, VDAC_COMMAND, 0x10); /* set ERPF */
 
 	vgaw(ba, VDAC_XINDEX, 9);
