@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_mbuf.c,v 1.20 2018/02/26 06:17:01 maxv Exp $	*/
+/*	$NetBSD: ipsec_mbuf.c,v 1.21 2018/03/05 12:42:28 maxv Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_mbuf.c,v 1.20 2018/02/26 06:17:01 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_mbuf.c,v 1.21 2018/03/05 12:42:28 maxv Exp $");
 
 /*
  * IPsec-specific mbuf routines.
@@ -317,10 +317,8 @@ m_pad(struct mbuf *m, int n)
 	register int len, pad;
 	void *retval;
 
-	if (n <= 0) {  /* No stupid arguments. */
-		IPSECLOG(LOG_DEBUG, "pad length invalid (%d)\n", n);
-		m_freem(m);
-		return NULL;
+	if (__predict_false(n > MLEN)) {
+		panic("%s: %d > MLEN", __func__, n);
 	}
 
 	len = m->m_pkthdr.len;
@@ -329,7 +327,7 @@ m_pad(struct mbuf *m, int n)
 
 	while (m0->m_len < len) {
 		KASSERTMSG(m0->m_next != NULL,
-		    "m0 null, len %u m_len %u", len, m0->m_len);/*XXX*/
+		    "m0 null, len %u m_len %u", len, m0->m_len);
 		len -= m0->m_len;
 		m0 = m0->m_next;
 	}
@@ -338,7 +336,6 @@ m_pad(struct mbuf *m, int n)
 		IPSECLOG(LOG_DEBUG,
 		    "length mismatch (should be %d instead of %d)\n",
 		    m->m_pkthdr.len, m->m_pkthdr.len + m0->m_len - len);
-
 		m_freem(m);
 		return NULL;
 	}
@@ -350,7 +347,6 @@ m_pad(struct mbuf *m, int n)
 			    "length mismatch (should be %d instead of %d)\n",
 			    m->m_pkthdr.len,
 			    m->m_pkthdr.len + m1->m_next->m_len);
-
 			m_freem(m);
 			return NULL;
 		}
@@ -361,8 +357,8 @@ m_pad(struct mbuf *m, int n)
 	if (pad > M_TRAILINGSPACE(m0)) {
 		/* Add an mbuf to the chain. */
 		MGET(m1, M_DONTWAIT, MT_DATA);
-		if (m1 == 0) {
-			m_freem(m0);
+		if (m1 == NULL) {
+			m_freem(m);
 			IPSECLOG(LOG_DEBUG, "unable to get extra mbuf\n");
 			return NULL;
 		}
