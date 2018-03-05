@@ -21,7 +21,7 @@ _mips_AES_encrypt:
 	lw	$14,8($6)
 	lw	$15,12($6)
 	lw	$30,240($6)
-	add $3,$6,16
+	dadd $3,$6,16
 
 	xor	$8,$12
 	xor	$9,$13
@@ -101,7 +101,7 @@ _mips_AES_encrypt:
 	xor	$15,$19
 
 	sub	$30,1
-	add $3,16
+	dadd $3,16
 	xor	$8,$12
 	xor	$9,$13
 	xor	$10,$14
@@ -121,10 +121,10 @@ _mips_AES_encrypt:
 	and	$2,0x3fc
 	and	$24,0x3fc
 	and	$25,0x3fc
-	add $1,$7
-	add $2,$7
-	add $24,$7
-	add $25,$7
+	dadd $1,$7
+	dadd $2,$7
+	dadd $24,$7
+	dadd $25,$7
 #if defined(_MIPS_ARCH_MIPS32R2) || defined(_MIPS_ARCH_MIPS64R2)
 	lw	$12,0($1)		# Te1[s1>>16]
 	srl	$1,$10,14
@@ -152,10 +152,10 @@ _mips_AES_encrypt:
 	and	$2,0x3fc
 	and	$24,0x3fc
 	and	$25,0x3fc
-	add $1,$7
-	add $2,$7
-	add $24,$7
-	add $25,$7
+	dadd $1,$7
+	dadd $2,$7
+	dadd $24,$7
+	dadd $25,$7
 #if defined(_MIPS_ARCH_MIPS32R2) || defined(_MIPS_ARCH_MIPS64R2)
 	rotr	$12,$12,24
 	rotr	$13,$13,24
@@ -175,27 +175,27 @@ _mips_AES_encrypt:
 	and	$2,0x3fc
 	and	$24,0x3fc
 	and	$25,0x3fc
-	add $1,$7
-	add $2,$7
-	add $24,$7
-	add $25,$7
+	dadd $1,$7
+	dadd $2,$7
+	dadd $24,$7
+	dadd $25,$7
 	lw	$20,0($1)		# Te3[s3]
-	ins $1,$8,2,8
+	dins $1,$8,2,8
 	lw	$21,0($2)		# Te3[s0]
-	ins $2,$9,2,8
+	dins $2,$9,2,8
 	lw	$22,0($24)		# Te3[s1]
-	ins $24,$10,2,8
+	dins $24,$10,2,8
 	lw	$23,0($25)		# Te3[s2]
-	ins $25,$11,2,8
+	dins $25,$11,2,8
 # else
 	lw	$16,0($1)		# Te2[s2>>8]
-	ins $1,$11,2,8
+	dins $1,$11,2,8
 	lw	$17,0($2)		# Te2[s3>>8]
-	ins $2,$8,2,8
+	dins $2,$8,2,8
 	lw	$18,0($24)		# Te2[s0>>8]
-	ins $24,$9,2,8
+	dins $24,$9,2,8
 	lw	$19,0($25)		# Te2[s1>>8]
-	ins $25,$10,2,8
+	dins $25,$10,2,8
 
 	lw	$20,0($1)		# Te3[s3]
 	sll	$1,$8,2
@@ -210,10 +210,10 @@ _mips_AES_encrypt:
 	and	$2,0x3fc
 	and	$24,0x3fc
 	and	$25,0x3fc
-	add $1,$7
-	add $2,$7
-	add $24,$7
-	add $25,$7
+	dadd $1,$7
+	dadd $2,$7
+	dadd $24,$7
+	dadd $25,$7
 # endif
 	rotr	$16,$16,16
 	rotr	$17,$17,16
@@ -242,10 +242,10 @@ _mips_AES_encrypt:
 	and	$2,0x3fc
 	and	$24,0x3fc
 	and	$25,0x3fc
-	add $1,$7
-	add $2,$7
-	add $24,$7
-	add $25,$7
+	dadd $1,$7
+	dadd $2,$7
+	dadd $24,$7
+	dadd $25,$7
 	lwl	$20,0($1)		# Te3[s3]
 	lwl	$21,0($2)		# Te3[s0]
 	lwl	$22,0($24)		# Te3[s1]
@@ -263,10 +263,10 @@ _mips_AES_encrypt:
 	and	$2,0x3fc
 	and	$24,0x3fc
 	and	$25,0x3fc
-	add $1,$7
-	add $2,$7
-	add $24,$7
-	add $25,$7
+	dadd $1,$7
+	dadd $2,$7
+	dadd $24,$7
+	dadd $25,$7
 #endif
 	xor	$12,$16
 	lw	$16,0($1)		# Te0[s0>>24]
@@ -292,7 +292,7 @@ _mips_AES_encrypt:
 	xor	$15,$19
 
 	sub	$30,1
-	add $3,16
+	dadd $3,16
 	xor	$8,$12
 	xor	$9,$13
 	xor	$10,$14
@@ -310,10 +310,10 @@ _mips_AES_encrypt:
 	and	$2,0x3fc
 	and	$24,0x3fc
 	and	$25,0x3fc
-	add $1,$7
-	add $2,$7
-	add $24,$7
-	add $25,$7
+	dadd $1,$7
+	dadd $2,$7
+	dadd $24,$7
+	dadd $25,$7
 	lbu	$12,2($1)		# Te4[s1>>16]
 	srl	$1,$10,14
 	lbu	$13,2($2)		# Te4[s2>>16]
@@ -327,20 +327,20 @@ _mips_AES_encrypt:
 	and	$2,0x3fc
 	and	$24,0x3fc
 	and	$25,0x3fc
-	add $1,$7
-	add $2,$7
-	add $24,$7
-	add $25,$7
+	dadd $1,$7
+	dadd $2,$7
+	dadd $24,$7
+	dadd $25,$7
 #if defined(_MIPS_ARCH_MIPS32R2) || defined(_MIPS_ARCH_MIPS64R2)
 # if defined(_MIPSEL)
 	lbu	$16,2($1)		# Te4[s2>>8]
-	ins $1,$8,2,8
+	dins $1,$8,2,8
 	lbu	$17,2($2)		# Te4[s3>>8]
-	ins $2,$9,2,8
+	dins $2,$9,2,8
 	lbu	$18,2($24)		# Te4[s0>>8]
-	ins $24,$10,2,8
+	dins $24,$10,2,8
 	lbu	$19,2($25)		# Te4[s1>>8]
-	ins $25,$11,2,8
+	dins $25,$11,2,8
 
 	lbu	$20,2($1)		# Te4[s0>>24]
 	srl	$1,$11,22
@@ -355,10 +355,10 @@ _mips_AES_encrypt:
 	and	$2,0x3fc
 	and	$24,0x3fc
 	and	$25,0x3fc
-	add $1,$7
-	add $2,$7
-	add $24,$7
-	add $25,$7
+	dadd $1,$7
+	dadd $2,$7
+	dadd $24,$7
+	dadd $25,$7
 # else
 	lbu	$16,2($1)		# Te4[s2>>8]
 	sll	$1,$8,2
@@ -373,18 +373,18 @@ _mips_AES_encrypt:
 	and	$2,0x3fc
 	and	$24,0x3fc
 	and	$25,0x3fc
-	add $1,$7
-	add $2,$7
-	add $24,$7
-	add $25,$7
+	dadd $1,$7
+	dadd $2,$7
+	dadd $24,$7
+	dadd $25,$7
 	lbu	$20,2($1)		# Te4[s0>>24]
-	ins $1,$11,2,8
+	dins $1,$11,2,8
 	lbu	$21,2($2)		# Te4[s1>>24]
-	ins $2,$8,2,8
+	dins $2,$8,2,8
 	lbu	$22,2($24)		# Te4[s2>>24]
-	ins $24,$9,2,8
+	dins $24,$9,2,8
 	lbu	$23,2($25)		# Te4[s3>>24]
-	ins $25,$10,2,8
+	dins $25,$10,2,8
 # endif
 	sll	$12,$12,8
 	sll	$13,$13,8
@@ -427,10 +427,10 @@ _mips_AES_encrypt:
 	and	$2,0x3fc
 	and	$24,0x3fc
 	and	$25,0x3fc
-	add $1,$7
-	add $2,$7
-	add $24,$7
-	add $25,$7
+	dadd $1,$7
+	dadd $2,$7
+	dadd $24,$7
+	dadd $25,$7
 	lbu	$20,2($1)		# Te4[s0>>24]
 	srl	$1,$11,22
 	lbu	$21,2($2)		# Te4[s1>>24]
@@ -444,10 +444,10 @@ _mips_AES_encrypt:
 	and	$2,0x3fc
 	and	$24,0x3fc
 	and	$25,0x3fc
-	add $1,$7
-	add $2,$7
-	add $24,$7
-	add $25,$7
+	dadd $1,$7
+	dadd $2,$7
+	dadd $24,$7
+	dadd $25,$7
 
 	sll	$12,$12,8
 	sll	$13,$13,8
@@ -504,23 +504,24 @@ _mips_AES_encrypt:
 .globl	AES_encrypt
 .ent	AES_encrypt
 AES_encrypt:
-	.frame	$29,64,$31
-	.mask	0xc0ff0000,-4
+	.frame	$29,128,$31
+	.mask	0xc0ff0000,-8
 	.set	noreorder
-	.cpload	$25
-	sub $29,64
-	sw	$31,64-1*4($29)
-	sw	$30,64-2*4($29)
-	sw	$23,64-3*4($29)
-	sw	$22,64-4*4($29)
-	sw	$21,64-5*4($29)
-	sw	$20,64-6*4($29)
-	sw	$19,64-7*4($29)
-	sw	$18,64-8*4($29)
-	sw	$17,64-9*4($29)
-	sw	$16,64-10*4($29)
+	dsub $29,128
+	sd	$31,128-1*8($29)
+	sd	$30,128-2*8($29)
+	sd	$23,128-3*8($29)
+	sd	$22,128-4*8($29)
+	sd	$21,128-5*8($29)
+	sd	$20,128-6*8($29)
+	sd	$19,128-7*8($29)
+	sd	$18,128-8*8($29)
+	sd	$17,128-9*8($29)
+	sd	$16,128-10*8($29)
+	.cplocal	$7
+	.cpsetup	$25,$0,AES_encrypt
 	.set	reorder
-	la	$7,AES_Te		# PIC-ified 'load address'
+	dla	$7,AES_Te		# PIC-ified 'load address'
 
 	lwl	$8,0+3($4)
 	lwl	$9,4+3($4)
@@ -543,18 +544,18 @@ AES_encrypt:
 	swl	$11,12+3($5)
 
 	.set	noreorder
-	lw	$31,64-1*4($29)
-	lw	$30,64-2*4($29)
-	lw	$23,64-3*4($29)
-	lw	$22,64-4*4($29)
-	lw	$21,64-5*4($29)
-	lw	$20,64-6*4($29)
-	lw	$19,64-7*4($29)
-	lw	$18,64-8*4($29)
-	lw	$17,64-9*4($29)
-	lw	$16,64-10*4($29)
+	ld	$31,128-1*8($29)
+	ld	$30,128-2*8($29)
+	ld	$23,128-3*8($29)
+	ld	$22,128-4*8($29)
+	ld	$21,128-5*8($29)
+	ld	$20,128-6*8($29)
+	ld	$19,128-7*8($29)
+	ld	$18,128-8*8($29)
+	ld	$17,128-9*8($29)
+	ld	$16,128-10*8($29)
 	jr	$31
-	add $29,64
+	dadd $29,128
 .end	AES_encrypt
 .align	5
 .ent	_mips_AES_decrypt
@@ -566,7 +567,7 @@ _mips_AES_decrypt:
 	lw	$14,8($6)
 	lw	$15,12($6)
 	lw	$30,240($6)
-	add $3,$6,16
+	dadd $3,$6,16
 
 	xor	$8,$12
 	xor	$9,$13
@@ -646,7 +647,7 @@ _mips_AES_decrypt:
 	xor	$15,$19
 
 	sub	$30,1
-	add $3,16
+	dadd $3,16
 	xor	$8,$12
 	xor	$9,$13
 	xor	$10,$14
@@ -666,10 +667,10 @@ _mips_AES_decrypt:
 	and	$2,0x3fc
 	and	$24,0x3fc
 	and	$25,0x3fc
-	add $1,$7
-	add $2,$7
-	add $24,$7
-	add $25,$7
+	dadd $1,$7
+	dadd $2,$7
+	dadd $24,$7
+	dadd $25,$7
 #if defined(_MIPS_ARCH_MIPS32R2) || defined(_MIPS_ARCH_MIPS64R2)
 	lw	$12,0($1)		# Td1[s3>>16]
 	srl	$1,$10,14
@@ -698,10 +699,10 @@ _mips_AES_decrypt:
 	and	$2,0x3fc
 	and	$24,0x3fc
 	and	$25,0x3fc
-	add $1,$7
-	add $2,$7
-	add $24,$7
-	add $25,$7
+	dadd $1,$7
+	dadd $2,$7
+	dadd $24,$7
+	dadd $25,$7
 #if defined(_MIPS_ARCH_MIPS32R2) || defined(_MIPS_ARCH_MIPS64R2)
 	rotr	$12,$12,24
 	rotr	$13,$13,24
@@ -721,27 +722,27 @@ _mips_AES_decrypt:
 	and	$2,0x3fc
 	and	$24,0x3fc
 	and	$25,0x3fc
-	add $1,$7
-	add $2,$7
-	add $24,$7
-	add $25,$7
+	dadd $1,$7
+	dadd $2,$7
+	dadd $24,$7
+	dadd $25,$7
 	lw	$20,0($1)		# Td3[s1]
-	ins $1,$8,2,8
+	dins $1,$8,2,8
 	lw	$21,0($2)		# Td3[s2]
-	ins $2,$9,2,8
+	dins $2,$9,2,8
 	lw	$22,0($24)		# Td3[s3]
-	ins $24,$10,2,8
+	dins $24,$10,2,8
 	lw	$23,0($25)		# Td3[s0]
-	ins $25,$11,2,8
+	dins $25,$11,2,8
 #else
 	lw	$16,0($1)		# Td2[s2>>8]
-	ins $1,$9,2,8
+	dins $1,$9,2,8
 	lw	$17,0($2)		# Td2[s3>>8]
-	ins $2,$10,2,8
+	dins $2,$10,2,8
 	lw	$18,0($24)		# Td2[s0>>8]
-	ins $24,$11,2,8
+	dins $24,$11,2,8
 	lw	$19,0($25)		# Td2[s1>>8]
-	ins $25,$8,2,8
+	dins $25,$8,2,8
 
 	lw	$20,0($1)		# Td3[s1]
 	sll	$1,$8,2
@@ -756,10 +757,10 @@ _mips_AES_decrypt:
 	and	$2,0x3fc
 	and	$24,0x3fc
 	and	$25,0x3fc
-	add $1,$7
-	add $2,$7
-	add $24,$7
-	add $25,$7
+	dadd $1,$7
+	dadd $2,$7
+	dadd $24,$7
+	dadd $25,$7
 #endif
 	rotr	$16,$16,16
 	rotr	$17,$17,16
@@ -788,10 +789,10 @@ _mips_AES_decrypt:
 	and	$2,0x3fc
 	and	$24,0x3fc
 	and	$25,0x3fc
-	add $1,$7
-	add $2,$7
-	add $24,$7
-	add $25,$7
+	dadd $1,$7
+	dadd $2,$7
+	dadd $24,$7
+	dadd $25,$7
 	lwl	$20,0($1)		# Td3[s1]
 	lwl	$21,0($2)		# Td3[s2]
 	lwl	$22,0($24)		# Td3[s3]
@@ -809,10 +810,10 @@ _mips_AES_decrypt:
 	and	$2,0x3fc
 	and	$24,0x3fc
 	and	$25,0x3fc
-	add $1,$7
-	add $2,$7
-	add $24,$7
-	add $25,$7
+	dadd $1,$7
+	dadd $2,$7
+	dadd $24,$7
+	dadd $25,$7
 #endif
 
 	xor	$12,$16
@@ -839,7 +840,7 @@ _mips_AES_decrypt:
 	xor	$15,$19
 
 	sub	$30,1
-	add $3,16
+	dadd $3,16
 	xor	$8,$12
 	xor	$9,$13
 	xor	$10,$14
@@ -867,10 +868,10 @@ _mips_AES_decrypt:
 	lw	$23,1024+224($7)
 	and	$25,0xff
 
-	add $1,$7
-	add $2,$7
-	add $24,$7
-	add $25,$7
+	dadd $1,$7
+	dadd $2,$7
+	dadd $24,$7
+	dadd $25,$7
 	lbu	$12,1024($1)		# Td4[s3>>16]
 	srl	$1,$10,16
 	lbu	$13,1024($2)		# Td4[s0>>16]
@@ -884,20 +885,20 @@ _mips_AES_decrypt:
 	and	$2,0xff
 	and	$24,0xff
 	and	$25,0xff
-	add $1,$7
-	add $2,$7
-	add $24,$7
-	add $25,$7
+	dadd $1,$7
+	dadd $2,$7
+	dadd $24,$7
+	dadd $25,$7
 #if defined(_MIPS_ARCH_MIPS32R2) || defined(_MIPS_ARCH_MIPS64R2)
 # if defined(_MIPSEL)
 	lbu	$16,1024($1)		# Td4[s2>>8]
-	ins $1,$8,0,8
+	dins $1,$8,0,8
 	lbu	$17,1024($2)		# Td4[s3>>8]
-	ins $2,$9,0,8
+	dins $2,$9,0,8
 	lbu	$18,1024($24)		# Td4[s0>>8]
-	ins $24,$10,0,8
+	dins $24,$10,0,8
 	lbu	$19,1024($25)		# Td4[s1>>8]
-	ins $25,$11,0,8
+	dins $25,$11,0,8
 
 	lbu	$20,1024($1)		# Td4[s0>>24]
 	srl	$1,$9,24
@@ -908,10 +909,10 @@ _mips_AES_decrypt:
 	lbu	$23,1024($25)		# Td4[s3>>24]
 	srl	$25,$8,24
 
-	add $1,$7
-	add $2,$7
-	add $24,$7
-	add $25,$7
+	dadd $1,$7
+	dadd $2,$7
+	dadd $24,$7
+	dadd $25,$7
 # else
 	lbu	$16,1024($1)		# Td4[s2>>8]
 	and	$1,$8,0xff
@@ -922,18 +923,18 @@ _mips_AES_decrypt:
 	lbu	$19,1024($25)		# Td4[s1>>8]
 	and	$25,$11,0xff
 
-	add $1,$7
-	add $2,$7
-	add $24,$7
-	add $25,$7
+	dadd $1,$7
+	dadd $2,$7
+	dadd $24,$7
+	dadd $25,$7
 	lbu	$20,1024($1)		# Td4[s0>>24]
-	ins $1,$9,0,8
+	dins $1,$9,0,8
 	lbu	$21,1024($2)		# Td4[s1>>24]
-	ins $2,$10,0,8
+	dins $2,$10,0,8
 	lbu	$22,1024($24)		# Td4[s2>>24]
-	ins $24,$11,0,8
+	dins $24,$11,0,8
 	lbu	$23,1024($25)		# Td4[s3>>24]
-	ins $25,$8,0,8
+	dins $25,$8,0,8
 # endif
 	sll	$12,$12,8
 	sll	$13,$13,8
@@ -972,10 +973,10 @@ _mips_AES_decrypt:
 	lbu	$19,1024($25)		# Td4[s1>>8]
 	and	$25,$11,0xff
 
-	add $1,$7
-	add $2,$7
-	add $24,$7
-	add $25,$7
+	dadd $1,$7
+	dadd $2,$7
+	dadd $24,$7
+	dadd $25,$7
 	lbu	$20,1024($1)		# Td4[s0>>24]
 	srl	$1,$9,24
 	lbu	$21,1024($2)		# Td4[s1>>24]
@@ -985,10 +986,10 @@ _mips_AES_decrypt:
 	lbu	$23,1024($25)		# Td4[s3>>24]
 	srl	$25,$8,24
 
-	add $1,$7
-	add $2,$7
-	add $24,$7
-	add $25,$7
+	dadd $1,$7
+	dadd $2,$7
+	dadd $24,$7
+	dadd $25,$7
 
 	sll	$12,$12,8
 	sll	$13,$13,8
@@ -1046,23 +1047,24 @@ _mips_AES_decrypt:
 .globl	AES_decrypt
 .ent	AES_decrypt
 AES_decrypt:
-	.frame	$29,64,$31
-	.mask	0xc0ff0000,-4
+	.frame	$29,128,$31
+	.mask	0xc0ff0000,-8
 	.set	noreorder
-	.cpload	$25
-	sub $29,64
-	sw	$31,64-1*4($29)
-	sw	$30,64-2*4($29)
-	sw	$23,64-3*4($29)
-	sw	$22,64-4*4($29)
-	sw	$21,64-5*4($29)
-	sw	$20,64-6*4($29)
-	sw	$19,64-7*4($29)
-	sw	$18,64-8*4($29)
-	sw	$17,64-9*4($29)
-	sw	$16,64-10*4($29)
+	dsub $29,128
+	sd	$31,128-1*8($29)
+	sd	$30,128-2*8($29)
+	sd	$23,128-3*8($29)
+	sd	$22,128-4*8($29)
+	sd	$21,128-5*8($29)
+	sd	$20,128-6*8($29)
+	sd	$19,128-7*8($29)
+	sd	$18,128-8*8($29)
+	sd	$17,128-9*8($29)
+	sd	$16,128-10*8($29)
+	.cplocal	$7
+	.cpsetup	$25,$0,AES_decrypt
 	.set	reorder
-	la	$7,AES_Td		# PIC-ified 'load address'
+	dla	$7,AES_Td		# PIC-ified 'load address'
 
 	lwl	$8,0+3($4)
 	lwl	$9,4+3($4)
@@ -1085,18 +1087,18 @@ AES_decrypt:
 	swl	$11,12+3($5)
 
 	.set	noreorder
-	lw	$31,64-1*4($29)
-	lw	$30,64-2*4($29)
-	lw	$23,64-3*4($29)
-	lw	$22,64-4*4($29)
-	lw	$21,64-5*4($29)
-	lw	$20,64-6*4($29)
-	lw	$19,64-7*4($29)
-	lw	$18,64-8*4($29)
-	lw	$17,64-9*4($29)
-	lw	$16,64-10*4($29)
+	ld	$31,128-1*8($29)
+	ld	$30,128-2*8($29)
+	ld	$23,128-3*8($29)
+	ld	$22,128-4*8($29)
+	ld	$21,128-5*8($29)
+	ld	$20,128-6*8($29)
+	ld	$19,128-7*8($29)
+	ld	$18,128-8*8($29)
+	ld	$17,128-9*8($29)
+	ld	$16,128-10*8($29)
 	jr	$31
-	add $29,64
+	dadd $29,128
 .end	AES_decrypt
 .align	5
 .ent	_mips_AES_set_encrypt_key
@@ -1106,7 +1108,7 @@ _mips_AES_set_encrypt_key:
 	beqz	$4,.Lekey_done
 	li	$2,-1
 	beqz	$6,.Lekey_done
-	add $3,$7,256
+	dadd $3,$7,256
 
 	.set	reorder
 	lwl	$8,0+3($4)	# load 128 bits
@@ -1154,10 +1156,10 @@ _mips_AES_set_encrypt_key:
 	and	$2,0xff
 	and	$24,$11,0xff
 	srl	$25,$11,24
-	add $1,$7
-	add $2,$7
-	add $24,$7
-	add $25,$7
+	dadd $1,$7
+	dadd $2,$7
+	dadd $24,$7
+	dadd $25,$7
 	lbu	$1,0($1)
 	lbu	$2,0($2)
 	lbu	$24,0($24)
@@ -1168,7 +1170,7 @@ _mips_AES_set_encrypt_key:
 	sw	$10,8($6)
 	sw	$11,12($6)
 	sub	$30,1
-	add $6,16
+	dadd $6,16
 
 	sll	$1,$1,8
 	#sll	$2,$2,0
@@ -1188,7 +1190,7 @@ _mips_AES_set_encrypt_key:
 
 	.set	noreorder
 	bnez	$30,.L128bits
-	add $3,4
+	dadd $3,4
 
 	sw	$8,0($6)
 	sw	$9,4($6)
@@ -1198,7 +1200,7 @@ _mips_AES_set_encrypt_key:
 	li	$2,0
 	sw	$30,80($6)
 	b	.Lekey_done
-	sub $6,10*16
+	dsub $6,10*16
 
 .align	4
 .L192bits:
@@ -1209,10 +1211,10 @@ _mips_AES_set_encrypt_key:
 	and	$2,0xff
 	and	$24,$13,0xff
 	srl	$25,$13,24
-	add $1,$7
-	add $2,$7
-	add $24,$7
-	add $25,$7
+	dadd $1,$7
+	dadd $2,$7
+	dadd $24,$7
+	dadd $25,$7
 	lbu	$1,0($1)
 	lbu	$2,0($2)
 	lbu	$24,0($24)
@@ -1225,7 +1227,7 @@ _mips_AES_set_encrypt_key:
 	sw	$12,16($6)
 	sw	$13,20($6)
 	sub	$30,1
-	add $6,24
+	dadd $6,24
 
 	sll	$1,$1,8
 	#sll	$2,$2,0
@@ -1247,7 +1249,7 @@ _mips_AES_set_encrypt_key:
 
 	.set	noreorder
 	bnez	$30,.L192bits
-	add $3,4
+	dadd $3,4
 
 	sw	$8,0($6)
 	sw	$9,4($6)
@@ -1257,7 +1259,7 @@ _mips_AES_set_encrypt_key:
 	li	$2,0
 	sw	$30,48($6)
 	b	.Lekey_done
-	sub $6,12*16
+	dsub $6,12*16
 
 .align	4
 .L256bits:
@@ -1268,10 +1270,10 @@ _mips_AES_set_encrypt_key:
 	and	$2,0xff
 	and	$24,$15,0xff
 	srl	$25,$15,24
-	add $1,$7
-	add $2,$7
-	add $24,$7
-	add $25,$7
+	dadd $1,$7
+	dadd $2,$7
+	dadd $24,$7
+	dadd $25,$7
 	lbu	$1,0($1)
 	lbu	$2,0($2)
 	lbu	$24,0($24)
@@ -1310,10 +1312,10 @@ _mips_AES_set_encrypt_key:
 	and	$25,$11,0xff
 	and	$2,0xff
 	and	$24,0xff
-	add $1,$7
-	add $2,$7
-	add $24,$7
-	add $25,$7
+	dadd $1,$7
+	dadd $2,$7
+	dadd $24,$7
+	dadd $25,$7
 	lbu	$1,0($1)
 	lbu	$2,0($2)
 	lbu	$24,0($24)
@@ -1331,10 +1333,10 @@ _mips_AES_set_encrypt_key:
 	xor	$14,$13
 	xor	$15,$14
 
-	add $6,32
+	dadd $6,32
 	.set	noreorder
 	b	.L256bits
-	add $3,4
+	dadd $3,4
 
 .L256bits_done:
 	sw	$8,32($6)
@@ -1344,7 +1346,7 @@ _mips_AES_set_encrypt_key:
 	sw	$11,44($6)
 	li	$2,0
 	sw	$30,48($6)
-	sub $6,12*16
+	dsub $6,12*16
 
 .Lekey_done:
 	jr	$31
@@ -1354,46 +1356,48 @@ _mips_AES_set_encrypt_key:
 .globl	AES_set_encrypt_key
 .ent	AES_set_encrypt_key
 AES_set_encrypt_key:
-	.frame	$29,32,$31
-	.mask	0xc0000000,-4
+	.frame	$29,64,$31
+	.mask	0xc0000000,-8
 	.set	noreorder
-	.cpload	$25
-	sub $29,32
-	sw	$31,32-1*4($29)
-	sw	$30,32-2*4($29)
+	dsub $29,64
+	sd	$31,64-1*8($29)
+	sd	$30,64-2*8($29)
+	.cplocal	$7
+	.cpsetup	$25,$0,AES_set_encrypt_key
 	.set	reorder
-	la	$7,AES_Te4		# PIC-ified 'load address'
+	dla	$7,AES_Te4		# PIC-ified 'load address'
 
 	bal	_mips_AES_set_encrypt_key
 
 	.set	noreorder
 	move	$4,$2
-	lw	$31,32-1*4($29)
-	lw	$30,32-2*4($29)
+	ld	$31,64-1*8($29)
+	ld	$30,64-2*8($29)
 	jr	$31
-	add $29,32
+	dadd $29,64
 .end	AES_set_encrypt_key
 .align	5
 .globl	AES_set_decrypt_key
 .ent	AES_set_decrypt_key
 AES_set_decrypt_key:
-	.frame	$29,32,$31
-	.mask	0xc0000000,-4
+	.frame	$29,64,$31
+	.mask	0xc0000000,-8
 	.set	noreorder
-	.cpload	$25
-	sub $29,32
-	sw	$31,32-1*4($29)
-	sw	$30,32-2*4($29)
+	dsub $29,64
+	sd	$31,64-1*8($29)
+	sd	$30,64-2*8($29)
+	.cplocal	$7
+	.cpsetup	$25,$0,AES_set_decrypt_key
 	.set	reorder
-	la	$7,AES_Te4		# PIC-ified 'load address'
+	dla	$7,AES_Te4		# PIC-ified 'load address'
 
 	bal	_mips_AES_set_encrypt_key
 
 	bltz	$2,.Ldkey_done
 
 	sll	$1,$30,4
-	add $4,$6,0
-	add $5,$6,$1
+	dadd $4,$6,0
+	dadd $5,$6,$1
 .align	4
 .Lswap:
 	lw	$8,0($4)
@@ -1408,8 +1412,8 @@ AES_set_decrypt_key:
 	sw	$9,4($5)
 	sw	$10,8($5)
 	sw	$11,12($5)
-	add $4,16
-	sub $5,16
+	dadd $4,16
+	dsub $5,16
 	sw	$12,-16($4)
 	sw	$13,-12($4)
 	sw	$14,-8($4)
@@ -1421,7 +1425,7 @@ AES_set_decrypt_key:
 	sub	$30,1
 	or	$2,0x8080
 	sll	$30,2
-	add $6,16
+	dadd $6,16
 	lui	$25,0x1b1b
 	nor	$24,$0,$2
 	or	$25,0x1b1b
@@ -1483,17 +1487,17 @@ AES_set_decrypt_key:
 #endif
 	sub	$30,1
 	sw	$15,0($6)
-	add $6,4
+	dadd $6,4
 	bnez	$30,.Lmix
 
 	li	$2,0
 .Ldkey_done:
 	.set	noreorder
 	move	$4,$2
-	lw	$31,32-1*4($29)
-	lw	$30,32-2*4($29)
+	ld	$31,64-1*8($29)
+	ld	$30,64-2*8($29)
 	jr	$31
-	add $29,32
+	dadd $29,64
 .end	AES_set_decrypt_key
 .rdata
 .align	10
