@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheinfo.h,v 1.22 2016/04/27 08:47:03 msaitoh Exp $	*/
+/*	$NetBSD: cacheinfo.h,v 1.23 2018/03/05 05:44:07 msaitoh Exp $	*/
 
 #ifndef _X86_CACHEINFO_H_
 #define _X86_CACHEINFO_H_
@@ -333,6 +333,7 @@ __CI_TBL(CAI_L3CACHE,  0xeb,   24,18 * 1024 * 1024, 64, NULL), \
 __CI_TBL(CAI_L3CACHE,  0xec,   24,24 * 1024 * 1024, 64, NULL), \
 __CI_TBL(CAI_PREFETCH, 0xf0,    0,               0, 64, NULL), \
 __CI_TBL(CAI_PREFETCH, 0xf1,    0,               0,128, NULL), \
+/* 0xfe means no TLB information in CPUID leaf 2 (and use leaf 0x18) */ \
 /* 0xff means no cache information in CPUID leaf 2 (and use leaf 4) */ \
 __CI_TBL(0,               0,    0,               0,  0, NULL)  \
 }
