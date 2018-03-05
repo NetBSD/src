@@ -422,7 +422,7 @@ extern int dot_symbols;
 #define INT32_TYPE "int"
 
 #undef INT64_TYPE
-#define INT64_TYPE "long int"
+#define	INT64_TYPE (LONG_TYPE_SIZE == 64 ? "long int" : "long long int")
 
 #undef UINT8_TYPE
 #define UINT8_TYPE "unsigned char"
@@ -434,7 +434,7 @@ extern int dot_symbols;
 #define UINT32_TYPE "unsigned int"
 
 #undef UINT64_TYPE
-#define UINT64_TYPE "long unsigned int"
+#define	UINT64_TYPE (LONG_TYPE_SIZE == 64 ? "long unsigned int" : "long long unsigned int")
 
 #undef INT_FAST8_TYPE
 #define INT_FAST8_TYPE "int"
