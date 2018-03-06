@@ -1,11 +1,10 @@
-#	$NetBSD: files.common,v 1.1.2.1 2018/03/06 05:38:20 pgoyette Exp $
+#	$NetBSD: files.common,v 1.1.2.2 2018/03/06 10:00:10 pgoyette Exp $
 
 #
 # Generic files, used by all compat options.
 #
 file	compat/common/compat_mod.c		compat_netbsd
 file	compat/common/compat_exec.c		compat_netbsd
-file	compat/common/compat_util.c		compat_netbsd
 
 #
 # Sources for syscall and ioctl compatibility across the versions.
