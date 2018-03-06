@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.258.2.5 2018/03/06 23:39:35 pgoyette Exp $	*/
+/*	$NetBSD: if.h,v 1.258.2.6 2018/03/06 23:48:34 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -1339,7 +1339,7 @@ int	sysctl_ifq(int *name, u_int namelen, void *oldp,
 
 extern int (*vec_compat_ifdatareq)(struct lwp *, u_long, void *);
 extern void (*vec_compat_ifreqo2n)(struct oifreq *, struct ifreq *);
-extern int stub_compat_ifconf(u_long, void *);
+extern int vec_compat_ifconf(u_long, void *);
 
 #endif /* _NETBSD_SOURCE */
 #endif /* !_NET_IF_H_ */
