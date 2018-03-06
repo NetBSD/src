@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: n_exp2.c,v 1.3 2014/03/23 15:26:47 martin Exp $");
+__RCSID("$NetBSD: n_exp2.c,v 1.4 2018/03/06 01:14:41 christos Exp $");
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: src/lib/msun/src/s_exp2.c,v 1.7 2008/02/22 02:27:34 das Exp $");
 #endif
@@ -372,7 +372,8 @@ exp2(double x)
 	/* Compute r = exp2(y) = exp2t[i0] * p(z - eps[i]). */
 	t = tbl[i0];		/* exp2t[i0] */
 	z -= tbl[i0 + 1];	/* eps[i0]   */
-	big = k >= -1021 << 20;
+	/* -1021 << 20 == 3075 << 20 */
+	big = k >= 3075 << 20;
 	if (big) {
 		temp = 0x3ff00000+k;
 		twopk = 0.0;
