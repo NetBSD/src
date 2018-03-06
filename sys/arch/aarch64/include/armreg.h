@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.3 2017/12/20 14:58:08 skrll Exp $ */
+/* $NetBSD: armreg.h,v 1.4 2018/03/06 07:31:57 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -201,7 +201,7 @@ AARCH64REG_WRITE_INLINE(esr_el1)
 
 static const uintmax_t
     ESR_EC = 		__BITS(31,26), // Exception Cause
-     ESR_EC_UNKOWN	= 0,	// AXX: Unknown Reason
+     ESR_EC_UNKNOWN	= 0,	// AXX: Unknown Reason
      ESR_EC_WFX		= 1,	// AXX: WFI or WFE instruction execution
      ESR_EC_CP15_RT	= 3,	// A32: MCR/MRC access to CP15 !EC=0
      ESR_EC_CP15_RRT	= 4,	// A32: MCRR/MRRC access to CP15 !EC=0
