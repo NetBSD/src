@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.24.2.5 2018/03/01 19:02:15 martin Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.24.2.6 2018/03/06 11:12:40 martin Exp $ */
 
 /******************************************************************************
 
@@ -238,8 +238,26 @@ ixgbe_mq_start(struct ifnet *ifp, struct mbuf *m)
 	if (IXGBE_TX_TRYLOCK(txr)) {
 		ixgbe_mq_start_locked(ifp, txr);
 		IXGBE_TX_UNLOCK(txr);
-	} else
-		softint_schedule(txr->txr_si);
+	} else {
+		if (adapter->txrx_use_workqueue) {
+			/*
+			 * This function itself is not called in interrupt
+			 * context, however it can be called in fast softint
+			 * context right after receiving forwarding packets.
+			 * So, it is required to protect workqueue from twice
+			 * enqueuing when the machine uses both spontaneous
+			 * packets and forwarding packets.
+			 */
+			u_int *enqueued = percpu_getref(adapter->txr_wq_enqueued);
+			if (*enqueued == 0) {
+				*enqueued = 1;
+				percpu_putref(adapter->txr_wq_enqueued);
+				workqueue_enqueue(adapter->txr_wq, &txr->wq_cookie, curcpu());
+			} else
+				percpu_putref(adapter->txr_wq_enqueued);
+		} else
+			softint_schedule(txr->txr_si);
+	}
 
 	return (0);
 } /* ixgbe_mq_start */
@@ -291,7 +309,8 @@ ixgbe_mq_start_locked(struct ifnet *ifp, struct tx_ring *txr)
 /************************************************************************
  * ixgbe_deferred_mq_start
  *
- *   Called from a taskqueue to drain queued transmit packets.
+ *   Called from a softint and workqueue (indirectly) to drain queued
+ *   transmit packets.
  ************************************************************************/
 void
 ixgbe_deferred_mq_start(void *arg)
@@ -305,6 +324,24 @@ ixgbe_deferred_mq_start(void *arg)
 		ixgbe_mq_start_locked(ifp, txr);
 	IXGBE_TX_UNLOCK(txr);
 } /* ixgbe_deferred_mq_start */
+
+/************************************************************************
+ * ixgbe_deferred_mq_start_work
+ *
+ *   Called from a workqueue to drain queued transmit packets.
+ ************************************************************************/
+void
+ixgbe_deferred_mq_start_work(struct work *wk, void *arg)
+{
+	struct tx_ring *txr = container_of(wk, struct tx_ring, wq_cookie);
+	struct adapter *adapter = txr->adapter;
+	u_int *enqueued = percpu_getref(adapter->txr_wq_enqueued);
+	*enqueued = 0;
+	percpu_putref(adapter->txr_wq_enqueued);
+
+	ixgbe_deferred_mq_start(txr);
+} /* ixgbe_deferred_mq_start */
+
 
 /************************************************************************
  * ixgbe_xmit

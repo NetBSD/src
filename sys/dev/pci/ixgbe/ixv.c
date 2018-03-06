@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.56.2.8 2018/03/01 19:02:15 martin Exp $*/
+/*$NetBSD: ixv.c,v 1.56.2.9 2018/03/06 11:12:41 martin Exp $*/
 
 /******************************************************************************
 
@@ -131,8 +131,16 @@ static void	ixv_save_stats(struct adapter *);
 static void	ixv_init_stats(struct adapter *);
 static void	ixv_update_stats(struct adapter *);
 static void	ixv_add_stats_sysctls(struct adapter *);
+
+
+/* Sysctl handlers */
 static void	ixv_set_sysctl_value(struct adapter *, const char *,
 		    const char *, int *, int);
+static int      ixv_sysctl_interrupt_rate_handler(SYSCTLFN_PROTO);
+static int      ixv_sysctl_rdh_handler(SYSCTLFN_PROTO);
+static int      ixv_sysctl_rdt_handler(SYSCTLFN_PROTO);
+static int      ixv_sysctl_tdt_handler(SYSCTLFN_PROTO);
+static int      ixv_sysctl_tdh_handler(SYSCTLFN_PROTO);
 
 /* The MSI-X Interrupt handlers */
 static int	ixv_msix_que(void *);
@@ -141,6 +149,9 @@ static int	ixv_msix_mbx(void *);
 /* Deferred interrupt tasklets */
 static void	ixv_handle_que(void *);
 static void     ixv_handle_link(void *);
+
+/* Workqueue handler for deferred work */
+static void	ixv_handle_que_work(struct work *, void *);
 
 const struct sysctlnode *ixv_sysctl_instance(struct adapter *);
 static ixgbe_vendor_info_t *ixv_lookup(const struct pci_attach_args *);
@@ -181,6 +192,9 @@ TUNABLE_INT("hw.ixv.num_queues", &ixv_num_queues);
 static bool ixv_enable_aim = false;
 TUNABLE_INT("hw.ixv.enable_aim", &ixv_enable_aim);
 
+static int ixv_max_interrupt_rate = (4000000 / IXGBE_LOW_LATENCY);
+TUNABLE_INT("hw.ixv.max_interrupt_rate", &ixv_max_interrupt_rate);
+
 /* How many packets rxeof tries to clean at a time */
 static int ixv_rx_process_limit = 256;
 TUNABLE_INT("hw.ixv.rx_process_limit", &ixv_rx_process_limit);
@@ -188,6 +202,9 @@ TUNABLE_INT("hw.ixv.rx_process_limit", &ixv_rx_process_limit);
 /* How many packets txeof tries to clean at a time */
 static int ixv_tx_process_limit = 256;
 TUNABLE_INT("hw.ixv.tx_process_limit", &ixv_tx_process_limit);
+
+/* Which pakcet processing uses workqueue or softint */
+static bool ixv_txrx_workqueue = false;
 
 /*
  * Number of TX descriptors per ring,
@@ -216,10 +233,13 @@ static u32 ixv_shadow_vfta[IXGBE_VFTA_SIZE];
 #define IXGBE_MPSAFE		1
 #define IXGBE_CALLOUT_FLAGS	CALLOUT_MPSAFE
 #define IXGBE_SOFTINFT_FLAGS	SOFTINT_MPSAFE
+#define IXGBE_WORKQUEUE_FLAGS	WQ_PERCPU | WQ_MPSAFE
 #else
 #define IXGBE_CALLOUT_FLAGS	0
 #define IXGBE_SOFTINFT_FLAGS	0
+#define IXGBE_WORKQUEUE_FLAGS	WQ_PERCPU
 #endif
+#define IXGBE_WORKQUEUE_PRI PRI_SOFTNET
 
 #if 0
 static int (*ixv_start_locked)(struct ifnet *, struct tx_ring *);
@@ -504,6 +524,8 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 	/* hw.ix defaults init */
 	adapter->enable_aim = ixv_enable_aim;
 
+	adapter->txrx_use_workqueue = ixv_txrx_workqueue;
+
 	error = ixv_allocate_msix(adapter, pa);
 	if (error) {
 		device_printf(dev, "ixv_allocate_msix() failed!\n");
@@ -593,6 +615,12 @@ ixv_detach(device_t dev, int flags)
 			softint_disestablish(txr->txr_si);
 		softint_disestablish(que->que_si);
 	}
+	if (adapter->txr_wq != NULL)
+		workqueue_destroy(adapter->txr_wq);
+	if (adapter->txr_wq_enqueued != NULL)
+		percpu_free(adapter->txr_wq_enqueued, sizeof(u_int));
+	if (adapter->que_wq != NULL)
+		workqueue_destroy(adapter->que_wq);
 
 	/* Drain the Mailbox(link) queue */
 	softint_disestablish(adapter->link_si);
@@ -1792,6 +1820,86 @@ ixv_initialize_receive_units(struct adapter *adapter)
 } /* ixv_initialize_receive_units */
 
 /************************************************************************
+ * ixv_sysctl_tdh_handler - Transmit Descriptor Head handler function
+ *
+ *   Retrieves the TDH value from the hardware
+ ************************************************************************/
+static int 
+ixv_sysctl_tdh_handler(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	struct tx_ring *txr = (struct tx_ring *)node.sysctl_data;
+	uint32_t val;
+
+	if (!txr)
+		return (0);
+
+	val = IXGBE_READ_REG(&txr->adapter->hw, IXGBE_VFTDH(txr->me));
+	node.sysctl_data = &val;
+	return sysctl_lookup(SYSCTLFN_CALL(&node));
+} /* ixv_sysctl_tdh_handler */
+
+/************************************************************************
+ * ixgbe_sysctl_tdt_handler - Transmit Descriptor Tail handler function
+ *
+ *   Retrieves the TDT value from the hardware
+ ************************************************************************/
+static int 
+ixv_sysctl_tdt_handler(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	struct tx_ring *txr = (struct tx_ring *)node.sysctl_data;
+	uint32_t val;
+
+	if (!txr)
+		return (0);
+
+	val = IXGBE_READ_REG(&txr->adapter->hw, IXGBE_VFTDT(txr->me));
+	node.sysctl_data = &val;
+	return sysctl_lookup(SYSCTLFN_CALL(&node));
+} /* ixv_sysctl_tdt_handler */
+
+/************************************************************************
+ * ixv_sysctl_rdh_handler - Receive Descriptor Head handler function
+ *
+ *   Retrieves the RDH value from the hardware
+ ************************************************************************/
+static int 
+ixv_sysctl_rdh_handler(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	struct rx_ring *rxr = (struct rx_ring *)node.sysctl_data;
+	uint32_t val;
+
+	if (!rxr)
+		return (0);
+
+	val = IXGBE_READ_REG(&rxr->adapter->hw, IXGBE_VFRDH(rxr->me));
+	node.sysctl_data = &val;
+	return sysctl_lookup(SYSCTLFN_CALL(&node));
+} /* ixv_sysctl_rdh_handler */
+
+/************************************************************************
+ * ixv_sysctl_rdt_handler - Receive Descriptor Tail handler function
+ *
+ *   Retrieves the RDT value from the hardware
+ ************************************************************************/
+static int 
+ixv_sysctl_rdt_handler(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	struct rx_ring *rxr = (struct rx_ring *)node.sysctl_data;
+	uint32_t val;
+
+	if (!rxr)
+		return (0);
+
+	val = IXGBE_READ_REG(&rxr->adapter->hw, IXGBE_VFRDT(rxr->me));
+	node.sysctl_data = &val;
+	return sysctl_lookup(SYSCTLFN_CALL(&node));
+} /* ixv_sysctl_rdt_handler */
+
+/************************************************************************
  * ixv_setup_vlan_support
  ************************************************************************/
 static void
@@ -2110,6 +2218,55 @@ ixv_update_stats(struct adapter *adapter)
 	 */
 } /* ixv_update_stats */
 
+/************************************************************************
+ * ixv_sysctl_interrupt_rate_handler
+ ************************************************************************/
+static int
+ixv_sysctl_interrupt_rate_handler(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	struct ix_queue *que = (struct ix_queue *)node.sysctl_data;
+	struct adapter  *adapter = que->adapter;
+	uint32_t reg, usec, rate;
+	int error;
+
+	if (que == NULL)
+		return 0;
+	reg = IXGBE_READ_REG(&que->adapter->hw, IXGBE_VTEITR(que->msix));
+	usec = ((reg & 0x0FF8) >> 3);
+	if (usec > 0)
+		rate = 500000 / usec;
+	else
+		rate = 0;
+	node.sysctl_data = &rate;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+	reg &= ~0xfff; /* default, no limitation */
+	if (rate > 0 && rate < 500000) {
+		if (rate < 1000)
+			rate = 1000;
+		reg |= ((4000000/rate) & 0xff8);
+		/*
+		 * When RSC is used, ITR interval must be larger than
+		 * RSC_DELAY. Currently, we use 2us for RSC_DELAY.
+		 * The minimum value is always greater than 2us on 100M
+		 * (and 10M?(not documented)), but it's not on 1G and higher.
+		 */
+		if ((adapter->link_speed != IXGBE_LINK_SPEED_100_FULL)
+		    && (adapter->link_speed != IXGBE_LINK_SPEED_10_FULL)) {
+			if ((adapter->num_queues > 1)
+			    && (reg < IXGBE_MIN_RSC_EITR_10G1G))
+				return EINVAL;
+		}
+		ixv_max_interrupt_rate = rate;
+	} else
+		ixv_max_interrupt_rate = 0;
+	ixv_eitr_write(que, reg);
+
+	return (0);
+} /* ixv_sysctl_interrupt_rate_handler */
+
 const struct sysctlnode *
 ixv_sysctl_instance(struct adapter *adapter)
 {
@@ -2159,6 +2316,12 @@ ixv_add_device_sysctls(struct adapter *adapter)
 	    "enable_aim", SYSCTL_DESCR("Interrupt Moderation"),
 	    NULL, 0, &adapter->enable_aim, 0, CTL_CREATE, CTL_EOL) != 0)
 		aprint_error_dev(dev, "could not create sysctl\n");
+
+	if (sysctl_createv(log, 0, &rnode, &cnode,
+	    CTLFLAG_READWRITE, CTLTYPE_BOOL,
+	    "txrx_workqueue", SYSCTL_DESCR("Use workqueue for packet processing"),
+		NULL, 0, &adapter->txrx_use_workqueue, 0, CTL_CREATE, CTL_EOL) != 0)
+		aprint_error_dev(dev, "could not create sysctl\n");
 }
 
 /************************************************************************
@@ -2172,7 +2335,7 @@ ixv_add_stats_sysctls(struct adapter *adapter)
 	struct rx_ring          *rxr = adapter->rx_rings;
 	struct ixgbevf_hw_stats *stats = &adapter->stats.vf;
 	struct ixgbe_hw *hw = &adapter->hw;
-	const struct sysctlnode *rnode;
+	const struct sysctlnode *rnode, *cnode;
 	struct sysctllog **log = &adapter->sysctllog;
 	const char *xname = device_xname(dev);
 
@@ -2220,35 +2383,36 @@ ixv_add_stats_sysctls(struct adapter *adapter)
 		    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL) != 0)
 			break;
 
-#if 0 /* not yet */
 		if (sysctl_createv(log, 0, &rnode, &cnode,
 		    CTLFLAG_READWRITE, CTLTYPE_INT,
 		    "interrupt_rate", SYSCTL_DESCR("Interrupt Rate"),
-		    ixgbe_sysctl_interrupt_rate_handler, 0,
+		    ixv_sysctl_interrupt_rate_handler, 0,
 		    (void *)&adapter->queues[i], 0, CTL_CREATE, CTL_EOL) != 0)
 			break;
 
+#if 0
 		if (sysctl_createv(log, 0, &rnode, &cnode,
 		    CTLFLAG_READONLY, CTLTYPE_QUAD,
 		    "irqs", SYSCTL_DESCR("irqs on this queue"),
 			NULL, 0, &(adapter->queues[i].irqs),
 		    0, CTL_CREATE, CTL_EOL) != 0)
 			break;
+#endif
 
 		if (sysctl_createv(log, 0, &rnode, &cnode,
 		    CTLFLAG_READONLY, CTLTYPE_INT,
 		    "txd_head", SYSCTL_DESCR("Transmit Descriptor Head"),
-		    ixgbe_sysctl_tdh_handler, 0, (void *)txr,
+		    ixv_sysctl_tdh_handler, 0, (void *)txr,
 		    0, CTL_CREATE, CTL_EOL) != 0)
 			break;
 
 		if (sysctl_createv(log, 0, &rnode, &cnode,
 		    CTLFLAG_READONLY, CTLTYPE_INT,
 		    "txd_tail", SYSCTL_DESCR("Transmit Descriptor Tail"),
-		    ixgbe_sysctl_tdt_handler, 0, (void *)txr,
+		    ixv_sysctl_tdt_handler, 0, (void *)txr,
 		    0, CTL_CREATE, CTL_EOL) != 0)
 			break;
-#endif
+
 		evcnt_attach_dynamic(&adapter->queues[i].irqs, EVCNT_TYPE_INTR,
 		    NULL, adapter->queues[i].evnamebuf, "IRQs on queue");
 		evcnt_attach_dynamic(&txr->tso_tx, EVCNT_TYPE_MISC,
@@ -2269,12 +2433,11 @@ ixv_add_stats_sysctls(struct adapter *adapter)
 		struct lro_ctrl *lro = &rxr->lro;
 #endif /* LRO */
 
-#if 0 /* not yet */
 		if (sysctl_createv(log, 0, &rnode, &cnode,
 		    CTLFLAG_READONLY,
 		    CTLTYPE_INT,
 		    "rxd_head", SYSCTL_DESCR("Receive Descriptor Head"),
-		    ixgbe_sysctl_rdh_handler, 0, (void *)rxr, 0,
+		    ixv_sysctl_rdh_handler, 0, (void *)rxr, 0,
 		    CTL_CREATE, CTL_EOL) != 0)
 			break;
 
@@ -2282,10 +2445,9 @@ ixv_add_stats_sysctls(struct adapter *adapter)
 		    CTLFLAG_READONLY,
 		    CTLTYPE_INT,
 		    "rxd_tail", SYSCTL_DESCR("Receive Descriptor Tail"),
-		    ixgbe_sysctl_rdt_handler, 0, (void *)rxr, 0,
+		    ixv_sysctl_rdt_handler, 0, (void *)rxr, 0,
 		    CTL_CREATE, CTL_EOL) != 0)
 			break;
-#endif
 
 		evcnt_attach_dynamic(&rxr->rx_packets, EVCNT_TYPE_MISC,
 		    NULL, adapter->queues[i].evnamebuf, "Queue Packets Received");
@@ -2626,7 +2788,6 @@ ixv_init(struct ifnet *ifp)
 	return 0;
 } /* ixv_init */
 
-
 /************************************************************************
  * ixv_handle_que
  ************************************************************************/
@@ -2656,7 +2817,15 @@ ixv_handle_que(void *context)
 		IXGBE_TX_UNLOCK(txr);
 		if (more) {
 			adapter->req.ev_count++;
-			softint_schedule(que->que_si);
+			if (adapter->txrx_use_workqueue) {
+				/*
+				 * "enqueued flag" is not required here
+				 * the same as ixg(4). See ixgbe_msix_que().
+				 */
+				workqueue_enqueue(adapter->que_wq,
+				    &que->wq_cookie, curcpu());
+			} else
+				  softint_schedule(que->que_si);
 			return;
 		}
 	}
@@ -2666,6 +2835,21 @@ ixv_handle_que(void *context)
 
 	return;
 } /* ixv_handle_que */
+
+/************************************************************************
+ * ixv_handle_que_work
+ ************************************************************************/
+static void
+ixv_handle_que_work(struct work *wk, void *context)
+{
+	struct ix_queue *que = container_of(wk, struct ix_queue, wq_cookie);
+
+	/*
+	 * "enqueued flag" is not required here the same as ixg(4).
+	 * See ixgbe_msix_que().
+	 */
+	ixv_handle_que(que);
+}
 
 /************************************************************************
  * ixv_allocate_msix - Setup MSI-X Interrupt resources and handlers
@@ -2680,6 +2864,7 @@ ixv_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 	pci_chipset_tag_t pc;
 	pcitag_t	tag;
 	char		intrbuf[PCI_INTRSTR_LEN];
+	char		wqname[MAXCOMLEN];
 	char		intr_xname[32];
 	const char	*intrstr = NULL;
 	kcpuset_t	*affinity;
@@ -2747,6 +2932,23 @@ ixv_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 			aprint_error_dev(dev,
 			    "could not establish software interrupt\n"); 
 		}
+	}
+	snprintf(wqname, sizeof(wqname), "%sdeferTx", device_xname(dev));
+	error = workqueue_create(&adapter->txr_wq, wqname,
+	    ixgbe_deferred_mq_start_work, adapter, IXGBE_WORKQUEUE_PRI, IPL_NET,
+	    IXGBE_WORKQUEUE_FLAGS);
+	if (error) {
+		aprint_error_dev(dev, "couldn't create workqueue for deferred Tx\n");
+	}
+	adapter->txr_wq_enqueued = percpu_alloc(sizeof(u_int));
+
+	snprintf(wqname, sizeof(wqname), "%sTxRx", device_xname(dev));
+	error = workqueue_create(&adapter->que_wq, wqname,
+	    ixv_handle_que_work, adapter, IXGBE_WORKQUEUE_PRI, IPL_NET,
+	    IXGBE_WORKQUEUE_FLAGS);
+	if (error) {
+		aprint_error_dev(dev,
+		    "couldn't create workqueue\n");
 	}
 
 	/* and Mailbox */
