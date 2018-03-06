@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.22 2013/11/15 08:47:55 msaitoh Exp $	*/
+/*	$NetBSD: patch.c,v 1.22.22.1 2018/03/06 10:17:11 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.22 2013/11/15 08:47:55 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.22.22.1 2018/03/06 10:17:11 martin Exp $");
 
 #include "opt_lockdebug.h"
 #ifdef i386
@@ -47,9 +47,16 @@ __KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.22 2013/11/15 08:47:55 msaitoh Exp $");
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
 #include <machine/specialreg.h>
+#include <machine/frameasm.h>
 
 #include <x86/cpuvar.h>
 #include <x86/cputypes.h>
+
+struct hotpatch {
+	uint8_t name;
+	uint8_t size;
+	void *addr;
+} __packed;
 
 void	spllower(int);
 void	spllower_end(void);
@@ -128,14 +135,59 @@ patchfunc(void *from_s, void *from_e, void *to_s, void *to_e,
 }
 
 static inline void __unused
-patchbytes(void *addr, const int byte1, const int byte2, const int byte3)
+patchbytes(void *addr, const uint8_t *bytes, size_t size)
 {
+	uint8_t *ptr = (uint8_t *)addr;
+	size_t i;
 
-	((uint8_t *)addr)[0] = (uint8_t)byte1;
-	if (byte2 != -1)
-		((uint8_t *)addr)[1] = (uint8_t)byte2;
-	if (byte3 != -1)
-		((uint8_t *)addr)[2] = (uint8_t)byte3;
+	for (i = 0; i < size; i++) {
+		ptr[i] = bytes[i];
+	}
+}
+
+void
+x86_hotpatch(uint32_t name, const uint8_t *bytes, size_t size)
+{
+	extern char __rodata_hotpatch_start;
+	extern char __rodata_hotpatch_end;
+	struct hotpatch *hps, *hpe, *hp;
+
+	hps = (struct hotpatch *)&__rodata_hotpatch_start;
+	hpe = (struct hotpatch *)&__rodata_hotpatch_end;
+
+	for (hp = hps; hp < hpe; hp++) {
+		if (hp->name != name) {
+			continue;
+		}
+		if (hp->size != size) {
+			panic("x86_hotpatch: incorrect size");
+		}
+		patchbytes(hp->addr, bytes, size);
+	}
+}
+
+void
+x86_patch_window_open(u_long *psl, u_long *cr0)
+{
+	/* Disable interrupts. */
+	*psl = x86_read_psl();
+	x86_disable_intr();
+
+	/* Disable write protection in supervisor mode. */
+	*cr0 = rcr0();
+	lcr0(*cr0 & ~CR0_WP);
+}
+
+void
+x86_patch_window_close(u_long psl, u_long cr0)
+{
+	/* Write back and invalidate cache, flush pipelines. */
+	wbinvd();
+	x86_flush();
+	x86_write_psl(psl);
+
+	/* Re-enable write protection. */
+	lcr0(cr0);
 }
 
 void
@@ -156,22 +208,23 @@ x86_patch(bool early)
 		second = true;
 	}
 
-	/* Disable interrupts. */
-	psl = x86_read_psl();
-	x86_disable_intr();
-
-	/* Disable write protection in supervisor mode. */
-	cr0 = rcr0();
-	lcr0(cr0 & ~CR0_WP);
+	x86_patch_window_open(&psl, &cr0);
 
 #if !defined(GPROF)
 	if (!early && ncpu == 1) {
 #ifndef LOCKDEBUG
+		/*
+		 * Uniprocessor: kill LOCK prefixes.
+		 */
+		const uint8_t bytes[] = {
+			X86_NOP
+		};
+
 		/* Uniprocessor: kill LOCK prefixes. */
 		for (i = 0; x86_lockpatch[i] != 0; i++)
-			patchbytes(x86_lockpatch[i], X86_NOP, -1, -1);
+			patchbytes(x86_lockpatch[i], bytes, sizeof(bytes));
 		for (i = 0; atomic_lockpatch[i] != 0; i++)
-			patchbytes(atomic_lockpatch[i], X86_NOP, -1, -1);
+			patchbytes(atomic_lockpatch[i], bytes, sizeof(bytes));
 #endif	/* !LOCKDEBUG */
 	}
 	if (!early && (cpu_feature[0] & CPUID_SSE2) != 0) {
@@ -230,17 +283,15 @@ x86_patch(bool early)
 	    (CPUID_TO_FAMILY(cpu_info_primary.ci_signature) == 0xe ||
 	    (CPUID_TO_FAMILY(cpu_info_primary.ci_signature) == 0xf &&
 	    CPUID_TO_EXTMODEL(cpu_info_primary.ci_signature) < 0x4))) {
+		const uint8_t bytes[] = {
+			0x0F, 0xAE, 0xE8 /* lfence */
+		};
+
 		for (i = 0; x86_retpatch[i] != 0; i++) {
 			/* ret,nop,nop,ret -> lfence,ret */
-			patchbytes(x86_retpatch[i], 0x0f, 0xae, 0xe8);
+			patchbytes(x86_retpatch[i], bytes, sizeof(bytes));
 		}
 	}
 
-	/* Write back and invalidate cache, flush pipelines. */
-	wbinvd();
-	x86_flush();
-	x86_write_psl(psl);
-
-	/* Re-enable write protection. */
-	lcr0(cr0);
+	x86_patch_window_close(psl, cr0);
 }
