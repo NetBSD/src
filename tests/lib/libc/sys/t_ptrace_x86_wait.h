@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_x86_wait.h,v 1.3 2017/12/16 14:45:25 christos Exp $	*/
+/*	$NetBSD: t_ptrace_x86_wait.h,v 1.4 2018/03/06 21:11:51 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -422,7 +422,7 @@ dbregs_trap_variable(int reg, int cond, int len, bool write)
 		if (write)
 			watchme = 1;
 		else
-			DPRINTF("watchme=%d\n", watchme);
+			printf("watchme=%d\n", watchme);
 
 		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
@@ -897,7 +897,6 @@ ATF_TC_BODY(dbregs_dr0_trap_variable_readwrite_read_byte, tc)
 	/* 0b11 -- break on data write&read */
 	/* 0b00 -- 1 byte */
 
-	atf_tc_expect_fail("wrong signal");
 	dbregs_trap_variable(0, 3, 0, false);
 }
 
@@ -914,7 +913,6 @@ ATF_TC_BODY(dbregs_dr1_trap_variable_readwrite_read_byte, tc)
 	/* 0b11 -- break on data write&read */
 	/* 0b00 -- 1 byte */
 
-	atf_tc_expect_fail("wrong signal");
 	dbregs_trap_variable(1, 3, 0, false);
 }
 
@@ -931,7 +929,6 @@ ATF_TC_BODY(dbregs_dr2_trap_variable_readwrite_read_byte, tc)
 	/* 0b11 -- break on data write&read */
 	/* 0b00 -- 1 byte */
 
-	atf_tc_expect_fail("wrong signal");
 	dbregs_trap_variable(2, 3, 0, false);
 }
 
@@ -948,7 +945,6 @@ ATF_TC_BODY(dbregs_dr3_trap_variable_readwrite_read_byte, tc)
 	/* 0b11 -- break on data write&read */
 	/* 0b00 -- 1 byte */
 
-	atf_tc_expect_fail("wrong signal");
 	dbregs_trap_variable(3, 3, 0, false);
 }
 
@@ -965,7 +961,6 @@ ATF_TC_BODY(dbregs_dr0_trap_variable_readwrite_read_2bytes, tc)
 	/* 0b11 -- break on data write&read */
 	/* 0b01 -- 2 bytes */
 
-	atf_tc_expect_fail("wrong signal");
 	dbregs_trap_variable(0, 3, 1, false);
 }
 
@@ -982,7 +977,6 @@ ATF_TC_BODY(dbregs_dr1_trap_variable_readwrite_read_2bytes, tc)
 	/* 0b11 -- break on data write&read */
 	/* 0b01 -- 2 bytes */
 
-	atf_tc_expect_fail("wrong signal");
 	dbregs_trap_variable(1, 3, 1, false);
 }
 
@@ -999,7 +993,6 @@ ATF_TC_BODY(dbregs_dr2_trap_variable_readwrite_read_2bytes, tc)
 	/* 0b11 -- break on data write&read */
 	/* 0b01 -- 2 bytes */
 
-	atf_tc_expect_fail("wrong signal");
 	dbregs_trap_variable(2, 3, 1, false);
 }
 
@@ -1016,7 +1009,6 @@ ATF_TC_BODY(dbregs_dr3_trap_variable_readwrite_read_2bytes, tc)
 	/* 0b11 -- break on data write&read */
 	/* 0b01 -- 2 bytes */
 
-	atf_tc_expect_fail("wrong signal");
 	dbregs_trap_variable(3, 3, 1, false);
 }
 
@@ -1033,7 +1025,6 @@ ATF_TC_BODY(dbregs_dr0_trap_variable_readwrite_read_4bytes, tc)
 	/* 0b11 -- break on data write&read */
 	/* 0b11 -- 4 bytes */
 
-	atf_tc_expect_fail("wrong signal");
 	dbregs_trap_variable(0, 3, 3, false);
 }
 
@@ -1050,7 +1041,6 @@ ATF_TC_BODY(dbregs_dr1_trap_variable_readwrite_read_4bytes, tc)
 	/* 0b11 -- break on data write&read */
 	/* 0b11 -- 4 bytes */
 
-	atf_tc_expect_fail("wrong signal");
 	dbregs_trap_variable(1, 3, 3, false);
 }
 
@@ -1067,7 +1057,6 @@ ATF_TC_BODY(dbregs_dr2_trap_variable_readwrite_read_4bytes, tc)
 	/* 0b11 -- break on data write&read */
 	/* 0b11 -- 4 bytes */
 
-	atf_tc_expect_fail("wrong signal");
 	dbregs_trap_variable(2, 3, 3, false);
 }
 
@@ -1084,7 +1073,6 @@ ATF_TC_BODY(dbregs_dr3_trap_variable_readwrite_read_4bytes, tc)
 	/* 0b11 -- break on data write&read */
 	/* 0b11 -- 4 bytes */
 
-	atf_tc_expect_fail("wrong signal");
 	dbregs_trap_variable(3, 3, 3, false);
 }
 
@@ -1110,8 +1098,6 @@ ATF_TC_BODY(dbregs_dr0_trap_code, tc)
 	volatile int watchme = 1;
 	union u dr7;
 
-	atf_tc_expect_fail("wrong signal");
-
 	struct ptrace_siginfo info;
 	memset(&info, 0, sizeof(info));
 
@@ -1129,7 +1115,7 @@ ATF_TC_BODY(dbregs_dr0_trap_code, tc)
 		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		DPRINTF("check_happy(%d)=%d\n", watchme, check_happy(watchme));
+		printf("check_happy(%d)=%d\n", watchme, check_happy(watchme));
 
 		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
@@ -1242,8 +1228,6 @@ ATF_TC_BODY(dbregs_dr1_trap_code, tc)
 	struct ptrace_siginfo info;
 	memset(&info, 0, sizeof(info));
 
-	atf_tc_expect_fail("wrong signal");
-
 	dr7.raw = 0;
 	dr7.bits.global_dr1_breakpoint = 1;
 	dr7.bits.condition_dr1 = 0;	/* 0b00 -- break on code execution */
@@ -1258,7 +1242,7 @@ ATF_TC_BODY(dbregs_dr1_trap_code, tc)
 		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		DPRINTF("check_happy(%d)=%d\n", watchme, check_happy(watchme));
+		printf("check_happy(%d)=%d\n", watchme, check_happy(watchme));
 
 		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
@@ -1371,7 +1355,6 @@ ATF_TC_BODY(dbregs_dr2_trap_code, tc)
 	struct ptrace_siginfo info;
 	memset(&info, 0, sizeof(info));
 
-	atf_tc_expect_fail("wrong signal");
 	dr7.raw = 0;
 	dr7.bits.global_dr2_breakpoint = 1;
 	dr7.bits.condition_dr2 = 0;	/* 0b00 -- break on code execution */
@@ -1386,7 +1369,7 @@ ATF_TC_BODY(dbregs_dr2_trap_code, tc)
 		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		DPRINTF("check_happy(%d)=%d\n", watchme, check_happy(watchme));
+		printf("check_happy(%d)=%d\n", watchme, check_happy(watchme));
 
 		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
@@ -1499,7 +1482,6 @@ ATF_TC_BODY(dbregs_dr3_trap_code, tc)
 	struct ptrace_siginfo info;
 	memset(&info, 0, sizeof(info));
 
-	atf_tc_expect_fail("wrong signal");
 	dr7.raw = 0;
 	dr7.bits.global_dr3_breakpoint = 1;
 	dr7.bits.condition_dr3 = 0;	/* 0b00 -- break on code execution */
@@ -1514,7 +1496,7 @@ ATF_TC_BODY(dbregs_dr3_trap_code, tc)
 		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		DPRINTF("check_happy(%d)=%d\n", watchme, check_happy(watchme));
+		printf("check_happy(%d)=%d\n", watchme, check_happy(watchme));
 
 		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
