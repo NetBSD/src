@@ -1,4 +1,4 @@
-# $NetBSD: std,v 1.22 2016/11/02 00:11:59 pgoyette Exp $
+# $NetBSD: std,v 1.22.14.1 2018/03/06 05:43:02 pgoyette Exp $
 #
 # standard MI 'options'
 #
@@ -34,6 +34,13 @@ options	AIO		# POSIX asynchronous I/O
 options	MQUEUE		# POSIX message queues
 
 #
+# Common compatibility functions. They happen to be needed even when
+# no compatibility option is explicitly enabled.
+#
+options 	COMPAT_UTILS
+
+#
+
 # Security model.
 #
 options	secmodel_bsd44	# Traditional 4.4BSD security model
