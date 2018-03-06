@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.148 2018/02/24 07:53:15 ozaki-r Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.149 2018/03/06 10:57:00 roy Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.148 2018/02/24 07:53:15 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.149 2018/03/06 10:57:00 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.148 2018/02/24 07:53:15 ozaki-r Exp $"
 #include <sys/syslog.h>
 #include <sys/queue.h>
 #include <sys/callout.h>
+#include <sys/cprng.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -77,16 +78,15 @@ __KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.148 2018/02/24 07:53:15 ozaki-r Exp $"
 #include <net/net_osdep.h>
 
 struct dadq;
-static struct dadq *nd6_dad_find(struct ifaddr *);
+static struct dadq *nd6_dad_find(struct ifaddr *, struct nd_opt_nonce *);
 static void nd6_dad_starttimer(struct dadq *, int);
 static void nd6_dad_destroytimer(struct dadq *);
 static void nd6_dad_timer(struct dadq *);
 static void nd6_dad_ns_output(struct dadq *, struct ifaddr *);
-static void nd6_dad_ns_input(struct ifaddr *);
+static void nd6_dad_ns_input(struct ifaddr *, struct nd_opt_nonce *);
 static void nd6_dad_na_input(struct ifaddr *);
 static void nd6_dad_duplicated(struct dadq *);
 
-static int dad_ignore_ns = 0;	/* ignore NS in DAD - specwise incorrect*/
 static int dad_maxtry = 15;	/* max # of *tries* to transmit DAD packet */
 
 /*
@@ -309,7 +309,7 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 		 * silently ignore it.
 		 */
 		if (IN6_IS_ADDR_UNSPECIFIED(&saddr6))
-			nd6_dad_ns_input(ifa);
+			nd6_dad_ns_input(ifa, ndopts.nd_opts_nonce);
 		ifa_release(ifa, &psref_ia);
 		ifa = NULL;
 
@@ -374,7 +374,7 @@ void
 nd6_ns_output(struct ifnet *ifp, const struct in6_addr *daddr6,
     const struct in6_addr *taddr6,
     struct in6_addr *hsrc,
-    int dad			/* duplicate address detection */)
+    uint8_t *nonce		/* duplicate address detection */)
 {
 	struct mbuf *m;
 	struct ip6_hdr *ip6;
@@ -441,7 +441,7 @@ nd6_ns_output(struct ifnet *ifp, const struct in6_addr *daddr6,
 		if (in6_setscope(&ip6->ip6_dst, ifp, NULL) != 0)
 			goto bad;
 	}
-	if (!dad) {
+	if (nonce == NULL) {
 		int s;
 		/*
 		 * RFC2461 7.2.2:
@@ -512,7 +512,7 @@ nd6_ns_output(struct ifnet *ifp, const struct in6_addr *daddr6,
 	 *	Multicast NS		MUST add one	add the option
 	 *	Unicast NS		SHOULD add one	add the option
 	 */
-	if (!dad && (mac = nd6_ifptomac(ifp))) {
+	if (nonce == NULL && (mac = nd6_ifptomac(ifp))) {
 		int optlen = sizeof(struct nd_opt_hdr) + ifp->if_addrlen;
 		struct nd_opt_hdr *nd_opt = (struct nd_opt_hdr *)(nd_ns + 1);
 		/* 8 byte alignments... */
@@ -527,12 +527,30 @@ nd6_ns_output(struct ifnet *ifp, const struct in6_addr *daddr6,
 		memcpy((void *)(nd_opt + 1), mac, ifp->if_addrlen);
 	}
 
+	/* Add a nonce option (RFC 3971) to detect looped back NS messages.
+	 * This behavior is documented in RFC 7527. */
+	if (nonce != NULL) {
+		int optlen = sizeof(struct nd_opt_hdr) + ND_OPT_NONCE_LEN;
+		struct nd_opt_hdr *nd_opt = (struct nd_opt_hdr *)(nd_ns + 1);
+
+		/* 8-byte alignment is required. */
+		optlen = (optlen + 7) & ~7;
+		m->m_pkthdr.len += optlen;
+		m->m_len += optlen;
+		icmp6len += optlen;
+		memset(nd_opt, 0, optlen);
+		nd_opt->nd_opt_type = ND_OPT_NONCE;
+		nd_opt->nd_opt_len = optlen >> 3;
+		memcpy(nd_opt + 1, nonce, ND_OPT_NONCE_LEN);
+	}
+
 	ip6->ip6_plen = htons((u_int16_t)icmp6len);
 	nd_ns->nd_ns_cksum = 0;
 	nd_ns->nd_ns_cksum =
 	    in6_cksum(m, IPPROTO_ICMPV6, sizeof(*ip6), icmp6len);
 
-	ip6_output(m, NULL, &ro, dad ? IPV6_UNSPECSRC : 0, &im6o, NULL, NULL);
+	ip6_output(m, NULL, &ro, nonce != NULL ? IPV6_UNSPECSRC : 0,
+	    &im6o, NULL, NULL);
 	icmp6_ifstat_inc(ifp, ifs6_out_msg);
 	icmp6_ifstat_inc(ifp, ifs6_out_neighborsolicit);
 	ICMP6_STATINC(ICMP6_STAT_OUTHIST + ND_NEIGHBOR_SOLICIT);
@@ -1055,12 +1073,24 @@ TAILQ_HEAD(dadq_head, dadq);
 struct dadq {
 	TAILQ_ENTRY(dadq) dad_list;
 	struct ifaddr *dad_ifa;
-	int dad_count;		/* max NS to send */
-	int dad_ns_tcount;	/* # of trials to send NS */
-	int dad_ns_ocount;	/* NS sent so far */
+	int dad_count;			/* max NS to send */
+	int dad_ns_tcount;		/* # of trials to send NS */
+	int dad_ns_ocount;		/* NS sent so far */
 	int dad_ns_icount;
 	int dad_na_icount;
+	int dad_ns_lcount;		/* looped back NS */
 	struct callout dad_timer_ch;
+#define	ND_OPT_NONCE_STORE	3	/* dad_count should not exceed this */
+	/*
+	 * The default ip6_dad_count is 1 as specified by RFC 4862 and
+	 * practically must users won't exceed this.
+	 * A storage of 3 is defaulted to here, in-case the administrator wants
+	 * to match the equivalent behaviour in our ARP implementation.
+	 * This constraint could be removed by sending the on wire nonce as
+	 * hmac(key, dad_ns_ocount), but that would increase the nonce size
+	 * sent on the wire.
+	 */
+	uint8_t dad_nonce[ND_OPT_NONCE_STORE][ND_OPT_NONCE_LEN];
 };
 
 static struct dadq_head dadq;
@@ -1068,17 +1098,42 @@ static int dad_init = 0;
 static kmutex_t nd6_dad_lock;
 
 static struct dadq *
-nd6_dad_find(struct ifaddr *ifa)
+nd6_dad_find(struct ifaddr *ifa, struct nd_opt_nonce *nonce)
 {
 	struct dadq *dp;
+	int i, nonce_max;
 
 	KASSERT(mutex_owned(&nd6_dad_lock));
 
 	TAILQ_FOREACH(dp, &dadq, dad_list) {
-		if (dp->dad_ifa == ifa)
-			return dp;
+		if (dp->dad_ifa != ifa)
+			continue;
+
+		if (nonce == NULL ||
+		    nonce->nd_opt_nonce_len != (ND_OPT_NONCE_LEN + 2) / 8)
+			break;
+
+		nonce_max = MIN(dp->dad_ns_ocount, ND_OPT_NONCE_STORE);
+		for (i = 0; i < nonce_max; i++) {
+			if (memcmp(nonce->nd_opt_nonce,
+			    dp->dad_nonce[i],
+			    ND_OPT_NONCE_LEN) == 0)
+				break;
+		}
+		if (i < nonce_max) {
+			char ip6buf[INET6_ADDRSTRLEN];
+
+			log(LOG_DEBUG,
+			    "%s: detected a looped back NS message for %s\n",
+			    ifa->ifa_ifp ? if_name(ifa->ifa_ifp) : "???",
+			    IN6_PRINT(ip6buf, IFA_IN6(ifa)));
+			dp->dad_ns_lcount++;
+			continue;
+		}
+
+		break;
 	}
-	return NULL;
+	return dp;
 }
 
 static void
@@ -1149,7 +1204,7 @@ nd6_dad_start(struct ifaddr *ifa, int xtick)
 	dp = kmem_intr_alloc(sizeof(*dp), KM_NOSLEEP);
 
 	mutex_enter(&nd6_dad_lock);
-	if (nd6_dad_find(ifa) != NULL) {
+	if (nd6_dad_find(ifa, NULL) != NULL) {
 		mutex_exit(&nd6_dad_lock);
 		/* DAD already in progress */
 		if (dp != NULL)
@@ -1178,6 +1233,7 @@ nd6_dad_start(struct ifaddr *ifa, int xtick)
 	dp->dad_count = ip6_dad_count;
 	dp->dad_ns_icount = dp->dad_na_icount = 0;
 	dp->dad_ns_ocount = dp->dad_ns_tcount = 0;
+	dp->dad_ns_lcount = 0;
 	TAILQ_INSERT_TAIL(&dadq, (struct dadq *)dp, dad_list);
 
 	nd6log(LOG_DEBUG, "%s: starting DAD for %s\n", if_name(ifa->ifa_ifp),
@@ -1204,7 +1260,7 @@ nd6_dad_stop(struct ifaddr *ifa)
 		return;
 
 	mutex_enter(&nd6_dad_lock);
-	dp = nd6_dad_find(ifa);
+	dp = nd6_dad_find(ifa, NULL);
 	if (dp == NULL) {
 		mutex_exit(&nd6_dad_lock);
 		/* DAD wasn't started yet */
@@ -1340,9 +1396,10 @@ nd6_dad_duplicated(struct dadq *dp)
 	ifp = ifa->ifa_ifp;
 	ia = (struct in6_ifaddr *)ifa;
 	log(LOG_ERR, "%s: DAD detected duplicate IPv6 address %s: "
-	    "NS in/out=%d/%d, NA in=%d\n",
+	    "NS in/out/loopback=%d/%d/%d, NA in=%d\n",
 	    if_name(ifp), IN6_PRINT(ip6buf, &ia->ia_addr.sin6_addr),
-	    dp->dad_ns_icount, dp->dad_ns_ocount, dp->dad_na_icount);
+	    dp->dad_ns_icount, dp->dad_ns_ocount, dp->dad_ns_lcount,
+	    dp->dad_na_icount);
 
 	ia->ia6_flags &= ~IN6_IFF_TENTATIVE;
 	ia->ia6_flags |= IN6_IFF_DUPLICATED;
@@ -1396,6 +1453,7 @@ nd6_dad_ns_output(struct dadq *dp, struct ifaddr *ifa)
 {
 	struct in6_ifaddr *ia = (struct in6_ifaddr *)ifa;
 	struct ifnet *ifp = ifa->ifa_ifp;
+	uint8_t *nonce;
 
 	dp->dad_ns_tcount++;
 	if ((ifp->if_flags & IFF_UP) == 0) {
@@ -1412,12 +1470,15 @@ nd6_dad_ns_output(struct dadq *dp, struct ifaddr *ifa)
 	}
 
 	dp->dad_ns_tcount = 0;
+	nonce = dp->dad_nonce[dp->dad_ns_ocount % ND_OPT_NONCE_STORE];
+	cprng_fast(nonce, ND_OPT_NONCE_LEN);
 	dp->dad_ns_ocount++;
-	nd6_ns_output(ifp, NULL, &ia->ia_addr.sin6_addr, NULL, 1);
+
+	nd6_ns_output(ifp, NULL, &ia->ia_addr.sin6_addr, NULL, nonce);
 }
 
 static void
-nd6_dad_ns_input(struct ifaddr *ifa)
+nd6_dad_ns_input(struct ifaddr *ifa, struct nd_opt_nonce *nonce)
 {
 	struct in6_ifaddr *ia;
 	const struct in6_addr *taddr6;
@@ -1432,16 +1493,7 @@ nd6_dad_ns_input(struct ifaddr *ifa)
 	duplicate = 0;
 
 	mutex_enter(&nd6_dad_lock);
-	dp = nd6_dad_find(ifa);
-
-	/* Quickhack - completely ignore DAD NS packets */
-	if (dad_ignore_ns) {
-		char ip6buf[INET6_ADDRSTRLEN];
-		nd6log(LOG_INFO, "ignoring DAD NS packet for "
-		    "address %s(%s)\n", IN6_PRINT(ip6buf, taddr6),
-		    if_name(ifa->ifa_ifp));
-		return;
-	}
+	dp = nd6_dad_find(ifa, nonce);
 
 	/*
 	 * if I'm yet to start DAD, someone else started using this address
@@ -1473,7 +1525,7 @@ nd6_dad_na_input(struct ifaddr *ifa)
 	KASSERT(ifa != NULL);
 
 	mutex_enter(&nd6_dad_lock);
-	dp = nd6_dad_find(ifa);
+	dp = nd6_dad_find(ifa, NULL);
 	if (dp)
 		dp->dad_na_icount++;
 
