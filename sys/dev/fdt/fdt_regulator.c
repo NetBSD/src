@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_regulator.c,v 1.4 2017/09/22 15:33:21 jmcneill Exp $ */
+/* $NetBSD: fdt_regulator.c,v 1.5 2018/03/06 17:24:57 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_regulator.c,v 1.4 2017/09/22 15:33:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_regulator.c,v 1.5 2018/03/06 17:24:57 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -150,7 +150,7 @@ fdtbus_regulator_get_voltage(struct fdtbus_regulator *reg, u_int *puvol)
 {
 	struct fdtbus_regulator_controller *rc = reg->reg_rc;
 
-	if (rc->rc_funcs->set_voltage == NULL)
+	if (rc->rc_funcs->get_voltage == NULL)
 		return EINVAL;
 
 	return rc->rc_funcs->get_voltage(rc->rc_dev, puvol);
