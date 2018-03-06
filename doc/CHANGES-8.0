@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.136 2018/03/01 19:09:02 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.137 2018/03/06 08:53:41 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -9973,7 +9973,7 @@ sys/arch/alpha/alpha/pmap.c			1.262
 sys/arch/m68k/m68k/pmap_motorola.c		1.70
 sys/arch/powerpc/oea/pmap.c			1.95
 sys/arch/sparc64/sparc64/pmap.c			1.308
-sys/arch/x86/x86/pmap.c				1.266 (via patch)
+sys/arch/x86/x86/pmap.c				1.266 (via patch),1.267
 sys/dev/dtv/dtv_scatter.c			1.4
 sys/dev/marvell/mvxpsec.c			1.2
 sys/kern/subr_extent.c				1.86
