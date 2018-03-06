@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.260 2018/02/24 07:37:09 ozaki-r Exp $	*/
+/*	$NetBSD: in6.c,v 1.261 2018/03/06 07:20:41 ozaki-r Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.260 2018/02/24 07:37:09 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.261 2018/03/06 07:20:41 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2402,6 +2402,8 @@ struct in6_llentry {
 static void
 in6_lltable_destroy_lle(struct llentry *lle)
 {
+
+	KASSERT(lle->la_numheld == 0);
 
 	LLE_WUNLOCK(lle);
 	LLE_LOCK_DESTROY(lle);
