@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.222 2018/03/06 07:25:27 ozaki-r Exp $	*/
+/*	$NetBSD: in.c,v 1.223 2018/03/06 07:27:55 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.222 2018/03/06 07:25:27 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.223 2018/03/06 07:27:55 ozaki-r Exp $");
 
 #include "arp.h"
 
@@ -1918,10 +1918,6 @@ in_tunnel_validate(const struct ip *ip, struct in_addr src, struct in_addr dst)
 
 #if NARP > 0
 
-struct in_llentry {
-	struct llentry		base;
-};
-
 #define	IN_LLTBL_DEFAULT_HSIZE	32
 #define	IN_LLTBL_HASH(k, h) \
 	(((((((k >> 8) ^ k) >> 8) ^ k) >> 8) ^ k) & ((h) - 1))
@@ -1939,15 +1935,15 @@ in_lltable_destroy_lle(struct llentry *lle)
 
 	LLE_WUNLOCK(lle);
 	LLE_LOCK_DESTROY(lle);
-	kmem_intr_free(lle, sizeof(*lle));
+	llentry_pool_put(lle);
 }
 
 static struct llentry *
 in_lltable_new(struct in_addr addr4, u_int flags)
 {
-	struct in_llentry *lle;
+	struct llentry *lle;
 
-	lle = kmem_intr_zalloc(sizeof(*lle), KM_NOSLEEP);
+	lle = llentry_pool_get(PR_NOWAIT);
 	if (lle == NULL)		/* NB: caller generates msg */
 		return NULL;
 
@@ -1955,14 +1951,14 @@ in_lltable_new(struct in_addr addr4, u_int flags)
 	 * For IPv4 this will trigger "arpresolve" to generate
 	 * an ARP request.
 	 */
-	lle->base.la_expire = time_uptime; /* mark expired */
-	lle->base.r_l3addr.addr4 = addr4;
-	lle->base.lle_refcnt = 1;
-	lle->base.lle_free = in_lltable_destroy_lle;
-	LLE_LOCK_INIT(&lle->base);
-	callout_init(&lle->base.la_timer, CALLOUT_MPSAFE);
+	lle->la_expire = time_uptime; /* mark expired */
+	lle->r_l3addr.addr4 = addr4;
+	lle->lle_refcnt = 1;
+	lle->lle_free = in_lltable_destroy_lle;
+	LLE_LOCK_INIT(lle);
+	callout_init(&lle->la_timer, CALLOUT_MPSAFE);
 
-	return (&lle->base);
+	return lle;
 }
 
 #define IN_ARE_MASKED_ADDR_EQUAL(d, a, m)	(			\
