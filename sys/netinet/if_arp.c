@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.268 2018/03/01 14:40:57 roy Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.269 2018/03/06 07:19:03 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.268 2018/03/01 14:40:57 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.269 2018/03/06 07:19:03 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -315,11 +315,7 @@ arptimer(void *arg)
 	struct llentry *lle = arg;
 	struct ifnet *ifp;
 
-	if (lle == NULL)
-		return;
-
-	if (lle->la_flags & LLE_STATIC)
-		return;
+	KASSERT((lle->la_flags & LLE_STATIC) == 0);
 
 	LLE_WLOCK(lle);
 	if (callout_pending(&lle->la_timer)) {
@@ -371,6 +367,8 @@ arp_settimer(struct llentry *la, int sec)
 {
 
 	LLE_WLOCK_ASSERT(la);
+	KASSERT((la->la_flags & LLE_STATIC) == 0);
+
 	LLE_ADDREF(la);
 	callout_reset(&la->la_timer, hz * sec, arptimer, la);
 }
