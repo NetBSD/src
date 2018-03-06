@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1196.2.1 2018/03/06 05:41:51 pgoyette Exp $
+#	$NetBSD: files,v 1.1196.2.2 2018/03/06 09:55:59 pgoyette Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -82,9 +82,10 @@ defflag	opt_revcache.h		NAMECACHE_ENTER_REVERSE
 
 defflag	opt_exec.h		DEBUG_EXEC
 
-defflag	opt_execfmt.h		EXEC_AOUT EXEC_COFF EXEC_ECOFF EXEC_ELF32
+defflag	opt_execfmt.h		EXEC_AOUT EXEC_COFF EXEC_ECOFF
 				EXEC_ELF64 EXEC_SCRIPT
 				EXEC_ELF_NOTELESS
+defflag opt_execfmt.h		EXEC_ELF32 : COMPAT_NETBSD32
 
 defflag	opt_dkwedge.h		DKWEDGE_AUTODISCOVER
 				DKWEDGE_METHOD_BSDLABEL
@@ -157,7 +158,8 @@ defflag				COMPAT_SUNOS: COMPAT_30
 defflag	opt_compat_svr4.h	COMPAT_SVR4 COMPAT_SVR4_32 SVR4_COMPAT_SOLARIS2
 defflag				COMPAT_ULTRIX: COMPAT_50
 defflag				COMPAT_NETBSD32
-defflag				COMPAT_LINUX32 : COMPAT_LINUX, COMPAT_NETBSD32
+defflag				COMPAT_LINUX32 : COMPAT_LINUX, COMPAT_NETBSD32,
+						 COMPAT_50
 defflag				COMPAT_AOUT_M68K: COMPAT_40
 defflag				COMPAT_M68K4K
 defflag				COMPAT_VAX1K
