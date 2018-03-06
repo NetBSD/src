@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.62 2018/01/21 04:20:10 christos Exp $ */
+/*	$NetBSD: genfb.c,v 1.63 2018/03/06 07:49:36 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.62 2018/01/21 04:20:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.63 2018/03/06 07:49:36 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -611,8 +611,9 @@ genfb_putcmap(struct genfb_softc *sc, struct wsdisplay_cmap *cm)
 #ifdef GENFB_DEBUG
 	aprint_debug("putcmap: %d %d\n",index, count);
 #endif
-	if (index + count > 256)
+	if (index >= 256 || count > 256 || index + count > 256)
 		return EINVAL;
+
 	error = copyin(cm->red, &rbuf[index], count);
 	if (error)
 		return error;
@@ -646,7 +647,7 @@ genfb_getcmap(struct genfb_softc *sc, struct wsdisplay_cmap *cm)
 	u_int count = cm->count;
 	int error;
 
-	if (index >= 255 || count > 256 || index + count > 256)
+	if (index >= 256 || count > 256 || index + count > 256)
 		return EINVAL;
 
 	error = copyout(&sc->sc_cmap_red[index],   cm->red,   count);
