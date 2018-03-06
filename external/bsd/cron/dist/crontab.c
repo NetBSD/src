@@ -1,4 +1,4 @@
-/*	$NetBSD: crontab.c,v 1.14 2017/06/09 17:36:30 christos Exp $	*/
+/*	$NetBSD: crontab.c,v 1.15 2018/03/06 21:21:27 htodd Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -25,7 +25,7 @@
 #if 0
 static char rcsid[] = "Id: crontab.c,v 1.12 2004/01/23 18:56:42 vixie Exp";
 #else
-__RCSID("$NetBSD: crontab.c,v 1.14 2017/06/09 17:36:30 christos Exp $");
+__RCSID("$NetBSD: crontab.c,v 1.15 2018/03/06 21:21:27 htodd Exp $");
 #endif
 #endif
 
@@ -66,7 +66,7 @@ static	void		list_cmd(void),
 static	int		replace_cmd(void);
 static  int		allowed(const char *, const char *, const char *);
 static  int		in_file(const char *, FILE *, int);
-static  int 		relinguish_priv(void);
+static  int 		relinquish_priv(void);
 static  int 		regain_priv(void);
 
 static __dead void
@@ -265,7 +265,7 @@ parse_args(int argc, char *argv[]) {
 			 * the race.
 			 */
 
-			if (relinguish_priv() < OK) {
+			if (relinquish_priv() < OK) {
 				err(ERROR_EXIT, "swapping uids");
 			}
 			if (!(NewCrontab = fopen(Filename, "r"))) {
@@ -689,7 +689,7 @@ replace_cmd(void) {
 	    "# (%s installed on %-24.24s)\n", Filename, ctime(&now));
 	(void)fprintf(tmp,
 	    "# (Cron version %s -- %s)\n", CRON_VERSION,
-	    "$NetBSD: crontab.c,v 1.14 2017/06/09 17:36:30 christos Exp $");
+	    "$NetBSD: crontab.c,v 1.15 2018/03/06 21:21:27 htodd Exp $");
 
 	/* copy the crontab to the tmp
 	 */
@@ -882,7 +882,7 @@ in_file(const char *string, FILE *file, int error)
 
 #ifdef HAVE_SAVED_UIDS
 
-static int relinguish_priv(void) {
+static int relinquish_priv(void) {
 	return (setegid(rgid) || seteuid(ruid)) ? -1 : 0;
 }
 
@@ -892,7 +892,7 @@ static int regain_priv(void) {
 
 #else /*HAVE_SAVED_UIDS*/
 
-static int relinguish_priv(void) {
+static int relinquish_priv(void) {
 	return (setregid(egid, rgid) || setreuid(euid, ruid)) ? -1 : 0;
 }
 
