@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.93 2017/11/07 19:44:04 christos Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.93.2.1 2018/03/06 10:37:41 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005, 2015 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.93 2017/11/07 19:44:04 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.93.2.1 2018/03/06 10:37:41 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -1083,4 +1083,78 @@ elf_free_emul_arg(void *arg)
 	struct elf_args *ap = arg;
 	KASSERT(ap != NULL);
 	kmem_free(ap, sizeof(*ap));
+}
+
+void
+emul_find_root(struct lwp *l, struct exec_package *epp)
+{
+	struct vnode *vp;
+	const char *emul_path;
+
+	if (epp->ep_emul_root != NULL)
+		/* We've already found it */
+		return;
+
+	emul_path = epp->ep_esch->es_emul->e_path;
+	if (emul_path == NULL)
+		/* Emulation doesn't have a root */
+		return;
+
+	if (namei_simple_kernel(emul_path, NSM_FOLLOW_NOEMULROOT, &vp) != 0)
+		/* emulation root doesn't exist */
+		return;
+
+	epp->ep_emul_root = vp;
+}
+
+/*
+ * Search the alternate path for dynamic binary interpreter. If not found
+ * there, check if the interpreter exists in within 'proper' tree.
+ */
+int
+emul_find_interp(struct lwp *l, struct exec_package *epp, const char *itp)
+{
+	int error;
+	struct pathbuf *pb;
+	struct nameidata nd;
+	unsigned int flags;
+
+	pb = pathbuf_create(itp);
+	if (pb == NULL) {
+		return ENOMEM;
+	}
+
+	/* If we haven't found the emulation root already, do so now */
+	/* Maybe we should remember failures somehow ? */
+	if (epp->ep_esch->es_emul->e_path != 0 && epp->ep_emul_root == NULL)
+		emul_find_root(l, epp);
+
+	if (epp->ep_interp != NULL)
+		vrele(epp->ep_interp);
+
+	/* We need to use the emulation root for the new program,
+	 * not the one for the current process. */
+	if (epp->ep_emul_root == NULL)
+		flags = FOLLOW;
+	else {
+		nd.ni_erootdir = epp->ep_emul_root;
+		/* hack: Pass in the emulation path for ktrace calls */
+		nd.ni_next = epp->ep_esch->es_emul->e_path;
+		flags = FOLLOW | TRYEMULROOT | EMULROOTSET;
+	}
+
+	NDINIT(&nd, LOOKUP, flags, pb);
+	error = namei(&nd);
+	if (error != 0) {
+		epp->ep_interp = NULL;
+		pathbuf_destroy(pb);
+		return error;
+	}
+
+	/* Save interpreter in case we actually need to load it */
+	epp->ep_interp = nd.ni_vp;
+
+	pathbuf_destroy(pb);
+
+	return 0;
 }
