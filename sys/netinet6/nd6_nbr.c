@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.149 2018/03/06 10:57:00 roy Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.150 2018/03/06 11:21:31 martin Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.149 2018/03/06 10:57:00 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.150 2018/03/06 11:21:31 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1480,16 +1480,12 @@ nd6_dad_ns_output(struct dadq *dp, struct ifaddr *ifa)
 static void
 nd6_dad_ns_input(struct ifaddr *ifa, struct nd_opt_nonce *nonce)
 {
-	struct in6_ifaddr *ia;
-	const struct in6_addr *taddr6;
 	struct dadq *dp;
 	int duplicate;
 
 	if (ifa == NULL)
 		panic("ifa == NULL in nd6_dad_ns_input");
 
-	ia = (struct in6_ifaddr *)ifa;
-	taddr6 = &ia->ia_addr.sin6_addr;
 	duplicate = 0;
 
 	mutex_enter(&nd6_dad_lock);
