@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.261 2018/03/06 07:20:41 ozaki-r Exp $	*/
+/*	$NetBSD: in6.c,v 1.262 2018/03/06 07:24:01 ozaki-r Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.261 2018/03/06 07:20:41 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.262 2018/03/06 07:24:01 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2446,45 +2446,9 @@ in6_lltable_match_prefix(const struct sockaddr *prefix,
 static void
 in6_lltable_free_entry(struct lltable *llt, struct llentry *lle)
 {
-	struct ifnet *ifp = llt->llt_ifp;
-	bool locked = false;
 
 	LLE_WLOCK_ASSERT(lle);
-
-	/* Unlink entry from table */
-	if ((lle->la_flags & LLE_LINKED) != 0) {
-		IF_AFDATA_WLOCK_ASSERT(ifp);
-		lltable_unlink_entry(llt, lle);
-		KASSERT((lle->la_flags & LLE_LINKED) == 0);
-		locked = true;
-	}
-	/*
-	 * We need to release the lock here to lle_timer proceeds;
-	 * lle_timer should stop immediately if LLE_LINKED isn't set.
-	 * Note that we cannot pass lle->lle_lock to callout_halt
-	 * because it's a rwlock.
-	 */
-	LLE_ADDREF(lle);
-	LLE_WUNLOCK(lle);
-	if (locked)
-		IF_AFDATA_WUNLOCK(ifp);
-
-#ifdef NET_MPSAFE
-	callout_halt(&lle->lle_timer, NULL);
-#else
-	if (mutex_owned(softnet_lock))
-		callout_halt(&lle->lle_timer, softnet_lock);
-	else
-		callout_halt(&lle->lle_timer, NULL);
-#endif
-	LLE_WLOCK(lle);
-	LLE_REMREF(lle);
-
-	lltable_drop_entry_queue(lle);
-	LLE_FREE_LOCKED(lle);
-
-	if (locked)
-		IF_AFDATA_WLOCK(ifp);
+	(void) llentry_free(lle);
 }
 
 static int
