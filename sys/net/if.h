@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.258.2.1 2018/03/06 23:19:20 pgoyette Exp $	*/
+/*	$NetBSD: if.h,v 1.258.2.2 2018/03/06 23:24:11 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -89,6 +89,8 @@
 #include <sys/pserialize.h>
 #include <sys/psref.h>
 #endif
+
+#include <compat/sys/sockio.h>
 
 /*
  * Always include ALTQ glue here -- we use the ALTQ interface queue
