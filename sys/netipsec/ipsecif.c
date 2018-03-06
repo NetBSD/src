@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsecif.c,v 1.1.2.2 2018/02/11 21:17:34 snj Exp $  */
+/*	$NetBSD: ipsecif.c,v 1.1.2.3 2018/03/06 11:17:55 martin Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsecif.c,v 1.1.2.2 2018/02/11 21:17:34 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsecif.c,v 1.1.2.3 2018/03/06 11:17:55 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -266,7 +266,7 @@ ipsecif4_fragout(struct ipsec_variant *var, int family, struct mbuf *m, int mtu)
 
 	for (error = 0; m; m = next) {
 		next = m->m_nextpkt;
-		m->m_next = NULL;
+		m->m_nextpkt = NULL;
 		if (error) {
 			m_freem(m);
 			continue;
