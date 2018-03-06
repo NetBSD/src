@@ -8,9 +8,10 @@ ARM_MAX_ARCH=4
 ARM_MAX_ARCH=5
 .elif !empty(MACHINE_ARCH:Mearmv6*)
 ARM_MAX_ARCH=6
+.elif !empty(MACHINE_ARCH:Mearmv7*)
+ARM_MAX_ARCH=7
 .else
 ARM_MAX_ARCH=8
-CPUID_SRCS += arm64cpuid.S
 .endif
 CPPFLAGS += -D__ARM_MAX_ARCH__=${ARM_MAX_ARCH}
 .include "../../crypto.inc"
