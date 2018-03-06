@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.2,v 1.1.2.75 2018/03/03 20:26:52 snj Exp $
+# $NetBSD: CHANGES-7.2,v 1.1.2.76 2018/03/06 15:06:05 martin Exp $
 
 A complete list of changes from the NetBSD 7.1 release to the NetBSD 7.2
 release:
@@ -5290,4 +5290,9 @@ sys/netipsec/ipsec_input.c			1.57-1.58
 
 	Fix out-of-bounds read.
 	[maxv, ticket #1577]
+
+sys/arch/mips/mips/cache.c			1.59
+
+	Add missing call to mips_dcache_compute_align() affecting.
+	[flxd, ticket #1578]
 
