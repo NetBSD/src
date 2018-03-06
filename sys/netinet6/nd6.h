@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.h,v 1.85 2017/06/22 09:24:02 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.h,v 1.86 2018/03/06 10:57:00 roy Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -397,7 +397,7 @@ extern int ip6_temp_regen_advance; /* seconds */
 extern int nd6_numroutes;
 
 union nd_opts {
-	struct nd_opt_hdr *nd_opt_array[8];
+	struct nd_opt_hdr *nd_opt_array[16];	/* max = ND_OPT_NONCE */
 	struct {
 		struct nd_opt_hdr *zero;
 		struct nd_opt_hdr *src_lladdr;
@@ -405,6 +405,16 @@ union nd_opts {
 		struct nd_opt_prefix_info *pi_beg; /* multiple opts, start */
 		struct nd_opt_rd_hdr *rh;
 		struct nd_opt_mtu *mtu;
+		struct nd_opt_hdr *__res6;
+		struct nd_opt_hdr *__res7;
+		struct nd_opt_hdr *__res8;
+		struct nd_opt_hdr *__res9;
+		struct nd_opt_hdr *__res10;
+		struct nd_opt_hdr *__res11;
+		struct nd_opt_hdr *__res12;
+		struct nd_opt_hdr *__res13;
+		struct nd_opt_nonce *nonce;
+		struct nd_opt_hdr *__res15;
 		struct nd_opt_hdr *search;	/* multiple opts */
 		struct nd_opt_hdr *last;	/* multiple opts */
 		int done;
@@ -417,6 +427,7 @@ union nd_opts {
 #define nd_opts_pi_end		nd_opt_each.pi_end
 #define nd_opts_rh		nd_opt_each.rh
 #define nd_opts_mtu		nd_opt_each.mtu
+#define nd_opts_nonce		nd_opt_each.nonce
 #define nd_opts_search		nd_opt_each.search
 #define nd_opts_last		nd_opt_each.last
 #define nd_opts_done		nd_opt_each.done
@@ -454,7 +465,7 @@ void nd6_na_output(struct ifnet *, const struct in6_addr *,
 	const struct in6_addr *, u_long, int, const struct sockaddr *);
 void nd6_ns_input(struct mbuf *, int, int);
 void nd6_ns_output(struct ifnet *, const struct in6_addr *,
-	const struct in6_addr *, struct in6_addr *, int);
+	const struct in6_addr *, struct in6_addr *, uint8_t *);
 const void *nd6_ifptomac(const struct ifnet *);
 void nd6_dad_start(struct ifaddr *, int);
 void nd6_dad_stop(struct ifaddr *);
