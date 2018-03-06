@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpfs.c,v 1.63 2013/09/03 04:02:13 dholland Exp $	*/
+/*	$NetBSD: dumpfs.c,v 1.64 2018/03/06 07:45:38 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: dumpfs.c,v 1.63 2013/09/03 04:02:13 dholland Exp $");
+__RCSID("$NetBSD: dumpfs.c,v 1.64 2018/03/06 07:45:38 mlelstv Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: dumpfs.c,v 1.63 2013/09/03 04:02:13 dholland Exp $");
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/ufs_bswap.h>
 #include <ufs/ufs/ufs_wapbl.h>
+#include <ufs/ufs/quota.h>
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
 
@@ -405,6 +406,8 @@ print_superblock(struct fs *fs, uint16_t *opostbl,
 	    fs->fs_journallocs[0], fs->fs_journallocs[1]);
 	printf("\tloc2 %" PRIu64 "\tloc3 %" PRIu64 "\n",
 	    fs->fs_journallocs[2], fs->fs_journallocs[3]);
+	printf("usrquota %" PRIu64 "\tgrpquota %" PRIu64 "\n",
+		fs->fs_quotafile[USRQUOTA], fs->fs_quotafile[GRPQUOTA]);
 	printf("flags\t");
 	if (fs->fs_flags == 0)
 		printf("none");
