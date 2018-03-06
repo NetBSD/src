@@ -1,4 +1,4 @@
-/*	$NetBSD: if_llatbl.c,v 1.25 2018/03/06 07:25:27 ozaki-r Exp $	*/
+/*	$NetBSD: if_llatbl.c,v 1.26 2018/03/06 07:27:55 ozaki-r Exp $	*/
 /*
  * Copyright (c) 2004 Luigi Rizzo, Alessandro Cerri. All rights reserved.
  * Copyright (c) 2004-2008 Qing Li. All rights reserved.
@@ -67,6 +67,7 @@
 
 static SLIST_HEAD(, lltable) lltables;
 krwlock_t lltable_rwlock;
+static struct pool llentry_pool;
 
 static void lltable_unlink(struct lltable *llt);
 static void llentries_unlink(struct lltable *llt, struct llentries *head);
@@ -333,6 +334,24 @@ lltable_drop_entry_queue(struct llentry *lle)
 		 lle->la_numheld, pkts_dropped);
 
 	return (pkts_dropped);
+}
+
+struct llentry *
+llentry_pool_get(int flags)
+{
+	struct llentry *lle;
+
+	lle = pool_get(&llentry_pool, flags);
+	if (lle != NULL)
+		memset(lle, 0, sizeof(*lle));
+	return lle;
+}
+
+void
+llentry_pool_put(struct llentry *lle)
+{
+
+	pool_put(&llentry_pool, lle);
 }
 
 /*
@@ -747,6 +766,9 @@ lltableinit(void)
 
 	SLIST_INIT(&lltables);
 	rw_init(&lltable_rwlock);
+
+	pool_init(&llentry_pool, sizeof(struct llentry), 0, 0, 0, "llentrypl",
+	    NULL, IPL_SOFTNET);
 }
 
 #ifdef __FreeBSD__

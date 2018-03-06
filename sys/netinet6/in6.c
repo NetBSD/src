@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.263 2018/03/06 07:25:27 ozaki-r Exp $	*/
+/*	$NetBSD: in6.c,v 1.264 2018/03/06 07:27:55 ozaki-r Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.263 2018/03/06 07:25:27 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.264 2018/03/06 07:27:55 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2386,10 +2386,6 @@ in6_if2idlen(struct ifnet *ifp)
 	}
 }
 
-struct in6_llentry {
-	struct llentry		base;
-};
-
 #define	IN6_LLTBL_DEFAULT_HSIZE	32
 #define	IN6_LLTBL_HASH(k, h) \
 	(((((((k >> 8) ^ k) >> 8) ^ k) >> 8) ^ k) & ((h) - 1))
@@ -2407,25 +2403,25 @@ in6_lltable_destroy_lle(struct llentry *lle)
 
 	LLE_WUNLOCK(lle);
 	LLE_LOCK_DESTROY(lle);
-	kmem_intr_free(lle, sizeof(struct in6_llentry));
+	llentry_pool_put(lle);
 }
 
 static struct llentry *
 in6_lltable_new(const struct in6_addr *addr6, u_int flags)
 {
-	struct in6_llentry *lle;
+	struct llentry *lle;
 
-	lle = kmem_intr_zalloc(sizeof(struct in6_llentry), KM_NOSLEEP);
+	lle = llentry_pool_get(PR_NOWAIT);
 	if (lle == NULL)		/* NB: caller generates msg */
 		return NULL;
 
-	lle->base.r_l3addr.addr6 = *addr6;
-	lle->base.lle_refcnt = 1;
-	lle->base.lle_free = in6_lltable_destroy_lle;
-	LLE_LOCK_INIT(&lle->base);
-	callout_init(&lle->base.lle_timer, CALLOUT_MPSAFE);
+	lle->r_l3addr.addr6 = *addr6;
+	lle->lle_refcnt = 1;
+	lle->lle_free = in6_lltable_destroy_lle;
+	LLE_LOCK_INIT(lle);
+	callout_init(&lle->lle_timer, CALLOUT_MPSAFE);
 
-	return &lle->base;
+	return lle;
 }
 
 static int
