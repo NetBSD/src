@@ -1,4 +1,4 @@
-/*	$NetBSD: if_40.h,v 1.1.2.1 2018/03/06 23:17:42 pgoyette Exp $	*/
+/*	$NetBSD: if_40.h,v 1.1.2.2 2018/03/06 23:31:29 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -33,6 +33,10 @@
 #define	_COMPAT_IF_40_H_
 
 #if defined(COMPAT_40)
+
+#include <net/if.h>
+#include <compat/sys/sockio.h>
+
 extern u_long (*vec_compat_cvtcmd)(u_long); 
 extern int (*vec_compat_ifioctl)(struct socket *, u_long, u_long, 
     void *, struct lwp *);
