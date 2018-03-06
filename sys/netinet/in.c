@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.220 2018/03/06 07:20:41 ozaki-r Exp $	*/
+/*	$NetBSD: in.c,v 1.221 2018/03/06 07:24:01 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.220 2018/03/06 07:20:41 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.221 2018/03/06 07:24:01 ozaki-r Exp $");
 
 #include "arp.h"
 
@@ -1992,44 +1992,13 @@ in_lltable_match_prefix(const struct sockaddr *prefix,
 static void
 in_lltable_free_entry(struct lltable *llt, struct llentry *lle)
 {
-	struct ifnet *ifp __diagused;
 	size_t pkts_dropped;
-	bool locked = false;
 
 	LLE_WLOCK_ASSERT(lle);
 	KASSERT(llt != NULL);
 
-	/* Unlink entry from table if not already */
-	if ((lle->la_flags & LLE_LINKED) != 0) {
-		ifp = llt->llt_ifp;
-		IF_AFDATA_WLOCK_ASSERT(ifp);
-		lltable_unlink_entry(llt, lle);
-		locked = true;
-	}
-
-	/*
-	 * We need to release the lock here to lle_timer proceeds;
-	 * lle_timer should stop immediately if LLE_LINKED isn't set.
-	 * Note that we cannot pass lle->lle_lock to callout_halt
-	 * because it's a rwlock.
-	 */
-	LLE_ADDREF(lle);
-	LLE_WUNLOCK(lle);
-	if (locked)
-		IF_AFDATA_WUNLOCK(ifp);
-
-	/* cancel timer */
-	callout_halt(&lle->lle_timer, NULL);
-
-	LLE_WLOCK(lle);
-	LLE_REMREF(lle);
-
-	/* Drop hold queue */
 	pkts_dropped = llentry_free(lle);
 	arp_stat_add(ARP_STAT_DFRDROPPED, (uint64_t)pkts_dropped);
-
-	if (locked)
-		IF_AFDATA_WLOCK(ifp);
 }
 
 static int
