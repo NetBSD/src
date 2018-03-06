@@ -1,9 +1,9 @@
-/*	$NetBSD: uipc_syscalls_40.c,v 1.15.2.2 2018/03/06 22:46:41 pgoyette Exp $	*/
+/*	$NetBSD: uipc_syscalls_40.c,v 1.15.2.3 2018/03/06 23:17:42 pgoyette Exp $	*/
 
 /* written by Pavel Cahyna, 2006. Public domain. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_40.c,v 1.15.2.2 2018/03/06 22:46:41 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_40.c,v 1.15.2.3 2018/03/06 23:17:42 pgoyette Exp $");
 
 /*
  * System call interface to the socket abstraction.
@@ -20,6 +20,8 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_40.c,v 1.15.2.2 2018/03/06 22:46:41 pg
 
 #include <compat/sys/socket.h>
 #include <compat/sys/sockio.h>
+
+#include <compat/common/if_40.h>
 
 #ifdef COMPAT_OIFREQ
 /*
