@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.258 2018/01/15 13:05:40 maxv Exp $	*/
+/*	$NetBSD: if.h,v 1.258.2.1 2018/03/06 23:19:20 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -1332,5 +1332,11 @@ int	sysctl_ifq(int *name, u_int namelen, void *oldp,
 	{ "peak", CTLTYPE_INT }, \
 	{ "drops", CTLTYPE_INT }, \
 }
+
+/* compat function vectors */
+extern int (*vec_compat_ifdatareq)(struct lwp *, u_long, void *);
+extern void (*vec_compat_ifreqo2n)(struct oifreq *, struct ifreq *);
+extern int stub_compat_ifconf(u_long, void *);
+
 #endif /* _NETBSD_SOURCE */
 #endif /* !_NET_IF_H_ */
