@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.6 2018/03/06 08:14:17 skrll Exp $ */
+/* $NetBSD: armreg.h,v 1.7 2018/03/06 08:20:22 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -36,36 +36,36 @@
 
 #include <sys/types.h>
 
-#define AARCH64REG_READ_INLINE2(regname, regdesc)	\
-static uint64_t inline					\
-reg_##regname##_read(void)				\
-{							\
-	uint64_t __rv;					\
-	__asm("mrs %0, " #regdesc : "=r"(__rv));	\
-	return __rv;					\
+#define AARCH64REG_READ_INLINE2(regname, regdesc)		\
+static uint64_t inline						\
+reg_##regname##_read(void)					\
+{								\
+	uint64_t __rv;						\
+	__asm __volatile("mrs %0, " #regdesc : "=r"(__rv));	\
+	return __rv;						\
 }
 
-#define AARCH64REG_WRITE_INLINE2(regname, regdesc)	\
-static void inline					\
-reg_##regname##_write(uint64_t __val)			\
-{							\
-	__asm("msr " #regdesc ", %0" :: "r"(__val));	\
+#define AARCH64REG_WRITE_INLINE2(regname, regdesc)		\
+static void inline						\
+reg_##regname##_write(uint64_t __val)				\
+{								\
+	__asm __volatile("msr " #regdesc ", %0" :: "r"(__val));	\
 }
 
-#define AARCH64REG_WRITEIMM_INLINE2(regname, regdesc)	\
-static void inline					\
-reg_##regname##_write(uint64_t __val)			\
-{							\
-	__asm("msr " #regdesc ", %0" :: "n"(__val));	\
+#define AARCH64REG_WRITEIMM_INLINE2(regname, regdesc)		\
+static void inline						\
+reg_##regname##_write(uint64_t __val)				\
+{								\
+	__asm __volatile("msr " #regdesc ", %0" :: "n"(__val));	\
 }
 
-#define AARCH64REG_READ_INLINE(regname)			\
+#define AARCH64REG_READ_INLINE(regname)				\
 	AARCH64REG_READ_INLINE2(regname, regname)
 
-#define AARCH64REG_WRITE_INLINE(regname)		\
+#define AARCH64REG_WRITE_INLINE(regname)			\
 	AARCH64REG_WRITE_INLINE2(regname, regname)
 
-#define AARCH64REG_WRITEIMM_INLINE(regname)		\
+#define AARCH64REG_WRITEIMM_INLINE(regname)			\
 	AARCH64REG_WRITEIMM_INLINE2(regname, regname)
 /*
  * System registers available at EL0 (user)
