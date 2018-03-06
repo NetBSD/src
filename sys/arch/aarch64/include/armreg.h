@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.5 2018/03/06 07:36:09 skrll Exp $ */
+/* $NetBSD: armreg.h,v 1.6 2018/03/06 08:14:17 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -201,41 +201,41 @@ AARCH64REG_WRITE_INLINE(esr_el1)
 
 static const uintmax_t
     ESR_EC = 		__BITS(31,26), // Exception Cause
-     ESR_EC_UNKNOWN	= 0,	// AXX: Unknown Reason
-     ESR_EC_WFX		= 1,	// AXX: WFI or WFE instruction execution
-     ESR_EC_CP15_RT	= 3,	// A32: MCR/MRC access to CP15 !EC=0
-     ESR_EC_CP15_RRT	= 4,	// A32: MCRR/MRRC access to CP15 !EC=0
-     ESR_EC_CP14_RT	= 5,	// A32: MCR/MRC access to CP14
-     ESR_EC_CP14_DT	= 6,	// A32: LDC/STC access to CP14
-     ESR_EC_FP_ACCESS	= 7,	// AXX: Access to SIMD/FP Registers
-     ESR_EC_FPID	= 8,	// A32: MCR/MRC access to CP10 !EC=7
-     ESR_EC_CP14_RRT	= 12,	// A32: MRRC access to CP14
-     ESR_EC_ILL_STATE	= 14,	// AXX: Illegal Execution State
-     ESR_EC_SVC_A32	= 17,	// A32: SVC Instruction Execution
-     ESR_EC_HVC_A32	= 18,	// A32: HVC Instruction Execution
-     ESR_EC_SMC_A32	= 19,	// A32: SMC Instruction Execution
-     ESR_EC_SVC_A64	= 21,	// A64: SVC Instruction Execution
-     ESR_EC_HVC_A64	= 22,	// A64: HVC Instruction Execution
-     ESR_EC_SMC_A64	= 23,	// A64: SMC Instruction Execution
-     ESR_EC_SYS_REG	= 24,	// A64: MSR/MRS/SYS instruction (!EC0/1/7)
-     ESR_EC_INSN_ABT_EL0 = 32,	// AXX: Instruction Abort (EL0)
-     ESR_EC_INSN_ABT_EL1 = 33,	// AXX: Instruction Abort (EL1)
-     ESR_EC_PC_ALIGNMENT = 34,	// AXX: Misaligned PC
-     ESR_EC_DATA_ABT_EL0 = 36,	// AXX: Data Abort (EL0)
-     ESR_EC_DATA_ABT_EL1 = 37,	// AXX: Data Abort (EL1)
-     ESR_EC_SP_ALIGNMENT = 38,	// AXX: Misaligned SP
-     ESR_EC_FP_TRAP_A32 = 40,	// A32: FP Exception
-     ESR_EC_FP_TRAP_A64 = 44,	// A64: FP Exception
-     ESR_EC_SERROR	= 47,	// AXX: SError Interrupt
-     ESR_EC_BRKPNT_EL0 = 48,	// AXX: Breakpoint Exception (EL0)
-     ESR_EC_BRKPNT_EL1 = 49,	// AXX: Breakpoint Exception (EL1)
-     ESR_EC_SW_STEP_EL0 = 50,	// AXX: Software Step (EL0)
-     ESR_EC_SW_STEP_EL1 = 51,	// AXX: Software Step (EL1)
-     ESR_EC_WTCHPNT_EL0 = 52,	// AXX: Watchpoint (EL0)
-     ESR_EC_WTCHPNT_EL1 = 53,	// AXX: Watchpoint (EL1)
-     ESR_EC_BKPT_INSN_A32 = 56,	// A32: BKPT Instruction Execution
-     ESR_EC_VECTOR_CATCH = 58,	// A32: Vector Catch Exception
-     ESR_EC_BKPT_INSN_A64 = 60,	// A64: BKPT Instruction Execution
+     ESR_EC_UNKNOWN		= 0x00,	// AXX: Unknown Reason
+     ESR_EC_WFX			= 0x01,	// AXX: WFI or WFE instruction execution
+     ESR_EC_CP15_RT		= 0x03,	// A32: MCR/MRC access to CP15 !EC=0
+     ESR_EC_CP15_RRT		= 0x04,	// A32: MCRR/MRRC access to CP15 !EC=0
+     ESR_EC_CP14_RT		= 0x05,	// A32: MCR/MRC access to CP14
+     ESR_EC_CP14_DT		= 0x06,	// A32: LDC/STC access to CP14
+     ESR_EC_FP_ACCESS		= 0x07,	// AXX: Access to SIMD/FP Registers
+     ESR_EC_FPID		= 0x08,	// A32: MCR/MRC access to CP10 !EC=7
+     ESR_EC_CP14_RRT		= 0x0c,	// A32: MRRC access to CP14
+     ESR_EC_ILL_STATE		= 0x0e,	// AXX: Illegal Execution State
+     ESR_EC_SVC_A32		= 0x11,	// A32: SVC Instruction Execution
+     ESR_EC_HVC_A32		= 0x12,	// A32: HVC Instruction Execution
+     ESR_EC_SMC_A32		= 0x13,	// A32: SMC Instruction Execution
+     ESR_EC_SVC_A64		= 0x15,	// A64: SVC Instruction Execution
+     ESR_EC_HVC_A64		= 0x16,	// A64: HVC Instruction Execution
+     ESR_EC_SMC_A64		= 0x17,	// A64: SMC Instruction Execution
+     ESR_EC_SYS_REG		= 0x18,	// A64: MSR/MRS/SYS instruction (!EC0/1/7)
+     ESR_EC_INSN_ABT_EL0	= 0x20, // AXX: Instruction Abort (EL0)
+     ESR_EC_INSN_ABT_EL1	= 0x21, // AXX: Instruction Abort (EL1)
+     ESR_EC_PC_ALIGNMENT	= 0x22, // AXX: Misaligned PC
+     ESR_EC_DATA_ABT_EL0	= 0x24, // AXX: Data Abort (EL0)
+     ESR_EC_DATA_ABT_EL1	= 0x25, // AXX: Data Abort (EL1)
+     ESR_EC_SP_ALIGNMENT	= 0x26, // AXX: Misaligned SP
+     ESR_EC_FP_TRAP_A32		= 0x28,	// A32: FP Exception
+     ESR_EC_FP_TRAP_A64		= 0x2c,	// A64: FP Exception
+     ESR_EC_SERROR		= 0x2f,	// AXX: SError Interrupt
+     ESR_EC_BRKPNT_EL0		= 0x30,	// AXX: Breakpoint Exception (EL0)
+     ESR_EC_BRKPNT_EL1		= 0x31,	// AXX: Breakpoint Exception (EL1)
+     ESR_EC_SW_STEP_EL0		= 0x32,	// AXX: Software Step (EL0)
+     ESR_EC_SW_STEP_EL1		= 0x33,	// AXX: Software Step (EL1)
+     ESR_EC_WTCHPNT_EL0		= 0x34,	// AXX: Watchpoint (EL0)
+     ESR_EC_WTCHPNT_EL1		= 0x35,	// AXX: Watchpoint (EL1)
+     ESR_EC_BKPT_INSN_A32 = 0x38,	// A32: BKPT Instruction Execution
+     ESR_EC_VECTOR_CATCH = 0x3a,	// A32: Vector Catch Exception
+     ESR_EC_BKPT_INSN_A64 = 0x3c,	// A64: BKPT Instruction Execution
     ESR_IL = 		__BIT(25), // Instruction Length (1=32-bit)
     ESR_ISS = 		__BITS(24,0); // Instruction Specific Syndrome
 
