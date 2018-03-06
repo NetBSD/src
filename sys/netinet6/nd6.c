@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.246 2018/03/06 07:24:01 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.c,v 1.247 2018/03/06 10:57:00 roy Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.246 2018/03/06 07:24:01 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.247 2018/03/06 10:57:00 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -347,6 +347,7 @@ nd6_options(union nd_opts *ndopts)
 		case ND_OPT_TARGET_LINKADDR:
 		case ND_OPT_MTU:
 		case ND_OPT_REDIRECTED_HEADER:
+		case ND_OPT_NONCE:
 			if (ndopts->nd_opt_array[nd_opt->nd_opt_type]) {
 				nd6log(LOG_INFO,
 				    "duplicated ND6 option found (type=%d)\n",
@@ -554,7 +555,7 @@ nd6_llinfo_timer(void *arg)
 		psrc = nd6_llinfo_get_holdsrc(ln, &src);
 		LLE_FREE_LOCKED(ln);
 		ln = NULL;
-		nd6_ns_output(ifp, daddr6, taddr6, psrc, 0);
+		nd6_ns_output(ifp, daddr6, taddr6, psrc, NULL);
 	}
 
 out:
@@ -2420,7 +2421,7 @@ nd6_resolve(struct ifnet *ifp, const struct rtentry *rt, struct mbuf *m,
 		psrc = nd6_llinfo_get_holdsrc(ln, &src);
 		LLE_WUNLOCK(ln);
 		ln = NULL;
-		nd6_ns_output(ifp, NULL, &dst->sin6_addr, psrc, 0);
+		nd6_ns_output(ifp, NULL, &dst->sin6_addr, psrc, NULL);
 	} else {
 		/* We did the lookup so we need to do the unlock here. */
 		LLE_WUNLOCK(ln);
