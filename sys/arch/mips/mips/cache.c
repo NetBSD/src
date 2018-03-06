@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.48 2011/11/24 04:17:11 matt Exp $	*/
+/*	$NetBSD: cache.c,v 1.48.24.1 2018/03/06 15:04:49 martin Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.48 2011/11/24 04:17:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.48.24.1 2018/03/06 15:04:49 martin Exp $");
 
 #include "opt_cputype.h"
 #include "opt_mips_cache.h"
@@ -1231,5 +1231,7 @@ mips_config_cache_modern(uint32_t cpu_id)
 		mco->mco_intern_pdcache_wb_range =
 		    (void (*)(vaddr_t, vsize_t))cache_noop;
 	}
+
+	mips_dcache_compute_align();
 }
 #endif /* MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2 > 0 */
