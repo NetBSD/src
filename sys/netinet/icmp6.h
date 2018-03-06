@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.h,v 1.49 2018/01/23 10:55:38 maxv Exp $	*/
+/*	$NetBSD: icmp6.h,v 1.50 2018/03/06 10:57:00 roy Exp $	*/
 /*	$KAME: icmp6.h,v 1.84 2003/04/23 10:26:51 itojun Exp $	*/
 
 
@@ -305,10 +305,12 @@ struct nd_opt_hdr {		/* Neighbor discovery option header */
 #define ND_OPT_HOMEAGENT_INFO		8
 #define ND_OPT_SOURCE_ADDRLIST		9
 #define ND_OPT_TARGET_ADDRLIST		10
+#define ND_OPT_NONCE			14	/* RFC 3971 */
 #define ND_OPT_MAP			23	/* RFC 5380 */
 #define ND_OPT_ROUTE_INFO		24	/* RFC 4191 */
 #define ND_OPT_RDNSS			25	/* RFC 6016 */
 #define ND_OPT_DNSSL			31	/* RFC 6016 */
+#define ND_OPT_MAX			31
 
 struct nd_opt_route_info {	/* route info */
 	u_int8_t	nd_opt_rti_type;
@@ -346,6 +348,16 @@ struct nd_opt_mtu {		/* MTU option */
 	u_int8_t	nd_opt_mtu_len;
 	u_int16_t	nd_opt_mtu_reserved;
 	u_int32_t	nd_opt_mtu_mtu;
+} __packed;
+
+#define	ND_OPT_NONCE_LEN	((1 * 8) - 2)
+#if ((ND_OPT_NONCE_LEN + 2) % 8) != 0
+#error	"(ND_OPT_NONCE_LEN + 2) must be a multiple of 8."
+#endif
+struct nd_opt_nonce {
+	u_int8_t	nd_opt_nonce_type;
+	u_int8_t	nd_opt_nonce_len;
+	u_int8_t	nd_opt_nonce[ND_OPT_NONCE_LEN];
 } __packed;
 
 struct nd_opt_rdnss {		/* RDNSS option RFC 6106 */
