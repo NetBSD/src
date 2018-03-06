@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.344 2017/11/08 20:24:53 matt Exp $
+#	$NetBSD: BRANCHES,v 1.345 2018/03/06 00:15:24 pgoyette Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -887,21 +887,31 @@ Scope:		src/sys and src/common
 Notes:		Used as experiment sandbox and if successful hopefully one day
 		to be integrated.
 
+Branch:		pgoyette-compat
+Description:	clean-up of compat module
+Status:		Active
+Start Date:	Tues Mar 6, 2018
+End Date:
+Base Tag:	pgoyette-compat-base
+Maintainer:	pgoyette
+Scope:		src/
+Notes:
+
+
+########################################################################
+# Individual developers' branches (Terminated):
+########################################################################
+
 Branch:		prg-localcount2
 Description:	Implement localcount reference counting as proposed by
 		riastradh@ - supersedes abandonded pgoyette-localcount
-Status:		Active
+Status:		Suspended - core of the changes were merged to HEAD
 Start Date:	Wed Apr 26 2017
 End Date:	
 Base Tag:	prg-localcount2-base
 Maintainer:	pgoyette
 Scope:		src/sys/
 Notes:		
-
-
-########################################################################
-# Individual developers' branches (Terminated):
-########################################################################
 
 Branch:		pgoyette-localcount
 Description:	Implement localcount reference counting as proposed by
