@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.4 2018/03/06 07:31:57 skrll Exp $ */
+/* $NetBSD: armreg.h,v 1.5 2018/03/06 07:36:09 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -207,7 +207,7 @@ static const uintmax_t
      ESR_EC_CP15_RRT	= 4,	// A32: MCRR/MRRC access to CP15 !EC=0
      ESR_EC_CP14_RT	= 5,	// A32: MCR/MRC access to CP14
      ESR_EC_CP14_DT	= 6,	// A32: LDC/STC access to CP14
-     ESR_EC_FP_ACCCES	= 7,	// AXX: Access to SIMD/FP Registers
+     ESR_EC_FP_ACCESS	= 7,	// AXX: Access to SIMD/FP Registers
      ESR_EC_FPID	= 8,	// A32: MCR/MRC access to CP10 !EC=7
      ESR_EC_CP14_RRT	= 12,	// A32: MRRC access to CP14
      ESR_EC_ILL_STATE	= 14,	// AXX: Illegal Execution State
