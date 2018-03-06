@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.485.2.1 2018/03/06 04:45:04 pgoyette Exp $
+# $NetBSD: NOCOMPAT,v 1.1.2.1 2018/03/06 04:45:04 pgoyette Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.485.2.1 $"
+#ident		"GENERIC-$Revision: 1.1.2.1 $"
 
 maxusers	64		# estimated number of users
 
@@ -124,16 +124,16 @@ options 	KDTRACE_HOOKS	# kernel DTrace hooks
 # NetBSD backward compatibility. Support goes from COMPAT_15 up until
 # the latest release. Note that really old compat (< COMPAT_16) is only
 # useful for 32-bit i386 binaries.
-include 	"conf/compat_netbsd15.config"
+#include 	"conf/compat_netbsd15.config"
 
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 
 options 	COMPAT_OSSAUDIO
-options 	COMPAT_NETBSD32
-options 	COMPAT_LINUX
-options 	COMPAT_LINUX32	# requires COMPAT_LINUX and COMPAT_NETBSD32
+#options 	COMPAT_NETBSD32
+#options 	COMPAT_LINUX
+#options 	COMPAT_LINUX32	# requires COMPAT_LINUX and COMPAT_NETBSD32
 				# and COMPAT_50 (or older)
-options 	EXEC_ELF32	# requires COMPAT_NETBSD32
+#options 	EXEC_ELF32	# requires COMPAT_NETBSD32
 
 # Wedge support
 options 	DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances
