@@ -1,9 +1,9 @@
-/*	$NetBSD: uipc_syscalls_40.c,v 1.15.2.1 2018/03/06 05:46:06 pgoyette Exp $	*/
+/*	$NetBSD: uipc_syscalls_40.c,v 1.15.2.2 2018/03/06 22:46:41 pgoyette Exp $	*/
 
 /* written by Pavel Cahyna, 2006. Public domain. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_40.c,v 1.15.2.1 2018/03/06 05:46:06 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_40.c,v 1.15.2.2 2018/03/06 22:46:41 pgoyette Exp $");
 
 /*
  * System call interface to the socket abstraction.
@@ -153,7 +153,7 @@ release_exit:
 #endif
 #if defined(COMPAT_40)
 static int (*orig_compat_ifconf)(u_long, void *);
-static void (*orig_compat_ifconf(u_long, void *);
+static int (*orig_compat_ifconf)(u_long, void *);
  
 void      
 if_40_init(void)
