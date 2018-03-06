@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.216.6.3 2017/11/06 09:55:56 snj Exp $ */
+/* $NetBSD: vmstat.c,v 1.216.6.4 2018/03/06 11:15:33 martin Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.216.6.3 2017/11/06 09:55:56 snj Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.216.6.4 2018/03/06 11:15:33 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -1123,8 +1123,11 @@ drvstats(int *ovflwp)
 
 	for (dn = 0; dn < ndrive; ++dn) {
 		/* elapsed time for disk stats */
-		dtime = (double)cur.timestamp[dn].tv_sec +
-			((double)cur.timestamp[dn].tv_usec / (double)1000000);
+		dtime = cur.cp_etime;
+		if (cur.timestamp[dn].tv_sec || cur.timestamp[dn].tv_usec) {
+			dtime = (double)cur.timestamp[dn].tv_sec +
+				((double)cur.timestamp[dn].tv_usec / (double)1000000);
+		}
 
 		if (!drv_select[dn])
 	 		continue;
