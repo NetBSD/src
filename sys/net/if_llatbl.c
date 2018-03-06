@@ -1,4 +1,4 @@
-/*	$NetBSD: if_llatbl.c,v 1.24 2018/03/06 07:24:01 ozaki-r Exp $	*/
+/*	$NetBSD: if_llatbl.c,v 1.25 2018/03/06 07:25:27 ozaki-r Exp $	*/
 /*
  * Copyright (c) 2004 Luigi Rizzo, Alessandro Cerri. All rights reserved.
  * Copyright (c) 2004-2008 Qing Li. All rights reserved.
@@ -350,6 +350,8 @@ llentry_free(struct llentry *lle)
 	size_t pkts_dropped;
 
 	LLE_WLOCK_ASSERT(lle);
+
+	lle->la_flags |= LLE_DELETED;
 
 	if ((lle->la_flags & LLE_LINKED) != 0) {
 		llt = lle->lle_tbl;

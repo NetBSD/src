@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.262 2018/03/06 07:24:01 ozaki-r Exp $	*/
+/*	$NetBSD: in6.c,v 1.263 2018/03/06 07:25:27 ozaki-r Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.262 2018/03/06 07:24:01 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.263 2018/03/06 07:25:27 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2549,7 +2549,6 @@ in6_lltable_delete(struct lltable *llt, u_int flags,
 	}
 
 	LLE_WLOCK(lle);
-	lle->la_flags |= LLE_DELETED;
 #ifdef LLTABLE_DEBUG
 	{
 		char buf[64];
@@ -2558,10 +2557,7 @@ in6_lltable_delete(struct lltable *llt, u_int flags,
 		    __func__, buf, lle);
 	}
 #endif
-	if ((lle->la_flags & (LLE_STATIC | LLE_IFADDR)) == LLE_STATIC)
-		llentry_free(lle);
-	else
-		LLE_WUNLOCK(lle);
+	llentry_free(lle);
 
 	return 0;
 }

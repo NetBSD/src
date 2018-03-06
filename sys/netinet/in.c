@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.221 2018/03/06 07:24:01 ozaki-r Exp $	*/
+/*	$NetBSD: in.c,v 1.222 2018/03/06 07:25:27 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.221 2018/03/06 07:24:01 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.222 2018/03/06 07:25:27 ozaki-r Exp $");
 
 #include "arp.h"
 
@@ -2135,7 +2135,6 @@ in_lltable_delete(struct lltable *llt, u_int flags,
 	}
 
 	LLE_WLOCK(lle);
-	lle->la_flags |= LLE_DELETED;
 #ifdef LLTABLE_DEBUG
 	{
 		char buf[64];
@@ -2144,10 +2143,7 @@ in_lltable_delete(struct lltable *llt, u_int flags,
 		    __func__, buf, lle);
 	}
 #endif
-	if ((lle->la_flags & (LLE_STATIC | LLE_IFADDR)) == LLE_STATIC)
-		llentry_free(lle);
-	else
-		LLE_WUNLOCK(lle);
+	llentry_free(lle);
 
 	return (0);
 }
