@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.58 2018/01/19 23:38:56 macallan Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.59 2018/03/06 07:59:59 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -633,3 +633,15 @@ struct netbsd32_devrescanargs {
 #define DRVCTLCOMMAND32		_IOWR('D', 125, struct netbsd32_plistref)
 #define	DRVLISTDEV32		_IOWR('D', 127, struct netbsd32_devlistargs)
 #define DRVGETEVENT32		_IOR('D', 128, struct netbsd32_plistref)
+
+/* From sys/disk.h, sys/dkio.h */
+
+struct netbsd32_dkwedge_list {
+	void			*dkwl_buf;	/* storage for dkwedge_info array */
+	netbsd32_size_t		dkwl_bufsize;	/* size	of that	buffer */
+	u_int			dkwl_nwedges;	/* total number	of wedges */
+	u_int			dkwl_ncopied;	/* number actually copied */
+};
+
+#define DIOCLWEDGES32		_IOWR('d', 124, struct netbsd32_dkwedge_list)
+

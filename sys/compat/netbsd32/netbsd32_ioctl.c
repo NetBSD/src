@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.91 2018/01/19 23:38:56 macallan Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.92 2018/03/06 07:59:59 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.91 2018/01/19 23:38:56 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.92 2018/03/06 07:59:59 mlelstv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -535,6 +535,18 @@ netbsd32_to_devrescanargs(
 	p->locators = NETBSD32PTR64(s32p->locators);
 }
 
+static inline void
+netbsd32_to_dkwedge_list(
+    const struct netbsd32_dkwedge_list *s32p,
+    struct dkwedge_list *p,
+    u_long cmd)
+{
+	p->dkwl_buf = s32p->dkwl_buf;
+	p->dkwl_bufsize = s32p->dkwl_bufsize;
+	p->dkwl_nwedges = s32p->dkwl_nwedges;
+	p->dkwl_ncopied = s32p->dkwl_ncopied;
+}
+
 /*
  * handle ioctl conversions from 64-bit kernel -> netbsd32
  */
@@ -975,6 +987,18 @@ netbsd32_from_devrescanargs(
 	memcpy(s32p->ifattr, p->ifattr, sizeof(s32p->ifattr));
 	s32p->numlocators = p->numlocators;
 	NETBSD32PTR32(s32p->locators, p->locators);
+}
+
+static inline void
+netbsd32_from_dkwedge_list(
+    const struct dkwedge_list *p,
+    struct netbsd32_dkwedge_list *s32p,
+    u_long cmd)
+{
+	s32p->dkwl_buf = p->dkwl_buf;
+	s32p->dkwl_bufsize = p->dkwl_bufsize;
+	s32p->dkwl_nwedges = p->dkwl_nwedges;
+	s32p->dkwl_ncopied = p->dkwl_ncopied;
 }
 
 #ifdef NTP
@@ -1432,6 +1456,9 @@ netbsd32_ioctl(struct lwp *l, const struct netbsd32_ioctl_args *uap, register_t 
 		IOCTL_STRUCT_CONV_TO(DRVCTLCOMMAND, plistref);
 	case DRVGETEVENT32:
 		IOCTL_STRUCT_CONV_TO(DRVGETEVENT, plistref);
+
+	case DIOCLWEDGES32:
+		IOCTL_STRUCT_CONV_TO(DIOCLWEDGES, dkwedge_list);
 
 	default:
 #ifdef NETBSD32_MD_IOCTL
