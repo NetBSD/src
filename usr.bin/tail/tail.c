@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)tail.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tail.c,v 1.19 2017/10/02 08:23:23 wiz Exp $");
+__RCSID("$NetBSD: tail.c,v 1.20 2018/03/06 03:33:26 eadler Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -235,7 +235,7 @@ static void
 obsolete(char *argv[])
 {
 	char *ap, *p, *t;
-	int len;
+	size_t len;
 	char *start;
 
 	while ((ap = *++argv) != NULL) {
