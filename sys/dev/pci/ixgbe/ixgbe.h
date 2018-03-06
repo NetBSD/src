@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.24.6.4 2018/03/01 19:02:15 martin Exp $ */
+/* $NetBSD: ixgbe.h,v 1.24.6.5 2018/03/06 11:12:40 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -80,6 +80,7 @@
 #include <sys/kernel.h>
 #include <sys/module.h>
 #include <sys/sockio.h>
+#include <sys/percpu.h>
 
 #include <net/if.h>
 #include <net/if_arp.h>
@@ -331,6 +332,7 @@ struct ix_queue {
 	int              busy;
 	struct tx_ring   *txr;
 	struct rx_ring   *rxr;
+	struct work      wq_cookie;
 	void             *que_si;
 	struct evcnt     irqs;
 	char             namebuf[32];
@@ -360,6 +362,7 @@ struct tx_ring {
 	ixgbe_dma_tag_t		*txtag;
 	char			mtx_name[16];
 	pcq_t			*txr_interq;
+	struct work		wq_cookie;
 	void			*txr_si;
 
 	/* Flow Director */
@@ -498,6 +501,18 @@ struct adapter {
 	void			*fdir_si;
 
 	void			*phy_si;   /* PHY intr tasklet */
+
+	bool			txrx_use_workqueue;
+	struct workqueue	*que_wq;    /* workqueue for ixgbe_handle_que_work() */
+					    /*
+					     * que_wq's "enqueued flag" is not required,
+					     * because twice workqueue_enqueue() for
+					     * ixgbe_handle_que_work() is avoided by masking
+					     * the queue's interrupt by EIMC.
+					     * See also ixgbe_msix_que().
+					     */
+	struct workqueue	*txr_wq;    /* workqueue for ixgbe_deferred_mq_start_work() */
+	percpu_t		*txr_wq_enqueued;
 
 	/*
 	 * Queues:
@@ -714,6 +729,7 @@ int  ixgbe_legacy_start_locked(struct ifnet *, struct tx_ring *);
 int  ixgbe_mq_start(struct ifnet *, struct mbuf *);
 int  ixgbe_mq_start_locked(struct ifnet *, struct tx_ring *);
 void ixgbe_deferred_mq_start(void *);
+void ixgbe_deferred_mq_start_work(struct work *, void *);
 
 int  ixgbe_allocate_queues(struct adapter *);
 int  ixgbe_setup_transmit_structures(struct adapter *);
