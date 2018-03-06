@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc.c,v 1.34 2017/02/17 10:51:48 nonaka Exp $	*/
+/*	$NetBSD: sdmmc.c,v 1.35 2018/03/06 07:41:55 mlelstv Exp $	*/
 /*	$OpenBSD: sdmmc.c,v 1.18 2009/01/09 10:58:38 jsg Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.34 2017/02/17 10:51:48 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.35 2018/03/06 07:41:55 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -524,6 +524,7 @@ sdmmc_print(void *aux, const char *pnp)
 				printf("standard function interface code 0x%x",
 				    sf->interface);
 			printf(")");
+			i = 1;
 		}
 		printf("%sat %s", i ? " " : "", pnp);
 	}
