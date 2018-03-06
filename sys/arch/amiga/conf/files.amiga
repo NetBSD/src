@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.178 2016/10/03 14:26:02 rkujawa Exp $
+#	$NetBSD: files.amiga,v 1.179 2018/03/06 06:04:21 spz Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -254,7 +254,7 @@ device	xsh: xshbus
 attach	xsh at zbus
 file	arch/amiga/dev/xsh.c		xsh needs-flag
 
-attach	ne at xshbus with ne_xsh: ax88190
+attach	ne at xshbus with ne_xsh: ax88190, mii_bitbang
 file	arch/amiga/dev/if_ne_xsh.c	ne_xsh needs-flag
 
 # Hydra ethernet card
