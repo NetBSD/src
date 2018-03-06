@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mod.c,v 1.24 2016/11/05 23:30:22 pgoyette Exp $	*/
+/*	$NetBSD: compat_mod.c,v 1.24.14.1 2018/03/06 05:46:06 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.24 2016/11/05 23:30:22 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.24.14.1 2018/03/06 05:46:06 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -63,6 +63,16 @@ __KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.24 2016/11/05 23:30:22 pgoyette Exp
 
 #if defined(COMPAT_09) || defined(COMPAT_43) || defined(COMPAT_50)
 static struct sysctllog *compat_clog = NULL;
+#endif
+
+#ifdef COMPAT_40
+void if_40_init(void);
+void if_40_fini(void);
+#endif
+
+#ifdef COMPAT_50
+void if_50_init(void);
+void if_50_fini(void);
 #endif
 
 MODULE(MODULE_CLASS_EXEC, compat, NULL);
@@ -238,6 +248,12 @@ compat_modcmd(modcmd_t cmd, void *arg)
 		ttcompatvec = ttcompat;
 		if_43_init();
 #endif
+#ifdef COMPAT_40
+		if_40_init();
+#endif
+#ifdef COMPAT_50
+		if_50_init();
+#endif
 #ifdef COMPAT_16
 #if defined(COMPAT_SIGCONTEXT)
 		KASSERT(emul_netbsd.e_sigobject == NULL);
@@ -336,5 +352,8 @@ compat_sysctl_fini(void)
 #endif
 #if defined(COMPAT_43)
 	if_43_fini();
+#endif
+#ifdef COMPAT_50
+	if_50_fini();
 #endif
 }

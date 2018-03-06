@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.419 2018/01/30 10:40:02 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.419.2.1 2018/03/06 05:46:06 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.419 2018/01/30 10:40:02 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.419.2.1 2018/03/06 05:46:06 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -254,11 +254,45 @@ u_long (*vec_compat_cvtcmd)(u_long) = stub_compat_cvtcmd;
 int (*vec_compat_ifioctl)(struct socket *, u_long, u_long, void *,
 	struct lwp *) = NULL;
 
+/*
+ * And a few more
+ */
+int stub_compat_ifdatareq(struct lwp *, u_long, void *);
+int (*vec_compat_ifdatareq)(struct lwp *, u_long, void *) =
+    stub_compat_ifdatareq;
+
+void stub_compat_ifreqo2n(struct oifreq *, struct ifreq *);
+void (*vec_compat_ifreqo2n)(struct oifreq *, struct ifreq *) =
+    stub_compat_ifreqo2n;
+
+int stub_compat_ifconf(u_long, void *);
+int (*vec_compat_ifconf)(u_long, void *) = stub_compat_ifconf;
+
 /* The stub version of compat_cvtcmd() */
 u_long stub_compat_cvtcmd(u_long cmd)
 {
 
 	return cmd;
+}
+
+/* The stub version of compat_ifdatareq() */
+int stub_compat_ifdatareq(struct lwp *l, u_long cmd, void *data)
+{
+
+	return EINVAL;
+}
+
+/* The stub version of compat_ifreqo2n() */
+void stub_compat_ifreqo2n(struct oifreq *old, struct ifreq *new)
+{
+
+}
+
+/* The stub version of compat_ifconf() */
+int stub_compat_ifconf(u_long cmd, void *data)
+{
+
+	return EINVAL;
 }
 
 static int
@@ -3117,12 +3151,12 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 #ifdef COMPAT_OIFREQ
 	case OSIOCGIFCONF:
 	case OOSIOCGIFCONF:
-		return compat_ifconf(cmd, data);
+		return (*vec_compat_ifconf)(cmd, data);
 #endif
 #ifdef COMPAT_OIFDATA
 	case OSIOCGIFDATA:
 	case OSIOCZIFDATA:
-		return compat_ifdatareq(l, cmd, data);
+		return (*vec_compat_ifdatareq)(l, cmd, data);
 #endif
 	case SIOCGIFCONF:
 		return ifconf(cmd, data);
@@ -3135,7 +3169,7 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 	if (cmd != ocmd) {
 		oifr = data;
 		data = ifr = &ifrb;
-		ifreqo2n(oifr, ifr);
+		(*vec_compat_ifreqo2n)(oifr, ifr);
 	} else
 #endif
 		ifr = data;
@@ -3394,7 +3428,7 @@ ifreq_setaddr(u_long cmd, struct ifreq *ifr, const struct sockaddr *sa)
 	if (cmd != ocmd) {
 		oifr = (struct oifreq *)(void *)ifr;
 		ifr = &ifrb;
-		ifreqo2n(oifr, ifr);
+		(*vec_compat_ifreqo2n)(oifr, ifr);
 		len = sizeof(oifr->ifr_addr);
 	} else
 #endif
