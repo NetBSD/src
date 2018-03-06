@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.32 2018/03/02 10:19:20 knakahara Exp $ */
+/* $NetBSD: ixgbe.h,v 1.33 2018/03/06 03:47:23 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -332,6 +332,7 @@ struct ix_queue {
 	int              busy;
 	struct tx_ring   *txr;
 	struct rx_ring   *rxr;
+	struct work      wq_cookie;
 	void             *que_si;
 	struct evcnt     irqs;
 	char             namebuf[32];
@@ -339,8 +340,6 @@ struct ix_queue {
 
 	kmutex_t         im_mtx;	/* lock for im_nest and this queue's EIMS/EIMC bit */
 	int              im_nest;
-
-	struct work      wq_cookie;
 };
 
 /*
@@ -363,6 +362,7 @@ struct tx_ring {
 	ixgbe_dma_tag_t		*txtag;
 	char			mtx_name[16];
 	pcq_t			*txr_interq;
+	struct work		wq_cookie;
 	void			*txr_si;
 
 	/* Flow Director */
@@ -376,8 +376,6 @@ struct tx_ring {
 	struct evcnt		no_desc_avail;
 	struct evcnt		total_packets;
 	struct evcnt		pcq_drops;
-
-	struct work		wq_cookie;
 };
 
 
