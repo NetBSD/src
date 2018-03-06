@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.137 2018/03/06 08:53:41 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.138 2018/03/06 11:19:17 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -10027,4 +10027,63 @@ sys/arch/x86/include/Makefile			1.22
 
 	Do not install dbregs.h, it is a kernel-only header.
 	[kamil, ticket #599]
+
+sys/netipsec/ipsec_input.c			1.57-1.58
+
+	Fix an out-of-bound read (after authentication).
+	[maxv, ticket #600]
+
+sys/arch/mips/mips/cache.c			1.59
+
+	Add missing call to mips_dcache_compute_align().
+	[flxd, ticket #601]
+
+doc/CHANGES{,.prev}				1.138
+lib/libc/sys/ptrace.2				1.68
+sys/kern/sys_ptrace_common.c			1.35 (patch)
+sys/sys/ptrace.h				1.63
+tests/lib/libc/sys/t_ptrace_wait.c		1.23
+
+	Remove PT_GET_SIGMASK / PT_SET_SIGMASK.
+	[kamil, ticket #602]
+
+sys/arch/md64/conf/kern.ldscript		1.25 (patch)
+sys/arch/amd64/conf/kern.ldscript.Xen		1.14 (patch)
+sys/arch/i386/conf/kern.ldscript		1.21 (patch)
+sys/arch/i386/conf/kern.ldscript.Xen		1.15 (patch)
+sys/arch/x86/include/cpufunc.h			1.24 (patch)
+sys/arch/x86/x86/patch.c			1.25 (partial) 1.26 (partial)
+
+	Backport x86_hotpatch.
+	[maxv, ticket #603]
+
+sys/dev/pci/if_wm.c				1.565-1.566
+
+	- Fix a bug that wm_pll_workaround_i210() is not called on some
+	   cases.
+	- Rename function.
+	- Do wm_reset_mdicnfg_82580() on 82580 only.
+	[msaitoh, ticket #604]
+
+sys/dev/pci/ixgbe/ix_txrx.c			1.34
+sys/dev/pci/ixgbe/ixgbe.c			1.128
+sys/dev/pci/ixgbe/ixgbe.h			1.32-1.33
+sys/dev/pci/ixgbe/ixv.c				1.83-1.84
+
+	- Add hw.ixvM.q[01].{interrupt_rate,[tr]xd_head,[tr]xd_tail} sysctls
+	  like ixg(4).
+	- Add support for workqueue poll mode to ixg(4) and ixv(4), but
+	  do not enable them by default.
+	- Move the location of "struct work" in ixgbe.h.
+	[knakahara, ticket #605]
+
+usr.bin/vmstat/vmstat.c				1.218
+
+	Don't print "nan" when there is no disk activity.
+	[nakayama, ticket #606]
+
+sys/netipsec/ipsecif.c				1.3
+
+	Fix fragment processing in ipsec4_fragout().
+	[knakahara, ticket #607]
 
