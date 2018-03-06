@@ -1,4 +1,4 @@
-.\"	$NetBSD: ptrace.2,v 1.67 2017/06/03 19:41:14 abhinav Exp $
+.\"	$NetBSD: ptrace.2,v 1.67.2.1 2018/03/06 09:52:09 martin Exp $
 .\"
 .\" This file is in the public domain.
 .Dd April 7, 2017
@@ -561,31 +561,6 @@ The
 .Fa data
 argument should be set to
 .Li sizeof(struct ptrace_siginfo) .
-.It Dv PT_SET_SIGMASK
-This request loads the traced process' signal mask from
-.Dq Li "sigset_t"
-(defined in
-.In sys/sigtypes.h )
-pointed to by
-.Fa addr .
-The
-.Fa data
-argument contains the LWP ID of the thread whose registers are to
-be written.
-If zero is supplied, the first thread of the process is written.
-.It Dv PT_GET_SIGMASK
-This request is the converse of
-.Dv PT_SET_SIGMASK ;
-it reads the traced process' signal mask into
-.Dq Li "sigset_t"
-(defined in
-.In sys/sigtypes.h )
-pointed to by
-.Fa addr .
-The
-.Fa data
-argument contains the LWP ID of the thread whose mask is to be read.
-If zero is supplied, the first thread of the process is read.
 .It Dv PT_RESUME
 Allow execution of a specified thread,
 change its state from suspended to continued.

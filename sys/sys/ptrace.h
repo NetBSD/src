@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.60 2017/03/24 17:40:44 christos Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.60.6.1 2018/03/06 09:52:09 martin Exp $	*/
 
 /*-
  * Copyright (c) 1984, 1993
@@ -55,10 +55,8 @@
 #define	PT_GET_PROCESS_STATE	18	/* get process state, defined below */
 #define	PT_SET_SIGINFO		19	/* set signal state, defined below */
 #define	PT_GET_SIGINFO		20	/* get signal state, defined below */
-#define	PT_SET_SIGMASK		21	/* set signal mask */
-#define	PT_GET_SIGMASK		22	/* get signal mask */
-#define	PT_RESUME		23	/* allow execution of the LWP */
-#define	PT_SUSPEND		24	/* prevent execution of the LWP */
+#define	PT_RESUME		21	/* allow execution of the LWP */
+#define	PT_SUSPEND		22	/* prevent execution of the LWP */
 
 #define	PT_FIRSTMACH		32	/* for machine-specific requests */
 #include <machine/ptrace.h>		/* machine-specific requests, if any */
@@ -85,10 +83,8 @@
 /* 18 */    "PT_GET_PROCESS_STATE", \
 /* 19 */    "PT_SET_SIGINFO", \
 /* 20 */    "PT_GET_SIGINFO", \
-/* 21 */    "PT_GET_SIGMASK", \
-/* 22 */    "PT_GET_SIGMASK", \
-/* 23 */    "PT_RESUME", \
-/* 24 */    "PT_SUSPEND",
+/* 21 */    "PT_RESUME", \
+/* 22 */    "PT_SUSPEND",
 
 /* PT_{G,S}EVENT_MASK */
 typedef struct ptrace_event {

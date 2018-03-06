@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2286.2.2 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2286.2.3 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -355,6 +355,8 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	amd64: Use fine-grained permissions for architecture-specific memory
 		areas (W^X). [maxv 20160725]
 	sdtemp(4): Add support for Atmel AT30TS00, AT30TSE004, Giantec
+	kernel: SMBFS uses low-overhead NT Directory Change Notify SMB to watch
+		for vnode kqueue(2) events on directories [jdolecek 20030407]
 		GT30TS00, GT34TS02, Microchip MCP9804, MCP98244, IDT
 		TS3000GB[02], TS3001GB2, TSE200[24]GB2 and On Semiconductor
 		CAT34TS04. [msaitoh 20160726]
