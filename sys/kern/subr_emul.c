@@ -1,11 +1,11 @@
-/*	$NetBSD: compat_util.h,v 1.23.36.1 2018/03/07 09:33:26 pgoyette Exp $	*/
+/*	$NetBSD: subr_emul.c,v 1.1.2.1 2018/03/07 09:33:26 pgoyette Exp $	*/
 
 /*-
- * Copyright (c) 1994 The NetBSD Foundation, Inc.
+ * Copyright (c) 1994, 2000, 2005, 2015 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Christos Zoulas.
+ * by Christos Zoulas and Maxime Villard.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,7 @@
  */
 
 /*
- * Copyright (c) 1995 Frank van der Linden
- * Copyright (c) 2009 Matthew R. Green
+ * Copyright (c) 1996 Christopher G. Demetriou
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -55,27 +54,93 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
 
-#ifndef	_COMPAT_UTIL_H_
-#define	_COMPAT_UTIL_H_
+#include <sys/cdefs.h>
+__KERNEL_RCSID(1, "$NetBSD: subr_emul.c,v 1.1.2.1 2018/03/07 09:33:26 pgoyette Exp $");
 
-struct emul;
-struct proc;
-struct exec_package;
+#ifdef _KERNEL_OPT
+#include "opt_pax.h"
+#endif /* _KERNEL_OPT */
 
-struct emul_flags_xtab {
-	unsigned long omask;
-	unsigned long oval;
-	unsigned long nval;
-};
+#include <sys/param.h>
+#include <sys/proc.h>
+#include <sys/vnode.h>
+#include <sys/namei.h>
+#include <sys/exec.h>
 
-unsigned long emul_flags_translate(const struct emul_flags_xtab *tab,
-				   unsigned long in, unsigned long *leftover);
+#include <compat/common/compat_util.h>
 
-void compat_offseterr(struct vnode *, const char *);
+void
+emul_find_root(struct lwp *l, struct exec_package *epp)
+{
+	struct vnode *vp;
+	const char *emul_path;
 
-int compat_elf_check_interp(struct exec_package *, char *, const char *);
+	if (epp->ep_emul_root != NULL)
+		/* We've already found it */
+		return;
 
-#endif /* !_COMPAT_UTIL_H_ */
+	emul_path = epp->ep_esch->es_emul->e_path;
+	if (emul_path == NULL)
+		/* Emulation doesn't have a root */
+		return;
+
+	if (namei_simple_kernel(emul_path, NSM_FOLLOW_NOEMULROOT, &vp) != 0)
+		/* emulation root doesn't exist */
+		return;
+
+	epp->ep_emul_root = vp;
+}
+
+/*
+ * Search the alternate path for dynamic binary interpreter. If not found
+ * there, check if the interpreter exists in within 'proper' tree.
+ */
+int
+emul_find_interp(struct lwp *l, struct exec_package *epp, const char *itp)
+{
+	int error;
+	struct pathbuf *pb;
+	struct nameidata nd;
+	unsigned int flags;
+
+	pb = pathbuf_create(itp);
+	if (pb == NULL) {
+		return ENOMEM;
+	}
+
+	/* If we haven't found the emulation root already, do so now */
+	/* Maybe we should remember failures somehow ? */
+	if (epp->ep_esch->es_emul->e_path != 0 && epp->ep_emul_root == NULL)
+		emul_find_root(l, epp);
+
+	if (epp->ep_interp != NULL)
+		vrele(epp->ep_interp);
+
+	/* We need to use the emulation root for the new program,
+	 * not the one for the current process. */
+	if (epp->ep_emul_root == NULL)
+		flags = FOLLOW;
+	else {
+		nd.ni_erootdir = epp->ep_emul_root;
+		/* hack: Pass in the emulation path for ktrace calls */
+		nd.ni_next = epp->ep_esch->es_emul->e_path;
+		flags = FOLLOW | TRYEMULROOT | EMULROOTSET;
+	}
+
+	NDINIT(&nd, LOOKUP, flags, pb);
+	error = namei(&nd);
+	if (error != 0) {
+		epp->ep_interp = NULL;
+		pathbuf_destroy(pb);
+		return error;
+	}
+
+	/* Save interpreter in case we actually need to load it */
+	epp->ep_interp = nd.ni_vp;
+
+	pathbuf_destroy(pb);
+
+	return 0;
+}
