@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.177 2018/03/03 03:19:36 mrg Exp $
+# $NetBSD: GENERIC,v 1.178 2018/03/07 09:44:22 mrg Exp $
 #
 # GENERIC machine description file
 # 
@@ -25,7 +25,7 @@ include 	"arch/sun3/conf/std.sun3"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.177 $"
+#ident		"GENERIC-$Revision: 1.178 $"
 
 makeoptions	COPTS="-Os"		# bootloader has size limit (~2MB)
 
@@ -48,7 +48,7 @@ options 	SYSVSHM		# System V shared memory
 #options 	INSECURE	# disable kernel security level
 #options 	USERCONF	# userconf(4) support
 options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
-options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Alternate buffer queue strategies for better responsiveness under high
 # disk I/O load.
