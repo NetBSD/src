@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.216 2018/03/07 20:46:05 maya Exp $	*/
+/*	$NetBSD: locore.S,v 1.217 2018/03/07 20:48:00 maya Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,7 +63,7 @@
 #include <mips/trap.h>
 #include <mips/locore.h>
 
-RCSID("$NetBSD: locore.S,v 1.216 2018/03/07 20:46:05 maya Exp $")
+RCSID("$NetBSD: locore.S,v 1.217 2018/03/07 20:48:00 maya Exp $")
 
 #include "assym.h"
 
@@ -142,14 +142,6 @@ _C_LABEL(kernel_text):
 	PTR_LA	gp, _C_LABEL(_gp)
 #endif
 
-#ifdef NOFPU /* No FPU; avoid touching FPU registers */
-#else /* NOFPU */
-	mfc0	t0, MIPS_COP_0_STATUS
-	MFC0_HAZARD
-	or	t0, MIPS_SR_COP_1_BIT		# Disable interrupts, and
-	mtc0	t0, MIPS_COP_0_STATUS		# enable the fp coprocessor
-	COP0_HAZARD_FPUENABLE
-#endif
 	mfc0	t0, MIPS_COP_0_PRID		# read product revision ID
 	COP0_SYNC
 	nop
