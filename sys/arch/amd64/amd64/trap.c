@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.96 2017/04/24 17:03:43 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.96.4.1 2018/03/07 14:50:56 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.96 2017/04/24 17:03:43 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.96.4.1 2018/03/07 14:50:56 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -126,6 +126,8 @@ dtrace_trap_func_t	dtrace_trap_func = NULL;
 dtrace_doubletrap_func_t	dtrace_doubletrap_func = NULL;
 #endif
 
+void nmitrap(struct trapframe *);
+void doubletrap(struct trapframe *);
 void trap(struct trapframe *);
 void trap_return_fault_return(struct trapframe *) __dead;
 
@@ -210,6 +212,39 @@ trap_print(const struct trapframe *frame, const lwp_t *l)
 	    l, l->l_proc->p_pid, l->l_lid, KSTACK_LOWEST_ADDR(l));
 }
 
+void
+nmitrap(struct trapframe *frame)
+{
+	const int type = T_NMI;
+
+	if (nmi_dispatch(frame))
+		return;
+	/* NMI can be hooked up to a pushbutton for debugging */
+	if (kgdb_trap(type, frame))
+		return;
+	if (kdb_trap(type, 0, frame))
+		return;
+	/* machine/parity/power fail/"kitchen sink" faults */
+
+	x86_nmi();
+}
+
+void
+doubletrap(struct trapframe *frame)
+{
+	const int type = T_DOUBLEFLT;
+	struct lwp *l = curlwp;
+
+	trap_print(frame, l);
+
+	if (kdb_trap(type, 0, frame))
+		return;
+	if (kgdb_trap(type, frame))
+		return;
+
+	panic("double fault");
+}
+
 /*
  * trap(frame): exception, fault, and trap interface to BSD kernel.
  *
@@ -257,7 +292,7 @@ trap(struct trapframe *frame)
 		trap_print(frame, l);
 	}
 #endif
-	if (type != T_NMI && !KERNELMODE(frame->tf_cs, frame->tf_rflags)) {
+	if (!KERNELMODE(frame->tf_cs, frame->tf_rflags)) {
 		type |= T_USER;
 		l->l_md.md_regs = frame;
 		LWP_CACHE_CREDS(l, p);
@@ -747,19 +782,6 @@ faultcommon:
 			(*p->p_emul->e_trapsignal)(l, &ksi);
 		}
 		break;
-
-	case T_NMI:
-		if (nmi_dispatch(frame))
-			return;
-		/* NMI can be hooked up to a pushbutton for debugging */
-		if (kgdb_trap(type, frame))
-			return;
-		if (kdb_trap(type, 0, frame))
-			return;
-		/* machine/parity/power fail/"kitchen sink" faults */
-
-		x86_nmi();
-		return;
 	}
 
 	if ((type & T_USER) == 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.123.6.2 2017/09/04 20:41:28 snj Exp $	*/
+/*	$NetBSD: locore.S,v 1.123.6.3 2018/03/07 14:50:56 martin Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1282,6 +1282,7 @@ IDTVEC(syscall)
 	pushq	$T_ASTFLT
 	subq	$TF_REGSIZE,%rsp
 	INTR_SAVE_GPRS
+	cld
 	movw	%fs,TF_FS(%rsp)
 	movw	%gs,TF_GS(%rsp)
 	movw	%es,TF_ES(%rsp)
@@ -1468,3 +1469,16 @@ ENTRY(pagezero)
 	sfence
 	ret
 END(pagezero)
+
+	_ALIGN_TEXT
+LABEL(intrfastexit)
+	INTR_RESTORE_GPRS
+	testq	$SEL_UPL,TF_CS(%rsp)
+	je	99f
+	NOT_XEN(cli;)
+	movw	TF_ES(%rsp),%es
+	movw	TF_DS(%rsp),%ds
+	SWAPGS
+99:	addq	$TF_REGSIZE+16,%rsp
+	iretq
+END(intrfastexit)
