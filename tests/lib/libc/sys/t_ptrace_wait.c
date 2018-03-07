@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.23 2018/03/05 11:24:34 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.24 2018/03/07 10:53:55 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.23 2018/03/05 11:24:34 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.24 2018/03/07 10:53:55 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -500,7 +500,7 @@ ATF_TC_BODY(attach2, tc)
 
 	DPRINTF("Wait for tracee to finish its job and exit - calling %s()\n",
 	    TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(tracee, &status, WNOHANG),
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(tracee, &status, 0),
 	    tracee);
 
 	validate_status_exited(status, exitval_tracee);
