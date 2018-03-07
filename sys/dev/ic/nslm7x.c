@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7x.c,v 1.70 2017/08/18 04:07:51 msaitoh Exp $ */
+/*	$NetBSD: nslm7x.c,v 1.71 2018/03/07 09:25:56 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.70 2017/08/18 04:07:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.71 2018/03/07 09:25:56 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2155,6 +2155,7 @@ static const struct wb_product wbsio_products[] = {
     { WBSIO_ID_NCT6792D,    "NCT6792D", nct6779d_sensors, NULL },
     { WBSIO_ID_NCT6793D,    "NCT6793D", nct6779d_sensors, NULL },
     { WBSIO_ID_NCT6795D,    "NCT6795D", nct6779d_sensors, NULL },
+    { WBSIO_ID_NCT6796D,    "NCT6796D", nct6779d_sensors, NULL },
     { 0, NULL, NULL, NULL }
 };
 
