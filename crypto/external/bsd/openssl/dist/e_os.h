@@ -32,7 +32,8 @@ extern "C" {
 /*
  * BIO_printf format modifier for [u]int64_t.
  */
-# if defined(__LP64__) || (defined(__SIZEOF_LONG__) && __SIZEOF_LONG__==8)
+# if !defined(__aarch64__) && (defined(__LP64__) || \
+     (defined(__SIZEOF_LONG__) && __SIZEOF_LONG__ == 8))
 #  define BIO_PRI64 "l"     /* 'll' does work "universally", but 'l' is
                              * here to shut -Wformat warnings in LP64... */
 # else
