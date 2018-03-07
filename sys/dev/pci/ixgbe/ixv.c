@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.85 2018/03/07 03:29:10 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.86 2018/03/07 08:01:32 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -959,10 +959,9 @@ ixv_msix_que(void *arg)
 	rxr->packets = 0;
 
 no_calc:
-	if (more) {
-		que->req.ev_count++;
+	if (more)
 		softint_schedule(que->que_si);
-	} else /* Re-enable this interrupt */
+	else /* Re-enable this interrupt */
 		ixv_enable_queue(adapter, que->msix);
 
 	return 1;
