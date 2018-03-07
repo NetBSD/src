@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.215 2018/03/07 20:43:53 maya Exp $	*/
+/*	$NetBSD: locore.S,v 1.216 2018/03/07 20:46:05 maya Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,7 +63,7 @@
 #include <mips/trap.h>
 #include <mips/locore.h>
 
-RCSID("$NetBSD: locore.S,v 1.215 2018/03/07 20:43:53 maya Exp $")
+RCSID("$NetBSD: locore.S,v 1.216 2018/03/07 20:46:05 maya Exp $")
 
 #include "assym.h"
 
@@ -171,11 +171,6 @@ _C_LABEL(kernel_text):
 	mtc0	k0, MIPS_COP_0_STATUS
 #endif
 
-#ifdef NOFPU /* No FPU; avoid touching FPU registers */
-	add	t1, zero, zero
-#else
-	cfc1	t1, MIPS_FPU_ID			# read FPU ID register
-#endif
 	INT_S	t0, _C_LABEL(mips_options)+MO_CPU_ID # save PRID register
 	INT_S	t1, _C_LABEL(mips_options)+MO_FPU_ID # save FPU ID register
 	PTR_LA	MIPS_CURLWP, _C_LABEL(lwp0)	# set curlwp
