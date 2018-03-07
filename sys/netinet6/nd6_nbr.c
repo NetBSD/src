@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.150 2018/03/06 11:21:31 martin Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.151 2018/03/07 01:37:24 ozaki-r Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.150 2018/03/06 11:21:31 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.151 2018/03/07 01:37:24 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1347,7 +1347,8 @@ nd6_dad_timer(struct dadq *dp)
 		}
 
 		if (duplicate) {
-			/* (*dp) will be freed in nd6_dad_duplicated() */
+			nd6_dad_duplicated(dp);
+			/* (*dp) has been freed in nd6_dad_duplicated() */
 			dp = NULL;
 		} else {
 			/*
@@ -1367,9 +1368,6 @@ nd6_dad_timer(struct dadq *dp)
 		}
 	}
 done:
-	if (duplicate)
-		nd6_dad_duplicated(dp);
-
 	mutex_exit(&nd6_dad_lock);
 
 	if (need_free) {
@@ -1501,7 +1499,8 @@ nd6_dad_ns_input(struct ifaddr *ifa, struct nd_opt_nonce *nonce)
 	/* XXX more checks for loopback situation - see nd6_dad_timer too */
 
 	if (duplicate) {
-		nd6_dad_duplicated(dp);
+		if (dp)
+			nd6_dad_duplicated(dp);
 	} else {
 		/*
 		 * not sure if I got a duplicate.
@@ -1522,11 +1521,12 @@ nd6_dad_na_input(struct ifaddr *ifa)
 
 	mutex_enter(&nd6_dad_lock);
 	dp = nd6_dad_find(ifa, NULL);
-	if (dp)
+	if (dp) {
 		dp->dad_na_icount++;
 
-	/* remove the address. */
-	nd6_dad_duplicated(dp);
+		/* remove the address. */
+		nd6_dad_duplicated(dp);
+	}
 
 	mutex_exit(&nd6_dad_lock);
 }
