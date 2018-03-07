@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.212 2018/03/07 15:49:45 maya Exp $	*/
+/*	$NetBSD: locore.S,v 1.213 2018/03/07 15:52:43 maya Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,7 +63,7 @@
 #include <mips/trap.h>
 #include <mips/locore.h>
 
-RCSID("$NetBSD: locore.S,v 1.212 2018/03/07 15:49:45 maya Exp $")
+RCSID("$NetBSD: locore.S,v 1.213 2018/03/07 15:52:43 maya Exp $")
 
 #include "assym.h"
 
@@ -92,6 +92,15 @@ _C_LABEL(kernel_text):
 	or	k0, MIPS_SR_KX | MIPS_SR_UX
 	mtc0	k0, MIPS_COP_0_STATUS
 #endif
+
+#ifdef HPCMIPS_L1CACHE_DISABLE
+	mfc0	t0, MIPS_COP_0_CONFIG
+	li	t1, 0xfffffff8
+	and	t0, t0, t1
+	or	t0, 0x00000002			# XXX, KSEG0 is uncached
+	mtc0	t0, MIPS_COP_0_CONFIG
+	COP0_SYNC
+#endif /* HPCMIPS_L1CACHE_DISABLE */
 
 #ifdef MIPS64_OCTEON
 	//
@@ -145,14 +154,6 @@ _C_LABEL(kernel_text):
 	mtc0	t0, MIPS_COP_0_STATUS		# the fp coprocessor
 	COP0_SYNC
 #endif /* !emips */
-#ifdef HPCMIPS_L1CACHE_DISABLE
-	mfc0	t0, MIPS_COP_0_CONFIG
-	li	t1, 0xfffffff8
-	and	t0, t0, t1
-	or	t0, 0x00000002			# XXX, KSEG0 is uncached
-	mtc0	t0, MIPS_COP_0_CONFIG
-	COP0_SYNC
-#endif /* HPCMIPS_L1CACHE_DISABLE */
 #else /* NOFPU */
 	mfc0	t0, MIPS_COP_0_STATUS
 	MFC0_HAZARD
