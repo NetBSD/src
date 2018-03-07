@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.88.8.1 2017/08/01 23:18:30 snj Exp $
+#	$NetBSD: files.amd64,v 1.88.8.2 2018/03/07 14:50:57 martin Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -35,6 +35,7 @@ file	arch/amd64/amd64/copy.S			machdep
 file	arch/amd64/amd64/spl.S			machdep
 
 file	arch/amd64/amd64/amd64func.S		machdep
+file	arch/amd64/amd64/amd64_trap.S		machdep
 file	arch/amd64/amd64/autoconf.c		machdep
 file	arch/amd64/amd64/busfunc.S		machdep
 file	arch/amd64/amd64/cpu_in_cksum.S		(inet | inet6) & cpu_in_cksum

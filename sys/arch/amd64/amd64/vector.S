@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.49 2017/05/23 08:54:38 nonaka Exp $	*/
+/*	$NetBSD: vector.S,v 1.49.2.1 2018/03/07 14:50:56 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -85,11 +85,7 @@
 #include "lapic.h"
 #include "assym.h"
 
-#include "amd64_trap.S"
-
-/*****************************************************************************/
-
-#define __HAVE_GENERIC_SOFT_INTERRUPTS	/* XXX */
+	.text
 
 /*
  * Macros for interrupt entry, call to handler, and exit.

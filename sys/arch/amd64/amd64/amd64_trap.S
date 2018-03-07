@@ -1,11 +1,11 @@
-/*	$NetBSD: amd64_trap.S,v 1.5 2017/03/24 18:03:32 maxv Exp $	*/
+/*	$NetBSD: amd64_trap.S,v 1.5.6.1 2018/03/07 14:50:56 martin Exp $	*/
 
-/*-
- * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
+/*
+ * Copyright (c) 1998, 2007, 2008, 2017 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Charles M. Hannum and by Andrew Doran.
+ * by Charles M. Hannum, by Andrew Doran and by Maxime Villard.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -64,10 +64,19 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if 0
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: amd64_trap.S,v 1.5 2017/03/24 18:03:32 maxv Exp $");
-#endif
+
+#include "opt_xen.h"
+#include "opt_dtrace.h"
+
+#define ALIGN_TEXT	.align 16,0x90
+
+#include <machine/frameasm.h>
+#include <machine/segments.h>
+#include <machine/trap.h>
+#include <machine/specialreg.h>
+
+#include "assym.h"
 
 /*
  * Trap and fault vector routines
@@ -78,12 +87,10 @@ __KERNEL_RCSID(0, "$NetBSD: amd64_trap.S,v 1.5 2017/03/24 18:03:32 maxv Exp $");
  * (possibly the next clock tick).  Thus, we disable interrupt before checking,
  * and only enable them again on the final `iret' or before calling the AST
  * handler.
- */ 
-
-/*****************************************************************************/
+ */
 
 #ifdef	XEN
-#define	PRE_TRAP	movq (%rsp),%rcx ; movq 8(%rsp),%r11 ; addq $0x10,%rsp 
+#define	PRE_TRAP	movq (%rsp),%rcx ; movq 8(%rsp),%r11 ; addq $0x10,%rsp
 #else
 #define	PRE_TRAP
 #endif
@@ -118,10 +125,10 @@ IDTVEC(trap02)
 #if defined(XEN)
 	ZTRAP(T_NMI)
 #else
-	pushq	$0
-	pushq	$T_NMI
+	ZTRAP_NJ(T_NMI)
 	subq	$TF_REGSIZE,%rsp
 	INTR_SAVE_GPRS
+	cld
 	movw	%gs,TF_GS(%rsp)
 	movw	%fs,TF_FS(%rsp)
 	movw	%es,TF_ES(%rsp)
@@ -130,23 +137,21 @@ IDTVEC(trap02)
 	movl	$MSR_GSBASE,%ecx
 	rdmsr
 	cmpl	$VM_MIN_KERNEL_ADDRESS_HIGH32,%edx
-	jae	noswapgs
+	jae	.Lnoswapgs
 
 	swapgs
 	movq	%rsp,%rdi
 	incq	CPUVAR(NTRAP)
-	call	_C_LABEL(trap)
+	call	_C_LABEL(nmitrap)
 	swapgs
-	jmp	nmileave
+	jmp	.Lnmileave
 
-noswapgs:
+.Lnoswapgs:
 	movq	%rsp,%rdi
 	incq	CPUVAR(NTRAP)
-	call	_C_LABEL(trap)
+	call	_C_LABEL(nmitrap)
 
-nmileave:
-	movw	TF_ES(%rsp),%es
-	movw	TF_DS(%rsp),%ds
+.Lnmileave:
 	INTR_RESTORE_GPRS
 	addq	$TF_REGSIZE+16,%rsp
 	iretq
@@ -179,21 +184,6 @@ IDTVEC(trap03)
 	/* Jump to the code hooked in by DTrace. */
 	movq	dtrace_invop_jump_addr, %rax
 	jmpq	*dtrace_invop_jump_addr
-
-	.bss
-	.globl	dtrace_invop_jump_addr
-	.align	8
-	.type	dtrace_invop_jump_addr, @object
-	.size	dtrace_invop_jump_addr, 8
-dtrace_invop_jump_addr:
-	.zero	8
-	.globl	dtrace_invop_calltrap_addr
-	.align	8
-	.type	dtrace_invop_calltrap_addr, @object
-	.size	dtrace_invop_calltrap_addr, 8
-dtrace_invop_calltrap_addr:
-	.zero	8
-	.text
 #endif
 IDTVEC_END(trap03)
 
@@ -214,23 +204,55 @@ IDTVEC(trap07)
 	INTRENTRY
 #ifdef DIAGNOSTIC
 	movl	CPUVAR(ILEVEL),%ebx
-#endif /* DIAGNOSTIC */
+#endif
 	movq	%rsp,%rdi
 	call	_C_LABEL(fpudna)
 	jmp	.Lalltraps_checkusr
 IDTVEC_END(trap07)
 
+/*
+ * Double faults execute on a particular stack, and we must not jump out
+ * of it. So don't enable interrupts.
+ */
 IDTVEC(trap08)
+#if defined(XEN)
 	TRAP(T_DOUBLEFLT)
+#else
+	TRAP_NJ(T_DOUBLEFLT)
+	subq	$TF_REGSIZE,%rsp
+	INTR_SAVE_GPRS
+	testb	$SEL_UPL,TF_CS(%rsp)
+	jz	1f
+	swapgs
+1:
+	cld
+	movw	%gs,TF_GS(%rsp)
+	movw	%fs,TF_FS(%rsp)
+	movw	%es,TF_ES(%rsp)
+	movw	%ds,TF_DS(%rsp)
+
+	movq	%rsp,%rdi
+	incq	CPUVAR(NTRAP)
+	call	_C_LABEL(doubletrap)
+
+	INTR_RESTORE_GPRS
+
+	testb	$SEL_UPL,TF_CS(%rsp)
+	jz	1f
+	swapgs
+1:
+	addq	$TF_REGSIZE+16,%rsp
+	iretq
+#endif
 IDTVEC_END(trap08)
 
 IDTVEC(trap09)
 	ZTRAP(T_FPOPFLT)
 IDTVEC_END(trap09)
 
-IDTVEC(trap0a)
+IDTVEC(trap10)
 	TRAP(T_TSSFLT)
-IDTVEC_END(trap0a)
+IDTVEC_END(trap10)
 
 #ifdef XEN
 /*
@@ -241,21 +263,115 @@ IDTVEC_END(trap0a)
 #define check_swapgs alltraps
 #endif
 
-IDTVEC(trap0b)		/* #NP() Segment not present */
+IDTVEC(trap11)		/* #NP() Segment not present */
 	TRAP_NJ(T_SEGNPFLT)
 	jmp	check_swapgs
-IDTVEC_END(trap0b)
+IDTVEC_END(trap11)
 
-IDTVEC(trap0c)		/* #SS() Stack exception */
+IDTVEC(trap12)		/* #SS() Stack exception */
 	TRAP_NJ(T_STKFLT)
 	jmp	check_swapgs
-IDTVEC_END(trap0c)
+IDTVEC_END(trap12)
 
-IDTVEC(trap0d)		/* #GP() General protection */
+IDTVEC(trap13)		/* #GP() General protection */
 	TRAP_NJ(T_PROTFLT)
-#ifdef check_swapgs
 	jmp	check_swapgs
-#else
+IDTVEC_END(trap13)
+
+IDTVEC(trap14)
+	TRAP(T_PAGEFLT)
+IDTVEC_END(trap14)
+
+IDTVEC(trap15)
+	ZTRAP_NJ(T_ASTFLT)
+	INTRENTRY
+#ifdef DIAGNOSTIC
+	movl	CPUVAR(ILEVEL),%ebx
+#endif
+	jmp	.Lalltraps_checkusr
+IDTVEC_END(trap15)
+
+IDTVEC(trap16)
+	ZTRAP_NJ(T_ARITHTRAP)
+.Ldo_fputrap:
+	INTRENTRY
+#ifdef DIAGNOSTIC
+	movl	CPUVAR(ILEVEL),%ebx
+#endif
+	movq	%rsp,%rdi
+	call	_C_LABEL(fputrap)
+	jmp	.Lalltraps_checkusr
+IDTVEC_END(trap16)
+
+IDTVEC(trap17)
+	TRAP(T_ALIGNFLT)
+IDTVEC_END(trap17)
+
+IDTVEC(trap18)
+	ZTRAP(T_MCA)
+IDTVEC_END(trap18)
+
+IDTVEC(trap19)
+	ZTRAP_NJ(T_XMM)
+	jmp	.Ldo_fputrap
+IDTVEC_END(trap19)
+
+IDTVEC(trap20)
+IDTVEC(trap21)
+IDTVEC(trap22)
+IDTVEC(trap23)
+IDTVEC(trap24)
+IDTVEC(trap25)
+IDTVEC(trap26)
+IDTVEC(trap27)
+IDTVEC(trap28)
+IDTVEC(trap29)
+IDTVEC(trap30)
+IDTVEC(trap31)
+	/* 20 - 31 reserved for future exp */
+	ZTRAP(T_RESERVED)
+IDTVEC_END(trap20)
+IDTVEC_END(trap21)
+IDTVEC_END(trap22)
+IDTVEC_END(trap23)
+IDTVEC_END(trap24)
+IDTVEC_END(trap25)
+IDTVEC_END(trap26)
+IDTVEC_END(trap27)
+IDTVEC_END(trap28)
+IDTVEC_END(trap29)
+IDTVEC_END(trap30)
+IDTVEC_END(trap31)
+
+IDTVEC(intrspurious)
+	ZTRAP_NJ(T_ASTFLT)
+	INTRENTRY
+#ifdef DIAGNOSTIC
+	movl	CPUVAR(ILEVEL),%ebx
+#endif
+	jmp	.Lalltraps_checkusr
+IDTVEC_END(intrspurious)
+
+
+/*
+ * trap() calls here when it detects a fault in INTRFASTEXIT (loading the
+ * segment registers or during the iret itself). The address of the (possibly
+ * reconstructed) user trap frame is passed as an argument.
+ *
+ * Typically the code will have raised a SIGSEGV which will be actioned
+ * by the code below.
+ */
+	.type	_C_LABEL(trap_return_fault_return), @function
+LABEL(trap_return_fault_return)
+	mov	%rdi,%rsp		/* frame for user return */
+#ifdef DIAGNOSTIC
+	/* We can't recover the saved %rbx, so suppress warning */
+	movl	CPUVAR(ILEVEL),%ebx
+#endif
+	jmp	.Lalltraps_checkusr
+END(trap_return_fault_return)
+
+#ifndef check_swapgs
 /*
  * We need to worry about traps in kernel mode while the kernel %gs isn't
  * loaded. These are either faults on iretq during return to user or loads to
@@ -264,7 +380,7 @@ IDTVEC(trap0d)		/* #GP() General protection */
  * When such traps happen, we have CPL=0 and %gs=userland, and we must perform
  * an additional swapgs to get %gs=kernel.
  */
-check_swapgs:
+NENTRY(check_swapgs)
 	INTRENTRY_L(3f,1:)
 2:
 	sti
@@ -289,112 +405,8 @@ check_swapgs:
 	cmpw	$0x8e+050*256,%ax	/* Any move to %gs (reg 5) */
 	jne	2b			/* No - normal kernel fault */
 	jmp	1b			/* Yes - restore %gs */
+END(check_swapgs)
 #endif
-IDTVEC_END(trap0d)
-
-IDTVEC(trap0e)
-	TRAP(T_PAGEFLT)
-IDTVEC_END(trap0e)
-
-IDTVEC(intrspurious)
-IDTVEC(trap0f)
-	ZTRAP_NJ(T_ASTFLT)
-	INTRENTRY
-#ifdef DIAGNOSTIC
-	movl	CPUVAR(ILEVEL),%ebx
-#endif /* DIAGNOSTIC */
-	jmp	.Lalltraps_checkusr
-IDTVEC_END(trap0f)
-IDTVEC_END(intrspurious)
-
-IDTVEC(trap10)
-	ZTRAP_NJ(T_ARITHTRAP)
-.Ldo_fputrap:
-	INTRENTRY
-#ifdef DIAGNOSTIC
-	movl	CPUVAR(ILEVEL),%ebx
-#endif /* DIAGNOSTIC */
-	movq	%rsp,%rdi
-	call	_C_LABEL(fputrap)
-	jmp	.Lalltraps_checkusr
-IDTVEC_END(trap10)
-
-IDTVEC(trap11)
-	TRAP(T_ALIGNFLT)
-IDTVEC_END(trap11)
-
-IDTVEC(trap12)
-	ZTRAP(T_MCA)
-IDTVEC_END(trap12)
-
-IDTVEC(trap13)
-	ZTRAP_NJ(T_XMM)
-	jmp	.Ldo_fputrap
-IDTVEC_END(trap13)
-
-IDTVEC(trap14)
-IDTVEC(trap15)
-IDTVEC(trap16)
-IDTVEC(trap17)
-IDTVEC(trap18)
-IDTVEC(trap19)
-IDTVEC(trap1a)
-IDTVEC(trap1b)
-IDTVEC(trap1c)
-IDTVEC(trap1d)
-IDTVEC(trap1e)
-IDTVEC(trap1f)
-	/* 20 - 31 reserved for future exp */
-	ZTRAP(T_RESERVED)
-IDTVEC_END(trap1f)
-IDTVEC_END(trap1e)
-IDTVEC_END(trap1d)
-IDTVEC_END(trap1c)
-IDTVEC_END(trap1b)
-IDTVEC_END(trap1a)
-IDTVEC_END(trap19)
-IDTVEC_END(trap18)
-IDTVEC_END(trap17)
-IDTVEC_END(trap16)
-IDTVEC_END(trap15)
-IDTVEC_END(trap14)
-
-IDTVEC(exceptions)
-	.quad	_C_LABEL(Xtrap00), _C_LABEL(Xtrap01)
-	.quad	_C_LABEL(Xtrap02), _C_LABEL(Xtrap03)
-	.quad	_C_LABEL(Xtrap04), _C_LABEL(Xtrap05)
-	.quad	_C_LABEL(Xtrap06), _C_LABEL(Xtrap07)
-	.quad	_C_LABEL(Xtrap08), _C_LABEL(Xtrap09)
-	.quad	_C_LABEL(Xtrap0a), _C_LABEL(Xtrap0b)
-	.quad	_C_LABEL(Xtrap0c), _C_LABEL(Xtrap0d)
-	.quad	_C_LABEL(Xtrap0e), _C_LABEL(Xtrap0f)
-	.quad	_C_LABEL(Xtrap10), _C_LABEL(Xtrap11)
-	.quad	_C_LABEL(Xtrap12), _C_LABEL(Xtrap13)
-	.quad	_C_LABEL(Xtrap14), _C_LABEL(Xtrap15)
-	.quad	_C_LABEL(Xtrap16), _C_LABEL(Xtrap17)
-	.quad	_C_LABEL(Xtrap18), _C_LABEL(Xtrap19)
-	.quad	_C_LABEL(Xtrap1a), _C_LABEL(Xtrap1b)
-	.quad	_C_LABEL(Xtrap1c), _C_LABEL(Xtrap1d)
-	.quad	_C_LABEL(Xtrap1e), _C_LABEL(Xtrap1f)
-IDTVEC_END(exceptions)
-
-/*
- * trap() calls here when it detects a fault in INTRFASTEXIT (loading the
- * segment registers or during the iret itself).
- * The address of the (possibly reconstructed) user trap frame is
- * passed as an argument.
- * Typically the code will have raised a SIGSEGV which will be actioned
- * by the code below.
- */
-	.type	_C_LABEL(trap_return_fault_return), @function
-LABEL(trap_return_fault_return)
-	mov	%rdi,%rsp		/* frame for user return */
-#ifdef DIAGNOSTIC
-	/* We can't recover the saved %rbx, so suppress warning */
-	movl	CPUVAR(ILEVEL),%ebx
-#endif /* DIAGNOSTIC */
-	jmp	.Lalltraps_checkusr
-END(trap_return_fault_return)
 
 /*
  * All traps go through here. Call the generic trap handler, and
@@ -407,13 +419,15 @@ NENTRY(alltraps)
 calltrap:
 #ifdef DIAGNOSTIC
 	movl	CPUVAR(ILEVEL),%ebx
-#endif /* DIAGNOSTIC */
+#endif
 	movq	%rsp,%rdi
 	incq	CPUVAR(NTRAP)
 	call	_C_LABEL(trap)
+
 .Lalltraps_checkusr:
 	testb	$SEL_RPL,TF_CS(%rsp)
 	jz	6f
+
 .Lalltraps_checkast:
 	movq	CPUVAR(CURLWP),%r14
 	/* Check for ASTs on exit to user mode. */
@@ -429,13 +443,21 @@ calltrap:
 	jmp	.Lalltraps_checkast	/* re-check ASTs */
 3:	CHECK_DEFERRED_SWITCH
 	jnz	9f
-#ifndef DIAGNOSTIC
-6:	INTRFASTEXIT
-#else /* DIAGNOSTIC */
-6:	cmpl	CPUVAR(ILEVEL),%ebx
-	jne	3f
+
+6:
+#ifdef DIAGNOSTIC
+	cmpl	CPUVAR(ILEVEL),%ebx
+	jne	.Lspl_error
+#endif
 	INTRFASTEXIT
-3:	STI(si)
+
+9:	STI(si)
+	call	_C_LABEL(do_pmap_load)
+	jmp	.Lalltraps_checkast	/* re-check ASTs */
+
+#ifdef DIAGNOSTIC
+.Lspl_error:
+	STI(si)
 	movabsq	$4f,%rdi
 	movl	CPUVAR(ILEVEL),%esi
 	movl	%ebx,%edx
@@ -445,8 +467,43 @@ calltrap:
 	call	_C_LABEL(spllower)
 	jmp	.Lalltraps_checkast
 4:	.asciz	"WARNING: SPL NOT LOWERED ON TRAP EXIT %x %x\n"
-#endif /* DIAGNOSTIC */
-9:	STI(si)
-	call	_C_LABEL(do_pmap_load)
-	jmp	.Lalltraps_checkast	/* re-check ASTs */
+#endif
 END(alltraps)
+
+#ifdef KDTRACE_HOOKS
+	.bss
+	.globl	dtrace_invop_jump_addr
+	.align	8
+	.type	dtrace_invop_jump_addr, @object
+	.size	dtrace_invop_jump_addr, 8
+dtrace_invop_jump_addr:
+	.zero	8
+	.globl	dtrace_invop_calltrap_addr
+	.align	8
+	.type	dtrace_invop_calltrap_addr, @object
+	.size	dtrace_invop_calltrap_addr, 8
+dtrace_invop_calltrap_addr:
+	.zero	8
+#endif
+
+	.section .rodata
+
+IDTVEC(exceptions)
+	.quad	_C_LABEL(Xtrap00), _C_LABEL(Xtrap01)
+	.quad	_C_LABEL(Xtrap02), _C_LABEL(Xtrap03)
+	.quad	_C_LABEL(Xtrap04), _C_LABEL(Xtrap05)
+	.quad	_C_LABEL(Xtrap06), _C_LABEL(Xtrap07)
+	.quad	_C_LABEL(Xtrap08), _C_LABEL(Xtrap09)
+	.quad	_C_LABEL(Xtrap10), _C_LABEL(Xtrap11)
+	.quad	_C_LABEL(Xtrap12), _C_LABEL(Xtrap13)
+	.quad	_C_LABEL(Xtrap14), _C_LABEL(Xtrap15)
+	.quad	_C_LABEL(Xtrap16), _C_LABEL(Xtrap17)
+	.quad	_C_LABEL(Xtrap18), _C_LABEL(Xtrap19)
+	.quad	_C_LABEL(Xtrap20), _C_LABEL(Xtrap21)
+	.quad	_C_LABEL(Xtrap22), _C_LABEL(Xtrap23)
+	.quad	_C_LABEL(Xtrap24), _C_LABEL(Xtrap25)
+	.quad	_C_LABEL(Xtrap26), _C_LABEL(Xtrap27)
+	.quad	_C_LABEL(Xtrap28), _C_LABEL(Xtrap29)
+	.quad	_C_LABEL(Xtrap30), _C_LABEL(Xtrap31)
+IDTVEC_END(exceptions)
+
