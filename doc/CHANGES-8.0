@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.138 2018/03/06 11:19:17 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.139 2018/03/07 14:55:49 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -10087,3 +10087,24 @@ sys/netipsec/ipsecif.c				1.3
 	Fix fragment processing in ipsec4_fragout().
 	[knakahara, ticket #607]
 
+sys/netipsec/key.c				1.249
+sys/netipsec/keydb.h				1.21
+
+	Avoid data races on lifetime counters by using percpu(9).
+	[ozaki-r, ticket #609]
+
+sys/arch/amd64/amd64/amd64_trap.S	1.8,1.10,1.12 (partial),1.13-1.15,
+					1.19 (partial),1.20,1.21,1.22,1.24
+					(via patch)
+sys/arch/amd64/amd64/locore.S		1.129 (partial),1.132 (via patch)
+sys/arch/amd64/amd64/trap.c		1.97 (partial),1.111 (via patch)
+sys/arch/amd64/amd64/vector.S		1.54,1.55 (via patch)
+sys/arch/amd64/include/frameasm.h	1.21,1.23 (via patch)
+sys/arch/x86/x86/cpu.c			1.138 (via patch)
+sys/arch/xen/conf/Makefile.xen		1.45 (via patch)
+
+	Rename and reorder several things in amd64_trap.S.
+	Compile amd64_trap.S as a file.
+	Introduce nmitrap and doubletrap.
+	Have the CPU clear PSL_D automatically in the syscall entry point.
+	[maxv, ticket #610]
