@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.419.2.2 2018/03/06 23:46:14 pgoyette Exp $	*/
+/*	$NetBSD: if.c,v 1.419.2.3 2018/03/07 08:56:44 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.419.2.2 2018/03/06 23:46:14 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.419.2.3 2018/03/07 08:56:44 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -264,8 +264,6 @@ int (*vec_compat_ifdatareq)(struct lwp *, u_long, void *) =
 void stub_compat_ifreqo2n(struct oifreq *, struct ifreq *);
 void (*vec_compat_ifreqo2n)(struct oifreq *, struct ifreq *) =
     stub_compat_ifreqo2n;
-
-int (*vec_compat_ifconf)(u_long, void *) = stub_compat_ifconf;
 
 int stub_compat_ifconf(u_long, void *);
 int (*vec_compat_ifconf)(u_long, void *) = stub_compat_ifconf;
