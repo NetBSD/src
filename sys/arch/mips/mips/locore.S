@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.210 2018/01/24 03:13:36 maya Exp $	*/
+/*	$NetBSD: locore.S,v 1.211 2018/03/07 15:44:15 maya Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,7 +63,7 @@
 #include <mips/trap.h>
 #include <mips/locore.h>
 
-RCSID("$NetBSD: locore.S,v 1.210 2018/01/24 03:13:36 maya Exp $")
+RCSID("$NetBSD: locore.S,v 1.211 2018/03/07 15:44:15 maya Exp $")
 
 #include "assym.h"
 
@@ -73,23 +73,18 @@ RCSID("$NetBSD: locore.S,v 1.210 2018/01/24 03:13:36 maya Exp $")
 	.globl	_C_LABEL(kernel_text)		# libkvm refers this
 start:
 _C_LABEL(kernel_text):
-#if (defined(MIPS3_PLUS) && !defined(MIPS1)) || defined(emips)
-	/* keep firmware exception handler until we hook. */
-	mfc0	v0, MIPS_COP_0_STATUS
+	/* First disable the interrupts only, for safety */
+	mfc0	k0, MIPS_COP_0_STATUS
 	MFC0_HAZARD
-#if defined(emips)
-	and	v0, MIPS_SR_TS | MIPS3_SR_RE
-#else
-	and	v0, MIPS_SR_BEV
-#endif
-	mtc0	v0, MIPS_COP_0_STATUS		# Disable interrupts
+	and	k0, ~MIPS_SR_INT_IE
+	mtc0	k0, MIPS_COP_0_STATUS
 	COP0_SYNC
-#else
-	mtc0	zero, MIPS_COP_0_STATUS		# Disable interrupts
-	COP0_SYNC
-#endif
+
+	/* Known state: BEV, coprocessors disabled */
+	mtc0	zero, MIPS_COP_0_STATUS
 	mtc0	zero, MIPS_COP_0_CAUSE
 	COP0_SYNC
+
 #ifdef MIPS64_OCTEON
 	//
 	// U-boot on the erlite starts all cpus at the kernel entry point.
