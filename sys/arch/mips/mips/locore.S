@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.211 2018/03/07 15:44:15 maya Exp $	*/
+/*	$NetBSD: locore.S,v 1.212 2018/03/07 15:49:45 maya Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,7 +63,7 @@
 #include <mips/trap.h>
 #include <mips/locore.h>
 
-RCSID("$NetBSD: locore.S,v 1.211 2018/03/07 15:44:15 maya Exp $")
+RCSID("$NetBSD: locore.S,v 1.212 2018/03/07 15:49:45 maya Exp $")
 
 #include "assym.h"
 
@@ -84,6 +84,14 @@ _C_LABEL(kernel_text):
 	mtc0	zero, MIPS_COP_0_STATUS
 	mtc0	zero, MIPS_COP_0_CAUSE
 	COP0_SYNC
+
+#ifdef _LP64
+	/* Enable 64-bit addressing */
+	mfc0	k0, MIPS_COP_0_STATUS
+	MFC0_HAZARD
+	or	k0, MIPS_SR_KX | MIPS_SR_UX
+	mtc0	k0, MIPS_COP_0_STATUS
+#endif
 
 #ifdef MIPS64_OCTEON
 	//
