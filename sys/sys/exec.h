@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.152 2017/11/07 19:44:05 christos Exp $	*/
+/*	$NetBSD: exec.h,v 1.152.2.1 2018/03/07 09:33:26 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -313,6 +313,12 @@ int	do_posix_spawn(struct lwp *, pid_t *, bool*, const char *,
     char *const *argv, char *const *, execve_fetch_element_t);
 
 extern int	maxexec;
+
+/*
+ * Utility functions
+ */
+void emul_find_root(struct lwp *, struct exec_package *);
+int emul_find_interp(struct lwp *, struct exec_package *, const char *);
 
 #endif /* _KERNEL */
 
