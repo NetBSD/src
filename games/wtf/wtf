@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: wtf,v 1.22 2018/01/17 03:03:59 pgoyette Exp $
+#	$NetBSD: wtf,v 1.23 2018/03/07 08:24:16 eadler Exp $
 #
 # Public domain
 #
@@ -65,7 +65,7 @@ fi
 
 
 for f in $acronyms; do
-	if [ ! -f $f ]; then
+	if [ ! -f "$f" ]; then
 		echo "$PROGNAME: cannot open acronym database file \`$f'" >&2
 		exit 1
 	fi
