@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.130 2018/03/07 08:01:32 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.131 2018/03/07 11:18:29 knakahara Exp $ */
 
 /******************************************************************************
 
@@ -4229,7 +4229,14 @@ ixgbe_local_timer1(void *arg)
 	if (hung == adapter->num_queues)
 		goto watchdog;
 	else if (queues != 0) { /* Force an IRQ on queues with work */
-		ixgbe_rearm_queues(adapter, queues);
+		que = adapter->queues;
+		for (int i = 0; i < adapter->num_queues; i++, que++) {
+			mutex_enter(&que->im_mtx);
+			if (que->im_nest == 0)
+				ixgbe_rearm_queues(adapter,
+				    queues & ((u64)1 << i));
+			mutex_exit(&que->im_mtx);
+		}
 	}
 
 out:
