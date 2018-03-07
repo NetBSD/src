@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.24 2018/03/07 10:53:55 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.25 2018/03/07 16:40:06 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.24 2018/03/07 10:53:55 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.25 2018/03/07 16:40:06 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -424,9 +424,6 @@ ATF_TC_BODY(attach2, tc)
 	int status;
 #endif
 
-	// Feature pending for refactoring
-	atf_tc_expect_fail("test is racy");
-
 	DPRINTF("Spawn tracee\n");
 	SYSCALL_REQUIRE(msg_open(&parent_tracee) == 0);
 	tracee = atf_utils_fork();
@@ -507,9 +504,6 @@ ATF_TC_BODY(attach2, tc)
 
 	msg_close(&parent_tracer);
 	msg_close(&parent_tracee);
-
-	// Test is racy
-	ATF_REQUIRE(0 && "In order to get reliable failure, abort");
 }
 #endif
 
