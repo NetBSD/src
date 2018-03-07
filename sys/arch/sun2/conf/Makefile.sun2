@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.sun2,v 1.21 2018/03/03 03:19:18 mrg Exp $
+# $NetBSD: Makefile.sun2,v 1.22 2018/03/07 15:20:50 maya Exp $
 
 # Makefile for NetBSD
 #
@@ -38,11 +38,13 @@ AFLAGS+=	-x assembler-with-cpp
 ##
 ## (3) libkern and compat
 ##
-OPT_MODULAR=   %MODULAR%
+OPT_MODULAR=	%MODULAR%
 .if !empty(OPT_MODULAR)
-KERN_AS=       obj
+KERN_AS=	obj
+COMPAT_AS=	obj
 .else
-KERN_AS=       library
+KERN_AS=	library
+COMPAT_AS=	library
 .endif
 # XXX lib/libkern/arch/m68k/Makefile.inc needs to know that
 # XXX our MACHINE_ARCH is m68000, and not m68k.  --fredette
