@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.214 2018/03/07 15:56:33 maya Exp $	*/
+/*	$NetBSD: locore.S,v 1.215 2018/03/07 20:43:53 maya Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,7 +63,7 @@
 #include <mips/trap.h>
 #include <mips/locore.h>
 
-RCSID("$NetBSD: locore.S,v 1.214 2018/03/07 15:56:33 maya Exp $")
+RCSID("$NetBSD: locore.S,v 1.215 2018/03/07 20:43:53 maya Exp $")
 
 #include "assym.h"
 
@@ -143,23 +143,9 @@ _C_LABEL(kernel_text):
 #endif
 
 #ifdef NOFPU /* No FPU; avoid touching FPU registers */
-#if !defined(emips)   /*  XXX??? we have already disabled interrupts! */
-#ifdef __mips_n32
-	li	t0, MIPS_SR_KX			# turn on XKSEG and XKPHYS
-#elif defined(_LP64)
-	li	t0, MIPS_SR_KX | MIPS_SR_UX	# turn on XKSEG and XKPHYS
-#else
-	li	t0, 0				# Disable interrupts and
-#endif /* n32 */
-	mtc0	t0, MIPS_COP_0_STATUS		# the fp coprocessor
-	COP0_SYNC
-#endif /* !emips */
 #else /* NOFPU */
 	mfc0	t0, MIPS_COP_0_STATUS
 	MFC0_HAZARD
-#if defined(_LP64) || defined(__mips_n32)
-	or	t0, MIPS_SR_KX			# turn on XKSEG and XKPHYS
-#endif
 	or	t0, MIPS_SR_COP_1_BIT		# Disable interrupts, and
 	mtc0	t0, MIPS_COP_0_STATUS		# enable the fp coprocessor
 	COP0_HAZARD_FPUENABLE
