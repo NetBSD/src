@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: wtf,v 1.23 2018/03/07 08:24:16 eadler Exp $
+#	$NetBSD: wtf,v 1.24 2018/03/07 08:25:43 eadler Exp $
 #
 # Public domain
 #
@@ -74,7 +74,7 @@ done
 rv=0
 for i; do
 	# Search acronym list first
-	target="$(echo "$i" | tr '[a-z]' '[A-Z]')"
+  target="$(echo "$i" | tr '[:lower:]' '[:upper:]')"
 	ans="$(fgrep -h "$target" $acronyms 2>/dev/null \
 	     | sed -ne "\|^$target[[:space:]]|s|^$target[[:space:]]*||p")"
 	if [ -n "$ans" ] ; then
