@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.129 2018/03/07 03:29:10 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.130 2018/03/07 08:01:32 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -2527,7 +2527,6 @@ ixgbe_msix_que(void *arg)
 
 no_calc:
 	if (more) {
-		que->req.ev_count++;
 		if (adapter->txrx_use_workqueue) {
 			/*
 			 * adapter->que_wq is bound to each CPU instead of
