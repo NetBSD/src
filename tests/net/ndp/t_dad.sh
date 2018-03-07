@@ -1,4 +1,4 @@
-#	$NetBSD: t_dad.sh,v 1.13 2018/03/07 02:30:00 ozaki-r Exp $
+#	$NetBSD: t_dad.sh,v 1.14 2018/03/07 02:30:37 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -74,9 +74,9 @@ make_ns_pkt_str()
 {
 	local id=$1
 	local target=$2
-	pkt="33:33:ff:00:00:0${id}, ethertype IPv6 (0x86dd), length 78: ::"
+	pkt="33:33:ff:00:00:0${id}, ethertype IPv6 (0x86dd), length 86: ::"
 	pkt="$pkt > ff02::1:ff00:${id}: ICMP6, neighbor solicitation,"
-	pkt="$pkt who has $target, length 24"
+	pkt="$pkt who has $target, length 32"
 	echo $pkt
 }
 
