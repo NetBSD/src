@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.213 2018/03/07 15:52:43 maya Exp $	*/
+/*	$NetBSD: locore.S,v 1.214 2018/03/07 15:56:33 maya Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,7 +63,7 @@
 #include <mips/trap.h>
 #include <mips/locore.h>
 
-RCSID("$NetBSD: locore.S,v 1.213 2018/03/07 15:52:43 maya Exp $")
+RCSID("$NetBSD: locore.S,v 1.214 2018/03/07 15:56:33 maya Exp $")
 
 #include "assym.h"
 
@@ -167,6 +167,24 @@ _C_LABEL(kernel_text):
 	mfc0	t0, MIPS_COP_0_PRID		# read product revision ID
 	COP0_SYNC
 	nop
+
+#ifdef NOFPU
+	li	t1, 0				# Dummy FPU_ID
+#else
+	/* Enable the FPU to read FPUID */
+	mfc0	k0, MIPS_COP_0_STATUS
+	MFC0_HAZARD
+	or	k0, MIPS_SR_COP_1_BIT
+	mtc0	k0, MIPS_COP_0_STATUS
+	COP0_HAZARD_FPUENABLE
+
+	cfc1	t1, MIPS_FPU_ID
+
+	/* Disable again, we don't want it on in the kernel */
+	and	k0, ~MIPS_SR_COP_1_BIT
+	mtc0	k0, MIPS_COP_0_STATUS
+#endif
+
 #ifdef NOFPU /* No FPU; avoid touching FPU registers */
 	add	t1, zero, zero
 #else
