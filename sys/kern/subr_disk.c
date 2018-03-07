@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.121 2017/10/27 12:25:15 joerg Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.122 2018/03/07 21:13:24 kre Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000, 2009 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.121 2017/10/27 12:25:15 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.122 2018/03/07 21:13:24 kre Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -130,7 +130,7 @@ diskerr(const struct buf *bp, const char *dname, const char *what, int pri,
 	daddr_t sn;
 
 	if (/*CONSTCOND*/0)
-		/* Compiler will error this is the format is wrong... */
+		/* Compiler will error this if the format is wrong... */
 		printf("%" PRIdaddr, bp->b_blkno);
 
 	if (pri != LOG_PRINTF) {
