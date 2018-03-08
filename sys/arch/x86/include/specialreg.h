@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.112 2018/03/05 05:44:07 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.113 2018/03/08 04:15:11 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -435,28 +435,6 @@
 #define CPUID_PES1_FLAGS	"\20" \
 	"\1" "XSAVEOPT"	"\2" "XSAVEC"	"\3" "XGETBV"	"\4" "XSAVES"
 
-/* Intel Fn80000001 extended features - %edx */
-#define CPUID_SYSCALL	0x00000800	/* SYSCALL/SYSRET */
-#define CPUID_XD	0x00100000	/* Execute Disable (like CPUID_NOX) */
-#define CPUID_P1GB	0x04000000	/* 1GB Large Page Support */
-#define CPUID_RDTSCP	0x08000000	/* Read TSC Pair Instruction */
-#define CPUID_EM64T	0x20000000	/* Intel EM64T */
-
-#define CPUID_INTEL_EXT_FLAGS	"\20" \
-	"\14" "SYSCALL/SYSRET"	"\25" "XD"	"\33" "P1GB" \
-	"\34" "RDTSCP"	"\36" "EM64T"
-
-/* Intel Fn80000001 extended features - %ecx */
-#define CPUID_LAHF	0x00000001	/* LAHF/SAHF in IA-32e mode, 64bit sub*/
-		/*	0x00000020 */	/* LZCNT. Same as AMD's CPUID_LZCNT */
-#define CPUID_PREFETCHW	0x00000100	/* PREFETCHW */
-
-#define CPUID_INTEL_FLAGS4	"\20"				\
-	"\1" "LAHF"	"\02" "B01"	"\03" "B02"		\
-			"\06" "LZCNT"				\
-	"\11" "PREFETCHW"
-
-
 /*
  * Intel Deterministic Address Translation Parameter Leaf
  * Fn0000_0018
@@ -484,6 +462,28 @@
 #define CPUID_DATP_TCLEVEL	__BITS(7, 5)	/* TLB level (start at 1) */
 #define CPUID_DATP_FULLASSOC	__BIT(8)	/* Full associative */
 #define CPUID_DATP_SHAREING	__BITS(25, 14)	/* shareing */
+
+
+/* Intel Fn80000001 extended features - %edx */
+#define CPUID_SYSCALL	0x00000800	/* SYSCALL/SYSRET */
+#define CPUID_XD	0x00100000	/* Execute Disable (like CPUID_NOX) */
+#define CPUID_P1GB	0x04000000	/* 1GB Large Page Support */
+#define CPUID_RDTSCP	0x08000000	/* Read TSC Pair Instruction */
+#define CPUID_EM64T	0x20000000	/* Intel EM64T */
+
+#define CPUID_INTEL_EXT_FLAGS	"\20" \
+	"\14" "SYSCALL/SYSRET"	"\25" "XD"	"\33" "P1GB" \
+	"\34" "RDTSCP"	"\36" "EM64T"
+
+/* Intel Fn80000001 extended features - %ecx */
+#define CPUID_LAHF	0x00000001	/* LAHF/SAHF in IA-32e mode, 64bit sub*/
+		/*	0x00000020 */	/* LZCNT. Same as AMD's CPUID_LZCNT */
+#define CPUID_PREFETCHW	0x00000100	/* PREFETCHW */
+
+#define CPUID_INTEL_FLAGS4	"\20"				\
+	"\1" "LAHF"	"\02" "B01"	"\03" "B02"		\
+			"\06" "LZCNT"				\
+	"\11" "PREFETCHW"
 
 
 /* AMD/VIA Fn80000001 extended features - %edx */
