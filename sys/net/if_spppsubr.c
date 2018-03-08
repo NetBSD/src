@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.169.6.4 2018/01/16 13:01:10 martin Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.169.6.5 2018/03/08 13:22:25 martin Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.169.6.4 2018/01/16 13:01:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.169.6.5 2018/03/08 13:22:25 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -999,7 +999,7 @@ sppp_attach(struct ifnet *ifp)
 
 	/* Initialize keepalive handler. */
 	if (! spppq) {
-		callout_init(&keepalive_ch, 0);
+		callout_init(&keepalive_ch, CALLOUT_MPSAFE);
 		callout_reset(&keepalive_ch, hz * LCP_KEEPALIVE_INTERVAL, sppp_keepalive, NULL);
 	}
 
@@ -2205,7 +2205,7 @@ sppp_lcp_init(struct sppp *sp)
 	sp->lcp.max_terminate = 2;
 	sp->lcp.max_configure = 10;
 	sp->lcp.max_failure = 10;
-	callout_init(&sp->ch[IDX_LCP], 0);
+	callout_init(&sp->ch[IDX_LCP], CALLOUT_MPSAFE);
 }
 
 static void
@@ -2967,9 +2967,9 @@ sppp_ipcp_init(struct sppp *sp)
 	sp->fail_counter[IDX_IPCP] = 0;
 	sp->pp_seq[IDX_IPCP] = 0;
 	sp->pp_rseq[IDX_IPCP] = 0;
-	callout_init(&sp->ch[IDX_IPCP], 0);
+	callout_init(&sp->ch[IDX_IPCP], CALLOUT_MPSAFE);
 
-	error = workqueue_create(&sp->ipcp.update_addrs_wq, "ipcp_update_addrs",
+	error = workqueue_create(&sp->ipcp.update_addrs_wq, "ipcp_addr",
 	    sppp_update_ip_addrs_work, sp, PRI_SOFTNET, IPL_NET, 0);
 	if (error)
 		panic("%s: update_addrs workqueue_create failed (%d)\n",
@@ -3526,7 +3526,7 @@ sppp_ipv6cp_init(struct sppp *sp)
 	sp->fail_counter[IDX_IPV6CP] = 0;
 	sp->pp_seq[IDX_IPV6CP] = 0;
 	sp->pp_rseq[IDX_IPV6CP] = 0;
-	callout_init(&sp->ch[IDX_IPV6CP], 0);
+	callout_init(&sp->ch[IDX_IPV6CP], CALLOUT_MPSAFE);
 }
 
 static void
@@ -4047,7 +4047,7 @@ sppp_ipv6cp_close(struct sppp *sp)
 static void
 sppp_ipv6cp_TO(void *cookie)
 {
-	struct sppp *sp = cookie;
+	struct sppp *sp __diagused = cookie;
 
 	KASSERT(SPPP_WLOCKED(sp));
 }
@@ -4464,7 +4464,7 @@ sppp_chap_init(struct sppp *sp)
 	sp->fail_counter[IDX_CHAP] = 0;
 	sp->pp_seq[IDX_CHAP] = 0;
 	sp->pp_rseq[IDX_CHAP] = 0;
-	callout_init(&sp->ch[IDX_CHAP], 0);
+	callout_init(&sp->ch[IDX_CHAP], CALLOUT_MPSAFE);
 }
 
 static void
@@ -4832,8 +4832,8 @@ sppp_pap_init(struct sppp *sp)
 	sp->fail_counter[IDX_PAP] = 0;
 	sp->pp_seq[IDX_PAP] = 0;
 	sp->pp_rseq[IDX_PAP] = 0;
-	callout_init(&sp->ch[IDX_PAP], 0);
-	callout_init(&sp->pap_my_to_ch, 0);
+	callout_init(&sp->ch[IDX_PAP], CALLOUT_MPSAFE);
+	callout_init(&sp->pap_my_to_ch, CALLOUT_MPSAFE);
 }
 
 static void

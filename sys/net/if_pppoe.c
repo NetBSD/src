@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.125.6.5 2018/01/02 10:20:33 snj Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.125.6.6 2018/03/08 13:22:25 martin Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.125.6.5 2018/01/02 10:20:33 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.125.6.6 2018/03/08 13:22:25 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -315,7 +315,7 @@ pppoe_clone_create(struct if_clone *ifc, int unit)
 	/* changed to real address later */
 	memcpy(&sc->sc_dest, etherbroadcastaddr, sizeof(sc->sc_dest));
 
-	callout_init(&sc->sc_timeout, 0);
+	callout_init(&sc->sc_timeout, CALLOUT_MPSAFE);
 
 	sc->sc_sppp.pp_if.if_start = pppoe_start;
 #ifdef PPPOE_MPSAFE
@@ -1795,7 +1795,7 @@ pppoe_transmit(struct ifnet *ifp, struct mbuf *m)
 	PPPOE_LOCK(sc, RW_READER);
 	if (sc->sc_state < PPPOE_STATE_SESSION) {
 		PPPOE_UNLOCK(sc);
-		m_free(m);
+		m_freem(m);
 		return ENOBUFS;
 	}
 
@@ -1887,13 +1887,13 @@ static void
 pppoe_enqueue(struct ifqueue *inq, struct mbuf *m)
 {
 	if (m->m_flags & M_PROMISC) {
-		m_free(m);
+		m_freem(m);
 		return;
 	}
 
 #ifndef PPPOE_SERVER
 	if (m->m_flags & (M_MCAST | M_BCAST)) {
-		m_free(m);
+		m_freem(m);
 		return;
 	}
 #endif
