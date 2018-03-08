@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls_50.c,v 1.3.56.1 2018/03/08 00:23:47 pgoyette Exp $	*/
+/*	$NetBSD: uipc_syscalls_50.c,v 1.3.56.2 2018/03/08 07:04:01 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_50.c,v 1.3.56.1 2018/03/08 00:23:47 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_50.c,v 1.3.56.2 2018/03/08 07:04:01 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_50.c,v 1.3.56.1 2018/03/08 00:23:47 pg
 #include <compat/sys/time.h>
 #include <compat/sys/socket.h>
 #include <compat/sys/sockio.h>
+#include <compat/sys/if.h>
 
 #ifdef COMPAT_OIFDATA
 /*ARGSUSED*/
@@ -98,16 +99,13 @@ compat_ifdatareq(struct lwp *l, u_long cmd, void *data)
 
 /* Save and restore compat vector as needed */
 
-int (*orig_compat_ifconf)(u_long, void *);
 int (*orig_compat_ifdatareq)(struct lwp *, u_long, void *);
 
 void
 if_50_init(void)
 {
 
-	orig_compat_ifreqo2n = vec_compat_ifreqo2n;
 	orig_compat_ifdatareq = vec_compat_ifdatareq;
-	vec_compat_ifreqo2n = compat_ifreqo2n;
 	vec_compat_ifdatareq = compat_ifdatareq;
 }
 
@@ -115,7 +113,6 @@ void
 if_50_fini(void)
 {
 
-	vec_compat_ifreqo2n = orig_compat_ifreqo2n;
 	vec_compat_ifdatareq = orig_compat_ifdatareq;
 }
 #endif
