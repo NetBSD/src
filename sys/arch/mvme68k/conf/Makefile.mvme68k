@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mvme68k,v 1.66 2015/09/06 02:17:31 uebayasi Exp $
+#	$NetBSD: Makefile.mvme68k,v 1.67 2018/03/08 03:12:02 mrg Exp $
 
 # Makefile for NetBSD
 #
@@ -40,9 +40,9 @@ CMACHFLAGS=	-m68030
 .endif
 .else
 .if empty(IDENT:M-DMVME147) && empty(IDENT:M-DMVME162) && empty(IDENT:M-DMVME167)
-CMACHFLAGS=	-m68060 -Wa,-march=68030 -Wa,-mcpu=68030 -Wa,-m68851
+CMACHFLAGS=	-m68060 -Wa,-march=68030 -Wa,-m68030 -Wa,-mcpu=68030 -Wa,-m68851
 .else
-CMACHFLAGS=	-m68020-60 -Wa,-mcpu=68030 -Wa,-m68851
+CMACHFLAGS=	-m68020-60 -Wa,-m68030 -Wa,-mcpu=68030 -Wa,-m68851
 .endif
 .endif
 CFLAGS+=	${CMACHFLAGS} -msoft-float
