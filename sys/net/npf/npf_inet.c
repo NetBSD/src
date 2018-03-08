@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_inet.c,v 1.38 2018/03/08 07:06:13 maxv Exp $	*/
+/*	$NetBSD: npf_inet.c,v 1.39 2018/03/08 07:54:14 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.38 2018/03/08 07:06:13 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.39 2018/03/08 07:54:14 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -229,7 +229,7 @@ npf_fetch_tcpopts(npf_cache_t *npc, uint16_t *mss, int *wscale)
 	nbuf_t *nbuf = npc->npc_nbuf;
 	const struct tcphdr *th = npc->npc_l4.tcp;
 	int topts_len, step;
-	void *nptr;
+	uint8_t *nptr;
 	uint8_t val;
 	bool ok;
 
@@ -252,7 +252,7 @@ next:
 		ok = false;
 		goto done;
 	}
-	val = *(uint8_t *)nptr;
+	val = *nptr;
 
 	switch (val) {
 	case TCPOPT_EOL:
@@ -264,43 +264,43 @@ next:
 		step = 1;
 		break;
 	case TCPOPT_MAXSEG:
-		if ((nptr = nbuf_advance(nbuf, 2, 2)) == NULL) {
+		if ((nptr = nbuf_ensure_contig(nbuf, TCPOLEN_MAXSEG)) == NULL) {
 			ok = false;
 			goto done;
 		}
 		if (mss) {
 			if (*mss) {
-				memcpy(nptr, mss, sizeof(uint16_t));
+				memcpy(nptr + 2, mss, sizeof(uint16_t));
 			} else {
-				memcpy(mss, nptr, sizeof(uint16_t));
+				memcpy(mss, nptr + 2, sizeof(uint16_t));
 			}
 		}
 		topts_len -= TCPOLEN_MAXSEG;
-		step = 2;
+		step = TCPOLEN_MAXSEG;
 		break;
 	case TCPOPT_WINDOW:
 		/* TCP Window Scaling (RFC 1323). */
-		if ((nptr = nbuf_advance(nbuf, 2, 1)) == NULL) {
+		if ((nptr = nbuf_ensure_contig(nbuf, TCPOLEN_WINDOW)) == NULL) {
 			ok = false;
 			goto done;
 		}
-		val = *(uint8_t *)nptr;
+		val = *(nptr + 2);
 		*wscale = (val > TCP_MAX_WINSHIFT) ? TCP_MAX_WINSHIFT : val;
 		topts_len -= TCPOLEN_WINDOW;
-		step = 1;
+		step = TCPOLEN_WINDOW;
 		break;
 	default:
-		if ((nptr = nbuf_advance(nbuf, 1, 1)) == NULL) {
+		if ((nptr = nbuf_ensure_contig(nbuf, 2)) == NULL) {
 			ok = false;
 			goto done;
 		}
-		val = *(uint8_t *)nptr;
+		val = *(nptr + 1);
 		if (val < 2 || val > topts_len) {
 			ok = false;
 			goto done;
 		}
 		topts_len -= val;
-		step = val - 1;
+		step = val;
 	}
 
 	/* Any options left? */
