@@ -1,4 +1,4 @@
-/*	$NetBSD: sockio.h,v 1.10 2010/11/14 15:36:47 uebayasi Exp $	*/
+/*	$NetBSD: sockio.h,v 1.10.58.1 2018/03/08 01:37:46 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -179,6 +179,9 @@ struct oifdatareq {
 		    (oi)->ifi_lastchange.tv_usec * 1000; \
 	} while (/*CONSTCOND*/0)
 #ifdef _KERNEL
+void if_50_init(void);
+void if_50_fini(void);
+
 __BEGIN_DECLS
 int compat_ifconf(u_long, void *);
 int compat_ifdatareq(struct lwp *, u_long, void *);
