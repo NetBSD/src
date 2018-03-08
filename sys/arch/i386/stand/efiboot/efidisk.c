@@ -1,4 +1,4 @@
-/*	$NetBSD: efidisk.c,v 1.1 2017/01/24 11:09:14 nonaka Exp $	*/
+/*	$NetBSD: efidisk.c,v 1.2 2018/03/08 10:34:33 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -26,8 +26,15 @@
  * SUCH DAMAGE.
  */
 
+#define FSTYPENAMES	/* for sys/disklabel.h */
+
 #include "efiboot.h"
 
+#include <sys/disklabel.h>
+
+#include "biosdisk.h"
+#include "biosdisk_ll.h"
+#include "devopen.h"
 #include "efidisk.h"
 
 static struct efidiskinfo_lh efi_disklist;
@@ -41,10 +48,9 @@ efi_disk_probe(void)
 	EFI_HANDLE *handles;
 	EFI_BLOCK_IO *bio;
 	EFI_BLOCK_IO_MEDIA *media;
+	EFI_DEVICE_PATH *dp;
 	struct efidiskinfo *edi;
-	EFI_DEVICE_PATH *dp, *bdp;
-	bool bootdev;
-	int dev;
+	int dev, depth = -1;
 
 	TAILQ_INIT(&efi_disklist);
 
@@ -52,6 +58,18 @@ efi_disk_probe(void)
 	    &nhandles, &handles);
 	if (EFI_ERROR(status))
 		Panic(L"LocateHandle(BlockIoProtocol): %r", status);
+
+	if (efi_bootdp != NULL)
+		depth = efi_device_path_depth(efi_bootdp, MEDIA_DEVICE_PATH);
+
+	/*
+	 * U-Boot incorrectly represents devices with a single
+	 * MEDIA_DEVICE_PATH component.  In that case include that
+	 * component into the matching, otherwise we'll blindly select
+	 * the first device.
+	 */
+	if (depth == 0)
+		depth = 1;
 
 	for (i = 0; i < nhandles; i++) {
 		status = uefi_call_wrapper(BS->HandleProtocol, 3, handles[i],
@@ -65,43 +83,114 @@ efi_disk_probe(void)
 
 		edi = alloc(sizeof(struct efidiskinfo));
 		memset(edi, 0, sizeof(*edi));
+		edi->type = BIOSDISK_TYPE_HD;
 		edi->bio = bio;
 		edi->media_id = media->MediaId;
 
-		bootdev = false;
-		if (efi_bootdp == NULL)
-			goto next;
-
-		status = uefi_call_wrapper(BS->HandleProtocol, 3, handles[i],
-		    &DevicePathProtocol, (void **)&dp);
-		if (EFI_ERROR(status))
-			goto next;
-
-		bdp = efi_bootdp;
-		for (;;) {
-			if (IsDevicePathEnd(dp)) {
-				bootdev = true;
-				break;
+		if (efi_bootdp != NULL && depth > 0) {
+			status = uefi_call_wrapper(BS->HandleProtocol, 3,
+			    handles[i], &DevicePathProtocol, (void **)&dp);
+			if (EFI_ERROR(status))
+				goto next;
+			if (efi_device_path_ncmp(efi_bootdp, dp, depth) == 0) {
+				edi->bootdev = true;
+				TAILQ_INSERT_HEAD(&efi_disklist, edi,
+				    list);
+				continue;
 			}
-			if (memcmp(dp, bdp, sizeof(EFI_DEVICE_PATH)) != 0 ||
-			    memcmp(dp, bdp, DevicePathNodeLength(dp)) != 0)
-				break;
-			dp = NextDevicePathNode(dp);
-			bdp = NextDevicePathNode(bdp);
 		}
 next:
-		if (bootdev)
-			TAILQ_INSERT_HEAD(&efi_disklist, edi, list);
-		else
-			TAILQ_INSERT_TAIL(&efi_disklist, edi, list);
+		TAILQ_INSERT_TAIL(&efi_disklist, edi, list);
 	}
 
 	FreePool(handles);
 
+	if (efi_bootdp_type == BIOSDISK_TYPE_CD) {
+		TAILQ_FOREACH(edi, &efi_disklist, list) {
+			if (edi->bootdev) {
+				edi = TAILQ_FIRST(&efi_disklist);
+				edi->type = BIOSDISK_TYPE_CD;
+				TAILQ_REMOVE(&efi_disklist, edi, list);
+				TAILQ_INSERT_TAIL(&efi_disklist, edi, list);
+				break;
+			}
+		}
+	}
+
 	dev = 0x80;
 	TAILQ_FOREACH(edi, &efi_disklist, list) {
 		edi->dev = dev++;
-		nefidisks++;
+		if (edi->type == BIOSDISK_TYPE_HD)
+			nefidisks++;
+		if (edi->bootdev)
+			boot_biosdev = edi->dev;
+	}
+}
+
+void
+efi_disk_show(void)
+{
+	const struct efidiskinfo *edi;
+	EFI_BLOCK_IO_MEDIA *media;
+	struct biosdisk_partition *part;
+	uint64_t size;
+	int i, nparts;
+	bool first;
+
+	TAILQ_FOREACH(edi, &efi_disklist, list) {
+		media = edi->bio->Media;
+		first = true;
+		printf("disk ");
+		switch (edi->type) {
+		case BIOSDISK_TYPE_CD:
+			printf("cd0");
+			printf(" mediaId %u", media->MediaId);
+			if (edi->media_id != media->MediaId)
+				printf("(%u)", edi->media_id);
+			printf("\n");
+			printf("  cd0a\n");
+			break;
+		case BIOSDISK_TYPE_HD:
+			printf("hd%d", edi->dev & 0x7f);
+			printf(" mediaId %u", media->MediaId);
+			if (edi->media_id != media->MediaId)
+				printf("(%u)", edi->media_id);
+			printf(" size ");
+			size = (media->LastBlock + 1) * media->BlockSize;
+			if (size >= (10ULL * 1024 * 1024 * 1024))
+				printf("%"PRIu64" GB", size / (1024 * 1024 * 1024));
+			else
+				printf("%"PRIu64" MB", size / (1024 * 1024));
+			printf("\n");
+			break;
+		}
+		if (edi->type != BIOSDISK_TYPE_HD)
+			continue;
+
+		if (biosdisk_readpartition(edi->dev, &part, &nparts))
+			continue;
+
+		for (i = 0; i < nparts; i++) {
+			if (part[i].size == 0)
+				continue;
+			if (part[i].fstype == FS_UNUSED)
+				continue;
+			if (first) {
+				printf(" ");
+				first = false;
+			}
+			printf(" hd%d%c(", edi->dev & 0x7f, i + 'a');
+			if (part[i].guid != NULL)
+				printf("%s", part[i].guid->name);
+			else if (part[i].fstype < FSMAXTYPES)
+				printf("%s", fstypenames[part[i].fstype]);
+			else
+				printf("%d", part[i].fstype);
+			printf(")");
+		}
+		if (!first)
+			printf("\n");
+		dealloc(part, sizeof(*part) * nparts);
 	}
 }
 
