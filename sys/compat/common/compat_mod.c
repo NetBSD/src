@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mod.c,v 1.24.14.3 2018/03/08 00:23:47 pgoyette Exp $	*/
+/*	$NetBSD: compat_mod.c,v 1.24.14.4 2018/03/08 01:07:13 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.24.14.3 2018/03/08 00:23:47 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.24.14.4 2018/03/08 01:07:13 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -53,6 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.24.14.3 2018/03/08 00:23:47 pgoyett
 #include <sys/syscallargs.h>
 #include <sys/syscallvar.h>
 #include <sys/sysctl.h>
+
+#include <net/if.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_object.h>
