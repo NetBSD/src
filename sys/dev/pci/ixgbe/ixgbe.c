@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.132 2018/03/08 02:39:42 knakahara Exp $ */
+/* $NetBSD: ixgbe.c,v 1.133 2018/03/08 02:41:27 knakahara Exp $ */
 
 /******************************************************************************
 
@@ -2439,6 +2439,36 @@ out:
 } /* ixgbe_disable_queue */
 
 /************************************************************************
+ * ixgbe_sched_handle_que - schedule deferred packet processing
+ ************************************************************************/
+static inline void
+ixgbe_sched_handle_que(struct adapter *adapter, struct ix_queue *que)
+{
+
+	if (adapter->txrx_use_workqueue) {
+		/*
+		 * adapter->que_wq is bound to each CPU instead of
+		 * each NIC queue to reduce workqueue kthread. As we
+		 * should consider about interrupt affinity in this
+		 * function, the workqueue kthread must be WQ_PERCPU.
+		 * If create WQ_PERCPU workqueue kthread for each NIC
+		 * queue, that number of created workqueue kthread is
+		 * (number of used NIC queue) * (number of CPUs) =
+		 * (number of CPUs) ^ 2 most often.
+		 *
+		 * The same NIC queue's interrupts are avoided by
+		 * masking the queue's interrupt. And different
+		 * NIC queue's interrupts use different struct work
+		 * (que->wq_cookie). So, "enqueued flag" to avoid
+		 * twice workqueue_enqueue() is not required .
+		 */
+		workqueue_enqueue(adapter->que_wq, &que->wq_cookie, curcpu());
+	} else {
+		softint_schedule(que->que_si);
+	}
+}
+
+/************************************************************************
  * ixgbe_msix_que - MSI-X Queue Interrupt Service routine
  ************************************************************************/
 static int
@@ -2526,30 +2556,9 @@ ixgbe_msix_que(void *arg)
 	rxr->packets = 0;
 
 no_calc:
-	if (more) {
-		if (adapter->txrx_use_workqueue) {
-			/*
-			 * adapter->que_wq is bound to each CPU instead of
-			 * each NIC queue to reduce workqueue kthread. As we
-			 * should consider about interrupt affinity in this
-			 * function, the workqueue kthread must be WQ_PERCPU.
-			 * If create WQ_PERCPU workqueue kthread for each NIC
-			 * queue, that number of created workqueue kthread is
-			 * (number of used NIC queue) * (number of CPUs) =
-			 * (number of CPUs) ^ 2 most often.
-			 *
-			 * The same NIC queue's interrupts are avoided by
-			 * masking the queue's interrupt. And different
-			 * NIC queue's interrupts use different struct work
-			 * (que->wq_cookie). So, "enqueued flag" to avoid
-			 * twice workqueue_enqueue() is not required .
-			 */
-			workqueue_enqueue(adapter->que_wq, &que->wq_cookie,
-			    curcpu());
-		} else {
-			softint_schedule(que->que_si);
-		}
-	} else
+	if (more)
+		ixgbe_sched_handle_que(adapter, que);
+	else
 		ixgbe_enable_queue(adapter, que->msix);
 
 	return 1;
@@ -4725,16 +4734,7 @@ ixgbe_legacy_irq(void *arg)
 
 	if (more) {
 		que->req.ev_count++;
-		if (adapter->txrx_use_workqueue) {
-			/*
-			 * "enqueued flag" is not required here.
-			 * See ixgbe_msix_que().
-			 */
-			workqueue_enqueue(adapter->que_wq, &que->wq_cookie,
-			    curcpu());
-		} else {
-			softint_schedule(que->que_si);
-		}
+		ixgbe_sched_handle_que(adapter, que);
 	} else
 		ixgbe_enable_intr(adapter);
 
@@ -5853,16 +5853,7 @@ ixgbe_handle_que(void *context)
 
 	if (more) {
 		que->req.ev_count++;
-		if (adapter->txrx_use_workqueue) {
-			/*
-			 * "enqueued flag" is not required here.
-			 * See ixgbe_msix_que().
-			 */
-			workqueue_enqueue(adapter->que_wq, &que->wq_cookie,
-			    curcpu());
-		} else {
-			softint_schedule(que->que_si);
-		}
+		ixgbe_sched_handle_que(adapter, que);
 	} else if (que->res != NULL) {
 		/* Re-enable this interrupt */
 		ixgbe_enable_queue(adapter, que->msix);
