@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.34 2014/03/24 19:52:27 christos Exp $	*/
+/*	$NetBSD: sbic.c,v 1.35 2018/03/08 03:12:02 mrg Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.34 2014/03/24 19:52:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.35 2018/03/08 03:12:02 mrg Exp $");
 
 #include "opt_ddb.h"
 
@@ -1682,8 +1682,8 @@ sbicintr(struct sbic_softc *dev)
 		if (i == SBIC_STATE_RUNNING) {
 			GET_SBIC_asr(regs, asr);
 
-		if (asr & SBIC_ASR_LCI)
-			printf("sbicgo: LCI asr:%02x csr:%02x\n", asr, csr);
+			if (asr & SBIC_ASR_LCI)
+				printf("sbicgo: LCI asr:%02x csr:%02x\n", asr, csr);
 
 			if (asr & SBIC_ASR_INT)
 				GET_SBIC_csr(regs, csr);
