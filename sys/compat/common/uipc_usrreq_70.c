@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq_70.c,v 1.1 2016/04/06 19:45:45 roy Exp $	*/
+/*	$NetBSD: uipc_usrreq_70.c,v 1.1.20.1 2018/03/08 08:56:47 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq_70.c,v 1.1 2016/04/06 19:45:45 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq_70.c,v 1.1.20.1 2018/03/08 08:56:47 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/lwp.h>
@@ -42,7 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_usrreq_70.c,v 1.1 2016/04/06 19:45:45 roy Exp $
 
 #include <compat/sys/socket.h>
 
-#ifdef COMPAT_SOCKCRED70
 struct mbuf *
 compat_70_unp_addsockcred(struct lwp *l, struct mbuf *control)
 {
@@ -67,4 +66,3 @@ compat_70_unp_addsockcred(struct lwp *l, struct mbuf *control)
 
 	return m_add(control, m);
 }
-#endif
