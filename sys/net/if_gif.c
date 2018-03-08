@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.126.2.8 2018/02/11 21:17:34 snj Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.126.2.9 2018/03/08 13:22:26 martin Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.126.2.8 2018/02/11 21:17:34 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.126.2.9 2018/03/08 13:22:26 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -458,7 +458,7 @@ gif_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family);
 
 	if ((error = gif_check_nesting(ifp, m)) != 0) {
-		m_free(m);
+		m_freem(m);
 		goto end;
 	}
 
@@ -1126,6 +1126,9 @@ gif_delete_tunnel(struct ifnet *ifp)
 		mutex_exit(&sc->gif_lock);
 		encap_lock_exit();
 		kmem_free(nvar, sizeof(*nvar));
+#ifndef GIF_MPSAFE
+		splx(s);
+#endif
 		return;
 	}
 
