@@ -1,9 +1,9 @@
-/*	$NetBSD: uipc_syscalls_40.c,v 1.15.2.4 2018/03/08 00:25:30 pgoyette Exp $	*/
+/*	$NetBSD: uipc_syscalls_40.c,v 1.15.2.5 2018/03/08 09:56:05 pgoyette Exp $	*/
 
 /* written by Pavel Cahyna, 2006. Public domain. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_40.c,v 1.15.2.4 2018/03/08 00:25:30 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_40.c,v 1.15.2.5 2018/03/08 09:56:05 pgoyette Exp $");
 
 /*
  * System call interface to the socket abstraction.
@@ -24,7 +24,6 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_40.c,v 1.15.2.4 2018/03/08 00:25:30 pg
 
 #include <compat/common/if_40.h>
 
-#ifdef COMPAT_OIFREQ
 /*
  * Return interface configuration
  * of system.  List may be used
@@ -153,8 +152,7 @@ release_exit:
 	curlwp_bindx(bound);
 	return error;
 }
-#endif
-#if defined(COMPAT_40)
+
 static int (*orig_compat_ifconf)(u_long, void *);
 static int (*orig_compat_ifconf)(u_long, void *);
  
@@ -172,4 +170,3 @@ if_40_fini(void)
  
 	vec_compat_ifconf = orig_compat_ifconf;
 }
-#endif /* defined(COMPAT_40) */
