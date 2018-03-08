@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.1280.2.2 2017/11/21 14:51:04 martin Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.1280.2.3 2018/03/08 14:32:49 martin Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1289.2.2 2017/11/21 14:48:23 martin Exp
+ *	NetBSD: pcidevs,v 1.1289.2.3 2018/03/08 14:31:18 martin Exp
  */
 
 /*
@@ -3725,7 +3725,7 @@ static const uint16_t pci_products[] = {
 	    15916, 16026, 0,
 	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_C042, 
 	    15916, 16034, 0,
-	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_C055, 
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_8058, 
 	    15916, 16042, 0,
 	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_GT64120, 
 	    16050, 6, 6300, 0,
@@ -14190,7 +14190,7 @@ static const char pci_words[] = { "."
 	    "88EC032\0" /* 1 refs @ 16018 */
 	    "88EC034\0" /* 1 refs @ 16026 */
 	    "88EC042\0" /* 1 refs @ 16034 */
-	    "88EC055\0" /* 1 refs @ 16042 */
+	    "88E8058\0" /* 1 refs @ 16042 */
 	    "GT-64120\0" /* 1 refs @ 16050 */
 	    "88SX5040\0" /* 1 refs @ 16059 */
 	    "88SX5041\0" /* 1 refs @ 16068 */

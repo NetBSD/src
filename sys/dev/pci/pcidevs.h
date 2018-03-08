@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1281.2.2 2017/11/21 14:51:04 martin Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1281.2.3 2018/03/08 14:32:49 martin Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1289.2.2 2017/11/21 14:48:23 martin Exp
+ *	NetBSD: pcidevs,v 1.1289.2.3 2018/03/08 14:31:18 martin Exp
  */
 
 /*
@@ -41,7 +41,7 @@
 /*
  * NOTE: a fairly complete list of PCI codes can be found at:
  *
- *	http://www.pcidatabase.com/
+ *	https://pci-ids.ucw.cz/
  *
  * (but it doesn't always seem to match vendor documentation)
  *
@@ -2457,7 +2457,7 @@
 #define	PCI_PRODUCT_MARVELL_YUKON_C032	0x4367		/* Yukon 88EC032 */
 #define	PCI_PRODUCT_MARVELL_YUKON_C034	0x4368		/* Yukon 88EC034 */
 #define	PCI_PRODUCT_MARVELL_YUKON_C042	0x4369		/* Yukon 88EC042 */
-#define	PCI_PRODUCT_MARVELL_YUKON_C055	0x436a		/* Yukon 88EC055 */
+#define	PCI_PRODUCT_MARVELL_YUKON_8058	0x436a		/* Yukon 88E8058 */
 #define	PCI_PRODUCT_MARVELL_GT64120	0x4620		/* GT-64120 System Controller */
 #define	PCI_PRODUCT_MARVELL_BELKIN	0x5005		/* Belkin Gigabit Ethernet */
 #define	PCI_PRODUCT_MARVELL_88SX5040	0x5040		/* 88SX5040 SATA */
