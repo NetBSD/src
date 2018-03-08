@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.782.6.2 2018/01/01 19:09:03 snj Exp $	*/
+/*	$NetBSD: machdep.c,v 1.782.6.3 2018/03/08 11:33:15 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.782.6.2 2018/01/01 19:09:03 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.782.6.3 2018/03/08 11:33:15 martin Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -578,7 +578,78 @@ i386_tls_switch(lwp_t *l)
 }
 #endif /* XEN */
 
+/* XXX */
+#define IDTVEC(name)	__CONCAT(X, name)
+typedef void (vector)(void);
+
 #ifndef XEN
+static void	tss_init(struct i386tss *, void *, void *);
+
+static void
+tss_init(struct i386tss *tss, void *stack, void *func)
+{
+	KASSERT(curcpu()->ci_pmap == pmap_kernel());
+
+	memset(tss, 0, sizeof *tss);
+	tss->tss_esp0 = tss->tss_esp = (int)((char *)stack + USPACE - 16);
+	tss->tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
+	tss->__tss_cs = GSEL(GCODE_SEL, SEL_KPL);
+	tss->tss_fs = GSEL(GCPU_SEL, SEL_KPL);
+	tss->tss_gs = tss->__tss_es = tss->__tss_ds =
+	    tss->__tss_ss = GSEL(GDATA_SEL, SEL_KPL);
+	/* %cr3 contains the value associated to pmap_kernel */
+	tss->tss_cr3 = rcr3();
+	tss->tss_esp = (int)((char *)stack + USPACE - 16);
+	tss->tss_ldt = GSEL(GLDT_SEL, SEL_KPL);
+	tss->__tss_eflags = PSL_MBO | PSL_NT;	/* XXX not needed? */
+	tss->__tss_eip = (int)func;
+}
+
+extern vector IDTVEC(tss_trap08);
+#if defined(DDB) && defined(MULTIPROCESSOR)
+extern vector Xintrddbipi, Xx2apic_intrddbipi;
+extern int ddb_vec;
+#endif
+
+void
+cpu_set_tss_gates(struct cpu_info *ci)
+{
+	struct segment_descriptor sd;
+
+	ci->ci_doubleflt_stack = (char *)uvm_km_alloc(kernel_map, USPACE, 0,
+	    UVM_KMF_WIRED);
+
+	tss_init(&ci->ci_doubleflt_tss, ci->ci_doubleflt_stack,
+	    IDTVEC(tss_trap08));
+	setsegment(&sd, &ci->ci_doubleflt_tss, sizeof(struct i386tss) - 1,
+	    SDT_SYS386TSS, SEL_KPL, 0, 0);
+	ci->ci_gdt[GTRAPTSS_SEL].sd = sd;
+
+	setgate(&idt[8], NULL, 0, SDT_SYSTASKGT, SEL_KPL,
+	    GSEL(GTRAPTSS_SEL, SEL_KPL));
+
+#if defined(DDB) && defined(MULTIPROCESSOR)
+	/*
+	 * Set up separate handler for the DDB IPI, so that it doesn't
+	 * stomp on a possibly corrupted stack.
+	 *
+	 * XXX overwriting the gate set in db_machine_init.
+	 * Should rearrange the code so that it's set only once.
+	 */
+	ci->ci_ddbipi_stack = (char *)uvm_km_alloc(kernel_map, USPACE, 0,
+	    UVM_KMF_WIRED);
+	tss_init(&ci->ci_ddbipi_tss, ci->ci_ddbipi_stack,
+	    x2apic_mode ? Xx2apic_intrddbipi : Xintrddbipi);
+
+	setsegment(&sd, &ci->ci_ddbipi_tss, sizeof(struct i386tss) - 1,
+	    SDT_SYS386TSS, SEL_KPL, 0, 0);
+	ci->ci_gdt[GIPITSS_SEL].sd = sd;
+
+	setgate(&idt[ddb_vec], NULL, 0, SDT_SYSTASKGT, SEL_KPL,
+	    GSEL(GIPITSS_SEL, SEL_KPL));
+#endif
+}
+
 /*
  * Set up TSS and I/O bitmap.
  */
@@ -930,8 +1001,7 @@ setsegment(struct segment_descriptor *sd, const void *base, size_t limit,
 	sd->sd_hibase = (int)base >> 24;
 }
 
-#define	IDTVEC(name)	__CONCAT(X, name)
-typedef void (vector)(void);
+/* XXX */
 extern vector IDTVEC(syscall);
 extern vector *IDTVEC(exceptions)[];
 extern vector IDTVEC(svr4_fasttrap);
