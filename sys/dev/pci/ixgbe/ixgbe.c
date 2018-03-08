@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.88.2.12 2018/03/06 11:12:41 martin Exp $ */
+/* $NetBSD: ixgbe.c,v 1.88.2.13 2018/03/08 12:31:25 martin Exp $ */
 
 /******************************************************************************
 
@@ -1686,10 +1686,6 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 	const char *xname = device_xname(dev);
 
 	/* Driver Statistics */
-	evcnt_attach_dynamic(&adapter->handleq, EVCNT_TYPE_MISC,
-	    NULL, xname, "Handled queue in softint");
-	evcnt_attach_dynamic(&adapter->req, EVCNT_TYPE_MISC,
-	    NULL, xname, "Requeued in softint");
 	evcnt_attach_dynamic(&adapter->efbig_tx_dma_setup, EVCNT_TYPE_MISC,
 	    NULL, xname, "Driver tx dma soft fail EFBIG");
 	evcnt_attach_dynamic(&adapter->mbuf_defrag_failed, EVCNT_TYPE_MISC,
@@ -1736,15 +1732,6 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 		    (void *)&adapter->queues[i], 0, CTL_CREATE, CTL_EOL) != 0)
 			break;
 
-#if 0 /* XXX msaitoh */
-		if (sysctl_createv(log, 0, &rnode, &cnode,
-		    CTLFLAG_READONLY, CTLTYPE_QUAD,
-		    "irqs", SYSCTL_DESCR("irqs on this queue"),
-			NULL, 0, &(adapter->queues[i].irqs),
-		    0, CTL_CREATE, CTL_EOL) != 0)
-			break;
-#endif
-
 		if (sysctl_createv(log, 0, &rnode, &cnode,
 		    CTLFLAG_READONLY, CTLTYPE_INT,
 		    "txd_head", SYSCTL_DESCR("Transmit Descriptor Head"),
@@ -1761,6 +1748,11 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 
 		evcnt_attach_dynamic(&adapter->queues[i].irqs, EVCNT_TYPE_INTR,
 		    NULL, adapter->queues[i].evnamebuf, "IRQs on queue");
+		evcnt_attach_dynamic(&adapter->queues[i].handleq,
+		    EVCNT_TYPE_MISC, NULL, adapter->queues[i].evnamebuf,
+		    "Handled queue in softint");
+		evcnt_attach_dynamic(&adapter->queues[i].req, EVCNT_TYPE_MISC,
+		    NULL, adapter->queues[i].evnamebuf, "Requeued in softint");
 		evcnt_attach_dynamic(&txr->tso_tx, EVCNT_TYPE_MISC,
 		    NULL, adapter->queues[i].evnamebuf, "TSO");
 		evcnt_attach_dynamic(&txr->no_desc_avail, EVCNT_TYPE_MISC,
@@ -1981,8 +1973,6 @@ ixgbe_clear_evcnt(struct adapter *adapter)
 	struct ixgbe_hw *hw = &adapter->hw;
 	struct ixgbe_hw_stats *stats = &adapter->stats.pf;
 
-	adapter->handleq.ev_count = 0;
-	adapter->req.ev_count = 0;
 	adapter->efbig_tx_dma_setup.ev_count = 0;
 	adapter->mbuf_defrag_failed.ev_count = 0;
 	adapter->efbig2_tx_dma_setup.ev_count = 0;
@@ -1997,6 +1987,8 @@ ixgbe_clear_evcnt(struct adapter *adapter)
 	txr = adapter->tx_rings;
 	for (int i = 0; i < adapter->num_queues; i++, rxr++, txr++) {
 		adapter->queues[i].irqs.ev_count = 0;
+		adapter->queues[i].handleq.ev_count = 0;
+		adapter->queues[i].req.ev_count = 0;
 		txr->no_desc_avail.ev_count = 0;
 		txr->total_packets.ev_count = 0;
 		txr->tso_tx.ev_count = 0;
@@ -2447,6 +2439,36 @@ out:
 } /* ixgbe_disable_queue */
 
 /************************************************************************
+ * ixgbe_sched_handle_que - schedule deferred packet processing
+ ************************************************************************/
+static inline void
+ixgbe_sched_handle_que(struct adapter *adapter, struct ix_queue *que)
+{
+
+	if (adapter->txrx_use_workqueue) {
+		/*
+		 * adapter->que_wq is bound to each CPU instead of
+		 * each NIC queue to reduce workqueue kthread. As we
+		 * should consider about interrupt affinity in this
+		 * function, the workqueue kthread must be WQ_PERCPU.
+		 * If create WQ_PERCPU workqueue kthread for each NIC
+		 * queue, that number of created workqueue kthread is
+		 * (number of used NIC queue) * (number of CPUs) =
+		 * (number of CPUs) ^ 2 most often.
+		 *
+		 * The same NIC queue's interrupts are avoided by
+		 * masking the queue's interrupt. And different
+		 * NIC queue's interrupts use different struct work
+		 * (que->wq_cookie). So, "enqueued flag" to avoid
+		 * twice workqueue_enqueue() is not required .
+		 */
+		workqueue_enqueue(adapter->que_wq, &que->wq_cookie, curcpu());
+	} else {
+		softint_schedule(que->que_si);
+	}
+}
+
+/************************************************************************
  * ixgbe_msix_que - MSI-X Queue Interrupt Service routine
  ************************************************************************/
 static int
@@ -2534,30 +2556,9 @@ ixgbe_msix_que(void *arg)
 	rxr->packets = 0;
 
 no_calc:
-	if (more) {
-		if (adapter->txrx_use_workqueue) {
-			/*
-			 * adapter->que_wq is bound to each CPU instead of
-			 * each NIC queue to reduce workqueue kthread. As we
-			 * should consider about interrupt affinity in this
-			 * function, the workqueue kthread must be WQ_PERCPU.
-			 * If create WQ_PERCPU workqueue kthread for each NIC
-			 * queue, that number of created workqueue kthread is
-			 * (number of used NIC queue) * (number of CPUs) =
-			 * (number of CPUs) ^ 2 most often.
-			 *
-			 * The same NIC queue's interrupts are avoided by
-			 * masking the queue's interrupt. And different
-			 * NIC queue's interrupts use different struct work
-			 * (que->wq_cookie). So, "enqueued flag" to avoid
-			 * twice workqueue_enqueue() is not required .
-			 */
-			workqueue_enqueue(adapter->que_wq, &que->wq_cookie,
-			    curcpu());
-		} else {
-			softint_schedule(que->que_si);
-		}
-	} else
+	if (more)
+		ixgbe_sched_handle_que(adapter, que);
+	else
 		ixgbe_enable_queue(adapter, que->msix);
 
 	return 1;
@@ -3376,8 +3377,6 @@ ixgbe_detach(device_t dev, int flags)
 	if_percpuq_destroy(adapter->ipq);
 
 	sysctl_teardown(&adapter->sysctllog);
-	evcnt_detach(&adapter->handleq);
-	evcnt_detach(&adapter->req);
 	evcnt_detach(&adapter->efbig_tx_dma_setup);
 	evcnt_detach(&adapter->mbuf_defrag_failed);
 	evcnt_detach(&adapter->efbig2_tx_dma_setup);
@@ -3392,6 +3391,8 @@ ixgbe_detach(device_t dev, int flags)
 	txr = adapter->tx_rings;
 	for (int i = 0; i < adapter->num_queues; i++, rxr++, txr++) {
 		evcnt_detach(&adapter->queues[i].irqs);
+		evcnt_detach(&adapter->queues[i].handleq);
+		evcnt_detach(&adapter->queues[i].req);
 		evcnt_detach(&txr->no_desc_avail);
 		evcnt_detach(&txr->total_packets);
 		evcnt_detach(&txr->tso_tx);
@@ -4237,7 +4238,14 @@ ixgbe_local_timer1(void *arg)
 	if (hung == adapter->num_queues)
 		goto watchdog;
 	else if (queues != 0) { /* Force an IRQ on queues with work */
-		ixgbe_rearm_queues(adapter, queues);
+		que = adapter->queues;
+		for (int i = 0; i < adapter->num_queues; i++, que++) {
+			mutex_enter(&que->im_mtx);
+			if (que->im_nest == 0)
+				ixgbe_rearm_queues(adapter,
+				    queues & ((u64)1 << i));
+			mutex_exit(&que->im_mtx);
+		}
 	}
 
 out:
@@ -4724,9 +4732,10 @@ ixgbe_legacy_irq(void *arg)
 	    (eicr & IXGBE_EICR_GPI_SDP0_X540))
 		softint_schedule(adapter->phy_si);
 
-	if (more)
-		softint_schedule(que->que_si);
-	else
+	if (more) {
+		que->req.ev_count++;
+		ixgbe_sched_handle_que(adapter, que);
+	} else
 		ixgbe_enable_intr(adapter);
 
 	return 1;
@@ -5825,7 +5834,7 @@ ixgbe_handle_que(void *context)
 	struct ifnet    *ifp = adapter->ifp;
 	bool		more = false;
 
-	adapter->handleq.ev_count++;
+	que->handleq.ev_count++;
 
 	if (ifp->if_flags & IFF_RUNNING) {
 		more = ixgbe_rxeof(que);
@@ -5843,16 +5852,8 @@ ixgbe_handle_que(void *context)
 	}
 
 	if (more) {
-		if (adapter->txrx_use_workqueue) {
-			/*
-			 * "enqueued flag" is not required here.
-			 * See ixgbe_msix_que().
-			 */
-			workqueue_enqueue(adapter->que_wq, &que->wq_cookie,
-			    curcpu());
-		} else {
-			softint_schedule(que->que_si);
-		}
+		que->req.ev_count++;
+		ixgbe_sched_handle_que(adapter, que);
 	} else if (que->res != NULL) {
 		/* Re-enable this interrupt */
 		ixgbe_enable_queue(adapter, que->msix);
