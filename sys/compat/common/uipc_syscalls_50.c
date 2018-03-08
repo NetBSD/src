@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls_50.c,v 1.3.56.2 2018/03/08 07:04:01 pgoyette Exp $	*/
+/*	$NetBSD: uipc_syscalls_50.c,v 1.3.56.3 2018/03/08 09:56:05 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_50.c,v 1.3.56.2 2018/03/08 07:04:01 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_50.c,v 1.3.56.3 2018/03/08 09:56:05 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -56,7 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_50.c,v 1.3.56.2 2018/03/08 07:04:01 pg
 #include <compat/sys/sockio.h>
 #include <compat/sys/if.h>
 
-#ifdef COMPAT_OIFDATA
 /*ARGSUSED*/
 int
 compat_ifdatareq(struct lwp *l, u_long cmd, void *data)
@@ -115,4 +114,3 @@ if_50_fini(void)
 
 	vec_compat_ifdatareq = orig_compat_ifdatareq;
 }
-#endif
