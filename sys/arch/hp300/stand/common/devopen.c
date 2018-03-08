@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.11 2014/08/10 07:40:49 isaki Exp $	*/
+/*	$NetBSD: devopen.c,v 1.12 2018/03/08 03:12:01 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -144,7 +144,7 @@ devparse(const char *fname, int *dev, int *adapt, int *ctlr, int *unit,
 
 	/* get device name */
 	for (s = (char *)fname; *s && *s != '/' && *s != ':' && *s != '('; s++)
-		;
+		continue;
 
 	/* first form */
 	if (*s == '(') {
@@ -188,11 +188,12 @@ devparse(const char *fname, int *dev, int *adapt, int *ctlr, int *unit,
 		int temp;
 
 		/* isolate device */
-		for (s = (char *)fname; *s != ':' && !isdigit(*s); s++);
+		for (s = (char *)fname; *s != ':' && !isdigit(*s); s++)
+			continue;
 	
-			/* lookup device and get index */
-			if ((*dev = devlookup(fname, s - fname)) < 0)
-				goto baddev;
+		/* lookup device and get index */
+		if ((*dev = devlookup(fname, s - fname)) < 0)
+			goto baddev;
 
 		/* isolate unit */
 		if ((temp = atoi(s)) > 255)
@@ -200,7 +201,7 @@ devparse(const char *fname, int *dev, int *adapt, int *ctlr, int *unit,
 		*adapt = temp / 8;
 		*ctlr = temp % 8;
 		for (; isdigit(*s); s++)
-			;
+			continue;
 	
 		/* translate partition */
 		if (!ispart(*s))
