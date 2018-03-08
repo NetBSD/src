@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.151 2018/03/07 01:37:24 ozaki-r Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.152 2018/03/08 06:48:23 ozaki-r Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.151 2018/03/07 01:37:24 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.152 2018/03/08 06:48:23 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1145,17 +1145,24 @@ nd6_dad_starttimer(struct dadq *dp, int ticks)
 }
 
 static void
-nd6_dad_destroytimer(struct dadq *dp)
+nd6_dad_stoptimer(struct dadq *dp)
 {
-	struct ifaddr *ifa;
+
+	KASSERT(mutex_owned(&nd6_dad_lock));
 
 	TAILQ_REMOVE(&dadq, dp, dad_list);
-	/* Request the timer to destroy dp. */
-	ifa = dp->dad_ifa;
+	/* Tell the timer that dp is being destroyed. */
 	dp->dad_ifa = NULL;
-	ifafree(ifa);
-	callout_reset(&dp->dad_timer_ch, 0,
-	    (void (*)(void *))nd6_dad_timer, dp);
+	callout_halt(&dp->dad_timer_ch, &nd6_dad_lock);
+}
+
+static void
+nd6_dad_destroytimer(struct dadq *dp)
+{
+
+	KASSERT(dp->dad_ifa == NULL);
+	callout_destroy(&dp->dad_timer_ch);
+	kmem_intr_free(dp, sizeof(*dp));
 }
 
 /*
@@ -1268,9 +1275,12 @@ nd6_dad_stop(struct ifaddr *ifa)
 	}
 
 	/* Prevent the timer from running anymore. */
-	nd6_dad_destroytimer(dp);
+	nd6_dad_stoptimer(dp);
 
 	mutex_exit(&nd6_dad_lock);
+
+	nd6_dad_destroytimer(dp);
+	ifafree(ifa);
 }
 
 static void
@@ -1282,15 +1292,12 @@ nd6_dad_timer(struct dadq *dp)
 	char ip6buf[INET6_ADDRSTRLEN];
 	bool need_free = false;
 
-	SOFTNET_KERNEL_LOCK_UNLESS_NET_MPSAFE();
+	KERNEL_LOCK_UNLESS_NET_MPSAFE();
 	mutex_enter(&nd6_dad_lock);
 
 	ifa = dp->dad_ifa;
 	if (ifa == NULL) {
-		/*
-		 * ifa is being deleted and the callout is already scheduled
-		 * again, so we cannot destroy dp in this run.
-		 */
+		/* dp is being destroyed by someone.  Do nothing. */
 		goto done;
 	}
 
@@ -1315,7 +1322,7 @@ nd6_dad_timer(struct dadq *dp)
 		nd6log(LOG_INFO, "%s: could not run DAD, driver problem?\n",
 			if_name(ifa->ifa_ifp));
 
-		TAILQ_REMOVE(&dadq, dp, dad_list);
+		nd6_dad_stoptimer(dp);
 		need_free = true;
 		goto done;
 	}
@@ -1348,8 +1355,8 @@ nd6_dad_timer(struct dadq *dp)
 
 		if (duplicate) {
 			nd6_dad_duplicated(dp);
-			/* (*dp) has been freed in nd6_dad_duplicated() */
-			dp = NULL;
+			nd6_dad_stoptimer(dp);
+			need_free = true;
 		} else {
 			/*
 			 * We are done with DAD.  No NA came, no NS came.
@@ -1363,7 +1370,7 @@ nd6_dad_timer(struct dadq *dp)
 			    if_name(ifa->ifa_ifp),
 			    IN6_PRINT(ip6buf, &ia->ia_addr.sin6_addr));
 
-			TAILQ_REMOVE(&dadq, dp, dad_list);
+			nd6_dad_stoptimer(dp);
 			need_free = true;
 		}
 	}
@@ -1371,13 +1378,12 @@ done:
 	mutex_exit(&nd6_dad_lock);
 
 	if (need_free) {
-		callout_destroy(&dp->dad_timer_ch);
-		kmem_intr_free(dp, sizeof(*dp));
-		if (ifa != NULL)
-			ifafree(ifa);
+		nd6_dad_destroytimer(dp);
+		KASSERT(ifa != NULL);
+		ifafree(ifa);
 	}
 
-	SOFTNET_KERNEL_UNLOCK_UNLESS_NET_MPSAFE();
+	KERNEL_UNLOCK_UNLESS_NET_MPSAFE();
 }
 
 static void
@@ -1441,9 +1447,6 @@ nd6_dad_duplicated(struct dadq *dp)
 			break;
 		}
 	}
-
-	/* We are done with DAD, with duplicated address found. (failure) */
-	nd6_dad_destroytimer(dp);
 }
 
 static void
@@ -1499,8 +1502,10 @@ nd6_dad_ns_input(struct ifaddr *ifa, struct nd_opt_nonce *nonce)
 	/* XXX more checks for loopback situation - see nd6_dad_timer too */
 
 	if (duplicate) {
-		if (dp)
+		if (dp) {
 			nd6_dad_duplicated(dp);
+			nd6_dad_stoptimer(dp);
+		}
 	} else {
 		/*
 		 * not sure if I got a duplicate.
@@ -1510,6 +1515,11 @@ nd6_dad_ns_input(struct ifaddr *ifa, struct nd_opt_nonce *nonce)
 			dp->dad_ns_icount++;
 	}
 	mutex_exit(&nd6_dad_lock);
+
+	if (duplicate && dp) {
+		nd6_dad_destroytimer(dp);
+		ifafree(ifa);
+	}
 }
 
 static void
@@ -1520,13 +1530,21 @@ nd6_dad_na_input(struct ifaddr *ifa)
 	KASSERT(ifa != NULL);
 
 	mutex_enter(&nd6_dad_lock);
-	dp = nd6_dad_find(ifa, NULL);
-	if (dp) {
-		dp->dad_na_icount++;
 
-		/* remove the address. */
-		nd6_dad_duplicated(dp);
+	dp = nd6_dad_find(ifa, NULL);
+	if (dp == NULL) {
+		mutex_exit(&nd6_dad_lock);
+		return;
 	}
 
+	dp->dad_na_icount++;
+
+	/* remove the address. */
+	nd6_dad_duplicated(dp);
+	nd6_dad_stoptimer(dp);
+
 	mutex_exit(&nd6_dad_lock);
+
+	nd6_dad_destroytimer(dp);
+	ifafree(ifa);
 }
