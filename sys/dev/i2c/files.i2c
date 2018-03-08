@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.84 2018/02/13 13:19:30 uwe Exp $
+#	$NetBSD: files.i2c,v 1.85 2018/03/08 23:25:56 macallan Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -303,6 +303,11 @@ file	dev/i2c/dstemp.c			dstemp
 device	em3027rtc: sysmon_envsys
 attach	em3027rtc at iic
 file	dev/i2c/em3027.c			em3027rtc
+
+# Apple Fan Control Unit found in some G5
+device	fcu: sysmon_envsys
+attach	fcu at iic
+file	dev/i2c/fcu.c				fcu
 
 # HID over i2c
 # HID "bus"
