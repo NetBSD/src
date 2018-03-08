@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.130.2.2 2018/03/07 14:50:57 martin Exp $	*/
+/*	$NetBSD: cpu.c,v 1.130.2.3 2018/03/08 11:33:15 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.130.2.2 2018/03/07 14:50:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.130.2.3 2018/03/08 11:33:15 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -164,15 +164,13 @@ struct cpu_info cpu_info_primary __aligned(CACHE_LINE_SIZE) = {
 	.ci_curldt = -1,
 #ifdef TRAPLOG
 	.ci_tlog_base = &tlog_primary,
-#endif /* !TRAPLOG */
+#endif
 };
 
 struct cpu_info *cpu_info_list = &cpu_info_primary;
 
-static void	cpu_set_tss_gates(struct cpu_info *);
-
 #ifdef i386
-static void	tss_init(struct i386tss *, void *, void *);
+void		cpu_set_tss_gates(struct cpu_info *);
 #endif
 
 static void	cpu_init_idle_lwp(struct cpu_info *);
@@ -186,8 +184,6 @@ uint32_t cpu_feature[7] __read_mostly; /* X86 CPUID feature bits */
 			 * [5] structured extended features cpuid.7:%ebx
 			 * [6] structured extended features cpuid.7:%ecx
 			 */
-
-extern char x86_64_doubleflt_stack[];
 
 #ifdef MULTIPROCESSOR
 bool x86_mp_online;
@@ -395,7 +391,9 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		cpu_intr_init(ci);
 		cpu_get_tsc_freq(ci);
 		cpu_init(ci);
+#ifdef i386
 		cpu_set_tss_gates(ci);
+#endif
 		pmap_cpu_init_late(ci);
 #if NLAPIC > 0
 		if (caa->cpu_role != CPU_ROLE_SP) {
@@ -434,7 +432,9 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		 */
 		cpu_intr_init(ci);
 		gdt_alloc_cpu(ci);
+#ifdef i386
 		cpu_set_tss_gates(ci);
+#endif
 		pmap_cpu_init_late(ci);
 		cpu_start_secondary(ci);
 		if (ci->ci_flags & CPUF_PRESENT) {
@@ -501,7 +501,6 @@ cpu_rescan(device_t self, const char *ifattr, const int *locators)
 	cfaa.ci = ci;
 
 	if (ifattr_match(ifattr, "cpufeaturebus")) {
-
 		if (ci->ci_frequency == NULL) {
 			cfaa.name = "frequency";
 			ci->ci_frequency = config_found_ia(self,
@@ -808,7 +807,7 @@ cpu_hatch(void *v)
 	cpu_probe(ci);
 
 	ci->ci_data.cpu_cc_freq = cpu_info_primary.ci_data.cpu_cc_freq;
-	/* cpu_get_tsc_freq(ci); */ 
+	/* cpu_get_tsc_freq(ci); */
 
 	KDASSERT((ci->ci_flags & CPUF_PRESENT) == 0);
 
@@ -824,7 +823,7 @@ cpu_hatch(void *v)
 	/*
 	 * Wait to be brought online.  Use 'monitor/mwait' if available,
 	 * in order to make the TSC drift as much as possible. so that
-	 * we can detect it later.  If not available, try 'pause'. 
+	 * we can detect it later.  If not available, try 'pause'.
 	 * We'd like to use 'hlt', but we have interrupts off.
 	 */
 	while ((ci->ci_flags & CPUF_GO) == 0) {
@@ -933,7 +932,7 @@ cpu_copy_trampoline(void)
 	 */
 	extern u_char cpu_spinup_trampoline[];
 	extern u_char cpu_spinup_trampoline_end[];
-	
+
 	vaddr_t mp_trampoline_vaddr;
 
 	mp_trampoline_vaddr = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
@@ -951,80 +950,6 @@ cpu_copy_trampoline(void)
 	uvm_km_free(kernel_map, mp_trampoline_vaddr, PAGE_SIZE, UVM_KMF_VAONLY);
 }
 #endif
-
-#ifdef i386
-static void
-tss_init(struct i386tss *tss, void *stack, void *func)
-{
-	KASSERT(curcpu()->ci_pmap == pmap_kernel());
-
-	memset(tss, 0, sizeof *tss);
-	tss->tss_esp0 = tss->tss_esp = (int)((char *)stack + USPACE - 16);
-	tss->tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
-	tss->__tss_cs = GSEL(GCODE_SEL, SEL_KPL);
-	tss->tss_fs = GSEL(GCPU_SEL, SEL_KPL);
-	tss->tss_gs = tss->__tss_es = tss->__tss_ds =
-	    tss->__tss_ss = GSEL(GDATA_SEL, SEL_KPL);
-	/* %cr3 contains the value associated to pmap_kernel */
-	tss->tss_cr3 = rcr3();
-	tss->tss_esp = (int)((char *)stack + USPACE - 16);
-	tss->tss_ldt = GSEL(GLDT_SEL, SEL_KPL);
-	tss->__tss_eflags = PSL_MBO | PSL_NT;	/* XXX not needed? */
-	tss->__tss_eip = (int)func;
-}
-
-/* XXX */
-#define IDTVEC(name)	__CONCAT(X, name)
-typedef void (vector)(void);
-extern vector IDTVEC(tss_trap08);
-#if defined(DDB) && defined(MULTIPROCESSOR)
-extern vector Xintrddbipi, Xx2apic_intrddbipi;
-extern int ddb_vec;
-#endif
-
-static void
-cpu_set_tss_gates(struct cpu_info *ci)
-{
-	struct segment_descriptor sd;
-
-	ci->ci_doubleflt_stack = (char *)uvm_km_alloc(kernel_map, USPACE, 0,
-	    UVM_KMF_WIRED);
-	tss_init(&ci->ci_doubleflt_tss, ci->ci_doubleflt_stack,
-	    IDTVEC(tss_trap08));
-	setsegment(&sd, &ci->ci_doubleflt_tss, sizeof(struct i386tss) - 1,
-	    SDT_SYS386TSS, SEL_KPL, 0, 0);
-	ci->ci_gdt[GTRAPTSS_SEL].sd = sd;
-	setgate(&idt[8], NULL, 0, SDT_SYSTASKGT, SEL_KPL,
-	    GSEL(GTRAPTSS_SEL, SEL_KPL));
-
-#if defined(DDB) && defined(MULTIPROCESSOR)
-	/*
-	 * Set up separate handler for the DDB IPI, so that it doesn't
-	 * stomp on a possibly corrupted stack.
-	 *
-	 * XXX overwriting the gate set in db_machine_init.
-	 * Should rearrange the code so that it's set only once.
-	 */
-	ci->ci_ddbipi_stack = (char *)uvm_km_alloc(kernel_map, USPACE, 0,
-	    UVM_KMF_WIRED);
-	tss_init(&ci->ci_ddbipi_tss, ci->ci_ddbipi_stack,
-	    x2apic_mode ? Xx2apic_intrddbipi : Xintrddbipi);
-
-	setsegment(&sd, &ci->ci_ddbipi_tss, sizeof(struct i386tss) - 1,
-	    SDT_SYS386TSS, SEL_KPL, 0, 0);
-	ci->ci_gdt[GIPITSS_SEL].sd = sd;
-
-	setgate(&idt[ddb_vec], NULL, 0, SDT_SYSTASKGT, SEL_KPL,
-	    GSEL(GIPITSS_SEL, SEL_KPL));
-#endif
-}
-#else
-static void
-cpu_set_tss_gates(struct cpu_info *ci)
-{
-
-}
-#endif	/* i386 */
 
 #ifdef MULTIPROCESSOR
 int
@@ -1305,7 +1230,7 @@ cpu_load_pmap(struct pmap *pmap, struct pmap *oldpmap)
 	for (i = 0 ; i < PDP_SIZE; i++) {
 		l3_pd[i] = pmap->pm_pdirpa[i] | PG_V;
 	}
-	
+
 	if (interrupts_enabled)
 		x86_enable_intr();
 	tlbflush();

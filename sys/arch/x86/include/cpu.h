@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.71 2017/05/23 08:48:34 nonaka Exp $	*/
+/*	$NetBSD: cpu.h,v 1.71.2.1 2018/03/08 11:33:15 martin Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -406,6 +406,9 @@ extern void (*x86_cpu_idle)(void);
 #define	cpu_idle() (*x86_cpu_idle)()
 
 /* machdep.c */
+#ifdef i386
+void	cpu_set_tss_gates(struct cpu_info *);
+#endif
 void	dumpconf(void);
 void	cpu_reset(void);
 void	i386_proc0_tss_ldt_init(void);
@@ -438,9 +441,6 @@ extern vm_guest_t vm_guest;
 /* cpu_topology.c */
 void	x86_cpu_topology(struct cpu_info *);
 
-/* vm_machdep.c */
-void	cpu_proc_fork(struct proc *, struct proc *);
-
 /* locore.s */
 struct region_descriptor;
 void	lgdt(struct region_descriptor *);
@@ -467,10 +467,10 @@ void	i8254_initclocks(void);
 #endif
 
 /* cpu.c */
-
 void	cpu_probe_features(struct cpu_info *);
 
 /* vm_machdep.c */
+void	cpu_proc_fork(struct proc *, struct proc *);
 paddr_t	kvtop(void *);
 
 #ifdef USER_LDT
