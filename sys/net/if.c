@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.419.2.3 2018/03/07 08:56:44 pgoyette Exp $	*/
+/*	$NetBSD: if.c,v 1.419.2.4 2018/03/08 00:25:30 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.419.2.3 2018/03/07 08:56:44 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.419.2.4 2018/03/08 00:25:30 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -157,6 +157,7 @@ __KERNEL_RCSID(0, "$NetBSD: if.c,v 1.419.2.3 2018/03/07 08:56:44 pgoyette Exp $"
 
 #include <compat/sys/sockio.h>
 #include <compat/sys/socket.h>
+#include <compat/sys/if.h>
 
 MALLOC_DEFINE(M_IFADDR, "ifaddr", "interface address");
 MALLOC_DEFINE(M_IFMADDR, "ether_multi", "link-level multicast address");
