@@ -1,4 +1,4 @@
-/*	$NetBSD: in_l2tp.c,v 1.2.8.3 2018/01/02 10:39:57 snj Exp $	*/
+/*	$NetBSD: in_l2tp.c,v 1.2.8.4 2018/03/08 13:41:41 martin Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_l2tp.c,v 1.2.8.3 2018/01/02 10:39:57 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_l2tp.c,v 1.2.8.4 2018/03/08 13:41:41 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_l2tp.h"
@@ -103,9 +103,6 @@ in_l2tp_output(struct l2tp_variant *var, struct mbuf *m)
 	    && sin_dst->sin_family == AF_INET);
 
 	sc = var->lv_softc;
-	if (sc == NULL)
-		return ENETUNREACH;
-
 	ifp = &sc->l2tp_ec.ec_if;
 	error = l2tp_check_nesting(ifp, m);
 	if (error) {
@@ -113,7 +110,16 @@ in_l2tp_output(struct l2tp_variant *var, struct mbuf *m)
 		goto looped;
 	}
 
-#ifdef NETYET
+	/* bidirectional configured tunnel mode */
+	if (sin_dst->sin_addr.s_addr == INADDR_ANY) {
+		m_freem(m);
+		if ((ifp->if_flags & IFF_DEBUG) != 0)
+			log(LOG_DEBUG, "%s: ENETUNREACH\n", __func__);
+		error = ENETUNREACH;
+		goto out;
+	}
+
+#ifdef NOTYET
 /* TODO: support ALTQ for innner frame */
 #ifdef ALTQ
 	ALTQ_SAVE_PAYLOAD(m, AF_ETHER);
@@ -122,16 +128,7 @@ in_l2tp_output(struct l2tp_variant *var, struct mbuf *m)
 
 	memset(&iphdr, 0, sizeof(iphdr));
 	iphdr.ip_src = sin_src->sin_addr;
-	/* bidirectional configured tunnel mode */
-	if (sin_dst->sin_addr.s_addr != INADDR_ANY)
-		iphdr.ip_dst = sin_dst->sin_addr;
-	else {
-		m_freem(m);
-		if ((ifp->if_flags & IFF_DEBUG) != 0)
-			log(LOG_DEBUG, "%s: ENETUNREACH\n", __func__);
-		error = ENETUNREACH;
-		goto out;
-	}
+	iphdr.ip_dst = sin_dst->sin_addr;
 	iphdr.ip_p = IPPROTO_L2TP;
 	/* version will be set in ip_output() */
 	iphdr.ip_ttl = ip_l2tp_ttl;
@@ -152,11 +149,12 @@ in_l2tp_output(struct l2tp_variant *var, struct mbuf *m)
 		goto out;
 	}
 #endif
+
 	/*
-	 * payload length
-	 *  NOTE: Payload length may be changed in ip_tcpmss().
-	 *        Typical case is missing of TCP mss option in original
-	 *        TCP header.
+	 * Payload length.
+	 *
+	 * NOTE: payload length may be changed in ip_tcpmss(). Typical case
+	 * is missing of TCP mss option in original TCP header.
 	 */
 	iphdr.ip_len += m->m_pkthdr.len;
 	HTONS(iphdr.ip_len);
@@ -174,12 +172,10 @@ in_l2tp_output(struct l2tp_variant *var, struct mbuf *m)
 		}
 		if (var->lv_peer_cookie_len == 4) {
 			cookie_32 = htonl((uint32_t)var->lv_peer_cookie);
-			memcpy(mtod(m, void *), &cookie_32,
-			    sizeof(uint32_t));
+			memcpy(mtod(m, void *), &cookie_32, sizeof(uint32_t));
 		} else {
 			cookie_64 = htobe64(var->lv_peer_cookie);
-			memcpy(mtod(m, void *), &cookie_64,
-			    sizeof(uint64_t));
+			memcpy(mtod(m, void *), &cookie_64, sizeof(uint64_t));
 		}
 	}
 
@@ -196,11 +192,14 @@ in_l2tp_output(struct l2tp_variant *var, struct mbuf *m)
 
 	/* prepend new IP header */
 	M_PREPEND(m, sizeof(struct ip), M_DONTWAIT);
+	if (m == NULL) {
+		error = ENOBUFS;
+		goto out;
+	}
 	if (IP_HDR_ALIGNED_P(mtod(m, void *)) == 0) {
-		if (m)
-			m = m_copyup(m, sizeof(struct ip), 0);
+		m = m_copyup(m, sizeof(struct ip), 0);
 	} else {
-		if (m && m->m_len < sizeof(struct ip))
+		if (m->m_len < sizeof(struct ip))
 			m = m_pullup(m, sizeof(struct ip));
 	}
 	if (m == NULL) {
@@ -260,13 +259,12 @@ in_l2tp_input(struct mbuf *m, int off, int proto, void *eparg __unused)
 	struct psref psref;
 	struct l2tp_variant *var;
 
-	if (m->m_len < off + sizeof(uint32_t)) {
-		m = m_pullup(m, off + sizeof(uint32_t));
-		if (!m) {
-			/* if payload length < 4 octets */
-			return;
-		}
-        }
+	KASSERT((m->m_flags & M_PKTHDR) != 0);
+
+	if (m->m_pkthdr.len < off + sizeof(uint32_t)) {
+		m_freem(m);
+		return;
+	}
 
 	/* get L2TP session ID */
 	m_copydata(m, off, sizeof(uint32_t), (void *)&sess_id);
@@ -288,28 +286,28 @@ in_l2tp_input(struct mbuf *m, int off, int proto, void *eparg __unused)
 		m_freem(m);
 		ip_statinc(IP_STAT_NOL2TP);
 		return;
-	} else {
-		sc = var->lv_softc;
-		l2tpp = &(sc->l2tp_ec.ec_if);
+	}
 
-		if (l2tpp == NULL || (l2tpp->if_flags & IFF_UP) == 0) {
+	sc = var->lv_softc;
+	l2tpp = &(sc->l2tp_ec.ec_if);
+
+	if (l2tpp == NULL || (l2tpp->if_flags & IFF_UP) == 0) {
 #ifdef L2TP_DEBUG
-			if (l2tpp == NULL)
-				log(LOG_DEBUG, "%s: l2tpp is NULL\n", __func__);
-			else
-				log(LOG_DEBUG, "%s: l2tpp is down\n", __func__);
+		if (l2tpp == NULL)
+			log(LOG_DEBUG, "%s: l2tpp is NULL\n", __func__);
+		else
+			log(LOG_DEBUG, "%s: l2tpp is down\n", __func__);
 #endif
-			m_freem(m);
-			ip_statinc(IP_STAT_NOL2TP);
-			goto out;
-		}
+		m_freem(m);
+		ip_statinc(IP_STAT_NOL2TP);
+		goto out;
+	}
 
-		/* other CPU do l2tp_delete_tunnel */
-		if (var->lv_psrc == NULL || var->lv_pdst == NULL) {
-			m_freem(m);
-			ip_statinc(IP_STAT_NOL2TP);
-			goto out;
-		}
+	/* other CPU did l2tp_delete_tunnel */
+	if (var->lv_psrc == NULL || var->lv_pdst == NULL) {
+		m_freem(m);
+		ip_statinc(IP_STAT_NOL2TP);
+		goto out;
 	}
 
 	if (var->lv_state != L2TP_STATE_UP) {
@@ -320,6 +318,10 @@ in_l2tp_input(struct mbuf *m, int off, int proto, void *eparg __unused)
 	m_adj(m, off + sizeof(uint32_t));
 
 	if (var->lv_use_cookie == L2TP_COOKIE_ON) {
+		if (m->m_pkthdr.len < var->lv_my_cookie_len) {
+			m_freem(m);
+			goto out;
+		}
 		if (var->lv_my_cookie_len == 4) {
 			m_copydata(m, 0, sizeof(uint32_t), (void *)&cookie_32);
 			NTOHL(cookie_32);
