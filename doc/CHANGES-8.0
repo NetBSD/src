@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.139 2018/03/07 14:55:49 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.140 2018/03/08 14:39:22 martin Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -10108,3 +10108,74 @@ sys/arch/xen/conf/Makefile.xen		1.45 (via patch)
 	Introduce nmitrap and doubletrap.
 	Have the CPU clear PSL_D automatically in the syscall entry point.
 	[maxv, ticket #610]
+
+sys/arch/i386/i386/machdep.c			1.792 (via patch)
+sys/arch/x86/include/cpu.h			1.78 (via patch)
+sys/arch/x86/x86/cpu.c				1.134 (via patch)
+
+	Style, and move some i386-specific code into i386/
+	[maxv, ticket #611]
+
+sys/dev/pci/ixgbe/ixgbe.c			1.129-1.133
+sys/dev/pci/ixgbe/ixgbe.h			1.34
+sys/dev/pci/ixgbe/ixv.c				1.85,1.86
+
+	Make "Handled queue in softint" and "Requeued in softint" evcnt(9)
+	per queue and count them correctly.
+	Fix another poll mode assumption breaking.
+	Fix INTx/MSI handler did not schedule workqueue.
+	[knakahara, ticket #612]
+
+sys/net/if_gif.c				1.138,1.139
+sys/net/if_pppoe.c				1.130,1.134
+sys/net/if_spppsubr.c				1.172,1.175,1.179
+
+	Mark callouts of pppoe(4) CALLOUT_MPSAFE.
+	Fix non-diagnostic compilation for pppoe(4)
+	Fix gif(4) spl leak.
+	Fix breaking character limit of workqueue thread name for pppoe(4).
+	Fix leaking the next mbufs for gif(4) and pppoe(4).
+	[knakahara, ticket #613]
+
+sys/net/if_l2tp.c				1.13,1.18-1.20
+sys/net/if_l2tp.h				1.3
+sys/netinet/in_l2tp.c				1.10-1.12
+sys/netinet6/in6_l2tp.c				1.13,1.14
+
+	Fix memory leak when if_attach() failed.
+	Fix NULL dereference when M_PREPEND() failed.
+	Fix invalid m_copydata() when mbuf does not have enough space.
+	Reduce unnecessary NULL check.
+	Use MH_ALIGN instead of own code.
+	[knakahara, ticket #614]
+
+share/man/man4/sdtemp.4				1.7-1.8
+sys/dev/i2c/sdtemp.c				1.33
+sys/dev/i2c/sdtemp_reg.h			1.13
+
+	- Add another device ID of Maxim MAX6604.
+	- Add Microchip EMC1501.
+	- ADT7408's device ID is not 0x80 but 0x08.
+	Add Microchip EMC1501.
+	Remove unnecessary macros.
+	[msaitoh, ticket #615]
+
+sys/dev/pci/if_msk.c				1.55
+sys/dev/pci/pcidevs				1.1299
+sys/dev/pci/pcidevs.h				(regen)
+sys/dev/pci/pcidevs_data.h			(regen)
+
+	Update entry for Marvel Yukon 8058, and fix URL for pci ids.
+	[msaitoh, ticket #616]
+
+sys/dev/ppbus/if_plip.c				1.28
+
+	Fix an spl leak.
+	[msaitoh, ticket #617]
+
+sys/net/if_ethersubr.c				1.245,1.247
+
+	Use macro(ETHER_LOCK() and ETHER_UNLOCK()).
+	Modify ether_ioctl() for readability. No functional change.
+	[msaitoh, ticket #618]
+
