@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2016/11/03 04:26:58 riastradh Exp $
+#	$NetBSD: Makefile,v 1.14.14.1 2018/03/08 09:54:36 pgoyette Exp $
 
 .include "../Makefile.inc"
 
@@ -27,7 +27,7 @@ CPPFLAGS+=	-DCOMPAT_43
 
 .include "../../compat/common/Makefile.sysio"
 
-SRCS+=	compat_mod.c
+SRCS+=	compat_mod.c compat_exec.c compat_util.c
 
 .PATH:	${S}/arch/${MACHINE}/${MACHINE}
 .PATH:	${S}/arch/${MACHINE_ARCH}/${MACHINE_ARCH}
