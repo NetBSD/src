@@ -1,4 +1,4 @@
-/*      $NetBSD: en.c,v 1.18 2015/01/23 03:36:58 chs Exp $        */
+/*      $NetBSD: en.c,v 1.19 2018/03/08 03:12:02 mrg Exp $        */
 /*
  * Copyright (c) 1996 Rolf Grossmann
  * All rights reserved.
@@ -247,9 +247,10 @@ en_put(struct iodesc *desc, void *pkt, size_t len)
 #if 01
 			DPRINTF(("en_put: DMA state = 0x%x.\n", state));
 #endif
-			if (state & (DMACSR_COMPLETE|DMACSR_BUSEXC))
+			if (state & (DMACSR_COMPLETE|DMACSR_BUSEXC)) {
 				txdma->dd_csr = DMACSR_RESET | DMACSR_CLRCOMPLETE;
 				break;
+			}
 		}
 
 		txs = er->txstat;
