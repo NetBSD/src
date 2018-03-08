@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2364 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2365 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -125,5 +125,5 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	imcsmb(4): For amd64 and i386 on Intel {Ivy,Sandy}bridge and
 		{Broad,Has}well CPUs, enable access to Integrated Memory
 		Controller-based SMBus [pgoyette 20170228]
-	ichsmb(4) Add Apollo Lake and Gemini Lake devices. [msaitoh 2018302]
-	lm(4): Add NCT6796D support. [msaitoh 2018308]
+	ichsmb(4) Add Apollo Lake and Gemini Lake devices. [msaitoh 20180302]
+	lm(4): Add NCT6796D support. [msaitoh 20180308]
