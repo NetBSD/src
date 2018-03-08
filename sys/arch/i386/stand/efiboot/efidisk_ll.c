@@ -1,4 +1,4 @@
-/*	$NetBSD: efidisk_ll.c,v 1.1 2017/01/24 11:09:14 nonaka Exp $	 */
+/*	$NetBSD: efidisk_ll.c,v 1.2 2018/03/08 10:34:33 nonaka Exp $	 */
 /*	NetBSD: biosdisk_ll.c,v 1.31 2011/02/21 02:58:02 jakllsch Exp	 */
 
 /*-
@@ -95,14 +95,16 @@ set_geometry(struct biosdisk_ll *d, struct biosdisk_extinfo *ed)
 	media = edi->bio->Media;
 
 	d->secsize = media->BlockSize;
-	d->type = BIOSDISK_TYPE_HD;
+	d->type = edi->type;
 	d->flags = BIOSDISK_INT13EXT;
 
-	ed->totsec = media->LastBlock + 1;
-	ed->sbytes = media->BlockSize;
-	ed->flags = 0;
-	if (media->RemovableMedia)
-		ed->flags |= EXTINFO_REMOVABLE;
+	if (ed != NULL) {
+		ed->totsec = media->LastBlock + 1;
+		ed->sbytes = media->BlockSize;
+		ed->flags = 0;
+		if (media->RemovableMedia)
+			ed->flags |= EXTINFO_REMOVABLE;
+	}
 
 	return 0;
 }
