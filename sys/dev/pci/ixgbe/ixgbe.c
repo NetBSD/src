@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.131 2018/03/07 11:18:29 knakahara Exp $ */
+/* $NetBSD: ixgbe.c,v 1.132 2018/03/08 02:39:42 knakahara Exp $ */
 
 /******************************************************************************
 
@@ -4725,7 +4725,16 @@ ixgbe_legacy_irq(void *arg)
 
 	if (more) {
 		que->req.ev_count++;
-		softint_schedule(que->que_si);
+		if (adapter->txrx_use_workqueue) {
+			/*
+			 * "enqueued flag" is not required here.
+			 * See ixgbe_msix_que().
+			 */
+			workqueue_enqueue(adapter->que_wq, &que->wq_cookie,
+			    curcpu());
+		} else {
+			softint_schedule(que->que_si);
+		}
 	} else
 		ixgbe_enable_intr(adapter);
 
