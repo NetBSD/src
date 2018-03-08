@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.24.6.5 2018/03/06 11:12:40 martin Exp $ */
+/* $NetBSD: ixgbe.h,v 1.24.6.6 2018/03/08 12:31:25 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -335,6 +335,8 @@ struct ix_queue {
 	struct work      wq_cookie;
 	void             *que_si;
 	struct evcnt     irqs;
+	struct evcnt     handleq;
+	struct evcnt     req;
 	char             namebuf[32];
 	char             evnamebuf[32];
 
@@ -566,8 +568,6 @@ struct adapter {
 	struct evcnt	   	tso_err;
 	struct evcnt	   	watchdog_events;
 	struct evcnt		link_irq;
-	struct evcnt		handleq;
-	struct evcnt		req;
 
 	union {
 		struct ixgbe_hw_stats pf;

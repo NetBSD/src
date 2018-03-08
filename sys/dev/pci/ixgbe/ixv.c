@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.56.2.9 2018/03/06 11:12:41 martin Exp $*/
+/*$NetBSD: ixv.c,v 1.56.2.10 2018/03/08 12:31:25 martin Exp $*/
 
 /******************************************************************************
 
@@ -647,8 +647,6 @@ ixv_detach(device_t dev, int flags)
 	if_percpuq_destroy(adapter->ipq);
 
 	sysctl_teardown(&adapter->sysctllog);
-	evcnt_detach(&adapter->handleq);
-	evcnt_detach(&adapter->req);
 	evcnt_detach(&adapter->efbig_tx_dma_setup);
 	evcnt_detach(&adapter->mbuf_defrag_failed);
 	evcnt_detach(&adapter->efbig2_tx_dma_setup);
@@ -663,6 +661,8 @@ ixv_detach(device_t dev, int flags)
 	txr = adapter->tx_rings;
 	for (int i = 0; i < adapter->num_queues; i++, rxr++, txr++) {
 		evcnt_detach(&adapter->queues[i].irqs);
+		evcnt_detach(&adapter->queues[i].handleq);
+		evcnt_detach(&adapter->queues[i].req);
 		evcnt_detach(&txr->no_desc_avail);
 		evcnt_detach(&txr->total_packets);
 		evcnt_detach(&txr->tso_tx);
@@ -2340,10 +2340,6 @@ ixv_add_stats_sysctls(struct adapter *adapter)
 	const char *xname = device_xname(dev);
 
 	/* Driver Statistics */
-	evcnt_attach_dynamic(&adapter->handleq, EVCNT_TYPE_MISC,
-	    NULL, xname, "Handled queue in softint");
-	evcnt_attach_dynamic(&adapter->req, EVCNT_TYPE_MISC,
-	    NULL, xname, "Requeued in softint");
 	evcnt_attach_dynamic(&adapter->efbig_tx_dma_setup, EVCNT_TYPE_MISC,
 	    NULL, xname, "Driver tx dma soft fail EFBIG");
 	evcnt_attach_dynamic(&adapter->mbuf_defrag_failed, EVCNT_TYPE_MISC,
@@ -2390,15 +2386,6 @@ ixv_add_stats_sysctls(struct adapter *adapter)
 		    (void *)&adapter->queues[i], 0, CTL_CREATE, CTL_EOL) != 0)
 			break;
 
-#if 0
-		if (sysctl_createv(log, 0, &rnode, &cnode,
-		    CTLFLAG_READONLY, CTLTYPE_QUAD,
-		    "irqs", SYSCTL_DESCR("irqs on this queue"),
-			NULL, 0, &(adapter->queues[i].irqs),
-		    0, CTL_CREATE, CTL_EOL) != 0)
-			break;
-#endif
-
 		if (sysctl_createv(log, 0, &rnode, &cnode,
 		    CTLFLAG_READONLY, CTLTYPE_INT,
 		    "txd_head", SYSCTL_DESCR("Transmit Descriptor Head"),
@@ -2415,6 +2402,11 @@ ixv_add_stats_sysctls(struct adapter *adapter)
 
 		evcnt_attach_dynamic(&adapter->queues[i].irqs, EVCNT_TYPE_INTR,
 		    NULL, adapter->queues[i].evnamebuf, "IRQs on queue");
+		evcnt_attach_dynamic(&adapter->queues[i].handleq,
+		    EVCNT_TYPE_MISC, NULL, adapter->queues[i].evnamebuf,
+		    "Handled queue in softint");
+		evcnt_attach_dynamic(&adapter->queues[i].req, EVCNT_TYPE_MISC,
+		    NULL, adapter->queues[i].evnamebuf, "Requeued in softint");
 		evcnt_attach_dynamic(&txr->tso_tx, EVCNT_TYPE_MISC,
 		    NULL, adapter->queues[i].evnamebuf, "TSO");
 		evcnt_attach_dynamic(&txr->no_desc_avail, EVCNT_TYPE_MISC,
@@ -2800,7 +2792,7 @@ ixv_handle_que(void *context)
 	struct ifnet    *ifp = adapter->ifp;
 	bool		more;
 
-	adapter->handleq.ev_count++;
+	que->handleq.ev_count++;
 
 	if (ifp->if_flags & IFF_RUNNING) {
 		more = ixgbe_rxeof(que);
@@ -2816,7 +2808,7 @@ ixv_handle_que(void *context)
 			ixgbe_legacy_start_locked(ifp, txr);
 		IXGBE_TX_UNLOCK(txr);
 		if (more) {
-			adapter->req.ev_count++;
+			que->req.ev_count++;
 			if (adapter->txrx_use_workqueue) {
 				/*
 				 * "enqueued flag" is not required here
