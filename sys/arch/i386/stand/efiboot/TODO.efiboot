@@ -1,6 +1,5 @@
 - efiboot
  * handle UEFI variables
- * boot from CD/DVD (bootable from CD/DVD, but root fs not found.)
  * load boot.cfg from EFI system partition (FAT32)
 
 - kernel

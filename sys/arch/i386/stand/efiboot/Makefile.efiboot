@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.efiboot,v 1.9 2017/04/29 00:05:35 nonaka Exp $
+# $NetBSD: Makefile.efiboot,v 1.10 2018/03/08 10:34:33 nonaka Exp $
 
 S=		${.CURDIR}/../../../../..
 
@@ -12,8 +12,8 @@ SOURCES?= start.S conf.c devopen.c efiboot.c self_reloc.c
 LIBI386SRCS= boot.c biosdisk.c bootinfo.c bootinfo_biosgeom.c
 LIBI386SRCS+= bootmenu.c diskbuf.c exec.c menuutils.c
 LIBI386SRCS+= panic.c parseutils.c pread.c
-LIBI386SRCS+= eficons.c efidelay.c efidisk.c efidisk_ll.c efigetsecs.c
-LIBI386SRCS+= efimemory.c
+LIBI386SRCS+= eficons.c efidelay.c efidev.c efidisk.c efidisk_ll.c
+LIBI386SRCS+= efigetsecs.c efimemory.c
 SRCS= ${SOURCES} ${EXTRA_SOURCES} ${LIBI386SRCS}
 
 PIE_CFLAGS=
@@ -54,9 +54,11 @@ CPPFLAGS+= -Wno-pointer-sign
 CPPFLAGS+= -DEFI_ALLOCATE_MAX_ADDRESS=0x100000000ULL
 CPPFLAGS+= -DHEAP_VARIABLE
 CPPFLAGS+= -DSUPPORT_CD9660
+CPPFLAGS+= -D"devb2cdb(bno)=(bno)"
 CPPFLAGS+= -DSUPPORT_DOSFS
 CPPFLAGS+= -DSUPPORT_EXT2FS
 CPPFLAGS+= -DPASS_BIOSGEOM
+CPPFLAGS+= -DBIOSDISK_DEFAULT_SECSIZE=2048	# for bootinfo_biosgeom.c
 CPPFLAGS+= -DLIBSA_ENABLE_LS_OP
 
 EFIDIR= ${S}/external/bsd/gnu-efi/dist
@@ -66,6 +68,7 @@ CPPFLAGS+= -I${EFIDIR}/inc/protocol
 
 SAMISCCPPFLAGS+= -DLIBSA_PRINTF_LONGLONG_SUPPORT
 SAMISCCPPFLAGS+= -DLIBSA_PRINTF_WIDTH_SUPPORT
+SAMISCCPPFLAGS+= -D"cdb2devb(bno)=(bno)"
 SAMISCMAKEFLAGS+= SA_USE_CREAD=yes      # Read compressed kernels
 SAMISCMAKEFLAGS+= SA_INCLUDE_NET=no     # Netboot via TFTP, NFS
 
