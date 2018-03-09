@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_mod.c,v 1.1.2.5 2018/03/09 04:48:42 pgoyette Exp $	*/
+/*	$NetBSD: sysv_mod.c,v 1.1.2.6 2018/03/09 09:37:01 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_mod.c,v 1.1.2.5 2018/03/09 04:48:42 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_mod.c,v 1.1.2.6 2018/03/09 09:37:01 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: sysv_mod.c,v 1.1.2.5 2018/03/09 04:48:42 pgoyette Ex
 int sysctl_kern_sysvipc50(SYSCTLFN_PROTO);
 #endif
 
-MODULE(MODULE_CLASS_EXEC, compat_sysv_ipc, "sysv_ipc");
+MODULE(MODULE_CLASS_EXEC, compat_sysv, "sysv_ipc");
 
 /* Build the syscall package based on options specified */
 
@@ -95,9 +95,9 @@ static const struct syscall_package compat_syscalls[] = {
 };
 
 static int
-compat_sysv_ipc_modcmd(modcmd_t cmd, void *arg)
+compat_sysv_modcmd(modcmd_t cmd, void *arg)
 {
-	static (*orig_sysvipc50_sysctl)(SYSCTLFN_PROTO);
+	static int (*orig_sysvipc50_sysctl)(SYSCTLFN_PROTO);
 
 	int error = 0;
 
