@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsecif.c,v 1.3 2018/03/06 10:07:06 knakahara Exp $  */
+/*	$NetBSD: ipsecif.c,v 1.4 2018/03/09 11:05:21 knakahara Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsecif.c,v 1.3 2018/03/06 10:07:06 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsecif.c,v 1.4 2018/03/09 11:05:21 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -259,7 +259,13 @@ ipsecif4_fragout(struct ipsec_variant *var, int family, struct mbuf *m, int mtu)
 	if (mtag)
 		m_tag_delete(m, mtag);
 
-	error = ip_fragment(m, ifp, mtu);
+	/* consider new IP header prepended in ipsecif4_output() */
+	if (mtu <= sizeof(struct ip)) {
+		m_freem(m);
+		return ENETUNREACH;
+	}
+	m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
+	error = ip_fragment(m, ifp, mtu - sizeof(struct ip));
 	if (error)
 		return error;
 
@@ -396,7 +402,7 @@ ipsecif4_output(struct ipsec_variant *var, int family, struct mbuf *m)
 	 * frangmentation is already done in ipsecif4_fragout(),
 	 * so ipsec4_process_packet() must not do fragmentation here.
 	 */
-	KASSERT(error != 0 || sa_mtu == 0);
+	KASSERT(sa_mtu == 0);
 
 done:
 	return error;
