@@ -1,4 +1,4 @@
-/* $NetBSD: adadc.c,v 1.1 2018/03/09 20:16:54 macallan Exp $ */
+/* $NetBSD: adadc.c,v 1.2 2018/03/09 22:27:15 macallan Exp $ */
 
 /*-
  * Copyright (c) 2018 Michael Lorenz
@@ -26,10 +26,15 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* a driver for Analog Devices AD7417 temperature sensors / ADCs */
+/*
+ * a driver for Analog Devices AD7417 temperature sensors / ADCs
+ * very much macppc only for now since we need calibaration data to make sense
+ * of the ADC inputs
+ * info on how to get these from FreeBSD and Linux
+ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adadc.c,v 1.1 2018/03/09 20:16:54 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adadc.c,v 1.2 2018/03/09 22:27:15 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,6 +98,7 @@ static const char * dstemp_compats[] = {
 	NULL
 };
 
+/* calibaration table from Darwin via Linux */
 static int slope[5] = {0, 0, 0x0320, 0x00a0, 0x1f40};
 
 static int
@@ -101,7 +107,11 @@ adadc_match(device_t parent, cfdata_t match, void *aux)
 	struct i2c_attach_args *ia = aux;
 
 	if (ia->ia_name == NULL) {
-		/* no ID registers on this chip */
+		/*
+		 * XXX
+		 * this driver is pretty much useless without OF, should
+		 * probably remove this
+		 */
 		if ((ia->ia_addr & 0x2b) == 0x2b)
 			return 1;
 		return 0;
@@ -118,7 +128,6 @@ adadc_attach(device_t parent, device_t self, void *aux)
 	envsys_data_t *s;
 	int error, ch, cpuid;
 	uint32_t eeprom[40];
-	uint8_t cmd, data;
 	char loc[256];
 	int which_cpu;
 
@@ -129,16 +138,17 @@ adadc_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": AD7417\n");
 
-	cmd = ADADC_CONFIG;
-	error = iic_exec(sc->sc_i2c, I2C_OP_READ_WITH_STOP,
-	    sc->sc_addr, &cmd, 1, &data, 1, 0);
-
 	sc->sc_sme = sysmon_envsys_create();
 	sc->sc_sme->sme_name = device_xname(self);
 	sc->sc_sme->sme_cookie = sc;
 	sc->sc_sme->sme_refresh = adadc_sensors_refresh;
 	sc->sc_nsensors = 0;
 
+	/*
+	 * XXX
+	 * without OpenFirmware telling us how to interpret the ADC inputs we
+	 * should probably just expose the temperature and four ENVSYS_INTEGERs
+	 */
 	which_cpu = 0;
 	ch = OF_child(ia->ia_cookie);
 	while (ch != 0) {
@@ -146,6 +156,10 @@ adadc_attach(device_t parent, device_t self, void *aux)
 			int reg = 0;
 			OF_getprop(ch, "reg", &reg, sizeof(reg));
 			s = &sc->sc_sensors[sc->sc_nsensors];
+			/*
+			 * this setup matches my 2x 2.5GHz PCI-X G5, Linux and
+			 * FreeBSD hardcode these as well so we should be safe
+			 */
 			switch (reg) {
 			case 0:
 				if (strstr(loc, "CPU B") != NULL)
@@ -220,6 +234,10 @@ adadc_sensors_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 			/* 16.16 fixed point */
 			edata->value_cur = (temp >> 12) * 62500 + 273150000;
 		} else {
+			/*
+			 * the input is 10bit, so converting to 8.4 fixed point
+			 * is more than enough
+			 */
 			int temp = rdata * slope[edata->private];
 			edata->value_cur = (temp >> 12) * 62500;
 		}
@@ -228,6 +246,7 @@ adadc_sensors_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 		/* just read the temperature register */
 		error = iic_exec(sc->sc_i2c, I2C_OP_READ_WITH_STOP,
 		    sc->sc_addr, &cmd, 1, &data, 2, 0);
+		/* 8.2 bit fixed point Celsius -> microkelvin */
 		edata->value_cur = ((data >> 6) * 250000) + 273150000;
 	}
 	iic_release_bus(sc->sc_i2c, 0);
