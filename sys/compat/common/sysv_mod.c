@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_mod.c,v 1.1.2.2 2018/03/09 02:13:46 pgoyette Exp $	*/
+/*	$NetBSD: sysv_mod.c,v 1.1.2.3 2018/03/09 03:58:32 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_mod.c,v 1.1.2.2 2018/03/09 02:13:46 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_mod.c,v 1.1.2.3 2018/03/09 03:58:32 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: sysv_mod.c,v 1.1.2.2 2018/03/09 02:13:46 pgoyette Ex
 #include <sys/syscallvar.h>
 #include <sys/sysctl.h>
 
-#include <compat/common/sysv_ipc_mod.h>
+#include <compat/common/sysv_ipc.h>
 
 #ifdef COMPAT_50
 int sysctl_kern_sysvipc50(SYSCTLFN_PROTO);
