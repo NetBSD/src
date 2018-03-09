@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipsec.c,v 1.3 2018/01/31 07:33:18 mrg Exp $  */
+/*	$NetBSD: if_ipsec.c,v 1.4 2018/03/09 10:59:36 knakahara Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.3 2018/01/31 07:33:18 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.4 2018/03/09 10:59:36 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -892,7 +892,7 @@ if_ipsec_set_tunnel(struct ifnet *ifp,
 	switch(nsrc->sa_family) {
 #ifdef INET
 	case AF_INET:
-		nsport = ntohs(satosin(src)->sin_port);
+		nsport = satosin(src)->sin_port;
 		/*
 		 * avoid confuse SP when NAT-T disabled,
 		 * e.g.
@@ -900,15 +900,15 @@ if_ipsec_set_tunnel(struct ifnet *ifp,
 		 *     confuse : 10.0.1.2[600] 10.0.1.1[600] 4(ipv4)
 		 */
 		satosin(nsrc)->sin_port = 0;
-		ndport = ntohs(satosin(dst)->sin_port);
+		ndport = satosin(dst)->sin_port;
 		satosin(ndst)->sin_port = 0;
 		break;
 #endif /* INET */
 #ifdef INET6
 	case AF_INET6:
-		nsport = ntohs(satosin6(src)->sin6_port);
+		nsport = satosin6(src)->sin6_port;
 		satosin6(nsrc)->sin6_port = 0;
-		ndport = ntohs(satosin6(dst)->sin6_port);
+		ndport = satosin6(dst)->sin6_port;
 		satosin6(ndst)->sin6_port = 0;
 		break;
 #endif /* INET6 */
@@ -1459,14 +1459,14 @@ if_ipsec_set_addr_port(struct sockaddr *addrport, struct sockaddr *addr,
 #ifdef INET
 	case AF_INET: {
 		struct sockaddr_in *sin = satosin(addrport);
-		sin->sin_port = htons(port);
+		sin->sin_port = port;
 		break;
 	}
 #endif /* INET */
 #ifdef INET6
 	case AF_INET6: {
 		struct sockaddr_in6 *sin6 = satosin6(addrport);
-		sin6->sin6_port = htons(port);
+		sin6->sin6_port = port;
 		break;
 	}
 #endif /* INET6 */
