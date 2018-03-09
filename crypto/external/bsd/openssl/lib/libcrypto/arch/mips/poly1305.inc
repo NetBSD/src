@@ -1,4 +1,4 @@
-.if empty(MACHINE_ARCH:M*eb}
+.if empty(MACHINE_ARCH:M*eb)
 .if !empty(MACHINE_ARCH:Mmips64*)
 
 .PATH.S: ${.PARSEDIR}
