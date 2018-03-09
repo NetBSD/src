@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipsec.c,v 1.4 2018/03/09 10:59:36 knakahara Exp $  */
+/*	$NetBSD: if_ipsec.c,v 1.5 2018/03/09 11:01:41 knakahara Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.4 2018/03/09 10:59:36 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.5 2018/03/09 11:01:41 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -109,7 +109,8 @@ static inline size_t if_ipsec_set_sadb_src(struct sadb_address *,
 static inline size_t if_ipsec_set_sadb_dst(struct sadb_address *,
     struct sockaddr *, int);
 static inline size_t if_ipsec_set_sadb_x_policy(struct sadb_x_policy *,
-    struct sadb_x_ipsecrequest *, uint16_t, uint8_t, uint32_t, uint8_t);
+    struct sadb_x_ipsecrequest *, uint16_t, uint8_t, uint32_t, uint8_t,
+    struct sockaddr *, struct sockaddr *);
 static inline void if_ipsec_set_sadb_msg(struct sadb_msg *, uint16_t, uint8_t);
 static inline void if_ipsec_set_sadb_msg_add(struct sadb_msg *, uint16_t);
 static inline void if_ipsec_set_sadb_msg_del(struct sadb_msg *, uint16_t);
@@ -1388,7 +1389,7 @@ if_ipsec_set_sadb_dst(struct sadb_address *sadst, struct sockaddr *dst,
 static inline size_t
 if_ipsec_set_sadb_x_policy(struct sadb_x_policy *xpl,
     struct sadb_x_ipsecrequest *xisr, uint16_t policy, uint8_t dir, uint32_t id,
-    uint8_t level)
+    uint8_t level, struct sockaddr *src, struct sockaddr *dst)
 {
 	size_t size;
 
@@ -1397,6 +1398,10 @@ if_ipsec_set_sadb_x_policy(struct sadb_x_policy *xpl,
 	size = sizeof(*xpl);
 	if (policy == IPSEC_POLICY_IPSEC) {
 		size += PFKEY_ALIGN8(sizeof(*xisr));
+		if (src != NULL)
+			size += PFKEY_ALIGN8(src->sa_len);
+		if (dst != NULL)
+			size += PFKEY_ALIGN8(dst->sa_len);
 	}
 	xpl->sadb_x_policy_len = PFKEY_UNIT64(size);
 	xpl->sadb_x_policy_exttype = SADB_X_EXT_POLICY;
@@ -1408,6 +1413,10 @@ if_ipsec_set_sadb_x_policy(struct sadb_x_policy *xpl,
 
 	if (policy == IPSEC_POLICY_IPSEC) {
 		xisr->sadb_x_ipsecrequest_len = PFKEY_ALIGN8(sizeof(*xisr));
+		if (src != NULL)
+			xisr->sadb_x_ipsecrequest_len += PFKEY_ALIGN8(src->sa_len);
+		if (dst != NULL)
+			xisr->sadb_x_ipsecrequest_len += PFKEY_ALIGN8(dst->sa_len);
 		xisr->sadb_x_ipsecrequest_proto = IPPROTO_ESP;
 		xisr->sadb_x_ipsecrequest_mode = IPSEC_MODE_TRANSPORT;
 		xisr->sadb_x_ipsecrequest_level = level;
@@ -1506,7 +1515,7 @@ if_ipsec_add_sp0(struct sockaddr *src, in_port_t sport,
 	ext_msg_len += PFKEY_UNIT64(size);
 	size = if_ipsec_set_sadb_dst(&xdst, dst, proto);
 	ext_msg_len += PFKEY_UNIT64(size);
-	size = if_ipsec_set_sadb_x_policy(&xpl, &xisr, policy, dir, 0, level);
+	size = if_ipsec_set_sadb_x_policy(&xpl, &xisr, policy, dir, 0, level, src, dst);
 	ext_msg_len += PFKEY_UNIT64(size);
 	if_ipsec_set_sadb_msg_add(&msg, ext_msg_len);
 
@@ -1542,8 +1551,30 @@ if_ipsec_add_sp0(struct sockaddr *src, in_port_t sport,
 	if_ipsec_add_pad(m, padlen);
 
 	if_ipsec_add_mbuf(m, &xpl, sizeof(xpl));
-	if (policy == IPSEC_POLICY_IPSEC)
+	if (policy == IPSEC_POLICY_IPSEC) {
 		if_ipsec_add_mbuf(m, &xisr, sizeof(xisr));
+		if (sport == 0) {
+			if_ipsec_add_mbuf(m, src, src->sa_len);
+		} else {
+			struct sockaddr addrport;
+
+			if_ipsec_set_addr_port(&addrport, src, sport);
+			if_ipsec_add_mbuf(m, &addrport, addrport.sa_len);
+		}
+		if (dport == 0) {
+			if_ipsec_add_mbuf(m, dst, dst->sa_len);
+		} else {
+			struct sockaddr addrport;
+			if_ipsec_set_addr_port(&addrport, dst, dport);
+			if_ipsec_add_mbuf(m, &addrport, addrport.sa_len);
+		}
+	}
+	padlen = PFKEY_UNUNIT64(xpl.sadb_x_policy_len) - sizeof(xpl);
+	if (src != NULL)
+		padlen -= PFKEY_ALIGN8(src->sa_len);
+	if (dst != NULL)
+		padlen -= PFKEY_ALIGN8(dst->sa_len);
+	if_ipsec_add_pad(m, padlen);
 
 	/* key_kpi_spdadd() has already done KEY_SP_REF(). */
 	return key_kpi_spdadd(m);
@@ -1636,7 +1667,7 @@ if_ipsec_del_sp0(struct secpolicy *sp)
 
 	MGETHDR(m, M_WAITOK, MT_DATA);
 
-	size = if_ipsec_set_sadb_x_policy(&xpl, NULL, 0, 0, sp->id, 0);
+	size = if_ipsec_set_sadb_x_policy(&xpl, NULL, 0, 0, sp->id, 0, NULL, NULL);
 	ext_msg_len += PFKEY_UNIT64(size);
 
 	if_ipsec_set_sadb_msg_del(&msg, ext_msg_len);
