@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.86 2018/03/07 08:01:32 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.87 2018/03/09 06:27:53 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -1194,7 +1194,9 @@ ixv_local_timer_locked(void *arg)
 	device_t	dev = adapter->dev;
 	struct ix_queue	*que = adapter->queues;
 	u64		queues = 0;
+	u64		v0, v1, v2, v3, v4, v5, v6, v7;
 	int		hung = 0;
+	int		i;
 
 	KASSERT(mutex_owned(&adapter->core_mtx));
 
@@ -1203,12 +1205,37 @@ ixv_local_timer_locked(void *arg)
 	/* Stats Update */
 	ixv_update_stats(adapter);
 
+	/* Update some event counters */
+	v0 = v1 = v2 = v3 = v4 = v5 = v6 = v7 = 0;
+	que = adapter->queues;
+	for (i = 0; i < adapter->num_queues; i++, que++) {
+		struct tx_ring  *txr = que->txr;
+
+		v0 += txr->q_efbig_tx_dma_setup;
+		v1 += txr->q_mbuf_defrag_failed;
+		v2 += txr->q_efbig2_tx_dma_setup;
+		v3 += txr->q_einval_tx_dma_setup;
+		v4 += txr->q_other_tx_dma_setup;
+		v5 += txr->q_eagain_tx_dma_setup;
+		v6 += txr->q_enomem_tx_dma_setup;
+		v7 += txr->q_tso_err;
+	}
+	adapter->efbig_tx_dma_setup.ev_count = v0;
+	adapter->mbuf_defrag_failed.ev_count = v1;
+	adapter->efbig2_tx_dma_setup.ev_count = v2;
+	adapter->einval_tx_dma_setup.ev_count = v3;
+	adapter->other_tx_dma_setup.ev_count = v4;
+	adapter->eagain_tx_dma_setup.ev_count = v5;
+	adapter->enomem_tx_dma_setup.ev_count = v6;
+	adapter->tso_err.ev_count = v7;
+
 	/*
 	 * Check the TX queues status
 	 *      - mark hung queues so we don't schedule on them
 	 *      - watchdog only if all queues show hung
 	 */
-	for (int i = 0; i < adapter->num_queues; i++, que++) {
+	que = adapter->queues;
+	for (i = 0; i < adapter->num_queues; i++, que++) {
 		/* Keep track of queues with work for soft irq */
 		if (que->txr->busy)
 			queues |= ((u64)1 << que->me);
