@@ -1,4 +1,4 @@
-#	$NetBSD: files.common,v 1.1.2.4 2018/03/09 01:27:50 pgoyette Exp $
+#	$NetBSD: files.common,v 1.1.2.5 2018/03/09 02:02:59 pgoyette Exp $
 
 #
 # Generic files, used by all compat options.
@@ -75,7 +75,7 @@ file	compat/common/uipc_usrreq_70.c		compat_netbsd
 
 # Module interface for sysv ipc compatability options
 
-file	compat/common/sysv_ipc_mod.c		compat_netbsd
+file	compat/common/sysv_mod.c		compat_netbsd
 
 # Compatibility code for NetBSD 1.0
 file	compat/common/kern_ipc_10.c		compat_netbsd
