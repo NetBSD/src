@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_ipc.c,v 1.32.16.2 2018/03/09 03:58:33 pgoyette Exp $	*/
+/*	$NetBSD: sysv_ipc.c,v 1.32.16.3 2018/03/09 10:41:05 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_ipc.c,v 1.32.16.2 2018/03/09 03:58:33 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_ipc.c,v 1.32.16.3 2018/03/09 10:41:05 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
@@ -63,6 +63,8 @@ __KERNEL_RCSID(0, "$NetBSD: sysv_ipc.c,v 1.32.16.2 2018/03/09 03:58:33 pgoyette 
 #include <sys/kauth.h>
 
 #include <compat/common/sysv_mod.h>	/* for sysctl routine vector */
+
+int (*vec_sysvipc50_sysctl)(SYSCTLFN_PROTO);
 
 /*
  * Values in support of System V compatible shared memory.	XXX
