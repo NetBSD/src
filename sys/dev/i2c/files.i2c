@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.85 2018/03/08 23:25:56 macallan Exp $
+#	$NetBSD: files.i2c,v 1.86 2018/03/09 20:16:54 macallan Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -308,6 +308,11 @@ file	dev/i2c/em3027.c			em3027rtc
 device	fcu: sysmon_envsys
 attach	fcu at iic
 file	dev/i2c/fcu.c				fcu
+
+# Analog Devices AD7417 thermometer and ADC
+device	adadc: sysmon_envsys
+attach	adadc at iic
+file	dev/i2c/adadc.c				adadc
 
 # HID over i2c
 # HID "bus"
