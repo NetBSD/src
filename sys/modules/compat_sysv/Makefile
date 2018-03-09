@@ -1,10 +1,10 @@
-# $NetBSD: Makefile,v 1.3.10.1 2018/03/09 02:06:45 pgoyette Exp $
+# $NetBSD: Makefile,v 1.3.10.2 2018/03/09 03:58:33 pgoyette Exp $
 
 .include "../Makefile.inc"
 
 .PATH:	${S}/kern
 
-KMOD=	sysv_ipc
+KMOD=	compat_sysv
 
 CPPFLAGS+=	-DSYSVSEM -DSYSVSHM -DSYSVMSG
 
@@ -15,7 +15,7 @@ CPPFLAGS+=	-DCOMPAT_13
 CPPFLAGS+=	-DCOMPAT_14
 CPPFLAGS+=	-DCOMPAT_50
 
-SRCS+=	sysv_ipc_mod.c
+SRCS+=	sysv_ipc.c
 SRCS+=	kern_ipc_10.c
 SRCS+=	sysv_msg_14.c sysv_sem_14.c sysv_shm_14.c
 SRCS+=	sysv_msg_50.c sysv_sem_50.c sysv_shm_50.c
