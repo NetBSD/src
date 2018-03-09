@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1046 2018/03/05 21:14:34 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.1047 2018/03/09 12:58:59 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -100,11 +100,7 @@ MKGCCCMDS?=	no
 #
 # What OpenSSL is used?
 # 
-.if ${MACHINE} != "vax"
 HAVE_OPENSSL?=  11
-.else
-HAVE_OPENSSL?=  10
-.endif
 
 .if ${HAVE_OPENSSL} == 11
 EXTERNAL_OPENSSL_SUBDIR=openssl
