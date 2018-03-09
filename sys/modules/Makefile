@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.202 2018/02/26 07:29:24 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.202.2.1 2018/03/09 01:27:50 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -29,6 +29,7 @@ SUBDIR+=	coda
 SUBDIR+=	coda5
 SUBDIR+=	compat
 SUBDIR+=	compat_ossaudio
+SUBDIR+=	compat_sysv_ipc
 SUBDIR+=	coredump
 SUBDIR+=	dbcool
 SUBDIR+=	des
