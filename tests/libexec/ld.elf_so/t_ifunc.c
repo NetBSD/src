@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ifunc.c,v 1.7 2018/01/01 06:34:13 maya Exp $	*/
+/*	$NetBSD: t_ifunc.c,v 1.8 2018/03/09 20:15:03 joerg Exp $	*/
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -53,12 +53,12 @@ ATF_TC_BODY(rtld_ifunc, tc)
 	const char *envstr[] = {
 	    "0", "1"
 	};
-	int expected_result[] = {
-	    0xdeadbeef, 0xbeefdead
+	long long expected_result[] = {
+	    0xdeadbeefll, 0xbeefdeadll
 	};
 	void *handle;
-	int (*sym)(void);
-	int result;
+	long long (*sym)(void);
+	long long result;
 	const char *error;
 	size_t i;
 
@@ -86,7 +86,7 @@ ATF_TC_BODY(rtld_ifunc, tc)
 		ATF_CHECK(error == NULL);
 
 		char *command;
-		easprintf(&command, "%s/h_ifunc %d",
+		easprintf(&command, "%s/h_ifunc %lld",
 		    atf_tc_get_config_var(tc, "srcdir"), expected_result[i]);
 		if (system(command) != EXIT_SUCCESS)
 			atf_tc_fail("Test failed; see output for details");
@@ -106,13 +106,13 @@ ATF_TC_BODY(rtld_hidden_ifunc, tc)
 	const char *envstr[] = {
 	    "0", "1"
 	};
-	int expected_result[] = {
-	    0xdeadbeef, 0xbeefdead
+	long long expected_result[] = {
+	    0xdeadbeefll, 0xbeefdeadll
 	};
 	void *handle;
-	int (*sym)(void);
-	int (*(*sym2)(void))(void);
-	int result;
+	long long (*sym)(void);
+	long long (*(*sym2)(void))(void);
+	long long result;
 	const char *error;
 	size_t i;
 
@@ -149,7 +149,7 @@ ATF_TC_BODY(rtld_hidden_ifunc, tc)
 		ATF_CHECK(error == NULL);
 
 		char *command;
-		easprintf(&command, "%s/h_ifunc %d",
+		easprintf(&command, "%s/h_ifunc %lld",
 		    atf_tc_get_config_var(tc, "srcdir"), expected_result[i]);
 		if (system(command) != EXIT_SUCCESS)
 			atf_tc_fail("Test failed; see output for details");
@@ -165,26 +165,26 @@ ATF_TC_HEAD(rtld_main_ifunc, tc)
 }
 
 #if LINKER_SUPPORT
-static unsigned int
+static long long
 ifunc_helper(void)
 {
-	return 0xdeadbeef;
+	return 0xdeadbeefll;
 }
 
 static __attribute__((used))
-unsigned int (*resolve_ifunc(void))(void)
+long long (*resolve_ifunc(void))(void)
 {
 	return ifunc_helper;
 }
 __hidden_ifunc(ifunc, resolve_ifunc);
 #endif
-unsigned int ifunc(void);
+long long ifunc(void);
 
 ATF_TC_BODY(rtld_main_ifunc, tc)
 {
 	if (!LINKER_SUPPORT)
 		atf_tc_skip("Missing linker support for ifunc relocations");
-	ATF_CHECK(ifunc() == 0xdeadbeef);
+	ATF_CHECK(ifunc() == 0xdeadbeefll);
 }
 
 ATF_TP_ADD_TCS(tp)
