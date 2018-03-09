@@ -1,4 +1,4 @@
-/* $NetBSD: crt0-common.c,v 1.14 2016/06/07 12:07:35 joerg Exp $ */
+/* $NetBSD: crt0-common.c,v 1.15 2018/03/09 20:20:47 joerg Exp $ */
 
 /*
  * Copyright (c) 1998 Christos Zoulas
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: crt0-common.c,v 1.14 2016/06/07 12:07:35 joerg Exp $");
+__RCSID("$NetBSD: crt0-common.c,v 1.15 2018/03/09 20:20:47 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/exec.h>
@@ -127,6 +127,74 @@ _fini(void)
 }
 #endif /* HAVE_INITFINI_ARRAY */
 
+#if defined(__x86_64__) || defined(__powerpc__) || defined(__sparc__)
+#define HAS_IPLTA
+static void fix_iplta(void) __noinline;
+#elif defined(__i386__) || defined(__arm__)
+#define HAS_IPLT
+static void fix_iplt(void) __noinline;
+#endif
+
+
+#ifdef HAS_IPLTA
+#include <stdio.h>
+extern const Elf_Rela __rela_iplt_start[] __dso_hidden __weak;
+extern const Elf_Rela __rela_iplt_end[] __dso_hidden __weak;
+
+static void
+fix_iplta(void)
+{
+	const Elf_Rela *rela, *relalim;
+	uintptr_t relocbase = 0;
+	Elf_Addr *where, target;
+
+	rela = __rela_iplt_start;
+	relalim = __rela_iplt_end;
+#if DEBUG
+	printf("%p - %p\n", rela, relalim);
+#endif
+	for (; rela < relalim; ++rela) {
+		if (ELF_R_TYPE(rela->r_info) != R_TYPE(IRELATIVE))
+			abort();
+		where = (Elf_Addr *)(relocbase + rela->r_offset);
+#if DEBUG
+		printf("location: %p\n", where);
+#endif
+		target = (Elf_Addr)(relocbase + rela->r_addend);
+#if DEBUG
+		printf("target: %p\n", (void *)target);
+#endif
+		target = ((Elf_Addr(*)(void))target)();
+#if DEBUG
+		printf("...resolves to: %p\n", (void *)target);
+#endif
+		*where = target;
+	}
+}
+#endif
+#ifdef HAS_IPLT
+extern const Elf_Rel __rel_iplt_start[] __dso_hidden __weak;
+extern const Elf_Rel __rel_iplt_end[] __dso_hidden __weak;
+
+static void
+fix_iplt(void)
+{
+	const Elf_Rel *rel, *rellim;
+	uintptr_t relocbase = 0;
+	Elf_Addr *where, target;
+
+	rel = __rel_iplt_start;
+	rellim = __rel_iplt_end;
+	for (; rel < rellim; ++rel) {
+		if (ELF_R_TYPE(rel->r_info) != R_TYPE(IRELATIVE))
+			abort();
+		where = (Elf_Addr *)(relocbase + rel->r_offset);
+		target = ((Elf_Addr(*)(void))*where)();
+		*where = target;
+	}
+}
+#endif
+
 void
 ___start(void (*cleanup)(void),			/* from shared loader */
     const Obj_Entry *obj,			/* from shared loader */
@@ -161,6 +229,15 @@ ___start(void (*cleanup)(void),			/* from shared loader */
 	}
 
 	_libc_init();
+
+	if (&rtld_DYNAMIC == NULL) {
+#ifdef HAS_IPLTA
+		fix_iplta();
+#endif
+#ifdef HAS_IPLT
+		fix_iplt();
+#endif
+	}
 
 #ifdef HAVE_INITFINI_ARRAY
 	_preinit();
