@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.775 2018/02/22 14:24:03 martin Exp $
+# $NetBSD: mi,v 1.776 2018/03/09 20:20:48 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2399,11 +2399,13 @@
 ./usr/tests/lib/csu				tests-lib-tests	compattestfile,atf
 ./usr/tests/lib/csu/Atffile			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/csu/Kyuafile			tests-lib-tests		compattestfile,atf,kyua
+./usr/tests/lib/csu/h_ifunc_static		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/csu/h_initfini			tests-obsolete		obsolete
 ./usr/tests/lib/csu/h_initfini1			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/csu/h_initfini2			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/csu/h_initfini3			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/csu/t_crt0			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/csu/t_ifunc_static		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libbluetooth			tests-lib-tests	compattestfile,atf
 ./usr/tests/lib/libbluetooth/Atffile		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libbluetooth/Kyuafile		tests-lib-tests		compattestfile,atf,kyua
