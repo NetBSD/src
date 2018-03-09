@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipsec.c,v 1.5 2018/03/09 11:01:41 knakahara Exp $  */
+/*	$NetBSD: if_ipsec.c,v 1.6 2018/03/09 11:03:26 knakahara Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.5 2018/03/09 11:01:41 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.6 2018/03/09 11:03:26 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1321,6 +1321,20 @@ if_ipsec_add_mbuf(struct mbuf *m0, void *data, size_t len)
 }
 
 static inline void
+if_ipsec_add_mbuf_addr_port(struct mbuf *m0, struct sockaddr *addr, in_port_t port)
+{
+
+	if (port == 0) {
+		if_ipsec_add_mbuf(m0, addr, addr->sa_len);
+	} else {
+		struct sockaddr addrport;
+
+		if_ipsec_set_addr_port(&addrport, addr, port);
+		if_ipsec_add_mbuf(m0, &addrport, addrport.sa_len);
+	}
+}
+
+static inline void
 if_ipsec_add_pad(struct mbuf *m0, size_t len)
 {
 	struct mbuf *m;
@@ -1525,27 +1539,13 @@ if_ipsec_add_sp0(struct sockaddr *src, in_port_t sport,
 	m_copyback(m, 0, sizeof(msg), &msg);
 
 	if_ipsec_add_mbuf(m, &xsrc, sizeof(xsrc));
-	if (sport == 0) {
-		if_ipsec_add_mbuf(m, src, src->sa_len);
-	} else {
-		struct sockaddr addrport;
-
-		if_ipsec_set_addr_port(&addrport, src, sport);
-		if_ipsec_add_mbuf(m, &addrport, addrport.sa_len);
-	}
+	if_ipsec_add_mbuf_addr_port(m, src, sport);
 	padlen = PFKEY_UNUNIT64(xsrc.sadb_address_len)
 		- (sizeof(xsrc) + PFKEY_ALIGN8(src->sa_len));
 	if_ipsec_add_pad(m, padlen);
 
 	if_ipsec_add_mbuf(m, &xdst, sizeof(xdst));
-	if (dport == 0) {
-		if_ipsec_add_mbuf(m, dst, dst->sa_len);
-	} else {
-		struct sockaddr addrport;
-
-		if_ipsec_set_addr_port(&addrport, dst, dport);
-		if_ipsec_add_mbuf(m, &addrport, addrport.sa_len);
-	}
+	if_ipsec_add_mbuf_addr_port(m, dst, dport);
 	padlen = PFKEY_UNUNIT64(xdst.sadb_address_len)
 		- (sizeof(xdst) + PFKEY_ALIGN8(dst->sa_len));
 	if_ipsec_add_pad(m, padlen);
@@ -1553,21 +1553,8 @@ if_ipsec_add_sp0(struct sockaddr *src, in_port_t sport,
 	if_ipsec_add_mbuf(m, &xpl, sizeof(xpl));
 	if (policy == IPSEC_POLICY_IPSEC) {
 		if_ipsec_add_mbuf(m, &xisr, sizeof(xisr));
-		if (sport == 0) {
-			if_ipsec_add_mbuf(m, src, src->sa_len);
-		} else {
-			struct sockaddr addrport;
-
-			if_ipsec_set_addr_port(&addrport, src, sport);
-			if_ipsec_add_mbuf(m, &addrport, addrport.sa_len);
-		}
-		if (dport == 0) {
-			if_ipsec_add_mbuf(m, dst, dst->sa_len);
-		} else {
-			struct sockaddr addrport;
-			if_ipsec_set_addr_port(&addrport, dst, dport);
-			if_ipsec_add_mbuf(m, &addrport, addrport.sa_len);
-		}
+		if_ipsec_add_mbuf_addr_port(m, src, sport);
+		if_ipsec_add_mbuf_addr_port(m, dst, dport);
 	}
 	padlen = PFKEY_UNUNIT64(xpl.sadb_x_policy_len) - sizeof(xpl);
 	if (src != NULL)
