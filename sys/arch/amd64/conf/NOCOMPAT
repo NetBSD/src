@@ -1,4 +1,4 @@
-# $NetBSD: NOCOMPAT,v 1.1.2.1 2018/03/06 04:45:04 pgoyette Exp $
+# $NetBSD: NOCOMPAT,v 1.1.2.2 2018/03/09 01:27:50 pgoyette Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.1.2.1 $"
+#ident		"GENERIC-$Revision: 1.1.2.2 $"
 
 maxusers	64		# estimated number of users
 
@@ -63,9 +63,9 @@ options 	KTRACE		# system call tracing via ktrace(1)
 options 	CPU_UCODE	# cpu ucode loading support
 
 # Note: SysV IPC parameters could be changed dynamically, see sysctl(8).
-options 	SYSVMSG		# System V-like message queues
-options 	SYSVSEM		# System V-like semaphores
-options 	SYSVSHM		# System V-like memory sharing
+#options 	SYSVMSG		# System V-like message queues
+#options 	SYSVSEM		# System V-like semaphores
+#options 	SYSVSHM		# System V-like memory sharing
 
 options 	MODULAR		# new style module(7) framework
 options 	MODULAR_DEFAULT_AUTOLOAD

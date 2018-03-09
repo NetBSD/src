@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_ipc.c,v 1.32 2015/12/05 00:51:42 pgoyette Exp $	*/
+/*	$NetBSD: sysv_ipc.c,v 1.32.16.1 2018/03/09 01:27:50 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_ipc.c,v 1.32 2015/12/05 00:51:42 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_ipc.c,v 1.32.16.1 2018/03/09 01:27:50 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
@@ -61,6 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: sysv_ipc.c,v 1.32 2015/12/05 00:51:42 pgoyette Exp $
 #include <sys/stat.h>
 #include <sys/sysctl.h>
 #include <sys/kauth.h>
+
+#include <compat/common/sysv_ipc_mod.h>	/* for sysctl routine vector */
 
 /*
  * Values in support of System V compatible shared memory.	XXX
@@ -124,10 +126,6 @@ struct	msginfo msginfo = {
 };
 #endif
 
-#if defined(COMPAT_50)
-int sysctl_kern_sysvipc50(SYSCTLFN_PROTO);
-#endif
-
 MODULE(MODULE_CLASS_EXEC, sysv_ipc, NULL);
  
 SYSCTL_SETUP_PROTO(sysctl_ipc_setup);
@@ -140,15 +138,6 @@ static const struct syscall_package sysvipc_syscalls[] = {
 	{ SYS_shmat, 0, (sy_call_t *)sys_shmat },
 	{ SYS_shmdt, 0, (sy_call_t *)sys_shmdt },
 	{ SYS_shmget, 0, (sy_call_t *)sys_shmget },
-#if defined(COMPAT_10) && !defined(_LP64)
-	{ SYS_compat_10_oshmsys, 0, (sy_call_t *)compat_10_sys_shmsys },
-#endif
-#if defined(COMPAT_14)
-	{ SYS_compat_14_shmctl, 0, (sy_call_t *)compat_14_sys_shmctl },
-#endif
-#if defined(COMPAT_50)
-	{ SYS_compat_50___shmctl13, 0, (sy_call_t *)compat_50_sys___shmctl13 },
-#endif
 #endif	/* SYSVSHM */
 
 #if defined(SYSVSEM)
@@ -156,15 +145,6 @@ static const struct syscall_package sysvipc_syscalls[] = {
 	{ SYS_semget, 0, (sy_call_t *)sys_semget },
 	{ SYS_semop, 0, (sy_call_t *)sys_semop },
 	{ SYS_semconfig, 0, (sy_call_t *)sys_semconfig },
-#if defined(COMPAT_10) && !defined(_LP64)
-	{ SYS_compat_10_osemsys, 0, (sy_call_t *)compat_10_sys_semsys },
-#endif
-#if defined(COMPAT_14)
-	{ SYS_compat_14___semctl, 0, (sy_call_t *)compat_14_sys___semctl },
-#endif
-#if defined(COMPAT_50)
-	{ SYS_compat_50_____semctl13, 0, (sy_call_t *)compat_50_sys_____semctl13 },
-#endif
 #endif	/* SYSVSEM */
 
 #if defined(SYSVMSG)
@@ -172,15 +152,6 @@ static const struct syscall_package sysvipc_syscalls[] = {
 	{ SYS_msgget, 0, (sy_call_t *)sys_msgget },
 	{ SYS_msgsnd, 0, (sy_call_t *)sys_msgsnd },
 	{ SYS_msgrcv, 0, (sy_call_t *)sys_msgrcv },
-#if defined(COMPAT_10) && !defined(_LP64)
-	{ SYS_compat_10_omsgsys, 0, (sy_call_t *)compat_10_sys_msgsys },
-#endif
-#if defined(COMPAT_14)
-	{ SYS_compat_14_msgctl, 0, (sy_call_t *)compat_14_sys_msgctl },
-#endif
-#if defined(COMPAT_50)
-	{ SYS_compat_50___msgctl13, 0, (sy_call_t *)compat_50_sys___msgctl13 },
-#endif
 #endif	/* SYSVMSG */
 	{ 0, 0, NULL }
 };
@@ -369,6 +340,17 @@ sysvipcinit(void)
 	    sysvipc_listener_cb, NULL);
 }
 
+/* Vector the old 50 sysctl stuff */
+ 
+static int stub_sysvipc50_sysctl(SYSCTLFN_PROTO);
+int (*vec_sysvipc50_sysctl)(SYSCTLFN_PROTO) = stub_sysvipc50_sysctl;
+
+static int
+stub_sysvipc50_sysctl(SYSCTLFN_ARGS)
+{
+	return EPASSTHROUGH;
+}
+
 static int
 sysctl_kern_sysvipc(SYSCTLFN_ARGS)
 {
@@ -395,11 +377,9 @@ sysctl_kern_sysvipc(SYSCTLFN_ARGS)
  * to the non-compat sysctl code.
  */
 
-#if defined(COMPAT_50)
-	error = sysctl_kern_sysvipc50(SYSCTLFN_CALL(rnode));
+	error = (*vec_sysvipc50_sysctl)(SYSCTLFN_CALL(rnode));
 	if (error != EPASSTHROUGH)
 		return error;
-#endif
 
 	if (namelen != 1)
 		return EINVAL;
