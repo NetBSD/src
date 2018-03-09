@@ -1,4 +1,4 @@
-#	$NetBSD: files.zaurus,v 1.14 2018/03/06 22:21:01 christos Exp $
+#	$NetBSD: files.zaurus,v 1.15 2018/03/09 17:15:14 christos Exp $
 #
 # Sharp Zaurus specific configuration info
 #
@@ -92,7 +92,7 @@ attach ztp at zssp
 file arch/zaurus/dev/ztp.c		ztp
 
 # WM8750 audio
-device zaudio: audiobus, auconv, mulaw, aurateconv, pxaiic
+device zaudio: audiobus, auconv, mulaw, aurateconv, pxaiis
 attach zaudio at iic
 file arch/zaurus/dev/zaudio.c		zaudio
 file arch/zaurus/dev/wm8731_zaudio.c	zaudio & cpu_xscale_pxa250
