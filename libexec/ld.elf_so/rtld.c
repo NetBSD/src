@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.190 2018/02/11 18:58:44 jakllsch Exp $	 */
+/*	$NetBSD: rtld.c,v 1.191 2018/03/09 20:19:11 joerg Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.190 2018/02/11 18:58:44 jakllsch Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.191 2018/03/09 20:19:11 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -263,7 +263,7 @@ static bool
 _rtld_call_ifunc_functions(sigset_t *mask, Obj_Entry *obj, u_int cur_objgen)
 {
 	if (obj->ifunc_remaining
-#ifdef __sparc__
+#if defined(__sparc__) || defined(__powerpc__)
 	    || obj->ifunc_remaining_nonplt
 #endif
 	) {
