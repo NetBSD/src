@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_stub.c,v 1.44 2017/12/16 18:42:22 christos Exp $	*/
+/*	$NetBSD: kern_stub.c,v 1.44.2.1 2018/03/10 03:33:27 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.44 2017/12/16 18:42:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.44.2.1 2018/03/10 03:33:27 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ktrace.h"
@@ -85,19 +85,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.44 2017/12/16 18:42:22 christos Exp 
 bool default_bus_space_is_equal(bus_space_tag_t, bus_space_tag_t);
 bool default_bus_space_handle_is_equal(bus_space_tag_t, bus_space_handle_t,
     bus_space_handle_t);
-
-/*
- * SYSV Semaphores, Shared Memory, Message Queues
- */
-#ifndef SYSVMSG
-__strong_alias(msgctl1,enosys);
-#endif
-#ifndef SYSVSHM
-__strong_alias(shmctl1,enosys);
-#endif
-#ifndef SYSVSEM
-__strong_alias(semctl1,enosys);
-#endif
 
 /*
  * ktrace stubs.  ktruser() goes to enosys as we want to fail the syscall,
