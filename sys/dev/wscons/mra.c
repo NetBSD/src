@@ -1,4 +1,4 @@
-/*	$NetBSD: mra.c,v 1.6 2014/03/14 05:03:19 khorben Exp $	*/
+/*	$NetBSD: mra.c,v 1.7 2018/03/10 23:25:59 khorben Exp $	*/
 
 /*
  * Copyright (c) 1999 Shin Takemura All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mra.c,v 1.6 2014/03/14 05:03:19 khorben Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mra.c,v 1.7 2018/03/10 23:25:59 khorben Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,7 @@ mra_Y_AX1_BX2_C(const int *y, int ys,
 #define Y(i)		AA(y, ys, i)
 
 	/*
-	 * get avarage and sum
+	 * get average and sum
 	 */
 	X1a = 0;	X2a = 0;	Ya = 0;
 	X1X1s = 0;	X2X2s = 0;	X1X2s = 0;
