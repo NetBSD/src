@@ -1,4 +1,4 @@
-/*	$NetBSD: module.h,v 1.41.14.1 2018/03/10 10:33:02 pgoyette Exp $	*/
+/*	$NetBSD: module.h,v 1.41.14.2 2018/03/10 11:35:44 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@ typedef struct modinfo {
 	int		(*mi_modcmd)(modcmd_t, void *);
 	const char	*mi_name;
 	const char	*mi_required;
-	const char	*mi_aliases;
+	const char	*mi_alias[];
 } const modinfo_t;
 
 /* Per module information, maintained by kern_module.c */ 
