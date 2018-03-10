@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.59 2018/01/20 17:37:15 tsutsui Exp $	*/
+/*	$NetBSD: bus.c,v 1.60 2018/03/10 03:44:43 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.59 2018/01/20 17:37:15 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.60 2018/03/10 03:44:43 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -548,46 +548,203 @@ _bus_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
  * by bus-specific DMA map synchronization functions.
  */
 void
-_bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t off,
+_bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
     bus_size_t len, int ops)
 {
 #if defined(M68040) || defined(M68060)
-	int	i, pa_off, inc, seglen;
-	u_long	pa, end_pa;
+	bus_addr_t p, e, ps, pe;
+	bus_size_t seglen;
+	bus_dma_segment_t *seg;
+	int i;
+#endif
 
-	pa_off = t->_displacement;
+#if defined(M68020) || defined(M68030)
+#if defined(M68040) || defined(M68060)
+	if (cputype == CPU_68020 || cputype == CPU_68030)
+#endif
+		/* assume no L2 physical cache */
+		return;
+#endif
 
-	/* Flush granularity */
-	inc = (len > 1024) ? PAGE_SIZE : 16;
+#if defined(M68040) || defined(M68060)
+	/* If the whole DMA map is uncached, do nothing. */
+	if ((map->_dm_flags & BUS_DMA_COHERENT) != 0)
+		return;
 
-	for (i = 0; i < map->dm_nsegs && len > 0; i++) {
-		if (map->dm_segs[i].ds_len <= off) {
+	/* Short-circuit for unsupported `ops' */
+	if ((ops & (BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE)) == 0)
+		return;
+
+	/*
+	 * flush/purge the cache.
+	 */
+	for (i = 0; i < map->dm_nsegs && len != 0; i++) {
+		seg = &map->dm_segs[i];
+		if (seg->ds_len <= offset) {
 			/* Segment irrelevant - before requested offset */
-			off -= map->dm_segs[i].ds_len;
+			offset -= seg->ds_len;
 			continue;
 		}
-		seglen = map->dm_segs[i].ds_len - off;
+
+		/*
+		 * Now at the first segment to sync; nail
+		 * each segment until we have exhausted the
+		 * length.
+		 */
+		seglen = seg->ds_len - offset;
 		if (seglen > len)
 			seglen = len;
-		len -= seglen;
-		pa = map->dm_segs[i].ds_addr + off - pa_off;
-		end_pa = pa + seglen;
 
-		if (inc == 16) {
-			pa &= ~15;
-			while (pa < end_pa) {
-				DCFL(pa);
-				pa += 16;
+		ps = seg->ds_addr + offset;
+		pe = ps + seglen;
+
+		if (ops & BUS_DMASYNC_PREWRITE) {
+			p = ps & ~CACHELINE_MASK;
+			e = (pe + CACHELINE_MASK) & ~CACHELINE_MASK;
+
+			/* flush cacheline */
+			while ((p < e) && (p & (CACHELINE_SIZE * 8 - 1)) != 0) {
+				DCFL(p);
+				p += CACHELINE_SIZE;
 			}
-		} else {
-			pa &= ~PGOFSET;
-			while (pa < end_pa) {
-				DCFP(pa);
-				pa += PAGE_SIZE;
+
+			/* flush cachelines per 128bytes */
+			while ((p < e) && (p & PAGE_MASK) != 0) {
+				DCFL(p);
+				p += CACHELINE_SIZE;
+				DCFL(p);
+				p += CACHELINE_SIZE;
+				DCFL(p);
+				p += CACHELINE_SIZE;
+				DCFL(p);
+				p += CACHELINE_SIZE;
+				DCFL(p);
+				p += CACHELINE_SIZE;
+				DCFL(p);
+				p += CACHELINE_SIZE;
+				DCFL(p);
+				p += CACHELINE_SIZE;
+				DCFL(p);
+				p += CACHELINE_SIZE;
+			}
+
+			/* flush page */
+			while (p + PAGE_SIZE <= e) {
+				DCFP(p);
+				p += PAGE_SIZE;
+			}
+
+			/* flush cachelines per 128bytes */
+			while (p + CACHELINE_SIZE * 8 <= e) {
+				DCFL(p);
+				p += CACHELINE_SIZE;
+				DCFL(p);
+				p += CACHELINE_SIZE;
+				DCFL(p);
+				p += CACHELINE_SIZE;
+				DCFL(p);
+				p += CACHELINE_SIZE;
+				DCFL(p);
+				p += CACHELINE_SIZE;
+				DCFL(p);
+				p += CACHELINE_SIZE;
+				DCFL(p);
+				p += CACHELINE_SIZE;
+				DCFL(p);
+				p += CACHELINE_SIZE;
+			}
+
+			/* flush cacheline */
+			while (p < e) {
+				DCFL(p);
+				p += CACHELINE_SIZE;
 			}
 		}
+
+		/*
+		 * Normally, the `PREREAD' flag instructs us to purge the
+		 * cache for the specified offset and length. However, if
+		 * the offset/length is not aligned to a cacheline boundary,
+		 * we may end up purging some legitimate data from the
+		 * start/end of the cache. In such a case, *flush* the
+		 * cachelines at the start and end of the required region.
+		 */
+		else if (ops & BUS_DMASYNC_PREREAD) {
+			/* flush cacheline on start boundary */
+			if (ps & CACHELINE_MASK) {
+				DCFL(ps & ~CACHELINE_MASK);
+			}
+
+			p = (ps + CACHELINE_MASK) & ~CACHELINE_MASK;
+			e = pe & ~CACHELINE_MASK;
+
+			/* purge cacheline */
+			while ((p < e) && (p & (CACHELINE_SIZE * 8 - 1)) != 0) {
+				DCPL(p);
+				p += CACHELINE_SIZE;
+			}
+
+			/* purge cachelines per 128bytes */
+			while ((p < e) && (p & PAGE_MASK) != 0) {
+				DCPL(p);
+				p += CACHELINE_SIZE;
+				DCPL(p);
+				p += CACHELINE_SIZE;
+				DCPL(p);
+				p += CACHELINE_SIZE;
+				DCPL(p);
+				p += CACHELINE_SIZE;
+				DCPL(p);
+				p += CACHELINE_SIZE;
+				DCPL(p);
+				p += CACHELINE_SIZE;
+				DCPL(p);
+				p += CACHELINE_SIZE;
+				DCPL(p);
+				p += CACHELINE_SIZE;
+			}
+
+			/* purge page */
+			while (p + PAGE_SIZE <= e) {
+				DCPP(p);
+				p += PAGE_SIZE;
+			}
+
+			/* purge cachelines per 128bytes */
+			while (p + CACHELINE_SIZE * 8 <= e) {
+				DCPL(p);
+				p += CACHELINE_SIZE;
+				DCPL(p);
+				p += CACHELINE_SIZE;
+				DCPL(p);
+				p += CACHELINE_SIZE;
+				DCPL(p);
+				p += CACHELINE_SIZE;
+				DCPL(p);
+				p += CACHELINE_SIZE;
+				DCPL(p);
+				p += CACHELINE_SIZE;
+				DCPL(p);
+				p += CACHELINE_SIZE;
+				DCPL(p);
+				p += CACHELINE_SIZE;
+			}
+
+			/* purge cacheline */
+			while (p < e) {
+				DCPL(p);
+				p += CACHELINE_SIZE;
+			}
+
+			/* flush cacheline on end boundary */
+			if (p < pe) {
+				DCFL(p);
+			}
+		}
+		offset = 0;
+		len -= seglen;
 	}
-#endif
+#endif	/* defined(M68040) || defined(M68060) */
 }
 
 /*
