@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.198 2018/02/12 08:22:26 maxv Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.199 2018/03/10 23:28:13 khorben Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -135,7 +135,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.198 2018/02/12 08:22:26 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.199 2018/03/10 23:28:13 khorben Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1720,7 +1720,7 @@ out:
 			error = 0;
 		}
 
-		/* Back out the seqence number advance. */
+		/* Back out the sequence number advance. */
 		if (sack_rxmit)
 			p->rxmit -= len;
 
