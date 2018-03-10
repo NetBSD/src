@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.291 2018/01/06 16:41:23 kamil Exp $
+	$NetBSD: syscalls.master,v 1.291.2.1 2018/03/10 05:09:24 pgoyette Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -353,7 +353,7 @@
 168	UNIMPL
 ; XXX more generally, never on machines where sizeof(void *) != sizeof(int)
 #if !defined(_LP64)
-169	COMPAT_10 MODULAR sysv_ipc	\
+169	COMPAT_10 MODULAR compat_sysv	\
 		{ int|sys||semsys(int which, int a2, int a3, int a4, \
 			    int a5); } osemsys
 #else
@@ -361,7 +361,7 @@
 #endif
 ; XXX more generally, never on machines where sizeof(void *) != sizeof(int)
 #if !defined(_LP64)
-170	COMPAT_10 MODULAR sysv_ipc	\
+170	COMPAT_10 MODULAR compat_sysv	\
 		{ int|sys||msgsys(int which, int a2, int a3, int a4, \
 			    int a5, int a6); } omsgsys
 #else
@@ -369,7 +369,7 @@
 #endif
 ; XXX more generally, never on machines where sizeof(void *) != sizeof(int)
 #if !defined(_LP64)
-171	COMPAT_10 MODULAR sysv_ipc	\
+171	COMPAT_10 MODULAR compat_sysv	\
 		{ int|sys||shmsys(int which, int a2, int a3, int a4); } \
 			    oshmsys
 #else
@@ -455,7 +455,7 @@
 218	UNIMPL
 219	UNIMPL
 ; System calls 220-300 are reserved for use by NetBSD
-220	COMPAT_14 MODULAR sysv_ipc	\
+220	COMPAT_14 MODULAR compat_sysv	\
 		{ int|sys||__semctl(int semid, int semnum, int cmd, \
 			    union __semun *arg); }
 221	STD MODULAR sysv_ipc { int|sys||semget(key_t key, int nsems, \
@@ -463,7 +463,7 @@
 222	STD MODULAR sysv_ipc { int|sys||semop(int semid, struct sembuf *sops, \
 			    size_t nsops); }
 223	STD MODULAR sysv_ipc { int|sys||semconfig(int flag); }
-224	COMPAT_14 MODULAR sysv_ipc { int|sys||msgctl(int msqid, int cmd, \
+224	COMPAT_14 MODULAR compat_sysv { int|sys||msgctl(int msqid, int cmd, \
 			    struct msqid_ds14 *buf); }
 225	STD MODULAR sysv_ipc { int|sys||msgget(key_t key, int msgflg); }
 226	STD MODULAR sysv_ipc { int|sys||msgsnd(int msqid, const void *msgp, \
@@ -472,7 +472,7 @@
 			    size_t msgsz, long msgtyp, int msgflg); }
 228	STD MODULAR sysv_ipc { void *|sys||shmat(int shmid,	\
 			    const void *shmaddr, int shmflg); }
-229	COMPAT_14 MODULAR sysv_ipc { int|sys||shmctl(int shmid, int cmd, \
+229	COMPAT_14 MODULAR compat_sysv { int|sys||shmctl(int shmid, int cmd, \
 			    struct shmid_ds14 *buf); }
 230	STD MODULAR sysv_ipc { int|sys||shmdt(const void *shmaddr); }
 231	STD MODULAR sysv_ipc { int|sys||shmget(key_t key, size_t size,	\
@@ -611,12 +611,12 @@
 300	COMPAT_20 MODULAR compat	\
 		{ int|sys||fhstatfs(const struct compat_30_fhandle *fhp, \
 			    struct statfs12 *buf); }
-301	COMPAT_50 MODULAR sysv_ipc	\
+301	COMPAT_50 MODULAR compat_sysv	\
 		{ int|sys|13|__semctl(int semid, int semnum, int cmd, \
 			    ... union __semun *arg); }
-302	COMPAT_50 MODULAR sysv_ipc { int|sys|13|msgctl(int msqid, int cmd, \
+302	COMPAT_50 MODULAR compat_sysv { int|sys|13|msgctl(int msqid, int cmd, \
 			    struct msqid_ds *buf); }
-303	COMPAT_50 MODULAR sysv_ipc { int|sys|13|shmctl(int shmid, int cmd, \
+303	COMPAT_50 MODULAR compat_sysv { int|sys|13|shmctl(int shmid, int cmd, \
 			    struct shmid_ds13 *buf); }
 304	STD 	 RUMP	{ int|sys||lchflags(const char *path, u_long flags); }
 305	NOERR 	RUMP	{ int|sys||issetugid(void); }
