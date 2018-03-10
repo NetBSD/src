@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_mbuf.c,v 1.21 2018/03/05 12:42:28 maxv Exp $	*/
+/*	$NetBSD: ipsec_mbuf.c,v 1.22 2018/03/10 17:52:50 maxv Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_mbuf.c,v 1.21 2018/03/05 12:42:28 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_mbuf.c,v 1.22 2018/03/10 17:52:50 maxv Exp $");
 
 /*
  * IPsec-specific mbuf routines.
@@ -214,6 +214,7 @@ m_makespace(struct mbuf *m0, int skip, int hlen, int *off)
 	unsigned remain;
 
 	KASSERT(m0 != NULL);
+	KASSERT(m0->m_flags & M_PKTHDR);
 	KASSERTMSG(hlen < MHLEN, "hlen too big: %u", hlen);
 
 	for (m = m0; m && skip > m->m_len; m = m->m_next)
@@ -320,6 +321,7 @@ m_pad(struct mbuf *m, int n)
 	if (__predict_false(n > MLEN)) {
 		panic("%s: %d > MLEN", __func__, n);
 	}
+	KASSERT(m->m_flags & M_PKTHDR);
 
 	len = m->m_pkthdr.len;
 	pad = n;
@@ -385,6 +387,8 @@ m_striphdr(struct mbuf *m, int skip, int hlen)
 {
 	struct mbuf *m1;
 	int roff;
+
+	KASSERT(m->m_flags & M_PKTHDR);
 
 	/* Find beginning of header */
 	m1 = m_getptr(m, skip, &roff);
