@@ -1,4 +1,4 @@
-/*	$NetBSD: module.h,v 1.41 2016/11/16 10:42:14 pgoyette Exp $	*/
+/*	$NetBSD: module.h,v 1.41.14.1 2018/03/10 10:33:02 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -62,6 +62,7 @@ typedef enum modcmd {
 	MODULE_CMD_FINI,		/* mandatory */
 	MODULE_CMD_STAT,		/* optional */
 	MODULE_CMD_AUTOUNLOAD,		/* optional */
+	MODULE_CMD_GETALIASES,		/* optional */
 } modcmd_t;
 
 #ifdef _KERNEL
@@ -78,6 +79,7 @@ typedef struct modinfo {
 	int		(*mi_modcmd)(modcmd_t, void *);
 	const char	*mi_name;
 	const char	*mi_required;
+	const char	*mi_aliases;
 } const modinfo_t;
 
 /* Per module information, maintained by kern_module.c */ 
@@ -95,6 +97,7 @@ typedef struct module {
 	int			mod_flags;
 #define MODFLG_MUST_FORCE	0x01
 #define MODFLG_AUTO_LOADED	0x02
+#define	MODFLG_IS_ALIAS		0x04	/* only for export via modstat_t */
 
 } module_t;
 
