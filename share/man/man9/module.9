@@ -1,4 +1,4 @@
-.\"	$NetBSD: module.9,v 1.42.2.1 2018/03/10 10:51:27 pgoyette Exp $
+.\"	$NetBSD: module.9,v 1.42.2.2 2018/03/10 11:34:19 pgoyette Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -202,10 +202,10 @@ For the
 .Dv MODULE_CMD_GETALIASES
 command, the
 .Fa data
-argument points to a variable of type
-.Vt const char * ;
-the module's command routine should store the address of a quoted string
-containing a comma-separated list of alias names.
+argument points to an array of type
+.Vt const char *[] ;
+the module's command routine should store the addresses of each alias
+name for the module.
 .Pp
 The __link_set mechanism is used to enable the
 .Nm
