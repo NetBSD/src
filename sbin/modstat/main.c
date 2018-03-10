@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.24 2016/11/16 10:43:37 pgoyette Exp $	*/
+/*	$NetBSD: main.c,v 1.24.12.1 2018/03/10 10:33:40 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.24 2016/11/16 10:43:37 pgoyette Exp $");
+__RCSID("$NetBSD: main.c,v 1.24.12.1 2018/03/10 10:33:40 pgoyette Exp $");
 #endif /* !lint */
 
 #include <sys/module.h>
@@ -67,7 +67,7 @@ static const char *sources[] = {
 const unsigned int source_max = __arraycount(sources);
 
 static const char *modflags[] = {
-	"-", "f", "a", "af"
+	"-", "f", "a", "af", "A", "Af", "Aa", "Aaf"
 };
 
 int
