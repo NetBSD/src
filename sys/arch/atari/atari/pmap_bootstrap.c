@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.8 2016/12/22 14:47:54 cherry Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.9 2018/03/10 02:48:51 tsutsui Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -113,11 +113,11 @@ pmap_bootstrap(vaddr_t vstart)
 	/*
 	 * Setup physical address ranges
 	 */
-	for (i = 0; usable_segs[i + 1].start; i++)
-		;
+	for (i = 0; i < NMEM_SEGS && usable_segs[i].start; i++)
+		continue;
 	/* XXX: allow for msgbuf */
-	usable_segs[i].end -= m68k_round_page(MSGBUFSIZE);
-	msgbufpa = usable_segs[i].end;
+	usable_segs[i - 1].end -= m68k_round_page(MSGBUFSIZE);
+	msgbufpa = usable_segs[i - 1].end;
 
 	/*
 	 * Count physical memory
@@ -132,7 +132,7 @@ pmap_bootstrap(vaddr_t vstart)
 	/*
 	 * Announce available memory to the VM-system
 	 */
-	for (i = 0; usable_segs[i].start; i++)
+	for (i = 0; i < NMEM_SEGS && usable_segs[i].start; i++)
 		uvm_page_physload(atop(usable_segs[i].start),
 				 atop(usable_segs[i].end),
 				 atop(usable_segs[i].start),
