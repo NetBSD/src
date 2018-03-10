@@ -1,4 +1,4 @@
-.\" $NetBSD: modstat.8,v 1.22 2016/09/12 06:54:00 wiz Exp $
+.\" $NetBSD: modstat.8,v 1.22.12.1 2018/03/10 10:36:26 pgoyette Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -97,11 +97,16 @@ The module flags:
 .It Dv a
 Module is auto-loaded.
 .It Dv f
-Required the
+Requires the
 .Xr modload 8
 flag
 .Fl f
 (force) to be loaded.
+.It Dv A
+Module is an alias for another module.
+The REQUIRES column contains the
+.Dq real
+alias name.
 .El
 .It Li REFS
 Number of references held on the module.
