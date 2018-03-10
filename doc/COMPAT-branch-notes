@@ -1,0 +1,45 @@
+DONE
+----
+1. Removed linking of the kernel compat object library into all kernels;
+   using the .o library caused some build breakage, and resulted in the
+   bulk of the compat code being included in every kernel, but without
+   any module linkage.  In turn, this caused failure when loading some
+   modules due to symbols already being defined in the kernel.
+
+2. Reverted some intentional breakage for loading the sysv_ipc module;
+   the breakage was introduced as the fix for the above-mentioned build
+   breakage.  
+
+3. Split the sysv_ipc compat routines into their own compat_sysv module.
+
+4. Resolved some inter-module dependencies.
+
+5. Extracted some net/if.c compat routines into the compat module, and
+   replaced the originals with indirect (vectored) function calls.
+
+
+TODO
+----
+1. Audit the entire code base for any remaining embedded #ifdef's for
+   COMPAT_xx.  When found, move the actual compat code into the compat
+   hierarchy and replace originals with indirect (vectored) calls.
+
+   (There are several instances of this in the net routing table code.)
+
+2. Implement a mechanism for modules to include "aliases".  This would
+   allow a single module file to contain multiple module table entries
+   (for example, a single file for the compat module could include
+   compat_80, compat_70, compat_60, ...).  Then, other modules could
+   depend on individual names.  For example, module compat_xyz could
+   depend on compat_70, and the dependency would be met by either the
+   "everything" compat module (with all of its aliases) or by a 7.0-
+   specific module.
+
+   Note that in addition to updating the module code, this would also
+   require changes to syscalls.master files to change the names of the
+   modules associated with module-provided syscalls.
+
+3. In addition to the single, all-encompassing compat module, provide a
+   per-version compat_xx module, each with dependencies on all higher
+   versions.  (Perhaps we would also do this for the sysv ipc module,
+   although the gains are a lot smaller.)
