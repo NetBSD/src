@@ -1,4 +1,4 @@
-.\"	$NetBSD: module.9,v 1.42 2017/12/20 10:01:38 wiz Exp $
+.\"	$NetBSD: module.9,v 1.42.2.1 2018/03/10 10:51:27 pgoyette Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -170,6 +170,9 @@ Perform module-specific clean-up before the module is unloaded.
 Notify the module that it is about to be unloaded.
 .It Dv MODULE_CMD_STAT
 Request the module to provide status information (not currently implemented).
+.It Dv MODULE_CMD_GETALIASES
+Request the module to provide a list of its alias names (typically used
+for included modules).
 .El
 .Pp
 All modules'
@@ -195,6 +198,14 @@ For the
 command, the
 .Fa data
 argument points to a buffer where the status information should be placed.
+For the
+.Dv MODULE_CMD_GETALIASES
+command, the
+.Fa data
+argument points to a variable of type
+.Vt const char * ;
+the module's command routine should store the address of a quoted string
+containing a comma-separated list of alias names.
 .Pp
 The __link_set mechanism is used to enable the
 .Nm
