@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipcomp.c,v 1.59 2018/02/16 09:24:55 maxv Exp $	*/
+/*	$NetBSD: xform_ipcomp.c,v 1.60 2018/03/10 17:48:32 maxv Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipcomp.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /* $OpenBSD: ip_ipcomp.c,v 1.1 2001/07/05 12:08:52 jjbg Exp $ */
 
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.59 2018/02/16 09:24:55 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.60 2018/03/10 17:48:32 maxv Exp $");
 
 /* IP payload compression protocol (IPComp), see RFC 2393 */
 #if defined(_KERNEL_OPT)
@@ -614,7 +614,7 @@ ipcomp_output_cb(struct cryptop *crp)
 #ifdef INET6
 		case AF_INET6:
 			mtod(m, struct ip6_hdr *)->ip6_plen =
-			    htons(m->m_pkthdr.len) - sizeof(struct ip6_hdr);
+			    htons(m->m_pkthdr.len - sizeof(struct ip6_hdr));
 			break;
 #endif
 		default:
