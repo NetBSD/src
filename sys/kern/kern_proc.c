@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.209 2017/11/30 18:44:16 maxv Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.210 2018/03/11 15:13:05 kre Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.209 2017/11/30 18:44:16 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.210 2018/03/11 15:13:05 kre Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -1655,7 +1655,7 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 			arg = name[1];
 			break;
 		}
-		elem_count = 0;	/* Ditto */
+		elem_count = 0;	/* Hush little compiler, don't you cry */
 		kelem_size = elem_size = sizeof(kbuf->kproc);
 	} else {
 		if (namelen != 4)
