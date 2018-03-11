@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.130.2.3 2018/03/11 08:32:21 pgoyette Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.130.2.4 2018/03/11 11:47:45 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.130.2.3 2018/03/11 08:32:21 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.130.2.4 2018/03/11 11:47:45 pgoyette Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -671,9 +671,10 @@ module_alias_lookup(const char *name, module_t *mod)
 	aliasp = *mod->mod_info->mi_aliases;
 	if (aliasp == NULL)
 		return 0;
-	while (*aliasp)
+	while (*aliasp) {
 		if (strcmp(*aliasp++, name) == 0)
 			return 1;
+	}
 	return 0;
 }
 
@@ -690,11 +691,10 @@ module_lookup(const char *name)
 	KASSERT(kernconfig_is_held());
 
 	TAILQ_FOREACH(mod, &module_list, mod_chain) {
-		if (strcmp(mod->mod_info->mi_name, name) == 0) {
+		if (strcmp(mod->mod_info->mi_name, name) == 0)
 			break;
 		if (module_alias_lookup(name, mod))
 			break;
-		}
 	}
 
 	return mod;
@@ -855,13 +855,17 @@ module_do_builtin(const module_t *pmod, const char *name, module_t **modp,
 	}
 
 	/*
-	 * Retrieve that none of the module's aliases already exist
+	 * Confirm that none of the module's aliases already exist
 	 */
 
 	if ((aliasp = *mod->mod_info->mi_aliases) != NULL) {
-		while (*aliasp)
-			if (module_lookup(*aliasp++) != NULL)
+		while (*aliasp) {
+			if ((mod2 = module_lookup(*aliasp++)) != NULL) {
+				if (modp != NULL)
+					*modp = mod2;
 				return EEXIST;
+			}
+		}
 	}
 	/*
 	 * Try to initialize the module.
@@ -1084,6 +1088,8 @@ module_do_load(const char *name, bool isdep, int flags,
 			module_error("module with name `%s' already loaded",
 			    mod2->mod_info->mi_name);
 			error = EEXIST;
+			if (modp != NULL)
+				*modp = mod2;
 			goto fail;
 		}
 	}
@@ -1171,13 +1177,19 @@ module_do_load(const char *name, bool isdep, int flags,
 	/*
 	 * One last check for duplicate module name/alias
 	 */
-	if ((aliasp = *mod->mod_info->mi_aliases) != NULL)
-		while (*aliasp != NULL)
-			if (module_lookup(*aliasp) != NULL) {
+	if ((aliasp = *mod->mod_info->mi_aliases) != NULL) {
+		while (*aliasp != NULL) {
+			if ((mod2 = module_lookup(*aliasp)) != NULL) {
 				module_error("Module `%s' alias `%s' already "
 				    "exists", mod->mod_info->mi_name, *aliasp);
+				error = EEXIST;
+				if (modp != NULL)
+					*modp = mod2;
 				goto fail;
 			}
+			aliasp++;
+		}
+	}
 
 	prev_active = module_active;
 	module_active = mod;
