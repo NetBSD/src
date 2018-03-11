@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.149 2018/02/22 13:27:18 maxv Exp $	*/
+/*	$NetBSD: cpu.c,v 1.150 2018/03/11 13:38:02 maxv Exp $	*/
 
 /*
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.149 2018/02/22 13:27:18 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.150 2018/03/11 13:38:02 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -674,7 +674,7 @@ cpu_init(struct cpu_info *ci)
 #endif /* MTRR */
 
 	if (ci != &cpu_info_primary) {
-		/* Synchronize TSC again, and check for drift. */
+		/* Synchronize TSC */
 		wbinvd();
 		atomic_or_32(&ci->ci_flags, CPUF_RUNNING);
 		tsc_sync_ap(ci);
@@ -786,8 +786,9 @@ cpu_start_secondary(struct cpu_info *ci)
 	} else {
 		/*
 		 * Synchronize time stamp counters. Invalidate cache and do
-		 * twice to try and minimize possible cache effects. Disable
-		 * interrupts to try and rule out any external interference.
+		 * twice (in tsc_sync_bp) to minimize possible cache effects.
+		 * Disable interrupts to try and rule out any external
+		 * interference.
 		 */
 		psl = x86_read_psl();
 		x86_disable_intr();
@@ -854,19 +855,25 @@ cpu_hatch(void *v)
 	KDASSERT((ci->ci_flags & CPUF_PRESENT) == 0);
 
 	/*
-	 * Synchronize time stamp counters.  Invalidate cache and do twice
-	 * to try and minimize possible cache effects.  Note that interrupts
-	 * are off at this point.
+	 * Synchronize the TSC for the first time. Note that interrupts are
+	 * off at this point.
 	 */
 	wbinvd();
 	atomic_or_32(&ci->ci_flags, CPUF_PRESENT);
 	tsc_sync_ap(ci);
 
 	/*
-	 * Wait to be brought online.  Use 'monitor/mwait' if available,
-	 * in order to make the TSC drift as much as possible. so that
-	 * we can detect it later.  If not available, try 'pause'.
-	 * We'd like to use 'hlt', but we have interrupts off.
+	 * Wait to be brought online.
+	 *
+	 * Use MONITOR/MWAIT if available. These instructions put the CPU in
+	 * a low consumption mode (C-state), and if the TSC is not invariant,
+	 * this causes the TSC to drift. We want this to happen, so that we
+	 * can later detect (in tsc_tc_init) any abnormal drift with invariant
+	 * TSCs. That's just for safety; by definition such drifts should
+	 * never occur with invariant TSCs.
+	 *
+	 * If not available, try PAUSE. We'd like to use HLT, but we have
+	 * interrupts off.
 	 */
 	while ((ci->ci_flags & CPUF_GO) == 0) {
 		if ((cpu_feature[1] & CPUID2_MONITOR) != 0) {
@@ -922,6 +929,11 @@ cpu_hatch(void *v)
 	lldt(GSYSSEL(GLDT_SEL, SEL_KPL));
 	ltr(ci->ci_tss_sel);
 
+	/*
+	 * cpu_init will re-synchronize the TSC, and will detect any abnormal
+	 * drift that would have been caused by the use of MONITOR/MWAIT
+	 * above.
+	 */
 	cpu_init(ci);
 	cpu_get_tsc_freq(ci);
 
