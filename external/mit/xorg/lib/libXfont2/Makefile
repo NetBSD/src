@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2018/03/11 09:43:38 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2018/03/11 10:17:10 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -55,15 +55,24 @@ SRCS.FreeType=	\
 .PATH:	${XFONT2DIR}/src/FreeType
 
 SRCS.bitmap=	\
-	ftenc.c \
-	ftfuncs.c \
-	fttools.c \
-	xttcap.c \
+	bitmap.c \
+	bitmapfunc.c \
+	bitmaputil.c \
+	bitscale.c \
+	fontink.c \
+	bitmap.c \
+	bitmapfunc.c \
+	bitmaputil.c \
+	bitscale.c \
+	fontink.c \
 	bdfread.c \
 	bdfutils.c \
-	pcfread.c \
+	pcfread.c
+.if 0
+SRCS.bitmap+=	\
 	pcfwrite.c \
 	snfread.c
+.endif
 .PATH:	${XFONT2DIR}/src/bitmap
 
 SRCS.builtins=	\
