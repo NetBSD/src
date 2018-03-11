@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.80 2018/03/11 07:18:49 mrg Exp $
+# $NetBSD: shl.mi,v 1.81 2018/03/11 09:43:39 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -89,6 +89,9 @@
 ./usr/X11R7/lib/libXfixes.so			-unknown-		xorg,compatx11file
 ./usr/X11R7/lib/libXfixes.so.4			-unknown-		xorg,compatx11file
 ./usr/X11R7/lib/libXfixes.so.4.0		-unknown-		xorg,compatx11file
+./usr/X11R7/lib/libXfont2.so			-unknown-		xorg,compatx11file
+./usr/X11R7/lib/libXfont2.so.2			-unknown-		xorg,compatx11file
+./usr/X11R7/lib/libXfont2.so.2.0		-unknown-		xorg,compatx11file
 ./usr/X11R7/lib/libXfont.so			-unknown-		xorg,compatx11file
 ./usr/X11R7/lib/libXfont.so.3			-unknown-		xorg,compatx11file
 ./usr/X11R7/lib/libXfont.so.3.0			-unknown-		xorg,compatx11file

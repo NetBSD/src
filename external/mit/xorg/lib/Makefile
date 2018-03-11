@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.41 2018/03/11 07:18:49 mrg Exp $
+#	$NetBSD: Makefile,v 1.42 2018/03/11 09:43:38 mrg Exp $
 
 # build libraries for xorg
 
@@ -28,7 +28,7 @@ SUBDIR+=fontconfig libSM libX11 \
 	.WAIT \
 	libXi libXxf86vm \
 	.WAIT \
-	libGL libXScrnSaver libXTrap libXevie libXfont \
+	libGL libXScrnSaver libXTrap libXevie libXfont libXfont2 \
 	libXinerama libXmu libXmuu libXpm libXrender \
 	libXres libXtst libXvMC libXvMCW libXv libXxf86dga libXxf86misc \
 	libxkbui \

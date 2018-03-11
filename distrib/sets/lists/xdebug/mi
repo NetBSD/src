@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.27 2018/03/11 07:18:49 mrg Exp $
+# $NetBSD: mi,v 1.28 2018/03/11 09:43:39 mrg Exp $
 ./etc/mtree/set.xdebug					comp-sys-root
 ./usr/X11R7/lib						-unknown-	debuglib,xorg,compatx11dir
 ./usr/X11R7/lib/libFS_g.a				-unknown-	debuglib,xorg,compatx11file
@@ -24,6 +24,7 @@
 ./usr/X11R7/lib/libXevie_g.a				-unknown-	debuglib,xorg,compatx11file
 ./usr/X11R7/lib/libXext_g.a				-unknown-	debuglib,xorg,compatx11file
 ./usr/X11R7/lib/libXfixes_g.a				-unknown-	debuglib,xorg,compatx11file
+./usr/X11R7/lib/libXfont2_g.a				-unknown-	debuglib,xorg,compatx11file
 ./usr/X11R7/lib/libXfont_g.a				-unknown-	debuglib,xorg,compatx11file
 ./usr/X11R7/lib/libXfontcache_g.a			-unknown-	obsolete
 ./usr/X11R7/lib/libXft_g.a				-unknown-	debuglib,xorg,compatx11file
