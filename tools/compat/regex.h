@@ -1,4 +1,3 @@
-/*	$NetBSD: regex.h,v 1.4 2018/03/11 10:14:04 hans Exp $ */
+/*	$NetBSD: regex.h,v 1.5 2018/03/11 18:32:43 christos Exp $ */
 
-#include "nbtool_config.h"
 #include "../../include/regex.h"
