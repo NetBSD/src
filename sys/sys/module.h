@@ -1,4 +1,4 @@
-/*	$NetBSD: module.h,v 1.41.14.4 2018/03/11 00:53:13 pgoyette Exp $	*/
+/*	$NetBSD: module.h,v 1.41.14.5 2018/03/11 00:58:12 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -153,9 +153,9 @@ static void __CONCAT(moddtor_,name)(void)				\
 #endif /* RUMP_USE_CTOR */
 
 #define	MODULE(class, name, required)				\
-	MODULE_ALIAS(class, name, required, NULL)
+	MODULE_WITH_ALIAS(class, name, required, NULL)
 
-#define	MODULE_ALIAS(class, name, required, aliases)		\
+#define	MODULE_WITH_ALIAS(class, name, required, aliases)	\
 static int __CONCAT(name,_modcmd)(modcmd_t, void *);		\
 static const char * const * __CONCAT(name,_aliases) = { aliases }; \
 static const modinfo_t __CONCAT(name,_modinfo) = {		\
@@ -163,7 +163,7 @@ static const modinfo_t __CONCAT(name,_modinfo) = {		\
 	.mi_class = (class),					\
 	.mi_modcmd = __CONCAT(name,_modcmd),			\
 	.mi_name = __STRING(name),				\
-	.mi_aliases = (__CONCAT(name,_aliases)),		\
+	.mi_aliases = __CONCAT(name,_aliases),			\
 	.mi_required = (required)				\
 }; 								\
 _MODULE_REGISTER(name)
