@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_mod.c,v 1.11 2017/12/10 00:43:05 kre Exp $	*/
+/*	$NetBSD: linux32_mod.c,v 1.11.2.1 2018/03/11 23:50:18 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_mod.c,v 1.11 2017/12/10 00:43:05 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_mod.c,v 1.11.2.1 2018/03/11 23:50:18 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_mod.c,v 1.11 2017/12/10 00:43:05 kre Exp $")
 # define	MD1	""
 #endif
 
-MODULE(MODULE_CLASS_EXEC, compat_linux32, "compat_linux" MD1);
+MODULE(MODULE_CLASS_EXEC, compat_linux32, "compat_linux,compat_sysv" MD1);
 
 static struct execsw linux32_execsw[] = {
 #if defined(EXEC_ELF32)
