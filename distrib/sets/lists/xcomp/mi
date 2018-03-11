@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.194 2018/03/11 09:43:39 mrg Exp $
+#	 $NetBSD: mi,v 1.195 2018/03/11 11:34:33 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1394,7 +1394,7 @@
 ./usr/X11R7/lib/pkgconfig/xfixes.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xfont2.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xfont.pc			-unknown-	xorg
-./usr/X11R7/lib/pkgconfig/xfontcache.pc			-unknown-	xorg
+./usr/X11R7/lib/pkgconfig/xfontcache.pc			-unknown-	obsolete
 ./usr/X11R7/lib/pkgconfig/xft.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xi.pc				-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xinerama.pc			-unknown-	xorg
@@ -1621,11 +1621,11 @@
 ./usr/X11R7/man/cat3/FcValueEqual.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/FcValuePrint.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/FcValueSave.0			-unknown-	.cat,xorg
-./usr/X11R7/man/cat3/FontCacheChangeCacheSettings.0	-unknown-	.cat,xorg
-./usr/X11R7/man/cat3/FontCacheGetCacheSettings.0	-unknown-	.cat,xorg
-./usr/X11R7/man/cat3/FontCacheGetCacheStatistics.0	-unknown-	.cat,xorg
-./usr/X11R7/man/cat3/FontCacheQueryExtension.0		-unknown-	.cat,xorg
-./usr/X11R7/man/cat3/FontCacheQueryVersion.0		-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/FontCacheChangeCacheSettings.0	-unknown-	obsolete
+./usr/X11R7/man/cat3/FontCacheGetCacheSettings.0	-unknown-	obsolete
+./usr/X11R7/man/cat3/FontCacheGetCacheStatistics.0	-unknown-	obsolete
+./usr/X11R7/man/cat3/FontCacheQueryExtension.0		-unknown-	obsolete
+./usr/X11R7/man/cat3/FontCacheQueryVersion.0		-unknown-	obsolete
 ./usr/X11R7/man/cat3/ImageByteOrder.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/IsCursorKey.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/MenuPopdown.0			-unknown-	.cat,xorg
@@ -2532,11 +2532,11 @@
 ./usr/X11R7/man/html3/FcValueEqual.html			-unknown-	html,xorg
 ./usr/X11R7/man/html3/FcValuePrint.html			-unknown-	html,xorg
 ./usr/X11R7/man/html3/FcValueSave.html			-unknown-	html,xorg
-./usr/X11R7/man/html3/FontCacheChangeCacheSettings.html	-unknown-	html,xorg
-./usr/X11R7/man/html3/FontCacheGetCacheSettings.html	-unknown-	html,xorg
-./usr/X11R7/man/html3/FontCacheGetCacheStatistics.html	-unknown-	html,xorg
-./usr/X11R7/man/html3/FontCacheQueryExtension.html	-unknown-	html,xorg
-./usr/X11R7/man/html3/FontCacheQueryVersion.html	-unknown-	html,xorg
+./usr/X11R7/man/html3/FontCacheChangeCacheSettings.html	-unknown-	obsolete
+./usr/X11R7/man/html3/FontCacheGetCacheSettings.html	-unknown-	obsolete
+./usr/X11R7/man/html3/FontCacheGetCacheStatistics.html	-unknown-	obsolete
+./usr/X11R7/man/html3/FontCacheQueryExtension.html	-unknown-	obsolete
+./usr/X11R7/man/html3/FontCacheQueryVersion.html	-unknown-	obsolete
 ./usr/X11R7/man/html3/ImageByteOrder.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/IsCursorKey.html			-unknown-	html,xorg
 ./usr/X11R7/man/html3/MenuPopdown.html			-unknown-	html,xorg
@@ -3442,11 +3442,11 @@
 ./usr/X11R7/man/man3/FcValueEqual.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/FcValuePrint.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/FcValueSave.3			-unknown-	.man,xorg
-./usr/X11R7/man/man3/FontCacheChangeCacheSettings.3	-unknown-	.man,xorg
-./usr/X11R7/man/man3/FontCacheGetCacheSettings.3	-unknown-	.man,xorg
-./usr/X11R7/man/man3/FontCacheGetCacheStatistics.3	-unknown-	.man,xorg
-./usr/X11R7/man/man3/FontCacheQueryExtension.3		-unknown-	.man,xorg
-./usr/X11R7/man/man3/FontCacheQueryVersion.3		-unknown-	.man,xorg
+./usr/X11R7/man/man3/FontCacheChangeCacheSettings.3	-unknown-	obsolete
+./usr/X11R7/man/man3/FontCacheGetCacheSettings.3	-unknown-	obsolete
+./usr/X11R7/man/man3/FontCacheGetCacheStatistics.3	-unknown-	obsolete
+./usr/X11R7/man/man3/FontCacheQueryExtension.3		-unknown-	obsolete
+./usr/X11R7/man/man3/FontCacheQueryVersion.3		-unknown-	obsolete
 ./usr/X11R7/man/man3/ImageByteOrder.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/IsCursorKey.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/MenuPopdown.3			-unknown-	.man,xorg
