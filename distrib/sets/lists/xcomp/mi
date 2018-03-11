@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.195 2018/03/11 11:34:33 mrg Exp $
+#	 $NetBSD: mi,v 1.196 2018/03/11 23:49:39 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -715,6 +715,7 @@
 ./usr/X11R7/include/libdrm/via_drm.h			-unknown-	xorg
 ./usr/X11R7/include/libdrm/virtgpu_drm.h		-unknown-	xorg
 ./usr/X11R7/include/libkms/libkms.h			-unknown-	xorg
+./usr/X11R7/include/libsync.h				-unknown-	xorg
 ./usr/X11R7/include/pciaccess.h				-unknown-	xorg
 ./usr/X11R7/include/pixman-1/pixman-version.h		-unknown-	xorg
 ./usr/X11R7/include/pixman-1/pixman.h			-unknown-	xorg
@@ -759,7 +760,6 @@
 ./usr/X11R7/include/xcb/xvmc.h				-unknown-	xorg
 ./usr/X11R7/include/xf86drm.h				-unknown-	xorg
 ./usr/X11R7/include/xf86drmMode.h			-unknown-	xorg
-./usr/X11R7/include/libsync.h				-unknown-	xorg
 ./usr/X11R7/include/xorg/BT.h				-unknown-	xorg
 ./usr/X11R7/include/xorg/IBM.h				-unknown-	xorg
 ./usr/X11R7/include/xorg/TI.h				-unknown-	xorg
@@ -1137,9 +1137,9 @@
 ./usr/X11R7/lib/libXext_p.a				-unknown-	profile,xorg,compatx11file
 ./usr/X11R7/lib/libXfixes.a				-unknown-	xorg,compatx11file
 ./usr/X11R7/lib/libXfixes_p.a				-unknown-	profile,xorg,compatx11file
+./usr/X11R7/lib/libXfont.a				-unknown-	xorg,compatx11file
 ./usr/X11R7/lib/libXfont2.a				-unknown-	xorg,compatx11file
 ./usr/X11R7/lib/libXfont2_p.a				-unknown-	profile,xorg,compatx11file
-./usr/X11R7/lib/libXfont.a				-unknown-	xorg,compatx11file
 ./usr/X11R7/lib/libXfont_p.a				-unknown-	profile,xorg,compatx11file
 ./usr/X11R7/lib/libXfontcache.a				-unknown-	obsolete
 ./usr/X11R7/lib/libXfontcache_p.a			-unknown-	obsolete
@@ -1392,8 +1392,8 @@
 ./usr/X11R7/lib/pkgconfig/xf86miscproto.pc		-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xf86vidmodeproto.pc		-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xfixes.pc			-unknown-	xorg
-./usr/X11R7/lib/pkgconfig/xfont2.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xfont.pc			-unknown-	xorg
+./usr/X11R7/lib/pkgconfig/xfont2.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xfontcache.pc			-unknown-	obsolete
 ./usr/X11R7/lib/pkgconfig/xft.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xi.pc				-unknown-	xorg
@@ -4213,6 +4213,7 @@
 ./usr/libdata/lint/llib-lXext.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lXfixes.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lXfont.ln			-unknown-	lint,xorg
+./usr/libdata/lint/llib-lXfont2.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lXfontcache.ln			-unknown-	obsolete
 ./usr/libdata/lint/llib-lXft.ln				-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lXi.ln				-unknown-	lint,xorg
