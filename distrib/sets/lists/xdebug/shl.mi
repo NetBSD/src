@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.42 2018/03/11 07:18:49 mrg Exp $
+# $NetBSD: shl.mi,v 1.43 2018/03/11 09:43:39 mrg Exp $
 ./usr/libdata/debug/usr/X11R7/lib	-unknown-		xorg,debug,compatx11dir
 ./usr/libdata/debug/usr/X11R7/lib/X11/locale/lib/common/libximcp.so.2.0.debug	obsolete		xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/X11/locale/lib/common/libxlcDef.so.2.0.debug	obsolete		xorg,obsolete
@@ -34,6 +34,7 @@
 ./usr/libdata/debug/usr/X11R7/lib/libXevie.so.2.0.debug	-unknown-		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libXext.so.7.1.debug	-unknown-		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libXfixes.so.4.0.debug	-unknown-		xorg,debug,compatx11file
+./usr/libdata/debug/usr/X11R7/lib/libXfont2.so.2.0.debug	-unknown-		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libXfont.so.3.0.debug	-unknown-		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libXfontcache.so.2.0.debug	-unknown-		obsolete
 ./usr/libdata/debug/usr/X11R7/lib/libXft.so.3.0.debug	-unknown-		xorg,debug,compatx11file

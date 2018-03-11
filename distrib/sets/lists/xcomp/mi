@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.193 2018/03/11 07:18:49 mrg Exp $
+#	 $NetBSD: mi,v 1.194 2018/03/11 09:43:39 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -516,6 +516,7 @@
 ./usr/X11R7/include/X11/fonts/fsmasks.h			-unknown-	xorg
 ./usr/X11R7/include/X11/fonts/ft.h			-unknown-	xorg
 ./usr/X11R7/include/X11/fonts/ftfuncs.h			-unknown-	xorg
+./usr/X11R7/include/X11/fonts/libxfont2.h		-unknown-	xorg
 ./usr/X11R7/include/X11/fonts/pcf.h			-unknown-	xorg
 ./usr/X11R7/include/X11/keysym.h			-unknown-	xorg
 ./usr/X11R7/include/X11/keysymdef.h			-unknown-	xorg
@@ -1136,6 +1137,8 @@
 ./usr/X11R7/lib/libXext_p.a				-unknown-	profile,xorg,compatx11file
 ./usr/X11R7/lib/libXfixes.a				-unknown-	xorg,compatx11file
 ./usr/X11R7/lib/libXfixes_p.a				-unknown-	profile,xorg,compatx11file
+./usr/X11R7/lib/libXfont2.a				-unknown-	xorg,compatx11file
+./usr/X11R7/lib/libXfont2_p.a				-unknown-	profile,xorg,compatx11file
 ./usr/X11R7/lib/libXfont.a				-unknown-	xorg,compatx11file
 ./usr/X11R7/lib/libXfont_p.a				-unknown-	profile,xorg,compatx11file
 ./usr/X11R7/lib/libXfontcache.a				-unknown-	obsolete
@@ -1389,6 +1392,7 @@
 ./usr/X11R7/lib/pkgconfig/xf86miscproto.pc		-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xf86vidmodeproto.pc		-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xfixes.pc			-unknown-	xorg
+./usr/X11R7/lib/pkgconfig/xfont2.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xfont.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xfontcache.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xft.pc			-unknown-	xorg
