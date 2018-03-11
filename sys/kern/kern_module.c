@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.130.2.2 2018/03/11 07:25:59 pgoyette Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.130.2.3 2018/03/11 08:32:21 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.130.2.2 2018/03/11 07:25:59 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.130.2.3 2018/03/11 08:32:21 pgoyette Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -666,7 +666,7 @@ module_unload(const char *name)
 int
 module_alias_lookup(const char *name, module_t *mod)
 {
-	const char * const	aliasp[];
+	const char * const *aliasp;
 
 	aliasp = *mod->mod_info->mi_aliases;
 	if (aliasp == NULL)
@@ -784,7 +784,7 @@ module_do_builtin(const module_t *pmod, const char *name, module_t **modp,
     prop_dictionary_t props)
 {
 	const char *p, *s;
-	const char * const	aliasp[];
+	const char * const *aliasp;
 	char buf[MAXMODNAME];
 	modinfo_t *mi = NULL;
 	module_t *mod, *mod2, *mod_loaded, *prev_active;
@@ -910,7 +910,7 @@ module_do_load(const char *name, bool isdep, int flags,
 	prop_dictionary_t filedict;
 	char buf[MAXMODNAME];
 	const char *s, *p;
-	const char * const aliasp[];
+	const char * const *aliasp;
 	int error;
 	size_t len;
 

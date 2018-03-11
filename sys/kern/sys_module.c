@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_module.c,v 1.23.2.2 2018/03/11 07:25:59 pgoyette Exp $	*/
+/*	$NetBSD: sys_module.c,v 1.23.2.3 2018/03/11 08:32:21 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.23.2.2 2018/03/11 07:25:59 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.23.2.3 2018/03/11 08:32:21 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
@@ -122,7 +122,7 @@ handle_modctl_stat(struct iovec *iov, void *arg)
 	int error;
 	int mscnt;
 	bool stataddr;
-	const char * const aliasp[];
+	const char * const *aliasp;
 
 	/* If not privileged, don't expose kernel addresses. */
 	error = kauth_authorize_system(kauth_cred_get(), KAUTH_SYSTEM_MODULE,
