@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.368 2018/03/11 07:18:49 mrg Exp $
+#	$NetBSD: bsd.README,v 1.369 2018/03/11 09:56:44 mrg Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -1677,6 +1677,7 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBXDMCP?=	${DESTDIR}/usr/X11R7/lib/libXdmcp.a
 		LIBXEXT?=	${DESTDIR}/usr/X11R7/lib/libXext.a
 		LIBXFONT?=	${DESTDIR}/usr/X11R7/lib/libXfont.a
+		LIBXFONT2?=	${DESTDIR}/usr/X11R7/lib/libXfont2.a
 		LIBXFT?=	${DESTDIR}/usr/X11R7/lib/libXft.a
 		LIBXI?=		${DESTDIR}/usr/X11R7/lib/libXi.a
 		LIBXINERAMA?=	${DESTDIR}/usr/X11R7/lib/libXinerama.a
