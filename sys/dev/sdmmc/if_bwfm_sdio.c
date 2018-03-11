@@ -1,4 +1,4 @@
-/* $NetBSD: if_bwfm_sdio.c,v 1.1 2017/11/07 16:30:32 khorben Exp $ */
+/* $NetBSD: if_bwfm_sdio.c,v 1.2 2018/03/11 00:17:28 khorben Exp $ */
 /* $OpenBSD: if_bwfm_sdio.c,v 1.1 2017/10/11 17:19:50 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -73,6 +73,7 @@ int		 bwfm_sdio_match(device_t, cfdata_t, void *);
 void		 bwfm_sdio_attach(device_t, struct device *, void *);
 int		 bwfm_sdio_detach(device_t, int);
 
+void		 bwfm_sdio_backplane(struct bwfm_sdio_softc *, uint32_t);
 uint8_t		 bwfm_sdio_read_1(struct bwfm_sdio_softc *, uint32_t);
 uint32_t	 bwfm_sdio_read_4(struct bwfm_sdio_softc *, uint32_t);
 void		 bwfm_sdio_write_1(struct bwfm_sdio_softc *, uint32_t,
@@ -218,6 +219,21 @@ bwfm_sdio_detach(struct device *self, int flags)
 	return 0;
 }
 
+void
+bwfm_sdio_backplane(struct bwfm_sdio_softc *sc, uint32_t bar0)
+{
+	if (sc->sc_bar0 == bar0)
+		return;
+
+	bwfm_sdio_write_1(sc, BWFM_SDIO_FUNC1_SBADDRLOW,
+	    (bar0 >>  8) & 0x80);
+	bwfm_sdio_write_1(sc, BWFM_SDIO_FUNC1_SBADDRMID,
+	    (bar0 >> 16) & 0xff);
+	bwfm_sdio_write_1(sc, BWFM_SDIO_FUNC1_SBADDRHIGH,
+	    (bar0 >> 24) & 0xff);
+	sc->sc_bar0 = bar0;
+}
+
 uint8_t
 bwfm_sdio_read_1(struct bwfm_sdio_softc *sc, uint32_t addr)
 {
@@ -246,15 +262,7 @@ bwfm_sdio_read_4(struct bwfm_sdio_softc *sc, uint32_t addr)
 	uint32_t bar0 = addr & ~BWFM_SDIO_SB_OFT_ADDR_MASK;
 	uint32_t rv;
 
-	if (sc->sc_bar0 != bar0) {
-		bwfm_sdio_write_1(sc, BWFM_SDIO_FUNC1_SBADDRLOW,
-		    (bar0 >>  8) & 0x80);
-		bwfm_sdio_write_1(sc, BWFM_SDIO_FUNC1_SBADDRMID,
-		    (bar0 >> 16) & 0xff);
-		bwfm_sdio_write_1(sc, BWFM_SDIO_FUNC1_SBADDRHIGH,
-		    (bar0 >> 24) & 0xff);
-		sc->sc_bar0 = bar0;
-	}
+	bwfm_sdio_backplane(sc, bar0);
 
 	addr &= BWFM_SDIO_SB_OFT_ADDR_MASK;
 	addr |= BWFM_SDIO_SB_ACCESS_2_4B_FLAG;
@@ -299,15 +307,7 @@ bwfm_sdio_write_4(struct bwfm_sdio_softc *sc, uint32_t addr, uint32_t data)
 	struct sdmmc_function *sf;
 	uint32_t bar0 = addr & ~BWFM_SDIO_SB_OFT_ADDR_MASK;
 
-	if (sc->sc_bar0 != bar0) {
-		bwfm_sdio_write_1(sc, BWFM_SDIO_FUNC1_SBADDRLOW,
-		    (bar0 >>  8) & 0x80);
-		bwfm_sdio_write_1(sc, BWFM_SDIO_FUNC1_SBADDRMID,
-		    (bar0 >> 16) & 0xff);
-		bwfm_sdio_write_1(sc, BWFM_SDIO_FUNC1_SBADDRHIGH,
-		    (bar0 >> 24) & 0xff);
-		sc->sc_bar0 = bar0;
-	}
+	bwfm_sdio_backplane(sc, bar0);
 
 	addr &= BWFM_SDIO_SB_OFT_ADDR_MASK;
 	addr |= BWFM_SDIO_SB_ACCESS_2_4B_FLAG;
