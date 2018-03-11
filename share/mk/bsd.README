@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.367 2018/03/01 06:34:23 snj Exp $
+#	$NetBSD: bsd.README,v 1.368 2018/03/11 07:18:49 mrg Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -1694,7 +1694,6 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBXXF86VM?=	${DESTDIR}/usr/X11R7/lib/libXxf86vm.a
 		LIBDPS?=	${DESTDIR}/usr/X11R7/lib/libdps.a
 		LIBFNTSTUBS?=	${DESTDIR}/usr/X11R7/lib/libfntstubs.a
-		LIBFONTCACHE?=	${DESTDIR}/usr/X11R7/lib/libfontcache.a
 		LIBFONTCONFIG?=	${DESTDIR}/usr/X11R7/lib/libfontconfig.a
 		LIBFONTENC?=	${DESTDIR}/usr/X11R7/lib/libfontenc.a
 		LIBFREETYPE?=	${DESTDIR}/usr/X11R7/lib/libfreetype.a

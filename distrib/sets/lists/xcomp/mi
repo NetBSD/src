@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.192 2017/03/06 05:58:00 nakayama Exp $
+#	 $NetBSD: mi,v 1.193 2018/03/11 07:18:49 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1138,8 +1138,8 @@
 ./usr/X11R7/lib/libXfixes_p.a				-unknown-	profile,xorg,compatx11file
 ./usr/X11R7/lib/libXfont.a				-unknown-	xorg,compatx11file
 ./usr/X11R7/lib/libXfont_p.a				-unknown-	profile,xorg,compatx11file
-./usr/X11R7/lib/libXfontcache.a				-unknown-	xorg,compatx11file
-./usr/X11R7/lib/libXfontcache_p.a			-unknown-	profile,xorg,compatx11file
+./usr/X11R7/lib/libXfontcache.a				-unknown-	obsolete
+./usr/X11R7/lib/libXfontcache_p.a			-unknown-	obsolete
 ./usr/X11R7/lib/libXft.a				-unknown-	xorg,compatx11file
 ./usr/X11R7/lib/libXft_p.a				-unknown-	profile,xorg,compatx11file
 ./usr/X11R7/lib/libXi.a					-unknown-	xorg,compatx11file
@@ -1976,7 +1976,7 @@
 ./usr/X11R7/man/cat3/XevieSendEvent.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XevieStart.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/Xfixes.0				-unknown-	.cat,xorg
-./usr/X11R7/man/cat3/Xfontcache.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/Xfontcache.0			-unknown-	obsolete
 ./usr/X11R7/man/cat3/Xft.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/Xinerama.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XineramaIsActive.0			-unknown-	.cat,xorg
@@ -2887,7 +2887,7 @@
 ./usr/X11R7/man/html3/XevieSendEvent.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/XevieStart.html			-unknown-	html,xorg
 ./usr/X11R7/man/html3/Xfixes.html			-unknown-	html,xorg
-./usr/X11R7/man/html3/Xfontcache.html			-unknown-	html,xorg
+./usr/X11R7/man/html3/Xfontcache.html			-unknown-	obsolete
 ./usr/X11R7/man/html3/Xft.html				-unknown-	html,xorg
 ./usr/X11R7/man/html3/Xinerama.html			-unknown-	html,xorg
 ./usr/X11R7/man/html3/XineramaIsActive.html		-unknown-	html,xorg
@@ -3797,7 +3797,7 @@
 ./usr/X11R7/man/man3/XevieSendEvent.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XevieStart.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/Xfixes.3				-unknown-	.man,xorg
-./usr/X11R7/man/man3/Xfontcache.3			-unknown-	.man,xorg
+./usr/X11R7/man/man3/Xfontcache.3			-unknown-	obsolete
 ./usr/X11R7/man/man3/Xft.3				-unknown-	.man,xorg
 ./usr/X11R7/man/man3/Xinerama.3				-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XineramaIsActive.3			-unknown-	.man,xorg
@@ -4209,7 +4209,7 @@
 ./usr/libdata/lint/llib-lXext.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lXfixes.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lXfont.ln			-unknown-	lint,xorg
-./usr/libdata/lint/llib-lXfontcache.ln			-unknown-	lint,xorg
+./usr/libdata/lint/llib-lXfontcache.ln			-unknown-	obsolete
 ./usr/libdata/lint/llib-lXft.ln				-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lXi.ln				-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lXinerama.ln			-unknown-	lint,xorg
