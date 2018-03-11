@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2017/08/09 18:45:30 maxv Exp $
+#	$NetBSD: Makefile,v 1.4.2.1 2018/03/11 22:04:35 pgoyette Exp $
 
 .include "../Makefile.inc"
 .include "../Makefile.assym"
@@ -7,6 +7,10 @@ KMOD=	compat_ibcs2
 
 CPPFLAGS+=	-DSYSVSHM -DSYSVSEM -DSYSVMSG
 CPPFLAGS+=	-DCOMPAT_IBCS2
+
+.if ${MACHINE_ARCH} == "i386"
+CPPFLAGS+=      -DEXEC_ELF32
+.endif
 
 .PATH:	${S}/compat/ibcs2
 
