@@ -1,4 +1,4 @@
-/*	$NetBSD: libmain.c,v 1.3 2017/01/02 17:45:27 christos Exp $	*/
+/*	$NetBSD: libmain.c,v 1.4 2018/03/11 18:32:10 christos Exp $	*/
 
 /* libmain - flex run-time support library "main" function */
 
@@ -22,9 +22,11 @@
 /*  IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED */
 /*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR */
 /*  PURPOSE. */
+#ifndef HAVE_NBTOOL_CONFIG_H
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: libmain.c,v 1.3 2017/01/02 17:45:27 christos Exp $");
+__RCSID("$NetBSD: libmain.c,v 1.4 2018/03/11 18:32:10 christos Exp $");
+#endif
 #endif
 
 #include <stdlib.h>
