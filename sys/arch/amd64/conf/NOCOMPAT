@@ -1,4 +1,4 @@
-# $NetBSD: NOCOMPAT,v 1.1.2.2 2018/03/09 01:27:50 pgoyette Exp $
+# $NetBSD: NOCOMPAT,v 1.1.2.3 2018/03/11 23:49:32 pgoyette Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.1.2.2 $"
+#ident		"GENERIC-$Revision: 1.1.2.3 $"
 
 maxusers	64		# estimated number of users
 
@@ -128,7 +128,7 @@ options 	KDTRACE_HOOKS	# kernel DTrace hooks
 
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 
-options 	COMPAT_OSSAUDIO
+#options 	COMPAT_OSSAUDIO
 #options 	COMPAT_NETBSD32
 #options 	COMPAT_LINUX
 #options 	COMPAT_LINUX32	# requires COMPAT_LINUX and COMPAT_NETBSD32
