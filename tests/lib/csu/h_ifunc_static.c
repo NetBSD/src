@@ -1,4 +1,4 @@
-/*	$NetBSD: h_ifunc_static.c,v 1.1 2018/03/09 20:20:47 joerg Exp $	*/
+/*	$NetBSD: h_ifunc_static.c,v 1.2 2018/03/11 21:20:22 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -29,6 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if defined(__arm__) || defined(__i386__) || defined(__x86_64__) || defined(__powerpc__) || defined(__sparc__)
 #include <stdlib.h>
 #include <string.h>
 
@@ -62,3 +63,10 @@ main(int argc, char **argv)
 		return 1;
 	return atoll(argv[1]) != ifunc();
 }
+#else
+int
+main(int argc, char **argv)
+{
+	return 127;
+}
+#endif
