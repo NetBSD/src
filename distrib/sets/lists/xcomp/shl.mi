@@ -1,4 +1,4 @@
-#	$NetBSD: shl.mi,v 1.48 2017/03/05 09:27:52 mrg Exp $
+#	$NetBSD: shl.mi,v 1.49 2018/03/11 07:18:49 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -25,7 +25,7 @@
 ./usr/X11R7/lib/libXext_pic.a				-unknown-	xorg,picinstall,compatx11file
 ./usr/X11R7/lib/libXfixes_pic.a				-unknown-	xorg,picinstall,compatx11file
 ./usr/X11R7/lib/libXfont_pic.a				-unknown-	xorg,picinstall,compatx11file
-./usr/X11R7/lib/libXfontcache_pic.a			-unknown-	xorg,picinstall,compatx11file
+./usr/X11R7/lib/libXfontcache_pic.a			-unknown-	obsolete
 ./usr/X11R7/lib/libXft_pic.a				-unknown-	xorg,picinstall,compatx11file
 ./usr/X11R7/lib/libXi_pic.a				-unknown-	xorg,picinstall,compatx11file
 ./usr/X11R7/lib/libXinerama_pic.a			-unknown-	xorg,picinstall,compatx11file
