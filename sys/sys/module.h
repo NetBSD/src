@@ -1,4 +1,4 @@
-/*	$NetBSD: module.h,v 1.41.14.5 2018/03/11 00:58:12 pgoyette Exp $	*/
+/*	$NetBSD: module.h,v 1.41.14.6 2018/03/11 07:25:59 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@ typedef struct modinfo {
 	int			(*mi_modcmd)(modcmd_t, void *);
 	const char		*mi_name;
 	const char		*mi_required;
-	const char * const	*mi_aliases;
+	const char * const	(*mi_aliases)[];
 } const modinfo_t;
 
 /* Per module information, maintained by kern_module.c */ 
@@ -152,21 +152,26 @@ static void __CONCAT(moddtor_,name)(void)				\
 
 #endif /* RUMP_USE_CTOR */
 
-#define	MODULE(class, name, required)				\
-	MODULE_WITH_ALIAS(class, name, required, NULL)
-
-#define	MODULE_WITH_ALIAS(class, name, required, aliases)	\
+#define	MODULE_WITH_ALIASES(class, name, required, aliases)	\
 static int __CONCAT(name,_modcmd)(modcmd_t, void *);		\
-static const char * const * __CONCAT(name,_aliases) = { aliases }; \
 static const modinfo_t __CONCAT(name,_modinfo) = {		\
 	.mi_version = __NetBSD_Version__,			\
 	.mi_class = (class),					\
 	.mi_modcmd = __CONCAT(name,_modcmd),			\
 	.mi_name = __STRING(name),				\
-	.mi_aliases = __CONCAT(name,_aliases),			\
+	.mi_aliases = (aliases),				\
 	.mi_required = (required)				\
 }; 								\
 _MODULE_REGISTER(name)
+
+#define	MODULE(class, name, required)				\
+	MODULE_WITH_ALIASES(class, name, required, NULL)
+
+#ifdef PRG
+static mod_alias_list __CONCAT(name,_aliases) = { aliases };	\
+	.mi_aliases = & __CONCAT(name,_aliases),		\
+
+#endif
 
 TAILQ_HEAD(modlist, module);
 
