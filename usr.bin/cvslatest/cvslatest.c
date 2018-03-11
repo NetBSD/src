@@ -1,4 +1,4 @@
-/*	$NetBSD: cvslatest.c,v 1.6 2017/09/24 09:43:27 joerg Exp $	*/
+/*	$NetBSD: cvslatest.c,v 1.7 2018/03/11 14:59:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cvslatest.c,v 1.6 2017/09/24 09:43:27 joerg Exp $");
+__RCSID("$NetBSD: cvslatest.c,v 1.7 2018/03/11 14:59:41 christos Exp $");
 
 /*
  * Find the latest timestamp in a set of CVS trees, by examining the
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: cvslatest.c,v 1.6 2017/09/24 09:43:27 joerg Exp $");
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <dirent.h>
 #include <err.h>
 #include <fts.h>
 #include <time.h>
@@ -174,11 +175,55 @@ usage(void)
 	exit(EXIT_FAILURE);
 }
 
+static int
+checkDir(char *path, size_t pathlen, const char *name)
+{
+	static const char *files[] = {
+		"Entries", "Root", "Repository",
+	};
+	size_t i;
+
+	for (i = 0; i < __arraycount(files); i++) {
+		snprintf(path, pathlen, "%s/%s", name, files[i]);
+		if (access(path, F_OK) == -1)
+			return 0;
+	}
+
+	return 1;
+}
+
+static const char *
+findCVSDir(char *path, size_t pathlen, const char *name)
+{
+	DIR *dirp;
+	struct dirent *dp;
+	const char *n;
+
+	if ((dirp = opendir(name)) == NULL)
+		err(EXIT_FAILURE, "Can't open `%s'", name);
+
+	while ((dp = readdir(dirp)) != NULL) {
+		n = dp->d_name;
+		if (n[0] == '.' && (n[1] == '\0' ||
+		    (n[1] == '.' && n[2] == '\0')))
+			continue;
+		if (checkDir(path, pathlen, n))
+			goto out;
+	}
+	n = "CVS";
+out:
+	closedir(dirp);
+	strlcpy(path, n, pathlen);
+	return path;
+}
+
+
 int
 main(int argc, char *argv[])
 {
 	struct latest lat;
-	const char *name = "CVS";
+	const char *name = NULL;
+	char path[MAXPATHLEN];
 	int c;
 
 	while ((c = getopt(argc, argv, "din:")) != -1)
@@ -201,6 +246,9 @@ main(int argc, char *argv[])
 
 	// So that mktime behaves consistently
 	setenv("TZ", "UTC", 1);
+
+	if (name == NULL)
+		name = findCVSDir(path, sizeof(path), argv[optind]);
 
 	cvsscan(argv + optind, name, &lat);
 	if (debug)
