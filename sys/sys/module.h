@@ -1,4 +1,4 @@
-/*	$NetBSD: module.h,v 1.41.14.2 2018/03/10 11:35:44 pgoyette Exp $	*/
+/*	$NetBSD: module.h,v 1.41.14.3 2018/03/11 00:44:32 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,6 @@ typedef enum modcmd {
 	MODULE_CMD_FINI,		/* mandatory */
 	MODULE_CMD_STAT,		/* optional */
 	MODULE_CMD_AUTOUNLOAD,		/* optional */
-	MODULE_CMD_GETALIASES,		/* optional */
 } modcmd_t;
 
 #ifdef _KERNEL
@@ -74,12 +73,12 @@ typedef enum modcmd {
 
 /* Module header structure. */
 typedef struct modinfo {
-	u_int		mi_version;
-	modclass_t	mi_class;
-	int		(*mi_modcmd)(modcmd_t, void *);
-	const char	*mi_name;
-	const char	*mi_required;
-	const char	*mi_alias[];
+	u_int			mi_version;
+	modclass_t		mi_class;
+	int			(*mi_modcmd)(modcmd_t, void *);
+	const char		*mi_name;
+	const char		*mi_required;
+	const char * const	*mi_aliases;
 } const modinfo_t;
 
 /* Per module information, maintained by kern_module.c */ 
@@ -154,12 +153,16 @@ static void __CONCAT(moddtor_,name)(void)				\
 #endif /* RUMP_USE_CTOR */
 
 #define	MODULE(class, name, required)				\
+	MODULE_ALIAS(class, name, required, NULL)
+
+#define	MODULE_ALIAS(class, name, required, aliases)		\
 static int __CONCAT(name,_modcmd)(modcmd_t, void *);		\
 static const modinfo_t __CONCAT(name,_modinfo) = {		\
 	.mi_version = __NetBSD_Version__,			\
 	.mi_class = (class),					\
 	.mi_modcmd = __CONCAT(name,_modcmd),			\
 	.mi_name = __STRING(name),				\
+	.mi_aliases = (required),				\
 	.mi_required = (required)				\
 }; 								\
 _MODULE_REGISTER(name)

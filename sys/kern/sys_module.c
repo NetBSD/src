@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_module.c,v 1.23 2018/01/18 13:31:20 maxv Exp $	*/
+/*	$NetBSD: sys_module.c,v 1.23.2.1 2018/03/11 00:44:32 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.23 2018/01/18 13:31:20 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.23.2.1 2018/03/11 00:44:32 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
@@ -120,7 +120,9 @@ handle_modctl_stat(struct iovec *iov, void *arg)
 	size_t size;
 	size_t mslen;
 	int error;
+	int mscnt;
 	bool stataddr;
+	const char * const *aliasp;
 
 	/* If not privileged, don't expose kernel addresses. */
 	error = kauth_authorize_system(kauth_cred_get(), KAUTH_SYSTEM_MODULE,
@@ -128,7 +130,16 @@ handle_modctl_stat(struct iovec *iov, void *arg)
 	stataddr = (error == 0);
 
 	kernconfig_lock();
-	mslen = (module_count+module_builtinlist+1) * sizeof(modstat_t);
+	mscnt = 0;
+	TAILQ_FOREACH(mod, &module_list, mod_chain) {
+		mscnt++;
+		mi = mod->mod_info;
+		if ((aliasp = mi->mi_aliases) != NULL) {
+			while (*aliasp++ != NULL)
+				mslen++;
+		}
+	}
+	mslen = (mscnt+module_builtinlist+1) * sizeof(modstat_t);
 	mso = kmem_zalloc(mslen, KM_SLEEP);
 	ms = mso;
 	TAILQ_FOREACH(mod, &module_list, mod_chain) {
@@ -148,6 +159,19 @@ handle_modctl_stat(struct iovec *iov, void *arg)
 		ms->ms_source = mod->mod_source;
 		ms->ms_flags = mod->mod_flags;
 		ms++;
+		aliasp = mi->mi_aliases;
+		if (aliasp == NULL)
+			continue;
+		while (*aliasp) {
+			strlcpy(ms->ms_name, *aliasp, sizeof(ms->ms_name));
+			strlcpy(ms->ms_required, mi->mi_name,
+			    sizeof(ms->ms_required));
+			ms->ms_class = mi->mi_class;
+			ms->ms_source = mod->mod_source;
+			ms->ms_flags = mod->mod_flags | MODFLG_IS_ALIAS;
+			aliasp++;
+			ms++;
+		}
 	}
 	TAILQ_FOREACH(mod, &module_builtins, mod_chain) {
 		mi = mod->mod_info;

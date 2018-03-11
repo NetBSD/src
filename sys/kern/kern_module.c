@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.130 2017/12/14 22:28:59 pgoyette Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.130.2.1 2018/03/11 00:44:32 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.130 2017/12/14 22:28:59 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.130.2.1 2018/03/11 00:44:32 pgoyette Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -99,6 +99,7 @@ static int	module_fetch_info(module_t *);
 static void	module_thread(void *);
 
 static module_t	*module_lookup(const char *);
+int		module_alias_lookup(const char *, module_t *);
 static void	module_enqueue(module_t *);
 
 static bool	module_merge_dicts(prop_dictionary_t, const prop_dictionary_t);
@@ -658,6 +659,25 @@ module_unload(const char *name)
 }
 
 /*
+ * module_alias_lookup
+ *
+ *	locate a name within a module's alias list
+ */
+int
+module_alias_lookup(const char *name, module_t *mod)
+{
+	const char * const *aliasp;
+
+	aliasp = mod->mod_info->mi_aliases;
+	if (aliasp == NULL)
+		return 0;
+	while (*aliasp)
+		if (strcmp(*aliasp++, name) == 0)
+			return 1;
+	return 0;
+}
+
+/*
  * module_lookup:
  *
  *	Look up a module by name.
@@ -671,6 +691,8 @@ module_lookup(const char *name)
 
 	TAILQ_FOREACH(mod, &module_list, mod_chain) {
 		if (strcmp(mod->mod_info->mi_name, name) == 0) {
+			break;
+		if (module_alias_lookup(name, mod))
 			break;
 		}
 	}
@@ -762,6 +784,7 @@ module_do_builtin(const module_t *pmod, const char *name, module_t **modp,
     prop_dictionary_t props)
 {
 	const char *p, *s;
+	const char * const *aliasp;
 	char buf[MAXMODNAME];
 	modinfo_t *mi = NULL;
 	module_t *mod, *mod2, *mod_loaded, *prev_active;
@@ -832,6 +855,15 @@ module_do_builtin(const module_t *pmod, const char *name, module_t **modp,
 	}
 
 	/*
+	 * Retrieve that none of the module's aliases already exist
+	 */
+
+	if ((aliasp = mod->mod_info->mi_aliases) != NULL) {
+		while (*aliasp)
+			if (module_lookup(*aliasp++) != NULL)
+				return EEXIST;
+	}
+	/*
 	 * Try to initialize the module.
 	 */
 	prev_active = module_active;
@@ -878,6 +910,7 @@ module_do_load(const char *name, bool isdep, int flags,
 	prop_dictionary_t filedict;
 	char buf[MAXMODNAME];
 	const char *s, *p;
+	const char * const *aliasp;
 	int error;
 	size_t len;
 
@@ -1135,6 +1168,17 @@ module_do_load(const char *name, bool isdep, int flags,
 			goto fail;
 		}
 	}
+	/*
+	 * One last check for duplicate module name/alias
+	 */
+	if ((aliasp = mod->mod_info->mi_aliases) != NULL)
+		while (*aliasp != NULL)
+			if (module_lookup(*aliasp) != NULL) {
+				module_error("Module `%s' alias `%s' already "
+				    "exists", mod->mod_info->mi_name, *aliasp);
+				goto fail;
+			}
+
 	prev_active = module_active;
 	module_active = mod;
 	error = (*mi->mi_modcmd)(MODULE_CMD_INIT, filedict ? filedict : props);
