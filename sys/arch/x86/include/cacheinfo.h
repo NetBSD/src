@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheinfo.h,v 1.24 2018/03/09 08:49:32 msaitoh Exp $	*/
+/*	$NetBSD: cacheinfo.h,v 1.25 2018/03/12 06:20:33 msaitoh Exp $	*/
 
 #ifndef _X86_CACHEINFO_H_
 #define _X86_CACHEINFO_H_
@@ -342,7 +342,9 @@ __CI_TBL(0,               0,    0,               0,  0, NULL)  \
 #define AMD_L2CACHE_INFO { \
 __CI_TBL(0, 0x01,    1, 0, 0, NULL), \
 __CI_TBL(0, 0x02,    2, 0, 0, NULL), \
+__CI_TBL(0, 0x03,    3, 0, 0, NULL), \
 __CI_TBL(0, 0x04,    4, 0, 0, NULL), \
+__CI_TBL(0, 0x05,    6, 0, 0, NULL), \
 __CI_TBL(0, 0x06,    8, 0, 0, NULL), \
 __CI_TBL(0, 0x08,   16, 0, 0, NULL), \
 __CI_TBL(0, 0x0a,   32, 0, 0, NULL), \
