@@ -1,4 +1,4 @@
-.\"	$NetBSD: printf.1,v 1.25 2014/04/13 01:45:34 snj Exp $
+.\"	$NetBSD: printf.1,v 1.26 2018/03/12 00:42:05 dholland Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	from: @(#)printf.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd May 6, 2008
+.Dd March 11, 2018
 .Dt PRINTF 1
 .Os
 .Sh NAME
@@ -358,6 +358,13 @@ Print a `%'; no argument is used.
 In no case does a non-existent or small field width cause truncation of
 a field; padding takes place only if the specified field width exceeds
 the actual width.
+.Pp
+If the first character of
+.Ar format
+is a dash,
+.Ar format
+must be preceded by a word consisting of two dashes (--) to prevent it
+from being interpreted as an option string.
 .Sh EXIT STATUS
 .Ex -std
 .Sh SEE ALSO
