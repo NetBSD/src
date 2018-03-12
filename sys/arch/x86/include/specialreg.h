@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.113 2018/03/08 04:15:11 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.114 2018/03/12 07:12:54 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -250,7 +250,7 @@
 
 /* CPUID Fn00000001 %ebx */
 #define	CPUID_BRAND_INDEX	__BITS(7,0)
-#define	CPUID_CLFUSH_SIZE	__BITS(15,8)
+#define	CPUID_CLFLUSH_SIZE	__BITS(15,8)
 #define	CPUID_HTT_CORES		__BITS(23,16)
 #define	CPUID_LOCAL_APIC_ID	__BITS(31,24)
 
