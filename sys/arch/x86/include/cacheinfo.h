@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheinfo.h,v 1.25 2018/03/12 06:20:33 msaitoh Exp $	*/
+/*	$NetBSD: cacheinfo.h,v 1.26 2018/03/12 07:35:45 msaitoh Exp $	*/
 
 #ifndef _X86_CACHEINFO_H_
 #define _X86_CACHEINFO_H_
@@ -140,7 +140,7 @@ struct x86_cache_info {
 
 /* L3 Cache */
 #define AMD_L3_EDX_C_SIZE(x)		((((x) >> 18) & 0xffff) * 1024 * 512)
-#define AMD_L3_EDX_C_ASSOC(x)		 (((x) >> 12) & 0xff)
+#define AMD_L3_EDX_C_ASSOC(x)		 (((x) >> 12) & 0xf)
 #define AMD_L3_EDX_C_LPT(x)		 (((x) >> 8)  & 0xf)
 #define AMD_L3_EDX_C_LS(x)		 ( (x)        & 0xff)
 
