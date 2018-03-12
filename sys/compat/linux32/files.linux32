@@ -1,4 +1,4 @@
-#	$NetBSD: files.linux32,v 1.6 2014/11/17 01:01:57 uebayasi Exp $
+#	$NetBSD: files.linux32,v 1.6.18.1 2018/03/12 01:59:32 pgoyette Exp $
 #
 # Config file description for machine-independent Linux 32 bit compat code.
 # Included by ports that need it.
@@ -6,7 +6,9 @@
 # ports should define any machine-specific files they need in their
 # own file lists.
 
-define	compat_linux32
+define	compat_linux32		: exec_elf32, compat_netbsd32,
+				  compat_netbsd32_sysv_ipc, compat_linux,
+				  compat_sysv
 file	compat/linux32/common/linux32_dirent.c	compat_linux32
 file	compat/linux32/common/linux32_exec.c	compat_linux32
 file	compat/linux32/common/linux32_exec_elf32.c compat_linux32 & exec_elf32
