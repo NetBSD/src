@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.100 2017/01/05 02:22:19 christos Exp $
+# $NetBSD: md.amd64,v 1.101 2018/03/12 18:48:49 mrg Exp $
 ./usr/X11R7/bin/X					-unknown-	xorg
 ./usr/X11R7/bin/Xorg					-unknown-	xorg
 ./usr/X11R7/bin/cvt					-unknown-	xorg
@@ -48,7 +48,7 @@
 ./usr/X11R7/lib/modules/dri/unichrome_dri.so		-unknown-	obsolete
 ./usr/X11R7/lib/modules/dri/unichrome_dri.so.0		-unknown-	obsolete
 ./usr/X11R7/lib/modules/drivers/amdgpu_drv.so		-unknown-	xorg,xorg_server_ver=118
-./usr/X11R7/lib/modules/drivers/amdgpu_drv.so.1		-unknown-	xorg,xorg_server_ver=118
+./usr/X11R7/lib/modules/drivers/amdgpu_drv.so.18		-unknown-	xorg,xorg_server_ver=118
 ./usr/X11R7/lib/modules/drivers/apm_drv.so		-unknown-	xorg,xorg_server_ver=110
 ./usr/X11R7/lib/modules/drivers/apm_drv.so		-unknown-	xorg,xorg_server_ver=118,obsolete
 ./usr/X11R7/lib/modules/drivers/apm_drv.so.1		-unknown-	xorg,xorg_server_ver=110
@@ -126,7 +126,7 @@
 ./usr/X11R7/lib/modules/drivers/r128_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/r128_drv.so.6		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/radeon_drv.so		-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/radeon_drv.so.7		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/radeon_drv.so.18	-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/radeon_drv_old.so	-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/radeon_drv_old.so.6	-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/radeonhd_drv.so		-unknown-	xorg,obsolete
