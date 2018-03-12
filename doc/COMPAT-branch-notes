@@ -17,6 +17,16 @@ DONE
 5. Extracted some net/if.c compat routines into the compat module, and
    replaced the originals with indirect (vectored) function calls.
 
+6. Implemented a mechanism for modules to include "aliases", allowing
+   a single module file to declare multiple names.  For example, a
+   single "compat" module could declare compat_80, compat_70, etc, and
+   other modules could depend on specific compat levels rather than on
+   the entirety of compat.
+
+7. Reconfirmed all compat-module dependencies, and update the files *
+   def lines as needed, to insure that built-in dependencies get
+   resolved.
+
 
 TODO
 ----
@@ -35,15 +45,9 @@ TODO
    "everything" compat module (with all of its aliases) or by a 7.0-
    specific module.
 
-   Note that in addition to updating the module code, this would also
-   require changes to syscalls.master files to change the names of the
-   modules associated with module-provided syscalls.
+2. Using the alias mechanism, split compat (and perhaps compat_sysv)
+   into multiple version-specific modules.  Note that in addition to
+   updating the module code, this would also require changes to
+   syscalls.master files to change the names of the modules associated
+   with module-provided syscalls.
 
-3. In addition to the single, all-encompassing compat module, provide a
-   per-version compat_xx module, each with dependencies on all higher
-   versions.  (Perhaps we would also do this for the sysv ipc module,
-   although the gains are a lot smaller.)
-
-4. Reconfirm all compat-module dependencies, and update the files *
-   def lines as needed, to insure that built-in dependencies get
-   resolved.

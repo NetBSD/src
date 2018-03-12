@@ -1,4 +1,4 @@
-#	$NetBSD: files.sunos32,v 1.3 2014/11/17 01:01:58 uebayasi Exp $
+#	$NetBSD: files.sunos32,v 1.3.18.1 2018/03/12 01:59:32 pgoyette Exp $
 #
 # Config file description for machine-independent SunOS compat code for
 # 64-bit kernel.  Included by ports that need it.
@@ -7,7 +7,7 @@
 # own file lists.
 
 # XXX compat_sunos32
-define	compat_sunos
+define	compat_sunos		: compat_netbsd, compat_netbsd32, exec_aout
 file	compat/sunos32/sunos32_exec.c		compat_sunos & compat_netbsd32
 file	compat/sunos32/sunos32_exec_aout.c	compat_sunos & compat_netbsd32
 file	compat/sunos32/sunos32_misc.c		compat_sunos & compat_netbsd32

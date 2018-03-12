@@ -1,9 +1,9 @@
-#	$NetBSD: files.freebsd,v 1.15 2017/08/01 14:43:54 maxv Exp $
+#	$NetBSD: files.freebsd,v 1.15.2.1 2018/03/12 01:59:31 pgoyette Exp $
 #
 # Config file description for machine-independent FreeBSD compat code.
 # Included by ports that need it. Only i386 is supported.
 
-define	compat_freebsd
+define	compat_freebsd		: compat_netbsd, compat_ossaudio
 file	compat/freebsd/freebsd_exec.c		compat_freebsd
 file	compat/freebsd/freebsd_exec_elf32.c	compat_freebsd & exec_elf32
 file	compat/freebsd/freebsd_file.c		compat_freebsd
