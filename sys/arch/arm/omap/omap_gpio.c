@@ -1,4 +1,4 @@
-/*	$NetBSD: omap_gpio.c,v 1.7 2012/11/12 18:00:37 skrll Exp $ */
+/*	$NetBSD: omap_gpio.c,v 1.8 2018/03/13 06:41:53 ryo Exp $ */
 
 /*
  * The OMAP GPIO Controller interface is inspired by pxa2x0_gpio.c
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap_gpio.c,v 1.7 2012/11/12 18:00:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap_gpio.c,v 1.8 2018/03/13 06:41:53 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -388,6 +388,7 @@ omap_gpio_intr_mask(void *cookie)
 	sc = device_lookup_private(&omapgpio_cd, GPIO_MODULE(gpio));
 	bit = GPIO_BIT(gpio);
 	relnum = GPIO_RELNUM(gpio);
+	__USE(relnum);
 
 	/* Disable interrupt generation for that gpio. */
 	bus_space_write_4(sc->sc_bust, sc->sc_bush, GPIO_CLEAR_IRQENABLE,
@@ -410,6 +411,7 @@ omap_gpio_intr_unmask(void *cookie)
 	sc = device_lookup_private(&omapgpio_cd, GPIO_MODULE(gpio));
 	bit = GPIO_BIT(gpio);
 	relnum = GPIO_RELNUM(gpio);
+	__USE(relnum);
 
 	/* Enable interrupt generation for that pin. */
 	bus_space_write_4(sc->sc_bust, sc->sc_bush, GPIO_SET_IRQENABLE,
@@ -432,6 +434,7 @@ omap_gpio_intr_wakeup(void *cookie, int enable)
 	sc = device_lookup_private(&omapgpio_cd, GPIO_MODULE(gpio));
 	bit = GPIO_BIT(gpio);
 	relnum = GPIO_RELNUM(gpio);
+	__USE(relnum);
 
 	if (enable)
 		bus_space_write_4(sc->sc_bust, sc->sc_bush,
