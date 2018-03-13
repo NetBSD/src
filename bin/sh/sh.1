@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.176 2018/03/13 19:18:53 uwe Exp $
+.\"	$NetBSD: sh.1,v 1.177 2018/03/13 19:35:46 uwe Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -442,7 +442,7 @@ option to be sent to standard error as it exists when the
 .Fl X
 option is enabled (regardless of its previous state.)
 For example:
-.Bd -compact -literal
+.Bd -literal -compact
         set -X 2>/tmp/trace-file
 .Ed
 will arrange for tracing output to be sent to the file named,
@@ -3527,7 +3527,7 @@ ignored by the terminal if received, as when
 .Xr editline 7
 is not in use, the prompt strings are simply written to the terminal.
 For example, setting:
-.Bd -compact -literal -offset left
+.Bd -literal -offset left -compact
   PSlit="$(printf\ '\e1')"
   PS1="${PSlit}$(tput\ bold\ blink)${PSlit}\e$${PSlit}$(tput\ sgr0)${PSlit}\ "
 .Ed
