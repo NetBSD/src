@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.175 2017/10/28 00:37:13 pgoyette Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.175.2.1 2018/03/13 09:10:31 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.175 2017/10/28 00:37:13 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.175.2.1 2018/03/13 09:10:31 pgoyette Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -114,35 +114,6 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.175 2017/10/28 00:37:13 pgoyette Exp 
  *  [5] SWAP_CTL: changes the priority of a swap device (new priority in
  *	"misc")
  */
-
-/*
- * swapdev: describes a single swap partition/file
- *
- * note the following should be true:
- * swd_inuse <= swd_nblks  [number of blocks in use is <= total blocks]
- * swd_nblks <= swd_mapsize [because mapsize includes miniroot+disklabel]
- */
-struct swapdev {
-	dev_t			swd_dev;	/* device id */
-	int			swd_flags;	/* flags:inuse/enable/fake */
-	int			swd_priority;	/* our priority */
-	int			swd_nblks;	/* blocks in this device */
-	char			*swd_path;	/* saved pathname of device */
-	int			swd_pathlen;	/* length of pathname */
-	int			swd_npages;	/* #pages we can use */
-	int			swd_npginuse;	/* #pages in use */
-	int			swd_npgbad;	/* #pages bad */
-	int			swd_drumoffset;	/* page0 offset in drum */
-	int			swd_drumsize;	/* #pages in drum */
-	blist_t			swd_blist;	/* blist for this swapdev */
-	struct vnode		*swd_vp;	/* backing vnode */
-	TAILQ_ENTRY(swapdev)	swd_next;	/* priority tailq */
-
-	int			swd_bsize;	/* blocksize (bytes) */
-	int			swd_maxactive;	/* max active i/o reqs */
-	struct bufq_state	*swd_tab;	/* buffer list */
-	int			swd_active;	/* number of active buffers */
-};
 
 /*
  * swap device priority entry; the list is kept sorted on `spi_priority'.
@@ -243,6 +214,40 @@ static void sw_reg_iodone(struct work *wk, void *dummy);
 static void sw_reg_start(struct swapdev *);
 
 static int uvm_swap_io(struct vm_page **, int, int, int);
+
+/*
+ * vectored routines for COMPAT_13 and COMPAT_50
+ */
+
+size_t swapstats_len_13 = 0;
+
+static void stub_swapstats13_copy(int, int, struct swapdev *,
+    struct swapent13 *);
+void (*vec_swapstats_copy_13)(int, int, struct swapdev *, struct swapent13 *) =
+    stub_swapstats13_copy;
+
+size_t swapstats_len_50 = 0;
+
+static void stub_swapstats50_copy(int, int, struct swapdev *,
+    struct swapent50 *);
+void (*vec_swapstats_copy_50)(int, int, struct swapdev *, struct swapent50 *) =
+    stub_swapstats50_copy;
+
+static void
+stub_swapstats13_copy(int cmd, int inuse, struct swapdev *sdp,
+    struct swapent13 *sep13)
+{
+
+	/* nothing */
+}
+
+static void
+stub_swapstats50_copy(int cmd, int inuse, struct swapdev *sdp,
+    struct swapent50 *sep50)
+{
+
+	/* nothing */
+}
 
 /*
  * uvm_swap_init: init the swap system data structures and locks
@@ -494,14 +499,18 @@ sys_swapctl(struct lwp *l, const struct sys_swapctl_args *uap, register_t *retva
 	 * to grab the uvm_swap_data_lock because we may fault&sleep during
 	 * copyout() and we don't want to be holding that lock then!
 	 */
-	if (SCARG(uap, cmd) == SWAP_STATS
-#if defined(COMPAT_50)
-	    || SCARG(uap, cmd) == SWAP_STATS50
-#endif
-#if defined(COMPAT_13)
-	    || SCARG(uap, cmd) == SWAP_STATS13
-#endif
-	    ) {
+	len = 0;
+	if (SCARG(uap, cmd) == SWAP_STATS)
+		len = sizeof(struct swapent);
+	else if (SCARG(uap, cmd) == SWAP_STATS13)
+		len = swapstats_len_13;
+	else if (SCARG(uap, cmd) == SWAP_STATS50)
+		len = swapstats_len_50;
+	/*
+	 * If the compat_* code isn't loaded, len will still be zero
+	 * and we'll just fall through and return EINVAL
+	 */
+	if (len > 0) {
 		if (misc < 0) {
 			error = EINVAL;
 			goto out;
@@ -514,17 +523,7 @@ sys_swapctl(struct lwp *l, const struct sys_swapctl_args *uap, register_t *retva
 		if ((size_t)misc > (size_t)uvmexp.nswapdev)
 			misc = uvmexp.nswapdev;
 		KASSERT(misc > 0);
-#if defined(COMPAT_13)
-		if (SCARG(uap, cmd) == SWAP_STATS13)
-			len = sizeof(struct swapent13) * misc;
-		else
-#endif
-#if defined(COMPAT_50)
-		if (SCARG(uap, cmd) == SWAP_STATS50)
-			len = sizeof(struct swapent50) * misc;
-		else
-#endif
-			len = sizeof(struct swapent) * misc;
+		len *= misc;
 		sep = (struct swapent *)kmem_alloc(len, KM_SLEEP);
 
 		uvm_swap_stats(SCARG(uap, cmd), sep, misc, retval);
@@ -769,9 +768,7 @@ uvm_swap_stats(int cmd, struct swapent *sep, int sec, register_t *retval)
 			inuse = btodb((uint64_t)sdp->swd_npginuse <<
 			    PAGE_SHIFT);
 
-#if defined(COMPAT_13) || defined(COMPAT_50)
 			if (cmd == SWAP_STATS) {
-#endif
 				sep->se_dev = sdp->swd_dev;
 				sep->se_flags = sdp->swd_flags;
 				sep->se_nblks = sdp->swd_nblks;
@@ -781,36 +778,21 @@ uvm_swap_stats(int cmd, struct swapent *sep, int sec, register_t *retval)
 				    sizeof(sep->se_path));
 				strcpy(sep->se_path, sdp->swd_path);
 				sep++;
-#if defined(COMPAT_13)
 			} else if (cmd == SWAP_STATS13) {
 				struct swapent13 *sep13 =
 				    (struct swapent13 *)sep;
 
-				sep13->se13_dev = sdp->swd_dev;
-				sep13->se13_flags = sdp->swd_flags;
-				sep13->se13_nblks = sdp->swd_nblks;
-				sep13->se13_inuse = inuse;
-				sep13->se13_priority = sdp->swd_priority;
+				(*vec_swapstats_copy_13)(cmd, inuse, sdp,
+				    sep13);
 				sep = (struct swapent *)(sep13 + 1);
-#endif
-#if defined(COMPAT_50)
 			} else if (cmd == SWAP_STATS50) {
 				struct swapent50 *sep50 =
 				    (struct swapent50 *)sep;
 
-				sep50->se50_dev = sdp->swd_dev;
-				sep50->se50_flags = sdp->swd_flags;
-				sep50->se50_nblks = sdp->swd_nblks;
-				sep50->se50_inuse = inuse;
-				sep50->se50_priority = sdp->swd_priority;
-				KASSERT(sdp->swd_pathlen <
-				    sizeof(sep50->se50_path));
-				strcpy(sep50->se50_path, sdp->swd_path);
+				(*vec_swapstats_copy_50)(cmd, inuse, sdp,
+				    sep50);
 				sep = (struct swapent *)(sep50 + 1);
-#endif
-#if defined(COMPAT_13) || defined(COMPAT_50)
 			}
-#endif
 			count++;
 		}
 	}
