@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.245.6.3 2018/03/06 08:45:59 martin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.245.6.4 2018/03/13 15:47:45 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.245.6.3 2018/03/06 08:45:59 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.245.6.4 2018/03/13 15:47:45 martin Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -2833,8 +2833,8 @@ pmap_load(void)
 
 #ifdef i386
 #ifndef XEN
-	ci->ci_tss.tss_ldt = pmap->pm_ldt_sel;
-	ci->ci_tss.tss_cr3 = pcb->pcb_cr3;
+	ci->ci_tss->tss.tss_ldt = pmap->pm_ldt_sel;
+	ci->ci_tss->tss.tss_cr3 = pcb->pcb_cr3;
 #endif /* !XEN */
 #endif /* i386 */
 
