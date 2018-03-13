@@ -1,5 +1,5 @@
 #
-#	$NetBSD: N900,v 1.26 2017/09/14 07:58:40 mrg Exp $
+#	$NetBSD: N900,v 1.27 2018/03/13 06:20:41 ryo Exp $
 #
 #	N900 -- Nokia N900 Kernel
 #
@@ -123,10 +123,10 @@ makeoptions	DEBUG="-g"	# compile full symbol table
 makeoptions	COPY_SYMTAB=1
 
 ## USB Debugging options
-options USB_DEBUG
-options EHCI_DEBUG
-options OHCI_DEBUG
-options UHUB_DEBUG
+#options USB_DEBUG
+#options EHCI_DEBUG
+#options OHCI_DEBUG
+#options UHUB_DEBUG
 
 
 # Valid options for BOOT_ARGS:
