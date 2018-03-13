@@ -1,4 +1,4 @@
-/*	$NetBSD: mpls_ttl.c,v 1.3 2010/07/05 09:54:26 kefren Exp $ */
+/*	$NetBSD: mpls_ttl.c,v 1.3.18.1 2018/03/13 17:42:41 snj Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  */
 
-/*-
+/*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpls_ttl.c,v 1.3 2010/07/05 09:54:26 kefren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpls_ttl.c,v 1.3.18.1 2018/03/13 17:42:41 snj Exp $");
 
 #include "opt_inet.h"
 #include "opt_mpls.h"
@@ -136,21 +136,21 @@ extern int icmpreturndatabytes;
 
 struct icmp_ext_cmn_hdr {
 #if BYTE_ORDER == BIG_ENDIAN
-        unsigned char   version:4;
-        unsigned char   reserved1:4;
+	unsigned char version:4;
+	unsigned char reserved1:4;
 #else
-        unsigned char   reserved1:4;
-        unsigned char   version:4;
+	unsigned char reserved1:4;
+	unsigned char version:4;
 #endif
-	unsigned char   reserved2;
-	unsigned short  checksum;
+	unsigned char reserved2;
+	unsigned short checksum;
 };
 
 struct icmp_ext_obj_hdr {
 	u_short length;
-	u_char  class_num;
+	u_char class_num;
 #define MPLS_STACK_ENTRY_CLASS 1
-	u_char  c_type;
+	u_char c_type;
 #define MPLS_STACK_ENTRY_C_TYPE 1
 };
 
@@ -161,8 +161,8 @@ struct mpls_extension {
 } __packed;
 
 static void mpls_icmp_error(struct mbuf *, int, int, n_long, int,
-	union mpls_shim *);
-static bool ip4_check(struct mbuf *);
+    union mpls_shim *);
+static struct mbuf *ip4_check(struct mbuf *);
 
 /*
  * Reference: http://tools.ietf.org/html/rfc4950
@@ -179,13 +179,13 @@ mpls_icmp_error(struct mbuf *n, int type, int code, n_long dest,
 	struct mbuf *m;
 	unsigned icmplen, mblen, packetlen;
 	struct mpls_extension mpls_icmp_ext;
-	
+
 	memset(&mpls_icmp_ext, 0, sizeof(mpls_icmp_ext));
 	mpls_icmp_ext.cmn_hdr.version = ICMP_EXT_VERSION;
 	mpls_icmp_ext.cmn_hdr.checksum = 0;
 
-	mpls_icmp_ext.obj_hdr.length = htons(sizeof(union mpls_shim) + 
-					sizeof(struct icmp_ext_obj_hdr));
+	mpls_icmp_ext.obj_hdr.length = htons(sizeof(union mpls_shim) +
+	    sizeof(struct icmp_ext_obj_hdr));
 	mpls_icmp_ext.obj_hdr.class_num = MPLS_STACK_ENTRY_CLASS;
 	mpls_icmp_ext.obj_hdr.c_type = MPLS_STACK_ENTRY_C_TYPE;
 
@@ -302,7 +302,7 @@ mpls_icmp_error(struct mbuf *n, int type, int code, n_long dest,
 	/*
 	 * Now, copy old ip header (without options)
 	 * in front of icmp message.
-	*/
+	 */
 	if ((m->m_flags & M_EXT) == 0 &&
 	    m->m_data - sizeof(struct ip) < m->m_pktdat)
 		panic("icmp len");
@@ -325,10 +325,9 @@ mpls_icmp_error(struct mbuf *n, int type, int code, n_long dest,
 
 freeit:
 	m_freem(n);
-
 }
 
-static bool
+static struct mbuf *
 ip4_check(struct mbuf *m)
 {
 	struct ip *iph;
@@ -336,7 +335,7 @@ ip4_check(struct mbuf *m)
 
 	if (m->m_len < sizeof(struct ip) &&
 	    (m = m_pullup(m, sizeof(struct ip))) == NULL)
-		return false;
+		return NULL;
 
 	iph = mtod(m, struct ip *);
 
@@ -347,7 +346,7 @@ ip4_check(struct mbuf *m)
 		goto freeit;
 	if (hlen > m->m_len) {
 		if ((m = m_pullup(m, hlen)) == NULL)
-			return false;
+			return NULL;
 		iph = mtod(m, struct ip *);
 	}
 	if (IN_MULTICAST(iph->ip_src.s_addr) ||
@@ -360,11 +359,11 @@ ip4_check(struct mbuf *m)
 	if (len < hlen || m->m_pkthdr.len < len)
 		goto freeit;
 
-	return true;
+	return m;
+
 freeit:
 	m_freem(m);
-	return false;
-
+	return NULL;
 }
 
 #endif	/* INET */
@@ -392,15 +391,14 @@ mpls_ttl_dec(struct mbuf *m)
 
 #ifdef INET
 		/*
-		 * shim ttl exceeded
-		 * send back ICMP type 11 code 0
+		 * Shim ttl exceeded. Send back ICMP type 11 code 0.
 		 */
 		bossh.s_addr = mshim->s_addr;
 		top_shim.s_addr = htonl(mshim->s_addr);
 		m_adj(m, sizeof(union mpls_shim));
 
 		/* Goto BOS */
-		while(bossh.shim.bos == 0) {
+		while (bossh.shim.bos == 0) {
 			if (m->m_len < sizeof(union mpls_shim) &&
 			    (m = m_pullup(m, sizeof(union mpls_shim))) == NULL) {
 				m_freem(m);
@@ -409,8 +407,8 @@ mpls_ttl_dec(struct mbuf *m)
 			bossh.s_addr = ntohl(mtod(m, union mpls_shim *)->s_addr);
 			m_adj(m, sizeof(union mpls_shim));
 		}
-		
-		if (ip4_check(m) == true)
+
+		if ((m = ip4_check(m)) != NULL)
 			mpls_icmp_error(m, ICMP_TIMXCEED, ICMP_TIMXCEED_INTRANS,
 			    0, 0, &top_shim);
 #else
