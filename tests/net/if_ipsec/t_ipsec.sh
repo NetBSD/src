@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec.sh,v 1.3 2018/02/01 05:22:01 ozaki-r Exp $
+#	$NetBSD: t_ipsec.sh,v 1.4 2018/03/13 03:50:26 knakahara Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -269,7 +269,9 @@ setup_if_ipsec_sa()
 	local algo_args="$(generate_algo_args $proto $algo)"
 
 	inunique=`get_if_ipsec_unique ${sock} ${dst} ${mode}`
+	atf_check -s exit:0 test "X$inunique" != "X"
 	outunique=`get_if_ipsec_unique ${sock} ${src} ${mode}`
+	atf_check -s exit:0 test "X$outunique" != "X"
 
 	if [ ${dir} = "1to2" ] ; then
 	    if [ ${mode} = "ipv6" ] ; then
@@ -446,7 +448,9 @@ setup_dummy_if_ipsec_sa()
 	local algo_args="$(generate_algo_args $proto $algo)"
 
 	inunique=`get_if_ipsec_unique ${sock} ${dst} ${mode}`
+	atf_check -s exit:0 test "X$inunique" != "X"
 	outunique=`get_if_ipsec_unique ${sock} ${src} ${mode}`
+	atf_check -s exit:0 test "X$outunique" != "X"
 
 	if [ ${dir} = "1to2" ] ; then
 	    inid="20000"
