@@ -1,5 +1,5 @@
 #
-#	$NetBSD: DUOVERO,v 1.6 2017/09/14 07:58:40 mrg Exp $
+#	$NetBSD: DUOVERO,v 1.7 2018/03/13 06:21:59 ryo Exp $
 #
 #	DUOOVERO -- Gumstix. Inc. DuoVero COMS platforms kernel
 #
@@ -17,6 +17,7 @@ maxusers	32
 options 	CPU_CORTEXA9
 options 	OMAP_4430
 options 	MULTIPROCESSOR
+options 	 __HAVE_CPU_UAREA_ALLOC_IDLELWP	# need for MULTIPROCESSOR
 options 	FPU_VFP
 options 	PMAPCOUNTERS
 options 	ARM_HAS_VBAR
