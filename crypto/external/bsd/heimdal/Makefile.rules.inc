@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.rules.inc,v 1.8 2017/01/28 21:31:43 christos Exp $
+# $NetBSD: Makefile.rules.inc,v 1.9 2018/03/13 03:06:51 mrg Exp $
 
 SRCS+= ${HEIMSRCS:N*.et:N*.in:N*.asn1}
 
@@ -23,6 +23,7 @@ ASN1_OPTS.${src} ?= --one-code-file
 CLEANFILES+=				\
 	${src:.asn1=_asn1_files}	\
 	${src:.asn1=_asn1-template.c}	\
+	${src:.asn1=_asn1-template.x}	\
 	${ASN1_FILES.${src}}		\
 	${ASN1_FILES.${src}:.x=.c}	\
 	${src:.asn1=_asn1.h}		\
