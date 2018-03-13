@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2016/01/14 02:30:18 christos Exp $
+# $NetBSD: Makefile,v 1.3 2018/03/13 03:03:33 mrg Exp $
 
 # $FreeBSD: src/gnu/usr.bin/groff/src/preproc/refer/Makefile,v 1.4 2003/05/01 13:22:20 ru Exp $
 
@@ -13,6 +13,6 @@ SRCS=		label.cpp command.cpp ref.cpp refer.cpp token.cpp
 CFLAGS+=	-I${DIST_DIR}
 DPADD+=		${LIBBIB}
 LDADD+=		${LIBBIB}
-CLEANFILES=	${MAN}
+CLEANFILES+=	${MAN}
 
 .include <bsd.prog.mk>
