@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.321 2017/12/06 19:34:00 uwe Exp $
+#	$NetBSD: Makefile,v 1.322 2018/03/13 03:06:28 mrg Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -528,3 +528,4 @@ dependall-distrib depend-distrib all-distrib: .PHONY
 .include <bsd.obj.mk>
 .include <bsd.kernobj.mk>
 .include <bsd.subdir.mk>
+.include <bsd.clean.mk>
