@@ -1,4 +1,4 @@
-/*	$NetBSD: nvram.c,v 1.20 2015/03/06 12:41:05 christos Exp $	*/
+/*	$NetBSD: nvram.c,v 1.20.10.1 2018/03/13 13:41:13 martin Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvram.c,v 1.20 2015/03/06 12:41:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvram.c,v 1.20.10.1 2018/03/13 13:41:13 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -92,11 +92,15 @@ nvr_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Check the validity of the NVram contents
 	 */
-	if (!nvram_csum_valid(nvram_csum())) {
-		printf(": Invalid checksum - re-initialized");
-		for (nreg = MC_NVRAM_START; nreg < MC_NVRAM_CSUM; nreg++)
-			mc146818_write(RTC, nreg, 0);
-		nvram_set_csum(nvram_csum());
+	/* XXX: Milan's firmware seems to use different check method */
+	if ((machineid & ATARI_MILAN) == 0) {
+		if (!nvram_csum_valid(nvram_csum())) {
+			printf(": Invalid checksum - re-initialized");
+			for (nreg = MC_NVRAM_START; nreg < MC_NVRAM_CSUM;
+			    nreg++)
+				mc146818_write(RTC, nreg, 0);
+			nvram_set_csum(nvram_csum());
+		}
 	}
 	sc = device_private(self);
 	sc->sc_dev = self;

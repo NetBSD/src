@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.54 2014/03/29 19:28:26 christos Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.54.22.1 2018/03/13 13:41:14 martin Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.54 2014/03/29 19:28:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.54.22.1 2018/03/13 13:41:14 martin Exp $");
 
 #include "opt_mbtype.h"
 
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.54 2014/03/29 19:28:26 christos Ex
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
+#include <dev/pci/pcidevs.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -449,6 +450,24 @@ enable_pci_devices(void)
 	/*
 	 * On the Milan, we accept the BIOS's choice.
 	 */
+	/* ..except the secondary IDE interrupt that the BIOS doesn't setup. */
+#define PIIX_PCIB_MBIRQ0	0x70
+	if ((PCI_VENDOR(id) == PCI_VENDOR_INTEL) &&
+	    (PCI_PRODUCT(id) == PCI_PRODUCT_INTEL_82371FB_ISA)) {
+		/*
+		 * Set Interrupt Routing for MBIRQ0 to IRQ15.
+		 * Note Milan's ROM bootloader v1.2 and v1.4 incorrectly
+		 * set MBIRQ0 to IRQ14 (not 15) and unused MBIRQ1 to IRQ 15,
+		 * so explicitly disable MBIRQ1.
+		 */
+		csr = pci_conf_read(pc, tag, PIIX_PCIB_MBIRQ0);
+		csr &= ~0x000ffff;
+		csr |=  0x000800f;	/* MBIRQ1: disable, MBIRQ0: IRQ15 */
+		pci_conf_write(pc, tag, PIIX_PCIB_MBIRQ0, csr);
+#ifdef DEBUG_PCI_MACHDEP
+		printf("\npcib0: enable and route MBIRQ0 to irq 15\n");
+#endif
+	}
 #endif
     }
 

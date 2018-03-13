@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.31 2017/02/02 21:53:54 rin Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.31.6.1 2018/03/13 13:41:14 martin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -104,8 +104,10 @@
 
 /*
  * Our bootloader currently passes up to 2 segments (ST and TT ram).
+ * On the other hand, Milan has four SIMM slots with 2 banks
+ * so it could have upto 8 segments.
  */
-#define VM_PHYSSEG_MAX		(2)
+#define VM_PHYSSEG_MAX		(8)
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_RANDOM
 
 #define	VM_NFREELIST		2

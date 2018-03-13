@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.110 2011/12/22 15:33:28 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.110.40.1 2018/03/13 13:41:13 martin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -399,7 +399,7 @@ ENTRY_NOPROFILE(lev6intr)
 	movel	%d1,%sp@-		| Call handler
 	jbsr	_C_LABEL(milan_isa_intr)
 	addql	#8,%sp
-	INTERRUPT_RESTOREREG
+	moveml  %sp@+,%d0-%d2/%a0-%a1
 	subql	#1,_C_LABEL(idepth)
 	jra	_ASM_LABEL(rei)
 
@@ -450,7 +450,6 @@ ENTRY_NOPROFILE(lev7intr)
 	tstl	_ASM_LABEL(plx_nonmi)	| milan_conf_read shortcut
 	jne	1f			| .... get out immediately
 	INTERRUPT_SAVEREG
-	moveml	%d0-%d1/%a0-%a1,%sp@-
 	movl	_C_LABEL(stio_addr),%a0	| get KVA of ST-IO area
 	movw	%a0@(PLX_PCICR),_C_LABEL(plx_status)
 	movw	#0xf900,%a0@(PLX_PCICR)	| Clear error bits
@@ -464,7 +463,6 @@ ENTRY_NOPROFILE(lev7intr)
 ENTRY_NOPROFILE(lev3intr)
 ENTRY_NOPROFILE(badtrap)
 	addql	#1,_C_LABEL(idepth)
-	moveml	#0xC0C0,%sp@-		|  save scratch regs
 	INTERRUPT_SAVEREG
 	movw	%sp@(22),%sp@-		|  push exception vector info
 	clrw	%sp@-

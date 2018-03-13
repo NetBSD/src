@@ -1,4 +1,4 @@
-# $NetBSD: md.atari,v 1.54 2014/08/06 12:15:01 martin Exp $
+# $NetBSD: md.atari,v 1.54.16.1 2018/03/13 13:41:14 martin Exp $
 ./sbin/ahdilabel				base-sysutil-root
 ./sbin/binpatch					base-sysutil-root
 ./sbin/edahdi					base-sysutil-root
@@ -10,6 +10,8 @@
 ./usr/mdec/milan/fdboot				base-sysutil-bin
 ./usr/mdec/milan/sdb00t.ahdi			base-sysutil-bin
 ./usr/mdec/milan/sdboot				base-sysutil-bin
+./usr/mdec/milan/wdb00t.ahdi			base-sysutil-bin
+./usr/mdec/milan/wdboot				base-sysutil-bin
 ./usr/mdec/milan/xxboot.ahdi			base-sysutil-bin
 ./usr/mdec/std					base-sysutil-bin
 ./usr/mdec/std/boot.atari			base-sysutil-bin

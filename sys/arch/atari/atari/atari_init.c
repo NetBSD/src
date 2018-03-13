@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.100 2012/08/10 17:43:32 tsutsui Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.100.32.1 2018/03/13 13:41:13 martin Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.100 2012/08/10 17:43:32 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.100.32.1 2018/03/13 13:41:13 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -91,9 +91,26 @@ static void set_machtype(void);
 static void mmu040_setup(paddr_t, u_int, paddr_t, psize_t, paddr_t, paddr_t);
 #endif
 
+#if defined(_MILANHW_)
+static u_int milan_probe_bank_1(paddr_t paddr);
+static u_int milan_probe_bank(paddr_t paddr);
+
+#define NBANK	2
+#define NSLOT	4
+
+#define MB(n)		((n) * 1024 * 1024)
+#define MB_END(n)	(MB(n) - 1)
+#define MAGIC_4M	(4 - 1)
+#define MAGIC_4M_INV	((uint8_t)~MAGIC_4M)
+#define MAGIC_8M	(8 - 1)
+#define MAGIC_16M	(16 - 1)
+#define MAGIC_32M	(32 - 1)
+#define MAGIC_64M	(64 - 1)
+#endif
+
 /*
  * Extent maps to manage all memory space, including I/O ranges.  Allocate
- * storage for 8 regions in each, initially.  Later, iomem_malloc_safe
+ * storage for 16 regions in each, initially.  Later, iomem_malloc_safe
  * will indicate that it's safe to use malloc() to dynamically allocate
  * region descriptors.
  * This means that the fixed static storage is only used for registrating
@@ -102,7 +119,7 @@ static void mmu040_setup(paddr_t, u_int, paddr_t, psize_t, paddr_t, paddr_t);
  * The extent maps are not static!  They are used for bus address space
  * allocation.
  */
-static long iomem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
+static long iomem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(16) / sizeof(long)];
 struct extent *iomem_ex;
 int iomem_malloc_safe;
 
@@ -204,23 +221,67 @@ start_c(int id, u_int ttphystart, u_int ttphysize, u_int stphysize,
 	paddr_t		kbase;
 	u_int		kstsize;
 	paddr_t		Sysptmap_pa;
-
 #if defined(_MILANHW_)
-	/* XXX
-	 * XXX The right place todo this is probably the booter (Leo)
-	 * XXX More than 16MB memory is not yet supported on the Milan!
+	/*
 	 * The Milan Lies about the presence of TT-RAM. If you insert
 	 * 16MB it is split in 14MB ST starting at address 0 and 2MB TT RAM,
-	 * starting at address 16MB. 
+	 * starting at address 16MB as the BIOS remapping memory using MMU.
+	 *
+	 * Milan actually has four SIMM slots and each slot has two banks,
+	 * so it could have up to 8 memory segment regions.
 	 */
-	stphysize += ttphysize;
-	ttphysize  = ttphystart = 0;
-#endif
+	const paddr_t simm_base[NBANK][NSLOT] = {
+		/* slot 0-3, bank 0 */
+		{ 0x00000000, 0x04000000, 0x08000000, 0x0c000000 },
+		/* slot 0-3, bank 1 */
+		{ 0x10000000, 0x14000000, 0x18000000, 0x1c000000 }
+	};
+	int slot, bank, seg;
+	u_int mb;
+
+	/* On Milan, all RAMs are fast 32 bit so no need to reloc kernel */
+	reloc_kernel = 0;
+
+	/* probe memory region in all SIMM slots and banks */
+	seg = 0;
+	ttphysize = 0;
+	for (bank = 0; bank < 2; bank++) {
+		for (slot = 0; slot < 4; slot++) {
+			if (bank == 0 && slot == 0) {
+				/*
+				 * The first bank has at least 16MB because
+				 * the Milan's ROM bootloader requires it
+				 * to allocate ST RAM.
+				 */
+				mb = milan_probe_bank_1(simm_base[bank][slot]);
+				boot_segs[0].start = 0;
+				boot_segs[0].end   = MB(mb);
+				stphysize          = MB(mb);
+				seg++;
+			} else {
+				/*
+				 * The rest banks could be empty or
+				 * have 4, 8, 16, 32, or 64MB.
+				 */
+				mb = milan_probe_bank(simm_base[bank][slot]);
+				if (mb > 0) {
+					boot_segs[seg].start =
+					    simm_base[bank][slot];
+					boot_segs[seg].end   =
+					    simm_base[bank][slot] + MB(mb);
+					ttphysize += MB(mb);
+					seg++;
+				}
+			}
+		}
+	}
+#else /* _MILANHW_ */
 	boot_segs[0].start       = 0;
 	boot_segs[0].end         = stphysize;
 	boot_segs[1].start       = ttphystart;
 	boot_segs[1].end         = ttphystart + ttphysize;
 	boot_segs[2].start = boot_segs[2].end = 0; /* End of segments! */
+#endif
 
 	/*
 	 * The following is a hack. We do not know how much ST memory we
@@ -484,10 +545,21 @@ start_c(int id, u_int ttphystart, u_int ttphysize, u_int stphysize,
 	usable_segs[0].start = 0;
 	usable_segs[0].end   = stphysize;
 	usable_segs[0].free_list = VM_FREELIST_STRAM;
+#if defined(_MILANHW_)
+	for (i = 1; i < seg; i++) {
+		usable_segs[i].start = boot_segs[i].start;
+		usable_segs[i].end   = boot_segs[i].end;
+		usable_segs[i].free_list = VM_FREELIST_TTRAM;
+	}
+	for (; i < NMEM_SEGS; i++) {
+		usable_segs[i].start = usable_segs[i].end = 0;
+	}
+#else
 	usable_segs[1].start = ttphystart;
 	usable_segs[1].end   = ttphystart + ttphysize;
 	usable_segs[1].free_list = VM_FREELIST_TTRAM;
 	usable_segs[2].start = usable_segs[2].end = 0; /* End of segments! */
+#endif
 
 	if (kbase) {
 		/*
@@ -506,7 +578,7 @@ start_c(int id, u_int ttphystart, u_int ttphysize, u_int stphysize,
 	 * available physical memory.
 	 */
 	usable_segs[0].first_page = 0;
-	for (i = 1; usable_segs[i].start; i++) {
+	for (i = 1; i < NMEM_SEGS && usable_segs[i].start; i++) {
 		usable_segs[i].first_page  = usable_segs[i-1].first_page;
 		usable_segs[i].first_page +=
 		    (usable_segs[i-1].end - usable_segs[i-1].start) / PAGE_SIZE;
@@ -609,7 +681,7 @@ start_c(int id, u_int ttphystart, u_int ttphysize, u_int stphysize,
 	/*
 	 * Allocate the physical RAM from the extent map
 	 */
-	for (i = 0; boot_segs[i].end != 0; i++) {
+	for (i = 0; i < NMEM_SEGS && boot_segs[i].end != 0; i++) {
 		if (extent_alloc_region(iomem_ex, boot_segs[i].start,
 		    boot_segs[i].end - boot_segs[i].start, EX_NOWAIT)) {
 			/* XXX: Ahum, should not happen ;-) */
@@ -623,6 +695,151 @@ start_c(int id, u_int ttphystart, u_int ttphysize, u_int stphysize,
 	 */
 	intr_init();
 }
+
+#if defined(_MILANHW_)
+/*
+ * Probe and return available memory size in MB at specfied address.
+ * The first slot SIMM have at least 16MB, so check if it has 32 or 64 MB.
+ *
+ * Note it seems Milan does not generate bus errors on accesses against
+ * address regions where memory doesn't exist, but it returns memory images
+ * of lower address of the bank.
+ */
+static u_int
+milan_probe_bank_1(paddr_t start_paddr)
+{
+	volatile uint8_t *base;
+	u_int mb;
+	uint8_t save_16, save_32, save_64;
+
+	/* Assume that this bank has at least 16MB */
+	mb = 16;
+
+	base = (uint8_t *)start_paddr;
+
+	/* save and write a MAGIC at the end of 16MB region */
+	save_16 = base[MB_END(16)];
+	base[MB_END(16)] = MAGIC_16M;
+
+	/* check bus error at the end of 32MB region */
+	if (badbaddr(__UNVOLATILE(base + MB_END(32)), sizeof(uint8_t))) {
+		/* bus error; assume no memory there */
+		goto out16;
+	}
+
+	/* check if the 32MB region is not image of the prior 16MB region */
+	save_32 = base[MB_END(32)];
+	base[MB_END(32)] = MAGIC_32M;
+	if (base[MB_END(32)] != MAGIC_32M || base[MB_END(16)] != MAGIC_16M) {
+		/* no memory or image at the 32MB region */
+		goto out16;
+	}
+	/* we have at least 32MB */
+	mb = 32;
+
+	/* check bus error at the end of 64MB region */
+	if (badbaddr(__UNVOLATILE(base + MB_END(64)), sizeof(uint8_t))) {
+		/* bus error; assume no memory there */
+		goto out32;
+	}
+
+	/* check if the 64MB region is not image of the prior 32MB region */
+	save_64 = base[MB_END(64)];
+	base[MB_END(64)] = MAGIC_64M;
+	if (base[MB_END(64)] != MAGIC_64M || base[MB_END(32)] != MAGIC_32M) {
+		/* no memory or image at the 64MB region */
+		goto out32;
+	}
+	/* we have 64MB */
+	mb = 64;
+	base[MB_END(64)] = save_64;
+ out32:
+	base[MB_END(32)] = save_32;
+ out16:
+	base[MB_END(16)] = save_16;
+
+	return mb;
+}
+
+/*
+ * Probe and return available memory size in MB at specfied address.
+ * The rest slot could be empty so check all possible size.
+ */
+static u_int
+milan_probe_bank(paddr_t start_paddr)
+{
+	volatile uint8_t *base;
+	u_int mb;
+	uint8_t save_4, save_8, save_16;
+
+	/* The rest banks might have no memory */
+	mb = 0;
+
+	base = (uint8_t *)start_paddr;
+
+	/* check bus error at the end of 4MB region */
+	if (badbaddr(__UNVOLATILE(base + MB_END(4)), sizeof(uint8_t))) {
+		/* bus error; assume no memory there */
+		goto out;
+	}
+
+	/* check if the 4MB region has memory */
+	save_4 = base[MB_END(4)];
+	base[MB_END(4)] = MAGIC_4M_INV;
+	if (base[MB_END(4)] != MAGIC_4M_INV) {
+		/* no memory */
+		goto out;
+	}
+	base[MB_END(4)] = MAGIC_4M;
+	if (base[MB_END(4)] != MAGIC_4M) {
+		/* no memory */
+		goto out;
+	}
+	/* we have at least 4MB */
+	mb = 4;
+
+	/* check bus error at the end of 8MB region */
+	if (badbaddr(__UNVOLATILE(base + MB_END(8)), sizeof(uint8_t))) {
+		/* bus error; assume no memory there */
+		goto out4;
+	}
+
+	/* check if the 8MB region is not image of the prior 4MB region */
+	save_8 = base[MB_END(8)];
+	base[MB_END(8)] = MAGIC_8M;
+	if (base[MB_END(8)] != MAGIC_8M || base[MB_END(4)] != MAGIC_4M) {
+		/* no memory or image at the 8MB region */
+		goto out4;
+	}
+	/* we have at least 8MB */
+	mb = 8;
+
+	/* check bus error at the end of 16MB region */
+	if (badbaddr(__UNVOLATILE(base + MB_END(16)), sizeof(uint8_t))) {
+		/* bus error; assume no memory there */
+		goto out8;
+	}
+
+	/* check if the 16MB region is not image of the prior 8MB region */
+	save_16 = base[MB_END(16)];
+	base[MB_END(16)] = MAGIC_16M;
+	if (base[MB_END(16)] != MAGIC_16M || base[MB_END(8)] != MAGIC_8M) {
+		/* no memory or image at the 32MB region */
+		goto out8;
+	}
+	/* we have at least 16MB, so check more region as the first bank */
+	mb = milan_probe_bank_1(start_paddr);
+
+	base[MB_END(16)] = save_16;
+ out8:
+	base[MB_END(8)] = save_8;
+ out4:
+	base[MB_END(4)] = save_4;
+ out:
+
+	return mb;
+}
+#endif	/* _MILANHW_ */
 
 /*
  * Try to figure out on what type of machine we are running

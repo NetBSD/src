@@ -1,5 +1,5 @@
 #
-#	$NetBSD: MILAN.in,v 1.27 2014/07/05 09:24:23 tsutsui Exp $
+#	$NetBSD: MILAN.in,v 1.27.20.1 2018/03/13 13:41:13 martin Exp $
 #
 # Milan
 #
@@ -77,20 +77,21 @@ wdc1 		at isa? port 0x170 irq 15 flags 0x04	# 2nd IDE controller
 
 #if defined(MILAN_PCIIDE)
 pciide* 	at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
-acardide*	at pci? dev ? function ?	# Acard IDE controllers
-aceride* 	at pci? dev ? function ?	# Acer Lab IDE controllers
-artsata*	at pci? dev ? function ?	# Intel i31244 SATA controller
-cmdide* 	at pci? dev ? function ?	# CMD tech IDE controllers
-cypide* 	at pci? dev ? function ?	# Cypress IDE controllers
-hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
-optiide* 	at pci? dev ? function ?	# Opti IDE controllers
-pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
-pdcsata* 	at pci? dev ? function ?	# Promise SATA150 controllers
-satalink*	at pci? dev ? function ?	# SiI SATALink controllers
-siside* 	at pci? dev ? function ?	# SiS IDE controllers
-slide*  	at pci? dev ? function ?	# Symphony Labs IDE controllers
-viaide* 	at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
-#endif /* MILAN_ISAIDE */
+#acardide*	at pci? dev ? function ?	# Acard IDE controllers
+#aceride* 	at pci? dev ? function ?	# Acer Lab IDE controllers
+#artsata*	at pci? dev ? function ?	# Intel i31244 SATA controller
+#cmdide* 	at pci? dev ? function ?	# CMD tech IDE controllers
+#cypide* 	at pci? dev ? function ?	# Cypress IDE controllers
+#hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
+#optiide* 	at pci? dev ? function ?	# Opti IDE controllers
+#pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
+#pdcsata* 	at pci? dev ? function ?	# Promise SATA150 controllers
+piixide* 	at pci? dev ? function ?	# Intel IDE controllers
+#satalink*	at pci? dev ? function ?	# SiI SATALink controllers
+#siside* 	at pci? dev ? function ?	# SiS IDE controllers
+#slide*  	at pci? dev ? function ?	# Symphony Labs IDE controllers
+#viaide* 	at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
+#endif /* MILAN_PCIIDE */
 
 atabus*		at ata? channel ?
 
