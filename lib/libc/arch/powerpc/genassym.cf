@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.3 2011/01/18 01:23:24 matt Exp $
+#	$NetBSD: genassym.cf,v 1.3.8.1 2018/03/13 17:27:39 snj Exp $
 
 #
 # Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@ define CALLFRAME_R31	offsetof(struct callframe, cf_r31)
 
 define UC_GREGS_R1	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_R1])
 define UC_GREGS_R3	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_R3])
+define UC_GREGS_R30	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_R30])
 define UC_GREGS_PC	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_PC])
 
 define SIG_BLOCK	SIG_BLOCK
