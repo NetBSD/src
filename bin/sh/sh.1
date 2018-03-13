@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.184 2018/03/13 20:48:00 uwe Exp $
+.\"	$NetBSD: sh.1,v 1.185 2018/03/13 21:04:57 uwe Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -859,39 +859,44 @@ If present it must occur immediately before the redirection
 operator, with no intervening white space, and becomes a
 part of that operator.
 .Bl -tag -width aaabsfiles -offset indent
-.It Oo Ar n Oc Ns > Ar file
-Redirect standard output (or n) to
+.It Oo Ar n Oc Ns Ic > Ar file
+Redirect standard output (or
+.Ar n )
+to
 .Ar file .
-.It Oo Ar n Oc Ns >| file
+.It Oo Ar n Oc Ns Ic >| Ar file
 The same, but override the
 .Fl C
 option.
-.It Oo Ar n Oc Ns >> Ar file
-Append standard output (or n) to
+.It Oo Ar n Oc Ns Ic >> Ar file
+Append standard output (or
+.Ar n )
+to
 .Ar file .
-.It Oo Ar n Oc Ns < Ar file
+.It Oo Ar n Oc Ns Ic < Ar file
 Redirect standard input (or
 .Ar n )
 from
 .Ar file .
-.It Oo Ar n1 Oc Ns <& Ns Ar n2
+.It Oo Ar n1 Oc Ns Ic <& Ns Ar n2
 Duplicate standard input (or
 .Ar n1 )
 from file descriptor
 .Ar n2 .
 .Ar n2
 is expanded if not a digit string, the result must be a number.
-.It Oo Ar n Oc Ns <&-
+.It Oo Ar n Oc Ns Ic <&-
 Close standard input (or
 .Ar n ) .
-.It Oo Ar n1 Oc Ns >& Ns Ar n2
+.It Oo Ar n1 Oc Ns Ic >& Ns Ar n2
 Duplicate standard output (or
 .Ar n1 )
 to
 .Ar n2 .
-.It Oo Ar n Oc Ns >&-
-Close standard output (or n).
-.It Oo Ar n Oc Ns <> Ar file
+.It Oo Ar n Oc Ns Ic >&-
+Close standard output (or
+.Ar n ) .
+.It Oo Ar n Oc Ns Ic <> Ar file
 Open
 .Ar file
 for reading and writing on standard input (or
@@ -900,10 +905,10 @@ for reading and writing on standard input (or
 .Pp
 The following redirection is often called a
 .Dq here-document .
-.Bd -literal -offset indent
-[n]<< delimiter
-\&... here-doc-text ...
-delimiter
+.Bd -unfilled -offset indent
+.Oo Ar n Oc Ns Ic << Ar delimiter
+.Li \&... here-doc-text ...
+.Ar delimiter
 .Ed
 .Pp
 The
@@ -932,9 +937,9 @@ expansion as described in the
 .Sx Word Expansions
 section below.
 If the operator is
-.Dq <<\(mi
+.Ic <<-
 instead of
-.Dq << ,
+.Ic << ,
 then leading tabs in all lines in the here-doc-text, including before the
 end delimiter, are stripped.
 If the delimiter is not quoted, lines in here-doc-text that end with
