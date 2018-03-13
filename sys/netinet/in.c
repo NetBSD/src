@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.203.2.10 2018/02/26 13:32:01 martin Exp $	*/
+/*	$NetBSD: in.c,v 1.203.2.11 2018/03/13 13:27:10 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.203.2.10 2018/02/26 13:32:01 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.203.2.11 2018/03/13 13:27:10 martin Exp $");
 
 #include "arp.h"
 
@@ -1918,10 +1918,6 @@ in_tunnel_validate(const struct ip *ip, struct in_addr src, struct in_addr dst)
 
 #if NARP > 0
 
-struct in_llentry {
-	struct llentry		base;
-};
-
 #define	IN_LLTBL_DEFAULT_HSIZE	32
 #define	IN_LLTBL_HASH(k, h) \
 	(((((((k >> 8) ^ k) >> 8) ^ k) >> 8) ^ k) & ((h) - 1))
@@ -1935,17 +1931,19 @@ static void
 in_lltable_destroy_lle(struct llentry *lle)
 {
 
+	KASSERT(lle->la_numheld == 0);
+
 	LLE_WUNLOCK(lle);
 	LLE_LOCK_DESTROY(lle);
-	kmem_intr_free(lle, sizeof(*lle));
+	llentry_pool_put(lle);
 }
 
 static struct llentry *
 in_lltable_new(struct in_addr addr4, u_int flags)
 {
-	struct in_llentry *lle;
+	struct llentry *lle;
 
-	lle = kmem_intr_zalloc(sizeof(*lle), KM_NOSLEEP);
+	lle = llentry_pool_get(PR_NOWAIT);
 	if (lle == NULL)		/* NB: caller generates msg */
 		return NULL;
 
@@ -1953,14 +1951,14 @@ in_lltable_new(struct in_addr addr4, u_int flags)
 	 * For IPv4 this will trigger "arpresolve" to generate
 	 * an ARP request.
 	 */
-	lle->base.la_expire = time_uptime; /* mark expired */
-	lle->base.r_l3addr.addr4 = addr4;
-	lle->base.lle_refcnt = 1;
-	lle->base.lle_free = in_lltable_destroy_lle;
-	LLE_LOCK_INIT(&lle->base);
-	callout_init(&lle->base.la_timer, CALLOUT_MPSAFE);
+	lle->la_expire = time_uptime; /* mark expired */
+	lle->r_l3addr.addr4 = addr4;
+	lle->lle_refcnt = 1;
+	lle->lle_free = in_lltable_destroy_lle;
+	LLE_LOCK_INIT(lle);
+	callout_init(&lle->la_timer, CALLOUT_MPSAFE);
 
-	return (&lle->base);
+	return lle;
 }
 
 #define IN_ARE_MASKED_ADDR_EQUAL(d, a, m)	(			\
@@ -1990,44 +1988,13 @@ in_lltable_match_prefix(const struct sockaddr *prefix,
 static void
 in_lltable_free_entry(struct lltable *llt, struct llentry *lle)
 {
-	struct ifnet *ifp __diagused;
 	size_t pkts_dropped;
-	bool locked = false;
 
 	LLE_WLOCK_ASSERT(lle);
 	KASSERT(llt != NULL);
 
-	/* Unlink entry from table if not already */
-	if ((lle->la_flags & LLE_LINKED) != 0) {
-		ifp = llt->llt_ifp;
-		IF_AFDATA_WLOCK_ASSERT(ifp);
-		lltable_unlink_entry(llt, lle);
-		locked = true;
-	}
-
-	/*
-	 * We need to release the lock here to lle_timer proceeds;
-	 * lle_timer should stop immediately if LLE_LINKED isn't set.
-	 * Note that we cannot pass lle->lle_lock to callout_halt
-	 * because it's a rwlock.
-	 */
-	LLE_ADDREF(lle);
-	LLE_WUNLOCK(lle);
-	if (locked)
-		IF_AFDATA_WUNLOCK(ifp);
-
-	/* cancel timer */
-	callout_halt(&lle->lle_timer, NULL);
-
-	LLE_WLOCK(lle);
-	LLE_REMREF(lle);
-
-	/* Drop hold queue */
 	pkts_dropped = llentry_free(lle);
 	arp_stat_add(ARP_STAT_DFRDROPPED, (uint64_t)pkts_dropped);
-
-	if (locked)
-		IF_AFDATA_WLOCK(ifp);
 }
 
 static int
@@ -2158,7 +2125,7 @@ in_lltable_delete(struct lltable *llt, u_int flags,
 
 	lle = in_lltable_find_dst(llt, sin->sin_addr);
 	if (lle == NULL) {
-#ifdef DEBUG
+#ifdef LLTABLE_DEBUG
 		char buf[64];
 		sockaddr_format(l3addr, buf, sizeof(buf));
 		log(LOG_INFO, "%s: cache for %s is not found\n",
@@ -2168,8 +2135,7 @@ in_lltable_delete(struct lltable *llt, u_int flags,
 	}
 
 	LLE_WLOCK(lle);
-	lle->la_flags |= LLE_DELETED;
-#ifdef DEBUG
+#ifdef LLTABLE_DEBUG
 	{
 		char buf[64];
 		sockaddr_format(l3addr, buf, sizeof(buf));
@@ -2177,10 +2143,7 @@ in_lltable_delete(struct lltable *llt, u_int flags,
 		    __func__, buf, lle);
 	}
 #endif
-	if ((lle->la_flags & (LLE_STATIC | LLE_IFADDR)) == LLE_STATIC)
-		llentry_free(lle);
-	else
-		LLE_WUNLOCK(lle);
+	llentry_free(lle);
 
 	return (0);
 }

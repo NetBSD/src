@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.250.2.6 2018/02/26 13:36:01 martin Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.250.2.7 2018/03/13 13:27:10 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.250.2.6 2018/02/26 13:36:01 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.250.2.7 2018/03/13 13:27:10 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -314,35 +314,20 @@ arptimer(void *arg)
 	struct llentry *lle = arg;
 	struct ifnet *ifp;
 
-	if (lle == NULL)
-		return;
-
-	if (lle->la_flags & LLE_STATIC)
-		return;
+	KASSERT((lle->la_flags & LLE_STATIC) == 0);
 
 	LLE_WLOCK(lle);
-	if (callout_pending(&lle->la_timer)) {
-		/*
-		 * Here we are a bit odd here in the treatment of
-		 * active/pending. If the pending bit is set, it got
-		 * rescheduled before I ran. The active
-		 * bit we ignore, since if it was stopped
-		 * in ll_tablefree() and was currently running
-		 * it would have return 0 so the code would
-		 * not have deleted it since the callout could
-		 * not be stopped so we want to go through
-		 * with the delete here now. If the callout
-		 * was restarted, the pending bit will be back on and
-		 * we just want to bail since the callout_reset would
-		 * return 1 and our reference would have been removed
-		 * by arpresolve() below.
-		 */
-		LLE_WUNLOCK(lle);
+
+	/*
+	 * This shortcut is required to avoid trying to touch ifp that may be
+	 * being destroyed.
+	 */
+	if ((lle->la_flags & LLE_LINKED) == 0) {
+		LLE_FREE_LOCKED(lle);
 		return;
 	}
-	ifp = lle->lle_tbl->llt_ifp;
 
-	callout_stop(&lle->la_timer);
+	ifp = lle->lle_tbl->llt_ifp;
 
 	/* XXX: LOR avoidance. We still have ref on lle. */
 	LLE_WUNLOCK(lle);
@@ -370,6 +355,21 @@ arp_settimer(struct llentry *la, int sec)
 {
 
 	LLE_WLOCK_ASSERT(la);
+	KASSERT((la->la_flags & LLE_STATIC) == 0);
+
+	/*
+	 * We have to take care of a reference leak which occurs if
+	 * callout_reset overwrites a pending callout schedule.  Unfortunately
+	 * we don't have a mean to know the overwrite, so we need to know it
+	 * using callout_stop.  We need to call callout_pending first to exclude
+	 * the case that the callout has never been scheduled.
+	 */
+	if (callout_pending(&la->la_timer)) {
+		bool expired = callout_stop(&la->la_timer);
+		if (!expired)
+			/* A pending callout schedule is canceled. */
+			LLE_REMREF(la);
+	}
 	LLE_ADDREF(la);
 	callout_reset(&la->la_timer, hz * sec, arptimer, la);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.194.6.6 2018/02/05 14:55:16 martin Exp $	*/
+/*	$NetBSD: route.c,v 1.194.6.7 2018/03/13 13:27:10 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.194.6.6 2018/02/05 14:55:16 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.194.6.7 2018/03/13 13:27:10 martin Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -143,7 +143,7 @@ __KERNEL_RCSID(0, "$NetBSD: route.c,v 1.194.6.6 2018/02/05 14:55:16 martin Exp $
 #define RT_REFCNT_TRACE(rt)	do {} while (0)
 #endif
 
-#ifdef DEBUG
+#ifdef RT_DEBUG
 #define dlog(level, fmt, args...)	log(level, fmt, ##args)
 #else
 #define dlog(level, fmt, args...)	do {} while (0)
