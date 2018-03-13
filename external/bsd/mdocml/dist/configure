@@ -40,7 +40,9 @@ OSNAME=
 MAKEFLAGS=
 UTF8_LOCALE=
 
-CC=`printf "all:\\n\\t@echo \\\$(CC)\\n" | env -i make -sf -`
+if [ -z "${CC}" ]; then
+	CC=`printf "all:\\n\\t@echo \\\$(CC)\\n" | env -i make -sf -`
+fi
 CFLAGS="-g -W -Wall -Wmissing-prototypes -Wstrict-prototypes -Wwrite-strings"
 CFLAGS="${CFLAGS} -Wno-unused-parameter"
 LDADD=
