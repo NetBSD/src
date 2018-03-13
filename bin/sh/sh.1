@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.179 2018/03/13 20:08:11 uwe Exp $
+.\"	$NetBSD: sh.1,v 1.180 2018/03/13 20:18:16 uwe Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -947,7 +947,7 @@ It is a syntax error for the end of the input file (or string) to be
 reached before the delimiter is encountered.
 .Ss Search and Execution
 There are three types of commands: shell functions, built-in commands, and
-normal programs -- and the command is searched for (by name) in that order.
+normal programs \(em and the command is searched for (by name) in that order.
 A command that contains a slash
 .Sq \&/
 in its name is always a normal program.
@@ -1127,7 +1127,7 @@ to the standard input of command2.
 .Pp
 Note that unlike some other shells, each process in the pipeline is a
 child of the invoking shell (unless it is a shell built-in, in which case
-it executes in the current shell -- but any effect it has on the
+it executes in the current shell \(em but any effect it has on the
 environment is wiped).
 .Pp
 A pipeline is a simple case of an AND-OR-list (described below.)
@@ -1145,10 +1145,10 @@ after they have completed,
 can be obtained using the
 .Ic wait
 built-in command described later.
-.Ss Background Commands -- &
+.Ss Background Commands \(em &
 If a command, pipeline, or AND-OR-list
 is terminated by the control operator ampersand (&), the
-shell executes the command asynchronously -- that is, the shell does not
+shell executes the command asynchronously \(em that is, the shell does not
 wait for the command to finish before executing the next command.
 .Pp
 The format for running a command in background is:
@@ -1164,7 +1164,7 @@ background can be obtained from the value of the special parameter
 (see
 .Sx Special Parameters )
 provided it is accessed before the next asynchronous command is started.
-.Ss Lists -- Generally Speaking
+.Ss Lists \(em Generally Speaking
 A list is a sequence of one or more commands separated by newlines,
 semicolons, or ampersands, and optionally terminated by one of these three
 characters.
@@ -1208,7 +1208,7 @@ writes
 .Dq baz
 and nothing else.
 This is not the way it works in C.
-.Ss Flow-Control Constructs -- if, while, until, for, case
+.Ss Flow-Control Constructs \(em if, while, until, for, case
 These commands are instances of compound commands.
 The syntax of the
 .Ic if
