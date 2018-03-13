@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsecif.c,v 1.1.2.4 2018/03/13 15:29:45 martin Exp $  */
+/*	$NetBSD: ipsecif.c,v 1.1.2.5 2018/03/13 15:34:33 martin Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsecif.c,v 1.1.2.4 2018/03/13 15:29:45 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsecif.c,v 1.1.2.5 2018/03/13 15:34:33 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -489,7 +489,9 @@ ipsecif6_output(struct ipsec_variant *var, int family, struct mbuf *m)
 	ip6->ip6_flow	= 0;
 	ip6->ip6_vfc	&= ~IPV6_VERSION_MASK;
 	ip6->ip6_vfc	|= IPV6_VERSION;
-	ip6->ip6_plen	= htons((u_short)m->m_pkthdr.len);
+#if 0	/* ip6->ip6_plen will be filled by ip6_output */
+	ip6->ip6_plen	= htons((u_short)m->m_pkthdr.len - sizeof(*ip6));
+#endif
 	ip6->ip6_nxt	= proto;
 	ip6->ip6_hlim	= ip6_ipsec_hlim;
 	ip6->ip6_src	= sin6_src->sin6_addr;
