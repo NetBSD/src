@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mod.c,v 1.24.14.4 2018/03/08 01:07:13 pgoyette Exp $	*/
+/*	$NetBSD: compat_mod.c,v 1.24.14.5 2018/03/13 09:10:31 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.24.14.4 2018/03/08 01:07:13 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.24.14.5 2018/03/13 09:10:31 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -62,6 +62,8 @@ __KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.24.14.4 2018/03/08 01:07:13 pgoyett
 #include <compat/common/compat_util.h>
 #include <compat/common/compat_mod.h>
 #include <compat/common/if_43.h>
+#include <compat/common/uvm_stats_13.h>
+#include <compat/common/uvm_stats_50.h>
 #include <compat/sys/sockio.h>
 
 
@@ -251,11 +253,15 @@ compat_modcmd(modcmd_t cmd, void *arg)
 		ttcompatvec = ttcompat;
 		if_43_init();
 #endif
+#ifdef COMPAT_13
+		swapstats_13_init();
+#endif
 #ifdef COMPAT_40
 		if_40_init();
 #endif
 #ifdef COMPAT_50
 		if_50_init();
+		swapstats_50_init();
 #endif
 #ifdef COMPAT_16
 #if defined(COMPAT_SIGCONTEXT)
@@ -326,6 +332,16 @@ compat_modcmd(modcmd_t cmd, void *arg)
 		rw_exit(&exec_lock);
 #endif
 #endif	/* COMPAT_16 */
+#ifdef COMPAT_13
+		swapstats_13_fini();
+#endif
+#ifdef COMPAT_40
+		if_40_fini();
+#endif
+#ifdef COMPAT_50
+		if_50_fini();
+		swapstats_50_fini();
+#endif
 		compat_sysctl_fini();
 		return 0;
 
