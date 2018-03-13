@@ -1,4 +1,4 @@
-/* $NetBSD: imx31lk_machdep.c,v 1.19 2016/12/22 14:47:55 cherry Exp $ */
+/* $NetBSD: imx31lk_machdep.c,v 1.20 2018/03/13 06:18:17 ryo Exp $ */
 
 /*
  * Startup routines for the ZOOM iMX31 LITEKIT.
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx31lk_machdep.c,v 1.19 2016/12/22 14:47:55 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx31lk_machdep.c,v 1.20 2018/03/13 06:18:17 ryo Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -417,7 +417,7 @@ initarm(void *arg)
 
 #ifdef VERBOSE_INIT_ARM
 	/* Tell the user about the memory */
-	printf("physmemory: %d pages at 0x%08lx -> 0x%08lx\n", physmem,
+	printf("physmemory: %"PRIuPSIZE" pages at 0x%08lx -> 0x%08lx\n", physmem,
 	    physical_start, physical_end - 1);
 #endif
 
