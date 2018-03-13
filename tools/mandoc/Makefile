@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2016/01/27 21:24:59 christos Exp $
+#	$NetBSD: Makefile,v 1.9.8.1 2018/03/13 13:29:57 martin Exp $
 
 HOSTPROGNAME=	${_TOOL_PREFIX}mandoc
 HOST_SRCDIR=	external/bsd/mdocml/bin/mandoc
@@ -17,6 +17,6 @@ DPSRCS+=	config.h
 CLEANFILES+=	config.log config.h Makefile.local
 
 config.h: configure 
-	SRCDIR=${DISTDIR} ${HOST_SH} ${DISTDIR}/configure
+	SRCDIR=${DISTDIR} CC=${HOST_CC} ${HOST_SH} ${DISTDIR}/configure
 
 .include "${.CURDIR}/../Makefile.host"
