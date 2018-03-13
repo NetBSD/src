@@ -1,12 +1,12 @@
 #
-# $NetBSD: MILAN-ISAIDE,v 1.87 2016/12/13 20:42:16 christos Exp $
+# $NetBSD: MILAN-ISAIDE,v 1.87.8.1 2018/03/13 13:42:54 martin Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
-#		NetBSD: MILAN.in,v 1.27 2014/07/05 09:24:23 tsutsui Exp $
-#		NetBSD: GENERIC.in,v 1.109 2014/11/24 08:23:48 tsutsui Exp $
+#		NetBSD: MILAN.in,v 1.27.20.1 2018/03/13 13:41:13 martin Exp $
+#		NetBSD: GENERIC.in,v 1.112.8.1 2018/01/26 14:28:15 martin Exp $
 include "arch/atari/conf/std.milan"
 options INCLUDE_CONFIG_FILE # embed config file in kernel binary
 makeoptions COPTS="-O2 -fno-reorder-blocks" # see share/mk/sys.mk
@@ -89,9 +89,7 @@ ep* at pci? dev ? function ? # 3Com 3c59x
 fxp* at pci? dev ? function ? # Intel EtherExpress PRO 10+/100B
 eso* at pci? dev ? function ? # ESS Solo-1 PCI AudioDrive
 audio* at eso?
-
-spkr*	at audio?		# PC speaker (synthesized)
-
+spkr* at audio? # PC speaker (synthesized)
 options WSEMUL_VT100 # VT100 / VT220 emulation
 options WS_KERNEL_FG=WSCOL_WHITE
 options WS_KERNEL_BG=WSCOL_BLACK
@@ -114,8 +112,6 @@ wsdisplay* at vga? console ? # as a wscons console
 pckbc0 at isa? # PC keyboard controller
 pckbd* at pckbc? # PC keyboard
 wskbd* at pckbd? console ? # wscons keyboard
-
 wd* at atabus? drive ?
 atapibus* at atabus? # ATAPI bus support
-
 cd* at atapibus? drive ? # ATAPI CD-ROM drives
