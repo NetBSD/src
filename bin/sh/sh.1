@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.185 2018/03/13 21:04:57 uwe Exp $
+.\"	$NetBSD: sh.1,v 1.186 2018/03/13 21:49:15 uwe Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -1615,25 +1615,32 @@ In variable assignments,
 an unquoted tilde immediately after the assignment operator (=), and
 each unquoted tilde immediately after an unquoted colon in the value
 to be assigned is also subject to tilde expansion as just stated.
+.\"
+.\"
 .Ss Parameter Expansion
+.\"
 The format for parameter expansion is as follows:
 .Pp
-.Dl ${expression}
+.Dl ${ Ns Ar expression Ns Li }
 .Pp
-where expression consists of all characters until the matching
-.Dq } .
+where
+.Ar expression
+consists of all characters until the matching
+.Sq Li } .
 Any
-.Dq }
+.Sq Li }
 escaped by a backslash or within a quoted string, and characters in
 embedded arithmetic expansions, command substitutions, and variable
 expansions, are not examined in determining the matching
-.Dq } .
+.Sq Li } .
 .Pp
 The simplest form for parameter expansion is:
 .Pp
-.Dl ${parameter}
+.Dl ${ Ns Ar parameter Ns Li }
 .Pp
-The value, if any, of parameter is substituted.
+The value, if any, of
+.Ar parameter
+is substituted.
 .Pp
 The parameter name or symbol can be enclosed in braces,
 which are optional in this simple case,
@@ -1643,47 +1650,74 @@ part of the name.
 If a parameter expansion occurs inside double quotes:
 .Bl -enum
 .It
-Pathname expansion is not performed on the results of the expansion.
+pathname expansion is not performed on the results of the expansion;
 .It
-Field splitting is not performed on the results of the
-expansion, with the exception of the special rules for @.
+field splitting is not performed on the results of the
+expansion, with the exception of the special rules for
+.Dv @ .
 .El
 .Pp
 In addition, a parameter expansion where braces are used,
 can be modified by using one of the following formats.
 If the
-.Dq Dv \&:
+.Sq Ic \&:
 is omitted in the following modifiers, then the test in the expansion
 applies only to unset parameters, not null ones.
 .Bl -tag -width aaparameterwordaaaaa
-.It ${parameter:\(miword}
-Use Default Values.
-If parameter is unset or null, the expansion of word
-is substituted; otherwise, the value of parameter is substituted.
-.It ${parameter:=word}
-Assign Default Values.
-If parameter is unset or null, the expansion of
-word is assigned to parameter.
-In all cases, the final value of parameter is substituted.
+.It Li ${ Ns Ar parameter Ns Ic :- Ns Ar word Ns Li }
+.Sy Use Default Values.
+If
+.Ar parameter
+is unset or null, the expansion of
+.Ar word
+is substituted; otherwise, the value of
+.Ar parameter
+is substituted.
+.It Li ${ Ns Ar parameter Ns Ic := Ns Ar word Ns Li }
+.Sy Assign Default Values.
+If
+.Ar parameter
+is unset or null, the expansion of
+.Ar word
+is assigned to
+.Ar parameter .
+In all cases, the final value of
+.Ar parameter
+is substituted.
 Only variables, not positional parameters or special
 parameters, can be assigned in this way.
-.It ${parameter:?[word]}
-Indicate Error if Null or Unset.
-If parameter is unset or null, the
-expansion of word (or a message indicating it is unset if word is omitted)
+.It Li ${ Ns Ar parameter Ns Ic :? Ns Oo Ar word\^ Oc Ns Li }
+.Sy Indicate Error if Null or Unset.
+If
+.Ar parameter
+is unset or null, the expansion of
+.Ar word
+(or a message indicating it is unset if
+.Ar word
+is omitted)
 is written to standard error and a non-interactive shell exits with
 a nonzero exit status.
 An interactive shell will not exit, but any associated command(s) will
 not be executed.
-If the parameter is set, its value is substituted.
-.It ${parameter:+word}
-Use Alternative Value.
-If parameter is unset or null, null is
-substituted; otherwise, the expansion of word is substituted.
-The value of parameter is not used in this expansion.
-.It ${#parameter}
-String Length.
-The length in characters of the value of parameter.
+If the
+.Ar parameter
+is set, its value is substituted.
+.It Li ${ Ns Ar parameter Ns Ic :+ Ns Ar word Ns Li }
+.Sy Use Alternative Value.
+If
+.Ar parameter
+is unset or null, null is substituted;
+otherwise, the expansion of
+.Ar word
+is substituted.
+The value of
+.Ar parameter
+.Em is not used
+in this expansion.
+.It Li ${ Ns Ic # Ns Ar parameter Ns Li }
+.Sy String Length.
+The length in characters of the value of
+.Ar parameter .
 .El
 .Pp
 The following four varieties of parameter expansion provide for substring
@@ -1691,50 +1725,76 @@ processing.
 In each case, pattern matching notation (see
 .Sx Shell Patterns ) ,
 rather than regular expression notation, is used to evaluate the patterns.
-If parameter is * or @, the result of the expansion is unspecified.
+If parameter is
+.Dv *
+or
+.Dv @ ,
+the result of the expansion is unspecified.
 Enclosing the full parameter expansion string in double quotes does not
 cause the following four varieties of pattern characters to be quoted,
 whereas quoting characters within the braces has this effect.
 .Bl -tag -width aaparameterwordaaaaa
-.It ${parameter%word}
-Remove Smallest Suffix Pattern.
-The word is expanded to produce a pattern.
-The parameter expansion then results in parameter, with the
+.It Li ${ Ns Ar parameter Ns Ic % Ns Ar word Ns Li }
+.Sy Remove Smallest Suffix Pattern.
+The
+.Ar word
+is expanded to produce a pattern.
+The parameter expansion then results in
+.Ar parameter ,
+with the
 smallest portion of the suffix matched by the pattern deleted.
-If the word is to start with a
-.Sq \&%
+If the
+.Ar word
+is to start with a
+.Sq Li \&%
 character, it must be quoted.
-.It ${parameter%%word}
-Remove Largest Suffix Pattern.
-The word is expanded to produce a pattern.
-The parameter expansion then results in parameter, with the largest
+.It Li ${ Ns Ar parameter Ns Ic %% Ns Ar word Ns Li }
+.Sy Remove Largest Suffix Pattern.
+The
+.Ar word
+is expanded to produce a pattern.
+The parameter expansion then results in
+.Ar parameter ,
+with the largest
 portion of the suffix matched by the pattern deleted.
 The
-.Dq %%
+.Dq Ic %%
 pattern operator only produces different results from the
-.Dq \&%
+.Dq Ic \&%
 operator when the pattern contains at least one unquoted
-.Sq \&* .
-.It ${parameter#word}
-Remove Smallest Prefix Pattern.
-The word is expanded to produce a pattern.
-The parameter expansion then results in parameter, with the
+.Sq Li \&* .
+.It Li ${ Ns Ar parameter Ns Ic \&# Ns Ar word Ns Li }
+.Sy Remove Smallest Prefix Pattern.
+The
+.Ar word
+is expanded to produce a pattern.
+The parameter expansion then results in
+.Ar parameter ,
+with the
 smallest portion of the prefix matched by the pattern deleted.
-If the word is to start with a
-.Sq \&#
+If the
+.Ar word
+is to start with a
+.Sq Li \&#
 character, it must be quoted.
-.It ${parameter##word}
-Remove Largest Prefix Pattern.
-The word is expanded to produce a pattern.
-The parameter expansion then results in parameter, with the largest
+.It Li ${ Ns Ar parameter Ns Ic \&## Ns Ar word Ns Li }
+.Sy Remove Largest Prefix Pattern.
+The
+.Ar word
+is expanded to produce a pattern.
+The parameter expansion then results in
+.Ar parameter ,
+with the largest
 portion of the prefix matched by the pattern deleted.
 This has the same relationship with the
-.Sq \&#
+.Dq Ic \&#
 pattern operator as
-.Dq %%
+.Dq Ic %%
 has with
-.Dq \&% .
+.Dq Ic \&% .
 .El
+.\"
+.\"
 .Ss Command Substitution
 Command substitution allows the output of a command to be substituted in
 place of the command (and surrounding syntax).
