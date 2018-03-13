@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2018/03/11 10:17:10 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2018/03/13 02:23:28 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -68,9 +68,11 @@ SRCS.bitmap=	\
 	bdfread.c \
 	bdfutils.c \
 	pcfread.c
+SRCS.bitmap+=	\
+	pcfwrite.c
+# SNF support not enabled
 .if 0
 SRCS.bitmap+=	\
-	pcfwrite.c \
 	snfread.c
 .endif
 .PATH:	${XFONT2DIR}/src/bitmap
