@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.24.2.6 2018/03/06 11:12:40 martin Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.24.2.7 2018/03/13 14:59:06 martin Exp $ */
 
 /******************************************************************************
 
@@ -392,10 +392,10 @@ retry:
 
 		switch (error) {
 		case EAGAIN:
-			adapter->eagain_tx_dma_setup.ev_count++;
+			txr->q_eagain_tx_dma_setup++;
 			return EAGAIN;
 		case ENOMEM:
-			adapter->enomem_tx_dma_setup.ev_count++;
+			txr->q_enomem_tx_dma_setup++;
 			return EAGAIN;
 		case EFBIG:
 			/* Try it again? - one try */
@@ -405,23 +405,23 @@ retry:
 				 * XXX: m_defrag will choke on
 				 * non-MCLBYTES-sized clusters
 				 */
-				adapter->efbig_tx_dma_setup.ev_count++;
+				txr->q_efbig_tx_dma_setup++;
 				m = m_defrag(m_head, M_NOWAIT);
 				if (m == NULL) {
-					adapter->mbuf_defrag_failed.ev_count++;
+					txr->q_mbuf_defrag_failed++;
 					return ENOBUFS;
 				}
 				m_head = m;
 				goto retry;
 			} else {
-				adapter->efbig2_tx_dma_setup.ev_count++;
+				txr->q_efbig2_tx_dma_setup++;
 				return error;
 			}
 		case EINVAL:
-			adapter->einval_tx_dma_setup.ev_count++;
+			txr->q_einval_tx_dma_setup++;
 			return error;
 		default:
-			adapter->other_tx_dma_setup.ev_count++;
+			txr->q_other_tx_dma_setup++;
 			return error;
 		}
 	}
