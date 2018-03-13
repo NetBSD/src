@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.69 2011/12/19 11:59:58 drochner Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.69.2.1 2018/03/13 16:43:06 snj Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.109 2002/09/11 08:10:17 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.69 2011/12/19 11:59:58 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.69.2.1 2018/03/13 16:43:06 snj Exp $");
 
 #include "opt_gateway.h"
 #include "opt_ipsec.h"
@@ -645,8 +645,8 @@ ip6_forward(struct mbuf *m, int srcrt)
 			IP6_STATINC(IP6_STAT_REDIRECTSENT);
 		else {
 #ifdef GATEWAY
-			if (m->m_flags & M_CANFASTFWD)
-				ip6flow_create(&ip6_forward_rt, m);
+			if (mcopy->m_flags & M_CANFASTFWD)
+				ip6flow_create(&ip6_forward_rt, mcopy);
 #endif
 			if (mcopy)
 				goto freecopy;
