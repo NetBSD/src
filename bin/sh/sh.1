@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.183 2018/03/13 20:40:52 uwe Exp $
+.\"	$NetBSD: sh.1,v 1.184 2018/03/13 20:48:00 uwe Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -900,20 +900,19 @@ for reading and writing on standard input (or
 .Pp
 The following redirection is often called a
 .Dq here-document .
-.Bl -item -offset indent
-.It
-.Li [n]<< delimiter
-.Dl here-doc-text ...
-.Li delimiter
-.El
+.Bd -literal -offset indent
+[n]<< delimiter
+\&... here-doc-text ...
+delimiter
+.Ed
 .Pp
 The
 .Dq here-doc-text
 starts immediately after the next unquoted newline character following
-the here-doc redirection operator.
+the here-document redirection operator.
 If there is more than one here-document redirection on the same
 line, then the text for the first (from left to right) is read
-first, and subsequent here-doc-text for later here-doc redirections
+first, and subsequent here-doc-text for later here-document redirections
 follows immediately after, until all such redirections have been
 processed.
 .Pp
@@ -940,7 +939,8 @@ then leading tabs in all lines in the here-doc-text, including before the
 end delimiter, are stripped.
 If the delimiter is not quoted, lines in here-doc-text that end with
 an unquoted \e are joined to the following line, the \e and following
-newline are simply removed while reading the here-doc, which thus guarantees
+newline are simply removed while reading the here-document,
+which thus guarantees
 that neither of those lines can be the end delimiter.
 .Pp
 It is a syntax error for the end of the input file (or string) to be
