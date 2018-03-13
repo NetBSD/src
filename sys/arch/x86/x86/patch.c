@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.33 2018/02/22 09:41:06 maxv Exp $	*/
+/*	$NetBSD: patch.c,v 1.34 2018/03/13 16:52:42 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.33 2018/02/22 09:41:06 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.34 2018/03/13 16:52:42 maxv Exp $");
 
 #include "opt_lockdebug.h"
 #ifdef i386
@@ -182,10 +182,12 @@ x86_patch_window_close(u_long psl, u_long cr0)
 	/* Write back and invalidate cache, flush pipelines. */
 	wbinvd();
 	x86_flush();
-	x86_write_psl(psl);
 
 	/* Re-enable write protection. */
 	lcr0(cr0);
+
+	/* Restore the PSL, potentially re-enabling interrupts. */
+	x86_write_psl(psl);
 }
 
 void
