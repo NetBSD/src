@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.326 2018/03/03 20:50:38 snj Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.327 2018/03/13 18:06:22 snj Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -21092,4 +21092,76 @@ dist/pf/etc/pf.os				1.4-1.5
 	Synchronise with r1.27 from OpenBSD
 	Add DragonFly BSD fingerprints.
 	[sevan, ticket #1515]
+
+sys/dev/fss.c					1.101-1.103
+
+	fss:
+	- Bounds check against media size for non-persistent snapshots.
+	- Treat partial read from backing store as I/O error.
+	- Pass residual back to b_resid for persistent snapshots.
+	[hannken, ticket #1516]
+
+sys/netinet6/ip6_forward.c			1.89-1.90 via patch
+
+	Fix use-after-free of mbuf in ip6flow_create and ip6flow_create.
+	[ozaki-r, ticket #1518]
+
+sys/arch/sparc/sparc/timer.c			1.33-1.34 via patch
+sys/arch/sparc/sparc/timer_sun4m.c		1.31 via patch
+sys/arch/sparc/sparc/timerreg.h			1.10 via patch
+
+	Fix time goes backwards problems on sparc.
+	[mrg, ticket #1519]
+
+bin/ksh/history.c				1.18 via patch
+
+	Use 0600 as the mode for histfile.  PR bin/52480
+	[maya, ticket #1520]
+
+sys/arch/macppc/dev/snapper.c			1.42
+
+	Fix issue with audio being downpitched.  PR 52949.
+	[sevan, ticket #1522]
+
+sys/netipsec/xform_ah.c				1.77 via patch
+sys/netipsec/xform_esp.c			1.73 via patch
+sys/netipsec/xform_ipip.c			1.56-1.57 via patch
+
+	Several fixes in IPsec: strengthen sanity checks (AH/ESP), and
+	fix possible use-after-free (Tunnel).
+	[maxv, ticket #1532]
+
+sys/dev/sbus/be.c				1.86
+
+	Fix spl leak.
+	[msaitoh, ticket #1533]
+
+lib/libc/arch/powerpc/gen/swapcontext.S		1.8 via patch
+lib/libc/arch/powerpc/genassym.cf		1.5 via patch
+
+	PIC code clobbers %r30 so we need to update the saved oucp with
+	caller's %r30 manually.  Makes old context happy when it needs
+	to do more function calls after restore.
+	[uwe, ticket #1534]
+
+sys/net/if_mpls.c				1.31-1.33 via patch
+sys/netmpls/mpls_ttl.c				1.9 via patch
+
+   	Fix several memory corruptions and inconsistencies in MPLS.
+	[maxv, ticket #1535]
+
+sys/netipsec/ipsec_input.c			1.57-1.58
+
+	Fix out-of-bounds read.
+	[maxv, ticket #1536]
+
+sys/dev/ppbus/if_plip.c				1.28
+
+	Fix spl leak.
+	[msaitoh, ticket #1537]
+
+share/man/man4/altq.4				1.3
+
+	Update URL for the cited paper
+	[sevan, ticket #1538]
 
