@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.30 2014/03/20 03:13:18 christos Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.30.22.1 2018/03/13 14:54:52 martin Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -71,7 +71,9 @@ struct ptable_ent {
 #define	PTFIXSZ		8
 #define	PTSIZE(pp)	roundup(PTFIXSZ + isonum_711((pp)->namlen), 2)
 
+#ifndef	cdb2devb
 #define	cdb2devb(bno)	((bno) * ISO_DEFAULT_BLOCK_SIZE / DEV_BSIZE)
+#endif
 
 static int	pnmatch(const char *, struct ptable_ent *);
 static int	dirmatch(const char *, struct iso_directory_record *);

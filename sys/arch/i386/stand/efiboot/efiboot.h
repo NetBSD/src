@@ -1,4 +1,4 @@
-/*	$NetBSD: efiboot.h,v 1.5 2017/05/01 13:03:01 nonaka Exp $	*/
+/*	$NetBSD: efiboot.h,v 1.5.2.1 2018/03/13 14:54:52 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -46,6 +46,7 @@ void print_banner(void);
 /* efiboot.c */
 extern EFI_HANDLE IH;
 extern EFI_DEVICE_PATH *efi_bootdp;
+extern int efi_bootdp_type;
 extern EFI_LOADED_IMAGE *efi_li;
 extern uintptr_t efi_main_sp;
 extern physaddr_t efi_loadaddr, efi_kernel_start;
@@ -59,8 +60,13 @@ void consinit(int, int, int);
 void command_text(char *);
 void command_gop(char *);
 
+/* efidev.c */
+int efi_device_path_depth(EFI_DEVICE_PATH *dp, int);
+int efi_device_path_ncmp(EFI_DEVICE_PATH *, EFI_DEVICE_PATH *, int);
+
 /* efidisk.c */
 void efi_disk_probe(void);
+void efi_disk_show(void);
 
 /* efimemory.c */
 void efi_memory_probe(void);

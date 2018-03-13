@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.1 2017/01/24 11:09:14 nonaka Exp $	 */
+/*	$NetBSD: devopen.c,v 1.1.12.1 2018/03/13 14:54:52 martin Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -66,8 +66,11 @@ dev2bios(char *devname, int unit, int *biosdev)
 
 	if (strcmp(devname, "hd") == 0)
 		*biosdev = 0x80 + unit;
+	if (strcmp(devname, "cd") == 0)
+		*biosdev = 0x80 + get_harddrives() + unit;
 	else
 		return ENXIO;
+
 	return 0;
 }
 
@@ -76,7 +79,13 @@ bios2dev(int biosdev, daddr_t sector, char **devname, int *unit, int *partition)
 {
 
 	*unit = biosdev & 0x7f;
-	*devname = "hd";
+
+	if (biosdev >= 0x80 + get_harddrives()) {
+		*devname = "cd";
+		*unit -= get_harddrives();
+	} else
+		*devname = "hd";
+
 	*partition = biosdisk_findpartition(biosdev, sector);
 }
 
