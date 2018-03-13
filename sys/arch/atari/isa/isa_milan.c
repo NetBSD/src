@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_milan.c,v 1.14 2009/03/18 10:22:25 cegger Exp $	*/
+/*	$NetBSD: isa_milan.c,v 1.14.56.1 2018/03/13 13:41:14 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_milan.c,v 1.14 2009/03/18 10:22:25 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_milan.c,v 1.14.56.1 2018/03/13 13:41:14 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -122,9 +122,11 @@ isa_callback(int vector)
 
 	s = splx(iinfo_p->ipl);
 	(void) (iinfo_p->ifunc)(iinfo_p->iarg);
-	if (vector > 7)
+	if (vector > 7) {
 		WICU(AD_8259_SLAVE, 0x60 | (vector & 7));
-	else WICU(AD_8259_MASTER, 0x60 | (vector & 7));
+		vector = IRQ_SLAVE;
+	}
+	WICU(AD_8259_MASTER, 0x60 | (vector & 7));
 	splx(s);
 }
 
@@ -139,10 +141,6 @@ milan_isa_intr(int vector, int sr)
 		printf("milan_isa_intr: Bogus vector %d\n", vector);
 		return;
 	}
-
-	/* Ack cascade 0x60 == Specific EOI		*/
-	if (vector > 7)
-		WICU(AD_8259_MASTER, 0x60|IRQ_SLAVE);
 
 	iinfo_p = &milan_isa_iinfo[vector];
 	if (iinfo_p->ifunc == NULL) {
@@ -159,9 +157,11 @@ milan_isa_intr(int vector, int sr)
 	else {
 		s = splx(iinfo_p->ipl);
 		(void) (iinfo_p->ifunc)(iinfo_p->iarg);
-		if (vector > 7)
+		if (vector > 7) {
 			WICU(AD_8259_SLAVE, 0x60 | (vector & 7));
-		else WICU(AD_8259_MASTER, 0x60 | (vector & 7));
+			vector = IRQ_SLAVE;
+		}
+		WICU(AD_8259_MASTER, 0x60 | (vector & 7));
 		splx(s);
 	}
 }
@@ -209,7 +209,7 @@ isa_intr_establish(isa_chipset_tag_t ic, int irq, int type, int level, int (*ih_
 
 	iinfo_p->slot  = 0;	/* Unused on Milan */
 	iinfo_p->ihand = NULL;	/* Unused on Milan */
-	iinfo_p->ipl   = level;
+	iinfo_p->ipl   = ipl2psl_table[level];
 	iinfo_p->ifunc = ih_fun;
 	iinfo_p->iarg  = ih_arg;
 

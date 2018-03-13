@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.110 2015/12/08 20:36:15 christos Exp $	*/
+/*	$NetBSD: fd.c,v 1.110.10.1 2018/03/13 13:41:13 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2008 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.110 2015/12/08 20:36:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.110.10.1 2018/03/13 13:41:13 martin Exp $");
 
 #include "opt_ddb.h"
 
@@ -460,14 +460,16 @@ fdcfinishattach(device_t self)
 			 * Atari has a different ordening, defaults to 1.44
 			 */
 			fa.fa_deftype = &fd_types[2];
+			 /* Atari also configures ISA fdc(4) as "fdcisa" */
+			(void)config_found_ia(fdc->sc_dev, "fdcisa", (void *)&fa, fdprint);
 #else
 			/*
 			 * Default to 1.44MB on Alpha and BeBox.  How do we tell
 			 * on these platforms?
 			 */
 			fa.fa_deftype = &fd_types[0];
-#endif
 			(void)config_found_ia(fdc->sc_dev, "fdc", (void *)&fa, fdprint);
+#endif
 		}
 	}
 	fdc->sc_state = DEVIDLE;
