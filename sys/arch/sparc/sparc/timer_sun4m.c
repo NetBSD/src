@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_sun4m.c,v 1.28 2011/09/01 08:43:24 martin Exp $	*/
+/*	$NetBSD: timer_sun4m.c,v 1.28.14.1 2018/03/13 16:48:01 snj Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_sun4m.c,v 1.28 2011/09/01 08:43:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_sun4m.c,v 1.28.14.1 2018/03/13 16:48:01 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -74,7 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: timer_sun4m.c,v 1.28 2011/09/01 08:43:24 martin Exp 
 #include <sparc/sparc/timerreg.h>
 #include <sparc/sparc/timervar.h>
 
-struct timer_4m		*timerreg4m;
+static struct timer_4m		*timerreg4m;
 #define	counterreg4m	cpuinfo.counterreg_4m
 
 /*
@@ -142,9 +142,13 @@ clockintr_4m(void *cap)
 	 */
 	if (cold)
 		return 0;
+
 	kpreempt_disable();
-	/* read the limit register to clear the interrupt */
+
+	/* Read the limit register to clear the interrupt. */
 	*((volatile int *)&timerreg4m->t_limit);
+
+	/* Update the timecounter offset. */
 	tickle_tc();
 	hardclock((struct clockframe *)cap);
 	kpreempt_enable();
