@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.145.6.2 2017/09/09 17:29:40 snj Exp $	*/
+/*	$NetBSD: locore.S,v 1.145.6.3 2018/03/13 15:47:44 martin Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.145.6.2 2017/09/09 17:29:40 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.145.6.3 2018/03/13 15:47:44 martin Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_copy_symtab.h"
@@ -1112,7 +1112,8 @@ skip_save:
 	addl	$4,%esp
 #else
 	movl	PCB_ESP0(%ebx),%eax
-	movl	%eax,CPUVAR(ESP0)
+	movl	CPUVAR(TSS),%ecx
+	movl	%eax,TSS_ESP0(%ecx)
 #endif
 
 	/* Don't bother with the rest if switching to a system process. */
@@ -1136,7 +1137,8 @@ skip_save:
 	movl	PCB_IOMAP(%ebx),%eax
 	orl	%eax,%eax
 	jnz	.Lcopy_iobitmap
-	movl	$(IOMAP_INVALOFF << 16),CPUVAR(IOBASE)
+	movl	CPUVAR(TSS),%eax
+	movl	$(IOMAP_INVALOFF << 16),TSS_IOBASE(%eax)
 .Liobitmap_done:
 
 	/* Is this process using RAS (restartable atomic sequences)? */
@@ -1200,13 +1202,14 @@ switch_return:
 	pushl	%esi
 	pushl	%edi
 	movl	%eax,%esi		/* pcb_iomap */
-	movl	CPUVAR(SELF),%edi
-	leal	CPU_INFO_IOMAP(%edi),%edi
+	movl	CPUVAR(TSS),%edi
+	leal	TSS_IOMAP(%edi),%edi
 	rep
 	movsl
 	popl	%edi
 	popl	%esi
-	movl	$((CPU_INFO_IOMAP - CPU_INFO_TSS) << 16),CPUVAR(IOBASE)
+	movl	CPUVAR(TSS),%eax
+	movl	$((TSS_IOMAP - TSS_TSS) << 16),TSS_IOBASE(%eax)
 	jmp	.Liobitmap_done
 END(cpu_switchto)
 

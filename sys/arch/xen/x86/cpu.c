@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.110 2017/03/23 18:08:06 maxv Exp $	*/
+/*	$NetBSD: cpu.c,v 1.110.6.1 2018/03/13 15:47:45 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.110 2017/03/23 18:08:06 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.110.6.1 2018/03/13 15:47:45 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -389,6 +389,7 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 #ifdef TRAPLOG
 		ci->ci_tlog_base = kmem_zalloc(sizeof(struct tlog), KM_SLEEP);
 #endif
+		cpu_init_tss(ci);
 	} else {
 		aprint_naive(": %s Processor\n",
 		    caa->cpu_role == CPU_ROLE_SP ? "Single" : "Boot");

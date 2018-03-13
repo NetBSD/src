@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.123.6.3 2018/03/07 14:50:56 martin Exp $	*/
+/*	$NetBSD: locore.S,v 1.123.6.4 2018/03/13 15:47:44 martin Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1099,7 +1099,8 @@ skip_save:
 	/* Switch ring0 stack */
 #ifndef XEN
 	movq	PCB_RSP0(%r14),%rax
-	movq	%rax,CPUVAR(RSP0)
+	movq	CPUVAR(TSS),%rdi
+	movq	%rax,TSS_RSP0(%rdi)
 #else
 	movq	%r14,%rdi
 	callq	_C_LABEL(x86_64_switch_context);
