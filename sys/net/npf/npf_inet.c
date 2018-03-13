@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_inet.c,v 1.40 2018/03/13 09:04:02 maxv Exp $	*/
+/*	$NetBSD: npf_inet.c,v 1.41 2018/03/13 16:23:40 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.40 2018/03/13 09:04:02 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.41 2018/03/13 16:23:40 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -391,6 +391,13 @@ npf_cache_ip(npf_cache_t *npc, nbuf_t *nbuf)
 				ip6f = nbuf_ensure_contig(nbuf, sizeof(*ip6f));
 				if (ip6f == NULL)
 					return NPC_FMTERR;
+
+				/* RFC6946: Skip dummy fragments. */
+				if (!ntohs(ip6f->ip6f_offlg & IP6F_OFF_MASK) &&
+				    !(ip6f->ip6f_offlg & IP6F_MORE_FRAG)) {
+					hlen = sizeof(struct ip6_frag);
+					break;
+				}
 
 				hlen = 0;
 				flags |= NPC_IPFRAG;
