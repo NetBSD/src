@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_handler.c,v 1.38 2018/03/08 07:06:13 maxv Exp $	*/
+/*	$NetBSD: npf_handler.c,v 1.39 2018/03/13 09:04:02 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.38 2018/03/08 07:06:13 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.39 2018/03/13 09:04:02 maxv Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -166,14 +166,7 @@ npf_packet_handler(npf_t *npf, struct mbuf **mp, ifnet_t *ifp, int di)
 	/* Determine whether it is an IP fragment. */
 	if (__predict_false(flags & NPC_IPFRAG)) {
 		/*
-		 * We pass IPv6 fragments unconditionally
-		 * The first IPv6 fragment is not marked as such
-		 * and passes through the filter
-		 */
-		if (flags & NPC_IP6)
-			return 0;
-		/*
-		 * Pass to IPv4 reassembly mechanism.
+		 * Pass to IPv4/IPv6 reassembly mechanism.
 		 */
 		error = npf_reassembly(npf, &npc, mp);
 		if (error) {

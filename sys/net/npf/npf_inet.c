@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_inet.c,v 1.39 2018/03/08 07:54:14 maxv Exp $	*/
+/*	$NetBSD: npf_inet.c,v 1.40 2018/03/13 09:04:02 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.39 2018/03/08 07:54:14 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.40 2018/03/13 09:04:02 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -358,9 +358,6 @@ npf_cache_ip(npf_cache_t *npc, nbuf_t *nbuf)
 		struct ip6_frag *ip6f;
 		size_t off, hlen;
 		int frag_present;
-		bool is_frag;
-		uint8_t onxt;
-		int fragoff;
 
 		ip6 = nbuf_ensure_contig(nbuf, sizeof(struct ip6_hdr));
 		if (ip6 == NULL) {
@@ -373,7 +370,6 @@ npf_cache_ip(npf_cache_t *npc, nbuf_t *nbuf)
 		npc->npc_hlen = hlen;
 
 		frag_present = 0;
-		is_frag = false;
 
 		/*
 		 * Advance by the length of the current header.
@@ -396,27 +392,8 @@ npf_cache_ip(npf_cache_t *npc, nbuf_t *nbuf)
 				if (ip6f == NULL)
 					return NPC_FMTERR;
 
-				hlen = sizeof(struct ip6_frag);
-
-				/* RFC6946: Skip dummy fragments. */
-				fragoff = ntohs(ip6f->ip6f_offlg & IP6F_OFF_MASK);
-				if (fragoff == 0 &&
-				    !(ip6f->ip6f_offlg & IP6F_MORE_FRAG)) {
-					break;
-				}
-
-				is_frag = true;
-
-				/*
-				 * We treat the first fragment as a regular
-				 * packet and then we pass the rest of the
-				 * fragments unconditionally. This way if
-				 * the first packet passes the rest will
-				 * be able to reassembled, if not they will
-				 * be ignored. We can do better later.
-				 */
-				if (fragoff != 0)
-					flags |= NPC_IPFRAG;
+				hlen = 0;
+				flags |= NPC_IPFRAG;
 
 				break;
 			case IPPROTO_AH:
@@ -430,21 +407,8 @@ npf_cache_ip(npf_cache_t *npc, nbuf_t *nbuf)
 			if (!hlen) {
 				break;
 			}
-			onxt = npc->npc_proto;
 			npc->npc_proto = ip6e->ip6e_nxt;
 			npc->npc_hlen += hlen;
-		}
-
-		/*
-		 * We failed to advance. If we are not a fragment, that's
-		 * a format error and we leave. Otherwise, restore npc_hlen
-		 * and npc_proto to their previous (and correct) values.
-		 */
-		if (ip6e == NULL) {
-			if (!is_frag)
-				return NPC_FMTERR;
-			npc->npc_proto = onxt;
-			npc->npc_hlen -= hlen;
 		}
 
 		/*
