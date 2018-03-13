@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.178 2018/03/13 19:43:52 uwe Exp $
+.\"	$NetBSD: sh.1,v 1.179 2018/03/13 20:08:11 uwe Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -550,7 +550,7 @@ operators (their meaning is discussed later).
 The following is a list of operators:
 .Bl -ohang -offset indent
 .It "Control operators:"
-.Dl &  &&  \&(  \&)  \&;  ;; ;& | || <newline>
+.Dl &  &&  \&(  \&)  \&;  ;; ;& \&| || <newline>
 .It "Redirection operators:"
 .Dl <  >  >|  <<  >>  <&  >&  <<-  <>
 .El
@@ -1081,7 +1081,7 @@ as is the standard input of the first command.
 .Pp
 The format for a pipeline is:
 .Pp
-.Dl [!] command1 [ | command2 ...]
+.Dl [!] command1 [ \&| command2 ...]
 .Pp
 The standard output of command1 is connected to the standard input of
 command2.
@@ -1120,7 +1120,7 @@ Because pipeline assignment of standard input or standard output or both
 takes place before redirection, it can be modified by redirection.
 For example:
 .Pp
-.Dl $ command1 2>&1 | command2
+.Dl $ command1 2>&1 \&| command2
 .Pp
 sends both the standard output and standard error of command1
 to the standard input of command2.
