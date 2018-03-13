@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.210 2018/03/11 15:13:05 kre Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.211 2018/03/13 02:24:26 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.210 2018/03/11 15:13:05 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.211 2018/03/13 02:24:26 kamil Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -1674,12 +1674,16 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 	marker->p_flag = PK_MARKER;
 
 	mutex_enter(proc_lock);
-	mmmbrains = false;
-	for (p = LIST_FIRST(&allproc);; p = next) {
+	/*
+	 * Start with zombies to prevent reporting processes twice, in case they
+	 * are dying and being moved from the list of alive processes to zombies.
+	 */
+	mmmbrains = true;
+	for (p = LIST_FIRST(&zombproc);; p = next) {
 		if (p == NULL) {
-			if (!mmmbrains) {
-				p = LIST_FIRST(&zombproc);
-				mmmbrains = true;
+			if (mmmbrains) {
+				p = LIST_FIRST(&allproc);
+				mmmbrains = false;
 			}
 			if (p == NULL)
 				break;
@@ -1704,17 +1708,17 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 		}
 
 		/*
-		 * TODO - make more efficient (see notes below).
-		 * do by session.
+		 * Hande all the operations in one switch on the cost of
+		 * algorithm complexity is on purpose. The win splitting this
+		 * function into several similar copies makes maintenance burden
+		 * burden, code grow and boost is neglible in practical systems.
 		 */
 		switch (op) {
 		case KERN_PROC_PID:
-			/* could do this with just a lookup */
 			match = (p->p_pid == (pid_t)arg);
 			break;
 
 		case KERN_PROC_PGRP:
-			/* could do this by traversing pgrp */
 			match = (p->p_pgrp->pg_id == (pid_t)arg);
 			break;
 
@@ -1820,10 +1824,20 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 			rw_exit(&p->p_reflock);
 			next = LIST_NEXT(p, p_list);
 		}
+
+		/*
+		 * Short-circuit break quickly!
+		 */
+		if (op == KERN_PROC_PID)
+                	break;
 	}
 	mutex_exit(proc_lock);
 
 	if (where != NULL) {
+		if (needed == 0) {
+			error = ESRCH;
+			goto out;
+		}
 		*oldlenp = dp - where;
 		if (needed > *oldlenp) {
 			error = ENOMEM;
@@ -1833,10 +1847,8 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 		needed += KERN_PROCSLOP;
 		*oldlenp = needed;
 	}
-	if (kbuf)
-		kmem_free(kbuf, sizeof(*kbuf));
-	if (marker)
-		kmem_free(marker, sizeof(*marker));
+	kmem_free(kbuf, sizeof(*kbuf));
+	kmem_free(marker, sizeof(*marker));
 	sysctl_relock();
 	return 0;
  bah:
@@ -1847,10 +1859,8 @@ sysctl_doeproc(SYSCTLFN_ARGS)
  cleanup:
 	mutex_exit(proc_lock);
  out:
-	if (kbuf)
-		kmem_free(kbuf, sizeof(*kbuf));
-	if (marker)
-		kmem_free(marker, sizeof(*marker));
+	kmem_free(kbuf, sizeof(*kbuf));
+	kmem_free(marker, sizeof(*marker));
 	sysctl_relock();
 	return error;
 }
