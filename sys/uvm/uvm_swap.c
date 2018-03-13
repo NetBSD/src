@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.175.2.1 2018/03/13 09:10:31 pgoyette Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.175.2.2 2018/03/13 21:59:51 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.175.2.1 2018/03/13 09:10:31 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.175.2.2 2018/03/13 21:59:51 pgoyette Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -499,19 +499,21 @@ sys_swapctl(struct lwp *l, const struct sys_swapctl_args *uap, register_t *retva
 	 * to grab the uvm_swap_data_lock because we may fault&sleep during
 	 * copyout() and we don't want to be holding that lock then!
 	 */
-	len = 0;
-	if (SCARG(uap, cmd) == SWAP_STATS)
-		len = sizeof(struct swapent);
-	else if (SCARG(uap, cmd) == SWAP_STATS13)
-		len = swapstats_len_13;
-	else if (SCARG(uap, cmd) == SWAP_STATS50)
-		len = swapstats_len_50;
-	/*
-	 * If the compat_* code isn't loaded, len will still be zero
-	 * and we'll just fall through and return EINVAL
-	 */
-	if (len > 0) {
-		if (misc < 0) {
+	if (SCARG(uap,cmd) == SWAP_STATS || SCARG(uap, cmd) == SWAP_STATS13 ||
+	    SCARG(uap,cmd) == SWAP_STATS50) {
+		len = 0;
+		if (SCARG(uap, cmd) == SWAP_STATS)
+			len = sizeof(struct swapent);
+		else if (SCARG(uap, cmd) == SWAP_STATS13)
+			len = swapstats_len_13;
+		else if (SCARG(uap, cmd) == SWAP_STATS50)
+			len = swapstats_len_50;
+		/*
+		 * If len is still zero at this point, no compat code
+		 * for the current cmd exists, so error out.  Also,
+		 * error if user-specified buffer size is less than zero.
+		 */
+		if (len == 0 || misc < 0) {
 			error = EINVAL;
 			goto out;
 		}
