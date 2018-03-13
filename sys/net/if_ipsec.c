@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipsec.c,v 1.3.2.3 2018/03/13 15:29:45 martin Exp $  */
+/*	$NetBSD: if_ipsec.c,v 1.3.2.4 2018/03/13 15:34:33 martin Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.3.2.3 2018/03/13 15:29:45 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.3.2.4 2018/03/13 15:34:33 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1310,27 +1310,37 @@ if_ipsec_unshare_sp(struct ipsec_variant *var)
 }
 
 static inline void
-if_ipsec_add_mbuf(struct mbuf *m0, void *data, size_t len)
+if_ipsec_add_mbuf_optalign(struct mbuf *m0, void *data, size_t len, bool align)
 {
 	struct mbuf *m;
 
 	MGET(m, M_WAITOK | M_ZERO, MT_DATA);
-	m->m_len = PFKEY_ALIGN8(len);
+	if (align)
+		m->m_len = PFKEY_ALIGN8(len);
+	else
+		m->m_len = len;
 	m_copyback(m, 0, len, data);
 	m_cat(m0, m);
 }
 
 static inline void
-if_ipsec_add_mbuf_addr_port(struct mbuf *m0, struct sockaddr *addr, in_port_t port)
+if_ipsec_add_mbuf(struct mbuf *m0, void *data, size_t len)
+{
+
+	if_ipsec_add_mbuf_optalign(m0, data, len, true);
+}
+
+static inline void
+if_ipsec_add_mbuf_addr_port(struct mbuf *m0, struct sockaddr *addr, in_port_t port, bool align)
 {
 
 	if (port == 0) {
-		if_ipsec_add_mbuf(m0, addr, addr->sa_len);
+		if_ipsec_add_mbuf_optalign(m0, addr, addr->sa_len, align);
 	} else {
 		struct sockaddr addrport;
 
 		if_ipsec_set_addr_port(&addrport, addr, port);
-		if_ipsec_add_mbuf(m0, &addrport, addrport.sa_len);
+		if_ipsec_add_mbuf_optalign(m0, &addrport, addrport.sa_len, align);
 	}
 }
 
@@ -1412,10 +1422,8 @@ if_ipsec_set_sadb_x_policy(struct sadb_x_policy *xpl,
 	size = sizeof(*xpl);
 	if (policy == IPSEC_POLICY_IPSEC) {
 		size += PFKEY_ALIGN8(sizeof(*xisr));
-		if (src != NULL)
-			size += PFKEY_ALIGN8(src->sa_len);
-		if (dst != NULL)
-			size += PFKEY_ALIGN8(dst->sa_len);
+		if (src != NULL && dst != NULL)
+			size += PFKEY_ALIGN8(src->sa_len + dst->sa_len);
 	}
 	xpl->sadb_x_policy_len = PFKEY_UNIT64(size);
 	xpl->sadb_x_policy_exttype = SADB_X_EXT_POLICY;
@@ -1427,10 +1435,9 @@ if_ipsec_set_sadb_x_policy(struct sadb_x_policy *xpl,
 
 	if (policy == IPSEC_POLICY_IPSEC) {
 		xisr->sadb_x_ipsecrequest_len = PFKEY_ALIGN8(sizeof(*xisr));
-		if (src != NULL)
-			xisr->sadb_x_ipsecrequest_len += PFKEY_ALIGN8(src->sa_len);
-		if (dst != NULL)
-			xisr->sadb_x_ipsecrequest_len += PFKEY_ALIGN8(dst->sa_len);
+		if (src != NULL && dst != NULL)
+			xisr->sadb_x_ipsecrequest_len +=
+				PFKEY_ALIGN8(src->sa_len + dst->sa_len);
 		xisr->sadb_x_ipsecrequest_proto = IPPROTO_ESP;
 		xisr->sadb_x_ipsecrequest_mode = IPSEC_MODE_TRANSPORT;
 		xisr->sadb_x_ipsecrequest_level = level;
@@ -1539,13 +1546,13 @@ if_ipsec_add_sp0(struct sockaddr *src, in_port_t sport,
 	m_copyback(m, 0, sizeof(msg), &msg);
 
 	if_ipsec_add_mbuf(m, &xsrc, sizeof(xsrc));
-	if_ipsec_add_mbuf_addr_port(m, src, sport);
+	if_ipsec_add_mbuf_addr_port(m, src, sport, true);
 	padlen = PFKEY_UNUNIT64(xsrc.sadb_address_len)
 		- (sizeof(xsrc) + PFKEY_ALIGN8(src->sa_len));
 	if_ipsec_add_pad(m, padlen);
 
 	if_ipsec_add_mbuf(m, &xdst, sizeof(xdst));
-	if_ipsec_add_mbuf_addr_port(m, dst, dport);
+	if_ipsec_add_mbuf_addr_port(m, dst, dport, true);
 	padlen = PFKEY_UNUNIT64(xdst.sadb_address_len)
 		- (sizeof(xdst) + PFKEY_ALIGN8(dst->sa_len));
 	if_ipsec_add_pad(m, padlen);
@@ -1553,14 +1560,12 @@ if_ipsec_add_sp0(struct sockaddr *src, in_port_t sport,
 	if_ipsec_add_mbuf(m, &xpl, sizeof(xpl));
 	if (policy == IPSEC_POLICY_IPSEC) {
 		if_ipsec_add_mbuf(m, &xisr, sizeof(xisr));
-		if_ipsec_add_mbuf_addr_port(m, src, sport);
-		if_ipsec_add_mbuf_addr_port(m, dst, dport);
+		if_ipsec_add_mbuf_addr_port(m, src, sport, false);
+		if_ipsec_add_mbuf_addr_port(m, dst, dport, false);
 	}
 	padlen = PFKEY_UNUNIT64(xpl.sadb_x_policy_len) - sizeof(xpl);
-	if (src != NULL)
-		padlen -= PFKEY_ALIGN8(src->sa_len);
-	if (dst != NULL)
-		padlen -= PFKEY_ALIGN8(dst->sa_len);
+	if (src != NULL && dst != NULL)
+		padlen -= PFKEY_ALIGN8(src->sa_len + dst->sa_len);
 	if_ipsec_add_pad(m, padlen);
 
 	/* key_kpi_spdadd() has already done KEY_SP_REF(). */
