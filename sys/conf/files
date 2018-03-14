@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1196.2.6 2018/03/14 21:46:51 pgoyette Exp $
+#	$NetBSD: files,v 1.1196.2.7 2018/03/14 22:26:15 pgoyette Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -148,7 +148,6 @@ defflag	opt_compat_netbsd.h	COMPAT_12: COMPAT_13, COMPAT_NETBSD
 defflag	opt_compat_netbsd.h	COMPAT_11: COMPAT_12, COMPAT_NETBSD
 defflag	opt_compat_netbsd.h	COMPAT_10: COMPAT_11, COMPAT_NETBSD
 defflag	opt_compat_netbsd.h	COMPAT_09: COMPAT_10, COMPAT_NETBSD
-defflag				COMPAT_43: COMPAT_09, COMPAT_NETBSD
 defflag				COMPAT_OSSAUDIO
 defflag				COMPAT_FREEBSD: COMPAT_30
 defflag				COMPAT_IBCS2
@@ -170,6 +169,7 @@ defflag				COMPAT_LINUX32 : COMPAT_LINUX, COMPAT_NETBSD32,
 defflag				COMPAT_AOUT_M68K: COMPAT_40
 defflag				COMPAT_M68K4K
 defflag				COMPAT_VAX1K
+defflag				COMPAT_43
 defflag	opt_compat_netbsd.h	COMPAT_NOMID
 
 include	"compat/common/files.common"
