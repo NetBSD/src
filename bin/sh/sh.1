@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.190 2018/03/14 09:46:45 uwe Exp $
+.\"	$NetBSD: sh.1,v 1.191 2018/03/14 10:30:40 uwe Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -220,7 +220,10 @@ was given, or if neither
 .Fl c
 nor any additional (non-option) arguments were present,
 the shell reads commands from its standard input.
+.\"
+.\"
 .Ss Argument List Processing
+.\"
 Currently, all of the single letter options that can meaningfully
 be set using the
 .Ic set
@@ -228,8 +231,8 @@ built-in, have a corresponding name
 that can be used as an argument to the
 .Fl o
 option.
-The set
-.Fl o
+The
+.Ic set Fl o
 name is provided next to the single letter option in
 the description below.
 Some options have only a long name, they are described after
@@ -242,9 +245,9 @@ only, either on the command line, or with the
 built-in command.
 Other options described are for the command line only.
 Specifying a dash
-.Dq -
+.Dq Cm \-
 turns the option on, while using a plus
-.Dq +
+.Dq Cm +
 disables the option.
 The following options can be set from the command line and,
 unless otherwise stated, with the
