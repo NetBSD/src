@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.114 2018/03/12 07:12:54 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.115 2018/03/14 14:15:02 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -842,6 +842,7 @@
 
 #define MSR_IC_CFG	0xc0011021
 #define 	IC_CFG_DIS_SEQ_PREFETCH	0x00000800
+#define 	IC_CFG_DIS_IND		0x00004000
 
 #define MSR_DC_CFG	0xc0011022
 #define 	DC_CFG_DIS_CNV_WC_SSO	0x00000008
