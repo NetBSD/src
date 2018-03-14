@@ -77,7 +77,7 @@
 #define PACKAGE_NAME "libxcb"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "libxcb 1.12"
+#define PACKAGE_STRING "libxcb 1.13"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "libxcb"
@@ -86,13 +86,13 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.12"
+#define PACKAGE_VERSION "1.13"
 
 /* Major version of this package */
 #define PACKAGE_VERSION_MAJOR 1
 
 /* Minor version of this package */
-#define PACKAGE_VERSION_MINOR 12
+#define PACKAGE_VERSION_MINOR 13
 
 /* Patch version of this package */
 #define PACKAGE_VERSION_PATCHLEVEL 0
@@ -126,7 +126,7 @@
 
 
 /* Version number of package */
-#define VERSION "1.12"
+#define VERSION "1.13"
 
 /* XCB buffer queue size */
 #define XCB_QUEUE_BUFFER_SIZE 16384
