@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2015/07/23 09:37:59 mrg Exp $
+#	$NetBSD: Makefile,v 1.16 2018/03/14 06:06:40 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -12,7 +12,8 @@ SRCS=	button.c charproc.c charsets.c cursor.c data.c doublechr.c \
 # graphics_regis.c graphics_sixel.c
 # xterm.appdata.xml
 
-CPPFLAGS+=	-I${X11SRCDIR.${PROG}} \
+CPPFLAGS+=	-I. \
+		-I${X11SRCDIR.${PROG}} \
 		-I${X11SRCDIR.${PROG}}/../include \
 		-I${DESTDIR}${X11INCDIR}/freetype2 \
 		-DPROJECTROOT=${X11ROOTDIR} \
@@ -43,6 +44,12 @@ SUBDIR=	resize uxterm
 COPTS.input.c+=	-Wno-error	# uses XKeycodeToKeysym
 
 # XXXMRG should probably build builtin_icons.h
+
+.SUFFIXES: .def .hin
+.def.hin:
+	${TOOL_AWK} '/^CASE_/{printf "#define %s %d\n", $$1, n++}' < $< >$@
+DPSRCS+= Tekparse.hin VTparse.hin
+CLEANFILES+= Tekparse.hin VTparse.hin
 
 .include "Makefile.inc"
 
