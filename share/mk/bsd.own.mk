@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1048 2018/03/11 07:18:49 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.1049 2018/03/14 07:35:56 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1394,7 +1394,7 @@ X11SRCDIR.${_lib}?=		${X11SRCDIRMIT}/lib${_lib}/dist
 	xcmisc xext xf86bigfont bigreqs input kb x fonts fixes scrnsaver \
 	xinerama dri2 dri3 render resource record video xf86dga xf86misc \
 	xf86vidmode composite damage trap gl randr fontcache xf86dri \
-	present xcb-
+	present xcb- xorg
 X11SRCDIR.${_proto}proto?=		${X11SRCDIRMIT}/${_proto}proto/dist
 .endfor
 
