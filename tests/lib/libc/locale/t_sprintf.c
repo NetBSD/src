@@ -1,11 +1,11 @@
-/* $NetBSD: t_sprintf.c,v 1.1 2017/05/30 23:44:02 perseant Exp $ */
+/* $NetBSD: t_sprintf.c,v 1.1.2.1 2018/03/14 18:37:00 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Konrad Schroder
+ * by Konrad Schroder.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2017\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_sprintf.c,v 1.1 2017/05/30 23:44:02 perseant Exp $");
+__RCSID("$NetBSD: t_sprintf.c,v 1.1.2.1 2018/03/14 18:37:00 bouyer Exp $");
 
 #include <locale.h>
 #include <stdio.h>
@@ -53,14 +53,6 @@ static struct test {
 	const char *double_input;
 } tests[] = {
 	{
-		"C",
-		-12345,
-		"-12,345",
-		"-12345",
-		-12345.6789,
-		"-12,345.678900",
-		"-12345.678900",
-	}, {
 		"en_US.UTF-8",
 		-12345,
 		"-12,345",
@@ -76,6 +68,30 @@ static struct test {
 		-12345.6789,
 		"-12\240345,678900",
 		"-12345,678900",
+	}, {
+		"it_IT.ISO8859-1",
+		-12345,
+		"-12.345",
+		"-12345",
+		-12345.6789,
+		"-12.345,678900",
+		"-12345,678900",
+	}, {
+		"POSIX",
+		/*
+		 * POSIX-1.2008 specifies that the C and POSIX
+		 * locales shall be identical (section 7.2) and
+		 * that the POSIX locale shall have an empty
+		 * thousands separator and "<period>" as its
+		 * decimal point (section 7.3.4).  *printf
+		 * ought to honor these settings.
+		 */
+		-12345,
+		"-12345",
+		"-12345",
+		-12345.6789,
+		"-12345.678900",
+		"-12345.678900",
 	}, {
 		NULL,
 		0,
@@ -95,12 +111,18 @@ h_sprintf(const struct test *t)
 	ATF_REQUIRE_STREQ(setlocale(LC_ALL, "C"), "C");
 	printf("Trying locale %s...\n", t->locale);
 	ATF_REQUIRE(setlocale(LC_NUMERIC, t->locale) != NULL);
+	printf("Using locale: %s\n", setlocale(LC_ALL, NULL));
+
+	if (!strcmp("POSIX", t->locale))
+        	atf_tc_expect_fail("%s", "PR standards/52282, printf doesn't respect empty thousands separator");
 
 	sprintf(buf, "%'f", t->double_value);
 	ATF_REQUIRE_STREQ(buf, t->double_result);
 
 	sprintf(buf, "%'d", t->int_value);
 	ATF_REQUIRE_STREQ(buf, t->int_result);
+
+        atf_tc_expect_pass();
 }
 
 static void
