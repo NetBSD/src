@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.191 2018/03/14 10:30:40 uwe Exp $
+.\"	$NetBSD: sh.1,v 1.192 2018/03/14 10:38:52 uwe Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -257,11 +257,8 @@ built-in (described later).
 .\" strlen("quietprofile") == strlen("local_lineno"): pick the latter
 .\" to give the indent as the _ in local_lineno, and the fi ligature in
 .\" quietprofile combine to make "local_lineno' slightly wider when printed
-.\" (in italics) in a variable width font.   Probably should test the actual
-.\" widths and use the wider, but I am not sure if mandoc is up to that...
-.\" (and I don't know how to get at the font that will be used easily anyway!)
-.\" The X's just provide a little extra space.
-.Bl -tag -width \-WXXlocal_linenoXX -offset indent
+.\" (in italics) in a variable width font.
+.Bl -tag -width ".Fl L Em local_lineno" -offset indent
 .\"
 .It Fl a Em allexport
 Automatically export any variable to which a value is assigned
