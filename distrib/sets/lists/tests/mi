@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.776 2018/03/09 20:20:48 joerg Exp $
+# $NetBSD: mi,v 1.777 2018/03/14 02:13:47 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2197,6 +2197,7 @@
 ./usr/tests/kernel/t_umount			tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_umountstress		tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_writev			tests-obsolete		obsolete
+./usr/tests/kernel/t_zombie			tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/tty				tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/tty/Atffile			tests-kernel-tests	atf,rump
 ./usr/tests/kernel/tty/Kyuafile			tests-kernel-tests	atf,rump,kyua
