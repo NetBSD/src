@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.141 2018/03/13 15:50:31 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.142 2018/03/14 18:37:48 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -10301,4 +10301,11 @@ sys/arch/xen/x86/cpu.c				via patch: 1.117
 	Merge the TSS structures into one single cpu_tss structure, and
 	allocate it dynamically.
 	[maxv, ticket #629]
+
+lib/libc/stdio/vfwprintf.c			1.35, 1.36
+tests/lib/libc/locale/t_sprintf.c		1.2
+
+	Do not use thousands grouping when none is specified by the locale.
+	Fixes PR standards/52282.
+	[martin, ticket #630]
 
