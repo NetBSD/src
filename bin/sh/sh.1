@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.189 2018/03/14 09:42:37 uwe Exp $
+.\"	$NetBSD: sh.1,v 1.190 2018/03/14 09:46:45 uwe Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -50,7 +50,7 @@
 .Op Cm +o Ar option_name
 .Ek
 .Bk -words
-.Op Ar command_file Oo Ar argument ... Oc
+.Op Ar command_file Op Ar argument ...
 .Ek
 .Nm
 .Fl c
@@ -65,7 +65,7 @@
 .Ek
 .Bk -words
 .Ar command_string
-.Op Ar command_name Oo Ar argument ... Oc
+.Op Ar command_name Op Ar argument ...
 .Ek
 .Nm
 .Fl s
@@ -2053,7 +2053,7 @@ be built in for efficiency (e.g.
 .Xr test 1 ,
 etc).
 .Bl -tag -width 5n
-.It Ic \&: Oo Ar arg ... Oc
+.It Ic \&: Op Ar arg ...
 A null command that returns a 0 (true) exit value.
 Any arguments or redirects are evaluated, then ignored.
 .It Ic \&. Ar file
@@ -2239,7 +2239,7 @@ If
 is given it is used as the exit status of the shell; otherwise the
 exit status of the preceding command (the current value of $?) is used.
 .It Ic export Oo Fl npx Oc Ar name ...
-.It Ic export Fl p Oo Fl x Oc
+.It Ic export Fl p Op Fl x
 With no options,
 but one or more names,
 the specified names are exported so that they will appear in the
@@ -3164,7 +3164,7 @@ command, tracked alias and not found.
 For aliases the alias expansion is
 printed; for commands and tracked aliases the complete pathname of the
 command is printed.
-.It Ic ulimit Oo Fl H \*(Ba Fl S Oc Oo Fl a \*(Ba Fl btfdscmlrpnv Oo Ar value Oc Oc
+.It Ic ulimit Oo Fl H \*(Ba Fl S Oc Op Fl a \*(Ba Fl btfdscmlrpnv Op Ar value
 Inquire about or set the hard or soft limits on processes or set new
 limits.
 The choice between hard limit (which no process is allowed to
