@@ -1,4 +1,4 @@
-.\"	$NetBSD: module.9,v 1.42.2.3 2018/03/11 00:44:32 pgoyette Exp $
+.\"	$NetBSD: module.9,v 1.42.2.4 2018/03/14 02:47:41 pgoyette Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 16, 2017
+.Dd March 14, 2018
 .Dt MODULE 9
 .Os
 .Sh NAME
@@ -43,6 +43,7 @@
 .Sh SYNOPSIS
 .In sys/module.h
 .Fn MODULE "class" "name" "required"
+.Fn MODULE_WITH_ALIAS "class" "name" "required" "aliases"
 .Ft int
 .Fn module_load "const char *name" "int flags" "prop_dictionary_t props" \
 "modclass_t class"
@@ -95,9 +96,12 @@ The module subsystem is protected by the global
 .Sh FUNCTIONS
 .Bl -tag -width abcd
 .It Fn MODULE "class" "name" "required"
+.It Fn MODULE_WITH_ALIASES "class" "name" "required" "aliases"
 The
 .Fn MODULE
-macro creates and initializes a
+and
+.Fn MODULE_WITH_ALIASES
+macros create and initialize a
 .Vt modinfo_t
 structure.
 The
@@ -140,7 +144,30 @@ When a module is loaded, all of its required modules are auto-loaded and
 initialized before the module itself is loaded.
 Loading of required modules is a recursive operation.
 .Pp
-If there are no required modules, this argument should be specified as
+The
+.Fa aliases
+argument is a pointer to a NULL-terminated constant array of constant
+strings.
+Each string in the array is an alternate name (i.e., an alias) of the
+module.
+Module names and aliases must all be unique; a module cannot be loaded
+if its name or any of its aliases matches the name or an alias of any
+already-loaded module.
+(Module names are displayed by the
+.Xr modstat 8
+utility, with an
+.Dv A
+in the flags column.)
+.Pp
+For example,
+.Bd -literal
+	const char * const my_pets[] = { "dog", "cat", "bird", NULL };
+
+	MODULE_WITH_ALIASES(MODULE_CLASS_MISC, pets, NULL, &my_pets);
+.Ed
+.Pp
+If there are no required modules or aliases, these argument should be
+specified as
 .Dv NULL .
 .Pp
 In addition to the explicit arguments, the
