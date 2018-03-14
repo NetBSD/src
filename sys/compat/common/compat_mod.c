@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mod.c,v 1.24.14.5 2018/03/13 09:10:31 pgoyette Exp $	*/
+/*	$NetBSD: compat_mod.c,v 1.24.14.6 2018/03/14 02:24:56 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.24.14.5 2018/03/13 09:10:31 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.24.14.6 2018/03/14 02:24:56 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.24.14.5 2018/03/13 09:10:31 pgoyett
 #include <sys/syscallargs.h>
 #include <sys/syscallvar.h>
 #include <sys/sysctl.h>
+#include <sys/vfs_syscalls.h>
 
 #include <net/if.h>
 
@@ -275,10 +276,16 @@ compat_modcmd(modcmd_t cmd, void *arg)
 		sendsig_sigcontext_vec = sendsig_sigcontext;
 #endif
 #endif
+#ifdef COMPAT_10
+		vfs_syscalls_10_init();
+#endif
 		compat_sysctl_init();
 		return 0;
 
 	case MODULE_CMD_FINI:
+#ifdef COMPAT_10
+		vfs_syscalls_10_fini();
+#endif
 #ifdef COMPAT_16
 		/*
 		 * Ensure sendsig_sigcontext() is not being used.
