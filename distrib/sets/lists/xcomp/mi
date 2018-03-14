@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.196 2018/03/11 23:49:39 christos Exp $
+#	 $NetBSD: mi,v 1.197 2018/03/14 09:09:46 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -407,9 +407,9 @@
 ./usr/X11R7/include/X11/extensions/dri3proto.h		-unknown-	xorg
 ./usr/X11R7/include/X11/extensions/evieproto.h		-unknown-	xorg
 ./usr/X11R7/include/X11/extensions/extutil.h		-unknown-	xorg
-./usr/X11R7/include/X11/extensions/fontcache.h		-unknown-	xorg
-./usr/X11R7/include/X11/extensions/fontcacheP.h		-unknown-	xorg
-./usr/X11R7/include/X11/extensions/fontcachstr.h	-unknown-	xorg
+./usr/X11R7/include/X11/extensions/fontcache.h		-unknown-	obsolete
+./usr/X11R7/include/X11/extensions/fontcacheP.h		-unknown-	obsolete
+./usr/X11R7/include/X11/extensions/fontcachstr.h	-unknown-	obsolete
 ./usr/X11R7/include/X11/extensions/ge.h			-unknown-	xorg
 ./usr/X11R7/include/X11/extensions/geproto.h		-unknown-	xorg
 ./usr/X11R7/include/X11/extensions/lbx.h		-unknown-	xorg
@@ -1304,7 +1304,7 @@
 ./usr/X11R7/lib/pkgconfig/epoxy.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/evieproto.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/fixesproto.pc			-unknown-	xorg
-./usr/X11R7/lib/pkgconfig/fontcacheproto.pc		-unknown-	xorg
+./usr/X11R7/lib/pkgconfig/fontcacheproto.pc		-unknown-	obsolete
 ./usr/X11R7/lib/pkgconfig/fontconfig.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/fontenc.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/fontsproto.pc			-unknown-	xorg
