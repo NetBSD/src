@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.518 2018/01/09 03:31:13 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.518.2.1 2018/03/14 02:24:56 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.518 2018/01/09 03:31:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.518.2.1 2018/03/14 02:24:56 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -141,6 +141,10 @@ static int fd_nameiat(struct lwp *, int, struct nameidata *);
 static int fd_nameiat_simple_user(struct lwp *, int, const char *,
     namei_simple_flags_t, struct vnode **);
 
+/* Routine for COMPAT_10 handling of NULL pathbuf passed to do_sys_openat */
+
+static int stub_sys_openat_10(struct pathbuf **);
+int (*vec_sys_openat_10)(struct pathbuf **) = stub_sys_openat_10;
 
 /*
  * This table is used to maintain compatibility with 4.3BSD
@@ -1629,6 +1633,13 @@ fd_open(const char *path, int open_flags, int open_mode, int *fd)
  * and call the device open routine if any.
  */
 static int
+stub_sys_openat_10(struct pathbuf **pb)
+{
+
+	return 0;
+}
+
+static int
 do_sys_openat(lwp_t *l, int fdat, const char *path, int flags,
     int mode, int *fd)
 {
@@ -1637,14 +1648,11 @@ do_sys_openat(lwp_t *l, int fdat, const char *path, int flags,
 	struct pathbuf *pb;
 	int error;
 
-#ifdef COMPAT_10	/* XXX: and perhaps later */
 	if (path == NULL) {
-		pb = pathbuf_create(".");
-		if (pb == NULL)
-			return ENOMEM;
-	} else
-#endif
-	{
+		error = (*vec_sys_openat_10)(&pb);
+		if (error)
+			return error;
+	} else {
 		error = pathbuf_copyin(path, &pb);
 		if (error)
 			return error;
