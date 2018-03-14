@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.35 2018/03/12 18:48:49 mrg Exp $
+# $NetBSD: md.i386,v 1.36 2018/03/14 13:23:31 rin Exp $
 ./usr/X11R7/lib/libI810XvMC_g.a				-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libIntelXvMC_g.a			-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libchromeXvMCPro_g.a			-unknown-	debuglib,xorg
@@ -90,7 +90,7 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ark_drv.so.0.debug	-unknown-		xorg,debug,xorg_server_ver=110
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ark_drv.so.0.debug	-unknown-		xorg,debug,xorg_server_ver=118,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ast_drv.so.1.debug	-unknown-		xorg,debug
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ati_drv.so.18.debug	-unknown-		xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ati_drv.so.6.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ch7017_drv.so.2.debug	-unknown-		xorg,debug,xorg_server_ver=110
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ch7017_drv.so.2.debug	-unknown-		xorg,debug,xorg_server_ver=118,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ch7xxx_drv.so.2.debug	-unknown-		xorg,debug,xorg_server_ver=110
