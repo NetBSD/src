@@ -92,6 +92,24 @@ xcb_randr_provider_end (xcb_randr_provider_iterator_t i)
 }
 
 void
+xcb_randr_lease_next (xcb_randr_lease_iterator_t *i)
+{
+    --i->rem;
+    ++i->data;
+    i->index += sizeof(xcb_randr_lease_t);
+}
+
+xcb_generic_iterator_t
+xcb_randr_lease_end (xcb_randr_lease_iterator_t i)
+{
+    xcb_generic_iterator_t ret;
+    ret.data = i.data + i.rem;
+    ret.index = i.index + ((char *) ret.data - (char *) i.data);
+    ret.rem = 0;
+    return ret;
+}
+
+void
 xcb_randr_screen_size_next (xcb_randr_screen_size_iterator_t *i)
 {
     --i->rem;
@@ -5080,24 +5098,6 @@ xcb_randr_resource_change_end (xcb_randr_resource_change_iterator_t i)
     return ret;
 }
 
-void
-xcb_randr_notify_data_next (xcb_randr_notify_data_iterator_t *i)
-{
-    --i->rem;
-    ++i->data;
-    i->index += sizeof(xcb_randr_notify_data_t);
-}
-
-xcb_generic_iterator_t
-xcb_randr_notify_data_end (xcb_randr_notify_data_iterator_t i)
-{
-    xcb_generic_iterator_t ret;
-    ret.data = i.data + i.rem;
-    ret.index = i.index + ((char *) ret.data - (char *) i.data);
-    ret.rem = 0;
-    return ret;
-}
-
 int
 xcb_randr_monitor_info_sizeof (const void  *_buffer)
 {
@@ -5442,5 +5442,243 @@ xcb_randr_delete_monitor (xcb_connection_t *c,
 
     xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
     return xcb_ret;
+}
+
+int
+xcb_randr_create_lease_sizeof (const void  *_buffer)
+{
+    char *xcb_tmp = (char *)_buffer;
+    const xcb_randr_create_lease_request_t *_aux = (xcb_randr_create_lease_request_t *)_buffer;
+    unsigned int xcb_buffer_len = 0;
+    unsigned int xcb_block_len = 0;
+    unsigned int xcb_pad = 0;
+    unsigned int xcb_align_to = 0;
+
+
+    xcb_block_len += sizeof(xcb_randr_create_lease_request_t);
+    xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
+    /* crtcs */
+    xcb_block_len += _aux->num_crtcs * sizeof(xcb_randr_output_t);
+    xcb_tmp += xcb_block_len;
+    xcb_align_to = ALIGNOF(xcb_randr_crtc_t);
+    /* insert padding */
+    xcb_pad = -xcb_block_len & (xcb_align_to - 1);
+    xcb_buffer_len += xcb_block_len + xcb_pad;
+    if (0 != xcb_pad) {
+        xcb_tmp += xcb_pad;
+        xcb_pad = 0;
+    }
+    xcb_block_len = 0;
+    /* outputs */
+    xcb_block_len += _aux->num_outputs * sizeof(xcb_randr_output_t);
+    xcb_tmp += xcb_block_len;
+    xcb_align_to = ALIGNOF(xcb_randr_output_t);
+    /* insert padding */
+    xcb_pad = -xcb_block_len & (xcb_align_to - 1);
+    xcb_buffer_len += xcb_block_len + xcb_pad;
+    if (0 != xcb_pad) {
+        xcb_tmp += xcb_pad;
+        xcb_pad = 0;
+    }
+    xcb_block_len = 0;
+
+    return xcb_buffer_len;
+}
+
+xcb_randr_create_lease_cookie_t
+xcb_randr_create_lease (xcb_connection_t         *c,
+                        xcb_window_t              window,
+                        xcb_randr_lease_t         lid,
+                        uint16_t                  num_crtcs,
+                        uint16_t                  num_outputs,
+                        const xcb_randr_crtc_t   *crtcs,
+                        const xcb_randr_output_t *outputs)
+{
+    static const xcb_protocol_request_t xcb_req = {
+        .count = 6,
+        .ext = &xcb_randr_id,
+        .opcode = XCB_RANDR_CREATE_LEASE,
+        .isvoid = 0
+    };
+
+    struct iovec xcb_parts[8];
+    xcb_randr_create_lease_cookie_t xcb_ret;
+    xcb_randr_create_lease_request_t xcb_out;
+
+    xcb_out.window = window;
+    xcb_out.lid = lid;
+    xcb_out.num_crtcs = num_crtcs;
+    xcb_out.num_outputs = num_outputs;
+
+    xcb_parts[2].iov_base = (char *) &xcb_out;
+    xcb_parts[2].iov_len = sizeof(xcb_out);
+    xcb_parts[3].iov_base = 0;
+    xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
+    /* xcb_randr_crtc_t crtcs */
+    xcb_parts[4].iov_base = (char *) crtcs;
+    xcb_parts[4].iov_len = num_crtcs * sizeof(uint32_t);
+    xcb_parts[5].iov_base = 0;
+    xcb_parts[5].iov_len = -xcb_parts[4].iov_len & 3;
+    /* xcb_randr_output_t outputs */
+    xcb_parts[6].iov_base = (char *) outputs;
+    xcb_parts[6].iov_len = num_outputs * sizeof(uint32_t);
+    xcb_parts[7].iov_base = 0;
+    xcb_parts[7].iov_len = -xcb_parts[6].iov_len & 3;
+
+    xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED|XCB_REQUEST_REPLY_FDS, xcb_parts + 2, &xcb_req);
+    return xcb_ret;
+}
+
+xcb_randr_create_lease_cookie_t
+xcb_randr_create_lease_unchecked (xcb_connection_t         *c,
+                                  xcb_window_t              window,
+                                  xcb_randr_lease_t         lid,
+                                  uint16_t                  num_crtcs,
+                                  uint16_t                  num_outputs,
+                                  const xcb_randr_crtc_t   *crtcs,
+                                  const xcb_randr_output_t *outputs)
+{
+    static const xcb_protocol_request_t xcb_req = {
+        .count = 6,
+        .ext = &xcb_randr_id,
+        .opcode = XCB_RANDR_CREATE_LEASE,
+        .isvoid = 0
+    };
+
+    struct iovec xcb_parts[8];
+    xcb_randr_create_lease_cookie_t xcb_ret;
+    xcb_randr_create_lease_request_t xcb_out;
+
+    xcb_out.window = window;
+    xcb_out.lid = lid;
+    xcb_out.num_crtcs = num_crtcs;
+    xcb_out.num_outputs = num_outputs;
+
+    xcb_parts[2].iov_base = (char *) &xcb_out;
+    xcb_parts[2].iov_len = sizeof(xcb_out);
+    xcb_parts[3].iov_base = 0;
+    xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
+    /* xcb_randr_crtc_t crtcs */
+    xcb_parts[4].iov_base = (char *) crtcs;
+    xcb_parts[4].iov_len = num_crtcs * sizeof(uint32_t);
+    xcb_parts[5].iov_base = 0;
+    xcb_parts[5].iov_len = -xcb_parts[4].iov_len & 3;
+    /* xcb_randr_output_t outputs */
+    xcb_parts[6].iov_base = (char *) outputs;
+    xcb_parts[6].iov_len = num_outputs * sizeof(uint32_t);
+    xcb_parts[7].iov_base = 0;
+    xcb_parts[7].iov_len = -xcb_parts[6].iov_len & 3;
+
+    xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_REPLY_FDS, xcb_parts + 2, &xcb_req);
+    return xcb_ret;
+}
+
+xcb_randr_create_lease_reply_t *
+xcb_randr_create_lease_reply (xcb_connection_t                 *c,
+                              xcb_randr_create_lease_cookie_t   cookie  /**< */,
+                              xcb_generic_error_t             **e)
+{
+    return (xcb_randr_create_lease_reply_t *) xcb_wait_for_reply(c, cookie.sequence, e);
+}
+
+int *
+xcb_randr_create_lease_reply_fds (xcb_connection_t                *c  /**< */,
+                                  xcb_randr_create_lease_reply_t  *reply)
+{
+    return xcb_get_reply_fds(c, reply, sizeof(xcb_randr_create_lease_reply_t) + 4 * reply->length);
+}
+
+xcb_void_cookie_t
+xcb_randr_free_lease_checked (xcb_connection_t  *c,
+                              xcb_randr_lease_t  lid,
+                              uint8_t            terminate)
+{
+    static const xcb_protocol_request_t xcb_req = {
+        .count = 2,
+        .ext = &xcb_randr_id,
+        .opcode = XCB_RANDR_FREE_LEASE,
+        .isvoid = 1
+    };
+
+    struct iovec xcb_parts[4];
+    xcb_void_cookie_t xcb_ret;
+    xcb_randr_free_lease_request_t xcb_out;
+
+    xcb_out.lid = lid;
+    xcb_out.terminate = terminate;
+
+    xcb_parts[2].iov_base = (char *) &xcb_out;
+    xcb_parts[2].iov_len = sizeof(xcb_out);
+    xcb_parts[3].iov_base = 0;
+    xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
+
+    xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req);
+    return xcb_ret;
+}
+
+xcb_void_cookie_t
+xcb_randr_free_lease (xcb_connection_t  *c,
+                      xcb_randr_lease_t  lid,
+                      uint8_t            terminate)
+{
+    static const xcb_protocol_request_t xcb_req = {
+        .count = 2,
+        .ext = &xcb_randr_id,
+        .opcode = XCB_RANDR_FREE_LEASE,
+        .isvoid = 1
+    };
+
+    struct iovec xcb_parts[4];
+    xcb_void_cookie_t xcb_ret;
+    xcb_randr_free_lease_request_t xcb_out;
+
+    xcb_out.lid = lid;
+    xcb_out.terminate = terminate;
+
+    xcb_parts[2].iov_base = (char *) &xcb_out;
+    xcb_parts[2].iov_len = sizeof(xcb_out);
+    xcb_parts[3].iov_base = 0;
+    xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
+
+    xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
+    return xcb_ret;
+}
+
+void
+xcb_randr_lease_notify_next (xcb_randr_lease_notify_iterator_t *i)
+{
+    --i->rem;
+    ++i->data;
+    i->index += sizeof(xcb_randr_lease_notify_t);
+}
+
+xcb_generic_iterator_t
+xcb_randr_lease_notify_end (xcb_randr_lease_notify_iterator_t i)
+{
+    xcb_generic_iterator_t ret;
+    ret.data = i.data + i.rem;
+    ret.index = i.index + ((char *) ret.data - (char *) i.data);
+    ret.rem = 0;
+    return ret;
+}
+
+void
+xcb_randr_notify_data_next (xcb_randr_notify_data_iterator_t *i)
+{
+    --i->rem;
+    ++i->data;
+    i->index += sizeof(xcb_randr_notify_data_t);
+}
+
+xcb_generic_iterator_t
+xcb_randr_notify_data_end (xcb_randr_notify_data_iterator_t i)
+{
+    xcb_generic_iterator_t ret;
+    ret.data = i.data + i.rem;
+    ret.index = i.index + ((char *) ret.data - (char *) i.data);
+    ret.rem = 0;
+    return ret;
 }
 

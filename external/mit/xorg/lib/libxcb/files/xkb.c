@@ -11373,9 +11373,9 @@ xcb_xkb_set_device_info_checked (xcb_connection_t                *c,
     struct iovec xcb_parts[8];
     xcb_void_cookie_t xcb_ret;
     xcb_xkb_set_device_info_request_t xcb_out;
-    unsigned int i;
     unsigned int xcb_tmp_len;
     char *xcb_tmp;
+    unsigned int i;
 
     xcb_out.deviceSpec = deviceSpec;
     xcb_out.firstBtn = firstBtn;
@@ -11428,9 +11428,9 @@ xcb_xkb_set_device_info (xcb_connection_t                *c,
     struct iovec xcb_parts[8];
     xcb_void_cookie_t xcb_ret;
     xcb_xkb_set_device_info_request_t xcb_out;
-    unsigned int i;
     unsigned int xcb_tmp_len;
     char *xcb_tmp;
+    unsigned int i;
 
     xcb_out.deviceSpec = deviceSpec;
     xcb_out.firstBtn = firstBtn;

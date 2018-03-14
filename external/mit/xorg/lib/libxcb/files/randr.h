@@ -21,7 +21,7 @@ extern "C" {
 #endif
 
 #define XCB_RANDR_MAJOR_VERSION 1
-#define XCB_RANDR_MINOR_VERSION 5
+#define XCB_RANDR_MINOR_VERSION 6
 
 extern xcb_extension_t xcb_randr_id;
 
@@ -68,6 +68,17 @@ typedef struct xcb_randr_provider_iterator_t {
     int                   rem;
     int                   index;
 } xcb_randr_provider_iterator_t;
+
+typedef uint32_t xcb_randr_lease_t;
+
+/**
+ * @brief xcb_randr_lease_iterator_t
+ **/
+typedef struct xcb_randr_lease_iterator_t {
+    xcb_randr_lease_t *data;
+    int                rem;
+    int                index;
+} xcb_randr_lease_iterator_t;
 
 /** Opcode for xcb_randr_bad_output. */
 #define XCB_RANDR_BAD_OUTPUT 0
@@ -250,7 +261,8 @@ typedef enum xcb_randr_notify_mask_t {
     XCB_RANDR_NOTIFY_MASK_OUTPUT_PROPERTY = 8,
     XCB_RANDR_NOTIFY_MASK_PROVIDER_CHANGE = 16,
     XCB_RANDR_NOTIFY_MASK_PROVIDER_PROPERTY = 32,
-    XCB_RANDR_NOTIFY_MASK_RESOURCE_CHANGE = 64
+    XCB_RANDR_NOTIFY_MASK_RESOURCE_CHANGE = 64,
+    XCB_RANDR_NOTIFY_MASK_LEASE = 128
 } xcb_randr_notify_mask_t;
 
 /** Opcode for xcb_randr_select_input. */
@@ -1405,7 +1417,8 @@ typedef enum xcb_randr_notify_t {
     XCB_RANDR_NOTIFY_OUTPUT_PROPERTY = 2,
     XCB_RANDR_NOTIFY_PROVIDER_CHANGE = 3,
     XCB_RANDR_NOTIFY_PROVIDER_PROPERTY = 4,
-    XCB_RANDR_NOTIFY_RESOURCE_CHANGE = 5
+    XCB_RANDR_NOTIFY_RESOURCE_CHANGE = 5,
+    XCB_RANDR_NOTIFY_LEASE = 6
 } xcb_randr_notify_t;
 
 /**
@@ -1537,40 +1550,6 @@ typedef struct xcb_randr_resource_change_iterator_t {
 } xcb_randr_resource_change_iterator_t;
 
 /**
- * @brief xcb_randr_notify_data_t
- **/
-typedef union xcb_randr_notify_data_t {
-    xcb_randr_crtc_change_t       cc;
-    xcb_randr_output_change_t     oc;
-    xcb_randr_output_property_t   op;
-    xcb_randr_provider_change_t   pc;
-    xcb_randr_provider_property_t pp;
-    xcb_randr_resource_change_t   rc;
-} xcb_randr_notify_data_t;
-
-/**
- * @brief xcb_randr_notify_data_iterator_t
- **/
-typedef struct xcb_randr_notify_data_iterator_t {
-    xcb_randr_notify_data_t *data;
-    int                      rem;
-    int                      index;
-} xcb_randr_notify_data_iterator_t;
-
-/** Opcode for xcb_randr_notify. */
-#define XCB_RANDR_NOTIFY 1
-
-/**
- * @brief xcb_randr_notify_event_t
- **/
-typedef struct xcb_randr_notify_event_t {
-    uint8_t                 response_type;
-    uint8_t                 subCode;
-    uint16_t                sequence;
-    xcb_randr_notify_data_t u;
-} xcb_randr_notify_event_t;
-
-/**
  * @brief xcb_randr_monitor_info_t
  **/
 typedef struct xcb_randr_monitor_info_t {
@@ -1656,6 +1635,109 @@ typedef struct xcb_randr_delete_monitor_request_t {
     xcb_window_t window;
     xcb_atom_t   name;
 } xcb_randr_delete_monitor_request_t;
+
+/**
+ * @brief xcb_randr_create_lease_cookie_t
+ **/
+typedef struct xcb_randr_create_lease_cookie_t {
+    unsigned int sequence;
+} xcb_randr_create_lease_cookie_t;
+
+/** Opcode for xcb_randr_create_lease. */
+#define XCB_RANDR_CREATE_LEASE 45
+
+/**
+ * @brief xcb_randr_create_lease_request_t
+ **/
+typedef struct xcb_randr_create_lease_request_t {
+    uint8_t           major_opcode;
+    uint8_t           minor_opcode;
+    uint16_t          length;
+    xcb_window_t      window;
+    xcb_randr_lease_t lid;
+    uint16_t          num_crtcs;
+    uint16_t          num_outputs;
+} xcb_randr_create_lease_request_t;
+
+/**
+ * @brief xcb_randr_create_lease_reply_t
+ **/
+typedef struct xcb_randr_create_lease_reply_t {
+    uint8_t  response_type;
+    uint8_t  nfd;
+    uint16_t sequence;
+    uint32_t length;
+    uint8_t  pad0[24];
+} xcb_randr_create_lease_reply_t;
+
+/** Opcode for xcb_randr_free_lease. */
+#define XCB_RANDR_FREE_LEASE 46
+
+/**
+ * @brief xcb_randr_free_lease_request_t
+ **/
+typedef struct xcb_randr_free_lease_request_t {
+    uint8_t           major_opcode;
+    uint8_t           minor_opcode;
+    uint16_t          length;
+    xcb_randr_lease_t lid;
+    uint8_t           terminate;
+} xcb_randr_free_lease_request_t;
+
+/**
+ * @brief xcb_randr_lease_notify_t
+ **/
+typedef struct xcb_randr_lease_notify_t {
+    xcb_timestamp_t   timestamp;
+    xcb_window_t      window;
+    xcb_randr_lease_t lease;
+    uint8_t           created;
+    uint8_t           pad0[15];
+} xcb_randr_lease_notify_t;
+
+/**
+ * @brief xcb_randr_lease_notify_iterator_t
+ **/
+typedef struct xcb_randr_lease_notify_iterator_t {
+    xcb_randr_lease_notify_t *data;
+    int                       rem;
+    int                       index;
+} xcb_randr_lease_notify_iterator_t;
+
+/**
+ * @brief xcb_randr_notify_data_t
+ **/
+typedef union xcb_randr_notify_data_t {
+    xcb_randr_crtc_change_t       cc;
+    xcb_randr_output_change_t     oc;
+    xcb_randr_output_property_t   op;
+    xcb_randr_provider_change_t   pc;
+    xcb_randr_provider_property_t pp;
+    xcb_randr_resource_change_t   rc;
+    xcb_randr_lease_notify_t      lc;
+} xcb_randr_notify_data_t;
+
+/**
+ * @brief xcb_randr_notify_data_iterator_t
+ **/
+typedef struct xcb_randr_notify_data_iterator_t {
+    xcb_randr_notify_data_t *data;
+    int                      rem;
+    int                      index;
+} xcb_randr_notify_data_iterator_t;
+
+/** Opcode for xcb_randr_notify. */
+#define XCB_RANDR_NOTIFY 1
+
+/**
+ * @brief xcb_randr_notify_event_t
+ **/
+typedef struct xcb_randr_notify_event_t {
+    uint8_t                 response_type;
+    uint8_t                 subCode;
+    uint16_t                sequence;
+    xcb_randr_notify_data_t u;
+} xcb_randr_notify_event_t;
 
 /**
  * Get the next element of the iterator
@@ -1748,6 +1830,29 @@ xcb_randr_provider_next (xcb_randr_provider_iterator_t *i);
  */
 xcb_generic_iterator_t
 xcb_randr_provider_end (xcb_randr_provider_iterator_t i);
+
+/**
+ * Get the next element of the iterator
+ * @param i Pointer to a xcb_randr_lease_iterator_t
+ *
+ * Get the next element in the iterator. The member rem is
+ * decreased by one. The member data points to the next
+ * element. The member index is increased by sizeof(xcb_randr_lease_t)
+ */
+void
+xcb_randr_lease_next (xcb_randr_lease_iterator_t *i);
+
+/**
+ * Return the iterator pointing to the last element
+ * @param i An xcb_randr_lease_iterator_t
+ * @return  The iterator pointing to the last element
+ *
+ * Set the current element in the iterator to the last element.
+ * The member rem is set to 0. The member data points to the
+ * last element.
+ */
+xcb_generic_iterator_t
+xcb_randr_lease_end (xcb_randr_lease_iterator_t i);
 
 /**
  * Get the next element of the iterator
@@ -4155,29 +4260,6 @@ xcb_randr_resource_change_next (xcb_randr_resource_change_iterator_t *i);
 xcb_generic_iterator_t
 xcb_randr_resource_change_end (xcb_randr_resource_change_iterator_t i);
 
-/**
- * Get the next element of the iterator
- * @param i Pointer to a xcb_randr_notify_data_iterator_t
- *
- * Get the next element in the iterator. The member rem is
- * decreased by one. The member data points to the next
- * element. The member index is increased by sizeof(xcb_randr_notify_data_t)
- */
-void
-xcb_randr_notify_data_next (xcb_randr_notify_data_iterator_t *i);
-
-/**
- * Return the iterator pointing to the last element
- * @param i An xcb_randr_notify_data_iterator_t
- * @return  The iterator pointing to the last element
- *
- * Set the current element in the iterator to the last element.
- * The member rem is set to 0. The member data points to the
- * last element.
- */
-xcb_generic_iterator_t
-xcb_randr_notify_data_end (xcb_randr_notify_data_iterator_t i);
-
 int
 xcb_randr_monitor_info_sizeof (const void  *_buffer);
 
@@ -4333,6 +4415,153 @@ xcb_void_cookie_t
 xcb_randr_delete_monitor (xcb_connection_t *c,
                           xcb_window_t      window,
                           xcb_atom_t        name);
+
+int
+xcb_randr_create_lease_sizeof (const void  *_buffer);
+
+/**
+ *
+ * @param c The connection
+ * @return A cookie
+ *
+ * Delivers a request to the X server.
+ *
+ */
+xcb_randr_create_lease_cookie_t
+xcb_randr_create_lease (xcb_connection_t         *c,
+                        xcb_window_t              window,
+                        xcb_randr_lease_t         lid,
+                        uint16_t                  num_crtcs,
+                        uint16_t                  num_outputs,
+                        const xcb_randr_crtc_t   *crtcs,
+                        const xcb_randr_output_t *outputs);
+
+/**
+ *
+ * @param c The connection
+ * @return A cookie
+ *
+ * Delivers a request to the X server.
+ *
+ * This form can be used only if the request will cause
+ * a reply to be generated. Any returned error will be
+ * placed in the event queue.
+ */
+xcb_randr_create_lease_cookie_t
+xcb_randr_create_lease_unchecked (xcb_connection_t         *c,
+                                  xcb_window_t              window,
+                                  xcb_randr_lease_t         lid,
+                                  uint16_t                  num_crtcs,
+                                  uint16_t                  num_outputs,
+                                  const xcb_randr_crtc_t   *crtcs,
+                                  const xcb_randr_output_t *outputs);
+
+/**
+ * Return the reply
+ * @param c      The connection
+ * @param cookie The cookie
+ * @param e      The xcb_generic_error_t supplied
+ *
+ * Returns the reply of the request asked by
+ *
+ * The parameter @p e supplied to this function must be NULL if
+ * xcb_randr_create_lease_unchecked(). is used.
+ * Otherwise, it stores the error if any.
+ *
+ * The returned value must be freed by the caller using free().
+ */
+xcb_randr_create_lease_reply_t *
+xcb_randr_create_lease_reply (xcb_connection_t                 *c,
+                              xcb_randr_create_lease_cookie_t   cookie  /**< */,
+                              xcb_generic_error_t             **e);
+
+/**
+ * Return the reply fds
+ * @param c      The connection
+ * @param reply  The reply
+ *
+ * Returns the array of reply fds of the request asked by
+ *
+ * The returned value must be freed by the caller using free().
+ */
+int *
+xcb_randr_create_lease_reply_fds (xcb_connection_t                *c  /**< */,
+                                  xcb_randr_create_lease_reply_t  *reply);
+
+/**
+ *
+ * @param c The connection
+ * @return A cookie
+ *
+ * Delivers a request to the X server.
+ *
+ * This form can be used only if the request will not cause
+ * a reply to be generated. Any returned error will be
+ * saved for handling by xcb_request_check().
+ */
+xcb_void_cookie_t
+xcb_randr_free_lease_checked (xcb_connection_t  *c,
+                              xcb_randr_lease_t  lid,
+                              uint8_t            terminate);
+
+/**
+ *
+ * @param c The connection
+ * @return A cookie
+ *
+ * Delivers a request to the X server.
+ *
+ */
+xcb_void_cookie_t
+xcb_randr_free_lease (xcb_connection_t  *c,
+                      xcb_randr_lease_t  lid,
+                      uint8_t            terminate);
+
+/**
+ * Get the next element of the iterator
+ * @param i Pointer to a xcb_randr_lease_notify_iterator_t
+ *
+ * Get the next element in the iterator. The member rem is
+ * decreased by one. The member data points to the next
+ * element. The member index is increased by sizeof(xcb_randr_lease_notify_t)
+ */
+void
+xcb_randr_lease_notify_next (xcb_randr_lease_notify_iterator_t *i);
+
+/**
+ * Return the iterator pointing to the last element
+ * @param i An xcb_randr_lease_notify_iterator_t
+ * @return  The iterator pointing to the last element
+ *
+ * Set the current element in the iterator to the last element.
+ * The member rem is set to 0. The member data points to the
+ * last element.
+ */
+xcb_generic_iterator_t
+xcb_randr_lease_notify_end (xcb_randr_lease_notify_iterator_t i);
+
+/**
+ * Get the next element of the iterator
+ * @param i Pointer to a xcb_randr_notify_data_iterator_t
+ *
+ * Get the next element in the iterator. The member rem is
+ * decreased by one. The member data points to the next
+ * element. The member index is increased by sizeof(xcb_randr_notify_data_t)
+ */
+void
+xcb_randr_notify_data_next (xcb_randr_notify_data_iterator_t *i);
+
+/**
+ * Return the iterator pointing to the last element
+ * @param i An xcb_randr_notify_data_iterator_t
+ * @return  The iterator pointing to the last element
+ *
+ * Set the current element in the iterator to the last element.
+ * The member rem is set to 0. The member data points to the
+ * last element.
+ */
+xcb_generic_iterator_t
+xcb_randr_notify_data_end (xcb_randr_notify_data_iterator_t i);
 
 
 #ifdef __cplusplus

@@ -23,7 +23,7 @@ extern "C" {
 #endif
 
 #define XCB_PRESENT_MAJOR_VERSION 1
-#define XCB_PRESENT_MINOR_VERSION 0
+#define XCB_PRESENT_MINOR_VERSION 2
 
 extern xcb_extension_t xcb_present_id;
 
@@ -46,7 +46,8 @@ typedef enum xcb_present_option_t {
     XCB_PRESENT_OPTION_NONE = 0,
     XCB_PRESENT_OPTION_ASYNC = 1,
     XCB_PRESENT_OPTION_COPY = 2,
-    XCB_PRESENT_OPTION_UST = 4
+    XCB_PRESENT_OPTION_UST = 4,
+    XCB_PRESENT_OPTION_SUBOPTIMAL = 8
 } xcb_present_option_t;
 
 typedef enum xcb_present_capability_t {
@@ -64,7 +65,8 @@ typedef enum xcb_present_complete_kind_t {
 typedef enum xcb_present_complete_mode_t {
     XCB_PRESENT_COMPLETE_MODE_COPY = 0,
     XCB_PRESENT_COMPLETE_MODE_FLIP = 1,
-    XCB_PRESENT_COMPLETE_MODE_SKIP = 2
+    XCB_PRESENT_COMPLETE_MODE_SKIP = 2,
+    XCB_PRESENT_COMPLETE_MODE_SUBOPTIMAL_COPY = 3
 } xcb_present_complete_mode_t;
 
 /**
