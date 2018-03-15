@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_gif.c,v 1.85.6.4 2018/02/11 21:17:34 snj Exp $	*/
+/*	$NetBSD: in6_gif.c,v 1.85.6.5 2018/03/15 11:27:25 bouyer Exp $	*/
 /*	$KAME: in6_gif.c,v 1.62 2001/07/29 04:27:25 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.85.6.4 2018/02/11 21:17:34 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.85.6.5 2018/03/15 11:27:25 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -459,9 +459,11 @@ in6_gif_ctlinput(int cmd, const struct sockaddr *sa, void *d, void *eparg)
 	if (!ip6)
 		return NULL;
 
-	if ((sc->gif_if.if_flags & IFF_RUNNING) == 0)
-		return NULL;
 	var = gif_getref_variant(sc, &psref);
+	if (var->gv_psrc == NULL || var->gv_pdst == NULL) {
+		gif_putref_variant(var, &psref);
+		return NULL;
+	}
 	if (var->gv_psrc->sa_family != AF_INET6) {
 		gif_putref_variant(var, &psref);
 		return NULL;
