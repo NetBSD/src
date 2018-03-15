@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_70_mod.c,v 1.1.2.1 2018/03/15 05:10:05 pgoyette Exp $	*/
+/*	$NetBSD: compat_70_mod.c,v 1.1.2.2 2018/03/15 23:14:21 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,19 +34,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_70_mod.c,v 1.1.2.1 2018/03/15 05:10:05 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_70_mod.c,v 1.1.2.2 2018/03/15 23:14:21 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
-#include "opt_ntp.h"
-#include "opt_sysv.h"
-#include "opt_lfs.h"
 #endif
 
 #include <sys/systm.h>
 #include <sys/module.h>
-#include <sys/sysctl.h>
 
 #include <net/if.h>
 #include <net/route.h>
