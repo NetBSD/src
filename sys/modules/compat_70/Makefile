@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.1.2.1 2018/03/15 05:10:05 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.1.2.2 2018/03/15 07:29:02 pgoyette Exp $
 
 .include "../Makefile.inc"
 
 .PATH:	${S}/compat/common
 
-KMOD=	compat
+KMOD=	compat_70
 
 CPPFLAGS+=	-DCOMPAT_70 -DCOMPAT_80
 
