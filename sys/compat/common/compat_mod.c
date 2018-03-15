@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mod.c,v 1.24.14.8 2018/03/15 11:17:54 pgoyette Exp $	*/
+/*	$NetBSD: compat_mod.c,v 1.24.14.9 2018/03/15 22:46:22 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.24.14.8 2018/03/15 11:17:54 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.24.14.9 2018/03/15 22:46:22 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -78,7 +78,12 @@ void if_50_init(void);
 void if_50_fini(void);
 #endif
 
-MODULE(MODULE_CLASS_EXEC, compat, NULL);
+static const char * const compat_includes[] = {
+	"compat_70",
+	NULL
+};
+
+MODULE_WITH_ALIASES(MODULE_CLASS_EXEC, compat, NULL, &compat_includes);
 
 int	ttcompat(struct tty *, u_long, void *, int, struct lwp *);
 
