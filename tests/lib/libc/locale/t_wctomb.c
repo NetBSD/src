@@ -1,4 +1,4 @@
-/* $NetBSD: t_wctomb.c,v 1.4 2017/05/25 18:28:54 perseant Exp $ */
+/* $NetBSD: t_wctomb.c,v 1.4.2.1 2018/03/15 09:55:23 martin Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2011\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_wctomb.c,v 1.4 2017/05/25 18:28:54 perseant Exp $");
+__RCSID("$NetBSD: t_wctomb.c,v 1.4.2.1 2018/03/15 09:55:23 martin Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -149,6 +149,8 @@ h_wctomb(const struct test *t, char tc)
 		(void)printf("At position %zd:\n", i);
 		(void)printf("  expected: %zd\n", t->mblen[i]);
 		(void)printf("  got     : %zd\n", ret);
+		(void)strvis(buf, cs, VIS_WHITE | VIS_OCTAL);
+		(void)printf("  sequence: \"%s\"\n", buf);
 		atf_tc_fail("Test failed");
 		/* NOTREACHED */
 	}

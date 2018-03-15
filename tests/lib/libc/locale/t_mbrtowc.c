@@ -1,4 +1,4 @@
-/* $NetBSD: t_mbrtowc.c,v 1.1 2011/07/15 07:35:21 jruoho Exp $ */
+/* $NetBSD: t_mbrtowc.c,v 1.1.34.1 2018/03/15 09:55:23 martin Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2011\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_mbrtowc.c,v 1.1 2011/07/15 07:35:21 jruoho Exp $");
+__RCSID("$NetBSD: t_mbrtowc.c,v 1.1.34.1 2018/03/15 09:55:23 martin Exp $");
 
 #include <errno.h>
 #include <locale.h>
@@ -98,19 +98,31 @@ static struct test {
 }, {
 	"ja_JP.ISO2022-JP2",
 	"\033$BF|K\1348l\033(BA\033$B$\"\033(BB\033$B$$\033(B",
+#ifdef __STDC_ISO_10646__
+	{ 0x65E5, 0x672C, 0x8A9E, 0x41, 0x3042, 0x42, 0x3044 },
+#else
 	{ 0x4200467c, 0x42004b5c, 0x4200386c, 0x41, 0x42002422, 0x42, 0x42002424 },
+#endif
 	{ 5, 2, 2, 4, 5, 4, 5 },
 	7
 }, {
 	"ja_JP.SJIS",
 	"\223\372\226{\214\352A\202\240B\202\242",
-	{ 0x93fa, 0x967b, 0x8cea, 0x41, 0x82a0, 0x42, 0x82a2 },
+#ifdef __STDC_ISO_10646__
+	{ 0x65E5, 0x672C, 0x8A9E, 0x41, 0x3042, 0x42, 0x3044 },
+#else
+	{ 0x93FA, 0x967B, 0x8CEA, 0x41, 0x82A0, 0x42, 0x82A2 },
+#endif
 	{ 2, 2, 2, 1, 2, 1, 2 },
 	7
 }, {
 	"ja_JP.eucJP",
 	"\306\374\313\334\270\354A\244\242B\244\244",
-	{ 0xc6fc, 0xcbdc, 0xb8ec, 0x41, 0xa4a2, 0x42, 0xa4a4 },
+#ifdef __STDC_ISO_10646__
+	{ 0x65E5, 0x672C, 0x8A9E, 0x41, 0x3042, 0x42, 0x3044 },
+#else
+	{ 0xC6FC, 0xCBDC, 0xB8EC, 0x41, 0xA4A2, 0x42, 0xA4A4 },
+#endif
 	{ 2, 2, 2, 1, 2, 1, 2 },
 	7
 }, {
@@ -145,6 +157,8 @@ h_ctype2(const struct test *t, bool use_mbstate)
 	(void)memset(&st, 0, sizeof(st));
 //	mbrtowc(0, 0, 0, &st); /* XXX for ISO2022-JP */
 	stp = use_mbstate ? &st : 0;
+
+	printf("First using repeated mbrtowc\n");
 
 	for (n = 9; n > 0; n--) {
 		const char *src = t->data;
@@ -195,6 +209,8 @@ h_ctype2(const struct test *t, bool use_mbstate)
 		ATF_REQUIRE_EQ_MSG(nchar, t->length, "Incorrect length: "
 			"%zd (expected: %zd)", nchar, t->length);
 	}
+
+	printf("Now using mbsrtowcs\n");
 
 	{
 		wchar_t wbuf[SIZE];

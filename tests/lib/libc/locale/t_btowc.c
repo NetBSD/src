@@ -1,4 +1,4 @@
-/* $NetBSD: t_btowc.c,v 1.1 2017/06/01 15:45:02 perseant Exp $ */
+/* $NetBSD: t_btowc.c,v 1.1.2.1 2018/03/15 09:55:23 martin Exp $ */
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -32,11 +32,12 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2017\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_btowc.c,v 1.1 2017/06/01 15:45:02 perseant Exp $");
+__RCSID("$NetBSD: t_btowc.c,v 1.1.2.1 2018/03/15 09:55:23 martin Exp $");
 
 #include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <errno.h>
 #include <string.h>
 #include <wchar.h>
 
@@ -50,13 +51,6 @@ struct test {
 	const wchar_t wlegal[8]; /* The same characters, but in ISO-10646 */
 	const wchar_t willegal[8]; /* ISO-10646 that do not map into charset */
 } tests[] = {
-	{
-		"C",
-		"\377",
-		"ABC123@\t",
-		{ 'A', 'B', 'C', '1', '2', '3', '@', '\t' },
-		{ 0x0430, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0}
-	},
 	{
 		"en_US.UTF-8",
 		"\200",
@@ -85,18 +79,28 @@ static void
 h_iso10646(struct test *t)
 {
 	const char *cp;
-	unsigned char c;
+	int c, wc;
 	char *str;
 	const wchar_t *wcp;
 
+	ATF_REQUIRE_STREQ(setlocale(LC_ALL, "C"), "C");
+	printf("Trying locale: %s\n", t->locale);
+	ATF_REQUIRE(setlocale(LC_CTYPE, t->locale) != NULL);
+	ATF_REQUIRE((str = setlocale(LC_ALL, NULL)) != NULL);
+	(void)printf("Using locale: %s\n", str);
+
 	/* These should have valid wchar representations */
 	for (cp = t->legal, wcp = t->wlegal; *cp != '\0'; ++cp, ++wcp) {
-		c = (unsigned char)*cp;
+		c = (int)(unsigned char)*cp;
 		printf("Checking legal character 0x%x\n", c);
+		wc = btowc(c);
+
+		if (errno != 0)
+			printf(" btowc() failed with errno=%d\n", errno);
 
 		/* It should map to the known Unicode equivalent */
 		printf("btowc(0x%2.2x) = 0x%x, expecting 0x%x\n",
-			c, btowc(c), *wcp);
+		       c, wc, *wcp);
 		ATF_REQUIRE(btowc(c) == *wcp);
 	}
 
@@ -120,6 +124,8 @@ h_btowc(struct test *t)
 	ATF_REQUIRE_STREQ(setlocale(LC_ALL, "C"), "C");
 	printf("Trying locale: %s\n", t->locale);
 	ATF_REQUIRE(setlocale(LC_CTYPE, t->locale) != NULL);
+	ATF_REQUIRE((str = setlocale(LC_ALL, NULL)) != NULL);
+	(void)printf("Using locale: %s\n", str);
 
 	/* btowc(EOF) -> WEOF */
 	ATF_REQUIRE_EQ(btowc(EOF), WEOF);
@@ -180,9 +186,39 @@ ATF_TC_BODY(stdc_iso_10646, tc)
 #endif /* ! __STDC_ISO_10646__ */
 }
 
+ATF_TC(btowc_posix);
+ATF_TC_HEAD(btowc_posix, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Checks btowc(3) and wctob(3) for POSIX locale");
+}
+ATF_TC_BODY(btowc_posix, tc)
+{
+	const char *cp;
+	unsigned char c;
+	char *str;
+	const wchar_t *wcp;
+	int i;
+
+	ATF_REQUIRE_STREQ(setlocale(LC_ALL, "POSIX"), "POSIX");
+
+	/* btowc(EOF) -> WEOF */
+	ATF_REQUIRE_EQ(btowc(EOF), WEOF);
+
+	/* wctob(WEOF) -> EOF */
+	ATF_REQUIRE_EQ(wctob(WEOF), EOF);
+
+	/* All characters from 0 to 255, inclusive, map
+	   onto their unsigned char equivalent */
+	for (i = 0; i <= 255; i++) {
+		ATF_REQUIRE_EQ(btowc(i), (wchar_t)(unsigned char)(i));
+		ATF_REQUIRE_EQ((unsigned char)wctob(i), (wchar_t)i);
+	}
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, btowc);
+	ATF_TP_ADD_TC(tp, btowc_posix);
 	ATF_TP_ADD_TC(tp, stdc_iso_10646);
 
 	return atf_no_error();

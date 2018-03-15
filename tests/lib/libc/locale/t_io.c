@@ -1,4 +1,4 @@
-/* $NetBSD: t_io.c,v 1.4 2014/01/21 00:32:16 yamt Exp $ */
+/* $NetBSD: t_io.c,v 1.4.20.1 2018/03/15 09:55:23 martin Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2011\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_io.c,v 1.4 2014/01/21 00:32:16 yamt Exp $");
+__RCSID("$NetBSD: t_io.c,v 1.4.20.1 2018/03/15 09:55:23 martin Exp $");
 
 #include <sys/param.h>
 #include <errno.h>
@@ -53,8 +53,14 @@ ATF_TC_HEAD(bad_big5_wprintf, tc)
 
 ATF_TC_BODY(bad_big5_wprintf, tc)
 {
-	/* XXX implementation detail knowledge (wchar_t encoding) */
-	wchar_t ibuf[] = { 0xcf10, 0 };
+	wchar_t ibuf[] = {
+#ifdef __STDC_ISO_10646__
+		0x0978, 0  /* An arbitrarily chosen Devangari symbol */
+#else
+		/* XXX implementation detail knowledge (wchar_t encoding) */
+		0xcf10, 0
+#endif
+	};
 	setlocale(LC_CTYPE, "zh_TW.Big5");
 	ATF_REQUIRE_ERRNO(EILSEQ, wprintf(L"%ls\n", ibuf) < 0);
 	ATF_REQUIRE(ferror(stdout));
@@ -68,8 +74,14 @@ ATF_TC_HEAD(bad_big5_swprintf, tc)
 
 ATF_TC_BODY(bad_big5_swprintf, tc)
 {
-	/* XXX implementation detail knowledge (wchar_t encoding) */
-	wchar_t ibuf[] = { 0xcf10, 0 };
+	wchar_t ibuf[] = {
+#ifdef __STDC_ISO_10646__
+		0x0978, 0  /* An arbitrarily chosen Devangari symbol */
+#else
+		/* XXX implementation detail knowledge (wchar_t encoding) */
+		0xcf10, 0
+#endif
+	};
 	wchar_t obuf[20];
 	setlocale(LC_CTYPE, "zh_TW.Big5");
 	ATF_REQUIRE_ERRNO(EILSEQ,
@@ -84,8 +96,14 @@ ATF_TC_HEAD(good_big5_wprintf, tc)
 
 ATF_TC_BODY(good_big5_wprintf, tc)
 {
-	/* XXX implementation detail knowledge (wchar_t encoding) */
-	wchar_t ibuf[] = { 0xcf40, 0 };
+	wchar_t ibuf[] = {
+#ifdef __STDC_ISO_10646__
+		0x67DC, 0
+#else
+		/* XXX implementation detail knowledge (wchar_t encoding) */
+		0xcf40, 0
+#endif
+	};
 	setlocale(LC_CTYPE, "zh_TW.Big5");
 	ATF_REQUIRE_EQ(wprintf(L"%ls\n", ibuf), 2);
 }
@@ -98,8 +116,14 @@ ATF_TC_HEAD(good_big5_swprintf, tc)
 
 ATF_TC_BODY(good_big5_swprintf, tc)
 {
-	/* XXX implementation detail knowledge (wchar_t encoding) */
-	wchar_t ibuf[] = { 0xcf40, 0 };
+	wchar_t ibuf[] = {
+#ifdef __STDC_ISO_10646__
+		0x67DC, 0
+#else
+		/* XXX implementation detail knowledge (wchar_t encoding) */
+		0xcf40, 0
+#endif
+	};
 	wchar_t obuf[20];
 	setlocale(LC_CTYPE, "zh_TW.Big5");
 	ATF_REQUIRE_EQ(swprintf(obuf, sizeof(obuf), L"%ls\n", ibuf), 2);
@@ -139,8 +163,14 @@ ATF_TC_BODY(good_big5_getwc, tc)
 
 	ATF_REQUIRE(fp != NULL);
 	setlocale(LC_CTYPE, "zh_TW.Big5");
-	/* XXX implementation detail knowledge (wchar_t encoding) */
-	ATF_REQUIRE_EQ(getwc(fp), 0xcf40);
+	ATF_REQUIRE_EQ(getwc(fp),
+#ifdef __STDC_ISO_10646__
+		       0x67DC
+#else
+		       /* XXX implementation detail knowledge (wchar_t encoding) */
+		       0xcf40
+#endif
+		);
 	fclose(fp);
 }
 

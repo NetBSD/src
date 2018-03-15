@@ -1,4 +1,4 @@
-/* $NetBSD: t_wcstod.c,v 1.3 2011/10/01 17:56:11 christos Exp $ */
+/* $NetBSD: t_wcstod.c,v 1.3.34.1 2018/03/15 09:55:23 martin Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2011\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_wcstod.c,v 1.3 2011/10/01 17:56:11 christos Exp $");
+__RCSID("$NetBSD: t_wcstod.c,v 1.3.34.1 2018/03/15 09:55:23 martin Exp $");
 
 #include <errno.h>
 #include <math.h>
@@ -384,6 +384,35 @@ static struct test {
 };
 #endif /* !defined(__vax__) */
 
+
+ATF_TC(wcstombs);
+ATF_TC_HEAD(wcstombs, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Checks wcstombs(3) on the inputs to the wcstod test");
+}
+ATF_TC_BODY(wcstombs, tc)
+{
+	struct test *t;
+	size_t n;
+	char *buf;
+
+	/*
+	 * Previously this was part of the wcstod test.
+	 */
+	for (t = &tests[0]; t->wcs != NULL; ++t) {
+		printf("wcslen(\"%S\") = %zu\n", t->wcs, wcslen(t->wcs));
+		n = wcstombs(NULL, t->wcs, 0);
+		printf("wcstombs(NULL, \"%S\", 0) = %d\n", t->wcs, (int)n);
+		ATF_REQUIRE((buf = (void *)calloc(1, n + 1)) != NULL);
+		(void)wcstombs(buf, t->wcs, n + 1);
+		printf("wcstombs(buf, \"%S\", %d) = \"%s\"\n", t->wcs,
+		       (int)(n + 1), buf);
+		ATF_REQUIRE_EQ(strlen(buf), wcslen(t->wcs));
+		
+		free(buf);
+	}
+}
+
 ATF_TC(wcstod);
 ATF_TC_HEAD(wcstod, tc)
 {
@@ -398,17 +427,11 @@ ATF_TC_BODY(wcstod, tc)
 
 #if !defined(__vax__)
 	for (t = &tests[0]; t->wcs != NULL; ++t) {
-		double d;
 		size_t n;
+		double d;
 		wchar_t *tail;
-		char *buf;
 
-		/* we do not supported %ls nor %S yet. */
-		n = wcstombs(NULL, t->wcs, 0);
-		ATF_REQUIRE((buf = (void *)malloc(n + 1)) != NULL);
-		(void)wcstombs(buf, t->wcs, n + 1);
-		(void)printf("Checking wcstod(\"%s\", &tail):\n", buf);
-		free(buf);
+		(void)printf("Checking wcstod(\"%S\", &tail):\n", t->wcs);
 
 		errno = 0;
 		d = wcstod(t->wcs, &tail);
@@ -451,6 +474,7 @@ ATF_TC_BODY(wcstod, tc)
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, wcstod);
+	ATF_TP_ADD_TC(tp, wcstombs);
 
 	return atf_no_error();
 }

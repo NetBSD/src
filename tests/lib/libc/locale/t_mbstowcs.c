@@ -1,4 +1,4 @@
-/* $NetBSD: t_mbstowcs.c,v 1.1 2011/07/15 07:35:21 jruoho Exp $ */
+/* $NetBSD: t_mbstowcs.c,v 1.1.34.1 2018/03/15 09:55:23 martin Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2011\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_mbstowcs.c,v 1.1 2011/07/15 07:35:21 jruoho Exp $");
+__RCSID("$NetBSD: t_mbstowcs.c,v 1.1.34.1 2018/03/15 09:55:23 martin Exp $");
 
 #include <errno.h>
 #include <locale.h>
@@ -97,9 +97,15 @@ static struct test {
 	"ja_JP.ISO2022-JP",
 	"\033$B#J#I#S$G$9!#\033(Baaaa\033$B$\"$$$&$($*\033(B",
 	{
+#ifdef __STDC_ISO_10646__
+		0xFF2A, 0xFF29, 0xFF33, 0x3067, 0x3059,
+		0x3002, 0x61, 0x61, 0x61, 0x61, 0x3042, 0x3044,
+		0x3046, 0x3048, 0x304A, 0x0A
+#else
 		0x4200234A, 0x42002349, 0x42002353, 0x42002447, 0x42002439,
 		0x42002123, 0x61, 0x61, 0x61, 0x61, 0x42002422, 0x42002424,
 		0x42002426, 0x42002428, 0x4200242A, 0x0A
+#endif
 	},
 	{ 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 2, 2, -1 },
 	26
@@ -108,8 +114,13 @@ static struct test {
 	"\202r\202i\202h\202r\202\305\202\267\201Baaaa\202\240\202\242"
 	"\202\244\202\246\202\250",
 	{
+#ifdef __STDC_ISO_10646__
+		0xFF33, 0xFF2A, 0xFF29, 0xFF33, 0x3067, 0x3059, 0x3002, 0x61,
+		0x61, 0x61, 0x61, 0x3042, 0x3044, 0x3046, 0x3048, 0x304A, 0x0A
+#else
 		0x8272, 0x8269, 0x8268, 0x8272, 0x82C5, 0x82B7, 0x8142, 0x61,
 		0x61, 0x61, 0x61, 0x82A0, 0x82A2, 0x82A4, 0x82A6, 0x82A8, 0x0A
+#endif
 	},
 	{ 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 2, 2, -1 },
 	28
@@ -118,8 +129,13 @@ static struct test {
 	"\243\305\243\325\243\303\244\307\244\271\241\243aaaa\244\242\244"
 	"\244\244\246\244\250\244\252",
 	{
+#ifdef __STDC_ISO_10646__
+		0xFF25, 0xFF35, 0xFF23, 0x3067, 0x3059, 0x3002, 0x61, 0x61, 0x61,
+		0x61, 0x3042, 0x3044, 0x3046, 0x3048, 0x304A, 0x0A
+#else
 		0xA3C5, 0xA3D5, 0xA3C3, 0xA4C7, 0xA4B9, 0xA1A3, 0x61, 0x61, 0x61,
 		0x61, 0xA4A2, 0xA4A4, 0xA4A6, 0xA4A8, 0xA4AA, 0x0A
+#endif
 	},
 	{ 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 2, 2, -1 },
 	26
