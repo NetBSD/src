@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.176 2018/03/15 00:48:13 christos Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.177 2018/03/15 03:21:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.176 2018/03/15 00:48:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.177 2018/03/15 03:21:58 christos Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -173,31 +173,6 @@ struct vndxfer {
 struct vndbuf {
 	struct buf	vb_buf;
 	struct vndxfer	*vb_xfer;
-};
-
-/*
- * NetBSD 1.3 swapctl(SWAP_STATS, ...) swapent structure; uses 32 bit
- * dev_t and has no se_path[] member.
- */
-struct swapent13 {
-	int32_t	se13_dev;		/* device id */
-	int	se13_flags;		/* flags */
-	int	se13_nblks;		/* total blocks */
-	int	se13_inuse;		/* blocks in use */
-	int	se13_priority;		/* priority of this device */
-};
-
-/*
- * NetBSD 5.0 swapctl(SWAP_STATS, ...) swapent structure; uses 32 bit
- * dev_t.
- */
-struct swapent50 {
-	int32_t	se50_dev;		/* device id */
-	int	se50_flags;		/* flags */
-	int	se50_nblks;		/* total blocks */
-	int	se50_inuse;		/* blocks in use */
-	int	se50_priority;		/* priority of this device */
-	char	se50_path[PATH_MAX+1];	/* path name */
 };
 
 /*
@@ -440,36 +415,6 @@ void swapsys_unlock(void)
 	rw_exit(&swap_syscall_lock);
 }
 
-#if defined(COMPAT_13)
-static void
-swapent13_cvt(void *p, const struct swapent *se)
-{
-	struct swapent13 *sep13 = p;
-
-	sep13->se13_dev = se->se_dev;
-	sep13->se13_flags = se->se_flags;
-	sep13->sse13_nblks = se->se_nblks;
-	sep13->se13_inuse = se->se_inuse;
-	sep13->se13_priority = se->se_priority;
-}
-#endif
-
-#if defined(COMPAT_50)
-static void
-swapent50_cvt(void *p, const struct swapent *se)
-{
-	struct swapent50 *sep50 = p;
-
-	sep50->se50_dev = se->se_dev;
-	sep50->se50_flags = se->se_flags;
-	sep50->se50_nblks = se->se_nblks;
-	sep50->se50_inuse = se->se_inuse;
-	sep50->se50_priority = se->se_priority;
-	KASSERT(sizeof(se->se_path) <= sizeof(sep50->se50_path));
-	strcpy(sep50->se50_path, se->se_path);
-}
-#endif
-
 static void
 swapent_cvt(struct swapent *se, const struct swapdev *sdp, int inuse)
 {
@@ -482,42 +427,10 @@ swapent_cvt(struct swapent *se, const struct swapdev *sdp, int inuse)
 	strcpy(se->se_path, sdp->swd_path);
 }
 
-static size_t
-swapent_size(int cmd)
-{
-	switch (cmd) {
-#if defined(COMPAT_13)
-	case SWAP_STATS13:
-		return sizeof(struct swapent13);
-#endif
-#if defined(COMPAT_50)
-	case SWAP_STATS50:
-	    	return sizeof(struct swapent50);
-#endif
-	case SWAP_STATS:
-		return sizeof(struct swapent);
-	default:
-		return 0;
-	}
-}
-
-static void (*
-swapent_fun(int cmd))(void *, const struct swapent *)
-{
-	switch (cmd) {
-#if defined(COMPAT_13)
-	case SWAP_STATS13:
-		return swapent13_cvt;
-#endif
-#if defined(COMPAT_50)
-	case SWAP_STATS50:
-		return swapent50_cvt;
-#endif
-	case SWAP_STATS:
-	default:
-		return NULL;
-	}
-}
+int (*uvm_swap_stats13)(const struct sys_swapctl_args *, register_t *) =
+    (void *)enosys;
+int (*uvm_swap_stats50)(const struct sys_swapctl_args *, register_t *) =
+    (void *)enosys;
 
 /*
  * sys_swapctl: main entry point for swapctl(2) system call
@@ -572,16 +485,15 @@ sys_swapctl(struct lwp *l, const struct sys_swapctl_args *uap, register_t *retva
 	 * copyout() and we don't want to be holding that lock then!
 	 */
 	switch (SCARG(uap, cmd)) {
-	case SWAP_STATS:
-#if defined(COMPAT_50)
-	case SWAP_STATS50:
-#endif
-#if defined(COMPAT_13)
 	case SWAP_STATS13:
-#endif
+		error = (*uvm_swap_stats13)(uap, retval);
+		goto out;
+	case SWAP_STATS50:
+		error = (*uvm_swap_stats50)(uap, retval);
+		goto out;
+	case SWAP_STATS:
 		error = uvm_swap_stats(SCARG(uap, arg), SCARG(uap, misc),
-		    swapent_fun(SCARG(uap, cmd)), swapent_size(SCARG(uap, cmd)),
-		    retval);
+		    NULL, sizeof(struct swapent), retval);
 		UVMHIST_LOG(pdhist, "<- done SWAP_STATS", 0, 0, 0, 0);
 		goto out;
 	
