@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.4 2017/11/11 12:51:05 maxv Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.4.2.1 2018/03/15 09:12:04 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.4 2017/11/11 12:51:05 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.4.2.1 2018/03/15 09:12:04 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.4 2017/11/11 12:51:05 maxv Exp $");
 #include <machine/db_machdep.h>
 
 #include <ddb/db_access.h>
+#include <ddb/db_output.h>
 
 /*
  * Read bytes from kernel address space for debugger.
@@ -117,7 +118,7 @@ db_write_text(vaddr_t addr, size_t size, const char *data)
 		pte = *ppte;
 
 		if ((pte & PG_V) == 0) {
-			printf(" address %p not a valid page\n", dst);
+			db_printf(" address %p not a valid page\n", dst);
 			return;
 		}
 

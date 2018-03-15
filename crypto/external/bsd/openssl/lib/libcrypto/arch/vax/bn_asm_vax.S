@@ -1,4 +1,4 @@
-#	$NetBSD: bn_asm_vax.S,v 1.1 2009/07/19 23:30:47 christos Exp $
+#	$NetBSD: bn_asm_vax.S,v 1.1.46.1 2018/03/15 09:11:53 pgoyette Exp $
 #
 # w.j.m. 15-jan-1999
 #
@@ -50,6 +50,7 @@ bn_mul_add_words:
 
 	movl	%r6,%r0
 	ret
+	.size  bn_mul_add_words, .-bn_mul_add_words
 
 #	.title	vax_bn_mul_words  unsigned multiply & add, 32*32+32=>64
 #;
@@ -98,6 +99,7 @@ bn_mul_words:
 
 	movl	%r6,%r0
 	ret
+	.size  bn_mul_words, .-bn_mul_words
 
 
 
@@ -136,6 +138,7 @@ bn_sqr_words:
 	sobgtr	%r4,0b			# loop
 
 	ret
+	.size  bn_sqr_words, .-bn_sqr_words
 
 
 #	.title	vax_bn_div_words  unsigned divide
@@ -315,6 +318,7 @@ bn_div_words:
 	incl	%r2		#   [q',q] = [q',q] + 1
 	adwc	$0,%r8
 	brb	5b
+	.size  bn_div_words, .-bn_div_words
 
 
 
@@ -351,6 +355,7 @@ bn_add_words:
 
 	adwc	$0,%r0
 1:	ret
+	.size  bn_add_words, .-bn_add_words
 
 #;
 #; Richard Levitte 20-Nov-2000
@@ -383,6 +388,7 @@ bn_sub_words:
 
 1:	adwc	$0,%r0
 	ret
+	.size  bn_sub_words, .-bn_sub_words
 
 #
 #	Ragge 20-Sep-2003
@@ -463,3 +469,4 @@ bn_sqr_comba8:
 	sobgtr	%r8,2b
 
 	ret
+	.size  bn_mul_comba4, .-bn_mul_comba4

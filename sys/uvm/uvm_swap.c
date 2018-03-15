@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.175.2.2 2018/03/13 21:59:51 pgoyette Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.175.2.3 2018/03/15 09:12:07 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.175.2.2 2018/03/13 21:59:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.175.2.3 2018/03/15 09:12:07 pgoyette Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -144,31 +144,6 @@ struct vndxfer {
 struct vndbuf {
 	struct buf	vb_buf;
 	struct vndxfer	*vb_xfer;
-};
-
-/*
- * NetBSD 1.3 swapctl(SWAP_STATS, ...) swapent structure; uses 32 bit
- * dev_t and has no se_path[] member.
- */
-struct swapent13 {
-	int32_t	se13_dev;		/* device id */
-	int	se13_flags;		/* flags */
-	int	se13_nblks;		/* total blocks */
-	int	se13_inuse;		/* blocks in use */
-	int	se13_priority;		/* priority of this device */
-};
-
-/*
- * NetBSD 5.0 swapctl(SWAP_STATS, ...) swapent structure; uses 32 bit
- * dev_t.
- */
-struct swapent50 {
-	int32_t	se50_dev;		/* device id */
-	int	se50_flags;		/* flags */
-	int	se50_nblks;		/* total blocks */
-	int	se50_inuse;		/* blocks in use */
-	int	se50_priority;		/* priority of this device */
-	char	se50_path[PATH_MAX+1];	/* path name */
 };
 
 /*
@@ -445,6 +420,23 @@ void swapsys_unlock(void)
 	rw_exit(&swap_syscall_lock);
 }
 
+static void
+swapent_cvt(struct swapent *se, const struct swapdev *sdp, int inuse)
+{
+	se->se_dev = sdp->swd_dev;
+	se->se_flags = sdp->swd_flags;
+	se->se_nblks = sdp->swd_nblks;
+	se->se_inuse = inuse;
+	se->se_priority = sdp->swd_priority;
+	KASSERT(sdp->swd_pathlen < sizeof(se->se_path));
+	strcpy(se->se_path, sdp->swd_path);
+}
+
+int (*uvm_swap_stats13)(const struct sys_swapctl_args *, register_t *) =
+    (void *)enosys;
+int (*uvm_swap_stats50)(const struct sys_swapctl_args *, register_t *) =
+    (void *)enosys;
+
 /*
  * sys_swapctl: main entry point for swapctl(2) system call
  * 	[with two helper functions: swap_on and swap_off]
@@ -461,11 +453,10 @@ sys_swapctl(struct lwp *l, const struct sys_swapctl_args *uap, register_t *retva
 	struct nameidata nd;
 	struct swappri *spp;
 	struct swapdev *sdp;
-	struct swapent *sep;
 #define SWAP_PATH_MAX (PATH_MAX + 1)
 	char	*userpath;
 	size_t	len = 0;
-	int	error, misc;
+	int	error;
 	int	priority;
 	UVMHIST_FUNC("sys_swapctl"); UVMHIST_CALLED(pdhist);
 
@@ -483,7 +474,6 @@ sys_swapctl(struct lwp *l, const struct sys_swapctl_args *uap, register_t *retva
 		return 0;
 	}
 
-	misc = SCARG(uap, misc);
 	userpath = kmem_alloc(SWAP_PATH_MAX, KM_SLEEP);
 
 	/*
@@ -499,47 +489,24 @@ sys_swapctl(struct lwp *l, const struct sys_swapctl_args *uap, register_t *retva
 	 * to grab the uvm_swap_data_lock because we may fault&sleep during
 	 * copyout() and we don't want to be holding that lock then!
 	 */
-	if (SCARG(uap,cmd) == SWAP_STATS || SCARG(uap, cmd) == SWAP_STATS13 ||
-	    SCARG(uap,cmd) == SWAP_STATS50) {
-		len = 0;
-		if (SCARG(uap, cmd) == SWAP_STATS)
-			len = sizeof(struct swapent);
-		else if (SCARG(uap, cmd) == SWAP_STATS13)
-			len = swapstats_len_13;
-		else if (SCARG(uap, cmd) == SWAP_STATS50)
-			len = swapstats_len_50;
-		/*
-		 * If len is still zero at this point, no compat code
-		 * for the current cmd exists, so error out.  Also,
-		 * error if user-specified buffer size is less than zero.
-		 */
-		if (len == 0 || misc < 0) {
-			error = EINVAL;
-			goto out;
-		}
-		if (misc == 0 || uvmexp.nswapdev == 0) {
-			error = 0;
-			goto out;
-		}
-		/* Make sure userland cannot exhaust kernel memory */
-		if ((size_t)misc > (size_t)uvmexp.nswapdev)
-			misc = uvmexp.nswapdev;
-		KASSERT(misc > 0);
-		len *= misc;
-		sep = (struct swapent *)kmem_alloc(len, KM_SLEEP);
-
-		uvm_swap_stats(SCARG(uap, cmd), sep, misc, retval);
-		error = copyout(sep, SCARG(uap, arg), len);
-
-		kmem_free(sep, len);
+	switch (SCARG(uap, cmd)) {
+	case SWAP_STATS13:
+		error = (*uvm_swap_stats13)(uap, retval);
+		goto out;
+	case SWAP_STATS50:
+		error = (*uvm_swap_stats50)(uap, retval);
+		goto out;
+	case SWAP_STATS:
+		error = uvm_swap_stats(SCARG(uap, arg), SCARG(uap, misc),
+		    NULL, sizeof(struct swapent), retval);
 		UVMHIST_LOG(pdhist, "<- done SWAP_STATS", 0, 0, 0, 0);
 		goto out;
-	}
-	if (SCARG(uap, cmd) == SWAP_GETDUMPDEV) {
-		dev_t	*devp = (dev_t *)SCARG(uap, arg);
-
-		error = copyout(&dumpdev, devp, sizeof(dumpdev));
+	
+	case SWAP_GETDUMPDEV:
+		error = copyout(&dumpdev, SCARG(uap, arg), sizeof(dumpdev));
 		goto out;
+	default:
+		break;
 	}
 
 	/*
@@ -745,12 +712,30 @@ out:
  * is not known at build time. Hence it would not be possible to
  * ensure it would fit in the stackgap in any case.
  */
-void
-uvm_swap_stats(int cmd, struct swapent *sep, int sec, register_t *retval)
+int
+uvm_swap_stats(char *ptr, int misc, 
+    void (*f)(void *, const struct swapent *), size_t len,
+    register_t *retval)
 {
 	struct swappri *spp;
 	struct swapdev *sdp;
+	struct swapent sep;
 	int count = 0;
+	int error;
+
+	KASSERT(len <= sizeof(sep));
+	if (len == 0)
+		return ENOSYS;
+
+	if (misc < 0)
+		return EINVAL;
+
+	if (misc == 0 || uvmexp.nswapdev == 0)
+		return 0;
+
+	/* Make sure userland cannot exhaust kernel memory */
+	if ((size_t)misc > (size_t)uvmexp.nswapdev)
+		misc = uvmexp.nswapdev;
 
 	KASSERT(rw_lock_held(&swap_syscall_lock));
 
@@ -758,47 +743,23 @@ uvm_swap_stats(int cmd, struct swapent *sep, int sec, register_t *retval)
 		TAILQ_FOREACH(sdp, &spp->spi_swapdev, swd_next) {
 			int inuse;
 
-			if (sec-- <= 0)
+			if (misc-- <= 0)
 				break;
 
-			/*
-			 * backwards compatibility for system call.
-			 * For NetBSD 1.3 and 5.0, we have to use
-			 * the 32 bit dev_t.  For 5.0 and -current
-			 * we have to add the path.
-			 */
 			inuse = btodb((uint64_t)sdp->swd_npginuse <<
 			    PAGE_SHIFT);
 
-			if (cmd == SWAP_STATS) {
-				sep->se_dev = sdp->swd_dev;
-				sep->se_flags = sdp->swd_flags;
-				sep->se_nblks = sdp->swd_nblks;
-				sep->se_inuse = inuse;
-				sep->se_priority = sdp->swd_priority;
-				KASSERT(sdp->swd_pathlen <
-				    sizeof(sep->se_path));
-				strcpy(sep->se_path, sdp->swd_path);
-				sep++;
-			} else if (cmd == SWAP_STATS13) {
-				struct swapent13 *sep13 =
-				    (struct swapent13 *)sep;
-
-				(*vec_swapstats_copy_13)(cmd, inuse, sdp,
-				    sep13);
-				sep = (struct swapent *)(sep13 + 1);
-			} else if (cmd == SWAP_STATS50) {
-				struct swapent50 *sep50 =
-				    (struct swapent50 *)sep;
-
-				(*vec_swapstats_copy_50)(cmd, inuse, sdp,
-				    sep50);
-				sep = (struct swapent *)(sep50 + 1);
-			}
+			swapent_cvt(&sep, sdp, inuse);
+			if (f)
+				(*f)(&sep, &sep);
+			if ((error = copyout(&sep, ptr, len)) != 0)
+				return error;
+			ptr += len;
 			count++;
 		}
 	}
 	*retval = count;
+	return 0;
 }
 
 /*

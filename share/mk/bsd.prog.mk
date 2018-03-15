@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.311 2018/02/25 00:16:48 mrg Exp $
+#	$NetBSD: bsd.prog.mk,v 1.311.2.1 2018/03/15 09:12:01 pgoyette Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -260,6 +260,7 @@ PAM_STATIC_DPADD=
 	Xaw \
 	Xdmcp \
 	Xext \
+	Xfont2 \
 	Xfont \
 	Xft \
 	Xi \

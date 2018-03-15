@@ -710,6 +710,7 @@ static int
 smu_fan_get_rpm(struct smu_fan *fan, int *rpm)
 {
 	int ret;
+	ret = 0;
 
 	if (time_uptime - fan->last_update > 1) {
 		ret = smu_fan_update_rpm(fan);

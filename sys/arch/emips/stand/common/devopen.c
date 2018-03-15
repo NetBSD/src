@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.1 2011/01/26 01:18:54 pooka Exp $	*/
+/*	$NetBSD: devopen.c,v 1.1.60.1 2018/03/15 09:12:02 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -59,54 +59,53 @@ devopen(struct open_file *f,
 	cp = fname;
 	ncp = device_name;
 
-    /* Require the form CTRL/DEVNAME(UNIT,PART)/FILENAME e.g. '0/ace(0,0)/netbsd' '0/tftp(0,0)/netbsd'
-     */
+	/*
+	 * Require the form CTRL/DEVNAME(UNIT,PART)/FILENAME
+	 * e.g. '0/ace(0,0)/netbsd' '0/tftp(0,0)/netbsd'
+	 */
 
-    /* get controller number */
-    if ((c = *cp) >= '0' && c <= '9') {
-        ctlr = c - '0';
-        c = *++cp;
-    } else
-        return (ENXIO);
+	/* get controller number */
+	c = *cp++;
+	if (c < '0' || c > '9')
+		return ENXIO;
+	ctlr = c - '0';
 
-    if (c != '/')
-        return (ENXIO);
-    c = *++cp;
+	c = *cp++;
+	if (c != '/')
+		return ENXIO;
 
-    /* get device name */
-    while ((c = *cp) != '\0') {
-        if ((c == '(') || (c == '/')) {
-            cp++;
-            break;
-        }
-        if (ncp < device_name + sizeof(device_name) - 1)
-            *ncp++ = c;
-        cp++;
-    }
-    if (ncp == device_name)
-        return (ENXIO);
+	/* get device name */
+	while ((c = *cp) != '\0') {
+		if ((c == '(') || (c == '/')) {
+			cp++;
+			break;
+		}
+		if (ncp < device_name + sizeof(device_name) - 1)
+			*ncp++ = c;
+		cp++;
+	}
+	if (ncp == device_name)
+		return ENXIO;
 
-    /* get device number */
-    if ((c = *cp) >= '0' && c <= '9') {
-        unit = c - '0';
-        c = *++cp;
-    } else
-        return (ENXIO);
+	/* get device number */
+	c = *cp++;
+	if (c < '0' || c > '9')
+		return ENXIO;
+	unit = c - '0';
 
-    if (c == ',') {
-        /* get partition number */
-        if ((c = *++cp) >= '0' && c <= '9') {
-            part = c - '0';
-            c = *++cp;
-        } else
-            return (ENXIO);
-    } else
-        return (ENXIO);
+	c = *cp++;
+	if (c != ',')
+		return (ENXIO);
 
-    if (c == ')')
-        cp++;
-    else
-        return (ENXIO);
+	/* get partition number */
+	c = *cp++;
+	if (c < '0' || c > '9')
+		return ENXIO;
+	part = c - '0';
+
+	c = *cp++;
+	if (c != ')')
+		return ENXIO;
 
 	*ncp = '\0';
 
@@ -121,7 +120,7 @@ devopen(struct open_file *f,
 		if (dp->dv_name)
 			printf(" %s", dp->dv_name);
 	printf("\n");
-	return (ENXIO);
+	return ENXIO;
 
 fnd:
 #ifdef BOOTNET
@@ -132,12 +131,12 @@ fnd:
 		rc = (dp->dv_open)(f, ctlr, unit, part, cp);
 #endif /* !LIBSA_SINGLE_DEVICE */
 	if (rc)
-		return (rc);
+		return rc;
 
 #ifndef LIBSA_SINGLE_DEVICE
 	f->f_dev = dp;
 #endif
 	if (file && *cp != '\0')
 		*file = (char *)cp;	/* XXX */
-	return (0);
+	return 0;
 }

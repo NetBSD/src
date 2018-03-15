@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.99 2017/08/09 01:56:42 ginsbach Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.99.2.1 2018/03/15 09:12:08 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: ypbind.c,v 1.99 2017/08/09 01:56:42 ginsbach Exp $");
+__RCSID("$NetBSD: ypbind.c,v 1.99.2.1 2018/03/15 09:12:08 pgoyette Exp $");
 #endif
 
 #include <sys/types.h>
@@ -710,14 +710,14 @@ ypbindproc_domain_2(SVCXPRT *transp, void *argp)
 
 	DPRINTF("ypbindproc_domain_2 %s\n", arg);
 
+	(void)memset(&res, 0, sizeof res);
+	res.ypbind_status = YPBIND_FAIL_VAL;
+
 	/* Reject invalid domains. */
 	if (_yp_invalid_domain(arg)) {
 		res.ypbind_respbody.ypbind_error = YPBIND_ERR_NOSERV;
 		return &res;
 	}
-
-	(void)memset(&res, 0, sizeof res);
-	res.ypbind_status = YPBIND_FAIL_VAL;
 
 	/*
 	 * Look for the domain. XXX: Behave erratically if we have

@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_sendpkt.c,v 1.16 2016/12/26 23:05:06 christos Exp $	*/
+/*	$NetBSD: npf_sendpkt.c,v 1.16.14.1 2018/03/15 09:12:06 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2010-2011 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_sendpkt.c,v 1.16 2016/12/26 23:05:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_sendpkt.c,v 1.16.14.1 2018/03/15 09:12:06 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: npf_sendpkt.c,v 1.16 2016/12/26 23:05:06 christos Ex
 #include <netinet/ip6.h>
 #include <netinet/icmp6.h>
 #include <netinet6/ip6_var.h>
+#include <netinet6/scope6_var.h>
 #include <sys/mbuf.h>
 #endif
 
@@ -175,11 +176,29 @@ npf_return_tcp(npf_cache_t *npc)
 		    sizeof(struct tcphdr));
 	}
 
+	/* Handle IPv6 scopes */
+	if (npf_iscached(npc, NPC_IP6)) {
+		const struct ifnet *rcvif = npc->npc_nbuf->nb_ifp;
+
+		if (in6_clearscope(&ip6->ip6_src) ||
+		    in6_clearscope(&ip6->ip6_dst)) {
+			goto bad;
+		}
+		if (in6_setscope(&ip6->ip6_src, rcvif, NULL) ||
+		    in6_setscope(&ip6->ip6_dst, rcvif, NULL)) {
+			goto bad;
+		}
+	}
+
 	/* Pass to IP layer. */
 	if (npf_iscached(npc, NPC_IP4)) {
 		return ip_output(m, NULL, NULL, IP_FORWARDING, NULL, NULL);
 	}
 	return ip6_output(m, NULL, NULL, IPV6_FORWARDING, NULL, NULL, NULL);
+
+bad:
+	m_freem(m);
+	return EINVAL;
 }
 
 /*

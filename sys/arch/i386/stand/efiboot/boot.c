@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.5 2017/05/01 13:03:01 nonaka Exp $	*/
+/*	$NetBSD: boot.c,v 1.5.10.1 2018/03/15 09:12:03 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -419,7 +419,7 @@ command_dev(char *arg)
 	const char *file; /* dummy */
 
 	if (*arg == '\0') {
-		biosdisk_probe();
+		efi_disk_show();
 		printf("default %s%d%c\n", default_devname, default_unit,
 		       'a' + default_partition);
 		return;
@@ -554,6 +554,7 @@ command_multiboot(char *arg)
 void
 command_version(char *arg)
 {
+	CHAR16 *path;
 
 	if (strcmp(arg, "full") == 0) {
 		printf("ImageBase: 0x%" PRIxPTR "\n",
@@ -563,6 +564,10 @@ command_version(char *arg)
 		    ST->Hdr.Revision >> 16, ST->Hdr.Revision & 0xffff);
 		Print(L"EFI Firmware: %s (rev %d.%02d)\n", ST->FirmwareVendor,
 		    ST->FirmwareRevision >> 16, ST->FirmwareRevision & 0xffff);
+		path = DevicePathToStr(efi_bootdp);
+		Print(L"Boot DevicePath: %d:%d:%s\n", DevicePathType(efi_bootdp),
+		    DevicePathSubType(efi_bootdp), path);
+		FreePool(path);
 	}
 
 	printf("\n"

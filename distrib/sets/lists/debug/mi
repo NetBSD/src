@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.243 2018/02/17 08:07:06 wiz Exp $
+# $NetBSD: mi,v 1.243.2.1 2018/03/15 09:11:54 pgoyette Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -1750,6 +1750,7 @@
 ./usr/libdata/debug/usr/tests/kernel/t_timeleft.debug			tests-kernel-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/t_ucontext.debug			tests-obsolete		obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/t_writev.debug			tests-obsolete		obsolete,compattestfile
+./usr/libdata/debug/usr/tests/kernel/t_zombie.debug			tests-kernel-tests	debug,atf,rump
 ./usr/libdata/debug/usr/tests/kernel/tty/t_pr.debug			tests-kernel-tests	debug,atf,rump
 ./usr/libdata/debug/usr/tests/kyua-cli/bootstrap/atf_helpers.debug			tests-kyua-tests	debug,atf,kyua,compattestfile
 ./usr/libdata/debug/usr/tests/kyua-cli/bootstrap/plain_helpers.debug			tests-kyua-tests	debug,atf,kyua,compattestfile
@@ -1865,6 +1866,7 @@
 ./usr/libdata/debug/usr/tests/kyua-testers/stacktrace_helper.debug	tests-kyua-tests	debug,atf,kyua,compattestfile
 ./usr/libdata/debug/usr/tests/kyua-testers/stacktrace_test.debug	tests-kyua-tests	debug,atf,kyua,compattestfile
 ./usr/libdata/debug/usr/tests/kyua-testers/text_test.debug		tests-kyua-tests	debug,atf,kyua,compattestfile
+./usr/libdata/debug/usr/tests/lib/csu/h_ifunc_static.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/csu/h_initfini.debug			tests-obsolete		obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/lib/csu/h_initfini1.debug			tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/csu/h_initfini2.debug			tests-lib-debug		debug,atf,compattestfile

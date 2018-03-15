@@ -1,4 +1,4 @@
-/* $NetBSD: lcd.c,v 1.8 2017/03/09 14:05:58 tsutsui Exp $ */
+/* $NetBSD: lcd.c,v 1.8.12.1 2018/03/15 09:12:03 pgoyette Exp $ */
 /* $OpenBSD: lcd.c,v 1.7 2015/02/10 22:42:35 miod Exp $ */
 
 /*-
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>		/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lcd.c,v 1.8 2017/03/09 14:05:58 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lcd.c,v 1.8.12.1 2018/03/15 09:12:03 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -214,9 +214,8 @@ lcdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	case LCDMOVE:
 	case LCDSEEK:
 	case LCDRESTORE:
-	if ((flag & FWRITE) == 0)
-		return EACCES;
-		break;
+		if ((flag & FWRITE) == 0)
+			return EACCES;
 	}
 
 	switch (cmd) {

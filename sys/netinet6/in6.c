@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.260 2018/02/24 07:37:09 ozaki-r Exp $	*/
+/*	$NetBSD: in6.c,v 1.260.2.1 2018/03/15 09:12:07 pgoyette Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.260 2018/02/24 07:37:09 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.260.2.1 2018/03/15 09:12:07 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2386,10 +2386,6 @@ in6_if2idlen(struct ifnet *ifp)
 	}
 }
 
-struct in6_llentry {
-	struct llentry		base;
-};
-
 #define	IN6_LLTBL_DEFAULT_HSIZE	32
 #define	IN6_LLTBL_HASH(k, h) \
 	(((((((k >> 8) ^ k) >> 8) ^ k) >> 8) ^ k) & ((h) - 1))
@@ -2403,27 +2399,29 @@ static void
 in6_lltable_destroy_lle(struct llentry *lle)
 {
 
+	KASSERT(lle->la_numheld == 0);
+
 	LLE_WUNLOCK(lle);
 	LLE_LOCK_DESTROY(lle);
-	kmem_intr_free(lle, sizeof(struct in6_llentry));
+	llentry_pool_put(lle);
 }
 
 static struct llentry *
 in6_lltable_new(const struct in6_addr *addr6, u_int flags)
 {
-	struct in6_llentry *lle;
+	struct llentry *lle;
 
-	lle = kmem_intr_zalloc(sizeof(struct in6_llentry), KM_NOSLEEP);
+	lle = llentry_pool_get(PR_NOWAIT);
 	if (lle == NULL)		/* NB: caller generates msg */
 		return NULL;
 
-	lle->base.r_l3addr.addr6 = *addr6;
-	lle->base.lle_refcnt = 1;
-	lle->base.lle_free = in6_lltable_destroy_lle;
-	LLE_LOCK_INIT(&lle->base);
-	callout_init(&lle->base.lle_timer, CALLOUT_MPSAFE);
+	lle->r_l3addr.addr6 = *addr6;
+	lle->lle_refcnt = 1;
+	lle->lle_free = in6_lltable_destroy_lle;
+	LLE_LOCK_INIT(lle);
+	callout_init(&lle->lle_timer, CALLOUT_MPSAFE);
 
-	return &lle->base;
+	return lle;
 }
 
 static int
@@ -2444,45 +2442,9 @@ in6_lltable_match_prefix(const struct sockaddr *prefix,
 static void
 in6_lltable_free_entry(struct lltable *llt, struct llentry *lle)
 {
-	struct ifnet *ifp = llt->llt_ifp;
-	bool locked = false;
 
 	LLE_WLOCK_ASSERT(lle);
-
-	/* Unlink entry from table */
-	if ((lle->la_flags & LLE_LINKED) != 0) {
-		IF_AFDATA_WLOCK_ASSERT(ifp);
-		lltable_unlink_entry(llt, lle);
-		KASSERT((lle->la_flags & LLE_LINKED) == 0);
-		locked = true;
-	}
-	/*
-	 * We need to release the lock here to lle_timer proceeds;
-	 * lle_timer should stop immediately if LLE_LINKED isn't set.
-	 * Note that we cannot pass lle->lle_lock to callout_halt
-	 * because it's a rwlock.
-	 */
-	LLE_ADDREF(lle);
-	LLE_WUNLOCK(lle);
-	if (locked)
-		IF_AFDATA_WUNLOCK(ifp);
-
-#ifdef NET_MPSAFE
-	callout_halt(&lle->lle_timer, NULL);
-#else
-	if (mutex_owned(softnet_lock))
-		callout_halt(&lle->lle_timer, softnet_lock);
-	else
-		callout_halt(&lle->lle_timer, NULL);
-#endif
-	LLE_WLOCK(lle);
-	LLE_REMREF(lle);
-
-	lltable_drop_entry_queue(lle);
-	LLE_FREE_LOCKED(lle);
-
-	if (locked)
-		IF_AFDATA_WLOCK(ifp);
+	(void) llentry_free(lle);
 }
 
 static int
@@ -2583,7 +2545,6 @@ in6_lltable_delete(struct lltable *llt, u_int flags,
 	}
 
 	LLE_WLOCK(lle);
-	lle->la_flags |= LLE_DELETED;
 #ifdef LLTABLE_DEBUG
 	{
 		char buf[64];
@@ -2592,10 +2553,7 @@ in6_lltable_delete(struct lltable *llt, u_int flags,
 		    __func__, buf, lle);
 	}
 #endif
-	if ((lle->la_flags & (LLE_STATIC | LLE_IFADDR)) == LLE_STATIC)
-		llentry_free(lle);
-	else
-		LLE_WUNLOCK(lle);
+	llentry_free(lle);
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: svs.c,v 1.13 2018/03/01 16:49:06 maxv Exp $	*/
+/*	$NetBSD: svs.c,v 1.13.2.1 2018/03/15 09:12:04 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.13 2018/03/01 16:49:06 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.13.2.1 2018/03/15 09:12:04 pgoyette Exp $");
 
 #include "opt_svs.h"
 
@@ -647,6 +647,7 @@ svs_disable_cpu(void *arg1, void *arg2)
 	u_long psl;
 
 	psl = x86_read_psl();
+	x86_disable_intr();
 
 	atomic_dec_ulong(&svs_cpu_barrier1);
 	while (atomic_cas_ulong(&svs_cpu_barrier1, 0, 0) != 0) {

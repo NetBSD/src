@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.192 2017/03/06 05:58:00 nakayama Exp $
+#	 $NetBSD: mi,v 1.192.10.1 2018/03/15 09:11:54 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -407,9 +407,9 @@
 ./usr/X11R7/include/X11/extensions/dri3proto.h		-unknown-	xorg
 ./usr/X11R7/include/X11/extensions/evieproto.h		-unknown-	xorg
 ./usr/X11R7/include/X11/extensions/extutil.h		-unknown-	xorg
-./usr/X11R7/include/X11/extensions/fontcache.h		-unknown-	xorg
-./usr/X11R7/include/X11/extensions/fontcacheP.h		-unknown-	xorg
-./usr/X11R7/include/X11/extensions/fontcachstr.h	-unknown-	xorg
+./usr/X11R7/include/X11/extensions/fontcache.h		-unknown-	obsolete
+./usr/X11R7/include/X11/extensions/fontcacheP.h		-unknown-	obsolete
+./usr/X11R7/include/X11/extensions/fontcachstr.h	-unknown-	obsolete
 ./usr/X11R7/include/X11/extensions/ge.h			-unknown-	xorg
 ./usr/X11R7/include/X11/extensions/geproto.h		-unknown-	xorg
 ./usr/X11R7/include/X11/extensions/lbx.h		-unknown-	xorg
@@ -516,6 +516,7 @@
 ./usr/X11R7/include/X11/fonts/fsmasks.h			-unknown-	xorg
 ./usr/X11R7/include/X11/fonts/ft.h			-unknown-	xorg
 ./usr/X11R7/include/X11/fonts/ftfuncs.h			-unknown-	xorg
+./usr/X11R7/include/X11/fonts/libxfont2.h		-unknown-	xorg
 ./usr/X11R7/include/X11/fonts/pcf.h			-unknown-	xorg
 ./usr/X11R7/include/X11/keysym.h			-unknown-	xorg
 ./usr/X11R7/include/X11/keysymdef.h			-unknown-	xorg
@@ -714,6 +715,7 @@
 ./usr/X11R7/include/libdrm/via_drm.h			-unknown-	xorg
 ./usr/X11R7/include/libdrm/virtgpu_drm.h		-unknown-	xorg
 ./usr/X11R7/include/libkms/libkms.h			-unknown-	xorg
+./usr/X11R7/include/libsync.h				-unknown-	xorg
 ./usr/X11R7/include/pciaccess.h				-unknown-	xorg
 ./usr/X11R7/include/pixman-1/pixman-version.h		-unknown-	xorg
 ./usr/X11R7/include/pixman-1/pixman.h			-unknown-	xorg
@@ -758,7 +760,6 @@
 ./usr/X11R7/include/xcb/xvmc.h				-unknown-	xorg
 ./usr/X11R7/include/xf86drm.h				-unknown-	xorg
 ./usr/X11R7/include/xf86drmMode.h			-unknown-	xorg
-./usr/X11R7/include/libsync.h				-unknown-	xorg
 ./usr/X11R7/include/xorg/BT.h				-unknown-	xorg
 ./usr/X11R7/include/xorg/IBM.h				-unknown-	xorg
 ./usr/X11R7/include/xorg/TI.h				-unknown-	xorg
@@ -1137,9 +1138,11 @@
 ./usr/X11R7/lib/libXfixes.a				-unknown-	xorg,compatx11file
 ./usr/X11R7/lib/libXfixes_p.a				-unknown-	profile,xorg,compatx11file
 ./usr/X11R7/lib/libXfont.a				-unknown-	xorg,compatx11file
+./usr/X11R7/lib/libXfont2.a				-unknown-	xorg,compatx11file
+./usr/X11R7/lib/libXfont2_p.a				-unknown-	profile,xorg,compatx11file
 ./usr/X11R7/lib/libXfont_p.a				-unknown-	profile,xorg,compatx11file
-./usr/X11R7/lib/libXfontcache.a				-unknown-	xorg,compatx11file
-./usr/X11R7/lib/libXfontcache_p.a			-unknown-	profile,xorg,compatx11file
+./usr/X11R7/lib/libXfontcache.a				-unknown-	obsolete
+./usr/X11R7/lib/libXfontcache_p.a			-unknown-	obsolete
 ./usr/X11R7/lib/libXft.a				-unknown-	xorg,compatx11file
 ./usr/X11R7/lib/libXft_p.a				-unknown-	profile,xorg,compatx11file
 ./usr/X11R7/lib/libXi.a					-unknown-	xorg,compatx11file
@@ -1301,7 +1304,7 @@
 ./usr/X11R7/lib/pkgconfig/epoxy.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/evieproto.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/fixesproto.pc			-unknown-	xorg
-./usr/X11R7/lib/pkgconfig/fontcacheproto.pc		-unknown-	xorg
+./usr/X11R7/lib/pkgconfig/fontcacheproto.pc		-unknown-	obsolete
 ./usr/X11R7/lib/pkgconfig/fontconfig.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/fontenc.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/fontsproto.pc			-unknown-	xorg
@@ -1390,7 +1393,8 @@
 ./usr/X11R7/lib/pkgconfig/xf86vidmodeproto.pc		-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xfixes.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xfont.pc			-unknown-	xorg
-./usr/X11R7/lib/pkgconfig/xfontcache.pc			-unknown-	xorg
+./usr/X11R7/lib/pkgconfig/xfont2.pc			-unknown-	xorg
+./usr/X11R7/lib/pkgconfig/xfontcache.pc			-unknown-	obsolete
 ./usr/X11R7/lib/pkgconfig/xft.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xi.pc				-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xinerama.pc			-unknown-	xorg
@@ -1617,11 +1621,11 @@
 ./usr/X11R7/man/cat3/FcValueEqual.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/FcValuePrint.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/FcValueSave.0			-unknown-	.cat,xorg
-./usr/X11R7/man/cat3/FontCacheChangeCacheSettings.0	-unknown-	.cat,xorg
-./usr/X11R7/man/cat3/FontCacheGetCacheSettings.0	-unknown-	.cat,xorg
-./usr/X11R7/man/cat3/FontCacheGetCacheStatistics.0	-unknown-	.cat,xorg
-./usr/X11R7/man/cat3/FontCacheQueryExtension.0		-unknown-	.cat,xorg
-./usr/X11R7/man/cat3/FontCacheQueryVersion.0		-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/FontCacheChangeCacheSettings.0	-unknown-	obsolete
+./usr/X11R7/man/cat3/FontCacheGetCacheSettings.0	-unknown-	obsolete
+./usr/X11R7/man/cat3/FontCacheGetCacheStatistics.0	-unknown-	obsolete
+./usr/X11R7/man/cat3/FontCacheQueryExtension.0		-unknown-	obsolete
+./usr/X11R7/man/cat3/FontCacheQueryVersion.0		-unknown-	obsolete
 ./usr/X11R7/man/cat3/ImageByteOrder.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/IsCursorKey.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/MenuPopdown.0			-unknown-	.cat,xorg
@@ -1976,7 +1980,7 @@
 ./usr/X11R7/man/cat3/XevieSendEvent.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XevieStart.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/Xfixes.0				-unknown-	.cat,xorg
-./usr/X11R7/man/cat3/Xfontcache.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/Xfontcache.0			-unknown-	obsolete
 ./usr/X11R7/man/cat3/Xft.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/Xinerama.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XineramaIsActive.0			-unknown-	.cat,xorg
@@ -2528,11 +2532,11 @@
 ./usr/X11R7/man/html3/FcValueEqual.html			-unknown-	html,xorg
 ./usr/X11R7/man/html3/FcValuePrint.html			-unknown-	html,xorg
 ./usr/X11R7/man/html3/FcValueSave.html			-unknown-	html,xorg
-./usr/X11R7/man/html3/FontCacheChangeCacheSettings.html	-unknown-	html,xorg
-./usr/X11R7/man/html3/FontCacheGetCacheSettings.html	-unknown-	html,xorg
-./usr/X11R7/man/html3/FontCacheGetCacheStatistics.html	-unknown-	html,xorg
-./usr/X11R7/man/html3/FontCacheQueryExtension.html	-unknown-	html,xorg
-./usr/X11R7/man/html3/FontCacheQueryVersion.html	-unknown-	html,xorg
+./usr/X11R7/man/html3/FontCacheChangeCacheSettings.html	-unknown-	obsolete
+./usr/X11R7/man/html3/FontCacheGetCacheSettings.html	-unknown-	obsolete
+./usr/X11R7/man/html3/FontCacheGetCacheStatistics.html	-unknown-	obsolete
+./usr/X11R7/man/html3/FontCacheQueryExtension.html	-unknown-	obsolete
+./usr/X11R7/man/html3/FontCacheQueryVersion.html	-unknown-	obsolete
 ./usr/X11R7/man/html3/ImageByteOrder.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/IsCursorKey.html			-unknown-	html,xorg
 ./usr/X11R7/man/html3/MenuPopdown.html			-unknown-	html,xorg
@@ -2887,7 +2891,7 @@
 ./usr/X11R7/man/html3/XevieSendEvent.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/XevieStart.html			-unknown-	html,xorg
 ./usr/X11R7/man/html3/Xfixes.html			-unknown-	html,xorg
-./usr/X11R7/man/html3/Xfontcache.html			-unknown-	html,xorg
+./usr/X11R7/man/html3/Xfontcache.html			-unknown-	obsolete
 ./usr/X11R7/man/html3/Xft.html				-unknown-	html,xorg
 ./usr/X11R7/man/html3/Xinerama.html			-unknown-	html,xorg
 ./usr/X11R7/man/html3/XineramaIsActive.html		-unknown-	html,xorg
@@ -3438,11 +3442,11 @@
 ./usr/X11R7/man/man3/FcValueEqual.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/FcValuePrint.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/FcValueSave.3			-unknown-	.man,xorg
-./usr/X11R7/man/man3/FontCacheChangeCacheSettings.3	-unknown-	.man,xorg
-./usr/X11R7/man/man3/FontCacheGetCacheSettings.3	-unknown-	.man,xorg
-./usr/X11R7/man/man3/FontCacheGetCacheStatistics.3	-unknown-	.man,xorg
-./usr/X11R7/man/man3/FontCacheQueryExtension.3		-unknown-	.man,xorg
-./usr/X11R7/man/man3/FontCacheQueryVersion.3		-unknown-	.man,xorg
+./usr/X11R7/man/man3/FontCacheChangeCacheSettings.3	-unknown-	obsolete
+./usr/X11R7/man/man3/FontCacheGetCacheSettings.3	-unknown-	obsolete
+./usr/X11R7/man/man3/FontCacheGetCacheStatistics.3	-unknown-	obsolete
+./usr/X11R7/man/man3/FontCacheQueryExtension.3		-unknown-	obsolete
+./usr/X11R7/man/man3/FontCacheQueryVersion.3		-unknown-	obsolete
 ./usr/X11R7/man/man3/ImageByteOrder.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/IsCursorKey.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/MenuPopdown.3			-unknown-	.man,xorg
@@ -3797,7 +3801,7 @@
 ./usr/X11R7/man/man3/XevieSendEvent.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XevieStart.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/Xfixes.3				-unknown-	.man,xorg
-./usr/X11R7/man/man3/Xfontcache.3			-unknown-	.man,xorg
+./usr/X11R7/man/man3/Xfontcache.3			-unknown-	obsolete
 ./usr/X11R7/man/man3/Xft.3				-unknown-	.man,xorg
 ./usr/X11R7/man/man3/Xinerama.3				-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XineramaIsActive.3			-unknown-	.man,xorg
@@ -4209,7 +4213,8 @@
 ./usr/libdata/lint/llib-lXext.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lXfixes.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lXfont.ln			-unknown-	lint,xorg
-./usr/libdata/lint/llib-lXfontcache.ln			-unknown-	lint,xorg
+./usr/libdata/lint/llib-lXfont2.ln			-unknown-	lint,xorg
+./usr/libdata/lint/llib-lXfontcache.ln			-unknown-	obsolete
 ./usr/libdata/lint/llib-lXft.ln				-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lXi.ln				-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lXinerama.ln			-unknown-	lint,xorg

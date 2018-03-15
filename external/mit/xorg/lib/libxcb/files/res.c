@@ -88,7 +88,7 @@ xcb_res_client_id_value_sizeof (const void  *_buffer)
     xcb_buffer_len += xcb_block_len;
     xcb_block_len = 0;
     /* value */
-    xcb_block_len += _aux->length * sizeof(uint32_t);
+    xcb_block_len += (_aux->length / 4) * sizeof(uint32_t);
     xcb_tmp += xcb_block_len;
     xcb_align_to = ALIGNOF(uint32_t);
     /* insert padding */
@@ -112,14 +112,14 @@ xcb_res_client_id_value_value (const xcb_res_client_id_value_t *R)
 int
 xcb_res_client_id_value_value_length (const xcb_res_client_id_value_t *R)
 {
-    return R->length;
+    return (R->length / 4);
 }
 
 xcb_generic_iterator_t
 xcb_res_client_id_value_value_end (const xcb_res_client_id_value_t *R)
 {
     xcb_generic_iterator_t i;
-    i.data = ((uint32_t *) (R + 1)) + (R->length);
+    i.data = ((uint32_t *) (R + 1)) + ((R->length / 4));
     i.rem = 0;
     i.index = (char *) i.data - (char *) R;
     return i;

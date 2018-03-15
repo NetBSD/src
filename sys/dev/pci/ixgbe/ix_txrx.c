@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.34 2018/03/02 10:19:20 knakahara Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.34.2.1 2018/03/15 09:12:05 pgoyette Exp $ */
 
 /******************************************************************************
 
@@ -392,10 +392,10 @@ retry:
 
 		switch (error) {
 		case EAGAIN:
-			adapter->eagain_tx_dma_setup.ev_count++;
+			txr->q_eagain_tx_dma_setup++;
 			return EAGAIN;
 		case ENOMEM:
-			adapter->enomem_tx_dma_setup.ev_count++;
+			txr->q_enomem_tx_dma_setup++;
 			return EAGAIN;
 		case EFBIG:
 			/* Try it again? - one try */
@@ -405,23 +405,23 @@ retry:
 				 * XXX: m_defrag will choke on
 				 * non-MCLBYTES-sized clusters
 				 */
-				adapter->efbig_tx_dma_setup.ev_count++;
+				txr->q_efbig_tx_dma_setup++;
 				m = m_defrag(m_head, M_NOWAIT);
 				if (m == NULL) {
-					adapter->mbuf_defrag_failed.ev_count++;
+					txr->q_mbuf_defrag_failed++;
 					return ENOBUFS;
 				}
 				m_head = m;
 				goto retry;
 			} else {
-				adapter->efbig2_tx_dma_setup.ev_count++;
+				txr->q_efbig2_tx_dma_setup++;
 				return error;
 			}
 		case EINVAL:
-			adapter->einval_tx_dma_setup.ev_count++;
+			txr->q_einval_tx_dma_setup++;
 			return error;
 		default:
-			adapter->other_tx_dma_setup.ev_count++;
+			txr->q_other_tx_dma_setup++;
 			return error;
 		}
 	}
@@ -865,23 +865,23 @@ ixgbe_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp,
 
 	/* No support for offloads for non-L4 next headers */
  	switch (ipproto) {
- 		case IPPROTO_TCP:
-			if (mp->m_pkthdr.csum_flags &
-			    (M_CSUM_TCPv4 | M_CSUM_TCPv6))
-				type_tucmd_mlhl |= IXGBE_ADVTXD_TUCMD_L4T_TCP;
-			else
-				offload = false;
-			break;
-		case IPPROTO_UDP:
-			if (mp->m_pkthdr.csum_flags &
-			    (M_CSUM_UDPv4 | M_CSUM_UDPv6))
-				type_tucmd_mlhl |= IXGBE_ADVTXD_TUCMD_L4T_UDP;
-			else
-				offload = false;
-			break;
-		default:
+	case IPPROTO_TCP:
+		if (mp->m_pkthdr.csum_flags &
+		    (M_CSUM_TCPv4 | M_CSUM_TCPv6))
+			type_tucmd_mlhl |= IXGBE_ADVTXD_TUCMD_L4T_TCP;
+		else
 			offload = false;
-			break;
+		break;
+	case IPPROTO_UDP:
+		if (mp->m_pkthdr.csum_flags &
+		    (M_CSUM_UDPv4 | M_CSUM_UDPv6))
+			type_tucmd_mlhl |= IXGBE_ADVTXD_TUCMD_L4T_UDP;
+		else
+			offload = false;
+		break;
+	default:
+		offload = false;
+		break;
 	}
 
 	if (offload) /* Insert L4 checksum into data descriptors */

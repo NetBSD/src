@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.193 2018/02/24 07:37:09 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.193.2.1 2018/03/15 09:12:07 pgoyette Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.193 2018/02/24 07:37:09 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.193.2.1 2018/03/15 09:12:07 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -321,54 +321,6 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 	}
 
 	/*
-	 * Assume that we can create a fast-forward IP flow entry
-	 * based on this packet.
-	 */
-	m->m_flags |= M_CANFASTFWD;
-
-	/*
-	 * Run through list of hooks for input packets.  If there are any
-	 * filters which require that additional packets in the flow are
-	 * not fast-forwarded, they must clear the M_CANFASTFWD flag.
-	 * Note that filters must _never_ set this flag, as another filter
-	 * in the list may have previously cleared it.
-	 */
-	/*
-	 * let ipfilter look at packet on the wire,
-	 * not the decapsulated packet.
-	 */
-#if defined(IPSEC)
-	if (!ipsec_used || !ipsec_indone(m))
-#else
-	if (1)
-#endif
-	{
-		struct in6_addr odst;
-
-		odst = ip6->ip6_dst;
-		if (pfil_run_hooks(inet6_pfil_hook, &m, rcvif, PFIL_IN) != 0)
-			return;
-		if (m == NULL)
-			return;
-		ip6 = mtod(m, struct ip6_hdr *);
-		srcrt = !IN6_ARE_ADDR_EQUAL(&odst, &ip6->ip6_dst);
-	}
-
-	IP6_STATINC(IP6_STAT_NXTHIST + ip6->ip6_nxt);
-
-#ifdef ALTQ
-	if (altq_input != NULL) {
-		SOFTNET_LOCK();
-		if ((*altq_input)(m, AF_INET6) == 0) {
-			SOFTNET_UNLOCK();
-			/* packet is dropped by traffic conditioner */
-			return;
-		}
-		SOFTNET_UNLOCK();
-	}
-#endif
-
-	/*
 	 * Check against address spoofing/corruption.
 	 */
 	if (IN6_IS_ADDR_MULTICAST(&ip6->ip6_src) ||
@@ -413,6 +365,54 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 		IP6_STATINC(IP6_STAT_BADSCOPE);
 		in6_ifstat_inc(rcvif, ifs6_in_addrerr);
 		goto bad;
+	}
+#endif
+
+	/*
+	 * Assume that we can create a fast-forward IP flow entry
+	 * based on this packet.
+	 */
+	m->m_flags |= M_CANFASTFWD;
+
+	/*
+	 * Run through list of hooks for input packets.  If there are any
+	 * filters which require that additional packets in the flow are
+	 * not fast-forwarded, they must clear the M_CANFASTFWD flag.
+	 * Note that filters must _never_ set this flag, as another filter
+	 * in the list may have previously cleared it.
+	 */
+	/*
+	 * let ipfilter look at packet on the wire,
+	 * not the decapsulated packet.
+	 */
+#if defined(IPSEC)
+	if (!ipsec_used || !ipsec_indone(m))
+#else
+	if (1)
+#endif
+	{
+		struct in6_addr odst;
+
+		odst = ip6->ip6_dst;
+		if (pfil_run_hooks(inet6_pfil_hook, &m, rcvif, PFIL_IN) != 0)
+			return;
+		if (m == NULL)
+			return;
+		ip6 = mtod(m, struct ip6_hdr *);
+		srcrt = !IN6_ARE_ADDR_EQUAL(&odst, &ip6->ip6_dst);
+	}
+
+	IP6_STATINC(IP6_STAT_NXTHIST + ip6->ip6_nxt);
+
+#ifdef ALTQ
+	if (altq_input != NULL) {
+		SOFTNET_LOCK();
+		if ((*altq_input)(m, AF_INET6) == 0) {
+			SOFTNET_UNLOCK();
+			/* packet is dropped by traffic conditioner */
+			return;
+		}
+		SOFTNET_UNLOCK();
 	}
 #endif
 

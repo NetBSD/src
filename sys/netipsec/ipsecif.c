@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsecif.c,v 1.2 2018/02/26 06:17:01 maxv Exp $  */
+/*	$NetBSD: ipsecif.c,v 1.2.2.1 2018/03/15 09:12:07 pgoyette Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsecif.c,v 1.2 2018/02/26 06:17:01 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsecif.c,v 1.2.2.1 2018/03/15 09:12:07 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -259,13 +259,19 @@ ipsecif4_fragout(struct ipsec_variant *var, int family, struct mbuf *m, int mtu)
 	if (mtag)
 		m_tag_delete(m, mtag);
 
-	error = ip_fragment(m, ifp, mtu);
+	/* consider new IP header prepended in ipsecif4_output() */
+	if (mtu <= sizeof(struct ip)) {
+		m_freem(m);
+		return ENETUNREACH;
+	}
+	m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
+	error = ip_fragment(m, ifp, mtu - sizeof(struct ip));
 	if (error)
 		return error;
 
 	for (error = 0; m; m = next) {
 		next = m->m_nextpkt;
-		m->m_next = NULL;
+		m->m_nextpkt = NULL;
 		if (error) {
 			m_freem(m);
 			continue;
@@ -396,7 +402,7 @@ ipsecif4_output(struct ipsec_variant *var, int family, struct mbuf *m)
 	 * frangmentation is already done in ipsecif4_fragout(),
 	 * so ipsec4_process_packet() must not do fragmentation here.
 	 */
-	KASSERT(error != 0 || sa_mtu == 0);
+	KASSERT(sa_mtu == 0);
 
 done:
 	return error;
@@ -477,7 +483,9 @@ ipsecif6_output(struct ipsec_variant *var, int family, struct mbuf *m)
 	ip6->ip6_flow	= 0;
 	ip6->ip6_vfc	&= ~IPV6_VERSION_MASK;
 	ip6->ip6_vfc	|= IPV6_VERSION;
-	ip6->ip6_plen	= htons((u_short)m->m_pkthdr.len);
+#if 0	/* ip6->ip6_plen will be filled by ip6_output */
+	ip6->ip6_plen	= htons((u_short)m->m_pkthdr.len - sizeof(*ip6));
+#endif
 	ip6->ip6_nxt	= proto;
 	ip6->ip6_hlim	= ip6_ipsec_hlim;
 	ip6->ip6_src	= sin6_src->sin6_addr;

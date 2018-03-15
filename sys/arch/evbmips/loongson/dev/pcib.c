@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.1 2011/08/27 13:42:46 bouyer Exp $	*/
+/*	$NetBSD: pcib.c,v 1.1.52.1 2018/03/15 09:12:03 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.1 2011/08/27 13:42:46 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.1.52.1 2018/03/15 09:12:03 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,7 +83,7 @@ pcibmatch(device_t parent, cfdata_t match, void *aux)
 		break;
 	case PCI_VENDOR_VIATECH:
 		switch (PCI_PRODUCT(pa->pa_id)) {
-		case PCI_PRODUCT_VIATECH_VT82C686A_SMB:
+		case PCI_PRODUCT_VIATECH_VT82C686A_PWR:
 			/* mis-identifies itself as a ISA bridge */
 			return (0);
 		}

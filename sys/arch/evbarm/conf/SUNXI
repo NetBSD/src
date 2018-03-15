@@ -1,5 +1,5 @@
 #
-#	$NetBSD: SUNXI,v 1.59 2018/02/14 20:10:17 jakllsch Exp $
+#	$NetBSD: SUNXI,v 1.59.2.1 2018/03/15 09:12:02 pgoyette Exp $
 #
 #	Allwinner sunxi family
 #
@@ -240,6 +240,11 @@ seeprom*	at iic?			# AT24Cxx Serial EEPROM
 sun6ispi*	at fdt?
 spi*		at spibus?
 
+# CAN bus
+options         CAN             # Controller Area Network protocol
+pseudo-device   canloop         # CAN loopback interface
+sunxican*	at fdt?		# A10/A20 CAN controller
+
 # RTC
 sunxirtc*	at fdt?			# RTC
 
@@ -294,6 +299,9 @@ options 	WSDISPLAY_MULTICONS
 # Touch Screen controller
 sunxits*	at fdt?			# Touch Screen controller
 wsmouse*	at sunxits? mux 0
+
+# Low res ADC
+sunxilradc*	at fdt?
 
 # wscons pseudo-devices
 pseudo-device	wsfont

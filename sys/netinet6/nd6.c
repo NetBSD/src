@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.245 2018/01/29 19:51:15 christos Exp $	*/
+/*	$NetBSD: nd6.c,v 1.245.2.1 2018/03/15 09:12:07 pgoyette Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.245 2018/01/29 19:51:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.245.2.1 2018/03/15 09:12:07 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -347,6 +347,7 @@ nd6_options(union nd_opts *ndopts)
 		case ND_OPT_TARGET_LINKADDR:
 		case ND_OPT_MTU:
 		case ND_OPT_REDIRECTED_HEADER:
+		case ND_OPT_NONCE:
 			if (ndopts->nd_opt_array[nd_opt->nd_opt_type]) {
 				nd6log(LOG_INFO,
 				    "duplicated ND6 option found (type=%d)\n",
@@ -402,6 +403,19 @@ nd6_llinfo_settimer(struct llentry *ln, time_t xtick)
 
 	KASSERT(xtick >= 0);
 
+	/*
+	 * We have to take care of a reference leak which occurs if
+	 * callout_reset overwrites a pending callout schedule.  Unfortunately
+	 * we don't have a mean to know the overwrite, so we need to know it
+	 * using callout_stop.  We need to call callout_pending first to exclude
+	 * the case that the callout has never been scheduled.
+	 */
+	if (callout_pending(&ln->la_timer)) {
+		bool expired = callout_stop(&ln->la_timer);
+		if (!expired)
+			LLE_REMREF(ln);
+	}
+
 	ln->ln_expire = time_uptime + xtick / hz;
 	LLE_ADDREF(ln);
 	if (xtick > INT_MAX) {
@@ -451,6 +465,7 @@ nd6_llinfo_timer(void *arg)
 	const struct in6_addr *daddr6 = NULL;
 
 	SOFTNET_KERNEL_LOCK_UNLESS_NET_MPSAFE();
+
 	LLE_WLOCK(ln);
 	if ((ln->la_flags & LLE_LINKED) == 0)
 		goto out;
@@ -459,28 +474,8 @@ nd6_llinfo_timer(void *arg)
 		goto out;
 	}
 
-	if (callout_pending(&ln->la_timer)) {
-		/*
-		 * Here we are a bit odd here in the treatment of
-		 * active/pending. If the pending bit is set, it got
-		 * rescheduled before I ran. The active
-		 * bit we ignore, since if it was stopped
-		 * in ll_tablefree() and was currently running
-		 * it would have return 0 so the code would
-		 * not have deleted it since the callout could
-		 * not be stopped so we want to go through
-		 * with the delete here now. If the callout
-		 * was restarted, the pending bit will be back on and
-		 * we just want to bail since the callout_reset would
-		 * return 1 and our reference would have been removed
-		 * by nd6_llinfo_settimer above since canceled
-		 * would have been 1.
-		 */
-		goto out;
-	}
 
 	ifp = ln->lle_tbl->llt_ifp;
-
 	KASSERT(ifp != NULL);
 
 	ndi = ND_IFINFO(ifp);
@@ -560,7 +555,7 @@ nd6_llinfo_timer(void *arg)
 		psrc = nd6_llinfo_get_holdsrc(ln, &src);
 		LLE_FREE_LOCKED(ln);
 		ln = NULL;
-		nd6_ns_output(ifp, daddr6, taddr6, psrc, 0);
+		nd6_ns_output(ifp, daddr6, taddr6, psrc, NULL);
 	}
 
 out:
@@ -2426,7 +2421,7 @@ nd6_resolve(struct ifnet *ifp, const struct rtentry *rt, struct mbuf *m,
 		psrc = nd6_llinfo_get_holdsrc(ln, &src);
 		LLE_WUNLOCK(ln);
 		ln = NULL;
-		nd6_ns_output(ifp, NULL, &dst->sin6_addr, psrc, 0);
+		nd6_ns_output(ifp, NULL, &dst->sin6_addr, psrc, NULL);
 	} else {
 		/* We did the lookup so we need to do the unlock here. */
 		LLE_WUNLOCK(ln);

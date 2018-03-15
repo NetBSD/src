@@ -1,4 +1,4 @@
-/*	$NetBSD: wbsio.c,v 1.22 2018/02/20 01:53:39 pgoyette Exp $	*/
+/*	$NetBSD: wbsio.c,v 1.22.2.1 2018/03/15 09:12:05 pgoyette Exp $	*/
 /*	$OpenBSD: wbsio.c,v 1.10 2015/03/14 03:38:47 jsg Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
@@ -97,6 +97,7 @@ static const struct wbsio_product {
 	{ WBSIO_ID_NCT6792D,	true,	"NCT6792D" },
 	{ WBSIO_ID_NCT6793D,	true,	"NCT6793D" },
 	{ WBSIO_ID_NCT6795D,	true,	"NCT6795D" },
+	{ WBSIO_ID_NCT6796D,	true,	"NCT6796D" },
 };
 
 static const struct wbsio_product *wbsio_lookup(uint8_t id, uint8_t rev);

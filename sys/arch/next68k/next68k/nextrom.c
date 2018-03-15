@@ -1,4 +1,4 @@
-/*	$NetBSD: nextrom.c,v 1.25 2012/08/11 01:21:04 tsutsui Exp $	*/
+/*	$NetBSD: nextrom.c,v 1.25.38.1 2018/03/15 09:12:04 pgoyette Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nextrom.c,v 1.25 2012/08/11 01:21:04 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nextrom.c,v 1.25.38.1 2018/03/15 09:12:04 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_serial.h"
@@ -155,7 +155,10 @@ next68k_bootargs(unsigned char **args)
 	 */
 
 	reloc_end = end + NEXT_RAMBASE;
+#pragma GCC push_options
+#pragma GCC diagnostic ignored "-Warray-bounds"
 	reloc_elfmag = ELFMAG + NEXT_RAMBASE;
+#pragma GCC pop_options
 	ehdr = (void *)reloc_end;
 
 	for (i = 0; i < SELFMAG; i++) {

@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.6 2018/03/03 03:34:17 mrg Exp $
+#	$NetBSD: Makefile,v 1.6.2.1 2018/03/15 09:11:56 pgoyette Exp $
 
 .include <bsd.own.mk>
 
 PROG=	xset
 
-CPPFLAGS+=${X11FLAGS.EXTENSION} -DXKB
+CPPFLAGS+=${X11FLAGS.EXTENSION} -DXKB -DHAVE_USLEEP
 
 LDADD+=	-lXmuu -lXt -lSM -lICE -lXxf86misc -lXext -lX11
 DPADD+= ${LIBXMUU} ${LIBXT} ${LIBSM} ${LIBICE} ${LIBXXF86MISC}

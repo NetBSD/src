@@ -4,7 +4,7 @@
   pc104           Generic 104-key PC
   pc105           Generic 105-key PC (intl.)
   dell101         Dell 101-key PC
-  latitude        Dell Latutude laptop
+  latitude        Dell Latitude laptop
   dellm65         Dell Precision M65 laptop
   everex          Everex STEPnote
   flexpro         Keytronic FlexPro
@@ -199,6 +199,7 @@
   az              Azerbaijani
   by              Belarusian
   be              Belgian
+  bd              Bangla
   in              Indian
   ba              Bosnian
   br              Portuguese (Brazil)
@@ -285,7 +286,7 @@
   ph              Filipino
   md              Moldavian
   id              Indonesian (Jawi)
-  my              Malay (Jawi)
+  my              Malay (Jawi, Arabic Keyboard)
 
 ! variant
   chr             us: Cherokee
@@ -302,7 +303,7 @@
   dvp             us: English (programmer Dvorak)
   rus             us: Russian (US, phonetic)
   mac             us: English (Macintosh)
-  altgr-intl      us: English (intl., with dead keys)
+  altgr-intl      us: English (intl., with AltGr dead keys)
   olpc2           us: English (the divide/multiply keys toggle the layout)
   hbs             us: Serbo-Croatian (US)
   workman         us: English (Workman)
@@ -318,6 +319,7 @@
   qwerty          ara: Arabic (QWERTY)
   qwerty_digits   ara: Arabic (qwerty/digits)
   buckwalter      ara: Arabic (Buckwalter)
+  olpc            ara: Arabic (OLPC)
   mac             ara: Arabic (Macintosh)
   plisi           al: Albanian (Plisi)
   phonetic        am: Armenian (phonetic)
@@ -338,11 +340,42 @@
   nodeadkeys      be: Belgian (no dead keys)
   sundeadkeys     be: Belgian (with Sun dead keys)
   wang            be: Belgian (Wang 724 AZERTY)
+  probhat         bd: Bangla (Probhat)
+  ben             in: Bangla (India)
+  ben_probhat     in: Bangla (India, Probhat)
+  ben_baishakhi   in: Bangla (India, Baishakhi)
+  ben_bornona     in: Bangla (India, Bornona)
+  ben_gitanjali   in: Bangla (India, Uni Gitanjali)
+  ben_inscript    in: Bangla (India, Baishakhi Inscript)
+  eeyek           in: Manipuri (Eeyek)
+  guj             in: Gujarati
+  guru            in: Punjabi (Gurmukhi)
+  jhelum          in: Punjabi (Gurmukhi Jhelum)
+  kan             in: Kannada
+  kan-kagapa      in: Kannada (KaGaPa phonetic)
+  mal             in: Malayalam
+  mal_lalitha     in: Malayalam (Lalitha)
+  mal_enhanced    in: Malayalam (enhanced Inscript, with rupee)
+  ori             in: Oriya
+  olck            in: Ol Chiki
+  tam_unicode     in: Tamil (Unicode)
+  tam_keyboard_with_numerals in: Tamil (keyboard with numerals)
+  tam_TAB         in: Tamil (TAB typewriter)
+  tam_TSCII       in: Tamil (TSCII typewriter)
+  tam             in: Tamil
+  tel             in: Telugu
+  tel-kagapa      in: Telugu (KaGaPa phonetic)
+  tel-sarala      in: Telugu (Sarala)
   urd-phonetic    in: Urdu (phonetic)
   urd-phonetic3   in: Urdu (alt. phonetic)
   urd-winkeys     in: Urdu (Win keys)
+  bolnagri        in: Hindi (Bolnagri)
+  hin-wx          in: Hindi (Wx)
+  hin-kagapa      in: Hindi (KaGaPa phonetic)
+  san-kagapa      in: Sanskrit (KaGaPa phonetic)
+  mar-kagapa      in: Marathi (KaGaPa phonetic)
   eng             in: English (India, with rupee)
-  alternatequotes ba: Bosnian (with guillements)
+  alternatequotes ba: Bosnian (with guillemets)
   unicode         ba: Bosnian (with Bosnian digraphs)
   unicodeus       ba: Bosnian (US, with Bosnian digraphs)
   us              ba: Bosnian (US, with Bosnian letters)
@@ -378,7 +411,7 @@
   tib             cn: Tibetan
   tib_asciinum    cn: Tibetan (with ASCII numerals)
   ug              cn: Uyghur
-  alternatequotes hr: Croatian (with guillements)
+  alternatequotes hr: Croatian (with guillemets)
   unicode         hr: Croatian (with Croatian digraphs)
   unicodeus       hr: Croatian (US, with Croatian digraphs)
   us              hr: Croatian (US, with Croatian letters)
@@ -497,6 +530,8 @@
   us              it: Italian (US, with Italian letters)
   geo             it: Georgian (Italy)
   ibm             it: Italian (IBM 142)
+  intl            it: Italian (intl., with dead keys)
+  scn             it: Sicilian
   kana            jp: Japanese (Kana)
   kana86          jp: Japanese (Kana 86)
   OADG109A        jp: Japanese (OADG 109A)
@@ -581,7 +616,7 @@
   chm             ru: Mari
   phonetic_azerty ru: Russian (phonetic, AZERTY)
   phonetic_dvorak ru: Russian (phonetic, Dvorak)
-  phonetic_fr     ru: Russian Russian (phonetic, French)
+  phonetic_fr     ru: Russian (phonetic, French)
   yz              rs: Serbian (Cyrillic, ZE and ZHE swapped)
   latin           rs: Serbian (Latin)
   latinunicode    rs: Serbian (Latin, Unicode)
@@ -590,7 +625,7 @@
   alternatequotes rs: Serbian (Cyrillic with guillemets)
   latinalternatequotes rs: Serbian (Latin with guillemets)
   rue             rs: Pannonian Rusyn
-  alternatequotes si: Slovenian (with guillements)
+  alternatequotes si: Slovenian (with guillemets)
   us              si: Slovenian (US, with Slovenian letters)
   bksl            sk: Slovak (extended backslash)
   qwerty          sk: Slovak (QWERTY)
@@ -610,6 +645,7 @@
   smi             se: Northern Saami (Sweden)
   mac             se: Swedish (Macintosh)
   svdvorak        se: Swedish (Svdvorak)
+  us_dvorak       se: Swedish (based on US Intl. Dvorak)
   swl             se: Swedish Sign Language
   legacy          ch: German (Switzerland, legacy)
   de_nodeadkeys   ch: German (Switzerland, no dead keys)
@@ -687,6 +723,7 @@
   dvorak          ph: Filipino (Dvorak, Latin)
   dvorak-bay      ph: Filipino (Dvorak, Baybayin)
   gag             md: Moldavian (Gagauz)
+  phonetic        my: Malay (Jawi, phonetic)
 
 ! option
   grp                  Switching to another layout
@@ -695,6 +732,7 @@
   grp:lwin_switch      Left Win (while pressed)
   grp:rwin_switch      Left Win (while pressed)
   grp:win_switch       Any Win (while pressed)
+  grp:menu_switch      Menu (while pressed), Shift+Menu for Menu
   grp:caps_switch      Caps Lock (while pressed), Alt+Caps Lock for the original Caps Lock action
   grp:rctrl_switch     Right Ctrl (while pressed)
   grp:toggle           Right Alt
@@ -769,7 +807,7 @@
   keypad:future_wang   Wang 724 keypad with Unicode additions (arrows and math operators; math operators on default level)
   keypad:hex           Hexadecimal
   keypad:atm           ATM/phone-style
-  kpdl                 Numeric keypad Delete behaviour
+  kpdl                 Numeric keypad Delete behavior
   kpdl:dot             Legacy key with dot
   kpdl:comma           Legacy key with comma
   kpdl:dotoss          Four-level key with dot
@@ -858,16 +896,16 @@
   nbsp:level3          Non-breaking space at the 3rd level
   nbsp:level3s         Non-breaking space at the 3rd level, nothing at the 4th level
   nbsp:level3n         Non-breaking space at the 3rd level, thin non-breaking space at the 4th level
-  nbsp:level4          Non-breaking space at the 4th lever
-  nbsp:level4n         Non-breaking space at the 4th lever, thin non-breaking space at the 6th level
-  nbsp:level4nl        Non-breaking space at the 4th lever, thin non-breaking space at the 6th level (via Ctrl+Shift)
+  nbsp:level4          Non-breaking space at the 4th level
+  nbsp:level4n         Non-breaking space at the 4th level, thin non-breaking space at the 6th level
+  nbsp:level4nl        Non-breaking space at the 4th level, thin non-breaking space at the 6th level (via Ctrl+Shift)
   nbsp:zwnj2           Zero-width non-joiner at the 2nd level
   nbsp:zwnj2zwj3       Zero-width non-joiner at the 2nd level, zero-width joiner at the 3rd level
   nbsp:zwnj2zwj3nb4    Zero-width non-joiner at the 2nd level, zero-width joiner at the 3rd level, non-breaking space at the 4th level
   nbsp:zwnj2nb3        Zero-width non-joiner at the 2nd level, non-breaking space at the 3rd level
   nbsp:zwnj2nb3s       Zero-width non-joiner at the 2nd level, non-breaking space at the 3rd level, nothing at the 4th level
   nbsp:zwnj2nb3zwj4    Zero-width non-joiner at the 2nd level, non-breaking space at the 3rd level, zero-width joiner at the 4th level
-  nbsp:zwnj2nb3nnb4    Zero-width non-joiner at the 2nd level, non-breaking space at the 3rd level, thin non-breakable space at the 4th level
+  nbsp:zwnj2nb3nnb4    Zero-width non-joiner at the 2nd level, non-breaking space at the 3rd level, thin non-breaking space at the 4th level
   nbsp:zwnj3zwj4       Zero-width non-joiner at the 3rd level, zero-width joiner at the 4th level
   japan                Japanese keyboard options
   japan:kana_lock      Kana Lock key is locking

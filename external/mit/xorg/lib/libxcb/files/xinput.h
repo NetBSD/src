@@ -328,12 +328,23 @@ typedef struct xcb_input_list_input_devices_reply_t {
     uint8_t  pad0[23];
 } xcb_input_list_input_devices_reply_t;
 
+typedef uint8_t xcb_input_event_type_base_t;
+
+/**
+ * @brief xcb_input_event_type_base_iterator_t
+ **/
+typedef struct xcb_input_event_type_base_iterator_t {
+    xcb_input_event_type_base_t *data;
+    int                          rem;
+    int                          index;
+} xcb_input_event_type_base_iterator_t;
+
 /**
  * @brief xcb_input_input_class_info_t
  **/
 typedef struct xcb_input_input_class_info_t {
-    uint8_t class_id;
-    uint8_t event_type_base;
+    uint8_t                     class_id;
+    xcb_input_event_type_base_t event_type_base;
 } xcb_input_input_class_info_t;
 
 /**
@@ -1645,24 +1656,6 @@ typedef struct xcb_input_query_device_state_reply_t {
     uint8_t  num_classes;
     uint8_t  pad0[23];
 } xcb_input_query_device_state_reply_t;
-
-/** Opcode for xcb_input_send_extension_event. */
-#define XCB_INPUT_SEND_EXTENSION_EVENT 31
-
-/**
- * @brief xcb_input_send_extension_event_request_t
- **/
-typedef struct xcb_input_send_extension_event_request_t {
-    uint8_t      major_opcode;
-    uint8_t      minor_opcode;
-    uint16_t     length;
-    xcb_window_t destination;
-    uint8_t      device_id;
-    uint8_t      propagate;
-    uint16_t     num_classes;
-    uint8_t      num_events;
-    uint8_t      pad0[3];
-} xcb_input_send_extension_event_request_t;
 
 /** Opcode for xcb_input_device_bell. */
 #define XCB_INPUT_DEVICE_BELL 32
@@ -4040,6 +4033,56 @@ typedef struct xcb_input_barrier_hit_event_t {
 
 typedef xcb_input_barrier_hit_event_t xcb_input_barrier_leave_event_t;
 
+/**
+ * @brief xcb_input_event_for_send_t
+ **/
+typedef union xcb_input_event_for_send_t {
+    xcb_input_device_valuator_event_t            device_valuator;
+    xcb_input_device_key_press_event_t           device_key_press;
+    xcb_input_device_key_release_event_t         device_key_release;
+    xcb_input_device_button_press_event_t        device_button_press;
+    xcb_input_device_button_release_event_t      device_button_release;
+    xcb_input_device_motion_notify_event_t       device_motion_notify;
+    xcb_input_device_focus_in_event_t            device_focus_in;
+    xcb_input_device_focus_out_event_t           device_focus_out;
+    xcb_input_proximity_in_event_t               proximity_in;
+    xcb_input_proximity_out_event_t              proximity_out;
+    xcb_input_device_state_notify_event_t        device_state_notify;
+    xcb_input_device_mapping_notify_event_t      device_mapping_notify;
+    xcb_input_change_device_notify_event_t       change_device_notify;
+    xcb_input_device_key_state_notify_event_t    device_key_state_notify;
+    xcb_input_device_button_state_notify_event_t device_button_state_notify;
+    xcb_input_device_presence_notify_event_t     device_presence_notify;
+    xcb_raw_generic_event_t                      event_header;
+} xcb_input_event_for_send_t;
+
+/**
+ * @brief xcb_input_event_for_send_iterator_t
+ **/
+typedef struct xcb_input_event_for_send_iterator_t {
+    xcb_input_event_for_send_t *data;
+    int                         rem;
+    int                         index;
+} xcb_input_event_for_send_iterator_t;
+
+/** Opcode for xcb_input_send_extension_event. */
+#define XCB_INPUT_SEND_EXTENSION_EVENT 31
+
+/**
+ * @brief xcb_input_send_extension_event_request_t
+ **/
+typedef struct xcb_input_send_extension_event_request_t {
+    uint8_t      major_opcode;
+    uint8_t      minor_opcode;
+    uint16_t     length;
+    xcb_window_t destination;
+    uint8_t      device_id;
+    uint8_t      propagate;
+    uint16_t     num_classes;
+    uint8_t      num_events;
+    uint8_t      pad0[3];
+} xcb_input_send_extension_event_request_t;
+
 /** Opcode for xcb_input_device. */
 #define XCB_INPUT_DEVICE 0
 
@@ -4546,6 +4589,29 @@ xcb_input_list_input_devices_reply_t *
 xcb_input_list_input_devices_reply (xcb_connection_t                       *c,
                                     xcb_input_list_input_devices_cookie_t   cookie  /**< */,
                                     xcb_generic_error_t                   **e);
+
+/**
+ * Get the next element of the iterator
+ * @param i Pointer to a xcb_input_event_type_base_iterator_t
+ *
+ * Get the next element in the iterator. The member rem is
+ * decreased by one. The member data points to the next
+ * element. The member index is increased by sizeof(xcb_input_event_type_base_t)
+ */
+void
+xcb_input_event_type_base_next (xcb_input_event_type_base_iterator_t *i);
+
+/**
+ * Return the iterator pointing to the last element
+ * @param i An xcb_input_event_type_base_iterator_t
+ * @return  The iterator pointing to the last element
+ *
+ * Set the current element in the iterator to the last element.
+ * The member rem is set to 0. The member data points to the
+ * last element.
+ */
+xcb_generic_iterator_t
+xcb_input_event_type_base_end (xcb_input_event_type_base_iterator_t i);
 
 /**
  * Get the next element of the iterator
@@ -6508,66 +6574,6 @@ xcb_input_query_device_state_reply_t *
 xcb_input_query_device_state_reply (xcb_connection_t                       *c,
                                     xcb_input_query_device_state_cookie_t   cookie  /**< */,
                                     xcb_generic_error_t                   **e);
-
-int
-xcb_input_send_extension_event_sizeof (const void  *_buffer);
-
-/**
- *
- * @param c The connection
- * @return A cookie
- *
- * Delivers a request to the X server.
- *
- * This form can be used only if the request will not cause
- * a reply to be generated. Any returned error will be
- * saved for handling by xcb_request_check().
- */
-xcb_void_cookie_t
-xcb_input_send_extension_event_checked (xcb_connection_t              *c,
-                                        xcb_window_t                   destination,
-                                        uint8_t                        device_id,
-                                        uint8_t                        propagate,
-                                        uint16_t                       num_classes,
-                                        uint8_t                        num_events,
-                                        const uint8_t                 *events,
-                                        const xcb_input_event_class_t *classes);
-
-/**
- *
- * @param c The connection
- * @return A cookie
- *
- * Delivers a request to the X server.
- *
- */
-xcb_void_cookie_t
-xcb_input_send_extension_event (xcb_connection_t              *c,
-                                xcb_window_t                   destination,
-                                uint8_t                        device_id,
-                                uint8_t                        propagate,
-                                uint16_t                       num_classes,
-                                uint8_t                        num_events,
-                                const uint8_t                 *events,
-                                const xcb_input_event_class_t *classes);
-
-uint8_t *
-xcb_input_send_extension_event_events (const xcb_input_send_extension_event_request_t *R);
-
-int
-xcb_input_send_extension_event_events_length (const xcb_input_send_extension_event_request_t *R);
-
-xcb_generic_iterator_t
-xcb_input_send_extension_event_events_end (const xcb_input_send_extension_event_request_t *R);
-
-xcb_input_event_class_t *
-xcb_input_send_extension_event_classes (const xcb_input_send_extension_event_request_t *R);
-
-int
-xcb_input_send_extension_event_classes_length (const xcb_input_send_extension_event_request_t *R);
-
-xcb_generic_iterator_t
-xcb_input_send_extension_event_classes_end (const xcb_input_send_extension_event_request_t *R);
 
 /**
  *
@@ -9467,6 +9473,89 @@ xcb_input_raw_touch_update_sizeof (const void  *_buffer  /**< */);
 
 int
 xcb_input_raw_touch_end_sizeof (const void  *_buffer  /**< */);
+
+/**
+ * Get the next element of the iterator
+ * @param i Pointer to a xcb_input_event_for_send_iterator_t
+ *
+ * Get the next element in the iterator. The member rem is
+ * decreased by one. The member data points to the next
+ * element. The member index is increased by sizeof(xcb_input_event_for_send_t)
+ */
+void
+xcb_input_event_for_send_next (xcb_input_event_for_send_iterator_t *i);
+
+/**
+ * Return the iterator pointing to the last element
+ * @param i An xcb_input_event_for_send_iterator_t
+ * @return  The iterator pointing to the last element
+ *
+ * Set the current element in the iterator to the last element.
+ * The member rem is set to 0. The member data points to the
+ * last element.
+ */
+xcb_generic_iterator_t
+xcb_input_event_for_send_end (xcb_input_event_for_send_iterator_t i);
+
+int
+xcb_input_send_extension_event_sizeof (const void  *_buffer);
+
+/**
+ *
+ * @param c The connection
+ * @return A cookie
+ *
+ * Delivers a request to the X server.
+ *
+ * This form can be used only if the request will not cause
+ * a reply to be generated. Any returned error will be
+ * saved for handling by xcb_request_check().
+ */
+xcb_void_cookie_t
+xcb_input_send_extension_event_checked (xcb_connection_t                 *c,
+                                        xcb_window_t                      destination,
+                                        uint8_t                           device_id,
+                                        uint8_t                           propagate,
+                                        uint16_t                          num_classes,
+                                        uint8_t                           num_events,
+                                        const xcb_input_event_for_send_t *events,
+                                        const xcb_input_event_class_t    *classes);
+
+/**
+ *
+ * @param c The connection
+ * @return A cookie
+ *
+ * Delivers a request to the X server.
+ *
+ */
+xcb_void_cookie_t
+xcb_input_send_extension_event (xcb_connection_t                 *c,
+                                xcb_window_t                      destination,
+                                uint8_t                           device_id,
+                                uint8_t                           propagate,
+                                uint16_t                          num_classes,
+                                uint8_t                           num_events,
+                                const xcb_input_event_for_send_t *events,
+                                const xcb_input_event_class_t    *classes);
+
+xcb_input_event_for_send_t *
+xcb_input_send_extension_event_events (const xcb_input_send_extension_event_request_t *R);
+
+int
+xcb_input_send_extension_event_events_length (const xcb_input_send_extension_event_request_t *R);
+
+xcb_input_event_for_send_iterator_t
+xcb_input_send_extension_event_events_iterator (const xcb_input_send_extension_event_request_t *R);
+
+xcb_input_event_class_t *
+xcb_input_send_extension_event_classes (const xcb_input_send_extension_event_request_t *R);
+
+int
+xcb_input_send_extension_event_classes_length (const xcb_input_send_extension_event_request_t *R);
+
+xcb_generic_iterator_t
+xcb_input_send_extension_event_classes_end (const xcb_input_send_extension_event_request_t *R);
 
 
 #ifdef __cplusplus

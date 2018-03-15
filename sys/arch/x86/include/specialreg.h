@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.112 2018/03/05 05:44:07 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.112.2.1 2018/03/15 09:12:04 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -250,7 +250,7 @@
 
 /* CPUID Fn00000001 %ebx */
 #define	CPUID_BRAND_INDEX	__BITS(7,0)
-#define	CPUID_CLFUSH_SIZE	__BITS(15,8)
+#define	CPUID_CLFLUSH_SIZE	__BITS(15,8)
 #define	CPUID_HTT_CORES		__BITS(23,16)
 #define	CPUID_LOCAL_APIC_ID	__BITS(31,24)
 
@@ -435,28 +435,6 @@
 #define CPUID_PES1_FLAGS	"\20" \
 	"\1" "XSAVEOPT"	"\2" "XSAVEC"	"\3" "XGETBV"	"\4" "XSAVES"
 
-/* Intel Fn80000001 extended features - %edx */
-#define CPUID_SYSCALL	0x00000800	/* SYSCALL/SYSRET */
-#define CPUID_XD	0x00100000	/* Execute Disable (like CPUID_NOX) */
-#define CPUID_P1GB	0x04000000	/* 1GB Large Page Support */
-#define CPUID_RDTSCP	0x08000000	/* Read TSC Pair Instruction */
-#define CPUID_EM64T	0x20000000	/* Intel EM64T */
-
-#define CPUID_INTEL_EXT_FLAGS	"\20" \
-	"\14" "SYSCALL/SYSRET"	"\25" "XD"	"\33" "P1GB" \
-	"\34" "RDTSCP"	"\36" "EM64T"
-
-/* Intel Fn80000001 extended features - %ecx */
-#define CPUID_LAHF	0x00000001	/* LAHF/SAHF in IA-32e mode, 64bit sub*/
-		/*	0x00000020 */	/* LZCNT. Same as AMD's CPUID_LZCNT */
-#define CPUID_PREFETCHW	0x00000100	/* PREFETCHW */
-
-#define CPUID_INTEL_FLAGS4	"\20"				\
-	"\1" "LAHF"	"\02" "B01"	"\03" "B02"		\
-			"\06" "LZCNT"				\
-	"\11" "PREFETCHW"
-
-
 /*
  * Intel Deterministic Address Translation Parameter Leaf
  * Fn0000_0018
@@ -484,6 +462,28 @@
 #define CPUID_DATP_TCLEVEL	__BITS(7, 5)	/* TLB level (start at 1) */
 #define CPUID_DATP_FULLASSOC	__BIT(8)	/* Full associative */
 #define CPUID_DATP_SHAREING	__BITS(25, 14)	/* shareing */
+
+
+/* Intel Fn80000001 extended features - %edx */
+#define CPUID_SYSCALL	0x00000800	/* SYSCALL/SYSRET */
+#define CPUID_XD	0x00100000	/* Execute Disable (like CPUID_NOX) */
+#define CPUID_P1GB	0x04000000	/* 1GB Large Page Support */
+#define CPUID_RDTSCP	0x08000000	/* Read TSC Pair Instruction */
+#define CPUID_EM64T	0x20000000	/* Intel EM64T */
+
+#define CPUID_INTEL_EXT_FLAGS	"\20" \
+	"\14" "SYSCALL/SYSRET"	"\25" "XD"	"\33" "P1GB" \
+	"\34" "RDTSCP"	"\36" "EM64T"
+
+/* Intel Fn80000001 extended features - %ecx */
+#define CPUID_LAHF	0x00000001	/* LAHF/SAHF in IA-32e mode, 64bit sub*/
+		/*	0x00000020 */	/* LZCNT. Same as AMD's CPUID_LZCNT */
+#define CPUID_PREFETCHW	0x00000100	/* PREFETCHW */
+
+#define CPUID_INTEL_FLAGS4	"\20"				\
+	"\1" "LAHF"	"\02" "B01"	"\03" "B02"		\
+			"\06" "LZCNT"				\
+	"\11" "PREFETCHW"
 
 
 /* AMD/VIA Fn80000001 extended features - %edx */
@@ -630,7 +630,10 @@
 #define MSR_EBC_FREQUENCY_ID	0x02c	/* PIV only */
 #define MSR_TEST_CTL		0x033
 #define MSR_IA32_SPEC_CTRL	0x048
+#define 	IA32_SPEC_CTRL_IBRS	0x01
+#define 	IA32_SPEC_CTRL_STIBP	0x02
 #define MSR_IA32_PRED_CMD	0x049
+#define 	IA32_PRED_CMD_IBPB	0x01
 #define MSR_BIOS_UPDT_TRIG	0x079
 #define MSR_BBL_CR_D0		0x088	/* PII+ only */
 #define MSR_BBL_CR_D1		0x089	/* PII+ only */
@@ -842,6 +845,7 @@
 
 #define MSR_IC_CFG	0xc0011021
 #define 	IC_CFG_DIS_SEQ_PREFETCH	0x00000800
+#define 	IC_CFG_DIS_IND		0x00004000
 
 #define MSR_DC_CFG	0xc0011022
 #define 	DC_CFG_DIS_CNV_WC_SSO	0x00000008

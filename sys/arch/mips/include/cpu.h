@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.123 2018/01/22 23:20:26 maya Exp $	*/
+/*	$NetBSD: cpu.h,v 1.123.2.1 2018/03/15 09:12:03 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -160,9 +160,11 @@ struct cpu_info {
 #ifdef MULTIPROCESSOR
 #define	CPU_INFO_ITERATOR		int
 #define	CPU_INFO_FOREACH(cii, ci)	\
-    cii = 0, ci = (ncpu ? cpu_infos[0] : &cpu_info_store); \
-    cii < (ncpu ? ncpu : 1); \
-    ++cii
+    cii = 0, ci = &cpu_info_store; \
+    ci != NULL; \
+    cii++, \
+    ncpu ? (ci = cpu_infos[cii]) \
+         : (ci = NULL)
 #else
 #define	CPU_INFO_ITERATOR		int __unused
 #define	CPU_INFO_FOREACH(cii, ci)	\

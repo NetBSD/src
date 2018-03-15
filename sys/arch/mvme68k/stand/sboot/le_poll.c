@@ -1,4 +1,4 @@
-/*	$NetBSD: le_poll.c,v 1.5 2008/01/12 09:54:33 tsutsui Exp $	*/
+/*	$NetBSD: le_poll.c,v 1.5.96.1 2018/03/15 09:12:04 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -239,7 +239,7 @@ int le_put(u_char *pkt, size_t len)
 	if (ler1->ler1_rdp & LE_C0_ERR) {
 		if ((ler1->ler1_rdp &
 		    (LE_C0_BABL|LE_C0_CERR|LE_C0_MISS|LE_C0_MERR)) !=
-		    LE_C0_CERR)
+		    LE_C0_CERR) {
 			printf("le_put: xmit error, buf %d\n",
 			    le_softc.next_tmd);
 			le_error("le_put(xmit error)", ler1);
@@ -248,7 +248,7 @@ int le_put(u_char *pkt, size_t len)
 #if 0
 		(le_softc.next_tmd == (LETBUF - 1)) ? 0 : le_softc.next_tmd + 1;
 #endif
-		if (tmd->tmd1_bits & LE_T1_ERR) {
+		if (tmd->tmd1_bits & LE_T1_ERR)
 			printf("le0: transmit error, error = 0x%x\n",
 			    tmd->tmd3);
 		return -1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.210 2018/01/24 03:13:36 maya Exp $	*/
+/*	$NetBSD: locore.S,v 1.210.2.1 2018/03/15 09:12:03 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,7 +63,7 @@
 #include <mips/trap.h>
 #include <mips/locore.h>
 
-RCSID("$NetBSD: locore.S,v 1.210 2018/01/24 03:13:36 maya Exp $")
+RCSID("$NetBSD: locore.S,v 1.210.2.1 2018/03/15 09:12:03 pgoyette Exp $")
 
 #include "assym.h"
 
@@ -73,23 +73,35 @@ RCSID("$NetBSD: locore.S,v 1.210 2018/01/24 03:13:36 maya Exp $")
 	.globl	_C_LABEL(kernel_text)		# libkvm refers this
 start:
 _C_LABEL(kernel_text):
-#if (defined(MIPS3_PLUS) && !defined(MIPS1)) || defined(emips)
-	/* keep firmware exception handler until we hook. */
-	mfc0	v0, MIPS_COP_0_STATUS
+	/* First disable the interrupts only, for safety */
+	mfc0	k0, MIPS_COP_0_STATUS
 	MFC0_HAZARD
-#if defined(emips)
-	and	v0, MIPS_SR_TS | MIPS3_SR_RE
-#else
-	and	v0, MIPS_SR_BEV
-#endif
-	mtc0	v0, MIPS_COP_0_STATUS		# Disable interrupts
+	and	k0, ~MIPS_SR_INT_IE
+	mtc0	k0, MIPS_COP_0_STATUS
 	COP0_SYNC
-#else
-	mtc0	zero, MIPS_COP_0_STATUS		# Disable interrupts
-	COP0_SYNC
-#endif
+
+	/* Known state: BEV, coprocessors disabled */
+	mtc0	zero, MIPS_COP_0_STATUS
 	mtc0	zero, MIPS_COP_0_CAUSE
 	COP0_SYNC
+
+#ifdef _LP64
+	/* Enable 64-bit addressing */
+	mfc0	k0, MIPS_COP_0_STATUS
+	MFC0_HAZARD
+	or	k0, MIPS_SR_KX | MIPS_SR_UX
+	mtc0	k0, MIPS_COP_0_STATUS
+#endif
+
+#ifdef HPCMIPS_L1CACHE_DISABLE
+	mfc0	t0, MIPS_COP_0_CONFIG
+	li	t1, 0xfffffff8
+	and	t0, t0, t1
+	or	t0, 0x00000002			# XXX, KSEG0 is uncached
+	mtc0	t0, MIPS_COP_0_CONFIG
+	COP0_SYNC
+#endif /* HPCMIPS_L1CACHE_DISABLE */
+
 #ifdef MIPS64_OCTEON
 	//
 	// U-boot on the erlite starts all cpus at the kernel entry point.
@@ -130,44 +142,27 @@ _C_LABEL(kernel_text):
 	PTR_LA	gp, _C_LABEL(_gp)
 #endif
 
-#ifdef NOFPU /* No FPU; avoid touching FPU registers */
-#if !defined(emips)   /*  XXX??? we have already disabled interrupts! */
-#ifdef __mips_n32
-	li	t0, MIPS_SR_KX			# turn on XKSEG and XKPHYS
-#elif defined(_LP64)
-	li	t0, MIPS_SR_KX | MIPS_SR_UX	# turn on XKSEG and XKPHYS
-#else
-	li	t0, 0				# Disable interrupts and
-#endif /* n32 */
-	mtc0	t0, MIPS_COP_0_STATUS		# the fp coprocessor
-	COP0_SYNC
-#endif /* !emips */
-#ifdef HPCMIPS_L1CACHE_DISABLE
-	mfc0	t0, MIPS_COP_0_CONFIG
-	li	t1, 0xfffffff8
-	and	t0, t0, t1
-	or	t0, 0x00000002			# XXX, KSEG0 is uncached
-	mtc0	t0, MIPS_COP_0_CONFIG
-	COP0_SYNC
-#endif /* HPCMIPS_L1CACHE_DISABLE */
-#else /* NOFPU */
-	mfc0	t0, MIPS_COP_0_STATUS
-	MFC0_HAZARD
-#if defined(_LP64) || defined(__mips_n32)
-	or	t0, MIPS_SR_KX			# turn on XKSEG and XKPHYS
-#endif
-	or	t0, MIPS_SR_COP_1_BIT		# Disable interrupts, and
-	mtc0	t0, MIPS_COP_0_STATUS		# enable the fp coprocessor
-	COP0_HAZARD_FPUENABLE
-#endif
 	mfc0	t0, MIPS_COP_0_PRID		# read product revision ID
 	COP0_SYNC
 	nop
-#ifdef NOFPU /* No FPU; avoid touching FPU registers */
-	add	t1, zero, zero
+
+#ifdef NOFPU
+	li	t1, 0				# Dummy FPU_ID
 #else
-	cfc1	t1, MIPS_FPU_ID			# read FPU ID register
+	/* Enable the FPU to read FPUID */
+	mfc0	k0, MIPS_COP_0_STATUS
+	MFC0_HAZARD
+	or	k0, MIPS_SR_COP_1_BIT
+	mtc0	k0, MIPS_COP_0_STATUS
+	COP0_HAZARD_FPUENABLE
+
+	cfc1	t1, MIPS_FPU_ID
+
+	/* Disable again, we don't want it on in the kernel */
+	and	k0, ~MIPS_SR_COP_1_BIT
+	mtc0	k0, MIPS_COP_0_STATUS
 #endif
+
 	INT_S	t0, _C_LABEL(mips_options)+MO_CPU_ID # save PRID register
 	INT_S	t1, _C_LABEL(mips_options)+MO_FPU_ID # save FPU ID register
 	PTR_LA	MIPS_CURLWP, _C_LABEL(lwp0)	# set curlwp

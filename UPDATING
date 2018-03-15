@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.291 2018/02/13 04:36:00 mrg Exp $
+$NetBSD: UPDATING,v 1.291.2.1 2018/03/15 09:11:52 pgoyette Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -18,6 +18,11 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20180311:
+	bdftopcf was updated and may need cleaning in the
+	src/external/mit/xorg/tools/bdftopcf subdirectory if there are
+	link errors.
 
 20180212:
 	between OpenSSL and GCC updates, many things may fail to build.

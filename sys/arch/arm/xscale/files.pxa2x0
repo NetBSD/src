@@ -1,4 +1,4 @@
-#	$NetBSD: files.pxa2x0,v 1.19 2017/06/16 22:39:34 pgoyette Exp $
+#	$NetBSD: files.pxa2x0,v 1.19.4.1 2018/03/15 09:12:02 pgoyette Exp $
 #
 # Configuration info for Intel PXA2[751]0 CPU support
 #
@@ -78,11 +78,11 @@ device	pxapcic: pcmciabus
 file	arch/arm/xscale/pxa2x0_pcic.c		pxapcic
 
 # Inter-Integrated Circuit controller
-device	pxaiic {}
+device	pxaiic
 file	arch/arm/xscale/pxa2x0_i2c.c		pxaiic
 
 # Inter-IC Sound controller
-device	pxaiis {}
+device	pxaiis
 file	arch/arm/xscale/pxa2x0_i2s.c		pxaiis
 
 # PXA2x0 real time clock

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2016/01/14 02:30:18 christos Exp $
+# $NetBSD: Makefile,v 1.2.14.1 2018/03/15 09:11:55 pgoyette Exp $
 
 # $FreeBSD: src/gnu/usr.bin/groff/src/preproc/eqn/Makefile,v 1.4 2003/05/01 13:22:19 ru Exp $
 
@@ -15,6 +15,6 @@ SRCS=		main.cpp lex.cpp eqn.cpp \
 CPPFLAGS+=	-I${DIST_DIR} -I.
 SCRIPTS=	neqn
 MAN=		eqn.1 neqn.1
-CLEANFILES=	${SCRIPTS} ${MAN}
+CLEANFILES+=	${SCRIPTS} ${MAN}
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.38 2016/12/15 12:56:52 kre Exp $
+# $NetBSD: md.amd64,v 1.38.12.1 2018/03/15 09:11:54 pgoyette Exp $
 ./usr/X11R7/lib/libI810XvMC_g.a				-unknown-	debuglib,xorg,compatx11file
 ./usr/X11R7/lib/libIntelXvMC_g.a			-unknown-	debuglib,xorg,compatx11file
 ./usr/X11R7/lib/libchromeXvMCPro_g.a			-unknown-	debuglib,xorg,compatx11file
@@ -74,7 +74,7 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/tdfx_dri.so.0.debug	-unknown-		obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/trident_dri.so.0.debug	-unknown-		obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/unichrome_dri.so.0.debug	-unknown-		obsolete
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/amdgpu_drv.so.1.debug	-unknown-		xorg,debug,xorg_server_ver=118
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/amdgpu_drv.so.18.debug	-unknown-		xorg,debug,xorg_server_ver=118
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/apm_drv.so.1.debug	-unknown-		xorg,debug,xorg_server_ver=110
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/apm_drv.so.1.debug	-unknown-		xorg,debug,xorg_server_ver=118,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ark_drv.so.0.debug	-unknown-		xorg,debug,xorg_server_ver=110
@@ -153,7 +153,7 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/openchrome_drv.so.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/r128_drv.so.6.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/radeon_drv.so.6.debug	-unknown-		xorg,debug,obsolete
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/radeon_drv.so.7.debug	-unknown-		xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/radeon_drv.so.18.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/radeon_drv_old.so.6.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/radeonhd_drv.so.1.debug	-unknown-		xorg,debug,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/s3_drv.so.0.debug	-unknown-		xorg,debug

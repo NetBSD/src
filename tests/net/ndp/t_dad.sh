@@ -1,4 +1,4 @@
-#	$NetBSD: t_dad.sh,v 1.12 2016/11/25 08:51:17 ozaki-r Exp $
+#	$NetBSD: t_dad.sh,v 1.12.12.1 2018/03/15 09:12:08 pgoyette Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -31,6 +31,7 @@ SOCKPEER=unix://commsock2
 DEBUG=${DEBUG:-false}
 
 duplicated="[Dd][Uu][Pp][Ll][Ii][Cc][Aa][Tt][Ee][Dd]"
+tentative="[Tt][Ee][Nn][Tt][Aa][Tt][Ii][Vv][Ee]"
 
 atf_test_case dad_basic cleanup
 atf_test_case dad_duplicated cleanup
@@ -73,9 +74,9 @@ make_ns_pkt_str()
 {
 	local id=$1
 	local target=$2
-	pkt="33:33:ff:00:00:0${id}, ethertype IPv6 (0x86dd), length 78: ::"
+	pkt="33:33:ff:00:00:0${id}, ethertype IPv6 (0x86dd), length 86: ::"
 	pkt="$pkt > ff02::1:ff00:${id}: ICMP6, neighbor solicitation,"
-	pkt="$pkt who has $target, length 24"
+	pkt="$pkt who has $target, length 32"
 	echo $pkt
 }
 
@@ -95,11 +96,12 @@ dad_basic_body()
 	$DEBUG && rump.ifconfig shmif0
 
 	atf_check -s exit:0 rump.ifconfig shmif0 up
-	rump.ifconfig shmif0 > ./out
-	$DEBUG && cat ./out
+	$DEBUG && rump.ifconfig shmif0
 
 	# The primary address doesn't start with tentative state
-	atf_check -s not-exit:0 -x "cat ./out |grep $localip1 |grep -q tentative"
+	atf_check -s exit:0 -o match:"$localip1" \
+	    -o not-match:"$localip1.+$tentative" \
+	    rump.ifconfig shmif0
 	# The alias address starts with tentative state
 	# XXX we have no stable way to check this, so skip for now
 	#atf_check -s exit:0 -x "cat ./out |grep $localip2 |grep -q tentative"
@@ -110,10 +112,12 @@ dad_basic_body()
 
 	# Check DAD probe packets (Neighbor Solicitation Message)
 	pkt=$(make_ns_pkt_str 2 $localip2)
-	atf_check -s exit:0 -x "cat ./out |grep -q '$pkt'"
+	pkt=$(echo $pkt | sed 's/\([\(\)]\)/\\\1/g')
+	atf_check -s exit:0 -o match:"$pkt" cat ./out
 	# No DAD for the primary address
 	pkt=$(make_ns_pkt_str 1 $localip1)
-	atf_check -s not-exit:0 -x "cat ./out |grep -q '$pkt'"
+	pkt=$(echo $pkt | sed 's/\([\(\)]\)/\\\1/g')
+	atf_check -s exit:0 -o not-match:"$pkt" cat ./out
 
 	# Waiting for DAD complete
 	atf_check -s exit:0 rump.ifconfig -w 10
@@ -123,7 +127,9 @@ dad_basic_body()
 	# IPv6 DAD doesn't announce (Neighbor Advertisement Message)
 
 	# The alias address left tentative
-	atf_check -s not-exit:0 -x "rump.ifconfig shmif0 |grep $localip2 |grep -q tentative"
+	atf_check -s exit:0 -o match:"$localip2" \
+	    -o not-match:"$localip2.+$tentative" \
+	    rump.ifconfig shmif0
 
 	#
 	# Add a new address on the fly
@@ -139,7 +145,8 @@ dad_basic_body()
 	extract_new_packets bus1 > ./out
 	$DEBUG && cat ./out
 	pkt=$(make_ns_pkt_str 3 $localip3)
-	atf_check -s exit:0 -x "cat ./out |grep -q '$pkt'"
+	pkt=$(echo $pkt | sed 's/\([\(\)]\)/\\\1/g')
+	atf_check -s exit:0 -o match:"$pkt" cat ./out
 
 	# Waiting for DAD complete
 	atf_check -s exit:0 rump.ifconfig -w 10
@@ -149,7 +156,9 @@ dad_basic_body()
 	# IPv6 DAD doesn't announce (Neighbor Advertisement Message)
 
 	# The new address left tentative
-	atf_check -s not-exit:0 -x "rump.ifconfig shmif0 |grep $localip3 |grep -q tentative"
+	atf_check -s exit:0 -o match:"$localip3" \
+	    -o not-match:"$localip3.+$tentative" \
+	    rump.ifconfig shmif0
 
 	rump_server_destroy_ifaces
 }
@@ -169,7 +178,8 @@ dad_duplicated_body()
 	export RUMP_SERVER=$SOCKLOCAL
 
 	# The primary address isn't marked as duplicated
-	atf_check -s exit:0 -o not-match:"$localip1.+$duplicated" \
+	atf_check -s exit:0 -o match:"$localip1" \
+	    -o not-match:"$localip1.+$duplicated" \
 	    rump.ifconfig shmif0
 
 	#
@@ -185,7 +195,8 @@ dad_duplicated_body()
 	# A unique address isn't marked as duplicated
 	atf_check -s exit:0 rump.ifconfig shmif0 inet6 $localip2
 	atf_check -s exit:0 sleep 1
-	atf_check -s exit:0 -o not-match:"$localip2.+$duplicated" \
+	atf_check -s exit:0 -o match:"$localip2" \
+	    -o not-match:"$localip2.+$duplicated" \
 	    rump.ifconfig shmif0
 
 	rump_server_destroy_ifaces

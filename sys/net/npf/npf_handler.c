@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_handler.c,v 1.37 2017/02/19 20:27:22 christos Exp $	*/
+/*	$NetBSD: npf_handler.c,v 1.37.12.1 2018/03/15 09:12:06 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.37 2017/02/19 20:27:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.37.12.1 2018/03/15 09:12:06 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -109,7 +109,7 @@ npf_reassembly(npf_t *npf, npf_cache_t *npc, struct mbuf **mp)
 	nbuf_init(npf, nbuf, *mp, nbuf->nb_ifp);
 	npc->npc_info = 0;
 
-	if (npf_cache_all(npc) & NPC_IPFRAG) {
+	if (npf_cache_all(npc) & (NPC_IPFRAG|NPC_FMTERR)) {
 		return EINVAL;
 	}
 	npf_stats_inc(npf, NPF_STAT_REASSEMBLY);
@@ -154,18 +154,19 @@ npf_packet_handler(npf_t *npf, struct mbuf **mp, ifnet_t *ifp, int di)
 	error = 0;
 	rp = NULL;
 
-	/* Cache everything.  Determine whether it is an IP fragment. */
+	/* Cache everything. */
 	flags = npf_cache_all(&npc);
+
+	/* If error on the format, leave quickly. */
+	if (flags & NPC_FMTERR) {
+		error = EINVAL;
+		goto fastout;
+	}
+
+	/* Determine whether it is an IP fragment. */
 	if (__predict_false(flags & NPC_IPFRAG)) {
 		/*
-		 * We pass IPv6 fragments unconditionally
-		 * The first IPv6 fragment is not marked as such
-		 * and passes through the filter
-		 */
-		if (flags & NPC_IP6)
-			return 0;
-		/*
-		 * Pass to IPv4 reassembly mechanism.
+		 * Pass to IPv4/IPv6 reassembly mechanism.
 		 */
 		error = npf_reassembly(npf, &npc, mp);
 		if (error) {
@@ -308,6 +309,7 @@ out:
 		error = ENETUNREACH;
 	}
 
+fastout:
 	if (*mp) {
 		/* Free the mbuf chain. */
 		m_freem(*mp);
