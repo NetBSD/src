@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_alg_icmp.c,v 1.25 2017/12/10 00:07:36 rmind Exp $	*/
+/*	$NetBSD: npf_alg_icmp.c,v 1.25.2.1 2018/03/15 09:12:06 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_alg_icmp.c,v 1.25 2017/12/10 00:07:36 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_alg_icmp.c,v 1.25.2.1 2018/03/15 09:12:06 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
@@ -135,9 +135,6 @@ npfa_icmp4_inspect(const int type, npf_cache_t *npc)
 	case ICMP_REDIRECT:
 	case ICMP_TIMXCEED:
 	case ICMP_PARAMPROB:
-		if (npc == NULL) {
-			return false;
-		}
 		/* Should contain original IP header. */
 		if (!nbuf_advance(nbuf, offsetof(struct icmp, icmp_ip), 0)) {
 			return false;
@@ -175,9 +172,6 @@ npfa_icmp6_inspect(const int type, npf_cache_t *npc)
 	case ICMP6_PACKET_TOO_BIG:
 	case ICMP6_TIME_EXCEEDED:
 	case ICMP6_PARAM_PROB:
-		if (npc == NULL) {
-			return false;
-		}
 		/* Should contain original IP header. */
 		if (!nbuf_advance(nbuf, sizeof(struct icmp6_hdr), 0)) {
 			return false;

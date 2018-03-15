@@ -1,4 +1,4 @@
-/*	$NetBSD: if_llatbl.c,v 1.23 2018/02/14 14:15:53 maxv Exp $	*/
+/*	$NetBSD: if_llatbl.c,v 1.23.2.1 2018/03/15 09:12:06 pgoyette Exp $	*/
 /*
  * Copyright (c) 2004 Luigi Rizzo, Alessandro Cerri. All rights reserved.
  * Copyright (c) 2004-2008 Qing Li. All rights reserved.
@@ -67,6 +67,7 @@
 
 static SLIST_HEAD(, lltable) lltables;
 krwlock_t lltable_rwlock;
+static struct pool llentry_pool;
 
 static void lltable_unlink(struct lltable *llt);
 static void llentries_unlink(struct lltable *llt, struct llentries *head);
@@ -335,6 +336,24 @@ lltable_drop_entry_queue(struct llentry *lle)
 	return (pkts_dropped);
 }
 
+struct llentry *
+llentry_pool_get(int flags)
+{
+	struct llentry *lle;
+
+	lle = pool_get(&llentry_pool, flags);
+	if (lle != NULL)
+		memset(lle, 0, sizeof(*lle));
+	return lle;
+}
+
+void
+llentry_pool_put(struct llentry *lle)
+{
+
+	pool_put(&llentry_pool, lle);
+}
+
 /*
  * Deletes an address from the address table.
  * This function is called by the timer functions
@@ -351,11 +370,25 @@ llentry_free(struct llentry *lle)
 
 	LLE_WLOCK_ASSERT(lle);
 
+	lle->la_flags |= LLE_DELETED;
+
 	if ((lle->la_flags & LLE_LINKED) != 0) {
 		llt = lle->lle_tbl;
 
 		IF_AFDATA_WLOCK_ASSERT(llt->llt_ifp);
 		llt->llt_unlink_entry(lle);
+	}
+
+	/*
+	 * Stop a pending callout if one exists.  If we cancel one, we have to
+	 * remove a reference to avoid a leak.  callout_pending is required to
+	 * to exclude the case that the callout has never been scheduled.
+	 */
+	/* XXX once softnet_lock goes away, we should use callout_halt */
+	if (callout_pending(&lle->la_timer)) {
+		bool expired = callout_stop(&lle->la_timer);
+		if (!expired)
+			LLE_REMREF(lle);
 	}
 
 	pkts_dropped = lltable_drop_entry_queue(lle);
@@ -428,28 +461,8 @@ lltable_purge_entries(struct lltable *llt)
 	llentries_unlink(llt, &dchain);
 	IF_AFDATA_WUNLOCK(llt->llt_ifp);
 
-	LIST_FOREACH_SAFE(lle, &dchain, lle_chain, next) {
-		/*
-		 * We need to release the lock here to lle_timer proceeds;
-		 * lle_timer should stop immediately if LLE_LINKED isn't set.
-		 * Note that we cannot pass lle->lle_lock to callout_halt
-		 * because it's a rwlock.
-		 */
-		LLE_ADDREF(lle);
-		LLE_WUNLOCK(lle);
-#ifdef NET_MPSAFE
-		callout_halt(&lle->la_timer, NULL);
-#else
-		if (mutex_owned(softnet_lock))
-			callout_halt(&lle->la_timer, softnet_lock);
-		else
-			callout_halt(&lle->la_timer, NULL);
-#endif
-		LLE_WLOCK(lle);
-		LLE_REMREF(lle);
-		llentry_free(lle);
-	}
-
+	LIST_FOREACH_SAFE(lle, &dchain, lle_chain, next)
+		(void)llentry_free(lle);
 }
 
 /*
@@ -753,6 +766,9 @@ lltableinit(void)
 
 	SLIST_INIT(&lltables);
 	rw_init(&lltable_rwlock);
+
+	pool_init(&llentry_pool, sizeof(struct llentry), 0, 0, 0, "llentrypl",
+	    NULL, IPL_SOFTNET);
 }
 
 #ifdef __FreeBSD__

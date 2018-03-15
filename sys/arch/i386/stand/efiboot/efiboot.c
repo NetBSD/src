@@ -1,4 +1,4 @@
-/*	$NetBSD: efiboot.c,v 1.4 2017/02/11 10:23:39 nonaka Exp $	*/
+/*	$NetBSD: efiboot.c,v 1.4.18.1 2018/03/15 09:12:03 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -28,11 +28,13 @@
 
 #include "efiboot.h"
 
+#include "biosdisk_ll.h"
 #include "bootinfo.h"
 #include "devopen.h"
 
 EFI_HANDLE IH;
 EFI_DEVICE_PATH *efi_bootdp;
+int efi_bootdp_type = BIOSDISK_TYPE_HD;
 EFI_LOADED_IMAGE *efi_li;
 uintptr_t efi_main_sp;
 physaddr_t efi_loadaddr, efi_kernel_start;
@@ -71,15 +73,13 @@ efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE *systemTable)
 	    &DevicePathProtocol, (void **)&dp0);
 	if (EFI_ERROR(status))
 		Panic(L"HandleProtocol(DevicePathProtocol): %r", status);
+	efi_bootdp = dp0;
 	for (dp = dp0; !IsDevicePathEnd(dp); dp = NextDevicePathNode(dp)) {
-		if (DevicePathType(dp) == MEDIA_DEVICE_PATH)
-			continue;
-		if (DevicePathSubType(dp) == MEDIA_HARDDRIVE_DP) {
-			boot_biosdev = 0x80;
-			efi_bootdp = dp;
+		if (DevicePathType(dp) == MEDIA_DEVICE_PATH &&
+		    DevicePathSubType(dp) == MEDIA_CDROM_DP) {
+			efi_bootdp_type = BIOSDISK_TYPE_CD;
 			break;
 		}
-		break;
 	}
 
 	efi_disk_probe();

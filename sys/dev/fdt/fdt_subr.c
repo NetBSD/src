@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_subr.c,v 1.20 2017/12/10 21:38:27 skrll Exp $ */
+/* $NetBSD: fdt_subr.c,v 1.20.2.1 2018/03/15 09:12:05 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.20 2017/12/10 21:38:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.20.2.1 2018/03/15 09:12:05 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -467,7 +467,7 @@ fdtbus_get_string_index(int phandle, const char *prop, u_int index)
 	names = fdtbus_get_string(phandle, prop);
 
 	for (name = names, cur = 0; len > 0;
-	     name += strlen(name) + 1, cur++) {
+	     len -= strlen(name) + 1, name += strlen(name) + 1, cur++) {
 		if (index == cur)
 			return name;
 	}

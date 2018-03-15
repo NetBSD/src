@@ -1,4 +1,4 @@
-/*	$NetBSD: vnconfig.c,v 1.44 2016/04/10 09:04:09 martin Exp $	*/
+/*	$NetBSD: vnconfig.c,v 1.44.14.1 2018/03/15 09:12:08 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -423,11 +423,11 @@ getgeom(struct vndgeom *vng, char *cp)
 static void
 usage(void)
 {
-
-	(void)fprintf(stderr, "%s%s",
-	    "usage: vnconfig [-crvz] [-f dsktab] [-t type] vnode_disk"
-		" reg-file [geomspec]\n",
-	    "       vnconfig -u [-Fv] vnode_disk\n"
-	    "       vnconfig -l [-m num | vnode_disk...]\n");
+	const char *p = getprogname();
+	(void)fprintf(stderr, 
+	    "Usage: %s [-crvz] [-f dsktab] [-t type] vnode_disk"
+		" reg-file [geomspec]\n"
+	    "       %s -u [-Fv] vnode_disk\n"
+	    "       %s -l [-m num | vnode_disk...]\n", p, p, p);
 	exit(1);
 }

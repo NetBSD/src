@@ -1,4 +1,4 @@
-#      $NetBSD: Makefile,v 1.3 2017/08/29 07:12:13 mrg Exp $
+#      $NetBSD: Makefile,v 1.3.2.1 2018/03/15 09:12:00 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -13,15 +13,16 @@ SRCS= \
 	amdgpu_device.c \
 	amdgpu_gpu_info.c \
 	amdgpu_vamgr.c \
+	amdgpu_vm.c \
 	util_hash.c \
 	util_hash_table.c
 
 LIBDRMDATADIR=	${X11ROOTDIR}/share/libdrm
+# XXX goes away in new libdrm.
 IDS_NENT!=	egrep -ci '^[0-9a-f]{4},.*[0-9a-f]+,' ${X11SRCDIR.drm}/data/amdgpu.ids
 
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/libdrm
-CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11 -I${X11SRCDIR.drm} \
-		-DHAVE_SYS_SYSCTL_H
+CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11 -I${X11SRCDIR.drm}
 CPPFLAGS+=	-DAMDGPU_ASIC_ID_TABLE=\"${LIBDRMDATADIR}/amdgpu.ids\" \
 		-DAMDGPU_ASIC_ID_TABLE_NUM_ENTRIES=$(IDS_NENT)
 

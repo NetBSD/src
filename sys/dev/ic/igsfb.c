@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb.c,v 1.57 2018/01/24 05:35:58 riastradh Exp $ */
+/*	$NetBSD: igsfb.c,v 1.57.2.1 2018/03/15 09:12:05 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.57 2018/01/24 05:35:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.57.2.1 2018/03/15 09:12:05 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1001,7 +1001,7 @@ igsfb_set_cursor(struct igsfb_devconfig *dc, const struct wsdisplay_cursor *p)
 		/* clear trailing bits in the "partial" mask bytes */
 		trailing_bits = p->size.x & 0x07;
 		if (trailing_bits != 0) {
-			const u_int cutmask = ~((~0) << trailing_bits);
+			const u_int cutmask = ~((~0U) << trailing_bits);
 			u_char *mp;
 			u_int i;
 

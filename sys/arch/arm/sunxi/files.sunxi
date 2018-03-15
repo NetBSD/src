@@ -1,4 +1,4 @@
-#	$NetBSD: files.sunxi,v 1.42 2018/02/18 10:28:37 jmcneill Exp $
+#	$NetBSD: files.sunxi,v 1.42.2.1 2018/03/15 09:12:02 pgoyette Exp $
 #
 # Configuration info for Allwinner sunxi family SoCs
 #
@@ -236,6 +236,15 @@ device	sun6ispi: spibus
 attach	sun6ispi at fdt with sun6i_spi
 file	arch/arm/sunxi/sun6i_spi.c		sun6i_spi
 
+# A10/A20 CAN
+device	sunxican { } : ifnet
+attach	sunxican at fdt with sunxi_can
+file	arch/arm/sunxi/sunxi_can.c		sunxi_can
+
+# LRADC
+device	sunxilradc
+attach	sunxilradc at fdt with sunxi_lradc
+file	arch/arm/sunxi/sunxi_lradc.c		sunxi_lradc
 # SOC parameters
 defflag	opt_soc.h			SOC_SUNXI
 defflag	opt_soc.h			SOC_SUN4I: SOC_SUNXI

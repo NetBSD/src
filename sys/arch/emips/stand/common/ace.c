@@ -1,4 +1,4 @@
-/*	$NetBSD: ace.c,v 1.3 2014/02/05 19:07:16 christos Exp $	*/
+/*	$NetBSD: ace.c,v 1.3.28.1 2018/03/15 09:12:02 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -88,7 +88,12 @@
  */
 #if defined(DEBUG)
 int acedebug = 2;
-#define DBGME(lev,x) if (lev >= acedebug) x
+#define DBGME(lev,x) \
+	do \
+		if (lev >= acedebug) { \
+			x; \
+		} \
+	while (/*CONSTCOND*/0)
 #else
 #define DBGME(lev,x) 
 #endif
@@ -537,9 +542,9 @@ static int SysAce_read(struct _Sac * Interface, char *Buffer, uint32_t StartSect
                     
                     Data32 = Interface->DATABUFREG[0];
                     Data32 = le32toh(Data32);
-DBGME(0,printf(" %x", Data32));
-if (0 == (0xf & (i+4) )) DBGME(0,printf("\n"));
-                    memcpy(Buffer+i,&Data32,4);
+		    DBGME(0,printf(" %x", Data32));
+		    if (0 == (0xf & (i+4))) DBGME(0,printf("\n"));
+                    memcpy(Buffer+i, &Data32, 4);
                 }
                 else
                 {

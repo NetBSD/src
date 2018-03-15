@@ -1,4 +1,4 @@
-|	$NetBSD: aes-m68k.S,v 1.2 2018/03/05 00:59:43 christos Exp $
+|	$NetBSD: aes-m68k.S,v 1.2.2.1 2018/03/15 09:11:53 pgoyette Exp $
 
 | Copyright (C) 2016 Tetsuya Isaki. All rights reserved.
 | Copyright (C) 2016 Y.Sugahara (moveccr). All rights reserved.
@@ -34,19 +34,20 @@
 	.global	AES_set_encrypt_key
 	.type	AES_set_encrypt_key, @function
 AES_set_encrypt_key:
+.Laes_set_encrypt_key:
 	moveml	%d2-%d7/%a2-%a6,%sp@-
 	moveal	%sp@(44+4),%a0		| userKey
 	moveal	%sp@(44+8),%a1		| bits
 	moveal	%sp@(44+12),%a3		| key
 
 	tstl	%a0
-	beq	pek_return1		| return -1 if userKey == NULL
+	beq	.Lpek_return1		| return -1 if userKey == NULL
 	tstl	%a3
-	beq	pek_return1		| return -1 if key == NULL
+	beq	.Lpek_return1		| return -1 if key == NULL
 
 	cmpaw	#128,%a1
-	bne	pek192_check		| unless bits == 128
-pek128:
+	bne	.Lpek192_check		| unless bits == 128
+.Lpek128:
 	| %d0-%d7 rk[0..7]
 	| %a0 userKey, Te0
 	| %a1          Te1
@@ -80,7 +81,7 @@ pek128:
 	lea	%pc@(rcon_byte),%a4
 	lea	%a4@(10),%a6
 
-pek128_loop:
+.Lpek128_loop:
 					| d6 consists of four Te index bytes
 	movel	%d3,%d5			| d5=rk[3] as {1,2,3,0}
 	moveb	%d5,%d7			| d7=temp
@@ -111,21 +112,21 @@ pek128_loop:
 	movel	%d3,%a5@+
 
 	cmpal	%a4,%a6
-	bne	pek128_loop		|if (++i == 10) return 0;
+	bne	.Lpek128_loop		|if (++i == 10) return 0;
 
-pek_return0:
+.Lpek_return0:
 	moveql	#0,%d0
-pek_return:
+.Lpek_return:
 	moveml	%sp@+,%d2-%d7/%a2-%a6
 	rts
 
-pek192_check:
+.Lpek192_check:
 	| %a0 userKey
 	| %a1 bits
 	| %a3 key
 	cmpaw	#192,%a1
-	bne	pek256_check		| unless bits == 192
-pek192:
+	bne	.Lpek256_check		| unless bits == 192
+.Lpek192:
 	| %a0 Te0
 	| %a1 Te1
 	| %a2 Te2
@@ -160,15 +161,15 @@ pek192:
 	moveq	#0,%d7
 	lea	%pc@(rcon_byte),%a4
 	lea	%a4@(8),%a6
-	bra	pek192_loop_start
+	bra	.Lpek192_loop_start
 
-pek192_loop:
+.Lpek192_loop:
 	eorl	%d3,%d4			| rk[10] = rk[4] ^ rk[9]
 	movel	%d4,%a5@+		| %d4 is rk[10]
 	eorl	%d4,%d5			| rk[11] = rk[5] ^ rk[10]
 	movel	%d5,%a5@		| %d5 is rk[11]
 
-pek192_loop_start:
+.Lpek192_loop_start:
 	| %d0..%d5 = rk[0..5]
 	|
 	| temp = rk[5];
@@ -206,17 +207,17 @@ pek192_loop_start:
 	movel	%d3,%a5@+		| %d3 is rk[9]
 
 	cmpal	%a4,%a6
-	bne	pek192_loop
-	bra	pek_return0
+	bne	.Lpek192_loop
+	bra	.Lpek_return0
 
 
-pek256_check:
+.Lpek256_check:
 	| %a0 userKey
 	| %a1 bits
 	| %a3 key
 	cmpaw	#256,%a1
-	bne	pek_return2		| otherwise return -2
-pek256:
+	bne	.Lpek_return2		| otherwise return -2
+.Lpek256:
 	| %a0 Te0
 	| %a1 Te1
 	| %a2 Te2
@@ -254,9 +255,9 @@ pek256:
 
 	lea	%pc@(rcon_byte),%a4
 	lea	%a4@(7),%a6
-	bra	pek256_loop_start
+	bra	.Lpek256_loop_start
 
-pek256_loop:
+.Lpek256_loop:
 	| %d0: rk[8]  -> work
 	| %d1: rk[9]  -> work
 	| %d2: rk[10]
@@ -314,7 +315,7 @@ pek256_loop:
 	moveml	%a5@(-8*4),%d0-%d1	| %d0..%d1 = rk[8..9]
 	movel	%a5@(-5*4),%d3		| %d3 = rk[11]
 
-pek256_loop_start:
+.Lpek256_loop_start:
 	| %d0: rk[0]
 	| %d1: rk[1]
 	| %d2: rk[2]
@@ -369,15 +370,15 @@ pek256_loop_start:
 	| %d7: work
 
 	cmpal	%a4,%a6
-	bne	pek256_loop
-	bra	pek_return0
+	bne	.Lpek256_loop
+	bra	.Lpek_return0
 
-pek_return1:
+.Lpek_return1:
 	moveql	#-1,%d0
-	bra	pek_return
-pek_return2:
+	bra	.Lpek_return
+.Lpek_return2:
 	moveql	#-2,%d0
-	bra	pek_return
+	bra	.Lpek_return
 	.size	AES_set_encrypt_key, .-AES_set_encrypt_key
 
 
@@ -397,9 +398,9 @@ AES_set_decrypt_key:
 	movel	%a3,%sp@-
 	movel	%a1,%sp@-
 	movel	%a0,%sp@-
-	bsr	AES_set_encrypt_key
+	bsr	.Laes_set_encrypt_key
 	lea	%sp@(12),%sp
-	bmi	pdk_return
+	bmi	.Lpdk_return
 
 	/* invert the order of the round keys: */
 	lea	%a3@(rd_key),%a5	| %a5 := &rk[0]
@@ -407,7 +408,7 @@ AES_set_decrypt_key:
 	lslw	#4,%d4
 	lea	%a5@(%d4),%a4		| %a4 := &rk[j]
 	moveal	%a4,%a6			| %a6 for the next loop
-pdk_invert_loop:
+.Lpdk_invert_loop:
 	movel	%a5@,%d0
 	movel	%a4@,%a5@+
 	movel	%d0,%a4@+
@@ -427,7 +428,7 @@ pdk_invert_loop:
 	lea	%a4@(-28),%a4
 
 	cmpal	%a4,%a5
-	bcs	pdk_invert_loop
+	bcs	.Lpdk_invert_loop
 
 	/*
 	 * apply the inverse MixColumn transform to all round keys but
@@ -442,7 +443,7 @@ pdk_invert_loop:
 
 	| for (i = 1; i < key->rounds; i++)
 	moveq	#0,%d1
-pdk_apply_loop:
+.Lpdk_apply_loop:
 	| rk[0] =
 	|     Td3[Te1[(rk[0]      ) & 0xff] & 0xff] ^
 	|     Td2[Te1[(rk[0] >>  8) & 0xff] & 0xff] ^
@@ -469,10 +470,10 @@ pdk_apply_loop:
 	movel	%d2,%a5@+		| -> rk[0]
 
 	cmpal	%a6,%a5
-	bcs	pdk_apply_loop
+	bcs	.Lpdk_apply_loop
 
 	moveql	#0,%d0
-pdk_return:
+.Lpdk_return:
 	moveml	%sp@+,%d2-%d7/%a2-%a6
 	rts
 	.size	AES_set_decrypt_key, .-AES_set_decrypt_key
@@ -522,9 +523,9 @@ AES_encrypt:
 	lea	%a1@(256*4),%a2		| %a2 = Te2
 	lea	%a2@(256*4),%a3		| %a3 = Te3
 
-	bra	enc_loop_start
+	bra	.Lenc_loop_start
 
-enc_loop:
+.Lenc_loop:
 	| s1  = Te3[(t0      ) & 0xff];
 	| s2  = Te2[(t0 >>  8) & 0xff];
 	| s3  = Te1[(t0 >> 16) & 0xff];
@@ -621,7 +622,7 @@ enc_loop:
 	movel	%a5@+,%d4
 	eorl	%d4,%d3
 
-enc_loop_start:
+.Lenc_loop_start:
 	| t1  = Te3[(s0      ) & 0xff];
 	| t2  = Te2[(s0 >>  8) & 0xff];
 	| t3  = Te1[(s0 >> 16) & 0xff];
@@ -719,8 +720,8 @@ enc_loop_start:
 	eorl	%d0,%d7
 
 	cmpal	%a5,%a4
-	bne	enc_loop		| if (--r == 0) break;
-enc_last:
+	bne	.Lenc_loop		| if (--r == 0) break;
+.Lenc_last:
 	/*
 	 * apply last round and
 	 * map cipher state to byte array block:
@@ -873,9 +874,9 @@ AES_decrypt:
 	lea	%a1@(256*4),%a2		| %a2 = Td2
 	lea	%a2@(256*4),%a3		| %a3 = Td3
 
-	bra	dec_loop_start
+	bra	.Ldec_loop_start
 
-dec_loop:
+.Ldec_loop:
 	| s3  = Td3[(t0      ) & 0xff];
 	| s2  = Td2[(t0 >>  8) & 0xff];
 	| s1  = Td1[(t0 >> 16) & 0xff];
@@ -972,7 +973,7 @@ dec_loop:
 	movel	%a5@+,%d4
 	eorl	%d4,%d3
 
-dec_loop_start:
+.Ldec_loop_start:
 	| t3  = Td3[(s0      ) & 0xff];
 	| t2  = Td2[(s0 >>  8) & 0xff];
 	| t1  = Td1[(s0 >> 16) & 0xff];
@@ -1070,7 +1071,7 @@ dec_loop_start:
 	eorl	%d0,%d7
 
 	cmpal	%a5,%a4
-	bne	dec_loop		| if (--r == 0) break;
+	bne	.Ldec_loop		| if (--r == 0) break;
 
 	/*
 	 * apply last round and

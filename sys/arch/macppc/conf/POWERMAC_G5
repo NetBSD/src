@@ -145,6 +145,8 @@ iic*		at i2cbus?
 admtemp* 	at iic?
 lmtemp* 	at iic?
 dstemp* 	at iic?
+adadc* 		at iic?
+fcu* 		at iic?
 deq* 		at iic?
 
 pmu* 		at obio?	# Apple PMU

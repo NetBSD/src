@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.h,v 1.55 2017/12/15 21:00:26 maxv Exp $	*/
+/*	$NetBSD: npf.h,v 1.55.2.1 2018/03/15 09:12:06 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -142,6 +142,8 @@ int		nbuf_find_tag(nbuf_t *, uint32_t *);
 #define	NPC_ICMP_ID	0x80	/* ICMP with query ID. */
 
 #define	NPC_ALG_EXEC	0x100	/* ALG execution. */
+
+#define	NPC_FMTERR	0x200	/* Format error. */
 
 #define	NPC_IP46	(NPC_IP4|NPC_IP6)
 

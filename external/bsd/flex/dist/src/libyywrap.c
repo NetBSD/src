@@ -1,4 +1,4 @@
-/*	$NetBSD: libyywrap.c,v 1.2 2016/01/09 17:38:57 christos Exp $	*/
+/*	$NetBSD: libyywrap.c,v 1.2.14.1 2018/03/15 09:11:54 pgoyette Exp $	*/
 
 /* libyywrap - flex run-time support library "yywrap" function */
 
@@ -22,9 +22,11 @@
 /*  IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED */
 /*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR */
 /*  PURPOSE. */
+#ifndef HAVE_NBTOOL_CONFIG_H
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: libyywrap.c,v 1.2 2016/01/09 17:38:57 christos Exp $");
+__RCSID("$NetBSD: libyywrap.c,v 1.2.14.1 2018/03/15 09:11:54 pgoyette Exp $");
+#endif
 #endif
 
 int     yywrap (void);

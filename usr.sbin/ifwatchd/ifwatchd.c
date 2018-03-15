@@ -1,6 +1,6 @@
-/*	$NetBSD: ifwatchd.c,v 1.42 2017/04/11 14:21:35 roy Exp $	*/
+/*	$NetBSD: ifwatchd.c,v 1.42.10.1 2018/03/15 09:12:08 pgoyette Exp $	*/
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ifwatchd.c,v 1.42 2017/04/11 14:21:35 roy Exp $");
+__RCSID("$NetBSD: ifwatchd.c,v 1.42.10.1 2018/03/15 09:12:08 pgoyette Exp $");
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -267,18 +267,8 @@ dispatch(const void *msg, size_t len)
 	case RTM_IFINFO:
 		check_carrier(msg);
 		break;
-	case RTM_ADD:
-	case RTM_DELETE:
-	case RTM_CHANGE:
-	case RTM_LOSING:
-	case RTM_REDIRECT:
-	case RTM_MISS:
-	case RTM_IEEE80211:
-	case RTM_ONEWADDR:
-	case RTM_ODELADDR:
-	case RTM_OCHGADDR:
-		break;
 	default:
+		/* Should be impossible as we filter messages. */
 		if (verbose)
 			printf("unknown message ignored (%d)\n", hd->rtm_type);
 		break;

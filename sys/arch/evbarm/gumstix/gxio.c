@@ -1,4 +1,4 @@
-/*	$NetBSD: gxio.c,v 1.25 2017/01/22 17:19:32 christos Exp $ */
+/*	$NetBSD: gxio.c,v 1.25.12.1 2018/03/15 09:12:02 pgoyette Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gxio.c,v 1.25 2017/01/22 17:19:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gxio.c,v 1.25.12.1 2018/03/15 09:12:02 pgoyette Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_gumstix.h"
@@ -241,11 +241,14 @@ static int gxio_omap_mux_config_address(const char *, unsigned long,
 static void gxio_omap_gpio_config(const struct omap_gpio_conf[]);
 void gxio_omap_gpio_write(int, int);
 
+#if defined(OVERO)
 static const struct omap_mux_conf overo_mux_i2c3_conf[] = {
 	{ 0x1c2, MUXMODE(0) | INPUTENABLE },		/* i2c3_scl */
 	{ 0x1c4, MUXMODE(0) | INPUTENABLE },		/* i2c3_sda */
 	{ -1 }
 };
+#endif
+#if defined(OVERO)
 static const struct omap_mux_conf overo_mux_mmchs2_conf[] = {
 	{ 0x158,					/* mmc2_clk */
 	  MUXMODE(0) | PULLUDENABLE | PULLTYPESELECT | INPUTENABLE },
@@ -261,6 +264,7 @@ static const struct omap_mux_conf overo_mux_mmchs2_conf[] = {
 	  MUXMODE(0) | PULLUDENABLE | PULLTYPESELECT | INPUTENABLE },
 	{ -1 }
 };
+#endif
 #if defined(OVERO) 
 static const struct omap_mux_conf overo_mux_wireless_conf[] = {
 	{ 0x0b4, MUXMODE(4) },				/* gpio_54:BT_nPOWERON*/

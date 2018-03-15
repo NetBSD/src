@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk.c,v 1.46 2017/01/24 11:09:14 nonaka Exp $	*/
+/*	$NetBSD: biosdisk.c,v 1.46.12.1 2018/03/15 09:12:03 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998
@@ -89,27 +89,18 @@
 #include "bootinfo.h"
 #endif
 
-#define BUFSIZE	2048	/* must be large enough for a CD sector */
+#ifndef BIOSDISK_BUFSIZE
+#define BIOSDISK_BUFSIZE	2048	/* must be large enough for a CD sector */
+#endif
 
 #define BIOSDISKNPART 26
 
 struct biosdisk {
 	struct biosdisk_ll ll;
 	daddr_t         boff;
-	char            buf[BUFSIZE];
+	char            buf[BIOSDISK_BUFSIZE];
 #if !defined(NO_DISKLABEL) || !defined(NO_GPT)
-	struct {
-		daddr_t offset;
-		daddr_t size;
-		int     fstype;
-#ifdef EFIBOOT
-		const struct gpt_part {
-			const struct uuid *guid;
-			const char *name;
-		} *guid;
-		uint64_t attr;
-#endif
-	} part[BIOSDISKNPART];
+	struct biosdisk_partition part[BIOSDISKNPART];
 #endif
 };
 
@@ -178,6 +169,10 @@ static struct btinfo_bootwedge bi_wedge;
 
 #define	RF_PROTECTED_SECTORS	64	/* XXX refer to <.../rf_optnames.h> */
 
+#ifndef	devb2cdb
+#define	devb2cdb(bno)	(((bno) * DEV_BSIZE) / ISO_DEFAULT_BLOCK_SIZE)
+#endif
+
 int
 biosdisk_strategy(void *devdata, int flag, daddr_t dblk, size_t size,
 		  void *buf, size_t *rsize)
@@ -191,7 +186,7 @@ biosdisk_strategy(void *devdata, int flag, daddr_t dblk, size_t size,
 	d = (struct biosdisk *) devdata;
 
 	if (d->ll.type == BIOSDISK_TYPE_CD)
-		dblk = dblk * DEV_BSIZE / ISO_DEFAULT_BLOCK_SIZE;
+		dblk = devb2cdb(dblk);
 
 	dblk += d->boff;
 
@@ -517,6 +512,39 @@ read_minix_subp(struct biosdisk *d, struct disklabel* dflt_lbl,
 	return 0;
 }
 
+#if defined(EFIBOOT) && defined(SUPPORT_CD9660)
+static int
+check_cd9660(struct biosdisk *d)
+{
+	struct biosdisk_extinfo ed;
+	struct iso_primary_descriptor *vd;
+	daddr_t bno;
+
+	for (bno = 16;; bno++) {
+		if (readsects(&d->ll, bno, 1, d->buf, 0))
+			return -1;
+		vd = (struct iso_primary_descriptor *)d->buf;
+		if (memcmp(vd->id, ISO_STANDARD_ID, sizeof vd->id) != 0)
+			return -1;
+		if (isonum_711(vd->type) == ISO_VD_END)
+			return -1;
+		if (isonum_711(vd->type) == ISO_VD_PRIMARY)
+			break;
+	}
+	if (isonum_723(vd->logical_block_size) != ISO_DEFAULT_BLOCK_SIZE)
+		return -1;
+
+	if (set_geometry(&d->ll, &ed))
+		return -1;
+
+	memset(d->part, 0, sizeof(d->part));
+	d->part[0].fstype = FS_ISO9660;
+	d->part[0].offset = 0;
+	d->part[0].size = ed.totsec;
+	return 0;
+}
+#endif
+
 static int
 read_label(struct biosdisk *d)
 {
@@ -623,6 +651,13 @@ read_label(struct biosdisk *d)
 	error = check_label(d, sector);
 	if (error >= 0)
 		return error;
+
+#if defined(EFIBOOT) && defined(SUPPORT_CD9660)
+	/* Check CD/DVD */
+	error = check_cd9660(d);
+	if (error >= 0)
+		return error;
+#endif
 
 	/*
 	 * Nothing at start of disk, return info from mbr partitions.
@@ -774,6 +809,7 @@ biosdisk_findpartition(int biosdev, daddr_t sector)
 				case FS_RAID:
 				case FS_CCD:
 				case FS_CGD:
+				case FS_ISO9660:
 					break;
 
 				default:
@@ -795,6 +831,43 @@ biosdisk_findpartition(int biosdev, daddr_t sector)
 
 	dealloc(d, sizeof(*d));
 	return partition;
+#endif /* NO_DISKLABEL && NO_GPT */
+}
+
+int
+biosdisk_readpartition(int biosdev, struct biosdisk_partition **partpp,
+    int *rnum)
+{
+#if defined(NO_DISKLABEL) && defined(NO_GPT)
+	return ENOTSUP;
+#else
+	struct biosdisk *d;
+	struct biosdisk_partition *part;
+	int rv;
+
+	/* Look for netbsd partition that is the dos boot one */
+	d = alloc_biosdisk(biosdev);
+	if (d == NULL)
+		return ENOMEM;
+
+	if (read_partitions(d)) {
+		rv = EINVAL;
+		goto out;
+	}
+
+	part = alloc(sizeof(d->part));
+	if (part == NULL) {
+		rv = ENOMEM;
+		goto out;
+	}
+
+	memcpy(part, d->part, sizeof(d->part));
+	*partpp = part;
+	*rnum = (int)__arraycount(d->part);
+	rv = 0;
+out:
+	dealloc(d, sizeof(*d));
+	return rv;
 #endif /* NO_DISKLABEL && NO_GPT */
 }
 

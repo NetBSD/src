@@ -1,4 +1,4 @@
-#	$NetBSD: files.zaurus,v 1.13 2015/08/11 13:12:25 nonaka Exp $
+#	$NetBSD: files.zaurus,v 1.13.16.1 2018/03/15 09:12:04 pgoyette Exp $
 #
 # Sharp Zaurus specific configuration info
 #

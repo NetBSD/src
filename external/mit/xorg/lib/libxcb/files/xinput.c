@@ -958,6 +958,24 @@ xcb_input_list_input_devices_reply (xcb_connection_t                       *c,
 }
 
 void
+xcb_input_event_type_base_next (xcb_input_event_type_base_iterator_t *i)
+{
+    --i->rem;
+    ++i->data;
+    i->index += sizeof(xcb_input_event_type_base_t);
+}
+
+xcb_generic_iterator_t
+xcb_input_event_type_base_end (xcb_input_event_type_base_iterator_t i)
+{
+    xcb_generic_iterator_t ret;
+    ret.data = i.data + i.rem;
+    ret.index = i.index + ((char *) ret.data - (char *) i.data);
+    ret.rem = 0;
+    return ret;
+}
+
+void
 xcb_input_input_class_info_next (xcb_input_input_class_info_iterator_t *i)
 {
     --i->rem;
@@ -5608,189 +5626,6 @@ xcb_input_query_device_state_reply (xcb_connection_t                       *c,
     return (xcb_input_query_device_state_reply_t *) xcb_wait_for_reply(c, cookie.sequence, e);
 }
 
-int
-xcb_input_send_extension_event_sizeof (const void  *_buffer)
-{
-    char *xcb_tmp = (char *)_buffer;
-    const xcb_input_send_extension_event_request_t *_aux = (xcb_input_send_extension_event_request_t *)_buffer;
-    unsigned int xcb_buffer_len = 0;
-    unsigned int xcb_block_len = 0;
-    unsigned int xcb_pad = 0;
-    unsigned int xcb_align_to = 0;
-
-
-    xcb_block_len += sizeof(xcb_input_send_extension_event_request_t);
-    xcb_tmp += xcb_block_len;
-    xcb_buffer_len += xcb_block_len;
-    xcb_block_len = 0;
-    /* events */
-    xcb_block_len += (_aux->num_events * 32) * sizeof(uint8_t);
-    xcb_tmp += xcb_block_len;
-    xcb_align_to = ALIGNOF(uint8_t);
-    /* insert padding */
-    xcb_pad = -xcb_block_len & (xcb_align_to - 1);
-    xcb_buffer_len += xcb_block_len + xcb_pad;
-    if (0 != xcb_pad) {
-        xcb_tmp += xcb_pad;
-        xcb_pad = 0;
-    }
-    xcb_block_len = 0;
-    /* classes */
-    xcb_block_len += _aux->num_classes * sizeof(xcb_input_event_class_t);
-    xcb_tmp += xcb_block_len;
-    xcb_align_to = ALIGNOF(xcb_input_event_class_t);
-    /* insert padding */
-    xcb_pad = -xcb_block_len & (xcb_align_to - 1);
-    xcb_buffer_len += xcb_block_len + xcb_pad;
-    if (0 != xcb_pad) {
-        xcb_tmp += xcb_pad;
-        xcb_pad = 0;
-    }
-    xcb_block_len = 0;
-
-    return xcb_buffer_len;
-}
-
-xcb_void_cookie_t
-xcb_input_send_extension_event_checked (xcb_connection_t              *c,
-                                        xcb_window_t                   destination,
-                                        uint8_t                        device_id,
-                                        uint8_t                        propagate,
-                                        uint16_t                       num_classes,
-                                        uint8_t                        num_events,
-                                        const uint8_t                 *events,
-                                        const xcb_input_event_class_t *classes)
-{
-    static const xcb_protocol_request_t xcb_req = {
-        .count = 6,
-        .ext = &xcb_input_id,
-        .opcode = XCB_INPUT_SEND_EXTENSION_EVENT,
-        .isvoid = 1
-    };
-
-    struct iovec xcb_parts[8];
-    xcb_void_cookie_t xcb_ret;
-    xcb_input_send_extension_event_request_t xcb_out;
-
-    xcb_out.destination = destination;
-    xcb_out.device_id = device_id;
-    xcb_out.propagate = propagate;
-    xcb_out.num_classes = num_classes;
-    xcb_out.num_events = num_events;
-    memset(xcb_out.pad0, 0, 3);
-
-    xcb_parts[2].iov_base = (char *) &xcb_out;
-    xcb_parts[2].iov_len = sizeof(xcb_out);
-    xcb_parts[3].iov_base = 0;
-    xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
-    /* uint8_t events */
-    xcb_parts[4].iov_base = (char *) events;
-    xcb_parts[4].iov_len = (num_events * 32) * sizeof(uint8_t);
-    xcb_parts[5].iov_base = 0;
-    xcb_parts[5].iov_len = -xcb_parts[4].iov_len & 3;
-    /* xcb_input_event_class_t classes */
-    xcb_parts[6].iov_base = (char *) classes;
-    xcb_parts[6].iov_len = num_classes * sizeof(xcb_input_event_class_t);
-    xcb_parts[7].iov_base = 0;
-    xcb_parts[7].iov_len = -xcb_parts[6].iov_len & 3;
-
-    xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req);
-    return xcb_ret;
-}
-
-xcb_void_cookie_t
-xcb_input_send_extension_event (xcb_connection_t              *c,
-                                xcb_window_t                   destination,
-                                uint8_t                        device_id,
-                                uint8_t                        propagate,
-                                uint16_t                       num_classes,
-                                uint8_t                        num_events,
-                                const uint8_t                 *events,
-                                const xcb_input_event_class_t *classes)
-{
-    static const xcb_protocol_request_t xcb_req = {
-        .count = 6,
-        .ext = &xcb_input_id,
-        .opcode = XCB_INPUT_SEND_EXTENSION_EVENT,
-        .isvoid = 1
-    };
-
-    struct iovec xcb_parts[8];
-    xcb_void_cookie_t xcb_ret;
-    xcb_input_send_extension_event_request_t xcb_out;
-
-    xcb_out.destination = destination;
-    xcb_out.device_id = device_id;
-    xcb_out.propagate = propagate;
-    xcb_out.num_classes = num_classes;
-    xcb_out.num_events = num_events;
-    memset(xcb_out.pad0, 0, 3);
-
-    xcb_parts[2].iov_base = (char *) &xcb_out;
-    xcb_parts[2].iov_len = sizeof(xcb_out);
-    xcb_parts[3].iov_base = 0;
-    xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
-    /* uint8_t events */
-    xcb_parts[4].iov_base = (char *) events;
-    xcb_parts[4].iov_len = (num_events * 32) * sizeof(uint8_t);
-    xcb_parts[5].iov_base = 0;
-    xcb_parts[5].iov_len = -xcb_parts[4].iov_len & 3;
-    /* xcb_input_event_class_t classes */
-    xcb_parts[6].iov_base = (char *) classes;
-    xcb_parts[6].iov_len = num_classes * sizeof(xcb_input_event_class_t);
-    xcb_parts[7].iov_base = 0;
-    xcb_parts[7].iov_len = -xcb_parts[6].iov_len & 3;
-
-    xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
-    return xcb_ret;
-}
-
-uint8_t *
-xcb_input_send_extension_event_events (const xcb_input_send_extension_event_request_t *R)
-{
-    return (uint8_t *) (R + 1);
-}
-
-int
-xcb_input_send_extension_event_events_length (const xcb_input_send_extension_event_request_t *R)
-{
-    return (R->num_events * 32);
-}
-
-xcb_generic_iterator_t
-xcb_input_send_extension_event_events_end (const xcb_input_send_extension_event_request_t *R)
-{
-    xcb_generic_iterator_t i;
-    i.data = ((uint8_t *) (R + 1)) + ((R->num_events * 32));
-    i.rem = 0;
-    i.index = (char *) i.data - (char *) R;
-    return i;
-}
-
-xcb_input_event_class_t *
-xcb_input_send_extension_event_classes (const xcb_input_send_extension_event_request_t *R)
-{
-    xcb_generic_iterator_t prev = xcb_input_send_extension_event_events_end(R);
-    return (xcb_input_event_class_t *) ((char *) prev.data + XCB_TYPE_PAD(xcb_input_event_class_t, prev.index) + 0);
-}
-
-int
-xcb_input_send_extension_event_classes_length (const xcb_input_send_extension_event_request_t *R)
-{
-    return R->num_classes;
-}
-
-xcb_generic_iterator_t
-xcb_input_send_extension_event_classes_end (const xcb_input_send_extension_event_request_t *R)
-{
-    xcb_generic_iterator_t i;
-    xcb_generic_iterator_t prev = xcb_input_send_extension_event_events_end(R);
-    i.data = ((xcb_input_event_class_t *) ((char*) prev.data + XCB_TYPE_PAD(xcb_input_event_class_t, prev.index))) + (R->num_classes);
-    i.rem = 0;
-    i.index = (char *) i.data - (char *) R;
-    return i;
-}
-
 xcb_void_cookie_t
 xcb_input_device_bell_checked (xcb_connection_t *c,
                                uint8_t           device_id,
@@ -9516,9 +9351,9 @@ xcb_input_xi_change_hierarchy_checked (xcb_connection_t                   *c,
     struct iovec xcb_parts[6];
     xcb_void_cookie_t xcb_ret;
     xcb_input_xi_change_hierarchy_request_t xcb_out;
-    unsigned int i;
     unsigned int xcb_tmp_len;
     char *xcb_tmp;
+    unsigned int i;
 
     xcb_out.num_changes = num_changes;
     memset(xcb_out.pad0, 0, 3);
@@ -9558,9 +9393,9 @@ xcb_input_xi_change_hierarchy (xcb_connection_t                   *c,
     struct iovec xcb_parts[6];
     xcb_void_cookie_t xcb_ret;
     xcb_input_xi_change_hierarchy_request_t xcb_out;
-    unsigned int i;
     unsigned int xcb_tmp_len;
     char *xcb_tmp;
+    unsigned int i;
 
     xcb_out.num_changes = num_changes;
     memset(xcb_out.pad0, 0, 3);
@@ -9847,9 +9682,9 @@ xcb_input_xi_select_events_checked (xcb_connection_t             *c,
     struct iovec xcb_parts[6];
     xcb_void_cookie_t xcb_ret;
     xcb_input_xi_select_events_request_t xcb_out;
-    unsigned int i;
     unsigned int xcb_tmp_len;
     char *xcb_tmp;
+    unsigned int i;
 
     xcb_out.window = window;
     xcb_out.num_mask = num_mask;
@@ -9891,9 +9726,9 @@ xcb_input_xi_select_events (xcb_connection_t             *c,
     struct iovec xcb_parts[6];
     xcb_void_cookie_t xcb_ret;
     xcb_input_xi_select_events_request_t xcb_out;
-    unsigned int i;
     unsigned int xcb_tmp_len;
     char *xcb_tmp;
+    unsigned int i;
 
     xcb_out.window = window;
     xcb_out.num_mask = num_mask;
@@ -14453,5 +14288,206 @@ int
 xcb_input_raw_touch_end_sizeof (const void  *_buffer  /**< */)
 {
     return xcb_input_raw_touch_begin_sizeof(_buffer);
+}
+
+void
+xcb_input_event_for_send_next (xcb_input_event_for_send_iterator_t *i)
+{
+    --i->rem;
+    ++i->data;
+    i->index += sizeof(xcb_input_event_for_send_t);
+}
+
+xcb_generic_iterator_t
+xcb_input_event_for_send_end (xcb_input_event_for_send_iterator_t i)
+{
+    xcb_generic_iterator_t ret;
+    ret.data = i.data + i.rem;
+    ret.index = i.index + ((char *) ret.data - (char *) i.data);
+    ret.rem = 0;
+    return ret;
+}
+
+int
+xcb_input_send_extension_event_sizeof (const void  *_buffer)
+{
+    char *xcb_tmp = (char *)_buffer;
+    const xcb_input_send_extension_event_request_t *_aux = (xcb_input_send_extension_event_request_t *)_buffer;
+    unsigned int xcb_buffer_len = 0;
+    unsigned int xcb_block_len = 0;
+    unsigned int xcb_pad = 0;
+    unsigned int xcb_align_to = 0;
+
+
+    xcb_block_len += sizeof(xcb_input_send_extension_event_request_t);
+    xcb_tmp += xcb_block_len;
+    xcb_buffer_len += xcb_block_len;
+    xcb_block_len = 0;
+    /* events */
+    xcb_block_len += _aux->num_events * sizeof(xcb_input_event_for_send_t);
+    xcb_tmp += xcb_block_len;
+    xcb_align_to = ALIGNOF(xcb_input_event_for_send_t);
+    /* insert padding */
+    xcb_pad = -xcb_block_len & (xcb_align_to - 1);
+    xcb_buffer_len += xcb_block_len + xcb_pad;
+    if (0 != xcb_pad) {
+        xcb_tmp += xcb_pad;
+        xcb_pad = 0;
+    }
+    xcb_block_len = 0;
+    /* classes */
+    xcb_block_len += _aux->num_classes * sizeof(xcb_input_event_class_t);
+    xcb_tmp += xcb_block_len;
+    xcb_align_to = ALIGNOF(xcb_input_event_class_t);
+    /* insert padding */
+    xcb_pad = -xcb_block_len & (xcb_align_to - 1);
+    xcb_buffer_len += xcb_block_len + xcb_pad;
+    if (0 != xcb_pad) {
+        xcb_tmp += xcb_pad;
+        xcb_pad = 0;
+    }
+    xcb_block_len = 0;
+
+    return xcb_buffer_len;
+}
+
+xcb_void_cookie_t
+xcb_input_send_extension_event_checked (xcb_connection_t                 *c,
+                                        xcb_window_t                      destination,
+                                        uint8_t                           device_id,
+                                        uint8_t                           propagate,
+                                        uint16_t                          num_classes,
+                                        uint8_t                           num_events,
+                                        const xcb_input_event_for_send_t *events,
+                                        const xcb_input_event_class_t    *classes)
+{
+    static const xcb_protocol_request_t xcb_req = {
+        .count = 6,
+        .ext = &xcb_input_id,
+        .opcode = XCB_INPUT_SEND_EXTENSION_EVENT,
+        .isvoid = 1
+    };
+
+    struct iovec xcb_parts[8];
+    xcb_void_cookie_t xcb_ret;
+    xcb_input_send_extension_event_request_t xcb_out;
+
+    xcb_out.destination = destination;
+    xcb_out.device_id = device_id;
+    xcb_out.propagate = propagate;
+    xcb_out.num_classes = num_classes;
+    xcb_out.num_events = num_events;
+    memset(xcb_out.pad0, 0, 3);
+
+    xcb_parts[2].iov_base = (char *) &xcb_out;
+    xcb_parts[2].iov_len = sizeof(xcb_out);
+    xcb_parts[3].iov_base = 0;
+    xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
+    /* xcb_input_event_for_send_t events */
+    xcb_parts[4].iov_base = (char *) events;
+    xcb_parts[4].iov_len = num_events * sizeof(xcb_input_event_for_send_t);
+    xcb_parts[5].iov_base = 0;
+    xcb_parts[5].iov_len = -xcb_parts[4].iov_len & 3;
+    /* xcb_input_event_class_t classes */
+    xcb_parts[6].iov_base = (char *) classes;
+    xcb_parts[6].iov_len = num_classes * sizeof(xcb_input_event_class_t);
+    xcb_parts[7].iov_base = 0;
+    xcb_parts[7].iov_len = -xcb_parts[6].iov_len & 3;
+
+    xcb_ret.sequence = xcb_send_request(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req);
+    return xcb_ret;
+}
+
+xcb_void_cookie_t
+xcb_input_send_extension_event (xcb_connection_t                 *c,
+                                xcb_window_t                      destination,
+                                uint8_t                           device_id,
+                                uint8_t                           propagate,
+                                uint16_t                          num_classes,
+                                uint8_t                           num_events,
+                                const xcb_input_event_for_send_t *events,
+                                const xcb_input_event_class_t    *classes)
+{
+    static const xcb_protocol_request_t xcb_req = {
+        .count = 6,
+        .ext = &xcb_input_id,
+        .opcode = XCB_INPUT_SEND_EXTENSION_EVENT,
+        .isvoid = 1
+    };
+
+    struct iovec xcb_parts[8];
+    xcb_void_cookie_t xcb_ret;
+    xcb_input_send_extension_event_request_t xcb_out;
+
+    xcb_out.destination = destination;
+    xcb_out.device_id = device_id;
+    xcb_out.propagate = propagate;
+    xcb_out.num_classes = num_classes;
+    xcb_out.num_events = num_events;
+    memset(xcb_out.pad0, 0, 3);
+
+    xcb_parts[2].iov_base = (char *) &xcb_out;
+    xcb_parts[2].iov_len = sizeof(xcb_out);
+    xcb_parts[3].iov_base = 0;
+    xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
+    /* xcb_input_event_for_send_t events */
+    xcb_parts[4].iov_base = (char *) events;
+    xcb_parts[4].iov_len = num_events * sizeof(xcb_input_event_for_send_t);
+    xcb_parts[5].iov_base = 0;
+    xcb_parts[5].iov_len = -xcb_parts[4].iov_len & 3;
+    /* xcb_input_event_class_t classes */
+    xcb_parts[6].iov_base = (char *) classes;
+    xcb_parts[6].iov_len = num_classes * sizeof(xcb_input_event_class_t);
+    xcb_parts[7].iov_base = 0;
+    xcb_parts[7].iov_len = -xcb_parts[6].iov_len & 3;
+
+    xcb_ret.sequence = xcb_send_request(c, 0, xcb_parts + 2, &xcb_req);
+    return xcb_ret;
+}
+
+xcb_input_event_for_send_t *
+xcb_input_send_extension_event_events (const xcb_input_send_extension_event_request_t *R)
+{
+    return (xcb_input_event_for_send_t *) (R + 1);
+}
+
+int
+xcb_input_send_extension_event_events_length (const xcb_input_send_extension_event_request_t *R)
+{
+    return R->num_events;
+}
+
+xcb_input_event_for_send_iterator_t
+xcb_input_send_extension_event_events_iterator (const xcb_input_send_extension_event_request_t *R)
+{
+    xcb_input_event_for_send_iterator_t i;
+    i.data = (xcb_input_event_for_send_t *) (R + 1);
+    i.rem = R->num_events;
+    i.index = (char *) i.data - (char *) R;
+    return i;
+}
+
+xcb_input_event_class_t *
+xcb_input_send_extension_event_classes (const xcb_input_send_extension_event_request_t *R)
+{
+    xcb_generic_iterator_t prev = xcb_input_event_for_send_end(xcb_input_send_extension_event_events_iterator(R));
+    return (xcb_input_event_class_t *) ((char *) prev.data + XCB_TYPE_PAD(xcb_input_event_class_t, prev.index) + 0);
+}
+
+int
+xcb_input_send_extension_event_classes_length (const xcb_input_send_extension_event_request_t *R)
+{
+    return R->num_classes;
+}
+
+xcb_generic_iterator_t
+xcb_input_send_extension_event_classes_end (const xcb_input_send_extension_event_request_t *R)
+{
+    xcb_generic_iterator_t i;
+    xcb_generic_iterator_t prev = xcb_input_event_for_send_end(xcb_input_send_extension_event_events_iterator(R));
+    i.data = ((xcb_input_event_class_t *) ((char*) prev.data + XCB_TYPE_PAD(xcb_input_event_class_t, prev.index))) + (R->num_classes);
+    i.rem = 0;
+    i.index = (char *) i.data - (char *) R;
+    return i;
 }
 

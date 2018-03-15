@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.32 2018/03/02 10:19:20 knakahara Exp $ */
+/* $NetBSD: ixgbe.h,v 1.32.2.1 2018/03/15 09:12:05 pgoyette Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -114,7 +114,6 @@
 #include "ixgbe_netbsd.h"
 #include "ixgbe_api.h"
 #include "ixgbe_common.h"
-#include "ixgbe_phy.h"
 #include "ixgbe_vf.h"
 #include "ixgbe_features.h"
 
@@ -256,7 +255,6 @@
                                 IXGBE_EITR_ITR_INT_MASK)
 
 
-
 /************************************************************************
  * vendor_info_array
  *
@@ -332,15 +330,17 @@ struct ix_queue {
 	int              busy;
 	struct tx_ring   *txr;
 	struct rx_ring   *rxr;
+	struct work      wq_cookie;
 	void             *que_si;
-	struct evcnt     irqs;
+	/* Per queue event conters */
+	struct evcnt     irqs;		/* Hardware interrupt */
+	struct evcnt     handleq;	/* software_interrupt */
+	struct evcnt     req;		/* deferred */
 	char             namebuf[32];
 	char             evnamebuf[32];
 
 	kmutex_t         im_mtx;	/* lock for im_nest and this queue's EIMS/EIMC bit */
 	int              im_nest;
-
-	struct work      wq_cookie;
 };
 
 /*
@@ -363,6 +363,7 @@ struct tx_ring {
 	ixgbe_dma_tag_t		*txtag;
 	char			mtx_name[16];
 	pcq_t			*txr_interq;
+	struct work		wq_cookie;
 	void			*txr_si;
 
 	/* Flow Director */
@@ -376,8 +377,15 @@ struct tx_ring {
 	struct evcnt		no_desc_avail;
 	struct evcnt		total_packets;
 	struct evcnt		pcq_drops;
-
-	struct work		wq_cookie;
+	/* Per queue conters.  The adapter total is in struct adapter */
+	u64              q_efbig_tx_dma_setup;
+	u64              q_mbuf_defrag_failed;
+	u64              q_efbig2_tx_dma_setup;
+	u64              q_einval_tx_dma_setup;
+	u64              q_other_tx_dma_setup;
+	u64              q_eagain_tx_dma_setup;
+	u64              q_enomem_tx_dma_setup;
+	u64              q_tso_err;
 };
 
 
@@ -558,8 +566,8 @@ struct adapter {
 	void 			(*stop_locked)(void *);
 
 	/* Misc stats maintained by the driver */
-	struct evcnt   		mbuf_defrag_failed;
 	struct evcnt	   	efbig_tx_dma_setup;
+	struct evcnt   		mbuf_defrag_failed;
 	struct evcnt	   	efbig2_tx_dma_setup;
 	struct evcnt	   	einval_tx_dma_setup;
 	struct evcnt	   	other_tx_dma_setup;
@@ -568,8 +576,6 @@ struct adapter {
 	struct evcnt	   	tso_err;
 	struct evcnt	   	watchdog_events;
 	struct evcnt		link_irq;
-	struct evcnt		handleq;
-	struct evcnt		req;
 
 	union {
 		struct ixgbe_hw_stats pf;
@@ -596,7 +602,6 @@ struct adapter {
 	const struct sysctlnode *sysctltop;
 	ixgbe_extmem_head_t jcl_head;
 };
-
 
 /* Precision Time Sync (IEEE 1588) defines */
 #define ETHERTYPE_IEEE1588      0x88F7
@@ -673,10 +678,10 @@ static __inline int
 drbr_needs_enqueue(struct ifnet *ifp, struct buf_ring *br)
 {
 #ifdef ALTQ
-        if (ALTQ_IS_ENABLED(&ifp->if_snd))
-                return (1);
+	if (ALTQ_IS_ENABLED(&ifp->if_snd))
+		return (1);
 #endif
-        return (!buf_ring_empty(br));
+	return (!buf_ring_empty(br));
 }
 #endif
 
@@ -744,7 +749,6 @@ bool ixgbe_rxeof(struct ix_queue *);
 const struct sysctlnode *ixgbe_sysctl_instance(struct adapter *);
 
 #include "ixgbe_bypass.h"
-#include "ixgbe_sriov.h"
 #include "ixgbe_fdir.h"
 #include "ixgbe_rss.h"
 #include "ixgbe_netmap.h"

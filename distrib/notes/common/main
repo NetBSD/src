@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.543 2018/03/05 00:06:24 eadler Exp $
+.\"	$NetBSD: main,v 1.543.2.1 2018/03/15 09:11:53 pgoyette Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1186,6 +1186,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Emile Heitor Ta Mt imil@NetBSD.org
 .It Ta John Heasley Ta Mt heas@NetBSD.org
 .It Ta Lars Heidieker Ta Mt para@NetBSD.org
+.It Ta Tom Ivar Helbekkmo Ta Mt tih@NetBSD.org
 .It Ta Geert Hendrickx Ta Mt ghen@NetBSD.org
 .It Ta Wen Heping Ta Mt wen@NetBSD.org
 .It Ta Ren\('e Hexel Ta Mt rh@NetBSD.org

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.268 2018/03/01 14:40:57 roy Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.268.2.1 2018/03/15 09:12:06 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.268 2018/03/01 14:40:57 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.268.2.1 2018/03/15 09:12:06 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -315,35 +315,20 @@ arptimer(void *arg)
 	struct llentry *lle = arg;
 	struct ifnet *ifp;
 
-	if (lle == NULL)
-		return;
-
-	if (lle->la_flags & LLE_STATIC)
-		return;
+	KASSERT((lle->la_flags & LLE_STATIC) == 0);
 
 	LLE_WLOCK(lle);
-	if (callout_pending(&lle->la_timer)) {
-		/*
-		 * Here we are a bit odd in the treatment of
-		 * active/pending. If the pending bit is set, it got
-		 * rescheduled before I ran. The active
-		 * bit we ignore, since if it was stopped
-		 * in ll_tablefree() and was currently running
-		 * it would have return 0 so the code would
-		 * not have deleted it since the callout could
-		 * not be stopped so we want to go through
-		 * with the delete here now. If the callout
-		 * was restarted, the pending bit will be back on and
-		 * we just want to bail since the callout_reset would
-		 * return 1 and our reference would have been removed
-		 * by arpresolve() below.
-		 */
-		LLE_WUNLOCK(lle);
+
+	/*
+	 * This shortcut is required to avoid trying to touch ifp that may be
+	 * being destroyed.
+	 */
+	if ((lle->la_flags & LLE_LINKED) == 0) {
+		LLE_FREE_LOCKED(lle);
 		return;
 	}
-	ifp = lle->lle_tbl->llt_ifp;
 
-	callout_stop(&lle->la_timer);
+	ifp = lle->lle_tbl->llt_ifp;
 
 	/* XXX: LOR avoidance. We still have ref on lle. */
 	LLE_WUNLOCK(lle);
@@ -371,6 +356,21 @@ arp_settimer(struct llentry *la, int sec)
 {
 
 	LLE_WLOCK_ASSERT(la);
+	KASSERT((la->la_flags & LLE_STATIC) == 0);
+
+	/*
+	 * We have to take care of a reference leak which occurs if
+	 * callout_reset overwrites a pending callout schedule.  Unfortunately
+	 * we don't have a mean to know the overwrite, so we need to know it
+	 * using callout_stop.  We need to call callout_pending first to exclude
+	 * the case that the callout has never been scheduled.
+	 */
+	if (callout_pending(&la->la_timer)) {
+		bool expired = callout_stop(&la->la_timer);
+		if (!expired)
+			/* A pending callout schedule is canceled. */
+			LLE_REMREF(la);
+	}
 	LLE_ADDREF(la);
 	callout_reset(&la->la_timer, hz * sec, arptimer, la);
 }
@@ -1526,14 +1526,24 @@ arp_dad_starttimer(struct dadq *dp, int ticks)
 }
 
 static void
+arp_dad_stoptimer(struct dadq *dp)
+{
+
+	KASSERT(mutex_owned(&arp_dad_lock));
+
+	TAILQ_REMOVE(&dadq, dp, dad_list);
+	/* Tell the timer that dp is being destroyed. */
+	dp->dad_ifa = NULL;
+	callout_halt(&dp->dad_timer_ch, &arp_dad_lock);
+}
+
+static void
 arp_dad_destroytimer(struct dadq *dp)
 {
 
-	TAILQ_REMOVE(&dadq, dp, dad_list);
-	/* Request the timer to destroy dp. */
-	dp->dad_ifa = NULL;
-	callout_reset(&dp->dad_timer_ch, 0,
-	    (void (*)(void *))arp_dad_timer, dp);
+	callout_destroy(&dp->dad_timer_ch);
+	KASSERT(dp->dad_ifa == NULL);
+	kmem_intr_free(dp, sizeof(*dp));
 }
 
 static void
@@ -1652,11 +1662,11 @@ arp_dad_stop(struct ifaddr *ifa)
 		return;
 	}
 
-	/* Prevent the timer from running anymore. */
-	arp_dad_destroytimer(dp);
+	arp_dad_stoptimer(dp);
 
 	mutex_exit(&arp_dad_lock);
 
+	arp_dad_destroytimer(dp);
 	ifafree(ifa);
 }
 
@@ -1668,15 +1678,12 @@ arp_dad_timer(struct dadq *dp)
 	char ipbuf[INET_ADDRSTRLEN];
 	bool need_free = false;
 
-	SOFTNET_KERNEL_LOCK_UNLESS_NET_MPSAFE();
+	KERNEL_LOCK_UNLESS_NET_MPSAFE();
 	mutex_enter(&arp_dad_lock);
 
 	ifa = dp->dad_ifa;
 	if (ifa == NULL) {
-		/*
-		 * ifa is being deleted and the callout is already scheduled
-		 * again, so we cannot destroy dp in this run.
-		 */
+		/* dp is being destroyed by someone.  Do nothing. */
 		goto done;
 	}
 
@@ -1700,7 +1707,7 @@ arp_dad_timer(struct dadq *dp)
 		ARPLOG(LOG_INFO, "%s: could not run DAD, driver problem?\n",
 		    if_name(ifa->ifa_ifp));
 
-		TAILQ_REMOVE(&dadq, dp, dad_list);
+		arp_dad_stoptimer(dp);
 		need_free = true;
 		goto done;
 	}
@@ -1749,19 +1756,18 @@ announce:
 		    if_name(ifa->ifa_ifp), ARPLOGADDR(&ia->ia_addr.sin_addr));
 	}
 
-	TAILQ_REMOVE(&dadq, dp, dad_list);
+	arp_dad_stoptimer(dp);
 	need_free = true;
 done:
 	mutex_exit(&arp_dad_lock);
 
 	if (need_free) {
-		callout_destroy(&dp->dad_timer_ch);
-		kmem_intr_free(dp, sizeof(*dp));
-		if (ifa != NULL)
-			ifafree(ifa);
+		arp_dad_destroytimer(dp);
+		KASSERT(ifa != NULL);
+		ifafree(ifa);
 	}
 
-	SOFTNET_KERNEL_UNLOCK_UNLESS_NET_MPSAFE();
+	KERNEL_UNLOCK_UNLESS_NET_MPSAFE();
 }
 
 static void

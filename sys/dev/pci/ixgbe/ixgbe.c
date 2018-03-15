@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.128 2018/03/02 10:19:20 knakahara Exp $ */
+/* $NetBSD: ixgbe.c,v 1.128.2.1 2018/03/15 09:12:05 pgoyette Exp $ */
 
 /******************************************************************************
 
@@ -70,6 +70,7 @@
 #endif
 
 #include "ixgbe.h"
+#include "ixgbe_sriov.h"
 #include "vlan.h"
 
 #include <sys/cprng.h>
@@ -1686,10 +1687,6 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 	const char *xname = device_xname(dev);
 
 	/* Driver Statistics */
-	evcnt_attach_dynamic(&adapter->handleq, EVCNT_TYPE_MISC,
-	    NULL, xname, "Handled queue in softint");
-	evcnt_attach_dynamic(&adapter->req, EVCNT_TYPE_MISC,
-	    NULL, xname, "Requeued in softint");
 	evcnt_attach_dynamic(&adapter->efbig_tx_dma_setup, EVCNT_TYPE_MISC,
 	    NULL, xname, "Driver tx dma soft fail EFBIG");
 	evcnt_attach_dynamic(&adapter->mbuf_defrag_failed, EVCNT_TYPE_MISC,
@@ -1712,6 +1709,10 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 	    NULL, xname, "Link MSI-X IRQ Handled");
 
 	for (int i = 0; i < adapter->num_queues; i++, rxr++, txr++) {
+#ifdef LRO
+		struct lro_ctrl *lro = &rxr->lro;
+#endif /* LRO */
+
 		snprintf(adapter->queues[i].evnamebuf,
 		    sizeof(adapter->queues[i].evnamebuf), "%s q%d",
 		    xname, i);
@@ -1736,15 +1737,6 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 		    (void *)&adapter->queues[i], 0, CTL_CREATE, CTL_EOL) != 0)
 			break;
 
-#if 0 /* XXX msaitoh */
-		if (sysctl_createv(log, 0, &rnode, &cnode,
-		    CTLFLAG_READONLY, CTLTYPE_QUAD,
-		    "irqs", SYSCTL_DESCR("irqs on this queue"),
-			NULL, 0, &(adapter->queues[i].irqs),
-		    0, CTL_CREATE, CTL_EOL) != 0)
-			break;
-#endif
-
 		if (sysctl_createv(log, 0, &rnode, &cnode,
 		    CTLFLAG_READONLY, CTLTYPE_INT,
 		    "txd_head", SYSCTL_DESCR("Transmit Descriptor Head"),
@@ -1761,6 +1753,11 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 
 		evcnt_attach_dynamic(&adapter->queues[i].irqs, EVCNT_TYPE_INTR,
 		    NULL, adapter->queues[i].evnamebuf, "IRQs on queue");
+		evcnt_attach_dynamic(&adapter->queues[i].handleq,
+		    EVCNT_TYPE_MISC, NULL, adapter->queues[i].evnamebuf,
+		    "Handled queue in softint");
+		evcnt_attach_dynamic(&adapter->queues[i].req, EVCNT_TYPE_MISC,
+		    NULL, adapter->queues[i].evnamebuf, "Requeued in softint");
 		evcnt_attach_dynamic(&txr->tso_tx, EVCNT_TYPE_MISC,
 		    NULL, adapter->queues[i].evnamebuf, "TSO");
 		evcnt_attach_dynamic(&txr->no_desc_avail, EVCNT_TYPE_MISC,
@@ -1774,10 +1771,6 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 		    NULL, adapter->queues[i].evnamebuf,
 		    "Packets dropped in pcq");
 #endif
-
-#ifdef LRO
-		struct lro_ctrl *lro = &rxr->lro;
-#endif /* LRO */
 
 		if (sysctl_createv(log, 0, &rnode, &cnode,
 		    CTLFLAG_READONLY,
@@ -1981,8 +1974,6 @@ ixgbe_clear_evcnt(struct adapter *adapter)
 	struct ixgbe_hw *hw = &adapter->hw;
 	struct ixgbe_hw_stats *stats = &adapter->stats.pf;
 
-	adapter->handleq.ev_count = 0;
-	adapter->req.ev_count = 0;
 	adapter->efbig_tx_dma_setup.ev_count = 0;
 	adapter->mbuf_defrag_failed.ev_count = 0;
 	adapter->efbig2_tx_dma_setup.ev_count = 0;
@@ -1990,19 +1981,29 @@ ixgbe_clear_evcnt(struct adapter *adapter)
 	adapter->other_tx_dma_setup.ev_count = 0;
 	adapter->eagain_tx_dma_setup.ev_count = 0;
 	adapter->enomem_tx_dma_setup.ev_count = 0;
-	adapter->watchdog_events.ev_count = 0;
 	adapter->tso_err.ev_count = 0;
+	adapter->watchdog_events.ev_count = 0;
 	adapter->link_irq.ev_count = 0;
 
 	txr = adapter->tx_rings;
 	for (int i = 0; i < adapter->num_queues; i++, rxr++, txr++) {
 		adapter->queues[i].irqs.ev_count = 0;
+		adapter->queues[i].handleq.ev_count = 0;
+		adapter->queues[i].req.ev_count = 0;
 		txr->no_desc_avail.ev_count = 0;
 		txr->total_packets.ev_count = 0;
 		txr->tso_tx.ev_count = 0;
 #ifndef IXGBE_LEGACY_TX
 		txr->pcq_drops.ev_count = 0;
 #endif
+		txr->q_efbig_tx_dma_setup = 0;
+		txr->q_mbuf_defrag_failed = 0;
+		txr->q_efbig2_tx_dma_setup = 0;
+		txr->q_einval_tx_dma_setup = 0;
+		txr->q_other_tx_dma_setup = 0;
+		txr->q_eagain_tx_dma_setup = 0;
+		txr->q_enomem_tx_dma_setup = 0;
+		txr->q_tso_err = 0;
 
 		if (i < __arraycount(stats->mpc)) {
 			stats->mpc[i].ev_count = 0;
@@ -2447,6 +2448,36 @@ out:
 } /* ixgbe_disable_queue */
 
 /************************************************************************
+ * ixgbe_sched_handle_que - schedule deferred packet processing
+ ************************************************************************/
+static inline void
+ixgbe_sched_handle_que(struct adapter *adapter, struct ix_queue *que)
+{
+
+	if (adapter->txrx_use_workqueue) {
+		/*
+		 * adapter->que_wq is bound to each CPU instead of
+		 * each NIC queue to reduce workqueue kthread. As we
+		 * should consider about interrupt affinity in this
+		 * function, the workqueue kthread must be WQ_PERCPU.
+		 * If create WQ_PERCPU workqueue kthread for each NIC
+		 * queue, that number of created workqueue kthread is
+		 * (number of used NIC queue) * (number of CPUs) =
+		 * (number of CPUs) ^ 2 most often.
+		 *
+		 * The same NIC queue's interrupts are avoided by
+		 * masking the queue's interrupt. And different
+		 * NIC queue's interrupts use different struct work
+		 * (que->wq_cookie). So, "enqueued flag" to avoid
+		 * twice workqueue_enqueue() is not required .
+		 */
+		workqueue_enqueue(adapter->que_wq, &que->wq_cookie, curcpu());
+	} else {
+		softint_schedule(que->que_si);
+	}
+}
+
+/************************************************************************
  * ixgbe_msix_que - MSI-X Queue Interrupt Service routine
  ************************************************************************/
 static int
@@ -2534,30 +2565,9 @@ ixgbe_msix_que(void *arg)
 	rxr->packets = 0;
 
 no_calc:
-	if (more) {
-		if (adapter->txrx_use_workqueue) {
-			/*
-			 * adapter->que_wq is bound to each CPU instead of
-			 * each NIC queue to reduce workqueue kthread. As we
-			 * should consider about interrupt affinity in this
-			 * function, the workqueue kthread must be WQ_PERCPU.
-			 * If create WQ_PERCPU workqueue kthread for each NIC
-			 * queue, that number of created workqueue kthread is
-			 * (number of used NIC queue) * (number of CPUs) =
-			 * (number of CPUs) ^ 2 most often.
-			 *
-			 * The same NIC queue's interrupts are avoided by
-			 * masking the queue's interrupt. And different
-			 * NIC queue's interrupts use different struct work
-			 * (que->wq_cookie). So, "enqueued flag" to avoid
-			 * twice workqueue_enqueue() is not required .
-			 */
-			workqueue_enqueue(adapter->que_wq, &que->wq_cookie,
-			    curcpu());
-		} else {
-			softint_schedule(que->que_si);
-		}
-	} else
+	if (more)
+		ixgbe_sched_handle_que(adapter, que);
+	else
 		ixgbe_enable_queue(adapter, que->msix);
 
 	return 1;
@@ -3376,8 +3386,6 @@ ixgbe_detach(device_t dev, int flags)
 	if_percpuq_destroy(adapter->ipq);
 
 	sysctl_teardown(&adapter->sysctllog);
-	evcnt_detach(&adapter->handleq);
-	evcnt_detach(&adapter->req);
 	evcnt_detach(&adapter->efbig_tx_dma_setup);
 	evcnt_detach(&adapter->mbuf_defrag_failed);
 	evcnt_detach(&adapter->efbig2_tx_dma_setup);
@@ -3392,6 +3400,8 @@ ixgbe_detach(device_t dev, int flags)
 	txr = adapter->tx_rings;
 	for (int i = 0; i < adapter->num_queues; i++, rxr++, txr++) {
 		evcnt_detach(&adapter->queues[i].irqs);
+		evcnt_detach(&adapter->queues[i].handleq);
+		evcnt_detach(&adapter->queues[i].req);
 		evcnt_detach(&txr->no_desc_avail);
 		evcnt_detach(&txr->total_packets);
 		evcnt_detach(&txr->tso_tx);
@@ -3922,7 +3932,6 @@ ixgbe_set_ivar(struct adapter *adapter, u8 entry, u8 vector, s8 type)
 	vector |= IXGBE_IVAR_ALLOC_VAL;
 
 	switch (hw->mac.type) {
-
 	case ixgbe_mac_82598EB:
 		if (type == -1)
 			entry = IXGBE_IVAR_OTHER_CAUSES_INDEX;
@@ -3934,7 +3943,6 @@ ixgbe_set_ivar(struct adapter *adapter, u8 entry, u8 vector, s8 type)
 		ivar |= (vector << (8 * (entry & 0x3)));
 		IXGBE_WRITE_REG(&adapter->hw, IXGBE_IVAR(index), ivar);
 		break;
-
 	case ixgbe_mac_82599EB:
 	case ixgbe_mac_X540:
 	case ixgbe_mac_X550:
@@ -3953,7 +3961,7 @@ ixgbe_set_ivar(struct adapter *adapter, u8 entry, u8 vector, s8 type)
 			ivar |= (vector << index);
 			IXGBE_WRITE_REG(hw, IXGBE_IVAR(entry >> 1), ivar);
 		}
-
+		break;
 	default:
 		break;
 	}
@@ -4036,7 +4044,6 @@ ixgbe_config_gpie(struct adapter *adapter)
 
 	IXGBE_WRITE_REG(hw, IXGBE_GPIE, gpie);
 
-	return;
 } /* ixgbe_config_gpie */
 
 /************************************************************************
@@ -4143,7 +4150,6 @@ ixgbe_set_multi(struct adapter *adapter)
 		    ixgbe_mc_array_itr, TRUE);
 	}
 
-	return;
 } /* ixgbe_set_multi */
 
 /************************************************************************
@@ -4189,7 +4195,9 @@ ixgbe_local_timer1(void *arg)
 	device_t	dev = adapter->dev;
 	struct ix_queue *que = adapter->queues;
 	u64		queues = 0;
+	u64		v0, v1, v2, v3, v4, v5, v6, v7;
 	int		hung = 0;
+	int		i;
 
 	KASSERT(mutex_owned(&adapter->core_mtx));
 
@@ -4201,12 +4209,37 @@ ixgbe_local_timer1(void *arg)
 	ixgbe_update_link_status(adapter);
 	ixgbe_update_stats_counters(adapter);
 
+	/* Update some event counters */
+	v0 = v1 = v2 = v3 = v4 = v5 = v6 = v7 = 0;
+	que = adapter->queues;
+	for (i = 0; i < adapter->num_queues; i++, que++) {
+		struct tx_ring  *txr = que->txr;
+
+		v0 += txr->q_efbig_tx_dma_setup;
+		v1 += txr->q_mbuf_defrag_failed;
+		v2 += txr->q_efbig2_tx_dma_setup;
+		v3 += txr->q_einval_tx_dma_setup;
+		v4 += txr->q_other_tx_dma_setup;
+		v5 += txr->q_eagain_tx_dma_setup;
+		v6 += txr->q_enomem_tx_dma_setup;
+		v7 += txr->q_tso_err;
+	}
+	adapter->efbig_tx_dma_setup.ev_count = v0;
+	adapter->mbuf_defrag_failed.ev_count = v1;
+	adapter->efbig2_tx_dma_setup.ev_count = v2;
+	adapter->einval_tx_dma_setup.ev_count = v3;
+	adapter->other_tx_dma_setup.ev_count = v4;
+	adapter->eagain_tx_dma_setup.ev_count = v5;
+	adapter->enomem_tx_dma_setup.ev_count = v6;
+	adapter->tso_err.ev_count = v7;
+
 	/*
 	 * Check the TX queues status
 	 *      - mark hung queues so we don't schedule on them
 	 *      - watchdog only if all queues show hung
 	 */
-	for (int i = 0; i < adapter->num_queues; i++, que++) {
+	que = adapter->queues;
+	for (i = 0; i < adapter->num_queues; i++, que++) {
 		/* Keep track of queues with work for soft irq */
 		if (que->txr->busy)
 			queues |= ((u64)1 << que->me);
@@ -4237,7 +4270,14 @@ ixgbe_local_timer1(void *arg)
 	if (hung == adapter->num_queues)
 		goto watchdog;
 	else if (queues != 0) { /* Force an IRQ on queues with work */
-		ixgbe_rearm_queues(adapter, queues);
+		que = adapter->queues;
+		for (i = 0; i < adapter->num_queues; i++, que++) {
+			mutex_enter(&que->im_mtx);
+			if (que->im_nest == 0)
+				ixgbe_rearm_queues(adapter,
+				    queues & ((u64)1 << i));
+			mutex_exit(&que->im_mtx);
+		}
 	}
 
 out:
@@ -4507,8 +4547,6 @@ ixgbe_update_link_status(struct adapter *adapter)
 				ixgbe_ping_all_vfs(adapter);
 		}
 	}
-
-	return;
 } /* ixgbe_update_link_status */
 
 /************************************************************************
@@ -4641,7 +4679,6 @@ ixgbe_disable_intr(struct adapter *adapter)
 
 	IXGBE_WRITE_FLUSH(&adapter->hw);
 
-	return;
 } /* ixgbe_disable_intr */
 
 /************************************************************************
@@ -4724,9 +4761,10 @@ ixgbe_legacy_irq(void *arg)
 	    (eicr & IXGBE_EICR_GPI_SDP0_X540))
 		softint_schedule(adapter->phy_si);
 
-	if (more)
-		softint_schedule(que->que_si);
-	else
+	if (more) {
+		que->req.ev_count++;
+		ixgbe_sched_handle_que(adapter, que);
+	} else
 		ixgbe_enable_intr(adapter);
 
 	return 1;
@@ -5160,7 +5198,7 @@ ixgbe_sysctl_dmac(SYSCTLFN_ARGS)
 
 	/* Re-initialize hardware if it's already running */
 	if (ifp->if_flags & IFF_RUNNING)
-		ixgbe_init(ifp);
+		ifp->if_init(ifp);
 
 	return (0);
 }
@@ -5470,7 +5508,7 @@ ixgbe_sysctl_eee_state(SYSCTLFN_ARGS)
 	}
 
 	/* Restart auto-neg */
-	ixgbe_init(ifp);
+	ifp->if_init(ifp);
 
 	device_printf(dev, "New EEE state: %d\n", new_eee);
 
@@ -5778,7 +5816,8 @@ ixgbe_ioctl(struct ifnet * ifp, u_long command, void *data)
 			;
 		else if (command == SIOCSIFCAP || command == SIOCSIFMTU) {
 			IXGBE_CORE_LOCK(adapter);
-			ixgbe_init_locked(adapter);
+			if ((ifp->if_flags & IFF_RUNNING) != 0)
+				ixgbe_init_locked(adapter);
 			ixgbe_recalculate_max_frame(adapter);
 			IXGBE_CORE_UNLOCK(adapter);
 		} else if (command == SIOCADDMULTI || command == SIOCDELMULTI) {
@@ -5825,7 +5864,7 @@ ixgbe_handle_que(void *context)
 	struct ifnet    *ifp = adapter->ifp;
 	bool		more = false;
 
-	adapter->handleq.ev_count++;
+	que->handleq.ev_count++;
 
 	if (ifp->if_flags & IFF_RUNNING) {
 		more = ixgbe_rxeof(que);
@@ -5843,16 +5882,8 @@ ixgbe_handle_que(void *context)
 	}
 
 	if (more) {
-		if (adapter->txrx_use_workqueue) {
-			/*
-			 * "enqueued flag" is not required here.
-			 * See ixgbe_msix_que().
-			 */
-			workqueue_enqueue(adapter->que_wq, &que->wq_cookie,
-			    curcpu());
-		} else {
-			softint_schedule(que->que_si);
-		}
+		que->req.ev_count++;
+		ixgbe_sched_handle_que(adapter, que);
 	} else if (que->res != NULL) {
 		/* Re-enable this interrupt */
 		ixgbe_enable_queue(adapter, que->msix);

@@ -1,4 +1,4 @@
-.\"	$NetBSD: printf.1,v 1.25 2014/04/13 01:45:34 snj Exp $
+.\"	$NetBSD: printf.1,v 1.25.22.1 2018/03/15 09:12:08 pgoyette Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	from: @(#)printf.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd May 6, 2008
+.Dd March 11, 2018
 .Dt PRINTF 1
 .Os
 .Sh NAME
@@ -70,8 +70,7 @@ otherwise it is evaluated as a C constant, with the following extensions:
 .It
 A leading plus or minus sign is allowed.
 .It
-If the leading character is a single or double quote, the value is the
-.Tn ASCII
+If the leading character is a single or double quote, the value is the ASCII
 code of the next character.
 .El
 .Pp
@@ -127,13 +126,11 @@ character.
 .It Cm \e\e
 Write a backslash character.
 .It Cm \e Ns Ar num
-Write an 8\-bit character whose
-.Tn ASCII
+Write an 8\-bit character whose ASCII
 value is the 1\-, 2\-, or 3\-digit octal number
 .Ar num .
 .It Cm \ex Ns Ar xx
-Write an 8\-bit character whose
-.Tn ASCII
+Write an 8\-bit character whose ASCII
 value is the 1\- or 2\-digit hexadecimal number
 .Ar xx .
 .El
@@ -309,10 +306,8 @@ to ignore any remaining characters in the string operand containing it,
 any remaining string operands, and any additional characters in
 the format operand.
 .It Cm \e0 Ns Ar num
-Write an 8\-bit character whose
-.Tn ASCII
-value is the 1\-, 2\-, or 3\-digit
-octal number
+Write an 8\-bit character whose ASCII value is the 1\-, 2\-, or
+3\-digit octal number
 .Ar num .
 .It Cm \e^ Ns Ar c
 Write the control character
@@ -358,6 +353,13 @@ Print a `%'; no argument is used.
 In no case does a non-existent or small field width cause truncation of
 a field; padding takes place only if the specified field width exceeds
 the actual width.
+.Pp
+If the first character of
+.Ar format
+is a dash,
+.Ar format
+must be preceded by a word consisting of two dashes (--) to prevent it
+from being interpreted as an option string.
 .Sh EXIT STATUS
 .Ex -std
 .Sh SEE ALSO
@@ -377,10 +379,8 @@ are optional in POSIX.
 The behaviour of the %B format and the \e', \e", \exxx, \ee and
 \e[M][\-|^]c escape sequences are undefined in POSIX.
 .Sh BUGS
-Since the floating point numbers are translated from
-.Tn ASCII
-to floating-point and
-then back again, floating-point precision may be lost.
+Since the floating point numbers are translated from ASCII to
+floating-point and then back again, floating-point precision may be lost.
 .Pp
 Hexadecimal character constants are restricted to, and should be specified
 as, two character constants.

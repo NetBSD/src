@@ -1,4 +1,4 @@
-/*	$NetBSD: ixdp425_machdep.c,v 1.37 2016/12/22 14:47:55 cherry Exp $ */
+/*	$NetBSD: ixdp425_machdep.c,v 1.37.14.1 2018/03/15 09:12:03 pgoyette Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixdp425_machdep.c,v 1.37 2016/12/22 14:47:55 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixdp425_machdep.c,v 1.37.14.1 2018/03/15 09:12:03 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -435,7 +435,7 @@ initarm(void *arg)
 
 	/* Tell the user about the memory */
 #ifdef VERBOSE_INIT_ARM
-	printf("physmemory: %d pages at 0x%08lx -> 0x%08lx\n", physmem,
+	printf("physmemory: %"PRIuPSIZE" pages at 0x%08lx -> 0x%08lx\n", physmem,
 	    physical_start, physical_end - 1);
 
 	printf("Allocating page tables\n");

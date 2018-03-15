@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.82 2018/03/05 10:54:05 msaitoh Exp $	*/
+/*	$NetBSD: i386.c,v 1.82.2.1 2018/03/15 09:12:08 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.82 2018/03/05 10:54:05 msaitoh Exp $");
+__RCSID("$NetBSD: i386.c,v 1.82.2.1 2018/03/15 09:12:08 pgoyette Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1094,6 +1094,7 @@ intel_cpu_cacheinfo(struct cpu_info *ci)
 	x86_cpuid(0x18, descs);
 	iterations = descs[0];
 	for (i = 0; i <= iterations; i++) {
+		uint32_t pgsize;
 		bool full;
 
 		x86_cpuid2(0x18, i, descs);
@@ -1101,13 +1102,48 @@ intel_cpu_cacheinfo(struct cpu_info *ci)
 		if (type == CPUID_DATP_TCTYPE_N)
 			continue;
 		level = __SHIFTOUT(descs[3], CPUID_DATP_TCLEVEL);
+		pgsize = __SHIFTOUT(descs[1], CPUID_DATP_PGSIZE);
 		switch (level) {
 		case 1:
-			if (type == CPUID_DATP_TCTYPE_I)
-				caitype = CAI_ITLB; /* XXX or ITLB2? */
-			else if (type == CPUID_DATP_TCTYPE_D)
-				caitype = CAI_DTLB;
-			else
+			if (type == CPUID_DATP_TCTYPE_I) {
+				switch (pgsize) {
+				case CPUID_DATP_PGSIZE_4KB:
+					caitype = CAI_ITLB;
+					break;
+				case CPUID_DATP_PGSIZE_2MB
+				    | CPUID_DATP_PGSIZE_4MB:
+					caitype = CAI_ITLB2;
+					break;
+				case CPUID_DATP_PGSIZE_1GB:
+					caitype = CAI_L1_1GBITLB;
+					break;
+				default:
+					aprint_error_dev(ci->ci_dev,
+					    "error: unknown ITLB size (%d)\n",
+					    pgsize);
+					caitype = CAI_ITLB;
+					break;
+				}
+			} else if (type == CPUID_DATP_TCTYPE_D) {
+				switch (pgsize) {
+				case CPUID_DATP_PGSIZE_4KB:
+					caitype = CAI_DTLB;
+					break;
+				case CPUID_DATP_PGSIZE_2MB
+				    | CPUID_DATP_PGSIZE_4MB:
+					caitype = CAI_DTLB2;
+					break;
+				case CPUID_DATP_PGSIZE_1GB:
+					caitype = CAI_L1_1GBDTLB;
+					break;
+				default:
+					aprint_error_dev(ci->ci_dev,
+					    "error: unknown DTLB size (%d)\n",
+					    pgsize);
+					caitype = CAI_DTLB;
+					break;
+				}
+			} else
 				caitype = -1;
 			break;
 		case 2:
@@ -1115,9 +1151,27 @@ intel_cpu_cacheinfo(struct cpu_info *ci)
 				caitype = CAI_L2_ITLB;
 			else if (type == CPUID_DATP_TCTYPE_D)
 				caitype = CAI_L2_DTLB;
-			else if (type == CPUID_DATP_TCTYPE_U)
-				caitype = CAI_L2_STLB;
-			else
+			else if (type == CPUID_DATP_TCTYPE_U) {
+				switch (pgsize) {
+				case CPUID_DATP_PGSIZE_4KB:
+					caitype = CAI_L2_STLB;
+					break;
+				case CPUID_DATP_PGSIZE_4KB
+				    | CPUID_DATP_PGSIZE_2MB:
+					caitype = CAI_L2_STLB2;
+					break;
+				case CPUID_DATP_PGSIZE_2MB
+				    | CPUID_DATP_PGSIZE_4MB:
+					caitype = CAI_L2_STLB3;
+					break;
+				default:
+					aprint_error_dev(ci->ci_dev,
+					    "error: unknown L2 STLB size (%d)\n",
+					    pgsize);
+					caitype = CAI_DTLB;
+					break;
+				}
+			} else
 				caitype = -1;
 			break;
 		case 3:
@@ -1134,7 +1188,7 @@ intel_cpu_cacheinfo(struct cpu_info *ci)
 			    level, type);
 			continue;
 		}
-		switch (__SHIFTOUT(descs[1], CPUID_DATP_PGSIZE)) {
+		switch (pgsize) {
 		case CPUID_DATP_PGSIZE_4KB:
 			linesize = 4 * 1024;
 			break;
@@ -1165,7 +1219,7 @@ intel_cpu_cacheinfo(struct cpu_info *ci)
 		    = ways * sets; /* entries */
 		ci->ci_cinfo[caitype].cai_associativity
 		    = full ? 0xff : ways;
-		ci->ci_cinfo[caitype].cai_linesize = linesize; /* page size */
+		ci->ci_cinfo[caitype].cai_linesize = linesize; /* pg size */
 	}
 }
 
@@ -2276,6 +2330,7 @@ x86_print_cache_and_tlb_info(struct cpu_info *ci)
 	if (ci->ci_cinfo[CAI_L2_STLB].cai_totalsize != 0) {
 		sep = print_tlb_config(ci, CAI_L2_STLB, "L2 STLB", NULL);
 		sep = print_tlb_config(ci, CAI_L2_STLB2, NULL, sep);
+		sep = print_tlb_config(ci, CAI_L2_STLB3, NULL, sep);
 		if (sep != NULL)
 			aprint_verbose("\n");
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.149 2018/02/22 13:27:18 maxv Exp $	*/
+/*	$NetBSD: cpu.c,v 1.149.2.1 2018/03/15 09:12:04 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.149 2018/02/22 13:27:18 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.149.2.1 2018/03/15 09:12:04 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -82,6 +82,8 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.149 2018/02/22 13:27:18 maxv Exp $");
 #include <sys/idle.h>
 #include <sys/atomic.h>
 #include <sys/reboot.h>
+#include <sys/sysctl.h>
+#include <sys/xcall.h>
 
 #include <uvm/uvm.h>
 
@@ -104,6 +106,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.149 2018/02/22 13:27:18 maxv Exp $");
 #include <machine/cpu_counter.h>
 
 #include <x86/fpu.h>
+#include <x86/cputypes.h>
 
 #if NLAPIC > 0
 #include <machine/apicvar.h>
@@ -674,7 +677,7 @@ cpu_init(struct cpu_info *ci)
 #endif /* MTRR */
 
 	if (ci != &cpu_info_primary) {
-		/* Synchronize TSC again, and check for drift. */
+		/* Synchronize TSC */
 		wbinvd();
 		atomic_or_32(&ci->ci_flags, CPUF_RUNNING);
 		tsc_sync_ap(ci);
@@ -786,8 +789,9 @@ cpu_start_secondary(struct cpu_info *ci)
 	} else {
 		/*
 		 * Synchronize time stamp counters. Invalidate cache and do
-		 * twice to try and minimize possible cache effects. Disable
-		 * interrupts to try and rule out any external interference.
+		 * twice (in tsc_sync_bp) to minimize possible cache effects.
+		 * Disable interrupts to try and rule out any external
+		 * interference.
 		 */
 		psl = x86_read_psl();
 		x86_disable_intr();
@@ -854,19 +858,25 @@ cpu_hatch(void *v)
 	KDASSERT((ci->ci_flags & CPUF_PRESENT) == 0);
 
 	/*
-	 * Synchronize time stamp counters.  Invalidate cache and do twice
-	 * to try and minimize possible cache effects.  Note that interrupts
-	 * are off at this point.
+	 * Synchronize the TSC for the first time. Note that interrupts are
+	 * off at this point.
 	 */
 	wbinvd();
 	atomic_or_32(&ci->ci_flags, CPUF_PRESENT);
 	tsc_sync_ap(ci);
 
 	/*
-	 * Wait to be brought online.  Use 'monitor/mwait' if available,
-	 * in order to make the TSC drift as much as possible. so that
-	 * we can detect it later.  If not available, try 'pause'.
-	 * We'd like to use 'hlt', but we have interrupts off.
+	 * Wait to be brought online.
+	 *
+	 * Use MONITOR/MWAIT if available. These instructions put the CPU in
+	 * a low consumption mode (C-state), and if the TSC is not invariant,
+	 * this causes the TSC to drift. We want this to happen, so that we
+	 * can later detect (in tsc_tc_init) any abnormal drift with invariant
+	 * TSCs. That's just for safety; by definition such drifts should
+	 * never occur with invariant TSCs.
+	 *
+	 * If not available, try PAUSE. We'd like to use HLT, but we have
+	 * interrupts off.
 	 */
 	while ((ci->ci_flags & CPUF_GO) == 0) {
 		if ((cpu_feature[1] & CPUID2_MONITOR) != 0) {
@@ -922,6 +932,11 @@ cpu_hatch(void *v)
 	lldt(GSYSSEL(GLDT_SEL, SEL_KPL));
 	ltr(ci->ci_tss_sel);
 
+	/*
+	 * cpu_init will re-synchronize the TSC, and will detect any abnormal
+	 * drift that would have been caused by the use of MONITOR/MWAIT
+	 * above.
+	 */
 	cpu_init(ci);
 	cpu_get_tsc_freq(ci);
 
@@ -1322,3 +1337,172 @@ cpu_kick(struct cpu_info *ci)
 {
 	x86_send_ipi(ci, 0);
 }
+
+#if !defined(XEN)
+
+/* --------------------------------------------------------------------- */
+
+/*
+ * Speculation-related mitigations.
+ */
+
+enum spec_mitigation {
+	MITIGATION_NONE,
+	MITIGATION_AMD_DIS_IND,
+	MITIGATION_INTEL_IBRS
+};
+
+bool spec_mitigation_enabled __read_mostly = false;
+static enum spec_mitigation mitigation_method = MITIGATION_NONE;
+
+static void
+speculation_detect_method(void)
+{
+	struct cpu_info *ci = curcpu();
+
+	if (cpu_vendor == CPUVENDOR_INTEL) {
+		/* TODO: detect MITIGATION_INTEL_IBRS */
+		mitigation_method = MITIGATION_NONE;
+	} else if (cpu_vendor == CPUVENDOR_AMD) {
+		switch (CPUID_TO_FAMILY(ci->ci_signature)) {
+		case 0x10:
+		case 0x12:
+		case 0x16:
+			mitigation_method = MITIGATION_AMD_DIS_IND;
+			break;
+		default:
+			mitigation_method = MITIGATION_NONE;
+			break;
+		}
+	} else {
+		mitigation_method = MITIGATION_NONE;
+	}
+}
+
+static void
+mitigation_disable_cpu(void *arg1, void *arg2)
+{
+	uint64_t msr;
+
+	switch (mitigation_method) {
+	case MITIGATION_NONE:
+		panic("impossible");
+		break;
+	case MITIGATION_AMD_DIS_IND:
+		msr = rdmsr(MSR_IC_CFG);
+		msr &= ~IC_CFG_DIS_IND;
+		wrmsr(MSR_IC_CFG, msr);
+		break;
+	case MITIGATION_INTEL_IBRS:
+		/* ibrs_disable() TODO */
+		break;
+	}
+}
+
+static void
+mitigation_enable_cpu(void *arg1, void *arg2)
+{
+	uint64_t msr;
+
+	switch (mitigation_method) {
+	case MITIGATION_NONE:
+		panic("impossible");
+		break;
+	case MITIGATION_AMD_DIS_IND:
+		msr = rdmsr(MSR_IC_CFG);
+		msr |= IC_CFG_DIS_IND;
+		wrmsr(MSR_IC_CFG, msr);
+		break;
+	case MITIGATION_INTEL_IBRS:
+		/* ibrs_enable() TODO */
+		break;
+	}
+}
+
+static int
+mitigation_disable(void)
+{
+	uint64_t xc;
+
+	speculation_detect_method();
+
+	switch (mitigation_method) {
+	case MITIGATION_NONE:
+		printf("[!] No mitigation available\n");
+		return EOPNOTSUPP;
+	case MITIGATION_AMD_DIS_IND:
+		printf("[+] Disabling SpectreV2 Mitigation...");
+		xc = xc_broadcast(0, mitigation_disable_cpu,
+		    NULL, NULL);
+		xc_wait(xc);
+		printf(" done!\n");
+		spec_mitigation_enabled = false;
+		return 0;
+	case MITIGATION_INTEL_IBRS:
+		/* TODO */
+		return 0;
+	default:
+		panic("impossible");
+	}
+}
+
+static int
+mitigation_enable(void)
+{
+	uint64_t xc;
+
+	speculation_detect_method();
+
+	switch (mitigation_method) {
+	case MITIGATION_NONE:
+		printf("[!] No mitigation available\n");
+		return EOPNOTSUPP;
+	case MITIGATION_AMD_DIS_IND:
+		printf("[+] Enabling SpectreV2 Mitigation...");
+		xc = xc_broadcast(0, mitigation_enable_cpu,
+		    NULL, NULL);
+		xc_wait(xc);
+		printf(" done!\n");
+		spec_mitigation_enabled = true;
+		return 0;
+	case MITIGATION_INTEL_IBRS:
+		/* TODO */
+		return 0;
+	default:
+		panic("impossible");
+	}
+}
+
+int sysctl_machdep_spectreV2_mitigated(SYSCTLFN_ARGS);
+
+int
+sysctl_machdep_spectreV2_mitigated(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	int error, val;
+
+	val = *(int *)rnode->sysctl_data;
+
+	node = *rnode;
+	node.sysctl_data = &val;
+
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error != 0 || newp == NULL)
+		return error;
+
+	if (val == 0) {
+		if (!spec_mitigation_enabled)
+			error = 0;
+		else
+			error = mitigation_disable();
+	} else {
+		if (spec_mitigation_enabled)
+			error = 0;
+		else
+			error = mitigation_enable();
+	}
+
+	return error;
+}
+
+#endif

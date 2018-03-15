@@ -505,6 +505,7 @@ xcb_shm_attach_fd_checked (xcb_connection_t *c,
     xcb_void_cookie_t xcb_ret;
     xcb_shm_attach_fd_request_t xcb_out;
     int fds[1];
+    int fd_index = 0;
 
     xcb_out.shmseg = shmseg;
     xcb_out.read_only = read_only;
@@ -515,7 +516,7 @@ xcb_shm_attach_fd_checked (xcb_connection_t *c,
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
 
-    fds[0] = shm_fd;
+    fds[fd_index++] = shm_fd;
     xcb_ret.sequence = xcb_send_request_with_fds(c, XCB_REQUEST_CHECKED, xcb_parts + 2, &xcb_req, 1, fds);
     return xcb_ret;
 }
@@ -537,6 +538,7 @@ xcb_shm_attach_fd (xcb_connection_t *c,
     xcb_void_cookie_t xcb_ret;
     xcb_shm_attach_fd_request_t xcb_out;
     int fds[1];
+    int fd_index = 0;
 
     xcb_out.shmseg = shmseg;
     xcb_out.read_only = read_only;
@@ -547,7 +549,7 @@ xcb_shm_attach_fd (xcb_connection_t *c,
     xcb_parts[3].iov_base = 0;
     xcb_parts[3].iov_len = -xcb_parts[2].iov_len & 3;
 
-    fds[0] = shm_fd;
+    fds[fd_index++] = shm_fd;
     xcb_ret.sequence = xcb_send_request_with_fds(c, 0, xcb_parts + 2, &xcb_req, 1, fds);
     return xcb_ret;
 }

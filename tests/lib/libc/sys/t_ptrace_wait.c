@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.23 2018/03/05 11:24:34 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.23.2.1 2018/03/15 09:12:07 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.23 2018/03/05 11:24:34 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.23.2.1 2018/03/15 09:12:07 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: t_ptrace_wait.c,v 1.23 2018/03/05 11:24:34 kamil Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <strings.h>
+#include <time.h>
 #include <unistd.h>
 
 #include <atf-c.h>
@@ -312,7 +313,8 @@ ATF_TC_HEAD(attach1, tc)
 	    "Assert that tracer sees process termination before the parent");
 }
 
-ATF_TC_BODY(attach1, tc)
+static void
+attach1_raw(bool raw)
 {
 	struct msg_fds parent_tracee, parent_tracer;
 	const int exitval_tracee = 5;
@@ -372,8 +374,10 @@ ATF_TC_BODY(attach1, tc)
 	PARENT_TO_CHILD("exit tracee", parent_tracee,  msg);
 
 	DPRINTF("Detect that tracee is zombie\n");
-	await_zombie(tracee);
-
+	if (raw)
+		await_zombie_raw(tracee, 0);
+	else
+		await_zombie(tracee);
 
 	DPRINTF("Assert that there is no status about tracee %d - "
 	    "Tracer must detect zombie first - calling %s()\n", tracee,
@@ -402,6 +406,14 @@ ATF_TC_BODY(attach1, tc)
 	msg_close(&parent_tracer);
 	msg_close(&parent_tracee);
 }
+
+ATF_TC_BODY(attach1, tc)
+{
+
+	/* Reuse this test with race1 */
+	attach1_raw(false);
+}
+
 #endif
 
 #if defined(TWAIT_HAVE_PID)
@@ -423,9 +435,6 @@ ATF_TC_BODY(attach2, tc)
 #if defined(TWAIT_HAVE_STATUS)
 	int status;
 #endif
-
-	// Feature pending for refactoring
-	atf_tc_expect_fail("test is racy");
 
 	DPRINTF("Spawn tracee\n");
 	SYSCALL_REQUIRE(msg_open(&parent_tracee) == 0);
@@ -500,16 +509,13 @@ ATF_TC_BODY(attach2, tc)
 
 	DPRINTF("Wait for tracee to finish its job and exit - calling %s()\n",
 	    TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(tracee, &status, WNOHANG),
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(tracee, &status, 0),
 	    tracee);
 
 	validate_status_exited(status, exitval_tracee);
 
 	msg_close(&parent_tracer);
 	msg_close(&parent_tracee);
-
-	// Test is racy
-	ATF_REQUIRE(0 && "In order to get reliable failure, abort");
 }
 #endif
 
@@ -7068,6 +7074,37 @@ ATF_TC_BODY(syscallemu1, tc)
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
+#if defined(TWAIT_HAVE_PID)
+ATF_TC(race1);
+ATF_TC_HEAD(race1, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Assert that await_zombie() in attach1 always finds a single "
+	    "process and no other error is reported");
+}
+
+ATF_TC_BODY(race1, tc)
+{
+	time_t start, end;
+	double diff;
+	unsigned long N = 0;
+
+	/* Reuse this test with attach1 */
+
+	start = time(NULL);
+	while (true) {
+		DPRINTF("Step: %lu\n", N);
+		attach1_raw(true);
+		end = time(NULL);
+		diff = difftime(end, start);
+		if (diff >= 5.0)
+			break;
+		++N;
+	}
+	DPRINTF("Iterations: %lu\n", N);
+}
+#endif
+
 #include "t_ptrace_amd64_wait.h"
 #include "t_ptrace_i386_wait.h"
 #include "t_ptrace_x86_wait.h"
@@ -7198,6 +7235,8 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, syscall1);
 
 	ATF_TP_ADD_TC(tp, syscallemu1);
+
+	ATF_TP_ADD_TC_HAVE_PID(tp, race1);
 
 	ATF_TP_ADD_TCS_PTRACE_WAIT_AMD64();
 	ATF_TP_ADD_TCS_PTRACE_WAIT_I386();

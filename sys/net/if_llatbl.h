@@ -1,4 +1,4 @@
-/*	$NetBSD: if_llatbl.h,v 1.13 2017/11/10 07:24:28 ozaki-r Exp $	*/
+/*	$NetBSD: if_llatbl.h,v 1.13.4.1 2018/03/15 09:12:06 pgoyette Exp $	*/
 /*
  * Copyright (c) 2004 Luigi Rizzo, Alessandro Cerri. All rights reserved.
  * Copyright (c) 2004-2008 Qing Li. All rights reserved.
@@ -265,6 +265,9 @@ int		lltable_dump_entry(struct lltable *, struct llentry *,
 size_t		llentry_free(struct llentry *);
 struct llentry  *llentry_alloc(struct ifnet *, struct lltable *,
 		    struct sockaddr_storage *);
+
+struct llentry  *llentry_pool_get(int);
+void		llentry_pool_put(struct llentry *);
 
 /* helper functions */
 size_t lltable_drop_entry_queue(struct llentry *);
