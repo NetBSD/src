@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.126 2018/02/05 08:38:06 maxv Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.127 2018/03/15 08:15:21 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.126 2018/02/05 08:38:06 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.127 2018/03/15 08:15:21 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mrouting.h"
@@ -432,7 +432,7 @@ const struct protosw inetsw[] = {
 {	.pr_type = SOCK_RAW,
 	.pr_domain = &inetdomain,
 	.pr_protocol = IPPROTO_CARP,
-	.pr_flags = PR_ATOMIC|PR_ADDR,
+	.pr_flags = PR_ATOMIC|PR_ADDR|PR_LASTHDR,
 	.pr_input = carp_proto_input,
 	.pr_ctloutput = rip_ctloutput,
 	.pr_usrreqs = &rip_usrreqs,
@@ -453,7 +453,7 @@ const struct protosw inetsw[] = {
 {	.pr_type = SOCK_RAW,
 	.pr_domain = &inetdomain,
 	.pr_protocol = IPPROTO_PFSYNC,
-	.pr_flags	 = PR_ATOMIC|PR_ADDR,
+	.pr_flags	 = PR_ATOMIC|PR_ADDR|PR_LASTHDR,
 	.pr_input	 = pfsync_input,
 	.pr_ctloutput = rip_ctloutput,
 	.pr_usrreqs	 = &rip_usrreqs,
