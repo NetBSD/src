@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mod.c,v 1.24.14.9 2018/03/15 22:46:22 pgoyette Exp $	*/
+/*	$NetBSD: compat_mod.c,v 1.24.14.10 2018/03/15 23:32:35 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.24.14.9 2018/03/15 22:46:22 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.24.14.10 2018/03/15 23:32:35 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -76,6 +76,11 @@ static struct sysctllog *compat_clog = NULL;
 #ifdef COMPAT_50
 void if_50_init(void);
 void if_50_fini(void);
+#endif
+
+#ifdef COMPAT_70
+#include <compat/net/route.h>
+#include <compat/net/route_70.h>
 #endif
 
 static const char * const compat_includes[] = {
@@ -282,9 +287,17 @@ compat_modcmd(modcmd_t cmd, void *arg)
 		uvm_50_init();
 		if_50_init();
 #endif
+#ifdef COMPAT_70
+		vec_ocreds_valid = true;
+		rtsock_70_init();
+#endif
 		return 0;
 
 	case MODULE_CMD_FINI:
+#ifdef COMPAT_70
+		rtsock_70_fini();
+		vec_ocreds_valid = false;
+#endif
 #ifdef COMPAT_10
 		vfs_syscalls_10_fini();
 #endif
