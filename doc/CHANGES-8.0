@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.0,v 1.1.2.143 2018/03/15 09:56:35 martin Exp $
+# $NetBSD: CHANGES-8.0,v 1.1.2.144 2018/03/15 11:28:24 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 8.0 branch on 2017-06-04
 until the 8.0 release:
@@ -10323,4 +10323,18 @@ tests/lib/libc/locale/t_wctype.c		1.2
 	Separate the C/POSIX locale test from the rest; make it
 	more thorough and more correct.
 	[maya, ticket #608]
+
+tests/lib/libc/locale/t_sprintf.c		1.4 - 1.7
+
+	Since the C standard allows for intermediate floating results to
+	contain more precision bits than the data type expects, but
+	(kind of obviously) does not allow such values to be stored in memory,
+	check that the strtod() result and expected values are very very close
+	and not strictly equal.
+	[martin, ticket #631]
+
+sys/netinet6/in6_gif.c				1.91
+
+	Fix potential NULL dereference
+	[knakahara, ticket #632]
 
