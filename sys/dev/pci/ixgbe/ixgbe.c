@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.134 2018/03/09 06:27:53 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.135 2018/03/15 06:48:51 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -70,6 +70,7 @@
 #endif
 
 #include "ixgbe.h"
+#include "ixgbe_sriov.h"
 #include "vlan.h"
 
 #include <sys/cprng.h>
@@ -1708,6 +1709,10 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 	    NULL, xname, "Link MSI-X IRQ Handled");
 
 	for (int i = 0; i < adapter->num_queues; i++, rxr++, txr++) {
+#ifdef LRO
+		struct lro_ctrl *lro = &rxr->lro;
+#endif /* LRO */
+
 		snprintf(adapter->queues[i].evnamebuf,
 		    sizeof(adapter->queues[i].evnamebuf), "%s q%d",
 		    xname, i);
@@ -1766,10 +1771,6 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 		    NULL, adapter->queues[i].evnamebuf,
 		    "Packets dropped in pcq");
 #endif
-
-#ifdef LRO
-		struct lro_ctrl *lro = &rxr->lro;
-#endif /* LRO */
 
 		if (sysctl_createv(log, 0, &rnode, &cnode,
 		    CTLFLAG_READONLY,
@@ -3931,7 +3932,6 @@ ixgbe_set_ivar(struct adapter *adapter, u8 entry, u8 vector, s8 type)
 	vector |= IXGBE_IVAR_ALLOC_VAL;
 
 	switch (hw->mac.type) {
-
 	case ixgbe_mac_82598EB:
 		if (type == -1)
 			entry = IXGBE_IVAR_OTHER_CAUSES_INDEX;
@@ -3943,7 +3943,6 @@ ixgbe_set_ivar(struct adapter *adapter, u8 entry, u8 vector, s8 type)
 		ivar |= (vector << (8 * (entry & 0x3)));
 		IXGBE_WRITE_REG(&adapter->hw, IXGBE_IVAR(index), ivar);
 		break;
-
 	case ixgbe_mac_82599EB:
 	case ixgbe_mac_X540:
 	case ixgbe_mac_X550:
@@ -3962,7 +3961,7 @@ ixgbe_set_ivar(struct adapter *adapter, u8 entry, u8 vector, s8 type)
 			ivar |= (vector << index);
 			IXGBE_WRITE_REG(hw, IXGBE_IVAR(entry >> 1), ivar);
 		}
-
+		break;
 	default:
 		break;
 	}
@@ -4045,7 +4044,6 @@ ixgbe_config_gpie(struct adapter *adapter)
 
 	IXGBE_WRITE_REG(hw, IXGBE_GPIE, gpie);
 
-	return;
 } /* ixgbe_config_gpie */
 
 /************************************************************************
@@ -4152,7 +4150,6 @@ ixgbe_set_multi(struct adapter *adapter)
 		    ixgbe_mc_array_itr, TRUE);
 	}
 
-	return;
 } /* ixgbe_set_multi */
 
 /************************************************************************
@@ -4550,8 +4547,6 @@ ixgbe_update_link_status(struct adapter *adapter)
 				ixgbe_ping_all_vfs(adapter);
 		}
 	}
-
-	return;
 } /* ixgbe_update_link_status */
 
 /************************************************************************
@@ -4684,7 +4679,6 @@ ixgbe_disable_intr(struct adapter *adapter)
 
 	IXGBE_WRITE_FLUSH(&adapter->hw);
 
-	return;
 } /* ixgbe_disable_intr */
 
 /************************************************************************
@@ -5204,7 +5198,7 @@ ixgbe_sysctl_dmac(SYSCTLFN_ARGS)
 
 	/* Re-initialize hardware if it's already running */
 	if (ifp->if_flags & IFF_RUNNING)
-		ixgbe_init(ifp);
+		ifp->if_init(ifp);
 
 	return (0);
 }
@@ -5514,7 +5508,7 @@ ixgbe_sysctl_eee_state(SYSCTLFN_ARGS)
 	}
 
 	/* Restart auto-neg */
-	ixgbe_init(ifp);
+	ifp->if_init(ifp);
 
 	device_printf(dev, "New EEE state: %d\n", new_eee);
 
@@ -5822,7 +5816,8 @@ ixgbe_ioctl(struct ifnet * ifp, u_long command, void *data)
 			;
 		else if (command == SIOCSIFCAP || command == SIOCSIFMTU) {
 			IXGBE_CORE_LOCK(adapter);
-			ixgbe_init_locked(adapter);
+			if ((ifp->if_flags & IFF_RUNNING) != 0)
+				ixgbe_init_locked(adapter);
 			ixgbe_recalculate_max_frame(adapter);
 			IXGBE_CORE_UNLOCK(adapter);
 		} else if (command == SIOCADDMULTI || command == SIOCDELMULTI) {
