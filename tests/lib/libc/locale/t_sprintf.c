@@ -1,4 +1,4 @@
-/* $NetBSD: t_sprintf.c,v 1.1.2.1 2018/03/14 18:37:00 bouyer Exp $ */
+/* $NetBSD: t_sprintf.c,v 1.1.2.2 2018/03/15 09:55:23 martin Exp $ */
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2017\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_sprintf.c,v 1.1.2.1 2018/03/14 18:37:00 bouyer Exp $");
+__RCSID("$NetBSD: t_sprintf.c,v 1.1.2.2 2018/03/15 09:55:23 martin Exp $");
 
 #include <locale.h>
 #include <stdio.h>
@@ -112,9 +112,6 @@ h_sprintf(const struct test *t)
 	printf("Trying locale %s...\n", t->locale);
 	ATF_REQUIRE(setlocale(LC_NUMERIC, t->locale) != NULL);
 	printf("Using locale: %s\n", setlocale(LC_ALL, NULL));
-
-	if (!strcmp("POSIX", t->locale))
-        	atf_tc_expect_fail("%s", "PR standards/52282, printf doesn't respect empty thousands separator");
 
 	sprintf(buf, "%'f", t->double_value);
 	ATF_REQUIRE_STREQ(buf, t->double_result);

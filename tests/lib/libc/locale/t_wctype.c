@@ -1,4 +1,4 @@
-/* $NetBSD: t_wctype.c,v 1.1 2017/05/30 23:44:02 perseant Exp $ */
+/* $NetBSD: t_wctype.c,v 1.1.2.1 2018/03/15 09:55:23 martin Exp $ */
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2017\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_wctype.c,v 1.1 2017/05/30 23:44:02 perseant Exp $");
+__RCSID("$NetBSD: t_wctype.c,v 1.1.2.1 2018/03/15 09:55:23 martin Exp $");
 
 #include <locale.h>
 #include <stdio.h>
@@ -91,6 +91,26 @@ static struct test {
 			{ /* xdigit */ "123abcABC", "xyz" },
 		},
 	}, {
+		"en_US.UTF-8",
+		{
+			{ /* alnum */ "abc123", "&^%$" },
+			{ /* alpha */ "ABCabc", "123*&^" },
+			{ /* blank */ " \t", "abc123%$^&\r\n" },
+			{ /* cntrl */ "\a", "abc123^&*" },
+			{ /* digit */ "123", "abc*()" },
+			{ /* graph */ "abc123ABC[];?~", " " },
+			{ /* ideogram */ "", "" },
+			{ /* lower */ "abc", "ABC123&*(" },
+			{ /* phonogram */ "", "" },
+			{ /* print */ "abcABC123%^&* ", "\r\n\t" },
+			{ /* punct */ ".,;:!?", "abc123 \n" },
+			{ /* rune */ "", "" },
+			{ /* space */ " \t\r\n", "abc123ABC&*(" },
+			{ /* special */ "", "" },
+			{ /* upper */ "ABC", "abc123&*(" },
+			{ /* xdigit */ "123abcABC", "xyz" },
+		},
+	}, {
 		"ru_RU.KOI8-R",
 		{
 			{ /* alnum */ "abc123i\xa3\xb3\xd6", "&^%$" },
@@ -129,6 +149,7 @@ h_ctype(const struct test *t)
 	ATF_REQUIRE_STREQ(setlocale(LC_ALL, "C"), "C");
 	printf("Trying locale %s...\n", t->locale);
 	ATF_REQUIRE(setlocale(LC_CTYPE, t->locale) != NULL);
+	printf("Using locale %s\n", setlocale(LC_CTYPE, NULL));
 
 	for (i = 0; i < 16; i++) {
 		/* Skip any type that has no chars */
