@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.h,v 1.22.16.2 2018/03/15 09:12:07 pgoyette Exp $	*/
+/*	$NetBSD: uvm_swap.h,v 1.22.16.3 2018/03/15 11:17:55 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green
@@ -39,35 +39,6 @@
 #endif
 
 struct lwp;
-
-/*
- * swapdev: describes a single swap partition/file
- *
- * note the following should be true:
- * swd_inuse <= swd_nblks  [number of blocks in use is <= total blocks]
- * swd_nblks <= swd_mapsize [because mapsize includes miniroot+disklabel]
- */   
-struct swapdev {
-	dev_t			swd_dev;	/* device id */
-	int			swd_flags;	/* flags:inuse/enable/fake */
-	int			swd_priority;	/* our priority */ 
-	int			swd_nblks;	/* blocks in this device */
-	char			*swd_path;	/* saved pathname of device */
-	int			swd_pathlen;	/* length of pathname */
-	int			swd_npages;	/* #pages we can use */
-	int			swd_npginuse;	/* #pages in use */
-	int			swd_npgbad;	/* #pages bad */
-	int			swd_drumoffset;	/* page0 offset in drum */
-	int			swd_drumsize;	/* #pages in drum */
-	blist_t			swd_blist;	/* blist for this swapdev */
-	struct vnode		*swd_vp;	/* backing vnode */
-	TAILQ_ENTRY(swapdev)	swd_next;	/* priority tailq */
- 
-	int			swd_bsize;	/* blocksize (bytes) */ 
-	int			swd_maxactive;	/* max active i/o reqs */
-	struct bufq_state	*swd_tab;	/* buffer list */
-	int			swd_active;	/* number of active buffers */
-};      
 
 #if defined(VMSWAP)
 
