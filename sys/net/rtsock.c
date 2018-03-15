@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.238 2018/01/25 03:09:05 ozaki-r Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.238.2.1 2018/03/15 05:10:06 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.238 2018/01/25 03:09:05 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.238.2.1 2018/03/15 05:10:06 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -100,10 +100,10 @@ extern void sctp_add_ip_address(struct ifaddr *);
 extern void sctp_delete_ip_address(struct ifaddr *);
 #endif
 
-#if defined(COMPAT_14) || defined(COMPAT_50) || defined(COMPAT_70)
 #include <compat/net/if.h>
 #include <compat/net/route.h>
-#endif
+#include <compat/net/route_70.h>
+
 #ifdef COMPAT_RTSOCK
 #define	RTM_XVERSION	RTM_OVERSION
 #define	RTM_XNEWADDR	RTM_ONEWADDR
@@ -191,6 +191,24 @@ static kmutex_t *rt_so_mtx;
 
 static bool rt_updating = false;
 static kcondvar_t rt_update_cv;
+#endif
+
+#ifndef COMPAT_RTSOCK
+static int
+sysctl_iflist_addr(struct rt_walkarg *, struct ifaddr *, struct rt_addrinfo *);
+
+/*
+ * Compat linkage
+ */
+static void stub_70_rt_newaddrmsg1(int cmd, struct ifaddr*ifa)
+{
+
+	/* nothing */
+}
+
+void (*vec_70_rt_newaddrmsg1)(int, struct ifaddr *) = stub_70_rt_newaddrmsg1;
+int (*vec_70_iflist_addr)(struct rt_walkarg *, struct ifaddr *,
+		       struct rt_addrinfo *)= sysctl_iflist_addr;
 #endif
 
 static void
@@ -1601,9 +1619,7 @@ COMPATNAME(rt_newaddrmsg)(int cmd, struct ifaddr *ifa, int error,
 			default:
 				panic("%s: unknown command %d", __func__, cmd);
 			}
-#ifdef COMPAT_70
-			compat_70_rt_newaddrmsg1(ncmd, ifa);
-#endif
+			(*vec_70_rt_newaddrmsg1)(ncmd, ifa);
 			info.rti_info[RTAX_IFA] = sa = ifa->ifa_addr;
 			KASSERT(ifp->if_dl != NULL);
 			info.rti_info[RTAX_IFP] = ifp->if_dl->ifa_addr;
@@ -1830,6 +1846,7 @@ sysctl_iflist_if(struct ifnet *ifp, struct rt_walkarg *w,
 	return error;
 }
 
+#ifndef COMPAT_RTSOCK	/* XXX need to include the stuff in COMPAT_50 */
 static int
 sysctl_iflist_addr(struct rt_walkarg *w, struct ifaddr *ifa,
      struct rt_addrinfo *info)
@@ -1855,6 +1872,7 @@ sysctl_iflist_addr(struct rt_walkarg *w, struct ifaddr *ifa,
 	}
 	return error;
 }
+#endif /* XXX */
 
 static int
 sysctl_iflist(int af, struct rt_walkarg *w, int type)
@@ -1865,8 +1883,6 @@ sysctl_iflist(int af, struct rt_walkarg *w, int type)
 	int	cmd, len, error = 0;
 	int	(*iflist_if)(struct ifnet *, struct rt_walkarg *,
 			     struct rt_addrinfo *, size_t);
-	int	(*iflist_addr)(struct rt_walkarg *, struct ifaddr *,
-			       struct rt_addrinfo *);
 	int s;
 	struct psref psref;
 	int bound;
@@ -1875,27 +1891,23 @@ sysctl_iflist(int af, struct rt_walkarg *w, int type)
 	case NET_RT_IFLIST:
 		cmd = RTM_IFINFO;
 		iflist_if = sysctl_iflist_if;
-		iflist_addr = sysctl_iflist_addr;
 		break;
 #ifdef COMPAT_14
 	case NET_RT_OOOIFLIST:
 		cmd = RTM_OOIFINFO;
 		iflist_if = compat_14_iflist;
-		iflist_addr = compat_70_iflist_addr;
 		break;
 #endif
 #ifdef COMPAT_50
 	case NET_RT_OOIFLIST:
 		cmd = RTM_OIFINFO;
 		iflist_if = compat_50_iflist;
-		iflist_addr = compat_70_iflist_addr;
 		break;
 #endif
 #ifdef COMPAT_70
 	case NET_RT_OIFLIST:
 		cmd = RTM_IFINFO;
 		iflist_if = sysctl_iflist_if;
-		iflist_addr = compat_70_iflist_addr;
 		break;
 #endif
 	default:
@@ -1938,7 +1950,7 @@ sysctl_iflist(int af, struct rt_walkarg *w, int type)
 			info.rti_info[RTAX_IFA] = ifa->ifa_addr;
 			info.rti_info[RTAX_NETMASK] = ifa->ifa_netmask;
 			info.rti_info[RTAX_BRD] = ifa->ifa_dstaddr;
-			error = iflist_addr(w, ifa, &info);
+			error = (*vec_70_iflist_addr)(w, ifa, &info);
 
 			_s = pserialize_read_enter();
 			ifa_release(ifa, &_psref);
