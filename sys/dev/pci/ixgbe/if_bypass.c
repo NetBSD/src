@@ -474,45 +474,45 @@ ixgbe_bp_wd_set(SYSCTLFN_ARGS)
 
 	mask = BYPASS_WDT_ENABLE_M;
 	switch (timeout) {
-		case 0: /* disables the timer */
-			break;
-		case 1:
-			arg = BYPASS_WDT_1_5 << BYPASS_WDT_TIME_SHIFT;
-			arg |= 0x1 << BYPASS_WDT_ENABLE_SHIFT;
-			mask |= BYPASS_WDT_VALUE_M;
-			break;
-		case 2:
-			arg = BYPASS_WDT_2 << BYPASS_WDT_TIME_SHIFT;
-			arg |= 0x1 << BYPASS_WDT_ENABLE_SHIFT;
-			mask |= BYPASS_WDT_VALUE_M;
-			break;
-		case 3:
-			arg = BYPASS_WDT_3 << BYPASS_WDT_TIME_SHIFT;
-			arg |= 0x1 << BYPASS_WDT_ENABLE_SHIFT;
-			mask |= BYPASS_WDT_VALUE_M;
-			break;
-		case 4:
-			arg = BYPASS_WDT_4 << BYPASS_WDT_TIME_SHIFT;
-			arg |= 0x1 << BYPASS_WDT_ENABLE_SHIFT;
-			mask |= BYPASS_WDT_VALUE_M;
-			break;
-		case 8:
-			arg = BYPASS_WDT_8 << BYPASS_WDT_TIME_SHIFT;
-			arg |= 0x1 << BYPASS_WDT_ENABLE_SHIFT;
-			mask |= BYPASS_WDT_VALUE_M;
-			break;
-		case 16:
-			arg = BYPASS_WDT_16 << BYPASS_WDT_TIME_SHIFT;
-			arg |= 0x1 << BYPASS_WDT_ENABLE_SHIFT;
-			mask |= BYPASS_WDT_VALUE_M;
-			break;
-		case 32:
-			arg = BYPASS_WDT_32 << BYPASS_WDT_TIME_SHIFT;
-			arg |= 0x1 << BYPASS_WDT_ENABLE_SHIFT;
-			mask |= BYPASS_WDT_VALUE_M;
-			break;
-		default:
-			return (EINVAL);
+	case 0: /* disables the timer */
+		break;
+	case 1:
+		arg = BYPASS_WDT_1_5 << BYPASS_WDT_TIME_SHIFT;
+		arg |= 0x1 << BYPASS_WDT_ENABLE_SHIFT;
+		mask |= BYPASS_WDT_VALUE_M;
+		break;
+	case 2:
+		arg = BYPASS_WDT_2 << BYPASS_WDT_TIME_SHIFT;
+		arg |= 0x1 << BYPASS_WDT_ENABLE_SHIFT;
+		mask |= BYPASS_WDT_VALUE_M;
+		break;
+	case 3:
+		arg = BYPASS_WDT_3 << BYPASS_WDT_TIME_SHIFT;
+		arg |= 0x1 << BYPASS_WDT_ENABLE_SHIFT;
+		mask |= BYPASS_WDT_VALUE_M;
+		break;
+	case 4:
+		arg = BYPASS_WDT_4 << BYPASS_WDT_TIME_SHIFT;
+		arg |= 0x1 << BYPASS_WDT_ENABLE_SHIFT;
+		mask |= BYPASS_WDT_VALUE_M;
+		break;
+	case 8:
+		arg = BYPASS_WDT_8 << BYPASS_WDT_TIME_SHIFT;
+		arg |= 0x1 << BYPASS_WDT_ENABLE_SHIFT;
+		mask |= BYPASS_WDT_VALUE_M;
+		break;
+	case 16:
+		arg = BYPASS_WDT_16 << BYPASS_WDT_TIME_SHIFT;
+		arg |= 0x1 << BYPASS_WDT_ENABLE_SHIFT;
+		mask |= BYPASS_WDT_VALUE_M;
+		break;
+	case 32:
+		arg = BYPASS_WDT_32 << BYPASS_WDT_TIME_SHIFT;
+		arg |= 0x1 << BYPASS_WDT_ENABLE_SHIFT;
+		mask |= BYPASS_WDT_VALUE_M;
+		break;
+	default:
+		return (EINVAL);
 	}
 	/* Set the new watchdog */
 	ixgbe_bypass_mutex_enter(adapter);
@@ -635,7 +635,7 @@ ixgbe_bp_log(SYSCTLFN_ARGS)
 			    &data);
 			ixgbe_bypass_mutex_clear(adapter);
 			if (error)
-				return (-EINVAL);
+				return (EINVAL);
 			eeprom[count].logs += data << (8 * i);
 		}
 
@@ -644,7 +644,7 @@ ixgbe_bp_log(SYSCTLFN_ARGS)
 		    log_off + i, &eeprom[count].actions);
 		ixgbe_bypass_mutex_clear(adapter);
 		if (error)
-			return (-EINVAL);
+			return (EINVAL);
 
 		/* Quit if not a unread log */
 		if (!(eeprom[count].logs & BYPASS_LOG_CLEAR_M))
@@ -717,7 +717,7 @@ ixgbe_bp_log(SYSCTLFN_ARGS)
 		ixgbe_bypass_mutex_clear(adapter);
 
 		if (error)
-			return (-EINVAL);
+			return (EINVAL);
 	}
 
 	status = 0; /* reset */
@@ -731,7 +731,7 @@ unlock_err:
 	status = 0; /* reset */
 	while (atomic_cas_uint(&adapter->bypass.log, 1, 0) == 0)
 		usec_delay(3000);
-	return (-EINVAL);
+	return (EINVAL);
 } /* ixgbe_bp_log */
 
 /************************************************************************
