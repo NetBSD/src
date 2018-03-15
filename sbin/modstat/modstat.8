@@ -1,4 +1,4 @@
-.\" $NetBSD: modstat.8,v 1.22.12.1 2018/03/10 10:36:26 pgoyette Exp $
+.\" $NetBSD: modstat.8,v 1.22.12.2 2018/03/15 10:03:04 pgoyette Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -103,10 +103,10 @@ flag
 .Fl f
 (force) to be loaded.
 .It Dv A
-Module is an alias for another module.
+The named module is an alias for another module.
 The REQUIRES column contains the
 .Dq real
-alias name.
+module name.
 .El
 .It Li REFS
 Number of references held on the module.
