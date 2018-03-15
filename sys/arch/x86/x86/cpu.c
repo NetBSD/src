@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.151 2018/03/14 17:40:41 maxv Exp $	*/
+/*	$NetBSD: cpu.c,v 1.152 2018/03/15 09:17:31 maxv Exp $	*/
 
 /*
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.151 2018/03/14 17:40:41 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.152 2018/03/15 09:17:31 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -1338,8 +1338,6 @@ cpu_kick(struct cpu_info *ci)
 	x86_send_ipi(ci, 0);
 }
 
-#if !defined(XEN)
-
 /* --------------------------------------------------------------------- */
 
 /*
@@ -1364,6 +1362,13 @@ speculation_detect_method(void)
 		/* TODO: detect MITIGATION_INTEL_IBRS */
 		mitigation_method = MITIGATION_NONE;
 	} else if (cpu_vendor == CPUVENDOR_AMD) {
+		/*
+		 * The AMD Family 10h manual documents the IC_CFG.DIS_IND bit.
+		 * This bit disables the Indirect Branch Predictor.
+		 *
+		 * Families 12h and 16h are believed to have this bit too, but
+		 * their manuals don't document it.
+		 */
 		switch (CPUID_TO_FAMILY(ci->ci_signature)) {
 		case 0x10:
 		case 0x12:
@@ -1504,5 +1509,3 @@ sysctl_machdep_spectreV2_mitigated(SYSCTLFN_ARGS)
 
 	return error;
 }
-
-#endif
