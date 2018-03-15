@@ -1,4 +1,4 @@
-.\"	$NetBSD: module.9,v 1.42.2.4 2018/03/14 02:47:41 pgoyette Exp $
+.\"	$NetBSD: module.9,v 1.42.2.5 2018/03/15 10:00:47 pgoyette Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,7 +43,7 @@
 .Sh SYNOPSIS
 .In sys/module.h
 .Fn MODULE "class" "name" "required"
-.Fn MODULE_WITH_ALIAS "class" "name" "required" "aliases"
+.Fn MODULE_WITH_ALIASES "class" "name" "required" "aliases"
 .Ft int
 .Fn module_load "const char *name" "int flags" "prop_dictionary_t props" \
 "modclass_t class"
