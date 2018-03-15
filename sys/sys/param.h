@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.557.2.1 2018/03/15 09:12:07 pgoyette Exp $	*/
+/*	$NetBSD: param.h,v 1.557.2.2 2018/03/15 11:57:14 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -87,7 +87,7 @@
 #define	NetBSD	199905		/* NetBSD version (year & month). */
 
 /*
- * There macros determine if we are running in protected mode or not.
+ * These macros determine if we are running in protected mode or not.
  *   _HARDKERNEL: code uses kernel namespace and runs in hw priviledged mode
  *   _SOFTKERNEL: code uses kernel namespace but runs without hw priviledges
  */
