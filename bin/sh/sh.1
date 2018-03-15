@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.192 2018/03/14 10:38:52 uwe Exp $
+.\"	$NetBSD: sh.1,v 1.193 2018/03/15 01:20:43 uwe Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -196,8 +196,12 @@ nor
 .Fl s
 was given, then the shell treats the first argument
 as the name of a file from which to read commands (a shell script).
-This also becomes $0 and the remaining arguments are set as the
-positional parameters of the shell ($1, $2, etc).
+This also becomes
+.Li $0
+and the remaining arguments are set as the
+positional parameters of the shell
+.Li ( $1 , $2 ,
+etc).
 Otherwise, if
 .Fl c
 was given, then the first argument, which must exist,
@@ -205,14 +209,22 @@ is taken to be a string of
 .Nm
 commands to execute.
 Then if any additional arguments follow the command string,
-those arguments become $0, $1, ...
+those arguments become
+.Li $0 , $1 ,
+\&...
 Otherwise, if additional arguments were given
 (which implies that
 .Fl s
 was set)
-those arguments become $1, $2, ...
-If $0 has not been set by the preceding processing, it
-will be set to argv[0] as passed to the shell, which will
+those arguments become
+.Li $1 , $2 ,
+\&...
+If
+.Li $0
+has not been set by the preceding processing, it
+will be set to
+.Va argv\^ Ns [ 0 ]
+as passed to the shell, which will
 usually be the name of the shell itself.
 If
 .Fl s
@@ -273,15 +285,19 @@ Don't overwrite existing files with
 Read commands from the
 .Ar command_string
 operand instead of, or in addition to, from the standard input.
-Special parameter 0 will be set from the
+Special parameter
+.Dv 0 \" $0
+will be set from the
 .Ar command_name
-operand if given, and the positional parameters ($1, $2, etc.)
+operand if given, and the positional parameters
+.Li ( $1 , $2 ,
+etc.)
 set from the remaining argument operands, if any.
 .Fl c
 is only available at invocation, it cannot be
 .Ic set ,
 and there is no form using
-.Dq \&+ .
+.Dq Cm \&+ .
 .It Fl E Em emacs
 Enable the built-in emacs style
 command line editor (disables
@@ -577,17 +593,20 @@ single quotes in a single-quoted string).
 .Ss Double Quotes
 Enclosing characters within double quotes preserves the literal
 meaning of all characters except dollar sign
-.Pq $ ,
+.Pq Li \&$ ,
 backquote
-.Pq ` ,
+.Pq Li \&` ,
 and backslash
-.Pq \e .
+.Pq Li \e .
 The backslash inside double quotes is historically weird, and serves to
 quote only the following characters (and these not in all contexts):
 .Dl $  `  \*q  \e  <newline> ,
 where a backslash newline is a line continuation as above.
 Otherwise it remains literal.
-.Ss Dollar Single Quotes (\&$'...')
+.\"
+.\"
+.Ss Dollar Single Quotes ( Li \&$'...' )
+.\"
 .Bd -filled -offset indent
 .Bf Em
 Note: this form of quoting is still somewhat experimental,
@@ -600,10 +619,10 @@ adopted text differ.
 .Pp
 Enclosing characters in a matched pair of single quotes, with the
 first immediately preceded by an unquoted dollar sign
-.Pq \&$
+.Pq Li \&$
 provides a quoting mechanism similar to single quotes, except
 that within the sequence of characters, any backslash
-.Pq \e ,
+.Pq Li \e ,
 is an escape character, which causes the following character to
 be treated specially.
 Only a subset of the characters that can occur in the string
@@ -614,14 +633,14 @@ in strings in the C programming language, with some extensions.
 .Pp
 The following characters are treated literally when following
 the escape character (backslash):
-.Dl \e \&' \&"
+.Dl \e \&' \(dq
 The sequence
-.Dq \e\e
+.Dq Li \e\e
 allows the escape character (backslash) to appear in the string literally.
-.Dq \e'
+.Dq Li \e'
 allows a single quote character into the string, such an
 escaped single quote does not terminate the quoted string.
-.Dq \e"
+.Dq Li \e\(dq
 is for compatibility with C strings, the double quote has
 no special meaning in a shell C-style string,
 and does not need to be escaped, but may be.
@@ -659,7 +678,7 @@ is vertical tab (0x13).
 In addition to those there are 5 forms that need additional
 data, which is obtained from the subsequent characters.
 An escape
-.Pq \e
+.Pq Li \e
 followed by one, two or three, octal digits
 .Po So 0 Sc Ns \&.. Ns So 7 Sc Ns Pc
 is processed to form an 8 bit character value.
@@ -687,7 +706,9 @@ characters as long as they remain valid hex digits.
 Consequently, users should ensure that the character
 following the hex escape sequence is something other than
 a hex digit.
-One way to achieve this is to end the $'...' string immediately
+One way to achieve this is to end the
+.Li $'...'
+string immediately
 after the final hex digit, and then, immediately start
 another, so
 .Dl \&$'\ex33'$'4...'
@@ -700,9 +721,9 @@ whereas
 in some other shells would be the hex value 0x334 (10, or more, bits).
 .Pp
 There are two escape sequences beginning with
-.Sq \eu
+.Sq Li \eu
 or
-.Sq \eU .
+.Sq Li \eU .
 The former is followed by from 1 to 4 hex digits, the latter by
 from 1 to 8 hex digits.
 Leading zeros can be used to pad the sequences to the maximum
@@ -728,30 +749,30 @@ character (backslash), followed by
 be an alphabetic character (a letter), or one of the following:
 .Dl \&@ \&[ \&\e \&] \&^ \&_ \&?
 Other than
-.Sq \ec?
+.Sq Li \ec?
 the value obtained is the least significant 5 bits of the
 ASCII value of the character following the
-.Sq \ec
+.Sq Li \ec
 escape sequence.
 That is what is commonly known as the
 .Dq control
 character obtained from the given character.
 The escape sequence
-.Sq \ec?
+.Sq Li \ec?
 yields the ASCII DEL character (0x7F).
 Note that to obtain the ASCII FS character (0x1C) this way,
 .Pq "that is control-\e"
 the trailing
-.Sq \e
+.Sq Li \e
 must be escaped itself, and so for this one case, the full
 escape sequence is
-.Dq \ec\e\e .
+.Dq Li \ec\e\e .
 The sequence
-.Dq \ec\eX
+.Dq Li \ec\e Ns Ar X\^
 where
-.Sq X
+.Sq Ar X\^
 is some character other than
-.Sq \e
+.Sq Li \e
 is reserved for future use, its meaning is unspecified.
 In this
 .Nm
@@ -759,12 +780,18 @@ an error is generated.
 .Pp
 If any of the preceding escape sequences generate the value
 .Sq \e0
-(a NUL character) that character, and all that follow in the
-same $'...' string, are omitted from the resulting word.
+(a NUL character) that character, and all that follow in the same
+.Li $'...'
+string, are omitted from the resulting word.
 .Pp
-After the $'...' string has had any included escape sequences
+After the
+.Li $'...'
+string has had any included escape sequences
 converted, it is treated as if it had been a single quoted string.
+.\"
+.\"
 .Ss Reserved Words
+.\"
 Reserved words are words that have special meaning to the
 shell and are recognized at the beginning of a line and
 after a control operator.
@@ -777,7 +804,10 @@ The following are reserved words:
 .El
 .Pp
 Their meanings are discussed later.
+.\"
+.\"
 .Ss Aliases
+.\"
 An alias is a name and corresponding value set using the
 .Ic alias
 built-in command.
@@ -801,7 +831,9 @@ Aliases provide a convenient way for naive users to create shorthands for
 commands without having to learn how to create functions with arguments.
 They can also be used to create lexically obscure code.
 This use is strongly discouraged.
+.\"
 .Ss Commands
+.\"
 The shell interprets the words it reads according to a language, the
 specification of which is outside the scope of this man page (refer to the
 BNF in the POSIX 1003.2 document).
@@ -810,13 +842,16 @@ word of the line (or after a control operator) is not a reserved word,
 then the shell has recognized a simple command.
 Otherwise, a complex
 command or some other special construct may have been recognized.
+.\"
+.\"
 .Ss Simple Commands
+.\"
 If a simple command has been recognized, the shell performs
 the following actions:
 .Bl -enum -offset indent
 .It
 Leading words of the form
-.Dq name=value
+.Dq Ar name Ns Li = Ns Ar value
 are stripped off, the value is expanded, as described below,
 and the results are assigned to the environment of the simple command.
 Redirection operators and their arguments (as described below) are
@@ -829,31 +864,34 @@ The first remaining word is considered the command name and the
 command is located.
 Any remaining words are considered the arguments of the command.
 If no command name resulted, then the
-.Dq name=value
+.Dq Ar name Ns Li = Ns Ar value
 variable assignments recognized in item 1 affect the current shell.
 .It
 Redirections are performed, from first to last, in the order given,
 as described in the next section.
 .El
+.\"
+.\"
 .Ss Redirections
+.\"
 Redirections are used to change where a command reads its input or sends
 its output.
 In general, redirections open, close, or duplicate an
 existing reference to a file.
 The overall format used for redirection is:
 .Pp
-.Dl [n] Ns Va redir-op Ar file
+.Dl Oo Ar n Oc Ns Va redir-op Ar file
 .Pp
 where
 .Va redir-op
 is one of the redirection operators mentioned previously.
 The following is a list of the possible redirections.
 The
-.Bq n
+.Op Ar n
 is an optional number, as in
-.Sq 3
+.Sq Li 3
 (not
-.Sq Bq 3 ) ,
+.Li [3] ) ,
 that refers to a file descriptor.
 If present it must occur immediately before the redirection
 operator, with no intervening white space, and becomes a
@@ -929,9 +967,9 @@ descriptor n if it is specified.
 If the delimiter as specified on the initial line is
 quoted, then the here-doc-text is treated literally; otherwise, the text is
 treated much like a double quoted string, except that
-.Sq \&"
+.Sq Li \(dq
 characters have no special meaning, and are not escaped by
-.Sq \&\e ,
+.Sq Li \&\e ,
 and is subjected to parameter expansion, command substitution, and arithmetic
 expansion as described in the
 .Sx Word Expansions
@@ -943,14 +981,21 @@ instead of
 then leading tabs in all lines in the here-doc-text, including before the
 end delimiter, are stripped.
 If the delimiter is not quoted, lines in here-doc-text that end with
-an unquoted \e are joined to the following line, the \e and following
+an unquoted
+.Li \e
+are joined to the following line, the
+.Li \e
+and following
 newline are simply removed while reading the here-document,
 which thus guarantees
 that neither of those lines can be the end delimiter.
 .Pp
 It is a syntax error for the end of the input file (or string) to be
 reached before the delimiter is encountered.
+.\"
+.\"
 .Ss Search and Execution
+.\"
 There are three types of commands: shell functions, built-in commands, and
 normal programs \(em and the command is searched for (by name) in that order.
 A command that contains a slash
@@ -959,7 +1004,9 @@ in its name is always a normal program.
 They each are executed in a different way.
 .Pp
 When a shell function is executed, all of the shell positional parameters
-(except $0, which remains unchanged) are set to the arguments of the shell
+(except
+.Li $0 ,
+which remains unchanged) are set to the arguments of the shell
 function.
 The variables which are explicitly placed in the environment of
 the command (by placing assignments to them before the function name) are
@@ -980,7 +1027,11 @@ described in the next section).
 When a normal program is executed, the shell runs the program,
 passing the arguments and the environment to the program.
 If the program is not a normal executable file, and if it does
-not begin with the "magic number" whose ASCII representation is "#!", so
+not begin with the
+.Dq magic number
+whose ASCII representation is
+.Dq Li "#!" ,
+so
 .Xr execve 2
 returns
 .Er ENOEXEC
@@ -993,8 +1044,12 @@ remembered by the child.
 .Pp
 Note that previous versions of this document and the source code itself
 misleadingly and sporadically refer to a shell script without a magic
-number as a "shell procedure".
+number as a
+.Dq shell procedure .
+.\"
+.\"
 .Ss Path Search
+.\"
 When locating a command, the shell first looks to see if it has a shell
 function by that name.
 Then it looks for a built-in command by that name.
@@ -1059,19 +1114,22 @@ allows new simple commands to be created as groupings of existing commands.
 .Pp
 Unless otherwise stated, the exit status of a list
 is that of the last simple command executed by the list.
+.\"
+.\"
 .Ss Pipelines
+.\"
 A pipeline is a sequence of one or more commands separated
 by the control operator
-.Sq \&| ,
+.Sq Ic \(ba ,
 and optionally preceded by the
-.Dq \&!
+.Dq Ic \&!
 reserved word.
 Note that
-.Sq \&|
+.Sq Ic \(ba
 is an operator, and so is recognized anywhere it appears unquoted,
 it does not require surrounding white space or other syntax elements.
 On the other hand
-.Dq \&!
+.Dq Ic \&!
 being a reserved word, must be separated from adjacent words by
 white space (or other operators, perhaps redirects) and is only
 recognized as the reserved word when it appears in a command word
@@ -1086,7 +1144,7 @@ as is the standard input of the first command.
 .Pp
 The format for a pipeline is:
 .Pp
-.Dl [!] command1 [ \&| command2 ...]
+.Dl [!] command1 Op Li \&| command2 No ...
 .Pp
 The standard output of command1 is connected to the standard input of
 command2.
@@ -1115,11 +1173,15 @@ the pipeline status is the exit
 status of the last command in the pipeline,
 and the exit status of any other commands in the pipeline is ignored.
 .Pp
-If the reserved word ! precedes the pipeline, the exit status
+If the reserved word
+.Dq Ic \&!
+precedes the pipeline, the exit status
 becomes the logical NOT of the pipeline status as determined above.
 That is, if the pipeline status is zero, the exit status is 1;
 if the pipeline status is other than zero, the exit status is zero.
-If there is no ! reserved word, the pipeline status becomes the exit status.
+If there is no
+.Dq Ic \&!
+reserved word, the pipeline status becomes the exit status.
 .Pp
 Because pipeline assignment of standard input or standard output or both
 takes place before redirection, it can be modified by redirection.
@@ -1136,13 +1198,17 @@ it executes in the current shell \(em but any effect it has on the
 environment is wiped).
 .Pp
 A pipeline is a simple case of an AND-OR-list (described below.)
-A ; or
+A
+.Li \&;
+or
 .Aq newline
 terminator causes the preceding pipeline, or more generally,
 the preceding AND-OR-list to be executed sequentially;
 that is, the shell executes the commands, and waits for them
 to finish before proceeding to following commands.
-An & terminator causes asynchronous (background) execution
+An
+.Li \&&
+terminator causes asynchronous (background) execution
 of the preceding AND-OR-list (see the next paragraph below).
 The exit status of an asynchronous AND-OR-list is zero.
 The actual status of the commands,
@@ -1150,26 +1216,34 @@ after they have completed,
 can be obtained using the
 .Ic wait
 built-in command described later.
-.Ss Background Commands \(em &
+.\"
+.\"
+.Ss Background Commands \(em Ic \&&
+.\"
 If a command, pipeline, or AND-OR-list
-is terminated by the control operator ampersand (&), the
+is terminated by the control operator ampersand
+.Pq Li \&& ,
+the
 shell executes the command asynchronously \(em that is, the shell does not
 wait for the command to finish before executing the next command.
 .Pp
 The format for running a command in background is:
 .Pp
-.Dl command1 & [command2 & ...]
+.Dl command1 & Op Li command2 & No ...
 .Pp
 If the shell is not interactive, the standard input of an asynchronous
 command is set to
 .Pa /dev/null .
 The process identifier of the most recent command started in the
 background can be obtained from the value of the special parameter
-.Dq \&!
+.Dq Dv \&! \" $!
 (see
 .Sx Special Parameters )
 provided it is accessed before the next asynchronous command is started.
+.\"
+.\"
 .Ss Lists \(em Generally Speaking
+.\"
 A list is a sequence of one or more commands separated by newlines,
 semicolons, or ampersands, and optionally terminated by one of these three
 characters.
@@ -1185,27 +1259,30 @@ If command is followed by an ampersand, the shell starts the
 command and immediately proceeds to the next command; otherwise it waits
 for the command to terminate before proceeding to the next one.
 A newline is equivalent to a
-.Sq \&;
+.Sq Li \&;
 when no other operator is present, and the command being input
 could syntactically correctly be terminated at the point where
 the newline is encountered, otherwise it is just whitespace.
+.\"
+.\"
 .Ss AND-OR Lists (Short-Circuit List Operators)
-.Dq &&
+.\"
+.Dq Li \&&&
 and
-.Dq ||
+.Dq Li \&||
 are AND-OR list operators.
 After executing the commands that precede the
-.Dq &&
+.Dq Li \&&&
 the subsequent command is executed
 if and only if the exit status of the preceding command(s) is zero.
-.Dq ||
+.Dq Li \&||
 is similar, but executes the subsequent command if and only if the exit status
 of the preceding command is nonzero.
 If a command is not executed, the exit status remains unchanged
 and the following AND-OR list operator (if any) uses that status.
-.Dq &&
+.Dq Li \&&&
 and
-.Dq ||
+.Dq Li \&||
 both have the same priority.
 Note that these operators are left-associative, so
 .Dl true || echo bar && echo baz
@@ -1213,19 +1290,23 @@ writes
 .Dq baz
 and nothing else.
 This is not the way it works in C.
-.Ss Flow-Control Constructs \(em if, while, until, for, case
+.\"
+.\"
+.Ss Flow-Control Constructs \(em Ic if , while , until , for , case
+.\"
 These commands are instances of compound commands.
 The syntax of the
 .Ic if
 command is
 .Bd -literal -offset indent
-if list
-then list
-[ elif list
-then    list ] ...
-[ else list ]
-fi
+.Ic if Ar list
+.Ic then Ar list
+.Ic [ elif Ar list
+.Ic then  Ar list ] No ...
+.Ic [ else Ar list ]
+.Ic fi
 .Ed
+.Pp
 The first list is executed, and if the exit status of that list is zero,
 the list following the
 .Ic then
@@ -1244,9 +1325,9 @@ The syntax of the
 .Ic while
 command is
 .Bd -literal -offset indent
-while list
-do   list
-done
+.Ic while Ar list
+.Ic do Ar list
+.Ic done
 .Ed
 .Pp
 The two lists are executed repeatedly while the exit status of the
@@ -1263,12 +1344,14 @@ The syntax of the
 .Ic for
 command is
 .Bd -literal -offset indent
-for variable [ in word ... ]
-do   list
-done
+.Ic for Ar variable Op Ic in Ar word No ...
+.Ic do Ar list
+.Ic done
 .Ed
 .Pp
-The words are expanded, or "$@" if
+The words are expanded, or
+.Li \*q$@\*q
+if
 .Ic in
 (and the following words) is not present,
 and then the list is executed repeatedly with the
@@ -1292,8 +1375,8 @@ and
 .Ic continue
 commands is
 .Bd -literal -offset indent
-break [ num ]
-continue [ num ]
+.Ic break Op Ar num
+.Ic continue Op Ar num
 .Ed
 .Pp
 .Ic break
@@ -1306,7 +1389,7 @@ or
 loops.
 .Ic continue
 breaks execution of the
-.Ar num\-1
+.Ar num\^ Ns -1
 innermost
 .Ic for , while ,
 or
@@ -1322,11 +1405,11 @@ The syntax of the
 .Ic case
 command is
 .Bd -literal -offset indent
-case word in
-[(] pattern ) [ list ] ;&
-[(] pattern ) [ list ] ;;
-\&...
-esac
+.Ic case Ar word Ic in
+.Oo Ic \&( Oc  Ar pattern Ns Ic \&) Oo Ar list Oc Ic \&;&
+.Oo Ic \&( Oc  Ar pattern Ns Ic \&) Oo Ar list Oc Ic \&;;
+.No \&...
+.Ic esac
 .Ed
 .Pp
 The pattern can actually be one or more patterns (see
@@ -1335,19 +1418,22 @@ described later), separated by
 .Dq \(or
 characters.
 .Pp
-Word is expanded and matched against each pattern in turn,
+.Ar word
+is expanded and matched against each
+.Ar pattern
+in turn,
 from first to last,
 with each pattern being expanded just before the match is attempted.
 When a match is found, pattern comparisons cease, and the associated
-.Dq list ,
+.Ar list ,
 if given,
 is evaluated.
 If the list is terminated with
-.Dq \&;&
+.Dq Ic \&;&
 execution then falls through to the following list, if any,
 without evaluating its pattern, or attempting a match.
 When a list terminated with
-.Dq \&;;
+.Dq Ic \&;;
 has been executed, or when
 .Ic esac
 is reached, execution of the
@@ -1355,11 +1441,14 @@ is reached, execution of the
 statement is complete.
 The exit status is that of the last command executed
 from the last list evaluated, if any, or zero otherwise.
+.\"
+.\"
 .Ss Grouping Commands Together
+.\"
 Commands may be grouped by writing either
-.Dl (list)
+.Dl Ic \&( Ns Ar list Ns Ic \&)
 or
-.Dl { list; }
+.Dl Ic \&{ Ar list Ns Ic \&; \&}
 These also form compound commands.
 .Pp
 Note that while parentheses are operators, and do not require
@@ -1369,7 +1458,9 @@ closing brace must occur in a position where a new command word might
 otherwise appear.
 .Pp
 The first of these executes the commands in a sub-shell.
-Built-in commands grouped into a (list) will not affect the current shell.
+Built-in commands grouped into a
+.Li \&( Ns Ar list Ns \&)
+will not affect the current shell.
 The second form does not fork another shell so is slightly more efficient,
 and allows for commands which do affect the current shell.
 Grouping commands together this way allows you to redirect
@@ -1379,14 +1470,17 @@ their output as though they were one program:
 .Ed
 .Pp
 Note that
-.Dq }
+.Dq Ic }
 must follow a control operator (here,
-.Dq \&; )
+.Dq Ic \&; )
 so that it is recognized as a reserved word and not as another command argument.
+.\"
+.\"
 .Ss Functions
+.\"
 The syntax of a function definition is
 .Pp
-.Dl name ( ) command [ redirect... ]
+.Dl Ar name Ns Ic \&() Ar command Op Ar redirect No ...
 .Pp
 A function definition is an executable statement; when executed it
 installs a function named name and returns an exit status of zero.
@@ -1400,7 +1494,7 @@ As an extension, this shell also allows a simple command
 (or even another function definition) to be
 used, though users should be aware this is non-standard syntax.
 This means that
-.Dl l() ls "$@"
+.Dl l() ls \*q$@\*q
 works to make
 .Dq l
 an alternative name for the
@@ -1473,10 +1567,10 @@ When starting up, the shell turns all the environment
 variables into shell variables, and exports them.
 New variables can be set using the form
 .Pp
-.Dl name=value
+.Dl Ar name Ns Li = Ns Ar value
 .Pp
 Variables set by the user must have a name consisting solely of
-alphabetics, numerics, and underscores - the first of which must not be
+alphabetics, numerics, and underscores \(em the first of which must not be
 numeric.
 A parameter can also be denoted by a number or a special
 character as explained below.
@@ -1491,22 +1585,27 @@ built-in can also be used to set or reset them, and
 can be used to manipulate the list.
 .Pp
 To refer to the 10th (and later) positional parameters,
-the form ${n} must be used.
+the form
+.Li \&${ Ns Ar n Ns Li \&}
+must be used.
 Without the braces, a digit following
 .Dq $
 can only refer to one of the first 9 positional parameters,
 or the special parameter
-.Dq 0 .
+.Dv 0 . \" $0
 The word
-.Dq $10
+.Dq Li $10
 is treated identically to
-.Dq ${1}0 .
+.Dq Li ${1}0 .
+.\"
+.\"
 .Ss Special Parameters
+.\"
 A special parameter is a parameter denoted by one of the following special
 characters.
 The value of the parameter is listed next to its character.
 .Bl -tag -width thinhyphena
-.It *
+.It Dv *
 Expands to the positional parameters, starting from one.
 When the
 expansion occurs within a double-quoted string it expands to a single
@@ -1518,52 +1617,62 @@ variable, or by a
 if
 .Ev IFS
 is unset.
-.It @
+.It Dv @
 Expands to the positional parameters, starting from one.
 When the expansion occurs within double quotes, each positional
 parameter expands as a separate argument.
 If there are no positional parameters, the
-expansion of @ generates zero arguments, even when @ is
-double-quoted.
+expansion of @ generates zero arguments, even when
+.Dv @
+is double-quoted.
 What this basically means, for example, is
-if $1 is
+if
+.Li $1
+is
 .Dq abc
-and $2 is
-.Dq def ghi ,
+and
+.Li $2
+is
+.Dq def\ ghi ,
 then
-.Qq $@
+.Li \*q$@\*q
 expands to
 the two arguments:
 .Pp
 .Sm off
 .Dl \*q abc \*q \  \*q def\ ghi \*q
 .Sm on
-.It #
+.It Dv #
 Expands to the number of positional parameters.
-.It \&?
+.It Dv \&?
 Expands to the exit status of the most recent pipeline.
-.It \- (Hyphen, or minus.)
+.It Dv \- No (hyphen, or minus)
 Expands to the current option flags (the single-letter
 option names concatenated into a string) as specified on
 invocation, by the set built-in command, or implicitly
 by the shell.
-.It $
+.It Dv $
 Expands to the process ID of the invoked shell.
-A sub-shell retains the same value of $ as its parent.
-.It \&!
+A sub-shell retains the same value of
+.Dv $
+as its parent.
+.It Dv \&!
 Expands to the process ID of the most recent background
 command executed from the current shell.
 For a pipeline, the process ID is that of the last command in the pipeline.
 If no background commands have yet been started by the shell, then
-.Dq \&!
+.Dq Dv \&!
 will be unset.
 Once set, the value of
-.Dq \&!
+.Dq Dv \&!
 will be retained until another background command is started.
-.It 0 (Zero.)
+.It Dv 0 No (zero)
 Expands to the name of the shell or shell script.
 .El
+.\"
+.\"
 .Ss Word Expansions
+.\"
 This section describes the various expansions that are performed on words.
 Not all expansions are performed on every word, as explained later.
 .Pp
@@ -1573,8 +1682,9 @@ single field.
 It is only field splitting or pathname expansion that can
 create multiple fields from a single word.
 The single exception to this
-rule is the expansion of the special parameter @ within double quotes, as
-was described above.
+rule is the expansion of the special parameter
+.Dv @ \" $@
+within double quotes, as was described above.
 .Pp
 The order of word expansion is:
 .Bl -enum
@@ -1608,7 +1718,7 @@ and are replaced with the pathname of the named user's home directory.
 If the user name is missing (as in
 .Pa ~/foobar ) ,
 the tilde is replaced with the value of the
-.Va HOME
+.Dv HOME
 variable (the current user's home directory).
 .Pp
 In variable assignments,
@@ -1654,7 +1764,7 @@ pathname expansion is not performed on the results of the expansion;
 .It
 field splitting is not performed on the results of the
 expansion, with the exception of the special rules for
-.Dv @ .
+.Dv @ . \" $@
 .El
 .Pp
 In addition, a parameter expansion where braces are used,
@@ -1796,11 +1906,12 @@ has with
 .\"
 .\"
 .Ss Command Substitution
+.\"
 Command substitution allows the output of a command to be substituted in
 place of the command (and surrounding syntax).
 Command substitution occurs when the command is enclosed as follows:
 .Pp
-.Dl $(command)
+.Dl Ic $( Ns Ar command Ns Ic \&)
 .Pp
 or
 .Po
@@ -1808,7 +1919,7 @@ or
 version
 .Pc :
 .Pp
-.Dl `command`
+.Dl Ic \&` Ns Ar command Ns Ic \&`
 .Pp
 The shell expands the command substitution by executing command in a
 sub-shell environment and replacing the command substitution with the
@@ -1824,12 +1935,15 @@ they may be translated into
 depending on the value of
 .Ev IFS
 and any quoting that is in effect.)
+.\"
+.\"
 .Ss Arithmetic Expansion
+.\"
 Arithmetic expansion provides a mechanism for evaluating an arithmetic
 expression and substituting its value.
 The format for arithmetic expansion is as follows:
 .Pp
-.Dl $((expression))
+.Dl Ic $(( Ns Ar expression Ns Ic \&))
 .Pp
 The expression in an arithmetic expansion is treated as if it were in
 double quotes, except that a double quote character inside the expression
@@ -1903,12 +2017,15 @@ and the struct and array referencing binary operators:
 .Dq \&->
 and
 .Dq \&[ .
+.\"
+.\"
 .Ss White Space Splitting (Field Splitting)
+.\"
 After parameter expansion, command substitution, and
 arithmetic expansion the shell scans the results of
 expansions and substitutions that did not occur in double quotes,
 and
-.Dq $@
+.Dq Li $@
 even if it did,
 for field splitting and multiple fields can result.
 .Pp
