@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.35 2018/03/09 06:27:53 msaitoh Exp $ */
+/* $NetBSD: ixgbe.h,v 1.36 2018/03/15 06:48:51 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -114,7 +114,6 @@
 #include "ixgbe_netbsd.h"
 #include "ixgbe_api.h"
 #include "ixgbe_common.h"
-#include "ixgbe_phy.h"
 #include "ixgbe_vf.h"
 #include "ixgbe_features.h"
 
@@ -254,7 +253,6 @@
 #define IXGBE_LINK_ITR_QUANTA  0x1FF
 #define IXGBE_LINK_ITR         ((IXGBE_LINK_ITR_QUANTA << 3) & \
                                 IXGBE_EITR_ITR_INT_MASK)
-
 
 
 /************************************************************************
@@ -605,7 +603,6 @@ struct adapter {
 	ixgbe_extmem_head_t jcl_head;
 };
 
-
 /* Precision Time Sync (IEEE 1588) defines */
 #define ETHERTYPE_IEEE1588      0x88F7
 #define PICOSECS_PER_TICK       20833
@@ -681,10 +678,10 @@ static __inline int
 drbr_needs_enqueue(struct ifnet *ifp, struct buf_ring *br)
 {
 #ifdef ALTQ
-        if (ALTQ_IS_ENABLED(&ifp->if_snd))
-                return (1);
+	if (ALTQ_IS_ENABLED(&ifp->if_snd))
+		return (1);
 #endif
-        return (!buf_ring_empty(br));
+	return (!buf_ring_empty(br));
 }
 #endif
 
@@ -752,7 +749,6 @@ bool ixgbe_rxeof(struct ix_queue *);
 const struct sysctlnode *ixgbe_sysctl_instance(struct adapter *);
 
 #include "ixgbe_bypass.h"
-#include "ixgbe_sriov.h"
 #include "ixgbe_fdir.h"
 #include "ixgbe_rss.h"
 #include "ixgbe_netmap.h"
