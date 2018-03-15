@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.1 2018/03/15 03:13:51 christos Exp $	*/
+/*	$NetBSD: uvm.h,v 1.2 2018/03/15 03:22:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,17 +32,6 @@
 #ifndef _COMPAT_SYS_UVM_H_
 #define _COMPAT_SYS_UVM_H_
 
-void uvm_13_init(void);
-void uvm_50_init(void);
-void uvm_13_fini(void);
-void uvm_50_fini(void);
-
-struct sys_swapctl_args;
-
-int (*uvm_swap_stats13)(const struct sys_swapctl_args *, register_t *);
-int (*uvm_swap_stats50)(const struct sys_swapctl_args *, register_t *);
-
-#endif /* _COMPAT_SYS_UVM_H_ */
 /*
  * NetBSD 1.3 swapctl(SWAP_STATS, ...) swapent structure; uses 32 bit
  * dev_t and has no se_path[] member.
@@ -67,3 +56,19 @@ struct swapent50 {
 	int	se50_priority;		/* priority of this device */
 	char	se50_path[PATH_MAX+1];	/* path name */
 };
+
+__BEGIN_DECLS
+
+void uvm_13_init(void);
+void uvm_50_init(void);
+void uvm_13_fini(void);
+void uvm_50_fini(void);
+
+struct sys_swapctl_args;
+
+extern int (*uvm_swap_stats13)(const struct sys_swapctl_args *, register_t *);
+extern int (*uvm_swap_stats50)(const struct sys_swapctl_args *, register_t *);
+
+__END_DECLS
+
+#endif /* _COMPAT_SYS_UVM_H_ */
